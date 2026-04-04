@@ -1,0 +1,76 @@
+{
+  "name": "netlab",
+  "version": "0.1.0",
+  "description": "Browser-based network visualization library with OSI layer simulation",
+  "main": "dist/netlab.cjs.js",
+  "module": "dist/netlab.es.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/netlab.es.js",
+      "require": "./dist/netlab.cjs.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./layers/l1-physical": {
+      "import": "./dist/layers/l1-physical/index.js",
+      "require": "./dist/layers/l1-physical/index.cjs.js"
+    },
+    "./layers/l2-datalink": {
+      "import": "./dist/layers/l2-datalink/index.js",
+      "require": "./dist/layers/l2-datalink/index.cjs.js"
+    },
+    "./layers/l3-network": {
+      "import": "./dist/layers/l3-network/index.js",
+      "require": "./dist/layers/l3-network/index.cjs.js"
+    },
+    "./layers/l4-transport": {
+      "import": "./dist/layers/l4-transport/index.js",
+      "require": "./dist/layers/l4-transport/index.cjs.js"
+    },
+    "./layers/l7-application": {
+      "import": "./dist/layers/l7-application/index.js",
+      "require": "./dist/layers/l7-application/index.cjs.js"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.build.json && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@xyflow/react": ">=12.0.0",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "@xyflow/react": "^12.0.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "typescript": "^5.5.0",
+    "vite": "^5.4.0",
+    "vite-plugin-dts": "^4.0.0"
+  },
+  "dependencies": {
+    "zustand": "^5.0.0"
+  },
+  "keywords": [
+    "network",
+    "visualization",
+    "osi",
+    "react-flow",
+    "simulation",
+    "packet"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/koseki2580/netlab"
+  }
+}
