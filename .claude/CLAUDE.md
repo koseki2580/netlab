@@ -57,6 +57,8 @@
 ### 7. Specification-Driven Development
 
 - Before implementation, write the specification in `docs/`
+  - Always consult `docs/README.md` to determine the correct location for your changes or new specifications.
+  - If you create a new document or change the structure, you MUST update `docs/README.md` alongside it to keep the documentation index current.
 - Review and validate the specification before writing code
 - After implementation, update the specification to reflect the actual behavior
 - Ensure that documentation always matches the current implementation
