@@ -19,6 +19,8 @@ import { NodeDetailPanel } from './NodeDetailPanel';
 import { layerRegistry } from '../registry/LayerRegistry';
 import { areasToNodes } from '../areas/AreaRegistry';
 import { AreaBackground } from '../areas/AreaBackground';
+import { isValidConnectionBetweenNodes, isValidEdge } from '../utils/connectionValidator';
+import type { NetlabNode } from '../types/topology';
 
 const AREA_NODE_TYPE: NodeTypes = {
   'netlab-area': AreaBackground as NodeTypes[string],
@@ -54,6 +56,22 @@ export function NetlabCanvas({ style, className }: NetlabCanvasProps) {
     [setEdges],
   );
 
+  const validateConnection = useCallback(
+    (connection: Connection) =>
+      isValidConnectionBetweenNodes(nodes as NetlabNode[], connection.source, connection.target),
+    [nodes],
+  );
+
+  const styledEdges = useMemo(
+    () =>
+      edges.map((edge) =>
+        isValidEdge(nodes as NetlabNode[], edge)
+          ? edge
+          : { ...edge, style: { ...edge.style, stroke: 'red' } },
+      ),
+    [edges, nodes],
+  );
+
   const uiCtx = useMemo(
     () => ({ selectedNodeId, setSelectedNodeId }),
     [selectedNodeId],
@@ -64,11 +82,12 @@ export function NetlabCanvas({ style, className }: NetlabCanvasProps) {
       <div style={{ width: '100%', height: '100%', position: 'relative', ...style }} className={className}>
         <ReactFlow
           nodes={nodes}
-          edges={edges}
+          edges={styledEdges}
           nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          isValidConnection={validateConnection}
           connectionMode={ConnectionMode.Loose}
           fitView
           proOptions={{ hideAttribution: false }}
