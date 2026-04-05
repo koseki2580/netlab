@@ -1,3 +1,27 @@
+// Simulation types
+export type {
+  PacketHop,
+  PacketTrace,
+  SimulationStatus,
+  SimulationState,
+} from './types/simulation';
+
+// Simulation engine
+export { SimulationEngine } from './simulation/SimulationEngine';
+
+// Simulation React integration
+export {
+  SimulationProvider,
+  SimulationContext,
+  useSimulation,
+} from './simulation/SimulationContext';
+export type { SimulationProviderProps, SimulationContextValue } from './simulation/SimulationContext';
+
+// Simulation UI components
+export { SimulationControls } from './components/simulation/SimulationControls';
+export { PacketViewer } from './components/simulation/PacketViewer';
+export { PacketTimeline } from './components/simulation/PacketTimeline';
+
 // Types
 export type {
   TcpFlags,

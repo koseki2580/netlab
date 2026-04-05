@@ -1,9 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { RouteTable } from '../../src/components/controls/RouteTable';
 import { AreaLegend } from '../../src/components/controls/AreaLegend';
-import { hookEngine } from '../../src/hooks/HookEngine';
+import { SimulationProvider } from '../../src/simulation/SimulationContext';
+import { SimulationControls } from '../../src/components/simulation/SimulationControls';
+import { PacketViewer } from '../../src/components/simulation/PacketViewer';
+import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import type { NetworkTopology } from '../../src/types/topology';
 import type { NetworkArea } from '../../src/types/areas';
 import { encodeTopology, decodeTopology } from '../../src/utils/topology-url';
@@ -79,7 +82,6 @@ const INITIAL_TOPOLOGY: NetworkTopology = {
         staticRoutes: [
           { destination: '10.0.0.0/24', nextHop: 'direct' },
           { destination: '203.0.113.0/24', nextHop: 'direct' },
-          { destination: '0.0.0.0/0', nextHop: '203.0.113.254' },
         ],
       },
     },
@@ -121,19 +123,8 @@ const INITIAL_TOPOLOGY: NetworkTopology = {
   routeTables: new Map(),
 };
 
-interface LogEntry {
-  id: number;
-  time: string;
-  from: string;
-  to: string;
-}
-
-let logId = 0;
-
 export default function ClientServerDemo() {
   const topology = decodeTopology(window.location.search) ?? INITIAL_TOPOLOGY;
-  const [log, setLog] = useState<LogEntry[]>([]);
-  const logRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
 
   const handleCopyLink = () => {
@@ -145,132 +136,76 @@ export default function ClientServerDemo() {
     });
   };
 
-  useEffect(() => {
-    const unsub = hookEngine.on('packet:forward', async (ctx, next) => {
-      setLog((prev) => [
-        ...prev.slice(-49),
-        { id: logId++, time: new Date().toLocaleTimeString(), from: ctx.fromNodeId, to: ctx.toNodeId },
-      ]);
-      await next();
-    });
-    return unsub;
-  }, []);
-
-  useEffect(() => {
-    if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
-  }, [log]);
-
-  const sendRequest = () => {
-    fetch('http://203.0.113.10/api/data')
-      .then((r) => r.json())
-      .then((data) => console.log('[demo] Response:', data))
-      .catch((e) => console.error('[demo] Error:', e));
-  };
-
   return (
-    <DemoShell title="Client–Server" desc="Private/public areas, static routing, live packet log">
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        {/* Toolbar */}
-        <div
-          style={{
-            padding: '8px 16px',
-            background: '#1e293b',
-            borderBottom: '1px solid #334155',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            flexShrink: 0,
-          }}
-        >
-          <button
-            onClick={sendRequest}
-            style={{
-              padding: '5px 14px',
-              background: '#2563eb',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 6,
-              cursor: 'pointer',
-              fontSize: 13,
-              fontFamily: 'monospace',
-            }}
-          >
-            ▶ Send Request
-          </button>
-          <button
-            onClick={handleCopyLink}
-            style={{
-              padding: '5px 14px',
-              background: copied ? '#16a34a' : '#334155',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 6,
-              cursor: 'pointer',
-              fontSize: 13,
-              fontFamily: 'monospace',
-              transition: 'background 0.2s',
-            }}
-          >
-            {copied ? '✓ Copied!' : '🔗 Copy Link'}
-          </button>
-        </div>
+    <DemoShell title="Client–Server" desc="Packet flow visualization with step-by-step tracing">
+      <NetlabProvider topology={topology}>
+        <SimulationProvider>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
 
-        {/* Main content */}
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-          {/* Canvas */}
-          <div style={{ flex: 1, position: 'relative' }}>
-            <NetlabProvider topology={topology}>
-              <NetlabCanvas />
-              <RouteTable />
-              <AreaLegend />
-            </NetlabProvider>
-          </div>
-
-          {/* Packet log */}
-          <div
-            style={{
-              width: 260,
-              background: '#0f172a',
-              borderLeft: '1px solid #1e293b',
-              display: 'flex',
-              flexDirection: 'column',
-              flexShrink: 0,
-            }}
-          >
+            {/* Toolbar */}
             <div
               style={{
-                padding: '8px 12px',
-                borderBottom: '1px solid #1e293b',
-                color: '#94a3b8',
-                fontFamily: 'monospace',
-                fontSize: 10,
-                fontWeight: 'bold',
-                letterSpacing: 1,
+                padding: '4px 12px',
+                background: '#1e293b',
+                borderBottom: '1px solid #334155',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                flexShrink: 0,
               }}
             >
-              PACKET LOG
-            </div>
-            <div ref={logRef} style={{ flex: 1, overflowY: 'auto', padding: '8px 12px' }}>
-              {log.length === 0 && (
-                <div style={{ color: '#334155', fontFamily: 'monospace', fontSize: 11, marginTop: 8 }}>
-                  Click "Send Request" to simulate traffic…
-                </div>
-              )}
-              {log.map((entry) => (
-                <div
-                  key={entry.id}
-                  style={{ fontFamily: 'monospace', fontSize: 11, color: '#94a3b8', marginBottom: 4, lineHeight: 1.5 }}
+              {/* SimulationControls owns Send Packet + Play/Pause/Step/Reset */}
+              <SimulationControls />
+
+              <div style={{ marginLeft: 'auto' }}>
+                <button
+                  onClick={handleCopyLink}
+                  style={{
+                    padding: '5px 14px',
+                    background: copied ? '#16a34a' : '#334155',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    fontFamily: 'monospace',
+                    transition: 'background 0.2s',
+                  }}
                 >
-                  <span style={{ color: '#475569' }}>{entry.time} </span>
-                  <span style={{ color: '#7dd3fc' }}>{entry.from}</span>
-                  <span style={{ color: '#475569' }}> → </span>
-                  <span style={{ color: '#4ade80' }}>{entry.to}</span>
-                </div>
-              ))}
+                  {copied ? '✓ Copied!' : '🔗 Copy Link'}
+                </button>
+              </div>
+            </div>
+
+            {/* Main content */}
+            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+
+              {/* Canvas */}
+              <div style={{ flex: 1, position: 'relative' }}>
+                <NetlabCanvas />
+                <RouteTable />
+                <AreaLegend />
+                {/* PacketViewer floats over canvas */}
+                <PacketViewer />
+              </div>
+
+              {/* Timeline panel */}
+              <div
+                style={{
+                  width: 260,
+                  background: '#0f172a',
+                  borderLeft: '1px solid #1e293b',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  flexShrink: 0,
+                }}
+              >
+                <PacketTimeline />
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </SimulationProvider>
+      </NetlabProvider>
     </DemoShell>
   );
 }
