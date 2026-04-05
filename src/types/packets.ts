@@ -61,6 +61,8 @@ export type Packet = EthernetFrame;
 
 export interface InFlightPacket {
   id: string;
+  srcNodeId: string;    // origin node ID
+  dstNodeId: string;    // destination node ID
   frame: EthernetFrame;
   currentDeviceId: string;
   ingressPortId: string;

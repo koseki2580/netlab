@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useContext } from 'react';
 import {
   ReactFlow,
   Background,
@@ -10,6 +10,7 @@ import {
   addEdge,
   type NodeTypes,
   type Connection,
+  type Edge,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -20,6 +21,7 @@ import { layerRegistry } from '../registry/LayerRegistry';
 import { areasToNodes } from '../areas/AreaRegistry';
 import { AreaBackground } from '../areas/AreaBackground';
 import { isValidConnectionBetweenNodes, isValidEdge } from '../utils/connectionValidator';
+import { SimulationContext } from '../simulation/SimulationContext';
 import type { NetlabNode } from '../types/topology';
 
 const AREA_NODE_TYPE: NodeTypes = {
@@ -34,6 +36,10 @@ export interface NetlabCanvasProps {
 export function NetlabCanvas({ style, className }: NetlabCanvasProps) {
   const { topology, areas } = useNetlabContext();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+
+  // Optional: read active edge IDs from SimulationContext (non-throwing)
+  const simCtx = useContext(SimulationContext);
+  const activeEdgeIds = simCtx?.state.activeEdgeIds ?? [];
 
   const nodeTypes = useMemo(() => ({
     ...AREA_NODE_TYPE,
@@ -57,19 +63,23 @@ export function NetlabCanvas({ style, className }: NetlabCanvasProps) {
   );
 
   const validateConnection = useCallback(
-    (connection: Connection) =>
+    (connection: Connection | Edge) =>
       isValidConnectionBetweenNodes(nodes as NetlabNode[], connection.source, connection.target),
     [nodes],
   );
 
   const styledEdges = useMemo(
     () =>
-      edges.map((edge) =>
-        isValidEdge(nodes as NetlabNode[], edge)
-          ? edge
-          : { ...edge, style: { ...edge.style, stroke: 'red' } },
-      ),
-    [edges, nodes],
+      edges.map((edge) => {
+        if (activeEdgeIds.includes(edge.id)) {
+          return { ...edge, animated: true, style: { ...edge.style, stroke: '#7dd3fc', strokeWidth: 2 } };
+        }
+        if (!isValidEdge(nodes as NetlabNode[], edge)) {
+          return { ...edge, style: { ...edge.style, stroke: 'red' } };
+        }
+        return edge;
+      }),
+    [edges, nodes, activeEdgeIds],
   );
 
   const uiCtx = useMemo(
