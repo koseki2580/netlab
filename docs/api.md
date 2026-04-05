@@ -15,7 +15,7 @@ interface NetlabProviderProps {
 
 ### `<NetlabCanvas>`
 
-The main React Flow canvas. Renders the network topology with area backgrounds and packet animations.
+The main React Flow canvas. Renders the network topology with area backgrounds and supports interactive drag repositioning and edge creation.
 
 ```typescript
 interface NetlabCanvasProps {
@@ -23,6 +23,16 @@ interface NetlabCanvasProps {
   className?: string;
 }
 ```
+
+Node positions and edges are managed in local React state seeded from the provided topology. Changes (drag, new connections) are not propagated back to `NetlabProvider`.
+
+See [ui-interaction.md](./ui-interaction.md) for the full interaction design.
+
+### `<NodeDetailPanel>`
+
+Floating overlay that shows the full metadata for the currently selected node. Rendered automatically by `NetlabCanvas` — no manual placement required. Close with `✕` button or `Escape` key.
+
+See [ui-interaction.md#node-detail-panel](./ui-interaction.md#node-detail-panel).
 
 ### `<RouteTable>`
 
@@ -64,11 +74,21 @@ const { on, emit } = useNetlabHooks();
 
 ### `useNetlabContext()`
 
-Access the full netlab context.
+Access the full netlab context (simulation data).
 
 ```typescript
 const { topology, routeTable, areas } = useNetlabContext();
 ```
+
+### `useNetlabUI()`
+
+Access the UI interaction context. Must be called inside a `NetlabCanvas` tree.
+
+```typescript
+const { selectedNodeId, setSelectedNodeId } = useNetlabUI();
+```
+
+Use `setSelectedNodeId(nodeId)` to open the `NodeDetailPanel` for a specific node, or `setSelectedNodeId(null)` to close it.
 
 ## Classes
 

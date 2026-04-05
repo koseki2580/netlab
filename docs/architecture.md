@@ -19,7 +19,8 @@
 │  NetlabCanvas  (React Flow wrapper)                 │
 │  ├─ LayerRegistry.getAllNodeTypes()                  │
 │  ├─ AreaBackground nodes (zIndex: -1)               │
-│  └─ PacketAnimator (requestAnimationFrame)          │
+│  ├─ NetlabUIContext  (selectedNodeId, setter)        │
+│  └─ NodeDetailPanel  (overlay, zIndex: 200)         │
 └────────────────────┬────────────────────────────────┘
                      │
          ┌───────────┴───────────┐
@@ -82,3 +83,18 @@ See [hooks.md](./hooks.md).
 Each layer plugin contributes its own `NodeTypes` object. These are merged once via
 `LayerRegistry.getAllNodeTypes()` and passed to React Flow. This avoids per-render object creation
 that would cause React Flow to remount all nodes.
+
+### Separation of Simulation and UI Contexts
+
+`NetlabContext` (provided by `NetlabProvider`) carries simulation data: topology, route tables, hook engine.
+`NetlabUIContext` (provided by `NetlabCanvas`) carries view-only state: the currently selected node ID.
+
+Keeping them separate ensures node components can trigger the detail panel without coupling to the simulation
+layer, and simulation logic never depends on display state.
+
+### Local Canvas State for Interactivity
+
+`NetlabCanvas` seeds `useNodesState`/`useEdgesState` from the topology on first render, then owns those
+arrays independently. Drag operations and new connections modify only the local canvas state and are never
+written back to `NetlabProvider`. This keeps the simulation topology immutable and predictable while giving
+users a freely editable canvas.
