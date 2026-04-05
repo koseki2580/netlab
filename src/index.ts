@@ -68,3 +68,4 @@ export { NodeDetailPanel } from './components/NodeDetailPanel';
 
 // Utilities
 export { isInSubnet, parseCidr } from './utils/cidr';
+export { encodeTopology, decodeTopology } from './utils/topology-url';
