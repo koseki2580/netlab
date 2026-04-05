@@ -15,6 +15,7 @@ import StarDemo from './basic/StarDemo';
 import ClientServerDemo from './routing/ClientServerDemo';
 import MultiHopDemo from './routing/MultiHopDemo';
 import DmzDemo from './areas/DmzDemo';
+import EditorDemo from './editor/EditorDemo';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Root element not found');
@@ -30,6 +31,7 @@ createRoot(root).render(
         <Route path="/routing/client-server" element={<ClientServerDemo />} />
         <Route path="/routing/multi-hop" element={<MultiHopDemo />} />
         <Route path="/areas/dmz" element={<DmzDemo />} />
+        <Route path="/editor" element={<EditorDemo />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </HashRouter>

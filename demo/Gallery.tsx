@@ -65,6 +65,18 @@ const CATEGORIES: Category[] = [
       },
     ],
   },
+  {
+    id: 'editor',
+    label: 'Interactive Editor',
+    color: '#a855f7',
+    demos: [
+      {
+        path: '/editor',
+        title: 'Topology Editor',
+        desc: 'Visually add/remove nodes, connect them, edit properties, and undo/redo changes.',
+      },
+    ],
+  },
 ];
 
 export default function Gallery() {

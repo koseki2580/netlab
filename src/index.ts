@@ -70,3 +70,19 @@ export { NodeDetailPanel } from './components/NodeDetailPanel';
 export { isInSubnet, parseCidr } from './utils/cidr';
 export { encodeTopology, decodeTopology } from './utils/topology-url';
 export { isValidConnection, isValidConnectionBetweenNodes, isValidEdge } from './utils/connectionValidator';
+
+// Editor
+export { TopologyEditor } from './editor/components/TopologyEditor';
+export type { TopologyEditorProps } from './editor/components/TopologyEditor';
+export type { EditorTopology, TopologyEditorState, PositionUpdate } from './editor/types';
+export { useTopologyEditorContext } from './editor/context/TopologyEditorContext';
+export type { TopologyEditorContextValue } from './editor/context/TopologyEditorContext';
+export { TopologyEditorProvider } from './editor/context/TopologyEditorProvider';
+export type { TopologyEditorProviderProps } from './editor/context/TopologyEditorProvider';
+export {
+  createRouterNode,
+  createSwitchNode,
+  createClientNode,
+  createServerNode,
+  randomPosition,
+} from './editor/utils/nodeFactory';
