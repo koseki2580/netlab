@@ -63,6 +63,8 @@ export type { NetlabCanvasProps } from './components/NetlabCanvas';
 export { RouteTable } from './components/controls/RouteTable';
 export { AreaLegend } from './components/controls/AreaLegend';
 export { useNetlabContext } from './components/NetlabContext';
+export { useNetlabUI } from './components/NetlabUIContext';
+export { NodeDetailPanel } from './components/NodeDetailPanel';
 
 // Utilities
 export { isInSubnet, parseCidr } from './utils/cidr';
