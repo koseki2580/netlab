@@ -20,10 +20,10 @@
 
 ### 3. Self-Improvement Loop
 
+- **At the start of every session, read `agents/tasks/lessons.md` before taking any action**
 - Whenever you receive corrections from the user, record the pattern in `agents/tasks/lessons.md`
 - Write rules for yourself to avoid repeating the same mistakes
 - Continuously refine these rules until the error rate decreases
-- At the start of each session, review relevant lessons for the project
 
 ---
 
