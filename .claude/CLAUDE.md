@@ -68,6 +68,27 @@
 
 ---
 
+### 8. Docs–Tests Consistency
+
+- Any change to specifications in `docs/` MUST be accompanied by corresponding updates to test cases
+- A change in documentation implies a change in system behavior or expectations
+
+- Tests are the executable representation of the specification:
+  - If docs change, tests MUST reflect that change
+  - If tests no longer match docs, they MUST be updated immediately
+
+- A change is NOT complete unless all of the following are consistent:
+  - documentation (`docs/`)
+  - implementation (code)
+  - test cases
+
+- Never allow discrepancies between:
+  - docs (intended behavior)
+  - tests (validated behavior)
+  - code (actual behavior)
+
+---
+
 ## Task Management
 
 1. **Start with a plan**: Write a checklist-style plan in `agents/tasks/todo.md`
