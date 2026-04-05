@@ -112,6 +112,19 @@ Drag from handle ──► drop onto another node/handle ──► new smoothste
 
 Connections use `ConnectionMode.Loose`, so dragging from any handle connects to the nearest compatible handle on the target node.
 
+#### Connection Validation
+
+Not all connections are topologically meaningful. Netlab enforces the following rule at draw time:
+
+- **Invalid**: both endpoints are L7 devices (`client` or `server`). Direct endpoint-to-endpoint links bypass all network infrastructure (switches and routers) and are not permitted.
+- **Valid**: all other role combinations (e.g., client↔switch, router↔router).
+
+During an invalid drag, React Flow shows a **red connection line** and a blocked cursor. Releasing the drag does not create the edge.
+
+If a topology is loaded that already contains invalid edges (e.g., from an external source), those edges are displayed in **red** to signal the problem without blocking the view.
+
+See [`docs/connection-validation.md`](./connection-validation.md) for the full rule matrix and implementation details.
+
 ### State Initialization
 
 On mount, canvas state is seeded from the topology passed to `NetlabProvider`:
