@@ -140,3 +140,4 @@ vite.config.ts.timestamp-*
 
 # Demo build output (deployed to gh-pages via CI)
 dist-demo/
+bug/
