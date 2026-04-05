@@ -64,7 +64,7 @@ function makeNode(id: string, role: string): NetlabNode {
   return {
     id,
     position: { x: 0, y: 0 },
-    data: { label: id, layerId: 'l7-application', role },
+    data: { label: id, layerId: 'l7', role },
   } as NetlabNode;
 }
 
