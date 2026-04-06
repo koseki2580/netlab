@@ -66,6 +66,18 @@ const CATEGORIES: Category[] = [
     ],
   },
   {
+    id: 'simulation',
+    label: 'Simulation',
+    color: '#8b5cf6',
+    demos: [
+      {
+        path: '/simulation/step',
+        title: 'Step-by-Step',
+        desc: 'Trace packet routing decisions hop by hop. See LPM in action — match scores, route candidates, and why each next hop was chosen.',
+      },
+    ],
+  },
+  {
     id: 'editor',
     label: 'Interactive Editor',
     color: '#a855f7',
