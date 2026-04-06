@@ -5,6 +5,7 @@ import type { NetworkTopology } from '../types/topology';
 import type { InFlightPacket } from '../types/packets';
 import type { RouteEntry } from '../types/routing';
 import type { PacketHop, PacketTrace, SimulationState, RoutingDecision, RoutingCandidate } from '../types/simulation';
+import { type FailureState, EMPTY_FAILURE_STATE } from '../types/failure';
 
 const MAX_HOPS = 64;
 const DEFAULT_PLAY_INTERVAL_MS = 500;
@@ -98,9 +99,14 @@ export class SimulationEngine {
 
   // ── Topology helpers ───────────────────────────────────────────────────────
 
-  private getNeighbors(nodeId: string, excludeNodeId: string | null = null): Neighbor[] {
+  private getNeighbors(
+    nodeId: string,
+    excludeNodeId: string | null = null,
+    failureState: FailureState = EMPTY_FAILURE_STATE,
+  ): Neighbor[] {
     const result: Neighbor[] = [];
     for (const edge of this.topology.edges) {
+      if (failureState.downEdgeIds.has(edge.id)) continue;
       if (edge.source === nodeId && edge.target !== excludeNodeId) {
         result.push({ nodeId: edge.target, edgeId: edge.id });
       } else if (edge.target === nodeId && edge.source !== excludeNodeId) {
@@ -114,8 +120,9 @@ export class SimulationEngine {
     currentNodeId: string,
     dstIp: string,
     ingressNodeId: string | null,
+    failureState: FailureState = EMPTY_FAILURE_STATE,
   ): Neighbor | null {
-    const neighbors = this.getNeighbors(currentNodeId, ingressNodeId);
+    const neighbors = this.getNeighbors(currentNodeId, ingressNodeId, failureState);
     const node = this.topology.nodes.find((n) => n.id === currentNodeId);
     if (!node) return null;
 
@@ -162,7 +169,10 @@ export class SimulationEngine {
 
   // ── Core precomputation ────────────────────────────────────────────────────
 
-  async precompute(packet: InFlightPacket): Promise<PacketTrace> {
+  async precompute(
+    packet: InFlightPacket,
+    failureState: FailureState = EMPTY_FAILURE_STATE,
+  ): Promise<PacketTrace> {
     const hops: PacketHop[] = [];
     const snapshots: InFlightPacket[] = [];
     const visitedNodes = new Set<string>();
@@ -206,6 +216,24 @@ export class SimulationEngine {
           event: 'drop',
           fromNodeId: ingressFrom ?? undefined,
           reason: 'node-not-found',
+          timestamp: baseTs,
+        });
+        break;
+      }
+
+      if (failureState.downNodeIds.has(current)) {
+        snapshots.push({ ...workingPacket });
+        hops.push({
+          step,
+          nodeId: current,
+          nodeLabel: node.data.label,
+          srcIp: workingPacket.frame.payload.srcIp,
+          dstIp: workingPacket.frame.payload.dstIp,
+          ttl: workingPacket.frame.payload.ttl,
+          protocol: protocolName(workingPacket.frame.payload.protocol),
+          event: 'drop',
+          fromNodeId: ingressFrom ?? undefined,
+          reason: 'node-down',
           timestamp: baseTs,
         });
         break;
@@ -268,7 +296,7 @@ export class SimulationEngine {
       }
 
       // Resolve next node via topology graph (independent of egressPort)
-      const next = this.resolveNextNode(current, ipPacket.dstIp, ingressFrom);
+      const next = this.resolveNextNode(current, ipPacket.dstIp, ingressFrom, failureState);
       if (!next) {
         hop.event = 'drop';
         hop.reason = 'no-route';
@@ -303,9 +331,9 @@ export class SimulationEngine {
 
   // ── Playback API ───────────────────────────────────────────────────────────
 
-  async send(packet: InFlightPacket): Promise<void> {
+  async send(packet: InFlightPacket, failureState: FailureState = EMPTY_FAILURE_STATE): Promise<void> {
     this.clearPlay();
-    const trace = await this.precompute(packet);
+    const trace = await this.precompute(packet, failureState);
     this.state = {
       ...this.state,
       status: 'paused',

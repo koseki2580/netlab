@@ -1,3 +1,19 @@
+// Failure simulation types
+export type { FailureState } from './types/failure';
+export { EMPTY_FAILURE_STATE } from './types/failure';
+
+// Failure simulation context
+export {
+  FailureProvider,
+  FailureContext,
+  useFailure,
+  useOptionalFailure,
+} from './simulation/FailureContext';
+export type { FailureContextValue } from './simulation/FailureContext';
+
+// Failure simulation UI
+export { FailureTogglePanel } from './components/simulation/FailureTogglePanel';
+
 // Simulation types
 export type {
   PacketHop,

@@ -17,6 +17,7 @@ import MultiHopDemo from './routing/MultiHopDemo';
 import DmzDemo from './areas/DmzDemo';
 import EditorDemo from './editor/EditorDemo';
 import StepSimDemo from './simulation/StepSimDemo';
+import FailureSimDemo from './simulation/FailureSimDemo';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Root element not found');
@@ -34,6 +35,7 @@ createRoot(root).render(
         <Route path="/areas/dmz" element={<DmzDemo />} />
         <Route path="/editor" element={<EditorDemo />} />
         <Route path="/simulation/step" element={<StepSimDemo />} />
+        <Route path="/simulation/failure" element={<FailureSimDemo />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </HashRouter>
