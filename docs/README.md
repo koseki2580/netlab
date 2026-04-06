@@ -21,6 +21,7 @@ Specifications regarding user interface implementation and canvas operations.
 - [UI Interaction](ui/ui-interaction.md) - Canvas operations, node/link selection, and context menu specifications
 - [Topology Editor](ui/topology-editor.md) - Design of node and link addition/editing features
 - [Packet Visualization](ui/packet-visualization.md) - Animation features and timeline display for packet communication
+- [Step-by-Step Simulation](ui/step-simulation.md) - Routing decision data model, StepSimulationController, and StepControls component
 
 ### 🌐 Networking Models & Features (`networking/`)
 
