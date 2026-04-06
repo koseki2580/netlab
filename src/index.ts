@@ -103,6 +103,8 @@ export { BgpProtocol, bgpProtocol } from './routing/bgp/BgpProtocol';
 export { RipProtocol, ripProtocol } from './routing/rip/RipProtocol';
 
 // Components
+export { ResizableSidebar } from './components/ResizableSidebar';
+export type { ResizableSidebarProps } from './components/ResizableSidebar';
 export { NetlabProvider } from './components/NetlabProvider';
 export type { NetlabProviderProps } from './components/NetlabProvider';
 export { NetlabCanvas } from './components/NetlabCanvas';

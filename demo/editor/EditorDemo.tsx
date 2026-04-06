@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { TopologyEditor } from '../../src/editor/components/TopologyEditor';
+import { ResizableSidebar } from '../../src/components/ResizableSidebar';
 import { encodeTopology, decodeTopology } from '../../src/utils/topology-url';
 import type { EditorTopology } from '../../src/editor/types';
 import type { NetworkTopology } from '../../src/types/topology';
@@ -154,14 +155,13 @@ export default function EditorDemo() {
 
           {/* JSON panel */}
           {jsonOpen && (
-            <div
+            <ResizableSidebar
+              defaultWidth={300}
               style={{
-                width: 300,
                 background: '#0f172a',
                 borderLeft: '1px solid #1e293b',
                 display: 'flex',
                 flexDirection: 'column',
-                flexShrink: 0,
               }}
             >
               <div
@@ -192,7 +192,7 @@ export default function EditorDemo() {
               >
                 {JSON.stringify(topology, null, 2)}
               </pre>
-            </div>
+            </ResizableSidebar>
           )}
         </div>
       </div>

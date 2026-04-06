@@ -7,6 +7,7 @@ import { SimulationProvider } from '../../src/simulation/SimulationContext';
 import { SimulationControls } from '../../src/components/simulation/SimulationControls';
 import { PacketViewer } from '../../src/components/simulation/PacketViewer';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
+import { ResizableSidebar } from '../../src/components/ResizableSidebar';
 import type { NetworkTopology } from '../../src/types/topology';
 import type { NetworkArea } from '../../src/types/areas';
 import { encodeTopology, decodeTopology } from '../../src/utils/topology-url';
@@ -190,18 +191,17 @@ export default function ClientServerDemo() {
               </div>
 
               {/* Timeline panel */}
-              <div
+              <ResizableSidebar
+                defaultWidth={260}
                 style={{
-                  width: 260,
                   background: '#0f172a',
                   borderLeft: '1px solid #1e293b',
                   display: 'flex',
                   flexDirection: 'column',
-                  flexShrink: 0,
                 }}
               >
                 <PacketTimeline />
-              </div>
+              </ResizableSidebar>
             </div>
           </div>
         </SimulationProvider>
