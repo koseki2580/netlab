@@ -29,8 +29,17 @@ function EditorCanvasInner({ initialNodes, initialEdges }: EditorCanvasInnerProp
   const { addEdge, deleteNode, deleteEdge, updateNodePositions } =
     useTopologyEditorContext();
 
-  const [nodes, , onNodesChange] = useNodesState(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  // Sync local ReactFlow state when canonical topology changes (addNode, deleteNode, etc.)
+  useEffect(() => {
+    setNodes(initialNodes);
+  }, [initialNodes, setNodes]);
+
+  useEffect(() => {
+    setEdges(initialEdges);
+  }, [initialEdges, setEdges]);
 
   const nodeTypes = useMemo(() => layerRegistry.getAllNodeTypes(), []);
 
