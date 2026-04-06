@@ -638,3 +638,97 @@ describe('SimulationEngine.selectHop', () => {
     expect(state.activeEdgeIds).toEqual(['e2']);
   });
 });
+
+describe('SimulationEngine.routingDecision', () => {
+  it('router hop has routingDecision defined', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const trace = await engine.precompute(
+      makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+    );
+
+    const routerHop = trace.hops.find((h) => h.nodeId === 'router-1');
+    expect(routerHop).toBeDefined();
+    expect(routerHop!.routingDecision).toBeDefined();
+  });
+
+  it('client and server hops do NOT have routingDecision', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const trace = await engine.precompute(
+      makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+    );
+
+    const clientHop = trace.hops.find((h) => h.nodeId === 'client-1');
+    const serverHop = trace.hops.find((h) => h.nodeId === 'server-1');
+    expect(clientHop!.routingDecision).toBeUndefined();
+    expect(serverHop!.routingDecision).toBeUndefined();
+  });
+
+  it('winner is non-null on successful forward', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const trace = await engine.precompute(
+      makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+    );
+
+    const routerHop = trace.hops.find((h) => h.nodeId === 'router-1');
+    expect(routerHop!.routingDecision!.winner).not.toBeNull();
+  });
+
+  it('winner is null on no-route drop', async () => {
+    const topology = singleRouterTopology();
+    topology.routeTables.set('router-1', []);
+    const engine = makeEngine(topology);
+    const trace = await engine.precompute(
+      makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+    );
+
+    const routerHop = trace.hops.find((h) => h.nodeId === 'router-1');
+    expect(routerHop).toBeDefined();
+    expect(routerHop!.routingDecision).toBeDefined();
+    expect(routerHop!.routingDecision!.winner).toBeNull();
+  });
+
+  it('TTL-exceeded drop has no routingDecision', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const trace = await engine.precompute(
+      makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10', 1),
+    );
+
+    const dropHop = trace.hops.find((h) => h.event === 'drop');
+    expect(dropHop).toBeDefined();
+    expect(dropHop!.reason).toBe('ttl-exceeded');
+    expect(dropHop!.routingDecision).toBeUndefined();
+  });
+
+  it('candidates count matches router route table size', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const trace = await engine.precompute(
+      makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+    );
+
+    const routerHop = trace.hops.find((h) => h.nodeId === 'router-1');
+    // singleRouterTopology has 2 routes for router-1
+    expect(routerHop!.routingDecision!.candidates).toHaveLength(2);
+  });
+
+  it('exactly one candidate has selectedByLpm true', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const trace = await engine.precompute(
+      makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+    );
+
+    const routerHop = trace.hops.find((h) => h.nodeId === 'router-1');
+    const lpmWinners = routerHop!.routingDecision!.candidates.filter((c) => c.selectedByLpm);
+    expect(lpmWinners).toHaveLength(1);
+  });
+
+  it('explanation is a non-empty string', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const trace = await engine.precompute(
+      makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+    );
+
+    const routerHop = trace.hops.find((h) => h.nodeId === 'router-1');
+    expect(typeof routerHop!.routingDecision!.explanation).toBe('string');
+    expect(routerHop!.routingDecision!.explanation.length).toBeGreaterThan(0);
+  });
+});
