@@ -100,7 +100,9 @@ When the user drags a node, React Flow fires many intermediate position events. 
 
 ### Why `reactFlowKey` forces remount on undo/redo
 
-React Flow (`useNodesState`/`useEdgesState`) is initialized from props once. It does not re-sync when those props change. Incrementing `reactFlowKey` causes React to unmount and remount `EditorCanvasInner`, re-initializing React Flow from the restored topology snapshot.
+React Flow (`useNodesState`/`useEdgesState`) treats its argument as an initial value only — it does not re-sync when props change. For UNDO/REDO, incrementing `reactFlowKey` causes React to unmount and remount `EditorCanvasInner`, which re-runs `fitView` and cleanly reinitializes React Flow from the restored snapshot.
+
+For normal COMMIT operations (addNode, deleteNode, addEdge, deleteEdge, updateNodeData), `EditorCanvasInner` uses `useEffect` hooks to sync its local ReactFlow state whenever `initialNodes` or `initialEdges` props change. This avoids the full remount (and associated viewport reset) while still reflecting changes immediately.
 
 ---
 
@@ -212,6 +214,6 @@ export { createRouterNode, createSwitchNode, createClientNode, createServerNode 
 
 1. **No area editing** — areas are not displayed or editable in the editor canvas
 2. **Undo does not restore drag positions** — drag stop is not in history
-3. **Viewport resets on undo/redo** — `reactFlowKey` increment causes `fitView` to re-run
+3. **Viewport resets on undo/redo** — `reactFlowKey` increment causes `fitView` to re-run (normal add/delete does not reset viewport)
 4. **No Ctrl+Z shortcut** — undo/redo via toolbar buttons only
 5. **No node type validation on import** — `initialTopology` is trusted as-is
