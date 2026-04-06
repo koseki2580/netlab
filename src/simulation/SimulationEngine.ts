@@ -4,7 +4,7 @@ import type { HookEngine } from '../hooks/HookEngine';
 import type { NetworkTopology } from '../types/topology';
 import type { InFlightPacket } from '../types/packets';
 import type { RouteEntry } from '../types/routing';
-import type { PacketHop, PacketTrace, SimulationState } from '../types/simulation';
+import type { PacketHop, PacketTrace, SimulationState, RoutingDecision, RoutingCandidate } from '../types/simulation';
 
 const MAX_HOPS = 64;
 const DEFAULT_PLAY_INTERVAL_MS = 500;
@@ -14,6 +14,39 @@ function protocolName(num: number): string {
   if (num === 6) return 'TCP';
   if (num === 17) return 'UDP';
   return String(num);
+}
+
+function buildRoutingDecision(dstIp: string, routes: RouteEntry[]): RoutingDecision {
+  const sorted = [...routes].sort(
+    (a, b) => prefixLength(b.destination) - prefixLength(a.destination),
+  );
+  let winnerRoute: RouteEntry | null = null;
+  const candidates: RoutingCandidate[] = sorted.map((r) => {
+    const matched = isInSubnet(dstIp, r.destination);
+    if (matched && winnerRoute === null) winnerRoute = r;
+    return {
+      destination: r.destination,
+      nextHop: r.nextHop,
+      metric: r.metric,
+      protocol: r.protocol,
+      adminDistance: r.adminDistance,
+      matched,
+      selectedByLpm: false,
+    };
+  });
+  if (winnerRoute !== null) {
+    const idx = candidates.findIndex(
+      (c) =>
+        c.destination === (winnerRoute as RouteEntry).destination &&
+        c.nextHop === (winnerRoute as RouteEntry).nextHop,
+    );
+    if (idx >= 0) candidates[idx].selectedByLpm = true;
+  }
+  const winner = candidates.find((c) => c.selectedByLpm) ?? null;
+  const explanation = winner
+    ? `Matched ${winner.destination} via ${winner.nextHop} (${winner.protocol}, AD=${winner.adminDistance})`
+    : `No matching route for ${dstIp} — packet will be dropped`;
+  return { dstIp, candidates, winner, explanation };
 }
 
 function bestRoute(dstIp: string, routes: RouteEntry[]): RouteEntry | null {
@@ -212,11 +245,26 @@ export class SimulationEngine {
           if (decision.action === 'drop') {
             hop.event = 'drop';
             hop.reason = decision.reason;
+            // Capture routing decision for no-route drops (but not TTL drops).
+            // TTL is checked first in the forwarder, so ttl-exceeded reason means
+            // we broke before any routing lookup — intentionally absent on TTL drops.
+            if (decision.reason !== 'ttl-exceeded') {
+              const routes = this.topology.routeTables.get(current) ?? [];
+              hop.routingDecision = buildRoutingDecision(ipPacket.dstIp, routes);
+            }
             hops.push(hop);
             break;
           }
           workingPacket = decision.packet;
         }
+      }
+
+      // Capture routing decision for educational display (router hops only).
+      // TTL-exceeded drops break before reaching this point, so routingDecision
+      // is intentionally absent on TTL drops.
+      if (node.data.role === 'router') {
+        const routes = this.topology.routeTables.get(current) ?? [];
+        hop.routingDecision = buildRoutingDecision(ipPacket.dstIp, routes);
       }
 
       // Resolve next node via topology graph (independent of egressPort)
