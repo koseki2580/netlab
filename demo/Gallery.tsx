@@ -75,6 +75,11 @@ const CATEGORIES: Category[] = [
         title: 'Step-by-Step',
         desc: 'Trace packet routing decisions hop by hop. See LPM in action — match scores, route candidates, and why each next hop was chosen.',
       },
+      {
+        path: '/simulation/failure',
+        title: 'Failure Injection',
+        desc: 'Toggle nodes and links down. Watch packets drop with node-down or no-route reasons. Failed components are highlighted on the canvas.',
+      },
     ],
   },
   {

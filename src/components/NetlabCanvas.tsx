@@ -22,6 +22,7 @@ import { areasToNodes } from '../areas/AreaRegistry';
 import { AreaBackground } from '../areas/AreaBackground';
 import { isValidConnectionBetweenNodes, isValidEdge } from '../utils/connectionValidator';
 import { SimulationContext } from '../simulation/SimulationContext';
+import { useOptionalFailure } from '../simulation/FailureContext';
 import type { NetlabNode } from '../types/topology';
 
 const AREA_NODE_TYPE: NodeTypes = {
@@ -40,6 +41,9 @@ export function NetlabCanvas({ style, className }: NetlabCanvasProps) {
   // Optional: read active edge IDs from SimulationContext (non-throwing)
   const simCtx = useContext(SimulationContext);
   const activeEdgeIds = simCtx?.state.activeEdgeIds ?? [];
+
+  // Optional: read failure state for visual styling
+  const failureCtx = useOptionalFailure();
 
   const nodeTypes = useMemo(() => ({
     ...AREA_NODE_TYPE,
@@ -68,9 +72,27 @@ export function NetlabCanvas({ style, className }: NetlabCanvasProps) {
     [nodes],
   );
 
+  const styledNodes = useMemo(
+    () =>
+      nodes.map((node) => {
+        if (failureCtx?.isNodeDown(node.id)) {
+          return { ...node, style: { ...node.style, opacity: 0.4, filter: 'grayscale(80%)' } };
+        }
+        return node;
+      }),
+    [nodes, failureCtx],
+  );
+
   const styledEdges = useMemo(
     () =>
       edges.map((edge) => {
+        if (failureCtx?.isEdgeDown(edge.id)) {
+          return {
+            ...edge,
+            animated: false,
+            style: { ...edge.style, stroke: '#ef4444', strokeDasharray: '6 3', strokeWidth: 2, opacity: 0.7 },
+          };
+        }
         if (activeEdgeIds.includes(edge.id)) {
           return { ...edge, animated: true, style: { ...edge.style, stroke: '#7dd3fc', strokeWidth: 2 } };
         }
@@ -79,7 +101,7 @@ export function NetlabCanvas({ style, className }: NetlabCanvasProps) {
         }
         return edge;
       }),
-    [edges, nodes, activeEdgeIds],
+    [edges, nodes, activeEdgeIds, failureCtx],
   );
 
   const uiCtx = useMemo(
@@ -91,7 +113,7 @@ export function NetlabCanvas({ style, className }: NetlabCanvasProps) {
     <NetlabUIContext.Provider value={uiCtx}>
       <div style={{ width: '100%', height: '100%', position: 'relative', ...style }} className={className}>
         <ReactFlow
-          nodes={nodes}
+          nodes={styledNodes}
           edges={styledEdges}
           nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}

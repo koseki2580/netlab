@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { SimulationEngine } from './SimulationEngine';
 import { useNetlabContext } from '../components/NetlabContext';
+import { useOptionalFailure } from './FailureContext';
 import type { InFlightPacket } from '../types/packets';
 import type { SimulationState } from '../types/simulation';
 
@@ -26,6 +27,7 @@ export interface SimulationProviderProps {
 
 export function SimulationProvider({ children }: SimulationProviderProps) {
   const { topology, hookEngine } = useNetlabContext();
+  const failureCtx = useOptionalFailure();
 
   const engine = useMemo(
     () => new SimulationEngine(topology, hookEngine),
@@ -41,8 +43,8 @@ export function SimulationProvider({ children }: SimulationProviderProps) {
   }, [engine]);
 
   const sendPacket = useCallback(
-    (packet: InFlightPacket) => engine.send(packet),
-    [engine],
+    (packet: InFlightPacket) => engine.send(packet, failureCtx?.failureState),
+    [engine, failureCtx?.failureState],
   );
 
   const value = useMemo(
