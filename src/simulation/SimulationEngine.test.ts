@@ -7,6 +7,7 @@ import { SwitchForwarder } from '../layers/l2-datalink/SwitchForwarder';
 import type { NetworkTopology } from '../types/topology';
 import type { InFlightPacket, EthernetFrame } from '../types/packets';
 import type { RouteEntry } from '../types/routing';
+import { type FailureState, EMPTY_FAILURE_STATE } from '../types/failure';
 
 // Register forwarders once without importing React components
 beforeAll(() => {
@@ -730,5 +731,101 @@ describe('SimulationEngine.routingDecision', () => {
     const routerHop = trace.hops.find((h) => h.nodeId === 'router-1');
     expect(typeof routerHop!.routingDecision!.explanation).toBe('string');
     expect(routerHop!.routingDecision!.explanation.length).toBeGreaterThan(0);
+  });
+});
+
+// ── Failure simulation ────────────────────────────────────────────────────────
+
+describe('SimulationEngine failure simulation', () => {
+  function makeEngine(topology: NetworkTopology): SimulationEngine {
+    return new SimulationEngine(topology, new HookEngine());
+  }
+
+  it('EMPTY_FAILURE_STATE has no effect — packet is delivered normally', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const trace = await engine.precompute(
+      makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+      EMPTY_FAILURE_STATE,
+    );
+    expect(trace.status).toBe('delivered');
+  });
+
+  it('down node drops packet with reason node-down', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const failureState: FailureState = {
+      downNodeIds: new Set(['router-1']),
+      downEdgeIds: new Set(),
+    };
+    const trace = await engine.precompute(
+      makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+      failureState,
+    );
+    expect(trace.status).toBe('dropped');
+    const dropHop = trace.hops.find((h) => h.event === 'drop');
+    expect(dropHop?.reason).toBe('node-down');
+    expect(dropHop?.nodeId).toBe('router-1');
+  });
+
+  it('down source node drops packet at step 0 with reason node-down', async () => {
+    const engine = makeEngine(directTopology());
+    const failureState: FailureState = {
+      downNodeIds: new Set(['client-1']),
+      downEdgeIds: new Set(),
+    };
+    const trace = await engine.precompute(
+      makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+      failureState,
+    );
+    expect(trace.status).toBe('dropped');
+    expect(trace.hops[0].event).toBe('drop');
+    expect(trace.hops[0].reason).toBe('node-down');
+    expect(trace.hops[0].nodeId).toBe('client-1');
+  });
+
+  it('down edge causes no-route drop at the router', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const failureState: FailureState = {
+      downNodeIds: new Set(),
+      downEdgeIds: new Set(['e2']), // router-1 → server-1
+    };
+    const trace = await engine.precompute(
+      makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+      failureState,
+    );
+    expect(trace.status).toBe('dropped');
+    const dropHop = trace.hops.find((h) => h.event === 'drop');
+    expect(dropHop?.reason).toBe('no-route');
+    expect(dropHop?.nodeId).toBe('router-1');
+  });
+
+  it('down edge not on the path does not affect delivery', async () => {
+    // e1 is client-1 → router-1 (on path), e2 is router-1 → server-1 (on path)
+    // singleRouterTopology only has two edges; put a non-existent edge id down
+    const engine = makeEngine(singleRouterTopology());
+    const failureState: FailureState = {
+      downNodeIds: new Set(),
+      downEdgeIds: new Set(['e-nonexistent']),
+    };
+    const trace = await engine.precompute(
+      makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+      failureState,
+    );
+    expect(trace.status).toBe('delivered');
+  });
+
+  it('send() forwards failureState to precompute — drop result is persisted in engine state', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const failureState: FailureState = {
+      downNodeIds: new Set(['router-1']),
+      downEdgeIds: new Set(),
+    };
+    await engine.send(
+      makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+      failureState,
+    );
+    const trace = engine.getState().traces.find((t) => t.packetId === 'p1');
+    expect(trace?.status).toBe('dropped');
+    const dropHop = trace?.hops.find((h) => h.event === 'drop');
+    expect(dropHop?.reason).toBe('node-down');
   });
 });
