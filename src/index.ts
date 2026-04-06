@@ -4,6 +4,8 @@ export type {
   PacketTrace,
   SimulationStatus,
   SimulationState,
+  RoutingDecision,
+  RoutingCandidate,
 } from './types/simulation';
 
 // Simulation engine
@@ -21,6 +23,11 @@ export type { SimulationProviderProps, SimulationContextValue } from './simulati
 export { SimulationControls } from './components/simulation/SimulationControls';
 export { PacketViewer } from './components/simulation/PacketViewer';
 export { PacketTimeline } from './components/simulation/PacketTimeline';
+export { StepControls } from './components/simulation/StepControls';
+
+// Step simulation controller
+export { StepSimulationController } from './simulation/StepSimulationController';
+export type { StepSimStatus, StepSimState } from './simulation/StepSimulationController';
 
 // Types
 export type {
