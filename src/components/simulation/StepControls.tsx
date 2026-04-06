@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useSimulation } from '../../simulation/SimulationContext';
 import type { PacketHop, RoutingDecision } from '../../types/simulation';
 
@@ -9,7 +10,6 @@ const EVENT_COLORS: Record<string, string> = {
   deliver: '#34d399',
   drop: '#f87171',
 };
-
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -172,83 +172,178 @@ function RoutingTable({ decision }: RoutingTableProps) {
   );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
+// ── StepEntry: one hop in the accumulated log ─────────────────────────────────
 
-export function StepControls() {
-  const { engine, state } = useSimulation();
-  const { selectedHop, status, currentStep, traces, currentTraceId } = state;
-  const totalHops = traces.find((t) => t.packetId === currentTraceId)?.hops.length ?? 0;
+interface StepEntryProps {
+  hop: PacketHop;
+  isCurrent: boolean;
+  isLast: boolean;
+  totalHops: number;
+}
 
-  const stepDisabled = status === 'running' || status === 'done' || status === 'idle';
-  const resetDisabled = status === 'idle';
+function StepEntry({ hop, isCurrent, isLast, totalHops }: StepEntryProps) {
+  const circleColor = isCurrent ? '#7dd3fc' : '#334155';
+  const circleBorder = isCurrent ? '#7dd3fc' : '#475569';
 
   return (
-    <div
-      style={{
-        padding: '12px 16px',
-        fontFamily: 'monospace',
-        color: '#e2e8f0',
-        background: '#0f172a',
-        height: '100%',
-        overflowY: 'auto',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 16,
-        boxSizing: 'border-box',
-      }}
-    >
-      {/* Section 1: Header */}
-      <div>
-        <div
-          style={{
-            fontSize: 10,
-            fontWeight: 'bold',
-            letterSpacing: 1,
-            color: '#64748b',
-            marginBottom: 8,
-          }}
-        >
-          STEP-BY-STEP SIMULATION
-        </div>
-        {!selectedHop ? (
-          <div style={{ color: '#334155', fontSize: 12 }}>
-            No hop selected — press Next Step to begin.
-          </div>
-        ) : (
-          <HopHeader hop={selectedHop} current={currentStep + 1} total={totalHops} />
-        )}
-      </div>
-
-      {/* Section 2: Routing Table (router hops only) */}
-      {selectedHop?.routingDecision && (
-        <RoutingTable decision={selectedHop.routingDecision} />
-      )}
-
-      {/* Section 3: Drop reason for non-routing drops (TTL etc.) */}
-      {selectedHop?.event === 'drop' && !selectedHop.routingDecision && selectedHop.reason && (
-        <div
-          style={{
-            padding: '8px 12px',
-            background: '#450a0a',
-            border: '1px solid #991b1b',
-            borderRadius: 6,
-            fontSize: 12,
-            color: '#fca5a5',
-          }}
-        >
-          Drop reason: {selectedHop.reason}
-        </div>
-      )}
-
-      {/* Section 4: Controls */}
+    <div style={{ display: 'flex', gap: 0 }}>
+      {/* Timeline column: circle + connector */}
       <div
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: 8,
-          marginTop: 'auto',
-          paddingTop: 16,
+          alignItems: 'center',
+          width: 24,
+          flexShrink: 0,
+          paddingTop: 2,
+        }}
+      >
+        {/* Circle indicator */}
+        <div
+          style={{
+            width: 10,
+            height: 10,
+            borderRadius: '50%',
+            background: isCurrent ? circleColor : 'transparent',
+            border: `2px solid ${circleBorder}`,
+            flexShrink: 0,
+          }}
+        />
+        {/* Connector line — omitted after last entry */}
+        {!isLast && (
+          <div
+            style={{
+              width: 2,
+              flex: 1,
+              minHeight: 12,
+              background: '#1e293b',
+              marginTop: 2,
+            }}
+          />
+        )}
+      </div>
+
+      {/* Content column */}
+      <div
+        style={{
+          flex: 1,
+          paddingLeft: 8,
+          paddingBottom: isLast ? 0 : 16,
+          borderLeft: isCurrent ? '2px solid #7dd3fc22' : '2px solid transparent',
+          marginLeft: -2,
+        }}
+      >
+        <HopHeader hop={hop} current={hop.step + 1} total={totalHops} />
+
+        {hop.routingDecision && (
+          <div style={{ marginTop: 10 }}>
+            <RoutingTable decision={hop.routingDecision} />
+          </div>
+        )}
+
+        {hop.event === 'drop' && !hop.routingDecision && hop.reason && (
+          <div
+            style={{
+              marginTop: 8,
+              padding: '8px 12px',
+              background: '#450a0a',
+              border: '1px solid #991b1b',
+              borderRadius: 6,
+              fontSize: 12,
+              color: '#fca5a5',
+            }}
+          >
+            Drop reason: {hop.reason}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
+export function StepControls() {
+  const { engine, state } = useSimulation();
+  const { status, currentStep, traces, currentTraceId } = state;
+  const trace = traces.find((t) => t.packetId === currentTraceId);
+  const totalHops = trace?.hops.length ?? 0;
+  const revealedHops = trace ? trace.hops.slice(0, currentStep + 1) : [];
+
+  const stepDisabled = status === 'running' || status === 'done' || status === 'idle';
+  const resetDisabled = status === 'idle';
+
+  // Auto-scroll log to bottom when a new step is revealed
+  const logRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!logRef.current || currentStep < 0) return;
+    logRef.current.scrollTop = logRef.current.scrollHeight;
+  }, [currentStep]);
+
+  return (
+    <div
+      style={{
+        fontFamily: 'monospace',
+        color: '#e2e8f0',
+        background: '#0f172a',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        boxSizing: 'border-box',
+      }}
+    >
+      {/* Sticky header */}
+      <div
+        style={{
+          padding: '10px 16px',
+          borderBottom: '1px solid #1e293b',
+          flexShrink: 0,
+          fontSize: 10,
+          fontWeight: 'bold',
+          letterSpacing: 1,
+          color: '#64748b',
+        }}
+      >
+        STEP-BY-STEP SIMULATION
+      </div>
+
+      {/* Scrollable accumulated log */}
+      <div
+        ref={logRef}
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '12px 16px',
+        }}
+      >
+        {revealedHops.length === 0 ? (
+          <div style={{ color: '#334155', fontSize: 12 }}>
+            {status === 'idle'
+              ? 'Send a packet to begin.'
+              : 'Press Next Step to start stepping.'}
+          </div>
+        ) : (
+          revealedHops.map((hop, idx) => (
+            <StepEntry
+              key={hop.step}
+              hop={hop}
+              isCurrent={hop.step === currentStep}
+              isLast={idx === revealedHops.length - 1}
+              totalHops={totalHops}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Sticky footer: controls */}
+      <div
+        style={{
+          padding: '12px 16px',
           borderTop: '1px solid #1e293b',
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
         }}
       >
         <div style={{ display: 'flex', gap: 8 }}>

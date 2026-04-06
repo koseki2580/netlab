@@ -124,35 +124,71 @@ interface StepSimState {
 
 ## `StepControls` Component
 
-A React component that consumes `useSimulation()` to display the current hop details and provide step/reset controls.
+A React component that consumes `useSimulation()` to display an **accumulated step log** and provide step/reset controls. Every hop that has been executed remains visible in the log — stepping does not replace previous entries.
 
 ### Required context providers
 
 The component must be wrapped in both `<NetlabProvider>` and `<SimulationProvider>`.
 
+### Layout
+
+```text
+┌─────────────────────────────┐
+│ STEP-BY-STEP SIMULATION     │  ← sticky header
+├─────────────────────────────┤
+│  ○ Step 0 — CREATE — Client │  ← scrollable accumulated log
+│  │  10.0.0.10 → 203.0.113.10│
+│  │                           │
+│  ○ Step 1 — FWD — R-1       │
+│  │  [routing table...]       │
+│  │  Matched 203.0.113.0/24  │
+│  │                           │
+│  ● Step 2 — FWD — R-2       │  ← current step (highlighted)
+│    [routing table...]        │
+├─────────────────────────────┤
+│  [→ Next Step]  [⟳ Reset]  │  ← sticky footer
+│  Paused at hop 3 of 5       │
+└─────────────────────────────┘
+```
+
 ### Sections
 
-#### 1. Header
+#### 1. Sticky header
 
 - Label: `STEP-BY-STEP SIMULATION`
-- If no hop selected: placeholder text
-- If hop selected: `HopHeader` sub-component
 
-#### 2. Routing Table (router hops only)
+#### 2. Accumulated step log (scrollable)
 
-- Rendered only when `selectedHop.routingDecision` is defined
-- Uses `RoutingTable` sub-component
+- Computes `revealedHops = trace.hops.slice(0, currentStep + 1)`
+- Renders a `StepEntry` for each revealed hop
+- When `currentStep === -1` (loaded but not started): shows placeholder text
+- Auto-scrolls to the bottom when a new step is added
 
-#### 3. Drop reason (non-routing drops)
-
-- Rendered when `selectedHop.event === 'drop' && !selectedHop.routingDecision && selectedHop.reason`
-- Shows the drop reason string (e.g., TTL exceeded)
-
-#### 4. Controls
+#### 3. Sticky footer (controls)
 
 - **Next Step** button: calls `engine.step()`; disabled when `status === 'running' || done || idle`
 - **Reset** button: calls `engine.reset()`; disabled when `status === 'idle'`
 - Status text below the buttons
+
+### `StepEntry` sub-component
+
+Each entry in the accumulated log represents one revealed hop.
+
+**Timeline marker:**
+
+- A small circle on the left — `●` (filled, `#7dd3fc`) for the current step, `○` (outline, `#475569`) for past steps
+- A vertical connector line (`│`, `#1e293b`) drawn below the circle, omitted on the last entry
+- Marker is rendered in a fixed-width left column so content aligns cleanly
+
+**Content (right column):**
+
+- `HopHeader` showing event badge, node label, IP/TTL/protocol
+- `RoutingTable` when `hop.routingDecision` is defined
+- Drop reason block when `hop.event === 'drop' && !hop.routingDecision && hop.reason`
+
+**Current step highlight:**
+
+- The current step entry has a subtle left border in `#7dd3fc` to draw attention
 
 ### `HopHeader` sub-component
 
@@ -165,6 +201,7 @@ Displays:
   - `deliver` → `#34d399`
   - `drop` → `#f87171`
 - Node label
+- IP src → dst, TTL, and protocol on a second line
 
 ### `RoutingTable` sub-component
 
@@ -203,3 +240,4 @@ A three-router demo topology that showcases LPM with both specific routes and a 
 - `router-2` has both a `/24` specific route and a `0.0.0.0/0` default, making LPM selection visible
 - The packet is auto-loaded on mount so the user can immediately start stepping
 - Layout: canvas (flex: 1) + `StepControls` side panel (380px)
+- Each click of **Next Step** appends a new step entry to the log; all previous entries remain visible
