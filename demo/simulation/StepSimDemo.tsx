@@ -3,6 +3,7 @@ import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import { StepControls } from '../../src/components/simulation/StepControls';
+import { ResizableSidebar } from '../../src/components/ResizableSidebar';
 import { useNetlabContext } from '../../src/components/NetlabContext';
 import type { NetworkTopology } from '../../src/types/topology';
 import type { InFlightPacket } from '../../src/types/packets';
@@ -173,17 +174,15 @@ function StepSimDemoInner() {
         <NetlabCanvas />
       </div>
       {/* Step controls side panel */}
-      <div
+      <ResizableSidebar
+        defaultWidth={380}
         style={{
-          width: 380,
           background: '#0f172a',
           borderLeft: '1px solid #1e293b',
-          overflowY: 'auto',
-          flexShrink: 0,
         }}
       >
         <StepControls />
-      </div>
+      </ResizableSidebar>
     </div>
   );
 }

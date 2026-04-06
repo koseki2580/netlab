@@ -4,6 +4,7 @@ import { SimulationProvider, useSimulation } from '../../src/simulation/Simulati
 import { FailureProvider, useFailure } from '../../src/simulation/FailureContext';
 import { StepControls } from '../../src/components/simulation/StepControls';
 import { FailureTogglePanel } from '../../src/components/simulation/FailureTogglePanel';
+import { ResizableSidebar } from '../../src/components/ResizableSidebar';
 import { useNetlabContext } from '../../src/components/NetlabContext';
 import type { NetworkTopology } from '../../src/types/topology';
 import type { InFlightPacket } from '../../src/types/packets';
@@ -205,15 +206,13 @@ function FailureSimDemoInner() {
       </div>
 
       {/* Right panel */}
-      <div
+      <ResizableSidebar
+        defaultWidth={300}
         style={{
-          width: 300,
           background: '#0f172a',
           borderLeft: '1px solid #1e293b',
           display: 'flex',
           flexDirection: 'column',
-          flexShrink: 0,
-          overflow: 'hidden',
         }}
       >
         {/* Failure panel (top half) */}
@@ -228,7 +227,7 @@ function FailureSimDemoInner() {
         <div style={{ flex: 1, overflowY: 'auto' }}>
           <StepControls />
         </div>
-      </div>
+      </ResizableSidebar>
     </div>
   );
 }

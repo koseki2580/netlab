@@ -23,6 +23,7 @@ Specifications regarding user interface implementation and canvas operations.
 - [Packet Visualization](ui/packet-visualization.md) - Animation features and timeline display for packet communication
 - [Step-by-Step Simulation](ui/step-simulation.md) - Routing decision data model, StepSimulationController, and StepControls component
 - [Failure Simulation](ui/failure-simulation.md) - Node/link failure injection, FailureTogglePanel, and visual styling
+- [Resizable Sidebar](ui/resizable-sidebar.md) - Drag-to-resize sidebar component used across demo layouts
 
 ### 🌐 Networking Models & Features (`networking/`)
 
