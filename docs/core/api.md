@@ -110,6 +110,42 @@ class SimulationEngine {
 
 Register a routing protocol. See [routing/index.md](./routing/index.md).
 
+## Theming
+
+### `NetlabTheme`
+
+Interface for color token configuration. See [theming.md](../ui/theming.md) for the full reference.
+
+```typescript
+import type { NetlabTheme } from 'netlab';
+import { NETLAB_DARK_THEME, NETLAB_LIGHT_THEME, themeToVars } from 'netlab';
+```
+
+- `NETLAB_DARK_THEME` — default dark palette (matches legacy hardcoded colors)
+- `NETLAB_LIGHT_THEME` — built-in light palette
+- `themeToVars(theme)` — converts a `NetlabTheme` to a `React.CSSProperties` object of `--netlab-*` variables
+
+### `NetlabApp` `theme` prop
+
+`NetlabApp` accepts an optional `theme?: Partial<NetlabTheme>` prop. Missing fields default to `NETLAB_DARK_THEME`.
+
+```typescript
+interface NetlabAppProps {
+  topology: NetworkTopology;
+  width?: number | string;
+  height?: number | string;
+  simulation?: boolean;
+  timeline?: boolean;
+  routeTable?: boolean;
+  areaLegend?: boolean;
+  theme?: Partial<NetlabTheme>;   // ← new
+  style?: React.CSSProperties;
+  className?: string;
+}
+```
+
+---
+
 ## Types
 
 All types are exported from the root `netlab` package:

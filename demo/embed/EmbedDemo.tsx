@@ -1,4 +1,4 @@
-import { NetlabApp } from '../../src/components/NetlabApp';
+import { NetlabApp, NETLAB_LIGHT_THEME } from '../../src/index';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
 
@@ -135,9 +135,44 @@ export default function EmbedDemo() {
           style={{ borderRadius: 8, border: '1px solid #334155' }}
         />
 
+        {/* ── LIGHT THEME EXAMPLE ───────────────────────────────────────────── */}
+        <div style={{ ...PROSE_STYLE, color: '#64748b', marginTop: 8 }}>
+          Light theme — pass <code style={{ color: '#7dd3fc' }}>theme={'{NETLAB_LIGHT_THEME}'}</code> to
+          blend into a light-mode host page:
+        </div>
+
+        {/* Simulated light-mode host page */}
+        <div style={{ background: '#f8fafc', borderRadius: 8, padding: 24, border: '1px solid #e2e8f0' }}>
+          <div style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#0f172a', marginBottom: 16 }}>
+            <strong>My Documentation Site</strong>
+            <span style={{ color: '#94a3b8', marginLeft: 8, fontSize: 12 }}>light-mode host page</span>
+          </div>
+          <NetlabApp
+            topology={TOPOLOGY}
+            width="100%"
+            height={260}
+            theme={NETLAB_LIGHT_THEME}
+            style={{ borderRadius: 6, border: '1px solid #cbd5e1' }}
+          />
+        </div>
+
+        <code style={CODE_STYLE}>{`import { NetlabApp, NETLAB_LIGHT_THEME } from 'netlab';
+
+<NetlabApp
+  topology={topology}
+  theme={NETLAB_LIGHT_THEME}
+  style={{ borderRadius: 6 }}
+/>
+
+// Or override individual tokens:
+<NetlabApp
+  topology={topology}
+  theme={{ bgPrimary: '#ffffff', bgSurface: '#f1f5f9', textPrimary: '#0f172a' }}
+/>`}</code>
+
         {/* Host page footer */}
         <div style={{ ...PROSE_STYLE, color: '#475569', fontSize: 12 }}>
-          Both components are fully contained — they do not use viewport height and can be placed
+          All components are fully contained — they do not use viewport height and can be placed
           anywhere in a document.
         </div>
       </div>

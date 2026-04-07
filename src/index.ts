@@ -102,6 +102,10 @@ export { OspfProtocol, ospfProtocol } from './routing/ospf/OspfProtocol';
 export { BgpProtocol, bgpProtocol } from './routing/bgp/BgpProtocol';
 export { RipProtocol, ripProtocol } from './routing/rip/RipProtocol';
 
+// Theming
+export type { NetlabTheme } from './theme';
+export { NETLAB_DARK_THEME, NETLAB_LIGHT_THEME, themeToVars } from './theme';
+
 // Embeddable app component
 export { NetlabApp } from './components/NetlabApp';
 export type { NetlabAppProps } from './components/NetlabApp';

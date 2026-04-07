@@ -39,11 +39,11 @@ function HopRow({
         borderRadius: 4,
         cursor: 'pointer',
         background: isActive ? 'rgba(125, 211, 252, 0.08)' : 'transparent',
-        borderLeft: isActive ? `2px solid ${color}` : '2px solid transparent',
+      borderLeft: isActive ? `2px solid ${color}` : '2px solid transparent',
         marginBottom: 2,
       }}
     >
-      <span style={{ color: '#475569', fontSize: 10, minWidth: 18, textAlign: 'right' }}>
+      <span style={{ color: 'var(--netlab-text-faint)', fontSize: 10, minWidth: 18, textAlign: 'right' }}>
         {hop.step}
       </span>
       <span
@@ -60,11 +60,11 @@ function HopRow({
       >
         {label}
       </span>
-      <span style={{ color: '#cbd5e1', fontSize: 11, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <span style={{ color: 'var(--netlab-text-primary)', fontSize: 11, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {hop.nodeLabel}
       </span>
       {hop.toNodeId && (
-        <span style={{ color: '#475569', fontSize: 10 }}>→ {hop.toNodeId}</span>
+        <span style={{ color: 'var(--netlab-text-faint)', fontSize: 10 }}>→ {hop.toNodeId}</span>
       )}
     </div>
   );
@@ -96,8 +96,8 @@ export function PacketTimeline() {
       <div
         style={{
           padding: '6px 10px',
-          borderBottom: '1px solid #1e293b',
-          color: '#64748b',
+          borderBottom: '1px solid var(--netlab-bg-surface)',
+          color: 'var(--netlab-text-muted)',
           fontSize: 10,
           fontWeight: 'bold',
           letterSpacing: 1,
@@ -106,7 +106,7 @@ export function PacketTimeline() {
       >
         PACKET TIMELINE
         {trace && (
-          <span style={{ marginLeft: 8, color: '#334155', fontWeight: 'normal' }}>
+          <span style={{ marginLeft: 8, color: 'var(--netlab-border)', fontWeight: 'normal' }}>
             {trace.hops.length} hops · {trace.status}
           </span>
         )}
@@ -114,7 +114,7 @@ export function PacketTimeline() {
 
       <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '6px 4px' }}>
         {!trace ? (
-          <div style={{ color: '#334155', fontSize: 11, padding: '8px 8px' }}>
+          <div style={{ color: 'var(--netlab-border)', fontSize: 11, padding: '8px 8px' }}>
             No trace yet — click "Send Packet" to start.
           </div>
         ) : (

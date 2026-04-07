@@ -178,6 +178,29 @@ import 'netlab/src/layers/l7-application/index';
 
 ---
 
+## Theming
+
+`NetlabApp` ships with a built-in dark theme. To match a host page's color scheme, pass a `theme` prop:
+
+```tsx
+import { NetlabApp, NETLAB_LIGHT_THEME } from 'netlab';
+
+// Built-in light theme
+<NetlabApp topology={topology} theme={NETLAB_LIGHT_THEME} />
+
+// Custom overrides (unspecified tokens fall back to the dark theme)
+<NetlabApp
+  topology={topology}
+  theme={{ bgPrimary: '#ffffff', bgSurface: '#f1f5f9', textPrimary: '#0f172a', border: '#cbd5e1' }}
+/>
+```
+
+The theme is injected as CSS custom properties (`--netlab-*`) on the outermost container, so host pages can also override them via CSS without any JavaScript.
+
+See [Theming](../ui/theming.md) for the full token reference and CSS override guide.
+
+---
+
 ## Provider Composition
 
 `NetlabApp` internally mounts `NetlabProvider` (and `SimulationProvider` when `simulation={true}`). Do not wrap `NetlabApp` in these providers — they are already included.
