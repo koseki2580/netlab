@@ -24,6 +24,7 @@ Specifications regarding user interface implementation and canvas operations.
 - [Step-by-Step Simulation](ui/step-simulation.md) - Routing decision data model, StepSimulationController, and StepControls component
 - [Failure Simulation](ui/failure-simulation.md) - Node/link failure injection, FailureTogglePanel, and visual styling
 - [Resizable Sidebar](ui/resizable-sidebar.md) - Drag-to-resize sidebar component used across demo layouts
+- [Theming](ui/theming.md) - CSS variable-based color theming for embedding in host pages
 
 ### 🌐 Networking Models & Features (`networking/`)
 

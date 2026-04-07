@@ -12,6 +12,8 @@ import { ResizableSidebar } from './ResizableSidebar';
 import { RouteTable } from './controls/RouteTable';
 import { AreaLegend } from './controls/AreaLegend';
 import type { NetworkTopology } from '../types/topology';
+import { NETLAB_DARK_THEME, themeToVars } from '../theme';
+import type { NetlabTheme } from '../theme';
 
 export interface NetlabAppProps {
   /** The network topology to display. */
@@ -43,6 +45,13 @@ export interface NetlabAppProps {
    * Default: auto-detected — enabled when `topology.areas.length > 0`.
    */
   areaLegend?: boolean;
+  /**
+   * Color theme. Missing fields fall back to `NETLAB_DARK_THEME`.
+   * Theme tokens are injected as CSS custom properties (`--netlab-*`) on the
+   * outermost container and can also be overridden via external CSS.
+   * See docs/ui/theming.md for the full token reference.
+   */
+  theme?: Partial<NetlabTheme>;
   /** Additional styles merged into the outermost container div. */
   style?: React.CSSProperties;
   /** CSS class applied to the outermost container div. */
@@ -77,8 +86,8 @@ function SimulationLayout({ showTimeline, showRouteTable, showAreaLegend }: Layo
       <div
         style={{
           flexShrink: 0,
-          background: '#1e293b',
-          borderBottom: '1px solid #334155',
+          background: 'var(--netlab-bg-surface)',
+          borderBottom: '1px solid var(--netlab-border)',
         }}
       >
         <SimulationControls />
@@ -97,8 +106,8 @@ function SimulationLayout({ showTimeline, showRouteTable, showAreaLegend }: Layo
           <ResizableSidebar
             defaultWidth={260}
             style={{
-              background: '#0f172a',
-              borderLeft: '1px solid #1e293b',
+              background: 'var(--netlab-bg-primary)',
+              borderLeft: '1px solid var(--netlab-bg-surface)',
               display: 'flex',
               flexDirection: 'column',
             }}
@@ -121,6 +130,7 @@ export function NetlabApp({
   timeline,
   routeTable,
   areaLegend,
+  theme,
   style,
   className,
 }: NetlabAppProps) {
@@ -133,13 +143,16 @@ export function NetlabApp({
     showAreaLegend: areaLegend ?? hasAreas,
   };
 
+  const resolvedTheme: NetlabTheme = { ...NETLAB_DARK_THEME, ...theme };
+
   const containerStyle: React.CSSProperties = {
+    ...themeToVars(resolvedTheme),
     width,
     height,
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
-    background: '#0f172a',
+    background: 'var(--netlab-bg-primary)',
     ...style,
   };
 

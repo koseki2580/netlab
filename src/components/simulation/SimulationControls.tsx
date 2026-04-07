@@ -57,9 +57,9 @@ const BTN: React.CSSProperties = {
   transition: 'opacity 0.15s',
 };
 
-const BTN_PRIMARY: React.CSSProperties = { ...BTN, background: '#2563eb', color: '#fff' };
-const BTN_SECONDARY: React.CSSProperties = { ...BTN, background: '#334155', color: '#cbd5e1' };
-const BTN_DISABLED: React.CSSProperties = { ...BTN, background: '#1e293b', color: '#475569', cursor: 'not-allowed' };
+const BTN_PRIMARY: React.CSSProperties = { ...BTN, background: 'var(--netlab-accent-blue)', color: '#fff' };
+const BTN_SECONDARY: React.CSSProperties = { ...BTN, background: 'var(--netlab-border)', color: 'var(--netlab-text-primary)' };
+const BTN_DISABLED: React.CSSProperties = { ...BTN, background: 'var(--netlab-bg-surface)', color: 'var(--netlab-text-faint)', cursor: 'not-allowed' };
 
 export function SimulationControls() {
   const { topology } = useNetlabContext();
@@ -85,8 +85,8 @@ export function SimulationControls() {
         alignItems: 'center',
         gap: 8,
         padding: '6px 12px',
-        background: '#1e293b',
-        borderBottom: '1px solid #334155',
+        background: 'var(--netlab-bg-surface)',
+        borderBottom: '1px solid var(--netlab-border)',
         flexShrink: 0,
         flexWrap: 'wrap',
       }}
@@ -98,7 +98,7 @@ export function SimulationControls() {
         ▶ Send Packet
       </button>
 
-      <div style={{ width: 1, height: 20, background: '#334155', margin: '0 4px' }} />
+      <div style={{ width: 1, height: 20, background: 'var(--netlab-border)', margin: '0 4px' }} />
 
       <button
         onClick={() => engine.play()}
@@ -129,7 +129,7 @@ export function SimulationControls() {
         ⟳ Reset
       </button>
 
-      <div style={{ marginLeft: 'auto', fontFamily: 'monospace', fontSize: 11, color: '#64748b' }}>
+      <div style={{ marginLeft: 'auto', fontFamily: 'monospace', fontSize: 11, color: 'var(--netlab-text-muted)' }}>
         {status === 'idle' && 'Click "Send Packet" to begin'}
         {status === 'paused' && state.currentStep === -1 && 'Loaded — press Step or Play'}
         {status === 'paused' && state.currentStep >= 0 && `Paused — hop ${state.currentStep + 1}`}

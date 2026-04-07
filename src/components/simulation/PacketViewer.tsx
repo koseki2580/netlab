@@ -6,18 +6,18 @@ const PANEL: React.CSSProperties = {
   top: 12,
   right: 12,
   width: 220,
-  background: 'rgba(15, 23, 42, 0.95)',
-  border: '1px solid rgba(100, 116, 139, 0.4)',
+  background: 'var(--netlab-bg-panel)',
+  border: '1px solid var(--netlab-border-subtle)',
   borderRadius: 8,
   padding: '10px 14px',
-  color: '#e2e8f0',
+  color: 'var(--netlab-text-primary)',
   fontSize: 11,
   fontFamily: 'monospace',
   zIndex: 10,
 };
 
 const LABEL: React.CSSProperties = {
-  color: '#64748b',
+  color: 'var(--netlab-text-muted)',
   fontSize: 10,
   letterSpacing: 1,
   fontWeight: 'bold',
@@ -31,8 +31,8 @@ const ROW: React.CSSProperties = {
   lineHeight: 1.6,
 };
 
-const KEY: React.CSSProperties = { color: '#94a3b8' };
-const VAL: React.CSSProperties = { color: '#e2e8f0', textAlign: 'right', maxWidth: '60%', wordBreak: 'break-all' };
+const KEY: React.CSSProperties = { color: 'var(--netlab-text-secondary)' };
+const VAL: React.CSSProperties = { color: 'var(--netlab-text-primary)', textAlign: 'right', maxWidth: '60%', wordBreak: 'break-all' };
 
 const EVENT_COLORS: Record<string, string> = {
   create:  '#7dd3fc',
@@ -83,7 +83,7 @@ export function PacketViewer() {
       <div style={LABEL}>PACKET VIEWER</div>
 
       {!selectedHop ? (
-        <div style={{ color: '#334155', fontSize: 11 }}>
+        <div style={{ color: 'var(--netlab-border)', fontSize: 11 }}>
           No hop selected — press Step or click a row in the timeline.
         </div>
       ) : (
@@ -95,7 +95,7 @@ export function PacketViewer() {
             <EventBadge event={selectedHop.event} />
           </div>
 
-          <div style={{ borderTop: '1px solid #1e293b', paddingTop: 8 }}>
+          <div style={{ borderTop: '1px solid var(--netlab-bg-surface)', paddingTop: 8 }}>
             <Field label="Node" value={selectedHop.nodeLabel} />
             <Field label="Src IP" value={selectedHop.srcIp} />
             <Field label="Dst IP" value={selectedHop.dstIp} />
