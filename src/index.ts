@@ -102,6 +102,10 @@ export { OspfProtocol, ospfProtocol } from './routing/ospf/OspfProtocol';
 export { BgpProtocol, bgpProtocol } from './routing/bgp/BgpProtocol';
 export { RipProtocol, ripProtocol } from './routing/rip/RipProtocol';
 
+// Embeddable app component
+export { NetlabApp } from './components/NetlabApp';
+export type { NetlabAppProps } from './components/NetlabApp';
+
 // Components
 export { ResizableSidebar } from './components/ResizableSidebar';
 export type { ResizableSidebarProps } from './components/ResizableSidebar';
