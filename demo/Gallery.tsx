@@ -94,6 +94,18 @@ const CATEGORIES: Category[] = [
       },
     ],
   },
+  {
+    id: 'integration',
+    label: 'Integration',
+    color: '#06b6d4',
+    demos: [
+      {
+        path: '/embed',
+        title: 'Embed',
+        desc: 'NetlabApp embedded inside a host page with fixed width/height. Shows both simulation and static modes.',
+      },
+    ],
+  },
 ];
 
 export default function Gallery() {
