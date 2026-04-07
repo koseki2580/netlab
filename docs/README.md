@@ -47,3 +47,4 @@ Specifications related to demo environment setup, integration using query parame
 - [Demo Structure](deployment/demo-structure.md) - Demo screen configurations for tutorials and gallery items
 - [Query Params](deployment/query-params.md) - Topology data sharing and restoration methods via URL parameters
 - [CI/CD](deployment/ci-cd.md) - Automated testing and deployment environments setup using GitHub Actions
+- [Embed](deployment/embed.md) - Embedding NetlabApp in external web pages with configurable width/height
