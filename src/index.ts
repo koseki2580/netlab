@@ -40,6 +40,11 @@ export { SimulationControls } from './components/simulation/SimulationControls';
 export { PacketViewer } from './components/simulation/PacketViewer';
 export { PacketTimeline } from './components/simulation/PacketTimeline';
 export { StepControls } from './components/simulation/StepControls';
+export { PacketStructureViewer } from './components/simulation/PacketStructureViewer';
+
+// Packet serializer (byte-level packet visualization)
+export { serializePacket } from './utils/packetSerializer';
+export type { LayerTag, AnnotatedField, SerializedPacket } from './utils/packetSerializer';
 
 // Step simulation controller
 export { StepSimulationController } from './simulation/StepSimulationController';
