@@ -69,6 +69,7 @@ const INITIAL_STATE: SimulationState = {
   currentStep: -1,
   activeEdgeIds: [],
   selectedHop: null,
+  selectedPacket: null,
 };
 
 export class SimulationEngine {
@@ -342,6 +343,7 @@ export class SimulationEngine {
       currentStep: -1,
       activeEdgeIds: [],
       selectedHop: null,
+      selectedPacket: null,
     };
     this.notify();
   }
@@ -369,6 +371,7 @@ export class SimulationEngine {
       currentStep: nextStep,
       activeEdgeIds: hop.activeEdgeId ? [hop.activeEdgeId] : [],
       selectedHop: hop,
+      selectedPacket: packetAtStep ?? null,
       status: isDone ? 'done' : this.state.status,
     };
     this.notify();
@@ -434,6 +437,7 @@ export class SimulationEngine {
       currentStep: -1,
       activeEdgeIds: [],
       selectedHop: null,
+      selectedPacket: null,
     };
     this.notify();
   }
@@ -443,10 +447,13 @@ export class SimulationEngine {
     if (!trace) return;
     const hop = trace.hops[step];
     if (!hop) return;
+    const snapshots = this.packetSnapshots.get(trace.packetId) ?? [];
+    const packetAtStep = snapshots[step] ?? null;
     this.state = {
       ...this.state,
       selectedHop: hop,
       activeEdgeIds: hop.activeEdgeId ? [hop.activeEdgeId] : [],
+      selectedPacket: packetAtStep,
     };
     this.notify();
   }

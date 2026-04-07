@@ -49,4 +49,5 @@ export interface SimulationState {
   currentStep: number;      // -1 = trace loaded but playback not started
   activeEdgeIds: string[];  // edge IDs to highlight in the canvas
   selectedHop: PacketHop | null;
+  selectedPacket: import('./packets').InFlightPacket | null;  // packet snapshot at selectedHop
 }
