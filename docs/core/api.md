@@ -7,11 +7,20 @@
 Context provider. Must wrap `<NetlabCanvas>` and any netlab hooks.
 
 ```typescript
-interface NetlabProviderProps {
-  topology: NetworkTopology;
-  children: React.ReactNode;
-}
+type NetlabProviderProps =
+  | {
+      topology: NetworkTopology;
+      defaultTopology?: TopologySnapshot;
+      children: React.ReactNode;
+    }
+  | {
+      topology?: undefined;
+      defaultTopology: TopologySnapshot;
+      children: React.ReactNode;
+    };
 ```
+
+Use `topology` for parent-owned state. Use `defaultTopology` when you only need an initial snapshot and do not want subsequent prop changes to re-seed the provider.
 
 ### `<NetlabCanvas>`
 
@@ -21,12 +30,15 @@ The main React Flow canvas. Renders the network topology with area backgrounds a
 interface NetlabCanvasProps {
   style?: React.CSSProperties;
   className?: string;
+  onNodesChange?: (nodes: NetlabNode[]) => void;
+  onEdgesChange?: (edges: NetlabEdge[]) => void;
+  onTopologyChange?: (topology: TopologySnapshot) => void;
 }
 ```
 
-Node positions and edges are managed in local React state seeded from the provided topology. Changes (drag, new connections) are not propagated back to `NetlabProvider`.
+By default, node positions and edges are managed in local React state seeded from the provided topology. When any callback prop is provided, `NetlabCanvas` enters controlled-sync mode: committed changes are reported back to the parent and external topology updates re-sync the canvas.
 
-See [ui-interaction.md](./ui-interaction.md) for the full interaction design.
+See [../api/controlled-topology.md](../api/controlled-topology.md) for the controlled workflow and [ui-interaction.md](./ui-interaction.md) for the interaction design.
 
 ### `<NodeDetailPanel>`
 
@@ -161,7 +173,7 @@ import type {
   // Hooks
   HookFn, HookMap, HookPoint,
   // Topology
-  NetworkTopology, NetlabNode, NetlabEdge, NetlabNodeData,
+  NetworkTopology, TopologySnapshot, NetlabNode, NetlabEdge, NetlabNodeData,
   // Packets
   InFlightPacket, EthernetFrame, IpPacket, TcpSegment, HttpMessage,
 } from 'netlab';
