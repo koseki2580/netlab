@@ -29,6 +29,12 @@ Specifications regarding user interface implementation and canvas operations.
 - [Theming](ui/theming.md) - CSS variable-based color theming for embedding in host pages
 - [Packet Structure Viewer](ui/packet-structure-viewer.md) - Byte-level hex dump and field table showing per-layer color-coded packet structure
 
+### 🔄 Simulation (`simulation/`)
+
+Specifications focused on simulation-time packet traversal and trace annotation.
+
+- [Interface-Aware Forwarding](simulation/interface-aware-forwarding.md) - How ingress and egress interfaces are resolved for each packet hop
+
 ### 🌐 Networking Models & Features (`networking/`)
 
 Specifications for protocol implementations based on the OSI model and network device behaviors.

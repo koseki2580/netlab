@@ -62,6 +62,11 @@ interface Neighbor {
   edgeId: string;
 }
 
+interface ResolvedInterface {
+  id: string;
+  name: string;
+}
+
 const INITIAL_STATE: SimulationState = {
   status: 'idle',
   traces: [],
@@ -115,6 +120,74 @@ export class SimulationEngine {
       }
     }
     return result;
+  }
+
+  private resolveEgressInterface(
+    nodeId: string,
+    dstIp: string,
+  ): ResolvedInterface | null {
+    const node = this.topology.nodes.find((n) => n.id === nodeId);
+    if (!node || node.data.role !== 'router') return null;
+
+    const routes = this.topology.routeTables.get(nodeId) ?? [];
+    const route = bestRoute(dstIp, routes);
+    if (!route) return null;
+
+    const targetIp = route.nextHop === 'direct' ? dstIp : route.nextHop;
+    const match = node.data.interfaces?.find((iface) =>
+      isInSubnet(targetIp, `${iface.ipAddress}/${iface.prefixLength}`),
+    );
+
+    return match ? { id: match.id, name: match.name } : null;
+  }
+
+  private resolveIngressInterface(
+    nodeId: string,
+    senderIp: string,
+  ): ResolvedInterface | null {
+    const node = this.topology.nodes.find((n) => n.id === nodeId);
+    if (!node) return null;
+
+    const match = node.data.interfaces?.find((iface) =>
+      isInSubnet(senderIp, `${iface.ipAddress}/${iface.prefixLength}`),
+    );
+
+    return match ? { id: match.id, name: match.name } : null;
+  }
+
+  private resolvePortFromEdge(
+    nodeId: string,
+    edgeId: string,
+    direction: 'ingress' | 'egress',
+  ): ResolvedInterface | null {
+    if (!edgeId) return null;
+
+    const edge = this.topology.edges.find((candidate) => candidate.id === edgeId);
+    if (!edge) return null;
+
+    const handleId =
+      direction === 'egress'
+        ? edge.source === nodeId
+          ? edge.sourceHandle
+          : edge.target === nodeId
+            ? edge.targetHandle
+            : undefined
+        : edge.target === nodeId
+          ? edge.targetHandle
+          : edge.source === nodeId
+            ? edge.sourceHandle
+            : undefined;
+
+    if (!handleId) return null;
+
+    const node = this.topology.nodes.find((candidate) => candidate.id === nodeId);
+    if (!node) return null;
+
+    const iface = node.data.interfaces?.find((candidate) => candidate.id === handleId);
+    const port = node.data.ports?.find((candidate) => candidate.id === handleId);
+    const resolved = iface ?? port;
+
+    return resolved ? { id: resolved.id, name: resolved.name } : null;
   }
 
   private resolveNextNode(
@@ -179,6 +252,8 @@ export class SimulationEngine {
     const visitedNodes = new Set<string>();
     let current = packet.srcNodeId;
     let ingressFrom: string | null = null;
+    let ingressEdgeId: string | null = null;
+    let senderIp: string | null = null;
     let workingPacket: InFlightPacket = { ...packet, currentDeviceId: current };
     const baseTs = Date.now();
 
@@ -265,6 +340,16 @@ export class SimulationEngine {
         break;
       }
 
+      if (ingressFrom !== null) {
+        const ingressInterface =
+          (senderIp ? this.resolveIngressInterface(current, senderIp) : null) ??
+          this.resolvePortFromEdge(current, ingressEdgeId ?? '', 'ingress');
+        if (ingressInterface) {
+          hop.ingressInterfaceId = ingressInterface.id;
+          hop.ingressInterfaceName = ingressInterface.name;
+        }
+      }
+
       // Call router forwarder for TTL decrement and drop detection
       if (node.data.role === 'router') {
         const forwarderFactory = layerRegistry.getForwarder(node.data.layerId);
@@ -308,9 +393,34 @@ export class SimulationEngine {
       hop.event = step === 0 ? 'create' : 'forward';
       hop.toNodeId = next.nodeId;
       hop.activeEdgeId = next.edgeId;
+
+      if (node.data.role === 'router') {
+        const egressInterface =
+          this.resolveEgressInterface(current, ipPacket.dstIp) ??
+          this.resolvePortFromEdge(current, next.edgeId, 'egress');
+        if (egressInterface) {
+          hop.egressInterfaceId = egressInterface.id;
+          hop.egressInterfaceName = egressInterface.name;
+        }
+
+        const egressIface = node.data.interfaces?.find(
+          (iface) => iface.id === hop.egressInterfaceId,
+        );
+        senderIp = egressIface?.ipAddress ?? null;
+      } else if (node.data.role === 'client' || node.data.role === 'server') {
+        senderIp = node.data.ip ?? null;
+      } else if (node.data.role === 'switch') {
+        const egressPort = this.resolvePortFromEdge(current, next.edgeId, 'egress');
+        if (egressPort) {
+          hop.egressInterfaceId = egressPort.id;
+          hop.egressInterfaceName = egressPort.name;
+        }
+      }
+
       hops.push(hop);
 
       ingressFrom = current;
+      ingressEdgeId = next.edgeId;
       workingPacket = { ...workingPacket, currentDeviceId: next.nodeId };
       current = next.nodeId;
     }

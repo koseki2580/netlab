@@ -197,6 +197,18 @@ function switchPassthroughTopology(): NetworkTopology {
   };
 }
 
+/** client-1 -- e1(targetHandle=p0) -- switch-1(sourceHandle=p1) -- e2 -- server-1 */
+function switchPassthroughTopologyWithHandles(): NetworkTopology {
+  const topology = switchPassthroughTopology();
+  return {
+    ...topology,
+    edges: [
+      { id: 'e1', source: 'client-1', target: 'switch-1', targetHandle: 'p0' },
+      { id: 'e2', source: 'switch-1', target: 'server-1', sourceHandle: 'p1' },
+    ],
+  };
+}
+
 /** client-1 -- e1 -- router-1 -- e2 -- router-2 -- e3 -- server-1 */
 function multiHopTopology(): NetworkTopology {
   const routeTables = new Map<string, RouteEntry[]>([
@@ -304,6 +316,17 @@ describe('SimulationEngine.precompute', () => {
     expect(trace.hops[2].nodeId).toBe('server-1');
   });
 
+  it('annotates router ingress and egress interfaces on direct forwarding hops', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
+    const trace = await engine.precompute(packet);
+
+    expect(trace.hops[1].ingressInterfaceId).toBe('eth0');
+    expect(trace.hops[1].ingressInterfaceName).toBe('eth0');
+    expect(trace.hops[1].egressInterfaceId).toBe('eth1');
+    expect(trace.hops[1].egressInterfaceName).toBe('eth1');
+  });
+
   it('decrements TTL at each router hop', async () => {
     const engine = makeEngine(singleRouterTopology());
     const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10', 64);
@@ -339,6 +362,8 @@ describe('SimulationEngine.precompute', () => {
     const dropHop = trace.hops.find((h) => h.event === 'drop');
     expect(dropHop).toBeDefined();
     expect(dropHop!.reason).toBe('no-route');
+    expect(dropHop!.ingressInterfaceId).toBe('eth0');
+    expect(dropHop!.ingressInterfaceName).toBe('eth0');
   });
 
   it('traverses through a switch', async () => {
@@ -353,6 +378,18 @@ describe('SimulationEngine.precompute', () => {
     expect(trace.hops[1].activeEdgeId).toBe('e2');
   });
 
+  it('annotates switch ingress and egress ports when edge handles are present', async () => {
+    const engine = makeEngine(switchPassthroughTopologyWithHandles());
+    const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
+    const trace = await engine.precompute(packet);
+
+    expect(trace.hops[1].nodeId).toBe('switch-1');
+    expect(trace.hops[1].ingressInterfaceId).toBe('p0');
+    expect(trace.hops[1].ingressInterfaceName).toBe('fa0/0');
+    expect(trace.hops[1].egressInterfaceId).toBe('p1');
+    expect(trace.hops[1].egressInterfaceName).toBe('fa0/1');
+  });
+
   it('routes through two routers', async () => {
     const engine = makeEngine(multiHopTopology());
     const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10', 64);
@@ -364,6 +401,17 @@ describe('SimulationEngine.precompute', () => {
     expect(trace.hops[1].nodeId).toBe('router-1');
     expect(trace.hops[2].nodeId).toBe('router-2');
     expect(trace.hops[3].event).toBe('deliver');
+  });
+
+  it('tracks sender IP across router hops to resolve downstream ingress interfaces', async () => {
+    const engine = makeEngine(multiHopTopology());
+    const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10', 64);
+    const trace = await engine.precompute(packet);
+
+    expect(trace.hops[1].egressInterfaceId).toBe('eth1');
+    expect(trace.hops[2].ingressInterfaceId).toBe('eth0');
+    expect(trace.hops[2].ingressInterfaceName).toBe('eth0');
+    expect(trace.hops[2].egressInterfaceId).toBe('eth1');
   });
 
   it('stops with routing-loop when a node is revisited (triangle cycle)', async () => {

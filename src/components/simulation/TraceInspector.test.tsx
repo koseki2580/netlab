@@ -94,6 +94,10 @@ const BASE_HOPS: PacketHop[] = [
     fromNodeId: 'client-1',
     toNodeId: 'server-1',
     activeEdgeId: 'e2',
+    ingressInterfaceId: 'eth0',
+    ingressInterfaceName: 'eth0',
+    egressInterfaceId: 'eth1',
+    egressInterfaceName: 'eth1',
     routingDecision: {
       dstIp: '203.0.113.10',
       winner: {
@@ -214,6 +218,10 @@ describe('Trace Inspector components', () => {
     expect(html).toContain('Hop 2 / 3');
     expect(html).toContain('TTL Out');
     expect(html).toContain('62');
+    expect(html).toContain('Ingress If');
+    expect(html).toContain('eth0');
+    expect(html).toContain('Egress If');
+    expect(html).toContain('eth1');
     expect(html).toContain('Matched 203.0.113.0/24 via direct (static, AD=1)');
   });
 
@@ -260,6 +268,16 @@ describe('Trace Inspector components', () => {
     expect(html).toContain('DROP REASON');
     expect(html).toContain('no-route');
     expect(html).toContain('No matching route for 198.51.100.10');
+  });
+
+  it('HopInspector omits interface rows when the selected hop has no interface metadata', () => {
+    const html = renderWithContexts(
+      <HopInspector />,
+      makeState({ selectedHop: BASE_HOPS[0] }),
+    );
+
+    expect(html).not.toContain('Ingress If');
+    expect(html).not.toContain('Egress If');
   });
 
   it('TraceSummary maps in-flight traces to the in-progress label', () => {

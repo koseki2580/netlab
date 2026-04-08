@@ -85,6 +85,11 @@ const CATEGORIES: Category[] = [
         title: 'Trace Inspector',
         desc: 'Click any hop in the timeline to inspect routing decisions, LPM candidates, TTL values, and drop reasons.',
       },
+      {
+        path: '/simulation/interface-aware',
+        title: 'Interface-Aware Forwarding',
+        desc: 'See which router interface is selected at each hop, with ingress and egress interface names shown in the inspector.',
+      },
     ],
   },
   {

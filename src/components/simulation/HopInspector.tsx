@@ -90,6 +90,13 @@ function HopFields({
     { label: 'Protocol', value: hop.protocol },
   ];
 
+  if (hop.ingressInterfaceName || hop.egressInterfaceName) {
+    fields.push(
+      { label: 'Ingress If', value: hop.ingressInterfaceName ?? '—' },
+      { label: 'Egress If', value: hop.egressInterfaceName ?? '—' },
+    );
+  }
+
   return (
     <section
       style={{
