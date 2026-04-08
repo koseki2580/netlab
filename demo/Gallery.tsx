@@ -93,6 +93,11 @@ const CATEGORIES: Category[] = [
     color: '#a855f7',
     demos: [
       {
+        path: '/topology/controlled',
+        title: 'Controlled Topology',
+        desc: 'Drag nodes, connect links, and delete edges while a live JSON snapshot stays in sync and can be encoded/restored from the URL.',
+      },
+      {
         path: '/editor',
         title: 'Topology Editor',
         desc: 'Visually add/remove nodes, connect them, edit properties, and undo/redo changes.',
