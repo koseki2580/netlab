@@ -39,8 +39,10 @@ export type { SimulationProviderProps, SimulationContextValue } from './simulati
 export { SimulationControls } from './components/simulation/SimulationControls';
 export { PacketViewer } from './components/simulation/PacketViewer';
 export { PacketTimeline } from './components/simulation/PacketTimeline';
+export { HopInspector } from './components/simulation/HopInspector';
 export { StepControls } from './components/simulation/StepControls';
 export { PacketStructureViewer } from './components/simulation/PacketStructureViewer';
+export { TraceSummary } from './components/simulation/TraceSummary';
 
 // Packet serializer (byte-level packet visualization)
 export { serializePacket } from './utils/packetSerializer';
