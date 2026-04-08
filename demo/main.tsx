@@ -20,6 +20,7 @@ import ControlledTopologyDemo from './topology/ControlledTopologyDemo';
 import StepSimDemo from './simulation/StepSimDemo';
 import FailureSimDemo from './simulation/FailureSimDemo';
 import TraceInspectorDemo from './simulation/TraceInspectorDemo';
+import InterfaceAwareDemo from './simulation/InterfaceAwareDemo';
 import EmbedDemo from './embed/EmbedDemo';
 
 const root = document.getElementById('root');
@@ -41,6 +42,7 @@ createRoot(root).render(
         <Route path="/simulation/step" element={<StepSimDemo />} />
         <Route path="/simulation/failure" element={<FailureSimDemo />} />
         <Route path="/simulation/trace-inspector" element={<TraceInspectorDemo />} />
+        <Route path="/simulation/interface-aware" element={<InterfaceAwareDemo />} />
         <Route path="/embed" element={<EmbedDemo />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

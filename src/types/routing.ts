@@ -44,4 +44,5 @@ export interface RouterInterface {
   ipAddress: string;
   prefixLength: number;
   macAddress: string;
+  connectedEdgeId?: string;
 }

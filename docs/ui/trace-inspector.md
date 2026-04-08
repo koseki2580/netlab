@@ -56,6 +56,15 @@ All three components are zero-prop React components that consume `useSimulation(
 - TTL Out
 - Protocol
 
+#### Interface rows
+
+When a hop carries interface-aware forwarding metadata, `HopInspector` also shows:
+
+- Ingress If
+- Egress If
+
+The rows appear only when at least one of `hop.ingressInterfaceName` or `hop.egressInterfaceName` is populated. If only one side is known, the missing side renders as `—`.
+
 #### TTL derivation
 
 `PacketHop` does not gain a new `ttlAfter` field. `HopInspector` derives the display value locally:
@@ -77,6 +86,15 @@ The routing section follows the same information model already used in `StepCont
 - row badges for matched and LPM-selected candidates
 
 If `decision.winner` is present, the explanation uses a success tint. If no winner exists, the explanation uses a warning tint.
+
+#### Interface rows
+
+When `PacketHop.ingressInterfaceName` or `PacketHop.egressInterfaceName` is present, `HopInspector` renders:
+
+- `Ingress If`
+- `Egress If`
+
+Missing values render as `—` so mixed cases remain readable.
 
 ### `TraceSummary`
 

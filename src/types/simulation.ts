@@ -27,6 +27,10 @@ export interface PacketHop {
   fromNodeId?: string;      // absent on step 0 (create)
   toNodeId?: string;        // absent on deliver / drop
   activeEdgeId?: string;    // ReactFlow edge.id to highlight; absent on deliver / drop
+  ingressInterfaceId?: string;
+  ingressInterfaceName?: string;
+  egressInterfaceId?: string;
+  egressInterfaceName?: string;
   reason?: string;          // populated only when event === 'drop'
   routingDecision?: RoutingDecision;  // present only when nodeId is a router, never on TTL drops
   timestamp: number;
