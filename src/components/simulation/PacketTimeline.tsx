@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useNetlabContext } from '../NetlabContext';
 import { useSimulation } from '../../simulation/SimulationContext';
 import type { PacketHop } from '../../types/simulation';
 
@@ -18,10 +19,12 @@ const EVENT_LABELS: Record<string, string> = {
 
 function HopRow({
   hop,
+  nextHopLabel,
   isActive,
   onClick,
 }: {
   hop: PacketHop;
+  nextHopLabel: string | null;
   isActive: boolean;
   onClick: () => void;
 }) {
@@ -64,25 +67,27 @@ function HopRow({
         {hop.nodeLabel}
       </span>
       {hop.toNodeId && (
-        <span style={{ color: 'var(--netlab-text-faint)', fontSize: 10 }}>→ {hop.toNodeId}</span>
+        <span style={{ color: 'var(--netlab-text-faint)', fontSize: 10 }}>→ {nextHopLabel ?? hop.toNodeId}</span>
       )}
     </div>
   );
 }
 
 export function PacketTimeline() {
+  const { topology } = useNetlabContext();
   const { engine, state } = useSimulation();
-  const { traces, currentTraceId, currentStep } = state;
+  const { traces, currentTraceId, currentStep, selectedHop } = state;
   const trace = traces.find((t) => t.packetId === currentTraceId);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const activeStep = selectedHop?.step ?? currentStep;
 
   // Auto-scroll to active row
   useEffect(() => {
-    if (!scrollRef.current || currentStep < 0) return;
+    if (!scrollRef.current || activeStep < 0) return;
     const rows = scrollRef.current.querySelectorAll('[data-step]');
-    const activeRow = rows[currentStep] as HTMLElement | undefined;
+    const activeRow = rows[activeStep] as HTMLElement | undefined;
     activeRow?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  }, [currentStep]);
+  }, [activeStep]);
 
   return (
     <div
@@ -122,7 +127,12 @@ export function PacketTimeline() {
             <div key={hop.step} data-step={hop.step}>
               <HopRow
                 hop={hop}
-                isActive={hop.step === currentStep}
+                nextHopLabel={
+                  hop.toNodeId
+                    ? topology.nodes.find((node) => node.id === hop.toNodeId)?.data.label ?? hop.toNodeId
+                    : null
+                }
+                isActive={hop.step === activeStep}
                 onClick={() => engine.selectHop(hop.step)}
               />
             </div>
