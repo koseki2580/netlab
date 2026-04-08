@@ -91,6 +91,7 @@ export type {
   NetlabNode,
   NetlabEdge,
   NetworkTopology,
+  TopologySnapshot,
 } from './types/topology';
 
 export type { HookFn, HookMap, HookPoint } from './types/hooks';

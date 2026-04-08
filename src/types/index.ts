@@ -36,6 +36,7 @@ export type {
   NetlabNode,
   NetlabEdge,
   NetworkTopology,
+  TopologySnapshot,
 } from './topology';
 
 export type { HookFn, HookMap, HookPoint } from './hooks';

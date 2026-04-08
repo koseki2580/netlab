@@ -1,13 +1,16 @@
-import type { NetworkTopology, NetlabNode, NetlabEdge } from '../types/topology';
+import type {
+  NetworkTopology,
+  NetlabNode,
+  NetlabEdge,
+  TopologySnapshot,
+} from '../types/topology';
 import type { NetworkArea } from '../types/areas';
-
-type TopologyInput = Pick<NetworkTopology, 'nodes' | 'edges' | 'areas'>;
 
 /**
  * Encode a topology to a URL query string fragment (`?topo=<base64url>`).
  * routeTables is excluded — it is recomputed on load.
  */
-export function encodeTopology(topology: TopologyInput): string {
+export function encodeTopology(topology: TopologySnapshot): string {
   const json = JSON.stringify({
     nodes: topology.nodes,
     edges: topology.edges,

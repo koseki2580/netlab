@@ -32,3 +32,9 @@ export interface NetworkTopology {
   areas: NetworkArea[];
   routeTables: Map<string, RouteEntry[]>;
 }
+
+/**
+ * Serializable topology snapshot used in controlled API callbacks.
+ * Excludes computed route tables, which are recomputed by NetlabProvider.
+ */
+export type TopologySnapshot = Pick<NetworkTopology, 'nodes' | 'edges' | 'areas'>;
