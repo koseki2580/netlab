@@ -22,6 +22,7 @@ Specifications regarding user interface implementation and canvas operations.
 - [Topology Editor](ui/topology-editor.md) - Design of node and link addition/editing features
 - [Packet Visualization](ui/packet-visualization.md) - Animation features and timeline display for packet communication
 - [Step-by-Step Simulation](ui/step-simulation.md) - Routing decision data model, StepSimulationController, and StepControls component
+- [Trace Inspector](ui/trace-inspector.md) - PacketTimeline, HopInspector, and TraceSummary for end-to-end packet trace inspection
 - [Failure Simulation](ui/failure-simulation.md) - Node/link failure injection, FailureTogglePanel, and visual styling
 - [Resizable Sidebar](ui/resizable-sidebar.md) - Drag-to-resize sidebar component used across demo layouts
 - [Theming](ui/theming.md) - CSS variable-based color theming for embedding in host pages
