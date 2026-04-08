@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useContext } from 'react';
+import { useState, useMemo, useCallback, useContext, useEffect } from 'react';
 import {
   ReactFlow,
   Background,
@@ -8,9 +8,14 @@ import {
   useNodesState,
   useEdgesState,
   addEdge,
+  applyNodeChanges,
+  applyEdgeChanges,
   type NodeTypes,
   type Connection,
   type Edge,
+  type NodeChange,
+  type EdgeChange,
+  type OnNodeDrag,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -23,20 +28,35 @@ import { AreaBackground } from '../areas/AreaBackground';
 import { isValidConnectionBetweenNodes, isValidEdge } from '../utils/connectionValidator';
 import { SimulationContext } from '../simulation/SimulationContext';
 import { useOptionalFailure } from '../simulation/FailureContext';
-import type { NetlabNode } from '../types/topology';
+import type { NetlabNode, NetlabEdge, TopologySnapshot } from '../types/topology';
 
 const AREA_NODE_TYPE: NodeTypes = {
   'netlab-area': AreaBackground as NodeTypes[string],
 };
+const AREA_NODE_PREFIX = '__area__';
+
+function excludeAreaNodes(nodes: { id: string }[]): NetlabNode[] {
+  return nodes.filter((node) => !node.id.startsWith(AREA_NODE_PREFIX)) as NetlabNode[];
+}
 
 export interface NetlabCanvasProps {
   style?: React.CSSProperties;
   className?: string;
+  onNodesChange?: (nodes: NetlabNode[]) => void;
+  onEdgesChange?: (edges: NetlabEdge[]) => void;
+  onTopologyChange?: (topology: TopologySnapshot) => void;
 }
 
-export function NetlabCanvas({ style, className }: NetlabCanvasProps) {
+export function NetlabCanvas({
+  style,
+  className,
+  onNodesChange: onNodesChangeProp,
+  onEdgesChange: onEdgesChangeProp,
+  onTopologyChange,
+}: NetlabCanvasProps) {
   const { topology, areas } = useNetlabContext();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const isControlled = Boolean(onTopologyChange || onNodesChangeProp || onEdgesChangeProp);
 
   // Optional: read active edge IDs from SimulationContext (non-throwing)
   const simCtx = useContext(SimulationContext);
@@ -57,13 +77,78 @@ export function NetlabCanvas({ style, className }: NetlabCanvasProps) {
     [areaNodes, topology.nodes],
   );
 
-  const [nodes, , onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(topology.edges);
+  const [nodes, setNodes, rfOnNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, rfOnEdgesChange] = useEdgesState(topology.edges);
+
+  useEffect(() => {
+    if (!isControlled) return;
+    setNodes([...areaNodes, ...topology.nodes]);
+  }, [topology.nodes, areaNodes, setNodes, isControlled]);
+
+  useEffect(() => {
+    if (!isControlled) return;
+    setEdges(topology.edges);
+  }, [topology.edges, setEdges, isControlled]);
+
+  const emitTopologyChange = useCallback(
+    (nextNodes: NetlabNode[], nextEdges: NetlabEdge[]) => {
+      onTopologyChange?.({
+        nodes: nextNodes,
+        edges: nextEdges,
+        areas: topology.areas,
+      });
+    },
+    [onTopologyChange, topology.areas],
+  );
+
+  const onNodesChange = useCallback(
+    (changes: NodeChange<NetlabNode>[]) => {
+      rfOnNodesChange(changes);
+
+      if (!isControlled || !changes.some((change) => change.type === 'remove')) return;
+
+      const nextNodes = excludeAreaNodes(applyNodeChanges(changes, nodes));
+      onNodesChangeProp?.(nextNodes);
+      emitTopologyChange(nextNodes, edges);
+    },
+    [rfOnNodesChange, isControlled, nodes, onNodesChangeProp, emitTopologyChange, edges],
+  );
+
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange<NetlabEdge>[]) => {
+      rfOnEdgesChange(changes);
+
+      if (!isControlled || !changes.some((change) => change.type === 'remove')) return;
+
+      const nextEdges = applyEdgeChanges(changes, edges);
+      onEdgesChangeProp?.(nextEdges);
+      emitTopologyChange(excludeAreaNodes(nodes), nextEdges);
+    },
+    [rfOnEdgesChange, isControlled, edges, onEdgesChangeProp, emitTopologyChange, nodes],
+  );
 
   const onConnect = useCallback(
-    (connection: Connection) =>
-      setEdges((eds) => addEdge({ ...connection, type: 'smoothstep' }, eds)),
-    [setEdges],
+    (connection: Connection) => {
+      const nextEdges = addEdge({ ...connection, type: 'smoothstep' }, edges);
+      setEdges(nextEdges);
+
+      if (!isControlled) return;
+
+      onEdgesChangeProp?.(nextEdges);
+      emitTopologyChange(excludeAreaNodes(nodes), nextEdges);
+    },
+    [edges, setEdges, isControlled, onEdgesChangeProp, emitTopologyChange, nodes],
+  );
+
+  const onNodeDragStop: OnNodeDrag = useCallback(
+    (_event, _node, allNodes) => {
+      if (!isControlled) return;
+
+      const nextNodes = excludeAreaNodes(allNodes);
+      onNodesChangeProp?.(nextNodes);
+      emitTopologyChange(nextNodes, edges);
+    },
+    [isControlled, onNodesChangeProp, emitTopologyChange, edges],
   );
 
   const validateConnection = useCallback(
@@ -119,6 +204,7 @@ export function NetlabCanvas({ style, className }: NetlabCanvasProps) {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onNodeDragStop={onNodeDragStop}
           isValidConnection={validateConnection}
           connectionMode={ConnectionMode.Loose}
           fitView
