@@ -80,6 +80,11 @@ const CATEGORIES: Category[] = [
         title: 'Failure Injection',
         desc: 'Toggle nodes and links down. Watch packets drop with node-down or no-route reasons. Failed components are highlighted on the canvas.',
       },
+      {
+        path: '/simulation/trace-inspector',
+        title: 'Trace Inspector',
+        desc: 'Click any hop in the timeline to inspect routing decisions, LPM candidates, TTL values, and drop reasons.',
+      },
     ],
   },
   {

@@ -18,6 +18,7 @@ import DmzDemo from './areas/DmzDemo';
 import EditorDemo from './editor/EditorDemo';
 import StepSimDemo from './simulation/StepSimDemo';
 import FailureSimDemo from './simulation/FailureSimDemo';
+import TraceInspectorDemo from './simulation/TraceInspectorDemo';
 import EmbedDemo from './embed/EmbedDemo';
 
 const root = document.getElementById('root');
@@ -37,6 +38,7 @@ createRoot(root).render(
         <Route path="/editor" element={<EditorDemo />} />
         <Route path="/simulation/step" element={<StepSimDemo />} />
         <Route path="/simulation/failure" element={<FailureSimDemo />} />
+        <Route path="/simulation/trace-inspector" element={<TraceInspectorDemo />} />
         <Route path="/embed" element={<EmbedDemo />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
