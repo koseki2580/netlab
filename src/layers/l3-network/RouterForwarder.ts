@@ -3,6 +3,8 @@ import type { InFlightPacket } from '../../types/packets';
 import type { RouteEntry } from '../../types/routing';
 import type { NetworkTopology } from '../../types/topology';
 import { isInSubnet, prefixLength } from '../../utils/cidr';
+import { computeIpv4Checksum } from '../../utils/checksum';
+import { buildIpv4HeaderBytes } from '../../utils/packetLayout';
 
 export class RouterForwarder implements Forwarder {
   private readonly nodeId: string;
@@ -35,21 +37,26 @@ export class RouterForwarder implements Forwarder {
   ): Promise<ForwardDecision> {
     const ipPacket = packet.frame.payload;
 
-    // Decrement TTL
     if (ipPacket.ttl <= 1) {
       return { action: 'drop', reason: 'ttl-exceeded' };
     }
-    const updatedIp = { ...ipPacket, ttl: ipPacket.ttl - 1 };
-    const updatedPacket: InFlightPacket = {
-      ...packet,
-      frame: { ...packet.frame, payload: updatedIp },
-      ingressPortId,
-    };
 
     const route = this.lookup(ipPacket.dstIp);
     if (!route) {
       return { action: 'drop', reason: 'no-route' };
     }
+
+    const updatedIp = { ...ipPacket, ttl: ipPacket.ttl - 1 };
+    const headerBytes = buildIpv4HeaderBytes(updatedIp, { checksumOverride: 0 });
+    const updatedIpWithChecksum = {
+      ...updatedIp,
+      headerChecksum: computeIpv4Checksum(headerBytes),
+    };
+    const updatedPacket: InFlightPacket = {
+      ...packet,
+      frame: { ...packet.frame, payload: updatedIpWithChecksum },
+      ingressPortId,
+    };
 
     if (route.nextHop === 'direct') {
       // Check if any connected node matches the destination IP

@@ -8,6 +8,12 @@ import type { NetworkTopology } from '../types/topology';
 import type { InFlightPacket, EthernetFrame } from '../types/packets';
 import type { RouteEntry } from '../types/routing';
 import { type FailureState, EMPTY_FAILURE_STATE, makeInterfaceFailureId } from '../types/failure';
+import { computeFcs, computeIpv4Checksum } from '../utils/checksum';
+import { buildEthernetFrameBytes, buildIpv4HeaderBytes } from '../utils/packetLayout';
+
+const CLIENT_MAC = '02:00:00:00:00:10';
+const SERVER_MAC = '02:00:00:00:00:20';
+const SERVER_TWO_MAC = '02:00:00:00:00:21';
 
 // Register forwarders once without importing React components
 beforeAll(() => {
@@ -93,13 +99,13 @@ function directTopology(): NetworkTopology {
         id: 'client-1',
         type: 'client',
         position: { x: 0, y: 0 },
-        data: { label: 'Client', role: 'client', layerId: 'l7', ip: '10.0.0.10' },
+        data: { label: 'Client', role: 'client', layerId: 'l7', ip: '10.0.0.10', mac: CLIENT_MAC },
       },
       {
         id: 'server-1',
         type: 'server',
         position: { x: 200, y: 0 },
-        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.10' },
+        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.10', mac: SERVER_MAC },
       },
     ],
     edges: [{ id: 'e1', source: 'client-1', target: 'server-1' }],
@@ -125,7 +131,7 @@ function singleRouterTopology(): NetworkTopology {
         id: 'client-1',
         type: 'client',
         position: { x: 0, y: 0 },
-        data: { label: 'Client', role: 'client', layerId: 'l7', ip: '10.0.0.10' },
+        data: { label: 'Client', role: 'client', layerId: 'l7', ip: '10.0.0.10', mac: CLIENT_MAC },
       },
       {
         id: 'router-1',
@@ -145,7 +151,7 @@ function singleRouterTopology(): NetworkTopology {
         id: 'server-1',
         type: 'server',
         position: { x: 400, y: 0 },
-        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.10' },
+        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.10', mac: SERVER_MAC },
       },
     ],
     edges: [
@@ -165,7 +171,7 @@ function switchPassthroughTopology(): NetworkTopology {
         id: 'client-1',
         type: 'client',
         position: { x: 0, y: 0 },
-        data: { label: 'Client', role: 'client', layerId: 'l7', ip: '10.0.0.10' },
+        data: { label: 'Client', role: 'client', layerId: 'l7', ip: '10.0.0.10', mac: CLIENT_MAC },
       },
       {
         id: 'switch-1',
@@ -185,7 +191,7 @@ function switchPassthroughTopology(): NetworkTopology {
         id: 'server-1',
         type: 'server',
         position: { x: 400, y: 0 },
-        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.10' },
+        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.10', mac: SERVER_MAC },
       },
     ],
     edges: [
@@ -206,6 +212,71 @@ function switchPassthroughTopologyWithHandles(): NetworkTopology {
       { id: 'e1', source: 'client-1', target: 'switch-1', targetHandle: 'p0' },
       { id: 'e2', source: 'switch-1', target: 'server-1', sourceHandle: 'p1' },
     ],
+  };
+}
+
+/** client-1 -- e1 -- router-1 -- e2 -- switch-1 -- e3 -- server-1 */
+function routerSwitchHostTopology(): NetworkTopology {
+  const routeTables = new Map<string, RouteEntry[]>([
+    [
+      'router-1',
+      [
+        makeRouteEntry('router-1', '10.0.0.0/24', 'direct'),
+        makeRouteEntry('router-1', '203.0.113.0/24', 'direct'),
+      ],
+    ],
+  ]);
+
+  return {
+    nodes: [
+      {
+        id: 'client-1',
+        type: 'client',
+        position: { x: 0, y: 0 },
+        data: { label: 'Client', role: 'client', layerId: 'l7', ip: '10.0.0.10', mac: CLIENT_MAC },
+      },
+      {
+        id: 'router-1',
+        type: 'router',
+        position: { x: 200, y: 0 },
+        data: {
+          label: 'R-1',
+          role: 'router',
+          layerId: 'l3',
+          interfaces: [
+            { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
+            { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:01:00:01' },
+          ],
+        },
+      },
+      {
+        id: 'switch-1',
+        type: 'switch',
+        position: { x: 400, y: 0 },
+        data: {
+          label: 'SW-1',
+          role: 'switch',
+          layerId: 'l2',
+          ports: [
+            { id: 'p0', name: 'fa0/0', macAddress: '00:00:00:10:00:00' },
+            { id: 'p1', name: 'fa0/1', macAddress: '00:00:00:10:00:01' },
+          ],
+        },
+      },
+      {
+        id: 'server-1',
+        type: 'server',
+        position: { x: 600, y: 0 },
+        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.10', mac: SERVER_TWO_MAC },
+      },
+    ],
+    edges: [
+      { id: 'e1', source: 'client-1', target: 'router-1' },
+      { id: 'e2', source: 'router-1', target: 'switch-1' },
+      { id: 'e3', source: 'switch-1', target: 'server-1' },
+    ],
+    areas: [],
+    routeTables,
   };
 }
 
@@ -233,7 +304,7 @@ function multiHopTopology(): NetworkTopology {
         id: 'client-1',
         type: 'client',
         position: { x: 0, y: 0 },
-        data: { label: 'Client', role: 'client', layerId: 'l7', ip: '10.0.0.10' },
+        data: { label: 'Client', role: 'client', layerId: 'l7', ip: '10.0.0.10', mac: CLIENT_MAC },
       },
       {
         id: 'router-1',
@@ -267,7 +338,7 @@ function multiHopTopology(): NetworkTopology {
         id: 'server-1',
         type: 'server',
         position: { x: 600, y: 0 },
-        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.10' },
+        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.10', mac: SERVER_MAC },
       },
     ],
     edges: [
@@ -282,6 +353,22 @@ function multiHopTopology(): NetworkTopology {
 
 function makeEngine(topology: NetworkTopology) {
   return new SimulationEngine(topology, new HookEngine());
+}
+
+async function packetAtStep(
+  engine: SimulationEngine,
+  packet: InFlightPacket,
+  step: number,
+): Promise<InFlightPacket> {
+  await engine.send(packet);
+  engine.selectHop(step);
+  const selectedPacket = engine.getState().selectedPacket;
+
+  if (!selectedPacket) {
+    throw new Error(`No packet snapshot available for step ${step}`);
+  }
+
+  return selectedPacket;
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -327,6 +414,44 @@ describe('SimulationEngine.precompute', () => {
     expect(trace.hops[1].egressInterfaceName).toBe('eth1');
   });
 
+  it('materializes identification, IPv4 checksum, and FCS before the create hop snapshot', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
+    const createSnapshot = await packetAtStep(engine, packet, 0);
+    const expectedChecksum = computeIpv4Checksum(
+      buildIpv4HeaderBytes(createSnapshot.frame.payload, { checksumOverride: 0 }),
+    );
+    const expectedFcs = computeFcs(
+      buildEthernetFrameBytes(
+        { ...createSnapshot.frame, fcs: 0 },
+        { includePreamble: false, includeFcs: false },
+      ),
+    );
+
+    expect(createSnapshot.frame.payload.identification).toBeDefined();
+    expect(createSnapshot.frame.payload.headerChecksum).toBe(expectedChecksum);
+    expect(createSnapshot.frame.fcs).toBe(expectedFcs);
+    expect(createSnapshot.frame.srcMac).toBe(CLIENT_MAC);
+    expect(createSnapshot.frame.dstMac).toBe('00:00:00:01:00:00');
+  });
+
+  it('rewrites router-hop source and destination MAC addresses to the egress segment', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
+    const routerSnapshot = await packetAtStep(engine, packet, 1);
+
+    expect(routerSnapshot.frame.srcMac).toBe('00:00:00:01:00:01');
+    expect(routerSnapshot.frame.dstMac).toBe(SERVER_MAC);
+    expect(routerSnapshot.frame.fcs).toBe(
+      computeFcs(
+        buildEthernetFrameBytes(
+          { ...routerSnapshot.frame, fcs: 0 },
+          { includePreamble: false, includeFcs: false },
+        ),
+      ),
+    );
+  });
+
   it('decrements TTL at each router hop', async () => {
     const engine = makeEngine(singleRouterTopology());
     const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10', 64);
@@ -366,6 +491,21 @@ describe('SimulationEngine.precompute', () => {
     expect(dropHop!.ingressInterfaceName).toBe('eth0');
   });
 
+  it('marks router-hop field mutations for UI diff highlighting', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10', 64);
+    const trace = await engine.precompute(packet);
+
+    expect(trace.hops[1].changedFields).toEqual([
+      'TTL',
+      'Header Checksum',
+      'Src MAC',
+      'Dst MAC',
+      'FCS',
+    ]);
+    expect(trace.hops[0].changedFields).toBeUndefined();
+  });
+
   it('traverses through a switch', async () => {
     const engine = makeEngine(switchPassthroughTopology());
     const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
@@ -388,6 +528,31 @@ describe('SimulationEngine.precompute', () => {
     expect(trace.hops[1].ingressInterfaceName).toBe('fa0/0');
     expect(trace.hops[1].egressInterfaceId).toBe('p1');
     expect(trace.hops[1].egressInterfaceName).toBe('fa0/1');
+  });
+
+  it('keeps MAC addresses stable on client-to-switch hops with no L3 boundary', async () => {
+    const engine = makeEngine(switchPassthroughTopology());
+    const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
+    await engine.send(packet);
+
+    engine.selectHop(0);
+    const createSnapshot = engine.getState().selectedPacket!;
+    engine.selectHop(1);
+    const switchSnapshot = engine.getState().selectedPacket!;
+
+    expect(createSnapshot.frame.srcMac).toBe(CLIENT_MAC);
+    expect(createSnapshot.frame.dstMac).toBe(SERVER_MAC);
+    expect(switchSnapshot.frame.srcMac).toBe(createSnapshot.frame.srcMac);
+    expect(switchSnapshot.frame.dstMac).toBe(createSnapshot.frame.dstMac);
+  });
+
+  it('resolves router destination MAC through transparent switches to the host MAC', async () => {
+    const engine = makeEngine(routerSwitchHostTopology());
+    const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
+    const routerSnapshot = await packetAtStep(engine, packet, 1);
+
+    expect(routerSnapshot.frame.srcMac).toBe('00:00:00:01:00:01');
+    expect(routerSnapshot.frame.dstMac).toBe(SERVER_TWO_MAC);
   });
 
   it('routes through two routers', async () => {

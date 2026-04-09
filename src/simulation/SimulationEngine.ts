@@ -1,7 +1,9 @@
 import { layerRegistry } from '../registry/LayerRegistry';
 import { isInSubnet, prefixLength } from '../utils/cidr';
+import { computeFcs, computeIpv4Checksum } from '../utils/checksum';
+import { buildEthernetFrameBytes, buildIpv4HeaderBytes } from '../utils/packetLayout';
 import type { HookEngine } from '../hooks/HookEngine';
-import type { NetworkTopology } from '../types/topology';
+import type { NetlabNode, NetworkTopology } from '../types/topology';
 import type { InFlightPacket } from '../types/packets';
 import type { RouteEntry } from '../types/routing';
 import type { PacketHop, PacketTrace, SimulationState, RoutingDecision, RoutingCandidate } from '../types/simulation';
@@ -241,6 +243,399 @@ export class SimulationEngine {
     return null;
   }
 
+  private findNode(nodeId: string) {
+    return this.topology.nodes.find((candidate) => candidate.id === nodeId) ?? null;
+  }
+
+  private isPlaceholderMac(mac: string): boolean {
+    const normalized = mac.trim().toLowerCase();
+    return (
+      normalized === '00:00:00:00:00:00' ||
+      normalized === '00:00:00:00:00:01' ||
+      normalized === '00:00:00:00:00:02'
+    );
+  }
+
+  private hashString(value: string): number {
+    let hash = 0x811c9dc5;
+    for (let i = 0; i < value.length; i++) {
+      hash ^= value.charCodeAt(i);
+      hash = Math.imul(hash, 0x01000193);
+    }
+    return hash >>> 0;
+  }
+
+  private derivePacketIdentification(packetId: string): number {
+    return this.hashString(packetId) & 0xffff;
+  }
+
+  private deriveDeterministicMac(nodeId: string): string {
+    const hash = this.hashString(nodeId);
+    const bytes = [
+      0x02,
+      (hash >>> 24) & 0xff,
+      (hash >>> 16) & 0xff,
+      (hash >>> 8) & 0xff,
+      hash & 0xff,
+      nodeId.length & 0xff,
+    ];
+    return bytes.map((byte) => byte.toString(16).padStart(2, '0')).join(':');
+  }
+
+  private resolveEndpointMac(nodeId: string): string | null {
+    const node = this.findNode(nodeId);
+    if (!node || (node.data.role !== 'client' && node.data.role !== 'server')) {
+      return null;
+    }
+
+    return typeof node.data.mac === 'string' && node.data.mac.length > 0
+      ? node.data.mac
+      : this.deriveDeterministicMac(nodeId);
+  }
+
+  private findMatchingNodeThroughSwitches(
+    switchNodeId: string,
+    sourceNodeId: string,
+    targetIp: string | null,
+    targetNodeId: string | undefined,
+    failureState: FailureState,
+    visited = new Set<string>(),
+  ): NetlabNode | null {
+    if (visited.has(switchNodeId)) return null;
+    visited.add(switchNodeId);
+
+    const neighbors = this.getNeighbors(switchNodeId, sourceNodeId, failureState);
+    const switchNeighbors = [];
+
+    for (const neighbor of neighbors) {
+      const node = this.findNode(neighbor.nodeId);
+      if (!node) continue;
+
+      if (node.data.role === 'switch') {
+        switchNeighbors.push(node.id);
+        continue;
+      }
+
+      const interfaces = node.data.interfaces ?? [];
+      const matchesTarget =
+        (targetNodeId !== undefined && node.id === targetNodeId) ||
+        (targetIp !== null && (
+          node.data.ip === targetIp ||
+          interfaces.some((iface) => iface.ipAddress === targetIp)
+        ));
+
+      if (matchesTarget) {
+        return node;
+      }
+    }
+
+    for (const neighborId of switchNeighbors) {
+      const match = this.findMatchingNodeThroughSwitches(
+        neighborId,
+        switchNodeId,
+        targetIp,
+        targetNodeId,
+        failureState,
+        visited,
+      );
+      if (match) return match;
+    }
+
+    return null;
+  }
+
+  private findFirstNonSwitchNode(
+    switchNodeId: string,
+    sourceNodeId: string,
+    failureState: FailureState,
+    visited = new Set<string>(),
+  ): NetlabNode | null {
+    if (visited.has(switchNodeId)) return null;
+    visited.add(switchNodeId);
+
+    const neighbors = this.getNeighbors(switchNodeId, sourceNodeId, failureState);
+    for (const neighbor of neighbors) {
+      const node = this.findNode(neighbor.nodeId);
+      if (!node) continue;
+      if (node.data.role !== 'switch') {
+        return node;
+      }
+    }
+
+    for (const neighbor of neighbors) {
+      const node = this.findNode(neighbor.nodeId);
+      if (!node || node.data.role !== 'switch') continue;
+
+      const match = this.findFirstNonSwitchNode(
+        node.id,
+        switchNodeId,
+        failureState,
+        visited,
+      );
+      if (match) return match;
+    }
+
+    return null;
+  }
+
+  private resolveEffectiveLayer2Destination(
+    currentNodeId: string,
+    nextNodeId: string,
+    packet: InFlightPacket,
+    failureState: FailureState,
+  ): NetlabNode | null {
+    const nextNode = this.findNode(nextNodeId);
+    if (!nextNode) return null;
+    if (nextNode.data.role !== 'switch') {
+      return nextNode;
+    }
+
+    const currentNode = this.findNode(currentNodeId);
+    if (!currentNode) return null;
+
+    let targetIp: string | null = packet.frame.payload.dstIp;
+    let targetNodeId: string | undefined = packet.dstNodeId;
+
+    if (currentNode.data.role === 'router') {
+      const route = bestRoute(
+        packet.frame.payload.dstIp,
+        this.topology.routeTables.get(currentNodeId) ?? [],
+      );
+      if (route?.nextHop && route.nextHop !== 'direct') {
+        targetIp = route.nextHop;
+        targetNodeId = undefined;
+      }
+    }
+
+    return (
+      this.findMatchingNodeThroughSwitches(
+        nextNodeId,
+        currentNodeId,
+        targetIp,
+        targetNodeId,
+        failureState,
+      ) ??
+      this.findFirstNonSwitchNode(nextNodeId, currentNodeId, failureState)
+    );
+  }
+
+  private resolveRouterMac(
+    currentNodeId: string,
+    routerNodeId: string,
+    packet: InFlightPacket,
+    egressInterfaceId?: string,
+  ): string | null {
+    const routerNode = this.findNode(routerNodeId);
+    if (!routerNode || routerNode.data.role !== 'router') return null;
+
+    const routerInterfaces = routerNode.data.interfaces ?? [];
+    const currentNode = this.findNode(currentNodeId);
+
+    if (currentNode?.data.role === 'router') {
+      const route = bestRoute(
+        packet.frame.payload.dstIp,
+        this.topology.routeTables.get(currentNodeId) ?? [],
+      );
+      if (route?.nextHop && route.nextHop !== 'direct') {
+        const nextHopInterface = routerInterfaces.find((iface) => iface.ipAddress === route.nextHop);
+        if (nextHopInterface) return nextHopInterface.macAddress;
+      }
+
+      const egressInterface = currentNode.data.interfaces?.find(
+        (iface) => iface.id === egressInterfaceId,
+      );
+      if (egressInterface) {
+        const subnetInterface = routerInterfaces.find((iface) =>
+          isInSubnet(
+            iface.ipAddress,
+            `${egressInterface.ipAddress}/${egressInterface.prefixLength}`,
+          ),
+        );
+        if (subnetInterface) return subnetInterface.macAddress;
+      }
+    }
+
+    const sourceIp = packet.frame.payload.srcIp;
+    const ingressFacingInterface = routerInterfaces.find((iface) =>
+      isInSubnet(sourceIp, `${iface.ipAddress}/${iface.prefixLength}`),
+    );
+
+    return ingressFacingInterface?.macAddress ?? routerInterfaces[0]?.macAddress ?? null;
+  }
+
+  private resolveDstMac(
+    currentNodeId: string,
+    nextNodeId: string,
+    egressInterfaceId: string | undefined,
+    packet: InFlightPacket,
+    failureState: FailureState,
+  ): string | null {
+    const destinationNode = this.resolveEffectiveLayer2Destination(
+      currentNodeId,
+      nextNodeId,
+      packet,
+      failureState,
+    );
+
+    if (!destinationNode) return null;
+
+    if (destinationNode.data.role === 'router') {
+      return (
+        this.resolveRouterMac(currentNodeId, destinationNode.id, packet, egressInterfaceId) ??
+        this.deriveDeterministicMac(destinationNode.id)
+      );
+    }
+
+    if (destinationNode.data.role === 'client' || destinationNode.data.role === 'server') {
+      return this.resolveEndpointMac(destinationNode.id);
+    }
+
+    return null;
+  }
+
+  private withIpv4HeaderChecksum(packet: InFlightPacket): InFlightPacket {
+    const ipPacket = packet.frame.payload;
+    const checksum = computeIpv4Checksum(
+      buildIpv4HeaderBytes(ipPacket, { checksumOverride: 0 }),
+    );
+
+    if (ipPacket.headerChecksum === checksum) {
+      return packet;
+    }
+
+    return {
+      ...packet,
+      frame: {
+        ...packet.frame,
+        payload: {
+          ...ipPacket,
+          headerChecksum: checksum,
+        },
+      },
+    };
+  }
+
+  private withFrameFcs(packet: InFlightPacket): InFlightPacket {
+    const fcs = computeFcs(
+      buildEthernetFrameBytes(
+        { ...packet.frame, fcs: 0 },
+        { includePreamble: false, includeFcs: false },
+      ),
+    );
+
+    if (packet.frame.fcs === fcs) {
+      return packet;
+    }
+
+    return {
+      ...packet,
+      frame: {
+        ...packet.frame,
+        fcs,
+      },
+    };
+  }
+
+  private diffPacketFields(before: InFlightPacket, after: InFlightPacket): string[] {
+    const changedFields: string[] = [];
+
+    if (before.frame.payload.ttl !== after.frame.payload.ttl) {
+      changedFields.push('TTL');
+    }
+    if (before.frame.payload.headerChecksum !== after.frame.payload.headerChecksum) {
+      changedFields.push('Header Checksum');
+    }
+    if (before.frame.srcMac !== after.frame.srcMac) {
+      changedFields.push('Src MAC');
+    }
+    if (before.frame.dstMac !== after.frame.dstMac) {
+      changedFields.push('Dst MAC');
+    }
+    if (before.frame.fcs !== after.frame.fcs) {
+      changedFields.push('FCS');
+    }
+
+    return changedFields;
+  }
+
+  private materializePacket(
+    packet: InFlightPacket,
+    failureState: FailureState,
+  ): InFlightPacket {
+    const currentNode = this.findNode(packet.currentDeviceId);
+    const ipPacket = packet.frame.payload;
+    let workingPacket: InFlightPacket = {
+      ...packet,
+      frame: {
+        ...packet.frame,
+        payload: {
+          ...ipPacket,
+          identification: ipPacket.identification ?? this.derivePacketIdentification(packet.id),
+        },
+      },
+    };
+
+    const next = this.resolveNextNode(
+      packet.currentDeviceId,
+      packet.frame.payload.dstIp,
+      null,
+      failureState,
+    );
+
+    if (currentNode?.data.role === 'router' && next) {
+      const egressInterface =
+        this.resolveEgressInterface(packet.currentDeviceId, packet.frame.payload.dstIp) ??
+        this.resolvePortFromEdge(packet.currentDeviceId, next.edgeId, 'egress');
+      const srcMac = currentNode.data.interfaces?.find(
+        (iface) => iface.id === egressInterface?.id,
+      )?.macAddress;
+      const dstMac = this.resolveDstMac(
+        packet.currentDeviceId,
+        next.nodeId,
+        egressInterface?.id,
+        workingPacket,
+        failureState,
+      );
+
+      workingPacket = {
+        ...workingPacket,
+        frame: {
+          ...workingPacket.frame,
+          srcMac: srcMac ?? workingPacket.frame.srcMac,
+          dstMac: dstMac ?? workingPacket.frame.dstMac,
+        },
+      };
+    } else if (currentNode?.data.role === 'client' || currentNode?.data.role === 'server') {
+      const resolvedSrcMac = this.resolveEndpointMac(currentNode.id);
+      const resolvedDstMac = next
+        ? this.resolveDstMac(
+            currentNode.id,
+            next.nodeId,
+            undefined,
+            workingPacket,
+            failureState,
+          )
+        : null;
+
+      workingPacket = {
+        ...workingPacket,
+        frame: {
+          ...workingPacket.frame,
+          srcMac:
+            resolvedSrcMac && this.isPlaceholderMac(workingPacket.frame.srcMac)
+              ? resolvedSrcMac
+              : workingPacket.frame.srcMac,
+          dstMac:
+            resolvedDstMac && this.isPlaceholderMac(workingPacket.frame.dstMac)
+              ? resolvedDstMac
+              : workingPacket.frame.dstMac,
+        },
+      };
+    }
+
+    return this.withFrameFcs(this.withIpv4HeaderChecksum(workingPacket));
+  }
+
   // ── Core precomputation ────────────────────────────────────────────────────
 
   async precompute(
@@ -254,7 +649,10 @@ export class SimulationEngine {
     let ingressFrom: string | null = null;
     let ingressEdgeId: string | null = null;
     let senderIp: string | null = null;
-    let workingPacket: InFlightPacket = { ...packet, currentDeviceId: current };
+    let workingPacket: InFlightPacket = this.materializePacket(
+      { ...packet, currentDeviceId: current },
+      failureState,
+    );
     const baseTs = Date.now();
 
     for (let step = 0; step < MAX_HOPS; step++) {
@@ -278,7 +676,7 @@ export class SimulationEngine {
       }
       visitedNodes.add(current);
 
-      const node = this.topology.nodes.find((n) => n.id === current);
+      const node = this.findNode(current);
       if (!node) {
         snapshots.push({ ...workingPacket });
         hops.push({
@@ -328,7 +726,6 @@ export class SimulationEngine {
         fromNodeId: ingressFrom ?? undefined,
         timestamp: baseTs,
       };
-      snapshots.push({ ...workingPacket });
 
       // Destination check: endpoint with matching IP
       if (
@@ -336,6 +733,7 @@ export class SimulationEngine {
         node.data.ip === ipPacket.dstIp
       ) {
         hop.event = 'deliver';
+        snapshots.push({ ...workingPacket });
         hops.push(hop);
         break;
       }
@@ -349,6 +747,8 @@ export class SimulationEngine {
           hop.ingressInterfaceName = ingressInterface.name;
         }
       }
+
+      const packetBeforeHop = workingPacket;
 
       // Call router forwarder for TTL decrement and drop detection
       if (node.data.role === 'router') {
@@ -366,6 +766,11 @@ export class SimulationEngine {
               const routes = this.topology.routeTables.get(current) ?? [];
               hop.routingDecision = buildRoutingDecision(ipPacket.dstIp, routes);
             }
+            const changedFields = this.diffPacketFields(packetBeforeHop, workingPacket);
+            if (changedFields.length > 0) {
+              hop.changedFields = changedFields;
+            }
+            snapshots.push({ ...workingPacket });
             hops.push(hop);
             break;
           }
@@ -386,6 +791,11 @@ export class SimulationEngine {
       if (!next) {
         hop.event = 'drop';
         hop.reason = 'no-route';
+        const changedFields = this.diffPacketFields(packetBeforeHop, workingPacket);
+        if (changedFields.length > 0) {
+          hop.changedFields = changedFields;
+        }
+        snapshots.push({ ...workingPacket });
         hops.push(hop);
         break;
       }
@@ -409,6 +819,11 @@ export class SimulationEngine {
         ) {
           hop.event = 'drop';
           hop.reason = 'interface-down';
+          const changedFields = this.diffPacketFields(packetBeforeHop, workingPacket);
+          if (changedFields.length > 0) {
+            hop.changedFields = changedFields;
+          }
+          snapshots.push({ ...workingPacket });
           hops.push(hop);
           break;
         }
@@ -419,10 +834,25 @@ export class SimulationEngine {
       hop.activeEdgeId = next.edgeId;
 
       if (node.data.role === 'router') {
+        const rewrittenDstMac = this.resolveDstMac(
+          current,
+          next.nodeId,
+          hop.egressInterfaceId,
+          workingPacket,
+          failureState,
+        );
         const egressIface = node.data.interfaces?.find(
           (iface) => iface.id === hop.egressInterfaceId,
         );
         senderIp = egressIface?.ipAddress ?? null;
+        workingPacket = this.withFrameFcs({
+          ...workingPacket,
+          frame: {
+            ...workingPacket.frame,
+            srcMac: egressIface?.macAddress ?? workingPacket.frame.srcMac,
+            dstMac: rewrittenDstMac ?? workingPacket.frame.dstMac,
+          },
+        });
       } else if (node.data.role === 'client' || node.data.role === 'server') {
         senderIp = node.data.ip ?? null;
       } else if (node.data.role === 'switch') {
@@ -433,6 +863,12 @@ export class SimulationEngine {
         }
       }
 
+      const changedFields = this.diffPacketFields(packetBeforeHop, workingPacket);
+      if (changedFields.length > 0) {
+        hop.changedFields = changedFields;
+      }
+
+      snapshots.push({ ...workingPacket });
       hops.push(hop);
 
       ingressFrom = current;

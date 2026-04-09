@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { RouterForwarder } from './RouterForwarder';
 import type { NetworkTopology } from '../../types/topology';
 import type { InFlightPacket } from '../../types/packets';
+import { computeIpv4Checksum } from '../../utils/checksum';
+import { buildIpv4HeaderBytes } from '../../utils/packetLayout';
 
 function makeTopology(routeTable: Record<string, Array<{ destination: string; nextHop: string }>>): NetworkTopology {
   const routeTables = new Map<string, ReturnType<typeof makeRouteEntries>>();
@@ -113,6 +115,39 @@ describe('RouterForwarder', () => {
     expect(result.action).toBe('forward');
     const fwd = result as { action: 'forward'; packet: InFlightPacket };
     expect(fwd.packet.frame.payload.ttl).toBe(63);
+  });
+
+  it('sets the IPv4 header checksum after TTL decrement', async () => {
+    const topology = makeTopology({
+      'router-1': [{ destination: '203.0.113.0/24', nextHop: '203.0.113.254' }],
+    });
+    const forwarder = new RouterForwarder('router-1', topology);
+    const result = await forwarder.receive(makePacket('203.0.113.10', 64), 'eth0');
+
+    expect(result.action).toBe('forward');
+    const forwardedPacket = (result as { action: 'forward'; packet: InFlightPacket }).packet;
+    const expectedChecksum = computeIpv4Checksum(
+      buildIpv4HeaderBytes(forwardedPacket.frame.payload, { checksumOverride: 0 }),
+    );
+
+    expect(forwardedPacket.frame.payload.headerChecksum).toBe(expectedChecksum);
+    expect(expectedChecksum).not.toBe(0);
+  });
+
+  it('changes the IPv4 header checksum across successive hops', async () => {
+    const topology = makeTopology({
+      'router-1': [{ destination: '203.0.113.0/24', nextHop: '203.0.113.254' }],
+    });
+    const forwarder = new RouterForwarder('router-1', topology);
+
+    const firstResult = await forwarder.receive(makePacket('203.0.113.10', 64), 'eth0');
+    const firstPacket = (firstResult as { action: 'forward'; packet: InFlightPacket }).packet;
+    const secondResult = await forwarder.receive(firstPacket, 'eth0');
+    const secondPacket = (secondResult as { action: 'forward'; packet: InFlightPacket }).packet;
+
+    expect(firstPacket.frame.payload.headerChecksum).not.toBe(secondPacket.frame.payload.headerChecksum);
+    expect(firstPacket.frame.payload.ttl).toBe(63);
+    expect(secondPacket.frame.payload.ttl).toBe(62);
   });
 
   it('uses most-specific route (longest prefix match)', async () => {
