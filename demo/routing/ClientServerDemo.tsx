@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
-import { RouteTable } from '../../src/components/controls/RouteTable';
 import { AreaLegend } from '../../src/components/controls/AreaLegend';
 import { SimulationProvider } from '../../src/simulation/SimulationContext';
 import { SimulationControls } from '../../src/components/simulation/SimulationControls';
-import { PacketViewer } from '../../src/components/simulation/PacketViewer';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
+import { SimulationOverlayDock } from '../../src/components/simulation/SimulationOverlayDock';
 import { ResizableSidebar } from '../../src/components/ResizableSidebar';
 import type { NetworkTopology } from '../../src/types/topology';
 import type { NetworkArea } from '../../src/types/areas';
@@ -184,10 +183,8 @@ export default function ClientServerDemo() {
               {/* Canvas */}
               <div style={{ flex: 1, position: 'relative' }}>
                 <NetlabCanvas />
-                <RouteTable />
+                <SimulationOverlayDock showRouteTable />
                 <AreaLegend />
-                {/* PacketViewer floats over canvas */}
-                <PacketViewer />
               </div>
 
               {/* Timeline panel */}
