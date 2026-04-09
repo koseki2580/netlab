@@ -31,7 +31,7 @@ export interface PacketHop {
   ingressInterfaceName?: string;
   egressInterfaceId?: string;
   egressInterfaceName?: string;
-  reason?: string;          // populated only when event === 'drop'
+  reason?: string;          // known values include node-down, interface-down, no-route, ttl-exceeded
   routingDecision?: RoutingDecision;  // present only when nodeId is a router, never on TTL drops
   timestamp: number;
 }

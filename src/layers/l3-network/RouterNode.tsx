@@ -3,6 +3,7 @@ import type { NetlabNodeData } from '../../types/topology';
 import { useNetlabUI } from '../../components/NetlabUIContext';
 
 const ROUTER_STYLE: React.CSSProperties = {
+  position: 'relative',
   background: '#0f2a1a',
   border: '2px solid #166534',
   borderRadius: 10,
@@ -42,6 +43,7 @@ function RouterIcon() {
 export function RouterNode({ id, data }: NodeProps) {
   const { setSelectedNodeId } = useNetlabUI();
   const d = data as NetlabNodeData;
+  const downInterfaceCount = typeof d._downInterfaceCount === 'number' ? d._downInterfaceCount : 0;
   return (
     <div style={ROUTER_STYLE} onClick={() => setSelectedNodeId(id)}>
       <Handle type="source" position={Position.Top}    id="top"    style={HANDLE_STYLE} />
@@ -52,6 +54,26 @@ export function RouterNode({ id, data }: NodeProps) {
         <RouterIcon />
       </div>
       <div style={{ fontWeight: 'bold', fontSize: 11, color: '#e2e8f0' }}>{d.label}</div>
+      {downInterfaceCount > 0 && (
+        <div
+          style={{
+            position: 'absolute',
+            right: -8,
+            bottom: -8,
+            background: '#ef4444',
+            color: '#fff',
+            borderRadius: 4,
+            padding: '1px 4px',
+            fontSize: 9,
+            fontWeight: 'bold',
+            lineHeight: 1.2,
+            pointerEvents: 'none',
+            boxShadow: '0 1px 2px rgba(15, 23, 42, 0.45)',
+          }}
+        >
+          {downInterfaceCount} iface{downInterfaceCount > 1 ? 's' : ''} down
+        </div>
+      )}
     </div>
   );
 }

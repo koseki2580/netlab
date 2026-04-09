@@ -5,7 +5,7 @@ import type { NetworkTopology } from '../types/topology';
 import type { InFlightPacket } from '../types/packets';
 import type { RouteEntry } from '../types/routing';
 import type { PacketHop, PacketTrace, SimulationState, RoutingDecision, RoutingCandidate } from '../types/simulation';
-import { type FailureState, EMPTY_FAILURE_STATE } from '../types/failure';
+import { type FailureState, EMPTY_FAILURE_STATE, makeInterfaceFailureId } from '../types/failure';
 
 const MAX_HOPS = 64;
 const DEFAULT_PLAY_INTERVAL_MS = 500;
@@ -390,19 +390,35 @@ export class SimulationEngine {
         break;
       }
 
+      let routerEgressInterface: ResolvedInterface | null = null;
+
+      if (node.data.role === 'router') {
+        routerEgressInterface =
+          this.resolveEgressInterface(current, ipPacket.dstIp) ??
+          this.resolvePortFromEdge(current, next.edgeId, 'egress');
+        if (routerEgressInterface) {
+          hop.egressInterfaceId = routerEgressInterface.id;
+          hop.egressInterfaceName = routerEgressInterface.name;
+        }
+
+        if (
+          routerEgressInterface &&
+          failureState.downInterfaceIds.has(
+            makeInterfaceFailureId(current, routerEgressInterface.id),
+          )
+        ) {
+          hop.event = 'drop';
+          hop.reason = 'interface-down';
+          hops.push(hop);
+          break;
+        }
+      }
+
       hop.event = step === 0 ? 'create' : 'forward';
       hop.toNodeId = next.nodeId;
       hop.activeEdgeId = next.edgeId;
 
       if (node.data.role === 'router') {
-        const egressInterface =
-          this.resolveEgressInterface(current, ipPacket.dstIp) ??
-          this.resolvePortFromEdge(current, next.edgeId, 'egress');
-        if (egressInterface) {
-          hop.egressInterfaceId = egressInterface.id;
-          hop.egressInterfaceName = egressInterface.name;
-        }
-
         const egressIface = node.data.interfaces?.find(
           (iface) => iface.id === hop.egressInterfaceId,
         );

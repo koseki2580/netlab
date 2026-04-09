@@ -1,13 +1,15 @@
 import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
-import { type FailureState, EMPTY_FAILURE_STATE } from '../types/failure';
+import { type FailureState, EMPTY_FAILURE_STATE, makeInterfaceFailureId } from '../types/failure';
 
 export interface FailureContextValue {
   failureState: FailureState;
   toggleNode: (nodeId: string) => void;
   toggleEdge: (edgeId: string) => void;
+  toggleInterface: (nodeId: string, interfaceId: string) => void;
   resetFailures: () => void;
   isNodeDown: (nodeId: string) => boolean;
   isEdgeDown: (edgeId: string) => boolean;
+  isInterfaceDown: (nodeId: string, interfaceId: string) => boolean;
 }
 
 export const FailureContext = createContext<FailureContextValue | null>(null);
@@ -31,6 +33,15 @@ export function FailureProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const toggleInterface = useCallback((nodeId: string, interfaceId: string) => {
+    setFailureState((prev) => {
+      const next = new Set(prev.downInterfaceIds);
+      const failureId = makeInterfaceFailureId(nodeId, interfaceId);
+      if (next.has(failureId)) next.delete(failureId); else next.add(failureId);
+      return { ...prev, downInterfaceIds: next };
+    });
+  }, []);
+
   const resetFailures = useCallback(() => setFailureState(EMPTY_FAILURE_STATE), []);
 
   const isNodeDown = useCallback(
@@ -43,9 +54,33 @@ export function FailureProvider({ children }: { children: ReactNode }) {
     [failureState],
   );
 
+  const isInterfaceDown = useCallback(
+    (nodeId: string, interfaceId: string) =>
+      failureState.downInterfaceIds.has(makeInterfaceFailureId(nodeId, interfaceId)),
+    [failureState],
+  );
+
   const value = useMemo(
-    () => ({ failureState, toggleNode, toggleEdge, resetFailures, isNodeDown, isEdgeDown }),
-    [failureState, toggleNode, toggleEdge, resetFailures, isNodeDown, isEdgeDown],
+    () => ({
+      failureState,
+      toggleNode,
+      toggleEdge,
+      toggleInterface,
+      resetFailures,
+      isNodeDown,
+      isEdgeDown,
+      isInterfaceDown,
+    }),
+    [
+      failureState,
+      toggleNode,
+      toggleEdge,
+      toggleInterface,
+      resetFailures,
+      isNodeDown,
+      isEdgeDown,
+      isInterfaceDown,
+    ],
   );
 
   return <FailureContext.Provider value={value}>{children}</FailureContext.Provider>;

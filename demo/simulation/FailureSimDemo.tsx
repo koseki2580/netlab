@@ -173,7 +173,10 @@ function FailureSimDemoInner() {
     void sendPacket(makePacket(client.id, server.id, srcIp, dstIp));
   };
 
-  const downCount = failureState.downNodeIds.size + failureState.downEdgeIds.size;
+  const downCount =
+    failureState.downNodeIds.size +
+    failureState.downEdgeIds.size +
+    failureState.downInterfaceIds.size;
 
   return (
     <div style={{ display: 'flex', height: '100%' }}>
