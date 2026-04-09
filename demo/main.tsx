@@ -23,6 +23,7 @@ import TraceInspectorDemo from './simulation/TraceInspectorDemo';
 import InterfaceAwareDemo from './simulation/InterfaceAwareDemo';
 import SessionDemo from './simulation/SessionDemo';
 import EmbedDemo from './embed/EmbedDemo';
+import AllInOneDemo from './comprehensive/AllInOneDemo';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Root element not found');
@@ -46,6 +47,7 @@ createRoot(root).render(
         <Route path="/simulation/interface-aware" element={<InterfaceAwareDemo />} />
         <Route path="/simulation/session" element={<SessionDemo />} />
         <Route path="/embed" element={<EmbedDemo />} />
+        <Route path="/comprehensive/all-in-one" element={<AllInOneDemo />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </HashRouter>
