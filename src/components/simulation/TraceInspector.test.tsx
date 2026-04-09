@@ -280,6 +280,31 @@ describe('Trace Inspector components', () => {
     expect(html).not.toContain('Egress If');
   });
 
+  it('HopInspector empty state uses the secondary text token for visible copy', () => {
+    const html = renderWithContexts(
+      <HopInspector />,
+      makeState({ selectedHop: null }),
+    );
+
+    expect(html).toContain('No hop selected. Click a timeline row to inspect packet details.');
+    expect(html).toContain('var(--netlab-text-secondary)');
+    expect(html).not.toContain('var(--netlab-text-muted)');
+  });
+
+  it('HopInspector uses the secondary text token for section headers and routing table headers', () => {
+    const html = renderWithContexts(
+      <HopInspector />,
+      makeState({ selectedHop: BASE_HOPS[1] }),
+    );
+
+    expect(html).toContain('HOP INSPECTOR');
+    expect(html).toContain('HOP FIELDS');
+    expect(html).toContain('ROUTING DECISION');
+    expect(html).toContain('DESTINATION');
+    expect(html).toContain('var(--netlab-text-secondary)');
+    expect(html).not.toContain('var(--netlab-text-muted)');
+  });
+
   it('TraceSummary maps in-flight traces to the in-progress label', () => {
     const trace: PacketTrace = {
       packetId: 'pkt-in-flight',
