@@ -47,6 +47,7 @@ interface MockConnection {
 interface MockReactFlowProps {
   nodes: MockNode[];
   edges: MockEdge[];
+  colorMode?: 'light' | 'dark';
   onNodesChange?: (changes: MockNodeChange[]) => void;
   onEdgesChange?: (changes: MockEdgeChange[]) => void;
   onConnect?: (connection: MockConnection) => void;
@@ -324,6 +325,26 @@ describe('NetlabCanvas controlled topology API', () => {
     const props = currentReactFlowProps();
     expect(props.nodes).toHaveLength(2);
     expect(props.edges).toHaveLength(1);
+  });
+
+  it('defaults React Flow to dark color mode', () => {
+    render(
+      <NetlabProvider topology={makeTopology()}>
+        <NetlabCanvas />
+      </NetlabProvider>,
+    );
+
+    expect(currentReactFlowProps().colorMode).toBe('dark');
+  });
+
+  it('forwards the requested React Flow color mode', () => {
+    render(
+      <NetlabProvider topology={makeTopology()}>
+        <NetlabCanvas colorMode="light" />
+      </NetlabProvider>,
+    );
+
+    expect(currentReactFlowProps().colorMode).toBe('light');
   });
 
   it('fires onTopologyChange when a new edge is connected', () => {

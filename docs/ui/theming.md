@@ -203,3 +203,25 @@ const vars = themeToVars(NETLAB_LIGHT_THEME);
 ## Scope
 
 The theming system covers UI chrome and node rendering. Container backgrounds, overlay panels, toolbars, text, borders, node backgrounds, node icons, node handles, and edge state colors all consume `--netlab-*` variables. See [Node Theming](./node-theming.md) for the node-specific token and styling rules.
+
+## React Flow Color Mode Alignment
+
+Netlab uses React Flow as its canvas engine. React Flow maintains its own internal CSS variable layer (`--xy-*`) for pane backgrounds, background dots, handle colors, minimap surfaces, and controls. Those variables are independent of the `--netlab-*` theme tokens injected by `NetlabApp`.
+
+`ReactFlow`'s `colorMode` prop must stay aligned with the resolved Netlab theme:
+
+- `colorMode="dark"` keeps React Flow's dark pane and control palette
+- `colorMode="light"` switches React Flow to its light/transparent pane and light-mode control palette
+
+`NetlabApp` derives the correct `colorMode` from the resolved theme's `bgPrimary` value using perceived luminance (ITU-R BT.601):
+
+```ts
+luminance = 0.299 * R + 0.587 * G + 0.114 * B
+colorMode = luminance > 128 ? 'light' : 'dark'
+```
+
+`NetlabCanvas` accepts an optional `colorMode` prop and forwards it to `ReactFlow`. Consumers who embed `NetlabCanvas` directly outside `NetlabApp` must pass the correct `colorMode` when using a light background.
+
+This derivation only applies to colors supplied through the `theme` prop. If a host page overrides `--netlab-*` variables purely through external CSS, `NetlabApp` cannot infer React Flow's mode from those runtime CSS values, so direct `NetlabCanvas` embeddings should set `colorMode` explicitly for light-mode canvases.
+
+If `colorMode` and the active theme do not match, React Flow renders its pane with the wrong `--xy-*` palette. In practice, a light Netlab theme paired with `colorMode="dark"` produces a dark canvas overlay that hides pane details, makes node/default-handle styling illegible, and blocks expected pointer interaction on the canvas.

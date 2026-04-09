@@ -30,6 +30,7 @@ import { SimulationContext } from '../simulation/SimulationContext';
 import { useOptionalFailure } from '../simulation/FailureContext';
 import type { NetlabNode, NetlabEdge, TopologySnapshot } from '../types/topology';
 import type { RouterInterface } from '../types/routing';
+import type { NetlabColorMode } from '../utils/themeUtils';
 
 const AREA_NODE_TYPE: NodeTypes = {
   'netlab-area': AreaBackground as NodeTypes[string],
@@ -43,6 +44,7 @@ function excludeAreaNodes(nodes: { id: string }[]): NetlabNode[] {
 export interface NetlabCanvasProps {
   style?: React.CSSProperties;
   className?: string;
+  colorMode?: NetlabColorMode;
   onNodesChange?: (nodes: NetlabNode[]) => void;
   onEdgesChange?: (edges: NetlabEdge[]) => void;
   onTopologyChange?: (topology: TopologySnapshot) => void;
@@ -51,6 +53,7 @@ export interface NetlabCanvasProps {
 export function NetlabCanvas({
   style,
   className,
+  colorMode = 'dark',
   onNodesChange: onNodesChangeProp,
   onEdgesChange: onEdgesChangeProp,
   onTopologyChange,
@@ -215,6 +218,7 @@ export function NetlabCanvas({
           nodes={styledNodes}
           edges={styledEdges}
           nodeTypes={nodeTypes}
+          colorMode={colorMode}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
