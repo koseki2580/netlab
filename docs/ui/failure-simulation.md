@@ -1,6 +1,6 @@
 # Failure Simulation
 
-Netlab supports injecting node and link failures into the simulation. When a node or edge is marked as "down", the simulation engine skips it during packet path precomputation. Failed components are also highlighted visually on the canvas.
+Netlab supports injecting node, link, and router-interface failures into the simulation. Failure state is captured as an immutable snapshot and applied during packet-path precomputation. Failed components are also surfaced in the UI so users can see why a trace was rerouted or dropped.
 
 ## FailureState
 
@@ -8,57 +8,89 @@ Netlab supports injecting node and link failures into the simulation. When a nod
 interface FailureState {
   readonly downNodeIds: ReadonlySet<string>;
   readonly downEdgeIds: ReadonlySet<string>;
+  readonly downInterfaceIds: ReadonlySet<string>;
 }
 
 const EMPTY_FAILURE_STATE: FailureState = {
   downNodeIds: new Set(),
   downEdgeIds: new Set(),
+  downInterfaceIds: new Set(),
 };
 ```
 
-`FailureState` is an immutable snapshot passed to `SimulationEngine.send()` at the moment a packet is sent. The engine does not hold a live reference; it reads the snapshot once during `precompute`.
+`FailureState` is passed to `SimulationEngine.send()` or `SimulationEngine.precompute()` as a snapshot. The engine does not subscribe to future changes.
+
+### Interface ID semantics
+
+`downInterfaceIds` stores node-scoped interface keys in the format `nodeId:interfaceId`, for example `router-1:eth1`.
+
+- This avoids collisions when multiple routers use common interface names such as `eth0`.
+- The control panel still shows human-friendly labels such as `R-1 / eth1`.
+- Engine checks derive the same key from the current router node ID and the resolved egress interface ID.
 
 ## Drop Reasons
 
-When a packet encounters a failure, a `PacketHop` with `event: 'drop'` is emitted. The `reason` field describes the cause:
+When a packet encounters a failure, a `PacketHop` with `event: 'drop'` is emitted.
 
 | Reason | Trigger |
 |---|---|
-| `'node-down'` | `currentNode` is in `downNodeIds`; packet dropped immediately on arrival |
-| `'no-route'` | All edges to the LPM next-hop are in `downEdgeIds`; router has no reachable neighbor |
+| `'node-down'` | The current node is in `downNodeIds` |
+| `'interface-down'` | A router resolves an egress interface and its `nodeId:interfaceId` key is in `downInterfaceIds` |
+| `'no-route'` | Neighbor resolution fails after `downEdgeIds` removes unusable links |
 
-The existing reasons (`routing-loop`, `ttl-exceeded`, `node-not-found`) are unchanged.
+The existing reasons (`routing-loop`, `ttl-exceeded`, `node-not-found`, forwarder-specific drops) remain unchanged.
 
 ## Engine Behavior
 
 ### Down Nodes (`downNodeIds`)
 
-At the start of each hop, after the `node-not-found` guard, the engine checks:
-
-```typescript
-if (failureState.downNodeIds.has(current)) {
-  // push drop hop with reason: 'node-down' and break
-}
-```
-
-The packet is dropped without TTL decrement, routing lookup, or forwarder invocation.
+At the start of each hop, the engine checks whether the current node is down. If it is, the packet is dropped immediately with `reason: 'node-down'`.
 
 ### Down Edges (`downEdgeIds`)
 
-`getNeighbors` skips edges present in `downEdgeIds`:
+`getNeighbors()` skips edges in `downEdgeIds`, so topology traversal behaves as if those links do not exist. If no remaining neighbor satisfies the forwarding decision, `resolveNextNode()` returns `null` and the hop becomes a `no-route` drop.
 
-```typescript
-for (const edge of topology.edges) {
-  if (failureState.downEdgeIds.has(edge.id)) continue;
-  // ...
-}
-```
+### Down Interfaces (`downInterfaceIds`)
 
-When the LPM winner's next-hop cannot be resolved through any available neighbor (all edges to that neighbor are down), `resolveNextNode` returns `null`, causing a `no-route` drop. If an alternate neighbor matches a lower-priority route, the packet is automatically rerouted through it.
+Router interface failure is an egress-only check in this iteration:
 
-### Static Route Recalculation
+1. The engine resolves the next node through the topology graph.
+2. If a next hop exists and the current node is a router, the engine resolves the router egress interface.
+3. If that interface is in `downInterfaceIds`, the packet is dropped with `reason: 'interface-down'`.
 
-Static route tables are not modified when failures are injected. Instead, the engine's neighbor resolution step (topology graph walk) reacts to down edges. If a router has two routes to the same destination (e.g., primary via R-2 and a fallback default route via R-3), toggling the primary link causes R-2 to disappear from the neighbor list, and the fallback route's next-hop (R-3) becomes the resolved path.
+This preserves existing node-down and edge-down behavior while adding a more specific router-port failure mode.
+
+### Failure precedence
+
+| Order | Check | Outcome |
+|---|---|---|
+| 1 | current node in `downNodeIds` | `'node-down'` drop |
+| 2 | router forwarder TTL / forwarding checks | existing router drop reasons |
+| 3 | `resolveNextNode()` with `downEdgeIds` applied | `'no-route'` drop |
+| 4 | resolved router egress interface in `downInterfaceIds` | `'interface-down'` drop |
+| 5 | successful traversal | create / forward / deliver |
+
+## Egress Interface Resolution
+
+Router interface-down checks reuse the same subnet-based egress resolution used for hop annotation:
+
+1. Find the best route for `dstIp` by longest-prefix match.
+2. Choose the lookup target:
+   - `dstIp` for `direct` routes
+   - `route.nextHop` for routed paths
+3. Select the first local router interface whose `ipAddress/prefixLength` subnet contains that target IP.
+
+If no interface can be resolved confidently, the engine leaves interface metadata unset and does not emit an `interface-down` drop for that hop.
+
+## Static Routing Interaction
+
+Static route tables are not recomputed when failures are toggled. Instead:
+
+- node failure is handled at hop execution time
+- link failure is handled by neighbor filtering
+- interface failure is handled after the next node is known but before traversal occurs
+
+This keeps the feature incremental and leaves room for future dynamic-routing reactions.
 
 ## FailureContext
 
@@ -67,22 +99,24 @@ interface FailureContextValue {
   failureState: FailureState;
   toggleNode: (nodeId: string) => void;
   toggleEdge: (edgeId: string) => void;
+  toggleInterface: (nodeId: string, interfaceId: string) => void;
   resetFailures: () => void;
   isNodeDown: (nodeId: string) => boolean;
   isEdgeDown: (edgeId: string) => boolean;
+  isInterfaceDown: (nodeId: string, interfaceId: string) => boolean;
 }
 ```
 
-`FailureProvider` holds `FailureState` in React state and exposes immutable toggle operations. Each toggle creates new `Set` instances (immutable update pattern) to trigger React re-renders.
+`FailureProvider` owns the current `FailureState` in React state. Each toggle creates new `Set` instances so React consumers re-render predictably.
 
 Two hooks are provided:
 
-- `useFailure()` — throws if used outside `<FailureProvider>`
-- `useOptionalFailure()` — returns `null` if no provider in tree; used by `SimulationContext` and `NetlabCanvas` for opt-in integration
+- `useFailure()` throws if used outside `<FailureProvider>`
+- `useOptionalFailure()` returns `null` when no provider is mounted
 
 ## Provider Hierarchy
 
-`FailureProvider` must wrap `SimulationProvider` so that `sendPacket` captures the current failure state:
+`FailureProvider` must wrap `SimulationProvider` so packets are sent with the current failure snapshot:
 
 ```tsx
 <NetlabProvider topology={topology}>
@@ -94,48 +128,59 @@ Two hooks are provided:
 </NetlabProvider>
 ```
 
-`FailureProvider` is entirely optional. Apps that do not need failure simulation simply omit it.
+## FailureTogglePanel
 
-## FailureTogglePanel Component
+`<FailureTogglePanel />` renders sections for nodes, links, and router interfaces.
 
-`<FailureTogglePanel />` renders a panel listing all topology nodes and edges with toggle buttons.
+### Interface section
 
-**Props:** none (reads from `useFailure()` and `useNetlabContext()`)
+- Only nodes with `data.interfaces` are listed.
+- Each row label uses `{node label} / {interface name}`.
+- Toggling a row adds or removes the node-scoped interface key from `downInterfaceIds`.
 
-**Layout:**
+Example layout:
 
-```
+```text
 ┌──────────────────────────────────┐
 │ FAILURE INJECTION                │
 ├──────────────────────────────────┤
 │ NODES                            │
-│  Client        ● UP   [Toggle]   │
-│  Router-1      ● DOWN [Toggle]   │
-├──────────────────────────────────┤
 │ LINKS                            │
-│  Client ↔ Router-1  ● UP  [Tgl] │
-│  Router-1 ↔ Server  ● DOWN [Tgl]│
+│ INTERFACES                       │
+│  R-1 / eth1      DOWN [Toggle]   │
 ├──────────────────────────────────┤
 │         [ Reset All ]            │
 └──────────────────────────────────┘
 ```
 
-- Status badge is green (`#4ade80`) for UP, red (`#f87171`) for DOWN
-- Edge labels use `srcNode.data.label ↔ dstNode.data.label`
-- "Reset All" calls `resetFailures()`
-
 ## Visual Styling
 
-`NetlabCanvas` reads `useOptionalFailure()` and applies styles:
+`NetlabCanvas` applies existing failure visuals and adds router-interface annotations:
 
-**Down edges:**
+- down nodes: `opacity: 0.4`, `filter: grayscale(80%)`
+- down edges: red dashed stroke
+- routers with one or more down interfaces: a small badge rendered by `RouterNode`
+
+The badge is driven by a transient runtime field on node data:
+
 ```typescript
-{ stroke: '#ef4444', strokeDasharray: '6 3', strokeWidth: 2, opacity: 0.7 }
+data._downInterfaceCount
 ```
 
-**Down nodes:**
-```typescript
-{ opacity: 0.4, filter: 'grayscale(80%)' }
-```
+This keeps authored topology data separate from canvas-only state.
 
-These styles are applied via a `styledNodes` memo (parallel to the existing `styledEdges` memo) and override any other styles.
+## Demo Expectations
+
+The existing failure demo is sufficient for interface failures because it already contains multi-interface routers. Users should be able to:
+
+1. send a packet successfully with no failures
+2. toggle a router interface down
+3. send the packet again and observe an `interface-down` drop plus the router badge
+
+## Future Extension
+
+The current design is intentionally compatible with future routing-protocol integration:
+
+- `FailureState` remains an immutable snapshot API
+- `FailureContext` can notify future protocol orchestration
+- routing protocols can later treat interface-down as a topology-change signal and recompute routes without redesigning the failure UI
