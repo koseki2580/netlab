@@ -57,7 +57,7 @@ Specifications for protocol implementations based on the OSI model and network d
 
 Specifications related to demo environment setup, integration using query parameters, and continuous integration.
 
-- [Demo Structure](deployment/demo-structure.md) - Demo screen configurations for tutorials and gallery items
+- [Demo Structure](deployment/demo-structure.md) - Demo screen configurations for tutorials and gallery items, including shared GitHub source links and the All-in-One comprehensive demo
 - [Query Params](deployment/query-params.md) - Topology data sharing and restoration methods via URL parameters
 - [CI/CD](deployment/ci-cd.md) - Automated testing and deployment environments setup using GitHub Actions
 - [Embed](deployment/embed.md) - Embedding NetlabApp in external web pages with configurable width/height
