@@ -108,7 +108,7 @@ function HopFields({
     >
       <div
         style={{
-          color: 'var(--netlab-text-muted)',
+          color: 'var(--netlab-text-secondary)',
           fontSize: 10,
           fontWeight: 'bold',
           letterSpacing: 1,
@@ -138,7 +138,7 @@ function RoutingSection({ decision }: { decision: RoutingDecision }) {
     >
       <div
         style={{
-          color: 'var(--netlab-text-muted)',
+          color: 'var(--netlab-text-secondary)',
           fontSize: 10,
           fontWeight: 'bold',
           letterSpacing: 1,
@@ -177,7 +177,7 @@ function RoutingSection({ decision }: { decision: RoutingDecision }) {
             gap: 8,
             padding: '6px 8px',
             background: 'var(--netlab-bg-surface)',
-            color: 'var(--netlab-text-muted)',
+            color: 'var(--netlab-text-secondary)',
             fontWeight: 'bold',
             letterSpacing: 0.4,
             fontSize: 10,
@@ -193,7 +193,7 @@ function RoutingSection({ decision }: { decision: RoutingDecision }) {
         </div>
 
         {decision.candidates.length === 0 ? (
-          <div style={{ padding: '10px 8px', color: 'var(--netlab-text-muted)' }}>
+          <div style={{ padding: '10px 8px', color: 'var(--netlab-text-secondary)' }}>
             No routing candidates.
           </div>
         ) : (
@@ -358,7 +358,7 @@ export function HopInspector() {
           style={{
             padding: '12px 14px',
             borderBottom: '1px solid var(--netlab-border-subtle)',
-            color: 'var(--netlab-text-muted)',
+            color: 'var(--netlab-text-secondary)',
             fontSize: 10,
             fontWeight: 'bold',
             letterSpacing: 1,
@@ -373,7 +373,7 @@ export function HopInspector() {
         <div
           style={{
             padding: '16px 14px',
-            color: 'var(--netlab-text-muted)',
+            color: 'var(--netlab-text-secondary)',
             fontSize: 12,
           }}
         >
@@ -410,7 +410,7 @@ export function HopInspector() {
       >
         <div
           style={{
-            color: 'var(--netlab-text-muted)',
+            color: 'var(--netlab-text-secondary)',
             fontSize: 10,
             fontWeight: 'bold',
             letterSpacing: 1,

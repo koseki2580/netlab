@@ -87,6 +87,13 @@ The routing section follows the same information model already used in `StepCont
 
 If `decision.winner` is present, the explanation uses a success tint. If no winner exists, the explanation uses a warning tint.
 
+#### Header and empty-state colors
+
+- Section headers such as `HOP INSPECTOR`, `HOP FIELDS`, and `ROUTING DECISION` use `--netlab-text-secondary`
+- Routing table column headers use `--netlab-text-secondary`
+- The empty-state message (`No hop selected...`) also uses `--netlab-text-secondary`
+- `--netlab-text-muted` is reserved for more subdued hint text outside the inspector sections
+
 #### Interface rows
 
 When `PacketHop.ingressInterfaceName` or `PacketHop.egressInterfaceName` is present, `HopInspector` renders:
@@ -170,3 +177,11 @@ The feature includes a dedicated `TraceInspectorDemo` registered in the Gallery.
 - Styling uses inline React styles
 - Colors should respect existing `var(--netlab-*)` CSS custom properties where available
 - The new panels should visually align with existing simulation UI components rather than introducing a separate design system
+
+### Accessibility
+
+Section headers (`HOP INSPECTOR`, `HOP FIELDS`, `ROUTING DECISION`) and routing table column headers use `--netlab-text-secondary` (`#94a3b8`) against the dark inspector panel background `--netlab-bg-panel` (`#0f172a`).
+
+This pairing yields approximately `5.9:1` contrast, which satisfies WCAG 2.1 AA for normal text.
+
+Do not use `--netlab-text-muted` (`#64748b`) for visible inspector headers or status text. On the same dark background it yields approximately `3.1:1` contrast and fails AA.
