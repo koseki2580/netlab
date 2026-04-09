@@ -7,7 +7,7 @@ import { SwitchForwarder } from '../layers/l2-datalink/SwitchForwarder';
 import type { NetworkTopology } from '../types/topology';
 import type { InFlightPacket, EthernetFrame } from '../types/packets';
 import type { RouteEntry } from '../types/routing';
-import { type FailureState, EMPTY_FAILURE_STATE } from '../types/failure';
+import { type FailureState, EMPTY_FAILURE_STATE, makeInterfaceFailureId } from '../types/failure';
 
 // Register forwarders once without importing React components
 beforeAll(() => {
@@ -803,6 +803,7 @@ describe('SimulationEngine failure simulation', () => {
     const failureState: FailureState = {
       downNodeIds: new Set(['router-1']),
       downEdgeIds: new Set(),
+      downInterfaceIds: new Set(),
     };
     const trace = await engine.precompute(
       makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
@@ -819,6 +820,7 @@ describe('SimulationEngine failure simulation', () => {
     const failureState: FailureState = {
       downNodeIds: new Set(['client-1']),
       downEdgeIds: new Set(),
+      downInterfaceIds: new Set(),
     };
     const trace = await engine.precompute(
       makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
@@ -835,6 +837,7 @@ describe('SimulationEngine failure simulation', () => {
     const failureState: FailureState = {
       downNodeIds: new Set(),
       downEdgeIds: new Set(['e2']), // router-1 → server-1
+      downInterfaceIds: new Set(),
     };
     const trace = await engine.precompute(
       makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
@@ -853,6 +856,7 @@ describe('SimulationEngine failure simulation', () => {
     const failureState: FailureState = {
       downNodeIds: new Set(),
       downEdgeIds: new Set(['e-nonexistent']),
+      downInterfaceIds: new Set(),
     };
     const trace = await engine.precompute(
       makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
@@ -866,6 +870,7 @@ describe('SimulationEngine failure simulation', () => {
     const failureState: FailureState = {
       downNodeIds: new Set(['router-1']),
       downEdgeIds: new Set(),
+      downInterfaceIds: new Set(),
     };
     await engine.send(
       makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
@@ -875,5 +880,85 @@ describe('SimulationEngine failure simulation', () => {
     expect(trace?.status).toBe('dropped');
     const dropHop = trace?.hops.find((h) => h.event === 'drop');
     expect(dropHop?.reason).toBe('node-down');
+  });
+
+  describe('interface-down failure', () => {
+    it('drops packet at a router when the resolved egress interface is down', async () => {
+      const engine = makeEngine(singleRouterTopology());
+      const failureState: FailureState = {
+        downNodeIds: new Set(),
+        downEdgeIds: new Set(),
+        downInterfaceIds: new Set([makeInterfaceFailureId('router-1', 'eth1')]),
+      };
+
+      const trace = await engine.precompute(
+        makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+        failureState,
+      );
+
+      expect(trace.status).toBe('dropped');
+      const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+      expect(dropHop?.nodeId).toBe('router-1');
+      expect(dropHop?.reason).toBe('interface-down');
+      expect(dropHop?.egressInterfaceId).toBe('eth1');
+      expect(dropHop?.egressInterfaceName).toBe('eth1');
+    });
+
+    it('keeps delivery working when only the ingress interface on the next router is down', async () => {
+      const engine = makeEngine(multiHopTopology());
+      const failureState: FailureState = {
+        downNodeIds: new Set(),
+        downEdgeIds: new Set(),
+        downInterfaceIds: new Set([makeInterfaceFailureId('router-2', 'eth0')]),
+      };
+
+      const trace = await engine.precompute(
+        makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+        failureState,
+      );
+
+      expect(trace.status).toBe('delivered');
+      expect(trace.hops[2].nodeId).toBe('router-2');
+      expect(trace.hops[2].ingressInterfaceId).toBe('eth0');
+      expect(trace.hops[2].egressInterfaceId).toBe('eth1');
+    });
+
+    it('prefers interface-down over normal forwarding when the router itself is still up', async () => {
+      const engine = makeEngine(singleRouterTopology());
+      const failureState: FailureState = {
+        downNodeIds: new Set(),
+        downEdgeIds: new Set(),
+        downInterfaceIds: new Set([makeInterfaceFailureId('router-1', 'eth1')]),
+      };
+
+      const trace = await engine.precompute(
+        makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+        failureState,
+      );
+
+      expect(trace.status).toBe('dropped');
+      const routerHop = trace.hops.find((hop) => hop.nodeId === 'router-1');
+      expect(routerHop?.event).toBe('drop');
+      expect(routerHop?.reason).toBe('interface-down');
+    });
+
+    it('keeps edge-down precedence over interface-down when no next hop is available', async () => {
+      const engine = makeEngine(singleRouterTopology());
+      const failureState: FailureState = {
+        downNodeIds: new Set(),
+        downEdgeIds: new Set(['e2']),
+        downInterfaceIds: new Set([makeInterfaceFailureId('router-1', 'eth1')]),
+      };
+
+      const trace = await engine.precompute(
+        makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+        failureState,
+      );
+
+      expect(trace.status).toBe('dropped');
+      const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+      expect(dropHop?.nodeId).toBe('router-1');
+      expect(dropHop?.reason).toBe('no-route');
+    });
   });
 });
