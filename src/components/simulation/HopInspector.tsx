@@ -7,6 +7,8 @@ const EVENT_COLORS: Record<PacketHop['event'], string> = {
   forward: '#4ade80',
   deliver: '#34d399',
   drop: '#f87171',
+  'arp-request': '#f59e0b',
+  'arp-reply': '#f59e0b',
 };
 
 function resolveNodeLabel(
@@ -28,6 +30,9 @@ function getTtlOut(
   hop: PacketHop,
   nodes: Array<{ id: string; data: { label: string; role: string } }>,
 ): number {
+  if (hop.event === 'arp-request' || hop.event === 'arp-reply') {
+    return 0;
+  }
   if (hop.event === 'forward' && isRouterNode(hop.nodeId, nodes)) {
     return hop.ttl - 1;
   }
@@ -120,6 +125,50 @@ function HopFields({
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
         {fields.map((field) => (
           <FieldRow key={field.label} label={field.label} value={field.value} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ArpHopDetails({ hop }: { hop: PacketHop }) {
+  const frame = hop.arpFrame;
+  if (!frame) return null;
+
+  const rows: Array<[string, string]> = [
+    ['Operation', frame.payload.operation === 'request' ? 'REQUEST (1)' : 'REPLY (2)'],
+    ['Sender MAC', frame.payload.senderMac],
+    ['Sender IP', frame.payload.senderIp],
+    ['Target MAC', frame.payload.operation === 'request' ? '(unknown)' : frame.payload.targetMac],
+    ['Target IP', frame.payload.targetIp],
+    ['Eth Dst', frame.dstMac],
+    ['Eth Src', frame.srcMac],
+    ['EtherType', '0x0806 (ARP)'],
+  ];
+
+  return (
+    <section
+      style={{
+        background: 'var(--netlab-bg-panel)',
+        border: '1px solid #78350f',
+        borderRadius: 8,
+        padding: 12,
+      }}
+    >
+      <div
+        style={{
+          color: '#f59e0b',
+          fontSize: 10,
+          fontWeight: 'bold',
+          letterSpacing: 1,
+          marginBottom: 10,
+        }}
+      >
+        ARP FIELDS
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
+        {rows.map(([label, value]) => (
+          <FieldRow key={label} label={label} value={value} />
         ))}
       </div>
     </section>
@@ -438,8 +487,12 @@ export function HopInspector() {
           gap: 12,
         }}
       >
-        <HopFields hop={selectedHop} nodes={topology.nodes} />
-        {selectedHop.routingDecision && <RoutingSection decision={selectedHop.routingDecision} />}
+        {selectedHop.arpFrame ? (
+          <ArpHopDetails hop={selectedHop} />
+        ) : (
+          <HopFields hop={selectedHop} nodes={topology.nodes} />
+        )}
+        {selectedHop.routingDecision && !selectedHop.arpFrame && <RoutingSection decision={selectedHop.routingDecision} />}
         {selectedHop.changedFields && selectedHop.changedFields.length > 0 && (
           <ChangedFieldsBlock fields={selectedHop.changedFields} />
         )}

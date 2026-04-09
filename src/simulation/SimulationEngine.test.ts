@@ -91,6 +91,24 @@ function makeRouteEntry(
   };
 }
 
+function deriveDeterministicMac(nodeId: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < nodeId.length; i++) {
+    hash ^= nodeId.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  hash >>>= 0;
+
+  return [
+    0x02,
+    (hash >>> 24) & 0xff,
+    (hash >>> 16) & 0xff,
+    (hash >>> 8) & 0xff,
+    hash & 0xff,
+    nodeId.length & 0xff,
+  ].map((byte) => byte.toString(16).padStart(2, '0')).join(':');
+}
+
 /** Simple two-node topology: client-1 -- e1 -- server-1 */
 function directTopology(): NetworkTopology {
   return {
@@ -111,6 +129,21 @@ function directTopology(): NetworkTopology {
     edges: [{ id: 'e1', source: 'client-1', target: 'server-1' }],
     areas: [],
     routeTables: new Map(),
+  };
+}
+
+function directTopologyWithoutServerMac(): NetworkTopology {
+  const topology = directTopology();
+  return {
+    ...topology,
+    nodes: topology.nodes.map((node) =>
+      node.id === 'server-1'
+        ? {
+            ...node,
+            data: { ...node.data, mac: undefined },
+          }
+        : node,
+    ),
   };
 }
 
@@ -160,6 +193,21 @@ function singleRouterTopology(): NetworkTopology {
     ],
     areas: [],
     routeTables,
+  };
+}
+
+function singleRouterTopologyWithoutServerMac(): NetworkTopology {
+  const topology = singleRouterTopology();
+  return {
+    ...topology,
+    nodes: topology.nodes.map((node) =>
+      node.id === 'server-1'
+        ? {
+            ...node,
+            data: { ...node.data, mac: undefined },
+          }
+        : node,
+    ),
   };
 }
 
@@ -401,6 +449,86 @@ describe('SimulationEngine.precompute', () => {
     expect(trace.hops[1].nodeId).toBe('router-1');
     expect(trace.hops[2].event).toBe('deliver');
     expect(trace.hops[2].nodeId).toBe('server-1');
+  });
+
+  it('does not inject ARP hops when endpoint and interface MACs are explicitly configured', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const packet = makePacket('p-explicit', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
+    const trace = await engine.precompute(packet);
+
+    expect(trace.hops.some((hop) => hop.event === 'arp-request' || hop.event === 'arp-reply')).toBe(false);
+  });
+
+  it('injects host-side ARP request/reply hops before the first forward when the destination MAC is unknown', async () => {
+    const engine = makeEngine(directTopologyWithoutServerMac());
+    const packet = makePacket('p-arp-host', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
+    const trace = await engine.precompute(packet);
+
+    expect(trace.hops.map((hop) => hop.event)).toEqual([
+      'create',
+      'arp-request',
+      'arp-reply',
+      'forward',
+      'deliver',
+    ]);
+
+    const arpRequest = trace.hops[1];
+    const arpReply = trace.hops[2];
+    expect(arpRequest.nodeId).toBe('client-1');
+    expect(arpRequest.arpFrame?.payload.operation).toBe('request');
+    expect(arpRequest.arpFrame?.dstMac).toBe('ff:ff:ff:ff:ff:ff');
+    expect(arpReply.nodeId).toBe('server-1');
+    expect(arpReply.arpFrame?.payload.operation).toBe('reply');
+    expect(arpReply.arpFrame?.payload.senderMac).toBe(deriveDeterministicMac('server-1'));
+  });
+
+  it('injects router-side ARP request/reply hops before a directly connected forward when the destination MAC is unknown', async () => {
+    const engine = makeEngine(singleRouterTopologyWithoutServerMac());
+    const packet = makePacket('p-arp-router', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
+    const trace = await engine.precompute(packet);
+
+    expect(trace.hops.map((hop) => hop.event)).toEqual([
+      'create',
+      'arp-request',
+      'arp-reply',
+      'forward',
+      'deliver',
+    ]);
+
+    expect(trace.hops[1].nodeId).toBe('router-1');
+    expect(trace.hops[2].nodeId).toBe('server-1');
+    expect(trace.hops[3].nodeId).toBe('router-1');
+  });
+
+  it('populates nodeArpTables for both the requester and the responder when ARP is simulated', async () => {
+    const engine = makeEngine(directTopologyWithoutServerMac());
+    await engine.send(
+      makePacket('p-arp-state', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+    );
+
+    expect(engine.getState().nodeArpTables['client-1']?.['203.0.113.10']).toBe(
+      deriveDeterministicMac('server-1'),
+    );
+    expect(engine.getState().nodeArpTables['server-1']?.['10.0.0.10']).toBe(CLIENT_MAC);
+  });
+
+  it('assigns contiguous step numbers when ARP hops are injected', async () => {
+    const engine = makeEngine(directTopologyWithoutServerMac());
+    const packet = makePacket('p-arp-steps', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
+    const trace = await engine.precompute(packet);
+
+    expect(trace.hops.map((hop) => hop.step)).toEqual([0, 1, 2, 3, 4]);
+  });
+
+  it('resets the in-run ARP cache between precompute calls', async () => {
+    const engine = makeEngine(directTopologyWithoutServerMac());
+    const packet = makePacket('p-arp-reset', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
+
+    const firstTrace = await engine.precompute(packet);
+    const secondTrace = await engine.precompute({ ...packet, id: 'p-arp-reset-2' });
+
+    expect(firstTrace.hops.filter((hop) => hop.event === 'arp-request')).toHaveLength(1);
+    expect(secondTrace.hops.filter((hop) => hop.event === 'arp-request')).toHaveLength(1);
   });
 
   it('annotates router ingress and egress interfaces on direct forwarding hops', async () => {

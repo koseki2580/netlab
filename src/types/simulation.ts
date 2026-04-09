@@ -23,7 +23,7 @@ export interface PacketHop {
   dstIp: string;
   ttl: number;
   protocol: string;         // 'TCP' | 'UDP' | 'ICMP' | '<number>'
-  event: 'create' | 'forward' | 'deliver' | 'drop';
+  event: 'create' | 'forward' | 'deliver' | 'drop' | 'arp-request' | 'arp-reply';
   fromNodeId?: string;      // absent on step 0 (create)
   toNodeId?: string;        // absent on deliver / drop
   activeEdgeId?: string;    // ReactFlow edge.id to highlight; absent on deliver / drop
@@ -31,6 +31,7 @@ export interface PacketHop {
   ingressInterfaceName?: string;
   egressInterfaceId?: string;
   egressInterfaceName?: string;
+  arpFrame?: import('./packets').ArpEthernetFrame;
   reason?: string;          // known values include node-down, interface-down, no-route, ttl-exceeded
   routingDecision?: RoutingDecision;  // present only when nodeId is a router, never on TTL drops
   changedFields?: string[];
@@ -55,4 +56,5 @@ export interface SimulationState {
   activeEdgeIds: string[];  // edge IDs to highlight in the canvas
   selectedHop: PacketHop | null;
   selectedPacket: import('./packets').InFlightPacket | null;  // packet snapshot at selectedHop
+  nodeArpTables: Record<string, Record<string, string>>;
 }

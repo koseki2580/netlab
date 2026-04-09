@@ -9,6 +9,8 @@ const EVENT_COLORS: Record<string, string> = {
   forward: '#4ade80',
   deliver: '#34d399',
   drop: '#f87171',
+  'arp-request': '#f59e0b',
+  'arp-reply': '#f59e0b',
 };
 
 // ── Sub-components ────────────────────────────────────────────────────────────

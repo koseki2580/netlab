@@ -4,8 +4,8 @@ import { computeFcs, computeIpv4Checksum } from '../utils/checksum';
 import { buildEthernetFrameBytes, buildIpv4HeaderBytes } from '../utils/packetLayout';
 import type { HookEngine } from '../hooks/HookEngine';
 import type { NetlabNode, NetworkTopology } from '../types/topology';
-import type { InFlightPacket } from '../types/packets';
-import type { RouteEntry } from '../types/routing';
+import type { ArpEthernetFrame, InFlightPacket } from '../types/packets';
+import type { RouteEntry, RouterInterface } from '../types/routing';
 import type { PacketHop, PacketTrace, SimulationState, RoutingDecision, RoutingCandidate } from '../types/simulation';
 import { type FailureState, EMPTY_FAILURE_STATE, makeInterfaceFailureId } from '../types/failure';
 
@@ -69,6 +69,13 @@ interface ResolvedInterface {
   name: string;
 }
 
+interface ArpTargetInfo {
+  targetIp: string;
+  targetNodeId: string;
+  senderIp: string;
+  senderMac: string;
+}
+
 const INITIAL_STATE: SimulationState = {
   status: 'idle',
   traces: [],
@@ -77,6 +84,7 @@ const INITIAL_STATE: SimulationState = {
   activeEdgeIds: [],
   selectedHop: null,
   selectedPacket: null,
+  nodeArpTables: {},
 };
 
 export class SimulationEngine {
@@ -288,9 +296,14 @@ export class SimulationEngine {
       return null;
     }
 
-    return typeof node.data.mac === 'string' && node.data.mac.length > 0
+    return typeof node.data.mac === 'string' && node.data.mac.length > 0 && !this.isPlaceholderMac(node.data.mac)
       ? node.data.mac
       : this.deriveDeterministicMac(nodeId);
+  }
+
+  private nodeOwnsIp(node: NetlabNode, ip: string): boolean {
+    if (node.data.ip === ip) return true;
+    return (node.data.interfaces ?? []).some((iface) => iface.ipAddress === ip);
   }
 
   private findMatchingNodeThroughSwitches(
@@ -493,6 +506,245 @@ export class SimulationEngine {
     return null;
   }
 
+  private resolveArpTargetInfo(
+    currentNodeId: string,
+    nextNodeId: string,
+    packet: InFlightPacket,
+    failureState: FailureState,
+    egressInterfaceId?: string,
+    edgeId?: string,
+  ): ArpTargetInfo | null {
+    const currentNode = this.findNode(currentNodeId);
+    if (!currentNode) return null;
+
+    if (currentNode.data.role === 'router') {
+      const routes = this.topology.routeTables.get(currentNodeId) ?? [];
+      const route = bestRoute(packet.frame.payload.dstIp, routes);
+      if (!route) return null;
+
+      const targetIp = route.nextHop === 'direct' ? packet.frame.payload.dstIp : route.nextHop;
+      if (!targetIp) return null;
+
+      const targetNode = this.resolveEffectiveLayer2Destination(
+        currentNodeId,
+        nextNodeId,
+        packet,
+        failureState,
+      );
+      if (!targetNode || !this.nodeOwnsIp(targetNode, targetIp)) return null;
+
+      const egressInterface =
+        currentNode.data.interfaces?.find((iface) => iface.id === egressInterfaceId) ??
+        (() => {
+          const fallback = this.resolvePortFromEdge(currentNodeId, edgeId ?? '', 'egress');
+          return currentNode.data.interfaces?.find((iface) => iface.id === fallback?.id);
+        })();
+
+      return {
+        targetIp,
+        targetNodeId: targetNode.id,
+        senderIp: egressInterface?.ipAddress ?? '',
+        senderMac: egressInterface?.macAddress ?? this.deriveDeterministicMac(currentNodeId),
+      };
+    }
+
+    if (currentNode.data.role !== 'client' && currentNode.data.role !== 'server') {
+      return null;
+    }
+
+    const targetNode = this.resolveEffectiveLayer2Destination(
+      currentNodeId,
+      nextNodeId,
+      packet,
+      failureState,
+    );
+    if (!targetNode) return null;
+
+    const senderIp = currentNode.data.ip ?? '';
+    let targetIp = '';
+
+    if (targetNode.data.role === 'router') {
+      const gatewayInterface = ((targetNode.data.interfaces ?? []) as RouterInterface[]).find((iface) =>
+        senderIp.length > 0 && isInSubnet(senderIp, `${iface.ipAddress}/${iface.prefixLength}`),
+      );
+      targetIp = gatewayInterface?.ipAddress ?? '';
+    } else if (targetNode.data.role === 'client' || targetNode.data.role === 'server') {
+      targetIp = targetNode.data.ip ?? '';
+    }
+
+    if (!targetIp || !this.nodeOwnsIp(targetNode, targetIp)) return null;
+
+    return {
+      targetIp,
+      targetNodeId: targetNode.id,
+      senderIp,
+      senderMac: this.resolveEndpointMac(currentNodeId) ?? this.deriveDeterministicMac(currentNodeId),
+    };
+  }
+
+  private resolveArpTargetMac(
+    currentNodeId: string,
+    nextNodeId: string,
+    targetNodeId: string,
+    packet: InFlightPacket,
+    failureState: FailureState,
+    egressInterfaceId?: string,
+  ): string {
+    const resolvedMac = this.resolveDstMac(
+      currentNodeId,
+      nextNodeId,
+      egressInterfaceId,
+      packet,
+      failureState,
+    );
+    if (resolvedMac) return resolvedMac;
+
+    const targetNode = this.findNode(targetNodeId);
+    if (targetNode?.data.role === 'router') {
+      return (
+        this.resolveRouterMac(currentNodeId, targetNodeId, packet, egressInterfaceId) ??
+        this.deriveDeterministicMac(targetNodeId)
+      );
+    }
+
+    return this.resolveEndpointMac(targetNodeId) ?? this.deriveDeterministicMac(targetNodeId);
+  }
+
+  private seedArpCache(cache: Map<string, string>): void {
+    for (const node of this.topology.nodes) {
+      for (const iface of (node.data.interfaces ?? []) as RouterInterface[]) {
+        if (iface.ipAddress && iface.macAddress && !this.isPlaceholderMac(iface.macAddress)) {
+          cache.set(iface.ipAddress, iface.macAddress);
+        }
+      }
+
+      if (
+        typeof node.data.ip === 'string' &&
+        node.data.ip &&
+        typeof node.data.mac === 'string' &&
+        node.data.mac &&
+        !this.isPlaceholderMac(node.data.mac)
+      ) {
+        cache.set(node.data.ip, node.data.mac);
+      }
+    }
+  }
+
+  private appendHop(
+    hops: PacketHop[],
+    snapshots: InFlightPacket[],
+    hop: Omit<PacketHop, 'step'>,
+    snapshot: InFlightPacket,
+    stepCounter: number,
+  ): number {
+    snapshots.push({ ...snapshot });
+    hops.push({ ...hop, step: stepCounter });
+    return stepCounter + 1;
+  }
+
+  private recordArpEntry(
+    nodeArpTables: Record<string, Record<string, string>>,
+    nodeId: string,
+    ip: string,
+    mac: string,
+  ): void {
+    if (!ip.trim() || !mac.trim()) return;
+    nodeArpTables[nodeId] ??= {};
+    nodeArpTables[nodeId][ip] = mac;
+  }
+
+  private injectArpExchange(
+    senderNodeId: string,
+    targetNodeId: string,
+    senderIp: string,
+    targetIp: string,
+    senderMac: string,
+    targetMac: string,
+    edgeId: string,
+    workingPacket: InFlightPacket,
+    stepCounter: number,
+    hops: PacketHop[],
+    snapshots: InFlightPacket[],
+    baseTs: number,
+  ): number {
+    const senderNode = this.findNode(senderNodeId);
+    const targetNode = this.findNode(targetNodeId);
+
+    const arpRequestFrame: ArpEthernetFrame = {
+      layer: 'L2',
+      srcMac: senderMac,
+      dstMac: 'ff:ff:ff:ff:ff:ff',
+      etherType: 0x0806,
+      payload: {
+        layer: 'ARP',
+        hardwareType: 1,
+        protocolType: 0x0800,
+        operation: 'request',
+        senderMac,
+        senderIp,
+        targetMac: '00:00:00:00:00:00',
+        targetIp,
+      },
+    };
+
+    stepCounter = this.appendHop(
+      hops,
+      snapshots,
+      {
+        nodeId: senderNodeId,
+        nodeLabel: senderNode?.data.label ?? senderNodeId,
+        srcIp: senderIp,
+        dstIp: targetIp,
+        ttl: 0,
+        protocol: 'ARP',
+        event: 'arp-request',
+        toNodeId: targetNodeId,
+        activeEdgeId: edgeId,
+        arpFrame: arpRequestFrame,
+        timestamp: baseTs,
+      },
+      workingPacket,
+      stepCounter,
+    );
+
+    const arpReplyFrame: ArpEthernetFrame = {
+      layer: 'L2',
+      srcMac: targetMac,
+      dstMac: senderMac,
+      etherType: 0x0806,
+      payload: {
+        layer: 'ARP',
+        hardwareType: 1,
+        protocolType: 0x0800,
+        operation: 'reply',
+        senderMac: targetMac,
+        senderIp: targetIp,
+        targetMac: senderMac,
+        targetIp: senderIp,
+      },
+    };
+
+    return this.appendHop(
+      hops,
+      snapshots,
+      {
+        nodeId: targetNodeId,
+        nodeLabel: targetNode?.data.label ?? targetNodeId,
+        srcIp: targetIp,
+        dstIp: senderIp,
+        ttl: 0,
+        protocol: 'ARP',
+        event: 'arp-reply',
+        toNodeId: senderNodeId,
+        activeEdgeId: edgeId,
+        arpFrame: arpReplyFrame,
+        timestamp: baseTs,
+      },
+      workingPacket,
+      stepCounter,
+    );
+  }
+
   private withIpv4HeaderChecksum(packet: InFlightPacket): InFlightPacket {
     const ipPacket = packet.frame.payload;
     const checksum = computeIpv4Checksum(
@@ -561,6 +813,7 @@ export class SimulationEngine {
   private materializePacket(
     packet: InFlightPacket,
     failureState: FailureState,
+    arpCache: Map<string, string>,
   ): InFlightPacket {
     const currentNode = this.findNode(packet.currentDeviceId);
     const ipPacket = packet.frame.payload;
@@ -589,13 +842,23 @@ export class SimulationEngine {
       const srcMac = currentNode.data.interfaces?.find(
         (iface) => iface.id === egressInterface?.id,
       )?.macAddress;
-      const dstMac = this.resolveDstMac(
+      const arpTarget = this.resolveArpTargetInfo(
         packet.currentDeviceId,
         next.nodeId,
-        egressInterface?.id,
         workingPacket,
         failureState,
+        egressInterface?.id,
+        next.edgeId,
       );
+      const dstMac = arpTarget
+        ? (arpCache.get(arpTarget.targetIp) ?? null)
+        : this.resolveDstMac(
+            packet.currentDeviceId,
+            next.nodeId,
+            egressInterface?.id,
+            workingPacket,
+            failureState,
+          );
 
       workingPacket = {
         ...workingPacket,
@@ -607,14 +870,26 @@ export class SimulationEngine {
       };
     } else if (currentNode?.data.role === 'client' || currentNode?.data.role === 'server') {
       const resolvedSrcMac = this.resolveEndpointMac(currentNode.id);
-      const resolvedDstMac = next
-        ? this.resolveDstMac(
+      const arpTarget = next
+        ? this.resolveArpTargetInfo(
             currentNode.id,
             next.nodeId,
-            undefined,
             workingPacket,
             failureState,
+            undefined,
+            next.edgeId,
           )
+        : null;
+      const resolvedDstMac = next
+        ? arpTarget
+          ? (arpCache.get(arpTarget.targetIp) ?? null)
+          : this.resolveDstMac(
+              currentNode.id,
+              next.nodeId,
+              undefined,
+              workingPacket,
+              failureState,
+            )
         : null;
 
       workingPacket = {
@@ -638,29 +913,32 @@ export class SimulationEngine {
 
   // ── Core precomputation ────────────────────────────────────────────────────
 
-  async precompute(
+  private async precomputeDetailed(
     packet: InFlightPacket,
     failureState: FailureState = EMPTY_FAILURE_STATE,
-  ): Promise<PacketTrace> {
+  ): Promise<{ trace: PacketTrace; nodeArpTables: Record<string, Record<string, string>> }> {
     const hops: PacketHop[] = [];
     const snapshots: InFlightPacket[] = [];
+    const nodeArpTables: Record<string, Record<string, string>> = {};
     const visitedNodes = new Set<string>();
+    const arpCache = new Map<string, string>();
     let current = packet.srcNodeId;
     let ingressFrom: string | null = null;
     let ingressEdgeId: string | null = null;
     let senderIp: string | null = null;
+    let stepCounter = 0;
+    this.seedArpCache(arpCache);
     let workingPacket: InFlightPacket = this.materializePacket(
       { ...packet, currentDeviceId: current },
       failureState,
+      arpCache,
     );
     const baseTs = Date.now();
 
-    for (let step = 0; step < MAX_HOPS; step++) {
+    for (let iter = 0; iter < MAX_HOPS; iter++) {
       // Loop guard
       if (visitedNodes.has(current)) {
-        snapshots.push({ ...workingPacket });
-        hops.push({
-          step,
+        stepCounter = this.appendHop(hops, snapshots, {
           nodeId: current,
           nodeLabel: current,
           srcIp: workingPacket.frame.payload.srcIp,
@@ -671,16 +949,14 @@ export class SimulationEngine {
           fromNodeId: ingressFrom ?? undefined,
           reason: 'routing-loop',
           timestamp: baseTs,
-        });
+        }, workingPacket, stepCounter);
         break;
       }
       visitedNodes.add(current);
 
       const node = this.findNode(current);
       if (!node) {
-        snapshots.push({ ...workingPacket });
-        hops.push({
-          step,
+        stepCounter = this.appendHop(hops, snapshots, {
           nodeId: current,
           nodeLabel: current,
           srcIp: workingPacket.frame.payload.srcIp,
@@ -691,14 +967,12 @@ export class SimulationEngine {
           fromNodeId: ingressFrom ?? undefined,
           reason: 'node-not-found',
           timestamp: baseTs,
-        });
+        }, workingPacket, stepCounter);
         break;
       }
 
       if (failureState.downNodeIds.has(current)) {
-        snapshots.push({ ...workingPacket });
-        hops.push({
-          step,
+        stepCounter = this.appendHop(hops, snapshots, {
           nodeId: current,
           nodeLabel: node.data.label,
           srcIp: workingPacket.frame.payload.srcIp,
@@ -709,13 +983,12 @@ export class SimulationEngine {
           fromNodeId: ingressFrom ?? undefined,
           reason: 'node-down',
           timestamp: baseTs,
-        });
+        }, workingPacket, stepCounter);
         break;
       }
 
       const ipPacket = workingPacket.frame.payload;
-      const hop: PacketHop = {
-        step,
+      const hopBase: Omit<PacketHop, 'step'> = {
         nodeId: current,
         nodeLabel: node.data.label,
         srcIp: ipPacket.srcIp,
@@ -732,9 +1005,13 @@ export class SimulationEngine {
         (node.data.role === 'client' || node.data.role === 'server') &&
         node.data.ip === ipPacket.dstIp
       ) {
-        hop.event = 'deliver';
-        snapshots.push({ ...workingPacket });
-        hops.push(hop);
+        stepCounter = this.appendHop(
+          hops,
+          snapshots,
+          { ...hopBase, event: 'deliver' },
+          workingPacket,
+          stepCounter,
+        );
         break;
       }
 
@@ -743,8 +1020,8 @@ export class SimulationEngine {
           (senderIp ? this.resolveIngressInterface(current, senderIp) : null) ??
           this.resolvePortFromEdge(current, ingressEdgeId ?? '', 'ingress');
         if (ingressInterface) {
-          hop.ingressInterfaceId = ingressInterface.id;
-          hop.ingressInterfaceName = ingressInterface.name;
+          hopBase.ingressInterfaceId = ingressInterface.id;
+          hopBase.ingressInterfaceName = ingressInterface.name;
         }
       }
 
@@ -757,21 +1034,23 @@ export class SimulationEngine {
           const forwarder = forwarderFactory(current, this.topology);
           const decision = await forwarder.receive(workingPacket, workingPacket.ingressPortId ?? '');
           if (decision.action === 'drop') {
-            hop.event = 'drop';
-            hop.reason = decision.reason;
+            const dropHop: Omit<PacketHop, 'step'> = {
+              ...hopBase,
+              event: 'drop',
+              reason: decision.reason,
+            };
             // Capture routing decision for no-route drops (but not TTL drops).
             // TTL is checked first in the forwarder, so ttl-exceeded reason means
             // we broke before any routing lookup — intentionally absent on TTL drops.
             if (decision.reason !== 'ttl-exceeded') {
               const routes = this.topology.routeTables.get(current) ?? [];
-              hop.routingDecision = buildRoutingDecision(ipPacket.dstIp, routes);
+              dropHop.routingDecision = buildRoutingDecision(ipPacket.dstIp, routes);
             }
             const changedFields = this.diffPacketFields(packetBeforeHop, workingPacket);
             if (changedFields.length > 0) {
-              hop.changedFields = changedFields;
+              dropHop.changedFields = changedFields;
             }
-            snapshots.push({ ...workingPacket });
-            hops.push(hop);
+            stepCounter = this.appendHop(hops, snapshots, dropHop, workingPacket, stepCounter);
             break;
           }
           workingPacket = decision.packet;
@@ -783,20 +1062,22 @@ export class SimulationEngine {
       // is intentionally absent on TTL drops.
       if (node.data.role === 'router') {
         const routes = this.topology.routeTables.get(current) ?? [];
-        hop.routingDecision = buildRoutingDecision(ipPacket.dstIp, routes);
+        hopBase.routingDecision = buildRoutingDecision(ipPacket.dstIp, routes);
       }
 
       // Resolve next node via topology graph (independent of egressPort)
       const next = this.resolveNextNode(current, ipPacket.dstIp, ingressFrom, failureState);
       if (!next) {
-        hop.event = 'drop';
-        hop.reason = 'no-route';
+        const dropHop: Omit<PacketHop, 'step'> = {
+          ...hopBase,
+          event: 'drop',
+          reason: 'no-route',
+        };
         const changedFields = this.diffPacketFields(packetBeforeHop, workingPacket);
         if (changedFields.length > 0) {
-          hop.changedFields = changedFields;
+          dropHop.changedFields = changedFields;
         }
-        snapshots.push({ ...workingPacket });
-        hops.push(hop);
+        stepCounter = this.appendHop(hops, snapshots, dropHop, workingPacket, stepCounter);
         break;
       }
 
@@ -807,8 +1088,8 @@ export class SimulationEngine {
           this.resolveEgressInterface(current, ipPacket.dstIp) ??
           this.resolvePortFromEdge(current, next.edgeId, 'egress');
         if (routerEgressInterface) {
-          hop.egressInterfaceId = routerEgressInterface.id;
-          hop.egressInterfaceName = routerEgressInterface.name;
+          hopBase.egressInterfaceId = routerEgressInterface.id;
+          hopBase.egressInterfaceName = routerEgressInterface.name;
         }
 
         if (
@@ -817,32 +1098,108 @@ export class SimulationEngine {
             makeInterfaceFailureId(current, routerEgressInterface.id),
           )
         ) {
-          hop.event = 'drop';
-          hop.reason = 'interface-down';
+          const dropHop: Omit<PacketHop, 'step'> = {
+            ...hopBase,
+            event: 'drop',
+            reason: 'interface-down',
+          };
           const changedFields = this.diffPacketFields(packetBeforeHop, workingPacket);
           if (changedFields.length > 0) {
-            hop.changedFields = changedFields;
+            dropHop.changedFields = changedFields;
           }
-          snapshots.push({ ...workingPacket });
-          hops.push(hop);
+          stepCounter = this.appendHop(hops, snapshots, dropHop, workingPacket, stepCounter);
           break;
         }
       }
 
-      hop.event = step === 0 ? 'create' : 'forward';
-      hop.toNodeId = next.nodeId;
-      hop.activeEdgeId = next.edgeId;
+      const arpTarget =
+        node.data.role === 'router' || node.data.role === 'client' || node.data.role === 'server'
+          ? this.resolveArpTargetInfo(
+              current,
+              next.nodeId,
+              workingPacket,
+              failureState,
+              routerEgressInterface?.id,
+              next.edgeId,
+            )
+          : null;
+      const shouldInjectArp = arpTarget !== null && !arpCache.has(arpTarget.targetIp);
 
-      if (node.data.role === 'router') {
-        const rewrittenDstMac = this.resolveDstMac(
+      if (shouldInjectArp && ingressFrom === null) {
+        const createHop: Omit<PacketHop, 'step'> = {
+          ...hopBase,
+          event: 'create',
+          toNodeId: next.nodeId,
+          activeEdgeId: next.edgeId,
+        };
+        const changedFields = this.diffPacketFields(packetBeforeHop, workingPacket);
+        if (changedFields.length > 0) {
+          createHop.changedFields = changedFields;
+        }
+        stepCounter = this.appendHop(hops, snapshots, createHop, workingPacket, stepCounter);
+      }
+
+      const packetBeforeForward = shouldInjectArp && ingressFrom === null ? workingPacket : packetBeforeHop;
+
+      if (shouldInjectArp && arpTarget) {
+        const targetMac = this.resolveArpTargetMac(
           current,
           next.nodeId,
-          hop.egressInterfaceId,
+          arpTarget.targetNodeId,
           workingPacket,
           failureState,
+          hopBase.egressInterfaceId,
         );
+
+        stepCounter = this.injectArpExchange(
+          current,
+          arpTarget.targetNodeId,
+          arpTarget.senderIp,
+          arpTarget.targetIp,
+          arpTarget.senderMac,
+          targetMac,
+          next.edgeId,
+          workingPacket,
+          stepCounter,
+          hops,
+          snapshots,
+          baseTs,
+        );
+
+        arpCache.set(arpTarget.targetIp, targetMac);
+        if (arpTarget.senderIp.trim()) {
+          arpCache.set(arpTarget.senderIp, arpTarget.senderMac);
+        }
+        this.recordArpEntry(nodeArpTables, current, arpTarget.targetIp, targetMac);
+        this.recordArpEntry(nodeArpTables, arpTarget.targetNodeId, arpTarget.senderIp, arpTarget.senderMac);
+      }
+
+      const forwardHop: Omit<PacketHop, 'step'> = {
+        ...hopBase,
+        event: ingressFrom === null && !shouldInjectArp ? 'create' : 'forward',
+        toNodeId: next.nodeId,
+        activeEdgeId: next.edgeId,
+      };
+      const resolvedDstMac = arpTarget
+        ? (arpCache.get(arpTarget.targetIp) ?? this.resolveArpTargetMac(
+            current,
+            next.nodeId,
+            arpTarget.targetNodeId,
+            workingPacket,
+            failureState,
+            hopBase.egressInterfaceId,
+          ))
+        : this.resolveDstMac(
+            current,
+            next.nodeId,
+            hopBase.egressInterfaceId,
+            workingPacket,
+            failureState,
+          );
+
+      if (node.data.role === 'router') {
         const egressIface = node.data.interfaces?.find(
-          (iface) => iface.id === hop.egressInterfaceId,
+          (iface) => iface.id === hopBase.egressInterfaceId,
         );
         senderIp = egressIface?.ipAddress ?? null;
         workingPacket = this.withFrameFcs({
@@ -850,26 +1207,40 @@ export class SimulationEngine {
           frame: {
             ...workingPacket.frame,
             srcMac: egressIface?.macAddress ?? workingPacket.frame.srcMac,
-            dstMac: rewrittenDstMac ?? workingPacket.frame.dstMac,
+            dstMac: resolvedDstMac ?? workingPacket.frame.dstMac,
           },
         });
       } else if (node.data.role === 'client' || node.data.role === 'server') {
         senderIp = node.data.ip ?? null;
+        const resolvedSrcMac = this.resolveEndpointMac(current);
+        workingPacket = this.withFrameFcs({
+          ...workingPacket,
+          frame: {
+            ...workingPacket.frame,
+            srcMac:
+              resolvedSrcMac && this.isPlaceholderMac(workingPacket.frame.srcMac)
+                ? resolvedSrcMac
+                : workingPacket.frame.srcMac,
+            dstMac:
+              resolvedDstMac && this.isPlaceholderMac(workingPacket.frame.dstMac)
+                ? resolvedDstMac
+                : workingPacket.frame.dstMac,
+          },
+        });
       } else if (node.data.role === 'switch') {
         const egressPort = this.resolvePortFromEdge(current, next.edgeId, 'egress');
         if (egressPort) {
-          hop.egressInterfaceId = egressPort.id;
-          hop.egressInterfaceName = egressPort.name;
+          forwardHop.egressInterfaceId = egressPort.id;
+          forwardHop.egressInterfaceName = egressPort.name;
         }
       }
 
-      const changedFields = this.diffPacketFields(packetBeforeHop, workingPacket);
+      const changedFields = this.diffPacketFields(packetBeforeForward, workingPacket);
       if (changedFields.length > 0) {
-        hop.changedFields = changedFields;
+        forwardHop.changedFields = changedFields;
       }
 
-      snapshots.push({ ...workingPacket });
-      hops.push(hop);
+      stepCounter = this.appendHop(hops, snapshots, forwardHop, workingPacket, stepCounter);
 
       ingressFrom = current;
       ingressEdgeId = next.edgeId;
@@ -889,6 +1260,14 @@ export class SimulationEngine {
     };
 
     this.packetSnapshots.set(packet.id, snapshots);
+    return { trace, nodeArpTables };
+  }
+
+  async precompute(
+    packet: InFlightPacket,
+    failureState: FailureState = EMPTY_FAILURE_STATE,
+  ): Promise<PacketTrace> {
+    const { trace } = await this.precomputeDetailed(packet, failureState);
     return trace;
   }
 
@@ -896,7 +1275,14 @@ export class SimulationEngine {
 
   async send(packet: InFlightPacket, failureState: FailureState = EMPTY_FAILURE_STATE): Promise<void> {
     this.clearPlay();
-    const trace = await this.precompute(packet, failureState);
+    const { trace, nodeArpTables } = await this.precomputeDetailed(packet, failureState);
+    const mergedNodeArpTables = { ...this.state.nodeArpTables };
+    for (const [nodeId, table] of Object.entries(nodeArpTables)) {
+      mergedNodeArpTables[nodeId] = {
+        ...(mergedNodeArpTables[nodeId] ?? {}),
+        ...table,
+      };
+    }
     this.state = {
       ...this.state,
       status: 'paused',
@@ -906,6 +1292,7 @@ export class SimulationEngine {
       activeEdgeIds: [],
       selectedHop: null,
       selectedPacket: null,
+      nodeArpTables: mergedNodeArpTables,
     };
     this.notify();
   }
@@ -969,6 +1356,9 @@ export class SimulationEngine {
           nodeId: hop.nodeId,
           reason: hop.reason ?? 'unknown',
         });
+        break;
+      case 'arp-request':
+      case 'arp-reply':
         break;
     }
   }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { serializePacket } from './packetSerializer';
-import type { EthernetFrame } from '../types/packets';
+import { serializeArpFrame, serializePacket } from './packetSerializer';
+import type { ArpEthernetFrame, EthernetFrame } from '../types/packets';
 
 const tcpSynFrame: EthernetFrame = {
   layer: 'L2',
@@ -87,6 +87,24 @@ const httpFrame: EthernetFrame = {
         headers: {},
       },
     },
+  },
+};
+
+const arpRequestFrame: ArpEthernetFrame = {
+  layer: 'L2',
+  srcMac: '02:00:00:00:00:01',
+  dstMac: 'ff:ff:ff:ff:ff:ff',
+  etherType: 0x0806,
+  fcs: 0x12345678,
+  payload: {
+    layer: 'ARP',
+    hardwareType: 1,
+    protocolType: 0x0800,
+    operation: 'request',
+    senderMac: '02:00:00:00:00:01',
+    senderIp: '10.0.0.2',
+    targetMac: '00:00:00:00:00:00',
+    targetIp: '10.0.0.1',
   },
 };
 
@@ -221,5 +239,41 @@ describe('serializePacket', () => {
     const { fields } = serializePacket(tcpSynFrame);
     expect(fields.find((field) => field.name === 'Header Checksum')?.displayValue).toBe('0xABCD');
     expect(fields.find((field) => field.name === 'Identification')?.displayValue).toBe('0x1234');
+  });
+});
+
+describe('serializeArpFrame', () => {
+  it('encodes broadcast destination MAC, EtherType, and ARP operation bytes', () => {
+    const { bytes } = serializeArpFrame(arpRequestFrame);
+
+    expect(Array.from(bytes.slice(0, 6))).toEqual([0xff, 0xff, 0xff, 0xff, 0xff, 0xff]);
+    expect(Array.from(bytes.slice(12, 14))).toEqual([0x08, 0x06]);
+    expect(Array.from(bytes.slice(20, 22))).toEqual([0x00, 0x01]);
+  });
+
+  it('encodes the sender and target protocol addresses at the documented offsets', () => {
+    const { bytes } = serializeArpFrame(arpRequestFrame);
+
+    expect(Array.from(bytes.slice(28, 32))).toEqual([10, 0, 0, 2]);
+    expect(Array.from(bytes.slice(32, 38))).toEqual([0, 0, 0, 0, 0, 0]);
+    expect(Array.from(bytes.slice(38, 42))).toEqual([10, 0, 0, 1]);
+  });
+
+  it('marks the Ethernet envelope as L2 and the ARP payload bytes as ARP', () => {
+    const { bytes, annotations, fields } = serializeArpFrame(arpRequestFrame);
+    const coverage = new Array<number>(bytes.length).fill(0);
+
+    expect(bytes.length).toBe(46);
+    expect(annotations.slice(0, 14).every((tag) => tag === 'L2')).toBe(true);
+    expect(annotations.slice(14, 42).every((tag) => tag === 'ARP')).toBe(true);
+    expect(annotations.slice(42).every((tag) => tag === 'L2')).toBe(true);
+
+    for (const field of fields) {
+      for (let i = 0; i < field.byteLength; i++) {
+        coverage[field.byteOffset + i]++;
+      }
+    }
+
+    expect(coverage.every((count) => count === 1)).toBe(true);
   });
 });

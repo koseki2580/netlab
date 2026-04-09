@@ -260,6 +260,7 @@ function makeSimulationContextValue(activeEdgeIds: string[]): SimulationContextV
       activeEdgeIds,
       selectedHop: null,
       selectedPacket: null,
+      nodeArpTables: {},
     },
   };
 }

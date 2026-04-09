@@ -1,5 +1,5 @@
 import { useSimulation } from '../../simulation/SimulationContext';
-import { serializePacket } from '../../utils/packetSerializer';
+import { serializeArpFrame, serializePacket } from '../../utils/packetSerializer';
 import type { AnnotatedField, LayerTag, SerializedPacket } from '../../utils/packetSerializer';
 
 // ── Layer color palette ───────────────────────────────────────────────────────
@@ -9,6 +9,7 @@ const LAYER_COLORS: Record<LayerTag, string> = {
   L3:  '#a78bfa',  // violet-400
   L4:  '#4ade80',  // green-400 — matches existing FORWARD event badge
   L7:  '#f472b6',  // pink-400
+  ARP: '#f59e0b',  // amber-500 — matches ARP event badges
   raw: '#94a3b8',  // slate-400
 };
 
@@ -17,6 +18,7 @@ const LAYER_LABELS: Record<LayerTag, string> = {
   L3:  'L3 IPv4',
   L4:  'L4 TCP/UDP',
   L7:  'L7 App',
+  ARP: 'ARP Payload',
   raw: 'Payload',
 };
 
@@ -297,7 +299,9 @@ export function PacketStructureViewer() {
         <EmptyState />
       ) : (
         (() => {
-          const serialized = serializePacket(selectedPacket.frame);
+          const serialized = selectedHop?.arpFrame
+            ? serializeArpFrame(selectedHop.arpFrame)
+            : serializePacket(selectedPacket.frame);
           const changedFields = selectedHop?.changedFields;
           return (
             <>

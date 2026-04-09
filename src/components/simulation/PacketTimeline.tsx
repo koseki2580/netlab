@@ -4,17 +4,21 @@ import { useSimulation } from '../../simulation/SimulationContext';
 import type { PacketHop } from '../../types/simulation';
 
 const EVENT_COLORS: Record<string, string> = {
-  create:  '#7dd3fc',
-  forward: '#4ade80',
-  deliver: '#34d399',
-  drop:    '#f87171',
+  create:        '#7dd3fc',
+  forward:       '#4ade80',
+  deliver:       '#34d399',
+  drop:          '#f87171',
+  'arp-request': '#f59e0b',
+  'arp-reply':   '#f59e0b',
 };
 
 const EVENT_LABELS: Record<string, string> = {
-  create:  'CREATE',
-  forward: 'FWD',
-  deliver: 'DELIVER',
-  drop:    'DROP',
+  create:        'CREATE',
+  forward:       'FWD',
+  deliver:       'DELIVER',
+  drop:          'DROP',
+  'arp-request': 'ARP-REQ',
+  'arp-reply':   'ARP-REP',
 };
 
 function HopRow({
@@ -36,38 +40,47 @@ function HopRow({
       onClick={onClick}
       style={{
         display: 'flex',
-        alignItems: 'center',
-        gap: 6,
+        flexDirection: 'column',
+        gap: 2,
         padding: '4px 8px',
         borderRadius: 4,
         cursor: 'pointer',
         background: isActive ? 'rgba(125, 211, 252, 0.08)' : 'transparent',
-      borderLeft: isActive ? `2px solid ${color}` : '2px solid transparent',
+        borderLeft: isActive ? `2px solid ${color}` : '2px solid transparent',
         marginBottom: 2,
       }}
     >
-      <span style={{ color: 'var(--netlab-text-faint)', fontSize: 10, minWidth: 18, textAlign: 'right' }}>
-        {hop.step}
-      </span>
-      <span
-        style={{
-          fontSize: 9,
-          fontWeight: 'bold',
-          padding: '1px 5px',
-          borderRadius: 3,
-          background: `${color}22`,
-          color,
-          minWidth: 46,
-          textAlign: 'center',
-        }}
-      >
-        {label}
-      </span>
-      <span style={{ color: 'var(--netlab-text-primary)', fontSize: 11, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {hop.nodeLabel}
-      </span>
-      {hop.toNodeId && (
-        <span style={{ color: 'var(--netlab-text-faint)', fontSize: 10 }}>→ {nextHopLabel ?? hop.toNodeId}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+        <span style={{ color: 'var(--netlab-text-faint)', fontSize: 10, minWidth: 18, textAlign: 'right' }}>
+          {hop.step}
+        </span>
+        <span
+          style={{
+            fontSize: 9,
+            fontWeight: 'bold',
+            padding: '1px 5px',
+            borderRadius: 3,
+            background: `${color}22`,
+            color,
+            minWidth: 46,
+            textAlign: 'center',
+          }}
+        >
+          {label}
+        </span>
+        <span style={{ color: 'var(--netlab-text-primary)', fontSize: 11, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {hop.nodeLabel}
+        </span>
+        {hop.toNodeId && (
+          <span style={{ color: 'var(--netlab-text-faint)', fontSize: 10 }}>→ {nextHopLabel ?? hop.toNodeId}</span>
+        )}
+      </div>
+      {(hop.event === 'arp-request' || hop.event === 'arp-reply') && hop.arpFrame && (
+        <span style={{ color: '#f59e0b', fontSize: 9, opacity: 0.8, paddingLeft: 28 }}>
+          {hop.event === 'arp-request'
+            ? `who has ${hop.dstIp}?`
+            : `${hop.srcIp} is at ${hop.arpFrame.srcMac}`}
+        </span>
       )}
     </div>
   );
