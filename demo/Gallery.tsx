@@ -90,6 +90,11 @@ const CATEGORIES: Category[] = [
         title: 'Interface-Aware Forwarding',
         desc: 'See which router interface is selected at each hop, with ingress and egress interface names shown in the inspector.',
       },
+      {
+        path: '/simulation/session',
+        title: 'Session Inspector',
+        desc: 'Group request and response traffic into one session lifecycle, with request/response paths and failure-aware status.',
+      },
     ],
   },
   {
