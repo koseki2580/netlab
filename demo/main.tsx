@@ -21,6 +21,7 @@ import DhcpDnsDemo from './services/DhcpDnsDemo';
 import StepSimDemo from './simulation/StepSimDemo';
 import FailureSimDemo from './simulation/FailureSimDemo';
 import TraceInspectorDemo from './simulation/TraceInspectorDemo';
+import NatDemo from './simulation/NatDemo';
 import InterfaceAwareDemo from './simulation/InterfaceAwareDemo';
 import SessionDemo from './simulation/SessionDemo';
 import EmbedDemo from './embed/EmbedDemo';
@@ -46,6 +47,7 @@ createRoot(root).render(
         <Route path="/simulation/step" element={<StepSimDemo />} />
         <Route path="/simulation/failure" element={<FailureSimDemo />} />
         <Route path="/simulation/trace-inspector" element={<TraceInspectorDemo />} />
+        <Route path="/simulation/nat" element={<NatDemo />} />
         <Route path="/simulation/interface-aware" element={<InterfaceAwareDemo />} />
         <Route path="/simulation/session" element={<SessionDemo />} />
         <Route path="/embed" element={<EmbedDemo />} />
