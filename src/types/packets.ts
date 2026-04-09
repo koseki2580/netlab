@@ -30,6 +30,9 @@ export interface TcpSegment {
   seq: number;
   ack: number;
   flags: TcpFlags;
+  windowSize?: number;
+  checksum?: number;
+  urgentPointer?: number;
   payload: HttpMessage | RawPayload;
 }
 
@@ -37,24 +40,39 @@ export interface UdpDatagram {
   layer: 'L4';
   srcPort: number;
   dstPort: number;
+  length?: number;
+  checksum?: number;
   payload: RawPayload;
 }
 
 export interface IpPacket {
   layer: 'L3';
+  ihl?: number;
+  dscp?: number;
+  ecn?: number;
+  totalLength?: number;
+  identification?: number;
+  flags?: {
+    df: boolean;
+    mf: boolean;
+  };
+  fragmentOffset?: number;
   srcIp: string;
   dstIp: string;
   ttl: number;
   protocol: number;  // 6 = TCP, 17 = UDP
+  headerChecksum?: number;
   payload: TcpSegment | UdpDatagram;
 }
 
 export interface EthernetFrame {
   layer: 'L2';
+  preamble?: number[];
   srcMac: string;
   dstMac: string;
   etherType: number;  // 0x0800 = IPv4
   payload: IpPacket;
+  fcs?: number;
 }
 
 export type Packet = EthernetFrame;
