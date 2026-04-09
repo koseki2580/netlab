@@ -133,7 +133,7 @@ import type { NetlabTheme } from 'netlab';
 import { NETLAB_DARK_THEME, NETLAB_LIGHT_THEME, themeToVars } from 'netlab';
 ```
 
-- `NETLAB_DARK_THEME` — default dark palette (matches legacy hardcoded colors)
+- `NETLAB_DARK_THEME` — default dark palette, including node background tokens
 - `NETLAB_LIGHT_THEME` — built-in light palette
 - `themeToVars(theme)` — converts a `NetlabTheme` to a `React.CSSProperties` object of `--netlab-*` variables
 
