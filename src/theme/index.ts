@@ -44,6 +44,16 @@ export interface NetlabTheme {
   accentYellow: string;
   /** IP address highlights and primary text accents. */
   accentCyan: string;
+
+  // ── Node backgrounds ────────────────────────────────────────────────────
+  /** Router node container background. */
+  nodeRouterBg: string;
+  /** Switch node container background. */
+  nodeSwitchBg: string;
+  /** Client node container background. */
+  nodeClientBg: string;
+  /** Server node container background. */
+  nodeServerBg: string;
 }
 
 /** Default dark theme — mirrors the legacy hardcoded color palette. */
@@ -63,6 +73,10 @@ export const NETLAB_DARK_THEME: NetlabTheme = {
   accentRed:     '#f87171',
   accentYellow:  '#fbbf24',
   accentCyan:    '#7dd3fc',
+  nodeRouterBg:  '#0f2a1a',
+  nodeSwitchBg:  '#0d1f3c',
+  nodeClientBg:  '#0d1a2e',
+  nodeServerBg:  '#0a1f14',
 };
 
 /** Built-in light theme suitable for embedding in light-mode host pages. */
@@ -82,6 +96,10 @@ export const NETLAB_LIGHT_THEME: NetlabTheme = {
   accentRed:     '#dc2626',
   accentYellow:  '#d97706',
   accentCyan:    '#0284c7',
+  nodeRouterBg:  '#f0fdf4',
+  nodeSwitchBg:  '#eff6ff',
+  nodeClientBg:  '#f0f9ff',
+  nodeServerBg:  '#f0fdf4',
 };
 
 /**
@@ -106,5 +124,9 @@ export function themeToVars(theme: NetlabTheme): React.CSSProperties {
     '--netlab-accent-red':    theme.accentRed,
     '--netlab-accent-yellow': theme.accentYellow,
     '--netlab-accent-cyan':   theme.accentCyan,
+    '--netlab-node-router-bg':theme.nodeRouterBg,
+    '--netlab-node-switch-bg':theme.nodeSwitchBg,
+    '--netlab-node-client-bg':theme.nodeClientBg,
+    '--netlab-node-server-bg':theme.nodeServerBg,
   } as React.CSSProperties;
 }
