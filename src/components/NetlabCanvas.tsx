@@ -21,6 +21,7 @@ import '@xyflow/react/dist/style.css';
 
 import { useNetlabContext } from './NetlabContext';
 import { NetlabUIContext } from './NetlabUIContext';
+import { NetlabThemeScopeContext } from './NetlabThemeScope';
 import { NodeDetailPanel } from './NodeDetailPanel';
 import { layerRegistry } from '../registry/LayerRegistry';
 import { areasToNodes } from '../areas/AreaRegistry';
@@ -53,7 +54,7 @@ export interface NetlabCanvasProps {
 export function NetlabCanvas({
   style,
   className,
-  colorMode = 'dark',
+  colorMode,
   onNodesChange: onNodesChangeProp,
   onEdgesChange: onEdgesChangeProp,
   onTopologyChange,
@@ -65,6 +66,8 @@ export function NetlabCanvas({
   // Optional: read active edge IDs from SimulationContext (non-throwing)
   const simCtx = useContext(SimulationContext);
   const activeEdgeIds = simCtx?.state.activeEdgeIds ?? [];
+  const themeScope = useContext(NetlabThemeScopeContext);
+  const resolvedColorMode = colorMode ?? themeScope?.colorMode ?? 'dark';
 
   // Optional: read failure state for visual styling
   const failureCtx = useOptionalFailure();
@@ -218,7 +221,7 @@ export function NetlabCanvas({
           nodes={styledNodes}
           edges={styledEdges}
           nodeTypes={nodeTypes}
-          colorMode={colorMode}
+          colorMode={resolvedColorMode}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}

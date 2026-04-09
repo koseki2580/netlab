@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { NetlabProvider } from '../../components/NetlabProvider';
+import { NetlabThemeScope } from '../../components/NetlabThemeScope';
 import { NetlabUIContext } from '../../components/NetlabUIContext';
 import { TopologyEditorProvider } from '../context/TopologyEditorProvider';
 import { useTopologyEditorContext } from '../context/TopologyEditorContext';
@@ -62,7 +63,7 @@ export function TopologyEditor({
       initialTopology={initialTopology}
       onTopologyChange={onTopologyChange}
     >
-      <div
+      <NetlabThemeScope
         style={{
           display: 'flex',
           flexDirection: 'column',
@@ -74,7 +75,7 @@ export function TopologyEditor({
       >
         <EditorToolbar />
         <TopologyEditorInner />
-      </div>
+      </NetlabThemeScope>
     </TopologyEditorProvider>
   );
 }

@@ -3,10 +3,12 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { NETLAB_LIGHT_THEME } from '../theme';
 import type { NetworkTopology, TopologySnapshot } from '../types/topology';
 import { useNetlabContext } from './NetlabContext';
 import { NetlabCanvas } from './NetlabCanvas';
 import { NetlabProvider } from './NetlabProvider';
+import { NetlabThemeScope } from './NetlabThemeScope';
 import { FailureContext, type FailureContextValue } from '../simulation/FailureContext';
 import { SimulationContext, type SimulationContextValue } from '../simulation/SimulationContext';
 import { EMPTY_FAILURE_STATE } from '../types/failure';
@@ -343,6 +345,18 @@ describe('NetlabCanvas controlled topology API', () => {
       <NetlabProvider topology={makeTopology()}>
         <NetlabCanvas colorMode="light" />
       </NetlabProvider>,
+    );
+
+    expect(currentReactFlowProps().colorMode).toBe('light');
+  });
+
+  it('inherits React Flow color mode from NetlabThemeScope when the prop is omitted', () => {
+    render(
+      <NetlabThemeScope theme={NETLAB_LIGHT_THEME}>
+        <NetlabProvider topology={makeTopology()}>
+          <NetlabCanvas />
+        </NetlabProvider>
+      </NetlabThemeScope>,
     );
 
     expect(currentReactFlowProps().colorMode).toBe('light');
