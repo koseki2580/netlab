@@ -212,6 +212,13 @@ Absolute-positioned dark panel (right side). Displays `state.selectedHop` fields
 
 Shows placeholder text when `selectedHop === null`.
 
+#### Overlay layout rule
+
+- When `PacketViewer` is rendered together with `RouteTable` in the same canvas region, the two panels must not occupy the same top-right coordinates
+- `NetlabApp` simulation mode and the client-server demo compose them inside one shared right-aligned overlay stack
+- The stack keeps `RouteTable` above `PacketViewer` with a visible gap so both panels remain readable at the same time
+- Standalone uses of either component may still render as independent floating overlays
+
 ### `PacketTimeline`
 
 Scrollable list of all hops in the current trace. Each row:
