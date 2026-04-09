@@ -110,6 +110,11 @@ const CATEGORIES: Category[] = [
         desc: 'Click any hop in the timeline to inspect routing decisions, LPM candidates, TTL values, and drop reasons.',
       },
       {
+        path: '/simulation/nat',
+        title: 'NAT / PAT',
+        desc: 'Watch SNAT, DNAT port forwarding, and the live NAT table update on an edge router.',
+      },
+      {
         path: '/simulation/interface-aware',
         title: 'Interface-Aware Forwarding',
         desc: 'See which router interface is selected at each hop, with ingress and egress interface names shown in the inspector.',
