@@ -198,6 +198,42 @@ const vars = themeToVars(NETLAB_LIGHT_THEME);
 <div style={vars}>...</div>
 ```
 
+## Primitive Composition
+
+`NetlabApp` is the batteries-included entry point: it injects `--netlab-*` variables and keeps `ReactFlow`'s `colorMode` aligned automatically.
+
+If you compose the lower-level primitives yourself, you must provide that theme scope explicitly. The supported wrapper is `NetlabThemeScope`:
+
+```tsx
+import {
+  NetlabThemeScope,
+  NetlabProvider,
+  SimulationProvider,
+  NetlabCanvas,
+  SimulationControls,
+  RouteTable,
+  NETLAB_LIGHT_THEME,
+} from 'netlab';
+
+<NetlabThemeScope theme={NETLAB_LIGHT_THEME}>
+  <NetlabProvider topology={topology}>
+    <SimulationProvider>
+      <SimulationControls />
+      <NetlabCanvas />
+      <RouteTable />
+    </SimulationProvider>
+  </NetlabProvider>
+</NetlabThemeScope>
+```
+
+`NetlabThemeScope`:
+
+- merges partial overrides on top of `NETLAB_DARK_THEME`
+- injects the `--netlab-*` CSS variables for all descendants
+- provides the resolved `colorMode` to `NetlabCanvas` when the prop is omitted
+
+If you skip both `NetlabApp` and `NetlabThemeScope`, components that use `var(--netlab-*)` fall back to browser defaults. In practice this makes panel text render black-on-dark, node labels lose their intended colors, and simulation overlays become visually inconsistent.
+
 ---
 
 ## Scope
@@ -220,7 +256,7 @@ luminance = 0.299 * R + 0.587 * G + 0.114 * B
 colorMode = luminance > 128 ? 'light' : 'dark'
 ```
 
-`NetlabCanvas` accepts an optional `colorMode` prop and forwards it to `ReactFlow`. Consumers who embed `NetlabCanvas` directly outside `NetlabApp` must pass the correct `colorMode` when using a light background.
+`NetlabCanvas` accepts an optional `colorMode` prop and forwards it to `ReactFlow`. Inside `NetlabThemeScope`, `NetlabCanvas` inherits the resolved mode automatically. Consumers who bypass both `NetlabApp` and `NetlabThemeScope` must pass the correct `colorMode` explicitly when using a light background.
 
 This derivation only applies to colors supplied through the `theme` prop. If a host page overrides `--netlab-*` variables purely through external CSS, `NetlabApp` cannot infer React Flow's mode from those runtime CSS values, so direct `NetlabCanvas` embeddings should set `colorMode` explicitly for light-mode canvases.
 
