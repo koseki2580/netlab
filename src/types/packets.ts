@@ -23,6 +23,43 @@ export interface HttpMessage {
   body?: string;
 }
 
+export interface DhcpOptions {
+  subnetMask?: string;
+  router?: string;
+  dnsServer?: string;
+  leaseTime?: number;
+}
+
+export interface DhcpMessage {
+  layer: 'L7';
+  messageType: 'DISCOVER' | 'OFFER' | 'REQUEST' | 'ACK' | 'NAK';
+  transactionId: number;
+  clientMac: string;
+  offeredIp?: string;
+  serverIp?: string;
+  options: DhcpOptions;
+}
+
+export interface DnsQuestion {
+  name: string;
+  type: 'A';
+}
+
+export interface DnsRecord {
+  name: string;
+  type: 'A';
+  ttl: number;
+  address: string;
+}
+
+export interface DnsMessage {
+  layer: 'L7';
+  transactionId: number;
+  isResponse: boolean;
+  questions: DnsQuestion[];
+  answers: DnsRecord[];
+}
+
 export interface TcpSegment {
   layer: 'L4';
   srcPort: number;
@@ -42,7 +79,7 @@ export interface UdpDatagram {
   dstPort: number;
   length?: number;
   checksum?: number;
-  payload: RawPayload;
+  payload: RawPayload | DhcpMessage | DnsMessage;
 }
 
 export interface IpPacket {

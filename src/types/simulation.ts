@@ -40,6 +40,8 @@ export interface PacketHop {
 
 export interface PacketTrace {
   packetId: string;
+  sessionId?: string;
+  label?: string;
   srcNodeId: string;
   dstNodeId: string;
   hops: PacketHop[];

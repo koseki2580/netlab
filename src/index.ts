@@ -60,6 +60,7 @@ export { HopInspector } from './components/simulation/HopInspector';
 export { StepControls } from './components/simulation/StepControls';
 export { PacketStructureViewer } from './components/simulation/PacketStructureViewer';
 export { TraceSummary } from './components/simulation/TraceSummary';
+export { TraceSelector } from './components/simulation/TraceSelector';
 export { SessionList } from './components/simulation/SessionList';
 export { SessionDetail } from './components/simulation/SessionDetail';
 
@@ -76,6 +77,11 @@ export type {
   TcpFlags,
   RawPayload,
   HttpMessage,
+  DhcpOptions,
+  DhcpMessage,
+  DnsQuestion,
+  DnsRecord,
+  DnsMessage,
   TcpSegment,
   UdpDatagram,
   IpPacket,
@@ -114,6 +120,16 @@ export type {
   NetworkTopology,
   TopologySnapshot,
 } from './types/topology';
+
+export type {
+  DhcpServerConfig,
+  DhcpClientConfig,
+  DnsZoneEntry,
+  DnsServerConfig,
+  DhcpLeaseState,
+  DnsCacheEntry,
+  DnsCache,
+} from './types/services';
 
 export type { HookFn, HookMap, HookPoint } from './types/hooks';
 
@@ -156,6 +172,7 @@ export { NodeDetailPanel } from './components/NodeDetailPanel';
 
 // Utilities
 export { isInSubnet, parseCidr } from './utils/cidr';
+export { deriveDeterministicMac, extractHostname, isIpAddress } from './utils/network';
 export { encodeTopology, decodeTopology } from './utils/topology-url';
 export { isValidConnection, isValidConnectionBetweenNodes, isValidEdge } from './utils/connectionValidator';
 

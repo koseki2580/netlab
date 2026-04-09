@@ -61,6 +61,60 @@ const udpFrame: EthernetFrame = {
   },
 };
 
+const dhcpFrame: EthernetFrame = {
+  layer: 'L2',
+  srcMac: 'ff:ff:ff:ff:ff:ff',
+  dstMac: '00:00:00:00:00:02',
+  etherType: 0x0800,
+  fcs: 0x12345678,
+  payload: {
+    layer: 'L3',
+    srcIp: '0.0.0.0',
+    dstIp: '255.255.255.255',
+    ttl: 64,
+    protocol: 17,
+    payload: {
+      layer: 'L4',
+      srcPort: 68,
+      dstPort: 67,
+      payload: {
+        layer: 'L7',
+        messageType: 'DISCOVER',
+        transactionId: 1,
+        clientMac: '02:00:00:00:00:01',
+        options: {},
+      },
+    },
+  },
+};
+
+const dnsFrame: EthernetFrame = {
+  layer: 'L2',
+  srcMac: '00:00:00:00:00:01',
+  dstMac: '00:00:00:00:00:02',
+  etherType: 0x0800,
+  fcs: 0x12345678,
+  payload: {
+    layer: 'L3',
+    srcIp: '192.168.1.101',
+    dstIp: '192.168.1.53',
+    ttl: 64,
+    protocol: 17,
+    payload: {
+      layer: 'L4',
+      srcPort: 5000,
+      dstPort: 53,
+      payload: {
+        layer: 'L7',
+        transactionId: 1,
+        isResponse: false,
+        questions: [{ name: 'web.example.com', type: 'A' }],
+        answers: [],
+      },
+    },
+  },
+};
+
 const httpFrame: EthernetFrame = {
   layer: 'L2',
   srcMac: '00:00:00:00:00:01',
@@ -228,6 +282,24 @@ describe('serializePacket', () => {
     expect(l7Field).toBeDefined();
     const payloadBytes = bytes.slice(l7Field!.byteOffset, l7Field!.byteOffset + 14);
     expect(new TextDecoder().decode(payloadBytes)).toBe('GET / HTTP/1.1');
+  });
+
+  it('labels DHCP payloads as L7 DHCP data', () => {
+    const { fields } = serializePacket(dhcpFrame);
+    const field = fields.find((candidate) => candidate.name === 'DHCP Payload');
+
+    expect(field).toBeDefined();
+    expect(field?.layer).toBe('L7');
+    expect(field?.displayValue).toContain('DHCP DISCOVER');
+  });
+
+  it('labels DNS payloads as L7 DNS data', () => {
+    const { fields } = serializePacket(dnsFrame);
+    const field = fields.find((candidate) => candidate.name === 'DNS Payload');
+
+    expect(field).toBeDefined();
+    expect(field?.layer).toBe('L7');
+    expect(field?.displayValue).toContain('DNS QUERY');
   });
 
   it('appends the FCS as the final 4 bytes of the frame', () => {

@@ -15,6 +15,8 @@
 
 import type {
   ArpEthernetFrame,
+  DhcpMessage,
+  DnsMessage,
   EthernetFrame,
   HttpMessage,
   IpPacket,
@@ -26,6 +28,8 @@ import {
   DEFAULT_ETHERNET_PREAMBLE,
   buildApplicationPayloadBytes,
   buildEthernetFrameBytes,
+  formatDhcpMessage,
+  formatDnsMessage,
   buildIpv4FlagsAndFragmentOffset,
   buildIpv4HeaderBytes,
   buildTcpFlagsByte,
@@ -90,26 +94,34 @@ function formatIpv4FlagsAndOffset(ip: IpPacket): string {
 }
 
 function serializeL7(
-  payload: HttpMessage | RawPayload,
+  payload: HttpMessage | RawPayload | DhcpMessage | DnsMessage,
   baseOffset: number,
 ): LayerResult {
   const bytes = buildApplicationPayloadBytes(payload);
+  const label = payload.layer === 'raw'
+    ? 'Data'
+    : 'messageType' in payload
+      ? 'DHCP Payload'
+      : 'questions' in payload
+        ? 'DNS Payload'
+        : 'HTTP Payload';
+  const displayValue = payload.layer === 'raw'
+    ? payload.data
+    : 'messageType' in payload
+      ? formatDhcpMessage(payload)
+      : 'questions' in payload
+        ? formatDnsMessage(payload)
+        : formatHttpMessage(payload);
 
   return {
     bytes,
     fields: [
       {
-        name: payload.layer === 'raw' ? 'Data' : 'HTTP Payload',
+        name: label,
         layer: payload.layer === 'raw' ? 'raw' : 'L7',
         byteOffset: baseOffset,
         byteLength: bytes.length,
-        displayValue:
-          payload.layer === 'raw'
-            ? payload.data
-            : (() => {
-                const text = formatHttpMessage(payload);
-                return text.slice(0, 80) + (text.length > 80 ? '…' : '');
-              })(),
+        displayValue: displayValue.slice(0, 80) + (displayValue.length > 80 ? '…' : ''),
       },
     ],
   };

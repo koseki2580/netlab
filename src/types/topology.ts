@@ -2,6 +2,7 @@ import type { Node, Edge } from '@xyflow/react';
 import type { LayerId } from './layers';
 import type { RouterInterface, StaticRouteConfig, RouteEntry } from './routing';
 import type { NetworkArea } from './areas';
+import type { DhcpClientConfig, DhcpServerConfig, DnsServerConfig } from './services';
 
 export interface NetlabNodeData extends Record<string, unknown> {
   label: string;
@@ -14,6 +15,10 @@ export interface NetlabNodeData extends Record<string, unknown> {
   // Router-specific
   interfaces?: RouterInterface[];
   staticRoutes?: StaticRouteConfig[];
+  // Service-specific
+  dhcpServer?: DhcpServerConfig;
+  dhcpClient?: DhcpClientConfig;
+  dnsServer?: DnsServerConfig;
   // Switch-specific
   ports?: SwitchPort[];
 }

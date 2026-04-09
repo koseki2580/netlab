@@ -1,8 +1,10 @@
-import { useEffect } from 'react';
+import { useContext, useEffect } from 'react';
 import { useNetlabUI } from './NetlabUIContext';
 import { useNetlabContext } from './NetlabContext';
+import { SimulationContext } from '../simulation/SimulationContext';
 import type { NetlabNodeData } from '../types/topology';
 import type { RouterInterface } from '../types/routing';
+import type { DhcpLeaseState, DnsCache } from '../types/services';
 
 const PANEL_STYLE: React.CSSProperties = {
   position: 'absolute',
@@ -26,6 +28,14 @@ const ROW_STYLE: React.CSSProperties = {
   display: 'flex',
   gap: 8,
   marginBottom: 3,
+};
+
+const SECTION_HEADER_STYLE: React.CSSProperties = {
+  color: 'var(--netlab-text-secondary)',
+  fontSize: 10,
+  fontWeight: 'bold',
+  letterSpacing: 1,
+  margin: '10px 0 6px',
 };
 
 function RouterDetail({ data }: { data: NetlabNodeData }) {
@@ -77,13 +87,13 @@ function SwitchDetail({ data }: { data: NetlabNodeData }) {
   );
 }
 
-function HostDetail({ data }: { data: NetlabNodeData }) {
+function HostDetail({ data, runtimeIp }: { data: NetlabNodeData; runtimeIp?: string }) {
   return (
     <>
-      {data.ip && (
+      {(runtimeIp ?? data.ip) && (
         <div style={ROW_STYLE}>
           <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 36 }}>IP</span>
-          <span style={{ color: 'var(--netlab-accent-cyan)' }}>{data.ip}</span>
+          <span style={{ color: 'var(--netlab-accent-cyan)' }}>{runtimeIp ?? data.ip}</span>
         </div>
       )}
       {data.mac && (
@@ -96,9 +106,63 @@ function HostDetail({ data }: { data: NetlabNodeData }) {
   );
 }
 
+function DhcpLeaseDetail({ lease }: { lease: DhcpLeaseState }) {
+  return (
+    <>
+      <div style={SECTION_HEADER_STYLE}>DHCP LEASE</div>
+      <div style={ROW_STYLE}>
+        <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 110 }}>Status</span>
+        <span style={{ color: 'var(--netlab-text-primary)' }}>{lease.status.toUpperCase()}</span>
+      </div>
+      {lease.assignedIp && (
+        <div style={ROW_STYLE}>
+          <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 110 }}>Assigned IP</span>
+          <span style={{ color: 'var(--netlab-text-primary)' }}>{lease.assignedIp}</span>
+        </div>
+      )}
+      {lease.serverIp && (
+        <div style={ROW_STYLE}>
+          <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 110 }}>Lease Server</span>
+          <span style={{ color: 'var(--netlab-text-primary)' }}>{lease.serverIp}</span>
+        </div>
+      )}
+      {lease.defaultGateway && (
+        <div style={ROW_STYLE}>
+          <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 110 }}>Default GW</span>
+          <span style={{ color: 'var(--netlab-text-primary)' }}>{lease.defaultGateway}</span>
+        </div>
+      )}
+      {lease.dnsServerIp && (
+        <div style={ROW_STYLE}>
+          <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 110 }}>DNS Server</span>
+          <span style={{ color: 'var(--netlab-text-primary)' }}>{lease.dnsServerIp}</span>
+        </div>
+      )}
+    </>
+  );
+}
+
+function DnsCacheDetail({ cache }: { cache: DnsCache }) {
+  const entries = Object.entries(cache);
+  if (entries.length === 0) return null;
+
+  return (
+    <>
+      <div style={SECTION_HEADER_STYLE}>DNS CACHE</div>
+      {entries.map(([hostname, entry]) => (
+        <div key={hostname} style={ROW_STYLE}>
+          <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 110 }}>{hostname}</span>
+          <span style={{ color: 'var(--netlab-text-primary)' }}>{entry.address}</span>
+        </div>
+      ))}
+    </>
+  );
+}
+
 export function NodeDetailPanel() {
   const { selectedNodeId, setSelectedNodeId } = useNetlabUI();
   const { topology } = useNetlabContext();
+  const simCtx = useContext(SimulationContext);
 
   useEffect(() => {
     if (!selectedNodeId) return;
@@ -115,6 +179,9 @@ export function NodeDetailPanel() {
   if (!node) return null;
 
   const d = node.data as NetlabNodeData;
+  const leaseState = simCtx?.getDhcpLeaseState(selectedNodeId) ?? null;
+  const dnsCache = simCtx?.getDnsCache(selectedNodeId) ?? null;
+  const runtimeIp = simCtx?.engine.getRuntimeNodeIp(selectedNodeId) ?? leaseState?.assignedIp ?? undefined;
 
   return (
     <div style={PANEL_STYLE}>
@@ -145,7 +212,9 @@ export function NodeDetailPanel() {
       <div style={{ borderTop: '1px solid var(--netlab-border-subtle)', paddingTop: 8 }}>
         {d.role === 'router' && <RouterDetail data={d} />}
         {d.role === 'switch' && <SwitchDetail data={d} />}
-        {(d.role === 'client' || d.role === 'server') && <HostDetail data={d} />}
+        {(d.role === 'client' || d.role === 'server') && <HostDetail data={d} runtimeIp={runtimeIp} />}
+        {leaseState && <DhcpLeaseDetail lease={leaseState} />}
+        {dnsCache && <DnsCacheDetail cache={dnsCache} />}
       </div>
     </div>
   );
