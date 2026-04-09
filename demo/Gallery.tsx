@@ -78,6 +78,18 @@ const CATEGORIES: Category[] = [
     ],
   },
   {
+    id: 'services',
+    label: 'Services',
+    color: '#eab308',
+    demos: [
+      {
+        path: '/services/dhcp-dns',
+        title: 'DHCP & DNS',
+        desc: 'Lease an IP with DHCP, resolve a hostname with DNS, and inspect each service trace before HTTP.',
+      },
+    ],
+  },
+  {
     id: 'simulation',
     label: 'Simulation',
     color: '#8b5cf6',
