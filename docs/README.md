@@ -27,6 +27,7 @@ Specifications regarding user interface implementation and canvas operations.
 - [Failure Simulation](ui/failure-simulation.md) - Node/link failure injection, FailureTogglePanel, and visual styling
 - [Resizable Sidebar](ui/resizable-sidebar.md) - Drag-to-resize sidebar component used across demo layouts
 - [Theming](ui/theming.md) - CSS variable-based color theming for embedding in host pages
+- [Node Theming](ui/node-theming.md) - Per-node-type color tokens and CSS variable wiring for theme-aware node rendering
 - [Packet Structure Viewer](ui/packet-structure-viewer.md) - Byte-level hex dump and field table showing per-layer color-coded packet structure
 
 ### 🔄 Simulation (`simulation/`)

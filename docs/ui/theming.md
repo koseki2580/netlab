@@ -40,6 +40,12 @@ interface NetlabTheme {
   accentRed: string;      // Drop / error events
   accentYellow: string;   // MAC addresses
   accentCyan: string;     // IP addresses, primary text accents
+
+  // Node backgrounds
+  nodeRouterBg: string;   // Router node container background
+  nodeSwitchBg: string;   // Switch node container background
+  nodeClientBg: string;   // Client node container background
+  nodeServerBg: string;   // Server node container background
 }
 ```
 
@@ -66,6 +72,10 @@ Each `NetlabTheme` field maps to a CSS custom property scoped to the component c
 | `accentRed` | `--netlab-accent-red` |
 | `accentYellow` | `--netlab-accent-yellow` |
 | `accentCyan` | `--netlab-accent-cyan` |
+| `nodeRouterBg` | `--netlab-node-router-bg` |
+| `nodeSwitchBg` | `--netlab-node-switch-bg` |
+| `nodeClientBg` | `--netlab-node-client-bg` |
+| `nodeServerBg` | `--netlab-node-server-bg` |
 
 ---
 
@@ -92,6 +102,10 @@ import { NETLAB_DARK_THEME } from 'netlab';
 //   accentRed:     '#f87171',
 //   accentYellow:  '#fbbf24',
 //   accentCyan:    '#7dd3fc',
+//   nodeRouterBg:  '#0f2a1a',
+//   nodeSwitchBg:  '#0d1f3c',
+//   nodeClientBg:  '#0d1a2e',
+//   nodeServerBg:  '#0a1f14',
 // }
 ```
 
@@ -116,6 +130,10 @@ import { NETLAB_LIGHT_THEME } from 'netlab';
 //   accentRed:     '#dc2626',
 //   accentYellow:  '#d97706',
 //   accentCyan:    '#0284c7',
+//   nodeRouterBg:  '#f0fdf4',
+//   nodeSwitchBg:  '#eff6ff',
+//   nodeClientBg:  '#f0f9ff',
+//   nodeServerBg:  '#f0fdf4',
 // }
 ```
 
@@ -184,4 +202,4 @@ const vars = themeToVars(NETLAB_LIGHT_THEME);
 
 ## Scope
 
-The theming system covers **UI chrome** — container backgrounds, overlay panels, toolbars, text, and borders. Network device node colors (router green, client blue, server purple, etc.) retain their hardcoded semantic colors because they carry protocol-layer meaning independent of the host page's visual style.
+The theming system covers UI chrome and node rendering. Container backgrounds, overlay panels, toolbars, text, borders, node backgrounds, node icons, node handles, and edge state colors all consume `--netlab-*` variables. See [Node Theming](./node-theming.md) for the node-specific token and styling rules.
