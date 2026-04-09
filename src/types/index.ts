@@ -40,3 +40,9 @@ export type {
 } from './topology';
 
 export type { HookFn, HookMap, HookPoint } from './hooks';
+export type {
+  SessionPhase,
+  SessionStatus,
+  SessionEvent,
+  NetworkSession,
+} from './session';
