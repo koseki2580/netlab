@@ -7,6 +7,9 @@ import type { NetworkTopology, TopologySnapshot } from '../types/topology';
 import { useNetlabContext } from './NetlabContext';
 import { NetlabCanvas } from './NetlabCanvas';
 import { NetlabProvider } from './NetlabProvider';
+import { FailureContext, type FailureContextValue } from '../simulation/FailureContext';
+import { SimulationContext, type SimulationContextValue } from '../simulation/SimulationContext';
+import { EMPTY_FAILURE_STATE } from '../types/failure';
 
 interface MockNode {
   id: string;
@@ -228,6 +231,36 @@ function currentReactFlowProps(): MockReactFlowProps {
   }
 
   return reactFlowState.latestProps;
+}
+
+function makeFailureContextValue(overrides: Partial<FailureContextValue> = {}): FailureContextValue {
+  return {
+    failureState: EMPTY_FAILURE_STATE,
+    toggleNode: vi.fn(),
+    toggleEdge: vi.fn(),
+    toggleInterface: vi.fn(),
+    resetFailures: vi.fn(),
+    isNodeDown: () => false,
+    isEdgeDown: () => false,
+    isInterfaceDown: () => false,
+    ...overrides,
+  };
+}
+
+function makeSimulationContextValue(activeEdgeIds: string[]): SimulationContextValue {
+  return {
+    engine: {} as never,
+    sendPacket: vi.fn(async () => undefined),
+    state: {
+      status: 'idle',
+      traces: [],
+      currentTraceId: null,
+      currentStep: -1,
+      activeEdgeIds,
+      selectedHop: null,
+      selectedPacket: null,
+    },
+  };
 }
 
 beforeEach(() => {
@@ -459,5 +492,83 @@ describe('NetlabCanvas controlled topology API', () => {
     );
 
     expect(currentReactFlowProps().nodes[0]?.position).toEqual({ x: 50, y: 80 });
+  });
+
+  it('uses theme CSS variables for failed edges', () => {
+    render(
+      <NetlabProvider topology={makeTopology()}>
+        <FailureContext.Provider
+          value={makeFailureContextValue({ isEdgeDown: (edgeId) => edgeId === 'e1' })}
+        >
+          <NetlabCanvas />
+        </FailureContext.Provider>
+      </NetlabProvider>,
+    );
+
+    expect(currentReactFlowProps().edges[0]).toMatchObject({
+      animated: false,
+      style: expect.objectContaining({
+        stroke: 'var(--netlab-accent-red)',
+        strokeDasharray: '6 3',
+        strokeWidth: 2,
+      }),
+    });
+  });
+
+  it('uses theme CSS variables for active edges', () => {
+    render(
+      <NetlabProvider topology={makeTopology()}>
+        <SimulationContext.Provider value={makeSimulationContextValue(['e1'])}>
+          <NetlabCanvas />
+        </SimulationContext.Provider>
+      </NetlabProvider>,
+    );
+
+    expect(currentReactFlowProps().edges[0]).toMatchObject({
+      animated: true,
+      style: expect.objectContaining({
+        stroke: 'var(--netlab-accent-cyan)',
+        strokeWidth: 2,
+      }),
+    });
+  });
+
+  it('uses theme CSS variables for invalid edges', () => {
+    render(
+      <NetlabProvider
+        topology={makeTopology({
+          nodes: [
+            {
+              id: 'client-1',
+              type: 'client',
+              position: { x: 50, y: 80 },
+              data: { label: 'PC1', role: 'client', layerId: 'l7' },
+            },
+            {
+              id: 'server-1',
+              type: 'server',
+              position: { x: 240, y: 80 },
+              data: { label: 'SRV1', role: 'server', layerId: 'l7' },
+            },
+          ],
+          edges: [
+            {
+              id: 'e-invalid',
+              source: 'client-1',
+              target: 'server-1',
+              type: 'smoothstep',
+            },
+          ],
+        })}
+      >
+        <NetlabCanvas />
+      </NetlabProvider>,
+    );
+
+    expect(currentReactFlowProps().edges[0]).toMatchObject({
+      style: expect.objectContaining({
+        stroke: 'var(--netlab-accent-red)',
+      }),
+    });
   });
 });

@@ -189,14 +189,14 @@ export function NetlabCanvas({
           return {
             ...edge,
             animated: false,
-            style: { ...edge.style, stroke: '#ef4444', strokeDasharray: '6 3', strokeWidth: 2, opacity: 0.7 },
+            style: { ...edge.style, stroke: 'var(--netlab-accent-red)', strokeDasharray: '6 3', strokeWidth: 2, opacity: 0.7 },
           };
         }
         if (activeEdgeIds.includes(edge.id)) {
-          return { ...edge, animated: true, style: { ...edge.style, stroke: '#7dd3fc', strokeWidth: 2 } };
+          return { ...edge, animated: true, style: { ...edge.style, stroke: 'var(--netlab-accent-cyan)', strokeWidth: 2 } };
         }
         if (!isValidEdge(nodes as NetlabNode[], edge)) {
-          return { ...edge, style: { ...edge.style, stroke: 'red' } };
+          return { ...edge, style: { ...edge.style, stroke: 'var(--netlab-accent-red)' } };
         }
         return edge;
       }),
