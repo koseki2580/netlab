@@ -159,6 +159,7 @@ The component must be wrapped in both `<NetlabProvider>` and `<SimulationProvide
 
 #### 2. Accumulated step log (scrollable)
 
+- When multiple traces exist, renders a `TraceSelector` at the top of the log so the active trace can be switched without leaving the sidebar
 - Computes `revealedHops = trace.hops.slice(0, currentStep + 1)`
 - Renders a `StepEntry` for each revealed hop
 - When `currentStep === -1` (loaded but not started): shows placeholder text

@@ -16,6 +16,7 @@ The site uses **React Router (HashRouter)** for client-side navigation. Hash-bas
 /#/routing/client-server     → Routing: Client–Server
 /#/routing/multi-hop         → Routing: Multi-Hop Routing
 /#/areas/dmz                 → Areas: DMZ Segmentation
+/#/services/dhcp-dns        → Services: DHCP & DNS
 /#/simulation/step           → Simulation: Step-by-Step
 /#/simulation/failure        → Simulation: Failure Injection
 /#/simulation/trace-inspector → Simulation: Trace Inspector
@@ -45,6 +46,8 @@ demo/
     MultiHopDemo.tsx          client → R1 → R2 → server (chained routers)
   areas/
     DmzDemo.tsx               3 zones: private → DMZ → public (classic DMZ)
+  services/
+    DhcpDnsDemo.tsx           DHCP lease assignment + DNS lookup before HTTP
   simulation/
     StepSimDemo.tsx           Auto-running step-by-step routing walkthrough
     FailureSimDemo.tsx        Failure toggle panel + simulation trace controls
@@ -132,6 +135,10 @@ Individual demos are responsible for their own internal layout and any additiona
 - **Edges**: linear chain through both firewalls
 - **Areas**: `private` (10.0.0.0/24), `dmz` (172.16.1.0/24), `public` (203.0.113.0/24)
 - **Purpose**: Classic three-zone DMZ topology; demonstrates the `dmz` area type.
+
+### services/dhcp-dns
+- **Purpose**: Demonstrates DHCP DORA and DNS resolution as explicit packet-trace sessions before HTTP traffic.
+- **Extras**: Flat switched LAN topology, DHCP runtime lease state, DNS cache inspection, and multi-trace step walkthrough.
 
 ### simulation/step
 - **Purpose**: Step-by-step routing walkthrough with hop controls and packet structure inspection.

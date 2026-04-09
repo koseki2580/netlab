@@ -31,14 +31,15 @@ When a frame is received on a port, the switch records `srcMac → ingressPort` 
 
 | Condition | Action |
 | --------- | ------ |
-| `dstMac == ff:ff:ff:ff:ff:ff` | Flood to all ports except ingress |
-| `dstMac` in MAC table | Forward to known port only |
-| `dstMac` not in MAC table | Unknown unicast: flood all ports except ingress |
+| `dstMac == ff:ff:ff:ff:ff:ff` | Select the simulated path toward the destination endpoint |
+| `dstMac` in MAC table | Forward to the matching path |
+| `dstMac` not in MAC table | Select the path that leads toward the destination endpoint |
 
 ### MAC Table
 
-The MAC table is maintained per-switch in `SwitchForwarder`. It is visible in the UI by clicking
-on a Switch node (future feature).
+The MAC table is maintained per-switch in `SwitchForwarder`. The current engine uses a
+destination-aware single-path approximation instead of duplicating one frame into multiple
+concurrent flood branches. This keeps the trace deterministic and readable in the visualizer.
 
 ## Node Types
 

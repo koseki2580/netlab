@@ -51,6 +51,9 @@ Specifications for protocol implementations based on the OSI model and network d
 
 - [Routing](networking/routing/) - Operational specifications for OSPF (`ospf.md`), BGP (`bgp.md`), RIP (`rip.md`), and static routing (`static.md`)
 - [ARP](networking/arp.md) - Address Resolution Protocol simulation: cache seeding, request/reply hop injection, and node ARP table visualization
+- [Services Overview](networking/services/index.md) - DHCP/DNS service sessions, runtime state, and UDP service architecture
+- [DHCP](networking/services/dhcp.md) - DORA address assignment simulation for runtime host IPs
+- [DNS](networking/services/dns.md) - Static A-record resolution and automatic pre-HTTP lookup
 - [Network Areas](networking/network-areas.md) - Mechanisms for managing and rendering OSPF areas and BGP AS
 - [Connection Validation](networking/connection-validation.md) - Validation logic for port compatibility and link limits
 
