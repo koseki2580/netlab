@@ -152,6 +152,10 @@ Individual demos are responsible for their own internal layout and any additiona
 - **Purpose**: Dedicated trace inspection view for packet timeline, hop-level routing details, and final trace status.
 - **Extras**: Auto-sends a packet on mount and composes `TraceSummary`, `PacketTimeline`, `HopInspector`, and `SimulationControls`.
 
+### simulation/nat
+- **Purpose**: Demonstrates edge-router NAT with outbound SNAT, inbound DNAT, and live translation-table inspection.
+- **Extras**: `NatTableViewer`, NAT-specific send buttons, `PacketTimeline`, and `HopInspector`.
+
 ### simulation/interface-aware
 - **Purpose**: Demonstrates ingress and egress interface selection at each forwarding hop.
 

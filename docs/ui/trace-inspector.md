@@ -45,6 +45,7 @@ All three components are zero-prop React components that consume `useSimulation(
 - Shows a sticky header with the hop counter and event badge
 - Shows key packet fields for the selected hop
 - Shows routing details when `hop.routingDecision` exists
+- Shows NAT translation details when `hop.natTranslation` exists
 - Shows a red-tinted drop reason block when `hop.event === 'drop'` and `hop.reason` is present
 
 #### Display fields
@@ -65,6 +66,18 @@ When a hop carries interface-aware forwarding metadata, `HopInspector` also show
 - Egress If
 
 The rows appear only when at least one of `hop.ingressInterfaceName` or `hop.egressInterfaceName` is populated. If only one side is known, the missing side renders as `—`.
+
+#### NAT translation section
+
+When a hop carries `PacketHop.natTranslation`, `HopInspector` renders a `NAT TRANSLATION` section
+showing:
+
+- translation type
+- pre/post source endpoint
+- pre/post destination endpoint
+
+Changed `Post` values use `--netlab-accent-green`. Unchanged `Post` values use
+`--netlab-text-muted`.
 
 #### TTL derivation
 

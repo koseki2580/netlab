@@ -121,6 +121,10 @@ interface PacketHop {
 
 - `TTL`
 - `Header Checksum`
+- `Src IP`
+- `Dst IP`
+- `Src Port`
+- `Dst Port`
 - `Src MAC`
 - `Dst MAC`
 - `FCS`
