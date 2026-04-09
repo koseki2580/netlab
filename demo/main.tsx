@@ -17,6 +17,7 @@ import MultiHopDemo from './routing/MultiHopDemo';
 import DmzDemo from './areas/DmzDemo';
 import EditorDemo from './editor/EditorDemo';
 import ControlledTopologyDemo from './topology/ControlledTopologyDemo';
+import DhcpDnsDemo from './services/DhcpDnsDemo';
 import StepSimDemo from './simulation/StepSimDemo';
 import FailureSimDemo from './simulation/FailureSimDemo';
 import TraceInspectorDemo from './simulation/TraceInspectorDemo';
@@ -39,6 +40,7 @@ createRoot(root).render(
         <Route path="/routing/client-server" element={<ClientServerDemo />} />
         <Route path="/routing/multi-hop" element={<MultiHopDemo />} />
         <Route path="/areas/dmz" element={<DmzDemo />} />
+        <Route path="/services/dhcp-dns" element={<DhcpDnsDemo />} />
         <Route path="/editor" element={<EditorDemo />} />
         <Route path="/topology/controlled" element={<ControlledTopologyDemo />} />
         <Route path="/simulation/step" element={<StepSimDemo />} />

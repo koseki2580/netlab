@@ -19,7 +19,7 @@ describe('demo chrome', () => {
     expect(html).toContain('Example');
   });
 
-  it('Gallery includes a GitHub source link and the All-in-One demo card', () => {
+  it('Gallery includes a GitHub source link and key demo cards', () => {
     const html = renderToStaticMarkup(
       <MemoryRouter>
         <Gallery />
@@ -30,5 +30,7 @@ describe('demo chrome', () => {
     expect(html).toContain('Comprehensive');
     expect(html).toContain('All-in-One');
     expect(html).toContain('/comprehensive/all-in-one');
+    expect(html).toContain('DHCP &amp; DNS');
+    expect(html).toContain('/services/dhcp-dns');
   });
 });
