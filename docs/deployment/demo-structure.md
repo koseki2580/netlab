@@ -16,6 +16,15 @@ The site uses **React Router (HashRouter)** for client-side navigation. Hash-bas
 /#/routing/client-server     → Routing: Client–Server
 /#/routing/multi-hop         → Routing: Multi-Hop Routing
 /#/areas/dmz                 → Areas: DMZ Segmentation
+/#/simulation/step           → Simulation: Step-by-Step
+/#/simulation/failure        → Simulation: Failure Injection
+/#/simulation/trace-inspector → Simulation: Trace Inspector
+/#/simulation/interface-aware → Simulation: Interface-Aware Forwarding
+/#/simulation/session        → Simulation: Session Inspector
+/#/topology/controlled       → Editor: Controlled Topology
+/#/editor                    → Editor: Topology Editor
+/#/embed                     → Integration: Embed
+/#/comprehensive/all-in-one  → Comprehensive: All-in-One Demo
 ```
 
 ---
@@ -26,7 +35,7 @@ The site uses **React Router (HashRouter)** for client-side navigation. Hash-bas
 demo/
   main.tsx                    Entry point: HashRouter + all route definitions
   Gallery.tsx                 Home page: card grid grouped by category
-  DemoShell.tsx               Shared layout: back button + demo title/description
+  DemoShell.tsx               Shared layout: back button + title/description + GitHub source link
   basic/
     MinimalDemo.tsx           2 nodes (client ↔ server), no areas
     ThreeTierDemo.tsx         client → switch → server, L2 switch with ports
@@ -36,23 +45,32 @@ demo/
     MultiHopDemo.tsx          client → R1 → R2 → server (chained routers)
   areas/
     DmzDemo.tsx               3 zones: private → DMZ → public (classic DMZ)
+  simulation/
+    StepSimDemo.tsx           Auto-running step-by-step routing walkthrough
+    FailureSimDemo.tsx        Failure toggle panel + simulation trace controls
+    TraceInspectorDemo.tsx    Packet timeline + hop inspector + trace summary
+    InterfaceAwareDemo.tsx    Interface ingress/egress inspection walkthrough
+    SessionDemo.tsx           Request/response session lifecycle inspector
+  editor/
+    EditorDemo.tsx            Full topology editor with JSON inspector and share link
+  topology/
+    ControlledTopologyDemo.tsx Controlled topology state with URL restore/share
+  embed/
+    EmbedDemo.tsx             Host-page embed showcase
+  comprehensive/
+    AllInOneDemo.tsx          Tabbed editor/simulation/failure/trace showcase
 ```
 
 ---
 
 ## Route Registry
 
-A single `DEMOS` array in `demo/main.tsx` is the source of truth for all routes. The Gallery page reads this array to render navigation cards.
+`demo/main.tsx` contains the concrete `<Route>` definitions for the demo site. `demo/Gallery.tsx` maintains a parallel category/card registry that links to those routes.
 
-```typescript
-interface DemoMeta {
-  path: string;       // relative path, e.g. 'basic/minimal'
-  category: string;   // display category, e.g. 'basic'
-  title: string;
-  desc: string;
-  component: React.ComponentType;
-}
-```
+When adding a new demo, update both files:
+
+- register the route in `demo/main.tsx`
+- add the corresponding gallery card/category entry in `demo/Gallery.tsx`
 
 ---
 
@@ -60,13 +78,15 @@ interface DemoMeta {
 
 The Gallery (`demo/Gallery.tsx`) displays all demos as cards grouped by category. Each card shows the demo title and a one-line description, and links to the demo's hash route. Categories are rendered as labeled sections.
 
+The header also exposes a direct `GitHub` link to `https://github.com/koseki2580/netlab` so users can jump from the landing page to the source repository.
+
 ---
 
 ## DemoShell
 
 `demo/DemoShell.tsx` provides a shared wrapper for every demo page:
 
-- Header bar with a **← Gallery** back link, the demo title, and a subtitle description
+- Header bar with a **← Gallery** back link, the demo title, a subtitle description, and a right-aligned `GitHub` source link
 - Renders `children` below the header (full remaining viewport height)
 
 Individual demos are responsible for their own internal layout and any additional controls (packet log, copy-link button, etc.).
@@ -112,6 +132,44 @@ Individual demos are responsible for their own internal layout and any additiona
 - **Edges**: linear chain through both firewalls
 - **Areas**: `private` (10.0.0.0/24), `dmz` (172.16.1.0/24), `public` (203.0.113.0/24)
 - **Purpose**: Classic three-zone DMZ topology; demonstrates the `dmz` area type.
+
+### simulation/step
+- **Purpose**: Step-by-step routing walkthrough with hop controls and packet structure inspection.
+- **Extras**: Auto-sends a packet on mount and renders `StepControls` in a resizable sidebar.
+
+### simulation/failure
+- **Purpose**: Failure injection walkthrough for node, link, and interface failures.
+- **Extras**: `FailureTogglePanel`, packet send overlay, and `StepControls` stacked in a resizable sidebar.
+
+### simulation/trace-inspector
+- **Purpose**: Dedicated trace inspection view for packet timeline, hop-level routing details, and final trace status.
+- **Extras**: Auto-sends a packet on mount and composes `TraceSummary`, `PacketTimeline`, `HopInspector`, and `SimulationControls`.
+
+### simulation/interface-aware
+- **Purpose**: Demonstrates ingress and egress interface selection at each forwarding hop.
+
+### simulation/session
+- **Purpose**: Demonstrates request/response correlation and lifecycle grouping in the session inspector.
+
+### topology/controlled
+- **Purpose**: Controlled topology demo that keeps topology state outside the editor/canvas and supports URL serialization.
+
+### editor
+- **Purpose**: Full topology editor with add/remove/connect/edit workflows, JSON inspection, and shareable encoded URLs.
+
+### embed
+- **Purpose**: Shows how `NetlabApp` can be embedded inside a host page with fixed dimensions.
+
+### comprehensive/all-in-one
+
+A tabbed demo that shares one editable topology across four views:
+
+- **Editor** tab: topology editing via `TopologyEditor`
+- **Step Simulation** tab: auto-running simulation with `StepControls`
+- **Failure Injection** tab: failure toggles plus packet send workflow
+- **Trace Inspector** tab: `TraceSummary`, `PacketTimeline`, `HopInspector`, and `SimulationControls`
+
+Topology changes made in the Editor tab carry over to the other tabs. Each simulation-oriented tab remounts its providers on tab switch so every view starts from a fresh simulation session over the latest topology.
 
 ---
 
