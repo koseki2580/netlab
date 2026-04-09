@@ -73,10 +73,17 @@ function LegendPills({ annotations }: { annotations: LayerTag[] }) {
   );
 }
 
-function HexDump({ serialized }: { serialized: SerializedPacket }) {
+function HexDump({
+  serialized,
+  changedFields,
+}: {
+  serialized: SerializedPacket;
+  changedFields?: string[];
+}) {
   const { bytes, annotations, fields } = serialized;
   const truncated = bytes.length > MAX_RENDER_BYTES;
   const renderBytes = truncated ? bytes.slice(0, MAX_RENDER_BYTES) : bytes;
+  const changedFieldSet = new Set(changedFields ?? []);
 
   // Build a lookup: byteIndex → field name
   const fieldByByte = new Map<number, string>();
@@ -111,6 +118,7 @@ function HexDump({ serialized }: { serialized: SerializedPacket }) {
           const layer = annotations[absIdx] ?? 'raw';
           const color = LAYER_COLORS[layer];
           const fieldName = fieldByByte.get(absIdx) ?? '';
+          const isChangedByte = changedFieldSet.has(fieldName);
           return (
             <span
               key={i}
@@ -125,6 +133,8 @@ function HexDump({ serialized }: { serialized: SerializedPacket }) {
                 padding: '1px 0',
                 color,
                 background: `${color}18`,
+                outline: isChangedByte ? '1px solid #fbbf24' : undefined,
+                outlineOffset: isChangedByte ? '-1px' : undefined,
                 cursor: 'default',
                 userSelect: 'none',
               }}
@@ -160,8 +170,15 @@ function HexDump({ serialized }: { serialized: SerializedPacket }) {
   );
 }
 
-function FieldTable({ fields }: { fields: AnnotatedField[] }) {
+function FieldTable({
+  fields,
+  changedFields,
+}: {
+  fields: AnnotatedField[];
+  changedFields?: string[];
+}) {
   if (fields.length === 0) return null;
+  const changedFieldSet = new Set(changedFields ?? []);
   return (
     <div>
       <div
@@ -212,7 +229,11 @@ function FieldTable({ fields }: { fields: AnnotatedField[] }) {
               gap: 4,
               padding: '3px 8px',
               borderTop: idx > 0 ? '1px solid #0f172a' : undefined,
-              background: idx % 2 === 0 ? 'transparent' : '#0f172a55',
+              background: changedFieldSet.has(field.name)
+                ? '#92400e33'
+                : idx % 2 === 0
+                  ? 'transparent'
+                  : '#0f172a55',
               alignItems: 'center',
             }}
           >
@@ -243,7 +264,7 @@ function FieldTable({ fields }: { fields: AnnotatedField[] }) {
 
 export function PacketStructureViewer() {
   const { state } = useSimulation();
-  const { selectedPacket } = state;
+  const { selectedHop, selectedPacket } = state;
 
   return (
     <div
@@ -277,11 +298,12 @@ export function PacketStructureViewer() {
       ) : (
         (() => {
           const serialized = serializePacket(selectedPacket.frame);
+          const changedFields = selectedHop?.changedFields;
           return (
             <>
               <LegendPills annotations={serialized.annotations} />
-              <HexDump serialized={serialized} />
-              <FieldTable fields={serialized.fields} />
+              <HexDump serialized={serialized} changedFields={changedFields} />
+              <FieldTable fields={serialized.fields} changedFields={changedFields} />
             </>
           );
         })()

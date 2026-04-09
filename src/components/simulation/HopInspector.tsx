@@ -286,6 +286,51 @@ function DropReasonBlock({ reason }: { reason: string }) {
   );
 }
 
+function ChangedFieldsBlock({ fields }: { fields: string[] }) {
+  return (
+    <section
+      style={{
+        background: 'var(--netlab-bg-panel)',
+        border: '1px solid #78350f',
+        borderRadius: 8,
+        padding: 12,
+      }}
+    >
+      <div
+        style={{
+          color: '#fbbf24',
+          fontSize: 10,
+          fontWeight: 'bold',
+          letterSpacing: 1,
+          marginBottom: 8,
+        }}
+      >
+        MUTATED FIELDS
+      </div>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {fields.map((field) => (
+          <span
+            key={field}
+            style={{
+              display: 'inline-block',
+              padding: '2px 8px',
+              borderRadius: 999,
+              fontSize: 10,
+              fontWeight: 'bold',
+              background: '#451a03',
+              border: '1px solid #92400e',
+              color: '#fbbf24',
+              letterSpacing: 0.4,
+            }}
+          >
+            {field}
+          </span>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function HopInspector() {
   const { topology } = useNetlabContext();
   const { state } = useSimulation();
@@ -395,6 +440,9 @@ export function HopInspector() {
       >
         <HopFields hop={selectedHop} nodes={topology.nodes} />
         {selectedHop.routingDecision && <RoutingSection decision={selectedHop.routingDecision} />}
+        {selectedHop.changedFields && selectedHop.changedFields.length > 0 && (
+          <ChangedFieldsBlock fields={selectedHop.changedFields} />
+        )}
         {selectedHop.event === 'drop' && selectedHop.reason && (
           <DropReasonBlock reason={selectedHop.reason} />
         )}
