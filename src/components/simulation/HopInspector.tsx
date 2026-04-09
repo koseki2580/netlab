@@ -1,6 +1,6 @@
 import { useNetlabContext } from '../NetlabContext';
 import { useSimulation } from '../../simulation/SimulationContext';
-import type { PacketHop, RoutingDecision } from '../../types/simulation';
+import type { NatTranslation, PacketHop, RoutingDecision } from '../../types/simulation';
 
 const EVENT_COLORS: Record<PacketHop['event'], string> = {
   create: '#7dd3fc',
@@ -62,7 +62,7 @@ function EventBadge({ event }: { event: PacketHop['event'] }) {
   );
 }
 
-function FieldRow({ label, value }: { label: string; value: string }) {
+function FieldRow({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
   return (
     <div
       style={{
@@ -73,8 +73,65 @@ function FieldRow({ label, value }: { label: string; value: string }) {
       }}
     >
       <span style={{ color: 'var(--netlab-text-secondary)' }}>{label}</span>
-      <span style={{ color: 'var(--netlab-text-primary)', wordBreak: 'break-word' }}>{value}</span>
+      <span style={{ color: valueColor ?? 'var(--netlab-text-primary)', wordBreak: 'break-word' }}>{value}</span>
     </div>
+  );
+}
+
+function formatEndpoint(ip: string, port: number): string {
+  return `${ip}:${port}`;
+}
+
+function NatTranslationSection({ translation }: { translation: NatTranslation }) {
+  const srcChanged =
+    translation.preSrcIp !== translation.postSrcIp ||
+    translation.preSrcPort !== translation.postSrcPort;
+  const dstChanged =
+    translation.preDstIp !== translation.postDstIp ||
+    translation.preDstPort !== translation.postDstPort;
+
+  return (
+    <section
+      style={{
+        background: 'var(--netlab-bg-panel)',
+        border: '1px solid var(--netlab-border-subtle)',
+        borderRadius: 8,
+        padding: 12,
+      }}
+    >
+      <div
+        style={{
+          color: 'var(--netlab-text-secondary)',
+          fontSize: 10,
+          fontWeight: 'bold',
+          letterSpacing: 1,
+          marginBottom: 10,
+        }}
+      >
+        NAT TRANSLATION
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
+        <FieldRow label="Type" value={translation.type.toUpperCase()} />
+        <FieldRow
+          label="Pre Src"
+          value={formatEndpoint(translation.preSrcIp, translation.preSrcPort)}
+        />
+        <FieldRow
+          label="Post Src"
+          value={formatEndpoint(translation.postSrcIp, translation.postSrcPort)}
+          valueColor={srcChanged ? 'var(--netlab-accent-green)' : 'var(--netlab-text-muted)'}
+        />
+        <FieldRow
+          label="Pre Dst"
+          value={formatEndpoint(translation.preDstIp, translation.preDstPort)}
+        />
+        <FieldRow
+          label="Post Dst"
+          value={formatEndpoint(translation.postDstIp, translation.postDstPort)}
+          valueColor={dstChanged ? 'var(--netlab-accent-green)' : 'var(--netlab-text-muted)'}
+        />
+      </div>
+    </section>
   );
 }
 
@@ -491,6 +548,9 @@ export function HopInspector() {
           <ArpHopDetails hop={selectedHop} />
         ) : (
           <HopFields hop={selectedHop} nodes={topology.nodes} />
+        )}
+        {selectedHop.natTranslation && !selectedHop.arpFrame && (
+          <NatTranslationSection translation={selectedHop.natTranslation} />
         )}
         {selectedHop.routingDecision && !selectedHop.arpFrame && <RoutingSection decision={selectedHop.routingDecision} />}
         {selectedHop.changedFields && selectedHop.changedFields.length > 0 && (

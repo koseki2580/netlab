@@ -1,3 +1,5 @@
+import type { NatTable } from './nat';
+
 export interface RoutingCandidate {
   destination: string;     // CIDR
   nextHop: string;         // IP or 'direct'
@@ -13,6 +15,18 @@ export interface RoutingDecision {
   candidates: RoutingCandidate[];  // all routes sorted by prefix length desc
   winner: RoutingCandidate | null; // null = no matching route
   explanation: string;             // e.g. "Matched 10.0.0.0/24 via direct (static, AD=1)"
+}
+
+export interface NatTranslation {
+  type: 'snat' | 'dnat';
+  preSrcIp: string;
+  preSrcPort: number;
+  postSrcIp: string;
+  postSrcPort: number;
+  preDstIp: string;
+  preDstPort: number;
+  postDstIp: string;
+  postDstPort: number;
 }
 
 export interface PacketHop {
@@ -34,6 +48,7 @@ export interface PacketHop {
   arpFrame?: import('./packets').ArpEthernetFrame;
   reason?: string;          // known values include node-down, interface-down, no-route, ttl-exceeded
   routingDecision?: RoutingDecision;  // present only when nodeId is a router, never on TTL drops
+  natTranslation?: NatTranslation;
   changedFields?: string[];
   timestamp: number;
 }
@@ -59,4 +74,5 @@ export interface SimulationState {
   selectedHop: PacketHop | null;
   selectedPacket: import('./packets').InFlightPacket | null;  // packet snapshot at selectedHop
   nodeArpTables: Record<string, Record<string, string>>;
+  natTables: NatTable[];
 }

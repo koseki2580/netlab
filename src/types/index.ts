@@ -29,9 +29,12 @@ export type {
   TopologyChangeEvent,
   RoutingProtocol,
   StaticRouteConfig,
+  PortForwardingRule,
   RouterInterface,
 } from './routing';
 export { ADMIN_DISTANCES } from './routing';
+
+export type { NatType, NatEntry, NatTable } from './nat';
 
 export type { AreaType, AreaVisualConfig, NetworkArea } from './areas';
 

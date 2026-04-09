@@ -267,6 +267,7 @@ function makeSimulationContextValue(activeEdgeIds: string[]): SimulationContextV
       selectedHop: null,
       selectedPacket: null,
       nodeArpTables: {},
+      natTables: [],
     },
   };
 }

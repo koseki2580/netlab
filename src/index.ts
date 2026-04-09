@@ -22,6 +22,7 @@ export type {
   SimulationState,
   RoutingDecision,
   RoutingCandidate,
+  NatTranslation,
 } from './types/simulation';
 
 // Simulation engine
@@ -57,6 +58,7 @@ export { SimulationControls } from './components/simulation/SimulationControls';
 export { PacketViewer } from './components/simulation/PacketViewer';
 export { PacketTimeline } from './components/simulation/PacketTimeline';
 export { HopInspector } from './components/simulation/HopInspector';
+export { NatTableViewer } from './components/simulation/NatTableViewer';
 export { StepControls } from './components/simulation/StepControls';
 export { PacketStructureViewer } from './components/simulation/PacketStructureViewer';
 export { TraceSummary } from './components/simulation/TraceSummary';
@@ -106,9 +108,11 @@ export type {
   TopologyChangeEvent,
   RoutingProtocol,
   StaticRouteConfig,
+  PortForwardingRule,
   RouterInterface,
 } from './types/routing';
 export { ADMIN_DISTANCES } from './types/routing';
+export type { NatType, NatEntry, NatTable } from './types/nat';
 
 export type { AreaType, AreaVisualConfig, NetworkArea } from './types/areas';
 
