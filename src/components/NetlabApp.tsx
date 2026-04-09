@@ -7,10 +7,10 @@ import { NetlabCanvas } from './NetlabCanvas';
 import { SimulationProvider } from '../simulation/SimulationContext';
 import { SimulationControls } from './simulation/SimulationControls';
 import { PacketTimeline } from './simulation/PacketTimeline';
-import { PacketViewer } from './simulation/PacketViewer';
 import { ResizableSidebar } from './ResizableSidebar';
 import { RouteTable } from './controls/RouteTable';
 import { AreaLegend } from './controls/AreaLegend';
+import { SimulationOverlayDock } from './simulation/SimulationOverlayDock';
 import type { NetworkTopology } from '../types/topology';
 import { NETLAB_DARK_THEME, themeToVars } from '../theme';
 import type { NetlabTheme } from '../theme';
@@ -99,9 +99,8 @@ function SimulationLayout({ showTimeline, showRouteTable, showAreaLegend, colorM
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
           <NetlabCanvas colorMode={colorMode} />
-          {showRouteTable && <RouteTable />}
+          <SimulationOverlayDock showRouteTable={showRouteTable} />
           {showAreaLegend && <AreaLegend />}
-          <PacketViewer />
         </div>
 
         {showTimeline && (

@@ -1,9 +1,6 @@
 import { useNetlabContext } from '../NetlabContext';
 
 const PANEL_STYLE: React.CSSProperties = {
-  position: 'absolute',
-  right: 12,
-  top: 12,
   background: 'var(--netlab-bg-panel)',
   border: '1px solid var(--netlab-border-subtle)',
   borderRadius: 8,
@@ -14,10 +11,20 @@ const PANEL_STYLE: React.CSSProperties = {
   color: 'var(--netlab-text-primary)',
   fontSize: 11,
   fontFamily: 'monospace',
+};
+
+const FLOATING_PANEL_STYLE: React.CSSProperties = {
+  position: 'absolute',
+  right: 12,
+  top: 12,
   zIndex: 100,
 };
 
-export function RouteTable() {
+interface RouteTablePanelProps {
+  floating?: boolean;
+}
+
+export function RouteTablePanel({ floating = false }: RouteTablePanelProps) {
   const { topology, routeTable } = useNetlabContext();
 
   const routers = topology.nodes.filter((n) => n.data.role === 'router');
@@ -27,7 +34,7 @@ export function RouteTable() {
   }
 
   return (
-    <div style={PANEL_STYLE}>
+    <div style={floating ? { ...PANEL_STYLE, ...FLOATING_PANEL_STYLE } : PANEL_STYLE}>
       <div style={{ fontWeight: 'bold', marginBottom: 8, color: 'var(--netlab-text-secondary)', fontSize: 10 }}>
         ROUTE TABLE
       </div>
@@ -54,4 +61,8 @@ export function RouteTable() {
       })}
     </div>
   );
+}
+
+export function RouteTable() {
+  return <RouteTablePanel floating />;
 }
