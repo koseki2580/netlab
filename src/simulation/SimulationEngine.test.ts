@@ -31,7 +31,13 @@ beforeAll(() => {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function makeIpFrame(srcIp: string, dstIp: string, ttl = 64): EthernetFrame {
+function makeIpFrame(
+  srcIp: string,
+  dstIp: string,
+  ttl = 64,
+  srcPort = 12345,
+  dstPort = 80,
+): EthernetFrame {
   return {
     layer: 'L2',
     srcMac: '00:00:00:00:00:01',
@@ -45,8 +51,8 @@ function makeIpFrame(srcIp: string, dstIp: string, ttl = 64): EthernetFrame {
       protocol: 6,
       payload: {
         layer: 'L4',
-        srcPort: 12345,
-        dstPort: 80,
+        srcPort,
+        dstPort,
         seq: 0,
         ack: 0,
         flags: { syn: true, ack: false, fin: false, rst: false, psh: false, urg: false },
@@ -63,12 +69,14 @@ function makePacket(
   srcIp: string,
   dstIp: string,
   ttl = 64,
+  srcPort = 12345,
+  dstPort = 80,
 ): InFlightPacket {
   return {
     id,
     srcNodeId,
     dstNodeId,
-    frame: makeIpFrame(srcIp, dstIp, ttl),
+    frame: makeIpFrame(srcIp, dstIp, ttl, srcPort, dstPort),
     currentDeviceId: srcNodeId,
     ingressPortId: '',
     path: [],
@@ -393,6 +401,97 @@ function multiHopTopology(): NetworkTopology {
       { id: 'e1', source: 'client-1', target: 'router-1' },
       { id: 'e2', source: 'router-1', target: 'router-2' },
       { id: 'e3', source: 'router-2', target: 'server-1' },
+    ],
+    areas: [],
+    routeTables,
+  };
+}
+
+/** client-1 -- e1 -- nat-router -- e2 -- isp-router -- e3 -- server-1 */
+function natTopology(): NetworkTopology {
+  const routeTables = new Map<string, RouteEntry[]>([
+    [
+      'nat-router',
+      [
+        makeRouteEntry('nat-router', '192.168.1.0/24', 'direct'),
+        makeRouteEntry('nat-router', '203.0.113.0/30', 'direct'),
+        makeRouteEntry('nat-router', '0.0.0.0/0', '203.0.113.2'),
+      ],
+    ],
+    [
+      'isp-router',
+      [
+        makeRouteEntry('isp-router', '203.0.113.0/30', 'direct'),
+        makeRouteEntry('isp-router', '198.51.100.0/24', 'direct'),
+        makeRouteEntry('isp-router', '192.168.1.0/24', '203.0.113.1'),
+      ],
+    ],
+  ]);
+
+  return {
+    nodes: [
+      {
+        id: 'client-1',
+        type: 'client',
+        position: { x: 0, y: 0 },
+        data: { label: 'Client', role: 'client', layerId: 'l7', ip: '192.168.1.10', mac: CLIENT_MAC },
+      },
+      {
+        id: 'nat-router',
+        type: 'router',
+        position: { x: 200, y: 0 },
+        data: {
+          label: 'R-NAT',
+          role: 'router',
+          layerId: 'l3',
+          interfaces: [
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '192.168.1.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:11:00:00',
+              nat: 'inside',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '203.0.113.1',
+              prefixLength: 30,
+              macAddress: '00:00:00:11:00:01',
+              nat: 'outside',
+            },
+          ],
+          portForwardingRules: [
+            { proto: 'tcp', externalPort: 8080, internalIp: '192.168.1.10', internalPort: 80 },
+          ],
+        },
+      },
+      {
+        id: 'isp-router',
+        type: 'router',
+        position: { x: 400, y: 0 },
+        data: {
+          label: 'R-ISP',
+          role: 'router',
+          layerId: 'l3',
+          interfaces: [
+            { id: 'eth0', name: 'eth0', ipAddress: '203.0.113.2', prefixLength: 30, macAddress: '00:00:00:12:00:00' },
+            { id: 'eth1', name: 'eth1', ipAddress: '198.51.100.1', prefixLength: 24, macAddress: '00:00:00:12:00:01' },
+          ],
+        },
+      },
+      {
+        id: 'server-1',
+        type: 'server',
+        position: { x: 600, y: 0 },
+        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '198.51.100.10', mac: SERVER_MAC },
+      },
+    ],
+    edges: [
+      { id: 'e1', source: 'client-1', target: 'nat-router' },
+      { id: 'e2', source: 'nat-router', target: 'isp-router' },
+      { id: 'e3', source: 'isp-router', target: 'server-1' },
     ],
     areas: [],
     routeTables,
@@ -900,6 +999,227 @@ describe('SimulationEngine.reset', () => {
     expect(state.selectedHop).toBeNull();
     expect(state.traces).toHaveLength(1); // trace still present
     expect(state.status).toBe('paused');
+  });
+});
+
+describe('SimulationEngine NAT', () => {
+  it('annotates SNAT hops and exposes live NAT table state', async () => {
+    const engine = makeEngine(natTopology());
+
+    await engine.send(
+      makePacket(
+        'nat-snat',
+        'client-1',
+        'server-1',
+        '192.168.1.10',
+        '198.51.100.10',
+        64,
+        54321,
+        80,
+      ),
+    );
+
+    const trace = engine.getState().traces.find((candidate) => candidate.packetId === 'nat-snat');
+    const natHop = trace?.hops.find((hop) => hop.nodeId === 'nat-router');
+    const natTable = engine.getState().natTables.find((table) => table.routerId === 'nat-router');
+
+    expect(trace?.status).toBe('delivered');
+    expect(natHop?.natTranslation).toEqual({
+      type: 'snat',
+      preSrcIp: '192.168.1.10',
+      preSrcPort: 54321,
+      postSrcIp: '203.0.113.1',
+      postSrcPort: 1024,
+      preDstIp: '198.51.100.10',
+      preDstPort: 80,
+      postDstIp: '198.51.100.10',
+      postDstPort: 80,
+    });
+    expect(natHop?.changedFields).toEqual(expect.arrayContaining([
+      'TTL',
+      'Header Checksum',
+      'Src IP',
+      'Src Port',
+      'Src MAC',
+      'Dst MAC',
+      'FCS',
+    ]));
+    expect(natTable?.entries).toHaveLength(1);
+    expect(natTable?.entries[0]?.insideGlobalIp).toBe('203.0.113.1');
+    expect(natTable?.entries[0]?.insideGlobalPort).toBe(1024);
+  });
+
+  it('reverse-translates return traffic for an existing SNAT session', async () => {
+    const engine = makeEngine(natTopology());
+
+    await engine.send(
+      makePacket(
+        'nat-snat',
+        'client-1',
+        'server-1',
+        '192.168.1.10',
+        '198.51.100.10',
+        64,
+        54321,
+        80,
+      ),
+    );
+
+    const mappedPort = engine.getState().natTables[0]?.entries[0]?.insideGlobalPort;
+    expect(mappedPort).toBe(1024);
+
+    await engine.send(
+      makePacket(
+        'nat-return',
+        'server-1',
+        'client-1',
+        '198.51.100.10',
+        '203.0.113.1',
+        64,
+        80,
+        mappedPort ?? 0,
+      ),
+    );
+
+    const trace = engine.getState().traces.find((candidate) => candidate.packetId === 'nat-return');
+    const natHop = trace?.hops.find((hop) => hop.nodeId === 'nat-router');
+
+    expect(trace?.status).toBe('delivered');
+    expect(natHop?.natTranslation).toEqual({
+      type: 'snat',
+      preSrcIp: '198.51.100.10',
+      preSrcPort: 80,
+      postSrcIp: '198.51.100.10',
+      postSrcPort: 80,
+      preDstIp: '203.0.113.1',
+      preDstPort: 1024,
+      postDstIp: '192.168.1.10',
+      postDstPort: 54321,
+    });
+    expect(natHop?.changedFields).toEqual(expect.arrayContaining([
+      'TTL',
+      'Header Checksum',
+      'Dst IP',
+      'Dst Port',
+      'Src MAC',
+      'Dst MAC',
+      'FCS',
+    ]));
+  });
+
+  it('applies DNAT for port forwarding and reuses that mapping on the response', async () => {
+    const engine = makeEngine(natTopology());
+
+    await engine.send(
+      makePacket(
+        'nat-dnat-in',
+        'server-1',
+        'client-1',
+        '198.51.100.10',
+        '203.0.113.1',
+        64,
+        55000,
+        8080,
+      ),
+    );
+
+    const inboundTrace = engine.getState().traces.find((candidate) => candidate.packetId === 'nat-dnat-in');
+    const inboundNatHop = inboundTrace?.hops.find((hop) => hop.nodeId === 'nat-router');
+
+    expect(inboundTrace?.status).toBe('delivered');
+    expect(inboundNatHop?.natTranslation).toEqual({
+      type: 'dnat',
+      preSrcIp: '198.51.100.10',
+      preSrcPort: 55000,
+      postSrcIp: '198.51.100.10',
+      postSrcPort: 55000,
+      preDstIp: '203.0.113.1',
+      preDstPort: 8080,
+      postDstIp: '192.168.1.10',
+      postDstPort: 80,
+    });
+    expect(inboundNatHop?.changedFields).toEqual(expect.arrayContaining([
+      'TTL',
+      'Header Checksum',
+      'Dst IP',
+      'Dst Port',
+      'Src MAC',
+      'Dst MAC',
+      'FCS',
+    ]));
+
+    await engine.send(
+      makePacket(
+        'nat-dnat-out',
+        'client-1',
+        'server-1',
+        '192.168.1.10',
+        '198.51.100.10',
+        64,
+        80,
+        55000,
+      ),
+    );
+
+    const outboundTrace = engine.getState().traces.find((candidate) => candidate.packetId === 'nat-dnat-out');
+    const outboundNatHop = outboundTrace?.hops.find((hop) => hop.nodeId === 'nat-router');
+
+    expect(outboundTrace?.status).toBe('delivered');
+    expect(outboundNatHop?.natTranslation).toEqual({
+      type: 'dnat',
+      preSrcIp: '192.168.1.10',
+      preSrcPort: 80,
+      postSrcIp: '203.0.113.1',
+      postSrcPort: 8080,
+      preDstIp: '198.51.100.10',
+      preDstPort: 55000,
+      postDstIp: '198.51.100.10',
+      postDstPort: 55000,
+    });
+    expect(outboundNatHop?.changedFields).toEqual(expect.arrayContaining([
+      'TTL',
+      'Header Checksum',
+      'Src IP',
+      'Src Port',
+      'Src MAC',
+      'Dst MAC',
+      'FCS',
+    ]));
+  });
+
+  it('reset clears NAT tables and restarts PAT port allocation', async () => {
+    const engine = makeEngine(natTopology());
+
+    await engine.send(
+      makePacket(
+        'nat-before-reset',
+        'client-1',
+        'server-1',
+        '192.168.1.10',
+        '198.51.100.10',
+        64,
+        54321,
+        80,
+      ),
+    );
+    expect(engine.getState().natTables[0]?.entries[0]?.insideGlobalPort).toBe(1024);
+
+    engine.reset();
+    expect(engine.getState().natTables).toEqual([]);
+
+    await engine.send(
+      makePacket(
+        'nat-after-reset',
+        'client-1',
+        'server-1',
+        '192.168.1.10',
+        '198.51.100.10',
+        64,
+        54321,
+        80,
+      ),
+    );
+    expect(engine.getState().natTables[0]?.entries[0]?.insideGlobalPort).toBe(1024);
   });
 });
 

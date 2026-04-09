@@ -38,6 +38,13 @@ export interface StaticRouteConfig {
   metric?: number;
 }
 
+export interface PortForwardingRule {
+  proto: 'tcp' | 'udp';
+  externalPort: number;
+  internalIp: string;
+  internalPort: number;
+}
+
 export interface RouterInterface {
   id: string;
   name: string;
@@ -45,4 +52,5 @@ export interface RouterInterface {
   prefixLength: number;
   macAddress: string;
   connectedEdgeId?: string;
+  nat?: 'inside' | 'outside';
 }

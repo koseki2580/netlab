@@ -3,10 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { HookEngine } from '../../hooks/HookEngine';
 import { SimulationContext } from '../../simulation/SimulationContext';
 import { SimulationEngine } from '../../simulation/SimulationEngine';
+import type { NatTable } from '../../types/nat';
 import type { PacketHop, PacketTrace, SimulationState } from '../../types/simulation';
 import type { NetworkTopology } from '../../types/topology';
 import { NetlabContext } from '../NetlabContext';
+import { NetlabUIContext } from '../NetlabUIContext';
 import { HopInspector } from './HopInspector';
+import { NatTableViewer } from './NatTableViewer';
 import { PacketTimeline } from './PacketTimeline';
 import { TraceSummary } from './TraceSummary';
 
@@ -27,8 +30,8 @@ const TOPOLOGY: NetworkTopology = {
         role: 'router',
         layerId: 'l3',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:01:00:01' },
+          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00', nat: 'inside' },
+          { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:01:00:01', nat: 'outside' },
         ],
       },
     },
@@ -195,6 +198,7 @@ function makeState(overrides: Partial<SimulationState> = {}): SimulationState {
     selectedHop: null,
     selectedPacket: null,
     nodeArpTables: {},
+    natTables: [],
     ...overrides,
   };
 }
@@ -327,6 +331,34 @@ describe('Trace Inspector components', () => {
     expect(html).toContain('No matching route for 198.51.100.10');
   });
 
+  it('HopInspector renders NAT translation details with changed and unchanged post values', () => {
+    const natHop: PacketHop = {
+      ...BASE_HOPS[1],
+      natTranslation: {
+        type: 'snat',
+        preSrcIp: '10.0.0.10',
+        preSrcPort: 54321,
+        postSrcIp: '203.0.113.1',
+        postSrcPort: 1024,
+        preDstIp: '203.0.113.10',
+        preDstPort: 80,
+        postDstIp: '203.0.113.10',
+        postDstPort: 80,
+      },
+    };
+
+    const html = renderWithContexts(
+      <HopInspector />,
+      makeState({ selectedHop: natHop }),
+    );
+
+    expect(html).toContain('NAT TRANSLATION');
+    expect(html).toContain('SNAT');
+    expect(html).toContain('203.0.113.1:1024');
+    expect(html).toContain('var(--netlab-accent-green)');
+    expect(html).toContain('var(--netlab-text-muted)');
+  });
+
   it('HopInspector renders ARP-specific field details and skips routing decision for ARP hops', () => {
     const trace: PacketTrace = {
       packetId: 'pkt-arp-hop',
@@ -407,5 +439,43 @@ describe('Trace Inspector components', () => {
     expect(html).toContain('in-progress');
     expect(html).toContain('Server');
     expect(html).toContain('203.0.113.10');
+  });
+
+  it('NatTableViewer renders the selected router NAT table', () => {
+    const natTables: NatTable[] = [
+      {
+        routerId: 'router-1',
+        entries: [
+          {
+            id: 'nat-1',
+            proto: 'tcp',
+            type: 'snat',
+            insideLocalIp: '10.0.0.10',
+            insideLocalPort: 54321,
+            insideGlobalIp: '203.0.113.1',
+            insideGlobalPort: 1024,
+            outsidePeerIp: '203.0.113.10',
+            outsidePeerPort: 80,
+            createdAt: 1,
+            lastSeenAt: 1,
+          },
+        ],
+      },
+    ];
+
+    const html = renderWithContexts(
+      <NetlabUIContext.Provider value={{ selectedNodeId: 'router-1', setSelectedNodeId: () => {} }}>
+        <NatTableViewer />
+      </NetlabUIContext.Provider>,
+      makeState({
+        selectedHop: BASE_HOPS[1],
+        natTables,
+      }),
+    );
+
+    expect(html).toContain('NAT TABLE');
+    expect(html).toContain('Router: R-1');
+    expect(html).toContain('203.0.113.1:1024');
+    expect(html).toContain('SNAT');
   });
 });

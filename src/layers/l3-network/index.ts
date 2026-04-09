@@ -15,3 +15,4 @@ registerLayerPlugin({
 
 export { RouterForwarder } from './RouterForwarder';
 export { RouterNode } from './RouterNode';
+export { NatProcessor } from './NatProcessor';
