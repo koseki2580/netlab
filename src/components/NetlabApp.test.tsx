@@ -12,6 +12,10 @@ const capturedCanvasProps = vi.hoisted(() => ({
   latest: null as Record<string, unknown> | null,
 }));
 
+const capturedOverlayDockProps = vi.hoisted(() => ({
+  latest: null as Record<string, unknown> | null,
+}));
+
 vi.mock('./NetlabCanvas', async () => {
   const React = await import('react');
 
@@ -50,6 +54,17 @@ vi.mock('./simulation/PacketTimeline', () => ({
 vi.mock('./simulation/PacketViewer', () => ({
   PacketViewer: () => null,
 }));
+
+vi.mock('./simulation/SimulationOverlayDock', async () => {
+  const React = await import('react');
+
+  return {
+    SimulationOverlayDock: (props: Record<string, unknown>) => {
+      capturedOverlayDockProps.latest = props;
+      return React.createElement('div', { 'data-testid': 'simulation-overlay-dock' });
+    },
+  };
+});
 
 vi.mock('./ResizableSidebar', async () => {
   const React = await import('react');
@@ -110,9 +125,18 @@ function currentCanvasProps() {
   return capturedCanvasProps.latest;
 }
 
+function currentOverlayDockProps() {
+  if (!capturedOverlayDockProps.latest) {
+    throw new Error('SimulationOverlayDock props were not captured');
+  }
+
+  return capturedOverlayDockProps.latest;
+}
+
 beforeEach(() => {
   actEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
   capturedCanvasProps.latest = null;
+  capturedOverlayDockProps.latest = null;
 });
 
 afterEach(() => {
@@ -122,6 +146,7 @@ afterEach(() => {
 
   root = null;
   capturedCanvasProps.latest = null;
+  capturedOverlayDockProps.latest = null;
   actEnvironment.IS_REACT_ACT_ENVIRONMENT = false;
 
   if (container) {
@@ -162,5 +187,32 @@ describe('NetlabApp color mode propagation', () => {
     );
 
     expect(currentCanvasProps().colorMode).toBe('light');
+  });
+
+  it('uses the shared simulation overlay dock and forwards route-table visibility', () => {
+    render(
+      <NetlabApp
+        topology={topology}
+        simulation
+        timeline={false}
+        areaLegend={false}
+      />,
+    );
+
+    expect(currentOverlayDockProps().showRouteTable).toBe(true);
+  });
+
+  it('can disable the route table inside the shared simulation overlay dock', () => {
+    render(
+      <NetlabApp
+        topology={topology}
+        simulation
+        timeline={false}
+        routeTable={false}
+        areaLegend={false}
+      />,
+    );
+
+    expect(currentOverlayDockProps().showRouteTable).toBe(false);
   });
 });

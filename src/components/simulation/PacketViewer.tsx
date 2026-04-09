@@ -2,9 +2,6 @@ import { useSimulation } from '../../simulation/SimulationContext';
 import type { PacketHop } from '../../types/simulation';
 
 const PANEL: React.CSSProperties = {
-  position: 'absolute',
-  top: 12,
-  right: 12,
   width: 220,
   background: 'var(--netlab-bg-panel)',
   border: '1px solid var(--netlab-border-subtle)',
@@ -13,6 +10,12 @@ const PANEL: React.CSSProperties = {
   color: 'var(--netlab-text-primary)',
   fontSize: 11,
   fontFamily: 'monospace',
+};
+
+const FLOATING_PANEL: React.CSSProperties = {
+  position: 'absolute',
+  top: 12,
+  right: 12,
   zIndex: 10,
 };
 
@@ -74,14 +77,18 @@ function EventBadge({ event }: { event: PacketHop['event'] }) {
   );
 }
 
-export function PacketViewer() {
+interface PacketViewerPanelProps {
+  floating?: boolean;
+}
+
+export function PacketViewerPanel({ floating = false }: PacketViewerPanelProps) {
   const { state } = useSimulation();
   const { selectedHop, traces, currentTraceId } = state;
   const trace = traces.find((t) => t.packetId === currentTraceId);
   const totalHops = trace?.hops.length ?? 0;
 
   return (
-    <div style={PANEL}>
+    <div style={floating ? { ...PANEL, ...FLOATING_PANEL } : PANEL}>
       <div style={LABEL}>PACKET VIEWER</div>
 
       {!selectedHop ? (
@@ -115,4 +122,8 @@ export function PacketViewer() {
       )}
     </div>
   );
+}
+
+export function PacketViewer() {
+  return <PacketViewerPanel floating />;
 }
