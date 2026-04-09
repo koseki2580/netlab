@@ -138,6 +138,8 @@ export { NETLAB_DARK_THEME, NETLAB_LIGHT_THEME, themeToVars } from './theme';
 // Embeddable app component
 export { NetlabApp } from './components/NetlabApp';
 export type { NetlabAppProps } from './components/NetlabApp';
+export { NetlabThemeScope } from './components/NetlabThemeScope';
+export type { NetlabThemeScopeProps } from './components/NetlabThemeScope';
 
 // Components
 export { ResizableSidebar } from './components/ResizableSidebar';
