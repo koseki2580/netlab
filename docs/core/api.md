@@ -30,6 +30,7 @@ The main React Flow canvas. Renders the network topology with area backgrounds a
 interface NetlabCanvasProps {
   style?: React.CSSProperties;
   className?: string;
+  colorMode?: 'light' | 'dark';
   onNodesChange?: (nodes: NetlabNode[]) => void;
   onEdgesChange?: (edges: NetlabEdge[]) => void;
   onTopologyChange?: (topology: TopologySnapshot) => void;
@@ -39,6 +40,21 @@ interface NetlabCanvasProps {
 By default, node positions and edges are managed in local React state seeded from the provided topology. When any callback prop is provided, `NetlabCanvas` enters controlled-sync mode: committed changes are reported back to the parent and external topology updates re-sync the canvas.
 
 See [../api/controlled-topology.md](../api/controlled-topology.md) for the controlled workflow and [ui-interaction.md](./ui-interaction.md) for the interaction design.
+
+### `<NetlabThemeScope>`
+
+Theme wrapper for manual primitive composition. Use it when you render `NetlabProvider`, `SimulationProvider`, `NetlabCanvas`, or the simulation/overlay controls directly instead of going through `NetlabApp`.
+
+```typescript
+interface NetlabThemeScopeProps {
+  theme?: Partial<NetlabTheme>;
+  style?: React.CSSProperties;
+  className?: string;
+  children: React.ReactNode;
+}
+```
+
+`NetlabThemeScope` merges partial overrides on top of `NETLAB_DARK_THEME`, injects the `--netlab-*` CSS variables for descendants, and provides the resolved `colorMode` to `NetlabCanvas`.
 
 ### `<NodeDetailPanel>`
 
@@ -136,6 +152,7 @@ import { NETLAB_DARK_THEME, NETLAB_LIGHT_THEME, themeToVars } from 'netlab';
 - `NETLAB_DARK_THEME` — default dark palette, including node background tokens
 - `NETLAB_LIGHT_THEME` — built-in light palette
 - `themeToVars(theme)` — converts a `NetlabTheme` to a `React.CSSProperties` object of `--netlab-*` variables
+- `NetlabThemeScope` — the recommended theme wrapper when composing lower-level primitives directly
 
 ### `NetlabApp` `theme` prop
 
