@@ -1,8 +1,8 @@
 # L7 – Application Layer
 
-**Status: Visual only (fetch interception implemented)**
+**Status: HTTP implemented, DHCP/DNS service integration implemented**
 
-The application layer represents HTTP, DNS, and other application protocols.
+The application layer represents HTTP and service-layer payloads such as DHCP and DNS.
 
 ## Packet Format: HTTP Message
 
@@ -39,6 +39,19 @@ installFetchInterceptor({
 - `client` — Browser/client host (shows fetch requests)
 - `server` — Web server (shows received requests)
 
+## Service Integration
+
+Application-triggered name resolution is integrated with the services layer:
+
+- HTTP requests whose `url` contains a hostname trigger DNS resolution before the HTTP trace is sent
+- DHCP may assign the client runtime IP before the application trace is emitted
+
+See:
+
+- [DHCP](../services/dhcp.md)
+- [DNS](../services/dns.md)
+- [Services Overview](../services/index.md)
+
 ## Plugin Import
 
 ```typescript
@@ -47,7 +60,6 @@ import 'netlab/layers/l7-application';
 
 ## Future Implementation
 
-- DNS resolution simulation
 - HTTP/2 multiplexing
 - TLS handshake simulation
 - WebSocket support

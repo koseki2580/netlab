@@ -21,9 +21,13 @@ See [l2-datalink.md](../layers/l2-datalink.md) for the full forwarding specifica
 
 1. **Learn**: Record `srcMac → ingressPort` on every received frame
 2. **Forward**:
-   - Broadcast (`ff:ff:ff:ff:ff:ff`): flood all ports except ingress
-   - Known unicast: send to known port only
-   - Unknown unicast: flood all ports except ingress
+   - Broadcast (`ff:ff:ff:ff:ff:ff`): choose the simulated path toward the intended destination node
+   - Known unicast: send to the matching path
+   - Unknown unicast: choose the path that leads toward the destination node
+
+In the current engine, switch traversal is modeled as a single destination-aware path through the
+topology graph. The engine does not duplicate one frame into multiple concurrent branch traces for
+every flooded port.
 
 ## Demo Configuration
 

@@ -24,6 +24,7 @@ All three components are zero-prop React components that consume `useSimulation(
 
 #### Behavior
 
+- When multiple traces exist in `state.traces`, renders a `TraceSelector` above the hop list so the user can switch between DHCP, DNS, and application traces
 - Renders every hop in the current trace in step order
 - Keeps the existing click-to-`selectHop` interaction
 - Keeps the per-hop event badge styling
@@ -132,6 +133,7 @@ The package export surface includes:
 export { PacketTimeline } from './components/simulation/PacketTimeline';
 export { HopInspector } from './components/simulation/HopInspector';
 export { TraceSummary } from './components/simulation/TraceSummary';
+export { TraceSelector } from './components/simulation/TraceSelector';
 ```
 
 Each component is zero-prop:
