@@ -37,11 +37,13 @@ export interface HookMap {
   'fetch:intercept': HookFn<{
     request: Request;
     nodeId: string;
+    sessionId?: string;
   }>;
   'fetch:respond': HookFn<{
     request: Request;
     response: Response;
     nodeId: string;
+    sessionId?: string;
   }>;
 }
 

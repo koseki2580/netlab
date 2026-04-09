@@ -69,4 +69,5 @@ export interface InFlightPacket {
   egressPortId?: string;
   path: string[];       // ordered list of device IDs already visited
   timestamp: number;
+  sessionId?: string;
 }
