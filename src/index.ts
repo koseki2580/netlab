@@ -35,6 +35,23 @@ export {
 } from './simulation/SimulationContext';
 export type { SimulationProviderProps, SimulationContextValue } from './simulation/SimulationContext';
 
+// Session types
+export type {
+  NetworkSession,
+  SessionPhase,
+  SessionStatus,
+  SessionEvent,
+} from './types/session';
+
+// Session tracker + context
+export { SessionTracker } from './simulation/SessionTracker';
+export {
+  SessionProvider,
+  SessionContext,
+  useSession,
+} from './simulation/SessionContext';
+export type { SessionProviderProps, SessionContextValue } from './simulation/SessionContext';
+
 // Simulation UI components
 export { SimulationControls } from './components/simulation/SimulationControls';
 export { PacketViewer } from './components/simulation/PacketViewer';
@@ -43,6 +60,8 @@ export { HopInspector } from './components/simulation/HopInspector';
 export { StepControls } from './components/simulation/StepControls';
 export { PacketStructureViewer } from './components/simulation/PacketStructureViewer';
 export { TraceSummary } from './components/simulation/TraceSummary';
+export { SessionList } from './components/simulation/SessionList';
+export { SessionDetail } from './components/simulation/SessionDetail';
 
 // Packet serializer (byte-level packet visualization)
 export { serializePacket } from './utils/packetSerializer';
