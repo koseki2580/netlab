@@ -21,6 +21,7 @@ import StepSimDemo from './simulation/StepSimDemo';
 import FailureSimDemo from './simulation/FailureSimDemo';
 import TraceInspectorDemo from './simulation/TraceInspectorDemo';
 import InterfaceAwareDemo from './simulation/InterfaceAwareDemo';
+import SessionDemo from './simulation/SessionDemo';
 import EmbedDemo from './embed/EmbedDemo';
 
 const root = document.getElementById('root');
@@ -43,6 +44,7 @@ createRoot(root).render(
         <Route path="/simulation/failure" element={<FailureSimDemo />} />
         <Route path="/simulation/trace-inspector" element={<TraceInspectorDemo />} />
         <Route path="/simulation/interface-aware" element={<InterfaceAwareDemo />} />
+        <Route path="/simulation/session" element={<SessionDemo />} />
         <Route path="/embed" element={<EmbedDemo />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
