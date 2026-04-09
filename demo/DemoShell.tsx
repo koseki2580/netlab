@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { NetlabThemeScope } from '../src/components/NetlabThemeScope';
 
 const GITHUB_ICON = (
   <svg
@@ -81,9 +82,9 @@ export default function DemoShell({ title, desc, children }: DemoShellProps) {
           GitHub
         </a>
       </div>
-      <div style={{ flex: 1, overflow: 'hidden' }}>
+      <NetlabThemeScope style={{ flex: 1, overflow: 'hidden' }}>
         {children}
-      </div>
+      </NetlabThemeScope>
     </div>
   );
 }
