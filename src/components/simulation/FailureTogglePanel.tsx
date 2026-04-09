@@ -1,5 +1,6 @@
 import { useFailure } from '../../simulation/FailureContext';
 import { useNetlabContext } from '../NetlabContext';
+import type { RouterInterface } from '../../types/routing';
 
 function ToggleRow({
   label,
@@ -55,11 +56,22 @@ function ToggleRow({
 }
 
 export function FailureTogglePanel() {
-  const { toggleNode, toggleEdge, resetFailures, isNodeDown, isEdgeDown } = useFailure();
+  const {
+    toggleNode,
+    toggleEdge,
+    toggleInterface,
+    resetFailures,
+    isNodeDown,
+    isEdgeDown,
+    isInterfaceDown,
+  } = useFailure();
   const { topology } = useNetlabContext();
 
   const visibleNodes = topology.nodes.filter(
     (n) => n.type !== 'netlab-area',
+  );
+  const routerNodes = visibleNodes.filter(
+    (node) => Array.isArray(node.data.interfaces) && node.data.interfaces.length > 0,
   );
 
   return (
@@ -113,6 +125,24 @@ export function FailureTogglePanel() {
           );
         })}
       </div>
+
+      {routerNodes.length > 0 && (
+        <div>
+          <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4, letterSpacing: '0.06em' }}>
+            INTERFACES
+          </div>
+          {routerNodes.flatMap((node) =>
+            ((node.data.interfaces ?? []) as RouterInterface[]).map((iface) => (
+              <ToggleRow
+                key={`${node.id}:${iface.id}`}
+                label={`${node.data.label} / ${iface.name}`}
+                isDown={isInterfaceDown(node.id, iface.id)}
+                onToggle={() => toggleInterface(node.id, iface.id)}
+              />
+            )),
+          )}
+        </div>
+      )}
 
       <button
         onClick={resetFailures}

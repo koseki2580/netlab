@@ -29,6 +29,7 @@ import { isValidConnectionBetweenNodes, isValidEdge } from '../utils/connectionV
 import { SimulationContext } from '../simulation/SimulationContext';
 import { useOptionalFailure } from '../simulation/FailureContext';
 import type { NetlabNode, NetlabEdge, TopologySnapshot } from '../types/topology';
+import type { RouterInterface } from '../types/routing';
 
 const AREA_NODE_TYPE: NodeTypes = {
   'netlab-area': AreaBackground as NodeTypes[string],
@@ -160,10 +161,23 @@ export function NetlabCanvas({
   const styledNodes = useMemo(
     () =>
       nodes.map((node) => {
-        if (failureCtx?.isNodeDown(node.id)) {
-          return { ...node, style: { ...node.style, opacity: 0.4, filter: 'grayscale(80%)' } };
+        const downInterfaceCount = ((node.data.interfaces ?? []) as RouterInterface[]).filter((iface) =>
+          failureCtx?.isInterfaceDown(node.id, iface.id),
+        ).length;
+
+        if (!failureCtx?.isNodeDown(node.id) && downInterfaceCount === 0) {
+          return node;
         }
-        return node;
+
+        return {
+          ...node,
+          style: failureCtx?.isNodeDown(node.id)
+            ? { ...node.style, opacity: 0.4, filter: 'grayscale(80%)' }
+            : node.style,
+          data: downInterfaceCount > 0
+            ? { ...node.data, _downInterfaceCount: downInterfaceCount }
+            : node.data,
+        };
       }),
     [nodes, failureCtx],
   );
