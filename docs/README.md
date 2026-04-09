@@ -34,6 +34,7 @@ Specifications regarding user interface implementation and canvas operations.
 Specifications focused on simulation-time packet traversal and trace annotation.
 
 - [Interface-Aware Forwarding](simulation/interface-aware-forwarding.md) - How ingress and egress interfaces are resolved for each packet hop
+- [Session Correlation](simulation/session-correlation.md) - Session-aware request/response lifecycle grouping, correlation logic, and SessionList/SessionDetail UI
 
 ### 🌐 Networking Models & Features (`networking/`)
 
