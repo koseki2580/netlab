@@ -14,6 +14,7 @@ import { AreaLegend } from './controls/AreaLegend';
 import type { NetworkTopology } from '../types/topology';
 import { NETLAB_DARK_THEME, themeToVars } from '../theme';
 import type { NetlabTheme } from '../theme';
+import { resolveColorMode, type NetlabColorMode } from '../utils/themeUtils';
 
 export interface NetlabAppProps {
   /** The network topology to display. */
@@ -64,12 +65,13 @@ interface LayoutFlags {
   showTimeline: boolean;
   showRouteTable: boolean;
   showAreaLegend: boolean;
+  colorMode: NetlabColorMode;
 }
 
-function StaticLayout({ showRouteTable, showAreaLegend }: LayoutFlags) {
+function StaticLayout({ showRouteTable, showAreaLegend, colorMode }: LayoutFlags) {
   return (
     <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-      <NetlabCanvas />
+      <NetlabCanvas colorMode={colorMode} />
       {showRouteTable && <RouteTable />}
       {showAreaLegend && <AreaLegend />}
     </div>
@@ -79,7 +81,7 @@ function StaticLayout({ showRouteTable, showAreaLegend }: LayoutFlags) {
 // SimulationLayout is only ever rendered inside a SimulationProvider,
 // so useSimulation() calls inside SimulationControls, PacketViewer,
 // and PacketTimeline are safe here.
-function SimulationLayout({ showTimeline, showRouteTable, showAreaLegend }: LayoutFlags) {
+function SimulationLayout({ showTimeline, showRouteTable, showAreaLegend, colorMode }: LayoutFlags) {
   return (
     <>
       {/* Toolbar */}
@@ -96,7 +98,7 @@ function SimulationLayout({ showTimeline, showRouteTable, showAreaLegend }: Layo
       {/* Canvas row */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-          <NetlabCanvas />
+          <NetlabCanvas colorMode={colorMode} />
           {showRouteTable && <RouteTable />}
           {showAreaLegend && <AreaLegend />}
           <PacketViewer />
@@ -136,14 +138,15 @@ export function NetlabApp({
 }: NetlabAppProps) {
   const hasRouters = topology.nodes.some((n) => n.data.role === 'router');
   const hasAreas = (topology.areas ?? []).length > 0;
+  const resolvedTheme: NetlabTheme = { ...NETLAB_DARK_THEME, ...theme };
+  const colorMode = resolveColorMode(resolvedTheme.bgPrimary);
 
   const flags: LayoutFlags = {
     showTimeline: timeline ?? simulation,
     showRouteTable: routeTable ?? hasRouters,
     showAreaLegend: areaLegend ?? hasAreas,
+    colorMode,
   };
-
-  const resolvedTheme: NetlabTheme = { ...NETLAB_DARK_THEME, ...theme };
 
   const containerStyle: React.CSSProperties = {
     ...themeToVars(resolvedTheme),
