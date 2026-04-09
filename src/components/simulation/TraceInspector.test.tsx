@@ -147,6 +147,36 @@ const BASE_HOPS: PacketHop[] = [
   },
 ];
 
+const ARP_REQUEST_HOP: PacketHop = {
+  step: 1,
+  nodeId: 'client-1',
+  nodeLabel: 'Client',
+  srcIp: '10.0.0.10',
+  dstIp: '203.0.113.10',
+  ttl: 0,
+  protocol: 'ARP',
+  event: 'arp-request',
+  toNodeId: 'server-1',
+  activeEdgeId: 'e1',
+  arpFrame: {
+    layer: 'L2',
+    srcMac: '02:00:00:00:00:10',
+    dstMac: 'ff:ff:ff:ff:ff:ff',
+    etherType: 0x0806,
+    payload: {
+      layer: 'ARP',
+      hardwareType: 1,
+      protocolType: 0x0800,
+      operation: 'request',
+      senderMac: '02:00:00:00:00:10',
+      senderIp: '10.0.0.10',
+      targetMac: '00:00:00:00:00:00',
+      targetIp: '203.0.113.10',
+    },
+  },
+  timestamp: 2,
+};
+
 function makeState(overrides: Partial<SimulationState> = {}): SimulationState {
   const trace: PacketTrace = {
     packetId: 'pkt-1',
@@ -164,6 +194,7 @@ function makeState(overrides: Partial<SimulationState> = {}): SimulationState {
     activeEdgeIds: [],
     selectedHop: null,
     selectedPacket: null,
+    nodeArpTables: {},
     ...overrides,
   };
 }
@@ -207,6 +238,28 @@ describe('Trace Inspector components', () => {
 
     expect(html).toContain('→ Server');
     expect(html).not.toContain('→ server-1');
+  });
+
+  it('PacketTimeline renders ARP-specific labels and helper copy for ARP hops', () => {
+    const trace: PacketTrace = {
+      packetId: 'pkt-arp',
+      srcNodeId: 'client-1',
+      dstNodeId: 'server-1',
+      hops: [BASE_HOPS[0], ARP_REQUEST_HOP],
+      status: 'in-flight',
+    };
+
+    const html = renderWithContexts(
+      <PacketTimeline />,
+      makeState({
+        traces: [trace],
+        currentTraceId: trace.packetId,
+        selectedHop: ARP_REQUEST_HOP,
+      }),
+    );
+
+    expect(html).toContain('ARP-REQ');
+    expect(html).toContain('who has 203.0.113.10?');
   });
 
   it('HopInspector renders derived TTL Out and routing explanation for router hops', () => {
@@ -268,6 +321,30 @@ describe('Trace Inspector components', () => {
     expect(html).toContain('DROP REASON');
     expect(html).toContain('no-route');
     expect(html).toContain('No matching route for 198.51.100.10');
+  });
+
+  it('HopInspector renders ARP-specific field details and skips routing decision for ARP hops', () => {
+    const trace: PacketTrace = {
+      packetId: 'pkt-arp-hop',
+      srcNodeId: 'client-1',
+      dstNodeId: 'server-1',
+      hops: [BASE_HOPS[0], ARP_REQUEST_HOP],
+      status: 'in-flight',
+    };
+
+    const html = renderWithContexts(
+      <HopInspector />,
+      makeState({
+        traces: [trace],
+        currentTraceId: trace.packetId,
+        selectedHop: ARP_REQUEST_HOP,
+      }),
+    );
+
+    expect(html).toContain('ARP FIELDS');
+    expect(html).toContain('REQUEST (1)');
+    expect(html).toContain('ff:ff:ff:ff:ff:ff');
+    expect(html).not.toContain('ROUTING DECISION');
   });
 
   it('HopInspector omits interface rows when the selected hop has no interface metadata', () => {

@@ -64,7 +64,7 @@ export { SessionList } from './components/simulation/SessionList';
 export { SessionDetail } from './components/simulation/SessionDetail';
 
 // Packet serializer (byte-level packet visualization)
-export { serializePacket } from './utils/packetSerializer';
+export { serializePacket, serializeArpFrame } from './utils/packetSerializer';
 export type { LayerTag, AnnotatedField, SerializedPacket } from './utils/packetSerializer';
 
 // Step simulation controller
@@ -80,6 +80,8 @@ export type {
   UdpDatagram,
   IpPacket,
   EthernetFrame,
+  ArpPacket,
+  ArpEthernetFrame,
   Packet,
   InFlightPacket,
 } from './types/packets';

@@ -14,6 +14,7 @@
  */
 
 import type {
+  ArpEthernetFrame,
   EthernetFrame,
   HttpMessage,
   IpPacket,
@@ -34,7 +35,7 @@ import {
   uint32BE,
 } from './packetLayout';
 
-export type LayerTag = 'L2' | 'L3' | 'L4' | 'L7' | 'raw';
+export type LayerTag = 'L2' | 'L3' | 'L4' | 'L7' | 'ARP' | 'raw';
 
 export interface AnnotatedField {
   name: string;
@@ -67,6 +68,14 @@ function formatProtocol(protocol: number): string {
   if (protocol === 6) return 'TCP';
   if (protocol === 17) return 'UDP';
   return String(protocol);
+}
+
+function macToBytes(mac: string): number[] {
+  return mac.split(':').map((part) => Number.parseInt(part, 16));
+}
+
+function ipToBytes(ip: string): number[] {
+  return ip.split('.').map((part) => Number.parseInt(part, 10));
 }
 
 function formatIpv4FlagsAndOffset(ip: IpPacket): string {
@@ -302,8 +311,7 @@ function serializeL2(frame: EthernetFrame): LayerResult {
   };
 }
 
-export function serializePacket(frame: EthernetFrame): SerializedPacket {
-  const { bytes: rawBytes, fields } = serializeL2(frame);
+function finalizeSerializedPacket(rawBytes: number[], fields: AnnotatedField[]): SerializedPacket {
   const annotations: LayerTag[] = new Array<LayerTag>(rawBytes.length).fill('raw');
 
   for (const field of fields) {
@@ -317,4 +325,86 @@ export function serializePacket(frame: EthernetFrame): SerializedPacket {
     annotations,
     fields,
   };
+}
+
+export function serializePacket(frame: EthernetFrame): SerializedPacket {
+  const { bytes: rawBytes, fields } = serializeL2(frame);
+  return finalizeSerializedPacket(rawBytes, fields);
+}
+
+export function serializeArpFrame(frame: ArpEthernetFrame): SerializedPacket {
+  const fcs = frame.fcs ?? 0;
+  const operation = frame.payload.operation === 'request' ? 1 : 2;
+  const rawBytes = [
+    ...macToBytes(frame.dstMac),
+    ...macToBytes(frame.srcMac),
+    0x08,
+    0x06,
+    0x00,
+    0x01,
+    0x08,
+    0x00,
+    0x06,
+    0x04,
+    ...uint16BE(operation),
+    ...macToBytes(frame.payload.senderMac),
+    ...ipToBytes(frame.payload.senderIp),
+    ...macToBytes(frame.payload.targetMac),
+    ...ipToBytes(frame.payload.targetIp),
+    ...uint32BE(fcs),
+  ];
+
+  const fields: AnnotatedField[] = [
+    { name: 'Dst MAC', layer: 'L2', byteOffset: 0, byteLength: 6, displayValue: frame.dstMac },
+    { name: 'Src MAC', layer: 'L2', byteOffset: 6, byteLength: 6, displayValue: frame.srcMac },
+    { name: 'EtherType', layer: 'L2', byteOffset: 12, byteLength: 2, displayValue: `${formatHex(frame.etherType, 4)} (ARP)` },
+    { name: 'Hardware Type', layer: 'ARP', byteOffset: 14, byteLength: 2, displayValue: '0x0001 (Ethernet)' },
+    { name: 'Protocol Type', layer: 'ARP', byteOffset: 16, byteLength: 2, displayValue: '0x0800 (IPv4)' },
+    { name: 'HW Length', layer: 'ARP', byteOffset: 18, byteLength: 1, displayValue: '6' },
+    { name: 'Proto Length', layer: 'ARP', byteOffset: 19, byteLength: 1, displayValue: '4' },
+    {
+      name: 'Operation',
+      layer: 'ARP',
+      byteOffset: 20,
+      byteLength: 2,
+      displayValue: `${formatHex(operation, 4)} (${frame.payload.operation.toUpperCase()})`,
+    },
+    {
+      name: 'Sender MAC',
+      layer: 'ARP',
+      byteOffset: 22,
+      byteLength: 6,
+      displayValue: frame.payload.senderMac,
+    },
+    {
+      name: 'Sender IP',
+      layer: 'ARP',
+      byteOffset: 28,
+      byteLength: 4,
+      displayValue: frame.payload.senderIp,
+    },
+    {
+      name: 'Target MAC',
+      layer: 'ARP',
+      byteOffset: 32,
+      byteLength: 6,
+      displayValue: frame.payload.targetMac,
+    },
+    {
+      name: 'Target IP',
+      layer: 'ARP',
+      byteOffset: 38,
+      byteLength: 4,
+      displayValue: frame.payload.targetIp,
+    },
+    {
+      name: 'FCS',
+      layer: 'L2',
+      byteOffset: 42,
+      byteLength: 4,
+      displayValue: formatHex(fcs, 8),
+    },
+  ];
+
+  return finalizeSerializedPacket(rawBytes, fields);
 }

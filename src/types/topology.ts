@@ -9,6 +9,7 @@ export interface NetlabNodeData extends Record<string, unknown> {
   role: string;
   ip?: string;
   mac?: string;
+  arpTable?: Record<string, string>;
   areaId?: string;
   // Router-specific
   interfaces?: RouterInterface[];

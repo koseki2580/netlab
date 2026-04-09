@@ -13,6 +13,8 @@ const EVENT_META: Record<PacketHop['event'], { label: string; color: string }> =
   forward: { label: 'FORWARD', color: '#4ade80' },
   deliver: { label: 'DELIVER', color: '#34d399' },
   drop: { label: 'DROP', color: '#f87171' },
+  'arp-request': { label: 'ARP-REQ', color: '#f59e0b' },
+  'arp-reply': { label: 'ARP-REP', color: '#f59e0b' },
 };
 
 function shortSessionId(sessionId: string): string {
@@ -60,6 +62,12 @@ function describeHop(
   }
   if (hop.event === 'deliver') {
     return 'delivered';
+  }
+  if (hop.event === 'arp-request') {
+    return `who has ${hop.dstIp}?`;
+  }
+  if (hop.event === 'arp-reply') {
+    return `${hop.srcIp} is at ${hop.arpFrame?.srcMac ?? 'unknown'}`;
   }
 
   const parts: string[] = [];

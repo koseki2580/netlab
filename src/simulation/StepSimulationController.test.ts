@@ -9,6 +9,9 @@ import type { NetworkTopology } from '../types/topology';
 import type { InFlightPacket, EthernetFrame } from '../types/packets';
 import type { RouteEntry } from '../types/routing';
 
+const CLIENT_MAC = '02:00:00:00:00:10';
+const SERVER_MAC = '02:00:00:00:00:20';
+
 // Register forwarders once without importing React components
 beforeAll(() => {
   layerRegistry.register({
@@ -102,7 +105,7 @@ function singleRouterTopology(): NetworkTopology {
         id: 'client-1',
         type: 'client',
         position: { x: 0, y: 0 },
-        data: { label: 'Client', role: 'client', layerId: 'l7', ip: '10.0.0.10' },
+        data: { label: 'Client', role: 'client', layerId: 'l7', ip: '10.0.0.10', mac: CLIENT_MAC },
       },
       {
         id: 'router-1',
@@ -122,7 +125,7 @@ function singleRouterTopology(): NetworkTopology {
         id: 'server-1',
         type: 'server',
         position: { x: 400, y: 0 },
-        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.10' },
+        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.10', mac: SERVER_MAC },
       },
     ],
     edges: [

@@ -75,6 +75,26 @@ export interface EthernetFrame {
   fcs?: number;
 }
 
+export interface ArpPacket {
+  layer: 'ARP';
+  hardwareType: 1;
+  protocolType: 0x0800;
+  operation: 'request' | 'reply';
+  senderMac: string;
+  senderIp: string;
+  targetMac: string;
+  targetIp: string;
+}
+
+export interface ArpEthernetFrame {
+  layer: 'L2';
+  srcMac: string;
+  dstMac: string;
+  etherType: 0x0806;
+  payload: ArpPacket;
+  fcs?: number;
+}
+
 export type Packet = EthernetFrame;
 
 export interface InFlightPacket {
