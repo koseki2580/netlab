@@ -1,4 +1,6 @@
 import type {
+  DhcpMessage,
+  DnsMessage,
   EthernetFrame,
   HttpMessage,
   IpPacket,
@@ -65,11 +67,47 @@ export function formatHttpMessage(message: HttpMessage): string {
   return text;
 }
 
+export function formatDhcpMessage(message: DhcpMessage): string {
+  const parts = [
+    `DHCP ${message.messageType}`,
+    `xid=${message.transactionId}`,
+    `client=${message.clientMac}`,
+  ];
+
+  if (message.offeredIp) parts.push(`offered=${message.offeredIp}`);
+  if (message.serverIp) parts.push(`server=${message.serverIp}`);
+  if (message.options.subnetMask) parts.push(`mask=${message.options.subnetMask}`);
+  if (message.options.router) parts.push(`gw=${message.options.router}`);
+  if (message.options.dnsServer) parts.push(`dns=${message.options.dnsServer}`);
+  if (message.options.leaseTime != null) parts.push(`lease=${message.options.leaseTime}`);
+
+  return parts.join(' ');
+}
+
+export function formatDnsMessage(message: DnsMessage): string {
+  const question = message.questions[0];
+  const answer = message.answers[0];
+
+  if (!message.isResponse) {
+    return `DNS QUERY ${question?.type ?? 'A'} ${question?.name ?? 'unknown'}`;
+  }
+
+  return `DNS RESPONSE ${answer?.name ?? question?.name ?? 'unknown'} ${answer?.address ?? 'NXDOMAIN'} ttl=${answer?.ttl ?? 0}`;
+}
+
 export function buildApplicationPayloadBytes(
-  payload: HttpMessage | RawPayload,
+  payload: HttpMessage | RawPayload | DhcpMessage | DnsMessage,
 ): number[] {
   if (payload.layer === 'raw') {
     return Array.from(encoder.encode(payload.data));
+  }
+
+  if ('messageType' in payload) {
+    return Array.from(encoder.encode(formatDhcpMessage(payload)));
+  }
+
+  if ('questions' in payload) {
+    return Array.from(encoder.encode(formatDnsMessage(payload)));
   }
 
   return Array.from(encoder.encode(formatHttpMessage(payload)));

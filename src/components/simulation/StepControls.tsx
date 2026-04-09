@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useSimulation } from '../../simulation/SimulationContext';
 import type { PacketHop, RoutingDecision } from '../../types/simulation';
+import { TraceSelector } from './TraceSelector';
 
 // ── Style constants (dark theme, monospace) ───────────────────────────────────
 
@@ -318,6 +319,9 @@ export function StepControls() {
           padding: '12px 16px',
         }}
       >
+        <div style={{ marginBottom: 12 }}>
+          <TraceSelector />
+        </div>
         {revealedHops.length === 0 ? (
           <div style={{ color: '#334155', fontSize: 12 }}>
             {status === 'idle'

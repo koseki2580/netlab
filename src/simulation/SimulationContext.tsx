@@ -12,11 +12,16 @@ import { useNetlabContext } from '../components/NetlabContext';
 import { useOptionalFailure } from './FailureContext';
 import type { InFlightPacket } from '../types/packets';
 import type { SimulationState } from '../types/simulation';
+import type { DhcpLeaseState, DnsCache } from '../types/services';
 
 export interface SimulationContextValue {
   engine: SimulationEngine;
   state: SimulationState;
   sendPacket: (packet: InFlightPacket) => Promise<void>;
+  simulateDhcp: (clientNodeId: string) => Promise<boolean>;
+  simulateDns: (clientNodeId: string, hostname: string) => Promise<string | null>;
+  getDhcpLeaseState: (nodeId: string) => DhcpLeaseState | null;
+  getDnsCache: (nodeId: string) => DnsCache | null;
 }
 
 export const SimulationContext = createContext<SimulationContextValue | null>(null);
@@ -47,9 +52,38 @@ export function SimulationProvider({ children }: SimulationProviderProps) {
     [engine, failureCtx?.failureState],
   );
 
+  const simulateDhcp = useCallback(
+    (clientNodeId: string) => engine.simulateDhcp(clientNodeId, failureCtx?.failureState),
+    [engine, failureCtx?.failureState],
+  );
+
+  const simulateDns = useCallback(
+    (clientNodeId: string, hostname: string) =>
+      engine.simulateDns(clientNodeId, hostname, failureCtx?.failureState),
+    [engine, failureCtx?.failureState],
+  );
+
+  const getDhcpLeaseState = useCallback(
+    (nodeId: string) => engine.getDhcpLeaseState(nodeId),
+    [engine],
+  );
+
+  const getDnsCache = useCallback(
+    (nodeId: string) => engine.getDnsCache(nodeId),
+    [engine],
+  );
+
   const value = useMemo(
-    () => ({ engine, state, sendPacket }),
-    [engine, state, sendPacket],
+    () => ({
+      engine,
+      state,
+      sendPacket,
+      simulateDhcp,
+      simulateDns,
+      getDhcpLeaseState,
+      getDnsCache,
+    }),
+    [engine, state, sendPacket, simulateDhcp, simulateDns, getDhcpLeaseState, getDnsCache],
   );
 
   return (

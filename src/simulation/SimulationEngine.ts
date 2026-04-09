@@ -4,13 +4,49 @@ import { computeFcs, computeIpv4Checksum } from '../utils/checksum';
 import { buildEthernetFrameBytes, buildIpv4HeaderBytes } from '../utils/packetLayout';
 import type { HookEngine } from '../hooks/HookEngine';
 import type { NetlabNode, NetworkTopology } from '../types/topology';
-import type { ArpEthernetFrame, InFlightPacket } from '../types/packets';
+import type {
+  ArpEthernetFrame,
+  DhcpMessage,
+  DnsMessage,
+  HttpMessage,
+  InFlightPacket,
+  IpPacket,
+  UdpDatagram,
+} from '../types/packets';
 import type { RouteEntry, RouterInterface } from '../types/routing';
 import type { PacketHop, PacketTrace, SimulationState, RoutingDecision, RoutingCandidate } from '../types/simulation';
+import type { DhcpLeaseState, DnsCache } from '../types/services';
 import { type FailureState, EMPTY_FAILURE_STATE, makeInterfaceFailureId } from '../types/failure';
+import { buildDiscover, handleAck, handleOffer } from '../services/DhcpClient';
+import { handleDiscover, handleRequest, LeaseAllocator } from '../services/DhcpServer';
+import { buildDnsQuery, handleDnsResponse } from '../services/DnsClient';
+import { handleDnsQuery } from '../services/DnsServer';
+import { deriveDeterministicMac, extractHostname, isIpAddress } from '../utils/network';
 
 const MAX_HOPS = 64;
 const DEFAULT_PLAY_INTERVAL_MS = 500;
+const BROADCAST_IP = '255.255.255.255';
+
+function isUdpDatagram(payload: IpPacket['payload']): payload is UdpDatagram {
+  return !('seq' in payload);
+}
+
+function isDhcpPayload(payload: UdpDatagram['payload']): payload is DhcpMessage {
+  return payload.layer === 'L7' && 'messageType' in payload;
+}
+
+function isDnsPayload(payload: UdpDatagram['payload']): payload is DnsMessage {
+  return payload.layer === 'L7' && 'questions' in payload;
+}
+
+function isHttpPayload(payload: IpPacket['payload']): payload is IpPacket['payload'] & { payload: HttpMessage } {
+  return 'seq' in payload && payload.payload.layer === 'L7' && 'headers' in payload.payload;
+}
+
+function getDhcpMessage(packet: InFlightPacket): DhcpMessage | null {
+  const transport = packet.frame.payload.payload;
+  return isUdpDatagram(transport) && isDhcpPayload(transport.payload) ? transport.payload : null;
+}
 
 function protocolName(num: number): string {
   if (num === 1) return 'ICMP';
@@ -93,6 +129,9 @@ export class SimulationEngine {
   private playTimer: ReturnType<typeof setInterval> | null = null;
   // packetSnapshots[traceId][step] = InFlightPacket snapshot at that hop
   private packetSnapshots = new Map<string, InFlightPacket[]>();
+  private runtimeNodeIps = new Map<string, string>();
+  private dhcpLeaseStates = new Map<string, DhcpLeaseState>();
+  private dnsCaches = new Map<string, DnsCache>();
 
   constructor(
     private readonly topology: NetworkTopology,
@@ -202,13 +241,14 @@ export class SimulationEngine {
 
   private resolveNextNode(
     currentNodeId: string,
-    dstIp: string,
+    packet: InFlightPacket,
     ingressNodeId: string | null,
     failureState: FailureState = EMPTY_FAILURE_STATE,
   ): Neighbor | null {
     const neighbors = this.getNeighbors(currentNodeId, ingressNodeId, failureState);
     const node = this.topology.nodes.find((n) => n.id === currentNodeId);
     if (!node) return null;
+    const dstIp = packet.frame.payload.dstIp;
 
     if (node.data.role === 'router') {
       const routes = this.topology.routeTables.get(currentNodeId) ?? [];
@@ -220,7 +260,7 @@ export class SimulationEngine {
         for (const neighbor of neighbors) {
           const neighborNode = this.topology.nodes.find((n) => n.id === neighbor.nodeId);
           if (!neighborNode) continue;
-          if (neighborNode.data.ip === dstIp) return neighbor;
+          if (this.getEffectiveNodeIp(neighborNode) === dstIp) return neighbor;
           if (neighborNode.data.role === 'switch') return neighbor;
         }
         return null;
@@ -238,7 +278,41 @@ export class SimulationEngine {
     }
 
     if (node.data.role === 'switch') {
-      // Flood: pick first non-ingress neighbor
+      const targetIp = dstIp === BROADCAST_IP ? null : dstIp;
+
+      for (const neighbor of neighbors) {
+        const neighborNode = this.findNode(neighbor.nodeId);
+        if (!neighborNode) continue;
+
+        if (neighborNode.data.role === 'switch') {
+          const matched = this.findMatchingNodeThroughSwitches(
+            neighborNode.id,
+            currentNodeId,
+            targetIp,
+            packet.dstNodeId,
+            failureState,
+          );
+          if (matched && (!packet.dstNodeId || matched.id === packet.dstNodeId)) {
+            return neighbor;
+          }
+          continue;
+        }
+
+        if (packet.dstNodeId && neighborNode.id === packet.dstNodeId) {
+          return neighbor;
+        }
+
+        if (
+          targetIp &&
+          (
+            this.getEffectiveNodeIp(neighborNode) === targetIp ||
+            (neighborNode.data.interfaces ?? []).some((iface) => iface.ipAddress === targetIp)
+          )
+        ) {
+          return neighbor;
+        }
+      }
+
       return neighbors[0] ?? null;
     }
 
@@ -277,19 +351,6 @@ export class SimulationEngine {
     return this.hashString(packetId) & 0xffff;
   }
 
-  private deriveDeterministicMac(nodeId: string): string {
-    const hash = this.hashString(nodeId);
-    const bytes = [
-      0x02,
-      (hash >>> 24) & 0xff,
-      (hash >>> 16) & 0xff,
-      (hash >>> 8) & 0xff,
-      hash & 0xff,
-      nodeId.length & 0xff,
-    ];
-    return bytes.map((byte) => byte.toString(16).padStart(2, '0')).join(':');
-  }
-
   private resolveEndpointMac(nodeId: string): string | null {
     const node = this.findNode(nodeId);
     if (!node || (node.data.role !== 'client' && node.data.role !== 'server')) {
@@ -298,11 +359,16 @@ export class SimulationEngine {
 
     return typeof node.data.mac === 'string' && node.data.mac.length > 0 && !this.isPlaceholderMac(node.data.mac)
       ? node.data.mac
-      : this.deriveDeterministicMac(nodeId);
+      : deriveDeterministicMac(nodeId);
+  }
+
+  private getEffectiveNodeIp(node: NetlabNode | null): string | undefined {
+    if (!node) return undefined;
+    return this.runtimeNodeIps.get(node.id) ?? node.data.ip;
   }
 
   private nodeOwnsIp(node: NetlabNode, ip: string): boolean {
-    if (node.data.ip === ip) return true;
+    if (this.getEffectiveNodeIp(node) === ip) return true;
     return (node.data.interfaces ?? []).some((iface) => iface.ipAddress === ip);
   }
 
@@ -333,7 +399,7 @@ export class SimulationEngine {
       const matchesTarget =
         (targetNodeId !== undefined && node.id === targetNodeId) ||
         (targetIp !== null && (
-          node.data.ip === targetIp ||
+          this.getEffectiveNodeIp(node) === targetIp ||
           interfaces.some((iface) => iface.ipAddress === targetIp)
         ));
 
@@ -495,7 +561,7 @@ export class SimulationEngine {
     if (destinationNode.data.role === 'router') {
       return (
         this.resolveRouterMac(currentNodeId, destinationNode.id, packet, egressInterfaceId) ??
-        this.deriveDeterministicMac(destinationNode.id)
+        deriveDeterministicMac(destinationNode.id)
       );
     }
 
@@ -516,6 +582,7 @@ export class SimulationEngine {
   ): ArpTargetInfo | null {
     const currentNode = this.findNode(currentNodeId);
     if (!currentNode) return null;
+    if (packet.frame.payload.dstIp === BROADCAST_IP) return null;
 
     if (currentNode.data.role === 'router') {
       const routes = this.topology.routeTables.get(currentNodeId) ?? [];
@@ -544,7 +611,7 @@ export class SimulationEngine {
         targetIp,
         targetNodeId: targetNode.id,
         senderIp: egressInterface?.ipAddress ?? '',
-        senderMac: egressInterface?.macAddress ?? this.deriveDeterministicMac(currentNodeId),
+        senderMac: egressInterface?.macAddress ?? deriveDeterministicMac(currentNodeId),
       };
     }
 
@@ -560,7 +627,7 @@ export class SimulationEngine {
     );
     if (!targetNode) return null;
 
-    const senderIp = currentNode.data.ip ?? '';
+    const senderIp = this.getEffectiveNodeIp(currentNode) ?? '';
     let targetIp = '';
 
     if (targetNode.data.role === 'router') {
@@ -569,7 +636,7 @@ export class SimulationEngine {
       );
       targetIp = gatewayInterface?.ipAddress ?? '';
     } else if (targetNode.data.role === 'client' || targetNode.data.role === 'server') {
-      targetIp = targetNode.data.ip ?? '';
+      targetIp = this.getEffectiveNodeIp(targetNode) ?? '';
     }
 
     if (!targetIp || !this.nodeOwnsIp(targetNode, targetIp)) return null;
@@ -578,7 +645,7 @@ export class SimulationEngine {
       targetIp,
       targetNodeId: targetNode.id,
       senderIp,
-      senderMac: this.resolveEndpointMac(currentNodeId) ?? this.deriveDeterministicMac(currentNodeId),
+      senderMac: this.resolveEndpointMac(currentNodeId) ?? deriveDeterministicMac(currentNodeId),
     };
   }
 
@@ -603,11 +670,11 @@ export class SimulationEngine {
     if (targetNode?.data.role === 'router') {
       return (
         this.resolveRouterMac(currentNodeId, targetNodeId, packet, egressInterfaceId) ??
-        this.deriveDeterministicMac(targetNodeId)
+        deriveDeterministicMac(targetNodeId)
       );
     }
 
-    return this.resolveEndpointMac(targetNodeId) ?? this.deriveDeterministicMac(targetNodeId);
+    return this.resolveEndpointMac(targetNodeId) ?? deriveDeterministicMac(targetNodeId);
   }
 
   private seedArpCache(cache: Map<string, string>): void {
@@ -618,14 +685,15 @@ export class SimulationEngine {
         }
       }
 
+      const effectiveIp = this.getEffectiveNodeIp(node);
       if (
-        typeof node.data.ip === 'string' &&
-        node.data.ip &&
+        typeof effectiveIp === 'string' &&
+        effectiveIp &&
         typeof node.data.mac === 'string' &&
         node.data.mac &&
         !this.isPlaceholderMac(node.data.mac)
       ) {
-        cache.set(node.data.ip, node.data.mac);
+        cache.set(effectiveIp, node.data.mac);
       }
     }
   }
@@ -830,7 +898,7 @@ export class SimulationEngine {
 
     const next = this.resolveNextNode(
       packet.currentDeviceId,
-      packet.frame.payload.dstIp,
+      workingPacket,
       null,
       failureState,
     );
@@ -909,6 +977,55 @@ export class SimulationEngine {
     }
 
     return this.withFrameFcs(this.withIpv4HeaderChecksum(workingPacket));
+  }
+
+  private deriveTraceLabel(packet: InFlightPacket): string {
+    const ipPayload = packet.frame.payload.payload;
+
+    if (isHttpPayload(ipPayload)) {
+      if (ipPayload.payload.method) {
+        return `HTTP ${ipPayload.payload.method}`;
+      }
+      if (ipPayload.payload.statusCode != null) {
+        return `HTTP ${ipPayload.payload.statusCode}`;
+      }
+      return 'HTTP';
+    }
+
+    if (isUdpDatagram(ipPayload)) {
+      if (isDhcpPayload(ipPayload.payload)) {
+        return `DHCP ${ipPayload.payload.messageType}`;
+      }
+      if (isDnsPayload(ipPayload.payload)) {
+        return ipPayload.payload.isResponse ? 'DNS RESPONSE' : 'DNS QUERY';
+      }
+      return 'UDP';
+    }
+
+    return protocolName(packet.frame.payload.protocol);
+  }
+
+  private withPacketIps(
+    packet: InFlightPacket,
+    ips: { srcIp?: string; dstIp?: string },
+  ): InFlightPacket {
+    const srcIp = ips.srcIp ?? packet.frame.payload.srcIp;
+    const dstIp = ips.dstIp ?? packet.frame.payload.dstIp;
+    if (srcIp === packet.frame.payload.srcIp && dstIp === packet.frame.payload.dstIp) {
+      return packet;
+    }
+
+    return {
+      ...packet,
+      frame: {
+        ...packet.frame,
+        payload: {
+          ...packet.frame.payload,
+          srcIp,
+          dstIp,
+        },
+      },
+    };
   }
 
   // ── Core precomputation ────────────────────────────────────────────────────
@@ -1000,10 +1117,25 @@ export class SimulationEngine {
         timestamp: baseTs,
       };
 
-      // Destination check: endpoint with matching IP
+      if (
+        ipPacket.dstIp === BROADCAST_IP &&
+        workingPacket.dstNodeId === current &&
+        (node.data.dhcpServer != null || node.data.dhcpClient != null)
+      ) {
+        stepCounter = this.appendHop(
+          hops,
+          snapshots,
+          { ...hopBase, event: 'deliver' },
+          workingPacket,
+          stepCounter,
+        );
+        break;
+      }
+
+      const effectiveIp = this.getEffectiveNodeIp(node);
       if (
         (node.data.role === 'client' || node.data.role === 'server') &&
-        node.data.ip === ipPacket.dstIp
+        effectiveIp === ipPacket.dstIp
       ) {
         stepCounter = this.appendHop(
           hops,
@@ -1066,7 +1198,7 @@ export class SimulationEngine {
       }
 
       // Resolve next node via topology graph (independent of egressPort)
-      const next = this.resolveNextNode(current, ipPacket.dstIp, ingressFrom, failureState);
+      const next = this.resolveNextNode(current, workingPacket, ingressFrom, failureState);
       if (!next) {
         const dropHop: Omit<PacketHop, 'step'> = {
           ...hopBase,
@@ -1211,7 +1343,7 @@ export class SimulationEngine {
           },
         });
       } else if (node.data.role === 'client' || node.data.role === 'server') {
-        senderIp = node.data.ip ?? null;
+        senderIp = this.getEffectiveNodeIp(node) ?? null;
         const resolvedSrcMac = this.resolveEndpointMac(current);
         workingPacket = this.withFrameFcs({
           ...workingPacket,
@@ -1253,6 +1385,8 @@ export class SimulationEngine {
 
     const trace: PacketTrace = {
       packetId: packet.id,
+      sessionId: packet.sessionId,
+      label: this.deriveTraceLabel(packet),
       srcNodeId: packet.srcNodeId,
       dstNodeId: packet.dstNodeId,
       hops,
@@ -1273,9 +1407,9 @@ export class SimulationEngine {
 
   // ── Playback API ───────────────────────────────────────────────────────────
 
-  async send(packet: InFlightPacket, failureState: FailureState = EMPTY_FAILURE_STATE): Promise<void> {
-    this.clearPlay();
-    const { trace, nodeArpTables } = await this.precomputeDetailed(packet, failureState);
+  private mergeNodeArpTables(
+    nodeArpTables: Record<string, Record<string, string>>,
+  ): Record<string, Record<string, string>> {
     const mergedNodeArpTables = { ...this.state.nodeArpTables };
     for (const [nodeId, table] of Object.entries(nodeArpTables)) {
       mergedNodeArpTables[nodeId] = {
@@ -1283,6 +1417,13 @@ export class SimulationEngine {
         ...table,
       };
     }
+    return mergedNodeArpTables;
+  }
+
+  private appendTrace(
+    trace: PacketTrace,
+    nodeArpTables: Record<string, Record<string, string>> = {},
+  ): void {
     this.state = {
       ...this.state,
       status: 'paused',
@@ -1292,9 +1433,226 @@ export class SimulationEngine {
       activeEdgeIds: [],
       selectedHop: null,
       selectedPacket: null,
-      nodeArpTables: mergedNodeArpTables,
+      nodeArpTables: this.mergeNodeArpTables(nodeArpTables),
     };
     this.notify();
+  }
+
+  private emitSyntheticDropTrace(packet: InFlightPacket, reason: string): void {
+    const sourceNode = this.findNode(packet.srcNodeId);
+    const hop: PacketHop = {
+      step: 0,
+      nodeId: packet.srcNodeId,
+      nodeLabel: sourceNode?.data.label ?? packet.srcNodeId,
+      srcIp: packet.frame.payload.srcIp,
+      dstIp: packet.frame.payload.dstIp,
+      ttl: packet.frame.payload.ttl,
+      protocol: protocolName(packet.frame.payload.protocol),
+      event: 'drop',
+      reason,
+      timestamp: Date.now(),
+    };
+
+    const trace: PacketTrace = {
+      packetId: packet.id,
+      sessionId: packet.sessionId,
+      label: this.deriveTraceLabel(packet),
+      srcNodeId: packet.srcNodeId,
+      dstNodeId: packet.dstNodeId,
+      hops: [hop],
+      status: 'dropped',
+    };
+
+    this.packetSnapshots.set(packet.id, [packet]);
+    this.appendTrace(trace);
+  }
+
+  async simulateDhcp(
+    clientNodeId: string,
+    failureState: FailureState = EMPTY_FAILURE_STATE,
+    sessionId: string = crypto.randomUUID(),
+  ): Promise<boolean> {
+    if (this.runtimeNodeIps.has(clientNodeId)) return true;
+
+    const discoverPacket = buildDiscover(clientNodeId, this.topology);
+    const discoverMessage = discoverPacket ? getDhcpMessage(discoverPacket) : null;
+    const serverNode = discoverPacket ? this.findNode(discoverPacket.dstNodeId) : null;
+    if (!discoverPacket || !discoverMessage || !serverNode?.data.dhcpServer) {
+      return false;
+    }
+
+    this.dhcpLeaseStates.set(clientNodeId, {
+      status: 'selecting',
+      transactionId: discoverMessage.transactionId,
+    });
+    this.notify();
+
+    const leaseAllocator = new LeaseAllocator(serverNode.data.dhcpServer);
+    const stampedDiscover = { ...discoverPacket, sessionId };
+    const discoverResult = await this.precomputeDetailed(stampedDiscover, failureState);
+    this.appendTrace(discoverResult.trace, discoverResult.nodeArpTables);
+    if (discoverResult.trace.status !== 'delivered') return false;
+
+    const offerPacket = handleDiscover(stampedDiscover, this.topology, leaseAllocator);
+    if (!offerPacket) return false;
+    const stampedOffer = { ...offerPacket, sessionId };
+    const offerResult = await this.precomputeDetailed(stampedOffer, failureState);
+    this.appendTrace(offerResult.trace, offerResult.nodeArpTables);
+    if (offerResult.trace.status !== 'delivered') return false;
+
+    const offerMessage = getDhcpMessage(stampedOffer);
+    if (!offerMessage) return false;
+    if (offerMessage.messageType === 'NAK') {
+      this.dhcpLeaseStates.set(clientNodeId, {
+        status: 'init',
+        transactionId: offerMessage.transactionId,
+        serverIp: offerMessage.serverIp,
+      });
+      this.notify();
+      return false;
+    }
+
+    this.dhcpLeaseStates.set(clientNodeId, {
+      status: 'requesting',
+      transactionId: offerMessage.transactionId,
+      offeredIp: offerMessage.offeredIp,
+      serverIp: offerMessage.serverIp,
+    });
+    this.notify();
+
+    const requestPacket = handleOffer(stampedOffer, clientNodeId, this.topology);
+    const stampedRequest = { ...requestPacket, sessionId };
+    const requestResult = await this.precomputeDetailed(stampedRequest, failureState);
+    this.appendTrace(requestResult.trace, requestResult.nodeArpTables);
+    if (requestResult.trace.status !== 'delivered') return false;
+
+    const finalPacket = handleRequest(stampedRequest, this.topology, leaseAllocator);
+    if (!finalPacket) return false;
+    const stampedFinal = { ...finalPacket, sessionId };
+    const finalResult = await this.precomputeDetailed(stampedFinal, failureState);
+    this.appendTrace(finalResult.trace, finalResult.nodeArpTables);
+    if (finalResult.trace.status !== 'delivered') return false;
+
+    const ackResult = handleAck(stampedFinal);
+    if (!ackResult) {
+      this.dhcpLeaseStates.set(clientNodeId, {
+        status: 'init',
+        transactionId: offerMessage.transactionId,
+        serverIp: offerMessage.serverIp,
+      });
+      this.notify();
+      return false;
+    }
+
+    this.runtimeNodeIps.set(clientNodeId, ackResult.assignedIp);
+    this.dhcpLeaseStates.set(clientNodeId, {
+      status: 'bound',
+      transactionId: offerMessage.transactionId,
+      offeredIp: ackResult.assignedIp,
+      serverIp: offerMessage.serverIp,
+      assignedIp: ackResult.assignedIp,
+      subnetMask: ackResult.subnetMask,
+      defaultGateway: ackResult.defaultGateway,
+      dnsServerIp: ackResult.dnsServerIp,
+    });
+    this.notify();
+    return true;
+  }
+
+  async simulateDns(
+    clientNodeId: string,
+    hostname: string,
+    failureState: FailureState = EMPTY_FAILURE_STATE,
+    sessionId: string = crypto.randomUUID(),
+  ): Promise<string | null> {
+    const cached = this.dnsCaches.get(clientNodeId)?.[hostname];
+    if (cached) return cached.address;
+
+    const queryPacket = buildDnsQuery(
+      clientNodeId,
+      hostname,
+      this.topology,
+      this.runtimeNodeIps,
+      this.dhcpLeaseStates.get(clientNodeId)?.dnsServerIp,
+    );
+    if (!queryPacket) return null;
+
+    const stampedQuery = { ...queryPacket, sessionId };
+    const queryResult = await this.precomputeDetailed(stampedQuery, failureState);
+    this.appendTrace(queryResult.trace, queryResult.nodeArpTables);
+    if (queryResult.trace.status !== 'delivered') return null;
+
+    const responsePacket = handleDnsQuery(stampedQuery, this.topology);
+    if (!responsePacket) return null;
+    const stampedResponse = { ...responsePacket, sessionId };
+    const responseResult = await this.precomputeDetailed(stampedResponse, failureState);
+    this.appendTrace(responseResult.trace, responseResult.nodeArpTables);
+    if (responseResult.trace.status !== 'delivered') return null;
+
+    const record = handleDnsResponse(stampedResponse);
+    if (!record) return null;
+
+    this.dnsCaches.set(clientNodeId, {
+      ...(this.dnsCaches.get(clientNodeId) ?? {}),
+      [record.hostname]: {
+        address: record.address,
+        ttl: record.ttl,
+        resolvedAt: Date.now(),
+      },
+    });
+    this.notify();
+    return record.address;
+  }
+
+  private async preparePacketForSend(
+    packet: InFlightPacket,
+    failureState: FailureState,
+  ): Promise<InFlightPacket | null> {
+    const sessionId = packet.sessionId ?? crypto.randomUUID();
+    let workingPacket: InFlightPacket = { ...packet, sessionId };
+    const sourceNode = this.findNode(workingPacket.srcNodeId);
+
+    if (sourceNode?.data.dhcpClient?.enabled && !this.runtimeNodeIps.has(sourceNode.id)) {
+      const bound = await this.simulateDhcp(sourceNode.id, failureState, sessionId);
+      if (!bound) {
+        this.emitSyntheticDropTrace(workingPacket, 'dhcp-assignment-failed');
+        return null;
+      }
+    }
+
+    const effectiveSrcIp = this.getEffectiveNodeIp(sourceNode);
+    if (effectiveSrcIp) {
+      workingPacket = this.withPacketIps(workingPacket, { srcIp: effectiveSrcIp });
+    }
+
+    const transport = workingPacket.frame.payload.payload;
+    if (isHttpPayload(transport) && transport.payload.url) {
+      const hostname = extractHostname(transport.payload.url);
+      if (hostname && !isIpAddress(hostname)) {
+        const resolvedIp = await this.simulateDns(
+          workingPacket.srcNodeId,
+          hostname,
+          failureState,
+          sessionId,
+        );
+        if (!resolvedIp) {
+          this.emitSyntheticDropTrace(workingPacket, 'dns-resolution-failed');
+          return null;
+        }
+        workingPacket = this.withPacketIps(workingPacket, { dstIp: resolvedIp });
+      }
+    }
+
+    return workingPacket;
+  }
+
+  async send(packet: InFlightPacket, failureState: FailureState = EMPTY_FAILURE_STATE): Promise<void> {
+    this.clearPlay();
+    const preparedPacket = await this.preparePacketForSend(packet, failureState);
+    if (!preparedPacket) return;
+
+    const { trace, nodeArpTables } = await this.precomputeDetailed(preparedPacket, failureState);
+    this.appendTrace(trace, nodeArpTables);
   }
 
   private currentTrace(): PacketTrace | null {
@@ -1394,6 +1752,50 @@ export class SimulationEngine {
     this.notify();
   }
 
+  clear(): void {
+    this.clearPlay();
+    this.packetSnapshots.clear();
+    this.runtimeNodeIps.clear();
+    this.dhcpLeaseStates.clear();
+    this.dnsCaches.clear();
+    this.state = { ...INITIAL_STATE };
+    this.notify();
+  }
+
+  clearTraces(): void {
+    this.clearPlay();
+    this.packetSnapshots.clear();
+    this.state = {
+      ...this.state,
+      status: 'idle',
+      traces: [],
+      currentTraceId: null,
+      currentStep: -1,
+      activeEdgeIds: [],
+      selectedHop: null,
+      selectedPacket: null,
+      nodeArpTables: {},
+    };
+    this.notify();
+  }
+
+  selectTrace(packetId: string): void {
+    const trace = this.state.traces.find((candidate) => candidate.packetId === packetId);
+    if (!trace) return;
+
+    this.clearPlay();
+    this.state = {
+      ...this.state,
+      status: 'paused',
+      currentTraceId: trace.packetId,
+      currentStep: -1,
+      activeEdgeIds: [],
+      selectedHop: null,
+      selectedPacket: null,
+    };
+    this.notify();
+  }
+
   selectHop(step: number): void {
     const trace = this.currentTrace();
     if (!trace) return;
@@ -1408,6 +1810,18 @@ export class SimulationEngine {
       selectedPacket: packetAtStep,
     };
     this.notify();
+  }
+
+  getRuntimeNodeIp(nodeId: string): string | null {
+    return this.runtimeNodeIps.get(nodeId) ?? null;
+  }
+
+  getDhcpLeaseState(nodeId: string): DhcpLeaseState | null {
+    return this.dhcpLeaseStates.get(nodeId) ?? null;
+  }
+
+  getDnsCache(nodeId: string): DnsCache | null {
+    return this.dnsCaches.get(nodeId) ?? null;
   }
 
   private clearPlay(): void {

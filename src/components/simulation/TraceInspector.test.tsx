@@ -221,6 +221,10 @@ function renderWithContexts(
           engine,
           state,
           sendPacket: async () => {},
+          simulateDhcp: async () => false,
+          simulateDns: async () => null,
+          getDhcpLeaseState: () => null,
+          getDnsCache: () => null,
         }}
       >
         {ui}

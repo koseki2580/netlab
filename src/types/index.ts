@@ -2,6 +2,11 @@ export type {
   TcpFlags,
   RawPayload,
   HttpMessage,
+  DhcpOptions,
+  DhcpMessage,
+  DnsQuestion,
+  DnsRecord,
+  DnsMessage,
   TcpSegment,
   UdpDatagram,
   IpPacket,
@@ -38,6 +43,16 @@ export type {
   NetworkTopology,
   TopologySnapshot,
 } from './topology';
+
+export type {
+  DhcpServerConfig,
+  DhcpClientConfig,
+  DnsZoneEntry,
+  DnsServerConfig,
+  DhcpLeaseState,
+  DnsCacheEntry,
+  DnsCache,
+} from './services';
 
 export type { HookFn, HookMap, HookPoint } from './hooks';
 export type {

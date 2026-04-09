@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useNetlabContext } from '../NetlabContext';
 import { useSimulation } from '../../simulation/SimulationContext';
 import type { PacketHop } from '../../types/simulation';
+import { TraceSelector } from './TraceSelector';
 
 const EVENT_COLORS: Record<string, string> = {
   create:        '#7dd3fc',
@@ -128,6 +129,10 @@ export function PacketTimeline() {
             {trace.hops.length} hops · {trace.status}
           </span>
         )}
+      </div>
+
+      <div style={{ padding: '8px 10px 0', flexShrink: 0 }}>
+        <TraceSelector />
       </div>
 
       <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '6px 4px' }}>
