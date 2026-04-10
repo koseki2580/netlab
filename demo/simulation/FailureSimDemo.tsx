@@ -219,7 +219,7 @@ function FailureSimDemoInner() {
         }}
       >
         {/* Failure panel (top half) */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 12 }}>
+        <div style={{ flex: 1, overflow: 'hidden', padding: 12 }}>
           <FailureTogglePanel />
         </div>
 
@@ -227,7 +227,7 @@ function FailureSimDemoInner() {
         <div style={{ height: 1, background: '#1e293b', flexShrink: 0 }} />
 
         {/* Step controls (bottom half) */}
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ flex: 1, overflow: 'hidden' }}>
           <StepControls />
         </div>
       </ResizableSidebar>
