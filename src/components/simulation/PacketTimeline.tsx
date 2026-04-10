@@ -22,6 +22,12 @@ const EVENT_LABELS: Record<string, string> = {
   'arp-reply':   'ARP-REP',
 };
 
+function formatDropReason(reason: string | undefined): string | null {
+  if (!reason) return null;
+  if (reason === 'acl-deny') return 'ACL Deny';
+  return reason;
+}
+
 function HopRow({
   hop,
   nextHopLabel,
@@ -35,10 +41,12 @@ function HopRow({
 }) {
   const color = EVENT_COLORS[hop.event] ?? '#94a3b8';
   const label = EVENT_LABELS[hop.event] ?? hop.event.toUpperCase();
+  const dropReason = hop.event === 'drop' ? formatDropReason(hop.reason) : null;
 
   return (
     <div
       onClick={onClick}
+      title={dropReason ?? undefined}
       style={{
         display: 'flex',
         flexDirection: 'column',

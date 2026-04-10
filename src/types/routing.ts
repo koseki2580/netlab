@@ -1,3 +1,4 @@
+import type { AclRule } from './acl';
 import type { NetworkTopology } from './topology';
 
 export type ProtocolName = 'static' | 'ospf' | 'bgp' | 'rip' | (string & Record<never, never>);
@@ -53,4 +54,6 @@ export interface RouterInterface {
   macAddress: string;
   connectedEdgeId?: string;
   nat?: 'inside' | 'outside';
+  inboundAcl?: AclRule[];
+  outboundAcl?: AclRule[];
 }

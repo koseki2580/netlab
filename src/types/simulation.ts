@@ -1,3 +1,4 @@
+import type { AclMatchInfo, ConnTrackTable } from './acl';
 import type { NatTable } from './nat';
 
 export interface RoutingCandidate {
@@ -49,6 +50,7 @@ export interface PacketHop {
   reason?: string;          // known values include node-down, interface-down, no-route, ttl-exceeded
   routingDecision?: RoutingDecision;  // present only when nodeId is a router, never on TTL drops
   natTranslation?: NatTranslation;
+  aclMatch?: AclMatchInfo;
   changedFields?: string[];
   timestamp: number;
 }
@@ -75,4 +77,5 @@ export interface SimulationState {
   selectedPacket: import('./packets').InFlightPacket | null;  // packet snapshot at selectedHop
   nodeArpTables: Record<string, Record<string, string>>;
   natTables: NatTable[];
+  connTrackTables: ConnTrackTable[];
 }

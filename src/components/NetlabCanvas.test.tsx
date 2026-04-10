@@ -268,6 +268,7 @@ function makeSimulationContextValue(activeEdgeIds: string[]): SimulationContextV
       selectedPacket: null,
       nodeArpTables: {},
       natTables: [],
+      connTrackTables: [],
     },
   };
 }

@@ -1,9 +1,11 @@
 import { layerRegistry } from '../registry/LayerRegistry';
+import { AclProcessor } from '../layers/l3-network/AclProcessor';
 import { NatProcessor } from '../layers/l3-network/NatProcessor';
 import { isInSubnet, prefixLength } from '../utils/cidr';
 import { computeFcs, computeIpv4Checksum } from '../utils/checksum';
 import { buildEthernetFrameBytes, buildIpv4HeaderBytes } from '../utils/packetLayout';
 import type { HookEngine } from '../hooks/HookEngine';
+import type { ConnTrackTable } from '../types/acl';
 import type { NatTable } from '../types/nat';
 import type { NetlabNode, NetworkTopology } from '../types/topology';
 import type {
@@ -131,6 +133,7 @@ const INITIAL_STATE: SimulationState = {
   selectedPacket: null,
   nodeArpTables: {},
   natTables: [],
+  connTrackTables: [],
 };
 
 export class SimulationEngine {
@@ -143,6 +146,7 @@ export class SimulationEngine {
   private dhcpLeaseStates = new Map<string, DhcpLeaseState>();
   private dnsCaches = new Map<string, DnsCache>();
   private natProcessors = new Map<string, NatProcessor>();
+  private aclProcessors = new Map<string, AclProcessor>();
 
   constructor(
     private readonly topology: NetworkTopology,
@@ -150,7 +154,7 @@ export class SimulationEngine {
   ) {}
 
   getState(): SimulationState {
-    return { ...this.state, natTables: this.serializeNatTables() };
+    return this.serializeState();
   }
 
   subscribe(listener: (state: SimulationState) => void): () => void {
@@ -159,7 +163,7 @@ export class SimulationEngine {
   }
 
   private notify(): void {
-    const snapshot = { ...this.state, natTables: this.serializeNatTables() };
+    const snapshot = this.serializeState();
     this.listeners.forEach((fn) => fn(snapshot));
   }
 
@@ -347,6 +351,24 @@ export class SimulationEngine {
     return Array.from(this.natProcessors.values()).map((processor) => processor.getTable());
   }
 
+  private serializeConnTrackTables(): ConnTrackTable[] {
+    return Array.from(this.aclProcessors.entries()).flatMap(([routerId, processor]) => {
+      const node = this.findNode(routerId);
+      if (!node || node.data.role !== 'router' || node.data.statefulFirewall !== true) {
+        return [];
+      }
+      return [processor.getConnTrackTable()];
+    });
+  }
+
+  private serializeState(): SimulationState {
+    return {
+      ...this.state,
+      natTables: this.serializeNatTables(),
+      connTrackTables: this.serializeConnTrackTables(),
+    };
+  }
+
   private getNatProcessor(routerId: string): NatProcessor | null {
     const node = this.findNode(routerId);
     if (!node || node.data.role !== 'router') return null;
@@ -361,6 +383,23 @@ export class SimulationEngine {
     }
 
     return this.natProcessors.get(routerId) ?? null;
+  }
+
+  private getAclProcessor(routerId: string): AclProcessor | null {
+    const node = this.findNode(routerId);
+    if (!node || node.data.role !== 'router') return null;
+
+    const interfaces = node.data.interfaces ?? [];
+    const hasAcl = interfaces.some(
+      (iface) => iface.inboundAcl !== undefined || iface.outboundAcl !== undefined,
+    );
+    if (!hasAcl) return null;
+
+    if (!this.aclProcessors.has(routerId)) {
+      this.aclProcessors.set(routerId, new AclProcessor(routerId, this.topology));
+    }
+
+    return this.aclProcessors.get(routerId) ?? null;
   }
 
   private isPlaceholderMac(mac: string): boolean {
@@ -1208,6 +1247,8 @@ export class SimulationEngine {
       const packetBeforeHop = workingPacket;
       let natTranslation: NatTranslation | null = null;
       let outsideToInsideMatched = false;
+      let ingressAclMatch = null;
+      let egressAclMatch = null;
 
       if (node.data.role === 'router') {
         const natProcessor = this.getNatProcessor(current);
@@ -1244,6 +1285,41 @@ export class SimulationEngine {
           natTranslation = preRoutingResult.translation;
           outsideToInsideMatched = preRoutingResult.matched;
         }
+
+        const aclProcessor = this.getAclProcessor(current);
+        if (aclProcessor) {
+          const ingressResult = aclProcessor.applyIngress(
+            workingPacket,
+            hopBase.ingressInterfaceId,
+            stepCounter,
+          );
+          ingressAclMatch = ingressResult.match;
+          if (ingressResult.dropReason) {
+            const dropHop: Omit<PacketHop, 'step'> = {
+              ...hopBase,
+              event: 'drop',
+              reason: ingressResult.dropReason,
+              aclMatch: ingressResult.match ?? undefined,
+            };
+            if (natTranslation) {
+              dropHop.natTranslation = natTranslation;
+            }
+            const changedFields = this.diffPacketFields(packetBeforeHop, ingressResult.packet);
+            if (changedFields.length > 0) {
+              dropHop.changedFields = changedFields;
+            }
+            stepCounter = this.appendHop(
+              hops,
+              snapshots,
+              dropHop,
+              ingressResult.packet,
+              stepCounter,
+            );
+            break;
+          }
+
+          workingPacket = ingressResult.packet;
+        }
       }
 
       // Call router forwarder for TTL decrement and drop detection
@@ -1257,6 +1333,7 @@ export class SimulationEngine {
               ...hopBase,
               event: 'drop',
               reason: decision.reason,
+              aclMatch: ingressAclMatch ?? undefined,
             };
             // Capture routing decision for no-route drops (but not TTL drops).
             // TTL is checked first in the forwarder, so ttl-exceeded reason means
@@ -1294,6 +1371,7 @@ export class SimulationEngine {
           ...hopBase,
           event: 'drop',
           reason: 'no-route',
+          aclMatch: ingressAclMatch ?? undefined,
         };
         if (natTranslation) {
           dropHop.natTranslation = natTranslation;
@@ -1327,6 +1405,7 @@ export class SimulationEngine {
             ...hopBase,
             event: 'drop',
             reason: 'interface-down',
+            aclMatch: ingressAclMatch ?? undefined,
           };
           const changedFields = this.diffPacketFields(packetBeforeHop, workingPacket);
           if (changedFields.length > 0) {
@@ -1337,6 +1416,42 @@ export class SimulationEngine {
           }
           stepCounter = this.appendHop(hops, snapshots, dropHop, workingPacket, stepCounter);
           break;
+        }
+
+        const aclProcessor = this.getAclProcessor(current);
+        if (aclProcessor) {
+          const egressResult = aclProcessor.applyEgress(
+            workingPacket,
+            hopBase.egressInterfaceId,
+            stepCounter,
+          );
+          egressAclMatch = egressResult.match;
+          if (egressResult.dropReason) {
+            const dropHop: Omit<PacketHop, 'step'> = {
+              ...hopBase,
+              event: 'drop',
+              reason: egressResult.dropReason,
+              routingDecision: hopBase.routingDecision,
+              aclMatch: egressResult.match ?? undefined,
+            };
+            if (natTranslation) {
+              dropHop.natTranslation = natTranslation;
+            }
+            const changedFields = this.diffPacketFields(packetBeforeHop, egressResult.packet);
+            if (changedFields.length > 0) {
+              dropHop.changedFields = changedFields;
+            }
+            stepCounter = this.appendHop(
+              hops,
+              snapshots,
+              dropHop,
+              egressResult.packet,
+              stepCounter,
+            );
+            break;
+          }
+
+          workingPacket = egressResult.packet;
         }
 
         const natProcessor = this.getNatProcessor(current);
@@ -1354,6 +1469,7 @@ export class SimulationEngine {
               event: 'drop',
               reason: postRoutingResult.dropReason,
               routingDecision: hopBase.routingDecision,
+              aclMatch: egressAclMatch ?? ingressAclMatch ?? undefined,
             };
             if (postRoutingResult.translation ?? natTranslation) {
               dropHop.natTranslation = postRoutingResult.translation ?? natTranslation ?? undefined;
@@ -1447,6 +1563,9 @@ export class SimulationEngine {
       };
       if (natTranslation) {
         forwardHop.natTranslation = natTranslation;
+      }
+      if (egressAclMatch ?? ingressAclMatch) {
+        forwardHop.aclMatch = egressAclMatch ?? ingressAclMatch ?? undefined;
       }
       const resolvedDstMac = arpTarget
         ? (arpCache.get(arpTarget.targetIp) ?? this.resolveArpTargetMac(
@@ -1879,6 +1998,8 @@ export class SimulationEngine {
     this.clearPlay();
     this.natProcessors.forEach((processor) => processor.clear());
     this.natProcessors.clear();
+    this.aclProcessors.forEach((processor) => processor.clear());
+    this.aclProcessors.clear();
     this.state = {
       ...this.state,
       status: this.state.currentTraceId ? 'paused' : 'idle',
@@ -1898,6 +2019,8 @@ export class SimulationEngine {
     this.dnsCaches.clear();
     this.natProcessors.forEach((processor) => processor.clear());
     this.natProcessors.clear();
+    this.aclProcessors.forEach((processor) => processor.clear());
+    this.aclProcessors.clear();
     this.state = { ...INITIAL_STATE };
     this.notify();
   }
@@ -1907,6 +2030,8 @@ export class SimulationEngine {
     this.packetSnapshots.clear();
     this.natProcessors.forEach((processor) => processor.clear());
     this.natProcessors.clear();
+    this.aclProcessors.forEach((processor) => processor.clear());
+    this.aclProcessors.clear();
     this.state = {
       ...this.state,
       status: 'idle',

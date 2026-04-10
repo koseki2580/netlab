@@ -16,6 +16,7 @@ export interface NetlabNodeData extends Record<string, unknown> {
   interfaces?: RouterInterface[];
   staticRoutes?: StaticRouteConfig[];
   portForwardingRules?: PortForwardingRule[];
+  statefulFirewall?: boolean;
   // Service-specific
   dhcpServer?: DhcpServerConfig;
   dhcpClient?: DhcpClientConfig;

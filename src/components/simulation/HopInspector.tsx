@@ -1,3 +1,4 @@
+import type { AclRule } from '../../types/acl';
 import { useNetlabContext } from '../NetlabContext';
 import { useSimulation } from '../../simulation/SimulationContext';
 import type { NatTranslation, PacketHop, RoutingDecision } from '../../types/simulation';
@@ -78,6 +79,40 @@ function FieldRow({ label, value, valueColor }: { label: string; value: string; 
   );
 }
 
+function formatPortSpec(port: AclRule['srcPort']): string {
+  if (port === undefined) return 'any';
+  if (typeof port === 'number') return String(port);
+  return `${port.from}-${port.to}`;
+}
+
+function formatAclRule(rule: AclRule): string {
+  const tokens = [
+    `#${rule.priority}`,
+    rule.action,
+    rule.protocol,
+    rule.srcIp ?? 'any',
+  ];
+
+  if (rule.srcPort !== undefined) {
+    tokens.push('src', formatPortSpec(rule.srcPort));
+  }
+
+  tokens.push(rule.dstIp ?? 'any');
+
+  if (rule.dstPort !== undefined) {
+    tokens.push('dst', formatPortSpec(rule.dstPort));
+  }
+
+  return tokens.join(' ');
+}
+
+function formatDropReason(reason: string): string {
+  if (reason === 'acl-deny') {
+    return 'ACL Deny';
+  }
+  return reason;
+}
+
 function formatEndpoint(ip: string, port: number): string {
   return `${ip}:${port}`;
 }
@@ -129,6 +164,73 @@ function NatTranslationSection({ translation }: { translation: NatTranslation })
           label="Post Dst"
           value={formatEndpoint(translation.postDstIp, translation.postDstPort)}
           valueColor={dstChanged ? 'var(--netlab-accent-green)' : 'var(--netlab-text-muted)'}
+        />
+      </div>
+    </section>
+  );
+}
+
+function AclFilterSection({ hop }: { hop: PacketHop }) {
+  if (!hop.aclMatch) return null;
+
+  const ruleText = hop.aclMatch.byConnTrack
+    ? 'stateful return traffic'
+    : hop.aclMatch.matchedRule
+      ? formatAclRule(hop.aclMatch.matchedRule)
+      : '(default policy)';
+  const ruleColor = hop.aclMatch.byConnTrack
+    ? 'var(--netlab-text-primary)'
+    : hop.aclMatch.matchedRule
+      ? 'var(--netlab-text-primary)'
+      : 'var(--netlab-text-muted)';
+  const actionColor =
+    hop.aclMatch.action === 'permit'
+      ? 'var(--netlab-accent-green)'
+      : 'var(--netlab-accent-red)';
+
+  return (
+    <section
+      style={{
+        background: 'var(--netlab-bg-panel)',
+        border: '1px solid var(--netlab-border-subtle)',
+        borderRadius: 8,
+        padding: 12,
+      }}
+    >
+      <div
+        style={{
+          color: 'var(--netlab-text-secondary)',
+          fontSize: 10,
+          fontWeight: 'bold',
+          letterSpacing: 1,
+          marginBottom: 10,
+        }}
+      >
+        ACL FILTER
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
+        <FieldRow label="Direction" value={hop.aclMatch.direction.toUpperCase()} />
+        <FieldRow label="Interface" value={hop.aclMatch.interfaceName} />
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '84px minmax(0, 1fr)',
+            gap: 10,
+            alignItems: 'start',
+          }}
+        >
+          <span style={{ color: 'var(--netlab-text-secondary)' }}>Rule</span>
+          <span style={{ color: ruleColor, wordBreak: 'break-word' }}>
+            {ruleText}
+            {hop.aclMatch.byConnTrack && (
+              <span style={{ color: 'var(--netlab-text-secondary)' }}> (conn-track)</span>
+            )}
+          </span>
+        </div>
+        <FieldRow
+          label="Action"
+          value={hop.aclMatch.action.toUpperCase()}
+          valueColor={actionColor}
         />
       </div>
     </section>
@@ -387,7 +489,7 @@ function DropReasonBlock({ reason }: { reason: string }) {
       >
         DROP REASON
       </div>
-      <div style={{ color: '#fecaca', fontSize: 12 }}>{reason}</div>
+      <div style={{ color: '#fecaca', fontSize: 12 }}>{formatDropReason(reason)}</div>
     </section>
   );
 }
@@ -551,6 +653,9 @@ export function HopInspector() {
         )}
         {selectedHop.natTranslation && !selectedHop.arpFrame && (
           <NatTranslationSection translation={selectedHop.natTranslation} />
+        )}
+        {selectedHop.aclMatch && !selectedHop.arpFrame && (
+          <AclFilterSection hop={selectedHop} />
         )}
         {selectedHop.routingDecision && !selectedHop.arpFrame && <RoutingSection decision={selectedHop.routingDecision} />}
         {selectedHop.changedFields && selectedHop.changedFields.length > 0 && (

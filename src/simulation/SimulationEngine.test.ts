@@ -6,7 +6,7 @@ import { RouterForwarder } from '../layers/l3-network/RouterForwarder';
 import { SwitchForwarder } from '../layers/l2-datalink/SwitchForwarder';
 import type { NetworkTopology } from '../types/topology';
 import type { InFlightPacket, EthernetFrame } from '../types/packets';
-import type { RouteEntry } from '../types/routing';
+import type { RouteEntry, RouterInterface } from '../types/routing';
 import { type FailureState, EMPTY_FAILURE_STATE, makeInterfaceFailureId } from '../types/failure';
 import { computeFcs, computeIpv4Checksum } from '../utils/checksum';
 import { buildEthernetFrameBytes, buildIpv4HeaderBytes } from '../utils/packetLayout';
@@ -492,6 +492,74 @@ function natTopology(): NetworkTopology {
       { id: 'e1', source: 'client-1', target: 'nat-router' },
       { id: 'e2', source: 'nat-router', target: 'isp-router' },
       { id: 'e3', source: 'isp-router', target: 'server-1' },
+    ],
+    areas: [],
+    routeTables,
+  };
+}
+
+function aclTopology(options: {
+  stateful?: boolean;
+  lanInboundAcl?: RouterInterface['inboundAcl'];
+  wanInboundAcl?: RouterInterface['inboundAcl'];
+} = {}): NetworkTopology {
+  const routeTables = new Map<string, RouteEntry[]>([
+    [
+      'router-1',
+      [
+        makeRouteEntry('router-1', '10.0.1.0/24', 'direct'),
+        makeRouteEntry('router-1', '203.0.113.0/24', 'direct'),
+      ],
+    ],
+  ]);
+
+  return {
+    nodes: [
+      {
+        id: 'client-1',
+        type: 'client',
+        position: { x: 0, y: 0 },
+        data: { label: 'Client', role: 'client', layerId: 'l7', ip: '10.0.1.10', mac: CLIENT_MAC },
+      },
+      {
+        id: 'router-1',
+        type: 'router',
+        position: { x: 200, y: 0 },
+        data: {
+          label: 'R-FW',
+          role: 'router',
+          layerId: 'l3',
+          statefulFirewall: options.stateful === true,
+          interfaces: [
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '10.0.1.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:01:10:00',
+              inboundAcl: options.lanInboundAcl,
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '203.0.113.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:01:10:01',
+              inboundAcl: options.wanInboundAcl,
+            },
+          ],
+        },
+      },
+      {
+        id: 'server-1',
+        type: 'server',
+        position: { x: 400, y: 0 },
+        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.50', mac: SERVER_MAC },
+      },
+    ],
+    edges: [
+      { id: 'e1', source: 'client-1', target: 'router-1' },
+      { id: 'e2', source: 'router-1', target: 'server-1' },
     ],
     areas: [],
     routeTables,
@@ -1220,6 +1288,146 @@ describe('SimulationEngine NAT', () => {
       ),
     );
     expect(engine.getState().natTables[0]?.entries[0]?.insideGlobalPort).toBe(1024);
+  });
+});
+
+describe('SimulationEngine ACL', () => {
+  it('drops on an explicit ACL deny rule and terminates the trace at the router', async () => {
+    const engine = makeEngine(aclTopology({
+      lanInboundAcl: [
+        {
+          id: 'deny-ssh',
+          priority: 10,
+          action: 'deny',
+          protocol: 'tcp',
+          dstPort: 22,
+        },
+      ],
+    }));
+
+    const trace = await engine.precompute(
+      makePacket('acl-deny-explicit', 'client-1', 'server-1', '10.0.1.10', '203.0.113.50', 64, 41000, 22),
+    );
+
+    const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+    expect(trace.status).toBe('dropped');
+    expect(trace.hops).toHaveLength(2);
+    expect(dropHop?.nodeId).toBe('router-1');
+    expect(dropHop?.reason).toBe('acl-deny');
+    expect(dropHop?.aclMatch?.action).toBe('deny');
+    expect(dropHop?.aclMatch?.matchedRule?.id).toBe('deny-ssh');
+  });
+
+  it('annotates permitted router hops with the matching ACL rule', async () => {
+    const engine = makeEngine(aclTopology({
+      lanInboundAcl: [
+        {
+          id: 'allow-http',
+          priority: 10,
+          action: 'permit',
+          protocol: 'tcp',
+          srcIp: '10.0.1.0/24',
+          dstPort: 80,
+        },
+      ],
+    }));
+
+    const trace = await engine.precompute(
+      makePacket('acl-permit', 'client-1', 'server-1', '10.0.1.10', '203.0.113.50', 64, 40000, 80),
+    );
+
+    const routerHop = trace.hops.find((hop) => hop.nodeId === 'router-1' && hop.event === 'forward');
+    expect(trace.status).toBe('delivered');
+    expect(routerHop?.aclMatch?.action).toBe('permit');
+    expect(routerHop?.aclMatch?.matchedRule?.id).toBe('allow-http');
+    expect(routerHop?.aclMatch?.direction).toBe('inbound');
+  });
+
+  it('applies implicit default deny when no rule matches', async () => {
+    const engine = makeEngine(aclTopology({
+      lanInboundAcl: [
+        {
+          id: 'allow-https',
+          priority: 10,
+          action: 'permit',
+          protocol: 'tcp',
+          dstPort: 443,
+        },
+      ],
+    }));
+
+    const trace = await engine.precompute(
+      makePacket('acl-default-deny', 'client-1', 'server-1', '10.0.1.10', '203.0.113.50', 64, 41000, 22),
+    );
+
+    const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+    expect(trace.status).toBe('dropped');
+    expect(dropHop?.reason).toBe('acl-deny');
+    expect(dropHop?.aclMatch?.matchedRule).toBeNull();
+    expect(dropHop?.aclMatch?.byConnTrack).toBe(false);
+  });
+
+  it('auto-permits return traffic via conn-track and exposes the live table', async () => {
+    const engine = makeEngine(aclTopology({
+      stateful: true,
+      lanInboundAcl: [
+        {
+          id: 'allow-http',
+          priority: 10,
+          action: 'permit',
+          protocol: 'tcp',
+          dstPort: 80,
+        },
+      ],
+      wanInboundAcl: [],
+    }));
+
+    await engine.precompute(
+      makePacket('acl-stateful-out', 'client-1', 'server-1', '10.0.1.10', '203.0.113.50', 64, 40000, 80),
+    );
+
+    const returnTrace = await engine.precompute(
+      makePacket('acl-stateful-return', 'server-1', 'client-1', '203.0.113.50', '10.0.1.10', 64, 80, 40000),
+    );
+
+    const routerHop = returnTrace.hops.find((hop) => hop.nodeId === 'router-1' && hop.event === 'forward');
+    const connTrackTable = engine.getState().connTrackTables.find((table) => table.routerId === 'router-1');
+
+    expect(returnTrace.status).toBe('delivered');
+    expect(routerHop?.aclMatch?.action).toBe('permit');
+    expect(routerHop?.aclMatch?.byConnTrack).toBe(true);
+    expect(connTrackTable?.entries).toHaveLength(1);
+    expect(connTrackTable?.entries[0]?.srcIp).toBe('10.0.1.10');
+    expect(connTrackTable?.entries[0]?.dstIp).toBe('203.0.113.50');
+  });
+
+  it('reset clears conn-track entries and repeated forward flows reuse the same entry', async () => {
+    const engine = makeEngine(aclTopology({
+      stateful: true,
+      lanInboundAcl: [
+        {
+          id: 'allow-http',
+          priority: 10,
+          action: 'permit',
+          protocol: 'tcp',
+          dstPort: 80,
+        },
+      ],
+      wanInboundAcl: [],
+    }));
+
+    await engine.precompute(
+      makePacket('acl-reuse-1', 'client-1', 'server-1', '10.0.1.10', '203.0.113.50', 64, 40000, 80),
+    );
+    await engine.precompute(
+      makePacket('acl-reuse-2', 'client-1', 'server-1', '10.0.1.10', '203.0.113.50', 64, 40000, 80),
+    );
+
+    expect(engine.getState().connTrackTables[0]?.entries).toHaveLength(1);
+
+    engine.reset();
+
+    expect(engine.getState().connTrackTables).toEqual([]);
   });
 });
 
