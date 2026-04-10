@@ -436,6 +436,111 @@ function multiHopTopology(): NetworkTopology {
   };
 }
 
+/** client-1 -- e1 -- router-1 -- e2 -- router-2 -- e4 -- server-1
+ *                         └──── e3 ──── router-3 -- e5 --┘
+ */
+function failureFallbackTopology(): NetworkTopology {
+  const routeTables = new Map<string, RouteEntry[]>([
+    [
+      'router-1',
+      [
+        makeRouteEntry('router-1', '10.0.0.0/24', 'direct'),
+        makeRouteEntry('router-1', '172.16.0.0/30', 'direct'),
+        makeRouteEntry('router-1', '172.17.0.0/30', 'direct'),
+        makeRouteEntry('router-1', '203.0.113.0/24', '172.16.0.2'),
+        { ...makeRouteEntry('router-1', '0.0.0.0/0', '172.17.0.2'), metric: 5 },
+      ],
+    ],
+    [
+      'router-2',
+      [
+        makeRouteEntry('router-2', '172.16.0.0/30', 'direct'),
+        makeRouteEntry('router-2', '203.0.113.0/24', 'direct'),
+        makeRouteEntry('router-2', '10.0.0.0/24', '172.16.0.1'),
+        makeRouteEntry('router-2', '0.0.0.0/0', '172.16.0.1'),
+      ],
+    ],
+    [
+      'router-3',
+      [
+        makeRouteEntry('router-3', '172.17.0.0/30', 'direct'),
+        makeRouteEntry('router-3', '203.0.113.0/24', 'direct'),
+        makeRouteEntry('router-3', '10.0.0.0/24', '172.17.0.1'),
+        makeRouteEntry('router-3', '0.0.0.0/0', '172.17.0.1'),
+      ],
+    ],
+  ]);
+
+  return {
+    nodes: [
+      {
+        id: 'client-1',
+        type: 'client',
+        position: { x: 0, y: 0 },
+        data: { label: 'Client', role: 'client', layerId: 'l7', ip: '10.0.0.10', mac: CLIENT_MAC },
+      },
+      {
+        id: 'router-1',
+        type: 'router',
+        position: { x: 200, y: 0 },
+        data: {
+          label: 'R-1',
+          role: 'router',
+          layerId: 'l3',
+          interfaces: [
+            { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
+            { id: 'eth1', name: 'eth1', ipAddress: '172.16.0.1', prefixLength: 30, macAddress: '00:00:00:01:00:01' },
+            { id: 'eth2', name: 'eth2', ipAddress: '172.17.0.1', prefixLength: 30, macAddress: '00:00:00:01:00:02' },
+          ],
+        },
+      },
+      {
+        id: 'router-2',
+        type: 'router',
+        position: { x: 400, y: -120 },
+        data: {
+          label: 'R-2',
+          role: 'router',
+          layerId: 'l3',
+          interfaces: [
+            { id: 'eth0', name: 'eth0', ipAddress: '172.16.0.2', prefixLength: 30, macAddress: '00:00:00:02:00:00' },
+            { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:02:00:01' },
+          ],
+        },
+      },
+      {
+        id: 'router-3',
+        type: 'router',
+        position: { x: 400, y: 120 },
+        data: {
+          label: 'R-3',
+          role: 'router',
+          layerId: 'l3',
+          interfaces: [
+            { id: 'eth0', name: 'eth0', ipAddress: '172.17.0.2', prefixLength: 30, macAddress: '00:00:00:03:00:00' },
+            { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.2', prefixLength: 24, macAddress: '00:00:00:03:00:01' },
+          ],
+        },
+      },
+      {
+        id: 'server-1',
+        type: 'server',
+        position: { x: 600, y: 0 },
+        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.10', mac: SERVER_MAC },
+      },
+    ],
+    edges: [
+      { id: 'e1', source: 'client-1', target: 'router-1' },
+      { id: 'e2', source: 'router-1', target: 'router-2' },
+      { id: 'e3', source: 'router-1', target: 'router-3' },
+      { id: 'e4', source: 'router-2', target: 'server-1' },
+      { id: 'e5', source: 'router-3', target: 'server-1' },
+    ],
+    areas: [],
+    routeTables,
+  };
+}
+
 /** client-1 -- e1 -- nat-router -- e2 -- isp-router -- e3 -- server-1 */
 function natTopology(): NetworkTopology {
   const routeTables = new Map<string, RouteEntry[]>([
@@ -1702,6 +1807,108 @@ describe('SimulationEngine.routingDecision', () => {
     const routerHop = trace.hops.find((h) => h.nodeId === 'router-1');
     expect(typeof routerHop!.routingDecision!.explanation).toBe('string');
     expect(routerHop!.routingDecision!.explanation.length).toBeGreaterThan(0);
+  });
+});
+
+describe('SimulationEngine failure-aware routing fallback', () => {
+  it('reroutes through the fallback route when the primary edge is down', async () => {
+    const engine = makeEngine(failureFallbackTopology());
+    const failureState: FailureState = {
+      downNodeIds: new Set(),
+      downEdgeIds: new Set(['e2']),
+      downInterfaceIds: new Set(),
+    };
+
+    const trace = await engine.precompute(
+      makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+      failureState,
+    );
+
+    expect(trace.status).toBe('delivered');
+
+    const routerHop = trace.hops.find((hop) => hop.nodeId === 'router-1');
+    expect(routerHop?.toNodeId).toBe('router-3');
+    expect(routerHop?.activeEdgeId).toBe('e3');
+    expect(routerHop?.egressInterfaceId).toBe('eth2');
+
+    const decision = routerHop?.routingDecision;
+    expect(decision?.winner?.destination).toBe('0.0.0.0/0');
+    expect(decision?.winner?.nextHop).toBe('172.17.0.2');
+    expect(decision?.explanation).toContain('Fallback via 0.0.0.0/0 (172.17.0.2)');
+
+    const primaryCandidate = decision?.candidates.find((candidate) => candidate.destination === '203.0.113.0/24');
+    const fallbackCandidate = decision?.candidates.find((candidate) => candidate.destination === '0.0.0.0/0');
+    expect(primaryCandidate?.selectedByLpm).toBe(true);
+    expect(primaryCandidate?.selectedByFailover).not.toBe(true);
+    expect(fallbackCandidate?.selectedByLpm).toBe(false);
+    expect(fallbackCandidate?.selectedByFailover).toBe(true);
+  });
+
+  it('keeps selectedByFailover unset on the normal primary path', async () => {
+    const engine = makeEngine(failureFallbackTopology());
+    const trace = await engine.precompute(
+      makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+    );
+
+    expect(trace.status).toBe('delivered');
+
+    const routerHop = trace.hops.find((hop) => hop.nodeId === 'router-1');
+    expect(routerHop?.toNodeId).toBe('router-2');
+    expect(routerHop?.egressInterfaceId).toBe('eth1');
+    expect(routerHop?.routingDecision?.winner?.destination).toBe('203.0.113.0/24');
+    expect(
+      routerHop?.routingDecision?.candidates.some((candidate) => candidate.selectedByFailover),
+    ).toBe(false);
+  });
+
+  it('reports no reachable winner when both primary and fallback edges are down', async () => {
+    const engine = makeEngine(failureFallbackTopology());
+    const failureState: FailureState = {
+      downNodeIds: new Set(),
+      downEdgeIds: new Set(['e2', 'e3']),
+      downInterfaceIds: new Set(),
+    };
+
+    const trace = await engine.precompute(
+      makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+      failureState,
+    );
+
+    expect(trace.status).toBe('dropped');
+
+    const dropHop = trace.hops.find((hop) => hop.event === 'drop' && hop.nodeId === 'router-1');
+    expect(dropHop?.reason).toBe('no-route');
+    expect(dropHop?.routingDecision?.winner).toBeNull();
+    expect(dropHop?.routingDecision?.explanation).toContain('No reachable route');
+
+    const primaryCandidate = dropHop?.routingDecision?.candidates.find(
+      (candidate) => candidate.destination === '203.0.113.0/24',
+    );
+    expect(primaryCandidate?.selectedByLpm).toBe(true);
+    expect(
+      dropHop?.routingDecision?.candidates.some((candidate) => candidate.selectedByFailover),
+    ).toBe(false);
+  });
+
+  it('uses the failover route subnet for interface-down checks', async () => {
+    const engine = makeEngine(failureFallbackTopology());
+    const failureState: FailureState = {
+      downNodeIds: new Set(),
+      downEdgeIds: new Set(['e2']),
+      downInterfaceIds: new Set([makeInterfaceFailureId('router-1', 'eth2')]),
+    };
+
+    const trace = await engine.precompute(
+      makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+      failureState,
+    );
+
+    expect(trace.status).toBe('dropped');
+
+    const dropHop = trace.hops.find((hop) => hop.event === 'drop' && hop.nodeId === 'router-1');
+    expect(dropHop?.reason).toBe('interface-down');
+    expect(dropHop?.egressInterfaceId).toBe('eth2');
+    expect(dropHop?.routingDecision?.winner?.nextHop).toBe('172.17.0.2');
   });
 });
 
