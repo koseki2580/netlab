@@ -14,6 +14,7 @@ An L3 router forwards IP packets using a routing table with Longest Prefix Match
   interfaces: RouterInterface[];
   staticRoutes?: StaticRouteConfig[];
   portForwardingRules?: PortForwardingRule[];
+  statefulFirewall?: boolean;
 }
 
 interface RouterInterface {
@@ -23,6 +24,8 @@ interface RouterInterface {
   prefixLength: number;    // e.g. 24
   macAddress: string;
   nat?: 'inside' | 'outside';
+  inboundAcl?: AclRule[];
+  outboundAcl?: AclRule[];
 }
 
 interface PortForwardingRule {
@@ -53,6 +56,41 @@ Routers may optionally participate in NAT by tagging interfaces with `nat: 'insi
 
 Detailed NAT semantics, runtime table behavior, and trace annotation live in
 [`docs/networking/nat.md`](../nat.md).
+
+## Firewalls & ACLs
+
+Routers may attach ordered ACL rule lists directly to interfaces and may optionally enable
+stateful return-traffic handling with `statefulFirewall: true`.
+
+```typescript
+{
+  role: 'router',
+  layerId: 'l3',
+  statefulFirewall: true,
+  interfaces: [
+    {
+      id: 'eth0',
+      name: 'eth0',
+      ipAddress: '10.0.0.1',
+      prefixLength: 24,
+      macAddress: '00:00:00:00:02:00',
+      inboundAcl: [
+        {
+          id: 'allow-http',
+          priority: 10,
+          action: 'permit',
+          protocol: 'tcp',
+          srcIp: '10.0.0.0/24',
+          dstPort: 80,
+        },
+      ],
+    },
+  ],
+}
+```
+
+Detailed ACL semantics, evaluation order, conn-track behavior, and trace annotation live in
+[`docs/networking/acl.md`](../acl.md).
 
 ## Demo Configuration
 
