@@ -4,6 +4,7 @@ import { NatProcessor } from '../layers/l3-network/NatProcessor';
 import { isInSubnet, prefixLength } from '../utils/cidr';
 import { computeFcs, computeIpv4Checksum } from '../utils/checksum';
 import { buildEthernetFrameBytes, buildIpv4HeaderBytes } from '../utils/packetLayout';
+import { buildPcap, type PcapRecord } from '../utils/pcapSerializer';
 import type { HookEngine } from '../hooks/HookEngine';
 import type { ConnTrackTable } from '../types/acl';
 import type { NatTable } from '../types/nat';
@@ -1913,6 +1914,27 @@ export class SimulationEngine {
   private currentTrace(): PacketTrace | null {
     if (!this.state.currentTraceId) return null;
     return this.state.traces.find((t) => t.packetId === this.state.currentTraceId) ?? null;
+  }
+
+  exportPcap(traceId?: string): Uint8Array {
+    const trace = traceId
+      ? this.state.traces.find((candidate) => candidate.packetId === traceId) ?? null
+      : this.currentTrace();
+
+    if (!trace) {
+      return buildPcap([]);
+    }
+
+    const snapshots = this.packetSnapshots.get(trace.packetId) ?? [];
+    const records: PcapRecord[] = [];
+
+    trace.hops.forEach((hop, index) => {
+      const frame = hop.arpFrame ?? snapshots[index]?.frame;
+      if (!frame) return;
+      records.push({ hop, frame });
+    });
+
+    return buildPcap(records);
   }
 
   step(): void {

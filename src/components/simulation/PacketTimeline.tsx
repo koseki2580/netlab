@@ -97,7 +97,7 @@ function HopRow({
 
 export function PacketTimeline() {
   const { topology } = useNetlabContext();
-  const { engine, state } = useSimulation();
+  const { engine, state, exportPcap } = useSimulation();
   const { traces, currentTraceId, currentStep, selectedHop } = state;
   const trace = traces.find((t) => t.packetId === currentTraceId);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -110,6 +110,19 @@ export function PacketTimeline() {
     const activeRow = rows[activeStep] as HTMLElement | undefined;
     activeRow?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, [activeStep]);
+
+  function handleDownloadPcap() {
+    const bytes = exportPcap(currentTraceId ?? undefined);
+    const blob = new Blob([Uint8Array.from(bytes)], { type: 'application/vnd.tcpdump.pcap' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `netlab-trace-${currentTraceId ?? 'export'}.pcap`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
 
   return (
     <div
@@ -139,8 +152,37 @@ export function PacketTimeline() {
         )}
       </div>
 
-      <div style={{ padding: '8px 10px 0', flexShrink: 0 }}>
+      <div
+        style={{
+          padding: '8px 10px 0',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: 8,
+        }}
+      >
         <TraceSelector />
+        <button
+          type="button"
+          onClick={handleDownloadPcap}
+          disabled={!currentTraceId}
+          style={{
+            padding: '2px 8px',
+            fontSize: 11,
+            borderRadius: 4,
+            border: '1px solid var(--netlab-border)',
+            background: 'var(--netlab-bg-surface)',
+            color: currentTraceId
+              ? 'var(--netlab-text-primary)'
+              : 'var(--netlab-text-muted)',
+            cursor: currentTraceId ? 'pointer' : 'default',
+            flexShrink: 0,
+            fontFamily: 'monospace',
+          }}
+        >
+          Download PCAP
+        </button>
       </div>
 
       <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '6px 4px' }}>

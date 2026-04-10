@@ -22,6 +22,7 @@ export interface SimulationContextValue {
   simulateDns: (clientNodeId: string, hostname: string) => Promise<string | null>;
   getDhcpLeaseState: (nodeId: string) => DhcpLeaseState | null;
   getDnsCache: (nodeId: string) => DnsCache | null;
+  exportPcap: (traceId?: string) => Uint8Array;
 }
 
 export const SimulationContext = createContext<SimulationContextValue | null>(null);
@@ -73,6 +74,11 @@ export function SimulationProvider({ children }: SimulationProviderProps) {
     [engine],
   );
 
+  const exportPcap = useCallback(
+    (traceId?: string) => engine.exportPcap(traceId),
+    [engine],
+  );
+
   const value = useMemo(
     () => ({
       engine,
@@ -82,8 +88,9 @@ export function SimulationProvider({ children }: SimulationProviderProps) {
       simulateDns,
       getDhcpLeaseState,
       getDnsCache,
+      exportPcap,
     }),
-    [engine, state, sendPacket, simulateDhcp, simulateDns, getDhcpLeaseState, getDnsCache],
+    [engine, state, sendPacket, simulateDhcp, simulateDns, getDhcpLeaseState, getDnsCache, exportPcap],
   );
 
   return (

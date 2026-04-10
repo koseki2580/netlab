@@ -230,6 +230,7 @@ function renderWithContexts(
           simulateDns: async () => null,
           getDhcpLeaseState: () => null,
           getDnsCache: () => null,
+          exportPcap: () => new Uint8Array(),
         }}
       >
         {ui}

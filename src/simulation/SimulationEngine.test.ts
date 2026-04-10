@@ -10,6 +10,7 @@ import type { RouteEntry, RouterInterface } from '../types/routing';
 import { type FailureState, EMPTY_FAILURE_STATE, makeInterfaceFailureId } from '../types/failure';
 import { computeFcs, computeIpv4Checksum } from '../utils/checksum';
 import { buildEthernetFrameBytes, buildIpv4HeaderBytes } from '../utils/packetLayout';
+import { serializeArpFrame } from '../utils/packetSerializer';
 
 const CLIENT_MAC = '02:00:00:00:00:10';
 const SERVER_MAC = '02:00:00:00:00:20';
@@ -115,6 +116,34 @@ function deriveDeterministicMac(nodeId: string): string {
     hash & 0xff,
     nodeId.length & 0xff,
   ].map((byte) => byte.toString(16).padStart(2, '0')).join(':');
+}
+
+function readUint32LE(bytes: Uint8Array, offset: number): number {
+  return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(offset, true);
+}
+
+function countPcapRecords(bytes: Uint8Array): number {
+  let count = 0;
+  let offset = 24;
+
+  while (offset < bytes.length) {
+    const recordLength = readUint32LE(bytes, offset + 8);
+    offset += 16 + recordLength;
+    count++;
+  }
+
+  return count;
+}
+
+function pcapRecordBytes(bytes: Uint8Array, index: number): Uint8Array {
+  let offset = 24;
+
+  for (let recordIndex = 0; recordIndex < index; recordIndex++) {
+    offset += 16 + readUint32LE(bytes, offset + 8);
+  }
+
+  const recordLength = readUint32LE(bytes, offset + 8);
+  return bytes.slice(offset + 16, offset + 16 + recordLength);
 }
 
 /** Simple two-node topology: client-1 -- e1 -- server-1 */
@@ -1067,6 +1096,79 @@ describe('SimulationEngine.reset', () => {
     expect(state.selectedHop).toBeNull();
     expect(state.traces).toHaveLength(1); // trace still present
     expect(state.status).toBe('paused');
+  });
+});
+
+describe('SimulationEngine.exportPcap', () => {
+  it('returns a 24-byte header-only export when no trace exists', () => {
+    const engine = makeEngine(singleRouterTopology());
+
+    expect(engine.exportPcap()).toHaveLength(24);
+  });
+
+  it('returns a valid PCAP whose record count matches the hop count', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    await engine.send(makePacket('pcap-basic', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
+
+    const state = engine.getState();
+    const trace = state.traces.find((candidate) => candidate.packetId === 'pcap-basic');
+    const bytes = engine.exportPcap('pcap-basic');
+
+    expect(trace).toBeDefined();
+    expect(countPcapRecords(bytes)).toBe(trace?.hops.length);
+  });
+
+  it('defaults to the currentTraceId when no trace id is provided', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    await engine.send(makePacket('pcap-current', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
+
+    expect(Array.from(engine.exportPcap())).toEqual(Array.from(engine.exportPcap('pcap-current')));
+  });
+
+  it('returns a 24-byte header-only export when the requested trace id is missing', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    await engine.send(makePacket('pcap-known', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
+
+    expect(engine.exportPcap('missing-trace')).toHaveLength(24);
+  });
+
+  it('uses arpFrame bytes for ARP hops instead of packet snapshots', async () => {
+    const engine = makeEngine(directTopologyWithoutServerMac());
+    await engine.send(makePacket('pcap-arp', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
+
+    const trace = engine.getState().traces.find((candidate) => candidate.packetId === 'pcap-arp');
+    const arpHopIndex = trace?.hops.findIndex((hop) => hop.event === 'arp-request') ?? -1;
+    const arpFrame = arpHopIndex >= 0 ? trace?.hops[arpHopIndex].arpFrame : undefined;
+    const bytes = engine.exportPcap('pcap-arp');
+    const expectedFrameBytes = arpFrame
+      ? serializeArpFrame(arpFrame).bytes.slice(0, serializeArpFrame(arpFrame).bytes.length - 4)
+      : null;
+
+    expect(arpHopIndex).toBeGreaterThanOrEqual(0);
+    expect(expectedFrameBytes).not.toBeNull();
+    expect(Array.from(pcapRecordBytes(bytes, arpHopIndex))).toEqual(Array.from(expectedFrameBytes!));
+  });
+
+  it('uses the stored packet snapshot bytes for drop hops', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    await engine.send(makePacket('pcap-drop', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10', 1));
+
+    const trace = engine.getState().traces.find((candidate) => candidate.packetId === 'pcap-drop');
+    const dropHopIndex = trace?.hops.findIndex((hop) => hop.event === 'drop') ?? -1;
+    expect(dropHopIndex).toBeGreaterThanOrEqual(0);
+
+    engine.selectTrace('pcap-drop');
+    engine.selectHop(dropHopIndex);
+    const snapshot = engine.getState().selectedPacket;
+    const expectedFrameBytes = snapshot
+      ? Uint8Array.from(
+          buildEthernetFrameBytes(snapshot.frame, { includePreamble: false, includeFcs: false }),
+        )
+      : null;
+    const bytes = engine.exportPcap('pcap-drop');
+
+    expect(expectedFrameBytes).not.toBeNull();
+    expect(Array.from(pcapRecordBytes(bytes, dropHopIndex))).toEqual(Array.from(expectedFrameBytes!));
   });
 });
 

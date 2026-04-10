@@ -258,6 +258,7 @@ function makeSimulationContextValue(activeEdgeIds: string[]): SimulationContextV
     simulateDns: vi.fn(async () => null),
     getDhcpLeaseState: vi.fn(() => null),
     getDnsCache: vi.fn(() => null),
+    exportPcap: vi.fn(() => new Uint8Array()),
     state: {
       status: 'idle',
       traces: [],
