@@ -82,15 +82,27 @@ Router interface-down checks reuse the same subnet-based egress resolution used 
 
 If no interface can be resolved confidently, the engine leaves interface metadata unset and does not emit an `interface-down` drop for that hop.
 
-## Static Routing Interaction
+## Static Routing and Failure Fallback
 
-Static route tables are not recomputed when failures are toggled. Instead:
+Static route tables are not recomputed when failures are toggled. However, route selection at hop
+execution time is failure-aware:
 
-- node failure is handled at hop execution time
-- link failure is handled by neighbor filtering
-- interface failure is handled after the next node is known but before traversal occurs
+1. Matching routes for `dstIp` are sorted by prefix length, most specific first.
+2. Each candidate is checked against the current failure-filtered neighbor list.
+3. The first candidate whose next hop resolves to a reachable neighbor is used.
+4. If no candidate resolves to a reachable neighbor, the packet drops with `reason: 'no-route'`.
 
-This keeps the feature incremental and leaves room for future dynamic-routing reactions.
+This means a less-specific route such as `0.0.0.0/0` can automatically act as a fallback when a
+more-specific route becomes unreachable because of a node or link failure.
+
+### Routing Decision Annotation
+
+`hop.routingDecision` distinguishes between the pure LPM winner and the route actually used:
+
+- `selectedByLpm: true` marks the most-specific matching route.
+- `selectedByFailover: true` marks the route actually used after skipping an unreachable primary.
+- In the normal case, `selectedByFailover` is absent and the LPM winner is used directly.
+- When different candidates carry the flags, the hop used a less-specific fallback route.
 
 ## FailureContext
 
