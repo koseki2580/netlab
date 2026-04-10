@@ -113,6 +113,16 @@ export type {
 } from './types/routing';
 export { ADMIN_DISTANCES } from './types/routing';
 export type { NatType, NatEntry, NatTable } from './types/nat';
+export type {
+  AclAction,
+  AclProtocol,
+  AclPortRange,
+  AclRule,
+  AclMatchInfo,
+  ConnState,
+  ConnTrackEntry,
+  ConnTrackTable,
+} from './types/acl';
 
 export type { AreaType, AreaVisualConfig, NetworkArea } from './types/areas';
 

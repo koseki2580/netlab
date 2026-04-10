@@ -199,6 +199,7 @@ function makeState(overrides: Partial<SimulationState> = {}): SimulationState {
     selectedPacket: null,
     nodeArpTables: {},
     natTables: [],
+    connTrackTables: [],
     ...overrides,
   };
 }
@@ -359,6 +360,79 @@ describe('Trace Inspector components', () => {
     expect(html).toContain('var(--netlab-text-muted)');
   });
 
+  it('HopInspector renders ACL filter details for explicit rule matches', () => {
+    const aclHop: PacketHop = {
+      ...BASE_HOPS[1],
+      aclMatch: {
+        direction: 'inbound',
+        interfaceId: 'eth0',
+        interfaceName: 'eth0',
+        matchedRule: {
+          id: 'allow-http',
+          priority: 10,
+          action: 'permit',
+          protocol: 'tcp',
+          srcIp: '10.0.0.0/24',
+          dstPort: 80,
+        },
+        action: 'permit',
+        byConnTrack: false,
+      },
+    };
+
+    const html = renderWithContexts(
+      <HopInspector />,
+      makeState({ selectedHop: aclHop }),
+    );
+
+    expect(html).toContain('ACL FILTER');
+    expect(html).toContain('INBOUND');
+    expect(html).toContain('eth0');
+    expect(html).toContain('#10 permit tcp 10.0.0.0/24 any dst 80');
+    expect(html).toContain('PERMIT');
+  });
+
+  it('HopInspector distinguishes conn-track permits from default policy denies', () => {
+    const connTrackHop: PacketHop = {
+      ...BASE_HOPS[1],
+      aclMatch: {
+        direction: 'inbound',
+        interfaceId: 'eth1',
+        interfaceName: 'eth1',
+        matchedRule: null,
+        action: 'permit',
+        byConnTrack: true,
+      },
+    };
+    const defaultDenyHop: PacketHop = {
+      ...BASE_HOPS[1],
+      event: 'drop',
+      reason: 'acl-deny',
+      aclMatch: {
+        direction: 'inbound',
+        interfaceId: 'eth0',
+        interfaceName: 'eth0',
+        matchedRule: null,
+        action: 'deny',
+        byConnTrack: false,
+      },
+    };
+
+    const connTrackHtml = renderWithContexts(
+      <HopInspector />,
+      makeState({ selectedHop: connTrackHop }),
+    );
+    const defaultDenyHtml = renderWithContexts(
+      <HopInspector />,
+      makeState({ selectedHop: defaultDenyHop }),
+    );
+
+    expect(connTrackHtml).toContain('stateful return traffic');
+    expect(connTrackHtml).toContain('(conn-track)');
+    expect(defaultDenyHtml).toContain('(default policy)');
+    expect(defaultDenyHtml).toContain('ACL Deny');
+  });
+
   it('HopInspector renders ARP-specific field details and skips routing decision for ARP hops', () => {
     const trace: PacketTrace = {
       packetId: 'pkt-arp-hop',
@@ -402,6 +476,33 @@ describe('Trace Inspector components', () => {
     expect(html).toContain('No hop selected. Click a timeline row to inspect packet details.');
     expect(html).toContain('var(--netlab-text-secondary)');
     expect(html).not.toContain('var(--netlab-text-muted)');
+  });
+
+  it('PacketTimeline exposes ACL deny as a human-readable tooltip label', () => {
+    const dropHop: PacketHop = {
+      ...BASE_HOPS[1],
+      event: 'drop',
+      toNodeId: undefined,
+      reason: 'acl-deny',
+    };
+    const trace: PacketTrace = {
+      packetId: 'pkt-acl-drop',
+      srcNodeId: 'client-1',
+      dstNodeId: 'server-1',
+      hops: [BASE_HOPS[0], dropHop],
+      status: 'dropped',
+    };
+
+    const html = renderWithContexts(
+      <PacketTimeline />,
+      makeState({
+        traces: [trace],
+        currentTraceId: trace.packetId,
+        selectedHop: dropHop,
+      }),
+    );
+
+    expect(html).toContain('title="ACL Deny"');
   });
 
   it('HopInspector uses the secondary text token for section headers and routing table headers', () => {
