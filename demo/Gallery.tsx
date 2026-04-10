@@ -115,6 +115,11 @@ const CATEGORIES: Category[] = [
         desc: 'Watch SNAT, DNAT port forwarding, and the live NAT table update on an edge router.',
       },
       {
+        path: '/simulation/acl',
+        title: 'Firewalls & ACLs',
+        desc: 'Inspect interface ACL permit/deny decisions and stateful return-traffic auto-permit on a firewall router.',
+      },
+      {
         path: '/simulation/interface-aware',
         title: 'Interface-Aware Forwarding',
         desc: 'See which router interface is selected at each hop, with ingress and egress interface names shown in the inspector.',
