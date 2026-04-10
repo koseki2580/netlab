@@ -32,5 +32,7 @@ describe('demo chrome', () => {
     expect(html).toContain('/comprehensive/all-in-one');
     expect(html).toContain('DHCP &amp; DNS');
     expect(html).toContain('/services/dhcp-dns');
+    expect(html).toContain('Firewalls &amp; ACLs');
+    expect(html).toContain('/simulation/acl');
   });
 });
