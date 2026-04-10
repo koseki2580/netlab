@@ -9,6 +9,7 @@ export interface RoutingCandidate {
   adminDistance: number;
   matched: boolean;        // isInSubnet(dstIp, destination)
   selectedByLpm: boolean;  // the single LPM winner
+  selectedByFailover?: boolean; // chosen after the LPM winner was unreachable
 }
 
 export interface RoutingDecision {

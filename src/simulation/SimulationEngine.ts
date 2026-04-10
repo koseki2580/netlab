@@ -67,14 +67,30 @@ function protocolName(num: number): string {
   return String(num);
 }
 
-function buildRoutingDecision(dstIp: string, routes: RouteEntry[]): RoutingDecision {
+function sameRoute(left: RouteEntry | null | undefined, right: RouteEntry | null | undefined): boolean {
+  if (!left || !right) return false;
+  return (
+    left.destination === right.destination &&
+    left.nextHop === right.nextHop &&
+    left.protocol === right.protocol &&
+    left.adminDistance === right.adminDistance &&
+    left.metric === right.metric &&
+    left.nodeId === right.nodeId
+  );
+}
+
+function buildRoutingDecision(
+  dstIp: string,
+  routes: RouteEntry[],
+  selectedRoute?: RouteEntry | null,
+): RoutingDecision {
+  const selectionProvided = arguments.length >= 3;
   const sorted = [...routes].sort(
     (a, b) => prefixLength(b.destination) - prefixLength(a.destination),
   );
-  let winnerRoute: RouteEntry | null = null;
+  const lpmWinner = sorted.find((route) => isInSubnet(dstIp, route.destination)) ?? null;
   const candidates: RoutingCandidate[] = sorted.map((r) => {
     const matched = isInSubnet(dstIp, r.destination);
-    if (matched && winnerRoute === null) winnerRoute = r;
     return {
       destination: r.destination,
       nextHop: r.nextHop,
@@ -85,18 +101,56 @@ function buildRoutingDecision(dstIp: string, routes: RouteEntry[]): RoutingDecis
       selectedByLpm: false,
     };
   });
-  if (winnerRoute !== null) {
+
+  if (lpmWinner) {
     const idx = candidates.findIndex(
       (c) =>
-        c.destination === (winnerRoute as RouteEntry).destination &&
-        c.nextHop === (winnerRoute as RouteEntry).nextHop,
+        c.destination === lpmWinner.destination &&
+        c.nextHop === lpmWinner.nextHop &&
+        c.protocol === lpmWinner.protocol &&
+        c.adminDistance === lpmWinner.adminDistance &&
+        c.metric === lpmWinner.metric,
     );
     if (idx >= 0) candidates[idx].selectedByLpm = true;
   }
-  const winner = candidates.find((c) => c.selectedByLpm) ?? null;
-  const explanation = winner
-    ? `Matched ${winner.destination} via ${winner.nextHop} (${winner.protocol}, AD=${winner.adminDistance})`
-    : `No matching route for ${dstIp} — packet will be dropped`;
+
+  const activeRoute = selectedRoute ?? null;
+  const selectedCandidate = activeRoute
+    ? candidates.find(
+        (candidate) =>
+          candidate.destination === activeRoute.destination &&
+          candidate.nextHop === activeRoute.nextHop &&
+          candidate.protocol === activeRoute.protocol &&
+          candidate.adminDistance === activeRoute.adminDistance &&
+          candidate.metric === activeRoute.metric,
+      ) ?? null
+    : null;
+
+  if (selectedCandidate && lpmWinner && !sameRoute(activeRoute, lpmWinner)) {
+    selectedCandidate.selectedByFailover = true;
+  }
+
+  const winner = selectionProvided
+    ? selectedCandidate
+    : candidates.find((candidate) => candidate.selectedByLpm) ?? null;
+
+  let explanation: string;
+  if (selectedCandidate) {
+    if (lpmWinner && !sameRoute(activeRoute, lpmWinner)) {
+      explanation =
+        `Fallback via ${selectedCandidate.destination} (${selectedCandidate.nextHop})` +
+        ` — primary route ${lpmWinner.destination} (${lpmWinner.nextHop}) unreachable`;
+    } else {
+      explanation =
+        `Matched ${selectedCandidate.destination} via ${selectedCandidate.nextHop}` +
+        ` (${selectedCandidate.protocol}, AD=${selectedCandidate.adminDistance})`;
+    }
+  } else if (selectionProvided && candidates.some((candidate) => candidate.matched)) {
+    explanation = `No reachable route for ${dstIp} — matching routes are unavailable`;
+  } else {
+    explanation = `No matching route for ${dstIp} — packet will be dropped`;
+  }
+
   return { dstIp, candidates, winner, explanation };
 }
 
@@ -115,6 +169,11 @@ interface Neighbor {
 interface ResolvedInterface {
   id: string;
   name: string;
+}
+
+interface NextNodeResult {
+  neighbor: Neighbor;
+  selectedRoute: RouteEntry | null;
 }
 
 interface ArpTargetInfo {
@@ -190,15 +249,21 @@ export class SimulationEngine {
   private resolveEgressInterface(
     nodeId: string,
     dstIp: string,
+    overrideNextHop?: string,
   ): ResolvedInterface | null {
     const node = this.topology.nodes.find((n) => n.id === nodeId);
     if (!node || node.data.role !== 'router') return null;
 
-    const routes = this.topology.routeTables.get(nodeId) ?? [];
-    const route = bestRoute(dstIp, routes);
-    if (!route) return null;
+    let targetIp: string;
+    if (overrideNextHop !== undefined) {
+      targetIp = overrideNextHop === 'direct' ? dstIp : overrideNextHop;
+    } else {
+      const routes = this.topology.routeTables.get(nodeId) ?? [];
+      const route = bestRoute(dstIp, routes);
+      if (!route) return null;
+      targetIp = route.nextHop === 'direct' ? dstIp : route.nextHop;
+    }
 
-    const targetIp = route.nextHop === 'direct' ? dstIp : route.nextHop;
     const match = node.data.interfaces?.find((iface) =>
       isInSubnet(targetIp, `${iface.ipAddress}/${iface.prefixLength}`),
     );
@@ -260,7 +325,7 @@ export class SimulationEngine {
     packet: InFlightPacket,
     ingressNodeId: string | null,
     failureState: FailureState = EMPTY_FAILURE_STATE,
-  ): Neighbor | null {
+  ): NextNodeResult | null {
     const neighbors = this.getNeighbors(currentNodeId, ingressNodeId, failureState);
     const node = this.topology.nodes.find((n) => n.id === currentNodeId);
     if (!node) return null;
@@ -268,32 +333,10 @@ export class SimulationEngine {
 
     if (node.data.role === 'router') {
       const routes = this.topology.routeTables.get(currentNodeId) ?? [];
-      const route = bestRoute(dstIp, routes);
+      const route = this.selectReachableRoute(dstIp, routes, neighbors);
       if (!route) return null;
-
-      if (route.nextHop === 'direct') {
-        // Find neighbor that is the exact destination, or a switch (transparent pass-through)
-        for (const neighbor of neighbors) {
-          const neighborNode = this.topology.nodes.find((n) => n.id === neighbor.nodeId);
-          if (!neighborNode) continue;
-          if (this.getEffectiveNodeIp(neighborNode) === dstIp) return neighbor;
-          if ((neighborNode.data.interfaces ?? []).some((iface) => iface.ipAddress === dstIp)) {
-            return neighbor;
-          }
-          if (neighborNode.data.role === 'switch') return neighbor;
-        }
-        return null;
-      }
-
-      // nextHop is an IP: find neighbor router whose interface has that IP, or a switch
-      for (const neighbor of neighbors) {
-        const neighborNode = this.topology.nodes.find((n) => n.id === neighbor.nodeId);
-        if (!neighborNode) continue;
-        const ifaces = (neighborNode.data.interfaces ?? []) as Array<{ ipAddress: string }>;
-        if (ifaces.some((i) => i.ipAddress === route.nextHop)) return neighbor;
-        if (neighborNode.data.role === 'switch') return neighbor;
-      }
-      return null;
+      const neighbor = this.resolveNeighborForRoute(dstIp, route, neighbors);
+      return neighbor ? { neighbor, selectedRoute: route } : null;
     }
 
     if (node.data.role === 'switch') {
@@ -312,13 +355,13 @@ export class SimulationEngine {
             failureState,
           );
           if (matched && (!packet.dstNodeId || matched.id === packet.dstNodeId)) {
-            return neighbor;
+            return { neighbor, selectedRoute: null };
           }
           continue;
         }
 
         if (packet.dstNodeId && neighborNode.id === packet.dstNodeId) {
-          return neighbor;
+          return { neighbor, selectedRoute: null };
         }
 
         if (
@@ -328,17 +371,61 @@ export class SimulationEngine {
             (neighborNode.data.interfaces ?? []).some((iface) => iface.ipAddress === targetIp)
           )
         ) {
-          return neighbor;
+          return { neighbor, selectedRoute: null };
         }
       }
 
-      return neighbors[0] ?? null;
+      return neighbors[0] ? { neighbor: neighbors[0], selectedRoute: null } : null;
     }
 
     // Source endpoints forward to their first connected neighbor
     // (non-source endpoints never forward — packet should have been delivered)
     if (ingressNodeId === null) {
-      return neighbors[0] ?? null;
+      return neighbors[0] ? { neighbor: neighbors[0], selectedRoute: null } : null;
+    }
+
+    return null;
+  }
+
+  private resolveNeighborForRoute(
+    dstIp: string,
+    route: RouteEntry,
+    neighbors: Neighbor[],
+  ): Neighbor | null {
+    for (const neighbor of neighbors) {
+      const neighborNode = this.topology.nodes.find((n) => n.id === neighbor.nodeId);
+      if (!neighborNode) continue;
+
+      if (route.nextHop === 'direct') {
+        if (this.getEffectiveNodeIp(neighborNode) === dstIp) return neighbor;
+        if ((neighborNode.data.interfaces ?? []).some((iface) => iface.ipAddress === dstIp)) {
+          return neighbor;
+        }
+        if (neighborNode.data.role === 'switch') return neighbor;
+        continue;
+      }
+
+      const ifaces = (neighborNode.data.interfaces ?? []) as Array<{ ipAddress: string }>;
+      if (ifaces.some((iface) => iface.ipAddress === route.nextHop)) return neighbor;
+      if (neighborNode.data.role === 'switch') return neighbor;
+    }
+
+    return null;
+  }
+
+  private selectReachableRoute(
+    dstIp: string,
+    routes: RouteEntry[],
+    neighbors: Neighbor[],
+  ): RouteEntry | null {
+    const candidates = [...routes]
+      .filter((route) => isInSubnet(dstIp, route.destination))
+      .sort((a, b) => prefixLength(b.destination) - prefixLength(a.destination));
+
+    for (const route of candidates) {
+      if (this.resolveNeighborForRoute(dstIp, route, neighbors)) {
+        return route;
+      }
     }
 
     return null;
@@ -536,6 +623,7 @@ export class SimulationEngine {
     nextNodeId: string,
     packet: InFlightPacket,
     failureState: FailureState,
+    overrideNextHop?: string,
   ): NetlabNode | null {
     const nextNode = this.findNode(nextNodeId);
     if (!nextNode) return null;
@@ -550,13 +638,20 @@ export class SimulationEngine {
     let targetNodeId: string | undefined = packet.dstNodeId;
 
     if (currentNode.data.role === 'router') {
-      const route = bestRoute(
-        packet.frame.payload.dstIp,
-        this.topology.routeTables.get(currentNodeId) ?? [],
-      );
-      if (route?.nextHop && route.nextHop !== 'direct') {
-        targetIp = route.nextHop;
-        targetNodeId = undefined;
+      if (overrideNextHop !== undefined) {
+        if (overrideNextHop !== 'direct') {
+          targetIp = overrideNextHop;
+          targetNodeId = undefined;
+        }
+      } else {
+        const route = bestRoute(
+          packet.frame.payload.dstIp,
+          this.topology.routeTables.get(currentNodeId) ?? [],
+        );
+        if (route?.nextHop && route.nextHop !== 'direct') {
+          targetIp = route.nextHop;
+          targetNodeId = undefined;
+        }
       }
     }
 
@@ -577,6 +672,7 @@ export class SimulationEngine {
     routerNodeId: string,
     packet: InFlightPacket,
     egressInterfaceId?: string,
+    overrideNextHop?: string,
   ): string | null {
     const routerNode = this.findNode(routerNodeId);
     if (!routerNode || routerNode.data.role !== 'router') return null;
@@ -585,12 +681,16 @@ export class SimulationEngine {
     const currentNode = this.findNode(currentNodeId);
 
     if (currentNode?.data.role === 'router') {
-      const route = bestRoute(
-        packet.frame.payload.dstIp,
-        this.topology.routeTables.get(currentNodeId) ?? [],
-      );
-      if (route?.nextHop && route.nextHop !== 'direct') {
-        const nextHopInterface = routerInterfaces.find((iface) => iface.ipAddress === route.nextHop);
+      const nextHop =
+        overrideNextHop !== undefined
+          ? overrideNextHop
+          : bestRoute(
+              packet.frame.payload.dstIp,
+              this.topology.routeTables.get(currentNodeId) ?? [],
+            )?.nextHop;
+
+      if (nextHop && nextHop !== 'direct') {
+        const nextHopInterface = routerInterfaces.find((iface) => iface.ipAddress === nextHop);
         if (nextHopInterface) return nextHopInterface.macAddress;
       }
 
@@ -622,19 +722,27 @@ export class SimulationEngine {
     egressInterfaceId: string | undefined,
     packet: InFlightPacket,
     failureState: FailureState,
+    overrideNextHop?: string,
   ): string | null {
     const destinationNode = this.resolveEffectiveLayer2Destination(
       currentNodeId,
       nextNodeId,
       packet,
       failureState,
+      overrideNextHop,
     );
 
     if (!destinationNode) return null;
 
     if (destinationNode.data.role === 'router') {
       return (
-        this.resolveRouterMac(currentNodeId, destinationNode.id, packet, egressInterfaceId) ??
+        this.resolveRouterMac(
+          currentNodeId,
+          destinationNode.id,
+          packet,
+          egressInterfaceId,
+          overrideNextHop,
+        ) ??
         deriveDeterministicMac(destinationNode.id)
       );
     }
@@ -653,17 +761,23 @@ export class SimulationEngine {
     failureState: FailureState,
     egressInterfaceId?: string,
     edgeId?: string,
+    overrideNextHop?: string,
   ): ArpTargetInfo | null {
     const currentNode = this.findNode(currentNodeId);
     if (!currentNode) return null;
     if (packet.frame.payload.dstIp === BROADCAST_IP) return null;
 
     if (currentNode.data.role === 'router') {
-      const routes = this.topology.routeTables.get(currentNodeId) ?? [];
-      const route = bestRoute(packet.frame.payload.dstIp, routes);
-      if (!route) return null;
+      let targetIp: string | null;
+      if (overrideNextHop !== undefined) {
+        targetIp = overrideNextHop === 'direct' ? packet.frame.payload.dstIp : overrideNextHop;
+      } else {
+        const routes = this.topology.routeTables.get(currentNodeId) ?? [];
+        const route = bestRoute(packet.frame.payload.dstIp, routes);
+        if (!route) return null;
+        targetIp = route.nextHop === 'direct' ? packet.frame.payload.dstIp : route.nextHop;
+      }
 
-      const targetIp = route.nextHop === 'direct' ? packet.frame.payload.dstIp : route.nextHop;
       if (!targetIp) return null;
 
       const targetNode = this.resolveEffectiveLayer2Destination(
@@ -671,6 +785,7 @@ export class SimulationEngine {
         nextNodeId,
         packet,
         failureState,
+        overrideNextHop,
       );
       if (!targetNode || !this.nodeOwnsIp(targetNode, targetIp)) return null;
 
@@ -698,6 +813,7 @@ export class SimulationEngine {
       nextNodeId,
       packet,
       failureState,
+      overrideNextHop,
     );
     if (!targetNode) return null;
 
@@ -730,6 +846,7 @@ export class SimulationEngine {
     packet: InFlightPacket,
     failureState: FailureState,
     egressInterfaceId?: string,
+    overrideNextHop?: string,
   ): string {
     const resolvedMac = this.resolveDstMac(
       currentNodeId,
@@ -737,13 +854,20 @@ export class SimulationEngine {
       egressInterfaceId,
       packet,
       failureState,
+      overrideNextHop,
     );
     if (resolvedMac) return resolvedMac;
 
     const targetNode = this.findNode(targetNodeId);
     if (targetNode?.data.role === 'router') {
       return (
-        this.resolveRouterMac(currentNodeId, targetNodeId, packet, egressInterfaceId) ??
+        this.resolveRouterMac(
+          currentNodeId,
+          targetNodeId,
+          packet,
+          egressInterfaceId,
+          overrideNextHop,
+        ) ??
         deriveDeterministicMac(targetNodeId)
       );
     }
@@ -984,16 +1108,22 @@ export class SimulationEngine {
       },
     };
 
-    const next = this.resolveNextNode(
+    const nextResult = this.resolveNextNode(
       packet.currentDeviceId,
       workingPacket,
       null,
       failureState,
     );
+    const next = nextResult?.neighbor ?? null;
+    const selectedRoute = nextResult?.selectedRoute ?? null;
 
     if (currentNode?.data.role === 'router' && next) {
       const egressInterface =
-        this.resolveEgressInterface(packet.currentDeviceId, packet.frame.payload.dstIp) ??
+        this.resolveEgressInterface(
+          packet.currentDeviceId,
+          packet.frame.payload.dstIp,
+          selectedRoute?.nextHop,
+        ) ??
         this.resolvePortFromEdge(packet.currentDeviceId, next.edgeId, 'egress');
       const srcMac = currentNode.data.interfaces?.find(
         (iface) => iface.id === egressInterface?.id,
@@ -1005,6 +1135,7 @@ export class SimulationEngine {
         failureState,
         egressInterface?.id,
         next.edgeId,
+        selectedRoute?.nextHop,
       );
       const dstMac = arpTarget
         ? (arpCache.get(arpTarget.targetIp) ?? null)
@@ -1014,6 +1145,7 @@ export class SimulationEngine {
             egressInterface?.id,
             workingPacket,
             failureState,
+            selectedRoute?.nextHop,
           );
 
       workingPacket = {
@@ -1028,13 +1160,14 @@ export class SimulationEngine {
       const resolvedSrcMac = this.resolveEndpointMac(currentNode.id);
       const arpTarget = next
         ? this.resolveArpTargetInfo(
-            currentNode.id,
-            next.nodeId,
-            workingPacket,
-            failureState,
-            undefined,
-            next.edgeId,
-          )
+          currentNode.id,
+          next.nodeId,
+          workingPacket,
+          failureState,
+          undefined,
+          next.edgeId,
+          undefined,
+        )
         : null;
       const resolvedDstMac = next
         ? arpTarget
@@ -1357,16 +1490,23 @@ export class SimulationEngine {
         }
       }
 
+      // Resolve next node via topology graph (independent of egressPort)
+      const nextResult = this.resolveNextNode(current, workingPacket, ingressFrom, failureState);
+      const next = nextResult?.neighbor ?? null;
+      const selectedRoute = nextResult?.selectedRoute ?? null;
+
       // Capture routing decision for educational display (router hops only).
       // TTL-exceeded drops break before reaching this point, so routingDecision
       // is intentionally absent on TTL drops.
       if (node.data.role === 'router') {
         const routes = this.topology.routeTables.get(current) ?? [];
-        hopBase.routingDecision = buildRoutingDecision(workingPacket.frame.payload.dstIp, routes);
+        hopBase.routingDecision = buildRoutingDecision(
+          workingPacket.frame.payload.dstIp,
+          routes,
+          selectedRoute,
+        );
       }
 
-      // Resolve next node via topology graph (independent of egressPort)
-      const next = this.resolveNextNode(current, workingPacket, ingressFrom, failureState);
       if (!next) {
         const dropHop: Omit<PacketHop, 'step'> = {
           ...hopBase,
@@ -1389,7 +1529,11 @@ export class SimulationEngine {
 
       if (node.data.role === 'router') {
         routerEgressInterface =
-          this.resolveEgressInterface(current, workingPacket.frame.payload.dstIp) ??
+          this.resolveEgressInterface(
+            current,
+            workingPacket.frame.payload.dstIp,
+            selectedRoute?.nextHop,
+          ) ??
           this.resolvePortFromEdge(current, next.edgeId, 'egress');
         if (routerEgressInterface) {
           hopBase.egressInterfaceId = routerEgressInterface.id;
@@ -1503,6 +1647,7 @@ export class SimulationEngine {
               failureState,
               routerEgressInterface?.id,
               next.edgeId,
+              selectedRoute?.nextHop,
             )
           : null;
       const shouldInjectArp = arpTarget !== null && !arpCache.has(arpTarget.targetIp);
@@ -1531,6 +1676,7 @@ export class SimulationEngine {
           workingPacket,
           failureState,
           hopBase.egressInterfaceId,
+          selectedRoute?.nextHop,
         );
 
         stepCounter = this.injectArpExchange(
@@ -1576,6 +1722,7 @@ export class SimulationEngine {
             workingPacket,
             failureState,
             hopBase.egressInterfaceId,
+            selectedRoute?.nextHop,
           ))
         : this.resolveDstMac(
             current,
@@ -1583,6 +1730,7 @@ export class SimulationEngine {
             hopBase.egressInterfaceId,
             workingPacket,
             failureState,
+            selectedRoute?.nextHop,
           );
 
       if (node.data.role === 'router') {
