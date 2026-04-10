@@ -52,6 +52,7 @@ Specifications for protocol implementations based on the OSI model and network d
 - [Routing](networking/routing/) - Operational specifications for OSPF (`ospf.md`), BGP (`bgp.md`), RIP (`rip.md`), and static routing (`static.md`)
 - [ARP](networking/arp.md) - Address Resolution Protocol simulation: cache seeding, request/reply hop injection, and node ARP table visualization
 - [NAT / PAT](networking/nat.md) - Stateful SNAT, DNAT, port forwarding, and per-router NAT table behavior
+- [Firewalls & ACLs](networking/acl.md) - Interface ACL rules, default deny, and optional stateful conn-track behavior
 - [Services Overview](networking/services/index.md) - DHCP/DNS service sessions, runtime state, and UDP service architecture
 - [DHCP](networking/services/dhcp.md) - DORA address assignment simulation for runtime host IPs
 - [DNS](networking/services/dns.md) - Static A-record resolution and automatic pre-HTTP lookup

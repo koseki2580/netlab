@@ -20,6 +20,7 @@ The site uses **React Router (HashRouter)** for client-side navigation. Hash-bas
 /#/simulation/step           → Simulation: Step-by-Step
 /#/simulation/failure        → Simulation: Failure Injection
 /#/simulation/trace-inspector → Simulation: Trace Inspector
+/#/simulation/acl            → Simulation: Firewalls & ACLs
 /#/simulation/interface-aware → Simulation: Interface-Aware Forwarding
 /#/simulation/session        → Simulation: Session Inspector
 /#/topology/controlled       → Editor: Controlled Topology
@@ -52,6 +53,7 @@ demo/
     StepSimDemo.tsx           Auto-running step-by-step routing walkthrough
     FailureSimDemo.tsx        Failure toggle panel + simulation trace controls
     TraceInspectorDemo.tsx    Packet timeline + hop inspector + trace summary
+    AclDemo.tsx               Router firewall ACL and stateful conn-track walkthrough
     InterfaceAwareDemo.tsx    Interface ingress/egress inspection walkthrough
     SessionDemo.tsx           Request/response session lifecycle inspector
   editor/
@@ -155,6 +157,10 @@ Individual demos are responsible for their own internal layout and any additiona
 ### simulation/nat
 - **Purpose**: Demonstrates edge-router NAT with outbound SNAT, inbound DNAT, and live translation-table inspection.
 - **Extras**: `NatTableViewer`, NAT-specific send buttons, `PacketTimeline`, and `HopInspector`.
+
+### simulation/acl
+- **Purpose**: Demonstrates router interface ACL permit/deny behavior and stateful return-traffic auto-permit.
+- **Extras**: ACL-specific send buttons, `PacketTimeline`, and `HopInspector`.
 
 ### simulation/interface-aware
 - **Purpose**: Demonstrates ingress and egress interface selection at each forwarding hop.
