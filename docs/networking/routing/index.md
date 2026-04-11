@@ -23,10 +23,12 @@ On a tie, lower `metric` wins.
 
 | Protocol | Status | Import |
 | -------- | ------ | ------ |
-| Static | Implemented | Built-in |
-| OSPF | Stub | `import 'netlab/routing/ospf'` (future) |
-| BGP | Stub | `import 'netlab/routing/bgp'` (future) |
-| RIP | Stub | `import 'netlab/routing/rip'` (future) |
+| Static | Implemented | Built-in (from `netlab`) |
+| OSPF | Stub | `import { ospfProtocol } from 'netlab'` |
+| BGP | Stub | `import { bgpProtocol } from 'netlab'` |
+| RIP | Stub | `import { ripProtocol } from 'netlab'` |
+
+The dynamic protocol exports already exist at the root package, but their current implementations are intentionally stubbed and return no learned routes.
 
 ## Route Resolution Algorithm
 
