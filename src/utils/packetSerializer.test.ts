@@ -144,6 +144,30 @@ const httpFrame: EthernetFrame = {
   },
 };
 
+const icmpFrame: EthernetFrame = {
+  layer: 'L2',
+  srcMac: '00:00:00:00:00:01',
+  dstMac: '00:00:00:00:00:02',
+  etherType: 0x0800,
+  fcs: 0x12345678,
+  payload: {
+    layer: 'L3',
+    srcIp: '10.0.0.10',
+    dstIp: '10.0.0.20',
+    ttl: 64,
+    protocol: 1,
+    payload: {
+      layer: 'L4',
+      type: 8,
+      code: 0,
+      checksum: 0,
+      identifier: 0x1234,
+      sequenceNumber: 1,
+      data: 'ping',
+    },
+  },
+};
+
 const arpRequestFrame: ArpEthernetFrame = {
   layer: 'L2',
   srcMac: '02:00:00:00:00:01',
@@ -197,6 +221,15 @@ describe('serializePacket', () => {
   it('encodes the IP protocol at byte 31', () => {
     const { bytes } = serializePacket(tcpSynFrame);
     expect(bytes[31]).toBe(6);
+  });
+
+  it('serializes ICMP payloads without treating them as UDP', () => {
+    const { bytes, fields } = serializePacket(icmpFrame);
+
+    expect(bytes[31]).toBe(1);
+    expect(fields.find((field) => field.name === 'Protocol')?.displayValue).toBe('1 (ICMP)');
+    expect(fields.find((field) => field.name === 'Type')?.displayValue).toBe('8');
+    expect(fields.find((field) => field.name === 'Sequence Number')?.displayValue).toBe('1');
   });
 
   it('encodes srcIp at bytes 34-37', () => {

@@ -82,6 +82,16 @@ export interface UdpDatagram {
   payload: RawPayload | DhcpMessage | DnsMessage;
 }
 
+export interface IcmpMessage {
+  layer: 'L4';
+  type: number;
+  code: number;
+  checksum: number;
+  identifier?: number;
+  sequenceNumber?: number;
+  data?: string;
+}
+
 export interface IpPacket {
   layer: 'L3';
   ihl?: number;
@@ -97,9 +107,9 @@ export interface IpPacket {
   srcIp: string;
   dstIp: string;
   ttl: number;
-  protocol: number;  // 6 = TCP, 17 = UDP
+  protocol: number;  // 1 = ICMP, 6 = TCP, 17 = UDP
   headerChecksum?: number;
-  payload: TcpSegment | UdpDatagram;
+  payload: IcmpMessage | TcpSegment | UdpDatagram; // When protocol === 1 (ICMP), payload is IcmpMessage.
 }
 
 export interface EthernetFrame {

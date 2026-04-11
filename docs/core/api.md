@@ -128,11 +128,33 @@ Pure TypeScript simulation engine. See [architecture.md](./architecture.md).
 
 ```typescript
 class SimulationEngine {
-  on(listener: SimulationEventListener): () => void;
-  step(packetId: string): void;
-  run(packet: InFlightPacket): Promise<void>;
+  subscribe(listener: (state: SimulationState) => void): () => void;
+  getState(): SimulationState;
+  send(packet: InFlightPacket, failureState?: FailureState): Promise<void>;
+  ping(srcNodeId: string, dstIp: string, options?: { ttl?: number }): Promise<PacketTrace>;
+  traceroute(srcNodeId: string, dstIp: string, maxHops?: number): Promise<PacketTrace[]>;
+  exportPcap(traceId?: string): Uint8Array;
+  step(): void;
+  play(ms?: number): void;
+  pause(): void;
+  reset(): void;
+  clear(): void;
+  clearTraces(): void;
+  selectTrace(packetId: string): void;
+  selectHop(step: number): void;
 }
 ```
+
+#### `SimulationEngine.ping()`
+
+Simulates an ICMP Echo Request from a source node to a destination IP. If the request is
+delivered, the engine automatically emits the Echo Reply as a second trace segment and
+returns the combined `PacketTrace`.
+
+#### `SimulationEngine.traceroute()`
+
+Runs repeated ICMP Echo Request probes with incrementing TTL values. Each probe returns one
+`PacketTrace`; the method stops early once the destination is delivered or `maxHops` is reached.
 
 ## Routing Protocol Registration
 

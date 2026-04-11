@@ -86,6 +86,7 @@ describe('RouterForwarder', () => {
     const result = await forwarder.receive(makePacket('203.0.113.10', 1), 'eth0');
     expect(result.action).toBe('drop');
     expect((result as { action: 'drop'; reason: string }).reason).toBe('ttl-exceeded');
+    expect(result).not.toHaveProperty('selectedRoute');
   });
 
   it('drops packet when no matching route exists', async () => {
@@ -94,6 +95,7 @@ describe('RouterForwarder', () => {
     const result = await forwarder.receive(makePacket('203.0.113.10'), 'eth0');
     expect(result.action).toBe('drop');
     expect((result as { action: 'drop'; reason: string }).reason).toBe('no-route');
+    expect(result).not.toHaveProperty('selectedRoute');
   });
 
   it('forwards to next-hop IP when route exists', async () => {
@@ -104,6 +106,10 @@ describe('RouterForwarder', () => {
     const result = await forwarder.receive(makePacket('203.0.113.10'), 'eth0');
     expect(result.action).toBe('forward');
     expect((result as { action: 'forward'; egressPort: string }).egressPort).toBe('203.0.113.254');
+    expect((result as { action: 'forward'; selectedRoute: { destination: string; nextHop: string } }).selectedRoute).toMatchObject({
+      destination: '203.0.113.0/24',
+      nextHop: '203.0.113.254',
+    });
   });
 
   it('decrements TTL on forward', async () => {

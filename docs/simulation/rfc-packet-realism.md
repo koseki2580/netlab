@@ -51,7 +51,7 @@ interface IpPacket {
   ttl: number;
   protocol: number;
   headerChecksum?: number;
-  payload: TcpSegment | UdpDatagram;
+  payload: IcmpMessage | TcpSegment | UdpDatagram;
 }
 ```
 
@@ -65,6 +65,25 @@ Default policy:
 - `identification`: stable per packet, materialized once if omitted
 - `totalLength`: derived from the serialized L4 + payload size when omitted
 - `headerChecksum`: computed from the materialized IPv4 header
+
+### `IcmpMessage`
+
+```ts
+interface IcmpMessage {
+  layer: 'L4';
+  type: number;
+  code: number;
+  checksum: number;
+  identifier?: number;
+  sequenceNumber?: number;
+  data?: string;
+}
+```
+
+Current ICMP usage:
+
+- Echo Request / Echo Reply for `SimulationEngine.ping()`
+- Time Exceeded responses for TTL expiry during forwarding
 
 ### `TcpSegment`
 
