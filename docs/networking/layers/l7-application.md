@@ -1,6 +1,5 @@
 # L7 – Application Layer
-
-**Status: HTTP implemented, DHCP/DNS service integration implemented**
+> **Status**: 🧪 Spec only — not yet implemented
 
 The application layer represents HTTP and service-layer payloads such as DHCP and DNS.
 

@@ -76,7 +76,9 @@ Optional legend showing area types and their colors.
 
 Register a layer plugin before rendering. See [plugins.md](./plugins.md).
 
-### `installFetchInterceptor(options): () => void`
+### `installFetchInterceptor(options): () => void` 🧪 Planned
+
+> This API is not yet exported. It will be available in a future release.
 
 Override `window.fetch` to simulate network traffic.
 Returns a cleanup function that restores the original `fetch`.
