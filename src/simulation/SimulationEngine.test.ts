@@ -1810,7 +1810,87 @@ describe('SimulationEngine.routingDecision', () => {
   });
 });
 
+describe('SimulationEngine ICMP helpers', () => {
+  it('ping sends an echo request and appends the echo reply path on success', async () => {
+    const engine = makeEngine(singleRouterTopology());
+
+    const trace = await engine.ping('client-1', '203.0.113.10');
+
+    expect(trace.status).toBe('delivered');
+
+    const serverDeliverIndex = trace.hops.findIndex(
+      (hop) => hop.nodeId === 'server-1' && hop.event === 'deliver',
+    );
+    const clientDeliverIndex = trace.hops.findIndex(
+      (hop) => hop.nodeId === 'client-1' && hop.event === 'deliver' && hop.fromNodeId === 'router-1',
+    );
+
+    expect(serverDeliverIndex).toBeGreaterThan(-1);
+    expect(clientDeliverIndex).toBeGreaterThan(serverDeliverIndex);
+    expect(trace.hops[0]?.protocol).toBe('ICMP');
+  });
+
+  it('ping drops with no-route when the destination IP is unreachable', async () => {
+    const engine = makeEngine(singleRouterTopology());
+
+    const trace = await engine.ping('client-1', '198.51.100.10');
+
+    expect(trace.status).toBe('dropped');
+    expect(trace.hops.some((hop) => hop.event === 'drop' && hop.reason === 'no-route')).toBe(true);
+  });
+
+  it('ping with TTL=1 marks the router drop hop and appends the generated ICMP response', async () => {
+    const engine = makeEngine(singleRouterTopology());
+
+    const trace = await engine.ping('client-1', '203.0.113.10', { ttl: 1 });
+
+    expect(trace.status).toBe('dropped');
+
+    const ttlDropHop = trace.hops.find(
+      (hop) => hop.nodeId === 'router-1' && hop.event === 'drop' && hop.reason === 'ttl-exceeded',
+    );
+
+    expect(ttlDropHop?.icmpGenerated).toBe(true);
+    expect(
+      trace.hops.some((hop) => hop.nodeId === 'client-1' && hop.event === 'deliver'),
+    ).toBe(true);
+  });
+
+  it('traceroute stops after the destination is reached', async () => {
+    const engine = makeEngine(multiHopTopology());
+
+    const traces = await engine.traceroute('client-1', '203.0.113.10');
+
+    expect(traces).toHaveLength(3);
+    expect(
+      traces[0]?.hops.some((hop) => hop.nodeId === 'router-1' && hop.reason === 'ttl-exceeded'),
+    ).toBe(true);
+    expect(
+      traces[1]?.hops.some((hop) => hop.nodeId === 'router-2' && hop.reason === 'ttl-exceeded'),
+    ).toBe(true);
+    expect(
+      traces[2]?.hops.some((hop) => hop.nodeId === 'server-1' && hop.event === 'deliver'),
+    ).toBe(true);
+  });
+});
+
 describe('SimulationEngine failure-aware routing fallback', () => {
+  it('uses the forwarder hint route without re-running reachable route selection when the path is up', async () => {
+    const engine = makeEngine(failureFallbackTopology());
+    const selectReachableRouteSpy = vi.spyOn(engine as any, 'selectReachableRoute');
+
+    const trace = await engine.precompute(
+      makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+    );
+
+    expect(trace.status).toBe('delivered');
+    expect(selectReachableRouteSpy).not.toHaveBeenCalled();
+
+    const routerHop = trace.hops.find((hop) => hop.nodeId === 'router-1');
+    expect(routerHop?.toNodeId).toBe('router-2');
+    expect(routerHop?.routingDecision?.winner?.destination).toBe('203.0.113.0/24');
+  });
+
   it('reroutes through the fallback route when the primary edge is down', async () => {
     const engine = makeEngine(failureFallbackTopology());
     const failureState: FailureState = {
@@ -1842,6 +1922,28 @@ describe('SimulationEngine failure-aware routing fallback', () => {
     expect(primaryCandidate?.selectedByFailover).not.toBe(true);
     expect(fallbackCandidate?.selectedByLpm).toBe(false);
     expect(fallbackCandidate?.selectedByFailover).toBe(true);
+  });
+
+  it('falls back to reachable-route selection when the forwarder hint route is unavailable', async () => {
+    const engine = makeEngine(failureFallbackTopology());
+    const selectReachableRouteSpy = vi.spyOn(engine as any, 'selectReachableRoute');
+    const failureState: FailureState = {
+      downNodeIds: new Set(),
+      downEdgeIds: new Set(['e2']),
+      downInterfaceIds: new Set(),
+    };
+
+    const trace = await engine.precompute(
+      makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+      failureState,
+    );
+
+    expect(trace.status).toBe('delivered');
+    expect(selectReachableRouteSpy).toHaveBeenCalled();
+
+    const routerHop = trace.hops.find((hop) => hop.nodeId === 'router-1');
+    expect(routerHop?.toNodeId).toBe('router-3');
+    expect(routerHop?.routingDecision?.winner?.destination).toBe('0.0.0.0/0');
   });
 
   it('keeps selectedByFailover unset on the normal primary path', async () => {

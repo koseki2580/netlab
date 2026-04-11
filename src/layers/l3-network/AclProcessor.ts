@@ -274,7 +274,7 @@ export class AclProcessor {
       };
     }
 
-    if (ipPacket.protocol === 17 && !isTcpSegment(ipPacket.payload)) {
+    if (ipPacket.protocol === 17 && !isTcpSegment(ipPacket.payload) && 'srcPort' in ipPacket.payload) {
       return {
         proto: 'udp',
         srcPort: ipPacket.payload.srcPort,

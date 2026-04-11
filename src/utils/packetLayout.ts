@@ -3,6 +3,7 @@ import type {
   DnsMessage,
   EthernetFrame,
   HttpMessage,
+  IcmpMessage,
   IpPacket,
   RawPayload,
   TcpFlags,
@@ -46,6 +47,10 @@ export function uint32BE(value: number): [number, number, number, number] {
 
 export function isTcpSegment(payload: IpPacket['payload']): payload is TcpSegment {
   return 'seq' in payload;
+}
+
+export function isIcmpMessage(payload: IpPacket['payload']): payload is IcmpMessage {
+  return 'type' in payload && 'code' in payload;
 }
 
 export function formatHttpMessage(message: HttpMessage): string {
@@ -158,10 +163,31 @@ export function buildUdpDatagramBytes(udp: UdpDatagram): number[] {
   ];
 }
 
+export function buildIcmpMessageBytes(icmp: IcmpMessage): number[] {
+  const identifier = icmp.identifier ?? 0;
+  const sequenceNumber = icmp.sequenceNumber ?? 0;
+  const dataBytes = icmp.data ? Array.from(encoder.encode(icmp.data)) : [];
+
+  return [
+    icmp.type & 0xff,
+    icmp.code & 0xff,
+    ...uint16BE(icmp.checksum),
+    ...uint16BE(identifier),
+    ...uint16BE(sequenceNumber),
+    ...dataBytes,
+  ];
+}
+
 export function buildTransportBytes(payload: IpPacket['payload']): number[] {
-  return isTcpSegment(payload)
-    ? buildTcpSegmentBytes(payload)
-    : buildUdpDatagramBytes(payload);
+  if (isTcpSegment(payload)) {
+    return buildTcpSegmentBytes(payload);
+  }
+
+  if (isIcmpMessage(payload)) {
+    return buildIcmpMessageBytes(payload);
+  }
+
+  return buildUdpDatagramBytes(payload);
 }
 
 export function buildIpv4FlagsAndFragmentOffset(ip: IpPacket): number {

@@ -14,8 +14,10 @@ import type {
   DhcpMessage,
   DnsMessage,
   HttpMessage,
+  IcmpMessage,
   InFlightPacket,
   IpPacket,
+  TcpSegment,
   UdpDatagram,
 } from '../types/packets';
 import type { RouteEntry, RouterInterface } from '../types/routing';
@@ -34,13 +36,22 @@ import { handleDiscover, handleRequest, LeaseAllocator } from '../services/DhcpS
 import { buildDnsQuery, handleDnsResponse } from '../services/DnsClient';
 import { handleDnsQuery } from '../services/DnsServer';
 import { deriveDeterministicMac, extractHostname, isIpAddress } from '../utils/network';
+import { ICMP_CODE, ICMP_TYPE } from './icmp';
 
 const MAX_HOPS = 64;
 const DEFAULT_PLAY_INTERVAL_MS = 500;
 const BROADCAST_IP = '255.255.255.255';
 
 function isUdpDatagram(payload: IpPacket['payload']): payload is UdpDatagram {
-  return !('seq' in payload);
+  return 'srcPort' in payload && 'dstPort' in payload && !('seq' in payload);
+}
+
+function isIcmpMessage(payload: IpPacket['payload']): payload is IcmpMessage {
+  return 'type' in payload && 'code' in payload;
+}
+
+function isPortBearingPayload(payload: IpPacket['payload']): payload is TcpSegment | UdpDatagram {
+  return 'srcPort' in payload && 'dstPort' in payload;
 }
 
 function isDhcpPayload(payload: UdpDatagram['payload']): payload is DhcpMessage {
@@ -181,6 +192,16 @@ interface ArpTargetInfo {
   targetNodeId: string;
   senderIp: string;
   senderMac: string;
+}
+
+interface PrecomputeOptions {
+  suppressGeneratedIcmp?: boolean;
+}
+
+interface PrecomputeResult {
+  trace: PacketTrace;
+  nodeArpTables: Record<string, Record<string, string>>;
+  snapshots: InFlightPacket[];
 }
 
 const INITIAL_STATE: SimulationState = {
@@ -325,6 +346,7 @@ export class SimulationEngine {
     packet: InFlightPacket,
     ingressNodeId: string | null,
     failureState: FailureState = EMPTY_FAILURE_STATE,
+    hintRoute?: RouteEntry,
   ): NextNodeResult | null {
     const neighbors = this.getNeighbors(currentNodeId, ingressNodeId, failureState);
     const node = this.topology.nodes.find((n) => n.id === currentNodeId);
@@ -332,6 +354,13 @@ export class SimulationEngine {
     const dstIp = packet.frame.payload.dstIp;
 
     if (node.data.role === 'router') {
+      if (hintRoute) {
+        const hintedNeighbor = this.resolveNeighborForRoute(dstIp, hintRoute, neighbors);
+        if (hintedNeighbor) {
+          return { neighbor: hintedNeighbor, selectedRoute: hintRoute };
+        }
+      }
+
       const routes = this.topology.routeTables.get(currentNodeId) ?? [];
       const route = this.selectReachableRoute(dstIp, routes, neighbors);
       if (!route) return null;
@@ -1071,11 +1100,13 @@ export class SimulationEngine {
     if (before.frame.payload.dstIp !== after.frame.payload.dstIp) {
       changedFields.push('Dst IP');
     }
-    if (beforeTransport.srcPort !== afterTransport.srcPort) {
-      changedFields.push('Src Port');
-    }
-    if (beforeTransport.dstPort !== afterTransport.dstPort) {
-      changedFields.push('Dst Port');
+    if (isPortBearingPayload(beforeTransport) && isPortBearingPayload(afterTransport)) {
+      if (beforeTransport.srcPort !== afterTransport.srcPort) {
+        changedFields.push('Src Port');
+      }
+      if (beforeTransport.dstPort !== afterTransport.dstPort) {
+        changedFields.push('Dst Port');
+      }
     }
     if (before.frame.srcMac !== after.frame.srcMac) {
       changedFields.push('Src MAC');
@@ -1113,6 +1144,7 @@ export class SimulationEngine {
       workingPacket,
       null,
       failureState,
+      undefined,
     );
     const next = nextResult?.neighbor ?? null;
     const selectedRoute = nextResult?.selectedRoute ?? null;
@@ -1226,6 +1258,163 @@ export class SimulationEngine {
     return protocolName(packet.frame.payload.protocol);
   }
 
+  private findNodeByIp(ip: string): NetlabNode | null {
+    return this.topology.nodes.find((node) => this.nodeOwnsIp(node, ip)) ?? null;
+  }
+
+  private makePacketId(prefix: string): string {
+    return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  private buildIcmpPacket(
+    packetId: string,
+    srcNodeId: string,
+    dstNodeId: string,
+    srcIp: string,
+    dstIp: string,
+    ttl: number,
+    payload: IcmpMessage,
+  ): InFlightPacket {
+    return {
+      id: packetId,
+      srcNodeId,
+      dstNodeId,
+      currentDeviceId: srcNodeId,
+      ingressPortId: '',
+      path: [],
+      timestamp: Date.now(),
+      frame: {
+        layer: 'L2',
+        srcMac: '00:00:00:00:00:00',
+        dstMac: '00:00:00:00:00:00',
+        etherType: 0x0800,
+        payload: {
+          layer: 'L3',
+          srcIp,
+          dstIp,
+          ttl,
+          protocol: 1,
+          payload,
+        },
+      },
+    };
+  }
+
+  private buildIcmpEchoRequest(
+    srcNodeId: string,
+    dstNodeId: string,
+    srcIp: string,
+    dstIp: string,
+    ttl: number,
+  ): InFlightPacket {
+    const packetId = this.makePacketId('icmp-echo-request');
+    return this.buildIcmpPacket(
+      packetId,
+      srcNodeId,
+      dstNodeId,
+      srcIp,
+      dstIp,
+      ttl,
+      {
+        layer: 'L4',
+        type: ICMP_TYPE.ECHO_REQUEST,
+        code: 0,
+        checksum: 0,
+        identifier: this.derivePacketIdentification(packetId) & 0xffff,
+        sequenceNumber: 1,
+      },
+    );
+  }
+
+  private buildIcmpEchoReply(
+    srcNodeId: string,
+    dstNodeId: string,
+    srcIp: string,
+    dstIp: string,
+    requestPacket: InFlightPacket,
+  ): InFlightPacket {
+    const requestPayload = requestPacket.frame.payload.payload;
+    const packetId = `${requestPacket.id}-reply`;
+    return this.buildIcmpPacket(
+      packetId,
+      srcNodeId,
+      dstNodeId,
+      srcIp,
+      dstIp,
+      64,
+      {
+        layer: 'L4',
+        type: ICMP_TYPE.ECHO_REPLY,
+        code: 0,
+        checksum: 0,
+        identifier: isIcmpMessage(requestPayload) ? requestPayload.identifier : undefined,
+        sequenceNumber: isIcmpMessage(requestPayload) ? requestPayload.sequenceNumber : undefined,
+      },
+    );
+  }
+
+  private buildIcmpTimeExceeded(
+    routerNodeId: string,
+    routerIp: string,
+    originalPacket: InFlightPacket,
+  ): InFlightPacket {
+    return this.buildIcmpPacket(
+      `${originalPacket.id}-ttl-exceeded`,
+      routerNodeId,
+      originalPacket.srcNodeId,
+      routerIp,
+      originalPacket.frame.payload.srcIp,
+      64,
+      {
+        layer: 'L4',
+        type: ICMP_TYPE.TIME_EXCEEDED,
+        code: ICMP_CODE.TTL_EXCEEDED_IN_TRANSIT,
+        checksum: 0,
+        data: `Original dst: ${originalPacket.frame.payload.dstIp}`,
+      },
+    );
+  }
+
+  private mergePrecomputeResults(
+    primary: PrecomputeResult,
+    secondary: PrecomputeResult,
+    options: { preservePrimaryStatus?: boolean } = {},
+  ): PrecomputeResult {
+    const stepOffset = primary.trace.hops.length;
+    const mergedTrace: PacketTrace = {
+      ...primary.trace,
+      hops: [
+        ...primary.trace.hops,
+        ...secondary.trace.hops.map((hop) => ({
+          ...hop,
+          step: hop.step + stepOffset,
+        })),
+      ],
+      status: options.preservePrimaryStatus ? primary.trace.status : secondary.trace.status,
+    };
+
+    return {
+      trace: mergedTrace,
+      nodeArpTables: Object.entries(secondary.nodeArpTables).reduce<Record<string, Record<string, string>>>(
+        (merged, [nodeId, table]) => {
+          merged[nodeId] = {
+            ...(merged[nodeId] ?? {}),
+            ...table,
+          };
+          return merged;
+        },
+        Object.entries(primary.nodeArpTables).reduce<Record<string, Record<string, string>>>(
+          (merged, [nodeId, table]) => {
+            merged[nodeId] = { ...table };
+            return merged;
+          },
+          {},
+        ),
+      ),
+      snapshots: [...primary.snapshots, ...secondary.snapshots],
+    };
+  }
+
   private withPacketIps(
     packet: InFlightPacket,
     ips: { srcIp?: string; dstIp?: string },
@@ -1254,7 +1443,8 @@ export class SimulationEngine {
   private async precomputeDetailed(
     packet: InFlightPacket,
     failureState: FailureState = EMPTY_FAILURE_STATE,
-  ): Promise<{ trace: PacketTrace; nodeArpTables: Record<string, Record<string, string>> }> {
+    options: PrecomputeOptions = {},
+  ): Promise<PrecomputeResult> {
     const hops: PacketHop[] = [];
     const snapshots: InFlightPacket[] = [];
     const nodeArpTables: Record<string, Record<string, string>> = {};
@@ -1272,6 +1462,7 @@ export class SimulationEngine {
       arpCache,
     );
     const baseTs = Date.now();
+    let generatedIcmpPacket: InFlightPacket | null = null;
 
     for (let iter = 0; iter < MAX_HOPS; iter++) {
       // Loop guard
@@ -1353,10 +1544,10 @@ export class SimulationEngine {
         break;
       }
 
-      const effectiveIp = this.getEffectiveNodeIp(node);
       if (
-        (node.data.role === 'client' || node.data.role === 'server') &&
-        effectiveIp === ipPacket.dstIp
+        workingPacket.dstNodeId === current &&
+        node.data.role !== 'switch' &&
+        this.nodeOwnsIp(node, ipPacket.dstIp)
       ) {
         stepCounter = this.appendHop(
           hops,
@@ -1383,6 +1574,7 @@ export class SimulationEngine {
       let outsideToInsideMatched = false;
       let ingressAclMatch = null;
       let egressAclMatch = null;
+      let forwarderSelectedRoute: RouteEntry | undefined;
 
       if (node.data.role === 'router') {
         const natProcessor = this.getNatProcessor(current);
@@ -1479,6 +1671,20 @@ export class SimulationEngine {
             if (natTranslation) {
               dropHop.natTranslation = natTranslation;
             }
+            if (decision.reason === 'ttl-exceeded' && !options.suppressGeneratedIcmp) {
+              const routerIp = hopBase.ingressInterfaceId
+                ? node.data.interfaces?.find((iface) => iface.id === hopBase.ingressInterfaceId)?.ipAddress
+                : undefined;
+              const responseSourceIp = routerIp ?? this.getEffectiveNodeIp(node);
+              if (responseSourceIp) {
+                dropHop.icmpGenerated = true;
+                generatedIcmpPacket = this.buildIcmpTimeExceeded(
+                  current,
+                  responseSourceIp,
+                  workingPacket,
+                );
+              }
+            }
             const changedFields = this.diffPacketFields(packetBeforeHop, workingPacket);
             if (changedFields.length > 0) {
               dropHop.changedFields = changedFields;
@@ -1487,11 +1693,20 @@ export class SimulationEngine {
             break;
           }
           workingPacket = decision.packet;
+          forwarderSelectedRoute = decision.action === 'forward'
+            ? decision.selectedRoute
+            : undefined;
         }
       }
 
       // Resolve next node via topology graph (independent of egressPort)
-      const nextResult = this.resolveNextNode(current, workingPacket, ingressFrom, failureState);
+      const nextResult = this.resolveNextNode(
+        current,
+        workingPacket,
+        ingressFrom,
+        failureState,
+        node.data.role === 'router' ? forwarderSelectedRoute : undefined,
+      );
       const next = nextResult?.neighbor ?? null;
       const selectedRoute = nextResult?.selectedRoute ?? null;
 
@@ -1787,18 +2002,33 @@ export class SimulationEngine {
     const lastHop = hops[hops.length - 1];
     const status = lastHop?.event === 'deliver' ? 'delivered' : 'dropped';
 
-    const trace: PacketTrace = {
-      packetId: packet.id,
-      sessionId: packet.sessionId,
-      label: this.deriveTraceLabel(packet),
-      srcNodeId: packet.srcNodeId,
-      dstNodeId: packet.dstNodeId,
-      hops,
-      status,
+    let result: PrecomputeResult = {
+      trace: {
+        packetId: packet.id,
+        sessionId: packet.sessionId,
+        label: this.deriveTraceLabel(packet),
+        srcNodeId: packet.srcNodeId,
+        dstNodeId: packet.dstNodeId,
+        hops,
+        status,
+      },
+      nodeArpTables,
+      snapshots,
     };
 
-    this.packetSnapshots.set(packet.id, snapshots);
-    return { trace, nodeArpTables };
+    if (generatedIcmpPacket) {
+      const generatedResult = await this.precomputeDetailed(
+        generatedIcmpPacket,
+        failureState,
+        { suppressGeneratedIcmp: true },
+      );
+      result = this.mergePrecomputeResults(result, generatedResult, {
+        preservePrimaryStatus: true,
+      });
+    }
+
+    this.packetSnapshots.set(packet.id, result.snapshots);
+    return result;
   }
 
   async precompute(
@@ -1807,6 +2037,69 @@ export class SimulationEngine {
   ): Promise<PacketTrace> {
     const { trace } = await this.precomputeDetailed(packet, failureState);
     return trace;
+  }
+
+  async ping(
+    srcNodeId: string,
+    dstIp: string,
+    options?: { ttl?: number },
+  ): Promise<PacketTrace> {
+    const srcNode = this.findNode(srcNodeId);
+    if (!srcNode) {
+      throw new Error(`Node ${srcNodeId} not found`);
+    }
+
+    const srcIp = this.getEffectiveNodeIp(srcNode);
+    if (!srcIp) {
+      throw new Error(`Node ${srcNodeId} has no effective IP`);
+    }
+
+    const dstNode = this.findNodeByIp(dstIp);
+    const requestPacket = this.buildIcmpEchoRequest(
+      srcNodeId,
+      dstNode?.id ?? dstIp,
+      srcIp,
+      dstIp,
+      options?.ttl ?? 64,
+    );
+
+    let result = await this.precomputeDetailed(requestPacket, EMPTY_FAILURE_STATE);
+
+    if (result.trace.status === 'delivered' && dstNode) {
+      const replyPacket = this.buildIcmpEchoReply(
+        dstNode.id,
+        srcNodeId,
+        dstIp,
+        srcIp,
+        requestPacket,
+      );
+      const replyResult = await this.precomputeDetailed(replyPacket, EMPTY_FAILURE_STATE);
+      result = this.mergePrecomputeResults(result, replyResult);
+      this.packetSnapshots.set(result.trace.packetId, result.snapshots);
+    }
+
+    this.appendTrace(result.trace, result.nodeArpTables);
+    return result.trace;
+  }
+
+  async traceroute(
+    srcNodeId: string,
+    dstIp: string,
+    maxHops = 30,
+  ): Promise<PacketTrace[]> {
+    const traces: PacketTrace[] = [];
+    const dstNode = this.findNodeByIp(dstIp);
+
+    for (let ttl = 1; ttl <= maxHops; ttl++) {
+      const trace = await this.ping(srcNodeId, dstIp, { ttl });
+      traces.push(trace);
+
+      if (dstNode && trace.hops.some((hop) => hop.nodeId === dstNode.id && hop.event === 'deliver')) {
+        break;
+      }
+    }
+
+    return traces;
   }
 
   // ── Playback API ───────────────────────────────────────────────────────────

@@ -52,6 +52,7 @@ export interface PacketHop {
   routingDecision?: RoutingDecision;  // present only when nodeId is a router, never on TTL drops
   natTranslation?: NatTranslation;
   aclMatch?: AclMatchInfo;
+  icmpGenerated?: boolean;
   changedFields?: string[];
   timestamp: number;
 }

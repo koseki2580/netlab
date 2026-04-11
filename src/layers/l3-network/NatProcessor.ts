@@ -260,7 +260,7 @@ export class NatProcessor {
       };
     }
 
-    if (ipPacket.payload.layer === 'L4') {
+    if (ipPacket.protocol === 17 && ipPacket.payload.layer === 'L4' && 'srcPort' in ipPacket.payload) {
       return {
         proto: 'udp',
         srcPort: ipPacket.payload.srcPort,
@@ -401,6 +401,21 @@ export class NatProcessor {
   ): InFlightPacket {
     const ipPacket = packet.frame.payload;
     const transport = ipPacket.payload;
+
+    if (!isTcpSegment(transport) && !('srcPort' in transport)) {
+      return {
+        ...packet,
+        frame: {
+          ...packet.frame,
+          payload: {
+            ...ipPacket,
+            srcIp: srcIp ?? ipPacket.srcIp,
+            dstIp: dstIp ?? ipPacket.dstIp,
+            headerChecksum: 0,
+          },
+        },
+      };
+    }
 
     let updatedTransport: TcpSegment | UdpDatagram;
     if (isTcpSegment(transport)) {

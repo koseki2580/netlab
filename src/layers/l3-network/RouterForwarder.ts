@@ -66,13 +66,14 @@ export class RouterForwarder implements Forwarder {
         isInSubnet(ipPacket.dstIp, `${iface.ipAddress}/${route.destination.split('/')[1]}`),
       );
       const egressPort = matchingIface?.id ?? route.destination;
-      return { action: 'forward', egressPort, packet: updatedPacket };
+      return { action: 'forward', egressPort, packet: updatedPacket, selectedRoute: route };
     }
 
     return {
       action: 'forward',
       egressPort: route.nextHop,
       packet: updatedPacket,
+      selectedRoute: route,
     };
   }
 }

@@ -128,7 +128,11 @@ describe('NatProcessor', () => {
       postDstPort: 80,
     });
     expect(result.packet.frame.payload.srcIp).toBe('203.0.113.1');
-    expect(result.packet.frame.payload.payload.srcPort).toBe(1024);
+    const translatedOutbound = result.packet.frame.payload.payload;
+    if (!('srcPort' in translatedOutbound)) {
+      throw new Error('expected port-bearing transport');
+    }
+    expect(translatedOutbound.srcPort).toBe(1024);
     expect(result.packet.frame.payload.headerChecksum).toBe(0);
     expect(processor.getTable().entries).toHaveLength(1);
   });
@@ -203,7 +207,11 @@ describe('NatProcessor', () => {
       postDstPort: 54321,
     });
     expect(result.packet.frame.payload.dstIp).toBe('192.168.1.10');
-    expect(result.packet.frame.payload.payload.dstPort).toBe(54321);
+    const translatedInbound = result.packet.frame.payload.payload;
+    if (!('dstPort' in translatedInbound)) {
+      throw new Error('expected port-bearing transport');
+    }
+    expect(translatedInbound.dstPort).toBe(54321);
   });
 
   it('applies DNAT port forwarding and creates a reverse entry', () => {
@@ -228,7 +236,11 @@ describe('NatProcessor', () => {
       postDstPort: 80,
     });
     expect(result.packet.frame.payload.dstIp).toBe('192.168.1.10');
-    expect(result.packet.frame.payload.payload.dstPort).toBe(80);
+    const translatedDnat = result.packet.frame.payload.payload;
+    if (!('dstPort' in translatedDnat)) {
+      throw new Error('expected port-bearing transport');
+    }
+    expect(translatedDnat.dstPort).toBe(80);
     expect(processor.getTable().entries[0]?.type).toBe('dnat');
   });
 

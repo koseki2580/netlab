@@ -84,6 +84,7 @@ export type {
   DnsQuestion,
   DnsRecord,
   DnsMessage,
+  IcmpMessage,
   TcpSegment,
   UdpDatagram,
   IpPacket,
@@ -128,12 +129,15 @@ export type { AreaType, AreaVisualConfig, NetworkArea } from './types/areas';
 
 export type {
   NetlabNodeData,
+  VlanConfig,
   SwitchPort,
   NetlabNode,
   NetlabEdge,
   NetworkTopology,
   TopologySnapshot,
 } from './types/topology';
+export { ICMP_TYPE, ICMP_CODE } from './simulation/icmp';
+export type { IcmpType, IcmpCode } from './simulation/icmp';
 
 export type {
   DhcpServerConfig,

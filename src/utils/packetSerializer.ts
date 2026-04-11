@@ -19,6 +19,7 @@ import type {
   DnsMessage,
   EthernetFrame,
   HttpMessage,
+  IcmpMessage,
   IpPacket,
   RawPayload,
   TcpSegment,
@@ -28,12 +29,14 @@ import {
   DEFAULT_ETHERNET_PREAMBLE,
   buildApplicationPayloadBytes,
   buildEthernetFrameBytes,
+  buildIcmpMessageBytes,
   formatDhcpMessage,
   formatDnsMessage,
   buildIpv4FlagsAndFragmentOffset,
   buildIpv4HeaderBytes,
   buildTcpFlagsByte,
   formatHttpMessage,
+  isIcmpMessage,
   isTcpSegment,
   uint16BE,
   uint32BE,
@@ -69,6 +72,7 @@ function formatByteSequenceHex(bytes: number[]): string {
 }
 
 function formatProtocol(protocol: number): string {
+  if (protocol === 1) return 'ICMP';
   if (protocol === 6) return 'TCP';
   if (protocol === 17) return 'UDP';
   return String(protocol);
@@ -208,13 +212,58 @@ function serializeUdp(udp: UdpDatagram, baseOffset: number): LayerResult {
   };
 }
 
+function serializeIcmp(icmp: IcmpMessage, baseOffset: number): LayerResult {
+  const bytes = buildIcmpMessageBytes(icmp);
+  const dataBytes = icmp.data ? new TextEncoder().encode(icmp.data) : new Uint8Array();
+
+  return {
+    bytes,
+    fields: [
+      { name: 'Type', layer: 'L4', byteOffset: baseOffset + 0, byteLength: 1, displayValue: String(icmp.type) },
+      { name: 'Code', layer: 'L4', byteOffset: baseOffset + 1, byteLength: 1, displayValue: String(icmp.code) },
+      {
+        name: 'Checksum',
+        layer: 'L4',
+        byteOffset: baseOffset + 2,
+        byteLength: 2,
+        displayValue: `${formatHex(icmp.checksum, 4)} (simulated)`,
+      },
+      {
+        name: 'Identifier',
+        layer: 'L4',
+        byteOffset: baseOffset + 4,
+        byteLength: 2,
+        displayValue: String(icmp.identifier ?? 0),
+      },
+      {
+        name: 'Sequence Number',
+        layer: 'L4',
+        byteOffset: baseOffset + 6,
+        byteLength: 2,
+        displayValue: String(icmp.sequenceNumber ?? 0),
+      },
+      ...(dataBytes.length > 0
+        ? [{
+            name: 'Data',
+            layer: 'raw' as const,
+            byteOffset: baseOffset + 8,
+            byteLength: dataBytes.length,
+            displayValue: icmp.data ?? '',
+          }]
+        : []),
+    ],
+  };
+}
+
 function serializeL3(ip: IpPacket, baseOffset: number): LayerResult {
   const headerBytes = buildIpv4HeaderBytes(ip);
   const headerLength = headerBytes.length;
   const l4Base = baseOffset + headerLength;
   const l4Result = isTcpSegment(ip.payload)
     ? serializeTcp(ip.payload, l4Base)
-    : serializeUdp(ip.payload, l4Base);
+    : isIcmpMessage(ip.payload)
+      ? serializeIcmp(ip.payload, l4Base)
+      : serializeUdp(ip.payload, l4Base);
   const totalLength = ip.totalLength ?? (headerLength + l4Result.bytes.length);
   const identification = ip.identification ?? 0;
 

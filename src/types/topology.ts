@@ -29,6 +29,14 @@ export interface SwitchPort {
   id: string;
   name: string;
   macAddress: string;
+  vlanMode?: 'access' | 'trunk';
+  accessVlan?: number;
+  trunkAllowedVlans?: number[];
+}
+
+export interface VlanConfig {
+  vlanId: number;
+  name?: string;
 }
 
 export type NetlabNode = Node<NetlabNodeData>;
