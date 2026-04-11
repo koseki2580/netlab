@@ -33,7 +33,7 @@ interface SerializedTopology {
 ## Encoding
 
 ```typescript
-import { encodeTopology } from 'netlab/utils/topology-url';
+import { encodeTopology } from 'netlab';
 
 const url = encodeTopology({ nodes, edges, areas });
 // → "?topo=eyJub2Rlcy..."
@@ -49,7 +49,7 @@ Internally:
 ## Decoding
 
 ```typescript
-import { decodeTopology } from 'netlab/utils/topology-url';
+import { decodeTopology } from 'netlab';
 
 const topology = decodeTopology(window.location.search);
 // → { nodes, edges, areas } | null

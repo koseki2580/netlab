@@ -111,11 +111,11 @@ Double-registration is safe: the `layerRegistry` will log a warning and overwrit
 If you use the lower-level API (`NetlabProvider` + `NetlabCanvas` directly), you are responsible for registering layers yourself:
 
 ```ts
-import 'netlab/src/layers/l1-physical/index';
-import 'netlab/src/layers/l2-datalink/index';
-import 'netlab/src/layers/l3-network/index';
-import 'netlab/src/layers/l4-transport/index';
-import 'netlab/src/layers/l7-application/index';
+import 'netlab/layers/l1-physical';
+import 'netlab/layers/l2-datalink';
+import 'netlab/layers/l3-network';
+import 'netlab/layers/l4-transport';
+import 'netlab/layers/l7-application';
 ```
 
 ---
