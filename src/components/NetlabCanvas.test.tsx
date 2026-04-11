@@ -54,6 +54,7 @@ interface MockReactFlowProps {
   onEdgesChange?: (changes: MockEdgeChange[]) => void;
   onConnect?: (connection: MockConnection) => void;
   onNodeDragStop?: (event: unknown, node: MockNode, nodes: MockNode[]) => void;
+  isValidConnection?: (connection: MockConnection) => boolean;
 }
 
 const reactFlowState = vi.hoisted(() => ({
@@ -599,6 +600,46 @@ describe('NetlabCanvas controlled topology API', () => {
               id: 'e-invalid',
               source: 'client-1',
               target: 'server-1',
+              type: 'smoothstep',
+            },
+          ],
+        })}
+      >
+        <NetlabCanvas />
+      </NetlabProvider>,
+    );
+
+    expect(currentReactFlowProps().edges[0]).toMatchObject({
+      style: expect.objectContaining({
+        stroke: 'var(--netlab-accent-red)',
+      }),
+    });
+  });
+
+  it('blocks duplicate edges during connection drag validation', () => {
+    render(
+      <NetlabProvider topology={makeTopology()}>
+        <NetlabCanvas />
+      </NetlabProvider>,
+    );
+
+    expect(
+      currentReactFlowProps().isValidConnection?.({
+        source: 'n2',
+        target: 'n1',
+      }),
+    ).toBe(false);
+  });
+
+  it('styles loaded self-loop edges as invalid', () => {
+    render(
+      <NetlabProvider
+        topology={makeTopology({
+          edges: [
+            {
+              id: 'e-self',
+              source: 'n1',
+              target: 'n1',
               type: 'smoothstep',
             },
           ],

@@ -14,7 +14,7 @@ import {
 import '@xyflow/react/dist/style.css';
 
 import { layerRegistry } from '../../registry/LayerRegistry';
-import { isValidConnectionBetweenNodes, isValidEdge } from '../../utils/connectionValidator';
+import { validateConnection as validateEditorConnection } from '../../utils/connectionValidator';
 import type { NetlabNode, NetlabEdge } from '../../types/topology';
 import { useTopologyEditorContext } from '../context/TopologyEditorContext';
 
@@ -46,21 +46,31 @@ function EditorCanvasInner({ initialNodes, initialEdges }: EditorCanvasInnerProp
   const styledEdges = useMemo(
     () =>
       edges.map((edge) =>
-        isValidEdge(nodes as NetlabNode[], edge)
+        validateEditorConnection(
+          nodes as NetlabNode[],
+          (edges as NetlabEdge[]).filter((candidate) => candidate.id !== edge.id),
+          edge.source,
+          edge.target,
+          edge.sourceHandle,
+          edge.targetHandle,
+        ).valid
           ? edge
           : { ...edge, style: { ...edge.style, stroke: 'red' } },
       ),
     [edges, nodes],
   );
 
-  const validateConnection = useCallback(
+  const isConnectionValid = useCallback(
     (connection: Connection | NetlabEdge) =>
-      isValidConnectionBetweenNodes(
+      validateEditorConnection(
         nodes as NetlabNode[],
-        connection.source,
-        connection.target,
-      ),
-    [nodes],
+        edges as NetlabEdge[],
+        connection.source ?? '',
+        connection.target ?? '',
+        connection.sourceHandle,
+        connection.targetHandle,
+      ).valid,
+    [nodes, edges],
   );
 
   const onConnect = useCallback(
@@ -118,7 +128,7 @@ function EditorCanvasInner({ initialNodes, initialEdges }: EditorCanvasInnerProp
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
       onNodeDragStop={onNodeDragStop}
-      isValidConnection={validateConnection}
+      isValidConnection={isConnectionValid}
       connectionMode={ConnectionMode.Loose}
       deleteKeyCode={null}
       fitView

@@ -26,7 +26,7 @@ import { NodeDetailPanel } from './NodeDetailPanel';
 import { layerRegistry } from '../registry/LayerRegistry';
 import { areasToNodes } from '../areas/AreaRegistry';
 import { AreaBackground } from '../areas/AreaBackground';
-import { isValidConnectionBetweenNodes, isValidEdge } from '../utils/connectionValidator';
+import { validateConnection as validateCanvasConnection } from '../utils/connectionValidator';
 import { SimulationContext } from '../simulation/SimulationContext';
 import { useOptionalFailure } from '../simulation/FailureContext';
 import type { NetlabNode, NetlabEdge, TopologySnapshot } from '../types/topology';
@@ -158,10 +158,17 @@ export function NetlabCanvas({
     [isControlled, onNodesChangeProp, emitTopologyChange, edges],
   );
 
-  const validateConnection = useCallback(
+  const isConnectionValid = useCallback(
     (connection: Connection | Edge) =>
-      isValidConnectionBetweenNodes(nodes as NetlabNode[], connection.source, connection.target),
-    [nodes],
+      validateCanvasConnection(
+        nodes as NetlabNode[],
+        edges as NetlabEdge[],
+        connection.source ?? '',
+        connection.target ?? '',
+        connection.sourceHandle,
+        connection.targetHandle,
+      ).valid,
+    [nodes, edges],
   );
 
   const styledNodes = useMemo(
@@ -201,7 +208,16 @@ export function NetlabCanvas({
         if (activeEdgeIds.includes(edge.id)) {
           return { ...edge, animated: true, style: { ...edge.style, stroke: 'var(--netlab-accent-cyan)', strokeWidth: 2 } };
         }
-        if (!isValidEdge(nodes as NetlabNode[], edge)) {
+        if (
+          !validateCanvasConnection(
+            nodes as NetlabNode[],
+            (edges as NetlabEdge[]).filter((candidate) => candidate.id !== edge.id),
+            edge.source,
+            edge.target,
+            edge.sourceHandle,
+            edge.targetHandle,
+          ).valid
+        ) {
           return { ...edge, style: { ...edge.style, stroke: 'var(--netlab-accent-red)' } };
         }
         return edge;
@@ -226,7 +242,7 @@ export function NetlabCanvas({
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeDragStop={onNodeDragStop}
-          isValidConnection={validateConnection}
+          isValidConnection={isConnectionValid}
           connectionMode={ConnectionMode.Loose}
           fitView
           proOptions={{ hideAttribution: false }}

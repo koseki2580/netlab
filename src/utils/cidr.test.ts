@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isInSubnet, parseCidr, prefixLength } from './cidr';
+import { isInSubnet, isInSameSubnet, parseCidr, prefixLength } from './cidr';
 
 describe('isInSubnet', () => {
   it('matches IP within /24 subnet', () => {
@@ -65,5 +65,23 @@ describe('prefixLength', () => {
 
   it('returns 32 for /32', () => {
     expect(prefixLength('192.168.1.1/32')).toBe(32);
+  });
+});
+
+describe('isInSameSubnet', () => {
+  it('returns true for CIDRs in the same subnet', () => {
+    expect(isInSameSubnet('10.0.0.1/24', '10.0.0.2/24')).toBe(true);
+  });
+
+  it('returns false for CIDRs in different subnets', () => {
+    expect(isInSameSubnet('10.0.0.1/24', '10.0.1.1/24')).toBe(false);
+  });
+
+  it('returns false for different prefix lengths', () => {
+    expect(isInSameSubnet('10.0.0.1/24', '10.0.0.2/25')).toBe(false);
+  });
+
+  it('returns true for an exact /32 match', () => {
+    expect(isInSameSubnet('203.0.113.10/32', '203.0.113.10/32')).toBe(true);
   });
 });
