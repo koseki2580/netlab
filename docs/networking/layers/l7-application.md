@@ -22,6 +22,7 @@ When `window.fetch` is called, `installFetchInterceptor` creates an `InFlightPac
 with an `HttpMessage` at L7, wraps it down to L2, and runs it through the simulation.
 
 ```typescript
+// ⚠️ installFetchInterceptor is not yet exported. This is a planned API.
 installFetchInterceptor({
   engine,
   clientNodeId: 'client-1',

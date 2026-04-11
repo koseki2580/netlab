@@ -32,7 +32,7 @@ import { NetlabProvider, NetlabCanvas } from 'netlab';
 import 'netlab/layers/l2-datalink';
 import 'netlab/layers/l3-network';
 
-const devices = [ /* NetworkDevice[] */ ];
+const devices = [ /* NetlabNode[] */ ];
 const links   = [ /* NetlabEdge[] */ ];
 const areas   = [ /* NetworkArea[] */ ];
 
@@ -51,4 +51,4 @@ See [architecture.md](./architecture.md) for the full design.
 
 ## Supported OSI Layers
 
-See [layers/index.md](./layers/index.md).
+See [layers/index.md](../networking/layers/index.md).
