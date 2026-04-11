@@ -210,6 +210,10 @@ See [Theming](../ui/theming.md) for the full token reference and CSS override gu
 If you need to access context values from outside (e.g. to build a custom control panel alongside the embed), use the lower-level API instead:
 
 ```tsx
+import { NetlabProvider, NetlabCanvas, SimulationProvider } from 'netlab';
+import 'netlab/layers/l2-datalink';
+import 'netlab/layers/l3-network';
+
 <NetlabProvider topology={topology}>
   <SimulationProvider>
     <div style={{ width: 900, height: 600, display: 'flex', flexDirection: 'column' }}>
