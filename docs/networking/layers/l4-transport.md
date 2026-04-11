@@ -1,6 +1,5 @@
 # L4 – Transport Layer
-
-**Status: TCP modeled, UDP services integrated**
+> **Status**: 🧪 Spec only — not yet implemented
 
 The transport layer handles end-to-end communication with port numbers and reliability (TCP/UDP).
 

@@ -1,6 +1,5 @@
 # L2 – Data Link Layer
-
-**Status: Implemented**
+> **Status**: ✅ Implemented
 
 The data link layer handles Ethernet frame forwarding using MAC addresses.
 

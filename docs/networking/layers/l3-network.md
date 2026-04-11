@@ -1,6 +1,5 @@
 # L3 – Network Layer
-
-**Status: Implemented**
+> **Status**: ✅ Implemented
 
 The network layer handles IP packet routing using IP addresses and routing tables.
 
