@@ -185,10 +185,20 @@ export { useNetlabUI } from './components/NetlabUIContext';
 export { NodeDetailPanel } from './components/NodeDetailPanel';
 
 // Utilities
-export { isInSubnet, parseCidr } from './utils/cidr';
+export { isInSubnet, parseCidr, isInSameSubnet } from './utils/cidr';
 export { deriveDeterministicMac, extractHostname, isIpAddress } from './utils/network';
 export { encodeTopology, decodeTopology } from './utils/topology-url';
-export { isValidConnection, isValidConnectionBetweenNodes, isValidEdge } from './utils/connectionValidator';
+export {
+  isValidConnection,
+  isValidConnectionBetweenNodes,
+  isValidEdge,
+  validateConnection,
+} from './utils/connectionValidator';
+export type {
+  ValidationResult,
+  ValidationError,
+  ValidationWarning,
+} from './utils/connectionValidator';
 
 // Editor
 export { TopologyEditor } from './editor/components/TopologyEditor';

@@ -125,9 +125,9 @@ Default node data by role:
 
 ### Connecting Nodes
 
-Drag from any handle on one node to any handle on another. Connection validation uses the existing `isValidConnectionBetweenNodes` logic:
-- **Blocked**: client↔client, server↔server, client↔server (L7 endpoint to L7 endpoint)
-- **Allowed**: everything else
+Drag from any handle on one node to any handle on another. Connection validation uses `validateConnection()`:
+- **Blocked**: self-loops, duplicate edges, handle reuse, and endpoint↔endpoint links (`client` / `server`)
+- **Warn-only**: subnet mismatch and missing IP configuration
 - Invalid connections still appear on the canvas (styled red) but are blocked during drag via `isValidConnection`.
 
 ### Deleting Nodes and Edges

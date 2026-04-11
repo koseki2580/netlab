@@ -1,6 +1,6 @@
 # Connection Validation
 
-This document specifies how `NetlabCanvas` validates connections between nodes to prevent topologically meaningless edges.
+This document specifies how `NetlabCanvas` validates connections between nodes to prevent topologically meaningless or physically invalid edges.
 
 ---
 
@@ -10,18 +10,22 @@ Network endpoints (clients and servers) have no packet-forwarding capability. A 
 
 ---
 
-## Validation Rule
+## Validation Rules
 
-A connection is **invalid** if and only if **both** endpoints have an L7 role (`"client"` or `"server"`). All other role combinations are valid.
+`validateConnection()` returns both blocking errors and non-blocking warnings.
+The canvas blocks the connection only when `errors.length > 0`.
 
-| Source \ Target | client  | server  | switch | router |
-|-----------------|---------|---------|--------|--------|
-| **client**      | Invalid | Invalid | Valid  | Valid  |
-| **server**      | Invalid | Invalid | Valid  | Valid  |
-| **switch**      | Valid   | Valid   | Valid  | Valid  |
-| **router**      | Valid   | Valid   | Valid  | Valid  |
+| Type | Code | Condition | Message |
+|------|------|-----------|---------|
+| Error | `self-loop` | `sourceId === targetId` | `Self-loop: a node cannot connect to itself` |
+| Error | `duplicate-edge` | an existing edge already connects the same two nodes | `Duplicate edge: nodes are already connected` |
+| Error | `interface-in-use` | the selected interface handle is already attached to another edge | `Interface already in use: {ifName}` |
+| Error | `endpoint-to-endpoint` | both nodes are L7 endpoints (`client` / `server`) | `Endpoint-to-endpoint connections are not allowed` |
+| Warning | `subnet-mismatch` | router-to-router link uses interface CIDRs from different subnets | `Subnet mismatch: {cidr1} and {cidr2} are in different subnets` |
+| Warning | `missing-ip` | a router, client, or server is missing IP configuration needed for L3 forwarding | `Missing IP configuration on {nodeName}` |
 
-Node roles are read from `node.data.role`. If a node's role is unknown or undefined (e.g., area background nodes), the connection is treated as valid to avoid false positives.
+Unknown or missing roles still default to non-blocking behavior unless one of the explicit
+rules above applies.
 
 ---
 
@@ -31,9 +35,9 @@ Node roles are read from `node.data.role`. If a node's role is unknown or undefi
 
 When the user drags a connection handle toward a target node:
 
-- React Flow invokes `isValidConnection` before the edge is created.
-- If the connection is **invalid**, React Flow shows a **red line** and a blocked cursor. Releasing the drag does **not** create the edge.
-- If the connection is **valid**, the line renders normally and the edge is created on release.
+- React Flow invokes `validateConnection()` before the edge is created.
+- If the result contains one or more **errors**, React Flow shows a **red line** and a blocked cursor. Releasing the drag does **not** create the edge.
+- If the result contains only **warnings**, the connection is still allowed.
 
 ### Loaded from topology
 
@@ -49,13 +53,24 @@ If a topology passed to `NetlabProvider` already contains invalid edges (e.g., l
 | File | Role |
 |------|------|
 | `src/utils/connectionValidator.ts` | Pure validation logic (no React/React Flow deps) |
-| `src/components/NetlabCanvas.tsx` | Wires `isValidConnection` prop and `styledEdges` memo |
+| `src/utils/cidr.ts` | Subnet comparison helpers used by router-to-router validation |
+| `src/components/NetlabCanvas.tsx` | Wires `validateConnection()` into React Flow's `isValidConnection` callback |
 
 ### `src/utils/connectionValidator.ts` API
 
 ```ts
 // Core predicate — role strings only, no node lookup
 isValidConnection(sourceRole?: string, targetRole?: string): boolean
+
+// Structured validation for UI and topology checks
+validateConnection(
+  nodes: NetlabNode[],
+  edges: NetlabEdge[],
+  sourceId: string,
+  targetId: string,
+  sourceHandle?: string | null,
+  targetHandle?: string | null,
+): ValidationResult
 
 // Node-ID variant — looks up roles from the nodes array
 isValidConnectionBetweenNodes(nodes: NetlabNode[], sourceId: string | null, targetId: string | null): boolean
@@ -64,8 +79,30 @@ isValidConnectionBetweenNodes(nodes: NetlabNode[], sourceId: string | null, targ
 isValidEdge(nodes: NetlabNode[], edge: NetlabEdge): boolean
 ```
 
+### `ValidationResult`
+
+```ts
+interface ValidationResult {
+  valid: boolean;
+  errors: ValidationError[];
+  warnings: ValidationWarning[];
+}
+
+interface ValidationError {
+  code: 'self-loop' | 'duplicate-edge' | 'interface-in-use' | 'endpoint-to-endpoint';
+  message: string;
+}
+
+interface ValidationWarning {
+  code: 'subnet-mismatch' | 'missing-ip';
+  message: string;
+}
+```
+
 ---
 
 ## Extending the Rules
 
-To add more validation rules (e.g., blocking L1 physical nodes from connecting to L3 routers), update `isValidConnection` in `src/utils/connectionValidator.ts`. The canvas wiring in `NetlabCanvas.tsx` requires no changes.
+To add more validation rules, extend `validateConnection()` and keep the legacy boolean
+helpers as compatibility wrappers. Blocking behavior should stay in `errors`; advisory
+checks should stay in `warnings`.
