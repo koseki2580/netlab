@@ -1,5 +1,7 @@
 # Topology Editor — Specification
 
+> **Status**: ✅ Implemented
+
 ## Purpose
 
 `TopologyEditor` is an interactive React component that enables users to visually build and edit network topologies. It extends the existing read-only `NetlabProvider` + `NetlabCanvas` stack with full CRUD operations on nodes and edges, per-node property editing, and undo/redo history.

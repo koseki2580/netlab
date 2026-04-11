@@ -1,5 +1,7 @@
 # PCAP Export
 
+> **Status**: ⚠️ Experimental
+
 This document specifies how netlab exports a single `PacketTrace` as a browser-downloaded libpcap (`.pcap`) file that Wireshark and tcpdump can open directly.
 
 ---

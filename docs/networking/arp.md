@@ -1,6 +1,7 @@
 # ARP - Address Resolution Protocol
 
-**Status: Implemented**  
+> **Status**: ✅ Implemented
+
 **Layer: L2 / L3 boundary**
 
 ## Purpose

@@ -1,5 +1,7 @@
 # Controlled Topology API
 
+> **Status**: ✅ Implemented
+
 ## Overview
 
 Netlab now supports a prop-based controlled topology workflow for applications that need to persist or restore topology state outside the canvas.
@@ -212,4 +214,3 @@ To migrate to controlled topology:
 | Mutation callbacks | Yes | No |
 | Extra renders | Parent update + canvas sync | Lower overhead |
 | Best fit | Persistence, collaboration, editor-like flows | Static demos, quick visualization |
-

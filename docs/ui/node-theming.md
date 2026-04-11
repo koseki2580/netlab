@@ -1,5 +1,7 @@
 # Node Theming
 
+> **Status**: ✅ Implemented
+
 This document defines how node colors participate in the Netlab theme system so node rendering stays visually consistent in both dark and light embeds.
 
 ## Scope

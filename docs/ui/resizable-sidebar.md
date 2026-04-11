@@ -1,5 +1,7 @@
 # Resizable Sidebar
 
+> **Status**: ✅ Implemented
+
 ## Overview
 
 The `ResizableSidebar` component replaces fixed-width right-side panels across all demo layouts. It allows users to drag its left edge to freely resize the panel while the canvas area automatically adjusts to fill remaining space.

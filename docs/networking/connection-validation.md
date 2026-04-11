@@ -1,5 +1,7 @@
 # Connection Validation
 
+> **Status**: ✅ Implemented
+
 This document specifies how `NetlabCanvas` validates connections between nodes to prevent topologically meaningless or physically invalid edges.
 
 ---

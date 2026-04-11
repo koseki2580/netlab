@@ -1,5 +1,7 @@
 # Step-by-Step Simulation
 
+> **Status**: ✅ Implemented
+
 This document specifies the routing decision data model, `StepSimulationController` API, and `StepControls` component that together form the step-by-step simulation feature.
 
 ---

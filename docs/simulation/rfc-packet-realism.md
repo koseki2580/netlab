@@ -1,5 +1,7 @@
 # RFC Packet Realism
 
+> **Status**: ✅ Implemented
+
 This document specifies the packet-model and hop-mutation changes needed to make packet inspection more faithful to Ethernet and IPv4 behavior during simulation playback.
 
 ---

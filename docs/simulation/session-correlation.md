@@ -1,5 +1,7 @@
 # Session Correlation
 
+> **Status**: ✅ Implemented
+
 This document specifies session-aware request/response correlation for Netlab simulations. A session groups related L7 and packet-level activity into one observable lifecycle without replacing the existing hook system or `PacketTrace` model.
 
 ---

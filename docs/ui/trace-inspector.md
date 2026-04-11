@@ -1,5 +1,7 @@
 # Trace Inspector
 
+> **Status**: ✅ Implemented
+
 This document specifies the Trace Inspector UI for inspecting a full `PacketTrace` outside the canvas overlay. The feature is composed of `PacketTimeline`, `HopInspector`, and `TraceSummary`.
 
 ---

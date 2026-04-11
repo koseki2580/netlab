@@ -1,5 +1,7 @@
 # Layer Plugins
 
+> **Status**: ✅ Implemented
+
 netlab supports custom layer plugins that extend the visualization and simulation behavior.
 
 ## What a Plugin Does

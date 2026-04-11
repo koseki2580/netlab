@@ -1,5 +1,7 @@
 # Switch Device
 
+> **Status**: ✅ Implemented
+
 An L2 switch forwards Ethernet frames based on MAC address learning.
 
 ## Properties

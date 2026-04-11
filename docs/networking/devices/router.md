@@ -1,5 +1,7 @@
 # Router Device
 
+> **Status**: ✅ Implemented
+
 An L3 router forwards IP packets using a routing table with Longest Prefix Match.
 
 ## Properties

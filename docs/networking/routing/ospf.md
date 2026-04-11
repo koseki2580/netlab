@@ -1,6 +1,8 @@
 # OSPF (Open Shortest Path First)
 
-**Status: Stub** | Admin Distance: 110
+> **Status**: ⚠️ Experimental
+
+Admin Distance: `110` (current export is a stub)
 
 OSPF is a link-state interior gateway protocol. Routers exchange LSAs (Link State Advertisements)
 and each router computes the shortest path tree using Dijkstra's algorithm.

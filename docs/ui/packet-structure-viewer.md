@@ -1,5 +1,7 @@
 # Packet Structure Viewer
 
+> **Status**: ✅ Implemented
+
 > **Implementation note**: All byte-level protocol encodings in this specification and in `src/utils/packetSerializer.ts` are derived directly from the authoritative RFCs listed in each section.
 
 ## Overview

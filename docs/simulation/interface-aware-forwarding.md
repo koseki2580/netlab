@@ -1,5 +1,7 @@
 # Interface-Aware Forwarding
 
+> **Status**: ✅ Implemented
+
 This document specifies how the simulation engine annotates packet hops with ingress and egress interface information without changing the core graph-traversal logic.
 
 ---

@@ -1,5 +1,7 @@
 # Failure Simulation
 
+> **Status**: ✅ Implemented
+
 Netlab supports injecting node, link, and router-interface failures into the simulation. Failure state is captured as an immutable snapshot and applied during packet-path precomputation. Failed components are also surfaced in the UI so users can see why a trace was rerouted or dropped.
 
 ## FailureState

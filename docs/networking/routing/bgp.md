@@ -1,6 +1,8 @@
 # BGP (Border Gateway Protocol)
 
-**Status: Stub** | Admin Distance: eBGP=20, iBGP=200
+> **Status**: ⚠️ Experimental
+
+Admin Distance: `eBGP=20`, `iBGP=200` (current export is a stub)
 
 BGP is a path-vector protocol used for inter-AS routing (the routing protocol of the Internet).
 
