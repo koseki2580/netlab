@@ -1,6 +1,6 @@
 # Networking Services
 
-**Status: Implemented**
+> **Status**: ✅ Implemented
 
 Netlab models selected UDP application services as explicit multi-packet simulation flows rather
 than as opaque payloads. The initial service set is:

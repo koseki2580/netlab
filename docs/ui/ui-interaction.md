@@ -1,5 +1,7 @@
 # UI Interaction
 
+> **Status**: ✅ Implemented
+
 This document describes the visual design system for network node components and the interactive features of `NetlabCanvas`.
 
 ---

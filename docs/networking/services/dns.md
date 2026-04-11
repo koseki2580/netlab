@@ -1,6 +1,6 @@
 # DNS Service
 
-**Status: Implemented**
+> **Status**: ✅ Implemented
 
 Netlab simulates DNS as a direct UDP query/response exchange backed by static A records.
 

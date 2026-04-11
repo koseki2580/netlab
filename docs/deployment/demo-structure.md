@@ -1,5 +1,7 @@
 # Demo Site Structure
 
+> **Status**: ✅ Implemented
+
 The netlab demo site is a single-page React application deployed to GitHub Pages at `https://koseki2580.github.io/netlab/`. It serves as a living showcase of the library's features organized into a browsable gallery.
 
 ---

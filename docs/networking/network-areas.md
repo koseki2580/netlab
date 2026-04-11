@@ -1,5 +1,7 @@
 # Network Areas
 
+> **Status**: ✅ Implemented
+
 Network areas represent logical zones in the topology (Private, Public, DMZ, etc.).
 They are visualized as semi-transparent background regions on the React Flow canvas.
 

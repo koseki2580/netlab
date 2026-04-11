@@ -1,6 +1,8 @@
 # Static Routing
 
-**Status: Implemented** | Admin Distance: 1
+> **Status**: ✅ Implemented
+
+Admin Distance: `1`
 
 Static routes are manually configured on router nodes via the `staticRoutes` field in node data.
 

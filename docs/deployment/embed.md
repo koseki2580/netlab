@@ -1,5 +1,7 @@
 # Embedding NetlabApp
 
+> **Status**: ✅ Implemented
+
 ## Overview
 
 `NetlabApp` is an all-in-one embeddable React component that renders a full netlab topology viewer inside a bounded container. Unlike the demo pages which assume full-page rendering (`height: 100vh`), `NetlabApp` respects explicit `width` and `height` props so it can be placed inside any host page layout.

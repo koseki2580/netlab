@@ -1,6 +1,6 @@
 # DHCP Service
 
-**Status: Implemented**
+> **Status**: ✅ Implemented
 
 Netlab simulates DHCP as a four-message DORA exchange carried over UDP.
 

@@ -1,5 +1,7 @@
 # Packet Visualization
 
+> **Status**: ✅ Implemented
+
 Specification for the step-by-step packet flow visualization system in netlab.
 
 ---

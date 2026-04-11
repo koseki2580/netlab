@@ -1,5 +1,7 @@
 # Hook System
 
+> **Status**: ✅ Implemented
+
 netlab provides a Koa-style middleware hook system that lets you observe and modify the simulation pipeline.
 
 ## Hook Points

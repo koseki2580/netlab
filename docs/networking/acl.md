@@ -1,5 +1,7 @@
 # Firewalls & ACLs
 
+> **Status**: ✅ Implemented
+
 This document specifies router interface ACL filtering and optional stateful connection tracking
 for IPv4 traffic in Netlab.
 

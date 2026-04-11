@@ -1,5 +1,7 @@
 # Architecture
 
+> **Status**: ✅ Implemented
+
 ## Layer Diagram
 
 ```

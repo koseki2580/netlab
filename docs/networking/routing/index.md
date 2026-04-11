@@ -1,5 +1,7 @@
 # Routing
 
+> **Status**: ✅ Implemented
+
 netlab supports multiple routing protocols that can coexist via `ProtocolRegistry`.
 Each protocol computes routes, and the registry resolves conflicts using **administrative distance**.
 

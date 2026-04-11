@@ -1,5 +1,7 @@
 # netlab Overview
 
+> **Status**: ✅ Implemented
+
 **netlab** is a browser-based network visualization and simulation library built on React Flow.
 
 ## Purpose

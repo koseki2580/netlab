@@ -1,5 +1,7 @@
 # NAT / PAT
 
+> **Status**: ✅ Implemented
+
 This document specifies IPv4 Network Address Translation (NAT) support for routers that bridge an
 explicitly tagged inside network and outside network.
 

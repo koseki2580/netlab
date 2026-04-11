@@ -1,5 +1,7 @@
 # Theming
 
+> **Status**: ✅ Implemented
+
 ## Overview
 
 NetlabApp ships with a built-in dark theme. The theming system lets you customize color tokens so the component blends seamlessly into a host page's design — for example, a light-mode documentation site.

@@ -1,5 +1,7 @@
 # OSI Layers
 
+> **Status**: ✅ Implemented
+
 netlab supports all relevant OSI layers. Each layer has its own plugin with React Flow node types
 and optional packet forwarding logic.
 

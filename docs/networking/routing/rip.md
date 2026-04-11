@@ -1,6 +1,8 @@
 # RIP (Routing Information Protocol)
 
-**Status: Stub** | Admin Distance: 120
+> **Status**: ⚠️ Experimental
+
+Admin Distance: `120` (current export is a stub)
 
 RIP is a distance-vector protocol. Routers periodically broadcast their entire routing table.
 Maximum hop count is 15 (16 = unreachable).

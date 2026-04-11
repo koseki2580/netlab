@@ -1,5 +1,7 @@
 # Query Parameter–Based Topology Loading
 
+> **Status**: ✅ Implemented
+
 netlab supports encoding a full network topology in the URL query string. This allows any diagram to be shared or embedded without a server.
 
 ---
