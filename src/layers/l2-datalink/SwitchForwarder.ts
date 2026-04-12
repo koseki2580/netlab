@@ -1,8 +1,9 @@
-import type { Forwarder, ForwardDecision } from '../../types/layers';
+import type { ForwardContext, ForwardDecision, Forwarder } from '../../types/layers';
 import type { InFlightPacket } from '../../types/packets';
 import type { NetworkTopology } from '../../types/topology';
 
 const BROADCAST_MAC = 'ff:ff:ff:ff:ff:ff';
+const BROADCAST_IP = '255.255.255.255';
 
 export class SwitchForwarder implements Forwarder {
   private macTable = new Map<string, string>(); // MAC → portId
@@ -20,6 +21,48 @@ export class SwitchForwarder implements Forwarder {
 
   learn(srcMac: string, ingressPortId: string): void {
     this.macTable.set(srcMac, ingressPortId);
+  }
+
+  private resolveConnectedEdgeForPort(portId: string) {
+    return this.topology.edges.find(
+      (edge) =>
+        (edge.source === this.nodeId && edge.sourceHandle === portId) ||
+        (edge.target === this.nodeId && edge.targetHandle === portId),
+    ) ?? null;
+  }
+
+  private resolvePortForEdge(edgeId: string): string | undefined {
+    const edge = this.topology.edges.find((candidate) => candidate.id === edgeId);
+    if (!edge) return undefined;
+    if (edge.source === this.nodeId) return edge.sourceHandle ?? undefined;
+    if (edge.target === this.nodeId) return edge.targetHandle ?? undefined;
+    return undefined;
+  }
+
+  private selectNeighbor(
+    packet: InFlightPacket,
+    neighbors: ForwardContext['neighbors'],
+  ) {
+    const dstIp = packet.frame.payload.dstIp === BROADCAST_IP
+      ? null
+      : packet.frame.payload.dstIp;
+
+    for (const neighbor of neighbors) {
+      const node = this.topology.nodes.find((candidate) => candidate.id === neighbor.nodeId);
+      if (!node) continue;
+      if (packet.dstNodeId && node.id === packet.dstNodeId) return neighbor;
+      if (
+        dstIp &&
+        (
+          node.data.ip === dstIp ||
+          (node.data.interfaces ?? []).some((iface) => iface.ipAddress === dstIp)
+        )
+      ) {
+        return neighbor;
+      }
+    }
+
+    return neighbors[0] ?? null;
   }
 
   forward(
@@ -41,6 +84,7 @@ export class SwitchForwarder implements Forwarder {
   async receive(
     packet: InFlightPacket,
     ingressPortId: string,
+    ctx: ForwardContext,
   ): Promise<ForwardDecision> {
     const node = this.topology.nodes.find((n) => n.id === this.nodeId);
     if (!node) {
@@ -58,25 +102,54 @@ export class SwitchForwarder implements Forwarder {
       return { action: 'drop', reason: 'no egress port found' };
     }
 
-    // Use the first egress port for the primary forward decision
-    // (multi-port flooding is handled by the simulation engine duplicating the packet)
-    const egressPort = egressPorts[0];
-
-    // Check if this is the destination
-    const connectedEdge = this.topology.edges.find(
-      (e) =>
-        (e.source === this.nodeId && e.sourceHandle === egressPort) ||
-        (e.target === this.nodeId && e.targetHandle === egressPort),
-    );
-
-    if (!connectedEdge) {
-      return { action: 'drop', reason: `no edge connected to port ${egressPort}` };
+    const learnedPort = this.macTable.get(frame.dstMac);
+    if (learnedPort) {
+      const learnedEdge = this.resolveConnectedEdgeForPort(learnedPort);
+      if (learnedEdge) {
+        const nextNodeId =
+          learnedEdge.source === this.nodeId ? learnedEdge.target : learnedEdge.source;
+        return {
+          action: 'forward',
+          nextNodeId,
+          edgeId: learnedEdge.id,
+          egressPort: learnedPort,
+          packet: { ...packet, egressPortId: learnedPort },
+        };
+      }
     }
 
-    return {
-      action: 'forward',
-      egressPort,
-      packet: { ...packet, egressPortId: egressPort },
-    };
+    const selectedNeighbor = this.selectNeighbor(packet, ctx.neighbors);
+    if (selectedNeighbor) {
+      return {
+        action: 'forward',
+        nextNodeId: selectedNeighbor.nodeId,
+        edgeId: selectedNeighbor.edgeId,
+        egressPort: this.resolvePortForEdge(selectedNeighbor.edgeId) ?? egressPorts[0],
+        packet: {
+          ...packet,
+          egressPortId: this.resolvePortForEdge(selectedNeighbor.edgeId) ?? egressPorts[0],
+        },
+      };
+    }
+
+    const egressPort = egressPorts[0];
+    const connectedEdge = this.resolveConnectedEdgeForPort(egressPort);
+
+    if (connectedEdge) {
+      const nextNodeId =
+        connectedEdge.source === this.nodeId
+          ? connectedEdge.target
+          : connectedEdge.source;
+
+      return {
+        action: 'forward',
+        nextNodeId,
+        edgeId: connectedEdge.id,
+        egressPort,
+        packet: { ...packet, egressPortId: egressPort },
+      };
+    }
+
+    return { action: 'drop', reason: `no edge connected to port ${egressPort}` };
   }
 }
