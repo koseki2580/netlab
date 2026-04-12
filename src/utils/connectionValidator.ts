@@ -20,6 +20,13 @@ export interface ValidationWarning {
   message: string;
 }
 
+export interface TopologyValidationResult {
+  valid: boolean;
+  edgeResults: Map<string, ValidationResult>;
+  errorCount: number;
+  warningCount: number;
+}
+
 function findNode(nodes: NetlabNode[], nodeId: string): NetlabNode | undefined {
   return nodes.find((node) => node.id === nodeId);
 }
@@ -197,4 +204,35 @@ export function isValidConnectionBetweenNodes(
  */
 export function isValidEdge(nodes: NetlabNode[], edge: NetlabEdge): boolean {
   return isValidConnectionBetweenNodes(nodes, edge.source, edge.target);
+}
+
+export function validateTopology(
+  nodes: NetlabNode[],
+  edges: NetlabEdge[],
+): TopologyValidationResult {
+  const edgeResults = new Map<string, ValidationResult>();
+  let errorCount = 0;
+  let warningCount = 0;
+
+  for (const edge of edges) {
+    const result = validateConnection(
+      nodes,
+      edges.filter((candidate) => candidate.id !== edge.id),
+      edge.source,
+      edge.target,
+      edge.sourceHandle,
+      edge.targetHandle,
+    );
+
+    edgeResults.set(edge.id, result);
+    errorCount += result.errors.length;
+    warningCount += result.warnings.length;
+  }
+
+  return {
+    valid: errorCount === 0,
+    edgeResults,
+    errorCount,
+    warningCount,
+  };
 }

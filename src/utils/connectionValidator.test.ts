@@ -4,6 +4,7 @@ import {
   isValidConnectionBetweenNodes,
   isValidEdge,
   validateConnection,
+  validateTopology,
 } from './connectionValidator';
 import type { NetlabNode, NetlabEdge } from '../types/topology';
 
@@ -302,5 +303,144 @@ describe('validateConnection', () => {
       errors: [],
       warnings: [],
     });
+  });
+});
+
+describe('validateTopology', () => {
+  it('returns a valid empty result when no edges exist', () => {
+    const result = validateTopology([makeNode('router-1', 'router')], []);
+
+    expect(result).toEqual({
+      valid: true,
+      edgeResults: new Map(),
+      errorCount: 0,
+      warningCount: 0,
+    });
+  });
+
+  it('returns valid for a healthy client-router-server topology', () => {
+    const nodes = [
+      makeNode('client-1', 'client', { ip: '10.0.0.10' }),
+      makeNode('router-1', 'router', {
+        interfaces: [
+          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:00:00:01' },
+          { id: 'eth1', name: 'eth1', ipAddress: '10.0.1.1', prefixLength: 24, macAddress: '00:00:00:00:00:02' },
+        ],
+      }),
+      makeNode('server-1', 'server', { ip: '10.0.1.20' }),
+    ];
+    const edges = [
+      makeEdge('client-1', 'router-1', { id: 'e1' }),
+      makeEdge('router-1', 'server-1', { id: 'e2' }),
+    ];
+
+    const result = validateTopology(nodes, edges);
+
+    expect(result.valid).toBe(true);
+    expect(result.errorCount).toBe(0);
+    expect(result.warningCount).toBe(0);
+    expect(result.edgeResults.size).toBe(2);
+  });
+
+  it('aggregates invalid loaded edges', () => {
+    const nodes = [
+      makeNode('client-1', 'client', { ip: '10.0.0.10' }),
+      makeNode('server-1', 'server', { ip: '10.0.0.20' }),
+    ];
+    const edges = [makeEdge('client-1', 'server-1', { id: 'e-invalid' })];
+
+    const result = validateTopology(nodes, edges);
+
+    expect(result.valid).toBe(false);
+    expect(result.errorCount).toBe(1);
+    expect(result.edgeResults.get('e-invalid')?.errors).toContainEqual({
+      code: 'endpoint-to-endpoint',
+      message: 'Endpoint-to-endpoint connections are not allowed',
+    });
+  });
+
+  it('flags each duplicate edge independently', () => {
+    const nodes = [makeNode('router-1', 'router'), makeNode('switch-1', 'switch')];
+    const edges = [
+      makeEdge('router-1', 'switch-1', { id: 'e1' }),
+      makeEdge('switch-1', 'router-1', { id: 'e2' }),
+    ];
+
+    const result = validateTopology(nodes, edges);
+
+    expect(result.valid).toBe(false);
+    expect(result.errorCount).toBe(2);
+    expect(result.edgeResults.get('e1')?.errors).toContainEqual({
+      code: 'duplicate-edge',
+      message: 'Duplicate edge: nodes are already connected',
+    });
+    expect(result.edgeResults.get('e2')?.errors).toContainEqual({
+      code: 'duplicate-edge',
+      message: 'Duplicate edge: nodes are already connected',
+    });
+  });
+
+  it('keeps warning-only topologies valid while aggregating warnings', () => {
+    const nodes = [
+      makeNode('router-1', 'router', {
+        interfaces: [
+          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:00:00:01' },
+        ],
+      }),
+      makeNode('router-2', 'router', {
+        interfaces: [
+          { id: 'eth1', name: 'eth1', ipAddress: '10.0.1.2', prefixLength: 24, macAddress: '00:00:00:00:00:02' },
+        ],
+      }),
+    ];
+    const edges = [
+      makeEdge('router-1', 'router-2', {
+        id: 'e-warning',
+        sourceHandle: 'eth0',
+        targetHandle: 'eth1',
+      }),
+    ];
+
+    const result = validateTopology(nodes, edges);
+
+    expect(result.valid).toBe(true);
+    expect(result.errorCount).toBe(0);
+    expect(result.warningCount).toBe(1);
+    expect(result.edgeResults.get('e-warning')?.warnings).toContainEqual({
+      code: 'subnet-mismatch',
+      message: 'Subnet mismatch: 10.0.0.1/24 and 10.0.1.2/24 are in different subnets',
+    });
+  });
+
+  it('aggregates mixed issues across multiple edges', () => {
+    const nodes = [
+      makeNode('client-1', 'client', { ip: '10.0.0.10' }),
+      makeNode('server-1', 'server', { ip: '10.0.0.20' }),
+      makeNode('router-1', 'router', {
+        interfaces: [
+          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:00:00:01' },
+        ],
+      }),
+      makeNode('router-2', 'router', {
+        interfaces: [
+          { id: 'eth1', name: 'eth1', ipAddress: '10.0.1.2', prefixLength: 24, macAddress: '00:00:00:00:00:02' },
+        ],
+      }),
+    ];
+    const edges = [
+      makeEdge('client-1', 'server-1', { id: 'e-error' }),
+      makeEdge('router-1', 'router-2', {
+        id: 'e-warning',
+        sourceHandle: 'eth0',
+        targetHandle: 'eth1',
+      }),
+    ];
+
+    const result = validateTopology(nodes, edges);
+
+    expect(result.valid).toBe(false);
+    expect(result.errorCount).toBe(1);
+    expect(result.warningCount).toBe(1);
+    expect(result.edgeResults.size).toBe(2);
   });
 });
