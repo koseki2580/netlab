@@ -40,6 +40,7 @@ interface NetlabTheme {
   accentBlue: string;     // Action buttons, primary highlights
   accentGreen: string;    // Routers, forward events
   accentRed: string;      // Drop / error events
+  accentOrange: string;   // Warning / advisory validation events
   accentYellow: string;   // MAC addresses
   accentCyan: string;     // IP addresses, primary text accents
 
@@ -72,6 +73,7 @@ Each `NetlabTheme` field maps to a CSS custom property scoped to the component c
 | `accentBlue` | `--netlab-accent-blue` |
 | `accentGreen` | `--netlab-accent-green` |
 | `accentRed` | `--netlab-accent-red` |
+| `accentOrange` | `--netlab-accent-orange` |
 | `accentYellow` | `--netlab-accent-yellow` |
 | `accentCyan` | `--netlab-accent-cyan` |
 | `nodeRouterBg` | `--netlab-node-router-bg` |
@@ -102,6 +104,7 @@ import { NETLAB_DARK_THEME } from 'netlab';
 //   accentBlue:    '#2563eb',
 //   accentGreen:   '#4ade80',
 //   accentRed:     '#f87171',
+//   accentOrange:  '#f59e0b',
 //   accentYellow:  '#fbbf24',
 //   accentCyan:    '#7dd3fc',
 //   nodeRouterBg:  '#0f2a1a',
@@ -130,6 +133,7 @@ import { NETLAB_LIGHT_THEME } from 'netlab';
 //   accentBlue:    '#2563eb',
 //   accentGreen:   '#16a34a',
 //   accentRed:     '#dc2626',
+//   accentOrange:  '#f59e0b',
 //   accentYellow:  '#d97706',
 //   accentCyan:    '#0284c7',
 //   nodeRouterBg:  '#f0fdf4',
