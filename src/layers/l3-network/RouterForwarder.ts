@@ -1,6 +1,7 @@
-import type { Forwarder, ForwardDecision } from '../../types/layers';
+import type { ForwardContext, ForwardDecision, Forwarder } from '../../types/layers';
 import type { InFlightPacket } from '../../types/packets';
 import type { RouteEntry } from '../../types/routing';
+import type { Neighbor } from '../../types/simulation';
 import type { NetworkTopology } from '../../types/topology';
 import { isInSubnet, prefixLength } from '../../utils/cidr';
 import { computeIpv4Checksum } from '../../utils/checksum';
@@ -15,25 +16,87 @@ export class RouterForwarder implements Forwarder {
     this.topology = topology;
   }
 
-  private lookup(dstIp: string): RouteEntry | null {
-    const routes = this.topology.routeTables.get(this.nodeId) ?? [];
+  private resolveNeighborForRoute(
+    dstIp: string,
+    route: RouteEntry,
+    neighbors: Neighbor[],
+  ): Neighbor | null {
+    for (const neighbor of neighbors) {
+      const neighborNode = this.topology.nodes.find((node) => node.id === neighbor.nodeId);
+      if (!neighborNode) continue;
 
-    // Routes should be sorted by prefix length descending (most specific first)
-    const sorted = [...routes].sort(
+      if (route.nextHop === 'direct') {
+        const nodeIp = neighborNode.data.runtimeIp ?? neighborNode.data.ip;
+        if (nodeIp === dstIp) return neighbor;
+        if ((neighborNode.data.interfaces ?? []).some((iface) => iface.ipAddress === dstIp)) {
+          return neighbor;
+        }
+        if (neighborNode.data.role === 'switch') return neighbor;
+        continue;
+      }
+
+      const ifaces = (neighborNode.data.interfaces ?? []) as Array<{ ipAddress: string }>;
+      if (ifaces.some((iface) => iface.ipAddress === route.nextHop)) {
+        return neighbor;
+      }
+      if (neighborNode.data.role === 'switch') return neighbor;
+    }
+
+    return null;
+  }
+
+  private lookupReachable(
+    dstIp: string,
+    neighbors: Neighbor[],
+  ): { route: RouteEntry; neighbor: Neighbor } | null {
+    const routes = this.topology.routeTables.get(this.nodeId) ?? [];
+    const candidates = [...routes]
+      .filter((route) => isInSubnet(dstIp, route.destination))
+      .sort(
       (a, b) => prefixLength(b.destination) - prefixLength(a.destination),
     );
 
-    for (const route of sorted) {
-      if (isInSubnet(dstIp, route.destination)) {
-        return route;
+    for (const route of candidates) {
+      const neighbor = this.resolveNeighborForRoute(dstIp, route, neighbors);
+      if (neighbor) {
+        return { route, neighbor };
       }
     }
+
     return null;
+  }
+
+  private resolveEgressInterface(
+    route: RouteEntry,
+    dstIp: string,
+    edgeId: string,
+  ): string | undefined {
+    const edge = this.topology.edges.find((candidate) => candidate.id === edgeId);
+    if (edge) {
+      const handle =
+        edge.source === this.nodeId
+          ? edge.sourceHandle
+          : edge.target === this.nodeId
+            ? edge.targetHandle
+            : undefined;
+      if (handle) return handle;
+    }
+
+    const node = this.topology.nodes.find((candidate) => candidate.id === this.nodeId);
+    if (!node || node.data.role !== 'router') return undefined;
+
+    const targetIp = route.nextHop === 'direct' ? dstIp : route.nextHop;
+    const match = node.data.interfaces?.find((iface) =>
+      isInSubnet(targetIp, `${iface.ipAddress}/${iface.prefixLength}`),
+    );
+
+    return match?.id;
   }
 
   async receive(
     packet: InFlightPacket,
     ingressPortId: string,
+    ctx: ForwardContext,
   ): Promise<ForwardDecision> {
     const ipPacket = packet.frame.payload;
 
@@ -41,10 +104,11 @@ export class RouterForwarder implements Forwarder {
       return { action: 'drop', reason: 'ttl-exceeded' };
     }
 
-    const route = this.lookup(ipPacket.dstIp);
-    if (!route) {
+    const result = this.lookupReachable(ipPacket.dstIp, ctx.neighbors);
+    if (!result) {
       return { action: 'drop', reason: 'no-route' };
     }
+    const { route, neighbor } = result;
 
     const updatedIp = { ...ipPacket, ttl: ipPacket.ttl - 1 };
     const headerBytes = buildIpv4HeaderBytes(updatedIp, { checksumOverride: 0 });
@@ -58,20 +122,18 @@ export class RouterForwarder implements Forwarder {
       ingressPortId,
     };
 
-    if (route.nextHop === 'direct') {
-      // Check if any connected node matches the destination IP
-      const node = this.topology.nodes.find((n) => n.id === this.nodeId);
-      const ifaces = node?.data.interfaces ?? [];
-      const matchingIface = (ifaces as Array<{ ipAddress: string; id: string }>).find((iface) =>
-        isInSubnet(ipPacket.dstIp, `${iface.ipAddress}/${route.destination.split('/')[1]}`),
-      );
-      const egressPort = matchingIface?.id ?? route.destination;
-      return { action: 'forward', egressPort, packet: updatedPacket, selectedRoute: route };
-    }
+    const egressInterfaceId = this.resolveEgressInterface(
+      route,
+      ipPacket.dstIp,
+      neighbor.edgeId,
+    );
 
     return {
       action: 'forward',
-      egressPort: route.nextHop,
+      nextNodeId: neighbor.nodeId,
+      edgeId: neighbor.edgeId,
+      egressPort: route.nextHop === 'direct' ? ipPacket.dstIp : route.nextHop,
+      egressInterfaceId,
       packet: updatedPacket,
       selectedRoute: route,
     };
