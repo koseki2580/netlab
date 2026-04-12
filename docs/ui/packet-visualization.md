@@ -107,22 +107,23 @@ interface InFlightPacket {
 ### Design
 
 - Instantiated with a `NetworkTopology` (enriched, with `routeTables`) and a `HookEngine`.
-- Traversal is **node-level**: for each hop it finds the next node via topology edges + route tables, independently of `ForwardDecision.egressPort` (which uses interface IDs, not node IDs).
-- Forwarders (RouterForwarder, SwitchForwarder) are still called **for TTL decrement and drop detection**, but not for next-node resolution.
+- Traversal is **node-level**, but transit next-hop selection is owned by the active forwarder.
+- `RouterForwarder` and `SwitchForwarder` return `nextNodeId` + `edgeId`, and `SimulationEngine` executes those decisions directly.
 - `precompute()` builds the full `PacketHop[]` list without mutating React state or emitting hooks.
 - `step()` advances the playback cursor, emits the appropriate HookEngine event, and notifies React subscribers.
 
 ### Traversal Rules
 
 #### Router
-1. Look up the destination IP in the routing table (longest prefix match).
-2. If no route: drop with `reason: 'no-route'`.
-3. If `nextHop === 'direct'`: find the neighbor node whose `data.ip` matches `dstIp`, or the first switch neighbor (switches are transparent pass-throughs toward the destination).
-4. If `nextHop` is an IP: find the neighbor router whose interfaces include that IP, or the first switch neighbor.
+1. `RouterForwarder.receive()` performs reachable-route selection.
+2. It decrements TTL, recomputes the IPv4 header checksum, and returns the chosen `selectedRoute`.
+3. It resolves `nextNodeId`, `edgeId`, and `egressInterfaceId` before control returns to the engine.
+4. `SimulationEngine` uses that decision for hop execution, NAT/ACL staging, ARP, and trace annotation.
 
 #### Switch
-1. Flood: return the first non-ingress neighbor.
-2. (MAC learning is performed by `SwitchForwarder.receive()` as a side effect but does not affect next-node resolution.)
+1. `SwitchForwarder.receive()` performs MAC learning on the ingress port.
+2. If the destination MAC is known, it returns the learned port's connected neighbor.
+3. If the MAC is unknown, it uses packet destination metadata to choose a deterministic neighbor for the trace.
 
 #### Client / Server (endpoint)
 - If `data.ip === dstIp`: deliver.

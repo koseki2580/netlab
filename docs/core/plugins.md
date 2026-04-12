@@ -66,14 +66,28 @@ interface LayerPlugin {
 
 ```typescript
 interface Forwarder {
-  receive(packet: Packet, ingressPort: string): Promise<ForwardDecision>;
+  receive(
+    packet: Packet,
+    ingressPort: string,
+    ctx: { neighbors: Array<{ nodeId: string; edgeId: string }> },
+  ): Promise<ForwardDecision>;
 }
 
 type ForwardDecision =
-  | { action: 'forward'; egressPort: string; packet: Packet }
+  | {
+      action: 'forward';
+      nextNodeId: string;
+      edgeId: string;
+      egressPort: string;
+      egressInterfaceId?: string;
+      packet: Packet;
+    }
   | { action: 'deliver'; packet: Packet }
   | { action: 'drop'; reason: string };
 ```
+
+The `forward` variant is authoritative: `SimulationEngine` executes `nextNodeId` and `edgeId`
+directly instead of translating `egressPort` through its own routing heuristics.
 
 ## Overriding a Built-in Plugin
 

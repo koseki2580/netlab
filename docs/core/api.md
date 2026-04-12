@@ -530,10 +530,12 @@ import type {
 ```typescript
 import type {
   LayerId,
+  ForwardContext,
   ForwardDecision,
   Forwarder,
   ForwarderFactory,
   LayerPlugin,
+  Neighbor,
   ProtocolName,
   RouteEntry,
   TopologyChangeEvent,

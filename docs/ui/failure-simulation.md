@@ -50,14 +50,16 @@ At the start of each hop, the engine checks whether the current node is down. If
 
 ### Down Edges (`downEdgeIds`)
 
-`getNeighbors()` skips edges in `downEdgeIds`, so topology traversal behaves as if those links do not exist. If no remaining neighbor satisfies the forwarding decision, `resolveNextNode()` returns `null` and the hop becomes a `no-route` drop.
+`getNeighbors()` skips edges in `downEdgeIds`, so forwarders only receive reachable neighbors in
+their `ForwardContext`. If no remaining neighbor satisfies the forwarding decision, the forwarder
+returns a `no-route` drop.
 
 ### Down Interfaces (`downInterfaceIds`)
 
 Router interface failure is an egress-only check in this iteration:
 
-1. The engine resolves the next node through the topology graph.
-2. If a next hop exists and the current node is a router, the engine resolves the router egress interface.
+1. The router forwarder resolves the definitive next hop and egress interface.
+2. The engine annotates that egress interface on the hop.
 3. If that interface is in `downInterfaceIds`, the packet is dropped with `reason: 'interface-down'`.
 
 This preserves existing node-down and edge-down behavior while adding a more specific router-port failure mode.
@@ -68,7 +70,7 @@ This preserves existing node-down and edge-down behavior while adding a more spe
 |---|---|---|
 | 1 | current node in `downNodeIds` | `'node-down'` drop |
 | 2 | router forwarder TTL / forwarding checks | existing router drop reasons |
-| 3 | `resolveNextNode()` with `downEdgeIds` applied | `'no-route'` drop |
+| 3 | forwarder decision against failure-filtered neighbors | `'no-route'` drop |
 | 4 | resolved router egress interface in `downInterfaceIds` | `'interface-down'` drop |
 | 5 | successful traversal | create / forward / deliver |
 
@@ -86,8 +88,8 @@ If no interface can be resolved confidently, the engine leaves interface metadat
 
 ## Static Routing and Failure Fallback
 
-Static route tables are not recomputed when failures are toggled. However, route selection at hop
-execution time is failure-aware:
+Static route tables are not recomputed when failures are toggled. However, route selection inside
+`RouterForwarder` is failure-aware:
 
 1. Matching routes for `dstIp` are sorted by prefix length, most specific first.
 2. Each candidate is checked against the current failure-filtered neighbor list.
