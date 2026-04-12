@@ -3,7 +3,10 @@ export type { TopologyEditorProps } from './components/TopologyEditor';
 
 export { NodeEditorPanel } from './components/NodeEditorPanel';
 export { TopologyEditorCanvas } from './components/TopologyEditorCanvas';
+export type { TopologyEditorCanvasProps } from './components/TopologyEditorCanvas';
 export { EditorToolbar } from './components/EditorToolbar';
+export { ValidationPanel } from './components/ValidationPanel';
+export type { ValidationPanelProps } from './components/ValidationPanel';
 
 export { TopologyEditorProvider } from './context/TopologyEditorProvider';
 export type { TopologyEditorProviderProps } from './context/TopologyEditorProvider';

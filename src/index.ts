@@ -212,6 +212,8 @@ export type {
 // Editor
 export { TopologyEditor } from './editor/components/TopologyEditor';
 export type { TopologyEditorProps } from './editor/components/TopologyEditor';
+export { ValidationPanel } from './editor/components/ValidationPanel';
+export type { ValidationPanelProps } from './editor/components/ValidationPanel';
 export type { EditorTopology, TopologyEditorState, PositionUpdate } from './editor/types';
 export { useTopologyEditorContext } from './editor/context/TopologyEditorContext';
 export type { TopologyEditorContextValue } from './editor/context/TopologyEditorContext';
