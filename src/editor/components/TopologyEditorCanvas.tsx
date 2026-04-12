@@ -13,6 +13,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
+import { ValidationSmoothStepEdge } from '../../components/ValidationEdgeLabel';
 import { layerRegistry } from '../../registry/LayerRegistry';
 import { validateConnection as validateEditorConnection } from '../../utils/connectionValidator';
 import type { NetlabNode, NetlabEdge } from '../../types/topology';
@@ -23,9 +24,22 @@ import { useTopologyEditorContext } from '../context/TopologyEditorContext';
 interface EditorCanvasInnerProps {
   initialNodes: NetlabNode[];
   initialEdges: NetlabEdge[];
+  highlightEdgeId?: string | null;
 }
 
-function EditorCanvasInner({ initialNodes, initialEdges }: EditorCanvasInnerProps) {
+function withValidationEdgeType(edge: NetlabEdge): NetlabEdge {
+  if (edge.type && edge.type !== 'smoothstep') {
+    return edge;
+  }
+
+  return { ...edge, type: 'validation-smoothstep' };
+}
+
+function EditorCanvasInner({
+  initialNodes,
+  initialEdges,
+  highlightEdgeId,
+}: EditorCanvasInnerProps) {
   const { addEdge, deleteNode, deleteEdge, updateNodePositions } =
     useTopologyEditorContext();
 
@@ -42,22 +56,53 @@ function EditorCanvasInner({ initialNodes, initialEdges }: EditorCanvasInnerProp
   }, [initialEdges, setEdges]);
 
   const nodeTypes = useMemo(() => layerRegistry.getAllNodeTypes(), []);
+  const edgeTypes = useMemo(
+    () => ({
+      'validation-smoothstep': ValidationSmoothStepEdge,
+    }),
+    [],
+  );
 
   const styledEdges = useMemo(
     () =>
-      edges.map((edge) =>
-        validateEditorConnection(
+      edges.map((edge) => {
+        const validationEdge = withValidationEdgeType(edge);
+        const validationResult = validateEditorConnection(
           nodes as NetlabNode[],
           (edges as NetlabEdge[]).filter((candidate) => candidate.id !== edge.id),
           edge.source,
           edge.target,
           edge.sourceHandle,
           edge.targetHandle,
-        ).valid
-          ? edge
-          : { ...edge, style: { ...edge.style, stroke: 'red' } },
-      ),
-    [edges, nodes],
+        );
+
+        const edgeWithValidation = !validationResult.valid
+          ? {
+              ...validationEdge,
+              style: { ...validationEdge.style, stroke: 'var(--netlab-accent-red)' },
+              data: { ...validationEdge.data, validationResult },
+            }
+          : validationResult.warnings.length > 0
+            ? {
+                ...validationEdge,
+                style: { ...validationEdge.style, stroke: 'var(--netlab-accent-orange, orange)' },
+                data: { ...validationEdge.data, validationResult },
+              }
+            : validationEdge;
+
+        if (highlightEdgeId !== edge.id) {
+          return edgeWithValidation;
+        }
+
+        return {
+          ...edgeWithValidation,
+          style: {
+            ...edgeWithValidation.style,
+            strokeWidth: 3,
+          },
+        };
+      }),
+    [edges, nodes, highlightEdgeId],
   );
 
   const isConnectionValid = useCallback(
@@ -124,6 +169,7 @@ function EditorCanvasInner({ initialNodes, initialEdges }: EditorCanvasInnerProp
       nodes={nodes}
       edges={styledEdges}
       nodeTypes={nodeTypes}
+      edgeTypes={edgeTypes}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
@@ -143,7 +189,11 @@ function EditorCanvasInner({ initialNodes, initialEdges }: EditorCanvasInnerProp
 
 // ─── Outer wrapper — applies reactFlowKey to force remount on undo/redo ───
 
-export function TopologyEditorCanvas() {
+export interface TopologyEditorCanvasProps {
+  highlightEdgeId?: string | null;
+}
+
+export function TopologyEditorCanvas({ highlightEdgeId }: TopologyEditorCanvasProps) {
   const { state } = useTopologyEditorContext();
 
   return (
@@ -152,6 +202,7 @@ export function TopologyEditorCanvas() {
         key={state.reactFlowKey}
         initialNodes={state.topology.nodes}
         initialEdges={state.topology.edges}
+        highlightEdgeId={highlightEdgeId}
       />
     </div>
   );

@@ -151,6 +151,9 @@ vi.mock('@xyflow/react', async () => {
     useNodesState,
     useEdgesState,
     addEdge,
+    BaseEdge: () => null,
+    EdgeLabelRenderer: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children),
+    getSmoothStepPath: () => ['M0 0', 0, 0],
     applyNodeChanges,
     applyEdgeChanges,
   };
@@ -586,13 +589,13 @@ describe('NetlabCanvas controlled topology API', () => {
               id: 'client-1',
               type: 'client',
               position: { x: 50, y: 80 },
-              data: { label: 'PC1', role: 'client', layerId: 'l7' },
+              data: { label: 'PC1', role: 'client', layerId: 'l7', ip: '10.0.0.10' },
             },
             {
               id: 'server-1',
               type: 'server',
               position: { x: 240, y: 80 },
-              data: { label: 'SRV1', role: 'server', layerId: 'l7' },
+              data: { label: 'SRV1', role: 'server', layerId: 'l7', ip: '10.0.0.20' },
             },
           ],
           edges: [
@@ -613,6 +616,97 @@ describe('NetlabCanvas controlled topology API', () => {
       style: expect.objectContaining({
         stroke: 'var(--netlab-accent-red)',
       }),
+      data: {
+        validationResult: {
+          valid: false,
+          errors: [
+            {
+              code: 'endpoint-to-endpoint',
+              message: 'Endpoint-to-endpoint connections are not allowed',
+            },
+          ],
+          warnings: [],
+        },
+      },
+    });
+  });
+
+  it('uses orange styling for warning-only edges and attaches the validation result', () => {
+    render(
+      <NetlabProvider
+        topology={makeTopology({
+          nodes: [
+            {
+              id: 'router-1',
+              type: 'router',
+              position: { x: 50, y: 80 },
+              data: {
+                label: 'R1',
+                role: 'router',
+                layerId: 'l3',
+                interfaces: [
+                  {
+                    id: 'eth0',
+                    name: 'eth0',
+                    ipAddress: '10.0.0.1',
+                    prefixLength: 24,
+                    macAddress: '00:00:00:00:00:01',
+                  },
+                ],
+              },
+            },
+            {
+              id: 'router-2',
+              type: 'router',
+              position: { x: 240, y: 80 },
+              data: {
+                label: 'R2',
+                role: 'router',
+                layerId: 'l3',
+                interfaces: [
+                  {
+                    id: 'eth1',
+                    name: 'eth1',
+                    ipAddress: '10.0.1.2',
+                    prefixLength: 24,
+                    macAddress: '00:00:00:00:00:02',
+                  },
+                ],
+              },
+            },
+          ],
+          edges: [
+            {
+              id: 'e-warning',
+              source: 'router-1',
+              target: 'router-2',
+              sourceHandle: 'eth0',
+              targetHandle: 'eth1',
+              type: 'smoothstep',
+            },
+          ],
+        })}
+      >
+        <NetlabCanvas />
+      </NetlabProvider>,
+    );
+
+    expect(currentReactFlowProps().edges[0]).toMatchObject({
+      style: expect.objectContaining({
+        stroke: 'var(--netlab-accent-orange, orange)',
+      }),
+      data: {
+        validationResult: {
+          valid: true,
+          errors: [],
+          warnings: [
+            {
+              code: 'subnet-mismatch',
+              message: 'Subnet mismatch: 10.0.0.1/24 and 10.0.1.2/24 are in different subnets',
+            },
+          ],
+        },
+      },
     });
   });
 
