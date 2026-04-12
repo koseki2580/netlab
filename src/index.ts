@@ -200,11 +200,13 @@ export {
   isValidConnectionBetweenNodes,
   isValidEdge,
   validateConnection,
+  validateTopology,
 } from './utils/connectionValidator';
 export type {
   ValidationResult,
   ValidationError,
   ValidationWarning,
+  TopologyValidationResult,
 } from './utils/connectionValidator';
 
 // Editor
