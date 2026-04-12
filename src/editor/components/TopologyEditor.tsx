@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { NetlabProvider } from '../../components/NetlabProvider';
 import { NetlabThemeScope } from '../../components/NetlabThemeScope';
 import { NetlabUIContext } from '../../components/NetlabUIContext';
@@ -7,6 +7,7 @@ import { useTopologyEditorContext } from '../context/TopologyEditorContext';
 import { EditorToolbar } from './EditorToolbar';
 import { TopologyEditorCanvas } from './TopologyEditorCanvas';
 import { NodeEditorPanel } from './NodeEditorPanel';
+import { ValidationPanel } from './ValidationPanel';
 import type { EditorTopology } from '../types';
 
 export interface TopologyEditorProps {
@@ -19,6 +20,7 @@ export interface TopologyEditorProps {
 // Inner component: can read editor context to pass NetlabUIContext values
 function TopologyEditorInner() {
   const { state, setSelectedNodeId } = useTopologyEditorContext();
+  const [highlightEdgeId, setHighlightEdgeId] = useState<string | null>(null);
 
   const uiCtx = useMemo(
     () => ({
@@ -40,11 +42,26 @@ function TopologyEditorInner() {
     [state.topology],
   );
 
+  useEffect(() => {
+    if (!highlightEdgeId) {
+      return;
+    }
+
+    if (!state.topology.edges.some((edge) => edge.id === highlightEdgeId)) {
+      setHighlightEdgeId(null);
+    }
+  }, [highlightEdgeId, state.topology.edges]);
+
   return (
     <NetlabProvider topology={netlabTopology}>
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
         <NetlabUIContext.Provider value={uiCtx}>
-          <TopologyEditorCanvas />
+          <TopologyEditorCanvas highlightEdgeId={highlightEdgeId} />
+          <ValidationPanel
+            nodes={state.topology.nodes}
+            edges={state.topology.edges}
+            onEdgeClick={setHighlightEdgeId}
+          />
           <NodeEditorPanel />
         </NetlabUIContext.Provider>
       </div>
