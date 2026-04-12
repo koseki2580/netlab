@@ -2,7 +2,7 @@
 
 > **Status**: ✅ Implemented
 
-This document specifies how `NetlabCanvas` validates connections between nodes to prevent topologically meaningless or physically invalid edges.
+This document specifies how `NetlabCanvas` and the topology editor validate connections between nodes to prevent topologically meaningless or physically invalid edges.
 
 ---
 
@@ -43,10 +43,12 @@ When the user drags a connection handle toward a target node:
 
 ### Loaded from topology
 
-If a topology passed to `NetlabProvider` already contains invalid edges (e.g., loaded from an external source or query parameter):
+If a topology passed to `NetlabProvider` already contains invalid or warning-worthy edges (e.g., loaded from an external source or query parameter):
 
 - The edge is still rendered so the topology is visible.
-- The edge is drawn with `stroke: red` to signal the problem without blocking the view.
+- Validation errors are drawn with `stroke: var(--netlab-accent-red)`.
+- Warning-only edges are drawn with `stroke: var(--netlab-accent-orange, orange)`.
+- A midpoint validation indicator (`❌` / `⚠️`) exposes the full messages via the native `title` tooltip.
 
 ---
 
@@ -57,6 +59,9 @@ If a topology passed to `NetlabProvider` already contains invalid edges (e.g., l
 | `src/utils/connectionValidator.ts` | Pure validation logic (no React/React Flow deps) |
 | `src/utils/cidr.ts` | Subnet comparison helpers used by router-to-router validation |
 | `src/components/NetlabCanvas.tsx` | Wires `validateConnection()` into React Flow's `isValidConnection` callback |
+| `src/editor/components/TopologyEditorCanvas.tsx` | Applies the same edge validation styling inside the editor canvas |
+| `src/components/ValidationEdgeLabel.tsx` | Edge midpoint validation indicator / tooltip rendering |
+| `src/editor/components/ValidationPanel.tsx` | Topology-wide validation summary UI for the editor |
 
 ### `src/utils/connectionValidator.ts` API
 
@@ -74,6 +79,12 @@ validateConnection(
   targetHandle?: string | null,
 ): ValidationResult
 
+// Batch validation for every edge in the topology
+validateTopology(
+  nodes: NetlabNode[],
+  edges: NetlabEdge[],
+): TopologyValidationResult
+
 // Node-ID variant — looks up roles from the nodes array
 isValidConnectionBetweenNodes(nodes: NetlabNode[], sourceId: string | null, targetId: string | null): boolean
 
@@ -90,6 +101,13 @@ interface ValidationResult {
   warnings: ValidationWarning[];
 }
 
+interface TopologyValidationResult {
+  valid: boolean;
+  edgeResults: Map<string, ValidationResult>;
+  errorCount: number;
+  warningCount: number;
+}
+
 interface ValidationError {
   code: 'self-loop' | 'duplicate-edge' | 'interface-in-use' | 'endpoint-to-endpoint';
   message: string;
@@ -100,6 +118,62 @@ interface ValidationWarning {
   message: string;
 }
 ```
+
+## Batch Validation
+
+Use `validateTopology()` when you need a single pass over all existing edges:
+
+```ts
+import { validateTopology } from 'netlab';
+import type { TopologyValidationResult } from 'netlab';
+
+const result: TopologyValidationResult = validateTopology(nodes, edges);
+
+console.log(result.valid);        // true if no blocking errors exist
+console.log(result.errorCount);   // total number of errors across all edges
+console.log(result.warningCount); // total number of warnings across all edges
+
+for (const [edgeId, edgeResult] of result.edgeResults) {
+  if (!edgeResult.valid || edgeResult.warnings.length > 0) {
+    console.log(edgeId, edgeResult);
+  }
+}
+```
+
+The batch helper reuses `validateConnection()` for each edge while excluding that edge
+from its own duplicate-edge check.
+
+## Visual Feedback
+
+| Condition | Edge Appearance | Indicator |
+|------|------|------|
+| Validation error | Red stroke | `❌` tooltip |
+| Warning only | Orange stroke | `⚠️` tooltip |
+| Valid | Default stroke | none |
+
+Hover the midpoint indicator to read the combined error/warning messages for that edge.
+
+## Validation Panel
+
+The editor-facing `<ValidationPanel>` component summarizes all validation issues in one place:
+
+```tsx
+import { ValidationPanel } from 'netlab';
+
+<ValidationPanel
+  nodes={nodes}
+  edges={edges}
+  onEdgeClick={(edgeId) => {
+    console.log('focus edge', edgeId);
+  }}
+/>
+```
+
+Features:
+
+- Shows `✅ No issues found` for healthy topologies
+- Groups errors and warnings by edge
+- Exposes `onEdgeClick(edgeId)` so host editors can focus or select the problematic edge
 
 ---
 

@@ -71,6 +71,7 @@ SVG fills and strokes inside node icons MUST use theme variables.
 - Failed edges use `--netlab-accent-red`
 - Active edges use `--netlab-accent-cyan`
 - Invalid edges use `--netlab-accent-red`
+- Warning-only validation edges use `--netlab-accent-orange`
 
 The edge logic itself does not change; only the color source changes.
 

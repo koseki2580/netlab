@@ -117,6 +117,7 @@ interface NetlabThemeScopeProps {
 | `<FailureTogglePanel>` | Interactive node/edge/interface failure toggles |
 | `<TopologyEditor>` | High-level editor UI for adding and wiring nodes |
 | `<TopologyEditorProvider>` | Editor state provider used by `TopologyEditor` and custom editor shells |
+| `<ValidationPanel>` | Topology-wide validation summary component for editor layouts |
 
 ### Simulation UI Components
 
@@ -236,6 +237,7 @@ import type {
   TopologyEditorProviderProps,
   TopologyEditorContextValue,
   TopologyEditorProps,
+  ValidationPanelProps,
   EditorTopology,
   TopologyEditorState,
   PositionUpdate,
@@ -247,6 +249,7 @@ import type {
 | `TopologyEditorProvider` | Component | Provides editor state/history to custom editor shells |
 | `useTopologyEditorContext()` | Hook | Access topology mutations, selection, and undo/redo state |
 | `TopologyEditor` | Component | Opinionated editor built on the provider plus built-in UI |
+| `ValidationPanel` | Component | Topology validation summary panel for editor shells and custom layouts |
 
 ## Classes
 
@@ -397,8 +400,14 @@ import {
   isValidConnectionBetweenNodes,
   isValidEdge,
   validateConnection,
+  validateTopology,
 } from 'netlab';
-import type { ValidationResult, ValidationError, ValidationWarning } from 'netlab';
+import type {
+  ValidationResult,
+  ValidationError,
+  ValidationWarning,
+  TopologyValidationResult,
+} from 'netlab';
 ```
 
 ### CIDR Utilities
@@ -429,9 +438,16 @@ import type { ValidationResult, ValidationError, ValidationWarning } from 'netla
 | Function | Description |
 | -------- | ----------- |
 | `validateConnection(nodes, edges, sourceId, targetId, sourceHandle?, targetHandle?)` | Returns full `ValidationResult` with errors and warnings |
+| `validateTopology(nodes, edges)` | Returns `TopologyValidationResult` with per-edge results and aggregated counts |
 | `isValidConnection(sourceRole, targetRole)` | Fast role-level compatibility check |
 | `isValidConnectionBetweenNodes(nodes, sourceId, targetId)` | Convenience wrapper that looks up node roles |
 | `isValidEdge(nodes, edge)` | Convenience wrapper for existing edges |
+
+`TopologyValidationResult` contains:
+
+- `valid`: `true` when the topology has no blocking validation errors
+- `edgeResults`: `Map<edgeId, ValidationResult>` for per-edge lookup
+- `errorCount` / `warningCount`: aggregated totals for badges and health summaries
 
 ## Node Factory Utilities
 
