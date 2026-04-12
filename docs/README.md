@@ -36,6 +36,7 @@ Specifications regarding user interface implementation and canvas operations.
 
 Specifications focused on simulation-time packet traversal and trace annotation.
 
+- [Simulation Engine Coverage Improvements](simulation/simulation-engine-coverage.md) - Shared fixture extraction and deterministic coverage scenarios for routing, TTL, ARP, no-route, and failures
 - [Protocol-Driven Forwarding](simulation/interface-aware-forwarding.md) - Forwarder-owned next-hop decisions, engine execution rules, and interface hop annotation
 - [RFC Packet Realism](simulation/rfc-packet-realism.md) - Packet materialization, router MAC rewrite, checksum/FCS recomputation, and hop mutation tracking
 - [Session Correlation](simulation/session-correlation.md) - Session-aware request/response lifecycle grouping, correlation logic, and SessionList/SessionDetail UI
