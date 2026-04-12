@@ -1,6 +1,11 @@
 import type { AclMatchInfo, ConnTrackTable } from './acl';
 import type { NatTable } from './nat';
 
+export interface Neighbor {
+  nodeId: string;
+  edgeId: string;
+}
+
 export interface RoutingCandidate {
   destination: string;     // CIDR
   nextHop: string;         // IP or 'direct'

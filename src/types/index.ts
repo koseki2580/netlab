@@ -17,6 +17,7 @@ export type {
 
 export type {
   LayerId,
+  ForwardContext,
   ForwardDecision,
   Forwarder,
   ForwarderFactory,
@@ -66,6 +67,8 @@ export type {
   DnsCacheEntry,
   DnsCache,
 } from './services';
+
+export type { Neighbor } from './simulation';
 
 export type { HookFn, HookMap, HookPoint } from './hooks';
 export type {

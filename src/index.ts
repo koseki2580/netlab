@@ -97,11 +97,14 @@ export type {
 
 export type {
   LayerId,
+  ForwardContext,
   ForwardDecision,
   Forwarder,
   ForwarderFactory,
   LayerPlugin,
 } from './types/layers';
+
+export type { Neighbor } from './types/simulation';
 
 export type {
   ProtocolName,
