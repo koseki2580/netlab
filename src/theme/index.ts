@@ -40,6 +40,8 @@ export interface NetlabTheme {
   accentGreen: string;
   /** Drop / error packet events. */
   accentRed: string;
+  /** Warning / advisory validation highlights. */
+  accentOrange: string;
   /** MAC address highlights. */
   accentYellow: string;
   /** IP address highlights and primary text accents. */
@@ -71,6 +73,7 @@ export const NETLAB_DARK_THEME: NetlabTheme = {
   accentBlue:    '#2563eb',
   accentGreen:   '#4ade80',
   accentRed:     '#f87171',
+  accentOrange:  '#f59e0b',
   accentYellow:  '#fbbf24',
   accentCyan:    '#7dd3fc',
   nodeRouterBg:  '#0f2a1a',
@@ -94,6 +97,7 @@ export const NETLAB_LIGHT_THEME: NetlabTheme = {
   accentBlue:    '#2563eb',
   accentGreen:   '#16a34a',
   accentRed:     '#dc2626',
+  accentOrange:  '#f59e0b',
   accentYellow:  '#d97706',
   accentCyan:    '#0284c7',
   nodeRouterBg:  '#f0fdf4',
@@ -122,6 +126,7 @@ export function themeToVars(theme: NetlabTheme): React.CSSProperties {
     '--netlab-accent-blue':   theme.accentBlue,
     '--netlab-accent-green':  theme.accentGreen,
     '--netlab-accent-red':    theme.accentRed,
+    '--netlab-accent-orange': theme.accentOrange,
     '--netlab-accent-yellow': theme.accentYellow,
     '--netlab-accent-cyan':   theme.accentCyan,
     '--netlab-node-router-bg':theme.nodeRouterBg,

@@ -8,6 +8,7 @@ describe('themeToVars', () => {
       nodeSwitchBg: '#0d1f3c',
       nodeClientBg: '#0d1a2e',
       nodeServerBg: '#0a1f14',
+      accentOrange: '#f59e0b',
     });
 
     expect(NETLAB_LIGHT_THEME).toMatchObject({
@@ -15,6 +16,7 @@ describe('themeToVars', () => {
       nodeSwitchBg: '#eff6ff',
       nodeClientBg: '#f0f9ff',
       nodeServerBg: '#f0fdf4',
+      accentOrange: '#f59e0b',
     });
 
     expect(themeToVars(NETLAB_LIGHT_THEME)).toMatchObject({
@@ -22,6 +24,7 @@ describe('themeToVars', () => {
       '--netlab-node-switch-bg': '#eff6ff',
       '--netlab-node-client-bg': '#f0f9ff',
       '--netlab-node-server-bg': '#f0fdf4',
+      '--netlab-accent-orange': '#f59e0b',
     });
   });
 });

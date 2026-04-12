@@ -23,6 +23,7 @@ import { useNetlabContext } from './NetlabContext';
 import { NetlabUIContext } from './NetlabUIContext';
 import { NetlabThemeScopeContext } from './NetlabThemeScope';
 import { NodeDetailPanel } from './NodeDetailPanel';
+import { ValidationSmoothStepEdge } from './ValidationEdgeLabel';
 import { layerRegistry } from '../registry/LayerRegistry';
 import { areasToNodes } from '../areas/AreaRegistry';
 import { AreaBackground } from '../areas/AreaBackground';
@@ -40,6 +41,14 @@ const AREA_NODE_PREFIX = '__area__';
 
 function excludeAreaNodes(nodes: { id: string }[]): NetlabNode[] {
   return nodes.filter((node) => !node.id.startsWith(AREA_NODE_PREFIX)) as NetlabNode[];
+}
+
+function withValidationEdgeType(edge: NetlabEdge): NetlabEdge {
+  if (edge.type && edge.type !== 'smoothstep') {
+    return edge;
+  }
+
+  return { ...edge, type: 'validation-smoothstep' };
 }
 
 export interface NetlabCanvasProps {
@@ -76,6 +85,12 @@ export function NetlabCanvas({
     ...AREA_NODE_TYPE,
     ...layerRegistry.getAllNodeTypes(),
   }), []);
+  const edgeTypes = useMemo(
+    () => ({
+      'validation-smoothstep': ValidationSmoothStepEdge,
+    }),
+    [],
+  );
 
   const areaNodes = useMemo(() => areasToNodes(areas), [areas]);
 
@@ -198,29 +213,48 @@ export function NetlabCanvas({
   const styledEdges = useMemo(
     () =>
       edges.map((edge) => {
+        const validationEdge = withValidationEdgeType(edge);
+
         if (failureCtx?.isEdgeDown(edge.id)) {
           return {
-            ...edge,
+            ...validationEdge,
             animated: false,
-            style: { ...edge.style, stroke: 'var(--netlab-accent-red)', strokeDasharray: '6 3', strokeWidth: 2, opacity: 0.7 },
+            style: { ...validationEdge.style, stroke: 'var(--netlab-accent-red)', strokeDasharray: '6 3', strokeWidth: 2, opacity: 0.7 },
           };
         }
         if (activeEdgeIds.includes(edge.id)) {
-          return { ...edge, animated: true, style: { ...edge.style, stroke: 'var(--netlab-accent-cyan)', strokeWidth: 2 } };
+          return {
+            ...validationEdge,
+            animated: true,
+            style: { ...validationEdge.style, stroke: 'var(--netlab-accent-cyan)', strokeWidth: 2 },
+          };
         }
-        if (
-          !validateCanvasConnection(
-            nodes as NetlabNode[],
-            (edges as NetlabEdge[]).filter((candidate) => candidate.id !== edge.id),
-            edge.source,
-            edge.target,
-            edge.sourceHandle,
-            edge.targetHandle,
-          ).valid
-        ) {
-          return { ...edge, style: { ...edge.style, stroke: 'var(--netlab-accent-red)' } };
+        const validationResult = validateCanvasConnection(
+          nodes as NetlabNode[],
+          (edges as NetlabEdge[]).filter((candidate) => candidate.id !== edge.id),
+          edge.source,
+          edge.target,
+          edge.sourceHandle,
+          edge.targetHandle,
+        );
+
+        if (!validationResult.valid) {
+          return {
+            ...validationEdge,
+            style: { ...validationEdge.style, stroke: 'var(--netlab-accent-red)' },
+            data: { ...validationEdge.data, validationResult },
+          };
         }
-        return edge;
+
+        if (validationResult.warnings.length > 0) {
+          return {
+            ...validationEdge,
+            style: { ...validationEdge.style, stroke: 'var(--netlab-accent-orange, orange)' },
+            data: { ...validationEdge.data, validationResult },
+          };
+        }
+
+        return validationEdge;
       }),
     [edges, nodes, activeEdgeIds, failureCtx],
   );
@@ -237,6 +271,7 @@ export function NetlabCanvas({
           nodes={styledNodes}
           edges={styledEdges}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           colorMode={resolvedColorMode}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
