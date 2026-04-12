@@ -62,6 +62,14 @@ window.fetch(url)
 `SimulationEngine`, `SwitchForwarder`, `RouterForwarder`, and all routing protocols have zero React
 dependencies. This enables unit testing without a DOM and clean separation from the render cycle.
 
+### Forwarders Own Next-Hop Selection
+
+Transit forwarding is protocol-driven:
+
+- `RouterForwarder` returns the definitive next-hop node, traversed edge, selected route, and egress interface
+- `SwitchForwarder` returns the definitive next-hop node and traversed edge, including deterministic handling of unknown unicast on shared LAN demos
+- `SimulationEngine` executes those decisions and no longer performs a second router LPM or switch-path search for transit hops
+
 ### Module-Level Singletons for Registries
 
 `layerRegistry` and `protocolRegistry` are module-level singletons.

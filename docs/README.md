@@ -36,7 +36,7 @@ Specifications regarding user interface implementation and canvas operations.
 
 Specifications focused on simulation-time packet traversal and trace annotation.
 
-- [Interface-Aware Forwarding](simulation/interface-aware-forwarding.md) - How ingress and egress interfaces are resolved for each packet hop
+- [Protocol-Driven Forwarding](simulation/interface-aware-forwarding.md) - Forwarder-owned next-hop decisions, engine execution rules, and interface hop annotation
 - [RFC Packet Realism](simulation/rfc-packet-realism.md) - Packet materialization, router MAC rewrite, checksum/FCS recomputation, and hop mutation tracking
 - [Session Correlation](simulation/session-correlation.md) - Session-aware request/response lifecycle grouping, correlation logic, and SessionList/SessionDetail UI
 

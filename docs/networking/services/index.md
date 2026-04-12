@@ -58,9 +58,9 @@ performs DNS resolution first and rewrites the destination IP before precomputin
 ## Switch Traversal for Service Demos
 
 The services demo uses a flat topology with one switch and several endpoints. To support that
-layout, switch next-hop selection in `SimulationEngine` is destination-aware: when a frame enters a
-switch, the engine chooses the neighbor path that leads toward the intended endpoint instead of
-blindly forwarding to the first non-ingress neighbor.
+layout, `SwitchForwarder` is destination-aware when the MAC table has no learned entry yet:
+it uses the packet's destination node/IP metadata to choose the neighbor path that leads toward
+the intended endpoint instead of blindly returning the first flooded port.
 
 This keeps the packet trace deterministic while still matching the educational intent of a shared
 LAN segment.
