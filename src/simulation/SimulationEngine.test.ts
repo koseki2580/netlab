@@ -1875,16 +1875,16 @@ describe('SimulationEngine ICMP helpers', () => {
 });
 
 describe('SimulationEngine failure-aware routing fallback', () => {
-  it('uses the forwarder hint route without re-running reachable route selection when the path is up', async () => {
+  it('uses the forwarder-selected primary route on the healthy path', async () => {
     const engine = makeEngine(failureFallbackTopology());
-    const selectReachableRouteSpy = vi.spyOn(engine as any, 'selectReachableRoute');
 
     const trace = await engine.precompute(
       makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
     );
 
     expect(trace.status).toBe('delivered');
-    expect(selectReachableRouteSpy).not.toHaveBeenCalled();
+    expect((engine as any).selectReachableRoute).toBeUndefined();
+    expect((engine as any).resolveNextNode).toBeUndefined();
 
     const routerHop = trace.hops.find((hop) => hop.nodeId === 'router-1');
     expect(routerHop?.toNodeId).toBe('router-2');
@@ -1924,9 +1924,8 @@ describe('SimulationEngine failure-aware routing fallback', () => {
     expect(fallbackCandidate?.selectedByFailover).toBe(true);
   });
 
-  it('falls back to reachable-route selection when the forwarder hint route is unavailable', async () => {
+  it('does not retain the legacy reachable-route helper after fallback', async () => {
     const engine = makeEngine(failureFallbackTopology());
-    const selectReachableRouteSpy = vi.spyOn(engine as any, 'selectReachableRoute');
     const failureState: FailureState = {
       downNodeIds: new Set(),
       downEdgeIds: new Set(['e2']),
@@ -1939,7 +1938,8 @@ describe('SimulationEngine failure-aware routing fallback', () => {
     );
 
     expect(trace.status).toBe('delivered');
-    expect(selectReachableRouteSpy).toHaveBeenCalled();
+    expect((engine as any).selectReachableRoute).toBeUndefined();
+    expect((engine as any).resolveNextNode).toBeUndefined();
 
     const routerHop = trace.hops.find((hop) => hop.nodeId === 'router-1');
     expect(routerHop?.toNodeId).toBe('router-3');

@@ -6,6 +6,7 @@ import { computeFcs, computeIpv4Checksum } from '../utils/checksum';
 import { buildEthernetFrameBytes, buildIpv4HeaderBytes } from '../utils/packetLayout';
 import { buildPcap, type PcapRecord } from '../utils/pcapSerializer';
 import type { HookEngine } from '../hooks/HookEngine';
+import type { ForwardContext } from '../types/layers';
 import type { ConnTrackTable } from '../types/acl';
 import type { NatTable } from '../types/nat';
 import type { NetlabNode, NetworkTopology } from '../types/topology';
@@ -22,6 +23,7 @@ import type {
 } from '../types/packets';
 import type { RouteEntry, RouterInterface } from '../types/routing';
 import type {
+  Neighbor,
   PacketHop,
   PacketTrace,
   SimulationState,
@@ -172,19 +174,9 @@ function bestRoute(dstIp: string, routes: RouteEntry[]): RouteEntry | null {
   return sorted.find((r) => isInSubnet(dstIp, r.destination)) ?? null;
 }
 
-interface Neighbor {
-  nodeId: string;
-  edgeId: string;
-}
-
 interface ResolvedInterface {
   id: string;
   name: string;
-}
-
-interface NextNodeResult {
-  neighbor: Neighbor;
-  selectedRoute: RouteEntry | null;
 }
 
 interface ArpTargetInfo {
@@ -339,125 +331,6 @@ export class SimulationEngine {
     const resolved = iface ?? port;
 
     return resolved ? { id: resolved.id, name: resolved.name } : null;
-  }
-
-  private resolveNextNode(
-    currentNodeId: string,
-    packet: InFlightPacket,
-    ingressNodeId: string | null,
-    failureState: FailureState = EMPTY_FAILURE_STATE,
-    hintRoute?: RouteEntry,
-  ): NextNodeResult | null {
-    const neighbors = this.getNeighbors(currentNodeId, ingressNodeId, failureState);
-    const node = this.topology.nodes.find((n) => n.id === currentNodeId);
-    if (!node) return null;
-    const dstIp = packet.frame.payload.dstIp;
-
-    if (node.data.role === 'router') {
-      if (hintRoute) {
-        const hintedNeighbor = this.resolveNeighborForRoute(dstIp, hintRoute, neighbors);
-        if (hintedNeighbor) {
-          return { neighbor: hintedNeighbor, selectedRoute: hintRoute };
-        }
-      }
-
-      const routes = this.topology.routeTables.get(currentNodeId) ?? [];
-      const route = this.selectReachableRoute(dstIp, routes, neighbors);
-      if (!route) return null;
-      const neighbor = this.resolveNeighborForRoute(dstIp, route, neighbors);
-      return neighbor ? { neighbor, selectedRoute: route } : null;
-    }
-
-    if (node.data.role === 'switch') {
-      const targetIp = dstIp === BROADCAST_IP ? null : dstIp;
-
-      for (const neighbor of neighbors) {
-        const neighborNode = this.findNode(neighbor.nodeId);
-        if (!neighborNode) continue;
-
-        if (neighborNode.data.role === 'switch') {
-          const matched = this.findMatchingNodeThroughSwitches(
-            neighborNode.id,
-            currentNodeId,
-            targetIp,
-            packet.dstNodeId,
-            failureState,
-          );
-          if (matched && (!packet.dstNodeId || matched.id === packet.dstNodeId)) {
-            return { neighbor, selectedRoute: null };
-          }
-          continue;
-        }
-
-        if (packet.dstNodeId && neighborNode.id === packet.dstNodeId) {
-          return { neighbor, selectedRoute: null };
-        }
-
-        if (
-          targetIp &&
-          (
-            this.getEffectiveNodeIp(neighborNode) === targetIp ||
-            (neighborNode.data.interfaces ?? []).some((iface) => iface.ipAddress === targetIp)
-          )
-        ) {
-          return { neighbor, selectedRoute: null };
-        }
-      }
-
-      return neighbors[0] ? { neighbor: neighbors[0], selectedRoute: null } : null;
-    }
-
-    // Source endpoints forward to their first connected neighbor
-    // (non-source endpoints never forward — packet should have been delivered)
-    if (ingressNodeId === null) {
-      return neighbors[0] ? { neighbor: neighbors[0], selectedRoute: null } : null;
-    }
-
-    return null;
-  }
-
-  private resolveNeighborForRoute(
-    dstIp: string,
-    route: RouteEntry,
-    neighbors: Neighbor[],
-  ): Neighbor | null {
-    for (const neighbor of neighbors) {
-      const neighborNode = this.topology.nodes.find((n) => n.id === neighbor.nodeId);
-      if (!neighborNode) continue;
-
-      if (route.nextHop === 'direct') {
-        if (this.getEffectiveNodeIp(neighborNode) === dstIp) return neighbor;
-        if ((neighborNode.data.interfaces ?? []).some((iface) => iface.ipAddress === dstIp)) {
-          return neighbor;
-        }
-        if (neighborNode.data.role === 'switch') return neighbor;
-        continue;
-      }
-
-      const ifaces = (neighborNode.data.interfaces ?? []) as Array<{ ipAddress: string }>;
-      if (ifaces.some((iface) => iface.ipAddress === route.nextHop)) return neighbor;
-      if (neighborNode.data.role === 'switch') return neighbor;
-    }
-
-    return null;
-  }
-
-  private selectReachableRoute(
-    dstIp: string,
-    routes: RouteEntry[],
-    neighbors: Neighbor[],
-  ): RouteEntry | null {
-    const candidates = [...routes]
-      .filter((route) => isInSubnet(dstIp, route.destination))
-      .sort((a, b) => prefixLength(b.destination) - prefixLength(a.destination));
-
-    for (const route of candidates) {
-      if (this.resolveNeighborForRoute(dstIp, route, neighbors)) {
-        return route;
-      }
-    }
-
-    return null;
   }
 
   private findNode(nodeId: string) {
@@ -1139,22 +1012,16 @@ export class SimulationEngine {
       },
     };
 
-    const nextResult = this.resolveNextNode(
-      packet.currentDeviceId,
-      workingPacket,
-      null,
-      failureState,
-      undefined,
-    );
-    const next = nextResult?.neighbor ?? null;
-    const selectedRoute = nextResult?.selectedRoute ?? null;
+    const next =
+      currentNode?.data.role === 'client' || currentNode?.data.role === 'server'
+        ? this.getNeighbors(packet.currentDeviceId, null, failureState)[0] ?? null
+        : null;
 
     if (currentNode?.data.role === 'router' && next) {
       const egressInterface =
         this.resolveEgressInterface(
           packet.currentDeviceId,
           packet.frame.payload.dstIp,
-          selectedRoute?.nextHop,
         ) ??
         this.resolvePortFromEdge(packet.currentDeviceId, next.edgeId, 'egress');
       const srcMac = currentNode.data.interfaces?.find(
@@ -1167,7 +1034,6 @@ export class SimulationEngine {
         failureState,
         egressInterface?.id,
         next.edgeId,
-        selectedRoute?.nextHop,
       );
       const dstMac = arpTarget
         ? (arpCache.get(arpTarget.targetIp) ?? null)
@@ -1177,7 +1043,6 @@ export class SimulationEngine {
             egressInterface?.id,
             workingPacket,
             failureState,
-            selectedRoute?.nextHop,
           );
 
       workingPacket = {
@@ -1574,7 +1439,11 @@ export class SimulationEngine {
       let outsideToInsideMatched = false;
       let ingressAclMatch = null;
       let egressAclMatch = null;
-      let forwarderSelectedRoute: RouteEntry | undefined;
+      const neighbors = this.getNeighbors(current, ingressFrom, failureState);
+      const forwardCtx: ForwardContext = { neighbors };
+      let next: Neighbor | null = null;
+      let selectedRoute: RouteEntry | null = null;
+      let routerEgressInterface: ResolvedInterface | null = null;
 
       if (node.data.role === 'router') {
         const natProcessor = this.getNatProcessor(current);
@@ -1648,12 +1517,15 @@ export class SimulationEngine {
         }
       }
 
-      // Call router forwarder for TTL decrement and drop detection
-      if (node.data.role === 'router') {
+      if (node.data.role === 'router' || node.data.role === 'switch') {
         const forwarderFactory = layerRegistry.getForwarder(node.data.layerId);
         if (forwarderFactory) {
           const forwarder = forwarderFactory(current, this.topology);
-          const decision = await forwarder.receive(workingPacket, workingPacket.ingressPortId ?? '');
+          const decision = await forwarder.receive(
+            workingPacket,
+            workingPacket.ingressPortId ?? '',
+            forwardCtx,
+          );
           if (decision.action === 'drop') {
             const dropHop: Omit<PacketHop, 'step'> = {
               ...hopBase,
@@ -1661,17 +1533,22 @@ export class SimulationEngine {
               reason: decision.reason,
               aclMatch: ingressAclMatch ?? undefined,
             };
-            // Capture routing decision for no-route drops (but not TTL drops).
-            // TTL is checked first in the forwarder, so ttl-exceeded reason means
-            // we broke before any routing lookup — intentionally absent on TTL drops.
-            if (decision.reason !== 'ttl-exceeded') {
+            if (node.data.role === 'router' && decision.reason !== 'ttl-exceeded') {
               const routes = this.topology.routeTables.get(current) ?? [];
-              dropHop.routingDecision = buildRoutingDecision(workingPacket.frame.payload.dstIp, routes);
+              dropHop.routingDecision = buildRoutingDecision(
+                workingPacket.frame.payload.dstIp,
+                routes,
+                null,
+              );
             }
             if (natTranslation) {
               dropHop.natTranslation = natTranslation;
             }
-            if (decision.reason === 'ttl-exceeded' && !options.suppressGeneratedIcmp) {
+            if (
+              node.data.role === 'router' &&
+              decision.reason === 'ttl-exceeded' &&
+              !options.suppressGeneratedIcmp
+            ) {
               const routerIp = hopBase.ingressInterfaceId
                 ? node.data.interfaces?.find((iface) => iface.id === hopBase.ingressInterfaceId)?.ipAddress
                 : undefined;
@@ -1692,23 +1569,47 @@ export class SimulationEngine {
             stepCounter = this.appendHop(hops, snapshots, dropHop, workingPacket, stepCounter);
             break;
           }
-          workingPacket = decision.packet;
-          forwarderSelectedRoute = decision.action === 'forward'
-            ? decision.selectedRoute
-            : undefined;
-        }
-      }
 
-      // Resolve next node via topology graph (independent of egressPort)
-      const nextResult = this.resolveNextNode(
-        current,
-        workingPacket,
-        ingressFrom,
-        failureState,
-        node.data.role === 'router' ? forwarderSelectedRoute : undefined,
-      );
-      const next = nextResult?.neighbor ?? null;
-      const selectedRoute = nextResult?.selectedRoute ?? null;
+          if (decision.action !== 'forward') {
+            const deliverHop: Omit<PacketHop, 'step'> = {
+              ...hopBase,
+              event: 'deliver',
+              aclMatch: ingressAclMatch ?? undefined,
+            };
+            if (natTranslation) {
+              deliverHop.natTranslation = natTranslation;
+            }
+            const changedFields = this.diffPacketFields(packetBeforeHop, decision.packet);
+            if (changedFields.length > 0) {
+              deliverHop.changedFields = changedFields;
+            }
+            stepCounter = this.appendHop(
+              hops,
+              snapshots,
+              deliverHop,
+              decision.packet,
+              stepCounter,
+            );
+            break;
+          }
+
+          workingPacket = decision.packet;
+          next = { nodeId: decision.nextNodeId, edgeId: decision.edgeId };
+
+          if (node.data.role === 'router') {
+            selectedRoute = decision.selectedRoute ?? null;
+            const egressInterfaceId = decision.egressInterfaceId;
+            const interfaceMatch = egressInterfaceId
+              ? node.data.interfaces?.find((iface) => iface.id === egressInterfaceId)
+              : null;
+            routerEgressInterface = interfaceMatch
+              ? { id: interfaceMatch.id, name: interfaceMatch.name }
+              : this.resolvePortFromEdge(current, next.edgeId, 'egress');
+          }
+        }
+      } else if (ingressFrom === null) {
+        next = neighbors[0] ?? null;
+      }
 
       // Capture routing decision for educational display (router hops only).
       // TTL-exceeded drops break before reaching this point, so routingDecision
@@ -1740,16 +1641,7 @@ export class SimulationEngine {
         break;
       }
 
-      let routerEgressInterface: ResolvedInterface | null = null;
-
       if (node.data.role === 'router') {
-        routerEgressInterface =
-          this.resolveEgressInterface(
-            current,
-            workingPacket.frame.payload.dstIp,
-            selectedRoute?.nextHop,
-          ) ??
-          this.resolvePortFromEdge(current, next.edgeId, 'egress');
         if (routerEgressInterface) {
           hopBase.egressInterfaceId = routerEgressInterface.id;
           hopBase.egressInterfaceName = routerEgressInterface.name;
@@ -1995,7 +1887,12 @@ export class SimulationEngine {
 
       ingressFrom = current;
       ingressEdgeId = next.edgeId;
-      workingPacket = { ...workingPacket, currentDeviceId: next.nodeId };
+      const nextIngressPort = this.resolvePortFromEdge(next.nodeId, next.edgeId, 'ingress');
+      workingPacket = {
+        ...workingPacket,
+        currentDeviceId: next.nodeId,
+        ingressPortId: nextIngressPort?.id ?? workingPacket.ingressPortId,
+      };
       current = next.nodeId;
     }
 
@@ -2420,7 +2317,14 @@ export class SimulationEngine {
           packet,
           fromNodeId: hop.fromNodeId ?? hop.nodeId,
           toNodeId: hop.toNodeId ?? '',
-          decision: { action: 'forward', egressPort: hop.activeEdgeId ?? '', packet },
+          decision: {
+            action: 'forward',
+            nextNodeId: hop.toNodeId ?? '',
+            edgeId: hop.activeEdgeId ?? '',
+            egressPort: hop.egressInterfaceId ?? hop.activeEdgeId ?? '',
+            egressInterfaceId: hop.egressInterfaceId,
+            packet,
+          },
         });
         break;
       case 'deliver':
