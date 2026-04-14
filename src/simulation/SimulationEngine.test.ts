@@ -517,6 +517,116 @@ describe('SimulationEngine.play / pause', () => {
   });
 });
 
+describe('SimulationEngine animation speed', () => {
+  it('returns the default play interval before configuration', () => {
+    const engine = makeEngine(singleRouterTopology());
+
+    expect(engine.getPlayInterval()).toBe(500);
+  });
+
+  it('stores the configured play interval', () => {
+    const engine = makeEngine(singleRouterTopology());
+
+    engine.setPlayInterval(250);
+
+    expect(engine.getPlayInterval()).toBe(250);
+  });
+
+  it('clamps configured play interval to the minimum value', () => {
+    const engine = makeEngine(singleRouterTopology());
+
+    engine.setPlayInterval(25);
+
+    expect(engine.getPlayInterval()).toBe(50);
+  });
+
+  it('clamps configured play interval to the maximum value', () => {
+    const engine = makeEngine(singleRouterTopology());
+
+    engine.setPlayInterval(10000);
+
+    expect(engine.getPlayInterval()).toBe(5000);
+  });
+
+  it('uses the configured play interval when play() is called without an override', async () => {
+    vi.useFakeTimers();
+    const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
+    const engine = makeEngine(singleRouterTopology());
+    await engine.send(makePacket('speed-play', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
+
+    engine.setPlayInterval(250);
+    engine.play();
+
+    expect(setIntervalSpy).toHaveBeenLastCalledWith(expect.any(Function), 250);
+
+    engine.pause();
+    vi.useRealTimers();
+  });
+});
+
+describe('SimulationEngine last-packet tracking', () => {
+  it('returns null before any packet is sent', () => {
+    const engine = makeEngine(singleRouterTopology());
+
+    expect(engine.getLastPacket()).toBeNull();
+  });
+
+  it('stores the last packet after send()', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const packet = makePacket('last-packet', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
+
+    await engine.send(packet);
+
+    expect(engine.getLastPacket()).toBe(packet);
+  });
+
+  it('resend() replays the last packet with a fresh id and the provided failure state', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-14T00:00:00Z'));
+
+    const engine = makeEngine(singleRouterTopology());
+    const packet = makePacket('resend-source', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
+    await engine.send(packet);
+
+    vi.setSystemTime(new Date('2026-04-14T00:00:01Z'));
+    const sendSpy = vi.spyOn(engine, 'send');
+    const failureState: FailureState = {
+      downNodeIds: new Set(),
+      downEdgeIds: new Set(['e2']),
+      downInterfaceIds: new Set(),
+    };
+
+    await engine.resend(failureState);
+
+    expect(sendSpy).toHaveBeenCalledTimes(1);
+    const resentPacket = sendSpy.mock.calls[0]?.[0];
+    const resentFailureState = sendSpy.mock.calls[0]?.[1];
+    expect(resentPacket?.id).not.toBe(packet.id);
+    expect(resentPacket?.timestamp).not.toBe(packet.timestamp);
+    expect(resentFailureState).toBe(failureState);
+
+    vi.useRealTimers();
+  });
+
+  it('resend() is a no-op when no packet has been sent yet', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const sendSpy = vi.spyOn(engine, 'send');
+
+    await engine.resend();
+
+    expect(sendSpy).not.toHaveBeenCalled();
+  });
+
+  it('clear() resets the stored last packet', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    await engine.send(makePacket('clear-last-packet', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
+
+    engine.clear();
+
+    expect(engine.getLastPacket()).toBeNull();
+  });
+});
+
 describe('SimulationEngine.reset', () => {
   it('resets playback position without clearing traces', async () => {
     const engine = makeEngine(singleRouterTopology());

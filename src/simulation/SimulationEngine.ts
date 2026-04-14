@@ -23,6 +23,9 @@ export class SimulationEngine {
   private state: SimulationState = { ...INITIAL_STATE };
   private listeners = new Set<(state: SimulationState) => void>();
   private playTimer: ReturnType<typeof setInterval> | null = null;
+  private playIntervalMs: number = DEFAULT_PLAY_INTERVAL_MS;
+  private lastPacket: InFlightPacket | null = null;
+  private lastFailureState: FailureState = EMPTY_FAILURE_STATE;
   private readonly traceRecorder: TraceRecorder;
   private readonly services: ServiceOrchestrator;
   private readonly pipeline: ForwardingPipeline;
@@ -113,11 +116,31 @@ export class SimulationEngine {
 
   async send(packet: InFlightPacket, failureState: FailureState = EMPTY_FAILURE_STATE): Promise<void> {
     this.clearPlay();
+    this.lastPacket = packet;
+    this.lastFailureState = failureState;
     const preparedPacket = await this.preparePacketForSend(packet, failureState);
     if (!preparedPacket) return;
 
     const { trace, nodeArpTables } = await this.pipeline.precompute(preparedPacket, failureState);
     this.commitTrace(trace, nodeArpTables);
+  }
+
+  async resend(failureState?: FailureState): Promise<void> {
+    if (!this.lastPacket) return;
+
+    const timestamp = Date.now();
+    await this.send(
+      {
+        ...this.lastPacket,
+        id: `pkt-${timestamp}`,
+        timestamp,
+      },
+      failureState ?? this.lastFailureState,
+    );
+  }
+
+  getLastPacket(): InFlightPacket | null {
+    return this.lastPacket;
   }
 
   exportPcap(traceId?: string): Uint8Array {
@@ -158,11 +181,25 @@ export class SimulationEngine {
     }
   }
 
-  play(ms = DEFAULT_PLAY_INTERVAL_MS): void {
+  setPlayInterval(ms: number): void {
+    this.playIntervalMs = Math.max(50, Math.min(5000, ms));
+    if (this.state.status === 'running') {
+      this.clearPlay();
+      this.playTimer = setInterval(() => this.step(), this.playIntervalMs);
+    }
+    this.notify();
+  }
+
+  getPlayInterval(): number {
+    return this.playIntervalMs;
+  }
+
+  play(ms?: number): void {
     if (this.state.status === 'done' || this.state.status === 'running') return;
+    const interval = ms ?? this.playIntervalMs;
     this.state = { ...this.state, status: 'running' };
     this.notify();
-    this.playTimer = setInterval(() => this.step(), ms);
+    this.playTimer = setInterval(() => this.step(), interval);
   }
 
   pause(): void {
@@ -192,6 +229,8 @@ export class SimulationEngine {
     this.clearPlay();
     this.traceRecorder.clearSnapshots();
     this.services.clearAll();
+    this.lastPacket = null;
+    this.lastFailureState = EMPTY_FAILURE_STATE;
     this.state = { ...INITIAL_STATE };
     this.notify();
   }
@@ -200,6 +239,8 @@ export class SimulationEngine {
     this.clearPlay();
     this.traceRecorder.clearSnapshots();
     this.services.resetProcessors();
+    this.lastPacket = null;
+    this.lastFailureState = EMPTY_FAILURE_STATE;
     this.state = {
       ...this.state,
       status: 'idle',
