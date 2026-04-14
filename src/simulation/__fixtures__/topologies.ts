@@ -395,6 +395,150 @@ export function threeHopChainTopology(): NetworkTopology {
   };
 }
 
+/** server-a -- e1 -- router-1 -- e2 -- router-2 -- e3 -- server-b */
+export function dataTransferDemoTopology(): NetworkTopology {
+  const routeTables = new Map<string, RouteEntry[]>([
+    [
+      'router-1',
+      [
+        makeRouteEntry('router-1', '10.0.1.0/24', 'direct'),
+        makeRouteEntry('router-1', '10.0.2.0/24', 'direct'),
+        makeRouteEntry('router-1', '10.0.3.0/24', '10.0.2.2'),
+      ],
+    ],
+    [
+      'router-2',
+      [
+        makeRouteEntry('router-2', '10.0.1.0/24', '10.0.2.1'),
+        makeRouteEntry('router-2', '10.0.2.0/24', 'direct'),
+        makeRouteEntry('router-2', '10.0.3.0/24', 'direct'),
+      ],
+    ],
+  ]);
+
+  return {
+    nodes: [
+      {
+        id: 'server-a',
+        type: 'server',
+        position: { x: 100, y: 300 },
+        data: {
+          label: 'Server A',
+          role: 'server',
+          layerId: 'l3',
+          ip: '10.0.1.10',
+          mac: 'aa:bb:cc:00:01:10',
+          interfaces: [
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '10.0.1.10',
+              prefixLength: 24,
+              macAddress: 'aa:bb:cc:00:01:10',
+            },
+          ],
+          staticRoutes: [
+            { destination: '0.0.0.0/0', nextHop: '10.0.1.1' },
+          ],
+        },
+      },
+      {
+        id: 'router-1',
+        type: 'router',
+        position: { x: 300, y: 300 },
+        data: {
+          label: 'Router 1',
+          role: 'router',
+          layerId: 'l3',
+          interfaces: [
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '10.0.1.1',
+              prefixLength: 24,
+              macAddress: 'aa:bb:cc:00:01:01',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '10.0.2.1',
+              prefixLength: 24,
+              macAddress: 'aa:bb:cc:00:02:01',
+            },
+          ],
+          staticRoutes: [
+            { destination: '10.0.1.0/24', nextHop: 'direct' },
+            { destination: '10.0.2.0/24', nextHop: 'direct' },
+            { destination: '10.0.3.0/24', nextHop: '10.0.2.2' },
+          ],
+        },
+      },
+      {
+        id: 'router-2',
+        type: 'router',
+        position: { x: 500, y: 300 },
+        data: {
+          label: 'Router 2',
+          role: 'router',
+          layerId: 'l3',
+          interfaces: [
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '10.0.2.2',
+              prefixLength: 24,
+              macAddress: 'aa:bb:cc:00:02:02',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '10.0.3.1',
+              prefixLength: 24,
+              macAddress: 'aa:bb:cc:00:03:01',
+            },
+          ],
+          staticRoutes: [
+            { destination: '10.0.1.0/24', nextHop: '10.0.2.1' },
+            { destination: '10.0.2.0/24', nextHop: 'direct' },
+            { destination: '10.0.3.0/24', nextHop: 'direct' },
+          ],
+        },
+      },
+      {
+        id: 'server-b',
+        type: 'server',
+        position: { x: 700, y: 300 },
+        data: {
+          label: 'Server B',
+          role: 'server',
+          layerId: 'l3',
+          ip: '10.0.3.10',
+          mac: 'aa:bb:cc:00:03:10',
+          interfaces: [
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '10.0.3.10',
+              prefixLength: 24,
+              macAddress: 'aa:bb:cc:00:03:10',
+            },
+          ],
+          staticRoutes: [
+            { destination: '0.0.0.0/0', nextHop: '10.0.3.1' },
+          ],
+        },
+      },
+    ],
+    edges: [
+      { id: 'e1', source: 'server-a', target: 'router-1', sourceHandle: 'eth0', targetHandle: 'eth0' },
+      { id: 'e2', source: 'router-1', target: 'router-2', sourceHandle: 'eth1', targetHandle: 'eth0' },
+      { id: 'e3', source: 'router-2', target: 'server-b', sourceHandle: 'eth1', targetHandle: 'eth0' },
+    ],
+    areas: [],
+    routeTables,
+  };
+}
+
 /** client-1 -- router-1 -- {router-2,router-3} -- router-4 -- server-1 */
 export function diamondTopology(): NetworkTopology {
   const routeTables = new Map<string, RouteEntry[]>([
