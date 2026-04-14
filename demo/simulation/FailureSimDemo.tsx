@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
@@ -160,18 +161,19 @@ function makePacket(srcNodeId: string, dstNodeId: string, srcIp: string, dstIp: 
 // ── Inner component ──────────────────────────────────────────────────────────
 
 function FailureSimDemoInner() {
-  const { sendPacket } = useSimulation();
+  const { sendPacket, state, animationSpeed, setAnimationSpeed } = useSimulation();
   const { topology } = useNetlabContext();
   const { failureState } = useFailure();
 
-  const handleSend = () => {
+  useEffect(() => {
+    if (state.status !== 'idle') return;
     const client = topology.nodes.find((n) => n.data.role === 'client');
     const server = topology.nodes.find((n) => n.data.role === 'server');
     if (!client || !server) return;
     const srcIp = (client.data.ip as string | undefined) ?? '0.0.0.0';
     const dstIp = (server.data.ip as string | undefined) ?? '0.0.0.0';
     void sendPacket(makePacket(client.id, server.id, srcIp, dstIp));
-  };
+  }, []);
 
   const downCount =
     failureState.downNodeIds.size +
@@ -180,35 +182,17 @@ function FailureSimDemoInner() {
 
   return (
     <div style={{ display: 'flex', height: '100%' }}>
-      {/* Canvas */}
       <div style={{ flex: 1, position: 'relative' }}>
         <NetlabCanvas />
-        {/* Send button overlay */}
-        <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button
-            onClick={handleSend}
-            style={{
-              padding: '6px 14px',
-              background: '#1d4ed8',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 5,
-              cursor: 'pointer',
-              fontFamily: 'monospace',
-              fontSize: 12,
-            }}
-          >
-            Send Packet
-          </button>
-          {downCount > 0 && (
+        {downCount > 0 && (
+          <div style={{ position: 'absolute', top: 12, left: 12 }}>
             <span style={{ fontSize: 11, color: '#f87171', fontFamily: 'monospace' }}>
               {downCount} failure{downCount > 1 ? 's' : ''} active
             </span>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Right panel */}
       <ResizableSidebar
         defaultWidth={300}
         style={{
@@ -218,15 +202,27 @@ function FailureSimDemoInner() {
           flexDirection: 'column',
         }}
       >
-        {/* Failure panel (top half) */}
         <div style={{ flex: 1, overflow: 'hidden', padding: 12 }}>
           <FailureTogglePanel />
         </div>
 
-        {/* Divider */}
         <div style={{ height: 1, background: '#1e293b', flexShrink: 0 }} />
 
-        {/* Step controls (bottom half) */}
+        <div style={{ padding: '8px 12px', borderBottom: '1px solid #1e293b' }}>
+          <label style={{ display: 'block', fontSize: 10, color: '#64748b', fontFamily: 'monospace' }}>
+            SPEED: {animationSpeed}ms
+          </label>
+          <input
+            type="range"
+            min={50}
+            max={2000}
+            step={50}
+            value={animationSpeed}
+            onChange={(event) => setAnimationSpeed(Number(event.target.value))}
+            style={{ width: '100%', marginTop: 4 }}
+          />
+        </div>
+
         <div style={{ flex: 1, overflow: 'hidden' }}>
           <StepControls />
         </div>
@@ -241,11 +237,11 @@ export default function FailureSimDemo() {
   return (
     <DemoShell
       title="Failure Injection"
-      desc="Toggle nodes and links down — watch packets reroute or drop"
+      desc="Toggle failures and watch packets recompute, reroute, or drop"
     >
       <NetlabProvider topology={TOPOLOGY}>
         <FailureProvider>
-          <SimulationProvider>
+          <SimulationProvider autoRecompute>
             <FailureSimDemoInner />
           </SimulationProvider>
         </FailureProvider>
