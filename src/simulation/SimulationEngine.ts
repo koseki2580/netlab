@@ -3,8 +3,10 @@ import type { NetworkTopology } from '../types/topology';
 import type { HttpMessage, InFlightPacket, IpPacket } from '../types/packets';
 import type { PacketHop, PacketTrace, SimulationState } from '../types/simulation';
 import type { DhcpLeaseState, DnsCache } from '../types/services';
+import type { TransferMessage } from '../types/transfer';
 import { type FailureState, EMPTY_FAILURE_STATE } from '../types/failure';
 import { extractHostname, isIpAddress } from '../utils/network';
+import { DataTransferController, type DataTransferOptions } from './DataTransferController';
 import { ForwardingPipeline } from './ForwardingPipeline';
 import { ServiceOrchestrator } from './ServiceOrchestrator';
 import { TraceRecorder } from './TraceRecorder';
@@ -26,6 +28,7 @@ export class SimulationEngine {
   private playIntervalMs: number = DEFAULT_PLAY_INTERVAL_MS;
   private lastPacket: InFlightPacket | null = null;
   private lastFailureState: FailureState = EMPTY_FAILURE_STATE;
+  private transferController: DataTransferController | null = null;
   private readonly traceRecorder: TraceRecorder;
   private readonly services: ServiceOrchestrator;
   private readonly pipeline: ForwardingPipeline;
@@ -114,6 +117,19 @@ export class SimulationEngine {
     );
   }
 
+  async sendTransfer(
+    srcNodeId: string,
+    dstNodeId: string,
+    payload: string,
+    options?: DataTransferOptions,
+  ): Promise<TransferMessage> {
+    if (!this.transferController) {
+      this.transferController = new DataTransferController(this);
+    }
+
+    return this.transferController.startTransfer(srcNodeId, dstNodeId, payload, options);
+  }
+
   async send(packet: InFlightPacket, failureState: FailureState = EMPTY_FAILURE_STATE): Promise<void> {
     this.clearPlay();
     this.lastPacket = packet;
@@ -141,6 +157,10 @@ export class SimulationEngine {
 
   getLastPacket(): InFlightPacket | null {
     return this.lastPacket;
+  }
+
+  getTransferController(): DataTransferController | null {
+    return this.transferController ?? null;
   }
 
   exportPcap(traceId?: string): Uint8Array {
@@ -229,6 +249,8 @@ export class SimulationEngine {
     this.clearPlay();
     this.traceRecorder.clearSnapshots();
     this.services.clearAll();
+    this.transferController?.clear();
+    this.transferController = null;
     this.lastPacket = null;
     this.lastFailureState = EMPTY_FAILURE_STATE;
     this.state = { ...INITIAL_STATE };
