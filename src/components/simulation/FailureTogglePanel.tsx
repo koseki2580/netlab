@@ -1,4 +1,5 @@
 import { useFailure } from '../../simulation/FailureContext';
+import { useOptionalSimulation } from '../../simulation/SimulationContext';
 import { useNetlabContext } from '../NetlabContext';
 import type { RouterInterface } from '../../types/routing';
 
@@ -66,6 +67,7 @@ export function FailureTogglePanel() {
     isInterfaceDown,
   } = useFailure();
   const { topology } = useNetlabContext();
+  const simulation = useOptionalSimulation();
 
   const visibleNodes = topology.nodes.filter(
     (n) => n.type !== 'netlab-area',
@@ -93,6 +95,35 @@ export function FailureTogglePanel() {
       <div style={{ fontWeight: 'bold', fontSize: 11, color: '#94a3b8', letterSpacing: '0.08em' }}>
         FAILURE INJECTION
       </div>
+
+      {simulation?.isRecomputing && (
+        <div
+          style={{
+            padding: '6px 10px',
+            background: '#172554',
+            border: '1px solid #1e40af',
+            borderRadius: 6,
+            fontSize: 11,
+            color: '#60a5fa',
+            fontFamily: 'monospace',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <span
+            style={{
+              display: 'inline-block',
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: '#3b82f6',
+              flexShrink: 0,
+            }}
+          />
+          Calculating...
+        </div>
+      )}
 
       <div>
         <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4, letterSpacing: '0.06em' }}>
