@@ -5,6 +5,7 @@ import {
   useEffect,
   useMemo,
   useCallback,
+  useRef,
   type ReactNode,
 } from 'react';
 import { SimulationEngine } from './SimulationEngine';
@@ -23,15 +24,24 @@ export interface SimulationContextValue {
   getDhcpLeaseState: (nodeId: string) => DhcpLeaseState | null;
   getDnsCache: (nodeId: string) => DnsCache | null;
   exportPcap: (traceId?: string) => Uint8Array;
+  animationSpeed: number;
+  setAnimationSpeed: (ms: number) => void;
+  isRecomputing: boolean;
 }
 
 export const SimulationContext = createContext<SimulationContextValue | null>(null);
 
 export interface SimulationProviderProps {
   children: ReactNode;
+  autoRecompute?: boolean;
+  animationSpeed?: number;
 }
 
-export function SimulationProvider({ children }: SimulationProviderProps) {
+export function SimulationProvider({
+  children,
+  autoRecompute = false,
+  animationSpeed,
+}: SimulationProviderProps) {
   const { topology, hookEngine } = useNetlabContext();
   const failureCtx = useOptionalFailure();
 
@@ -41,12 +51,56 @@ export function SimulationProvider({ children }: SimulationProviderProps) {
   );
 
   const [state, setState] = useState<SimulationState>(() => engine.getState());
+  const [currentSpeed, setCurrentSpeed] = useState<number>(
+    () => animationSpeed ?? engine.getPlayInterval(),
+  );
+  const [isRecomputing, setIsRecomputing] = useState(false);
+  const prevFailureStateRef = useRef(failureCtx?.failureState);
+  const recomputeSequenceRef = useRef(0);
 
   useEffect(() => {
     // Re-seed state when engine changes (topology changed)
     setState(engine.getState());
+    setCurrentSpeed(animationSpeed ?? engine.getPlayInterval());
+    setIsRecomputing(false);
     return engine.subscribe(setState);
   }, [engine]);
+
+  useEffect(() => {
+    if (animationSpeed === undefined) return;
+    engine.setPlayInterval(animationSpeed);
+    setCurrentSpeed(engine.getPlayInterval());
+  }, [animationSpeed, engine]);
+
+  useEffect(() => {
+    const nextFailureState = failureCtx?.failureState;
+    const prevFailureState = prevFailureStateRef.current;
+    prevFailureStateRef.current = nextFailureState;
+
+    if (!autoRecompute || !failureCtx || !nextFailureState) return;
+    if (prevFailureState === undefined || prevFailureState === nextFailureState) return;
+    if (!engine.getLastPacket()) return;
+
+    const sequence = recomputeSequenceRef.current + 1;
+    recomputeSequenceRef.current = sequence;
+    const shouldResume = engine.getState().status === 'running';
+
+    setIsRecomputing(true);
+    engine.reset();
+
+    void engine.resend(nextFailureState)
+      .then(() => {
+        if (recomputeSequenceRef.current !== sequence) return;
+        if (shouldResume) {
+          engine.play();
+        }
+      })
+      .finally(() => {
+        if (recomputeSequenceRef.current === sequence) {
+          setIsRecomputing(false);
+        }
+      });
+  }, [autoRecompute, engine, failureCtx, failureCtx?.failureState]);
 
   const sendPacket = useCallback(
     (packet: InFlightPacket) => engine.send(packet, failureCtx?.failureState),
@@ -79,6 +133,14 @@ export function SimulationProvider({ children }: SimulationProviderProps) {
     [engine],
   );
 
+  const setAnimationSpeed = useCallback(
+    (ms: number) => {
+      engine.setPlayInterval(ms);
+      setCurrentSpeed(engine.getPlayInterval());
+    },
+    [engine],
+  );
+
   const value = useMemo(
     () => ({
       engine,
@@ -89,8 +151,23 @@ export function SimulationProvider({ children }: SimulationProviderProps) {
       getDhcpLeaseState,
       getDnsCache,
       exportPcap,
+      animationSpeed: currentSpeed,
+      setAnimationSpeed,
+      isRecomputing,
     }),
-    [engine, state, sendPacket, simulateDhcp, simulateDns, getDhcpLeaseState, getDnsCache, exportPcap],
+    [
+      engine,
+      state,
+      sendPacket,
+      simulateDhcp,
+      simulateDns,
+      getDhcpLeaseState,
+      getDnsCache,
+      exportPcap,
+      currentSpeed,
+      setAnimationSpeed,
+      isRecomputing,
+    ],
   );
 
   return (
@@ -106,4 +183,8 @@ export function useSimulation(): SimulationContextValue {
     throw new Error('[netlab] useSimulation must be used within <SimulationProvider>');
   }
   return ctx;
+}
+
+export function useOptionalSimulation(): SimulationContextValue | null {
+  return useContext(SimulationContext);
 }

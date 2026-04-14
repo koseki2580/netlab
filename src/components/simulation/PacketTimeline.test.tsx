@@ -92,6 +92,9 @@ function makeSimulationContextValue(
     getDhcpLeaseState: () => null,
     getDnsCache: () => null,
     exportPcap: () => new Uint8Array(),
+    animationSpeed: 500,
+    setAnimationSpeed: () => {},
+    isRecomputing: false,
     ...overrides,
   };
 }
