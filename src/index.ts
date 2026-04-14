@@ -43,15 +43,35 @@ export type {
   SessionStatus,
   SessionEvent,
 } from './types/session';
+export type {
+  DeliveryStatus,
+  TransferMessage,
+  ChunkDeliveryState,
+  TransferChunk,
+  ReassemblyState,
+  DataTransferState,
+} from './types/transfer';
 
 // Session tracker + context
 export { SessionTracker } from './simulation/SessionTracker';
+export { DataTransferController } from './simulation/DataTransferController';
 export {
   SessionProvider,
   SessionContext,
   useSession,
 } from './simulation/SessionContext';
 export type { SessionProviderProps, SessionContextValue } from './simulation/SessionContext';
+export type { DataTransferOptions } from './simulation/DataTransferController';
+export {
+  DataTransferProvider,
+  DataTransferContext,
+  useDataTransfer,
+  useOptionalDataTransfer,
+} from './simulation/DataTransferContext';
+export type {
+  DataTransferProviderProps,
+  DataTransferContextValue,
+} from './simulation/DataTransferContext';
 
 // Simulation UI components
 export { SimulationControls } from './components/simulation/SimulationControls';
