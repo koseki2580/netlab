@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest';
+import { DataTransferController } from './DataTransferController';
 import { SimulationEngine } from './SimulationEngine';
 import { HookEngine } from '../hooks/HookEngine';
 import { layerRegistry } from '../registry/LayerRegistry';
@@ -624,6 +625,43 @@ describe('SimulationEngine last-packet tracking', () => {
     engine.clear();
 
     expect(engine.getLastPacket()).toBeNull();
+  });
+});
+
+describe('SimulationEngine.sendTransfer', () => {
+  it('creates a transfer controller lazily', async () => {
+    const engine = makeEngine(singleRouterTopology());
+
+    expect(engine.getTransferController()).toBeNull();
+
+    await engine.sendTransfer('client-1', 'server-1', 'payload', { chunkDelay: 0 });
+
+    expect(engine.getTransferController()).toBeInstanceOf(DataTransferController);
+  });
+
+  it('delegates to DataTransferController.startTransfer', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const startTransferSpy = vi.spyOn(DataTransferController.prototype, 'startTransfer');
+
+    await engine.sendTransfer('client-1', 'server-1', 'payload', { chunkDelay: 0 });
+
+    expect(startTransferSpy).toHaveBeenCalledTimes(1);
+    expect(startTransferSpy).toHaveBeenCalledWith('client-1', 'server-1', 'payload', { chunkDelay: 0 });
+  });
+
+  it('clear resets the transfer controller', async () => {
+    const engine = makeEngine(singleRouterTopology());
+
+    await engine.sendTransfer('client-1', 'server-1', 'payload', { chunkDelay: 0 });
+
+    const controller = engine.getTransferController();
+    expect(controller).not.toBeNull();
+
+    const clearSpy = controller ? vi.spyOn(controller, 'clear') : null;
+    engine.clear();
+
+    expect(clearSpy).toHaveBeenCalledTimes(1);
+    expect(engine.getTransferController()).toBeNull();
   });
 });
 
