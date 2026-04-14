@@ -129,6 +129,11 @@ const CATEGORIES: Category[] = [
         title: 'Session Inspector',
         desc: 'Group request and response traffic into one session lifecycle, with request/response paths and failure-aware status.',
       },
+      {
+        path: '/simulation/data-transfer',
+        title: 'Data Transfer',
+        desc: 'Application-level data transfer with chunking, reassembly, and per-hop forwarding visualization.',
+      },
     ],
   },
   {
