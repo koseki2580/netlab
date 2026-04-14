@@ -36,6 +36,9 @@ Specifications regarding user interface implementation and canvas operations.
 
 Specifications focused on simulation-time packet traversal and trace annotation.
 
+- [ForwardingPipeline](core/architecture.md) - Forwarding loop, route lookup, ARP/ICMP generation, and packet materialization behind the `SimulationEngine` facade
+- [TraceRecorder](core/architecture.md) - Trace snapshot ownership, merged trace assembly, and PCAP export support for simulation playback
+- [ServiceOrchestrator](core/architecture.md) - DHCP/DNS orchestration plus NAT/ACL runtime processor ownership behind the simulation facade
 - [Simulation Engine Coverage Improvements](simulation/simulation-engine-coverage.md) - Shared fixture extraction and deterministic coverage scenarios for routing, TTL, ARP, no-route, and failures
 - [Protocol-Driven Forwarding](simulation/interface-aware-forwarding.md) - Forwarder-owned next-hop decisions, engine execution rules, and interface hop annotation
 - [RFC Packet Realism](simulation/rfc-packet-realism.md) - Packet materialization, router MAC rewrite, checksum/FCS recomputation, and hop mutation tracking
