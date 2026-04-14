@@ -100,6 +100,44 @@ interface InFlightPacket {
 }
 ```
 
+## Animation Speed Configuration
+
+Packet playback speed is configurable at both the engine and React-context layers.
+
+### Engine API
+
+```typescript
+engine.setPlayInterval(ms: number): void
+engine.getPlayInterval(): number
+engine.play(): void
+engine.play(ms: number): void
+```
+
+- `setPlayInterval(ms)` stores a persistent playback interval and clamps the value to `50..5000`.
+- `getPlayInterval()` returns the currently stored interval.
+- `play()` uses the stored interval when no argument is provided.
+- `play(ms)` is a one-shot override for that play call only; it does not replace the stored interval.
+
+### Provider Props
+
+```tsx
+<SimulationProvider animationSpeed={300}>
+  {/* ... */}
+</SimulationProvider>
+```
+
+- `animationSpeed` seeds the engine interval when the provider mounts.
+- When the prop changes at runtime, the provider pushes the new value into `engine.setPlayInterval(...)`.
+
+### Context Value
+
+```typescript
+const { animationSpeed, setAnimationSpeed } = useSimulation();
+```
+
+- `animationSpeed` exposes the current clamped interval in milliseconds.
+- `setAnimationSpeed(ms)` updates both the engine interval and the exposed context value, so UI controls such as sliders stay in sync.
+
 ---
 
 ## SimulationEngine (`src/simulation/SimulationEngine.ts`)
@@ -138,7 +176,9 @@ A `visitedNodes: Set<string>` tracks every node the packet has visited in the cu
 |---|---|
 | `async send(packet)` | Precompute trace, store it, set status to `'paused'`, `currentStep = -1`, notify listeners. |
 | `step()` | Advance `currentStep` by 1, emit hook for that hop, update `activeEdgeIds` + `selectedHop`, notify. Sets `status = 'done'` at last hop. No-op if already done. |
-| `play(ms = 500)` | Set `status = 'running'`, auto-call `step()` every `ms` milliseconds. Clears itself on done. |
+| `setPlayInterval(ms)` | Persist the playback interval for future `play()` calls. Clamps to `50..5000` milliseconds. |
+| `getPlayInterval()` | Return the currently configured playback interval. |
+| `play(ms?)` | Set `status = 'running'`, auto-call `step()` every configured interval. Passing `ms` overrides only the current play session. Clears itself on done. |
 | `pause()` | Clear interval, set `status = 'paused'`, notify. |
 | `reset()` | Set `currentStep = -1`, `activeEdgeIds = []`, `selectedHop = null`, `status = 'paused'`, notify. Does NOT clear traces. |
 | `selectHop(step)` | Update `selectedHop` and `activeEdgeIds` without advancing `currentStep` (used by timeline click). |
@@ -183,11 +223,16 @@ Must be nested **inside** `NetlabProvider`:
 
 ### `useSimulation()` hook
 
-Throws if called outside `SimulationProvider`. Returns `{ engine, state, sendPacket }`.
+Throws if called outside `SimulationProvider`. Returns the engine, simulation state, packet/DHCP/DNS actions, PCAP export, recompute state, and animation-speed controls.
 
 ### `SimulationContext` (raw context object)
 
 Exported separately so `NetlabCanvas` can do an **optional** read (`useContext(SimulationContext)`) without throwing when `SimulationProvider` is absent.
+
+### `useOptionalSimulation()` hook
+
+Returns `null` when `SimulationProvider` is absent. This is intended for components such as
+`FailureTogglePanel` that can render both inside and outside the simulation runtime.
 
 ---
 

@@ -99,6 +99,36 @@ Static route tables are not recomputed when failures are toggled. However, route
 This means a less-specific route such as `0.0.0.0/0` can automatically act as a fallback when a
 more-specific route becomes unreachable because of a node or link failure.
 
+## Auto-Recompute Mode
+
+When `<SimulationProvider autoRecompute>` is enabled and a `FailureProvider` is mounted above it,
+the simulation automatically re-sends the last packet whenever `failureState` changes.
+
+### Behavior
+
+1. A packet is sent once through `sendPacket()` or `SimulationEngine.send()`.
+2. `SimulationEngine` stores that packet as its resend source.
+3. When a failure toggle changes the immutable `failureState` snapshot:
+   - the provider resets playback state
+   - the provider calls `engine.resend(nextFailureState)`
+   - if playback was running before the toggle, playback resumes automatically after the new trace is ready
+4. While the resend is in flight, `useSimulation()` exposes `isRecomputing: true`.
+
+### Constraints
+
+- Auto-recompute is opt-in and defaults to `false`.
+- Auto-recompute does nothing until at least one packet has already been sent.
+- The provider still requires `FailureProvider` to wrap `SimulationProvider`.
+- Existing demos without failure injection remain unchanged.
+
+### UI Feedback
+
+`FailureTogglePanel` can read `useOptionalSimulation()` and render a lightweight status row while
+`isRecomputing` is `true`.
+
+- The indicator lives inside the failure panel so the feedback is colocated with the toggle action.
+- Failure demos using auto-recompute should not require a separate manual "Send Packet" button for each toggle.
+
 ### Routing Decision Annotation
 
 `hop.routingDecision` distinguishes between the pure LPM winner and the route actually used:
@@ -137,7 +167,7 @@ Two hooks are provided:
 ```tsx
 <NetlabProvider topology={topology}>
   <FailureProvider>
-    <SimulationProvider>
+    <SimulationProvider autoRecompute>
       {/* NetlabCanvas, FailureTogglePanel, etc. */}
     </SimulationProvider>
   </FailureProvider>
@@ -154,11 +184,17 @@ Two hooks are provided:
 - Each row label uses `{node label} / {interface name}`.
 - Toggling a row adds or removes the node-scoped interface key from `downInterfaceIds`.
 
+### Recompute status
+
+When the panel is rendered inside `SimulationProvider`, it may also show a "Calculating…" status
+row while `isRecomputing` is `true`.
+
 Example layout:
 
 ```text
 ┌──────────────────────────────────┐
 │ FAILURE INJECTION                │
+│ Calculating…                     │
 ├──────────────────────────────────┤
 │ NODES                            │
 │ LINKS                            │
@@ -189,9 +225,10 @@ This keeps authored topology data separate from canvas-only state.
 
 The existing failure demo is sufficient for interface failures because it already contains multi-interface routers. Users should be able to:
 
-1. send a packet successfully with no failures
-2. toggle a router interface down
-3. send the packet again and observe an `interface-down` drop plus the router badge
+1. load the demo and see an initial packet trace without clicking a send button
+2. toggle a node, link, or router interface failure
+3. observe the trace recompute automatically, plus any reroute / drop annotation and router badge
+4. use the step controls to inspect the updated trace
 
 ## Future Extension
 
