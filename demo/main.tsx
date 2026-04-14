@@ -25,6 +25,7 @@ import NatDemo from './simulation/NatDemo';
 import AclDemo from './simulation/AclDemo';
 import InterfaceAwareDemo from './simulation/InterfaceAwareDemo';
 import SessionDemo from './simulation/SessionDemo';
+import DataTransferDemo from './simulation/DataTransferDemo';
 import EmbedDemo from './embed/EmbedDemo';
 import AllInOneDemo from './comprehensive/AllInOneDemo';
 
@@ -52,6 +53,7 @@ createRoot(root).render(
         <Route path="/simulation/acl" element={<AclDemo />} />
         <Route path="/simulation/interface-aware" element={<InterfaceAwareDemo />} />
         <Route path="/simulation/session" element={<SessionDemo />} />
+        <Route path="/simulation/data-transfer" element={<DataTransferDemo />} />
         <Route path="/embed" element={<EmbedDemo />} />
         <Route path="/comprehensive/all-in-one" element={<AllInOneDemo />} />
         <Route path="*" element={<Navigate to="/" replace />} />
