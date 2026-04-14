@@ -18,6 +18,13 @@
 └────────────────────┬────────────────────────────────┘
                      │
 ┌────────────────────▼────────────────────────────────┐
+│  SimulationEngine (facade)                          │
+│  ├─ ForwardingPipeline   (routing, ARP, ICMP loop)  │
+│  ├─ ServiceOrchestrator (DHCP, DNS, NAT, ACL state) │
+│  └─ TraceRecorder       (trace snapshots, PCAP)     │
+└────────────────────┬────────────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────────────┐
 │  NetlabCanvas  (React Flow wrapper)                 │
 │  ├─ LayerRegistry.getAllNodeTypes()                  │
 │  ├─ AreaBackground nodes (zIndex: -1)               │
@@ -45,11 +52,14 @@ window.fetch(url)
   ▼ fetchInterceptor.ts
   ├─ HookEngine.emit('fetch:intercept')
   ├─ Build InFlightPacket  (L7 → L4 → L3 → L2)
-  ├─ SimulationEngine.run(packet)
-  │    ├─ SwitchForwarder.receive()   → 'forward' | 'deliver'
-  │    │    └─ HookEngine.emit('switch:learn', 'packet:forward')
-  │    └─ RouterForwarder.receive()  → 'forward' | 'deliver' | 'drop'
-  │         └─ HookEngine.emit('router:lookup', 'packet:forward')
+  ├─ SimulationEngine.send(packet)
+  │    ├─ ServiceOrchestrator.simulateDhcp()/simulateDns()
+  │    ├─ ForwardingPipeline.precompute()
+  │    │    ├─ SwitchForwarder.receive()   → 'forward' | 'deliver'
+  │    │    │    └─ HookEngine.emit('switch:learn', 'packet:forward')
+  │    │    └─ RouterForwarder.receive()  → 'forward' | 'deliver' | 'drop'
+  │    │         └─ HookEngine.emit('router:lookup', 'packet:forward')
+  │    └─ TraceRecorder.appendTrace()/exportPcap()
   ├─ HookEngine.emit('packet:deliver')
   ├─ HookEngine.emit('fetch:respond')
   └─ return mock Response
@@ -59,8 +69,15 @@ window.fetch(url)
 
 ### Pure TypeScript Simulation Core
 
-`SimulationEngine`, `SwitchForwarder`, `RouterForwarder`, and all routing protocols have zero React
+`SimulationEngine`, `ForwardingPipeline`, `ServiceOrchestrator`, `TraceRecorder`,
+`SwitchForwarder`, `RouterForwarder`, and all routing protocols have zero React
 dependencies. This enables unit testing without a DOM and clean separation from the render cycle.
+
+### SimulationEngine Is a Thin Facade
+
+`SimulationEngine` now owns playback state, selection state, and hook emission only.
+Forwarding and packet mutation live in `ForwardingPipeline`, runtime service state lives in
+`ServiceOrchestrator`, and trace/snapshot export logic lives in `TraceRecorder`.
 
 ### Forwarders Own Next-Hop Selection
 
@@ -68,7 +85,7 @@ Transit forwarding is protocol-driven:
 
 - `RouterForwarder` returns the definitive next-hop node, traversed edge, selected route, and egress interface
 - `SwitchForwarder` returns the definitive next-hop node and traversed edge, including deterministic handling of unknown unicast on shared LAN demos
-- `SimulationEngine` executes those decisions and no longer performs a second router LPM or switch-path search for transit hops
+- `ForwardingPipeline` executes those decisions and no longer performs a second router LPM or switch-path search for transit hops
 
 ### Module-Level Singletons for Registries
 

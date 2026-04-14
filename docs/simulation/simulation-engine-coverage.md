@@ -2,23 +2,29 @@
 
 > **Status**: ✅ Implemented
 
-This document specifies the test-coverage expansion for `SimulationEngine`.
+This document specifies the regression and module-level coverage for the refactored simulation stack.
 The goal is to cover routing correctness, TTL expiry behavior, ARP resolution,
-no-route handling, and failure injection with deterministic reusable fixtures.
+no-route handling, failure injection, and the extracted forwarding/trace/service modules
+with deterministic reusable fixtures.
 
 ---
 
 ## Overview
 
-The coverage expansion is test-only.
-It must not change production `SimulationEngine`, `RouterForwarder`, or related runtime behavior.
+The coverage expansion must not change production `SimulationEngine`, `ForwardingPipeline`,
+`TraceRecorder`, `ServiceOrchestrator`, `RouterForwarder`, or related runtime behavior.
 
-The implementation is split into two layers:
+The implementation is split into three layers:
 
 - shared test fixtures extracted from `src/simulation/SimulationEngine.test.ts`
-- a dedicated `src/simulation/SimulationEngine.coverage.test.ts` suite for gap-focused scenarios
+- module-level suites for:
+  - `src/simulation/ForwardingPipeline.test.ts`
+  - `src/simulation/TraceRecorder.test.ts`
+  - `src/simulation/ServiceOrchestrator.test.ts`
+- a dedicated `src/simulation/SimulationEngine.coverage.test.ts` suite for facade-level regression scenarios
 
-This keeps the existing regression suite stable while making new multi-topology tests reusable.
+This keeps the existing regression suites stable while making new multi-topology tests reusable and
+pinning the extracted module boundaries directly.
 
 ---
 
@@ -52,6 +58,30 @@ so hop-by-hop assertions remain deterministic.
 ---
 
 ## Coverage Suite
+
+`src/simulation/ForwardingPipeline.test.ts` covers:
+
+- basic router forwarding
+- TTL expiration
+- no-route handling
+- ARP request/reply injection
+- ICMP echo request/reply generation
+
+`src/simulation/TraceRecorder.test.ts` covers:
+
+- hop/snapshot appends
+- dropped trace generation
+- PCAP export
+- merged precompute results
+- snapshot retrieval
+
+`src/simulation/ServiceOrchestrator.test.ts` covers:
+
+- NAT processor creation/caching
+- ACL processor creation/caching
+- DHCP DORA runtime IP assignment
+- DNS resolution and cache reuse
+- runtime-state clearing
 
 `src/simulation/SimulationEngine.coverage.test.ts` contains focused describe blocks for:
 
@@ -111,8 +141,12 @@ than only checking final trace status.
 The implementation is complete only when all of the following pass:
 
 ```bash
+npx vitest run src/simulation/TraceRecorder.test.ts
+npx vitest run src/simulation/ServiceOrchestrator.test.ts
+npx vitest run src/simulation/ForwardingPipeline.test.ts
 npx vitest run src/simulation/SimulationEngine.test.ts
 npx vitest run src/simulation/SimulationEngine.coverage.test.ts
 ```
 
-The existing regression file must keep its current behavior, with fixture code moved but test logic unchanged.
+The existing regression files must keep their current behavior, with facade expectations unchanged
+even though the forwarding, service, and trace internals now live in separate modules.
