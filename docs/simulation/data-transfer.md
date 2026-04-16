@@ -1,6 +1,6 @@
 # Data Transfer Simulation
 
-> **Status**: 📝 Planned
+> **Status**: ✅ Implemented (Phase 2 in progress)
 
 This document specifies an application-level data transfer layer for Netlab simulations. The feature sits above the existing packet, trace, and session systems and models chunked message delivery, receiver-side reassembly, integrity verification, and per-hop packet inspection.
 
@@ -29,6 +29,20 @@ DataTransferController
   -> ForwardingPipeline
   -> EthernetFrame / IpPacket / TcpSegment / UdpDatagram
 ```
+
+## Layered Model
+
+The simulator models data delivery at four distinct levels:
+
+| Level | Entity | Description |
+| --- | --- | --- |
+| **Message** | `TransferMessage` | Application-level transfer: source, destination, full payload, checksum |
+| **Chunk** | `TransferChunk` | Application-level split of the payload into smaller pieces |
+| **Packet** | `InFlightPacket` | Network-level unit with L2-L4 headers (Ethernet, IP, TCP/UDP) |
+| **Fragment** | *(deferred)* | IP-level fragmentation of an oversized packet |
+
+Message -> Chunk is 1:N. Each chunk becomes exactly one packet.
+Fragment support is deferred to a later phase.
 
 ---
 
@@ -284,6 +298,9 @@ Per-hop packet mutation is still owned by the existing simulation stack:
 - IPv4 header checksum and Ethernet FCS recomputation
 - `PacketHop.changedFields[]` annotations
 
+Each `PacketHop` includes `srcMac` and `dstMac` fields, showing the Ethernet source and
+destination MAC addresses at that point in the forwarding path.
+
 See [RFC Packet Realism](rfc-packet-realism.md) for the forwarding and mutation rules that the transfer feature relies on.
 
 The data transfer layer consumes those existing traces to teach:
@@ -291,6 +308,23 @@ The data transfer layer consumes those existing traces to teach:
 - source and destination IP remain constant end to end
 - source and destination MAC change hop by hop
 - each chunk has its own independent packet trace
+- the MAC rewrite is performed by the router as part of L2 forwarding
+
+The `HopInspector` component displays both IP and MAC fields for each hop.
+
+---
+
+## Failure-Aware Delivery
+
+When link or node failures are active, chunks routed through the failed path are marked as
+`dropped`. The transfer status becomes `partial` if some chunks arrive and `failed` if none
+arrive.
+
+The UI exposes:
+
+- which specific chunks were dropped
+- the drop reason from the packet trace, such as `node-down` or `no-route`
+- the chunk trace for inspection of where the failure occurred
 
 ---
 

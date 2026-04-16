@@ -56,9 +56,16 @@ All three components are zero-prop React components that consume `useSimulation(
 - Next hop label
 - Source IP
 - Destination IP
+- Source MAC
+- Destination MAC
 - TTL In
 - TTL Out
 - Protocol
+
+These fields intentionally contrast end-to-end and hop-by-hop addressing:
+
+- IP addresses remain stable across the routed path
+- MAC addresses change at each routed hop as the frame is rewritten for the next link
 
 #### Interface rows
 
