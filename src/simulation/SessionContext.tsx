@@ -24,6 +24,7 @@ export interface SessionContextValue {
       dstNodeId: string;
       protocol?: string;
       requestType?: string;
+      transferId?: string;
     },
   ) => void;
   attachTrace: (
@@ -34,7 +35,11 @@ export interface SessionContextValue {
   clearSessions: () => void;
 }
 
-export const SessionContext = createContext<SessionContextValue | null>(null);
+interface SessionContextInternalValue extends SessionContextValue {
+  tracker: SessionTracker;
+}
+
+export const SessionContext = createContext<SessionContextInternalValue | null>(null);
 
 export interface SessionProviderProps {
   children: ReactNode;
@@ -74,8 +79,9 @@ export function SessionProvider({ children }: SessionProviderProps) {
 
   const selectedSession = sessions.find((session) => session.sessionId === selectedSessionId) ?? null;
 
-  const value = useMemo(
+  const value = useMemo<SessionContextInternalValue>(
     () => ({
+      tracker,
       sessions,
       selectedSessionId,
       selectedSession,
@@ -85,6 +91,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
       clearSessions,
     }),
     [
+      tracker,
       sessions,
       selectedSessionId,
       selectedSession,
@@ -107,4 +114,12 @@ export function useSession(): SessionContextValue {
     throw new Error('[netlab] useSession must be used within <SessionProvider>');
   }
   return ctx;
+}
+
+export function useOptionalSession(): SessionContextValue | null {
+  return useContext(SessionContext);
+}
+
+export function useOptionalSessionTracker(): SessionTracker | null {
+  return useContext(SessionContext)?.tracker ?? null;
 }
