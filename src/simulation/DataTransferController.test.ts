@@ -334,4 +334,105 @@ describe('DataTransferController', () => {
     );
     expect(chunks.every((chunk) => chunk.totalChunks === chunks.length)).toBe(true);
   });
+
+  it('hop srcMac and dstMac are populated for each chunk trace', async () => {
+    const engine = makeEngine(dataTransferDemoTopology());
+    const controller = new DataTransferController(engine);
+
+    const transfer = await controller.startTransfer(
+      'server-a',
+      'server-b',
+      'phase-two-mac-visibility',
+      { chunkDelay: 0 },
+    );
+
+    const chunk = controller.getChunks(transfer.messageId)[0];
+    const trace = engine.getState().traces.find((candidate) => candidate.packetId === chunk.traceId);
+
+    expect(trace).toBeDefined();
+    expect(trace?.hops.every((hop) => typeof hop.srcMac === 'string' && typeof hop.dstMac === 'string')).toBe(true);
+    expect(trace?.hops[0].srcMac).toBe('aa:bb:cc:00:01:10');
+    expect(trace?.hops[trace.hops.length - 1].dstMac).toBe('aa:bb:cc:00:03:10');
+  });
+
+  it('MAC addresses change at router hops while IP addresses stay constant', async () => {
+    const engine = makeEngine(dataTransferDemoTopology());
+    const controller = new DataTransferController(engine);
+
+    const transfer = await controller.startTransfer(
+      'server-a',
+      'server-b',
+      'stable-ip-changing-mac',
+      { chunkDelay: 0 },
+    );
+
+    const chunk = controller.getChunks(transfer.messageId)[0];
+    const trace = engine.getState().traces.find((candidate) => candidate.packetId === chunk.traceId);
+    const nonArpHops = trace?.hops.filter((hop) => hop.event !== 'arp-request' && hop.event !== 'arp-reply') ?? [];
+    const macPairs = nonArpHops.map((hop) => `${hop.srcMac}->${hop.dstMac}`);
+
+    expect(new Set(nonArpHops.map((hop) => hop.srcIp))).toEqual(new Set(['10.0.1.10']));
+    expect(new Set(nonArpHops.map((hop) => hop.dstIp))).toEqual(new Set(['10.0.3.10']));
+    expect(macPairs[0]).not.toBe(macPairs[1]);
+    expect(macPairs[1]).not.toBe(macPairs[2]);
+    expect(macPairs[2]).toBe(macPairs[3]);
+  });
+
+  it('dropped chunks remain identifiable for the missing chunks UI', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const controller = new DataTransferController(engine);
+    const downEdgeIds = new Set<string>();
+    const failureState: FailureState = {
+      downNodeIds: new Set(),
+      downEdgeIds,
+      downInterfaceIds: new Set(),
+    };
+    const originalSend = engine.send.bind(engine);
+    let sendCount = 0;
+
+    vi.spyOn(engine, 'send').mockImplementation(async (packet, state = failureState) => {
+      sendCount += 1;
+      await originalSend(packet, state);
+      if (sendCount === 1) {
+        downEdgeIds.add('e2');
+      }
+    });
+
+    const transfer = await controller.startTransfer(
+      'client-1',
+      'server-1',
+      'x'.repeat(4200),
+      { chunkSize: 1400, chunkDelay: 0, failureState },
+    );
+    const chunks = controller.getChunks(transfer.messageId);
+    const droppedChunks = chunks.filter((chunk) => chunk.state === 'dropped');
+
+    expect(droppedChunks.length).toBeGreaterThan(0);
+    expect(['partial', 'failed']).toContain(transfer.status);
+    expect(droppedChunks.every((chunk) => Number.isInteger(chunk.sequenceNumber) && chunk.sequenceNumber >= 0)).toBe(true);
+    expect(
+      droppedChunks.every((chunk) => {
+        const trace = chunk.traceId
+          ? engine.getState().traces.find((candidate) => candidate.packetId === chunk.traceId)
+          : undefined;
+        return Boolean(trace?.hops[trace.hops.length - 1]?.reason);
+      }),
+    ).toBe(true);
+  });
+
+  it('payload preview remains accessible alongside the full payload data', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const controller = new DataTransferController(engine);
+    const payload = 'preview-segment-'.repeat(12);
+
+    const transfer = await controller.startTransfer(
+      'client-1',
+      'server-1',
+      payload,
+      { chunkDelay: 0 },
+    );
+
+    expect(transfer.payloadPreview).toContain('preview-segment-preview-segment');
+    expect(transfer.payloadData).toBe(payload);
+  });
 });
