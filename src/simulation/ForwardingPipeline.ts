@@ -674,6 +674,25 @@ export class ForwardingPipeline {
     nodeArpTables[nodeId][ip] = mac;
   }
 
+  private withPacketMacs(hop: Omit<PacketHop, 'step'>, packet: InFlightPacket): Omit<PacketHop, 'step'> {
+    return {
+      ...hop,
+      srcMac: packet.frame.srcMac,
+      dstMac: packet.frame.dstMac,
+    };
+  }
+
+  private withArpFrameMacs(
+    hop: Omit<PacketHop, 'step'>,
+    arpFrame: ArpEthernetFrame,
+  ): Omit<PacketHop, 'step'> {
+    return {
+      ...hop,
+      srcMac: arpFrame.srcMac,
+      dstMac: arpFrame.dstMac,
+    };
+  }
+
   private injectArpExchange(
     senderNodeId: string,
     targetNodeId: string,
@@ -711,7 +730,7 @@ export class ForwardingPipeline {
     stepCounter = this.traceRecorder.appendHop(
       hops,
       snapshots,
-      {
+      this.withArpFrameMacs({
         nodeId: senderNodeId,
         nodeLabel: senderNode?.data.label ?? senderNodeId,
         srcIp: senderIp,
@@ -723,7 +742,7 @@ export class ForwardingPipeline {
         activeEdgeId: edgeId,
         arpFrame: arpRequestFrame,
         timestamp: baseTs,
-      },
+      }, arpRequestFrame),
       workingPacket,
       stepCounter,
     );
@@ -748,7 +767,7 @@ export class ForwardingPipeline {
     return this.traceRecorder.appendHop(
       hops,
       snapshots,
-      {
+      this.withArpFrameMacs({
         nodeId: targetNodeId,
         nodeLabel: targetNode?.data.label ?? targetNodeId,
         srcIp: targetIp,
@@ -760,7 +779,7 @@ export class ForwardingPipeline {
         activeEdgeId: edgeId,
         arpFrame: arpReplyFrame,
         timestamp: baseTs,
-      },
+      }, arpReplyFrame),
       workingPacket,
       stepCounter,
     );
@@ -1119,25 +1138,31 @@ export class ForwardingPipeline {
     for (let iter = 0; iter < MAX_HOPS; iter++) {
       // Loop guard
       if (visitedNodes.has(current)) {
-        stepCounter = this.traceRecorder.appendHop(hops, snapshots, {
-          nodeId: current,
-          nodeLabel: current,
-          srcIp: workingPacket.frame.payload.srcIp,
-          dstIp: workingPacket.frame.payload.dstIp,
-          ttl: workingPacket.frame.payload.ttl,
-          protocol: protocolName(workingPacket.frame.payload.protocol),
-          event: 'drop',
-          fromNodeId: ingressFrom ?? undefined,
-          reason: 'routing-loop',
-          timestamp: baseTs,
-        }, workingPacket, stepCounter);
+        stepCounter = this.traceRecorder.appendHop(
+          hops,
+          snapshots,
+          this.withPacketMacs({
+            nodeId: current,
+            nodeLabel: current,
+            srcIp: workingPacket.frame.payload.srcIp,
+            dstIp: workingPacket.frame.payload.dstIp,
+            ttl: workingPacket.frame.payload.ttl,
+            protocol: protocolName(workingPacket.frame.payload.protocol),
+            event: 'drop',
+            fromNodeId: ingressFrom ?? undefined,
+            reason: 'routing-loop',
+            timestamp: baseTs,
+          }, workingPacket),
+          workingPacket,
+          stepCounter,
+        );
         break;
       }
       visitedNodes.add(current);
 
       const node = this.findNode(current);
       if (!node) {
-        stepCounter = this.traceRecorder.appendHop(hops, snapshots, {
+        stepCounter = this.traceRecorder.appendHop(hops, snapshots, this.withPacketMacs({
           nodeId: current,
           nodeLabel: current,
           srcIp: workingPacket.frame.payload.srcIp,
@@ -1148,12 +1173,12 @@ export class ForwardingPipeline {
           fromNodeId: ingressFrom ?? undefined,
           reason: 'node-not-found',
           timestamp: baseTs,
-        }, workingPacket, stepCounter);
+        }, workingPacket), workingPacket, stepCounter);
         break;
       }
 
       if (failureState.downNodeIds.has(current)) {
-        stepCounter = this.traceRecorder.appendHop(hops, snapshots, {
+        stepCounter = this.traceRecorder.appendHop(hops, snapshots, this.withPacketMacs({
           nodeId: current,
           nodeLabel: node.data.label,
           srcIp: workingPacket.frame.payload.srcIp,
@@ -1164,7 +1189,7 @@ export class ForwardingPipeline {
           fromNodeId: ingressFrom ?? undefined,
           reason: 'node-down',
           timestamp: baseTs,
-        }, workingPacket, stepCounter);
+        }, workingPacket), workingPacket, stepCounter);
         break;
       }
 
@@ -1189,7 +1214,7 @@ export class ForwardingPipeline {
         stepCounter = this.traceRecorder.appendHop(
           hops,
           snapshots,
-          { ...hopBase, event: 'deliver' },
+          this.withPacketMacs({ ...hopBase, event: 'deliver' }, workingPacket),
           workingPacket,
           stepCounter,
         );
@@ -1204,7 +1229,7 @@ export class ForwardingPipeline {
         stepCounter = this.traceRecorder.appendHop(
           hops,
           snapshots,
-          { ...hopBase, event: 'deliver' },
+          this.withPacketMacs({ ...hopBase, event: 'deliver' }, workingPacket),
           workingPacket,
           stepCounter,
         );
@@ -1256,7 +1281,7 @@ export class ForwardingPipeline {
             stepCounter = this.traceRecorder.appendHop(
               hops,
               snapshots,
-              dropHop,
+              this.withPacketMacs(dropHop, preRoutingResult.packet),
               preRoutingResult.packet,
               stepCounter,
             );
@@ -1293,7 +1318,7 @@ export class ForwardingPipeline {
             stepCounter = this.traceRecorder.appendHop(
               hops,
               snapshots,
-              dropHop,
+              this.withPacketMacs(dropHop, ingressResult.packet),
               ingressResult.packet,
               stepCounter,
             );
@@ -1353,7 +1378,13 @@ export class ForwardingPipeline {
             if (changedFields.length > 0) {
               dropHop.changedFields = changedFields;
             }
-            stepCounter = this.traceRecorder.appendHop(hops, snapshots, dropHop, workingPacket, stepCounter);
+            stepCounter = this.traceRecorder.appendHop(
+              hops,
+              snapshots,
+              this.withPacketMacs(dropHop, workingPacket),
+              workingPacket,
+              stepCounter,
+            );
             break;
           }
 
@@ -1373,7 +1404,7 @@ export class ForwardingPipeline {
             stepCounter = this.traceRecorder.appendHop(
               hops,
               snapshots,
-              deliverHop,
+              this.withPacketMacs(deliverHop, decision.packet),
               decision.packet,
               stepCounter,
             );
@@ -1424,7 +1455,13 @@ export class ForwardingPipeline {
         if (changedFields.length > 0) {
           dropHop.changedFields = changedFields;
         }
-        stepCounter = this.traceRecorder.appendHop(hops, snapshots, dropHop, workingPacket, stepCounter);
+        stepCounter = this.traceRecorder.appendHop(
+          hops,
+          snapshots,
+          this.withPacketMacs(dropHop, workingPacket),
+          workingPacket,
+          stepCounter,
+        );
         break;
       }
 
@@ -1453,7 +1490,13 @@ export class ForwardingPipeline {
           if (natTranslation) {
             dropHop.natTranslation = natTranslation;
           }
-          stepCounter = this.traceRecorder.appendHop(hops, snapshots, dropHop, workingPacket, stepCounter);
+          stepCounter = this.traceRecorder.appendHop(
+            hops,
+            snapshots,
+            this.withPacketMacs(dropHop, workingPacket),
+            workingPacket,
+            stepCounter,
+          );
           break;
         }
 
@@ -1483,7 +1526,7 @@ export class ForwardingPipeline {
             stepCounter = this.traceRecorder.appendHop(
               hops,
               snapshots,
-              dropHop,
+              this.withPacketMacs(dropHop, egressResult.packet),
               egressResult.packet,
               stepCounter,
             );
@@ -1520,7 +1563,7 @@ export class ForwardingPipeline {
             stepCounter = this.traceRecorder.appendHop(
               hops,
               snapshots,
-              dropHop,
+              this.withPacketMacs(dropHop, postRoutingResult.packet),
               postRoutingResult.packet,
               stepCounter,
             );
@@ -1557,7 +1600,13 @@ export class ForwardingPipeline {
         if (changedFields.length > 0) {
           createHop.changedFields = changedFields;
         }
-        stepCounter = this.traceRecorder.appendHop(hops, snapshots, createHop, workingPacket, stepCounter);
+        stepCounter = this.traceRecorder.appendHop(
+          hops,
+          snapshots,
+          this.withPacketMacs(createHop, workingPacket),
+          workingPacket,
+          stepCounter,
+        );
       }
 
       const packetBeforeForward = shouldInjectArp && ingressFrom === null ? workingPacket : packetBeforeHop;
@@ -1670,7 +1719,13 @@ export class ForwardingPipeline {
         forwardHop.changedFields = changedFields;
       }
 
-      stepCounter = this.traceRecorder.appendHop(hops, snapshots, forwardHop, workingPacket, stepCounter);
+      stepCounter = this.traceRecorder.appendHop(
+        hops,
+        snapshots,
+        this.withPacketMacs(forwardHop, workingPacket),
+        workingPacket,
+        stepCounter,
+      );
 
       ingressFrom = current;
       ingressEdgeId = next.edgeId;
