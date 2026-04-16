@@ -244,3 +244,14 @@ A three-router demo topology that showcases LPM with both specific routes and a 
 - The packet is auto-loaded on mount so the user can immediately start stepping
 - Layout: canvas (flex: 1) + `StepControls` side panel (380px)
 - Each click of **Next Step** appends a new step entry to the log; all previous entries remain visible
+
+## Control Stability
+
+The step simulation controls must preserve a stable interaction surface while the log grows.
+
+- **Sticky footer**: the `Next Step` and `Reset` controls remain pinned at the bottom of the component
+- **Scrollable log**: revealed step entries scroll independently in the middle area
+- **Fixed-height parent**: the layout that hosts `StepControls` must constrain its height with patterns
+  such as `flex: 1` plus `overflow: hidden` so the component does not expand indefinitely
+
+This prevents the user from chasing the primary controls as more hops are revealed.
