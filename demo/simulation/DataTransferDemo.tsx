@@ -2,11 +2,13 @@ import { useMemo, useState, type CSSProperties } from 'react';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { FailureTogglePanel } from '../../src/components/simulation/FailureTogglePanel';
-import { StepControls } from '../../src/components/simulation/StepControls';
+import { HopInspector } from '../../src/components/simulation/HopInspector';
+import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { DataTransferProvider, useDataTransfer } from '../../src/simulation/DataTransferContext';
 import { FailureProvider, useFailure } from '../../src/simulation/FailureContext';
 import { dataTransferDemoTopology } from '../../src/simulation/__fixtures__/topologies';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
+import type { PacketTrace } from '../../src/types/simulation';
 import type { TransferChunk, TransferMessage } from '../../src/types/transfer';
 import DemoShell from '../DemoShell';
 
@@ -57,15 +59,91 @@ function chunkStateColor(state: TransferChunk['state']): string {
   }
 }
 
-function TransferDetailPanel({
+function PayloadPreviewSection({ transfer }: { transfer: TransferMessage }) {
+  const preview = transfer.payloadData.length > 200
+    ? `${transfer.payloadData.slice(0, 200)}...`
+    : transfer.payloadData;
+
+  return (
+    <div style={SECTION_STYLE}>
+      <label style={LABEL_STYLE}>PAYLOAD PREVIEW</label>
+      <pre
+        style={{
+          margin: 0,
+          padding: 10,
+          borderRadius: 8,
+          background: '#020617',
+          color: '#94a3b8',
+          fontSize: 11,
+          fontFamily: 'monospace',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-all',
+          maxHeight: 120,
+          overflow: 'auto',
+        }}
+      >
+        {preview || '(empty payload)'}
+      </pre>
+    </div>
+  );
+}
+
+function MissingChunksSection({
+  chunks,
+  tracesById,
+}: {
+  chunks: TransferChunk[];
+  tracesById: Map<string, PacketTrace>;
+}) {
+  const missing = chunks.filter((chunk) => chunk.state === 'dropped');
+
+  if (missing.length === 0) {
+    return null;
+  }
+
+  return (
+    <div style={SECTION_STYLE}>
+      <label style={LABEL_STYLE}>MISSING CHUNKS</label>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {missing.map((chunk) => {
+          const trace = chunk.traceId ? tracesById.get(chunk.traceId) : undefined;
+          const lastHop = trace?.hops[trace.hops.length - 1];
+          const reason = lastHop?.reason ?? 'dropped';
+          const location = lastHop?.nodeLabel ? ` @ ${lastHop.nodeLabel}` : '';
+
+          return (
+            <span
+              key={chunk.chunkId}
+              style={{
+                padding: '3px 8px',
+                borderRadius: 999,
+                fontSize: 10,
+                background: '#450a0a',
+                border: '1px solid #991b1b',
+                color: '#fca5a5',
+                fontFamily: 'monospace',
+              }}
+            >
+              #{chunk.sequenceNumber} ({chunk.sizeBytes} bytes) · {reason}{location}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function MessageView({
   transfer,
   chunks,
   currentTraceId,
+  tracesById,
   onChunkSelect,
 }: {
   transfer: TransferMessage | null;
   chunks: TransferChunk[];
   currentTraceId: string | null;
+  tracesById: Map<string, PacketTrace>;
   onChunkSelect: (chunk: TransferChunk) => void;
 }) {
   const { getReassembly } = useDataTransfer();
@@ -74,7 +152,7 @@ function TransferDetailPanel({
   if (!transfer) {
     return (
       <div style={{ ...SECTION_STYLE, color: '#94a3b8', fontFamily: 'monospace', fontSize: 12 }}>
-        Start a transfer to inspect chunks, checksum status, and hop-by-hop traces.
+        Start a transfer to inspect payloads, missing chunks, and hop-by-hop traces.
       </div>
     );
   }
@@ -131,13 +209,14 @@ function TransferDetailPanel({
         </div>
       </div>
 
+      <PayloadPreviewSection transfer={transfer} />
+
       <div style={SECTION_STYLE}>
-        <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#e2e8f0', marginBottom: 10 }}>
-          Chunks
-        </div>
+        <label style={LABEL_STYLE}>CHUNKS</label>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 }}>
           {chunks.map((chunk) => {
             const isSelectedTrace = chunk.traceId !== undefined && chunk.traceId === currentTraceId;
+
             return (
               <button
                 key={chunk.chunkId}
@@ -169,9 +248,7 @@ function TransferDetailPanel({
       </div>
 
       <div style={SECTION_STYLE}>
-        <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#e2e8f0', marginBottom: 10 }}>
-          Reassembly
-        </div>
+        <label style={LABEL_STYLE}>REASSEMBLY</label>
         <div style={{ fontFamily: 'monospace', fontSize: 11, color: '#cbd5e1', display: 'grid', gap: 6 }}>
           <div>received: {reassembly?.receivedChunks.size ?? 0}/{reassembly?.expectedTotal ?? chunks.length}</div>
           <div>complete: {reassembly?.isComplete ? 'yes' : 'no'}</div>
@@ -186,7 +263,38 @@ function TransferDetailPanel({
           </div>
         </div>
       </div>
+
+      <MissingChunksSection chunks={chunks} tracesById={tracesById} />
     </div>
+  );
+}
+
+function TabButton({
+  active,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        borderRadius: 8,
+        border: `1px solid ${active ? '#38bdf8' : '#334155'}`,
+        background: active ? '#082f49' : '#111827',
+        color: active ? '#e0f2fe' : '#94a3b8',
+        fontFamily: 'monospace',
+        fontSize: 11,
+        padding: '8px 12px',
+        cursor: 'pointer',
+      }}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -203,10 +311,15 @@ function DataTransferDemoInner() {
   const [payload, setPayload] = useState(DEFAULT_PAYLOAD);
   const [chunkSize, setChunkSize] = useState(1400);
   const [isSending, setIsSending] = useState(false);
+  const [activeView, setActiveView] = useState<'message' | 'packet'>('message');
 
   const transfers = useMemo(
     () => Array.from(state.transfers.values()).sort((left, right) => right.createdAt - left.createdAt),
     [state.transfers],
+  );
+  const tracesById = useMemo(
+    () => new Map<string, PacketTrace>(simulationState.traces.map((trace) => [trace.packetId, trace])),
+    [simulationState.traces],
   );
   const selectedTransfer = selectedTransferId
     ? state.transfers.get(selectedTransferId) ?? null
@@ -231,6 +344,7 @@ function DataTransferDemoInner() {
         failureState,
       });
       selectTransfer(transfer.messageId);
+      setActiveView('message');
     } finally {
       setIsSending(false);
     }
@@ -242,6 +356,7 @@ function DataTransferDemoInner() {
     }
 
     engine.selectTrace(chunk.traceId);
+    setActiveView('packet');
   };
 
   return (
@@ -367,11 +482,15 @@ function DataTransferDemoInner() {
               )}
               {transfers.map((transfer) => {
                 const isSelected = transfer.messageId === selectedTransfer?.messageId;
+
                 return (
                   <button
                     key={transfer.messageId}
                     type="button"
-                    onClick={() => selectTransfer(transfer.messageId)}
+                    onClick={() => {
+                      selectTransfer(transfer.messageId);
+                      setActiveView('message');
+                    }}
                     style={{
                       borderRadius: 8,
                       border: `1px solid ${isSelected ? '#38bdf8' : '#334155'}`,
@@ -398,24 +517,74 @@ function DataTransferDemoInner() {
           style={{
             flex: 1,
             minWidth: 0,
+            minHeight: 0,
             padding: 12,
             display: 'flex',
             flexDirection: 'column',
             gap: 12,
             background: '#020617',
+            overflow: 'hidden',
           }}
         >
-          <div style={{ flex: '0 0 auto' }}>
-            <TransferDetailPanel
-              transfer={selectedTransfer}
-              chunks={selectedChunks}
-              currentTraceId={simulationState.currentTraceId}
-              onChunkSelect={handleChunkSelect}
+          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+            <TabButton
+              active={activeView === 'message'}
+              label="Message View"
+              onClick={() => setActiveView('message')}
+            />
+            <TabButton
+              active={activeView === 'packet'}
+              label="Packet View"
+              onClick={() => setActiveView('packet')}
             />
           </div>
 
-          <div style={{ ...SECTION_STYLE, flex: 1, minHeight: 0, padding: 0, overflow: 'hidden' }}>
-            <StepControls />
+          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+            <div
+              style={{
+                display: activeView === 'message' ? 'flex' : 'none',
+                flexDirection: 'column',
+                gap: 12,
+                height: '100%',
+                minHeight: 0,
+                overflow: 'auto',
+                paddingRight: 4,
+              }}
+            >
+              <MessageView
+                transfer={selectedTransfer}
+                chunks={selectedChunks}
+                currentTraceId={simulationState.currentTraceId}
+                tracesById={tracesById}
+                onChunkSelect={handleChunkSelect}
+              />
+            </div>
+
+            <div
+              style={{
+                display: activeView === 'packet' ? 'flex' : 'none',
+                flexDirection: 'column',
+                gap: 12,
+                height: '100%',
+                minHeight: 0,
+              }}
+            >
+              <div
+                style={{
+                  ...SECTION_STYLE,
+                  flex: '0 0 40%',
+                  minHeight: 180,
+                  padding: 0,
+                  overflow: 'hidden',
+                }}
+              >
+                <PacketTimeline />
+              </div>
+
+              <div style={{ flex: '1 1 60%', minHeight: 0, overflow: 'hidden' }}>
+                <HopInspector />
+              </div>
+            </div>
           </div>
         </div>
       </div>
