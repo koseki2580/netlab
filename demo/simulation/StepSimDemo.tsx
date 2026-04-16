@@ -23,9 +23,9 @@ function StepSimDemoInner() {
   }, []); // run once on mount
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
+    <div style={{ display: 'flex', height: '100%', minHeight: 0 }}>
       {/* Canvas area */}
-      <div style={{ flex: 1, position: 'relative' }}>
+      <div style={{ flex: 1, minWidth: 0, minHeight: 0, position: 'relative' }}>
         <NetlabCanvas />
       </div>
       {/* Step controls side panel */}
@@ -35,10 +35,11 @@ function StepSimDemoInner() {
         style={{
           background: '#0f172a',
           borderLeft: '1px solid #1e293b',
+          minHeight: 0,
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-          <div style={{ flex: 1, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden' }}>
+          <div style={{ flex: '1 1 auto', minHeight: 0, overflow: 'hidden' }}>
             <StepControls />
           </div>
           <PacketStructureViewer />
