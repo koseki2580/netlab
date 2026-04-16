@@ -1,4 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { HookEngine } from '../hooks/HookEngine';
 import { RouterForwarder } from '../layers/l3-network/RouterForwarder';
 import { SwitchForwarder } from '../layers/l2-datalink/SwitchForwarder';
 import { layerRegistry } from '../registry/LayerRegistry';
@@ -11,6 +12,8 @@ import {
   singleRouterTopology,
 } from './__fixtures__/topologies';
 import { DataTransferController } from './DataTransferController';
+import { deriveDeterministicMac } from './ForwardingPipeline';
+import { SessionTracker } from './SessionTracker';
 
 beforeAll(() => {
   layerRegistry.register({
@@ -43,6 +46,11 @@ function packetSnapshotAtTraceStep(
   }
 
   return packet;
+}
+
+function makeSessionTracker(engine: ReturnType<typeof makeEngine>): SessionTracker {
+  const hookEngine = Reflect.get(engine as object, 'hookEngine') as HookEngine;
+  return new SessionTracker(hookEngine);
 }
 
 describe('DataTransferController', () => {
@@ -211,6 +219,79 @@ describe('DataTransferController', () => {
     }
   });
 
+  it('does not create sessions when no SessionTracker is provided', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const controller = new DataTransferController(engine);
+
+    const transfer = await controller.startTransfer(
+      'client-1',
+      'server-1',
+      's'.repeat(4200),
+      { chunkSize: 1400, chunkDelay: 0 },
+    );
+
+    expect(transfer.sessionIds).toBeUndefined();
+    expect(controller.getTransfer(transfer.messageId)?.sessionIds).toBeUndefined();
+  });
+
+  it('creates a session per chunk when SessionTracker is provided', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const tracker = makeSessionTracker(engine);
+    const controller = new DataTransferController(engine, tracker);
+
+    const transfer = await controller.startTransfer(
+      'client-1',
+      'server-1',
+      's'.repeat(4200),
+      { chunkSize: 1400, chunkDelay: 0 },
+    );
+
+    expect(transfer.sessionIds).toHaveLength(transfer.expectedChunks);
+    expect(new Set(transfer.sessionIds ?? []).size).toBe(transfer.expectedChunks);
+    expect(tracker.getSessions()).toHaveLength(transfer.expectedChunks);
+  });
+
+  it('sets transferId on created sessions', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const tracker = makeSessionTracker(engine);
+    const controller = new DataTransferController(engine, tracker);
+
+    const transfer = await controller.startTransfer(
+      'client-1',
+      'server-1',
+      'transfer-session-link'.repeat(150),
+      { chunkSize: 700, chunkDelay: 0 },
+    );
+
+    for (const sessionId of transfer.sessionIds ?? []) {
+      expect(tracker.getSession(sessionId)?.transferId).toBe(transfer.messageId);
+    }
+  });
+
+  it('attaches each chunk trace to its session', async () => {
+    const engine = makeEngine(multiHopTopology());
+    const tracker = makeSessionTracker(engine);
+    const controller = new DataTransferController(engine, tracker);
+
+    const transfer = await controller.startTransfer(
+      'client-1',
+      'server-1',
+      'trace-session-link'.repeat(180),
+      { chunkSize: 900, chunkDelay: 0 },
+    );
+
+    const chunks = controller.getChunks(transfer.messageId);
+
+    for (const [index, sessionId] of (transfer.sessionIds ?? []).entries()) {
+      const chunk = chunks[index];
+      const session = tracker.getSession(sessionId);
+
+      expect(chunk.traceId).toBeTruthy();
+      expect(session?.requestTrace?.packetId).toBe(chunk.traceId);
+      expect(session?.status).toBe('success');
+    }
+  });
+
   it('per-hop shows MAC rewrite and TTL decrement', async () => {
     const engine = makeEngine(dataTransferDemoTopology());
     const controller = new DataTransferController(engine);
@@ -279,6 +360,70 @@ describe('DataTransferController', () => {
       'Dst MAC',
       'FCS',
     ]);
+  });
+
+  it('initial chunk packet has source MAC from the sending node', async () => {
+    const engine = makeEngine(dataTransferDemoTopology());
+    const controller = new DataTransferController(engine);
+
+    const transfer = await controller.startTransfer(
+      'server-a',
+      'server-b',
+      'source-mac-resolution',
+      { chunkDelay: 0 },
+    );
+
+    const chunk = controller.getChunks(transfer.messageId)[0];
+    const createPacket = packetSnapshotAtTraceStep(engine, chunk.traceId!, 0);
+
+    expect(createPacket.frame.srcMac).toBe('aa:bb:cc:00:01:10');
+    expect(createPacket.frame.srcMac).not.toBe('00:00:00:00:00:01');
+  });
+
+  it('initial chunk packet has the first-hop MAC as destination', async () => {
+    const engine = makeEngine(dataTransferDemoTopology());
+    const controller = new DataTransferController(engine);
+
+    const transfer = await controller.startTransfer(
+      'server-a',
+      'server-b',
+      'first-hop-mac-resolution',
+      { chunkDelay: 0 },
+    );
+
+    const chunk = controller.getChunks(transfer.messageId)[0];
+    const createPacket = packetSnapshotAtTraceStep(engine, chunk.traceId!, 0);
+
+    expect(createPacket.frame.dstMac).toBe('aa:bb:cc:00:01:01');
+    expect(createPacket.frame.dstMac).not.toBe('00:00:00:00:00:02');
+  });
+
+  it('falls back to deterministic MAC when the sending node has no MAC configured', async () => {
+    const topology = singleRouterTopology();
+    const engine = makeEngine({
+      ...topology,
+      nodes: topology.nodes.map((node) =>
+        node.id === 'client-1'
+          ? {
+              ...node,
+              data: { ...node.data, mac: undefined },
+            }
+          : node,
+      ),
+    });
+    const controller = new DataTransferController(engine);
+
+    const transfer = await controller.startTransfer(
+      'client-1',
+      'server-1',
+      'fallback-mac',
+      { chunkDelay: 0 },
+    );
+
+    const chunk = controller.getChunks(transfer.messageId)[0];
+    const createPacket = packetSnapshotAtTraceStep(engine, chunk.traceId!, 0);
+
+    expect(createPacket.frame.srcMac).toBe(deriveDeterministicMac('client-1'));
   });
 
   it('reassembly remains incomplete when a dropped chunk prevents checksum verification', async () => {
@@ -418,6 +563,45 @@ describe('DataTransferController', () => {
         return Boolean(trace?.hops[trace.hops.length - 1]?.reason);
       }),
     ).toBe(true);
+  });
+
+  it('summary data is derivable from transfer, chunks, and reassembly during partial delivery', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    const controller = new DataTransferController(engine);
+    const downEdgeIds = new Set<string>();
+    const failureState: FailureState = {
+      downNodeIds: new Set(),
+      downEdgeIds,
+      downInterfaceIds: new Set(),
+    };
+    const originalSend = engine.send.bind(engine);
+    let sendCount = 0;
+
+    vi.spyOn(engine, 'send').mockImplementation(async (packet, state = failureState) => {
+      sendCount += 1;
+      await originalSend(packet, state);
+      if (sendCount === 1) {
+        downEdgeIds.add('e2');
+      }
+    });
+
+    const transfer = await controller.startTransfer(
+      'client-1',
+      'server-1',
+      'summary-state'.repeat(350),
+      { chunkSize: 1400, chunkDelay: 0, failureState },
+    );
+
+    const chunks = controller.getChunks(transfer.messageId);
+    const reassembly = controller.getReassembly(transfer.messageId);
+    const delivered = chunks.filter((chunk) => chunk.state === 'delivered').length;
+    const dropped = chunks.filter((chunk) => chunk.state === 'dropped').length;
+
+    expect(transfer.status).toBe('partial');
+    expect(delivered).toBeGreaterThan(0);
+    expect(dropped).toBeGreaterThan(0);
+    expect(reassembly?.isComplete).toBe(false);
+    expect(reassembly?.checksumVerified).toBeUndefined();
   });
 
   it('payload preview remains accessible alongside the full payload data', async () => {

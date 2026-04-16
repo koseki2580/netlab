@@ -31,6 +31,8 @@ import type { PrecomputeOptions, PrecomputeResult } from './types';
 const MAX_HOPS = 64;
 const BROADCAST_IP = '255.255.255.255';
 
+export { deriveDeterministicMac } from '../utils/network';
+
 function isIcmpMessage(payload: IpPacket['payload']): payload is IcmpMessage {
   return 'type' in payload && 'code' in payload;
 }
