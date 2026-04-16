@@ -18,6 +18,7 @@ export interface TransferMessage {
   status: DeliveryStatus;
   createdAt: number;
   completedAt?: number;
+  sessionIds?: string[];
 }
 
 export type ChunkDeliveryState =

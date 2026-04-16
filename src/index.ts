@@ -59,6 +59,7 @@ export {
   SessionProvider,
   SessionContext,
   useSession,
+  useOptionalSession,
 } from './simulation/SessionContext';
 export type { SessionProviderProps, SessionContextValue } from './simulation/SessionContext';
 export type { DataTransferOptions } from './simulation/DataTransferController';
