@@ -35,4 +35,5 @@ export interface NetworkSession {
     reason: string;
     nodeId: string;
   };
+  transferId?: string;
 }
