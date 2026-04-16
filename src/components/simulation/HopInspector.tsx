@@ -249,6 +249,8 @@ function HopFields({
     { label: 'Next Hop', value: resolveNodeLabel(hop.toNodeId, nodes) },
     { label: 'Src IP', value: hop.srcIp },
     { label: 'Dst IP', value: hop.dstIp },
+    { label: 'Src MAC', value: hop.srcMac ?? '—' },
+    { label: 'Dst MAC', value: hop.dstMac ?? '—' },
     { label: 'TTL In', value: String(hop.ttl) },
     { label: 'TTL Out', value: String(getTtlOut(hop, nodes)) },
     { label: 'Protocol', value: hop.protocol },
