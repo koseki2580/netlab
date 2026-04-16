@@ -1,0 +1,331 @@
+/* @vitest-environment jsdom */
+
+import { act } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { SimulationContext, type SimulationContextValue } from '../simulation/SimulationContext';
+import type { NetworkTopology } from '../types/topology';
+import { NodeDetailPanel } from './NodeDetailPanel';
+
+const uiMock = vi.hoisted(() => ({
+  selectedNodeId: null as string | null,
+  setSelectedNodeId: vi.fn(),
+}));
+
+const netlabMock = vi.hoisted(() => ({
+  topology: {
+    nodes: [],
+    edges: [],
+    areas: [],
+    routeTables: new Map(),
+  } as NetworkTopology,
+}));
+
+vi.mock('./NetlabUIContext', () => ({
+  useNetlabUI: () => uiMock,
+}));
+
+vi.mock('./NetlabContext', () => ({
+  useNetlabContext: () => ({
+    topology: netlabMock.topology,
+    routeTable: netlabMock.topology.routeTables,
+    areas: netlabMock.topology.areas,
+    hookEngine: {} as never,
+  }),
+}));
+
+function makeSimulationValue(overrides: Partial<SimulationContextValue> = {}): SimulationContextValue {
+  return {
+    engine: { getRuntimeNodeIp: () => null } as never,
+    state: {
+      status: 'idle',
+      traces: [],
+      currentTraceId: null,
+      currentStep: -1,
+      activeEdgeIds: [],
+      selectedHop: null,
+      selectedPacket: null,
+      nodeArpTables: {},
+      natTables: [],
+      connTrackTables: [],
+    },
+    sendPacket: async () => {},
+    simulateDhcp: async () => false,
+    simulateDns: async () => null,
+    getDhcpLeaseState: () => null,
+    getDnsCache: () => null,
+    exportPcap: () => new Uint8Array(),
+    animationSpeed: 500,
+    setAnimationSpeed: () => {},
+    isRecomputing: false,
+    ...overrides,
+  };
+}
+
+function makeTopology(nodes: NetworkTopology['nodes']): NetworkTopology {
+  return {
+    nodes,
+    edges: [],
+    areas: [],
+    routeTables: new Map(),
+  };
+}
+
+function makeRouterNode() {
+  return {
+    id: 'router-1',
+    type: 'router',
+    position: { x: 0, y: 0 },
+    data: {
+      label: 'R1',
+      role: 'router',
+      layerId: 'l3',
+      interfaces: [
+        {
+          id: 'eth0',
+          name: 'eth0',
+          ipAddress: '10.0.0.1',
+          prefixLength: 24,
+          macAddress: '00:00:00:00:00:01',
+        },
+      ],
+    },
+  } as NetworkTopology['nodes'][number];
+}
+
+function makeSwitchNode() {
+  return {
+    id: 'switch-1',
+    type: 'switch',
+    position: { x: 0, y: 0 },
+    data: {
+      label: 'SW1',
+      role: 'switch',
+      layerId: 'l2',
+      ports: [
+        {
+          id: 'port-1',
+          name: 'fa0/1',
+          macAddress: '00:00:00:00:00:02',
+        },
+      ],
+    },
+  } as NetworkTopology['nodes'][number];
+}
+
+function makeClientNode() {
+  return {
+    id: 'client-1',
+    type: 'client',
+    position: { x: 0, y: 0 },
+    data: {
+      label: 'Client',
+      role: 'client',
+      layerId: 'l7',
+      ip: '10.0.0.10',
+      mac: '00:00:00:00:00:03',
+    },
+  } as NetworkTopology['nodes'][number];
+}
+
+function renderMarkup(simulationValue = makeSimulationValue()) {
+  return renderToStaticMarkup(
+    <SimulationContext.Provider value={simulationValue}>
+      <NodeDetailPanel />
+    </SimulationContext.Provider>,
+  );
+}
+
+let root: Root | null = null;
+let container: HTMLDivElement | null = null;
+const actEnvironment = globalThis as typeof globalThis & {
+  IS_REACT_ACT_ENVIRONMENT?: boolean;
+};
+
+function renderDom(simulationValue = makeSimulationValue()) {
+  if (!container) {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  }
+
+  if (!root) {
+    root = createRoot(container);
+  }
+
+  act(() => {
+    root?.render(
+      <SimulationContext.Provider value={simulationValue}>
+        <NodeDetailPanel />
+      </SimulationContext.Provider>,
+    );
+  });
+}
+
+beforeEach(() => {
+  actEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+  uiMock.selectedNodeId = null;
+  uiMock.setSelectedNodeId.mockReset();
+  netlabMock.topology = makeTopology([]);
+});
+
+afterEach(() => {
+  act(() => {
+    root?.unmount();
+  });
+
+  root = null;
+  actEnvironment.IS_REACT_ACT_ENVIRONMENT = false;
+
+  if (container) {
+    container.remove();
+    container = null;
+  }
+
+  vi.restoreAllMocks();
+});
+
+describe('NodeDetailPanel', () => {
+  it('returns null when no node is selected', () => {
+    expect(renderMarkup()).toBe('');
+  });
+
+  it('returns null when selected node not found in topology', () => {
+    uiMock.selectedNodeId = 'missing';
+
+    expect(renderMarkup()).toBe('');
+  });
+
+  it('renders router detail for router node', () => {
+    uiMock.selectedNodeId = 'router-1';
+    netlabMock.topology = makeTopology([makeRouterNode()]);
+
+    const html = renderMarkup();
+
+    expect(html).toContain('NODE DETAIL');
+    expect(html).toContain('R1');
+    expect(html).toContain('router');
+  });
+
+  it('renders switch detail for switch node', () => {
+    uiMock.selectedNodeId = 'switch-1';
+    netlabMock.topology = makeTopology([makeSwitchNode()]);
+
+    const html = renderMarkup();
+
+    expect(html).toContain('SW1');
+    expect(html).toContain('switch');
+  });
+
+  it('renders host detail for client node', () => {
+    uiMock.selectedNodeId = 'client-1';
+    netlabMock.topology = makeTopology([makeClientNode()]);
+
+    const html = renderMarkup();
+
+    expect(html).toContain('Client');
+    expect(html).toContain('client');
+  });
+
+  it('displays router interfaces with IP and MAC', () => {
+    uiMock.selectedNodeId = 'router-1';
+    netlabMock.topology = makeTopology([makeRouterNode()]);
+
+    const html = renderMarkup();
+
+    expect(html).toContain('eth0');
+    expect(html).toContain('10.0.0.1/24');
+    expect(html).toContain('00:00:00:00:00:01');
+  });
+
+  it('displays switch ports', () => {
+    uiMock.selectedNodeId = 'switch-1';
+    netlabMock.topology = makeTopology([makeSwitchNode()]);
+
+    const html = renderMarkup();
+
+    expect(html).toContain('fa0/1');
+    expect(html).toContain('00:00:00:00:00:02');
+  });
+
+  it('displays host static IP and MAC', () => {
+    uiMock.selectedNodeId = 'client-1';
+    netlabMock.topology = makeTopology([makeClientNode()]);
+
+    const html = renderMarkup();
+
+    expect(html).toContain('10.0.0.10');
+    expect(html).toContain('00:00:00:00:00:03');
+  });
+
+  it('displays runtime IP from simulation context', () => {
+    uiMock.selectedNodeId = 'client-1';
+    netlabMock.topology = makeTopology([makeClientNode()]);
+
+    const html = renderMarkup(
+      makeSimulationValue({
+        engine: { getRuntimeNodeIp: () => '10.0.0.99' } as never,
+      }),
+    );
+
+    expect(html).toContain('10.0.0.99');
+    expect(html).not.toContain('10.0.0.10');
+  });
+
+  it('displays DHCP lease when present', () => {
+    uiMock.selectedNodeId = 'client-1';
+    netlabMock.topology = makeTopology([makeClientNode()]);
+
+    const html = renderMarkup(
+      makeSimulationValue({
+        getDhcpLeaseState: () => ({
+          status: 'bound',
+          transactionId: 1,
+          assignedIp: '10.0.0.20',
+          serverIp: '10.0.0.1',
+          defaultGateway: '10.0.0.1',
+          dnsServerIp: '10.0.0.53',
+        }),
+      }),
+    );
+
+    expect(html).toContain('DHCP LEASE');
+    expect(html).toContain('BOUND');
+    expect(html).toContain('10.0.0.20');
+    expect(html).toContain('10.0.0.53');
+  });
+
+  it('displays DNS cache when present', () => {
+    uiMock.selectedNodeId = 'client-1';
+    netlabMock.topology = makeTopology([makeClientNode()]);
+
+    const html = renderMarkup(
+      makeSimulationValue({
+        getDnsCache: () => ({
+          'example.com': {
+            address: '203.0.113.10',
+            ttl: 60,
+            resolvedAt: 1,
+          },
+        }),
+      }),
+    );
+
+    expect(html).toContain('DNS CACHE');
+    expect(html).toContain('example.com');
+    expect(html).toContain('203.0.113.10');
+  });
+
+  it('closes panel on Escape key', () => {
+    uiMock.selectedNodeId = 'client-1';
+    netlabMock.topology = makeTopology([makeClientNode()]);
+
+    renderDom();
+
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    });
+
+    expect(uiMock.setSelectedNodeId).toHaveBeenCalledWith(null);
+  });
+});
