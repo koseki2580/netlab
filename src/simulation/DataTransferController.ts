@@ -1,14 +1,18 @@
 import type { FailureState } from '../types/failure';
 import { EMPTY_FAILURE_STATE } from '../types/failure';
 import type { InFlightPacket } from '../types/packets';
-import type { PacketTrace } from '../types/simulation';
+import type { Neighbor, PacketTrace } from '../types/simulation';
+import type { NetlabNode, NetworkTopology } from '../types/topology';
 import type {
   DataTransferState,
   ReassemblyState,
   TransferChunk,
   TransferMessage,
 } from '../types/transfer';
+import { isInSubnet, prefixLength } from '../utils/cidr';
 import { sha256Hex } from '../utils/hash';
+import { deriveDeterministicMac } from './ForwardingPipeline';
+import type { SessionTracker } from './SessionTracker';
 import type { SimulationEngine } from './SimulationEngine';
 
 const DEFAULT_CHUNK_SIZE = 1400;
@@ -16,13 +20,21 @@ const DEFAULT_CHUNK_DELAY = 100;
 const DEFAULT_SRC_PORT = 49152;
 const DEFAULT_DST_PORT = 8080;
 const PAYLOAD_PREVIEW_LIMIT = 80;
-const PLACEHOLDER_SRC_MAC = '00:00:00:00:00:01';
-const PLACEHOLDER_DST_MAC = '00:00:00:00:00:02';
 const textEncoder = new TextEncoder();
 
 interface ForwardingPipelineLike {
-  findNode(nodeId: string): unknown;
-  getEffectiveNodeIp(node: unknown): string | undefined;
+  findNode(nodeId: string): NetlabNode | null;
+  getEffectiveNodeIp(node: NetlabNode | null): string | undefined;
+  getNeighbors(
+    nodeId: string,
+    excludeNodeId?: string | null,
+    failureState?: FailureState,
+  ): Neighbor[];
+  resolveEgressInterface?(
+    nodeId: string,
+    dstIp: string,
+    overrideNextHop?: string,
+  ): { id: string; name: string } | null;
 }
 
 type DataTransferListener = (state: DataTransferState) => void;
@@ -100,7 +112,10 @@ function splitPayloadByBytes(payload: string, maxBytes: number): Array<{ data: s
 }
 
 function cloneTransferMessage(transfer: TransferMessage): TransferMessage {
-  return { ...transfer };
+  return {
+    ...transfer,
+    sessionIds: transfer.sessionIds ? [...transfer.sessionIds] : undefined,
+  };
 }
 
 function cloneTransferChunk(chunk: TransferChunk): TransferChunk {
@@ -129,7 +144,10 @@ export class DataTransferController {
   private state: DataTransferState = createState();
   private readonly listeners = new Set<DataTransferListener>();
 
-  constructor(private readonly engine: SimulationEngine) {}
+  constructor(
+    private readonly engine: SimulationEngine,
+    private readonly sessionTracker?: SessionTracker,
+  ) {}
 
   async startTransfer(
     srcNodeId: string,
@@ -197,6 +215,10 @@ export class DataTransferController {
       chunk.state = 'in-flight';
       this.notify();
 
+      const sessionId = this.sessionTracker
+        ? `${messageId}-session-${chunk.sequenceNumber}`
+        : undefined;
+
       const packet = this.buildChunkPacket({
         messageId,
         srcNodeId,
@@ -207,6 +229,7 @@ export class DataTransferController {
         dstPort,
         chunk,
         chunkSize,
+        sessionId,
       });
 
       await this.engine.send(packet, failureState);
@@ -217,6 +240,18 @@ export class DataTransferController {
       }
 
       chunk.traceId = trace.packetId;
+
+      if (this.sessionTracker && sessionId) {
+        this.sessionTracker.startSession(sessionId, {
+          srcNodeId,
+          dstNodeId,
+          protocol: 'raw',
+          requestType: 'data-transfer',
+          transferId: messageId,
+        });
+        this.sessionTracker.attachTrace(sessionId, trace, 'request');
+        transfer.sessionIds = [...(transfer.sessionIds ?? []), sessionId];
+      }
 
       if (trace.status === 'delivered') {
         chunk.state = 'delivered';
@@ -320,15 +355,20 @@ export class DataTransferController {
     dstPort: number;
     chunk: TransferChunk;
     chunkSize: number;
+    sessionId?: string;
   }): InFlightPacket {
+    const srcMac = this.resolveSourceMac(args.srcNodeId, args.dstIp);
+    const dstMac = this.resolveFirstHopMac(args.srcNodeId, args.dstIp);
+
     return {
       id: `${args.messageId}-packet-${args.chunk.sequenceNumber}`,
+      sessionId: args.sessionId,
       srcNodeId: args.srcNodeId,
       dstNodeId: args.dstNodeId,
       frame: {
         layer: 'L2',
-        srcMac: PLACEHOLDER_SRC_MAC,
-        dstMac: PLACEHOLDER_DST_MAC,
+        srcMac,
+        dstMac,
         etherType: 0x0800,
         payload: {
           layer: 'L3',
@@ -368,14 +408,27 @@ export class DataTransferController {
     return this.engine.getState().traces.find((trace) => trace.packetId === packetId);
   }
 
+  private getPipeline(): ForwardingPipelineLike | undefined {
+    return Reflect.get(this.engine as object, 'pipeline') as ForwardingPipelineLike | undefined;
+  }
+
+  private getTopology(): NetworkTopology | undefined {
+    const pipeline = this.getPipeline();
+    if (!pipeline) {
+      return undefined;
+    }
+
+    return Reflect.get(pipeline as object, 'topology') as NetworkTopology | undefined;
+  }
+
   private resolveNodeIp(nodeId: string): string {
     const runtimeIp = this.engine.getRuntimeNodeIp(nodeId);
     if (runtimeIp) {
       return runtimeIp;
     }
 
-    const pipeline = Reflect.get(this.engine as object, 'pipeline') as ForwardingPipelineLike | undefined;
-    const node = pipeline?.findNode(nodeId);
+    const pipeline = this.getPipeline();
+    const node = pipeline?.findNode(nodeId) ?? null;
     const effectiveIp = pipeline?.getEffectiveNodeIp(node);
 
     if (!effectiveIp) {
@@ -383,5 +436,185 @@ export class DataTransferController {
     }
 
     return effectiveIp;
+  }
+
+  private resolveSourceMac(nodeId: string, dstIp: string): string {
+    const pipeline = this.getPipeline();
+    const node = pipeline?.findNode(nodeId) ?? null;
+
+    if (node?.data.role === 'router') {
+      const egressInterfaceId = pipeline?.resolveEgressInterface?.(nodeId, dstIp)?.id;
+      if (egressInterfaceId) {
+        const egressInterface = node.data.interfaces?.find((iface) => iface.id === egressInterfaceId);
+        if (egressInterface?.macAddress && !this.isPlaceholderMac(egressInterface.macAddress)) {
+          return egressInterface.macAddress;
+        }
+      }
+    }
+
+    return this.resolveNodeMac(nodeId);
+  }
+
+  private resolveFirstHopMac(srcNodeId: string, dstIp: string): string {
+    const { nextHopIp, nextHopNodeId } = this.resolveFirstHop(srcNodeId, dstIp);
+    if (nextHopNodeId) {
+      return this.resolveNodeMac(nextHopNodeId, nextHopIp);
+    }
+
+    return deriveDeterministicMac(`${srcNodeId}:next-hop`);
+  }
+
+  private resolveFirstHop(
+    srcNodeId: string,
+    dstIp: string,
+  ): { nextHopIp?: string; nextHopNodeId?: string } {
+    const srcNode = this.getPipeline()?.findNode(srcNodeId) ?? null;
+    if (!srcNode) {
+      return {};
+    }
+
+    const nextHopIp = this.resolveNextHopIp(srcNode, dstIp);
+    const nextHopNode = this.findReachableNode(srcNodeId, nextHopIp)
+      ?? (nextHopIp !== dstIp ? this.findReachableNode(srcNodeId, dstIp) : null);
+
+    return {
+      nextHopIp,
+      nextHopNodeId: nextHopNode?.id,
+    };
+  }
+
+  private resolveNextHopIp(srcNode: NetlabNode, dstIp: string): string {
+    const topology = this.getTopology();
+
+    if (srcNode.data.role === 'router') {
+      const route = this.selectBestRoute(dstIp, topology?.routeTables.get(srcNode.id) ?? []);
+      if (route) {
+        return route.nextHop === 'direct' ? dstIp : route.nextHop;
+      }
+      return dstIp;
+    }
+
+    const route = this.selectBestRoute(dstIp, srcNode.data.staticRoutes ?? []);
+    if (route) {
+      return route.nextHop === 'direct' ? dstIp : route.nextHop;
+    }
+
+    return dstIp;
+  }
+
+  private selectBestRoute<T extends { destination: string; nextHop: string }>(
+    dstIp: string,
+    routes: T[],
+  ): T | null {
+    return [...routes]
+      .sort((left, right) => prefixLength(right.destination) - prefixLength(left.destination))
+      .find((route) => isInSubnet(dstIp, route.destination)) ?? null;
+  }
+
+  private findReachableNode(srcNodeId: string, targetIp: string): NetlabNode | null {
+    const pipeline = this.getPipeline();
+    if (!pipeline) {
+      return null;
+    }
+
+    const queue = pipeline.getNeighbors(srcNodeId, null, EMPTY_FAILURE_STATE)
+      .map((neighbor) => ({ nodeId: neighbor.nodeId, previousNodeId: srcNodeId }));
+    const visited = new Set<string>();
+    let fallback: NetlabNode | null = null;
+
+    while (queue.length > 0) {
+      const current = queue.shift();
+      if (!current || visited.has(current.nodeId)) {
+        continue;
+      }
+      visited.add(current.nodeId);
+
+      const node = pipeline.findNode(current.nodeId);
+      if (!node) {
+        continue;
+      }
+
+      if (node.data.role !== 'switch') {
+        fallback ??= node;
+        if (this.nodeOwnsIp(node, targetIp)) {
+          return node;
+        }
+        continue;
+      }
+
+      const neighbors = pipeline.getNeighbors(node.id, current.previousNodeId, EMPTY_FAILURE_STATE);
+      for (const neighbor of neighbors) {
+        if (!visited.has(neighbor.nodeId)) {
+          queue.push({ nodeId: neighbor.nodeId, previousNodeId: node.id });
+        }
+      }
+    }
+
+    return fallback;
+  }
+
+  private nodeOwnsIp(node: NetlabNode, ip: string): boolean {
+    const pipeline = this.getPipeline();
+    const effectiveIp = pipeline?.getEffectiveNodeIp(node) ?? node.data.ip;
+    if (effectiveIp === ip) {
+      return true;
+    }
+
+    return (node.data.interfaces ?? []).some((iface) => iface.ipAddress === ip);
+  }
+
+  private resolveNodeMac(nodeId: string, preferredIp?: string): string {
+    const node = this.getPipeline()?.findNode(nodeId) ?? null;
+    const mac = node ? this.extractNodeMac(node, preferredIp) : null;
+
+    if (mac && !this.isPlaceholderMac(mac)) {
+      return mac;
+    }
+
+    return deriveDeterministicMac(nodeId);
+  }
+
+  private extractNodeMac(node: NetlabNode, preferredIp?: string): string | null {
+    if (typeof node.data.mac === 'string' && node.data.mac.length > 0 && !this.isPlaceholderMac(node.data.mac)) {
+      return node.data.mac;
+    }
+
+    const interfaces = node.data.interfaces ?? [];
+    if (preferredIp) {
+      const exactMatch = interfaces.find((iface) => iface.ipAddress === preferredIp);
+      if (exactMatch?.macAddress) {
+        return exactMatch.macAddress;
+      }
+
+      const subnetMatch = interfaces.find((iface) =>
+        isInSubnet(preferredIp, `${iface.ipAddress}/${iface.prefixLength}`),
+      );
+      if (subnetMatch?.macAddress) {
+        return subnetMatch.macAddress;
+      }
+    }
+
+    const effectiveIp = this.getPipeline()?.getEffectiveNodeIp(node) ?? node.data.ip;
+    if (effectiveIp) {
+      const effectiveMatch = interfaces.find((iface) => iface.ipAddress === effectiveIp);
+      if (effectiveMatch?.macAddress) {
+        return effectiveMatch.macAddress;
+      }
+    }
+
+    if (interfaces[0]?.macAddress) {
+      return interfaces[0].macAddress;
+    }
+
+    if (node.data.ports?.[0]?.macAddress) {
+      return node.data.ports[0].macAddress;
+    }
+
+    return null;
+  }
+
+  private isPlaceholderMac(mac: string): boolean {
+    const normalized = mac.trim().toLowerCase();
+    return normalized === '00:00:00:00:00:01' || normalized === '00:00:00:00:00:02';
   }
 }

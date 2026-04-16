@@ -14,6 +14,7 @@ import type {
   TransferMessage,
 } from '../types/transfer';
 import { DataTransferController, type DataTransferOptions } from './DataTransferController';
+import { useOptionalSessionTracker } from './SessionContext';
 import { useSimulation } from './SimulationContext';
 
 export interface DataTransferContextValue {
@@ -40,7 +41,11 @@ export interface DataTransferProviderProps {
 
 export function DataTransferProvider({ children }: DataTransferProviderProps) {
   const { engine } = useSimulation();
-  const controller = useMemo(() => new DataTransferController(engine), [engine]);
+  const sessionTracker = useOptionalSessionTracker();
+  const controller = useMemo(
+    () => new DataTransferController(engine, sessionTracker ?? undefined),
+    [engine, sessionTracker],
+  );
   const [controllerState, setControllerState] = useState<DataTransferState>(() => controller.getState());
   const [selectedTransferId, setSelectedTransferId] = useState<string | null>(null);
   const effectiveSelectedTransferId = selectedTransferId ?? controllerState.selectedTransferId;
