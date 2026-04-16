@@ -87,6 +87,18 @@ describe('SessionTracker.startSession', () => {
     });
   });
 
+  it('stores transferId when provided', () => {
+    const tracker = new SessionTracker(new HookEngine());
+
+    tracker.startSession('session-1', {
+      srcNodeId: 'client-1',
+      dstNodeId: 'server-1',
+      transferId: 'transfer-1',
+    });
+
+    expect(tracker.getSession('session-1')?.transferId).toBe('transfer-1');
+  });
+
   it('is idempotent for duplicate ids', () => {
     const tracker = new SessionTracker(new HookEngine());
 
@@ -317,6 +329,28 @@ describe('SessionTracker.attachTrace', () => {
     tracker.attachTrace('session-1', makeTrace('pkt-request'), 'request');
 
     expect(listener).toHaveBeenCalledOnce();
+  });
+
+  it('marks data-transfer request traces as successful one-way sessions', () => {
+    const tracker = new SessionTracker(new HookEngine());
+    const trace = makeTrace('pkt-request');
+
+    tracker.startSession('session-1', {
+      srcNodeId: 'client-1',
+      dstNodeId: 'server-1',
+      requestType: 'data-transfer',
+      transferId: 'transfer-1',
+    });
+    tracker.attachTrace('session-1', trace, 'request');
+
+    expect(tracker.getSession('session-1')).toMatchObject({
+      status: 'success',
+      requestTrace: trace,
+      transferId: 'transfer-1',
+    });
+    expect(
+      tracker.getSession('session-1')?.events.map((event) => event.phase),
+    ).toEqual(['request:routing', 'request:delivered']);
   });
 });
 

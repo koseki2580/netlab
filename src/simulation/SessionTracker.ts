@@ -14,6 +14,7 @@ interface StartSessionOptions {
   dstNodeId: string;
   protocol?: string;
   requestType?: string;
+  transferId?: string;
 }
 
 export class SessionTracker {
@@ -36,6 +37,7 @@ export class SessionTracker {
       status: 'pending',
       createdAt: Date.now(),
       events: [],
+      transferId: opts.transferId,
     });
 
     this.notify();
@@ -53,6 +55,10 @@ export class SessionTracker {
       session.requestTrace = trace;
     } else {
       session.responseTrace = trace;
+    }
+
+    if (session.requestType === 'data-transfer' && role === 'request') {
+      this.syncDataTransferSession(session, trace);
     }
 
     this.notify();
@@ -198,6 +204,45 @@ export class SessionTracker {
       meta: opts?.meta,
     };
     session.events.push(event);
+  }
+
+  private syncDataTransferSession(
+    session: NetworkSession,
+    trace: PacketTrace,
+  ): void {
+    const firstHop = trace.hops[0];
+    const lastHop = trace.hops[trace.hops.length - 1];
+
+    if (!session.events.some((event) => event.phase === 'request:routing')) {
+      this.addEvent(session, 'request:routing', {
+        nodeId: firstHop?.nodeId ?? session.srcNodeId,
+      });
+    }
+
+    if (trace.status === 'delivered') {
+      if (!session.events.some((event) => event.phase === 'request:delivered')) {
+        this.addEvent(session, 'request:delivered', {
+          nodeId: lastHop?.nodeId ?? session.dstNodeId,
+        });
+      }
+      session.status = 'success';
+      session.completedAt = Date.now();
+      session.error = undefined;
+      return;
+    }
+
+    if (!session.events.some((event) => event.phase === 'drop')) {
+      const reason = lastHop?.reason ?? 'dropped';
+      const nodeId = lastHop?.nodeId ?? session.dstNodeId;
+      session.error = { reason, nodeId };
+      this.addEvent(session, 'drop', {
+        nodeId,
+        meta: { reason },
+      });
+    }
+
+    session.status = 'failed';
+    session.completedAt = Date.now();
   }
 
   private notify(): void {
