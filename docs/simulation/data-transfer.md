@@ -44,6 +44,28 @@ The simulator models data delivery at four distinct levels:
 Message -> Chunk is 1:N. Each chunk becomes exactly one packet.
 Fragment support is deferred to a later phase.
 
+## Transfer-Session Integration
+
+When a `SessionTracker` is provided to `DataTransferController`, each chunk transmission
+creates a correlated session:
+
+- `TransferMessage.sessionIds` contains the IDs of all sessions created during the transfer
+- Each `NetworkSession.transferId` references the originating transfer
+- This allows the UI to navigate from a transfer to its individual chunk sessions and vice versa
+
+The integration is optional. Transfers still work without sessions for simpler demos.
+
+### Cross-Reference Model
+
+```text
+TransferMessage (1)
+  -> sessionIds: [sid-0, sid-1, sid-2]
+       |
+       +-- NetworkSession sid-0 { transferId: "transfer-xxx", requestTrace: ... }
+       +-- NetworkSession sid-1 { transferId: "transfer-xxx", requestTrace: ... }
+       +-- NetworkSession sid-2 { transferId: "transfer-xxx", requestTrace: ... }
+```
+
 ---
 
 ## Data Model
@@ -75,6 +97,7 @@ export interface TransferMessage {
   status: DeliveryStatus;
   createdAt: number;
   completedAt?: number;
+  sessionIds?: string[];
 }
 ```
 
@@ -154,7 +177,7 @@ export interface DataTransferOptions {
 
 ```ts
 export class DataTransferController {
-  constructor(engine: SimulationEngine)
+  constructor(engine: SimulationEngine, sessionTracker?: SessionTracker)
 
   async startTransfer(
     srcNodeId: string,
@@ -301,6 +324,18 @@ Per-hop packet mutation is still owned by the existing simulation stack:
 Each `PacketHop` includes `srcMac` and `dstMac` fields, showing the Ethernet source and
 destination MAC addresses at that point in the forwarding path.
 
+### Initial MAC Resolution
+
+The initial Ethernet frame for each chunk packet resolves realistic MAC addresses:
+
+- **Source MAC**: derived from the sending node's interface MAC when available, or a deterministic
+  fallback derived from the node ID
+- **Destination MAC**: resolved from the first-hop neighbor selected by the forwarding pipeline,
+  matching the hop-0 forwarding view as closely as possible
+
+This keeps the very first hop educationally accurate. Learners can inspect the initial frame and
+see that it already targets the next L2 hop rather than a placeholder address.
+
 See [RFC Packet Realism](rfc-packet-realism.md) for the forwarding and mutation rules that the transfer feature relies on.
 
 The data transfer layer consumes those existing traces to teach:
@@ -368,3 +403,46 @@ Deferred work:
 - IP fragmentation support based on IPv4 `mf` / `fragmentOffset`
 - richer L4 transport semantics
 - binary file-transfer payload modeling
+
+---
+
+## Message View
+
+The Message View provides a transfer-level summary with the following sections.
+
+### Summary Card
+
+Displayed at the top. It contains:
+
+- delivery verdict: COMPLETE / PARTIAL / FAILED / IN PROGRESS
+- source and destination nodes
+- payload size and chunk counters for delivered, dropped, and missing chunks
+- checksum verification result
+- reconstructed payload size when reassembly completed
+
+### IP vs MAC Educational Summary
+
+This section explains the difference between stable end-to-end IP addressing and hop-by-hop
+link-layer rewriting.
+
+- shows the end-to-end IP pair from a delivered chunk trace
+- reports how many MAC rewrites were observed across the trace hops
+- highlights the initial and final MAC pair when available
+
+### Chunk Grid
+
+Each chunk is rendered as a clickable inspection card with:
+
+- sequence number, state, and size
+- an explicit `Inspect hop trace` affordance when a trace exists
+- hover/focus/selection styling so the interaction is discoverable
+- disabled styling when trace data is unavailable
+
+### Reassembly Status
+
+The reassembly section reports:
+
+- received vs expected chunks
+- checksum state
+- incomplete delivery state when chunks are missing
+- missing chunk badges with drop reasons derived from the trace

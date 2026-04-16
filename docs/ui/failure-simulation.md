@@ -205,6 +205,17 @@ Example layout:
 └──────────────────────────────────┘
 ```
 
+## Panel Layout Stability
+
+`FailureTogglePanel` should be mounted inside a container that reserves space for recompute status
+changes.
+
+- `minHeight` reserves enough space so the panel does not collapse while recalculating
+- `maxHeight` with `overflow: auto` prevents the section from growing without bound
+- the loading indicator should render inside the reserved panel area rather than expanding the layout
+
+This keeps failure toggles and nearby controls stationary while `autoRecompute` is active.
+
 ## Visual Styling
 
 `NetlabCanvas` applies existing failure visuals and adds router-interface annotations:

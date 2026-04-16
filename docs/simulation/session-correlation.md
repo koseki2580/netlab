@@ -98,6 +98,7 @@ interface NetworkSession {
     reason: string;
     nodeId: string;
   };
+  transferId?: string;
 }
 ```
 
@@ -182,6 +183,7 @@ class SessionTracker {
       dstNodeId: string;
       protocol?: string;
       requestType?: string;
+      transferId?: string;
     },
   ): void
 
@@ -197,6 +199,14 @@ class SessionTracker {
   subscribe(listener: () => void): () => void
 }
 ```
+
+## Transfer Correlation
+
+When sessions are created as part of a `DataTransferController` transfer:
+
+- `NetworkSession.transferId` is set to the originating `TransferMessage.messageId`
+- sessions can be filtered by `transferId` to show only those related to a specific transfer
+- the session lifecycle mirrors the delivery outcome of the correlated chunk trace
 
 ### Hook handling
 
