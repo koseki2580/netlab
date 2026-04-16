@@ -42,6 +42,8 @@ export interface PacketHop {
   nodeLabel: string;
   srcIp: string;
   dstIp: string;
+  srcMac?: string;
+  dstMac?: string;
   ttl: number;
   protocol: string;         // 'TCP' | 'UDP' | 'ICMP' | '<number>'
   event: 'create' | 'forward' | 'deliver' | 'drop' | 'arp-request' | 'arp-reply';
