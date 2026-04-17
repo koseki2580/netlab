@@ -13,7 +13,23 @@ An L2 switch forwards Ethernet frames based on MAC address learning.
   label: 'SW-1',
   layerId: 'l2',
   // Switch-specific:
-  ports: DevicePort[];   // e.g. [{ id: 'p1', name: 'fa0/1', macAddress: 'aa:bb:cc:dd:ee:01' }]
+  ports: SwitchPort[];
+  vlans?: VlanConfig[];
+}
+
+interface SwitchPort {
+  id: string;
+  name: string;
+  macAddress: string;
+  vlanMode?: 'access' | 'trunk';
+  accessVlan?: number;
+  trunkAllowedVlans?: number[];
+  nativeVlan?: number;
+}
+
+interface VlanConfig {
+  vlanId: number;
+  name?: string;
 }
 ```
 
@@ -21,15 +37,27 @@ An L2 switch forwards Ethernet frames based on MAC address learning.
 
 See [l2-datalink.md](../layers/l2-datalink.md) for the full forwarding specification.
 
-1. **Learn**: Record `srcMac → ingressPort` on every received frame
+1. **Learn**: Record `vlanId:srcMac → ingressPort` on every received frame
 2. **Forward**:
-   - Broadcast (`ff:ff:ff:ff:ff:ff`): choose the simulated path toward the intended destination node
-   - Known unicast: send to the matching path
-   - Unknown unicast: choose the path that leads toward the destination node
+   - Broadcast (`ff:ff:ff:ff:ff:ff`): choose an egress path that stays inside the resolved VLAN
+   - Known unicast: send to the matching path if that port carries the VLAN
+   - Unknown unicast: choose the path that leads toward the destination node inside the same VLAN
 
 In the current engine, switch traversal is modeled as a single destination-aware path through the
 topology graph. The engine does not duplicate one frame into multiple concurrent branch traces for
 every flooded port.
+
+## VLAN Forwarding
+
+- Access ports accept only untagged ingress frames and classify them into `accessVlan` (default `1`).
+- Trunk ports accept untagged ingress frames on `nativeVlan` (default `1`) and tagged ingress
+  frames only when the VLAN is listed in `trunkAllowedVlans`.
+- Access-port egress is always untagged.
+- Trunk egress is tagged for non-native VLANs and untagged for the native VLAN.
+- Broadcast-domain isolation is enforced by filtering flood and known-unicast egress to only the
+  ports that carry the forwarding VLAN.
+
+See [vlan.md](../vlan.md) for the full ingress/egress rules and examples.
 
 ## Demo Configuration
 
@@ -42,9 +70,13 @@ every flooded port.
     label: 'SW-1',
     role: 'switch',
     layerId: 'l2',
+    vlans: [
+      { vlanId: 10, name: 'users' },
+      { vlanId: 20, name: 'servers' },
+    ],
     ports: [
-      { id: 'p0', name: 'fa0/0', macAddress: '00:00:00:00:01:00' },
-      { id: 'p1', name: 'fa0/1', macAddress: '00:00:00:00:01:01' },
+      { id: 'p0', name: 'fa0/0', macAddress: '00:00:00:00:01:00', vlanMode: 'access', accessVlan: 10 },
+      { id: 'p1', name: 'fa0/1', macAddress: '00:00:00:00:01:01', vlanMode: 'trunk', trunkAllowedVlans: [10, 20], nativeVlan: 1 },
     ],
   },
 }

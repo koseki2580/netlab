@@ -31,6 +31,15 @@ interface RouterInterface {
   nat?: 'inside' | 'outside';
   inboundAcl?: AclRule[];
   outboundAcl?: AclRule[];
+  subInterfaces?: SubInterface[];
+}
+
+interface SubInterface {
+  id: string;              // e.g. 'eth0.10'
+  parentInterfaceId: string;
+  vlanId: number;
+  ipAddress: string;
+  prefixLength: number;
 }
 
 interface PortForwardingRule {
@@ -100,6 +109,18 @@ stateful return-traffic handling with `statefulFirewall: true`.
 Detailed ACL semantics, evaluation order, conn-track behavior, and trace annotation live in
 [`docs/networking/acl.md`](../acl.md).
 
+## Router-on-a-Stick
+
+Routers may terminate multiple VLANs on one parent interface by defining `subInterfaces`.
+
+- Tagged ingress frames resolve to the sub-interface whose `vlanId` matches the 802.1Q tag.
+- Untagged ingress may still use the parent interface IP if the parent interface is configured.
+- Each sub-interface contributes its own connected network to route-table derivation.
+- ARP resolution is scoped per VLAN so overlapping downstream addressing remains isolated.
+- Trace annotation surfaces the logical interface name, such as `eth0.10` or `eth0.20`.
+
+See [vlan.md](../vlan.md) for the full VLAN forwarding and per-VLAN ARP model.
+
 ## Demo Configuration
 
 ```typescript
@@ -112,7 +133,23 @@ Detailed ACL semantics, evaluation order, conn-track behavior, and trace annotat
     role: 'router',
     layerId: 'l3',
     interfaces: [
-      { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:00:02:00', nat: 'inside' },
+      {
+        id: 'eth0',
+        name: 'eth0',
+        ipAddress: '10.0.0.1',
+        prefixLength: 24,
+        macAddress: '00:00:00:00:02:00',
+        nat: 'inside',
+        subInterfaces: [
+          {
+            id: 'eth0.10',
+            parentInterfaceId: 'eth0',
+            vlanId: 10,
+            ipAddress: '10.0.10.1',
+            prefixLength: 24,
+          },
+        ],
+      },
       { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:00:02:01', nat: 'outside' },
     ],
     staticRoutes: [
