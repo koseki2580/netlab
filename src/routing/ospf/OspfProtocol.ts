@@ -97,7 +97,9 @@ function getAdvertisedNetworks(node: NetlabNode): string[] {
   const configuredNetworks = new Set(
     node.data.ospfConfig?.areas.flatMap((area) => area.networks) ?? [],
   );
-  return getConnectedNetworks(node).filter((network) => configuredNetworks.has(network));
+  return getConnectedNetworks(node)
+    .map((network) => network.cidr)
+    .filter((network) => configuredNetworks.has(network));
 }
 
 function resolveLinkCost(node: NetlabNode, iface: RouterInterface): number {

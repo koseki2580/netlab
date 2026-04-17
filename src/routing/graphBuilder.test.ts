@@ -201,13 +201,16 @@ describe('buildRouterAdjacency', () => {
 });
 
 describe('getConnectedNetworks', () => {
-  it('returns CIDR for each router interface', () => {
+  it('returns one connected-network entry for each router interface', () => {
     const router = makeRouter('r1', [
       { ipAddress: '10.0.0.1', prefixLength: 24 },
       { ipAddress: '172.16.0.2', prefixLength: 30 },
     ]);
 
-    expect(getConnectedNetworks(router)).toEqual(['10.0.0.0/24', '172.16.0.0/30']);
+    expect(getConnectedNetworks(router)).toEqual([
+      { cidr: '10.0.0.0/24' },
+      { cidr: '172.16.0.0/30' },
+    ]);
   });
 
   it('returns empty array for node without interfaces', () => {
@@ -218,5 +221,74 @@ describe('getConnectedNetworks', () => {
 
   it('returns empty array for non-router node', () => {
     expect(getConnectedNetworks(makeNode('client-1', 'client', 'client'))).toEqual([]);
+  });
+
+  describe('VLAN sub-interfaces', () => {
+    it('emits one connected network per sub-interface in addition to the parent interface', () => {
+      const router = makeRouter('r1', [
+        {
+          id: 'eth0',
+          name: 'eth0',
+          ipAddress: '192.0.2.1',
+          prefixLength: 24,
+          subInterfaces: [
+            {
+              id: 'eth0.10',
+              parentInterfaceId: 'eth0',
+              vlanId: 10,
+              ipAddress: '10.0.10.1',
+              prefixLength: 24,
+            },
+            {
+              id: 'eth0.20',
+              parentInterfaceId: 'eth0',
+              vlanId: 20,
+              ipAddress: '10.0.20.1',
+              prefixLength: 24,
+            },
+          ],
+        },
+      ]);
+
+      expect(getConnectedNetworks(router)).toEqual([
+        { cidr: '192.0.2.0/24' },
+        { cidr: '10.0.10.0/24', vlanId: 10 },
+        { cidr: '10.0.20.0/24', vlanId: 20 },
+      ]);
+    });
+
+    it('annotates sub-interface-derived networks with their vlanId', () => {
+      const router = makeRouter('r1', [
+        {
+          id: 'eth0',
+          name: 'eth0',
+          ipAddress: '192.0.2.1',
+          prefixLength: 24,
+          subInterfaces: [
+            {
+              id: 'eth0.30',
+              parentInterfaceId: 'eth0',
+              vlanId: 30,
+              ipAddress: '10.30.0.1',
+              prefixLength: 24,
+            },
+          ],
+        },
+      ]);
+
+      expect(getConnectedNetworks(router)).toContainEqual({ cidr: '10.30.0.0/24', vlanId: 30 });
+    });
+
+    it('returns identical results for routers with no subInterfaces (regression guard)', () => {
+      const router = makeRouter('r1', [
+        { ipAddress: '10.0.0.1', prefixLength: 24 },
+        { ipAddress: '172.16.0.2', prefixLength: 30 },
+      ]);
+
+      expect(getConnectedNetworks(router)).toEqual([
+        { cidr: '10.0.0.0/24' },
+        { cidr: '172.16.0.0/30' },
+      ]);
+    });
   });
 });
