@@ -16,6 +16,7 @@ export type ForwardDecision =
       nextNodeId: string;
       edgeId: string;
       egressPort: string;
+      ingressInterfaceId?: string;
       egressInterfaceId?: string;
       packet: InFlightPacket;
       selectedRoute?: RouteEntry;

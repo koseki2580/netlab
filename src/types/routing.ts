@@ -46,6 +46,14 @@ export interface PortForwardingRule {
   internalPort: number;
 }
 
+export interface SubInterface {
+  id: string;
+  parentInterfaceId: string;
+  vlanId: number;
+  ipAddress: string;
+  prefixLength: number;
+}
+
 export interface RouterInterface {
   id: string;
   name: string;
@@ -56,6 +64,7 @@ export interface RouterInterface {
   nat?: 'inside' | 'outside';
   inboundAcl?: AclRule[];
   outboundAcl?: AclRule[];
+  subInterfaces?: SubInterface[];
 }
 
 // --- Dynamic Routing Protocol Configs ---

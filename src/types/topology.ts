@@ -34,6 +34,7 @@ export interface NetlabNodeData extends Record<string, unknown> {
   dnsServer?: DnsServerConfig;
   // Switch-specific
   ports?: SwitchPort[];
+  vlans?: VlanConfig[];
 }
 
 export interface SwitchPort {
@@ -43,6 +44,7 @@ export interface SwitchPort {
   vlanMode?: 'access' | 'trunk';
   accessVlan?: number;
   trunkAllowedVlans?: number[];
+  nativeVlan?: number;
 }
 
 export interface VlanConfig {

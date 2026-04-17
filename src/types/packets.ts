@@ -112,12 +112,24 @@ export interface IpPacket {
   payload: IcmpMessage | TcpSegment | UdpDatagram; // When protocol === 1 (ICMP), payload is IcmpMessage.
 }
 
+/**
+ * 802.1Q VLAN tag carried between the source MAC and EtherType fields of an
+ * Ethernet frame. Untagged frames omit this object.
+ */
+export interface VlanTag {
+  tpid: 0x8100;
+  pcp: number;
+  dei: 0 | 1;
+  vid: number;
+}
+
 export interface EthernetFrame {
   layer: 'L2';
   preamble?: number[];
   srcMac: string;
   dstMac: string;
   etherType: number;  // 0x0800 = IPv4
+  vlanTag?: VlanTag;
   payload: IpPacket;
   fcs?: number;
 }
@@ -138,6 +150,7 @@ export interface ArpEthernetFrame {
   srcMac: string;
   dstMac: string;
   etherType: 0x0806;
+  vlanTag?: VlanTag;
   payload: ArpPacket;
   fcs?: number;
 }
@@ -152,6 +165,7 @@ export interface InFlightPacket {
   currentDeviceId: string;
   ingressPortId: string;
   egressPortId?: string;
+  vlanId?: number;
   path: string[];       // ordered list of device IDs already visited
   timestamp: number;
   sessionId?: string;
