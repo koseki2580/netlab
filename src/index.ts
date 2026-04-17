@@ -109,6 +109,7 @@ export type {
   TcpSegment,
   UdpDatagram,
   IpPacket,
+  VlanTag,
   EthernetFrame,
   ArpPacket,
   ArpEthernetFrame,
@@ -149,6 +150,7 @@ export type {
   StaticRouteConfig,
   PortForwardingRule,
   RouterInterface,
+  SubInterface,
 } from './types/routing';
 export { ADMIN_DISTANCES } from './types/routing';
 export type { NatType, NatEntry, NatTable } from './types/nat';
