@@ -81,6 +81,11 @@ const CATEGORIES: Category[] = [
         desc: 'Compare same-VLAN switching against router-on-a-stick inter-VLAN routing, then break the trunk to observe isolation.',
       },
       {
+        path: '/networking/stp',
+        title: 'Spanning Tree',
+        desc: 'Watch a triangle of switches elect a root bridge, block one redundant port, and reroute B→C traffic through the root.',
+      },
+      {
         path: '/areas/dmz',
         title: 'DMZ Segmentation',
         desc: 'Classic three-zone topology: Private → DMZ → Public with two border routers.',
