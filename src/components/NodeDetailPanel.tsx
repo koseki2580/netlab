@@ -2,9 +2,15 @@ import { useContext, useEffect } from 'react';
 import { useNetlabUI } from './NetlabUIContext';
 import { useNetlabContext } from './NetlabContext';
 import { SimulationContext } from '../simulation/SimulationContext';
-import type { NetlabNodeData } from '../types/topology';
+import type { NetlabNodeData, NetworkTopology, StpPortRuntime } from '../types/topology';
 import type { RouterInterface } from '../types/routing';
 import type { DhcpLeaseState, DnsCache } from '../types/services';
+import {
+  compareBridgeId,
+  DEFAULT_BRIDGE_PRIORITY,
+  formatBridgeId,
+  makeBridgeId,
+} from '../layers/l2-datalink/stp/BridgeId';
 
 const PANEL_STYLE: React.CSSProperties = {
   position: 'absolute',
@@ -51,6 +57,21 @@ const VLAN_PALETTE = [
 
 export function vlanColor(vid: number): string {
   return VLAN_PALETTE[Math.abs(vid) % VLAN_PALETTE.length] ?? VLAN_PALETTE[0];
+}
+
+function stpRoleColor(role: 'ROOT' | 'DESIGNATED' | 'BLOCKED' | 'DISABLED'): string {
+  switch (role) {
+    case 'ROOT':
+      return '#38bdf8';
+    case 'DESIGNATED':
+      return '#22c55e';
+    case 'BLOCKED':
+      return '#ef4444';
+    case 'DISABLED':
+      return '#94a3b8';
+    default:
+      return 'var(--netlab-text-primary)';
+  }
 }
 
 function RouterDetail({ data }: { data: NetlabNodeData }) {
@@ -107,7 +128,15 @@ function RouterDetail({ data }: { data: NetlabNodeData }) {
   );
 }
 
-function SwitchDetail({ data }: { data: NetlabNodeData }) {
+function SwitchDetail({
+  nodeId,
+  data,
+  topology,
+}: {
+  nodeId: string;
+  data: NetlabNodeData;
+  topology: NetworkTopology;
+}) {
   const ports = data.ports ?? [];
   const hasVlanConfig = ports.some((port) =>
     port.vlanMode !== undefined ||
@@ -115,6 +144,24 @@ function SwitchDetail({ data }: { data: NetlabNodeData }) {
     (port.trunkAllowedVlans?.length ?? 0) > 0 ||
     port.nativeVlan !== undefined,
   );
+  const stpPortStates: Array<{ port: typeof ports[number]; runtime: StpPortRuntime }> = topology.stpStates
+    ? ports.reduce<Array<{ port: typeof ports[number]; runtime: StpPortRuntime }>>((entries, port) => {
+      const runtime = topology.stpStates?.get(`${nodeId}:${port.id}`);
+      if (runtime) {
+        entries.push({ port, runtime });
+      }
+      return entries;
+    }, [])
+    : [];
+  const localBridgeId = topology.stpStates && topology.stpRoot && ports.length > 0
+    ? makeBridgeId(data.stpConfig?.priority ?? DEFAULT_BRIDGE_PRIORITY, ports)
+    : null;
+  const isRootBridge = Boolean(
+    localBridgeId &&
+    topology.stpRoot &&
+    compareBridgeId(localBridgeId, topology.stpRoot) === 0,
+  );
+
   return (
     <>
       {ports.length === 0 ? (
@@ -132,6 +179,32 @@ function SwitchDetail({ data }: { data: NetlabNodeData }) {
             </div>
           </div>
         ))
+      )}
+      {topology.stpStates && stpPortStates.length > 0 && (
+        <>
+          <div style={SECTION_HEADER_STYLE}>STP</div>
+          {topology.stpRoot && localBridgeId && (
+            <div
+              style={{
+                marginBottom: 8,
+                padding: '4px 8px',
+                borderRadius: 6,
+                background: isRootBridge ? 'rgba(56, 189, 248, 0.14)' : 'rgba(148, 163, 184, 0.12)',
+                color: isRootBridge ? '#38bdf8' : 'var(--netlab-text-secondary)',
+              }}
+            >
+              {isRootBridge ? 'Root bridge' : `Non-root (root = ${formatBridgeId(topology.stpRoot)})`}
+            </div>
+          )}
+          {stpPortStates.map(({ port, runtime }) => (
+            <div key={`${port.id}-stp`} style={ROW_STYLE}>
+              <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>{port.id}</span>
+              <span style={{ color: stpRoleColor(runtime.role) }}>
+                {runtime.role} ({runtime.state})
+              </span>
+            </div>
+          ))}
+        </>
       )}
       {hasVlanConfig && (
         <>
@@ -293,7 +366,7 @@ export function NodeDetailPanel() {
       </div>
       <div style={{ borderTop: '1px solid var(--netlab-border-subtle)', paddingTop: 8 }}>
         {d.role === 'router' && <RouterDetail data={d} />}
-        {d.role === 'switch' && <SwitchDetail data={d} />}
+        {d.role === 'switch' && <SwitchDetail nodeId={node.id} data={d} topology={topology} />}
         {(d.role === 'client' || d.role === 'server') && <HostDetail data={d} runtimeIp={runtimeIp} />}
         {leaseState && <DhcpLeaseDetail lease={leaseState} />}
         {dnsCache && <DnsCacheDetail cache={dnsCache} />}

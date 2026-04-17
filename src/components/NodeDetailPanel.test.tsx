@@ -5,7 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SimulationContext, type SimulationContextValue } from '../simulation/SimulationContext';
-import type { NetworkTopology } from '../types/topology';
+import type { NetworkTopology, StpPortRuntime } from '../types/topology';
 import { NodeDetailPanel, vlanColor } from './NodeDetailPanel';
 
 const uiMock = vi.hoisted(() => ({
@@ -63,12 +63,16 @@ function makeSimulationValue(overrides: Partial<SimulationContextValue> = {}): S
   };
 }
 
-function makeTopology(nodes: NetworkTopology['nodes']): NetworkTopology {
+function makeTopology(
+  nodes: NetworkTopology['nodes'],
+  overrides: Partial<NetworkTopology> = {},
+): NetworkTopology {
   return {
     nodes,
     edges: [],
     areas: [],
     routeTables: new Map(),
+    ...overrides,
   };
 }
 
@@ -171,6 +175,21 @@ function makeSwitchNodeWithoutVlanConfig() {
       ],
     },
   } as NetworkTopology['nodes'][number];
+}
+
+function makeStpRuntime(
+  portId: string,
+  role: StpPortRuntime['role'],
+  state: StpPortRuntime['state'],
+): StpPortRuntime {
+  return {
+    switchNodeId: 'switch-1',
+    portId,
+    role,
+    state,
+    designatedBridge: { priority: 32768, mac: '00:00:00:00:00:02' },
+    rootPathCost: role === 'ROOT' ? 19 : 0,
+  };
 }
 
 function makeClientNode() {
@@ -428,6 +447,82 @@ describe('NodeDetailPanel', () => {
     it('vlanColor returns the same color for the same vid and different colors for different vids', () => {
       expect(vlanColor(10)).toBe(vlanColor(10));
       expect(vlanColor(10)).not.toBe(vlanColor(20));
+    });
+  });
+
+  describe('STP', () => {
+    it('renders ROOT/DESIGNATED/BLOCKED badges for a switch with stpStates', () => {
+      uiMock.selectedNodeId = 'switch-1';
+      netlabMock.topology = makeTopology(
+        [makeSwitchNode(true)],
+        {
+          stpStates: new Map([
+            ['switch-1:port-1', makeStpRuntime('port-1', 'ROOT', 'FORWARDING')],
+            ['switch-1:port-2', makeStpRuntime('port-2', 'DESIGNATED', 'FORWARDING')],
+            ['switch-1:port-3', makeStpRuntime('port-3', 'BLOCKED', 'BLOCKING')],
+          ]),
+          stpRoot: { priority: 4096, mac: '00:00:00:00:00:01' },
+        },
+      );
+      netlabMock.topology.nodes[0]!.data.ports = [
+        { id: 'port-1', name: 'fa0/1', macAddress: '00:00:00:00:00:02' },
+        { id: 'port-2', name: 'fa0/2', macAddress: '00:00:00:00:00:03' },
+        { id: 'port-3', name: 'fa0/3', macAddress: '00:00:00:00:00:04' },
+      ];
+
+      const html = renderMarkup();
+
+      expect(html).toContain('STP');
+      expect(html).toContain('port-1');
+      expect(html).toContain('ROOT');
+      expect(html).toContain('DESIGNATED');
+      expect(html).toContain('BLOCKED');
+    });
+
+    it('shows "Root bridge" when this switch is the elected root', () => {
+      uiMock.selectedNodeId = 'switch-1';
+      netlabMock.topology = makeTopology(
+        [makeSwitchNodeWithoutVlanConfig()],
+        {
+          stpStates: new Map([
+            ['switch-1:port-1', makeStpRuntime('port-1', 'DESIGNATED', 'FORWARDING')],
+          ]),
+          stpRoot: { priority: 32768, mac: '00:00:00:00:00:02' },
+        },
+      );
+
+      const html = renderMarkup();
+
+      expect(html).toContain('Root bridge');
+    });
+
+    it('shows "Non-root" with root BridgeId otherwise', () => {
+      uiMock.selectedNodeId = 'switch-1';
+      netlabMock.topology = makeTopology(
+        [makeSwitchNodeWithoutVlanConfig()],
+        {
+          stpStates: new Map([
+            ['switch-1:port-1', makeStpRuntime('port-1', 'ROOT', 'FORWARDING')],
+          ]),
+          stpRoot: { priority: 4096, mac: '00:00:00:00:00:01' },
+        },
+      );
+
+      const html = renderMarkup();
+
+      expect(html).toContain('Non-root');
+      expect(html).toContain('4096/00:00:00:00:00:01');
+    });
+
+    it('omits STP section when topology.stpStates is absent (backward compat)', () => {
+      uiMock.selectedNodeId = 'switch-1';
+      netlabMock.topology = makeTopology([makeSwitchNodeWithoutVlanConfig()]);
+
+      const html = renderMarkup();
+
+      expect(html).not.toContain('Root bridge');
+      expect(html).not.toContain('Non-root');
+      expect(html).not.toContain('STP');
     });
   });
 });

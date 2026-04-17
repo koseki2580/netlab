@@ -6,6 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HookEngine } from '../hooks/HookEngine';
 import { protocolRegistry } from '../registry/ProtocolRegistry';
+import * as stpModule from '../layers/l2-datalink/stp/computeStp';
 import type { RouteEntry } from '../types/routing';
 import type { NetworkTopology, TopologySnapshot } from '../types/topology';
 import { useNetlabContext, type NetlabContextValue } from './NetlabContext';
@@ -201,6 +202,38 @@ describe('NetlabProvider', () => {
       renderControlled(makeTopology('Routes'));
 
       expect(currentContext().topology.routeTables).toBe(routeTable);
+    });
+  });
+
+  describe('stp computation', () => {
+    it('computes STP state via computeStp', () => {
+      const topology = makeTopology('STP');
+      const stpStates = new Map([
+        [
+          'switch-1:p1',
+          {
+            switchNodeId: 'switch-1',
+            portId: 'p1',
+            role: 'DESIGNATED' as const,
+            state: 'FORWARDING' as const,
+            designatedBridge: { priority: 32768, mac: '02:00:00:10:00:01' },
+            rootPathCost: 0,
+          },
+        ],
+      ]);
+      const spy = vi.spyOn(stpModule, 'computeStp').mockReturnValue({
+        root: { priority: 32768, mac: '02:00:00:10:00:01' },
+        ports: stpStates,
+      });
+
+      renderControlled(topology);
+
+      expect(spy).toHaveBeenCalledWith(topology);
+      expect(currentContext().topology.stpStates).toBe(stpStates);
+      expect(currentContext().topology.stpRoot).toEqual({
+        priority: 32768,
+        mac: '02:00:00:10:00:01',
+      });
     });
   });
 

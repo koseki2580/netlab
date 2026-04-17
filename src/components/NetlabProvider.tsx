@@ -6,6 +6,7 @@ import { bgpProtocol } from '../routing/bgp/BgpProtocol';
 import { ospfProtocol } from '../routing/ospf/OspfProtocol';
 import { ripProtocol } from '../routing/rip/RipProtocol';
 import { staticProtocol } from '../routing/static/StaticProtocol';
+import { computeStp } from '../layers/l2-datalink/stp/computeStp';
 import type { NetworkTopology, TopologySnapshot } from '../types/topology';
 
 function ensureBuiltInProtocolsRegistered() {
@@ -61,9 +62,19 @@ export function NetlabProvider({ topology, defaultTopology, children }: NetlabPr
     [resolvedTopology],
   );
 
+  const stpResult = useMemo(
+    () => computeStp(resolvedTopology),
+    [resolvedTopology],
+  );
+
   const enrichedTopology = useMemo(
-    () => ({ ...resolvedTopology, routeTables: routeTable }),
-    [resolvedTopology, routeTable],
+    () => ({
+      ...resolvedTopology,
+      routeTables: routeTable,
+      stpStates: stpResult.ports,
+      stpRoot: stpResult.root,
+    }),
+    [resolvedTopology, routeTable, stpResult],
   );
 
   const value = useMemo(
