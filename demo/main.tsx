@@ -13,6 +13,7 @@ import MinimalDemo from './basic/MinimalDemo';
 import ThreeTierDemo from './basic/ThreeTierDemo';
 import StarDemo from './basic/StarDemo';
 import ClientServerDemo from './routing/ClientServerDemo';
+import DynamicRoutingDemo from './routing/DynamicRoutingDemo';
 import MultiHopDemo from './routing/MultiHopDemo';
 import DmzDemo from './areas/DmzDemo';
 import EditorDemo from './editor/EditorDemo';
@@ -26,6 +27,7 @@ import AclDemo from './simulation/AclDemo';
 import InterfaceAwareDemo from './simulation/InterfaceAwareDemo';
 import SessionDemo from './simulation/SessionDemo';
 import DataTransferDemo from './simulation/DataTransferDemo';
+import TcpHandshakeDemo from './simulation/TcpHandshakeDemo';
 import EmbedDemo from './embed/EmbedDemo';
 import AllInOneDemo from './comprehensive/AllInOneDemo';
 
@@ -41,6 +43,7 @@ createRoot(root).render(
         <Route path="/basic/three-tier" element={<ThreeTierDemo />} />
         <Route path="/basic/star" element={<StarDemo />} />
         <Route path="/routing/client-server" element={<ClientServerDemo />} />
+        <Route path="/routing/dynamic" element={<DynamicRoutingDemo />} />
         <Route path="/routing/multi-hop" element={<MultiHopDemo />} />
         <Route path="/areas/dmz" element={<DmzDemo />} />
         <Route path="/services/dhcp-dns" element={<DhcpDnsDemo />} />
@@ -54,6 +57,7 @@ createRoot(root).render(
         <Route path="/simulation/interface-aware" element={<InterfaceAwareDemo />} />
         <Route path="/simulation/session" element={<SessionDemo />} />
         <Route path="/simulation/data-transfer" element={<DataTransferDemo />} />
+        <Route path="/simulation/tcp-handshake" element={<TcpHandshakeDemo />} />
         <Route path="/embed" element={<EmbedDemo />} />
         <Route path="/comprehensive/all-in-one" element={<AllInOneDemo />} />
         <Route path="*" element={<Navigate to="/" replace />} />
