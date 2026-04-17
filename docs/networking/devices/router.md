@@ -15,6 +15,9 @@ An L3 router forwards IP packets using a routing table with Longest Prefix Match
   // Router-specific:
   interfaces: RouterInterface[];
   staticRoutes?: StaticRouteConfig[];
+  ospfConfig?: OspfConfig;
+  ripConfig?: RipConfig;
+  bgpConfig?: BgpConfig;
   portForwardingRules?: PortForwardingRule[];
   statefulFirewall?: boolean;
 }
@@ -47,9 +50,12 @@ interface StaticRouteConfig {
 ## Routing Protocols
 
 Routing protocols are configured via `ProtocolRegistry`. The router's `staticRoutes` field
-feeds into `StaticProtocol.computeRoutes()`.
+feeds into `StaticProtocol.computeRoutes()`. Dynamic routing uses router-local config fields on
+`NetlabNodeData`:
 
-For OSPF/BGP/RIP (future), the router will need additional config fields (area ID, AS number, etc.).
+- `ospfConfig` for SPF routing over router adjacency
+- `ripConfig` for hop-count distance-vector routing
+- `bgpConfig` for explicit-neighbor path-vector routing
 
 ## NAT / PAT
 
