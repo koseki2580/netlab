@@ -32,6 +32,18 @@ Netlab supports IEEE 802.1Q VLAN tagging on switch trunks.
 
 See [vlan.md](../vlan.md) for the full VLAN ingress/egress matrix and router-on-a-stick model.
 
+## STP Loop Avoidance
+
+Netlab supports an educational subset of IEEE 802.1D Spanning Tree Protocol.
+
+- Switches elect a root bridge from Bridge ID (priority + MAC).
+- Non-root switches keep one Root Port toward the root.
+- Each redundant segment keeps one Designated Port and blocks the loser.
+- `SwitchForwarder` drops frames arriving on blocked ports and excludes blocked ports from flood
+  and unicast egress candidates.
+
+See [stp.md](../stp.md) for the full algorithm, data model, and configuration surface.
+
 ## Switch Forwarding Specification
 
 ### MAC Learning
@@ -66,4 +78,4 @@ import 'netlab/layers/l2-datalink';
 ```
 
 See [switch.md](../devices/switch.md) for the Switch device spec and [vlan.md](../vlan.md) for
-VLAN-specific behavior.
+VLAN-specific behavior. See [stp.md](../stp.md) for spanning-tree loop prevention.

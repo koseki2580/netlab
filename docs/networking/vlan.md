@@ -195,7 +195,7 @@ const topology = {
 
 ## Limitations
 
-- No STP, RSTP, or PVST loop prevention
+- No RSTP, PVST, or MSTP loop prevention beyond classic 802.1D common spanning tree
 - No VTP propagation
 - No Q-in-Q / 802.1ad double tagging
 - No voice VLAN or auxiliary VLAN behavior

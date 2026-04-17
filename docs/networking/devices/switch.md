@@ -15,6 +15,7 @@ An L2 switch forwards Ethernet frames based on MAC address learning.
   // Switch-specific:
   ports: SwitchPort[];
   vlans?: VlanConfig[];
+  stpConfig?: StpConfig;
 }
 
 interface SwitchPort {
@@ -25,6 +26,12 @@ interface SwitchPort {
   accessVlan?: number;
   trunkAllowedVlans?: number[];
   nativeVlan?: number;
+  stpPathCost?: number;
+}
+
+interface StpConfig {
+  priority?: number;
+  disabledPortIds?: string[];
 }
 
 interface VlanConfig {
@@ -58,6 +65,15 @@ every flooded port.
   ports that carry the forwarding VLAN.
 
 See [vlan.md](../vlan.md) for the full ingress/egress rules and examples.
+
+## STP Configuration
+
+- `stpConfig.priority` overrides the bridge priority used during root election.
+- `stpConfig.disabledPortIds` forces listed switch ports into the `DISABLED` STP state.
+- `SwitchPort.stpPathCost` overrides the per-port path cost used when choosing a root path.
+- Blocked and disabled ports are removed from `SwitchForwarder` ingress/egress eligibility.
+
+See [stp.md](../stp.md) for the spanning-tree algorithm and runtime port-role model.
 
 ## Demo Configuration
 
