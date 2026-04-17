@@ -63,6 +63,11 @@ const CATEGORIES: Category[] = [
         title: 'Multi-Hop',
         desc: 'Traffic traverses two routers across three subnets before reaching the server.',
       },
+      {
+        path: '/routing/dynamic',
+        title: 'Dynamic Routing',
+        desc: 'Switch between RIP, OSPF, and BGP to compare hop-count, SPF cost, and policy-based path selection.',
+      },
     ],
   },
   {
@@ -133,6 +138,11 @@ const CATEGORIES: Category[] = [
         path: '/simulation/data-transfer',
         title: 'Data Transfer',
         desc: 'Application-level data transfer with chunking, reassembly, and per-hop forwarding visualization.',
+      },
+      {
+        path: '/simulation/tcp-handshake',
+        title: 'TCP Handshake',
+        desc: 'Step through SYN, SYN-ACK, ACK, and FIN exchanges while watching connection state and TCP header fields evolve.',
       },
     ],
   },
