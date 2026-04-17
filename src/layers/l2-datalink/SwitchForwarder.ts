@@ -1,6 +1,11 @@
 import type { ForwardContext, ForwardDecision, Forwarder } from '../../types/layers';
 import type { InFlightPacket } from '../../types/packets';
-import type { NetworkTopology } from '../../types/topology';
+import type { NetworkTopology, SwitchPort } from '../../types/topology';
+import {
+  isVlanAllowedOnPort,
+  prepareEgressFrame,
+  resolveIngressVlan,
+} from './vlan';
 
 const BROADCAST_MAC = 'ff:ff:ff:ff:ff:ff';
 const BROADCAST_IP = '255.255.255.255';
@@ -19,8 +24,20 @@ export class SwitchForwarder implements Forwarder {
     return this.macTable;
   }
 
-  learn(srcMac: string, ingressPortId: string): void {
-    this.macTable.set(srcMac, ingressPortId);
+  private macKey(vlanId: number, mac: string): string {
+    return `${vlanId}:${mac}`;
+  }
+
+  private resolvePortConfig(ports: SwitchPort[], portId: string): SwitchPort {
+    return ports.find((port) => port.id === portId) ?? {
+      id: portId,
+      name: portId,
+      macAddress: '',
+    };
+  }
+
+  learn(srcMac: string, ingressPortId: string, vlanId: number): void {
+    this.macTable.set(this.macKey(vlanId, srcMac), ingressPortId);
   }
 
   private resolveConnectedEdgeForPort(portId: string) {
@@ -43,9 +60,24 @@ export class SwitchForwarder implements Forwarder {
     packet: InFlightPacket,
     neighbors: ForwardContext['neighbors'],
   ) {
+    const dstMac = packet.frame.dstMac.toLowerCase();
     const dstIp = packet.frame.payload.dstIp === BROADCAST_IP
       ? null
       : packet.frame.payload.dstIp;
+
+    for (const neighbor of neighbors) {
+      const node = this.topology.nodes.find((candidate) => candidate.id === neighbor.nodeId);
+      if (!node) continue;
+      const neighborMacs = [
+        typeof node.data.mac === 'string' ? node.data.mac : null,
+        ...(node.data.interfaces ?? []).map((iface) => iface.macAddress),
+      ]
+        .filter((value): value is string => typeof value === 'string')
+        .map((value) => value.toLowerCase());
+      if (neighborMacs.includes(dstMac)) {
+        return neighbor;
+      }
+    }
 
     for (const neighbor of neighbors) {
       const node = this.topology.nodes.find((candidate) => candidate.id === neighbor.nodeId);
@@ -68,17 +100,23 @@ export class SwitchForwarder implements Forwarder {
   forward(
     dstMac: string,
     ingressPortId: string,
-    allPortIds: string[],
+    ports: SwitchPort[],
+    vlanId: number,
   ): string[] {
+    const eligiblePortIds = ports
+      .filter((port) => port.id !== ingressPortId)
+      .filter((port) => isVlanAllowedOnPort(port, vlanId))
+      .map((port) => port.id);
+
     if (dstMac === BROADCAST_MAC) {
-      return allPortIds.filter((p) => p !== ingressPortId);
+      return eligiblePortIds;
     }
-    const known = this.macTable.get(dstMac);
+    const known = this.macTable.get(this.macKey(vlanId, dstMac));
     if (known) {
-      return [known];
+      return eligiblePortIds.includes(known) ? [known] : [];
     }
     // Unknown unicast: flood
-    return allPortIds.filter((p) => p !== ingressPortId);
+    return eligiblePortIds;
   }
 
   async receive(
@@ -92,64 +130,90 @@ export class SwitchForwarder implements Forwarder {
     }
 
     const frame = packet.frame;
-    this.learn(frame.srcMac, ingressPortId);
+    const ports = (node.data.ports ?? []) as SwitchPort[];
+    const ingressPort = this.resolvePortConfig(ports, ingressPortId);
+    const vlanId = resolveIngressVlan(ingressPort, frame);
 
-    const ports = (node.data.ports ?? []) as Array<{ id: string }>;
-    const allPortIds = ports.map((p) => p.id);
-    const egressPorts = this.forward(frame.dstMac, ingressPortId, allPortIds);
-
-    if (egressPorts.length === 0) {
-      return { action: 'drop', reason: 'no egress port found' };
+    if (vlanId === null) {
+      return { action: 'drop', reason: 'vlan-ingress-violation' };
     }
 
-    const learnedPort = this.macTable.get(frame.dstMac);
+    this.learn(frame.srcMac, ingressPortId, vlanId);
+
+    const egressPorts = this.forward(frame.dstMac, ingressPortId, ports, vlanId);
+
+    if (egressPorts.length === 0) {
+      return { action: 'drop', reason: 'no-egress-in-vlan' };
+    }
+
+    const learnedPort = this.macTable.get(this.macKey(vlanId, frame.dstMac));
     if (learnedPort) {
       const learnedEdge = this.resolveConnectedEdgeForPort(learnedPort);
       if (learnedEdge) {
         const nextNodeId =
           learnedEdge.source === this.nodeId ? learnedEdge.target : learnedEdge.source;
+        const egressPort = this.resolvePortConfig(ports, learnedPort);
         return {
           action: 'forward',
           nextNodeId,
           edgeId: learnedEdge.id,
           egressPort: learnedPort,
-          packet: { ...packet, egressPortId: learnedPort },
+          packet: {
+            ...packet,
+            egressPortId: learnedPort,
+            vlanId,
+            frame: prepareEgressFrame(frame, egressPort, vlanId),
+          },
         };
       }
     }
 
     const selectedNeighbor = this.selectNeighbor(packet, ctx.neighbors);
     if (selectedNeighbor) {
+      const resolvedEgressPortId = this.resolvePortForEdge(selectedNeighbor.edgeId);
+      const egressPortId = resolvedEgressPortId ?? egressPorts[0];
+      if (!egressPortId || !egressPorts.includes(egressPortId)) {
+        return { action: 'drop', reason: 'no-egress-in-vlan' };
+      }
+      const egressPort = this.resolvePortConfig(ports, egressPortId);
       return {
         action: 'forward',
         nextNodeId: selectedNeighbor.nodeId,
         edgeId: selectedNeighbor.edgeId,
-        egressPort: this.resolvePortForEdge(selectedNeighbor.edgeId) ?? egressPorts[0],
+        egressPort: egressPortId,
         packet: {
           ...packet,
-          egressPortId: this.resolvePortForEdge(selectedNeighbor.edgeId) ?? egressPorts[0],
+          egressPortId: egressPortId,
+          vlanId,
+          frame: prepareEgressFrame(frame, egressPort, vlanId),
         },
       };
     }
 
-    const egressPort = egressPorts[0];
-    const connectedEdge = this.resolveConnectedEdgeForPort(egressPort);
+    const fallbackEgressPortId = egressPorts[0];
+    const connectedEdge = this.resolveConnectedEdgeForPort(fallbackEgressPortId);
 
     if (connectedEdge) {
       const nextNodeId =
         connectedEdge.source === this.nodeId
           ? connectedEdge.target
           : connectedEdge.source;
+      const egressPort = this.resolvePortConfig(ports, fallbackEgressPortId);
 
       return {
         action: 'forward',
         nextNodeId,
         edgeId: connectedEdge.id,
-        egressPort,
-        packet: { ...packet, egressPortId: egressPort },
+        egressPort: fallbackEgressPortId,
+        packet: {
+          ...packet,
+          egressPortId: fallbackEgressPortId,
+          vlanId,
+          frame: prepareEgressFrame(frame, egressPort, vlanId),
+        },
       };
     }
 
-    return { action: 'drop', reason: `no edge connected to port ${egressPort}` };
+    return { action: 'drop', reason: `no edge connected to port ${fallbackEgressPortId}` };
   }
 }

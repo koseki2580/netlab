@@ -25,7 +25,17 @@ function intToIp(value: number): string {
   ].join('.');
 }
 
-function toNetworkCidr(iface: RouterInterface): string {
+interface AddressedNetwork {
+  ipAddress: string;
+  prefixLength: number;
+}
+
+export interface ConnectedNetwork {
+  cidr: string;
+  vlanId?: number;
+}
+
+function toNetworkCidr(iface: AddressedNetwork): string {
   if (iface.prefixLength === 0) return '0.0.0.0/0';
 
   const mask = (~0 << (32 - iface.prefixLength)) >>> 0;
@@ -143,13 +153,29 @@ export function buildRouterAdjacency(topology: NetworkTopology): Map<string, Rou
   return adjacency;
 }
 
-export function getConnectedNetworks(node: NetlabNode): string[] {
+export function getConnectedNetworks(node: NetlabNode): ConnectedNetwork[] {
   if (node.data.role !== 'router') return [];
 
-  const networks = new Set<string>();
+  const networks: ConnectedNetwork[] = [];
+  const seen = new Set<string>();
+
+  const pushNetwork = (
+    iface: AddressedNetwork,
+    vlanId?: number,
+  ) => {
+    const cidr = toNetworkCidr(iface);
+    const key = `${vlanId ?? 'untagged'}:${cidr}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    networks.push(vlanId === undefined ? { cidr } : { cidr, vlanId });
+  };
+
   for (const iface of node.data.interfaces ?? []) {
-    networks.add(toNetworkCidr(iface));
+    pushNetwork(iface);
+    for (const subInterface of iface.subInterfaces ?? []) {
+      pushNetwork(subInterface, subInterface.vlanId);
+    }
   }
 
-  return Array.from(networks);
+  return networks;
 }

@@ -13,7 +13,7 @@ import type {
   TcpSegment,
   UdpDatagram,
 } from '../types/packets';
-import type { RouteEntry, RouterInterface } from '../types/routing';
+import type { RouteEntry } from '../types/routing';
 import type {
   Neighbor,
   PacketHop,
@@ -147,6 +147,14 @@ interface ResolvedInterface {
   name: string;
 }
 
+interface LogicalRouterInterface extends ResolvedInterface {
+  ipAddress: string;
+  prefixLength: number;
+  macAddress: string;
+  parentInterfaceId?: string;
+  vlanId?: number;
+}
+
 interface ArpTargetInfo {
   targetIp: string;
   targetNodeId: string;
@@ -199,7 +207,7 @@ export class ForwardingPipeline {
       targetIp = route.nextHop === 'direct' ? dstIp : route.nextHop;
     }
 
-    const match = node.data.interfaces?.find((iface) =>
+    const match = this.getLogicalRouterInterfaces(node).find((iface) =>
       isInSubnet(targetIp, `${iface.ipAddress}/${iface.prefixLength}`),
     );
 
@@ -213,11 +221,87 @@ export class ForwardingPipeline {
     const node = this.topology.nodes.find((n) => n.id === nodeId);
     if (!node) return null;
 
-    const match = node.data.interfaces?.find((iface) =>
+    const match = this.getLogicalRouterInterfaces(node).find((iface) =>
       isInSubnet(senderIp, `${iface.ipAddress}/${iface.prefixLength}`),
     );
 
     return match ? { id: match.id, name: match.name } : null;
+  }
+
+  private getLogicalRouterInterfaces(node: NetlabNode | null): LogicalRouterInterface[] {
+    if (!node || node.data.role !== 'router') {
+      return [];
+    }
+
+    return (node.data.interfaces ?? []).flatMap((iface) => {
+      const parent: LogicalRouterInterface = {
+        id: iface.id,
+        name: iface.name,
+        ipAddress: iface.ipAddress,
+        prefixLength: iface.prefixLength,
+        macAddress: iface.macAddress,
+      };
+      const subInterfaces = (iface.subInterfaces ?? []).map((subInterface) => ({
+        id: subInterface.id,
+        name: subInterface.id,
+        ipAddress: subInterface.ipAddress,
+        prefixLength: subInterface.prefixLength,
+        macAddress: iface.macAddress,
+        parentInterfaceId: iface.id,
+        vlanId: subInterface.vlanId,
+      }));
+      return [parent, ...subInterfaces];
+    });
+  }
+
+  private findLogicalRouterInterfaceById(
+    nodeId: string,
+    interfaceId: string | undefined,
+  ): LogicalRouterInterface | null {
+    if (!interfaceId) return null;
+    const node = this.findNode(nodeId);
+    return this.getLogicalRouterInterfaces(node).find((iface) => iface.id === interfaceId) ?? null;
+  }
+
+  private findGatewayRouterThroughSwitches(
+    switchNodeId: string,
+    sourceNodeId: string,
+    senderIp: string,
+    failureState: FailureState,
+    visited = new Set<string>(),
+  ): { node: NetlabNode; iface: LogicalRouterInterface } | null {
+    if (visited.has(switchNodeId)) return null;
+    visited.add(switchNodeId);
+
+    const neighbors = this.getNeighbors(switchNodeId, sourceNodeId, failureState);
+    for (const neighbor of neighbors) {
+      const node = this.findNode(neighbor.nodeId);
+      if (!node) continue;
+      if (node.data.role === 'router') {
+        const iface = this.getLogicalRouterInterfaces(node).find((candidate) =>
+          isInSubnet(senderIp, `${candidate.ipAddress}/${candidate.prefixLength}`),
+        );
+        if (iface) {
+          return { node, iface };
+        }
+      }
+    }
+
+    for (const neighbor of neighbors) {
+      const node = this.findNode(neighbor.nodeId);
+      if (!node || node.data.role !== 'switch') continue;
+
+      const match = this.findGatewayRouterThroughSwitches(
+        node.id,
+        switchNodeId,
+        senderIp,
+        failureState,
+        visited,
+      );
+      if (match) return match;
+    }
+
+    return null;
   }
 
   private resolvePortFromEdge(
@@ -257,6 +341,23 @@ export class ForwardingPipeline {
 
   findNode(nodeId: string) {
     return this.topology.nodes.find((candidate) => candidate.id === nodeId) ?? null;
+  }
+
+  private getForwardingVlanId(packet: InFlightPacket): number {
+    return packet.vlanId ?? packet.frame.vlanTag?.vid ?? 0;
+  }
+
+  private buildLoopGuardKey(
+    node: NetlabNode,
+    packet: InFlightPacket,
+    ingressEdgeId: string | null,
+  ): string {
+    if (node.data.role !== 'switch') {
+      return node.id;
+    }
+
+    const ingressKey = packet.ingressPortId || ingressEdgeId || 'origin';
+    return `${node.id}:${ingressKey}:${this.getForwardingVlanId(packet)}`;
   }
 
   private isPlaceholderMac(mac: string): boolean {
@@ -299,7 +400,7 @@ export class ForwardingPipeline {
 
   private nodeOwnsIp(node: NetlabNode, ip: string): boolean {
     if (this.getEffectiveNodeIp(node) === ip) return true;
-    return (node.data.interfaces ?? []).some((iface) => iface.ipAddress === ip);
+    return this.getLogicalRouterInterfaces(node).some((iface) => iface.ipAddress === ip);
   }
 
   private findMatchingNodeThroughSwitches(
@@ -406,6 +507,24 @@ export class ForwardingPipeline {
     let targetIp: string | null = packet.frame.payload.dstIp;
     let targetNodeId: string | undefined = packet.dstNodeId;
 
+    if (currentNode.data.role === 'client' || currentNode.data.role === 'server') {
+      const senderIp = this.getEffectiveNodeIp(currentNode);
+      if (senderIp && targetIp) {
+        const gateway = this.findGatewayRouterThroughSwitches(
+          nextNodeId,
+          currentNodeId,
+          senderIp,
+          failureState,
+        );
+        if (
+          gateway &&
+          !isInSubnet(targetIp, `${gateway.iface.ipAddress}/${gateway.iface.prefixLength}`)
+        ) {
+          return gateway.node;
+        }
+      }
+    }
+
     if (currentNode.data.role === 'router') {
       if (overrideNextHop !== undefined) {
         if (overrideNextHop !== 'direct') {
@@ -446,7 +565,7 @@ export class ForwardingPipeline {
     const routerNode = this.findNode(routerNodeId);
     if (!routerNode || routerNode.data.role !== 'router') return null;
 
-    const routerInterfaces = routerNode.data.interfaces ?? [];
+    const routerInterfaces = this.getLogicalRouterInterfaces(routerNode);
     const currentNode = this.findNode(currentNodeId);
 
     if (currentNode?.data.role === 'router') {
@@ -463,9 +582,7 @@ export class ForwardingPipeline {
         if (nextHopInterface) return nextHopInterface.macAddress;
       }
 
-      const egressInterface = currentNode.data.interfaces?.find(
-        (iface) => iface.id === egressInterfaceId,
-      );
+      const egressInterface = this.findLogicalRouterInterfaceById(currentNodeId, egressInterfaceId);
       if (egressInterface) {
         const subnetInterface = routerInterfaces.find((iface) =>
           isInSubnet(
@@ -559,10 +676,10 @@ export class ForwardingPipeline {
       if (!targetNode || !this.nodeOwnsIp(targetNode, targetIp)) return null;
 
       const egressInterface =
-        currentNode.data.interfaces?.find((iface) => iface.id === egressInterfaceId) ??
+        this.findLogicalRouterInterfaceById(currentNodeId, egressInterfaceId) ??
         (() => {
           const fallback = this.resolvePortFromEdge(currentNodeId, edgeId ?? '', 'egress');
-          return currentNode.data.interfaces?.find((iface) => iface.id === fallback?.id);
+          return this.findLogicalRouterInterfaceById(currentNodeId, fallback?.id);
         })();
 
       return {
@@ -590,7 +707,7 @@ export class ForwardingPipeline {
     let targetIp = '';
 
     if (targetNode.data.role === 'router') {
-      const gatewayInterface = ((targetNode.data.interfaces ?? []) as RouterInterface[]).find((iface) =>
+      const gatewayInterface = this.getLogicalRouterInterfaces(targetNode).find((iface) =>
         senderIp.length > 0 && isInSubnet(senderIp, `${iface.ipAddress}/${iface.prefixLength}`),
       );
       targetIp = gatewayInterface?.ipAddress ?? '';
@@ -646,7 +763,7 @@ export class ForwardingPipeline {
 
   private seedArpCache(cache: Map<string, string>): void {
     for (const node of this.topology.nodes) {
-      for (const iface of (node.data.interfaces ?? []) as RouterInterface[]) {
+      for (const iface of this.getLogicalRouterInterfaces(node)) {
         if (iface.ipAddress && iface.macAddress && !this.isPlaceholderMac(iface.macAddress)) {
           cache.set(iface.ipAddress, iface.macAddress);
         }
@@ -898,9 +1015,7 @@ export class ForwardingPipeline {
           packet.frame.payload.dstIp,
         ) ??
         this.resolvePortFromEdge(packet.currentDeviceId, next.edgeId, 'egress');
-      const srcMac = currentNode.data.interfaces?.find(
-        (iface) => iface.id === egressInterface?.id,
-      )?.macAddress;
+      const srcMac = this.findLogicalRouterInterfaceById(currentNode.id, egressInterface?.id)?.macAddress;
       const arpTarget = this.resolveArpTargetInfo(
         packet.currentDeviceId,
         next.nodeId,
@@ -1121,7 +1236,7 @@ export class ForwardingPipeline {
     const hops: PacketHop[] = [];
     const snapshots: InFlightPacket[] = [];
     const nodeArpTables: Record<string, Record<string, string>> = {};
-    const visitedNodes = new Set<string>();
+    const visitedStates = new Set<string>();
     const arpCache = new Map<string, string>();
     let current = packet.srcNodeId;
     let ingressFrom: string | null = null;
@@ -1138,30 +1253,6 @@ export class ForwardingPipeline {
     let generatedIcmpPacket: InFlightPacket | null = null;
 
     for (let iter = 0; iter < MAX_HOPS; iter++) {
-      // Loop guard
-      if (visitedNodes.has(current)) {
-        stepCounter = this.traceRecorder.appendHop(
-          hops,
-          snapshots,
-          this.withPacketMacs({
-            nodeId: current,
-            nodeLabel: current,
-            srcIp: workingPacket.frame.payload.srcIp,
-            dstIp: workingPacket.frame.payload.dstIp,
-            ttl: workingPacket.frame.payload.ttl,
-            protocol: protocolName(workingPacket.frame.payload.protocol),
-            event: 'drop',
-            fromNodeId: ingressFrom ?? undefined,
-            reason: 'routing-loop',
-            timestamp: baseTs,
-          }, workingPacket),
-          workingPacket,
-          stepCounter,
-        );
-        break;
-      }
-      visitedNodes.add(current);
-
       const node = this.findNode(current);
       if (!node) {
         stepCounter = this.traceRecorder.appendHop(hops, snapshots, this.withPacketMacs({
@@ -1178,6 +1269,31 @@ export class ForwardingPipeline {
         }, workingPacket), workingPacket, stepCounter);
         break;
       }
+
+      // Loop guard
+      const loopGuardKey = this.buildLoopGuardKey(node, workingPacket, ingressEdgeId);
+      if (visitedStates.has(loopGuardKey)) {
+        stepCounter = this.traceRecorder.appendHop(
+          hops,
+          snapshots,
+          this.withPacketMacs({
+            nodeId: current,
+            nodeLabel: node.data.label,
+            srcIp: workingPacket.frame.payload.srcIp,
+            dstIp: workingPacket.frame.payload.dstIp,
+            ttl: workingPacket.frame.payload.ttl,
+            protocol: protocolName(workingPacket.frame.payload.protocol),
+            event: 'drop',
+            fromNodeId: ingressFrom ?? undefined,
+            reason: 'routing-loop',
+            timestamp: baseTs,
+          }, workingPacket),
+          workingPacket,
+          stepCounter,
+        );
+        break;
+      }
+      visitedStates.add(loopGuardKey);
 
       if (failureState.downNodeIds.has(current)) {
         stepCounter = this.traceRecorder.appendHop(hops, snapshots, this.withPacketMacs({
@@ -1253,7 +1369,11 @@ export class ForwardingPipeline {
       let outsideToInsideMatched = false;
       let ingressAclMatch = null;
       let egressAclMatch = null;
-      const neighbors = this.getNeighbors(current, ingressFrom, failureState);
+      const neighbors = this.getNeighbors(
+        current,
+        node.data.role === 'router' ? null : ingressFrom,
+        failureState,
+      );
       const forwardCtx: ForwardContext = { neighbors };
       let next: Neighbor | null = null;
       let selectedRoute: RouteEntry | null = null;
@@ -1364,7 +1484,7 @@ export class ForwardingPipeline {
               !options.suppressGeneratedIcmp
             ) {
               const routerIp = hopBase.ingressInterfaceId
-                ? node.data.interfaces?.find((iface) => iface.id === hopBase.ingressInterfaceId)?.ipAddress
+                ? this.findLogicalRouterInterfaceById(current, hopBase.ingressInterfaceId)?.ipAddress
                 : undefined;
               const responseSourceIp = routerIp ?? this.getEffectiveNodeIp(node);
               if (responseSourceIp) {
@@ -1418,10 +1538,16 @@ export class ForwardingPipeline {
 
           if (node.data.role === 'router') {
             selectedRoute = decision.selectedRoute ?? null;
+            const ingressInterfaceMatch = this.findLogicalRouterInterfaceById(
+              current,
+              decision.ingressInterfaceId,
+            );
+            if (ingressInterfaceMatch) {
+              hopBase.ingressInterfaceId = ingressInterfaceMatch.id;
+              hopBase.ingressInterfaceName = ingressInterfaceMatch.name;
+            }
             const egressInterfaceId = decision.egressInterfaceId;
-            const interfaceMatch = egressInterfaceId
-              ? node.data.interfaces?.find((iface) => iface.id === egressInterfaceId)
-              : null;
+            const interfaceMatch = this.findLogicalRouterInterfaceById(current, egressInterfaceId);
             routerEgressInterface = interfaceMatch
               ? { id: interfaceMatch.id, name: interfaceMatch.name }
               : this.resolvePortFromEdge(current, next.edgeId, 'egress');
@@ -1679,9 +1805,7 @@ export class ForwardingPipeline {
           );
 
       if (node.data.role === 'router') {
-        const egressIface = node.data.interfaces?.find(
-          (iface) => iface.id === hopBase.egressInterfaceId,
-        );
+        const egressIface = this.findLogicalRouterInterfaceById(current, hopBase.egressInterfaceId);
         senderIp = egressIface?.ipAddress ?? null;
         workingPacket = this.withFrameFcs({
           ...workingPacket,
