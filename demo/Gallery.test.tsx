@@ -34,5 +34,7 @@ describe('demo chrome', () => {
     expect(html).toContain('/services/dhcp-dns');
     expect(html).toContain('Firewalls &amp; ACLs');
     expect(html).toContain('/simulation/acl');
+    expect(html).toContain('Spanning Tree');
+    expect(html).toContain('/networking/stp');
   });
 });
