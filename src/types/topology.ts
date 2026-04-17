@@ -1,6 +1,14 @@
 import type { Node, Edge } from '@xyflow/react';
 import type { LayerId } from './layers';
-import type { PortForwardingRule, RouterInterface, StaticRouteConfig, RouteEntry } from './routing';
+import type {
+  BgpConfig,
+  OspfConfig,
+  PortForwardingRule,
+  RipConfig,
+  RouterInterface,
+  StaticRouteConfig,
+  RouteEntry,
+} from './routing';
 import type { NetworkArea } from './areas';
 import type { DhcpClientConfig, DhcpServerConfig, DnsServerConfig } from './services';
 
@@ -15,6 +23,9 @@ export interface NetlabNodeData extends Record<string, unknown> {
   // Router-specific
   interfaces?: RouterInterface[];
   staticRoutes?: StaticRouteConfig[];
+  ospfConfig?: OspfConfig;
+  ripConfig?: RipConfig;
+  bgpConfig?: BgpConfig;
   portForwardingRules?: PortForwardingRule[];
   statefulFirewall?: boolean;
   // Service-specific

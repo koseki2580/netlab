@@ -115,6 +115,14 @@ export type {
   Packet,
   InFlightPacket,
 } from './types/packets';
+export type {
+  TcpState,
+  TcpEvent,
+  TcpConnection,
+  TcpTransitionResult,
+  TcpAction,
+  TcpFourTuple,
+} from './types/tcp';
 
 export type {
   LayerId,
@@ -128,7 +136,13 @@ export type {
 export type { Neighbor } from './types/simulation';
 
 export type {
+  BgpConfig,
+  BgpNeighborConfig,
+  BgpPathAttributes,
+  OspfAreaConfig,
+  OspfConfig,
   ProtocolName,
+  RipConfig,
   RouteEntry,
   TopologyChangeEvent,
   RoutingProtocol,
@@ -188,6 +202,28 @@ export { StaticProtocol, staticProtocol } from './routing/static/StaticProtocol'
 export { OspfProtocol, ospfProtocol } from './routing/ospf/OspfProtocol';
 export { BgpProtocol, bgpProtocol } from './routing/bgp/BgpProtocol';
 export { RipProtocol, ripProtocol } from './routing/rip/RipProtocol';
+export {
+  TcpStateMachine,
+  transition as transitionTcpState,
+  describeTransition as describeTcpTransition,
+} from './layers/l4-transport/TcpStateMachine';
+export {
+  TcpOrchestrator,
+} from './layers/l4-transport/TcpOrchestrator';
+export type {
+  TcpHandshakeResult,
+  TcpTeardownResult,
+} from './layers/l4-transport/TcpOrchestrator';
+export { TcpConnectionTracker } from './layers/l4-transport/TcpConnectionTracker';
+export {
+  buildSynPacket,
+  buildSynAckPacket,
+  buildAckPacket,
+  buildFinPacket,
+  buildRstPacket,
+  generateISN,
+} from './layers/l4-transport/tcpPacketBuilder';
+export type { TcpPacketOptions } from './layers/l4-transport/tcpPacketBuilder';
 
 // Theming
 export type { NetlabTheme } from './theme';

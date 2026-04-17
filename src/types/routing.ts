@@ -57,3 +57,42 @@ export interface RouterInterface {
   inboundAcl?: AclRule[];
   outboundAcl?: AclRule[];
 }
+
+// --- Dynamic Routing Protocol Configs ---
+
+export interface OspfConfig {
+  routerId: string;
+  areas: OspfAreaConfig[];
+}
+
+export interface OspfAreaConfig {
+  areaId: string;
+  networks: string[];
+  cost?: number;
+}
+
+export interface RipConfig {
+  version: 1 | 2;
+  networks: string[];
+}
+
+export interface BgpConfig {
+  localAs: number;
+  routerId: string;
+  neighbors: BgpNeighborConfig[];
+  networks: string[];
+}
+
+export interface BgpNeighborConfig {
+  address: string;
+  remoteAs: number;
+  localPref?: number;
+  med?: number;
+}
+
+export interface BgpPathAttributes {
+  asPath: number[];
+  localPref: number;
+  med: number;
+  origin: 'igp' | 'egp' | 'incomplete';
+}
