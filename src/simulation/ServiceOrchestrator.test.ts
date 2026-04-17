@@ -93,6 +93,36 @@ const DNS_TOPOLOGY: NetworkTopology = {
   routeTables: new Map(),
 };
 
+const TCP_TOPOLOGY: NetworkTopology = {
+  nodes: [
+    {
+      id: 'client-1',
+      type: 'client',
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'Client',
+        role: 'client',
+        layerId: 'l7',
+        ip: '10.0.0.10',
+      },
+    },
+    {
+      id: 'server-1',
+      type: 'server',
+      position: { x: 200, y: 0 },
+      data: {
+        label: 'Server',
+        role: 'server',
+        layerId: 'l7',
+        ip: '203.0.113.10',
+      },
+    },
+  ],
+  edges: [{ id: 'e1', source: 'client-1', target: 'server-1' }],
+  areas: [],
+  routeTables: new Map(),
+};
+
 function makePacketSender(topology: NetworkTopology): PacketSender {
   return {
     precompute: async (packet) => ({
@@ -220,5 +250,79 @@ describe('ServiceOrchestrator', () => {
     expect(services.getDhcpLeaseState('dhcp-client')).toBeNull();
     expect(services.serializeNatTables()).toEqual([]);
     expect(services.serializeConnTrackTables()).toEqual([]);
+  });
+
+  it('registers a TCP connection after a successful handshake', async () => {
+    const services = new ServiceOrchestrator(TCP_TOPOLOGY, new HookEngine());
+    services.setPacketSender(makePacketSender(TCP_TOPOLOGY));
+    const sink = createSink();
+
+    const result = await services.simulateTcpConnect(
+      'client-1',
+      'server-1',
+      12345,
+      80,
+      sink,
+    );
+
+    expect(result.success).toBe(true);
+    expect(services.getTcpConnections()).toHaveLength(1);
+    expect(services.getTcpConnectionsForNode('client-1')).toHaveLength(1);
+    expect(sink.traces).toHaveLength(3);
+  });
+
+  it('removes a TCP connection after successful teardown', async () => {
+    const services = new ServiceOrchestrator(TCP_TOPOLOGY, new HookEngine());
+    services.setPacketSender(makePacketSender(TCP_TOPOLOGY));
+    const sink = createSink();
+
+    const connectResult = await services.simulateTcpConnect(
+      'client-1',
+      'server-1',
+      12345,
+      80,
+      sink,
+    );
+    expect(connectResult.success).toBe(true);
+
+    const disconnectResult = await services.simulateTcpDisconnect(
+      connectResult.connection!.id,
+      sink,
+    );
+
+    expect(disconnectResult.success).toBe(true);
+    expect(services.getTcpConnections()).toEqual([]);
+    expect(sink.traces).toHaveLength(7);
+  });
+
+  it('returns a TCP teardown failure when the connection does not exist', async () => {
+    const services = new ServiceOrchestrator(TCP_TOPOLOGY, new HookEngine());
+    services.setPacketSender(makePacketSender(TCP_TOPOLOGY));
+
+    const result = await services.simulateTcpDisconnect('missing-connection', createSink());
+
+    expect(result).toEqual({
+      success: false,
+      traces: [],
+      failureReason: 'TCP disconnect failed: connection not found',
+    });
+  });
+
+  it('clears TCP runtime state with clearAll', async () => {
+    const services = new ServiceOrchestrator(TCP_TOPOLOGY, new HookEngine());
+    services.setPacketSender(makePacketSender(TCP_TOPOLOGY));
+
+    const connectResult = await services.simulateTcpConnect(
+      'client-1',
+      'server-1',
+      12345,
+      80,
+      createSink(),
+    );
+    expect(connectResult.success).toBe(true);
+
+    services.clearAll();
+
+    expect(services.getTcpConnections()).toEqual([]);
   });
 });

@@ -2,11 +2,28 @@ import { useMemo, useRef, type ReactNode } from 'react';
 import { NetlabContext } from './NetlabContext';
 import { HookEngine } from '../hooks/HookEngine';
 import { protocolRegistry } from '../registry/ProtocolRegistry';
+import { bgpProtocol } from '../routing/bgp/BgpProtocol';
+import { ospfProtocol } from '../routing/ospf/OspfProtocol';
+import { ripProtocol } from '../routing/rip/RipProtocol';
 import { staticProtocol } from '../routing/static/StaticProtocol';
 import type { NetworkTopology, TopologySnapshot } from '../types/topology';
 
-// Register built-in protocols once
-protocolRegistry.register(staticProtocol);
+function ensureBuiltInProtocolsRegistered() {
+  const registered = new Set(protocolRegistry.list());
+
+  if (!registered.has(staticProtocol.name)) {
+    protocolRegistry.register(staticProtocol);
+  }
+  if (!registered.has(ospfProtocol.name)) {
+    protocolRegistry.register(ospfProtocol);
+  }
+  if (!registered.has(bgpProtocol.name)) {
+    protocolRegistry.register(bgpProtocol);
+  }
+  if (!registered.has(ripProtocol.name)) {
+    protocolRegistry.register(ripProtocol);
+  }
+}
 
 type ControlledNetlabProviderProps = {
   topology: NetworkTopology;
@@ -25,6 +42,8 @@ export type NetlabProviderProps =
   | UncontrolledNetlabProviderProps;
 
 export function NetlabProvider({ topology, defaultTopology, children }: NetlabProviderProps) {
+  ensureBuiltInProtocolsRegistered();
+
   const defaultTopologyRef = useRef<NetworkTopology | null>(null);
   if (defaultTopologyRef.current === null && defaultTopology) {
     defaultTopologyRef.current = { ...defaultTopology, routeTables: new Map() };

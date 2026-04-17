@@ -5,6 +5,11 @@ import type { PacketHop, PacketTrace, SimulationState } from '../types/simulatio
 import type { DhcpLeaseState, DnsCache } from '../types/services';
 import type { TransferMessage } from '../types/transfer';
 import { type FailureState, EMPTY_FAILURE_STATE } from '../types/failure';
+import type { TcpConnection } from '../types/tcp';
+import type {
+  TcpHandshakeResult,
+  TcpTeardownResult,
+} from '../layers/l4-transport/TcpOrchestrator';
 import { extractHostname, isIpAddress } from '../utils/network';
 import { DataTransferController, type DataTransferOptions } from './DataTransferController';
 import { ForwardingPipeline } from './ForwardingPipeline';
@@ -114,6 +119,42 @@ export class SimulationEngine {
       },
       failureState,
       sessionId,
+    );
+  }
+
+  async tcpConnect(
+    clientNodeId: string,
+    serverNodeId: string,
+    srcPort: number,
+    dstPort: number,
+    failureState: FailureState = EMPTY_FAILURE_STATE,
+    sessionId: string = crypto.randomUUID(),
+  ): Promise<TcpHandshakeResult> {
+    return this.services.simulateTcpConnect(
+      clientNodeId,
+      serverNodeId,
+      srcPort,
+      dstPort,
+      {
+        appendTrace: (trace, nodeArpTables = {}) => this.commitTrace(trace, nodeArpTables),
+        notify: () => this.notify(),
+      },
+      failureState,
+      sessionId,
+    );
+  }
+
+  async tcpDisconnect(
+    connectionId: string,
+    failureState: FailureState = EMPTY_FAILURE_STATE,
+  ): Promise<TcpTeardownResult> {
+    return this.services.simulateTcpDisconnect(
+      connectionId,
+      {
+        appendTrace: (trace, nodeArpTables = {}) => this.commitTrace(trace, nodeArpTables),
+        notify: () => this.notify(),
+      },
+      failureState,
     );
   }
 
@@ -315,6 +356,12 @@ export class SimulationEngine {
   getDhcpLeaseState(nodeId: string): DhcpLeaseState | null { return this.services.getDhcpLeaseState(nodeId); }
 
   getDnsCache(nodeId: string): DnsCache | null { return this.services.getDnsCache(nodeId); }
+
+  getTcpConnections(): TcpConnection[] { return this.services.getTcpConnections(); }
+
+  getTcpConnectionsForNode(nodeId: string): TcpConnection[] {
+    return this.services.getTcpConnectionsForNode(nodeId);
+  }
 
   private notify(): void {
     const snapshot = this.serializeState();
