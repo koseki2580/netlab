@@ -56,6 +56,11 @@ export class SwitchForwarder implements Forwarder {
     return undefined;
   }
 
+  private isPortForwarding(portId: string): boolean {
+    const state = this.topology.stpStates?.get(`${this.nodeId}:${portId}`)?.state;
+    return state === undefined || state === 'FORWARDING';
+  }
+
   private selectNeighbor(
     packet: InFlightPacket,
     neighbors: ForwardContext['neighbors'],
@@ -66,6 +71,10 @@ export class SwitchForwarder implements Forwarder {
       : packet.frame.payload.dstIp;
 
     for (const neighbor of neighbors) {
+      const egressPortId = this.resolvePortForEdge(neighbor.edgeId);
+      if (egressPortId && !this.isPortForwarding(egressPortId)) {
+        continue;
+      }
       const node = this.topology.nodes.find((candidate) => candidate.id === neighbor.nodeId);
       if (!node) continue;
       const neighborMacs = [
@@ -80,6 +89,10 @@ export class SwitchForwarder implements Forwarder {
     }
 
     for (const neighbor of neighbors) {
+      const egressPortId = this.resolvePortForEdge(neighbor.edgeId);
+      if (egressPortId && !this.isPortForwarding(egressPortId)) {
+        continue;
+      }
       const node = this.topology.nodes.find((candidate) => candidate.id === neighbor.nodeId);
       if (!node) continue;
       if (packet.dstNodeId && node.id === packet.dstNodeId) return neighbor;
@@ -94,7 +107,14 @@ export class SwitchForwarder implements Forwarder {
       }
     }
 
-    return neighbors[0] ?? null;
+    for (const neighbor of neighbors) {
+      const egressPortId = this.resolvePortForEdge(neighbor.edgeId);
+      if (!egressPortId || this.isPortForwarding(egressPortId)) {
+        return neighbor;
+      }
+    }
+
+    return null;
   }
 
   forward(
@@ -105,6 +125,7 @@ export class SwitchForwarder implements Forwarder {
   ): string[] {
     const eligiblePortIds = ports
       .filter((port) => port.id !== ingressPortId)
+      .filter((port) => this.isPortForwarding(port.id))
       .filter((port) => isVlanAllowedOnPort(port, vlanId))
       .map((port) => port.id);
 
@@ -113,7 +134,7 @@ export class SwitchForwarder implements Forwarder {
     }
     const known = this.macTable.get(this.macKey(vlanId, dstMac));
     if (known) {
-      return eligiblePortIds.includes(known) ? [known] : [];
+      return eligiblePortIds.includes(known) ? [known] : eligiblePortIds;
     }
     // Unknown unicast: flood
     return eligiblePortIds;
@@ -127,6 +148,10 @@ export class SwitchForwarder implements Forwarder {
     const node = this.topology.nodes.find((n) => n.id === this.nodeId);
     if (!node) {
       return { action: 'drop', reason: `switch node ${this.nodeId} not found` };
+    }
+
+    if (!this.isPortForwarding(ingressPortId)) {
+      return { action: 'drop', reason: 'stp-port-blocked' };
     }
 
     const frame = packet.frame;
@@ -147,7 +172,7 @@ export class SwitchForwarder implements Forwarder {
     }
 
     const learnedPort = this.macTable.get(this.macKey(vlanId, frame.dstMac));
-    if (learnedPort) {
+    if (learnedPort && this.isPortForwarding(learnedPort)) {
       const learnedEdge = this.resolveConnectedEdgeForPort(learnedPort);
       if (learnedEdge) {
         const nextNodeId =
