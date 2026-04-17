@@ -168,9 +168,14 @@ export type {
 export type { AreaType, AreaVisualConfig, NetworkArea } from './types/areas';
 
 export type {
+  BridgeId,
   NetlabNodeData,
   VlanConfig,
   SwitchPort,
+  StpConfig,
+  StpPortRole,
+  StpPortState,
+  StpPortRuntime,
   NetlabNode,
   NetlabEdge,
   NetworkTopology,
@@ -217,6 +222,17 @@ export type {
   TcpTeardownResult,
 } from './layers/l4-transport/TcpOrchestrator';
 export { TcpConnectionTracker } from './layers/l4-transport/TcpConnectionTracker';
+export {
+  DEFAULT_BRIDGE_PRIORITY,
+  DEFAULT_STP_PATH_COST,
+  collectSwitchBridges,
+  compareBridgeId,
+  computeStp,
+  electRoot,
+  formatBridgeId,
+  makeBridgeId,
+} from './layers/l2-datalink';
+export type { StpResult, SwitchBridge } from './layers/l2-datalink';
 export {
   buildSynPacket,
   buildSynAckPacket,
