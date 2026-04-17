@@ -35,6 +35,7 @@ export interface NetlabNodeData extends Record<string, unknown> {
   // Switch-specific
   ports?: SwitchPort[];
   vlans?: VlanConfig[];
+  stpConfig?: StpConfig;
 }
 
 export interface SwitchPort {
@@ -45,6 +46,7 @@ export interface SwitchPort {
   accessVlan?: number;
   trunkAllowedVlans?: number[];
   nativeVlan?: number;
+  stpPathCost?: number;
 }
 
 export interface VlanConfig {
@@ -60,6 +62,8 @@ export interface NetworkTopology {
   edges: NetlabEdge[];
   areas: NetworkArea[];
   routeTables: Map<string, RouteEntry[]>;
+  stpStates?: Map<string, StpPortRuntime>;
+  stpRoot?: BridgeId | null;
 }
 
 /**
@@ -67,3 +71,32 @@ export interface NetworkTopology {
  * Excludes computed route tables, which are recomputed by NetlabProvider.
  */
 export type TopologySnapshot = Pick<NetworkTopology, 'nodes' | 'edges' | 'areas'>;
+
+// --- STP (IEEE 802.1D) ---
+
+/** 64-bit Bridge Identifier: 16-bit priority + 48-bit MAC address. */
+export interface BridgeId {
+  priority: number;
+  mac: string;
+}
+
+export type StpPortRole = 'ROOT' | 'DESIGNATED' | 'BLOCKED' | 'DISABLED';
+
+/** Simplified 3-state port state (educational). */
+export type StpPortState = 'FORWARDING' | 'BLOCKING' | 'DISABLED';
+
+/** Runtime STP metadata for a single switch port, produced by computeStp(). */
+export interface StpPortRuntime {
+  switchNodeId: string;
+  portId: string;
+  role: StpPortRole;
+  state: StpPortState;
+  designatedBridge: BridgeId;
+  rootPathCost: number;
+}
+
+/** Per-switch admin overrides — all optional. */
+export interface StpConfig {
+  priority?: number;
+  disabledPortIds?: string[];
+}
