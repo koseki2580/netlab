@@ -12,6 +12,13 @@ import { buildDiscover, handleAck, handleOffer } from '../services/DhcpClient';
 import { handleDiscover, handleRequest, LeaseAllocator } from '../services/DhcpServer';
 import { buildDnsQuery, handleDnsResponse } from '../services/DnsClient';
 import { handleDnsQuery } from '../services/DnsServer';
+import { TcpConnectionTracker } from '../layers/l4-transport/TcpConnectionTracker';
+import {
+  TcpOrchestrator,
+  type TcpHandshakeResult,
+  type TcpTeardownResult,
+} from '../layers/l4-transport/TcpOrchestrator';
+import type { TcpConnection } from '../types/tcp';
 import type { PrecomputeOptions, PrecomputeResult } from './types';
 
 function isUdpDatagram(payload: InFlightPacket['frame']['payload']['payload']): payload is UdpDatagram {
@@ -51,6 +58,7 @@ export class ServiceOrchestrator {
   private readonly dnsCaches = new Map<string, DnsCache>();
   private readonly natProcessors = new Map<string, NatProcessor>();
   private readonly aclProcessors = new Map<string, AclProcessor>();
+  private readonly tcpConnections = new TcpConnectionTracker();
 
   constructor(
     private readonly topology: NetworkTopology,
@@ -249,6 +257,63 @@ export class ServiceOrchestrator {
     return record.address;
   }
 
+  async simulateTcpConnect(
+    clientNodeId: string,
+    serverNodeId: string,
+    srcPort: number,
+    dstPort: number,
+    sink: ServiceEventSink,
+    failureState: FailureState = EMPTY_FAILURE_STATE,
+    sessionId: string = crypto.randomUUID(),
+  ): Promise<TcpHandshakeResult> {
+    const result = await new TcpOrchestrator(this.topology, this.requirePacketSender()).handshake(
+      clientNodeId,
+      serverNodeId,
+      srcPort,
+      dstPort,
+      sink,
+      failureState,
+      sessionId,
+    );
+
+    if (result.success && result.connection) {
+      this.tcpConnections.addConnection(result.connection);
+      sink.notify();
+    }
+
+    return result;
+  }
+
+  async simulateTcpDisconnect(
+    connectionId: string,
+    sink: ServiceEventSink,
+    failureState: FailureState = EMPTY_FAILURE_STATE,
+  ): Promise<TcpTeardownResult> {
+    const connection =
+      this.tcpConnections.serialize().find((candidate) => candidate.id === connectionId) ?? null;
+
+    if (!connection) {
+      return {
+        success: false,
+        traces: [],
+        failureReason: 'TCP disconnect failed: connection not found',
+      };
+    }
+
+    const result = await new TcpOrchestrator(this.topology, this.requirePacketSender()).teardown(
+      connection,
+      sink,
+      failureState,
+    );
+
+    if (result.success) {
+      this.tcpConnections.removeConnection(connectionId);
+      sink.notify();
+    }
+
+    return result;
+  }
+
   getRuntimeNodeIp(nodeId: string): string | null {
     return this.runtimeNodeIps.get(nodeId) ?? null;
   }
@@ -259,6 +324,14 @@ export class ServiceOrchestrator {
 
   getDnsCache(nodeId: string): DnsCache | null {
     return this.dnsCaches.get(nodeId) ?? null;
+  }
+
+  getTcpConnections(): TcpConnection[] {
+    return this.tcpConnections.serialize();
+  }
+
+  getTcpConnectionsForNode(nodeId: string): TcpConnection[] {
+    return this.tcpConnections.getConnectionsForNode(nodeId);
   }
 
   resetProcessors(): void {
@@ -272,6 +345,7 @@ export class ServiceOrchestrator {
     this.runtimeNodeIps.clear();
     this.dhcpLeaseStates.clear();
     this.dnsCaches.clear();
+    this.tcpConnections.clear();
     this.resetProcessors();
   }
 

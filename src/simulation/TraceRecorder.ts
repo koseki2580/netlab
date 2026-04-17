@@ -5,6 +5,7 @@ import type {
   HttpMessage,
   InFlightPacket,
   IpPacket,
+  TcpSegment,
   UdpDatagram,
 } from '../types/packets';
 import type { PacketHop, PacketTrace, SimulationState } from '../types/simulation';
@@ -16,6 +17,10 @@ function isUdpDatagram(payload: IpPacket['payload']): payload is UdpDatagram {
 
 function isDhcpPayload(payload: UdpDatagram['payload']): payload is DhcpMessage {
   return payload.layer === 'L7' && 'messageType' in payload;
+}
+
+function isTcpSegment(payload: IpPacket['payload']): payload is TcpSegment {
+  return 'seq' in payload && 'flags' in payload;
 }
 
 function isDnsPayload(payload: UdpDatagram['payload']): payload is DnsMessage {
@@ -140,6 +145,24 @@ export class TraceRecorder {
         return ipPayload.payload.isResponse ? 'DNS RESPONSE' : 'DNS QUERY';
       }
       return 'UDP';
+    }
+
+    if (isTcpSegment(ipPayload)) {
+      if (ipPayload.flags.syn && ipPayload.flags.ack) {
+        return 'TCP SYN-ACK';
+      }
+      if (ipPayload.flags.syn) {
+        return 'TCP SYN';
+      }
+      if (ipPayload.flags.fin) {
+        return 'TCP FIN';
+      }
+      if (ipPayload.flags.rst) {
+        return 'TCP RST';
+      }
+      if (ipPayload.flags.ack) {
+        return 'TCP ACK';
+      }
     }
 
     return protocolName(packet.frame.payload.protocol);
