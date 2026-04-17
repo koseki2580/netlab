@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SimulationContext, type SimulationContextValue } from '../simulation/SimulationContext';
 import type { NetworkTopology } from '../types/topology';
-import { NodeDetailPanel } from './NodeDetailPanel';
+import { NodeDetailPanel, vlanColor } from './NodeDetailPanel';
 
 const uiMock = vi.hoisted(() => ({
   selectedNodeId: null as string | null,
@@ -72,7 +72,7 @@ function makeTopology(nodes: NetworkTopology['nodes']): NetworkTopology {
   };
 }
 
-function makeRouterNode() {
+function makeRouterNode(withSubInterfaces = false) {
   return {
     id: 'router-1',
     type: 'router',
@@ -88,13 +88,72 @@ function makeRouterNode() {
           ipAddress: '10.0.0.1',
           prefixLength: 24,
           macAddress: '00:00:00:00:00:01',
+          subInterfaces: withSubInterfaces
+            ? [
+                {
+                  id: 'eth0.10',
+                  parentInterfaceId: 'eth0',
+                  vlanId: 10,
+                  ipAddress: '10.0.10.1',
+                  prefixLength: 24,
+                },
+                {
+                  id: 'eth0.20',
+                  parentInterfaceId: 'eth0',
+                  vlanId: 20,
+                  ipAddress: '10.0.20.1',
+                  prefixLength: 24,
+                },
+              ]
+            : undefined,
         },
       ],
     },
   } as NetworkTopology['nodes'][number];
 }
 
-function makeSwitchNode() {
+function makeSwitchNode(withVlanConfig = false) {
+  return {
+    id: 'switch-1',
+    type: 'switch',
+    position: { x: 0, y: 0 },
+    data: {
+      label: 'SW1',
+      role: 'switch',
+      layerId: 'l2',
+      ports: [
+        {
+          id: 'port-1',
+          name: 'fa0/1',
+          macAddress: '00:00:00:00:00:02',
+          vlanMode: withVlanConfig ? 'access' : undefined,
+          accessVlan: withVlanConfig ? 10 : undefined,
+          nativeVlan: withVlanConfig ? 1 : undefined,
+        },
+        ...(withVlanConfig
+          ? [
+              {
+                id: 'port-2',
+                name: 'fa0/24',
+                macAddress: '00:00:00:00:00:24',
+                vlanMode: 'trunk' as const,
+                trunkAllowedVlans: [10, 20],
+                nativeVlan: 1,
+              },
+            ]
+          : []),
+      ],
+      vlans: withVlanConfig
+        ? [
+            { vlanId: 10, name: 'users' },
+            { vlanId: 20, name: 'servers' },
+          ]
+        : undefined,
+    },
+  } as NetworkTopology['nodes'][number];
+}
+
+function makeSwitchNodeWithoutVlanConfig() {
   return {
     id: 'switch-1',
     type: 'switch',
@@ -240,7 +299,7 @@ describe('NodeDetailPanel', () => {
 
   it('displays switch ports', () => {
     uiMock.selectedNodeId = 'switch-1';
-    netlabMock.topology = makeTopology([makeSwitchNode()]);
+    netlabMock.topology = makeTopology([makeSwitchNodeWithoutVlanConfig()]);
 
     const html = renderMarkup();
 
@@ -327,5 +386,48 @@ describe('NodeDetailPanel', () => {
     });
 
     expect(uiMock.setSelectedNodeId).toHaveBeenCalledWith(null);
+  });
+
+  describe('VLAN', () => {
+    it('renders access/trunk mode and VLAN IDs for a switch with port VLAN config', () => {
+      uiMock.selectedNodeId = 'switch-1';
+      netlabMock.topology = makeTopology([makeSwitchNode(true)]);
+
+      const html = renderMarkup();
+
+      expect(html).toContain('PORT VLANS');
+      expect(html).toContain('fa0/1');
+      expect(html).toContain('ACCESS');
+      expect(html).toContain('fa0/24');
+      expect(html).toContain('TRUNK');
+      expect(html).toContain('10');
+      expect(html).toContain('10, 20');
+    });
+
+    it('renders sub-interface list for a router with subInterfaces', () => {
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode(true)]);
+
+      const html = renderMarkup();
+
+      expect(html).toContain('eth0.10');
+      expect(html).toContain('10.0.10.1/24');
+      expect(html).toContain('eth0.20');
+      expect(html).toContain('10.0.20.1/24');
+    });
+
+    it('omits the VLAN table on switches with no VLAN config (backward compat)', () => {
+      uiMock.selectedNodeId = 'switch-1';
+      netlabMock.topology = makeTopology([makeSwitchNodeWithoutVlanConfig()]);
+
+      const html = renderMarkup();
+
+      expect(html).not.toContain('PORT VLANS');
+    });
+
+    it('vlanColor returns the same color for the same vid and different colors for different vids', () => {
+      expect(vlanColor(10)).toBe(vlanColor(10));
+      expect(vlanColor(10)).not.toBe(vlanColor(20));
+    });
   });
 });

@@ -38,6 +38,21 @@ const SECTION_HEADER_STYLE: React.CSSProperties = {
   margin: '10px 0 6px',
 };
 
+const VLAN_PALETTE = [
+  '#38bdf8',
+  '#f59e0b',
+  '#22c55e',
+  '#f97316',
+  '#eab308',
+  '#ef4444',
+  '#14b8a6',
+  '#a78bfa',
+];
+
+export function vlanColor(vid: number): string {
+  return VLAN_PALETTE[Math.abs(vid) % VLAN_PALETTE.length] ?? VLAN_PALETTE[0];
+}
+
 function RouterDetail({ data }: { data: NetlabNodeData }) {
   const ifaces = (data.interfaces ?? []) as RouterInterface[];
   return (
@@ -56,6 +71,35 @@ function RouterDetail({ data }: { data: NetlabNodeData }) {
               <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 36 }}>MAC</span>
               <span style={{ color: 'var(--netlab-accent-yellow)' }}>{iface.macAddress}</span>
             </div>
+            {(iface.subInterfaces ?? []).length > 0 && (
+              <>
+                <div style={SECTION_HEADER_STYLE}>SUB-INTERFACES</div>
+                {(iface.subInterfaces ?? []).map((subInterface) => (
+                  <div
+                    key={subInterface.id}
+                    style={{
+                      marginBottom: 6,
+                      paddingLeft: 10,
+                      borderLeft: `2px solid ${vlanColor(subInterface.vlanId)}`,
+                    }}
+                  >
+                    <div style={{ color: vlanColor(subInterface.vlanId), fontWeight: 'bold' }}>
+                      {subInterface.id}
+                    </div>
+                    <div style={ROW_STYLE}>
+                      <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 36 }}>IP</span>
+                      <span style={{ color: 'var(--netlab-accent-cyan)' }}>
+                        {subInterface.ipAddress}/{subInterface.prefixLength}
+                      </span>
+                    </div>
+                    <div style={ROW_STYLE}>
+                      <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 36 }}>VLAN</span>
+                      <span style={{ color: vlanColor(subInterface.vlanId) }}>{subInterface.vlanId}</span>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         ))
       )}
@@ -65,6 +109,12 @@ function RouterDetail({ data }: { data: NetlabNodeData }) {
 
 function SwitchDetail({ data }: { data: NetlabNodeData }) {
   const ports = data.ports ?? [];
+  const hasVlanConfig = ports.some((port) =>
+    port.vlanMode !== undefined ||
+    port.accessVlan !== undefined ||
+    (port.trunkAllowedVlans?.length ?? 0) > 0 ||
+    port.nativeVlan !== undefined,
+  );
   return (
     <>
       {ports.length === 0 ? (
@@ -82,6 +132,38 @@ function SwitchDetail({ data }: { data: NetlabNodeData }) {
             </div>
           </div>
         ))
+      )}
+      {hasVlanConfig && (
+        <>
+          <div style={SECTION_HEADER_STYLE}>PORT VLANS</div>
+          {ports.map((port) => (
+            <div key={`${port.id}-vlan`} style={{ marginBottom: 8, paddingBottom: 6, borderBottom: '1px solid var(--netlab-border-subtle)' }}>
+              <div style={{ color: 'var(--netlab-text-primary)', fontWeight: 'bold', marginBottom: 4 }}>
+                {port.name}
+              </div>
+              <div style={ROW_STYLE}>
+                <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>Mode</span>
+                <span style={{ color: 'var(--netlab-text-primary)' }}>{(port.vlanMode ?? 'access').toUpperCase()}</span>
+              </div>
+              <div style={ROW_STYLE}>
+                <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>Access</span>
+                <span style={{ color: port.accessVlan ? vlanColor(port.accessVlan) : 'var(--netlab-text-muted)' }}>
+                  {port.accessVlan ?? '-'}
+                </span>
+              </div>
+              <div style={ROW_STYLE}>
+                <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>Allowed</span>
+                <span style={{ color: 'var(--netlab-text-primary)' }}>
+                  {port.trunkAllowedVlans?.join(', ') ?? '-'}
+                </span>
+              </div>
+              <div style={ROW_STYLE}>
+                <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>Native</span>
+                <span style={{ color: vlanColor(port.nativeVlan ?? 1) }}>{port.nativeVlan ?? 1}</span>
+              </div>
+            </div>
+          ))}
+        </>
       )}
     </>
   );
