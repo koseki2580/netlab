@@ -76,6 +76,11 @@ const CATEGORIES: Category[] = [
     color: '#f59e0b',
     demos: [
       {
+        path: '/networking/vlan',
+        title: 'VLAN Segmentation',
+        desc: 'Compare same-VLAN switching against router-on-a-stick inter-VLAN routing, then break the trunk to observe isolation.',
+      },
+      {
         path: '/areas/dmz',
         title: 'DMZ Segmentation',
         desc: 'Classic three-zone topology: Private → DMZ → Public with two border routers.',

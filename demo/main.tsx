@@ -15,6 +15,7 @@ import StarDemo from './basic/StarDemo';
 import ClientServerDemo from './routing/ClientServerDemo';
 import DynamicRoutingDemo from './routing/DynamicRoutingDemo';
 import MultiHopDemo from './routing/MultiHopDemo';
+import VlanDemo from './networking/VlanDemo';
 import DmzDemo from './areas/DmzDemo';
 import EditorDemo from './editor/EditorDemo';
 import ControlledTopologyDemo from './topology/ControlledTopologyDemo';
@@ -45,6 +46,7 @@ createRoot(root).render(
         <Route path="/routing/client-server" element={<ClientServerDemo />} />
         <Route path="/routing/dynamic" element={<DynamicRoutingDemo />} />
         <Route path="/routing/multi-hop" element={<MultiHopDemo />} />
+        <Route path="/networking/vlan" element={<VlanDemo />} />
         <Route path="/areas/dmz" element={<DmzDemo />} />
         <Route path="/services/dhcp-dns" element={<DhcpDnsDemo />} />
         <Route path="/editor" element={<EditorDemo />} />
