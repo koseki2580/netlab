@@ -266,6 +266,8 @@ class SimulationEngine {
   traceroute(srcNodeId: string, dstIp: string, maxHops?: number): Promise<PacketTrace[]>;
   simulateDhcp(clientNodeId: string, failureState?: FailureState, sessionId?: string): Promise<boolean>;
   simulateDns(clientNodeId: string, hostname: string, failureState?: FailureState, sessionId?: string): Promise<string | null>;
+  tcpConnect(clientNodeId: string, serverNodeId: string, srcPort: number, dstPort: number, failureState?: FailureState, sessionId?: string): Promise<TcpHandshakeResult>;
+  tcpDisconnect(connectionId: string, failureState?: FailureState): Promise<TcpTeardownResult>;
   exportPcap(traceId?: string): Uint8Array;
   step(): void;
   play(ms?: number): void;
@@ -278,8 +280,16 @@ class SimulationEngine {
   getRuntimeNodeIp(nodeId: string): string | null;
   getDhcpLeaseState(nodeId: string): DhcpLeaseState | null;
   getDnsCache(nodeId: string): DnsCache | null;
+  getTcpConnections(): TcpConnection[];
+  getTcpConnectionsForNode(nodeId: string): TcpConnection[];
 }
 ```
+
+TCP-specific helpers:
+
+- `tcpConnect()` emits `TCP SYN`, `TCP SYN-ACK`, and `TCP ACK` traces and returns the established runtime connection on success
+- `tcpDisconnect()` emits `TCP FIN`, `TCP ACK`, `TCP FIN`, and `TCP ACK` traces and removes the connection only after successful teardown
+- `getTcpConnections()` and `getTcpConnectionsForNode()` expose the active TCP runtime tracker used by the educational demo
 
 ### `StepSimulationController`
 
@@ -297,6 +307,30 @@ Wrapper around `SimulationEngine` that exposes a smaller stepping-oriented inter
 | `reset()` | Resets engine step state |
 | `getState()` | Returns the derived `StepSimState` |
 | `subscribe(listener)` | Subscribe to derived step-state updates |
+
+### L4 Transport Classes And Helpers
+
+```typescript
+import {
+  TcpStateMachine,
+  TcpOrchestrator,
+  TcpConnectionTracker,
+  buildSynPacket,
+  buildSynAckPacket,
+  buildAckPacket,
+  buildFinPacket,
+  buildRstPacket,
+  generateISN,
+} from 'netlab';
+```
+
+| Export | Description |
+| ------ | ----------- |
+| `TcpStateMachine` | Pure transition table for the educational 10-state TCP subset |
+| `TcpOrchestrator` | Multi-packet handshake/teardown runner built on the forwarding pipeline abstraction |
+| `TcpConnectionTracker` | Runtime TCP connection registry keyed by connection ID and 4-tuple |
+| `buildSynPacket` / `buildSynAckPacket` / `buildAckPacket` / `buildFinPacket` / `buildRstPacket` | Full TCP `InFlightPacket` builders for transport control flows |
+| `generateISN` | Deterministic initial-sequence-number helper for reproducible traces |
 
 ### Routing Protocol Classes
 
@@ -316,9 +350,9 @@ import {
 | Export | Description |
 | ------ | ----------- |
 | `StaticProtocol` / `staticProtocol` | Static-route protocol implementation and shared singleton |
-| `OspfProtocol` / `ospfProtocol` | Exported OSPF stub; currently returns no learned routes |
-| `BgpProtocol` / `bgpProtocol` | Exported BGP stub; currently returns no learned routes |
-| `RipProtocol` / `ripProtocol` | Exported RIP stub; currently returns no learned routes |
+| `OspfProtocol` / `ospfProtocol` | Education-focused OSPF SPF implementation over topology adjacency |
+| `BgpProtocol` / `bgpProtocol` | Education-focused BGP path-vector implementation with AS_PATH and best-path selection |
+| `RipProtocol` / `ripProtocol` | Education-focused RIP Bellman-Ford implementation with hop-count metric |
 
 ## Registries And Constants
 
@@ -520,6 +554,15 @@ import type {
 ```typescript
 import type {
   TcpFlags,
+  TcpState,
+  TcpEvent,
+  TcpConnection,
+  TcpTransitionResult,
+  TcpAction,
+  TcpFourTuple,
+  TcpHandshakeResult,
+  TcpTeardownResult,
+  TcpPacketOptions,
   RawPayload,
   HttpMessage,
   DhcpOptions,
@@ -540,6 +583,9 @@ import type {
   IcmpCode,
 } from 'netlab';
 ```
+
+This group now also includes the teaching-oriented TCP state-machine and handshake result types
+used by the new L4 transport APIs.
 
 ### Layer, Routing, Topology, NAT, ACL, And Area Types
 

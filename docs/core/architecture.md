@@ -54,6 +54,8 @@ window.fetch(url)
   ├─ Build InFlightPacket  (L7 → L4 → L3 → L2)
   ├─ SimulationEngine.send(packet)
   │    ├─ ServiceOrchestrator.simulateDhcp()/simulateDns()
+  │    ├─ SimulationEngine.tcpConnect()/tcpDisconnect()
+  │    │    └─ ServiceOrchestrator.simulateTcpConnect()/simulateTcpDisconnect()
   │    ├─ ForwardingPipeline.precompute()
   │    │    ├─ SwitchForwarder.receive()   → 'forward' | 'deliver'
   │    │    │    └─ HookEngine.emit('switch:learn', 'packet:forward')

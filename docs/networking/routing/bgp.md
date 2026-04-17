@@ -1,55 +1,93 @@
 # BGP (Border Gateway Protocol)
 
-> **Status**: ⚠️ Experimental
+> **Status**: ✅ Implemented (educational)
 
-Admin Distance: `eBGP=20`, `iBGP=200` (current export is a stub)
+Admin Distance: `eBGP=20`, `iBGP=200`
 
-BGP is a path-vector protocol used for inter-AS routing (the routing protocol of the Internet).
+netlab implements a simplified path-vector BGP model over explicitly configured neighbors.
+It is intended for teaching route selection and AS_PATH behavior, not for simulating full Internet
+control-plane exchange.
 
-## Planned Interface
+## Configuration
 
 ```typescript
 interface BgpConfig {
-  localAs: number;            // Autonomous System number
-  routerId: string;           // BGP Router ID
-  neighbors: BgpNeighbor[];
-  networks: string[];         // prefixes to originate
+  localAs: number;
+  routerId: string;
+  neighbors: BgpNeighborConfig[];
+  networks: string[];  // prefixes originated by this router
 }
 
-interface BgpNeighbor {
-  address: string;            // peer IP address
-  remoteAs: number;           // peer AS number (same AS = iBGP, different = eBGP)
-  updateSource?: string;      // interface name for BGP session source
+interface BgpNeighborConfig {
+  address: string;     // peer interface IP
+  remoteAs: number;
+  localPref?: number;  // optional local policy override for routes learned from this peer
+  med?: number;        // optional teaching/demo MED override for routes learned from this peer
 }
 ```
 
-## BGP Path Attributes (Planned)
+## Configuration Example
 
-| Attribute | Type | Description |
-| --------- | ---- | ----------- |
-| AS_PATH | Well-known | List of ASes the route has traversed |
-| NEXT_HOP | Well-known | IP address of next hop |
-| LOCAL_PREF | Well-known discrete | Preference within an AS (higher = preferred) |
-| MED | Optional | Multi-Exit Discriminator (lower = preferred) |
-| COMMUNITY | Optional | Tag for policy grouping |
-
-## BGP Best Path Selection (Planned)
-
-1. Highest `LOCAL_PREF`
-2. Shortest AS_PATH
-3. Lowest origin type (IGP < EGP < Incomplete)
-4. Lowest MED
-5. eBGP over iBGP
-6. Lowest IGP metric to NEXT_HOP
-7. Lowest router ID
+```typescript
+{
+  id: 'router-1',
+  type: 'router',
+  data: {
+    label: 'R1',
+    role: 'router',
+    layerId: 'l3',
+    interfaces: [
+      { id: 'to-r2', name: 'to-r2', ipAddress: '10.0.12.1', prefixLength: 30, macAddress: '00:00:00:01:00:00' },
+      { id: 'to-r3', name: 'to-r3', ipAddress: '10.0.13.1', prefixLength: 30, macAddress: '00:00:00:01:00:01' },
+    ],
+    bgpConfig: {
+      localAs: 65001,
+      routerId: '1.1.1.1',
+      neighbors: [
+        { address: '10.0.12.2', remoteAs: 65002, localPref: 200 },
+        { address: '10.0.13.2', remoteAs: 65003, localPref: 100 },
+      ],
+      networks: ['10.1.0.0/24'],
+    },
+  },
+}
+```
 
 ## Current Behavior
 
-Stub returns `computeRoutes → []`.
+`computeRoutes(topology)` now:
 
-## Use Case in netlab
+1. Resolves peers by matching `neighbors[].address` to router interface IPs
+2. Classifies each session as eBGP or iBGP from `localAs` / `remoteAs`
+3. Seeds each router with locally originated prefixes
+4. Iteratively propagates routes until convergence or router-count rounds
+5. Applies simplified best-path selection:
+   highest `LOCAL_PREF`
+   shortest `AS_PATH`
+   lowest `MED`
+   eBGP over iBGP
+   lowest advertiser `routerId`
 
-BGP enables simulation of:
-- Internet peering between ISP networks (Public areas)
-- Multi-homed enterprise networks
-- Traffic engineering with communities
+The exported `RouteEntry.metric` is the installed AS_PATH length.
+
+## Algorithm Overview
+
+```text
+for each bgp router:
+  originate configured prefixes
+
+repeat up to N rounds:
+  for each router R:
+    for each configured peer P:
+      for each route known by P:
+        derive exported AS_PATH
+        reject if R.localAs already appears in the path
+        compare against current best path for the prefix
+```
+
+## Limitations
+
+- No TCP session establishment, OPEN/KEEPALIVE/UPDATE messages, or timers
+- No route reflection, confederations, or community-based policy
+- Neighbor relationships are explicit; there is no auto-discovery from edges
+- `localPref` / `med` are optional teaching knobs, not a full policy engine

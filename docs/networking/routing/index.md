@@ -24,11 +24,12 @@ On a tie, lower `metric` wins.
 | Protocol | Status | Import |
 | -------- | ------ | ------ |
 | Static | Implemented | Built-in (from `netlab`) |
-| OSPF | Stub | `import { ospfProtocol } from 'netlab'` |
-| BGP | Stub | `import { bgpProtocol } from 'netlab'` |
-| RIP | Stub | `import { ripProtocol } from 'netlab'` |
+| OSPF | Implemented (educational) | Built-in and exported from `netlab` |
+| BGP | Implemented (educational) | Built-in and exported from `netlab` |
+| RIP | Implemented (educational) | Built-in and exported from `netlab` |
 
-The dynamic protocol exports already exist at the root package, but their current implementations are intentionally stubbed and return no learned routes.
+`NetlabProvider` auto-registers the built-in routing protocols, so route tables are recomputed from
+static, RIP, OSPF, and BGP without extra setup when the corresponding config exists on routers.
 
 ## Route Resolution Algorithm
 
@@ -47,6 +48,17 @@ The dynamic protocol exports already exist at the root package, but their curren
 - [OSPF](./ospf.md)
 - [BGP](./bgp.md)
 - [RIP](./rip.md)
+
+## Dynamic Router Config Fields
+
+```typescript
+interface NetlabNodeData {
+  staticRoutes?: StaticRouteConfig[];
+  ospfConfig?: OspfConfig;
+  ripConfig?: RipConfig;
+  bgpConfig?: BgpConfig;
+}
+```
 
 ## Custom Protocol
 

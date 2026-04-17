@@ -231,7 +231,9 @@ Below the table: the `explanation` string, colored green if `winner !== null`, a
 
 ## Extensibility
 
-The `protocol` field on `RoutingCandidate` is a plain string, not an enum. This allows future routing protocol implementations (OSPF, RIP, BGP) to populate their protocol name without requiring changes to the type system. The `RoutingTable` display renders the protocol name as-is.
+The `protocol` field on `RoutingCandidate` is a plain string, not an enum. This allows built-in
+protocols (static, OSPF, RIP, BGP) and custom protocols to populate their protocol name without
+requiring changes to the type system. The `RoutingTable` display renders the protocol name as-is.
 
 ---
 
