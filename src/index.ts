@@ -56,6 +56,13 @@ export type {
 export { SessionTracker } from './simulation/SessionTracker';
 export { DataTransferController } from './simulation/DataTransferController';
 export {
+  IPV4_DEFAULT_PMTU,
+  IPV4_MIN_PMTU,
+  PathMtuCache,
+} from './simulation/PathMtuCache';
+export { parseIcmpFragNeeded } from './simulation/pmtudParser';
+export type { FragNeededSignal } from './simulation/pmtudParser';
+export {
   SessionProvider,
   SessionContext,
   useSession,

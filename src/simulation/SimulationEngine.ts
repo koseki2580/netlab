@@ -13,6 +13,8 @@ import type {
 import { extractHostname, isIpAddress } from '../utils/network';
 import { DataTransferController, type DataTransferOptions } from './DataTransferController';
 import { ForwardingPipeline } from './ForwardingPipeline';
+import { PathMtuCache } from './PathMtuCache';
+import { parseIcmpFragNeeded } from './pmtudParser';
 import { ServiceOrchestrator } from './ServiceOrchestrator';
 import { TraceRecorder } from './TraceRecorder';
 
@@ -34,12 +36,13 @@ export class SimulationEngine {
   private lastPacket: InFlightPacket | null = null;
   private lastFailureState: FailureState = EMPTY_FAILURE_STATE;
   private transferController: DataTransferController | null = null;
+  private readonly pathMtuCaches = new Map<string, PathMtuCache>();
   private readonly traceRecorder: TraceRecorder;
   private readonly services: ServiceOrchestrator;
   private readonly pipeline: ForwardingPipeline;
 
   constructor(
-    topology: NetworkTopology,
+    private readonly topology: NetworkTopology,
     private readonly hookEngine: HookEngine,
   ) {
     this.traceRecorder = new TraceRecorder();
@@ -168,7 +171,10 @@ export class SimulationEngine {
       this.transferController = new DataTransferController(this);
     }
 
-    return this.transferController.startTransfer(srcNodeId, dstNodeId, payload, options);
+    return this.transferController.startTransfer(srcNodeId, dstNodeId, payload, {
+      ...options,
+      pmtuLookup: options?.pmtuLookup ?? this.pmtuLookup.bind(this),
+    });
   }
 
   async send(packet: InFlightPacket, failureState: FailureState = EMPTY_FAILURE_STATE): Promise<void> {
@@ -202,6 +208,26 @@ export class SimulationEngine {
 
   getTransferController(): DataTransferController | null {
     return this.transferController ?? null;
+  }
+
+  getPathMtuCache(nodeId: string): PathMtuCache {
+    const existing = this.pathMtuCaches.get(nodeId);
+    if (existing) {
+      return existing;
+    }
+
+    const cache = new PathMtuCache();
+    this.pathMtuCaches.set(nodeId, cache);
+    return cache;
+  }
+
+  clearPathMtuCaches(): void {
+    this.pathMtuCaches.forEach((cache) => cache.clear());
+    this.notify();
+  }
+
+  pmtuLookup(srcNodeId: string, dstIp: string): number {
+    return this.getPathMtuCache(srcNodeId).get(dstIp);
   }
 
   exportPcap(traceId?: string): Uint8Array {
@@ -292,6 +318,7 @@ export class SimulationEngine {
     this.services.clearAll();
     this.transferController?.clear();
     this.transferController = null;
+    this.pathMtuCaches.clear();
     this.lastPacket = null;
     this.lastFailureState = EMPTY_FAILURE_STATE;
     this.state = { ...INITIAL_STATE };
@@ -399,6 +426,7 @@ export class SimulationEngine {
       nodeArpTables,
       this.mergeNodeArpTables.bind(this),
     );
+    this.observePathMtuSignals(trace);
     this.notify();
   }
 
@@ -456,6 +484,44 @@ export class SimulationEngine {
     }
 
     return workingPacket;
+  }
+
+  private observePathMtuSignals(trace: PacketTrace): void {
+    const snapshots = this.traceRecorder.getSnapshots(trace.packetId);
+
+    trace.hops.forEach((hop, index) => {
+      if (hop.event !== 'deliver') {
+        return;
+      }
+
+      const snapshot = snapshots[index];
+      const ipPacket = snapshot?.frame.payload;
+      if (!ipPacket) {
+        return;
+      }
+
+      const signal = parseIcmpFragNeeded(ipPacket);
+      if (!signal) {
+        return;
+      }
+
+      const arrivalNode = this.findNodeByIp(ipPacket.dstIp);
+      if (!arrivalNode || arrivalNode.data.role === 'router') {
+        return;
+      }
+
+      this.getPathMtuCache(arrivalNode.id).update(signal.originalDstIp, signal.nextHopMtu);
+    });
+  }
+
+  private findNodeByIp(ip: string) {
+    return this.topology.nodes.find((node) => {
+      if (typeof node.data.ip === 'string' && node.data.ip === ip) {
+        return true;
+      }
+
+      return (node.data.interfaces ?? []).some((iface) => iface.ipAddress === ip);
+    }) ?? null;
   }
 
   private currentTrace(): PacketTrace | null {
