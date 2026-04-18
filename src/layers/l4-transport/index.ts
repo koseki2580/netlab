@@ -31,3 +31,5 @@ export {
   generateISN,
 } from './tcpPacketBuilder';
 export type { TcpPacketOptions } from './tcpPacketBuilder';
+export { buildUdpPacket, generateEphemeralPort } from './udpPacketBuilder';
+export type { UdpPacketOptions } from './udpPacketBuilder';

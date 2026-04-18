@@ -1,5 +1,6 @@
 import type { DnsMessage, InFlightPacket } from '../types/packets';
 import type { NetworkTopology } from '../types/topology';
+import { buildUdpPacket } from '../layers/l4-transport/udpPacketBuilder';
 import { deriveDeterministicMac } from '../utils/network';
 
 const DNS_PORT = 53;
@@ -35,40 +36,24 @@ export function buildDnsQuery(
 
   const transactionId = Math.floor(Math.random() * 0xffff);
 
-  return {
-    id: `dns-query-${transactionId}-${Date.now()}`,
+  return buildUdpPacket({
+    packetId: `dns-query-${transactionId}-${Date.now()}`,
     srcNodeId: clientNodeId,
     dstNodeId: dnsServer.id,
-    frame: {
-      layer: 'L2',
-      srcMac: deriveDeterministicMac(clientNodeId),
-      dstMac: '00:00:00:00:00:02',
-      etherType: 0x0800,
-      payload: {
-        layer: 'L3',
-        srcIp,
-        dstIp: dnsServer.data.ip,
-        ttl: 64,
-        protocol: 17,
-        payload: {
-          layer: 'L4',
-          srcPort: 49152 + (transactionId % 16384),
-          dstPort: DNS_PORT,
-          payload: {
-            layer: 'L7',
-            transactionId,
-            isResponse: false,
-            questions: [{ name: hostname, type: 'A' }],
-            answers: [],
-          },
-        },
-      },
+    srcMac: deriveDeterministicMac(clientNodeId),
+    dstMac: '00:00:00:00:00:02',
+    srcIp,
+    dstIp: dnsServer.data.ip,
+    srcPort: 49152 + (transactionId % 16384),
+    dstPort: DNS_PORT,
+    payload: {
+      layer: 'L7',
+      transactionId,
+      isResponse: false,
+      questions: [{ name: hostname, type: 'A' }],
+      answers: [],
     },
-    currentDeviceId: clientNodeId,
-    ingressPortId: '',
-    path: [],
-    timestamp: Date.now(),
-  };
+  });
 }
 
 export function handleDnsResponse(

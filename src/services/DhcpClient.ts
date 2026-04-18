@@ -1,5 +1,6 @@
 import type { DhcpMessage, InFlightPacket } from '../types/packets';
 import type { NetworkTopology } from '../types/topology';
+import { buildUdpPacket } from '../layers/l4-transport/udpPacketBuilder';
 import { deriveDeterministicMac } from '../utils/network';
 
 const DHCP_CLIENT_PORT = 68;
@@ -20,34 +21,18 @@ function createDhcpPacket(
   dstIp: string,
   message: DhcpMessage,
 ): InFlightPacket {
-  return {
-    id: packetId,
+  return buildUdpPacket({
+    packetId,
     srcNodeId,
     dstNodeId,
-    frame: {
-      layer: 'L2',
-      srcMac: deriveDeterministicMac(srcNodeId),
-      dstMac: BROADCAST_MAC,
-      etherType: 0x0800,
-      payload: {
-        layer: 'L3',
-        srcIp,
-        dstIp,
-        ttl: 64,
-        protocol: 17,
-        payload: {
-          layer: 'L4',
-          srcPort: srcIp === UNSPECIFIED_IP ? DHCP_CLIENT_PORT : DHCP_SERVER_PORT,
-          dstPort: srcIp === UNSPECIFIED_IP ? DHCP_SERVER_PORT : DHCP_CLIENT_PORT,
-          payload: message,
-        },
-      },
-    },
-    currentDeviceId: srcNodeId,
-    ingressPortId: '',
-    path: [],
-    timestamp: Date.now(),
-  };
+    srcMac: deriveDeterministicMac(srcNodeId),
+    dstMac: BROADCAST_MAC,
+    srcIp,
+    dstIp,
+    srcPort: srcIp === UNSPECIFIED_IP ? DHCP_CLIENT_PORT : DHCP_SERVER_PORT,
+    dstPort: srcIp === UNSPECIFIED_IP ? DHCP_SERVER_PORT : DHCP_CLIENT_PORT,
+    payload: message,
+  });
 }
 
 function dhcpPayload(packet: InFlightPacket): DhcpMessage | null {
