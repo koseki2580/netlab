@@ -9,6 +9,7 @@ export const ICMP_CODE = {
   NET_UNREACHABLE: 0,
   HOST_UNREACHABLE: 1,
   TTL_EXCEEDED_IN_TRANSIT: 0,
+  FRAGMENTATION_NEEDED: 4,
 } as const;
 
 export type IcmpType = (typeof ICMP_TYPE)[keyof typeof ICMP_TYPE];
