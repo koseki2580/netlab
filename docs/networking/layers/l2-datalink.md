@@ -53,11 +53,11 @@ When a frame is received on a port, the switch resolves the ingress VLAN and rec
 
 ### Forwarding Rules
 
-| Condition | Action |
-| --------- | ------ |
-| `dstMac == ff:ff:ff:ff:ff:ff` | Flood only across ports that carry the ingress VLAN |
-| `dstMac` in the per-VLAN MAC table | Forward to the matching port if that port carries the VLAN |
-| `dstMac` not in the per-VLAN MAC table | Flood only across ports that carry the ingress VLAN |
+| Condition                              | Action                                                     |
+| -------------------------------------- | ---------------------------------------------------------- |
+| `dstMac == ff:ff:ff:ff:ff:ff`          | Flood only across ports that carry the ingress VLAN        |
+| `dstMac` in the per-VLAN MAC table     | Forward to the matching port if that port carries the VLAN |
+| `dstMac` not in the per-VLAN MAC table | Flood only across ports that carry the ingress VLAN        |
 
 ### MAC Table
 
@@ -79,3 +79,18 @@ import 'netlab/layers/l2-datalink';
 
 See [switch.md](../devices/switch.md) for the Switch device spec and [vlan.md](../vlan.md) for
 VLAN-specific behavior. See [stp.md](../stp.md) for spanning-tree loop prevention.
+See [multicast.md](../multicast.md) for IGMP snooping and multicast forwarding.
+
+### Multicast Forwarding
+
+When the destination MAC falls in the `01:00:5e:xx:xx:xx` multicast range, `SwitchForwarder`
+consults a `MulticastTable` to restrict forwarding:
+
+- **Link-local** (`224.0.0.0/24`): always flooded to all in-VLAN ports.
+- **Learned group**: forwarded only to ports that registered via IGMP Report.
+- **Unlearned group**: flooded to all in-VLAN ports (standard fallback).
+
+IGMP control messages (Query, Report, Leave) are always flooded regardless of snooping
+state, making snooping transparent to endpoints.
+
+See [multicast.md](../multicast.md) for the full data model and snooping algorithm.

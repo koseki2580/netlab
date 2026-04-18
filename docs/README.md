@@ -64,13 +64,20 @@ Specifications for protocol implementations based on the OSI model and network d
 - [Path MTU Discovery](networking/pmtud.md) - TCP `DF=1` defaults, per-host PMTU cache, and adaptive chunk sizing from ICMP Fragmentation Needed
 - [NAT / PAT](networking/nat.md) - Stateful SNAT, DNAT, port forwarding, and per-router NAT table behavior
 - [Firewalls & ACLs](networking/acl.md) - Interface ACL rules, default deny, and optional stateful conn-track behavior
+- [UDP](networking/udp.md) - Stateless L4 datagram; real packet plumbing shared by DHCP/DNS and future UDP apps
+- [HTTP/1.1](networking/http.md) - Educational subset: request/response builder, line-based parser, TCP-backed client and server
 - [Services Overview](networking/services/index.md) - DHCP/DNS service sessions, runtime state, and UDP service architecture
 - [DHCP](networking/services/dhcp.md) - DORA address assignment simulation for runtime host IPs
 - [DNS](networking/services/dns.md) - Static A-record resolution and automatic pre-HTTP lookup
 - [Network Areas](networking/network-areas.md) - Mechanisms for managing and rendering OSPF areas and BGP AS
 - [Connection Validation](networking/connection-validation.md) - Validation logic for port compatibility and link limits
+- [Multicast (IGMPv2)](networking/multicast.md) - Class D forwarding, IGMP Query/Report/Leave, switch snooping with VLAN scope
 
-### 🚀 Deployment & Integration (`deployment/`)
+### �️ Roadmap
+
+- [Protocol Coverage Roadmap](../plan/35.md) - Meta-plan sequencing UDP/HTTP/IGMP/IPv6 work
+
+### �🚀 Deployment & Integration (`deployment/`)
 
 Specifications related to demo environment setup, integration using query parameters, and continuous integration.
 

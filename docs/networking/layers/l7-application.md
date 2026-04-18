@@ -64,3 +64,7 @@ import 'netlab/layers/l7-application';
 - TLS handshake simulation
 - WebSocket support
 - XHR override (in addition to fetch)
+
+## See Also
+
+- [HTTP/1.1](../http.md) — Full HTTP/1.1 implementation: request/response builder, line-based parser, client/server, and session correlation
