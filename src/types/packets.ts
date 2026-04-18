@@ -10,17 +10,20 @@ export interface TcpFlags {
 }
 
 export interface RawPayload {
-  layer: 'raw';
+  layer: "raw";
   data: string;
 }
 
 export interface HttpMessage {
-  layer: 'L7';
-  method?: string;
+  layer: "L7";
+  httpVersion: "HTTP/1.1";
+  method?: "GET" | "POST" | "PUT" | "DELETE" | "HEAD";
   url?: string;
   statusCode?: number;
+  reasonPhrase?: string;
   headers: Record<string, string>;
   body?: string;
+  requestId?: string;
 }
 
 export interface DhcpOptions {
@@ -31,8 +34,8 @@ export interface DhcpOptions {
 }
 
 export interface DhcpMessage {
-  layer: 'L7';
-  messageType: 'DISCOVER' | 'OFFER' | 'REQUEST' | 'ACK' | 'NAK';
+  layer: "L7";
+  messageType: "DISCOVER" | "OFFER" | "REQUEST" | "ACK" | "NAK";
   transactionId: number;
   clientMac: string;
   offeredIp?: string;
@@ -42,18 +45,18 @@ export interface DhcpMessage {
 
 export interface DnsQuestion {
   name: string;
-  type: 'A';
+  type: "A";
 }
 
 export interface DnsRecord {
   name: string;
-  type: 'A';
+  type: "A";
   ttl: number;
   address: string;
 }
 
 export interface DnsMessage {
-  layer: 'L7';
+  layer: "L7";
   transactionId: number;
   isResponse: boolean;
   questions: DnsQuestion[];
@@ -61,7 +64,7 @@ export interface DnsMessage {
 }
 
 export interface TcpSegment {
-  layer: 'L4';
+  layer: "L4";
   srcPort: number;
   dstPort: number;
   seq: number;
@@ -74,7 +77,7 @@ export interface TcpSegment {
 }
 
 export interface UdpDatagram {
-  layer: 'L4';
+  layer: "L4";
   srcPort: number;
   dstPort: number;
   length?: number;
@@ -83,7 +86,7 @@ export interface UdpDatagram {
 }
 
 export interface IcmpMessage {
-  layer: 'L4';
+  layer: "L4";
   type: number;
   code: number;
   checksum: number;
@@ -92,8 +95,24 @@ export interface IcmpMessage {
   data?: string;
 }
 
+export interface IgmpMessage {
+  layer: "L4";
+  igmpType: "v2-membership-query" | "v2-membership-report" | "v2-leave-group";
+  groupAddress: string;
+  maxResponseTime?: number;
+  checksum?: number;
+}
+
+export interface IgmpMessage {
+  layer: "L4";
+  igmpType: "v2-membership-query" | "v2-membership-report" | "v2-leave-group";
+  groupAddress: string;
+  maxResponseTime?: number;
+  checksum?: number;
+}
+
 export interface IpPacket {
-  layer: 'L3';
+  layer: "L3";
   ihl?: number;
   dscp?: number;
   ecn?: number;
@@ -107,12 +126,12 @@ export interface IpPacket {
   srcIp: string;
   dstIp: string;
   ttl: number;
-  protocol: number;  // 1 = ICMP, 6 = TCP, 17 = UDP
+  protocol: number; // 1 = ICMP, 6 = TCP, 17 = UDP
   headerChecksum?: number;
-  payload: IcmpMessage | TcpSegment | UdpDatagram | RawPayload;
+  payload: IcmpMessage | TcpSegment | UdpDatagram | IgmpMessage | RawPayload;
   // Internal template retained on fragments so destination reassembly can restore
   // the original structured transport payload before L4 delivery.
-  reassemblyPayload?: IcmpMessage | TcpSegment | UdpDatagram;
+  reassemblyPayload?: IcmpMessage | TcpSegment | UdpDatagram | IgmpMessage;
 }
 
 /**
@@ -127,21 +146,21 @@ export interface VlanTag {
 }
 
 export interface EthernetFrame {
-  layer: 'L2';
+  layer: "L2";
   preamble?: number[];
   srcMac: string;
   dstMac: string;
-  etherType: number;  // 0x0800 = IPv4
+  etherType: number; // 0x0800 = IPv4
   vlanTag?: VlanTag;
   payload: IpPacket;
   fcs?: number;
 }
 
 export interface ArpPacket {
-  layer: 'ARP';
+  layer: "ARP";
   hardwareType: 1;
   protocolType: 0x0800;
-  operation: 'request' | 'reply';
+  operation: "request" | "reply";
   senderMac: string;
   senderIp: string;
   targetMac: string;
@@ -149,7 +168,7 @@ export interface ArpPacket {
 }
 
 export interface ArpEthernetFrame {
-  layer: 'L2';
+  layer: "L2";
   srcMac: string;
   dstMac: string;
   etherType: 0x0806;
@@ -162,14 +181,14 @@ export type Packet = EthernetFrame;
 
 export interface InFlightPacket {
   id: string;
-  srcNodeId: string;    // origin node ID
-  dstNodeId: string;    // destination node ID
+  srcNodeId: string; // origin node ID
+  dstNodeId: string; // destination node ID
   frame: EthernetFrame;
   currentDeviceId: string;
   ingressPortId: string;
   egressPortId?: string;
   vlanId?: number;
-  path: string[];       // ordered list of device IDs already visited
+  path: string[]; // ordered list of device IDs already visited
   timestamp: number;
   sessionId?: string;
 }

@@ -1,79 +1,103 @@
 export type {
-  TcpFlags,
-  RawPayload,
-  HttpMessage,
-  DhcpOptions,
   DhcpMessage,
+  DhcpOptions,
+  DnsMessage,
   DnsQuestion,
   DnsRecord,
-  DnsMessage,
+  EthernetFrame,
+  HttpMessage,
+  IcmpMessage,
+  IgmpMessage,
+  InFlightPacket,
+  IpPacket,
+  Packet,
+  RawPayload,
+  TcpFlags,
   TcpSegment,
   UdpDatagram,
-  IpPacket,
-  EthernetFrame,
-  Packet,
-  InFlightPacket,
-} from './packets';
+} from "./packets";
 
 export type {
-  LayerId,
   ForwardContext,
   ForwardDecision,
   Forwarder,
   ForwarderFactory,
+  LayerId,
   LayerPlugin,
-} from './layers';
+} from "./layers";
 
+export { ADMIN_DISTANCES } from "./routing";
 export type {
+  PortForwardingRule,
   ProtocolName,
   RouteEntry,
-  TopologyChangeEvent,
+  RouterInterface,
   RoutingProtocol,
   StaticRouteConfig,
-  PortForwardingRule,
-  RouterInterface,
-} from './routing';
-export { ADMIN_DISTANCES } from './routing';
+  TopologyChangeEvent,
+} from "./routing";
 
-export type { NatType, NatEntry, NatTable } from './nat';
 export type {
   AclAction,
-  AclProtocol,
-  AclPortRange,
-  AclRule,
   AclMatchInfo,
+  AclPortRange,
+  AclProtocol,
+  AclRule,
   ConnState,
   ConnTrackEntry,
   ConnTrackTable,
-} from './acl';
+} from "./acl";
+export type { NatEntry, NatTable, NatType } from "./nat";
 
-export type { AreaType, AreaVisualConfig, NetworkArea } from './areas';
+export type { AreaType, AreaVisualConfig, NetworkArea } from "./areas";
 
 export type {
-  NetlabNodeData,
-  SwitchPort,
-  NetlabNode,
   NetlabEdge,
+  NetlabNode,
+  NetlabNodeData,
   NetworkTopology,
+  SwitchPort,
   TopologySnapshot,
-} from './topology';
+} from "./topology";
 
 export type {
-  DhcpServerConfig,
   DhcpClientConfig,
-  DnsZoneEntry,
-  DnsServerConfig,
   DhcpLeaseState,
-  DnsCacheEntry,
+  DhcpServerConfig,
   DnsCache,
-} from './services';
+  DnsCacheEntry,
+  DnsServerConfig,
+  DnsZoneEntry,
+} from "./services";
 
-export type { Neighbor } from './simulation';
+export type { Neighbor } from "./simulation";
 
-export type { HookFn, HookMap, HookPoint } from './hooks';
+export type { HookFn, HookMap, HookPoint } from "./hooks";
 export type {
+  HttpPhases,
+  HttpSessionPhase,
+  NetworkSession,
+  SessionEvent,
+  SessionMode,
   SessionPhase,
   SessionStatus,
-  SessionEvent,
-  NetworkSession,
-} from './session';
+} from "./session";
+
+export {
+  HTTP_PORT,
+  HTTP_USER_AGENT,
+  isHttpRequest,
+  isHttpResponse,
+} from "./http";
+export type { HttpRequest, HttpResponse, HttpVersion } from "./http";
+
+export {
+  ALL_HOSTS_GROUP,
+  ALL_ROUTERS_GROUP,
+  IGMP_PROTOCOL,
+  isLinkLocalMulticast,
+  isMulticastIp,
+  MULTICAST_IP_PREFIX,
+  MULTICAST_LINK_LOCAL_PREFIX,
+} from "./multicast";
+export type { MulticastGroup } from "./multicast";
