@@ -1,7 +1,14 @@
 import { layerRegistry } from '../registry/LayerRegistry';
 import { isInSubnet, prefixLength } from '../utils/cidr';
 import { computeFcs, computeIpv4Checksum } from '../utils/checksum';
-import { buildEthernetFrameBytes, buildIpv4HeaderBytes } from '../utils/packetLayout';
+import {
+  buildEthernetFrameBytes,
+  buildIpv4HeaderBytes,
+  buildTransportBytes,
+  bytesToRawString,
+  isTcpSegment,
+} from '../utils/packetLayout';
+import { stableHash32 } from '../utils/hash';
 import type { HookEngine } from '../hooks/HookEngine';
 import type { ForwardContext } from '../types/layers';
 import type { NetlabNode, NetworkTopology } from '../types/topology';
@@ -24,6 +31,13 @@ import type {
 import { type FailureState, EMPTY_FAILURE_STATE, makeInterfaceFailureId } from '../types/failure';
 import { deriveDeterministicMac } from '../utils/network';
 import { ICMP_CODE, ICMP_TYPE } from './icmp';
+import {
+  deriveIdentification,
+  effectiveMtu,
+  fragment,
+  packetSizeBytes,
+} from './fragmentation';
+import { Reassembler } from './Reassembler';
 import { ServiceOrchestrator } from './ServiceOrchestrator';
 import { TraceRecorder } from './TraceRecorder';
 import type { PrecomputeOptions, PrecomputeResult } from './types';
@@ -151,6 +165,7 @@ interface LogicalRouterInterface extends ResolvedInterface {
   ipAddress: string;
   prefixLength: number;
   macAddress: string;
+  mtu?: number;
   parentInterfaceId?: string;
   vlanId?: number;
 }
@@ -160,6 +175,27 @@ interface ArpTargetInfo {
   targetNodeId: string;
   senderIp: string;
   senderMac: string;
+}
+
+interface ForwardLoopParams {
+  packet: InFlightPacket;
+  current: string;
+  ingressFrom: string | null;
+  ingressEdgeId: string | null;
+  senderIp: string | null;
+  stepCounter: number;
+  baseTs: number;
+  visitedStates: Set<string>;
+}
+
+interface ForwardLoopShared {
+  hops: PacketHop[];
+  snapshots: InFlightPacket[];
+  nodeArpTables: Record<string, Record<string, string>>;
+  arpCache: Map<string, string>;
+  reassemblers: Map<string, Reassembler>;
+  failureState: FailureState;
+  options: PrecomputeOptions;
 }
 
 export class ForwardingPipeline {
@@ -240,6 +276,7 @@ export class ForwardingPipeline {
         ipAddress: iface.ipAddress,
         prefixLength: iface.prefixLength,
         macAddress: iface.macAddress,
+        mtu: iface.mtu,
       };
       const subInterfaces = (iface.subInterfaces ?? []).map((subInterface) => ({
         id: subInterface.id,
@@ -247,6 +284,7 @@ export class ForwardingPipeline {
         ipAddress: subInterface.ipAddress,
         prefixLength: subInterface.prefixLength,
         macAddress: iface.macAddress,
+        mtu: subInterface.mtu ?? iface.mtu,
         parentInterfaceId: iface.id,
         vlanId: subInterface.vlanId,
       }));
@@ -369,17 +407,21 @@ export class ForwardingPipeline {
     );
   }
 
-  private hashString(value: string): number {
-    let hash = 0x811c9dc5;
-    for (let i = 0; i < value.length; i++) {
-      hash ^= value.charCodeAt(i);
-      hash = Math.imul(hash, 0x01000193);
-    }
-    return hash >>> 0;
-  }
+  private derivePacketIdentification(packet: InFlightPacket): number {
+    const payload = packet.frame.payload.payload;
+    const sequenceNumber =
+      isIcmpMessage(payload)
+        ? payload.sequenceNumber
+        : isTcpSegment(payload)
+          ? payload.seq
+          : undefined;
 
-  private derivePacketIdentification(packetId: string): number {
-    return this.hashString(packetId) & 0xffff;
+    return deriveIdentification(
+      packet.frame.payload.srcIp,
+      packet.frame.payload.dstIp,
+      packet.sessionId,
+      sequenceNumber,
+    );
   }
 
   private resolveEndpointMac(nodeId: string): string | null {
@@ -998,7 +1040,7 @@ export class ForwardingPipeline {
         ...packet.frame,
         payload: {
           ...ipPacket,
-          identification: ipPacket.identification ?? this.derivePacketIdentification(packet.id),
+          identification: ipPacket.identification ?? this.derivePacketIdentification(packet),
         },
       },
     };
@@ -1148,7 +1190,7 @@ export class ForwardingPipeline {
         type: ICMP_TYPE.ECHO_REQUEST,
         code: 0,
         checksum: 0,
-        identifier: this.derivePacketIdentification(packetId) & 0xffff,
+        identifier: stableHash32(packetId) & 0xffff,
         sequenceNumber: 1,
       },
     );
@@ -1203,6 +1245,39 @@ export class ForwardingPipeline {
     );
   }
 
+  private shouldEmitGeneratedIcmp(srcIp: string): boolean {
+    return srcIp !== '0.0.0.0' && srcIp !== BROADCAST_IP;
+  }
+
+  private buildIcmpFragmentationNeeded(
+    routerNodeId: string,
+    routerIp: string,
+    originalPacket: InFlightPacket,
+    nextHopMtu: number,
+  ): InFlightPacket {
+    const quotedBytes = [
+      ...buildIpv4HeaderBytes(originalPacket.frame.payload),
+      ...buildTransportBytes(originalPacket.frame.payload.payload).slice(0, 8),
+    ];
+
+    return this.buildIcmpPacket(
+      `${originalPacket.id}-frag-needed`,
+      routerNodeId,
+      originalPacket.srcNodeId,
+      routerIp,
+      originalPacket.frame.payload.srcIp,
+      64,
+      {
+        layer: 'L4',
+        type: ICMP_TYPE.DESTINATION_UNREACHABLE,
+        code: ICMP_CODE.FRAGMENTATION_NEEDED,
+        checksum: 0,
+        sequenceNumber: nextHopMtu,
+        data: bytesToRawString(quotedBytes),
+      },
+    );
+  }
+
   withPacketIps(
     packet: InFlightPacket,
     ips: { srcIp?: string; dstIp?: string },
@@ -1228,31 +1303,31 @@ export class ForwardingPipeline {
 
   // ── Core precomputation ────────────────────────────────────────────────────
 
-  private async precomputeDetailed(
-    packet: InFlightPacket,
-    failureState: FailureState = EMPTY_FAILURE_STATE,
-    options: PrecomputeOptions = {},
-  ): Promise<PrecomputeResult> {
-    const hops: PacketHop[] = [];
-    const snapshots: InFlightPacket[] = [];
-    const nodeArpTables: Record<string, Record<string, string>> = {};
-    const visitedStates = new Set<string>();
-    const arpCache = new Map<string, string>();
-    let current = packet.srcNodeId;
-    let ingressFrom: string | null = null;
-    let ingressEdgeId: string | null = null;
-    let senderIp: string | null = null;
-    let stepCounter = 0;
-    this.seedArpCache(arpCache);
-    let workingPacket: InFlightPacket = this.materializePacket(
-      { ...packet, currentDeviceId: current },
-      failureState,
+  private async runForwardingLoop(
+    params: ForwardLoopParams,
+    shared: ForwardLoopShared,
+  ): Promise<{ stepCounter: number; generatedIcmpPackets: InFlightPacket[] }> {
+    let {
+      packet: workingPacket,
+      current,
+      ingressFrom,
+      ingressEdgeId,
+      senderIp,
+      stepCounter,
+      baseTs,
+      visitedStates,
+    } = params;
+    const {
+      hops,
+      snapshots,
+      nodeArpTables,
       arpCache,
-    );
-    const baseTs = Date.now();
-    let generatedIcmpPacket: InFlightPacket | null = null;
+      failureState,
+      options,
+    } = shared;
+    const generatedIcmpPackets: InFlightPacket[] = [];
 
-    for (let iter = 0; iter < MAX_HOPS; iter++) {
+    for (let iter = 0; iter < MAX_HOPS; iter += 1) {
       const node = this.findNode(current);
       if (!node) {
         stepCounter = this.traceRecorder.appendHop(hops, snapshots, this.withPacketMacs({
@@ -1270,7 +1345,6 @@ export class ForwardingPipeline {
         break;
       }
 
-      // Loop guard
       const loopGuardKey = this.buildLoopGuardKey(node, workingPacket, ingressEdgeId);
       if (visitedStates.has(loopGuardKey)) {
         stepCounter = this.traceRecorder.appendHop(
@@ -1319,7 +1393,7 @@ export class ForwardingPipeline {
         dstIp: ipPacket.dstIp,
         ttl: ipPacket.ttl,
         protocol: protocolName(ipPacket.protocol),
-        event: 'forward', // overwritten below
+        event: 'forward',
         fromNodeId: ingressFrom ?? undefined,
         timestamp: baseTs,
       };
@@ -1344,6 +1418,49 @@ export class ForwardingPipeline {
         node.data.role !== 'switch' &&
         this.nodeOwnsIp(node, ipPacket.dstIp)
       ) {
+        const isFragmentedPacket = ipPacket.identification !== undefined && (
+          ipPacket.flags?.mf === true ||
+          (ipPacket.fragmentOffset ?? 0) > 0
+        );
+
+        if (isFragmentedPacket) {
+          const reassembler = shared.reassemblers.get(current) ?? new Reassembler();
+          shared.reassemblers.set(current, reassembler);
+          const reassembledPacket = reassembler.accept(ipPacket);
+
+          if (!reassembledPacket) {
+            stepCounter = this.traceRecorder.appendHop(
+              hops,
+              snapshots,
+              this.withPacketMacs({ ...hopBase, event: 'deliver', action: 'reassembly-pending' }, workingPacket),
+              workingPacket,
+              stepCounter,
+            );
+            break;
+          }
+
+          const deliveredPacket = this.withFrameFcs(this.withIpv4HeaderChecksum({
+            ...workingPacket,
+            frame: {
+              ...workingPacket.frame,
+              payload: reassembledPacket,
+            },
+          }));
+          stepCounter = this.traceRecorder.appendHop(
+            hops,
+            snapshots,
+            this.withPacketMacs({
+              ...hopBase,
+              event: 'deliver',
+              action: 'reassembly-complete',
+              fragmentCount: reassembler.getLastCompletedFragmentCount() ?? undefined,
+            }, deliveredPacket),
+            deliveredPacket,
+            stepCounter,
+          );
+          break;
+        }
+
         stepCounter = this.traceRecorder.appendHop(
           hops,
           snapshots,
@@ -1487,13 +1604,13 @@ export class ForwardingPipeline {
                 ? this.findLogicalRouterInterfaceById(current, hopBase.ingressInterfaceId)?.ipAddress
                 : undefined;
               const responseSourceIp = routerIp ?? this.getEffectiveNodeIp(node);
-              if (responseSourceIp) {
+              if (responseSourceIp && this.shouldEmitGeneratedIcmp(workingPacket.frame.payload.srcIp)) {
                 dropHop.icmpGenerated = true;
-                generatedIcmpPacket = this.buildIcmpTimeExceeded(
+                generatedIcmpPackets.push(this.buildIcmpTimeExceeded(
                   current,
                   responseSourceIp,
                   workingPacket,
-                );
+                ));
               }
             }
             const changedFields = this.diffPacketFields(packetBeforeHop, workingPacket);
@@ -1557,9 +1674,6 @@ export class ForwardingPipeline {
         next = neighbors[0] ?? null;
       }
 
-      // Capture routing decision for educational display (router hops only).
-      // TTL-exceeded drops break before reaching this point, so routingDecision
-      // is intentionally absent on TTL drops.
       if (node.data.role === 'router') {
         const routes = this.topology.routeTables.get(current) ?? [];
         hopBase.routingDecision = buildRoutingDecision(
@@ -1773,18 +1887,7 @@ export class ForwardingPipeline {
         this.recordArpEntry(nodeArpTables, arpTarget.targetNodeId, arpTarget.senderIp, arpTarget.senderMac);
       }
 
-      const forwardHop: Omit<PacketHop, 'step'> = {
-        ...hopBase,
-        event: ingressFrom === null && !shouldInjectArp ? 'create' : 'forward',
-        toNodeId: next.nodeId,
-        activeEdgeId: next.edgeId,
-      };
-      if (natTranslation) {
-        forwardHop.natTranslation = natTranslation;
-      }
-      if (egressAclMatch ?? ingressAclMatch) {
-        forwardHop.aclMatch = egressAclMatch ?? ingressAclMatch ?? undefined;
-      }
+      const forwardEvent = ingressFrom === null && !shouldInjectArp ? 'create' : 'forward';
       const resolvedDstMac = arpTarget
         ? (arpCache.get(arpTarget.targetIp) ?? this.resolveArpTargetMac(
             current,
@@ -1806,6 +1909,125 @@ export class ForwardingPipeline {
 
       if (node.data.role === 'router') {
         const egressIface = this.findLogicalRouterInterfaceById(current, hopBase.egressInterfaceId);
+        const egressEdge = this.topology.edges.find((candidate) => candidate.id === next.edgeId);
+        const mtu = effectiveMtu(egressEdge?.data?.mtuBytes, egressIface?.mtu);
+        const size = packetSizeBytes(workingPacket.frame.payload);
+
+        if (size > mtu && workingPacket.frame.payload.flags?.df === true) {
+          const dropHop: Omit<PacketHop, 'step'> = {
+            ...hopBase,
+            event: 'drop',
+            reason: 'fragmentation-needed',
+            routingDecision: hopBase.routingDecision,
+            aclMatch: egressAclMatch ?? ingressAclMatch ?? undefined,
+            nextHopMtu: mtu,
+          };
+          if (natTranslation) {
+            dropHop.natTranslation = natTranslation;
+          }
+          const routerIp = hopBase.ingressInterfaceId
+            ? this.findLogicalRouterInterfaceById(current, hopBase.ingressInterfaceId)?.ipAddress
+            : this.getEffectiveNodeIp(node);
+          if (
+            routerIp &&
+            !options.suppressGeneratedIcmp &&
+            this.shouldEmitGeneratedIcmp(workingPacket.frame.payload.srcIp)
+          ) {
+            dropHop.icmpGenerated = true;
+            generatedIcmpPackets.push(this.buildIcmpFragmentationNeeded(
+              current,
+              routerIp,
+              workingPacket,
+              mtu,
+            ));
+          }
+          const changedFields = this.diffPacketFields(packetBeforeHop, workingPacket);
+          if (changedFields.length > 0) {
+            dropHop.changedFields = changedFields;
+          }
+          stepCounter = this.traceRecorder.appendHop(
+            hops,
+            snapshots,
+            this.withPacketMacs(dropHop, workingPacket),
+            workingPacket,
+            stepCounter,
+          );
+          break;
+        }
+
+        if (size > mtu) {
+          const identification = workingPacket.frame.payload.identification ?? this.derivePacketIdentification(workingPacket);
+          const fragments = fragment(workingPacket.frame.payload, mtu, identification);
+          const nextIngressPort = this.resolvePortFromEdge(next.nodeId, next.edgeId, 'ingress');
+          const fragmentAclMatch = egressAclMatch ?? ingressAclMatch ?? undefined;
+          senderIp = egressIface?.ipAddress ?? null;
+
+          for (const [fragmentIndex, fragmentPayload] of fragments.entries()) {
+            let fragmentPacket: InFlightPacket = {
+              ...workingPacket,
+              frame: {
+                ...workingPacket.frame,
+                payload: fragmentPayload,
+                srcMac: egressIface?.macAddress ?? workingPacket.frame.srcMac,
+                dstMac: resolvedDstMac ?? workingPacket.frame.dstMac,
+              },
+            };
+            fragmentPacket = this.withFrameFcs(this.withIpv4HeaderChecksum(fragmentPacket));
+
+            const fragmentHop: Omit<PacketHop, 'step'> = {
+              ...hopBase,
+              event: forwardEvent,
+              toNodeId: next.nodeId,
+              activeEdgeId: next.edgeId,
+              action: 'fragment',
+              fragmentIndex,
+              fragmentCount: fragments.length,
+              identification,
+              nextHopMtu: mtu,
+            };
+            if (natTranslation) {
+              fragmentHop.natTranslation = natTranslation;
+            }
+            if (fragmentAclMatch) {
+              fragmentHop.aclMatch = fragmentAclMatch;
+            }
+            const changedFields = this.diffPacketFields(packetBeforeForward, fragmentPacket);
+            if (changedFields.length > 0) {
+              fragmentHop.changedFields = changedFields;
+            }
+            stepCounter = this.traceRecorder.appendHop(
+              hops,
+              snapshots,
+              this.withPacketMacs(fragmentHop, fragmentPacket),
+              fragmentPacket,
+              stepCounter,
+            );
+
+            const forwardedFragment: InFlightPacket = {
+              ...fragmentPacket,
+              currentDeviceId: next.nodeId,
+              ingressPortId: nextIngressPort?.id ?? fragmentPacket.ingressPortId,
+            };
+            const fragmentResult = await this.runForwardingLoop(
+              {
+                packet: forwardedFragment,
+                current: next.nodeId,
+                ingressFrom: current,
+                ingressEdgeId: next.edgeId,
+                senderIp,
+                stepCounter,
+                baseTs,
+                visitedStates: new Set(visitedStates),
+              },
+              shared,
+            );
+            stepCounter = fragmentResult.stepCounter;
+            generatedIcmpPackets.push(...fragmentResult.generatedIcmpPackets);
+          }
+
+          return { stepCounter, generatedIcmpPackets };
+        }
+
         senderIp = egressIface?.ipAddress ?? null;
         workingPacket = this.withFrameFcs({
           ...workingPacket,
@@ -1835,11 +2057,23 @@ export class ForwardingPipeline {
       } else if (node.data.role === 'switch') {
         const egressPort = this.resolvePortFromEdge(current, next.edgeId, 'egress');
         if (egressPort) {
-          forwardHop.egressInterfaceId = egressPort.id;
-          forwardHop.egressInterfaceName = egressPort.name;
+          hopBase.egressInterfaceId = egressPort.id;
+          hopBase.egressInterfaceName = egressPort.name;
         }
       }
 
+      const forwardHop: Omit<PacketHop, 'step'> = {
+        ...hopBase,
+        event: forwardEvent,
+        toNodeId: next.nodeId,
+        activeEdgeId: next.edgeId,
+      };
+      if (natTranslation) {
+        forwardHop.natTranslation = natTranslation;
+      }
+      if (egressAclMatch ?? ingressAclMatch) {
+        forwardHop.aclMatch = egressAclMatch ?? ingressAclMatch ?? undefined;
+      }
       const changedFields = this.diffPacketFields(packetBeforeForward, workingPacket);
       if (changedFields.length > 0) {
         forwardHop.changedFields = changedFields;
@@ -1864,6 +2098,50 @@ export class ForwardingPipeline {
       current = next.nodeId;
     }
 
+    return { stepCounter, generatedIcmpPackets };
+  }
+
+  private async precomputeDetailed(
+    packet: InFlightPacket,
+    failureState: FailureState = EMPTY_FAILURE_STATE,
+    options: PrecomputeOptions = {},
+  ): Promise<PrecomputeResult> {
+    const hops: PacketHop[] = [];
+    const snapshots: InFlightPacket[] = [];
+    const nodeArpTables: Record<string, Record<string, string>> = {};
+    const arpCache = new Map<string, string>();
+    const reassemblers = new Map<string, Reassembler>();
+    this.seedArpCache(arpCache);
+    const baseTs = Date.now();
+    const current = packet.srcNodeId;
+    const workingPacket = this.materializePacket(
+      { ...packet, currentDeviceId: current },
+      failureState,
+      arpCache,
+    );
+
+    const { generatedIcmpPackets } = await this.runForwardingLoop(
+      {
+        packet: workingPacket,
+        current,
+        ingressFrom: null,
+        ingressEdgeId: null,
+        senderIp: null,
+        stepCounter: 0,
+        baseTs,
+        visitedStates: new Set<string>(),
+      },
+      {
+        hops,
+        snapshots,
+        nodeArpTables,
+        arpCache,
+        reassemblers,
+        failureState,
+        options,
+      },
+    );
+
     const lastHop = hops[hops.length - 1];
     const status = lastHop?.event === 'deliver' ? 'delivered' : 'dropped';
 
@@ -1881,7 +2159,7 @@ export class ForwardingPipeline {
       snapshots,
     };
 
-    if (generatedIcmpPacket) {
+    for (const generatedIcmpPacket of generatedIcmpPackets) {
       const generatedResult = await this.precomputeDetailed(
         generatedIcmpPacket,
         failureState,
