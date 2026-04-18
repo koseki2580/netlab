@@ -55,7 +55,12 @@ export interface VlanConfig {
 }
 
 export type NetlabNode = Node<NetlabNodeData>;
-export type NetlabEdge = Edge;
+
+export interface NetlabEdgeData extends Record<string, unknown> {
+  mtuBytes?: number;
+}
+
+export type NetlabEdge = Edge<NetlabEdgeData>;
 
 export interface NetworkTopology {
   nodes: NetlabNode[];
