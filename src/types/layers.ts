@@ -1,18 +1,21 @@
-import type { NodeTypes } from '@xyflow/react';
-import type { InFlightPacket } from './packets';
-import type { RouteEntry } from './routing';
-import type { Neighbor } from './simulation';
-import type { NetworkTopology } from './topology';
+import type { NodeTypes } from "@xyflow/react";
+import type { InFlightPacket } from "./packets";
+import type { RouteEntry } from "./routing";
+import type { Neighbor } from "./simulation";
+import type { NetworkTopology } from "./topology";
 
-export type LayerId = 'l1' | 'l2' | 'l3' | 'l4' | 'l7';
+import type { MulticastTable } from "../layers/l2-datalink/MulticastTable";
+
+export type LayerId = "l1" | "l2" | "l3" | "l4" | "l7";
 
 export interface ForwardContext {
   neighbors: Neighbor[];
+  multicastTable?: MulticastTable;
 }
 
 export type ForwardDecision =
   | {
-      action: 'forward';
+      action: "forward";
       nextNodeId: string;
       edgeId: string;
       egressPort: string;
@@ -21,8 +24,8 @@ export type ForwardDecision =
       packet: InFlightPacket;
       selectedRoute?: RouteEntry;
     }
-  | { action: 'deliver'; packet: InFlightPacket }
-  | { action: 'drop'; reason: string };
+  | { action: "deliver"; packet: InFlightPacket }
+  | { action: "drop"; reason: string };
 
 export interface Forwarder {
   receive(

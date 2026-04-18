@@ -250,6 +250,16 @@ export {
   generateISN,
 } from './layers/l4-transport/tcpPacketBuilder';
 export type { TcpPacketOptions } from './layers/l4-transport/tcpPacketBuilder';
+export { buildUdpPacket, generateEphemeralPort } from './layers/l4-transport/udpPacketBuilder';
+export type { UdpPacketOptions } from './layers/l4-transport/udpPacketBuilder';
+export type { UdpSegment } from './types/udp';
+export {
+  UDP_PROTOCOL,
+  UDP_MIN_PORT,
+  UDP_MAX_PORT,
+  UDP_EPHEMERAL_PORT_MIN,
+  UDP_EPHEMERAL_PORT_MAX,
+} from './types/udp';
 
 // Theming
 export type { NetlabTheme } from './theme';
