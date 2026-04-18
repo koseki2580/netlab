@@ -55,6 +55,17 @@ The simulation supports core ICMP control traffic on top of IPv4:
 `SimulationEngine.traceroute()` is built on top of ICMP Echo Requests with incrementing TTL values.
 Each probe records the router or destination that responded to that TTL.
 
+### MTU & Fragmentation
+
+Routers now enforce an effective IPv4 MTU on each routed egress hop. Oversized packets either:
+
+- fragment when `DF=0`
+- drop and emit ICMP Destination Unreachable, code `4` when `DF=1`
+
+Destination hosts reassemble fragments before the packet reaches L4 handlers.
+
+See [MTU & IPv4 Fragmentation](../mtu-fragmentation.md) for the full data model, fragment layout, ICMP signaling, and reassembly rules.
+
 ### Route Entry
 
 ```typescript
