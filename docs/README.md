@@ -61,6 +61,7 @@ Specifications for protocol implementations based on the OSI model and network d
 - [VLAN (802.1Q)](networking/vlan.md) - 802.1Q tagging, access/trunk ports, router-on-a-stick inter-VLAN routing
 - [Spanning Tree (802.1D)](networking/stp.md) - Root election, port roles, and blocked-port enforcement in switch forwarding
 - [MTU & IPv4 Fragmentation](networking/mtu-fragmentation.md) - Per-link/per-interface MTU, DF-bit handling, ICMP Fragmentation Needed, and destination reassembly
+- [Path MTU Discovery](networking/pmtud.md) - TCP `DF=1` defaults, per-host PMTU cache, and adaptive chunk sizing from ICMP Fragmentation Needed
 - [NAT / PAT](networking/nat.md) - Stateful SNAT, DNAT, port forwarding, and per-router NAT table behavior
 - [Firewalls & ACLs](networking/acl.md) - Interface ACL rules, default deny, and optional stateful conn-track behavior
 - [Services Overview](networking/services/index.md) - DHCP/DNS service sessions, runtime state, and UDP service architecture
