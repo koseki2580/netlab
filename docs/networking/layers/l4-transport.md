@@ -32,17 +32,21 @@ interface UdpDatagram {
 }
 ```
 
-## Current UDP Usage
+## UDP
 
-UDP delivery is currently used by the services layer:
+UDP datagrams are built via `buildUdpPacket()` from `src/layers/l4-transport/udpPacketBuilder.ts`.
+The builder creates a full `InFlightPacket` with L2 → L3 → L4 (UDP) → payload encapsulation,
+port validation, and a `length` field computed from `8 + JSON.stringify(payload).length`.
 
-- DHCP: ports `67/68`
-- DNS: port `53`
+Ephemeral source ports are derived deterministically via `generateEphemeralPort(nodeId, seed)`
+using FNV-1a hashing into the IANA dynamic range [49152, 65535].
 
-These exchanges are orchestrated by `SimulationEngine` as multi-trace service sessions rather than
-through a general runtime UDP listener registry.
+Both DHCP and DNS services delegate to `buildUdpPacket` internally.
 
-See [Services Overview](../services/index.md) for the current service architecture and scope.
+`ForwardingPipeline` detects UDP via the `isUdpDatagram` guard and copies `srcPort`/`dstPort`
+into each `PacketHop` for trace inspection.
+
+See [UDP spec](../udp.md) for the full data model, factory API, and educational simplifications.
 
 ## Current TCP Behavior
 
