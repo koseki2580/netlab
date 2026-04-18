@@ -141,4 +141,28 @@ describe('HopInspector', () => {
     expect(html).toContain('Dst MAC');
     expect(html).toContain(emDash);
   });
+
+  it('renders fragmentation and reassembly annotations when hop metadata is present', () => {
+    const html = renderHopInspector({
+      step: 2,
+      nodeId: 'router-1',
+      nodeLabel: 'R-1',
+      srcIp: '10.0.0.10',
+      dstIp: '203.0.113.10',
+      ttl: 63,
+      protocol: 'ICMP',
+      event: 'deliver',
+      action: 'reassembly-complete',
+      fragmentCount: 3,
+      nextHopMtu: 600,
+      timestamp: 2,
+    });
+
+    expect(html).toContain('Action');
+    expect(html).toContain('Reassembly Complete');
+    expect(html).toContain('Fragment');
+    expect(html).toContain('3 total');
+    expect(html).toContain('Next-hop MTU');
+    expect(html).toContain('600');
+  });
 });

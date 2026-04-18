@@ -3,6 +3,8 @@ import { createContext, useContext } from 'react';
 export interface NetlabUIContextValue {
   selectedNodeId: string | null;
   setSelectedNodeId: (id: string | null) => void;
+  selectedEdgeId?: string | null;
+  setSelectedEdgeId?: (id: string | null) => void;
 }
 
 export const NetlabUIContext = createContext<NetlabUIContextValue | null>(null);

@@ -1,8 +1,8 @@
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useNetlabUI } from './NetlabUIContext';
 import { useNetlabContext } from './NetlabContext';
 import { SimulationContext } from '../simulation/SimulationContext';
-import type { NetlabNodeData, NetworkTopology, StpPortRuntime } from '../types/topology';
+import type { NetlabEdge, NetlabNodeData, NetworkTopology, StpPortRuntime, TopologySnapshot } from '../types/topology';
 import type { RouterInterface } from '../types/routing';
 import type { DhcpLeaseState, DnsCache } from '../types/services';
 import {
@@ -44,6 +44,28 @@ const SECTION_HEADER_STYLE: React.CSSProperties = {
   margin: '10px 0 6px',
 };
 
+const BADGE_STYLE: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  borderRadius: 999,
+  border: '1px solid var(--netlab-border-subtle)',
+  fontSize: 10,
+  fontWeight: 'bold',
+  letterSpacing: 0.4,
+  padding: '2px 8px',
+};
+
+const INPUT_STYLE: React.CSSProperties = {
+  background: 'var(--netlab-bg-surface)',
+  border: '1px solid var(--netlab-border-subtle)',
+  borderRadius: 4,
+  color: 'var(--netlab-text-primary)',
+  fontFamily: 'monospace',
+  fontSize: 11,
+  padding: '3px 6px',
+  width: 88,
+};
+
 const VLAN_PALETTE = [
   '#38bdf8',
   '#f59e0b',
@@ -74,7 +96,74 @@ function stpRoleColor(role: 'ROOT' | 'DESIGNATED' | 'BLOCKED' | 'DISABLED'): str
   }
 }
 
-function RouterDetail({ data }: { data: NetlabNodeData }) {
+function parseMtu(value: string): number | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  const parsed = Number.parseInt(trimmed, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+}
+
+function MtuBadge({ mtu }: { mtu: number | undefined }) {
+  const lowMtu = mtu !== undefined && mtu < 1500;
+  return (
+    <span
+      data-low-mtu={lowMtu ? 'true' : 'false'}
+      style={{
+        ...BADGE_STYLE,
+        color: lowMtu ? '#f59e0b' : 'var(--netlab-text-primary)',
+        background: lowMtu ? 'rgba(245, 158, 11, 0.12)' : 'rgba(148, 163, 184, 0.08)',
+        borderColor: lowMtu ? 'rgba(245, 158, 11, 0.3)' : 'var(--netlab-border-subtle)',
+      }}
+    >
+      {mtu === undefined ? 'MTU ∞' : `MTU ${mtu}`}
+    </span>
+  );
+}
+
+function MtuInput({
+  name,
+  mtu,
+  onCommit,
+}: {
+  name: string;
+  mtu: number | undefined;
+  onCommit: (mtu: number | undefined) => void;
+}) {
+  const [localValue, setLocalValue] = useState(mtu === undefined ? '' : String(mtu));
+
+  useEffect(() => {
+    setLocalValue(mtu === undefined ? '' : String(mtu));
+  }, [mtu]);
+
+  return (
+    <input
+      name={name}
+      type="number"
+      min={1}
+      placeholder="inherit"
+      value={localValue}
+      onChange={(event) => setLocalValue(event.target.value)}
+      onBlur={(event) => onCommit(parseMtu(event.currentTarget.value))}
+      style={INPUT_STYLE}
+    />
+  );
+}
+
+function RouterDetail({
+  data,
+  onInterfaceMtuChange,
+  onSubInterfaceMtuChange,
+}: {
+  data: NetlabNodeData;
+  onInterfaceMtuChange?: (interfaceId: string, mtu: number | undefined) => void;
+  onSubInterfaceMtuChange?: (
+    interfaceId: string,
+    subInterfaceId: string,
+    mtu: number | undefined,
+  ) => void;
+}) {
   const ifaces = (data.interfaces ?? []) as RouterInterface[];
   return (
     <>
@@ -83,7 +172,10 @@ function RouterDetail({ data }: { data: NetlabNodeData }) {
       ) : (
         ifaces.map((iface) => (
           <div key={iface.id} style={{ marginBottom: 6 }}>
-            <div style={{ color: 'var(--netlab-accent-green)', fontWeight: 'bold' }}>{iface.name}</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+              <div style={{ color: 'var(--netlab-accent-green)', fontWeight: 'bold' }}>{iface.name}</div>
+              <MtuBadge mtu={iface.mtu} />
+            </div>
             <div style={ROW_STYLE}>
               <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 36 }}>IP</span>
               <span style={{ color: 'var(--netlab-accent-cyan)' }}>{iface.ipAddress}/{iface.prefixLength}</span>
@@ -91,6 +183,17 @@ function RouterDetail({ data }: { data: NetlabNodeData }) {
             <div style={ROW_STYLE}>
               <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 36 }}>MAC</span>
               <span style={{ color: 'var(--netlab-accent-yellow)' }}>{iface.macAddress}</span>
+            </div>
+            <div style={{ ...ROW_STYLE, alignItems: 'center' }}>
+              <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 36 }}>MTU</span>
+              <MtuBadge mtu={iface.mtu} />
+              {onInterfaceMtuChange && (
+                <MtuInput
+                  name={`interface-mtu-${iface.id}`}
+                  mtu={iface.mtu}
+                  onCommit={(mtu) => onInterfaceMtuChange(iface.id, mtu)}
+                />
+              )}
             </div>
             {(iface.subInterfaces ?? []).length > 0 && (
               <>
@@ -104,8 +207,11 @@ function RouterDetail({ data }: { data: NetlabNodeData }) {
                       borderLeft: `2px solid ${vlanColor(subInterface.vlanId)}`,
                     }}
                   >
-                    <div style={{ color: vlanColor(subInterface.vlanId), fontWeight: 'bold' }}>
-                      {subInterface.id}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                      <div style={{ color: vlanColor(subInterface.vlanId), fontWeight: 'bold' }}>
+                        {subInterface.id}
+                      </div>
+                      <MtuBadge mtu={subInterface.mtu} />
                     </div>
                     <div style={ROW_STYLE}>
                       <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 36 }}>IP</span>
@@ -117,6 +223,17 @@ function RouterDetail({ data }: { data: NetlabNodeData }) {
                       <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 36 }}>VLAN</span>
                       <span style={{ color: vlanColor(subInterface.vlanId) }}>{subInterface.vlanId}</span>
                     </div>
+                    <div style={{ ...ROW_STYLE, alignItems: 'center' }}>
+                      <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 36 }}>MTU</span>
+                      <MtuBadge mtu={subInterface.mtu} />
+                      {onSubInterfaceMtuChange && (
+                        <MtuInput
+                          name={`subinterface-mtu-${subInterface.id}`}
+                          mtu={subInterface.mtu}
+                          onCommit={(mtu) => onSubInterfaceMtuChange(iface.id, subInterface.id, mtu)}
+                        />
+                      )}
+                    </div>
                   </div>
                 ))}
               </>
@@ -124,6 +241,44 @@ function RouterDetail({ data }: { data: NetlabNodeData }) {
           </div>
         ))
       )}
+    </>
+  );
+}
+
+function EdgeDetail({
+  edge,
+  topology,
+  onMtuChange,
+}: {
+  edge: NetlabEdge;
+  topology: NetworkTopology;
+  onMtuChange?: (mtu: number | undefined) => void;
+}) {
+  const sourceLabel = topology.nodes.find((node) => node.id === edge.source)?.data.label ?? edge.source;
+  const targetLabel = topology.nodes.find((node) => node.id === edge.target)?.data.label ?? edge.target;
+  const mtu = edge.data?.mtuBytes;
+
+  return (
+    <>
+      <div style={ROW_STYLE}>
+        <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>Source</span>
+        <span style={{ color: 'var(--netlab-text-primary)' }}>{sourceLabel}</span>
+      </div>
+      <div style={ROW_STYLE}>
+        <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>Target</span>
+        <span style={{ color: 'var(--netlab-text-primary)' }}>{targetLabel}</span>
+      </div>
+      <div style={{ ...ROW_STYLE, alignItems: 'center' }}>
+        <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>MTU</span>
+        <MtuBadge mtu={mtu} />
+        {onMtuChange && (
+          <MtuInput
+            name={`edge-mtu-${edge.id}`}
+            mtu={mtu}
+            onCommit={onMtuChange}
+          />
+        )}
+      </div>
     </>
   );
 }
@@ -314,24 +469,113 @@ function DnsCacheDetail({ cache }: { cache: DnsCache }) {
   );
 }
 
-export function NodeDetailPanel() {
-  const { selectedNodeId, setSelectedNodeId } = useNetlabUI();
+export interface NodeDetailPanelProps {
+  onTopologyChange?: (topology: TopologySnapshot) => void;
+}
+
+export function NodeDetailPanel({ onTopologyChange }: NodeDetailPanelProps = {}) {
+  const {
+    selectedNodeId,
+    setSelectedNodeId,
+    selectedEdgeId,
+    setSelectedEdgeId,
+  } = useNetlabUI();
   const { topology } = useNetlabContext();
   const simCtx = useContext(SimulationContext);
+  const activeSelectionId = selectedEdgeId ?? selectedNodeId;
 
   useEffect(() => {
-    if (!selectedNodeId) return;
+    if (!activeSelectionId) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setSelectedNodeId(null);
+      if (e.key === 'Escape') {
+        setSelectedNodeId(null);
+        setSelectedEdgeId?.(null);
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [selectedNodeId, setSelectedNodeId]);
+  }, [activeSelectionId, selectedNodeId, setSelectedEdgeId, setSelectedNodeId]);
 
-  if (!selectedNodeId) return null;
+  if (!selectedNodeId && !selectedEdgeId) return null;
+
+  const closePanel = () => {
+    setSelectedNodeId(null);
+    setSelectedEdgeId?.(null);
+  };
+
+  const updateSnapshot = (
+    update: (snapshot: TopologySnapshot) => TopologySnapshot,
+  ) => {
+    if (!onTopologyChange) return;
+    onTopologyChange(
+      update({
+        nodes: topology.nodes,
+        edges: topology.edges,
+        areas: topology.areas,
+      }),
+    );
+  };
+
+  if (selectedEdgeId) {
+    const edge = topology.edges.find((candidate) => candidate.id === selectedEdgeId);
+    if (!edge) return null;
+
+    return (
+      <div style={PANEL_STYLE}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <div style={{ fontWeight: 'bold', color: 'var(--netlab-text-secondary)', fontSize: 10, letterSpacing: 1 }}>
+            EDGE DETAIL
+          </div>
+          <button
+            onClick={closePanel}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--netlab-text-muted)',
+              cursor: 'pointer',
+              fontSize: 14,
+              padding: '0 2px',
+              lineHeight: 1,
+            }}
+          >
+            ✕
+          </button>
+        </div>
+        <div style={{ marginBottom: 8 }}>
+          <span style={{ color: 'var(--netlab-text-primary)', fontWeight: 'bold', fontSize: 13 }}>{edge.id}</span>
+          <span style={{ color: 'var(--netlab-text-muted)', marginLeft: 8 }}>link</span>
+        </div>
+        <div style={{ borderTop: '1px solid var(--netlab-border-subtle)', paddingTop: 8 }}>
+          <EdgeDetail
+            edge={edge}
+            topology={topology}
+            onMtuChange={
+              onTopologyChange
+                ? (mtu) => {
+                    updateSnapshot((snapshot) => ({
+                      ...snapshot,
+                      edges: snapshot.edges.map((candidate) =>
+                        candidate.id === edge.id
+                          ? {
+                              ...candidate,
+                              data: mtu === undefined
+                                ? undefined
+                                : { ...(candidate.data ?? {}), mtuBytes: mtu },
+                            }
+                          : candidate,
+                      ),
+                    }));
+                  }
+                : undefined
+            }
+          />
+        </div>
+      </div>
+    );
+  }
 
   const node = topology.nodes.find((n) => n.id === selectedNodeId);
-  if (!node) return null;
+  if (!node || !selectedNodeId) return null;
 
   const d = node.data as NetlabNodeData;
   const leaseState = simCtx?.getDhcpLeaseState(selectedNodeId) ?? null;
@@ -345,7 +589,7 @@ export function NodeDetailPanel() {
           NODE DETAIL
         </div>
         <button
-          onClick={() => setSelectedNodeId(null)}
+          onClick={closePanel}
           style={{
             background: 'none',
             border: 'none',
@@ -365,7 +609,62 @@ export function NodeDetailPanel() {
         <span style={{ color: 'var(--netlab-text-faint)', marginLeft: 8 }}>{d.layerId}</span>
       </div>
       <div style={{ borderTop: '1px solid var(--netlab-border-subtle)', paddingTop: 8 }}>
-        {d.role === 'router' && <RouterDetail data={d} />}
+        {d.role === 'router' && (
+          <RouterDetail
+            data={d}
+            onInterfaceMtuChange={
+              onTopologyChange
+                ? (interfaceId, mtu) => {
+                    updateSnapshot((snapshot) => ({
+                      ...snapshot,
+                      nodes: snapshot.nodes.map((candidate) =>
+                        candidate.id === selectedNodeId && candidate.data.role === 'router'
+                          ? {
+                              ...candidate,
+                              data: {
+                                ...candidate.data,
+                                interfaces: (candidate.data.interfaces ?? []).map((iface) =>
+                                  iface.id === interfaceId ? { ...iface, mtu } : iface,
+                                ),
+                              },
+                            }
+                          : candidate,
+                      ),
+                    }));
+                  }
+                : undefined
+            }
+            onSubInterfaceMtuChange={
+              onTopologyChange
+                ? (interfaceId, subInterfaceId, mtu) => {
+                    updateSnapshot((snapshot) => ({
+                      ...snapshot,
+                      nodes: snapshot.nodes.map((candidate) =>
+                        candidate.id === selectedNodeId && candidate.data.role === 'router'
+                          ? {
+                              ...candidate,
+                              data: {
+                                ...candidate.data,
+                                interfaces: (candidate.data.interfaces ?? []).map((iface) =>
+                                  iface.id === interfaceId
+                                    ? {
+                                        ...iface,
+                                        subInterfaces: (iface.subInterfaces ?? []).map((subInterface) =>
+                                          subInterface.id === subInterfaceId ? { ...subInterface, mtu } : subInterface,
+                                        ),
+                                      }
+                                    : iface,
+                                ),
+                              },
+                            }
+                          : candidate,
+                      ),
+                    }));
+                  }
+                : undefined
+            }
+          />
+        )}
         {d.role === 'switch' && <SwitchDetail nodeId={node.id} data={d} topology={topology} />}
         {(d.role === 'client' || d.role === 'server') && <HostDetail data={d} runtimeIp={runtimeIp} />}
         {leaseState && <DhcpLeaseDetail lease={leaseState} />}

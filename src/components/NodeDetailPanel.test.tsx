@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { act } from 'react';
+import { act, type ComponentProps } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -11,6 +11,8 @@ import { NodeDetailPanel, vlanColor } from './NodeDetailPanel';
 const uiMock = vi.hoisted(() => ({
   selectedNodeId: null as string | null,
   setSelectedNodeId: vi.fn(),
+  selectedEdgeId: null as string | null,
+  setSelectedEdgeId: vi.fn(),
 }));
 
 const netlabMock = vi.hoisted(() => ({
@@ -76,6 +78,21 @@ function makeTopology(
   };
 }
 
+function makeEdge(mtuBytes?: number): NetworkTopology['edges'][number] {
+  return {
+    id: 'edge-1',
+    source: 'router-1',
+    target: 'client-1',
+    type: 'smoothstep',
+    data: mtuBytes === undefined ? undefined : { mtuBytes },
+  };
+}
+
+function setNativeInputValue(input: HTMLInputElement, value: string) {
+  const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+  descriptor?.set?.call(input, value);
+}
+
 function makeRouterNode(withSubInterfaces = false) {
   return {
     id: 'router-1',
@@ -92,6 +109,7 @@ function makeRouterNode(withSubInterfaces = false) {
           ipAddress: '10.0.0.1',
           prefixLength: 24,
           macAddress: '00:00:00:00:00:01',
+          mtu: 1400,
           subInterfaces: withSubInterfaces
             ? [
                 {
@@ -100,6 +118,7 @@ function makeRouterNode(withSubInterfaces = false) {
                   vlanId: 10,
                   ipAddress: '10.0.10.1',
                   prefixLength: 24,
+                  mtu: 900,
                 },
                 {
                   id: 'eth0.20',
@@ -207,10 +226,15 @@ function makeClientNode() {
   } as NetworkTopology['nodes'][number];
 }
 
-function renderMarkup(simulationValue = makeSimulationValue()) {
+type PanelProps = ComponentProps<typeof NodeDetailPanel>;
+
+function renderMarkup(
+  simulationValue = makeSimulationValue(),
+  panelProps?: PanelProps,
+) {
   return renderToStaticMarkup(
     <SimulationContext.Provider value={simulationValue}>
-      <NodeDetailPanel />
+      <NodeDetailPanel {...panelProps} />
     </SimulationContext.Provider>,
   );
 }
@@ -221,7 +245,10 @@ const actEnvironment = globalThis as typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
 
-function renderDom(simulationValue = makeSimulationValue()) {
+function renderDom(
+  simulationValue = makeSimulationValue(),
+  panelProps?: PanelProps,
+) {
   if (!container) {
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -234,7 +261,7 @@ function renderDom(simulationValue = makeSimulationValue()) {
   act(() => {
     root?.render(
       <SimulationContext.Provider value={simulationValue}>
-        <NodeDetailPanel />
+        <NodeDetailPanel {...panelProps} />
       </SimulationContext.Provider>,
     );
   });
@@ -244,6 +271,8 @@ beforeEach(() => {
   actEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
   uiMock.selectedNodeId = null;
   uiMock.setSelectedNodeId.mockReset();
+  uiMock.selectedEdgeId = null;
+  uiMock.setSelectedEdgeId.mockReset();
   netlabMock.topology = makeTopology([]);
 });
 
@@ -447,6 +476,131 @@ describe('NodeDetailPanel', () => {
     it('vlanColor returns the same color for the same vid and different colors for different vids', () => {
       expect(vlanColor(10)).toBe(vlanColor(10));
       expect(vlanColor(10)).not.toBe(vlanColor(20));
+    });
+  });
+
+  describe('MTU', () => {
+    it('renders MTU ∞ for an interface without explicit mtu', () => {
+      uiMock.selectedNodeId = 'router-1';
+      const topology = makeTopology([makeRouterNode()]);
+      const router = topology.nodes[0]!;
+      if (router.data.role === 'router' && router.data.interfaces) {
+        router.data.interfaces = router.data.interfaces.map((iface) => ({ ...iface, mtu: undefined }));
+      }
+      netlabMock.topology = topology;
+
+      const html = renderMarkup();
+
+      expect(html).toContain('MTU ∞');
+    });
+
+    it('renders MTU <n> for an interface with explicit mtu', () => {
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+
+      const html = renderMarkup();
+
+      expect(html).toContain('MTU 1400');
+    });
+
+    it('applies the low-mtu accent when mtu < 1500', () => {
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode(true)]);
+
+      const html = renderMarkup();
+
+      expect(html).toContain('data-low-mtu="true"');
+    });
+
+    it('calls onTopologyChange when the user edits an interface mtu', () => {
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+      const onTopologyChange = vi.fn();
+
+      renderDom(makeSimulationValue(), { onTopologyChange });
+
+      const input = container?.querySelector('input[name="interface-mtu-eth0"]') as HTMLInputElement | null;
+      expect(input).not.toBeNull();
+
+      act(() => {
+        input!.focus();
+        setNativeInputValue(input!, '1300');
+        input!.dispatchEvent(new Event('input', { bubbles: true }));
+        input!.dispatchEvent(new Event('change', { bubbles: true }));
+        input!.blur();
+      });
+
+      expect(onTopologyChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          nodes: [
+            expect.objectContaining({
+              id: 'router-1',
+              data: expect.objectContaining({
+                interfaces: [
+                  expect.objectContaining({ id: 'eth0', mtu: 1300 }),
+                ],
+              }),
+            }),
+          ],
+        }),
+      );
+    });
+  });
+
+  describe('Edge detail — MTU', () => {
+    it('renders MTU ∞ when edge.data.mtuBytes is undefined', () => {
+      uiMock.selectedEdgeId = 'edge-1';
+      netlabMock.topology = makeTopology([makeRouterNode(), makeClientNode()], {
+        edges: [makeEdge()],
+      });
+
+      const html = renderMarkup();
+
+      expect(html).toContain('EDGE DETAIL');
+      expect(html).toContain('MTU ∞');
+    });
+
+    it('renders MTU <n> when edge.data.mtuBytes is set', () => {
+      uiMock.selectedEdgeId = 'edge-1';
+      netlabMock.topology = makeTopology([makeRouterNode(), makeClientNode()], {
+        edges: [makeEdge(600)],
+      });
+
+      const html = renderMarkup();
+
+      expect(html).toContain('MTU 600');
+    });
+
+    it('updates edge.data.mtuBytes via onTopologyChange', () => {
+      uiMock.selectedEdgeId = 'edge-1';
+      netlabMock.topology = makeTopology([makeRouterNode(), makeClientNode()], {
+        edges: [makeEdge(600)],
+      });
+      const onTopologyChange = vi.fn();
+
+      renderDom(makeSimulationValue(), { onTopologyChange });
+
+      const input = container?.querySelector('input[name="edge-mtu-edge-1"]') as HTMLInputElement | null;
+      expect(input).not.toBeNull();
+
+      act(() => {
+        input!.focus();
+        setNativeInputValue(input!, '900');
+        input!.dispatchEvent(new Event('input', { bubbles: true }));
+        input!.dispatchEvent(new Event('change', { bubbles: true }));
+        input!.blur();
+      });
+
+      expect(onTopologyChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          edges: [
+            expect.objectContaining({
+              id: 'edge-1',
+              data: expect.objectContaining({ mtuBytes: 900 }),
+            }),
+          ],
+        }),
+      );
     });
   });
 
