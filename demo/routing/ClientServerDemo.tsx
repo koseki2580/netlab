@@ -123,6 +123,8 @@ const INITIAL_TOPOLOGY: NetworkTopology = {
   routeTables: new Map(),
 };
 
+export const CLIENT_SERVER_INITIAL_TOPOLOGY = INITIAL_TOPOLOGY;
+
 export default function ClientServerDemo() {
   const topology = decodeTopology(window.location.search) ?? INITIAL_TOPOLOGY;
   const [copied, setCopied] = useState(false);

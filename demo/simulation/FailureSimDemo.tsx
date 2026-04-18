@@ -122,6 +122,8 @@ const TOPOLOGY: NetworkTopology = {
   routeTables: new Map(),
 };
 
+export const FAILURE_SIM_DEMO_TOPOLOGY = TOPOLOGY;
+
 // ── Helper to build a packet ─────────────────────────────────────────────────
 
 function makePacket(srcNodeId: string, dstNodeId: string, srcIp: string, dstIp: string): InFlightPacket {

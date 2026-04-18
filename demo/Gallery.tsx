@@ -86,6 +86,11 @@ const CATEGORIES: Category[] = [
         desc: 'Watch a triangle of switches elect a root bridge, block one redundant port, and reroute B→C traffic through the root.',
       },
       {
+        path: '/networking/mtu-fragmentation',
+        title: 'MTU & Fragmentation',
+        desc: 'Shrink a routed tunnel MTU to watch IPv4 fragment on egress or return ICMP Fragmentation Needed when DF is set.',
+      },
+      {
         path: '/areas/dmz',
         title: 'DMZ Segmentation',
         desc: 'Classic three-zone topology: Private → DMZ → Public with two border routers.',

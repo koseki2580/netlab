@@ -144,6 +144,8 @@ const VLAN_TOPOLOGY: NetworkTopology = {
   routeTables: new Map(),
 };
 
+export const VLAN_DEMO_TOPOLOGY = VLAN_TOPOLOGY;
+
 const BTN_BASE: CSSProperties = {
   padding: '7px 12px',
   borderRadius: 6,

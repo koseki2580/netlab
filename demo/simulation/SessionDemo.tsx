@@ -15,7 +15,7 @@ import type { NetworkTopology } from '../../src/types/topology';
 import type { SimulationEngine } from '../../src/simulation/SimulationEngine';
 import DemoShell from '../DemoShell';
 
-const SESSION_DEMO_TOPOLOGY: NetworkTopology = {
+export const SESSION_DEMO_TOPOLOGY: NetworkTopology = {
   nodes: [
     {
       id: 'client',

@@ -10,7 +10,7 @@ import { SimulationProvider, useSimulation } from '../../src/simulation/Simulati
 import type { InFlightPacket } from '../../src/types/packets';
 import type { NetworkTopology } from '../../src/types/topology';
 
-const NAT_DEMO_TOPOLOGY: NetworkTopology = {
+export const NAT_DEMO_TOPOLOGY: NetworkTopology = {
   nodes: [
     {
       id: 'client-1',

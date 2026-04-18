@@ -65,6 +65,8 @@ const TOPOLOGY: NetworkTopology = {
   routeTables: new Map(),
 };
 
+export const STAR_DEMO_TOPOLOGY = TOPOLOGY;
+
 export default function StarDemo() {
   return (
     <DemoShell title="Star Topology" desc="Central switch connecting four clients and a server">

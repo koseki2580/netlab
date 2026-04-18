@@ -9,7 +9,7 @@ import { SimulationProvider, useSimulation } from '../../src/simulation/Simulati
 import type { InFlightPacket } from '../../src/types/packets';
 import type { NetworkTopology } from '../../src/types/topology';
 
-const ACL_DEMO_TOPOLOGY: NetworkTopology = {
+export const ACL_DEMO_TOPOLOGY: NetworkTopology = {
   nodes: [
     {
       id: 'client-1',

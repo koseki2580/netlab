@@ -35,6 +35,8 @@ const TOPOLOGY: NetworkTopology = {
   routeTables: new Map(),
 };
 
+export const MINIMAL_DEMO_TOPOLOGY = TOPOLOGY;
+
 export default function MinimalDemo() {
   return (
     <DemoShell title="Minimal" desc="Two nodes directly connected">

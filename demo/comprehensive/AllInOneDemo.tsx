@@ -112,6 +112,8 @@ const INITIAL_TOPOLOGY: EditorTopology = {
   ],
 };
 
+export const ALL_IN_ONE_INITIAL_TOPOLOGY = INITIAL_TOPOLOGY;
+
 function TabBar({
   activeTab,
   onChange,
@@ -202,7 +204,7 @@ function makePacket(topology: NetworkTopology): InFlightPacket | null {
   };
 }
 
-function toSimulationTopology(topology: EditorTopology): NetworkTopology {
+export function toSimulationTopology(topology: EditorTopology): NetworkTopology {
   return {
     nodes: topology.nodes,
     edges: topology.edges,
