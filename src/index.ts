@@ -170,6 +170,7 @@ export type { AreaType, AreaVisualConfig, NetworkArea } from './types/areas';
 export type {
   BridgeId,
   NetlabNodeData,
+  NetlabEdgeData,
   VlanConfig,
   SwitchPort,
   StpConfig,

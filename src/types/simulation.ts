@@ -56,6 +56,11 @@ export interface PacketHop {
   egressInterfaceName?: string;
   arpFrame?: import('./packets').ArpEthernetFrame;
   reason?: string;          // known values include node-down, interface-down, no-route, ttl-exceeded
+  action?: 'fragment' | 'reassembly-pending' | 'reassembly-complete';
+  fragmentIndex?: number;
+  fragmentCount?: number;
+  identification?: number;
+  nextHopMtu?: number;
   routingDecision?: RoutingDecision;  // present only when nodeId is a router, never on TTL drops
   natTranslation?: NatTranslation;
   aclMatch?: AclMatchInfo;

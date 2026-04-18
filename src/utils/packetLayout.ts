@@ -53,6 +53,30 @@ export function isIcmpMessage(payload: IpPacket['payload']): payload is IcmpMess
   return 'type' in payload && 'code' in payload;
 }
 
+export function isRawPayload(payload: IpPacket['payload'] | HttpMessage | RawPayload | DhcpMessage | DnsMessage): payload is RawPayload {
+  return payload.layer === 'raw';
+}
+
+export function rawStringToBytes(data: string): number[] {
+  const bytes: number[] = [];
+
+  for (let index = 0; index < data.length; index += 1) {
+    bytes.push(data.charCodeAt(index) & 0xff);
+  }
+
+  return bytes;
+}
+
+export function bytesToRawString(bytes: readonly number[]): string {
+  let result = '';
+
+  for (let index = 0; index < bytes.length; index += 0x8000) {
+    result += String.fromCharCode(...bytes.slice(index, index + 0x8000));
+  }
+
+  return result;
+}
+
 export function formatHttpMessage(message: HttpMessage): string {
   const { method, url, statusCode, headers, body } = message;
 
@@ -103,8 +127,8 @@ export function formatDnsMessage(message: DnsMessage): string {
 export function buildApplicationPayloadBytes(
   payload: HttpMessage | RawPayload | DhcpMessage | DnsMessage,
 ): number[] {
-  if (payload.layer === 'raw') {
-    return Array.from(encoder.encode(payload.data));
+  if (isRawPayload(payload)) {
+    return rawStringToBytes(payload.data);
   }
 
   if ('messageType' in payload) {
@@ -166,7 +190,7 @@ export function buildUdpDatagramBytes(udp: UdpDatagram): number[] {
 export function buildIcmpMessageBytes(icmp: IcmpMessage): number[] {
   const identifier = icmp.identifier ?? 0;
   const sequenceNumber = icmp.sequenceNumber ?? 0;
-  const dataBytes = icmp.data ? Array.from(encoder.encode(icmp.data)) : [];
+  const dataBytes = icmp.data ? rawStringToBytes(icmp.data) : [];
 
   return [
     icmp.type & 0xff,
@@ -179,6 +203,10 @@ export function buildIcmpMessageBytes(icmp: IcmpMessage): number[] {
 }
 
 export function buildTransportBytes(payload: IpPacket['payload']): number[] {
+  if (isRawPayload(payload)) {
+    return buildApplicationPayloadBytes(payload);
+  }
+
   if (isTcpSegment(payload)) {
     return buildTcpSegmentBytes(payload);
   }
@@ -188,6 +216,17 @@ export function buildTransportBytes(payload: IpPacket['payload']): number[] {
   }
 
   return buildUdpDatagramBytes(payload);
+}
+
+export function buildIpv4PayloadBytes(ip: IpPacket): number[] {
+  const transportBytes = buildTransportBytes(ip.payload);
+  const headerLength = (ip.ihl ?? 5) * 4;
+
+  if (ip.totalLength === undefined) {
+    return transportBytes;
+  }
+
+  return transportBytes.slice(0, Math.max(0, ip.totalLength - headerLength));
 }
 
 export function buildIpv4FlagsAndFragmentOffset(ip: IpPacket): number {
@@ -204,7 +243,7 @@ export function buildIpv4HeaderBytes(
   ip: IpPacket,
   options: BuildIpv4HeaderOptions = {},
 ): number[] {
-  const transportBytes = buildTransportBytes(ip.payload);
+  const transportBytes = buildIpv4PayloadBytes(ip);
   const ihl = ip.ihl ?? 5;
   const headerLength = ihl * 4;
   const totalLength = ip.totalLength ?? (headerLength + transportBytes.length);
@@ -229,7 +268,7 @@ export function buildIpv4HeaderBytes(
 }
 
 export function buildIpv4PacketBytes(ip: IpPacket): number[] {
-  return [...buildIpv4HeaderBytes(ip), ...buildTransportBytes(ip.payload)];
+  return [...buildIpv4HeaderBytes(ip), ...buildIpv4PayloadBytes(ip)];
 }
 
 export interface BuildEthernetFrameOptions {

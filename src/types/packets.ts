@@ -109,7 +109,10 @@ export interface IpPacket {
   ttl: number;
   protocol: number;  // 1 = ICMP, 6 = TCP, 17 = UDP
   headerChecksum?: number;
-  payload: IcmpMessage | TcpSegment | UdpDatagram; // When protocol === 1 (ICMP), payload is IcmpMessage.
+  payload: IcmpMessage | TcpSegment | UdpDatagram | RawPayload;
+  // Internal template retained on fragments so destination reassembly can restore
+  // the original structured transport payload before L4 delivery.
+  reassemblyPayload?: IcmpMessage | TcpSegment | UdpDatagram;
 }
 
 /**

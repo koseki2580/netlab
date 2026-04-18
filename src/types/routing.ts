@@ -52,6 +52,7 @@ export interface SubInterface {
   vlanId: number;
   ipAddress: string;
   prefixLength: number;
+  mtu?: number;
 }
 
 export interface RouterInterface {
@@ -60,6 +61,7 @@ export interface RouterInterface {
   ipAddress: string;
   prefixLength: number;
   macAddress: string;
+  mtu?: number;
   connectedEdgeId?: string;
   nat?: 'inside' | 'outside';
   inboundAcl?: AclRule[];

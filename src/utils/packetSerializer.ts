@@ -29,6 +29,7 @@ import {
   DEFAULT_ETHERNET_PREAMBLE,
   buildApplicationPayloadBytes,
   buildEthernetFrameBytes,
+  buildIpv4PayloadBytes,
   buildIcmpMessageBytes,
   formatDhcpMessage,
   formatDnsMessage,
@@ -37,7 +38,9 @@ import {
   buildTcpFlagsByte,
   formatHttpMessage,
   isIcmpMessage,
+  isRawPayload,
   isTcpSegment,
+  rawStringToBytes,
   uint16BE,
   uint32BE,
 } from './packetLayout';
@@ -214,7 +217,7 @@ function serializeUdp(udp: UdpDatagram, baseOffset: number): LayerResult {
 
 function serializeIcmp(icmp: IcmpMessage, baseOffset: number): LayerResult {
   const bytes = buildIcmpMessageBytes(icmp);
-  const dataBytes = icmp.data ? new TextEncoder().encode(icmp.data) : new Uint8Array();
+  const dataBytes = icmp.data ? Uint8Array.from(rawStringToBytes(icmp.data)) : new Uint8Array();
 
   return {
     bytes,
@@ -259,16 +262,19 @@ function serializeL3(ip: IpPacket, baseOffset: number): LayerResult {
   const headerBytes = buildIpv4HeaderBytes(ip);
   const headerLength = headerBytes.length;
   const l4Base = baseOffset + headerLength;
-  const l4Result = isTcpSegment(ip.payload)
+  const l4Result = isRawPayload(ip.payload)
+    ? serializeL7(ip.payload, l4Base)
+    : isTcpSegment(ip.payload)
     ? serializeTcp(ip.payload, l4Base)
     : isIcmpMessage(ip.payload)
       ? serializeIcmp(ip.payload, l4Base)
       : serializeUdp(ip.payload, l4Base);
-  const totalLength = ip.totalLength ?? (headerLength + l4Result.bytes.length);
+  const payloadBytes = buildIpv4PayloadBytes(ip);
+  const totalLength = ip.totalLength ?? (headerLength + payloadBytes.length);
   const identification = ip.identification ?? 0;
 
   return {
-    bytes: [...headerBytes, ...l4Result.bytes],
+    bytes: [...headerBytes, ...payloadBytes],
     fields: [
       {
         name: 'Version + IHL',
