@@ -50,6 +50,8 @@ const TOPOLOGY: NetworkTopology = {
   routeTables: new Map(),
 };
 
+export const THREE_TIER_DEMO_TOPOLOGY = TOPOLOGY;
+
 export default function ThreeTierDemo() {
   return (
     <DemoShell title="Three-Tier LAN" desc="Client → Switch → Server with L2 port configuration">

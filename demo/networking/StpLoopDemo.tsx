@@ -229,6 +229,10 @@ function buildTopology(
   };
 }
 
+export function buildStpDemoTopology(): NetworkTopology {
+  return buildTopology(DEFAULT_PRIORITIES, DEFAULT_DISABLED_PORTS);
+}
+
 function buildPingPacket(topology: NetworkTopology, srcNodeId: HostId, dstNodeId: HostId): InFlightPacket | null {
   const srcNode = topology.nodes.find((node) => node.id === srcNodeId);
   const dstNode = topology.nodes.find((node) => node.id === dstNodeId);

@@ -87,6 +87,8 @@ const TOPOLOGY: NetworkTopology = {
   routeTables: new Map(),
 };
 
+export const MULTI_HOP_DEMO_TOPOLOGY = TOPOLOGY;
+
 export default function MultiHopDemo() {
   return (
     <DemoShell title="Multi-Hop Routing" desc="Traffic crosses two routers through three distinct subnets">

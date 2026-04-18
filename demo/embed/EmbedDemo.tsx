@@ -54,6 +54,8 @@ const TOPOLOGY: NetworkTopology = {
   routeTables: new Map(),
 };
 
+export const EMBED_DEMO_TOPOLOGY = TOPOLOGY;
+
 const PROSE_STYLE: React.CSSProperties = {
   fontFamily: 'monospace',
   fontSize: 13,

@@ -91,6 +91,8 @@ const TOPOLOGY: NetworkTopology = {
   ]),
 };
 
+export const TCP_HANDSHAKE_DEMO_TOPOLOGY = TOPOLOGY;
+
 function getCurrentTraceIndex(traces: PacketTrace[], currentTraceId: string | null): number {
   if (traces.length === 0) {
     return -1;

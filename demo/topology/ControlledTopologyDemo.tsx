@@ -13,6 +13,8 @@ const INITIAL_TOPOLOGY: NetworkTopology = {
   routeTables: new Map(),
 };
 
+export const CONTROLLED_TOPOLOGY_INITIAL_TOPOLOGY = INITIAL_TOPOLOGY;
+
 function formatSnapshot(snapshot: TopologySnapshot): string {
   return JSON.stringify(
     {

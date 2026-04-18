@@ -12,7 +12,7 @@ import type { PacketTrace } from '../../src/types/simulation';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
 
-const INTERFACE_AWARE_TOPOLOGY: NetworkTopology = {
+export const INTERFACE_AWARE_TOPOLOGY: NetworkTopology = {
   nodes: [
     {
       id: 'client-a',

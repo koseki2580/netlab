@@ -62,6 +62,8 @@ const EXAMPLE_TOPOLOGY: EditorTopology = {
   ],
 };
 
+export const EDITOR_EXAMPLE_TOPOLOGY = EXAMPLE_TOPOLOGY;
+
 function loadInitialTopology(): EditorTopology {
   const decoded = decodeTopology(window.location.search) as NetworkTopology | null;
   if (decoded) return { nodes: decoded.nodes, edges: decoded.edges };

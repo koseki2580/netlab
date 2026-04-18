@@ -256,6 +256,10 @@ function buildTopology(protocol: DynamicProtocol): NetworkTopology {
   };
 }
 
+export function buildDynamicRoutingTopology(protocol: DynamicProtocol): NetworkTopology {
+  return buildTopology(protocol);
+}
+
 function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
   const { topology, routeTable } = useNetlabContext();
   const routers = topology.nodes.filter((node) => node.data.role === 'router');

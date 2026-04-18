@@ -92,6 +92,8 @@ const TOPOLOGY: NetworkTopology = {
   routeTables: new Map(),
 };
 
+export const DHCP_DNS_DEMO_TOPOLOGY = TOPOLOGY;
+
 function buildHttpPacket(runtimeIp: string | null): InFlightPacket {
   return {
     id: `http-web-fetch-${Date.now()}`,

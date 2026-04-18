@@ -168,6 +168,8 @@ const TOPOLOGY: NetworkTopology = {
   routeTables: new Map(),
 };
 
+export const DMZ_DEMO_TOPOLOGY = TOPOLOGY;
+
 export default function DmzDemo() {
   return (
     <DemoShell title="DMZ Segmentation" desc="Three-zone topology: Private → DMZ → Public with two border firewalls">
