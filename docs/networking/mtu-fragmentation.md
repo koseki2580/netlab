@@ -78,6 +78,8 @@ const ICMP_CODE = {
 - Oversized packets with `DF=1` produce ICMP type `3`, code `4`.
 - Netlab encodes the next-hop MTU in `IcmpMessage.sequenceNumber` as an additive educational
   shortcut.
+- `IcmpMessage.data` carries the quoted IPv4 header plus the first 8 bytes of transport bytes as a
+  raw byte string via `bytesToRawString(...)`.
 
 ### Internal fragment payload representation
 
@@ -241,10 +243,11 @@ dropped at `r1` with ICMP Frag-Needed when `DF=1`.
 - No reassembly timeout. Incomplete fragment sets remain pending in the trace.
 - No gap or overlap conflict resolution; the educational model assumes clean fragments.
 - No source-host pre-fragmentation logic; fragmentation occurs when a routed egress exceeds MTU.
-- No PMTUD policy in transport protocols; PMTUD is handled separately by `plan/34.md`.
+- TCP-side PMTUD is documented separately in [Path MTU Discovery](pmtud.md).
 
 ## Related Specs
 
 - [L3 – Network Layer](layers/l3-network.md)
+- [Path MTU Discovery](pmtud.md)
 - [NAT / PAT](nat.md)
 - [DHCP](services/dhcp.md)
