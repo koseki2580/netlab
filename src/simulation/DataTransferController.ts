@@ -20,6 +20,8 @@ const DEFAULT_CHUNK_DELAY = 100;
 const DEFAULT_SRC_PORT = 49152;
 const DEFAULT_DST_PORT = 8080;
 const PAYLOAD_PREVIEW_LIMIT = 80;
+const IP_HEADER_BYTES = 20;
+const TCP_HEADER_BYTES = 20;
 const textEncoder = new TextEncoder();
 
 interface ForwardingPipelineLike {
@@ -45,6 +47,7 @@ export interface DataTransferOptions {
   srcPort?: number;
   dstPort?: number;
   failureState?: FailureState;
+  pmtuLookup?: (srcNodeId: string, dstIp: string) => number;
 }
 
 function createState(): DataTransferState {
@@ -111,6 +114,32 @@ function splitPayloadByBytes(payload: string, maxBytes: number): Array<{ data: s
   return chunks;
 }
 
+function takePayloadChunkByBytes(
+  payload: string,
+  maxBytes: number,
+): { data: string; sizeBytes: number; remainder: string } {
+  const [firstChunk] = splitPayloadByBytes(payload, maxBytes);
+
+  if (!firstChunk) {
+    return { data: '', sizeBytes: 0, remainder: '' };
+  }
+
+  return {
+    data: firstChunk.data,
+    sizeBytes: firstChunk.sizeBytes,
+    remainder: payload.slice(firstChunk.data.length),
+  };
+}
+
+function effectiveChunkSize(configuredMax: number, pathMtu: number): number {
+  if (!Number.isFinite(pathMtu)) {
+    return configuredMax;
+  }
+
+  const mss = Math.max(1, Math.floor(pathMtu) - IP_HEADER_BYTES - TCP_HEADER_BYTES);
+  return Math.min(configuredMax, mss);
+}
+
 function cloneTransferMessage(transfer: TransferMessage): TransferMessage {
   return {
     ...transfer,
@@ -160,10 +189,10 @@ export class DataTransferController {
     const srcPort = options.srcPort ?? DEFAULT_SRC_PORT;
     const dstPort = options.dstPort ?? DEFAULT_DST_PORT;
     const failureState = options.failureState ?? EMPTY_FAILURE_STATE;
+    const pmtuLookup = options.pmtuLookup;
     const srcIp = this.resolveNodeIp(srcNodeId);
     const dstIp = this.resolveNodeIp(dstNodeId);
     const checksum = await sha256Hex(payload);
-    const chunkPayloads = splitPayloadByBytes(payload, chunkSize);
     const messageId = makeId('transfer');
     const now = Date.now();
 
@@ -176,25 +205,16 @@ export class DataTransferController {
       payloadData: payload,
       payloadSizeBytes: byteLength(payload),
       checksum,
-      expectedChunks: chunkPayloads.length,
+      expectedChunks: 0,
       status: 'pending',
       createdAt: now,
     };
-
-    const chunks = chunkPayloads.map<TransferChunk>(({ data, sizeBytes }, sequenceNumber) => ({
-      chunkId: `${messageId}-chunk-${sequenceNumber}`,
-      messageId,
-      sequenceNumber,
-      totalChunks: chunkPayloads.length,
-      data,
-      sizeBytes,
-      state: 'pending',
-    }));
+    const chunks: TransferChunk[] = [];
 
     const reassembly: ReassemblyState = {
       messageId,
       receivedChunks: new Map(),
-      expectedTotal: chunkPayloads.length,
+      expectedTotal: 0,
       isComplete: false,
     };
 
@@ -211,9 +231,26 @@ export class DataTransferController {
     transfer.status = 'in-progress';
     this.notify();
 
-    for (const chunk of chunks) {
-      chunk.state = 'in-flight';
-      this.notify();
+    let remainingPayload = payload;
+    let payloadOffsetBytes = 0;
+    let needsEmptyChunk = payload.length === 0;
+
+    while (needsEmptyChunk || remainingPayload.length > 0) {
+      needsEmptyChunk = false;
+      const currentChunkSize = effectiveChunkSize(
+        chunkSize,
+        pmtuLookup?.(srcNodeId, dstIp) ?? Number.POSITIVE_INFINITY,
+      );
+      const chunkPayload = takePayloadChunkByBytes(remainingPayload, currentChunkSize);
+      const chunk: TransferChunk = {
+        chunkId: `${messageId}-chunk-${chunks.length}`,
+        messageId,
+        sequenceNumber: chunks.length,
+        totalChunks: 0,
+        data: chunkPayload.data,
+        sizeBytes: chunkPayload.sizeBytes,
+        state: 'in-flight',
+      };
 
       const sessionId = this.sessionTracker
         ? `${messageId}-session-${chunk.sequenceNumber}`
@@ -228,7 +265,7 @@ export class DataTransferController {
         srcPort,
         dstPort,
         chunk,
-        chunkSize,
+        payloadOffsetBytes,
         sessionId,
       });
 
@@ -240,6 +277,18 @@ export class DataTransferController {
       }
 
       chunk.traceId = trace.packetId;
+
+      const retryChunkSize = effectiveChunkSize(
+        chunkSize,
+        pmtuLookup?.(srcNodeId, dstIp) ?? Number.POSITIVE_INFINITY,
+      );
+      const shouldRetryWithSmallerChunk =
+        trace.status === 'dropped' &&
+        retryChunkSize < chunk.sizeBytes;
+
+      if (shouldRetryWithSmallerChunk) {
+        continue;
+      }
 
       if (this.sessionTracker && sessionId) {
         this.sessionTracker.startSession(sessionId, {
@@ -253,16 +302,25 @@ export class DataTransferController {
         transfer.sessionIds = [...(transfer.sessionIds ?? []), sessionId];
       }
 
-      if (trace.status === 'delivered') {
-        chunk.state = 'delivered';
-        reassembly.receivedChunks.set(chunk.sequenceNumber, cloneTransferChunk(chunk));
-      } else if (trace.status === 'dropped') {
-        chunk.state = 'dropped';
-      }
+      chunk.state = trace.status === 'delivered' ? 'delivered' : 'dropped';
+      chunks.push(chunk);
+      transfer.expectedChunks = chunks.length;
+      reassembly.expectedTotal = chunks.length;
+      chunks.forEach((candidate) => {
+        candidate.totalChunks = chunks.length;
+      });
+      reassembly.receivedChunks = new Map(
+        chunks
+          .filter((candidate) => candidate.state === 'delivered')
+          .map((candidate) => [candidate.sequenceNumber, cloneTransferChunk(candidate)]),
+      );
 
       this.notify();
 
-      if (chunkDelay > 0 && chunk.sequenceNumber < chunks.length - 1) {
+      remainingPayload = chunkPayload.remainder;
+      payloadOffsetBytes += chunk.sizeBytes;
+
+      if (chunkDelay > 0 && remainingPayload.length > 0) {
         await delay(chunkDelay);
       }
     }
@@ -354,7 +412,7 @@ export class DataTransferController {
     srcPort: number;
     dstPort: number;
     chunk: TransferChunk;
-    chunkSize: number;
+    payloadOffsetBytes: number;
     sessionId?: string;
   }): InFlightPacket {
     const srcMac = this.resolveSourceMac(args.srcNodeId, args.dstIp);
@@ -376,11 +434,12 @@ export class DataTransferController {
           dstIp: args.dstIp,
           ttl: 64,
           protocol: 6,
+          flags: { df: true, mf: false },
           payload: {
             layer: 'L4',
             srcPort: args.srcPort,
             dstPort: args.dstPort,
-            seq: args.chunk.sequenceNumber * args.chunkSize,
+            seq: args.payloadOffsetBytes,
             ack: 0,
             flags: {
               syn: false,

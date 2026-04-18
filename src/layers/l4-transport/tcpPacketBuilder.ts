@@ -62,6 +62,7 @@ function buildTcpPacket(
         dstIp: options.dstIp,
         ttl: options.ttl ?? 64,
         protocol: 6,
+        flags: { df: true, mf: false },
         payload: {
           layer: 'L4',
           srcPort: options.srcPort,
