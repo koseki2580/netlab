@@ -1,6 +1,7 @@
 import type { DhcpMessage, InFlightPacket } from '../types/packets';
 import type { NetworkTopology } from '../types/topology';
 import type { DhcpServerConfig } from '../types/services';
+import { buildUdpPacket } from '../layers/l4-transport/udpPacketBuilder';
 import { parseCidr } from '../utils/cidr';
 import { deriveDeterministicMac } from '../utils/network';
 
@@ -61,34 +62,18 @@ function createDhcpPacket(
   srcIp: string,
   message: DhcpMessage,
 ): InFlightPacket {
-  return {
-    id: packetId,
+  return buildUdpPacket({
+    packetId,
     srcNodeId,
     dstNodeId,
-    frame: {
-      layer: 'L2',
-      srcMac: deriveDeterministicMac(srcNodeId),
-      dstMac: BROADCAST_MAC,
-      etherType: 0x0800,
-      payload: {
-        layer: 'L3',
-        srcIp,
-        dstIp: BROADCAST_IP,
-        ttl: 64,
-        protocol: 17,
-        payload: {
-          layer: 'L4',
-          srcPort: DHCP_SERVER_PORT,
-          dstPort: DHCP_CLIENT_PORT,
-          payload: message,
-        },
-      },
-    },
-    currentDeviceId: srcNodeId,
-    ingressPortId: '',
-    path: [],
-    timestamp: Date.now(),
-  };
+    srcMac: deriveDeterministicMac(srcNodeId),
+    dstMac: BROADCAST_MAC,
+    srcIp,
+    dstIp: BROADCAST_IP,
+    srcPort: DHCP_SERVER_PORT,
+    dstPort: DHCP_CLIENT_PORT,
+    payload: message,
+  });
 }
 
 function buildDhcpOptions(config: DhcpServerConfig) {

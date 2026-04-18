@@ -1,5 +1,6 @@
 import type { DnsMessage, InFlightPacket } from '../types/packets';
 import type { NetworkTopology } from '../types/topology';
+import { buildUdpPacket } from '../layers/l4-transport/udpPacketBuilder';
 import { deriveDeterministicMac } from '../utils/network';
 
 function dnsPayload(packet: InFlightPacket): DnsMessage | null {
@@ -31,47 +32,31 @@ export function handleDnsQuery(
   );
   if (!record) return null;
 
-  return {
-    id: `dns-response-${payload.transactionId}-${Date.now()}`,
+  return buildUdpPacket({
+    packetId: `dns-response-${payload.transactionId}-${Date.now()}`,
     srcNodeId: server.id,
     dstNodeId: query.srcNodeId,
-    frame: {
-      layer: 'L2',
-      srcMac: deriveDeterministicMac(server.id),
-      dstMac: '00:00:00:00:00:01',
-      etherType: 0x0800,
-      payload: {
-        layer: 'L3',
-        srcIp: server.data.ip,
-        dstIp: query.frame.payload.srcIp,
-        ttl: 64,
-        protocol: 17,
-        payload: {
-          layer: 'L4',
-          srcPort: 53,
-          dstPort: 'payload' in query.frame.payload.payload
-            ? query.frame.payload.payload.srcPort
-            : 53,
-          payload: {
-            layer: 'L7',
-            transactionId: payload.transactionId,
-            isResponse: true,
-            questions: payload.questions,
-            answers: [
-              {
-                name: record.name,
-                type: 'A',
-                ttl: 300,
-                address: record.address,
-              },
-            ],
-          },
+    srcMac: deriveDeterministicMac(server.id),
+    dstMac: '00:00:00:00:00:01',
+    srcIp: server.data.ip,
+    dstIp: query.frame.payload.srcIp,
+    srcPort: 53,
+    dstPort: 'payload' in query.frame.payload.payload
+      ? query.frame.payload.payload.srcPort
+      : 53,
+    payload: {
+      layer: 'L7',
+      transactionId: payload.transactionId,
+      isResponse: true,
+      questions: payload.questions,
+      answers: [
+        {
+          name: record.name,
+          type: 'A',
+          ttl: 300,
+          address: record.address,
         },
-      },
+      ],
     },
-    currentDeviceId: server.id,
-    ingressPortId: '',
-    path: [],
-    timestamp: Date.now(),
-  };
+  });
 }
