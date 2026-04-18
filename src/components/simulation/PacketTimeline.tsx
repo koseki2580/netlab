@@ -28,6 +28,43 @@ function formatDropReason(reason: string | undefined): string | null {
   return reason;
 }
 
+function formatHopAnnotation(hop: PacketHop): string | null {
+  const parts: string[] = [];
+
+  if (hop.action === 'fragment') {
+    if (hop.fragmentIndex !== undefined && hop.fragmentCount !== undefined) {
+      parts.push(`fragment ${hop.fragmentIndex + 1}/${hop.fragmentCount}`);
+    } else {
+      parts.push('fragment');
+    }
+  }
+
+  if (hop.action === 'reassembly-pending') {
+    parts.push('reassembly pending');
+  }
+
+  if (hop.action === 'reassembly-complete') {
+    if (hop.fragmentCount !== undefined) {
+      parts.push(`reassembled (${hop.fragmentCount} frags)`);
+    } else {
+      parts.push('reassembly complete');
+    }
+  }
+
+  if (hop.nextHopMtu !== undefined) {
+    parts.push(`mtu ${hop.nextHopMtu}`);
+  }
+
+  if (hop.event === 'drop') {
+    const reason = formatDropReason(hop.reason);
+    if (reason) {
+      parts.push(reason);
+    }
+  }
+
+  return parts.length > 0 ? parts.join(' · ') : null;
+}
+
 function HopRow({
   hop,
   nextHopLabel,
@@ -42,6 +79,7 @@ function HopRow({
   const color = EVENT_COLORS[hop.event] ?? '#94a3b8';
   const label = EVENT_LABELS[hop.event] ?? hop.event.toUpperCase();
   const dropReason = hop.event === 'drop' ? formatDropReason(hop.reason) : null;
+  const annotation = formatHopAnnotation(hop);
 
   return (
     <div
@@ -89,6 +127,11 @@ function HopRow({
           {hop.event === 'arp-request'
             ? `who has ${hop.dstIp}?`
             : `${hop.srcIp} is at ${hop.arpFrame.srcMac}`}
+        </span>
+      )}
+      {annotation && (
+        <span style={{ color: 'var(--netlab-text-secondary)', fontSize: 9, paddingLeft: 28 }}>
+          {annotation}
         </span>
       )}
     </div>

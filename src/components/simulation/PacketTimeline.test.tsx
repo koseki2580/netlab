@@ -241,4 +241,30 @@ describe('PacketTimeline', () => {
       },
     ]);
   });
+
+  it('renders fragment annotations and next-hop MTU details when present', () => {
+    render(
+      makeSimulationContextValue({
+        state: makeState({
+          traces: [
+            {
+              ...TRACE,
+              hops: [
+                {
+                  ...TRACE.hops[0]!,
+                  action: 'fragment',
+                  fragmentIndex: 0,
+                  fragmentCount: 3,
+                  nextHopMtu: 600,
+                },
+              ],
+            },
+          ],
+        }),
+      }),
+    );
+
+    expect(container?.textContent).toContain('fragment 1/3');
+    expect(container?.textContent).toContain('mtu 600');
+  });
 });

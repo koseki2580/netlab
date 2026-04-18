@@ -113,6 +113,19 @@ function formatDropReason(reason: string): string {
   return reason;
 }
 
+function formatHopAction(action: PacketHop['action']): string {
+  switch (action) {
+    case 'fragment':
+      return 'Fragment';
+    case 'reassembly-pending':
+      return 'Reassembly Pending';
+    case 'reassembly-complete':
+      return 'Reassembly Complete';
+    default:
+      return '-';
+  }
+}
+
 function formatEndpoint(ip: string, port: number): string {
   return `${ip}:${port}`;
 }
@@ -261,6 +274,22 @@ function HopFields({
       { label: 'Ingress If', value: hop.ingressInterfaceName ?? '—' },
       { label: 'Egress If', value: hop.egressInterfaceName ?? '—' },
     );
+  }
+
+  if (hop.action) {
+    fields.push({ label: 'Action', value: formatHopAction(hop.action) });
+  }
+
+  if (hop.action === 'fragment' && hop.fragmentIndex !== undefined && hop.fragmentCount !== undefined) {
+    fields.push({ label: 'Fragment', value: `${hop.fragmentIndex + 1}/${hop.fragmentCount}` });
+  }
+
+  if (hop.action === 'reassembly-complete' && hop.fragmentCount !== undefined) {
+    fields.push({ label: 'Fragment', value: `${hop.fragmentCount} total` });
+  }
+
+  if (hop.nextHopMtu !== undefined) {
+    fields.push({ label: 'Next-hop MTU', value: String(hop.nextHopMtu) });
   }
 
   return (

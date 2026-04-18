@@ -70,6 +70,7 @@ export function NetlabCanvas({
 }: NetlabCanvasProps) {
   const { topology, areas } = useNetlabContext();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const isControlled = Boolean(onTopologyChange || onNodesChangeProp || onEdgesChangeProp);
 
   // Optional: read active edge IDs from SimulationContext (non-throwing)
@@ -173,6 +174,16 @@ export function NetlabCanvas({
     [isControlled, onNodesChangeProp, emitTopologyChange, edges],
   );
 
+  const selectNode = useCallback((id: string | null) => {
+    setSelectedEdgeId(null);
+    setSelectedNodeId(id);
+  }, []);
+
+  const selectEdge = useCallback((id: string | null) => {
+    setSelectedNodeId(null);
+    setSelectedEdgeId(id);
+  }, []);
+
   const isConnectionValid = useCallback(
     (connection: Connection | Edge) =>
       validateCanvasConnection(
@@ -260,8 +271,13 @@ export function NetlabCanvas({
   );
 
   const uiCtx = useMemo(
-    () => ({ selectedNodeId, setSelectedNodeId }),
-    [selectedNodeId],
+    () => ({
+      selectedNodeId,
+      setSelectedNodeId: selectNode,
+      selectedEdgeId,
+      setSelectedEdgeId: selectEdge,
+    }),
+    [selectedNodeId, selectNode, selectedEdgeId, selectEdge],
   );
 
   return (
@@ -277,6 +293,11 @@ export function NetlabCanvas({
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeDragStop={onNodeDragStop}
+          onEdgeClick={(_event, edge) => selectEdge(edge.id)}
+          onPaneClick={() => {
+            selectNode(null);
+            selectEdge(null);
+          }}
           isValidConnection={isConnectionValid}
           connectionMode={ConnectionMode.Loose}
           fitView
@@ -286,7 +307,7 @@ export function NetlabCanvas({
           <Controls />
           <MiniMap />
         </ReactFlow>
-        <NodeDetailPanel />
+        <NodeDetailPanel onTopologyChange={onTopologyChange} />
       </div>
     </NetlabUIContext.Provider>
   );
