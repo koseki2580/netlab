@@ -35,8 +35,20 @@ const TOPOLOGY: NetworkTopology = {
         role: 'router',
         layerId: 'l3',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '172.16.0.1', prefixLength: 30, macAddress: '00:00:00:01:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '172.16.0.1',
+            prefixLength: 30,
+            macAddress: '00:00:00:01:00:01',
+          },
         ],
         staticRoutes: [
           { destination: '10.0.0.0/24', nextHop: 'direct' },
@@ -55,8 +67,20 @@ const TOPOLOGY: NetworkTopology = {
         role: 'router',
         layerId: 'l3',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '172.16.0.2', prefixLength: 30, macAddress: '00:00:00:02:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:02:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '172.16.0.2',
+            prefixLength: 30,
+            macAddress: '00:00:00:02:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '203.0.113.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:02:00:01',
+          },
         ],
         staticRoutes: [
           { destination: '172.16.0.0/30', nextHop: 'direct' },
@@ -91,7 +115,10 @@ export const MULTI_HOP_DEMO_TOPOLOGY = TOPOLOGY;
 
 export default function MultiHopDemo() {
   return (
-    <DemoShell title="Multi-Hop Routing" desc="Traffic crosses two routers through three distinct subnets">
+    <DemoShell
+      title="Multi-Hop Routing"
+      desc="Traffic crosses two routers through three distinct subnets"
+    >
       <NetlabProvider topology={TOPOLOGY}>
         <NetlabCanvas />
         <RouteTable />

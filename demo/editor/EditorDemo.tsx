@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { TopologyEditor } from '../../src/editor/components/TopologyEditor';
 import { ResizableSidebar } from '../../src/components/ResizableSidebar';
-import { encodeTopology, decodeTopology } from '../../src/utils/topology-url';
+import { TopologyEditor } from '../../src/editor/components/TopologyEditor';
 import type { EditorTopology } from '../../src/editor/types';
-import type { NetworkTopology } from '../../src/types/topology';
+import { decodeTopology, encodeTopology } from '../../src/utils/topology-url';
 import DemoShell from '../DemoShell';
 
 // ─── Example starting topology ────────────────────────────────────────────
@@ -19,8 +18,20 @@ const EXAMPLE_TOPOLOGY: EditorTopology = {
         layerId: 'l3',
         role: 'router',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '02:00:aa:bb:cc:01' },
-          { id: 'eth1', name: 'eth1', ipAddress: '10.0.1.1', prefixLength: 24, macAddress: '02:00:aa:bb:cc:02' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '02:00:aa:bb:cc:01',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '10.0.1.1',
+            prefixLength: 24,
+            macAddress: '02:00:aa:bb:cc:02',
+          },
         ],
         staticRoutes: [
           { destination: '10.0.0.0/24', nextHop: 'direct' },
@@ -46,13 +57,23 @@ const EXAMPLE_TOPOLOGY: EditorTopology = {
       id: 'client-1',
       type: 'client',
       position: { x: 40, y: 100 },
-      data: { label: 'Client-1', layerId: 'l7', role: 'client', ip: '10.0.0.10' },
+      data: {
+        label: 'Client-1',
+        layerId: 'l7',
+        role: 'client',
+        ip: '10.0.0.10',
+      },
     },
     {
       id: 'server-1',
       type: 'server',
       position: { x: 560, y: 100 },
-      data: { label: 'Server-1', layerId: 'l7', role: 'server', ip: '10.0.1.10' },
+      data: {
+        label: 'Server-1',
+        layerId: 'l7',
+        role: 'server',
+        ip: '10.0.1.10',
+      },
     },
   ],
   edges: [
@@ -65,7 +86,7 @@ const EXAMPLE_TOPOLOGY: EditorTopology = {
 export const EDITOR_EXAMPLE_TOPOLOGY = EXAMPLE_TOPOLOGY;
 
 function loadInitialTopology(): EditorTopology {
-  const decoded = decodeTopology(window.location.search) as NetworkTopology | null;
+  const decoded = decodeTopology(window.location.search);
   if (decoded) return { nodes: decoded.nodes, edges: decoded.edges };
   return EXAMPLE_TOPOLOGY;
 }
@@ -87,10 +108,7 @@ export default function EditorDemo() {
   };
 
   return (
-    <DemoShell
-      title="Topology Editor"
-      desc="Build and edit network topologies interactively"
-    >
+    <DemoShell title="Topology Editor" desc="Build and edit network topologies interactively">
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         {/* Action bar */}
         <div
@@ -104,7 +122,7 @@ export default function EditorDemo() {
             flexShrink: 0,
             fontFamily: 'monospace',
             fontSize: 11,
-            color: '#64748b',
+            color: '#94a3b8',
           }}
         >
           <span>
@@ -187,7 +205,7 @@ export default function EditorDemo() {
                   padding: '8px 12px',
                   fontFamily: 'monospace',
                   fontSize: 10,
-                  color: '#64748b',
+                  color: '#94a3b8',
                   whiteSpace: 'pre-wrap',
                   wordBreak: 'break-all',
                 }}

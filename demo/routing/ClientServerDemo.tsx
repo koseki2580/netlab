@@ -76,8 +76,20 @@ const INITIAL_TOPOLOGY: NetworkTopology = {
         role: 'router',
         layerId: 'l3',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:02:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:02:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:02:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '203.0.113.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:02:00:01',
+          },
         ],
         staticRoutes: [
           { destination: '10.0.0.0/24', nextHop: 'direct' },
@@ -143,7 +155,6 @@ export default function ClientServerDemo() {
       <NetlabProvider topology={topology}>
         <SimulationProvider>
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-
             {/* Toolbar */}
             <div
               style={{
@@ -181,7 +192,6 @@ export default function ClientServerDemo() {
 
             {/* Main content */}
             <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-
               {/* Canvas */}
               <div style={{ flex: 1, position: 'relative' }}>
                 <NetlabCanvas />

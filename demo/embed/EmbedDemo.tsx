@@ -1,4 +1,4 @@
-import { NetlabApp, NETLAB_LIGHT_THEME } from '../../src/index';
+import { NETLAB_LIGHT_THEME, NetlabApp } from '../../src/index';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
 
@@ -25,8 +25,20 @@ const TOPOLOGY: NetworkTopology = {
         role: 'router',
         layerId: 'l3',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '192.168.1.1', prefixLength: 24, macAddress: '00:00:00:01:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '192.168.1.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:01',
+          },
         ],
         staticRoutes: [
           { destination: '10.0.0.0/24', nextHop: 'direct' },
@@ -79,6 +91,7 @@ export default function EmbedDemo() {
   return (
     <DemoShell title="Embed" desc="NetlabApp embedded inside a host page">
       <div
+        tabIndex={0}
         style={{
           height: '100%',
           overflowY: 'auto',
@@ -94,7 +107,7 @@ export default function EmbedDemo() {
           <div style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginBottom: 4 }}>
             My Network Documentation
           </div>
-          <div style={{ color: '#64748b' }}>
+          <div style={{ color: '#94a3b8' }}>
             The component below is a live <code style={{ color: '#7dd3fc' }}>NetlabApp</code> embed
             — width: 100%, height: 480px. It lives inside this prose layout and does not overflow.
           </div>
@@ -112,10 +125,10 @@ export default function EmbedDemo() {
 
         {/* Usage example */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ ...PROSE_STYLE, color: '#64748b' }}>
+          <div style={{ ...PROSE_STYLE, color: '#94a3b8' }}>
             The embed above is produced by the following JSX. Copy it into any React page:
           </div>
-          <code style={CODE_STYLE}>{`import { NetlabApp } from 'netlab';
+          <code tabIndex={0} style={CODE_STYLE}>{`import { NetlabApp } from 'netlab';
 
 <NetlabApp
   topology={topology}
@@ -127,7 +140,7 @@ export default function EmbedDemo() {
         </div>
 
         {/* Static variant */}
-        <div style={{ ...PROSE_STYLE, color: '#64748b' }}>
+        <div style={{ ...PROSE_STYLE, color: '#94a3b8' }}>
           Static view (no simulation controls) — width: 100%, height: 260px:
         </div>
         <NetlabApp
@@ -138,16 +151,28 @@ export default function EmbedDemo() {
         />
 
         {/* ── LIGHT THEME EXAMPLE ───────────────────────────────────────────── */}
-        <div style={{ ...PROSE_STYLE, color: '#64748b', marginTop: 8 }}>
-          Light theme — pass <code style={{ color: '#7dd3fc' }}>theme={'{NETLAB_LIGHT_THEME}'}</code> to
-          blend into a light-mode host page:
+        <div style={{ ...PROSE_STYLE, color: '#94a3b8', marginTop: 8 }}>
+          Light theme — pass{' '}
+          <code style={{ color: '#7dd3fc' }}>theme={'{NETLAB_LIGHT_THEME}'}</code> to blend into a
+          light-mode host page:
         </div>
 
         {/* Simulated light-mode host page */}
-        <div style={{ background: '#f8fafc', borderRadius: 8, padding: 24, border: '1px solid #e2e8f0' }}>
-          <div style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#0f172a', marginBottom: 16 }}>
+        <div
+          style={{
+            background: '#f8fafc',
+            borderRadius: 8,
+            padding: 24,
+            border: '1px solid #e2e8f0',
+          }}
+        >
+          <div
+            style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#0f172a', marginBottom: 16 }}
+          >
             <strong>My Documentation Site</strong>
-            <span style={{ color: '#94a3b8', marginLeft: 8, fontSize: 12 }}>light-mode host page</span>
+            <span style={{ color: '#94a3b8', marginLeft: 8, fontSize: 12 }}>
+              light-mode host page
+            </span>
           </div>
           <NetlabApp
             topology={TOPOLOGY}
@@ -158,7 +183,10 @@ export default function EmbedDemo() {
           />
         </div>
 
-        <code style={CODE_STYLE}>{`import { NetlabApp, NETLAB_LIGHT_THEME } from 'netlab';
+        <code
+          tabIndex={0}
+          style={CODE_STYLE}
+        >{`import { NetlabApp, NETLAB_LIGHT_THEME } from 'netlab';
 
 <NetlabApp
   topology={topology}
@@ -173,7 +201,7 @@ export default function EmbedDemo() {
 />`}</code>
 
         {/* Host page footer */}
-        <div style={{ ...PROSE_STYLE, color: '#475569', fontSize: 12 }}>
+        <div style={{ ...PROSE_STYLE, color: '#94a3b8', fontSize: 12 }}>
           All components are fully contained — they do not use viewport height and can be placed
           anywhere in a document.
         </div>

@@ -26,7 +26,7 @@ const SECTION_STYLE: CSSProperties = {
 const LABEL_STYLE: CSSProperties = {
   display: 'block',
   fontSize: 10,
-  color: '#64748b',
+  color: '#94a3b8',
   fontFamily: 'monospace',
   marginBottom: 6,
   letterSpacing: 0.6,
@@ -56,7 +56,7 @@ function chunkStateColor(state: TransferChunk['state']): string {
     case 'in-flight':
       return '#38bdf8';
     default:
-      return '#64748b';
+      return '#94a3b8';
   }
 }
 
@@ -72,16 +72,20 @@ function TransferSummaryCard({
   const delivered = chunks.filter((chunk) => chunk.state === 'delivered').length;
   const dropped = chunks.filter((chunk) => chunk.state === 'dropped').length;
   const missing = Math.max(0, transfer.expectedChunks - delivered);
-  const checksumLabel = reassembly?.checksumVerified === undefined
-    ? 'incomplete'
-    : reassembly.checksumVerified ? 'verified' : 'mismatch';
-  const verdictLabel = transfer.status === 'delivered'
-    ? 'COMPLETE DELIVERY'
-    : transfer.status === 'partial'
-      ? 'PARTIAL DELIVERY'
-      : transfer.status === 'failed'
-        ? 'FAILED DELIVERY'
-        : 'IN PROGRESS';
+  const checksumLabel =
+    reassembly?.checksumVerified === undefined
+      ? 'incomplete'
+      : reassembly.checksumVerified
+        ? 'verified'
+        : 'mismatch';
+  const verdictLabel =
+    transfer.status === 'delivered'
+      ? 'COMPLETE DELIVERY'
+      : transfer.status === 'partial'
+        ? 'PARTIAL DELIVERY'
+        : transfer.status === 'failed'
+          ? 'FAILED DELIVERY'
+          : 'IN PROGRESS';
 
   return (
     <div
@@ -115,7 +119,9 @@ function TransferSummaryCard({
         <div>source: {transfer.srcNodeId}</div>
         <div>destination: {transfer.dstNodeId}</div>
         <div>payload: {transfer.payloadSizeBytes} bytes</div>
-        <div>chunks: {delivered}/{transfer.expectedChunks} delivered</div>
+        <div>
+          chunks: {delivered}/{transfer.expectedChunks} delivered
+        </div>
         <div>dropped: {dropped}</div>
         <div>missing: {missing}</div>
         <div>checksum: {checksumLabel}</div>
@@ -136,7 +142,8 @@ function IpMacSummary({
 }) {
   const sampleChunk = chunks.find((chunk) => chunk.traceId && chunk.state === 'delivered');
   const trace = sampleChunk?.traceId ? tracesById.get(sampleChunk.traceId) : undefined;
-  const hops = trace?.hops.filter((hop) => hop.event !== 'arp-request' && hop.event !== 'arp-reply') ?? [];
+  const hops =
+    trace?.hops.filter((hop) => hop.event !== 'arp-request' && hop.event !== 'arp-reply') ?? [];
 
   if (hops.length === 0) {
     return null;
@@ -159,42 +166,15 @@ function IpMacSummary({
       <label style={LABEL_STYLE}>IP VS MAC (EDUCATIONAL)</label>
       <div style={{ display: 'grid', gap: 4 }}>
         <div>
-          End-to-end IP:
-          {' '}
-          {firstHop.srcIp}
-          {' '}
-          -&gt;
-          {' '}
-          {firstHop.dstIp}
+          End-to-end IP: {firstHop.srcIp} -&gt; {firstHop.dstIp}
           <span style={{ color: '#22c55e' }}> (unchanged)</span>
         </div>
         <div>
-          Hop-by-hop MAC rewrite:
-          {' '}
-          {macChanges}
-          {' '}
-          change(s) across
-          {' '}
-          {hops.length}
-          {' '}
-          hop(s)
+          Hop-by-hop MAC rewrite: {macChanges} change(s) across {hops.length} hop(s)
         </div>
         {firstHop.srcMac && lastHop.dstMac && (
-          <div style={{ marginTop: 4, color: '#64748b' }}>
-            Initial:
-            {' '}
-            {firstHop.srcMac}
-            {' '}
-            -&gt;
-            {' '}
-            {firstHop.dstMac}
-            {' '}
-            | Final:
-            {' '}
-            {lastHop.srcMac}
-            {' '}
-            -&gt;
-            {' '}
+          <div style={{ marginTop: 4, color: '#94a3b8' }}>
+            Initial: {firstHop.srcMac} -&gt; {firstHop.dstMac} | Final: {lastHop.srcMac} -&gt;{' '}
             {lastHop.dstMac}
           </div>
         )}
@@ -204,9 +184,10 @@ function IpMacSummary({
 }
 
 function PayloadPreviewSection({ transfer }: { transfer: TransferMessage }) {
-  const preview = transfer.payloadData.length > 200
-    ? `${transfer.payloadData.slice(0, 200)}...`
-    : transfer.payloadData;
+  const preview =
+    transfer.payloadData.length > 200
+      ? `${transfer.payloadData.slice(0, 200)}...`
+      : transfer.payloadData;
 
   return (
     <div style={SECTION_STYLE}>
@@ -268,7 +249,8 @@ function MissingChunksSection({
                 fontFamily: 'monospace',
               }}
             >
-              #{chunk.sequenceNumber} ({chunk.sizeBytes} bytes) · {reason}{location}
+              #{chunk.sequenceNumber} ({chunk.sizeBytes} bytes) · {reason}
+              {location}
             </span>
           );
         })}
@@ -304,16 +286,19 @@ function MessageView({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minHeight: 0 }}>
-      <TransferSummaryCard
-        transfer={transfer}
-        chunks={chunks}
-        reassembly={reassembly}
-      />
+      <TransferSummaryCard transfer={transfer} chunks={chunks} reassembly={reassembly} />
 
       <IpMacSummary chunks={chunks} tracesById={tracesById} />
 
       <div style={SECTION_STYLE}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: 12,
+            alignItems: 'center',
+          }}
+        >
           <div style={{ fontFamily: 'monospace', fontSize: 13, color: '#e2e8f0' }}>
             {transfer.srcNodeId} → {transfer.dstNodeId}
           </div>
@@ -366,7 +351,13 @@ function MessageView({
 
       <div style={SECTION_STYLE}>
         <label style={LABEL_STYLE}>CHUNKS</label>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+            gap: 8,
+          }}
+        >
           {chunks.map((chunk) => {
             const isSelectedTrace = chunk.traceId !== undefined && chunk.traceId === currentTraceId;
             const isHovered = hoveredChunkId === chunk.chunkId;
@@ -378,13 +369,19 @@ function MessageView({
                 disabled={!chunk.traceId}
                 onClick={() => onChunkSelect(chunk)}
                 onMouseEnter={() => setHoveredChunkId(chunk.chunkId)}
-                onMouseLeave={() => setHoveredChunkId((current) => (current === chunk.chunkId ? null : current))}
+                onMouseLeave={() =>
+                  setHoveredChunkId((current) => (current === chunk.chunkId ? null : current))
+                }
                 style={{
                   borderRadius: 8,
                   border: `1px solid ${
-                    isSelectedTrace ? '#38bdf8' : isHovered && chunk.traceId ? '#64748b' : '#334155'
+                    isSelectedTrace ? '#38bdf8' : isHovered && chunk.traceId ? '#94a3b8' : '#334155'
                   }`,
-                  background: isSelectedTrace ? '#082f49' : isHovered && chunk.traceId ? '#172033' : '#111827',
+                  background: isSelectedTrace
+                    ? '#082f49'
+                    : isHovered && chunk.traceId
+                      ? '#172033'
+                      : '#111827',
                   color: '#e2e8f0',
                   padding: 10,
                   textAlign: 'left',
@@ -399,7 +396,7 @@ function MessageView({
                 <div style={{ marginTop: 6, fontSize: 10, color: chunkStateColor(chunk.state) }}>
                   {chunk.state}
                 </div>
-                <div style={{ marginTop: 6, fontSize: 10, color: '#64748b' }}>
+                <div style={{ marginTop: 6, fontSize: 10, color: '#94a3b8' }}>
                   {chunk.sizeBytes} bytes
                 </div>
                 {chunk.traceId && (
@@ -415,12 +412,22 @@ function MessageView({
 
       <div style={SECTION_STYLE}>
         <label style={LABEL_STYLE}>REASSEMBLY</label>
-        <div style={{ fontFamily: 'monospace', fontSize: 11, color: '#cbd5e1', display: 'grid', gap: 6 }}>
-          <div>received: {reassembly?.receivedChunks.size ?? 0}/{reassembly?.expectedTotal ?? chunks.length}</div>
+        <div
+          style={{
+            fontFamily: 'monospace',
+            fontSize: 11,
+            color: '#cbd5e1',
+            display: 'grid',
+            gap: 6,
+          }}
+        >
+          <div>
+            received: {reassembly?.receivedChunks.size ?? 0}/
+            {reassembly?.expectedTotal ?? chunks.length}
+          </div>
           <div>complete: {reassembly?.isComplete ? 'yes' : 'no'}</div>
           <div>
-            checksum:
-            {' '}
+            checksum:{' '}
             {reassembly?.checksumVerified === undefined
               ? 'incomplete'
               : reassembly.checksumVerified
@@ -467,13 +474,7 @@ function TabButton({
 function DataTransferDemoInner() {
   const { engine, state: simulationState } = useSimulation();
   const { failureState } = useFailure();
-  const {
-    state,
-    startTransfer,
-    getChunks,
-    selectedTransferId,
-    selectTransfer,
-  } = useDataTransfer();
+  const { state, startTransfer, getChunks, selectedTransferId, selectTransfer } = useDataTransfer();
   const [payload, setPayload] = useState(DEFAULT_PAYLOAD);
   const [chunkSize, setChunkSize] = useState(1400);
   const [isSending, setIsSending] = useState(false);
@@ -481,16 +482,18 @@ function DataTransferDemoInner() {
   const [showPayloadConfig, setShowPayloadConfig] = useState(false);
 
   const transfers = useMemo(
-    () => Array.from(state.transfers.values()).sort((left, right) => right.createdAt - left.createdAt),
+    () =>
+      Array.from(state.transfers.values()).sort((left, right) => right.createdAt - left.createdAt),
     [state.transfers],
   );
   const tracesById = useMemo(
-    () => new Map<string, PacketTrace>(simulationState.traces.map((trace) => [trace.packetId, trace])),
+    () =>
+      new Map<string, PacketTrace>(simulationState.traces.map((trace) => [trace.packetId, trace])),
     [simulationState.traces],
   );
   const selectedTransfer = selectedTransferId
-    ? state.transfers.get(selectedTransferId) ?? null
-    : transfers[0] ?? null;
+    ? (state.transfers.get(selectedTransferId) ?? null)
+    : (transfers[0] ?? null);
   const selectedChunks = selectedTransfer ? getChunks(selectedTransfer.messageId) : [];
   const failureCount =
     failureState.downNodeIds.size +
@@ -529,7 +532,14 @@ function DataTransferDemoInner() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
-      <div style={{ flex: '0 0 44%', minHeight: 280, position: 'relative', borderBottom: '1px solid #1e293b' }}>
+      <div
+        style={{
+          flex: '0 0 44%',
+          minHeight: 280,
+          position: 'relative',
+          borderBottom: '1px solid #1e293b',
+        }}
+      >
         <NetlabCanvas />
         <div
           style={{
@@ -574,7 +584,7 @@ function DataTransferDemoInner() {
             borderRadius: 8,
             border: 'none',
             background: isSending ? '#1e293b' : '#0ea5e9',
-            color: isSending ? '#64748b' : '#082f49',
+            color: isSending ? '#94a3b8' : '#082f49',
             fontFamily: 'monospace',
             fontWeight: 'bold',
             padding: '8px 12px',
@@ -584,7 +594,7 @@ function DataTransferDemoInner() {
           {isSending ? 'Sending...' : '▶ Start Transfer'}
         </button>
 
-        <span style={{ color: failureCount > 0 ? '#f87171' : '#64748b', whiteSpace: 'nowrap' }}>
+        <span style={{ color: failureCount > 0 ? '#f87171' : '#94a3b8', whiteSpace: 'nowrap' }}>
           {failureCount > 0 ? `■ ${failureCount} failure(s)` : '■ No failures'}
         </span>
 
@@ -597,22 +607,8 @@ function DataTransferDemoInner() {
             whiteSpace: 'nowrap',
           }}
         >
-          payload:
-          {' '}
-          "{payloadSummary}"
-          {' '}
-          ·
-          {' '}
-          {chunkSize}
-          B chunks
-          {selectedTransfer && (
-            <>
-              {' '}
-              · status:
-              {' '}
-              {selectedTransfer.status}
-            </>
-          )}
+          payload: "{payloadSummary}" · {chunkSize}B chunks
+          {selectedTransfer && <> · status: {selectedTransfer.status}</>}
         </span>
 
         <TabButton
@@ -661,13 +657,15 @@ function DataTransferDemoInner() {
               }}
             >
               <span>{showPayloadConfig ? '▼' : '▶'} Payload Configuration</span>
-              <span style={{ color: '#64748b', fontSize: 10 }}>
+              <span style={{ color: '#94a3b8', fontSize: 10 }}>
                 {payload.length} chars · {chunkSize}B
               </span>
             </button>
             {showPayloadConfig && (
               <div style={{ marginTop: 10 }}>
-                <label style={LABEL_STYLE} htmlFor="transfer-payload">PAYLOAD</label>
+                <label style={LABEL_STYLE} htmlFor="transfer-payload">
+                  PAYLOAD
+                </label>
                 <textarea
                   id="transfer-payload"
                   value={payload}
@@ -686,7 +684,9 @@ function DataTransferDemoInner() {
                     boxSizing: 'border-box',
                   }}
                 />
-                <label style={{ ...LABEL_STYLE, marginTop: 10 }} htmlFor="chunk-size">CHUNK SIZE</label>
+                <label style={{ ...LABEL_STYLE, marginTop: 10 }} htmlFor="chunk-size">
+                  CHUNK SIZE
+                </label>
                 <input
                   id="chunk-size"
                   type="number"
@@ -725,19 +725,23 @@ function DataTransferDemoInner() {
               overflow: 'auto',
             }}
           >
-            <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#e2e8f0', marginBottom: 10 }}>
+            <div
+              style={{ fontFamily: 'monospace', fontSize: 12, color: '#e2e8f0', marginBottom: 10 }}
+            >
               Failure Injection
             </div>
             <FailureTogglePanel />
           </div>
 
           <div style={SECTION_STYLE}>
-            <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#e2e8f0', marginBottom: 10 }}>
+            <div
+              style={{ fontFamily: 'monospace', fontSize: 12, color: '#e2e8f0', marginBottom: 10 }}
+            >
               Transfers
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {transfers.length === 0 && (
-                <div style={{ fontFamily: 'monospace', fontSize: 11, color: '#64748b' }}>
+                <div style={{ fontFamily: 'monospace', fontSize: 11, color: '#94a3b8' }}>
                   No transfers yet.
                 </div>
               )}
@@ -763,8 +767,16 @@ function DataTransferDemoInner() {
                       fontFamily: 'monospace',
                     }}
                   >
-                    <div style={{ fontSize: 11 }}>{transfer.payloadPreview || '(empty payload)'}</div>
-                    <div style={{ marginTop: 6, fontSize: 10, color: transferStatusColor(transfer.status) }}>
+                    <div style={{ fontSize: 11 }}>
+                      {transfer.payloadPreview || '(empty payload)'}
+                    </div>
+                    <div
+                      style={{
+                        marginTop: 6,
+                        fontSize: 10,
+                        color: transferStatusColor(transfer.status),
+                      }}
+                    >
                       {transfer.status} · {transfer.expectedChunks} chunk(s)
                     </div>
                   </button>

@@ -28,9 +28,7 @@ const TOPOLOGY: NetworkTopology = {
       },
     },
   ],
-  edges: [
-    { id: 'e1', source: 'client-1', target: 'server-1', type: 'smoothstep' },
-  ],
+  edges: [{ id: 'e1', source: 'client-1', target: 'server-1', type: 'smoothstep' }],
   areas: [],
   routeTables: new Map(),
 };

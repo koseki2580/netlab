@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
-import { decodeTopology, encodeTopology } from '../../src/utils/topology-url';
+import { NetlabProvider } from '../../src/components/NetlabProvider';
 import type { NetworkTopology, TopologySnapshot } from '../../src/types/topology';
+import { decodeTopology, encodeTopology } from '../../src/utils/topology-url';
 import DemoShell from '../DemoShell';
 import { STEP_SIM_TOPOLOGY } from '../simulation/stepSimShared';
 
@@ -30,7 +30,9 @@ function formatSnapshot(snapshot: TopologySnapshot): string {
 export function ControlledTopologyDemo() {
   const [topology, setTopology] = useState<NetworkTopology>(INITIAL_TOPOLOGY);
   const [encodedSearch, setEncodedSearch] = useState(() => encodeTopology(INITIAL_TOPOLOGY));
-  const [status, setStatus] = useState('Drag nodes, connect links, or delete edges to update the snapshot.');
+  const [status, setStatus] = useState(
+    'Drag nodes, connect links, or delete edges to update the snapshot.',
+  );
 
   const snapshot: TopologySnapshot = {
     nodes: topology.nodes,
@@ -98,6 +100,7 @@ export function ControlledTopologyDemo() {
         </div>
 
         <aside
+          tabIndex={0}
           style={{
             flex: '0 1 380px',
             minWidth: 280,
@@ -117,9 +120,7 @@ export function ControlledTopologyDemo() {
             <div style={{ fontSize: 12, letterSpacing: 1, color: '#93c5fd', marginBottom: 6 }}>
               TOPOLOGY STATE (JSON)
             </div>
-            <div style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.5 }}>
-              {status}
-            </div>
+            <div style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.5 }}>{status}</div>
           </div>
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -159,9 +160,7 @@ export function ControlledTopologyDemo() {
           </div>
 
           <div>
-            <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 6 }}>
-              URL Query
-            </div>
+            <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 6 }}>URL Query</div>
             <pre
               style={{
                 margin: 0,

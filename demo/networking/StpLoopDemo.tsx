@@ -49,7 +49,10 @@ const SWITCH_PORTS: Record<SwitchId, SwitchPort[]> = {
   ],
 };
 
-const HOST_META: Record<HostId, { label: string; ip: string; mac: string; switchId: SwitchId; portId: string }> = {
+const HOST_META: Record<
+  HostId,
+  { label: string; ip: string; mac: string; switchId: SwitchId; portId: string }
+> = {
   'host-a': {
     label: 'Host A',
     ip: '10.0.0.11',
@@ -220,9 +223,30 @@ function buildTopology(
       { id: 'e-ah', source: 'host-a', target: 'switch-a', targetHandle: 'ah', type: 'smoothstep' },
       { id: 'e-bh', source: 'host-b', target: 'switch-b', targetHandle: 'bh', type: 'smoothstep' },
       { id: 'e-ch', source: 'host-c', target: 'switch-c', targetHandle: 'ch', type: 'smoothstep' },
-      { id: 'e-ab', source: 'switch-a', target: 'switch-b', sourceHandle: 'ab', targetHandle: 'ba', type: 'smoothstep' },
-      { id: 'e-ac', source: 'switch-a', target: 'switch-c', sourceHandle: 'ac', targetHandle: 'ca', type: 'smoothstep' },
-      { id: INTER_SWITCH_EDGE_ID, source: 'switch-b', target: 'switch-c', sourceHandle: 'bc', targetHandle: 'cb', type: 'smoothstep' },
+      {
+        id: 'e-ab',
+        source: 'switch-a',
+        target: 'switch-b',
+        sourceHandle: 'ab',
+        targetHandle: 'ba',
+        type: 'smoothstep',
+      },
+      {
+        id: 'e-ac',
+        source: 'switch-a',
+        target: 'switch-c',
+        sourceHandle: 'ac',
+        targetHandle: 'ca',
+        type: 'smoothstep',
+      },
+      {
+        id: INTER_SWITCH_EDGE_ID,
+        source: 'switch-b',
+        target: 'switch-c',
+        sourceHandle: 'bc',
+        targetHandle: 'cb',
+        type: 'smoothstep',
+      },
     ],
     areas: [],
     routeTables: new Map(),
@@ -233,14 +257,24 @@ export function buildStpDemoTopology(): NetworkTopology {
   return buildTopology(DEFAULT_PRIORITIES, DEFAULT_DISABLED_PORTS);
 }
 
-function buildPingPacket(topology: NetworkTopology, srcNodeId: HostId, dstNodeId: HostId): InFlightPacket | null {
+function buildPingPacket(
+  topology: NetworkTopology,
+  srcNodeId: HostId,
+  dstNodeId: HostId,
+): InFlightPacket | null {
   const srcNode = topology.nodes.find((node) => node.id === srcNodeId);
   const dstNode = topology.nodes.find((node) => node.id === dstNodeId);
   const srcIp = srcNode?.data.ip;
   const dstIp = dstNode?.data.ip;
   const srcMac = srcNode?.data.mac;
 
-  if (!srcNode || !dstNode || typeof srcIp !== 'string' || typeof dstIp !== 'string' || typeof srcMac !== 'string') {
+  if (
+    !srcNode ||
+    !dstNode ||
+    typeof srcIp !== 'string' ||
+    typeof dstIp !== 'string' ||
+    typeof srcMac !== 'string'
+  ) {
     return null;
   }
 
@@ -280,21 +314,26 @@ function buildPingPacket(topology: NetworkTopology, srcNodeId: HostId, dstNodeId
 function StpStatusCard({ switchId }: { switchId: SwitchId }) {
   const { topology } = useNetlabContext();
   const node = topology.nodes.find((candidate) => candidate.id === switchId);
-  if (!node || node.data.role !== 'switch') {
+  if (node?.data.role !== 'switch') {
     return null;
   }
 
   const ports = node.data.ports ?? [];
-  const bridgeId = ports.length > 0
-    ? makeBridgeId(node.data.stpConfig?.priority ?? DEFAULT_BRIDGE_PRIORITY, ports)
-    : null;
-  const isRoot = Boolean(bridgeId && topology.stpRoot && compareBridgeId(bridgeId, topology.stpRoot) === 0);
+  const bridgeId =
+    ports.length > 0
+      ? makeBridgeId(node.data.stpConfig?.priority ?? DEFAULT_BRIDGE_PRIORITY, ports)
+      : null;
+  const isRoot = Boolean(
+    bridgeId && topology.stpRoot && compareBridgeId(bridgeId, topology.stpRoot) === 0,
+  );
 
   return (
     <div style={CARD_STYLE}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
         <div>
-          <div style={{ color: '#f8fafc', fontFamily: 'monospace', fontWeight: 700 }}>{node.data.label}</div>
+          <div style={{ color: '#f8fafc', fontFamily: 'monospace', fontWeight: 700 }}>
+            {node.data.label}
+          </div>
           <div style={{ color: '#94a3b8', fontFamily: 'monospace', fontSize: 12 }}>
             priority {node.data.stpConfig?.priority ?? DEFAULT_BRIDGE_PRIORITY}
           </div>
@@ -344,10 +383,11 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
   const { topology } = useNetlabContext();
   const { state, isRecomputing } = useSimulation();
   const activeTrace = state.currentTraceId
-    ? state.traces.find((trace) => trace.packetId === state.currentTraceId) ?? null
+    ? (state.traces.find((trace) => trace.packetId === state.currentTraceId) ?? null)
     : null;
   const hopLabels = activeTrace?.hops.map((hop) => hop.nodeLabel).join(' → ') ?? 'No trace yet';
-  const usedBlockedSegment = activeTrace?.hops.some((hop) => hop.activeEdgeId === INTER_SWITCH_EDGE_ID) ?? false;
+  const usedBlockedSegment =
+    activeTrace?.hops.some((hop) => hop.activeEdgeId === INTER_SWITCH_EDGE_ID) ?? false;
   const rootLabel = topology.stpRoot ? formatBridgeId(topology.stpRoot) : 'none';
 
   return (
@@ -362,7 +402,14 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
       <div style={{ marginTop: 10, color: '#94a3b8', fontFamily: 'monospace', fontSize: 12 }}>
         Root bridge: {rootLabel}
       </div>
-      <div style={{ marginTop: 6, color: usedBlockedSegment ? '#f97316' : '#22c55e', fontFamily: 'monospace', fontSize: 12 }}>
+      <div
+        style={{
+          marginTop: 6,
+          color: usedBlockedSegment ? '#f97316' : '#22c55e',
+          fontFamily: 'monospace',
+          fontSize: 12,
+        }}
+      >
         Blocked segment used: {usedBlockedSegment ? 'yes' : 'no'}
       </div>
       {activeTrace?.status && (
@@ -395,16 +442,19 @@ function StpLoopDemoInner({
   const [lastScenario, setLastScenario] = useState<string | null>(null);
   const didAutoSend = useRef(false);
 
-  const runPing = useCallback(async (srcNodeId: HostId, dstNodeId: HostId, label: string) => {
-    const packet = buildPingPacket(topology, srcNodeId, dstNodeId);
-    if (!packet) {
-      return;
-    }
+  const runPing = useCallback(
+    async (srcNodeId: HostId, dstNodeId: HostId, label: string) => {
+      const packet = buildPingPacket(topology, srcNodeId, dstNodeId);
+      if (!packet) {
+        return;
+      }
 
-    setLastScenario(label);
-    engine.reset();
-    await sendPacket(packet);
-  }, [engine, sendPacket, topology]);
+      setLastScenario(label);
+      engine.reset();
+      await sendPacket(packet);
+    },
+    [engine, sendPacket, topology],
+  );
 
   useEffect(() => {
     if (didAutoSend.current || state.status !== 'idle') {
@@ -457,7 +507,8 @@ function StpLoopDemoInner({
           }}
         >
           Default root is Switch A. In the initial B → C trace, the blocked B–C segment should not
-          appear; traffic detours through Switch A. Lower Switch B or C priority to re-elect the root.
+          appear; traffic detours through Switch A. Lower Switch B or C priority to re-elect the
+          root.
         </div>
       </div>
 
@@ -477,13 +528,25 @@ function StpLoopDemoInner({
           <div style={CARD_STYLE}>
             <div style={SECTION_TITLE_STYLE}>Ping Controls</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              <button type="button" style={PRIMARY_BUTTON} onClick={() => void runPing('host-a', 'host-b', 'A → B')}>
+              <button
+                type="button"
+                style={PRIMARY_BUTTON}
+                onClick={() => void runPing('host-a', 'host-b', 'A → B')}
+              >
                 A → B
               </button>
-              <button type="button" style={PRIMARY_BUTTON} onClick={() => void runPing('host-a', 'host-c', 'A → C')}>
+              <button
+                type="button"
+                style={PRIMARY_BUTTON}
+                onClick={() => void runPing('host-a', 'host-c', 'A → C')}
+              >
                 A → C
               </button>
-              <button type="button" style={PRIMARY_BUTTON} onClick={() => void runPing('host-b', 'host-c', 'B → C')}>
+              <button
+                type="button"
+                style={PRIMARY_BUTTON}
+                onClick={() => void runPing('host-b', 'host-c', 'B → C')}
+              >
                 B → C
               </button>
             </div>
@@ -541,7 +604,14 @@ function StpLoopDemoInner({
             <div style={SECTION_TITLE_STYLE}>Disable Ports</div>
             {(['switch-a', 'switch-b', 'switch-c'] as SwitchId[]).map((switchId) => (
               <div key={switchId} style={{ marginBottom: 12 }}>
-                <div style={{ color: '#e2e8f0', fontFamily: 'monospace', fontSize: 12, marginBottom: 6 }}>
+                <div
+                  style={{
+                    color: '#e2e8f0',
+                    fontFamily: 'monospace',
+                    fontSize: 12,
+                    marginBottom: 6,
+                  }}
+                >
                   {switchId}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -583,7 +653,8 @@ function StpLoopDemoInner({
 
 export default function StpLoopDemo() {
   const [priorities, setPriorities] = useState<Record<SwitchId, number>>(DEFAULT_PRIORITIES);
-  const [disabledPorts, setDisabledPorts] = useState<Record<SwitchId, string[]>>(DEFAULT_DISABLED_PORTS);
+  const [disabledPorts, setDisabledPorts] =
+    useState<Record<SwitchId, string[]>>(DEFAULT_DISABLED_PORTS);
   const topology = useMemo(
     () => buildTopology(priorities, disabledPorts),
     [priorities, disabledPorts],

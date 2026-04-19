@@ -34,8 +34,20 @@ export const INTERFACE_AWARE_TOPOLOGY: NetworkTopology = {
         role: 'router',
         layerId: 'l3',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '192.168.1.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '192.168.1.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:01',
+          },
         ],
         staticRoutes: [
           { destination: '192.168.1.0/24', nextHop: 'direct' },
@@ -222,10 +234,21 @@ function InterfaceAwareDemoControls() {
         Reset
       </button>
 
-      <div style={{ marginLeft: 'auto', fontFamily: 'monospace', fontSize: 11, color: 'var(--netlab-text-muted)' }}>
+      <div
+        style={{
+          marginLeft: 'auto',
+          fontFamily: 'monospace',
+          fontSize: 11,
+          color: 'var(--netlab-text-muted)',
+        }}
+      >
         {state.status === 'idle' && 'Loading initial trace'}
-        {state.status === 'paused' && state.currentStep === -1 && 'Router hop selected automatically for interface inspection'}
-        {state.status === 'paused' && state.currentStep >= 0 && `Paused - hop ${state.currentStep + 1}`}
+        {state.status === 'paused' &&
+          state.currentStep === -1 &&
+          'Router hop selected automatically for interface inspection'}
+        {state.status === 'paused' &&
+          state.currentStep >= 0 &&
+          `Paused - hop ${state.currentStep + 1}`}
         {state.status === 'running' && `Running - hop ${state.currentStep + 1}`}
         {state.status === 'done' && 'Done'}
       </div>

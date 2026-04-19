@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
-import type { RouterInterface, BgpNeighborConfig, OspfAreaConfig } from '../../src/types/routing';
-import type { NetworkTopology, NetlabNode } from '../../src/types/topology';
+import { NetlabProvider } from '../../src/components/NetlabProvider';
+import type { BgpNeighborConfig, OspfAreaConfig, RouterInterface } from '../../src/types/routing';
+import type { NetlabNode, NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
 
 type DynamicProtocol = 'rip' | 'ospf' | 'bgp';
@@ -18,17 +18,20 @@ const PROTOCOL_META: Record<DynamicProtocol, ProtocolMeta> = {
   rip: {
     label: 'RIP',
     accent: '#22c55e',
-    summary: 'Hop count only. The diamond looks equal-cost, so RIP prefers the first 2-hop path it learns.',
+    summary:
+      'Hop count only. The diamond looks equal-cost, so RIP prefers the first 2-hop path it learns.',
   },
   ospf: {
     label: 'OSPF',
     accent: '#38bdf8',
-    summary: 'SPF uses interface cost. The R1 → R3 link is penalized with cost 3, so R1 prefers R2 toward C2.',
+    summary:
+      'SPF uses interface cost. The R1 → R3 link is penalized with cost 3, so R1 prefers R2 toward C2.',
   },
   bgp: {
     label: 'BGP',
     accent: '#f59e0b',
-    summary: 'Policy wins over equal AS_PATH length. R1 prefers the AS65002 path via higher LOCAL_PREF.',
+    summary:
+      'Policy wins over equal AS_PATH length. R1 prefers the AS65002 path via higher LOCAL_PREF.',
   },
 };
 
@@ -87,10 +90,7 @@ function buildRouters(protocol: DynamicProtocol): NetlabNode[] {
         label: 'R2',
         role: 'router',
         layerId: 'l3',
-        interfaces: [
-          makeIface('to-r1', '10.0.12.2'),
-          makeIface('to-r4', '10.0.24.1'),
-        ],
+        interfaces: [makeIface('to-r1', '10.0.12.2'), makeIface('to-r4', '10.0.24.1')],
       },
     },
     {
@@ -101,10 +101,7 @@ function buildRouters(protocol: DynamicProtocol): NetlabNode[] {
         label: 'R3',
         role: 'router',
         layerId: 'l3',
-        interfaces: [
-          makeIface('to-r1', '10.0.13.2'),
-          makeIface('to-r4', '10.0.34.1'),
-        ],
+        interfaces: [makeIface('to-r1', '10.0.13.2'), makeIface('to-r4', '10.0.34.1')],
       },
     },
     {
@@ -139,7 +136,7 @@ function buildRouters(protocol: DynamicProtocol): NetlabNode[] {
                 : router.id === 'r3'
                   ? ['10.0.13.0/30', '10.0.34.0/30']
                   : ['10.0.24.0/30', '10.0.34.0/30', '10.4.0.0/24'],
-      },
+        },
       },
     }));
   }
@@ -187,29 +184,20 @@ function buildRouters(protocol: DynamicProtocol): NetlabNode[] {
             ? {
                 localAs: 65002,
                 routerId: '2.2.2.2',
-                neighbors: [
-                  makeNeighbor('10.0.12.1', 65001),
-                  makeNeighbor('10.0.24.2', 65004),
-                ],
+                neighbors: [makeNeighbor('10.0.12.1', 65001), makeNeighbor('10.0.24.2', 65004)],
                 networks: [],
               }
             : router.id === 'r3'
               ? {
                   localAs: 65003,
                   routerId: '3.3.3.3',
-                  neighbors: [
-                    makeNeighbor('10.0.13.1', 65001),
-                    makeNeighbor('10.0.34.2', 65004),
-                  ],
+                  neighbors: [makeNeighbor('10.0.13.1', 65001), makeNeighbor('10.0.34.2', 65004)],
                   networks: [],
                 }
               : {
                   localAs: 65004,
                   routerId: '4.4.4.4',
-                  neighbors: [
-                    makeNeighbor('10.0.24.1', 65002),
-                    makeNeighbor('10.0.34.1', 65003),
-                  ],
+                  neighbors: [makeNeighbor('10.0.24.1', 65002), makeNeighbor('10.0.34.1', 65003)],
                   networks: ['10.4.0.0/24'],
                 },
     },
@@ -245,10 +233,38 @@ function buildTopology(protocol: DynamicProtocol): NetworkTopology {
     ],
     edges: [
       { id: 'e-c1-r1', source: 'c1', target: 'r1', targetHandle: 'lan1', type: 'smoothstep' },
-      { id: 'e-r1-r2', source: 'r1', target: 'r2', sourceHandle: 'to-r2', targetHandle: 'to-r1', type: 'smoothstep' },
-      { id: 'e-r1-r3', source: 'r1', target: 'r3', sourceHandle: 'to-r3', targetHandle: 'to-r1', type: 'smoothstep' },
-      { id: 'e-r2-r4', source: 'r2', target: 'r4', sourceHandle: 'to-r4', targetHandle: 'to-r2', type: 'smoothstep' },
-      { id: 'e-r3-r4', source: 'r3', target: 'r4', sourceHandle: 'to-r4', targetHandle: 'to-r3', type: 'smoothstep' },
+      {
+        id: 'e-r1-r2',
+        source: 'r1',
+        target: 'r2',
+        sourceHandle: 'to-r2',
+        targetHandle: 'to-r1',
+        type: 'smoothstep',
+      },
+      {
+        id: 'e-r1-r3',
+        source: 'r1',
+        target: 'r3',
+        sourceHandle: 'to-r3',
+        targetHandle: 'to-r1',
+        type: 'smoothstep',
+      },
+      {
+        id: 'e-r2-r4',
+        source: 'r2',
+        target: 'r4',
+        sourceHandle: 'to-r4',
+        targetHandle: 'to-r2',
+        type: 'smoothstep',
+      },
+      {
+        id: 'e-r3-r4',
+        source: 'r3',
+        target: 'r4',
+        sourceHandle: 'to-r4',
+        targetHandle: 'to-r3',
+        type: 'smoothstep',
+      },
       { id: 'e-r4-c2', source: 'r4', target: 'c2', sourceHandle: 'lan4', type: 'smoothstep' },
     ],
     areas: [],
@@ -266,6 +282,7 @@ function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
 
   return (
     <aside
+      tabIndex={0}
       style={{
         width: 360,
         minWidth: 320,
@@ -284,8 +301,8 @@ function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
         {PROTOCOL_META[protocol].summary}
       </p>
       {routers.map((router) => {
-        const routes = [...(routeTable.get(router.id) ?? [])].sort(
-          (left, right) => left.destination.localeCompare(right.destination),
+        const routes = [...(routeTable.get(router.id) ?? [])].sort((left, right) =>
+          left.destination.localeCompare(right.destination),
         );
 
         return (
@@ -294,7 +311,7 @@ function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
               {router.data.label}
             </div>
             {routes.length === 0 ? (
-              <div style={{ color: '#64748b', fontSize: 12 }}>No routes</div>
+              <div style={{ color: '#94a3b8', fontSize: 12 }}>No routes</div>
             ) : (
               <div style={{ display: 'grid', gap: 6 }}>
                 {routes.map((route) => (
