@@ -101,7 +101,7 @@ function makeSimulationContextValue(
 
 let root: Root | null = null;
 let container: HTMLDivElement | null = null;
-let clickedDownloads: Array<{ download: string; href: string }> = [];
+let clickedDownloads: { download: string; href: string }[] = [];
 const actEnvironment = globalThis as typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
@@ -163,7 +163,9 @@ beforeEach(() => {
     value: vi.fn(),
   });
 
-  vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function(this: HTMLAnchorElement) {
+  vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+    this: HTMLAnchorElement,
+  ) {
     clickedDownloads.push({
       download: this.download,
       href: this.href,
@@ -251,7 +253,7 @@ describe('PacketTimeline', () => {
               ...TRACE,
               hops: [
                 {
-                  ...TRACE.hops[0]!,
+                  ...TRACE.hops[0],
                   action: 'fragment',
                   fragmentIndex: 0,
                   fragmentCount: 3,
@@ -266,5 +268,11 @@ describe('PacketTimeline', () => {
 
     expect(container?.textContent).toContain('fragment 1/3');
     expect(container?.textContent).toContain('mtu 600');
+  });
+
+  it('perf: is wrapped in React.memo', () => {
+    expect((PacketTimeline as unknown as { $$typeof: symbol }).$$typeof).toBe(
+      Symbol.for('react.memo'),
+    );
   });
 });

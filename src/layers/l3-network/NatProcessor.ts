@@ -45,7 +45,7 @@ export class NatProcessor {
     step: number,
   ): NatProcessResult {
     const ingressIface = this.getInterface(ingressIfaceId);
-    if (!ingressIface || ingressIface.nat !== 'outside') {
+    if (ingressIface?.nat !== 'outside') {
       return { packet, translation: null, matched: false };
     }
 
@@ -65,7 +65,11 @@ export class NatProcessor {
     if (reverseEntry) {
       reverseEntry.lastSeenAt = step;
       return {
-        packet: this.rewriteDestination(packet, reverseEntry.insideLocalIp, reverseEntry.insideLocalPort),
+        packet: this.rewriteDestination(
+          packet,
+          reverseEntry.insideLocalIp,
+          reverseEntry.insideLocalPort,
+        ),
         translation: this.buildTranslation(packet, {
           type: reverseEntry.type,
           postDstIp: reverseEntry.insideLocalIp,
@@ -231,7 +235,7 @@ export class NatProcessor {
 
   private getRouterInterfaces(): RouterInterface[] {
     const node = this.topology.nodes.find((candidate) => candidate.id === this.routerId);
-    if (!node || node.data.role !== 'router') return [];
+    if (node?.data.role !== 'router') return [];
     return node.data.interfaces ?? [];
   }
 
@@ -245,7 +249,7 @@ export class NatProcessor {
     externalPort: number,
   ): PortForwardingRule | undefined {
     const node = this.topology.nodes.find((candidate) => candidate.id === this.routerId);
-    if (!node || node.data.role !== 'router') return undefined;
+    if (node?.data.role !== 'router') return undefined;
     return node.data.portForwardingRules?.find(
       (rule) => rule.proto === proto && rule.externalPort === externalPort,
     );
@@ -260,7 +264,11 @@ export class NatProcessor {
       };
     }
 
-    if (ipPacket.protocol === 17 && ipPacket.payload.layer === 'L4' && 'srcPort' in ipPacket.payload) {
+    if (
+      ipPacket.protocol === 17 &&
+      ipPacket.payload.layer === 'L4' &&
+      'srcPort' in ipPacket.payload
+    ) {
       return {
         proto: 'udp',
         srcPort: ipPacket.payload.srcPort,
@@ -365,15 +373,11 @@ export class NatProcessor {
     }
 
     const node = this.topology.nodes.find((candidate) => candidate.id === this.routerId);
-    if (!node || node.data.role !== 'router') return false;
+    if (node?.data.role !== 'router') return false;
     return node.data.portForwardingRules?.some((rule) => rule.externalPort === port) ?? false;
   }
 
-  private rewriteSource(
-    packet: InFlightPacket,
-    srcIp: string,
-    srcPort: number,
-  ): InFlightPacket {
+  private rewriteSource(packet: InFlightPacket, srcIp: string, srcPort: number): InFlightPacket {
     return this.rewritePacket(packet, { srcIp, srcPort });
   }
 

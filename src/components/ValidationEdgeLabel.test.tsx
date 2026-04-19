@@ -63,11 +63,7 @@ describe('ValidationEdgeLabel', () => {
 
   it('renders nothing when there are no errors or warnings', () => {
     render(
-      <ValidationEdgeLabel
-        validationResult={makeValidationResult()}
-        labelX={10}
-        labelY={20}
-      />,
+      <ValidationEdgeLabel validationResult={makeValidationResult()} labelX={10} labelY={20} />,
     );
 
     expect(container?.querySelector('.netlab-validation-tooltip')).toBeNull();
@@ -92,9 +88,7 @@ describe('ValidationEdgeLabel', () => {
 
     const label = container?.querySelector('.netlab-validation-tooltip');
     expect(label?.textContent).toBe('❌');
-    expect(label?.getAttribute('title')).toBe(
-      'Error: Duplicate edge: nodes are already connected',
-    );
+    expect(label?.getAttribute('title')).toBe('Error: Duplicate edge: nodes are already connected');
   });
 
   it('renders a warning icon and combined title for warning-only results', () => {

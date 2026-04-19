@@ -39,10 +39,11 @@ function sameNodePair(edge: NetlabEdge, sourceId: string, targetId: string): boo
 }
 
 function isHandleInUse(edges: NetlabEdge[], nodeId: string, handleId: string): boolean {
-  return edges.some((edge) => (
-    (edge.source === nodeId && edge.sourceHandle === handleId) ||
-    (edge.target === nodeId && edge.targetHandle === handleId)
-  ));
+  return edges.some(
+    (edge) =>
+      (edge.source === nodeId && edge.sourceHandle === handleId) ||
+      (edge.target === nodeId && edge.targetHandle === handleId),
+  );
 }
 
 function resolveHandleName(node: NetlabNode | undefined, handleId: string): string {
@@ -137,7 +138,7 @@ export function validateConnection(
     });
   }
 
-  if (!isValidConnection(sourceNode?.data.role as string | undefined, targetNode?.data.role as string | undefined)) {
+  if (!isValidConnection(sourceNode?.data.role, targetNode?.data.role)) {
     errors.push({
       code: 'endpoint-to-endpoint',
       message: 'Endpoint-to-endpoint connections are not allowed',
@@ -193,10 +194,7 @@ export function isValidConnectionBetweenNodes(
 ): boolean {
   const source = nodes.find((n) => n.id === sourceId);
   const target = nodes.find((n) => n.id === targetId);
-  return isValidConnection(
-    source?.data?.role as string | undefined,
-    target?.data?.role as string | undefined,
-  );
+  return isValidConnection(source?.data?.role, target?.data?.role);
 }
 
 /**

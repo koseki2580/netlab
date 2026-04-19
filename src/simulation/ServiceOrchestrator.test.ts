@@ -4,7 +4,11 @@ import type { InFlightPacket } from '../types/packets';
 import type { NetworkTopology } from '../types/topology';
 import type { PacketTrace } from '../types/simulation';
 import { aclTopology, natTopology } from './__fixtures__/topologies';
-import { ServiceOrchestrator, type PacketSender, type ServiceEventSink } from './ServiceOrchestrator';
+import {
+  ServiceOrchestrator,
+  type PacketSender,
+  type ServiceEventSink,
+} from './ServiceOrchestrator';
 
 const DHCP_TOPOLOGY: NetworkTopology = {
   nodes: [
@@ -228,8 +232,12 @@ describe('ServiceOrchestrator', () => {
     services.setPacketSender(makePacketSender(DNS_TOPOLOGY));
     const sink = createSink();
 
-    await expect(services.simulateDns('client-1', 'app.example.com', sink)).resolves.toBe('192.0.2.50');
-    await expect(services.simulateDns('client-1', 'app.example.com', sink)).resolves.toBe('192.0.2.50');
+    await expect(services.simulateDns('client-1', 'app.example.com', sink)).resolves.toBe(
+      '192.0.2.50',
+    );
+    await expect(services.simulateDns('client-1', 'app.example.com', sink)).resolves.toBe(
+      '192.0.2.50',
+    );
 
     expect(sink.traces).toHaveLength(2);
     expect(services.getDnsCache('client-1')).toEqual(
@@ -257,13 +265,7 @@ describe('ServiceOrchestrator', () => {
     services.setPacketSender(makePacketSender(TCP_TOPOLOGY));
     const sink = createSink();
 
-    const result = await services.simulateTcpConnect(
-      'client-1',
-      'server-1',
-      12345,
-      80,
-      sink,
-    );
+    const result = await services.simulateTcpConnect('client-1', 'server-1', 12345, 80, sink);
 
     expect(result.success).toBe(true);
     expect(services.getTcpConnections()).toHaveLength(1);

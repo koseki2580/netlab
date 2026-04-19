@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  IPV4_DEFAULT_PMTU,
-  IPV4_MIN_PMTU,
-  PathMtuCache,
-} from './PathMtuCache';
+import { IPV4_DEFAULT_PMTU, IPV4_MIN_PMTU, PathMtuCache } from './PathMtuCache';
 
 describe('PathMtuCache', () => {
   describe('get', () => {

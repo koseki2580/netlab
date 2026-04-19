@@ -1,10 +1,6 @@
-import {
-  ALL_HOSTS_GROUP,
-  ALL_ROUTERS_GROUP,
-  IGMP_PROTOCOL,
-} from "../../types/multicast";
-import type { IgmpMessage, InFlightPacket } from "../../types/packets";
-import { ipToMulticastMac } from "../../utils/multicastMac";
+import { ALL_HOSTS_GROUP, ALL_ROUTERS_GROUP, IGMP_PROTOCOL } from '../../types/multicast';
+import type { IgmpMessage, InFlightPacket } from '../../types/packets';
+import { ipToMulticastMac } from '../../utils/multicastMac';
 
 export class IgmpProcessor {
   /** (interfaceId, groupAddress) pairs the router has learned. */
@@ -16,9 +12,9 @@ export class IgmpProcessor {
    */
   buildGeneralQuery(srcInterface: { ip: string; mac: string }): InFlightPacket {
     const igmp: IgmpMessage = {
-      layer: "L4",
-      igmpType: "v2-membership-query",
-      groupAddress: "0.0.0.0",
+      layer: 'L4',
+      igmpType: 'v2-membership-query',
+      groupAddress: '0.0.0.0',
       maxResponseTime: 100, // 10 seconds in 0.1s units
     };
 
@@ -26,7 +22,7 @@ export class IgmpProcessor {
       srcIp: srcInterface.ip,
       srcMac: srcInterface.mac,
       dstIp: ALL_HOSTS_GROUP,
-      dstMac: "01:00:5e:00:00:01",
+      dstMac: '01:00:5e:00:00:01',
       igmp,
     });
   }
@@ -41,8 +37,8 @@ export class IgmpProcessor {
     groupAddress: string,
   ): InFlightPacket {
     const igmp: IgmpMessage = {
-      layer: "L4",
-      igmpType: "v2-membership-report",
+      layer: 'L4',
+      igmpType: 'v2-membership-report',
       groupAddress,
     };
 
@@ -59,14 +55,10 @@ export class IgmpProcessor {
    * Build a Leave Group message.
    * Destination: ALL_ROUTERS_GROUP (224.0.0.2).
    */
-  static buildLeaveGroup(
-    srcIp: string,
-    srcMac: string,
-    groupAddress: string,
-  ): InFlightPacket {
+  static buildLeaveGroup(srcIp: string, srcMac: string, groupAddress: string): InFlightPacket {
     const igmp: IgmpMessage = {
-      layer: "L4",
-      igmpType: "v2-leave-group",
+      layer: 'L4',
+      igmpType: 'v2-leave-group',
       groupAddress,
     };
 
@@ -74,7 +66,7 @@ export class IgmpProcessor {
       srcIp,
       srcMac,
       dstIp: ALL_ROUTERS_GROUP,
-      dstMac: "01:00:5e:00:00:02",
+      dstMac: '01:00:5e:00:00:02',
       igmp,
     });
   }
@@ -98,17 +90,15 @@ export class IgmpProcessor {
   }
 
   /** Per-router snapshot for UI. Sorted by (interfaceId, group). */
-  snapshot(): Array<{ interfaceId: string; group: string }> {
-    const rows: Array<{ interfaceId: string; group: string }> = [];
+  snapshot(): { interfaceId: string; group: string }[] {
+    const rows: { interfaceId: string; group: string }[] = [];
     for (const [interfaceId, groups] of this.memberships) {
       for (const group of groups) {
         rows.push({ interfaceId, group });
       }
     }
     rows.sort(
-      (a, b) =>
-        a.interfaceId.localeCompare(b.interfaceId) ||
-        a.group.localeCompare(b.group),
+      (a, b) => a.interfaceId.localeCompare(b.interfaceId) || a.group.localeCompare(b.group),
     );
     return rows;
   }
@@ -123,20 +113,20 @@ function buildIgmpPacket(opts: {
   igmp: IgmpMessage;
 }): InFlightPacket {
   return {
-    id: "",
-    srcNodeId: "",
-    dstNodeId: "",
-    currentDeviceId: "",
-    ingressPortId: "",
+    id: '',
+    srcNodeId: '',
+    dstNodeId: '',
+    currentDeviceId: '',
+    ingressPortId: '',
     path: [],
     timestamp: 0,
     frame: {
-      layer: "L2",
+      layer: 'L2',
       srcMac: opts.srcMac,
       dstMac: opts.dstMac,
       etherType: 0x0800,
       payload: {
-        layer: "L3",
+        layer: 'L3',
         protocol: IGMP_PROTOCOL,
         ttl: 1,
         srcIp: opts.srcIp,

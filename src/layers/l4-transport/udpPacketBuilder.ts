@@ -4,14 +4,14 @@ import type {
   InFlightPacket,
   RawPayload,
   UdpDatagram,
-} from "../../types/packets";
+} from '../../types/packets';
 import {
   UDP_EPHEMERAL_PORT_MAX,
   UDP_EPHEMERAL_PORT_MIN,
   UDP_MAX_PORT,
   UDP_MIN_PORT,
   UDP_PROTOCOL,
-} from "../../types/udp";
+} from '../../types/udp';
 
 export interface UdpPacketOptions {
   srcNodeId: string;
@@ -44,20 +44,16 @@ function hashString(input: string): number {
   return hash >>> 0;
 }
 
-function makePacketId(
-  prefix: string,
-  options: UdpPacketOptions,
-  ts: number,
-): string {
+function makePacketId(prefix: string, options: UdpPacketOptions, ts: number): string {
   return `${prefix}-${hashString(
     [
       options.srcNodeId,
       options.dstNodeId,
       String(options.srcPort),
       String(options.dstPort),
-      options.sessionId ?? "",
+      options.sessionId ?? '',
       String(ts),
-    ].join(":"),
+    ].join(':'),
   ).toString(16)}`;
 }
 
@@ -68,16 +64,14 @@ function makePacketId(
  * byte-level serialisation. This is intentionally simplified for visual/educational
  * purposes and does not match real UDP header length calculation.
  */
-function computeUdpLength(payload: UdpDatagram["payload"]): number {
+function computeUdpLength(payload: UdpDatagram['payload']): number {
   const UDP_HEADER_SIZE = 8;
   return UDP_HEADER_SIZE + JSON.stringify(payload).length;
 }
 
 function validatePort(port: number, name: string): void {
   if (port < UDP_MIN_PORT || port > UDP_MAX_PORT) {
-    throw new RangeError(
-      `${name} must be in [${UDP_MIN_PORT}, ${UDP_MAX_PORT}], got ${port}`,
-    );
+    throw new RangeError(`${name} must be in [${UDP_MIN_PORT}, ${UDP_MAX_PORT}], got ${port}`);
   }
 }
 
@@ -88,16 +82,16 @@ function validatePort(port: number, name: string): void {
  * `protocol = 17`.
  */
 export function buildUdpPacket(options: UdpPacketOptions): InFlightPacket {
-  validatePort(options.srcPort, "srcPort");
-  validatePort(options.dstPort, "dstPort");
+  validatePort(options.srcPort, 'srcPort');
+  validatePort(options.dstPort, 'dstPort');
 
-  const innerPayload: UdpDatagram["payload"] = options.payload ?? {
-    layer: "raw" as const,
-    data: "",
+  const innerPayload: UdpDatagram['payload'] = options.payload ?? {
+    layer: 'raw' as const,
+    data: '',
   };
 
   const ts = options.timestamp ?? Date.now();
-  const id = options.packetId ?? makePacketId("udp", options, ts);
+  const id = options.packetId ?? makePacketId('udp', options, ts);
   const df = options.df ?? false;
 
   return {
@@ -105,24 +99,24 @@ export function buildUdpPacket(options: UdpPacketOptions): InFlightPacket {
     srcNodeId: options.srcNodeId,
     dstNodeId: options.dstNodeId,
     currentDeviceId: options.srcNodeId,
-    ingressPortId: "",
+    ingressPortId: '',
     path: [],
     timestamp: ts,
     sessionId: options.sessionId,
     frame: {
-      layer: "L2",
-      srcMac: options.srcMac ?? "00:00:00:00:00:00",
-      dstMac: options.dstMac ?? "00:00:00:00:00:00",
+      layer: 'L2',
+      srcMac: options.srcMac ?? '00:00:00:00:00:00',
+      dstMac: options.dstMac ?? '00:00:00:00:00:00',
       etherType: 0x0800,
       payload: {
-        layer: "L3",
+        layer: 'L3',
         srcIp: options.srcIp,
         dstIp: options.dstIp,
         ttl: options.ttl ?? 64,
         protocol: UDP_PROTOCOL,
         flags: { df, mf: false },
         payload: {
-          layer: "L4",
+          layer: 'L4',
           srcPort: options.srcPort,
           dstPort: options.dstPort,
           length: computeUdpLength(innerPayload),

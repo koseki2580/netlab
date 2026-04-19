@@ -35,15 +35,20 @@ const ROW: React.CSSProperties = {
 };
 
 const KEY: React.CSSProperties = { color: 'var(--netlab-text-secondary)' };
-const VAL: React.CSSProperties = { color: 'var(--netlab-text-primary)', textAlign: 'right', maxWidth: '60%', wordBreak: 'break-all' };
+const VAL: React.CSSProperties = {
+  color: 'var(--netlab-text-primary)',
+  textAlign: 'right',
+  maxWidth: '60%',
+  wordBreak: 'break-all',
+};
 
 const EVENT_COLORS: Record<string, string> = {
-  create:        '#7dd3fc',
-  forward:       '#4ade80',
-  deliver:       '#34d399',
-  drop:          '#f87171',
+  create: '#7dd3fc',
+  forward: '#4ade80',
+  deliver: '#34d399',
+  drop: '#f87171',
   'arp-request': '#f59e0b',
-  'arp-reply':   '#f59e0b',
+  'arp-reply': '#f59e0b',
 };
 
 function Field({ label, value }: { label: string; value: string }) {
@@ -92,12 +97,19 @@ export function PacketViewerPanel({ floating = false }: PacketViewerPanelProps) 
       <div style={LABEL}>PACKET VIEWER</div>
 
       {!selectedHop ? (
-        <div style={{ color: 'var(--netlab-border)', fontSize: 11 }}>
+        <div style={{ color: 'var(--netlab-text-muted)', fontSize: 11 }}>
           No hop selected — press Step or click a row in the timeline.
         </div>
       ) : (
         <>
-          <div style={{ marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div
+            style={{
+              marginBottom: 8,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
             <span style={{ color: '#94a3b8', fontSize: 10 }}>
               Hop {selectedHop.step + 1} / {totalHops}
             </span>
@@ -111,12 +123,8 @@ export function PacketViewerPanel({ floating = false }: PacketViewerPanelProps) 
             <Field label="TTL" value={String(selectedHop.ttl)} />
             <Field label="Protocol" value={selectedHop.protocol} />
 
-            {selectedHop.toNodeId && (
-              <Field label="→ Next" value={selectedHop.toNodeId} />
-            )}
-            {selectedHop.reason && (
-              <Field label="Reason" value={selectedHop.reason} />
-            )}
+            {selectedHop.toNodeId && <Field label="→ Next" value={selectedHop.toNodeId} />}
+            {selectedHop.reason && <Field label="Reason" value={selectedHop.reason} />}
           </div>
         </>
       )}

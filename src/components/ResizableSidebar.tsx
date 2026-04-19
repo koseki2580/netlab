@@ -78,7 +78,9 @@ export function ResizableSidebar({
         }}
       />
       {/* Content */}
-      <div style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>{children}</div>
+      <div tabIndex={0} style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
+        {children}
+      </div>
     </div>
   );
 }

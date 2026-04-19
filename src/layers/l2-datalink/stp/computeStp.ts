@@ -1,4 +1,9 @@
-import type { BridgeId, NetworkTopology, StpPortRole, StpPortRuntime } from '../../../types/topology';
+import type {
+  BridgeId,
+  NetworkTopology,
+  StpPortRole,
+  StpPortRuntime,
+} from '../../../types/topology';
 import { DEFAULT_STP_PATH_COST } from './BridgeId';
 import { collectSwitchBridges, electRoot } from './rootElection';
 import { compareBridgeId } from './BridgeId';
@@ -63,9 +68,7 @@ export function computeStp(topology: NetworkTopology): StpResult {
 
   const bridgeIdByNodeId = new Map(bridges.map((bridge) => [bridge.nodeId, bridge.bridgeId]));
   const switchNodeById = new Map(
-    topology.nodes
-      .filter((node) => node.data.role === 'switch')
-      .map((node) => [node.id, node]),
+    topology.nodes.filter((node) => node.data.role === 'switch').map((node) => [node.id, node]),
   );
   const switchPortsByNodeId = new Map(
     [...switchNodeById.entries()].map(([nodeId, node]) => [
@@ -144,13 +147,8 @@ export function computeStp(topology: NetworkTopology): StpResult {
       if (
         currentNodeId === null ||
         candidateDistance < currentDistance ||
-        (
-          candidateDistance === currentDistance &&
-          compareBridgeId(
-            bridgeIdByNodeId.get(nodeId)!,
-            bridgeIdByNodeId.get(currentNodeId)!,
-          ) < 0
-        )
+        (candidateDistance === currentDistance &&
+          compareBridgeId(bridgeIdByNodeId.get(nodeId)!, bridgeIdByNodeId.get(currentNodeId)!) < 0)
       ) {
         currentNodeId = nodeId;
         currentDistance = candidateDistance;
@@ -183,28 +181,23 @@ export function computeStp(topology: NetworkTopology): StpResult {
       }
 
       const neighborPort = switchPortsByNodeId.get(neighborNodeId)?.get(neighborPortId);
-      const candidateDistance = currentDistance + (neighborPort?.stpPathCost ?? DEFAULT_STP_PATH_COST);
+      const candidateDistance =
+        currentDistance + (neighborPort?.stpPathCost ?? DEFAULT_STP_PATH_COST);
       const existingDistance = distanceByNodeId.get(neighborNodeId) ?? Number.POSITIVE_INFINITY;
       const existingStep = pathStepByNodeId.get(neighborNodeId);
       const shouldReplace =
         candidateDistance < existingDistance ||
-        (
-          candidateDistance === existingDistance &&
-          (
-            !existingStep ||
+        (candidateDistance === existingDistance &&
+          (!existingStep ||
             compareBridgeId(
               bridgeIdByNodeId.get(currentNodeId)!,
               bridgeIdByNodeId.get(existingStep.upstreamNodeId)!,
             ) < 0 ||
-            (
-              compareBridgeId(
-                bridgeIdByNodeId.get(currentNodeId)!,
-                bridgeIdByNodeId.get(existingStep.upstreamNodeId)!,
-              ) === 0 &&
-              comparePortIds(neighborPortId, existingStep.localPortId) < 0
-            )
-          )
-        );
+            (compareBridgeId(
+              bridgeIdByNodeId.get(currentNodeId)!,
+              bridgeIdByNodeId.get(existingStep.upstreamNodeId)!,
+            ) === 0 &&
+              comparePortIds(neighborPortId, existingStep.localPortId) < 0)));
 
       if (shouldReplace) {
         distanceByNodeId.set(neighborNodeId, candidateDistance);
@@ -322,10 +315,7 @@ export function computeStp(topology: NetworkTopology): StpResult {
       }
 
       const role = rootPortByNodeId.get(nodeId) === port.id ? 'ROOT' : 'DESIGNATED';
-      ports.set(
-        portKey,
-        buildPortRuntime(nodeId, port.id, role, bridgeId, rootPathCost),
-      );
+      ports.set(portKey, buildPortRuntime(nodeId, port.id, role, bridgeId, rootPathCost));
     }
   }
 

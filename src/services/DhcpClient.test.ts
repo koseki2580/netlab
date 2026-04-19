@@ -86,8 +86,12 @@ describe('DhcpClient', () => {
     expect(packet).not.toBeNull();
     expect(packet?.frame.payload.srcIp).toBe('0.0.0.0');
     expect(packet?.frame.payload.dstIp).toBe('255.255.255.255');
-    expect('payload' in packet!.frame.payload.payload && packet!.frame.payload.payload.srcPort).toBe(68);
-    expect('payload' in packet!.frame.payload.payload && packet!.frame.payload.payload.dstPort).toBe(67);
+    expect(
+      'payload' in packet!.frame.payload.payload && packet!.frame.payload.payload.srcPort,
+    ).toBe(68);
+    expect(
+      'payload' in packet!.frame.payload.payload && packet!.frame.payload.payload.dstPort,
+    ).toBe(67);
   });
 
   it('extracts the assigned IP settings from an ACK packet', () => {

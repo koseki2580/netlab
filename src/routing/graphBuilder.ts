@@ -17,12 +17,9 @@ function ipToInt(ip: string): number {
 }
 
 function intToIp(value: number): string {
-  return [
-    (value >>> 24) & 0xff,
-    (value >>> 16) & 0xff,
-    (value >>> 8) & 0xff,
-    value & 0xff,
-  ].join('.');
+  return [(value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff].join(
+    '.',
+  );
 }
 
 interface AddressedNetwork {
@@ -43,7 +40,7 @@ function toNetworkCidr(iface: AddressedNetwork): string {
 }
 
 function isRouter(node: NetlabNode | undefined): node is NetlabNode {
-  return Boolean(node && node.data.role === 'router');
+  return Boolean(node?.data.role === 'router');
 }
 
 function findInterfaceById(
@@ -54,7 +51,10 @@ function findInterfaceById(
   return (node.data.interfaces ?? []).find((iface) => iface.id === interfaceId) ?? null;
 }
 
-function findPeerInterfaceInSubnet(node: NetlabNode, localIface: RouterInterface): RouterInterface | null {
+function findPeerInterfaceInSubnet(
+  node: NetlabNode,
+  localIface: RouterInterface,
+): RouterInterface | null {
   return (
     (node.data.interfaces ?? []).find((candidate) =>
       isInSameSubnet(toNetworkCidr(localIface), toNetworkCidr(candidate)),
@@ -159,10 +159,7 @@ export function getConnectedNetworks(node: NetlabNode): ConnectedNetwork[] {
   const networks: ConnectedNetwork[] = [];
   const seen = new Set<string>();
 
-  const pushNetwork = (
-    iface: AddressedNetwork,
-    vlanId?: number,
-  ) => {
+  const pushNetwork = (iface: AddressedNetwork, vlanId?: number) => {
     const cidr = toNetworkCidr(iface);
     const key = `${vlanId ?? 'untagged'}:${cidr}`;
     if (seen.has(key)) return;

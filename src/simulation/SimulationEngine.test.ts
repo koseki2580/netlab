@@ -1,13 +1,11 @@
-import { describe, it, expect, beforeAll, vi } from 'vitest';
-import { DataTransferController } from './DataTransferController';
-import { SimulationEngine } from './SimulationEngine';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { HookEngine } from '../hooks/HookEngine';
-import { layerRegistry } from '../registry/LayerRegistry';
-import { RouterForwarder } from '../layers/l3-network/RouterForwarder';
 import { SwitchForwarder } from '../layers/l2-datalink/SwitchForwarder';
-import type { NetworkTopology } from '../types/topology';
-import type { RouteEntry } from '../types/routing';
+import { RouterForwarder } from '../layers/l3-network/RouterForwarder';
+import { layerRegistry } from '../registry/LayerRegistry';
 import { type FailureState, EMPTY_FAILURE_STATE, makeInterfaceFailureId } from '../types/failure';
+import type { RouteEntry } from '../types/routing';
+import type { NetworkTopology } from '../types/topology';
 import { computeFcs, computeIpv4Checksum } from '../utils/checksum';
 import { buildEthernetFrameBytes, buildIpv4HeaderBytes } from '../utils/packetLayout';
 import { serializeArpFrame } from '../utils/packetSerializer';
@@ -36,6 +34,8 @@ import {
   switchPassthroughTopology,
   switchPassthroughTopologyWithHandles,
 } from './__fixtures__/topologies';
+import { DataTransferController } from './DataTransferController';
+import { SimulationEngine } from './SimulationEngine';
 
 // Register forwarders once without importing React components
 beforeAll(() => {
@@ -88,7 +88,9 @@ describe('SimulationEngine.precompute', () => {
     const packet = makePacket('p-explicit', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
     const trace = await engine.precompute(packet);
 
-    expect(trace.hops.some((hop) => hop.event === 'arp-request' || hop.event === 'arp-reply')).toBe(false);
+    expect(trace.hops.some((hop) => hop.event === 'arp-request' || hop.event === 'arp-reply')).toBe(
+      false,
+    );
   });
 
   it('injects host-side ARP request/reply hops before the first forward when the destination MAC is unknown', async () => {
@@ -364,9 +366,27 @@ describe('SimulationEngine.precompute', () => {
             role: 'router',
             layerId: 'l3',
             interfaces: [
-              { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-              { id: 'eth1', name: 'eth1', ipAddress: '172.16.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:01' },
-              { id: 'eth2', name: 'eth2', ipAddress: '192.168.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:02' },
+              {
+                id: 'eth0',
+                name: 'eth0',
+                ipAddress: '10.0.0.1',
+                prefixLength: 24,
+                macAddress: '00:00:00:01:00:00',
+              },
+              {
+                id: 'eth1',
+                name: 'eth1',
+                ipAddress: '172.16.0.1',
+                prefixLength: 24,
+                macAddress: '00:00:00:01:00:01',
+              },
+              {
+                id: 'eth2',
+                name: 'eth2',
+                ipAddress: '192.168.0.1',
+                prefixLength: 24,
+                macAddress: '00:00:00:01:00:02',
+              },
             ],
           },
         },
@@ -379,8 +399,20 @@ describe('SimulationEngine.precompute', () => {
             role: 'router',
             layerId: 'l3',
             interfaces: [
-              { id: 'eth0', name: 'eth0', ipAddress: '172.16.0.2', prefixLength: 24, macAddress: '00:00:00:02:00:00' },
-              { id: 'eth1', name: 'eth1', ipAddress: '192.168.1.1', prefixLength: 24, macAddress: '00:00:00:02:00:01' },
+              {
+                id: 'eth0',
+                name: 'eth0',
+                ipAddress: '172.16.0.2',
+                prefixLength: 24,
+                macAddress: '00:00:00:02:00:00',
+              },
+              {
+                id: 'eth1',
+                name: 'eth1',
+                ipAddress: '192.168.1.1',
+                prefixLength: 24,
+                macAddress: '00:00:00:02:00:01',
+              },
             ],
           },
         },
@@ -393,8 +425,20 @@ describe('SimulationEngine.precompute', () => {
             role: 'router',
             layerId: 'l3',
             interfaces: [
-              { id: 'eth0', name: 'eth0', ipAddress: '192.168.1.2', prefixLength: 24, macAddress: '00:00:00:03:00:00' },
-              { id: 'eth1', name: 'eth1', ipAddress: '192.168.0.2', prefixLength: 24, macAddress: '00:00:00:03:00:01' },
+              {
+                id: 'eth0',
+                name: 'eth0',
+                ipAddress: '192.168.1.2',
+                prefixLength: 24,
+                macAddress: '00:00:00:03:00:00',
+              },
+              {
+                id: 'eth1',
+                name: 'eth1',
+                ipAddress: '192.168.0.2',
+                prefixLength: 24,
+                macAddress: '00:00:00:03:00:01',
+              },
             ],
           },
         },
@@ -553,7 +597,9 @@ describe('SimulationEngine animation speed', () => {
     vi.useFakeTimers();
     const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
     const engine = makeEngine(singleRouterTopology());
-    await engine.send(makePacket('speed-play', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
+    await engine.send(
+      makePacket('speed-play', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+    );
 
     engine.setPlayInterval(250);
     engine.play();
@@ -620,7 +666,9 @@ describe('SimulationEngine last-packet tracking', () => {
 
   it('clear() resets the stored last packet', async () => {
     const engine = makeEngine(singleRouterTopology());
-    await engine.send(makePacket('clear-last-packet', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
+    await engine.send(
+      makePacket('clear-last-packet', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+    );
 
     engine.clear();
 
@@ -646,7 +694,9 @@ describe('SimulationEngine.sendTransfer', () => {
     await engine.sendTransfer('client-1', 'server-1', 'payload', { chunkDelay: 0 });
 
     expect(startTransferSpy).toHaveBeenCalledTimes(1);
-    expect(startTransferSpy).toHaveBeenCalledWith('client-1', 'server-1', 'payload', { chunkDelay: 0 });
+    expect(startTransferSpy).toHaveBeenCalledWith('client-1', 'server-1', 'payload', {
+      chunkDelay: 0,
+    });
   });
 
   it('clear resets the transfer controller', async () => {
@@ -691,7 +741,9 @@ describe('SimulationEngine.exportPcap', () => {
 
   it('returns a valid PCAP whose record count matches the hop count', async () => {
     const engine = makeEngine(singleRouterTopology());
-    await engine.send(makePacket('pcap-basic', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
+    await engine.send(
+      makePacket('pcap-basic', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+    );
 
     const state = engine.getState();
     const trace = state.traces.find((candidate) => candidate.packetId === 'pcap-basic');
@@ -703,14 +755,18 @@ describe('SimulationEngine.exportPcap', () => {
 
   it('defaults to the currentTraceId when no trace id is provided', async () => {
     const engine = makeEngine(singleRouterTopology());
-    await engine.send(makePacket('pcap-current', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
+    await engine.send(
+      makePacket('pcap-current', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+    );
 
     expect(Array.from(engine.exportPcap())).toEqual(Array.from(engine.exportPcap('pcap-current')));
   });
 
   it('returns a 24-byte header-only export when the requested trace id is missing', async () => {
     const engine = makeEngine(singleRouterTopology());
-    await engine.send(makePacket('pcap-known', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
+    await engine.send(
+      makePacket('pcap-known', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+    );
 
     expect(engine.exportPcap('missing-trace')).toHaveLength(24);
   });
@@ -729,12 +785,16 @@ describe('SimulationEngine.exportPcap', () => {
 
     expect(arpHopIndex).toBeGreaterThanOrEqual(0);
     expect(expectedFrameBytes).not.toBeNull();
-    expect(Array.from(pcapRecordBytes(bytes, arpHopIndex))).toEqual(Array.from(expectedFrameBytes!));
+    expect(Array.from(pcapRecordBytes(bytes, arpHopIndex))).toEqual(
+      Array.from(expectedFrameBytes!),
+    );
   });
 
   it('uses the stored packet snapshot bytes for drop hops', async () => {
     const engine = makeEngine(singleRouterTopology());
-    await engine.send(makePacket('pcap-drop', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10', 1));
+    await engine.send(
+      makePacket('pcap-drop', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10', 1),
+    );
 
     const trace = engine.getState().traces.find((candidate) => candidate.packetId === 'pcap-drop');
     const dropHopIndex = trace?.hops.findIndex((hop) => hop.event === 'drop') ?? -1;
@@ -751,7 +811,9 @@ describe('SimulationEngine.exportPcap', () => {
     const bytes = engine.exportPcap('pcap-drop');
 
     expect(expectedFrameBytes).not.toBeNull();
-    expect(Array.from(pcapRecordBytes(bytes, dropHopIndex))).toEqual(Array.from(expectedFrameBytes!));
+    expect(Array.from(pcapRecordBytes(bytes, dropHopIndex))).toEqual(
+      Array.from(expectedFrameBytes!),
+    );
   });
 });
 
@@ -788,15 +850,17 @@ describe('SimulationEngine NAT', () => {
       postDstIp: '198.51.100.10',
       postDstPort: 80,
     });
-    expect(natHop?.changedFields).toEqual(expect.arrayContaining([
-      'TTL',
-      'Header Checksum',
-      'Src IP',
-      'Src Port',
-      'Src MAC',
-      'Dst MAC',
-      'FCS',
-    ]));
+    expect(natHop?.changedFields).toEqual(
+      expect.arrayContaining([
+        'TTL',
+        'Header Checksum',
+        'Src IP',
+        'Src Port',
+        'Src MAC',
+        'Dst MAC',
+        'FCS',
+      ]),
+    );
     expect(natTable?.entries).toHaveLength(1);
     expect(natTable?.entries[0]?.insideGlobalIp).toBe('203.0.113.1');
     expect(natTable?.entries[0]?.insideGlobalPort).toBe(1024);
@@ -849,15 +913,17 @@ describe('SimulationEngine NAT', () => {
       postDstIp: '192.168.1.10',
       postDstPort: 54321,
     });
-    expect(natHop?.changedFields).toEqual(expect.arrayContaining([
-      'TTL',
-      'Header Checksum',
-      'Dst IP',
-      'Dst Port',
-      'Src MAC',
-      'Dst MAC',
-      'FCS',
-    ]));
+    expect(natHop?.changedFields).toEqual(
+      expect.arrayContaining([
+        'TTL',
+        'Header Checksum',
+        'Dst IP',
+        'Dst Port',
+        'Src MAC',
+        'Dst MAC',
+        'FCS',
+      ]),
+    );
   });
 
   it('applies DNAT for port forwarding and reuses that mapping on the response', async () => {
@@ -876,7 +942,9 @@ describe('SimulationEngine NAT', () => {
       ),
     );
 
-    const inboundTrace = engine.getState().traces.find((candidate) => candidate.packetId === 'nat-dnat-in');
+    const inboundTrace = engine
+      .getState()
+      .traces.find((candidate) => candidate.packetId === 'nat-dnat-in');
     const inboundNatHop = inboundTrace?.hops.find((hop) => hop.nodeId === 'nat-router');
 
     expect(inboundTrace?.status).toBe('delivered');
@@ -891,15 +959,17 @@ describe('SimulationEngine NAT', () => {
       postDstIp: '192.168.1.10',
       postDstPort: 80,
     });
-    expect(inboundNatHop?.changedFields).toEqual(expect.arrayContaining([
-      'TTL',
-      'Header Checksum',
-      'Dst IP',
-      'Dst Port',
-      'Src MAC',
-      'Dst MAC',
-      'FCS',
-    ]));
+    expect(inboundNatHop?.changedFields).toEqual(
+      expect.arrayContaining([
+        'TTL',
+        'Header Checksum',
+        'Dst IP',
+        'Dst Port',
+        'Src MAC',
+        'Dst MAC',
+        'FCS',
+      ]),
+    );
 
     await engine.send(
       makePacket(
@@ -914,7 +984,9 @@ describe('SimulationEngine NAT', () => {
       ),
     );
 
-    const outboundTrace = engine.getState().traces.find((candidate) => candidate.packetId === 'nat-dnat-out');
+    const outboundTrace = engine
+      .getState()
+      .traces.find((candidate) => candidate.packetId === 'nat-dnat-out');
     const outboundNatHop = outboundTrace?.hops.find((hop) => hop.nodeId === 'nat-router');
 
     expect(outboundTrace?.status).toBe('delivered');
@@ -929,15 +1001,17 @@ describe('SimulationEngine NAT', () => {
       postDstIp: '198.51.100.10',
       postDstPort: 55000,
     });
-    expect(outboundNatHop?.changedFields).toEqual(expect.arrayContaining([
-      'TTL',
-      'Header Checksum',
-      'Src IP',
-      'Src Port',
-      'Src MAC',
-      'Dst MAC',
-      'FCS',
-    ]));
+    expect(outboundNatHop?.changedFields).toEqual(
+      expect.arrayContaining([
+        'TTL',
+        'Header Checksum',
+        'Src IP',
+        'Src Port',
+        'Src MAC',
+        'Dst MAC',
+        'FCS',
+      ]),
+    );
   });
 
   it('reset clears NAT tables and restarts PAT port allocation', async () => {
@@ -978,20 +1052,31 @@ describe('SimulationEngine NAT', () => {
 
 describe('SimulationEngine ACL', () => {
   it('drops on an explicit ACL deny rule and terminates the trace at the router', async () => {
-    const engine = makeEngine(aclTopology({
-      lanInboundAcl: [
-        {
-          id: 'deny-ssh',
-          priority: 10,
-          action: 'deny',
-          protocol: 'tcp',
-          dstPort: 22,
-        },
-      ],
-    }));
+    const engine = makeEngine(
+      aclTopology({
+        lanInboundAcl: [
+          {
+            id: 'deny-ssh',
+            priority: 10,
+            action: 'deny',
+            protocol: 'tcp',
+            dstPort: 22,
+          },
+        ],
+      }),
+    );
 
     const trace = await engine.precompute(
-      makePacket('acl-deny-explicit', 'client-1', 'server-1', '10.0.1.10', '203.0.113.50', 64, 41000, 22),
+      makePacket(
+        'acl-deny-explicit',
+        'client-1',
+        'server-1',
+        '10.0.1.10',
+        '203.0.113.50',
+        64,
+        41000,
+        22,
+      ),
     );
 
     const dropHop = trace.hops.find((hop) => hop.event === 'drop');
@@ -1004,24 +1089,28 @@ describe('SimulationEngine ACL', () => {
   });
 
   it('annotates permitted router hops with the matching ACL rule', async () => {
-    const engine = makeEngine(aclTopology({
-      lanInboundAcl: [
-        {
-          id: 'allow-http',
-          priority: 10,
-          action: 'permit',
-          protocol: 'tcp',
-          srcIp: '10.0.1.0/24',
-          dstPort: 80,
-        },
-      ],
-    }));
+    const engine = makeEngine(
+      aclTopology({
+        lanInboundAcl: [
+          {
+            id: 'allow-http',
+            priority: 10,
+            action: 'permit',
+            protocol: 'tcp',
+            srcIp: '10.0.1.0/24',
+            dstPort: 80,
+          },
+        ],
+      }),
+    );
 
     const trace = await engine.precompute(
       makePacket('acl-permit', 'client-1', 'server-1', '10.0.1.10', '203.0.113.50', 64, 40000, 80),
     );
 
-    const routerHop = trace.hops.find((hop) => hop.nodeId === 'router-1' && hop.event === 'forward');
+    const routerHop = trace.hops.find(
+      (hop) => hop.nodeId === 'router-1' && hop.event === 'forward',
+    );
     expect(trace.status).toBe('delivered');
     expect(routerHop?.aclMatch?.action).toBe('permit');
     expect(routerHop?.aclMatch?.matchedRule?.id).toBe('allow-http');
@@ -1029,20 +1118,31 @@ describe('SimulationEngine ACL', () => {
   });
 
   it('applies implicit default deny when no rule matches', async () => {
-    const engine = makeEngine(aclTopology({
-      lanInboundAcl: [
-        {
-          id: 'allow-https',
-          priority: 10,
-          action: 'permit',
-          protocol: 'tcp',
-          dstPort: 443,
-        },
-      ],
-    }));
+    const engine = makeEngine(
+      aclTopology({
+        lanInboundAcl: [
+          {
+            id: 'allow-https',
+            priority: 10,
+            action: 'permit',
+            protocol: 'tcp',
+            dstPort: 443,
+          },
+        ],
+      }),
+    );
 
     const trace = await engine.precompute(
-      makePacket('acl-default-deny', 'client-1', 'server-1', '10.0.1.10', '203.0.113.50', 64, 41000, 22),
+      makePacket(
+        'acl-default-deny',
+        'client-1',
+        'server-1',
+        '10.0.1.10',
+        '203.0.113.50',
+        64,
+        41000,
+        22,
+      ),
     );
 
     const dropHop = trace.hops.find((hop) => hop.event === 'drop');
@@ -1053,30 +1153,54 @@ describe('SimulationEngine ACL', () => {
   });
 
   it('auto-permits return traffic via conn-track and exposes the live table', async () => {
-    const engine = makeEngine(aclTopology({
-      stateful: true,
-      lanInboundAcl: [
-        {
-          id: 'allow-http',
-          priority: 10,
-          action: 'permit',
-          protocol: 'tcp',
-          dstPort: 80,
-        },
-      ],
-      wanInboundAcl: [],
-    }));
+    const engine = makeEngine(
+      aclTopology({
+        stateful: true,
+        lanInboundAcl: [
+          {
+            id: 'allow-http',
+            priority: 10,
+            action: 'permit',
+            protocol: 'tcp',
+            dstPort: 80,
+          },
+        ],
+        wanInboundAcl: [],
+      }),
+    );
 
     await engine.precompute(
-      makePacket('acl-stateful-out', 'client-1', 'server-1', '10.0.1.10', '203.0.113.50', 64, 40000, 80),
+      makePacket(
+        'acl-stateful-out',
+        'client-1',
+        'server-1',
+        '10.0.1.10',
+        '203.0.113.50',
+        64,
+        40000,
+        80,
+      ),
     );
 
     const returnTrace = await engine.precompute(
-      makePacket('acl-stateful-return', 'server-1', 'client-1', '203.0.113.50', '10.0.1.10', 64, 80, 40000),
+      makePacket(
+        'acl-stateful-return',
+        'server-1',
+        'client-1',
+        '203.0.113.50',
+        '10.0.1.10',
+        64,
+        80,
+        40000,
+      ),
     );
 
-    const routerHop = returnTrace.hops.find((hop) => hop.nodeId === 'router-1' && hop.event === 'forward');
-    const connTrackTable = engine.getState().connTrackTables.find((table) => table.routerId === 'router-1');
+    const routerHop = returnTrace.hops.find(
+      (hop) => hop.nodeId === 'router-1' && hop.event === 'forward',
+    );
+    const connTrackTable = engine
+      .getState()
+      .connTrackTables.find((table) => table.routerId === 'router-1');
 
     expect(returnTrace.status).toBe('delivered');
     expect(routerHop?.aclMatch?.action).toBe('permit');
@@ -1087,19 +1211,21 @@ describe('SimulationEngine ACL', () => {
   });
 
   it('reset clears conn-track entries and repeated forward flows reuse the same entry', async () => {
-    const engine = makeEngine(aclTopology({
-      stateful: true,
-      lanInboundAcl: [
-        {
-          id: 'allow-http',
-          priority: 10,
-          action: 'permit',
-          protocol: 'tcp',
-          dstPort: 80,
-        },
-      ],
-      wanInboundAcl: [],
-    }));
+    const engine = makeEngine(
+      aclTopology({
+        stateful: true,
+        lanInboundAcl: [
+          {
+            id: 'allow-http',
+            priority: 10,
+            action: 'permit',
+            protocol: 'tcp',
+            dstPort: 80,
+          },
+        ],
+        wanInboundAcl: [],
+      }),
+    );
 
     await engine.precompute(
       makePacket('acl-reuse-1', 'client-1', 'server-1', '10.0.1.10', '203.0.113.50', 64, 40000, 80),
@@ -1148,7 +1274,9 @@ describe('SimulationEngine hook emission', () => {
     const engine = new SimulationEngine(topology, hookEngine);
     await engine.send(makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
 
-    const forwardSpy = vi.fn(async (_ctx, next) => { await next(); });
+    const forwardSpy = vi.fn(async (_ctx, next) => {
+      await next();
+    });
     hookEngine.on('packet:forward', forwardSpy);
 
     engine.step(); // step 0: create
@@ -1168,7 +1296,9 @@ describe('SimulationEngine hook emission', () => {
     const engine = new SimulationEngine(singleRouterTopology(), hookEngine);
     await engine.send(makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
 
-    const deliverSpy = vi.fn(async (_ctx, next) => { await next(); });
+    const deliverSpy = vi.fn(async (_ctx, next) => {
+      await next();
+    });
     hookEngine.on('packet:deliver', deliverSpy);
 
     engine.step();
@@ -1300,7 +1430,8 @@ describe('SimulationEngine ICMP helpers', () => {
       (hop) => hop.nodeId === 'server-1' && hop.event === 'deliver',
     );
     const clientDeliverIndex = trace.hops.findIndex(
-      (hop) => hop.nodeId === 'client-1' && hop.event === 'deliver' && hop.fromNodeId === 'router-1',
+      (hop) =>
+        hop.nodeId === 'client-1' && hop.event === 'deliver' && hop.fromNodeId === 'router-1',
     );
 
     expect(serverDeliverIndex).toBeGreaterThan(-1);
@@ -1329,9 +1460,9 @@ describe('SimulationEngine ICMP helpers', () => {
     );
 
     expect(ttlDropHop?.icmpGenerated).toBe(true);
-    expect(
-      trace.hops.some((hop) => hop.nodeId === 'client-1' && hop.event === 'deliver'),
-    ).toBe(true);
+    expect(trace.hops.some((hop) => hop.nodeId === 'client-1' && hop.event === 'deliver')).toBe(
+      true,
+    );
   });
 
   it('traceroute stops after the destination is reached', async () => {
@@ -1361,8 +1492,8 @@ describe('SimulationEngine failure-aware routing fallback', () => {
     );
 
     expect(trace.status).toBe('delivered');
-    expect((engine as any).selectReachableRoute).toBeUndefined();
-    expect((engine as any).resolveNextNode).toBeUndefined();
+    expect('selectReachableRoute' in engine).toBe(false);
+    expect('resolveNextNode' in engine).toBe(false);
 
     const routerHop = trace.hops.find((hop) => hop.nodeId === 'router-1');
     expect(routerHop?.toNodeId).toBe('router-2');
@@ -1394,8 +1525,12 @@ describe('SimulationEngine failure-aware routing fallback', () => {
     expect(decision?.winner?.nextHop).toBe('172.17.0.2');
     expect(decision?.explanation).toContain('Fallback via 0.0.0.0/0 (172.17.0.2)');
 
-    const primaryCandidate = decision?.candidates.find((candidate) => candidate.destination === '203.0.113.0/24');
-    const fallbackCandidate = decision?.candidates.find((candidate) => candidate.destination === '0.0.0.0/0');
+    const primaryCandidate = decision?.candidates.find(
+      (candidate) => candidate.destination === '203.0.113.0/24',
+    );
+    const fallbackCandidate = decision?.candidates.find(
+      (candidate) => candidate.destination === '0.0.0.0/0',
+    );
     expect(primaryCandidate?.selectedByLpm).toBe(true);
     expect(primaryCandidate?.selectedByFailover).not.toBe(true);
     expect(fallbackCandidate?.selectedByLpm).toBe(false);
@@ -1416,8 +1551,8 @@ describe('SimulationEngine failure-aware routing fallback', () => {
     );
 
     expect(trace.status).toBe('delivered');
-    expect((engine as any).selectReachableRoute).toBeUndefined();
-    expect((engine as any).resolveNextNode).toBeUndefined();
+    expect('selectReachableRoute' in engine).toBe(false);
+    expect('resolveNextNode' in engine).toBe(false);
 
     const routerHop = trace.hops.find((hop) => hop.nodeId === 'router-1');
     expect(routerHop?.toNodeId).toBe('router-3');

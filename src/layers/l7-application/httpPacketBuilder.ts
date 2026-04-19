@@ -1,12 +1,12 @@
-import { HTTP_USER_AGENT } from "../../types/http";
-import type { HttpMessage } from "../../types/packets";
+import { HTTP_USER_AGENT } from '../../types/http';
+import type { HttpMessage } from '../../types/packets';
 
 /* ------------------------------------------------------------------ */
 /*  Options                                                            */
 /* ------------------------------------------------------------------ */
 
 export interface BuildHttpRequestOptions {
-  method: "GET" | "POST" | "PUT" | "DELETE" | "HEAD";
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'HEAD';
   url: string;
   host: string;
   headers?: Record<string, string>;
@@ -35,20 +35,14 @@ function hashString(input: string): number {
   return hash >>> 0;
 }
 
-function generateRequestId(
-  host: string,
-  url: string,
-  body: string | undefined,
-): string {
+function generateRequestId(host: string, url: string, body: string | undefined): string {
   const nonce = String(Date.now());
-  return `req-${hashString([host, url, body ?? "", nonce].join(":")).toString(16)}`;
+  return `req-${hashString([host, url, body ?? '', nonce].join(':')).toString(16)}`;
 }
 
 /** Converts a header key to Title-Case: "content-length" → "Content-Length". */
 function titleCase(key: string): string {
-  return key.replace(/(?:^|-)(\w)/g, (_, c: string) =>
-    _.replace(c, c.toUpperCase()),
-  );
+  return key.replace(/(?:^|-)(\w)/g, (_, c: string) => _.replace(c, c.toUpperCase()));
 }
 
 function mergeHeaders(
@@ -92,15 +86,15 @@ export function buildHttpRequest(o: BuildHttpRequestOptions): HttpMessage {
 
   const defaults: Record<string, string> = {
     Host: o.host,
-    "User-Agent": HTTP_USER_AGENT,
-    Accept: "*/*",
-    Connection: "close",
-    "Content-Length": contentLength,
+    'User-Agent': HTTP_USER_AGENT,
+    Accept: '*/*',
+    Connection: 'close',
+    'Content-Length': contentLength,
   };
 
   return {
-    layer: "L7",
-    httpVersion: "HTTP/1.1",
+    layer: 'L7',
+    httpVersion: 'HTTP/1.1',
     method: o.method,
     url: o.url,
     headers: mergeHeaders(defaults, o.headers),
@@ -114,13 +108,13 @@ export function buildHttpResponse(o: BuildHttpResponseOptions): HttpMessage {
 
   const defaults: Record<string, string> = {
     Server: HTTP_USER_AGENT,
-    Connection: "close",
-    "Content-Length": contentLength,
+    Connection: 'close',
+    'Content-Length': contentLength,
   };
 
   return {
-    layer: "L7",
-    httpVersion: "HTTP/1.1",
+    layer: 'L7',
+    httpVersion: 'HTTP/1.1',
     statusCode: o.statusCode,
     reasonPhrase: o.reasonPhrase,
     headers: mergeHeaders(defaults, o.headers),
@@ -134,7 +128,7 @@ export function buildHttpResponse(o: BuildHttpResponseOptions): HttpMessage {
 /* ------------------------------------------------------------------ */
 
 export function serializeHttp(msg: HttpMessage): string {
-  const CRLF = "\r\n";
+  const CRLF = '\r\n';
   const lines: string[] = [];
 
   // Start-line
@@ -143,9 +137,7 @@ export function serializeHttp(msg: HttpMessage): string {
     lines.push(`${msg.method} ${msg.url} ${msg.httpVersion}${CRLF}`);
   } else if (msg.statusCode !== undefined) {
     // Status-line: HTTP/1.1 SP status-code SP reason-phrase
-    lines.push(
-      `${msg.httpVersion} ${msg.statusCode} ${msg.reasonPhrase ?? ""}${CRLF}`,
-    );
+    lines.push(`${msg.httpVersion} ${msg.statusCode} ${msg.reasonPhrase ?? ''}${CRLF}`);
   }
 
   // Headers
@@ -161,5 +153,5 @@ export function serializeHttp(msg: HttpMessage): string {
     lines.push(msg.body);
   }
 
-  return lines.join("");
+  return lines.join('');
 }

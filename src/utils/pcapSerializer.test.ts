@@ -55,11 +55,7 @@ const arpFrame: ArpEthernetFrame = {
   },
 };
 
-function makeHop(
-  step: number,
-  timestamp: number,
-  overrides: Partial<PacketHop> = {},
-): PacketHop {
+function makeHop(step: number, timestamp: number, overrides: Partial<PacketHop> = {}): PacketHop {
   return {
     step,
     nodeId: 'node-1',

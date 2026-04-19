@@ -1,6 +1,7 @@
-import type { HttpMessage } from "../../types/packets";
-import { buildHttpResponse, serializeHttp } from "./httpPacketBuilder";
-import { parseHttp } from "./httpParser";
+import { NetlabError } from '../../errors';
+import type { HttpMessage } from '../../types/packets';
+import { buildHttpResponse, serializeHttp } from './httpPacketBuilder';
+import { parseHttp } from './httpParser';
 
 export type HttpHandler = (
   req: HttpMessage,
@@ -19,20 +20,16 @@ interface Route {
   handler: HttpHandler;
 }
 
-function matchRoute(
-  route: Route,
-  method: string,
-  path: string,
-): Record<string, string> | null {
+function matchRoute(route: Route, method: string, path: string): Record<string, string> | null {
   if (route.method.toUpperCase() !== method.toUpperCase()) return null;
 
-  const pathSegments = path.split("/").filter(Boolean);
+  const pathSegments = path.split('/').filter(Boolean);
   if (pathSegments.length !== route.segments.length) return null;
 
   const params: Record<string, string> = {};
   for (let i = 0; i < route.segments.length; i++) {
     const seg = route.segments[i];
-    if (seg.startsWith(":")) {
+    if (seg.startsWith(':')) {
       params[seg.slice(1)] = pathSegments[i];
     } else if (seg !== pathSegments[i]) {
       return null;
@@ -55,7 +52,7 @@ export class HttpServer {
     this.routes.push({
       method,
       pattern: pathPattern,
-      segments: pathPattern.split("/").filter(Boolean),
+      segments: pathPattern.split('/').filter(Boolean),
       handler,
     });
   }
@@ -73,17 +70,17 @@ export class HttpServer {
    * Returns the HttpMessage response.
    */
   async handleRequest(request: HttpMessage): Promise<HttpMessage> {
-    const method = request.method ?? "GET";
-    const url = request.url ?? "/";
-    const path = url.split("?")[0];
-    const requestId = request.requestId ?? "unknown";
+    const method = request.method ?? 'GET';
+    const url = request.url ?? '/';
+    const path = url.split('?')[0];
+    const requestId = request.requestId ?? 'unknown';
 
-    if (request.httpVersion !== "HTTP/1.1") {
+    if (request.httpVersion !== 'HTTP/1.1') {
       return buildHttpResponse({
         statusCode: 400,
-        reasonPhrase: "Bad Request",
+        reasonPhrase: 'Bad Request',
         requestId,
-        body: "Only HTTP/1.1 is supported",
+        body: 'Only HTTP/1.1 is supported',
       });
     }
 
@@ -96,7 +93,7 @@ export class HttpServer {
 
     return buildHttpResponse({
       statusCode: 404,
-      reasonPhrase: "Not Found",
+      reasonPhrase: 'Not Found',
       requestId,
     });
   }
@@ -105,19 +102,20 @@ export class HttpServer {
    * Processes raw HTTP bytes. Buffers until a complete request is available,
    * then dispatches and returns the serialized response.
    */
-  async handleRawData(
-    data: string,
-  ): Promise<{ response: string; parsed: HttpMessage }> {
+  async handleRawData(data: string): Promise<{ response: string; parsed: HttpMessage }> {
     const result = parseHttp(data);
 
-    if (result.kind === "incomplete") {
-      throw new Error("Incomplete HTTP request");
+    if (result.kind === 'incomplete') {
+      throw new NetlabError({
+        code: 'protocol/invalid-request',
+        message: 'Incomplete HTTP request',
+      });
     }
-    if (result.kind === "error") {
+    if (result.kind === 'error') {
       const errResp = buildHttpResponse({
         statusCode: 400,
-        reasonPhrase: "Bad Request",
-        requestId: "error",
+        reasonPhrase: 'Bad Request',
+        requestId: 'error',
         body: result.reason,
       });
       return { response: serializeHttp(errResp), parsed: errResp };

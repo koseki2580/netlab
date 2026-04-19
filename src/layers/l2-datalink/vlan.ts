@@ -1,7 +1,4 @@
-import type {
-  ArpEthernetFrame,
-  EthernetFrame,
-} from '../../types/packets';
+import type { ArpEthernetFrame, EthernetFrame } from '../../types/packets';
 import type { SwitchPort } from '../../types/topology';
 
 export const DEFAULT_VLAN_ID = 1;
@@ -67,15 +64,10 @@ export function isVlanAllowedOnPort(port: SwitchPort, vlanId: number): boolean {
     return true;
   }
 
-  return port.trunkAllowedVlans === undefined
-    ? true
-    : port.trunkAllowedVlans.includes(vlanId);
+  return port.trunkAllowedVlans === undefined ? true : port.trunkAllowedVlans.includes(vlanId);
 }
 
-export function resolveIngressVlan(
-  port: SwitchPort,
-  frame: VlanFrame,
-): number | null {
+export function resolveIngressVlan(port: SwitchPort, frame: VlanFrame): number | null {
   if (getPortMode(port) === 'access') {
     if (frame.vlanTag) {
       return null;

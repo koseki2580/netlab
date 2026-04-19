@@ -8,7 +8,7 @@ import type { RouterInterface, RouteEntry } from '../../types/routing';
 
 function makeRouteEntries(
   nodeId: string,
-  routes: Array<{ destination: string; nextHop: string; metric?: number }>,
+  routes: { destination: string; nextHop: string; metric?: number }[],
 ): RouteEntry[] {
   return routes.map((route) => ({
     destination: route.destination,
@@ -45,7 +45,13 @@ function makeSwitch() {
       role: 'switch',
       layerId: 'l2' as const,
       ports: [
-        { id: 'p0', name: 'fa0/24', macAddress: '02:00:00:10:00:24', vlanMode: 'trunk' as const, trunkAllowedVlans: [10, 20] },
+        {
+          id: 'p0',
+          name: 'fa0/24',
+          macAddress: '02:00:00:10:00:24',
+          vlanMode: 'trunk' as const,
+          trunkAllowedVlans: [10, 20],
+        },
       ],
     },
   };
@@ -53,7 +59,7 @@ function makeSwitch() {
 
 function makeTopology(overrides?: {
   interfaces?: RouterInterface[];
-  routeTable?: Array<{ destination: string; nextHop: string; metric?: number }>;
+  routeTable?: { destination: string; nextHop: string; metric?: number }[];
   arpTable?: Record<string, string>;
 }): NetworkTopology {
   return {
@@ -88,7 +94,15 @@ function makeTopology(overrides?: {
       ),
       makeSwitch(),
     ],
-    edges: [{ id: 'e-switch', source: 'router-1', target: 'switch-1', sourceHandle: 'eth0', targetHandle: 'p0' }],
+    edges: [
+      {
+        id: 'e-switch',
+        source: 'router-1',
+        target: 'switch-1',
+        sourceHandle: 'eth0',
+        targetHandle: 'p0',
+      },
+    ],
     areas: [],
     routeTables: new Map([
       [
@@ -171,7 +185,9 @@ describe('RouterForwarder — VLAN sub-interfaces', () => {
     const forwarder = new RouterForwarder('router-1', makeTopology());
 
     const result = expectForward(
-      await forwarder.receive(makePacket({ dstIp: '10.0.20.20', vlanId: 10 }), 'eth0', { neighbors }),
+      await forwarder.receive(makePacket({ dstIp: '10.0.20.20', vlanId: 10 }), 'eth0', {
+        neighbors,
+      }),
     );
 
     expect(result.nextNodeId).toBe('switch-1');
@@ -187,7 +203,9 @@ describe('RouterForwarder — VLAN sub-interfaces', () => {
     const forwarder = new RouterForwarder('router-1', makeTopology());
 
     const result = expectDrop(
-      await forwarder.receive(makePacket({ dstIp: '10.0.20.20', vlanId: 30 }), 'eth0', { neighbors }),
+      await forwarder.receive(makePacket({ dstIp: '10.0.20.20', vlanId: 30 }), 'eth0', {
+        neighbors,
+      }),
     );
 
     expect(result.reason).toBe('no-sub-interface-for-vlan');
@@ -232,7 +250,9 @@ describe('RouterForwarder — VLAN sub-interfaces', () => {
     const forwarder = new RouterForwarder('router-1', makeTopology());
 
     const result = expectForward(
-      await forwarder.receive(makePacket({ dstIp: '10.0.20.20', vlanId: 10 }), 'eth0', { neighbors }),
+      await forwarder.receive(makePacket({ dstIp: '10.0.20.20', vlanId: 10 }), 'eth0', {
+        neighbors,
+      }),
     );
 
     expect(result.ingressInterfaceId).toBe('eth0.10');
@@ -251,7 +271,9 @@ describe('RouterForwarder — VLAN sub-interfaces', () => {
     );
 
     const result = expectForward(
-      await forwarder.receive(makePacket({ dstIp: '10.0.20.99', vlanId: 10 }), 'eth0', { neighbors }),
+      await forwarder.receive(makePacket({ dstIp: '10.0.20.99', vlanId: 10 }), 'eth0', {
+        neighbors,
+      }),
     );
 
     expect(result.selectedRoute?.destination).toBe('10.0.20.0/24');

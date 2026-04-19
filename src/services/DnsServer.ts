@@ -15,14 +15,16 @@ export function handleDnsQuery(
   const payload = dnsPayload(query);
   if (!payload || payload.isResponse) return null;
 
-  const server = topology.nodes.find((node) => node.id === query.dstNodeId && node.data.dnsServer != null)
-    ?? topology.nodes.find((node) =>
-      node.data.dnsServer != null &&
-      typeof node.data.ip === 'string' &&
-      node.data.ip === query.frame.payload.dstIp,
-    )
-    ?? null;
-  if (!server || !server.data.dnsServer || typeof server.data.ip !== 'string') return null;
+  const server =
+    topology.nodes.find((node) => node.id === query.dstNodeId && node.data.dnsServer != null) ??
+    topology.nodes.find(
+      (node) =>
+        node.data.dnsServer != null &&
+        typeof node.data.ip === 'string' &&
+        node.data.ip === query.frame.payload.dstIp,
+    ) ??
+    null;
+  if (!server?.data.dnsServer || typeof server.data.ip !== 'string') return null;
 
   const question = payload.questions[0];
   if (!question) return null;
@@ -41,9 +43,7 @@ export function handleDnsQuery(
     srcIp: server.data.ip,
     dstIp: query.frame.payload.srcIp,
     srcPort: 53,
-    dstPort: 'payload' in query.frame.payload.payload
-      ? query.frame.payload.payload.srcPort
-      : 53,
+    dstPort: 'payload' in query.frame.payload.payload ? query.frame.payload.payload.srcPort : 53,
     payload: {
       layer: 'L7',
       transactionId: payload.transactionId,

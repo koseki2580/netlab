@@ -1,4 +1,5 @@
-import { isMulticastIp } from "../types/multicast";
+import { NetlabError } from '../errors';
+import { isMulticastIp } from '../types/multicast';
 
 /**
  * Maps an IPv4 multicast address to its canonical Ethernet multicast MAC.
@@ -6,9 +7,13 @@ import { isMulticastIp } from "../types/multicast";
  */
 export function ipToMulticastMac(ip: string): string {
   if (!isMulticastIp(ip)) {
-    throw new Error(`Not a multicast IP: ${ip}`);
+    throw new NetlabError({
+      code: 'invariant/not-multicast',
+      message: `Not a multicast IP: ${ip}`,
+      context: { ip },
+    });
   }
-  const octets = ip.split(".").map(Number);
+  const octets = ip.split('.').map(Number);
   const low23 = ((octets[1] & 0x7f) << 16) | (octets[2] << 8) | octets[3];
   const b1 = (low23 >> 16) & 0xff;
   const b2 = (low23 >> 8) & 0xff;
@@ -17,7 +22,7 @@ export function ipToMulticastMac(ip: string): string {
 }
 
 function hex(n: number): string {
-  return n.toString(16).padStart(2, "0");
+  return n.toString(16).padStart(2, '0');
 }
 
 /**
@@ -26,8 +31,8 @@ function hex(n: number): string {
  */
 export function isMulticastMac(mac: string): boolean {
   const lower = mac.toLowerCase();
-  if (!lower.startsWith("01:00:5e:")) return false;
-  const parts = lower.split(":");
+  if (!lower.startsWith('01:00:5e:')) return false;
+  const parts = lower.split(':');
   if (parts.length !== 6) return false;
   const byte3 = parseInt(parts[3], 16);
   return byte3 <= 0x7f;

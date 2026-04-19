@@ -1,4 +1,5 @@
-import type { HookMap, HookPoint, HookFn } from '../types/hooks';
+import { NetlabError } from '../errors';
+import type { HookFn, HookMap, HookPoint } from '../types/hooks';
 
 type HookContextOf<K extends HookPoint> = Parameters<HookMap[K]>[0];
 
@@ -6,7 +7,11 @@ function compose<T>(fns: HookFn<T>[]): (ctx: T) => Promise<void> {
   return async (ctx: T) => {
     let index = -1;
     async function dispatch(i: number): Promise<void> {
-      if (i <= index) throw new Error('[netlab] next() called multiple times');
+      if (i <= index)
+        throw new NetlabError({
+          code: 'invariant/next-called-twice',
+          message: '[netlab] next() called multiple times',
+        });
       index = i;
       const fn = fns[i];
       if (!fn) return;
@@ -24,7 +29,7 @@ export class HookEngine {
    * Returns an unsubscribe function.
    */
   on<K extends HookPoint>(point: K, fn: HookMap[K]): () => void {
-    const list = (this.registry.get(point) ?? []) as HookFn<unknown>[];
+    const list = this.registry.get(point) ?? [];
     const wrapped = fn as HookFn<unknown>;
     list.push(wrapped);
     this.registry.set(point, list);
@@ -40,10 +45,7 @@ export class HookEngine {
   /**
    * Execute all handlers for a hook point in registration order.
    */
-  async emit<K extends HookPoint>(
-    point: K,
-    ctx: HookContextOf<K>,
-  ): Promise<void> {
+  async emit<K extends HookPoint>(point: K, ctx: HookContextOf<K>): Promise<void> {
     const fns = (this.registry.get(point) ?? []) as HookFn<HookContextOf<K>>[];
     await compose(fns)(ctx);
   }

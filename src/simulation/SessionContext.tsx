@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useNetlabContext } from '../components/NetlabContext';
+import { NetlabError } from '../errors';
 import type { NetworkSession } from '../types/session';
 import type { PacketTrace } from '../types/simulation';
 import { SessionTracker } from './SessionTracker';
@@ -27,11 +28,7 @@ export interface SessionContextValue {
       transferId?: string;
     },
   ) => void;
-  attachTrace: (
-    sessionId: string,
-    trace: PacketTrace,
-    role: 'request' | 'response',
-  ) => void;
+  attachTrace: (sessionId: string, trace: PacketTrace, role: 'request' | 'response') => void;
   clearSessions: () => void;
 }
 
@@ -64,20 +61,27 @@ export function SessionProvider({ children }: SessionProviderProps) {
     setSelectedSessionId(null);
   }, [sessions, selectedSessionId]);
 
-  const startSession = useCallback<SessionContextValue['startSession']>((sessionId, opts) => {
-    tracker.startSession(sessionId, opts);
-  }, [tracker]);
+  const startSession = useCallback<SessionContextValue['startSession']>(
+    (sessionId, opts) => {
+      tracker.startSession(sessionId, opts);
+    },
+    [tracker],
+  );
 
-  const attachTrace = useCallback<SessionContextValue['attachTrace']>((sessionId, trace, role) => {
-    tracker.attachTrace(sessionId, trace, role);
-  }, [tracker]);
+  const attachTrace = useCallback<SessionContextValue['attachTrace']>(
+    (sessionId, trace, role) => {
+      tracker.attachTrace(sessionId, trace, role);
+    },
+    [tracker],
+  );
 
   const clearSessions = useCallback(() => {
     tracker.clear();
     setSelectedSessionId(null);
   }, [tracker]);
 
-  const selectedSession = sessions.find((session) => session.sessionId === selectedSessionId) ?? null;
+  const selectedSession =
+    sessions.find((session) => session.sessionId === selectedSessionId) ?? null;
 
   const value = useMemo<SessionContextInternalValue>(
     () => ({
@@ -101,17 +105,16 @@ export function SessionProvider({ children }: SessionProviderProps) {
     ],
   );
 
-  return (
-    <SessionContext.Provider value={value}>
-      {children}
-    </SessionContext.Provider>
-  );
+  return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
 
 export function useSession(): SessionContextValue {
   const ctx = useContext(SessionContext);
   if (!ctx) {
-    throw new Error('[netlab] useSession must be used within <SessionProvider>');
+    throw new NetlabError({
+      code: 'config/missing-provider',
+      message: '[netlab] useSession must be used within <SessionProvider>',
+    });
   }
   return ctx;
 }

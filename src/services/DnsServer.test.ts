@@ -1,8 +1,17 @@
 import { describe, expect, it } from 'vitest';
+import type { InFlightPacket } from '../types/packets';
+import { isDnsMessage, isUdpDatagram } from '../types/packets';
+import type { NetworkTopology } from '../types/topology';
 import { buildDnsQuery } from './DnsClient';
 import { handleDnsQuery } from './DnsServer';
-import type { InFlightPacket } from '../types/packets';
-import type { NetworkTopology } from '../types/topology';
+
+/** Extract DNS payload from an InFlightPacket, or null. */
+function extractDns(pkt: InFlightPacket | null) {
+  if (!pkt) return null;
+  const l4 = pkt.frame.payload.payload;
+  if (isUdpDatagram(l4) && isDnsMessage(l4.payload)) return l4.payload;
+  return null;
+}
 
 const TOPOLOGY: NetworkTopology = {
   nodes: [
@@ -36,7 +45,7 @@ describe('DnsServer', () => {
   it('returns a response when the A record exists', () => {
     const query = buildDnsQuery('client-1', 'web.example.com', TOPOLOGY, new Map())!;
     const response = handleDnsQuery(query, TOPOLOGY);
-    const payload = response ? ((response.frame.payload.payload as InFlightPacket['frame']['payload']['payload'] & { payload: unknown }).payload as any) : null;
+    const payload = extractDns(response ?? null);
 
     expect(response).not.toBeNull();
     expect(payload?.answers[0]?.address).toBe('192.168.1.10');

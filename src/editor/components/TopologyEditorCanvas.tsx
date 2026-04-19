@@ -40,8 +40,7 @@ function EditorCanvasInner({
   initialEdges,
   highlightEdgeId,
 }: EditorCanvasInnerProps) {
-  const { addEdge, deleteNode, deleteEdge, updateNodePositions } =
-    useTopologyEditorContext();
+  const { addEdge, deleteNode, deleteEdge, updateNodePositions } = useTopologyEditorContext();
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -68,8 +67,8 @@ function EditorCanvasInner({
       edges.map((edge) => {
         const validationEdge = withValidationEdgeType(edge);
         const validationResult = validateEditorConnection(
-          nodes as NetlabNode[],
-          (edges as NetlabEdge[]).filter((candidate) => candidate.id !== edge.id),
+          nodes,
+          edges.filter((candidate) => candidate.id !== edge.id),
           edge.source,
           edge.target,
           edge.sourceHandle,
@@ -108,8 +107,8 @@ function EditorCanvasInner({
   const isConnectionValid = useCallback(
     (connection: Connection | NetlabEdge) =>
       validateEditorConnection(
-        nodes as NetlabNode[],
-        edges as NetlabEdge[],
+        nodes,
+        edges,
         connection.source ?? '',
         connection.target ?? '',
         connection.sourceHandle,
@@ -138,9 +137,7 @@ function EditorCanvasInner({
 
   const onNodeDragStop: OnNodeDrag = useCallback(
     (_event, _node, allNodes) => {
-      updateNodePositions(
-        allNodes.map((n) => ({ id: n.id, position: n.position })),
-      );
+      updateNodePositions(allNodes.map((n) => ({ id: n.id, position: n.position })));
     },
     [updateNodePositions],
   );

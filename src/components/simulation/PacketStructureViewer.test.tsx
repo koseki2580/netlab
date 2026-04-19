@@ -94,10 +94,7 @@ describe('PacketStructureViewer', () => {
       simulationMock.state.selectedPacket = { frame: {} };
       serializerMock.serializePacket.mockReturnValue(
         makeSerialized({
-          bytes: Uint8Array.from([
-            ...Array.from({ length: 512 }, () => 0x00),
-            0xff,
-          ]),
+          bytes: Uint8Array.from([...Array.from({ length: 512 }, () => 0x00), 0xff]),
           annotations: Array.from({ length: 513 }, () => 'raw'),
           fields: [
             {
@@ -120,10 +117,7 @@ describe('PacketStructureViewer', () => {
       simulationMock.state.selectedPacket = { frame: {} };
       serializerMock.serializePacket.mockReturnValue(
         makeSerialized({
-          bytes: Uint8Array.from([
-            ...Array.from({ length: 512 }, () => 0x00),
-            0x01,
-          ]),
+          bytes: Uint8Array.from([...Array.from({ length: 512 }, () => 0x00), 0x01]),
           annotations: Array.from({ length: 513 }, () => 'raw'),
           fields: [
             {
@@ -221,9 +215,9 @@ describe('PacketStructureViewer', () => {
 
       const html = renderViewer();
 
-      expect((html.match(/L2 Ethernet/g) ?? [])).toHaveLength(1);
-      expect((html.match(/L3 IPv4/g) ?? [])).toHaveLength(1);
-      expect((html.match(/L4 TCP\/UDP/g) ?? [])).toHaveLength(1);
+      expect(html.match(/L2 Ethernet/g) ?? []).toHaveLength(1);
+      expect(html.match(/L3 IPv4/g) ?? []).toHaveLength(1);
+      expect(html.match(/L4 TCP\/UDP/g) ?? []).toHaveLength(1);
     });
 
     it('renders no badges when no annotations are present', () => {

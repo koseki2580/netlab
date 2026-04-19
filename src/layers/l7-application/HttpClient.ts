@@ -1,19 +1,13 @@
-import type { DataTransferController } from "../../simulation/DataTransferController";
-import type { SessionTracker } from "../../simulation/SessionTracker";
-import type { FailureState } from "../../types/failure";
-import type { HttpMessage } from "../../types/packets";
-import type {
-  TcpEventSink,
-  TcpOrchestrator,
-} from "../l4-transport/TcpOrchestrator";
-import { generateEphemeralPort } from "../l4-transport/udpPacketBuilder";
-import {
-  buildHttpRequest,
-  serializeHttp,
-  type BuildHttpRequestOptions,
-} from "./httpPacketBuilder";
-import { parseHttp } from "./httpParser";
-import type { HttpServer } from "./HttpServer";
+import { NetlabError } from '../../errors';
+import type { DataTransferController } from '../../simulation/DataTransferController';
+import type { SessionTracker } from '../../simulation/SessionTracker';
+import type { FailureState } from '../../types/failure';
+import type { HttpMessage } from '../../types/packets';
+import type { TcpEventSink, TcpOrchestrator } from '../l4-transport/TcpOrchestrator';
+import { generateEphemeralPort } from '../l4-transport/udpPacketBuilder';
+import { buildHttpRequest, serializeHttp, type BuildHttpRequestOptions } from './httpPacketBuilder';
+import { parseHttp } from './httpParser';
+import type { HttpServer } from './HttpServer';
 
 export interface HttpClientDeps {
   orchestrator: TcpOrchestrator;
@@ -49,8 +43,8 @@ export class HttpClient {
     this.deps.sessionTracker.startSession(sessionId, {
       srcNodeId,
       dstNodeId,
-      protocol: "HTTP",
-      requestType: httpReq.method ?? "GET",
+      protocol: 'HTTP',
+      requestType: httpReq.method ?? 'GET',
     });
 
     // 3. TCP handshake
@@ -69,52 +63,47 @@ export class HttpClient {
     );
 
     if (!handshakeResult.success || !handshakeResult.connection) {
-      throw new Error(
-        `TCP handshake failed: ${handshakeResult.failureReason ?? "unknown"}`,
-      );
+      throw new NetlabError({
+        code: 'protocol/handshake-failed',
+        message: `TCP handshake failed: ${handshakeResult.failureReason ?? 'unknown'}`,
+        context: { reason: handshakeResult.failureReason },
+      });
     }
 
     // 4. Send request bytes (client → server)
-    await this.deps.dataController.startTransfer(
-      srcNodeId,
-      dstNodeId,
-      reqBytes,
-      {
-        srcPort: ephPort,
-        dstPort,
-      },
-    );
+    await this.deps.dataController.startTransfer(srcNodeId, dstNodeId, reqBytes, {
+      srcPort: ephPort,
+      dstPort,
+    });
 
     // 5. Server processes request → response
     const httpResp = await server.handleRequest(httpReq);
     const respBytes = serializeHttp(httpResp);
 
     // 6. Send response bytes (server → client)
-    await this.deps.dataController.startTransfer(
-      dstNodeId,
-      srcNodeId,
-      respBytes,
-      {
-        srcPort: dstPort,
-        dstPort: ephPort,
-      },
-    );
+    await this.deps.dataController.startTransfer(dstNodeId, srcNodeId, respBytes, {
+      srcPort: dstPort,
+      dstPort: ephPort,
+    });
 
     // 7. Parse response from serialized bytes
     const parseResult = parseHttp(respBytes);
-    if (parseResult.kind === "error") {
-      throw new Error(`HTTP parse error: ${parseResult.reason}`);
+    if (parseResult.kind === 'error') {
+      throw new NetlabError({
+        code: 'protocol/invalid-response',
+        message: `HTTP parse error: ${parseResult.reason}`,
+        context: { reason: parseResult.reason },
+      });
     }
-    if (parseResult.kind === "incomplete") {
-      throw new Error("HTTP response incomplete");
+    if (parseResult.kind === 'incomplete') {
+      throw new NetlabError({
+        code: 'protocol/invalid-response',
+        message: 'HTTP response incomplete',
+      });
     }
 
     // 8. TCP teardown
-    await this.deps.orchestrator.teardown(
-      handshakeResult.connection,
-      sink,
-      options.failureState,
-    );
+    await this.deps.orchestrator.teardown(handshakeResult.connection, sink, options.failureState);
 
     // 9. Return parsed response
     return parseResult.message;

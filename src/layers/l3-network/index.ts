@@ -9,8 +9,7 @@ registerLayerPlugin({
     router: RouterNode,
   },
   deviceRoles: ['router'],
-  forwarder: (nodeId: string, topology: NetworkTopology) =>
-    new RouterForwarder(nodeId, topology),
+  forwarder: (nodeId: string, topology: NetworkTopology) => new RouterForwarder(nodeId, topology),
 });
 
 export { RouterForwarder } from './RouterForwarder';

@@ -36,7 +36,8 @@ function makePipeline(topology: NetworkTopology): ForwardingPipeline {
   const pipeline = new ForwardingPipeline(topology, hookEngine, traceRecorder, services);
 
   services.setPacketSender({
-    precompute: (packet, failureState, options) => pipeline.precompute(packet, failureState, options),
+    precompute: (packet, failureState, options) =>
+      pipeline.precompute(packet, failureState, options),
     findNode: (nodeId) => pipeline.findNode(nodeId) ?? undefined,
     getNeighbors: (
       nodeId,
@@ -117,7 +118,7 @@ describe('Reassembler', () => {
     const reassembler = new Reassembler();
     const fragments = fragment(makeTcpPacket(4000), 1500, 1234);
 
-    expect(reassembler.accept(fragments[0]!)).toBeNull();
+    expect(reassembler.accept(fragments[0])).toBeNull();
   });
 
   it('returns the reconstituted packet after the last fragment', () => {
@@ -125,10 +126,10 @@ describe('Reassembler', () => {
     const original = makeTcpPacket(4000);
     const fragments = fragment(original, 1500, 1234);
 
-    reassembler.accept(fragments[0]!);
-    reassembler.accept(fragments[1]!);
+    reassembler.accept(fragments[0]);
+    reassembler.accept(fragments[1]);
 
-    expect(reassembler.accept(fragments[2]!)).toEqual({
+    expect(reassembler.accept(fragments[2])).toEqual({
       ...original,
       identification: 1234,
       flags: { df: false, mf: false },
@@ -142,9 +143,9 @@ describe('Reassembler', () => {
     const original = makeTcpPacket(4000);
     const fragments = fragment(original, 1500, 1234);
 
-    expect(reassembler.accept(fragments[2]!)).toBeNull();
-    expect(reassembler.accept(fragments[0]!)).toBeNull();
-    expect(reassembler.accept(fragments[1]!)).toEqual({
+    expect(reassembler.accept(fragments[2])).toBeNull();
+    expect(reassembler.accept(fragments[0])).toBeNull();
+    expect(reassembler.accept(fragments[1])).toEqual({
       ...original,
       identification: 1234,
       flags: { df: false, mf: false },
@@ -156,12 +157,16 @@ describe('Reassembler', () => {
   it('handles two independent fragment sets in parallel', () => {
     const reassembler = new Reassembler();
     const first = fragment(makeTcpPacket(1500), 1000, 1111);
-    const second = fragment(makeTcpPacket(1500, { srcIp: '10.0.0.20', dstIp: '203.0.113.20' }), 1000, 2222);
+    const second = fragment(
+      makeTcpPacket(1500, { srcIp: '10.0.0.20', dstIp: '203.0.113.20' }),
+      1000,
+      2222,
+    );
 
-    expect(reassembler.accept(first[0]!)).toBeNull();
-    expect(reassembler.accept(second[0]!)).toBeNull();
-    expect(reassembler.accept(first[1]!)?.identification).toBe(1111);
-    expect(reassembler.accept(second[1]!)?.identification).toBe(2222);
+    expect(reassembler.accept(first[0])).toBeNull();
+    expect(reassembler.accept(second[0])).toBeNull();
+    expect(reassembler.accept(first[1])?.identification).toBe(1111);
+    expect(reassembler.accept(second[1])?.identification).toBe(2222);
   });
 
   it('passes through a non-fragmented packet unchanged', () => {
@@ -174,9 +179,9 @@ describe('Reassembler', () => {
   it('clear(key) evicts pending entries', () => {
     const reassembler = new Reassembler();
     const fragments = fragment(makeTcpPacket(4000), 1500, 1234);
-    const key = `${fragments[0]!.srcIp}|${fragments[0]!.dstIp}|1234|${fragments[0]!.protocol}`;
+    const key = `${fragments[0].srcIp}|${fragments[0].dstIp}|1234|${fragments[0].protocol}`;
 
-    reassembler.accept(fragments[0]!);
+    reassembler.accept(fragments[0]);
     expect(reassembler.size()).toBe(1);
     reassembler.clear(key);
     expect(reassembler.size()).toBe(0);
@@ -188,7 +193,7 @@ describe('ForwardingPipeline — reassembly integration', () => {
     const pipeline = makePipeline(withEdgeMtu(multiHopTopology(), 'e2', 1000));
     const result = await pipeline.precompute(makeLargePacket(1500));
     const finalDeliver = result.trace.hops.find((hop) => hop.action === 'reassembly-complete')!;
-    const finalSnapshot = result.snapshots[finalDeliver.step]!;
+    const finalSnapshot = result.snapshots[finalDeliver.step];
 
     expect(finalSnapshot.frame.payload.payload.layer).toBe('L4');
   });
@@ -196,8 +201,8 @@ describe('ForwardingPipeline — reassembly integration', () => {
   it('the reconstituted packet has flags.mf=false, fragmentOffset=0, totalLength restored', async () => {
     const pipeline = makePipeline(withEdgeMtu(multiHopTopology(), 'e2', 1000));
     const result = await pipeline.precompute(makeLargePacket(1500));
-    const finalDeliver = result.trace.hops[result.trace.hops.length - 1]!;
-    const finalSnapshot = result.snapshots[finalDeliver.step]!;
+    const finalDeliver = result.trace.hops[result.trace.hops.length - 1];
+    const finalSnapshot = result.snapshots[finalDeliver.step];
 
     expect(finalSnapshot.frame.payload.flags).toEqual({ df: false, mf: false });
     expect(finalSnapshot.frame.payload.fragmentOffset).toBe(0);
@@ -231,8 +236,8 @@ describe('ForwardingPipeline — reassembly integration', () => {
     const pipeline = makePipeline(withEdgeMtu(multiHopTopology(), 'e2', 1000));
     const original = makeLargePacket(1500);
     const result = await pipeline.precompute(original);
-    const finalDeliver = result.trace.hops[result.trace.hops.length - 1]!;
-    const finalSnapshot = result.snapshots[finalDeliver.step]!;
+    const finalDeliver = result.trace.hops[result.trace.hops.length - 1];
+    const finalSnapshot = result.snapshots[finalDeliver.step];
 
     expect(buildTransportBytes(finalSnapshot.frame.payload.payload)).toEqual(
       buildTransportBytes(original.frame.payload.payload),

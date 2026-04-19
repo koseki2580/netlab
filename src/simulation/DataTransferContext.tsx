@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { NetlabError } from '../errors';
 import type {
   DataTransferState,
   ReassemblyState,
@@ -46,7 +47,9 @@ export function DataTransferProvider({ children }: DataTransferProviderProps) {
     () => new DataTransferController(engine, sessionTracker ?? undefined),
     [engine, sessionTracker],
   );
-  const [controllerState, setControllerState] = useState<DataTransferState>(() => controller.getState());
+  const [controllerState, setControllerState] = useState<DataTransferState>(() =>
+    controller.getState(),
+  );
   const [selectedTransferId, setSelectedTransferId] = useState<string | null>(null);
   const effectiveSelectedTransferId = selectedTransferId ?? controllerState.selectedTransferId;
 
@@ -124,17 +127,16 @@ export function DataTransferProvider({ children }: DataTransferProviderProps) {
     ],
   );
 
-  return (
-    <DataTransferContext.Provider value={value}>
-      {children}
-    </DataTransferContext.Provider>
-  );
+  return <DataTransferContext.Provider value={value}>{children}</DataTransferContext.Provider>;
 }
 
 export function useDataTransfer(): DataTransferContextValue {
   const context = useContext(DataTransferContext);
   if (!context) {
-    throw new Error('[netlab] useDataTransfer must be used within <DataTransferProvider>');
+    throw new NetlabError({
+      code: 'config/missing-provider',
+      message: '[netlab] useDataTransfer must be used within <DataTransferProvider>',
+    });
   }
   return context;
 }

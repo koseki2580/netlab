@@ -152,7 +152,8 @@ vi.mock('@xyflow/react', async () => {
     useEdgesState,
     addEdge,
     BaseEdge: () => null,
-    EdgeLabelRenderer: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children),
+    EdgeLabelRenderer: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
     getSmoothStepPath: () => ['M0 0', 0, 0],
     applyNodeChanges,
     applyEdgeChanges,
@@ -240,7 +241,9 @@ function currentReactFlowProps(): MockReactFlowProps {
   return reactFlowState.latestProps;
 }
 
-function makeFailureContextValue(overrides: Partial<FailureContextValue> = {}): FailureContextValue {
+function makeFailureContextValue(
+  overrides: Partial<FailureContextValue> = {},
+): FailureContextValue {
   return {
     failureState: EMPTY_FAILURE_STATE,
     toggleNode: vi.fn(),
@@ -307,10 +310,7 @@ describe('NetlabProvider controlled/uncontrolled inputs', () => {
   it('captures defaultTopology once when topology is omitted', () => {
     const initial = makeTopology();
     const next = makeTopology({
-      nodes: [
-        { ...initial.nodes[0], position: { x: 400, y: 120 } },
-        initial.nodes[1],
-      ],
+      nodes: [{ ...initial.nodes[0], position: { x: 400, y: 120 } }, initial.nodes[1]],
     });
 
     const view = render(
@@ -495,10 +495,7 @@ describe('NetlabCanvas controlled topology API', () => {
   it('re-syncs local React Flow state when topology changes in controlled mode', () => {
     const initial = makeTopology();
     const updated = makeTopology({
-      nodes: [
-        { ...initial.nodes[0], position: { x: 320, y: 200 } },
-        initial.nodes[1],
-      ],
+      nodes: [{ ...initial.nodes[0], position: { x: 320, y: 200 } }, initial.nodes[1]],
     });
 
     const view = render(
@@ -521,10 +518,7 @@ describe('NetlabCanvas controlled topology API', () => {
   it('does not re-sync local React Flow state when callbacks are absent', () => {
     const initial = makeTopology();
     const updated = makeTopology({
-      nodes: [
-        { ...initial.nodes[0], position: { x: 320, y: 200 } },
-        initial.nodes[1],
-      ],
+      nodes: [{ ...initial.nodes[0], position: { x: 320, y: 200 } }, initial.nodes[1]],
     });
 
     const view = render(

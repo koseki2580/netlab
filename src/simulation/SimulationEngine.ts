@@ -1,34 +1,24 @@
-import type { HookEngine } from "../hooks/HookEngine";
-import type {
-  TcpHandshakeResult,
-  TcpTeardownResult,
-} from "../layers/l4-transport/TcpOrchestrator";
-import { EMPTY_FAILURE_STATE, type FailureState } from "../types/failure";
-import type { HttpMessage, InFlightPacket, IpPacket } from "../types/packets";
-import type { DhcpLeaseState, DnsCache } from "../types/services";
-import type {
-  PacketHop,
-  PacketTrace,
-  SimulationState,
-} from "../types/simulation";
-import type { TcpConnection } from "../types/tcp";
-import type { NetworkTopology } from "../types/topology";
-import type { TransferMessage } from "../types/transfer";
-import type { UdpBindings } from "../types/udp";
-import { extractHostname, isIpAddress } from "../utils/network";
-import {
-  DataTransferController,
-  type DataTransferOptions,
-} from "./DataTransferController";
-import { ForwardingPipeline } from "./ForwardingPipeline";
-import { PathMtuCache } from "./PathMtuCache";
-import { parseIcmpFragNeeded } from "./pmtudParser";
-import { ServiceOrchestrator } from "./ServiceOrchestrator";
-import { TraceRecorder } from "./TraceRecorder";
+import type { HookEngine } from '../hooks/HookEngine';
+import type { TcpHandshakeResult, TcpTeardownResult } from '../layers/l4-transport/TcpOrchestrator';
+import { EMPTY_FAILURE_STATE, type FailureState } from '../types/failure';
+import type { HttpMessage, InFlightPacket, IpPacket } from '../types/packets';
+import type { DhcpLeaseState, DnsCache } from '../types/services';
+import type { PacketHop, PacketTrace, SimulationState } from '../types/simulation';
+import type { TcpConnection } from '../types/tcp';
+import type { NetworkTopology } from '../types/topology';
+import type { TransferMessage } from '../types/transfer';
+import type { UdpBindings } from '../types/udp';
+import { extractHostname, isIpAddress } from '../utils/network';
+import { DataTransferController, type DataTransferOptions } from './DataTransferController';
+import { ForwardingPipeline } from './ForwardingPipeline';
+import { PathMtuCache } from './PathMtuCache';
+import { parseIcmpFragNeeded } from './pmtudParser';
+import { ServiceOrchestrator } from './ServiceOrchestrator';
+import { TraceRecorder } from './TraceRecorder';
 
 const DEFAULT_PLAY_INTERVAL_MS = 500;
 const INITIAL_STATE: SimulationState = {
-  status: "idle",
+  status: 'idle',
   traces: [],
   currentTraceId: null,
   currentStep: -1,
@@ -41,13 +31,9 @@ const INITIAL_STATE: SimulationState = {
 };
 
 function isHttpPayload(
-  payload: IpPacket["payload"],
-): payload is IpPacket["payload"] & { payload: HttpMessage } {
-  return (
-    "seq" in payload &&
-    payload.payload.layer === "L7" &&
-    "headers" in payload.payload
-  );
+  payload: IpPacket['payload'],
+): payload is IpPacket['payload'] & { payload: HttpMessage } {
+  return 'seq' in payload && payload.payload.layer === 'L7' && 'headers' in payload.payload;
 }
 
 export class SimulationEngine {
@@ -69,21 +55,13 @@ export class SimulationEngine {
   ) {
     this.traceRecorder = new TraceRecorder();
     this.services = new ServiceOrchestrator(topology, hookEngine);
-    this.pipeline = new ForwardingPipeline(
-      topology,
-      hookEngine,
-      this.traceRecorder,
-      this.services,
-    );
+    this.pipeline = new ForwardingPipeline(topology, hookEngine, this.traceRecorder, this.services);
     this.services.setPacketSender({
       precompute: (packet, failureState, options) =>
         this.pipeline.precompute(packet, failureState, options),
       findNode: (nodeId) => this.pipeline.findNode(nodeId) ?? undefined,
-      getNeighbors: (
-        nodeId,
-        excludeNodeId = null,
-        failureState = EMPTY_FAILURE_STATE,
-      ) => this.pipeline.getNeighbors(nodeId, excludeNodeId, failureState),
+      getNeighbors: (nodeId, excludeNodeId = null, failureState = EMPTY_FAILURE_STATE) =>
+        this.pipeline.getNeighbors(nodeId, excludeNodeId, failureState),
     });
   }
 
@@ -104,25 +82,15 @@ export class SimulationEngine {
     return trace;
   }
 
-  async ping(
-    srcNodeId: string,
-    dstIp: string,
-    options?: { ttl?: number },
-  ): Promise<PacketTrace> {
+  async ping(srcNodeId: string, dstIp: string, options?: { ttl?: number }): Promise<PacketTrace> {
     const result = await this.pipeline.ping(srcNodeId, dstIp, options);
     this.commitTrace(result.trace, result.nodeArpTables);
     return result.trace;
   }
 
-  async traceroute(
-    srcNodeId: string,
-    dstIp: string,
-    maxHops = 30,
-  ): Promise<PacketTrace[]> {
+  async traceroute(srcNodeId: string, dstIp: string, maxHops = 30): Promise<PacketTrace[]> {
     const results = await this.pipeline.traceroute(srcNodeId, dstIp, maxHops);
-    results.forEach((result) =>
-      this.commitTrace(result.trace, result.nodeArpTables),
-    );
+    results.forEach((result) => this.commitTrace(result.trace, result.nodeArpTables));
     return results.map((result) => result.trace);
   }
 
@@ -134,8 +102,7 @@ export class SimulationEngine {
     return this.services.simulateDhcp(
       clientNodeId,
       {
-        appendTrace: (trace, nodeArpTables = {}) =>
-          this.commitTrace(trace, nodeArpTables),
+        appendTrace: (trace, nodeArpTables = {}) => this.commitTrace(trace, nodeArpTables),
         notify: () => this.notify(),
       },
       failureState,
@@ -153,8 +120,7 @@ export class SimulationEngine {
       clientNodeId,
       hostname,
       {
-        appendTrace: (trace, nodeArpTables = {}) =>
-          this.commitTrace(trace, nodeArpTables),
+        appendTrace: (trace, nodeArpTables = {}) => this.commitTrace(trace, nodeArpTables),
         notify: () => this.notify(),
       },
       failureState,
@@ -176,8 +142,7 @@ export class SimulationEngine {
       srcPort,
       dstPort,
       {
-        appendTrace: (trace, nodeArpTables = {}) =>
-          this.commitTrace(trace, nodeArpTables),
+        appendTrace: (trace, nodeArpTables = {}) => this.commitTrace(trace, nodeArpTables),
         notify: () => this.notify(),
       },
       failureState,
@@ -192,8 +157,7 @@ export class SimulationEngine {
     return this.services.simulateTcpDisconnect(
       connectionId,
       {
-        appendTrace: (trace, nodeArpTables = {}) =>
-          this.commitTrace(trace, nodeArpTables),
+        appendTrace: (trace, nodeArpTables = {}) => this.commitTrace(trace, nodeArpTables),
         notify: () => this.notify(),
       },
       failureState,
@@ -210,15 +174,10 @@ export class SimulationEngine {
       this.transferController = new DataTransferController(this);
     }
 
-    return this.transferController.startTransfer(
-      srcNodeId,
-      dstNodeId,
-      payload,
-      {
-        ...options,
-        pmtuLookup: options?.pmtuLookup ?? this.pmtuLookup.bind(this),
-      },
-    );
+    return this.transferController.startTransfer(srcNodeId, dstNodeId, payload, {
+      ...options,
+      pmtuLookup: options?.pmtuLookup ?? this.pmtuLookup.bind(this),
+    });
   }
 
   async send(
@@ -228,16 +187,10 @@ export class SimulationEngine {
     this.clearPlay();
     this.lastPacket = packet;
     this.lastFailureState = failureState;
-    const preparedPacket = await this.preparePacketForSend(
-      packet,
-      failureState,
-    );
+    const preparedPacket = await this.preparePacketForSend(packet, failureState);
     if (!preparedPacket) return;
 
-    const { trace, nodeArpTables } = await this.pipeline.precompute(
-      preparedPacket,
-      failureState,
-    );
+    const { trace, nodeArpTables } = await this.pipeline.precompute(preparedPacket, failureState);
     this.commitTrace(trace, nodeArpTables);
   }
 
@@ -292,7 +245,7 @@ export class SimulationEngine {
 
   step(): void {
     const trace = this.currentTrace();
-    if (!trace || this.state.status === "done") return;
+    if (!trace || this.state.status === 'done') return;
 
     const nextStep = this.state.currentStep + 1;
     if (nextStep >= trace.hops.length) return;
@@ -308,7 +261,7 @@ export class SimulationEngine {
       activeEdgeIds: hop.activeEdgeId ? [hop.activeEdgeId] : [],
       selectedHop: hop,
       selectedPacket: packetAtStep,
-      status: isDone ? "done" : this.state.status,
+      status: isDone ? 'done' : this.state.status,
     };
     this.notify();
 
@@ -323,7 +276,7 @@ export class SimulationEngine {
 
   setPlayInterval(ms: number): void {
     this.playIntervalMs = Math.max(50, Math.min(5000, ms));
-    if (this.state.status === "running") {
+    if (this.state.status === 'running') {
       this.clearPlay();
       this.playTimer = setInterval(() => this.step(), this.playIntervalMs);
     }
@@ -335,18 +288,18 @@ export class SimulationEngine {
   }
 
   play(ms?: number): void {
-    if (this.state.status === "done" || this.state.status === "running") return;
+    if (this.state.status === 'done' || this.state.status === 'running') return;
     const interval = ms ?? this.playIntervalMs;
-    this.state = { ...this.state, status: "running" };
+    this.state = { ...this.state, status: 'running' };
     this.notify();
     this.playTimer = setInterval(() => this.step(), interval);
   }
 
   pause(): void {
-    const wasRunning = this.state.status === "running";
+    const wasRunning = this.state.status === 'running';
     this.clearPlay();
     if (wasRunning) {
-      this.state = { ...this.state, status: "paused" };
+      this.state = { ...this.state, status: 'paused' };
       this.notify();
     }
   }
@@ -356,7 +309,7 @@ export class SimulationEngine {
     this.services.resetProcessors();
     this.state = {
       ...this.state,
-      status: this.state.currentTraceId ? "paused" : "idle",
+      status: this.state.currentTraceId ? 'paused' : 'idle',
       currentStep: -1,
       activeEdgeIds: [],
       selectedHop: null,
@@ -386,7 +339,7 @@ export class SimulationEngine {
     this.lastFailureState = EMPTY_FAILURE_STATE;
     this.state = {
       ...this.state,
-      status: "idle",
+      status: 'idle',
       traces: [],
       currentTraceId: null,
       currentStep: -1,
@@ -399,15 +352,13 @@ export class SimulationEngine {
   }
 
   selectTrace(packetId: string): void {
-    const trace = this.state.traces.find(
-      (candidate) => candidate.packetId === packetId,
-    );
+    const trace = this.state.traces.find((candidate) => candidate.packetId === packetId);
     if (!trace) return;
 
     this.clearPlay();
     this.state = {
       ...this.state,
-      status: "paused",
+      status: 'paused',
       currentTraceId: trace.packetId,
       currentStep: -1,
       activeEdgeIds: [],
@@ -423,8 +374,7 @@ export class SimulationEngine {
     const hop = trace.hops[step];
     if (!hop) return;
 
-    const packetAtStep =
-      this.traceRecorder.getSnapshots(trace.packetId)[step] ?? null;
+    const packetAtStep = this.traceRecorder.getSnapshots(trace.packetId)[step] ?? null;
     this.state = {
       ...this.state,
       selectedHop: hop,
@@ -450,24 +400,24 @@ export class SimulationEngine {
     const node = this.topology.nodes.find((n) => n.id === nodeId);
     if (!node) return null;
     const role = node.data.role;
-    if (role !== "client" && role !== "server") return null;
+    if (role !== 'client' && role !== 'server') return null;
 
     const ip =
       this.services.getRuntimeNodeIp(nodeId) ??
-      (typeof node.data.ip === "string" ? node.data.ip : "0.0.0.0");
-    const listening: UdpBindings["listening"] = [];
-    const ephemeral: UdpBindings["ephemeral"] = [];
+      (typeof node.data.ip === 'string' ? node.data.ip : '0.0.0.0');
+    const listening: UdpBindings['listening'] = [];
+    const ephemeral: UdpBindings['ephemeral'] = [];
 
     if (node.data.dhcpServer) {
-      listening.push({ ip, port: 67, owner: "dhcp-server" });
+      listening.push({ ip, port: 67, owner: 'dhcp-server' });
     }
     if (node.data.dnsServer) {
-      listening.push({ ip, port: 53, owner: "dns" });
+      listening.push({ ip, port: 53, owner: 'dns' });
     }
     // DHCP client nodes listen on port 68
     const lease = this.services.getDhcpLeaseState(nodeId);
-    if (lease && (role === "client" || role === "server")) {
-      listening.push({ ip, port: 68, owner: "dhcp-client" });
+    if (lease && (role === 'client' || role === 'server')) {
+      listening.push({ ip, port: 68, owner: 'dhcp-client' });
     }
 
     return { listening, ephemeral };
@@ -499,9 +449,7 @@ export class SimulationEngine {
     multicastMac: string,
     portId: string,
   ): void {
-    this.services
-      .getMulticastTable(switchId)
-      ?.addMembership(vlanId, multicastMac, portId);
+    this.services.getMulticastTable(switchId)?.addMembership(vlanId, multicastMac, portId);
   }
 
   removeMulticastMembership(
@@ -510,9 +458,7 @@ export class SimulationEngine {
     multicastMac: string,
     portId: string,
   ): void {
-    this.services
-      .getMulticastTable(switchId)
-      ?.removeMembership(vlanId, multicastMac, portId);
+    this.services.getMulticastTable(switchId)?.removeMembership(vlanId, multicastMac, portId);
   }
 
   addJoinedGroup(nodeId: string, group: string): void {
@@ -563,10 +509,7 @@ export class SimulationEngine {
     this.notify();
   }
 
-  private commitSyntheticDropTrace(
-    packet: InFlightPacket,
-    reason: string,
-  ): void {
+  private commitSyntheticDropTrace(packet: InFlightPacket, reason: string): void {
     const sourceNode = this.pipeline.findNode(packet.srcNodeId);
     const trace = this.traceRecorder.emitDropTrace(
       packet,
@@ -589,13 +532,9 @@ export class SimulationEngine {
       sourceNode?.data.dhcpClient?.enabled &&
       this.services.getRuntimeNodeIp(sourceNode.id) === null
     ) {
-      const bound = await this.simulateDhcp(
-        sourceNode.id,
-        failureState,
-        sessionId,
-      );
+      const bound = await this.simulateDhcp(sourceNode.id, failureState, sessionId);
       if (!bound) {
-        this.commitSyntheticDropTrace(workingPacket, "dhcp-assignment-failed");
+        this.commitSyntheticDropTrace(workingPacket, 'dhcp-assignment-failed');
         return null;
       }
     }
@@ -618,7 +557,7 @@ export class SimulationEngine {
           sessionId,
         );
         if (!resolvedIp) {
-          this.commitSyntheticDropTrace(workingPacket, "dns-resolution-failed");
+          this.commitSyntheticDropTrace(workingPacket, 'dns-resolution-failed');
           return null;
         }
         workingPacket = this.pipeline.withPacketIps(workingPacket, {
@@ -634,7 +573,7 @@ export class SimulationEngine {
     const snapshots = this.traceRecorder.getSnapshots(trace.packetId);
 
     trace.hops.forEach((hop, index) => {
-      if (hop.event !== "deliver") {
+      if (hop.event !== 'deliver') {
         return;
       }
 
@@ -650,78 +589,69 @@ export class SimulationEngine {
       }
 
       const arrivalNode = this.findNodeByIp(ipPacket.dstIp);
-      if (!arrivalNode || arrivalNode.data.role === "router") {
+      if (!arrivalNode || arrivalNode.data.role === 'router') {
         return;
       }
 
-      this.getPathMtuCache(arrivalNode.id).update(
-        signal.originalDstIp,
-        signal.nextHopMtu,
-      );
+      this.getPathMtuCache(arrivalNode.id).update(signal.originalDstIp, signal.nextHopMtu);
     });
   }
 
   private findNodeByIp(ip: string) {
     return (
       this.topology.nodes.find((node) => {
-        if (typeof node.data.ip === "string" && node.data.ip === ip) {
+        if (typeof node.data.ip === 'string' && node.data.ip === ip) {
           return true;
         }
 
-        return (node.data.interfaces ?? []).some(
-          (iface) => iface.ipAddress === ip,
-        );
+        return (node.data.interfaces ?? []).some((iface) => iface.ipAddress === ip);
       }) ?? null
     );
   }
 
   private currentTrace(): PacketTrace | null {
     if (!this.state.currentTraceId) return null;
-    return (
-      this.state.traces.find(
-        (trace) => trace.packetId === this.state.currentTraceId,
-      ) ?? null
-    );
+    return this.state.traces.find((trace) => trace.packetId === this.state.currentTraceId) ?? null;
   }
 
   private emitHookForHop(hop: PacketHop, packet: InFlightPacket): void {
     switch (hop.event) {
-      case "create":
-        void this.hookEngine.emit("packet:create", {
+      case 'create':
+        void this.hookEngine.emit('packet:create', {
           packet,
           sourceNodeId: hop.nodeId,
         });
         break;
-      case "forward":
-        void this.hookEngine.emit("packet:forward", {
+      case 'forward':
+        void this.hookEngine.emit('packet:forward', {
           packet,
           fromNodeId: hop.fromNodeId ?? hop.nodeId,
-          toNodeId: hop.toNodeId ?? "",
+          toNodeId: hop.toNodeId ?? '',
           decision: {
-            action: "forward",
-            nextNodeId: hop.toNodeId ?? "",
-            edgeId: hop.activeEdgeId ?? "",
-            egressPort: hop.egressInterfaceId ?? hop.activeEdgeId ?? "",
+            action: 'forward',
+            nextNodeId: hop.toNodeId ?? '',
+            edgeId: hop.activeEdgeId ?? '',
+            egressPort: hop.egressInterfaceId ?? hop.activeEdgeId ?? '',
             egressInterfaceId: hop.egressInterfaceId,
             packet,
           },
         });
         break;
-      case "deliver":
-        void this.hookEngine.emit("packet:deliver", {
+      case 'deliver':
+        void this.hookEngine.emit('packet:deliver', {
           packet,
           destinationNodeId: hop.nodeId,
         });
         break;
-      case "drop":
-        void this.hookEngine.emit("packet:drop", {
+      case 'drop':
+        void this.hookEngine.emit('packet:drop', {
           packet,
           nodeId: hop.nodeId,
-          reason: hop.reason ?? "unknown",
+          reason: hop.reason ?? 'unknown',
         });
         break;
-      case "arp-request":
-      case "arp-reply":
+      case 'arp-request':
+      case 'arp-reply':
         break;
     }
   }

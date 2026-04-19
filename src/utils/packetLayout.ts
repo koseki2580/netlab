@@ -9,20 +9,18 @@ import type {
   TcpFlags,
   TcpSegment,
   UdpDatagram,
-} from "../types/packets";
+} from '../types/packets';
 
-export const DEFAULT_ETHERNET_PREAMBLE = [
-  0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xab,
-];
+export const DEFAULT_ETHERNET_PREAMBLE = [0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xab];
 
 const encoder = new TextEncoder();
 
 export function parseMac(mac: string): number[] {
-  return mac.split(":").map((part) => parseInt(part, 16));
+  return mac.split(':').map((part) => parseInt(part, 16));
 }
 
 export function parseIp(ip: string): number[] {
-  return ip.split(".").map(Number);
+  return ip.split('.').map(Number);
 }
 
 export function uint16BE(value: number): [number, number] {
@@ -30,35 +28,21 @@ export function uint16BE(value: number): [number, number] {
 }
 
 export function uint32BE(value: number): [number, number, number, number] {
-  return [
-    (value >>> 24) & 0xff,
-    (value >>> 16) & 0xff,
-    (value >>> 8) & 0xff,
-    value & 0xff,
-  ];
+  return [(value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff];
 }
 
-export function isTcpSegment(
-  payload: IpPacket["payload"],
-): payload is TcpSegment {
-  return "seq" in payload;
+export function isTcpSegment(payload: IpPacket['payload']): payload is TcpSegment {
+  return 'seq' in payload;
 }
 
-export function isIcmpMessage(
-  payload: IpPacket["payload"],
-): payload is IcmpMessage {
-  return "type" in payload && "code" in payload;
+export function isIcmpMessage(payload: IpPacket['payload']): payload is IcmpMessage {
+  return 'type' in payload && 'code' in payload;
 }
 
 export function isRawPayload(
-  payload:
-    | IpPacket["payload"]
-    | HttpMessage
-    | RawPayload
-    | DhcpMessage
-    | DnsMessage,
+  payload: IpPacket['payload'] | HttpMessage | RawPayload | DhcpMessage | DnsMessage,
 ): payload is RawPayload {
-  return payload.layer === "raw";
+  return payload.layer === 'raw';
 }
 
 export function rawStringToBytes(data: string): number[] {
@@ -72,7 +56,7 @@ export function rawStringToBytes(data: string): number[] {
 }
 
 export function bytesToRawString(bytes: readonly number[]): string {
-  let result = "";
+  let result = '';
 
   for (let index = 0; index < bytes.length; index += 0x8000) {
     result += String.fromCharCode(...bytes.slice(index, index + 0x8000));
@@ -86,14 +70,14 @@ export function formatHttpMessage(message: HttpMessage): string {
 
   let text =
     method !== undefined
-      ? `${method} ${url ?? "/"} HTTP/1.1\r\n`
+      ? `${method} ${url ?? '/'} HTTP/1.1\r\n`
       : `HTTP/1.1 ${statusCode ?? 200} OK\r\n`;
 
   for (const [key, value] of Object.entries(headers)) {
     text += `${key}: ${value}\r\n`;
   }
 
-  text += "\r\n";
+  text += '\r\n';
   if (body) {
     text += body;
   }
@@ -110,14 +94,12 @@ export function formatDhcpMessage(message: DhcpMessage): string {
 
   if (message.offeredIp) parts.push(`offered=${message.offeredIp}`);
   if (message.serverIp) parts.push(`server=${message.serverIp}`);
-  if (message.options.subnetMask)
-    parts.push(`mask=${message.options.subnetMask}`);
+  if (message.options.subnetMask) parts.push(`mask=${message.options.subnetMask}`);
   if (message.options.router) parts.push(`gw=${message.options.router}`);
   if (message.options.dnsServer) parts.push(`dns=${message.options.dnsServer}`);
-  if (message.options.leaseTime != null)
-    parts.push(`lease=${message.options.leaseTime}`);
+  if (message.options.leaseTime != null) parts.push(`lease=${message.options.leaseTime}`);
 
-  return parts.join(" ");
+  return parts.join(' ');
 }
 
 export function formatDnsMessage(message: DnsMessage): string {
@@ -125,10 +107,10 @@ export function formatDnsMessage(message: DnsMessage): string {
   const answer = message.answers[0];
 
   if (!message.isResponse) {
-    return `DNS QUERY ${question?.type ?? "A"} ${question?.name ?? "unknown"}`;
+    return `DNS QUERY ${question?.type ?? 'A'} ${question?.name ?? 'unknown'}`;
   }
 
-  return `DNS RESPONSE ${answer?.name ?? question?.name ?? "unknown"} ${answer?.address ?? "NXDOMAIN"} ttl=${answer?.ttl ?? 0}`;
+  return `DNS RESPONSE ${answer?.name ?? question?.name ?? 'unknown'} ${answer?.address ?? 'NXDOMAIN'} ttl=${answer?.ttl ?? 0}`;
 }
 
 export function buildApplicationPayloadBytes(
@@ -138,11 +120,11 @@ export function buildApplicationPayloadBytes(
     return rawStringToBytes(payload.data);
   }
 
-  if ("messageType" in payload) {
+  if ('messageType' in payload) {
     return Array.from(encoder.encode(formatDhcpMessage(payload)));
   }
 
-  if ("questions" in payload) {
+  if ('questions' in payload) {
     return Array.from(encoder.encode(formatDnsMessage(payload)));
   }
 
@@ -209,7 +191,7 @@ export function buildIcmpMessageBytes(icmp: IcmpMessage): number[] {
   ];
 }
 
-export function buildTransportBytes(payload: IpPacket["payload"]): number[] {
+export function buildTransportBytes(payload: IpPacket['payload']): number[] {
   if (isRawPayload(payload)) {
     return buildApplicationPayloadBytes(payload);
   }
@@ -222,7 +204,7 @@ export function buildTransportBytes(payload: IpPacket["payload"]): number[] {
     return buildIcmpMessageBytes(payload);
   }
 
-  if ("igmpType" in payload) {
+  if ('igmpType' in payload) {
     // IgmpMessage: produce a minimal 8-byte IGMP header representation
     return [0, 0, 0, 0, 0, 0, 0, 0];
   }
@@ -251,10 +233,7 @@ export interface BuildIpv4HeaderOptions {
   checksumOverride?: number;
 }
 
-export function buildIpv4HeaderBytes(
-  ip: IpPacket,
-  options: BuildIpv4HeaderOptions = {},
-): number[] {
+export function buildIpv4HeaderBytes(ip: IpPacket, options: BuildIpv4HeaderOptions = {}): number[] {
   const transportBytes = buildIpv4PayloadBytes(ip);
   const ihl = ip.ihl ?? 5;
   const headerLength = ihl * 4;

@@ -154,10 +154,7 @@ describe('buildRouterAdjacency', () => {
         makeNode('client-1', 'client', 'client'),
         makeNode('switch-1', 'switch', 'switch'),
       ],
-      edges: [
-        makeEdge('e1', 'r1', 'client-1'),
-        makeEdge('e2', 'r1', 'switch-1'),
-      ],
+      edges: [makeEdge('e1', 'r1', 'client-1'), makeEdge('e2', 'r1', 'switch-1')],
     });
 
     expect(buildRouterAdjacency(topology)).toEqual(new Map([['r1', []]]));
@@ -173,10 +170,7 @@ describe('buildRouterAdjacency', () => {
         ]),
         makeRouter('r3', [{ ipAddress: '10.0.23.3', prefixLength: 30 }]),
       ],
-      edges: [
-        makeEdge('e12', 'r1', 'r2'),
-        makeEdge('e23', 'r2', 'r3'),
-      ],
+      edges: [makeEdge('e12', 'r1', 'r2'), makeEdge('e23', 'r2', 'r3')],
     });
 
     const adjacency = buildRouterAdjacency(topology);

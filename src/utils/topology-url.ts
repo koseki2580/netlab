@@ -1,9 +1,4 @@
-import type {
-  NetworkTopology,
-  NetlabNode,
-  NetlabEdge,
-  TopologySnapshot,
-} from '../types/topology';
+import type { NetworkTopology, NetlabNode, NetlabEdge, TopologySnapshot } from '../types/topology';
 import type { NetworkArea } from '../types/areas';
 
 /**
@@ -16,10 +11,7 @@ export function encodeTopology(topology: TopologySnapshot): string {
     edges: topology.edges,
     areas: topology.areas,
   });
-  const b64 = btoa(json)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+  const b64 = btoa(json).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   return `?topo=${b64}`;
 }
 

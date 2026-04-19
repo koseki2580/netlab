@@ -7,14 +7,8 @@ registerLayerPlugin({
   deviceRoles: [],
 });
 
-export {
-  TcpStateMachine,
-  describeTransition,
-  transition,
-} from './TcpStateMachine';
-export {
-  TcpOrchestrator,
-} from './TcpOrchestrator';
+export { TcpStateMachine, describeTransition, transition } from './TcpStateMachine';
+export { TcpOrchestrator } from './TcpOrchestrator';
 export type {
   TcpHandshakeResult,
   TcpPacketSender,

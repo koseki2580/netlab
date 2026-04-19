@@ -76,10 +76,7 @@ export function TopologyEditor({
   className,
 }: TopologyEditorProps) {
   return (
-    <TopologyEditorProvider
-      initialTopology={initialTopology}
-      onTopologyChange={onTopologyChange}
-    >
+    <TopologyEditorProvider initialTopology={initialTopology} onTopologyChange={onTopologyChange}>
       <NetlabThemeScope
         style={{
           display: 'flex',

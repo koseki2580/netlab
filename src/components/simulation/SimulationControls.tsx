@@ -1,16 +1,16 @@
 import type React from 'react';
 import { useSimulation } from '../../simulation/SimulationContext';
-import { useNetlabContext } from '../NetlabContext';
 import type { InFlightPacket } from '../../types/packets';
 import type { NetworkTopology } from '../../types/topology';
+import { useNetlabContext } from '../NetlabContext';
 
 function buildDefaultPacket(topology: NetworkTopology): InFlightPacket | null {
   const client = topology.nodes.find((n) => n.data.role === 'client');
   const server = topology.nodes.find((n) => n.data.role === 'server');
   if (!client || !server) return null;
 
-  const srcIp = (client.data.ip as string | undefined) ?? '0.0.0.0';
-  const dstIp = (server.data.ip as string | undefined) ?? '0.0.0.0';
+  const srcIp = client.data.ip ?? '0.0.0.0';
+  const dstIp = server.data.ip ?? '0.0.0.0';
 
   const packet: InFlightPacket = {
     id: `pkt-${Date.now()}`,
@@ -57,9 +57,22 @@ const BTN: React.CSSProperties = {
   transition: 'opacity 0.15s',
 };
 
-const BTN_PRIMARY: React.CSSProperties = { ...BTN, background: 'var(--netlab-accent-blue)', color: '#fff' };
-const BTN_SECONDARY: React.CSSProperties = { ...BTN, background: 'var(--netlab-border)', color: 'var(--netlab-text-primary)' };
-const BTN_DISABLED: React.CSSProperties = { ...BTN, background: 'var(--netlab-bg-surface)', color: 'var(--netlab-text-faint)', cursor: 'not-allowed' };
+const BTN_PRIMARY: React.CSSProperties = {
+  ...BTN,
+  background: 'var(--netlab-accent-blue)',
+  color: '#fff',
+};
+const BTN_SECONDARY: React.CSSProperties = {
+  ...BTN,
+  background: 'var(--netlab-border)',
+  color: 'var(--netlab-text-primary)',
+};
+const BTN_DISABLED: React.CSSProperties = {
+  ...BTN,
+  background: 'var(--netlab-bg-surface)',
+  color: 'var(--netlab-text-faint)',
+  cursor: 'not-allowed',
+};
 
 export function SimulationControls() {
   const { topology } = useNetlabContext();
@@ -94,6 +107,8 @@ export function SimulationControls() {
       <button
         onClick={handleSend}
         style={BTN_PRIMARY}
+        aria-label="Send Packet"
+        className="netlab-focus-ring"
       >
         ▶ Send Packet
       </button>
@@ -104,6 +119,8 @@ export function SimulationControls() {
         onClick={() => engine.play()}
         disabled={playDisabled}
         style={playDisabled ? BTN_DISABLED : BTN_SECONDARY}
+        aria-label="Play"
+        className="netlab-focus-ring"
       >
         ▶ Play
       </button>
@@ -111,6 +128,8 @@ export function SimulationControls() {
         onClick={() => engine.pause()}
         disabled={pauseDisabled}
         style={pauseDisabled ? BTN_DISABLED : BTN_SECONDARY}
+        aria-label="Pause"
+        className="netlab-focus-ring"
       >
         ⏸ Pause
       </button>
@@ -118,6 +137,8 @@ export function SimulationControls() {
         onClick={() => engine.step()}
         disabled={stepDisabled}
         style={stepDisabled ? BTN_DISABLED : BTN_SECONDARY}
+        aria-label="Step Forward"
+        className="netlab-focus-ring"
       >
         → Step
       </button>
@@ -125,11 +146,20 @@ export function SimulationControls() {
         onClick={() => engine.reset()}
         disabled={resetDisabled}
         style={resetDisabled ? BTN_DISABLED : BTN_SECONDARY}
+        aria-label="Reset"
+        className="netlab-focus-ring"
       >
         ⟳ Reset
       </button>
 
-      <div style={{ marginLeft: 'auto', fontFamily: 'monospace', fontSize: 11, color: 'var(--netlab-text-muted)' }}>
+      <div
+        style={{
+          marginLeft: 'auto',
+          fontFamily: 'monospace',
+          fontSize: 11,
+          color: 'var(--netlab-text-muted)',
+        }}
+      >
         {status === 'idle' && 'Click "Send Packet" to begin'}
         {status === 'paused' && state.currentStep === -1 && 'Loaded — press Step or Play'}
         {status === 'paused' && state.currentStep >= 0 && `Paused — hop ${state.currentStep + 1}`}

@@ -1,5 +1,6 @@
-import { useNetlabContext } from '../NetlabContext';
+import { memo } from 'react';
 import { useSimulation } from '../../simulation/SimulationContext';
+import { useNetlabContext } from '../NetlabContext';
 
 const STATUS_META = {
   delivered: { label: 'delivered', color: '#34d399' },
@@ -7,7 +8,7 @@ const STATUS_META = {
   'in-flight': { label: 'in-progress', color: '#94a3b8' },
 } as const;
 
-export function TraceSummary() {
+export const TraceSummary = memo(function TraceSummary() {
   const { topology } = useNetlabContext();
   const { state } = useSimulation();
   const trace = state.traces.find((item) => item.packetId === state.currentTraceId);
@@ -18,7 +19,7 @@ export function TraceSummary() {
 
   const dstNode = topology.nodes.find((node) => node.id === trace.dstNodeId);
   const dstLabel = dstNode?.data.label ?? trace.dstNodeId;
-  const dstIp = (dstNode?.data.ip as string | undefined) ?? trace.hops[trace.hops.length - 1]?.dstIp ?? 'unknown';
+  const dstIp = dstNode?.data.ip ?? trace.hops[trace.hops.length - 1]?.dstIp ?? 'unknown';
   const status = STATUS_META[trace.status] ?? STATUS_META['in-flight'];
 
   return (
@@ -44,7 +45,9 @@ export function TraceSummary() {
         TRACE SUMMARY
       </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', fontSize: 12 }}>
+      <div
+        style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', fontSize: 12 }}
+      >
         <span style={{ color: 'var(--netlab-text-secondary)' }}>
           Hops:{' '}
           <span style={{ color: 'var(--netlab-text-primary)', fontWeight: 'bold' }}>
@@ -68,11 +71,9 @@ export function TraceSummary() {
 
       <div style={{ marginTop: 8, fontSize: 12, color: 'var(--netlab-text-secondary)' }}>
         Dst:{' '}
-        <span style={{ color: 'var(--netlab-text-primary)', fontWeight: 'bold' }}>
-          {dstLabel}
-        </span>{' '}
+        <span style={{ color: 'var(--netlab-text-primary)', fontWeight: 'bold' }}>{dstLabel}</span>{' '}
         <span style={{ color: 'var(--netlab-text-muted)' }}>({dstIp})</span>
       </div>
     </div>
   );
-}
+});

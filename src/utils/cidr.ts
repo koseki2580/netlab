@@ -3,12 +3,9 @@ function ipToInt(ip: string): number {
 }
 
 function intToIp(value: number): string {
-  return [
-    (value >>> 24) & 0xff,
-    (value >>> 16) & 0xff,
-    (value >>> 8) & 0xff,
-    value & 0xff,
-  ].join('.');
+  return [(value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff].join(
+    '.',
+  );
 }
 
 function networkAddress(ip: string, prefix: number): string {
@@ -38,7 +35,9 @@ export function isInSameSubnet(cidr1: string, cidr2: string): boolean {
     return false;
   }
 
-  return networkAddress(first.prefix, first.length) === networkAddress(second.prefix, second.length);
+  return (
+    networkAddress(first.prefix, first.length) === networkAddress(second.prefix, second.length)
+  );
 }
 
 export function prefixLength(cidr: string): number {

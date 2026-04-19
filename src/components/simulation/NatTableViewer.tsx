@@ -1,8 +1,8 @@
-import { useContext } from 'react';
-import { NetlabUIContext } from '../NetlabUIContext';
-import { useNetlabContext } from '../NetlabContext';
+import { memo, useContext } from 'react';
 import { useSimulation } from '../../simulation/SimulationContext';
 import type { NatTable } from '../../types/nat';
+import { useNetlabContext } from '../NetlabContext';
+import { NetlabUIContext } from '../NetlabUIContext';
 
 const PANEL_STYLE: React.CSSProperties = {
   display: 'flex',
@@ -18,31 +18,31 @@ const PANEL_STYLE: React.CSSProperties = {
 
 function isNatCapableRouter(
   routerId: string,
-  nodes: Array<{ id: string; data: { role: string; interfaces?: Array<{ nat?: 'inside' | 'outside' }> } }>,
+  nodes: { id: string; data: { role: string; interfaces?: { nat?: 'inside' | 'outside' }[] } }[],
 ): boolean {
   const node = nodes.find((candidate) => candidate.id === routerId);
-  if (!node || node.data.role !== 'router') return false;
+  if (node?.data.role !== 'router') return false;
   const interfaces = node.data.interfaces ?? [];
-  return interfaces.some((iface) => iface.nat === 'inside') && interfaces.some((iface) => iface.nat === 'outside');
+  return (
+    interfaces.some((iface) => iface.nat === 'inside') &&
+    interfaces.some((iface) => iface.nat === 'outside')
+  );
 }
 
 function resolveNodeLabel(
   nodeId: string | undefined,
-  nodes: Array<{ id: string; data: { label: string } }>,
+  nodes: { id: string; data: { label: string } }[],
 ): string {
   if (!nodeId) return 'Router';
   return nodes.find((node) => node.id === nodeId)?.data.label ?? nodeId;
 }
 
-function resolvePreferredTable(
-  natTables: NatTable[],
-  routerId: string | null,
-): NatTable | null {
+function resolvePreferredTable(natTables: NatTable[], routerId: string | null): NatTable | null {
   if (!routerId) return null;
   return natTables.find((table) => table.routerId === routerId) ?? { routerId, entries: [] };
 }
 
-export function NatTableViewer() {
+export const NatTableViewer = memo(function NatTableViewer() {
   const { topology } = useNetlabContext();
   const { state } = useSimulation();
   const ui = useContext(NetlabUIContext);
@@ -103,11 +103,14 @@ export function NatTableViewer() {
           No active NAT entries
         </div>
       ) : (
-        <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8, minHeight: 0 }}>
+        <div
+          style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8, minHeight: 0 }}
+        >
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: '72px minmax(150px, 1.2fr) minmax(150px, 1.2fr) minmax(150px, 1.2fr) 72px',
+              gridTemplateColumns:
+                '72px minmax(150px, 1.2fr) minmax(150px, 1.2fr) minmax(150px, 1.2fr) 72px',
               gap: 8,
               color: 'var(--netlab-text-secondary)',
               fontSize: 10,
@@ -127,7 +130,8 @@ export function NatTableViewer() {
               key={entry.id}
               style={{
                 display: 'grid',
-                gridTemplateColumns: '72px minmax(150px, 1.2fr) minmax(150px, 1.2fr) minmax(150px, 1.2fr) 72px',
+                gridTemplateColumns:
+                  '72px minmax(150px, 1.2fr) minmax(150px, 1.2fr) minmax(150px, 1.2fr) 72px',
                 gap: 8,
                 padding: '8px 0',
                 borderTop: '1px solid var(--netlab-border-subtle)',
@@ -136,9 +140,15 @@ export function NatTableViewer() {
               }}
             >
               <span>{entry.proto.toUpperCase()}</span>
-              <span>{entry.insideLocalIp}:{entry.insideLocalPort}</span>
-              <span>{entry.insideGlobalIp}:{entry.insideGlobalPort}</span>
-              <span>{entry.outsidePeerIp}:{entry.outsidePeerPort}</span>
+              <span>
+                {entry.insideLocalIp}:{entry.insideLocalPort}
+              </span>
+              <span>
+                {entry.insideGlobalIp}:{entry.insideGlobalPort}
+              </span>
+              <span>
+                {entry.outsidePeerIp}:{entry.outsidePeerPort}
+              </span>
               <span>{entry.type.toUpperCase()}</span>
             </div>
           ))}
@@ -146,4 +156,4 @@ export function NatTableViewer() {
       )}
     </div>
   );
-}
+});

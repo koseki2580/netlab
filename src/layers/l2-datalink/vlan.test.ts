@@ -98,7 +98,9 @@ describe('vlan', () => {
 
   describe('resolveIngressVlan', () => {
     it('access port + untagged frame → accessVlan', () => {
-      expect(resolveIngressVlan(makePort({ vlanMode: 'access', accessVlan: 10 }), makeFrame())).toBe(10);
+      expect(
+        resolveIngressVlan(makePort({ vlanMode: 'access', accessVlan: 10 }), makeFrame()),
+      ).toBe(10);
     });
 
     it('access port (accessVlan=10) + untagged → 10', () => {
@@ -106,15 +108,24 @@ describe('vlan', () => {
     });
 
     it('access port + tagged frame → null (drop)', () => {
-      expect(resolveIngressVlan(makePort({ accessVlan: 10 }), tagFrame(makeFrame(), 10))).toBeNull();
+      expect(
+        resolveIngressVlan(makePort({ accessVlan: 10 }), tagFrame(makeFrame(), 10)),
+      ).toBeNull();
     });
 
     it('access port with no accessVlan set → DEFAULT_VLAN_ID', () => {
-      expect(resolveIngressVlan(makePort({ vlanMode: 'access' }), makeFrame())).toBe(DEFAULT_VLAN_ID);
+      expect(resolveIngressVlan(makePort({ vlanMode: 'access' }), makeFrame())).toBe(
+        DEFAULT_VLAN_ID,
+      );
     });
 
     it('trunk port + untagged frame → nativeVlan (default 1)', () => {
-      expect(resolveIngressVlan(makePort({ vlanMode: 'trunk', trunkAllowedVlans: [10, 20] }), makeFrame())).toBe(DEFAULT_VLAN_ID);
+      expect(
+        resolveIngressVlan(
+          makePort({ vlanMode: 'trunk', trunkAllowedVlans: [10, 20] }),
+          makeFrame(),
+        ),
+      ).toBe(DEFAULT_VLAN_ID);
     });
 
     it('trunk port + tagged allowed VID → that VID', () => {
@@ -168,7 +179,9 @@ describe('vlan', () => {
     it('access egress strips tag', () => {
       const tagged = tagFrame(makeFrame(), 10);
 
-      expect(prepareEgressFrame(tagged, makePort({ vlanMode: 'access', accessVlan: 10 }), 10).vlanTag).toBeUndefined();
+      expect(
+        prepareEgressFrame(tagged, makePort({ vlanMode: 'access', accessVlan: 10 }), 10).vlanTag,
+      ).toBeUndefined();
       expect(tagged.vlanTag?.vid).toBe(10);
     });
 

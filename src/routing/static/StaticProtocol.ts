@@ -1,9 +1,4 @@
-import {
-  ADMIN_DISTANCES,
-  type RoutingProtocol,
-  type RouteEntry,
-  type StaticRouteConfig,
-} from '../../types/routing';
+import { ADMIN_DISTANCES, type RouteEntry, type RoutingProtocol } from '../../types/routing';
 import type { NetworkTopology } from '../../types/topology';
 
 export class StaticProtocol implements RoutingProtocol {
@@ -16,7 +11,7 @@ export class StaticProtocol implements RoutingProtocol {
     for (const node of topology.nodes) {
       if (node.data.role !== 'router') continue;
 
-      const staticRoutes = (node.data.staticRoutes ?? []) as StaticRouteConfig[];
+      const staticRoutes = node.data.staticRoutes ?? [];
       for (const r of staticRoutes) {
         entries.push({
           destination: r.destination,

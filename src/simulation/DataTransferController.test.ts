@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { HookEngine } from '../hooks/HookEngine';
+import type { HookEngine } from '../hooks/HookEngine';
 import { RouterForwarder } from '../layers/l3-network/RouterForwarder';
 import { SwitchForwarder } from '../layers/l2-datalink/SwitchForwarder';
 import { layerRegistry } from '../registry/LayerRegistry';
@@ -58,12 +58,9 @@ describe('DataTransferController', () => {
     const engine = makeEngine(singleRouterTopology());
     const controller = new DataTransferController(engine);
 
-    const transfer = await controller.startTransfer(
-      'client-1',
-      'server-1',
-      'hello from netlab',
-      { chunkDelay: 0 },
-    );
+    const transfer = await controller.startTransfer('client-1', 'server-1', 'hello from netlab', {
+      chunkDelay: 0,
+    });
 
     const chunks = controller.getChunks(transfer.messageId);
     const reassembly = controller.getReassembly(transfer.messageId);
@@ -80,12 +77,10 @@ describe('DataTransferController', () => {
     const engine = makeEngine(singleRouterTopology());
     const controller = new DataTransferController(engine);
 
-    const transfer = await controller.startTransfer(
-      'client-1',
-      'server-1',
-      'a'.repeat(4200),
-      { chunkSize: 1400, chunkDelay: 0 },
-    );
+    const transfer = await controller.startTransfer('client-1', 'server-1', 'a'.repeat(4200), {
+      chunkSize: 1400,
+      chunkDelay: 0,
+    });
 
     expect(transfer.expectedChunks).toBe(3);
     expect(controller.getChunks(transfer.messageId)).toHaveLength(3);
@@ -96,12 +91,10 @@ describe('DataTransferController', () => {
     const controller = new DataTransferController(engine);
     const payload = 'netlab-transfer-'.repeat(300);
 
-    const transfer = await controller.startTransfer(
-      'client-1',
-      'server-1',
-      payload,
-      { chunkSize: 1400, chunkDelay: 0 },
-    );
+    const transfer = await controller.startTransfer('client-1', 'server-1', payload, {
+      chunkSize: 1400,
+      chunkDelay: 0,
+    });
 
     const reassembly = controller.getReassembly(transfer.messageId);
 
@@ -131,12 +124,11 @@ describe('DataTransferController', () => {
       }
     });
 
-    const transfer = await controller.startTransfer(
-      'client-1',
-      'server-1',
-      'b'.repeat(4200),
-      { chunkSize: 1400, chunkDelay: 0, failureState },
-    );
+    const transfer = await controller.startTransfer('client-1', 'server-1', 'b'.repeat(4200), {
+      chunkSize: 1400,
+      chunkDelay: 0,
+      failureState,
+    });
 
     const chunks = controller.getChunks(transfer.messageId);
     const reassembly = controller.getReassembly(transfer.messageId);
@@ -171,33 +163,30 @@ describe('DataTransferController', () => {
       snapshots.push(state);
     });
 
-    const transfer = await controller.startTransfer(
-      'client-1',
-      'server-1',
-      'payload',
-      { chunkDelay: 0 },
-    );
+    const transfer = await controller.startTransfer('client-1', 'server-1', 'payload', {
+      chunkDelay: 0,
+    });
 
     unsubscribe();
 
     expect(snapshots.length).toBeGreaterThan(0);
-    expect(
-      snapshots[snapshots.length - 1]?.transfers.get(transfer.messageId)?.status,
-    ).toBe('delivered');
+    expect(snapshots[snapshots.length - 1]?.transfers.get(transfer.messageId)?.status).toBe(
+      'delivered',
+    );
   });
 
   it('getChunks returns chunks in sequence order', async () => {
     const engine = makeEngine(singleRouterTopology());
     const controller = new DataTransferController(engine);
 
-    const transfer = await controller.startTransfer(
-      'client-1',
-      'server-1',
-      'c'.repeat(4200),
-      { chunkSize: 1400, chunkDelay: 0 },
-    );
+    const transfer = await controller.startTransfer('client-1', 'server-1', 'c'.repeat(4200), {
+      chunkSize: 1400,
+      chunkDelay: 0,
+    });
 
-    expect(controller.getChunks(transfer.messageId).map((chunk) => chunk.sequenceNumber)).toEqual([0, 1, 2]);
+    expect(controller.getChunks(transfer.messageId).map((chunk) => chunk.sequenceNumber)).toEqual([
+      0, 1, 2,
+    ]);
   });
 
   it('chunk traceId links to PacketTrace', async () => {
@@ -223,12 +212,10 @@ describe('DataTransferController', () => {
     const engine = makeEngine(singleRouterTopology());
     const controller = new DataTransferController(engine);
 
-    const transfer = await controller.startTransfer(
-      'client-1',
-      'server-1',
-      's'.repeat(4200),
-      { chunkSize: 1400, chunkDelay: 0 },
-    );
+    const transfer = await controller.startTransfer('client-1', 'server-1', 's'.repeat(4200), {
+      chunkSize: 1400,
+      chunkDelay: 0,
+    });
 
     expect(transfer.sessionIds).toBeUndefined();
     expect(controller.getTransfer(transfer.messageId)?.sessionIds).toBeUndefined();
@@ -239,12 +226,10 @@ describe('DataTransferController', () => {
     const tracker = makeSessionTracker(engine);
     const controller = new DataTransferController(engine, tracker);
 
-    const transfer = await controller.startTransfer(
-      'client-1',
-      'server-1',
-      's'.repeat(4200),
-      { chunkSize: 1400, chunkDelay: 0 },
-    );
+    const transfer = await controller.startTransfer('client-1', 'server-1', 's'.repeat(4200), {
+      chunkSize: 1400,
+      chunkDelay: 0,
+    });
 
     expect(transfer.sessionIds).toHaveLength(transfer.expectedChunks);
     expect(new Set(transfer.sessionIds ?? []).size).toBe(transfer.expectedChunks);
@@ -296,15 +281,14 @@ describe('DataTransferController', () => {
     const engine = makeEngine(dataTransferDemoTopology());
     const controller = new DataTransferController(engine);
 
-    const transfer = await controller.startTransfer(
-      'server-a',
-      'server-b',
-      'hop-visualization',
-      { chunkDelay: 0 },
-    );
+    const transfer = await controller.startTransfer('server-a', 'server-b', 'hop-visualization', {
+      chunkDelay: 0,
+    });
 
     const chunk = controller.getChunks(transfer.messageId)[0];
-    const trace = engine.getState().traces.find((candidate) => candidate.packetId === chunk.traceId);
+    const trace = engine
+      .getState()
+      .traces.find((candidate) => candidate.packetId === chunk.traceId);
 
     expect(trace?.hops.map((hop) => hop.ttl)).toEqual([64, 64, 63, 62]);
     expect(trace?.hops.map((hop) => hop.srcIp)).toEqual([
@@ -336,15 +320,14 @@ describe('DataTransferController', () => {
     const engine = makeEngine(dataTransferDemoTopology());
     const controller = new DataTransferController(engine);
 
-    const transfer = await controller.startTransfer(
-      'server-a',
-      'server-b',
-      'field-highlights',
-      { chunkDelay: 0 },
-    );
+    const transfer = await controller.startTransfer('server-a', 'server-b', 'field-highlights', {
+      chunkDelay: 0,
+    });
 
     const chunk = controller.getChunks(transfer.messageId)[0];
-    const trace = engine.getState().traces.find((candidate) => candidate.packetId === chunk.traceId);
+    const trace = engine
+      .getState()
+      .traces.find((candidate) => candidate.packetId === chunk.traceId);
 
     expect(trace?.hops[1].changedFields).toEqual([
       'TTL',
@@ -413,12 +396,9 @@ describe('DataTransferController', () => {
     });
     const controller = new DataTransferController(engine);
 
-    const transfer = await controller.startTransfer(
-      'client-1',
-      'server-1',
-      'fallback-mac',
-      { chunkDelay: 0 },
-    );
+    const transfer = await controller.startTransfer('client-1', 'server-1', 'fallback-mac', {
+      chunkDelay: 0,
+    });
 
     const chunk = controller.getChunks(transfer.messageId)[0];
     const createPacket = packetSnapshotAtTraceStep(engine, chunk.traceId!, 0);
@@ -446,12 +426,11 @@ describe('DataTransferController', () => {
       }
     });
 
-    const transfer = await controller.startTransfer(
-      'server-a',
-      'server-b',
-      'd'.repeat(4200),
-      { chunkSize: 1400, chunkDelay: 0, failureState },
-    );
+    const transfer = await controller.startTransfer('server-a', 'server-b', 'd'.repeat(4200), {
+      chunkSize: 1400,
+      chunkDelay: 0,
+      failureState,
+    });
 
     const reassembly = controller.getReassembly(transfer.messageId);
 
@@ -492,10 +471,14 @@ describe('DataTransferController', () => {
     );
 
     const chunk = controller.getChunks(transfer.messageId)[0];
-    const trace = engine.getState().traces.find((candidate) => candidate.packetId === chunk.traceId);
+    const trace = engine
+      .getState()
+      .traces.find((candidate) => candidate.packetId === chunk.traceId);
 
     expect(trace).toBeDefined();
-    expect(trace?.hops.every((hop) => typeof hop.srcMac === 'string' && typeof hop.dstMac === 'string')).toBe(true);
+    expect(
+      trace?.hops.every((hop) => typeof hop.srcMac === 'string' && typeof hop.dstMac === 'string'),
+    ).toBe(true);
     expect(trace?.hops[0].srcMac).toBe('aa:bb:cc:00:01:10');
     expect(trace?.hops[trace.hops.length - 1].dstMac).toBe('aa:bb:cc:00:03:10');
   });
@@ -512,8 +495,11 @@ describe('DataTransferController', () => {
     );
 
     const chunk = controller.getChunks(transfer.messageId)[0];
-    const trace = engine.getState().traces.find((candidate) => candidate.packetId === chunk.traceId);
-    const nonArpHops = trace?.hops.filter((hop) => hop.event !== 'arp-request' && hop.event !== 'arp-reply') ?? [];
+    const trace = engine
+      .getState()
+      .traces.find((candidate) => candidate.packetId === chunk.traceId);
+    const nonArpHops =
+      trace?.hops.filter((hop) => hop.event !== 'arp-request' && hop.event !== 'arp-reply') ?? [];
     const macPairs = nonArpHops.map((hop) => `${hop.srcMac}->${hop.dstMac}`);
 
     expect(new Set(nonArpHops.map((hop) => hop.srcIp))).toEqual(new Set(['10.0.1.10']));
@@ -543,18 +529,21 @@ describe('DataTransferController', () => {
       }
     });
 
-    const transfer = await controller.startTransfer(
-      'client-1',
-      'server-1',
-      'x'.repeat(4200),
-      { chunkSize: 1400, chunkDelay: 0, failureState },
-    );
+    const transfer = await controller.startTransfer('client-1', 'server-1', 'x'.repeat(4200), {
+      chunkSize: 1400,
+      chunkDelay: 0,
+      failureState,
+    });
     const chunks = controller.getChunks(transfer.messageId);
     const droppedChunks = chunks.filter((chunk) => chunk.state === 'dropped');
 
     expect(droppedChunks.length).toBeGreaterThan(0);
     expect(['partial', 'failed']).toContain(transfer.status);
-    expect(droppedChunks.every((chunk) => Number.isInteger(chunk.sequenceNumber) && chunk.sequenceNumber >= 0)).toBe(true);
+    expect(
+      droppedChunks.every(
+        (chunk) => Number.isInteger(chunk.sequenceNumber) && chunk.sequenceNumber >= 0,
+      ),
+    ).toBe(true);
     expect(
       droppedChunks.every((chunk) => {
         const trace = chunk.traceId
@@ -609,12 +598,9 @@ describe('DataTransferController', () => {
     const controller = new DataTransferController(engine);
     const payload = 'preview-segment-'.repeat(12);
 
-    const transfer = await controller.startTransfer(
-      'client-1',
-      'server-1',
-      payload,
-      { chunkDelay: 0 },
-    );
+    const transfer = await controller.startTransfer('client-1', 'server-1', payload, {
+      chunkDelay: 0,
+    });
 
     expect(transfer.payloadPreview).toContain('preview-segment-preview-segment');
     expect(transfer.payloadData).toBe(payload);

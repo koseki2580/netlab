@@ -30,8 +30,22 @@ const TOPOLOGY: NetworkTopology = {
         role: 'router',
         layerId: 'l3',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00', nat: 'inside' },
-          { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:01:00:01', nat: 'outside' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:00',
+            nat: 'inside',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '203.0.113.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:01',
+            nat: 'outside',
+          },
         ],
       },
     },
@@ -244,10 +258,7 @@ function renderWithContexts(
 
 describe('Trace Inspector components', () => {
   it('PacketTimeline resolves next-hop labels from topology nodes', () => {
-    const html = renderWithContexts(
-      <PacketTimeline />,
-      makeState({ selectedHop: BASE_HOPS[1] }),
-    );
+    const html = renderWithContexts(<PacketTimeline />, makeState({ selectedHop: BASE_HOPS[1] }));
 
     expect(html).toContain('→ Server');
     expect(html).not.toContain('→ server-1');
@@ -276,10 +287,7 @@ describe('Trace Inspector components', () => {
   });
 
   it('HopInspector renders derived TTL Out and routing explanation for router hops', () => {
-    const html = renderWithContexts(
-      <HopInspector />,
-      makeState({ selectedHop: BASE_HOPS[1] }),
-    );
+    const html = renderWithContexts(<HopInspector />, makeState({ selectedHop: BASE_HOPS[1] }));
 
     expect(html).toContain('Hop 2 / 3');
     expect(html).toContain('TTL Out');
@@ -352,10 +360,7 @@ describe('Trace Inspector components', () => {
       },
     };
 
-    const html = renderWithContexts(
-      <HopInspector />,
-      makeState({ selectedHop: natHop }),
-    );
+    const html = renderWithContexts(<HopInspector />, makeState({ selectedHop: natHop }));
 
     expect(html).toContain('NAT TRANSLATION');
     expect(html).toContain('SNAT');
@@ -384,10 +389,7 @@ describe('Trace Inspector components', () => {
       },
     };
 
-    const html = renderWithContexts(
-      <HopInspector />,
-      makeState({ selectedHop: aclHop }),
-    );
+    const html = renderWithContexts(<HopInspector />, makeState({ selectedHop: aclHop }));
 
     expect(html).toContain('ACL FILTER');
     expect(html).toContain('INBOUND');
@@ -462,20 +464,14 @@ describe('Trace Inspector components', () => {
   });
 
   it('HopInspector omits interface rows when the selected hop has no interface metadata', () => {
-    const html = renderWithContexts(
-      <HopInspector />,
-      makeState({ selectedHop: BASE_HOPS[0] }),
-    );
+    const html = renderWithContexts(<HopInspector />, makeState({ selectedHop: BASE_HOPS[0] }));
 
     expect(html).not.toContain('Ingress If');
     expect(html).not.toContain('Egress If');
   });
 
   it('HopInspector empty state uses the secondary text token for visible copy', () => {
-    const html = renderWithContexts(
-      <HopInspector />,
-      makeState({ selectedHop: null }),
-    );
+    const html = renderWithContexts(<HopInspector />, makeState({ selectedHop: null }));
 
     expect(html).toContain('No hop selected. Click a timeline row to inspect packet details.');
     expect(html).toContain('var(--netlab-text-secondary)');
@@ -510,10 +506,7 @@ describe('Trace Inspector components', () => {
   });
 
   it('HopInspector uses the secondary text token for section headers and routing table headers', () => {
-    const html = renderWithContexts(
-      <HopInspector />,
-      makeState({ selectedHop: BASE_HOPS[1] }),
-    );
+    const html = renderWithContexts(<HopInspector />, makeState({ selectedHop: BASE_HOPS[1] }));
 
     expect(html).toContain('HOP INSPECTOR');
     expect(html).toContain('HOP FIELDS');

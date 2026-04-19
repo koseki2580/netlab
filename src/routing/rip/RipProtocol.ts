@@ -85,8 +85,10 @@ export class RipProtocol implements RoutingProtocol {
           nodeId,
         })),
       )
-      .sort((left, right) =>
-        left.nodeId.localeCompare(right.nodeId) || left.destination.localeCompare(right.destination),
+      .sort(
+        (left, right) =>
+          left.nodeId.localeCompare(right.nodeId) ||
+          left.destination.localeCompare(right.destination),
       );
   }
 }
@@ -100,10 +102,7 @@ function cloneTables(
     Array.from(tables.entries()).map(([nodeId, routeTable]) => [
       nodeId,
       new Map(
-        Array.from(routeTable.entries()).map(([destination, route]) => [
-          destination,
-          { ...route },
-        ]),
+        Array.from(routeTable.entries()).map(([destination, route]) => [destination, { ...route }]),
       ),
     ]),
   );

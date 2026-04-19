@@ -23,11 +23,13 @@ function CaptureSimulation() {
   return null;
 }
 
-function makeFailureState(overrides: {
-  downNodeIds?: string[];
-  downEdgeIds?: string[];
-  downInterfaceIds?: string[];
-} = {}): FailureState {
+function makeFailureState(
+  overrides: {
+    downNodeIds?: string[];
+    downEdgeIds?: string[];
+    downInterfaceIds?: string[];
+  } = {},
+): FailureState {
   return {
     downNodeIds: new Set(overrides.downNodeIds ?? []),
     downEdgeIds: new Set(overrides.downEdgeIds ?? []),
@@ -63,11 +65,7 @@ const actEnvironment = globalThis as typeof globalThis & {
 };
 
 function render(options: RenderOptions = {}) {
-  const {
-    autoRecompute = false,
-    animationSpeed,
-    failureState = EMPTY_FAILURE_STATE,
-  } = options;
+  const { autoRecompute = false, animationSpeed, failureState = EMPTY_FAILURE_STATE } = options;
 
   if (!container) {
     container = document.createElement('div');
@@ -89,10 +87,7 @@ function render(options: RenderOptions = {}) {
         }}
       >
         <FailureContext.Provider value={makeFailureContextValue(failureState)}>
-          <SimulationProvider
-            autoRecompute={autoRecompute}
-            animationSpeed={animationSpeed}
-          >
+          <SimulationProvider autoRecompute={autoRecompute} animationSpeed={animationSpeed}>
             <CaptureSimulation />
           </SimulationProvider>
         </FailureContext.Provider>
@@ -197,7 +192,13 @@ describe('SimulationProvider autoRecompute', () => {
     const initialFailureState = makeFailureState();
     const nextFailureState = makeFailureState({ downEdgeIds: ['e1'] });
     const view = render({ autoRecompute: true, failureState: initialFailureState });
-    const packet = makePacket('ctx-recomputing', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
+    const packet = makePacket(
+      'ctx-recomputing',
+      'client-1',
+      'server-1',
+      '10.0.0.10',
+      '203.0.113.10',
+    );
 
     await act(async () => {
       await currentSimulation().sendPacket(packet);

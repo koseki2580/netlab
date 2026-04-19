@@ -1,6 +1,7 @@
+import { NetlabError } from '../errors';
+import { buildUdpPacket } from '../layers/l4-transport/udpPacketBuilder';
 import type { DhcpMessage, InFlightPacket } from '../types/packets';
 import type { NetworkTopology } from '../types/topology';
-import { buildUdpPacket } from '../layers/l4-transport/udpPacketBuilder';
 import { deriveDeterministicMac } from '../utils/network';
 
 const DHCP_CLIENT_PORT = 68;
@@ -50,7 +51,7 @@ export function buildDiscover(
   if (!client || !server) return null;
 
   const clientMac =
-    (typeof client.data.mac === 'string' && client.data.mac.length > 0)
+    typeof client.data.mac === 'string' && client.data.mac.length > 0
       ? client.data.mac
       : deriveDeterministicMac(client.id);
   const transactionId = Math.floor(Math.random() * 0xffffffff);
@@ -78,8 +79,11 @@ export function handleOffer(
 ): InFlightPacket {
   const client = findNode(topology, clientNodeId);
   const payload = dhcpPayload(offer);
-  if (!client || !payload || !payload.offeredIp || !payload.serverIp) {
-    throw new Error('[netlab] invalid DHCP OFFER packet');
+  if (!client || !payload?.offeredIp || !payload.serverIp) {
+    throw new NetlabError({
+      code: 'protocol/invalid-packet',
+      message: '[netlab] invalid DHCP OFFER packet',
+    });
   }
 
   return createDhcpPacket(
@@ -100,16 +104,14 @@ export function handleOffer(
   );
 }
 
-export function handleAck(
-  ack: InFlightPacket,
-): {
+export function handleAck(ack: InFlightPacket): {
   assignedIp: string;
   subnetMask: string;
   defaultGateway: string;
   dnsServerIp?: string;
 } | null {
   const payload = dhcpPayload(ack);
-  if (!payload || payload.messageType !== 'ACK' || !payload.offeredIp) {
+  if (payload?.messageType !== 'ACK' || !payload.offeredIp) {
     return null;
   }
 

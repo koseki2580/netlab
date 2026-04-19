@@ -1,38 +1,37 @@
-import { useState, useMemo, useCallback, useContext, useEffect } from 'react';
 import {
-  ReactFlow,
+  addEdge,
+  applyEdgeChanges,
+  applyNodeChanges,
   Background,
+  ConnectionMode,
   Controls,
   MiniMap,
-  ConnectionMode,
-  useNodesState,
+  ReactFlow,
   useEdgesState,
-  addEdge,
-  applyNodeChanges,
-  applyEdgeChanges,
-  type NodeTypes,
+  useNodesState,
   type Connection,
   type Edge,
-  type NodeChange,
   type EdgeChange,
+  type NodeChange,
+  type NodeTypes,
   type OnNodeDrag,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
+import { AreaBackground } from '../areas/AreaBackground';
+import { areasToNodes } from '../areas/AreaRegistry';
+import { layerRegistry } from '../registry/LayerRegistry';
+import { useOptionalFailure } from '../simulation/FailureContext';
+import { SimulationContext } from '../simulation/SimulationContext';
+import type { NetlabEdge, NetlabNode, TopologySnapshot } from '../types/topology';
+import { validateConnection as validateCanvasConnection } from '../utils/connectionValidator';
+import type { NetlabColorMode } from '../utils/themeUtils';
 import { useNetlabContext } from './NetlabContext';
-import { NetlabUIContext } from './NetlabUIContext';
 import { NetlabThemeScopeContext } from './NetlabThemeScope';
+import { NetlabUIContext } from './NetlabUIContext';
 import { NodeDetailPanel } from './NodeDetailPanel';
 import { ValidationSmoothStepEdge } from './ValidationEdgeLabel';
-import { layerRegistry } from '../registry/LayerRegistry';
-import { areasToNodes } from '../areas/AreaRegistry';
-import { AreaBackground } from '../areas/AreaBackground';
-import { validateConnection as validateCanvasConnection } from '../utils/connectionValidator';
-import { SimulationContext } from '../simulation/SimulationContext';
-import { useOptionalFailure } from '../simulation/FailureContext';
-import type { NetlabNode, NetlabEdge, TopologySnapshot } from '../types/topology';
-import type { RouterInterface } from '../types/routing';
-import type { NetlabColorMode } from '../utils/themeUtils';
 
 const AREA_NODE_TYPE: NodeTypes = {
   'netlab-area': AreaBackground as NodeTypes[string],
@@ -82,10 +81,13 @@ export function NetlabCanvas({
   // Optional: read failure state for visual styling
   const failureCtx = useOptionalFailure();
 
-  const nodeTypes = useMemo(() => ({
-    ...AREA_NODE_TYPE,
-    ...layerRegistry.getAllNodeTypes(),
-  }), []);
+  const nodeTypes = useMemo(
+    () => ({
+      ...AREA_NODE_TYPE,
+      ...layerRegistry.getAllNodeTypes(),
+    }),
+    [],
+  );
   const edgeTypes = useMemo(
     () => ({
       'validation-smoothstep': ValidationSmoothStepEdge,
@@ -187,8 +189,8 @@ export function NetlabCanvas({
   const isConnectionValid = useCallback(
     (connection: Connection | Edge) =>
       validateCanvasConnection(
-        nodes as NetlabNode[],
-        edges as NetlabEdge[],
+        nodes,
+        edges,
         connection.source ?? '',
         connection.target ?? '',
         connection.sourceHandle,
@@ -200,7 +202,7 @@ export function NetlabCanvas({
   const styledNodes = useMemo(
     () =>
       nodes.map((node) => {
-        const downInterfaceCount = ((node.data.interfaces ?? []) as RouterInterface[]).filter((iface) =>
+        const downInterfaceCount = (node.data.interfaces ?? []).filter((iface) =>
           failureCtx?.isInterfaceDown(node.id, iface.id),
         ).length;
 
@@ -213,9 +215,10 @@ export function NetlabCanvas({
           style: failureCtx?.isNodeDown(node.id)
             ? { ...node.style, opacity: 0.4, filter: 'grayscale(80%)' }
             : node.style,
-          data: downInterfaceCount > 0
-            ? { ...node.data, _downInterfaceCount: downInterfaceCount }
-            : node.data,
+          data:
+            downInterfaceCount > 0
+              ? { ...node.data, _downInterfaceCount: downInterfaceCount }
+              : node.data,
         };
       }),
     [nodes, failureCtx],
@@ -230,19 +233,29 @@ export function NetlabCanvas({
           return {
             ...validationEdge,
             animated: false,
-            style: { ...validationEdge.style, stroke: 'var(--netlab-accent-red)', strokeDasharray: '6 3', strokeWidth: 2, opacity: 0.7 },
+            style: {
+              ...validationEdge.style,
+              stroke: 'var(--netlab-accent-red)',
+              strokeDasharray: '6 3',
+              strokeWidth: 2,
+              opacity: 0.7,
+            },
           };
         }
         if (activeEdgeIds.includes(edge.id)) {
           return {
             ...validationEdge,
             animated: true,
-            style: { ...validationEdge.style, stroke: 'var(--netlab-accent-cyan)', strokeWidth: 2 },
+            style: {
+              ...validationEdge.style,
+              stroke: 'var(--netlab-accent-cyan)',
+              strokeWidth: 2,
+            },
           };
         }
         const validationResult = validateCanvasConnection(
-          nodes as NetlabNode[],
-          (edges as NetlabEdge[]).filter((candidate) => candidate.id !== edge.id),
+          nodes,
+          edges.filter((candidate) => candidate.id !== edge.id),
           edge.source,
           edge.target,
           edge.sourceHandle,
@@ -252,7 +265,10 @@ export function NetlabCanvas({
         if (!validationResult.valid) {
           return {
             ...validationEdge,
-            style: { ...validationEdge.style, stroke: 'var(--netlab-accent-red)' },
+            style: {
+              ...validationEdge.style,
+              stroke: 'var(--netlab-accent-red)',
+            },
             data: { ...validationEdge.data, validationResult },
           };
         }
@@ -260,7 +276,10 @@ export function NetlabCanvas({
         if (validationResult.warnings.length > 0) {
           return {
             ...validationEdge,
-            style: { ...validationEdge.style, stroke: 'var(--netlab-accent-orange, orange)' },
+            style: {
+              ...validationEdge.style,
+              stroke: 'var(--netlab-accent-orange, orange)',
+            },
             data: { ...validationEdge.data, validationResult },
           };
         }
@@ -282,7 +301,15 @@ export function NetlabCanvas({
 
   return (
     <NetlabUIContext.Provider value={uiCtx}>
-      <div style={{ width: '100%', height: '100%', position: 'relative', ...style }} className={className}>
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          position: 'relative',
+          ...style,
+        }}
+        className={className}
+      >
         <ReactFlow
           nodes={styledNodes}
           edges={styledEdges}

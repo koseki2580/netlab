@@ -25,15 +25,17 @@ function hashString(input: string): number {
 }
 
 function makePacketId(prefix: string, options: TcpPacketOptions): string {
-  return `${prefix}-${hashString([
-    options.srcNodeId,
-    options.dstNodeId,
-    String(options.srcPort),
-    String(options.dstPort),
-    String(options.seq),
-    String(options.ack),
-    options.sessionId ?? '',
-  ].join(':')).toString(16)}`;
+  return `${prefix}-${hashString(
+    [
+      options.srcNodeId,
+      options.dstNodeId,
+      String(options.srcPort),
+      String(options.dstPort),
+      String(options.seq),
+      String(options.ack),
+      options.sessionId ?? '',
+    ].join(':'),
+  ).toString(16)}`;
 }
 
 function buildTcpPacket(
@@ -90,35 +92,47 @@ export function buildSynPacket(options: TcpPacketOptions): InFlightPacket {
 }
 
 export function buildSynAckPacket(options: TcpPacketOptions): InFlightPacket {
-  return buildTcpPacket(
-    'tcp-syn-ack',
-    options,
-    { syn: true, ack: true, fin: false, rst: false, psh: false, urg: false },
-  );
+  return buildTcpPacket('tcp-syn-ack', options, {
+    syn: true,
+    ack: true,
+    fin: false,
+    rst: false,
+    psh: false,
+    urg: false,
+  });
 }
 
 export function buildAckPacket(options: TcpPacketOptions): InFlightPacket {
-  return buildTcpPacket(
-    'tcp-ack',
-    options,
-    { syn: false, ack: true, fin: false, rst: false, psh: false, urg: false },
-  );
+  return buildTcpPacket('tcp-ack', options, {
+    syn: false,
+    ack: true,
+    fin: false,
+    rst: false,
+    psh: false,
+    urg: false,
+  });
 }
 
 export function buildFinPacket(options: TcpPacketOptions): InFlightPacket {
-  return buildTcpPacket(
-    'tcp-fin',
-    options,
-    { syn: false, ack: true, fin: true, rst: false, psh: false, urg: false },
-  );
+  return buildTcpPacket('tcp-fin', options, {
+    syn: false,
+    ack: true,
+    fin: true,
+    rst: false,
+    psh: false,
+    urg: false,
+  });
 }
 
 export function buildRstPacket(options: TcpPacketOptions): InFlightPacket {
-  return buildTcpPacket(
-    'tcp-rst',
-    options,
-    { syn: false, ack: false, fin: false, rst: true, psh: false, urg: false },
-  );
+  return buildTcpPacket('tcp-rst', options, {
+    syn: false,
+    ack: false,
+    fin: false,
+    rst: true,
+    psh: false,
+    urg: false,
+  });
 }
 
 export function generateISN(nodeId: string, port: number): number {

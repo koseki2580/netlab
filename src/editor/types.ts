@@ -22,9 +22,9 @@ export interface PositionUpdate {
 
 export interface TopologyEditorState {
   topology: EditorTopology;
-  past: HistoryEntry[];      // most recent last; capped at MAX_HISTORY_SIZE
-  future: HistoryEntry[];    // most recent first (for redo)
-  reactFlowKey: number;      // incremented on undo/redo to force RF remount
+  past: HistoryEntry[]; // most recent last; capped at MAX_HISTORY_SIZE
+  future: HistoryEntry[]; // most recent first (for redo)
+  reactFlowKey: number; // incremented on undo/redo to force RF remount
   selectedNodeId: string | null;
 }
 

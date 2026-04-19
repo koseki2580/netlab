@@ -26,7 +26,7 @@ function HopHeader({ hop, current, total }: HopHeaderProps) {
   const eventColor = EVENT_COLORS[hop.event] ?? '#94a3b8';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <div style={{ fontSize: 11, color: '#475569' }}>
+      <div style={{ fontSize: 11, color: '#94a3b8' }}>
         Hop {current} of {total}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -45,11 +45,9 @@ function HopHeader({ hop, current, total }: HopHeaderProps) {
         >
           {hop.event.toUpperCase()}
         </span>
-        <span style={{ fontSize: 13, fontWeight: 'bold', color: '#f1f5f9' }}>
-          {hop.nodeLabel}
-        </span>
+        <span style={{ fontSize: 13, fontWeight: 'bold', color: '#f1f5f9' }}>{hop.nodeLabel}</span>
       </div>
-      <div style={{ fontSize: 11, color: '#64748b' }}>
+      <div style={{ fontSize: 11, color: '#94a3b8' }}>
         {hop.srcIp} → {hop.dstIp} &nbsp;|&nbsp; TTL {hop.ttl} &nbsp;|&nbsp; {hop.protocol}
       </div>
     </div>
@@ -65,7 +63,7 @@ function RoutingTable({ decision }: RoutingTableProps) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ fontSize: 10, fontWeight: 'bold', letterSpacing: 1, color: '#64748b' }}>
+      <div style={{ fontSize: 10, fontWeight: 'bold', letterSpacing: 1, color: '#94a3b8' }}>
         LPM ROUTING TABLE
       </div>
 
@@ -85,7 +83,7 @@ function RoutingTable({ decision }: RoutingTableProps) {
             gridTemplateColumns: '1fr 1fr 80px 40px 60px 70px',
             padding: '4px 8px',
             background: '#1e293b',
-            color: '#475569',
+            color: '#94a3b8',
             fontWeight: 'bold',
             letterSpacing: 0.5,
             fontSize: 10,
@@ -127,7 +125,7 @@ function RoutingTable({ decision }: RoutingTableProps) {
                 padding: '5px 8px',
                 background: rowBg,
                 borderTop: '1px solid #1e293b',
-                color: c.matched ? '#e2e8f0' : '#475569',
+                color: c.matched ? '#e2e8f0' : '#94a3b8',
                 alignItems: 'center',
               }}
             >
@@ -304,7 +302,7 @@ export function StepControls() {
           fontSize: 10,
           fontWeight: 'bold',
           letterSpacing: 1,
-          color: '#64748b',
+          color: '#94a3b8',
         }}
       >
         STEP-BY-STEP SIMULATION
@@ -313,6 +311,7 @@ export function StepControls() {
       {/* Scrollable accumulated log */}
       <div
         ref={logRef}
+        tabIndex={0}
         style={{
           flex: 1,
           overflowY: 'auto',
@@ -323,10 +322,8 @@ export function StepControls() {
           <TraceSelector />
         </div>
         {revealedHops.length === 0 ? (
-          <div style={{ color: '#334155', fontSize: 12 }}>
-            {status === 'idle'
-              ? 'Send a packet to begin.'
-              : 'Press Next Step to start stepping.'}
+          <div style={{ color: '#94a3b8', fontSize: 12 }}>
+            {status === 'idle' ? 'Send a packet to begin.' : 'Press Next Step to start stepping.'}
           </div>
         ) : (
           revealedHops.map((hop, idx) => (
@@ -389,10 +386,12 @@ export function StepControls() {
             ⟳ Reset
           </button>
         </div>
-        <div style={{ fontSize: 11, color: '#475569', textAlign: 'center' }}>
+        <div style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center' }}>
           {status === 'idle' && 'Send a packet to begin'}
           {status === 'paused' && currentStep === -1 && 'Loaded — press Next Step'}
-          {status === 'paused' && currentStep >= 0 && `Paused at hop ${currentStep + 1} of ${totalHops}`}
+          {status === 'paused' &&
+            currentStep >= 0 &&
+            `Paused at hop ${currentStep + 1} of ${totalHops}`}
           {status === 'running' && `Running — hop ${currentStep + 1}`}
           {status === 'done' && `Complete — ${totalHops} hops`}
         </div>

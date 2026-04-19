@@ -6,9 +6,9 @@ function buildReassemblyKey(fragment: IpPacket): string {
 }
 
 function isFragmentedPacket(packet: IpPacket): boolean {
-  return packet.identification !== undefined && (
-    packet.flags?.mf === true ||
-    (packet.fragmentOffset ?? 0) > 0
+  return (
+    packet.identification !== undefined &&
+    (packet.flags?.mf === true || (packet.fragmentOffset ?? 0) > 0)
   );
 }
 
@@ -37,7 +37,8 @@ export class Reassembler {
     entry.fragments.set(fragment.fragmentOffset ?? 0, fragment);
 
     if (fragment.flags?.mf !== true) {
-      entry.totalBytesExpected = ((fragment.fragmentOffset ?? 0) * 8) + (packetSizeBytes(fragment) - 20);
+      entry.totalBytesExpected =
+        (fragment.fragmentOffset ?? 0) * 8 + (packetSizeBytes(fragment) - 20);
     }
 
     this.buffers.set(key, entry);

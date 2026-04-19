@@ -1,49 +1,37 @@
-import type { HookEngine } from "../hooks/HookEngine";
-import {
-  MulticastTable,
-  type MulticastTableEntry,
-} from "../layers/l2-datalink/MulticastTable";
-import { AclProcessor } from "../layers/l3-network/AclProcessor";
-import { IgmpProcessor } from "../layers/l3-network/IgmpProcessor";
-import { NatProcessor } from "../layers/l3-network/NatProcessor";
-import { TcpConnectionTracker } from "../layers/l4-transport/TcpConnectionTracker";
+import { NetlabError } from '../errors';
+import type { HookEngine } from '../hooks/HookEngine';
+import { MulticastTable, type MulticastTableEntry } from '../layers/l2-datalink/MulticastTable';
+import { AclProcessor } from '../layers/l3-network/AclProcessor';
+import { IgmpProcessor } from '../layers/l3-network/IgmpProcessor';
+import { NatProcessor } from '../layers/l3-network/NatProcessor';
+import { TcpConnectionTracker } from '../layers/l4-transport/TcpConnectionTracker';
 import {
   TcpOrchestrator,
   type TcpHandshakeResult,
   type TcpTeardownResult,
-} from "../layers/l4-transport/TcpOrchestrator";
-import { buildDiscover, handleAck, handleOffer } from "../services/DhcpClient";
-import {
-  handleDiscover,
-  handleRequest,
-  LeaseAllocator,
-} from "../services/DhcpServer";
-import { buildDnsQuery, handleDnsResponse } from "../services/DnsClient";
-import { handleDnsQuery } from "../services/DnsServer";
-import type { ConnTrackTable } from "../types/acl";
-import { EMPTY_FAILURE_STATE, type FailureState } from "../types/failure";
-import type { NatTable } from "../types/nat";
-import type {
-  DhcpMessage,
-  InFlightPacket,
-  UdpDatagram,
-} from "../types/packets";
-import type { DhcpLeaseState, DnsCache } from "../types/services";
-import type { Neighbor, PacketTrace } from "../types/simulation";
-import type { TcpConnection } from "../types/tcp";
-import type { NetlabNode, NetworkTopology } from "../types/topology";
-import type { PrecomputeOptions, PrecomputeResult } from "./types";
+} from '../layers/l4-transport/TcpOrchestrator';
+import { buildDiscover, handleAck, handleOffer } from '../services/DhcpClient';
+import { handleDiscover, handleRequest, LeaseAllocator } from '../services/DhcpServer';
+import { buildDnsQuery, handleDnsResponse } from '../services/DnsClient';
+import { handleDnsQuery } from '../services/DnsServer';
+import type { ConnTrackTable } from '../types/acl';
+import { EMPTY_FAILURE_STATE, type FailureState } from '../types/failure';
+import type { NatTable } from '../types/nat';
+import type { DhcpMessage, InFlightPacket, UdpDatagram } from '../types/packets';
+import type { DhcpLeaseState, DnsCache } from '../types/services';
+import type { Neighbor, PacketTrace } from '../types/simulation';
+import type { TcpConnection } from '../types/tcp';
+import type { NetlabNode, NetworkTopology } from '../types/topology';
+import type { PrecomputeOptions, PrecomputeResult } from './types';
 
 function isUdpDatagram(
-  payload: InFlightPacket["frame"]["payload"]["payload"],
+  payload: InFlightPacket['frame']['payload']['payload'],
 ): payload is UdpDatagram {
-  return "srcPort" in payload && "dstPort" in payload && !("seq" in payload);
+  return 'srcPort' in payload && 'dstPort' in payload && !('seq' in payload);
 }
 
-function isDhcpPayload(
-  payload: UdpDatagram["payload"],
-): payload is DhcpMessage {
-  return payload.layer === "L7" && "messageType" in payload;
+function isDhcpPayload(payload: UdpDatagram['payload']): payload is DhcpMessage {
+  return payload.layer === 'L7' && 'messageType' in payload;
 }
 
 export interface PacketSender {
@@ -61,10 +49,7 @@ export interface PacketSender {
 }
 
 export interface ServiceEventSink {
-  appendTrace(
-    trace: PacketTrace,
-    nodeArpTables?: Record<string, Record<string, string>>,
-  ): void;
+  appendTrace(trace: PacketTrace, nodeArpTables?: Record<string, Record<string, string>>): void;
   notify(): void;
 }
 
@@ -90,41 +75,30 @@ export class ServiceOrchestrator {
   }
 
   serializeNatTables(): NatTable[] {
-    return Array.from(this.natProcessors.values()).map((processor) =>
-      processor.getTable(),
-    );
+    return Array.from(this.natProcessors.values()).map((processor) => processor.getTable());
   }
 
   serializeConnTrackTables(): ConnTrackTable[] {
-    return Array.from(this.aclProcessors.entries()).flatMap(
-      ([routerId, processor]) => {
-        const node = this.findNode(routerId);
-        if (
-          !node ||
-          node.data.role !== "router" ||
-          node.data.statefulFirewall !== true
-        ) {
-          return [];
-        }
-        return [processor.getConnTrackTable()];
-      },
-    );
+    return Array.from(this.aclProcessors.entries()).flatMap(([routerId, processor]) => {
+      const node = this.findNode(routerId);
+      if (!node || node.data.role !== 'router' || node.data.statefulFirewall !== true) {
+        return [];
+      }
+      return [processor.getConnTrackTable()];
+    });
   }
 
   getNatProcessor(routerId: string): NatProcessor | null {
     const node = this.findNode(routerId);
-    if (!node || node.data.role !== "router") return null;
+    if (!node || node.data.role !== 'router') return null;
 
     const interfaces = node.data.interfaces ?? [];
-    const hasInside = interfaces.some((iface) => iface.nat === "inside");
-    const hasOutside = interfaces.some((iface) => iface.nat === "outside");
+    const hasInside = interfaces.some((iface) => iface.nat === 'inside');
+    const hasOutside = interfaces.some((iface) => iface.nat === 'outside');
     if (!hasInside || !hasOutside) return null;
 
     if (!this.natProcessors.has(routerId)) {
-      this.natProcessors.set(
-        routerId,
-        new NatProcessor(routerId, this.topology),
-      );
+      this.natProcessors.set(routerId, new NatProcessor(routerId, this.topology));
     }
 
     return this.natProcessors.get(routerId) ?? null;
@@ -132,20 +106,16 @@ export class ServiceOrchestrator {
 
   getAclProcessor(routerId: string): AclProcessor | null {
     const node = this.findNode(routerId);
-    if (!node || node.data.role !== "router") return null;
+    if (!node || node.data.role !== 'router') return null;
 
     const interfaces = node.data.interfaces ?? [];
     const hasAcl = interfaces.some(
-      (iface) =>
-        iface.inboundAcl !== undefined || iface.outboundAcl !== undefined,
+      (iface) => iface.inboundAcl !== undefined || iface.outboundAcl !== undefined,
     );
     if (!hasAcl) return null;
 
     if (!this.aclProcessors.has(routerId)) {
-      this.aclProcessors.set(
-        routerId,
-        new AclProcessor(routerId, this.topology),
-      );
+      this.aclProcessors.set(routerId, new AclProcessor(routerId, this.topology));
     }
 
     return this.aclProcessors.get(routerId) ?? null;
@@ -153,7 +123,7 @@ export class ServiceOrchestrator {
 
   getIgmpProcessor(routerId: string): IgmpProcessor | null {
     const node = this.findNode(routerId);
-    if (!node || node.data.role !== "router") return null;
+    if (!node || node.data.role !== 'router') return null;
 
     if (!this.igmpProcessors.has(routerId)) {
       this.igmpProcessors.set(routerId, new IgmpProcessor());
@@ -164,7 +134,7 @@ export class ServiceOrchestrator {
 
   getMulticastTable(switchId: string): MulticastTable | null {
     const node = this.findNode(switchId);
-    if (!node || node.data.role !== "switch") return null;
+    if (!node || node.data.role !== 'switch') return null;
 
     if (!this.multicastTables.has(switchId)) {
       this.multicastTables.set(switchId, new MulticastTable());
@@ -176,9 +146,7 @@ export class ServiceOrchestrator {
     return this.getMulticastTable(switchId)?.snapshot() ?? [];
   }
 
-  getIgmpMembershipSnapshot(
-    routerId: string,
-  ): Array<{ interfaceId: string; group: string }> {
+  getIgmpMembershipSnapshot(routerId: string): { interfaceId: string; group: string }[] {
     return this.getIgmpProcessor(routerId)?.snapshot() ?? [];
   }
 
@@ -208,18 +176,14 @@ export class ServiceOrchestrator {
     if (this.runtimeNodeIps.has(clientNodeId)) return true;
 
     const discoverPacket = buildDiscover(clientNodeId, this.topology);
-    const discoverMessage = discoverPacket
-      ? this.getDhcpMessage(discoverPacket)
-      : null;
-    const serverNode = discoverPacket
-      ? this.findNode(discoverPacket.dstNodeId)
-      : null;
+    const discoverMessage = discoverPacket ? this.getDhcpMessage(discoverPacket) : null;
+    const serverNode = discoverPacket ? this.findNode(discoverPacket.dstNodeId) : null;
     if (!discoverPacket || !discoverMessage || !serverNode?.data.dhcpServer) {
       return false;
     }
 
     this.dhcpLeaseStates.set(clientNodeId, {
-      status: "selecting",
+      status: 'selecting',
       transactionId: discoverMessage.transactionId,
     });
     sink.notify();
@@ -227,32 +191,22 @@ export class ServiceOrchestrator {
     const packetSender = this.requirePacketSender();
     const leaseAllocator = new LeaseAllocator(serverNode.data.dhcpServer);
     const stampedDiscover = { ...discoverPacket, sessionId };
-    const discoverResult = await packetSender.precompute(
-      stampedDiscover,
-      failureState,
-    );
+    const discoverResult = await packetSender.precompute(stampedDiscover, failureState);
     sink.appendTrace(discoverResult.trace, discoverResult.nodeArpTables);
-    if (discoverResult.trace.status !== "delivered") return false;
+    if (discoverResult.trace.status !== 'delivered') return false;
 
-    const offerPacket = handleDiscover(
-      stampedDiscover,
-      this.topology,
-      leaseAllocator,
-    );
+    const offerPacket = handleDiscover(stampedDiscover, this.topology, leaseAllocator);
     if (!offerPacket) return false;
     const stampedOffer = { ...offerPacket, sessionId };
-    const offerResult = await packetSender.precompute(
-      stampedOffer,
-      failureState,
-    );
+    const offerResult = await packetSender.precompute(stampedOffer, failureState);
     sink.appendTrace(offerResult.trace, offerResult.nodeArpTables);
-    if (offerResult.trace.status !== "delivered") return false;
+    if (offerResult.trace.status !== 'delivered') return false;
 
     const offerMessage = this.getDhcpMessage(stampedOffer);
     if (!offerMessage) return false;
-    if (offerMessage.messageType === "NAK") {
+    if (offerMessage.messageType === 'NAK') {
       this.dhcpLeaseStates.set(clientNodeId, {
-        status: "init",
+        status: 'init',
         transactionId: offerMessage.transactionId,
         serverIp: offerMessage.serverIp,
       });
@@ -261,44 +215,30 @@ export class ServiceOrchestrator {
     }
 
     this.dhcpLeaseStates.set(clientNodeId, {
-      status: "requesting",
+      status: 'requesting',
       transactionId: offerMessage.transactionId,
       offeredIp: offerMessage.offeredIp,
       serverIp: offerMessage.serverIp,
     });
     sink.notify();
 
-    const requestPacket = handleOffer(
-      stampedOffer,
-      clientNodeId,
-      this.topology,
-    );
+    const requestPacket = handleOffer(stampedOffer, clientNodeId, this.topology);
     const stampedRequest = { ...requestPacket, sessionId };
-    const requestResult = await packetSender.precompute(
-      stampedRequest,
-      failureState,
-    );
+    const requestResult = await packetSender.precompute(stampedRequest, failureState);
     sink.appendTrace(requestResult.trace, requestResult.nodeArpTables);
-    if (requestResult.trace.status !== "delivered") return false;
+    if (requestResult.trace.status !== 'delivered') return false;
 
-    const finalPacket = handleRequest(
-      stampedRequest,
-      this.topology,
-      leaseAllocator,
-    );
+    const finalPacket = handleRequest(stampedRequest, this.topology, leaseAllocator);
     if (!finalPacket) return false;
     const stampedFinal = { ...finalPacket, sessionId };
-    const finalResult = await packetSender.precompute(
-      stampedFinal,
-      failureState,
-    );
+    const finalResult = await packetSender.precompute(stampedFinal, failureState);
     sink.appendTrace(finalResult.trace, finalResult.nodeArpTables);
-    if (finalResult.trace.status !== "delivered") return false;
+    if (finalResult.trace.status !== 'delivered') return false;
 
     const ackResult = handleAck(stampedFinal);
     if (!ackResult) {
       this.dhcpLeaseStates.set(clientNodeId, {
-        status: "init",
+        status: 'init',
         transactionId: offerMessage.transactionId,
         serverIp: offerMessage.serverIp,
       });
@@ -308,7 +248,7 @@ export class ServiceOrchestrator {
 
     this.runtimeNodeIps.set(clientNodeId, ackResult.assignedIp);
     this.dhcpLeaseStates.set(clientNodeId, {
-      status: "bound",
+      status: 'bound',
       transactionId: offerMessage.transactionId,
       offeredIp: ackResult.assignedIp,
       serverIp: offerMessage.serverIp,
@@ -342,22 +282,16 @@ export class ServiceOrchestrator {
 
     const packetSender = this.requirePacketSender();
     const stampedQuery = { ...queryPacket, sessionId };
-    const queryResult = await packetSender.precompute(
-      stampedQuery,
-      failureState,
-    );
+    const queryResult = await packetSender.precompute(stampedQuery, failureState);
     sink.appendTrace(queryResult.trace, queryResult.nodeArpTables);
-    if (queryResult.trace.status !== "delivered") return null;
+    if (queryResult.trace.status !== 'delivered') return null;
 
     const responsePacket = handleDnsQuery(stampedQuery, this.topology);
     if (!responsePacket) return null;
     const stampedResponse = { ...responsePacket, sessionId };
-    const responseResult = await packetSender.precompute(
-      stampedResponse,
-      failureState,
-    );
+    const responseResult = await packetSender.precompute(stampedResponse, failureState);
     sink.appendTrace(responseResult.trace, responseResult.nodeArpTables);
-    if (responseResult.trace.status !== "delivered") return null;
+    if (responseResult.trace.status !== 'delivered') return null;
 
     const record = handleDnsResponse(stampedResponse);
     if (!record) return null;
@@ -383,10 +317,7 @@ export class ServiceOrchestrator {
     failureState: FailureState = EMPTY_FAILURE_STATE,
     sessionId: string = crypto.randomUUID(),
   ): Promise<TcpHandshakeResult> {
-    const result = await new TcpOrchestrator(
-      this.topology,
-      this.requirePacketSender(),
-    ).handshake(
+    const result = await new TcpOrchestrator(this.topology, this.requirePacketSender()).handshake(
       clientNodeId,
       serverNodeId,
       srcPort,
@@ -410,22 +341,21 @@ export class ServiceOrchestrator {
     failureState: FailureState = EMPTY_FAILURE_STATE,
   ): Promise<TcpTeardownResult> {
     const connection =
-      this.tcpConnections
-        .serialize()
-        .find((candidate) => candidate.id === connectionId) ?? null;
+      this.tcpConnections.serialize().find((candidate) => candidate.id === connectionId) ?? null;
 
     if (!connection) {
       return {
         success: false,
         traces: [],
-        failureReason: "TCP disconnect failed: connection not found",
+        failureReason: 'TCP disconnect failed: connection not found',
       };
     }
 
-    const result = await new TcpOrchestrator(
-      this.topology,
-      this.requirePacketSender(),
-    ).teardown(connection, sink, failureState);
+    const result = await new TcpOrchestrator(this.topology, this.requirePacketSender()).teardown(
+      connection,
+      sink,
+      failureState,
+    );
 
     if (result.success) {
       this.tcpConnections.removeConnection(connectionId);
@@ -472,21 +402,20 @@ export class ServiceOrchestrator {
 
   private requirePacketSender(): PacketSender {
     if (!this.packetSender) {
-      throw new Error("PacketSender is not configured");
+      throw new NetlabError({
+        code: 'invariant/not-configured',
+        message: 'PacketSender is not configured',
+      });
     }
     return this.packetSender;
   }
 
   private findNode(nodeId: string): NetlabNode | null {
-    return (
-      this.topology.nodes.find((candidate) => candidate.id === nodeId) ?? null
-    );
+    return this.topology.nodes.find((candidate) => candidate.id === nodeId) ?? null;
   }
 
   private getDhcpMessage(packet: InFlightPacket): DhcpMessage | null {
     const transport = packet.frame.payload.payload;
-    return isUdpDatagram(transport) && isDhcpPayload(transport.payload)
-      ? transport.payload
-      : null;
+    return isUdpDatagram(transport) && isDhcpPayload(transport.payload) ? transport.payload : null;
   }
 }

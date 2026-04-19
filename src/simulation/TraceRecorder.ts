@@ -27,7 +27,9 @@ function isDnsPayload(payload: UdpDatagram['payload']): payload is DnsMessage {
   return payload.layer === 'L7' && 'questions' in payload;
 }
 
-function isHttpPayload(payload: IpPacket['payload']): payload is IpPacket['payload'] & { payload: HttpMessage } {
+function isHttpPayload(
+  payload: IpPacket['payload'],
+): payload is IpPacket['payload'] & { payload: HttpMessage } {
   return 'seq' in payload && payload.payload.layer === 'L7' && 'headers' in payload.payload;
 }
 
@@ -105,7 +107,7 @@ export class TraceRecorder {
 
   exportPcap(traces: PacketTrace[], traceId?: string): Uint8Array {
     const trace = traceId
-      ? traces.find((candidate) => candidate.packetId === traceId) ?? null
+      ? (traces.find((candidate) => candidate.packetId === traceId) ?? null)
       : null;
 
     if (!trace) {
@@ -188,7 +190,9 @@ export class TraceRecorder {
 
     return {
       trace: mergedTrace,
-      nodeArpTables: Object.entries(secondary.nodeArpTables).reduce<Record<string, Record<string, string>>>(
+      nodeArpTables: Object.entries(secondary.nodeArpTables).reduce<
+        Record<string, Record<string, string>>
+      >(
         (merged, [nodeId, table]) => {
           merged[nodeId] = {
             ...(merged[nodeId] ?? {}),

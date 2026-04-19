@@ -36,7 +36,8 @@ function makePipeline(topology: NetworkTopology): ForwardingPipeline {
   const pipeline = new ForwardingPipeline(topology, hookEngine, traceRecorder, services);
 
   services.setPacketSender({
-    precompute: (packet, failureState, options) => pipeline.precompute(packet, failureState, options),
+    precompute: (packet, failureState, options) =>
+      pipeline.precompute(packet, failureState, options),
     findNode: (nodeId) => pipeline.findNode(nodeId) ?? undefined,
     getNeighbors: (
       nodeId,
@@ -104,7 +105,9 @@ describe('ForwardingPipeline', () => {
     const result = await pipeline.precompute(
       makePacket('fp-mac-stability', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
     );
-    const nonArpHops = result.trace.hops.filter((hop) => hop.event !== 'arp-request' && hop.event !== 'arp-reply');
+    const nonArpHops = result.trace.hops.filter(
+      (hop) => hop.event !== 'arp-request' && hop.event !== 'arp-reply',
+    );
     const macPairs = nonArpHops.map((hop) => `${hop.srcMac}->${hop.dstMac}`);
 
     expect(new Set(nonArpHops.map((hop) => hop.srcIp))).toEqual(new Set(['10.0.0.10']));
@@ -200,6 +203,8 @@ describe('ForwardingPipeline', () => {
     expect(result.trace.status).toBe('delivered');
     expect(result.trace.label).toBe('ICMP');
     expect(result.trace.hops.some((hop) => hop.protocol === 'ICMP')).toBe(true);
-    expect(result.trace.hops.some((hop) => hop.event === 'deliver' && hop.nodeId === 'client-1')).toBe(true);
+    expect(
+      result.trace.hops.some((hop) => hop.event === 'deliver' && hop.nodeId === 'client-1'),
+    ).toBe(true);
   });
 });

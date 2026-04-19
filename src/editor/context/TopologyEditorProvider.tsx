@@ -17,8 +17,6 @@ export function TopologyEditorProvider({
   const editorCtx = useTopologyEditor({ initialTopology, onTopologyChange });
 
   return (
-    <TopologyEditorContext.Provider value={editorCtx}>
-      {children}
-    </TopologyEditorContext.Provider>
+    <TopologyEditorContext.Provider value={editorCtx}>{children}</TopologyEditorContext.Provider>
   );
 }

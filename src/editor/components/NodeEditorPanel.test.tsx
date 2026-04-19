@@ -5,8 +5,8 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { TopologyEditorContextValue } from '../context/TopologyEditorContext';
 import type { NetlabNode, NetlabNodeData } from '../../types/topology';
+import type { TopologyEditorContextValue } from '../context/TopologyEditorContext';
 import { NodeEditorPanel } from './NodeEditorPanel';
 
 const uiMock = vi.hoisted(() => ({
@@ -116,14 +116,11 @@ function currentEditor() {
 function findButton(text: string) {
   return Array.from(container?.querySelectorAll('button') ?? []).find((button) =>
     button.textContent?.includes(text),
-  ) as HTMLButtonElement | undefined;
+  );
 }
 
 function changeInput(input: HTMLInputElement, value: string) {
-  const descriptor = Object.getOwnPropertyDescriptor(
-    HTMLInputElement.prototype,
-    'value',
-  );
+  const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
 
   act(() => {
     descriptor?.set?.call(input, value);
@@ -205,9 +202,9 @@ describe('NodeEditorPanel', () => {
       ]);
       render();
 
-      const input = container?.querySelector(
+      const input = container?.querySelector<HTMLInputElement>(
         'input[placeholder="e.g. 10.0.0.10"]',
-      ) as HTMLInputElement;
+      )!;
 
       changeInput(input, '10.0.0.20');
       blurInput(input);
@@ -228,9 +225,9 @@ describe('NodeEditorPanel', () => {
       ]);
       render();
 
-      const input = container?.querySelector(
+      const input = container?.querySelector<HTMLInputElement>(
         'input[placeholder="e.g. aa:bb:cc:dd:ee:ff"]',
-      ) as HTMLInputElement;
+      )!;
 
       changeInput(input, '00:00:00:00:00:99');
       blurInput(input);
@@ -279,14 +276,12 @@ describe('NodeEditorPanel', () => {
       render();
 
       act(() => {
-        findButton('Add Interface')?.dispatchEvent(
-          new MouseEvent('click', { bubbles: true }),
-        );
+        findButton('Add Interface')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       });
 
       const calls = (currentEditor().updateNodeData as ReturnType<typeof vi.fn>).mock.calls;
       const patch = calls[calls.length - 1]?.[1] as {
-        interfaces: Array<Record<string, unknown>>;
+        interfaces: Record<string, unknown>[];
       };
 
       expect(patch.interfaces).toHaveLength(1);
@@ -319,7 +314,8 @@ describe('NodeEditorPanel', () => {
       render();
 
       act(() => {
-        (container?.querySelector('button[title="Remove interface"]') as HTMLButtonElement)
+        container
+          ?.querySelector('button[title="Remove interface"]')
           ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       });
 
@@ -348,15 +344,15 @@ describe('NodeEditorPanel', () => {
       render();
 
       const input = Array.from(container?.querySelectorAll('input') ?? []).find(
-        (candidate) => (candidate as HTMLInputElement).value === '10.0.0.1/24',
-      ) as HTMLInputElement;
+        (candidate) => candidate.value === '10.0.0.1/24',
+      )!;
 
       changeInput(input, '10.0.1.1/25');
       blurInput(input);
 
       const calls = (currentEditor().updateNodeData as ReturnType<typeof vi.fn>).mock.calls;
       const patch = calls[calls.length - 1]?.[1] as {
-        interfaces: Array<Record<string, unknown>>;
+        interfaces: Record<string, unknown>[];
       };
 
       expect(patch.interfaces[0]).toMatchObject({
@@ -400,14 +396,12 @@ describe('NodeEditorPanel', () => {
       render();
 
       act(() => {
-        findButton('Add Port')?.dispatchEvent(
-          new MouseEvent('click', { bubbles: true }),
-        );
+        findButton('Add Port')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       });
 
       const calls = (currentEditor().updateNodeData as ReturnType<typeof vi.fn>).mock.calls;
       const patch = calls[calls.length - 1]?.[1] as {
-        ports: Array<Record<string, unknown>>;
+        ports: Record<string, unknown>[];
       };
 
       expect(patch.ports[0]).toMatchObject({
@@ -434,7 +428,8 @@ describe('NodeEditorPanel', () => {
       render();
 
       act(() => {
-        (container?.querySelector('button[title="Remove port"]') as HTMLButtonElement)
+        container
+          ?.querySelector('button[title="Remove port"]')
           ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       });
 
@@ -451,9 +446,7 @@ describe('NodeEditorPanel', () => {
         makeNode('router-1', 'router', {
           label: 'R1',
           interfaces: [],
-          staticRoutes: [
-            { destination: '0.0.0.0/0', nextHop: '10.0.0.254' },
-          ],
+          staticRoutes: [{ destination: '0.0.0.0/0', nextHop: '10.0.0.254' }],
         }),
       ]);
 
@@ -476,9 +469,7 @@ describe('NodeEditorPanel', () => {
       render();
 
       act(() => {
-        findButton('Add Route')?.dispatchEvent(
-          new MouseEvent('click', { bubbles: true }),
-        );
+        findButton('Add Route')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       });
 
       expect(currentEditor().updateNodeData).toHaveBeenCalledWith('router-1', {
@@ -492,15 +483,14 @@ describe('NodeEditorPanel', () => {
         makeNode('router-1', 'router', {
           label: 'R1',
           interfaces: [],
-          staticRoutes: [
-            { destination: '0.0.0.0/0', nextHop: '10.0.0.254' },
-          ],
+          staticRoutes: [{ destination: '0.0.0.0/0', nextHop: '10.0.0.254' }],
         }),
       ]);
       render();
 
       act(() => {
-        (container?.querySelector('button[title="Remove route"]') as HTMLButtonElement)
+        container
+          ?.querySelector('button[title="Remove route"]')
           ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       });
 
@@ -515,23 +505,19 @@ describe('NodeEditorPanel', () => {
         makeNode('router-1', 'router', {
           label: 'R1',
           interfaces: [],
-          staticRoutes: [
-            { destination: '0.0.0.0/0', nextHop: '10.0.0.254' },
-          ],
+          staticRoutes: [{ destination: '0.0.0.0/0', nextHop: '10.0.0.254' }],
         }),
       ]);
       render();
 
-      const input = container?.querySelector(
-        'input[placeholder="0.0.0.0/0"]',
-      ) as HTMLInputElement;
+      const input = container?.querySelector<HTMLInputElement>('input[placeholder="0.0.0.0/0"]')!;
 
       changeInput(input, '203.0.113.0/24');
       blurInput(input);
 
       const calls = (currentEditor().updateNodeData as ReturnType<typeof vi.fn>).mock.calls;
       const patch = calls[calls.length - 1]?.[1] as {
-        staticRoutes: Array<Record<string, unknown>>;
+        staticRoutes: Record<string, unknown>[];
       };
 
       expect(patch.staticRoutes[0]).toMatchObject({
@@ -551,7 +537,7 @@ describe('NodeEditorPanel', () => {
       ]);
       const view = render();
 
-      const labelInput = container?.querySelector('input') as HTMLInputElement;
+      const labelInput = container?.querySelector('input')!;
       expect(labelInput.value).toBe('Client A');
 
       editorMock.value = makeEditorValue([
@@ -563,9 +549,7 @@ describe('NodeEditorPanel', () => {
       uiMock.selectedNodeId = 'client-1';
       view.rerender();
 
-      expect((container?.querySelector('input') as HTMLInputElement).value).toBe(
-        'Client B',
-      );
+      expect((container?.querySelector('input'))!.value).toBe('Client B');
     });
 
     it('commits on blur when value changed', () => {
@@ -578,7 +562,7 @@ describe('NodeEditorPanel', () => {
       ]);
       render();
 
-      const labelInput = container?.querySelector('input') as HTMLInputElement;
+      const labelInput = container?.querySelector('input')!;
 
       changeInput(labelInput, 'Renamed');
       blurInput(labelInput);
@@ -598,7 +582,7 @@ describe('NodeEditorPanel', () => {
       ]);
       render();
 
-      const labelInput = container?.querySelector('input') as HTMLInputElement;
+      const labelInput = container?.querySelector('input')!;
       blurInput(labelInput);
 
       expect(currentEditor().updateNodeData).not.toHaveBeenCalled();
@@ -608,15 +592,11 @@ describe('NodeEditorPanel', () => {
   describe('actions', () => {
     it('delete node calls deleteNode and closes panel', () => {
       uiMock.selectedNodeId = 'client-1';
-      editorMock.value = makeEditorValue([
-        makeNode('client-1', 'client', { label: 'Client' }),
-      ]);
+      editorMock.value = makeEditorValue([makeNode('client-1', 'client', { label: 'Client' })]);
       render();
 
       act(() => {
-        findButton('Delete Node')?.dispatchEvent(
-          new MouseEvent('click', { bubbles: true }),
-        );
+        findButton('Delete Node')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       });
 
       expect(currentEditor().deleteNode).toHaveBeenCalledWith('client-1');
@@ -625,9 +605,7 @@ describe('NodeEditorPanel', () => {
 
     it('Escape key closes panel', () => {
       uiMock.selectedNodeId = 'client-1';
-      editorMock.value = makeEditorValue([
-        makeNode('client-1', 'client', { label: 'Client' }),
-      ]);
+      editorMock.value = makeEditorValue([makeNode('client-1', 'client', { label: 'Client' })]);
       render();
 
       act(() => {

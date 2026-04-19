@@ -70,14 +70,16 @@ function makeSender(
 
   return {
     sentPackets,
-    precompute: vi.fn(async (packet: InFlightPacket, _failureState: FailureState = EMPTY_FAILURE_STATE) => {
-      sentPackets.push(packet);
-      const status = remainingStatuses.shift() ?? 'delivered';
-      return {
-        trace: makeTrace(packet, status),
-        nodeArpTables: {},
-      };
-    }),
+    precompute: vi.fn(
+      async (packet: InFlightPacket, _failureState: FailureState = EMPTY_FAILURE_STATE) => {
+        sentPackets.push(packet);
+        const status = remainingStatuses.shift() ?? 'delivered';
+        return {
+          trace: makeTrace(packet, status),
+          nodeArpTables: {},
+        };
+      },
+    ),
     findNode: (nodeId) => TOPOLOGY.nodes.find((node) => node.id === nodeId),
   };
 }
@@ -130,13 +132,7 @@ describe('TcpOrchestrator', () => {
       const sink = makeSink();
       const orchestrator = new TcpOrchestrator(TOPOLOGY, sender);
 
-      const result = await orchestrator.handshake(
-        'client-1',
-        'server-1',
-        12345,
-        80,
-        sink,
-      );
+      const result = await orchestrator.handshake('client-1', 'server-1', 12345, 80, sink);
 
       expect(result.success).toBe(true);
       expect(result.connection).toEqual(

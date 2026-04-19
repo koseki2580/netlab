@@ -13,12 +13,9 @@ function ipToInt(ip: string): number {
 }
 
 function intToIp(value: number): string {
-  return [
-    (value >>> 24) & 0xff,
-    (value >>> 16) & 0xff,
-    (value >>> 8) & 0xff,
-    value & 0xff,
-  ].join('.');
+  return [(value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff].join(
+    '.',
+  );
 }
 
 function toNetworkCidr(iface: RouterInterface): string {
@@ -86,7 +83,8 @@ export class OspfProtocol implements RoutingProtocol {
 
     return routes.sort(
       (left, right) =>
-        left.nodeId.localeCompare(right.nodeId) || left.destination.localeCompare(right.destination),
+        left.nodeId.localeCompare(right.nodeId) ||
+        left.destination.localeCompare(right.destination),
     );
   }
 }
@@ -121,11 +119,13 @@ function runSpf(
   participatingRouterIds: Set<string>,
 ): Map<string, SpfState> {
   const states = new Map<string, SpfState>([[source.id, { distance: 0, nextHop: null }]]);
-  const queue: Array<{ nodeId: string; distance: number }> = [{ nodeId: source.id, distance: 0 }];
+  const queue: { nodeId: string; distance: number }[] = [{ nodeId: source.id, distance: 0 }];
   const visited = new Set<string>();
 
   while (queue.length > 0) {
-    queue.sort((left, right) => left.distance - right.distance || left.nodeId.localeCompare(right.nodeId));
+    queue.sort(
+      (left, right) => left.distance - right.distance || left.nodeId.localeCompare(right.nodeId),
+    );
     const current = queue.shift();
     if (!current || visited.has(current.nodeId)) continue;
 
@@ -145,7 +145,9 @@ function runSpf(
       if (
         !existing ||
         newDistance < existing.distance ||
-        (newDistance === existing.distance && nextHop !== null && (existing.nextHop === null || nextHop < existing.nextHop))
+        (newDistance === existing.distance &&
+          nextHop !== null &&
+          (existing.nextHop === null || nextHop < existing.nextHop))
       ) {
         states.set(neighbor.neighborId, {
           distance: newDistance,

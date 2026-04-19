@@ -25,8 +25,20 @@ const TOPOLOGY: NetworkTopology = {
         role: 'router',
         layerId: 'l3',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:01:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '203.0.113.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:01',
+          },
         ],
       },
     },
@@ -164,5 +176,11 @@ describe('HopInspector', () => {
     expect(html).toContain('3 total');
     expect(html).toContain('Next-hop MTU');
     expect(html).toContain('600');
+  });
+
+  it('perf: is wrapped in React.memo', () => {
+    expect((HopInspector as unknown as { $$typeof: symbol }).$$typeof).toBe(
+      Symbol.for('react.memo'),
+    );
   });
 });

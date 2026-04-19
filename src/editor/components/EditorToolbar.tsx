@@ -62,9 +62,7 @@ export function EditorToolbar() {
 
   return (
     <div style={TOOLBAR_STYLE}>
-      <span style={{ color: '#64748b', fontSize: 10, letterSpacing: 1, marginRight: 4 }}>
-        ADD
-      </span>
+      <span style={{ color: '#94a3b8', fontSize: 10, letterSpacing: 1, marginRight: 4 }}>ADD</span>
       <Btn onClick={() => addNode(createRouterNode(randomPosition()))} title="Add Router">
         + Router
       </Btn>

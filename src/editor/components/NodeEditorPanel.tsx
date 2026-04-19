@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNetlabUI } from '../../components/NetlabUIContext';
-import { useTopologyEditorContext } from '../context/TopologyEditorContext';
-import type { NetlabNodeData } from '../../types/topology';
 import type { RouterInterface, StaticRouteConfig } from '../../types/routing';
-import type { SwitchPort } from '../../types/topology';
+import type { NetlabNodeData, SwitchPort } from '../../types/topology';
+import { useTopologyEditorContext } from '../context/TopologyEditorContext';
 
 // ─── Styles ────────────────────────────────────────────────────────────────
 
@@ -32,7 +31,7 @@ const SECTION_STYLE: React.CSSProperties = {
 };
 
 const LABEL_STYLE: React.CSSProperties = {
-  color: '#64748b',
+  color: '#94a3b8',
   fontSize: 10,
   letterSpacing: 1,
   marginBottom: 3,
@@ -76,7 +75,7 @@ const DELETE_BTN: React.CSSProperties = {
 const ICON_BTN: React.CSSProperties = {
   background: 'none',
   border: 'none',
-  color: '#475569',
+  color: '#94a3b8',
   cursor: 'pointer',
   fontSize: 11,
   padding: '0 2px',
@@ -95,7 +94,9 @@ function generatePortId() {
 
 function generateMac() {
   const hex = () =>
-    Math.floor(Math.random() * 256).toString(16).padStart(2, '0');
+    Math.floor(Math.random() * 256)
+      .toString(16)
+      .padStart(2, '0');
   return `02:00:${hex()}:${hex()}:${hex()}:${hex()}`;
 }
 
@@ -109,7 +110,13 @@ interface TextFieldProps {
   accentColor?: string;
 }
 
-function TextField({ label, value, placeholder, onCommit, accentColor = '#e2e8f0' }: TextFieldProps) {
+function TextField({
+  label,
+  value,
+  placeholder,
+  onCommit,
+  accentColor = '#e2e8f0',
+}: TextFieldProps) {
   const [local, setLocal] = useState(value);
 
   // Sync if external value changes (e.g. undo)
@@ -167,7 +174,7 @@ function RouterEditor({
   data: NetlabNodeData;
   onCommit: (patch: Partial<NetlabNodeData>) => void;
 }) {
-  const ifaces = (data.interfaces ?? []) as RouterInterface[];
+  const ifaces = data.interfaces ?? [];
 
   const updateIface = (id: string, field: Partial<RouterInterface>) => {
     onCommit({
@@ -222,7 +229,10 @@ function IfaceRow({ iface, onUpdate, onDelete }: IfaceRowProps) {
   const [localMac, setLocalMac] = useState(iface.macAddress);
 
   useEffect(() => setLocalName(iface.name), [iface.name]);
-  useEffect(() => setLocalIpPrefix(`${iface.ipAddress}/${iface.prefixLength}`), [iface.ipAddress, iface.prefixLength]);
+  useEffect(
+    () => setLocalIpPrefix(`${iface.ipAddress}/${iface.prefixLength}`),
+    [iface.ipAddress, iface.prefixLength],
+  );
   useEffect(() => setLocalMac(iface.macAddress), [iface.macAddress]);
 
   const commitIpPrefix = (val: string) => {
@@ -231,29 +241,52 @@ function IfaceRow({ iface, onUpdate, onDelete }: IfaceRowProps) {
   };
 
   return (
-    <div style={{ marginBottom: 8, padding: '6px 8px', background: '#0f172a', borderRadius: 4, border: '1px solid #1e293b' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+    <div
+      style={{
+        marginBottom: 8,
+        padding: '6px 8px',
+        background: '#0f172a',
+        borderRadius: 4,
+        border: '1px solid #1e293b',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 4,
+        }}
+      >
         <input
           style={{ ...INPUT_STYLE, color: '#4ade80', width: 90, marginBottom: 0 }}
           value={localName}
           onChange={(e) => setLocalName(e.target.value)}
-          onBlur={() => { if (localName !== iface.name) onUpdate({ name: localName }); }}
+          onBlur={() => {
+            if (localName !== iface.name) onUpdate({ name: localName });
+          }}
         />
-        <button style={ICON_BTN} onClick={onDelete} title="Remove interface">✕</button>
+        <button style={ICON_BTN} onClick={onDelete} title="Remove interface">
+          ✕
+        </button>
       </div>
       <input
         style={{ ...INPUT_STYLE, color: '#7dd3fc', marginBottom: 3 }}
         value={localIpPrefix}
         placeholder="10.0.0.1/24"
         onChange={(e) => setLocalIpPrefix(e.target.value)}
-        onBlur={() => { if (localIpPrefix !== ipPrefix) commitIpPrefix(localIpPrefix); }}
+        onBlur={() => {
+          if (localIpPrefix !== ipPrefix) commitIpPrefix(localIpPrefix);
+        }}
       />
       <input
         style={{ ...INPUT_STYLE, color: '#fbbf24' }}
         value={localMac}
         placeholder="00:00:00:00:00:00"
         onChange={(e) => setLocalMac(e.target.value)}
-        onBlur={() => { if (localMac !== iface.macAddress) onUpdate({ macAddress: localMac }); }}
+        onBlur={() => {
+          if (localMac !== iface.macAddress) onUpdate({ macAddress: localMac });
+        }}
       />
     </div>
   );
@@ -266,7 +299,7 @@ function SwitchEditor({
   data: NetlabNodeData;
   onCommit: (patch: Partial<NetlabNodeData>) => void;
 }) {
-  const ports = (data.ports ?? []) as SwitchPort[];
+  const ports = data.ports ?? [];
 
   const updatePort = (id: string, field: Partial<SwitchPort>) => {
     onCommit({ ports: ports.map((p) => (p.id === id ? { ...p, ...field } : p)) });
@@ -326,15 +359,21 @@ function PortRow({ port, onUpdate, onDelete }: PortRowProps) {
         style={{ ...INPUT_STYLE, color: '#60a5fa', width: 80 }}
         value={localName}
         onChange={(e) => setLocalName(e.target.value)}
-        onBlur={() => { if (localName !== port.name) onUpdate({ name: localName }); }}
+        onBlur={() => {
+          if (localName !== port.name) onUpdate({ name: localName });
+        }}
       />
       <input
         style={{ ...INPUT_STYLE, color: '#fbbf24', flex: 1 }}
         value={localMac}
         onChange={(e) => setLocalMac(e.target.value)}
-        onBlur={() => { if (localMac !== port.macAddress) onUpdate({ macAddress: localMac }); }}
+        onBlur={() => {
+          if (localMac !== port.macAddress) onUpdate({ macAddress: localMac });
+        }}
       />
-      <button style={ICON_BTN} onClick={onDelete} title="Remove port">✕</button>
+      <button style={ICON_BTN} onClick={onDelete} title="Remove port">
+        ✕
+      </button>
     </div>
   );
 }
@@ -348,7 +387,7 @@ function StaticRoutesEditor({
   data: NetlabNodeData;
   onCommit: (patch: Partial<NetlabNodeData>) => void;
 }) {
-  const routes = (data.staticRoutes ?? []) as StaticRouteConfig[];
+  const routes = data.staticRoutes ?? [];
 
   const updateRoute = (i: number, field: Partial<StaticRouteConfig>) => {
     onCommit({ staticRoutes: routes.map((r, idx) => (idx === i ? { ...r, ...field } : r)) });
@@ -402,16 +441,22 @@ function RouteRow({ route, onUpdate, onDelete }: RouteRowProps) {
         value={localDest}
         placeholder="0.0.0.0/0"
         onChange={(e) => setLocalDest(e.target.value)}
-        onBlur={() => { if (localDest !== route.destination) onUpdate({ destination: localDest }); }}
+        onBlur={() => {
+          if (localDest !== route.destination) onUpdate({ destination: localDest });
+        }}
       />
       <input
         style={{ ...INPUT_STYLE, color: '#4ade80', flex: 1 }}
         value={localHop}
         placeholder="next-hop or 'direct'"
         onChange={(e) => setLocalHop(e.target.value)}
-        onBlur={() => { if (localHop !== route.nextHop) onUpdate({ nextHop: localHop }); }}
+        onBlur={() => {
+          if (localHop !== route.nextHop) onUpdate({ nextHop: localHop });
+        }}
       />
-      <button style={ICON_BTN} onClick={onDelete} title="Remove route">✕</button>
+      <button style={ICON_BTN} onClick={onDelete} title="Remove route">
+        ✕
+      </button>
     </div>
   );
 }
@@ -437,27 +482,45 @@ export function NodeEditorPanel() {
   const node = state.topology.nodes.find((n) => n.id === selectedNodeId);
   if (!node) return null;
 
-  const d = node.data as NetlabNodeData;
+  const d = node.data;
 
   const onCommit = (patch: Partial<NetlabNodeData>) => {
     updateNodeData(selectedNodeId, patch);
   };
 
   const roleColor =
-    d.role === 'router' ? '#4ade80' :
-    d.role === 'switch' ? '#60a5fa' :
-    d.role === 'client' ? '#7dd3fc' : '#f472b6';
+    d.role === 'router'
+      ? '#4ade80'
+      : d.role === 'switch'
+        ? '#60a5fa'
+        : d.role === 'client'
+          ? '#7dd3fc'
+          : '#f472b6';
 
   return (
     <div style={PANEL_STYLE}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 8,
+        }}
+      >
         <div style={{ fontWeight: 'bold', color: '#94a3b8', fontSize: 10, letterSpacing: 1 }}>
           EDIT NODE
         </div>
         <button
           onClick={() => setSelectedNodeId(null)}
-          style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 14, padding: '0 2px' }}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#94a3b8',
+            cursor: 'pointer',
+            fontSize: 14,
+            padding: '0 2px',
+          }}
         >
           ✕
         </button>
@@ -465,32 +528,32 @@ export function NodeEditorPanel() {
 
       {/* Role badge */}
       <div style={{ marginBottom: 8 }}>
-        <span style={{ color: roleColor, fontSize: 10, border: `1px solid ${roleColor}`, borderRadius: 3, padding: '1px 5px' }}>
+        <span
+          style={{
+            color: roleColor,
+            fontSize: 10,
+            border: `1px solid ${roleColor}`,
+            borderRadius: 3,
+            padding: '1px 5px',
+          }}
+        >
           {d.role}
         </span>
-        <span style={{ color: '#475569', fontSize: 10, marginLeft: 6 }}>{d.layerId}</span>
+        <span style={{ color: '#94a3b8', fontSize: 10, marginLeft: 6 }}>{d.layerId}</span>
       </div>
 
       {/* Label */}
-      <TextField
-        label="LABEL"
-        value={d.label}
-        onCommit={(v) => onCommit({ label: v })}
-      />
+      <TextField label="LABEL" value={d.label} onCommit={(v) => onCommit({ label: v })} />
 
       {/* Role-specific editors */}
-      {(d.role === 'client' || d.role === 'server') && (
-        <HostEditor data={d} onCommit={onCommit} />
-      )}
+      {(d.role === 'client' || d.role === 'server') && <HostEditor data={d} onCommit={onCommit} />}
       {d.role === 'router' && (
         <>
           <RouterEditor data={d} onCommit={onCommit} />
           <StaticRoutesEditor data={d} onCommit={onCommit} />
         </>
       )}
-      {d.role === 'switch' && (
-        <SwitchEditor data={d} onCommit={onCommit} />
-      )}
+      {d.role === 'switch' && <SwitchEditor data={d} onCommit={onCommit} />}
 
       {/* Delete node */}
       <button

@@ -1,23 +1,23 @@
 import { useSimulation } from '../../simulation/SimulationContext';
-import { serializeArpFrame, serializePacket } from '../../utils/packetSerializer';
 import type { AnnotatedField, LayerTag, SerializedPacket } from '../../utils/packetSerializer';
+import { serializeArpFrame, serializePacket } from '../../utils/packetSerializer';
 
 // ── Layer color palette ───────────────────────────────────────────────────────
 
 const LAYER_COLORS: Record<LayerTag, string> = {
-  L2:  '#7dd3fc',  // sky-300   — matches existing CREATE event badge
-  L3:  '#a78bfa',  // violet-400
-  L4:  '#4ade80',  // green-400 — matches existing FORWARD event badge
-  L7:  '#f472b6',  // pink-400
-  ARP: '#f59e0b',  // amber-500 — matches ARP event badges
-  raw: '#94a3b8',  // slate-400
+  L2: '#7dd3fc', // sky-300   — matches existing CREATE event badge
+  L3: '#a78bfa', // violet-400
+  L4: '#4ade80', // green-400 — matches existing FORWARD event badge
+  L7: '#f472b6', // pink-400
+  ARP: '#f59e0b', // amber-500 — matches ARP event badges
+  raw: '#94a3b8', // slate-400
 };
 
 const LAYER_LABELS: Record<LayerTag, string> = {
-  L2:  'L2 Ethernet',
-  L3:  'L3 IPv4',
-  L4:  'L4 TCP/UDP',
-  L7:  'L7 App',
+  L2: 'L2 Ethernet',
+  L3: 'L3 IPv4',
+  L4: 'L4 TCP/UDP',
+  L7: 'L7 App',
   ARP: 'ARP Payload',
   raw: 'Payload',
 };
@@ -50,7 +50,7 @@ function EmptyState() {
   return (
     <div
       style={{
-        color: '#475569',
+        color: '#94a3b8',
         fontSize: 11,
         fontStyle: 'italic',
         padding: '12px 0',
@@ -99,12 +99,15 @@ function HexDump({
   for (let rowStart = 0; rowStart < renderBytes.length; rowStart += HEX_BYTES_PER_ROW) {
     const rowBytes = renderBytes.slice(rowStart, rowStart + HEX_BYTES_PER_ROW);
     rows.push(
-      <div key={rowStart} style={{ display: 'flex', gap: 1, marginBottom: 2, alignItems: 'center' }}>
+      <div
+        key={rowStart}
+        style={{ display: 'flex', gap: 1, marginBottom: 2, alignItems: 'center' }}
+      >
         {/* Offset label */}
         <span
           style={{
             fontSize: 10,
-            color: '#475569',
+            color: '#94a3b8',
             width: 30,
             flexShrink: 0,
             textAlign: 'right',
@@ -156,7 +159,7 @@ function HexDump({
           fontSize: 10,
           fontWeight: 'bold',
           letterSpacing: 1,
-          color: '#64748b',
+          color: '#94a3b8',
           marginBottom: 4,
         }}
       >
@@ -164,7 +167,7 @@ function HexDump({
       </div>
       {rows}
       {truncated && (
-        <div style={{ fontSize: 10, color: '#475569', marginTop: 4 }}>
+        <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 4 }}>
           +{bytes.length - MAX_RENDER_BYTES} more bytes…
         </div>
       )}
@@ -188,7 +191,7 @@ function FieldTable({
           fontSize: 10,
           fontWeight: 'bold',
           letterSpacing: 1,
-          color: '#64748b',
+          color: '#94a3b8',
           marginBottom: 4,
         }}
       >
@@ -211,7 +214,7 @@ function FieldTable({
             gap: 4,
             padding: '4px 8px',
             background: '#1e293b',
-            color: '#475569',
+            color: '#94a3b8',
             fontSize: 10,
             letterSpacing: 0.5,
           }}
@@ -240,7 +243,14 @@ function FieldTable({
             }}
           >
             <span style={layerBadgeStyle(field.layer)}>{field.layer}</span>
-            <span style={{ color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span
+              style={{
+                color: '#94a3b8',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
               {field.name}
             </span>
             <span
@@ -254,7 +264,7 @@ function FieldTable({
             >
               {field.displayValue}
             </span>
-            <span style={{ color: '#475569', textAlign: 'right' }}>{field.byteLength}</span>
+            <span style={{ color: '#94a3b8', textAlign: 'right' }}>{field.byteLength}</span>
           </div>
         ))}
       </div>
@@ -270,6 +280,7 @@ export function PacketStructureViewer() {
 
   return (
     <div
+      tabIndex={0}
       style={{
         height: 320,
         overflowY: 'auto',
@@ -288,7 +299,7 @@ export function PacketStructureViewer() {
           fontSize: 10,
           fontWeight: 'bold',
           letterSpacing: 1,
-          color: '#64748b',
+          color: '#94a3b8',
           marginBottom: 6,
         }}
       >
