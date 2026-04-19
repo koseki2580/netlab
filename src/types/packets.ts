@@ -10,14 +10,14 @@ export interface TcpFlags {
 }
 
 export interface RawPayload {
-  layer: "raw";
+  layer: 'raw';
   data: string;
 }
 
 export interface HttpMessage {
-  layer: "L7";
-  httpVersion: "HTTP/1.1";
-  method?: "GET" | "POST" | "PUT" | "DELETE" | "HEAD";
+  layer: 'L7';
+  httpVersion: 'HTTP/1.1';
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'HEAD';
   url?: string;
   statusCode?: number;
   reasonPhrase?: string;
@@ -34,8 +34,8 @@ export interface DhcpOptions {
 }
 
 export interface DhcpMessage {
-  layer: "L7";
-  messageType: "DISCOVER" | "OFFER" | "REQUEST" | "ACK" | "NAK";
+  layer: 'L7';
+  messageType: 'DISCOVER' | 'OFFER' | 'REQUEST' | 'ACK' | 'NAK';
   transactionId: number;
   clientMac: string;
   offeredIp?: string;
@@ -45,18 +45,18 @@ export interface DhcpMessage {
 
 export interface DnsQuestion {
   name: string;
-  type: "A";
+  type: 'A';
 }
 
 export interface DnsRecord {
   name: string;
-  type: "A";
+  type: 'A';
   ttl: number;
   address: string;
 }
 
 export interface DnsMessage {
-  layer: "L7";
+  layer: 'L7';
   transactionId: number;
   isResponse: boolean;
   questions: DnsQuestion[];
@@ -64,7 +64,7 @@ export interface DnsMessage {
 }
 
 export interface TcpSegment {
-  layer: "L4";
+  layer: 'L4';
   srcPort: number;
   dstPort: number;
   seq: number;
@@ -77,7 +77,7 @@ export interface TcpSegment {
 }
 
 export interface UdpDatagram {
-  layer: "L4";
+  layer: 'L4';
   srcPort: number;
   dstPort: number;
   length?: number;
@@ -86,7 +86,7 @@ export interface UdpDatagram {
 }
 
 export interface IcmpMessage {
-  layer: "L4";
+  layer: 'L4';
   type: number;
   code: number;
   checksum: number;
@@ -96,23 +96,15 @@ export interface IcmpMessage {
 }
 
 export interface IgmpMessage {
-  layer: "L4";
-  igmpType: "v2-membership-query" | "v2-membership-report" | "v2-leave-group";
-  groupAddress: string;
-  maxResponseTime?: number;
-  checksum?: number;
-}
-
-export interface IgmpMessage {
-  layer: "L4";
-  igmpType: "v2-membership-query" | "v2-membership-report" | "v2-leave-group";
+  layer: 'L4';
+  igmpType: 'v2-membership-query' | 'v2-membership-report' | 'v2-leave-group';
   groupAddress: string;
   maxResponseTime?: number;
   checksum?: number;
 }
 
 export interface IpPacket {
-  layer: "L3";
+  layer: 'L3';
   ihl?: number;
   dscp?: number;
   ecn?: number;
@@ -146,7 +138,7 @@ export interface VlanTag {
 }
 
 export interface EthernetFrame {
-  layer: "L2";
+  layer: 'L2';
   preamble?: number[];
   srcMac: string;
   dstMac: string;
@@ -157,10 +149,10 @@ export interface EthernetFrame {
 }
 
 export interface ArpPacket {
-  layer: "ARP";
+  layer: 'ARP';
   hardwareType: 1;
   protocolType: 0x0800;
-  operation: "request" | "reply";
+  operation: 'request' | 'reply';
   senderMac: string;
   senderIp: string;
   targetMac: string;
@@ -168,7 +160,7 @@ export interface ArpPacket {
 }
 
 export interface ArpEthernetFrame {
-  layer: "L2";
+  layer: 'L2';
   srcMac: string;
   dstMac: string;
   etherType: 0x0806;
@@ -191,4 +183,59 @@ export interface InFlightPacket {
   path: string[]; // ordered list of device IDs already visited
   timestamp: number;
   sessionId?: string;
+}
+
+// ── Runtime predicates (type guards) ────────────────────────────
+
+/** Narrows an L3 payload to IcmpMessage. */
+export function isIcmpMessage(payload: IpPacket['payload']): payload is IcmpMessage {
+  return 'type' in payload && 'code' in payload;
+}
+
+/** Narrows an L3 payload to IgmpMessage. */
+export function isIgmpMessage(payload: IpPacket['payload']): payload is IgmpMessage {
+  return 'igmpType' in payload && 'groupAddress' in payload;
+}
+
+/** Narrows an L3 payload to UdpDatagram. */
+export function isUdpDatagram(payload: IpPacket['payload']): payload is UdpDatagram {
+  return (
+    payload.layer === 'L4' &&
+    'srcPort' in payload &&
+    'dstPort' in payload &&
+    !('flags' in payload) &&
+    !('type' in payload)
+  );
+}
+
+/** Narrows an L3 payload to TcpSegment. */
+export function isTcpSegment(payload: IpPacket['payload']): payload is TcpSegment {
+  return 'seq' in payload;
+}
+
+/** Narrows a UDP payload to DhcpMessage. */
+export function isDhcpMessage(payload: UdpDatagram['payload']): payload is DhcpMessage {
+  return payload.layer === 'L7' && 'messageType' in payload;
+}
+
+/** Narrows a UDP payload to DnsMessage. */
+export function isDnsMessage(payload: UdpDatagram['payload']): payload is DnsMessage {
+  return payload.layer === 'L7' && 'isResponse' in payload;
+}
+
+/** Narrows a TCP payload to HttpMessage. */
+export function isHttpMessage(payload: TcpSegment['payload']): payload is HttpMessage {
+  return payload.layer === 'L7';
+}
+
+/** Narrows an L2 frame to ArpEthernetFrame. */
+export function isArpFrame(frame: EthernetFrame | ArpEthernetFrame): frame is ArpEthernetFrame {
+  return frame.etherType === 0x0806;
+}
+
+/** Narrows an L3 payload to a port-bearing segment (TCP or UDP). */
+export function isPortBearingPayload(
+  payload: IpPacket['payload'],
+): payload is TcpSegment | UdpDatagram {
+  return 'srcPort' in payload && 'dstPort' in payload;
 }

@@ -9,16 +9,16 @@
 export const IGMP_PROTOCOL = 2;
 
 /** Class D multicast address range prefix. */
-export const MULTICAST_IP_PREFIX = "224.0.0.0/4";
+export const MULTICAST_IP_PREFIX = '224.0.0.0/4';
 
 /** Link-local multicast prefix — always flooded, never snooped. */
-export const MULTICAST_LINK_LOCAL_PREFIX = "224.0.0.0/24";
+export const MULTICAST_LINK_LOCAL_PREFIX = '224.0.0.0/24';
 
 /** All Hosts group (General Query destination). */
-export const ALL_HOSTS_GROUP = "224.0.0.1";
+export const ALL_HOSTS_GROUP = '224.0.0.1';
 
 /** All Routers group (Leave destination). */
-export const ALL_ROUTERS_GROUP = "224.0.0.2";
+export const ALL_ROUTERS_GROUP = '224.0.0.2';
 
 /**
  * Represents a multicast group with its set of joined ports (switch)
@@ -33,7 +33,7 @@ export interface MulticastGroup {
  * Returns true when the given IPv4 address is in the Class D range (224.0.0.0/4).
  */
 export function isMulticastIp(ip: string): boolean {
-  const parts = ip.split(".");
+  const parts = ip.split('.');
   if (parts.length !== 4) return false;
   const firstOctet = parseInt(parts[0], 10);
   return firstOctet >= 224 && firstOctet <= 239;
@@ -46,6 +46,6 @@ export function isMulticastIp(ip: string): boolean {
  */
 export function isLinkLocalMulticast(ip: string): boolean {
   if (!isMulticastIp(ip)) return false;
-  const parts = ip.split(".");
-  return parts[0] === "224" && parts[1] === "0" && parts[2] === "0";
+  const parts = ip.split('.');
+  return parts[0] === '224' && parts[1] === '0' && parts[2] === '0';
 }

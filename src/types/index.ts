@@ -1,4 +1,17 @@
+export {
+  isArpFrame,
+  isDhcpMessage,
+  isDnsMessage,
+  isHttpMessage,
+  isIcmpMessage,
+  isIgmpMessage,
+  isPortBearingPayload,
+  isTcpSegment,
+  isUdpDatagram,
+} from './packets';
 export type {
+  ArpEthernetFrame,
+  ArpPacket,
   DhcpMessage,
   DhcpOptions,
   DnsMessage,
@@ -15,7 +28,8 @@ export type {
   TcpFlags,
   TcpSegment,
   UdpDatagram,
-} from "./packets";
+  VlanTag,
+} from './packets';
 
 export type {
   ForwardContext,
@@ -24,9 +38,9 @@ export type {
   ForwarderFactory,
   LayerId,
   LayerPlugin,
-} from "./layers";
+} from './layers';
 
-export { ADMIN_DISTANCES } from "./routing";
+export { ADMIN_DISTANCES } from './routing';
 export type {
   PortForwardingRule,
   ProtocolName,
@@ -35,7 +49,7 @@ export type {
   RoutingProtocol,
   StaticRouteConfig,
   TopologyChangeEvent,
-} from "./routing";
+} from './routing';
 
 export type {
   AclAction,
@@ -46,10 +60,10 @@ export type {
   ConnState,
   ConnTrackEntry,
   ConnTrackTable,
-} from "./acl";
-export type { NatEntry, NatTable, NatType } from "./nat";
+} from './acl';
+export type { NatEntry, NatTable, NatType } from './nat';
 
-export type { AreaType, AreaVisualConfig, NetworkArea } from "./areas";
+export type { AreaType, AreaVisualConfig, NetworkArea } from './areas';
 
 export type {
   NetlabEdge,
@@ -58,7 +72,7 @@ export type {
   NetworkTopology,
   SwitchPort,
   TopologySnapshot,
-} from "./topology";
+} from './topology';
 
 export type {
   DhcpClientConfig,
@@ -68,11 +82,11 @@ export type {
   DnsCacheEntry,
   DnsServerConfig,
   DnsZoneEntry,
-} from "./services";
+} from './services';
 
-export type { Neighbor } from "./simulation";
+export type { Neighbor } from './simulation';
 
-export type { HookFn, HookMap, HookPoint } from "./hooks";
+export type { HookFn, HookMap, HookPoint } from './hooks';
 export type {
   HttpPhases,
   HttpSessionPhase,
@@ -81,15 +95,10 @@ export type {
   SessionMode,
   SessionPhase,
   SessionStatus,
-} from "./session";
+} from './session';
 
-export {
-  HTTP_PORT,
-  HTTP_USER_AGENT,
-  isHttpRequest,
-  isHttpResponse,
-} from "./http";
-export type { HttpRequest, HttpResponse, HttpVersion } from "./http";
+export { HTTP_PORT, HTTP_USER_AGENT, isHttpRequest, isHttpResponse } from './http';
+export type { HttpRequest, HttpResponse, HttpVersion } from './http';
 
 export {
   ALL_HOSTS_GROUP,
@@ -99,5 +108,5 @@ export {
   isMulticastIp,
   MULTICAST_IP_PREFIX,
   MULTICAST_LINK_LOCAL_PREFIX,
-} from "./multicast";
-export type { MulticastGroup } from "./multicast";
+} from './multicast';
+export type { MulticastGroup } from './multicast';
