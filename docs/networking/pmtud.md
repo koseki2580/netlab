@@ -91,10 +91,7 @@ the original destination IP as the cache key.
 `DataTransferController` computes an effective payload cap before each chunk send:
 
 ```typescript
-effectiveChunkSize = min(
-  configuredChunkSize,
-  max(1, pathMtu - 20 - 20),
-);
+effectiveChunkSize = min(configuredChunkSize, max(1, pathMtu - 20 - 20));
 ```
 
 - Unknown PMTU behaves as `Infinity`, so existing behavior remains unchanged.

@@ -38,12 +38,7 @@ import 'netlab/layers/l3-network';
 import 'netlab/layers/l7-application';
 
 // 2. Import components and types
-import {
-  NetlabProvider,
-  NetlabCanvas,
-  RouteTable,
-  AreaLegend,
-} from 'netlab';
+import { NetlabProvider, NetlabCanvas, RouteTable, AreaLegend } from 'netlab';
 import type { NetworkTopology } from 'netlab';
 
 // 3. Define your topology
@@ -64,7 +59,13 @@ const topology: NetworkTopology = {
         role: 'router',
         layerId: 'l3',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:00',
+          },
         ],
         staticRoutes: [
           { destination: '10.0.0.0/24', nextHop: 'direct' },
@@ -73,9 +74,7 @@ const topology: NetworkTopology = {
       },
     },
   ],
-  edges: [
-    { id: 'e1', source: 'client-1', target: 'router-1', type: 'smoothstep' },
-  ],
+  edges: [{ id: 'e1', source: 'client-1', target: 'router-1', type: 'smoothstep' }],
   areas: [],
   routeTables: new Map(),
 };
@@ -137,17 +136,17 @@ Define routes directly on router nodes via `staticRoutes`:
 
 ```ts
 staticRoutes: [
-  { destination: '10.0.0.0/24', nextHop: 'direct' },    // connected network
-  { destination: '0.0.0.0/0',   nextHop: '203.0.113.1' }, // default route
+  { destination: '10.0.0.0/24', nextHop: 'direct' }, // connected network
+  { destination: '0.0.0.0/0', nextHop: '203.0.113.1' }, // default route
   { destination: '192.168.0.0/24', nextHop: '10.0.0.254', metric: 10 },
-]
+];
 ```
 
-| Field | Description |
-|---|---|
-| `destination` | CIDR notation (e.g. `10.0.0.0/24`) |
-| `nextHop` | Next-hop IP address, or `"direct"` for connected networks |
-| `metric` | Optional metric (default `0`) |
+| Field         | Description                                               |
+| ------------- | --------------------------------------------------------- |
+| `destination` | CIDR notation (e.g. `10.0.0.0/24`)                        |
+| `nextHop`     | Next-hop IP address, or `"direct"` for connected networks |
+| `metric`      | Optional metric (default `0`)                             |
 
 ## Hook Engine
 
@@ -172,8 +171,8 @@ function PacketLogger() {
 
 ### Available hook points
 
-| Hook | Payload |
-|---|---|
+| Hook             | Payload                            |
+| ---------------- | ---------------------------------- |
 | `packet:forward` | `{ fromNodeId, toNodeId, packet }` |
 
 You can also use the `useNetlabHooks` React hook for convenience:
@@ -196,12 +195,12 @@ function MyComponent() {
 
 ### Components
 
-| Component | Description |
-|---|---|
-| `<NetlabProvider topology={...}>` | State provider; wrap your canvas with this |
-| `<NetlabCanvas>` | React Flow canvas with registered node types |
-| `<RouteTable>` | Overlay showing the current routing table |
-| `<AreaLegend>` | Overlay showing network area colors |
+| Component                         | Description                                  |
+| --------------------------------- | -------------------------------------------- |
+| `<NetlabProvider topology={...}>` | State provider; wrap your canvas with this   |
+| `<NetlabCanvas>`                  | React Flow canvas with registered node types |
+| `<RouteTable>`                    | Overlay showing the current routing table    |
+| `<AreaLegend>`                    | Overlay showing network area colors          |
 
 ### Utilities
 
@@ -209,7 +208,7 @@ function MyComponent() {
 import { isInSubnet, parseCidr } from 'netlab';
 
 isInSubnet('10.0.0.5', '10.0.0.0/24'); // true
-parseCidr('10.0.0.0/24');               // { prefix: '10.0.0.0', length: 24 }
+parseCidr('10.0.0.0/24'); // { prefix: '10.0.0.0', length: 24 }
 ```
 
 ## Layer Plugins
@@ -217,10 +216,10 @@ parseCidr('10.0.0.0/24');               // { prefix: '10.0.0.0', length: 24 }
 Import only the layers you need:
 
 ```ts
-import 'netlab/layers/l1-physical';   // Physical layer
-import 'netlab/layers/l2-datalink';   // Switch / L2 forwarding
-import 'netlab/layers/l3-network';    // Router / IP forwarding
-import 'netlab/layers/l4-transport';  // TCP/UDP
+import 'netlab/layers/l1-physical'; // Physical layer
+import 'netlab/layers/l2-datalink'; // Switch / L2 forwarding
+import 'netlab/layers/l3-network'; // Router / IP forwarding
+import 'netlab/layers/l4-transport'; // TCP/UDP
 import 'netlab/layers/l7-application'; // Client / Server nodes
 ```
 
@@ -245,6 +244,10 @@ npm run build
 # Build demo (for GitHub Pages)
 npm run build:demo
 ```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

@@ -69,26 +69,25 @@ docs(api): 📝 : fix typo in API documentation
 - Separate formatting changes from logic changes
 - If a commit message uses "and", it is likely incorrect
 
-
 ---
 
 ## Emoji Type
 
-| Type  | Description           | Emoji |
-|-------|----------------------|--------|
-| feat  | New feature          | ✨     |
-| fix   | Bug fix              | 🐛     |
-| docs  | Documentation        | 📝     |
-| test  | Add/update tests     | ✅     |
-| chore | Maintenance/misc     | 🔧     |
-| debug       | Add debug/logging                   | 🐞     |
-| hotfix      | Critical production fix             | 🚑     |
-| investigate | Root cause investigation            | 🔍     |
-| revert      | Revert changes                      | ⏪     |
-| refactor | Code refactoring (no behavior change)    | ♻️     |
-| perf     | Performance improvement                  | ⚡     |
-| cleanup  | Remove unused/dead code                  | 🧹     |
-| style    | Formatting / lint fixes                  | 🎨     |
+| Type        | Description                           | Emoji |
+| ----------- | ------------------------------------- | ----- |
+| feat        | New feature                           | ✨    |
+| fix         | Bug fix                               | 🐛    |
+| docs        | Documentation                         | 📝    |
+| test        | Add/update tests                      | ✅    |
+| chore       | Maintenance/misc                      | 🔧    |
+| debug       | Add debug/logging                     | 🐞    |
+| hotfix      | Critical production fix               | 🚑    |
+| investigate | Root cause investigation              | 🔍    |
+| revert      | Revert changes                        | ⏪    |
+| refactor    | Code refactoring (no behavior change) | ♻️    |
+| perf        | Performance improvement               | ⚡    |
+| cleanup     | Remove unused/dead code               | 🧹    |
+| style       | Formatting / lint fixes               | 🎨    |
 
 ---
 

@@ -14,20 +14,20 @@ cache. If no entry exists, it broadcasts an ARP request; the target replies with
 
 ### ARP Request (EtherType `0x0806`)
 
-| Field | Value |
-| --- | --- |
-| Ethernet Dst | `ff:ff:ff:ff:ff:ff` (broadcast) |
-| Ethernet Src | sender MAC |
-| EtherType | `0x0806` |
-| Hardware Type | `0x0001` (Ethernet) |
-| Protocol Type | `0x0800` (IPv4) |
-| HW Length | `6` |
-| Proto Length | `4` |
-| Operation | `1` (request) |
-| Sender MAC | sender MAC |
-| Sender IP | sender IP |
-| Target MAC | `00:00:00:00:00:00` (unknown) |
-| Target IP | IP to resolve |
+| Field         | Value                           |
+| ------------- | ------------------------------- |
+| Ethernet Dst  | `ff:ff:ff:ff:ff:ff` (broadcast) |
+| Ethernet Src  | sender MAC                      |
+| EtherType     | `0x0806`                        |
+| Hardware Type | `0x0001` (Ethernet)             |
+| Protocol Type | `0x0800` (IPv4)                 |
+| HW Length     | `6`                             |
+| Proto Length  | `4`                             |
+| Operation     | `1` (request)                   |
+| Sender MAC    | sender MAC                      |
+| Sender IP     | sender IP                       |
+| Target MAC    | `00:00:00:00:00:00` (unknown)   |
+| Target IP     | IP to resolve                   |
 
 ### ARP Reply (EtherType `0x0806`)
 

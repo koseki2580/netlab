@@ -103,24 +103,28 @@ Individual demos are responsible for their own internal layout and any additiona
 ## Demos
 
 ### basic/minimal
+
 - **Nodes**: `client-1` (10.0.0.1), `server-1` (10.0.0.2)
 - **Edges**: direct connection
 - **Areas**: none
 - **Purpose**: Simplest possible topology to illustrate the bare minimum API surface.
 
 ### basic/three-tier
+
 - **Nodes**: `client-1`, `switch-1` (L2, 2 ports), `server-1`
 - **Edges**: client → switch → server
 - **Areas**: none
 - **Purpose**: Demonstrates L2 switching with port configuration and MAC addresses.
 
 ### basic/star
+
 - **Nodes**: `switch-1` (L2, 5 ports), `client-1..4`, `server-1`
 - **Edges**: all nodes connected to the central switch
 - **Areas**: none
 - **Purpose**: Hub-and-spoke topology; shows how a single switch serves multiple hosts.
 
 ### routing/client-server
+
 - **Nodes**: `client-1`, `switch-1`, `router-1`, `switch-2`, `server-1`
 - **Edges**: linear chain
 - **Areas**: `private` (10.0.0.0/24), `public` (203.0.113.0/24)
@@ -128,6 +132,7 @@ Individual demos are responsible for their own internal layout and any additiona
 - **Purpose**: Full-stack demo; the primary showcase of the library. Extracted from the original single-page demo.
 
 ### routing/multi-hop
+
 - **Nodes**: `client-1`, `router-1`, `router-2`, `server-1`
 - **Edges**: linear chain
 - **Subnets**: 10.0.0.0/24 (client side), 172.16.0.0/30 (inter-router link), 203.0.113.0/24 (server side)
@@ -135,48 +140,60 @@ Individual demos are responsible for their own internal layout and any additiona
 - **Purpose**: Shows multi-hop routing; traffic traverses two routers before reaching its destination.
 
 ### areas/dmz
+
 - **Nodes**: `client-1`, `switch-1`, `fw-1` (router), `switch-dmz`, `web-server`, `fw-2` (router), `switch-pub`, `internet` (server)
 - **Edges**: linear chain through both firewalls
 - **Areas**: `private` (10.0.0.0/24), `dmz` (172.16.1.0/24), `public` (203.0.113.0/24)
 - **Purpose**: Classic three-zone DMZ topology; demonstrates the `dmz` area type.
 
 ### services/dhcp-dns
+
 - **Purpose**: Demonstrates DHCP DORA and DNS resolution as explicit packet-trace sessions before HTTP traffic.
 - **Extras**: Flat switched LAN topology, DHCP runtime lease state, DNS cache inspection, and multi-trace step walkthrough.
 
 ### simulation/step
+
 - **Purpose**: Step-by-step routing walkthrough with hop controls and packet structure inspection.
 - **Extras**: Auto-sends a packet on mount and renders `StepControls` in a resizable sidebar.
 
 ### simulation/failure
+
 - **Purpose**: Failure injection walkthrough for node, link, and interface failures.
 - **Extras**: `FailureTogglePanel`, packet send overlay, and `StepControls` stacked in a resizable sidebar.
 
 ### simulation/trace-inspector
+
 - **Purpose**: Dedicated trace inspection view for packet timeline, hop-level routing details, and final trace status.
 - **Extras**: Auto-sends a packet on mount and composes `TraceSummary`, `PacketTimeline`, `HopInspector`, and `SimulationControls`.
 
 ### simulation/nat
+
 - **Purpose**: Demonstrates edge-router NAT with outbound SNAT, inbound DNAT, and live translation-table inspection.
 - **Extras**: `NatTableViewer`, NAT-specific send buttons, `PacketTimeline`, and `HopInspector`.
 
 ### simulation/acl
+
 - **Purpose**: Demonstrates router interface ACL permit/deny behavior and stateful return-traffic auto-permit.
 - **Extras**: ACL-specific send buttons, `PacketTimeline`, and `HopInspector`.
 
 ### simulation/interface-aware
+
 - **Purpose**: Demonstrates ingress and egress interface selection at each forwarding hop.
 
 ### simulation/session
+
 - **Purpose**: Demonstrates request/response correlation and lifecycle grouping in the session inspector.
 
 ### topology/controlled
+
 - **Purpose**: Controlled topology demo that keeps topology state outside the editor/canvas and supports URL serialization.
 
 ### editor
+
 - **Purpose**: Full topology editor with add/remove/connect/edit workflows, JSON inspection, and shareable encoded URLs.
 
 ### embed
+
 - **Purpose**: Shows how `NetlabApp` can be embedded inside a host page with fixed dimensions.
 
 ### comprehensive/all-in-one
@@ -203,6 +220,7 @@ npm run build:demo
 ```
 
 Config (`vite.demo.config.ts`):
+
 - Base path: `/netlab/`
 - Single HTML entry: `index.html` → `demo/main.tsx`
 - Output: `dist-demo/`

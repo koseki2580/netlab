@@ -17,14 +17,14 @@ Network endpoints (clients and servers) have no packet-forwarding capability. A 
 `validateConnection()` returns both blocking errors and non-blocking warnings.
 The canvas blocks the connection only when `errors.length > 0`.
 
-| Type | Code | Condition | Message |
-|------|------|-----------|---------|
-| Error | `self-loop` | `sourceId === targetId` | `Self-loop: a node cannot connect to itself` |
-| Error | `duplicate-edge` | an existing edge already connects the same two nodes | `Duplicate edge: nodes are already connected` |
-| Error | `interface-in-use` | the selected interface handle is already attached to another edge | `Interface already in use: {ifName}` |
-| Error | `endpoint-to-endpoint` | both nodes are L7 endpoints (`client` / `server`) | `Endpoint-to-endpoint connections are not allowed` |
-| Warning | `subnet-mismatch` | router-to-router link uses interface CIDRs from different subnets | `Subnet mismatch: {cidr1} and {cidr2} are in different subnets` |
-| Warning | `missing-ip` | a router, client, or server is missing IP configuration needed for L3 forwarding | `Missing IP configuration on {nodeName}` |
+| Type    | Code                   | Condition                                                                        | Message                                                         |
+| ------- | ---------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Error   | `self-loop`            | `sourceId === targetId`                                                          | `Self-loop: a node cannot connect to itself`                    |
+| Error   | `duplicate-edge`       | an existing edge already connects the same two nodes                             | `Duplicate edge: nodes are already connected`                   |
+| Error   | `interface-in-use`     | the selected interface handle is already attached to another edge                | `Interface already in use: {ifName}`                            |
+| Error   | `endpoint-to-endpoint` | both nodes are L7 endpoints (`client` / `server`)                                | `Endpoint-to-endpoint connections are not allowed`              |
+| Warning | `subnet-mismatch`      | router-to-router link uses interface CIDRs from different subnets                | `Subnet mismatch: {cidr1} and {cidr2} are in different subnets` |
+| Warning | `missing-ip`           | a router, client, or server is missing IP configuration needed for L3 forwarding | `Missing IP configuration on {nodeName}`                        |
 
 Unknown or missing roles still default to non-blocking behavior unless one of the explicit
 rules above applies.
@@ -54,14 +54,14 @@ If a topology passed to `NetlabProvider` already contains invalid or warning-wor
 
 ## Implementation Reference
 
-| File | Role |
-|------|------|
-| `src/utils/connectionValidator.ts` | Pure validation logic (no React/React Flow deps) |
-| `src/utils/cidr.ts` | Subnet comparison helpers used by router-to-router validation |
-| `src/components/NetlabCanvas.tsx` | Wires `validateConnection()` into React Flow's `isValidConnection` callback |
-| `src/editor/components/TopologyEditorCanvas.tsx` | Applies the same edge validation styling inside the editor canvas |
-| `src/components/ValidationEdgeLabel.tsx` | Edge midpoint validation indicator / tooltip rendering |
-| `src/editor/components/ValidationPanel.tsx` | Topology-wide validation summary UI for the editor |
+| File                                             | Role                                                                        |
+| ------------------------------------------------ | --------------------------------------------------------------------------- |
+| `src/utils/connectionValidator.ts`               | Pure validation logic (no React/React Flow deps)                            |
+| `src/utils/cidr.ts`                              | Subnet comparison helpers used by router-to-router validation               |
+| `src/components/NetlabCanvas.tsx`                | Wires `validateConnection()` into React Flow's `isValidConnection` callback |
+| `src/editor/components/TopologyEditorCanvas.tsx` | Applies the same edge validation styling inside the editor canvas           |
+| `src/components/ValidationEdgeLabel.tsx`         | Edge midpoint validation indicator / tooltip rendering                      |
+| `src/editor/components/ValidationPanel.tsx`      | Topology-wide validation summary UI for the editor                          |
 
 ### `src/utils/connectionValidator.ts` API
 
@@ -129,8 +129,8 @@ import type { TopologyValidationResult } from 'netlab';
 
 const result: TopologyValidationResult = validateTopology(nodes, edges);
 
-console.log(result.valid);        // true if no blocking errors exist
-console.log(result.errorCount);   // total number of errors across all edges
+console.log(result.valid); // true if no blocking errors exist
+console.log(result.errorCount); // total number of errors across all edges
 console.log(result.warningCount); // total number of warnings across all edges
 
 for (const [edgeId, edgeResult] of result.edgeResults) {
@@ -145,11 +145,11 @@ from its own duplicate-edge check.
 
 ## Visual Feedback
 
-| Condition | Edge Appearance | Indicator |
-|------|------|------|
-| Validation error | Red stroke | `❌` tooltip |
-| Warning only | Orange stroke | `⚠️` tooltip |
-| Valid | Default stroke | none |
+| Condition        | Edge Appearance | Indicator    |
+| ---------------- | --------------- | ------------ |
+| Validation error | Red stroke      | `❌` tooltip |
+| Warning only     | Orange stroke   | `⚠️` tooltip |
+| Valid            | Default stroke  | none         |
 
 Hover the midpoint indicator to read the combined error/warning messages for that edge.
 
@@ -166,7 +166,7 @@ import { ValidationPanel } from 'netlab';
   onEdgeClick={(edgeId) => {
     console.log('focus edge', edgeId);
   }}
-/>
+/>;
 ```
 
 Features:

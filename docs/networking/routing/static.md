@@ -11,9 +11,9 @@ Static routes are manually configured on router nodes via the `staticRoutes` fie
 ```typescript
 // In router node data:
 staticRoutes: [
-  { destination: '10.0.0.0/24',  nextHop: 'direct' },
-  { destination: '0.0.0.0/0',    nextHop: '203.0.113.254' },
-]
+  { destination: '10.0.0.0/24', nextHop: 'direct' },
+  { destination: '0.0.0.0/0', nextHop: '203.0.113.254' },
+];
 ```
 
 ## How It Works
@@ -28,9 +28,9 @@ staticRoutes: [
 
 ```typescript
 interface StaticRouteConfig {
-  destination: string;   // CIDR notation
-  nextHop: string;       // IP address or 'direct' (connected network)
-  metric?: number;       // defaults to 0
+  destination: string; // CIDR notation
+  nextHop: string; // IP address or 'direct' (connected network)
+  metric?: number; // defaults to 0
 }
 ```
 

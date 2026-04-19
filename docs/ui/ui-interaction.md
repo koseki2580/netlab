@@ -25,12 +25,12 @@ Cards are `80px` wide with `12px 8px` padding. Metadata (IP addresses, interface
 
 Each device type has a unique inline SVG icon:
 
-| Device | Icon Description | Accent Color |
-|--------|-----------------|--------------|
-| Router | Circle with 4 directional arrows + center dot | `#4ade80` (green) |
-| Switch | Chassis rectangle with port slots and status LEDs | `#60a5fa` (blue) |
-| Client | Laptop outline (screen + base) | `#7dd3fc` (light blue) |
-| Server | Rack chassis with drive bays + status LEDs | `#4ade80` (green) |
+| Device | Icon Description                                  | Accent Color           |
+| ------ | ------------------------------------------------- | ---------------------- |
+| Router | Circle with 4 directional arrows + center dot     | `#4ade80` (green)      |
+| Switch | Chassis rectangle with port slots and status LEDs | `#60a5fa` (blue)       |
+| Client | Laptop outline (screen + base)                    | `#7dd3fc` (light blue) |
+| Server | Rack chassis with drive bays + status LEDs        | `#4ade80` (green)      |
 
 Icons are defined as named components within each node file (e.g. `RouterIcon`, `SwitchIcon`) using no external dependencies.
 
@@ -63,12 +63,12 @@ Each handle has a unique `id` (`"top"`, `"right"`, `"bottom"`, `"left"`) so Reac
 
 ### Content by Role
 
-| Role | Fields Displayed |
-|------|-----------------|
+| Role     | Fields Displayed                            |
+| -------- | ------------------------------------------- |
 | `router` | Per-interface: name, IP/prefix, MAC address |
-| `switch` | Per-port: name, MAC address |
-| `client` | IP address, MAC address (if present) |
-| `server` | IP address, MAC address (if present) |
+| `switch` | Per-port: name, MAC address                 |
+| `client` | IP address, MAC address (if present)        |
+| `server` | IP address, MAC address (if present)        |
 
 ### Usage
 
@@ -76,7 +76,7 @@ Each handle has a unique `id` (`"top"`, `"right"`, `"bottom"`, `"left"`) so Reac
 
 ```tsx
 <NetlabProvider topology={topology}>
-  <NetlabCanvas />        {/* NodeDetailPanel is included */}
+  <NetlabCanvas /> {/* NodeDetailPanel is included */}
   <RouteTable />
   <AreaLegend />
 </NetlabProvider>
@@ -131,10 +131,10 @@ See [`docs/connection-validation.md`](./connection-validation.md) for the full r
 
 On mount, canvas state is seeded from the topology passed to `NetlabProvider`:
 
-| Canvas state | Seeded from |
-|---|---|
-| `nodes` | `[...areasToNodes(areas), ...topology.nodes]` |
-| `edges` | `topology.edges` |
+| Canvas state | Seeded from                                   |
+| ------------ | --------------------------------------------- |
+| `nodes`      | `[...areasToNodes(areas), ...topology.nodes]` |
+| `edges`      | `topology.edges`                              |
 
 If `topology` changes after mount (e.g. a new node is added externally), the canvas state is **not** updated automatically. The canvas must be remounted to re-seed from the new topology.
 
@@ -178,10 +178,10 @@ Simulation context (`NetlabContext`) and UI context (`NetlabUIContext`) are inte
 
 ## Overlay Panel Z-Index Reference
 
-| Component | Position | z-index |
-|-----------|----------|---------|
-| `NodeDetailPanel` | `left: 12, top: 12` | `200` |
-| `RouteTable` | `right: 12, top: 12` | `100` |
-| `AreaLegend` | `left: 12, bottom: 60` | `100` |
-| React Flow Controls | bottom-left | ~5 |
-| React Flow MiniMap | bottom-right | ~5 |
+| Component           | Position               | z-index |
+| ------------------- | ---------------------- | ------- |
+| `NodeDetailPanel`   | `left: 12, top: 12`    | `200`   |
+| `RouteTable`        | `right: 12, top: 12`   | `100`   |
+| `AreaLegend`        | `left: 12, bottom: 60` | `100`   |
+| React Flow Controls | bottom-left            | ~5      |
+| React Flow MiniMap  | bottom-right           | ~5      |

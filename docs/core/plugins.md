@@ -14,12 +14,12 @@ A `LayerPlugin` provides:
 
 ## Built-in Plugins
 
-| Plugin | Import | Status |
-| ------ | ------ | ------ |
-| L1 Physical | `netlab/layers/l1-physical` | Stub |
-| L2 Data Link | `netlab/layers/l2-datalink` | Implemented |
-| L3 Network | `netlab/layers/l3-network` | Implemented |
-| L4 Transport | `netlab/layers/l4-transport` | Stub |
+| Plugin         | Import                         | Status      |
+| -------------- | ------------------------------ | ----------- |
+| L1 Physical    | `netlab/layers/l1-physical`    | Stub        |
+| L2 Data Link   | `netlab/layers/l2-datalink`    | Implemented |
+| L3 Network     | `netlab/layers/l3-network`     | Implemented |
+| L4 Transport   | `netlab/layers/l4-transport`   | Stub        |
 | L7 Application | `netlab/layers/l7-application` | Visual only |
 
 ## Registering Built-in Plugins
@@ -42,7 +42,7 @@ import { FirewallForwarder } from './FirewallForwarder';
 const firewallPlugin: LayerPlugin = {
   layerId: 'l3',
   nodeTypes: {
-    'firewall': MyFirewallNode,
+    firewall: MyFirewallNode,
   },
   deviceRoles: ['firewall'],
   forwarder: (nodeId, topology) => new FirewallForwarder(nodeId, topology),
@@ -55,10 +55,10 @@ registerLayerPlugin(firewallPlugin);
 
 ```typescript
 interface LayerPlugin {
-  layerId: LayerId;               // 'l1' | 'l2' | 'l3' | 'l4' | 'l7'
-  nodeTypes: NodeTypes;           // React Flow node type map
-  deviceRoles?: string[];         // device roles handled by this plugin
-  forwarder?: ForwarderFactory;   // (nodeId, topology) => Forwarder
+  layerId: LayerId; // 'l1' | 'l2' | 'l3' | 'l4' | 'l7'
+  nodeTypes: NodeTypes; // React Flow node type map
+  deviceRoles?: string[]; // device roles handled by this plugin
+  forwarder?: ForwarderFactory; // (nodeId, topology) => Forwarder
 }
 ```
 

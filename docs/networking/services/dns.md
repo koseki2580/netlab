@@ -8,7 +8,7 @@ Netlab simulates DNS as a direct UDP query/response exchange backed by static A 
 
 ```typescript
 interface DnsZoneEntry {
-  name: string;    // FQDN
+  name: string; // FQDN
   address: string; // IPv4
 }
 

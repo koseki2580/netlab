@@ -7,25 +7,25 @@ and optional packet forwarding logic.
 
 ## Layer Overview
 
-| Layer | ID | Name | Status | Key Devices |
-| ----- | -- | ---- | ------ | ----------- |
-| 1 | `l1` | Physical | Stub | Hub, Cable |
-| 2 | `l2` | Data Link | Implemented | Switch, Host (NIC) |
-| 3 | `l3` | Network | Implemented | Router, Host (IP) |
-| 4 | `l4` | Transport | Stub | Host (Port) |
-| 7 | `l7` | Application | Visual only | Client, Server |
+| Layer | ID   | Name        | Status      | Key Devices        |
+| ----- | ---- | ----------- | ----------- | ------------------ |
+| 1     | `l1` | Physical    | Stub        | Hub, Cable         |
+| 2     | `l2` | Data Link   | Implemented | Switch, Host (NIC) |
+| 3     | `l3` | Network     | Implemented | Router, Host (IP)  |
+| 4     | `l4` | Transport   | Stub        | Host (Port)        |
+| 7     | `l7` | Application | Visual only | Client, Server     |
 
 ## Layer Visibility Rules
 
 Which devices appear at each layer:
 
-| Device | L1 | L2 | L3 | L4 | L7 |
-| ------ | -- | -- | -- | -- | -- |
-| Hub | ✓ | | | | |
-| Switch | ✓ | ✓ | | | |
-| Router | ✓ | ✓ | ✓ | | |
-| Host | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Server | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Device | L1  | L2  | L3  | L4  | L7  |
+| ------ | --- | --- | --- | --- | --- |
+| Hub    | ✓   |     |     |     |     |
+| Switch | ✓   | ✓   |     |     |     |
+| Router | ✓   | ✓   | ✓   |     |     |
+| Host   | ✓   | ✓   | ✓   | ✓   | ✓   |
+| Server | ✓   | ✓   | ✓   | ✓   | ✓   |
 
 ## Layer Details
 

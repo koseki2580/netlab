@@ -42,7 +42,27 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "coverage": "vitest run --coverage",
+    "size": "npm run build && size-limit",
+    "e2e": "playwright test",
+    "e2e:install": "playwright install --with-deps chromium",
+    "plan:index": "node scripts/build-plan-index.mjs",
+    "plan:index:check": "node scripts/build-plan-index.mjs --check",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml}": [
+      "prettier --write"
+    ]
   },
   "peerDependencies": {
     "@xyflow/react": ">=12.0.0",
@@ -50,15 +70,28 @@
     "react-dom": ">=18.0.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.2",
+    "@playwright/test": "^1.59.1",
+    "@size-limit/preset-small-lib": "^12.1.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^6.0.1",
+    "@vitest/coverage-v8": "^4.1.4",
     "@xyflow/react": "^12.10.2",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "husky": "^9.1.7",
     "jsdom": "^29.0.2",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.3",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "react-router-dom": "^7.14.0",
+    "size-limit": "^12.1.0",
     "typescript": "^5.5.0",
+    "typescript-eslint": "^8.58.2",
     "vite": "^8.0.7",
     "vite-plugin-dts": "^4.0.0",
     "vitest": "^4.1.3"

@@ -66,7 +66,7 @@ interface NetlabNodeData {
 
 ```typescript
 interface SubInterface {
-  id: string;               // e.g. "eth0.10"
+  id: string; // e.g. "eth0.10"
   parentInterfaceId: string;
   vlanId: number;
   ipAddress: string;
@@ -90,23 +90,23 @@ interface RouterInterface {
 
 ### Ingress VLAN Resolution
 
-| Port mode | Incoming frame | Result |
-| --------- | -------------- | ------ |
-| access | untagged | Use `accessVlan`, default `1` |
-| access | tagged | Drop (`vlan-ingress-violation`) |
-| trunk | untagged | Use `nativeVlan`, default `1` |
-| trunk | tagged with allowed VID | Use tag `vid` |
-| trunk | tagged with disallowed VID | Drop (`vlan-ingress-violation`) |
+| Port mode | Incoming frame             | Result                          |
+| --------- | -------------------------- | ------------------------------- |
+| access    | untagged                   | Use `accessVlan`, default `1`   |
+| access    | tagged                     | Drop (`vlan-ingress-violation`) |
+| trunk     | untagged                   | Use `nativeVlan`, default `1`   |
+| trunk     | tagged with allowed VID    | Use tag `vid`                   |
+| trunk     | tagged with disallowed VID | Drop (`vlan-ingress-violation`) |
 
 ### Egress Tagging Rules
 
-| Egress port mode | Forwarding VLAN | Outgoing frame |
-| ---------------- | --------------- | -------------- |
-| access | matching access VLAN | Untagged |
-| access | non-matching VLAN | Not eligible for egress |
-| trunk | equals `nativeVlan` | Untagged |
-| trunk | allowed non-native VLAN | Tagged with `vlanTag.vid = vlanId` |
-| trunk | disallowed VLAN | Not eligible for egress |
+| Egress port mode | Forwarding VLAN         | Outgoing frame                     |
+| ---------------- | ----------------------- | ---------------------------------- |
+| access           | matching access VLAN    | Untagged                           |
+| access           | non-matching VLAN       | Not eligible for egress            |
+| trunk            | equals `nativeVlan`     | Untagged                           |
+| trunk            | allowed non-native VLAN | Tagged with `vlanTag.vid = vlanId` |
+| trunk            | disallowed VLAN         | Not eligible for egress            |
 
 ### Broadcast Isolation
 
@@ -142,8 +142,20 @@ const topology = {
           { vlanId: 20, name: 'servers' },
         ],
         ports: [
-          { id: 'p1', name: 'fa0/1', macAddress: '00:00:00:10:00:01', vlanMode: 'access', accessVlan: 10 },
-          { id: 'p2', name: 'fa0/2', macAddress: '00:00:00:10:00:02', vlanMode: 'access', accessVlan: 20 },
+          {
+            id: 'p1',
+            name: 'fa0/1',
+            macAddress: '00:00:00:10:00:01',
+            vlanMode: 'access',
+            accessVlan: 10,
+          },
+          {
+            id: 'p2',
+            name: 'fa0/2',
+            macAddress: '00:00:00:10:00:02',
+            vlanMode: 'access',
+            accessVlan: 20,
+          },
           {
             id: 'p24',
             name: 'fa0/24',

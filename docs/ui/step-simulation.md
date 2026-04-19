@@ -20,13 +20,13 @@ Represents a single entry in a router's route table, evaluated against the desti
 
 ```typescript
 interface RoutingCandidate {
-  destination: string;     // CIDR notation, e.g. "10.0.0.0/24"
-  nextHop: string;         // IP address or 'direct'
-  metric: number;          // routing metric
-  protocol: string;        // 'static' | 'ospf' | 'rip' | 'bgp' — extensible
-  adminDistance: number;   // administrative distance
-  matched: boolean;        // true if isInSubnet(dstIp, destination)
-  selectedByLpm: boolean;  // true for exactly one candidate: the LPM winner
+  destination: string; // CIDR notation, e.g. "10.0.0.0/24"
+  nextHop: string; // IP address or 'direct'
+  metric: number; // routing metric
+  protocol: string; // 'static' | 'ospf' | 'rip' | 'bgp' — extensible
+  adminDistance: number; // administrative distance
+  matched: boolean; // true if isInSubnet(dstIp, destination)
+  selectedByLpm: boolean; // true for exactly one candidate: the LPM winner
 }
 ```
 
@@ -37,9 +37,9 @@ Encapsulates the full routing decision made at a router hop.
 ```typescript
 interface RoutingDecision {
   dstIp: string;
-  candidates: RoutingCandidate[];  // all routes, sorted by prefix length descending
+  candidates: RoutingCandidate[]; // all routes, sorted by prefix length descending
   winner: RoutingCandidate | null; // null = no matching route (packet dropped)
-  explanation: string;             // human-readable summary
+  explanation: string; // human-readable summary
 }
 ```
 
@@ -87,7 +87,7 @@ type StepSimStatus = 'idle' | 'loaded' | 'stepping' | 'done';
 ```
 
 | Status     | Meaning                                              |
-|------------|------------------------------------------------------|
+| ---------- | ---------------------------------------------------- |
 | `idle`     | No trace loaded                                      |
 | `loaded`   | Trace ready, playback not started (`currentStep -1`) |
 | `stepping` | At least one step has been taken                     |
@@ -98,18 +98,18 @@ type StepSimStatus = 'idle' | 'loaded' | 'stepping' | 'done';
 ```typescript
 interface StepSimState {
   status: StepSimStatus;
-  currentStep: number;         // -1 before first step
-  totalSteps: number;          // total hop count
+  currentStep: number; // -1 before first step
+  totalSteps: number; // total hop count
   currentHop: PacketHop | null;
-  canStep: boolean;            // true when stepping is possible
-  canReset: boolean;           // true when a trace is loaded
+  canStep: boolean; // true when stepping is possible
+  canReset: boolean; // true when a trace is loaded
 }
 ```
 
 ### API
 
 | Method                | Description                                               |
-|-----------------------|-----------------------------------------------------------|
+| --------------------- | --------------------------------------------------------- |
 | `load(packet)`        | Precomputes the trace via `engine.send()`                 |
 | `nextStep()`          | Advances one hop; returns the new `PacketHop` or null     |
 | `reset()`             | Resets playback position without clearing the trace       |
@@ -210,8 +210,8 @@ Displays:
 
 Displays all `RoutingCandidate` entries with columns:
 
-| DESTINATION | NEXT HOP | PROTOCOL | AD | METRIC |
-|-------------|----------|----------|----|--------|
+| DESTINATION | NEXT HOP | PROTOCOL | AD  | METRIC |
+| ----------- | -------- | -------- | --- | ------ |
 
 **Row color coding:**
 

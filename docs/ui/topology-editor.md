@@ -7,6 +7,7 @@
 `TopologyEditor` is an interactive React component that enables users to visually build and edit network topologies. It extends the existing read-only `NetlabProvider` + `NetlabCanvas` stack with full CRUD operations on nodes and edges, per-node property editing, and undo/redo history.
 
 **Out of scope for v1:**
+
 - Area (network zone) editing
 - Simulation/packet forwarding from within the editor
 - Drag-and-drop from external palette
@@ -17,7 +18,7 @@
 
 ```typescript
 interface TopologyEditorProps {
-  initialTopology?: EditorTopology;   // nodes + edges to start with (default: empty)
+  initialTopology?: EditorTopology; // nodes + edges to start with (default: empty)
   onTopologyChange?: (topology: EditorTopology) => void;
   style?: React.CSSProperties;
   className?: string;
@@ -38,10 +39,7 @@ function App() {
   const [topology, setTopology] = useState<EditorTopology>({ nodes: [], edges: [] });
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
-      <TopologyEditor
-        initialTopology={topology}
-        onTopologyChange={setTopology}
-      />
+      <TopologyEditor initialTopology={topology} onTopologyChange={setTopology} />
     </div>
   );
 }
@@ -75,9 +73,9 @@ TopologyEditorProvider  (TopologyEditorContext — state + mutations)
 ```typescript
 interface TopologyEditorState {
   topology: EditorTopology;
-  past: HistoryEntry[];       // max 50 entries
+  past: HistoryEntry[]; // max 50 entries
   future: HistoryEntry[];
-  reactFlowKey: number;       // incremented on undo/redo to force RF remount
+  reactFlowKey: number; // incremented on undo/redo to force RF remount
   selectedNodeId: string | null;
 }
 
@@ -88,17 +86,17 @@ interface HistoryEntry {
 
 ### Reducer Actions
 
-| Action | History effect | `reactFlowKey` |
-|--------|----------------|-----------------|
-| `COMMIT { topology }` | Push current → `past` (cap 50), clear `future` | unchanged |
-| `UNDO` | Pop `past` → current, current → `future` | +1 |
-| `REDO` | Pop `future` → current, current → `past` | +1 |
-| `UPDATE_POSITIONS { updates }` | None — patches positions in-place | unchanged |
-| `SET_SELECTED { nodeId }` | None | unchanged |
+| Action                         | History effect                                 | `reactFlowKey` |
+| ------------------------------ | ---------------------------------------------- | -------------- |
+| `COMMIT { topology }`          | Push current → `past` (cap 50), clear `future` | unchanged      |
+| `UNDO`                         | Pop `past` → current, current → `future`       | +1             |
+| `REDO`                         | Pop `future` → current, current → `past`       | +1             |
+| `UPDATE_POSITIONS { updates }` | None — patches positions in-place              | unchanged      |
+| `SET_SELECTED { nodeId }`      | None                                           | unchanged      |
 
 ### Why `UPDATE_POSITIONS` bypasses history
 
-When the user drags a node, React Flow fires many intermediate position events. Committing each to history would flood the undo stack with positional micro-states, making undo effectively useless. Instead, drag-stop syncs the final position directly to canonical state without pushing to `past`. The user can still undo node *creation*, but not the precise final resting position of a drag.
+When the user drags a node, React Flow fires many intermediate position events. Committing each to history would flood the undo stack with positional micro-states, making undo effectively useless. Instead, drag-stop syncs the final position directly to canonical state without pushing to `past`. The user can still undo node _creation_, but not the precise final resting position of a drag.
 
 ### Why `reactFlowKey` forces remount on undo/redo
 
@@ -118,16 +116,17 @@ Each button creates a node with default data at a randomized position (`x: 200±
 
 Default node data by role:
 
-| Role | layerId | Default data |
-|------|---------|--------------|
-| router | l3 | `interfaces: [], staticRoutes: []` |
-| switch | l2 | `ports: [fa0/0, fa0/1]` (2 default ports) |
-| client | l7 | `ip: undefined, mac: undefined` |
-| server | l7 | `ip: undefined, mac: undefined` |
+| Role   | layerId | Default data                              |
+| ------ | ------- | ----------------------------------------- |
+| router | l3      | `interfaces: [], staticRoutes: []`        |
+| switch | l2      | `ports: [fa0/0, fa0/1]` (2 default ports) |
+| client | l7      | `ip: undefined, mac: undefined`           |
+| server | l7      | `ip: undefined, mac: undefined`           |
 
 ### Connecting Nodes
 
 Drag from any handle on one node to any handle on another. Connection validation uses `validateConnection()`:
+
 - **Blocked**: self-loops, duplicate edges, handle reuse, and endpoint↔endpoint links (`client` / `server`)
 - **Warn-only**: subnet mismatch and missing IP configuration
 - Invalid connections still appear on the canvas (styled red) but are blocked during drag via `isValidConnection`.
@@ -146,19 +145,23 @@ The `deleteKeyCode={null}` prop on `<ReactFlow>` disables the built-in delete be
 Click any node → `NodeEditorPanel` opens on the right side.
 
 **Common fields (all roles):**
+
 - Label — text input, committed on blur
 
 **client / server:**
+
 - IP address — text input, committed on blur
 - MAC address — text input, committed on blur
 
 **router:**
+
 - Interface list: each interface shows name, IP/prefix (`10.0.0.1/24`), MAC
 - [+ Add Interface] — adds a default interface immediately (commits to history)
 - [×] per interface — removes that interface (commits to history)
 - Interface field edits committed on blur
 
 **switch:**
+
 - Port list: each port shows name and MAC
 - [+ Add Port] — adds a default port immediately (commits to history)
 - [×] per port — removes that port (commits to history)
@@ -192,10 +195,10 @@ Locally-administered MACs: `02:00:XX:XX:XX:XX` where the last 3 octets are rando
 
 ## Keyboard Shortcuts
 
-| Key | Action |
-|-----|--------|
-| Delete / Backspace | Delete selected nodes and edges |
-| Escape | Close NodeEditorPanel (deselect node) |
+| Key                | Action                                |
+| ------------------ | ------------------------------------- |
+| Delete / Backspace | Delete selected nodes and edges       |
+| Escape             | Close NodeEditorPanel (deselect node) |
 
 ---
 
@@ -207,7 +210,12 @@ export { TopologyEditor } from './editor/components/TopologyEditor';
 export type { TopologyEditorProps } from './editor/components/TopologyEditor';
 export type { EditorTopology } from './editor/types';
 export { useTopologyEditorContext } from './editor/context/TopologyEditorContext';
-export { createRouterNode, createSwitchNode, createClientNode, createServerNode } from './editor/utils/nodeFactory';
+export {
+  createRouterNode,
+  createSwitchNode,
+  createClientNode,
+  createServerNode,
+} from './editor/utils/nodeFactory';
 ```
 
 ---

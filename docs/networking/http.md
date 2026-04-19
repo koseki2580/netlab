@@ -56,8 +56,8 @@ const HTTP_USER_AGENT = 'netlab/0.1';
 ```typescript
 import { isHttpRequest, isHttpResponse } from 'netlab';
 
-isHttpRequest(msg);   // true if method and url are present
-isHttpResponse(msg);  // true if statusCode is present
+isHttpRequest(msg); // true if method and url are present
+isHttpResponse(msg); // true if statusCode is present
 ```
 
 ## Factory API
@@ -65,6 +65,7 @@ isHttpResponse(msg);  // true if statusCode is present
 ### `buildHttpRequest(options)`
 
 Creates an `HttpMessage` with request fields. Automatically sets:
+
 - `Host` header (from `dstIp` or `host` option)
 - `User-Agent: netlab/0.1`
 - `Connection: close`
@@ -84,6 +85,7 @@ const request = buildHttpRequest({
 ### `buildHttpResponse(options)`
 
 Creates an `HttpMessage` with response fields. Automatically sets:
+
 - `Server: netlab/0.1`
 - `Connection: close`
 - `Content-Length` (if body is provided)
@@ -144,6 +146,7 @@ switch (result.type) {
 ```
 
 **Parser semantics**:
+
 - Waits for complete headers (terminated by `\r\n\r\n`)
 - Uses `Content-Length` to determine body completeness
 - Returns `incomplete` if headers or body are not yet fully received
@@ -174,11 +177,13 @@ server.route('GET', '/users/:id', (params) => ({
 ```
 
 **Route matching**:
+
 - Exact path segments and `:param` wildcards
 - Returns 404 for unmatched routes
 - Returns 400 for non-HTTP/1.1 requests
 
 **Dispatch methods**:
+
 - `handleRequest(msg: HttpMessage)` — typed dispatch
 - `handleRawData(data: string)` — parses buffer then dispatches
 
@@ -190,20 +195,21 @@ Orchestrates a full HTTP round-trip over TCP:
 import { HttpClient } from 'netlab';
 
 const client = new HttpClient({
-  orchestrator,       // TcpOrchestrator
-  dataController,     // DataTransferController
-  sessionTracker,     // SessionTracker (mode: 'http')
+  orchestrator, // TcpOrchestrator
+  dataController, // DataTransferController
+  sessionTracker, // SessionTracker (mode: 'http')
 });
 
 const response = await client.request(
-  'client-1',         // source node
-  'server-1',         // destination node
+  'client-1', // source node
+  'server-1', // destination node
   { method: 'GET', url: '/' },
-  server,             // HttpServer instance
+  server, // HttpServer instance
 );
 ```
 
 The client performs:
+
 1. TCP handshake via `orchestrator.connect()`
 2. Serialize and send HTTP request via `dataController`
 3. Server processes request via `server.handleRequest()`
@@ -320,7 +326,7 @@ const responseWire = serializeHttp(response);
 const parsed = parseHttp(responseWire);
 if (parsed.type === 'response') {
   console.log(parsed.message.statusCode); // 200
-  console.log(parsed.message.body);       // "Hello, netlab"
+  console.log(parsed.message.body); // "Hello, netlab"
 }
 ```
 

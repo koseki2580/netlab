@@ -92,12 +92,12 @@ Bridge IDs are ordered by:
 
 ## Port State Mapping
 
-| Role | State |
-| ---- | ----- |
-| `ROOT` | `FORWARDING` |
+| Role         | State        |
+| ------------ | ------------ |
+| `ROOT`       | `FORWARDING` |
 | `DESIGNATED` | `FORWARDING` |
-| `BLOCKED` | `BLOCKING` |
-| `DISABLED` | `DISABLED` |
+| `BLOCKED`    | `BLOCKING`   |
+| `DISABLED`   | `DISABLED`   |
 
 ## Forwarder Integration
 

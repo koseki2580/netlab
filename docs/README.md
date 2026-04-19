@@ -15,6 +15,7 @@ Core specifications for the overall design of Netlab and for creating extensions
 - [Mismatch Report](api/mismatch-report.md) - Results of the API documentation audit
 - [Hooks](core/hooks.md) - Mechanism of the React-independent event hook engine
 - [Plugins](core/plugins.md) - Plugin mechanism for feature extensions
+- [Errors](core/errors.md) - NetlabError taxonomy and recovery guidance
 
 ### 💻 UI & Interaction (`ui/`)
 
@@ -31,6 +32,7 @@ Specifications regarding user interface implementation and canvas operations.
 - [Theming](ui/theming.md) - CSS variable-based color theming for embedding in host pages
 - [Node Theming](ui/node-theming.md) - Per-node-type color tokens and CSS variable wiring for theme-aware node rendering
 - [Packet Structure Viewer](ui/packet-structure-viewer.md) - Byte-level hex dump and field table showing per-layer color-coded packet structure
+- [Accessibility](ui/accessibility.md) - WCAG 2.1 AA compliance: color contrast tokens, keyboard model, ARIA roles, and axe-core verification
 
 ### 🔄 Simulation (`simulation/`)
 

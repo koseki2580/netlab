@@ -111,12 +111,7 @@ Callback behavior:
 
 ```tsx
 import { useCallback, useMemo, useState } from 'react';
-import {
-  NetlabCanvas,
-  NetlabProvider,
-  decodeTopology,
-  encodeTopology,
-} from 'netlab';
+import { NetlabCanvas, NetlabProvider, decodeTopology, encodeTopology } from 'netlab';
 import type { NetworkTopology, TopologySnapshot } from 'netlab';
 
 const INITIAL_TOPOLOGY: NetworkTopology = {
@@ -130,7 +125,12 @@ export function ControlledTopologyExample() {
   const [topology, setTopology] = useState(INITIAL_TOPOLOGY);
 
   const json = useMemo(
-    () => JSON.stringify({ nodes: topology.nodes, edges: topology.edges, areas: topology.areas }, null, 2),
+    () =>
+      JSON.stringify(
+        { nodes: topology.nodes, edges: topology.edges, areas: topology.areas },
+        null,
+        2,
+      ),
     [topology],
   );
 
@@ -206,11 +206,11 @@ To migrate to controlled topology:
 
 ## Tradeoffs
 
-| Dimension | Controlled | Uncontrolled |
-| --- | --- | --- |
-| State owner | Parent React state | React Flow local state |
-| Persistence | Straightforward | Manual snapshotting required |
-| External restore | `setTopology(...)` | Remount or recreate initial state |
-| Mutation callbacks | Yes | No |
-| Extra renders | Parent update + canvas sync | Lower overhead |
-| Best fit | Persistence, collaboration, editor-like flows | Static demos, quick visualization |
+| Dimension          | Controlled                                    | Uncontrolled                      |
+| ------------------ | --------------------------------------------- | --------------------------------- |
+| State owner        | Parent React state                            | React Flow local state            |
+| Persistence        | Straightforward                               | Manual snapshotting required      |
+| External restore   | `setTopology(...)`                            | Remount or recreate initial state |
+| Mutation callbacks | Yes                                           | No                                |
+| Extra renders      | Parent update + canvas sync                   | Lower overhead                    |
+| Best fit           | Persistence, collaboration, editor-like flows | Static demos, quick visualization |

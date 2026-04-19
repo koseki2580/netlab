@@ -174,7 +174,7 @@ This keeps `SessionTracker` decoupled from `SimulationEngine` internals and avoi
 
 ```ts
 class SessionTracker {
-  constructor(hookEngine: HookEngine)
+  constructor(hookEngine: HookEngine);
 
   startSession(
     sessionId: string,
@@ -185,18 +185,14 @@ class SessionTracker {
       requestType?: string;
       transferId?: string;
     },
-  ): void
+  ): void;
 
-  attachTrace(
-    sessionId: string,
-    trace: PacketTrace,
-    role: 'request' | 'response',
-  ): void
+  attachTrace(sessionId: string, trace: PacketTrace, role: 'request' | 'response'): void;
 
-  getSessions(): NetworkSession[]
-  getSession(id: string): NetworkSession | undefined
-  clear(): void
-  subscribe(listener: () => void): () => void
+  getSessions(): NetworkSession[];
+  getSession(id: string): NetworkSession | undefined;
+  clear(): void;
+  subscribe(listener: () => void): () => void;
 }
 ```
 
@@ -243,11 +239,7 @@ interface SessionContextValue {
       requestType?: string;
     },
   ) => void;
-  attachTrace: (
-    sessionId: string,
-    trace: PacketTrace,
-    role: 'request' | 'response',
-  ) => void;
+  attachTrace: (sessionId: string, trace: PacketTrace, role: 'request' | 'response') => void;
   clearSessions: () => void;
 }
 ```
@@ -262,9 +254,7 @@ Provider hierarchy:
 <NetlabProvider topology={topology}>
   <FailureProvider>
     <SimulationProvider>
-      <SessionProvider>
-        {/* session-aware demo UI */}
-      </SessionProvider>
+      <SessionProvider>{/* session-aware demo UI */}</SessionProvider>
     </SimulationProvider>
   </FailureProvider>
 </NetlabProvider>

@@ -21,34 +21,34 @@ import type { NetlabTheme } from 'netlab';
 
 interface NetlabTheme {
   // Backgrounds
-  bgPrimary: string;      // Main container background
-  bgSurface: string;      // Toolbar, raised surfaces
-  bgElevated: string;     // Hover / elevated elements
-  bgPanel: string;        // Floating overlay panels (supports rgba)
+  bgPrimary: string; // Main container background
+  bgSurface: string; // Toolbar, raised surfaces
+  bgElevated: string; // Hover / elevated elements
+  bgPanel: string; // Floating overlay panels (supports rgba)
 
   // Borders
-  border: string;         // Solid borders
-  borderSubtle: string;   // Semi-transparent borders (supports rgba)
+  border: string; // Solid borders
+  borderSubtle: string; // Semi-transparent borders (supports rgba)
 
   // Text
-  textPrimary: string;    // Main text
-  textSecondary: string;  // Secondary / label text
-  textMuted: string;      // Muted / hint text
-  textFaint: string;      // Very dim text
+  textPrimary: string; // Main text
+  textSecondary: string; // Secondary / label text
+  textMuted: string; // Muted / hint text
+  textFaint: string; // Very dim text
 
   // Semantic accents (network-specific)
-  accentBlue: string;     // Action buttons, primary highlights
-  accentGreen: string;    // Routers, forward events
-  accentRed: string;      // Drop / error events
-  accentOrange: string;   // Warning / advisory validation events
-  accentYellow: string;   // MAC addresses
-  accentCyan: string;     // IP addresses, primary text accents
+  accentBlue: string; // Action buttons, primary highlights
+  accentGreen: string; // Routers, forward events
+  accentRed: string; // Drop / error events
+  accentOrange: string; // Warning / advisory validation events
+  accentYellow: string; // MAC addresses
+  accentCyan: string; // IP addresses, primary text accents
 
   // Node backgrounds
-  nodeRouterBg: string;   // Router node container background
-  nodeSwitchBg: string;   // Switch node container background
-  nodeClientBg: string;   // Client node container background
-  nodeServerBg: string;   // Server node container background
+  nodeRouterBg: string; // Router node container background
+  nodeSwitchBg: string; // Switch node container background
+  nodeClientBg: string; // Client node container background
+  nodeServerBg: string; // Server node container background
 }
 ```
 
@@ -58,28 +58,28 @@ interface NetlabTheme {
 
 Each `NetlabTheme` field maps to a CSS custom property scoped to the component container:
 
-| Field | CSS Variable |
-|---|---|
-| `bgPrimary` | `--netlab-bg-primary` |
-| `bgSurface` | `--netlab-bg-surface` |
-| `bgElevated` | `--netlab-bg-elevated` |
-| `bgPanel` | `--netlab-bg-panel` |
-| `border` | `--netlab-border` |
-| `borderSubtle` | `--netlab-border-subtle` |
-| `textPrimary` | `--netlab-text-primary` |
+| Field           | CSS Variable              |
+| --------------- | ------------------------- |
+| `bgPrimary`     | `--netlab-bg-primary`     |
+| `bgSurface`     | `--netlab-bg-surface`     |
+| `bgElevated`    | `--netlab-bg-elevated`    |
+| `bgPanel`       | `--netlab-bg-panel`       |
+| `border`        | `--netlab-border`         |
+| `borderSubtle`  | `--netlab-border-subtle`  |
+| `textPrimary`   | `--netlab-text-primary`   |
 | `textSecondary` | `--netlab-text-secondary` |
-| `textMuted` | `--netlab-text-muted` |
-| `textFaint` | `--netlab-text-faint` |
-| `accentBlue` | `--netlab-accent-blue` |
-| `accentGreen` | `--netlab-accent-green` |
-| `accentRed` | `--netlab-accent-red` |
-| `accentOrange` | `--netlab-accent-orange` |
-| `accentYellow` | `--netlab-accent-yellow` |
-| `accentCyan` | `--netlab-accent-cyan` |
-| `nodeRouterBg` | `--netlab-node-router-bg` |
-| `nodeSwitchBg` | `--netlab-node-switch-bg` |
-| `nodeClientBg` | `--netlab-node-client-bg` |
-| `nodeServerBg` | `--netlab-node-server-bg` |
+| `textMuted`     | `--netlab-text-muted`     |
+| `textFaint`     | `--netlab-text-faint`     |
+| `accentBlue`    | `--netlab-accent-blue`    |
+| `accentGreen`   | `--netlab-accent-green`   |
+| `accentRed`     | `--netlab-accent-red`     |
+| `accentOrange`  | `--netlab-accent-orange`  |
+| `accentYellow`  | `--netlab-accent-yellow`  |
+| `accentCyan`    | `--netlab-accent-cyan`    |
+| `nodeRouterBg`  | `--netlab-node-router-bg` |
+| `nodeSwitchBg`  | `--netlab-node-switch-bg` |
+| `nodeClientBg`  | `--netlab-node-client-bg` |
+| `nodeServerBg`  | `--netlab-node-server-bg` |
 
 ---
 
@@ -229,7 +229,7 @@ import {
       <RouteTable />
     </SimulationProvider>
   </NetlabProvider>
-</NetlabThemeScope>
+</NetlabThemeScope>;
 ```
 
 `NetlabThemeScope`:
@@ -258,8 +258,8 @@ Netlab uses React Flow as its canvas engine. React Flow maintains its own intern
 `NetlabApp` derives the correct `colorMode` from the resolved theme's `bgPrimary` value using perceived luminance (ITU-R BT.601):
 
 ```ts
-luminance = 0.299 * R + 0.587 * G + 0.114 * B
-colorMode = luminance > 128 ? 'light' : 'dark'
+luminance = 0.299 * R + 0.587 * G + 0.114 * B;
+colorMode = luminance > 128 ? 'light' : 'dark';
 ```
 
 `NetlabCanvas` accepts an optional `colorMode` prop and forwards it to `ReactFlow`. Inside `NetlabThemeScope`, `NetlabCanvas` inherits the resolved mode automatically. Consumers who bypass both `NetlabApp` and `NetlabThemeScope` must pass the correct `colorMode` explicitly when using a light background.

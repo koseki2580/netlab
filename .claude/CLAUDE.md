@@ -22,6 +22,9 @@
 
 - **At the start of every session, read `agents/tasks/lessons.md` before taking any action**
 - Whenever you receive corrections from the user, record the pattern in `agents/tasks/lessons.md`
+- Use the template in `agents/tasks/lessons.template.md` (four fields: What happened / Rule / Why / Apply-when)
+- Keep each lesson ≤ 5 lines of body; if longer, split into multiple entries
+- Every plan's §7 checklist must include "append to `lessons.md`" — a plan is not complete without a lesson
 - Write rules for yourself to avoid repeating the same mistakes
 - Continuously refine these rules until the error rate decreases
 

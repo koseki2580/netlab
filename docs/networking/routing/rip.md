@@ -12,7 +12,7 @@ current topology graph. It models hop-count route learning, but not packetized u
 ```typescript
 interface RipConfig {
   version: 1 | 2;
-  networks: string[];  // directly connected networks this router originates into RIP
+  networks: string[]; // directly connected networks this router originates into RIP
 }
 ```
 

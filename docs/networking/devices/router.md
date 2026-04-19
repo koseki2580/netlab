@@ -168,10 +168,10 @@ See [vlan.md](../vlan.md) for the full VLAN forwarding and per-VLAN ARP model.
 
 | Protocol | Admin Distance |
 | -------- | -------------- |
-| Static | 1 |
-| eBGP | 20 |
-| OSPF | 110 |
-| RIP | 120 |
-| iBGP | 200 |
+| Static   | 1              |
+| eBGP     | 20             |
+| OSPF     | 110            |
+| RIP      | 120            |
+| iBGP     | 200            |
 
 Lower admin distance wins when multiple protocols have a route to the same destination.

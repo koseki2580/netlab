@@ -34,11 +34,11 @@ const EMPTY_FAILURE_STATE: FailureState = {
 
 When a packet encounters a failure, a `PacketHop` with `event: 'drop'` is emitted.
 
-| Reason | Trigger |
-|---|---|
-| `'node-down'` | The current node is in `downNodeIds` |
+| Reason             | Trigger                                                                                         |
+| ------------------ | ----------------------------------------------------------------------------------------------- |
+| `'node-down'`      | The current node is in `downNodeIds`                                                            |
 | `'interface-down'` | A router resolves an egress interface and its `nodeId:interfaceId` key is in `downInterfaceIds` |
-| `'no-route'` | Neighbor resolution fails after `downEdgeIds` removes unusable links |
+| `'no-route'`       | Neighbor resolution fails after `downEdgeIds` removes unusable links                            |
 
 The existing reasons (`routing-loop`, `ttl-exceeded`, `node-not-found`, forwarder-specific drops) remain unchanged.
 
@@ -66,13 +66,13 @@ This preserves existing node-down and edge-down behavior while adding a more spe
 
 ### Failure precedence
 
-| Order | Check | Outcome |
-|---|---|---|
-| 1 | current node in `downNodeIds` | `'node-down'` drop |
-| 2 | router forwarder TTL / forwarding checks | existing router drop reasons |
-| 3 | forwarder decision against failure-filtered neighbors | `'no-route'` drop |
-| 4 | resolved router egress interface in `downInterfaceIds` | `'interface-down'` drop |
-| 5 | successful traversal | create / forward / deliver |
+| Order | Check                                                  | Outcome                      |
+| ----- | ------------------------------------------------------ | ---------------------------- |
+| 1     | current node in `downNodeIds`                          | `'node-down'` drop           |
+| 2     | router forwarder TTL / forwarding checks               | existing router drop reasons |
+| 3     | forwarder decision against failure-filtered neighbors  | `'no-route'` drop            |
+| 4     | resolved router egress interface in `downInterfaceIds` | `'interface-down'` drop      |
+| 5     | successful traversal                                   | create / forward / deliver   |
 
 ## Egress Interface Resolution
 
@@ -227,7 +227,7 @@ This keeps failure toggles and nearby controls stationary while `autoRecompute` 
 The badge is driven by a transient runtime field on node data:
 
 ```typescript
-data._downInterfaceCount
+data._downInterfaceCount;
 ```
 
 This keeps authored topology data separate from canvas-only state.
