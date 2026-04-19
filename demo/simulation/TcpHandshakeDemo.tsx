@@ -169,13 +169,17 @@ function deriveNodeStates(
 }
 
 function formatFlags(segment: TcpSegment): string {
-  return Object.entries(segment.flags)
-    .filter(([, enabled]) => enabled)
-    .map(([flag]) => flag.toUpperCase())
-    .join(', ') || 'NONE';
+  return (
+    Object.entries(segment.flags)
+      .filter(([, enabled]) => enabled)
+      .map(([flag]) => flag.toUpperCase())
+      .join(', ') || 'NONE'
+  );
 }
 
-function readSelectedSegment(selectedPacket: ReturnType<typeof useSimulation>['state']['selectedPacket']) {
+function readSelectedSegment(
+  selectedPacket: ReturnType<typeof useSimulation>['state']['selectedPacket'],
+) {
   if (!selectedPacket) {
     return null;
   }
@@ -197,7 +201,7 @@ function readSelectedSegment(selectedPacket: ReturnType<typeof useSimulation>['s
 function stateAccent(state: TcpState): string {
   if (state === 'ESTABLISHED') return '#34d399';
   if (state === 'TIME_WAIT') return '#f59e0b';
-  if (state === 'CLOSED') return '#64748b';
+  if (state === 'CLOSED') return '#94a3b8';
   return '#7dd3fc';
 }
 
@@ -250,8 +254,8 @@ function SidebarPanel({
   const activeConnections = engine.getTcpConnections();
   const selected = readSelectedSegment(state.selectedPacket);
   const activeTrace = currentTraceId
-    ? traces.find((trace) => trace.packetId === currentTraceId) ?? null
-    : traces[traces.length - 1] ?? null;
+    ? (traces.find((trace) => trace.packetId === currentTraceId) ?? null)
+    : (traces[traces.length - 1] ?? null);
 
   return (
     <div
@@ -266,11 +270,11 @@ function SidebarPanel({
       }}
     >
       <div>
-        <div style={{ fontSize: 11, color: '#64748b', letterSpacing: 1, marginBottom: 6 }}>
+        <div style={{ fontSize: 11, color: '#94a3b8', letterSpacing: 1, marginBottom: 6 }}>
           ACTIVE TCP CONNECTIONS
         </div>
         {activeConnections.length === 0 ? (
-          <div style={{ color: '#64748b', fontSize: 12 }}>No active connections.</div>
+          <div style={{ color: '#94a3b8', fontSize: 12 }}>No active connections.</div>
         ) : (
           activeConnections.map((connection) => (
             <div
@@ -288,9 +292,12 @@ function SidebarPanel({
               <div style={{ color: '#34d399', fontWeight: 'bold', marginBottom: 4 }}>
                 {connection.state}
               </div>
-              <div>{connection.srcIp}:{connection.srcPort} → {connection.dstIp}:{connection.dstPort}</div>
+              <div>
+                {connection.srcIp}:{connection.srcPort} → {connection.dstIp}:{connection.dstPort}
+              </div>
               <div style={{ color: '#94a3b8', marginTop: 4 }}>
-                localSeq={connection.localSeq} localAck={connection.localAck} remoteSeq={connection.remoteSeq}
+                localSeq={connection.localSeq} localAck={connection.localAck} remoteSeq=
+                {connection.remoteSeq}
               </div>
             </div>
           ))
@@ -298,7 +305,7 @@ function SidebarPanel({
       </div>
 
       <div>
-        <div style={{ fontSize: 11, color: '#64748b', letterSpacing: 1, marginBottom: 6 }}>
+        <div style={{ fontSize: 11, color: '#94a3b8', letterSpacing: 1, marginBottom: 6 }}>
           SELECTED SEGMENT
         </div>
         {selected ? (
@@ -318,13 +325,15 @@ function SidebarPanel({
             <div style={{ color: '#7dd3fc', fontWeight: 'bold' }}>
               {activeTrace?.label ?? 'TCP'}
             </div>
-            <div>{selected.src} → {selected.dst}</div>
+            <div>
+              {selected.src} → {selected.dst}
+            </div>
             <div>Flags: {selected.flags}</div>
             <div>SEQ: {selected.seq}</div>
             <div>ACK: {selected.ack}</div>
           </div>
         ) : (
-          <div style={{ color: '#64748b', fontSize: 12 }}>
+          <div style={{ color: '#94a3b8', fontSize: 12 }}>
             Select a trace and step into a hop to inspect TCP header fields.
           </div>
         )}
@@ -400,7 +409,7 @@ function TcpHandshakeDemoInner() {
               borderRadius: 6,
               border: '1px solid #334155',
               background: activeConnection ? '#020617' : '#111827',
-              color: activeConnection ? '#e2e8f0' : '#64748b',
+              color: activeConnection ? '#e2e8f0' : '#94a3b8',
               fontFamily: 'monospace',
               fontSize: 12,
               cursor: activeConnection ? 'pointer' : 'not-allowed',
@@ -409,7 +418,8 @@ function TcpHandshakeDemoInner() {
             Disconnect
           </button>
           <span style={{ color: '#94a3b8', fontFamily: 'monospace', fontSize: 11 }}>
-            Use the trace selector on the right to step through SYN, SYN-ACK, ACK, and FIN exchanges.
+            Use the trace selector on the right to step through SYN, SYN-ACK, ACK, and FIN
+            exchanges.
           </span>
         </div>
 

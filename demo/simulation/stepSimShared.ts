@@ -23,8 +23,20 @@ export const STEP_SIM_TOPOLOGY: NetworkTopology = {
         role: 'router',
         layerId: 'l3',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '172.16.0.1', prefixLength: 30, macAddress: '00:00:00:01:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '172.16.0.1',
+            prefixLength: 30,
+            macAddress: '00:00:00:01:00:01',
+          },
         ],
         staticRoutes: [
           { destination: '10.0.0.0/24', nextHop: 'direct' },
@@ -43,8 +55,20 @@ export const STEP_SIM_TOPOLOGY: NetworkTopology = {
         role: 'router',
         layerId: 'l3',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '172.16.0.2', prefixLength: 30, macAddress: '00:00:00:02:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '192.168.1.1', prefixLength: 30, macAddress: '00:00:00:02:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '172.16.0.2',
+            prefixLength: 30,
+            macAddress: '00:00:00:02:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '192.168.1.1',
+            prefixLength: 30,
+            macAddress: '00:00:00:02:00:01',
+          },
         ],
         staticRoutes: [
           { destination: '172.16.0.0/30', nextHop: 'direct' },
@@ -64,8 +88,20 @@ export const STEP_SIM_TOPOLOGY: NetworkTopology = {
         role: 'router',
         layerId: 'l3',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '192.168.1.2', prefixLength: 30, macAddress: '00:00:00:03:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:03:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '192.168.1.2',
+            prefixLength: 30,
+            macAddress: '00:00:00:03:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '203.0.113.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:03:00:01',
+          },
         ],
         staticRoutes: [
           { destination: '192.168.1.0/30', nextHop: 'direct' },
@@ -102,8 +138,8 @@ export function buildStepSimPacket(topology: NetworkTopology): InFlightPacket | 
   const server = topology.nodes.find((node) => node.data.role === 'server');
   if (!client || !server) return null;
 
-  const srcIp = (client.data.ip as string | undefined) ?? '0.0.0.0';
-  const dstIp = (server.data.ip as string | undefined) ?? '0.0.0.0';
+  const srcIp = client.data.ip ?? '0.0.0.0';
+  const dstIp = server.data.ip ?? '0.0.0.0';
 
   return {
     id: `pkt-${Date.now()}`,

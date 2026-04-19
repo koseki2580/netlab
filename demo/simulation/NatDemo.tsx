@@ -85,8 +85,20 @@ export const NAT_DEMO_TOPOLOGY: NetworkTopology = {
         role: 'router',
         layerId: 'l3',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '203.0.113.2', prefixLength: 30, macAddress: '00:00:00:12:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '198.51.100.1', prefixLength: 24, macAddress: '00:00:00:12:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '203.0.113.2',
+            prefixLength: 30,
+            macAddress: '00:00:00:12:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '198.51.100.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:12:00:01',
+          },
         ],
         staticRoutes: [
           { destination: '203.0.113.0/30', nextHop: 'direct' },
@@ -155,13 +167,7 @@ function makePacket(
   };
 }
 
-function ActionButton({
-  label,
-  onClick,
-}: {
-  label: string;
-  onClick: () => void;
-}) {
+function ActionButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
@@ -201,7 +207,16 @@ function NatDemoInner() {
           flexDirection: 'column',
         }}
       >
-        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 12, padding: 12 }}>
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+            padding: 12,
+          }}
+        >
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <ActionButton
               label="Client A -> Internet (SNAT)"

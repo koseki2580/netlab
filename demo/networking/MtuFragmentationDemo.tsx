@@ -67,8 +67,20 @@ function buildTopology(tunnelMtu: number): NetworkTopology {
           role: 'router',
           layerId: 'l3',
           interfaces: [
-            { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-            { id: 'tun0', name: 'tun0', ipAddress: '10.0.1.1', prefixLength: 30, macAddress: '00:00:00:01:00:01' },
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '10.0.0.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:01:00:00',
+            },
+            {
+              id: 'tun0',
+              name: 'tun0',
+              ipAddress: '10.0.1.1',
+              prefixLength: 30,
+              macAddress: '00:00:00:01:00:01',
+            },
           ],
           staticRoutes: [
             { destination: '10.0.0.0/24', nextHop: 'direct' },
@@ -87,8 +99,20 @@ function buildTopology(tunnelMtu: number): NetworkTopology {
           role: 'router',
           layerId: 'l3',
           interfaces: [
-            { id: 'tun0', name: 'tun0', ipAddress: '10.0.1.2', prefixLength: 30, macAddress: '00:00:00:02:00:00' },
-            { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:02:00:01' },
+            {
+              id: 'tun0',
+              name: 'tun0',
+              ipAddress: '10.0.1.2',
+              prefixLength: 30,
+              macAddress: '00:00:00:02:00:00',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '203.0.113.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:02:00:01',
+            },
           ],
           staticRoutes: [
             { destination: '10.0.1.0/30', nextHop: 'direct' },
@@ -112,7 +136,13 @@ function buildTopology(tunnelMtu: number): NetworkTopology {
       },
     ],
     edges: [
-      { id: 'e-host-a', source: 'host-a', target: 'router-r1', targetHandle: 'eth0', type: 'smoothstep' },
+      {
+        id: 'e-host-a',
+        source: 'host-a',
+        target: 'router-r1',
+        targetHandle: 'eth0',
+        type: 'smoothstep',
+      },
       {
         id: 'e-tunnel',
         source: 'router-r1',
@@ -122,7 +152,13 @@ function buildTopology(tunnelMtu: number): NetworkTopology {
         type: 'smoothstep',
         data: { mtuBytes: tunnelMtu },
       },
-      { id: 'e-host-b', source: 'router-r2', target: 'host-b', sourceHandle: 'eth1', type: 'smoothstep' },
+      {
+        id: 'e-host-b',
+        source: 'router-r2',
+        target: 'host-b',
+        sourceHandle: 'eth1',
+        type: 'smoothstep',
+      },
     ],
     areas: [],
     routeTables: new Map(),
@@ -208,11 +244,13 @@ function FragmentationDemoInner({
   const { topology } = useNetlabContext();
   const { engine, sendPacket, state, isRecomputing } = useSimulation();
   const activeTrace = state.currentTraceId
-    ? state.traces.find((trace) => trace.packetId === state.currentTraceId) ?? null
+    ? (state.traces.find((trace) => trace.packetId === state.currentTraceId) ?? null)
     : null;
   const fragmentHops = activeTrace?.hops.filter((hop) => hop.action === 'fragment') ?? [];
-  const reassemblyHop = activeTrace?.hops.find((hop) => hop.action === 'reassembly-complete') ?? null;
-  const fragNeededHop = activeTrace?.hops.find((hop) => hop.reason === 'fragmentation-needed') ?? null;
+  const reassemblyHop =
+    activeTrace?.hops.find((hop) => hop.action === 'reassembly-complete') ?? null;
+  const fragNeededHop =
+    activeTrace?.hops.find((hop) => hop.reason === 'fragmentation-needed') ?? null;
   const [dfEnabled, setDfEnabled] = useState(false);
 
   const sendPing = async () => {
@@ -243,13 +281,16 @@ function FragmentationDemoInner({
             backdropFilter: 'blur(8px)',
           }}
         >
-          <div style={{ color: '#f8fafc', fontWeight: 700, marginBottom: 4 }}>MTU & Fragmentation</div>
+          <div style={{ color: '#f8fafc', fontWeight: 700, marginBottom: 4 }}>
+            MTU & Fragmentation
+          </div>
           <div>
-            Host A sends toward Host B across a low-MTU tunnel. R1 fragments on egress when DF is clear,
-            or drops and emits ICMP Fragmentation Needed when DF is set.
+            Host A sends toward Host B across a low-MTU tunnel. R1 fragments on egress when DF is
+            clear, or drops and emits ICMP Fragmentation Needed when DF is set.
           </div>
           <div style={{ marginTop: 6, color: '#94a3b8' }}>
-            With the default `600`-byte tunnel MTU and a `1200`-byte ICMP data field, Netlab shows three IPv4 fragments because the ICMP header is part of the fragmented payload.
+            With the default `600`-byte tunnel MTU and a `1200`-byte ICMP data field, Netlab shows
+            three IPv4 fragments because the ICMP header is part of the fragmented payload.
           </div>
         </div>
       </div>
@@ -267,7 +308,15 @@ function FragmentationDemoInner({
         <div style={{ padding: 12, display: 'grid', gap: 12, borderBottom: '1px solid #1e293b' }}>
           <div style={CARD_STYLE}>
             <div style={LABEL_STYLE}>Controls</div>
-            <label style={{ display: 'grid', gap: 6, color: '#e2e8f0', fontFamily: 'monospace', fontSize: 12 }}>
+            <label
+              style={{
+                display: 'grid',
+                gap: 6,
+                color: '#e2e8f0',
+                fontFamily: 'monospace',
+                fontSize: 12,
+              }}
+            >
               <span>Tunnel MTU: {tunnelMtu} bytes</span>
               <input
                 type="range"
@@ -297,28 +346,62 @@ function FragmentationDemoInner({
               />
               Set DF bit on ICMP echo from A
             </label>
-            <button type="button" style={BUTTON_STYLE} disabled={isRecomputing} onClick={() => void sendPing()}>
+            <button
+              type="button"
+              style={BUTTON_STYLE}
+              disabled={isRecomputing}
+              onClick={() => void sendPing()}
+            >
               ping A → B (1200-byte payload)
             </button>
           </div>
           <div style={CARD_STYLE}>
             <div style={LABEL_STYLE}>Trace Notes</div>
-            <div style={{ color: '#cbd5e1', fontFamily: 'monospace', fontSize: 12, display: 'grid', gap: 6 }}>
+            <div
+              style={{
+                color: '#cbd5e1',
+                fontFamily: 'monospace',
+                fontSize: 12,
+                display: 'grid',
+                gap: 6,
+              }}
+            >
               <div>Fragment hops: {fragmentHops.length}</div>
-              <div>Reassembly: {reassemblyHop ? `complete (${reassemblyHop.fragmentCount ?? fragmentHops.length} fragments)` : 'not completed'}</div>
-              <div>Frag-Needed ICMP: {fragNeededHop ? `yes (next-hop MTU ${fragNeededHop.nextHopMtu ?? 'unknown'})` : 'no'}</div>
+              <div>
+                Reassembly:{' '}
+                {reassemblyHop
+                  ? `complete (${reassemblyHop.fragmentCount ?? fragmentHops.length} fragments)`
+                  : 'not completed'}
+              </div>
+              <div>
+                Frag-Needed ICMP:{' '}
+                {fragNeededHop
+                  ? `yes (next-hop MTU ${fragNeededHop.nextHopMtu ?? 'unknown'})`
+                  : 'no'}
+              </div>
             </div>
           </div>
           <div style={CARD_STYLE}>
             <div style={LABEL_STYLE}>Why You See Multiple Packets</div>
-            <div style={{ color: '#94a3b8', fontFamily: 'monospace', fontSize: 12, lineHeight: 1.6 }}>
-              R1&apos;s egress link to R2 has a finite MTU. With DF disabled, the packet is split into RFC 791 fragments.
-              Host B reassembles them before the echo reaches the destination stack. With DF enabled, R1 keeps the packet intact and returns ICMP type 3 code 4 instead.
+            <div
+              style={{ color: '#94a3b8', fontFamily: 'monospace', fontSize: 12, lineHeight: 1.6 }}
+            >
+              R1&apos;s egress link to R2 has a finite MTU. With DF disabled, the packet is split
+              into RFC 791 fragments. Host B reassembles them before the echo reaches the
+              destination stack. With DF enabled, R1 keeps the packet intact and returns ICMP type 3
+              code 4 instead.
             </div>
           </div>
         </div>
 
-        <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateRows: 'auto minmax(220px, 0.9fr) minmax(220px, 1.1fr)' }}>
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            display: 'grid',
+            gridTemplateRows: 'auto minmax(220px, 0.9fr) minmax(220px, 1.1fr)',
+          }}
+        >
           <div style={{ padding: 12, borderBottom: '1px solid #1e293b' }}>
             <TraceSummary />
           </div>

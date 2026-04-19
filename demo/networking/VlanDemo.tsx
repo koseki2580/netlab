@@ -77,10 +77,34 @@ const VLAN_TOPOLOGY: NetworkTopology = {
           { vlanId: 20, name: 'servers' },
         ],
         ports: [
-          { id: 'p1', name: 'fa0/1', macAddress: '02:00:00:10:00:01', vlanMode: 'access', accessVlan: 10 },
-          { id: 'p2', name: 'fa0/2', macAddress: '02:00:00:10:00:02', vlanMode: 'access', accessVlan: 10 },
-          { id: 'p3', name: 'fa0/3', macAddress: '02:00:00:10:00:03', vlanMode: 'access', accessVlan: 20 },
-          { id: 'p4', name: 'fa0/4', macAddress: '02:00:00:10:00:04', vlanMode: 'access', accessVlan: 20 },
+          {
+            id: 'p1',
+            name: 'fa0/1',
+            macAddress: '02:00:00:10:00:01',
+            vlanMode: 'access',
+            accessVlan: 10,
+          },
+          {
+            id: 'p2',
+            name: 'fa0/2',
+            macAddress: '02:00:00:10:00:02',
+            vlanMode: 'access',
+            accessVlan: 10,
+          },
+          {
+            id: 'p3',
+            name: 'fa0/3',
+            macAddress: '02:00:00:10:00:03',
+            vlanMode: 'access',
+            accessVlan: 20,
+          },
+          {
+            id: 'p4',
+            name: 'fa0/4',
+            macAddress: '02:00:00:10:00:04',
+            vlanMode: 'access',
+            accessVlan: 20,
+          },
           {
             id: 'p24',
             name: 'fa0/24',
@@ -138,7 +162,14 @@ const VLAN_TOPOLOGY: NetworkTopology = {
     { id: 'e-a2', source: 'host-a2', target: 'switch-1', targetHandle: 'p2', type: 'smoothstep' },
     { id: 'e-b1', source: 'host-b1', target: 'switch-1', targetHandle: 'p3', type: 'smoothstep' },
     { id: 'e-b2', source: 'host-b2', target: 'switch-1', targetHandle: 'p4', type: 'smoothstep' },
-    { id: TRUNK_EDGE_ID, source: 'switch-1', target: 'router-1', sourceHandle: 'p24', targetHandle: 'eth0', type: 'smoothstep' },
+    {
+      id: TRUNK_EDGE_ID,
+      source: 'switch-1',
+      target: 'router-1',
+      sourceHandle: 'p24',
+      targetHandle: 'eth0',
+      type: 'smoothstep',
+    },
   ],
   areas: [],
   routeTables: new Map(),
@@ -251,7 +282,7 @@ function VlanDemoInner() {
   }, [state.status]);
 
   const activeTrace = state.currentTraceId
-    ? state.traces.find((trace) => trace.packetId === state.currentTraceId) ?? null
+    ? (state.traces.find((trace) => trace.packetId === state.currentTraceId) ?? null)
     : null;
 
   const lastHop = activeTrace?.hops[activeTrace.hops.length - 1];
@@ -282,7 +313,8 @@ function VlanDemoInner() {
           <div style={{ color: '#f8fafc', fontWeight: 700, marginBottom: 4 }}>VLAN Demo</div>
           <div>{headline}</div>
           <div style={{ marginTop: 6, color: '#94a3b8' }}>
-            Click <strong>SW1</strong> to inspect access/trunk port VLANs and <strong>R1</strong> to inspect sub-interfaces.
+            Click <strong>SW1</strong> to inspect access/trunk port VLANs and <strong>R1</strong> to
+            inspect sub-interfaces.
           </div>
         </div>
       </div>
@@ -319,8 +351,15 @@ function VlanDemoInner() {
                   border: '1px solid #1f2937',
                 }}
               >
-                <div style={{ fontSize: 10, color: '#64748b', fontFamily: 'monospace' }}>TRUNK</div>
-                <div style={{ marginTop: 4, color: trunkDown ? '#fca5a5' : '#86efac', fontFamily: 'monospace', fontWeight: 700 }}>
+                <div style={{ fontSize: 10, color: '#94a3b8', fontFamily: 'monospace' }}>TRUNK</div>
+                <div
+                  style={{
+                    marginTop: 4,
+                    color: trunkDown ? '#fca5a5' : '#86efac',
+                    fontFamily: 'monospace',
+                    fontWeight: 700,
+                  }}
+                >
                   {trunkDown ? 'DOWN' : 'UP'}
                 </div>
               </div>
@@ -333,8 +372,17 @@ function VlanDemoInner() {
                   border: '1px solid #1f2937',
                 }}
               >
-                <div style={{ fontSize: 10, color: '#64748b', fontFamily: 'monospace' }}>LATEST RESULT</div>
-                <div style={{ marginTop: 4, color: lastHop?.event === 'drop' ? '#fca5a5' : '#93c5fd', fontFamily: 'monospace', fontWeight: 700 }}>
+                <div style={{ fontSize: 10, color: '#94a3b8', fontFamily: 'monospace' }}>
+                  LATEST RESULT
+                </div>
+                <div
+                  style={{
+                    marginTop: 4,
+                    color: lastHop?.event === 'drop' ? '#fca5a5' : '#93c5fd',
+                    fontFamily: 'monospace',
+                    fontWeight: 700,
+                  }}
+                >
                   {activeTrace?.status?.toUpperCase() ?? 'IDLE'}
                 </div>
               </div>
@@ -376,7 +424,9 @@ function VlanDemoInner() {
             <div style={{ fontSize: 11, color: '#94a3b8', fontFamily: 'monospace' }}>
               {isRecomputing && 'Recomputing last packet after topology failure change...'}
               {!isRecomputing && lastHop?.event === 'drop' && `Last drop reason: ${lastHop.reason}`}
-              {!isRecomputing && lastHop?.event !== 'drop' && 'Send traffic inside one VLAN or across VLANs to compare forwarding paths.'}
+              {!isRecomputing &&
+                lastHop?.event !== 'drop' &&
+                'Send traffic inside one VLAN or across VLANs to compare forwarding paths.'}
             </div>
           </div>
 

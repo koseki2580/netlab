@@ -75,8 +75,20 @@ const TOPOLOGY: NetworkTopology = {
         role: 'router',
         layerId: 'l3',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:02:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '172.16.1.1', prefixLength: 24, macAddress: '00:00:00:02:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:02:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '172.16.1.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:02:00:01',
+          },
         ],
         staticRoutes: [
           { destination: '10.0.0.0/24', nextHop: 'direct' },
@@ -107,7 +119,13 @@ const TOPOLOGY: NetworkTopology = {
       id: 'web-server',
       type: 'server',
       position: { x: 660, y: 180 },
-      data: { label: 'Web Server', role: 'server', layerId: 'l7', ip: '172.16.1.10', areaId: 'dmz' },
+      data: {
+        label: 'Web Server',
+        role: 'server',
+        layerId: 'l7',
+        ip: '172.16.1.10',
+        areaId: 'dmz',
+      },
     },
 
     // ── FW-2: DMZ → Public ──
@@ -120,8 +138,20 @@ const TOPOLOGY: NetworkTopology = {
         role: 'router',
         layerId: 'l3',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '172.16.1.2', prefixLength: 24, macAddress: '00:00:00:04:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:04:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '172.16.1.2',
+            prefixLength: 24,
+            macAddress: '00:00:00:04:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '203.0.113.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:04:00:01',
+          },
         ],
         staticRoutes: [
           { destination: '172.16.1.0/24', nextHop: 'direct' },
@@ -152,7 +182,13 @@ const TOPOLOGY: NetworkTopology = {
       id: 'internet',
       type: 'server',
       position: { x: 1100, y: 180 },
-      data: { label: 'Internet', role: 'server', layerId: 'l7', ip: '203.0.113.10', areaId: 'public' },
+      data: {
+        label: 'Internet',
+        role: 'server',
+        layerId: 'l7',
+        ip: '203.0.113.10',
+        areaId: 'public',
+      },
     },
   ],
   edges: [
@@ -172,7 +208,10 @@ export const DMZ_DEMO_TOPOLOGY = TOPOLOGY;
 
 export default function DmzDemo() {
   return (
-    <DemoShell title="DMZ Segmentation" desc="Three-zone topology: Private → DMZ → Public with two border firewalls">
+    <DemoShell
+      title="DMZ Segmentation"
+      desc="Three-zone topology: Private → DMZ → Public with two border firewalls"
+    >
       <NetlabProvider topology={TOPOLOGY}>
         <NetlabCanvas />
         <AreaLegend />

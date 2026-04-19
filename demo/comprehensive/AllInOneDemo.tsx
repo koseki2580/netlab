@@ -19,7 +19,7 @@ import type { NetworkTopology } from '../../src/types/topology';
 
 type TabId = 'editor' | 'simulation' | 'failure' | 'trace';
 
-const TABS: Array<{ id: TabId; label: string }> = [
+const TABS: { id: TabId; label: string }[] = [
   { id: 'editor', label: 'Editor' },
   { id: 'simulation', label: 'Step Simulation' },
   { id: 'failure', label: 'Failure Injection' },
@@ -43,9 +43,27 @@ const INITIAL_TOPOLOGY: EditorTopology = {
         role: 'router',
         layerId: 'l3',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '172.16.0.1', prefixLength: 30, macAddress: '00:00:00:01:00:01' },
-          { id: 'eth2', name: 'eth2', ipAddress: '172.17.0.1', prefixLength: 30, macAddress: '00:00:00:01:00:02' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '172.16.0.1',
+            prefixLength: 30,
+            macAddress: '00:00:00:01:00:01',
+          },
+          {
+            id: 'eth2',
+            name: 'eth2',
+            ipAddress: '172.17.0.1',
+            prefixLength: 30,
+            macAddress: '00:00:00:01:00:02',
+          },
         ],
         staticRoutes: [
           { destination: '10.0.0.0/24', nextHop: 'direct' },
@@ -65,8 +83,20 @@ const INITIAL_TOPOLOGY: EditorTopology = {
         role: 'router',
         layerId: 'l3',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '172.16.0.2', prefixLength: 30, macAddress: '00:00:00:02:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:02:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '172.16.0.2',
+            prefixLength: 30,
+            macAddress: '00:00:00:02:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '203.0.113.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:02:00:01',
+          },
         ],
         staticRoutes: [
           { destination: '172.16.0.0/30', nextHop: 'direct' },
@@ -85,8 +115,20 @@ const INITIAL_TOPOLOGY: EditorTopology = {
         role: 'router',
         layerId: 'l3',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '172.17.0.2', prefixLength: 30, macAddress: '00:00:00:03:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.2', prefixLength: 24, macAddress: '00:00:00:03:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '172.17.0.2',
+            prefixLength: 30,
+            macAddress: '00:00:00:03:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '203.0.113.2',
+            prefixLength: 24,
+            macAddress: '00:00:00:03:00:01',
+          },
         ],
         staticRoutes: [
           { destination: '172.17.0.0/30', nextHop: 'direct' },
@@ -114,13 +156,7 @@ const INITIAL_TOPOLOGY: EditorTopology = {
 
 export const ALL_IN_ONE_INITIAL_TOPOLOGY = INITIAL_TOPOLOGY;
 
-function TabBar({
-  activeTab,
-  onChange,
-}: {
-  activeTab: TabId;
-  onChange: (tab: TabId) => void;
-}) {
+function TabBar({ activeTab, onChange }: { activeTab: TabId; onChange: (tab: TabId) => void }) {
   return (
     <div
       style={{
@@ -139,7 +175,7 @@ function TabBar({
             background: activeTab === tab.id ? '#263144' : 'transparent',
             border: 'none',
             borderBottom: activeTab === tab.id ? '2px solid #2563eb' : '2px solid transparent',
-            color: activeTab === tab.id ? '#e2e8f0' : '#64748b',
+            color: activeTab === tab.id ? '#e2e8f0' : '#94a3b8',
             fontFamily: 'monospace',
             fontSize: 12,
             cursor: 'pointer',
@@ -152,7 +188,7 @@ function TabBar({
           }}
           onMouseLeave={(event) => {
             if (activeTab !== tab.id) {
-              (event.currentTarget as HTMLButtonElement).style.color = '#64748b';
+              (event.currentTarget as HTMLButtonElement).style.color = '#94a3b8';
             }
           }}
         >
@@ -168,8 +204,8 @@ function makePacket(topology: NetworkTopology): InFlightPacket | null {
   const server = topology.nodes.find((node) => node.data.role === 'server');
   if (!client || !server) return null;
 
-  const srcIp = (client.data.ip as string | undefined) ?? '0.0.0.0';
-  const dstIp = (server.data.ip as string | undefined) ?? '0.0.0.0';
+  const srcIp = client.data.ip ?? '0.0.0.0';
+  const dstIp = server.data.ip ?? '0.0.0.0';
 
   return {
     id: `pkt-${Date.now()}`,
@@ -290,7 +326,16 @@ function FailureTabInner() {
     <div style={{ display: 'flex', height: '100%' }}>
       <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
         <NetlabCanvas />
-        <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div
+          style={{
+            position: 'absolute',
+            top: 12,
+            left: 12,
+            display: 'flex',
+            gap: 8,
+            alignItems: 'center',
+          }}
+        >
           <button
             onClick={handleSend}
             style={{
@@ -428,18 +473,12 @@ export default function AllInOneDemo() {
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         <TabBar activeTab={activeTab} onChange={setActiveTab} />
         <div style={{ flex: 1, overflow: 'hidden' }}>
-          {activeTab === 'editor' && (
-            <EditorTab topology={topology} onChange={setTopology} />
-          )}
+          {activeTab === 'editor' && <EditorTab topology={topology} onChange={setTopology} />}
           {activeTab === 'simulation' && (
             <SimulationTab key="simulation" topology={simulationTopology} />
           )}
-          {activeTab === 'failure' && (
-            <FailureTab key="failure" topology={simulationTopology} />
-          )}
-          {activeTab === 'trace' && (
-            <TraceTab key="trace" topology={simulationTopology} />
-          )}
+          {activeTab === 'failure' && <FailureTab key="failure" topology={simulationTopology} />}
+          {activeTab === 'trace' && <TraceTab key="trace" topology={simulationTopology} />}
         </div>
       </div>
     </DemoShell>

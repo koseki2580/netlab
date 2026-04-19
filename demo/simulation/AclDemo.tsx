@@ -156,13 +156,7 @@ function makePacket(
   };
 }
 
-function ActionButton({
-  label,
-  onClick,
-}: {
-  label: string;
-  onClick: () => void;
-}) {
+function ActionButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
@@ -202,7 +196,16 @@ function AclDemoInner() {
           flexDirection: 'column',
         }}
       >
-        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 12, padding: 12 }}>
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+            padding: 12,
+          }}
+        >
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
             <ActionButton
               label="HTTP (permitted)"
