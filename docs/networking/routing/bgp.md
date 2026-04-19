@@ -15,14 +15,14 @@ interface BgpConfig {
   localAs: number;
   routerId: string;
   neighbors: BgpNeighborConfig[];
-  networks: string[];  // prefixes originated by this router
+  networks: string[]; // prefixes originated by this router
 }
 
 interface BgpNeighborConfig {
-  address: string;     // peer interface IP
+  address: string; // peer interface IP
   remoteAs: number;
-  localPref?: number;  // optional local policy override for routes learned from this peer
-  med?: number;        // optional teaching/demo MED override for routes learned from this peer
+  localPref?: number; // optional local policy override for routes learned from this peer
+  med?: number; // optional teaching/demo MED override for routes learned from this peer
 }
 ```
 

@@ -10,11 +10,11 @@ Netlab simulates DHCP as a four-message DORA exchange carried over UDP.
 
 ```typescript
 interface DhcpServerConfig {
-  leasePool: string;       // e.g. '192.168.1.100/28'
-  subnetMask: string;      // e.g. '255.255.255.0'
-  defaultGateway: string;  // e.g. '192.168.1.1'
-  dnsServer?: string;      // optional DNS server IP to hand out
-  leaseTime: number;       // seconds
+  leasePool: string; // e.g. '192.168.1.100/28'
+  subnetMask: string; // e.g. '255.255.255.0'
+  defaultGateway: string; // e.g. '192.168.1.1'
+  dnsServer?: string; // optional DNS server IP to hand out
+  leaseTime: number; // seconds
 }
 ```
 

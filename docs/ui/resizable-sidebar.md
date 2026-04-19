@@ -17,14 +17,15 @@ Located at `src/components/ResizableSidebar.tsx`.
 ```tsx
 interface ResizableSidebarProps {
   defaultWidth: number;
-  minWidth?: number;       // default: 150
-  maxWidth?: number;       // default: 600
-  style?: React.CSSProperties;  // applied to outer container (background, border, etc.)
+  minWidth?: number; // default: 150
+  maxWidth?: number; // default: 600
+  style?: React.CSSProperties; // applied to outer container (background, border, etc.)
   children: React.ReactNode;
 }
 ```
 
 **Usage:**
+
 ```tsx
 <ResizableSidebar
   defaultWidth={300}
@@ -71,9 +72,9 @@ The outer container has an explicit `width` driven by state and `flexShrink: 0` 
 ## Width Constraints
 
 | Constraint | Default |
-|---|---|
-| `minWidth` | 150px |
-| `maxWidth` | 600px |
+| ---------- | ------- |
+| `minWidth` | 150px   |
+| `maxWidth` | 600px   |
 
 These can be overridden per instance via props.
 
@@ -87,12 +88,12 @@ Width state is managed internally with `useState` inside `ResizableSidebar`. Eac
 
 ## Affected Layouts
 
-| Demo | File | Default Width |
-|---|---|---|
-| Client–Server Routing | `demo/routing/ClientServerDemo.tsx` | 260px |
-| Step-by-Step Simulation | `demo/simulation/StepSimDemo.tsx` | 380px |
-| Failure Simulation | `demo/simulation/FailureSimDemo.tsx` | 300px |
-| Topology Editor | `demo/editor/EditorDemo.tsx` | 300px |
+| Demo                    | File                                 | Default Width |
+| ----------------------- | ------------------------------------ | ------------- |
+| Client–Server Routing   | `demo/routing/ClientServerDemo.tsx`  | 260px         |
+| Step-by-Step Simulation | `demo/simulation/StepSimDemo.tsx`    | 380px         |
+| Failure Simulation      | `demo/simulation/FailureSimDemo.tsx` | 300px         |
+| Topology Editor         | `demo/editor/EditorDemo.tsx`         | 300px         |
 
 The floating `NodeEditorPanel` (`src/editor/components/NodeEditorPanel.tsx`) uses `position: absolute` and is not affected.
 

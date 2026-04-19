@@ -1,4 +1,5 @@
 # L1 – Physical Layer
+
 > **Status**: 🧪 Spec only — not yet implemented
 
 The physical layer represents the raw transmission medium: cables, electrical signals, and hubs.

@@ -1,4 +1,5 @@
 # L3 – Network Layer
+
 > **Status**: ✅ Implemented
 
 The network layer handles IP packet routing using IP addresses and routing tables.
@@ -13,10 +14,10 @@ The network layer handles IP packet routing using IP addresses and routing table
 ```typescript
 interface IpPacket {
   layer: 'L3';
-  srcIp: string;       // e.g. '10.0.0.10'
-  dstIp: string;       // e.g. '203.0.113.10'
-  ttl: number;         // decremented at each router hop (starts at 64)
-  protocol: number;    // 1 = ICMP, 6 = TCP, 17 = UDP
+  srcIp: string; // e.g. '10.0.0.10'
+  dstIp: string; // e.g. '203.0.113.10'
+  ttl: number; // decremented at each router hop (starts at 64)
+  protocol: number; // 1 = ICMP, 6 = TCP, 17 = UDP
   payload: IcmpMessage | TcpSegment | UdpDatagram;
 }
 ```
@@ -70,12 +71,12 @@ See [MTU & IPv4 Fragmentation](../mtu-fragmentation.md) for the full data model,
 
 ```typescript
 interface RouteEntry {
-  destination: string;    // CIDR e.g. '203.0.113.0/24'
-  nextHop: string;        // IP address or 'direct' for connected networks
-  metric: number;         // path cost (lower is better within same protocol)
+  destination: string; // CIDR e.g. '203.0.113.0/24'
+  nextHop: string; // IP address or 'direct' for connected networks
+  metric: number; // path cost (lower is better within same protocol)
   protocol: ProtocolName; // 'static' | 'ospf' | 'bgp' | 'rip'
-  adminDistance: number;  // inter-protocol preference (lower is better)
-  nodeId: string;         // which router owns this route
+  adminDistance: number; // inter-protocol preference (lower is better)
+  nodeId: string; // which router owns this route
 }
 ```
 

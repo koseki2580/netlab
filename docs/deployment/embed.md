@@ -29,17 +29,17 @@ const topology: NetworkTopology = { nodes: [...], edges: [...] };
 
 ## Props Reference
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `topology` | `NetworkTopology` | required | The network topology to display |
-| `width` | `number \| string` | `'100%'` | Container width (pixels or CSS string) |
-| `height` | `number \| string` | `500` | Container height (pixels or CSS string) |
-| `simulation` | `boolean` | `false` | Enable simulation mode: adds toolbar, packet viewer, and timeline sidebar |
-| `timeline` | `boolean` | `simulation` | Show the resizable `PacketTimeline` sidebar |
-| `routeTable` | `boolean` | auto | Show the `RouteTable` overlay (auto-enabled when topology contains routers) |
-| `areaLegend` | `boolean` | auto | Show the `AreaLegend` overlay (auto-enabled when topology has areas) |
-| `style` | `React.CSSProperties` | — | Additional styles merged into the outer container |
-| `className` | `string` | — | CSS class applied to the outer container |
+| Prop         | Type                  | Default      | Description                                                                 |
+| ------------ | --------------------- | ------------ | --------------------------------------------------------------------------- |
+| `topology`   | `NetworkTopology`     | required     | The network topology to display                                             |
+| `width`      | `number \| string`    | `'100%'`     | Container width (pixels or CSS string)                                      |
+| `height`     | `number \| string`    | `500`        | Container height (pixels or CSS string)                                     |
+| `simulation` | `boolean`             | `false`      | Enable simulation mode: adds toolbar, packet viewer, and timeline sidebar   |
+| `timeline`   | `boolean`             | `simulation` | Show the resizable `PacketTimeline` sidebar                                 |
+| `routeTable` | `boolean`             | auto         | Show the `RouteTable` overlay (auto-enabled when topology contains routers) |
+| `areaLegend` | `boolean`             | auto         | Show the `AreaLegend` overlay (auto-enabled when topology has areas)        |
+| `style`      | `React.CSSProperties` | —            | Additional styles merged into the outer container                           |
+| `className`  | `string`              | —            | CSS class applied to the outer container                                    |
 
 ### Auto-detection
 
@@ -59,6 +59,7 @@ Pass an explicit `false` to override either:
 ### `simulation={true}`
 
 Mounts `SimulationProvider` and renders:
+
 - A toolbar row (`SimulationControls`) with Send Packet, Play/Pause/Step/Reset buttons
 - `PacketViewer` overlay on the canvas for in-flight packet animation
 - A resizable `PacketTimeline` sidebar (unless `timeline={false}`)
@@ -125,11 +126,7 @@ import 'netlab/layers/l7-application';
 ### Static diagram (default)
 
 ```tsx
-<NetlabApp
-  topology={topology}
-  width="100%"
-  height={400}
-/>
+<NetlabApp topology={topology} width="100%" height={400} />
 ```
 
 ### Inside a fixed-width card
@@ -139,7 +136,7 @@ import 'netlab/layers/l7-application';
   <h2>Network Diagram</h2>
   <NetlabApp
     topology={topology}
-    width={752}  // 800 - 2*24px padding
+    width={752} // 800 - 2*24px padding
     height={450}
     style={{ borderRadius: 8, border: '1px solid #334155' }}
   />
@@ -149,24 +146,13 @@ import 'netlab/layers/l7-application';
 ### Interactive simulation embed
 
 ```tsx
-<NetlabApp
-  topology={topology}
-  width="100%"
-  height={560}
-  simulation
-/>
+<NetlabApp topology={topology} width="100%" height={560} simulation />
 ```
 
 ### Simulation without timeline
 
 ```tsx
-<NetlabApp
-  topology={topology}
-  width="100%"
-  height={480}
-  simulation
-  timeline={false}
-/>
+<NetlabApp topology={topology} width="100%" height={480} simulation timeline={false} />
 ```
 
 ### Inside a CSS Grid cell
@@ -221,5 +207,5 @@ import 'netlab/layers/l3-network';
       <NetlabCanvas />
     </div>
   </SimulationProvider>
-</NetlabProvider>
+</NetlabProvider>;
 ```

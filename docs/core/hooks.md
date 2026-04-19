@@ -6,16 +6,16 @@ netlab provides a Koa-style middleware hook system that lets you observe and mod
 
 ## Hook Points
 
-| Hook Point        | Trigger                                          |
-| ----------------- | ------------------------------------------------ |
-| `packet:create`   | A new packet is created (e.g., from fetch())     |
-| `packet:forward`  | A packet moves from one device to another        |
-| `packet:deliver`  | A packet reaches its destination device          |
-| `packet:drop`     | A packet is dropped (TTL=0, no route, etc.)      |
-| `switch:learn`    | A switch learns a new MAC→port mapping           |
-| `router:lookup`   | A router performs a route table lookup           |
-| `fetch:intercept` | `window.fetch` is called and intercepted         |
-| `fetch:respond`   | A mock response is about to be returned          |
+| Hook Point        | Trigger                                      |
+| ----------------- | -------------------------------------------- |
+| `packet:create`   | A new packet is created (e.g., from fetch()) |
+| `packet:forward`  | A packet moves from one device to another    |
+| `packet:deliver`  | A packet reaches its destination device      |
+| `packet:drop`     | A packet is dropped (TTL=0, no route, etc.)  |
+| `switch:learn`    | A switch learns a new MAC→port mapping       |
+| `router:lookup`   | A router performs a route table lookup       |
+| `fetch:intercept` | `window.fetch` is called and intercepted     |
+| `fetch:respond`   | A mock response is about to be returned      |
 
 ## Usage
 
@@ -53,7 +53,10 @@ hookEngine.on('router:lookup', async (ctx, next) => {
 ### `packet:create`
 
 ```typescript
-{ packet: InFlightPacket; sourceNodeId: string }
+{
+  packet: InFlightPacket;
+  sourceNodeId: string;
+}
 ```
 
 ### `packet:forward`
@@ -70,37 +73,59 @@ hookEngine.on('router:lookup', async (ctx, next) => {
 ### `packet:deliver`
 
 ```typescript
-{ packet: InFlightPacket; destinationNodeId: string }
+{
+  packet: InFlightPacket;
+  destinationNodeId: string;
+}
 ```
 
 ### `packet:drop`
 
 ```typescript
-{ packet: InFlightPacket; nodeId: string; reason: string }
+{
+  packet: InFlightPacket;
+  nodeId: string;
+  reason: string;
+}
 ```
 
 ### `switch:learn`
 
 ```typescript
-{ nodeId: string; mac: string; port: string }
+{
+  nodeId: string;
+  mac: string;
+  port: string;
+}
 ```
 
 ### `router:lookup`
 
 ```typescript
-{ nodeId: string; destination: string; resolvedRoute: RouteEntry | null }
+{
+  nodeId: string;
+  destination: string;
+  resolvedRoute: RouteEntry | null;
+}
 ```
 
 ### `fetch:intercept`
 
 ```typescript
-{ request: Request; nodeId: string }
+{
+  request: Request;
+  nodeId: string;
+}
 ```
 
 ### `fetch:respond`
 
 ```typescript
-{ request: Request; response: Response; nodeId: string }
+{
+  request: Request;
+  response: Response;
+  nodeId: string;
+}
 ```
 
 ## Middleware Chain Behavior

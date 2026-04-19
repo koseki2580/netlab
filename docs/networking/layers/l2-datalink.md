@@ -1,4 +1,5 @@
 # L2 – Data Link Layer
+
 > **Status**: ✅ Implemented
 
 The data link layer handles Ethernet frame forwarding using MAC addresses.
@@ -13,10 +14,10 @@ The data link layer handles Ethernet frame forwarding using MAC addresses.
 ```typescript
 interface EthernetFrame {
   layer: 'L2';
-  srcMac: string;      // e.g. 'aa:bb:cc:dd:ee:01'
+  srcMac: string; // e.g. 'aa:bb:cc:dd:ee:01'
   dstMac: string;
-  etherType: number;   // 0x0800 = IPv4
-  vlanTag?: VlanTag;   // present on 802.1Q-tagged trunk traffic
+  etherType: number; // 0x0800 = IPv4
+  vlanTag?: VlanTag; // present on 802.1Q-tagged trunk traffic
   payload: IpPacket;
 }
 ```

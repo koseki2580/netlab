@@ -34,12 +34,12 @@ DataTransferController
 
 The simulator models data delivery at four distinct levels:
 
-| Level | Entity | Description |
-| --- | --- | --- |
-| **Message** | `TransferMessage` | Application-level transfer: source, destination, full payload, checksum |
-| **Chunk** | `TransferChunk` | Application-level split of the payload into smaller pieces |
-| **Packet** | `InFlightPacket` | Network-level unit with L2-L4 headers (Ethernet, IP, TCP/UDP) |
-| **Fragment** | *(deferred)* | IP-level fragmentation of an oversized packet |
+| Level        | Entity            | Description                                                             |
+| ------------ | ----------------- | ----------------------------------------------------------------------- |
+| **Message**  | `TransferMessage` | Application-level transfer: source, destination, full payload, checksum |
+| **Chunk**    | `TransferChunk`   | Application-level split of the payload into smaller pieces              |
+| **Packet**   | `InFlightPacket`  | Network-level unit with L2-L4 headers (Ethernet, IP, TCP/UDP)           |
+| **Fragment** | _(deferred)_      | IP-level fragmentation of an oversized packet                           |
 
 Message -> Chunk is 1:N. Each chunk becomes exactly one packet.
 Fragment support is deferred to a later phase.
@@ -73,12 +73,7 @@ TransferMessage (1)
 ### `DeliveryStatus`
 
 ```ts
-export type DeliveryStatus =
-  | 'pending'
-  | 'in-progress'
-  | 'delivered'
-  | 'partial'
-  | 'failed';
+export type DeliveryStatus = 'pending' | 'in-progress' | 'delivered' | 'partial' | 'failed';
 ```
 
 ### `TransferMessage`
@@ -104,11 +99,7 @@ export interface TransferMessage {
 ### `ChunkDeliveryState`
 
 ```ts
-export type ChunkDeliveryState =
-  | 'pending'
-  | 'in-flight'
-  | 'delivered'
-  | 'dropped';
+export type ChunkDeliveryState = 'pending' | 'in-flight' | 'delivered' | 'dropped';
 ```
 
 ### `TransferChunk`
@@ -177,21 +168,21 @@ export interface DataTransferOptions {
 
 ```ts
 export class DataTransferController {
-  constructor(engine: SimulationEngine, sessionTracker?: SessionTracker)
+  constructor(engine: SimulationEngine, sessionTracker?: SessionTracker);
 
   async startTransfer(
     srcNodeId: string,
     dstNodeId: string,
     payload: string,
     options?: DataTransferOptions,
-  ): Promise<TransferMessage>
+  ): Promise<TransferMessage>;
 
-  getState(): DataTransferState
-  getTransfer(messageId: string): TransferMessage | undefined
-  getChunks(messageId: string): TransferChunk[]
-  getReassembly(messageId: string): ReassemblyState | undefined
-  clear(): void
-  subscribe(listener: (state: DataTransferState) => void): () => void
+  getState(): DataTransferState;
+  getTransfer(messageId: string): TransferMessage | undefined;
+  getChunks(messageId: string): TransferChunk[];
+  getReassembly(messageId: string): ReassemblyState | undefined;
+  clear(): void;
+  subscribe(listener: (state: DataTransferState) => void): () => void;
 }
 ```
 

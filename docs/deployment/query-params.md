@@ -22,9 +22,9 @@ Only the data needed to reconstruct the diagram is included. Route tables are **
 
 ```typescript
 interface SerializedTopology {
-  nodes: NetlabNode[];   // network devices with positions and all node data
-  edges: NetlabEdge[];   // connections (source/target IDs, edge type)
-  areas: NetworkArea[];  // network zones with subnets and visual config
+  nodes: NetlabNode[]; // network devices with positions and all node data
+  edges: NetlabEdge[]; // connections (source/target IDs, edge type)
+  areas: NetworkArea[]; // network zones with subnets and visual config
 }
 ```
 
@@ -40,6 +40,7 @@ const url = encodeTopology({ nodes, edges, areas });
 ```
 
 Internally:
+
 1. `JSON.stringify({ nodes, edges, areas })`
 2. `btoa(json)` — standard base64
 3. Replace `+` → `-`, `/` → `_`, strip trailing `=` (URL-safe base64)
@@ -56,6 +57,7 @@ const topology = decodeTopology(window.location.search);
 ```
 
 Returns `null` if:
+
 - The `topo` parameter is absent
 - The value is not valid base64
 - The decoded JSON does not parse
@@ -72,6 +74,7 @@ If `?topo=` is absent or invalid, the demo app silently falls back to the built-
 ## Demo: Copy Link
 
 The demo toolbar includes a **Copy Link** button. Clicking it:
+
 1. Encodes the current topology (nodes, edges, areas as loaded — not drag-updated positions) to a `?topo=` URL
 2. Writes the full URL to the clipboard
 3. Temporarily shows `✓ Copied!` for 2 seconds, then reverts
@@ -87,8 +90,12 @@ Given a minimal topology:
 ```json
 {
   "nodes": [
-    { "id": "h1", "type": "client", "position": { "x": 100, "y": 100 },
-      "data": { "label": "Host", "role": "client", "layerId": "l7", "ip": "10.0.0.1" } }
+    {
+      "id": "h1",
+      "type": "client",
+      "position": { "x": 100, "y": 100 },
+      "data": { "label": "Host", "role": "client", "layerId": "l7", "ip": "10.0.0.1" }
+    }
   ],
   "edges": [],
   "areas": []
@@ -99,6 +106,6 @@ Encode:
 
 ```js
 const json = JSON.stringify(topology);
-const b64  = btoa(json).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-const url  = `${location.origin}${location.pathname}?topo=${b64}`;
+const b64 = btoa(json).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const url = `${location.origin}${location.pathname}?topo=${b64}`;
 ```

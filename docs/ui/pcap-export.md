@@ -31,15 +31,15 @@ The exported file uses classic libpcap with:
 
 The file starts with one 24-byte global header:
 
-| Offset | Length | Field | Value |
-|---|---:|---|---|
-| 0 | 4 | magic_number | `0xa1b2c3d4` |
-| 4 | 2 | version_major | `2` |
-| 6 | 2 | version_minor | `4` |
-| 8 | 4 | thiszone | `0` |
-| 12 | 4 | sigfigs | `0` |
-| 16 | 4 | snaplen | `65535` |
-| 20 | 4 | network | `1` (`LINKTYPE_ETHERNET`) |
+| Offset | Length | Field         | Value                     |
+| ------ | -----: | ------------- | ------------------------- |
+| 0      |      4 | magic_number  | `0xa1b2c3d4`              |
+| 4      |      2 | version_major | `2`                       |
+| 6      |      2 | version_minor | `4`                       |
+| 8      |      4 | thiszone      | `0`                       |
+| 12     |      4 | sigfigs       | `0`                       |
+| 16     |      4 | snaplen       | `65535`                   |
+| 20     |      4 | network       | `1` (`LINKTYPE_ETHERNET`) |
 
 ### Per-Packet Record Header
 
@@ -48,13 +48,13 @@ Each captured frame is emitted as:
 - 16-byte record header
 - followed immediately by the serialized Ethernet frame bytes
 
-| Offset | Length | Field | Value |
-|---|---:|---|---|
-| 0 | 4 | ts_sec | Unix seconds |
-| 4 | 4 | ts_usec | microseconds within the second |
-| 8 | 4 | incl_len | captured byte length |
-| 12 | 4 | orig_len | original byte length |
-| 16 | N | packet data | Ethernet frame bytes |
+| Offset | Length | Field       | Value                          |
+| ------ | -----: | ----------- | ------------------------------ |
+| 0      |      4 | ts_sec      | Unix seconds                   |
+| 4      |      4 | ts_usec     | microseconds within the second |
+| 8      |      4 | incl_len    | captured byte length           |
+| 12     |      4 | orig_len    | original byte length           |
+| 16     |      N | packet data | Ethernet frame bytes           |
 
 ### Timestamp Derivation
 

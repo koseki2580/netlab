@@ -17,9 +17,9 @@ interface OspfConfig {
 }
 
 interface OspfAreaConfig {
-  areaId: string;      // backbone = '0.0.0.0'
-  networks: string[];  // connected networks this router advertises in the area
-  cost?: number;       // optional link cost override for matching interfaces
+  areaId: string; // backbone = '0.0.0.0'
+  networks: string[]; // connected networks this router advertises in the area
+  cost?: number; // optional link cost override for matching interfaces
 }
 ```
 

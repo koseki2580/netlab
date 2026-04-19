@@ -7,13 +7,13 @@ Each protocol computes routes, and the registry resolves conflicts using **admin
 
 ## Admin Distance (Priority)
 
-| Protocol | Admin Distance | Notes |
-| -------- | -------------- | ----- |
-| Static | 1 | Manually configured, highest priority |
-| eBGP | 20 | External BGP |
-| OSPF | 110 | Interior gateway protocol |
-| RIP | 120 | Distance vector, older |
-| iBGP | 200 | Internal BGP, lowest priority |
+| Protocol | Admin Distance | Notes                                 |
+| -------- | -------------- | ------------------------------------- |
+| Static   | 1              | Manually configured, highest priority |
+| eBGP     | 20             | External BGP                          |
+| OSPF     | 110            | Interior gateway protocol             |
+| RIP      | 120            | Distance vector, older                |
+| iBGP     | 200            | Internal BGP, lowest priority         |
 
 Lower admin distance = higher priority. If two protocols have routes to the same destination
 on the same router, the one with the lower admin distance wins.
@@ -21,12 +21,12 @@ On a tie, lower `metric` wins.
 
 ## Protocol Status
 
-| Protocol | Status | Import |
-| -------- | ------ | ------ |
-| Static | Implemented | Built-in (from `netlab`) |
-| OSPF | Implemented (educational) | Built-in and exported from `netlab` |
-| BGP | Implemented (educational) | Built-in and exported from `netlab` |
-| RIP | Implemented (educational) | Built-in and exported from `netlab` |
+| Protocol | Status                    | Import                              |
+| -------- | ------------------------- | ----------------------------------- |
+| Static   | Implemented               | Built-in (from `netlab`)            |
+| OSPF     | Implemented (educational) | Built-in and exported from `netlab` |
+| BGP      | Implemented (educational) | Built-in and exported from `netlab` |
+| RIP      | Implemented (educational) | Built-in and exported from `netlab` |
 
 `NetlabProvider` auto-registers the built-in routing protocols, so route tables are recomputed from
 static, RIP, OSPF, and BGP without extra setup when the corresponding config exists on routers.
@@ -69,7 +69,9 @@ const myProtocol: RoutingProtocol = {
   name: 'my-protocol',
   adminDistance: 50,
   computeRoutes(topology) {
-    return [ /* RouteEntry[] */ ];
+    return [
+      /* RouteEntry[] */
+    ];
   },
 };
 

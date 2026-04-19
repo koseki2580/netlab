@@ -15,15 +15,15 @@ netlab allows developers to:
 
 ## Key Concepts
 
-| Concept | Description |
-| ------- | ----------- |
-| **Layer** | An OSI model layer (L1–L7). Each layer has its own node types and forwarding logic. |
-| **Device** | A network node: host, switch, router, hub, etc. |
-| **Packet** | An encapsulated data unit traveling through the simulated network. |
-| **Area** | A logical network zone (Private, Public, DMZ) visualized as a background region. |
-| **Hook** | A middleware function injected at a named event point in the simulation pipeline. |
-| **Plugin** | A layer extension that registers custom React Flow node types and forwarding logic. |
-| **Routing Protocol** | An algorithm that computes route tables (static, OSPF, BGP, RIP). |
+| Concept              | Description                                                                         |
+| -------------------- | ----------------------------------------------------------------------------------- |
+| **Layer**            | An OSI model layer (L1–L7). Each layer has its own node types and forwarding logic. |
+| **Device**           | A network node: host, switch, router, hub, etc.                                     |
+| **Packet**           | An encapsulated data unit traveling through the simulated network.                  |
+| **Area**             | A logical network zone (Private, Public, DMZ) visualized as a background region.    |
+| **Hook**             | A middleware function injected at a named event point in the simulation pipeline.   |
+| **Plugin**           | A layer extension that registers custom React Flow node types and forwarding logic. |
+| **Routing Protocol** | An algorithm that computes route tables (static, OSPF, BGP, RIP).                   |
 
 ## Quick Example
 
@@ -32,9 +32,15 @@ import { NetlabProvider, NetlabCanvas } from 'netlab';
 import 'netlab/layers/l2-datalink';
 import 'netlab/layers/l3-network';
 
-const devices = [ /* NetlabNode[] */ ];
-const links   = [ /* NetlabEdge[] */ ];
-const areas   = [ /* NetworkArea[] */ ];
+const devices = [
+  /* NetlabNode[] */
+];
+const links = [
+  /* NetlabEdge[] */
+];
+const areas = [
+  /* NetworkArea[] */
+];
 
 function App() {
   return (

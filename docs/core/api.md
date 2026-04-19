@@ -29,17 +29,17 @@ import { NetlabApp } from 'netlab';
 import type { NetlabAppProps, NetworkTopology } from 'netlab';
 ```
 
-| Prop | Type | Notes |
-| ---- | ---- | ----- |
-| `topology` | `NetworkTopology` | Required topology including `routeTables` |
-| `width` | `number \| string` | Defaults to `'100%'` |
-| `height` | `number \| string` | Defaults to `500` |
-| `simulation` | `boolean` | Enables toolbar, packet overlay, and simulation context |
-| `timeline` | `boolean` | Controls the `PacketTimeline` sidebar |
-| `routeTable` | `boolean` | Controls the `RouteTable` overlay |
-| `areaLegend` | `boolean` | Controls the `AreaLegend` overlay |
-| `theme` | `Partial<NetlabTheme>` | Merged with `NETLAB_DARK_THEME` |
-| `style`, `className` | DOM props | Applied to the outer container |
+| Prop                 | Type                   | Notes                                                   |
+| -------------------- | ---------------------- | ------------------------------------------------------- |
+| `topology`           | `NetworkTopology`      | Required topology including `routeTables`               |
+| `width`              | `number \| string`     | Defaults to `'100%'`                                    |
+| `height`             | `number \| string`     | Defaults to `500`                                       |
+| `simulation`         | `boolean`              | Enables toolbar, packet overlay, and simulation context |
+| `timeline`           | `boolean`              | Controls the `PacketTimeline` sidebar                   |
+| `routeTable`         | `boolean`              | Controls the `RouteTable` overlay                       |
+| `areaLegend`         | `boolean`              | Controls the `AreaLegend` overlay                       |
+| `theme`              | `Partial<NetlabTheme>` | Merged with `NETLAB_DARK_THEME`                         |
+| `style`, `className` | DOM props              | Applied to the outer container                          |
 
 ### `<NetlabProvider>`
 
@@ -108,35 +108,35 @@ interface NetlabThemeScopeProps {
 
 ### Supporting Components
 
-| Export | Description |
-| ------ | ----------- |
-| `<NodeDetailPanel>` | Floating overlay for the currently selected node |
-| `<RouteTable>` | Debug/teaching overlay showing resolved routes |
-| `<AreaLegend>` | Legend for configured network areas |
-| `<ResizableSidebar>` | Generic right-side drag-resizable panel |
-| `<FailureTogglePanel>` | Interactive node/edge/interface failure toggles |
-| `<TopologyEditor>` | High-level editor UI for adding and wiring nodes |
+| Export                     | Description                                                             |
+| -------------------------- | ----------------------------------------------------------------------- |
+| `<NodeDetailPanel>`        | Floating overlay for the currently selected node                        |
+| `<RouteTable>`             | Debug/teaching overlay showing resolved routes                          |
+| `<AreaLegend>`             | Legend for configured network areas                                     |
+| `<ResizableSidebar>`       | Generic right-side drag-resizable panel                                 |
+| `<FailureTogglePanel>`     | Interactive node/edge/interface failure toggles                         |
+| `<TopologyEditor>`         | High-level editor UI for adding and wiring nodes                        |
 | `<TopologyEditorProvider>` | Editor state provider used by `TopologyEditor` and custom editor shells |
-| `<ValidationPanel>` | Topology-wide validation summary component for editor layouts |
+| `<ValidationPanel>`        | Topology-wide validation summary component for editor layouts           |
 
 ### Simulation UI Components
 
 These components are auto-rendered by `<NetlabApp>` when `simulation={true}` and can also be
 composed manually inside a `NetlabThemeScope` + `NetlabProvider` + `SimulationProvider` tree.
 
-| Component | Description |
-| --------- | ----------- |
-| `<SimulationControls>` | Toolbar with send/play/pause/step/reset controls |
-| `<PacketViewer>` | Overlay showing the currently animated packet |
-| `<PacketTimeline>` | Sidebar timeline of traces and hop events |
-| `<HopInspector>` | Per-hop detail view for the selected trace step |
-| `<NatTableViewer>` | NAT translation overlay panel |
-| `<StepControls>` | UI for step-by-step playback |
-| `<PacketStructureViewer>` | Byte-level packet inspector |
-| `<TraceSummary>` | Compact end-to-end trace summary |
-| `<TraceSelector>` | Trace picker for multiple recorded traces |
-| `<SessionList>` | Session list derived from `SessionTracker` |
-| `<SessionDetail>` | Detail pane for one selected session |
+| Component                 | Description                                      |
+| ------------------------- | ------------------------------------------------ |
+| `<SimulationControls>`    | Toolbar with send/play/pause/step/reset controls |
+| `<PacketViewer>`          | Overlay showing the currently animated packet    |
+| `<PacketTimeline>`        | Sidebar timeline of traces and hop events        |
+| `<HopInspector>`          | Per-hop detail view for the selected trace step  |
+| `<NatTableViewer>`        | NAT translation overlay panel                    |
+| `<StepControls>`          | UI for step-by-step playback                     |
+| `<PacketStructureViewer>` | Byte-level packet inspector                      |
+| `<TraceSummary>`          | Compact end-to-end trace summary                 |
+| `<TraceSelector>`         | Trace picker for multiple recorded traces        |
+| `<SessionList>`           | Session list derived from `SessionTracker`       |
+| `<SessionDetail>`         | Detail pane for one selected session             |
 
 ## Hooks And Contexts
 
@@ -147,11 +147,11 @@ import { HookEngine, hookEngine, useNetlabHooks } from 'netlab';
 import type { HookFn, HookMap, HookPoint } from 'netlab';
 ```
 
-| Export | Type | Description |
-| ------ | ---- | ----------- |
-| `HookEngine` | Class | Register and emit hook handlers with middleware-style `next()` chaining |
-| `hookEngine` | Shared instance | Convenience singleton for non-React integrations |
-| `useNetlabHooks()` | Hook | Returns the provider-scoped `HookEngine` instance |
+| Export             | Type            | Description                                                             |
+| ------------------ | --------------- | ----------------------------------------------------------------------- |
+| `HookEngine`       | Class           | Register and emit hook handlers with middleware-style `next()` chaining |
+| `hookEngine`       | Shared instance | Convenience singleton for non-React integrations                        |
+| `useNetlabHooks()` | Hook            | Returns the provider-scoped `HookEngine` instance                       |
 
 ### Netlab Tree Hooks
 
@@ -159,10 +159,10 @@ import type { HookFn, HookMap, HookPoint } from 'netlab';
 import { useNetlabContext, useNetlabUI } from 'netlab';
 ```
 
-| Hook | Description |
-| ---- | ----------- |
+| Hook                 | Description                                                                 |
+| -------------------- | --------------------------------------------------------------------------- |
 | `useNetlabContext()` | Access the enriched topology, route table, areas, and provider `HookEngine` |
-| `useNetlabUI()` | Access selection state used by `NodeDetailPanel` and canvas UI |
+| `useNetlabUI()`      | Access selection state used by `NodeDetailPanel` and canvas UI              |
 
 ### Simulation Context
 
@@ -171,11 +171,11 @@ import { SimulationProvider, SimulationContext, useSimulation } from 'netlab';
 import type { SimulationProviderProps, SimulationContextValue } from 'netlab';
 ```
 
-| Export | Type | Description |
-| ------ | ---- | ----------- |
-| `SimulationProvider` | Component | Creates and owns a `SimulationEngine` for the current topology |
-| `SimulationContext` | React context | Raw context object for advanced composition |
-| `useSimulation()` | Hook | Access engine, state, send helpers, DHCP/DNS helpers, and PCAP export |
+| Export               | Type          | Description                                                           |
+| -------------------- | ------------- | --------------------------------------------------------------------- |
+| `SimulationProvider` | Component     | Creates and owns a `SimulationEngine` for the current topology        |
+| `SimulationContext`  | React context | Raw context object for advanced composition                           |
+| `useSimulation()`    | Hook          | Access engine, state, send helpers, DHCP/DNS helpers, and PCAP export |
 
 `SimulationProvider` must be rendered inside `<NetlabProvider>`.
 
@@ -192,23 +192,18 @@ import {
 import type { FailureState, FailureContextValue } from 'netlab';
 ```
 
-| Export | Type | Description |
-| ------ | ---- | ----------- |
-| `FailureProvider` | Component | Stores node, edge, and interface failure state |
-| `FailureContext` | React context | Raw failure context object |
-| `useFailure()` | Hook | Strict hook that throws outside a provider |
-| `useOptionalFailure()` | Hook | Nullable variant for optional integration |
-| `EMPTY_FAILURE_STATE` | Constant | Default empty failure set |
+| Export                 | Type          | Description                                    |
+| ---------------------- | ------------- | ---------------------------------------------- |
+| `FailureProvider`      | Component     | Stores node, edge, and interface failure state |
+| `FailureContext`       | React context | Raw failure context object                     |
+| `useFailure()`         | Hook          | Strict hook that throws outside a provider     |
+| `useOptionalFailure()` | Hook          | Nullable variant for optional integration      |
+| `EMPTY_FAILURE_STATE`  | Constant      | Default empty failure set                      |
 
 ### Session Management
 
 ```typescript
-import {
-  SessionTracker,
-  SessionProvider,
-  SessionContext,
-  useSession,
-} from 'netlab';
+import { SessionTracker, SessionProvider, SessionContext, useSession } from 'netlab';
 import type {
   NetworkSession,
   SessionPhase,
@@ -219,20 +214,17 @@ import type {
 } from 'netlab';
 ```
 
-| Export | Type | Description |
-| ------ | ---- | ----------- |
-| `SessionTracker` | Class | Correlates hook events and traces into request/response sessions |
-| `SessionProvider` | Component | React wrapper around `SessionTracker` |
-| `SessionContext` | React context | Raw session context object |
-| `useSession()` | Hook | Access sessions, selection, and trace attachment helpers |
+| Export            | Type          | Description                                                      |
+| ----------------- | ------------- | ---------------------------------------------------------------- |
+| `SessionTracker`  | Class         | Correlates hook events and traces into request/response sessions |
+| `SessionProvider` | Component     | React wrapper around `SessionTracker`                            |
+| `SessionContext`  | React context | Raw session context object                                       |
+| `useSession()`    | Hook          | Access sessions, selection, and trace attachment helpers         |
 
 ### Topology Editor Context
 
 ```typescript
-import {
-  TopologyEditorProvider,
-  useTopologyEditorContext,
-} from 'netlab';
+import { TopologyEditorProvider, useTopologyEditorContext } from 'netlab';
 import type {
   TopologyEditorProviderProps,
   TopologyEditorContextValue,
@@ -244,12 +236,12 @@ import type {
 } from 'netlab';
 ```
 
-| Export | Type | Description |
-| ------ | ---- | ----------- |
-| `TopologyEditorProvider` | Component | Provides editor state/history to custom editor shells |
-| `useTopologyEditorContext()` | Hook | Access topology mutations, selection, and undo/redo state |
-| `TopologyEditor` | Component | Opinionated editor built on the provider plus built-in UI |
-| `ValidationPanel` | Component | Topology validation summary panel for editor shells and custom layouts |
+| Export                       | Type      | Description                                                            |
+| ---------------------------- | --------- | ---------------------------------------------------------------------- |
+| `TopologyEditorProvider`     | Component | Provides editor state/history to custom editor shells                  |
+| `useTopologyEditorContext()` | Hook      | Access topology mutations, selection, and undo/redo state              |
+| `TopologyEditor`             | Component | Opinionated editor built on the provider plus built-in UI              |
+| `ValidationPanel`            | Component | Topology validation summary panel for editor shells and custom layouts |
 
 ## Classes
 
@@ -264,9 +256,25 @@ class SimulationEngine {
   send(packet: InFlightPacket, failureState?: FailureState): Promise<void>;
   ping(srcNodeId: string, dstIp: string, options?: { ttl?: number }): Promise<PacketTrace>;
   traceroute(srcNodeId: string, dstIp: string, maxHops?: number): Promise<PacketTrace[]>;
-  simulateDhcp(clientNodeId: string, failureState?: FailureState, sessionId?: string): Promise<boolean>;
-  simulateDns(clientNodeId: string, hostname: string, failureState?: FailureState, sessionId?: string): Promise<string | null>;
-  tcpConnect(clientNodeId: string, serverNodeId: string, srcPort: number, dstPort: number, failureState?: FailureState, sessionId?: string): Promise<TcpHandshakeResult>;
+  simulateDhcp(
+    clientNodeId: string,
+    failureState?: FailureState,
+    sessionId?: string,
+  ): Promise<boolean>;
+  simulateDns(
+    clientNodeId: string,
+    hostname: string,
+    failureState?: FailureState,
+    sessionId?: string,
+  ): Promise<string | null>;
+  tcpConnect(
+    clientNodeId: string,
+    serverNodeId: string,
+    srcPort: number,
+    dstPort: number,
+    failureState?: FailureState,
+    sessionId?: string,
+  ): Promise<TcpHandshakeResult>;
   tcpDisconnect(connectionId: string, failureState?: FailureState): Promise<TcpTeardownResult>;
   exportPcap(traceId?: string): Uint8Array;
   step(): void;
@@ -300,13 +308,13 @@ import type { StepSimStatus, StepSimState } from 'netlab';
 
 Wrapper around `SimulationEngine` that exposes a smaller stepping-oriented interface.
 
-| Method / Property | Description |
-| ----------------- | ----------- |
-| `load(packet)` | Sends a packet into the wrapped engine and prepares step state |
-| `nextStep()` | Advances one hop and returns the new `PacketHop` or `null` |
-| `reset()` | Resets engine step state |
-| `getState()` | Returns the derived `StepSimState` |
-| `subscribe(listener)` | Subscribe to derived step-state updates |
+| Method / Property     | Description                                                    |
+| --------------------- | -------------------------------------------------------------- |
+| `load(packet)`        | Sends a packet into the wrapped engine and prepares step state |
+| `nextStep()`          | Advances one hop and returns the new `PacketHop` or `null`     |
+| `reset()`             | Resets engine step state                                       |
+| `getState()`          | Returns the derived `StepSimState`                             |
+| `subscribe(listener)` | Subscribe to derived step-state updates                        |
 
 ### L4 Transport Classes And Helpers
 
@@ -324,13 +332,13 @@ import {
 } from 'netlab';
 ```
 
-| Export | Description |
-| ------ | ----------- |
-| `TcpStateMachine` | Pure transition table for the educational 10-state TCP subset |
-| `TcpOrchestrator` | Multi-packet handshake/teardown runner built on the forwarding pipeline abstraction |
-| `TcpConnectionTracker` | Runtime TCP connection registry keyed by connection ID and 4-tuple |
-| `buildSynPacket` / `buildSynAckPacket` / `buildAckPacket` / `buildFinPacket` / `buildRstPacket` | Full TCP `InFlightPacket` builders for transport control flows |
-| `generateISN` | Deterministic initial-sequence-number helper for reproducible traces |
+| Export                                                                                          | Description                                                                         |
+| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `TcpStateMachine`                                                                               | Pure transition table for the educational 10-state TCP subset                       |
+| `TcpOrchestrator`                                                                               | Multi-packet handshake/teardown runner built on the forwarding pipeline abstraction |
+| `TcpConnectionTracker`                                                                          | Runtime TCP connection registry keyed by connection ID and 4-tuple                  |
+| `buildSynPacket` / `buildSynAckPacket` / `buildAckPacket` / `buildFinPacket` / `buildRstPacket` | Full TCP `InFlightPacket` builders for transport control flows                      |
+| `generateISN`                                                                                   | Deterministic initial-sequence-number helper for reproducible traces                |
 
 ### Routing Protocol Classes
 
@@ -347,30 +355,26 @@ import {
 } from 'netlab';
 ```
 
-| Export | Description |
-| ------ | ----------- |
-| `StaticProtocol` / `staticProtocol` | Static-route protocol implementation and shared singleton |
-| `OspfProtocol` / `ospfProtocol` | Education-focused OSPF SPF implementation over topology adjacency |
-| `BgpProtocol` / `bgpProtocol` | Education-focused BGP path-vector implementation with AS_PATH and best-path selection |
-| `RipProtocol` / `ripProtocol` | Education-focused RIP Bellman-Ford implementation with hop-count metric |
+| Export                              | Description                                                                           |
+| ----------------------------------- | ------------------------------------------------------------------------------------- |
+| `StaticProtocol` / `staticProtocol` | Static-route protocol implementation and shared singleton                             |
+| `OspfProtocol` / `ospfProtocol`     | Education-focused OSPF SPF implementation over topology adjacency                     |
+| `BgpProtocol` / `bgpProtocol`       | Education-focused BGP path-vector implementation with AS_PATH and best-path selection |
+| `RipProtocol` / `ripProtocol`       | Education-focused RIP Bellman-Ford implementation with hop-count metric               |
 
 ## Registries And Constants
 
 ### Layer And Protocol Registries
 
 ```typescript
-import {
-  registerLayerPlugin,
-  layerRegistry,
-  protocolRegistry,
-} from 'netlab';
+import { registerLayerPlugin, layerRegistry, protocolRegistry } from 'netlab';
 ```
 
-| Export | Description |
-| ------ | ----------- |
-| `registerLayerPlugin(plugin)` | Recommended entry point for custom layer registration |
-| `layerRegistry` | Low-level registry with `register()`, `getPlugin()`, `getAllNodeTypes()`, `getForwarder()`, and `list()` |
-| `protocolRegistry` | Routing registry with `register()`, `unregister()`, `resolveRouteTable()`, `notifyTopologyChange()`, and `list()` |
+| Export                        | Description                                                                                                       |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `registerLayerPlugin(plugin)` | Recommended entry point for custom layer registration                                                             |
+| `layerRegistry`               | Low-level registry with `register()`, `getPlugin()`, `getAllNodeTypes()`, `getForwarder()`, and `list()`          |
+| `protocolRegistry`            | Routing registry with `register()`, `unregister()`, `resolveRouteTable()`, `notifyTopologyChange()`, and `list()` |
 
 ### ICMP And Routing Constants
 
@@ -379,29 +383,25 @@ import { ADMIN_DISTANCES, ICMP_TYPE, ICMP_CODE } from 'netlab';
 import type { IcmpType, IcmpCode } from 'netlab';
 ```
 
-| Export | Description |
-| ------ | ----------- |
+| Export            | Description                                                            |
+| ----------------- | ---------------------------------------------------------------------- |
 | `ADMIN_DISTANCES` | Built-in routing admin distances for static, eBGP, OSPF, RIP, and iBGP |
-| `ICMP_TYPE` | ICMP message type constants used by `ping()` and `traceroute()` |
-| `ICMP_CODE` | ICMP code constants including TTL-exceeded |
+| `ICMP_TYPE`       | ICMP message type constants used by `ping()` and `traceroute()`        |
+| `ICMP_CODE`       | ICMP code constants including TTL-exceeded                             |
 
 ### Theming
 
 ```typescript
-import {
-  NETLAB_DARK_THEME,
-  NETLAB_LIGHT_THEME,
-  themeToVars,
-} from 'netlab';
+import { NETLAB_DARK_THEME, NETLAB_LIGHT_THEME, themeToVars } from 'netlab';
 import type { NetlabTheme } from 'netlab';
 ```
 
-| Export | Description |
-| ------ | ----------- |
-| `NetlabTheme` | Theme token interface used by `NetlabApp` and `NetlabThemeScope` |
-| `NETLAB_DARK_THEME` | Default dark palette |
-| `NETLAB_LIGHT_THEME` | Built-in light palette |
-| `themeToVars(theme)` | Converts theme tokens into `--netlab-*` CSS variables |
+| Export               | Description                                                      |
+| -------------------- | ---------------------------------------------------------------- |
+| `NetlabTheme`        | Theme token interface used by `NetlabApp` and `NetlabThemeScope` |
+| `NETLAB_DARK_THEME`  | Default dark palette                                             |
+| `NETLAB_LIGHT_THEME` | Built-in light palette                                           |
+| `themeToVars(theme)` | Converts theme tokens into `--netlab-*` CSS variables            |
 
 ## Packet Serialization
 
@@ -410,13 +410,13 @@ import { serializePacket, serializeArpFrame } from 'netlab';
 import type { LayerTag, AnnotatedField, SerializedPacket } from 'netlab';
 ```
 
-| Export | Description |
-| ------ | ----------- |
-| `serializePacket(packet)` | Serializes an `InFlightPacket` into bytes, layer annotations, and named fields |
-| `serializeArpFrame(frame)` | Serializes an `ArpEthernetFrame` for the packet structure viewer |
-| `LayerTag` | Byte-annotation layer tag union (`'L2'`, `'L3'`, `'L4'`, `'L7'`, `'ARP'`, `'raw'`) |
-| `AnnotatedField` | Named byte-range metadata for rendered packet fields |
-| `SerializedPacket` | Result object consumed by packet-inspection UI |
+| Export                     | Description                                                                        |
+| -------------------------- | ---------------------------------------------------------------------------------- |
+| `serializePacket(packet)`  | Serializes an `InFlightPacket` into bytes, layer annotations, and named fields     |
+| `serializeArpFrame(frame)` | Serializes an `ArpEthernetFrame` for the packet structure viewer                   |
+| `LayerTag`                 | Byte-annotation layer tag union (`'L2'`, `'L3'`, `'L4'`, `'L7'`, `'ARP'`, `'raw'`) |
+| `AnnotatedField`           | Named byte-range metadata for rendered packet fields                               |
+| `SerializedPacket`         | Result object consumed by packet-inspection UI                                     |
 
 ## Utilities
 
@@ -446,36 +446,36 @@ import type {
 
 ### CIDR Utilities
 
-| Function | Signature | Description |
-| -------- | --------- | ----------- |
-| `parseCidr(cidr)` | `(cidr: string) => { prefix: string; length: number }` | Splits a CIDR string into prefix and prefix length |
-| `isInSubnet(ip, cidr)` | `(ip: string, cidr: string) => boolean` | Checks IPv4 membership in a CIDR |
-| `isInSameSubnet(cidr1, cidr2)` | `(cidr1: string, cidr2: string) => boolean` | Compares network addresses for equal-length CIDRs |
+| Function                       | Signature                                              | Description                                        |
+| ------------------------------ | ------------------------------------------------------ | -------------------------------------------------- |
+| `parseCidr(cidr)`              | `(cidr: string) => { prefix: string; length: number }` | Splits a CIDR string into prefix and prefix length |
+| `isInSubnet(ip, cidr)`         | `(ip: string, cidr: string) => boolean`                | Checks IPv4 membership in a CIDR                   |
+| `isInSameSubnet(cidr1, cidr2)` | `(cidr1: string, cidr2: string) => boolean`            | Compares network addresses for equal-length CIDRs  |
 
 ### Network Utilities
 
-| Function | Description |
-| -------- | ----------- |
-| `deriveDeterministicMac(nodeId)` | Stable locally-administered MAC derived from a string seed |
-| `extractHostname(url)` | Hostname extraction helper that returns `null` for invalid URLs |
-| `isIpAddress(value)` | Lightweight IPv4 string check |
+| Function                         | Description                                                     |
+| -------------------------------- | --------------------------------------------------------------- |
+| `deriveDeterministicMac(nodeId)` | Stable locally-administered MAC derived from a string seed      |
+| `extractHostname(url)`           | Hostname extraction helper that returns `null` for invalid URLs |
+| `isIpAddress(value)`             | Lightweight IPv4 string check                                   |
 
 ### Topology URL Utilities
 
-| Function | Description |
-| -------- | ----------- |
-| `encodeTopology(topology)` | Encodes a `TopologySnapshot` into `?topo=<base64url>` |
-| `decodeTopology(search)` | Decodes `window.location.search` into a `NetworkTopology \| null` |
+| Function                   | Description                                                       |
+| -------------------------- | ----------------------------------------------------------------- |
+| `encodeTopology(topology)` | Encodes a `TopologySnapshot` into `?topo=<base64url>`             |
+| `decodeTopology(search)`   | Decodes `window.location.search` into a `NetworkTopology \| null` |
 
 ### Connection Validation
 
-| Function | Description |
-| -------- | ----------- |
-| `validateConnection(nodes, edges, sourceId, targetId, sourceHandle?, targetHandle?)` | Returns full `ValidationResult` with errors and warnings |
-| `validateTopology(nodes, edges)` | Returns `TopologyValidationResult` with per-edge results and aggregated counts |
-| `isValidConnection(sourceRole, targetRole)` | Fast role-level compatibility check |
-| `isValidConnectionBetweenNodes(nodes, sourceId, targetId)` | Convenience wrapper that looks up node roles |
-| `isValidEdge(nodes, edge)` | Convenience wrapper for existing edges |
+| Function                                                                             | Description                                                                    |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| `validateConnection(nodes, edges, sourceId, targetId, sourceHandle?, targetHandle?)` | Returns full `ValidationResult` with errors and warnings                       |
+| `validateTopology(nodes, edges)`                                                     | Returns `TopologyValidationResult` with per-edge results and aggregated counts |
+| `isValidConnection(sourceRole, targetRole)`                                          | Fast role-level compatibility check                                            |
+| `isValidConnectionBetweenNodes(nodes, sourceId, targetId)`                           | Convenience wrapper that looks up node roles                                   |
+| `isValidEdge(nodes, edge)`                                                           | Convenience wrapper for existing edges                                         |
 
 `TopologyValidationResult` contains:
 
@@ -495,13 +495,13 @@ import {
 } from 'netlab';
 ```
 
-| Function | Description |
-| -------- | ----------- |
+| Function                      | Description                                                   |
+| ----------------------------- | ------------------------------------------------------------- |
 | `createRouterNode(position?)` | Creates a router node with empty interfaces and static routes |
-| `createSwitchNode(position?)` | Creates a switch node with default ports |
-| `createClientNode(position?)` | Creates a client endpoint node |
-| `createServerNode(position?)` | Creates a server endpoint node |
-| `randomPosition()` | Returns a slightly randomized `{ x, y }` editor placement |
+| `createSwitchNode(position?)` | Creates a switch node with default ports                      |
+| `createClientNode(position?)` | Creates a client endpoint node                                |
+| `createServerNode(position?)` | Creates a server endpoint node                                |
+| `randomPosition()`            | Returns a slightly randomized `{ x, y }` editor placement     |
 
 ## Types
 

@@ -1,4 +1,5 @@
 # L7 – Application Layer
+
 > **Status**: 🧪 Spec only — not yet implemented
 
 The application layer represents HTTP and service-layer payloads such as DHCP and DNS.
@@ -8,9 +9,9 @@ The application layer represents HTTP and service-layer payloads such as DHCP an
 ```typescript
 interface HttpMessage {
   layer: 'L7';
-  method?: string;          // 'GET', 'POST', etc.
-  url?: string;             // request URL
-  statusCode?: number;      // response status code
+  method?: string; // 'GET', 'POST', etc.
+  url?: string; // request URL
+  statusCode?: number; // response status code
   headers: Record<string, string>;
   body?: string;
 }

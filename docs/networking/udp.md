@@ -39,7 +39,7 @@ interface UdpDatagram {
 Alias and constants exported from `src/types/udp.ts`:
 
 ```typescript
-type UdpSegment = UdpDatagram;          // alias for symmetry with TcpSegment
+type UdpSegment = UdpDatagram; // alias for symmetry with TcpSegment
 const UDP_PROTOCOL = 17;
 const UDP_EPHEMERAL_PORT_MIN = 49152;
 const UDP_EPHEMERAL_PORT_MAX = 65535;
@@ -74,7 +74,7 @@ Deterministic ephemeral port in [49152, 65535] derived via FNV-1a hash.
 ```typescript
 import { generateEphemeralPort } from 'netlab';
 
-const port = generateEphemeralPort('client-1');     // e.g. 52341
+const port = generateEphemeralPort('client-1'); // e.g. 52341
 const port2 = generateEphemeralPort('client-1', 1); // different seed → different port
 ```
 

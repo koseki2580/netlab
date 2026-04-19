@@ -6,9 +6,9 @@
 
 This project uses GitHub Actions for automated testing and deployment.
 
-| Workflow | Trigger | Purpose |
-|---|---|---|
-| [Unit Tests](#unit-tests) | Pull request to `main` | Run type checks and unit tests |
+| Workflow                    | Trigger                                | Purpose                               |
+| --------------------------- | -------------------------------------- | ------------------------------------- |
+| [Unit Tests](#unit-tests)   | Pull request to `main`                 | Run type checks and unit tests        |
 | [Deploy Demo](#deploy-demo) | Push to `main` / PR merged into `main` | Build and deploy demo to GitHub Pages |
 
 ---
@@ -24,10 +24,10 @@ Triggered on every pull request targeting `main`. Runs:
 
 ### Test files
 
-| File | What is tested |
-|---|---|
-| `src/utils/cidr.test.ts` | `isInSubnet`, `parseCidr`, `prefixLength` — CIDR matching and parsing |
-| `src/routing/static/StaticProtocol.test.ts` | Static route computation from topology nodes |
+| File                                            | What is tested                                                                   |
+| ----------------------------------------------- | -------------------------------------------------------------------------------- |
+| `src/utils/cidr.test.ts`                        | `isInSubnet`, `parseCidr`, `prefixLength` — CIDR matching and parsing            |
+| `src/routing/static/StaticProtocol.test.ts`     | Static route computation from topology nodes                                     |
 | `src/layers/l3-network/RouterForwarder.test.ts` | IP forwarding: TTL decrement, longest-prefix match, default route, no-route drop |
 
 ### Running tests locally
@@ -48,6 +48,7 @@ npm run test:watch # watch mode
 **File:** `.github/workflows/deploy.yml`
 
 Triggered when:
+
 - A commit is pushed directly to `main`, or
 - A pull request targeting `main` is merged
 

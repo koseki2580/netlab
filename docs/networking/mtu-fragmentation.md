@@ -95,10 +95,7 @@ UDP, or ICMP payload before delivery.
 For each routed egress step:
 
 ```typescript
-effectiveMtu = Math.min(
-  link.mtuBytes ?? Infinity,
-  egressInterface.mtu ?? Infinity,
-);
+effectiveMtu = Math.min(link.mtuBytes ?? Infinity, egressInterface.mtu ?? Infinity);
 ```
 
 - A finite interface MTU can further reduce the path MTU below the physical link MTU.
@@ -119,7 +116,7 @@ effectiveMtu = Math.min(
 - The maximum data carried by each non-final fragment is:
 
 ```typescript
-Math.floor((mtu - 20) / 8) * 8
+Math.floor((mtu - 20) / 8) * 8;
 ```
 
 - The last fragment carries the remaining bytes and may be shorter.
@@ -227,9 +224,7 @@ const topology = {
       data: { label: 'Host B', role: 'server', layerId: 'l7', ip: '203.0.113.10' },
     },
   ],
-  edges: [
-    { id: 'r1-r2', source: 'r1', target: 'r2', data: { mtuBytes: 600 } },
-  ],
+  edges: [{ id: 'r1-r2', source: 'r1', target: 'r2', data: { mtuBytes: 600 } }],
 };
 ```
 

@@ -27,12 +27,12 @@ The following components MUST use theme CSS variables instead of hardcoded hex c
 
 Default values:
 
-| Token | Dark theme | Light theme |
-| --- | --- | --- |
-| `nodeRouterBg` | `#0f2a1a` | `#f0fdf4` |
-| `nodeSwitchBg` | `#0d1f3c` | `#eff6ff` |
-| `nodeClientBg` | `#0d1a2e` | `#f0f9ff` |
-| `nodeServerBg` | `#0a1f14` | `#f0fdf4` |
+| Token          | Dark theme | Light theme |
+| -------------- | ---------- | ----------- |
+| `nodeRouterBg` | `#0f2a1a`  | `#f0fdf4`   |
+| `nodeSwitchBg` | `#0d1f3c`  | `#eff6ff`   |
+| `nodeClientBg` | `#0d1a2e`  | `#f0f9ff`   |
+| `nodeServerBg` | `#0a1f14`  | `#f0fdf4`   |
 
 These map to CSS custom properties on the `NetlabApp` container:
 

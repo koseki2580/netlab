@@ -1,4 +1,5 @@
 # L4 – Transport Layer
+
 > **Status**: ✅ Implemented (educational)
 
 The transport layer handles end-to-end communication with port numbers and reliability (TCP/UDP).
@@ -16,7 +17,7 @@ interface TcpSegment {
   dstPort: number;
   seq: number;
   ack: number;
-  flags: TcpFlags;     // SYN, ACK, FIN, RST, PSH, URG
+  flags: TcpFlags; // SYN, ACK, FIN, RST, PSH, URG
   payload: HttpMessage | RawPayload;
 }
 ```
