@@ -77,8 +77,8 @@ function buildDhcpOptions(config: DhcpServerConfig) {
   return {
     subnetMask: config.subnetMask,
     router: config.defaultGateway,
-    dnsServer: config.dnsServer,
     leaseTime: config.leaseTime,
+    ...(config.dnsServer !== undefined ? { dnsServer: config.dnsServer } : {}),
   };
 }
 
@@ -170,9 +170,9 @@ export function handleDiscover(
       messageType: offeredIp ? 'OFFER' : 'NAK',
       transactionId: payload.transactionId,
       clientMac: payload.clientMac,
-      offeredIp: offeredIp ?? undefined,
       serverIp: server.data.ip,
       options: buildDhcpOptions(leaseAllocator.getConfig()),
+      ...(offeredIp != null ? { offeredIp } : {}),
     },
   );
 }
@@ -203,9 +203,9 @@ export function handleRequest(
       messageType: confirmed ? 'ACK' : 'NAK',
       transactionId: payload.transactionId,
       clientMac: payload.clientMac,
-      offeredIp: confirmed?.offeredIp,
       serverIp: server.data.ip,
       options: buildDhcpOptions(leaseAllocator.getConfig()),
+      ...(confirmed?.offeredIp !== undefined ? { offeredIp: confirmed.offeredIp } : {}),
     },
   );
 }

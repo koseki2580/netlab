@@ -1,4 +1,5 @@
 import type { HttpMessage } from '../../types/packets';
+import { getRequired } from '../../utils';
 
 export type ParseResult =
   | { kind: 'incomplete' }
@@ -74,7 +75,9 @@ function parseRequest(
     return { kind: 'error', reason: 'Malformed request-line' };
   }
 
-  const [method, url, version] = parts;
+  const method = getRequired(parts, 0, { startLine });
+  const url = getRequired(parts, 1, { startLine });
+  const version = getRequired(parts, 2, { startLine });
 
   if (!VALID_METHODS.has(method)) {
     return { kind: 'error', reason: `Unknown method: ${method}` };
@@ -103,10 +106,10 @@ function parseRequest(
   const message: HttpMessage = {
     layer: 'L7',
     httpVersion: 'HTTP/1.1',
-    method: method as HttpMessage['method'],
+    method: method as NonNullable<HttpMessage['method']>,
     url,
     headers,
-    body,
+    ...(body !== undefined ? { body } : {}),
   };
 
   return { kind: 'request', message, consumed: bodyEnd };
@@ -161,7 +164,7 @@ function parseResponse(
     statusCode,
     reasonPhrase,
     headers,
-    body,
+    ...(body !== undefined ? { body } : {}),
   };
 
   return { kind: 'response', message, consumed: bodyEnd };

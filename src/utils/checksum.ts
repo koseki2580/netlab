@@ -1,3 +1,5 @@
+import { assertDefined } from './typedAccess';
+
 const CRC32_POLYNOMIAL = 0xedb88320;
 
 let crc32Table: Uint32Array | null = null;
@@ -37,7 +39,9 @@ export function computeFcs(bytes: number[]): number {
   let crc = 0xffffffff;
 
   for (const byte of bytes) {
-    crc = table[(crc ^ byte) & 0xff] ^ (crc >>> 8);
+    const lookup = table[(crc ^ byte) & 0xff];
+    assertDefined(lookup, 'crc32 lookup missing');
+    crc = lookup ^ (crc >>> 8);
   }
 
   return (crc ^ 0xffffffff) >>> 0;

@@ -41,25 +41,45 @@ function makeQuotedData(packet: IpPacket): string {
   ]);
 }
 
+type IcmpMessageOverrides = {
+  [K in keyof IcmpMessage]?: IcmpMessage[K] | undefined;
+};
+
 function makeFragNeededPacket(
-  overrides: Partial<IcmpMessage> = {},
+  overrides: IcmpMessageOverrides = {},
   data: string | undefined = makeQuotedData(makeOriginalPacket()),
 ): IpPacket {
+  const payload: IcmpMessage = {
+    layer: 'L4',
+    type: overrides.type ?? ICMP_TYPE.DESTINATION_UNREACHABLE,
+    code: overrides.code ?? ICMP_CODE.FRAGMENTATION_NEEDED,
+    checksum: overrides.checksum ?? 0,
+    ...('identifier' in overrides
+      ? overrides.identifier !== undefined
+        ? { identifier: overrides.identifier }
+        : {}
+      : {}),
+    ...('sequenceNumber' in overrides
+      ? overrides.sequenceNumber !== undefined
+        ? { sequenceNumber: overrides.sequenceNumber }
+        : {}
+      : { sequenceNumber: 600 }),
+    ...('data' in overrides
+      ? overrides.data !== undefined
+        ? { data: overrides.data }
+        : {}
+      : data !== undefined
+        ? { data }
+        : {}),
+  };
+
   return {
     layer: 'L3',
     srcIp: '203.0.113.1',
     dstIp: '10.0.0.10',
     ttl: 64,
     protocol: 1,
-    payload: {
-      layer: 'L4',
-      type: ICMP_TYPE.DESTINATION_UNREACHABLE,
-      code: ICMP_CODE.FRAGMENTATION_NEEDED,
-      checksum: 0,
-      sequenceNumber: 600,
-      data,
-      ...overrides,
-    },
+    payload,
   };
 }
 

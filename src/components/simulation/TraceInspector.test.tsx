@@ -6,6 +6,7 @@ import { SimulationEngine } from '../../simulation/SimulationEngine';
 import type { NatTable } from '../../types/nat';
 import type { PacketHop, PacketTrace, SimulationState } from '../../types/simulation';
 import type { NetworkTopology } from '../../types/topology';
+import { assertDefined } from '../../utils';
 import { NetlabContext } from '../NetlabContext';
 import { NetlabUIContext } from '../NetlabUIContext';
 import { HopInspector } from './HopInspector';
@@ -194,6 +195,11 @@ const ARP_REQUEST_HOP: PacketHop = {
   timestamp: 2,
 };
 
+const BASE_CREATE_HOP = BASE_HOPS[0];
+const BASE_ROUTER_HOP = BASE_HOPS[1];
+assertDefined(BASE_CREATE_HOP, 'expected base create hop');
+assertDefined(BASE_ROUTER_HOP, 'expected base router hop');
+
 function makeState(overrides: Partial<SimulationState> = {}): SimulationState {
   const trace: PacketTrace = {
     packetId: 'pkt-1',
@@ -258,7 +264,10 @@ function renderWithContexts(
 
 describe('Trace Inspector components', () => {
   it('PacketTimeline resolves next-hop labels from topology nodes', () => {
-    const html = renderWithContexts(<PacketTimeline />, makeState({ selectedHop: BASE_HOPS[1] }));
+    const html = renderWithContexts(
+      <PacketTimeline />,
+      makeState({ selectedHop: BASE_ROUTER_HOP }),
+    );
 
     expect(html).toContain('→ Server');
     expect(html).not.toContain('→ server-1');
@@ -269,7 +278,7 @@ describe('Trace Inspector components', () => {
       packetId: 'pkt-arp',
       srcNodeId: 'client-1',
       dstNodeId: 'server-1',
-      hops: [BASE_HOPS[0], ARP_REQUEST_HOP],
+      hops: [BASE_CREATE_HOP, ARP_REQUEST_HOP],
       status: 'in-flight',
     };
 
@@ -287,7 +296,7 @@ describe('Trace Inspector components', () => {
   });
 
   it('HopInspector renders derived TTL Out and routing explanation for router hops', () => {
-    const html = renderWithContexts(<HopInspector />, makeState({ selectedHop: BASE_HOPS[1] }));
+    const html = renderWithContexts(<HopInspector />, makeState({ selectedHop: BASE_ROUTER_HOP }));
 
     expect(html).toContain('Hop 2 / 3');
     expect(html).toContain('TTL Out');
@@ -301,9 +310,8 @@ describe('Trace Inspector components', () => {
 
   it('HopInspector shows drop reason alongside routing details on drop hops', () => {
     const dropHop: PacketHop = {
-      ...BASE_HOPS[1],
+      ...BASE_ROUTER_HOP,
       event: 'drop',
-      toNodeId: undefined,
       reason: 'no-route',
       routingDecision: {
         dstIp: '198.51.100.10',
@@ -326,7 +334,7 @@ describe('Trace Inspector components', () => {
       packetId: 'pkt-drop',
       srcNodeId: 'client-1',
       dstNodeId: 'server-1',
-      hops: [BASE_HOPS[0], dropHop],
+      hops: [BASE_CREATE_HOP, dropHop],
       status: 'dropped',
     };
 
@@ -346,7 +354,7 @@ describe('Trace Inspector components', () => {
 
   it('HopInspector renders NAT translation details with changed and unchanged post values', () => {
     const natHop: PacketHop = {
-      ...BASE_HOPS[1],
+      ...BASE_ROUTER_HOP,
       natTranslation: {
         type: 'snat',
         preSrcIp: '10.0.0.10',
@@ -371,7 +379,7 @@ describe('Trace Inspector components', () => {
 
   it('HopInspector renders ACL filter details for explicit rule matches', () => {
     const aclHop: PacketHop = {
-      ...BASE_HOPS[1],
+      ...BASE_ROUTER_HOP,
       aclMatch: {
         direction: 'inbound',
         interfaceId: 'eth0',
@@ -400,7 +408,7 @@ describe('Trace Inspector components', () => {
 
   it('HopInspector distinguishes conn-track permits from default policy denies', () => {
     const connTrackHop: PacketHop = {
-      ...BASE_HOPS[1],
+      ...BASE_ROUTER_HOP,
       aclMatch: {
         direction: 'inbound',
         interfaceId: 'eth1',
@@ -411,7 +419,7 @@ describe('Trace Inspector components', () => {
       },
     };
     const defaultDenyHop: PacketHop = {
-      ...BASE_HOPS[1],
+      ...BASE_ROUTER_HOP,
       event: 'drop',
       reason: 'acl-deny',
       aclMatch: {
@@ -444,7 +452,7 @@ describe('Trace Inspector components', () => {
       packetId: 'pkt-arp-hop',
       srcNodeId: 'client-1',
       dstNodeId: 'server-1',
-      hops: [BASE_HOPS[0], ARP_REQUEST_HOP],
+      hops: [BASE_CREATE_HOP, ARP_REQUEST_HOP],
       status: 'in-flight',
     };
 
@@ -464,7 +472,7 @@ describe('Trace Inspector components', () => {
   });
 
   it('HopInspector omits interface rows when the selected hop has no interface metadata', () => {
-    const html = renderWithContexts(<HopInspector />, makeState({ selectedHop: BASE_HOPS[0] }));
+    const html = renderWithContexts(<HopInspector />, makeState({ selectedHop: BASE_CREATE_HOP }));
 
     expect(html).not.toContain('Ingress If');
     expect(html).not.toContain('Egress If');
@@ -480,16 +488,15 @@ describe('Trace Inspector components', () => {
 
   it('PacketTimeline exposes ACL deny as a human-readable tooltip label', () => {
     const dropHop: PacketHop = {
-      ...BASE_HOPS[1],
+      ...BASE_ROUTER_HOP,
       event: 'drop',
-      toNodeId: undefined,
       reason: 'acl-deny',
     };
     const trace: PacketTrace = {
       packetId: 'pkt-acl-drop',
       srcNodeId: 'client-1',
       dstNodeId: 'server-1',
-      hops: [BASE_HOPS[0], dropHop],
+      hops: [BASE_CREATE_HOP, dropHop],
       status: 'dropped',
     };
 
@@ -506,7 +513,7 @@ describe('Trace Inspector components', () => {
   });
 
   it('HopInspector uses the secondary text token for section headers and routing table headers', () => {
-    const html = renderWithContexts(<HopInspector />, makeState({ selectedHop: BASE_HOPS[1] }));
+    const html = renderWithContexts(<HopInspector />, makeState({ selectedHop: BASE_ROUTER_HOP }));
 
     expect(html).toContain('HOP INSPECTOR');
     expect(html).toContain('HOP FIELDS');
@@ -566,7 +573,7 @@ describe('Trace Inspector components', () => {
         <NatTableViewer />
       </NetlabUIContext.Provider>,
       makeState({
-        selectedHop: BASE_HOPS[1],
+        selectedHop: BASE_ROUTER_HOP,
         natTables,
       }),
     );

@@ -147,7 +147,7 @@ function effectiveChunkSize(configuredMax: number, pathMtu: number): number {
 function cloneTransferMessage(transfer: TransferMessage): TransferMessage {
   return {
     ...transfer,
-    sessionIds: transfer.sessionIds ? [...transfer.sessionIds] : undefined,
+    ...(transfer.sessionIds !== undefined ? { sessionIds: [...transfer.sessionIds] } : {}),
   };
 }
 
@@ -270,7 +270,7 @@ export class DataTransferController {
         dstPort,
         chunk,
         payloadOffsetBytes,
-        sessionId,
+        ...(sessionId !== undefined ? { sessionId } : {}),
       });
 
       await this.engine.send(packet, failureState);
@@ -429,7 +429,6 @@ export class DataTransferController {
 
     return {
       id: `${args.messageId}-packet-${args.chunk.sequenceNumber}`,
-      sessionId: args.sessionId,
       srcNodeId: args.srcNodeId,
       dstNodeId: args.dstNodeId,
       frame: {
@@ -469,11 +468,19 @@ export class DataTransferController {
       ingressPortId: '',
       path: [],
       timestamp: Date.now(),
+      ...(args.sessionId !== undefined ? { sessionId: args.sessionId } : {}),
     };
   }
 
   private findTrace(packetId: string): PacketTrace | undefined {
-    return this.engine.getState().traces.find((trace) => trace.packetId === packetId);
+    const traces = this.engine.getState().traces;
+    for (let index = traces.length - 1; index >= 0; index--) {
+      const trace = traces[index];
+      if (trace?.packetId === packetId) {
+        return trace;
+      }
+    }
+    return undefined;
   }
 
   private getPipeline(): ForwardingPipelineLike | undefined {
@@ -554,7 +561,7 @@ export class DataTransferController {
 
     return {
       nextHopIp,
-      nextHopNodeId: nextHopNode?.id,
+      ...(nextHopNode?.id !== undefined ? { nextHopNodeId: nextHopNode.id } : {}),
     };
   }
 

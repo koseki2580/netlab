@@ -210,11 +210,14 @@ export function NetlabCanvas({
           return node;
         }
 
+        const nodeStyle = failureCtx?.isNodeDown(node.id)
+          ? { ...node.style, opacity: 0.4, filter: 'grayscale(80%)' }
+          : node.style;
+        const { style: _style, ...restNode } = node;
+
         return {
-          ...node,
-          style: failureCtx?.isNodeDown(node.id)
-            ? { ...node.style, opacity: 0.4, filter: 'grayscale(80%)' }
-            : node.style,
+          ...restNode,
+          ...(nodeStyle !== undefined ? { style: nodeStyle } : {}),
           data:
             downInterfaceCount > 0
               ? { ...node.data, _downInterfaceCount: downInterfaceCount }
@@ -334,7 +337,7 @@ export function NetlabCanvas({
           <Controls />
           <MiniMap />
         </ReactFlow>
-        <NodeDetailPanel onTopologyChange={onTopologyChange} />
+        <NodeDetailPanel {...(onTopologyChange !== undefined ? { onTopologyChange } : {})} />
       </div>
     </NetlabUIContext.Provider>
   );

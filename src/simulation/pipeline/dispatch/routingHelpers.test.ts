@@ -92,9 +92,9 @@ describe('routingHelpers', () => {
     it('returns false for ICMP message', () => {
       const icmp = {
         layer: 'L4' as const,
-        type: 'echo-request' as const,
+        type: 8,
         code: 0,
-        payload: { layer: 'raw' as const, data: '' },
+        checksum: 0,
       };
       expect(isPortBearingPayload(icmp)).toBe(false);
     });

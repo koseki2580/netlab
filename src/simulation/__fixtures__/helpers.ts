@@ -3,6 +3,7 @@ import { SimulationEngine } from '../SimulationEngine';
 import type { EthernetFrame, InFlightPacket } from '../../types/packets';
 import type { RouteEntry } from '../../types/routing';
 import type { NetworkTopology } from '../../types/topology';
+import { assertDefined } from '../../utils';
 
 export const CLIENT_MAC = '02:00:00:00:00:10';
 export const SERVER_MAC = '02:00:00:00:00:20';
@@ -131,11 +132,7 @@ export async function packetAtStep(
 ): Promise<InFlightPacket> {
   await engine.send(packet);
   engine.selectHop(step);
-  const selectedPacket = engine.getState().selectedPacket;
-
-  if (!selectedPacket) {
-    throw new Error(`No packet snapshot available for step ${step}`);
-  }
-
+  const selectedPacket = engine.getState().selectedPacket ?? undefined;
+  assertDefined(selectedPacket, `No packet snapshot available for step ${step}`);
   return selectedPacket;
 }

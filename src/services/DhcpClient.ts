@@ -119,6 +119,6 @@ export function handleAck(ack: InFlightPacket): {
     assignedIp: payload.offeredIp,
     subnetMask: payload.options.subnetMask ?? '255.255.255.0',
     defaultGateway: payload.options.router ?? '',
-    dnsServerIp: payload.options.dnsServer,
+    ...(payload.options.dnsServer !== undefined ? { dnsServerIp: payload.options.dnsServer } : {}),
   };
 }

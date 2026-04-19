@@ -98,8 +98,8 @@ export function buildHttpRequest(o: BuildHttpRequestOptions): HttpMessage {
     method: o.method,
     url: o.url,
     headers: mergeHeaders(defaults, o.headers),
-    body: o.body,
-    requestId,
+    ...(o.body !== undefined ? { body: o.body } : {}),
+    ...(requestId !== undefined ? { requestId } : {}),
   };
 }
 
@@ -118,7 +118,7 @@ export function buildHttpResponse(o: BuildHttpResponseOptions): HttpMessage {
     statusCode: o.statusCode,
     reasonPhrase: o.reasonPhrase,
     headers: mergeHeaders(defaults, o.headers),
-    body: o.body,
+    ...(o.body !== undefined ? { body: o.body } : {}),
     requestId: o.requestId,
   };
 }

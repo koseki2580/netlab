@@ -25,16 +25,19 @@ interface ExtractedL4 {
 }
 
 function cloneRule(rule: AclRule): AclRule {
+  const { srcPort, dstPort, ...restRule } = rule;
   return {
-    ...rule,
-    srcPort:
-      typeof rule.srcPort === 'object' && rule.srcPort !== null
-        ? { ...rule.srcPort }
-        : rule.srcPort,
-    dstPort:
-      typeof rule.dstPort === 'object' && rule.dstPort !== null
-        ? { ...rule.dstPort }
-        : rule.dstPort,
+    ...restRule,
+    ...(srcPort !== undefined
+      ? {
+          srcPort: typeof srcPort === 'object' && srcPort !== null ? { ...srcPort } : srcPort,
+        }
+      : {}),
+    ...(dstPort !== undefined
+      ? {
+          dstPort: typeof dstPort === 'object' && dstPort !== null ? { ...dstPort } : dstPort,
+        }
+      : {}),
   };
 }
 

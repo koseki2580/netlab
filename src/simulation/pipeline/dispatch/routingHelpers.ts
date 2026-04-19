@@ -3,6 +3,7 @@ import type { IpPacket, TcpSegment, UdpDatagram } from '../../../types/packets';
 import type { RouteEntry } from '../../../types/routing';
 import type { RoutingCandidate, RoutingDecision } from '../../../types/simulation';
 import { isInSubnet, prefixLength } from '../../../utils/cidr';
+import { getRequired } from '../../../utils/typedAccess';
 
 export function bestRoute(dstIp: string, routes: RouteEntry[]): RouteEntry | null {
   const sorted = [...routes].sort(
@@ -58,7 +59,12 @@ export function buildRoutingDecision(
         c.adminDistance === lpmWinner.adminDistance &&
         c.metric === lpmWinner.metric,
     );
-    if (idx >= 0) candidates[idx].selectedByLpm = true;
+    if (idx >= 0) {
+      getRequired(candidates, idx, {
+        dstIp,
+        reason: 'routing-lpm-candidate',
+      }).selectedByLpm = true;
+    }
   }
 
   const activeRoute = selectedRoute ?? null;

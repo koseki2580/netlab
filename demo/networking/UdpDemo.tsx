@@ -146,11 +146,11 @@ function UdpDemoInner() {
       dstNodeId: 'server-1',
       srcIp,
       dstIp,
-      srcMac,
-      dstMac,
       srcPort: 49200,
       dstPort: port,
       payload: { layer: 'raw', data: payloadText },
+      ...(srcMac !== undefined ? { srcMac } : {}),
+      ...(dstMac !== undefined ? { dstMac } : {}),
     });
 
     engine.reset();

@@ -3,6 +3,7 @@ import { NatProcessor } from './NatProcessor';
 import type { InFlightPacket } from '../../types/packets';
 import type { RouteEntry } from '../../types/routing';
 import type { NetworkTopology } from '../../types/topology';
+import { assertDefined } from '../../utils';
 
 function makeRouteEntry(nodeId: string, destination: string, nextHop: string): RouteEntry {
   return {
@@ -156,7 +157,9 @@ describe('NatProcessor', () => {
     expect(first.translation?.postSrcPort).toBe(1024);
     expect(second.translation?.postSrcPort).toBe(1024);
     expect(processor.getTable().entries).toHaveLength(1);
-    expect(processor.getTable().entries[0].lastSeenAt).toBe(4);
+    const firstEntry = processor.getTable().entries[0];
+    assertDefined(firstEntry, 'expected NAT table entry');
+    expect(firstEntry.lastSeenAt).toBe(4);
   });
 
   it('allocates distinct ports for distinct inside flows', () => {

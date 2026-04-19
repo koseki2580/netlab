@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { TcpConnection } from '../../types/tcp';
+import { assertDefined } from '../../utils';
 import { HttpClient, type HttpClientDeps } from './HttpClient';
 import { HttpServer } from './HttpServer';
 import { buildHttpResponse } from './httpPacketBuilder';
@@ -60,6 +61,12 @@ function createTestServer(): HttpServer {
   );
   server.listen();
   return server;
+}
+
+function getMockCall<TArgs extends unknown[]>(calls: TArgs[], index: number): TArgs {
+  const call = calls[index];
+  assertDefined(call, `expected mock call at index ${index}`);
+  return call;
 }
 
 describe('HttpClient', () => {
@@ -139,7 +146,10 @@ describe('HttpClient', () => {
     );
 
     // First call sends request (client → server)
-    const [srcNodeId, dstNodeId, payload] = deps.dataController.startTransfer.mock.calls[0];
+    const [srcNodeId, dstNodeId, payload] = getMockCall(
+      deps.dataController.startTransfer.mock.calls,
+      0,
+    );
     expect(srcNodeId).toBe('client-1');
     expect(dstNodeId).toBe('server-1');
     expect(payload).toContain('GET / HTTP/1.1');
@@ -274,7 +284,8 @@ describe('HttpClient', () => {
       server,
     );
 
-    const srcPort = deps.orchestrator.handshake.mock.calls[0][2] as number;
+    const handshakeCall = getMockCall(deps.orchestrator.handshake.mock.calls, 0);
+    const srcPort = handshakeCall[2] as number;
     expect(srcPort).toBeGreaterThanOrEqual(49152);
     expect(srcPort).toBeLessThanOrEqual(65535);
   });
@@ -298,7 +309,10 @@ describe('HttpClient', () => {
 
     // Second call sends response (server → client)
     expect(deps.dataController.startTransfer).toHaveBeenCalledTimes(2);
-    const [srcNodeId, dstNodeId, payload] = deps.dataController.startTransfer.mock.calls[1];
+    const [srcNodeId, dstNodeId, payload] = getMockCall(
+      deps.dataController.startTransfer.mock.calls,
+      1,
+    );
     expect(srcNodeId).toBe('server-1');
     expect(dstNodeId).toBe('client-1');
     expect(payload).toContain('HTTP/1.1 200 OK');

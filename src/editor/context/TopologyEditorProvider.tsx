@@ -14,7 +14,10 @@ export function TopologyEditorProvider({
   onTopologyChange,
   children,
 }: TopologyEditorProviderProps) {
-  const editorCtx = useTopologyEditor({ initialTopology, onTopologyChange });
+  const editorCtx = useTopologyEditor({
+    ...(initialTopology !== undefined ? { initialTopology } : {}),
+    ...(onTopologyChange !== undefined ? { onTopologyChange } : {}),
+  });
 
   return (
     <TopologyEditorContext.Provider value={editorCtx}>{children}</TopologyEditorContext.Provider>

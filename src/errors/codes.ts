@@ -8,6 +8,8 @@ export const NETLAB_ERROR_CODES = [
   'invariant/malformed-id',
   'invariant/not-multicast',
   'invariant/no-ip',
+  'invariant/undefined-value',
+  'invariant/index-out-of-bounds',
   'protocol/invalid-packet',
   'protocol/invalid-request',
   'protocol/invalid-response',

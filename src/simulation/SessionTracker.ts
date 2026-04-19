@@ -39,12 +39,12 @@ export class SessionTracker {
       sessionId,
       srcNodeId: opts.srcNodeId,
       dstNodeId: opts.dstNodeId,
-      protocol: opts.protocol,
-      requestType: opts.requestType,
       status: 'pending',
       createdAt: Date.now(),
       events: [],
-      transferId: opts.transferId,
+      ...(opts.protocol !== undefined ? { protocol: opts.protocol } : {}),
+      ...(opts.requestType !== undefined ? { requestType: opts.requestType } : {}),
+      ...(opts.transferId !== undefined ? { transferId: opts.transferId } : {}),
     });
 
     this.notify();
@@ -231,8 +231,8 @@ export class SessionTracker {
       phase,
       timestamp: Date.now(),
       seq: session.events.length,
-      nodeId: opts?.nodeId,
-      meta: opts?.meta,
+      ...(opts?.nodeId !== undefined ? { nodeId: opts.nodeId } : {}),
+      ...(opts?.meta !== undefined ? { meta: opts.meta } : {}),
     };
     session.events.push(event);
   }
@@ -255,7 +255,7 @@ export class SessionTracker {
       }
       session.status = 'success';
       session.completedAt = Date.now();
-      session.error = undefined;
+      delete session.error;
       return;
     }
 

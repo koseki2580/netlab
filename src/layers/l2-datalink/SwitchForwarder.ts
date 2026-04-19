@@ -2,6 +2,7 @@ import type { ForwardContext, ForwardDecision, Forwarder } from '../../types/lay
 import { IGMP_PROTOCOL, isLinkLocalMulticast } from '../../types/multicast';
 import type { IgmpMessage, InFlightPacket } from '../../types/packets';
 import type { NetworkTopology, SwitchPort } from '../../types/topology';
+import { getRequired } from '../../utils';
 import { ipToMulticastMac, isMulticastMac } from '../../utils/multicastMac';
 import { MulticastTable } from './MulticastTable';
 import { isVlanAllowedOnPort, prepareEgressFrame, resolveIngressVlan } from './vlan';
@@ -246,7 +247,10 @@ export class SwitchForwarder implements Forwarder {
       };
     }
 
-    const fallbackEgressPortId = egressPorts[0];
+    const fallbackEgressPortId = getRequired(egressPorts, 0, {
+      nodeId: this.nodeId,
+      reason: 'switch fallback egress port missing',
+    });
     const connectedEdge = this.resolveConnectedEdgeForPort(fallbackEgressPortId);
 
     if (connectedEdge) {

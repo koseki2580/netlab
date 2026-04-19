@@ -61,7 +61,7 @@ function makeArea(networks: string[], cost?: number): OspfAreaConfig {
   return {
     areaId: '0.0.0.0',
     networks,
-    cost,
+    ...(cost !== undefined ? { cost } : {}),
   };
 }
 

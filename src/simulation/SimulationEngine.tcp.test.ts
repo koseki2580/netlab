@@ -1,4 +1,7 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { SwitchForwarder } from '../layers/l2-datalink/SwitchForwarder';
+import { RouterForwarder } from '../layers/l3-network/RouterForwarder';
+import { layerRegistry } from '../registry/LayerRegistry';
 import { EMPTY_FAILURE_STATE } from '../types/failure';
 import { makeEngine } from './__fixtures__/helpers';
 import {
@@ -17,6 +20,19 @@ function withEdgeMtu(topology: NetworkTopology, edgeId: string, mtuBytes: number
     ),
   };
 }
+
+beforeAll(() => {
+  layerRegistry.register({
+    layerId: 'l3',
+    nodeTypes: {},
+    forwarder: (nodeId, topology) => new RouterForwarder(nodeId, topology),
+  });
+  layerRegistry.register({
+    layerId: 'l2',
+    nodeTypes: {},
+    forwarder: (nodeId, topology) => new SwitchForwarder(nodeId, topology),
+  });
+});
 
 describe('SimulationEngine TCP services', () => {
   it('returns TcpHandshakeResult with success=true on connected topology', async () => {
@@ -127,58 +143,6 @@ describe('SimulationEngine — PMTUD', () => {
     });
 
     await engine.sendTransfer('server-a', 'server-b', 'x'.repeat(1400), { chunkDelay: 0 });
-
-    const dryRun = sentPackets[0] ? await engine.precompute(sentPackets[0]) : null;
-    console.log(
-      JSON.stringify(
-        {
-          sentPackets: sentPackets.map((packet) => {
-            const transport = packet.frame.payload.payload;
-            return {
-              srcNodeId: packet.srcNodeId,
-              dstNodeId: packet.dstNodeId,
-              currentDeviceId: packet.currentDeviceId,
-              ingressPortId: packet.ingressPortId,
-              srcMac: packet.frame.srcMac,
-              dstMac: packet.frame.dstMac,
-              srcIp: packet.frame.payload.srcIp,
-              dstIp: packet.frame.payload.dstIp,
-              flags: packet.frame.payload.flags,
-              tcpFlags: 'flags' in transport ? transport.flags : null,
-              dataBytes:
-                'payload' in transport && transport.payload.layer === 'raw'
-                  ? transport.payload.data.length
-                  : -1,
-            };
-          }),
-          dryRun: dryRun
-            ? {
-                status: dryRun.status,
-                hops: dryRun.hops.map((hop) => ({
-                  step: hop.step,
-                  event: hop.event,
-                  nodeId: hop.nodeId,
-                  protocol: hop.protocol,
-                  reason: hop.reason,
-                })),
-              }
-            : null,
-          traces: engine.getState().traces.map((trace) => ({
-            packetId: trace.packetId,
-            status: trace.status,
-            hops: trace.hops.map((hop) => ({
-              step: hop.step,
-              event: hop.event,
-              nodeId: hop.nodeId,
-              protocol: hop.protocol,
-              reason: hop.reason,
-            })),
-          })),
-        },
-        null,
-        2,
-      ),
-    );
 
     expect(engine.getPathMtuCache('server-a').snapshot()).toEqual({
       '10.0.3.10': 600,

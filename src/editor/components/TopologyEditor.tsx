@@ -76,7 +76,10 @@ export function TopologyEditor({
   className,
 }: TopologyEditorProps) {
   return (
-    <TopologyEditorProvider initialTopology={initialTopology} onTopologyChange={onTopologyChange}>
+    <TopologyEditorProvider
+      {...(initialTopology !== undefined ? { initialTopology } : {})}
+      {...(onTopologyChange !== undefined ? { onTopologyChange } : {})}
+    >
       <NetlabThemeScope
         style={{
           display: 'flex',
@@ -85,7 +88,7 @@ export function TopologyEditor({
           height: '100%',
           ...style,
         }}
-        className={className}
+        {...(className !== undefined ? { className } : {})}
       >
         <EditorToolbar />
         <TopologyEditorInner />

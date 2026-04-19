@@ -5,10 +5,12 @@ import { RouterForwarder } from '../layers/l3-network/RouterForwarder';
 import { layerRegistry } from '../registry/LayerRegistry';
 import { type FailureState, EMPTY_FAILURE_STATE, makeInterfaceFailureId } from '../types/failure';
 import type { RouteEntry } from '../types/routing';
+import type { PacketTrace } from '../types/simulation';
 import type { NetworkTopology } from '../types/topology';
 import { computeFcs, computeIpv4Checksum } from '../utils/checksum';
 import { buildEthernetFrameBytes, buildIpv4HeaderBytes } from '../utils/packetLayout';
 import { serializeArpFrame } from '../utils/packetSerializer';
+import { assertDefined, getRequired } from '../utils/typedAccess';
 import {
   CLIENT_MAC,
   SERVER_MAC,
@@ -53,34 +55,67 @@ beforeAll(() => {
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
+function hopAt(trace: PacketTrace, index: number) {
+  return getRequired(trace.hops, index, {
+    packetId: trace.packetId,
+    reason: 'expected trace hop',
+    index,
+  });
+}
+
+function traceForPacketId(engine: ReturnType<typeof makeEngine>, packetId: string) {
+  const trace = engine.getState().traces.find((candidate) => candidate.packetId === packetId);
+  assertDefined(trace, `expected trace for packet ${packetId}`);
+  return trace;
+}
+
+function selectedPacketSnapshot(engine: ReturnType<typeof makeEngine>, message: string) {
+  const packet = engine.getState().selectedPacket;
+  if (packet == null) {
+    throw new Error(message);
+  }
+  return packet;
+}
+
+function spyCall<T extends unknown[]>(spy: { mock: { calls: T[] } }, index = 0): T {
+  const call = spy.mock.calls[index];
+  assertDefined(call, `expected spy call at index ${index}`);
+  return call;
+}
+
 describe('SimulationEngine.precompute', () => {
   it('delivers directly to adjacent server', async () => {
     const engine = makeEngine(directTopology());
     const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
     const trace = await engine.precompute(packet);
+    const createHop = hopAt(trace, 0);
+    const deliverHop = hopAt(trace, 1);
 
     expect(trace.status).toBe('delivered');
     expect(trace.hops).toHaveLength(2);
-    expect(trace.hops[0].event).toBe('create');
-    expect(trace.hops[0].nodeId).toBe('client-1');
-    expect(trace.hops[0].toNodeId).toBe('server-1');
-    expect(trace.hops[1].event).toBe('deliver');
-    expect(trace.hops[1].nodeId).toBe('server-1');
+    expect(createHop.event).toBe('create');
+    expect(createHop.nodeId).toBe('client-1');
+    expect(createHop.toNodeId).toBe('server-1');
+    expect(deliverHop.event).toBe('deliver');
+    expect(deliverHop.nodeId).toBe('server-1');
   });
 
   it('routes through a single router', async () => {
     const engine = makeEngine(singleRouterTopology());
     const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
     const trace = await engine.precompute(packet);
+    const createHop = hopAt(trace, 0);
+    const forwardHop = hopAt(trace, 1);
+    const deliverHop = hopAt(trace, 2);
 
     expect(trace.status).toBe('delivered');
     expect(trace.hops).toHaveLength(3);
-    expect(trace.hops[0].event).toBe('create');
-    expect(trace.hops[0].nodeId).toBe('client-1');
-    expect(trace.hops[1].event).toBe('forward');
-    expect(trace.hops[1].nodeId).toBe('router-1');
-    expect(trace.hops[2].event).toBe('deliver');
-    expect(trace.hops[2].nodeId).toBe('server-1');
+    expect(createHop.event).toBe('create');
+    expect(createHop.nodeId).toBe('client-1');
+    expect(forwardHop.event).toBe('forward');
+    expect(forwardHop.nodeId).toBe('router-1');
+    expect(deliverHop.event).toBe('deliver');
+    expect(deliverHop.nodeId).toBe('server-1');
   });
 
   it('does not inject ARP hops when endpoint and interface MACs are explicitly configured', async () => {
@@ -106,8 +141,8 @@ describe('SimulationEngine.precompute', () => {
       'deliver',
     ]);
 
-    const arpRequest = trace.hops[1];
-    const arpReply = trace.hops[2];
+    const arpRequest = hopAt(trace, 1);
+    const arpReply = hopAt(trace, 2);
     expect(arpRequest.nodeId).toBe('client-1');
     expect(arpRequest.arpFrame?.payload.operation).toBe('request');
     expect(arpRequest.arpFrame?.dstMac).toBe('ff:ff:ff:ff:ff:ff');
@@ -129,9 +164,9 @@ describe('SimulationEngine.precompute', () => {
       'deliver',
     ]);
 
-    expect(trace.hops[1].nodeId).toBe('router-1');
-    expect(trace.hops[2].nodeId).toBe('server-1');
-    expect(trace.hops[3].nodeId).toBe('router-1');
+    expect(hopAt(trace, 1).nodeId).toBe('router-1');
+    expect(hopAt(trace, 2).nodeId).toBe('server-1');
+    expect(hopAt(trace, 3).nodeId).toBe('router-1');
   });
 
   it('populates nodeArpTables for both the requester and the responder when ARP is simulated', async () => {
@@ -169,11 +204,12 @@ describe('SimulationEngine.precompute', () => {
     const engine = makeEngine(singleRouterTopology());
     const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
     const trace = await engine.precompute(packet);
+    const routerHop = hopAt(trace, 1);
 
-    expect(trace.hops[1].ingressInterfaceId).toBe('eth0');
-    expect(trace.hops[1].ingressInterfaceName).toBe('eth0');
-    expect(trace.hops[1].egressInterfaceId).toBe('eth1');
-    expect(trace.hops[1].egressInterfaceName).toBe('eth1');
+    expect(routerHop.ingressInterfaceId).toBe('eth0');
+    expect(routerHop.ingressInterfaceName).toBe('eth0');
+    expect(routerHop.egressInterfaceId).toBe('eth1');
+    expect(routerHop.egressInterfaceName).toBe('eth1');
   });
 
   it('materializes identification, IPv4 checksum, and FCS before the create hop snapshot', async () => {
@@ -220,9 +256,9 @@ describe('SimulationEngine.precompute', () => {
     const trace = await engine.precompute(packet);
 
     // hop[1] = router-1: arriving TTL is 64 (pre-decrement)
-    expect(trace.hops[1].ttl).toBe(64);
+    expect(hopAt(trace, 1).ttl).toBe(64);
     // hop[2] = server-1: forwarded packet has TTL=63
-    expect(trace.hops[2].ttl).toBe(63);
+    expect(hopAt(trace, 2).ttl).toBe(63);
   });
 
   it('drops packet when TTL reaches 1 at router', async () => {
@@ -258,38 +294,40 @@ describe('SimulationEngine.precompute', () => {
     const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10', 64);
     const trace = await engine.precompute(packet);
 
-    expect(trace.hops[1].changedFields).toEqual([
+    expect(hopAt(trace, 1).changedFields).toEqual([
       'TTL',
       'Header Checksum',
       'Src MAC',
       'Dst MAC',
       'FCS',
     ]);
-    expect(trace.hops[0].changedFields).toBeUndefined();
+    expect(hopAt(trace, 0).changedFields).toBeUndefined();
   });
 
   it('traverses through a switch', async () => {
     const engine = makeEngine(switchPassthroughTopology());
     const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
     const trace = await engine.precompute(packet);
+    const switchHop = hopAt(trace, 1);
 
     expect(trace.status).toBe('delivered');
     expect(trace.hops).toHaveLength(3);
-    expect(trace.hops[1].nodeId).toBe('switch-1');
-    expect(trace.hops[1].event).toBe('forward');
-    expect(trace.hops[1].activeEdgeId).toBe('e2');
+    expect(switchHop.nodeId).toBe('switch-1');
+    expect(switchHop.event).toBe('forward');
+    expect(switchHop.activeEdgeId).toBe('e2');
   });
 
   it('annotates switch ingress and egress ports when edge handles are present', async () => {
     const engine = makeEngine(switchPassthroughTopologyWithHandles());
     const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
     const trace = await engine.precompute(packet);
+    const switchHop = hopAt(trace, 1);
 
-    expect(trace.hops[1].nodeId).toBe('switch-1');
-    expect(trace.hops[1].ingressInterfaceId).toBe('p0');
-    expect(trace.hops[1].ingressInterfaceName).toBe('fa0/0');
-    expect(trace.hops[1].egressInterfaceId).toBe('p1');
-    expect(trace.hops[1].egressInterfaceName).toBe('fa0/1');
+    expect(switchHop.nodeId).toBe('switch-1');
+    expect(switchHop.ingressInterfaceId).toBe('p0');
+    expect(switchHop.ingressInterfaceName).toBe('fa0/0');
+    expect(switchHop.egressInterfaceId).toBe('p1');
+    expect(switchHop.egressInterfaceName).toBe('fa0/1');
   });
 
   it('keeps MAC addresses stable on client-to-switch hops with no L3 boundary', async () => {
@@ -298,9 +336,9 @@ describe('SimulationEngine.precompute', () => {
     await engine.send(packet);
 
     engine.selectHop(0);
-    const createSnapshot = engine.getState().selectedPacket!;
+    const createSnapshot = selectedPacketSnapshot(engine, 'expected create snapshot');
     engine.selectHop(1);
-    const switchSnapshot = engine.getState().selectedPacket!;
+    const switchSnapshot = selectedPacketSnapshot(engine, 'expected switch snapshot');
 
     expect(createSnapshot.frame.srcMac).toBe(CLIENT_MAC);
     expect(createSnapshot.frame.dstMac).toBe(SERVER_MAC);
@@ -321,24 +359,30 @@ describe('SimulationEngine.precompute', () => {
     const engine = makeEngine(multiHopTopology());
     const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10', 64);
     const trace = await engine.precompute(packet);
+    const createHop = hopAt(trace, 0);
+    const firstRouterHop = hopAt(trace, 1);
+    const secondRouterHop = hopAt(trace, 2);
+    const deliverHop = hopAt(trace, 3);
 
     expect(trace.status).toBe('delivered');
     expect(trace.hops).toHaveLength(4);
-    expect(trace.hops[0].event).toBe('create');
-    expect(trace.hops[1].nodeId).toBe('router-1');
-    expect(trace.hops[2].nodeId).toBe('router-2');
-    expect(trace.hops[3].event).toBe('deliver');
+    expect(createHop.event).toBe('create');
+    expect(firstRouterHop.nodeId).toBe('router-1');
+    expect(secondRouterHop.nodeId).toBe('router-2');
+    expect(deliverHop.event).toBe('deliver');
   });
 
   it('tracks sender IP across router hops to resolve downstream ingress interfaces', async () => {
     const engine = makeEngine(multiHopTopology());
     const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10', 64);
     const trace = await engine.precompute(packet);
+    const firstRouterHop = hopAt(trace, 1);
+    const secondRouterHop = hopAt(trace, 2);
 
-    expect(trace.hops[1].egressInterfaceId).toBe('eth1');
-    expect(trace.hops[2].ingressInterfaceId).toBe('eth0');
-    expect(trace.hops[2].ingressInterfaceName).toBe('eth0');
-    expect(trace.hops[2].egressInterfaceId).toBe('eth1');
+    expect(firstRouterHop.egressInterfaceId).toBe('eth1');
+    expect(secondRouterHop.ingressInterfaceId).toBe('eth0');
+    expect(secondRouterHop.ingressInterfaceName).toBe('eth0');
+    expect(secondRouterHop.egressInterfaceId).toBe('eth1');
   });
 
   it('stops with routing-loop when a node is revisited (triangle cycle)', async () => {
@@ -457,7 +501,7 @@ describe('SimulationEngine.precompute', () => {
     const trace = await engine.precompute(packet);
 
     expect(trace.status).toBe('dropped');
-    const dropHop = trace.hops[trace.hops.length - 1];
+    const dropHop = hopAt(trace, trace.hops.length - 1);
     expect(dropHop.event).toBe('drop');
     expect(dropHop.reason).toBe('routing-loop');
   });
@@ -694,9 +738,15 @@ describe('SimulationEngine.sendTransfer', () => {
     await engine.sendTransfer('client-1', 'server-1', 'payload', { chunkDelay: 0 });
 
     expect(startTransferSpy).toHaveBeenCalledTimes(1);
-    expect(startTransferSpy).toHaveBeenCalledWith('client-1', 'server-1', 'payload', {
-      chunkDelay: 0,
-    });
+    expect(startTransferSpy).toHaveBeenCalledWith(
+      'client-1',
+      'server-1',
+      'payload',
+      expect.objectContaining({
+        chunkDelay: 0,
+        pmtuLookup: expect.any(Function),
+      }),
+    );
   });
 
   it('clear resets the transfer controller', async () => {
@@ -745,12 +795,10 @@ describe('SimulationEngine.exportPcap', () => {
       makePacket('pcap-basic', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
     );
 
-    const state = engine.getState();
-    const trace = state.traces.find((candidate) => candidate.packetId === 'pcap-basic');
+    const trace = traceForPacketId(engine, 'pcap-basic');
     const bytes = engine.exportPcap('pcap-basic');
 
-    expect(trace).toBeDefined();
-    expect(countPcapRecords(bytes)).toBe(trace?.hops.length);
+    expect(countPcapRecords(bytes)).toBe(trace.hops.length);
   });
 
   it('defaults to the currentTraceId when no trace id is provided', async () => {
@@ -775,9 +823,12 @@ describe('SimulationEngine.exportPcap', () => {
     const engine = makeEngine(directTopologyWithoutServerMac());
     await engine.send(makePacket('pcap-arp', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
 
-    const trace = engine.getState().traces.find((candidate) => candidate.packetId === 'pcap-arp');
-    const arpHopIndex = trace?.hops.findIndex((hop) => hop.event === 'arp-request') ?? -1;
-    const arpFrame = arpHopIndex >= 0 ? trace?.hops[arpHopIndex].arpFrame : undefined;
+    const trace = traceForPacketId(engine, 'pcap-arp');
+    const arpHop = trace.hops.find((hop) => hop.event === 'arp-request');
+    assertDefined(arpHop, 'expected arp-request hop');
+    const arpHopIndex = arpHop.step;
+    const arpFrame = arpHop.arpFrame;
+    assertDefined(arpFrame, 'expected arp frame on arp-request hop');
     const bytes = engine.exportPcap('pcap-arp');
     const expectedFrameBytes = arpFrame
       ? serializeArpFrame(arpFrame).bytes.slice(0, serializeArpFrame(arpFrame).bytes.length - 4)
@@ -796,13 +847,15 @@ describe('SimulationEngine.exportPcap', () => {
       makePacket('pcap-drop', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10', 1),
     );
 
-    const trace = engine.getState().traces.find((candidate) => candidate.packetId === 'pcap-drop');
-    const dropHopIndex = trace?.hops.findIndex((hop) => hop.event === 'drop') ?? -1;
+    const trace = traceForPacketId(engine, 'pcap-drop');
+    const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+    assertDefined(dropHop, 'expected drop hop for PCAP export');
+    const dropHopIndex = dropHop.step;
     expect(dropHopIndex).toBeGreaterThanOrEqual(0);
 
     engine.selectTrace('pcap-drop');
     engine.selectHop(dropHopIndex);
-    const snapshot = engine.getState().selectedPacket;
+    const snapshot = selectedPacketSnapshot(engine, 'expected drop snapshot');
     const expectedFrameBytes = snapshot
       ? Uint8Array.from(
           buildEthernetFrameBytes(snapshot.frame, { includePreamble: false, includeFcs: false }),
@@ -1286,7 +1339,7 @@ describe('SimulationEngine hook emission', () => {
     await Promise.resolve();
 
     expect(forwardSpy).toHaveBeenCalledOnce();
-    const ctx = forwardSpy.mock.calls[0][0];
+    const [ctx] = spyCall(forwardSpy);
     expect(ctx.fromNodeId).toBe('client-1');
     expect(ctx.toNodeId).toBe('server-1');
   });
@@ -1307,7 +1360,7 @@ describe('SimulationEngine hook emission', () => {
 
     await Promise.resolve();
     expect(deliverSpy).toHaveBeenCalledOnce();
-    expect(deliverSpy.mock.calls[0][0].destinationNodeId).toBe('server-1');
+    expect(spyCall(deliverSpy)[0].destinationNodeId).toBe('server-1');
   });
 });
 
@@ -1672,9 +1725,10 @@ describe('SimulationEngine failure simulation', () => {
       failureState,
     );
     expect(trace.status).toBe('dropped');
-    expect(trace.hops[0].event).toBe('drop');
-    expect(trace.hops[0].reason).toBe('node-down');
-    expect(trace.hops[0].nodeId).toBe('client-1');
+    const dropHop = hopAt(trace, 0);
+    expect(dropHop.event).toBe('drop');
+    expect(dropHop.reason).toBe('node-down');
+    expect(dropHop.nodeId).toBe('client-1');
   });
 
   it('down edge causes no-route drop at the router', async () => {
@@ -1763,9 +1817,10 @@ describe('SimulationEngine failure simulation', () => {
       );
 
       expect(trace.status).toBe('delivered');
-      expect(trace.hops[2].nodeId).toBe('router-2');
-      expect(trace.hops[2].ingressInterfaceId).toBe('eth0');
-      expect(trace.hops[2].egressInterfaceId).toBe('eth1');
+      const routerHop = hopAt(trace, 2);
+      expect(routerHop.nodeId).toBe('router-2');
+      expect(routerHop.ingressInterfaceId).toBe('eth0');
+      expect(routerHop.egressInterfaceId).toBe('eth1');
     });
 
     it('prefers interface-down over normal forwarding when the router itself is still up', async () => {

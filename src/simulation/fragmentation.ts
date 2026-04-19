@@ -120,23 +120,28 @@ export function fragment(packet: IpPacket, mtu: number, identification: number):
   const maxFragmentPayloadBytes = Math.floor((mtu - IP_HEADER_BYTES) / 8) * 8;
   const bytes = actualPayloadBytes(packet);
   const fragments: IpPacket[] = [];
+  const {
+    headerChecksum: _omittedHeaderChecksum,
+    reassemblyPayload: _omittedReassemblyPayload,
+    ...basePacket
+  } = packet;
 
   for (let offset = 0; offset < bytes.length; offset += maxFragmentPayloadBytes) {
     const remaining = bytes.length - offset;
     const chunkSize = remaining > maxFragmentPayloadBytes ? maxFragmentPayloadBytes : remaining;
     const chunk = bytes.slice(offset, offset + chunkSize);
     const moreFragments = offset + chunk.length < bytes.length;
+    const reassemblyPayload =
+      offset === 0 && packet.payload.layer !== 'raw' ? packet.payload : packet.reassemblyPayload;
 
     fragments.push({
-      ...packet,
+      ...basePacket,
       identification,
       flags: fragmentFlags(packet, moreFragments),
       fragmentOffset: offset / 8,
       totalLength: IP_HEADER_BYTES + chunk.length,
-      headerChecksum: undefined,
       payload: offset === 0 ? firstFragmentPayload(packet, chunk) : toRawPayload(chunk),
-      reassemblyPayload:
-        offset === 0 && packet.payload.layer !== 'raw' ? packet.payload : packet.reassemblyPayload,
+      ...(reassemblyPayload !== undefined ? { reassemblyPayload } : {}),
     });
   }
 
@@ -186,17 +191,20 @@ export function tryReassemble(entry: ReassemblyBufferEntry): IpPacket | null {
   }
 
   const restoredPayload = entry.firstFragment.reassemblyPayload ?? entry.firstFragment.payload;
+  const {
+    reassemblyPayload: _omittedRestoredReassemblyPayload,
+    headerChecksum: _omittedRestoredHeaderChecksum,
+    ...restoredBasePacket
+  } = entry.firstFragment;
   const restoredPacket: IpPacket = {
-    ...entry.firstFragment,
+    ...restoredBasePacket,
     payload: restoredPayload,
-    reassemblyPayload: undefined,
     flags: {
       df: entry.firstFragment.flags?.df ?? false,
       mf: false,
     },
     fragmentOffset: 0,
     totalLength: IP_HEADER_BYTES + entry.totalBytesExpected,
-    headerChecksum: undefined,
   };
 
   if (buildTransportBytes(restoredPacket.payload).length !== entry.totalBytesExpected) {

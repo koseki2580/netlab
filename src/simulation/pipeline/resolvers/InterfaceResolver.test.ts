@@ -1,13 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { EMPTY_FAILURE_STATE } from '../../../types/failure';
+import { getRequired } from '../../../utils/typedAccess';
 import { directTopology, singleRouterTopology } from '../../__fixtures__/topologies';
 import { InterfaceResolver } from './InterfaceResolver';
 
 describe('InterfaceResolver', () => {
   it('findNode returns the node when it exists', () => {
     const resolver = new InterfaceResolver(directTopology());
-    expect(resolver.findNode('client-1')).not.toBeNull();
-    expect(resolver.findNode('client-1')!.data.role).toBe('client');
+    const node = resolver.findNode('client-1');
+    if (node == null) {
+      throw new Error('expected client-1 node');
+    }
+    expect(node.data.role).toBe('client');
   });
 
   it('findNode returns null for unknown node', () => {
@@ -19,7 +23,9 @@ describe('InterfaceResolver', () => {
     const resolver = new InterfaceResolver(directTopology());
     const neighbors = resolver.getNeighbors('client-1');
     expect(neighbors).toHaveLength(1);
-    expect(neighbors[0].nodeId).toBe('server-1');
+    expect(getRequired(neighbors, 0, { reason: 'expected direct neighbor' }).nodeId).toBe(
+      'server-1',
+    );
   });
 
   it('getNeighbors excludes specified node', () => {
@@ -38,8 +44,10 @@ describe('InterfaceResolver', () => {
   it('resolveEgress returns interface for a router with matching route', () => {
     const resolver = new InterfaceResolver(singleRouterTopology());
     const iface = resolver.resolveEgress('router-1', '203.0.113.10');
-    expect(iface).not.toBeNull();
-    expect(iface!.id).toBe('eth1');
+    if (iface == null) {
+      throw new Error('expected egress interface');
+    }
+    expect(iface.id).toBe('eth1');
   });
 
   it('resolveEgress returns null for unknown destination', () => {
@@ -71,8 +79,10 @@ describe('InterfaceResolver', () => {
   it('findLogicalById returns matching interface', () => {
     const resolver = new InterfaceResolver(singleRouterTopology());
     const iface = resolver.findLogicalById('router-1', 'eth0');
-    expect(iface).not.toBeNull();
-    expect(iface!.ipAddress).toBe('10.0.0.1');
+    if (iface == null) {
+      throw new Error('expected logical interface eth0');
+    }
+    expect(iface.ipAddress).toBe('10.0.0.1');
   });
 
   it('findLogicalById returns null for unknown interfaceId', () => {

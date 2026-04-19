@@ -19,7 +19,9 @@ export class NetlabError extends Error {
     super(init.message);
     this.name = 'NetlabError';
     this.code = init.code;
-    this.context = init.context;
+    if (init.context !== undefined) {
+      this.context = init.context;
+    }
     if (init.cause !== undefined) {
       this.cause = init.cause;
     }

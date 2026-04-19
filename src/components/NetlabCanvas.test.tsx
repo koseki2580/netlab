@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NETLAB_LIGHT_THEME } from '../theme';
 import type { NetworkTopology, TopologySnapshot } from '../types/topology';
+import { assertDefined } from '../utils';
 import { useNetlabContext } from './NetlabContext';
 import { NetlabCanvas } from './NetlabCanvas';
 import { NetlabProvider } from './NetlabProvider';
@@ -198,6 +199,12 @@ function toSnapshot(topology: NetworkTopology): TopologySnapshot {
   };
 }
 
+function topologyNodeAt(topology: NetworkTopology, index: number) {
+  const node = topology.nodes[index];
+  assertDefined(node, `expected topology node at index ${index}`);
+  return node;
+}
+
 let root: Root | null = null;
 let container: HTMLDivElement | null = null;
 let capturedTopology: NetworkTopology | null = null;
@@ -310,7 +317,10 @@ describe('NetlabProvider controlled/uncontrolled inputs', () => {
   it('captures defaultTopology once when topology is omitted', () => {
     const initial = makeTopology();
     const next = makeTopology({
-      nodes: [{ ...initial.nodes[0], position: { x: 400, y: 120 } }, initial.nodes[1]],
+      nodes: [
+        { ...topologyNodeAt(initial, 0), position: { x: 400, y: 120 } },
+        topologyNodeAt(initial, 1),
+      ],
     });
 
     const view = render(
@@ -439,12 +449,14 @@ describe('NetlabCanvas controlled topology API', () => {
     );
 
     const movedNodes: MockNode[] = [
-      { ...topology.nodes[0], position: { x: 180, y: 140 } },
-      topology.nodes[1] as MockNode,
+      { ...topologyNodeAt(topology, 0), position: { x: 180, y: 140 } },
+      topologyNodeAt(topology, 1) as MockNode,
     ];
+    const movedNode = movedNodes[0];
+    assertDefined(movedNode, 'expected moved node');
 
     act(() => {
-      currentReactFlowProps().onNodeDragStop?.({}, movedNodes[0], movedNodes);
+      currentReactFlowProps().onNodeDragStop?.({}, movedNode, movedNodes);
     });
 
     expect(onTopologyChange).toHaveBeenCalledTimes(1);
@@ -479,12 +491,14 @@ describe('NetlabCanvas controlled topology API', () => {
     expect(onNodesChange).not.toHaveBeenCalled();
 
     const movedNodes: MockNode[] = [
-      { ...topology.nodes[0], position: { x: 120, y: 160 } },
-      topology.nodes[1] as MockNode,
+      { ...topologyNodeAt(topology, 0), position: { x: 120, y: 160 } },
+      topologyNodeAt(topology, 1) as MockNode,
     ];
+    const movedNode = movedNodes[0];
+    assertDefined(movedNode, 'expected moved node');
 
     act(() => {
-      currentReactFlowProps().onNodeDragStop?.({}, movedNodes[0], movedNodes);
+      currentReactFlowProps().onNodeDragStop?.({}, movedNode, movedNodes);
     });
 
     expect(onNodesChange).toHaveBeenCalledTimes(1);
@@ -495,7 +509,10 @@ describe('NetlabCanvas controlled topology API', () => {
   it('re-syncs local React Flow state when topology changes in controlled mode', () => {
     const initial = makeTopology();
     const updated = makeTopology({
-      nodes: [{ ...initial.nodes[0], position: { x: 320, y: 200 } }, initial.nodes[1]],
+      nodes: [
+        { ...topologyNodeAt(initial, 0), position: { x: 320, y: 200 } },
+        topologyNodeAt(initial, 1),
+      ],
     });
 
     const view = render(
@@ -518,7 +535,10 @@ describe('NetlabCanvas controlled topology API', () => {
   it('does not re-sync local React Flow state when callbacks are absent', () => {
     const initial = makeTopology();
     const updated = makeTopology({
-      nodes: [{ ...initial.nodes[0], position: { x: 320, y: 200 } }, initial.nodes[1]],
+      nodes: [
+        { ...topologyNodeAt(initial, 0), position: { x: 320, y: 200 } },
+        topologyNodeAt(initial, 1),
+      ],
     });
 
     const view = render(

@@ -27,7 +27,7 @@ function makeArea(networks: string[], cost?: number): OspfAreaConfig {
   return {
     areaId: '0.0.0.0',
     networks,
-    cost,
+    ...(cost !== undefined ? { cost } : {}),
   };
 }
 
@@ -45,12 +45,14 @@ function makeRouter(
       role: 'router',
       layerId: 'l3',
       interfaces,
-      ospfConfig: areas
+      ...(areas !== undefined
         ? {
-            routerId: `1.1.1.${id.replace(/\D/g, '') || '1'}`,
-            areas,
+            ospfConfig: {
+              routerId: `1.1.1.${id.replace(/\D/g, '') || '1'}`,
+              areas,
+            },
           }
-        : undefined,
+        : {}),
     },
   };
 }
@@ -62,7 +64,13 @@ function makeEdge(
   sourceHandle?: string,
   targetHandle?: string,
 ): NetlabEdge {
-  return { id, source, target, sourceHandle, targetHandle };
+  return {
+    id,
+    source,
+    target,
+    ...(sourceHandle !== undefined ? { sourceHandle } : {}),
+    ...(targetHandle !== undefined ? { targetHandle } : {}),
+  };
 }
 
 function findRoute(

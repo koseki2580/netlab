@@ -37,10 +37,10 @@ export function directTopologyWithoutServerMac(): NetworkTopology {
     ...topology,
     nodes: topology.nodes.map((node) =>
       node.id === 'server-1'
-        ? {
-            ...node,
-            data: { ...node.data, mac: undefined },
-          }
+        ? (() => {
+            const { mac: _omittedMac, ...data } = node.data;
+            return { ...node, data };
+          })()
         : node,
     ),
   };
@@ -119,10 +119,10 @@ export function singleRouterTopologyWithoutServerMac(): NetworkTopology {
     ...topology,
     nodes: topology.nodes.map((node) =>
       node.id === 'server-1'
-        ? {
-            ...node,
-            data: { ...node.data, mac: undefined },
-          }
+        ? (() => {
+            const { mac: _omittedMac, ...data } = node.data;
+            return { ...node, data };
+          })()
         : node,
     ),
   };
@@ -1308,7 +1308,7 @@ export function aclTopology(
               ipAddress: '10.0.1.1',
               prefixLength: 24,
               macAddress: '00:00:00:01:10:00',
-              inboundAcl: options.lanInboundAcl,
+              ...(options.lanInboundAcl !== undefined ? { inboundAcl: options.lanInboundAcl } : {}),
             },
             {
               id: 'eth1',
@@ -1316,7 +1316,7 @@ export function aclTopology(
               ipAddress: '203.0.113.1',
               prefixLength: 24,
               macAddress: '00:00:00:01:10:01',
-              inboundAcl: options.wanInboundAcl,
+              ...(options.wanInboundAcl !== undefined ? { inboundAcl: options.wanInboundAcl } : {}),
             },
           ],
         },

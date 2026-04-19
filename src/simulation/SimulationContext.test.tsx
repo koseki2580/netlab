@@ -87,7 +87,10 @@ function render(options: RenderOptions = {}) {
         }}
       >
         <FailureContext.Provider value={makeFailureContextValue(failureState)}>
-          <SimulationProvider autoRecompute={autoRecompute} animationSpeed={animationSpeed}>
+          <SimulationProvider
+            autoRecompute={autoRecompute}
+            {...(animationSpeed !== undefined ? { animationSpeed } : {})}
+          >
             <CaptureSimulation />
           </SimulationProvider>
         </FailureContext.Provider>
@@ -99,8 +102,8 @@ function render(options: RenderOptions = {}) {
     rerender(nextOptions: RenderOptions = {}) {
       render({
         autoRecompute,
-        animationSpeed,
         failureState,
+        ...(animationSpeed !== undefined ? { animationSpeed } : {}),
         ...nextOptions,
       });
     },

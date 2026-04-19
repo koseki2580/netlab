@@ -1,5 +1,6 @@
 import { NetlabError } from '../errors';
 import { isMulticastIp } from '../types/multicast';
+import { getRequired } from './typedAccess';
 
 /**
  * Maps an IPv4 multicast address to its canonical Ethernet multicast MAC.
@@ -14,7 +15,10 @@ export function ipToMulticastMac(ip: string): string {
     });
   }
   const octets = ip.split('.').map(Number);
-  const low23 = ((octets[1] & 0x7f) << 16) | (octets[2] << 8) | octets[3];
+  const low23 =
+    ((getRequired(octets, 1, { ip }) & 0x7f) << 16) |
+    (getRequired(octets, 2, { ip }) << 8) |
+    getRequired(octets, 3, { ip });
   const b1 = (low23 >> 16) & 0xff;
   const b2 = (low23 >> 8) & 0xff;
   const b3 = low23 & 0xff;
@@ -34,6 +38,6 @@ export function isMulticastMac(mac: string): boolean {
   if (!lower.startsWith('01:00:5e:')) return false;
   const parts = lower.split(':');
   if (parts.length !== 6) return false;
-  const byte3 = parseInt(parts[3], 16);
+  const byte3 = parseInt(getRequired(parts, 3, { mac }), 16);
   return byte3 <= 0x7f;
 }

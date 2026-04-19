@@ -12,7 +12,7 @@ export function areasToNodes(areas: NetworkArea[]): NetlabNode[] {
       type: area.type,
       width: area.visualConfig?.width ?? 300,
       height: area.visualConfig?.height ?? 400,
-      color: area.visualConfig?.color,
+      ...(area.visualConfig?.color !== undefined ? { color: area.visualConfig.color } : {}),
     };
 
     return {

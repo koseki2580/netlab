@@ -40,7 +40,13 @@ function makeEdge(
   sourceHandle?: string,
   targetHandle?: string,
 ): NetlabEdge {
-  return { id, source, target, sourceHandle, targetHandle };
+  return {
+    id,
+    source,
+    target,
+    ...(sourceHandle !== undefined ? { sourceHandle } : {}),
+    ...(targetHandle !== undefined ? { targetHandle } : {}),
+  };
 }
 
 function makeTopology(nodes: NetlabNode[], edges: NetlabEdge[]): NetworkTopology {

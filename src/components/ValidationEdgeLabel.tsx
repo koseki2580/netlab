@@ -107,14 +107,16 @@ export function ValidationSmoothStepEdge({
       <BaseEdge
         id={id}
         path={edgePath}
-        style={style}
-        markerStart={markerStart}
-        markerEnd={markerEnd}
-        interactionWidth={interactionWidth}
+        {...(style !== undefined ? { style } : {})}
+        {...(markerStart !== undefined ? { markerStart } : {})}
+        {...(markerEnd !== undefined ? { markerEnd } : {})}
+        {...(interactionWidth !== undefined ? { interactionWidth } : {})}
       />
       <EdgeLabelRenderer>
         <ValidationEdgeLabel
-          validationResult={data?.validationResult}
+          {...(data?.validationResult !== undefined
+            ? { validationResult: data.validationResult }
+            : {})}
           labelX={labelX}
           labelY={labelY}
         />

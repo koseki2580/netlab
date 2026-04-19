@@ -208,7 +208,7 @@ export class ServiceOrchestrator {
       this.dhcpLeaseStates.set(clientNodeId, {
         status: 'init',
         transactionId: offerMessage.transactionId,
-        serverIp: offerMessage.serverIp,
+        ...(offerMessage.serverIp !== undefined ? { serverIp: offerMessage.serverIp } : {}),
       });
       sink.notify();
       return false;
@@ -217,8 +217,8 @@ export class ServiceOrchestrator {
     this.dhcpLeaseStates.set(clientNodeId, {
       status: 'requesting',
       transactionId: offerMessage.transactionId,
-      offeredIp: offerMessage.offeredIp,
-      serverIp: offerMessage.serverIp,
+      ...(offerMessage.offeredIp !== undefined ? { offeredIp: offerMessage.offeredIp } : {}),
+      ...(offerMessage.serverIp !== undefined ? { serverIp: offerMessage.serverIp } : {}),
     });
     sink.notify();
 
@@ -240,7 +240,7 @@ export class ServiceOrchestrator {
       this.dhcpLeaseStates.set(clientNodeId, {
         status: 'init',
         transactionId: offerMessage.transactionId,
-        serverIp: offerMessage.serverIp,
+        ...(offerMessage.serverIp !== undefined ? { serverIp: offerMessage.serverIp } : {}),
       });
       sink.notify();
       return false;
@@ -251,11 +251,11 @@ export class ServiceOrchestrator {
       status: 'bound',
       transactionId: offerMessage.transactionId,
       offeredIp: ackResult.assignedIp,
-      serverIp: offerMessage.serverIp,
       assignedIp: ackResult.assignedIp,
       subnetMask: ackResult.subnetMask,
       defaultGateway: ackResult.defaultGateway,
-      dnsServerIp: ackResult.dnsServerIp,
+      ...(offerMessage.serverIp !== undefined ? { serverIp: offerMessage.serverIp } : {}),
+      ...(ackResult.dnsServerIp !== undefined ? { dnsServerIp: ackResult.dnsServerIp } : {}),
     });
     sink.notify();
     return true;

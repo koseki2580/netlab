@@ -35,7 +35,9 @@ export interface MulticastGroup {
 export function isMulticastIp(ip: string): boolean {
   const parts = ip.split('.');
   if (parts.length !== 4) return false;
-  const firstOctet = parseInt(parts[0], 10);
+  const first = parts[0];
+  if (first === undefined) return false;
+  const firstOctet = parseInt(first, 10);
   return firstOctet >= 224 && firstOctet <= 239;
 }
 
@@ -47,5 +49,11 @@ export function isMulticastIp(ip: string): boolean {
 export function isLinkLocalMulticast(ip: string): boolean {
   if (!isMulticastIp(ip)) return false;
   const parts = ip.split('.');
-  return parts[0] === '224' && parts[1] === '0' && parts[2] === '0';
+  const first = parts[0];
+  const second = parts[1];
+  const third = parts[2];
+  if (first === undefined || second === undefined || third === undefined) {
+    return false;
+  }
+  return first === '224' && second === '0' && third === '0';
 }

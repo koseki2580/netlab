@@ -142,7 +142,6 @@ function makePacketSender(topology: NetworkTopology): PacketSender {
 function deliveredTrace(packet: InFlightPacket): PacketTrace {
   return {
     packetId: packet.id,
-    sessionId: packet.sessionId,
     srcNodeId: packet.srcNodeId,
     dstNodeId: packet.dstNodeId,
     status: 'delivered',
@@ -159,6 +158,7 @@ function deliveredTrace(packet: InFlightPacket): PacketTrace {
         timestamp: packet.timestamp,
       },
     ],
+    ...(packet.sessionId !== undefined ? { sessionId: packet.sessionId } : {}),
   };
 }
 

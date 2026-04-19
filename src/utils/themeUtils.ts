@@ -1,3 +1,5 @@
+import { assertDefined } from './typedAccess';
+
 export type NetlabColorMode = 'light' | 'dark';
 
 /**
@@ -12,6 +14,7 @@ export function resolveColorMode(bgPrimary: string): NetlabColorMode {
   }
 
   const hex = match[1];
+  assertDefined(hex, `missing hex capture for color: ${bgPrimary}`);
   const r = Number.parseInt(hex.slice(0, 2), 16);
   const g = Number.parseInt(hex.slice(2, 4), 16);
   const b = Number.parseInt(hex.slice(4, 6), 16);

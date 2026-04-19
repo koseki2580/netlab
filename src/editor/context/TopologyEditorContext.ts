@@ -3,6 +3,10 @@ import { NetlabError } from '../../errors';
 import type { NetlabEdge, NetlabNode, NetlabNodeData } from '../../types/topology';
 import type { PositionUpdate, TopologyEditorState } from '../types';
 
+export type NodeDataPatch = {
+  [K in keyof NetlabNodeData]?: NetlabNodeData[K] | undefined;
+};
+
 export interface TopologyEditorContextValue {
   state: TopologyEditorState;
   // Topology mutations — each commits to history
@@ -10,7 +14,7 @@ export interface TopologyEditorContextValue {
   deleteNode: (nodeId: string) => void; // also removes connected edges
   addEdge: (edge: NetlabEdge) => void;
   deleteEdge: (edgeId: string) => void;
-  updateNodeData: (nodeId: string, patch: Partial<NetlabNodeData>) => void;
+  updateNodeData: (nodeId: string, patch: NodeDataPatch) => void;
   // Position sync — does NOT push to history
   updateNodePositions: (updates: PositionUpdate[]) => void;
   // History controls

@@ -8,6 +8,7 @@ import { SimulationContext, type SimulationContextValue } from '../../simulation
 import { SimulationEngine } from '../../simulation/SimulationEngine';
 import type { PacketTrace, SimulationState } from '../../types/simulation';
 import type { NetworkTopology } from '../../types/topology';
+import { assertDefined } from '../../utils';
 import { NetlabContext } from '../NetlabContext';
 import { PacketTimeline } from './PacketTimeline';
 
@@ -66,6 +67,9 @@ const TRACE: PacketTrace = {
     },
   ],
 };
+
+const ACTIVE_HOP = TRACE.hops[1];
+assertDefined(ACTIVE_HOP, 'expected active packet timeline hop');
 
 function makeCtx(overrides: Partial<SimulationContextValue> = {}): SimulationContextValue {
   const hookEngine = new HookEngine();
@@ -150,9 +154,8 @@ describe('PacketTimeline a11y', () => {
   });
 
   it('active hop has aria-selected="true"', () => {
-    const hop = TRACE.hops[1];
     const ctx = makeCtx();
-    (ctx.state as SimulationState).selectedHop = hop;
+    (ctx.state as SimulationState).selectedHop = ACTIVE_HOP;
     renderTimeline(ctx);
     const selected = container.querySelectorAll('[role="option"][aria-selected="true"]');
     expect(selected.length).toBeGreaterThan(0);

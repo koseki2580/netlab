@@ -102,7 +102,7 @@ export function buildUdpPacket(options: UdpPacketOptions): InFlightPacket {
     ingressPortId: '',
     path: [],
     timestamp: ts,
-    sessionId: options.sessionId,
+    ...(options.sessionId !== undefined ? { sessionId: options.sessionId } : {}),
     frame: {
       layer: 'L2',
       srcMac: options.srcMac ?? '00:00:00:00:00:00',

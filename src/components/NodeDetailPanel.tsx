@@ -16,6 +16,7 @@ import type {
   TopologySnapshot,
 } from '../types/topology';
 import type { UdpBindings } from '../types/udp';
+import { getRequired } from '../utils';
 import { useNetlabContext } from './NetlabContext';
 import { useNetlabUI } from './NetlabUIContext';
 
@@ -85,7 +86,7 @@ const VLAN_PALETTE = [
 ];
 
 export function vlanColor(vid: number): string {
-  return VLAN_PALETTE[Math.abs(vid) % VLAN_PALETTE.length] ?? VLAN_PALETTE[0];
+  return getRequired(VLAN_PALETTE, Math.abs(vid) % VLAN_PALETTE.length, { vid });
 }
 
 function stpRoleColor(role: 'ROOT' | 'DESIGNATED' | 'BLOCKED' | 'DISABLED'): string {
@@ -808,29 +809,30 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
           <EdgeDetail
             edge={edge}
             topology={topology}
-            onMtuChange={
-              onTopologyChange
-                ? (mtu) => {
+            {...(onTopologyChange
+              ? {
+                  onMtuChange: (mtu: number | undefined) => {
                     updateSnapshot((snapshot) => ({
                       ...snapshot,
-                      edges: snapshot.edges.map((candidate) =>
-                        candidate.id === edge.id
-                          ? {
-                              ...candidate,
-                              data:
-                                mtu === undefined
-                                  ? undefined
-                                  : {
-                                      ...(candidate.data ?? {}),
-                                      mtuBytes: mtu,
-                                    },
-                            }
-                          : candidate,
-                      ),
+                      edges: snapshot.edges.map((candidate) => {
+                        if (candidate.id !== edge.id) {
+                          return candidate;
+                        }
+                        const { data: _data, ...restCandidate } = candidate;
+                        return mtu === undefined
+                          ? restCandidate
+                          : {
+                              ...restCandidate,
+                              data: {
+                                ...(candidate.data ?? {}),
+                                mtuBytes: mtu,
+                              },
+                            };
+                      }),
                     }));
-                  }
-                : undefined
-            }
+                  },
+                }
+              : {})}
           />
         </div>
       </div>
@@ -912,9 +914,9 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
         {d.role === 'router' && (
           <RouterDetail
             data={d}
-            onInterfaceMtuChange={
-              onTopologyChange
-                ? (interfaceId, mtu) => {
+            {...(onTopologyChange
+              ? {
+                  onInterfaceMtuChange: (interfaceId: string, mtu: number | undefined) => {
                     updateSnapshot((snapshot) => ({
                       ...snapshot,
                       nodes: snapshot.nodes.map((candidate) =>
@@ -923,20 +925,24 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
                               ...candidate,
                               data: {
                                 ...candidate.data,
-                                interfaces: (candidate.data.interfaces ?? []).map((iface) =>
-                                  iface.id === interfaceId ? { ...iface, mtu } : iface,
-                                ),
+                                interfaces: (candidate.data.interfaces ?? []).map((iface) => {
+                                  if (iface.id !== interfaceId) {
+                                    return iface;
+                                  }
+                                  const { mtu: _mtu, ...restIface } = iface;
+                                  return mtu === undefined ? restIface : { ...restIface, mtu };
+                                }),
                               },
                             }
                           : candidate,
                       ),
                     }));
-                  }
-                : undefined
-            }
-            onSubInterfaceMtuChange={
-              onTopologyChange
-                ? (interfaceId, subInterfaceId, mtu) => {
+                  },
+                  onSubInterfaceMtuChange: (
+                    interfaceId: string,
+                    subInterfaceId: string,
+                    mtu: number | undefined,
+                  ) => {
                     updateSnapshot((snapshot) => ({
                       ...snapshot,
                       nodes: snapshot.nodes.map((candidate) =>
@@ -950,10 +956,15 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
                                     ? {
                                         ...iface,
                                         subInterfaces: (iface.subInterfaces ?? []).map(
-                                          (subInterface) =>
-                                            subInterface.id === subInterfaceId
-                                              ? { ...subInterface, mtu }
-                                              : subInterface,
+                                          (subInterface) => {
+                                            if (subInterface.id !== subInterfaceId) {
+                                              return subInterface;
+                                            }
+                                            const { mtu: _mtu, ...restSubInterface } = subInterface;
+                                            return mtu === undefined
+                                              ? restSubInterface
+                                              : { ...restSubInterface, mtu };
+                                          },
                                         ),
                                       }
                                     : iface,
@@ -963,14 +974,14 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
                           : candidate,
                       ),
                     }));
-                  }
-                : undefined
-            }
+                  },
+                }
+              : {})}
           />
         )}
         {d.role === 'switch' && <SwitchDetail nodeId={node.id} data={d} topology={topology} />}
         {(d.role === 'client' || d.role === 'server') && (
-          <HostDetail data={d} runtimeIp={runtimeIp} />
+          <HostDetail data={d} {...(runtimeIp !== undefined ? { runtimeIp } : {})} />
         )}
         {leaseState && <DhcpLeaseDetail lease={leaseState} />}
         {dnsCache && <DnsCacheDetail cache={dnsCache} />}

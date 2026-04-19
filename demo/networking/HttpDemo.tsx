@@ -284,10 +284,10 @@ function HttpDemoInner() {
       const requestPayload: HttpMessage = {
         layer: 'L7',
         httpVersion: 'HTTP/1.1',
-        method: method as HttpMessage['method'],
+        method: method as NonNullable<HttpMessage['method']>,
         url,
         headers: requestHeaders,
-        body,
+        ...(body !== undefined ? { body } : {}),
       };
 
       const requestPacket = buildHttpPacket(topology, {
@@ -324,8 +324,8 @@ function HttpDemoInner() {
             statusCode: response.statusCode,
             requestHeaders,
             responseHeaders: { ...response.headers, Server: 'netlab/0.1', Connection: 'close' },
-            requestBody: body,
             responseBody: response.body,
+            ...(body !== undefined ? { requestBody: body } : {}),
           };
         }
       }

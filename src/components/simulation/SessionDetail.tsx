@@ -445,30 +445,46 @@ export const SessionDetail = memo(function SessionDetail() {
           </Section>
         )}
 
-        <SessionPathView label="REQUEST PATH" trace={selectedSession.requestTrace} />
-        <SessionPathView label="RESPONSE PATH" trace={selectedSession.responseTrace} />
+        <SessionPathView
+          label="REQUEST PATH"
+          {...(selectedSession.requestTrace !== undefined
+            ? { trace: selectedSession.requestTrace }
+            : {})}
+        />
+        <SessionPathView
+          label="RESPONSE PATH"
+          {...(selectedSession.responseTrace !== undefined
+            ? { trace: selectedSession.responseTrace }
+            : {})}
+        />
 
         {selectedSession.httpMeta && (
           <>
             <HttpPane
               label="HTTP REQUEST"
-              headline={
-                selectedSession.httpMeta.method && selectedSession.httpMeta.path
-                  ? `${selectedSession.httpMeta.method} ${selectedSession.httpMeta.path} HTTP/1.1`
-                  : undefined
-              }
-              headers={selectedSession.httpMeta.requestHeaders}
-              body={selectedSession.httpMeta.requestBody}
+              {...(selectedSession.httpMeta.method && selectedSession.httpMeta.path
+                ? {
+                    headline: `${selectedSession.httpMeta.method} ${selectedSession.httpMeta.path} HTTP/1.1`,
+                  }
+                : {})}
+              {...(selectedSession.httpMeta.requestHeaders !== undefined
+                ? { headers: selectedSession.httpMeta.requestHeaders }
+                : {})}
+              {...(selectedSession.httpMeta.requestBody !== undefined
+                ? { body: selectedSession.httpMeta.requestBody }
+                : {})}
             />
             <HttpPane
               label="HTTP RESPONSE"
-              headline={
-                selectedSession.httpMeta.statusCode != null
-                  ? `HTTP/1.1 ${selectedSession.httpMeta.statusCode}`
-                  : undefined
-              }
-              headers={selectedSession.httpMeta.responseHeaders}
-              body={selectedSession.httpMeta.responseBody}
+              {...(selectedSession.httpMeta.statusCode != null
+                ? { headline: `HTTP/1.1 ${selectedSession.httpMeta.statusCode}` }
+                : {})}
+              {...(selectedSession.httpMeta.responseHeaders !== undefined
+                ? { headers: selectedSession.httpMeta.responseHeaders }
+                : {})}
+              {...(selectedSession.httpMeta.responseBody !== undefined
+                ? { body: selectedSession.httpMeta.responseBody }
+                : {})}
             />
           </>
         )}
