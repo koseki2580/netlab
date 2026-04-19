@@ -301,11 +301,7 @@ describe('DataTransferProvider', () => {
       let transfer: TransferMessage | undefined;
 
       await act(async () => {
-        transfer = await currentDataTransfer().startTransfer(
-          'client-1',
-          'server-1',
-          'payload',
-        );
+        transfer = await currentDataTransfer().startTransfer('client-1', 'server-1', 'payload');
       });
 
       expect(transfer?.messageId).toBe('transfer-1');

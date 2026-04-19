@@ -8,7 +8,7 @@ import { buildIpv4HeaderBytes } from '../../utils/packetLayout';
 
 function makeRouteEntries(
   nodeId: string,
-  routes: Array<{ destination: string; nextHop: string; metric?: number }>,
+  routes: { destination: string; nextHop: string; metric?: number }[],
 ) {
   return routes.map((route) => ({
     destination: route.destination,
@@ -22,7 +22,13 @@ function makeRouteEntries(
 
 function makeRouter(
   id: string,
-  interfaces: Array<{ id: string; name: string; ipAddress: string; prefixLength: number; macAddress: string }>,
+  interfaces: {
+    id: string;
+    name: string;
+    ipAddress: string;
+    prefixLength: number;
+    macAddress: string;
+  }[],
 ) {
   return {
     id,
@@ -72,15 +78,13 @@ function makeSwitch(id: string) {
 function makeTopology(options: {
   nodes: NetworkTopology['nodes'];
   edges?: NetworkTopology['edges'];
-  routeTable?: Array<{ destination: string; nextHop: string; metric?: number }>;
+  routeTable?: { destination: string; nextHop: string; metric?: number }[];
 }): NetworkTopology {
   return {
     nodes: options.nodes,
     edges: options.edges ?? [],
     areas: [],
-    routeTables: new Map([
-      ['router-1', makeRouteEntries('router-1', options.routeTable ?? [])],
-    ]),
+    routeTables: new Map([['router-1', makeRouteEntries('router-1', options.routeTable ?? [])]]),
   };
 }
 
@@ -142,7 +146,9 @@ describe('RouterForwarder', () => {
     });
     const forwarder = new RouterForwarder('router-1', topology);
 
-    const result = await forwarder.receive(makePacket('203.0.113.10', 1), 'eth0', { neighbors: [] });
+    const result = await forwarder.receive(makePacket('203.0.113.10', 1), 'eth0', {
+      neighbors: [],
+    });
 
     expect(expectDrop(result).reason).toBe('ttl-exceeded');
   });
@@ -163,14 +169,40 @@ describe('RouterForwarder', () => {
     const topology = makeTopology({
       nodes: [
         makeRouter('router-1', [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '172.16.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '172.16.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:01',
+          },
         ]),
         makeRouter('router-2', [
-          { id: 'eth0', name: 'eth0', ipAddress: '172.16.0.2', prefixLength: 24, macAddress: '00:00:00:02:00:00' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '172.16.0.2',
+            prefixLength: 24,
+            macAddress: '00:00:00:02:00:00',
+          },
         ]),
       ],
-      edges: [{ id: 'e-r2', source: 'router-1', target: 'router-2', sourceHandle: 'eth1', targetHandle: 'eth0' }],
+      edges: [
+        {
+          id: 'e-r2',
+          source: 'router-1',
+          target: 'router-2',
+          sourceHandle: 'eth1',
+          targetHandle: 'eth0',
+        },
+      ],
       routeTable: [{ destination: '203.0.113.0/24', nextHop: '172.16.0.2' }],
     });
     const forwarder = new RouterForwarder('router-1', topology);
@@ -194,14 +226,40 @@ describe('RouterForwarder', () => {
     const topology = makeTopology({
       nodes: [
         makeRouter('router-1', [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '172.16.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '172.16.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:01',
+          },
         ]),
         makeRouter('router-2', [
-          { id: 'eth0', name: 'eth0', ipAddress: '172.16.0.2', prefixLength: 24, macAddress: '00:00:00:02:00:00' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '172.16.0.2',
+            prefixLength: 24,
+            macAddress: '00:00:00:02:00:00',
+          },
         ]),
       ],
-      edges: [{ id: 'e-r2', source: 'router-1', target: 'router-2', sourceHandle: 'eth1', targetHandle: 'eth0' }],
+      edges: [
+        {
+          id: 'e-r2',
+          source: 'router-1',
+          target: 'router-2',
+          sourceHandle: 'eth1',
+          targetHandle: 'eth0',
+        },
+      ],
       routeTable: [{ destination: '203.0.113.0/24', nextHop: '172.16.0.2' }],
     });
     const forwarder = new RouterForwarder('router-1', topology);
@@ -219,9 +277,7 @@ describe('RouterForwarder', () => {
     expect(firstPacket.frame.payload.headerChecksum).toBe(expectedChecksum);
     expect(expectedChecksum).not.toBe(0);
 
-    const secondResult = expectForward(
-      await forwarder.receive(firstPacket, 'eth0', { neighbors }),
-    );
+    const secondResult = expectForward(await forwarder.receive(firstPacket, 'eth0', { neighbors }));
     expect(secondResult.packet.frame.payload.ttl).toBe(62);
     expect(secondResult.packet.frame.payload.headerChecksum).not.toBe(
       firstPacket.frame.payload.headerChecksum,
@@ -232,20 +288,62 @@ describe('RouterForwarder', () => {
     const topology = makeTopology({
       nodes: [
         makeRouter('router-1', [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '172.16.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:01' },
-          { id: 'eth2', name: 'eth2', ipAddress: '172.17.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:02' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '172.16.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:01',
+          },
+          {
+            id: 'eth2',
+            name: 'eth2',
+            ipAddress: '172.17.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:02',
+          },
         ]),
         makeRouter('router-2', [
-          { id: 'eth0', name: 'eth0', ipAddress: '172.16.0.2', prefixLength: 24, macAddress: '00:00:00:02:00:00' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '172.16.0.2',
+            prefixLength: 24,
+            macAddress: '00:00:00:02:00:00',
+          },
         ]),
         makeRouter('router-3', [
-          { id: 'eth0', name: 'eth0', ipAddress: '172.17.0.2', prefixLength: 24, macAddress: '00:00:00:03:00:00' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '172.17.0.2',
+            prefixLength: 24,
+            macAddress: '00:00:00:03:00:00',
+          },
         ]),
       ],
       edges: [
-        { id: 'e-r2', source: 'router-1', target: 'router-2', sourceHandle: 'eth1', targetHandle: 'eth0' },
-        { id: 'e-r3', source: 'router-1', target: 'router-3', sourceHandle: 'eth2', targetHandle: 'eth0' },
+        {
+          id: 'e-r2',
+          source: 'router-1',
+          target: 'router-2',
+          sourceHandle: 'eth1',
+          targetHandle: 'eth0',
+        },
+        {
+          id: 'e-r3',
+          source: 'router-1',
+          target: 'router-3',
+          sourceHandle: 'eth2',
+          targetHandle: 'eth0',
+        },
       ],
       routeTable: [
         { destination: '0.0.0.0/0', nextHop: '172.17.0.2' },
@@ -272,20 +370,62 @@ describe('RouterForwarder', () => {
     const topology = makeTopology({
       nodes: [
         makeRouter('router-1', [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '172.16.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:01' },
-          { id: 'eth2', name: 'eth2', ipAddress: '172.17.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:02' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '172.16.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:01',
+          },
+          {
+            id: 'eth2',
+            name: 'eth2',
+            ipAddress: '172.17.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:02',
+          },
         ]),
         makeRouter('router-2', [
-          { id: 'eth0', name: 'eth0', ipAddress: '172.16.0.2', prefixLength: 24, macAddress: '00:00:00:02:00:00' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '172.16.0.2',
+            prefixLength: 24,
+            macAddress: '00:00:00:02:00:00',
+          },
         ]),
         makeRouter('router-3', [
-          { id: 'eth0', name: 'eth0', ipAddress: '172.17.0.2', prefixLength: 24, macAddress: '00:00:00:03:00:00' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '172.17.0.2',
+            prefixLength: 24,
+            macAddress: '00:00:00:03:00:00',
+          },
         ]),
       ],
       edges: [
-        { id: 'e-r2', source: 'router-1', target: 'router-2', sourceHandle: 'eth1', targetHandle: 'eth0' },
-        { id: 'e-r3', source: 'router-1', target: 'router-3', sourceHandle: 'eth2', targetHandle: 'eth0' },
+        {
+          id: 'e-r2',
+          source: 'router-1',
+          target: 'router-2',
+          sourceHandle: 'eth1',
+          targetHandle: 'eth0',
+        },
+        {
+          id: 'e-r3',
+          source: 'router-1',
+          target: 'router-3',
+          sourceHandle: 'eth2',
+          targetHandle: 'eth0',
+        },
       ],
       routeTable: [
         { destination: '203.0.113.0/24', nextHop: '172.16.0.2' },
@@ -310,14 +450,40 @@ describe('RouterForwarder', () => {
     const topology = makeTopology({
       nodes: [
         makeRouter('router-1', [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '172.16.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '172.16.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:01',
+          },
         ]),
         makeRouter('router-2', [
-          { id: 'eth0', name: 'eth0', ipAddress: '172.16.0.2', prefixLength: 24, macAddress: '00:00:00:02:00:00' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '172.16.0.2',
+            prefixLength: 24,
+            macAddress: '00:00:00:02:00:00',
+          },
         ]),
       ],
-      edges: [{ id: 'e-r2', source: 'router-1', target: 'router-2', sourceHandle: 'eth1', targetHandle: 'eth0' }],
+      edges: [
+        {
+          id: 'e-r2',
+          source: 'router-1',
+          target: 'router-2',
+          sourceHandle: 'eth1',
+          targetHandle: 'eth0',
+        },
+      ],
       routeTable: [{ destination: '203.0.113.0/24', nextHop: '172.16.0.2' }],
     });
     const forwarder = new RouterForwarder('router-1', topology);
@@ -331,8 +497,20 @@ describe('RouterForwarder', () => {
     const topology = makeTopology({
       nodes: [
         makeRouter('router-1', [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:01:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '203.0.113.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:01',
+          },
         ]),
         makeServer('server-1', '203.0.113.10'),
       ],
@@ -356,12 +534,32 @@ describe('RouterForwarder', () => {
     const topology = makeTopology({
       nodes: [
         makeRouter('router-1', [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-          { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:01:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '203.0.113.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:01',
+          },
         ]),
         makeSwitch('switch-1'),
       ],
-      edges: [{ id: 'e-sw', source: 'router-1', target: 'switch-1', sourceHandle: 'eth1', targetHandle: 'p0' }],
+      edges: [
+        {
+          id: 'e-sw',
+          source: 'router-1',
+          target: 'switch-1',
+          sourceHandle: 'eth1',
+          targetHandle: 'p0',
+        },
+      ],
       routeTable: [{ destination: '203.0.113.0/24', nextHop: 'direct' }],
     });
     const forwarder = new RouterForwarder('router-1', topology);

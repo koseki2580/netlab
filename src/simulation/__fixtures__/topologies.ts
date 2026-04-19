@@ -1,11 +1,6 @@
 import type { RouteEntry, RouterInterface } from '../../types/routing';
 import type { NetworkTopology } from '../../types/topology';
-import {
-  CLIENT_MAC,
-  SERVER_MAC,
-  SERVER_TWO_MAC,
-  makeRouteEntry,
-} from './helpers';
+import { CLIENT_MAC, SERVER_MAC, SERVER_TWO_MAC, makeRouteEntry } from './helpers';
 
 /** Simple two-node topology: client-1 -- e1 -- server-1 */
 export function directTopology(): NetworkTopology {
@@ -21,7 +16,13 @@ export function directTopology(): NetworkTopology {
         id: 'server-1',
         type: 'server',
         position: { x: 200, y: 0 },
-        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.10', mac: SERVER_MAC },
+        data: {
+          label: 'Server',
+          role: 'server',
+          layerId: 'l7',
+          ip: '203.0.113.10',
+          mac: SERVER_MAC,
+        },
       },
     ],
     edges: [{ id: 'e1', source: 'client-1', target: 'server-1' }],
@@ -73,8 +74,20 @@ export function singleRouterTopology(): NetworkTopology {
           role: 'router',
           layerId: 'l3',
           interfaces: [
-            { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-            { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:01:00:01' },
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '10.0.0.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:01:00:00',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '203.0.113.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:01:00:01',
+            },
           ],
         },
       },
@@ -82,7 +95,13 @@ export function singleRouterTopology(): NetworkTopology {
         id: 'server-1',
         type: 'server',
         position: { x: 400, y: 0 },
-        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.10', mac: SERVER_MAC },
+        data: {
+          label: 'Server',
+          role: 'server',
+          layerId: 'l7',
+          ip: '203.0.113.10',
+          mac: SERVER_MAC,
+        },
       },
     ],
     edges: [
@@ -137,7 +156,13 @@ export function switchPassthroughTopology(): NetworkTopology {
         id: 'server-1',
         type: 'server',
         position: { x: 400, y: 0 },
-        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.10', mac: SERVER_MAC },
+        data: {
+          label: 'Server',
+          role: 'server',
+          layerId: 'l7',
+          ip: '203.0.113.10',
+          mac: SERVER_MAC,
+        },
       },
     ],
     edges: [
@@ -190,8 +215,20 @@ export function routerSwitchHostTopology(): NetworkTopology {
           role: 'router',
           layerId: 'l3',
           interfaces: [
-            { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-            { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:01:00:01' },
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '10.0.0.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:01:00:00',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '203.0.113.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:01:00:01',
+            },
           ],
         },
       },
@@ -213,7 +250,13 @@ export function routerSwitchHostTopology(): NetworkTopology {
         id: 'server-1',
         type: 'server',
         position: { x: 600, y: 0 },
-        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.10', mac: SERVER_TWO_MAC },
+        data: {
+          label: 'Server',
+          role: 'server',
+          layerId: 'l7',
+          ip: '203.0.113.10',
+          mac: SERVER_TWO_MAC,
+        },
       },
     ],
     edges: [
@@ -261,8 +304,20 @@ export function multiHopTopology(): NetworkTopology {
           role: 'router',
           layerId: 'l3',
           interfaces: [
-            { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-            { id: 'eth1', name: 'eth1', ipAddress: '172.16.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:01' },
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '10.0.0.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:01:00:00',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '172.16.0.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:01:00:01',
+            },
           ],
         },
       },
@@ -275,8 +330,20 @@ export function multiHopTopology(): NetworkTopology {
           role: 'router',
           layerId: 'l3',
           interfaces: [
-            { id: 'eth0', name: 'eth0', ipAddress: '172.16.0.2', prefixLength: 24, macAddress: '00:00:00:02:00:00' },
-            { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:02:00:01' },
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '172.16.0.2',
+              prefixLength: 24,
+              macAddress: '00:00:00:02:00:00',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '203.0.113.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:02:00:01',
+            },
           ],
         },
       },
@@ -284,7 +351,13 @@ export function multiHopTopology(): NetworkTopology {
         id: 'server-1',
         type: 'server',
         position: { x: 600, y: 0 },
-        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.10', mac: SERVER_MAC },
+        data: {
+          label: 'Server',
+          role: 'server',
+          layerId: 'l7',
+          ip: '203.0.113.10',
+          mac: SERVER_MAC,
+        },
       },
     ],
     edges: [
@@ -344,8 +417,20 @@ export function threeHopChainTopology(): NetworkTopology {
           role: 'router',
           layerId: 'l3',
           interfaces: [
-            { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-            { id: 'eth1', name: 'eth1', ipAddress: '172.16.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:01' },
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '10.0.0.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:01:00:00',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '172.16.0.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:01:00:01',
+            },
           ],
         },
       },
@@ -358,8 +443,20 @@ export function threeHopChainTopology(): NetworkTopology {
           role: 'router',
           layerId: 'l3',
           interfaces: [
-            { id: 'eth0', name: 'eth0', ipAddress: '172.16.0.2', prefixLength: 24, macAddress: '00:00:00:02:00:00' },
-            { id: 'eth1', name: 'eth1', ipAddress: '192.168.0.1', prefixLength: 24, macAddress: '00:00:00:02:00:01' },
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '172.16.0.2',
+              prefixLength: 24,
+              macAddress: '00:00:00:02:00:00',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '192.168.0.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:02:00:01',
+            },
           ],
         },
       },
@@ -372,8 +469,20 @@ export function threeHopChainTopology(): NetworkTopology {
           role: 'router',
           layerId: 'l3',
           interfaces: [
-            { id: 'eth0', name: 'eth0', ipAddress: '192.168.0.2', prefixLength: 24, macAddress: '00:00:00:03:00:00' },
-            { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:03:00:01' },
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '192.168.0.2',
+              prefixLength: 24,
+              macAddress: '00:00:00:03:00:00',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '203.0.113.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:03:00:01',
+            },
           ],
         },
       },
@@ -381,7 +490,13 @@ export function threeHopChainTopology(): NetworkTopology {
         id: 'server-1',
         type: 'server',
         position: { x: 800, y: 0 },
-        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.10', mac: SERVER_MAC },
+        data: {
+          label: 'Server',
+          role: 'server',
+          layerId: 'l7',
+          ip: '203.0.113.10',
+          mac: SERVER_MAC,
+        },
       },
     ],
     edges: [
@@ -437,9 +552,7 @@ export function dataTransferDemoTopology(): NetworkTopology {
               macAddress: 'aa:bb:cc:00:01:10',
             },
           ],
-          staticRoutes: [
-            { destination: '0.0.0.0/0', nextHop: '10.0.1.1' },
-          ],
+          staticRoutes: [{ destination: '0.0.0.0/0', nextHop: '10.0.1.1' }],
         },
       },
       {
@@ -523,16 +636,32 @@ export function dataTransferDemoTopology(): NetworkTopology {
               macAddress: 'aa:bb:cc:00:03:10',
             },
           ],
-          staticRoutes: [
-            { destination: '0.0.0.0/0', nextHop: '10.0.3.1' },
-          ],
+          staticRoutes: [{ destination: '0.0.0.0/0', nextHop: '10.0.3.1' }],
         },
       },
     ],
     edges: [
-      { id: 'e1', source: 'server-a', target: 'router-1', sourceHandle: 'eth0', targetHandle: 'eth0' },
-      { id: 'e2', source: 'router-1', target: 'router-2', sourceHandle: 'eth1', targetHandle: 'eth0' },
-      { id: 'e3', source: 'router-2', target: 'server-b', sourceHandle: 'eth1', targetHandle: 'eth0' },
+      {
+        id: 'e1',
+        source: 'server-a',
+        target: 'router-1',
+        sourceHandle: 'eth0',
+        targetHandle: 'eth0',
+      },
+      {
+        id: 'e2',
+        source: 'router-1',
+        target: 'router-2',
+        sourceHandle: 'eth1',
+        targetHandle: 'eth0',
+      },
+      {
+        id: 'e3',
+        source: 'router-2',
+        target: 'server-b',
+        sourceHandle: 'eth1',
+        targetHandle: 'eth0',
+      },
     ],
     areas: [],
     routeTables,
@@ -594,9 +723,27 @@ export function diamondTopology(): NetworkTopology {
           role: 'router',
           layerId: 'l3',
           interfaces: [
-            { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-            { id: 'eth1', name: 'eth1', ipAddress: '172.16.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:01' },
-            { id: 'eth2', name: 'eth2', ipAddress: '172.17.0.1', prefixLength: 16, macAddress: '00:00:00:01:00:02' },
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '10.0.0.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:01:00:00',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '172.16.0.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:01:00:01',
+            },
+            {
+              id: 'eth2',
+              name: 'eth2',
+              ipAddress: '172.17.0.1',
+              prefixLength: 16,
+              macAddress: '00:00:00:01:00:02',
+            },
           ],
         },
       },
@@ -609,8 +756,20 @@ export function diamondTopology(): NetworkTopology {
           role: 'router',
           layerId: 'l3',
           interfaces: [
-            { id: 'eth0', name: 'eth0', ipAddress: '172.16.0.2', prefixLength: 24, macAddress: '00:00:00:02:10:00' },
-            { id: 'eth1', name: 'eth1', ipAddress: '10.1.0.1', prefixLength: 24, macAddress: '00:00:00:02:10:01' },
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '172.16.0.2',
+              prefixLength: 24,
+              macAddress: '00:00:00:02:10:00',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '10.1.0.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:02:10:01',
+            },
           ],
         },
       },
@@ -623,8 +782,20 @@ export function diamondTopology(): NetworkTopology {
           role: 'router',
           layerId: 'l3',
           interfaces: [
-            { id: 'eth0', name: 'eth0', ipAddress: '172.17.0.2', prefixLength: 16, macAddress: '00:00:00:03:10:00' },
-            { id: 'eth1', name: 'eth1', ipAddress: '10.1.0.2', prefixLength: 24, macAddress: '00:00:00:03:10:01' },
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '172.17.0.2',
+              prefixLength: 16,
+              macAddress: '00:00:00:03:10:00',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '10.1.0.2',
+              prefixLength: 24,
+              macAddress: '00:00:00:03:10:01',
+            },
           ],
         },
       },
@@ -637,8 +808,20 @@ export function diamondTopology(): NetworkTopology {
           role: 'router',
           layerId: 'l3',
           interfaces: [
-            { id: 'eth0', name: 'eth0', ipAddress: '10.1.0.3', prefixLength: 24, macAddress: '00:00:00:04:10:00' },
-            { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:04:10:01' },
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '10.1.0.3',
+              prefixLength: 24,
+              macAddress: '00:00:00:04:10:00',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '203.0.113.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:04:10:01',
+            },
           ],
         },
       },
@@ -646,7 +829,13 @@ export function diamondTopology(): NetworkTopology {
         id: 'server-1',
         type: 'server',
         position: { x: 800, y: 0 },
-        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.10', mac: SERVER_MAC },
+        data: {
+          label: 'Server',
+          role: 'server',
+          layerId: 'l7',
+          ip: '203.0.113.10',
+          mac: SERVER_MAC,
+        },
       },
     ],
     edges: [
@@ -709,9 +898,27 @@ export function asymmetricRoutingTopology(): NetworkTopology {
           role: 'router',
           layerId: 'l3',
           interfaces: [
-            { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:20:00' },
-            { id: 'eth1', name: 'eth1', ipAddress: '172.16.0.1', prefixLength: 24, macAddress: '00:00:00:01:20:01' },
-            { id: 'eth2', name: 'eth2', ipAddress: '172.17.0.1', prefixLength: 24, macAddress: '00:00:00:01:20:02' },
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '10.0.0.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:01:20:00',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '172.16.0.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:01:20:01',
+            },
+            {
+              id: 'eth2',
+              name: 'eth2',
+              ipAddress: '172.17.0.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:01:20:02',
+            },
           ],
         },
       },
@@ -724,8 +931,20 @@ export function asymmetricRoutingTopology(): NetworkTopology {
           role: 'router',
           layerId: 'l3',
           interfaces: [
-            { id: 'eth0', name: 'eth0', ipAddress: '172.16.0.2', prefixLength: 24, macAddress: '00:00:00:02:20:00' },
-            { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:02:20:01' },
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '172.16.0.2',
+              prefixLength: 24,
+              macAddress: '00:00:00:02:20:00',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '203.0.113.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:02:20:01',
+            },
           ],
         },
       },
@@ -738,8 +957,20 @@ export function asymmetricRoutingTopology(): NetworkTopology {
           role: 'router',
           layerId: 'l3',
           interfaces: [
-            { id: 'eth0', name: 'eth0', ipAddress: '203.0.113.2', prefixLength: 24, macAddress: '00:00:00:03:20:00' },
-            { id: 'eth1', name: 'eth1', ipAddress: '172.17.0.2', prefixLength: 24, macAddress: '00:00:00:03:20:01' },
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '203.0.113.2',
+              prefixLength: 24,
+              macAddress: '00:00:00:03:20:00',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '172.17.0.2',
+              prefixLength: 24,
+              macAddress: '00:00:00:03:20:01',
+            },
           ],
         },
       },
@@ -747,7 +978,13 @@ export function asymmetricRoutingTopology(): NetworkTopology {
         id: 'server-1',
         type: 'server',
         position: { x: 600, y: 0 },
-        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.10', mac: SERVER_MAC },
+        data: {
+          label: 'Server',
+          role: 'server',
+          layerId: 'l7',
+          ip: '203.0.113.10',
+          mac: SERVER_MAC,
+        },
       },
     ],
     edges: [
@@ -814,9 +1051,27 @@ export function failureFallbackTopology(): NetworkTopology {
           role: 'router',
           layerId: 'l3',
           interfaces: [
-            { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-            { id: 'eth1', name: 'eth1', ipAddress: '172.16.0.1', prefixLength: 30, macAddress: '00:00:00:01:00:01' },
-            { id: 'eth2', name: 'eth2', ipAddress: '172.17.0.1', prefixLength: 30, macAddress: '00:00:00:01:00:02' },
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '10.0.0.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:01:00:00',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '172.16.0.1',
+              prefixLength: 30,
+              macAddress: '00:00:00:01:00:01',
+            },
+            {
+              id: 'eth2',
+              name: 'eth2',
+              ipAddress: '172.17.0.1',
+              prefixLength: 30,
+              macAddress: '00:00:00:01:00:02',
+            },
           ],
         },
       },
@@ -829,8 +1084,20 @@ export function failureFallbackTopology(): NetworkTopology {
           role: 'router',
           layerId: 'l3',
           interfaces: [
-            { id: 'eth0', name: 'eth0', ipAddress: '172.16.0.2', prefixLength: 30, macAddress: '00:00:00:02:00:00' },
-            { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:02:00:01' },
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '172.16.0.2',
+              prefixLength: 30,
+              macAddress: '00:00:00:02:00:00',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '203.0.113.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:02:00:01',
+            },
           ],
         },
       },
@@ -843,8 +1110,20 @@ export function failureFallbackTopology(): NetworkTopology {
           role: 'router',
           layerId: 'l3',
           interfaces: [
-            { id: 'eth0', name: 'eth0', ipAddress: '172.17.0.2', prefixLength: 30, macAddress: '00:00:00:03:00:00' },
-            { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.2', prefixLength: 24, macAddress: '00:00:00:03:00:01' },
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '172.17.0.2',
+              prefixLength: 30,
+              macAddress: '00:00:00:03:00:00',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '203.0.113.2',
+              prefixLength: 24,
+              macAddress: '00:00:00:03:00:01',
+            },
           ],
         },
       },
@@ -852,7 +1131,13 @@ export function failureFallbackTopology(): NetworkTopology {
         id: 'server-1',
         type: 'server',
         position: { x: 600, y: 0 },
-        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.10', mac: SERVER_MAC },
+        data: {
+          label: 'Server',
+          role: 'server',
+          layerId: 'l7',
+          ip: '203.0.113.10',
+          mac: SERVER_MAC,
+        },
       },
     ],
     edges: [
@@ -894,7 +1179,13 @@ export function natTopology(): NetworkTopology {
         id: 'client-1',
         type: 'client',
         position: { x: 0, y: 0 },
-        data: { label: 'Client', role: 'client', layerId: 'l7', ip: '192.168.1.10', mac: CLIENT_MAC },
+        data: {
+          label: 'Client',
+          role: 'client',
+          layerId: 'l7',
+          ip: '192.168.1.10',
+          mac: CLIENT_MAC,
+        },
       },
       {
         id: 'nat-router',
@@ -936,8 +1227,20 @@ export function natTopology(): NetworkTopology {
           role: 'router',
           layerId: 'l3',
           interfaces: [
-            { id: 'eth0', name: 'eth0', ipAddress: '203.0.113.2', prefixLength: 30, macAddress: '00:00:00:12:00:00' },
-            { id: 'eth1', name: 'eth1', ipAddress: '198.51.100.1', prefixLength: 24, macAddress: '00:00:00:12:00:01' },
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '203.0.113.2',
+              prefixLength: 30,
+              macAddress: '00:00:00:12:00:00',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '198.51.100.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:12:00:01',
+            },
           ],
         },
       },
@@ -945,7 +1248,13 @@ export function natTopology(): NetworkTopology {
         id: 'server-1',
         type: 'server',
         position: { x: 600, y: 0 },
-        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '198.51.100.10', mac: SERVER_MAC },
+        data: {
+          label: 'Server',
+          role: 'server',
+          layerId: 'l7',
+          ip: '198.51.100.10',
+          mac: SERVER_MAC,
+        },
       },
     ],
     edges: [
@@ -958,11 +1267,13 @@ export function natTopology(): NetworkTopology {
   };
 }
 
-export function aclTopology(options: {
-  stateful?: boolean;
-  lanInboundAcl?: RouterInterface['inboundAcl'];
-  wanInboundAcl?: RouterInterface['inboundAcl'];
-} = {}): NetworkTopology {
+export function aclTopology(
+  options: {
+    stateful?: boolean;
+    lanInboundAcl?: RouterInterface['inboundAcl'];
+    wanInboundAcl?: RouterInterface['inboundAcl'];
+  } = {},
+): NetworkTopology {
   const routeTables = new Map<string, RouteEntry[]>([
     [
       'router-1',
@@ -1014,7 +1325,13 @@ export function aclTopology(options: {
         id: 'server-1',
         type: 'server',
         position: { x: 400, y: 0 },
-        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.50', mac: SERVER_MAC },
+        data: {
+          label: 'Server',
+          role: 'server',
+          layerId: 'l7',
+          ip: '203.0.113.50',
+          mac: SERVER_MAC,
+        },
       },
     ],
     edges: [

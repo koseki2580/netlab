@@ -1,3 +1,4 @@
+import { NetlabError } from '../errors';
 import type { FailureState } from '../types/failure';
 import { EMPTY_FAILURE_STATE } from '../types/failure';
 import type { InFlightPacket } from '../types/packets';
@@ -79,12 +80,15 @@ function byteLength(value: string): number {
   return textEncoder.encode(value).length;
 }
 
-function splitPayloadByBytes(payload: string, maxBytes: number): Array<{ data: string; sizeBytes: number }> {
+function splitPayloadByBytes(
+  payload: string,
+  maxBytes: number,
+): { data: string; sizeBytes: number }[] {
   if (payload.length === 0) {
     return [{ data: '', sizeBytes: 0 }];
   }
 
-  const chunks: Array<{ data: string; sizeBytes: number }> = [];
+  const chunks: { data: string; sizeBytes: number }[] = [];
   let currentChunk = '';
   let currentBytes = 0;
 
@@ -273,7 +277,11 @@ export class DataTransferController {
 
       const trace = this.findTrace(packet.id);
       if (!trace) {
-        throw new Error(`Trace ${packet.id} not found after sending transfer chunk`);
+        throw new NetlabError({
+          code: 'invariant/not-found',
+          message: `Trace ${packet.id} not found after sending transfer chunk`,
+          context: { packetId: packet.id },
+        });
       }
 
       chunk.traceId = trace.packetId;
@@ -283,8 +291,7 @@ export class DataTransferController {
         pmtuLookup?.(srcNodeId, dstIp) ?? Number.POSITIVE_INFINITY,
       );
       const shouldRetryWithSmallerChunk =
-        trace.status === 'dropped' &&
-        retryChunkSize < chunk.sizeBytes;
+        trace.status === 'dropped' && retryChunkSize < chunk.sizeBytes;
 
       if (shouldRetryWithSmallerChunk) {
         continue;
@@ -328,7 +335,9 @@ export class DataTransferController {
     const deliveredChunks = chunks.filter((chunk) => chunk.state === 'delivered');
 
     if (deliveredChunks.length === chunks.length) {
-      const orderedChunks = [...chunks].sort((left, right) => left.sequenceNumber - right.sequenceNumber);
+      const orderedChunks = [...chunks].sort(
+        (left, right) => left.sequenceNumber - right.sequenceNumber,
+      );
       const reassembledPayload = orderedChunks.map((chunk) => chunk.data).join('');
       const reassembledChecksum = await sha256Hex(reassembledPayload);
       reassembly.isComplete = true;
@@ -491,7 +500,11 @@ export class DataTransferController {
     const effectiveIp = pipeline?.getEffectiveNodeIp(node);
 
     if (!effectiveIp) {
-      throw new Error(`Node ${nodeId} has no effective IP`);
+      throw new NetlabError({
+        code: 'invariant/no-ip',
+        message: `Node ${nodeId} has no effective IP`,
+        context: { nodeId },
+      });
     }
 
     return effectiveIp;
@@ -504,7 +517,9 @@ export class DataTransferController {
     if (node?.data.role === 'router') {
       const egressInterfaceId = pipeline?.resolveEgressInterface?.(nodeId, dstIp)?.id;
       if (egressInterfaceId) {
-        const egressInterface = node.data.interfaces?.find((iface) => iface.id === egressInterfaceId);
+        const egressInterface = node.data.interfaces?.find(
+          (iface) => iface.id === egressInterfaceId,
+        );
         if (egressInterface?.macAddress && !this.isPlaceholderMac(egressInterface.macAddress)) {
           return egressInterface.macAddress;
         }
@@ -533,8 +548,9 @@ export class DataTransferController {
     }
 
     const nextHopIp = this.resolveNextHopIp(srcNode, dstIp);
-    const nextHopNode = this.findReachableNode(srcNodeId, nextHopIp)
-      ?? (nextHopIp !== dstIp ? this.findReachableNode(srcNodeId, dstIp) : null);
+    const nextHopNode =
+      this.findReachableNode(srcNodeId, nextHopIp) ??
+      (nextHopIp !== dstIp ? this.findReachableNode(srcNodeId, dstIp) : null);
 
     return {
       nextHopIp,
@@ -565,9 +581,11 @@ export class DataTransferController {
     dstIp: string,
     routes: T[],
   ): T | null {
-    return [...routes]
-      .sort((left, right) => prefixLength(right.destination) - prefixLength(left.destination))
-      .find((route) => isInSubnet(dstIp, route.destination)) ?? null;
+    return (
+      [...routes]
+        .sort((left, right) => prefixLength(right.destination) - prefixLength(left.destination))
+        .find((route) => isInSubnet(dstIp, route.destination)) ?? null
+    );
   }
 
   private findReachableNode(srcNodeId: string, targetIp: string): NetlabNode | null {
@@ -576,7 +594,8 @@ export class DataTransferController {
       return null;
     }
 
-    const queue = pipeline.getNeighbors(srcNodeId, null, EMPTY_FAILURE_STATE)
+    const queue = pipeline
+      .getNeighbors(srcNodeId, null, EMPTY_FAILURE_STATE)
       .map((neighbor) => ({ nodeId: neighbor.nodeId, previousNodeId: srcNodeId }));
     const visited = new Set<string>();
     let fallback: NetlabNode | null = null;
@@ -634,7 +653,11 @@ export class DataTransferController {
   }
 
   private extractNodeMac(node: NetlabNode, preferredIp?: string): string | null {
-    if (typeof node.data.mac === 'string' && node.data.mac.length > 0 && !this.isPlaceholderMac(node.data.mac)) {
+    if (
+      typeof node.data.mac === 'string' &&
+      node.data.mac.length > 0 &&
+      !this.isPlaceholderMac(node.data.mac)
+    ) {
       return node.data.mac;
     }
 

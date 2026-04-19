@@ -57,7 +57,7 @@ function selectTraceSnapshot(
 }
 
 function icmpPayloadFrom(packet: InFlightPacket | null): IcmpMessage {
-  if (!packet || packet.frame.payload.protocol !== 1) {
+  if (packet?.frame.payload.protocol !== 1) {
     throw new Error('Expected an ICMP packet snapshot');
   }
 
@@ -66,7 +66,7 @@ function icmpPayloadFrom(packet: InFlightPacket | null): IcmpMessage {
     throw new Error('Expected an ICMP payload');
   }
 
-  return payload as IcmpMessage;
+  return payload;
 }
 
 describe('Packet routing correctness', () => {
@@ -104,13 +104,7 @@ describe('Packet routing correctness', () => {
     });
 
     it('rewrites MAC addresses at each router boundary', async () => {
-      const packet = makePacket(
-        'routing-mac',
-        'client-1',
-        'server-1',
-        '10.0.0.10',
-        '203.0.113.10',
-      );
+      const packet = makePacket('routing-mac', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
 
       const r1Snapshot = await packetAtStep(makeEngine(threeHopChainTopology()), packet, 1);
       const r2Snapshot = await packetAtStep(makeEngine(threeHopChainTopology()), packet, 2);
@@ -381,9 +375,7 @@ describe('ARP resolution', () => {
 describe('No-route handling', () => {
   it('drops at R2 when R1 has a route but R2 does not (partial route failure)', async () => {
     const topology = multiHopTopology();
-    topology.routeTables.set('router-2', [
-      makeRouteEntry('router-2', '172.16.0.0/24', 'direct'),
-    ]);
+    topology.routeTables.set('router-2', [makeRouteEntry('router-2', '172.16.0.0/24', 'direct')]);
 
     const engine = makeEngine(topology);
     const trace = await engine.precompute(
@@ -401,20 +393,23 @@ describe('No-route handling', () => {
   it.each([
     { emptyAt: 'router-1', expectedDropNode: 'router-1' },
     { emptyAt: 'router-2', expectedDropNode: 'router-2' },
-  ])('drops at $expectedDropNode when $emptyAt has no routes', async ({ emptyAt, expectedDropNode }) => {
-    const topology = multiHopTopology();
-    topology.routeTables.set(emptyAt, []);
+  ])(
+    'drops at $expectedDropNode when $emptyAt has no routes',
+    async ({ emptyAt, expectedDropNode }) => {
+      const topology = multiHopTopology();
+      topology.routeTables.set(emptyAt, []);
 
-    const engine = makeEngine(topology);
-    const trace = await engine.precompute(
-      makePacket(`no-route-${emptyAt}`, 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
-    );
+      const engine = makeEngine(topology);
+      const trace = await engine.precompute(
+        makePacket(`no-route-${emptyAt}`, 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+      );
 
-    expect(trace.status).toBe('dropped');
-    const dropHop = trace.hops.find((hop) => hop.event === 'drop');
-    expect(dropHop?.nodeId).toBe(expectedDropNode);
-    expect(dropHop?.reason).toBe('no-route');
-  });
+      expect(trace.status).toBe('dropped');
+      const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+      expect(dropHop?.nodeId).toBe(expectedDropNode);
+      expect(dropHop?.reason).toBe('no-route');
+    },
+  );
 
   it('no-route drop includes routingDecision with null winner', async () => {
     const topology = singleRouterTopology();
@@ -431,9 +426,7 @@ describe('No-route handling', () => {
 
   it('no-route drop shows candidates that exist but do not match destination', async () => {
     const topology = singleRouterTopology();
-    topology.routeTables.set('router-1', [
-      makeRouteEntry('router-1', '192.168.0.0/24', 'direct'),
-    ]);
+    topology.routeTables.set('router-1', [makeRouteEntry('router-1', '192.168.0.0/24', 'direct')]);
 
     const engine = makeEngine(topology);
     const trace = await engine.precompute(
@@ -525,7 +518,13 @@ describe('Failure injection', () => {
       };
 
       const trace = await engine.precompute(
-        makePacket('failure-blocked-all-paths', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+        makePacket(
+          'failure-blocked-all-paths',
+          'client-1',
+          'server-1',
+          '10.0.0.10',
+          '203.0.113.10',
+        ),
         failureState,
       );
 
@@ -619,11 +618,23 @@ describe('Failure injection', () => {
       };
 
       const forward = await engine.precompute(
-        makePacket('failure-symmetric-forward', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+        makePacket(
+          'failure-symmetric-forward',
+          'client-1',
+          'server-1',
+          '10.0.0.10',
+          '203.0.113.10',
+        ),
         failureState,
       );
       const reverse = await engine.precompute(
-        makePacket('failure-symmetric-reverse', 'server-1', 'client-1', '203.0.113.10', '10.0.0.10'),
+        makePacket(
+          'failure-symmetric-reverse',
+          'server-1',
+          'client-1',
+          '203.0.113.10',
+          '10.0.0.10',
+        ),
         failureState,
       );
 
@@ -662,22 +673,31 @@ describe('Failure injection', () => {
         expectedReason: 'node-down',
         desc: 'all three',
       },
-    ])('$desc -> drop with $expectedReason', async ({ downNodes, downEdges, downInterfaces, expectedReason }) => {
-      const engine = makeEngine(singleRouterTopology());
-      const failureState: FailureState = {
-        downNodeIds: new Set(downNodes),
-        downEdgeIds: new Set(downEdges),
-        downInterfaceIds: new Set(downInterfaces),
-      };
+    ])(
+      '$desc -> drop with $expectedReason',
+      async ({ downNodes, downEdges, downInterfaces, expectedReason }) => {
+        const engine = makeEngine(singleRouterTopology());
+        const failureState: FailureState = {
+          downNodeIds: new Set(downNodes),
+          downEdgeIds: new Set(downEdges),
+          downInterfaceIds: new Set(downInterfaces),
+        };
 
-      const trace = await engine.precompute(
-        makePacket(`failure-table-${expectedReason}`, 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
-        failureState,
-      );
+        const trace = await engine.precompute(
+          makePacket(
+            `failure-table-${expectedReason}`,
+            'client-1',
+            'server-1',
+            '10.0.0.10',
+            '203.0.113.10',
+          ),
+          failureState,
+        );
 
-      expect(trace.status).toBe('dropped');
-      const dropHop = trace.hops.find((hop) => hop.event === 'drop');
-      expect(dropHop?.reason).toBe(expectedReason);
-    });
+        expect(trace.status).toBe('dropped');
+        const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+        expect(dropHop?.reason).toBe(expectedReason);
+      },
+    );
   });
 });

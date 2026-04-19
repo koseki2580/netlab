@@ -74,15 +74,16 @@ function makeNode(
   return {
     id,
     position: { x: 0, y: 0 },
-    data: { label: id, layerId: role === 'router' ? 'l3' : role === 'switch' ? 'l2' : 'l7', role, ...overrides },
+    data: {
+      label: id,
+      layerId: role === 'router' ? 'l3' : role === 'switch' ? 'l2' : 'l7',
+      role,
+      ...overrides,
+    },
   } as NetlabNode;
 }
 
-function makeEdge(
-  source: string,
-  target: string,
-  overrides: Partial<NetlabEdge> = {},
-): NetlabEdge {
+function makeEdge(source: string, target: string, overrides: Partial<NetlabEdge> = {}): NetlabEdge {
   return {
     id: overrides.id ?? `${source}-${target}`,
     source,
@@ -184,15 +185,19 @@ describe('validateConnection', () => {
     const nodes = [
       makeNode('router-1', 'router', {
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:00:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:00:00:01',
+          },
         ],
       }),
       makeNode('switch-1', 'switch'),
       makeNode('server-1', 'server'),
     ];
-    const edges = [
-      makeEdge('router-1', 'switch-1', { sourceHandle: 'eth0' }),
-    ];
+    const edges = [makeEdge('router-1', 'switch-1', { sourceHandle: 'eth0' })];
 
     const result = validateConnection(nodes, edges, 'router-1', 'server-1', 'eth0', null);
 
@@ -210,9 +215,7 @@ describe('validateConnection', () => {
         ports: [{ id: 'p0', name: 'fa0/0', macAddress: '00:00:00:00:00:02' }],
       }),
     ];
-    const edges = [
-      makeEdge('router-1', 'switch-1', { targetHandle: 'p0' }),
-    ];
+    const edges = [makeEdge('router-1', 'switch-1', { targetHandle: 'p0' })];
 
     const result = validateConnection(nodes, edges, 'router-1', 'switch-1', null, 'p0');
 
@@ -255,12 +258,24 @@ describe('validateConnection', () => {
     const nodes = [
       makeNode('router-1', 'router', {
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:00:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:00:00:01',
+          },
         ],
       }),
       makeNode('router-2', 'router', {
         interfaces: [
-          { id: 'eth1', name: 'eth1', ipAddress: '10.0.1.2', prefixLength: 24, macAddress: '00:00:00:00:00:02' },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '10.0.1.2',
+            prefixLength: 24,
+            macAddress: '00:00:00:00:00:02',
+          },
         ],
       }),
     ];
@@ -290,7 +305,13 @@ describe('validateConnection', () => {
     const nodes = [
       makeNode('router-1', 'router', {
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:00:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:00:00:01',
+          },
         ],
       }),
       makeNode('switch-1', 'switch'),
@@ -323,8 +344,20 @@ describe('validateTopology', () => {
       makeNode('client-1', 'client', { ip: '10.0.0.10' }),
       makeNode('router-1', 'router', {
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:00:00:01' },
-          { id: 'eth1', name: 'eth1', ipAddress: '10.0.1.1', prefixLength: 24, macAddress: '00:00:00:00:00:02' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:00:00:01',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '10.0.1.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:00:00:02',
+          },
         ],
       }),
       makeNode('server-1', 'server', { ip: '10.0.1.20' }),
@@ -384,12 +417,24 @@ describe('validateTopology', () => {
     const nodes = [
       makeNode('router-1', 'router', {
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:00:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:00:00:01',
+          },
         ],
       }),
       makeNode('router-2', 'router', {
         interfaces: [
-          { id: 'eth1', name: 'eth1', ipAddress: '10.0.1.2', prefixLength: 24, macAddress: '00:00:00:00:00:02' },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '10.0.1.2',
+            prefixLength: 24,
+            macAddress: '00:00:00:00:00:02',
+          },
         ],
       }),
     ];
@@ -418,12 +463,24 @@ describe('validateTopology', () => {
       makeNode('server-1', 'server', { ip: '10.0.0.20' }),
       makeNode('router-1', 'router', {
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:00:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:00:00:01',
+          },
         ],
       }),
       makeNode('router-2', 'router', {
         interfaces: [
-          { id: 'eth1', name: 'eth1', ipAddress: '10.0.1.2', prefixLength: 24, macAddress: '00:00:00:00:00:02' },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '10.0.1.2',
+            prefixLength: 24,
+            macAddress: '00:00:00:00:00:02',
+          },
         ],
       }),
     ];

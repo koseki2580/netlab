@@ -137,9 +137,10 @@ function expectDrop(result: Awaited<ReturnType<SwitchForwarder['receive']>>) {
 
 describe('SwitchForwarder — STP', () => {
   it('frame arriving on a BLOCKING port is dropped with reason stp-port-blocked', async () => {
-    const forwarder = new SwitchForwarder('switch-1', makeTopology(new Map([
-      ['switch-1:p1', makeStpRuntime('p1', 'BLOCKED', 'BLOCKING')],
-    ])));
+    const forwarder = new SwitchForwarder(
+      'switch-1',
+      makeTopology(new Map([['switch-1:p1', makeStpRuntime('p1', 'BLOCKED', 'BLOCKING')]])),
+    );
 
     const result = expectDrop(await forwarder.receive(makePacket(), 'p1', { neighbors: [] }));
 
@@ -147,35 +148,40 @@ describe('SwitchForwarder — STP', () => {
   });
 
   it('flood excludes BLOCKING ports', () => {
-    const forwarder = new SwitchForwarder('switch-1', makeTopology(new Map([
-      ['switch-1:p2', makeStpRuntime('p2', 'BLOCKED', 'BLOCKING')],
-    ])));
+    const forwarder = new SwitchForwarder(
+      'switch-1',
+      makeTopology(new Map([['switch-1:p2', makeStpRuntime('p2', 'BLOCKED', 'BLOCKING')]])),
+    );
 
     expect(forwarder.forward('ff:ff:ff:ff:ff:ff', 'p1', makePorts(), 1)).toEqual(['p3']);
   });
 
   it('unknown-unicast flood excludes BLOCKING ports', () => {
-    const forwarder = new SwitchForwarder('switch-1', makeTopology(new Map([
-      ['switch-1:p2', makeStpRuntime('p2', 'BLOCKED', 'BLOCKING')],
-    ])));
+    const forwarder = new SwitchForwarder(
+      'switch-1',
+      makeTopology(new Map([['switch-1:p2', makeStpRuntime('p2', 'BLOCKED', 'BLOCKING')]])),
+    );
 
     expect(forwarder.forward('02:00:00:00:00:99', 'p1', makePorts(), 1)).toEqual(['p3']);
   });
 
   it('learned MAC pointing at a blocked port causes re-selection of an alternate egress', async () => {
-    const forwarder = new SwitchForwarder('switch-1', makeTopology(new Map([
-      ['switch-1:p2', makeStpRuntime('p2', 'BLOCKED', 'BLOCKING')],
-    ])));
+    const forwarder = new SwitchForwarder(
+      'switch-1',
+      makeTopology(new Map([['switch-1:p2', makeStpRuntime('p2', 'BLOCKED', 'BLOCKING')]])),
+    );
     forwarder.learn('02:00:00:00:00:22', 'p2', 1);
 
     const packet = makePacket();
     packet.frame.dstMac = '02:00:00:00:00:22';
-    const result = expectForward(await forwarder.receive(packet, 'p1', {
-      neighbors: [
-        { nodeId: 'switch-2', edgeId: 'e2' },
-        { nodeId: 'switch-3', edgeId: 'e3' },
-      ],
-    }));
+    const result = expectForward(
+      await forwarder.receive(packet, 'p1', {
+        neighbors: [
+          { nodeId: 'switch-2', edgeId: 'e2' },
+          { nodeId: 'switch-3', edgeId: 'e3' },
+        ],
+      }),
+    );
 
     expect(result.egressPort).toBe('p3');
     expect(result.edgeId).toBe('e3');
@@ -183,9 +189,10 @@ describe('SwitchForwarder — STP', () => {
   });
 
   it('port missing from stpStates map falls through to existing behavior (no-op default)', async () => {
-    const forwarder = new SwitchForwarder('switch-1', makeTopology(new Map([
-      ['switch-1:p2', makeStpRuntime('p2', 'BLOCKED', 'BLOCKING')],
-    ])));
+    const forwarder = new SwitchForwarder(
+      'switch-1',
+      makeTopology(new Map([['switch-1:p2', makeStpRuntime('p2', 'BLOCKED', 'BLOCKING')]])),
+    );
 
     const result = expectForward(await forwarder.receive(makePacket(), 'p1', { neighbors: [] }));
 
@@ -193,13 +200,16 @@ describe('SwitchForwarder — STP', () => {
   });
 
   it('DISABLED port is treated the same as BLOCKING for ingress drop and egress exclusion', async () => {
-    const forwarder = new SwitchForwarder('switch-1', makeTopology(new Map([
-      ['switch-1:p2', makeStpRuntime('p2', 'DISABLED', 'DISABLED')],
-    ])));
+    const forwarder = new SwitchForwarder(
+      'switch-1',
+      makeTopology(new Map([['switch-1:p2', makeStpRuntime('p2', 'DISABLED', 'DISABLED')]])),
+    );
 
     expect(forwarder.forward('ff:ff:ff:ff:ff:ff', 'p1', makePorts(), 1)).toEqual(['p3']);
 
-    const result = expectDrop(await forwarder.receive(makePacket({ ingressPortId: 'p2' }), 'p2', { neighbors: [] }));
+    const result = expectDrop(
+      await forwarder.receive(makePacket({ ingressPortId: 'p2' }), 'p2', { neighbors: [] }),
+    );
 
     expect(result.reason).toBe('stp-port-blocked');
   });

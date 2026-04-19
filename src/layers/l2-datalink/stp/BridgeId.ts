@@ -1,3 +1,4 @@
+import { NetlabError } from '../../../errors';
 import type { BridgeId } from '../../../types/topology';
 
 export const DEFAULT_BRIDGE_PRIORITY = 32768;
@@ -6,7 +7,11 @@ export const DEFAULT_STP_PATH_COST = 19;
 function normalizeMacAddress(macAddress: string): string {
   const hex = macAddress.replace(/[^0-9a-f]/gi, '').toLowerCase();
   if (hex.length !== 12) {
-    throw new Error(`Invalid MAC address: ${macAddress}`);
+    throw new NetlabError({
+      code: 'invariant/malformed-id',
+      message: `Invalid MAC address: ${macAddress}`,
+      context: { macAddress },
+    });
   }
 
   return hex.match(/.{1,2}/g)?.join(':') ?? hex;
@@ -16,12 +21,12 @@ function normalizeMacAddress(macAddress: string): string {
  * Derive a Bridge ID from a switch's ports. Picks the lowest MAC from port.macAddress
  * entries (stable ordering) as the MAC component. If no ports exist, throws.
  */
-export function makeBridgeId(
-  priority: number,
-  ports: readonly { macAddress: string }[],
-): BridgeId {
+export function makeBridgeId(priority: number, ports: readonly { macAddress: string }[]): BridgeId {
   if (ports.length === 0) {
-    throw new Error('BridgeId requires at least one port MAC');
+    throw new NetlabError({
+      code: 'invariant/malformed-id',
+      message: 'BridgeId requires at least one port MAC',
+    });
   }
 
   const mac = ports
@@ -29,7 +34,10 @@ export function makeBridgeId(
     .sort((left, right) => left.localeCompare(right))[0];
 
   if (!mac) {
-    throw new Error('BridgeId requires at least one port MAC');
+    throw new NetlabError({
+      code: 'invariant/malformed-id',
+      message: 'BridgeId requires at least one port MAC',
+    });
   }
 
   return { priority, mac };

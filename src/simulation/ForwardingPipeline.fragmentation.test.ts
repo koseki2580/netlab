@@ -19,7 +19,10 @@ import { TCP_HANDSHAKE_DEMO_TOPOLOGY } from '../../demo/simulation/TcpHandshakeD
 import { EMBED_DEMO_TOPOLOGY } from '../../demo/embed/EmbedDemo';
 import { CONTROLLED_TOPOLOGY_INITIAL_TOPOLOGY } from '../../demo/topology/ControlledTopologyDemo';
 import { EDITOR_EXAMPLE_TOPOLOGY } from '../../demo/editor/EditorDemo';
-import { ALL_IN_ONE_INITIAL_TOPOLOGY, toSimulationTopology } from '../../demo/comprehensive/AllInOneDemo';
+import {
+  ALL_IN_ONE_INITIAL_TOPOLOGY,
+  toSimulationTopology,
+} from '../../demo/comprehensive/AllInOneDemo';
 import { HookEngine } from '../hooks/HookEngine';
 import { RouterForwarder } from '../layers/l3-network/RouterForwarder';
 import { SwitchForwarder } from '../layers/l2-datalink/SwitchForwarder';
@@ -33,7 +36,11 @@ import { ForwardingPipeline } from './ForwardingPipeline';
 import { ServiceOrchestrator } from './ServiceOrchestrator';
 import { TraceRecorder } from './TraceRecorder';
 import { makePacket } from './__fixtures__/helpers';
-import { multiHopTopology, singleRouterTopology, threeHopChainTopology } from './__fixtures__/topologies';
+import {
+  multiHopTopology,
+  singleRouterTopology,
+  threeHopChainTopology,
+} from './__fixtures__/topologies';
 
 beforeAll(() => {
   layerRegistry.register({
@@ -55,7 +62,8 @@ function makePipeline(topology: NetworkTopology): ForwardingPipeline {
   const pipeline = new ForwardingPipeline(topology, hookEngine, traceRecorder, services);
 
   services.setPacketSender({
-    precompute: (packet, failureState, options) => pipeline.precompute(packet, failureState, options),
+    precompute: (packet, failureState, options) =>
+      pipeline.precompute(packet, failureState, options),
     findNode: (nodeId) => pipeline.findNode(nodeId) ?? undefined,
     getNeighbors: (
       nodeId,
@@ -109,9 +117,7 @@ function withEdgeMtu(topology: NetworkTopology, edgeId: string, mtuBytes: number
   return {
     ...topology,
     edges: topology.edges.map((edge) =>
-      edge.id === edgeId
-        ? { ...edge, data: { ...(edge.data ?? {}), mtuBytes } }
-        : edge,
+      edge.id === edgeId ? { ...edge, data: { ...(edge.data ?? {}), mtuBytes } } : edge,
     ),
   };
 }
@@ -150,7 +156,9 @@ function resolveNodeIp(topology: NetworkTopology, nodeId: string): string | null
 function buildRegressionPacket(topology: NetworkTopology): InFlightPacket | null {
   const candidates = topology.nodes.filter((node) => node.data.role !== 'router');
   const srcNode = candidates.find((node) => resolveNodeIp(topology, node.id));
-  const dstNode = [...candidates].reverse().find((node) => node.id !== srcNode?.id && resolveNodeIp(topology, node.id));
+  const dstNode = [...candidates]
+    .reverse()
+    .find((node) => node.id !== srcNode?.id && resolveNodeIp(topology, node.id));
   const srcIp = srcNode ? resolveNodeIp(topology, srcNode.id) : null;
   const dstIp = dstNode ? resolveNodeIp(topology, dstNode.id) : null;
 
@@ -191,7 +199,7 @@ function buildRegressionPacket(topology: NetworkTopology): InFlightPacket | null
   };
 }
 
-const DEMO_REGRESSION_SCENARIOS: Array<[string, NetworkTopology]> = [
+const DEMO_REGRESSION_SCENARIOS: [string, NetworkTopology][] = [
   ['Minimal', MINIMAL_DEMO_TOPOLOGY],
   ['Three-Tier LAN', THREE_TIER_DEMO_TOPOLOGY],
   ['Star Topology', STAR_DEMO_TOPOLOGY],
@@ -248,7 +256,12 @@ describe('ForwardingPipeline — fragmentation (DF=0)', () => {
   });
 
   it('respects RouterInterface.mtu override even if link.mtuBytes is larger', async () => {
-    const topology = withInterfaceMtu(withEdgeMtu(singleRouterTopology(), 'e2', 1500), 'router-1', 'eth1', 1000);
+    const topology = withInterfaceMtu(
+      withEdgeMtu(singleRouterTopology(), 'e2', 1500),
+      'router-1',
+      'eth1',
+      1000,
+    );
     const pipeline = makePipeline(topology);
     const result = await pipeline.precompute(makeLargePacket(1500));
 
@@ -256,7 +269,12 @@ describe('ForwardingPipeline — fragmentation (DF=0)', () => {
   });
 
   it('uses the lower effective MTU when both link.mtuBytes and interface.mtu are set', async () => {
-    const topology = withInterfaceMtu(withEdgeMtu(singleRouterTopology(), 'e2', 900), 'router-1', 'eth1', 1200);
+    const topology = withInterfaceMtu(
+      withEdgeMtu(singleRouterTopology(), 'e2', 900),
+      'router-1',
+      'eth1',
+      1200,
+    );
     const pipeline = makePipeline(topology);
     const result = await pipeline.precompute(makeLargePacket(1500));
     const fragmentHops = result.trace.hops.filter((hop) => hop.action === 'fragment');
@@ -292,19 +310,25 @@ describe('ForwardingPipeline — fragmentation (DF=0)', () => {
     const fragmentSteps = result.trace.hops
       .filter((hop) => hop.action === 'fragment')
       .map((hop) => hop.step);
-    const fragmentSnapshots = fragmentSteps.map((step) => result.snapshots[step]!);
+    const fragmentSnapshots = fragmentSteps.map((step) => result.snapshots[step]);
 
-    expect(new Set(fragmentSnapshots.map((snapshot) => snapshot.sessionId))).toEqual(new Set(['session-frag']));
-    expect(new Set(fragmentSnapshots.map((snapshot) => snapshot.frame.payload.identification))).toHaveProperty('size', 1);
+    expect(new Set(fragmentSnapshots.map((snapshot) => snapshot.sessionId))).toEqual(
+      new Set(['session-frag']),
+    );
+    expect(
+      new Set(fragmentSnapshots.map((snapshot) => snapshot.frame.payload.identification)),
+    ).toHaveProperty('size', 1);
   });
 });
 
 describe('ForwardingPipeline — DF=1 (do not fragment)', () => {
   it('drops a packet with flags.df=true when size > mtu', async () => {
     const pipeline = makePipeline(withEdgeMtu(singleRouterTopology(), 'e2', 1000));
-    const result = await pipeline.precompute(makeLargePacket(1500, {
-      flags: { df: true, mf: false },
-    }));
+    const result = await pipeline.precompute(
+      makeLargePacket(1500, {
+        flags: { df: true, mf: false },
+      }),
+    );
 
     expect(result.trace.status).toBe('dropped');
     expect(result.trace.hops.some((hop) => hop.reason === 'fragmentation-needed')).toBe(true);
@@ -312,29 +336,39 @@ describe('ForwardingPipeline — DF=1 (do not fragment)', () => {
 
   it('emits ICMP type=3 code=4 back to the source', async () => {
     const pipeline = makePipeline(withEdgeMtu(singleRouterTopology(), 'e2', 1000));
-    const result = await pipeline.precompute(makeLargePacket(1500, {
-      flags: { df: true, mf: false },
-    }));
+    const result = await pipeline.precompute(
+      makeLargePacket(1500, {
+        flags: { df: true, mf: false },
+      }),
+    );
 
-    expect(result.trace.hops.some((hop) => hop.protocol === 'ICMP' && hop.event === 'deliver' && hop.nodeId === 'client-1')).toBe(true);
+    expect(
+      result.trace.hops.some(
+        (hop) => hop.protocol === 'ICMP' && hop.event === 'deliver' && hop.nodeId === 'client-1',
+      ),
+    ).toBe(true);
   });
 
   it('encodes the next-hop mtu in the ICMP sequenceNumber field', async () => {
     const pipeline = makePipeline(withEdgeMtu(singleRouterTopology(), 'e2', 1000));
-    const result = await pipeline.precompute(makeLargePacket(1500, {
-      flags: { df: true, mf: false },
-    }));
-    const icmpSnapshot = result.snapshots.find((snapshot) =>
-      snapshot.frame.payload.protocol === 1 &&
-      'type' in snapshot.frame.payload.payload &&
-      snapshot.frame.payload.payload.type === 3 &&
-      snapshot.frame.payload.payload.code === 4,
+    const result = await pipeline.precompute(
+      makeLargePacket(1500, {
+        flags: { df: true, mf: false },
+      }),
+    );
+    const icmpSnapshot = result.snapshots.find(
+      (snapshot) =>
+        snapshot.frame.payload.protocol === 1 &&
+        'type' in snapshot.frame.payload.payload &&
+        snapshot.frame.payload.payload.type === 3 &&
+        snapshot.frame.payload.payload.code === 4,
     );
 
     expect(icmpSnapshot?.frame.payload.payload.layer).toBe('L4');
     expect('sequenceNumber' in (icmpSnapshot?.frame.payload.payload ?? {})).toBe(true);
     expect(
-      icmpSnapshot?.frame.payload.payload.layer === 'L4' && 'type' in icmpSnapshot.frame.payload.payload
+      icmpSnapshot?.frame.payload.payload.layer === 'L4' &&
+        'type' in icmpSnapshot.frame.payload.payload
         ? icmpSnapshot.frame.payload.payload.sequenceNumber
         : null,
     ).toBe(1000);
@@ -342,16 +376,20 @@ describe('ForwardingPipeline — DF=1 (do not fragment)', () => {
 
   it('includes the offending IP header + first 8 bytes of L4 in ICMP data', async () => {
     const pipeline = makePipeline(withEdgeMtu(singleRouterTopology(), 'e2', 1000));
-    const result = await pipeline.precompute(makeLargePacket(1500, {
-      flags: { df: true, mf: false },
-    }));
-    const dropStep = result.trace.hops.find((hop) => hop.reason === 'fragmentation-needed')?.step ?? -1;
-    const droppedPacket = result.snapshots[dropStep]!;
-    const icmpSnapshot = result.snapshots.find((snapshot) =>
-      snapshot.frame.payload.protocol === 1 &&
-      'type' in snapshot.frame.payload.payload &&
-      snapshot.frame.payload.payload.type === 3 &&
-      snapshot.frame.payload.payload.code === 4,
+    const result = await pipeline.precompute(
+      makeLargePacket(1500, {
+        flags: { df: true, mf: false },
+      }),
+    );
+    const dropStep =
+      result.trace.hops.find((hop) => hop.reason === 'fragmentation-needed')?.step ?? -1;
+    const droppedPacket = result.snapshots[dropStep];
+    const icmpSnapshot = result.snapshots.find(
+      (snapshot) =>
+        snapshot.frame.payload.protocol === 1 &&
+        'type' in snapshot.frame.payload.payload &&
+        snapshot.frame.payload.payload.type === 3 &&
+        snapshot.frame.payload.payload.code === 4,
     )!;
     const expected = [
       ...buildIpv4HeaderBytes(droppedPacket.frame.payload),
@@ -364,29 +402,35 @@ describe('ForwardingPipeline — DF=1 (do not fragment)', () => {
 
   it('does NOT emit ICMP when source is 0.0.0.0', async () => {
     const pipeline = makePipeline(withEdgeMtu(singleRouterTopology(), 'e2', 1000));
-    const result = await pipeline.precompute(makeLargePacket(1500, {
-      srcIp: '0.0.0.0',
-      flags: { df: true, mf: false },
-    }));
+    const result = await pipeline.precompute(
+      makeLargePacket(1500, {
+        srcIp: '0.0.0.0',
+        flags: { df: true, mf: false },
+      }),
+    );
 
     expect(result.trace.hops.some((hop) => hop.protocol === 'ICMP')).toBe(false);
   });
 
   it('does NOT emit ICMP when source is 255.255.255.255', async () => {
     const pipeline = makePipeline(withEdgeMtu(singleRouterTopology(), 'e2', 1000));
-    const result = await pipeline.precompute(makeLargePacket(1500, {
-      srcIp: '255.255.255.255',
-      flags: { df: true, mf: false },
-    }));
+    const result = await pipeline.precompute(
+      makeLargePacket(1500, {
+        srcIp: '255.255.255.255',
+        flags: { df: true, mf: false },
+      }),
+    );
 
     expect(result.trace.hops.some((hop) => hop.protocol === 'ICMP')).toBe(false);
   });
 
   it('annotates the drop hop with reason=fragmentation-needed', async () => {
     const pipeline = makePipeline(withEdgeMtu(singleRouterTopology(), 'e2', 1000));
-    const result = await pipeline.precompute(makeLargePacket(1500, {
-      flags: { df: true, mf: false },
-    }));
+    const result = await pipeline.precompute(
+      makeLargePacket(1500, {
+        flags: { df: true, mf: false },
+      }),
+    );
 
     expect(result.trace.hops.find((hop) => hop.reason === 'fragmentation-needed')).toEqual(
       expect.objectContaining({
@@ -398,9 +442,11 @@ describe('ForwardingPipeline — DF=1 (do not fragment)', () => {
 
   it('passes unchanged when size <= mtu even if DF=1', async () => {
     const pipeline = makePipeline(withEdgeMtu(singleRouterTopology(), 'e2', 1500));
-    const result = await pipeline.precompute(makeLargePacket(500, {
-      flags: { df: true, mf: false },
-    }));
+    const result = await pipeline.precompute(
+      makeLargePacket(500, {
+        flags: { df: true, mf: false },
+      }),
+    );
 
     expect(result.trace.status).toBe('delivered');
     expect(result.trace.hops.some((hop) => hop.reason === 'fragmentation-needed')).toBe(false);
@@ -408,14 +454,19 @@ describe('ForwardingPipeline — DF=1 (do not fragment)', () => {
 });
 
 describe('ForwardingPipeline — regression: existing demos produce no fragmentation', () => {
-  it.each(DEMO_REGRESSION_SCENARIOS)('%s produces zero fragment/Frag-Needed hops', async (_name, topology) => {
-    const packet = buildRegressionPacket(topology);
-    expect(packet).not.toBeNull();
+  it.each(DEMO_REGRESSION_SCENARIOS)(
+    '%s produces zero fragment/Frag-Needed hops',
+    async (_name, topology) => {
+      const packet = buildRegressionPacket(topology);
+      expect(packet).not.toBeNull();
 
-    const pipeline = makePipeline(topology);
-    const result = await pipeline.precompute(packet!);
+      const pipeline = makePipeline(topology);
+      const result = await pipeline.precompute(packet!);
 
-    expect(result.trace.hops.filter((hop) => hop.action === 'fragment')).toHaveLength(0);
-    expect(result.trace.hops.filter((hop) => hop.reason === 'fragmentation-needed')).toHaveLength(0);
-  });
+      expect(result.trace.hops.filter((hop) => hop.action === 'fragment')).toHaveLength(0);
+      expect(result.trace.hops.filter((hop) => hop.reason === 'fragmentation-needed')).toHaveLength(
+        0,
+      );
+    },
+  );
 });

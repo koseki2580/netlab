@@ -14,11 +14,7 @@ function makeTopology(overrides: Partial<NetworkTopology> = {}): NetworkTopology
   };
 }
 
-function makeRouter(
-  id: string,
-  interfaces: RouterInterface[],
-  ripNetworks?: string[],
-): NetlabNode {
+function makeRouter(id: string, interfaces: RouterInterface[], ripNetworks?: string[]): NetlabNode {
   return {
     id,
     type: 'router',
@@ -131,10 +127,7 @@ describe('RipProtocol', () => {
         nodes: [
           makeRouter(
             'r1',
-            [
-              makeIface('eth0', '10.1.0.1', 24),
-              makeIface('eth1', '10.0.12.1', 30),
-            ],
+            [makeIface('eth0', '10.1.0.1', 24), makeIface('eth1', '10.0.12.1', 30)],
             ['10.1.0.0/24', '10.0.12.0/30'],
           ),
         ],
@@ -165,18 +158,12 @@ describe('RipProtocol', () => {
         nodes: [
           makeRouter(
             'r1',
-            [
-              makeIface('lan0', '10.1.0.1', 24),
-              makeIface('eth0', '10.0.12.1', 30),
-            ],
+            [makeIface('lan0', '10.1.0.1', 24), makeIface('eth0', '10.0.12.1', 30)],
             ['10.1.0.0/24'],
           ),
           makeRouter(
             'r2',
-            [
-              makeIface('eth0', '10.0.12.2', 30),
-              makeIface('lan0', '10.2.0.1', 24),
-            ],
+            [makeIface('eth0', '10.0.12.2', 30), makeIface('lan0', '10.2.0.1', 24)],
             ['10.2.0.0/24'],
           ),
         ],
@@ -198,27 +185,35 @@ describe('RipProtocol', () => {
     it('selects route with lower metric when multiple paths exist', () => {
       const topology = makeTopology({
         nodes: [
-          makeRouter('r1', [
-            makeIface('to-r2', '10.0.12.1', 30),
-            makeIface('to-r3', '10.0.13.1', 30),
-          ], []),
-          makeRouter('r2', [
-            makeIface('to-r1', '10.0.12.2', 30),
-            makeIface('to-r4', '10.0.24.1', 30),
-          ], []),
-          makeRouter('r3', [
-            makeIface('to-r1', '10.0.13.2', 30),
-            makeIface('to-r5', '10.0.35.1', 30),
-          ], []),
-          makeRouter('r4', [
-            makeIface('to-r2', '10.0.24.2', 30),
-            makeIface('to-r5', '10.0.45.2', 30),
-            makeIface('lan0', '10.4.0.1', 24),
-          ], ['10.4.0.0/24']),
-          makeRouter('r5', [
-            makeIface('to-r3', '10.0.35.2', 30),
-            makeIface('to-r4', '10.0.45.1', 30),
-          ], []),
+          makeRouter(
+            'r1',
+            [makeIface('to-r2', '10.0.12.1', 30), makeIface('to-r3', '10.0.13.1', 30)],
+            [],
+          ),
+          makeRouter(
+            'r2',
+            [makeIface('to-r1', '10.0.12.2', 30), makeIface('to-r4', '10.0.24.1', 30)],
+            [],
+          ),
+          makeRouter(
+            'r3',
+            [makeIface('to-r1', '10.0.13.2', 30), makeIface('to-r5', '10.0.35.1', 30)],
+            [],
+          ),
+          makeRouter(
+            'r4',
+            [
+              makeIface('to-r2', '10.0.24.2', 30),
+              makeIface('to-r5', '10.0.45.2', 30),
+              makeIface('lan0', '10.4.0.1', 24),
+            ],
+            ['10.4.0.0/24'],
+          ),
+          makeRouter(
+            'r5',
+            [makeIface('to-r3', '10.0.35.2', 30), makeIface('to-r4', '10.0.45.1', 30)],
+            [],
+          ),
         ],
         edges: [
           makeEdge('e12', 'r1', 'r2'),
@@ -229,7 +224,9 @@ describe('RipProtocol', () => {
         ],
       });
 
-      expect(findRoute(new RipProtocol().computeRoutes(topology), 'r1', '10.4.0.0/24')).toMatchObject({
+      expect(
+        findRoute(new RipProtocol().computeRoutes(topology), 'r1', '10.4.0.0/24'),
+      ).toMatchObject({
         nextHop: '10.0.12.2',
         metric: 2,
       });
@@ -246,26 +243,28 @@ describe('RipProtocol', () => {
     it('handles linear chain R1—R2—R3 correctly', () => {
       const topology = makeTopology({
         nodes: [
-          makeRouter('r1', [
-            makeIface('lan0', '10.1.0.1', 24),
-            makeIface('to-r2', '10.0.12.1', 30),
-          ], ['10.1.0.0/24']),
-          makeRouter('r2', [
-            makeIface('to-r1', '10.0.12.2', 30),
-            makeIface('to-r3', '10.0.23.2', 30),
-          ], []),
-          makeRouter('r3', [
-            makeIface('to-r2', '10.0.23.3', 30),
-            makeIface('lan0', '10.3.0.1', 24),
-          ], ['10.3.0.0/24']),
+          makeRouter(
+            'r1',
+            [makeIface('lan0', '10.1.0.1', 24), makeIface('to-r2', '10.0.12.1', 30)],
+            ['10.1.0.0/24'],
+          ),
+          makeRouter(
+            'r2',
+            [makeIface('to-r1', '10.0.12.2', 30), makeIface('to-r3', '10.0.23.2', 30)],
+            [],
+          ),
+          makeRouter(
+            'r3',
+            [makeIface('to-r2', '10.0.23.3', 30), makeIface('lan0', '10.3.0.1', 24)],
+            ['10.3.0.0/24'],
+          ),
         ],
-        edges: [
-          makeEdge('e12', 'r1', 'r2'),
-          makeEdge('e23', 'r2', 'r3'),
-        ],
+        edges: [makeEdge('e12', 'r1', 'r2'), makeEdge('e23', 'r2', 'r3')],
       });
 
-      expect(findRoute(new RipProtocol().computeRoutes(topology), 'r1', '10.3.0.0/24')).toMatchObject({
+      expect(
+        findRoute(new RipProtocol().computeRoutes(topology), 'r1', '10.3.0.0/24'),
+      ).toMatchObject({
         nextHop: '10.0.12.2',
         metric: 2,
       });
@@ -274,19 +273,25 @@ describe('RipProtocol', () => {
     it('handles triangle topology with shortest path selection', () => {
       const topology = makeTopology({
         nodes: [
-          makeRouter('r1', [
-            makeIface('to-r2', '10.0.12.1', 30),
-            makeIface('to-r3', '10.0.13.1', 30),
-          ], []),
-          makeRouter('r2', [
-            makeIface('to-r1', '10.0.12.2', 30),
-            makeIface('to-r3', '10.0.23.2', 30),
-          ], []),
-          makeRouter('r3', [
-            makeIface('to-r1', '10.0.13.3', 30),
-            makeIface('to-r2', '10.0.23.3', 30),
-            makeIface('lan0', '10.3.0.1', 24),
-          ], ['10.3.0.0/24']),
+          makeRouter(
+            'r1',
+            [makeIface('to-r2', '10.0.12.1', 30), makeIface('to-r3', '10.0.13.1', 30)],
+            [],
+          ),
+          makeRouter(
+            'r2',
+            [makeIface('to-r1', '10.0.12.2', 30), makeIface('to-r3', '10.0.23.2', 30)],
+            [],
+          ),
+          makeRouter(
+            'r3',
+            [
+              makeIface('to-r1', '10.0.13.3', 30),
+              makeIface('to-r2', '10.0.23.3', 30),
+              makeIface('lan0', '10.3.0.1', 24),
+            ],
+            ['10.3.0.0/24'],
+          ),
         ],
         edges: [
           makeEdge('e12', 'r1', 'r2'),
@@ -295,7 +300,9 @@ describe('RipProtocol', () => {
         ],
       });
 
-      expect(findRoute(new RipProtocol().computeRoutes(topology), 'r1', '10.3.0.0/24')).toMatchObject({
+      expect(
+        findRoute(new RipProtocol().computeRoutes(topology), 'r1', '10.3.0.0/24'),
+      ).toMatchObject({
         nextHop: '10.0.13.3',
         metric: 1,
       });
@@ -304,11 +311,15 @@ describe('RipProtocol', () => {
     it('only advertises networks listed in ripConfig.networks', () => {
       const topology = makeTopology({
         nodes: [
-          makeRouter('r1', [
-            makeIface('lan0', '10.1.0.1', 24),
-            makeIface('mgmt0', '192.168.1.1', 24),
-            makeIface('to-r2', '10.0.12.1', 30),
-          ], ['10.1.0.0/24']),
+          makeRouter(
+            'r1',
+            [
+              makeIface('lan0', '10.1.0.1', 24),
+              makeIface('mgmt0', '192.168.1.1', 24),
+              makeIface('to-r2', '10.0.12.1', 30),
+            ],
+            ['10.1.0.0/24'],
+          ),
           makeRouter('r2', [makeIface('to-r1', '10.0.12.2', 30)], []),
         ],
         edges: [makeEdge('e12', 'r1', 'r2')],
@@ -323,23 +334,22 @@ describe('RipProtocol', () => {
     it('ignores routers without ripConfig', () => {
       const topology = makeTopology({
         nodes: [
-          makeRouter('r1', [
-            makeIface('lan0', '10.1.0.1', 24),
-            makeIface('to-r2', '10.0.12.1', 30),
-          ], ['10.1.0.0/24']),
+          makeRouter(
+            'r1',
+            [makeIface('lan0', '10.1.0.1', 24), makeIface('to-r2', '10.0.12.1', 30)],
+            ['10.1.0.0/24'],
+          ),
           makeRouter('r2', [
             makeIface('to-r1', '10.0.12.2', 30),
             makeIface('to-r3', '10.0.23.2', 30),
           ]),
-          makeRouter('r3', [
-            makeIface('to-r2', '10.0.23.3', 30),
-            makeIface('lan0', '10.3.0.1', 24),
-          ], ['10.3.0.0/24']),
+          makeRouter(
+            'r3',
+            [makeIface('to-r2', '10.0.23.3', 30), makeIface('lan0', '10.3.0.1', 24)],
+            ['10.3.0.0/24'],
+          ),
         ],
-        edges: [
-          makeEdge('e12', 'r1', 'r2'),
-          makeEdge('e23', 'r2', 'r3'),
-        ],
+        edges: [makeEdge('e12', 'r1', 'r2'), makeEdge('e23', 'r2', 'r3')],
       });
 
       const routes = new RipProtocol().computeRoutes(topology);
@@ -352,14 +362,16 @@ describe('RipProtocol', () => {
       const topology = makeTopology({
         nodes: [
           makeRouter('r1', [makeIface('to-r2', '10.0.12.1', 30)], []),
-          makeRouter('r2', [
-            makeIface('to-r1', '10.0.12.2', 30),
-            makeIface('to-r3', '10.0.23.2', 30),
-          ], []),
-          makeRouter('r3', [
-            makeIface('to-r2', '10.0.23.3', 30),
-            makeIface('lan0', '10.3.0.1', 24),
-          ], ['10.3.0.0/24']),
+          makeRouter(
+            'r2',
+            [makeIface('to-r1', '10.0.12.2', 30), makeIface('to-r3', '10.0.23.2', 30)],
+            [],
+          ),
+          makeRouter(
+            'r3',
+            [makeIface('to-r2', '10.0.23.3', 30), makeIface('lan0', '10.3.0.1', 24)],
+            ['10.3.0.0/24'],
+          ),
         ],
         edges: [
           makeEdge('e12', 'r1', 'r2', 'to-r2', 'to-r1'),
@@ -367,7 +379,9 @@ describe('RipProtocol', () => {
         ],
       });
 
-      expect(findRoute(new RipProtocol().computeRoutes(topology), 'r1', '10.3.0.0/24')).toMatchObject({
+      expect(
+        findRoute(new RipProtocol().computeRoutes(topology), 'r1', '10.3.0.0/24'),
+      ).toMatchObject({
         nextHop: '10.0.12.2',
       });
     });
@@ -375,14 +389,16 @@ describe('RipProtocol', () => {
     it('uses adminDistance 120 for all routes', () => {
       const topology = makeTopology({
         nodes: [
-          makeRouter('r1', [
-            makeIface('lan0', '10.1.0.1', 24),
-            makeIface('to-r2', '10.0.12.1', 30),
-          ], ['10.1.0.0/24']),
-          makeRouter('r2', [
-            makeIface('to-r1', '10.0.12.2', 30),
-            makeIface('lan0', '10.2.0.1', 24),
-          ], ['10.2.0.0/24']),
+          makeRouter(
+            'r1',
+            [makeIface('lan0', '10.1.0.1', 24), makeIface('to-r2', '10.0.12.1', 30)],
+            ['10.1.0.0/24'],
+          ),
+          makeRouter(
+            'r2',
+            [makeIface('to-r1', '10.0.12.2', 30), makeIface('lan0', '10.2.0.1', 24)],
+            ['10.2.0.0/24'],
+          ),
         ],
         edges: [makeEdge('e12', 'r1', 'r2')],
       });

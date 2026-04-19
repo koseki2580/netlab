@@ -1,19 +1,20 @@
 import {
   createContext,
+  useCallback,
   useContext,
-  useState,
   useEffect,
   useMemo,
-  useCallback,
   useRef,
+  useState,
   type ReactNode,
 } from 'react';
-import { SimulationEngine } from './SimulationEngine';
 import { useNetlabContext } from '../components/NetlabContext';
-import { useOptionalFailure } from './FailureContext';
+import { NetlabError } from '../errors';
 import type { InFlightPacket } from '../types/packets';
-import type { SimulationState } from '../types/simulation';
 import type { DhcpLeaseState, DnsCache } from '../types/services';
+import type { SimulationState } from '../types/simulation';
+import { useOptionalFailure } from './FailureContext';
+import { SimulationEngine } from './SimulationEngine';
 
 export interface SimulationContextValue {
   engine: SimulationEngine;
@@ -45,10 +46,7 @@ export function SimulationProvider({
   const { topology, hookEngine } = useNetlabContext();
   const failureCtx = useOptionalFailure();
 
-  const engine = useMemo(
-    () => new SimulationEngine(topology, hookEngine),
-    [topology, hookEngine],
-  );
+  const engine = useMemo(() => new SimulationEngine(topology, hookEngine), [topology, hookEngine]);
 
   const [state, setState] = useState<SimulationState>(() => engine.getState());
   const [currentSpeed, setCurrentSpeed] = useState<number>(
@@ -65,6 +63,13 @@ export function SimulationProvider({
     setIsRecomputing(false);
     return engine.subscribe(setState);
   }, [engine]);
+
+  // E2E-mode: expose simulation state on window.__NETLAB_TRACE__ for Playwright golden tests.
+  // Gated by VITE_E2E so production/demo builds don't expose test hooks.
+  useEffect(() => {
+    if ((import.meta as any).env.VITE_E2E !== 'true') return;
+    (window as any).__NETLAB_TRACE__ = { traces: state.traces, lastStatus: state.status };
+  }, [state.traces, state.status]);
 
   useEffect(() => {
     if (animationSpeed === undefined) return;
@@ -88,7 +93,8 @@ export function SimulationProvider({
     setIsRecomputing(true);
     engine.reset();
 
-    void engine.resend(nextFailureState)
+    void engine
+      .resend(nextFailureState)
       .then(() => {
         if (recomputeSequenceRef.current !== sequence) return;
         if (shouldResume) {
@@ -123,15 +129,9 @@ export function SimulationProvider({
     [engine],
   );
 
-  const getDnsCache = useCallback(
-    (nodeId: string) => engine.getDnsCache(nodeId),
-    [engine],
-  );
+  const getDnsCache = useCallback((nodeId: string) => engine.getDnsCache(nodeId), [engine]);
 
-  const exportPcap = useCallback(
-    (traceId?: string) => engine.exportPcap(traceId),
-    [engine],
-  );
+  const exportPcap = useCallback((traceId?: string) => engine.exportPcap(traceId), [engine]);
 
   const setAnimationSpeed = useCallback(
     (ms: number) => {
@@ -170,17 +170,16 @@ export function SimulationProvider({
     ],
   );
 
-  return (
-    <SimulationContext.Provider value={value}>
-      {children}
-    </SimulationContext.Provider>
-  );
+  return <SimulationContext.Provider value={value}>{children}</SimulationContext.Provider>;
 }
 
 export function useSimulation(): SimulationContextValue {
   const ctx = useContext(SimulationContext);
   if (!ctx) {
-    throw new Error('[netlab] useSimulation must be used within <SimulationProvider>');
+    throw new NetlabError({
+      code: 'config/missing-provider',
+      message: '[netlab] useSimulation must be used within <SimulationProvider>',
+    });
   }
   return ctx;
 }

@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  TcpStateMachine,
-  describeTransition,
-  transition,
-} from './TcpStateMachine';
+import { TcpStateMachine, describeTransition, transition } from './TcpStateMachine';
 import type { TcpState } from '../../types/tcp';
 
 describe('TcpStateMachine', () => {
@@ -145,15 +141,15 @@ describe('TcpStateMachine', () => {
 
   describe('describeTransition', () => {
     it('returns readable description for SYN_SENT -> ESTABLISHED', () => {
-      expect(
-        describeTransition('SYN_SENT', 'SYN_ACK_RECEIVED', 'ESTABLISHED'),
-      ).toBe('SYN_SENT --SYN_ACK_RECEIVED--> ESTABLISHED');
+      expect(describeTransition('SYN_SENT', 'SYN_ACK_RECEIVED', 'ESTABLISHED')).toBe(
+        'SYN_SENT --SYN_ACK_RECEIVED--> ESTABLISHED',
+      );
     });
 
     it('returns readable description for connection teardown step', () => {
-      expect(
-        describeTransition('ESTABLISHED', 'FIN_RECEIVED', 'CLOSE_WAIT'),
-      ).toBe('ESTABLISHED --FIN_RECEIVED--> CLOSE_WAIT');
+      expect(describeTransition('ESTABLISHED', 'FIN_RECEIVED', 'CLOSE_WAIT')).toBe(
+        'ESTABLISHED --FIN_RECEIVED--> CLOSE_WAIT',
+      );
     });
   });
 });

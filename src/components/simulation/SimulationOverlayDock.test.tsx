@@ -10,7 +10,8 @@ vi.mock('../controls/RouteTable', async () => {
   const React = await import('react');
 
   return {
-    RouteTablePanel: () => React.createElement('div', { 'data-testid': 'route-table-panel' }, 'route-table'),
+    RouteTablePanel: () =>
+      React.createElement('div', { 'data-testid': 'route-table-panel' }, 'route-table'),
   };
 });
 
@@ -18,7 +19,8 @@ vi.mock('./PacketViewer', async () => {
   const React = await import('react');
 
   return {
-    PacketViewerPanel: () => React.createElement('div', { 'data-testid': 'packet-viewer-panel' }, 'packet-viewer'),
+    PacketViewerPanel: () =>
+      React.createElement('div', { 'data-testid': 'packet-viewer-panel' }, 'packet-viewer'),
   };
 });
 

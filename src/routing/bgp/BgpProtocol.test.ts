@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  ADMIN_DISTANCES,
-  type BgpNeighborConfig,
-  type RouterInterface,
-} from '../../types/routing';
+import { ADMIN_DISTANCES, type BgpNeighborConfig, type RouterInterface } from '../../types/routing';
 import type { NetlabNode, NetworkTopology } from '../../types/topology';
 import { BgpProtocol, bgpProtocol } from './BgpProtocol';
 
@@ -121,7 +117,9 @@ describe('BgpProtocol', () => {
         ],
       });
 
-      expect(findRoute(new BgpProtocol().computeRoutes(topology), 'r1', '203.0.113.0/24')).toMatchObject({
+      expect(
+        findRoute(new BgpProtocol().computeRoutes(topology), 'r1', '203.0.113.0/24'),
+      ).toMatchObject({
         nextHop: 'direct',
         protocol: 'bgp',
       });
@@ -141,14 +139,8 @@ describe('BgpProtocol', () => {
             'r2',
             65002,
             '2.2.2.2',
-            [
-              makeIface('to-r1', '10.0.12.2'),
-              makeIface('to-r3', '10.0.23.1'),
-            ],
-            [
-              makeNeighbor('10.0.12.1', 65001),
-              makeNeighbor('10.0.23.2', 65003),
-            ],
+            [makeIface('to-r1', '10.0.12.2'), makeIface('to-r3', '10.0.23.1')],
+            [makeNeighbor('10.0.12.1', 65001), makeNeighbor('10.0.23.2', 65003)],
           ),
           makeRouter(
             'r3',
@@ -161,7 +153,9 @@ describe('BgpProtocol', () => {
         ],
       });
 
-      expect(findRoute(new BgpProtocol().computeRoutes(topology), 'r1', '203.0.113.0/24')).toMatchObject({
+      expect(
+        findRoute(new BgpProtocol().computeRoutes(topology), 'r1', '203.0.113.0/24'),
+      ).toMatchObject({
         nextHop: '10.0.12.2',
         metric: 2,
       });
@@ -174,14 +168,8 @@ describe('BgpProtocol', () => {
             'r1',
             65001,
             '1.1.1.1',
-            [
-              makeIface('to-r2', '10.0.12.1'),
-              makeIface('to-r3', '10.0.13.1'),
-            ],
-            [
-              makeNeighbor('10.0.12.2', 65001),
-              makeNeighbor('10.0.13.2', 65002),
-            ],
+            [makeIface('to-r2', '10.0.12.1'), makeIface('to-r3', '10.0.13.1')],
+            [makeNeighbor('10.0.12.2', 65001), makeNeighbor('10.0.13.2', 65002)],
           ),
           makeRouter(
             'r2',
@@ -201,7 +189,9 @@ describe('BgpProtocol', () => {
         ],
       });
 
-      expect(findRoute(new BgpProtocol().computeRoutes(topology), 'r2', '203.0.113.0/24')).toMatchObject({
+      expect(
+        findRoute(new BgpProtocol().computeRoutes(topology), 'r2', '203.0.113.0/24'),
+      ).toMatchObject({
         nextHop: '10.0.12.1',
         metric: 1,
       });
@@ -214,46 +204,30 @@ describe('BgpProtocol', () => {
             'r1',
             65001,
             '1.1.1.1',
-            [
-              makeIface('to-r2', '10.0.12.1'),
-              makeIface('to-r3', '10.0.13.1'),
-            ],
-            [
-              makeNeighbor('10.0.12.2', 65002),
-              makeNeighbor('10.0.13.2', 65003),
-            ],
+            [makeIface('to-r2', '10.0.12.1'), makeIface('to-r3', '10.0.13.1')],
+            [makeNeighbor('10.0.12.2', 65002), makeNeighbor('10.0.13.2', 65003)],
             ['198.51.100.0/24'],
           ),
           makeRouter(
             'r2',
             65002,
             '2.2.2.2',
-            [
-              makeIface('to-r1', '10.0.12.2'),
-              makeIface('to-r3', '10.0.23.1'),
-            ],
-            [
-              makeNeighbor('10.0.12.1', 65001),
-              makeNeighbor('10.0.23.2', 65003),
-            ],
+            [makeIface('to-r1', '10.0.12.2'), makeIface('to-r3', '10.0.23.1')],
+            [makeNeighbor('10.0.12.1', 65001), makeNeighbor('10.0.23.2', 65003)],
           ),
           makeRouter(
             'r3',
             65003,
             '3.3.3.3',
-            [
-              makeIface('to-r1', '10.0.13.2'),
-              makeIface('to-r2', '10.0.23.2'),
-            ],
-            [
-              makeNeighbor('10.0.13.1', 65001),
-              makeNeighbor('10.0.23.1', 65002),
-            ],
+            [makeIface('to-r1', '10.0.13.2'), makeIface('to-r2', '10.0.23.2')],
+            [makeNeighbor('10.0.13.1', 65001), makeNeighbor('10.0.23.1', 65002)],
           ),
         ],
       });
 
-      expect(findRoute(new BgpProtocol().computeRoutes(topology), 'r1', '198.51.100.0/24')).toMatchObject({
+      expect(
+        findRoute(new BgpProtocol().computeRoutes(topology), 'r1', '198.51.100.0/24'),
+      ).toMatchObject({
         nextHop: 'direct',
         metric: 0,
       });
@@ -266,14 +240,8 @@ describe('BgpProtocol', () => {
             'r1',
             65001,
             '1.1.1.1',
-            [
-              makeIface('to-r2', '10.0.12.1'),
-              makeIface('to-r3', '10.0.13.1'),
-            ],
-            [
-              makeNeighbor('10.0.12.2', 65002),
-              makeNeighbor('10.0.13.2', 65003),
-            ],
+            [makeIface('to-r2', '10.0.12.1'), makeIface('to-r3', '10.0.13.1')],
+            [makeNeighbor('10.0.12.2', 65002), makeNeighbor('10.0.13.2', 65003)],
           ),
           makeRouter(
             'r2',
@@ -287,14 +255,8 @@ describe('BgpProtocol', () => {
             'r3',
             65003,
             '3.3.3.3',
-            [
-              makeIface('to-r1', '10.0.13.2'),
-              makeIface('to-r4', '10.0.34.1'),
-            ],
-            [
-              makeNeighbor('10.0.13.1', 65001),
-              makeNeighbor('10.0.34.2', 65004),
-            ],
+            [makeIface('to-r1', '10.0.13.2'), makeIface('to-r4', '10.0.34.1')],
+            [makeNeighbor('10.0.13.1', 65001), makeNeighbor('10.0.34.2', 65004)],
           ),
           makeRouter(
             'r4',
@@ -307,7 +269,9 @@ describe('BgpProtocol', () => {
         ],
       });
 
-      expect(findRoute(new BgpProtocol().computeRoutes(topology), 'r1', '203.0.113.0/24')).toMatchObject({
+      expect(
+        findRoute(new BgpProtocol().computeRoutes(topology), 'r1', '203.0.113.0/24'),
+      ).toMatchObject({
         nextHop: '10.0.12.2',
         metric: 1,
       });
@@ -320,10 +284,7 @@ describe('BgpProtocol', () => {
             'r1',
             65001,
             '1.1.1.1',
-            [
-              makeIface('to-r2', '10.0.12.1'),
-              makeIface('to-r3', '10.0.13.1'),
-            ],
+            [makeIface('to-r2', '10.0.12.1'), makeIface('to-r3', '10.0.13.1')],
             [
               makeNeighbor('10.0.12.2', 65002, { localPref: 200 }),
               makeNeighbor('10.0.13.2', 65003, { localPref: 100 }),
@@ -348,7 +309,9 @@ describe('BgpProtocol', () => {
         ],
       });
 
-      expect(findRoute(new BgpProtocol().computeRoutes(topology), 'r1', '203.0.113.0/24')).toMatchObject({
+      expect(
+        findRoute(new BgpProtocol().computeRoutes(topology), 'r1', '203.0.113.0/24'),
+      ).toMatchObject({
         nextHop: '10.0.12.2',
       });
     });
@@ -360,27 +323,15 @@ describe('BgpProtocol', () => {
             'r1',
             65001,
             '1.1.1.1',
-            [
-              makeIface('to-r2', '10.0.12.1'),
-              makeIface('to-r4', '10.0.14.1'),
-            ],
-            [
-              makeNeighbor('10.0.12.2', 65001),
-              makeNeighbor('10.0.14.2', 65004),
-            ],
+            [makeIface('to-r2', '10.0.12.1'), makeIface('to-r4', '10.0.14.1')],
+            [makeNeighbor('10.0.12.2', 65001), makeNeighbor('10.0.14.2', 65004)],
           ),
           makeRouter(
             'r2',
             65001,
             '1.1.1.2',
-            [
-              makeIface('to-r1', '10.0.12.2'),
-              makeIface('to-r3', '10.0.23.1'),
-            ],
-            [
-              makeNeighbor('10.0.12.1', 65001),
-              makeNeighbor('10.0.23.2', 65003),
-            ],
+            [makeIface('to-r1', '10.0.12.2'), makeIface('to-r3', '10.0.23.1')],
+            [makeNeighbor('10.0.12.1', 65001), makeNeighbor('10.0.23.2', 65003)],
           ),
           makeRouter(
             'r3',
@@ -401,7 +352,9 @@ describe('BgpProtocol', () => {
         ],
       });
 
-      expect(findRoute(new BgpProtocol().computeRoutes(topology), 'r1', '203.0.113.0/24')).toMatchObject({
+      expect(
+        findRoute(new BgpProtocol().computeRoutes(topology), 'r1', '203.0.113.0/24'),
+      ).toMatchObject({
         nextHop: '10.0.14.2',
         adminDistance: 20,
       });
@@ -414,14 +367,8 @@ describe('BgpProtocol', () => {
             'r1',
             65001,
             '1.1.1.1',
-            [
-              makeIface('to-r2', '10.0.12.1'),
-              makeIface('to-r3', '10.0.13.1'),
-            ],
-            [
-              makeNeighbor('10.0.12.2', 65002),
-              makeNeighbor('10.0.13.2', 65003),
-            ],
+            [makeIface('to-r2', '10.0.12.1'), makeIface('to-r3', '10.0.13.1')],
+            [makeNeighbor('10.0.12.2', 65002), makeNeighbor('10.0.13.2', 65003)],
           ),
           makeRouter(
             'r2',
@@ -442,7 +389,9 @@ describe('BgpProtocol', () => {
         ],
       });
 
-      expect(findRoute(new BgpProtocol().computeRoutes(topology), 'r1', '203.0.113.0/24')).toMatchObject({
+      expect(
+        findRoute(new BgpProtocol().computeRoutes(topology), 'r1', '203.0.113.0/24'),
+      ).toMatchObject({
         nextHop: '10.0.13.2',
       });
     });
@@ -454,46 +403,30 @@ describe('BgpProtocol', () => {
             'r1',
             65001,
             '1.1.1.1',
-            [
-              makeIface('to-r2', '10.0.12.1'),
-              makeIface('to-r3', '10.0.13.1'),
-            ],
-            [
-              makeNeighbor('10.0.12.2', 65002),
-              makeNeighbor('10.0.13.2', 65003),
-            ],
+            [makeIface('to-r2', '10.0.12.1'), makeIface('to-r3', '10.0.13.1')],
+            [makeNeighbor('10.0.12.2', 65002), makeNeighbor('10.0.13.2', 65003)],
           ),
           makeRouter(
             'r2',
             65002,
             '2.2.2.2',
-            [
-              makeIface('to-r1', '10.0.12.2'),
-              makeIface('to-r3', '10.0.23.1'),
-            ],
-            [
-              makeNeighbor('10.0.12.1', 65001),
-              makeNeighbor('10.0.23.2', 65003),
-            ],
+            [makeIface('to-r1', '10.0.12.2'), makeIface('to-r3', '10.0.23.1')],
+            [makeNeighbor('10.0.12.1', 65001), makeNeighbor('10.0.23.2', 65003)],
           ),
           makeRouter(
             'r3',
             65003,
             '3.3.3.3',
-            [
-              makeIface('to-r1', '10.0.13.2'),
-              makeIface('to-r2', '10.0.23.2'),
-            ],
-            [
-              makeNeighbor('10.0.13.1', 65001),
-              makeNeighbor('10.0.23.1', 65002),
-            ],
+            [makeIface('to-r1', '10.0.13.2'), makeIface('to-r2', '10.0.23.2')],
+            [makeNeighbor('10.0.13.1', 65001), makeNeighbor('10.0.23.1', 65002)],
             ['203.0.113.0/24'],
           ),
         ],
       });
 
-      expect(findRoute(new BgpProtocol().computeRoutes(topology), 'r1', '203.0.113.0/24')).toMatchObject({
+      expect(
+        findRoute(new BgpProtocol().computeRoutes(topology), 'r1', '203.0.113.0/24'),
+      ).toMatchObject({
         nextHop: '10.0.13.2',
         metric: 1,
       });
@@ -520,7 +453,9 @@ describe('BgpProtocol', () => {
         ],
       });
 
-      expect(findRoute(new BgpProtocol().computeRoutes(topology), 'r1', '203.0.113.0/24')).toMatchObject({
+      expect(
+        findRoute(new BgpProtocol().computeRoutes(topology), 'r1', '203.0.113.0/24'),
+      ).toMatchObject({
         adminDistance: 20,
       });
     });
@@ -532,14 +467,8 @@ describe('BgpProtocol', () => {
             'r1',
             65001,
             '1.1.1.1',
-            [
-              makeIface('to-r2', '10.0.12.1'),
-              makeIface('to-r3', '10.0.13.1'),
-            ],
-            [
-              makeNeighbor('10.0.12.2', 65001),
-              makeNeighbor('10.0.13.2', 65002),
-            ],
+            [makeIface('to-r2', '10.0.12.1'), makeIface('to-r3', '10.0.13.1')],
+            [makeNeighbor('10.0.12.2', 65001), makeNeighbor('10.0.13.2', 65002)],
           ),
           makeRouter(
             'r2',
@@ -559,7 +488,9 @@ describe('BgpProtocol', () => {
         ],
       });
 
-      expect(findRoute(new BgpProtocol().computeRoutes(topology), 'r2', '203.0.113.0/24')).toMatchObject({
+      expect(
+        findRoute(new BgpProtocol().computeRoutes(topology), 'r2', '203.0.113.0/24'),
+      ).toMatchObject({
         adminDistance: 200,
       });
     });

@@ -57,7 +57,9 @@ describe('NetlabThemeScope', () => {
     const scope = container?.firstElementChild as HTMLDivElement | null;
     expect(scope).not.toBeNull();
     expect(scope?.style.getPropertyValue('--netlab-bg-primary')).toBe(NETLAB_LIGHT_THEME.bgPrimary);
-    expect(scope?.style.getPropertyValue('--netlab-text-primary')).toBe(NETLAB_LIGHT_THEME.textPrimary);
+    expect(scope?.style.getPropertyValue('--netlab-text-primary')).toBe(
+      NETLAB_LIGHT_THEME.textPrimary,
+    );
     expect(scope?.style.background).toBe('var(--netlab-bg-primary)');
   });
 });

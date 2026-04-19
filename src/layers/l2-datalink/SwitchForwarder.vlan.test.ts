@@ -119,8 +119,20 @@ describe('SwitchForwarder — VLAN scenarios', () => {
         makeHost('host-a1', '10.0.10.11', '02:00:00:00:10:11'),
         makeHost('host-a2', '10.0.10.12', '02:00:00:00:10:12'),
         makeSwitch('switch-1', [
-          { id: 'p1', name: 'fa0/1', macAddress: '02:00:00:10:00:01', vlanMode: 'access', accessVlan: 10 },
-          { id: 'p2', name: 'fa0/2', macAddress: '02:00:00:10:00:02', vlanMode: 'access', accessVlan: 10 },
+          {
+            id: 'p1',
+            name: 'fa0/1',
+            macAddress: '02:00:00:10:00:01',
+            vlanMode: 'access',
+            accessVlan: 10,
+          },
+          {
+            id: 'p2',
+            name: 'fa0/2',
+            macAddress: '02:00:00:10:00:02',
+            vlanMode: 'access',
+            accessVlan: 10,
+          },
         ]),
       ],
       [
@@ -158,8 +170,20 @@ describe('SwitchForwarder — VLAN scenarios', () => {
         makeHost('host-a1', '10.0.10.11', '02:00:00:00:10:11'),
         makeHost('host-b1', '10.0.20.21', '02:00:00:00:20:21'),
         makeSwitch('switch-1', [
-          { id: 'p1', name: 'fa0/1', macAddress: '02:00:00:10:00:01', vlanMode: 'access', accessVlan: 10 },
-          { id: 'p2', name: 'fa0/2', macAddress: '02:00:00:10:00:02', vlanMode: 'access', accessVlan: 20 },
+          {
+            id: 'p1',
+            name: 'fa0/1',
+            macAddress: '02:00:00:10:00:01',
+            vlanMode: 'access',
+            accessVlan: 10,
+          },
+          {
+            id: 'p2',
+            name: 'fa0/2',
+            macAddress: '02:00:00:10:00:02',
+            vlanMode: 'access',
+            accessVlan: 20,
+          },
         ]),
       ],
       [
@@ -197,14 +221,50 @@ describe('SwitchForwarder — VLAN scenarios', () => {
         makeHost('host-a2', '10.0.10.12', '02:00:00:00:10:12'),
         makeHost('host-b2', '10.0.20.22', '02:00:00:00:20:22'),
         makeSwitch('switch-1', [
-          { id: 'p1', name: 'fa0/1', macAddress: '02:00:00:10:00:01', vlanMode: 'access', accessVlan: 10 },
-          { id: 'p2', name: 'fa0/2', macAddress: '02:00:00:10:00:02', vlanMode: 'access', accessVlan: 20 },
-          { id: 'p3', name: 'fa0/24', macAddress: '02:00:00:10:00:24', vlanMode: 'trunk', trunkAllowedVlans: [10, 20] },
+          {
+            id: 'p1',
+            name: 'fa0/1',
+            macAddress: '02:00:00:10:00:01',
+            vlanMode: 'access',
+            accessVlan: 10,
+          },
+          {
+            id: 'p2',
+            name: 'fa0/2',
+            macAddress: '02:00:00:10:00:02',
+            vlanMode: 'access',
+            accessVlan: 20,
+          },
+          {
+            id: 'p3',
+            name: 'fa0/24',
+            macAddress: '02:00:00:10:00:24',
+            vlanMode: 'trunk',
+            trunkAllowedVlans: [10, 20],
+          },
         ]),
         makeSwitch('switch-2', [
-          { id: 'p1', name: 'fa0/1', macAddress: '02:00:00:20:00:01', vlanMode: 'access', accessVlan: 10 },
-          { id: 'p2', name: 'fa0/2', macAddress: '02:00:00:20:00:02', vlanMode: 'access', accessVlan: 20 },
-          { id: 'p3', name: 'fa0/24', macAddress: '02:00:00:20:00:24', vlanMode: 'trunk', trunkAllowedVlans: [10, 20] },
+          {
+            id: 'p1',
+            name: 'fa0/1',
+            macAddress: '02:00:00:20:00:01',
+            vlanMode: 'access',
+            accessVlan: 10,
+          },
+          {
+            id: 'p2',
+            name: 'fa0/2',
+            macAddress: '02:00:00:20:00:02',
+            vlanMode: 'access',
+            accessVlan: 20,
+          },
+          {
+            id: 'p3',
+            name: 'fa0/24',
+            macAddress: '02:00:00:20:00:24',
+            vlanMode: 'trunk',
+            trunkAllowedVlans: [10, 20],
+          },
         ]),
       ],
       [
@@ -276,12 +336,36 @@ describe('SwitchForwarder — VLAN scenarios', () => {
         makeHost('host-n1', '10.0.1.11', '02:00:00:00:01:11'),
         makeHost('host-n2', '10.0.1.12', '02:00:00:00:01:12'),
         makeSwitch('switch-1', [
-          { id: 'p1', name: 'fa0/1', macAddress: '02:00:00:10:00:01', vlanMode: 'access', accessVlan: 1 },
-          { id: 'p3', name: 'fa0/24', macAddress: '02:00:00:10:00:24', vlanMode: 'trunk', trunkAllowedVlans: [10, 20] },
+          {
+            id: 'p1',
+            name: 'fa0/1',
+            macAddress: '02:00:00:10:00:01',
+            vlanMode: 'access',
+            accessVlan: 1,
+          },
+          {
+            id: 'p3',
+            name: 'fa0/24',
+            macAddress: '02:00:00:10:00:24',
+            vlanMode: 'trunk',
+            trunkAllowedVlans: [10, 20],
+          },
         ]),
         makeSwitch('switch-2', [
-          { id: 'p1', name: 'fa0/1', macAddress: '02:00:00:20:00:01', vlanMode: 'access', accessVlan: 1 },
-          { id: 'p3', name: 'fa0/24', macAddress: '02:00:00:20:00:24', vlanMode: 'trunk', trunkAllowedVlans: [10, 20] },
+          {
+            id: 'p1',
+            name: 'fa0/1',
+            macAddress: '02:00:00:20:00:01',
+            vlanMode: 'access',
+            accessVlan: 1,
+          },
+          {
+            id: 'p3',
+            name: 'fa0/24',
+            macAddress: '02:00:00:20:00:24',
+            vlanMode: 'trunk',
+            trunkAllowedVlans: [10, 20],
+          },
         ]),
       ],
       [
@@ -309,9 +393,7 @@ describe('SwitchForwarder — VLAN scenarios', () => {
         { neighbors: [] },
       ),
     );
-    const toAccess = expectForward(
-      await switch2.receive(onTrunk.packet, 'p3', { neighbors: [] }),
-    );
+    const toAccess = expectForward(await switch2.receive(onTrunk.packet, 'p3', { neighbors: [] }));
 
     expect(onTrunk.packet.vlanId).toBe(1);
     expect(onTrunk.packet.frame.vlanTag).toBeUndefined();
@@ -323,7 +405,13 @@ describe('SwitchForwarder — VLAN scenarios', () => {
       [
         makeHost('host-a1', '10.0.10.11', '02:00:00:00:10:11'),
         makeSwitch('switch-1', [
-          { id: 'p1', name: 'fa0/1', macAddress: '02:00:00:10:00:01', vlanMode: 'access', accessVlan: 10 },
+          {
+            id: 'p1',
+            name: 'fa0/1',
+            macAddress: '02:00:00:10:00:01',
+            vlanMode: 'access',
+            accessVlan: 10,
+          },
         ]),
       ],
       [makeEdge('e1', 'host-a1', 'switch-1', undefined, 'p1')],
@@ -355,8 +443,20 @@ describe('SwitchForwarder — VLAN scenarios', () => {
     const topology = makeTopology(
       [
         makeSwitch('switch-1', [
-          { id: 'p1', name: 'fa0/24', macAddress: '02:00:00:10:00:24', vlanMode: 'trunk', trunkAllowedVlans: [10] },
-          { id: 'p2', name: 'fa0/1', macAddress: '02:00:00:10:00:01', vlanMode: 'access', accessVlan: 20 },
+          {
+            id: 'p1',
+            name: 'fa0/24',
+            macAddress: '02:00:00:10:00:24',
+            vlanMode: 'trunk',
+            trunkAllowedVlans: [10],
+          },
+          {
+            id: 'p2',
+            name: 'fa0/1',
+            macAddress: '02:00:00:10:00:01',
+            vlanMode: 'access',
+            accessVlan: 20,
+          },
         ]),
       ],
       [],

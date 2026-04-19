@@ -1,13 +1,14 @@
 import { useMemo, useRef, type ReactNode } from 'react';
-import { NetlabContext } from './NetlabContext';
+import { NetlabError } from '../errors';
 import { HookEngine } from '../hooks/HookEngine';
+import { computeStp } from '../layers/l2-datalink/stp/computeStp';
 import { protocolRegistry } from '../registry/ProtocolRegistry';
 import { bgpProtocol } from '../routing/bgp/BgpProtocol';
 import { ospfProtocol } from '../routing/ospf/OspfProtocol';
 import { ripProtocol } from '../routing/rip/RipProtocol';
 import { staticProtocol } from '../routing/static/StaticProtocol';
-import { computeStp } from '../layers/l2-datalink/stp/computeStp';
 import type { NetworkTopology, TopologySnapshot } from '../types/topology';
+import { NetlabContext } from './NetlabContext';
 
 function ensureBuiltInProtocolsRegistered() {
   const registered = new Set(protocolRegistry.list());
@@ -26,21 +27,19 @@ function ensureBuiltInProtocolsRegistered() {
   }
 }
 
-type ControlledNetlabProviderProps = {
+interface ControlledNetlabProviderProps {
   topology: NetworkTopology;
   defaultTopology?: TopologySnapshot;
   children: ReactNode;
-};
+}
 
-type UncontrolledNetlabProviderProps = {
+interface UncontrolledNetlabProviderProps {
   topology?: undefined;
   defaultTopology: TopologySnapshot;
   children: ReactNode;
-};
+}
 
-export type NetlabProviderProps =
-  | ControlledNetlabProviderProps
-  | UncontrolledNetlabProviderProps;
+export type NetlabProviderProps = ControlledNetlabProviderProps | UncontrolledNetlabProviderProps;
 
 export function NetlabProvider({ topology, defaultTopology, children }: NetlabProviderProps) {
   ensureBuiltInProtocolsRegistered();
@@ -52,7 +51,10 @@ export function NetlabProvider({ topology, defaultTopology, children }: NetlabPr
 
   const resolvedTopology = topology ?? defaultTopologyRef.current;
   if (!resolvedTopology) {
-    throw new Error('NetlabProvider: either topology or defaultTopology must be provided');
+    throw new NetlabError({
+      code: 'config/missing-topology',
+      message: 'NetlabProvider: either topology or defaultTopology must be provided',
+    });
   }
 
   const hookEngine = useMemo(() => new HookEngine(), []);
@@ -62,10 +64,7 @@ export function NetlabProvider({ topology, defaultTopology, children }: NetlabPr
     [resolvedTopology],
   );
 
-  const stpResult = useMemo(
-    () => computeStp(resolvedTopology),
-    [resolvedTopology],
-  );
+  const stpResult = useMemo(() => computeStp(resolvedTopology), [resolvedTopology]);
 
   const enrichedTopology = useMemo(
     () => ({
@@ -87,7 +86,5 @@ export function NetlabProvider({ topology, defaultTopology, children }: NetlabPr
     [enrichedTopology, routeTable, resolvedTopology.areas, hookEngine],
   );
 
-  return (
-    <NetlabContext.Provider value={value}>{children}</NetlabContext.Provider>
-  );
+  return <NetlabContext.Provider value={value}>{children}</NetlabContext.Provider>;
 }

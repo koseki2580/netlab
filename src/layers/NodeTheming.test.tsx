@@ -102,20 +102,25 @@ describe('node theming', () => {
       backgroundVar: '--netlab-node-server-bg',
       accentVar: '--netlab-accent-green',
     },
-  ])('uses CSS variables for $name node colors', ({ Component, label, backgroundVar, accentVar }) => {
-    const rendered = renderNode(Component as unknown as NodeComponent, { label });
-    const node = rendered.firstElementChild as HTMLElement;
-    const labelEl = Array.from(rendered.querySelectorAll('div')).find((element) => element.textContent === label);
-    const topHandle = rendered.querySelector('[data-testid="handle-top"]') as HTMLElement;
-    const styledSvgElement = rendered.querySelector('svg [style]') as SVGElement;
+  ])(
+    'uses CSS variables for $name node colors',
+    ({ Component, label, backgroundVar, accentVar }) => {
+      const rendered = renderNode(Component as unknown as NodeComponent, { label });
+      const node = rendered.firstElementChild as HTMLElement;
+      const labelEl = Array.from(rendered.querySelectorAll('div')).find(
+        (element) => element.textContent === label,
+      );
+      const topHandle = rendered.querySelector('[data-testid="handle-top"]')!;
+      const styledSvgElement = rendered.querySelector('svg [style]')!;
 
-    expect(node.getAttribute('style')).toContain(`background: var(${backgroundVar})`);
-    expect(node.getAttribute('style')).toContain('color: var(--netlab-text-primary)');
-    expect(labelEl?.getAttribute('style')).toContain('color: var(--netlab-text-primary)');
-    expect(topHandle.getAttribute('style')).toContain(`background: var(${accentVar})`);
-    expect(topHandle.getAttribute('style')).toContain(`border: 1px solid var(${accentVar})`);
-    expect(styledSvgElement.getAttribute('style')).toContain(`var(${accentVar})`);
-  });
+      expect(node.getAttribute('style')).toContain(`background: var(${backgroundVar})`);
+      expect(node.getAttribute('style')).toContain('color: var(--netlab-text-primary)');
+      expect(labelEl?.getAttribute('style')).toContain('color: var(--netlab-text-primary)');
+      expect(topHandle.getAttribute('style')).toContain(`background: var(${accentVar})`);
+      expect(topHandle.getAttribute('style')).toContain(`border: 1px solid var(${accentVar})`);
+      expect(styledSvgElement.getAttribute('style')).toContain(`var(${accentVar})`);
+    },
+  );
 
   it('uses the semantic accent color for the router interface-down badge', () => {
     const rendered = renderNode(RouterNode as unknown as NodeComponent, {

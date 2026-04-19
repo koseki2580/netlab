@@ -1,7 +1,8 @@
-import type { AclRule } from '../../types/acl';
-import { useNetlabContext } from '../NetlabContext';
+import { memo } from 'react';
 import { useSimulation } from '../../simulation/SimulationContext';
+import type { AclRule } from '../../types/acl';
 import type { NatTranslation, PacketHop, RoutingDecision } from '../../types/simulation';
+import { useNetlabContext } from '../NetlabContext';
 
 const EVENT_COLORS: Record<PacketHop['event'], string> = {
   create: '#7dd3fc',
@@ -14,7 +15,7 @@ const EVENT_COLORS: Record<PacketHop['event'], string> = {
 
 function resolveNodeLabel(
   nodeId: string | undefined,
-  nodes: Array<{ id: string; data: { label: string; role: string } }>,
+  nodes: { id: string; data: { label: string; role: string } }[],
 ): string {
   if (!nodeId) return '-';
   return nodes.find((node) => node.id === nodeId)?.data.label ?? nodeId;
@@ -22,14 +23,14 @@ function resolveNodeLabel(
 
 function isRouterNode(
   nodeId: string,
-  nodes: Array<{ id: string; data: { label: string; role: string } }>,
+  nodes: { id: string; data: { label: string; role: string } }[],
 ): boolean {
   return nodes.find((node) => node.id === nodeId)?.data.role === 'router';
 }
 
 function getTtlOut(
   hop: PacketHop,
-  nodes: Array<{ id: string; data: { label: string; role: string } }>,
+  nodes: { id: string; data: { label: string; role: string } }[],
 ): number {
   if (hop.event === 'arp-request' || hop.event === 'arp-reply') {
     return 0;
@@ -63,7 +64,15 @@ function EventBadge({ event }: { event: PacketHop['event'] }) {
   );
 }
 
-function FieldRow({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
+function FieldRow({
+  label,
+  value,
+  valueColor,
+}: {
+  label: string;
+  value: string;
+  valueColor?: string;
+}) {
   return (
     <div
       style={{
@@ -74,7 +83,9 @@ function FieldRow({ label, value, valueColor }: { label: string; value: string; 
       }}
     >
       <span style={{ color: 'var(--netlab-text-secondary)' }}>{label}</span>
-      <span style={{ color: valueColor ?? 'var(--netlab-text-primary)', wordBreak: 'break-word' }}>{value}</span>
+      <span style={{ color: valueColor ?? 'var(--netlab-text-primary)', wordBreak: 'break-word' }}>
+        {value}
+      </span>
     </div>
   );
 }
@@ -86,12 +97,7 @@ function formatPortSpec(port: AclRule['srcPort']): string {
 }
 
 function formatAclRule(rule: AclRule): string {
-  const tokens = [
-    `#${rule.priority}`,
-    rule.action,
-    rule.protocol,
-    rule.srcIp ?? 'any',
-  ];
+  const tokens = [`#${rule.priority}`, rule.action, rule.protocol, rule.srcIp ?? 'any'];
 
   if (rule.srcPort !== undefined) {
     tokens.push('src', formatPortSpec(rule.srcPort));
@@ -197,9 +203,7 @@ function AclFilterSection({ hop }: { hop: PacketHop }) {
       ? 'var(--netlab-text-primary)'
       : 'var(--netlab-text-muted)';
   const actionColor =
-    hop.aclMatch.action === 'permit'
-      ? 'var(--netlab-accent-green)'
-      : 'var(--netlab-accent-red)';
+    hop.aclMatch.action === 'permit' ? 'var(--netlab-accent-green)' : 'var(--netlab-accent-red)';
 
   return (
     <section
@@ -255,7 +259,7 @@ function HopFields({
   nodes,
 }: {
   hop: PacketHop;
-  nodes: Array<{ id: string; data: { label: string; role: string } }>;
+  nodes: { id: string; data: { label: string; role: string } }[];
 }) {
   const fields = [
     { label: 'Node', value: resolveNodeLabel(hop.nodeId, nodes) },
@@ -280,7 +284,11 @@ function HopFields({
     fields.push({ label: 'Action', value: formatHopAction(hop.action) });
   }
 
-  if (hop.action === 'fragment' && hop.fragmentIndex !== undefined && hop.fragmentCount !== undefined) {
+  if (
+    hop.action === 'fragment' &&
+    hop.fragmentIndex !== undefined &&
+    hop.fragmentCount !== undefined
+  ) {
     fields.push({ label: 'Fragment', value: `${hop.fragmentIndex + 1}/${hop.fragmentCount}` });
   }
 
@@ -325,7 +333,7 @@ function ArpHopDetails({ hop }: { hop: PacketHop }) {
   const frame = hop.arpFrame;
   if (!frame) return null;
 
-  const rows: Array<[string, string]> = [
+  const rows: [string, string][] = [
     ['Operation', frame.payload.operation === 'request' ? 'REQUEST (1)' : 'REPLY (2)'],
     ['Sender MAC', frame.payload.senderMac],
     ['Sender IP', frame.payload.senderIp],
@@ -464,7 +472,9 @@ function RoutingSection({ decision }: { decision: RoutingDecision }) {
                   padding: '7px 8px',
                   borderTop: '1px solid var(--netlab-border-subtle)',
                   background,
-                  color: candidate.matched ? 'var(--netlab-text-primary)' : 'var(--netlab-text-secondary)',
+                  color: candidate.matched
+                    ? 'var(--netlab-text-primary)'
+                    : 'var(--netlab-text-secondary)',
                   alignItems: 'center',
                 }}
               >
@@ -570,7 +580,7 @@ function ChangedFieldsBlock({ fields }: { fields: string[] }) {
   );
 }
 
-export function HopInspector() {
+export const HopInspector = memo(function HopInspector() {
   const { topology } = useNetlabContext();
   const { state } = useSimulation();
   const { selectedHop, traces, currentTraceId } = state;
@@ -658,7 +668,14 @@ export function HopInspector() {
         >
           HOP INSPECTOR
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+          }}
+        >
           <span style={{ fontSize: 12, color: 'var(--netlab-text-secondary)' }}>
             Hop {selectedHop.step + 1} / {totalHops || selectedHop.step + 1}
           </span>
@@ -667,6 +684,7 @@ export function HopInspector() {
       </div>
 
       <div
+        tabIndex={0}
         style={{
           flex: 1,
           minHeight: 0,
@@ -685,10 +703,10 @@ export function HopInspector() {
         {selectedHop.natTranslation && !selectedHop.arpFrame && (
           <NatTranslationSection translation={selectedHop.natTranslation} />
         )}
-        {selectedHop.aclMatch && !selectedHop.arpFrame && (
-          <AclFilterSection hop={selectedHop} />
+        {selectedHop.aclMatch && !selectedHop.arpFrame && <AclFilterSection hop={selectedHop} />}
+        {selectedHop.routingDecision && !selectedHop.arpFrame && (
+          <RoutingSection decision={selectedHop.routingDecision} />
         )}
-        {selectedHop.routingDecision && !selectedHop.arpFrame && <RoutingSection decision={selectedHop.routingDecision} />}
         {selectedHop.changedFields && selectedHop.changedFields.length > 0 && (
           <ChangedFieldsBlock fields={selectedHop.changedFields} />
         )}
@@ -698,4 +716,4 @@ export function HopInspector() {
       </div>
     </div>
   );
-}
+});

@@ -15,9 +15,7 @@ const TOPOLOGY: NetworkTopology = {
   routeTables: new Map(),
 };
 
-function makeProtocol(
-  overrides: Partial<RoutingProtocol> = {},
-): RoutingProtocol {
+function makeProtocol(overrides: Partial<RoutingProtocol> = {}): RoutingProtocol {
   return {
     name: 'static' as ProtocolName,
     adminDistance: 1,
@@ -90,9 +88,7 @@ describe('ProtocolRegistry', () => {
       const result = protocolRegistry.resolveRouteTable(TOPOLOGY);
 
       expect(protocolRegistry.list()).toEqual(['static']);
-      expect(result.get('r1')).toEqual([
-        expect.objectContaining({ nextHop: '10.0.1.254' }),
-      ]);
+      expect(result.get('r1')).toEqual([expect.objectContaining({ nextHop: '10.0.1.254' })]);
     });
   });
 

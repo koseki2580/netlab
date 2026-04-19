@@ -154,13 +154,14 @@ export class BgpProtocol implements RoutingProtocol {
           nextHop: route.nextHop,
           metric: route.attributes.asPath.length,
           protocol: 'bgp',
-          adminDistance:
-            route.sourceType === 'ibgp' ? ADMIN_DISTANCES.ibgp : ADMIN_DISTANCES.ebgp,
+          adminDistance: route.sourceType === 'ibgp' ? ADMIN_DISTANCES.ibgp : ADMIN_DISTANCES.ebgp,
           nodeId,
         })),
       )
-      .sort((left, right) =>
-        left.nodeId.localeCompare(right.nodeId) || left.destination.localeCompare(right.destination),
+      .sort(
+        (left, right) =>
+          left.nodeId.localeCompare(right.nodeId) ||
+          left.destination.localeCompare(right.destination),
       );
   }
 }

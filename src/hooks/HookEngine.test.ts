@@ -122,9 +122,7 @@ describe('HookEngine', () => {
     it('resolves immediately when no handlers registered', async () => {
       const engine = new HookEngine();
 
-      await expect(
-        engine.emit('switch:learn', makeSwitchLearnContext()),
-      ).resolves.toBeUndefined();
+      await expect(engine.emit('switch:learn', makeSwitchLearnContext())).resolves.toBeUndefined();
     });
 
     it('propagates async handler results', async () => {
@@ -157,9 +155,9 @@ describe('HookEngine', () => {
         await next();
       });
 
-      await expect(
-        engine.emit('switch:learn', makeSwitchLearnContext()),
-      ).rejects.toThrow('[netlab] next() called multiple times');
+      await expect(engine.emit('switch:learn', makeSwitchLearnContext())).rejects.toThrow(
+        '[netlab] next() called multiple times',
+      );
     });
 
     it('handlers can mutate context object', async () => {

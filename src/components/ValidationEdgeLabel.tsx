@@ -74,9 +74,7 @@ export function ValidationEdgeLabel({
   );
 }
 
-type ValidationSmoothStepEdgeProps = EdgeProps<
-  Edge<ValidationEdgeData, 'validation-smoothstep'>
->;
+type ValidationSmoothStepEdgeProps = EdgeProps<Edge<ValidationEdgeData, 'validation-smoothstep'>>;
 
 export function ValidationSmoothStepEdge({
   id,

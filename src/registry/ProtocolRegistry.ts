@@ -41,10 +41,7 @@ class ProtocolRegistry {
         best.set(key, entry);
         continue;
       }
-      if (
-        entry.adminDistance === existing.adminDistance &&
-        entry.metric < existing.metric
-      ) {
+      if (entry.adminDistance === existing.adminDistance && entry.metric < existing.metric) {
         best.set(key, entry);
       }
     }

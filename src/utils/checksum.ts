@@ -29,7 +29,7 @@ export function computeIpv4Checksum(header: number[]): number {
     sum = (sum & 0xffff) + (sum >>> 16);
   }
 
-  return (~sum) & 0xffff;
+  return ~sum & 0xffff;
 }
 
 export function computeFcs(bytes: number[]): number {

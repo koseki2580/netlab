@@ -15,12 +15,20 @@ function makeRouteEntry(nodeId: string, destination: string, nextHop: string): R
   };
 }
 
-function makeAclTopology(options: {
-  stateful?: boolean;
-  inboundAcl?: NonNullable<NetworkTopology['nodes'][number]['data']['interfaces']>[number]['inboundAcl'];
-  outboundAcl?: NonNullable<NetworkTopology['nodes'][number]['data']['interfaces']>[number]['outboundAcl'];
-  wanInboundAcl?: NonNullable<NetworkTopology['nodes'][number]['data']['interfaces']>[number]['inboundAcl'];
-} = {}): NetworkTopology {
+function makeAclTopology(
+  options: {
+    stateful?: boolean;
+    inboundAcl?: NonNullable<
+      NetworkTopology['nodes'][number]['data']['interfaces']
+    >[number]['inboundAcl'];
+    outboundAcl?: NonNullable<
+      NetworkTopology['nodes'][number]['data']['interfaces']
+    >[number]['outboundAcl'];
+    wanInboundAcl?: NonNullable<
+      NetworkTopology['nodes'][number]['data']['interfaces']
+    >[number]['inboundAcl'];
+  } = {},
+): NetworkTopology {
   return {
     nodes: [
       {
@@ -277,10 +285,7 @@ describe('AclProcessor', () => {
   });
 
   it('treats an empty ACL list as implicit deny-only', () => {
-    const processor = new AclProcessor(
-      'router-1',
-      makeAclTopology({ inboundAcl: [] }),
-    );
+    const processor = new AclProcessor('router-1', makeAclTopology({ inboundAcl: [] }));
 
     const result = processor.applyIngress(
       makeTcpPacket('10.0.0.10', '203.0.113.10', 54321, 80),
@@ -390,16 +395,8 @@ describe('AclProcessor', () => {
       }),
     );
 
-    processor.applyIngress(
-      makeTcpPacket('10.0.0.10', '203.0.113.10', 54321, 80),
-      'eth0',
-      3,
-    );
-    processor.applyIngress(
-      makeTcpPacket('10.0.0.10', '203.0.113.10', 54321, 80),
-      'eth0',
-      4,
-    );
+    processor.applyIngress(makeTcpPacket('10.0.0.10', '203.0.113.10', 54321, 80), 'eth0', 3);
+    processor.applyIngress(makeTcpPacket('10.0.0.10', '203.0.113.10', 54321, 80), 'eth0', 4);
 
     const table = processor.getConnTrackTable();
     expect(table.entries).toHaveLength(1);
@@ -426,11 +423,7 @@ describe('AclProcessor', () => {
       }),
     );
 
-    processor.applyIngress(
-      makeTcpPacket('10.0.0.10', '203.0.113.10', 54321, 80),
-      'eth0',
-      3,
-    );
+    processor.applyIngress(makeTcpPacket('10.0.0.10', '203.0.113.10', 54321, 80), 'eth0', 3);
 
     const result = processor.applyIngress(
       makeTcpPacket('203.0.113.10', '10.0.0.10', 80, 54321),
@@ -489,11 +482,7 @@ describe('AclProcessor', () => {
       }),
     );
 
-    processor.applyIngress(
-      makeTcpPacket('10.0.0.10', '203.0.113.10', 54321, 80),
-      'eth0',
-      3,
-    );
+    processor.applyIngress(makeTcpPacket('10.0.0.10', '203.0.113.10', 54321, 80), 'eth0', 3);
     processor.clear();
 
     expect(processor.getConnTrackTable().entries).toEqual([]);

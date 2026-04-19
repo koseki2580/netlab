@@ -73,11 +73,7 @@ function makePacket(
   };
 }
 
-function makeRouteEntry(
-  nodeId: string,
-  destination: string,
-  nextHop: string,
-): RouteEntry {
+function makeRouteEntry(nodeId: string, destination: string, nextHop: string): RouteEntry {
   return {
     destination,
     nextHop,
@@ -116,8 +112,20 @@ function singleRouterTopology(): NetworkTopology {
           role: 'router',
           layerId: 'l3',
           interfaces: [
-            { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:01:00:00' },
-            { id: 'eth1', name: 'eth1', ipAddress: '203.0.113.1', prefixLength: 24, macAddress: '00:00:00:01:00:01' },
+            {
+              id: 'eth0',
+              name: 'eth0',
+              ipAddress: '10.0.0.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:01:00:00',
+            },
+            {
+              id: 'eth1',
+              name: 'eth1',
+              ipAddress: '203.0.113.1',
+              prefixLength: 24,
+              macAddress: '00:00:00:01:00:01',
+            },
           ],
         },
       },
@@ -125,7 +133,13 @@ function singleRouterTopology(): NetworkTopology {
         id: 'server-1',
         type: 'server',
         position: { x: 400, y: 0 },
-        data: { label: 'Server', role: 'server', layerId: 'l7', ip: '203.0.113.10', mac: SERVER_MAC },
+        data: {
+          label: 'Server',
+          role: 'server',
+          layerId: 'l7',
+          ip: '203.0.113.10',
+          mac: SERVER_MAC,
+        },
       },
     ],
     edges: [

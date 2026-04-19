@@ -228,12 +228,7 @@ export class TcpOrchestrator {
       ack: connection.localSeq + 1,
       sessionId,
     });
-    const responderFinTrace = await this.sendPacket(
-      responderFinPacket,
-      sink,
-      traces,
-      failureState,
-    );
+    const responderFinTrace = await this.sendPacket(responderFinPacket, sink, traces, failureState);
     if (responderFinTrace.status !== 'delivered') {
       return {
         success: false,

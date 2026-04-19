@@ -1,25 +1,25 @@
-import { useEffect, useRef } from 'react';
-import { useNetlabContext } from '../NetlabContext';
+import { memo, useEffect, useRef } from 'react';
 import { useSimulation } from '../../simulation/SimulationContext';
 import type { PacketHop } from '../../types/simulation';
+import { useNetlabContext } from '../NetlabContext';
 import { TraceSelector } from './TraceSelector';
 
 const EVENT_COLORS: Record<string, string> = {
-  create:        '#7dd3fc',
-  forward:       '#4ade80',
-  deliver:       '#34d399',
-  drop:          '#f87171',
+  create: '#7dd3fc',
+  forward: '#4ade80',
+  deliver: '#34d399',
+  drop: '#f87171',
   'arp-request': '#f59e0b',
-  'arp-reply':   '#f59e0b',
+  'arp-reply': '#f59e0b',
 };
 
 const EVENT_LABELS: Record<string, string> = {
-  create:        'CREATE',
-  forward:       'FWD',
-  deliver:       'DELIVER',
-  drop:          'DROP',
+  create: 'CREATE',
+  forward: 'FWD',
+  deliver: 'DELIVER',
+  drop: 'DROP',
   'arp-request': 'ARP-REQ',
-  'arp-reply':   'ARP-REP',
+  'arp-reply': 'ARP-REP',
 };
 
 function formatDropReason(reason: string | undefined): string | null {
@@ -83,8 +83,18 @@ function HopRow({
 
   return (
     <div
+      role="option"
+      aria-selected={isActive}
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       title={dropReason ?? undefined}
+      className="netlab-focus-ring"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -98,7 +108,14 @@ function HopRow({
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-        <span style={{ color: 'var(--netlab-text-faint)', fontSize: 10, minWidth: 18, textAlign: 'right' }}>
+        <span
+          style={{
+            color: 'var(--netlab-text-faint)',
+            fontSize: 10,
+            minWidth: 18,
+            textAlign: 'right',
+          }}
+        >
           {hop.step}
         </span>
         <span
@@ -115,11 +132,22 @@ function HopRow({
         >
           {label}
         </span>
-        <span style={{ color: 'var(--netlab-text-primary)', fontSize: 11, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span
+          style={{
+            color: 'var(--netlab-text-primary)',
+            fontSize: 11,
+            flex: 1,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
           {hop.nodeLabel}
         </span>
         {hop.toNodeId && (
-          <span style={{ color: 'var(--netlab-text-faint)', fontSize: 10 }}>→ {nextHopLabel ?? hop.toNodeId}</span>
+          <span style={{ color: 'var(--netlab-text-faint)', fontSize: 10 }}>
+            → {nextHopLabel ?? hop.toNodeId}
+          </span>
         )}
       </div>
       {(hop.event === 'arp-request' || hop.event === 'arp-reply') && hop.arpFrame && (
@@ -138,7 +166,7 @@ function HopRow({
   );
 }
 
-export function PacketTimeline() {
+export const PacketTimeline = memo(function PacketTimeline() {
   const { topology } = useNetlabContext();
   const { engine, state, exportPcap } = useSimulation();
   const { traces, currentTraceId, currentStep, selectedHop } = state;
@@ -189,7 +217,7 @@ export function PacketTimeline() {
       >
         PACKET TIMELINE
         {trace && (
-          <span style={{ marginLeft: 8, color: 'var(--netlab-border)', fontWeight: 'normal' }}>
+          <span style={{ marginLeft: 8, color: 'var(--netlab-text-muted)', fontWeight: 'normal' }}>
             {trace.hops.length} hops · {trace.status}
           </span>
         )}
@@ -216,9 +244,7 @@ export function PacketTimeline() {
             borderRadius: 4,
             border: '1px solid var(--netlab-border)',
             background: 'var(--netlab-bg-surface)',
-            color: currentTraceId
-              ? 'var(--netlab-text-primary)'
-              : 'var(--netlab-text-muted)',
+            color: currentTraceId ? 'var(--netlab-text-primary)' : 'var(--netlab-text-muted)',
             cursor: currentTraceId ? 'pointer' : 'default',
             flexShrink: 0,
             fontFamily: 'monospace',
@@ -228,9 +254,15 @@ export function PacketTimeline() {
         </button>
       </div>
 
-      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '6px 4px' }}>
+      <div
+        ref={scrollRef}
+        role={trace ? 'listbox' : 'region'}
+        aria-label="Packet hops"
+        tabIndex={0}
+        style={{ flex: 1, overflowY: 'auto', padding: '6px 4px' }}
+      >
         {!trace ? (
-          <div style={{ color: 'var(--netlab-border)', fontSize: 11, padding: '8px 8px' }}>
+          <div style={{ color: 'var(--netlab-text-muted)', fontSize: 11, padding: '8px 8px' }}>
             No trace yet — click "Send Packet" to start.
           </div>
         ) : (
@@ -240,7 +272,8 @@ export function PacketTimeline() {
                 hop={hop}
                 nextHopLabel={
                   hop.toNodeId
-                    ? topology.nodes.find((node) => node.id === hop.toNodeId)?.data.label ?? hop.toNodeId
+                    ? (topology.nodes.find((node) => node.id === hop.toNodeId)?.data.label ??
+                      hop.toNodeId)
                     : null
                 }
                 isActive={hop.step === activeStep}
@@ -252,4 +285,4 @@ export function PacketTimeline() {
       </div>
     </div>
   );
-}
+});

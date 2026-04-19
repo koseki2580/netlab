@@ -5,16 +5,10 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NetlabEdge, NetlabNode } from '../../types/topology';
 import { MAX_HISTORY_SIZE, type EditorTopology } from '../types';
-import {
-  useTopologyEditor,
-  type UseTopologyEditorOptions,
-} from './useTopologyEditor';
+import { useTopologyEditor, type UseTopologyEditorOptions } from './useTopologyEditor';
 import type { TopologyEditorContextValue } from '../context/TopologyEditorContext';
 
-function makeNode(
-  id: string,
-  overrides: Partial<NetlabNode> = {},
-): NetlabNode {
+function makeNode(id: string, overrides: Partial<NetlabNode> = {}): NetlabNode {
   return {
     id,
     type: 'host',
@@ -160,9 +154,7 @@ describe('useTopologyEditor', () => {
         currentEditor().undo();
       });
 
-      expect(currentEditor().state.topology.nodes.map((node) => node.id)).toEqual([
-        'n1',
-      ]);
+      expect(currentEditor().state.topology.nodes.map((node) => node.id)).toEqual(['n1']);
     });
 
     it('pushes current to future', () => {
@@ -176,9 +168,10 @@ describe('useTopologyEditor', () => {
       });
 
       expect(currentEditor().state.future).toHaveLength(1);
-      expect(
-        currentEditor().state.future[0]?.topology.nodes.map((node) => node.id),
-      ).toEqual(['n1', 'n2']);
+      expect(currentEditor().state.future[0]?.topology.nodes.map((node) => node.id)).toEqual([
+        'n1',
+        'n2',
+      ]);
     });
 
     it('increments reactFlowKey', () => {
@@ -220,10 +213,7 @@ describe('useTopologyEditor', () => {
         currentEditor().redo();
       });
 
-      expect(currentEditor().state.topology.nodes.map((node) => node.id)).toEqual([
-        'n1',
-        'n2',
-      ]);
+      expect(currentEditor().state.topology.nodes.map((node) => node.id)).toEqual(['n1', 'n2']);
     });
 
     it('pushes current to past', () => {
@@ -240,9 +230,7 @@ describe('useTopologyEditor', () => {
       });
 
       expect(currentEditor().state.past).toHaveLength(1);
-      expect(currentEditor().state.past[0]?.topology.nodes.map((node) => node.id)).toEqual([
-        'n1',
-      ]);
+      expect(currentEditor().state.past[0]?.topology.nodes.map((node) => node.id)).toEqual(['n1']);
     });
 
     it('increments reactFlowKey', () => {
@@ -278,9 +266,7 @@ describe('useTopologyEditor', () => {
       render({ initialTopology: makeTopology({ nodes: [makeNode('n1'), makeNode('n2')] }) });
 
       act(() => {
-        currentEditor().updateNodePositions([
-          { id: 'n2', position: { x: 100, y: 200 } },
-        ]);
+        currentEditor().updateNodePositions([{ id: 'n2', position: { x: 100, y: 200 } }]);
       });
 
       expect(
@@ -292,9 +278,7 @@ describe('useTopologyEditor', () => {
       render({ initialTopology: makeTopology() });
 
       act(() => {
-        currentEditor().updateNodePositions([
-          { id: 'missing', position: { x: 100, y: 200 } },
-        ]);
+        currentEditor().updateNodePositions([{ id: 'missing', position: { x: 100, y: 200 } }]);
       });
 
       expect(currentEditor().state.topology.nodes[0]?.position).toEqual({ x: 0, y: 0 });
@@ -340,9 +324,7 @@ describe('useTopologyEditor', () => {
         currentEditor().deleteNode('n1');
       });
 
-      expect(currentEditor().state.topology.nodes.map((node) => node.id)).toEqual([
-        'n2',
-      ]);
+      expect(currentEditor().state.topology.nodes.map((node) => node.id)).toEqual(['n2']);
       expect(currentEditor().state.topology.edges).toEqual([]);
     });
 
@@ -406,10 +388,7 @@ describe('useTopologyEditor', () => {
         currentEditor().redo();
       });
 
-      expect(currentEditor().state.topology.nodes.map((node) => node.id)).toEqual([
-        'n1',
-        'n2',
-      ]);
+      expect(currentEditor().state.topology.nodes.map((node) => node.id)).toEqual(['n1', 'n2']);
     });
 
     it('canUndo is false initially, true after commit', () => {
@@ -458,10 +437,7 @@ describe('useTopologyEditor', () => {
       expect(onTopologyChange).toHaveBeenCalledOnce();
       expect(onTopologyChange).toHaveBeenCalledWith(
         expect.objectContaining({
-          nodes: [
-            expect.objectContaining({ id: 'n1' }),
-            expect.objectContaining({ id: 'n2' }),
-          ],
+          nodes: [expect.objectContaining({ id: 'n1' }), expect.objectContaining({ id: 'n2' })],
         }),
       );
     });

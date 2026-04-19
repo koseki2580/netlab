@@ -61,11 +61,7 @@ export function makePacket(
   };
 }
 
-export function makeRouteEntry(
-  nodeId: string,
-  destination: string,
-  nextHop: string,
-): RouteEntry {
+export function makeRouteEntry(nodeId: string, destination: string, nextHop: string): RouteEntry {
   return {
     destination,
     nextHop,
@@ -91,7 +87,9 @@ export function deriveDeterministicMac(nodeId: string): string {
     (hash >>> 8) & 0xff,
     hash & 0xff,
     nodeId.length & 0xff,
-  ].map((byte) => byte.toString(16).padStart(2, '0')).join(':');
+  ]
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join(':');
 }
 
 export function readUint32LE(bytes: Uint8Array, offset: number): number {

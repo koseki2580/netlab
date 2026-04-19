@@ -1,7 +1,6 @@
 import { useFailure } from '../../simulation/FailureContext';
 import { useOptionalSimulation } from '../../simulation/SimulationContext';
 import { useNetlabContext } from '../NetlabContext';
-import type { RouterInterface } from '../../types/routing';
 
 function ToggleRow({
   label,
@@ -22,7 +21,16 @@ function ToggleRow({
         gap: 8,
       }}
     >
-      <span style={{ color: '#cbd5e1', fontSize: 12, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <span
+        style={{
+          color: '#cbd5e1',
+          fontSize: 12,
+          flex: 1,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
         {label}
       </span>
       <span
@@ -38,6 +46,10 @@ function ToggleRow({
       </span>
       <button
         onClick={onToggle}
+        role="switch"
+        aria-checked={!isDown}
+        aria-label={`Toggle ${label}`}
+        className="netlab-focus-ring"
         style={{
           fontSize: 10,
           padding: '2px 8px',
@@ -69,9 +81,7 @@ export function FailureTogglePanel() {
   const { topology } = useNetlabContext();
   const simulation = useOptionalSimulation();
 
-  const visibleNodes = topology.nodes.filter(
-    (n) => n.type !== 'netlab-area',
-  );
+  const visibleNodes = topology.nodes.filter((n) => n.type !== 'netlab-area');
   const routerNodes = visibleNodes.filter(
     (node) => Array.isArray(node.data.interfaces) && node.data.interfaces.length > 0,
   );
@@ -91,8 +101,16 @@ export function FailureTogglePanel() {
         gap: 10,
         overflow: 'auto',
       }}
+      tabIndex={0}
     >
-      <div style={{ fontWeight: 'bold', fontSize: 11, color: '#94a3b8', letterSpacing: '0.08em' }}>
+      <div
+        style={{
+          fontWeight: 'bold',
+          fontSize: 11,
+          color: '#94a3b8',
+          letterSpacing: '0.08em',
+        }}
+      >
         FAILURE INJECTION
       </div>
 
@@ -126,7 +144,14 @@ export function FailureTogglePanel() {
       )}
 
       <div>
-        <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4, letterSpacing: '0.06em' }}>
+        <div
+          style={{
+            fontSize: 10,
+            color: '#94a3b8',
+            marginBottom: 4,
+            letterSpacing: '0.06em',
+          }}
+        >
           NODES
         </div>
         {visibleNodes.map((node) => (
@@ -140,12 +165,21 @@ export function FailureTogglePanel() {
       </div>
 
       <div>
-        <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4, letterSpacing: '0.06em' }}>
+        <div
+          style={{
+            fontSize: 10,
+            color: '#94a3b8',
+            marginBottom: 4,
+            letterSpacing: '0.06em',
+          }}
+        >
           LINKS
         </div>
         {topology.edges.map((edge) => {
-          const srcLabel = topology.nodes.find((n) => n.id === edge.source)?.data.label ?? edge.source;
-          const dstLabel = topology.nodes.find((n) => n.id === edge.target)?.data.label ?? edge.target;
+          const srcLabel =
+            topology.nodes.find((n) => n.id === edge.source)?.data.label ?? edge.source;
+          const dstLabel =
+            topology.nodes.find((n) => n.id === edge.target)?.data.label ?? edge.target;
           return (
             <ToggleRow
               key={edge.id}
@@ -159,11 +193,18 @@ export function FailureTogglePanel() {
 
       {routerNodes.length > 0 && (
         <div>
-          <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4, letterSpacing: '0.06em' }}>
+          <div
+            style={{
+              fontSize: 10,
+              color: '#94a3b8',
+              marginBottom: 4,
+              letterSpacing: '0.06em',
+            }}
+          >
             INTERFACES
           </div>
           {routerNodes.flatMap((node) =>
-            ((node.data.interfaces ?? []) as RouterInterface[]).map((iface) => (
+            (node.data.interfaces ?? []).map((iface) => (
               <ToggleRow
                 key={`${node.id}:${iface.id}`}
                 label={`${node.data.label} / ${iface.name}`}

@@ -20,7 +20,7 @@ describe('DataTransferController — PMTU-aware chunking', () => {
     const engine = makeEngine(singleRouterTopology());
     const controller = new DataTransferController(engine);
     const sentSizes: number[] = [];
-    const packetHeaders: Array<{ dstIp: string; srcIp: string; seq: number }> = [];
+    const packetHeaders: { dstIp: string; srcIp: string; seq: number }[] = [];
     const originalSend = engine.send.bind(engine);
 
     vi.spyOn(engine, 'send').mockImplementation(async (packet, failureState) => {
@@ -34,15 +34,10 @@ describe('DataTransferController — PMTU-aware chunking', () => {
       await originalSend(packet, failureState);
     });
 
-    const transfer = await controller.startTransfer(
-      'client-1',
-      'server-1',
-      'a'.repeat(3000),
-      {
-        chunkDelay: 0,
-        pmtuLookup: () => Number.POSITIVE_INFINITY,
-      },
-    );
+    const transfer = await controller.startTransfer('client-1', 'server-1', 'a'.repeat(3000), {
+      chunkDelay: 0,
+      pmtuLookup: () => Number.POSITIVE_INFINITY,
+    });
 
     expect(transfer.expectedChunks).toBe(3);
     expect(sentSizes).toEqual([1400, 1400, 200]);
@@ -59,15 +54,10 @@ describe('DataTransferController — PMTU-aware chunking', () => {
       await originalSend(packet, failureState);
     });
 
-    await controller.startTransfer(
-      'client-1',
-      'server-1',
-      'b'.repeat(1400),
-      {
-        chunkDelay: 0,
-        pmtuLookup: () => 600,
-      },
-    );
+    await controller.startTransfer('client-1', 'server-1', 'b'.repeat(1400), {
+      chunkDelay: 0,
+      pmtuLookup: () => 600,
+    });
 
     expect(sentSizes[0]).toBe(560);
     expect(sentSizes.every((size) => size <= 560)).toBe(true);
@@ -89,15 +79,10 @@ describe('DataTransferController — PMTU-aware chunking', () => {
       }
     });
 
-    await controller.startTransfer(
-      'client-1',
-      'server-1',
-      'c'.repeat(3000),
-      {
-        chunkDelay: 0,
-        pmtuLookup: () => currentPmtu,
-      },
-    );
+    await controller.startTransfer('client-1', 'server-1', 'c'.repeat(3000), {
+      chunkDelay: 0,
+      pmtuLookup: () => currentPmtu,
+    });
 
     expect(sentSizes[0]).toBe(1400);
     expect(sentSizes[1]).toBe(560);
@@ -107,7 +92,7 @@ describe('DataTransferController — PMTU-aware chunking', () => {
   it('never sends a chunk larger than pmtuLookup reports at the moment of send', async () => {
     const engine = makeEngine(singleRouterTopology());
     const controller = new DataTransferController(engine);
-    const observations: Array<{ currentPmtu: number; sizeBytes: number }> = [];
+    const observations: { currentPmtu: number; sizeBytes: number }[] = [];
     const originalSend = engine.send.bind(engine);
     let currentPmtu = Number.POSITIVE_INFINITY;
 
@@ -122,19 +107,17 @@ describe('DataTransferController — PMTU-aware chunking', () => {
       }
     });
 
-    await controller.startTransfer(
-      'client-1',
-      'server-1',
-      'd'.repeat(5000),
-      {
-        chunkDelay: 0,
-        pmtuLookup: () => currentPmtu,
-      },
-    );
+    await controller.startTransfer('client-1', 'server-1', 'd'.repeat(5000), {
+      chunkDelay: 0,
+      pmtuLookup: () => currentPmtu,
+    });
 
-    expect(observations.every(({ currentPmtu, sizeBytes }) => (
-      !Number.isFinite(currentPmtu) || sizeBytes <= currentPmtu - 40
-    ))).toBe(true);
+    expect(
+      observations.every(
+        ({ currentPmtu, sizeBytes }) =>
+          !Number.isFinite(currentPmtu) || sizeBytes <= currentPmtu - 40,
+      ),
+    ).toBe(true);
   });
 
   it('handles pathMtu = 68 (minimum) without crashing', async () => {
@@ -148,15 +131,10 @@ describe('DataTransferController — PMTU-aware chunking', () => {
       await originalSend(packet, failureState);
     });
 
-    const transfer = await controller.startTransfer(
-      'client-1',
-      'server-1',
-      'e'.repeat(100),
-      {
-        chunkDelay: 0,
-        pmtuLookup: () => 68,
-      },
-    );
+    const transfer = await controller.startTransfer('client-1', 'server-1', 'e'.repeat(100), {
+      chunkDelay: 0,
+      pmtuLookup: () => 68,
+    });
 
     expect(transfer.status).toBe('delivered');
     expect(sentSizes.every((size) => size <= 28)).toBe(true);
@@ -168,14 +146,13 @@ describe('DataTransferController — regression', () => {
     const engine = makeEngine(singleRouterTopology());
     const controller = new DataTransferController(engine);
 
-    const transfer = await controller.startTransfer(
-      'client-1',
-      'server-1',
-      'f'.repeat(3000),
-      { chunkDelay: 0 },
-    );
+    const transfer = await controller.startTransfer('client-1', 'server-1', 'f'.repeat(3000), {
+      chunkDelay: 0,
+    });
 
     expect(transfer.expectedChunks).toBe(3);
-    expect(controller.getChunks(transfer.messageId).map((chunk) => chunk.sizeBytes)).toEqual([1400, 1400, 200]);
+    expect(controller.getChunks(transfer.messageId).map((chunk) => chunk.sizeBytes)).toEqual([
+      1400, 1400, 200,
+    ]);
   });
 });

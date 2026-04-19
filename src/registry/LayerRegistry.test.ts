@@ -12,9 +12,11 @@ function makePlugin(overrides: Partial<LayerPlugin> = {}): LayerPlugin {
 
 function resetRegistry() {
   for (const layerId of layerRegistry.list()) {
-    const plugins = (layerRegistry as unknown as {
-      plugins?: Map<string, LayerPlugin>;
-    }).plugins;
+    const plugins = (
+      layerRegistry as unknown as {
+        plugins?: Map<string, LayerPlugin>;
+      }
+    ).plugins;
     plugins?.delete(layerId);
   }
 }

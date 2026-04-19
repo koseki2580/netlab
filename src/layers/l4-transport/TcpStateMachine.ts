@@ -26,7 +26,7 @@ export function transition(currentState: TcpState, event: TcpEvent): TcpTransiti
     };
   }
 
-  const result = TRANSITIONS[`${currentState}:${event}` as TransitionKey];
+  const result = TRANSITIONS[`${currentState}:${event}`];
   if (result) {
     return result;
   }

@@ -61,7 +61,7 @@ export class AclProcessor {
     topology: NetworkTopology,
   ) {
     const node = topology.nodes.find((candidate) => candidate.id === routerId);
-    if (!node || node.data.role !== 'router') {
+    if (node?.data.role !== 'router') {
       this.interfaces = [];
       this.stateful = false;
       return;
@@ -77,20 +77,16 @@ export class AclProcessor {
     step: number,
   ): AclResult {
     const iface = this.getInterface(ingressIfaceId);
-    if (!iface || iface.inboundAcl === undefined) {
+    if (iface?.inboundAcl === undefined) {
       return { packet, match: null };
     }
 
     return this.evaluate(iface.inboundAcl, packet, 'inbound', iface, step);
   }
 
-  applyEgress(
-    packet: InFlightPacket,
-    egressIfaceId: string | undefined,
-    step: number,
-  ): AclResult {
+  applyEgress(packet: InFlightPacket, egressIfaceId: string | undefined, step: number): AclResult {
     const iface = this.getInterface(egressIfaceId);
-    if (!iface || iface.outboundAcl === undefined) {
+    if (iface?.outboundAcl === undefined) {
       return { packet, match: null };
     }
 
@@ -198,8 +194,7 @@ export class AclProcessor {
     }
 
     return (
-      portMatches(transport.srcPort, rule.srcPort) &&
-      portMatches(transport.dstPort, rule.dstPort)
+      portMatches(transport.srcPort, rule.srcPort) && portMatches(transport.dstPort, rule.dstPort)
     );
   }
 
@@ -214,12 +209,13 @@ export class AclProcessor {
     }
 
     const ipPacket = packet.frame.payload;
-    return this.connTrack.find((entry) =>
-      entry.proto === transport.proto &&
-      entry.srcIp === ipPacket.dstIp &&
-      entry.srcPort === transport.dstPort &&
-      entry.dstIp === ipPacket.srcIp &&
-      entry.dstPort === transport.srcPort,
+    return this.connTrack.find(
+      (entry) =>
+        entry.proto === transport.proto &&
+        entry.srcIp === ipPacket.dstIp &&
+        entry.srcPort === transport.dstPort &&
+        entry.dstIp === ipPacket.srcIp &&
+        entry.dstPort === transport.srcPort,
     );
   }
 
@@ -234,12 +230,13 @@ export class AclProcessor {
     }
 
     const ipPacket = packet.frame.payload;
-    const existing = this.connTrack.find((entry) =>
-      entry.proto === transport.proto &&
-      entry.srcIp === ipPacket.srcIp &&
-      entry.srcPort === transport.srcPort &&
-      entry.dstIp === ipPacket.dstIp &&
-      entry.dstPort === transport.dstPort,
+    const existing = this.connTrack.find(
+      (entry) =>
+        entry.proto === transport.proto &&
+        entry.srcIp === ipPacket.srcIp &&
+        entry.srcPort === transport.srcPort &&
+        entry.dstIp === ipPacket.dstIp &&
+        entry.dstPort === transport.dstPort,
     );
 
     if (existing) {
@@ -274,7 +271,11 @@ export class AclProcessor {
       };
     }
 
-    if (ipPacket.protocol === 17 && !isTcpSegment(ipPacket.payload) && 'srcPort' in ipPacket.payload) {
+    if (
+      ipPacket.protocol === 17 &&
+      !isTcpSegment(ipPacket.payload) &&
+      'srcPort' in ipPacket.payload
+    ) {
       return {
         proto: 'udp',
         srcPort: ipPacket.payload.srcPort,

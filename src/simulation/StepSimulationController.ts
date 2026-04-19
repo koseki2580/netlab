@@ -1,4 +1,4 @@
-import { SimulationEngine } from './SimulationEngine';
+import type { SimulationEngine } from './SimulationEngine';
 import type { InFlightPacket } from '../types/packets';
 import type { PacketHop, SimulationState } from '../types/simulation';
 
@@ -47,7 +47,7 @@ export class StepSimulationController {
 
   private deriveState(engineState: SimulationState): StepSimState {
     const trace = engineState.currentTraceId
-      ? engineState.traces.find((t) => t.packetId === engineState.currentTraceId) ?? null
+      ? (engineState.traces.find((t) => t.packetId === engineState.currentTraceId) ?? null)
       : null;
 
     const totalSteps = trace?.hops.length ?? 0;

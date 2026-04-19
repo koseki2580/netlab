@@ -81,7 +81,12 @@ function StaticLayout({ showRouteTable, showAreaLegend, colorMode }: LayoutFlags
 // SimulationLayout is only ever rendered inside a SimulationProvider,
 // so useSimulation() calls inside SimulationControls, PacketViewer,
 // and PacketTimeline are safe here.
-function SimulationLayout({ showTimeline, showRouteTable, showAreaLegend, colorMode }: LayoutFlags) {
+function SimulationLayout({
+  showTimeline,
+  showRouteTable,
+  showAreaLegend,
+  colorMode,
+}: LayoutFlags) {
   return (
     <>
       {/* Toolbar */}

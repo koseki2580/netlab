@@ -146,7 +146,7 @@ function render(ui: React.ReactElement = <StepControls />) {
 function findButton(text: string) {
   return Array.from(container?.querySelectorAll('button') ?? []).find((button) =>
     button.textContent?.includes(text),
-  ) as HTMLButtonElement | undefined;
+  );
 }
 
 beforeEach(() => {
@@ -307,9 +307,7 @@ describe('StepControls', () => {
     it('renders explanation text', () => {
       render();
 
-      expect(container?.textContent).toContain(
-        'Matched 203.0.113.0/24 via direct (static, AD=1)',
-      );
+      expect(container?.textContent).toContain('Matched 203.0.113.0/24 via direct (static, AD=1)');
     });
   });
 });

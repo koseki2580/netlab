@@ -25,7 +25,7 @@ export function electRoot(bridges: SwitchBridge[]): SwitchBridge | null {
     return null;
   }
 
-  return bridges.reduce((currentRoot, candidate) => (
-    compareBridgeId(candidate.bridgeId, currentRoot.bridgeId) < 0 ? candidate : currentRoot
-  ));
+  return bridges.reduce((currentRoot, candidate) =>
+    compareBridgeId(candidate.bridgeId, currentRoot.bridgeId) < 0 ? candidate : currentRoot,
+  );
 }

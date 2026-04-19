@@ -79,10 +79,7 @@ export function buildPcap(records: PcapRecord[]): Uint8Array {
 
   for (const { hop, frame } of records) {
     const packetBytes = serializePcapFrame(frame);
-    chunks.push(
-      buildPcapRecordHeader(hop.timestamp, hop.step, packetBytes.length),
-      packetBytes,
-    );
+    chunks.push(buildPcapRecordHeader(hop.timestamp, hop.step, packetBytes.length), packetBytes);
   }
 
   return concatUint8Arrays(chunks);

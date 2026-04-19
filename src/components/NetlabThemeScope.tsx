@@ -17,29 +17,25 @@ export interface NetlabThemeScopeProps {
   children: ReactNode;
 }
 
-export function NetlabThemeScope({
-  theme,
-  style,
-  className,
-  children,
-}: NetlabThemeScopeProps) {
-  const resolvedTheme = useMemo<NetlabTheme>(
-    () => ({ ...NETLAB_DARK_THEME, ...theme }),
-    [theme],
-  );
+export function NetlabThemeScope({ theme, style, className, children }: NetlabThemeScopeProps) {
+  const resolvedTheme = useMemo<NetlabTheme>(() => ({ ...NETLAB_DARK_THEME, ...theme }), [theme]);
 
   const colorMode = useMemo(
     () => resolveColorMode(resolvedTheme.bgPrimary),
     [resolvedTheme.bgPrimary],
   );
 
-  const value = useMemo(
-    () => ({ theme: resolvedTheme, colorMode }),
-    [resolvedTheme, colorMode],
-  );
+  const value = useMemo(() => ({ theme: resolvedTheme, colorMode }), [resolvedTheme, colorMode]);
 
   return (
     <NetlabThemeScopeContext.Provider value={value}>
+      {/* Focus ring CSS injected here so it scopes to netlab subtrees */}
+      <style>{`
+        .netlab-focus-ring:focus-visible {
+          outline: 2px solid var(--netlab-focus-ring, var(--netlab-accent-blue));
+          outline-offset: 2px;
+        }
+      `}</style>
       <div
         style={{
           ...themeToVars(resolvedTheme),

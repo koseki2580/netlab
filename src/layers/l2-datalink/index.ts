@@ -9,8 +9,7 @@ registerLayerPlugin({
     switch: SwitchNode,
   },
   deviceRoles: ['switch'],
-  forwarder: (nodeId: string, topology: NetworkTopology) =>
-    new SwitchForwarder(nodeId, topology),
+  forwarder: (nodeId: string, topology: NetworkTopology) => new SwitchForwarder(nodeId, topology),
 });
 
 export { SwitchForwarder } from './SwitchForwarder';

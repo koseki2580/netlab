@@ -1,15 +1,15 @@
-import { useMemo } from "react";
-import { useSession } from "../../simulation/SessionContext";
-import type { NetworkSession } from "../../types/session";
-import { useNetlabContext } from "../NetlabContext";
+import { useMemo } from 'react';
+import { useSession } from '../../simulation/SessionContext';
+import type { NetworkSession } from '../../types/session';
+import { useNetlabContext } from '../NetlabContext';
 
 const STATUS_META = {
-  pending: { icon: "◌", label: "pending", color: "#94a3b8" },
-  success: { icon: "✓", label: "success", color: "#34d399" },
-  failed: { icon: "✗", label: "failed", color: "#f87171" },
+  pending: { icon: '◌', label: 'pending', color: '#94a3b8' },
+  success: { icon: '✓', label: 'success', color: '#34d399' },
+  failed: { icon: '✗', label: 'failed', color: '#f87171' },
 } as const;
 
-const STATUS_ORDER: Record<NetworkSession["status"], number> = {
+const STATUS_ORDER: Record<NetworkSession['status'], number> = {
   pending: 0,
   success: 1,
   failed: 2,
@@ -21,7 +21,7 @@ function shortSessionId(sessionId: string): string {
 
 function resolveNodeLabel(
   nodeId: string,
-  nodes: Array<{ id: string; data: { label: string } }>,
+  nodes: { id: string; data: { label: string } }[],
 ): string {
   return nodes.find((node) => node.id === nodeId)?.data.label ?? nodeId;
 }
@@ -43,154 +43,117 @@ export function SessionList() {
   return (
     <div
       style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        background: "var(--netlab-bg-panel)",
-        border: "1px solid var(--netlab-border-subtle)",
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        background: 'var(--netlab-bg-panel)',
+        border: '1px solid var(--netlab-border-subtle)',
         borderRadius: 8,
-        overflow: "hidden",
-        color: "var(--netlab-text-primary)",
-        fontFamily: "monospace",
+        overflow: 'hidden',
+        color: 'var(--netlab-text-primary)',
+        fontFamily: 'monospace',
       }}
     >
       <div
         style={{
-          padding: "10px 12px",
-          borderBottom: "1px solid var(--netlab-border-subtle)",
-          color: "var(--netlab-text-muted)",
+          padding: '10px 12px',
+          borderBottom: '1px solid var(--netlab-border-subtle)',
+          color: 'var(--netlab-text-muted)',
           fontSize: 10,
-          fontWeight: "bold",
+          fontWeight: 'bold',
           letterSpacing: 1,
         }}
       >
         SESSIONS
-        <span
-          style={{
-            marginLeft: 8,
-            color: "var(--netlab-border)",
-            fontWeight: "normal",
-          }}
-        >
+        <span style={{ marginLeft: 8, color: 'var(--netlab-text-muted)', fontWeight: 'normal' }}>
           {sessions.length}
         </span>
       </div>
 
-      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: 6 }}>
+      <div
+        role={sortedSessions.length > 0 ? 'listbox' : 'region'}
+        aria-label="Network sessions"
+        tabIndex={0}
+        style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 6 }}
+      >
         {sortedSessions.length === 0 ? (
-          <div
-            style={{
-              padding: "10px 8px",
-              color: "var(--netlab-text-muted)",
-              fontSize: 12,
-            }}
-          >
+          <div style={{ padding: '10px 8px', color: 'var(--netlab-text-muted)', fontSize: 12 }}>
             No sessions yet. Send a request to start tracing a round trip.
           </div>
         ) : (
           sortedSessions.map((session) => {
             const status = STATUS_META[session.status];
-            const srcLabel = resolveNodeLabel(
-              session.srcNodeId,
-              topology.nodes,
-            );
-            const dstLabel = resolveNodeLabel(
-              session.dstNodeId,
-              topology.nodes,
-            );
+            const srcLabel = resolveNodeLabel(session.srcNodeId, topology.nodes);
+            const dstLabel = resolveNodeLabel(session.dstNodeId, topology.nodes);
             const isSelected = session.sessionId === selectedSessionId;
 
             return (
               <button
                 key={session.sessionId}
                 type="button"
+                role="option"
+                aria-selected={isSelected}
+                aria-label={`${session.requestType ?? session.protocol ?? 'Session'} ${srcLabel} to ${dstLabel} ${status.label}`}
+                className="netlab-focus-ring"
                 onClick={() => selectSession(session.sessionId)}
                 style={{
-                  width: "100%",
-                  textAlign: "left",
-                  display: "flex",
-                  flexDirection: "column",
+                  width: '100%',
+                  textAlign: 'left',
+                  display: 'flex',
+                  flexDirection: 'column',
                   gap: 4,
-                  padding: "8px 10px",
+                  padding: '8px 10px',
                   marginBottom: 4,
                   borderRadius: 6,
-                  border: `1px solid ${isSelected ? "var(--netlab-accent-blue)" : "transparent"}`,
-                  borderLeft: `3px solid ${isSelected ? "var(--netlab-accent-blue)" : "transparent"}`,
-                  background: isSelected
-                    ? "rgba(59, 130, 246, 0.12)"
-                    : "transparent",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
+                  border: `1px solid ${isSelected ? 'var(--netlab-accent-blue)' : 'transparent'}`,
+                  borderLeft: `3px solid ${isSelected ? 'var(--netlab-accent-blue)' : 'transparent'}`,
+                  background: isSelected ? 'rgba(59, 130, 246, 0.12)' : 'transparent',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span
-                    style={{
-                      color: status.color,
-                      fontWeight: "bold",
-                      fontSize: 12,
-                    }}
-                  >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ color: status.color, fontWeight: 'bold', fontSize: 12 }}>
                     {status.icon}
                   </span>
                   <span
                     style={{
-                      color: "var(--netlab-text-primary)",
+                      color: 'var(--netlab-text-primary)',
                       fontSize: 12,
-                      fontWeight: "bold",
+                      fontWeight: 'bold',
                       flex: 1,
                       minWidth: 0,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {session.requestType ??
                       session.protocol ??
                       `Session ${shortSessionId(session.sessionId)}`}
                   </span>
-                  <span
-                    style={{
-                      color: status.color,
-                      fontSize: 10,
-                      textTransform: "uppercase",
-                    }}
-                  >
+                  <span style={{ color: status.color, fontSize: 10, textTransform: 'uppercase' }}>
                     {status.label}
                   </span>
                 </div>
 
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    fontSize: 11,
-                  }}
-                >
-                  <span style={{ color: "var(--netlab-text-muted)" }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
+                  <span style={{ color: 'var(--netlab-text-muted)' }}>
                     #{shortSessionId(session.sessionId)}
                   </span>
-                  <span style={{ color: "var(--netlab-text-secondary)" }}>
+                  <span style={{ color: 'var(--netlab-text-secondary)' }}>
                     {srcLabel} → {dstLabel}
                   </span>
                 </div>
 
                 {session.httpMeta && (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      fontSize: 11,
-                    }}
-                  >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
                     {session.httpMeta.method && (
                       <span
                         data-testid="http-method"
                         style={{
-                          color: "#7dd3fc",
-                          fontWeight: "bold",
+                          color: '#7dd3fc',
+                          fontWeight: 'bold',
                         }}
                       >
                         {session.httpMeta.method}
@@ -200,12 +163,12 @@ export function SessionList() {
                       <span
                         data-testid="http-path"
                         style={{
-                          color: "var(--netlab-text-secondary)",
+                          color: 'var(--netlab-text-secondary)',
                           flex: 1,
                           minWidth: 0,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
                         }}
                       >
                         {session.httpMeta.path}
@@ -215,11 +178,8 @@ export function SessionList() {
                       <span
                         data-testid="http-status"
                         style={{
-                          color:
-                            session.httpMeta.statusCode < 400
-                              ? "#34d399"
-                              : "#f87171",
-                          fontWeight: "bold",
+                          color: session.httpMeta.statusCode < 400 ? '#34d399' : '#f87171',
+                          fontWeight: 'bold',
                         }}
                       >
                         {session.httpMeta.statusCode}

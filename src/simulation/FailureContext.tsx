@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
-import { type FailureState, EMPTY_FAILURE_STATE, makeInterfaceFailureId } from '../types/failure';
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { NetlabError } from '../errors';
+import { EMPTY_FAILURE_STATE, makeInterfaceFailureId, type FailureState } from '../types/failure';
 
 export interface FailureContextValue {
   failureState: FailureState;
@@ -20,7 +21,8 @@ export function FailureProvider({ children }: { children: ReactNode }) {
   const toggleNode = useCallback((nodeId: string) => {
     setFailureState((prev) => {
       const next = new Set(prev.downNodeIds);
-      if (next.has(nodeId)) next.delete(nodeId); else next.add(nodeId);
+      if (next.has(nodeId)) next.delete(nodeId);
+      else next.add(nodeId);
       return { ...prev, downNodeIds: next };
     });
   }, []);
@@ -28,7 +30,8 @@ export function FailureProvider({ children }: { children: ReactNode }) {
   const toggleEdge = useCallback((edgeId: string) => {
     setFailureState((prev) => {
       const next = new Set(prev.downEdgeIds);
-      if (next.has(edgeId)) next.delete(edgeId); else next.add(edgeId);
+      if (next.has(edgeId)) next.delete(edgeId);
+      else next.add(edgeId);
       return { ...prev, downEdgeIds: next };
     });
   }, []);
@@ -37,7 +40,8 @@ export function FailureProvider({ children }: { children: ReactNode }) {
     setFailureState((prev) => {
       const next = new Set(prev.downInterfaceIds);
       const failureId = makeInterfaceFailureId(nodeId, interfaceId);
-      if (next.has(failureId)) next.delete(failureId); else next.add(failureId);
+      if (next.has(failureId)) next.delete(failureId);
+      else next.add(failureId);
       return { ...prev, downInterfaceIds: next };
     });
   }, []);
@@ -88,7 +92,11 @@ export function FailureProvider({ children }: { children: ReactNode }) {
 
 export function useFailure(): FailureContextValue {
   const ctx = useContext(FailureContext);
-  if (!ctx) throw new Error('[netlab] useFailure must be used within <FailureProvider>');
+  if (!ctx)
+    throw new NetlabError({
+      code: 'config/missing-provider',
+      message: '[netlab] useFailure must be used within <FailureProvider>',
+    });
   return ctx;
 }
 

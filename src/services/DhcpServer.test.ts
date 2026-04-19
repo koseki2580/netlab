@@ -1,8 +1,17 @@
 import { describe, expect, it } from 'vitest';
+import type { InFlightPacket } from '../types/packets';
+import { isDhcpMessage, isUdpDatagram } from '../types/packets';
+import type { NetworkTopology } from '../types/topology';
 import { buildDiscover, handleOffer } from './DhcpClient';
 import { handleDiscover, handleRequest, LeaseAllocator } from './DhcpServer';
-import type { NetworkTopology } from '../types/topology';
-import type { InFlightPacket } from '../types/packets';
+
+/** Extract DHCP payload from an InFlightPacket, or null. */
+function extractDhcp(pkt: InFlightPacket | null) {
+  if (!pkt) return null;
+  const l4 = pkt.frame.payload.payload;
+  if (isUdpDatagram(l4) && isDhcpMessage(l4.payload)) return l4.payload;
+  return null;
+}
 
 const SERVER_CONFIG = {
   leasePool: '192.168.1.100/30',
@@ -45,7 +54,7 @@ describe('DhcpServer', () => {
 
     const offer = handleDiscover(discover, TOPOLOGY, allocator);
     const transport = offer?.frame.payload.payload;
-    const payload = offer ? ((offer.frame.payload.payload as InFlightPacket['frame']['payload']['payload'] & { payload: unknown }).payload as any) : null;
+    const payload = extractDhcp(offer ?? null);
 
     expect(offer).not.toBeNull();
     expect(transport && 'srcPort' in transport ? transport.srcPort : null).toBe(67);
@@ -61,7 +70,7 @@ describe('DhcpServer', () => {
     const request = handleOffer(offer, 'client-1', TOPOLOGY);
 
     const ack = handleRequest(request, TOPOLOGY, allocator);
-    const payload = ack ? ((ack.frame.payload.payload as InFlightPacket['frame']['payload']['payload'] & { payload: unknown }).payload as any) : null;
+    const payload = extractDhcp(ack ?? null);
 
     expect(ack).not.toBeNull();
     expect(payload?.messageType).toBe('ACK');
@@ -74,10 +83,11 @@ describe('DhcpServer', () => {
     const offer = handleDiscover(discover, TOPOLOGY, allocator)!;
     const request = handleOffer(offer, 'client-1', TOPOLOGY);
     const tamperedRequest = JSON.parse(JSON.stringify(request)) as InFlightPacket;
-    ((tamperedRequest.frame.payload.payload as InFlightPacket['frame']['payload']['payload'] & { payload: unknown }).payload as any).transactionId = 99999;
+    const tamperedDhcp = extractDhcp(tamperedRequest);
+    if (tamperedDhcp) tamperedDhcp.transactionId = 99999;
 
     const nak = handleRequest(tamperedRequest, TOPOLOGY, allocator);
-    const payload = nak ? ((nak.frame.payload.payload as InFlightPacket['frame']['payload']['payload'] & { payload: unknown }).payload as any) : null;
+    const payload = extractDhcp(nak ?? null);
 
     expect(nak).not.toBeNull();
     expect(payload?.messageType).toBe('NAK');

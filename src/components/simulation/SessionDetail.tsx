@@ -1,23 +1,22 @@
-import { useState } from "react";
-import { useSession } from "../../simulation/SessionContext";
-import type { PacketHop, PacketTrace } from "../../types/simulation";
-import { useNetlabContext } from "../NetlabContext";
+import { memo, useState } from 'react';
+import { useSession } from '../../simulation/SessionContext';
+import type { PacketHop, PacketTrace } from '../../types/simulation';
+import { useNetlabContext } from '../NetlabContext';
 
 const STATUS_META = {
-  pending: { icon: "◌", label: "pending", color: "#94a3b8" },
-  success: { icon: "✓", label: "success", color: "#34d399" },
-  failed: { icon: "✗", label: "failed", color: "#f87171" },
+  pending: { icon: '◌', label: 'pending', color: '#94a3b8' },
+  success: { icon: '✓', label: 'success', color: '#34d399' },
+  failed: { icon: '✗', label: 'failed', color: '#f87171' },
 } as const;
 
-const EVENT_META: Record<PacketHop["event"], { label: string; color: string }> =
-  {
-    create: { label: "CREATE", color: "#7dd3fc" },
-    forward: { label: "FORWARD", color: "#4ade80" },
-    deliver: { label: "DELIVER", color: "#34d399" },
-    drop: { label: "DROP", color: "#f87171" },
-    "arp-request": { label: "ARP-REQ", color: "#f59e0b" },
-    "arp-reply": { label: "ARP-REP", color: "#f59e0b" },
-  };
+const EVENT_META: Record<PacketHop['event'], { label: string; color: string }> = {
+  create: { label: 'CREATE', color: '#7dd3fc' },
+  forward: { label: 'FORWARD', color: '#4ade80' },
+  deliver: { label: 'DELIVER', color: '#34d399' },
+  drop: { label: 'DROP', color: '#f87171' },
+  'arp-request': { label: 'ARP-REQ', color: '#f59e0b' },
+  'arp-reply': { label: 'ARP-REP', color: '#f59e0b' },
+};
 
 function shortSessionId(sessionId: string): string {
   return sessionId.length > 8 ? sessionId.slice(0, 8) : sessionId;
@@ -28,48 +27,45 @@ function formatElapsed(timestamp: number, start: number): string {
 }
 
 function formatPhase(phase: string): string {
-  return phase.replace(":", " · ");
+  return phase.replace(':', ' · ');
 }
 
 function resolveNodeLabel(
   nodeId: string | undefined,
-  nodes: Array<{ id: string; data: { label: string } }>,
+  nodes: { id: string; data: { label: string } }[],
 ): string {
-  if (!nodeId) return "-";
+  if (!nodeId) return '-';
   return nodes.find((node) => node.id === nodeId)?.data.label ?? nodeId;
 }
 
 function resolveNodeAddress(
   nodeId: string,
-  nodes: Array<{
+  nodes: {
     id: string;
     data: {
       ip?: string;
-      interfaces?: Array<{ ipAddress: string }>;
+      interfaces?: { ipAddress: string }[];
     };
-  }>,
+  }[],
 ): string | null {
   const node = nodes.find((candidate) => candidate.id === nodeId);
   if (!node) return null;
-  if (typeof node.data.ip === "string") return node.data.ip;
+  if (typeof node.data.ip === 'string') return node.data.ip;
   return node.data.interfaces?.[0]?.ipAddress ?? null;
 }
 
-function describeHop(
-  hop: PacketHop,
-  nodes: Array<{ id: string; data: { label: string } }>,
-): string {
-  if (hop.event === "drop") {
-    return `drop: ${hop.reason ?? "unknown"}`;
+function describeHop(hop: PacketHop, nodes: { id: string; data: { label: string } }[]): string {
+  if (hop.event === 'drop') {
+    return `drop: ${hop.reason ?? 'unknown'}`;
   }
-  if (hop.event === "deliver") {
-    return "delivered";
+  if (hop.event === 'deliver') {
+    return 'delivered';
   }
-  if (hop.event === "arp-request") {
+  if (hop.event === 'arp-request') {
     return `who has ${hop.dstIp}?`;
   }
-  if (hop.event === "arp-reply") {
-    return `${hop.srcIp} is at ${hop.arpFrame?.srcMac ?? "unknown"}`;
+  if (hop.event === 'arp-reply') {
+    return `${hop.srcIp} is at ${hop.arpFrame?.srcMac ?? 'unknown'}`;
   }
 
   const parts: string[] = [];
@@ -78,37 +74,29 @@ function describeHop(
   }
 
   if (hop.ingressInterfaceName || hop.egressInterfaceName) {
-    parts.push(
-      `${hop.ingressInterfaceName ?? "—"} → ${hop.egressInterfaceName ?? "—"}`,
-    );
+    parts.push(`${hop.ingressInterfaceName ?? '—'} → ${hop.egressInterfaceName ?? '—'}`);
   }
 
-  return parts.join(" · ") || "originated";
+  return parts.join(' · ') || 'originated';
 }
 
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section
       style={{
-        background: "var(--netlab-bg-panel)",
-        border: "1px solid var(--netlab-border-subtle)",
+        background: 'var(--netlab-bg-panel)',
+        border: '1px solid var(--netlab-border-subtle)',
         borderRadius: 8,
-        overflow: "hidden",
+        overflow: 'hidden',
       }}
     >
       <div
         style={{
-          padding: "10px 12px",
-          borderBottom: "1px solid var(--netlab-border-subtle)",
-          color: "var(--netlab-text-muted)",
+          padding: '10px 12px',
+          borderBottom: '1px solid var(--netlab-border-subtle)',
+          color: 'var(--netlab-text-muted)',
           fontSize: 10,
-          fontWeight: "bold",
+          fontWeight: 'bold',
           letterSpacing: 1,
         }}
       >
@@ -140,9 +128,9 @@ function HttpPane({
       {headline && (
         <div
           style={{
-            color: "var(--netlab-text-primary)",
+            color: 'var(--netlab-text-primary)',
             fontSize: 12,
-            fontWeight: "bold",
+            fontWeight: 'bold',
             marginBottom: 8,
           }}
         >
@@ -151,32 +139,25 @@ function HttpPane({
       )}
 
       {headers && Object.keys(headers).length > 0 && (
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            fontSize: 11,
-            marginBottom: 8,
-          }}
-        >
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, marginBottom: 8 }}>
           <tbody>
             {Object.entries(headers).map(([key, value]) => (
               <tr key={key}>
                 <td
                   style={{
-                    color: "var(--netlab-text-muted)",
-                    padding: "2px 8px 2px 0",
-                    whiteSpace: "nowrap",
-                    verticalAlign: "top",
+                    color: 'var(--netlab-text-muted)',
+                    padding: '2px 8px 2px 0',
+                    whiteSpace: 'nowrap',
+                    verticalAlign: 'top',
                   }}
                 >
                   {key}
                 </td>
                 <td
                   style={{
-                    color: "var(--netlab-text-secondary)",
-                    padding: "2px 0",
-                    wordBreak: "break-all",
+                    color: 'var(--netlab-text-secondary)',
+                    padding: '2px 0',
+                    wordBreak: 'break-all',
                   }}
                 >
                   {value}
@@ -191,13 +172,13 @@ function HttpPane({
         <div>
           <pre
             style={{
-              color: "var(--netlab-text-secondary)",
+              color: 'var(--netlab-text-secondary)',
               fontSize: 11,
-              whiteSpace: "pre-wrap",
-              wordBreak: "break-all",
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-all',
               margin: 0,
               maxHeight: shouldCollapse && !bodyExpanded ? 80 : undefined,
-              overflow: shouldCollapse && !bodyExpanded ? "hidden" : undefined,
+              overflow: shouldCollapse && !bodyExpanded ? 'hidden' : undefined,
             }}
           >
             {body}
@@ -209,15 +190,15 @@ function HttpPane({
               style={{
                 marginTop: 4,
                 fontSize: 11,
-                color: "var(--netlab-accent-blue)",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
+                color: 'var(--netlab-accent-blue)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
                 padding: 0,
-                fontFamily: "inherit",
+                fontFamily: 'inherit',
               }}
             >
-              {bodyExpanded ? "Collapse" : `Show all (${body.length} chars)`}
+              {bodyExpanded ? 'Collapse' : `Show all (${body.length} chars)`}
             </button>
           )}
         </div>
@@ -226,75 +207,60 @@ function HttpPane({
   );
 }
 
-function SessionPathView({
-  label,
-  trace,
-}: {
-  label: string;
-  trace?: PacketTrace;
-}) {
+function SessionPathView({ label, trace }: { label: string; trace?: PacketTrace }) {
   const { topology } = useNetlabContext();
 
   return (
     <Section title={label}>
       {!trace ? (
-        <div style={{ color: "var(--netlab-text-muted)", fontSize: 12 }}>
+        <div style={{ color: 'var(--netlab-text-muted)', fontSize: 12 }}>
           No trace attached yet.
         </div>
       ) : trace.hops.length === 0 ? (
-        <div style={{ color: "var(--netlab-text-muted)", fontSize: 12 }}>
-          No hops recorded.
-        </div>
+        <div style={{ color: 'var(--netlab-text-muted)', fontSize: 12 }}>No hops recorded.</div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {trace.hops.map((hop) => {
             const eventMeta = EVENT_META[hop.event];
-            const isDrop = hop.event === "drop";
+            const isDrop = hop.event === 'drop';
             const address = resolveNodeAddress(hop.nodeId, topology.nodes);
 
             return (
               <div
                 key={`${trace.packetId}-${hop.step}`}
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "minmax(0, 1fr) auto",
+                  display: 'grid',
+                  gridTemplateColumns: 'minmax(0, 1fr) auto',
                   gap: 8,
-                  alignItems: "center",
-                  padding: "8px 10px",
+                  alignItems: 'center',
+                  padding: '8px 10px',
                   borderRadius: 6,
-                  background: isDrop ? "#450a0a33" : "var(--netlab-bg-surface)",
-                  border: `1px solid ${isDrop ? "#7f1d1d" : "var(--netlab-border-subtle)"}`,
+                  background: isDrop ? '#450a0a33' : 'var(--netlab-bg-surface)',
+                  border: `1px solid ${isDrop ? '#7f1d1d' : 'var(--netlab-border-subtle)'}`,
                 }}
               >
                 <div style={{ minWidth: 0 }}>
                   <div
                     style={{
-                      color: "var(--netlab-text-primary)",
+                      color: 'var(--netlab-text-primary)',
                       fontSize: 12,
-                      fontWeight: "bold",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
+                      fontWeight: 'bold',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {hop.nodeLabel}
                     {address ? (
-                      <span
-                        style={{
-                          color: "var(--netlab-text-muted)",
-                          fontWeight: "normal",
-                        }}
-                      >
-                        {" "}
+                      <span style={{ color: 'var(--netlab-text-muted)', fontWeight: 'normal' }}>
+                        {' '}
                         ({address})
                       </span>
                     ) : null}
                   </div>
                   <div
                     style={{
-                      color: isDrop
-                        ? "#fca5a5"
-                        : "var(--netlab-text-secondary)",
+                      color: isDrop ? '#fca5a5' : 'var(--netlab-text-secondary)',
                       fontSize: 11,
                       marginTop: 2,
                     }}
@@ -306,12 +272,12 @@ function SessionPathView({
                 <span
                   style={{
                     fontSize: 10,
-                    fontWeight: "bold",
+                    fontWeight: 'bold',
                     color: eventMeta.color,
                     background: `${eventMeta.color}22`,
                     border: `1px solid ${eventMeta.color}44`,
                     borderRadius: 999,
-                    padding: "2px 7px",
+                    padding: '2px 7px',
                     letterSpacing: 0.4,
                   }}
                 >
@@ -326,7 +292,7 @@ function SessionPathView({
   );
 }
 
-export function SessionDetail() {
+export const SessionDetail = memo(function SessionDetail() {
   const { topology } = useNetlabContext();
   const { selectedSession } = useSession();
 
@@ -334,37 +300,31 @@ export function SessionDetail() {
     return (
       <div
         style={{
-          display: "flex",
-          flexDirection: "column",
-          height: "100%",
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
           minHeight: 0,
-          background: "var(--netlab-bg-panel)",
-          border: "1px solid var(--netlab-border-subtle)",
+          background: 'var(--netlab-bg-panel)',
+          border: '1px solid var(--netlab-border-subtle)',
           borderRadius: 8,
-          overflow: "hidden",
-          color: "var(--netlab-text-primary)",
-          fontFamily: "monospace",
+          overflow: 'hidden',
+          color: 'var(--netlab-text-primary)',
+          fontFamily: 'monospace',
         }}
       >
         <div
           style={{
-            padding: "10px 12px",
-            borderBottom: "1px solid var(--netlab-border-subtle)",
-            color: "var(--netlab-text-muted)",
+            padding: '10px 12px',
+            borderBottom: '1px solid var(--netlab-border-subtle)',
+            color: 'var(--netlab-text-muted)',
             fontSize: 10,
-            fontWeight: "bold",
+            fontWeight: 'bold',
             letterSpacing: 1,
           }}
         >
           SESSION DETAIL
         </div>
-        <div
-          style={{
-            padding: "16px 14px",
-            color: "var(--netlab-text-muted)",
-            fontSize: 12,
-          }}
-        >
+        <div style={{ padding: '16px 14px', color: 'var(--netlab-text-muted)', fontSize: 12 }}>
           Select a session to inspect its lifecycle and packet paths.
         </div>
       </div>
@@ -378,30 +338,30 @@ export function SessionDetail() {
   return (
     <div
       style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
         minHeight: 0,
-        background: "var(--netlab-bg-panel)",
-        border: "1px solid var(--netlab-border-subtle)",
+        background: 'var(--netlab-bg-panel)',
+        border: '1px solid var(--netlab-border-subtle)',
         borderRadius: 8,
-        overflow: "hidden",
-        color: "var(--netlab-text-primary)",
-        fontFamily: "monospace",
+        overflow: 'hidden',
+        color: 'var(--netlab-text-primary)',
+        fontFamily: 'monospace',
       }}
     >
       <div
         style={{
-          padding: "12px 14px",
-          borderBottom: "1px solid var(--netlab-border-subtle)",
-          background: "var(--netlab-bg-panel)",
+          padding: '12px 14px',
+          borderBottom: '1px solid var(--netlab-border-subtle)',
+          background: 'var(--netlab-bg-panel)',
         }}
       >
         <div
           style={{
-            color: "var(--netlab-text-muted)",
+            color: 'var(--netlab-text-muted)',
             fontSize: 10,
-            fontWeight: "bold",
+            fontWeight: 'bold',
             letterSpacing: 1,
             marginBottom: 8,
           }}
@@ -409,21 +369,8 @@ export function SessionDetail() {
           SESSION DETAIL
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            marginBottom: 6,
-          }}
-        >
-          <span
-            style={{
-              fontSize: 13,
-              fontWeight: "bold",
-              color: "var(--netlab-text-primary)",
-            }}
-          >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+          <span style={{ fontSize: 13, fontWeight: 'bold', color: 'var(--netlab-text-primary)' }}>
             SESSION #{shortSessionId(selectedSession.sessionId)}
           </span>
           <span style={{ fontSize: 12, color: status.color }}>
@@ -431,61 +378,54 @@ export function SessionDetail() {
           </span>
         </div>
 
-        <div
-          style={{
-            color: "var(--netlab-text-secondary)",
-            fontSize: 12,
-            marginBottom: 4,
-          }}
-        >
-          {selectedSession.requestType ?? "Unnamed request"}
+        <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 12, marginBottom: 4 }}>
+          {selectedSession.requestType ?? 'Unnamed request'}
         </div>
 
-        <div style={{ color: "var(--netlab-text-muted)", fontSize: 11 }}>
+        <div style={{ color: 'var(--netlab-text-muted)', fontSize: 11 }}>
           {srcLabel} → {dstLabel}
-          {selectedSession.protocol ? ` · ${selectedSession.protocol}` : ""}
+          {selectedSession.protocol ? ` · ${selectedSession.protocol}` : ''}
         </div>
       </div>
 
       <div
+        tabIndex={0}
         style={{
           flex: 1,
           minHeight: 0,
-          overflowY: "auto",
+          overflowY: 'auto',
           padding: 12,
-          display: "flex",
-          flexDirection: "column",
+          display: 'flex',
+          flexDirection: 'column',
           gap: 12,
         }}
       >
         <Section title="LIFECYCLE">
           {selectedSession.events.length === 0 ? (
-            <div style={{ color: "var(--netlab-text-muted)", fontSize: 12 }}>
+            <div style={{ color: 'var(--netlab-text-muted)', fontSize: 12 }}>
               No lifecycle events recorded yet.
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {selectedSession.events.map((event) => (
                 <div
                   key={`${selectedSession.sessionId}-${event.seq}`}
                   style={{
-                    display: "grid",
-                    gridTemplateColumns: "28px minmax(0, 1fr) auto auto",
+                    display: 'grid',
+                    gridTemplateColumns: '28px minmax(0, 1fr) auto auto',
                     gap: 8,
-                    alignItems: "center",
+                    alignItems: 'center',
                     fontSize: 12,
                   }}
                 >
-                  <span style={{ color: "var(--netlab-text-muted)" }}>
-                    {event.seq + 1}.
-                  </span>
-                  <span style={{ color: "var(--netlab-text-primary)" }}>
+                  <span style={{ color: 'var(--netlab-text-muted)' }}>{event.seq + 1}.</span>
+                  <span style={{ color: 'var(--netlab-text-primary)' }}>
                     {formatPhase(event.phase)}
                   </span>
-                  <span style={{ color: "var(--netlab-text-secondary)" }}>
+                  <span style={{ color: 'var(--netlab-text-secondary)' }}>
                     {resolveNodeLabel(event.nodeId, topology.nodes)}
                   </span>
-                  <span style={{ color: "var(--netlab-text-muted)" }}>
+                  <span style={{ color: 'var(--netlab-text-muted)' }}>
                     {formatElapsed(event.timestamp, selectedSession.createdAt)}
                   </span>
                 </div>
@@ -496,26 +436,17 @@ export function SessionDetail() {
 
         {selectedSession.error && (
           <Section title="ERROR">
-            <div style={{ color: "#fca5a5", fontSize: 12, marginBottom: 4 }}>
+            <div style={{ color: '#fca5a5', fontSize: 12, marginBottom: 4 }}>
               {selectedSession.error.reason}
             </div>
-            <div
-              style={{ color: "var(--netlab-text-secondary)", fontSize: 11 }}
-            >
-              at{" "}
-              {resolveNodeLabel(selectedSession.error.nodeId, topology.nodes)}
+            <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 11 }}>
+              at {resolveNodeLabel(selectedSession.error.nodeId, topology.nodes)}
             </div>
           </Section>
         )}
 
-        <SessionPathView
-          label="REQUEST PATH"
-          trace={selectedSession.requestTrace}
-        />
-        <SessionPathView
-          label="RESPONSE PATH"
-          trace={selectedSession.responseTrace}
-        />
+        <SessionPathView label="REQUEST PATH" trace={selectedSession.requestTrace} />
+        <SessionPathView label="RESPONSE PATH" trace={selectedSession.responseTrace} />
 
         {selectedSession.httpMeta && (
           <>
@@ -544,4 +475,4 @@ export function SessionDetail() {
       </div>
     </div>
   );
-}
+});

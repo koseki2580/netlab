@@ -35,7 +35,15 @@ function ServerIcon() {
         strokeWidth="1.5"
         fillOpacity="0.2"
       />
-      <line x1="5" y1="20" x2="35" y2="20" style={{ stroke: 'var(--netlab-accent-green)' }} strokeWidth="1" strokeOpacity="0.4" />
+      <line
+        x1="5"
+        y1="20"
+        x2="35"
+        y2="20"
+        style={{ stroke: 'var(--netlab-accent-green)' }}
+        strokeWidth="1"
+        strokeOpacity="0.4"
+      />
       <rect
         x="8"
         y="9"
@@ -87,14 +95,16 @@ export function ServerNode({ id, data }: NodeProps) {
   const d = data as NetlabNodeData;
   return (
     <div style={SERVER_STYLE} onClick={() => setSelectedNodeId(id)}>
-      <Handle type="source" position={Position.Top}    id="top"    style={HANDLE_STYLE} />
-      <Handle type="source" position={Position.Right}  id="right"  style={HANDLE_STYLE} />
+      <Handle type="source" position={Position.Top} id="top" style={HANDLE_STYLE} />
+      <Handle type="source" position={Position.Right} id="right" style={HANDLE_STYLE} />
       <Handle type="source" position={Position.Bottom} id="bottom" style={HANDLE_STYLE} />
-      <Handle type="source" position={Position.Left}   id="left"   style={HANDLE_STYLE} />
+      <Handle type="source" position={Position.Left} id="left" style={HANDLE_STYLE} />
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}>
         <ServerIcon />
       </div>
-      <div style={{ fontWeight: 'bold', fontSize: 11, color: 'var(--netlab-text-primary)' }}>{d.label}</div>
+      <div style={{ fontWeight: 'bold', fontSize: 11, color: 'var(--netlab-text-primary)' }}>
+        {d.label}
+      </div>
     </div>
   );
 }

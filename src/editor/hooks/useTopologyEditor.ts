@@ -1,11 +1,6 @@
 import { useReducer, useCallback, useEffect, useMemo } from 'react';
 import type { NetlabNode, NetlabEdge, NetlabNodeData } from '../../types/topology';
-import type {
-  EditorTopology,
-  TopologyEditorState,
-  HistoryEntry,
-  PositionUpdate,
-} from '../types';
+import type { EditorTopology, TopologyEditorState, HistoryEntry, PositionUpdate } from '../types';
 import { MAX_HISTORY_SIZE } from '../types';
 import type { TopologyEditorContextValue } from '../context/TopologyEditorContext';
 
@@ -18,10 +13,7 @@ type EditorAction =
   | { type: 'UPDATE_POSITIONS'; updates: PositionUpdate[] }
   | { type: 'SET_SELECTED'; nodeId: string | null };
 
-function editorReducer(
-  state: TopologyEditorState,
-  action: EditorAction,
-): TopologyEditorState {
+function editorReducer(state: TopologyEditorState, action: EditorAction): TopologyEditorState {
   switch (action.type) {
     case 'COMMIT': {
       const entry: HistoryEntry = { topology: state.topology };
@@ -53,9 +45,7 @@ function editorReducer(
       return {
         ...state,
         topology: restored.topology,
-        past: [...state.past, { topology: state.topology }].slice(
-          -MAX_HISTORY_SIZE,
-        ),
+        past: [...state.past, { topology: state.topology }].slice(-MAX_HISTORY_SIZE),
         future,
         reactFlowKey: state.reactFlowKey + 1,
       };
@@ -83,9 +73,7 @@ function editorReducer(
 
 // ─── Initial state ─────────────────────────────────────────────────────────
 
-function makeInitialState(
-  initialTopology?: EditorTopology,
-): TopologyEditorState {
+function makeInitialState(initialTopology?: EditorTopology): TopologyEditorState {
   return {
     topology: initialTopology ?? { nodes: [], edges: [] },
     past: [],
@@ -107,11 +95,7 @@ export function useTopologyEditor(
 ): TopologyEditorContextValue {
   const { initialTopology, onTopologyChange } = options;
 
-  const [state, dispatch] = useReducer(
-    editorReducer,
-    initialTopology,
-    makeInitialState,
-  );
+  const [state, dispatch] = useReducer(editorReducer, initialTopology, makeInitialState);
 
   // Notify parent of topology changes
   useEffect(() => {
@@ -137,9 +121,7 @@ export function useTopologyEditor(
         type: 'COMMIT',
         topology: {
           nodes: state.topology.nodes.filter((n) => n.id !== nodeId),
-          edges: state.topology.edges.filter(
-            (e) => e.source !== nodeId && e.target !== nodeId,
-          ),
+          edges: state.topology.edges.filter((e) => e.source !== nodeId && e.target !== nodeId),
         },
       });
     },

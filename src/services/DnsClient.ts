@@ -24,11 +24,14 @@ export function buildDnsQuery(
   const client = findNode(topology, clientNodeId);
   if (!client) return null;
 
-  const dnsServer = topology.nodes.find((node) =>
-    node.data.dnsServer != null &&
-    typeof node.data.ip === 'string' &&
-    (!preferredDnsServerIp || node.data.ip === preferredDnsServerIp),
-  ) ?? topology.nodes.find((node) => node.data.dnsServer != null && typeof node.data.ip === 'string');
+  const dnsServer =
+    topology.nodes.find(
+      (node) =>
+        node.data.dnsServer != null &&
+        typeof node.data.ip === 'string' &&
+        (!preferredDnsServerIp || node.data.ip === preferredDnsServerIp),
+    ) ??
+    topology.nodes.find((node) => node.data.dnsServer != null && typeof node.data.ip === 'string');
   if (!dnsServer || typeof dnsServer.data.ip !== 'string') return null;
 
   const srcIp = runtimeNodeIps.get(clientNodeId) ?? client.data.ip;
@@ -60,7 +63,7 @@ export function handleDnsResponse(
   response: InFlightPacket,
 ): { hostname: string; address: string; ttl: number } | null {
   const payload = dnsPayload(response);
-  if (!payload || !payload.isResponse) return null;
+  if (!payload?.isResponse) return null;
 
   const answer = payload.answers[0];
   if (!answer) return null;

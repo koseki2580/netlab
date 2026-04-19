@@ -1,9 +1,6 @@
 import { useMemo } from 'react';
 import type { NetlabNode, NetlabEdge } from '../../types/topology';
-import {
-  validateTopology,
-  type TopologyValidationResult,
-} from '../../utils/connectionValidator';
+import { validateTopology, type TopologyValidationResult } from '../../utils/connectionValidator';
 
 export interface ValidationPanelProps {
   nodes: NetlabNode[];
@@ -57,11 +54,7 @@ function resolveNodeLabel(nodes: NetlabNode[], nodeId: string): string {
   return nodes.find((node) => node.id === nodeId)?.data.label ?? nodeId;
 }
 
-export function ValidationPanel({
-  nodes,
-  edges,
-  onEdgeClick,
-}: ValidationPanelProps) {
+export function ValidationPanel({ nodes, edges, onEdgeClick }: ValidationPanelProps) {
   const result: TopologyValidationResult = useMemo(
     () => validateTopology(nodes, edges),
     [nodes, edges],
@@ -73,8 +66,14 @@ export function ValidationPanel({
         .map(([edgeId, edgeResult]) => {
           const edge = edges.find((candidate) => candidate.id === edgeId);
           const issues = [
-            ...edgeResult.errors.map((error) => ({ level: 'error' as const, message: error.message })),
-            ...edgeResult.warnings.map((warning) => ({ level: 'warning' as const, message: warning.message })),
+            ...edgeResult.errors.map((error) => ({
+              level: 'error' as const,
+              message: error.message,
+            })),
+            ...edgeResult.warnings.map((warning) => ({
+              level: 'warning' as const,
+              message: warning.message,
+            })),
           ];
 
           if (!edge || issues.length === 0) {
@@ -104,7 +103,15 @@ export function ValidationPanel({
 
   return (
     <div className="netlab-validation-panel" style={PANEL_STYLE}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          marginBottom: 10,
+          flexWrap: 'wrap',
+        }}
+      >
         <strong style={{ fontSize: 12 }}>Topology Issues</strong>
         {result.errorCount > 0 ? (
           <span
@@ -141,7 +148,7 @@ export function ValidationPanel({
               style={EDGE_BUTTON_STYLE}
             >
               {entry.title}
-              <span style={{ color: 'var(--netlab-text-muted, #64748b)' }}> ({entry.edgeId})</span>
+              <span style={{ color: 'var(--netlab-text-muted, #5a6a7e)' }}> ({entry.edgeId})</span>
             </button>
             <ul style={{ margin: 0, paddingLeft: 18 }}>
               {entry.issues.map((issue, index) => (
@@ -149,9 +156,10 @@ export function ValidationPanel({
                   key={`${entry.edgeId}-${index}`}
                   className={`issue-${issue.level}`}
                   style={{
-                    color: issue.level === 'error'
-                      ? 'var(--netlab-accent-red, #f87171)'
-                      : 'var(--netlab-accent-orange, #f59e0b)',
+                    color:
+                      issue.level === 'error'
+                        ? 'var(--netlab-accent-red, #f87171)'
+                        : 'var(--netlab-accent-orange, #f59e0b)',
                   }}
                 >
                   {issue.level === 'error' ? '❌' : '⚠️'} {issue.message}

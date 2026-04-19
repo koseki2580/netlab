@@ -1,3 +1,4 @@
+import { NetlabError } from '../errors';
 import type { IpPacket, RawPayload } from '../types/packets';
 import { stableHash32 } from '../utils/hash';
 import {
@@ -62,7 +63,11 @@ function firstFragmentPayload(packet: IpPacket, bytes: number[]): IpPacket['payl
     };
   }
 
-  if (!isTcpSegment(originalPayload) && !isIcmpMessage(originalPayload) && 'srcPort' in originalPayload) {
+  if (
+    !isTcpSegment(originalPayload) &&
+    !isIcmpMessage(originalPayload) &&
+    'srcPort' in originalPayload
+  ) {
     if (bytes.length < UDP_HEADER_BYTES) {
       return toRawPayload(bytes);
     }
@@ -85,7 +90,7 @@ function fragmentFlags(packet: IpPacket, moreFragments: boolean): NonNullable<Ip
 }
 
 export function packetSizeBytes(packet: IpPacket): number {
-  return packet.totalLength ?? (ipHeaderBytes(packet) + buildTransportBytes(packet.payload).length);
+  return packet.totalLength ?? ipHeaderBytes(packet) + buildTransportBytes(packet.payload).length;
 }
 
 export function effectiveMtu(
@@ -105,7 +110,11 @@ export function fragment(packet: IpPacket, mtu: number, identification: number):
   }
 
   if (mtu < MIN_IPV4_FRAGMENT_MTU) {
-    throw new Error(`MTU ${mtu} is too small for IPv4 fragmentation`);
+    throw new NetlabError({
+      code: 'invariant/cannot-fragment',
+      message: `MTU ${mtu} is too small for IPv4 fragmentation`,
+      context: { mtu },
+    });
   }
 
   const maxFragmentPayloadBytes = Math.floor((mtu - IP_HEADER_BYTES) / 8) * 8;
@@ -126,7 +135,8 @@ export function fragment(packet: IpPacket, mtu: number, identification: number):
       totalLength: IP_HEADER_BYTES + chunk.length,
       headerChecksum: undefined,
       payload: offset === 0 ? firstFragmentPayload(packet, chunk) : toRawPayload(chunk),
-      reassemblyPayload: offset === 0 && packet.payload.layer !== 'raw' ? packet.payload : packet.reassemblyPayload,
+      reassemblyPayload:
+        offset === 0 && packet.payload.layer !== 'raw' ? packet.payload : packet.reassemblyPayload,
     });
   }
 
@@ -139,7 +149,9 @@ export function deriveIdentification(
   sessionId: string | undefined,
   sequenceNumber: number | undefined,
 ): number {
-  return stableHash32([srcIp, dstIp, sessionId ?? '', String(sequenceNumber ?? '')].join('|')) & 0xffff;
+  return (
+    stableHash32([srcIp, dstIp, sessionId ?? '', String(sequenceNumber ?? '')].join('|')) & 0xffff
+  );
 }
 
 export interface ReassemblyBufferEntry {

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { buildAckPacket, buildFinPacket, buildRstPacket, buildSynAckPacket, buildSynPacket } from '../layers/l4-transport/tcpPacketBuilder';
+import {
+  buildAckPacket,
+  buildFinPacket,
+  buildRstPacket,
+  buildSynAckPacket,
+  buildSynPacket,
+} from '../layers/l4-transport/tcpPacketBuilder';
 import { buildDiscover, handleOffer } from '../services/DhcpClient';
 import { LeaseAllocator, handleDiscover, handleRequest } from '../services/DhcpServer';
 import { buildDnsQuery } from '../services/DnsClient';
@@ -115,18 +121,20 @@ function makeReassemblyEntry(fragments: IpPacket[]): ReassemblyBufferEntry {
 
   return {
     key: '10.0.0.10|203.0.113.10|1234|6',
-    firstFragment: fragments.find((candidate) => (candidate.fragmentOffset ?? 0) === 0) ?? fragments[0]!,
+    firstFragment:
+      fragments.find((candidate) => (candidate.fragmentOffset ?? 0) === 0) ?? fragments[0],
     fragments: new Map(fragments.map((candidate) => [candidate.fragmentOffset ?? 0, candidate])),
-    totalBytesExpected: terminalFragment == null
-      ? null
-      : ((terminalFragment.fragmentOffset ?? 0) * 8) + (packetSizeBytes(terminalFragment) - 20),
+    totalBytesExpected:
+      terminalFragment == null
+        ? null
+        : (terminalFragment.fragmentOffset ?? 0) * 8 + (packetSizeBytes(terminalFragment) - 20),
   };
 }
 
 function fixturePackets(): IpPacket[] {
   const topology = makeServiceTopology();
   const discover = buildDiscover('client-1', topology)!;
-  const allocator = new LeaseAllocator(topology.nodes[1]!.data.dhcpServer!);
+  const allocator = new LeaseAllocator(topology.nodes[1].data.dhcpServer!);
   const offer = handleDiscover(discover, topology, allocator)!;
   const request = handleOffer(offer, 'client-1', topology);
   const ack = handleRequest(request, topology, allocator)!;
@@ -269,7 +277,9 @@ describe('fragmentation', () => {
     it('sets identical identification on every fragment', () => {
       const fragments = fragment(makeTcpPacket(4000), 1500, 4321);
 
-      expect(new Set(fragments.map((candidate) => candidate.identification))).toEqual(new Set([4321]));
+      expect(new Set(fragments.map((candidate) => candidate.identification))).toEqual(
+        new Set([4321]),
+      );
     });
 
     it('sets fragmentOffset in 8-byte units starting at 0', () => {
@@ -285,7 +295,11 @@ describe('fragmentation', () => {
     });
 
     it('preserves flags.df on every fragment', () => {
-      const fragments = fragment(makeTcpPacket(1500, { flags: { df: true, mf: false } }), 1000, 9999);
+      const fragments = fragment(
+        makeTcpPacket(1500, { flags: { df: true, mf: false } }),
+        1000,
+        9999,
+      );
 
       expect(fragments.every((candidate) => candidate.flags?.df === true)).toBe(true);
     });
@@ -307,26 +321,32 @@ describe('fragmentation', () => {
       const reassembled = tryReassemble(makeReassemblyEntry(fragments));
 
       expect(reassembled).not.toBeNull();
-      expect(buildTransportBytes(reassembled!.payload)).toEqual(buildTransportBytes(original.payload));
-      expect(buildIpv4PacketBytes(reassembled!)).toEqual(buildIpv4PacketBytes({
-        ...original,
-        identification: 1234,
-        flags: { df: false, mf: false },
-        fragmentOffset: 0,
-        totalLength: packetSizeBytes(original),
-      }));
+      expect(buildTransportBytes(reassembled!.payload)).toEqual(
+        buildTransportBytes(original.payload),
+      );
+      expect(buildIpv4PacketBytes(reassembled!)).toEqual(
+        buildIpv4PacketBytes({
+          ...original,
+          identification: 1234,
+          flags: { df: false, mf: false },
+          fragmentOffset: 0,
+          totalLength: packetSizeBytes(original),
+        }),
+      );
     });
   });
 
   describe('deriveIdentification', () => {
     it('is deterministic for the same inputs', () => {
-      expect(deriveIdentification('10.0.0.10', '203.0.113.10', 'session-1', 1))
-        .toBe(deriveIdentification('10.0.0.10', '203.0.113.10', 'session-1', 1));
+      expect(deriveIdentification('10.0.0.10', '203.0.113.10', 'session-1', 1)).toBe(
+        deriveIdentification('10.0.0.10', '203.0.113.10', 'session-1', 1),
+      );
     });
 
     it('differs for different sequence numbers', () => {
-      expect(deriveIdentification('10.0.0.10', '203.0.113.10', 'session-1', 1))
-        .not.toBe(deriveIdentification('10.0.0.10', '203.0.113.10', 'session-1', 2));
+      expect(deriveIdentification('10.0.0.10', '203.0.113.10', 'session-1', 1)).not.toBe(
+        deriveIdentification('10.0.0.10', '203.0.113.10', 'session-1', 2),
+      );
     });
 
     it('fits in 16 bits', () => {
@@ -347,7 +367,7 @@ describe('fragmentation', () => {
 
     it('returns null when only mf=0 arrived without lower fragments', () => {
       const fragments = fragment(makeTcpPacket(4000), 1500, 1234);
-      const last = fragments[2]!;
+      const last = fragments[2];
       const entry = makeReassemblyEntry([last]);
 
       expect(tryReassemble(entry)).toBeNull();
@@ -375,7 +395,11 @@ describe('fragmentation', () => {
     });
 
     it('sets flags.mf=false and fragmentOffset=0 on the reconstituted packet', () => {
-      const fragments = fragment(makeTcpPacket(4000, { flags: { df: true, mf: false } }), 1500, 1234);
+      const fragments = fragment(
+        makeTcpPacket(4000, { flags: { df: true, mf: false } }),
+        1500,
+        1234,
+      );
       const reassembled = tryReassemble(makeReassemblyEntry(fragments));
 
       expect(reassembled?.flags).toEqual({ df: true, mf: false });

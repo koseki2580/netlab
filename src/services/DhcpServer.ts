@@ -22,17 +22,14 @@ function ipToInt(ip: string): number {
 }
 
 function intToIp(value: number): string {
-  return [
-    (value >>> 24) & 0xff,
-    (value >>> 16) & 0xff,
-    (value >>> 8) & 0xff,
-    value & 0xff,
-  ].join('.');
+  return [(value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff].join(
+    '.',
+  );
 }
 
 function expandLeasePool(cidr: string): string[] {
   const { prefix, length } = parseCidr(cidr);
-  const mask = length === 0 ? 0 : ((~0 << (32 - length)) >>> 0);
+  const mask = length === 0 ? 0 : (~0 << (32 - length)) >>> 0;
   const network = ipToInt(prefix) & mask;
   const size = 2 ** (32 - length);
   const firstHost = length >= 31 ? network : network + 1;
@@ -94,7 +91,12 @@ export class LeaseAllocator {
     this.pool = expandLeasePool(config.leasePool);
   }
 
-  offer(transactionId: number, clientMac: string, clientNodeId: string, serverNodeId: string): string | null {
+  offer(
+    transactionId: number,
+    clientMac: string,
+    clientNodeId: string,
+    serverNodeId: string,
+  ): string | null {
     const existingLease = this.leases.get(clientMac);
     if (existingLease) {
       this.pendingOffers.set(transactionId, {
@@ -124,7 +126,7 @@ export class LeaseAllocator {
 
   ack(transactionId: number, clientMac: string, requestedIp?: string): PendingOffer | null {
     const pending = this.pendingOffers.get(transactionId);
-    if (!pending || pending.clientMac !== clientMac) return null;
+    if (pending?.clientMac !== clientMac) return null;
     if (requestedIp && pending.offeredIp !== requestedIp) return null;
 
     this.leases.set(clientMac, pending.offeredIp);
@@ -143,11 +145,12 @@ export function handleDiscover(
   leaseAllocator: LeaseAllocator,
 ): InFlightPacket | null {
   const payload = dhcpPayload(discover);
-  if (!payload || payload.messageType !== 'DISCOVER') return null;
+  if (payload?.messageType !== 'DISCOVER') return null;
 
-  const server = findNode(topology, discover.dstNodeId)
-    ?? topology.nodes.find((node) => node.data.dhcpServer != null)
-    ?? null;
+  const server =
+    findNode(topology, discover.dstNodeId) ??
+    topology.nodes.find((node) => node.data.dhcpServer != null) ??
+    null;
   if (!server || typeof server.data.ip !== 'string' || !server.data.dhcpServer) return null;
 
   const offeredIp = leaseAllocator.offer(
@@ -180,18 +183,15 @@ export function handleRequest(
   leaseAllocator: LeaseAllocator,
 ): InFlightPacket | null {
   const payload = dhcpPayload(request);
-  if (!payload || payload.messageType !== 'REQUEST') return null;
+  if (payload?.messageType !== 'REQUEST') return null;
 
-  const server = findNode(topology, request.dstNodeId)
-    ?? topology.nodes.find((node) => node.data.dhcpServer != null)
-    ?? null;
+  const server =
+    findNode(topology, request.dstNodeId) ??
+    topology.nodes.find((node) => node.data.dhcpServer != null) ??
+    null;
   if (!server || typeof server.data.ip !== 'string' || !server.data.dhcpServer) return null;
 
-  const confirmed = leaseAllocator.ack(
-    payload.transactionId,
-    payload.clientMac,
-    payload.offeredIp,
-  );
+  const confirmed = leaseAllocator.ack(payload.transactionId, payload.clientMac, payload.offeredIp);
 
   return createDhcpPacket(
     `dhcp-final-${payload.transactionId}-${Date.now()}`,

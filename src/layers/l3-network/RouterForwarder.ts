@@ -34,7 +34,9 @@ export class RouterForwarder implements Forwarder {
   }
 
   resolveArpMac(ipAddress: string, vlanId?: number): string | null {
-    return this.arpTable.get(this.arpKey(ipAddress, vlanId)) ?? this.arpTable.get(ipAddress) ?? null;
+    return (
+      this.arpTable.get(this.arpKey(ipAddress, vlanId)) ?? this.arpTable.get(ipAddress) ?? null
+    );
   }
 
   private arpKey(ipAddress: string, vlanId?: number): string {
@@ -48,7 +50,7 @@ export class RouterForwarder implements Forwarder {
 
   private getLogicalInterfacesForNode(nodeId: string): LogicalRouterInterface[] {
     const node = this.topology.nodes.find((candidate) => candidate.id === nodeId);
-    if (!node || node.data.role !== 'router') {
+    if (node?.data.role !== 'router') {
       return [];
     }
 
@@ -74,7 +76,10 @@ export class RouterForwarder implements Forwarder {
   }
 
   private findLogicalInterfaceById(interfaceId: string): LogicalRouterInterface | null {
-    return this.getLogicalInterfacesForNode(this.nodeId).find((iface) => iface.id === interfaceId) ?? null;
+    return (
+      this.getLogicalInterfacesForNode(this.nodeId).find((iface) => iface.id === interfaceId) ??
+      null
+    );
   }
 
   private seedArpTable(): void {
@@ -95,7 +100,9 @@ export class RouterForwarder implements Forwarder {
       return { iface: null };
     }
 
-    const parentInterface = (node.data.interfaces ?? []).find((iface) => iface.id === ingressPortId);
+    const parentInterface = (node.data.interfaces ?? []).find(
+      (iface) => iface.id === ingressPortId,
+    );
     const directLogical = this.findLogicalInterfaceById(ingressPortId);
     if (!parentInterface) {
       return { iface: directLogical };
@@ -127,9 +134,10 @@ export class RouterForwarder implements Forwarder {
       const neighborNode = this.topology.nodes.find((node) => node.id === neighbor.nodeId);
       if (!neighborNode) continue;
 
-      const neighborInterfaceIps = neighborNode.data.role === 'router'
-        ? this.getLogicalInterfacesForNode(neighborNode.id).map((iface) => iface.ipAddress)
-        : (neighborNode.data.interfaces ?? []).map((iface) => iface.ipAddress);
+      const neighborInterfaceIps =
+        neighborNode.data.role === 'router'
+          ? this.getLogicalInterfacesForNode(neighborNode.id).map((iface) => iface.ipAddress)
+          : (neighborNode.data.interfaces ?? []).map((iface) => iface.ipAddress);
 
       if (route.nextHop === 'direct') {
         const nodeIp = neighborNode.data.runtimeIp ?? neighborNode.data.ip;
@@ -157,9 +165,7 @@ export class RouterForwarder implements Forwarder {
     const routes = this.topology.routeTables.get(this.nodeId) ?? [];
     const candidates = [...routes]
       .filter((route) => isInSubnet(dstIp, route.destination))
-      .sort(
-        (a, b) => prefixLength(b.destination) - prefixLength(a.destination),
-      );
+      .sort((a, b) => prefixLength(b.destination) - prefixLength(a.destination));
 
     for (const route of candidates) {
       const neighbor = this.resolveNeighborForRoute(dstIp, route, neighbors);
@@ -237,11 +243,7 @@ export class RouterForwarder implements Forwarder {
       headerChecksum: computeIpv4Checksum(headerBytes),
     };
 
-    const egressInterfaceId = this.resolveEgressInterface(
-      route,
-      ipPacket.dstIp,
-      neighbor.edgeId,
-    );
+    const egressInterfaceId = this.resolveEgressInterface(route, ipPacket.dstIp, neighbor.edgeId);
     const egressInterface = egressInterfaceId
       ? this.findLogicalInterfaceById(egressInterfaceId)
       : null;

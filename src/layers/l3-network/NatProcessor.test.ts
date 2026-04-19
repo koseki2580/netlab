@@ -181,12 +181,7 @@ describe('NatProcessor', () => {
 
   it('reverse-translates outside-to-inside return traffic for SNAT', () => {
     const processor = new NatProcessor('router-1', makeNatTopology());
-    processor.applyPostRouting(
-      makePacket('192.168.1.10', '8.8.8.8', 54321, 80),
-      'eth0',
-      'eth1',
-      1,
-    );
+    processor.applyPostRouting(makePacket('192.168.1.10', '8.8.8.8', 54321, 80), 'eth0', 'eth1', 1);
 
     const result = processor.applyPreRouting(
       makePacket('8.8.8.8', '203.0.113.1', 80, 1024),
@@ -246,11 +241,7 @@ describe('NatProcessor', () => {
 
   it('reuses the DNAT mapping for the inside server response', () => {
     const processor = new NatProcessor('router-1', makeNatTopology());
-    processor.applyPreRouting(
-      makePacket('198.51.100.10', '203.0.113.1', 55000, 8080),
-      'eth1',
-      5,
-    );
+    processor.applyPreRouting(makePacket('198.51.100.10', '203.0.113.1', 55000, 8080), 'eth1', 5);
 
     const result = processor.applyPostRouting(
       makePacket('192.168.1.10', '198.51.100.10', 80, 55000),
@@ -300,7 +291,7 @@ describe('NatProcessor', () => {
 
   it('drops when no SNAT port is available', () => {
     const processor = new NatProcessor('router-1', makeNatTopology());
-    ((processor as unknown) as { portCounter: number }).portCounter = 65536;
+    (processor as unknown as { portCounter: number }).portCounter = 65536;
 
     const result = processor.applyPostRouting(
       makePacket('192.168.1.10', '8.8.8.8', 54321, 80),

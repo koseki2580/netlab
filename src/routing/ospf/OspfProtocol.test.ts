@@ -108,10 +108,7 @@ describe('OspfProtocol', () => {
         nodes: [
           makeRouter(
             'r1',
-            [
-              makeIface('lan0', '10.1.0.1', 24),
-              makeIface('eth0', '10.0.12.1', 30),
-            ],
+            [makeIface('lan0', '10.1.0.1', 24), makeIface('eth0', '10.0.12.1', 30)],
             [makeArea(['10.1.0.0/24', '10.0.12.0/30'])],
           ),
         ],
@@ -142,25 +139,21 @@ describe('OspfProtocol', () => {
         nodes: [
           makeRouter(
             'r1',
-            [
-              makeIface('lan0', '10.1.0.1', 24),
-              makeIface('eth0', '10.0.12.1', 30),
-            ],
+            [makeIface('lan0', '10.1.0.1', 24), makeIface('eth0', '10.0.12.1', 30)],
             [makeArea(['10.1.0.0/24', '10.0.12.0/30'])],
           ),
           makeRouter(
             'r2',
-            [
-              makeIface('eth0', '10.0.12.2', 30),
-              makeIface('lan0', '10.2.0.1', 24),
-            ],
+            [makeIface('eth0', '10.0.12.2', 30), makeIface('lan0', '10.2.0.1', 24)],
             [makeArea(['10.0.12.0/30', '10.2.0.0/24'])],
           ),
         ],
         edges: [makeEdge('e12', 'r1', 'r2', 'eth0', 'eth0')],
       });
 
-      expect(findRoute(new OspfProtocol().computeRoutes(topology), 'r1', '10.2.0.0/24')).toMatchObject({
+      expect(
+        findRoute(new OspfProtocol().computeRoutes(topology), 'r1', '10.2.0.0/24'),
+      ).toMatchObject({
         nextHop: '10.0.12.2',
         metric: 1,
       });
@@ -169,35 +162,24 @@ describe('OspfProtocol', () => {
     it('computes shortest path in linear chain R1—R2—R3', () => {
       const topology = makeTopology({
         nodes: [
-          makeRouter(
-            'r1',
-            [makeIface('to-r2', '10.0.12.1', 30)],
-            [makeArea(['10.0.12.0/30'])],
-          ),
+          makeRouter('r1', [makeIface('to-r2', '10.0.12.1', 30)], [makeArea(['10.0.12.0/30'])]),
           makeRouter(
             'r2',
-            [
-              makeIface('to-r1', '10.0.12.2', 30),
-              makeIface('to-r3', '10.0.23.1', 30),
-            ],
+            [makeIface('to-r1', '10.0.12.2', 30), makeIface('to-r3', '10.0.23.1', 30)],
             [makeArea(['10.0.12.0/30', '10.0.23.0/30'])],
           ),
           makeRouter(
             'r3',
-            [
-              makeIface('to-r2', '10.0.23.2', 30),
-              makeIface('lan0', '10.3.0.1', 24),
-            ],
+            [makeIface('to-r2', '10.0.23.2', 30), makeIface('lan0', '10.3.0.1', 24)],
             [makeArea(['10.0.23.0/30', '10.3.0.0/24'])],
           ),
         ],
-        edges: [
-          makeEdge('e12', 'r1', 'r2'),
-          makeEdge('e23', 'r2', 'r3'),
-        ],
+        edges: [makeEdge('e12', 'r1', 'r2'), makeEdge('e23', 'r2', 'r3')],
       });
 
-      expect(findRoute(new OspfProtocol().computeRoutes(topology), 'r1', '10.3.0.0/24')).toMatchObject({
+      expect(
+        findRoute(new OspfProtocol().computeRoutes(topology), 'r1', '10.3.0.0/24'),
+      ).toMatchObject({
         nextHop: '10.0.12.2',
         metric: 2,
       });
@@ -208,18 +190,12 @@ describe('OspfProtocol', () => {
         nodes: [
           makeRouter(
             'r1',
-            [
-              makeIface('to-r2', '10.0.12.1', 30),
-              makeIface('to-r3', '10.0.13.1', 30),
-            ],
+            [makeIface('to-r2', '10.0.12.1', 30), makeIface('to-r3', '10.0.13.1', 30)],
             [makeArea(['10.0.12.0/30', '10.0.13.0/30'])],
           ),
           makeRouter(
             'r2',
-            [
-              makeIface('to-r1', '10.0.12.2', 30),
-              makeIface('to-r3', '10.0.23.1', 30),
-            ],
+            [makeIface('to-r1', '10.0.12.2', 30), makeIface('to-r3', '10.0.23.1', 30)],
             [makeArea(['10.0.12.0/30', '10.0.23.0/30'])],
           ),
           makeRouter(
@@ -239,7 +215,9 @@ describe('OspfProtocol', () => {
         ],
       });
 
-      expect(findRoute(new OspfProtocol().computeRoutes(topology), 'r1', '10.3.0.0/24')).toMatchObject({
+      expect(
+        findRoute(new OspfProtocol().computeRoutes(topology), 'r1', '10.3.0.0/24'),
+      ).toMatchObject({
         nextHop: '10.0.13.2',
         metric: 1,
       });
@@ -248,24 +226,19 @@ describe('OspfProtocol', () => {
     it('uses link cost from adjacency (default 1)', () => {
       const topology = makeTopology({
         nodes: [
-          makeRouter(
-            'r1',
-            [makeIface('to-r2', '10.0.12.1', 30)],
-            [makeArea(['10.0.12.0/30'])],
-          ),
+          makeRouter('r1', [makeIface('to-r2', '10.0.12.1', 30)], [makeArea(['10.0.12.0/30'])]),
           makeRouter(
             'r2',
-            [
-              makeIface('to-r1', '10.0.12.2', 30),
-              makeIface('lan0', '10.2.0.1', 24),
-            ],
+            [makeIface('to-r1', '10.0.12.2', 30), makeIface('lan0', '10.2.0.1', 24)],
             [makeArea(['10.0.12.0/30', '10.2.0.0/24'])],
           ),
         ],
         edges: [makeEdge('e12', 'r1', 'r2')],
       });
 
-      expect(findRoute(new OspfProtocol().computeRoutes(topology), 'r1', '10.2.0.0/24')).toMatchObject({
+      expect(
+        findRoute(new OspfProtocol().computeRoutes(topology), 'r1', '10.2.0.0/24'),
+      ).toMatchObject({
         metric: 1,
       });
     });
@@ -273,35 +246,24 @@ describe('OspfProtocol', () => {
     it('accumulates cost across multiple hops', () => {
       const topology = makeTopology({
         nodes: [
-          makeRouter(
-            'r1',
-            [makeIface('to-r2', '10.0.12.1', 30)],
-            [makeArea(['10.0.12.0/30'], 2)],
-          ),
+          makeRouter('r1', [makeIface('to-r2', '10.0.12.1', 30)], [makeArea(['10.0.12.0/30'], 2)]),
           makeRouter(
             'r2',
-            [
-              makeIface('to-r1', '10.0.12.2', 30),
-              makeIface('to-r3', '10.0.23.1', 30),
-            ],
+            [makeIface('to-r1', '10.0.12.2', 30), makeIface('to-r3', '10.0.23.1', 30)],
             [makeArea(['10.0.12.0/30', '10.0.23.0/30'], 3)],
           ),
           makeRouter(
             'r3',
-            [
-              makeIface('to-r2', '10.0.23.2', 30),
-              makeIface('lan0', '10.3.0.1', 24),
-            ],
+            [makeIface('to-r2', '10.0.23.2', 30), makeIface('lan0', '10.3.0.1', 24)],
             [makeArea(['10.0.23.0/30', '10.3.0.0/24'])],
           ),
         ],
-        edges: [
-          makeEdge('e12', 'r1', 'r2'),
-          makeEdge('e23', 'r2', 'r3'),
-        ],
+        edges: [makeEdge('e12', 'r1', 'r2'), makeEdge('e23', 'r2', 'r3')],
       });
 
-      expect(findRoute(new OspfProtocol().computeRoutes(topology), 'r1', '10.3.0.0/24')).toMatchObject({
+      expect(
+        findRoute(new OspfProtocol().computeRoutes(topology), 'r1', '10.3.0.0/24'),
+      ).toMatchObject({
         metric: 5,
       });
     });
@@ -309,25 +271,15 @@ describe('OspfProtocol', () => {
     it('resolves correct first-hop nextHop IP for multi-hop paths', () => {
       const topology = makeTopology({
         nodes: [
-          makeRouter(
-            'r1',
-            [makeIface('to-r2', '10.0.12.1', 30)],
-            [makeArea(['10.0.12.0/30'])],
-          ),
+          makeRouter('r1', [makeIface('to-r2', '10.0.12.1', 30)], [makeArea(['10.0.12.0/30'])]),
           makeRouter(
             'r2',
-            [
-              makeIface('to-r1', '10.0.12.2', 30),
-              makeIface('to-r3', '10.0.23.1', 30),
-            ],
+            [makeIface('to-r1', '10.0.12.2', 30), makeIface('to-r3', '10.0.23.1', 30)],
             [makeArea(['10.0.12.0/30', '10.0.23.0/30'])],
           ),
           makeRouter(
             'r3',
-            [
-              makeIface('to-r2', '10.0.23.2', 30),
-              makeIface('lan0', '10.3.0.1', 24),
-            ],
+            [makeIface('to-r2', '10.0.23.2', 30), makeIface('lan0', '10.3.0.1', 24)],
             [makeArea(['10.0.23.0/30', '10.3.0.0/24'])],
           ),
         ],
@@ -337,7 +289,9 @@ describe('OspfProtocol', () => {
         ],
       });
 
-      expect(findRoute(new OspfProtocol().computeRoutes(topology), 'r1', '10.3.0.0/24')).toMatchObject({
+      expect(
+        findRoute(new OspfProtocol().computeRoutes(topology), 'r1', '10.3.0.0/24'),
+      ).toMatchObject({
         nextHop: '10.0.12.2',
       });
     });
@@ -354,11 +308,7 @@ describe('OspfProtocol', () => {
             ],
             [makeArea(['10.1.0.0/24', '10.0.12.0/30'])],
           ),
-          makeRouter(
-            'r2',
-            [makeIface('to-r1', '10.0.12.2', 30)],
-            [makeArea(['10.0.12.0/30'])],
-          ),
+          makeRouter('r2', [makeIface('to-r1', '10.0.12.2', 30)], [makeArea(['10.0.12.0/30'])]),
         ],
         edges: [makeEdge('e12', 'r1', 'r2')],
       });
@@ -372,47 +322,32 @@ describe('OspfProtocol', () => {
     it('ignores routers without ospfConfig', () => {
       const topology = makeTopology({
         nodes: [
-          makeRouter(
-            'r1',
-            [makeIface('to-r2', '10.0.12.1', 30)],
-            [makeArea(['10.0.12.0/30'])],
-          ),
+          makeRouter('r1', [makeIface('to-r2', '10.0.12.1', 30)], [makeArea(['10.0.12.0/30'])]),
           makeRouter('r2', [
             makeIface('to-r1', '10.0.12.2', 30),
             makeIface('to-r3', '10.0.23.1', 30),
           ]),
           makeRouter(
             'r3',
-            [
-              makeIface('to-r2', '10.0.23.2', 30),
-              makeIface('lan0', '10.3.0.1', 24),
-            ],
+            [makeIface('to-r2', '10.0.23.2', 30), makeIface('lan0', '10.3.0.1', 24)],
             [makeArea(['10.0.23.0/30', '10.3.0.0/24'])],
           ),
         ],
-        edges: [
-          makeEdge('e12', 'r1', 'r2'),
-          makeEdge('e23', 'r2', 'r3'),
-        ],
+        edges: [makeEdge('e12', 'r1', 'r2'), makeEdge('e23', 'r2', 'r3')],
       });
 
-      expect(findRoute(new OspfProtocol().computeRoutes(topology), 'r1', '10.3.0.0/24')).toBeUndefined();
+      expect(
+        findRoute(new OspfProtocol().computeRoutes(topology), 'r1', '10.3.0.0/24'),
+      ).toBeUndefined();
     });
 
     it('uses adminDistance 110 for all routes', () => {
       const topology = makeTopology({
         nodes: [
-          makeRouter(
-            'r1',
-            [makeIface('to-r2', '10.0.12.1', 30)],
-            [makeArea(['10.0.12.0/30'])],
-          ),
+          makeRouter('r1', [makeIface('to-r2', '10.0.12.1', 30)], [makeArea(['10.0.12.0/30'])]),
           makeRouter(
             'r2',
-            [
-              makeIface('to-r1', '10.0.12.2', 30),
-              makeIface('lan0', '10.2.0.1', 24),
-            ],
+            [makeIface('to-r1', '10.0.12.2', 30), makeIface('lan0', '10.2.0.1', 24)],
             [makeArea(['10.0.12.0/30', '10.2.0.0/24'])],
           ),
         ],
@@ -429,35 +364,18 @@ describe('OspfProtocol', () => {
         nodes: [
           makeRouter(
             'r1',
-            [
-              makeIface('to-r2', '10.0.12.1', 30),
-              makeIface('lan0', '10.1.0.1', 24),
-            ],
+            [makeIface('to-r2', '10.0.12.1', 30), makeIface('lan0', '10.1.0.1', 24)],
             [makeArea(['10.0.12.0/30', '10.1.0.0/24'])],
           ),
-          makeRouter(
-            'r2',
-            [makeIface('to-r1', '10.0.12.2', 30)],
-            [makeArea(['10.0.12.0/30'])],
-          ),
+          makeRouter('r2', [makeIface('to-r1', '10.0.12.2', 30)], [makeArea(['10.0.12.0/30'])]),
           makeRouter(
             'r3',
-            [
-              makeIface('to-r4', '10.0.34.1', 30),
-              makeIface('lan0', '10.3.0.1', 24),
-            ],
+            [makeIface('to-r4', '10.0.34.1', 30), makeIface('lan0', '10.3.0.1', 24)],
             [makeArea(['10.0.34.0/30', '10.3.0.0/24'])],
           ),
-          makeRouter(
-            'r4',
-            [makeIface('to-r3', '10.0.34.2', 30)],
-            [makeArea(['10.0.34.0/30'])],
-          ),
+          makeRouter('r4', [makeIface('to-r3', '10.0.34.2', 30)], [makeArea(['10.0.34.0/30'])]),
         ],
-        edges: [
-          makeEdge('e12', 'r1', 'r2'),
-          makeEdge('e34', 'r3', 'r4'),
-        ],
+        edges: [makeEdge('e12', 'r1', 'r2'), makeEdge('e34', 'r3', 'r4')],
       });
 
       const routes = new OspfProtocol().computeRoutes(topology);

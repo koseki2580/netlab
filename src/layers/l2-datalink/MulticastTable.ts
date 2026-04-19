@@ -45,15 +45,12 @@ export class MulticastTable {
   snapshot(): MulticastTableEntry[] {
     const rows: MulticastTableEntry[] = [];
     for (const [key, ports] of this.entries) {
-      const sepIdx = key.indexOf(":");
+      const sepIdx = key.indexOf(':');
       const vlanId = Number(key.slice(0, sepIdx));
       const multicastMac = key.slice(sepIdx + 1);
       rows.push({ vlanId, multicastMac, ports: [...ports].sort() });
     }
-    rows.sort(
-      (a, b) =>
-        a.vlanId - b.vlanId || a.multicastMac.localeCompare(b.multicastMac),
-    );
+    rows.sort((a, b) => a.vlanId - b.vlanId || a.multicastMac.localeCompare(b.multicastMac));
     return rows;
   }
 

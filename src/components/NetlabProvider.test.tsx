@@ -5,8 +5,8 @@ import { createRoot, type Root } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HookEngine } from '../hooks/HookEngine';
-import { protocolRegistry } from '../registry/ProtocolRegistry';
 import * as stpModule from '../layers/l2-datalink/stp/computeStp';
+import { protocolRegistry } from '../registry/ProtocolRegistry';
 import type { RouteEntry } from '../types/routing';
 import type { NetworkTopology, TopologySnapshot } from '../types/topology';
 import { useNetlabContext, type NetlabContextValue } from './NetlabContext';
@@ -157,9 +157,8 @@ describe('NetlabProvider', () => {
         renderToStaticMarkup(
           createElement(
             NetlabProvider as unknown as (props: { children?: null }) => JSX.Element,
-            {
-            children: null,
-            },
+            null,
+            null,
           ),
         ),
       ).toThrow('NetlabProvider: either topology or defaultTopology must be provided');
@@ -184,9 +183,7 @@ describe('NetlabProvider', () => {
           ],
         ],
       ]);
-      const spy = vi
-        .spyOn(protocolRegistry, 'resolveRouteTable')
-        .mockReturnValue(routeTable);
+      const spy = vi.spyOn(protocolRegistry, 'resolveRouteTable').mockReturnValue(routeTable);
 
       renderControlled(topology);
 

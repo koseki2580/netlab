@@ -56,9 +56,27 @@ function makeVlanTopology(): NetworkTopology {
           role: 'switch',
           layerId: 'l2',
           ports: [
-            { id: 'p1', name: 'fa0/1', macAddress: '02:00:00:10:00:01', vlanMode: 'access', accessVlan: 10 },
-            { id: 'p2', name: 'fa0/2', macAddress: '02:00:00:10:00:02', vlanMode: 'access', accessVlan: 20 },
-            { id: 'p24', name: 'fa0/24', macAddress: '02:00:00:10:00:24', vlanMode: 'trunk', trunkAllowedVlans: [10, 20] },
+            {
+              id: 'p1',
+              name: 'fa0/1',
+              macAddress: '02:00:00:10:00:01',
+              vlanMode: 'access',
+              accessVlan: 10,
+            },
+            {
+              id: 'p2',
+              name: 'fa0/2',
+              macAddress: '02:00:00:10:00:02',
+              vlanMode: 'access',
+              accessVlan: 20,
+            },
+            {
+              id: 'p24',
+              name: 'fa0/24',
+              macAddress: '02:00:00:10:00:24',
+              vlanMode: 'trunk',
+              trunkAllowedVlans: [10, 20],
+            },
           ],
         },
       },
@@ -106,7 +124,13 @@ function makeVlanTopology(): NetworkTopology {
     edges: [
       { id: 'e-a1', source: 'host-a1', target: 'switch-1', targetHandle: 'p1' },
       { id: 'e-b1', source: 'host-b1', target: 'switch-1', targetHandle: 'p2' },
-      { id: 'e-trunk', source: 'switch-1', target: 'router-1', sourceHandle: 'p24', targetHandle: 'eth0' },
+      {
+        id: 'e-trunk',
+        source: 'switch-1',
+        target: 'router-1',
+        sourceHandle: 'p24',
+        targetHandle: 'eth0',
+      },
     ],
     areas: [],
     routeTables: new Map([

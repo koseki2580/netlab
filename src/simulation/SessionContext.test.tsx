@@ -272,9 +272,7 @@ describe('SessionProvider', () => {
 
   describe('useOptionalSession', () => {
     it('returns null outside SessionProvider', () => {
-      expect(renderToStaticMarkup(<OptionalSessionOutsideConsumer />)).toContain(
-        'true',
-      );
+      expect(renderToStaticMarkup(<OptionalSessionOutsideConsumer />)).toContain('true');
     });
   });
 
@@ -286,9 +284,7 @@ describe('SessionProvider', () => {
     });
 
     it('returns null outside provider', () => {
-      expect(renderToStaticMarkup(<OptionalTrackerOutsideConsumer />)).toContain(
-        'true',
-      );
+      expect(renderToStaticMarkup(<OptionalTrackerOutsideConsumer />)).toContain('true');
     });
   });
 });

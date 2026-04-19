@@ -23,11 +23,7 @@ function makeNode(
   } as NetlabNode;
 }
 
-function makeEdge(
-  source: string,
-  target: string,
-  overrides: Partial<NetlabEdge> = {},
-): NetlabEdge {
+function makeEdge(source: string, target: string, overrides: Partial<NetlabEdge> = {}): NetlabEdge {
   return {
     id: overrides.id ?? `${source}-${target}`,
     source,
@@ -90,7 +86,13 @@ describe('ValidationPanel', () => {
       makeNode('router-1', 'router', {
         label: 'R1',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:00:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:00:00:01',
+          },
         ],
       }),
     ];
@@ -108,7 +110,13 @@ describe('ValidationPanel', () => {
       makeNode('router-1', 'router', {
         label: 'R1',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:00:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:00:00:01',
+          },
         ],
       }),
     ];
@@ -130,13 +138,25 @@ describe('ValidationPanel', () => {
       makeNode('router-1', 'router', {
         label: 'R1',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:00:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:00:00:01',
+          },
         ],
       }),
       makeNode('router-2', 'router', {
         label: 'R2',
         interfaces: [
-          { id: 'eth1', name: 'eth1', ipAddress: '10.0.1.2', prefixLength: 24, macAddress: '00:00:00:00:00:02' },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '10.0.1.2',
+            prefixLength: 24,
+            macAddress: '00:00:00:00:00:02',
+          },
         ],
       }),
     ];
@@ -162,13 +182,7 @@ describe('ValidationPanel', () => {
     ];
     const edges = [makeEdge('client-1', 'server-1', { id: 'e-invalid' })];
 
-    render(
-      <ValidationPanel
-        nodes={nodes}
-        edges={edges}
-        onEdgeClick={onEdgeClick}
-      />,
-    );
+    render(<ValidationPanel nodes={nodes} edges={edges} onEdgeClick={onEdgeClick} />);
 
     const button = container?.querySelector('button');
     expect(button).not.toBeNull();
@@ -187,15 +201,18 @@ describe('ValidationPanel', () => {
       makeNode('router-1', 'router', {
         label: 'R1',
         interfaces: [
-          { id: 'eth0', name: 'eth0', ipAddress: '10.0.0.1', prefixLength: 24, macAddress: '00:00:00:00:00:01' },
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:00:00:01',
+          },
         ],
       }),
     ];
     const view = render(
-      <ValidationPanel
-        nodes={nodes}
-        edges={[makeEdge('client-1', 'router-1', { id: 'e-ok' })]}
-      />,
+      <ValidationPanel nodes={nodes} edges={[makeEdge('client-1', 'router-1', { id: 'e-ok' })]} />,
     );
 
     expect(container?.textContent).toContain('✅ No issues found');

@@ -31,7 +31,8 @@ vi.mock('./NetlabProvider', async () => {
   const React = await import('react');
 
   return {
-    NetlabProvider: ({ children }: { children?: React.ReactNode }) => React.createElement(React.Fragment, null, children),
+    NetlabProvider: ({ children }: { children?: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
   };
 });
 
@@ -39,7 +40,8 @@ vi.mock('../simulation/SimulationContext', async () => {
   const React = await import('react');
 
   return {
-    SimulationProvider: ({ children }: { children?: React.ReactNode }) => React.createElement(React.Fragment, null, children),
+    SimulationProvider: ({ children }: { children?: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
   };
 });
 
@@ -70,7 +72,8 @@ vi.mock('./ResizableSidebar', async () => {
   const React = await import('react');
 
   return {
-    ResizableSidebar: ({ children }: { children?: React.ReactNode }) => React.createElement(React.Fragment, null, children),
+    ResizableSidebar: ({ children }: { children?: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
   };
 });
 
@@ -190,14 +193,7 @@ describe('NetlabApp color mode propagation', () => {
   });
 
   it('uses the shared simulation overlay dock and forwards route-table visibility', () => {
-    render(
-      <NetlabApp
-        topology={topology}
-        simulation
-        timeline={false}
-        areaLegend={false}
-      />,
-    );
+    render(<NetlabApp topology={topology} simulation timeline={false} areaLegend={false} />);
 
     expect(currentOverlayDockProps().showRouteTable).toBe(true);
   });
