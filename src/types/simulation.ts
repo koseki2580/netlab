@@ -1,5 +1,5 @@
-import type { AclMatchInfo, ConnTrackTable } from "./acl";
-import type { NatTable } from "./nat";
+import type { AclMatchInfo, ConnTrackTable } from './acl';
+import type { NatTable } from './nat';
 
 export interface Neighbor {
   nodeId: string;
@@ -25,7 +25,7 @@ export interface RoutingDecision {
 }
 
 export interface NatTranslation {
-  type: "snat" | "dnat";
+  type: 'snat' | 'dnat';
   preSrcIp: string;
   preSrcPort: number;
   postSrcIp: string;
@@ -48,13 +48,7 @@ export interface PacketHop {
   protocol: string; // 'TCP' | 'UDP' | 'ICMP' | '<number>'
   srcPort?: number; // present for TCP and UDP payloads
   dstPort?: number; // present for TCP and UDP payloads
-  event:
-    | "create"
-    | "forward"
-    | "deliver"
-    | "drop"
-    | "arp-request"
-    | "arp-reply";
+  event: 'create' | 'forward' | 'deliver' | 'drop' | 'arp-request' | 'arp-reply';
   fromNodeId?: string; // absent on step 0 (create)
   toNodeId?: string; // absent on deliver / drop
   activeEdgeId?: string; // ReactFlow edge.id to highlight; absent on deliver / drop
@@ -62,13 +56,9 @@ export interface PacketHop {
   ingressInterfaceName?: string;
   egressInterfaceId?: string;
   egressInterfaceName?: string;
-  arpFrame?: import("./packets").ArpEthernetFrame;
+  arpFrame?: import('./packets').ArpEthernetFrame;
   reason?: string; // known values include node-down, interface-down, no-route, ttl-exceeded
-  action?:
-    | "fragment"
-    | "reassembly-pending"
-    | "reassembly-complete"
-    | `IGMP ${string}`;
+  action?: 'fragment' | 'reassembly-pending' | 'reassembly-complete' | `IGMP ${string}`;
   fragmentIndex?: number;
   fragmentCount?: number;
   identification?: number;
@@ -88,10 +78,10 @@ export interface PacketTrace {
   srcNodeId: string;
   dstNodeId: string;
   hops: PacketHop[];
-  status: "in-flight" | "delivered" | "dropped";
+  status: 'in-flight' | 'delivered' | 'dropped';
 }
 
-export type SimulationStatus = "idle" | "running" | "paused" | "done";
+export type SimulationStatus = 'idle' | 'running' | 'paused' | 'done';
 
 export interface SimulationState {
   status: SimulationStatus;
@@ -100,7 +90,7 @@ export interface SimulationState {
   currentStep: number; // -1 = trace loaded but playback not started
   activeEdgeIds: string[]; // edge IDs to highlight in the canvas
   selectedHop: PacketHop | null;
-  selectedPacket: import("./packets").InFlightPacket | null; // packet snapshot at selectedHop
+  selectedPacket: import('./packets').InFlightPacket | null; // packet snapshot at selectedHop
   nodeArpTables: Record<string, Record<string, string>>;
   natTables: NatTable[];
   connTrackTables: ConnTrackTable[];

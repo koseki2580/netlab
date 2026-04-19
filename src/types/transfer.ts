@@ -1,9 +1,4 @@
-export type DeliveryStatus =
-  | 'pending'
-  | 'in-progress'
-  | 'delivered'
-  | 'partial'
-  | 'failed';
+export type DeliveryStatus = 'pending' | 'in-progress' | 'delivered' | 'partial' | 'failed';
 
 export interface TransferMessage {
   messageId: string;
@@ -21,11 +16,7 @@ export interface TransferMessage {
   sessionIds?: string[];
 }
 
-export type ChunkDeliveryState =
-  | 'pending'
-  | 'in-flight'
-  | 'delivered'
-  | 'dropped';
+export type ChunkDeliveryState = 'pending' | 'in-flight' | 'delivered' | 'dropped';
 
 export interface TransferChunk {
   chunkId: string;

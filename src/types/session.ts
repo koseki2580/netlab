@@ -1,23 +1,19 @@
-import type { PacketTrace } from "./simulation";
+import type { PacketTrace } from './simulation';
 
 export type SessionPhase =
-  | "request:initiated"
-  | "request:routing"
-  | "request:delivered"
-  | "response:generated"
-  | "response:routing"
-  | "response:delivered"
-  | "drop";
+  | 'request:initiated'
+  | 'request:routing'
+  | 'request:delivered'
+  | 'response:generated'
+  | 'response:routing'
+  | 'response:delivered'
+  | 'drop';
 
-export type SessionStatus = "pending" | "success" | "failed";
+export type SessionStatus = 'pending' | 'success' | 'failed';
 
-export type SessionMode = "legacy" | "http";
+export type SessionMode = 'legacy' | 'http';
 
-export type HttpSessionPhase =
-  | "tcp-open"
-  | "http-request"
-  | "http-response"
-  | "tcp-close";
+export type HttpSessionPhase = 'tcp-open' | 'http-request' | 'http-response' | 'tcp-close';
 
 export interface HttpPhases {
   tcpOpen?: PacketTrace;

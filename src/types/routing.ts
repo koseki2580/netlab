@@ -12,12 +12,12 @@ export const ADMIN_DISTANCES: Record<string, number> = {
 };
 
 export interface RouteEntry {
-  destination: string;    // CIDR notation e.g. '10.0.0.0/24'
-  nextHop: string;        // IP address or 'direct' (connected network)
+  destination: string; // CIDR notation e.g. '10.0.0.0/24'
+  nextHop: string; // IP address or 'direct' (connected network)
   metric: number;
   protocol: ProtocolName;
   adminDistance: number;
-  nodeId: string;         // which router owns this route
+  nodeId: string; // which router owns this route
 }
 
 export interface TopologyChangeEvent {

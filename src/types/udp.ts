@@ -1,4 +1,4 @@
-import type { UdpDatagram } from "./packets";
+import type { UdpDatagram } from './packets';
 
 /** Re-export alias: `UdpSegment` is the same type as `UdpDatagram`. */
 export type UdpSegment = UdpDatagram;
@@ -14,11 +14,11 @@ export interface UdpBinding {
   ip: string;
   port: number;
   owner: string;
-  kind: "listening" | "ephemeral";
+  kind: 'listening' | 'ephemeral';
 }
 
 /** Aggregate UDP bindings for a node. */
 export interface UdpBindings {
-  listening: Array<{ ip: string; port: number; owner: string }>;
-  ephemeral: Array<{ ip: string; port: number }>;
+  listening: { ip: string; port: number; owner: string }[];
+  ephemeral: { ip: string; port: number }[];
 }
