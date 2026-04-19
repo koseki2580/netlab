@@ -24,12 +24,14 @@ function makeRouter(id: string, interfaces: RouterInterface[], ripNetworks?: str
       role: 'router',
       layerId: 'l3',
       interfaces,
-      ripConfig: ripNetworks
+      ...(ripNetworks !== undefined
         ? {
-            version: 2,
-            networks: ripNetworks,
+            ripConfig: {
+              version: 2,
+              networks: ripNetworks,
+            },
           }
-        : undefined,
+        : {}),
     },
   };
 }
@@ -51,7 +53,13 @@ function makeEdge(
   sourceHandle?: string,
   targetHandle?: string,
 ): NetlabEdge {
-  return { id, source, target, sourceHandle, targetHandle };
+  return {
+    id,
+    source,
+    target,
+    ...(sourceHandle !== undefined ? { sourceHandle } : {}),
+    ...(targetHandle !== undefined ? { targetHandle } : {}),
+  };
 }
 
 function findRoute(

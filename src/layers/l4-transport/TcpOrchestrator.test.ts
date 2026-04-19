@@ -5,6 +5,7 @@ import type { InFlightPacket, TcpSegment } from '../../types/packets';
 import type { PacketTrace } from '../../types/simulation';
 import type { NetworkTopology } from '../../types/topology';
 import type { TcpConnection } from '../../types/tcp';
+import { assertDefined } from '../../utils';
 import { TcpOrchestrator, type TcpEventSink, type TcpPacketSender } from './TcpOrchestrator';
 import { generateISN } from './tcpPacketBuilder';
 
@@ -41,7 +42,6 @@ const TOPOLOGY: NetworkTopology = {
 function makeTrace(packet: InFlightPacket, status: PacketTrace['status']): PacketTrace {
   return {
     packetId: packet.id,
-    sessionId: packet.sessionId,
     label: 'TCP',
     srcNodeId: packet.srcNodeId,
     dstNodeId: packet.dstNodeId,
@@ -59,6 +59,7 @@ function makeTrace(packet: InFlightPacket, status: PacketTrace['status']): Packe
         timestamp: packet.timestamp,
       },
     ],
+    ...(packet.sessionId !== undefined ? { sessionId: packet.sessionId } : {}),
   };
 }
 
@@ -121,6 +122,15 @@ function tcpPayload(packet: InFlightPacket): TcpSegment {
   return payload;
 }
 
+function sentPacketAt(
+  sender: TcpPacketSender & { sentPackets: InFlightPacket[] },
+  index: number,
+): InFlightPacket {
+  const packet = sender.sentPackets[index];
+  assertDefined(packet, `expected sent packet at index ${index}`);
+  return packet;
+}
+
 afterEach(() => {
   vi.restoreAllMocks();
 });
@@ -166,7 +176,7 @@ describe('TcpOrchestrator', () => {
 
       await orchestrator.handshake('client-1', 'server-1', 12345, 80, makeSink());
 
-      expect(tcpPayload(sender.sentPackets[0]).flags).toEqual({
+      expect(tcpPayload(sentPacketAt(sender, 0)).flags).toEqual({
         syn: true,
         ack: false,
         fin: false,
@@ -184,8 +194,8 @@ describe('TcpOrchestrator', () => {
 
       await orchestrator.handshake('client-1', 'server-1', 12345, 80, makeSink());
 
-      expect(tcpPayload(sender.sentPackets[1]).seq).toBe(serverIsn);
-      expect(tcpPayload(sender.sentPackets[1]).ack).toBe(clientIsn + 1);
+      expect(tcpPayload(sentPacketAt(sender, 1)).seq).toBe(serverIsn);
+      expect(tcpPayload(sentPacketAt(sender, 1)).ack).toBe(clientIsn + 1);
     });
 
     it('ACK has correct seq=ISN_c+1 and ack=ISN_s+1', async () => {
@@ -196,8 +206,8 @@ describe('TcpOrchestrator', () => {
 
       await orchestrator.handshake('client-1', 'server-1', 12345, 80, makeSink());
 
-      expect(tcpPayload(sender.sentPackets[2]).seq).toBe(clientIsn + 1);
-      expect(tcpPayload(sender.sentPackets[2]).ack).toBe(serverIsn + 1);
+      expect(tcpPayload(sentPacketAt(sender, 2)).seq).toBe(clientIsn + 1);
+      expect(tcpPayload(sentPacketAt(sender, 2)).ack).toBe(serverIsn + 1);
     });
 
     it('calls sink.appendTrace for each packet', async () => {
@@ -303,7 +313,7 @@ describe('TcpOrchestrator', () => {
 
       await orchestrator.teardown(makeConnection(), makeSink());
 
-      expect(tcpPayload(sender.sentPackets[0]).flags).toEqual({
+      expect(tcpPayload(sentPacketAt(sender, 0)).flags).toEqual({
         syn: false,
         ack: true,
         fin: true,
@@ -332,11 +342,11 @@ describe('TcpOrchestrator', () => {
 
       await orchestrator.teardown(connection, makeSink());
 
-      expect(tcpPayload(sender.sentPackets[0]).seq).toBe(connection.localSeq);
-      expect(tcpPayload(sender.sentPackets[1]).ack).toBe(connection.localSeq + 1);
-      expect(tcpPayload(sender.sentPackets[2]).seq).toBe(connection.remoteSeq);
-      expect(tcpPayload(sender.sentPackets[3]).seq).toBe(connection.localSeq + 1);
-      expect(tcpPayload(sender.sentPackets[3]).ack).toBe(connection.remoteSeq + 1);
+      expect(tcpPayload(sentPacketAt(sender, 0)).seq).toBe(connection.localSeq);
+      expect(tcpPayload(sentPacketAt(sender, 1)).ack).toBe(connection.localSeq + 1);
+      expect(tcpPayload(sentPacketAt(sender, 2)).seq).toBe(connection.remoteSeq);
+      expect(tcpPayload(sentPacketAt(sender, 3)).seq).toBe(connection.localSeq + 1);
+      expect(tcpPayload(sentPacketAt(sender, 3)).ack).toBe(connection.remoteSeq + 1);
     });
   });
 });

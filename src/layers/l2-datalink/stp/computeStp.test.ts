@@ -17,13 +17,14 @@ function makeSwitch(
       role: 'switch',
       layerId: 'l2',
       ports,
-      stpConfig:
-        priority === undefined && !disabledPortIds?.length
-          ? undefined
-          : {
-              priority,
-              disabledPortIds,
+      ...(priority !== undefined || disabledPortIds?.length
+        ? {
+            stpConfig: {
+              ...(priority !== undefined ? { priority } : {}),
+              ...(disabledPortIds?.length ? { disabledPortIds } : {}),
             },
+          }
+        : {}),
     },
   };
 }
@@ -39,9 +40,9 @@ function makeLeaf(id: string, role: 'client' | 'server' | 'router'): NetlabNode 
       layerId: role === 'router' ? 'l3' : 'l7',
       ip: '10.0.0.1',
       mac: '02:00:00:ff:ff:ff',
-      interfaces:
-        role === 'router'
-          ? [
+      ...(role === 'router'
+        ? {
+            interfaces: [
               {
                 id: 'eth0',
                 name: 'eth0',
@@ -49,8 +50,9 @@ function makeLeaf(id: string, role: 'client' | 'server' | 'router'): NetlabNode 
                 prefixLength: 24,
                 macAddress: '02:00:00:ff:ff:fe',
               },
-            ]
-          : undefined,
+            ],
+          }
+        : {}),
     },
   };
 }
@@ -62,7 +64,13 @@ function makeEdge(
   sourceHandle?: string,
   targetHandle?: string,
 ): NetlabEdge {
-  return { id, source, target, sourceHandle, targetHandle };
+  return {
+    id,
+    source,
+    target,
+    ...(sourceHandle !== undefined ? { sourceHandle } : {}),
+    ...(targetHandle !== undefined ? { targetHandle } : {}),
+  };
 }
 
 function makeTopology(nodes: NetlabNode[], edges: NetlabEdge[]): NetworkTopology {

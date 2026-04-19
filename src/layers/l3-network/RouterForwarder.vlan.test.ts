@@ -30,7 +30,7 @@ function makeRouter(interfaces: RouterInterface[], arpTable?: Record<string, str
       role: 'router',
       layerId: 'l3' as const,
       interfaces,
-      arpTable,
+      ...(arpTable !== undefined ? { arpTable } : {}),
     },
   };
 }

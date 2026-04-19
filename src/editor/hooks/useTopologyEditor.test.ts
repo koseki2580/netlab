@@ -63,7 +63,7 @@ function render(options?: UseTopologyEditorOptions) {
   }
 
   act(() => {
-    root?.render(createElement(CaptureEditor, { options }));
+    root?.render(createElement(CaptureEditor, options === undefined ? {} : { options }));
   });
 }
 

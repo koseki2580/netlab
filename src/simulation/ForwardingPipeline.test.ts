@@ -12,6 +12,7 @@ import {
   singleRouterTopologyWithoutServerMac,
 } from './__fixtures__/topologies';
 import { CLIENT_MAC, SERVER_MAC, deriveDeterministicMac, makePacket } from './__fixtures__/helpers';
+import { getRequired } from '../utils/typedAccess';
 import { ForwardingPipeline } from './ForwardingPipeline';
 import { ServiceOrchestrator } from './ServiceOrchestrator';
 import { TraceRecorder } from './TraceRecorder';
@@ -58,7 +59,10 @@ describe('ForwardingPipeline', () => {
 
     expect(result.trace.status).toBe('delivered');
     expect(result.trace.hops.map((hop) => hop.event)).toEqual(['create', 'forward', 'deliver']);
-    expect(result.trace.hops[1].nodeId).toBe('router-1');
+    expect(
+      getRequired(result.trace.hops, 1, { reason: 'expected router hop in forwarding test' })
+        .nodeId,
+    ).toBe('router-1');
   });
 
   it('records source and destination MAC addresses at the create step', async () => {

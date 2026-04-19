@@ -151,11 +151,17 @@ function IpMacSummary({
 
   const firstHop = hops[0];
   const lastHop = hops[hops.length - 1];
+  if (!firstHop || !lastHop) {
+    return null;
+  }
   const macChanges = hops.reduce((count, hop, index) => {
     if (index === 0) {
       return count;
     }
     const previousHop = hops[index - 1];
+    if (!previousHop) {
+      return count;
+    }
     return hop.srcMac !== previousHop.srcMac || hop.dstMac !== previousHop.dstMac
       ? count + 1
       : count;

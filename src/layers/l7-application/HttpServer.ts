@@ -1,5 +1,6 @@
 import { NetlabError } from '../../errors';
 import type { HttpMessage } from '../../types/packets';
+import { getRequired } from '../../utils';
 import { buildHttpResponse, serializeHttp } from './httpPacketBuilder';
 import { parseHttp } from './httpParser';
 
@@ -28,10 +29,11 @@ function matchRoute(route: Route, method: string, path: string): Record<string, 
 
   const params: Record<string, string> = {};
   for (let i = 0; i < route.segments.length; i++) {
-    const seg = route.segments[i];
+    const seg = getRequired(route.segments, i, { route: route.pattern, path });
+    const pathSegment = getRequired(pathSegments, i, { route: route.pattern, path });
     if (seg.startsWith(':')) {
-      params[seg.slice(1)] = pathSegments[i];
-    } else if (seg !== pathSegments[i]) {
+      params[seg.slice(1)] = pathSegment;
+    } else if (seg !== pathSegment) {
       return null;
     }
   }
@@ -72,7 +74,7 @@ export class HttpServer {
   async handleRequest(request: HttpMessage): Promise<HttpMessage> {
     const method = request.method ?? 'GET';
     const url = request.url ?? '/';
-    const path = url.split('?')[0];
+    const path = getRequired(url.split('?'), 0, { url });
     const requestId = request.requestId ?? 'unknown';
 
     if (request.httpVersion !== 'HTTP/1.1') {

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNetlabUI } from '../../components/NetlabUIContext';
 import type { RouterInterface, StaticRouteConfig } from '../../types/routing';
 import type { NetlabNodeData, SwitchPort } from '../../types/topology';
-import { useTopologyEditorContext } from '../context/TopologyEditorContext';
+import { useTopologyEditorContext, type NodeDataPatch } from '../context/TopologyEditorContext';
 
 // ─── Styles ────────────────────────────────────────────────────────────────
 
@@ -145,7 +145,7 @@ function HostEditor({
   onCommit,
 }: {
   data: NetlabNodeData;
-  onCommit: (patch: Partial<NetlabNodeData>) => void;
+  onCommit: (patch: NodeDataPatch) => void;
 }) {
   return (
     <div style={SECTION_STYLE}>
@@ -172,7 +172,7 @@ function RouterEditor({
   onCommit,
 }: {
   data: NetlabNodeData;
-  onCommit: (patch: Partial<NetlabNodeData>) => void;
+  onCommit: (patch: NodeDataPatch) => void;
 }) {
   const ifaces = data.interfaces ?? [];
 
@@ -484,7 +484,7 @@ export function NodeEditorPanel() {
 
   const d = node.data;
 
-  const onCommit = (patch: Partial<NetlabNodeData>) => {
+  const onCommit = (patch: NodeDataPatch) => {
     updateNodeData(selectedNodeId, patch);
   };
 

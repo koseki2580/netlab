@@ -1,8 +1,9 @@
 import { useReducer, useCallback, useEffect, useMemo } from 'react';
 import type { NetlabNode, NetlabEdge, NetlabNodeData } from '../../types/topology';
+import { assertDefined } from '../../utils';
 import type { EditorTopology, TopologyEditorState, HistoryEntry, PositionUpdate } from '../types';
 import { MAX_HISTORY_SIZE } from '../types';
-import type { TopologyEditorContextValue } from '../context/TopologyEditorContext';
+import type { NodeDataPatch, TopologyEditorContextValue } from '../context/TopologyEditorContext';
 
 // ─── Reducer ──────────────────────────────────────────────────────────────
 
@@ -29,7 +30,8 @@ function editorReducer(state: TopologyEditorState, action: EditorAction): Topolo
     case 'UNDO': {
       if (state.past.length === 0) return state;
       const past = [...state.past];
-      const restored = past.pop()!;
+      const restored = past.pop();
+      assertDefined(restored, 'expected undo history entry');
       return {
         ...state,
         topology: restored.topology,
@@ -42,6 +44,7 @@ function editorReducer(state: TopologyEditorState, action: EditorAction): Topolo
     case 'REDO': {
       if (state.future.length === 0) return state;
       const [restored, ...future] = state.future;
+      assertDefined(restored, 'expected redo history entry');
       return {
         ...state,
         topology: restored.topology,
@@ -81,6 +84,21 @@ function makeInitialState(initialTopology?: EditorTopology): TopologyEditorState
     reactFlowKey: 0,
     selectedNodeId: null,
   };
+}
+
+function applyNodeDataPatch(current: NetlabNodeData, patch: NodeDataPatch): NetlabNodeData {
+  const next = { ...current } as Record<string, unknown>;
+
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === undefined) {
+      delete next[key];
+      continue;
+    }
+
+    next[key] = value;
+  }
+
+  return next as NetlabNodeData;
 }
 
 // ─── Hook ──────────────────────────────────────────────────────────────────
@@ -155,13 +173,20 @@ export function useTopologyEditor(
   );
 
   const updateNodeData = useCallback(
-    (nodeId: string, patch: Partial<NetlabNodeData>) => {
+    (nodeId: string, patch: NodeDataPatch) => {
       dispatch({
         type: 'COMMIT',
         topology: {
-          nodes: state.topology.nodes.map((n) =>
-            n.id === nodeId ? { ...n, data: { ...n.data, ...patch } } : n,
-          ),
+          nodes: state.topology.nodes.map((n) => {
+            if (n.id !== nodeId) {
+              return n;
+            }
+
+            return {
+              ...n,
+              data: applyNodeDataPatch(n.data, patch),
+            };
+          }),
           edges: state.topology.edges,
         },
       });

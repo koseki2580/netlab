@@ -13,6 +13,7 @@ import { handleDnsQuery } from '../services/DnsServer';
 import type { IpPacket } from '../types/packets';
 import type { NetworkTopology } from '../types/topology';
 import { buildIpv4PacketBytes, buildTransportBytes } from '../utils/packetLayout';
+import { getRequired } from '../utils/typedAccess';
 import {
   deriveIdentification,
   effectiveMtu,
@@ -118,11 +119,13 @@ function makeServiceTopology(): NetworkTopology {
 
 function makeReassemblyEntry(fragments: IpPacket[]): ReassemblyBufferEntry {
   const terminalFragment = fragments.find((candidate) => candidate.flags?.mf !== true) ?? null;
+  const firstFragment =
+    fragments.find((candidate) => (candidate.fragmentOffset ?? 0) === 0) ??
+    getRequired(fragments, 0, { reason: 'expected first fragment' });
 
   return {
     key: '10.0.0.10|203.0.113.10|1234|6',
-    firstFragment:
-      fragments.find((candidate) => (candidate.fragmentOffset ?? 0) === 0) ?? fragments[0],
+    firstFragment,
     fragments: new Map(fragments.map((candidate) => [candidate.fragmentOffset ?? 0, candidate])),
     totalBytesExpected:
       terminalFragment == null
@@ -134,7 +137,10 @@ function makeReassemblyEntry(fragments: IpPacket[]): ReassemblyBufferEntry {
 function fixturePackets(): IpPacket[] {
   const topology = makeServiceTopology();
   const discover = buildDiscover('client-1', topology)!;
-  const allocator = new LeaseAllocator(topology.nodes[1].data.dhcpServer!);
+  const allocator = new LeaseAllocator(
+    getRequired(topology.nodes, 1, { reason: 'expected dhcp server fixture node' }).data
+      .dhcpServer!,
+  );
   const offer = handleDiscover(discover, topology, allocator)!;
   const request = handleOffer(offer, 'client-1', topology);
   const ack = handleRequest(request, topology, allocator)!;
@@ -367,7 +373,7 @@ describe('fragmentation', () => {
 
     it('returns null when only mf=0 arrived without lower fragments', () => {
       const fragments = fragment(makeTcpPacket(4000), 1500, 1234);
-      const last = fragments[2];
+      const last = getRequired(fragments, 2, { reason: 'expected terminal fragment' });
       const entry = makeReassemblyEntry([last]);
 
       expect(tryReassemble(entry)).toBeNull();

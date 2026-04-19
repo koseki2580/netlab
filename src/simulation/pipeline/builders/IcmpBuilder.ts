@@ -84,8 +84,12 @@ export class IcmpBuilder {
       type: ICMP_TYPE.ECHO_REPLY,
       code: 0,
       checksum: 0,
-      identifier: isIcmpMessage(requestPayload) ? requestPayload.identifier : undefined,
-      sequenceNumber: isIcmpMessage(requestPayload) ? requestPayload.sequenceNumber : undefined,
+      ...(isIcmpMessage(requestPayload) && requestPayload.identifier !== undefined
+        ? { identifier: requestPayload.identifier }
+        : {}),
+      ...(isIcmpMessage(requestPayload) && requestPayload.sequenceNumber !== undefined
+        ? { sequenceNumber: requestPayload.sequenceNumber }
+        : {}),
     });
   }
 

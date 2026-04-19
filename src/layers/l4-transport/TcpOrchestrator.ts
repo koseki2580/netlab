@@ -88,7 +88,7 @@ export class TcpOrchestrator {
       dstPort,
       seq: clientIsn,
       ack: 0,
-      sessionId,
+      ...(sessionId !== undefined ? { sessionId } : {}),
     });
     const synTrace = await this.sendPacket(synPacket, sink, traces, failureState);
     if (synTrace.status !== 'delivered') {
@@ -109,7 +109,7 @@ export class TcpOrchestrator {
       dstPort: srcPort,
       seq: serverIsn,
       ack: clientIsn + 1,
-      sessionId,
+      ...(sessionId !== undefined ? { sessionId } : {}),
     });
     const synAckTrace = await this.sendPacket(synAckPacket, sink, traces, failureState);
     if (synAckTrace.status !== 'delivered') {
@@ -130,7 +130,7 @@ export class TcpOrchestrator {
       dstPort,
       seq: clientIsn + 1,
       ack: serverIsn + 1,
-      sessionId,
+      ...(sessionId !== undefined ? { sessionId } : {}),
     });
     const ackTrace = await this.sendPacket(ackPacket, sink, traces, failureState);
     if (ackTrace.status !== 'delivered') {

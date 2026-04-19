@@ -51,7 +51,10 @@ vi.mock('./DataTransferController', () => {
       transfers: new Map(
         Array.from(state.transfers.entries(), ([messageId, transfer]) => [
           messageId,
-          { ...transfer, sessionIds: transfer.sessionIds ? [...transfer.sessionIds] : undefined },
+          {
+            ...transfer,
+            ...(transfer.sessionIds !== undefined ? { sessionIds: [...transfer.sessionIds] } : {}),
+          },
         ]),
       ),
       chunks: new Map(

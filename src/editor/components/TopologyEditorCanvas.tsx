@@ -199,7 +199,7 @@ export function TopologyEditorCanvas({ highlightEdgeId }: TopologyEditorCanvasPr
         key={state.reactFlowKey}
         initialNodes={state.topology.nodes}
         initialEdges={state.topology.edges}
-        highlightEdgeId={highlightEdgeId}
+        {...(highlightEdgeId !== undefined ? { highlightEdgeId } : {})}
       />
     </div>
   );

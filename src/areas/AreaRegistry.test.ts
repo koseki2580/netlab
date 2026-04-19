@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { assertDefined } from '../utils';
 import type { NetworkArea } from '../types/areas';
 import { areasToNodes } from './AreaRegistry';
 
@@ -71,7 +72,6 @@ describe('areasToNodes', () => {
           y: 75,
           width: 450,
           height: 400,
-          label: undefined,
         },
       }),
     ]);
@@ -87,25 +87,29 @@ describe('areasToNodes', () => {
   });
 
   it('generates correct node ID with __area__ prefix', () => {
-    const [node] = areasToNodes([makeArea({ id: 'dmz-1' })]);
+    const node = areasToNodes([makeArea({ id: 'dmz-1' })])[0];
+    assertDefined(node, 'expected generated area node');
 
     expect(node.id).toBe('__area__dmz-1');
   });
 
   it('sets type to netlab-area', () => {
-    const [node] = areasToNodes([makeArea()]);
+    const node = areasToNodes([makeArea()])[0];
+    assertDefined(node, 'expected area node');
 
     expect(node.type).toBe('netlab-area');
   });
 
   it('sets zIndex to -1', () => {
-    const [node] = areasToNodes([makeArea()]);
+    const node = areasToNodes([makeArea()])[0];
+    assertDefined(node, 'expected area node');
 
     expect(node.zIndex).toBe(-1);
   });
 
   it('sets selectable to false and draggable to false', () => {
-    const [node] = areasToNodes([makeArea()]);
+    const node = areasToNodes([makeArea()])[0];
+    assertDefined(node, 'expected area node');
 
     expect(node.selectable).toBe(false);
     expect(node.draggable).toBe(false);

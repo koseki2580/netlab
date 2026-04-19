@@ -21,8 +21,20 @@ function switchTopology(): NetworkTopology {
           role: 'switch',
           layerId: 'l2',
           ports: [
-            { id: 'port0', name: 'Gi0/0', edgeId: 'e1', mode: 'access', vlan: 10 },
-            { id: 'port1', name: 'Gi0/1', edgeId: 'e2', mode: 'access', vlan: 10 },
+            {
+              id: 'port0',
+              name: 'Gi0/0',
+              macAddress: '00:00:00:00:00:01',
+              vlanMode: 'access',
+              accessVlan: 10,
+            },
+            {
+              id: 'port1',
+              name: 'Gi0/1',
+              macAddress: '00:00:00:00:00:02',
+              vlanMode: 'access',
+              accessVlan: 10,
+            },
           ],
         },
       },

@@ -67,7 +67,7 @@ function makeTopology(stpStates?: Map<string, StpPortRuntime>): NetworkTopology 
     ],
     areas: [],
     routeTables: new Map(),
-    stpStates,
+    ...(stpStates !== undefined ? { stpStates } : {}),
   };
 }
 

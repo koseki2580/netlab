@@ -96,12 +96,12 @@ export class TraceRecorder {
 
     return {
       packetId: packet.id,
-      sessionId: packet.sessionId,
       label: this.deriveTraceLabel(packet),
       srcNodeId: packet.srcNodeId,
       dstNodeId: packet.dstNodeId,
       hops: [hop],
       status: 'dropped',
+      ...(packet.sessionId !== undefined ? { sessionId: packet.sessionId } : {}),
     };
   }
 

@@ -1,3 +1,5 @@
+import { getRequired } from './typedAccess';
+
 function ipToInt(ip: string): number {
   return ip.split('.').reduce((acc, octet) => (acc << 8) | parseInt(octet, 10), 0) >>> 0;
 }
@@ -15,7 +17,9 @@ function networkAddress(ip: string, prefix: number): string {
 }
 
 export function isInSubnet(ip: string, cidr: string): boolean {
-  const [prefix, lengthStr] = cidr.split('/');
+  const parts = cidr.split('/');
+  const prefix = getRequired(parts, 0, { cidr });
+  const lengthStr = getRequired(parts, 1, { cidr });
   const length = parseInt(lengthStr, 10);
   if (length === 0) return true; // 0.0.0.0/0 matches everything
   const mask = (~0 << (32 - length)) >>> 0;
@@ -23,7 +27,9 @@ export function isInSubnet(ip: string, cidr: string): boolean {
 }
 
 export function parseCidr(cidr: string): { prefix: string; length: number } {
-  const [prefix, lengthStr] = cidr.split('/');
+  const parts = cidr.split('/');
+  const prefix = getRequired(parts, 0, { cidr });
+  const lengthStr = getRequired(parts, 1, { cidr });
   return { prefix, length: parseInt(lengthStr, 10) };
 }
 
@@ -41,5 +47,6 @@ export function isInSameSubnet(cidr1: string, cidr2: string): boolean {
 }
 
 export function prefixLength(cidr: string): number {
-  return parseInt(cidr.split('/')[1], 10);
+  const parts = cidr.split('/');
+  return parseInt(getRequired(parts, 1, { cidr }), 10);
 }

@@ -317,8 +317,14 @@ export function PacketStructureViewer() {
           return (
             <>
               <LegendPills annotations={serialized.annotations} />
-              <HexDump serialized={serialized} changedFields={changedFields} />
-              <FieldTable fields={serialized.fields} changedFields={changedFields} />
+              <HexDump
+                serialized={serialized}
+                {...(changedFields !== undefined ? { changedFields } : {})}
+              />
+              <FieldTable
+                fields={serialized.fields}
+                {...(changedFields !== undefined ? { changedFields } : {})}
+              />
             </>
           );
         })()

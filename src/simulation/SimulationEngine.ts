@@ -9,6 +9,7 @@ import type { NetworkTopology } from '../types/topology';
 import type { TransferMessage } from '../types/transfer';
 import type { UdpBindings } from '../types/udp';
 import { extractHostname, isIpAddress } from '../utils/network';
+import { getRequired } from '../utils/typedAccess';
 import { DataTransferController, type DataTransferOptions } from './DataTransferController';
 import { ForwardingPipeline } from './ForwardingPipeline';
 import { PathMtuCache } from './PathMtuCache';
@@ -250,7 +251,10 @@ export class SimulationEngine {
     const nextStep = this.state.currentStep + 1;
     if (nextStep >= trace.hops.length) return;
 
-    const hop = trace.hops[nextStep];
+    const hop = getRequired(trace.hops, nextStep, {
+      packetId: trace.packetId,
+      reason: 'simulation-step-hop',
+    });
     const snapshots = this.traceRecorder.getSnapshots(trace.packetId);
     const packetAtStep = snapshots[nextStep] ?? null;
     const isDone = nextStep === trace.hops.length - 1;
@@ -632,8 +636,10 @@ export class SimulationEngine {
             nextNodeId: hop.toNodeId ?? '',
             edgeId: hop.activeEdgeId ?? '',
             egressPort: hop.egressInterfaceId ?? hop.activeEdgeId ?? '',
-            egressInterfaceId: hop.egressInterfaceId,
             packet,
+            ...(hop.egressInterfaceId !== undefined
+              ? { egressInterfaceId: hop.egressInterfaceId }
+              : {}),
           },
         });
         break;

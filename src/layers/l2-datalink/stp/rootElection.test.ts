@@ -12,7 +12,7 @@ function makeSwitchNode(nodeId: string, macs: string[], priority?: number): Netl
       label: nodeId,
       role: 'switch',
       layerId: 'l2',
-      stpConfig: priority === undefined ? undefined : { priority },
+      ...(priority !== undefined ? { stpConfig: { priority } } : {}),
       ports: macs.map((macAddress, index) => ({
         id: `p${index + 1}`,
         name: `fa0/${index + 1}`,

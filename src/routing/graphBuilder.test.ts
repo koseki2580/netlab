@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { RouterInterface } from '../types/routing';
 import type { NetlabEdge, NetlabNode, NetworkTopology } from '../types/topology';
+import { assertDefined } from '../utils';
 import { buildRouterAdjacency, getConnectedNetworks } from './graphBuilder';
 
 function makeTopology(overrides: Partial<NetworkTopology> = {}): NetworkTopology {
@@ -54,7 +55,13 @@ function makeEdge(
   sourceHandle?: string,
   targetHandle?: string,
 ): NetlabEdge {
-  return { id, source, target, sourceHandle, targetHandle };
+  return {
+    id,
+    source,
+    target,
+    ...(sourceHandle !== undefined ? { sourceHandle } : {}),
+    ...(targetHandle !== undefined ? { targetHandle } : {}),
+  };
 }
 
 describe('buildRouterAdjacency', () => {
@@ -119,7 +126,8 @@ describe('buildRouterAdjacency', () => {
     });
 
     const adjacency = buildRouterAdjacency(topology);
-    const [entry] = adjacency.get('r1') ?? [];
+    const entry = (adjacency.get('r1') ?? [])[0];
+    assertDefined(entry, 'expected adjacency entry for handle-matched route');
 
     expect(entry.localIface.id).toBe('wan0');
     expect(entry.neighborIface.id).toBe('wan9');
@@ -141,7 +149,8 @@ describe('buildRouterAdjacency', () => {
     });
 
     const adjacency = buildRouterAdjacency(topology);
-    const [entry] = adjacency.get('r1') ?? [];
+    const entry = (adjacency.get('r1') ?? [])[0];
+    assertDefined(entry, 'expected adjacency entry for subnet-matched route');
 
     expect(entry.localIface.ipAddress).toBe('10.0.12.1');
     expect(entry.neighborIface.ipAddress).toBe('10.0.12.2');
@@ -189,7 +198,8 @@ describe('buildRouterAdjacency', () => {
       edges: [makeEdge('e1', 'r1', 'r2')],
     });
 
-    const [entry] = buildRouterAdjacency(topology).get('r1') ?? [];
+    const entry = (buildRouterAdjacency(topology).get('r1') ?? [])[0];
+    assertDefined(entry, 'expected adjacency entry for default-cost route');
     expect(entry.cost).toBe(1);
   });
 });

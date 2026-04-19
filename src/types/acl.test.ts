@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AclMatchInfo, AclRule, ConnTrackEntry, ConnTrackTable } from './acl';
+import { assertDefined } from '../utils';
 
 describe('AclRule shape', () => {
   it('accepts a full rule with all optional fields', () => {
@@ -73,7 +74,9 @@ describe('ConnTrackTable shape', () => {
       routerId: 'router-1',
       entries: [entry],
     };
+    const firstEntry = table.entries[0];
+    assertDefined(firstEntry, 'expected first conntrack entry');
     expect(table.entries).toHaveLength(1);
-    expect(table.entries[0].state).toBe('established');
+    expect(firstEntry.state).toBe('established');
   });
 });

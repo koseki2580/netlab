@@ -6,6 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SimulationContext, type SimulationContextValue } from '../simulation/SimulationContext';
 import type { NetworkTopology, StpPortRuntime } from '../types/topology';
+import { assertDefined } from '../utils';
 import { NodeDetailPanel, vlanColor } from './NodeDetailPanel';
 
 const uiMock = vi.hoisted(() => ({
@@ -92,7 +93,7 @@ function makeEdge(mtuBytes?: number): NetworkTopology['edges'][number] {
     source: 'router-1',
     target: 'client-1',
     type: 'smoothstep',
-    data: mtuBytes === undefined ? undefined : { mtuBytes },
+    ...(mtuBytes !== undefined ? { data: { mtuBytes } } : {}),
   };
 }
 
@@ -492,10 +493,13 @@ describe('NodeDetailPanel', () => {
       uiMock.selectedNodeId = 'router-1';
       const topology = makeTopology([makeRouterNode()]);
       const router = topology.nodes[0];
+      assertDefined(router, 'expected router node');
       if (router.data.role === 'router' && router.data.interfaces) {
         router.data.interfaces = router.data.interfaces.map((iface) => ({
-          ...iface,
-          mtu: undefined,
+          ...(() => {
+            const { mtu: _mtu, ...restIface } = iface;
+            return restIface;
+          })(),
         }));
       }
       netlabMock.topology = topology;
@@ -628,7 +632,9 @@ describe('NodeDetailPanel', () => {
         ]),
         stpRoot: { priority: 4096, mac: '00:00:00:00:00:01' },
       });
-      netlabMock.topology.nodes[0].data.ports = [
+      const switchNode = netlabMock.topology.nodes[0];
+      assertDefined(switchNode, 'expected switch node');
+      switchNode.data.ports = [
         { id: 'port-1', name: 'fa0/1', macAddress: '00:00:00:00:00:02' },
         { id: 'port-2', name: 'fa0/2', macAddress: '00:00:00:00:00:03' },
         { id: 'port-3', name: 'fa0/3', macAddress: '00:00:00:00:00:04' },

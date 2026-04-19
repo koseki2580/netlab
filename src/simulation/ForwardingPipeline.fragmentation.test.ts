@@ -32,6 +32,7 @@ import type { FailureState } from '../types/failure';
 import type { NetworkTopology } from '../types/topology';
 import { EMPTY_FAILURE_STATE } from '../types/failure';
 import { buildTransportBytes, buildIpv4HeaderBytes, rawStringToBytes } from '../utils/packetLayout';
+import { assertDefined, getRequired } from '../utils/typedAccess';
 import { ForwardingPipeline } from './ForwardingPipeline';
 import { ServiceOrchestrator } from './ServiceOrchestrator';
 import { TraceRecorder } from './TraceRecorder';
@@ -310,7 +311,9 @@ describe('ForwardingPipeline — fragmentation (DF=0)', () => {
     const fragmentSteps = result.trace.hops
       .filter((hop) => hop.action === 'fragment')
       .map((hop) => hop.step);
-    const fragmentSnapshots = fragmentSteps.map((step) => result.snapshots[step]);
+    const fragmentSnapshots = fragmentSteps.map((step) =>
+      getRequired(result.snapshots, step, { reason: 'expected fragment snapshot', step }),
+    );
 
     expect(new Set(fragmentSnapshots.map((snapshot) => snapshot.sessionId))).toEqual(
       new Set(['session-frag']),
@@ -383,14 +386,18 @@ describe('ForwardingPipeline — DF=1 (do not fragment)', () => {
     );
     const dropStep =
       result.trace.hops.find((hop) => hop.reason === 'fragmentation-needed')?.step ?? -1;
-    const droppedPacket = result.snapshots[dropStep];
+    const droppedPacket = getRequired(result.snapshots, dropStep, {
+      reason: 'expected dropped packet snapshot',
+      dropStep,
+    });
     const icmpSnapshot = result.snapshots.find(
       (snapshot) =>
         snapshot.frame.payload.protocol === 1 &&
         'type' in snapshot.frame.payload.payload &&
         snapshot.frame.payload.payload.type === 3 &&
         snapshot.frame.payload.payload.code === 4,
-    )!;
+    );
+    assertDefined(icmpSnapshot, 'expected ICMP fragmentation-needed snapshot');
     const expected = [
       ...buildIpv4HeaderBytes(droppedPacket.frame.payload),
       ...buildTransportBytes(droppedPacket.frame.payload.payload).slice(0, 8),

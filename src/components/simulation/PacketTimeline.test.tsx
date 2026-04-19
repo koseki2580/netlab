@@ -8,6 +8,7 @@ import { SimulationContext, type SimulationContextValue } from '../../simulation
 import { SimulationEngine } from '../../simulation/SimulationEngine';
 import type { PacketTrace, SimulationState } from '../../types/simulation';
 import type { NetworkTopology } from '../../types/topology';
+import { assertDefined } from '../../utils';
 import { NetlabContext } from '../NetlabContext';
 import { PacketTimeline } from './PacketTimeline';
 
@@ -63,6 +64,11 @@ const TRACE: PacketTrace = {
     },
   ],
 };
+
+const TRACE_CREATE_HOP = TRACE.hops[0];
+const TRACE_DELIVER_HOP = TRACE.hops[1];
+assertDefined(TRACE_CREATE_HOP, 'expected trace create hop');
+assertDefined(TRACE_DELIVER_HOP, 'expected trace deliver hop');
 
 function makeState(overrides: Partial<SimulationState> = {}): SimulationState {
   return {
@@ -253,7 +259,7 @@ describe('PacketTimeline', () => {
               ...TRACE,
               hops: [
                 {
-                  ...TRACE.hops[0],
+                  ...TRACE_CREATE_HOP,
                   action: 'fragment',
                   fragmentIndex: 0,
                   fragmentCount: 3,

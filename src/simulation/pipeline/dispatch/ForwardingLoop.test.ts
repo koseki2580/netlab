@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { HookEngine } from '../../../hooks/HookEngine';
 import { EMPTY_FAILURE_STATE } from '../../../types/failure';
 import type { NetworkTopology } from '../../../types/topology';
 import { ServiceOrchestrator } from '../../ServiceOrchestrator';
@@ -22,7 +23,7 @@ function makeForwardingLoop(topology: NetworkTopology) {
   const frameMaterializer = new FrameMaterializer();
   const arpBuilder = new ArpBuilder();
   const traceRecorder = new TraceRecorder();
-  const services = new ServiceOrchestrator();
+  const services = new ServiceOrchestrator(topology, new HookEngine());
   const arpDispatcher = new ArpDispatcher(
     topology,
     traceRecorder,

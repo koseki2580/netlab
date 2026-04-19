@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ArpEthernetFrame, EthernetFrame } from '../types/packets';
 import { serializeArpFrame, serializePacket } from './packetSerializer';
+import { assertDefined } from './typedAccess';
 
 const tcpSynFrame: EthernetFrame = {
   layer: 'L2',
@@ -312,7 +313,10 @@ describe('serializePacket', () => {
 
     for (const field of fields) {
       for (let i = 0; i < field.byteLength; i++) {
-        coverage[field.byteOffset + i]++;
+        const index = field.byteOffset + i;
+        const count = coverage[index];
+        assertDefined(count, `missing coverage slot ${index}`);
+        coverage[index] = count + 1;
       }
     }
 
@@ -326,7 +330,11 @@ describe('serializePacket', () => {
 
   it('encodes the UDP length as header plus payload length', () => {
     const { bytes } = serializePacket(udpFrame);
-    const length = (bytes[46] << 8) | bytes[47];
+    const high = bytes[46];
+    const low = bytes[47];
+    assertDefined(high, 'missing UDP length high byte');
+    assertDefined(low, 'missing UDP length low byte');
+    const length = (high << 8) | low;
     expect(length).toBe(10);
   });
 
@@ -397,7 +405,10 @@ describe('serializeArpFrame', () => {
 
     for (const field of fields) {
       for (let i = 0; i < field.byteLength; i++) {
-        coverage[field.byteOffset + i]++;
+        const index = field.byteOffset + i;
+        const count = coverage[index];
+        assertDefined(count, `missing ARP coverage slot ${index}`);
+        coverage[index] = count + 1;
       }
     }
 

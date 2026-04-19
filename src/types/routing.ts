@@ -3,13 +3,13 @@ import type { NetworkTopology } from './topology';
 
 export type ProtocolName = 'static' | 'ospf' | 'bgp' | 'rip' | (string & Record<never, never>);
 
-export const ADMIN_DISTANCES: Record<string, number> = {
+export const ADMIN_DISTANCES = {
   static: 1,
   ebgp: 20,
   ospf: 110,
   rip: 120,
   ibgp: 200,
-};
+} as const;
 
 export interface RouteEntry {
   destination: string; // CIDR notation e.g. '10.0.0.0/24'

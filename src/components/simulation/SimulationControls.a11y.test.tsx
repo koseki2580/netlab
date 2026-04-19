@@ -7,7 +7,18 @@ import type { SimulationState } from '../../types/simulation';
 
 const simulationMock = vi.hoisted(() => ({
   engine: { play: vi.fn(), pause: vi.fn(), step: vi.fn(), reset: vi.fn() },
-  state: { status: 'idle', traces: [], activeTraceIndex: 0 } as SimulationState,
+  state: {
+    status: 'idle',
+    traces: [],
+    currentTraceId: null,
+    currentStep: -1,
+    activeEdgeIds: [],
+    selectedHop: null,
+    selectedPacket: null,
+    nodeArpTables: {},
+    natTables: [],
+    connTrackTables: [],
+  } as SimulationState,
   sendPacket: vi.fn(),
 }));
 

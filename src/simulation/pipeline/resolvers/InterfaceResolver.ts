@@ -93,7 +93,7 @@ export class InterfaceResolver {
         ipAddress: iface.ipAddress,
         prefixLength: iface.prefixLength,
         macAddress: iface.macAddress,
-        mtu: iface.mtu,
+        ...(iface.mtu !== undefined ? { mtu: iface.mtu } : {}),
       };
       const subInterfaces = (iface.subInterfaces ?? []).map((subInterface) => ({
         id: subInterface.id,
@@ -101,7 +101,9 @@ export class InterfaceResolver {
         ipAddress: subInterface.ipAddress,
         prefixLength: subInterface.prefixLength,
         macAddress: iface.macAddress,
-        mtu: subInterface.mtu ?? iface.mtu,
+        ...((subInterface.mtu ?? iface.mtu) !== undefined
+          ? { mtu: subInterface.mtu ?? iface.mtu }
+          : {}),
         parentInterfaceId: iface.id,
         vlanId: subInterface.vlanId,
       }));

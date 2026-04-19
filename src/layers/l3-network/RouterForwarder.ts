@@ -260,7 +260,9 @@ export class RouterForwarder implements Forwarder {
       ...packet,
       frame: updatedFrame,
       ingressPortId,
-      vlanId: ingressResolution.iface?.vlanId ?? packet.vlanId,
+      ...((ingressResolution.iface?.vlanId ?? packet.vlanId) !== undefined
+        ? { vlanId: ingressResolution.iface?.vlanId ?? packet.vlanId }
+        : {}),
     };
 
     return {
@@ -268,9 +270,11 @@ export class RouterForwarder implements Forwarder {
       nextNodeId: neighbor.nodeId,
       edgeId: neighbor.edgeId,
       egressPort: route.nextHop === 'direct' ? ipPacket.dstIp : route.nextHop,
-      ingressInterfaceId: ingressResolution.iface?.id,
-      egressInterfaceId,
       packet: updatedPacket,
+      ...(ingressResolution.iface?.id !== undefined
+        ? { ingressInterfaceId: ingressResolution.iface.id }
+        : {}),
+      ...(egressInterfaceId !== undefined ? { egressInterfaceId } : {}),
       selectedRoute: route,
     };
   }

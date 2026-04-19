@@ -44,6 +44,7 @@ import {
   uint16BE,
   uint32BE,
 } from './packetLayout';
+import { getRequired } from './typedAccess';
 
 export type LayerTag = 'L2' | 'L3' | 'L4' | 'L7' | 'ARP' | 'raw';
 
@@ -350,6 +351,8 @@ function serializeL3(ip: IpPacket, baseOffset: number): LayerResult {
   const payloadBytes = buildIpv4PayloadBytes(ip);
   const totalLength = ip.totalLength ?? headerLength + payloadBytes.length;
   const identification = ip.identification ?? 0;
+  const versionAndIhl = getRequired(headerBytes, 0, { baseOffset, field: 'version-ihl' });
+  const dscpAndEcn = getRequired(headerBytes, 1, { baseOffset, field: 'dscp-ecn' });
 
   return {
     bytes: [...headerBytes, ...payloadBytes],
@@ -359,14 +362,14 @@ function serializeL3(ip: IpPacket, baseOffset: number): LayerResult {
         layer: 'L3',
         byteOffset: baseOffset + 0,
         byteLength: 1,
-        displayValue: `${formatHex(headerBytes[0], 2)} (IPv4, ${(ip.ihl ?? 5) * 4}-byte header)`,
+        displayValue: `${formatHex(versionAndIhl, 2)} (IPv4, ${(ip.ihl ?? 5) * 4}-byte header)`,
       },
       {
         name: 'DSCP / ECN',
         layer: 'L3',
         byteOffset: baseOffset + 1,
         byteLength: 1,
-        displayValue: formatHex(headerBytes[1], 2),
+        displayValue: formatHex(dscpAndEcn, 2),
       },
       {
         name: 'Total Length',

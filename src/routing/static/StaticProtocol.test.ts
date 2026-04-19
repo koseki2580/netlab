@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { StaticProtocol } from './StaticProtocol';
 import type { NetworkTopology } from '../../types/topology';
+import { assertDefined } from '../../utils';
 
 function makeTopology(overrides: Partial<NetworkTopology> = {}): NetworkTopology {
   return {
@@ -90,7 +91,9 @@ describe('StaticProtocol', () => {
       ],
     });
     const routes = protocol.computeRoutes(topology);
-    expect(routes[0].metric).toBe(5);
+    const firstRoute = routes[0];
+    assertDefined(firstRoute, 'expected computed static route');
+    expect(firstRoute.metric).toBe(5);
   });
 
   it('aggregates routes from multiple routers', () => {

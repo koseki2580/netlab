@@ -162,12 +162,12 @@ export class ForwardingPipeline {
     let result: PrecomputeResult = {
       trace: {
         packetId: packet.id,
-        sessionId: packet.sessionId,
         label: this.traceRecorder.deriveTraceLabel(packet),
         srcNodeId: packet.srcNodeId,
         dstNodeId: packet.dstNodeId,
         hops,
         status,
+        ...(packet.sessionId !== undefined ? { sessionId: packet.sessionId } : {}),
       },
       nodeArpTables,
       snapshots,

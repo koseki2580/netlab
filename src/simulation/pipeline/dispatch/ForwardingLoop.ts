@@ -247,7 +247,7 @@ export class ForwardingLoop {
               ttl: workingPacket.frame.payload.ttl,
               protocol: protocolName(workingPacket.frame.payload.protocol),
               event: 'drop',
-              fromNodeId: ingressFrom ?? undefined,
+              ...(ingressFrom !== null ? { fromNodeId: ingressFrom } : {}),
               reason: 'node-not-found',
               timestamp: baseTs,
             },
@@ -273,7 +273,7 @@ export class ForwardingLoop {
               ttl: workingPacket.frame.payload.ttl,
               protocol: protocolName(workingPacket.frame.payload.protocol),
               event: 'drop',
-              fromNodeId: ingressFrom ?? undefined,
+              ...(ingressFrom !== null ? { fromNodeId: ingressFrom } : {}),
               reason: 'routing-loop',
               timestamp: baseTs,
             },
@@ -299,7 +299,7 @@ export class ForwardingLoop {
               ttl: workingPacket.frame.payload.ttl,
               protocol: protocolName(workingPacket.frame.payload.protocol),
               event: 'drop',
-              fromNodeId: ingressFrom ?? undefined,
+              ...(ingressFrom !== null ? { fromNodeId: ingressFrom } : {}),
               reason: 'node-down',
               timestamp: baseTs,
             },
@@ -332,7 +332,7 @@ export class ForwardingLoop {
             }
           : {}),
         event: 'forward',
-        fromNodeId: ingressFrom ?? undefined,
+        ...(ingressFrom !== null ? { fromNodeId: ingressFrom } : {}),
         timestamp: baseTs,
       };
 
@@ -388,6 +388,7 @@ export class ForwardingLoop {
               },
             }),
           );
+          const fragmentCount = reassembler.getLastCompletedFragmentCount();
           stepCounter = this.traceRecorder.appendHop(
             hops,
             snapshots,
@@ -396,7 +397,7 @@ export class ForwardingLoop {
                 ...hopBase,
                 event: 'deliver',
                 action: 'reassembly-complete',
-                fragmentCount: reassembler.getLastCompletedFragmentCount() ?? undefined,
+                ...(fragmentCount != null ? { fragmentCount } : {}),
               },
               deliveredPacket,
             ),
@@ -436,12 +437,11 @@ export class ForwardingLoop {
         node.data.role === 'router' ? null : ingressFrom,
         failureState,
       );
+      const multicastTable =
+        node.data.role === 'switch' ? this.services.getMulticastTable(current) : null;
       const forwardCtx: ForwardContext = {
         neighbors,
-        multicastTable:
-          node.data.role === 'switch'
-            ? (this.services.getMulticastTable(current) ?? undefined)
-            : undefined,
+        ...(multicastTable != null ? { multicastTable } : {}),
       };
       let next: Neighbor | null = null;
       let selectedRoute: RouteEntry | null = null;
@@ -499,7 +499,7 @@ export class ForwardingLoop {
               ...hopBase,
               event: 'drop',
               reason: ingressResult.dropReason,
-              aclMatch: ingressResult.match ?? undefined,
+              ...(ingressResult.match != null ? { aclMatch: ingressResult.match } : {}),
             };
             if (natTranslation) {
               dropHop.natTranslation = natTranslation;
@@ -552,7 +552,7 @@ export class ForwardingLoop {
               ...hopBase,
               event: 'drop',
               reason: decision.reason,
-              aclMatch: ingressAclMatch ?? undefined,
+              ...(ingressAclMatch != null ? { aclMatch: ingressAclMatch } : {}),
             };
             if (node.data.role === 'router' && decision.reason !== 'ttl-exceeded') {
               const routes = this.topology.routeTables.get(current) ?? [];
@@ -605,7 +605,7 @@ export class ForwardingLoop {
             const deliverHop: Omit<PacketHop, 'step'> = {
               ...hopBase,
               event: 'deliver',
-              aclMatch: ingressAclMatch ?? undefined,
+              ...(ingressAclMatch != null ? { aclMatch: ingressAclMatch } : {}),
             };
             if (natTranslation) {
               deliverHop.natTranslation = natTranslation;
@@ -665,7 +665,7 @@ export class ForwardingLoop {
           ...hopBase,
           event: 'drop',
           reason: 'no-route',
-          aclMatch: ingressAclMatch ?? undefined,
+          ...(ingressAclMatch != null ? { aclMatch: ingressAclMatch } : {}),
         };
         if (natTranslation) {
           dropHop.natTranslation = natTranslation;
@@ -703,7 +703,7 @@ export class ForwardingLoop {
             ...hopBase,
             event: 'drop',
             reason: 'interface-down',
-            aclMatch: ingressAclMatch ?? undefined,
+            ...(ingressAclMatch != null ? { aclMatch: ingressAclMatch } : {}),
           };
           const changedFields = this.frameMaterializer.diffPacketFields(
             packetBeforeHop,
@@ -738,8 +738,10 @@ export class ForwardingLoop {
               ...hopBase,
               event: 'drop',
               reason: egressResult.dropReason,
-              routingDecision: hopBase.routingDecision,
-              aclMatch: egressResult.match ?? undefined,
+              ...(hopBase.routingDecision !== undefined
+                ? { routingDecision: hopBase.routingDecision }
+                : {}),
+              ...(egressResult.match != null ? { aclMatch: egressResult.match } : {}),
             };
             if (natTranslation) {
               dropHop.natTranslation = natTranslation;
@@ -774,15 +776,21 @@ export class ForwardingLoop {
             outsideToInsideMatched,
           );
           if (postRoutingResult.dropReason) {
+            const dropAclMatch = egressAclMatch ?? ingressAclMatch;
             const dropHop: Omit<PacketHop, 'step'> = {
               ...hopBase,
               event: 'drop',
               reason: postRoutingResult.dropReason,
-              routingDecision: hopBase.routingDecision,
-              aclMatch: egressAclMatch ?? ingressAclMatch ?? undefined,
+              ...(hopBase.routingDecision !== undefined
+                ? { routingDecision: hopBase.routingDecision }
+                : {}),
             };
-            if (postRoutingResult.translation ?? natTranslation) {
-              dropHop.natTranslation = postRoutingResult.translation ?? natTranslation ?? undefined;
+            if (dropAclMatch != null) {
+              dropHop.aclMatch = dropAclMatch;
+            }
+            const translation = postRoutingResult.translation ?? natTranslation;
+            if (translation) {
+              dropHop.natTranslation = translation;
             }
             const changedFields = this.frameMaterializer.diffPacketFields(
               packetBeforeHop,
@@ -913,14 +921,19 @@ export class ForwardingLoop {
         const size = packetSizeBytes(workingPacket.frame.payload);
 
         if (size > mtu && workingPacket.frame.payload.flags?.df === true) {
+          const dropAclMatch = egressAclMatch ?? ingressAclMatch;
           const dropHop: Omit<PacketHop, 'step'> = {
             ...hopBase,
             event: 'drop',
             reason: 'fragmentation-needed',
-            routingDecision: hopBase.routingDecision,
-            aclMatch: egressAclMatch ?? ingressAclMatch ?? undefined,
+            ...(hopBase.routingDecision !== undefined
+              ? { routingDecision: hopBase.routingDecision }
+              : {}),
             nextHopMtu: mtu,
           };
+          if (dropAclMatch != null) {
+            dropHop.aclMatch = dropAclMatch;
+          }
           if (natTranslation) {
             dropHop.natTranslation = natTranslation;
           }
@@ -1081,8 +1094,9 @@ export class ForwardingLoop {
       if (natTranslation) {
         forwardHop.natTranslation = natTranslation;
       }
-      if (egressAclMatch ?? ingressAclMatch) {
-        forwardHop.aclMatch = egressAclMatch ?? ingressAclMatch ?? undefined;
+      const forwardAclMatch = egressAclMatch ?? ingressAclMatch;
+      if (forwardAclMatch != null) {
+        forwardHop.aclMatch = forwardAclMatch;
       }
       const changedFields = this.frameMaterializer.diffPacketFields(
         packetBeforeForward,
