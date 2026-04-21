@@ -33,6 +33,7 @@ Specifications regarding user interface implementation and canvas operations.
 - [Node Theming](ui/node-theming.md) - Per-node-type color tokens and CSS variable wiring for theme-aware node rendering
 - [Packet Structure Viewer](ui/packet-structure-viewer.md) - Byte-level hex dump and field table showing per-layer color-coded packet structure
 - [Accessibility](ui/accessibility.md) - WCAG 2.1 AA compliance: color contrast tokens, keyboard model, ARIA roles, and axe-core verification
+- [Tutorials](ui/tutorials.md) - Scenario-backed guided tutorial mode, tutorial registry, predicate contract, and authoring rules
 
 ### 🔄 Simulation (`simulation/`)
 

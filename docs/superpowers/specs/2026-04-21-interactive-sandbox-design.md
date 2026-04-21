@@ -54,10 +54,10 @@ Exit β: **"Exit comparison"** discards the baseline and returns to α with the 
 
 Edit surface matches the granularity of the target:
 
-| Target granularity                            | Surface                                   | Component                  |
-| --------------------------------------------- | ----------------------------------------- | -------------------------- | ---- | --------- |
-| Single entity (node, link, packet)            | **Inline popover** anchored to the entity | `<EditPopover anchor="node | link | packet">` |
-| Global state (parameters, traffic generation) | **Side panel**, right side of canvas      | `<SandboxPanel>` with tabs |
+| Target granularity                            | Surface                                   | Component                                                   |
+| --------------------------------------------- | ----------------------------------------- | ----------------------------------------------------------- |
+| Single entity (node, link, packet)            | **Inline popover** anchored to the entity | `<EditPopover>` with `anchor: 'node' \| 'link' \| 'packet'` |
+| Global state (parameters, traffic generation) | **Side panel**, right side of canvas      | `<SandboxPanel>` with tabs                                  |
 
 The side panel always mounts when `<SandboxProvider>` is active (it also hosts the mode toggle). The popover mounts only while an entity is being edited.
 

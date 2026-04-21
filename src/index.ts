@@ -210,6 +210,20 @@ export { protocolRegistry } from './registry/ProtocolRegistry';
 export { HookEngine, hookEngine } from './hooks/HookEngine';
 export { useNetlabHooks } from './hooks/useNetlabHooks';
 
+// Scenarios + tutorials
+export { scenarioRegistry, ScenarioRegistry } from './scenarios';
+export type { Scenario, ScenarioMetadata, ScenarioSampleFlow } from './scenarios/types';
+export { tutorialRegistry, TutorialRunner, TutorialProvider, useTutorialRunner } from './tutorials';
+export type {
+  HookEventLog,
+  HookEventLogEntry,
+  PredicateInput,
+  StepPredicate,
+  Tutorial,
+  TutorialRunnerState,
+  TutorialStep,
+} from './tutorials/types';
+
 // Routing protocols
 export {
   collectSwitchBridges,

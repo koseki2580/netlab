@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { tutorialRegistry } from '../src/tutorials';
 
 const GITHUB_ICON = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -10,6 +11,7 @@ interface DemoCard {
   path: string;
   title: string;
   desc: string;
+  scenarioId?: string;
 }
 
 interface Category {
@@ -62,6 +64,12 @@ const CATEGORIES: Category[] = [
         title: 'Dynamic Routing',
         desc: 'Switch between RIP, OSPF, and BGP to compare hop-count, SPF cost, and policy-based path selection.',
       },
+      {
+        path: '/routing/ospf-convergence',
+        title: 'OSPF Convergence',
+        desc: 'Watch R1 prefer the low-cost path, then remove the primary link and resend traffic on the recomputed route.',
+        scenarioId: 'ospf-convergence',
+      },
     ],
   },
   {
@@ -69,6 +77,12 @@ const CATEGORIES: Category[] = [
     label: 'Network Areas',
     color: '#f59e0b',
     demos: [
+      {
+        path: '/networking/arp',
+        title: 'ARP Basics',
+        desc: 'Send the first packet, inspect the ARP request/reply, and watch the sender cache fill in.',
+        scenarioId: 'basic-arp',
+      },
       {
         path: '/networking/vlan',
         title: 'VLAN Segmentation',
@@ -83,6 +97,7 @@ const CATEGORIES: Category[] = [
         path: '/networking/mtu-fragmentation',
         title: 'MTU & Fragmentation',
         desc: 'Shrink a routed tunnel MTU to watch IPv4 fragment on egress or return ICMP Fragmentation Needed when DF is set.',
+        scenarioId: 'fragmented-echo',
       },
       {
         path: '/networking/udp',
@@ -167,6 +182,7 @@ const CATEGORIES: Category[] = [
         path: '/simulation/tcp-handshake',
         title: 'TCP Handshake',
         desc: 'Step through SYN, SYN-ACK, ACK, and FIN exchanges while watching connection state and TCP header fields evolve.',
+        scenarioId: 'tcp-handshake',
       },
     ],
   },
@@ -329,15 +345,22 @@ export default function Gallery() {
                 gap: 12,
               }}
             >
-              {cat.demos.map((demo) => (
-                <Link key={demo.path} to={demo.path} style={{ textDecoration: 'none' }}>
+              {cat.demos.map((demo) => {
+                const tutorial = demo.scenarioId
+                  ? tutorialRegistry.findByScenarioId(demo.scenarioId)
+                  : undefined;
+                const tutorialHref = tutorial
+                  ? `?tutorial=${encodeURIComponent(tutorial.id)}#${demo.path}`
+                  : null;
+
+                return (
                   <div
+                    key={demo.path}
                     style={{
                       background: '#1e293b',
                       border: '1px solid #334155',
                       borderRadius: 8,
                       padding: '16px 20px',
-                      cursor: 'pointer',
                       transition: 'border-color 0.15s, background 0.15s',
                     }}
                     onMouseEnter={(e) => {
@@ -368,10 +391,19 @@ export default function Gallery() {
                     >
                       {demo.desc}
                     </div>
-                    <div style={{ marginTop: 12, fontSize: 11, color: cat.color }}>Open →</div>
+                    <div style={{ display: 'flex', gap: 10, marginTop: 12, fontSize: 11 }}>
+                      <Link to={demo.path} style={{ color: cat.color, textDecoration: 'none' }}>
+                        Open →
+                      </Link>
+                      {tutorialHref ? (
+                        <a href={tutorialHref} style={{ color: '#7dd3fc', textDecoration: 'none' }}>
+                          Start Tutorial →
+                        </a>
+                      ) : null}
+                    </div>
                   </div>
-                </Link>
-              ))}
+                );
+              })}
             </div>
           </section>
         ))}
