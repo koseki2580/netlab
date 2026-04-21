@@ -16,6 +16,7 @@ import ThreeTierDemo from './basic/ThreeTierDemo';
 import AllInOneDemo from './comprehensive/AllInOneDemo';
 import EditorDemo from './editor/EditorDemo';
 import EmbedDemo from './embed/EmbedDemo';
+import ArpDemo from './networking/ArpDemo';
 import HttpDemo from './networking/HttpDemo';
 import MtuFragmentationDemo from './networking/MtuFragmentationDemo';
 import MulticastDemo from './networking/MulticastDemo';
@@ -25,6 +26,7 @@ import VlanDemo from './networking/VlanDemo';
 import ClientServerDemo from './routing/ClientServerDemo';
 import DynamicRoutingDemo from './routing/DynamicRoutingDemo';
 import MultiHopDemo from './routing/MultiHopDemo';
+import OspfConvergenceDemo from './routing/OspfConvergenceDemo';
 import DhcpDnsDemo from './services/DhcpDnsDemo';
 import AclDemo from './simulation/AclDemo';
 import DataTransferDemo from './simulation/DataTransferDemo';
@@ -51,6 +53,8 @@ createRoot(root).render(
         <Route path="/routing/client-server" element={<ClientServerDemo />} />
         <Route path="/routing/dynamic" element={<DynamicRoutingDemo />} />
         <Route path="/routing/multi-hop" element={<MultiHopDemo />} />
+        <Route path="/routing/ospf-convergence" element={<OspfConvergenceDemo />} />
+        <Route path="/networking/arp" element={<ArpDemo />} />
         <Route path="/networking/vlan" element={<VlanDemo />} />
         <Route path="/networking/stp" element={<StpLoopDemo />} />
         <Route path="/networking/mtu-fragmentation" element={<MtuFragmentationDemo />} />

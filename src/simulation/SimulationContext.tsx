@@ -9,10 +9,12 @@ import {
   type ReactNode,
 } from 'react';
 import { useNetlabContext } from '../components/NetlabContext';
+import { TutorialOverlay } from '../components/tutorial/TutorialOverlay';
 import { NetlabError } from '../errors';
 import type { InFlightPacket } from '../types/packets';
 import type { DhcpLeaseState, DnsCache } from '../types/services';
 import type { SimulationState } from '../types/simulation';
+import { TutorialProvider } from '../tutorials/TutorialContext';
 import { useOptionalFailure } from './FailureContext';
 import { SimulationEngine } from './SimulationEngine';
 
@@ -43,7 +45,7 @@ export function SimulationProvider({
   autoRecompute = false,
   animationSpeed,
 }: SimulationProviderProps) {
-  const { topology, hookEngine } = useNetlabContext();
+  const { topology, hookEngine, routeTable, tutorialId } = useNetlabContext();
   const failureCtx = useOptionalFailure();
 
   const engine = useMemo(() => new SimulationEngine(topology, hookEngine), [topology, hookEngine]);
@@ -170,7 +172,24 @@ export function SimulationProvider({
     ],
   );
 
-  return <SimulationContext.Provider value={value}>{children}</SimulationContext.Provider>;
+  return (
+    <SimulationContext.Provider value={value}>
+      {tutorialId ? (
+        <TutorialProvider
+          tutorialId={tutorialId}
+          engine={engine}
+          simulationState={state}
+          routeTable={routeTable}
+          hookEngine={hookEngine}
+        >
+          <TutorialOverlay />
+          {children}
+        </TutorialProvider>
+      ) : (
+        children
+      )}
+    </SimulationContext.Provider>
+  );
 }
 
 export function useSimulation(): SimulationContextValue {

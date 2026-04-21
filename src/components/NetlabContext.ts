@@ -10,6 +10,7 @@ export interface NetlabContextValue {
   routeTable: Map<string, RouteEntry[]>;
   areas: NetworkArea[];
   hookEngine: HookEngine;
+  tutorialId?: string;
 }
 
 export const NetlabContext = createContext<NetlabContextValue | null>(null);

@@ -31,17 +31,24 @@ interface ControlledNetlabProviderProps {
   topology: NetworkTopology;
   defaultTopology?: TopologySnapshot;
   children: ReactNode;
+  tutorialId?: string;
 }
 
 interface UncontrolledNetlabProviderProps {
   topology?: undefined;
   defaultTopology: TopologySnapshot;
   children: ReactNode;
+  tutorialId?: string;
 }
 
 export type NetlabProviderProps = ControlledNetlabProviderProps | UncontrolledNetlabProviderProps;
 
-export function NetlabProvider({ topology, defaultTopology, children }: NetlabProviderProps) {
+export function NetlabProvider({
+  topology,
+  defaultTopology,
+  children,
+  tutorialId,
+}: NetlabProviderProps) {
   ensureBuiltInProtocolsRegistered();
 
   const defaultTopologyRef = useRef<NetworkTopology | null>(null);
@@ -82,8 +89,9 @@ export function NetlabProvider({ topology, defaultTopology, children }: NetlabPr
       routeTable,
       areas: resolvedTopology.areas,
       hookEngine,
+      ...(tutorialId !== undefined ? { tutorialId } : {}),
     }),
-    [enrichedTopology, routeTable, resolvedTopology.areas, hookEngine],
+    [enrichedTopology, routeTable, resolvedTopology.areas, hookEngine, tutorialId],
   );
 
   return <NetlabContext.Provider value={value}>{children}</NetlabContext.Provider>;
