@@ -184,6 +184,11 @@ const CATEGORIES: Category[] = [
         desc: 'Step through SYN, SYN-ACK, ACK, and FIN exchanges while watching connection state and TCP header fields evolve.',
         scenarioId: 'tcp-handshake',
       },
+      {
+        path: '/simulation/enterprise',
+        title: 'Enterprise Edge',
+        desc: 'Boot a corporate client with DHCP, resolve internal DNS, browse through NAT, and inspect ACL decisions in one topology.',
+      },
     ],
   },
   {

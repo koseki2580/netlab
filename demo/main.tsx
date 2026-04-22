@@ -15,6 +15,7 @@ import StarDemo from './basic/StarDemo';
 import ThreeTierDemo from './basic/ThreeTierDemo';
 import AllInOneDemo from './comprehensive/AllInOneDemo';
 import EditorDemo from './editor/EditorDemo';
+import EnterpriseDemo from './enterprise/EnterpriseDemo';
 import EmbedDemo from './embed/EmbedDemo';
 import ArpDemo from './networking/ArpDemo';
 import HttpDemo from './networking/HttpDemo';
@@ -74,6 +75,7 @@ createRoot(root).render(
         <Route path="/simulation/session" element={<SessionDemo />} />
         <Route path="/simulation/data-transfer" element={<DataTransferDemo />} />
         <Route path="/simulation/tcp-handshake" element={<TcpHandshakeDemo />} />
+        <Route path="/simulation/enterprise" element={<EnterpriseDemo />} />
         <Route path="/embed" element={<EmbedDemo />} />
         <Route path="/comprehensive/all-in-one" element={<AllInOneDemo />} />
         <Route path="*" element={<Navigate to="/" replace />} />
