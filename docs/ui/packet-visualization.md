@@ -12,7 +12,7 @@ The packet visualization system traces a network packet through the topology hop
 
 - Packet metadata at each hop (srcIP, dstIP, TTL, protocol)
 - Timeline of all hops across the full path
-- Active edge highlighting in the canvas
+- Active hop and full-path highlighting in the canvas
 - Pause / resume / step-by-step playback controls
 
 The system is layered:
@@ -33,7 +33,8 @@ SimulationEngine          — pure TypeScript, no React
 - Node-level traversal (not port-level; edges in current topologies have no `sourceHandle`/`targetHandle`)
 - Pre-computed paths played back step by step
 - HookEngine event emission at each playback step
-- Edge highlighting via ReactFlow `animated` prop
+- Selected-trace path highlighting via ReactFlow `animated` prop
+- Stable per-trace accent colors while switching between committed traces
 
 ### Out of scope (v1)
 
@@ -73,6 +74,7 @@ interface PacketTrace {
 }
 
 type SimulationStatus = 'idle' | 'running' | 'paused' | 'done';
+type HighlightMode = 'hop' | 'path';
 
 interface SimulationState {
   status: SimulationStatus;
@@ -80,6 +82,9 @@ interface SimulationState {
   currentTraceId: string | null;
   currentStep: number; // -1 = trace loaded but playback not started
   activeEdgeIds: string[]; // edge IDs to highlight in the canvas
+  activePathEdgeIds: string[]; // ordered, deduplicated edge IDs for the selected trace
+  highlightMode: HighlightMode;
+  traceColors: Record<string, string>;
   selectedHop: PacketHop | null;
 }
 ```
@@ -176,18 +181,19 @@ A `visitedNodes: Set<string>` tracks every node the packet has visited in the cu
 
 ### Public API
 
-| Method                | Description                                                                                                                                                    |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `async send(packet)`  | Precompute trace, store it, set status to `'paused'`, `currentStep = -1`, notify listeners.                                                                    |
-| `step()`              | Advance `currentStep` by 1, emit hook for that hop, update `activeEdgeIds` + `selectedHop`, notify. Sets `status = 'done'` at last hop. No-op if already done. |
-| `setPlayInterval(ms)` | Persist the playback interval for future `play()` calls. Clamps to `50..5000` milliseconds.                                                                    |
-| `getPlayInterval()`   | Return the currently configured playback interval.                                                                                                             |
-| `play(ms?)`           | Set `status = 'running'`, auto-call `step()` every configured interval. Passing `ms` overrides only the current play session. Clears itself on done.           |
-| `pause()`             | Clear interval, set `status = 'paused'`, notify.                                                                                                               |
-| `reset()`             | Set `currentStep = -1`, `activeEdgeIds = []`, `selectedHop = null`, `status = 'paused'`, notify. Does NOT clear traces.                                        |
-| `selectHop(step)`     | Update `selectedHop` and `activeEdgeIds` without advancing `currentStep` (used by timeline click).                                                             |
-| `getState()`          | Return current `SimulationState` synchronously.                                                                                                                |
-| `subscribe(fn)`       | Register a listener; return an unsubscribe function.                                                                                                           |
+| Method                   | Description                                                                                                                                                    |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `async send(packet)`     | Precompute trace, store it, set status to `'paused'`, `currentStep = -1`, notify listeners.                                                                    |
+| `step()`                 | Advance `currentStep` by 1, emit hook for that hop, update `activeEdgeIds` + `selectedHop`, notify. Sets `status = 'done'` at last hop. No-op if already done. |
+| `setPlayInterval(ms)`    | Persist the playback interval for future `play()` calls. Clamps to `50..5000` milliseconds.                                                                    |
+| `getPlayInterval()`      | Return the currently configured playback interval.                                                                                                             |
+| `play(ms?)`              | Set `status = 'running'`, auto-call `step()` every configured interval. Passing `ms` overrides only the current play session. Clears itself on done.           |
+| `pause()`                | Clear interval, set `status = 'paused'`, notify.                                                                                                               |
+| `reset()`                | Set `currentStep = -1`, `activeEdgeIds = []`, `selectedHop = null`, `status = 'paused'`, notify. Does NOT clear traces.                                        |
+| `selectHop(step)`        | Update `selectedHop` and `activeEdgeIds` without advancing `currentStep` (used by timeline click).                                                             |
+| `setHighlightMode(mode)` | Toggle between legacy hop-only emphasis and selected-trace path emphasis.                                                                                      |
+| `getState()`             | Return current `SimulationState` synchronously.                                                                                                                |
+| `subscribe(fn)`          | Register a listener; return an unsubscribe function.                                                                                                           |
 
 ### Hook Emissions
 
@@ -251,6 +257,14 @@ Toolbar row containing:
 - **⏸ Pause** — disabled when `status !== 'running'`
 - **→ Step** — disabled when `status === 'running' || 'done'`
 - **⟳ Reset** — disabled when `status === 'idle'`
+- **Path Highlight / Hop Highlight** — toggles whether the canvas emphasizes the full selected path or only the current hop
+
+### Canvas Highlighting
+
+- `activeEdgeIds` remains the current-hop highlight channel for compatibility with existing inspectors.
+- `activePathEdgeIds` is derived from the selected trace's `hops[].activeEdgeId` values and rendered only when `highlightMode === 'path'`.
+- The selected trace uses a stable accent color from `traceColors[currentTraceId]`.
+- Down links and invalid connections still override highlight styling.
 
 ### `PacketViewer`
 

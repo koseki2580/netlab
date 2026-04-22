@@ -25,6 +25,7 @@ The site uses **React Router (HashRouter)** for client-side navigation. Hash-bas
 /#/simulation/acl            → Simulation: Firewalls & ACLs
 /#/simulation/interface-aware → Simulation: Interface-Aware Forwarding
 /#/simulation/session        → Simulation: Session Inspector
+/#/simulation/enterprise     → Simulation: Enterprise Edge
 /#/topology/controlled       → Editor: Controlled Topology
 /#/editor                    → Editor: Topology Editor
 /#/embed                     → Integration: Embed
@@ -49,6 +50,8 @@ demo/
     MultiHopDemo.tsx          client → R1 → R2 → server (chained routers)
   areas/
     DmzDemo.tsx               3 zones: private → DMZ → public (classic DMZ)
+  enterprise/
+    EnterpriseDemo.tsx        Corporate LAN → DHCP → DNS → ACL → NAT → Internet walkthrough
   services/
     DhcpDnsDemo.tsx           DHCP lease assignment + DNS lookup before HTTP
   simulation/
@@ -183,6 +186,11 @@ Individual demos are responsible for their own internal layout and any additiona
 ### simulation/session
 
 - **Purpose**: Demonstrates request/response correlation and lifecycle grouping in the session inspector.
+
+### simulation/enterprise
+
+- **Purpose**: Demonstrates one enterprise workflow that combines DHCP, internal DNS, ACL-gated outbound web access, NAT, and return traffic.
+- **Extras**: Editable `NodeDetailPanel` on the canvas, `NatTableViewer`, path highlighting, timeline/inspector stack, and a staged action panel.
 
 ### topology/controlled
 
