@@ -9,6 +9,7 @@ import {
 import { SimulationContext } from '../simulation/SimulationContext';
 import type { DhcpLeaseState, DnsCache } from '../types/services';
 import type {
+  NetlabNode,
   NetlabEdge,
   NetlabNodeData,
   NetworkTopology,
@@ -16,6 +17,13 @@ import type {
   TopologySnapshot,
 } from '../types/topology';
 import type { UdpBindings } from '../types/udp';
+import {
+  validateCidr,
+  validateIpAddress,
+  validateMacAddress,
+  validateNoDuplicateIp,
+  validatePrefixLength,
+} from '../utils/networkValidators';
 import { getRequired } from '../utils';
 import { useNetlabContext } from './NetlabContext';
 import { useNetlabUI } from './NetlabUIContext';
@@ -74,6 +82,24 @@ const INPUT_STYLE: React.CSSProperties = {
   width: 88,
 };
 
+const FIELD_STACK_STYLE: React.CSSProperties = {
+  display: 'flex',
+  flex: 1,
+  flexDirection: 'column',
+  gap: 4,
+};
+
+const FIELD_ERROR_STYLE: React.CSSProperties = {
+  color: 'var(--netlab-accent-red)',
+  fontSize: 10,
+  lineHeight: 1.3,
+};
+
+const SELECT_STYLE: React.CSSProperties = {
+  ...INPUT_STYLE,
+  width: 120,
+};
+
 const VLAN_PALETTE = [
   '#38bdf8',
   '#f59e0b',
@@ -111,6 +137,181 @@ function parseMtu(value: string): number | undefined {
   }
   const parsed = Number.parseInt(trimmed, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+}
+
+function parseOptionalInteger(value: string): number | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  const parsed = Number.parseInt(trimmed, 10);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function validateNonNegativeInteger(value: string, label: string): string | null {
+  const parsed = parseOptionalInteger(value);
+  if (parsed === undefined) {
+    return null;
+  }
+  return parsed >= 0 ? null : `${label} must be 0 or greater`;
+}
+
+function validatePositiveInteger(value: string, label: string): string | null {
+  const parsed = parseOptionalInteger(value);
+  if (parsed === undefined || parsed <= 0) {
+    return `${label} must be greater than 0`;
+  }
+  return null;
+}
+
+function parseTrunkAllowedVlans(value: string): {
+  vlans: number[] | undefined;
+  error: string | null;
+} {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return { vlans: undefined, error: null };
+  }
+
+  const parts = trimmed.split(',').map((part) => part.trim());
+  const vlans = parts.map((part) => Number.parseInt(part, 10));
+  if (vlans.some((v) => !Number.isFinite(v) || v < 0)) {
+    return { vlans: undefined, error: 'Allowed VLANs must be a comma-separated number list' };
+  }
+  return { vlans, error: null };
+}
+
+function collectConfiguredIps(
+  snapshot: TopologySnapshot,
+  ignore?: {
+    nodeId?: string;
+    interfaceId?: string;
+    subInterfaceId?: string;
+  },
+): string[] {
+  return snapshot.nodes.flatMap((candidate) => {
+    const ips: string[] = [];
+    if (candidate.id !== ignore?.nodeId && typeof candidate.data.ip === 'string') {
+      ips.push(candidate.data.ip);
+    }
+
+    for (const iface of candidate.data.interfaces ?? []) {
+      if (candidate.id === ignore?.nodeId && iface.id === ignore?.interfaceId) {
+        continue;
+      }
+      ips.push(iface.ipAddress);
+
+      for (const subInterface of iface.subInterfaces ?? []) {
+        if (
+          candidate.id === ignore?.nodeId &&
+          iface.id === ignore?.interfaceId &&
+          subInterface.id === ignore?.subInterfaceId
+        ) {
+          continue;
+        }
+        ips.push(subInterface.ipAddress);
+      }
+    }
+
+    return ips;
+  });
+}
+
+function EditableTextRow({
+  label,
+  name,
+  value,
+  editable,
+  color = 'var(--netlab-text-primary)',
+  minWidth = 72,
+  width = '100%',
+  onCommit,
+}: {
+  label: string;
+  name: string;
+  value: string;
+  editable: boolean;
+  color?: string;
+  minWidth?: number;
+  width?: number | string;
+  onCommit: (value: string) => string | null;
+}) {
+  const [localValue, setLocalValue] = useState(value);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLocalValue(value);
+    setError(null);
+  }, [value]);
+
+  return (
+    <div style={{ ...ROW_STYLE, alignItems: 'flex-start', marginBottom: 6 }}>
+      <span style={{ color: 'var(--netlab-text-secondary)', minWidth }}>{label}</span>
+      <div style={FIELD_STACK_STYLE}>
+        {editable ? (
+          <input
+            name={name}
+            value={localValue}
+            onChange={(event) => setLocalValue(event.target.value)}
+            onBlur={(event) => setError(onCommit(event.currentTarget.value))}
+            style={{ ...INPUT_STYLE, width }}
+          />
+        ) : (
+          <span style={{ color }}>{value || '—'}</span>
+        )}
+        {error && <span style={FIELD_ERROR_STYLE}>{error}</span>}
+      </div>
+    </div>
+  );
+}
+
+function EditableSelectRow({
+  label,
+  name,
+  value,
+  editable,
+  minWidth = 72,
+  options,
+  onCommit,
+}: {
+  label: string;
+  name: string;
+  value: string;
+  editable: boolean;
+  minWidth?: number;
+  options: { label: string; value: string }[];
+  onCommit: (value: string) => void;
+}) {
+  const [localValue, setLocalValue] = useState(value);
+
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  return (
+    <div style={{ ...ROW_STYLE, alignItems: 'center', marginBottom: 6 }}>
+      <span style={{ color: 'var(--netlab-text-secondary)', minWidth }}>{label}</span>
+      {editable ? (
+        <select
+          name={name}
+          value={localValue}
+          onChange={(event) => {
+            setLocalValue(event.target.value);
+            onCommit(event.target.value);
+          }}
+          style={SELECT_STYLE}
+        >
+          {options.map((option) => (
+            <option key={option.value || 'empty'} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <span style={{ color: 'var(--netlab-text-primary)' }}>{value || '—'}</span>
+      )}
+    </div>
+  );
 }
 
 function MtuBadge({ mtu }: { mtu: number | undefined }) {
@@ -529,6 +730,616 @@ function HostDetail({ data, runtimeIp }: { data: NetlabNodeData; runtimeIp?: str
   );
 }
 
+function HostEditorSection({
+  nodeId,
+  data,
+  editable,
+  snapshot,
+  updateNode,
+}: {
+  nodeId: string;
+  data: NetlabNodeData;
+  editable: boolean;
+  snapshot: TopologySnapshot;
+  updateNode: (updater: (node: NetlabNode) => NetlabNode) => void;
+}) {
+  const configuredIps = collectConfiguredIps(snapshot, { nodeId });
+
+  return (
+    <>
+      <div style={SECTION_HEADER_STYLE}>EDIT HOST</div>
+      <EditableTextRow
+        label="IP"
+        name={`host-ip-${nodeId}`}
+        value={data.ip ?? ''}
+        editable={editable}
+        color="var(--netlab-accent-cyan)"
+        minWidth={36}
+        onCommit={(nextValue) => {
+          const trimmed = nextValue.trim();
+          if (trimmed) {
+            const ipError =
+              validateIpAddress(trimmed) ?? validateNoDuplicateIp(trimmed, configuredIps);
+            if (ipError) {
+              return ipError;
+            }
+          }
+
+          if (trimmed === (data.ip ?? '')) {
+            return null;
+          }
+
+          updateNode((node) => ({
+            ...node,
+            data:
+              trimmed === ''
+                ? (() => {
+                    const { ip: _ip, ...restData } = node.data;
+                    return restData;
+                  })()
+                : { ...node.data, ip: trimmed },
+          }));
+          return null;
+        }}
+      />
+      <EditableTextRow
+        label="MAC"
+        name={`host-mac-${nodeId}`}
+        value={data.mac ?? ''}
+        editable={editable}
+        color="var(--netlab-accent-yellow)"
+        minWidth={36}
+        onCommit={(nextValue) => {
+          const trimmed = nextValue.trim();
+          if (trimmed) {
+            const macError = validateMacAddress(trimmed);
+            if (macError) {
+              return macError;
+            }
+          }
+
+          if (trimmed === (data.mac ?? '')) {
+            return null;
+          }
+
+          updateNode((node) => ({
+            ...node,
+            data:
+              trimmed === ''
+                ? (() => {
+                    const { mac: _mac, ...restData } = node.data;
+                    return restData;
+                  })()
+                : { ...node.data, mac: trimmed },
+          }));
+          return null;
+        }}
+      />
+    </>
+  );
+}
+
+function RouterEditorSection({
+  nodeId,
+  data,
+  editable,
+  snapshot,
+  updateNode,
+}: {
+  nodeId: string;
+  data: NetlabNodeData;
+  editable: boolean;
+  snapshot: TopologySnapshot;
+  updateNode: (updater: (node: NetlabNode) => NetlabNode) => void;
+}) {
+  const interfaces = data.interfaces ?? [];
+  const staticRoutes = data.staticRoutes ?? [];
+  const dhcpServer = data.dhcpServer;
+  const dnsServer = data.dnsServer;
+
+  return (
+    <>
+      <div style={SECTION_HEADER_STYLE}>EDIT INTERFACES</div>
+      {interfaces.map((iface) => (
+        <div key={`${iface.id}-edit`} style={{ marginBottom: 10 }}>
+          <div style={{ color: 'var(--netlab-accent-green)', fontWeight: 'bold', marginBottom: 4 }}>
+            {iface.name}
+          </div>
+          <EditableTextRow
+            label="IP"
+            name={`interface-ip-${iface.id}`}
+            value={iface.ipAddress}
+            editable={editable}
+            color="var(--netlab-accent-cyan)"
+            minWidth={36}
+            onCommit={(nextValue) => {
+              const trimmed = nextValue.trim();
+              const error =
+                validateIpAddress(trimmed) ??
+                validateNoDuplicateIp(
+                  trimmed,
+                  collectConfiguredIps(snapshot, {
+                    nodeId,
+                    interfaceId: iface.id,
+                  }),
+                );
+              if (error) {
+                return error;
+              }
+              if (trimmed === iface.ipAddress) {
+                return null;
+              }
+              updateNode((node) => ({
+                ...node,
+                data: {
+                  ...node.data,
+                  interfaces: (node.data.interfaces ?? []).map((candidate) =>
+                    candidate.id === iface.id ? { ...candidate, ipAddress: trimmed } : candidate,
+                  ),
+                },
+              }));
+              return null;
+            }}
+          />
+          <EditableTextRow
+            label="Prefix"
+            name={`interface-prefix-${iface.id}`}
+            value={String(iface.prefixLength)}
+            editable={editable}
+            minWidth={36}
+            onCommit={(nextValue) => {
+              const parsed = Number.parseInt(nextValue.trim(), 10);
+              const error = validatePrefixLength(parsed);
+              if (error) {
+                return error;
+              }
+              if (parsed === iface.prefixLength) {
+                return null;
+              }
+              updateNode((node) => ({
+                ...node,
+                data: {
+                  ...node.data,
+                  interfaces: (node.data.interfaces ?? []).map((candidate) =>
+                    candidate.id === iface.id ? { ...candidate, prefixLength: parsed } : candidate,
+                  ),
+                },
+              }));
+              return null;
+            }}
+          />
+          <EditableTextRow
+            label="MAC"
+            name={`interface-mac-${iface.id}`}
+            value={iface.macAddress}
+            editable={editable}
+            color="var(--netlab-accent-yellow)"
+            minWidth={36}
+            onCommit={(nextValue) => {
+              const trimmed = nextValue.trim();
+              const error = validateMacAddress(trimmed);
+              if (error) {
+                return error;
+              }
+              if (trimmed === iface.macAddress) {
+                return null;
+              }
+              updateNode((node) => ({
+                ...node,
+                data: {
+                  ...node.data,
+                  interfaces: (node.data.interfaces ?? []).map((candidate) =>
+                    candidate.id === iface.id ? { ...candidate, macAddress: trimmed } : candidate,
+                  ),
+                },
+              }));
+              return null;
+            }}
+          />
+          <EditableSelectRow
+            label="NAT"
+            name={`interface-nat-${iface.id}`}
+            value={iface.nat ?? ''}
+            editable={editable}
+            minWidth={36}
+            options={[
+              { label: 'none', value: '' },
+              { label: 'inside', value: 'inside' },
+              { label: 'outside', value: 'outside' },
+            ]}
+            onCommit={(nextValue) => {
+              updateNode((node) => ({
+                ...node,
+                data: {
+                  ...node.data,
+                  interfaces: (node.data.interfaces ?? []).map((candidate) => {
+                    if (candidate.id !== iface.id) {
+                      return candidate;
+                    }
+                    if (!nextValue) {
+                      const { nat: _nat, ...restIface } = candidate;
+                      return restIface;
+                    }
+                    return { ...candidate, nat: nextValue as 'inside' | 'outside' };
+                  }),
+                },
+              }));
+            }}
+          />
+        </div>
+      ))}
+
+      {staticRoutes.length > 0 && (
+        <>
+          <div style={SECTION_HEADER_STYLE}>EDIT STATIC ROUTES</div>
+          {staticRoutes.map((route, index) => (
+            <div key={`route-${index}`} style={{ marginBottom: 10 }}>
+              <EditableTextRow
+                label="CIDR"
+                name={`route-destination-${index}`}
+                value={route.destination}
+                editable={editable}
+                minWidth={42}
+                onCommit={(nextValue) => {
+                  const trimmed = nextValue.trim();
+                  const error = validateCidr(trimmed);
+                  if (error) {
+                    return error;
+                  }
+                  if (trimmed === route.destination) {
+                    return null;
+                  }
+                  updateNode((node) => ({
+                    ...node,
+                    data: {
+                      ...node.data,
+                      staticRoutes: (node.data.staticRoutes ?? []).map(
+                        (candidate, candidateIndex) =>
+                          candidateIndex === index
+                            ? { ...candidate, destination: trimmed }
+                            : candidate,
+                      ),
+                    },
+                  }));
+                  return null;
+                }}
+              />
+              <EditableTextRow
+                label="Next"
+                name={`route-next-hop-${index}`}
+                value={route.nextHop}
+                editable={editable}
+                minWidth={42}
+                onCommit={(nextValue) => {
+                  const trimmed = nextValue.trim();
+                  const error = trimmed === 'direct' ? null : validateIpAddress(trimmed);
+                  if (error) {
+                    return error;
+                  }
+                  if (trimmed === route.nextHop) {
+                    return null;
+                  }
+                  updateNode((node) => ({
+                    ...node,
+                    data: {
+                      ...node.data,
+                      staticRoutes: (node.data.staticRoutes ?? []).map(
+                        (candidate, candidateIndex) =>
+                          candidateIndex === index ? { ...candidate, nextHop: trimmed } : candidate,
+                      ),
+                    },
+                  }));
+                  return null;
+                }}
+              />
+            </div>
+          ))}
+        </>
+      )}
+
+      {dhcpServer && (
+        <>
+          <div style={SECTION_HEADER_STYLE}>EDIT DHCP SERVER</div>
+          <EditableTextRow
+            label="Pool"
+            name={`dhcp-pool-${nodeId}`}
+            value={dhcpServer.leasePool}
+            editable={editable}
+            minWidth={52}
+            onCommit={(nextValue) => {
+              const trimmed = nextValue.trim();
+              const error = validateCidr(trimmed);
+              if (error) {
+                return error;
+              }
+              if (trimmed === dhcpServer.leasePool) {
+                return null;
+              }
+              updateNode((node) => ({
+                ...node,
+                data: {
+                  ...node.data,
+                  dhcpServer: {
+                    ...(node.data.dhcpServer ?? dhcpServer),
+                    leasePool: trimmed,
+                  },
+                },
+              }));
+              return null;
+            }}
+          />
+          <EditableTextRow
+            label="GW"
+            name={`dhcp-default-gateway-${nodeId}`}
+            value={dhcpServer.defaultGateway}
+            editable={editable}
+            minWidth={52}
+            onCommit={(nextValue) => {
+              const trimmed = nextValue.trim();
+              const error = validateIpAddress(trimmed);
+              if (error) {
+                return error;
+              }
+              if (trimmed === dhcpServer.defaultGateway) {
+                return null;
+              }
+              updateNode((node) => ({
+                ...node,
+                data: {
+                  ...node.data,
+                  dhcpServer: {
+                    ...(node.data.dhcpServer ?? dhcpServer),
+                    defaultGateway: trimmed,
+                  },
+                },
+              }));
+              return null;
+            }}
+          />
+          <EditableTextRow
+            label="Lease"
+            name={`dhcp-lease-time-${nodeId}`}
+            value={String(dhcpServer.leaseTime)}
+            editable={editable}
+            minWidth={52}
+            onCommit={(nextValue) => {
+              const error = validatePositiveInteger(nextValue, 'Lease time');
+              if (error) {
+                return error;
+              }
+              const parsed = Number.parseInt(nextValue.trim(), 10);
+              if (parsed === dhcpServer.leaseTime) {
+                return null;
+              }
+              updateNode((node) => ({
+                ...node,
+                data: {
+                  ...node.data,
+                  dhcpServer: {
+                    ...(node.data.dhcpServer ?? dhcpServer),
+                    leaseTime: parsed,
+                  },
+                },
+              }));
+              return null;
+            }}
+          />
+        </>
+      )}
+
+      {dnsServer && (
+        <>
+          <div style={SECTION_HEADER_STYLE}>EDIT DNS ZONES</div>
+          {dnsServer.zones.map((zone, index) => (
+            <div key={`dns-zone-${index}`} style={{ marginBottom: 10 }}>
+              <EditableTextRow
+                label="Name"
+                name={`dns-zone-name-${index}`}
+                value={zone.name}
+                editable={editable}
+                minWidth={52}
+                onCommit={(nextValue) => {
+                  const trimmed = nextValue.trim();
+                  if (!trimmed) {
+                    return 'Zone name is required';
+                  }
+                  if (trimmed === zone.name) {
+                    return null;
+                  }
+                  updateNode((node) => ({
+                    ...node,
+                    data: {
+                      ...node.data,
+                      dnsServer: {
+                        ...(node.data.dnsServer ?? dnsServer),
+                        zones: (node.data.dnsServer?.zones ?? dnsServer.zones).map(
+                          (candidate, candidateIndex) =>
+                            candidateIndex === index ? { ...candidate, name: trimmed } : candidate,
+                        ),
+                      },
+                    },
+                  }));
+                  return null;
+                }}
+              />
+              <EditableTextRow
+                label="IP"
+                name={`dns-zone-address-${index}`}
+                value={zone.address}
+                editable={editable}
+                minWidth={52}
+                onCommit={(nextValue) => {
+                  const trimmed = nextValue.trim();
+                  const error = validateIpAddress(trimmed);
+                  if (error) {
+                    return error;
+                  }
+                  if (trimmed === zone.address) {
+                    return null;
+                  }
+                  updateNode((node) => ({
+                    ...node,
+                    data: {
+                      ...node.data,
+                      dnsServer: {
+                        ...(node.data.dnsServer ?? dnsServer),
+                        zones: (node.data.dnsServer?.zones ?? dnsServer.zones).map(
+                          (candidate, candidateIndex) =>
+                            candidateIndex === index
+                              ? { ...candidate, address: trimmed }
+                              : candidate,
+                        ),
+                      },
+                    },
+                  }));
+                  return null;
+                }}
+              />
+            </div>
+          ))}
+        </>
+      )}
+    </>
+  );
+}
+
+function SwitchEditorSection({
+  data,
+  editable,
+  updateNode,
+}: {
+  data: NetlabNodeData;
+  editable: boolean;
+  updateNode: (updater: (node: NetlabNode) => NetlabNode) => void;
+}) {
+  const ports = data.ports ?? [];
+
+  return (
+    <>
+      <div style={SECTION_HEADER_STYLE}>EDIT PORTS</div>
+      {ports.map((port) => (
+        <div key={`${port.id}-edit`} style={{ marginBottom: 10 }}>
+          <EditableTextRow
+            label="Port"
+            name={`switch-port-name-${port.id}`}
+            value={port.name}
+            editable={editable}
+            minWidth={52}
+            onCommit={(nextValue) => {
+              const trimmed = nextValue.trim();
+              if (!trimmed || trimmed === port.name) {
+                return trimmed ? null : 'Port name is required';
+              }
+              updateNode((node) => ({
+                ...node,
+                data: {
+                  ...node.data,
+                  ports: (node.data.ports ?? []).map((candidate) =>
+                    candidate.id === port.id ? { ...candidate, name: trimmed } : candidate,
+                  ),
+                },
+              }));
+              return null;
+            }}
+          />
+          <EditableTextRow
+            label="Access"
+            name={`switch-port-access-vlan-${port.id}`}
+            value={port.accessVlan === undefined ? '' : String(port.accessVlan)}
+            editable={editable}
+            minWidth={52}
+            onCommit={(nextValue) => {
+              const error = validateNonNegativeInteger(nextValue, 'Access VLAN');
+              if (error) {
+                return error;
+              }
+              const parsed = parseOptionalInteger(nextValue);
+              if (parsed === port.accessVlan) {
+                return null;
+              }
+              updateNode((node) => ({
+                ...node,
+                data: {
+                  ...node.data,
+                  ports: (node.data.ports ?? []).map((candidate) => {
+                    if (candidate.id !== port.id) {
+                      return candidate;
+                    }
+                    if (parsed === undefined) {
+                      const { accessVlan: _accessVlan, ...restPort } = candidate;
+                      return restPort;
+                    }
+                    return { ...candidate, accessVlan: parsed };
+                  }),
+                },
+              }));
+              return null;
+            }}
+          />
+          <EditableSelectRow
+            label="Mode"
+            name={`switch-port-mode-${port.id}`}
+            value={port.vlanMode ?? ''}
+            editable={editable}
+            minWidth={52}
+            options={[
+              { label: 'access', value: 'access' },
+              { label: 'trunk', value: 'trunk' },
+            ]}
+            onCommit={(nextValue) => {
+              updateNode((node) => ({
+                ...node,
+                data: {
+                  ...node.data,
+                  ports: (node.data.ports ?? []).map((candidate) =>
+                    candidate.id === port.id
+                      ? { ...candidate, vlanMode: nextValue as 'access' | 'trunk' }
+                      : candidate,
+                  ),
+                },
+              }));
+            }}
+          />
+          <EditableTextRow
+            label="Allowed"
+            name={`switch-port-allowed-vlans-${port.id}`}
+            value={port.trunkAllowedVlans?.join(', ') ?? ''}
+            editable={editable}
+            minWidth={52}
+            onCommit={(nextValue) => {
+              const { vlans, error } = parseTrunkAllowedVlans(nextValue);
+              if (error) {
+                return error;
+              }
+              const current = port.trunkAllowedVlans?.join(',') ?? '';
+              if ((vlans?.join(',') ?? '') === current) {
+                return null;
+              }
+              updateNode((node) => ({
+                ...node,
+                data: {
+                  ...node.data,
+                  ports: (node.data.ports ?? []).map((candidate) => {
+                    if (candidate.id !== port.id) {
+                      return candidate;
+                    }
+                    if (!vlans || vlans.length === 0) {
+                      const { trunkAllowedVlans: _allowed, ...restPort } = candidate;
+                      return restPort;
+                    }
+                    return { ...candidate, trunkAllowedVlans: vlans };
+                  }),
+                },
+              }));
+              return null;
+            }}
+          />
+        </div>
+      ))}
+    </>
+  );
+}
+
 function DhcpLeaseDetail({ lease }: { lease: DhcpLeaseState }) {
   return (
     <>
@@ -642,6 +1453,7 @@ function UdpBindingsDetail({ bindings }: { bindings: UdpBindings }) {
 }
 
 export interface NodeDetailPanelProps {
+  editable?: boolean;
   onTopologyChange?: (topology: TopologySnapshot) => void;
 }
 
@@ -712,12 +1524,14 @@ function JoinedGroupsDetail({ groups }: { groups: string[] }) {
 }
 
 export const NodeDetailPanel = memo(function NodeDetailPanel({
+  editable = false,
   onTopologyChange,
 }: NodeDetailPanelProps = {}) {
   const { selectedNodeId, setSelectedNodeId, selectedEdgeId, setSelectedEdgeId } = useNetlabUI();
   const { topology } = useNetlabContext();
   const simCtx = useContext(SimulationContext);
   const activeSelectionId = selectedEdgeId ?? selectedNodeId;
+  const canEdit = editable && onTopologyChange !== undefined;
 
   useEffect(() => {
     if (!activeSelectionId) return;
@@ -841,6 +1655,21 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
 
   const node = topology.nodes.find((n) => n.id === selectedNodeId);
   if (!node || !selectedNodeId) return null;
+
+  const snapshot: TopologySnapshot = {
+    nodes: topology.nodes,
+    edges: topology.edges,
+    areas: topology.areas,
+  };
+
+  const updateSelectedNode = (updater: (candidate: NetlabNode) => NetlabNode) => {
+    updateSnapshot((currentSnapshot) => ({
+      ...currentSnapshot,
+      nodes: currentSnapshot.nodes.map((candidate) =>
+        candidate.id === selectedNodeId ? updater(candidate) : candidate,
+      ),
+    }));
+  };
 
   const d = node.data;
   const leaseState = simCtx?.getDhcpLeaseState(selectedNodeId) ?? null;
@@ -982,6 +1811,27 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
         {d.role === 'switch' && <SwitchDetail nodeId={node.id} data={d} topology={topology} />}
         {(d.role === 'client' || d.role === 'server') && (
           <HostDetail data={d} {...(runtimeIp !== undefined ? { runtimeIp } : {})} />
+        )}
+        {canEdit && (d.role === 'client' || d.role === 'server') && (
+          <HostEditorSection
+            nodeId={node.id}
+            data={d}
+            editable={canEdit}
+            snapshot={snapshot}
+            updateNode={updateSelectedNode}
+          />
+        )}
+        {canEdit && d.role === 'router' && (
+          <RouterEditorSection
+            nodeId={node.id}
+            data={d}
+            editable={canEdit}
+            snapshot={snapshot}
+            updateNode={updateSelectedNode}
+          />
+        )}
+        {canEdit && d.role === 'switch' && (
+          <SwitchEditorSection data={d} editable={canEdit} updateNode={updateSelectedNode} />
         )}
         {leaseState && <DhcpLeaseDetail lease={leaseState} />}
         {dnsCache && <DnsCacheDetail cache={dnsCache} />}

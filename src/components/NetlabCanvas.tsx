@@ -54,6 +54,7 @@ export interface NetlabCanvasProps {
   style?: React.CSSProperties;
   className?: string;
   colorMode?: NetlabColorMode;
+  nodeDetailsEditable?: boolean;
   onNodesChange?: (nodes: NetlabNode[]) => void;
   onEdgesChange?: (edges: NetlabEdge[]) => void;
   onTopologyChange?: (topology: TopologySnapshot) => void;
@@ -63,6 +64,7 @@ export function NetlabCanvas({
   style,
   className,
   colorMode,
+  nodeDetailsEditable = false,
   onNodesChange: onNodesChangeProp,
   onEdgesChange: onEdgesChangeProp,
   onTopologyChange,
@@ -75,6 +77,12 @@ export function NetlabCanvas({
   // Optional: read active edge IDs from SimulationContext (non-throwing)
   const simCtx = useContext(SimulationContext);
   const activeEdgeIds = simCtx?.state.activeEdgeIds ?? [];
+  const activePathEdgeIds = simCtx?.state.activePathEdgeIds ?? [];
+  const highlightMode = simCtx?.state.highlightMode ?? 'path';
+  const currentTraceId = simCtx?.state.currentTraceId ?? null;
+  const currentTraceColor =
+    (currentTraceId ? simCtx?.state.traceColors[currentTraceId] : null) ??
+    'var(--netlab-accent-cyan)';
   const themeScope = useContext(NetlabThemeScopeContext);
   const resolvedColorMode = colorMode ?? themeScope?.colorMode ?? 'dark';
 
@@ -245,17 +253,36 @@ export function NetlabCanvas({
             },
           };
         }
-        if (activeEdgeIds.includes(edge.id)) {
+
+        const isCurrentHopEdge = activeEdgeIds.includes(edge.id);
+        const isPathEdge = highlightMode === 'path' && activePathEdgeIds.includes(edge.id);
+
+        if (isCurrentHopEdge) {
           return {
             ...validationEdge,
             animated: true,
             style: {
               ...validationEdge.style,
-              stroke: 'var(--netlab-accent-cyan)',
-              strokeWidth: 2,
+              stroke: currentTraceColor,
+              strokeWidth: isPathEdge ? 3 : 2,
+              opacity: 1,
             },
           };
         }
+
+        if (isPathEdge) {
+          return {
+            ...validationEdge,
+            animated: true,
+            style: {
+              ...validationEdge.style,
+              stroke: currentTraceColor,
+              strokeWidth: 2,
+              opacity: 0.45,
+            },
+          };
+        }
+
         const validationResult = validateCanvasConnection(
           nodes,
           edges.filter((candidate) => candidate.id !== edge.id),
@@ -289,7 +316,7 @@ export function NetlabCanvas({
 
         return validationEdge;
       }),
-    [edges, nodes, activeEdgeIds, failureCtx],
+    [edges, nodes, activeEdgeIds, activePathEdgeIds, highlightMode, currentTraceColor, failureCtx],
   );
 
   const uiCtx = useMemo(
@@ -337,7 +364,10 @@ export function NetlabCanvas({
           <Controls />
           <MiniMap />
         </ReactFlow>
-        <NodeDetailPanel {...(onTopologyChange !== undefined ? { onTopologyChange } : {})} />
+        <NodeDetailPanel
+          editable={nodeDetailsEditable}
+          {...(onTopologyChange !== undefined ? { onTopologyChange } : {})}
+        />
       </div>
     </NetlabUIContext.Provider>
   );

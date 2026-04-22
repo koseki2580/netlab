@@ -16,6 +16,7 @@ import { ACL_DEMO_TOPOLOGY } from '../../demo/simulation/AclDemo';
 import { INTERFACE_AWARE_TOPOLOGY } from '../../demo/simulation/InterfaceAwareDemo';
 import { SESSION_DEMO_TOPOLOGY } from '../../demo/simulation/SessionDemo';
 import { TCP_HANDSHAKE_DEMO_TOPOLOGY } from '../../demo/simulation/TcpHandshakeDemo';
+import { ENTERPRISE_DEMO_TOPOLOGY } from '../../demo/enterprise/EnterpriseDemo';
 import { EMBED_DEMO_TOPOLOGY } from '../../demo/embed/EmbedDemo';
 import { CONTROLLED_TOPOLOGY_INITIAL_TOPOLOGY } from '../../demo/topology/ControlledTopologyDemo';
 import { EDITOR_EXAMPLE_TOPOLOGY } from '../../demo/editor/EditorDemo';
@@ -221,6 +222,7 @@ const DEMO_REGRESSION_SCENARIOS: [string, NetworkTopology][] = [
   ['Interface-Aware Forwarding', INTERFACE_AWARE_TOPOLOGY],
   ['Session Inspector', SESSION_DEMO_TOPOLOGY],
   ['TCP Handshake', TCP_HANDSHAKE_DEMO_TOPOLOGY],
+  ['Enterprise Edge', ENTERPRISE_DEMO_TOPOLOGY],
   ['Embed', EMBED_DEMO_TOPOLOGY],
   ['Controlled Topology', CONTROLLED_TOPOLOGY_INITIAL_TOPOLOGY],
   ['Topology Editor', { ...EDITOR_EXAMPLE_TOPOLOGY, areas: [], routeTables: new Map() }],

@@ -77,7 +77,7 @@ const BTN_DISABLED: React.CSSProperties = {
 export function SimulationControls() {
   const { topology } = useNetlabContext();
   const { engine, state, sendPacket } = useSimulation();
-  const { status } = state;
+  const { status, highlightMode } = state;
 
   const handleSend = async () => {
     const packet = buildDefaultPacket(topology);
@@ -150,6 +150,15 @@ export function SimulationControls() {
         className="netlab-focus-ring"
       >
         ⟳ Reset
+      </button>
+      <button
+        onClick={() => engine.setHighlightMode(highlightMode === 'path' ? 'hop' : 'path')}
+        style={BTN_SECONDARY}
+        aria-label="Highlight Mode"
+        aria-pressed={highlightMode === 'path'}
+        className="netlab-focus-ring"
+      >
+        {highlightMode === 'path' ? 'Path Highlight' : 'Hop Highlight'}
       </button>
 
       <div
