@@ -55,6 +55,9 @@ function makeSimulationValue(
       currentTraceId: null,
       currentStep: -1,
       activeEdgeIds: [],
+      activePathEdgeIds: [],
+      highlightMode: 'path',
+      traceColors: {},
       selectedHop: null,
       selectedPacket: null,
       nodeArpTables: {},
@@ -557,6 +560,192 @@ describe('NodeDetailPanel', () => {
               }),
             }),
           ],
+        }),
+      );
+    });
+  });
+
+  describe('editable mode', () => {
+    it('renders host IP and MAC as inputs when editable=true', () => {
+      uiMock.selectedNodeId = 'client-1';
+      netlabMock.topology = makeTopology([makeClientNode()]);
+
+      renderDom(makeSimulationValue(), {
+        editable: true,
+        onTopologyChange: vi.fn(),
+      });
+
+      expect(container?.querySelector('input[name="host-ip-client-1"]')).not.toBeNull();
+      expect(container?.querySelector('input[name="host-mac-client-1"]')).not.toBeNull();
+    });
+
+    it('updates host IP through onTopologyChange when the input is valid', () => {
+      uiMock.selectedNodeId = 'client-1';
+      netlabMock.topology = makeTopology([makeClientNode()]);
+      const onTopologyChange = vi.fn();
+
+      renderDom(makeSimulationValue(), {
+        editable: true,
+        onTopologyChange,
+      });
+
+      const input = container?.querySelector(
+        'input[name="host-ip-client-1"]',
+      ) as HTMLInputElement | null;
+      expect(input).not.toBeNull();
+
+      act(() => {
+        input!.focus();
+        setNativeInputValue(input!, '10.0.0.99');
+        input!.dispatchEvent(new Event('input', { bubbles: true }));
+        input!.dispatchEvent(new Event('change', { bubbles: true }));
+        input!.blur();
+      });
+
+      expect(onTopologyChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          nodes: [
+            expect.objectContaining({
+              id: 'client-1',
+              data: expect.objectContaining({ ip: '10.0.0.99' }),
+            }),
+          ],
+        }),
+      );
+    });
+
+    it('shows an inline error and blocks invalid host IP updates', () => {
+      uiMock.selectedNodeId = 'client-1';
+      netlabMock.topology = makeTopology([makeClientNode()]);
+      const onTopologyChange = vi.fn();
+
+      renderDom(makeSimulationValue(), {
+        editable: true,
+        onTopologyChange,
+      });
+
+      const input = container?.querySelector(
+        'input[name="host-ip-client-1"]',
+      ) as HTMLInputElement | null;
+      expect(input).not.toBeNull();
+
+      act(() => {
+        input!.focus();
+        setNativeInputValue(input!, '999.0.0.1');
+        input!.dispatchEvent(new Event('input', { bubbles: true }));
+        input!.dispatchEvent(new Event('change', { bubbles: true }));
+        input!.blur();
+      });
+
+      expect(onTopologyChange).not.toHaveBeenCalled();
+      expect(container?.textContent).toContain('Invalid IPv4 address');
+    });
+
+    it('updates router interface IP and prefix when editable=true', () => {
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+      const onTopologyChange = vi.fn();
+
+      renderDom(makeSimulationValue(), {
+        editable: true,
+        onTopologyChange,
+      });
+
+      const ipInput = container?.querySelector(
+        'input[name="interface-ip-eth0"]',
+      ) as HTMLInputElement | null;
+      const prefixInput = container?.querySelector(
+        'input[name="interface-prefix-eth0"]',
+      ) as HTMLInputElement | null;
+      expect(ipInput).not.toBeNull();
+      expect(prefixInput).not.toBeNull();
+
+      act(() => {
+        ipInput!.focus();
+        setNativeInputValue(ipInput!, '10.0.10.1');
+        ipInput!.dispatchEvent(new Event('input', { bubbles: true }));
+        ipInput!.dispatchEvent(new Event('change', { bubbles: true }));
+        ipInput!.blur();
+
+        prefixInput!.focus();
+        setNativeInputValue(prefixInput!, '25');
+        prefixInput!.dispatchEvent(new Event('input', { bubbles: true }));
+        prefixInput!.dispatchEvent(new Event('change', { bubbles: true }));
+        prefixInput!.blur();
+      });
+
+      expect(onTopologyChange).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          nodes: expect.arrayContaining([
+            expect.objectContaining({
+              id: 'router-1',
+              data: expect.objectContaining({
+                interfaces: expect.arrayContaining([
+                  expect.objectContaining({
+                    id: 'eth0',
+                    ipAddress: '10.0.10.1',
+                  }),
+                ]),
+              }),
+            }),
+          ]),
+        }),
+      );
+      expect(onTopologyChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          nodes: expect.arrayContaining([
+            expect.objectContaining({
+              id: 'router-1',
+              data: expect.objectContaining({
+                interfaces: expect.arrayContaining([
+                  expect.objectContaining({
+                    id: 'eth0',
+                    prefixLength: 25,
+                  }),
+                ]),
+              }),
+            }),
+          ]),
+        }),
+      );
+    });
+
+    it('updates switch access VLAN through onTopologyChange', () => {
+      uiMock.selectedNodeId = 'switch-1';
+      netlabMock.topology = makeTopology([makeSwitchNode(true)]);
+      const onTopologyChange = vi.fn();
+
+      renderDom(makeSimulationValue(), {
+        editable: true,
+        onTopologyChange,
+      });
+
+      const input = container?.querySelector(
+        'input[name="switch-port-access-vlan-port-1"]',
+      ) as HTMLInputElement | null;
+      expect(input).not.toBeNull();
+
+      act(() => {
+        input!.focus();
+        setNativeInputValue(input!, '30');
+        input!.dispatchEvent(new Event('input', { bubbles: true }));
+        input!.dispatchEvent(new Event('change', { bubbles: true }));
+        input!.blur();
+      });
+
+      expect(onTopologyChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          nodes: expect.arrayContaining([
+            expect.objectContaining({
+              id: 'switch-1',
+              data: expect.objectContaining({
+                ports: expect.arrayContaining([
+                  expect.objectContaining({ id: 'port-1', accessVlan: 30 }),
+                ]),
+              }),
+            }),
+          ]),
         }),
       );
     });

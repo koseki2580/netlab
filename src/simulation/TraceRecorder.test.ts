@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { InFlightPacket } from '../types/packets';
-import type { PacketHop } from '../types/simulation';
+import type { PacketHop, SimulationState } from '../types/simulation';
 import { countPcapRecords, makePacket } from './__fixtures__/helpers';
 import { TraceRecorder } from './TraceRecorder';
 
@@ -205,5 +205,85 @@ describe('TraceRecorder', () => {
 
     expect(recorder.getSnapshots(packet.id)).toEqual([packet]);
     expect(recorder.getSnapshots('missing')).toEqual([]);
+  });
+
+  it('initializes full-path highlight state and trace colors when appending a trace', () => {
+    const recorder = new TraceRecorder();
+    const state = {
+      status: 'idle',
+      traces: [],
+      currentTraceId: null,
+      currentStep: -1,
+      activeEdgeIds: [],
+      activePathEdgeIds: [],
+      highlightMode: 'path',
+      traceColors: {},
+      selectedHop: null,
+      selectedPacket: null,
+      nodeArpTables: {},
+      natTables: [],
+      connTrackTables: [],
+    } as unknown as SimulationState;
+
+    const nextState = recorder.appendTrace(
+      state,
+      {
+        packetId: 'trace-highlight',
+        srcNodeId: 'client-1',
+        dstNodeId: 'server-1',
+        status: 'delivered',
+        hops: [
+          {
+            step: 0,
+            nodeId: 'client-1',
+            nodeLabel: 'Client',
+            srcIp: '10.0.0.10',
+            dstIp: '203.0.113.10',
+            ttl: 64,
+            protocol: 'TCP',
+            event: 'create',
+            activeEdgeId: 'e1',
+            timestamp: 1,
+          },
+          {
+            step: 1,
+            nodeId: 'router-1',
+            nodeLabel: 'Router',
+            srcIp: '10.0.0.10',
+            dstIp: '203.0.113.10',
+            ttl: 63,
+            protocol: 'TCP',
+            event: 'forward',
+            activeEdgeId: 'e2',
+            timestamp: 2,
+          },
+          {
+            step: 2,
+            nodeId: 'router-1',
+            nodeLabel: 'Router',
+            srcIp: '10.0.0.10',
+            dstIp: '203.0.113.10',
+            ttl: 62,
+            protocol: 'TCP',
+            event: 'forward',
+            activeEdgeId: 'e1',
+            timestamp: 3,
+          },
+        ],
+      },
+      {},
+      (nodeArpTables) => nodeArpTables,
+    );
+
+    expect(nextState).toMatchObject({
+      status: 'paused',
+      currentTraceId: 'trace-highlight',
+      activeEdgeIds: [],
+      activePathEdgeIds: ['e1', 'e2'],
+      highlightMode: 'path',
+      traceColors: {
+        'trace-highlight': 'var(--netlab-accent-cyan)',
+      },
+    });
   });
 });

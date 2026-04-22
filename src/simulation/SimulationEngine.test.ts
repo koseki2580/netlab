@@ -573,6 +573,25 @@ describe('SimulationEngine.step', () => {
     engine.step(); // deliver hop
     expect(engine.getState().activeEdgeIds).toEqual([]);
   });
+
+  it('tracks the selected trace path separately from the current hop highlight', async () => {
+    const engine = await loadedEngine();
+
+    expect(engine.getState()).toMatchObject({
+      activePathEdgeIds: ['e1', 'e2'],
+      highlightMode: 'path',
+      traceColors: {
+        p1: 'var(--netlab-accent-cyan)',
+      },
+    });
+
+    engine.step();
+
+    expect(engine.getState()).toMatchObject({
+      activeEdgeIds: ['e1'],
+      activePathEdgeIds: ['e1', 'e2'],
+    });
+  });
 });
 
 describe('SimulationEngine.play / pause', () => {
@@ -1374,6 +1393,55 @@ describe('SimulationEngine.selectHop', () => {
     expect(state.selectedHop?.nodeId).toBe('router-1');
     expect(state.currentStep).toBe(-1); // not advanced
     expect(state.activeEdgeIds).toEqual(['e2']);
+  });
+
+  it('keeps the full path highlight while selecting a specific hop', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    await engine.send(
+      makePacket('select-hop-path', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+    );
+
+    engine.selectHop(1);
+
+    expect(engine.getState()).toMatchObject({
+      activeEdgeIds: ['e2'],
+      activePathEdgeIds: ['e1', 'e2'],
+    });
+  });
+});
+
+describe('SimulationEngine highlight mode', () => {
+  it('defaults to path mode and allows switching between path and hop mode', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    await engine.send(
+      makePacket('highlight-mode', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+    );
+
+    expect(engine.getState()).toMatchObject({ highlightMode: 'path' });
+
+    engine.setHighlightMode('hop');
+    expect(engine.getState()).toMatchObject({ highlightMode: 'hop' });
+
+    engine.setHighlightMode('path');
+    expect(engine.getState()).toMatchObject({ highlightMode: 'path' });
+  });
+
+  it('assigns distinct colors to traces as they are appended', async () => {
+    const engine = makeEngine(singleRouterTopology());
+    await engine.send(
+      makePacket('highlight-color-1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+    );
+    await engine.send(
+      makePacket('highlight-color-2', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+    );
+
+    expect(engine.getState()).toMatchObject({
+      traceColors: {
+        'highlight-color-1': 'var(--netlab-accent-cyan)',
+        'highlight-color-2': 'var(--netlab-accent-orange)',
+      },
+      activePathEdgeIds: ['e1', 'e2'],
+    });
   });
 });
 

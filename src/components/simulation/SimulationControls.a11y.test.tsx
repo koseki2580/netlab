@@ -6,13 +6,22 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SimulationState } from '../../types/simulation';
 
 const simulationMock = vi.hoisted(() => ({
-  engine: { play: vi.fn(), pause: vi.fn(), step: vi.fn(), reset: vi.fn() },
+  engine: {
+    play: vi.fn(),
+    pause: vi.fn(),
+    step: vi.fn(),
+    reset: vi.fn(),
+    setHighlightMode: vi.fn(),
+  },
   state: {
     status: 'idle',
     traces: [],
     currentTraceId: null,
     currentStep: -1,
     activeEdgeIds: [],
+    activePathEdgeIds: [],
+    highlightMode: 'path',
+    traceColors: {},
     selectedHop: null,
     selectedPacket: null,
     nodeArpTables: {},
@@ -48,6 +57,11 @@ let container: HTMLDivElement;
 let root: Root;
 
 beforeEach(() => {
+  simulationMock.engine.play.mockReset();
+  simulationMock.engine.pause.mockReset();
+  simulationMock.engine.step.mockReset();
+  simulationMock.engine.reset.mockReset();
+  simulationMock.engine.setHighlightMode.mockReset();
   container = document.createElement('div');
   document.body.appendChild(container);
   act(() => {
@@ -79,11 +93,25 @@ describe('SimulationControls a11y', () => {
     expect(labels).toContain('Pause');
     expect(labels).toContain('Step Forward');
     expect(labels).toContain('Reset');
+    expect(labels).toContain('Highlight Mode');
   });
 
   it('all buttons have netlab-focus-ring class', () => {
     container.querySelectorAll('button').forEach((btn) => {
       expect(btn.classList.contains('netlab-focus-ring')).toBe(true);
     });
+  });
+
+  it('requests the opposite highlight mode when the toggle is clicked', () => {
+    const toggle = container.querySelector('[aria-label="Highlight Mode"]');
+    if (!(toggle instanceof HTMLButtonElement)) {
+      throw new Error('expected highlight mode button');
+    }
+
+    act(() => {
+      toggle.click();
+    });
+
+    expect(simulationMock.engine.setHighlightMode).toHaveBeenCalledWith('hop');
   });
 });

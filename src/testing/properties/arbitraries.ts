@@ -37,6 +37,12 @@ export const simulationStateArb: fc.Arbitrary<SimulationState> = fc.record({
   currentTraceId: fc.option(fc.string({ minLength: 1, maxLength: 24 }), { nil: null }),
   currentStep: fc.integer({ min: -1, max: 32 }),
   activeEdgeIds: fc.array(fc.string({ minLength: 1, maxLength: 16 }), { maxLength: 6 }),
+  activePathEdgeIds: fc.array(fc.string({ minLength: 1, maxLength: 16 }), { maxLength: 6 }),
+  highlightMode: fc.constantFrom('hop', 'path'),
+  traceColors: fc.dictionary(
+    fc.string({ minLength: 1, maxLength: 24 }),
+    fc.string({ minLength: 1, maxLength: 32 }),
+  ),
   selectedHop: fc.option(packetHopArb, { nil: null }),
   selectedPacket: fc.constant(null),
   nodeArpTables: fc.dictionary(

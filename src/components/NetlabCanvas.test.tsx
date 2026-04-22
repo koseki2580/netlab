@@ -264,7 +264,9 @@ function makeFailureContextValue(
   };
 }
 
-function makeSimulationContextValue(activeEdgeIds: string[]): SimulationContextValue {
+function makeSimulationContextValue(
+  overrides: Partial<SimulationContextValue['state']> = {},
+): SimulationContextValue {
   return {
     engine: {} as never,
     sendPacket: vi.fn(async () => undefined),
@@ -281,12 +283,16 @@ function makeSimulationContextValue(activeEdgeIds: string[]): SimulationContextV
       traces: [],
       currentTraceId: null,
       currentStep: -1,
-      activeEdgeIds,
+      activeEdgeIds: [],
+      activePathEdgeIds: [],
+      highlightMode: 'path',
+      traceColors: {},
       selectedHop: null,
       selectedPacket: null,
       nodeArpTables: {},
       natTables: [],
       connTrackTables: [],
+      ...overrides,
     },
   };
 }
@@ -582,7 +588,7 @@ describe('NetlabCanvas controlled topology API', () => {
   it('uses theme CSS variables for active edges', () => {
     render(
       <NetlabProvider topology={makeTopology()}>
-        <SimulationContext.Provider value={makeSimulationContextValue(['e1'])}>
+        <SimulationContext.Provider value={makeSimulationContextValue({ activeEdgeIds: ['e1'] })}>
           <NetlabCanvas />
         </SimulationContext.Provider>
       </NetlabProvider>,
@@ -595,6 +601,134 @@ describe('NetlabCanvas controlled topology API', () => {
         strokeWidth: 2,
       }),
     });
+  });
+
+  it('renders the selected trace path with the trace color and emphasizes the current hop', () => {
+    render(
+      <NetlabProvider
+        topology={makeTopology({
+          nodes: [
+            {
+              id: 'n1',
+              type: 'router',
+              position: { x: 50, y: 80 },
+              data: {
+                label: 'R1',
+                role: 'router',
+                layerId: 'l3',
+                interfaces: [
+                  {
+                    id: 'eth0',
+                    name: 'eth0',
+                    ipAddress: '10.0.0.1',
+                    prefixLength: 24,
+                    macAddress: '00:00:00:00:00:01',
+                  },
+                ],
+              },
+            },
+            {
+              id: 'n2',
+              type: 'router',
+              position: { x: 240, y: 80 },
+              data: {
+                label: 'R2',
+                role: 'router',
+                layerId: 'l3',
+                interfaces: [
+                  {
+                    id: 'eth0',
+                    name: 'eth0',
+                    ipAddress: '10.0.0.2',
+                    prefixLength: 24,
+                    macAddress: '00:00:00:00:00:02',
+                  },
+                  {
+                    id: 'eth1',
+                    name: 'eth1',
+                    ipAddress: '10.0.1.1',
+                    prefixLength: 24,
+                    macAddress: '00:00:00:00:00:03',
+                  },
+                ],
+              },
+            },
+            {
+              id: 'n3',
+              type: 'router',
+              position: { x: 430, y: 80 },
+              data: {
+                label: 'R3',
+                role: 'router',
+                layerId: 'l3',
+                interfaces: [
+                  {
+                    id: 'eth0',
+                    name: 'eth0',
+                    ipAddress: '10.0.1.2',
+                    prefixLength: 24,
+                    macAddress: '00:00:00:00:00:04',
+                  },
+                ],
+              },
+            },
+          ],
+          edges: [
+            {
+              id: 'e1',
+              source: 'n1',
+              target: 'n2',
+              sourceHandle: 'eth0',
+              targetHandle: 'eth0',
+              type: 'smoothstep',
+            },
+            {
+              id: 'e2',
+              source: 'n2',
+              target: 'n3',
+              sourceHandle: 'eth1',
+              targetHandle: 'eth0',
+              type: 'smoothstep',
+            },
+          ],
+        })}
+      >
+        <SimulationContext.Provider
+          value={makeSimulationContextValue({
+            currentTraceId: 'trace-1',
+            activeEdgeIds: ['e2'],
+            activePathEdgeIds: ['e1', 'e2'],
+            highlightMode: 'path',
+            traceColors: { 'trace-1': 'var(--netlab-accent-orange)' },
+          })}
+        >
+          <NetlabCanvas />
+        </SimulationContext.Provider>
+      </NetlabProvider>,
+    );
+
+    expect(currentReactFlowProps().edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'e1',
+          animated: true,
+          style: expect.objectContaining({
+            stroke: 'var(--netlab-accent-orange)',
+            opacity: 0.45,
+            strokeWidth: 2,
+          }),
+        }),
+        expect.objectContaining({
+          id: 'e2',
+          animated: true,
+          style: expect.objectContaining({
+            stroke: 'var(--netlab-accent-orange)',
+            opacity: 1,
+            strokeWidth: 3,
+          }),
+        }),
+      ]),
+    );
   });
 
   it('uses theme CSS variables for invalid edges', () => {

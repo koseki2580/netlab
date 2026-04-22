@@ -82,6 +82,7 @@ export interface PacketTrace {
 }
 
 export type SimulationStatus = 'idle' | 'running' | 'paused' | 'done';
+export type HighlightMode = 'hop' | 'path';
 
 export interface SimulationState {
   status: SimulationStatus;
@@ -89,6 +90,9 @@ export interface SimulationState {
   currentTraceId: string | null;
   currentStep: number; // -1 = trace loaded but playback not started
   activeEdgeIds: string[]; // edge IDs to highlight in the canvas
+  activePathEdgeIds: string[]; // selected trace path across all hops
+  highlightMode: HighlightMode;
+  traceColors: Record<string, string>;
   selectedHop: PacketHop | null;
   selectedPacket: import('./packets').InFlightPacket | null; // packet snapshot at selectedHop
   nodeArpTables: Record<string, Record<string, string>>;

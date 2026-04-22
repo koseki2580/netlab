@@ -10,6 +10,8 @@ import type {
 } from '../types/packets';
 import type { PacketHop, PacketTrace, SimulationState } from '../types/simulation';
 import type { PrecomputeResult } from './types';
+import { extractPathEdgeIds } from './extractPathEdgeIds';
+import { getTraceColor } from './traceColorPalette';
 
 function isUdpDatagram(payload: IpPacket['payload']): payload is UdpDatagram {
   return 'srcPort' in payload && 'dstPort' in payload && !('seq' in payload);
@@ -63,6 +65,11 @@ export class TraceRecorder {
       nodeArpTables: Record<string, Record<string, string>>,
     ) => Record<string, Record<string, string>>,
   ): SimulationState {
+    const traceColors = { ...state.traceColors };
+    if (traceColors[trace.packetId] === undefined) {
+      traceColors[trace.packetId] = getTraceColor(Object.keys(traceColors).length);
+    }
+
     return {
       ...state,
       status: 'paused',
@@ -70,6 +77,9 @@ export class TraceRecorder {
       currentTraceId: trace.packetId,
       currentStep: -1,
       activeEdgeIds: [],
+      activePathEdgeIds: extractPathEdgeIds(trace),
+      highlightMode: state.highlightMode ?? 'path',
+      traceColors,
       selectedHop: null,
       selectedPacket: null,
       nodeArpTables: mergeNodeArpTables(nodeArpTables),

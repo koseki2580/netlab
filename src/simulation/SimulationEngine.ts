@@ -3,7 +3,7 @@ import type { TcpHandshakeResult, TcpTeardownResult } from '../layers/l4-transpo
 import { EMPTY_FAILURE_STATE, type FailureState } from '../types/failure';
 import type { HttpMessage, InFlightPacket, IpPacket } from '../types/packets';
 import type { DhcpLeaseState, DnsCache } from '../types/services';
-import type { PacketHop, PacketTrace, SimulationState } from '../types/simulation';
+import type { HighlightMode, PacketHop, PacketTrace, SimulationState } from '../types/simulation';
 import type { TcpConnection } from '../types/tcp';
 import type { NetworkTopology } from '../types/topology';
 import type { TransferMessage } from '../types/transfer';
@@ -13,6 +13,7 @@ import { getRequired } from '../utils/typedAccess';
 import { DataTransferController, type DataTransferOptions } from './DataTransferController';
 import { ForwardingPipeline } from './ForwardingPipeline';
 import { PathMtuCache } from './PathMtuCache';
+import { extractPathEdgeIds } from './extractPathEdgeIds';
 import { parseIcmpFragNeeded } from './pmtudParser';
 import { ServiceOrchestrator } from './ServiceOrchestrator';
 import { TraceRecorder } from './TraceRecorder';
@@ -24,6 +25,9 @@ const INITIAL_STATE: SimulationState = {
   currentTraceId: null,
   currentStep: -1,
   activeEdgeIds: [],
+  activePathEdgeIds: [],
+  highlightMode: 'path',
+  traceColors: {},
   selectedHop: null,
   selectedPacket: null,
   nodeArpTables: {},
@@ -291,6 +295,18 @@ export class SimulationEngine {
     return this.playIntervalMs;
   }
 
+  setHighlightMode(mode: HighlightMode): void {
+    if (this.state.highlightMode === mode) {
+      return;
+    }
+
+    this.state = {
+      ...this.state,
+      highlightMode: mode,
+    };
+    this.notify();
+  }
+
   play(ms?: number): void {
     if (this.state.status === 'done' || this.state.status === 'running') return;
     const interval = ms ?? this.playIntervalMs;
@@ -348,6 +364,8 @@ export class SimulationEngine {
       currentTraceId: null,
       currentStep: -1,
       activeEdgeIds: [],
+      activePathEdgeIds: [],
+      traceColors: {},
       selectedHop: null,
       selectedPacket: null,
       nodeArpTables: {},
@@ -366,6 +384,7 @@ export class SimulationEngine {
       currentTraceId: trace.packetId,
       currentStep: -1,
       activeEdgeIds: [],
+      activePathEdgeIds: extractPathEdgeIds(trace),
       selectedHop: null,
       selectedPacket: null,
     };
