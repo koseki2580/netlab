@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef } from 'react';
+import { useSandboxOrNull } from '../../sandbox/useSandbox';
 import { useSimulation } from '../../simulation/SimulationContext';
 import type { PacketHop } from '../../types/simulation';
 import { useNetlabContext } from '../NetlabContext';
@@ -70,11 +71,13 @@ function HopRow({
   nextHopLabel,
   isActive,
   onClick,
+  onEdit,
 }: {
   hop: PacketHop;
   nextHopLabel: string | null;
   isActive: boolean;
   onClick: () => void;
+  onEdit: (anchorElement: HTMLElement) => void;
 }) {
   const color = EVENT_COLORS[hop.event] ?? '#94a3b8';
   const label = EVENT_LABELS[hop.event] ?? hop.event.toUpperCase();
@@ -87,10 +90,20 @@ function HopRow({
       aria-selected={isActive}
       tabIndex={0}
       onClick={onClick}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        onClick();
+        onEdit(event.currentTarget);
+      }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           onClick();
+        }
+        if (e.key === 'ContextMenu' || (e.key === 'F10' && e.shiftKey)) {
+          e.preventDefault();
+          onClick();
+          onEdit(e.currentTarget);
         }
       }}
       title={dropReason ?? undefined}
@@ -169,6 +182,7 @@ function HopRow({
 export const PacketTimeline = memo(function PacketTimeline() {
   const { topology } = useNetlabContext();
   const { engine, state, exportPcap } = useSimulation();
+  const sandbox = useSandboxOrNull();
   const { traces, currentTraceId, currentStep, selectedHop } = state;
   const trace = traces.find((t) => t.packetId === currentTraceId);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -278,6 +292,12 @@ export const PacketTimeline = memo(function PacketTimeline() {
                 }
                 isActive={hop.step === activeStep}
                 onClick={() => engine.selectHop(hop.step)}
+                onEdit={(anchorElement) => {
+                  sandbox?.openEditPopover({
+                    target: { kind: 'packet', traceId: trace.packetId, hopIndex: hop.step },
+                    anchorElement,
+                  });
+                }}
               />
             </div>
           ))

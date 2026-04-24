@@ -1,6 +1,8 @@
 import type { InFlightPacket } from './packets';
 import type { ForwardDecision } from './layers';
 import type { RouteEntry } from './routing';
+import type { Edit } from '../sandbox/edits';
+import type { SandboxMode } from '../sandbox/types';
 
 export type HookFn<T> = (ctx: T, next: () => Promise<void>) => Promise<void>;
 
@@ -44,6 +46,19 @@ export interface HookMap {
     response: Response;
     nodeId: string;
     sessionId?: string;
+  }>;
+  'sandbox:edit-rejected': HookFn<{
+    edit: unknown;
+    reason: 'unknown-kind' | 'not-paused' | 'validation-failed';
+  }>;
+  'sandbox:edit-applied': HookFn<{
+    edit: Edit;
+  }>;
+  'sandbox:mode-changed': HookFn<{
+    mode: SandboxMode;
+  }>;
+  'sandbox:panel-tab-opened': HookFn<{
+    axis: 'packet' | 'node' | 'parameters' | 'traffic';
   }>;
 }
 

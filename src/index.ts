@@ -224,6 +224,29 @@ export type {
   TutorialStep,
 } from './tutorials/types';
 
+// Interactive sandbox primitives
+export {
+  BranchedSimulationEngine,
+  EditSession,
+  SANDBOX_STATE_PARAM,
+  SandboxProvider,
+  decodeSandboxEdits,
+  encodeSandboxEdits,
+  updateSandboxSearch,
+  useSandbox,
+} from './sandbox';
+export type {
+  EdgeRef,
+  Edit,
+  InterfaceRef,
+  NodeRef,
+  PacketRef,
+  ProtocolParameterSet,
+  SandboxMode,
+  SimulationSnapshot,
+} from './sandbox';
+export { BeforeAfterView, DiffTimeline, EditPopover, SandboxPanel } from './components/sandbox';
+
 // Routing protocols
 export {
   collectSwitchBridges,

@@ -11,6 +11,8 @@ export interface NetlabContextValue {
   areas: NetworkArea[];
   hookEngine: HookEngine;
   tutorialId?: string;
+  sandboxEnabled?: boolean;
+  sandboxIntroId?: string;
 }
 
 export const NetlabContext = createContext<NetlabContextValue | null>(null);
