@@ -32,6 +32,8 @@ interface ControlledNetlabProviderProps {
   defaultTopology?: TopologySnapshot;
   children: ReactNode;
   tutorialId?: string;
+  sandboxEnabled?: boolean;
+  sandboxIntroId?: string;
 }
 
 interface UncontrolledNetlabProviderProps {
@@ -39,6 +41,8 @@ interface UncontrolledNetlabProviderProps {
   defaultTopology: TopologySnapshot;
   children: ReactNode;
   tutorialId?: string;
+  sandboxEnabled?: boolean;
+  sandboxIntroId?: string;
 }
 
 export type NetlabProviderProps = ControlledNetlabProviderProps | UncontrolledNetlabProviderProps;
@@ -48,6 +52,8 @@ export function NetlabProvider({
   defaultTopology,
   children,
   tutorialId,
+  sandboxEnabled = false,
+  sandboxIntroId,
 }: NetlabProviderProps) {
   ensureBuiltInProtocolsRegistered();
 
@@ -90,8 +96,18 @@ export function NetlabProvider({
       areas: resolvedTopology.areas,
       hookEngine,
       ...(tutorialId !== undefined ? { tutorialId } : {}),
+      ...(sandboxEnabled ? { sandboxEnabled: true } : {}),
+      ...(sandboxIntroId !== undefined ? { sandboxIntroId } : {}),
     }),
-    [enrichedTopology, routeTable, resolvedTopology.areas, hookEngine, tutorialId],
+    [
+      enrichedTopology,
+      routeTable,
+      resolvedTopology.areas,
+      hookEngine,
+      tutorialId,
+      sandboxEnabled,
+      sandboxIntroId,
+    ],
   );
 
   return <NetlabContext.Provider value={value}>{children}</NetlabContext.Provider>;

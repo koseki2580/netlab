@@ -10,11 +10,21 @@ import {
 } from 'react';
 import { useNetlabContext } from '../components/NetlabContext';
 import { TutorialOverlay } from '../components/tutorial/TutorialOverlay';
+import {
+  BeforeAfterView,
+  DiffTimeline,
+  SandboxActiveEditor,
+  SandboxErrorBoundary,
+  SandboxIntroOverlay,
+  SandboxPanel,
+} from '../components/sandbox';
 import { NetlabError } from '../errors';
 import type { InFlightPacket } from '../types/packets';
 import type { DhcpLeaseState, DnsCache } from '../types/services';
 import type { SimulationState } from '../types/simulation';
+import { SandboxIntroProvider } from '../sandbox/intro/SandboxIntroProvider';
 import { TutorialProvider } from '../tutorials/TutorialContext';
+import { SandboxProvider, useSandbox } from '../sandbox/SandboxContext';
 import { useOptionalFailure } from './FailureContext';
 import { SimulationEngine } from './SimulationEngine';
 
@@ -40,12 +50,33 @@ export interface SimulationProviderProps {
   animationSpeed?: number;
 }
 
+function SandboxSurface({
+  children,
+  introOverlay,
+}: {
+  readonly children: ReactNode;
+  readonly introOverlay?: ReactNode;
+}) {
+  const sandbox = useSandbox();
+
+  return (
+    <div style={{ position: 'relative', height: '100%', minHeight: 0 }}>
+      {sandbox.mode === 'beta' ? <BeforeAfterView /> : children}
+      {introOverlay}
+      <SandboxActiveEditor />
+      <DiffTimeline />
+      <SandboxPanel />
+    </div>
+  );
+}
+
 export function SimulationProvider({
   children,
   autoRecompute = false,
   animationSpeed,
 }: SimulationProviderProps) {
-  const { topology, hookEngine, routeTable, tutorialId } = useNetlabContext();
+  const { topology, hookEngine, routeTable, tutorialId, sandboxEnabled, sandboxIntroId } =
+    useNetlabContext();
   const failureCtx = useOptionalFailure();
 
   const engine = useMemo(() => new SimulationEngine(topology, hookEngine), [topology, hookEngine]);
@@ -172,6 +203,22 @@ export function SimulationProvider({
     ],
   );
 
+  const content = sandboxEnabled ? (
+    <SandboxErrorBoundary>
+      <SandboxProvider>
+        {sandboxIntroId ? (
+          <SandboxIntroProvider introId={sandboxIntroId as 'sandbox-intro-mtu'}>
+            <SandboxSurface introOverlay={<SandboxIntroOverlay />}>{children}</SandboxSurface>
+          </SandboxIntroProvider>
+        ) : (
+          <SandboxSurface>{children}</SandboxSurface>
+        )}
+      </SandboxProvider>
+    </SandboxErrorBoundary>
+  ) : (
+    children
+  );
+
   return (
     <SimulationContext.Provider value={value}>
       {tutorialId ? (
@@ -183,10 +230,10 @@ export function SimulationProvider({
           hookEngine={hookEngine}
         >
           <TutorialOverlay />
-          {children}
+          {content}
         </TutorialProvider>
       ) : (
-        children
+        content
       )}
     </SimulationContext.Provider>
   );

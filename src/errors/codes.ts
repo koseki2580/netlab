@@ -15,6 +15,11 @@ export const NETLAB_ERROR_CODES = [
   'protocol/invalid-response',
   'protocol/handshake-failed',
   'protocol/session-desync',
+  'sandbox/branch-desync',
+  'sandbox/missing-provider',
+  'sandbox/tutorial-conflict',
+  'sandbox-intro/missing-provider',
+  'sandbox-intro/unknown-id',
 ] as const;
 
 export type NetlabErrorCode = (typeof NETLAB_ERROR_CODES)[number];

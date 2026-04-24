@@ -22,6 +22,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { AreaBackground } from '../areas/AreaBackground';
 import { areasToNodes } from '../areas/AreaRegistry';
 import { layerRegistry } from '../registry/LayerRegistry';
+import { useSandboxOrNull } from '../sandbox/useSandbox';
 import { useOptionalFailure } from '../simulation/FailureContext';
 import { SimulationContext } from '../simulation/SimulationContext';
 import type { NetlabEdge, NetlabNode, TopologySnapshot } from '../types/topology';
@@ -54,16 +55,26 @@ export interface NetlabCanvasProps {
   style?: React.CSSProperties;
   className?: string;
   colorMode?: NetlabColorMode;
+  viewport?: NetlabViewport;
+  onViewportChange?: (viewport: NetlabViewport) => void;
   nodeDetailsEditable?: boolean;
   onNodesChange?: (nodes: NetlabNode[]) => void;
   onEdgesChange?: (edges: NetlabEdge[]) => void;
   onTopologyChange?: (topology: TopologySnapshot) => void;
 }
 
+export interface NetlabViewport {
+  x: number;
+  y: number;
+  zoom: number;
+}
+
 export function NetlabCanvas({
   style,
   className,
   colorMode,
+  viewport,
+  onViewportChange,
   nodeDetailsEditable = false,
   onNodesChange: onNodesChangeProp,
   onEdgesChange: onEdgesChangeProp,
@@ -88,6 +99,7 @@ export function NetlabCanvas({
 
   // Optional: read failure state for visual styling
   const failureCtx = useOptionalFailure();
+  const sandbox = useSandboxOrNull();
 
   const nodeTypes = useMemo(
     () => ({
@@ -240,7 +252,7 @@ export function NetlabCanvas({
       edges.map((edge) => {
         const validationEdge = withValidationEdgeType(edge);
 
-        if (failureCtx?.isEdgeDown(edge.id)) {
+        if (failureCtx?.isEdgeDown(edge.id) || edge.data?.state === 'down') {
           return {
             ...validationEdge,
             animated: false,
@@ -350,7 +362,30 @@ export function NetlabCanvas({
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeDragStop={onNodeDragStop}
+          {...(viewport !== undefined ? { viewport } : {})}
+          {...(onViewportChange !== undefined
+            ? { onMove: (_event, nextViewport) => onViewportChange(nextViewport) }
+            : {})}
           onEdgeClick={(_event, edge) => selectEdge(edge.id)}
+          onNodeClick={(_event, node) => selectNode(node.id)}
+          onNodeContextMenu={(event, node) => {
+            if (!sandbox) return;
+            event.preventDefault();
+            selectNode(node.id);
+            sandbox.openEditPopover({
+              target: { kind: 'node', nodeId: node.id },
+              anchorElement: event.currentTarget as HTMLElement,
+            });
+          }}
+          onEdgeContextMenu={(event, edge) => {
+            if (!sandbox) return;
+            event.preventDefault();
+            selectEdge(edge.id);
+            sandbox.openEditPopover({
+              target: { kind: 'edge', edgeId: edge.id },
+              anchorElement: event.currentTarget as HTMLElement,
+            });
+          }}
           onPaneClick={() => {
             selectNode(null);
             selectEdge(null);

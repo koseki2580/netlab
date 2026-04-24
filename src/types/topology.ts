@@ -58,6 +58,7 @@ export type NetlabNode = Node<NetlabNodeData>;
 
 export interface NetlabEdgeData extends Record<string, unknown> {
   mtuBytes?: number;
+  state?: 'up' | 'down';
 }
 
 export type NetlabEdge = Edge<NetlabEdgeData>;

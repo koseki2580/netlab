@@ -74,6 +74,16 @@ export class SimulationEngine {
     return this.serializeState();
   }
 
+  getTopology(): NetworkTopology {
+    return structuredClone(this.topology);
+  }
+
+  setState(state: SimulationState): void {
+    this.clearPlay();
+    this.state = structuredClone(state);
+    this.notify();
+  }
+
   subscribe(listener: (state: SimulationState) => void): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);

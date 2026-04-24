@@ -37,6 +37,7 @@ interface TutorialContextValue {
 }
 
 const TutorialContext = createContext<TutorialContextValue | null>(null);
+export const TutorialPresenceContext = createContext(false);
 
 export interface TutorialProviderProps {
   readonly tutorialId?: string | null;
@@ -160,7 +161,11 @@ export function TutorialProvider({
     return <>{children}</>;
   }
 
-  return <TutorialContext.Provider value={value}>{children}</TutorialContext.Provider>;
+  return (
+    <TutorialPresenceContext.Provider value={true}>
+      <TutorialContext.Provider value={value}>{children}</TutorialContext.Provider>
+    </TutorialPresenceContext.Provider>
+  );
 }
 
 export function useTutorialRunner(): TutorialContextValue {

@@ -40,6 +40,7 @@ export class InterfaceResolver {
     const result: Neighbor[] = [];
     for (const edge of this.topology.edges) {
       if (failureState.downEdgeIds.has(edge.id)) continue;
+      if (edge.data?.state === 'down') continue;
       if (edge.source === nodeId && edge.target !== excludeNodeId) {
         result.push({ nodeId: edge.target, edgeId: edge.id });
       } else if (edge.target === nodeId && edge.source !== excludeNodeId) {
