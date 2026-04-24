@@ -33,6 +33,8 @@ Specifications regarding user interface implementation and canvas operations.
 - [Node Theming](ui/node-theming.md) - Per-node-type color tokens and CSS variable wiring for theme-aware node rendering
 - [Packet Structure Viewer](ui/packet-structure-viewer.md) - Byte-level hex dump and field table showing per-layer color-coded packet structure
 - [Accessibility](ui/accessibility.md) - WCAG 2.1 AA compliance: color contrast tokens, keyboard model, ARIA roles, and axe-core verification
+- [Interactive Sandbox](ui/sandbox.md) - Sandbox surface, edit tabs, URL persistence, supported demos, and provider mutex
+- [Sandbox Introduction](ui/sandbox-intro.md) - Built-in onboarding flow for the sandbox on the MTU fragmentation demo
 - [Tutorials](ui/tutorials.md) - Scenario-backed guided tutorial mode, tutorial registry, predicate contract, and authoring rules
 
 ### 🔄 Simulation (`simulation/`)
@@ -85,6 +87,6 @@ Specifications for protocol implementations based on the OSI model and network d
 Specifications related to demo environment setup, integration using query parameters, and continuous integration.
 
 - [Demo Structure](deployment/demo-structure.md) - Demo screen configurations for tutorials and gallery items, including shared GitHub source links and the All-in-One comprehensive demo
-- [Query Params](deployment/query-params.md) - Topology data sharing and restoration methods via URL parameters
+- [Query Params](deployment/query-params.md) - Topology sharing plus sandbox and tutorial restoration via URL parameters
 - [CI/CD](deployment/ci-cd.md) - Automated testing and deployment environments setup using GitHub Actions
 - [Embed](deployment/embed.md) - Embedding NetlabApp in external web pages with configurable width/height
