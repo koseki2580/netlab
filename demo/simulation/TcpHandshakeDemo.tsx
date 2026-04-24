@@ -405,7 +405,9 @@ function TcpHandshakeDemoInner() {
 }
 
 export default function TcpHandshakeDemo() {
-  const tutorialId = new URLSearchParams(window.location.search).get('tutorial') ?? null;
+  const params = new URLSearchParams(window.location.search);
+  const tutorialId = params.get('tutorial') ?? null;
+  const sandboxEnabled = params.get('sandbox') === '1';
   const tutorialProps = tutorialId ? { tutorialId } : {};
 
   return (
@@ -413,7 +415,7 @@ export default function TcpHandshakeDemo() {
       title="TCP Handshake"
       desc="Inspect a 3-way handshake and 4-step teardown across a routed path, with state badges, active connections, and packet-byte detail."
     >
-      <NetlabProvider topology={TOPOLOGY} {...tutorialProps}>
+      <NetlabProvider topology={TOPOLOGY} sandboxEnabled={sandboxEnabled} {...tutorialProps}>
         <SimulationProvider>
           <TcpHandshakeDemoInner />
         </SimulationProvider>

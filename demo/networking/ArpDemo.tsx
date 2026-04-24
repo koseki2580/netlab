@@ -175,7 +175,9 @@ function ArpDemoInner() {
 }
 
 export default function ArpDemo() {
-  const tutorialId = new URLSearchParams(window.location.search).get('tutorial') ?? null;
+  const params = new URLSearchParams(window.location.search);
+  const tutorialId = params.get('tutorial') ?? null;
+  const sandboxEnabled = params.get('sandbox') === '1';
   const tutorialProps = tutorialId ? { tutorialId } : {};
 
   return (
@@ -183,7 +185,11 @@ export default function ArpDemo() {
       title="ARP Basics"
       desc="Watch ARP resolve the first-hop MAC before the first routed IPv4 packet can move."
     >
-      <NetlabProvider topology={basicArp.topology} {...tutorialProps}>
+      <NetlabProvider
+        topology={basicArp.topology}
+        sandboxEnabled={sandboxEnabled}
+        {...tutorialProps}
+      >
         <SimulationProvider>
           <ArpDemoInner />
         </SimulationProvider>
