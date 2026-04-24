@@ -1,111 +1,77 @@
-# Query Parameter–Based Topology Loading
+# Query Parameters
 
 > **Status**: ✅ Implemented
 
-netlab supports encoding a full network topology in the URL query string. This allows any diagram to be shared or embedded without a server.
+netlab uses URL query parameters for two independent concerns:
 
----
+- loading shared topologies
+- restoring sandbox state
 
-## URL Format
+## Topology Sharing
 
+Use `topo=<base64url>` to encode a topology snapshot into the URL.
+
+```txt
+/?topo=<base64url>
 ```
-https://koseki2580.github.io/netlab/?topo=<base64url>
-```
 
-The `topo` parameter contains a **URL-safe base64** encoding of a JSON-serialized topology.
+The serialized structure is:
 
----
-
-## Serialized Structure
-
-Only the data needed to reconstruct the diagram is included. Route tables are **not** serialized because they are computed automatically by `ProtocolRegistry.resolveRouteTable()` on load.
-
-```typescript
+```ts
 interface SerializedTopology {
-  nodes: NetlabNode[]; // network devices with positions and all node data
-  edges: NetlabEdge[]; // connections (source/target IDs, edge type)
-  areas: NetworkArea[]; // network zones with subnets and visual config
+  nodes: NetlabNode[];
+  edges: NetlabEdge[];
+  areas: NetworkArea[];
 }
 ```
 
----
+Only topology data is serialized. Route tables are recomputed on load.
 
-## Encoding
+## Sandbox Parameters
 
-```typescript
-import { encodeTopology } from 'netlab';
+Sandbox-ready demos also understand these parameters:
 
-const url = encodeTopology({ nodes, edges, areas });
-// → "?topo=eyJub2Rlcy..."
+| Param                      | Meaning                                                                                   |
+| -------------------------- | ----------------------------------------------------------------------------------------- | ---------- | -------- | -------------------------------- |
+| `sandbox=1`                | Enables the sandbox UI for the current demo.                                              |
+| `sandboxTab=packet         | node                                                                                      | parameters | traffic` | Selects the initial sandbox tab. |
+| `sandboxState=<base64url>` | Restores the current ordered edit log.                                                    |
+| `intro=sandbox-intro-mtu`  | Starts the built-in sandbox intro on the MTU fragmentation demo.                          |
+| `tutorial=<id>`            | Starts a guided tutorial on tutorial-enabled demos. Mutually exclusive with sandbox mode. |
+
+`sandboxState` uses UTF-8 JSON encoded as URL-safe base64:
+
+```ts
+interface SerializedSandboxState {
+  version: 1;
+  edits: Edit[];
+}
 ```
 
-Internally:
+The sandbox keeps this value synchronized with the active session via `history.replaceState`, so refreshing or sharing the current URL preserves the current edits.
 
-1. `JSON.stringify({ nodes, edges, areas })`
-2. `btoa(json)` — standard base64
-3. Replace `+` → `-`, `/` → `_`, strip trailing `=` (URL-safe base64)
+## Examples
 
----
+Load a demo directly into sandbox mode:
 
-## Decoding
-
-```typescript
-import { decodeTopology } from 'netlab';
-
-const topology = decodeTopology(window.location.search);
-// → { nodes, edges, areas } | null
+```txt
+/?sandbox=1&sandboxTab=packet#/simulation/tcp-handshake
 ```
 
-Returns `null` if:
+Open the sandbox intro:
 
-- The `topo` parameter is absent
-- The value is not valid base64
-- The decoded JSON does not parse
-- The parsed value is not an object with `nodes`, `edges`, and `areas` arrays
+```txt
+/?sandbox=1&sandboxTab=node&intro=sandbox-intro-mtu#/networking/mtu-fragmentation
+```
 
----
+Restore an existing topology and sandbox session together:
+
+```txt
+/?topo=<base64url>&sandbox=1&sandboxTab=node&sandboxState=<base64url>#/comprehensive/all-in-one
+```
 
 ## Fallback Behavior
 
-If `?topo=` is absent or invalid, the demo app silently falls back to the built-in default topology. No error is shown to the user.
-
----
-
-## Demo: Copy Link
-
-The demo toolbar includes a **Copy Link** button. Clicking it:
-
-1. Encodes the current topology (nodes, edges, areas as loaded — not drag-updated positions) to a `?topo=` URL
-2. Writes the full URL to the clipboard
-3. Temporarily shows `✓ Copied!` for 2 seconds, then reverts
-
-> **Note**: The encoded topology reflects the topology at load time. Node positions updated via drag-and-drop are not captured in the copied URL.
-
----
-
-## Example
-
-Given a minimal topology:
-
-```json
-{
-  "nodes": [
-    {
-      "id": "h1",
-      "type": "client",
-      "position": { "x": 100, "y": 100 },
-      "data": { "label": "Host", "role": "client", "layerId": "l7", "ip": "10.0.0.1" }
-    }
-  ],
-  "edges": [],
-  "areas": []
-}
-```
-
-Encode:
-
-```js
-const json = JSON.stringify(topology);
-const b64 = btoa(json).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-const url = `${location.origin}${location.pathname}?topo=${b64}`;
-```
+- Missing or malformed `topo` silently falls back to the built-in demo topology.
+- Missing or malformed `sandboxState` restores an empty sandbox session.
+- Unknown sandbox edit shapes are ignored instead of crashing the demo.

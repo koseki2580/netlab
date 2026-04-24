@@ -6,16 +6,20 @@ netlab provides a Koa-style middleware hook system that lets you observe and mod
 
 ## Hook Points
 
-| Hook Point        | Trigger                                      |
-| ----------------- | -------------------------------------------- |
-| `packet:create`   | A new packet is created (e.g., from fetch()) |
-| `packet:forward`  | A packet moves from one device to another    |
-| `packet:deliver`  | A packet reaches its destination device      |
-| `packet:drop`     | A packet is dropped (TTL=0, no route, etc.)  |
-| `switch:learn`    | A switch learns a new MAC→port mapping       |
-| `router:lookup`   | A router performs a route table lookup       |
-| `fetch:intercept` | `window.fetch` is called and intercepted     |
-| `fetch:respond`   | A mock response is about to be returned      |
+| Hook Point                 | Trigger                                                 |
+| -------------------------- | ------------------------------------------------------- |
+| `packet:create`            | A new packet is created (e.g., from fetch())            |
+| `packet:forward`           | A packet moves from one device to another               |
+| `packet:deliver`           | A packet reaches its destination device                 |
+| `packet:drop`              | A packet is dropped (TTL=0, no route, etc.)             |
+| `switch:learn`             | A switch learns a new MAC→port mapping                  |
+| `router:lookup`            | A router performs a route table lookup                  |
+| `fetch:intercept`          | `window.fetch` is called and intercepted                |
+| `fetch:respond`            | A mock response is about to be returned                 |
+| `sandbox:edit-rejected`    | A sandbox edit was rejected during validation or apply  |
+| `sandbox:edit-applied`     | A sandbox edit was accepted and appended to the session |
+| `sandbox:mode-changed`     | Sandbox mode switched between Live and Compare          |
+| `sandbox:panel-tab-opened` | The active sandbox panel tab changed                    |
 
 ## Usage
 
@@ -125,6 +129,39 @@ hookEngine.on('router:lookup', async (ctx, next) => {
   request: Request;
   response: Response;
   nodeId: string;
+}
+```
+
+### `sandbox:edit-rejected`
+
+```typescript
+{
+  edit: unknown;
+  reason: 'unknown-kind' | 'not-paused' | 'validation-failed';
+}
+```
+
+### `sandbox:edit-applied`
+
+```typescript
+{
+  edit: Edit;
+}
+```
+
+### `sandbox:mode-changed`
+
+```typescript
+{
+  mode: 'alpha' | 'beta';
+}
+```
+
+### `sandbox:panel-tab-opened`
+
+```typescript
+{
+  axis: 'packet' | 'node' | 'parameters' | 'traffic';
 }
 ```
 
