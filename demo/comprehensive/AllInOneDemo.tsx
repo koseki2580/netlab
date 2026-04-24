@@ -296,9 +296,15 @@ function SimulationTabInner() {
   );
 }
 
-function SimulationTab({ topology }: { topology: NetworkTopology }) {
+function SimulationTab({
+  topology,
+  sandboxEnabled,
+}: {
+  topology: NetworkTopology;
+  sandboxEnabled: boolean;
+}) {
   return (
-    <NetlabProvider topology={topology}>
+    <NetlabProvider topology={topology} sandboxEnabled={sandboxEnabled}>
       <SimulationProvider>
         <SimulationTabInner />
       </SimulationProvider>
@@ -379,9 +385,15 @@ function FailureTabInner() {
   );
 }
 
-function FailureTab({ topology }: { topology: NetworkTopology }) {
+function FailureTab({
+  topology,
+  sandboxEnabled,
+}: {
+  topology: NetworkTopology;
+  sandboxEnabled: boolean;
+}) {
   return (
-    <NetlabProvider topology={topology}>
+    <NetlabProvider topology={topology} sandboxEnabled={sandboxEnabled}>
       <FailureProvider>
         <SimulationProvider>
           <FailureTabInner />
@@ -450,9 +462,15 @@ function TraceTabInner() {
   );
 }
 
-function TraceTab({ topology }: { topology: NetworkTopology }) {
+function TraceTab({
+  topology,
+  sandboxEnabled,
+}: {
+  topology: NetworkTopology;
+  sandboxEnabled: boolean;
+}) {
   return (
-    <NetlabProvider topology={topology}>
+    <NetlabProvider topology={topology} sandboxEnabled={sandboxEnabled}>
       <SimulationProvider>
         <TraceTabInner />
       </SimulationProvider>
@@ -461,7 +479,8 @@ function TraceTab({ topology }: { topology: NetworkTopology }) {
 }
 
 export default function AllInOneDemo() {
-  const [activeTab, setActiveTab] = useState<TabId>('editor');
+  const sandboxEnabled = new URLSearchParams(window.location.search).get('sandbox') === '1';
+  const [activeTab, setActiveTab] = useState<TabId>(sandboxEnabled ? 'simulation' : 'editor');
   const [topology, setTopology] = useState<EditorTopology>(INITIAL_TOPOLOGY);
   const simulationTopology = toSimulationTopology(topology);
 
@@ -475,10 +494,22 @@ export default function AllInOneDemo() {
         <div style={{ flex: 1, overflow: 'hidden' }}>
           {activeTab === 'editor' && <EditorTab topology={topology} onChange={setTopology} />}
           {activeTab === 'simulation' && (
-            <SimulationTab key="simulation" topology={simulationTopology} />
+            <SimulationTab
+              key="simulation"
+              topology={simulationTopology}
+              sandboxEnabled={sandboxEnabled}
+            />
           )}
-          {activeTab === 'failure' && <FailureTab key="failure" topology={simulationTopology} />}
-          {activeTab === 'trace' && <TraceTab key="trace" topology={simulationTopology} />}
+          {activeTab === 'failure' && (
+            <FailureTab
+              key="failure"
+              topology={simulationTopology}
+              sandboxEnabled={sandboxEnabled}
+            />
+          )}
+          {activeTab === 'trace' && (
+            <TraceTab key="trace" topology={simulationTopology} sandboxEnabled={sandboxEnabled} />
+          )}
         </div>
       </div>
     </DemoShell>

@@ -188,7 +188,9 @@ function OspfConvergenceInner({
 export default function OspfConvergenceDemo() {
   const [primaryLinkDown, setPrimaryLinkDown] = useState(false);
   const topology = useMemo(() => buildOspfConvergenceTopology(primaryLinkDown), [primaryLinkDown]);
-  const tutorialId = new URLSearchParams(window.location.search).get('tutorial') ?? null;
+  const params = new URLSearchParams(window.location.search);
+  const tutorialId = params.get('tutorial') ?? null;
+  const sandboxEnabled = params.get('sandbox') === '1';
   const tutorialProps = tutorialId ? { tutorialId } : {};
 
   return (
@@ -196,7 +198,7 @@ export default function OspfConvergenceDemo() {
       title="OSPF Convergence"
       desc="Observe the lower-cost route first, then recompute toward the backup path after removing the primary inter-router link."
     >
-      <NetlabProvider topology={topology} {...tutorialProps}>
+      <NetlabProvider topology={topology} sandboxEnabled={sandboxEnabled} {...tutorialProps}>
         <SimulationProvider>
           <OspfConvergenceInner
             primaryLinkDown={primaryLinkDown}

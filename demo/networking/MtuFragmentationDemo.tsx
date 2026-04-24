@@ -100,7 +100,10 @@ function buildPingPacket(topology: NetworkTopology, df: boolean): InFlightPacket
 export default function MtuFragmentationDemo() {
   const [tunnelMtu, setTunnelMtu] = useState(DEFAULT_FRAGMENTED_ECHO_TUNNEL_MTU);
   const topology = useMemo(() => buildFragmentedEchoTopology(tunnelMtu), [tunnelMtu]);
-  const tutorialId = new URLSearchParams(window.location.search).get('tutorial') ?? null;
+  const params = new URLSearchParams(window.location.search);
+  const sandboxIntroId = params.get('intro') ?? null;
+  const tutorialId = sandboxIntroId ? null : (params.get('tutorial') ?? null);
+  const sandboxEnabled = params.get('sandbox') === '1';
   const tutorialProps = tutorialId ? { tutorialId } : {};
 
   return (
@@ -108,7 +111,12 @@ export default function MtuFragmentationDemo() {
       title="MTU & IPv4 Fragmentation"
       desc="Watch a low-MTU routed hop fragment oversized IPv4 packets or return ICMP Fragmentation Needed."
     >
-      <NetlabProvider topology={topology} {...tutorialProps}>
+      <NetlabProvider
+        topology={topology}
+        sandboxEnabled={sandboxEnabled}
+        {...(sandboxEnabled && sandboxIntroId ? { sandboxIntroId } : {})}
+        {...tutorialProps}
+      >
         <SimulationProvider>
           <FragmentationDemoInner tunnelMtu={tunnelMtu} onTunnelMtuChange={setTunnelMtu} />
         </SimulationProvider>

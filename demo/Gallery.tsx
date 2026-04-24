@@ -12,6 +12,8 @@ interface DemoCard {
   title: string;
   desc: string;
   scenarioId?: string;
+  sandboxReady?: boolean;
+  defaultSandboxTab?: 'packet' | 'node' | 'parameters' | 'traffic';
 }
 
 interface Category {
@@ -69,6 +71,8 @@ const CATEGORIES: Category[] = [
         title: 'OSPF Convergence',
         desc: 'Watch R1 prefer the low-cost path, then remove the primary link and resend traffic on the recomputed route.',
         scenarioId: 'ospf-convergence',
+        sandboxReady: true,
+        defaultSandboxTab: 'node',
       },
     ],
   },
@@ -82,6 +86,8 @@ const CATEGORIES: Category[] = [
         title: 'ARP Basics',
         desc: 'Send the first packet, inspect the ARP request/reply, and watch the sender cache fill in.',
         scenarioId: 'basic-arp',
+        sandboxReady: true,
+        defaultSandboxTab: 'packet',
       },
       {
         path: '/networking/vlan',
@@ -98,6 +104,8 @@ const CATEGORIES: Category[] = [
         title: 'MTU & Fragmentation',
         desc: 'Shrink a routed tunnel MTU to watch IPv4 fragment on egress or return ICMP Fragmentation Needed when DF is set.',
         scenarioId: 'fragmented-echo',
+        sandboxReady: true,
+        defaultSandboxTab: 'node',
       },
       {
         path: '/networking/udp',
@@ -183,6 +191,8 @@ const CATEGORIES: Category[] = [
         title: 'TCP Handshake',
         desc: 'Step through SYN, SYN-ACK, ACK, and FIN exchanges while watching connection state and TCP header fields evolve.',
         scenarioId: 'tcp-handshake',
+        sandboxReady: true,
+        defaultSandboxTab: 'packet',
       },
       {
         path: '/simulation/enterprise',
@@ -229,6 +239,8 @@ const CATEGORIES: Category[] = [
         path: '/comprehensive/all-in-one',
         title: 'All-in-One',
         desc: 'Edit topology, run step simulation, inject failures, and inspect packet traces in a single tabbed workflow.',
+        sandboxReady: true,
+        defaultSandboxTab: 'traffic',
       },
     ],
   },
@@ -236,7 +248,25 @@ const CATEGORIES: Category[] = [
 
 export { CATEGORIES };
 
+function getSandboxHref(demo: DemoCard): string | null {
+  if (!demo.sandboxReady) {
+    return null;
+  }
+
+  const params = new URLSearchParams({ sandbox: '1' });
+  if (demo.defaultSandboxTab) {
+    params.set('sandboxTab', demo.defaultSandboxTab);
+  }
+  return `?${params.toString()}#${demo.path}`;
+}
+
 export default function Gallery() {
+  const sandboxDemos = CATEGORIES.flatMap((category) => category.demos).filter(
+    (demo) => demo.sandboxReady,
+  );
+  const sandboxIntroHref =
+    '?sandbox=1&sandboxTab=node&intro=sandbox-intro-mtu#/networking/mtu-fragmentation';
+
   return (
     <div
       style={{
@@ -311,6 +341,142 @@ export default function Gallery() {
           gap: 40,
         }}
       >
+        <section>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              marginBottom: 16,
+            }}
+          >
+            <span
+              style={{
+                display: 'inline-block',
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: '#fbbf24',
+              }}
+            />
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 'bold',
+                letterSpacing: 1,
+                color: '#94a3b8',
+                textTransform: 'uppercase',
+              }}
+            >
+              Interactive Sandbox
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+              gap: 12,
+            }}
+          >
+            <div
+              style={{
+                background: '#1e293b',
+                border: '1px solid #334155',
+                borderRadius: 8,
+                padding: '16px 20px',
+              }}
+            >
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  borderRadius: 999,
+                  background: 'rgba(125, 211, 252, 0.14)',
+                  color: '#7dd3fc',
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: 1,
+                  padding: '4px 8px',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Start Here
+              </div>
+              <div
+                style={{
+                  fontWeight: 'bold',
+                  color: '#f1f5f9',
+                  fontSize: 14,
+                  marginBottom: 6,
+                  marginTop: 10,
+                }}
+              >
+                Start here: Sandbox intro
+              </div>
+              <div
+                style={{
+                  color: '#94a3b8',
+                  fontSize: 12,
+                  lineHeight: 1.5,
+                }}
+              >
+                Guided onboarding on the MTU demo: open the Node tab, lower an MTU, launch traffic,
+                compare baseline and what-if, then continue exploring freely.
+              </div>
+              <div style={{ display: 'flex', gap: 10, marginTop: 12, fontSize: 11 }}>
+                <a href={sandboxIntroHref} style={{ color: '#7dd3fc', textDecoration: 'none' }}>
+                  Open intro →
+                </a>
+              </div>
+            </div>
+
+            {sandboxDemos.map((demo) => (
+              <div
+                key={`sandbox-${demo.path}`}
+                style={{
+                  background: '#1e293b',
+                  border: '1px solid #334155',
+                  borderRadius: 8,
+                  padding: '16px 20px',
+                }}
+              >
+                <div
+                  style={{
+                    fontWeight: 'bold',
+                    color: '#f1f5f9',
+                    fontSize: 14,
+                    marginBottom: 6,
+                  }}
+                >
+                  {demo.title}
+                </div>
+                <div
+                  style={{
+                    color: '#94a3b8',
+                    fontSize: 12,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {demo.desc}
+                </div>
+                <div style={{ display: 'flex', gap: 10, marginTop: 12, fontSize: 11 }}>
+                  <Link to={demo.path} style={{ color: '#7dd3fc', textDecoration: 'none' }}>
+                    Open →
+                  </Link>
+                  <a
+                    href={getSandboxHref(demo) ?? `?sandbox=1#${demo.path}`}
+                    style={{ color: '#fbbf24', textDecoration: 'none' }}
+                  >
+                    Try in sandbox →
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {CATEGORIES.map((cat) => (
           <section key={cat.id}>
             <div
@@ -357,6 +523,7 @@ export default function Gallery() {
                 const tutorialHref = tutorial
                   ? `?tutorial=${encodeURIComponent(tutorial.id)}#${demo.path}`
                   : null;
+                const sandboxHref = getSandboxHref(demo);
 
                 return (
                   <div
@@ -400,6 +567,11 @@ export default function Gallery() {
                       <Link to={demo.path} style={{ color: cat.color, textDecoration: 'none' }}>
                         Open →
                       </Link>
+                      {sandboxHref ? (
+                        <a href={sandboxHref} style={{ color: '#fbbf24', textDecoration: 'none' }}>
+                          Try in sandbox →
+                        </a>
+                      ) : null}
                       {tutorialHref ? (
                         <a href={tutorialHref} style={{ color: '#7dd3fc', textDecoration: 'none' }}>
                           Start Tutorial →
