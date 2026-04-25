@@ -47,12 +47,12 @@ Entity-level edits open in `<EditPopover>`:
 
 Sandbox state is shareable through query parameters:
 
-| Param                      | Meaning                                                          |
-| -------------------------- | ---------------------------------------------------------------- |
-| `sandbox=1`                | Enables the sandbox surface for sandbox-ready demos.             |
-| `sandboxTab=<axis>`        | Selects `packet`, `node`, `parameters`, `traffic`, or `edits`.   |
-| `sandboxState=<base64url>` | Encodes the current visible edit session as UTF-8 JSON.          |
-| `intro=sandbox-intro-mtu`  | Starts the built-in sandbox intro on the MTU fragmentation demo. |
+| Param                      | Meaning                                                        |
+| -------------------------- | -------------------------------------------------------------- |
+| `sandbox=1`                | Enables the sandbox surface for sandbox-ready demos.           |
+| `sandboxTab=<axis>`        | Selects `packet`, `node`, `parameters`, `traffic`, or `edits`. |
+| `sandboxState=<base64url>` | Encodes the current visible edit session as UTF-8 JSON.        |
+| `intro=<sandbox-intro-id>` | Starts a built-in sandbox intro on its paired demo.            |
 
 `SandboxProvider` keeps `sandboxState` synchronized with the current visible session via `history.replaceState`, so copying the current URL preserves the active edit log. Redo-tail history is intentionally dropped on URL share. Use the panel header's `Export` action when the full `backing` history plus `head` cursor must be preserved in a local JSON file.
 
@@ -83,10 +83,11 @@ The Gallery renders sandbox-ready entries in a dedicated **Interactive Sandbox**
 - `MTU & Fragmentation`
 - `TCP Handshake`
 - `OSPF Convergence`
+- `NAT / PAT`
 - `ARP Basics`
 - `All-in-One`
 
-The first entry in that section is `Start here: Sandbox intro`, which opens the MTU fragmentation demo with the built-in intro overlay.
+The first four entries in that section are sandbox intros ordered as MTU, TCP, OSPF, and NAT. Regular sandbox-ready demo cards follow those onboarding entries.
 
 ## Hook Events
 

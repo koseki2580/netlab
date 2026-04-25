@@ -36,7 +36,7 @@ Sandbox-ready demos also understand these parameters:
 | `sandbox=1`                | Enables the sandbox UI for the current demo.                                              |
 | `sandboxTab=<axis>`        | Selects `packet`, `node`, `parameters`, `traffic`, or `edits`.                            |
 | `sandboxState=<base64url>` | Restores the current visible edit log. Redo-tail history is not serialized.               |
-| `intro=sandbox-intro-mtu`  | Starts the built-in sandbox intro on the MTU fragmentation demo.                          |
+| `intro=<sandbox-intro-id>` | Starts a built-in sandbox intro on its paired sandbox-ready demo.                         |
 | `tutorial=<id>`            | Starts a guided tutorial on tutorial-enabled demos. Mutually exclusive with sandbox mode. |
 
 `sandboxState` uses UTF-8 JSON encoded as URL-safe base64:
@@ -63,6 +63,8 @@ Open the sandbox intro:
 ```txt
 /?sandbox=1&sandboxTab=node&intro=sandbox-intro-mtu#/networking/mtu-fragmentation
 ```
+
+Other built-in intro ids are `sandbox-intro-tcp`, `sandbox-intro-ospf`, and `sandbox-intro-nat`.
 
 Restore an existing topology and sandbox session together:
 
