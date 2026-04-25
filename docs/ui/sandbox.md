@@ -29,12 +29,13 @@ The mode toggle lives in the panel header. When `beta` is active, the primary si
 
 ## Editing Surface
 
-`SandboxPanel` always exposes four tabs:
+`SandboxPanel` always exposes five tabs:
 
 - `Packet`: edit the selected packet trace hop. The current implementation supports TTL and raw payload replacement.
 - `Node`: summarize node/link edits already recorded in the session. Right-click a node or link on the canvas to open the inline editor popover.
 - `Parameters`: adjust global TCP, OSPF, ARP, and engine parameters. If Compare is active, parameter edits switch back to Live first.
 - `Traffic`: launch synthetic ICMP/TCP/UDP flows and keep simple in-memory presets.
+- `Edits`: inspect active edits plus redo-tail entries, revert individual active edits, undo to a specific row, or reset all edits.
 
 Entity-level edits open in `<EditPopover>`:
 
@@ -47,13 +48,13 @@ Entity-level edits open in `<EditPopover>`:
 Sandbox state is shareable through query parameters:
 
 | Param                      | Meaning                                                          |
-| -------------------------- | ---------------------------------------------------------------- | ---------- | -------- | -------------------------------------------- |
+| -------------------------- | ---------------------------------------------------------------- |
 | `sandbox=1`                | Enables the sandbox surface for sandbox-ready demos.             |
-| `sandboxTab=packet         | node                                                             | parameters | traffic` | Selects the initial active tab in the panel. |
-| `sandboxState=<base64url>` | Encodes the current ordered edit session as UTF-8 JSON.          |
+| `sandboxTab=<axis>`        | Selects `packet`, `node`, `parameters`, `traffic`, or `edits`.   |
+| `sandboxState=<base64url>` | Encodes the current visible edit session as UTF-8 JSON.          |
 | `intro=sandbox-intro-mtu`  | Starts the built-in sandbox intro on the MTU fragmentation demo. |
 
-`SandboxProvider` keeps `sandboxState` synchronized with the current session via `history.replaceState`, so copying the current URL preserves the current edit log.
+`SandboxProvider` keeps `sandboxState` synchronized with the current visible session via `history.replaceState`, so copying the current URL preserves the active edit log. Redo-tail history is intentionally dropped on share.
 
 The serialized payload is:
 
@@ -83,6 +84,12 @@ The first entry in that section is `Start here: Sandbox intro`, which opens the 
 The sandbox emits additive hook events through `hookEngine`:
 
 - `sandbox:edit-applied`
+- `sandbox:edit-undone`
+- `sandbox:edit-redone`
+- `sandbox:edit-reverted`
+- `sandbox:undo-blocked`
+- `sandbox:reset-all`
+- `sandbox:history-evicted`
 - `sandbox:edit-rejected`
 - `sandbox:mode-changed`
 - `sandbox:panel-tab-opened`
@@ -105,6 +112,7 @@ Library consumers can import:
 
 - `SandboxProvider`
 - `useSandbox`
+- `useUndoRedo`
 - `EditSession`
 - `encodeSandboxEdits`
 - `decodeSandboxEdits`
@@ -117,5 +125,6 @@ Library consumers can import:
 ## Related Docs
 
 - [Sandbox Introduction](sandbox-intro.md)
+- [Sandbox Undo And History](sandbox-undo.md)
 - [Query Params](../deployment/query-params.md)
 - [Hook System](../core/hooks.md)

@@ -32,10 +32,10 @@ Only topology data is serialized. Route tables are recomputed on load.
 Sandbox-ready demos also understand these parameters:
 
 | Param                      | Meaning                                                                                   |
-| -------------------------- | ----------------------------------------------------------------------------------------- | ---------- | -------- | -------------------------------- |
+| -------------------------- | ----------------------------------------------------------------------------------------- |
 | `sandbox=1`                | Enables the sandbox UI for the current demo.                                              |
-| `sandboxTab=packet         | node                                                                                      | parameters | traffic` | Selects the initial sandbox tab. |
-| `sandboxState=<base64url>` | Restores the current ordered edit log.                                                    |
+| `sandboxTab=<axis>`        | Selects `packet`, `node`, `parameters`, `traffic`, or `edits`.                            |
+| `sandboxState=<base64url>` | Restores the current visible edit log. Redo-tail history is not serialized.               |
 | `intro=sandbox-intro-mtu`  | Starts the built-in sandbox intro on the MTU fragmentation demo.                          |
 | `tutorial=<id>`            | Starts a guided tutorial on tutorial-enabled demos. Mutually exclusive with sandbox mode. |
 
@@ -48,7 +48,7 @@ interface SerializedSandboxState {
 }
 ```
 
-The sandbox keeps this value synchronized with the active session via `history.replaceState`, so refreshing or sharing the current URL preserves the current edits.
+The sandbox keeps this value synchronized with the active visible session via `history.replaceState`, so refreshing or sharing the current URL preserves the current edits.
 
 ## Examples
 
