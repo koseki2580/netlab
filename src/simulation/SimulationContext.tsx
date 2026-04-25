@@ -23,6 +23,7 @@ import type { InFlightPacket } from '../types/packets';
 import type { DhcpLeaseState, DnsCache } from '../types/services';
 import type { SimulationState } from '../types/simulation';
 import { SandboxIntroProvider } from '../sandbox/intro/SandboxIntroProvider';
+import type { SandboxIntroId } from '../sandbox/intro/introRegistry';
 import { TutorialProvider } from '../tutorials/TutorialContext';
 import { SandboxProvider, useSandbox } from '../sandbox/SandboxContext';
 import { useOptionalFailure } from './FailureContext';
@@ -207,7 +208,7 @@ export function SimulationProvider({
     <SandboxErrorBoundary>
       <SandboxProvider>
         {sandboxIntroId ? (
-          <SandboxIntroProvider introId={sandboxIntroId as 'sandbox-intro-mtu'}>
+          <SandboxIntroProvider introId={sandboxIntroId as SandboxIntroId}>
             <SandboxSurface introOverlay={<SandboxIntroOverlay />}>{children}</SandboxSurface>
           </SandboxIntroProvider>
         ) : (

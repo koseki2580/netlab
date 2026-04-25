@@ -2,6 +2,7 @@ const ROUTE_SCENARIOS = new Map<string, string>([
   ['/networking/mtu-fragmentation', 'fragmented-echo'],
   ['/simulation/tcp-handshake', 'tcp-handshake'],
   ['/routing/ospf-convergence', 'ospf-convergence'],
+  ['/simulation/nat', 'nat-basics'],
   ['/networking/arp', 'basic-arp'],
 ]);
 

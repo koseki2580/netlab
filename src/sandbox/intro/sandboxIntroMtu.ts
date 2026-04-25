@@ -5,7 +5,15 @@ function hasEvent(
   name: string,
   predicate: (payload: unknown) => boolean,
 ): boolean {
-  return events.some((event) => event.name === name && predicate(event.payload));
+  return Array.isArray(events)
+    ? events.some(
+        (event) =>
+          typeof event === 'object' &&
+          event !== null &&
+          event.name === name &&
+          predicate(event.payload),
+      )
+    : false;
 }
 
 export const sandboxIntroMtu: Tutorial = Object.freeze({
