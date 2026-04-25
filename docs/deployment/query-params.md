@@ -48,7 +48,7 @@ interface SerializedSandboxState {
 }
 ```
 
-The sandbox keeps this value synchronized with the active visible session via `history.replaceState`, so refreshing or sharing the current URL preserves the current edits.
+The sandbox keeps this value synchronized with the active visible session via `history.replaceState`, so refreshing or sharing the current URL preserves the current edits. Redo-tail history is not encoded in the URL; use the sandbox panel's JSON export when the full `EditSession.backing` plus `head` cursor must be preserved.
 
 ## Examples
 

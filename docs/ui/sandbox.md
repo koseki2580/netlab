@@ -54,7 +54,7 @@ Sandbox state is shareable through query parameters:
 | `sandboxState=<base64url>` | Encodes the current visible edit session as UTF-8 JSON.          |
 | `intro=sandbox-intro-mtu`  | Starts the built-in sandbox intro on the MTU fragmentation demo. |
 
-`SandboxProvider` keeps `sandboxState` synchronized with the current visible session via `history.replaceState`, so copying the current URL preserves the active edit log. Redo-tail history is intentionally dropped on share.
+`SandboxProvider` keeps `sandboxState` synchronized with the current visible session via `history.replaceState`, so copying the current URL preserves the active edit log. Redo-tail history is intentionally dropped on URL share. Use the panel header's `Export` action when the full `backing` history plus `head` cursor must be preserved in a local JSON file.
 
 The serialized payload is:
 
@@ -66,6 +66,15 @@ interface SerializedSandboxState {
 ```
 
 Malformed or unknown edits are ignored on load instead of crashing the demo.
+
+## File Import / Export
+
+The panel header includes local-only session file actions:
+
+- `Export` downloads a versioned JSON session file.
+- `Import` reads a local `.json` file, validates it, shows a preview, and applies it only after confirmation.
+
+Session files use the shared edit codec from URL persistence, but wrap it with `schemaVersion`, `scenarioId`, `initialParameters`, `backing`, `head`, `savedAt`, and `toolVersion`. See [Sandbox Session Import / Export](sandbox-session-io.md).
 
 ## Supported Demos
 
@@ -92,6 +101,7 @@ The sandbox emits additive hook events through `hookEngine`:
 - `sandbox:history-evicted`
 - `sandbox:edit-rejected`
 - `sandbox:mode-changed`
+- `sandbox:session-imported`
 - `sandbox:panel-tab-opened`
 
 These events are intended for analytics, guided onboarding, and higher-level orchestration. They are notifications, not veto points.
@@ -117,6 +127,8 @@ Library consumers can import:
 - `encodeSandboxEdits`
 - `decodeSandboxEdits`
 - `updateSandboxSearch`
+- `encodeEdit`
+- `decodeEdit`
 - `SandboxPanel`
 - `BeforeAfterView`
 - `DiffTimeline`
@@ -126,5 +138,6 @@ Library consumers can import:
 
 - [Sandbox Introduction](sandbox-intro.md)
 - [Sandbox Undo And History](sandbox-undo.md)
+- [Sandbox Session Import / Export](sandbox-session-io.md)
 - [Query Params](../deployment/query-params.md)
 - [Hook System](../core/hooks.md)
