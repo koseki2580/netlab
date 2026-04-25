@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import AllInOneDemo from './comprehensive/AllInOneDemo';
 import MtuFragmentationDemo from './networking/MtuFragmentationDemo';
 import OspfConvergenceDemo from './routing/OspfConvergenceDemo';
+import NatDemo from './simulation/NatDemo';
 import TcpHandshakeDemo from './simulation/TcpHandshakeDemo';
 
 const netlabProviderCalls: {
@@ -210,6 +211,7 @@ describe('sandbox-enabled demos', () => {
     ['MTU fragmentation', MtuFragmentationDemo],
     ['TCP handshake', TcpHandshakeDemo],
     ['OSPF convergence', OspfConvergenceDemo],
+    ['NAT', NatDemo],
   ])(
     'passes sandboxEnabled through NetlabProvider when sandbox mode is requested for %s',
     (_, Demo) => {
@@ -246,5 +248,18 @@ describe('sandbox-enabled demos', () => {
 
     expect(netlabProviderCalls[0]?.sandboxEnabled).toBe(true);
     expect(netlabProviderCalls[0]?.sandboxIntroId).toBe('sandbox-intro-mtu');
+  });
+
+  it.each([
+    ['TCP handshake', TcpHandshakeDemo, 'sandbox-intro-tcp'],
+    ['OSPF convergence', OspfConvergenceDemo, 'sandbox-intro-ospf'],
+    ['NAT', NatDemo, 'sandbox-intro-nat'],
+  ])('passes %s sandbox intro id through NetlabProvider', (_, Demo, introId) => {
+    window.history.replaceState({}, '', `/?sandbox=1&intro=${introId}`);
+
+    render(<Demo />);
+
+    expect(netlabProviderCalls[0]?.sandboxEnabled).toBe(true);
+    expect(netlabProviderCalls[0]?.sandboxIntroId).toBe(introId);
   });
 });

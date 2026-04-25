@@ -51,10 +51,11 @@ describe('demo chrome', () => {
     expect(html).toContain('?sandbox=1&amp;sandboxTab=node#/networking/mtu-fragmentation');
     expect(html).toContain('?sandbox=1&amp;sandboxTab=packet#/simulation/tcp-handshake');
     expect(html).toContain('?sandbox=1&amp;sandboxTab=node#/routing/ospf-convergence');
+    expect(html).toContain('?sandbox=1&amp;sandboxTab=node#/simulation/nat');
     expect(html).toContain('?sandbox=1&amp;sandboxTab=traffic#/comprehensive/all-in-one');
   });
 
-  it('Gallery exposes the sandbox intro as the first onboarding entry', () => {
+  it('Gallery exposes sandbox intros before non-intro sandbox demos', () => {
     const html = renderToStaticMarkup(
       <MemoryRouter>
         <Gallery />
@@ -65,5 +66,17 @@ describe('demo chrome', () => {
     expect(html).toContain(
       '?sandbox=1&amp;sandboxTab=node&amp;intro=sandbox-intro-mtu#/networking/mtu-fragmentation',
     );
+
+    const expectedOrder = [
+      'intro=sandbox-intro-mtu',
+      'intro=sandbox-intro-tcp',
+      'intro=sandbox-intro-ospf',
+      'intro=sandbox-intro-nat',
+      'Try in sandbox',
+    ];
+    const positions = expectedOrder.map((fragment) => html.indexOf(fragment));
+
+    expect(positions.every((position) => position >= 0)).toBe(true);
+    expect(positions).toEqual([...positions].sort((a, b) => a - b));
   });
 });
