@@ -165,6 +165,9 @@ const CATEGORIES: Category[] = [
         path: '/simulation/nat',
         title: 'NAT / PAT',
         desc: 'Watch SNAT, DNAT port forwarding, and the live NAT table update on an edge router.',
+        scenarioId: 'nat-basics',
+        sandboxReady: true,
+        defaultSandboxTab: 'node',
       },
       {
         path: '/simulation/acl',
@@ -248,6 +251,46 @@ const CATEGORIES: Category[] = [
 
 export { CATEGORIES };
 
+const SANDBOX_DEMO_ORDER = new Map(
+  [
+    '/networking/mtu-fragmentation',
+    '/simulation/tcp-handshake',
+    '/routing/ospf-convergence',
+    '/simulation/nat',
+  ].map((path, index) => [path, index]),
+);
+
+const SANDBOX_INTROS = [
+  {
+    id: 'sandbox-intro-mtu',
+    title: 'Start here: Sandbox intro',
+    desc: 'Guided onboarding on the MTU demo: open the Node tab, lower an MTU, launch traffic, compare baseline and what-if, then continue exploring freely.',
+    href: '?sandbox=1&sandboxTab=node&intro=sandbox-intro-mtu#/networking/mtu-fragmentation',
+    badge: 'Start Here',
+  },
+  {
+    id: 'sandbox-intro-tcp',
+    title: 'TCP handshake intro',
+    desc: 'Start a TCP handshake, edit the SYN into a reset, and observe why the connection never establishes.',
+    href: '?sandbox=1&sandboxTab=packet&intro=sandbox-intro-tcp#/simulation/tcp-handshake',
+    badge: 'Packet Edit',
+  },
+  {
+    id: 'sandbox-intro-ospf',
+    title: 'OSPF convergence intro',
+    desc: 'Disable a primary routed link, observe the backup path, add a static route, and confirm traffic converges.',
+    href: '?sandbox=1&sandboxTab=node&intro=sandbox-intro-ospf#/routing/ospf-convergence',
+    badge: 'Routing Edit',
+  },
+  {
+    id: 'sandbox-intro-nat',
+    title: 'NAT intro',
+    desc: 'Add a DNAT rule on the edge router, launch outside traffic, inspect translation, then remove the rule and retry.',
+    href: '?sandbox=1&sandboxTab=node&intro=sandbox-intro-nat#/simulation/nat',
+    badge: 'NAT Edit',
+  },
+] as const;
+
 function getSandboxHref(demo: DemoCard): string | null {
   if (!demo.sandboxReady) {
     return null;
@@ -261,11 +304,13 @@ function getSandboxHref(demo: DemoCard): string | null {
 }
 
 export default function Gallery() {
-  const sandboxDemos = CATEGORIES.flatMap((category) => category.demos).filter(
-    (demo) => demo.sandboxReady,
-  );
-  const sandboxIntroHref =
-    '?sandbox=1&sandboxTab=node&intro=sandbox-intro-mtu#/networking/mtu-fragmentation';
+  const sandboxDemos = CATEGORIES.flatMap((category) => category.demos)
+    .filter((demo) => demo.sandboxReady)
+    .sort(
+      (left, right) =>
+        (SANDBOX_DEMO_ORDER.get(left.path) ?? Number.MAX_SAFE_INTEGER) -
+        (SANDBOX_DEMO_ORDER.get(right.path) ?? Number.MAX_SAFE_INTEGER),
+    );
 
   return (
     <div
@@ -379,58 +424,60 @@ export default function Gallery() {
               gap: 12,
             }}
           >
-            <div
-              style={{
-                background: '#1e293b',
-                border: '1px solid #334155',
-                borderRadius: 8,
-                padding: '16px 20px',
-              }}
-            >
+            {SANDBOX_INTROS.map((intro) => (
               <div
+                key={intro.id}
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  borderRadius: 999,
-                  background: 'rgba(125, 211, 252, 0.14)',
-                  color: '#7dd3fc',
-                  fontSize: 10,
-                  fontWeight: 700,
-                  letterSpacing: 1,
-                  padding: '4px 8px',
-                  textTransform: 'uppercase',
+                  background: '#1e293b',
+                  border: '1px solid #334155',
+                  borderRadius: 8,
+                  padding: '16px 20px',
                 }}
               >
-                Start Here
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    borderRadius: 999,
+                    background: 'rgba(125, 211, 252, 0.14)',
+                    color: '#7dd3fc',
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: 1,
+                    padding: '4px 8px',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {intro.badge}
+                </div>
+                <div
+                  style={{
+                    fontWeight: 'bold',
+                    color: '#f1f5f9',
+                    fontSize: 14,
+                    marginBottom: 6,
+                    marginTop: 10,
+                  }}
+                >
+                  {intro.title}
+                </div>
+                <div
+                  style={{
+                    color: '#94a3b8',
+                    fontSize: 12,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {intro.desc}
+                </div>
+                <div style={{ display: 'flex', gap: 10, marginTop: 12, fontSize: 11 }}>
+                  <a href={intro.href} style={{ color: '#7dd3fc', textDecoration: 'none' }}>
+                    Open intro →
+                  </a>
+                </div>
               </div>
-              <div
-                style={{
-                  fontWeight: 'bold',
-                  color: '#f1f5f9',
-                  fontSize: 14,
-                  marginBottom: 6,
-                  marginTop: 10,
-                }}
-              >
-                Start here: Sandbox intro
-              </div>
-              <div
-                style={{
-                  color: '#94a3b8',
-                  fontSize: 12,
-                  lineHeight: 1.5,
-                }}
-              >
-                Guided onboarding on the MTU demo: open the Node tab, lower an MTU, launch traffic,
-                compare baseline and what-if, then continue exploring freely.
-              </div>
-              <div style={{ display: 'flex', gap: 10, marginTop: 12, fontSize: 11 }}>
-                <a href={sandboxIntroHref} style={{ color: '#7dd3fc', textDecoration: 'none' }}>
-                  Open intro →
-                </a>
-              </div>
-            </div>
+            ))}
 
             {sandboxDemos.map((demo) => (
               <div
