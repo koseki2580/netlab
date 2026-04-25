@@ -12,9 +12,12 @@ import { SandboxPanel } from './SandboxPanel';
 
 let root: Root | null = null;
 let container: HTMLDivElement | null = null;
+let clickedDownloads: { download: string; href: string; blob: Blob }[] = [];
 const actEnvironment = globalThis as typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
+const originalCreateObjectURL = URL.createObjectURL;
+const originalRevokeObjectURL = URL.revokeObjectURL;
 
 function render(ui: React.ReactElement) {
   if (!container) {
@@ -29,6 +32,13 @@ function render(ui: React.ReactElement) {
   act(() => {
     root?.render(ui);
   });
+}
+
+async function waitForDownload() {
+  const deadline = Date.now() + 1000;
+  while (clickedDownloads.length === 0 && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
 }
 
 function makeSandboxValue(overrides: Partial<SandboxContextValue> = {}): SandboxContextValue {
@@ -63,6 +73,7 @@ function makeSandboxValue(overrides: Partial<SandboxContextValue> = {}): Sandbox
     redo: vi.fn(),
     revertAt: vi.fn(),
     resetAll: vi.fn(),
+    setSession: vi.fn(),
     switchMode: vi.fn(),
     resetBaseline: vi.fn(),
     openEditPopover: vi.fn(),
@@ -84,7 +95,35 @@ function StatefulSandbox({ children }: { readonly children: ReactNode }) {
 
 beforeEach(() => {
   actEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+  clickedDownloads = [];
   window.history.replaceState({}, '', '/');
+
+  Object.defineProperty(URL, 'createObjectURL', {
+    configurable: true,
+    writable: true,
+    value: vi.fn((blob: Blob) => {
+      const href = `blob:sandbox-session-${clickedDownloads.length + 1}`;
+      clickedDownloads.push({ download: '', href, blob });
+      return href;
+    }),
+  });
+  Object.defineProperty(URL, 'revokeObjectURL', {
+    configurable: true,
+    writable: true,
+    value: vi.fn(),
+  });
+  vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+    this: HTMLAnchorElement,
+  ) {
+    const last = clickedDownloads[clickedDownloads.length - 1];
+    if (last) {
+      clickedDownloads[clickedDownloads.length - 1] = {
+        ...last,
+        download: this.download,
+        href: this.href,
+      };
+    }
+  });
 });
 
 afterEach(() => {
@@ -101,6 +140,26 @@ afterEach(() => {
   }
 
   vi.restoreAllMocks();
+
+  if (typeof originalCreateObjectURL === 'function') {
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      writable: true,
+      value: originalCreateObjectURL,
+    });
+  } else {
+    delete (URL as { createObjectURL?: typeof URL.createObjectURL }).createObjectURL;
+  }
+
+  if (typeof originalRevokeObjectURL === 'function') {
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      writable: true,
+      value: originalRevokeObjectURL,
+    });
+  } else {
+    delete (URL as { revokeObjectURL?: typeof URL.revokeObjectURL }).revokeObjectURL;
+  }
 });
 
 describe('SandboxPanel', () => {
@@ -286,6 +345,84 @@ describe('SandboxPanel', () => {
     });
 
     expect(container?.querySelector('[role="region"]')).not.toBeNull();
+  });
+
+  it('exports the full backing session to a JSON download', async () => {
+    window.history.replaceState({}, '', '/?sandbox=1#/networking/mtu-fragmentation');
+    const session = EditSession.empty()
+      .push({ kind: 'noop' })
+      .push({
+        kind: 'interface.mtu',
+        target: { kind: 'interface', nodeId: 'router-r1', ifaceId: 'tun0' },
+        before: 1500,
+        after: 500,
+      })
+      .undo();
+
+    render(
+      <SandboxContext.Provider value={makeSandboxValue({ session })}>
+        <SandboxPanel />
+      </SandboxContext.Provider>,
+    );
+
+    await act(async () => {
+      container?.querySelector<HTMLButtonElement>('[aria-label="Export sandbox session"]')?.click();
+    });
+    await waitForDownload();
+
+    expect(clickedDownloads).toHaveLength(1);
+    expect(clickedDownloads[0]?.download).toMatch(/^netlab-sandbox-fragmented-echo-\d{12}\.json$/);
+    const json = JSON.parse((await clickedDownloads[0]?.blob.text()) ?? '{}') as {
+      schemaVersion?: number;
+      scenarioId?: string;
+      backing?: unknown[];
+      head?: number;
+    };
+    expect(json.schemaVersion).toBe(1);
+    expect(json.scenarioId).toBe('fragmented-echo');
+    expect(json.backing).toHaveLength(2);
+    expect(json.head).toBe(1);
+  });
+
+  it('previews and applies an imported JSON session through context replacement', async () => {
+    const setSession = vi.fn();
+    render(
+      <SandboxContext.Provider value={makeSandboxValue({ setSession })}>
+        <SandboxPanel />
+      </SandboxContext.Provider>,
+    );
+
+    const payload = {
+      schemaVersion: 1,
+      scenarioId: 'fragmented-echo',
+      initialParameters: DEFAULT_PARAMETERS,
+      backing: [{ kind: 'noop' }],
+      head: 1,
+      savedAt: '2026-04-21T10:30:00.000Z',
+      toolVersion: 'test-version',
+    };
+    const input = container?.querySelector<HTMLInputElement>(
+      'input[aria-label="Import sandbox session file"]',
+    );
+    const file = new File([JSON.stringify(payload)], 'session.json', {
+      type: 'application/json',
+    });
+    Object.defineProperty(input, 'files', { configurable: true, value: [file] });
+
+    await act(async () => {
+      input?.dispatchEvent(new Event('change', { bubbles: true }));
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+
+    expect(container?.textContent).toContain('Import 1 edit from scenario fragmented-echo');
+
+    act(() => {
+      container
+        ?.querySelector<HTMLButtonElement>('[aria-label="Apply imported sandbox session"]')
+        ?.click();
+    });
+
+    expect(setSession).toHaveBeenCalledWith(new EditSession([{ kind: 'noop' }], 1));
   });
 });
 

@@ -1,8 +1,26 @@
 import { describe, expect, it } from 'vitest';
-import { decodeSandboxEdits, encodeSandboxEdits, updateSandboxSearch } from './urlCodec';
+import {
+  decodeEdit,
+  decodeSandboxEdits,
+  encodeEdit,
+  encodeSandboxEdits,
+  updateSandboxSearch,
+} from './urlCodec';
 import type { Edit } from './edits';
 
 describe('sandbox url codec', () => {
+  it('exposes shared per-edit encode/decode helpers for non-URL transports', () => {
+    const edit: Edit = {
+      kind: 'interface.mtu',
+      target: { kind: 'interface', nodeId: 'router-r1', ifaceId: 'tun0' },
+      before: 1500,
+      after: 500,
+    };
+
+    expect(decodeEdit(encodeEdit(edit))).toEqual(edit);
+    expect(decodeEdit({ kind: 'param.set', key: 'unknown', before: 1, after: 2 })).toBeNull();
+  });
+
   it('round-trips a mixed edit session through the sandboxState param', () => {
     const edits: Edit[] = [
       { kind: 'noop' },

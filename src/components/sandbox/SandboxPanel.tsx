@@ -3,6 +3,8 @@ import { hookEngine } from '../../hooks/HookEngine';
 import { useSandbox } from '../../sandbox/useSandbox';
 import type { SandboxMode } from '../../sandbox/types';
 import { EditsTab } from './EditsTab';
+import { ExportButton } from './ExportButton';
+import { ImportDialog } from './ImportDialog';
 import { PacketEditForm } from './PacketEditForm';
 import { ParametersTab } from './ParametersTab';
 import { SandboxNodeTabBody } from './SandboxNodeTabBody';
@@ -133,6 +135,8 @@ export function SandboxPanel() {
         <h2 id="sandbox-panel-heading" style={{ margin: 0, fontSize: 14, flex: 1 }}>
           Sandbox
         </h2>
+        <ExportButton />
+        <ImportDialog />
         <button
           type="button"
           aria-label="Switch sandbox mode"
