@@ -25,6 +25,7 @@ netlab provides a Koa-style middleware hook system that lets you observe and mod
 | `sandbox:reset-all`        | Every visible sandbox edit was cleared                  |
 | `sandbox:history-evicted`  | Old sandbox history entries were dropped by the cap     |
 | `sandbox:mode-changed`     | Sandbox mode switched between Live and Compare          |
+| `sandbox:session-imported` | A local JSON sandbox session was applied                |
 | `sandbox:panel-tab-opened` | The active sandbox panel tab changed                    |
 
 ## Usage
@@ -211,6 +212,16 @@ hookEngine.on('router:lookup', async (ctx, next) => {
 ```typescript
 {
   mode: 'alpha' | 'beta';
+}
+```
+
+### `sandbox:session-imported`
+
+```typescript
+{
+  scenarioId: string;
+  editCount: number;
+  head: number;
 }
 ```
 

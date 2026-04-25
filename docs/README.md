@@ -36,6 +36,7 @@ Specifications regarding user interface implementation and canvas operations.
 - [Interactive Sandbox](ui/sandbox.md) - Sandbox surface, edit tabs, URL persistence, supported demos, and provider mutex
 - [Sandbox Introduction](ui/sandbox-intro.md) - Built-in onboarding flow for the sandbox on the MTU fragmentation demo
 - [Sandbox Undo And History](ui/sandbox-undo.md) - Undo/redo cursor semantics, edit history UI, reset-all, shortcuts, and hook events
+- [Sandbox Session Import / Export](ui/sandbox-session-io.md) - Local JSON session files with schema versioning, import preview, and redo-tail preservation
 - [Tutorials](ui/tutorials.md) - Scenario-backed guided tutorial mode, tutorial registry, predicate contract, and authoring rules
 
 ### 🔄 Simulation (`simulation/`)
@@ -82,6 +83,7 @@ Specifications for protocol implementations based on the OSI model and network d
 ### �️ Roadmap
 
 - [Protocol Coverage Roadmap](../plan/35.md) - Meta-plan sequencing UDP/HTTP/IGMP/IPv6 work
+- [Complete Backlog Execution Plan](../plan/81.md) - Master ledger that ships every Planning-state plan and 15 newly-commissioned sub-plans (81a–81o)
 
 ### �🚀 Deployment & Integration (`deployment/`)
 
