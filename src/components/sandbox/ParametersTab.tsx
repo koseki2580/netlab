@@ -60,7 +60,7 @@ export function ParametersTab() {
           </label>
         );
       })}
-      <button type="button" style={buttonStyle} onClick={sandbox.resetBaseline}>
+      <button type="button" style={buttonStyle} onClick={sandbox.resetAll}>
         Reset parameters
       </button>
     </div>

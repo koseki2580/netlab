@@ -25,6 +25,7 @@ export {
   encodeSandboxEdits,
   updateSandboxSearch,
 } from './urlCodec';
+export { useUndoRedo } from './useUndoRedo';
 export type { Edit, EditKind } from './edits';
 export type {
   EdgeRef,

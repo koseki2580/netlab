@@ -7,6 +7,7 @@ import { fromEngine, toEngine } from './SimulationSnapshot';
 type Listener = () => void;
 
 export class BranchedSimulationEngine {
+  private readonly rootSnapshot: SimulationSnapshot;
   private currentMode: SandboxMode;
   private baselineEngine: SimulationEngine | null;
   private whatIfEngine: SimulationEngine;
@@ -15,6 +16,7 @@ export class BranchedSimulationEngine {
   private currentParameters: ProtocolParameterSet;
 
   constructor(base: SimulationSnapshot, opts: { mode?: SandboxMode } = {}) {
+    this.rootSnapshot = base;
     this.currentParameters = base.parameters;
     this.currentMode = opts.mode ?? 'alpha';
     this.whatIfEngine = toEngine(base);
@@ -38,8 +40,7 @@ export class BranchedSimulationEngine {
   }
 
   applyEdits(session: EditSession): void {
-    const currentSnapshot = fromEngine(this.whatIfEngine, this.currentParameters);
-    const nextSnapshot = session.apply(currentSnapshot);
+    const nextSnapshot = session.apply(this.rootSnapshot);
     this.currentParameters = nextSnapshot.parameters;
     this.whatIfEngine = toEngine(nextSnapshot);
     this.notify();

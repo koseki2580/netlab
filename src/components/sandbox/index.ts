@@ -1,6 +1,7 @@
 export { BeforeAfterView } from './BeforeAfterView';
 export { DiffTimeline } from './DiffTimeline';
 export { EditPopover } from './EditPopover';
+export { EditsTab } from './EditsTab';
 export { EmptySandboxTab } from './EmptySandboxTab';
 export { PacketEditForm } from './PacketEditForm';
 export { ParametersTab } from './ParametersTab';

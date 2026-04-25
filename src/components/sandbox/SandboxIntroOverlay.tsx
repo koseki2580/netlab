@@ -1,4 +1,6 @@
 import type { CSSProperties } from 'react';
+import { useEffect, useState } from 'react';
+import { hookEngine } from '../../hooks/HookEngine';
 import { useSandboxIntro } from '../../sandbox/intro/useSandboxIntro';
 
 const CARD_STYLE: CSSProperties = {
@@ -34,6 +36,15 @@ function buttonStyle(background: string): CSSProperties {
 
 export function SandboxIntroOverlay() {
   const intro = useSandboxIntro();
+  const [undoBlocked, setUndoBlocked] = useState(false);
+
+  useEffect(() => {
+    return hookEngine.on('sandbox:undo-blocked', async (_payload, next) => {
+      setUndoBlocked(true);
+      window.setTimeout(() => setUndoBlocked(false), 1800);
+      await next();
+    });
+  }, []);
 
   if (intro.status === 'passed' || intro.status === 'exited') {
     return null;
@@ -74,6 +85,11 @@ export function SandboxIntroOverlay() {
         <p style={{ ...MUTED_STYLE, margin: '12px 0 0' }}>
           Step {Math.min(intro.currentStepIndex + 1, intro.totalSteps)} / {intro.totalSteps}
         </p>
+        {undoBlocked ? (
+          <p role="status" style={{ ...MUTED_STYLE, margin: '10px 0 0' }}>
+            Undo is blocked for this intro step.
+          </p>
+        ) : null}
         <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
           {intro.status === 'pending' ? (
             <button type="button" onClick={intro.start} style={buttonStyle('#1d4ed8')}>

@@ -34,11 +34,27 @@ const inertEdits: Edit[] = [
   },
 ];
 
+const firstEdit: Edit = { kind: 'noop' };
+const secondEdit: Edit = {
+  kind: 'param.set',
+  key: 'engine.tickMs',
+  before: 100,
+  after: 200,
+};
+const thirdEdit: Edit = {
+  kind: 'interface.mtu',
+  target: { kind: 'interface', nodeId: 'missing-node', ifaceId: 'eth0' },
+  before: 1500,
+  after: 900,
+};
+
 describe('EditSession', () => {
   it('creates an empty session', () => {
     const session = EditSession.empty();
 
     expect(session.edits).toEqual([]);
+    expect(session.backing).toEqual([]);
+    expect(session.head).toBe(0);
     expect(session.size()).toBe(0);
   });
 
@@ -58,6 +74,8 @@ describe('EditSession', () => {
 
     expect(next).not.toBe(session);
     expect(next.edits).toEqual([{ kind: 'noop' }]);
+    expect(next.backing).toEqual([{ kind: 'noop' }]);
+    expect(next.head).toBe(1);
     expect(next.size()).toBe(1);
   });
 
@@ -71,11 +89,113 @@ describe('EditSession', () => {
   });
 
   it('preserves sequential apply order in the append-only log', () => {
-    const first: Edit = { kind: 'noop' };
-    const second: Edit = { kind: 'param.set', key: 'engine.tickMs', before: 100, after: 200 };
-    const session = EditSession.empty().push(first).push(second);
+    const session = EditSession.empty().push(firstEdit).push(secondEdit);
 
-    expect(session.edits).toEqual([first, second]);
+    expect(session.edits).toEqual([firstEdit, secondEdit]);
+  });
+
+  it('undo moves the visible head back without deleting redo history', () => {
+    const session = EditSession.empty().push(firstEdit).push(secondEdit);
+    const undone = session.undo();
+
+    expect(undone.edits).toEqual([firstEdit]);
+    expect(undone.backing).toEqual([firstEdit, secondEdit]);
+    expect(undone.head).toBe(1);
+    expect(undone.canUndo()).toBe(true);
+    expect(undone.canRedo()).toBe(true);
+  });
+
+  it('undo is a boundary no-op at head zero', () => {
+    const session = EditSession.empty();
+
+    expect(session.undo()).toBe(session);
+    expect(session.canUndo()).toBe(false);
+    expect(session.canRedo()).toBe(false);
+  });
+
+  it('redo restores the next redo-tail edit', () => {
+    const session = EditSession.empty().push(firstEdit).push(secondEdit).undo();
+    const redone = session.redo();
+
+    expect(redone.edits).toEqual([firstEdit, secondEdit]);
+    expect(redone.head).toBe(2);
+    expect(redone.canRedo()).toBe(false);
+  });
+
+  it('redo is a boundary no-op at the end of history', () => {
+    const session = EditSession.empty().push(firstEdit);
+
+    expect(session.redo()).toBe(session);
+    expect(session.canRedo()).toBe(false);
+  });
+
+  it('push after undo truncates the redo tail', () => {
+    const session = EditSession.empty().push(firstEdit).push(secondEdit).undo().push(thirdEdit);
+
+    expect(session.edits).toEqual([firstEdit, thirdEdit]);
+    expect(session.backing).toEqual([firstEdit, thirdEdit]);
+    expect(session.head).toBe(2);
+    expect(session.canRedo()).toBe(false);
+  });
+
+  it('size returns the visible head, not the backing length', () => {
+    const session = EditSession.empty().push(firstEdit).push(secondEdit).undo();
+
+    expect(session.size()).toBe(1);
+    expect(session.backing).toHaveLength(2);
+  });
+
+  it('freezes the session and backing history', () => {
+    const session = EditSession.empty().push(firstEdit);
+
+    expect(Object.isFrozen(session)).toBe(true);
+    expect(Object.isFrozen(session.backing)).toBe(true);
+    expect(Object.isFrozen(session.edits)).toBe(true);
+  });
+
+  it('keeps at most one hundred history entries', () => {
+    const session = Array.from({ length: 101 }, () => ({ kind: 'noop' }) as Edit).reduce(
+      (current, edit) => current.push(edit),
+      EditSession.empty(),
+    );
+
+    expect(session.backing).toHaveLength(100);
+    expect(session.head).toBe(100);
+  });
+
+  it('revertAt removes the first visible edit', () => {
+    const session = EditSession.empty().push(firstEdit).push(secondEdit).push(thirdEdit);
+    const reverted = session.revertAt(0);
+
+    expect(reverted.edits).toEqual([secondEdit, thirdEdit]);
+    expect(reverted.backing).toEqual([secondEdit, thirdEdit]);
+    expect(reverted.head).toBe(2);
+  });
+
+  it('revertAt removes a middle visible edit and preserves relative order', () => {
+    const session = EditSession.empty().push(firstEdit).push(secondEdit).push(thirdEdit);
+    const reverted = session.revertAt(1);
+
+    expect(reverted.edits).toEqual([firstEdit, thirdEdit]);
+    expect(reverted.canRedo()).toBe(false);
+  });
+
+  it('revertAt removes the edit just before the head', () => {
+    const session = EditSession.empty().push(firstEdit).push(secondEdit).push(thirdEdit);
+
+    expect(session.revertAt(2).edits).toEqual([firstEdit, secondEdit]);
+  });
+
+  it('revertAt past the visible head is a no-op', () => {
+    const session = EditSession.empty().push(firstEdit).push(secondEdit).undo();
+
+    expect(session.revertAt(1)).toBe(session);
+  });
+
+  it('revertAt with a negative index is a no-op', () => {
+    const session = EditSession.empty().push(firstEdit);
+
+    expect(session.revertAt(-1)).toBe(session);
   });
 
   it('noop apply is identity', () => {
