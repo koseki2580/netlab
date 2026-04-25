@@ -9,6 +9,7 @@ test('sandbox primitives mount, switch mode, and pass axe checks', async ({ page
   await expect(page.getByRole('tab', { name: 'Node' })).toBeVisible();
   await expect(page.getByRole('tab', { name: 'Parameters' })).toBeVisible();
   await expect(page.getByRole('tab', { name: 'Traffic' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: /Edits \(0\)/ })).toBeVisible();
   await expect(page.locator('[role="tabpanel"]')).toContainText(
     'Right-click a node or link on the canvas',
   );
