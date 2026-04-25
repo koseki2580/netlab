@@ -45,6 +45,7 @@ export interface SandboxContextValue {
   readonly redo: () => void;
   readonly revertAt: (index: number) => void;
   readonly resetAll: () => void;
+  readonly setSession: (session: EditSession) => void;
   readonly setUndoFloor?: (head: number) => void;
   readonly switchMode: (mode: SandboxMode) => void;
   readonly resetBaseline: () => void;
@@ -84,7 +85,9 @@ export function SandboxProvider({
     );
   }
 
-  const [session, setSession] = useState(() => initialSessionRef.current ?? EditSession.empty());
+  const [session, setSessionState] = useState(
+    () => initialSessionRef.current ?? EditSession.empty(),
+  );
   const sessionRef = useRef(session);
   const [activeEditor, setActiveEditor] = useState<SandboxEditorAnchor | null>(null);
   const [diffFilter, setDiffFilter] = useState<SandboxDiffFilter>('all');
@@ -143,10 +146,20 @@ export function SandboxProvider({
   const commitSession = useCallback(
     (nextSession: EditSession) => {
       sessionRef.current = nextSession;
-      setSession(nextSession);
+      setSessionState(nextSession);
       engine.applyEdits(nextSession);
     },
     [engine],
+  );
+
+  const replaceSession = useCallback(
+    (nextSession: EditSession) => {
+      undoFloorRef.current = 0;
+      setActiveEditor(null);
+      setDiffFilter('all');
+      commitSession(nextSession);
+    },
+    [commitSession],
   );
 
   const pushEdit = useCallback(
@@ -223,7 +236,7 @@ export function SandboxProvider({
     const count = sessionRef.current.size();
     const emptySession = EditSession.empty();
     sessionRef.current = emptySession;
-    setSession(emptySession);
+    setSessionState(emptySession);
     undoFloorRef.current = 0;
     setActiveEditor(null);
     setDiffFilter('all');
@@ -264,6 +277,7 @@ export function SandboxProvider({
       redo,
       revertAt,
       resetAll,
+      setSession: replaceSession,
       setUndoFloor,
       switchMode,
       resetBaseline,
@@ -280,6 +294,7 @@ export function SandboxProvider({
       redo,
       resetAll,
       resetBaseline,
+      replaceSession,
       revertAt,
       setUndoFloor,
       session,

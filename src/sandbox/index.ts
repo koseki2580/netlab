@@ -21,7 +21,9 @@ export {
 export { isEdit, isEditWithKind, PLACEHOLDER_EDIT_KINDS } from './edits';
 export {
   SANDBOX_STATE_PARAM,
+  decodeEdit,
   decodeSandboxEdits,
+  encodeEdit,
   encodeSandboxEdits,
   updateSandboxSearch,
 } from './urlCodec';

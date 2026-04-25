@@ -77,6 +77,7 @@ function makeSandboxValue(overrides: Partial<SandboxContextValue> = {}): Sandbox
     redo: vi.fn(),
     revertAt: vi.fn(),
     resetAll: vi.fn(),
+    setSession: vi.fn(),
     switchMode: vi.fn(),
     resetBaseline: vi.fn(),
     openEditPopover: vi.fn(),

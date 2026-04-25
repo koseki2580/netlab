@@ -103,6 +103,7 @@ function renderWithSandbox(mode: SandboxMode, children: ReactNode = <BeforeAfter
     redo: vi.fn(),
     revertAt: vi.fn(),
     resetAll: vi.fn(),
+    setSession: vi.fn(),
     switchMode: vi.fn(),
     resetBaseline: vi.fn(),
     openEditPopover: vi.fn(),

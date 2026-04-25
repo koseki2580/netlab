@@ -18,6 +18,8 @@ export const NETLAB_ERROR_CODES = [
   'sandbox/branch-desync',
   'sandbox/missing-provider',
   'sandbox/tutorial-conflict',
+  'session-io/invalid-session',
+  'session-io/unsupported-schema',
   'sandbox-intro/missing-provider',
   'sandbox-intro/unknown-id',
 ] as const;

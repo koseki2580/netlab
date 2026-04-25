@@ -7,6 +7,8 @@ interface SerializedSandboxState {
   readonly edits: readonly unknown[];
 }
 
+export type SerializedEdit = unknown;
+
 function toBase64Url(value: string): string {
   const bytes = new TextEncoder().encode(value);
   let binary = '';
@@ -35,7 +37,7 @@ export function encodeSandboxEdits(edits: readonly Edit[]): string | null {
 
   const payload: SerializedSandboxState = {
     version: 1,
-    edits,
+    edits: edits.map(encodeEdit),
   };
 
   return toBase64Url(JSON.stringify(payload));
@@ -63,10 +65,18 @@ export function decodeSandboxEdits(search: string): Edit[] {
       return [];
     }
 
-    return edits.filter(isEdit);
+    return edits.map(decodeEdit).filter((edit): edit is Edit => edit !== null);
   } catch {
     return [];
   }
+}
+
+export function encodeEdit(edit: Edit): SerializedEdit {
+  return edit;
+}
+
+export function decodeEdit(value: unknown): Edit | null {
+  return isEdit(value) ? value : null;
 }
 
 export function updateSandboxSearch(search: string, edits: readonly Edit[]): string {

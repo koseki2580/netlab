@@ -78,6 +78,11 @@ export interface HookMap {
   'sandbox:mode-changed': HookFn<{
     mode: SandboxMode;
   }>;
+  'sandbox:session-imported': HookFn<{
+    scenarioId: string;
+    editCount: number;
+    head: number;
+  }>;
   'sandbox:panel-tab-opened': HookFn<{
     axis: 'packet' | 'node' | 'parameters' | 'traffic' | 'edits';
   }>;
