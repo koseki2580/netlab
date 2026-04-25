@@ -59,6 +59,10 @@ function makeSandboxValue(overrides: Partial<SandboxContextValue> = {}): Sandbox
     activeEditor: null,
     diffFilter: 'all',
     pushEdit: vi.fn(),
+    undo: vi.fn(),
+    redo: vi.fn(),
+    revertAt: vi.fn(),
+    resetAll: vi.fn(),
     switchMode: vi.fn(),
     resetBaseline: vi.fn(),
     openEditPopover: vi.fn(),
@@ -112,7 +116,7 @@ describe('SandboxPanel', () => {
     expect(container?.querySelector('#sandbox-panel-heading')?.textContent).toBe('Sandbox');
   });
 
-  it('renders four tabs', () => {
+  it('renders five tabs including the edit history count', () => {
     render(
       <SandboxContext.Provider value={makeSandboxValue()}>
         <SandboxPanel />
@@ -120,7 +124,32 @@ describe('SandboxPanel', () => {
     );
 
     const tabs = Array.from(container?.querySelectorAll('[role="tab"]') ?? []);
-    expect(tabs.map((tab) => tab.textContent)).toEqual(['Packet', 'Node', 'Parameters', 'Traffic']);
+    expect(tabs.map((tab) => tab.textContent)).toEqual([
+      'Packet',
+      'Node',
+      'Parameters',
+      'Traffic',
+      'Edits (0)',
+    ]);
+  });
+
+  it('updates the Edits tab count from the active session head', () => {
+    const session = EditSession.empty().push({ kind: 'noop' }).push({
+      kind: 'param.set',
+      key: 'engine.tickMs',
+      before: 100,
+      after: 200,
+    });
+
+    render(
+      <SandboxContext.Provider value={makeSandboxValue({ session })}>
+        <SandboxPanel />
+      </SandboxContext.Provider>,
+    );
+
+    expect(container?.querySelector('[role="tab"][data-axis="edits"]')?.textContent).toBe(
+      'Edits (2)',
+    );
   });
 
   it('shows the packet empty state by default', () => {
@@ -164,6 +193,21 @@ describe('SandboxPanel', () => {
     expect(container?.textContent).toContain('Right-click a node or link');
   });
 
+  it('uses sandboxTab=edits as the initial active tab', () => {
+    window.history.replaceState({}, '', '/?sandboxTab=edits');
+
+    render(
+      <SandboxContext.Provider value={makeSandboxValue()}>
+        <SandboxPanel />
+      </SandboxContext.Provider>,
+    );
+
+    expect(container?.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe(
+      'Edits (0)',
+    );
+    expect(container?.textContent).toContain('No edits yet');
+  });
+
   it('supports ArrowRight keyboard navigation between tabs', () => {
     render(
       <SandboxContext.Provider value={makeSandboxValue()}>
@@ -200,7 +244,7 @@ describe('SandboxPanel', () => {
     });
 
     expect(container?.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe(
-      'Traffic',
+      'Edits (0)',
     );
   });
 

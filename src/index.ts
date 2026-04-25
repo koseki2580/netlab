@@ -234,6 +234,7 @@ export {
   encodeSandboxEdits,
   updateSandboxSearch,
   useSandbox,
+  useUndoRedo,
 } from './sandbox';
 export type {
   EdgeRef,

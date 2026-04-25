@@ -17,6 +17,7 @@ import { EditSession } from './EditSession';
 import { fromEngine } from './SimulationSnapshot';
 import type { Edit } from './edits';
 import { decodeSandboxEdits, updateSandboxSearch } from './urlCodec';
+import { useSandboxShortcuts } from './useUndoRedo';
 import type {
   EdgeRef,
   InterfaceRef,
@@ -40,6 +41,11 @@ export interface SandboxContextValue {
   readonly activeEditor: SandboxEditorAnchor | null;
   readonly diffFilter: SandboxDiffFilter;
   readonly pushEdit: (edit: Edit) => void;
+  readonly undo: () => void;
+  readonly redo: () => void;
+  readonly revertAt: (index: number) => void;
+  readonly resetAll: () => void;
+  readonly setUndoFloor?: (head: number) => void;
   readonly switchMode: (mode: SandboxMode) => void;
   readonly resetBaseline: () => void;
   readonly openEditPopover: (payload: SandboxEditorAnchor) => void;
@@ -52,13 +58,20 @@ export const SandboxContext = createContext<SandboxContextValue | null>(null);
 export interface SandboxProviderProps {
   readonly children: ReactNode;
   readonly initialMode?: SandboxMode;
+  readonly enableShortcuts?: boolean;
 }
 
-export function SandboxProvider({ children, initialMode = 'alpha' }: SandboxProviderProps) {
+export function SandboxProvider({
+  children,
+  initialMode = 'alpha',
+  enableShortcuts = true,
+}: SandboxProviderProps) {
   const simulation = useSimulation();
   const tutorialPresent = useContext(TutorialPresenceContext);
   const initialSnapshotRef = useRef<SimulationSnapshot | null>(null);
   const initialSessionRef = useRef<EditSession | null>(null);
+  const shortcutRootRef = useRef<HTMLElement | null>(null);
+  const undoFloorRef = useRef(0);
 
   if (!initialSnapshotRef.current) {
     initialSnapshotRef.current = fromEngine(simulation.engine);
@@ -127,15 +140,71 @@ export function SandboxProvider({ children, initialMode = 'alpha' }: SandboxProv
     [engine],
   );
 
-  const pushEdit = useCallback(
-    (edit: Edit) => {
-      const next = sessionRef.current.push(edit);
-      sessionRef.current = next;
-      setSession(next);
-      engine.applyEdits(next);
-      void hookEngine.emit('sandbox:edit-applied', { edit });
+  const commitSession = useCallback(
+    (nextSession: EditSession) => {
+      sessionRef.current = nextSession;
+      setSession(nextSession);
+      engine.applyEdits(nextSession);
     },
     [engine],
+  );
+
+  const pushEdit = useCallback(
+    (edit: Edit) => {
+      const current = sessionRef.current;
+      const evictedCount = Math.max(0, current.head + 1 - EditSession.MAX_HISTORY);
+      const next = current.push(edit);
+      commitSession(next);
+      if (evictedCount > 0) {
+        void hookEngine.emit('sandbox:history-evicted', { count: evictedCount });
+      }
+      void hookEngine.emit('sandbox:edit-applied', { edit });
+    },
+    [commitSession],
+  );
+
+  const undo = useCallback(() => {
+    const current = sessionRef.current;
+    if (!current.canUndo() || current.head <= undoFloorRef.current) {
+      void hookEngine.emit('sandbox:undo-blocked', { head: current.head });
+      return;
+    }
+
+    const edit = current.backing[current.head - 1];
+    if (!edit) return;
+
+    const next = current.undo();
+    commitSession(next);
+    void hookEngine.emit('sandbox:edit-undone', { edit, head: next.head });
+  }, [commitSession]);
+
+  const redo = useCallback(() => {
+    const current = sessionRef.current;
+    if (!current.canRedo()) {
+      return;
+    }
+
+    const edit = current.backing[current.head];
+    if (!edit) return;
+
+    const next = current.redo();
+    commitSession(next);
+    void hookEngine.emit('sandbox:edit-redone', { edit, head: next.head });
+  }, [commitSession]);
+
+  const revertAt = useCallback(
+    (index: number) => {
+      const current = sessionRef.current;
+      const edit = current.backing[index];
+      const next = current.revertAt(index);
+      if (next === current || !edit) {
+        return;
+      }
+
+      commitSession(next);
+      void hookEngine.emit('sandbox:edit-reverted', { edit, head: next.head });
+    },
+    [commitSession],
   );
 
   const switchMode = useCallback(
@@ -147,13 +216,15 @@ export function SandboxProvider({ children, initialMode = 'alpha' }: SandboxProv
     [engine],
   );
 
-  const resetBaseline = useCallback(() => {
+  const resetAll = useCallback(() => {
     const snapshot = initialSnapshotRef.current;
     if (!snapshot) return;
 
+    const count = sessionRef.current.size();
     const emptySession = EditSession.empty();
     sessionRef.current = emptySession;
     setSession(emptySession);
+    undoFloorRef.current = 0;
     setActiveEditor(null);
     setDiffFilter('all');
     setEngine((current) => {
@@ -162,7 +233,23 @@ export function SandboxProvider({ children, initialMode = 'alpha' }: SandboxProv
       return next;
     });
     setVersion((current) => current + 1);
+    void hookEngine.emit('sandbox:reset-all', { count });
   }, []);
+
+  const setUndoFloor = useCallback((head: number) => {
+    undoFloorRef.current = Math.max(0, Math.floor(head));
+  }, []);
+
+  const resetBaseline = useCallback(() => {
+    resetAll();
+  }, [resetAll]);
+
+  useSandboxShortcuts({
+    enabled: enableShortcuts,
+    rootRef: shortcutRootRef,
+    undo,
+    redo,
+  });
 
   const mode = engine.mode;
   const value = useMemo<SandboxContextValue>(
@@ -173,16 +260,41 @@ export function SandboxProvider({ children, initialMode = 'alpha' }: SandboxProv
       activeEditor,
       diffFilter,
       pushEdit,
+      undo,
+      redo,
+      revertAt,
+      resetAll,
+      setUndoFloor,
       switchMode,
       resetBaseline,
       openEditPopover: setActiveEditor,
       closeEditPopover: () => setActiveEditor(null),
       setDiffFilter,
     }),
-    [activeEditor, diffFilter, engine, mode, pushEdit, resetBaseline, session, switchMode],
+    [
+      activeEditor,
+      diffFilter,
+      engine,
+      mode,
+      pushEdit,
+      redo,
+      resetAll,
+      resetBaseline,
+      revertAt,
+      setUndoFloor,
+      session,
+      switchMode,
+      undo,
+    ],
   );
 
-  return <SandboxContext.Provider value={value}>{children}</SandboxContext.Provider>;
+  return (
+    <SandboxContext.Provider value={value}>
+      <span ref={shortcutRootRef} style={{ display: 'contents' }}>
+        {children}
+      </span>
+    </SandboxContext.Provider>
+  );
 }
 
 export function useSandbox(): SandboxContextValue {

@@ -2,18 +2,20 @@ import { useRef, useState } from 'react';
 import { hookEngine } from '../../hooks/HookEngine';
 import { useSandbox } from '../../sandbox/useSandbox';
 import type { SandboxMode } from '../../sandbox/types';
+import { EditsTab } from './EditsTab';
 import { PacketEditForm } from './PacketEditForm';
 import { ParametersTab } from './ParametersTab';
 import { SandboxNodeTabBody } from './SandboxNodeTabBody';
 import { TrafficTab } from './TrafficTab';
 
-type SandboxAxis = 'packet' | 'node' | 'parameters' | 'traffic';
+type SandboxAxis = 'packet' | 'node' | 'parameters' | 'traffic' | 'edits';
 
 const TABS: { readonly axis: SandboxAxis; readonly label: string }[] = [
   { axis: 'packet', label: 'Packet' },
   { axis: 'node', label: 'Node' },
   { axis: 'parameters', label: 'Parameters' },
   { axis: 'traffic', label: 'Traffic' },
+  { axis: 'edits', label: 'Edits' },
 ];
 
 function getInitialAxis(): SandboxAxis {
@@ -22,7 +24,8 @@ function getInitialAxis(): SandboxAxis {
     requested === 'packet' ||
     requested === 'node' ||
     requested === 'parameters' ||
-    requested === 'traffic'
+    requested === 'traffic' ||
+    requested === 'edits'
   ) {
     return requested;
   }
@@ -43,6 +46,8 @@ function SandboxTabBody({ axis }: { readonly axis: SandboxAxis }) {
       return <ParametersTab />;
     case 'traffic':
       return <TrafficTab />;
+    case 'edits':
+      return <EditsTab />;
   }
 }
 
@@ -208,7 +213,7 @@ export function SandboxPanel() {
                 cursor: 'pointer',
               }}
             >
-              {tab.label}
+              {tab.axis === 'edits' ? `${tab.label} (${sandbox.session.size()})` : tab.label}
             </button>
           );
         })}

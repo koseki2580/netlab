@@ -100,19 +100,22 @@ export function SandboxIntroProvider({ introId, children, onExit }: SandboxIntro
   }, [runner, sandbox.engine]);
 
   const start = useCallback(() => {
+    sandbox.setUndoFloor?.(sandbox.session.head);
     runner.start();
     runner.onSimulationState(sandbox.engine.whatIf.getState());
-  }, [runner, sandbox.engine]);
+  }, [runner, sandbox]);
 
   const skip = useCallback(() => {
+    sandbox.setUndoFloor?.(0);
     runner.exit();
     onExit?.();
-  }, [onExit, runner]);
+  }, [onExit, runner, sandbox]);
 
   const restart = useCallback(() => {
+    sandbox.setUndoFloor?.(sandbox.session.head);
     runner.start();
     runner.onSimulationState(sandbox.engine.whatIf.getState());
-  }, [runner, sandbox.engine]);
+  }, [runner, sandbox]);
 
   const value = useMemo<SandboxIntroContextValue>(
     () => ({

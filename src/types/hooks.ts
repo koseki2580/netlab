@@ -54,11 +54,32 @@ export interface HookMap {
   'sandbox:edit-applied': HookFn<{
     edit: Edit;
   }>;
+  'sandbox:edit-undone': HookFn<{
+    edit: Edit;
+    head: number;
+  }>;
+  'sandbox:edit-redone': HookFn<{
+    edit: Edit;
+    head: number;
+  }>;
+  'sandbox:edit-reverted': HookFn<{
+    edit: Edit;
+    head: number;
+  }>;
+  'sandbox:undo-blocked': HookFn<{
+    head: number;
+  }>;
+  'sandbox:reset-all': HookFn<{
+    count: number;
+  }>;
+  'sandbox:history-evicted': HookFn<{
+    count: number;
+  }>;
   'sandbox:mode-changed': HookFn<{
     mode: SandboxMode;
   }>;
   'sandbox:panel-tab-opened': HookFn<{
-    axis: 'packet' | 'node' | 'parameters' | 'traffic';
+    axis: 'packet' | 'node' | 'parameters' | 'traffic' | 'edits';
   }>;
 }
 
