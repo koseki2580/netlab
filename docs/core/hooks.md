@@ -18,6 +18,12 @@ netlab provides a Koa-style middleware hook system that lets you observe and mod
 | `fetch:respond`            | A mock response is about to be returned                 |
 | `sandbox:edit-rejected`    | A sandbox edit was rejected during validation or apply  |
 | `sandbox:edit-applied`     | A sandbox edit was accepted and appended to the session |
+| `sandbox:edit-undone`      | The sandbox history cursor moved backward               |
+| `sandbox:edit-redone`      | The sandbox history cursor moved forward                |
+| `sandbox:edit-reverted`    | A visible sandbox history entry was removed             |
+| `sandbox:undo-blocked`     | Undo was requested at the current undo boundary         |
+| `sandbox:reset-all`        | Every visible sandbox edit was cleared                  |
+| `sandbox:history-evicted`  | Old sandbox history entries were dropped by the cap     |
 | `sandbox:mode-changed`     | Sandbox mode switched between Live and Compare          |
 | `sandbox:panel-tab-opened` | The active sandbox panel tab changed                    |
 
@@ -149,6 +155,57 @@ hookEngine.on('router:lookup', async (ctx, next) => {
 }
 ```
 
+### `sandbox:edit-undone`
+
+```typescript
+{
+  edit: Edit;
+  head: number;
+}
+```
+
+### `sandbox:edit-redone`
+
+```typescript
+{
+  edit: Edit;
+  head: number;
+}
+```
+
+### `sandbox:edit-reverted`
+
+```typescript
+{
+  edit: Edit;
+  head: number;
+}
+```
+
+### `sandbox:undo-blocked`
+
+```typescript
+{
+  head: number;
+}
+```
+
+### `sandbox:reset-all`
+
+```typescript
+{
+  count: number;
+}
+```
+
+### `sandbox:history-evicted`
+
+```typescript
+{
+  count: number;
+}
+```
+
 ### `sandbox:mode-changed`
 
 ```typescript
@@ -161,7 +218,7 @@ hookEngine.on('router:lookup', async (ctx, next) => {
 
 ```typescript
 {
-  axis: 'packet' | 'node' | 'parameters' | 'traffic';
+  axis: 'packet' | 'node' | 'parameters' | 'traffic' | 'edits';
 }
 ```
 

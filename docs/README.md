@@ -35,6 +35,7 @@ Specifications regarding user interface implementation and canvas operations.
 - [Accessibility](ui/accessibility.md) - WCAG 2.1 AA compliance: color contrast tokens, keyboard model, ARIA roles, and axe-core verification
 - [Interactive Sandbox](ui/sandbox.md) - Sandbox surface, edit tabs, URL persistence, supported demos, and provider mutex
 - [Sandbox Introduction](ui/sandbox-intro.md) - Built-in onboarding flow for the sandbox on the MTU fragmentation demo
+- [Sandbox Undo And History](ui/sandbox-undo.md) - Undo/redo cursor semantics, edit history UI, reset-all, shortcuts, and hook events
 - [Tutorials](ui/tutorials.md) - Scenario-backed guided tutorial mode, tutorial registry, predicate contract, and authoring rules
 
 ### 🔄 Simulation (`simulation/`)
