@@ -37,6 +37,7 @@ Specifications regarding user interface implementation and canvas operations.
 - [Sandbox Introduction](ui/sandbox-intro.md) - Built-in onboarding flows for MTU, TCP, OSPF, and NAT sandbox demos
 - [Sandbox Undo And History](ui/sandbox-undo.md) - Undo/redo cursor semantics, edit history UI, reset-all, shortcuts, and hook events
 - [Sandbox Session Import / Export](ui/sandbox-session-io.md) - Local JSON session files with schema versioning, import preview, and redo-tail preservation
+- [Sandbox Keyboard Shortcuts & Narration](ui/sandbox-shortcuts.md) - Built-in shortcut registry, dispatcher, help modal, and `aria-live` screen-reader narration
 - [Tutorials](ui/tutorials.md) - Scenario-backed guided tutorial mode, tutorial registry, predicate contract, and authoring rules
 
 ### 🔄 Simulation (`simulation/`)
