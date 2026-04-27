@@ -202,8 +202,89 @@ Manual validation should confirm:
 
 ---
 
+## Sandbox Mode
+
+Sandbox PCAP export is implemented in `src/sandbox/pcap/exportSandboxPcap.ts` and surfaces through:
+
+- a **PCAP** button in the `SandboxPanel` header
+- per-track **PCAP** buttons in `DiffTimeline`
+
+### α (Live) Mode
+
+A single button downloads the current what-if trace as a classic libpcap file:
+
+```text
+netlab-sandbox-{scenarioId}-{stamp}.pcap
+```
+
+### β (Compare) Mode
+
+The panel header shows a branch selector (`What-if`, `Baseline`, `Combined`) next to the **PCAP** button. `DiffTimeline` adds per-track buttons for `baseline` and `whatif`, plus a `Combined` button in the header row.
+
+| Selection  | Output              | Format                               |
+| ---------- | ------------------- | ------------------------------------ |
+| `What-if`  | what-if trace only  | classic libpcap                      |
+| `Baseline` | baseline trace only | classic libpcap                      |
+| `Combined` | both traces, tagged | **pcapng** with EPB `Comment` option |
+
+#### Combined pcapng Format
+
+The combined file follows the [pcapng specification](https://www.ietf.org/archive/id/draft-tuexen-opsawg-pcapng-05.txt):
+
+1. Section Header Block (SHB) — 28 bytes, little-endian
+2. Interface Description Block (IDB) — 20 bytes, `LINKTYPE_ETHERNET`
+3. Enhanced Packet Blocks (EPB) — one per hop, with an `opt_comment` (option code 1) containing either `"baseline"` or `"whatif"`
+
+Wireshark 4.x reads the `opt_comment` field in the packet detail pane. The tag identifies which simulation branch each frame came from.
+
+#### Safari < 16 Fallback
+
+Older Safari versions do not reliably parse pcapng `Comment` options. When Safari < 16 is detected via `navigator.userAgent`, the export falls back to two separate classic libpcap files:
+
+```text
+netlab-sandbox-{scenarioId}-baseline-{stamp}.pcap
+netlab-sandbox-{scenarioId}-whatif-{stamp}.pcap
+```
+
+### Frame Limit
+
+Each export is capped at **10,000 frames**. If the trace exceeds this limit, the `SandboxPcapExport.truncated` flag is `true` and only the first 10,000 frames are written.
+
+### Hook
+
+`sandbox:pcap-exported` is emitted after every successful download:
+
+```ts
+hookEngine.emit('sandbox:pcap-exported', {
+  branch: 'alpha' | 'baseline' | 'whatif' | 'combined',
+  bytes: number, // total bytes across all downloaded files
+});
+```
+
+### Sandbox Serializer API
+
+`src/sandbox/pcap/exportSandboxPcap.ts` defines:
+
+```ts
+export type PcapBranch = 'alpha' | 'baseline' | 'whatif' | 'combined';
+
+export interface SandboxPcapExport {
+  blob: Blob;
+  filename: string;
+  truncated: boolean;
+}
+
+export function exportSandboxPcap(
+  engine: BranchedSimulationEngine,
+  branch: PcapBranch,
+  opts: { scenarioId: string; now?: Date },
+): SandboxPcapExport[];
+```
+
+---
+
 ## Limitations
 
-- only one trace is exported per file
-- the feature emits classic libpcap, not pcapng
+- only one trace is exported per file (sandbox combined exports two, tagged via pcapng)
+- TraceInspector export emits classic libpcap; sandbox combined export emits pcapng
 - export is based on stored simulation snapshots; it does not capture live playback timing

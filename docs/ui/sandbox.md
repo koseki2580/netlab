@@ -76,6 +76,16 @@ The panel header includes local-only session file actions:
 
 Session files use the shared edit codec from URL persistence, but wrap it with `schemaVersion`, `scenarioId`, `initialParameters`, `backing`, `head`, `savedAt`, and `toolVersion`. See [Sandbox Session Import / Export](sandbox-session-io.md).
 
+## PCAP Export
+
+The panel header includes a **PCAP** button that downloads the current simulation trace as a `.pcap` or `.pcapng` file that Wireshark and tcpdump can open directly.
+
+In α (Live) mode a single what-if `.pcap` is downloaded. In β (Compare) mode a branch selector (`What-if`, `Baseline`, `Combined`) appears next to the button. The `Combined` option produces a pcapng file with per-frame `Comment` options tagging each packet as `"baseline"` or `"whatif"`. Safari < 16 falls back to two separate `.pcap` files.
+
+`DiffTimeline` also adds inline PCAP buttons next to each track label and a `Combined` button in its header.
+
+Full format and API details: [PCAP Export — Sandbox Mode](pcap-export.md#sandbox-mode).
+
 ## Supported Demos
 
 The Gallery renders sandbox-ready entries in a dedicated **Interactive Sandbox** section. Today these entries are wired for sandbox mode:
@@ -104,6 +114,7 @@ The sandbox emits additive hook events through `hookEngine`:
 - `sandbox:mode-changed`
 - `sandbox:session-imported`
 - `sandbox:panel-tab-opened`
+- `sandbox:pcap-exported`
 
 These events are intended for analytics, guided onboarding, and higher-level orchestration. They are notifications, not veto points.
 
