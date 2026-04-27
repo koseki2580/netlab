@@ -115,14 +115,12 @@ export class TraceRecorder {
     };
   }
 
-  exportPcap(traces: PacketTrace[], traceId?: string): Uint8Array {
+  exportPcapRecords(traces: PacketTrace[], traceId?: string): PcapRecord[] {
     const trace = traceId
       ? (traces.find((candidate) => candidate.packetId === traceId) ?? null)
       : null;
 
-    if (!trace) {
-      return buildPcap([]);
-    }
+    if (!trace) return [];
 
     const snapshots = this.getSnapshots(trace.packetId);
     const records: PcapRecord[] = [];
@@ -133,7 +131,11 @@ export class TraceRecorder {
       records.push({ hop, frame });
     });
 
-    return buildPcap(records);
+    return records;
+  }
+
+  exportPcap(traces: PacketTrace[], traceId?: string): Uint8Array {
+    return buildPcap(this.exportPcapRecords(traces, traceId));
   }
 
   deriveTraceLabel(packet: InFlightPacket): string {

@@ -4,6 +4,7 @@ import { EMPTY_FAILURE_STATE, type FailureState } from '../types/failure';
 import type { HttpMessage, InFlightPacket, IpPacket } from '../types/packets';
 import type { DhcpLeaseState, DnsCache } from '../types/services';
 import type { HighlightMode, PacketHop, PacketTrace, SimulationState } from '../types/simulation';
+import type { PcapRecord } from '../utils/pcapSerializer';
 import type { TcpConnection } from '../types/tcp';
 import type { NetworkTopology } from '../types/topology';
 import type { TransferMessage } from '../types/transfer';
@@ -253,6 +254,13 @@ export class SimulationEngine {
 
   exportPcap(traceId?: string): Uint8Array {
     return this.traceRecorder.exportPcap(
+      this.state.traces,
+      traceId ?? this.state.currentTraceId ?? undefined,
+    );
+  }
+
+  exportPcapRecords(traceId?: string): PcapRecord[] {
+    return this.traceRecorder.exportPcapRecords(
       this.state.traces,
       traceId ?? this.state.currentTraceId ?? undefined,
     );

@@ -86,6 +86,10 @@ export interface HookMap {
   'sandbox:panel-tab-opened': HookFn<{
     axis: 'packet' | 'node' | 'parameters' | 'traffic' | 'edits';
   }>;
+  'sandbox:pcap-exported': HookFn<{
+    branch: 'alpha' | 'baseline' | 'whatif' | 'combined';
+    bytes: number;
+  }>;
 }
 
 export type HookPoint = keyof HookMap;

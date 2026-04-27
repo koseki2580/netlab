@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { useSandbox } from '../../sandbox/useSandbox';
 import type { PacketHop, PacketTrace } from '../../types/simulation';
+import { PcapDownloadButton } from './PcapDownloadButton';
 
 function currentTrace(traces: PacketTrace[], currentTraceId: string | null): PacketTrace | null {
   if (currentTraceId) {
@@ -104,8 +105,18 @@ export function DiffTimeline() {
         fontFamily: 'monospace',
       }}
     >
-      <div style={{ padding: '6px 10px', fontSize: 11, color: 'var(--netlab-text-muted)' }}>
+      <div
+        style={{
+          padding: '6px 10px',
+          fontSize: 11,
+          color: 'var(--netlab-text-muted)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
         DIFF TIMELINE
+        <PcapDownloadButton forceBranch="combined" />
       </div>
       {(['baseline', 'what-if'] as const).map((branch) => {
         const trace = branch === 'baseline' ? baselineTrace : whatIfTrace;
@@ -134,6 +145,7 @@ export function DiffTimeline() {
             >
               {branch}
             </strong>
+            <PcapDownloadButton forceBranch={branch === 'baseline' ? 'baseline' : 'whatif'} />
             {Array.from({ length: maxLength }, (_, index) => (
               <HopPill
                 key={`${branch}-${index}`}
