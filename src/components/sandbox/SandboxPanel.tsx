@@ -7,6 +7,7 @@ import { ExportButton } from './ExportButton';
 import { ImportDialog } from './ImportDialog';
 import { PacketEditForm } from './PacketEditForm';
 import { ParametersTab } from './ParametersTab';
+import { PcapDownloadButton } from './PcapDownloadButton';
 import { SandboxNodeTabBody } from './SandboxNodeTabBody';
 import { TrafficTab } from './TrafficTab';
 
@@ -135,6 +136,7 @@ export function SandboxPanel() {
         <h2 id="sandbox-panel-heading" style={{ margin: 0, fontSize: 14, flex: 1 }}>
           Sandbox
         </h2>
+        <PcapDownloadButton />
         <ExportButton />
         <ImportDialog />
         <button

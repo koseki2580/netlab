@@ -63,7 +63,7 @@ function isArpFrame(frame: EthernetFrame | ArpEthernetFrame): frame is ArpEthern
   return frame.etherType === 0x0806;
 }
 
-function serializePcapFrame(frame: EthernetFrame | ArpEthernetFrame): Uint8Array {
+export function serializePcapFrame(frame: EthernetFrame | ArpEthernetFrame): Uint8Array {
   if (isArpFrame(frame)) {
     const { bytes } = serializeArpFrame(frame);
     return bytes.slice(0, bytes.length - 4);
