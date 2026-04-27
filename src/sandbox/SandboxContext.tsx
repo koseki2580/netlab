@@ -16,6 +16,8 @@ import { BranchedSimulationEngine } from './BranchedSimulationEngine';
 import { EditSession } from './EditSession';
 import { fromEngine } from './SimulationSnapshot';
 import type { Edit } from './edits';
+import { createShortcutDispatcher } from './shortcuts/dispatcher';
+import { shortcutRegistry } from './shortcuts/registry';
 import { decodeSandboxEdits, updateSandboxSearch } from './urlCodec';
 import { useSandboxShortcuts } from './useUndoRedo';
 import type {
@@ -263,6 +265,40 @@ export function SandboxProvider({
     undo,
     redo,
   });
+
+  useEffect(() => {
+    if (!enableShortcuts) return undefined;
+
+    const unregisters = [
+      shortcutRegistry.register({
+        key: 'Escape',
+        description: 'Close popover / modal',
+        action: () => setActiveEditor(null),
+      }),
+      shortcutRegistry.register({
+        key: 'Shift+C',
+        description: 'Toggle compare mode',
+        action: () => switchMode(engine.mode === 'beta' ? 'alpha' : 'beta'),
+      }),
+      shortcutRegistry.register({
+        key: 'Cmd+Z',
+        description: 'Undo',
+        action: undo,
+      }),
+      shortcutRegistry.register({
+        key: 'Cmd+Shift+Z',
+        description: 'Redo',
+        action: redo,
+      }),
+    ];
+
+    const stopDispatcher = createShortcutDispatcher();
+
+    return () => {
+      stopDispatcher();
+      for (const unregister of unregisters) unregister();
+    };
+  }, [enableShortcuts, engine, undo, redo]);
 
   const mode = engine.mode;
   const value = useMemo<SandboxContextValue>(

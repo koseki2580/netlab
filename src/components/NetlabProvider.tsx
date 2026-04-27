@@ -7,6 +7,7 @@ import { bgpProtocol } from '../routing/bgp/BgpProtocol';
 import { ospfProtocol } from '../routing/ospf/OspfProtocol';
 import { ripProtocol } from '../routing/rip/RipProtocol';
 import { staticProtocol } from '../routing/static/StaticProtocol';
+import { SandboxNarrationRegion } from '../sandbox/narration/SandboxNarrationRegion';
 import type { NetworkTopology, TopologySnapshot } from '../types/topology';
 import { NetlabContext } from './NetlabContext';
 
@@ -110,5 +111,10 @@ export function NetlabProvider({
     ],
   );
 
-  return <NetlabContext.Provider value={value}>{children}</NetlabContext.Provider>;
+  return (
+    <NetlabContext.Provider value={value}>
+      {children}
+      {sandboxEnabled && <SandboxNarrationRegion hookEngine={hookEngine} />}
+    </NetlabContext.Provider>
+  );
 }
