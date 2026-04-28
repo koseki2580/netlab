@@ -2,10 +2,11 @@ import { expect, test } from './fixtures/harness';
 
 test('alpha mode: PCAP button downloads a libpcap file', async ({ page }, testInfo) => {
   await page.goto('/?sandbox=1#/networking/mtu-fragmentation');
-  await expect(page.locator('[data-testid="sandbox-panel"]')).toBeVisible();
+  const panel = page.locator('[data-testid="sandbox-panel"]');
+  await expect(panel).toBeVisible();
 
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Download sandbox PCAP' }).first().click();
+  await panel.getByRole('button', { name: 'Download sandbox PCAP', exact: true }).click();
   const download = await downloadPromise;
 
   expect(download.suggestedFilename()).toMatch(/^netlab-sandbox-fragmented-echo-\d{12}\.pcap$/);
@@ -23,17 +24,18 @@ test('beta mode: branch selector appears and baseline download works', async ({
   page,
 }, testInfo) => {
   await page.goto('/?sandbox=1#/networking/mtu-fragmentation');
-  await expect(page.locator('[data-testid="sandbox-panel"]')).toBeVisible();
+  const panel = page.locator('[data-testid="sandbox-panel"]');
+  await expect(panel).toBeVisible();
 
   await page.getByRole('button', { name: 'Switch sandbox mode' }).click();
   await expect(page.getByRole('button', { name: 'Switch sandbox mode' })).toContainText('Compare');
 
-  await expect(page.getByLabel('PCAP branch selection').first()).toBeVisible();
+  await expect(panel.getByLabel('PCAP branch selection')).toBeVisible();
 
-  await page.getByLabel('PCAP branch selection').first().selectOption('baseline');
+  await panel.getByLabel('PCAP branch selection').selectOption('baseline');
 
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Download sandbox PCAP' }).first().click();
+  await panel.getByRole('button', { name: 'Download sandbox PCAP', exact: true }).click();
   const download = await downloadPromise;
 
   expect(download.suggestedFilename()).toMatch(/baseline/);
@@ -49,15 +51,16 @@ test('beta mode: branch selector appears and baseline download works', async ({
 
 test('beta mode: combined download produces a pcapng file', async ({ page }, testInfo) => {
   await page.goto('/?sandbox=1#/networking/mtu-fragmentation');
-  await expect(page.locator('[data-testid="sandbox-panel"]')).toBeVisible();
+  const panel = page.locator('[data-testid="sandbox-panel"]');
+  await expect(panel).toBeVisible();
 
   await page.getByRole('button', { name: 'Switch sandbox mode' }).click();
   await expect(page.getByRole('button', { name: 'Switch sandbox mode' })).toContainText('Compare');
 
-  await page.getByLabel('PCAP branch selection').first().selectOption('combined');
+  await panel.getByLabel('PCAP branch selection').selectOption('combined');
 
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Download sandbox PCAP' }).first().click();
+  await panel.getByRole('button', { name: 'Download sandbox PCAP', exact: true }).click();
   const download = await downloadPromise;
 
   // combined mode produces either .pcapng or two .pcap files depending on browser
