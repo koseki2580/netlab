@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { hookEngine } from '../../hooks/HookEngine';
+import { useContext, useState } from 'react';
+import { hookEngine as sharedHookEngine } from '../../hooks/HookEngine';
 import type { PcapBranch } from '../../sandbox/pcap/exportSandboxPcap';
 import { exportSandboxPcap } from '../../sandbox/pcap/exportSandboxPcap';
 import { useSandbox } from '../../sandbox/useSandbox';
+import { NetlabContext } from '../NetlabContext';
 import { sessionIoButtonStyle } from './sessionIoStyles';
 import { currentSandboxScenarioId } from './sessionScenario';
 
@@ -25,6 +26,8 @@ function triggerDownload(blob: Blob, filename: string): void {
 
 export function PcapDownloadButton({ forceBranch }: { readonly forceBranch?: PcapBranch }) {
   const sandbox = useSandbox();
+  const netlabContext = useContext(NetlabContext);
+  const hookEngine = netlabContext?.hookEngine ?? sharedHookEngine;
   const isAlpha = sandbox.mode === 'alpha';
   const [betaBranch, setBetaBranch] = useState<PcapBranch>('whatif');
 

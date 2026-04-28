@@ -107,22 +107,32 @@ export function snapshotEquals(a: SimulationSnapshot, b: SimulationSnapshot): bo
       topology: a.topology,
       state: a.state,
       parameters: a.parameters,
+      meta: a.meta,
     }) ===
     structuralString({
       capturedAt: b.capturedAt,
       topology: b.topology,
       state: b.state,
       parameters: b.parameters,
+      meta: b.meta,
     })
   );
 }
 
 export function cloneSnapshot(snapshot: SimulationSnapshot): SimulationSnapshot {
-  return deepFreeze({
+  const nextBase = {
     id: snapshot.id,
     capturedAt: snapshot.capturedAt,
     topology: structuredClone(snapshot.topology) as NetworkTopology,
     state: structuredClone(snapshot.state) as SimulationState,
     parameters: structuredClone(snapshot.parameters) as ProtocolParameterSet,
+  };
+  if (snapshot.meta === undefined) {
+    return deepFreeze(nextBase);
+  }
+
+  return deepFreeze({
+    ...nextBase,
+    meta: structuredClone(snapshot.meta) as NonNullable<SimulationSnapshot['meta']>,
   });
 }

@@ -1,4 +1,6 @@
 import { isEdit, type Edit } from './edits';
+import { getSandboxEditSpec } from './plugin/registry';
+import type { PluginEdit } from './plugin/types';
 
 export const SANDBOX_STATE_PARAM = 'sandboxState';
 
@@ -8,6 +10,12 @@ interface SerializedSandboxState {
 }
 
 export type SerializedEdit = unknown;
+
+interface SerializedPluginEdit {
+  readonly kind: string;
+  readonly plugin: true;
+  readonly data: string;
+}
 
 function toBase64Url(value: string): string {
   const bytes = new TextEncoder().encode(value);
@@ -72,10 +80,34 @@ export function decodeSandboxEdits(search: string): Edit[] {
 }
 
 export function encodeEdit(edit: Edit): SerializedEdit {
+  if (edit.kind.startsWith('plugin:')) {
+    const spec = getSandboxEditSpec(edit.kind);
+    if (spec?.validator(edit)) {
+      return {
+        kind: edit.kind,
+        plugin: true,
+        data: spec.serializer.encode(edit as PluginEdit),
+      } satisfies SerializedPluginEdit;
+    }
+  }
+
   return edit;
 }
 
 export function decodeEdit(value: unknown): Edit | null {
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    (value as { readonly plugin?: unknown }).plugin === true &&
+    typeof (value as { readonly kind?: unknown }).kind === 'string' &&
+    typeof (value as { readonly data?: unknown }).data === 'string'
+  ) {
+    const serialized = value as SerializedPluginEdit;
+    const spec = getSandboxEditSpec(serialized.kind);
+    const decoded = spec?.serializer.decode(serialized.data) ?? null;
+    return decoded && spec?.validator(decoded) ? decoded : null;
+  }
+
   return isEdit(value) ? value : null;
 }
 

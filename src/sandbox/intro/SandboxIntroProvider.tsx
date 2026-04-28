@@ -1,14 +1,17 @@
 import {
   createContext,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
   type ReactNode,
 } from 'react';
+import { NetlabContext } from '../../components/NetlabContext';
 import { NetlabError } from '../../errors';
-import { hookEngine } from '../../hooks/HookEngine';
+import { hookEngine as sharedHookEngine } from '../../hooks/HookEngine';
+import type { HookEngine } from '../../hooks/HookEngine';
 import { TutorialRunner } from '../../tutorials/TutorialRunner';
 import type { Tutorial, TutorialRunnerState, TutorialStep } from '../../tutorials/types';
 import type { HookMap, HookPoint } from '../../types/hooks';
@@ -42,6 +45,7 @@ const INTRO_HOOK_POINTS: readonly HookPoint[] = [
 
 function subscribeIntroPoint<K extends HookPoint>(
   point: K,
+  hookEngine: HookEngine,
   runner: TutorialRunner,
   getStepIndex: () => number,
 ) {
@@ -60,6 +64,8 @@ function subscribeIntroPoint<K extends HookPoint>(
 
 export function SandboxIntroProvider({ introId, children, onExit }: SandboxIntroProviderProps) {
   const sandbox = useSandbox();
+  const netlabContext = useContext(NetlabContext);
+  const hookEngine = netlabContext?.hookEngine ?? sharedHookEngine;
   const intro = introRegistry.get(introId);
   const runnerRef = useRef<TutorialRunner | null>(null);
 
@@ -90,14 +96,19 @@ export function SandboxIntroProvider({ introId, children, onExit }: SandboxIntro
     });
 
     const unsubscribers = INTRO_HOOK_POINTS.map((point) =>
-      subscribeIntroPoint(point, runner, () => sandbox.engine.whatIf.getState().currentStep),
+      subscribeIntroPoint(
+        point,
+        hookEngine,
+        runner,
+        () => sandbox.engine.whatIf.getState().currentStep,
+      ),
     );
 
     return () => {
       unsubscribeEngine();
       unsubscribers.forEach((unsubscribe) => unsubscribe());
     };
-  }, [runner, sandbox.engine]);
+  }, [hookEngine, runner, sandbox.engine]);
 
   const start = useCallback(() => {
     sandbox.setUndoFloor?.(sandbox.session.head);

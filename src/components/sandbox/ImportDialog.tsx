@@ -1,12 +1,15 @@
-import { useRef, useState } from 'react';
-import { hookEngine } from '../../hooks/HookEngine';
+import { useContext, useRef, useState } from 'react';
+import { hookEngine as sharedHookEngine } from '../../hooks/HookEngine';
 import type { DecodedExportedSession } from '../../sandbox/session-io/schema';
 import { useSandbox } from '../../sandbox/useSandbox';
+import { NetlabContext } from '../NetlabContext';
 import { ImportPreview } from './ImportPreview';
 import { sessionIoButtonStyle, sessionIoPanelStyle } from './sessionIoStyles';
 
 export function ImportDialog() {
   const sandbox = useSandbox();
+  const netlabContext = useContext(NetlabContext);
+  const hookEngine = netlabContext?.hookEngine ?? sharedHookEngine;
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [decoded, setDecoded] = useState<DecodedExportedSession | null>(null);
   const [error, setError] = useState<string | null>(null);

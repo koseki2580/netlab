@@ -8,6 +8,8 @@ import { EditSession } from '../../sandbox/EditSession';
 import { SandboxContext, type SandboxContextValue } from '../../sandbox/SandboxContext';
 import { DEFAULT_PARAMETERS } from '../../sandbox/types';
 import type { Edit } from '../../sandbox/edits';
+import type { PluginEdit, PluginEditSpec } from '../../sandbox/plugin/types';
+import { registerSandboxEdit } from '../../sandbox/plugin/registry';
 import { EditsTab } from './EditsTab';
 
 let root: Root | null = null;
@@ -28,6 +30,37 @@ const paramEdit: Edit = {
   key: 'engine.tickMs',
   before: 100,
   after: 200,
+};
+
+interface HistoryPluginEdit extends PluginEdit {
+  readonly kind: 'plugin:test.history';
+  readonly value: string;
+}
+
+const unregisters: (() => void)[] = [];
+
+function isHistoryPluginEdit(value: unknown): value is HistoryPluginEdit {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    (value as { kind?: unknown }).kind === 'plugin:test.history' &&
+    typeof (value as { value?: unknown }).value === 'string'
+  );
+}
+
+const historyPluginSpec: PluginEditSpec<HistoryPluginEdit> = {
+  version: 1,
+  kind: 'plugin:test.history',
+  validator: isHistoryPluginEdit,
+  serializer: {
+    encode: (edit) => edit.value,
+    decode: (value) => {
+      const edit = { kind: 'plugin:test.history', value };
+      return isHistoryPluginEdit(edit) ? edit : null;
+    },
+  },
+  reducer: (snapshot) => snapshot,
+  labelFn: (edit) => `Plugin history: ${edit.value}`,
 };
 
 function render(ui: React.ReactElement) {
@@ -113,6 +146,7 @@ afterEach(() => {
   }
 
   vi.restoreAllMocks();
+  while (unregisters.length > 0) unregisters.pop()?.();
 });
 
 describe('EditsTab', () => {
@@ -203,5 +237,16 @@ describe('EditsTab', () => {
     expect(
       container?.querySelector<HTMLButtonElement>('[aria-label="Reset all edits"]')?.disabled,
     ).toBe(true);
+  });
+
+  it('uses plugin label functions for plugin edit history rows', () => {
+    unregisters.push(registerSandboxEdit(historyPluginSpec));
+    const edit: HistoryPluginEdit = { kind: 'plugin:test.history', value: 'custom row' };
+    const session = EditSession.empty().push(edit);
+
+    renderEditsTab(makeSandboxValue({ session }));
+
+    expect(container?.textContent).toContain('plugin:test.history');
+    expect(container?.textContent).toContain('Plugin history: custom row');
   });
 });

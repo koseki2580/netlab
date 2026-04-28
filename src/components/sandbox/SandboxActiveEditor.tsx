@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import { useSandbox } from '../../sandbox/useSandbox';
+import { getSandboxPluginEditors } from '../../sandbox/plugin/registry';
 import { EditPopover } from './EditPopover';
 import { PacketEditForm } from './PacketEditForm';
 import { AclEditorForm } from './editors/AclEditorForm';
@@ -16,6 +17,7 @@ export function SandboxActiveEditor() {
 
   const dismiss = sandbox.closeEditPopover;
   const target = activeEditor.target;
+  const pluginEditors = getSandboxPluginEditors();
 
   return (
     <EditPopover
@@ -41,6 +43,17 @@ export function SandboxActiveEditor() {
         )}
         {target.kind === 'edge' && <LinkEditorForm edgeId={target.edgeId} onSubmitted={dismiss} />}
         {target.kind === 'packet' && <PacketEditForm target={target} onSubmitted={dismiss} />}
+        {pluginEditors.map((PluginEditor, index) => (
+          <PluginEditor
+            key={`plugin-editor-${index}`}
+            target={target}
+            onCommit={(edit) => {
+              sandbox.pushEdit(edit);
+              dismiss();
+            }}
+            onDismiss={dismiss}
+          />
+        ))}
       </div>
     </EditPopover>
   );

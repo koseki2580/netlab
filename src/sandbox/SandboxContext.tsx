@@ -8,8 +8,9 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { NetlabContext } from '../components/NetlabContext';
 import { NetlabError } from '../errors';
-import { hookEngine } from '../hooks/HookEngine';
+import { hookEngine as sharedHookEngine } from '../hooks/HookEngine';
 import { useSimulation } from '../simulation/SimulationContext';
 import { TutorialPresenceContext } from '../tutorials/TutorialContext';
 import { BranchedSimulationEngine } from './BranchedSimulationEngine';
@@ -70,6 +71,8 @@ export function SandboxProvider({
   enableShortcuts = true,
 }: SandboxProviderProps) {
   const simulation = useSimulation();
+  const netlabContext = useContext(NetlabContext);
+  const hookEngine = netlabContext?.hookEngine ?? sharedHookEngine;
   const tutorialPresent = useContext(TutorialPresenceContext);
   const initialSnapshotRef = useRef<SimulationSnapshot | null>(null);
   const initialSessionRef = useRef<EditSession | null>(null);
@@ -175,7 +178,7 @@ export function SandboxProvider({
       }
       void hookEngine.emit('sandbox:edit-applied', { edit });
     },
-    [commitSession],
+    [commitSession, hookEngine],
   );
 
   const undo = useCallback(() => {
@@ -191,7 +194,7 @@ export function SandboxProvider({
     const next = current.undo();
     commitSession(next);
     void hookEngine.emit('sandbox:edit-undone', { edit, head: next.head });
-  }, [commitSession]);
+  }, [commitSession, hookEngine]);
 
   const redo = useCallback(() => {
     const current = sessionRef.current;
@@ -205,7 +208,7 @@ export function SandboxProvider({
     const next = current.redo();
     commitSession(next);
     void hookEngine.emit('sandbox:edit-redone', { edit, head: next.head });
-  }, [commitSession]);
+  }, [commitSession, hookEngine]);
 
   const revertAt = useCallback(
     (index: number) => {
@@ -219,7 +222,7 @@ export function SandboxProvider({
       commitSession(next);
       void hookEngine.emit('sandbox:edit-reverted', { edit, head: next.head });
     },
-    [commitSession],
+    [commitSession, hookEngine],
   );
 
   const switchMode = useCallback(
@@ -228,7 +231,7 @@ export function SandboxProvider({
       void hookEngine.emit('sandbox:mode-changed', { mode });
       setVersion((current) => current + 1);
     },
-    [engine],
+    [engine, hookEngine],
   );
 
   const resetAll = useCallback(() => {
@@ -249,7 +252,7 @@ export function SandboxProvider({
     });
     setVersion((current) => current + 1);
     void hookEngine.emit('sandbox:reset-all', { count });
-  }, []);
+  }, [hookEngine]);
 
   const setUndoFloor = useCallback((head: number) => {
     undoFloorRef.current = Math.max(0, Math.floor(head));

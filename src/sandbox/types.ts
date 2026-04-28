@@ -45,6 +45,10 @@ export interface SimulationSnapshot {
   readonly topology: NetworkTopology;
   readonly state: SimulationState;
   readonly parameters: ProtocolParameterSet;
+  readonly meta?: {
+    readonly notes?: Readonly<Record<string, string>>;
+    readonly [key: string]: unknown;
+  };
 }
 
 export interface PacketRef {

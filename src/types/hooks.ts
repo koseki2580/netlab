@@ -49,7 +49,7 @@ export interface HookMap {
   }>;
   'sandbox:edit-rejected': HookFn<{
     edit: unknown;
-    reason: 'unknown-kind' | 'not-paused' | 'validation-failed';
+    reason: 'unknown-kind' | 'not-paused' | 'validation-failed' | 'plugin-error';
   }>;
   'sandbox:edit-applied': HookFn<{
     edit: Edit;

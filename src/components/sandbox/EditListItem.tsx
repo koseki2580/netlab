@@ -1,4 +1,6 @@
 import type { Edit } from '../../sandbox/edits';
+import { getSandboxEditLabel } from '../../sandbox/plugin/registry';
+import type { PluginEdit } from '../../sandbox/plugin/types';
 
 export interface EditListItemProps {
   readonly edit: Edit;
@@ -9,6 +11,11 @@ export interface EditListItemProps {
 }
 
 function editSubtitle(edit: Edit): string {
+  if (edit.kind.startsWith('plugin:')) {
+    const pluginEdit = edit as PluginEdit;
+    return getSandboxEditLabel(pluginEdit) ?? pluginEdit.kind;
+  }
+
   switch (edit.kind) {
     case 'packet.header':
       return `${edit.fieldPath}: ${edit.before} -> ${edit.after}`;

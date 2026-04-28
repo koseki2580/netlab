@@ -5,6 +5,8 @@ import type { PortForwardingRule, StaticRouteConfig } from '../types/routing';
 import type { PacketHop, PacketTrace, SimulationState } from '../types/simulation';
 import type { NetlabNode, NetworkTopology } from '../types/topology';
 import { cloneSnapshot } from './SimulationSnapshot';
+import { getSandboxEditSpec, isRegisteredPluginEdit } from './plugin/registry';
+import type { PluginEdit } from './plugin/types';
 import type {
   EdgeRef,
   InterfaceRef,
@@ -100,7 +102,8 @@ export type Edit =
       readonly ruleId: string;
       readonly before: SandboxAclRule;
       readonly after: SandboxAclRule;
-    };
+    }
+  | PluginEdit;
 
 export type EditKind = Edit['kind'];
 export type SandboxReducer<K extends EditKind = EditKind> = (
@@ -140,10 +143,13 @@ function isTcpFlags(value: unknown): value is TcpFlags {
   );
 }
 
-function emitRejected(edit: unknown): void {
+function emitRejected(
+  edit: unknown,
+  reason: 'unknown-kind' | 'not-paused' | 'validation-failed' | 'plugin-error' = 'unknown-kind',
+): void {
   void hookEngine.emit('sandbox:edit-rejected', {
     edit,
-    reason: 'unknown-kind',
+    reason,
   });
 }
 
@@ -243,7 +249,7 @@ export function isEdit(value: unknown): value is Edit {
         isAclRule(value.after)
       );
     default:
-      return false;
+      return isRegisteredPluginEdit(value);
   }
 }
 
@@ -822,10 +828,25 @@ export function reduceEdit(snapshot: SimulationSnapshot, edit: unknown): Simulat
   }
 
   const reducer = getReducer(kind);
-  if (!reducer || !isEdit(edit)) {
+  if (reducer) {
+    if (!isEdit(edit)) {
+      emitRejected(edit);
+      return snapshot;
+    }
+
+    return reducer(snapshot, edit as never);
+  }
+
+  const pluginSpec = getSandboxEditSpec(kind);
+  if (!pluginSpec || !pluginSpec.validator(edit)) {
     emitRejected(edit);
     return snapshot;
   }
 
-  return reducer(snapshot, edit as never);
+  try {
+    return pluginSpec.reducer(snapshot, edit);
+  } catch {
+    emitRejected(edit, 'plugin-error');
+    return snapshot;
+  }
 }

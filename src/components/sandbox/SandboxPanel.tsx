@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
-import { hookEngine } from '../../hooks/HookEngine';
+import { useContext, useEffect, useRef, useState } from 'react';
+import { hookEngine as sharedHookEngine } from '../../hooks/HookEngine';
 import { shortcutRegistry } from '../../sandbox/shortcuts/registry';
 import { useSandbox } from '../../sandbox/useSandbox';
 import type { SandboxMode } from '../../sandbox/types';
+import { NetlabContext } from '../NetlabContext';
 import { EditsTab } from './EditsTab';
 import { ExportButton } from './ExportButton';
 import { ImportDialog } from './ImportDialog';
@@ -58,6 +59,8 @@ function SandboxTabBody({ axis }: { readonly axis: SandboxAxis }) {
 
 export function SandboxPanel() {
   const sandbox = useSandbox();
+  const netlabContext = useContext(NetlabContext);
+  const hookEngine = netlabContext?.hookEngine ?? sharedHookEngine;
   const [open, setOpen] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
   const [activeAxis, setActiveAxis] = useState<SandboxAxis>(() => getInitialAxis());

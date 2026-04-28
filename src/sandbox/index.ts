@@ -20,6 +20,12 @@ export {
 } from './types';
 export { isEdit, isEditWithKind, PLACEHOLDER_EDIT_KINDS } from './edits';
 export {
+  getSandboxEditSpec,
+  registerSandboxEdit,
+  registeredSandboxEditKinds,
+} from './plugin/registry';
+export { testPlugin } from './plugin/testPlugin';
+export {
   SANDBOX_STATE_PARAM,
   decodeEdit,
   decodeSandboxEdits,
@@ -29,6 +35,16 @@ export {
 } from './urlCodec';
 export { useUndoRedo } from './useUndoRedo';
 export type { Edit, EditKind } from './edits';
+export type {
+  PluginEdit,
+  PluginEditKind,
+  PluginEditSerializer,
+  PluginEditSpec,
+  PluginEditorProps,
+  PluginEditorTarget,
+  PluginTestOptions,
+  PluginTestResult,
+} from './plugin/types';
 export type {
   EdgeRef,
   InterfaceRef,
