@@ -6,6 +6,8 @@
  */
 import { useEffect } from 'react';
 import { useOptionalSimulation } from '../src/simulation/SimulationContext';
+import { registerSandboxEdit } from '../src/sandbox/plugin/registry';
+import { notesPlugin } from '../examples/plugins/notes';
 
 declare global {
   interface Window {
@@ -16,7 +18,16 @@ declare global {
   }
 }
 
+let notesRegistered = false;
+
+function ensureNotesPluginRegistered() {
+  if (notesRegistered) return;
+  registerSandboxEdit(notesPlugin);
+  notesRegistered = true;
+}
+
 export function E2eTraceHook() {
+  ensureNotesPluginRegistered();
   const simCtx = useOptionalSimulation();
   useEffect(() => {
     if (simCtx) {
