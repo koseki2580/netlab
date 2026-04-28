@@ -15,6 +15,7 @@ Core specifications for the overall design of Netlab and for creating extensions
 - [Mismatch Report](api/mismatch-report.md) - Results of the API documentation audit
 - [Hooks](core/hooks.md) - Mechanism of the React-independent event hook engine
 - [Plugins](core/plugins.md) - Plugin mechanism for feature extensions
+- [Sandbox Edit Plugins](core/sandbox-plugin.md) - Public API for registering custom sandbox edit variants
 - [Errors](core/errors.md) - NetlabError taxonomy and recovery guidance
 
 ### 💻 UI & Interaction (`ui/`)
