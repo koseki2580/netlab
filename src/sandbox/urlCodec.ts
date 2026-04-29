@@ -1,8 +1,10 @@
 import { isEdit, type Edit } from './edits';
 import { getSandboxEditSpec } from './plugin/registry';
 import type { PluginEdit } from './plugin/types';
+import type { TraceAnnotationEdit } from './annotations/types';
 
 export const SANDBOX_STATE_PARAM = 'sandboxState';
+export const SANDBOX_URL_ANNOTATION_LIMIT = 150;
 
 interface SerializedSandboxState {
   readonly version: 1;
@@ -38,14 +40,35 @@ function fromBase64Url(value: string): string | null {
   }
 }
 
+function annotationEditContent(edit: TraceAnnotationEdit): string {
+  switch (edit.kind) {
+    case 'trace.annotate.add':
+      return edit.annotation.content;
+    case 'trace.annotate.edit':
+      return `${edit.before}${edit.after}`;
+    case 'trace.annotate.remove':
+      return edit.before.content;
+  }
+}
+
+function shouldEncodeEditInUrl(edit: Edit): boolean {
+  if (!edit.kind.startsWith('trace.annotate.')) return true;
+  return annotationEditContent(edit as TraceAnnotationEdit).length <= SANDBOX_URL_ANNOTATION_LIMIT;
+}
+
+export function skippedAnnotationUrlEdits(edits: readonly Edit[]): Edit[] {
+  return edits.filter((edit) => !shouldEncodeEditInUrl(edit));
+}
+
 export function encodeSandboxEdits(edits: readonly Edit[]): string | null {
-  if (edits.length === 0) {
+  const encodedEdits = edits.filter(shouldEncodeEditInUrl).map(encodeEdit);
+  if (encodedEdits.length === 0) {
     return null;
   }
 
   const payload: SerializedSandboxState = {
     version: 1,
-    edits: edits.map(encodeEdit),
+    edits: encodedEdits,
   };
 
   return toBase64Url(JSON.stringify(payload));

@@ -8,6 +8,8 @@ export {
   type SandboxProviderProps,
 } from './SandboxContext';
 export { cloneSnapshot, fromEngine, snapshotEquals, toEngine } from './SimulationSnapshot';
+export { isTraceAnnotation, isTraceAnnotationEditWithKind } from './annotations/edits';
+export { useSandboxAnnotations } from './annotations/useSandboxAnnotations';
 export {
   DEFAULT_PARAMETERS,
   isEdgeRef,
@@ -35,6 +37,7 @@ export {
 } from './urlCodec';
 export { useUndoRedo } from './useUndoRedo';
 export type { Edit, EditKind } from './edits';
+export type { AnnotationAuthor, TraceAnnotation, TraceAnnotationEdit } from './annotations/types';
 export type {
   PluginEdit,
   PluginEditKind,

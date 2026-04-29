@@ -6,6 +6,7 @@ import type { SimulationState } from '../types/simulation';
 import type { NetworkTopology } from '../types/topology';
 import { cloneSnapshot, fromEngine, snapshotEquals, toEngine } from './SimulationSnapshot';
 import { DEFAULT_PARAMETERS, type ProtocolParameterSet } from './types';
+import type { TraceAnnotation } from './annotations/types';
 
 function makeEngine(topology: NetworkTopology = directTopology()): SimulationEngine {
   return new SimulationEngine(topology, new HookEngine());
@@ -20,6 +21,17 @@ function customParameters(): ProtocolParameterSet {
   };
 }
 
+function annotation(overrides: Partial<TraceAnnotation> = {}): TraceAnnotation {
+  return {
+    id: 'annotation-1',
+    traceEventId: 'event-1',
+    author: 'user',
+    content: 'note',
+    createdAt: 1,
+    ...overrides,
+  };
+}
+
 describe('SimulationSnapshot', () => {
   it('captures engine state, topology, and default parameters', () => {
     const snapshot = fromEngine(makeEngine());
@@ -28,6 +40,7 @@ describe('SimulationSnapshot', () => {
     expect(snapshot.capturedAt).toBe(-1);
     expect(snapshot.topology.nodes).toHaveLength(2);
     expect(snapshot.parameters).toEqual(DEFAULT_PARAMETERS);
+    expect(snapshot.annotations).toEqual([]);
   });
 
   it('accepts protocol parameter overrides', () => {
@@ -65,13 +78,18 @@ describe('SimulationSnapshot', () => {
   });
 
   it('cloneSnapshot creates a structurally equal snapshot with independent references', () => {
-    const snapshot = fromEngine(makeEngine());
+    const snapshot = cloneSnapshot({
+      ...fromEngine(makeEngine()),
+      annotations: [annotation()],
+    });
     const cloned = cloneSnapshot(snapshot);
 
     expect(snapshotEquals(cloned, snapshot)).toBe(true);
     expect(cloned).not.toBe(snapshot);
     expect(cloned.state).not.toBe(snapshot.state);
     expect(cloned.topology).not.toBe(snapshot.topology);
+    expect(cloned.annotations).toEqual(snapshot.annotations);
+    expect(cloned.annotations).not.toBe(snapshot.annotations);
   });
 
   it('snapshotEquals ignores ids for same structural input', () => {
@@ -80,6 +98,24 @@ describe('SimulationSnapshot', () => {
 
     expect(first.id).not.toBe(second.id);
     expect(snapshotEquals(first, second)).toBe(true);
+  });
+
+  it('snapshotEquals ignores annotations because they are metadata', () => {
+    const base = fromEngine(makeEngine());
+    const annotated = cloneSnapshot({
+      ...base,
+      annotations: [annotation()],
+    });
+
+    expect(snapshotEquals(base, annotated)).toBe(true);
+  });
+
+  it('forces preseeded annotations to scenario author', () => {
+    const snapshot = fromEngine(makeEngine(), customParameters(), {
+      preseedAnnotations: [annotation({ author: 'user' })],
+    });
+
+    expect(snapshot.annotations).toEqual([annotation({ author: 'scenario' })]);
   });
 
   it('snapshotEquals detects differing step indexes', () => {

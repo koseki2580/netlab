@@ -1,6 +1,8 @@
 import { useRef } from 'react';
+import { traceEventId } from '../../sandbox/annotations/anchors';
 import { useSandbox } from '../../sandbox/useSandbox';
 import type { PacketHop, PacketTrace } from '../../types/simulation';
+import { TraceAnnotationAnchor } from './annotations/TraceAnnotationAnchor';
 import { PcapDownloadButton } from './PcapDownloadButton';
 
 function currentTrace(traces: PacketTrace[], currentTraceId: string | null): PacketTrace | null {
@@ -40,9 +42,11 @@ function firstDivergence(
 
 function HopPill({
   hop,
+  trace,
   divergent,
 }: {
   readonly hop: PacketHop | undefined;
+  readonly trace: PacketTrace | null;
   readonly divergent: boolean;
 }) {
   return (
@@ -64,6 +68,7 @@ function HopPill({
       }}
     >
       {hop ? `${hop.step}: ${hop.event}` : 'missing'}
+      {hop && trace ? <TraceAnnotationAnchor traceEventId={traceEventId(trace, hop)} /> : null}
     </span>
   );
 }
@@ -150,6 +155,7 @@ export function DiffTimeline() {
               <HopPill
                 key={`${branch}-${index}`}
                 hop={trace?.hops[index]}
+                trace={trace}
                 divergent={index === divergence}
               />
             ))}

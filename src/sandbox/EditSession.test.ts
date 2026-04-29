@@ -62,6 +62,16 @@ describe('EditSession', () => {
     expect(registeredKinds()).toContain('node.route.add');
   });
 
+  it('registers trace annotation reducers as built-in edits', () => {
+    expect(registeredKinds()).toEqual(
+      expect.arrayContaining([
+        'trace.annotate.add',
+        'trace.annotate.edit',
+        'trace.annotate.remove',
+      ]),
+    );
+  });
+
   it('empty session apply returns the original snapshot', () => {
     const snapshot = makeSnapshot();
 
@@ -203,6 +213,23 @@ describe('EditSession', () => {
     const result = EditSession.empty().push({ kind: 'noop' }).apply(snapshot);
 
     expect(result).toBe(snapshot);
+  });
+
+  it('applies trace annotations through the shared reducer registry', () => {
+    const snapshot = makeSnapshot();
+    const annotation = {
+      id: 'annotation-1',
+      traceEventId: 'event-1',
+      author: 'user' as const,
+      content: 'Watch this hop',
+      createdAt: snapshot.capturedAt,
+    };
+
+    const result = EditSession.empty()
+      .push({ kind: 'trace.annotate.add', annotation })
+      .apply(snapshot);
+
+    expect(result.annotations).toEqual([annotation]);
   });
 
   it.each(inertEdits)('%s applies as a no-op when its target is absent', (edit) => {

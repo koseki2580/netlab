@@ -11,12 +11,14 @@ export class BranchedSimulationEngine {
   private currentMode: SandboxMode;
   private baselineEngine: SimulationEngine | null;
   private whatIfEngine: SimulationEngine;
+  private currentSnapshot: SimulationSnapshot;
   private listeners = new Set<Listener>();
   private disposed = false;
   private currentParameters: ProtocolParameterSet;
 
   constructor(base: SimulationSnapshot, opts: { mode?: SandboxMode } = {}) {
     this.rootSnapshot = base;
+    this.currentSnapshot = base;
     this.currentParameters = base.parameters;
     this.currentMode = opts.mode ?? 'alpha';
     this.whatIfEngine = toEngine(base);
@@ -35,12 +37,17 @@ export class BranchedSimulationEngine {
     return this.whatIfEngine;
   }
 
+  get snapshot(): SimulationSnapshot {
+    return this.currentSnapshot;
+  }
+
   get parameters(): ProtocolParameterSet {
     return this.currentParameters;
   }
 
   applyEdits(session: EditSession): void {
     const nextSnapshot = session.apply(this.rootSnapshot);
+    this.currentSnapshot = nextSnapshot;
     this.currentParameters = nextSnapshot.parameters;
     this.whatIfEngine = toEngine(nextSnapshot);
     this.notify();
@@ -64,7 +71,11 @@ export class BranchedSimulationEngine {
     }
 
     if (mode === 'beta') {
-      const snapshot = fromEngine(this.whatIfEngine, this.currentParameters);
+      const snapshot = {
+        ...fromEngine(this.whatIfEngine, this.currentParameters),
+        annotations: this.currentSnapshot.annotations,
+      };
+      this.currentSnapshot = snapshot;
       this.baselineEngine = toEngine(snapshot);
       this.whatIfEngine = toEngine(snapshot);
     } else {

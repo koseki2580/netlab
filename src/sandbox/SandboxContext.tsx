@@ -19,7 +19,12 @@ import { fromEngine } from './SimulationSnapshot';
 import type { Edit } from './edits';
 import { createShortcutDispatcher } from './shortcuts/dispatcher';
 import { shortcutRegistry } from './shortcuts/registry';
-import { decodeSandboxEdits, updateSandboxSearch } from './urlCodec';
+import {
+  decodeSandboxEdits,
+  SANDBOX_URL_ANNOTATION_LIMIT,
+  skippedAnnotationUrlEdits,
+  updateSandboxSearch,
+} from './urlCodec';
 import { useSandboxShortcuts } from './useUndoRedo';
 import type {
   EdgeRef,
@@ -129,6 +134,13 @@ export function SandboxProvider({
   }, [session]);
 
   useEffect(() => {
+    for (const edit of skippedAnnotationUrlEdits(session.edits)) {
+      void hookEngine.emit('sandbox:url-overflow', {
+        edit,
+        reason: 'annotation-too-long',
+        limit: SANDBOX_URL_ANNOTATION_LIMIT,
+      });
+    }
     const nextSearch = updateSandboxSearch(window.location.search, session.edits);
     const currentSearch = window.location.search;
     if (nextSearch === currentSearch) {
@@ -139,7 +151,7 @@ export function SandboxProvider({
       '',
       `${window.location.pathname}${nextSearch}${window.location.hash}`,
     );
-  }, [session]);
+  }, [hookEngine, session]);
 
   useEffect(
     () => () => {

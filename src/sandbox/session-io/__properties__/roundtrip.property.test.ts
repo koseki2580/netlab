@@ -119,6 +119,33 @@ const editArb: fc.Arbitrary<Edit> = fc.oneof(
     before: { id: 'acl-1', action: 'deny', proto: 'tcp', dstPort: 22, order: 10 },
     after: { id: 'acl-1', action: 'permit', proto: 'tcp', dstPort: 80, order: 20 },
   } satisfies Edit),
+  fc.constant({
+    kind: 'trace.annotate.add',
+    annotation: {
+      id: 'annotation-1',
+      traceEventId: 'trace-1:0',
+      author: 'user',
+      content: 'note',
+      createdAt: 0,
+    },
+  } satisfies Edit),
+  fc.constant({
+    kind: 'trace.annotate.edit',
+    id: 'annotation-1',
+    before: 'note',
+    after: 'updated',
+  } satisfies Edit),
+  fc.constant({
+    kind: 'trace.annotate.remove',
+    id: 'annotation-1',
+    before: {
+      id: 'annotation-1',
+      traceEventId: 'trace-1:0',
+      author: 'user',
+      content: 'note',
+      createdAt: 0,
+    },
+  } satisfies Edit),
 );
 
 describe('sandbox session JSON round-trip property', () => {

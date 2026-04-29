@@ -4,6 +4,7 @@ import {
   decodeSandboxEdits,
   encodeEdit,
   encodeSandboxEdits,
+  skippedAnnotationUrlEdits,
   updateSandboxSearch,
 } from './urlCodec';
 import type { Edit } from './edits';
@@ -116,5 +117,36 @@ describe('sandbox url codec', () => {
     const search = updateSandboxSearch('?sandbox=1', [edit]);
 
     expect(decodeSandboxEdits(search)).toEqual([edit]);
+  });
+
+  it('round-trips short trace annotation edits through sandboxState', () => {
+    const edit: Edit = {
+      kind: 'trace.annotate.add',
+      annotation: {
+        id: 'annotation-1',
+        traceEventId: 'trace-1:0',
+        author: 'user',
+        content: 'short note',
+        createdAt: 0,
+      },
+    };
+
+    expect(decodeSandboxEdits(updateSandboxSearch('?sandbox=1', [edit]))).toEqual([edit]);
+  });
+
+  it('omits long trace annotation edits from sandboxState', () => {
+    const edit: Edit = {
+      kind: 'trace.annotate.add',
+      annotation: {
+        id: 'annotation-1',
+        traceEventId: 'trace-1:0',
+        author: 'user',
+        content: 'x'.repeat(151),
+        createdAt: 0,
+      },
+    };
+
+    expect(decodeSandboxEdits(updateSandboxSearch('?sandbox=1', [edit]))).toEqual([]);
+    expect(skippedAnnotationUrlEdits([edit])).toEqual([edit]);
   });
 });

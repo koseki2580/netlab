@@ -2,6 +2,7 @@ import { HookEngine } from '../hooks/HookEngine';
 import { SimulationEngine } from '../simulation/SimulationEngine';
 import type { SimulationState } from '../types/simulation';
 import type { NetworkTopology } from '../types/topology';
+import type { TraceAnnotation } from './annotations/types';
 import { DEFAULT_PARAMETERS, type ProtocolParameterSet, type SimulationSnapshot } from './types';
 
 type Freezable =
@@ -82,6 +83,7 @@ function structuralString(value: unknown): string {
 export function fromEngine(
   engine: SimulationEngine,
   parameters: ProtocolParameterSet = DEFAULT_PARAMETERS,
+  options: { readonly preseedAnnotations?: readonly TraceAnnotation[] } = {},
 ): SimulationSnapshot {
   const state = cloneFrozen(engine.getState());
   return deepFreeze({
@@ -90,6 +92,12 @@ export function fromEngine(
     topology: cloneFrozen(engine.getTopology()),
     state,
     parameters: cloneFrozen(parameters),
+    annotations: cloneFrozen(
+      (options.preseedAnnotations ?? []).map((annotation) => ({
+        ...annotation,
+        author: 'scenario' as const,
+      })),
+    ),
   });
 }
 
@@ -126,6 +134,7 @@ export function cloneSnapshot(snapshot: SimulationSnapshot): SimulationSnapshot 
     topology: structuredClone(snapshot.topology) as NetworkTopology,
     state: structuredClone(snapshot.state) as SimulationState,
     parameters: structuredClone(snapshot.parameters) as ProtocolParameterSet,
+    annotations: structuredClone(snapshot.annotations) as readonly TraceAnnotation[],
   };
   if (snapshot.meta === undefined) {
     return deepFreeze(nextBase);

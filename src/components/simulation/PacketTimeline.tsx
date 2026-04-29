@@ -1,7 +1,9 @@
 import { memo, useEffect, useRef } from 'react';
+import { traceEventId } from '../../sandbox/annotations/anchors';
 import { useSandboxOrNull } from '../../sandbox/useSandbox';
 import { useSimulation } from '../../simulation/SimulationContext';
-import type { PacketHop } from '../../types/simulation';
+import type { PacketHop, PacketTrace } from '../../types/simulation';
+import { TraceAnnotationAnchor } from '../sandbox/annotations/TraceAnnotationAnchor';
 import { useNetlabContext } from '../NetlabContext';
 import { TraceSelector } from './TraceSelector';
 
@@ -68,12 +70,14 @@ function formatHopAnnotation(hop: PacketHop): string | null {
 
 function HopRow({
   hop,
+  trace,
   nextHopLabel,
   isActive,
   onClick,
   onEdit,
 }: {
   hop: PacketHop;
+  trace: PacketTrace;
   nextHopLabel: string | null;
   isActive: boolean;
   onClick: () => void;
@@ -145,6 +149,7 @@ function HopRow({
         >
           {label}
         </span>
+        <TraceAnnotationAnchor traceEventId={traceEventId(trace, hop)} />
         <span
           style={{
             color: 'var(--netlab-text-primary)',
@@ -284,6 +289,7 @@ export const PacketTimeline = memo(function PacketTimeline() {
             <div key={hop.step} data-step={hop.step}>
               <HopRow
                 hop={hop}
+                trace={trace}
                 nextHopLabel={
                   hop.toNodeId
                     ? (topology.nodes.find((node) => node.id === hop.toNodeId)?.data.label ??

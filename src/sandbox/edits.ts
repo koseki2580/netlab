@@ -4,6 +4,9 @@ import type { AclRule as RuntimeAclRule } from '../types/acl';
 import type { PortForwardingRule, StaticRouteConfig } from '../types/routing';
 import type { PacketHop, PacketTrace, SimulationState } from '../types/simulation';
 import type { NetlabNode, NetworkTopology } from '../types/topology';
+import { isTraceAnnotation, isTraceAnnotationEdit } from './annotations/edits';
+import { reduceAnnotation } from './annotations/reducer';
+import type { TraceAnnotationEdit } from './annotations/types';
 import { cloneSnapshot } from './SimulationSnapshot';
 import { getSandboxEditSpec, isRegisteredPluginEdit } from './plugin/registry';
 import type { PluginEdit } from './plugin/types';
@@ -103,6 +106,7 @@ export type Edit =
       readonly before: SandboxAclRule;
       readonly after: SandboxAclRule;
     }
+  | TraceAnnotationEdit
   | PluginEdit;
 
 export type EditKind = Edit['kind'];
@@ -248,6 +252,12 @@ export function isEdit(value: unknown): value is Edit {
         isAclRule(value.before) &&
         isAclRule(value.after)
       );
+    case 'trace.annotate.add':
+      return isTraceAnnotation(value.annotation);
+    case 'trace.annotate.edit':
+      return isTraceAnnotationEdit(value);
+    case 'trace.annotate.remove':
+      return isTraceAnnotationEdit(value);
     default:
       return isRegisteredPluginEdit(value);
   }
@@ -815,6 +825,9 @@ registerReducer('node.acl.remove', (snapshot, edit) =>
 registerReducer('node.acl.edit', (snapshot, edit) =>
   nodeRuleEdit(snapshot, edit.target.nodeId, 'sandboxAclRules', edit.ruleId, edit.after),
 );
+registerReducer('trace.annotate.add', reduceAnnotation);
+registerReducer('trace.annotate.edit', reduceAnnotation);
+registerReducer('trace.annotate.remove', reduceAnnotation);
 
 export function reduceEdit(snapshot: SimulationSnapshot, edit: unknown): SimulationSnapshot {
   const kind =

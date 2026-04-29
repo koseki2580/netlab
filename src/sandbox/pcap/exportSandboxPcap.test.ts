@@ -41,6 +41,7 @@ function makeRecord(step = 0): PcapRecord {
   return {
     hop: {
       step,
+      traceEventId: `trace-1:${step}`,
       nodeId: 'n1',
       nodeLabel: 'N1',
       srcIp: '10.0.0.1',
@@ -207,6 +208,32 @@ describe('exportSandboxPcap — combined branch (non-Safari)', () => {
     const bytes = new Uint8Array(await result!.blob.arrayBuffer());
     const text = new TextDecoder().decode(bytes);
     expect(text).toContain('whatif');
+  });
+
+  it('EPB comment option includes annotation content for annotated records', async () => {
+    const engine = makeEngineMock({
+      whatIfRecords: [makeRecord(0)],
+      baselineRecords: [],
+    });
+    Object.defineProperty(engine, 'snapshot', {
+      value: {
+        annotations: [
+          {
+            id: 'annotation-1',
+            traceEventId: 'trace-1:0',
+            author: 'user',
+            content: 'See **fragmentation** here',
+            createdAt: 0,
+          },
+        ],
+      },
+    });
+
+    const [result] = exportSandboxPcap(engine, 'combined', opts);
+    const bytes = new Uint8Array(await result!.blob.arrayBuffer());
+    const text = new TextDecoder().decode(bytes);
+    expect(text).toContain('whatif');
+    expect(text).toContain('See fragmentation here');
   });
 
   it('falls back to single whatif PCAP when baseline engine is absent', () => {

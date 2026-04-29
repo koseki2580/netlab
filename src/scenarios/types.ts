@@ -1,4 +1,5 @@
 import type { NetworkTopology } from '../types/topology';
+import type { TraceAnnotation } from '../sandbox/annotations/types';
 
 export interface ScenarioMetadata {
   readonly id: string;
@@ -20,4 +21,5 @@ export interface Scenario {
   readonly metadata: ScenarioMetadata;
   readonly topology: NetworkTopology;
   readonly sampleFlows?: readonly ScenarioSampleFlow[];
+  readonly preseedAnnotations?: readonly TraceAnnotation[];
 }

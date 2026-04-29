@@ -238,6 +238,7 @@ export {
   registeredSandboxEditKinds,
   testPlugin,
   updateSandboxSearch,
+  useSandboxAnnotations,
   useSandbox,
   useUndoRedo,
 } from './sandbox';
@@ -258,6 +259,9 @@ export type {
   ProtocolParameterSet,
   SandboxMode,
   SimulationSnapshot,
+  AnnotationAuthor,
+  TraceAnnotation,
+  TraceAnnotationEdit,
 } from './sandbox';
 export { BeforeAfterView, DiffTimeline, EditPopover, SandboxPanel } from './components/sandbox';
 

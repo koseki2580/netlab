@@ -37,6 +37,7 @@ export interface NatTranslation {
 }
 
 export interface PacketHop {
+  traceEventId?: string;
   step: number;
   nodeId: string;
   nodeLabel: string;

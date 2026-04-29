@@ -90,6 +90,11 @@ export interface HookMap {
     branch: 'alpha' | 'baseline' | 'whatif' | 'combined';
     bytes: number;
   }>;
+  'sandbox:url-overflow': HookFn<{
+    edit: Edit;
+    reason: 'annotation-too-long';
+    limit: number;
+  }>;
 }
 
 export type HookPoint = keyof HookMap;

@@ -1,10 +1,15 @@
+import { useState } from 'react';
 import { useSandbox } from '../../sandbox/useSandbox';
+import { AnnotationListPanel } from './annotations/AnnotationListPanel';
 import { EditListItem } from './EditListItem';
 import { buttonStyle } from './editors/editorStyles';
 
 export function EditsTab() {
   const sandbox = useSandbox();
-  const entries = sandbox.session.backing;
+  const [annotationsOnly, setAnnotationsOnly] = useState(false);
+  const entries = annotationsOnly
+    ? sandbox.session.backing.filter((edit) => edit.kind.startsWith('trace.annotate.'))
+    : sandbox.session.backing;
   const activeCount = sandbox.session.head;
 
   const undoTo = (index: number) => {
@@ -34,6 +39,16 @@ export function EditsTab() {
           Reset all
         </button>
       </header>
+      <label style={{ display: 'block', margin: '8px 0', fontSize: 11 }}>
+        <input
+          type="checkbox"
+          checked={annotationsOnly}
+          onChange={(event) => setAnnotationsOnly(event.currentTarget.checked)}
+        />{' '}
+        Show annotations only
+      </label>
+
+      {annotationsOnly ? <AnnotationListPanel /> : null}
 
       {entries.length === 0 ? (
         <p style={{ margin: 0, color: 'var(--netlab-text-muted)', fontSize: 11 }}>No edits yet</p>

@@ -1,6 +1,8 @@
 import { useId } from 'react';
 import { useSandbox } from '../../sandbox/useSandbox';
+import { traceEventIdFromParts } from '../../sandbox/annotations/anchors';
 import { getSandboxPluginEditors } from '../../sandbox/plugin/registry';
+import { AnnotationEditorPopover } from './annotations/AnnotationEditorPopover';
 import { EditPopover } from './EditPopover';
 import { PacketEditForm } from './PacketEditForm';
 import { AclEditorForm } from './editors/AclEditorForm';
@@ -42,7 +44,15 @@ export function SandboxActiveEditor() {
           <MtuEditorForm nodeId={target.nodeId} ifaceId={target.ifaceId} onSubmitted={dismiss} />
         )}
         {target.kind === 'edge' && <LinkEditorForm edgeId={target.edgeId} onSubmitted={dismiss} />}
-        {target.kind === 'packet' && <PacketEditForm target={target} onSubmitted={dismiss} />}
+        {target.kind === 'packet' && (
+          <>
+            <PacketEditForm target={target} onSubmitted={dismiss} />
+            <AnnotationEditorPopover
+              traceEventId={traceEventIdFromParts(target.traceId, target.hopIndex)}
+              onClose={dismiss}
+            />
+          </>
+        )}
         {pluginEditors.map((PluginEditor, index) => (
           <PluginEditor
             key={`plugin-editor-${index}`}

@@ -145,4 +145,35 @@ describe('sandbox session JSON codec', () => {
 
     expect(decodeSession(exported)).toEqual(session);
   });
+
+  it('forces imported annotation authors to user', () => {
+    const exported = encodeSession(
+      EditSession.empty().push({
+        kind: 'trace.annotate.add',
+        annotation: {
+          id: 'annotation-1',
+          traceEventId: 'trace-1:0',
+          author: 'scenario',
+          content: 'imported',
+          createdAt: 0,
+        },
+      }),
+      {
+        scenarioId: 'fragmented-echo',
+        initialParameters: DEFAULT_PARAMETERS,
+        savedAt: '2026-04-21T10:30:00.000Z',
+      },
+    );
+
+    expect(decodeSession(exported).edits[0]).toEqual({
+      kind: 'trace.annotate.add',
+      annotation: {
+        id: 'annotation-1',
+        traceEventId: 'trace-1:0',
+        author: 'user',
+        content: 'imported',
+        createdAt: 0,
+      },
+    });
+  });
 });

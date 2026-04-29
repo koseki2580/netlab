@@ -1,5 +1,6 @@
 import { buildPcap, serializePcapFrame } from '../../utils/pcapSerializer';
 import type { PcapRecord } from '../../utils/pcapSerializer';
+import { annotationCommentsForEvent } from '../annotations/plainText';
 import type { BranchedSimulationEngine } from '../BranchedSimulationEngine';
 
 export type PcapBranch = 'alpha' | 'baseline' | 'whatif' | 'combined';
@@ -24,8 +25,9 @@ const PCAPNG_IDB = new Uint8Array([
   1, 0, 0, 0, 0x14, 0, 0, 0, 1, 0, 0, 0, 0xff, 0xff, 0, 0, 0x14, 0, 0, 0,
 ]);
 
-const LABEL_BASELINE = new Uint8Array([98, 97, 115, 101, 108, 105, 110, 101]); // "baseline" (8 bytes, no pad)
-const LABEL_WHATIF = new Uint8Array([119, 104, 97, 116, 105, 102, 0, 0]); // "whatif\0\0" (padded to 8)
+const LABEL_BASELINE = 'baseline';
+const LABEL_WHATIF = 'whatif';
+const textEncoder = new TextEncoder();
 
 function pad(n: number): string {
   return String(n).padStart(2, '0');
@@ -45,12 +47,35 @@ function toBlob(bytes: Uint8Array): Blob {
   return new Blob([Uint8Array.from(bytes)], { type: PCAP_MIME });
 }
 
-function buildPcapngEPB(record: PcapRecord, label: Uint8Array, labelRawLen: number): Uint8Array {
+function optionComment(value: string): Uint8Array {
+  const raw = textEncoder.encode(value);
+  const paddedLength = (raw.length + 3) & ~3;
+  const out = new Uint8Array(4 + paddedLength);
+  const dv = new DataView(out.buffer);
+  dv.setUint16(0, 1, true);
+  dv.setUint16(2, raw.length, true);
+  out.set(raw, 4);
+  return out;
+}
+
+function buildOptions(comments: readonly string[]): Uint8Array {
+  const parts = comments.map(optionComment);
+  const total = parts.reduce((sum, part) => sum + part.length, 4);
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const part of parts) {
+    out.set(part, offset);
+    offset += part.length;
+  }
+  return out;
+}
+
+function buildPcapngEPB(record: PcapRecord, comments: readonly string[]): Uint8Array {
   const frameBytes = serializePcapFrame(record.frame);
   const capLen = frameBytes.length;
   const paddedData = (capLen + 3) & ~3;
-  // Options: opt_comment(2+2+8=12) + opt_endofopt(2+2=4) = 16 bytes
-  const btl = 32 + paddedData + 16;
+  const optionBytes = buildOptions(comments);
+  const btl = 32 + paddedData + optionBytes.length;
   const buf = new Uint8Array(btl);
   const dv = new DataView(buf.buffer);
 
@@ -77,27 +102,39 @@ function buildPcapngEPB(record: PcapRecord, label: Uint8Array, labelRawLen: numb
   o += 4;
   buf.set(frameBytes, o);
   o += paddedData;
-  // opt_comment: code=1, length=rawLen, value=label (padded 8 bytes)
-  dv.setUint16(o, 1, true);
-  o += 2;
-  dv.setUint16(o, labelRawLen, true);
-  o += 2;
-  buf.set(label, o);
-  o += 8;
-  // opt_endofopt: zeros already in buf; skip 4
-  o += 4;
+  buf.set(optionBytes, o);
+  o += optionBytes.length;
   dv.setUint32(o, btl, true); // BTL repeated
 
   return buf;
 }
 
+function commentsForRecord(
+  record: PcapRecord,
+  label: string,
+  engine: BranchedSimulationEngine,
+): string[] {
+  const comments = [label];
+  const annotationComment = annotationCommentsForEvent(
+    engine.snapshot?.annotations ?? [],
+    record.hop.traceEventId,
+  );
+  if (annotationComment) comments.push(annotationComment);
+  return comments;
+}
+
 function buildCombinedPcapng(
   baselineRecords: PcapRecord[],
   whatIfRecords: PcapRecord[],
+  engine: BranchedSimulationEngine,
 ): Uint8Array {
   const parts: Uint8Array[] = [PCAPNG_SHB, PCAPNG_IDB];
-  for (const r of baselineRecords) parts.push(buildPcapngEPB(r, LABEL_BASELINE, 8));
-  for (const r of whatIfRecords) parts.push(buildPcapngEPB(r, LABEL_WHATIF, 6));
+  for (const r of baselineRecords) {
+    parts.push(buildPcapngEPB(r, commentsForRecord(r, LABEL_BASELINE, engine)));
+  }
+  for (const r of whatIfRecords) {
+    parts.push(buildPcapngEPB(r, commentsForRecord(r, LABEL_WHATIF, engine)));
+  }
   const total = parts.reduce((s, p) => s + p.length, 0);
   const out = new Uint8Array(total);
   let o = 0;
@@ -194,7 +231,7 @@ export function exportSandboxPcap(
 
   return [
     {
-      blob: toBlob(buildCombinedPcapng(bRec, wRec)),
+      blob: toBlob(buildCombinedPcapng(bRec, wRec, engine)),
       filename: `netlab-sandbox-${scenarioId}-combined-${stamp}.pcapng`,
       truncated,
     },

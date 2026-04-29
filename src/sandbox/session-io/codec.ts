@@ -1,6 +1,7 @@
 import { NetlabError } from '../../errors';
 import { EditSession } from '../EditSession';
 import type { Edit } from '../edits';
+import type { TraceAnnotationEdit } from '../annotations/types';
 import { decodeEdit, encodeEdit } from '../urlCodec';
 import { isProtocolParameterSet, type ProtocolParameterSet } from '../types';
 import {
@@ -34,6 +35,25 @@ function isoSavedAt(savedAt: string | Date | undefined): string {
     return savedAt.toISOString();
   }
   return savedAt ?? new Date().toISOString();
+}
+
+function normalizeImportedEdit(edit: Edit): Edit {
+  if (!edit.kind.startsWith('trace.annotate.')) return edit;
+  const annotationEdit = edit as TraceAnnotationEdit;
+  switch (annotationEdit.kind) {
+    case 'trace.annotate.add':
+      return {
+        ...annotationEdit,
+        annotation: { ...annotationEdit.annotation, author: 'user' },
+      };
+    case 'trace.annotate.remove':
+      return {
+        ...annotationEdit,
+        before: { ...annotationEdit.before, author: 'user' },
+      };
+    case 'trace.annotate.edit':
+      return annotationEdit;
+  }
 }
 
 export function encodeSession(
@@ -114,7 +134,7 @@ export function readExportedSession(value: unknown): DecodedExportedSession {
   migrated.backing.forEach((rawEdit, index) => {
     const edit = decodeEdit(rawEdit);
     if (edit) {
-      backing.push(edit);
+      backing.push(normalizeImportedEdit(edit));
       return;
     }
     invalid(`[netlab] sandbox session file contains invalid edits at ${index}`);

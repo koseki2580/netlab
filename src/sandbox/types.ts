@@ -1,5 +1,6 @@
 import type { SimulationState } from '../types/simulation';
 import type { NetworkTopology } from '../types/topology';
+import type { TraceAnnotation } from './annotations/types';
 
 export interface ProtocolParameterSet {
   readonly tcp: {
@@ -45,6 +46,7 @@ export interface SimulationSnapshot {
   readonly topology: NetworkTopology;
   readonly state: SimulationState;
   readonly parameters: ProtocolParameterSet;
+  readonly annotations: readonly TraceAnnotation[];
   readonly meta?: {
     readonly notes?: Readonly<Record<string, string>>;
     readonly [key: string]: unknown;
@@ -285,6 +287,7 @@ export function isSimulationSnapshot(value: unknown): value is SimulationSnapsho
     hasNumber(value, 'capturedAt') &&
     isRecord(value.topology) &&
     isRecord(value.state) &&
+    Array.isArray(value.annotations) &&
     isProtocolParameterSet(value.parameters)
   );
 }
