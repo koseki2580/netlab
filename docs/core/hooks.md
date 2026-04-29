@@ -27,6 +27,8 @@ netlab provides a Koa-style middleware hook system that lets you observe and mod
 | `sandbox:mode-changed`     | Sandbox mode switched between Live and Compare          |
 | `sandbox:session-imported` | A local JSON sandbox session was applied                |
 | `sandbox:panel-tab-opened` | The active sandbox panel tab changed                    |
+| `sandbox:pcap-exported`    | A sandbox PCAP download was created                     |
+| `sandbox:url-overflow`     | A sandbox edit was omitted from URL state due to size   |
 
 ## Usage
 
@@ -230,6 +232,25 @@ hookEngine.on('router:lookup', async (ctx, next) => {
 ```typescript
 {
   axis: 'packet' | 'node' | 'parameters' | 'traffic' | 'edits';
+}
+```
+
+### `sandbox:pcap-exported`
+
+```typescript
+{
+  branch: 'alpha' | 'baseline' | 'whatif' | 'combined';
+  bytes: number;
+}
+```
+
+### `sandbox:url-overflow`
+
+```typescript
+{
+  edit: Edit;
+  reason: 'annotation-too-long';
+  limit: number;
 }
 ```
 

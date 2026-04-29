@@ -86,6 +86,14 @@ In α (Live) mode a single what-if `.pcap` is downloaded. In β (Compare) mode a
 
 Full format and API details: [PCAP Export — Sandbox Mode](pcap-export.md#sandbox-mode).
 
+## Trace Annotations
+
+Sandbox annotations attach notes to packet trace events without changing simulation behavior. They are stored as root-level snapshot metadata and changed through `trace.annotate.*` edits, so undo, redo, history, URL state, session files, and PCAP export treat them like the rest of the sandbox edit log.
+
+The Edits tab includes an annotation-only view with author filtering and search. Packet and diff timelines render compact callouts for annotated events. Scenario-authored annotations are locked and remain read-only to learners.
+
+Full behavior and markdown rules: [Sandbox Trace Annotations](sandbox-annotations.md).
+
 ## Supported Demos
 
 The Gallery renders sandbox-ready entries in a dedicated **Interactive Sandbox** section. Today these entries are wired for sandbox mode:
@@ -115,6 +123,7 @@ The sandbox emits additive hook events through `hookEngine`:
 - `sandbox:session-imported`
 - `sandbox:panel-tab-opened`
 - `sandbox:pcap-exported`
+- `sandbox:url-overflow`
 
 These events are intended for analytics, guided onboarding, and higher-level orchestration. They are notifications, not veto points.
 
@@ -151,5 +160,6 @@ Library consumers can import:
 - [Sandbox Introduction](sandbox-intro.md)
 - [Sandbox Undo And History](sandbox-undo.md)
 - [Sandbox Session Import / Export](sandbox-session-io.md)
+- [Sandbox Trace Annotations](sandbox-annotations.md)
 - [Query Params](../deployment/query-params.md)
 - [Hook System](../core/hooks.md)

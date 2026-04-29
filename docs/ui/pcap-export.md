@@ -235,7 +235,7 @@ The combined file follows the [pcapng specification](https://www.ietf.org/archiv
 2. Interface Description Block (IDB) — 20 bytes, `LINKTYPE_ETHERNET`
 3. Enhanced Packet Blocks (EPB) — one per hop, with an `opt_comment` (option code 1) containing either `"baseline"` or `"whatif"`
 
-Wireshark 4.x reads the `opt_comment` field in the packet detail pane. The tag identifies which simulation branch each frame came from.
+Wireshark 4.x reads the `opt_comment` field in the packet detail pane. The tag identifies which simulation branch each frame came from. When a frame has sandbox trace annotations, each annotation is emitted as an additional pcapng `Comment` option on that frame. Markdown markers are stripped to plain text before export. Multiple annotations for the same frame are joined with `---` separators.
 
 #### Safari < 16 Fallback
 

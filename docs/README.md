@@ -28,6 +28,7 @@ Specifications regarding user interface implementation and canvas operations.
 - [Step-by-Step Simulation](ui/step-simulation.md) - Routing decision data model, StepSimulationController, and StepControls component
 - [Trace Inspector](ui/trace-inspector.md) - PacketTimeline, HopInspector, and TraceSummary for end-to-end packet trace inspection
 - [PCAP Export](ui/pcap-export.md) - libpcap export format, trace export API, and PacketTimeline download action
+- [Sandbox Trace Annotations](ui/sandbox-annotations.md) - Trace-event notes, author model, markdown subset, and persistence behavior
 - [Failure Simulation](ui/failure-simulation.md) - Node/link failure injection, FailureTogglePanel, and visual styling
 - [Resizable Sidebar](ui/resizable-sidebar.md) - Drag-to-resize sidebar component used across demo layouts
 - [Theming](ui/theming.md) - CSS variable-based color theming for embedding in host pages
