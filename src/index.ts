@@ -379,3 +379,27 @@ export {
   createSwitchNode,
   randomPosition,
 } from './editor/utils/nodeFactory';
+
+// UI primitives
+export {
+  Checkbox,
+  EmptyState,
+  Input,
+  Modal,
+  Select,
+  Slider,
+  ToastProvider,
+  useToast,
+} from './components/ui';
+export type {
+  CheckboxProps,
+  EmptyStateProps,
+  InputProps,
+  ModalProps,
+  SelectOption,
+  SelectProps,
+  SliderProps,
+  ToastApi,
+  ToastInput,
+  ToastKind,
+} from './components/ui';
