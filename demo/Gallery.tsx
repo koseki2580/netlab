@@ -1,12 +1,20 @@
+import type React from 'react';
 import { Link } from 'react-router-dom';
 import { scenarioRegistry } from '../src/scenarios';
 import { tutorialRegistry } from '../src/tutorials';
+import { DemoCard } from './components/DemoCard';
+import { FeaturedStrip } from './components/FeaturedStrip';
+import { SearchBox } from './components/SearchBox';
+import { Sidebar } from './components/Sidebar';
 
 const GITHUB_ICON = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
   </svg>
 );
+
+// GITHUB_ICON is kept for potential future use in Gallery layout
+void GITHUB_ICON;
 
 interface DemoCard {
   path: string;
@@ -15,6 +23,11 @@ interface DemoCard {
   scenarioId?: string;
   sandboxReady?: boolean;
   defaultSandboxTab?: 'packet' | 'node' | 'parameters' | 'traffic';
+  /** Difficulty and protocol/layer tags for the redesigned gallery. */
+  meta?: {
+    difficulty: 'beginner' | 'intermediate' | 'advanced';
+    tags?: string[];
+  };
 }
 
 interface Category {
@@ -34,16 +47,19 @@ const CATEGORIES: Category[] = [
         path: '/basic/minimal',
         title: 'Minimal',
         desc: 'Two nodes directly connected. The simplest possible setup.',
+        meta: { difficulty: 'beginner', tags: ['L1–L2'] },
       },
       {
         path: '/basic/three-tier',
         title: 'Three-Tier LAN',
         desc: 'Client → Switch → Server. L2 switching with port and MAC configuration.',
+        meta: { difficulty: 'beginner', tags: ['L2', 'MAC'] },
       },
       {
         path: '/basic/star',
         title: 'Star Topology',
         desc: 'One central switch connecting four clients and a server.',
+        meta: { difficulty: 'beginner', tags: ['L2'] },
       },
     ],
   },
@@ -56,16 +72,19 @@ const CATEGORIES: Category[] = [
         path: '/routing/client-server',
         title: 'Client–Server',
         desc: 'Full stack: private/public areas, router with static routes, live packet log.',
+        meta: { difficulty: 'beginner', tags: ['L3', 'Static'] },
       },
       {
         path: '/routing/multi-hop',
         title: 'Multi-Hop',
         desc: 'Traffic traverses two routers across three subnets before reaching the server.',
+        meta: { difficulty: 'intermediate', tags: ['L3'] },
       },
       {
         path: '/routing/dynamic',
         title: 'Dynamic Routing',
         desc: 'Switch between RIP, OSPF, and BGP to compare hop-count, SPF cost, and policy-based path selection.',
+        meta: { difficulty: 'intermediate', tags: ['RIP', 'OSPF', 'BGP'] },
       },
       {
         path: '/routing/ospf-convergence',
@@ -74,6 +93,7 @@ const CATEGORIES: Category[] = [
         scenarioId: 'ospf-convergence',
         sandboxReady: true,
         defaultSandboxTab: 'node',
+        meta: { difficulty: 'advanced', tags: ['OSPF'] },
       },
     ],
   },
@@ -89,16 +109,19 @@ const CATEGORIES: Category[] = [
         scenarioId: 'basic-arp',
         sandboxReady: true,
         defaultSandboxTab: 'packet',
+        meta: { difficulty: 'beginner', tags: ['L2', 'ARP'] },
       },
       {
         path: '/networking/vlan',
         title: 'VLAN Segmentation',
         desc: 'Compare same-VLAN switching against router-on-a-stick inter-VLAN routing, then break the trunk to observe isolation.',
+        meta: { difficulty: 'intermediate', tags: ['802.1Q'] },
       },
       {
         path: '/networking/stp',
         title: 'Spanning Tree',
         desc: 'Watch a triangle of switches elect a root bridge, block one redundant port, and reroute B→C traffic through the root.',
+        meta: { difficulty: 'advanced', tags: ['STP'] },
       },
       {
         path: '/networking/mtu-fragmentation',
@@ -107,26 +130,31 @@ const CATEGORIES: Category[] = [
         scenarioId: 'fragmented-echo',
         sandboxReady: true,
         defaultSandboxTab: 'node',
+        meta: { difficulty: 'advanced', tags: ['L3', 'ICMP'] },
       },
       {
         path: '/networking/udp',
         title: 'UDP Datagram',
         desc: 'Fire a stateless UDP datagram with no handshake. Adjust the port and payload, or send a large payload to trigger fragmentation.',
+        meta: { difficulty: 'beginner', tags: ['L4', 'UDP'] },
       },
       {
         path: '/networking/http',
         title: 'HTTP/1.1',
         desc: 'Send GET and POST requests over TCP. Inspect the HTTP request/response lifecycle with Connection: close semantics.',
+        meta: { difficulty: 'intermediate', tags: ['L7', 'HTTP'] },
       },
       {
         path: '/areas/dmz',
         title: 'DMZ Segmentation',
         desc: 'Classic three-zone topology: Private → DMZ → Public with two border routers.',
+        meta: { difficulty: 'intermediate', tags: ['L3'] },
       },
       {
         path: '/networking/multicast',
         title: 'Multicast Snooping',
         desc: 'Join and leave multicast groups to see IGMP snooping restrict L2 forwarding within a VLAN.',
+        meta: { difficulty: 'advanced', tags: ['IGMP'] },
       },
     ],
   },
@@ -139,6 +167,7 @@ const CATEGORIES: Category[] = [
         path: '/services/dhcp-dns',
         title: 'DHCP & DNS',
         desc: 'Lease an IP with DHCP, resolve a hostname with DNS, and inspect each service trace before HTTP.',
+        meta: { difficulty: 'intermediate', tags: ['DHCP', 'DNS'] },
       },
     ],
   },
@@ -151,16 +180,19 @@ const CATEGORIES: Category[] = [
         path: '/simulation/step',
         title: 'Step-by-Step',
         desc: 'Trace packet routing decisions hop by hop. See LPM in action — match scores, route candidates, and why each next hop was chosen.',
+        meta: { difficulty: 'intermediate', tags: ['L3'] },
       },
       {
         path: '/simulation/failure',
         title: 'Failure Injection',
         desc: 'Toggle nodes and links down. Watch packets drop with node-down or no-route reasons. Failed components are highlighted on the canvas.',
+        meta: { difficulty: 'intermediate', tags: ['Drop'] },
       },
       {
         path: '/simulation/trace-inspector',
         title: 'Trace Inspector',
         desc: 'Click any hop in the timeline to inspect routing decisions, LPM candidates, TTL values, and drop reasons.',
+        meta: { difficulty: 'intermediate', tags: ['Trace'] },
       },
       {
         path: '/simulation/nat',
@@ -169,26 +201,31 @@ const CATEGORIES: Category[] = [
         scenarioId: 'nat-basics',
         sandboxReady: true,
         defaultSandboxTab: 'node',
+        meta: { difficulty: 'advanced', tags: ['SNAT', 'DNAT'] },
       },
       {
         path: '/simulation/acl',
         title: 'Firewalls & ACLs',
         desc: 'Inspect interface ACL permit/deny decisions and stateful return-traffic auto-permit on a firewall router.',
+        meta: { difficulty: 'advanced', tags: ['ACL', 'Firewall'] },
       },
       {
         path: '/simulation/interface-aware',
         title: 'Interface-Aware Forwarding',
         desc: 'See which router interface is selected at each hop, with ingress and egress interface names shown in the inspector.',
+        meta: { difficulty: 'intermediate', tags: ['L3'] },
       },
       {
         path: '/simulation/session',
         title: 'Session Inspector',
         desc: 'Group request and response traffic into one session lifecycle, with request/response paths and failure-aware status.',
+        meta: { difficulty: 'intermediate', tags: ['Session'] },
       },
       {
         path: '/simulation/data-transfer',
         title: 'Data Transfer',
         desc: 'Application-level data transfer with chunking, reassembly, and per-hop forwarding visualization.',
+        meta: { difficulty: 'advanced', tags: ['L7'] },
       },
       {
         path: '/simulation/tcp-handshake',
@@ -197,11 +234,13 @@ const CATEGORIES: Category[] = [
         scenarioId: 'tcp-handshake',
         sandboxReady: true,
         defaultSandboxTab: 'packet',
+        meta: { difficulty: 'intermediate', tags: ['L4', 'TCP'] },
       },
       {
         path: '/simulation/enterprise',
         title: 'Enterprise Edge',
         desc: 'Boot a corporate client with DHCP, resolve internal DNS, browse through NAT, and inspect ACL decisions in one topology.',
+        meta: { difficulty: 'advanced', tags: ['Edge'] },
       },
     ],
   },
@@ -214,11 +253,13 @@ const CATEGORIES: Category[] = [
         path: '/topology/controlled',
         title: 'Controlled Topology',
         desc: 'Drag nodes, connect links, and delete edges while a live JSON snapshot stays in sync and can be encoded/restored from the URL.',
+        meta: { difficulty: 'intermediate', tags: ['Editor'] },
       },
       {
         path: '/editor',
         title: 'Topology Editor',
         desc: 'Visually add/remove nodes, connect them, edit properties, and undo/redo changes.',
+        meta: { difficulty: 'intermediate', tags: ['Editor'] },
       },
     ],
   },
@@ -231,6 +272,7 @@ const CATEGORIES: Category[] = [
         path: '/embed',
         title: 'Embed',
         desc: 'NetlabApp embedded inside a host page with fixed width/height. Shows both simulation and static modes.',
+        meta: { difficulty: 'beginner', tags: ['Embed'] },
       },
     ],
   },
@@ -245,12 +287,14 @@ const CATEGORIES: Category[] = [
         desc: 'Edit topology, run step simulation, inject failures, and inspect packet traces in a single tabbed workflow.',
         sandboxReady: true,
         defaultSandboxTab: 'traffic',
+        meta: { difficulty: 'advanced', tags: ['All-in-one'] },
       },
     ],
   },
 ];
 
 export { CATEGORIES };
+export type { Category, DemoCard };
 
 const SANDBOX_DEMO_ORDER = new Map(
   [
@@ -260,6 +304,8 @@ const SANDBOX_DEMO_ORDER = new Map(
     '/simulation/nat',
   ].map((path, index) => [path, index]),
 );
+// SANDBOX_DEMO_ORDER is preserved for downstream consumers and future use.
+void SANDBOX_DEMO_ORDER;
 
 const SANDBOX_INTROS = [
   {
@@ -321,424 +367,177 @@ function getAssessmentHref(demo: DemoCard): string | null {
   return `?${params.toString()}#${demo.path}`;
 }
 
-export default function Gallery() {
-  const sandboxDemos = CATEGORIES.flatMap((category) => category.demos)
-    .filter((demo) => demo.sandboxReady)
-    .sort(
-      (left, right) =>
-        (SANDBOX_DEMO_ORDER.get(left.path) ?? Number.MAX_SAFE_INTEGER) -
-        (SANDBOX_DEMO_ORDER.get(right.path) ?? Number.MAX_SAFE_INTEGER),
-    );
-  const assessmentDemos = CATEGORIES.flatMap((category) => category.demos).filter(
-    (demo) => getAssessmentHref(demo) !== null,
+const CARD_GRID: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+  gap: 12,
+};
+
+function SectionHeader({
+  dot,
+  title,
+  blurb,
+  count,
+}: {
+  dot: string;
+  title: string;
+  blurb: string;
+  count: number;
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        paddingBottom: 10,
+        borderBottom: '1px solid var(--netlab-border)',
+        marginBottom: 14,
+      }}
+    >
+      <span
+        style={{
+          display: 'inline-block',
+          width: 8,
+          height: 8,
+          borderRadius: '50%',
+          background: dot,
+        }}
+      />
+      <span style={{ fontSize: 13, fontWeight: 700, color: '#f1f5f9' }}>{title}</span>
+      <span style={{ fontSize: 12, fontStyle: 'italic', color: 'var(--netlab-text-muted)' }}>
+        {blurb}
+      </span>
+      <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--netlab-text-muted)' }}>
+        {count} demos
+      </span>
+    </div>
   );
+}
+
+export default function Gallery() {
+  const allDemos = CATEGORIES.flatMap((cat) => cat.demos);
+  const assessmentDemos = allDemos.filter((demo) => getAssessmentHref(demo) !== null);
 
   return (
     <div
       style={{
         minHeight: '100vh',
-        background: '#0f172a',
+        background: 'var(--netlab-bg-primary)',
         fontFamily: 'monospace',
-        color: '#e2e8f0',
+        color: 'var(--netlab-text-primary)',
+        display: 'grid',
+        gridTemplateColumns: '248px 1fr',
       }}
     >
-      {/* Header */}
-      <div
-        style={{
-          padding: '32px 40px 24px',
-          borderBottom: '1px solid #1e293b',
-        }}
-      >
+      <Sidebar categories={CATEGORIES} featuredCount={SANDBOX_INTROS.length} />
+
+      <main style={{ overflowY: 'auto' }}>
+        {/* Page header */}
         <div
           style={{
+            padding: '24px 32px 20px',
+            borderBottom: '1px solid var(--netlab-border)',
             display: 'flex',
-            alignItems: 'baseline',
+            alignItems: 'flex-start',
             justifyContent: 'space-between',
             gap: 16,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-            <span style={{ fontSize: 22, fontWeight: 'bold' }}>📡 netlab</span>
-            <span style={{ color: '#94a3b8', fontSize: 13 }}>network visualization demo</span>
+          <div>
+            <h1 style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', margin: 0 }}>
+              Demo gallery
+            </h1>
+            <p
+              style={{
+                marginTop: 6,
+                color: 'var(--netlab-text-secondary)',
+                fontSize: 12,
+                maxWidth: 480,
+              }}
+            >
+              Interactive browser-based network topology visualizer. Each demo is fully
+              self-contained — pick one to explore.
+            </p>
           </div>
-          <a
-            href="https://github.com/koseki2580/netlab"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              color: '#94a3b8',
-              textDecoration: 'none',
-              fontFamily: 'monospace',
-              fontSize: 12,
-            }}
-            onMouseEnter={(event) => {
-              (event.currentTarget as HTMLAnchorElement).style.color = '#94a3b8';
-            }}
-            onMouseLeave={(event) => {
-              (event.currentTarget as HTMLAnchorElement).style.color = '#94a3b8';
-            }}
-          >
-            {GITHUB_ICON}
-            GitHub
-          </a>
+          <SearchBox />
         </div>
-        <p
-          style={{
-            marginTop: 8,
-            color: '#94a3b8',
-            fontSize: 12,
-            maxWidth: 480,
-          }}
-        >
-          Interactive browser-based network topology visualizer. Each demo is fully self-contained —
-          pick one to explore.
-        </p>
-      </div>
 
-      {/* Categories */}
-      <div
-        style={{
-          padding: '32px 40px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 40,
-        }}
-      >
-        <section>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              marginBottom: 16,
-            }}
-          >
-            <span
-              style={{
-                display: 'inline-block',
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: '#fbbf24',
-              }}
-            />
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 'bold',
-                letterSpacing: 1,
-                color: '#94a3b8',
-                textTransform: 'uppercase',
-              }}
-            >
-              Interactive Sandbox
-            </span>
-          </div>
+        {/* Content */}
+        <div style={{ padding: '28px 32px', display: 'flex', flexDirection: 'column', gap: 40 }}>
+          <FeaturedStrip intros={SANDBOX_INTROS} />
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-              gap: 12,
-            }}
-          >
-            {SANDBOX_INTROS.map((intro) => (
-              <div
-                key={intro.id}
-                style={{
-                  background: '#1e293b',
-                  border: '1px solid #334155',
-                  borderRadius: 8,
-                  padding: '16px 20px',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    borderRadius: 999,
-                    background: 'rgba(125, 211, 252, 0.14)',
-                    color: '#7dd3fc',
-                    fontSize: 10,
-                    fontWeight: 700,
-                    letterSpacing: 1,
-                    padding: '4px 8px',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {intro.badge}
-                </div>
-                <div
-                  style={{
-                    fontWeight: 'bold',
-                    color: '#f1f5f9',
-                    fontSize: 14,
-                    marginBottom: 6,
-                    marginTop: 10,
-                  }}
-                >
-                  {intro.title}
-                </div>
-                <div
-                  style={{
-                    color: '#94a3b8',
-                    fontSize: 12,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {intro.desc}
-                </div>
-                <div style={{ display: 'flex', gap: 10, marginTop: 12, fontSize: 11 }}>
-                  <a href={intro.href} style={{ color: '#7dd3fc', textDecoration: 'none' }}>
-                    Open intro →
-                  </a>
-                </div>
-              </div>
-            ))}
-
-            {sandboxDemos.map((demo) => (
-              <div
-                key={`sandbox-${demo.path}`}
-                style={{
-                  background: '#1e293b',
-                  border: '1px solid #334155',
-                  borderRadius: 8,
-                  padding: '16px 20px',
-                }}
-              >
-                <div
-                  style={{
-                    fontWeight: 'bold',
-                    color: '#f1f5f9',
-                    fontSize: 14,
-                    marginBottom: 6,
-                  }}
-                >
-                  {demo.title}
-                </div>
-                <div
-                  style={{
-                    color: '#94a3b8',
-                    fontSize: 12,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {demo.desc}
-                </div>
-                <div style={{ display: 'flex', gap: 10, marginTop: 12, fontSize: 11 }}>
-                  <Link to={demo.path} style={{ color: '#7dd3fc', textDecoration: 'none' }}>
-                    Open →
-                  </Link>
-                  <a
-                    href={getSandboxHref(demo) ?? `?sandbox=1#${demo.path}`}
-                    style={{ color: '#fbbf24', textDecoration: 'none' }}
-                  >
-                    Try in sandbox →
-                  </a>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {assessmentDemos.length > 0 ? (
-          <section>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                marginBottom: 16,
-              }}
-            >
-              <span
-                style={{
-                  display: 'inline-block',
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  background: '#22c55e',
-                }}
+          {assessmentDemos.length > 0 && (
+            <section id="assessments">
+              <SectionHeader
+                dot="var(--netlab-accent-green)"
+                title="Assessments"
+                blurb="— test your understanding"
+                count={assessmentDemos.length}
               />
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 'bold',
-                  letterSpacing: 1,
-                  color: '#94a3b8',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Assessments
-              </span>
-            </div>
+              <div style={CARD_GRID}>
+                {assessmentDemos.map((demo) => {
+                  const cat = CATEGORIES.find((c) => c.demos.some((d) => d.path === demo.path))!;
+                  const tutorial = demo.scenarioId
+                    ? tutorialRegistry.findByScenarioId(demo.scenarioId)
+                    : undefined;
+                  return (
+                    <DemoCard
+                      key={demo.path}
+                      demo={demo}
+                      category={cat}
+                      tutorialHref={
+                        tutorial
+                          ? `?tutorial=${encodeURIComponent(tutorial.id)}#${demo.path}`
+                          : null
+                      }
+                      sandboxHref={getSandboxHref(demo)}
+                      assessmentHref={getAssessmentHref(demo)}
+                    />
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-                gap: 12,
-              }}
-            >
-              {assessmentDemos.map((demo) => (
-                <div
-                  key={`assessment-${demo.path}`}
-                  style={{
-                    background: '#1e293b',
-                    border: '1px solid #334155',
-                    borderRadius: 8,
-                    padding: '16px 20px',
-                  }}
-                >
-                  <div
-                    style={{
-                      fontWeight: 'bold',
-                      color: '#f1f5f9',
-                      fontSize: 14,
-                      marginBottom: 6,
-                    }}
-                  >
-                    {demo.title}
-                  </div>
-                  <div style={{ color: '#94a3b8', fontSize: 12, lineHeight: 1.5 }}>
-                    {scenarioRegistry.get(demo.scenarioId ?? '')?.assessmentRubric?.goal ??
-                      demo.desc}
-                  </div>
-                  <div style={{ display: 'flex', gap: 10, marginTop: 12, fontSize: 11 }}>
-                    <a
-                      href={getAssessmentHref(demo) ?? '#'}
-                      style={{ color: '#22c55e', textDecoration: 'none' }}
-                    >
-                      Start assessment →
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        {CATEGORIES.map((cat) => (
-          <section key={cat.id}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                marginBottom: 16,
-              }}
-            >
-              <span
-                style={{
-                  display: 'inline-block',
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  background: cat.color,
-                }}
+          {CATEGORIES.map((cat) => (
+            <section key={cat.id} id={cat.id}>
+              <SectionHeader
+                dot={cat.color}
+                title={cat.label}
+                blurb="— learn the building blocks"
+                count={cat.demos.length}
               />
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 'bold',
-                  letterSpacing: 1,
-                  color: '#94a3b8',
-                  textTransform: 'uppercase',
-                }}
-              >
-                {cat.label}
-              </span>
-            </div>
-
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-                gap: 12,
-              }}
-            >
-              {cat.demos.map((demo) => {
-                const tutorial = demo.scenarioId
-                  ? tutorialRegistry.findByScenarioId(demo.scenarioId)
-                  : undefined;
-                const tutorialHref = tutorial
-                  ? `?tutorial=${encodeURIComponent(tutorial.id)}#${demo.path}`
-                  : null;
-                const sandboxHref = getSandboxHref(demo);
-                const assessmentHref = getAssessmentHref(demo);
-
-                return (
-                  <div
-                    key={demo.path}
-                    style={{
-                      background: '#1e293b',
-                      border: '1px solid #334155',
-                      borderRadius: 8,
-                      padding: '16px 20px',
-                      transition: 'border-color 0.15s, background 0.15s',
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLDivElement).style.borderColor = cat.color;
-                      (e.currentTarget as HTMLDivElement).style.background = '#263144';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLDivElement).style.borderColor = '#334155';
-                      (e.currentTarget as HTMLDivElement).style.background = '#1e293b';
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontWeight: 'bold',
-                        color: '#f1f5f9',
-                        fontSize: 14,
-                        marginBottom: 6,
-                      }}
-                    >
-                      {demo.title}
-                    </div>
-                    <div
-                      style={{
-                        color: '#94a3b8',
-                        fontSize: 12,
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      {demo.desc}
-                    </div>
-                    <div style={{ display: 'flex', gap: 10, marginTop: 12, fontSize: 11 }}>
-                      <Link to={demo.path} style={{ color: cat.color, textDecoration: 'none' }}>
-                        Open →
-                      </Link>
-                      {sandboxHref ? (
-                        <a href={sandboxHref} style={{ color: '#fbbf24', textDecoration: 'none' }}>
-                          Try in sandbox →
-                        </a>
-                      ) : null}
-                      {tutorialHref ? (
-                        <a href={tutorialHref} style={{ color: '#7dd3fc', textDecoration: 'none' }}>
-                          Start Tutorial →
-                        </a>
-                      ) : null}
-                      {assessmentHref ? (
-                        <a
-                          href={assessmentHref}
-                          style={{ color: '#22c55e', textDecoration: 'none' }}
-                        >
-                          Start Assessment →
-                        </a>
-                      ) : null}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        ))}
-      </div>
+              <div style={CARD_GRID}>
+                {cat.demos.map((demo) => {
+                  const tutorial = demo.scenarioId
+                    ? tutorialRegistry.findByScenarioId(demo.scenarioId)
+                    : undefined;
+                  return (
+                    <DemoCard
+                      key={demo.path}
+                      demo={demo}
+                      category={cat}
+                      tutorialHref={
+                        tutorial
+                          ? `?tutorial=${encodeURIComponent(tutorial.id)}#${demo.path}`
+                          : null
+                      }
+                      sandboxHref={getSandboxHref(demo)}
+                      assessmentHref={getAssessmentHref(demo)}
+                    />
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
+      </main>
     </div>
   );
 }
+
+// Keep Link in scope — it is used transitively by DemoCard (which imports it),
+// but if the bundler tree-shakes it away this import ensures the module is
+// loaded in test environments where DemoCard renders Link.
+void Link;
