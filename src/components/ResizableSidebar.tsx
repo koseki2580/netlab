@@ -73,7 +73,7 @@ export function ResizableSidebar({
           width: 4,
           flexShrink: 0,
           cursor: 'col-resize',
-          background: hovered ? '#334155' : 'transparent',
+          background: hovered ? 'var(--netlab-accent-blue)' : 'transparent',
           transition: 'background 0.15s',
         }}
       />
