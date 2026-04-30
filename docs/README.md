@@ -40,6 +40,7 @@ Specifications regarding user interface implementation and canvas operations.
 - [Sandbox Undo And History](ui/sandbox-undo.md) - Undo/redo cursor semantics, edit history UI, reset-all, shortcuts, and hook events
 - [Sandbox Session Import / Export](ui/sandbox-session-io.md) - Local JSON session files with schema versioning, import preview, and redo-tail preservation
 - [Sandbox Session Recording & Replay](ui/sandbox-recording.md) - Chronological event recording, scrubber-driven replay, fork-from-here, and desync detection
+- [Sandbox Named Snapshots](ui/sandbox-snapshots.md) - Named history bookmarks, arbitrary snapshot comparison, revert, and edit-chain inspection
 - [Sandbox Keyboard Shortcuts & Narration](ui/sandbox-shortcuts.md) - Built-in shortcut registry, dispatcher, help modal, and `aria-live` screen-reader narration
 - [Tutorials](ui/tutorials.md) - Scenario-backed guided tutorial mode, tutorial registry, predicate contract, and authoring rules
 
