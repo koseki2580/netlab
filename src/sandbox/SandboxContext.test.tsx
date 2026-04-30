@@ -191,6 +191,44 @@ describe('SandboxProvider', () => {
     expect(currentSandbox().session.edits).toEqual([{ kind: 'noop' }]);
   });
 
+  it('revertToSnapshot moves the head to the snapshot edit index and preserves redo history', () => {
+    renderSandbox();
+
+    act(() => {
+      currentSandbox().pushEdit({ kind: 'noop' });
+      currentSandbox().pushEdit({
+        kind: 'snapshot.create',
+        snapshot: {
+          id: 'snapshot-a',
+          name: 'Before MTU',
+          editIndex: 1,
+          sessionIdAtCapture: 'default-session',
+          createdAt: -1,
+        },
+      });
+      currentSandbox().pushEdit({
+        kind: 'param.set',
+        key: 'engine.tickMs',
+        before: 100,
+        after: 200,
+      });
+    });
+
+    act(() => {
+      currentSandbox().revertToSnapshot('snapshot-a');
+    });
+
+    expect(currentSandbox().session.head).toBe(1);
+    expect(currentSandbox().session.backing).toHaveLength(3);
+    expect(currentSandbox().session.canRedo()).toBe(true);
+  });
+
+  it('throws when reverting to an unknown snapshot id', () => {
+    renderSandbox();
+
+    expect(() => currentSandbox().revertToSnapshot('missing')).toThrow(NetlabError);
+  });
+
   it('does not trigger React setState warnings when an intro is subscribed during pushEdit', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 

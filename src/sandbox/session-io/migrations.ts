@@ -15,6 +15,14 @@ export function migrateExportedSession(value: unknown): unknown {
     return value;
   }
 
+  if (schemaVersion === 1) {
+    return {
+      ...value,
+      schemaVersion: SESSION_SCHEMA_VERSION,
+      orphanedSnapshots: [],
+    };
+  }
+
   if (typeof schemaVersion === 'number' && Number.isInteger(schemaVersion)) {
     throw new NetlabError({
       code: 'session-io/unsupported-schema',

@@ -1,6 +1,37 @@
 import type { SimulationSnapshot } from './types';
 import type { Edit } from './edits';
 import { reduceEdit } from './edits';
+import type { NamedSnapshot } from './snapshots/types';
+
+function orphanedSnapshotMarkers(edits: readonly Edit[]): Edit[] {
+  const snapshots = new Map<string, NamedSnapshot>();
+
+  for (const edit of edits) {
+    switch (edit.kind) {
+      case 'snapshot.create':
+        if (edit.snapshot.name.startsWith('__')) break;
+        snapshots.set(edit.snapshot.id, edit.snapshot);
+        break;
+      case 'snapshot.rename': {
+        const existing = snapshots.get(edit.id);
+        if (existing) {
+          snapshots.set(edit.id, { ...existing, name: edit.after });
+        }
+        break;
+      }
+      case 'snapshot.delete':
+        snapshots.delete(edit.id);
+        break;
+    }
+  }
+
+  return Array.from(snapshots.values()).map((snapshot) => ({
+    kind: 'snapshot.delete',
+    id: snapshot.id,
+    before: snapshot,
+    orphaned: true,
+  }));
+}
 
 export class EditSession {
   static readonly MAX_HISTORY = 100;
@@ -27,7 +58,9 @@ export class EditSession {
   }
 
   push(edit: Edit): EditSession {
-    return new EditSession([...this.backing.slice(0, this.head), edit]);
+    const visible = this.backing.slice(0, this.head);
+    const truncated = this.backing.slice(this.head);
+    return new EditSession([...visible, ...orphanedSnapshotMarkers(truncated), edit]);
   }
 
   undo(): EditSession {
@@ -44,6 +77,14 @@ export class EditSession {
     }
 
     return new EditSession(this.backing, this.head + 1);
+  }
+
+  goToHead(head: number): EditSession {
+    if (!Number.isInteger(head) || head < 0 || head > this.backing.length || head === this.head) {
+      return this;
+    }
+
+    return new EditSession(this.backing, head);
   }
 
   canUndo(): boolean {

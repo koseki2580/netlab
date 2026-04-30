@@ -11,6 +11,7 @@ import { PacketEditForm } from './PacketEditForm';
 import { ParametersTab } from './ParametersTab';
 import { PcapDownloadButton } from './PcapDownloadButton';
 import { SandboxNodeTabBody } from './SandboxNodeTabBody';
+import { SaveSnapshotButton } from './snapshots/SaveSnapshotButton';
 import { ShortcutsHelpModal } from './ShortcutsHelpModal';
 import { TrafficTab } from './TrafficTab';
 
@@ -171,6 +172,7 @@ export function SandboxPanel() {
           <PcapDownloadButton />
           <ExportButton />
           <ImportDialog />
+          <SaveSnapshotButton />
           <button
             type="button"
             aria-label="Switch sandbox mode"

@@ -98,6 +98,8 @@ export function fromEngine(
         author: 'scenario' as const,
       })),
     ),
+    snapshotRegistry: [],
+    orphanedSnapshotRegistry: [],
   });
 }
 
@@ -135,6 +137,8 @@ export function cloneSnapshot(snapshot: SimulationSnapshot): SimulationSnapshot 
     state: structuredClone(snapshot.state) as SimulationState,
     parameters: structuredClone(snapshot.parameters) as ProtocolParameterSet,
     annotations: structuredClone(snapshot.annotations) as readonly TraceAnnotation[],
+    snapshotRegistry: structuredClone(snapshot.snapshotRegistry),
+    orphanedSnapshotRegistry: structuredClone(snapshot.orphanedSnapshotRegistry),
   };
   if (snapshot.meta === undefined) {
     return deepFreeze(nextBase);

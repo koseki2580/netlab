@@ -41,6 +41,10 @@ export class BranchedSimulationEngine {
     return this.currentSnapshot;
   }
 
+  get root(): SimulationSnapshot {
+    return this.rootSnapshot;
+  }
+
   get parameters(): ProtocolParameterSet {
     return this.currentParameters;
   }

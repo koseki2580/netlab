@@ -1,6 +1,7 @@
 import type { SimulationState } from '../types/simulation';
 import type { NetworkTopology } from '../types/topology';
 import type { TraceAnnotation } from './annotations/types';
+import type { NamedSnapshot } from './snapshots/types';
 
 export interface ProtocolParameterSet {
   readonly tcp: {
@@ -47,6 +48,8 @@ export interface SimulationSnapshot {
   readonly state: SimulationState;
   readonly parameters: ProtocolParameterSet;
   readonly annotations: readonly TraceAnnotation[];
+  readonly snapshotRegistry: readonly NamedSnapshot[];
+  readonly orphanedSnapshotRegistry: readonly NamedSnapshot[];
   readonly meta?: {
     readonly notes?: Readonly<Record<string, string>>;
     readonly [key: string]: unknown;

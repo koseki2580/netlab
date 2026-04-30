@@ -8,6 +8,9 @@ import { isTraceAnnotation, isTraceAnnotationEdit } from './annotations/edits';
 import { reduceAnnotation } from './annotations/reducer';
 import type { TraceAnnotationEdit } from './annotations/types';
 import { cloneSnapshot } from './SimulationSnapshot';
+import { isSnapshotEdit } from './snapshots/edits';
+import { reduceSnapshotEdit } from './snapshots/reducer';
+import type { SnapshotEdit } from './snapshots/types';
 import { getSandboxEditSpec, isRegisteredPluginEdit } from './plugin/registry';
 import type { PluginEdit } from './plugin/types';
 import type {
@@ -106,6 +109,7 @@ export type Edit =
       readonly before: SandboxAclRule;
       readonly after: SandboxAclRule;
     }
+  | SnapshotEdit
   | TraceAnnotationEdit
   | PluginEdit;
 
@@ -258,6 +262,10 @@ export function isEdit(value: unknown): value is Edit {
       return isTraceAnnotationEdit(value);
     case 'trace.annotate.remove':
       return isTraceAnnotationEdit(value);
+    case 'snapshot.create':
+    case 'snapshot.rename':
+    case 'snapshot.delete':
+      return isSnapshotEdit(value);
     default:
       return isRegisteredPluginEdit(value);
   }
@@ -828,6 +836,9 @@ registerReducer('node.acl.edit', (snapshot, edit) =>
 registerReducer('trace.annotate.add', reduceAnnotation);
 registerReducer('trace.annotate.edit', reduceAnnotation);
 registerReducer('trace.annotate.remove', reduceAnnotation);
+registerReducer('snapshot.create', reduceSnapshotEdit);
+registerReducer('snapshot.rename', reduceSnapshotEdit);
+registerReducer('snapshot.delete', reduceSnapshotEdit);
 
 export function reduceEdit(snapshot: SimulationSnapshot, edit: unknown): SimulationSnapshot {
   const kind =

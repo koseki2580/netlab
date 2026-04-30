@@ -72,6 +72,7 @@ function makeSandboxValue(overrides: Partial<SandboxContextValue> = {}): Sandbox
     undo: vi.fn(),
     redo: vi.fn(),
     revertAt: vi.fn(),
+    revertToSnapshot: vi.fn(),
     resetAll: vi.fn(),
     setSession: vi.fn(),
     switchMode: vi.fn(),
@@ -378,7 +379,7 @@ describe('SandboxPanel', () => {
       backing?: unknown[];
       head?: number;
     };
-    expect(json.schemaVersion).toBe(1);
+    expect(json.schemaVersion).toBe(2);
     expect(json.scenarioId).toBe('fragmented-echo');
     expect(json.backing).toHaveLength(2);
     expect(json.head).toBe(1);

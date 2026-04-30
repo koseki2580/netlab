@@ -75,6 +75,22 @@ export interface HookMap {
   'sandbox:history-evicted': HookFn<{
     count: number;
   }>;
+  'sandbox:snapshot-invalid-name': HookFn<{
+    name: string;
+  }>;
+  'sandbox:snapshot-reserved-name': HookFn<{
+    name: string;
+  }>;
+  'sandbox:snapshot-duplicate-name': HookFn<{
+    name: string;
+  }>;
+  'sandbox:snapshot-cap-exceeded': HookFn<{
+    max: number;
+  }>;
+  'sandbox:snapshot-reverted': HookFn<{
+    id: string;
+    head: number;
+  }>;
   'sandbox:mode-changed': HookFn<{
     mode: SandboxMode;
   }>;

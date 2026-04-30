@@ -65,6 +65,7 @@ function makeSandboxValue(): SandboxContextValue {
     undo: () => undefined,
     redo: () => undefined,
     revertAt: () => undefined,
+    revertToSnapshot: () => undefined,
     resetAll: () => undefined,
     setSession: () => undefined,
     switchMode: () => undefined,

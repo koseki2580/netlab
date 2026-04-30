@@ -45,6 +45,7 @@ function sandboxValue(
     undo: vi.fn(),
     redo: vi.fn(),
     revertAt: vi.fn(),
+    revertToSnapshot: vi.fn(),
     resetAll: vi.fn(),
     setSession: vi.fn(),
     switchMode: vi.fn(),

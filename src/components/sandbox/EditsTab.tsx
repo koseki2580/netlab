@@ -1,12 +1,19 @@
 import { useState } from 'react';
+import type { NamedSnapshot } from '../../sandbox/snapshots/types';
 import { useSandbox } from '../../sandbox/useSandbox';
 import { AnnotationListPanel } from './annotations/AnnotationListPanel';
 import { EditListItem } from './EditListItem';
 import { buttonStyle } from './editors/editorStyles';
+import { SnapshotCompareView } from './snapshots/SnapshotCompareView';
+import { SnapshotListSection } from './snapshots/SnapshotListSection';
 
 export function EditsTab() {
   const sandbox = useSandbox();
   const [annotationsOnly, setAnnotationsOnly] = useState(false);
+  const [comparePair, setComparePair] = useState<{
+    readonly left: NamedSnapshot;
+    readonly right: NamedSnapshot;
+  } | null>(null);
   const entries = annotationsOnly
     ? sandbox.session.backing.filter((edit) => edit.kind.startsWith('trace.annotate.'))
     : sandbox.session.backing;
@@ -26,6 +33,13 @@ export function EditsTab() {
 
   return (
     <section aria-label="Sandbox edit history">
+      {comparePair ? (
+        <SnapshotCompareView
+          snapshotA={comparePair.left}
+          snapshotB={comparePair.right}
+          onExit={() => setComparePair(null)}
+        />
+      ) : null}
       <header>
         <h3 style={{ margin: 0, fontSize: 13 }}>History</h3>
         <button
@@ -49,6 +63,8 @@ export function EditsTab() {
       </label>
 
       {annotationsOnly ? <AnnotationListPanel /> : null}
+
+      <SnapshotListSection onComparePair={(left, right) => setComparePair({ left, right })} />
 
       {entries.length === 0 ? (
         <p style={{ margin: 0, color: 'var(--netlab-text-muted)', fontSize: 11 }}>No edits yet</p>

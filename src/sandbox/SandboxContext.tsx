@@ -52,6 +52,7 @@ export interface SandboxContextValue {
   readonly undo: () => void;
   readonly redo: () => void;
   readonly revertAt: (index: number) => void;
+  readonly revertToSnapshot: (id: string) => void;
   readonly resetAll: () => void;
   readonly setSession: (session: EditSession) => void;
   readonly setUndoFloor?: (head: number) => void;
@@ -237,6 +238,29 @@ export function SandboxProvider({
     [commitSession, hookEngine],
   );
 
+  const revertToSnapshot = useCallback(
+    (id: string) => {
+      const snapshot = engine.snapshot.snapshotRegistry.find((entry) => entry.id === id);
+      if (!snapshot) {
+        throw new NetlabError({
+          code: 'invariant/not-found',
+          message: `[netlab] snapshot not found: ${id}`,
+          context: { id },
+        });
+      }
+
+      const current = sessionRef.current;
+      const next = current.goToHead(snapshot.editIndex);
+      if (next === current) {
+        return;
+      }
+
+      commitSession(next);
+      void hookEngine.emit('sandbox:snapshot-reverted', { id, head: next.head });
+    },
+    [commitSession, engine, hookEngine],
+  );
+
   const switchMode = useCallback(
     (mode: SandboxMode) => {
       engine.switchMode(mode);
@@ -327,6 +351,7 @@ export function SandboxProvider({
       undo,
       redo,
       revertAt,
+      revertToSnapshot,
       resetAll,
       setSession: replaceSession,
       setUndoFloor,
@@ -347,6 +372,7 @@ export function SandboxProvider({
       resetBaseline,
       replaceSession,
       revertAt,
+      revertToSnapshot,
       setUndoFloor,
       session,
       switchMode,

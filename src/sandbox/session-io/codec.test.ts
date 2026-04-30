@@ -62,12 +62,13 @@ describe('sandbox session JSON codec', () => {
         toolVersion: 'test-version',
       }),
     ).toEqual({
-      schemaVersion: 1,
+      schemaVersion: 2,
       scenarioId: 'fragmented-echo',
       initialScenarioId: 'fragmented-echo',
       initialParameters: DEFAULT_PARAMETERS,
       backing: [{ kind: 'noop' }, mtuEdit],
       head: 1,
+      orphanedSnapshots: [],
       savedAt: '2026-04-21T10:30:00.000Z',
       toolVersion: 'test-version',
     });
@@ -103,6 +104,48 @@ describe('sandbox session JSON codec', () => {
         'session-io/unsupported-schema',
       );
     }
+  });
+
+  it('migrates schema v1 sessions to v2 with empty orphaned snapshots', () => {
+    const payload = {
+      schemaVersion: 1,
+      scenarioId: 'fragmented-echo',
+      initialParameters: DEFAULT_PARAMETERS,
+      backing: [{ kind: 'noop' }],
+      head: 1,
+      savedAt: '2026-04-21T10:30:00.000Z',
+      toolVersion: 'test-version',
+    };
+
+    const decoded = readExportedSession(payload);
+
+    expect(decoded.exported.schemaVersion).toBe(2);
+    expect(decoded.exported.orphanedSnapshots).toEqual([]);
+    expect(decoded.session.edits).toEqual([{ kind: 'noop' }]);
+  });
+
+  it('exports orphaned snapshots from redo-tail truncation markers', () => {
+    const orphan = {
+      id: 'snapshot-orphan',
+      name: 'Old branch',
+      editIndex: 2,
+      sessionIdAtCapture: 'default-session',
+      createdAt: -1,
+    };
+    const session = EditSession.empty().push({
+      kind: 'snapshot.delete',
+      id: orphan.id,
+      before: orphan,
+      orphaned: true,
+    });
+
+    const exported = encodeSession(session, {
+      scenarioId: 'fragmented-echo',
+      initialParameters: DEFAULT_PARAMETERS,
+      savedAt: '2026-04-21T10:30:00.000Z',
+    });
+
+    expect(exported.orphanedSnapshots).toEqual([orphan]);
   });
 
   it('rejects sessions over the file import edit cap', () => {

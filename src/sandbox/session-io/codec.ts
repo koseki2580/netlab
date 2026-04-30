@@ -2,8 +2,11 @@ import { NetlabError } from '../../errors';
 import { EditSession } from '../EditSession';
 import type { Edit } from '../edits';
 import type { TraceAnnotationEdit } from '../annotations/types';
+import type { NamedSnapshot } from '../snapshots/types';
 import { decodeEdit, encodeEdit } from '../urlCodec';
 import { isProtocolParameterSet, type ProtocolParameterSet } from '../types';
+import { isNamedSnapshot } from '../snapshots/edits';
+import { migrateExportedSession } from './migrations';
 import {
   SESSION_IMPORT_EDIT_LIMIT,
   SESSION_SCHEMA_VERSION,
@@ -56,6 +59,15 @@ function normalizeImportedEdit(edit: Edit): Edit {
   }
 }
 
+function orphanedSnapshotsFromBacking(backing: readonly Edit[]): readonly NamedSnapshot[] {
+  return backing
+    .filter(
+      (edit): edit is Extract<Edit, { readonly kind: 'snapshot.delete' }> =>
+        edit.kind === 'snapshot.delete' && edit.orphaned === true,
+    )
+    .map((edit) => edit.before);
+}
+
 export function encodeSession(
   session: EditSession,
   options: EncodeSessionOptions,
@@ -67,6 +79,7 @@ export function encodeSession(
     initialParameters: options.initialParameters,
     backing: session.backing.map((edit) => encodeEdit(edit) as Edit),
     head: session.head,
+    orphanedSnapshots: orphanedSnapshotsFromBacking(session.backing),
     savedAt: isoSavedAt(options.savedAt),
     toolVersion: options.toolVersion ?? '0.1.0',
   };
@@ -77,7 +90,7 @@ export function decodeSession(value: unknown): EditSession {
 }
 
 export function readExportedSession(value: unknown): DecodedExportedSession {
-  const migrated = value;
+  const migrated = migrateExportedSession(value);
   if (!isRecord(migrated)) {
     invalid('[netlab] invalid sandbox session');
   }
@@ -122,6 +135,9 @@ export function readExportedSession(value: unknown): DecodedExportedSession {
     invalid('[netlab] invalid sandbox session head');
   }
   const head = migrated.head;
+  const orphanedSnapshots = Array.isArray(migrated.orphanedSnapshots)
+    ? migrated.orphanedSnapshots.filter(isNamedSnapshot)
+    : [];
   if (typeof migrated.savedAt !== 'string') {
     invalid('[netlab] invalid sandbox session');
   }
@@ -149,6 +165,7 @@ export function readExportedSession(value: unknown): DecodedExportedSession {
     initialParameters: migrated.initialParameters,
     backing,
     head,
+    orphanedSnapshots,
     savedAt: migrated.savedAt,
     toolVersion: migrated.toolVersion,
   };
