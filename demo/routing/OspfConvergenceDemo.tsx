@@ -190,9 +190,12 @@ export default function OspfConvergenceDemo() {
   const topology = useMemo(() => buildOspfConvergenceTopology(primaryLinkDown), [primaryLinkDown]);
   const params = new URLSearchParams(window.location.search);
   const sandboxIntroId = params.get('intro') ?? null;
-  const tutorialId = sandboxIntroId ? null : (params.get('tutorial') ?? null);
+  const assessmentScenarioId = params.get('assessment') ?? null;
+  const tutorialId =
+    sandboxIntroId || assessmentScenarioId ? null : (params.get('tutorial') ?? null);
   const sandboxEnabled = params.get('sandbox') === '1';
   const tutorialProps = tutorialId ? { tutorialId } : {};
+  const assessmentProps = assessmentScenarioId ? { assessmentScenarioId } : {};
 
   return (
     <DemoShell
@@ -204,6 +207,7 @@ export default function OspfConvergenceDemo() {
         sandboxEnabled={sandboxEnabled}
         {...(sandboxEnabled && sandboxIntroId ? { sandboxIntroId } : {})}
         {...tutorialProps}
+        {...assessmentProps}
       >
         <SimulationProvider>
           <OspfConvergenceInner

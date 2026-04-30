@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { scenarioRegistry } from '../src/scenarios';
 import { tutorialRegistry } from '../src/tutorials';
 
 const GITHUB_ICON = (
@@ -303,6 +304,23 @@ function getSandboxHref(demo: DemoCard): string | null {
   return `?${params.toString()}#${demo.path}`;
 }
 
+function getAssessmentHref(demo: DemoCard): string | null {
+  if (!demo.scenarioId) {
+    return null;
+  }
+  const scenario = scenarioRegistry.get(demo.scenarioId);
+  if (!scenario?.assessmentRubric) {
+    return null;
+  }
+
+  const params = new URLSearchParams({
+    assessment: demo.scenarioId,
+    sandbox: '1',
+    sandboxTab: 'assessment',
+  });
+  return `?${params.toString()}#${demo.path}`;
+}
+
 export default function Gallery() {
   const sandboxDemos = CATEGORIES.flatMap((category) => category.demos)
     .filter((demo) => demo.sandboxReady)
@@ -311,6 +329,9 @@ export default function Gallery() {
         (SANDBOX_DEMO_ORDER.get(left.path) ?? Number.MAX_SAFE_INTEGER) -
         (SANDBOX_DEMO_ORDER.get(right.path) ?? Number.MAX_SAFE_INTEGER),
     );
+  const assessmentDemos = CATEGORIES.flatMap((category) => category.demos).filter(
+    (demo) => getAssessmentHref(demo) !== null,
+  );
 
   return (
     <div
@@ -524,6 +545,83 @@ export default function Gallery() {
           </div>
         </section>
 
+        {assessmentDemos.length > 0 ? (
+          <section>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                marginBottom: 16,
+              }}
+            >
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: '#22c55e',
+                }}
+              />
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 'bold',
+                  letterSpacing: 1,
+                  color: '#94a3b8',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Assessments
+              </span>
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                gap: 12,
+              }}
+            >
+              {assessmentDemos.map((demo) => (
+                <div
+                  key={`assessment-${demo.path}`}
+                  style={{
+                    background: '#1e293b',
+                    border: '1px solid #334155',
+                    borderRadius: 8,
+                    padding: '16px 20px',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontWeight: 'bold',
+                      color: '#f1f5f9',
+                      fontSize: 14,
+                      marginBottom: 6,
+                    }}
+                  >
+                    {demo.title}
+                  </div>
+                  <div style={{ color: '#94a3b8', fontSize: 12, lineHeight: 1.5 }}>
+                    {scenarioRegistry.get(demo.scenarioId ?? '')?.assessmentRubric?.goal ??
+                      demo.desc}
+                  </div>
+                  <div style={{ display: 'flex', gap: 10, marginTop: 12, fontSize: 11 }}>
+                    <a
+                      href={getAssessmentHref(demo) ?? '#'}
+                      style={{ color: '#22c55e', textDecoration: 'none' }}
+                    >
+                      Start assessment →
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         {CATEGORIES.map((cat) => (
           <section key={cat.id}>
             <div
@@ -571,6 +669,7 @@ export default function Gallery() {
                   ? `?tutorial=${encodeURIComponent(tutorial.id)}#${demo.path}`
                   : null;
                 const sandboxHref = getSandboxHref(demo);
+                const assessmentHref = getAssessmentHref(demo);
 
                 return (
                   <div
@@ -622,6 +721,14 @@ export default function Gallery() {
                       {tutorialHref ? (
                         <a href={tutorialHref} style={{ color: '#7dd3fc', textDecoration: 'none' }}>
                           Start Tutorial →
+                        </a>
+                      ) : null}
+                      {assessmentHref ? (
+                        <a
+                          href={assessmentHref}
+                          style={{ color: '#22c55e', textDecoration: 'none' }}
+                        >
+                          Start Assessment →
                         </a>
                       ) : null}
                     </div>

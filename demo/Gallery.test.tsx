@@ -79,4 +79,18 @@ describe('demo chrome', () => {
     expect(positions.every((position) => position >= 0)).toBe(true);
     expect(positions).toEqual([...positions].sort((a, b) => a - b));
   });
+
+  it('Gallery exposes assessment scenarios in a dedicated section', () => {
+    const html = renderToStaticMarkup(
+      <MemoryRouter>
+        <Gallery />
+      </MemoryRouter>,
+    );
+
+    expect(html).toContain('Assessments');
+    expect(html).toContain('Start assessment');
+    expect(html).toContain(
+      '?assessment=ospf-convergence&amp;sandbox=1&amp;sandboxTab=assessment#/routing/ospf-convergence',
+    );
+  });
 });
