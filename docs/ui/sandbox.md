@@ -160,6 +160,7 @@ Library consumers can import:
 - [Sandbox Introduction](sandbox-intro.md)
 - [Sandbox Undo And History](sandbox-undo.md)
 - [Sandbox Session Import / Export](sandbox-session-io.md)
+- [Sandbox Session Recording & Replay](sandbox-recording.md)
 - [Sandbox Trace Annotations](sandbox-annotations.md)
 - [Query Params](../deployment/query-params.md)
 - [Hook System](../core/hooks.md)
