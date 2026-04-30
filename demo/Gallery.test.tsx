@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import DemoShell from './DemoShell';
-import Gallery from './Gallery';
+import Gallery, { CATEGORIES } from './Gallery';
 
 describe('demo chrome', () => {
   it('DemoShell includes a GitHub source link in the shared header', () => {
@@ -40,18 +40,27 @@ describe('demo chrome', () => {
     expect(html).toContain('/networking/stp');
   });
 
-  it('Gallery highlights sandbox-ready demos in an Interactive Sandbox section', () => {
+  it('Gallery highlights sandbox-ready demos in the featured strip', () => {
     const html = renderToStaticMarkup(
       <MemoryRouter>
         <Gallery />
       </MemoryRouter>,
     );
 
-    expect(html).toContain('Interactive Sandbox');
-    expect(html).toContain('?sandbox=1&amp;sandboxTab=node#/networking/mtu-fragmentation');
-    expect(html).toContain('?sandbox=1&amp;sandboxTab=packet#/simulation/tcp-handshake');
-    expect(html).toContain('?sandbox=1&amp;sandboxTab=node#/routing/ospf-convergence');
-    expect(html).toContain('?sandbox=1&amp;sandboxTab=node#/simulation/nat');
+    // FeaturedStrip renders all sandbox intro hrefs
+    expect(html).toContain(
+      '?sandbox=1&amp;sandboxTab=node&amp;intro=sandbox-intro-mtu#/networking/mtu-fragmentation',
+    );
+    expect(html).toContain(
+      '?sandbox=1&amp;sandboxTab=packet&amp;intro=sandbox-intro-tcp#/simulation/tcp-handshake',
+    );
+    expect(html).toContain(
+      '?sandbox=1&amp;sandboxTab=node&amp;intro=sandbox-intro-ospf#/routing/ospf-convergence',
+    );
+    expect(html).toContain(
+      '?sandbox=1&amp;sandboxTab=node&amp;intro=sandbox-intro-nat#/simulation/nat',
+    );
+    // DemoCard renders sandbox hrefs
     expect(html).toContain('?sandbox=1&amp;sandboxTab=traffic#/comprehensive/all-in-one');
   });
 
@@ -72,7 +81,7 @@ describe('demo chrome', () => {
       'intro=sandbox-intro-tcp',
       'intro=sandbox-intro-ospf',
       'intro=sandbox-intro-nat',
-      'Try in sandbox',
+      'Sandbox →',
     ];
     const positions = expectedOrder.map((fragment) => html.indexOf(fragment));
 
@@ -88,9 +97,44 @@ describe('demo chrome', () => {
     );
 
     expect(html).toContain('Assessments');
-    expect(html).toContain('Start assessment');
+    expect(html).toContain('Assessment →');
     expect(html).toContain(
       '?assessment=ospf-convergence&amp;sandbox=1&amp;sandboxTab=assessment#/routing/ospf-convergence',
     );
+  });
+
+  it('Gallery sidebar renders one nav link per category section', () => {
+    const html = renderToStaticMarkup(
+      <MemoryRouter>
+        <Gallery />
+      </MemoryRouter>,
+    );
+
+    // Each CATEGORIES id appears as a href anchor in the sidebar
+    for (const cat of CATEGORIES) {
+      expect(html).toContain(`href="#${cat.id}"`);
+    }
+  });
+
+  it('Gallery demo cards render difficulty tags', () => {
+    const html = renderToStaticMarkup(
+      <MemoryRouter>
+        <Gallery />
+      </MemoryRouter>,
+    );
+
+    expect(html).toContain('Beginner');
+    expect(html).toContain('Intermediate');
+    expect(html).toContain('Advanced');
+  });
+
+  it('Gallery search box is present with correct placeholder', () => {
+    const html = renderToStaticMarkup(
+      <MemoryRouter>
+        <Gallery />
+      </MemoryRouter>,
+    );
+
+    expect(html).toContain('Search demos, protocols, layers');
   });
 });
