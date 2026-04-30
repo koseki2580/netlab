@@ -9,6 +9,11 @@ const RING_COLORS: Record<Variant, string> = {
   success: 'var(--netlab-accent-green)',
 };
 
+/**
+ * Props for the EmptyState component. Renders a centered placeholder with an optional icon,
+ * headline, body copy, and primary action button. Suitable for empty topology views,
+ * no-results states, and error fallbacks.
+ */
 export interface EmptyStateProps {
   /** Optional 48×48 inline SVG icon. */
   icon?: ReactNode;
