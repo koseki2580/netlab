@@ -433,7 +433,6 @@ export default function Gallery() {
       <Sidebar categories={CATEGORIES} featuredCount={SANDBOX_INTROS.length} />
 
       <main style={{ overflowY: 'auto' }}>
-        {/* Page header */}
         <div
           style={{
             padding: '24px 32px 20px',
@@ -463,7 +462,6 @@ export default function Gallery() {
           <SearchBox />
         </div>
 
-        {/* Content */}
         <div style={{ padding: '28px 32px', display: 'flex', flexDirection: 'column', gap: 40 }}>
           <FeaturedStrip intros={SANDBOX_INTROS} />
 
