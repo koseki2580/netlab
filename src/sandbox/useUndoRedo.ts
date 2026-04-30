@@ -1,4 +1,5 @@
-import { useEffect, type RefObject } from 'react';
+import { useCallback, useEffect, type RefObject } from 'react';
+import { useOptionalReplay } from './recording/useReplay';
 import { useSandbox } from './useSandbox';
 
 function isEditableTarget(element: Element | null): boolean {
@@ -21,12 +22,24 @@ export function useUndoRedo(): {
   resetAll(): void;
 } {
   const sandbox = useSandbox();
+  const replay = useOptionalReplay();
+  const replayActive = replay?.isActive ?? false;
+
+  const undo = useCallback(() => {
+    if (replayActive) return;
+    sandbox.undo();
+  }, [replayActive, sandbox]);
+
+  const redo = useCallback(() => {
+    if (replayActive) return;
+    sandbox.redo();
+  }, [replayActive, sandbox]);
 
   return {
-    undo: sandbox.undo,
-    redo: sandbox.redo,
-    canUndo: sandbox.session.canUndo(),
-    canRedo: sandbox.session.canRedo(),
+    undo,
+    redo,
+    canUndo: !replayActive && sandbox.session.canUndo(),
+    canRedo: !replayActive && sandbox.session.canRedo(),
     resetAll: sandbox.resetAll,
   };
 }

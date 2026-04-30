@@ -22,6 +22,12 @@ export const NETLAB_ERROR_CODES = [
   'session-io/unsupported-schema',
   'sandbox-intro/missing-provider',
   'sandbox-intro/unknown-id',
+  'sandbox-recording/invalid-recording',
+  'sandbox-recording/unsupported-schema',
+  'sandbox-recording/missing-sandbox',
+  'sandbox-recording/intro-active',
+  'sandbox-recording/event-limit',
+  'sandbox-recording/replay-desynced',
 ] as const;
 
 export type NetlabErrorCode = (typeof NETLAB_ERROR_CODES)[number];
