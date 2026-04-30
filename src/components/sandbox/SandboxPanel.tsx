@@ -3,6 +3,8 @@ import { hookEngine as sharedHookEngine } from '../../hooks/HookEngine';
 import { shortcutRegistry } from '../../sandbox/shortcuts/registry';
 import { useSandbox } from '../../sandbox/useSandbox';
 import type { SandboxMode } from '../../sandbox/types';
+import { AssessmentContext } from '../../assessments/AssessmentContext';
+import { AssessmentTab } from '../assessments/AssessmentTab';
 import { NetlabContext } from '../NetlabContext';
 import { EditsTab } from './EditsTab';
 import { ExportButton } from './ExportButton';
@@ -15,9 +17,9 @@ import { SaveSnapshotButton } from './snapshots/SaveSnapshotButton';
 import { ShortcutsHelpModal } from './ShortcutsHelpModal';
 import { TrafficTab } from './TrafficTab';
 
-type SandboxAxis = 'packet' | 'node' | 'parameters' | 'traffic' | 'edits';
+type SandboxAxis = 'packet' | 'node' | 'parameters' | 'traffic' | 'edits' | 'assessment';
 
-const TABS: { readonly axis: SandboxAxis; readonly label: string }[] = [
+const BASE_TABS: { readonly axis: SandboxAxis; readonly label: string }[] = [
   { axis: 'packet', label: 'Packet' },
   { axis: 'node', label: 'Node' },
   { axis: 'parameters', label: 'Parameters' },
@@ -25,14 +27,19 @@ const TABS: { readonly axis: SandboxAxis; readonly label: string }[] = [
   { axis: 'edits', label: 'Edits' },
 ];
 
-function getInitialAxis(): SandboxAxis {
+function getTabs(hasAssessment: boolean): { readonly axis: SandboxAxis; readonly label: string }[] {
+  return hasAssessment ? [...BASE_TABS, { axis: 'assessment', label: 'Assessment' }] : BASE_TABS;
+}
+
+function getInitialAxis(hasAssessment: boolean): SandboxAxis {
   const requested = new URLSearchParams(window.location.search).get('sandboxTab');
   if (
     requested === 'packet' ||
     requested === 'node' ||
     requested === 'parameters' ||
     requested === 'traffic' ||
-    requested === 'edits'
+    requested === 'edits' ||
+    (hasAssessment && requested === 'assessment')
   ) {
     return requested;
   }
@@ -55,17 +62,23 @@ function SandboxTabBody({ axis }: { readonly axis: SandboxAxis }) {
       return <TrafficTab />;
     case 'edits':
       return <EditsTab />;
+    case 'assessment':
+      return <AssessmentTab />;
   }
 }
 
 export function SandboxPanel() {
   const sandbox = useSandbox();
+  const assessment = useContext(AssessmentContext);
   const netlabContext = useContext(NetlabContext);
   const hookEngine = netlabContext?.hookEngine ?? sharedHookEngine;
   const [open, setOpen] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
-  const [activeAxis, setActiveAxis] = useState<SandboxAxis>(() => getInitialAxis());
+  const [activeAxis, setActiveAxis] = useState<SandboxAxis>(() =>
+    getInitialAxis(assessment !== null),
+  );
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const tabs = getTabs(assessment !== null);
 
   useEffect(() => {
     const unregisters = [
@@ -117,11 +130,11 @@ export function SandboxPanel() {
     );
   }
 
-  const activeIndex = TABS.findIndex((tab) => tab.axis === activeAxis);
+  const activeIndex = tabs.findIndex((tab) => tab.axis === activeAxis);
 
   const selectTabAt = (index: number) => {
-    const nextIndex = (index + TABS.length) % TABS.length;
-    const nextTab = TABS[nextIndex];
+    const nextIndex = (index + tabs.length) % tabs.length;
+    const nextTab = tabs[nextIndex];
     if (!nextTab) return;
 
     setActiveAxis(nextTab.axis);
@@ -231,7 +244,7 @@ export function SandboxPanel() {
         </header>
 
         <div role="tablist" aria-label="Sandbox edit axes" style={{ display: 'flex' }}>
-          {TABS.map((tab, index) => {
+          {tabs.map((tab, index) => {
             const selected = tab.axis === activeAxis;
             return (
               <button

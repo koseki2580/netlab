@@ -7,6 +7,10 @@ import type { BranchedSimulationEngine } from '../../sandbox/BranchedSimulationE
 import { EditSession } from '../../sandbox/EditSession';
 import { SandboxContext, type SandboxContextValue } from '../../sandbox/SandboxContext';
 import { DEFAULT_PARAMETERS, type SandboxMode } from '../../sandbox/types';
+import {
+  AssessmentContext,
+  type AssessmentContextValue,
+} from '../../assessments/AssessmentProvider';
 import { EmptySandboxTab } from './EmptySandboxTab';
 import { SandboxPanel } from './SandboxPanel';
 
@@ -92,6 +96,37 @@ function StatefulSandbox({ children }: { readonly children: ReactNode }) {
   });
 
   return <SandboxContext.Provider value={value}>{children}</SandboxContext.Provider>;
+}
+
+function makeAssessmentValue(): AssessmentContextValue {
+  return {
+    scenarioId: 'scenario-1',
+    rubric: {
+      id: 'assessment-1',
+      goal: 'Make the assessment pass.',
+      subgoals: [
+        {
+          id: 'goal',
+          title: 'Goal',
+          required: true,
+          predicate: () => false,
+          hints: [],
+        },
+      ],
+      constraints: [],
+    },
+    status: {
+      status: 'active',
+      rubricId: 'assessment-1',
+      subgoalResults: [{ subgoalId: 'goal', passed: false }],
+      hintsUsed: [],
+      startedAt: 0,
+      passedAt: null,
+    },
+    useHint: vi.fn(),
+    exit: vi.fn(),
+    failConstraint: vi.fn(),
+  };
 }
 
 beforeEach(() => {
@@ -191,6 +226,43 @@ describe('SandboxPanel', () => {
       'Traffic',
       'Edits (0)',
     ]);
+  });
+
+  it('renders the assessment tab only when assessment context is present', () => {
+    render(
+      <SandboxContext.Provider value={makeSandboxValue()}>
+        <AssessmentContext.Provider value={makeAssessmentValue()}>
+          <SandboxPanel />
+        </AssessmentContext.Provider>
+      </SandboxContext.Provider>,
+    );
+
+    const tabs = Array.from(container?.querySelectorAll('[role="tab"]') ?? []);
+    expect(tabs.map((tab) => tab.textContent)).toEqual([
+      'Packet',
+      'Node',
+      'Parameters',
+      'Traffic',
+      'Edits (0)',
+      'Assessment',
+    ]);
+  });
+
+  it('uses sandboxTab=assessment when assessment context is present', async () => {
+    window.history.replaceState({}, '', '/?sandboxTab=assessment');
+
+    render(
+      <SandboxContext.Provider value={makeSandboxValue()}>
+        <AssessmentContext.Provider value={makeAssessmentValue()}>
+          <SandboxPanel />
+        </AssessmentContext.Provider>
+      </SandboxContext.Provider>,
+    );
+
+    expect(container?.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe(
+      'Assessment',
+    );
+    expect(container?.textContent).toContain('Make the assessment pass.');
   });
 
   it('updates the Edits tab count from the active session head', () => {

@@ -11,6 +11,8 @@ import {
 import { NetlabContext } from '../components/NetlabContext';
 import { NetlabError } from '../errors';
 import { hookEngine as sharedHookEngine } from '../hooks/HookEngine';
+import { checkAssessmentConstraints } from '../assessments/constraints';
+import type { AssessmentRubric } from '../assessments/types';
 import { useSimulation } from '../simulation/SimulationContext';
 import { TutorialPresenceContext } from '../tutorials/TutorialContext';
 import { BranchedSimulationEngine } from './BranchedSimulationEngine';
@@ -69,12 +71,14 @@ export interface SandboxProviderProps {
   readonly children: ReactNode;
   readonly initialMode?: SandboxMode;
   readonly enableShortcuts?: boolean;
+  readonly assessmentRubric?: AssessmentRubric;
 }
 
 export function SandboxProvider({
   children,
   initialMode = 'alpha',
   enableShortcuts = true,
+  assessmentRubric,
 }: SandboxProviderProps) {
   const simulation = useSimulation();
   const netlabContext = useContext(NetlabContext);
@@ -183,6 +187,18 @@ export function SandboxProvider({
   const pushEdit = useCallback(
     (edit: Edit) => {
       const current = sessionRef.current;
+      const violation = assessmentRubric
+        ? checkAssessmentConstraints(assessmentRubric, edit, current)
+        : null;
+      if (violation) {
+        void hookEngine.emit('sandbox:edit-rejected', {
+          edit,
+          reason: violation.reason,
+          constraint: violation.constraint,
+        });
+        return;
+      }
+
       const evictedCount = Math.max(0, current.head + 1 - EditSession.MAX_HISTORY);
       const next = current.push(edit);
       commitSession(next);
@@ -191,7 +207,7 @@ export function SandboxProvider({
       }
       void hookEngine.emit('sandbox:edit-applied', { edit });
     },
-    [commitSession, hookEngine],
+    [assessmentRubric, commitSession, hookEngine],
   );
 
   const undo = useCallback(() => {

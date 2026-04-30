@@ -26,6 +26,8 @@ import { SandboxIntroProvider } from '../sandbox/intro/SandboxIntroProvider';
 import type { SandboxIntroId } from '../sandbox/intro/introRegistry';
 import { TutorialProvider } from '../tutorials/TutorialContext';
 import { SandboxProvider, useSandbox } from '../sandbox/SandboxContext';
+import { AssessmentProvider } from '../assessments/AssessmentProvider';
+import { scenarioRegistry } from '../scenarios/ScenarioRegistry';
 import { useOptionalFailure } from './FailureContext';
 import { SimulationEngine } from './SimulationEngine';
 
@@ -76,8 +78,15 @@ export function SimulationProvider({
   autoRecompute = false,
   animationSpeed,
 }: SimulationProviderProps) {
-  const { topology, hookEngine, routeTable, tutorialId, sandboxEnabled, sandboxIntroId } =
-    useNetlabContext();
+  const {
+    topology,
+    hookEngine,
+    routeTable,
+    tutorialId,
+    sandboxEnabled,
+    sandboxIntroId,
+    assessmentScenarioId,
+  } = useNetlabContext();
   const failureCtx = useOptionalFailure();
 
   const engine = useMemo(() => new SimulationEngine(topology, hookEngine), [topology, hookEngine]);
@@ -204,16 +213,30 @@ export function SimulationProvider({
     ],
   );
 
-  const content = sandboxEnabled ? (
+  const effectiveSandboxEnabled = sandboxEnabled || assessmentScenarioId !== undefined;
+  const sandboxSurface = sandboxIntroId ? (
+    <SandboxIntroProvider introId={sandboxIntroId as SandboxIntroId}>
+      <SandboxSurface introOverlay={<SandboxIntroOverlay />}>{children}</SandboxSurface>
+    </SandboxIntroProvider>
+  ) : (
+    <SandboxSurface>{children}</SandboxSurface>
+  );
+
+  const assessmentSurface = assessmentScenarioId ? (
+    <AssessmentProvider assessmentScenarioId={assessmentScenarioId}>
+      {sandboxSurface}
+    </AssessmentProvider>
+  ) : (
+    sandboxSurface
+  );
+  const assessmentRubric = assessmentScenarioId
+    ? scenarioRegistry.get(assessmentScenarioId)?.assessmentRubric
+    : undefined;
+
+  const content = effectiveSandboxEnabled ? (
     <SandboxErrorBoundary>
-      <SandboxProvider>
-        {sandboxIntroId ? (
-          <SandboxIntroProvider introId={sandboxIntroId as SandboxIntroId}>
-            <SandboxSurface introOverlay={<SandboxIntroOverlay />}>{children}</SandboxSurface>
-          </SandboxIntroProvider>
-        ) : (
-          <SandboxSurface>{children}</SandboxSurface>
-        )}
+      <SandboxProvider {...(assessmentRubric ? { assessmentRubric } : {})}>
+        {assessmentSurface}
       </SandboxProvider>
     </SandboxErrorBoundary>
   ) : (

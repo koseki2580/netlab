@@ -223,6 +223,18 @@ export type {
   TutorialRunnerState,
   TutorialStep,
 } from './tutorials/types';
+export type {
+  AssessmentConstraint,
+  AssessmentHint,
+  AssessmentHintUsage,
+  AssessmentPredicate,
+  AssessmentPredicateInput,
+  AssessmentRubric,
+  AssessmentStatus,
+  AssessmentStatusKind,
+  AssessmentSubgoal,
+  AssessmentSubgoalResult,
+} from './assessments/types';
 
 // Interactive sandbox primitives
 export {

@@ -35,6 +35,7 @@ interface ControlledNetlabProviderProps {
   tutorialId?: string;
   sandboxEnabled?: boolean;
   sandboxIntroId?: string;
+  assessmentScenarioId?: string;
 }
 
 interface UncontrolledNetlabProviderProps {
@@ -44,6 +45,7 @@ interface UncontrolledNetlabProviderProps {
   tutorialId?: string;
   sandboxEnabled?: boolean;
   sandboxIntroId?: string;
+  assessmentScenarioId?: string;
 }
 
 export type NetlabProviderProps = ControlledNetlabProviderProps | UncontrolledNetlabProviderProps;
@@ -55,6 +57,7 @@ export function NetlabProvider({
   tutorialId,
   sandboxEnabled = false,
   sandboxIntroId,
+  assessmentScenarioId,
 }: NetlabProviderProps) {
   ensureBuiltInProtocolsRegistered();
 
@@ -97,8 +100,9 @@ export function NetlabProvider({
       areas: resolvedTopology.areas,
       hookEngine,
       ...(tutorialId !== undefined ? { tutorialId } : {}),
-      ...(sandboxEnabled ? { sandboxEnabled: true } : {}),
+      ...(sandboxEnabled || assessmentScenarioId !== undefined ? { sandboxEnabled: true } : {}),
       ...(sandboxIntroId !== undefined ? { sandboxIntroId } : {}),
+      ...(assessmentScenarioId !== undefined ? { assessmentScenarioId } : {}),
     }),
     [
       enrichedTopology,
@@ -108,13 +112,16 @@ export function NetlabProvider({
       tutorialId,
       sandboxEnabled,
       sandboxIntroId,
+      assessmentScenarioId,
     ],
   );
 
   return (
     <NetlabContext.Provider value={value}>
       {children}
-      {sandboxEnabled && <SandboxNarrationRegion hookEngine={hookEngine} />}
+      {(sandboxEnabled || assessmentScenarioId !== undefined) && (
+        <SandboxNarrationRegion hookEngine={hookEngine} />
+      )}
     </NetlabContext.Provider>
   );
 }

@@ -1,11 +1,11 @@
 import { NetlabError } from '../../errors';
+import type { TraceAnnotationEdit } from '../annotations/types';
 import { EditSession } from '../EditSession';
 import type { Edit } from '../edits';
-import type { TraceAnnotationEdit } from '../annotations/types';
-import type { NamedSnapshot } from '../snapshots/types';
-import { decodeEdit, encodeEdit } from '../urlCodec';
-import { isProtocolParameterSet, type ProtocolParameterSet } from '../types';
+import { decodeEdit } from '../urlCodec';
+import { isProtocolParameterSet } from '../types';
 import { isNamedSnapshot } from '../snapshots/edits';
+import { normalizeImportedTraceAnnotationEdit } from './encode';
 import { migrateExportedSession } from './migrations';
 import {
   SESSION_IMPORT_EDIT_LIMIT,
@@ -14,12 +14,7 @@ import {
   type ExportedSession,
 } from './schema';
 
-interface EncodeSessionOptions {
-  readonly scenarioId: string;
-  readonly initialParameters: ProtocolParameterSet;
-  readonly savedAt?: string | Date;
-  readonly toolVersion?: string;
-}
+export { encodeSession } from './encode';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -33,56 +28,9 @@ function invalid(message: string, context?: Record<string, unknown>): never {
   });
 }
 
-function isoSavedAt(savedAt: string | Date | undefined): string {
-  if (savedAt instanceof Date) {
-    return savedAt.toISOString();
-  }
-  return savedAt ?? new Date().toISOString();
-}
-
 function normalizeImportedEdit(edit: Edit): Edit {
   if (!edit.kind.startsWith('trace.annotate.')) return edit;
-  const annotationEdit = edit as TraceAnnotationEdit;
-  switch (annotationEdit.kind) {
-    case 'trace.annotate.add':
-      return {
-        ...annotationEdit,
-        annotation: { ...annotationEdit.annotation, author: 'user' },
-      };
-    case 'trace.annotate.remove':
-      return {
-        ...annotationEdit,
-        before: { ...annotationEdit.before, author: 'user' },
-      };
-    case 'trace.annotate.edit':
-      return annotationEdit;
-  }
-}
-
-function orphanedSnapshotsFromBacking(backing: readonly Edit[]): readonly NamedSnapshot[] {
-  return backing
-    .filter(
-      (edit): edit is Extract<Edit, { readonly kind: 'snapshot.delete' }> =>
-        edit.kind === 'snapshot.delete' && edit.orphaned === true,
-    )
-    .map((edit) => edit.before);
-}
-
-export function encodeSession(
-  session: EditSession,
-  options: EncodeSessionOptions,
-): ExportedSession {
-  return {
-    schemaVersion: SESSION_SCHEMA_VERSION,
-    scenarioId: options.scenarioId,
-    initialScenarioId: options.scenarioId,
-    initialParameters: options.initialParameters,
-    backing: session.backing.map((edit) => encodeEdit(edit) as Edit),
-    head: session.head,
-    orphanedSnapshots: orphanedSnapshotsFromBacking(session.backing),
-    savedAt: isoSavedAt(options.savedAt),
-    toolVersion: options.toolVersion ?? '0.1.0',
-  };
+  return normalizeImportedTraceAnnotationEdit(edit as TraceAnnotationEdit);
 }
 
 export function decodeSession(value: unknown): EditSession {

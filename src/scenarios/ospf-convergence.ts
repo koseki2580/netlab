@@ -1,4 +1,5 @@
 import type { NetworkTopology } from '../types/topology';
+import { ospfBackupPathAssessment } from '../assessments/builtin/ospfBackupPath';
 import type { Scenario } from './types';
 
 export function buildOspfConvergenceTopology(primaryLinkDown = false): NetworkTopology {
@@ -242,4 +243,5 @@ export const ospfConvergence: Scenario = {
   sampleFlows: [
     { from: 'c1', to: 'c2', note: 'Healthy path prefers R2 before recomputing via R3' },
   ],
+  assessmentRubric: ospfBackupPathAssessment,
 };

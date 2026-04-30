@@ -4,11 +4,13 @@ import { StrictMode, act, Component, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NetlabError } from '../errors';
+import { NetlabContext } from '../components/NetlabContext';
 import { HookEngine } from '../hooks/HookEngine';
 import { basicArp, scenarioRegistry } from '../scenarios';
 import { SimulationContext, type SimulationContextValue } from '../simulation/SimulationContext';
 import { SimulationEngine } from '../simulation/SimulationEngine';
 import type { SimulationState } from '../types/simulation';
+import type { AssessmentRubric } from '../assessments/types';
 import { TutorialProvider } from '../tutorials/TutorialContext';
 import { tutorialRegistry } from '../tutorials';
 import type { Tutorial } from '../tutorials/types';
@@ -136,6 +138,45 @@ function renderSandbox(children: ReactNode = <CaptureSandbox />, initialMode?: '
   );
 }
 
+function makeAssessmentRubric(constraints: AssessmentRubric['constraints']): AssessmentRubric {
+  return {
+    id: 'assessment-constraints',
+    goal: 'goal',
+    subgoals: [
+      {
+        id: 'goal',
+        title: 'Goal',
+        required: true,
+        predicate: () => true,
+        hints: [],
+      },
+    ],
+    constraints,
+  };
+}
+
+function renderSandboxWithAssessment(
+  assessmentRubric: AssessmentRubric,
+  testHookEngine = new HookEngine(),
+) {
+  render(
+    <NetlabContext.Provider
+      value={{
+        topology: basicArp.topology,
+        routeTable: basicArp.topology.routeTables,
+        areas: [],
+        hookEngine: testHookEngine,
+      }}
+    >
+      <SimulationContext.Provider value={makeSimulationValue()}>
+        <SandboxProvider assessmentRubric={assessmentRubric}>
+          <CaptureSandbox />
+        </SandboxProvider>
+      </SimulationContext.Provider>
+    </NetlabContext.Provider>,
+  );
+}
+
 beforeEach(() => {
   actEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
   latestSandbox = null;
@@ -188,6 +229,56 @@ describe('SandboxProvider', () => {
       currentSandbox().pushEdit({ kind: 'noop' });
     });
 
+    expect(currentSandbox().session.edits).toEqual([{ kind: 'noop' }]);
+  });
+
+  it('rejects assessment constraint violations before mutating the session', () => {
+    renderSandboxWithAssessment(
+      makeAssessmentRubric([{ kind: 'forbid-edit', editKind: 'node.route.add' }]),
+    );
+
+    act(() => {
+      currentSandbox().pushEdit({
+        kind: 'node.route.add',
+        target: { kind: 'node', nodeId: 'router-a' },
+        route: {
+          id: 'route-a',
+          prefix: '10.0.0.0/24',
+          nextHop: '10.0.0.1',
+          outInterface: 'eth0',
+          metric: 1,
+        },
+      });
+    });
+
+    expect(currentSandbox().session.edits).toEqual([]);
+  });
+
+  it('emits an assessment constraint rejection event with detail', async () => {
+    const testHookEngine = new HookEngine();
+    const rejected = vi.fn();
+    testHookEngine.on('sandbox:edit-rejected', async (payload, next) => {
+      rejected(payload);
+      await next();
+    });
+    renderSandboxWithAssessment(
+      makeAssessmentRubric([{ kind: 'max-total-edits', max: 1 }]),
+      testHookEngine,
+    );
+
+    act(() => {
+      currentSandbox().pushEdit({ kind: 'noop' });
+    });
+    await act(async () => {
+      currentSandbox().pushEdit({ kind: 'noop' });
+      await Promise.resolve();
+    });
+
+    expect(rejected).toHaveBeenCalledWith({
+      edit: { kind: 'noop' },
+      reason: 'assessment-constraint-violated',
+      constraint: { kind: 'max-total-edits', max: 1 },
+    });
     expect(currentSandbox().session.edits).toEqual([{ kind: 'noop' }]);
   });
 

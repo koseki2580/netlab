@@ -13,6 +13,7 @@ export interface NetlabContextValue {
   tutorialId?: string;
   sandboxEnabled?: boolean;
   sandboxIntroId?: string;
+  assessmentScenarioId?: string;
 }
 
 export const NetlabContext = createContext<NetlabContextValue | null>(null);

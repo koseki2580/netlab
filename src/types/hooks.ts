@@ -3,6 +3,7 @@ import type { ForwardDecision } from './layers';
 import type { RouteEntry } from './routing';
 import type { Edit } from '../sandbox/edits';
 import type { SandboxMode } from '../sandbox/types';
+import type { AssessmentConstraint } from '../assessments/types';
 
 export type HookFn<T> = (ctx: T, next: () => Promise<void>) => Promise<void>;
 
@@ -49,7 +50,13 @@ export interface HookMap {
   }>;
   'sandbox:edit-rejected': HookFn<{
     edit: unknown;
-    reason: 'unknown-kind' | 'not-paused' | 'validation-failed' | 'plugin-error';
+    reason:
+      | 'unknown-kind'
+      | 'not-paused'
+      | 'validation-failed'
+      | 'plugin-error'
+      | 'assessment-constraint-violated';
+    constraint?: AssessmentConstraint;
   }>;
   'sandbox:edit-applied': HookFn<{
     edit: Edit;
@@ -100,7 +107,7 @@ export interface HookMap {
     head: number;
   }>;
   'sandbox:panel-tab-opened': HookFn<{
-    axis: 'packet' | 'node' | 'parameters' | 'traffic' | 'edits';
+    axis: 'packet' | 'node' | 'parameters' | 'traffic' | 'edits' | 'assessment';
   }>;
   'sandbox:pcap-exported': HookFn<{
     branch: 'alpha' | 'baseline' | 'whatif' | 'combined';
