@@ -57,6 +57,20 @@ const BTN: React.CSSProperties = {
   transition: 'opacity 0.15s',
 };
 
+const DIVIDER: React.CSSProperties = {
+  width: 1,
+  height: 20,
+  background: 'var(--netlab-border-subtle)',
+  margin: '0 4px',
+  flexShrink: 0,
+};
+
+const ZONE: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 4,
+};
+
 const BTN_PRIMARY: React.CSSProperties = {
   ...BTN,
   background: 'var(--netlab-accent-blue)',
@@ -97,69 +111,82 @@ export function SimulationControls() {
         display: 'flex',
         alignItems: 'center',
         gap: 8,
-        padding: '6px 12px',
+        padding: '4px 12px',
+        height: 40,
         background: 'var(--netlab-bg-surface)',
         borderBottom: '1px solid var(--netlab-border)',
         flexShrink: 0,
         flexWrap: 'wrap',
       }}
     >
-      <button
-        onClick={handleSend}
-        style={BTN_PRIMARY}
-        aria-label="Send Packet"
-        className="netlab-focus-ring"
-      >
-        ▶ Send Packet
-      </button>
+      {/* Zone 1: Transport */}
+      <div style={ZONE}>
+        <button
+          onClick={handleSend}
+          style={BTN_PRIMARY}
+          title="Send Packet"
+          aria-label="Send Packet"
+          className="netlab-focus-ring"
+        >
+          ▶ Send Packet
+        </button>
+        <button
+          onClick={() => engine.play()}
+          disabled={playDisabled}
+          style={playDisabled ? BTN_DISABLED : BTN_SECONDARY}
+          title="Play"
+          aria-label="Play"
+          className="netlab-focus-ring"
+        >
+          ▶
+        </button>
+        <button
+          onClick={() => engine.pause()}
+          disabled={pauseDisabled}
+          style={pauseDisabled ? BTN_DISABLED : BTN_SECONDARY}
+          title="Pause"
+          aria-label="Pause"
+          className="netlab-focus-ring"
+        >
+          ⏸
+        </button>
+        <button
+          onClick={() => engine.step()}
+          disabled={stepDisabled}
+          style={stepDisabled ? BTN_DISABLED : BTN_SECONDARY}
+          title="Step Forward"
+          aria-label="Step Forward"
+          className="netlab-focus-ring"
+        >
+          →
+        </button>
+        <button
+          onClick={() => engine.reset()}
+          disabled={resetDisabled}
+          style={resetDisabled ? BTN_DISABLED : BTN_SECONDARY}
+          title="Reset"
+          aria-label="Reset"
+          className="netlab-focus-ring"
+        >
+          ⟳
+        </button>
+      </div>
 
-      <div style={{ width: 1, height: 20, background: 'var(--netlab-border)', margin: '0 4px' }} />
+      <div style={DIVIDER} />
 
-      <button
-        onClick={() => engine.play()}
-        disabled={playDisabled}
-        style={playDisabled ? BTN_DISABLED : BTN_SECONDARY}
-        aria-label="Play"
-        className="netlab-focus-ring"
-      >
-        ▶ Play
-      </button>
-      <button
-        onClick={() => engine.pause()}
-        disabled={pauseDisabled}
-        style={pauseDisabled ? BTN_DISABLED : BTN_SECONDARY}
-        aria-label="Pause"
-        className="netlab-focus-ring"
-      >
-        ⏸ Pause
-      </button>
-      <button
-        onClick={() => engine.step()}
-        disabled={stepDisabled}
-        style={stepDisabled ? BTN_DISABLED : BTN_SECONDARY}
-        aria-label="Step Forward"
-        className="netlab-focus-ring"
-      >
-        → Step
-      </button>
-      <button
-        onClick={() => engine.reset()}
-        disabled={resetDisabled}
-        style={resetDisabled ? BTN_DISABLED : BTN_SECONDARY}
-        aria-label="Reset"
-        className="netlab-focus-ring"
-      >
-        ⟳ Reset
-      </button>
-      <button
-        onClick={() => engine.setHighlightMode(highlightMode === 'path' ? 'hop' : 'path')}
-        style={BTN_SECONDARY}
-        aria-label="Highlight Mode"
-        aria-pressed={highlightMode === 'path'}
-        className="netlab-focus-ring"
-      >
-        {highlightMode === 'path' ? 'Path Highlight' : 'Hop Highlight'}
-      </button>
+      {/* Zone 2: Inspect */}
+      <div style={ZONE}>
+        <button
+          onClick={() => engine.setHighlightMode(highlightMode === 'path' ? 'hop' : 'path')}
+          style={BTN_SECONDARY}
+          title="Highlight mode"
+          aria-label="Highlight Mode"
+          aria-pressed={highlightMode === 'path'}
+          className="netlab-focus-ring"
+        >
+          {highlightMode === 'path' ? 'Path' : 'Hop'}
+        </button>
+      </div>
 
       <div
         style={{
