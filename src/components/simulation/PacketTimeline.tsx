@@ -120,7 +120,8 @@ function HopRow({
         borderRadius: 4,
         cursor: 'pointer',
         background: isActive ? 'rgba(125, 211, 252, 0.08)' : 'transparent',
-        borderLeft: isActive ? `2px solid ${color}` : '2px solid transparent',
+        borderLeft: isActive ? '2px solid var(--netlab-accent-cyan)' : '2px solid transparent',
+        paddingLeft: isActive ? 6 : 8,
         marginBottom: 2,
       }}
     >
@@ -135,6 +136,18 @@ function HopRow({
         >
           {hop.step}
         </span>
+        <span
+          aria-hidden="true"
+          style={{
+            width: 4,
+            height: 4,
+            borderRadius: '50%',
+            background: EVENT_COLORS[hop.event] ?? 'var(--netlab-text-muted)',
+            display: 'inline-block',
+            flexShrink: 0,
+            marginTop: 4,
+          }}
+        />
         <span
           style={{
             fontSize: 9,
@@ -223,23 +236,60 @@ export const PacketTimeline = memo(function PacketTimeline() {
         fontFamily: 'monospace',
       }}
     >
+      {/* Section header */}
       <div
         style={{
-          padding: '6px 10px',
-          borderBottom: '1px solid var(--netlab-bg-surface)',
-          color: 'var(--netlab-text-muted)',
-          fontSize: 10,
-          fontWeight: 'bold',
-          letterSpacing: 1,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          height: 28,
+          padding: '0 8px',
+          borderBottom: '1px solid var(--netlab-border-subtle)',
           flexShrink: 0,
         }}
       >
-        PACKET TIMELINE
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: 1,
+            color: 'var(--netlab-text-secondary)',
+            textTransform: 'uppercase',
+          }}
+        >
+          PACKET TIMELINE
+        </span>
         {trace && (
-          <span style={{ marginLeft: 8, color: 'var(--netlab-text-muted)', fontWeight: 'normal' }}>
-            {trace.hops.length} hops · {trace.status}
+          <span
+            style={{
+              background: 'var(--netlab-bg-elevated)',
+              color: 'var(--netlab-text-muted)',
+              fontSize: 10,
+              borderRadius: 10,
+              padding: '1px 6px',
+            }}
+          >
+            {trace.hops.length}
           </span>
         )}
+        <button
+          type="button"
+          aria-label="Clear timeline"
+          onClick={() => engine.reset()}
+          style={{
+            marginLeft: 'auto',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: 'var(--netlab-text-muted)',
+            fontFamily: 'monospace',
+            fontSize: 11,
+            padding: '0 4px',
+          }}
+          className="netlab-focus-ring"
+        >
+          ✕
+        </button>
       </div>
 
       <div
