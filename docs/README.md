@@ -56,6 +56,7 @@ Specifications focused on simulation-time packet traversal and trace annotation.
 - [Protocol-Driven Forwarding](simulation/interface-aware-forwarding.md) - Forwarder-owned next-hop decisions, engine execution rules, and interface hop annotation
 - [RFC Packet Realism](simulation/rfc-packet-realism.md) - Packet materialization, router MAC rewrite, checksum/FCS recomputation, and hop mutation tracking
 - [Simulation Worker](simulation/worker.md) - Worker-capable SimulationEngine facade, protocol, fallback, respawn, and determinism contract
+- [Sandbox Performance](simulation/performance.md) - Checkpointed sandbox re-runs, fast trace mode, large-topology guardrails, and benchmark procedure
 - [Data Transfer Simulation](simulation/data-transfer.md) - Application-level data transfer model with chunking, reassembly, checksum verification, and per-hop forwarding visualization
 - [Session Correlation](simulation/session-correlation.md) - Session-aware request/response lifecycle grouping, correlation logic, and SessionList/SessionDetail UI
 
