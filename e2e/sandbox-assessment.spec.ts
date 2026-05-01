@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test('opens the OSPF backup-path assessment from the Gallery', async ({ page }) => {
   await page.goto('/');
   await page
-    .getByRole('link', { name: /Start assessment/i })
+    .getByRole('link', { name: /Assessment/i })
     .first()
     .click();
 
