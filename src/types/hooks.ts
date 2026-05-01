@@ -106,6 +106,15 @@ export interface HookMap {
     editCount: number;
     head: number;
   }>;
+  'sandbox:session-exported': HookFn<{
+    sizeBytes: number;
+    scenarioId: string;
+  }>;
+  'sandbox:assessment-passed': HookFn<{
+    rubricId: string;
+    hintsUsed: number;
+    durationMs: number;
+  }>;
   'sandbox:panel-tab-opened': HookFn<{
     axis: 'packet' | 'node' | 'parameters' | 'traffic' | 'edits' | 'assessment';
   }>;

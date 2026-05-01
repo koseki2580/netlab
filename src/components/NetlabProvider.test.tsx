@@ -250,5 +250,22 @@ describe('NetlabProvider', () => {
         areas: [],
       });
     });
+
+    it('provides embed options via context', () => {
+      render(
+        <NetlabProvider
+          topology={makeTopology('Embed')}
+          sandboxEnabled
+          embedMode="compact"
+          parentOrigin="https://teacher.example"
+        >
+          <CaptureNetlab />
+        </NetlabProvider>,
+      );
+
+      expect(currentContext().embedMode).toBe('compact');
+      expect(currentContext().parentOrigin).toBe('https://teacher.example');
+      expect(currentContext().sandboxEnabled).toBe(true);
+    });
   });
 });

@@ -27,6 +27,7 @@ import type { SandboxIntroId } from '../sandbox/intro/introRegistry';
 import { TutorialProvider } from '../tutorials/TutorialContext';
 import { SandboxProvider, useSandbox } from '../sandbox/SandboxContext';
 import { AssessmentProvider } from '../assessments/AssessmentProvider';
+import { EmbedBridge } from '../embed/EmbedBridge';
 import { scenarioRegistry } from '../scenarios/ScenarioRegistry';
 import { useOptionalFailure } from './FailureContext';
 import { SimulationEngine } from './SimulationEngine';
@@ -69,6 +70,7 @@ function SandboxSurface({
       <SandboxActiveEditor />
       <DiffTimeline />
       <SandboxPanel />
+      <EmbedBridge />
     </div>
   );
 }

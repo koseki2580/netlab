@@ -276,6 +276,13 @@ export type {
   TraceAnnotationEdit,
 } from './sandbox';
 export { BeforeAfterView, DiffTimeline, EditPopover, SandboxPanel } from './components/sandbox';
+export { buildSandboxEmbedUrl } from './embed/buildSandboxEmbedUrl';
+export type {
+  EmbedUrlParams,
+  NetlabEmbedMode,
+  ParentOrigin,
+  SandboxChildEvent,
+} from './embed/protocol';
 
 // Routing protocols
 export {

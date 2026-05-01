@@ -16,6 +16,10 @@ const capturedOverlayDockProps = vi.hoisted(() => ({
   latest: null as Record<string, unknown> | null,
 }));
 
+const capturedProviderProps = vi.hoisted(() => ({
+  latest: null as Record<string, unknown> | null,
+}));
+
 vi.mock('./NetlabCanvas', async () => {
   const React = await import('react');
 
@@ -31,8 +35,10 @@ vi.mock('./NetlabProvider', async () => {
   const React = await import('react');
 
   return {
-    NetlabProvider: ({ children }: { children?: React.ReactNode }) =>
-      React.createElement(React.Fragment, null, children),
+    NetlabProvider: (props: { children?: React.ReactNode }) => {
+      capturedProviderProps.latest = props;
+      return React.createElement(React.Fragment, null, props.children);
+    },
   };
 });
 
@@ -136,10 +142,19 @@ function currentOverlayDockProps() {
   return capturedOverlayDockProps.latest;
 }
 
+function currentProviderProps() {
+  if (!capturedProviderProps.latest) {
+    throw new Error('NetlabProvider props were not captured');
+  }
+
+  return capturedProviderProps.latest;
+}
+
 beforeEach(() => {
   actEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
   capturedCanvasProps.latest = null;
   capturedOverlayDockProps.latest = null;
+  capturedProviderProps.latest = null;
 });
 
 afterEach(() => {
@@ -150,6 +165,7 @@ afterEach(() => {
   root = null;
   capturedCanvasProps.latest = null;
   capturedOverlayDockProps.latest = null;
+  capturedProviderProps.latest = null;
   actEnvironment.IS_REACT_ACT_ENVIRONMENT = false;
 
   if (container) {
@@ -210,5 +226,23 @@ describe('NetlabApp color mode propagation', () => {
     );
 
     expect(currentOverlayDockProps().showRouteTable).toBe(false);
+  });
+
+  it('passes sandbox embed props through to NetlabProvider', () => {
+    render(
+      <NetlabApp
+        topology={topology}
+        simulation
+        sandboxEnabled
+        embedMode="minimal"
+        parentOrigin="https://teacher.example"
+      />,
+    );
+
+    expect(currentProviderProps()).toMatchObject({
+      sandboxEnabled: true,
+      embedMode: 'minimal',
+      parentOrigin: 'https://teacher.example',
+    });
   });
 });

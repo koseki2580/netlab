@@ -8,80 +8,89 @@ const GITHUB_ICON = (
   </svg>
 );
 
+const isE2e =
+  (import.meta as ImportMeta & { readonly env?: { readonly VITE_E2E?: string } }).env?.VITE_E2E ===
+  'true';
+
 interface DemoShellProps {
   title: string;
   desc: string;
   children: React.ReactNode;
+  embedded?: boolean;
 }
 
-export default function DemoShell({ title, desc, children }: DemoShellProps) {
+export default function DemoShell({ title, desc, children, embedded = false }: DemoShellProps) {
   return (
     <div
       data-testid="netlab-root"
       style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0f172a' }}
     >
-      <div
-        style={{
-          padding: '10px 16px',
-          background: '#1e293b',
-          borderBottom: '1px solid #334155',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 16,
-          flexShrink: 0,
-        }}
-      >
-        <Link
-          to="/"
+      {!embedded && (
+        <div
           style={{
-            color: '#94a3b8',
-            textDecoration: 'none',
-            fontFamily: 'monospace',
-            fontSize: 13,
+            padding: '10px 16px',
+            background: '#1e293b',
+            borderBottom: '1px solid #334155',
             display: 'flex',
             alignItems: 'center',
-            gap: 4,
+            gap: 16,
+            flexShrink: 0,
           }}
         >
-          ← Gallery
-        </Link>
-        <div style={{ width: 1, height: 18, background: '#334155' }} />
-        <span
-          style={{ color: '#e2e8f0', fontWeight: 'bold', fontFamily: 'monospace', fontSize: 15 }}
-        >
-          📡 netlab
-        </span>
-        <span style={{ color: '#94a3b8', fontFamily: 'monospace', fontSize: 14, fontWeight: 600 }}>
-          {title}
-        </span>
-        <span style={{ color: '#94a3b8', fontSize: 12, fontFamily: 'monospace' }}>{desc}</span>
-        <a
-          href="https://github.com/koseki2580/netlab"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            marginLeft: 'auto',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            color: '#94a3b8',
-            textDecoration: 'none',
-            fontFamily: 'monospace',
-            fontSize: 12,
-          }}
-          onMouseEnter={(event) => {
-            (event.currentTarget as HTMLAnchorElement).style.color = '#94a3b8';
-          }}
-          onMouseLeave={(event) => {
-            (event.currentTarget as HTMLAnchorElement).style.color = '#94a3b8';
-          }}
-        >
-          {GITHUB_ICON}
-          GitHub
-        </a>
-      </div>
+          <Link
+            to="/"
+            style={{
+              color: '#94a3b8',
+              textDecoration: 'none',
+              fontFamily: 'monospace',
+              fontSize: 13,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            ← Gallery
+          </Link>
+          <div style={{ width: 1, height: 18, background: '#334155' }} />
+          <span
+            style={{ color: '#e2e8f0', fontWeight: 'bold', fontFamily: 'monospace', fontSize: 15 }}
+          >
+            📡 netlab
+          </span>
+          <span
+            style={{ color: '#94a3b8', fontFamily: 'monospace', fontSize: 14, fontWeight: 600 }}
+          >
+            {title}
+          </span>
+          <span style={{ color: '#94a3b8', fontSize: 12, fontFamily: 'monospace' }}>{desc}</span>
+          <a
+            href="https://github.com/koseki2580/netlab"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              marginLeft: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              color: '#94a3b8',
+              textDecoration: 'none',
+              fontFamily: 'monospace',
+              fontSize: 12,
+            }}
+            onMouseEnter={(event) => {
+              (event.currentTarget as HTMLAnchorElement).style.color = '#94a3b8';
+            }}
+            onMouseLeave={(event) => {
+              (event.currentTarget as HTMLAnchorElement).style.color = '#94a3b8';
+            }}
+          >
+            {GITHUB_ICON}
+            GitHub
+          </a>
+        </div>
+      )}
       <NetlabThemeScope style={{ flex: 1, overflow: 'hidden' }}>
-        {(import.meta as any).env.VITE_E2E === 'true' && <E2eTraceHook />}
+        {isE2e && <E2eTraceHook />}
         {children}
       </NetlabThemeScope>
     </div>

@@ -14,6 +14,7 @@ import { SimulationProvider, useSimulation } from '../../src/simulation/Simulati
 import type { InFlightPacket } from '../../src/types/packets';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
+import { readDemoEmbedParams } from '../embedParams';
 
 const PING_PAYLOAD_BYTES = 1200;
 
@@ -104,16 +105,20 @@ export default function MtuFragmentationDemo() {
   const sandboxIntroId = params.get('intro') ?? null;
   const tutorialId = sandboxIntroId ? null : (params.get('tutorial') ?? null);
   const sandboxEnabled = params.get('sandbox') === '1';
+  const { embedded, embedMode, parentOrigin } = readDemoEmbedParams();
   const tutorialProps = tutorialId ? { tutorialId } : {};
 
   return (
     <DemoShell
       title="MTU & IPv4 Fragmentation"
       desc="Watch a low-MTU routed hop fragment oversized IPv4 packets or return ICMP Fragmentation Needed."
+      embedded={embedded}
     >
       <NetlabProvider
         topology={topology}
         sandboxEnabled={sandboxEnabled}
+        {...(embedMode !== undefined ? { embedMode } : {})}
+        {...(parentOrigin !== undefined ? { parentOrigin } : {})}
         {...(sandboxEnabled && sandboxIntroId ? { sandboxIntroId } : {})}
         {...tutorialProps}
       >

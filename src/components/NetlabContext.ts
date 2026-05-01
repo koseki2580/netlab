@@ -4,6 +4,7 @@ import type { HookEngine } from '../hooks/HookEngine';
 import type { NetworkArea } from '../types/areas';
 import type { RouteEntry } from '../types/routing';
 import type { NetworkTopology } from '../types/topology';
+import type { NetlabEmbedMode, ParentOrigin } from '../embed/protocol';
 
 export interface NetlabContextValue {
   topology: NetworkTopology;
@@ -14,6 +15,8 @@ export interface NetlabContextValue {
   sandboxEnabled?: boolean;
   sandboxIntroId?: string;
   assessmentScenarioId?: string;
+  embedMode?: NetlabEmbedMode;
+  parentOrigin?: ParentOrigin;
 }
 
 export const NetlabContext = createContext<NetlabContextValue | null>(null);

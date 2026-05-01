@@ -16,6 +16,12 @@ import { SimulationProvider, useSimulation } from '../../src/simulation/Simulati
 import type { EditorTopology } from '../../src/editor/types';
 import type { InFlightPacket } from '../../src/types/packets';
 import type { NetworkTopology } from '../../src/types/topology';
+import { readDemoEmbedParams } from '../embedParams';
+
+type DemoEmbedProviderProps = Pick<
+  ReturnType<typeof readDemoEmbedParams>,
+  'embedMode' | 'parentOrigin'
+>;
 
 type TabId = 'editor' | 'simulation' | 'failure' | 'trace';
 
@@ -299,12 +305,14 @@ function SimulationTabInner() {
 function SimulationTab({
   topology,
   sandboxEnabled,
+  embedParams,
 }: {
   topology: NetworkTopology;
   sandboxEnabled: boolean;
+  embedParams: DemoEmbedProviderProps;
 }) {
   return (
-    <NetlabProvider topology={topology} sandboxEnabled={sandboxEnabled}>
+    <NetlabProvider topology={topology} sandboxEnabled={sandboxEnabled} {...embedParams}>
       <SimulationProvider>
         <SimulationTabInner />
       </SimulationProvider>
@@ -388,12 +396,14 @@ function FailureTabInner() {
 function FailureTab({
   topology,
   sandboxEnabled,
+  embedParams,
 }: {
   topology: NetworkTopology;
   sandboxEnabled: boolean;
+  embedParams: DemoEmbedProviderProps;
 }) {
   return (
-    <NetlabProvider topology={topology} sandboxEnabled={sandboxEnabled}>
+    <NetlabProvider topology={topology} sandboxEnabled={sandboxEnabled} {...embedParams}>
       <FailureProvider>
         <SimulationProvider>
           <FailureTabInner />
@@ -465,12 +475,14 @@ function TraceTabInner() {
 function TraceTab({
   topology,
   sandboxEnabled,
+  embedParams,
 }: {
   topology: NetworkTopology;
   sandboxEnabled: boolean;
+  embedParams: DemoEmbedProviderProps;
 }) {
   return (
-    <NetlabProvider topology={topology} sandboxEnabled={sandboxEnabled}>
+    <NetlabProvider topology={topology} sandboxEnabled={sandboxEnabled} {...embedParams}>
       <SimulationProvider>
         <TraceTabInner />
       </SimulationProvider>
@@ -480,6 +492,11 @@ function TraceTab({
 
 export default function AllInOneDemo() {
   const sandboxEnabled = new URLSearchParams(window.location.search).get('sandbox') === '1';
+  const { embedded, embedMode, parentOrigin } = readDemoEmbedParams();
+  const embedParams = {
+    ...(embedMode !== undefined ? { embedMode } : {}),
+    ...(parentOrigin !== undefined ? { parentOrigin } : {}),
+  };
   const [activeTab, setActiveTab] = useState<TabId>(sandboxEnabled ? 'simulation' : 'editor');
   const [topology, setTopology] = useState<EditorTopology>(INITIAL_TOPOLOGY);
   const simulationTopology = toSimulationTopology(topology);
@@ -488,6 +505,7 @@ export default function AllInOneDemo() {
     <DemoShell
       title="All-in-One"
       desc="Edit topology, run simulation, inject failures, and inspect traces in one place"
+      embedded={embedded}
     >
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         <TabBar activeTab={activeTab} onChange={setActiveTab} />
@@ -498,6 +516,7 @@ export default function AllInOneDemo() {
               key="simulation"
               topology={simulationTopology}
               sandboxEnabled={sandboxEnabled}
+              embedParams={embedParams}
             />
           )}
           {activeTab === 'failure' && (
@@ -505,10 +524,16 @@ export default function AllInOneDemo() {
               key="failure"
               topology={simulationTopology}
               sandboxEnabled={sandboxEnabled}
+              embedParams={embedParams}
             />
           )}
           {activeTab === 'trace' && (
-            <TraceTab key="trace" topology={simulationTopology} sandboxEnabled={sandboxEnabled} />
+            <TraceTab
+              key="trace"
+              topology={simulationTopology}
+              sandboxEnabled={sandboxEnabled}
+              embedParams={embedParams}
+            />
           )}
         </div>
       </div>

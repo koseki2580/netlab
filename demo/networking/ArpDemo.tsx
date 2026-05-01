@@ -9,6 +9,7 @@ import { SimulationOverlayDock } from '../../src/components/simulation/Simulatio
 import { StepControls } from '../../src/components/simulation/StepControls';
 import { basicArp } from '../../src/scenarios';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
+import { readDemoEmbedParams } from '../embedParams';
 
 const CARD_STYLE: CSSProperties = {
   background: '#0b1220',
@@ -178,16 +179,20 @@ export default function ArpDemo() {
   const params = new URLSearchParams(window.location.search);
   const tutorialId = params.get('tutorial') ?? null;
   const sandboxEnabled = params.get('sandbox') === '1';
+  const { embedded, embedMode, parentOrigin } = readDemoEmbedParams();
   const tutorialProps = tutorialId ? { tutorialId } : {};
 
   return (
     <DemoShell
       title="ARP Basics"
       desc="Watch ARP resolve the first-hop MAC before the first routed IPv4 packet can move."
+      embedded={embedded}
     >
       <NetlabProvider
         topology={basicArp.topology}
         sandboxEnabled={sandboxEnabled}
+        {...(embedMode !== undefined ? { embedMode } : {})}
+        {...(parentOrigin !== undefined ? { parentOrigin } : {})}
         {...tutorialProps}
       >
         <SimulationProvider>

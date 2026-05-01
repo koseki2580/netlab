@@ -73,6 +73,8 @@ export function SandboxPanel() {
   const assessment = useContext(AssessmentContext);
   const netlabContext = useContext(NetlabContext);
   const hookEngine = netlabContext?.hookEngine ?? sharedHookEngine;
+  const embedMode = netlabContext?.embedMode;
+  const isMinimalEmbed = embedMode === 'minimal';
   const [open, setOpen] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
   const [activeAxis, setActiveAxis] = useState<SandboxAxis>(() =>
@@ -93,14 +95,20 @@ export function SandboxPanel() {
       shortcutRegistry.register({
         key: 'Shift+S',
         description: 'Toggle sandbox panel',
-        action: () => setOpen((current) => !current),
-        enabled: () => true,
+        action: () => setOpen((current) => (isMinimalEmbed ? true : !current)),
+        enabled: () => !isMinimalEmbed,
       }),
     ];
     return () => {
       for (const u of unregisters) u();
     };
-  }, []);
+  }, [isMinimalEmbed]);
+
+  useEffect(() => {
+    if (isMinimalEmbed) {
+      setOpen(true);
+    }
+  }, [isMinimalEmbed]);
 
   const helpModal = helpOpen ? <ShortcutsHelpModal onClose={() => setHelpOpen(false)} /> : null;
 
@@ -157,8 +165,9 @@ export function SandboxPanel() {
         role="region"
         aria-labelledby="sandbox-panel-heading"
         data-testid="sandbox-panel"
+        {...(embedMode !== undefined ? { 'data-embed-mode': embedMode } : {})}
         style={{
-          width: 320,
+          width: embedMode === 'minimal' ? 260 : embedMode === 'compact' ? 280 : 320,
           height: '100%',
           position: 'absolute',
           right: 0,
@@ -250,23 +259,25 @@ export function SandboxPanel() {
           >
             ?
           </button>
-          <button
-            type="button"
-            aria-label="Collapse sandbox"
-            onClick={() => setOpen(false)}
-            className="netlab-focus-ring"
-            style={{
-              border: '1px solid var(--netlab-border)',
-              borderRadius: 6,
-              background: 'var(--netlab-bg-surface)',
-              color: 'var(--netlab-text-muted)',
-              padding: '3px 7px',
-              fontFamily: 'monospace',
-              cursor: 'pointer',
-            }}
-          >
-            x
-          </button>
+          {!isMinimalEmbed && (
+            <button
+              type="button"
+              aria-label="Collapse sandbox"
+              onClick={() => setOpen(false)}
+              className="netlab-focus-ring"
+              style={{
+                border: '1px solid var(--netlab-border)',
+                borderRadius: 6,
+                background: 'var(--netlab-bg-surface)',
+                color: 'var(--netlab-text-muted)',
+                padding: '3px 7px',
+                fontFamily: 'monospace',
+                cursor: 'pointer',
+              }}
+            >
+              x
+            </button>
+          )}
         </header>
 
         <LargeTopologyWarning

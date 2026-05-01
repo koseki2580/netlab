@@ -8,6 +8,7 @@ import { ospfProtocol } from '../routing/ospf/OspfProtocol';
 import { ripProtocol } from '../routing/rip/RipProtocol';
 import { staticProtocol } from '../routing/static/StaticProtocol';
 import { SandboxNarrationRegion } from '../sandbox/narration/SandboxNarrationRegion';
+import type { NetlabEmbedMode, ParentOrigin } from '../embed/protocol';
 import type { NetworkTopology, TopologySnapshot } from '../types/topology';
 import { NetlabContext } from './NetlabContext';
 
@@ -36,6 +37,8 @@ interface ControlledNetlabProviderProps {
   sandboxEnabled?: boolean;
   sandboxIntroId?: string;
   assessmentScenarioId?: string;
+  embedMode?: NetlabEmbedMode;
+  parentOrigin?: ParentOrigin;
 }
 
 interface UncontrolledNetlabProviderProps {
@@ -46,6 +49,8 @@ interface UncontrolledNetlabProviderProps {
   sandboxEnabled?: boolean;
   sandboxIntroId?: string;
   assessmentScenarioId?: string;
+  embedMode?: NetlabEmbedMode;
+  parentOrigin?: ParentOrigin;
 }
 
 export type NetlabProviderProps = ControlledNetlabProviderProps | UncontrolledNetlabProviderProps;
@@ -58,6 +63,8 @@ export function NetlabProvider({
   sandboxEnabled = false,
   sandboxIntroId,
   assessmentScenarioId,
+  embedMode,
+  parentOrigin,
 }: NetlabProviderProps) {
   ensureBuiltInProtocolsRegistered();
 
@@ -103,6 +110,8 @@ export function NetlabProvider({
       ...(sandboxEnabled || assessmentScenarioId !== undefined ? { sandboxEnabled: true } : {}),
       ...(sandboxIntroId !== undefined ? { sandboxIntroId } : {}),
       ...(assessmentScenarioId !== undefined ? { assessmentScenarioId } : {}),
+      ...(embedMode !== undefined ? { embedMode } : {}),
+      ...(parentOrigin !== undefined ? { parentOrigin } : {}),
     }),
     [
       enrichedTopology,
@@ -113,6 +122,8 @@ export function NetlabProvider({
       sandboxEnabled,
       sandboxIntroId,
       assessmentScenarioId,
+      embedMode,
+      parentOrigin,
     ],
   );
 

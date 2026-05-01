@@ -15,6 +15,7 @@ import type { NetworkTopology } from '../types/topology';
 import { NETLAB_DARK_THEME, themeToVars } from '../theme';
 import type { NetlabTheme } from '../theme';
 import { resolveColorMode, type NetlabColorMode } from '../utils/themeUtils';
+import type { NetlabEmbedMode, ParentOrigin } from '../embed/protocol';
 
 export interface NetlabAppProps {
   /** The network topology to display. */
@@ -57,6 +58,12 @@ export interface NetlabAppProps {
   style?: React.CSSProperties;
   /** CSS class applied to the outermost container div. */
   className?: string;
+  /** Enable the interactive sandbox surface. */
+  sandboxEnabled?: boolean;
+  /** Iframe-friendly sandbox chrome mode. */
+  embedMode?: NetlabEmbedMode;
+  /** Allowed parent origins for sandbox child events. */
+  parentOrigin?: ParentOrigin;
 }
 
 // ─── Private sub-components ────────────────────────────────────────────────
@@ -139,6 +146,9 @@ export function NetlabApp({
   theme,
   style,
   className,
+  sandboxEnabled,
+  embedMode,
+  parentOrigin,
 }: NetlabAppProps) {
   const hasRouters = topology.nodes.some((n) => n.data.role === 'router');
   const hasAreas = (topology.areas ?? []).length > 0;
@@ -164,7 +174,12 @@ export function NetlabApp({
   };
 
   return (
-    <NetlabProvider topology={topology}>
+    <NetlabProvider
+      topology={topology}
+      {...(sandboxEnabled !== undefined ? { sandboxEnabled } : {})}
+      {...(embedMode !== undefined ? { embedMode } : {})}
+      {...(parentOrigin !== undefined ? { parentOrigin } : {})}
+    >
       <div style={containerStyle} className={className}>
         {simulation ? (
           <SimulationProvider>

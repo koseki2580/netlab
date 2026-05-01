@@ -101,3 +101,4 @@ Specifications related to demo environment setup, integration using query parame
 - [Query Params](deployment/query-params.md) - Topology sharing plus sandbox and tutorial restoration via URL parameters
 - [CI/CD](deployment/ci-cd.md) - Automated testing and deployment environments setup using GitHub Actions
 - [Embed](deployment/embed.md) - Embedding NetlabApp in external web pages with configurable width/height
+- [Sandbox Embed Integration](deployment/embed-sandbox.md) - Interactive sandbox iframe integration, parent messages, compact chrome, and URL builder

@@ -75,6 +75,7 @@ export function AssessmentProvider({ assessmentScenarioId, children }: Assessmen
 
   const runner = runnerRef.current;
   const [status, setStatus] = useState<AssessmentStatus>(runner.status);
+  const lastPassedAtRef = useRef<number | null>(null);
 
   useEffect(() => {
     sessionRef.current = sandbox.session;
@@ -89,6 +90,18 @@ export function AssessmentProvider({ assessmentScenarioId, children }: Assessmen
     setStatus(runner.status);
     return runner.subscribe(setStatus);
   }, [runner]);
+
+  useEffect(() => {
+    if (status.status !== 'passed' || status.passedAt === null) return;
+    if (lastPassedAtRef.current === status.passedAt) return;
+
+    lastPassedAtRef.current = status.passedAt;
+    void hookEngine.emit('sandbox:assessment-passed', {
+      rubricId: status.rubricId,
+      hintsUsed: status.hintsUsed.length,
+      durationMs: Math.max(0, status.passedAt - status.startedAt),
+    });
+  }, [hookEngine, status]);
 
   useEffect(() => {
     const evaluate = () => {

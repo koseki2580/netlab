@@ -9,6 +9,7 @@ import { SimulationControls } from '../../src/components/simulation/SimulationCo
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import type { InFlightPacket } from '../../src/types/packets';
 import { NAT_DEMO_TOPOLOGY } from './natDemoTopology';
+import { readDemoEmbedParams } from '../embedParams';
 
 export { NAT_DEMO_TOPOLOGY };
 
@@ -172,16 +173,20 @@ export default function NatDemo() {
   const sandboxIntroId = params.get('intro') ?? null;
   const tutorialId = sandboxIntroId ? null : (params.get('tutorial') ?? null);
   const sandboxEnabled = params.get('sandbox') === '1';
+  const { embedded, embedMode, parentOrigin } = readDemoEmbedParams();
   const tutorialProps = tutorialId ? { tutorialId } : {};
 
   return (
     <DemoShell
       title="NAT / PAT"
       desc="Inspect SNAT, DNAT port forwarding, and the live NAT table on an edge router"
+      embedded={embedded}
     >
       <NetlabProvider
         topology={NAT_DEMO_TOPOLOGY}
         sandboxEnabled={sandboxEnabled}
+        {...(embedMode !== undefined ? { embedMode } : {})}
+        {...(parentOrigin !== undefined ? { parentOrigin } : {})}
         {...(sandboxEnabled && sandboxIntroId ? { sandboxIntroId } : {})}
         {...tutorialProps}
       >

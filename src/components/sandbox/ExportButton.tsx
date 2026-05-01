@@ -1,4 +1,7 @@
+import { useContext } from 'react';
+import { hookEngine as sharedHookEngine } from '../../hooks/HookEngine';
 import { useSandbox } from '../../sandbox/useSandbox';
+import { NetlabContext } from '../NetlabContext';
 import { currentSandboxScenarioId } from './sessionScenario';
 import { sessionIoButtonStyle } from './sessionIoStyles';
 
@@ -11,6 +14,8 @@ function timestampForFilename(date = new Date()): string {
 
 export function ExportButton() {
   const sandbox = useSandbox();
+  const netlabContext = useContext(NetlabContext);
+  const hookEngine = netlabContext?.hookEngine ?? sharedHookEngine;
 
   const handleExport = async () => {
     const { encodeSession } = await import('../../sandbox/session-io/codec');
@@ -19,7 +24,8 @@ export function ExportButton() {
       scenarioId,
       initialParameters: sandbox.engine.parameters,
     });
-    const blob = new Blob([JSON.stringify(exported, null, 2)], {
+    const content = JSON.stringify(exported, null, 2);
+    const blob = new Blob([content], {
       type: 'application/json',
     });
     const url = URL.createObjectURL(blob);
@@ -30,6 +36,10 @@ export function ExportButton() {
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
+    void hookEngine.emit('sandbox:session-exported', {
+      sizeBytes: new TextEncoder().encode(content).byteLength,
+      scenarioId,
+    });
   };
 
   return (

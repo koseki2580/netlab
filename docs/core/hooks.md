@@ -6,29 +6,31 @@ netlab provides a Koa-style middleware hook system that lets you observe and mod
 
 ## Hook Points
 
-| Hook Point                 | Trigger                                                 |
-| -------------------------- | ------------------------------------------------------- |
-| `packet:create`            | A new packet is created (e.g., from fetch())            |
-| `packet:forward`           | A packet moves from one device to another               |
-| `packet:deliver`           | A packet reaches its destination device                 |
-| `packet:drop`              | A packet is dropped (TTL=0, no route, etc.)             |
-| `switch:learn`             | A switch learns a new MAC→port mapping                  |
-| `router:lookup`            | A router performs a route table lookup                  |
-| `fetch:intercept`          | `window.fetch` is called and intercepted                |
-| `fetch:respond`            | A mock response is about to be returned                 |
-| `sandbox:edit-rejected`    | A sandbox edit was rejected during validation or apply  |
-| `sandbox:edit-applied`     | A sandbox edit was accepted and appended to the session |
-| `sandbox:edit-undone`      | The sandbox history cursor moved backward               |
-| `sandbox:edit-redone`      | The sandbox history cursor moved forward                |
-| `sandbox:edit-reverted`    | A visible sandbox history entry was removed             |
-| `sandbox:undo-blocked`     | Undo was requested at the current undo boundary         |
-| `sandbox:reset-all`        | Every visible sandbox edit was cleared                  |
-| `sandbox:history-evicted`  | Old sandbox history entries were dropped by the cap     |
-| `sandbox:mode-changed`     | Sandbox mode switched between Live and Compare          |
-| `sandbox:session-imported` | A local JSON sandbox session was applied                |
-| `sandbox:panel-tab-opened` | The active sandbox panel tab changed                    |
-| `sandbox:pcap-exported`    | A sandbox PCAP download was created                     |
-| `sandbox:url-overflow`     | A sandbox edit was omitted from URL state due to size   |
+| Hook Point                  | Trigger                                                 |
+| --------------------------- | ------------------------------------------------------- |
+| `packet:create`             | A new packet is created (e.g., from fetch())            |
+| `packet:forward`            | A packet moves from one device to another               |
+| `packet:deliver`            | A packet reaches its destination device                 |
+| `packet:drop`               | A packet is dropped (TTL=0, no route, etc.)             |
+| `switch:learn`              | A switch learns a new MAC→port mapping                  |
+| `router:lookup`             | A router performs a route table lookup                  |
+| `fetch:intercept`           | `window.fetch` is called and intercepted                |
+| `fetch:respond`             | A mock response is about to be returned                 |
+| `sandbox:edit-rejected`     | A sandbox edit was rejected during validation or apply  |
+| `sandbox:edit-applied`      | A sandbox edit was accepted and appended to the session |
+| `sandbox:edit-undone`       | The sandbox history cursor moved backward               |
+| `sandbox:edit-redone`       | The sandbox history cursor moved forward                |
+| `sandbox:edit-reverted`     | A visible sandbox history entry was removed             |
+| `sandbox:undo-blocked`      | Undo was requested at the current undo boundary         |
+| `sandbox:reset-all`         | Every visible sandbox edit was cleared                  |
+| `sandbox:history-evicted`   | Old sandbox history entries were dropped by the cap     |
+| `sandbox:mode-changed`      | Sandbox mode switched between Live and Compare          |
+| `sandbox:session-imported`  | A local JSON sandbox session was applied                |
+| `sandbox:session-exported`  | A sandbox session JSON download was created             |
+| `sandbox:assessment-passed` | A sandbox assessment transitioned to passed             |
+| `sandbox:panel-tab-opened`  | The active sandbox panel tab changed                    |
+| `sandbox:pcap-exported`     | A sandbox PCAP download was created                     |
+| `sandbox:url-overflow`      | A sandbox edit was omitted from URL state due to size   |
 
 ## Usage
 
@@ -227,11 +229,30 @@ hookEngine.on('router:lookup', async (ctx, next) => {
 }
 ```
 
+### `sandbox:session-exported`
+
+```typescript
+{
+  sizeBytes: number;
+  scenarioId: string;
+}
+```
+
+### `sandbox:assessment-passed`
+
+```typescript
+{
+  rubricId: string;
+  hintsUsed: number;
+  durationMs: number;
+}
+```
+
 ### `sandbox:panel-tab-opened`
 
 ```typescript
 {
-  axis: 'packet' | 'node' | 'parameters' | 'traffic' | 'edits';
+  axis: 'packet' | 'node' | 'parameters' | 'traffic' | 'edits' | 'assessment';
 }
 ```
 

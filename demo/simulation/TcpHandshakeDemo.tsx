@@ -9,6 +9,7 @@ import { SimulationProvider, useSimulation } from '../../src/simulation/Simulati
 import type { TcpSegment } from '../../src/types/packets';
 import type { PacketTrace } from '../../src/types/simulation';
 import type { TcpState } from '../../src/types/tcp';
+import { readDemoEmbedParams } from '../embedParams';
 
 const TOPOLOGY = tcpHandshake.topology;
 
@@ -409,16 +410,20 @@ export default function TcpHandshakeDemo() {
   const sandboxIntroId = params.get('intro') ?? null;
   const tutorialId = sandboxIntroId ? null : (params.get('tutorial') ?? null);
   const sandboxEnabled = params.get('sandbox') === '1';
+  const { embedded, embedMode, parentOrigin } = readDemoEmbedParams();
   const tutorialProps = tutorialId ? { tutorialId } : {};
 
   return (
     <DemoShell
       title="TCP Handshake"
       desc="Inspect a 3-way handshake and 4-step teardown across a routed path, with state badges, active connections, and packet-byte detail."
+      embedded={embedded}
     >
       <NetlabProvider
         topology={TOPOLOGY}
         sandboxEnabled={sandboxEnabled}
+        {...(embedMode !== undefined ? { embedMode } : {})}
+        {...(parentOrigin !== undefined ? { parentOrigin } : {})}
         {...(sandboxEnabled && sandboxIntroId ? { sandboxIntroId } : {})}
         {...tutorialProps}
       >

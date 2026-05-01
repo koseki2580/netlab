@@ -9,6 +9,7 @@ import { SimulationOverlayDock } from '../../src/components/simulation/Simulatio
 import { StepControls } from '../../src/components/simulation/StepControls';
 import { buildOspfConvergenceTopology } from '../../src/scenarios/ospf-convergence';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
+import { readDemoEmbedParams } from '../embedParams';
 
 function RouteSummaryPanel() {
   const { routeTable } = useNetlabContext();
@@ -194,6 +195,7 @@ export default function OspfConvergenceDemo() {
   const tutorialId =
     sandboxIntroId || assessmentScenarioId ? null : (params.get('tutorial') ?? null);
   const sandboxEnabled = params.get('sandbox') === '1';
+  const { embedded, embedMode, parentOrigin } = readDemoEmbedParams();
   const tutorialProps = tutorialId ? { tutorialId } : {};
   const assessmentProps = assessmentScenarioId ? { assessmentScenarioId } : {};
 
@@ -201,10 +203,13 @@ export default function OspfConvergenceDemo() {
     <DemoShell
       title="OSPF Convergence"
       desc="Observe the lower-cost route first, then recompute toward the backup path after removing the primary inter-router link."
+      embedded={embedded}
     >
       <NetlabProvider
         topology={topology}
         sandboxEnabled={sandboxEnabled}
+        {...(embedMode !== undefined ? { embedMode } : {})}
+        {...(parentOrigin !== undefined ? { parentOrigin } : {})}
         {...(sandboxEnabled && sandboxIntroId ? { sandboxIntroId } : {})}
         {...tutorialProps}
         {...assessmentProps}

@@ -123,6 +123,8 @@ The sandbox emits additive hook events through `hookEngine`:
 - `sandbox:edit-rejected` (`assessment-constraint-violated` is used when an assessment constraint blocks an edit)
 - `sandbox:mode-changed`
 - `sandbox:session-imported`
+- `sandbox:session-exported`
+- `sandbox:assessment-passed`
 - `sandbox:panel-tab-opened`
 - `sandbox:pcap-exported`
 - `sandbox:url-overflow`

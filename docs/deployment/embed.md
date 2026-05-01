@@ -56,6 +56,10 @@ Pass an explicit `false` to override either:
 
 ## Feature Flags
 
+For interactive sandbox embeds with parent-page progress messages, compact
+chrome, and URL construction helpers, see
+[Sandbox Embed Integration](embed-sandbox.md).
+
 ### `simulation={true}`
 
 Mounts `SimulationProvider` and renders:

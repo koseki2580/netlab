@@ -11,6 +11,8 @@ import {
   AssessmentContext,
   type AssessmentContextValue,
 } from '../../assessments/AssessmentProvider';
+import { HookEngine } from '../../hooks/HookEngine';
+import { NetlabContext, type NetlabContextValue } from '../NetlabContext';
 import { EmptySandboxTab } from './EmptySandboxTab';
 import { SandboxPanel } from './SandboxPanel';
 
@@ -132,6 +134,17 @@ function makeAssessmentValue(): AssessmentContextValue {
     useHint: vi.fn(),
     exit: vi.fn(),
     failConstraint: vi.fn(),
+  };
+}
+
+function makeNetlabContext(overrides: Partial<NetlabContextValue> = {}): NetlabContextValue {
+  return {
+    topology: { nodes: [], edges: [], areas: [], routeTables: new Map() },
+    routeTable: new Map(),
+    areas: [],
+    hookEngine: new HookEngine(),
+    sandboxEnabled: true,
+    ...overrides,
   };
 }
 
@@ -424,6 +437,36 @@ describe('SandboxPanel', () => {
     });
 
     expect(container?.querySelector('[role="region"]')).not.toBeNull();
+  });
+
+  it('marks compact embed panels and uses the compact width', () => {
+    render(
+      <NetlabContext.Provider value={makeNetlabContext({ embedMode: 'compact' })}>
+        <SandboxContext.Provider value={makeSandboxValue()}>
+          <SandboxPanel />
+        </SandboxContext.Provider>
+      </NetlabContext.Provider>,
+    );
+
+    const panel = container?.querySelector<HTMLElement>('[data-testid="sandbox-panel"]');
+    expect(panel?.dataset.embedMode).toBe('compact');
+    expect(panel?.style.width).toBe('280px');
+    expect(container?.querySelector('[aria-label="Collapse sandbox"]')).not.toBeNull();
+  });
+
+  it('keeps minimal embed panels open by removing the collapse control', () => {
+    render(
+      <NetlabContext.Provider value={makeNetlabContext({ embedMode: 'minimal' })}>
+        <SandboxContext.Provider value={makeSandboxValue()}>
+          <SandboxPanel />
+        </SandboxContext.Provider>
+      </NetlabContext.Provider>,
+    );
+
+    const panel = container?.querySelector<HTMLElement>('[data-testid="sandbox-panel"]');
+    expect(panel?.dataset.embedMode).toBe('minimal');
+    expect(panel?.style.width).toBe('260px');
+    expect(container?.querySelector('[aria-label="Collapse sandbox"]')).toBeNull();
   });
 
   it('exports the full backing session to a JSON download', async () => {

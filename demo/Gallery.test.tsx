@@ -28,6 +28,20 @@ describe('demo chrome', () => {
     expect(html).toContain('Example');
   });
 
+  it('DemoShell hides Gallery navigation in embedded mode', () => {
+    const html = renderToStaticMarkup(
+      <MemoryRouter>
+        <DemoShell title="Example" desc="Shared shell" embedded>
+          <div>demo body</div>
+        </DemoShell>
+      </MemoryRouter>,
+    );
+
+    expect(html).not.toContain('Gallery');
+    expect(html).not.toContain('GitHub');
+    expect(html).toContain('demo body');
+  });
+
   it('Gallery includes a GitHub source link and key demo cards', () => {
     const html = renderGallery();
 
