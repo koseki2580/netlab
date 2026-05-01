@@ -88,6 +88,19 @@ When adding a new demo, update both files:
 
 The Gallery (`demo/Gallery.tsx`) displays all demos as cards grouped by category. Each card shows the demo title and a one-line description, and links to the demo's hash route. Categories are rendered as labeled sections.
 
+The gallery home intentionally uses a **layered light-mode surface system** instead of a flat single-plane background:
+
+- the page shell uses a soft multi-stop background so the main canvas does not read as one undifferentiated slab
+- the header, featured strip, assessment section, and category sections each sit on their own elevated surface with visible borders and spacing
+- demo cards inherit the category accent as a subtle tint so adjacent sections remain visually distinct while keeping light-mode contrast readable
+- headings and supporting copy must use `--netlab-text-*` variables or compatible light-mode colors; dark-only constants such as `#f1f5f9` are not valid for gallery chrome
+
+The gallery chrome is also interactive:
+
+- a header-level theme toggle switches the gallery between the built-in `NETLAB_LIGHT_THEME` and `NETLAB_DARK_THEME`
+- the search box filters demos in-place by title, description, category label, and tag text; when a query is active, only matching sections remain visible
+- the left sidebar is stateful: browse items scroll the main pane to the matching section and reflect the current active section, while reference items navigate to the relevant repository docs
+
 The header also exposes a direct `GitHub` link to `https://github.com/koseki2580/netlab` so users can jump from the landing page to the source repository.
 
 ---
