@@ -113,6 +113,9 @@ export interface HookMap {
     branch: 'alpha' | 'baseline' | 'whatif' | 'combined';
     bytes: number;
   }>;
+  'sandbox:engine-respawned': HookFn<{
+    reason: 'error' | 'messageerror';
+  }>;
   'sandbox:url-overflow': HookFn<{
     edit: Edit;
     reason: 'annotation-too-long';

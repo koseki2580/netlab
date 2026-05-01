@@ -51,9 +51,11 @@ export class BranchedSimulationEngine {
 
   applyEdits(session: EditSession): void {
     const nextSnapshot = session.apply(this.rootSnapshot);
+    const previousWhatIf = this.whatIfEngine;
     this.currentSnapshot = nextSnapshot;
     this.currentParameters = nextSnapshot.parameters;
     this.whatIfEngine = toEngine(nextSnapshot);
+    previousWhatIf.dispose();
     this.notify();
   }
 
@@ -79,10 +81,13 @@ export class BranchedSimulationEngine {
         ...fromEngine(this.whatIfEngine, this.currentParameters),
         annotations: this.currentSnapshot.annotations,
       };
+      const previousWhatIf = this.whatIfEngine;
       this.currentSnapshot = snapshot;
       this.baselineEngine = toEngine(snapshot);
       this.whatIfEngine = toEngine(snapshot);
+      previousWhatIf.dispose();
     } else {
+      this.baselineEngine?.dispose();
       this.baselineEngine = null;
     }
 
@@ -102,8 +107,8 @@ export class BranchedSimulationEngine {
   dispose(): void {
     this.disposed = true;
     this.listeners.clear();
-    this.baselineEngine?.clear();
-    this.whatIfEngine.clear();
+    this.baselineEngine?.dispose();
+    this.whatIfEngine.dispose();
     this.baselineEngine = null;
     this.currentMode = 'alpha';
   }
