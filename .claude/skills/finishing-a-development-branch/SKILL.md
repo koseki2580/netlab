@@ -1,6 +1,6 @@
 ---
 name: finishing-a-development-branch
-description: Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR, or cleanup
+description: Use when implementation is complete, all tests pass, and you need to decide how to integrate the work.
 ---
 
 # Finishing a Development Branch
@@ -12,6 +12,8 @@ Guide completion of development work by presenting clear options and handling ch
 **Core principle:** Verify tests → Present options → Execute choice → Clean up.
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
+
+**TOOL EXECUTION MANDATE:** Do not just print bash code blocks. You MUST execute all verification and git commands using the `run_in_terminal` tool to actually perform the operations. Use `vscode_askQuestions` or direct chat to present the options to the user.
 
 ## The Process
 

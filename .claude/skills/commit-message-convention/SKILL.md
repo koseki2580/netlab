@@ -1,6 +1,6 @@
 ---
 name: commit-message-convention
-description: Enforces structured commit message conventions using types, emojis, scoped descriptions, and strict single-responsibility commits.
+description: Use when creating git commits, before writing the commit message. Enforces structured commit message conventions using types, emojis, scoped descriptions, and strict single-responsibility commits.
 ---
 
 # Commit Message Convention (Skills)

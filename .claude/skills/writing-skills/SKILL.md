@@ -9,13 +9,13 @@ description: Use when creating new skills, editing existing skills, or verifying
 
 **Writing skills IS Test-Driven Development applied to process documentation.**
 
-**Personal skills live in agent-specific directories (`~/.claude/skills` for Claude Code, `~/.agents/skills/` for Codex)**
+**Personal skills live in agent-specific directories (`~/.claude/skills` or `~/.copilot/skills`)**
 
 You write test cases (pressure scenarios with subagents), watch them fail (baseline behavior), write the skill (documentation), watch tests pass (agents comply), and refactor (close loopholes).
 
 **Core principle:** If you didn't watch an agent fail without the skill, you don't know if the skill teaches the right thing.
 
-**REQUIRED BACKGROUND:** You MUST understand superpowers:test-driven-development before using this skill. That skill defines the fundamental RED-GREEN-REFACTOR cycle. This skill adapts TDD to documentation.
+**REQUIRED BACKGROUND:** You MUST understand test-driven-development before using this skill. That skill defines the fundamental RED-GREEN-REFACTOR cycle. This skill adapts TDD to documentation.
 
 **Official guidance:** For Anthropic's official skill authoring best practices, see anthropic-best-practices.md. This document provides additional patterns and guidelines that complement the TDD-focused approach in this skill.
 
@@ -309,8 +309,8 @@ wc -w skills/path/SKILL.md
 
 Use skill name only, with explicit requirement markers:
 
-- ✅ Good: `**REQUIRED SUB-SKILL:** Use superpowers:test-driven-development`
-- ✅ Good: `**REQUIRED BACKGROUND:** You MUST understand superpowers:systematic-debugging`
+- ✅ Good: `**REQUIRED SUB-SKILL:** Use test-driven-development`
+- ✅ Good: `**REQUIRED BACKGROUND:** You MUST understand systematic-debugging`
 - ❌ Bad: `See skills/testing/test-driven-development` (unclear if required)
 - ❌ Bad: `@skills/testing/test-driven-development/SKILL.md` (force-loads, burns context)
 
@@ -318,17 +318,11 @@ Use skill name only, with explicit requirement markers:
 
 ## Flowchart Usage
 
-```dot
-digraph when_flowchart {
-    "Need to show information?" [shape=diamond];
-    "Decision where I might go wrong?" [shape=diamond];
-    "Use markdown" [shape=box];
-    "Small inline flowchart" [shape=box];
-
-    "Need to show information?" -> "Decision where I might go wrong?" [label="yes"];
-    "Decision where I might go wrong?" -> "Small inline flowchart" [label="yes"];
-    "Decision where I might go wrong?" -> "Use markdown" [label="no"];
-}
+```mermaid
+graph TD
+    N1{"Need to show information?"} -->|yes| N2{"Decision where I might go wrong?"}
+    N2 -->|yes| N3[Small inline flowchart]
+    N2 -->|no| N4[Use markdown]
 ```
 
 **Use flowcharts ONLY for:**
@@ -432,7 +426,7 @@ Edit skill without testing? Same violation.
 - Don't "adapt" while running tests
 - Delete means delete
 
-**REQUIRED BACKGROUND:** The superpowers:test-driven-development skill explains why this matters. Same principles apply to documentation.
+**REQUIRED BACKGROUND:** The test-driven-development skill explains why this matters. Same principles apply to documentation.
 
 ## Testing All Skill Types
 
@@ -623,9 +617,9 @@ example-js.js, example-py.py, example-go.go
 
 ### ❌ Code in Flowcharts
 
-```dot
-step1 [label="import fs"];
-step2 [label="read file"];
+```mermaid
+graph TD
+    N1[import fs] --> N2[read file]
 ```
 
 **Why bad:** Can't copy-paste, hard to read

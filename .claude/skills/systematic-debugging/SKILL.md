@@ -1,6 +1,6 @@
 ---
 name: systematic-debugging
-description: Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes
+description: Use when encountering a bug, test failure, or unexpected behavior.
 ---
 
 # Systematic Debugging
@@ -181,7 +181,7 @@ You MUST complete each phase before proceeding to the next.
    - Automated test if possible
    - One-off test script if no framework
    - MUST have before fixing
-   - Use the `superpowers:test-driven-development` skill for writing proper failing tests
+   - Use the `test-driven-development` skill for writing proper failing tests
 
 2. **Implement Single Fix**
    - Address the root cause identified
@@ -292,8 +292,8 @@ These techniques are part of systematic debugging and available in this director
 
 **Related skills:**
 
-- **superpowers:test-driven-development** - For creating failing test case (Phase 4, Step 1)
-- **superpowers:verification-before-completion** - Verify fix worked before claiming success
+- **test-driven-development** - For creating failing test case (Phase 4, Step 1)
+- **verification-before-completion** - Verify fix worked before claiming success
 
 ## Real-World Impact
 

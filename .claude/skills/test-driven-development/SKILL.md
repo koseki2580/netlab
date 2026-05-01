@@ -1,6 +1,6 @@
 ---
 name: test-driven-development
-description: Use when implementing any feature or bugfix, before writing implementation code
+description: Use before writing implementation code for non-trivial features or bugfixes
 ---
 
 # Test-Driven Development (TDD)
@@ -10,6 +10,8 @@ description: Use when implementing any feature or bugfix, before writing impleme
 Write the test first. Watch it fail. Write minimal code to pass.
 
 **Core principle:** If you didn't watch the test fail, you don't know if it tests the right thing.
+
+**TOOL EXECUTION MANDATE:** You MUST use the `run_in_terminal`, `create_and_run_task`, or `runTests` tools to execute your tests. Do not just output testing code and wait for the user to run it. You are responsible for test execution.
 
 **Violating the letter of the rules is violating the spirit of the rules.**
 
@@ -47,28 +49,107 @@ Write code before the test? Delete it. Start over.
 
 Implement fresh from tests. Period.
 
+## Behavior, Not Implementation
+
+Tests describe **what the code should do**, not **how it does it**.
+
+**Assert on observable outcomes:**
+
+- Return values
+- Persisted state (DB rows, files written, queue messages)
+- Emitted events / outbound calls at system boundaries
+- Rendered output / HTTP responses
+- Errors raised to the caller
+
+**Do NOT assert on:**
+
+- Which private helpers got called
+- The order of internal method invocations
+- Mock call counts when they only prove "the code took this internal path"
+- SQL strings, cache keys, or other implementation choices that could change in a refactor
+
+**The refactor test:** A test is testing behavior if you can rewrite the implementation — different helpers, different structure, different libraries — and the test still passes unchanged. If a behavior-preserving refactor breaks the test, the test was testing implementation.
+
+<Good>
+```typescript
+test('returns the user when found', async () => {
+  await db.users.insert({ id: 1, name: 'Alice' });
+
+  const result = await getUser(1);
+
+  expect(result).toEqual({ id: 1, name: 'Alice' });
+});
+```
+Asserts on the outcome. Cache strategy, query shape, ORM choice can all change without touching this test.
+</Good>
+
+<Bad>
+```typescript
+test('returns the user when found', async () => {
+  const dbSpy = jest.spyOn(db, 'query');
+  const cacheSpy = jest.spyOn(cache, 'get');
+
+  await getUser(1);
+
+  expect(cacheSpy).toHaveBeenCalledBefore(dbSpy);
+  expect(dbSpy).toHaveBeenCalledWith('SELECT * FROM users WHERE id = ?', [1]);
+});
+```
+Locks in cache-then-DB order and exact SQL. A behavior-preserving refactor (new ORM, added read replica, different cache key) breaks this test for no real reason.
+</Bad>
+
+<Good>
+```typescript
+test('charges the customer when checkout succeeds', async () => {
+  const order = await checkout({ userId: 'u1', items: [...] });
+
+  expect(order.status).toBe('paid');
+  expect(await payments.findByOrder(order.id)).toMatchObject({ amount: 4200 });
+});
+```
+Verifies the externally observable effect (order paid, payment record created at the boundary).
+</Good>
+
+<Bad>
+```typescript
+test('charges the customer when checkout succeeds', async () => {
+  const stripeMock = jest.spyOn(stripe, 'createCharge');
+  const loggerMock = jest.spyOn(logger, 'info');
+
+  await checkout({ userId: 'u1', items: [...] });
+
+  expect(stripeMock).toHaveBeenCalledTimes(1);
+  expect(loggerMock).toHaveBeenCalledWith('charge.created');
+});
+```
+Tests that Stripe was called once and a log line was written — both are implementation details. Switching payment provider or removing the log breaks the test even though the user-visible behavior (got charged) is identical.
+</Bad>
+
+### Gate Function
+
+```
+BEFORE writing an assertion, ask:
+  "If a teammate refactored this internally without changing what
+   callers observe, would my assertion still pass?"
+
+  IF no:
+    The assertion is testing implementation. Rewrite to assert on
+    the outcome the caller actually sees.
+```
+
 ## Red-Green-Refactor
 
-```dot
-digraph tdd_cycle {
-    rankdir=LR;
-    red [label="RED\nWrite failing test", shape=box, style=filled, fillcolor="#ffcccc"];
-    verify_red [label="Verify fails\ncorrectly", shape=diamond];
-    green [label="GREEN\nMinimal code", shape=box, style=filled, fillcolor="#ccffcc"];
-    verify_green [label="Verify passes\nAll green", shape=diamond];
-    refactor [label="REFACTOR\nClean up", shape=box, style=filled, fillcolor="#ccccff"];
-    next [label="Next", shape=ellipse];
-
-    red -> verify_red;
-    verify_red -> green [label="yes"];
-    verify_red -> red [label="wrong\nfailure"];
-    green -> verify_green;
-    verify_green -> refactor [label="yes"];
-    verify_green -> green [label="no"];
-    refactor -> verify_green [label="stay\ngreen"];
-    verify_green -> next;
-    next -> red;
-}
+```mermaid
+graph TD
+    N1[RED<br>Write failing test] --> N2{Verify fails<br>correctly}
+    N2 -->|yes| N3[GREEN<br>Minimal code]
+    N2 -->|wrong failure| N1
+    N3 --> N4{Verify passes<br>All green}
+    N4 -->|yes| N5[REFACTOR<br>Clean up]
+    N4 -->|no| N3
+    N5 -->|stay green| N4
+    N4 --> N6([Next])
+    N6 --> N1
 ```
 
 ### RED - Write Failing Test

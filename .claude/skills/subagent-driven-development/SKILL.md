@@ -13,22 +13,14 @@ Execute plan by dispatching fresh subagent per task, with two-stage review after
 
 ## When to Use
 
-```dot
-digraph when_to_use {
-    "Have implementation plan?" [shape=diamond];
-    "Tasks mostly independent?" [shape=diamond];
-    "Stay in this session?" [shape=diamond];
-    "subagent-driven-development" [shape=box];
-    "executing-plans" [shape=box];
-    "Manual execution or brainstorm first" [shape=box];
-
-    "Have implementation plan?" -> "Tasks mostly independent?" [label="yes"];
-    "Have implementation plan?" -> "Manual execution or brainstorm first" [label="no"];
-    "Tasks mostly independent?" -> "Stay in this session?" [label="yes"];
-    "Tasks mostly independent?" -> "Manual execution or brainstorm first" [label="no - tightly coupled"];
-    "Stay in this session?" -> "subagent-driven-development" [label="yes"];
-    "Stay in this session?" -> "executing-plans" [label="no - parallel session"];
-}
+```mermaid
+graph TD
+    N1{"Have implementation plan?"} -->|yes| N2{"Tasks mostly independent?"}
+    N1 -->|no| N3["Manual execution or brainstorm first"]
+    N2 -->|yes| N4{"Stay in this session?"}
+    N2 -->|"no - tightly coupled"| N3
+    N4 -->|yes| N5["subagent-driven-development"]
+    N4 -->|"no - parallel session"| N6["executing-plans"]
 ```
 
 **vs. Executing Plans (parallel session):**
@@ -40,49 +32,26 @@ digraph when_to_use {
 
 ## The Process
 
-```dot
-digraph process {
-    rankdir=TB;
-
-    subgraph cluster_per_task {
-        label="Per Task";
-        "Dispatch implementer subagent (./implementer-prompt.md)" [shape=box];
-        "Implementer subagent asks questions?" [shape=diamond];
-        "Answer questions, provide context" [shape=box];
-        "Implementer subagent implements, tests, commits, self-reviews" [shape=box];
-        "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)" [shape=box];
-        "Spec reviewer subagent confirms code matches spec?" [shape=diamond];
-        "Implementer subagent fixes spec gaps" [shape=box];
-        "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [shape=box];
-        "Code quality reviewer subagent approves?" [shape=diamond];
-        "Implementer subagent fixes quality issues" [shape=box];
-        "Mark task complete in TodoWrite" [shape=box];
-    }
-
-    "Read plan, extract all tasks with full text, note context, create TodoWrite" [shape=box];
-    "More tasks remain?" [shape=diamond];
-    "Dispatch final code reviewer subagent for entire implementation" [shape=box];
-    "Use superpowers:finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
-
-    "Read plan, extract all tasks with full text, note context, create TodoWrite" -> "Dispatch implementer subagent (./implementer-prompt.md)";
-    "Dispatch implementer subagent (./implementer-prompt.md)" -> "Implementer subagent asks questions?";
-    "Implementer subagent asks questions?" -> "Answer questions, provide context" [label="yes"];
-    "Answer questions, provide context" -> "Dispatch implementer subagent (./implementer-prompt.md)";
-    "Implementer subagent asks questions?" -> "Implementer subagent implements, tests, commits, self-reviews" [label="no"];
-    "Implementer subagent implements, tests, commits, self-reviews" -> "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)";
-    "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)" -> "Spec reviewer subagent confirms code matches spec?";
-    "Spec reviewer subagent confirms code matches spec?" -> "Implementer subagent fixes spec gaps" [label="no"];
-    "Implementer subagent fixes spec gaps" -> "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)" [label="re-review"];
-    "Spec reviewer subagent confirms code matches spec?" -> "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [label="yes"];
-    "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" -> "Code quality reviewer subagent approves?";
-    "Code quality reviewer subagent approves?" -> "Implementer subagent fixes quality issues" [label="no"];
-    "Implementer subagent fixes quality issues" -> "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [label="re-review"];
-    "Code quality reviewer subagent approves?" -> "Mark task complete in TodoWrite" [label="yes"];
-    "Mark task complete in TodoWrite" -> "More tasks remain?";
-    "More tasks remain?" -> "Dispatch implementer subagent (./implementer-prompt.md)" [label="yes"];
-    "More tasks remain?" -> "Dispatch final code reviewer subagent for entire implementation" [label="no"];
-    "Dispatch final code reviewer subagent for entire implementation" -> "Use superpowers:finishing-a-development-branch";
-}
+```mermaid
+graph TD
+    N1["Read plan, extract all tasks with full text, note context, create TodoWrite"] --> N2["Dispatch implementer subagent (./implementer-prompt.md)"]
+    N2 --> N3{"Implementer subagent asks questions?"}
+    N3 -->|yes| N4["Answer questions, provide context"]
+    N4 --> N2
+    N3 -->|no| N5["Implementer subagent implements, tests, commits, self-reviews"]
+    N5 --> N6["Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)"]
+    N6 --> N7{"Spec reviewer subagent confirms code matches spec?"}
+    N7 -->|no| N8["Implementer subagent fixes spec gaps"]
+    N8 -->|"re-review"| N6
+    N7 -->|yes| N9["Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)"]
+    N9 --> N10{"Code quality reviewer subagent approves?"}
+    N10 -->|no| N11["Implementer subagent fixes quality issues"]
+    N11 -->|"re-review"| N9
+    N10 -->|yes| N12["Mark task complete in TodoWrite"]
+    N12 --> N13{"More tasks remain?"}
+    N13 -->|yes| N2
+    N13 -->|no| N14["Dispatch final code reviewer subagent for entire implementation"]
+    N14 --> N15["Use finishing-a-development-branch"]
 ```
 
 ## Model Selection
@@ -131,7 +100,7 @@ Implementer subagents report one of four statuses. Handle each appropriately:
 ```
 You: I'm using Subagent-Driven Development to execute this plan.
 
-[Read plan file once: docs/superpowers/plans/feature-plan.md]
+[Read plan file once: agents/tasks/active/feature-plan.md]
 [Extract all 5 tasks with full text and context]
 [Create TodoWrite with all tasks]
 
@@ -142,7 +111,7 @@ Task 1: Hook installation script
 
 Implementer: "Before I begin - should the hook be installed at user or system level?"
 
-You: "User level (~/.config/superpowers/hooks/)"
+You: "User level (~/.config/skills/hooks/)"
 
 Implementer: "Got it. Implementing now..."
 [Later] Implementer:
@@ -278,15 +247,15 @@ Done!
 
 **Required workflow skills:**
 
-- **superpowers:using-git-worktrees** - REQUIRED: Set up isolated workspace before starting
-- **superpowers:writing-plans** - Creates the plan this skill executes
-- **superpowers:requesting-code-review** - Code review template for reviewer subagents
-- **superpowers:finishing-a-development-branch** - Complete development after all tasks
+- **using-git-worktrees** - REQUIRED: Set up isolated workspace before starting
+- **writing-plans** - Creates the plan this skill executes
+- **requesting-code-review** - Code review template for reviewer subagents
+- **finishing-a-development-branch** - Complete development after all tasks
 
 **Subagents should use:**
 
-- **superpowers:test-driven-development** - Subagents follow TDD for each task
+- **test-driven-development** - Subagents follow TDD for each task
 
 **Alternative workflow:**
 
-- **superpowers:executing-plans** - Use for parallel session instead of same-session execution
+- **executing-plans** - Use for parallel session instead of same-session execution
