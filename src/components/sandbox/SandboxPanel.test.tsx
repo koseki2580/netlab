@@ -50,6 +50,12 @@ function makeSandboxValue(overrides: Partial<SandboxContextValue> = {}): Sandbox
     mode: 'alpha',
     session: EditSession.empty(),
     engine: {
+      snapshot: {
+        topology: { nodes: [], edges: [], areas: [], routeTables: new Map() },
+        snapshotRegistry: [],
+        orphanedSnapshotRegistry: [],
+        annotations: [],
+      },
       whatIf: {
         getState: () => ({
           status: 'idle',

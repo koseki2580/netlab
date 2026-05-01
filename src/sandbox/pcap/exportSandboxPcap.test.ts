@@ -58,6 +58,7 @@ function makeRecord(step = 0): PcapRecord {
 function makeEngineMock(overrides: {
   whatIfRecords?: PcapRecord[];
   baselineRecords?: PcapRecord[] | null;
+  detailLevel?: 'full' | 'metadata-only';
 }): BranchedSimulationEngine {
   const whatIfRecords = overrides.whatIfRecords ?? [makeRecord()];
   const baselineRecords = overrides.baselineRecords ?? null;
@@ -81,6 +82,7 @@ function makeEngineMock(overrides: {
     whatIf: whatIfMock,
     baseline: baselineMock,
     mode: baselineMock ? 'beta' : 'alpha',
+    detailLevel: overrides.detailLevel ?? 'full',
   } as unknown as BranchedSimulationEngine;
 }
 
@@ -94,6 +96,12 @@ describe('exportSandboxPcap — alpha branch', () => {
     expect(result).toBeDefined();
     expect(result?.filename).toBe(`netlab-sandbox-test-scenario-${STAMP}.pcap`);
     expect(result?.blob.type).toBe('application/vnd.tcpdump.pcap');
+  });
+
+  it('returns no exports in metadata-only detail mode', () => {
+    const engine = makeEngineMock({ detailLevel: 'metadata-only' });
+
+    expect(exportSandboxPcap(engine, 'alpha', opts)).toEqual([]);
   });
 
   it('does not mark output as truncated for small record sets', () => {

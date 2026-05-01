@@ -14,6 +14,7 @@ import type { TransferMessage } from '../../types/transfer';
 import type { UdpBindings } from '../../types/udp';
 import type { TcpConnection } from '../../types/tcp';
 import type { MulticastTableEntry } from '../../layers/l2-datalink/MulticastTable';
+import type { TraceDetailLevel } from '../TraceRecorder';
 
 export interface SimulationRuntimeSnapshot {
   readonly runtimeNodeIps: Readonly<Record<string, string | null>>;
@@ -33,6 +34,7 @@ export type SimulationWorkerCommand =
       readonly topology: NetworkTopology;
       readonly state: SimulationState;
       readonly playIntervalMs: number;
+      readonly traceDetailLevel?: TraceDetailLevel;
     }
   | { readonly type: 'getState'; readonly id: string }
   | { readonly type: 'setState'; readonly id: string; readonly state: SimulationState }
@@ -192,6 +194,10 @@ function isHighlightMode(value: unknown): value is HighlightMode {
   return value === 'path' || value === 'hop';
 }
 
+function isTraceDetailLevel(value: unknown): value is TraceDetailLevel {
+  return value === 'full' || value === 'metadata-only';
+}
+
 export function isSimulationWorkerCommand(value: unknown): value is SimulationWorkerCommand {
   if (!isRecord(value) || !hasId(value) || typeof value.type !== 'string') {
     return false;
@@ -202,7 +208,8 @@ export function isSimulationWorkerCommand(value: unknown): value is SimulationWo
       return (
         hasTopologyShape(value.topology) &&
         hasStateShape(value.state) &&
-        hasPositiveNumber(value, 'playIntervalMs')
+        hasPositiveNumber(value, 'playIntervalMs') &&
+        (value.traceDetailLevel === undefined || isTraceDetailLevel(value.traceDetailLevel))
       );
     case 'getState':
     case 'step':

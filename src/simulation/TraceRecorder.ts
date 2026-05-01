@@ -42,8 +42,53 @@ function protocolName(num: number): string {
   return String(num);
 }
 
+export type TraceDetailLevel = 'full' | 'metadata-only';
+
+export interface TraceRecorderOptions {
+  readonly detailLevel?: TraceDetailLevel;
+}
+
+function toMetadataHop(hop: PacketHop): PacketHop {
+  return {
+    step: hop.step,
+    nodeId: hop.nodeId,
+    nodeLabel: hop.nodeLabel,
+    srcIp: hop.srcIp,
+    dstIp: hop.dstIp,
+    ttl: hop.ttl,
+    protocol: hop.protocol,
+    event: hop.event,
+    ...(hop.traceEventId !== undefined ? { traceEventId: hop.traceEventId } : {}),
+    ...(hop.srcPort !== undefined ? { srcPort: hop.srcPort } : {}),
+    ...(hop.dstPort !== undefined ? { dstPort: hop.dstPort } : {}),
+    ...(hop.fromNodeId !== undefined ? { fromNodeId: hop.fromNodeId } : {}),
+    ...(hop.toNodeId !== undefined ? { toNodeId: hop.toNodeId } : {}),
+    ...(hop.activeEdgeId !== undefined ? { activeEdgeId: hop.activeEdgeId } : {}),
+    ...(hop.ingressInterfaceId !== undefined ? { ingressInterfaceId: hop.ingressInterfaceId } : {}),
+    ...(hop.ingressInterfaceName !== undefined
+      ? { ingressInterfaceName: hop.ingressInterfaceName }
+      : {}),
+    ...(hop.egressInterfaceId !== undefined ? { egressInterfaceId: hop.egressInterfaceId } : {}),
+    ...(hop.egressInterfaceName !== undefined
+      ? { egressInterfaceName: hop.egressInterfaceName }
+      : {}),
+    ...(hop.reason !== undefined ? { reason: hop.reason } : {}),
+    ...(hop.action !== undefined ? { action: hop.action } : {}),
+    ...(hop.fragmentIndex !== undefined ? { fragmentIndex: hop.fragmentIndex } : {}),
+    ...(hop.fragmentCount !== undefined ? { fragmentCount: hop.fragmentCount } : {}),
+    ...(hop.identification !== undefined ? { identification: hop.identification } : {}),
+    ...(hop.nextHopMtu !== undefined ? { nextHopMtu: hop.nextHopMtu } : {}),
+    timestamp: hop.timestamp,
+  };
+}
+
 export class TraceRecorder {
   private readonly packetSnapshots = new Map<string, InFlightPacket[]>();
+  readonly detailLevel: TraceDetailLevel;
+
+  constructor(opts: TraceRecorderOptions = {}) {
+    this.detailLevel = opts.detailLevel ?? 'full';
+  }
 
   appendHop(
     hops: PacketHop[],
@@ -52,8 +97,14 @@ export class TraceRecorder {
     snapshot: InFlightPacket,
     stepCounter: number,
   ): number {
-    snapshots.push({ ...snapshot });
-    hops.push({ ...hop, step: stepCounter });
+    const nextHop = { ...hop, step: stepCounter };
+    if (this.detailLevel === 'full') {
+      snapshots.push({ ...snapshot });
+      hops.push(nextHop);
+      return stepCounter + 1;
+    }
+
+    hops.push(toMetadataHop(nextHop));
     return stepCounter + 1;
   }
 
@@ -116,6 +167,10 @@ export class TraceRecorder {
   }
 
   exportPcapRecords(traces: PacketTrace[], traceId?: string): PcapRecord[] {
+    if (this.detailLevel === 'metadata-only') {
+      return [];
+    }
+
     const trace = traceId
       ? (traces.find((candidate) => candidate.packetId === traceId) ?? null)
       : null;
@@ -225,6 +280,10 @@ export class TraceRecorder {
   }
 
   setSnapshots(packetId: string, snapshots: InFlightPacket[]): void {
+    if (this.detailLevel === 'metadata-only') {
+      return;
+    }
+
     this.packetSnapshots.set(packetId, snapshots);
   }
 

@@ -43,6 +43,60 @@ describe('TraceRecorder', () => {
     expect(snapshots[0]).not.toBe(packet);
   });
 
+  it('metadata-only mode keeps hop identity but skips packet snapshots and rewrite detail', () => {
+    const recorder = new TraceRecorder({ detailLevel: 'metadata-only' });
+    const packet = makePacket('trace-fast', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
+    const hops: PacketHop[] = [];
+    const snapshots: InFlightPacket[] = [];
+
+    recorder.appendHop(
+      hops,
+      snapshots,
+      {
+        nodeId: 'router-1',
+        nodeLabel: 'Router',
+        srcIp: '10.0.0.10',
+        dstIp: '203.0.113.10',
+        srcMac: 'aa:aa:aa:aa:aa:aa',
+        dstMac: 'bb:bb:bb:bb:bb:bb',
+        ttl: 63,
+        protocol: 'TCP',
+        event: 'forward',
+        fromNodeId: 'client-1',
+        toNodeId: 'server-1',
+        activeEdgeId: 'edge-1',
+        routingDecision: {
+          dstIp: '203.0.113.10',
+          candidates: [],
+          winner: null,
+          explanation: 'test',
+        },
+        changedFields: ['ttl', 'dstMac'],
+        timestamp: 1000,
+      },
+      packet,
+      7,
+    );
+
+    expect(snapshots).toHaveLength(0);
+    expect(hops).toEqual([
+      {
+        step: 7,
+        nodeId: 'router-1',
+        nodeLabel: 'Router',
+        srcIp: '10.0.0.10',
+        dstIp: '203.0.113.10',
+        ttl: 63,
+        protocol: 'TCP',
+        event: 'forward',
+        fromNodeId: 'client-1',
+        toNodeId: 'server-1',
+        activeEdgeId: 'edge-1',
+        timestamp: 1000,
+      },
+    ]);
+  });
+
   it('builds a dropped trace and derives the label from the packet payload', () => {
     const recorder = new TraceRecorder();
     const packet = makePacket('trace-drop', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');

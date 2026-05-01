@@ -1,6 +1,7 @@
 import type { EditSession } from '../EditSession';
 import { reduceEdit } from '../edits';
 import type { SimulationSnapshot } from '../types';
+import type { CheckpointLadder } from '../checkpoints/ladder';
 
 const MAX_CACHE_ENTRIES = 20;
 const sessionIds = new WeakMap<EditSession, number>();
@@ -46,6 +47,7 @@ export function getSnapshotAt(
   initialSnapshot: SimulationSnapshot,
   session: EditSession,
   editIndex: number,
+  options: { readonly ladder?: CheckpointLadder } = {},
 ): SimulationSnapshot {
   if (!Number.isInteger(editIndex) || editIndex < 0) {
     throw new RangeError(`editIndex must be a non-negative integer, got ${editIndex}`);
@@ -57,16 +59,21 @@ export function getSnapshotAt(
   }
 
   const key = keyFor(initialSnapshot, session, boundedIndex);
-  const cached = cache.get(key);
-  if (cached) {
-    cache.delete(key);
-    cache.set(key, cached);
-    return cached;
+  const checkpoint = options.ladder?.nearestBefore(boundedIndex) ?? null;
+  if (!checkpoint) {
+    const cached = cache.get(key);
+    if (cached) {
+      cache.delete(key);
+      cache.set(key, cached);
+      return cached;
+    }
   }
 
+  const startIndex = checkpoint?.editIndex ?? 0;
+  const startSnapshot = checkpoint?.snapshot ?? initialSnapshot;
   const materialized = session.backing
-    .slice(0, boundedIndex)
-    .reduce<SimulationSnapshot>((current, edit) => reduceEdit(current, edit), initialSnapshot);
+    .slice(startIndex, boundedIndex)
+    .reduce<SimulationSnapshot>((current, edit) => reduceEdit(current, edit), startSnapshot);
 
   return remember(key, materialized);
 }

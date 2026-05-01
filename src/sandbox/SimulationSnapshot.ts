@@ -1,5 +1,6 @@
 import { HookEngine } from '../hooks/HookEngine';
 import { SimulationEngine } from '../simulation/SimulationEngine';
+import type { SimulationEngineOptions } from '../simulation/SimulationEngine';
 import type { SimulationState } from '../types/simulation';
 import type { NetworkTopology } from '../types/topology';
 import type { TraceAnnotation } from './annotations/types';
@@ -103,8 +104,15 @@ export function fromEngine(
   });
 }
 
-export function toEngine(snapshot: SimulationSnapshot): SimulationEngine {
-  const engine = new SimulationEngine(structuredClone(snapshot.topology), new HookEngine());
+export function toEngine(
+  snapshot: SimulationSnapshot,
+  options: Pick<SimulationEngineOptions, 'traceDetailLevel'> = {},
+): SimulationEngine {
+  const engine = new SimulationEngine(
+    structuredClone(snapshot.topology),
+    new HookEngine(),
+    options,
+  );
   engine.setState(structuredClone(snapshot.state));
   engine.setPlayInterval(snapshot.parameters.engine.tickMs);
   return engine;

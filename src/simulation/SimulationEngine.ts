@@ -12,11 +12,13 @@ import type { TcpConnection } from '../types/tcp';
 import type { PcapRecord } from '../utils/pcapSerializer';
 import type { DataTransferController, DataTransferOptions } from './DataTransferController';
 import type { PathMtuCache } from './PathMtuCache';
+import type { TraceDetailLevel } from './TraceRecorder';
 import { MainThreadEngine } from './worker/MainThreadEngine';
 import { WorkerEngine, type WorkerEngineOptions } from './worker/WorkerEngine';
 
 export interface SimulationEngineOptions extends WorkerEngineOptions {
   readonly useMainThread?: boolean;
+  readonly traceDetailLevel?: TraceDetailLevel;
 }
 
 type SimulationEngineImpl = MainThreadEngine | WorkerEngine;
@@ -38,7 +40,7 @@ export class SimulationEngine {
     this.hookEngine = hookEngine;
     this.impl = shouldUseWorker(opts)
       ? new WorkerEngine(topology, hookEngine, opts)
-      : new MainThreadEngine(topology, hookEngine);
+      : new MainThreadEngine(topology, hookEngine, opts);
     this.pipeline = Reflect.get(this.impl as object, 'pipeline');
   }
 

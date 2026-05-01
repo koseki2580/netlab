@@ -3,9 +3,10 @@ import { HookEngine } from '../../hooks/HookEngine';
 import { SimulationEngine } from '../../simulation/SimulationEngine';
 import { directTopology } from '../../simulation/__fixtures__/topologies';
 import { EditSession } from '../EditSession';
-import { fromEngine, snapshotEquals } from '../SimulationSnapshot';
+import { cloneSnapshot, fromEngine, snapshotEquals } from '../SimulationSnapshot';
 import type { Edit } from '../edits';
 import { clearSnapshotAtCache, getSnapshotAt } from './getSnapshotAt';
+import { CheckpointLadder } from '../checkpoints/ladder';
 
 function root() {
   return fromEngine(new SimulationEngine(directTopology(), new HookEngine()));
@@ -58,6 +59,30 @@ describe('getSnapshotAt', () => {
     const session = EditSession.empty().push(tickEdit(200));
 
     expect(getSnapshotAt(base, session, 1)).toBe(getSnapshotAt(base, session, 1));
+  });
+
+  it('can materialize from a checkpoint ladder suffix', () => {
+    const base = root();
+    const session = EditSession.empty().push(tickEdit(200)).push({
+      kind: 'param.set',
+      key: 'engine.maxTtl',
+      before: 64,
+      after: 32,
+    });
+    const checkpoint = cloneSnapshot({
+      ...session.goToHead(1).apply(base),
+      parameters: {
+        ...base.parameters,
+        engine: { ...base.parameters.engine, tickMs: 333 },
+      },
+    });
+    const ladder = new CheckpointLadder({ interval: 1 });
+    ladder.onPush(1, checkpoint);
+
+    const result = getSnapshotAt(base, session, 2, { ladder });
+
+    expect(result.parameters.engine.tickMs).toBe(333);
+    expect(result.parameters.engine.maxTtl).toBe(32);
   });
 
   it('clears cached references on demand', () => {

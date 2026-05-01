@@ -14,6 +14,7 @@ import type { UdpBindings } from '../../types/udp';
 import type { TcpConnection } from '../../types/tcp';
 import { buildPcap, type PcapRecord } from '../../utils/pcapSerializer';
 import type { DataTransferController, DataTransferOptions } from '../DataTransferController';
+import type { TraceDetailLevel } from '../TraceRecorder';
 import { PathMtuCache } from '../PathMtuCache';
 import {
   isSimulationWorkerEvent,
@@ -35,6 +36,7 @@ export interface WorkerLike {
 export interface WorkerEngineOptions {
   readonly initialState?: SimulationState;
   readonly playIntervalMs?: number;
+  readonly traceDetailLevel?: TraceDetailLevel;
   readonly timeoutMs?: number;
   readonly createWorker?: () => WorkerLike;
 }
@@ -86,6 +88,7 @@ export class WorkerEngine {
   private readonly listeners = new Set<(state: SimulationState) => void>();
   private playIntervalMs: number;
   private pcapRecords: PcapRecord[] = [];
+  private readonly traceDetailLevel: TraceDetailLevel;
   private disposed = false;
   private readyPromise: Promise<void>;
 
@@ -97,6 +100,7 @@ export class WorkerEngine {
     this.topology = clone(topology);
     this.state = clone(opts.initialState ?? INITIAL_SIMULATION_STATE);
     this.playIntervalMs = opts.playIntervalMs ?? 500;
+    this.traceDetailLevel = opts.traceDetailLevel ?? 'full';
     this.timeoutMs = opts.timeoutMs ?? 5000;
     this.createWorker = opts.createWorker ?? createDefaultWorker;
     this.worker = this.createAndWireWorker();
@@ -432,6 +436,7 @@ export class WorkerEngine {
         topology: this.topology,
         state: this.state,
         playIntervalMs: this.playIntervalMs,
+        traceDetailLevel: this.traceDetailLevel,
       },
       'ready',
     ).then(() => undefined);

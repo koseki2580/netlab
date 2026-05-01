@@ -46,6 +46,7 @@ export interface SandboxEditorAnchor {
 
 export interface SandboxContextValue {
   readonly mode: SandboxMode;
+  readonly fastMode?: boolean;
   readonly session: EditSession;
   readonly engine: BranchedSimulationEngine;
   readonly activeEditor: SandboxEditorAnchor | null;
@@ -59,6 +60,7 @@ export interface SandboxContextValue {
   readonly setSession: (session: EditSession) => void;
   readonly setUndoFloor?: (head: number) => void;
   readonly switchMode: (mode: SandboxMode) => void;
+  readonly setFastMode?: (enabled: boolean) => void;
   readonly resetBaseline: () => void;
   readonly openEditPopover: (payload: SandboxEditorAnchor) => void;
   readonly closeEditPopover: () => void;
@@ -70,6 +72,7 @@ export const SandboxContext = createContext<SandboxContextValue | null>(null);
 export interface SandboxProviderProps {
   readonly children: ReactNode;
   readonly initialMode?: SandboxMode;
+  readonly checkpointEvery?: number;
   readonly enableShortcuts?: boolean;
   readonly assessmentRubric?: AssessmentRubric;
 }
@@ -77,6 +80,7 @@ export interface SandboxProviderProps {
 export function SandboxProvider({
   children,
   initialMode = 'alpha',
+  checkpointEvery,
   enableShortcuts = true,
   assessmentRubric,
 }: SandboxProviderProps) {
@@ -103,12 +107,14 @@ export function SandboxProvider({
   const [session, setSessionState] = useState(
     () => initialSessionRef.current ?? EditSession.empty(),
   );
+  const [fastMode, setFastModeState] = useState(false);
   const sessionRef = useRef(session);
   const [activeEditor, setActiveEditor] = useState<SandboxEditorAnchor | null>(null);
   const [diffFilter, setDiffFilter] = useState<SandboxDiffFilter>('all');
   const [engine, setEngine] = useState(() => {
     const next = new BranchedSimulationEngine(initialSnapshotRef.current as SimulationSnapshot, {
       mode: initialMode,
+      ...(checkpointEvery !== undefined ? { checkpointEvery } : {}),
     });
     const initialSession = initialSessionRef.current;
     if (initialSession && initialSession.size() > 0) {
@@ -286,6 +292,15 @@ export function SandboxProvider({
     [engine, hookEngine],
   );
 
+  const setFastMode = useCallback(
+    (enabled: boolean) => {
+      setFastModeState(enabled);
+      engine.setTraceDetailLevel(enabled ? 'metadata-only' : 'full');
+      setVersion((current) => current + 1);
+    },
+    [engine],
+  );
+
   const resetAll = useCallback(() => {
     const snapshot = initialSnapshotRef.current;
     if (!snapshot) return;
@@ -298,13 +313,17 @@ export function SandboxProvider({
     setActiveEditor(null);
     setDiffFilter('all');
     setEngine((current) => {
-      const next = new BranchedSimulationEngine(snapshot, { mode: current.mode });
+      const next = new BranchedSimulationEngine(snapshot, {
+        mode: current.mode,
+        traceDetailLevel: fastMode ? 'metadata-only' : 'full',
+        ...(checkpointEvery !== undefined ? { checkpointEvery } : {}),
+      });
       current.dispose();
       return next;
     });
     setVersion((current) => current + 1);
     void hookEngine.emit('sandbox:reset-all', { count });
-  }, [hookEngine]);
+  }, [checkpointEvery, fastMode, hookEngine]);
 
   const setUndoFloor = useCallback((head: number) => {
     undoFloorRef.current = Math.max(0, Math.floor(head));
@@ -353,12 +372,13 @@ export function SandboxProvider({
       stopDispatcher();
       for (const unregister of unregisters) unregister();
     };
-  }, [enableShortcuts, engine, undo, redo]);
+  }, [enableShortcuts, engine, redo, switchMode, undo]);
 
   const mode = engine.mode;
   const value = useMemo<SandboxContextValue>(
     () => ({
       mode,
+      fastMode,
       session,
       engine,
       activeEditor,
@@ -372,6 +392,7 @@ export function SandboxProvider({
       setSession: replaceSession,
       setUndoFloor,
       switchMode,
+      setFastMode,
       resetBaseline,
       openEditPopover: setActiveEditor,
       closeEditPopover: () => setActiveEditor(null),
@@ -381,6 +402,7 @@ export function SandboxProvider({
       activeEditor,
       diffFilter,
       engine,
+      fastMode,
       mode,
       pushEdit,
       redo,
@@ -390,6 +412,7 @@ export function SandboxProvider({
       revertAt,
       revertToSnapshot,
       setUndoFloor,
+      setFastMode,
       session,
       switchMode,
       undo,

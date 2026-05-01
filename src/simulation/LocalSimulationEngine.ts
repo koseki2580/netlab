@@ -18,6 +18,7 @@ import { extractPathEdgeIds } from './extractPathEdgeIds';
 import { parseIcmpFragNeeded } from './pmtudParser';
 import { ServiceOrchestrator } from './ServiceOrchestrator';
 import { TraceRecorder } from './TraceRecorder';
+import type { TraceDetailLevel } from './TraceRecorder';
 import type { SimulationEngine } from './SimulationEngine';
 
 const DEFAULT_PLAY_INTERVAL_MS = 500;
@@ -36,6 +37,10 @@ const INITIAL_STATE: SimulationState = {
   natTables: [],
   connTrackTables: [],
 };
+
+export interface LocalSimulationEngineOptions {
+  readonly traceDetailLevel?: TraceDetailLevel;
+}
 
 function isHttpPayload(
   payload: IpPacket['payload'],
@@ -59,8 +64,11 @@ export class LocalSimulationEngine {
   constructor(
     private readonly topology: NetworkTopology,
     private readonly hookEngine: HookEngine,
+    opts: LocalSimulationEngineOptions = {},
   ) {
-    this.traceRecorder = new TraceRecorder();
+    this.traceRecorder = new TraceRecorder(
+      opts.traceDetailLevel === undefined ? {} : { detailLevel: opts.traceDetailLevel },
+    );
     this.services = new ServiceOrchestrator(topology, hookEngine);
     this.pipeline = new ForwardingPipeline(topology, hookEngine, this.traceRecorder, this.services);
     this.services.setPacketSender({

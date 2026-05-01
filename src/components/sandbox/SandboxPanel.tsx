@@ -12,6 +12,7 @@ import { ImportDialog } from './ImportDialog';
 import { PacketEditForm } from './PacketEditForm';
 import { ParametersTab } from './ParametersTab';
 import { PcapDownloadButton } from './PcapDownloadButton';
+import { LargeTopologyWarning } from './LargeTopologyWarning';
 import { SandboxNodeTabBody } from './SandboxNodeTabBody';
 import { SaveSnapshotButton } from './snapshots/SaveSnapshotButton';
 import { ShortcutsHelpModal } from './ShortcutsHelpModal';
@@ -79,6 +80,8 @@ export function SandboxPanel() {
   );
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const tabs = getTabs(assessment !== null);
+  const nodeCount = sandbox.engine.snapshot.topology.nodes.length;
+  const fastMode = sandbox.fastMode === true;
 
   useEffect(() => {
     const unregisters = [
@@ -186,6 +189,29 @@ export function SandboxPanel() {
           <ExportButton />
           <ImportDialog />
           <SaveSnapshotButton />
+          <label
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              border: '1px solid var(--netlab-border)',
+              borderRadius: 999,
+              background: fastMode ? 'rgba(14, 165, 233, 0.16)' : 'var(--netlab-bg-surface)',
+              color: 'var(--netlab-text-primary)',
+              padding: '4px 7px',
+              fontSize: 10,
+              cursor: 'pointer',
+            }}
+          >
+            <input
+              type="checkbox"
+              aria-label="Use fast mode"
+              checked={fastMode}
+              onChange={(event) => sandbox.setFastMode?.(event.currentTarget.checked)}
+              style={{ margin: 0 }}
+            />
+            Fast
+          </label>
           <button
             type="button"
             aria-label="Switch sandbox mode"
@@ -242,6 +268,12 @@ export function SandboxPanel() {
             x
           </button>
         </header>
+
+        <LargeTopologyWarning
+          nodeCount={nodeCount}
+          fastMode={fastMode}
+          onEnableFastMode={() => sandbox.setFastMode?.(true)}
+        />
 
         <div role="tablist" aria-label="Sandbox edit axes" style={{ display: 'flex' }}>
           {tabs.map((tab, index) => {

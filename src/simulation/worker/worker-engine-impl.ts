@@ -1,6 +1,7 @@
 import { HookEngine } from '../../hooks/HookEngine';
 import type { HookMap, HookPoint } from '../../types/hooks';
 import type { NetworkTopology } from '../../types/topology';
+import '../../layers/registerForwarders';
 import { LocalSimulationEngine } from '../LocalSimulationEngine';
 import {
   isSimulationWorkerCommand,
@@ -136,6 +137,7 @@ export class SimulationWorkerRuntime {
     this.engine = new LocalSimulationEngine(
       structuredClone(command.topology),
       new WorkerHookEngine(this.post),
+      command.traceDetailLevel === undefined ? {} : { traceDetailLevel: command.traceDetailLevel },
     );
     this.engine.setState(structuredClone(command.state));
     this.engine.setPlayInterval(command.playIntervalMs);

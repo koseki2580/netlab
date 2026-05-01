@@ -1,14 +1,18 @@
 import type { HookEngine } from '../../hooks/HookEngine';
 import type { SimulationState } from '../../types/simulation';
 import type { NetworkTopology } from '../../types/topology';
-import { LocalSimulationEngine } from '../LocalSimulationEngine';
+import { LocalSimulationEngine, type LocalSimulationEngineOptions } from '../LocalSimulationEngine';
 
 export class MainThreadEngine extends LocalSimulationEngine {
   private readonly unsubscribers = new Set<() => void>();
   private disposed = false;
 
-  constructor(topology: NetworkTopology, hookEngine: HookEngine) {
-    super(topology, hookEngine);
+  constructor(
+    topology: NetworkTopology,
+    hookEngine: HookEngine,
+    opts: LocalSimulationEngineOptions = {},
+  ) {
+    super(topology, hookEngine, opts);
   }
 
   override subscribe(listener: (state: SimulationState) => void): () => void {

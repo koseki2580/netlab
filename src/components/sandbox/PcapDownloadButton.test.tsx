@@ -50,6 +50,7 @@ function makeSandboxValue(overrides: Partial<SandboxContextValue> = {}): Sandbox
 
   return {
     mode: 'alpha',
+    fastMode: false,
     session: EditSession.empty(),
     engine: {
       whatIf: whatIfMock,
@@ -70,6 +71,7 @@ function makeSandboxValue(overrides: Partial<SandboxContextValue> = {}): Sandbox
     openEditPopover: vi.fn(),
     closeEditPopover: vi.fn(),
     setDiffFilter: vi.fn(),
+    setFastMode: vi.fn(),
     ...overrides,
   };
 }
@@ -158,6 +160,20 @@ describe('PcapDownloadButton — alpha mode', () => {
     });
     expect(clickedDownloads).toHaveLength(1);
     expect(clickedDownloads[0]?.download).toMatch(/netlab-sandbox-fragmented-echo-\d{12}\.pcap$/);
+  });
+
+  it('disables downloads while Fast mode is enabled', () => {
+    render(
+      <SandboxContext.Provider value={makeSandboxValue({ fastMode: true })}>
+        <PcapDownloadButton />
+      </SandboxContext.Provider>,
+    );
+
+    const button = container?.querySelector<HTMLButtonElement>(
+      '[aria-label="Download sandbox PCAP"]',
+    );
+    expect(button?.disabled).toBe(true);
+    expect(button?.title).toContain('Disable Fast mode');
   });
 });
 

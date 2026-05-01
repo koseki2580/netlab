@@ -88,6 +88,25 @@ describe('BranchedSimulationEngine', () => {
     expect(runner.baseline).toBeNull();
   });
 
+  it('uses checkpoint replay after the configured checkpoint interval', () => {
+    const runner = new BranchedSimulationEngine(makeSnapshot(), {
+      mode: 'alpha',
+      checkpointEvery: 2,
+    });
+    const session = EditSession.empty()
+      .push({ kind: 'param.set', key: 'engine.tickMs', before: 100, after: 150 })
+      .push({ kind: 'param.set', key: 'engine.tickMs', before: 150, after: 200 })
+      .push({ kind: 'param.set', key: 'engine.tickMs', before: 200, after: 250 });
+
+    runner.applyEdits(session.goToHead(2));
+    expect(runner.checkpoints.size()).toBe(1);
+
+    runner.applyEdits(session);
+
+    expect(runner.snapshot.parameters.engine.tickMs).toBe(250);
+    expect(runner.checkpoints.nearestBefore(3)?.editIndex).toBe(2);
+  });
+
   it('applyEdits in beta leaves baseline untouched', () => {
     const runner = new BranchedSimulationEngine(makeSnapshot(), { mode: 'beta' });
     const baseline = runner.baseline;

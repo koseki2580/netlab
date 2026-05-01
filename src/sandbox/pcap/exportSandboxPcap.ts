@@ -162,6 +162,10 @@ export function exportSandboxPcap(
   branch: PcapBranch,
   opts: { scenarioId: string; now?: Date },
 ): SandboxPcapExport[] {
+  if (engine.detailLevel === 'metadata-only') {
+    return [];
+  }
+
   const stamp = stampNow(opts.now ?? new Date());
   const { scenarioId } = opts;
 
