@@ -45,6 +45,29 @@ const PROTO_TAG_STYLE = {
   fg: 'var(--netlab-text-secondary)',
 };
 
+function getCardBackground(color: string) {
+  return `linear-gradient(180deg, color-mix(in srgb, ${color} 11%, var(--netlab-bg-surface)) 0%, color-mix(in srgb, var(--netlab-bg-surface) 82%, var(--netlab-bg-primary)) 34%, color-mix(in srgb, ${color} 4%, var(--netlab-bg-primary)) 100%)`;
+}
+
+function getCardBorder(color: string) {
+  return `1px solid color-mix(in srgb, ${color} 24%, var(--netlab-border))`;
+}
+
+function getActionLinkStyle(color: string) {
+  return {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    padding: '4px 8px',
+    borderRadius: 999,
+    background: `color-mix(in srgb, ${color} 10%, var(--netlab-bg-surface))`,
+    border: `1px solid color-mix(in srgb, ${color} 20%, var(--netlab-border))`,
+    color,
+    textDecoration: 'none',
+    fontWeight: 700,
+  } as const;
+}
+
 function Tag({ label, bg, fg }: { label: string; bg: string; fg: string }) {
   return (
     <span
@@ -82,27 +105,32 @@ export function DemoCard({
   const difficulty = demo.meta?.difficulty;
   const tags = demo.meta?.tags ?? [];
   const [layerTag, ...protoTags] = tags;
+  const defaultShadow = '0 18px 36px rgba(15, 23, 42, 0.07)';
+  const hoverShadow = '0 24px 44px rgba(15, 23, 42, 0.12)';
 
   return (
     <div
       style={{
-        background: 'var(--netlab-bg-elevated)',
-        border: '1px solid var(--netlab-border)',
-        borderRadius: 8,
-        padding: '14px 16px',
+        background: getCardBackground(category.color),
+        border: getCardBorder(category.color),
+        borderRadius: 18,
+        padding: '16px 16px 18px',
         display: 'flex',
         flexDirection: 'column',
-        transition: 'border-color 0.15s, transform 0.15s',
+        boxShadow: defaultShadow,
+        transition: 'border-color 0.18s, transform 0.18s, box-shadow 0.18s',
       }}
       onMouseEnter={(e) => {
         const el = e.currentTarget as HTMLDivElement;
         el.style.borderColor = category.color;
-        el.style.transform = 'translateY(-1px)';
+        el.style.transform = 'translateY(-3px)';
+        el.style.boxShadow = hoverShadow;
       }}
       onMouseLeave={(e) => {
         const el = e.currentTarget as HTMLDivElement;
-        el.style.borderColor = 'var(--netlab-border)';
+        el.style.borderColor = `color-mix(in srgb, ${category.color} 24%, var(--netlab-border))`;
         el.style.transform = '';
+        el.style.boxShadow = defaultShadow;
       }}
     >
       {/* Icon tile */}
@@ -110,13 +138,13 @@ export function DemoCard({
         style={{
           width: 36,
           height: 36,
-          borderRadius: 8,
-          background: 'var(--netlab-bg-surface)',
-          border: '1px solid var(--netlab-border)',
+          borderRadius: 12,
+          background: `linear-gradient(180deg, color-mix(in srgb, ${category.color} 14%, var(--netlab-bg-surface)) 0%, color-mix(in srgb, var(--netlab-bg-surface) 90%, var(--netlab-bg-primary)) 100%)`,
+          border: `1px solid color-mix(in srgb, ${category.color} 18%, var(--netlab-border))`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: 'var(--netlab-text-secondary)',
+          color: category.color,
           marginBottom: 10,
           flexShrink: 0,
         }}
@@ -127,9 +155,9 @@ export function DemoCard({
       {/* Title */}
       <div
         style={{
-          fontSize: 13.5,
+          fontSize: 14,
           fontWeight: 700,
-          color: '#f1f5f9',
+          color: 'var(--netlab-text-primary)',
           marginBottom: 6,
         }}
       >
@@ -158,9 +186,9 @@ export function DemoCard({
         style={{
           color: 'var(--netlab-text-secondary)',
           fontSize: 12,
-          lineHeight: 1.5,
+          lineHeight: 1.6,
           flex: 1,
-          marginBottom: 10,
+          marginBottom: 12,
         }}
       >
         {demo.desc}
@@ -169,38 +197,29 @@ export function DemoCard({
       {/* Foot links */}
       <div
         style={{
-          borderTop: '1px dashed var(--netlab-border)',
-          paddingTop: 10,
+          borderTop: `1px solid color-mix(in srgb, ${category.color} 12%, var(--netlab-border))`,
+          paddingTop: 12,
           display: 'flex',
-          gap: 10,
+          gap: 8,
           fontSize: 11,
           flexWrap: 'wrap',
         }}
       >
-        <Link to={demo.path} style={{ color: category.color, textDecoration: 'none' }}>
+        <Link to={demo.path} style={getActionLinkStyle(category.color)}>
           Open →
         </Link>
         {sandboxHref && (
-          <a
-            href={sandboxHref}
-            style={{ color: 'var(--netlab-accent-yellow)', textDecoration: 'none' }}
-          >
+          <a href={sandboxHref} style={getActionLinkStyle('var(--netlab-accent-yellow)')}>
             Sandbox →
           </a>
         )}
         {tutorialHref && (
-          <a
-            href={tutorialHref}
-            style={{ color: 'var(--netlab-accent-cyan)', textDecoration: 'none' }}
-          >
+          <a href={tutorialHref} style={getActionLinkStyle('var(--netlab-accent-cyan)')}>
             Tutorial →
           </a>
         )}
         {assessmentHref && (
-          <a
-            href={assessmentHref}
-            style={{ color: 'var(--netlab-accent-green)', textDecoration: 'none' }}
-          >
+          <a href={assessmentHref} style={getActionLinkStyle('var(--netlab-accent-green)')}>
             Assessment →
           </a>
         )}

@@ -1,6 +1,8 @@
 import type React from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { scenarioRegistry } from '../src/scenarios';
+import { NETLAB_DARK_THEME, NETLAB_LIGHT_THEME, themeToVars } from '../src/theme';
 import { tutorialRegistry } from '../src/tutorials';
 import { DemoCard } from './components/DemoCard';
 import { FeaturedStrip } from './components/FeaturedStrip';
@@ -296,6 +298,14 @@ const CATEGORIES: Category[] = [
 export { CATEGORIES };
 export type { Category, DemoCard };
 
+type GalleryThemeMode = 'light' | 'dark';
+
+interface GalleryProps {
+  initialQuery?: string;
+  initialThemeMode?: GalleryThemeMode;
+  initialActiveSectionId?: string;
+}
+
 const SANDBOX_DEMO_ORDER = new Map(
   [
     '/networking/mtu-fragmentation',
@@ -367,11 +377,136 @@ function getAssessmentHref(demo: DemoCard): string | null {
   return `?${params.toString()}#${demo.path}`;
 }
 
+function normalizeSearchText(parts: (string | undefined)[]): string {
+  return parts
+    .filter((part): part is string => Boolean(part && part.trim().length > 0))
+    .join(' ')
+    .toLowerCase();
+}
+
+function getDemoSearchText(category: Category, demo: DemoCard): string {
+  return normalizeSearchText([
+    category.label,
+    demo.title,
+    demo.desc,
+    demo.scenarioId,
+    demo.meta?.difficulty,
+    ...(demo.meta?.tags ?? []),
+  ]);
+}
+
+function getIntroSearchText(intro: (typeof SANDBOX_INTROS)[number]): string {
+  return normalizeSearchText([intro.title, intro.desc, intro.badge, intro.href]);
+}
+
 const CARD_GRID: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-  gap: 12,
+  gridTemplateColumns: 'repeat(auto-fill, minmax(248px, 1fr))',
+  gap: 16,
 };
+
+const SECTION_BLURBS: Record<string, string> = {
+  assessments: 'Goal-driven sandbox checks and rubric-backed practice',
+  basic: 'Foundational link, switch, and host behavior',
+  routing: 'Path selection, route control, and convergence',
+  areas: 'Segmentation, services, and protocol-specific network domains',
+  services: 'Addressing and name-resolution workflows',
+  simulation: 'Trace, failure, and stateful packet analysis tools',
+  editor: 'Topology editing and controlled-state workflows',
+  integration: 'Embedding and host-page integration examples',
+  comprehensive: 'End-to-end workflows that combine multiple tools',
+};
+
+function getSectionBlurb(sectionId: string): string {
+  return SECTION_BLURBS[sectionId] ?? 'Focused demos in this track';
+}
+
+function getSectionSurfaceStyle(accent: string): React.CSSProperties {
+  return {
+    padding: '24px',
+    borderRadius: 28,
+    border: `1px solid color-mix(in srgb, ${accent} 18%, var(--netlab-border))`,
+    background: `linear-gradient(180deg, color-mix(in srgb, ${accent} 8%, var(--netlab-bg-surface)) 0%, color-mix(in srgb, ${accent} 4%, var(--netlab-bg-primary)) 100%)`,
+    boxShadow: '0 20px 44px rgba(15, 23, 42, 0.07)',
+  };
+}
+
+function getStatChipStyle(accent: string): React.CSSProperties {
+  return {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '6px 10px',
+    borderRadius: 999,
+    background: `color-mix(in srgb, ${accent} 10%, var(--netlab-bg-surface))`,
+    border: `1px solid color-mix(in srgb, ${accent} 16%, var(--netlab-border))`,
+    color: 'var(--netlab-text-primary)',
+    fontSize: 11,
+    fontWeight: 700,
+  };
+}
+
+function ThemeModeToggle({
+  themeMode,
+  onChange,
+}: {
+  themeMode: GalleryThemeMode;
+  onChange: (themeMode: GalleryThemeMode) => void;
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
+      <span
+        style={{
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: 0.8,
+          color: 'var(--netlab-text-muted)',
+          textTransform: 'uppercase',
+        }}
+      >
+        Theme
+      </span>
+      <div
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: 4,
+          borderRadius: 999,
+          background: 'color-mix(in srgb, var(--netlab-bg-surface) 72%, var(--netlab-bg-primary))',
+          border: '1px solid var(--netlab-border)',
+        }}
+      >
+        {(['light', 'dark'] as const).map((mode) => {
+          const isActive = themeMode === mode;
+          return (
+            <button
+              key={mode}
+              type="button"
+              aria-pressed={isActive}
+              onClick={() => onChange(mode)}
+              style={{
+                border: 'none',
+                borderRadius: 999,
+                padding: '7px 12px',
+                background: isActive
+                  ? 'color-mix(in srgb, var(--netlab-accent-blue) 14%, var(--netlab-bg-surface))'
+                  : 'transparent',
+                color: isActive ? 'var(--netlab-text-primary)' : 'var(--netlab-text-secondary)',
+                fontFamily: 'monospace',
+                fontSize: 11,
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              {mode === 'light' ? 'Light' : 'Dark'}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function SectionHeader({
   dot,
@@ -388,89 +523,340 @@ function SectionHeader({
     <div
       style={{
         display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        paddingBottom: 10,
-        borderBottom: '1px solid var(--netlab-border)',
-        marginBottom: 14,
+        alignItems: 'flex-start',
+        gap: 12,
+        marginBottom: 18,
       }}
     >
       <span
         style={{
-          display: 'inline-block',
-          width: 8,
-          height: 8,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 14,
+          height: 14,
+          marginTop: 4,
           borderRadius: '50%',
           background: dot,
+          boxShadow: `0 0 0 6px color-mix(in srgb, ${dot} 14%, white)`,
         }}
       />
-      <span style={{ fontSize: 13, fontWeight: 700, color: '#f1f5f9' }}>{title}</span>
-      <span style={{ fontSize: 12, fontStyle: 'italic', color: 'var(--netlab-text-muted)' }}>
-        {blurb}
-      </span>
-      <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--netlab-text-muted)' }}>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--netlab-text-primary)' }}>
+          {title}
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--netlab-text-secondary)', marginTop: 4 }}>
+          {blurb}
+        </div>
+      </div>
+      <span
+        style={{
+          marginLeft: 'auto',
+          fontSize: 11,
+          color: 'var(--netlab-text-secondary)',
+          background: 'rgba(255, 255, 255, 0.72)',
+          border: '1px solid var(--netlab-border)',
+          borderRadius: 999,
+          padding: '6px 10px',
+          fontWeight: 700,
+          whiteSpace: 'nowrap',
+        }}
+      >
         {count} demos
       </span>
     </div>
   );
 }
 
-export default function Gallery() {
-  const allDemos = CATEGORIES.flatMap((cat) => cat.demos);
+export default function Gallery({
+  initialQuery = '',
+  initialThemeMode = 'light',
+  initialActiveSectionId = 'featured',
+}: GalleryProps) {
+  const [query, setQuery] = useState(initialQuery);
+  const [themeMode, setThemeMode] = useState<GalleryThemeMode>(initialThemeMode);
+  const [activeSectionId, setActiveSectionId] = useState(initialActiveSectionId);
+  const mainRef = useRef<HTMLElement | null>(null);
+  const normalizedQuery = query.trim().toLowerCase();
+  const activeTheme = themeMode === 'dark' ? NETLAB_DARK_THEME : NETLAB_LIGHT_THEME;
+
+  const filteredCategories = useMemo(() => {
+    if (!normalizedQuery) {
+      return CATEGORIES;
+    }
+
+    return CATEGORIES.map((category) => ({
+      ...category,
+      demos: category.demos.filter((demo) =>
+        getDemoSearchText(category, demo).includes(normalizedQuery),
+      ),
+    })).filter((category) => category.demos.length > 0);
+  }, [normalizedQuery]);
+
+  const allDemos = filteredCategories.flatMap((cat) => cat.demos);
   const assessmentDemos = allDemos.filter((demo) => getAssessmentHref(demo) !== null);
+  const sandboxDemos = allDemos.filter((demo) => demo.sandboxReady).length;
+  const filteredIntros = useMemo(() => {
+    if (!normalizedQuery) {
+      return SANDBOX_INTROS;
+    }
+
+    return SANDBOX_INTROS.filter((intro) => getIntroSearchText(intro).includes(normalizedQuery));
+  }, [normalizedQuery]);
+
+  const browseItems = useMemo(() => {
+    const items: { id: string; label: string; color: string; count: number }[] = [];
+    if (filteredIntros.length > 0) {
+      items.push({
+        id: 'featured',
+        label: 'Start here',
+        color: 'var(--netlab-accent-yellow)',
+        count: filteredIntros.length,
+      });
+    }
+    if (assessmentDemos.length > 0) {
+      items.push({
+        id: 'assessments',
+        label: 'Assessments',
+        color: 'var(--netlab-accent-green)',
+        count: assessmentDemos.length,
+      });
+    }
+    filteredCategories.forEach((category) => {
+      items.push({
+        id: category.id,
+        label: category.label,
+        color: category.color,
+        count: category.demos.length,
+      });
+    });
+    return items;
+  }, [assessmentDemos.length, filteredCategories, filteredIntros.length]);
+
+  const visibleSectionIds = browseItems.map((item) => item.id);
+
+  useEffect(() => {
+    if (visibleSectionIds.length === 0) {
+      return;
+    }
+    if (!visibleSectionIds.includes(activeSectionId)) {
+      const nextVisibleSectionId = visibleSectionIds[0];
+      if (nextVisibleSectionId) {
+        setActiveSectionId(nextVisibleSectionId);
+      }
+    }
+  }, [activeSectionId, visibleSectionIds]);
+
+  useEffect(() => {
+    const container = mainRef.current;
+    if (!container || visibleSectionIds.length === 0) {
+      return;
+    }
+
+    const usesOwnScrollContainer = container.scrollHeight > container.clientHeight + 1;
+
+    const updateActiveSection = () => {
+      const sections = Array.from(
+        container.querySelectorAll<HTMLElement>('[data-gallery-section]'),
+      );
+      if (sections.length === 0) {
+        return;
+      }
+
+      const firstSection = sections[0];
+      if (!firstSection) {
+        return;
+      }
+
+      const activationThreshold = usesOwnScrollContainer
+        ? container.getBoundingClientRect().top + container.clientHeight * 0.4
+        : window.innerHeight * 0.4;
+      const passedSections = sections.filter((section) => {
+        const sectionId = section.dataset.gallerySection;
+        return Boolean(sectionId) && section.getBoundingClientRect().top <= activationThreshold;
+      });
+      const nextSection = passedSections[passedSections.length - 1] ?? firstSection;
+      const nextSectionId = nextSection.dataset.gallerySection ?? activeSectionId;
+
+      setActiveSectionId((current) => (current === nextSectionId ? current : nextSectionId));
+    };
+
+    updateActiveSection();
+    if (usesOwnScrollContainer) {
+      container.addEventListener('scroll', updateActiveSection, { passive: true });
+    } else {
+      window.addEventListener('scroll', updateActiveSection, { passive: true });
+    }
+    window.addEventListener('resize', updateActiveSection);
+
+    return () => {
+      if (usesOwnScrollContainer) {
+        container.removeEventListener('scroll', updateActiveSection);
+      } else {
+        window.removeEventListener('scroll', updateActiveSection);
+      }
+      window.removeEventListener('resize', updateActiveSection);
+    };
+  }, [activeSectionId, visibleSectionIds]);
+
+  const handleSelectSection = (sectionId: string) => {
+    setActiveSectionId(sectionId);
+    const section = mainRef.current?.querySelector<HTMLElement>(
+      `[data-gallery-section="${sectionId}"]`,
+    );
+    if (!section) {
+      return;
+    }
+
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const totalDemoCount = CATEGORIES.reduce((count, category) => count + category.demos.length, 0);
+  const noMatches = normalizedQuery.length > 0 && browseItems.length === 0;
 
   return (
     <div
       style={{
+        ...themeToVars(activeTheme),
         minHeight: '100vh',
-        background: 'var(--netlab-bg-primary)',
+        background:
+          'radial-gradient(circle at top left, color-mix(in srgb, var(--netlab-accent-cyan) 10%, var(--netlab-bg-surface)), transparent 26%), radial-gradient(circle at top right, color-mix(in srgb, var(--netlab-accent-yellow) 10%, var(--netlab-bg-surface)), transparent 24%), linear-gradient(180deg, color-mix(in srgb, var(--netlab-bg-surface) 28%, var(--netlab-bg-primary)) 0%, var(--netlab-bg-primary) 100%)',
         fontFamily: 'monospace',
         color: 'var(--netlab-text-primary)',
         display: 'grid',
-        gridTemplateColumns: '248px 1fr',
+        gridTemplateColumns: '248px minmax(0, 1fr)',
       }}
     >
-      <Sidebar categories={CATEGORIES} featuredCount={SANDBOX_INTROS.length} />
+      <Sidebar
+        browseItems={browseItems}
+        activeSectionId={activeSectionId}
+        onSelectSection={handleSelectSection}
+      />
 
-      <main style={{ overflowY: 'auto' }}>
+      <main
+        ref={mainRef}
+        style={{
+          overflowY: 'auto',
+          padding: '24px',
+          background:
+            'linear-gradient(180deg, color-mix(in srgb, var(--netlab-bg-surface) 18%, var(--netlab-bg-primary)) 0%, color-mix(in srgb, var(--netlab-bg-primary) 92%, transparent) 100%)',
+        }}
+      >
         <div
           style={{
-            padding: '24px 32px 20px',
-            borderBottom: '1px solid var(--netlab-border)',
+            padding: '28px 32px',
             display: 'flex',
-            alignItems: 'flex-start',
+            alignItems: 'center',
             justifyContent: 'space-between',
-            gap: 16,
+            gap: 24,
+            borderRadius: 30,
+            border:
+              '1px solid color-mix(in srgb, var(--netlab-accent-blue) 16%, var(--netlab-border))',
+            background:
+              'linear-gradient(135deg, color-mix(in srgb, var(--netlab-accent-blue) 10%, var(--netlab-bg-surface)) 0%, color-mix(in srgb, var(--netlab-bg-surface) 86%, var(--netlab-bg-primary)) 55%, color-mix(in srgb, var(--netlab-accent-yellow) 10%, var(--netlab-bg-primary)) 100%)',
+            boxShadow: '0 24px 50px rgba(15, 23, 42, 0.08)',
           }}
         >
-          <div>
-            <h1 style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', margin: 0 }}>
+          <div style={{ minWidth: 0 }}>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '4px 10px',
+                borderRadius: 999,
+                background:
+                  'color-mix(in srgb, var(--netlab-bg-surface) 80%, var(--netlab-bg-primary))',
+                border: '1px solid var(--netlab-border)',
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: 0.6,
+                color: 'var(--netlab-text-secondary)',
+                textTransform: 'uppercase',
+                marginBottom: 12,
+              }}
+            >
+              {themeMode === 'light' ? 'Light-mode demo index' : 'Dark-mode demo index'}
+            </div>
+            <h1
+              style={{
+                fontSize: 26,
+                fontWeight: 700,
+                color: 'var(--netlab-text-primary)',
+                margin: 0,
+              }}
+            >
               Demo gallery
             </h1>
             <p
               style={{
-                marginTop: 6,
+                marginTop: 8,
                 color: 'var(--netlab-text-secondary)',
-                fontSize: 12,
-                maxWidth: 480,
+                fontSize: 13,
+                lineHeight: 1.65,
+                maxWidth: 620,
               }}
             >
-              Interactive browser-based network topology visualizer. Each demo is fully
-              self-contained — pick one to explore.
+              Browse packet-level intros, protocol drills, and full-stack topologies without the
+              flat single-surface look. Each track now has its own visual layer so you can scan by
+              category before opening a demo.
             </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
+              <span style={getStatChipStyle('var(--netlab-accent-blue)')}>
+                {allDemos.length} demos
+              </span>
+              <span style={getStatChipStyle('var(--netlab-accent-yellow)')}>
+                {filteredIntros.length} guided intros
+              </span>
+              <span style={getStatChipStyle('var(--netlab-accent-green)')}>
+                {assessmentDemos.length} assessments
+              </span>
+              <span style={getStatChipStyle('var(--netlab-accent-cyan)')}>
+                {sandboxDemos} sandbox-ready
+              </span>
+              {normalizedQuery && (
+                <span style={getStatChipStyle('var(--netlab-accent-orange)')}>
+                  filtered from {totalDemoCount}
+                </span>
+              )}
+            </div>
           </div>
-          <SearchBox />
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              flexWrap: 'wrap',
+              justifyContent: 'flex-end',
+            }}
+          >
+            <ThemeModeToggle themeMode={themeMode} onChange={setThemeMode} />
+            <SearchBox
+              value={query}
+              onChange={setQuery}
+              onClear={() => setQuery('')}
+              resultCount={allDemos.length}
+              totalCount={totalDemoCount}
+            />
+          </div>
         </div>
 
-        <div style={{ padding: '28px 32px', display: 'flex', flexDirection: 'column', gap: 40 }}>
-          <FeaturedStrip intros={SANDBOX_INTROS} />
+        <div style={{ padding: '28px 0 0', display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {filteredIntros.length > 0 && (
+            <div data-gallery-section="featured">
+              <FeaturedStrip intros={filteredIntros} />
+            </div>
+          )}
 
           {assessmentDemos.length > 0 && (
-            <section id="assessments">
+            <section
+              id="assessments"
+              data-gallery-section="assessments"
+              style={getSectionSurfaceStyle('var(--netlab-accent-green)')}
+            >
               <SectionHeader
                 dot="var(--netlab-accent-green)"
                 title="Assessments"
-                blurb="— test your understanding"
+                blurb={getSectionBlurb('assessments')}
                 count={assessmentDemos.length}
               />
               <div style={CARD_GRID}>
@@ -498,12 +884,17 @@ export default function Gallery() {
             </section>
           )}
 
-          {CATEGORIES.map((cat) => (
-            <section key={cat.id} id={cat.id}>
+          {filteredCategories.map((cat) => (
+            <section
+              key={cat.id}
+              id={cat.id}
+              data-gallery-section={cat.id}
+              style={getSectionSurfaceStyle(cat.color)}
+            >
               <SectionHeader
                 dot={cat.color}
                 title={cat.label}
-                blurb="— learn the building blocks"
+                blurb={getSectionBlurb(cat.id)}
                 count={cat.demos.length}
               />
               <div style={CARD_GRID}>
@@ -529,6 +920,17 @@ export default function Gallery() {
               </div>
             </section>
           ))}
+
+          {noMatches && (
+            <section style={getSectionSurfaceStyle('var(--netlab-accent-orange)')}>
+              <SectionHeader
+                dot="var(--netlab-accent-orange)"
+                title="No matches"
+                blurb={`No demos matched “${query}”. Try a protocol name, category, or layer tag.`}
+                count={0}
+              />
+            </section>
+          )}
         </div>
       </main>
     </div>

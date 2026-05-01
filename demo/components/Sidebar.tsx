@@ -4,7 +4,12 @@ interface Category {
   id: string;
   label: string;
   color: string;
-  demos: { path: string }[];
+  count: number;
+}
+
+interface ReferenceLink {
+  label: string;
+  href: string;
 }
 
 const GITHUB_ICON = (
@@ -14,8 +19,9 @@ const GITHUB_ICON = (
 );
 
 interface SidebarProps {
-  categories: Category[];
-  featuredCount: number;
+  browseItems: Category[];
+  activeSectionId: string;
+  onSelectSection: (sectionId: string) => void;
 }
 
 function NavGroup({ label, children }: { label: string; children: React.ReactNode }) {
@@ -39,37 +45,64 @@ function NavGroup({ label, children }: { label: string; children: React.ReactNod
   );
 }
 
-function NavRow({
+function NavButtonRow({
   dot,
+  sectionId,
+  isActive,
   label,
   count,
-  href,
+  onSelect,
 }: {
   dot?: string;
+  sectionId: string;
+  isActive: boolean;
   label: string;
   count?: number;
-  href: string;
+  onSelect: (sectionId: string) => void;
 }) {
+  const borderColor = isActive
+    ? `color-mix(in srgb, ${dot ?? 'var(--netlab-accent-blue)'} 22%, var(--netlab-border))`
+    : 'color-mix(in srgb, var(--netlab-bg-surface) 72%, var(--netlab-border))';
+  const background = isActive
+    ? `color-mix(in srgb, ${dot ?? 'var(--netlab-accent-blue)'} 16%, var(--netlab-bg-surface))`
+    : 'color-mix(in srgb, var(--netlab-bg-surface) 74%, var(--netlab-bg-primary))';
+
   return (
-    <a
-      href={href}
+    <button
+      type="button"
+      data-section-id={sectionId}
+      data-active={isActive ? 'true' : 'false'}
+      aria-pressed={isActive}
+      onClick={() => onSelect(sectionId)}
       style={{
         display: 'flex',
         alignItems: 'center',
         gap: 8,
-        padding: '5px 12px',
-        color: 'var(--netlab-text-secondary)',
-        textDecoration: 'none',
+        padding: '8px 12px',
+        margin: '0 8px 4px',
+        color: isActive ? 'var(--netlab-text-primary)' : 'var(--netlab-text-secondary)',
+        background,
+        border: `1px solid ${borderColor}`,
         fontSize: 12,
-        borderRadius: 4,
+        borderRadius: 12,
+        textAlign: 'left',
+        cursor: 'pointer',
+        transition: 'background 0.15s, color 0.15s, border-color 0.15s',
+        width: 'calc(100% - 16px)',
       }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLAnchorElement).style.background = 'var(--netlab-bg-elevated)';
-        (e.currentTarget as HTMLAnchorElement).style.color = 'var(--netlab-text-primary)';
+        (e.currentTarget as HTMLButtonElement).style.background =
+          `color-mix(in srgb, ${dot ?? 'var(--netlab-accent-blue)'} 14%, var(--netlab-bg-surface))`;
+        (e.currentTarget as HTMLButtonElement).style.color = 'var(--netlab-text-primary)';
+        (e.currentTarget as HTMLButtonElement).style.borderColor =
+          `color-mix(in srgb, ${dot ?? 'var(--netlab-accent-blue)'} 24%, var(--netlab-border))`;
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLAnchorElement).style.background = '';
-        (e.currentTarget as HTMLAnchorElement).style.color = 'var(--netlab-text-secondary)';
+        (e.currentTarget as HTMLButtonElement).style.background = background;
+        (e.currentTarget as HTMLButtonElement).style.color = isActive
+          ? 'var(--netlab-text-primary)'
+          : 'var(--netlab-text-secondary)';
+        (e.currentTarget as HTMLButtonElement).style.borderColor = borderColor;
       }}
     >
       {dot ? (
@@ -100,19 +133,63 @@ function NavRow({
           {count}
         </span>
       ) : null}
+    </button>
+  );
+}
+
+function NavLinkRow({ label, href }: ReferenceLink) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '8px 12px',
+        margin: '0 8px 4px',
+        color: 'var(--netlab-text-secondary)',
+        textDecoration: 'none',
+        fontSize: 12,
+        borderRadius: 12,
+        background: 'color-mix(in srgb, var(--netlab-bg-surface) 74%, var(--netlab-bg-primary))',
+        border: '1px solid color-mix(in srgb, var(--netlab-bg-surface) 72%, var(--netlab-border))',
+      }}
+    >
+      <span style={{ width: 8, flexShrink: 0 }} />
+      <span style={{ flex: 1 }}>{label}</span>
+      <span style={{ color: 'var(--netlab-text-muted)', fontSize: 12 }}>↗</span>
     </a>
   );
 }
 
-export function Sidebar({ categories, featuredCount }: SidebarProps) {
+const REFERENCE_LINKS: ReferenceLink[] = [
+  {
+    label: 'Docs',
+    href: 'https://github.com/koseki2580/netlab/blob/main/docs/README.md',
+  },
+  {
+    label: 'API',
+    href: 'https://github.com/koseki2580/netlab/blob/main/docs/core/api.md',
+  },
+  {
+    label: 'Layer Plugins',
+    href: 'https://github.com/koseki2580/netlab/blob/main/docs/core/plugins.md',
+  },
+];
+
+export function Sidebar({ browseItems, activeSectionId, onSelectSection }: SidebarProps) {
   return (
     <aside
       aria-label="Demo navigation"
       style={{
         width: 248,
         flexShrink: 0,
-        background: 'var(--netlab-bg-surface)',
+        background:
+          'linear-gradient(180deg, color-mix(in srgb, var(--netlab-bg-surface) 84%, var(--netlab-bg-primary)) 0%, var(--netlab-bg-primary) 100%)',
         borderRight: '1px solid var(--netlab-border)',
+        boxShadow: '16px 0 40px rgba(15, 23, 42, 0.06)',
         display: 'flex',
         flexDirection: 'column',
         position: 'sticky',
@@ -130,7 +207,9 @@ export function Sidebar({ categories, featuredCount }: SidebarProps) {
           marginBottom: 16,
         }}
       >
-        <span style={{ fontSize: 16, fontWeight: 'bold' }}>📡 netlab</span>
+        <span style={{ fontSize: 16, fontWeight: 'bold', color: 'var(--netlab-text-primary)' }}>
+          📡 netlab
+        </span>
         <span
           style={{
             display: 'block',
@@ -145,28 +224,24 @@ export function Sidebar({ categories, featuredCount }: SidebarProps) {
 
       {/* Browse */}
       <NavGroup label="Browse">
-        <NavRow
-          dot="var(--netlab-accent-yellow)"
-          label="Start here"
-          count={featuredCount}
-          href="#featured"
-        />
-        {categories.map((cat) => (
-          <NavRow
-            key={cat.id}
-            dot={cat.color}
-            label={cat.label}
-            count={cat.demos.length}
-            href={`#${cat.id}`}
+        {browseItems.map((item) => (
+          <NavButtonRow
+            key={item.id}
+            dot={item.color}
+            sectionId={item.id}
+            isActive={item.id === activeSectionId}
+            label={item.label}
+            count={item.count}
+            onSelect={onSelectSection}
           />
         ))}
       </NavGroup>
 
       {/* Reference */}
       <NavGroup label="Reference">
-        <NavRow label="Docs" href="#" />
-        <NavRow label="API" href="#" />
-        <NavRow label="Layer Plugins" href="#" />
+        {REFERENCE_LINKS.map((link) => (
+          <NavLinkRow key={link.label} {...link} />
+        ))}
       </NavGroup>
 
       {/* Footer */}
@@ -178,6 +253,7 @@ export function Sidebar({ categories, featuredCount }: SidebarProps) {
           display: 'flex',
           flexDirection: 'column',
           gap: 8,
+          background: 'color-mix(in srgb, var(--netlab-bg-surface) 48%, var(--netlab-bg-primary))',
         }}
       >
         <a

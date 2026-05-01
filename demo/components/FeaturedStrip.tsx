@@ -15,15 +15,24 @@ export function FeaturedStrip({ intros }: FeaturedStripProps) {
   if (!featured) return null;
 
   return (
-    <section id="featured" style={{ marginBottom: 40 }}>
+    <section
+      id="featured"
+      style={{
+        marginBottom: 0,
+        padding: '24px',
+        borderRadius: 28,
+        border: '1px solid color-mix(in srgb, var(--netlab-accent-cyan) 20%, var(--netlab-border))',
+        background:
+          'linear-gradient(180deg, color-mix(in srgb, var(--netlab-accent-cyan) 12%, var(--netlab-bg-surface)) 0%, color-mix(in srgb, var(--netlab-accent-cyan) 5%, var(--netlab-bg-primary)) 100%)',
+        boxShadow: '0 20px 44px rgba(15, 23, 42, 0.07)',
+      }}
+    >
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          paddingBottom: 12,
-          borderBottom: '1px solid var(--netlab-border)',
-          marginBottom: 16,
+          marginBottom: 18,
         }}
       >
         <span
@@ -39,7 +48,7 @@ export function FeaturedStrip({ intros }: FeaturedStripProps) {
           style={{
             fontSize: 13,
             fontWeight: 700,
-            color: '#f1f5f9',
+            color: 'var(--netlab-text-primary)',
           }}
         >
           Start here
@@ -68,7 +77,7 @@ export function FeaturedStrip({ intros }: FeaturedStripProps) {
         style={{
           display: 'grid',
           gridTemplateColumns: '1.4fr 1fr',
-          gap: 12,
+          gap: 16,
         }}
       >
         {/* Big feature card */}
@@ -76,18 +85,28 @@ export function FeaturedStrip({ intros }: FeaturedStripProps) {
           href={featured.href}
           style={{
             display: 'block',
-            background: `radial-gradient(ellipse at 20% 50%, color-mix(in srgb, var(--netlab-accent-cyan) 12%, transparent), transparent 60%), var(--netlab-bg-elevated)`,
-            border: '1px solid var(--netlab-border)',
-            borderRadius: 8,
+            background:
+              'radial-gradient(circle at top left, color-mix(in srgb, var(--netlab-accent-cyan) 18%, var(--netlab-bg-surface)), transparent 42%), linear-gradient(135deg, color-mix(in srgb, var(--netlab-accent-cyan) 11%, var(--netlab-bg-surface)) 0%, color-mix(in srgb, var(--netlab-bg-surface) 82%, var(--netlab-bg-primary)) 58%, color-mix(in srgb, var(--netlab-accent-yellow) 10%, var(--netlab-bg-primary)) 100%)',
+            border:
+              '1px solid color-mix(in srgb, var(--netlab-accent-cyan) 22%, var(--netlab-border))',
+            borderRadius: 22,
             padding: '20px 24px',
             textDecoration: 'none',
-            transition: 'border-color 0.15s',
+            boxShadow: '0 20px 40px rgba(15, 23, 42, 0.08)',
+            transition: 'border-color 0.15s, transform 0.15s, box-shadow 0.15s',
           }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--netlab-accent-cyan)';
+            (e.currentTarget as HTMLAnchorElement).style.transform = 'translateY(-2px)';
+            (e.currentTarget as HTMLAnchorElement).style.boxShadow =
+              '0 24px 46px rgba(15, 23, 42, 0.12)';
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--netlab-border)';
+            (e.currentTarget as HTMLAnchorElement).style.borderColor =
+              'color-mix(in srgb, var(--netlab-accent-cyan) 22%, var(--netlab-border))';
+            (e.currentTarget as HTMLAnchorElement).style.transform = '';
+            (e.currentTarget as HTMLAnchorElement).style.boxShadow =
+              '0 20px 40px rgba(15, 23, 42, 0.08)';
           }}
         >
           <div
@@ -112,7 +131,7 @@ export function FeaturedStrip({ intros }: FeaturedStripProps) {
             style={{
               fontSize: 16,
               fontWeight: 700,
-              color: '#f1f5f9',
+              color: 'var(--netlab-text-primary)',
               marginBottom: 8,
             }}
           >
@@ -129,17 +148,33 @@ export function FeaturedStrip({ intros }: FeaturedStripProps) {
             {featured.desc}
           </p>
           <div style={{ display: 'flex', gap: 10, fontSize: 12 }}>
-            <span style={{ color: 'var(--netlab-accent-cyan)' }}>Open intro →</span>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '5px 10px',
+                borderRadius: 999,
+                background:
+                  'color-mix(in srgb, var(--netlab-accent-cyan) 14%, var(--netlab-bg-surface))',
+                color: 'var(--netlab-accent-cyan)',
+                fontWeight: 700,
+              }}
+            >
+              Open intro →
+            </span>
           </div>
         </a>
 
         {/* Mini list */}
         <div
           style={{
-            background: 'var(--netlab-bg-elevated)',
-            border: '1px solid var(--netlab-border)',
-            borderRadius: 8,
+            background:
+              'linear-gradient(180deg, color-mix(in srgb, var(--netlab-accent-yellow) 9%, var(--netlab-bg-surface)) 0%, color-mix(in srgb, var(--netlab-accent-yellow) 4%, var(--netlab-bg-primary)) 100%)',
+            border:
+              '1px solid color-mix(in srgb, var(--netlab-accent-yellow) 18%, var(--netlab-border))',
+            borderRadius: 22,
             overflow: 'hidden',
+            boxShadow: '0 20px 40px rgba(15, 23, 42, 0.06)',
           }}
         >
           {rest.map((intro, index) => (
@@ -158,7 +193,7 @@ export function FeaturedStrip({ intros }: FeaturedStripProps) {
               }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLAnchorElement).style.background =
-                  'var(--netlab-bg-surface)';
+                  'color-mix(in srgb, var(--netlab-accent-cyan) 8%, var(--netlab-bg-surface))';
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLAnchorElement).style.background = '';
@@ -179,7 +214,7 @@ export function FeaturedStrip({ intros }: FeaturedStripProps) {
                   style={{
                     fontSize: 12,
                     fontWeight: 700,
-                    color: '#f1f5f9',
+                    color: 'var(--netlab-text-primary)',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',

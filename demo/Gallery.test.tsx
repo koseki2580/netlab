@@ -1,8 +1,17 @@
+import type { ComponentProps } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import DemoShell from './DemoShell';
 import Gallery, { CATEGORIES } from './Gallery';
+
+function renderGallery(props?: ComponentProps<typeof Gallery>) {
+  return renderToStaticMarkup(
+    <MemoryRouter>
+      <Gallery {...props} />
+    </MemoryRouter>,
+  );
+}
 
 describe('demo chrome', () => {
   it('DemoShell includes a GitHub source link in the shared header', () => {
@@ -20,11 +29,7 @@ describe('demo chrome', () => {
   });
 
   it('Gallery includes a GitHub source link and key demo cards', () => {
-    const html = renderToStaticMarkup(
-      <MemoryRouter>
-        <Gallery />
-      </MemoryRouter>,
-    );
+    const html = renderGallery();
 
     expect(html).toContain('https://github.com/koseki2580/netlab');
     expect(html).toContain('Comprehensive');
@@ -41,11 +46,7 @@ describe('demo chrome', () => {
   });
 
   it('Gallery highlights sandbox-ready demos in the featured strip', () => {
-    const html = renderToStaticMarkup(
-      <MemoryRouter>
-        <Gallery />
-      </MemoryRouter>,
-    );
+    const html = renderGallery();
 
     // FeaturedStrip renders all sandbox intro hrefs
     expect(html).toContain(
@@ -65,11 +66,7 @@ describe('demo chrome', () => {
   });
 
   it('Gallery exposes sandbox intros before non-intro sandbox demos', () => {
-    const html = renderToStaticMarkup(
-      <MemoryRouter>
-        <Gallery />
-      </MemoryRouter>,
-    );
+    const html = renderGallery();
 
     expect(html).toContain('Start here: Sandbox intro');
     expect(html).toContain(
@@ -90,11 +87,7 @@ describe('demo chrome', () => {
   });
 
   it('Gallery exposes assessment scenarios in a dedicated section', () => {
-    const html = renderToStaticMarkup(
-      <MemoryRouter>
-        <Gallery />
-      </MemoryRouter>,
-    );
+    const html = renderGallery();
 
     expect(html).toContain('Assessments');
     expect(html).toContain('Assessment →');
@@ -104,24 +97,16 @@ describe('demo chrome', () => {
   });
 
   it('Gallery sidebar renders one nav link per category section', () => {
-    const html = renderToStaticMarkup(
-      <MemoryRouter>
-        <Gallery />
-      </MemoryRouter>,
-    );
+    const html = renderGallery();
 
-    // Each CATEGORIES id appears as a href anchor in the sidebar
+    // Each CATEGORIES id appears as a browse control in the sidebar.
     for (const cat of CATEGORIES) {
-      expect(html).toContain(`href="#${cat.id}"`);
+      expect(html).toContain(`data-section-id="${cat.id}"`);
     }
   });
 
   it('Gallery demo cards render difficulty tags', () => {
-    const html = renderToStaticMarkup(
-      <MemoryRouter>
-        <Gallery />
-      </MemoryRouter>,
-    );
+    const html = renderGallery();
 
     expect(html).toContain('Beginner');
     expect(html).toContain('Intermediate');
@@ -129,12 +114,43 @@ describe('demo chrome', () => {
   });
 
   it('Gallery search box is present with correct placeholder', () => {
-    const html = renderToStaticMarkup(
-      <MemoryRouter>
-        <Gallery />
-      </MemoryRouter>,
-    );
+    const html = renderGallery();
 
     expect(html).toContain('Search demos, protocols, layers');
+  });
+
+  it('Gallery avoids hard-coded dark-only heading colors in light-mode chrome', () => {
+    const html = renderGallery();
+
+    expect(html).not.toContain('color:#f1f5f9');
+    expect(html).toContain('color:var(--netlab-text-primary)');
+  });
+
+  it('Gallery renders theme mode controls', () => {
+    const html = renderGallery();
+
+    expect(html).toContain('Theme');
+    expect(html).toContain('Light');
+    expect(html).toContain('Dark');
+  });
+
+  it('Gallery can start in dark mode', () => {
+    const html = renderGallery({ initialThemeMode: 'dark' });
+
+    expect(html).toContain('Dark-mode demo index');
+  });
+
+  it('Gallery filters demos from an initial query', () => {
+    const html = renderGallery({ initialQuery: 'ospf' });
+
+    expect(html).toContain('OSPF Convergence');
+    expect(html).toContain('Dynamic Routing');
+    expect(html).not.toContain('Three-Tier LAN');
+  });
+
+  it('Gallery can mark an initial active sidebar section', () => {
+    const html = renderGallery({ initialActiveSectionId: 'routing' });
+
+    expect(html).toContain('data-section-id="routing" data-active="true"');
   });
 });
