@@ -10,6 +10,13 @@ import { staticProtocol } from '../routing/static/StaticProtocol';
 import { SandboxNarrationRegion } from '../sandbox/narration/SandboxNarrationRegion';
 import type { NetlabEmbedMode, ParentOrigin } from '../embed/protocol';
 import type { NetworkTopology, TopologySnapshot } from '../types/topology';
+import {
+  DEFAULT_SANDBOX_PROPOSAL_TIMEOUT_MS,
+  resolveSandboxControlMode,
+  type ControlledTopologyChangeHandler,
+  type SandboxControlMode,
+  type SandboxEditProposalHandler,
+} from '../controlled/sandbox-mode';
 import { NetlabContext } from './NetlabContext';
 
 function ensureBuiltInProtocolsRegistered() {
@@ -39,6 +46,10 @@ interface ControlledNetlabProviderProps {
   assessmentScenarioId?: string;
   embedMode?: NetlabEmbedMode;
   parentOrigin?: ParentOrigin;
+  sandboxControlMode?: SandboxControlMode;
+  sandboxProposalTimeoutMs?: number;
+  onTopologyChange?: ControlledTopologyChangeHandler;
+  onSandboxEditProposed?: SandboxEditProposalHandler;
 }
 
 interface UncontrolledNetlabProviderProps {
@@ -51,6 +62,10 @@ interface UncontrolledNetlabProviderProps {
   assessmentScenarioId?: string;
   embedMode?: NetlabEmbedMode;
   parentOrigin?: ParentOrigin;
+  sandboxControlMode?: SandboxControlMode;
+  sandboxProposalTimeoutMs?: number;
+  onTopologyChange?: ControlledTopologyChangeHandler;
+  onSandboxEditProposed?: SandboxEditProposalHandler;
 }
 
 export type NetlabProviderProps = ControlledNetlabProviderProps | UncontrolledNetlabProviderProps;
@@ -65,8 +80,13 @@ export function NetlabProvider({
   assessmentScenarioId,
   embedMode,
   parentOrigin,
+  sandboxControlMode: sandboxControlModeProp,
+  sandboxProposalTimeoutMs = DEFAULT_SANDBOX_PROPOSAL_TIMEOUT_MS,
+  onTopologyChange,
+  onSandboxEditProposed,
 }: NetlabProviderProps) {
   ensureBuiltInProtocolsRegistered();
+  const warnedImplicitSandboxModeRef = useRef(false);
 
   const defaultTopologyRef = useRef<NetworkTopology | null>(null);
   if (defaultTopologyRef.current === null && defaultTopology) {
@@ -82,6 +102,23 @@ export function NetlabProvider({
   }
 
   const hookEngine = useMemo(() => new HookEngine(), []);
+  const effectiveSandboxEnabled = sandboxEnabled || assessmentScenarioId !== undefined;
+  const effectiveSandboxControlModeProp =
+    sandboxControlModeProp ?? (assessmentScenarioId !== undefined ? 'sandbox-owns' : undefined);
+  const sandboxControlMode = resolveSandboxControlMode({
+    hasControlledTopology: topology !== undefined,
+    sandboxEnabled: effectiveSandboxEnabled,
+    ...(effectiveSandboxControlModeProp !== undefined
+      ? { sandboxControlMode: effectiveSandboxControlModeProp }
+      : {}),
+    dev:
+      (import.meta as ImportMeta & { readonly env?: { readonly DEV?: boolean } }).env?.DEV ?? false,
+    warn: (message) => {
+      if (warnedImplicitSandboxModeRef.current) return;
+      warnedImplicitSandboxModeRef.current = true;
+      console.warn(message);
+    },
+  });
 
   const routeTable = useMemo(
     () => protocolRegistry.resolveRouteTable(resolvedTopology),
@@ -107,11 +144,15 @@ export function NetlabProvider({
       areas: resolvedTopology.areas,
       hookEngine,
       ...(tutorialId !== undefined ? { tutorialId } : {}),
-      ...(sandboxEnabled || assessmentScenarioId !== undefined ? { sandboxEnabled: true } : {}),
+      ...(effectiveSandboxEnabled ? { sandboxEnabled: true } : {}),
       ...(sandboxIntroId !== undefined ? { sandboxIntroId } : {}),
       ...(assessmentScenarioId !== undefined ? { assessmentScenarioId } : {}),
       ...(embedMode !== undefined ? { embedMode } : {}),
       ...(parentOrigin !== undefined ? { parentOrigin } : {}),
+      ...(sandboxControlMode !== undefined ? { sandboxControlMode } : {}),
+      ...(effectiveSandboxEnabled ? { sandboxProposalTimeoutMs } : {}),
+      ...(onTopologyChange !== undefined ? { onTopologyChange } : {}),
+      ...(onSandboxEditProposed !== undefined ? { onSandboxEditProposed } : {}),
     }),
     [
       enrichedTopology,
@@ -119,20 +160,22 @@ export function NetlabProvider({
       resolvedTopology.areas,
       hookEngine,
       tutorialId,
-      sandboxEnabled,
+      effectiveSandboxEnabled,
       sandboxIntroId,
       assessmentScenarioId,
       embedMode,
       parentOrigin,
+      sandboxControlMode,
+      sandboxProposalTimeoutMs,
+      onTopologyChange,
+      onSandboxEditProposed,
     ],
   );
 
   return (
     <NetlabContext.Provider value={value}>
       {children}
-      {(sandboxEnabled || assessmentScenarioId !== undefined) && (
-        <SandboxNarrationRegion hookEngine={hookEngine} />
-      )}
+      {effectiveSandboxEnabled && <SandboxNarrationRegion hookEngine={hookEngine} />}
     </NetlabContext.Provider>
   );
 }

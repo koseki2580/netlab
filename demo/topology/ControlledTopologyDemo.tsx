@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { SimulationProvider } from '../../src/simulation/SimulationContext';
+import { useSandbox } from '../../src/sandbox/useSandbox';
+import type { SandboxEditProposal } from '../../src/controlled/sandbox-mode';
+import type { Edit } from '../../src/sandbox/edits';
 import type { NetworkTopology, TopologySnapshot } from '../../src/types/topology';
 import { decodeTopology, encodeTopology } from '../../src/utils/topology-url';
 import DemoShell from '../DemoShell';
@@ -15,6 +19,20 @@ const INITIAL_TOPOLOGY: NetworkTopology = {
 
 export const CONTROLLED_TOPOLOGY_INITIAL_TOPOLOGY = INITIAL_TOPOLOGY;
 
+const LINK_DOWN_EDIT: Edit = {
+  kind: 'link.state',
+  target: { kind: 'edge', edgeId: 'e1' },
+  before: 'up',
+  after: 'down',
+};
+
+const LINK_UP_EDIT: Edit = {
+  kind: 'link.state',
+  target: { kind: 'edge', edgeId: 'e1' },
+  before: 'down',
+  after: 'up',
+};
+
 function formatSnapshot(snapshot: TopologySnapshot): string {
   return JSON.stringify(
     {
@@ -27,9 +45,63 @@ function formatSnapshot(snapshot: TopologySnapshot): string {
   );
 }
 
+function ControlledSandboxHarness() {
+  const sandbox = useSandbox();
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: 12,
+        bottom: 12,
+        zIndex: 12,
+        display: 'flex',
+        gap: 8,
+      }}
+    >
+      <button
+        type="button"
+        data-testid="controlled-sandbox-propose-down"
+        onClick={() => sandbox.pushEdit(LINK_DOWN_EDIT)}
+        style={{
+          border: '1px solid #2563eb',
+          borderRadius: 8,
+          padding: '8px 10px',
+          background: '#1d4ed8',
+          color: '#eff6ff',
+          fontFamily: 'monospace',
+          cursor: 'pointer',
+        }}
+      >
+        Propose link down
+      </button>
+      <button
+        type="button"
+        data-testid="controlled-sandbox-propose-up"
+        onClick={() => sandbox.pushEdit(LINK_UP_EDIT)}
+        style={{
+          border: '1px solid #334155',
+          borderRadius: 8,
+          padding: '8px 10px',
+          background: '#0f172a',
+          color: '#e2e8f0',
+          fontFamily: 'monospace',
+          cursor: 'pointer',
+        }}
+      >
+        Propose link up
+      </button>
+    </div>
+  );
+}
+
 export function ControlledTopologyDemo() {
+  const params = new URLSearchParams(window.location.search);
+  const sandboxEnabled = params.get('sandbox') === '1';
+  const showSandboxHarness = sandboxEnabled && params.get('controlledSandboxHarness') === '1';
   const [topology, setTopology] = useState<NetworkTopology>(INITIAL_TOPOLOGY);
   const [encodedSearch, setEncodedSearch] = useState(() => encodeTopology(INITIAL_TOPOLOGY));
+  const [pendingProposal, setPendingProposal] = useState<SandboxEditProposal | null>(null);
   const [status, setStatus] = useState(
     'Drag nodes, connect links, or delete edges to update the snapshot.',
   );
@@ -43,6 +115,31 @@ export function ControlledTopologyDemo() {
   const handleTopologyChange = (nextSnapshot: TopologySnapshot) => {
     setTopology((prev) => ({ ...prev, ...nextSnapshot }));
     setStatus('Topology updated from canvas interaction.');
+  };
+
+  const handleProviderTopologyChange = (
+    nextSnapshot: TopologySnapshot,
+    meta: { readonly source: 'user' | 'sandbox' | 'sandbox-informational' },
+  ) => {
+    if (meta.source !== 'sandbox-informational') {
+      setTopology((prev) => ({ ...prev, ...nextSnapshot }));
+    }
+    setStatus(`Topology update source: ${meta.source}.`);
+  };
+
+  const handleSandboxEditProposed = (proposal: SandboxEditProposal) => {
+    setPendingProposal(proposal);
+    setStatus(`Sandbox proposed ${proposal.edit.kind}.`);
+  };
+
+  const acceptPendingProposal = () => {
+    pendingProposal?.accept();
+    setPendingProposal(null);
+  };
+
+  const rejectPendingProposal = () => {
+    pendingProposal?.reject('demo-reject');
+    setPendingProposal(null);
   };
 
   const handleEncode = () => {
@@ -94,8 +191,25 @@ export function ControlledTopologyDemo() {
             background: '#0f172a',
           }}
         >
-          <NetlabProvider topology={topology}>
-            <NetlabCanvas onTopologyChange={handleTopologyChange} />
+          <NetlabProvider
+            topology={topology}
+            {...(sandboxEnabled
+              ? {
+                  sandboxEnabled: true,
+                  sandboxControlMode: 'sandbox-proposes' as const,
+                  onTopologyChange: handleProviderTopologyChange,
+                  onSandboxEditProposed: handleSandboxEditProposed,
+                }
+              : {})}
+          >
+            {sandboxEnabled ? (
+              <SimulationProvider>
+                <NetlabCanvas onTopologyChange={handleTopologyChange} />
+                {showSandboxHarness && <ControlledSandboxHarness />}
+              </SimulationProvider>
+            ) : (
+              <NetlabCanvas onTopologyChange={handleTopologyChange} />
+            )}
           </NetlabProvider>
         </div>
 
@@ -157,7 +271,51 @@ export function ControlledTopologyDemo() {
           <div style={{ fontSize: 12, color: '#cbd5e1', lineHeight: 1.6 }}>
             <div>Nodes: {snapshot.nodes.length}</div>
             <div>Edges: {snapshot.edges.length}</div>
+            {showSandboxHarness && (
+              <div data-testid="controlled-sandbox-pending">
+                Pending sandbox proposal: {pendingProposal ? pendingProposal.edit.kind : 'none'}
+              </div>
+            )}
           </div>
+
+          {showSandboxHarness && (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                data-testid="controlled-sandbox-accept"
+                disabled={!pendingProposal}
+                onClick={acceptPendingProposal}
+                style={{
+                  border: '1px solid #16a34a',
+                  borderRadius: 8,
+                  padding: '8px 12px',
+                  background: pendingProposal ? '#15803d' : '#1f2937',
+                  color: '#f0fdf4',
+                  cursor: pendingProposal ? 'pointer' : 'default',
+                  fontFamily: 'inherit',
+                }}
+              >
+                Accept proposal
+              </button>
+              <button
+                type="button"
+                data-testid="controlled-sandbox-reject"
+                disabled={!pendingProposal}
+                onClick={rejectPendingProposal}
+                style={{
+                  border: '1px solid #dc2626',
+                  borderRadius: 8,
+                  padding: '8px 12px',
+                  background: pendingProposal ? '#991b1b' : '#1f2937',
+                  color: '#fef2f2',
+                  cursor: pendingProposal ? 'pointer' : 'default',
+                  fontFamily: 'inherit',
+                }}
+              >
+                Reject proposal
+              </button>
+            </div>
+          )}
 
           <div>
             <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 6 }}>URL Query</div>
@@ -179,6 +337,7 @@ export function ControlledTopologyDemo() {
           </div>
 
           <pre
+            data-testid="controlled-topology-json"
             style={{
               margin: 0,
               flex: 1,

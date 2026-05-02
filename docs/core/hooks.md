@@ -17,6 +17,7 @@ netlab provides a Koa-style middleware hook system that lets you observe and mod
 | `fetch:intercept`           | `window.fetch` is called and intercepted                |
 | `fetch:respond`             | A mock response is about to be returned                 |
 | `sandbox:edit-rejected`     | A sandbox edit was rejected during validation or apply  |
+| `sandbox:proposal-timeout`  | A controlled sandbox proposal timed out before response |
 | `sandbox:edit-applied`      | A sandbox edit was accepted and appended to the session |
 | `sandbox:edit-undone`       | The sandbox history cursor moved backward               |
 | `sandbox:edit-redone`       | The sandbox history cursor moved forward                |
@@ -148,7 +149,23 @@ hookEngine.on('router:lookup', async (ctx, next) => {
 ```typescript
 {
   edit: unknown;
-  reason: 'unknown-kind' | 'not-paused' | 'validation-failed';
+  reason:
+    | 'unknown-kind'
+    | 'not-paused'
+    | 'validation-failed'
+    | 'plugin-error'
+    | 'assessment-constraint-violated'
+    | 'controlled-rejected'
+    | 'controlled-timeout'
+    | 'controlled-missing-callback';
+}
+```
+
+### `sandbox:proposal-timeout`
+
+```typescript
+{
+  edit: Edit;
 }
 ```
 

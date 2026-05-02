@@ -422,6 +422,7 @@ export default function TcpHandshakeDemo() {
       <NetlabProvider
         topology={TOPOLOGY}
         sandboxEnabled={sandboxEnabled}
+        {...(sandboxEnabled ? { sandboxControlMode: 'sandbox-owns' as const } : {})}
         {...(embedMode !== undefined ? { embedMode } : {})}
         {...(parentOrigin !== undefined ? { parentOrigin } : {})}
         {...(sandboxEnabled && sandboxIntroId ? { sandboxIntroId } : {})}

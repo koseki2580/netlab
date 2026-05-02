@@ -312,7 +312,12 @@ function SimulationTab({
   embedParams: DemoEmbedProviderProps;
 }) {
   return (
-    <NetlabProvider topology={topology} sandboxEnabled={sandboxEnabled} {...embedParams}>
+    <NetlabProvider
+      topology={topology}
+      sandboxEnabled={sandboxEnabled}
+      {...(sandboxEnabled ? { sandboxControlMode: 'sandbox-owns' as const } : {})}
+      {...embedParams}
+    >
       <SimulationProvider>
         <SimulationTabInner />
       </SimulationProvider>
@@ -403,7 +408,12 @@ function FailureTab({
   embedParams: DemoEmbedProviderProps;
 }) {
   return (
-    <NetlabProvider topology={topology} sandboxEnabled={sandboxEnabled} {...embedParams}>
+    <NetlabProvider
+      topology={topology}
+      sandboxEnabled={sandboxEnabled}
+      {...(sandboxEnabled ? { sandboxControlMode: 'sandbox-owns' as const } : {})}
+      {...embedParams}
+    >
       <FailureProvider>
         <SimulationProvider>
           <FailureTabInner />
@@ -482,7 +492,12 @@ function TraceTab({
   embedParams: DemoEmbedProviderProps;
 }) {
   return (
-    <NetlabProvider topology={topology} sandboxEnabled={sandboxEnabled} {...embedParams}>
+    <NetlabProvider
+      topology={topology}
+      sandboxEnabled={sandboxEnabled}
+      {...(sandboxEnabled ? { sandboxControlMode: 'sandbox-owns' as const } : {})}
+      {...embedParams}
+    >
       <SimulationProvider>
         <TraceTabInner />
       </SimulationProvider>

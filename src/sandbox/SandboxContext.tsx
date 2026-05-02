@@ -9,11 +9,17 @@ import {
   type ReactNode,
 } from 'react';
 import { NetlabContext } from '../components/NetlabContext';
+import {
+  DEFAULT_SANDBOX_PROPOSAL_TIMEOUT_MS,
+  type TopologyChangeMeta,
+} from '../controlled/sandbox-mode';
 import { NetlabError } from '../errors';
 import { hookEngine as sharedHookEngine } from '../hooks/HookEngine';
 import { checkAssessmentConstraints } from '../assessments/constraints';
 import type { AssessmentRubric } from '../assessments/types';
 import { useSimulation } from '../simulation/SimulationContext';
+import type { TopologySnapshot } from '../types/topology';
+import { ProposesBridge } from '../controlled/ProposesBridge';
 import { TutorialPresenceContext } from '../tutorials/TutorialContext';
 import { BranchedSimulationEngine } from './BranchedSimulationEngine';
 import { EditSession } from './EditSession';
@@ -51,6 +57,7 @@ export interface SandboxContextValue {
   readonly engine: BranchedSimulationEngine;
   readonly activeEditor: SandboxEditorAnchor | null;
   readonly diffFilter: SandboxDiffFilter;
+  readonly pendingProposalCount?: number;
   readonly pushEdit: (edit: Edit) => void;
   readonly undo: () => void;
   readonly redo: () => void;
@@ -68,6 +75,14 @@ export interface SandboxContextValue {
 }
 
 export const SandboxContext = createContext<SandboxContextValue | null>(null);
+
+function toTopologySnapshot(snapshot: SimulationSnapshot): TopologySnapshot {
+  return {
+    nodes: snapshot.topology.nodes,
+    edges: snapshot.topology.edges,
+    areas: snapshot.topology.areas,
+  };
+}
 
 export interface SandboxProviderProps {
   readonly children: ReactNode;
@@ -109,6 +124,7 @@ export function SandboxProvider({
   );
   const [fastMode, setFastModeState] = useState(false);
   const sessionRef = useRef(session);
+  const [pendingProposalCount, setPendingProposalCount] = useState(0);
   const [activeEditor, setActiveEditor] = useState<SandboxEditorAnchor | null>(null);
   const [diffFilter, setDiffFilter] = useState<SandboxDiffFilter>('all');
   const [engine, setEngine] = useState(() => {
@@ -139,6 +155,17 @@ export function SandboxProvider({
   }, [tutorialPresent]);
 
   useEffect(() => engine.subscribe(() => setVersion((current) => current + 1)), [engine]);
+
+  const proposalBridge = useMemo(
+    () =>
+      new ProposesBridge({
+        timeoutMs: netlabContext?.sandboxProposalTimeoutMs ?? DEFAULT_SANDBOX_PROPOSAL_TIMEOUT_MS,
+        onPendingChange: setPendingProposalCount,
+      }),
+    [netlabContext?.sandboxProposalTimeoutMs],
+  );
+
+  useEffect(() => () => proposalBridge.clear(), [proposalBridge]);
 
   useEffect(() => {
     sessionRef.current = session;
@@ -180,6 +207,32 @@ export function SandboxProvider({
     [engine],
   );
 
+  const publishTopologyChange = useCallback(
+    (nextSession: EditSession, source: TopologyChangeMeta['source']) => {
+      if (!netlabContext?.onTopologyChange) return;
+      const nextSnapshot = nextSession.apply(engine.root);
+      netlabContext.onTopologyChange(toTopologySnapshot(nextSnapshot), { source });
+    },
+    [engine, netlabContext],
+  );
+
+  const commitEdit = useCallback(
+    (edit: Edit, topologyChangeSource?: TopologyChangeMeta['source']) => {
+      const current = sessionRef.current;
+      const evictedCount = Math.max(0, current.head + 1 - EditSession.MAX_HISTORY);
+      const next = current.push(edit);
+      commitSession(next);
+      if (topologyChangeSource !== undefined) {
+        publishTopologyChange(next, topologyChangeSource);
+      }
+      if (evictedCount > 0) {
+        void hookEngine.emit('sandbox:history-evicted', { count: evictedCount });
+      }
+      void hookEngine.emit('sandbox:edit-applied', { edit });
+    },
+    [commitSession, hookEngine, publishTopologyChange],
+  );
+
   const replaceSession = useCallback(
     (nextSession: EditSession) => {
       undoFloorRef.current = 0;
@@ -205,15 +258,37 @@ export function SandboxProvider({
         return;
       }
 
-      const evictedCount = Math.max(0, current.head + 1 - EditSession.MAX_HISTORY);
-      const next = current.push(edit);
-      commitSession(next);
-      if (evictedCount > 0) {
-        void hookEngine.emit('sandbox:history-evicted', { count: evictedCount });
+      if (netlabContext?.sandboxControlMode === 'sandbox-proposes') {
+        if (!netlabContext.onSandboxEditProposed) {
+          void hookEngine.emit('sandbox:edit-rejected', {
+            edit,
+            reason: 'controlled-missing-callback',
+          });
+          return;
+        }
+
+        const proposal = proposalBridge.propose(edit, {
+          accept: (acceptedEdit) => commitEdit(acceptedEdit, 'sandbox'),
+          reject: (rejectedEdit, reason) => {
+            void hookEngine.emit('sandbox:edit-rejected', {
+              edit: rejectedEdit,
+              reason: reason === 'timeout' ? 'controlled-timeout' : 'controlled-rejected',
+            });
+          },
+          timeout: (timedOutEdit) => {
+            void hookEngine.emit('sandbox:proposal-timeout', { edit: timedOutEdit });
+          },
+        });
+        netlabContext.onSandboxEditProposed(proposal);
+        return;
       }
-      void hookEngine.emit('sandbox:edit-applied', { edit });
+
+      commitEdit(
+        edit,
+        netlabContext?.sandboxControlMode === 'sandbox-owns' ? 'sandbox-informational' : undefined,
+      );
     },
-    [assessmentRubric, commitSession, hookEngine],
+    [assessmentRubric, commitEdit, hookEngine, netlabContext, proposalBridge],
   );
 
   const undo = useCallback(() => {
@@ -383,6 +458,7 @@ export function SandboxProvider({
       engine,
       activeEditor,
       diffFilter,
+      pendingProposalCount,
       pushEdit,
       undo,
       redo,
@@ -404,6 +480,7 @@ export function SandboxProvider({
       engine,
       fastMode,
       mode,
+      pendingProposalCount,
       pushEdit,
       redo,
       resetAll,

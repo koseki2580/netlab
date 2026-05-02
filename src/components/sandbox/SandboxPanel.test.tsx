@@ -80,6 +80,7 @@ function makeSandboxValue(overrides: Partial<SandboxContextValue> = {}): Sandbox
     } as unknown as BranchedSimulationEngine,
     activeEditor: null,
     diffFilter: 'all',
+    pendingProposalCount: 0,
     pushEdit: vi.fn(),
     undo: vi.fn(),
     redo: vi.fn(),
@@ -301,6 +302,16 @@ describe('SandboxPanel', () => {
     expect(container?.querySelector('[role="tab"][data-axis="edits"]')?.textContent).toBe(
       'Edits (2)',
     );
+  });
+
+  it('shows pending controlled sandbox proposals', () => {
+    render(
+      <SandboxContext.Provider value={makeSandboxValue({ pendingProposalCount: 2 })}>
+        <SandboxPanel />
+      </SandboxContext.Provider>,
+    );
+
+    expect(container?.textContent).toContain('Pending proposals: 2');
   });
 
   it('shows the packet empty state by default', () => {

@@ -11,6 +11,7 @@ The API is intentionally hybrid:
 - `NetlabProvider` can be controlled with `topology` or seeded once with `defaultTopology`
 - `NetlabCanvas` still uses local React Flow state for smooth interaction
 - When callback props are provided, `NetlabCanvas` synchronizes its local state from the canonical topology and reports committed mutations back to the parent
+- Interactive Sandbox uses provider-level reconciliation modes; see [Controlled Topology + Sandbox](controlled-topology-sandbox.md)
 
 This preserves the existing uncontrolled behavior for current users while enabling parent-owned topology state for editors, persistence flows, and URL-driven restoration.
 

@@ -256,6 +256,7 @@ describe('NetlabProvider', () => {
         <NetlabProvider
           topology={makeTopology('Embed')}
           sandboxEnabled
+          sandboxControlMode="sandbox-owns"
           embedMode="compact"
           parentOrigin="https://teacher.example"
         >
@@ -266,6 +267,65 @@ describe('NetlabProvider', () => {
       expect(currentContext().embedMode).toBe('compact');
       expect(currentContext().parentOrigin).toBe('https://teacher.example');
       expect(currentContext().sandboxEnabled).toBe(true);
+    });
+
+    it('provides controlled sandbox options via context', () => {
+      const onTopologyChange = vi.fn();
+      const onSandboxEditProposed = vi.fn();
+
+      render(
+        <NetlabProvider
+          topology={makeTopology('Sandbox')}
+          sandboxEnabled
+          sandboxControlMode="sandbox-proposes"
+          sandboxProposalTimeoutMs={250}
+          onTopologyChange={onTopologyChange}
+          onSandboxEditProposed={onSandboxEditProposed}
+        >
+          <CaptureNetlab />
+        </NetlabProvider>,
+      );
+
+      expect(currentContext().sandboxControlMode).toBe('sandbox-proposes');
+      expect(currentContext().sandboxProposalTimeoutMs).toBe(250);
+      expect(currentContext().onTopologyChange).toBe(onTopologyChange);
+      expect(currentContext().onSandboxEditProposed).toBe(onSandboxEditProposed);
+    });
+
+    it('warns once per mount when controlled sandbox mode is implicit', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const topology = makeTopology('Warn');
+
+      render(
+        <NetlabProvider topology={topology} sandboxEnabled>
+          <CaptureNetlab />
+        </NetlabProvider>,
+      );
+      render(
+        <NetlabProvider topology={topology} sandboxEnabled>
+          <CaptureNetlab />
+        </NetlabProvider>,
+      );
+
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(currentContext().sandboxControlMode).toBe('sandbox-proposes');
+    });
+
+    it('does not warn when the controlled sandbox mode is explicit', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+      render(
+        <NetlabProvider
+          topology={makeTopology('Owns')}
+          sandboxEnabled
+          sandboxControlMode="sandbox-owns"
+        >
+          <CaptureNetlab />
+        </NetlabProvider>,
+      );
+
+      expect(warn).not.toHaveBeenCalled();
+      expect(currentContext().sandboxControlMode).toBe('sandbox-owns');
     });
   });
 });

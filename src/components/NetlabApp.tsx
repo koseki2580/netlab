@@ -16,6 +16,7 @@ import { NETLAB_DARK_THEME, themeToVars } from '../theme';
 import type { NetlabTheme } from '../theme';
 import { resolveColorMode, type NetlabColorMode } from '../utils/themeUtils';
 import type { NetlabEmbedMode, ParentOrigin } from '../embed/protocol';
+import type { SandboxControlMode } from '../controlled/sandbox-mode';
 
 export interface NetlabAppProps {
   /** The network topology to display. */
@@ -60,6 +61,8 @@ export interface NetlabAppProps {
   className?: string;
   /** Enable the interactive sandbox surface. */
   sandboxEnabled?: boolean;
+  /** Controlled-topology reconciliation mode used when sandbox is enabled. */
+  sandboxControlMode?: SandboxControlMode;
   /** Iframe-friendly sandbox chrome mode. */
   embedMode?: NetlabEmbedMode;
   /** Allowed parent origins for sandbox child events. */
@@ -147,6 +150,7 @@ export function NetlabApp({
   style,
   className,
   sandboxEnabled,
+  sandboxControlMode,
   embedMode,
   parentOrigin,
 }: NetlabAppProps) {
@@ -177,6 +181,9 @@ export function NetlabApp({
     <NetlabProvider
       topology={topology}
       {...(sandboxEnabled !== undefined ? { sandboxEnabled } : {})}
+      {...(sandboxEnabled
+        ? { sandboxControlMode: sandboxControlMode ?? ('sandbox-owns' as const) }
+        : {})}
       {...(embedMode !== undefined ? { embedMode } : {})}
       {...(parentOrigin !== undefined ? { parentOrigin } : {})}
     >

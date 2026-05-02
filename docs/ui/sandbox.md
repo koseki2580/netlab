@@ -121,6 +121,7 @@ The sandbox emits additive hook events through `hookEngine`:
 - `sandbox:reset-all`
 - `sandbox:history-evicted`
 - `sandbox:edit-rejected` (`assessment-constraint-violated` is used when an assessment constraint blocks an edit)
+- `sandbox:proposal-timeout`
 - `sandbox:mode-changed`
 - `sandbox:session-imported`
 - `sandbox:session-exported`

@@ -12,6 +12,7 @@ Core specifications for the overall design of Netlab and for creating extensions
 - [Architecture](core/architecture.md) - Overall system structure and design of key components
 - [API](core/api.md) - API specifications for external and internal use
 - [Controlled Topology API](api/controlled-topology.md) - Prop-based controlled/uncontrolled topology state with mutation callbacks
+- [Controlled Topology + Sandbox](api/controlled-topology-sandbox.md) - Explicit coexistence modes for parent-owned topology and sandbox-owned edits
 - [Mismatch Report](api/mismatch-report.md) - Results of the API documentation audit
 - [Hooks](core/hooks.md) - Mechanism of the React-independent event hook engine
 - [Plugins](core/plugins.md) - Plugin mechanism for feature extensions

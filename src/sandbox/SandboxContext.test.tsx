@@ -4,13 +4,16 @@ import { StrictMode, act, Component, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NetlabError } from '../errors';
-import { NetlabContext } from '../components/NetlabContext';
+import { NetlabContext, type NetlabContextValue } from '../components/NetlabContext';
 import { HookEngine } from '../hooks/HookEngine';
 import { basicArp, scenarioRegistry } from '../scenarios';
 import { SimulationContext, type SimulationContextValue } from '../simulation/SimulationContext';
 import { SimulationEngine } from '../simulation/SimulationEngine';
 import type { SimulationState } from '../types/simulation';
+import type { NetworkTopology } from '../types/topology';
 import type { AssessmentRubric } from '../assessments/types';
+import type { SandboxEditProposal } from '../controlled/sandbox-mode';
+import type { Edit } from './edits';
 import { TutorialProvider } from '../tutorials/TutorialContext';
 import { tutorialRegistry } from '../tutorials';
 import type { Tutorial } from '../tutorials/types';
@@ -177,6 +180,53 @@ function renderSandboxWithAssessment(
   );
 }
 
+function renderControlledSandbox({
+  topology = basicArp.topology,
+  hookEngine: testHookEngine = new HookEngine(),
+  sandboxControlMode = 'sandbox-proposes',
+  sandboxProposalTimeoutMs = 5000,
+  onSandboxEditProposed,
+  onTopologyChange,
+}: {
+  readonly topology?: NetworkTopology;
+  readonly hookEngine?: HookEngine;
+  readonly sandboxControlMode?: 'sandbox-proposes' | 'sandbox-owns';
+  readonly sandboxProposalTimeoutMs?: number;
+  readonly onSandboxEditProposed?: (proposal: SandboxEditProposal) => void;
+  readonly onTopologyChange?: NetlabContextValue['onTopologyChange'];
+}) {
+  render(
+    <NetlabContext.Provider
+      value={{
+        topology,
+        routeTable: topology.routeTables,
+        areas: topology.areas,
+        hookEngine: testHookEngine,
+        sandboxEnabled: true,
+        sandboxControlMode,
+        sandboxProposalTimeoutMs,
+        ...(onSandboxEditProposed !== undefined ? { onSandboxEditProposed } : {}),
+        ...(onTopologyChange !== undefined ? { onTopologyChange } : {}),
+      }}
+    >
+      <SimulationContext.Provider value={makeSimulationValue()}>
+        <SandboxProvider>
+          <CaptureSandbox />
+        </SandboxProvider>
+      </SimulationContext.Provider>
+    </NetlabContext.Provider>,
+  );
+}
+
+function linkDownEdit(): Edit {
+  return {
+    kind: 'link.state',
+    target: { kind: 'edge', edgeId: 'e1' },
+    before: 'up',
+    after: 'down',
+  };
+}
+
 beforeEach(() => {
   actEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
   latestSandbox = null;
@@ -230,6 +280,152 @@ describe('SandboxProvider', () => {
     });
 
     expect(currentSandbox().session.edits).toEqual([{ kind: 'noop' }]);
+  });
+
+  it('proposes controlled sandbox edits and waits for accept before mutating', async () => {
+    const proposalRef: { current: SandboxEditProposal | null } = { current: null };
+    const onTopologyChange = vi.fn();
+    renderControlledSandbox({
+      onSandboxEditProposed: (nextProposal) => {
+        proposalRef.current = nextProposal;
+      },
+      onTopologyChange,
+    });
+
+    act(() => {
+      currentSandbox().pushEdit(linkDownEdit());
+    });
+
+    expect(currentSandbox().session.edits).toEqual([]);
+    expect(currentSandbox().pendingProposalCount).toBe(1);
+
+    if (!proposalRef.current) {
+      throw new Error('expected sandbox proposal');
+    }
+    const acceptedProposal = proposalRef.current;
+    expect(acceptedProposal.edit).toEqual(linkDownEdit());
+    await act(async () => {
+      acceptedProposal.accept();
+      await Promise.resolve();
+    });
+
+    expect(currentSandbox().session.edits).toEqual([linkDownEdit()]);
+    expect(onTopologyChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        edges: expect.arrayContaining([
+          expect.objectContaining({ id: 'e1', data: expect.objectContaining({ state: 'down' }) }),
+        ]),
+      }),
+      { source: 'sandbox' },
+    );
+    expect(currentSandbox().pendingProposalCount).toBe(0);
+  });
+
+  it('does not mutate controlled sandbox edits that are rejected by the consumer', async () => {
+    const proposalRef: { current: SandboxEditProposal | null } = { current: null };
+    const onTopologyChange = vi.fn();
+    renderControlledSandbox({
+      onSandboxEditProposed: (nextProposal) => {
+        proposalRef.current = nextProposal;
+      },
+      onTopologyChange,
+    });
+
+    act(() => {
+      currentSandbox().pushEdit(linkDownEdit());
+    });
+
+    if (!proposalRef.current) {
+      throw new Error('expected sandbox proposal');
+    }
+    const rejectedProposal = proposalRef.current;
+    await act(async () => {
+      rejectedProposal.reject('policy');
+      await Promise.resolve();
+    });
+
+    expect(currentSandbox().session.edits).toEqual([]);
+    expect(currentSandbox().engine.snapshot.topology.edges[0]?.data?.state).toBeUndefined();
+    expect(onTopologyChange).not.toHaveBeenCalled();
+  });
+
+  it('auto-rejects controlled sandbox proposals after timeout', async () => {
+    vi.useFakeTimers();
+    const testHookEngine = new HookEngine();
+    const rejected = vi.fn();
+    const timedOut = vi.fn();
+    testHookEngine.on('sandbox:edit-rejected', async (payload, next) => {
+      rejected(payload);
+      await next();
+    });
+    testHookEngine.on('sandbox:proposal-timeout', async (payload, next) => {
+      timedOut(payload);
+      await next();
+    });
+    renderControlledSandbox({
+      hookEngine: testHookEngine,
+      sandboxProposalTimeoutMs: 5000,
+      onSandboxEditProposed: () => undefined,
+    });
+
+    act(() => {
+      currentSandbox().pushEdit(linkDownEdit());
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(5000);
+      await Promise.resolve();
+    });
+
+    expect(timedOut).toHaveBeenCalledWith({ edit: linkDownEdit() });
+    expect(rejected).toHaveBeenCalledWith({
+      edit: linkDownEdit(),
+      reason: 'controlled-timeout',
+    });
+    expect(currentSandbox().session.edits).toEqual([]);
+    vi.useRealTimers();
+  });
+
+  it('rejects proposes mode edits when no proposal callback is registered', async () => {
+    const testHookEngine = new HookEngine();
+    const rejected = vi.fn();
+    testHookEngine.on('sandbox:edit-rejected', async (payload, next) => {
+      rejected(payload);
+      await next();
+    });
+    renderControlledSandbox({ hookEngine: testHookEngine });
+
+    await act(async () => {
+      currentSandbox().pushEdit(linkDownEdit());
+      await Promise.resolve();
+    });
+
+    expect(rejected).toHaveBeenCalledWith({
+      edit: linkDownEdit(),
+      reason: 'controlled-missing-callback',
+    });
+    expect(currentSandbox().session.edits).toEqual([]);
+  });
+
+  it('sandbox-owns applies edits locally and reports informational topology changes', () => {
+    const onTopologyChange = vi.fn();
+    renderControlledSandbox({
+      sandboxControlMode: 'sandbox-owns',
+      onTopologyChange,
+    });
+
+    act(() => {
+      currentSandbox().pushEdit(linkDownEdit());
+    });
+
+    expect(currentSandbox().session.edits).toEqual([linkDownEdit()]);
+    expect(onTopologyChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        edges: expect.arrayContaining([
+          expect.objectContaining({ id: 'e1', data: expect.objectContaining({ state: 'down' }) }),
+        ]),
+      }),
+      { source: 'sandbox-informational' },
+    );
   });
 
   it('rejects assessment constraint violations before mutating the session', () => {

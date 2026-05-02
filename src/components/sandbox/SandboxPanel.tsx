@@ -12,6 +12,7 @@ import { ImportDialog } from './ImportDialog';
 import { PacketEditForm } from './PacketEditForm';
 import { ParametersTab } from './ParametersTab';
 import { PcapDownloadButton } from './PcapDownloadButton';
+import { ProposalPendingIndicator } from './ProposalPendingIndicator';
 import { LargeTopologyWarning } from './LargeTopologyWarning';
 import { SandboxNodeTabBody } from './SandboxNodeTabBody';
 import { SaveSnapshotButton } from './snapshots/SaveSnapshotButton';
@@ -285,6 +286,8 @@ export function SandboxPanel() {
           fastMode={fastMode}
           onEnableFastMode={() => sandbox.setFastMode?.(true)}
         />
+
+        <ProposalPendingIndicator count={sandbox.pendingProposalCount ?? 0} />
 
         <div role="tablist" aria-label="Sandbox edit axes" style={{ display: 'flex' }}>
           {tabs.map((tab, index) => {

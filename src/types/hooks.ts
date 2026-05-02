@@ -55,8 +55,14 @@ export interface HookMap {
       | 'not-paused'
       | 'validation-failed'
       | 'plugin-error'
-      | 'assessment-constraint-violated';
+      | 'assessment-constraint-violated'
+      | 'controlled-rejected'
+      | 'controlled-timeout'
+      | 'controlled-missing-callback';
     constraint?: AssessmentConstraint;
+  }>;
+  'sandbox:proposal-timeout': HookFn<{
+    edit: Edit;
   }>;
   'sandbox:edit-applied': HookFn<{
     edit: Edit;

@@ -5,6 +5,11 @@ import type { NetworkArea } from '../types/areas';
 import type { RouteEntry } from '../types/routing';
 import type { NetworkTopology } from '../types/topology';
 import type { NetlabEmbedMode, ParentOrigin } from '../embed/protocol';
+import type {
+  ControlledTopologyChangeHandler,
+  SandboxControlMode,
+  SandboxEditProposalHandler,
+} from '../controlled/sandbox-mode';
 
 export interface NetlabContextValue {
   topology: NetworkTopology;
@@ -17,6 +22,10 @@ export interface NetlabContextValue {
   assessmentScenarioId?: string;
   embedMode?: NetlabEmbedMode;
   parentOrigin?: ParentOrigin;
+  sandboxControlMode?: SandboxControlMode;
+  sandboxProposalTimeoutMs?: number;
+  onTopologyChange?: ControlledTopologyChangeHandler;
+  onSandboxEditProposed?: SandboxEditProposalHandler;
 }
 
 export const NetlabContext = createContext<NetlabContextValue | null>(null);

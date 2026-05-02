@@ -4,6 +4,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import AllInOneDemo from './comprehensive/AllInOneDemo';
+import ArpDemo from './networking/ArpDemo';
 import MtuFragmentationDemo from './networking/MtuFragmentationDemo';
 import OspfConvergenceDemo from './routing/OspfConvergenceDemo';
 import NatDemo from './simulation/NatDemo';
@@ -11,6 +12,7 @@ import TcpHandshakeDemo from './simulation/TcpHandshakeDemo';
 
 const netlabProviderCalls: {
   sandboxEnabled: boolean | undefined;
+  sandboxControlMode: 'sandbox-proposes' | 'sandbox-owns' | undefined;
   sandboxIntroId: string | undefined;
 }[] = [];
 
@@ -24,18 +26,21 @@ vi.mock('../src/components/NetlabProvider', () => ({
   NetlabProvider: ({
     children,
     sandboxEnabled,
+    sandboxControlMode,
     sandboxIntroId,
   }: {
     children: React.ReactNode;
     sandboxEnabled?: boolean;
+    sandboxControlMode?: 'sandbox-proposes' | 'sandbox-owns';
     sandboxIntroId?: string;
   }) => {
-    netlabProviderCalls.push({ sandboxEnabled, sandboxIntroId });
+    netlabProviderCalls.push({ sandboxEnabled, sandboxControlMode, sandboxIntroId });
 
     return (
       <div
         data-testid="netlab-provider"
         data-sandbox-enabled={String(Boolean(sandboxEnabled))}
+        data-sandbox-control-mode={sandboxControlMode ?? ''}
         data-sandbox-intro-id={sandboxIntroId ?? ''}
       >
         {children}
@@ -208,6 +213,7 @@ describe('sandbox-enabled demos', () => {
   });
 
   it.each([
+    ['ARP', ArpDemo],
     ['MTU fragmentation', MtuFragmentationDemo],
     ['TCP handshake', TcpHandshakeDemo],
     ['OSPF convergence', OspfConvergenceDemo],
@@ -220,11 +226,17 @@ describe('sandbox-enabled demos', () => {
       render(<Demo />);
 
       expect(netlabProviderCalls[0]?.sandboxEnabled).toBe(true);
+      expect(netlabProviderCalls[0]?.sandboxControlMode).toBe('sandbox-owns');
       expect(
         document
           .querySelector('[data-testid="netlab-provider"]')
           ?.getAttribute('data-sandbox-enabled'),
       ).toBe('true');
+      expect(
+        document
+          .querySelector('[data-testid="netlab-provider"]')
+          ?.getAttribute('data-sandbox-control-mode'),
+      ).toBe('sandbox-owns');
     },
   );
 
@@ -236,7 +248,9 @@ describe('sandbox-enabled demos', () => {
     expect(document.querySelectorAll('[data-testid="netlab-provider"]').length).toBeGreaterThan(0);
     expect(
       Array.from(document.querySelectorAll('[data-testid="netlab-provider"]')).some(
-        (node) => node.getAttribute('data-sandbox-enabled') === 'true',
+        (node) =>
+          node.getAttribute('data-sandbox-enabled') === 'true' &&
+          node.getAttribute('data-sandbox-control-mode') === 'sandbox-owns',
       ),
     ).toBe(true);
   });
@@ -247,6 +261,7 @@ describe('sandbox-enabled demos', () => {
     render(<MtuFragmentationDemo />);
 
     expect(netlabProviderCalls[0]?.sandboxEnabled).toBe(true);
+    expect(netlabProviderCalls[0]?.sandboxControlMode).toBe('sandbox-owns');
     expect(netlabProviderCalls[0]?.sandboxIntroId).toBe('sandbox-intro-mtu');
   });
 
@@ -260,6 +275,7 @@ describe('sandbox-enabled demos', () => {
     render(<Demo />);
 
     expect(netlabProviderCalls[0]?.sandboxEnabled).toBe(true);
+    expect(netlabProviderCalls[0]?.sandboxControlMode).toBe('sandbox-owns');
     expect(netlabProviderCalls[0]?.sandboxIntroId).toBe(introId);
   });
 });

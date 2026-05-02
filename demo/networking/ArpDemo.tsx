@@ -191,6 +191,7 @@ export default function ArpDemo() {
       <NetlabProvider
         topology={basicArp.topology}
         sandboxEnabled={sandboxEnabled}
+        {...(sandboxEnabled ? { sandboxControlMode: 'sandbox-owns' as const } : {})}
         {...(embedMode !== undefined ? { embedMode } : {})}
         {...(parentOrigin !== undefined ? { parentOrigin } : {})}
         {...tutorialProps}

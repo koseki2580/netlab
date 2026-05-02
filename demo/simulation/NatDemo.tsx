@@ -185,6 +185,7 @@ export default function NatDemo() {
       <NetlabProvider
         topology={NAT_DEMO_TOPOLOGY}
         sandboxEnabled={sandboxEnabled}
+        {...(sandboxEnabled ? { sandboxControlMode: 'sandbox-owns' as const } : {})}
         {...(embedMode !== undefined ? { embedMode } : {})}
         {...(parentOrigin !== undefined ? { parentOrigin } : {})}
         {...(sandboxEnabled && sandboxIntroId ? { sandboxIntroId } : {})}

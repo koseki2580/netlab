@@ -346,6 +346,14 @@ export type { NetlabCanvasProps } from './components/NetlabCanvas';
 export { useNetlabContext } from './components/NetlabContext';
 export { NetlabProvider } from './components/NetlabProvider';
 export type { NetlabProviderProps } from './components/NetlabProvider';
+export { DEFAULT_SANDBOX_PROPOSAL_TIMEOUT_MS } from './controlled/sandbox-mode';
+export type {
+  ControlledTopologyChangeHandler,
+  SandboxControlMode,
+  SandboxEditProposal,
+  SandboxEditProposalHandler,
+  TopologyChangeMeta,
+} from './controlled/sandbox-mode';
 export { useNetlabUI } from './components/NetlabUIContext';
 export { NodeDetailPanel } from './components/NodeDetailPanel';
 export { ResizableSidebar } from './components/ResizableSidebar';

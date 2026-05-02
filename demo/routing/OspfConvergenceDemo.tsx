@@ -208,6 +208,7 @@ export default function OspfConvergenceDemo() {
       <NetlabProvider
         topology={topology}
         sandboxEnabled={sandboxEnabled}
+        {...(sandboxEnabled ? { sandboxControlMode: 'sandbox-owns' as const } : {})}
         {...(embedMode !== undefined ? { embedMode } : {})}
         {...(parentOrigin !== undefined ? { parentOrigin } : {})}
         {...(sandboxEnabled && sandboxIntroId ? { sandboxIntroId } : {})}
