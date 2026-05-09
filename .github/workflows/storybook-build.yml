@@ -1,0 +1,47 @@
+name: Storybook
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  storybook:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright (Chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Build Storybook
+        run: npm run storybook:build
+
+      - name: Serve static Storybook
+        run: npx --yes http-server@14.1.1 storybook-static --port 6006 --silent &
+
+      - name: Wait for Storybook to come up
+        run: npx --yes wait-on@8.0.2 tcp:127.0.0.1:6006
+
+      - name: Run Storybook story + a11y tests
+        run: npm run storybook:test -- --maxWorkers=2
+
+      - name: Upload Storybook static artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: storybook-static
+          path: storybook-static/
+          retention-days: 7

@@ -10,6 +10,12 @@ Headless command-line workflows for regression checks and grading.
 
 - [netlab-run CLI](cli/netlab-run.md) - Node runner for scenario plus sandbox session assertions with TAP/JSON output
 
+### 🧰 Developer Tooling (`dev/`)
+
+Developer-facing tooling that does not ship in the published library bundle.
+
+- [Storybook](dev/storybook.md) - Component story harness with sandbox fixtures and axe-core a11y gate
+
 ### 🧠 Core Architecture & APIs (`core/`)
 
 Core specifications for the overall design of Netlab and for creating extensions.

@@ -15,3 +15,15 @@ A running record of corrections and feedback received during sessions. Use this 
 - Code and docs are one unit — and docs come first
 
 ---
+
+## L040 — Storybook is for interactive component review, not E2E substitute
+
+**What happened**: A well-meaning addition tried to replace Playwright e2e tests with Storybook `play` functions. Stories started depending on fixtures that drifted from real scenarios, false-passed, then a real regression hit production. Rolled back.
+
+**Rule**: Storybook is for visual / interactive review of components in isolation. It is NOT a replacement for Playwright e2e tests against real demos.
+
+**Why**: Stories use fixtures; e2e uses reality. Trust only reality for integration claims.
+
+**Apply when**: Someone proposes consolidating e2e + Storybook.
+
+---

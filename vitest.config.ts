@@ -7,7 +7,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
-      exclude: ['dist/**', 'dist-demo/**', 'demo/**', '**/*.test.*', 'e2e/**'],
+      exclude: ['dist/**', 'dist-demo/**', 'demo/**', '**/*.test.*', '**/*.stories.*', 'e2e/**'],
       reportOnFailure: true,
       thresholds: {
         statements: 75,
