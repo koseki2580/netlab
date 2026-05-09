@@ -2,6 +2,12 @@
 
 **Use the lightest process that safely completes the task.** Do not use a deeper mode unless it adds value.
 
+**Mode declaration (mandatory):** At the very start of every response to a new user request, output one line stating the selected mode and a brief reason, in this exact format:
+
+`Mode: <Minimal|Standard|Comprehensive> — <one-line reason>`
+
+This must be the first line of the reply (before any other text or tool calls). It serves as evidence that this section was read and that mode selection is deliberate. If the task changes scope mid-conversation and the mode escalates or de-escalates, output an updated `Mode:` line before continuing.
+
 - **Minimal** (Trivial changes, typos, formatting-only changes, small internal refactors, or obvious one-line fixes):
   - Answer or edit directly while preserving **Simplicity First**, **Surgical Changes**, and **Validation Before Completion**.
   - Use direct verification. Use a short plan only if helpful. Do not invoke skills, sub-agents, or documentation workflows unless strictly necessary.
@@ -83,6 +89,7 @@ Before implementing:
 - When necessary, review the diff between the main branch and your changes
 - Ask yourself: “Would a staff engineer approve this?”
 - Run tests, check logs, and demonstrate that everything works correctly
+- **If available and appropriate, consider using the `implementation-review-orchestration` skill** for in-progress mid-implementation review on Standard / Comprehensive tasks once implementation reaches a meaningful checkpoint, before final verification.
 - **If available and appropriate, consider using the `verification-before-completion` skill** when about to claim work is complete, fixed, or passing, to strictly run verification commands.
 
 ---

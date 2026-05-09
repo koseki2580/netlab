@@ -1,0 +1,151 @@
+# Initial active references derived from CLAUDE.md.
+# These are bootstrap references until real team-lead review history is backfilled.
+
+- id: claude-md-tests-required-001
+  status: active
+  source:
+    pr_url: ""
+    reviewer: project-rules
+    reviewed_at: 2026-05-01
+  context:
+    language: any
+    area: tests
+    change_type: [normal_feature, bug_fix, public_api]
+  code_before: |
+    Feature or bug fix without tests.
+  review_comment: |
+    Tests are mandatory. Bug fixes should include a failing reproduction test before the fix.
+  lesson: |
+    Treat tests as required evidence, not optional cleanup. For bug fixes, require a regression test that would fail before the fix.
+  applicability:
+    applies_when:
+      - New feature, bug fix, public API, or behavior change lacks tests
+      - Bug fix does not include a reproduction/regression test
+    does_not_apply_when:
+      - Documentation typo or non-behavioral text-only change
+      - Existing tests clearly cover the changed behavior
+  recommended_comment_type: request-changes
+  confidence: high
+  maintenance:
+    last_reviewed_at: 2026-05-01
+    review_interval_days: 90
+    owner: project-rules-maintainer
+
+- id: claude-md-surgical-changes-001
+  status: active
+  source:
+    pr_url: ""
+    reviewer: project-rules
+    reviewed_at: 2026-05-01
+  context:
+    language: any
+    area: change-validity
+    change_type: [bug_fix, normal_feature]
+  code_before: |
+    PR mixes the requested change with unrelated refactors or formatting.
+  review_comment: |
+    Keep changes surgical. Every changed line should trace directly to the request.
+  lesson: |
+    Flag unrelated refactors, adjacent cleanup, or formatting churn when they make review and rollback harder.
+  applicability:
+    applies_when:
+      - Bug fix contains unrelated refactor
+      - PR objective does not mention a broad cleanup included in the diff
+    does_not_apply_when:
+      - Cleanup is required to implement the fix safely
+      - The PR is explicitly scoped as a refactor
+  recommended_comment_type: request-changes
+  confidence: high
+  maintenance:
+    last_reviewed_at: 2026-05-01
+    review_interval_days: 90
+    owner: project-rules-maintainer
+
+- id: claude-md-reuse-before-adding-001
+  status: active
+  source:
+    pr_url: ""
+    reviewer: project-rules
+    reviewed_at: 2026-05-01
+  context:
+    language: any
+    area: maintainability
+    change_type: [normal_feature, dependency]
+  code_before: |
+    New helper, module, abstraction, or dependency added without checking existing solutions.
+  review_comment: |
+    Reuse before adding. Search existing docs/src/project equivalents before introducing a new helper or dependency.
+  lesson: |
+    Prefer existing helpers and standard library. New dependencies need rationale, version pinning, and security/license/maintenance consideration.
+  applicability:
+    applies_when:
+      - New helper duplicates existing functionality
+      - New dependency appears where stdlib or existing package could work
+    does_not_apply_when:
+      - Existing implementation has incompatible semantics
+      - New dependency was explicitly approved with rationale
+  recommended_comment_type: better
+  confidence: high
+  maintenance:
+    last_reviewed_at: 2026-05-01
+    review_interval_days: 90
+    owner: project-rules-maintainer
+
+- id: claude-md-docs-tests-consistency-001
+  status: active
+  source:
+    pr_url: ""
+    reviewer: project-rules
+    reviewed_at: 2026-05-01
+  context:
+    language: any
+    area: spec-consistency
+    change_type: [docs_only, public_api, normal_feature]
+  code_before: |
+    Docs/spec/tests/code describe different behavior.
+  review_comment: |
+    Keep intended behavior, validated behavior, and actual behavior consistent.
+  lesson: |
+    If docs or specs change, tests should reflect that change. If tests and docs disagree, the PR should resolve which behavior is intended.
+  applicability:
+    applies_when:
+      - docs changed without corresponding tests for behavior change
+      - tests expect behavior that docs do not describe
+    does_not_apply_when:
+      - docs-only typo or wording change does not affect behavior
+      - tests are intentionally deferred and PR explicitly documents that plan
+  recommended_comment_type: request-changes
+  confidence: high
+  maintenance:
+    last_reviewed_at: 2026-05-01
+    review_interval_days: 90
+    owner: project-rules-maintainer
+
+- id: claude-md-validation-before-completion-001
+  status: active
+  source:
+    pr_url: ""
+    reviewer: project-rules
+    reviewed_at: 2026-05-01
+  context:
+    language: any
+    area: validation
+    change_type: [normal_feature, bug_fix, migration]
+  code_before: |
+    Work is marked ready without test/CI/log verification.
+  review_comment: |
+    Do not mark a task complete until behavior is proven.
+  lesson: |
+    For non-trivial changes, require CI/test evidence or explicitly list unverified risks in the summary.
+  applicability:
+    applies_when:
+      - CI failed, pending, skipped, or unknown for risky changes
+      - PR claims completion without validation evidence
+    does_not_apply_when:
+      - Trivial docs-only or formatting-only change
+  recommended_comment_type: request-changes
+  confidence: high
+  maintenance:
+    last_reviewed_at: 2026-05-01
+    review_interval_days: 90
+    owner: project-rules-maintainer

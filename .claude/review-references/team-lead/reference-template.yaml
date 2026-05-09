@@ -1,0 +1,35 @@
+id: tl-review-YYYYMMDD-001
+status: candidate
+source:
+  pr_url: ""
+  reviewer: team-lead
+  reviewed_at: YYYY-MM-DD
+  comments:
+    - url: ""
+      file: ""
+      line: 0
+context:
+  language: other
+  area: other
+  change_type:
+    - normal_feature
+code_before: |
+  # The reviewed code, or a short summary of the structure
+code_after: |
+  # Post-fix code, or a short summary of the fix direction. May be empty.
+review_comment: |
+  # The past review finding. A summary is fine; do not paste verbatim.
+lesson: |
+  # Judgment criterion to reuse from now on
+applicability:
+  applies_when:
+    - ""
+  does_not_apply_when:
+    - ""
+recommended_comment_type: better
+confidence: medium
+maintenance:
+  created_at: YYYY-MM-DD
+  last_reviewed_at: YYYY-MM-DD
+  review_interval_days: 90
+  owner: ""

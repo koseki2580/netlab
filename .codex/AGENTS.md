@@ -11,4 +11,4 @@ Use the repository-local source of truth at:
 - `.claude/REVIEW_SYSTEM_GUARDRAILS.md`
 - `.claude/REVIEW_SYSTEM_MATURITY.md`
 
-This file is only a Copilot adapter so workspace-level tooling resolves the repository-local `.claude/` configuration.
+This file is only a Codex adapter so workspace-level tooling resolves the repository-local `.claude/` configuration.
