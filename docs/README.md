@@ -4,6 +4,12 @@ This directory contains organized documentation regarding the specifications, ar
 
 ## Table of Contents
 
+### CLI (`cli/`)
+
+Headless command-line workflows for regression checks and grading.
+
+- [netlab-run CLI](cli/netlab-run.md) - Node runner for scenario plus sandbox session assertions with TAP/JSON output
+
 ### 🧠 Core Architecture & APIs (`core/`)
 
 Core specifications for the overall design of Netlab and for creating extensions.

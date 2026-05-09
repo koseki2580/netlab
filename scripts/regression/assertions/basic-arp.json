@@ -1,0 +1,4 @@
+[
+  { "kind": "packet-reaches", "source": "client-1", "destination": "203.0.113.10", "within": 100 },
+  { "kind": "arp-cache-contains", "nodeId": "client-1", "ip": "10.0.0.1" }
+]

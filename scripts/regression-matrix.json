@@ -1,0 +1,34 @@
+{
+  "entries": [
+    {
+      "name": "basic ARP reachability",
+      "scenario": "basic-arp",
+      "session": "scripts/regression/sessions/empty-basic-arp.json",
+      "assertions": "scripts/regression/assertions/basic-arp.json"
+    },
+    {
+      "name": "fragmented echo low-MTU path",
+      "scenario": "fragmented-echo",
+      "session": "scripts/regression/sessions/empty-fragmented-echo.json",
+      "assertions": "scripts/regression/assertions/fragmented-echo.json"
+    },
+    {
+      "name": "TCP handshake service",
+      "scenario": "tcp-handshake",
+      "session": "scripts/regression/sessions/empty-tcp-handshake.json",
+      "assertions": "scripts/regression/assertions/tcp-handshake.json"
+    },
+    {
+      "name": "OSPF convergence sample flow",
+      "scenario": "ospf-convergence",
+      "session": "scripts/regression/sessions/empty-ospf-convergence.json",
+      "assertions": "scripts/regression/assertions/ospf-convergence.json"
+    },
+    {
+      "name": "NAT sandbox route edit smoke",
+      "scenario": "nat-basics",
+      "session": "scripts/regression/sessions/nat-route-edit.json",
+      "assertions": "scripts/regression/assertions/nat-basics.json"
+    }
+  ]
+}

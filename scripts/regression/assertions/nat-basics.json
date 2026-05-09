@@ -1,0 +1,8 @@
+[
+  {
+    "kind": "route-table-contains",
+    "nodeId": "nat-router",
+    "destination": "198.51.100.0/24",
+    "nextHop": "direct"
+  }
+]

@@ -1,0 +1,9 @@
+[
+  { "kind": "ospf-converged", "withinSteps": 100 },
+  {
+    "kind": "route-table-contains",
+    "nodeId": "r1",
+    "destination": "10.4.0.0/24",
+    "nextHop": "10.0.12.2"
+  }
+]

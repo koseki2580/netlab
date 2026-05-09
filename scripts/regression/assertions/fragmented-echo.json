@@ -1,0 +1,4 @@
+[
+  { "kind": "packet-reaches", "source": "host-a", "destination": "203.0.113.10", "within": 100 },
+  { "kind": "fragmentation-occurs", "atNodeId": "router-r1" }
+]

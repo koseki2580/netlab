@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 2,
+  "scenarioId": "fragmented-echo",
+  "initialScenarioId": "fragmented-echo",
+  "initialParameters": {
+    "tcp": { "initialWindow": 65535, "mss": 1460, "rto": 1000 },
+    "ospf": { "helloIntervalMs": 10000, "deadIntervalMs": 40000 },
+    "arp": { "cacheTtlMs": 1800000 },
+    "engine": { "tickMs": 100, "maxTtl": 64 }
+  },
+  "backing": [],
+  "head": 0,
+  "orphanedSnapshots": [],
+  "savedAt": "2026-05-09T00:00:00.000Z",
+  "toolVersion": "0.1.0"
+}

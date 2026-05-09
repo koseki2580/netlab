@@ -151,3 +151,4 @@ bug/
 plan/
 agents/tasks/active/*
 !agents/tasks/active/.gitkeep
+bin/*
