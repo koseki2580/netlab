@@ -5,6 +5,8 @@ import { createRoot, type Root } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HookEngine } from '../hooks/HookEngine';
+import { useI18n } from '../i18n/useI18n';
+import type { I18nContextValue } from '../i18n/types';
 import * as stpModule from '../layers/l2-datalink/stp/computeStp';
 import { protocolRegistry } from '../registry/ProtocolRegistry';
 import type { RouteEntry } from '../types/routing';
@@ -326,6 +328,39 @@ describe('NetlabProvider', () => {
 
       expect(warn).not.toHaveBeenCalled();
       expect(currentContext().sandboxControlMode).toBe('sandbox-owns');
+    });
+  });
+
+  describe('locale prop', () => {
+    let i18n: I18nContextValue | null = null;
+
+    function CaptureI18n() {
+      i18n = useI18n();
+      return null;
+    }
+
+    beforeEach(() => {
+      i18n = null;
+    });
+
+    it('defaults to en when locale prop is omitted', () => {
+      render(
+        <NetlabProvider topology={makeTopology('Default')}>
+          <CaptureI18n />
+        </NetlabProvider>,
+      );
+
+      expect(i18n?.locale).toBe('en');
+    });
+
+    it('threads the supplied locale through I18nProvider', () => {
+      render(
+        <NetlabProvider topology={makeTopology('Locale')} locale="ja">
+          <CaptureI18n />
+        </NetlabProvider>,
+      );
+
+      expect(i18n?.locale).toBe('ja');
     });
   });
 });

@@ -1,8 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import type { HookEngine } from '../../hooks/HookEngine';
+import { useI18n } from '../../i18n/useI18n';
 import type { Edit } from '../edits';
 import type { SandboxMode } from '../types';
-import { messages } from './messages';
+import {
+  editAppliedMessage,
+  editRedoneMessage,
+  editUndoneMessage,
+  modeChangedMessage,
+  resetAllMessage,
+} from './messages';
 
 const THROTTLE_MS = 500;
 
@@ -11,6 +18,7 @@ interface Props {
 }
 
 export function SandboxNarrationRegion({ hookEngine }: Props) {
+  const { t } = useI18n();
   const [announcement, setAnnouncement] = useState('');
   const pendingRef = useRef<string>('');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -29,23 +37,23 @@ export function SandboxNarrationRegion({ hookEngine }: Props) {
   useEffect(() => {
     const unsubs = [
       hookEngine.on('sandbox:edit-applied', async (payload, next) => {
-        enqueue(messages.editApplied(payload.edit as Edit));
+        enqueue(editAppliedMessage(t, payload.edit as Edit));
         await next();
       }),
       hookEngine.on('sandbox:edit-undone', async (payload, next) => {
-        enqueue(messages.editUndone(payload.edit as Edit));
+        enqueue(editUndoneMessage(t, payload.edit as Edit));
         await next();
       }),
       hookEngine.on('sandbox:edit-redone', async (payload, next) => {
-        enqueue(messages.editRedone(payload.edit as Edit));
+        enqueue(editRedoneMessage(t, payload.edit as Edit));
         await next();
       }),
       hookEngine.on('sandbox:mode-changed', async (payload, next) => {
-        enqueue(messages.modeChanged(payload.mode as SandboxMode));
+        enqueue(modeChangedMessage(t, payload.mode as SandboxMode));
         await next();
       }),
       hookEngine.on('sandbox:reset-all', async (_payload, next) => {
-        enqueue(messages.resetAll());
+        enqueue(resetAllMessage(t));
         await next();
       }),
     ];
@@ -57,7 +65,7 @@ export function SandboxNarrationRegion({ hookEngine }: Props) {
         timerRef.current = null;
       }
     };
-  }, [hookEngine]);
+  }, [hookEngine, t]);
 
   return (
     <div

@@ -346,6 +346,22 @@ export type { NetlabCanvasProps } from './components/NetlabCanvas';
 export { useNetlabContext } from './components/NetlabContext';
 export { NetlabProvider } from './components/NetlabProvider';
 export type { NetlabProviderProps } from './components/NetlabProvider';
+export {
+  DEFAULT_I18N_VALUE,
+  I18nContext,
+  I18nProvider,
+  createTranslator,
+  en,
+  substitute,
+  useI18n,
+} from './i18n';
+export type {
+  Catalog,
+  I18nContextValue,
+  I18nProviderProps,
+  TranslatorFn,
+  TranslatorParams,
+} from './i18n';
 export { DEFAULT_SANDBOX_PROPOSAL_TIMEOUT_MS } from './controlled/sandbox-mode';
 export type {
   ControlledTopologyChangeHandler,

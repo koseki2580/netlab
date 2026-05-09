@@ -1,6 +1,7 @@
 import { useMemo, useRef, type ReactNode } from 'react';
 import { NetlabError } from '../errors';
 import { HookEngine } from '../hooks/HookEngine';
+import { I18nProvider } from '../i18n/I18nProvider';
 import { computeStp } from '../layers/l2-datalink/stp/computeStp';
 import { protocolRegistry } from '../registry/ProtocolRegistry';
 import { bgpProtocol } from '../routing/bgp/BgpProtocol';
@@ -48,6 +49,7 @@ interface ControlledNetlabProviderProps {
   parentOrigin?: ParentOrigin;
   sandboxControlMode?: SandboxControlMode;
   sandboxProposalTimeoutMs?: number;
+  locale?: string;
   onTopologyChange?: ControlledTopologyChangeHandler;
   onSandboxEditProposed?: SandboxEditProposalHandler;
 }
@@ -64,6 +66,7 @@ interface UncontrolledNetlabProviderProps {
   parentOrigin?: ParentOrigin;
   sandboxControlMode?: SandboxControlMode;
   sandboxProposalTimeoutMs?: number;
+  locale?: string;
   onTopologyChange?: ControlledTopologyChangeHandler;
   onSandboxEditProposed?: SandboxEditProposalHandler;
 }
@@ -82,6 +85,7 @@ export function NetlabProvider({
   parentOrigin,
   sandboxControlMode: sandboxControlModeProp,
   sandboxProposalTimeoutMs = DEFAULT_SANDBOX_PROPOSAL_TIMEOUT_MS,
+  locale = 'en',
   onTopologyChange,
   onSandboxEditProposed,
 }: NetlabProviderProps) {
@@ -173,9 +177,11 @@ export function NetlabProvider({
   );
 
   return (
-    <NetlabContext.Provider value={value}>
-      {children}
-      {effectiveSandboxEnabled && <SandboxNarrationRegion hookEngine={hookEngine} />}
-    </NetlabContext.Provider>
+    <I18nProvider locale={locale}>
+      <NetlabContext.Provider value={value}>
+        {children}
+        {effectiveSandboxEnabled && <SandboxNarrationRegion hookEngine={hookEngine} />}
+      </NetlabContext.Provider>
+    </I18nProvider>
   );
 }

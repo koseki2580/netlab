@@ -1,5 +1,6 @@
 import { useContext, useEffect, useRef, useState } from 'react';
 import { hookEngine as sharedHookEngine } from '../../hooks/HookEngine';
+import { useI18n } from '../../i18n/useI18n';
 import { shortcutRegistry } from '../../sandbox/shortcuts/registry';
 import { useSandbox } from '../../sandbox/useSandbox';
 import type { SandboxMode } from '../../sandbox/types';
@@ -23,16 +24,20 @@ type SandboxAxis = 'packet' | 'node' | 'parameters' | 'traffic' | 'edits' | 'ass
 type ScenarioExportDialogComponent =
   typeof import('./authoring/ScenarioExportDialog').ScenarioExportDialog;
 
-const BASE_TABS: { readonly axis: SandboxAxis; readonly label: string }[] = [
-  { axis: 'packet', label: 'Packet' },
-  { axis: 'node', label: 'Node' },
-  { axis: 'parameters', label: 'Parameters' },
-  { axis: 'traffic', label: 'Traffic' },
-  { axis: 'edits', label: 'Edits' },
+const BASE_TABS: { readonly axis: SandboxAxis; readonly labelKey: string }[] = [
+  { axis: 'packet', labelKey: 'sandbox.panel.tab.packet' },
+  { axis: 'node', labelKey: 'sandbox.panel.tab.node' },
+  { axis: 'parameters', labelKey: 'sandbox.panel.tab.parameters' },
+  { axis: 'traffic', labelKey: 'sandbox.panel.tab.traffic' },
+  { axis: 'edits', labelKey: 'sandbox.panel.tab.edits' },
 ];
 
-function getTabs(hasAssessment: boolean): { readonly axis: SandboxAxis; readonly label: string }[] {
-  return hasAssessment ? [...BASE_TABS, { axis: 'assessment', label: 'Assessment' }] : BASE_TABS;
+function getTabs(
+  hasAssessment: boolean,
+): { readonly axis: SandboxAxis; readonly labelKey: string }[] {
+  return hasAssessment
+    ? [...BASE_TABS, { axis: 'assessment', labelKey: 'sandbox.panel.tab.assessment' }]
+    : BASE_TABS;
 }
 
 function getInitialAxis(hasAssessment: boolean): SandboxAxis {
@@ -72,6 +77,7 @@ function SandboxTabBody({ axis }: { readonly axis: SandboxAxis }) {
 }
 
 export function SandboxPanel() {
+  const { t } = useI18n();
   const sandbox = useSandbox();
   const assessment = useContext(AssessmentContext);
   const netlabContext = useContext(NetlabContext);
@@ -95,12 +101,12 @@ export function SandboxPanel() {
     const unregisters = [
       shortcutRegistry.register({
         key: '?',
-        description: 'Show keyboard shortcuts',
+        description: t('sandbox.panel.shortcuts.helpLabel'),
         action: () => setHelpOpen(true),
       }),
       shortcutRegistry.register({
         key: 'Shift+S',
-        description: 'Toggle sandbox panel',
+        description: t('sandbox.panel.shortcut.toggleDescription'),
         action: () => setOpen((current) => (isMinimalEmbed ? true : !current)),
         enabled: () => !isMinimalEmbed,
       }),
@@ -108,7 +114,7 @@ export function SandboxPanel() {
     return () => {
       for (const u of unregisters) u();
     };
-  }, [isMinimalEmbed]);
+  }, [isMinimalEmbed, t]);
 
   useEffect(() => {
     if (isMinimalEmbed) {
@@ -135,8 +141,8 @@ export function SandboxPanel() {
     ScenarioExportDialog ? (
       <ScenarioExportDialog open onClose={() => setScenarioExportOpen(false)} />
     ) : (
-      <section role="dialog" aria-label="Export scenario">
-        Export scenario
+      <section role="dialog" aria-label={t('sandbox.panel.export.dialogPlaceholderLabel')}>
+        {t('sandbox.panel.export.dialogPlaceholderText')}
       </section>
     )
   ) : null;
@@ -148,7 +154,7 @@ export function SandboxPanel() {
         {scenarioExportDialog}
         <button
           type="button"
-          aria-label="Open sandbox"
+          aria-label={t('sandbox.panel.openButton.label')}
           onClick={() => setOpen(true)}
           className="netlab-focus-ring"
           style={{
@@ -165,7 +171,7 @@ export function SandboxPanel() {
             cursor: 'pointer',
           }}
         >
-          Sandbox
+          {t('sandbox.panel.openButton.text')}
         </button>
       </>
     );
@@ -223,13 +229,13 @@ export function SandboxPanel() {
           }}
         >
           <h2 id="sandbox-panel-heading" style={{ margin: 0, fontSize: 14, flex: 1 }}>
-            Sandbox
+            {t('sandbox.panel.heading')}
           </h2>
           <PcapDownloadButton />
           <ExportButton />
           <button
             type="button"
-            aria-label="Export as scenario"
+            aria-label={t('sandbox.panel.export.scenarioLabel')}
             onClick={() => setScenarioExportOpen(true)}
             className="netlab-focus-ring"
             style={{
@@ -243,7 +249,7 @@ export function SandboxPanel() {
               cursor: 'pointer',
             }}
           >
-            Scenario
+            {t('sandbox.panel.export.scenarioText')}
           </button>
           <ImportDialog />
           <SaveSnapshotButton />
@@ -263,16 +269,16 @@ export function SandboxPanel() {
           >
             <input
               type="checkbox"
-              aria-label="Use fast mode"
+              aria-label={t('sandbox.panel.fast.label')}
               checked={fastMode}
               onChange={(event) => sandbox.setFastMode?.(event.currentTarget.checked)}
               style={{ margin: 0 }}
             />
-            Fast
+            {t('sandbox.panel.fast.text')}
           </label>
           <button
             type="button"
-            aria-label="Switch sandbox mode"
+            aria-label={t('sandbox.panel.mode.toggleLabel')}
             aria-pressed={sandbox.mode === 'beta'}
             onClick={() => sandbox.switchMode(nextMode(sandbox.mode))}
             className="netlab-focus-ring"
@@ -287,11 +293,13 @@ export function SandboxPanel() {
               cursor: 'pointer',
             }}
           >
-            {sandbox.mode === 'alpha' ? 'Live' : 'Compare'}
+            {sandbox.mode === 'alpha'
+              ? t('sandbox.panel.mode.alphaText')
+              : t('sandbox.panel.mode.betaText')}
           </button>
           <button
             type="button"
-            aria-label="Show keyboard shortcuts"
+            aria-label={t('sandbox.panel.shortcuts.helpLabel')}
             data-testid="sandbox-shortcuts-help-btn"
             onClick={() => setHelpOpen(true)}
             className="netlab-focus-ring"
@@ -306,12 +314,12 @@ export function SandboxPanel() {
               cursor: 'pointer',
             }}
           >
-            ?
+            {t('sandbox.panel.shortcuts.helpText')}
           </button>
           {!isMinimalEmbed && (
             <button
               type="button"
-              aria-label="Collapse sandbox"
+              aria-label={t('sandbox.panel.collapse.label')}
               onClick={() => setOpen(false)}
               className="netlab-focus-ring"
               style={{
@@ -324,7 +332,7 @@ export function SandboxPanel() {
                 cursor: 'pointer',
               }}
             >
-              x
+              {t('sandbox.panel.collapse.text')}
             </button>
           )}
         </header>
@@ -337,9 +345,14 @@ export function SandboxPanel() {
 
         <ProposalPendingIndicator count={sandbox.pendingProposalCount ?? 0} />
 
-        <div role="tablist" aria-label="Sandbox edit axes" style={{ display: 'flex' }}>
+        <div
+          role="tablist"
+          aria-label={t('sandbox.panel.tablist.label')}
+          style={{ display: 'flex' }}
+        >
           {tabs.map((tab, index) => {
             const selected = tab.axis === activeAxis;
+            const label = t(tab.labelKey);
             return (
               <button
                 key={tab.axis}
@@ -379,7 +392,12 @@ export function SandboxPanel() {
                   cursor: 'pointer',
                 }}
               >
-                {tab.axis === 'edits' ? `${tab.label} (${sandbox.session.size()})` : tab.label}
+                {tab.axis === 'edits'
+                  ? t('sandbox.panel.tab.editsWithCount', {
+                      label,
+                      count: sandbox.session.size(),
+                    })
+                  : label}
               </button>
             );
           })}

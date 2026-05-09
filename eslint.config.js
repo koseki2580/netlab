@@ -2,6 +2,20 @@ import prettierConfig from 'eslint-config-prettier';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
+import noHardcodedSandboxString from './eslint-rules/no-hardcoded-sandbox-string.mjs';
+
+const netlabPlugin = {
+  rules: {
+    'no-hardcoded-sandbox-string': noHardcodedSandboxString,
+  },
+};
+
+// Files already swept by plan/80 — enforce no-hardcoded-sandbox-string here.
+// Add new entries as additional sub-catalogs are extracted.
+const I18N_ENFORCED_FILES = [
+  'src/components/sandbox/SandboxPanel.tsx',
+  'src/components/sandbox/EmptySandboxTab.tsx',
+];
 
 export default tseslint.config(
   {
@@ -53,6 +67,13 @@ export default tseslint.config(
     rules: {
       'react-hooks/rules-of-hooks': 'off',
     }
+  },
+  {
+    files: I18N_ENFORCED_FILES,
+    plugins: { netlab: netlabPlugin },
+    rules: {
+      'netlab/no-hardcoded-sandbox-string': 'error',
+    },
   },
   prettierConfig,
 );
