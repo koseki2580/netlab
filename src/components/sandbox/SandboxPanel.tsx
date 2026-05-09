@@ -20,6 +20,8 @@ import { ShortcutsHelpModal } from './ShortcutsHelpModal';
 import { TrafficTab } from './TrafficTab';
 
 type SandboxAxis = 'packet' | 'node' | 'parameters' | 'traffic' | 'edits' | 'assessment';
+type ScenarioExportDialogComponent =
+  typeof import('./authoring/ScenarioExportDialog').ScenarioExportDialog;
 
 const BASE_TABS: { readonly axis: SandboxAxis; readonly label: string }[] = [
   { axis: 'packet', label: 'Packet' },
@@ -78,6 +80,9 @@ export function SandboxPanel() {
   const isMinimalEmbed = embedMode === 'minimal';
   const [open, setOpen] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [scenarioExportOpen, setScenarioExportOpen] = useState(false);
+  const [ScenarioExportDialog, setScenarioExportDialog] =
+    useState<ScenarioExportDialogComponent | null>(null);
   const [activeAxis, setActiveAxis] = useState<SandboxAxis>(() =>
     getInitialAxis(assessment !== null),
   );
@@ -111,12 +116,36 @@ export function SandboxPanel() {
     }
   }, [isMinimalEmbed]);
 
+  useEffect(() => {
+    if (!scenarioExportOpen || ScenarioExportDialog) return;
+
+    let cancelled = false;
+    void import('./authoring/ScenarioExportDialog').then((module) => {
+      if (!cancelled) {
+        setScenarioExportDialog(() => module.ScenarioExportDialog);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [ScenarioExportDialog, scenarioExportOpen]);
+
   const helpModal = helpOpen ? <ShortcutsHelpModal onClose={() => setHelpOpen(false)} /> : null;
+  const scenarioExportDialog = scenarioExportOpen ? (
+    ScenarioExportDialog ? (
+      <ScenarioExportDialog open onClose={() => setScenarioExportOpen(false)} />
+    ) : (
+      <section role="dialog" aria-label="Export scenario">
+        Export scenario
+      </section>
+    )
+  ) : null;
 
   if (!open) {
     return (
       <>
         {helpModal}
+        {scenarioExportDialog}
         <button
           type="button"
           aria-label="Open sandbox"
@@ -162,6 +191,7 @@ export function SandboxPanel() {
   return (
     <>
       {helpModal}
+      {scenarioExportDialog}
       <aside
         role="region"
         aria-labelledby="sandbox-panel-heading"
@@ -197,6 +227,24 @@ export function SandboxPanel() {
           </h2>
           <PcapDownloadButton />
           <ExportButton />
+          <button
+            type="button"
+            aria-label="Export as scenario"
+            onClick={() => setScenarioExportOpen(true)}
+            className="netlab-focus-ring"
+            style={{
+              border: '1px solid var(--netlab-border)',
+              borderRadius: 6,
+              background: 'var(--netlab-bg-surface)',
+              color: 'var(--netlab-text-primary)',
+              padding: '3px 7px',
+              fontFamily: 'monospace',
+              fontSize: 11,
+              cursor: 'pointer',
+            }}
+          >
+            Scenario
+          </button>
           <ImportDialog />
           <SaveSnapshotButton />
           <label

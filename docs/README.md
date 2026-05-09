@@ -44,6 +44,7 @@ Specifications regarding user interface implementation and canvas operations.
 - [Sandbox Named Snapshots](ui/sandbox-snapshots.md) - Named history bookmarks, arbitrary snapshot comparison, revert, and edit-chain inspection
 - [Assessment Sandbox](ui/assessments.md) - Goal-based free-form sandbox exercises, rubrics, constraints, hints, and submission files
 - [Sandbox Keyboard Shortcuts & Narration](ui/sandbox-shortcuts.md) - Built-in shortcut registry, dispatcher, help modal, and `aria-live` screen-reader narration
+- [Sandbox Scenario Authoring](ui/sandbox-authoring.md) - Browser export flow for turning sandbox states into commit-ready Scenario source
 - [Tutorials](ui/tutorials.md) - Scenario-backed guided tutorial mode, tutorial registry, predicate contract, and authoring rules
 
 ### 🔄 Simulation (`simulation/`)

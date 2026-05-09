@@ -47,16 +47,36 @@ async function waitForDownload() {
   }
 }
 
+async function waitForElement(selector: string): Promise<Element | null> {
+  const deadline = Date.now() + 1000;
+  let element: Element | null = null;
+  while (!element && Date.now() < deadline) {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    });
+    element = container?.querySelector(selector) ?? null;
+  }
+  return element;
+}
+
 function makeSandboxValue(overrides: Partial<SandboxContextValue> = {}): SandboxContextValue {
   return {
     mode: 'alpha',
     session: EditSession.empty(),
     engine: {
+      root: {
+        topology: { nodes: [], edges: [], areas: [], routeTables: new Map() },
+        snapshotRegistry: [],
+        orphanedSnapshotRegistry: [],
+        annotations: [],
+        parameters: DEFAULT_PARAMETERS,
+      },
       snapshot: {
         topology: { nodes: [], edges: [], areas: [], routeTables: new Map() },
         snapshotRegistry: [],
         orphanedSnapshotRegistry: [],
         annotations: [],
+        parameters: DEFAULT_PARAMETERS,
       },
       whatIf: {
         getState: () => ({
@@ -515,6 +535,23 @@ describe('SandboxPanel', () => {
     expect(json.scenarioId).toBe('fragmented-echo');
     expect(json.backing).toHaveLength(2);
     expect(json.head).toBe(1);
+  });
+
+  it('opens the scenario export authoring dialog from the panel header', async () => {
+    render(
+      <SandboxContext.Provider value={makeSandboxValue()}>
+        <SandboxPanel />
+      </SandboxContext.Provider>,
+    );
+
+    await act(async () => {
+      container?.querySelector<HTMLButtonElement>('[aria-label="Export as scenario"]')?.click();
+    });
+
+    expect(await waitForElement('input[aria-label="Scenario id"]')).not.toBeNull();
+    expect(
+      await waitForElement('button[aria-label="Download scenario TypeScript"]'),
+    ).not.toBeNull();
   });
 
   it('previews and applies an imported JSON session through context replacement', async () => {
