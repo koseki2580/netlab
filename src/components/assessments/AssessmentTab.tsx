@@ -3,37 +3,39 @@ import {
   downloadAssessmentSubmission,
 } from '../../assessments/submission';
 import { useAssessment } from '../../assessments/useAssessment';
+import { useI18n } from '../../i18n';
 import { useSandbox } from '../../sandbox/useSandbox';
 import { SubgoalListItem } from './SubgoalListItem';
 
-function statusLabel(status: string): string {
+function statusKey(status: string): string {
   switch (status) {
     case 'passed':
-      return 'Passed';
+      return 'sandbox.assessment.status.passed';
     case 'failed-timeout':
-      return 'Timed out';
+      return 'sandbox.assessment.status.failedTimeout';
     case 'failed-constraint':
-      return 'Constraint failed';
+      return 'sandbox.assessment.status.failedConstraint';
     case 'exited':
-      return 'Exited';
+      return 'sandbox.assessment.status.exited';
     default:
-      return 'Active';
+      return 'sandbox.assessment.status.active';
   }
 }
 
 export function AssessmentTab() {
   const assessment = useAssessment();
+  const { t } = useI18n();
   const passedCount = assessment.status.subgoalResults.filter((result) => result.passed).length;
   const totalCount = assessment.rubric.subgoals.length;
 
   return (
     <div>
-      <section aria-label="Assessment status">
+      <section aria-label={t('sandbox.assessment.status.label')}>
         <h3 style={{ margin: 0, fontSize: 14 }}>{assessment.rubric.goal}</h3>
-        <p>{statusLabel(assessment.status.status)}</p>
+        <p>{t(statusKey(assessment.status.status))}</p>
         <progress
           role="progressbar"
-          aria-label="Assessment sub-goal progress"
+          aria-label={t('sandbox.assessment.progress.label')}
           aria-valuemin={0}
           aria-valuemax={totalCount}
           aria-valuenow={passedCount}
@@ -41,7 +43,7 @@ export function AssessmentTab() {
           max={totalCount}
         />
         <div>
-          {passedCount} / {totalCount} sub-goals
+          {t('sandbox.assessment.progress.text', { passed: passedCount, total: totalCount })}
         </div>
       </section>
 
@@ -59,9 +61,9 @@ export function AssessmentTab() {
         ))}
       </ol>
       {assessment.status.status === 'passed' ? (
-        <section aria-label="Assessment passed" style={{ marginTop: 12 }}>
-          <div>Assessment passed</div>
-          <p>Ready to submit.</p>
+        <section aria-label={t('sandbox.assessment.passed.label')} style={{ marginTop: 12 }}>
+          <div>{t('sandbox.assessment.passed.heading')}</div>
+          <p>{t('sandbox.assessment.passed.ready')}</p>
           <AssessmentSubmitButton />
         </section>
       ) : null}
@@ -72,9 +74,10 @@ export function AssessmentTab() {
 function AssessmentSubmitButton() {
   const assessment = useAssessment();
   const sandbox = useSandbox();
+  const { t } = useI18n();
 
   const submit = () => {
-    const learnerNotes = window.prompt('Submission notes') ?? '';
+    const learnerNotes = window.prompt(t('sandbox.assessment.submit.prompt')) ?? '';
     downloadAssessmentSubmission(
       createAssessmentSubmission({
         scenarioId: assessment.scenarioId,
@@ -89,7 +92,7 @@ function AssessmentSubmitButton() {
 
   return (
     <button type="button" onClick={submit} className="netlab-focus-ring">
-      Submit
+      {t('sandbox.assessment.submit.text')}
     </button>
   );
 }

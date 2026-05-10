@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useI18n } from '../../../i18n';
 import { useSandbox } from '../../../sandbox/useSandbox';
 import type { SandboxAclRule } from '../../../sandbox/types';
 import { validateAclRule } from '../../../sandbox/validation/acl';
@@ -16,6 +17,7 @@ export function AclEditorForm({
   readonly onSubmitted?: () => void;
 }) {
   const sandbox = useSandbox();
+  const { t } = useI18n();
   const node = sandbox.engine.whatIf
     .getTopology()
     .nodes.find((candidate) => candidate.id === nodeId);
@@ -26,7 +28,9 @@ export function AclEditorForm({
   const [error, setError] = useState<string | null>(null);
 
   if (!node) {
-    return <p style={{ color: 'var(--netlab-text-muted)' }}>Node not found.</p>;
+    return (
+      <p style={{ color: 'var(--netlab-text-muted)' }}>{t('sandbox.edits.editor.nodeMissing')}</p>
+    );
   }
 
   const submit = () => {
@@ -39,7 +43,7 @@ export function AclEditorForm({
     };
     const validation = validateAclRule(rule);
     if (!validation.ok) {
-      setError(`ACL rejected: ${validation.reason}`);
+      setError(t('sandbox.edits.editor.acl.rejected', { reason: validation.reason }));
       return;
     }
 
@@ -49,17 +53,18 @@ export function AclEditorForm({
   };
 
   return (
-    <section style={sectionStyle} aria-label="ACL editor">
-      <strong>ACL rules</strong>
+    <section style={sectionStyle} aria-label={t('sandbox.edits.editor.acl.label')}>
+      <strong>{t('sandbox.edits.editor.acl.heading')}</strong>
       {rules.length === 0 ? (
         <span style={{ color: 'var(--netlab-text-muted)', fontSize: 11 }}>
-          No sandbox ACL rules.
+          {t('sandbox.edits.editor.acl.empty')}
         </span>
       ) : (
         rules.map((rule) => (
           <div key={rule.id} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
             <span style={{ flex: 1, fontSize: 11 }}>
-              {rule.order}: {rule.action} {rule.proto ?? 'any'} port {rule.dstPort ?? '*'}
+              {rule.order}: {rule.action} {rule.proto ?? 'any'} {t('sandbox.edits.editor.acl.port')}{' '}
+              {rule.dstPort ?? '*'}
             </span>
             <button
               type="button"
@@ -74,24 +79,24 @@ export function AclEditorForm({
                 onSubmitted?.();
               }}
             >
-              Remove
+              {t('sandbox.edits.editor.remove')}
             </button>
           </div>
         ))
       )}
       <label style={{ display: 'grid', gap: 3 }}>
-        <span>Deny TCP destination port</span>
+        <span>{t('sandbox.edits.editor.acl.dstPort')}</span>
         <input
-          aria-label="Deny TCP destination port"
+          aria-label={t('sandbox.edits.editor.acl.dstPort')}
           value={dstPort}
           onChange={(event) => setDstPort(event.target.value)}
           style={fieldStyle}
         />
       </label>
       <label style={{ display: 'grid', gap: 3 }}>
-        <span>Order</span>
+        <span>{t('sandbox.edits.editor.acl.order')}</span>
         <input
-          aria-label="ACL order"
+          aria-label={t('sandbox.edits.editor.acl.orderLabel')}
           value={order}
           onChange={(event) => setOrder(event.target.value)}
           style={fieldStyle}
@@ -99,7 +104,7 @@ export function AclEditorForm({
       </label>
       {error && <div style={{ color: 'var(--netlab-accent-red)', fontSize: 11 }}>{error}</div>}
       <button type="button" style={buttonStyle} onClick={submit}>
-        Add ACL rule
+        {t('sandbox.edits.editor.acl.add')}
       </button>
     </section>
   );

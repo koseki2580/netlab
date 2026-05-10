@@ -1,4 +1,5 @@
 import type { PredicateInput, Tutorial } from '../../tutorials/types';
+import { intro } from '../../i18n/locales/en/intro';
 import { editOf, eventLog, findLastEditIndex, hasEvent, isRecord } from './predicateUtils';
 
 function openedNodeTab(input: PredicateInput): boolean {
@@ -50,38 +51,38 @@ function isTrafficLaunchEvent(event: unknown): boolean {
 export const sandboxIntroOspf: Tutorial = Object.freeze({
   id: 'sandbox-intro-ospf',
   scenarioId: 'ospf-convergence',
-  title: 'OSPF intro',
-  summary: 'Fail a path and route around it.',
+  title: intro['sandbox.intro.ospf.title'],
+  summary: intro['sandbox.intro.ospf.summary'],
   difficulty: 'intro',
   steps: Object.freeze([
     {
       id: 'open-node-tab',
-      title: 'Open Node',
-      description: 'Open Node.',
+      title: intro['sandbox.intro.ospf.step.openNodeTab.title'],
+      description: intro['sandbox.intro.ospf.step.openNodeTab.description'],
       predicate: openedNodeTab,
     },
     {
       id: 'disable-primary-link',
-      title: 'Disable link',
-      description: 'Fail a link.',
+      title: intro['sandbox.intro.ospf.step.disablePrimaryLink.title'],
+      description: intro['sandbox.intro.ospf.step.disablePrimaryLink.description'],
       predicate: disabledPrimaryLink,
     },
     {
       id: 'observe-backup-path',
-      title: 'Launch traffic',
-      description: 'Launch traffic.',
+      title: intro['sandbox.intro.ospf.step.observeBackupPath.title'],
+      description: intro['sandbox.intro.ospf.step.observeBackupPath.description'],
       predicate: observedBackupPath,
     },
     {
       id: 'add-static-backup',
-      title: 'Add route',
-      description: 'Add backup.',
+      title: intro['sandbox.intro.ospf.step.addStaticBackup.title'],
+      description: intro['sandbox.intro.ospf.step.addStaticBackup.description'],
       predicate: addedStaticBackupRoute,
     },
     {
       id: 'confirm-backup-traffic',
-      title: 'Confirm path',
-      description: 'Launch again.',
+      title: intro['sandbox.intro.ospf.step.confirmBackupTraffic.title'],
+      description: intro['sandbox.intro.ospf.step.confirmBackupTraffic.description'],
       predicate: trafficUsesBackupRoute,
     },
   ]),

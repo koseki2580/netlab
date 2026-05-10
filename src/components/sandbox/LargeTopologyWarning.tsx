@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useI18n } from '../../i18n';
 
 interface LargeTopologyWarningProps {
   readonly nodeCount: number;
@@ -17,6 +18,7 @@ export function LargeTopologyWarning({
   fastMode,
   onEnableFastMode,
 }: LargeTopologyWarningProps) {
+  const { t } = useI18n();
   const [dismissed, setDismissed] = useState(false);
   const severity = severityFor(nodeCount);
   if (severity === 'none' || dismissed) return null;
@@ -40,7 +42,7 @@ export function LargeTopologyWarning({
     >
       <button
         type="button"
-        aria-label="Dismiss large topology warning"
+        aria-label={t('sandbox.edits.largeTopology.dismiss')}
         onClick={() => setDismissed(true)}
         className="netlab-focus-ring"
         style={{
@@ -57,18 +59,18 @@ export function LargeTopologyWarning({
       </button>
       <div style={{ fontWeight: 700 }}>
         {critical
-          ? `${nodeCount} nodes exceeds the tested bound.`
-          : `${nodeCount} nodes may replay more slowly.`}
+          ? t('sandbox.edits.largeTopology.critical', { count: nodeCount })
+          : t('sandbox.edits.largeTopology.warning', { count: nodeCount })}
       </div>
       <div style={{ marginTop: 4 }}>
         {fastMode
-          ? 'Fast mode is on, so trace detail is reduced.'
-          : 'Use Fast mode to reduce retained trace detail.'}
+          ? t('sandbox.edits.largeTopology.fastOn')
+          : t('sandbox.edits.largeTopology.fastOff')}
       </div>
       {!fastMode && (
         <button
           type="button"
-          aria-label="Use fast mode"
+          aria-label={t('sandbox.edits.largeTopology.fast.label')}
           onClick={onEnableFastMode}
           className="netlab-focus-ring"
           style={{
@@ -83,7 +85,7 @@ export function LargeTopologyWarning({
             cursor: 'pointer',
           }}
         >
-          Fast mode
+          {t('sandbox.edits.largeTopology.fast.text')}
         </button>
       )}
     </div>

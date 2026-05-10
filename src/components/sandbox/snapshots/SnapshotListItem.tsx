@@ -1,3 +1,4 @@
+import { useI18n } from '../../../i18n';
 import type { NamedSnapshot } from '../../../sandbox/snapshots/types';
 import { renderMarkdown } from '../../../sandbox/annotations/markdown';
 import { GoToSnapshotButton } from './GoToSnapshotButton';
@@ -19,6 +20,7 @@ export function SnapshotListItem({
   onRename,
   onDelete,
 }: SnapshotListItemProps) {
+  const { t } = useI18n();
   return (
     <li
       data-testid="snapshot-list-item"
@@ -28,12 +30,12 @@ export function SnapshotListItem({
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
         <strong>{renderMarkdown(snapshot.name)}</strong>
         <span style={{ color: 'var(--netlab-text-muted)', fontSize: 10 }}>
-          edit {snapshot.editIndex}
+          {t('sandbox.snapshots.item.edit')} {snapshot.editIndex}
         </span>
       </div>
       <div style={{ color: 'var(--netlab-text-muted)', fontSize: 10 }}>
-        created step {snapshot.createdAt}
-        {orphaned ? ' · orphaned' : ''}
+        {t('sandbox.snapshots.item.createdStep')} {snapshot.createdAt}
+        {orphaned ? ` · ${t('sandbox.snapshots.item.orphaned')}` : ''}
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
         {orphaned ? null : <GoToSnapshotButton id={snapshot.id} name={snapshot.name} />}
@@ -41,25 +43,25 @@ export function SnapshotListItem({
           <button
             type="button"
             aria-pressed={compareSelected}
-            aria-label={`Compare snapshot ${snapshot.name}`}
+            aria-label={t('sandbox.snapshots.item.compare.label', { name: snapshot.name })}
             onClick={() => onCompare(snapshot)}
           >
-            Compare
+            {t('sandbox.snapshots.item.compare.text')}
           </button>
         )}
         <button
           type="button"
-          aria-label={`Rename snapshot ${snapshot.name}`}
+          aria-label={t('sandbox.snapshots.item.rename.label', { name: snapshot.name })}
           onClick={() => onRename(snapshot)}
         >
-          Rename
+          {t('sandbox.snapshots.item.rename.text')}
         </button>
         <button
           type="button"
-          aria-label={`Delete snapshot ${snapshot.name}`}
+          aria-label={t('sandbox.snapshots.item.delete.label', { name: snapshot.name })}
           onClick={() => onDelete(snapshot)}
         >
-          Delete
+          {t('sandbox.snapshots.item.delete.text')}
         </button>
       </div>
     </li>

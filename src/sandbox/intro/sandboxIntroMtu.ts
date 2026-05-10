@@ -1,4 +1,5 @@
 import type { HookEventLogEntry, PredicateInput, Tutorial } from '../../tutorials/types';
+import { intro } from '../../i18n/locales/en/intro';
 
 function hasEvent(
   events: readonly HookEventLogEntry[],
@@ -19,14 +20,14 @@ function hasEvent(
 export const sandboxIntroMtu: Tutorial = Object.freeze({
   id: 'sandbox-intro-mtu',
   scenarioId: 'fragmented-echo',
-  title: 'Sandbox intro',
-  summary: 'Learn the sandbox loop by editing MTU, launching traffic, and comparing outcomes.',
+  title: intro['sandbox.intro.mtu.title'],
+  summary: intro['sandbox.intro.mtu.summary'],
   difficulty: 'intro',
   steps: Object.freeze([
     {
       id: 'open-node-tab',
-      title: 'Open the Node tab',
-      description: 'Open the Node tab in the sandbox panel to focus on node and link edits.',
+      title: intro['sandbox.intro.mtu.step.openNodeTab.title'],
+      description: intro['sandbox.intro.mtu.step.openNodeTab.description'],
       predicate: ({ events }: PredicateInput) =>
         hasEvent(
           events,
@@ -39,9 +40,8 @@ export const sandboxIntroMtu: Tutorial = Object.freeze({
     },
     {
       id: 'edit-mtu',
-      title: 'Lower an MTU',
-      description:
-        'Right-click a routed node, open the MTU editor, and apply a smaller interface MTU.',
+      title: intro['sandbox.intro.mtu.step.editMtu.title'],
+      description: intro['sandbox.intro.mtu.step.editMtu.description'],
       predicate: ({ events }: PredicateInput) =>
         hasEvent(
           events,
@@ -54,8 +54,8 @@ export const sandboxIntroMtu: Tutorial = Object.freeze({
     },
     {
       id: 'launch-traffic',
-      title: 'Launch sandbox traffic',
-      description: 'Use the Traffic tab to launch a synthetic flow through the edited topology.',
+      title: intro['sandbox.intro.mtu.step.launchTraffic.title'],
+      description: intro['sandbox.intro.mtu.step.launchTraffic.description'],
       predicate: ({ events }: PredicateInput) =>
         hasEvent(
           events,
@@ -68,9 +68,8 @@ export const sandboxIntroMtu: Tutorial = Object.freeze({
     },
     {
       id: 'enter-compare',
-      title: 'Enter Compare mode',
-      description:
-        'Switch the sandbox from Live to Compare to view baseline and what-if side by side.',
+      title: intro['sandbox.intro.mtu.step.enterCompare.title'],
+      description: intro['sandbox.intro.mtu.step.enterCompare.description'],
       predicate: ({ events }: PredicateInput) =>
         hasEvent(
           events,
@@ -83,8 +82,8 @@ export const sandboxIntroMtu: Tutorial = Object.freeze({
     },
     {
       id: 'exit-compare',
-      title: 'Exit Compare mode',
-      description: 'Switch back to Live mode and continue exploring freely.',
+      title: intro['sandbox.intro.mtu.step.exitCompare.title'],
+      description: intro['sandbox.intro.mtu.step.exitCompare.description'],
       predicate: ({ events }: PredicateInput) =>
         hasEvent(
           events,

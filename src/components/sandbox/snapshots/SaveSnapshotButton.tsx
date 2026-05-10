@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useI18n } from '../../../i18n';
 import { shortcutRegistry } from '../../../sandbox/shortcuts/registry';
 import { SNAPSHOT_NAME_MAX_LENGTH } from '../../../sandbox/snapshots/types';
 import { useSandbox } from '../../../sandbox/useSandbox';
@@ -10,6 +11,7 @@ function newSnapshotId(): string {
 
 export function SaveSnapshotButton() {
   const sandbox = useSandbox();
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const trimmed = name.trim();
@@ -52,7 +54,7 @@ export function SaveSnapshotButton() {
     <>
       <button
         type="button"
-        aria-label="Save snapshot"
+        aria-label={t('sandbox.snapshots.save.label')}
         onClick={() => setOpen(true)}
         className="netlab-focus-ring"
         style={{
@@ -66,13 +68,13 @@ export function SaveSnapshotButton() {
           cursor: 'pointer',
         }}
       >
-        Save
+        {t('sandbox.snapshots.save.text')}
       </button>
       {open ? (
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Save snapshot"
+          aria-label={t('sandbox.snapshots.save.label')}
           style={{
             position: 'absolute',
             right: 12,
@@ -88,7 +90,7 @@ export function SaveSnapshotButton() {
           }}
         >
           <label style={{ display: 'block', fontSize: 11 }}>
-            Name
+            {t('sandbox.snapshots.save.name')}
             <input
               value={name}
               maxLength={SNAPSHOT_NAME_MAX_LENGTH}
@@ -97,20 +99,25 @@ export function SaveSnapshotButton() {
             />
           </label>
           <div style={{ marginTop: 8, fontSize: 11, color: 'var(--netlab-text-muted)' }}>
-            Preview: {trimmed ? renderMarkdown(trimmed) : 'Unnamed'}
+            {t('sandbox.snapshots.save.preview')}{' '}
+            {trimmed ? renderMarkdown(trimmed) : t('sandbox.snapshots.save.unnamed')}
           </div>
           {duplicate ? (
-            <p style={{ margin: '6px 0 0', fontSize: 11 }}>Name already exists</p>
+            <p style={{ margin: '6px 0 0', fontSize: 11 }}>
+              {t('sandbox.snapshots.save.duplicate')}
+            </p>
           ) : null}
           {trimmed.startsWith('__') ? (
-            <p style={{ margin: '6px 0 0', fontSize: 11 }}>Names starting with __ are reserved</p>
+            <p style={{ margin: '6px 0 0', fontSize: 11 }}>
+              {t('sandbox.snapshots.save.reserved')}
+            </p>
           ) : null}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 10 }}>
             <button type="button" onClick={() => setOpen(false)}>
-              Cancel
+              {t('sandbox.snapshots.save.cancel')}
             </button>
             <button type="button" disabled={invalid} onClick={save}>
-              Save
+              {t('sandbox.snapshots.save.text')}
             </button>
           </div>
         </div>

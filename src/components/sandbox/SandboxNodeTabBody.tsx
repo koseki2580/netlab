@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import { useSandbox } from '../../sandbox/useSandbox';
 
 function countByKind(kindPrefix: string, kinds: readonly string[]): number {
@@ -6,6 +7,7 @@ function countByKind(kindPrefix: string, kinds: readonly string[]): number {
 
 export function SandboxNodeTabBody() {
   const sandbox = useSandbox();
+  const { t } = useI18n();
   const kinds = sandbox.session.edits.map((edit) => edit.kind);
   const routeCount = countByKind('node.route.', kinds);
   const mtuCount = kinds.filter((kind) => kind === 'interface.mtu').length;
@@ -16,14 +18,14 @@ export function SandboxNodeTabBody() {
   return (
     <div style={{ display: 'grid', gap: 10, fontFamily: 'monospace' }}>
       <p style={{ margin: 0, color: 'var(--netlab-text-secondary)', fontSize: 12 }}>
-        Right-click a node or link on the canvas and choose sandbox editing actions.
+        {t('sandbox.edits.node.description')}
       </p>
       {[
-        ['Routes', routeCount],
-        ['Interface MTU', mtuCount],
-        ['Link state', linkCount],
-        ['NAT rules', natCount],
-        ['ACL rules', aclCount],
+        [t('sandbox.edits.node.routes'), routeCount],
+        [t('sandbox.edits.node.mtu'), mtuCount],
+        [t('sandbox.edits.node.linkState'), linkCount],
+        [t('sandbox.edits.node.nat'), natCount],
+        [t('sandbox.edits.node.acl'), aclCount],
       ].map(([label, count]) => (
         <div
           key={label}
@@ -55,7 +57,7 @@ export function SandboxNodeTabBody() {
           cursor: 'pointer',
         }}
       >
-        Reset sandbox edits
+        {t('sandbox.edits.node.reset')}
       </button>
     </div>
   );

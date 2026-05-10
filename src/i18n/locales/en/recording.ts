@@ -1,0 +1,31 @@
+import type { Catalog } from '../../types';
+
+export const recording: Catalog = {
+  'sandbox.recording.desync.message':
+    'Replay desync detected at event {{seq}}. The recording may be corrupt or from a different netlab version.',
+  'sandbox.recording.desync.dismiss.label': 'Dismiss desync warning',
+  'sandbox.recording.desync.dismiss.text': 'Dismiss',
+  'sandbox.recording.metadata.heading': 'Save recording',
+  'sandbox.recording.metadata.captured': 'Captured {{count}} {{label}}.',
+  'sandbox.recording.metadata.event': 'event',
+  'sandbox.recording.metadata.events': 'events',
+  'sandbox.recording.metadata.title': 'Title',
+  'sandbox.recording.metadata.titlePreview': 'Title preview',
+  'sandbox.recording.metadata.author': 'Author',
+  'sandbox.recording.metadata.notes': 'Notes (optional)',
+  'sandbox.recording.metadata.cancel': 'Cancel',
+  'sandbox.recording.metadata.save': 'Save',
+  'sandbox.recording.replay.label': 'Sandbox recording replay scrubber',
+  'sandbox.recording.replay.playLabel': 'Play replay',
+  'sandbox.recording.replay.pauseLabel': 'Pause replay',
+  'sandbox.recording.replay.play': 'Play',
+  'sandbox.recording.replay.pause': 'Pause',
+  'sandbox.recording.replay.stepBackward': 'Step backward',
+  'sandbox.recording.replay.stepForward': 'Step forward',
+  'sandbox.recording.replay.speed': 'Speed',
+  'sandbox.recording.replay.speedLabel': 'Replay speed',
+  'sandbox.recording.replay.fork.label': 'Fork from here',
+  'sandbox.recording.replay.fork.text': 'Fork from here',
+  'sandbox.recording.replay.timeline': 'Replay timeline',
+  'sandbox.recording.replay.valueText': 'Event {{current}} of {{total}}',
+} as const;

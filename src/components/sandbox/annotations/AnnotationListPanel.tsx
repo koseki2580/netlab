@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useI18n } from '../../../i18n';
 import { useSandbox } from '../../../sandbox/useSandbox';
 import type { AnnotationAuthor } from '../../../sandbox/annotations/types';
 import { renderMarkdown } from '../../../sandbox/annotations/markdown';
@@ -7,6 +8,7 @@ type AuthorFilter = 'all' | AnnotationAuthor;
 
 export function AnnotationListPanel() {
   const sandbox = useSandbox();
+  const { t } = useI18n();
   const [author, setAuthor] = useState<AuthorFilter>('all');
   const [query, setQuery] = useState('');
   const annotations = sandbox.engine.snapshot.annotations;
@@ -18,26 +20,26 @@ export function AnnotationListPanel() {
   });
 
   return (
-    <section aria-label="Annotations">
+    <section aria-label={t('sandbox.annotations.list.label')}>
       <div>
         <select
-          aria-label="Filter annotations"
+          aria-label={t('sandbox.annotations.list.filter')}
           value={author}
           onChange={(event) => setAuthor(event.currentTarget.value as AuthorFilter)}
         >
-          <option value="all">All</option>
-          <option value="scenario">Scenario</option>
-          <option value="user">User</option>
+          <option value="all">{t('sandbox.annotations.list.all')}</option>
+          <option value="scenario">{t('sandbox.annotations.list.scenario')}</option>
+          <option value="user">{t('sandbox.annotations.list.user')}</option>
         </select>
         <input
-          aria-label="Search annotations"
+          aria-label={t('sandbox.annotations.list.search.label')}
           value={query}
           onInput={(event) => setQuery(event.currentTarget.value)}
-          placeholder="Search"
+          placeholder={t('sandbox.annotations.list.search.placeholder')}
         />
       </div>
       {visible.length === 0 ? (
-        <p>No annotations</p>
+        <p>{t('sandbox.annotations.list.empty')}</p>
       ) : (
         <ol>
           {visible.map((annotation) => (
@@ -45,10 +47,17 @@ export function AnnotationListPanel() {
               key={annotation.id}
               data-testid="annotation-list-item"
               tabIndex={0}
-              aria-label={`Annotation by ${annotation.author} for ${annotation.traceEventId}`}
+              aria-label={t('sandbox.annotations.list.item.label', {
+                author: annotation.author,
+                traceEventId: annotation.traceEventId,
+              })}
             >
               <div>
-                {annotation.author} · step {annotation.createdAt} · {annotation.traceEventId}
+                {t('sandbox.annotations.list.item.meta', {
+                  author: annotation.author,
+                  createdAt: annotation.createdAt,
+                  traceEventId: annotation.traceEventId,
+                })}
               </div>
               <div>{renderMarkdown(annotation.content)}</div>
             </li>

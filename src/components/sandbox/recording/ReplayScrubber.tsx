@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef } from 'react';
+import { useI18n } from '../../../i18n';
 import { shortcutRegistry } from '../../../sandbox/shortcuts/registry';
 import type { RecordedEvent, RecordedEventKind } from '../../../sandbox/recording/types';
 import { useReplay } from '../../../sandbox/recording/useReplay';
@@ -34,6 +35,7 @@ interface ReplayScrubberProps {
 
 export function ReplayScrubber({ testId = SCRUBBER_TEST_ID }: ReplayScrubberProps) {
   const replay = useReplay();
+  const { t } = useI18n();
   const trackId = useId();
   const trackRef = useRef<HTMLInputElement | null>(null);
 
@@ -138,7 +140,7 @@ export function ReplayScrubber({ testId = SCRUBBER_TEST_ID }: ReplayScrubberProp
     <div
       data-testid={testId}
       role="group"
-      aria-label="Sandbox recording replay scrubber"
+      aria-label={t('sandbox.recording.replay.label')}
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -151,18 +153,22 @@ export function ReplayScrubber({ testId = SCRUBBER_TEST_ID }: ReplayScrubberProp
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <button
           type="button"
-          aria-label={isPlaying ? 'Pause replay' : 'Play replay'}
+          aria-label={
+            isPlaying
+              ? t('sandbox.recording.replay.pauseLabel')
+              : t('sandbox.recording.replay.playLabel')
+          }
           aria-pressed={isPlaying}
           disabled={isDesynced || (isFinished && !isPlaying)}
           onClick={() => (isPlaying ? replay.pause() : replay.play())}
           className="netlab-focus-ring"
           style={{ minWidth: 72 }}
         >
-          {isPlaying ? 'Pause' : 'Play'}
+          {isPlaying ? t('sandbox.recording.replay.pause') : t('sandbox.recording.replay.play')}
         </button>
         <button
           type="button"
-          aria-label="Step backward"
+          aria-label={t('sandbox.recording.replay.stepBackward')}
           disabled={isDesynced || replay.currentSeq <= -1}
           onClick={() => replay.stepBackward()}
           className="netlab-focus-ring"
@@ -171,7 +177,7 @@ export function ReplayScrubber({ testId = SCRUBBER_TEST_ID }: ReplayScrubberProp
         </button>
         <button
           type="button"
-          aria-label="Step forward"
+          aria-label={t('sandbox.recording.replay.stepForward')}
           disabled={isDesynced || replay.currentSeq >= max}
           onClick={() => replay.stepForward()}
           className="netlab-focus-ring"
@@ -179,9 +185,9 @@ export function ReplayScrubber({ testId = SCRUBBER_TEST_ID }: ReplayScrubberProp
           ›
         </button>
         <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span style={{ fontSize: 12 }}>Speed</span>
+          <span style={{ fontSize: 12 }}>{t('sandbox.recording.replay.speed')}</span>
           <select
-            aria-label="Replay speed"
+            aria-label={t('sandbox.recording.replay.speedLabel')}
             value={replay.speed}
             onChange={(event) => {
               const next = Number(event.target.value) as ReplaySpeed;
@@ -202,11 +208,11 @@ export function ReplayScrubber({ testId = SCRUBBER_TEST_ID }: ReplayScrubberProp
         </span>
         <button
           type="button"
-          aria-label="Fork from here"
+          aria-label={t('sandbox.recording.replay.fork.label')}
           onClick={() => replay.fork()}
           className="netlab-focus-ring"
         >
-          Fork from here
+          {t('sandbox.recording.replay.fork.text')}
         </button>
       </div>
       <div style={{ position: 'relative', height: 24 }}>
@@ -218,8 +224,11 @@ export function ReplayScrubber({ testId = SCRUBBER_TEST_ID }: ReplayScrubberProp
           max={max}
           step={1}
           value={replay.currentSeq}
-          aria-label="Replay timeline"
-          aria-valuetext={`Event ${Math.max(0, replay.currentSeq + 1)} of ${replay.totalEvents}`}
+          aria-label={t('sandbox.recording.replay.timeline')}
+          aria-valuetext={t('sandbox.recording.replay.valueText', {
+            current: Math.max(0, replay.currentSeq + 1),
+            total: replay.totalEvents,
+          })}
           disabled={isDesynced}
           onChange={(event) => {
             const next = Number(event.target.value);

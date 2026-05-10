@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import type { Edit } from '../../sandbox/edits';
 import { getSandboxEditLabel } from '../../sandbox/plugin/registry';
 import type { PluginEdit } from '../../sandbox/plugin/types';
@@ -31,6 +32,7 @@ function editSubtitle(edit: Edit): string {
 }
 
 export function EditListItem({ edit, index, active, onRevert, onUndoTo }: EditListItemProps) {
+  const { t } = useI18n();
   const step = index + 1;
 
   return (
@@ -40,16 +42,23 @@ export function EditListItem({ edit, index, active, onRevert, onUndoTo }: EditLi
       style={{ opacity: active ? 1 : 0.55 }}
     >
       <div>
-        <strong>{edit.kind}</strong> {active ? `Step ${step}` : 'Redo'}
+        <strong>{edit.kind}</strong>{' '}
+        {active ? t('sandbox.edits.item.step', { step }) : t('sandbox.edits.item.redo')}
       </div>
       <div>{editSubtitle(edit)}</div>
       {active ? (
         <div>
-          <button aria-label={`Revert edit ${step}`} onClick={() => onRevert(index)}>
-            Revert
+          <button
+            aria-label={t('sandbox.edits.item.revert.label', { step })}
+            onClick={() => onRevert(index)}
+          >
+            {t('sandbox.edits.item.revert.text')}
           </button>
-          <button aria-label={`Undo to edit ${step}`} onClick={() => onUndoTo(index)}>
-            Undo to here
+          <button
+            aria-label={t('sandbox.edits.item.undoTo.label', { step })}
+            onClick={() => onUndoTo(index)}
+          >
+            {t('sandbox.edits.item.undoTo.text')}
           </button>
         </div>
       ) : null}

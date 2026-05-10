@@ -1,11 +1,14 @@
+import { useI18n } from '../../i18n';
+
 export interface PassCelebrationProps {
   readonly onSubmit: () => void;
 }
 
 export function PassCelebration({ onSubmit }: PassCelebrationProps) {
+  const { t } = useI18n();
   return (
     <section
-      aria-label="Assessment passed"
+      aria-label={t('sandbox.assessment.passed.label')}
       style={{
         marginTop: 12,
         border: '1px solid #22c55e',
@@ -14,9 +17,11 @@ export function PassCelebration({ onSubmit }: PassCelebrationProps) {
         padding: 10,
       }}
     >
-      <div style={{ color: '#22c55e', fontSize: 12, fontWeight: 700 }}>Assessment passed</div>
+      <div style={{ color: '#22c55e', fontSize: 12, fontWeight: 700 }}>
+        {t('sandbox.assessment.passed.heading')}
+      </div>
       <p style={{ margin: '6px 0 0', color: 'var(--netlab-text-muted)', fontSize: 12 }}>
-        Submit is available while the current sandbox state still satisfies the rubric.
+        {t('sandbox.assessment.passed.body')}
       </p>
       <button
         type="button"
@@ -24,7 +29,7 @@ export function PassCelebration({ onSubmit }: PassCelebrationProps) {
         className="netlab-focus-ring"
         style={{ marginTop: 8 }}
       >
-        Submit
+        {t('sandbox.assessment.submit.text')}
       </button>
     </section>
   );

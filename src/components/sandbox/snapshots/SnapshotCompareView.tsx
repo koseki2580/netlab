@@ -1,3 +1,4 @@
+import { useI18n } from '../../../i18n';
 import type { NamedSnapshot } from '../../../sandbox/snapshots/types';
 import { BeforeAfterView } from '../BeforeAfterView';
 import { EditChainInspector } from './EditChainInspector';
@@ -11,13 +12,14 @@ export function SnapshotCompareView({
   readonly snapshotB: NamedSnapshot;
   readonly onExit: () => void;
 }) {
+  const { t } = useI18n();
   const diverged = snapshotA.sessionIdAtCapture !== snapshotB.sessionIdAtCapture;
 
   return (
     <div
       data-testid="snapshot-compare-view"
       role="dialog"
-      aria-label="Compare snapshots"
+      aria-label={t('sandbox.snapshots.compare.label')}
       style={{
         position: 'absolute',
         inset: 0,
@@ -31,8 +33,12 @@ export function SnapshotCompareView({
         <h2 style={{ margin: 0, fontSize: 14, flex: 1 }}>
           {snapshotA.name} vs {snapshotB.name}
         </h2>
-        <button type="button" aria-label="Close snapshot compare" onClick={onExit}>
-          Close
+        <button
+          type="button"
+          aria-label={t('sandbox.snapshots.compare.close.label')}
+          onClick={onExit}
+        >
+          {t('sandbox.snapshots.compare.close.text')}
         </button>
       </header>
       <div style={{ flex: 1, minHeight: 0 }}>

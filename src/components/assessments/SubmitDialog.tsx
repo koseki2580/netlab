@@ -5,6 +5,7 @@ import {
   type AssessmentSubmission,
 } from '../../assessments/submission';
 import { useAssessment } from '../../assessments/useAssessment';
+import { useI18n } from '../../i18n';
 import { useSandbox } from '../../sandbox/useSandbox';
 
 export interface SubmitDialogProps {
@@ -35,6 +36,7 @@ function SubmitDialogBody({
   const notesId = useId();
   const assessment = useAssessment();
   const sandbox = useSandbox();
+  const { t } = useI18n();
   const [notes, setNotes] = useState('');
   const canSubmit = assessment.status.status === 'passed';
 
@@ -78,13 +80,13 @@ function SubmitDialogBody({
         }}
       >
         <h2 id={`${notesId}-title`} style={{ margin: 0, fontSize: 16 }}>
-          Submit assessment
+          {t('sandbox.assessment.submitDialog.heading')}
         </h2>
         <label htmlFor={notesId} style={{ display: 'grid', gap: 6, marginTop: 12 }}>
-          <span style={{ fontSize: 12 }}>Notes</span>
+          <span style={{ fontSize: 12 }}>{t('sandbox.assessment.submitDialog.notes')}</span>
           <textarea
             id={notesId}
-            aria-label="Submission notes"
+            aria-label={t('sandbox.assessment.submitDialog.notesLabel')}
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
             rows={5}
@@ -101,16 +103,16 @@ function SubmitDialogBody({
         </label>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
           <button type="button" onClick={onClose} className="netlab-focus-ring">
-            Cancel
+            {t('sandbox.assessment.submitDialog.cancel')}
           </button>
           <button
             type="button"
-            aria-label="Download assessment submission"
+            aria-label={t('sandbox.assessment.submitDialog.downloadLabel')}
             disabled={!canSubmit}
             onClick={submit}
             className="netlab-focus-ring"
           >
-            Submit
+            {t('sandbox.assessment.submit.text')}
           </button>
         </div>
       </section>

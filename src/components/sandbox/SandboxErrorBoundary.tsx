@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { NetlabError } from '../../errors';
+import { I18nContext } from '../../i18n';
 
 export interface SandboxErrorBoundaryProps {
   readonly children: ReactNode;
@@ -32,22 +33,23 @@ export class SandboxErrorBoundary extends Component<
     if (!this.state.error) return this.props.children;
 
     return (
-      <section
-        role="alert"
-        style={{
-          padding: 16,
-          border: '1px solid var(--netlab-accent-orange, orange)',
-          background: 'var(--netlab-bg-primary)',
-          color: 'var(--netlab-text-primary)',
-          fontFamily: 'monospace',
-        }}
-      >
-        <strong>Sandbox is unavailable during tutorials.</strong>
-        <p style={{ marginBottom: 0 }}>
-          Use either guided tutorial mode or the free-form sandbox. See
-          docs/ui/sandbox.md#tutorial-conflict.
-        </p>
-      </section>
+      <I18nContext.Consumer>
+        {({ t }) => (
+          <section
+            role="alert"
+            style={{
+              padding: 16,
+              border: '1px solid var(--netlab-accent-orange, orange)',
+              background: 'var(--netlab-bg-primary)',
+              color: 'var(--netlab-text-primary)',
+              fontFamily: 'monospace',
+            }}
+          >
+            <strong>{t('sandbox.edits.errorBoundary.heading')}</strong>
+            <p style={{ marginBottom: 0 }}>{t('sandbox.edits.errorBoundary.body')}</p>
+          </section>
+        )}
+      </I18nContext.Consumer>
     );
   }
 }

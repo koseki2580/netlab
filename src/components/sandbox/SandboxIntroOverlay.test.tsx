@@ -3,11 +3,13 @@
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { I18nProvider } from '../../i18n';
 import { SandboxIntroOverlay } from './SandboxIntroOverlay';
 
 const introState = vi.hoisted(() => ({
   value: {
     intro: {
+      id: 'sandbox-intro-mtu',
       title: 'Sandbox intro',
       summary: 'intro summary',
     },
@@ -15,6 +17,7 @@ const introState = vi.hoisted(() => ({
     currentStepIndex: 0,
     totalSteps: 5,
     currentStep: {
+      id: 'open-node-tab',
       title: 'Open the Node tab',
       description: 'Use the node tab.',
     },
@@ -97,6 +100,39 @@ describe('SandboxIntroOverlay', () => {
         ?.querySelector('[data-testid="sandbox-intro-step-panel"]')
         ?.getAttribute('data-intro-status'),
     ).toBe('active');
+  });
+
+  it('renders intro copy from the active i18n catalog', () => {
+    introState.value = {
+      ...introState.value,
+      status: 'active',
+    };
+
+    render(
+      <I18nProvider
+        locale="test"
+        catalog={{
+          'sandbox.intro.chrome.label': 'TEST INTRO',
+          'sandbox.intro.progress': 'Phase {{current}} of {{total}}',
+          'sandbox.intro.undoBlocked': 'Undo unavailable here.',
+          'sandbox.intro.start': 'Begin',
+          'sandbox.intro.restart': 'Again',
+          'sandbox.intro.skip': 'Leave',
+          'sandbox.intro.mtu.title': 'Translated MTU intro',
+          'sandbox.intro.mtu.summary': 'Translated intro summary.',
+          'sandbox.intro.mtu.step.openNodeTab.title': 'Translated node step',
+          'sandbox.intro.mtu.step.openNodeTab.description': 'Translated node description.',
+        }}
+      >
+        <SandboxIntroOverlay />
+      </I18nProvider>,
+    );
+
+    expect(container?.textContent).toContain('Translated node step');
+    expect(container?.textContent).toContain('Translated node description.');
+    expect(container?.textContent).toContain('Phase 1 of 5');
+    expect(container?.textContent).toContain('Again');
+    expect(container?.textContent).toContain('Leave');
   });
 
   it('returns null once the intro is passed', () => {

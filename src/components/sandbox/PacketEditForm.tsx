@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useI18n } from '../../i18n';
 import { useSandbox } from '../../sandbox/useSandbox';
 import type { PacketRef } from '../../sandbox/types';
 import type { TcpFlags } from '../../types/packets';
@@ -21,6 +22,7 @@ export function PacketEditForm({
   readonly onSubmitted?: () => void;
 }) {
   const sandbox = useSandbox();
+  const { t } = useI18n();
   const state = sandbox.engine.whatIf.getState();
   const trace = target
     ? state.traces.find((candidate) => candidate.packetId === target.traceId)
@@ -54,7 +56,7 @@ export function PacketEditForm({
   if (!trace || !hop || !packetRef) {
     return (
       <div style={{ color: 'var(--netlab-text-muted)', fontSize: 12 }}>
-        Select or generate a packet trace before editing packet fields.
+        {t('sandbox.edits.packet.empty')}
       </div>
     );
   }
@@ -62,7 +64,7 @@ export function PacketEditForm({
   const applyTtl = () => {
     const after = Number(ttl);
     if (!Number.isInteger(after) || after < 1 || after > 255) {
-      setError('TTL must be an integer from 1 to 255.');
+      setError(t('sandbox.edits.packet.ttl.error'));
       return;
     }
 
@@ -90,7 +92,7 @@ export function PacketEditForm({
 
   const applyTcpFlags = () => {
     if (!tcpFlags) {
-      setError('Select a TCP packet before editing flags.');
+      setError(t('sandbox.edits.packet.tcp.error'));
       return;
     }
 
@@ -107,39 +109,43 @@ export function PacketEditForm({
   return (
     <div style={{ display: 'grid', gap: 8 }}>
       <div style={{ color: 'var(--netlab-text-muted)', fontSize: 11 }}>
-        Editing {trace.packetId} hop {hop.step} at {hop.nodeLabel}
+        {t('sandbox.edits.packet.editing', {
+          packetId: trace.packetId,
+          step: hop.step,
+          node: hop.nodeLabel,
+        })}
       </div>
       <label style={{ display: 'grid', gap: 3 }}>
-        <span>IPv4 TTL</span>
+        <span>{t('sandbox.edits.packet.ttl.label')}</span>
         <input
-          aria-label="IPv4 TTL"
+          aria-label={t('sandbox.edits.packet.ttl.label')}
           value={ttl}
           onChange={(event) => setTtl(event.target.value)}
           style={fieldStyle}
         />
       </label>
       <button type="button" style={buttonStyle} onClick={applyTtl}>
-        Apply TTL
+        {t('sandbox.edits.packet.ttl.apply')}
       </button>
       <label style={{ display: 'grid', gap: 3 }}>
-        <span>Raw payload</span>
+        <span>{t('sandbox.edits.packet.payload.label')}</span>
         <textarea
-          aria-label="Raw payload"
+          aria-label={t('sandbox.edits.packet.payload.label')}
           value={payload}
           onChange={(event) => setPayload(event.target.value)}
           style={{ ...fieldStyle, minHeight: 58 }}
         />
       </label>
       <button type="button" style={buttonStyle} onClick={applyPayload}>
-        Apply payload
+        {t('sandbox.edits.packet.payload.apply')}
       </button>
       {tcpFlags && (
         <section style={{ display: 'grid', gap: 6 }}>
-          <strong style={{ fontSize: 12 }}>TCP flags</strong>
+          <strong style={{ fontSize: 12 }}>{t('sandbox.edits.packet.tcp.heading')}</strong>
           <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <input
               type="checkbox"
-              aria-label="TCP SYN flag"
+              aria-label={t('sandbox.edits.packet.tcp.syn.label')}
               checked={syn}
               onChange={(event) => setSyn(event.target.checked)}
             />
@@ -148,14 +154,14 @@ export function PacketEditForm({
           <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <input
               type="checkbox"
-              aria-label="TCP RST flag"
+              aria-label={t('sandbox.edits.packet.tcp.rst.label')}
               checked={rst}
               onChange={(event) => setRst(event.target.checked)}
             />
             <span>RST</span>
           </label>
           <button type="button" style={buttonStyle} onClick={applyTcpFlags}>
-            Apply TCP flags
+            {t('sandbox.edits.packet.tcp.apply')}
           </button>
         </section>
       )}

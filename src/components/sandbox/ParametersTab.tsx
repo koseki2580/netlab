@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import { useSandbox } from '../../sandbox/useSandbox';
 import type { ParameterKey } from '../../sandbox/types';
 import { buttonStyle, fieldStyle } from './editors/editorStyles';
@@ -28,11 +29,12 @@ function readParameter(sandbox: ReturnType<typeof useSandbox>, key: ParameterKey
 
 export function ParametersTab() {
   const sandbox = useSandbox();
+  const { t } = useI18n();
 
   return (
     <div style={{ display: 'grid', gap: 10 }}>
       <p style={{ margin: 0, color: 'var(--netlab-text-muted)', fontSize: 11 }}>
-        Parameter edits are applied in Live mode; switching from Compare returns to Live.
+        {t('sandbox.edits.parameters.description')}
       </p>
       {PARAMS.map((param) => {
         const current = readParameter(sandbox, param.key);
@@ -61,7 +63,7 @@ export function ParametersTab() {
         );
       })}
       <button type="button" style={buttonStyle} onClick={sandbox.resetAll}>
-        Reset parameters
+        {t('sandbox.edits.parameters.reset')}
       </button>
     </div>
   );

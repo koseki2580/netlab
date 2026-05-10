@@ -27,3 +27,15 @@ A running record of corrections and feedback received during sessions. Use this 
 **Apply when**: Someone proposes consolidating e2e + Storybook.
 
 ---
+
+## L041 — i18n stubs now; translations later
+
+**What happened**: netlab's sandbox had hundreds of hardcoded English strings, but full translation work was too large for one plan.
+
+**Rule**: Extract strings to a catalog + translator hook + ESLint rule first; defer real locale translation.
+
+**Why**: Extraction cost scales with string count, while translation cost scales with locale count; separating them avoids a later big-bang rewrite.
+
+**Apply when**: A UI has many hardcoded user-facing strings and i18n is useful but not urgent.
+
+---

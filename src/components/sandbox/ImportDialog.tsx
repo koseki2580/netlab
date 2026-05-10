@@ -1,5 +1,6 @@
 import { useContext, useRef, useState } from 'react';
 import { hookEngine as sharedHookEngine } from '../../hooks/HookEngine';
+import { useI18n } from '../../i18n';
 import type { DecodedExportedSession } from '../../sandbox/session-io/schema';
 import { useSandbox } from '../../sandbox/useSandbox';
 import { NetlabContext } from '../NetlabContext';
@@ -8,6 +9,7 @@ import { sessionIoButtonStyle, sessionIoPanelStyle } from './sessionIoStyles';
 
 export function ImportDialog() {
   const sandbox = useSandbox();
+  const { t } = useI18n();
   const netlabContext = useContext(NetlabContext);
   const hookEngine = netlabContext?.hookEngine ?? sharedHookEngine;
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -45,18 +47,18 @@ export function ImportDialog() {
     <>
       <button
         type="button"
-        aria-label="Import sandbox session"
+        aria-label={t('sandbox.edits.import.dialog.label')}
         onClick={() => inputRef.current?.click()}
         className="netlab-focus-ring"
         style={sessionIoButtonStyle}
       >
-        Import
+        {t('sandbox.edits.import.dialog.heading')}
       </button>
       <input
         ref={inputRef}
         type="file"
         accept=".json,application/json"
-        aria-label="Import sandbox session file"
+        aria-label={t('sandbox.edits.import.file.label')}
         onChange={(event) => {
           const file = event.currentTarget.files?.[0];
           if (file) {
@@ -70,7 +72,7 @@ export function ImportDialog() {
         <ImportPreview decoded={decoded} onApply={applyImport} onCancel={() => setDecoded(null)} />
       ) : null}
       {error ? (
-        <section aria-label="Sandbox session import error" style={sessionIoPanelStyle}>
+        <section aria-label={t('sandbox.edits.import.error.label')} style={sessionIoPanelStyle}>
           {error}
         </section>
       ) : null}

@@ -1,3 +1,4 @@
+import { useI18n } from '../../../i18n';
 import { useReplay } from '../../../sandbox/recording/useReplay';
 
 const containerStyle: React.CSSProperties = {
@@ -18,23 +19,21 @@ export interface DesyncWarningProps {
 
 export function DesyncWarning({ testId = 'replay-desync-warning' }: DesyncWarningProps) {
   const replay = useReplay();
+  const { t } = useI18n();
   const event = replay.desyncEvent;
   if (!event) return null;
 
   return (
     <div role="alert" aria-live="assertive" data-testid={testId} style={containerStyle}>
-      <span style={{ flex: 1 }}>
-        Replay desync detected at event {event.seq}. The recording may be corrupt or from a
-        different netlab version.
-      </span>
+      <span style={{ flex: 1 }}>{t('sandbox.recording.desync.message', { seq: event.seq })}</span>
       <button
         type="button"
         onClick={() => replay.dismissDesync()}
-        aria-label="Dismiss desync warning"
+        aria-label={t('sandbox.recording.desync.dismiss.label')}
         data-testid={`${testId}-dismiss`}
         className="netlab-focus-ring"
       >
-        Dismiss
+        {t('sandbox.recording.desync.dismiss.text')}
       </button>
     </div>
   );

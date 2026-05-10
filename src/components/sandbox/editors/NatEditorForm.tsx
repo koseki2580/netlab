@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useI18n } from '../../../i18n';
 import { useSandbox } from '../../../sandbox/useSandbox';
 import type { NatRule, NatRuleKind } from '../../../sandbox/types';
 import { validateNatRule } from '../../../sandbox/validation/nat';
@@ -16,6 +17,7 @@ export function NatEditorForm({
   readonly onSubmitted?: () => void;
 }) {
   const sandbox = useSandbox();
+  const { t } = useI18n();
   const topology = sandbox.engine.whatIf.getTopology();
   const node = topology.nodes.find((candidate) => candidate.id === nodeId);
   const data = node?.data as SandboxNatData | undefined;
@@ -27,7 +29,9 @@ export function NatEditorForm({
   const [error, setError] = useState<string | null>(null);
 
   if (!node || interfaces.length === 0) {
-    return <p style={{ color: 'var(--netlab-text-muted)' }}>No NAT-capable interfaces.</p>;
+    return (
+      <p style={{ color: 'var(--netlab-text-muted)' }}>{t('sandbox.edits.editor.nat.empty')}</p>
+    );
   }
 
   const submit = () => {
@@ -39,7 +43,7 @@ export function NatEditorForm({
     };
     const validation = validateNatRule(topology, nodeId, rule);
     if (!validation.ok) {
-      setError(`NAT rejected: ${validation.reason}`);
+      setError(t('sandbox.edits.editor.nat.rejected', { reason: validation.reason }));
       return;
     }
 
@@ -49,11 +53,11 @@ export function NatEditorForm({
   };
 
   return (
-    <section style={sectionStyle} aria-label="NAT editor">
-      <strong>NAT rules</strong>
+    <section style={sectionStyle} aria-label={t('sandbox.edits.editor.nat.label')}>
+      <strong>{t('sandbox.edits.editor.nat.heading')}</strong>
       {rules.length === 0 ? (
         <span style={{ color: 'var(--netlab-text-muted)', fontSize: 11 }}>
-          No sandbox NAT rules.
+          {t('sandbox.edits.editor.nat.noRules')}
         </span>
       ) : (
         rules.map((rule) => (
@@ -74,36 +78,36 @@ export function NatEditorForm({
                 onSubmitted?.();
               }}
             >
-              Remove
+              {t('sandbox.edits.editor.remove')}
             </button>
           </div>
         ))
       )}
       <label style={{ display: 'grid', gap: 3 }}>
-        <span>NAT kind</span>
+        <span>{t('sandbox.edits.editor.nat.kind')}</span>
         <select
-          aria-label="NAT kind"
+          aria-label={t('sandbox.edits.editor.nat.kind')}
           value={kind}
           onChange={(event) => setKind(event.target.value as NatRuleKind)}
           style={fieldStyle}
         >
-          <option value="snat">SNAT</option>
-          <option value="dnat">DNAT</option>
+          <option value="snat">{t('sandbox.edits.editor.nat.snat')}</option>
+          <option value="dnat">{t('sandbox.edits.editor.nat.dnat')}</option>
         </select>
       </label>
       <label style={{ display: 'grid', gap: 3 }}>
-        <span>Translate to</span>
+        <span>{t('sandbox.edits.editor.nat.translateTo')}</span>
         <input
-          aria-label="Translate to"
+          aria-label={t('sandbox.edits.editor.nat.translateTo')}
           value={translateTo}
           onChange={(event) => setTranslateTo(event.target.value)}
           style={fieldStyle}
         />
       </label>
       <label style={{ display: 'grid', gap: 3 }}>
-        <span>Outbound interface</span>
+        <span>{t('sandbox.edits.editor.nat.outboundInterface')}</span>
         <select
-          aria-label="Outbound interface"
+          aria-label={t('sandbox.edits.editor.nat.outboundInterface')}
           value={outInterface}
           onChange={(event) => setOutInterface(event.target.value)}
           style={fieldStyle}
@@ -117,7 +121,7 @@ export function NatEditorForm({
       </label>
       {error && <div style={{ color: 'var(--netlab-accent-red)', fontSize: 11 }}>{error}</div>}
       <button type="button" style={buttonStyle} onClick={submit}>
-        Add NAT rule
+        {t('sandbox.edits.editor.nat.add')}
       </button>
     </section>
   );

@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useI18n } from '../../i18n';
 import { useSandbox } from '../../sandbox/useSandbox';
 import type { TrafficFlow, TrafficProtocol } from '../../sandbox/types';
 import { buttonStyle, fieldStyle } from './editors/editorStyles';
 
 export function TrafficTab() {
   const sandbox = useSandbox();
+  const { t } = useI18n();
   const topology = sandbox.engine.whatIf.getTopology();
   const nodes = topology.nodes.filter((node) => node.data.role !== 'switch');
   const [srcNodeId, setSrcNodeId] = useState(nodes[0]?.id ?? '');
@@ -30,12 +32,12 @@ export function TrafficTab() {
   return (
     <div style={{ display: 'grid', gap: 10 }}>
       <p style={{ margin: 0, color: 'var(--netlab-text-muted)', fontSize: 11 }}>
-        Compose a synthetic flow and add it to the sandbox trace timeline.
+        {t('sandbox.edits.traffic.description')}
       </p>
       <label style={{ display: 'grid', gap: 3 }}>
-        <span>Source</span>
+        <span>{t('sandbox.edits.traffic.source')}</span>
         <select
-          aria-label="Source"
+          aria-label={t('sandbox.edits.traffic.source')}
           value={srcNodeId}
           onChange={(event) => setSrcNodeId(event.target.value)}
           style={fieldStyle}
@@ -48,9 +50,9 @@ export function TrafficTab() {
         </select>
       </label>
       <label style={{ display: 'grid', gap: 3 }}>
-        <span>Destination</span>
+        <span>{t('sandbox.edits.traffic.destination')}</span>
         <select
-          aria-label="Destination"
+          aria-label={t('sandbox.edits.traffic.destination')}
           value={dstNodeId}
           onChange={(event) => setDstNodeId(event.target.value)}
           style={fieldStyle}
@@ -63,34 +65,34 @@ export function TrafficTab() {
         </select>
       </label>
       <label style={{ display: 'grid', gap: 3 }}>
-        <span>Protocol</span>
+        <span>{t('sandbox.edits.traffic.protocol')}</span>
         <select
-          aria-label="Protocol"
+          aria-label={t('sandbox.edits.traffic.protocol')}
           value={protocol}
           onChange={(event) => setProtocol(event.target.value as TrafficProtocol)}
           style={fieldStyle}
         >
-          <option value="icmp">ICMP</option>
-          <option value="tcp">TCP</option>
-          <option value="udp">UDP</option>
+          <option value="icmp">{t('sandbox.edits.traffic.icmp')}</option>
+          <option value="tcp">{t('sandbox.edits.traffic.tcp')}</option>
+          <option value="udp">{t('sandbox.edits.traffic.udp')}</option>
         </select>
       </label>
       <textarea
-        aria-label="Traffic payload"
+        aria-label={t('sandbox.edits.traffic.payload')}
         value={payload}
         onChange={(event) => setPayload(event.target.value)}
         style={{ ...fieldStyle, minHeight: 58 }}
       />
       <div style={{ display: 'flex', gap: 6 }}>
         <button type="button" style={buttonStyle} onClick={() => launch()}>
-          Launch traffic
+          {t('sandbox.edits.traffic.launch')}
         </button>
         <button
           type="button"
           style={buttonStyle}
           onClick={() => setPresets([...presets, buildFlow()])}
         >
-          Save preset
+          {t('sandbox.edits.traffic.savePreset')}
         </button>
       </div>
       {presets.map((preset) => (
@@ -99,14 +101,14 @@ export function TrafficTab() {
             {preset.protocol.toUpperCase()} {preset.srcNodeId} {'->'} {preset.dstNodeId}
           </span>
           <button type="button" style={buttonStyle} onClick={() => launch(preset)}>
-            Load
+            {t('sandbox.edits.traffic.load')}
           </button>
           <button
             type="button"
             style={buttonStyle}
             onClick={() => setPresets(presets.filter((candidate) => candidate.id !== preset.id))}
           >
-            Delete
+            {t('sandbox.edits.traffic.delete')}
           </button>
         </div>
       ))}

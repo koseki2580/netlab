@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { useI18n } from '../../i18n';
 import { traceEventId } from '../../sandbox/annotations/anchors';
 import { useSandbox } from '../../sandbox/useSandbox';
 import type { PacketHop, PacketTrace } from '../../types/simulation';
@@ -75,6 +76,7 @@ function HopPill({
 
 export function DiffTimeline() {
   const sandbox = useSandbox();
+  const { t } = useI18n();
   const baseline = sandbox.engine.baseline;
   const baselineState = baseline?.getState() ?? null;
   const whatIfState = sandbox.engine.whatIf.getState();
@@ -102,7 +104,7 @@ export function DiffTimeline() {
   return (
     <section
       role="region"
-      aria-label="Sandbox diff timeline"
+      aria-label={t('sandbox.edits.diff.label')}
       style={{
         borderTop: '1px solid var(--netlab-border)',
         background: 'var(--netlab-bg-primary)',
@@ -120,7 +122,7 @@ export function DiffTimeline() {
           justifyContent: 'space-between',
         }}
       >
-        DIFF TIMELINE
+        {t('sandbox.edits.diff.heading')}
         <PcapDownloadButton forceBranch="combined" />
       </div>
       {(['baseline', 'what-if'] as const).map((branch) => {

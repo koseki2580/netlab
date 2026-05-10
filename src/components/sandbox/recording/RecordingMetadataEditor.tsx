@@ -1,4 +1,5 @@
 import { useId, useMemo, useState } from 'react';
+import { useI18n } from '../../../i18n';
 import { renderMarkdown } from '../../../sandbox/annotations/markdown';
 import {
   RECORDING_AUTHOR_MAX_LENGTH,
@@ -74,6 +75,7 @@ export function RecordingMetadataEditor({
   download = downloadRecording,
 }: RecordingMetadataEditorProps) {
   const recorder = useSandboxRecorder();
+  const { t } = useI18n();
   const titleId = useId();
   const authorId = useId();
   const notesId = useId();
@@ -113,16 +115,22 @@ export function RecordingMetadataEditor({
     >
       <div style={cardStyle}>
         <h2 id={titleId} style={{ margin: 0 }}>
-          Save recording
+          {t('sandbox.recording.metadata.heading')}
         </h2>
         <p style={{ margin: 0, fontSize: 13, color: 'var(--netlab-color-muted, #64748b)' }}>
-          Captured {recorder.eventCount} event{recorder.eventCount === 1 ? '' : 's'}.
+          {t('sandbox.recording.metadata.captured', {
+            count: recorder.eventCount,
+            label:
+              recorder.eventCount === 1
+                ? t('sandbox.recording.metadata.event')
+                : t('sandbox.recording.metadata.events'),
+          })}
         </p>
         <label
           htmlFor={`${titleId}-input`}
           style={{ display: 'flex', flexDirection: 'column', gap: 4 }}
         >
-          <span>Title</span>
+          <span>{t('sandbox.recording.metadata.title')}</span>
           <input
             id={`${titleId}-input`}
             type="text"
@@ -138,7 +146,7 @@ export function RecordingMetadataEditor({
           </small>
         </label>
         <div
-          aria-label="Title preview"
+          aria-label={t('sandbox.recording.metadata.titlePreview')}
           data-testid="recording-title-preview"
           style={{
             border: '1px solid var(--netlab-color-border, #e2e8f0)',
@@ -151,7 +159,7 @@ export function RecordingMetadataEditor({
           {titlePreview}
         </div>
         <label htmlFor={authorId} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span>Author</span>
+          <span>{t('sandbox.recording.metadata.author')}</span>
           <input
             id={authorId}
             type="text"
@@ -163,7 +171,7 @@ export function RecordingMetadataEditor({
           />
         </label>
         <label htmlFor={notesId} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span>Notes (optional)</span>
+          <span>{t('sandbox.recording.metadata.notes')}</span>
           <textarea
             id={notesId}
             rows={3}
@@ -181,7 +189,7 @@ export function RecordingMetadataEditor({
             data-testid="recording-metadata-cancel"
             className="netlab-focus-ring"
           >
-            Cancel
+            {t('sandbox.recording.metadata.cancel')}
           </button>
           <button
             type="button"
@@ -190,7 +198,7 @@ export function RecordingMetadataEditor({
             data-testid="recording-metadata-save"
             className="netlab-focus-ring"
           >
-            Save
+            {t('sandbox.recording.metadata.save')}
           </button>
         </div>
       </div>

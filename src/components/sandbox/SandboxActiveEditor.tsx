@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import { useI18n } from '../../i18n';
 import { useSandbox } from '../../sandbox/useSandbox';
 import { traceEventIdFromParts } from '../../sandbox/annotations/anchors';
 import { getSandboxPluginEditors } from '../../sandbox/plugin/registry';
@@ -13,6 +14,7 @@ import { RouteEditorForm } from './editors/RouteEditorForm';
 
 export function SandboxActiveEditor() {
   const sandbox = useSandbox();
+  const { t } = useI18n();
   const headingId = useId();
   const activeEditor = sandbox.activeEditor;
   if (!activeEditor) return null;
@@ -30,7 +32,7 @@ export function SandboxActiveEditor() {
     >
       <div style={{ display: 'grid', gap: 8 }}>
         <h3 id={headingId} style={{ margin: 0, fontSize: 13 }}>
-          Edit in sandbox
+          {t('sandbox.edits.activeEditor.heading')}
         </h3>
         {target.kind === 'node' && (
           <>

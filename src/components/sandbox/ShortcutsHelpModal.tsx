@@ -1,4 +1,5 @@
 import { useEffect, useRef, type KeyboardEvent } from 'react';
+import { useI18n } from '../../i18n';
 import { shortcutRegistry, type ShortcutEntry } from '../../sandbox/shortcuts/registry';
 
 interface Props {
@@ -35,6 +36,7 @@ function ShortcutRow({ entry }: { readonly entry: ShortcutEntry }) {
 }
 
 export function ShortcutsHelpModal({ onClose }: Props) {
+  const { t } = useI18n();
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -118,11 +120,11 @@ export function ShortcutsHelpModal({ onClose }: Props) {
           }}
         >
           <h2 id="shortcuts-modal-heading" style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>
-            Keyboard shortcuts
+            {t('sandbox.edits.shortcuts.heading')}
           </h2>
           <button
             type="button"
-            aria-label="Close shortcuts help"
+            aria-label={t('sandbox.edits.shortcuts.close.label')}
             onClick={onClose}
             className="netlab-focus-ring"
             style={{
@@ -141,7 +143,7 @@ export function ShortcutsHelpModal({ onClose }: Props) {
         </div>
         <table
           style={{ borderCollapse: 'collapse', width: '100%' }}
-          aria-label="Keyboard shortcuts list"
+          aria-label={t('sandbox.edits.shortcuts.list.label')}
         >
           <thead>
             <tr>
@@ -155,7 +157,7 @@ export function ShortcutsHelpModal({ onClose }: Props) {
                   borderBottom: '1px solid var(--netlab-border)',
                 }}
               >
-                Key
+                {t('sandbox.edits.shortcuts.key')}
               </th>
               <th
                 scope="col"
@@ -167,7 +169,7 @@ export function ShortcutsHelpModal({ onClose }: Props) {
                   borderBottom: '1px solid var(--netlab-border)',
                 }}
               >
-                Action
+                {t('sandbox.edits.shortcuts.action')}
               </th>
             </tr>
           </thead>

@@ -1,5 +1,6 @@
 import { useContext, useState } from 'react';
 import { hookEngine as sharedHookEngine } from '../../hooks/HookEngine';
+import { useI18n } from '../../i18n';
 import type { PcapBranch } from '../../sandbox/pcap/exportSandboxPcap';
 import { exportSandboxPcap } from '../../sandbox/pcap/exportSandboxPcap';
 import { useSandbox } from '../../sandbox/useSandbox';
@@ -26,6 +27,7 @@ function triggerDownload(blob: Blob, filename: string): void {
 
 export function PcapDownloadButton({ forceBranch }: { readonly forceBranch?: PcapBranch }) {
   const sandbox = useSandbox();
+  const { t } = useI18n();
   const netlabContext = useContext(NetlabContext);
   const hookEngine = netlabContext?.hookEngine ?? sharedHookEngine;
   const isAlpha = sandbox.mode === 'alpha';
@@ -51,7 +53,7 @@ export function PcapDownloadButton({ forceBranch }: { readonly forceBranch?: Pca
     <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
       {!isAlpha && !forceBranch && (
         <select
-          aria-label="PCAP branch selection"
+          aria-label={t('sandbox.edits.pcap.branch.label')}
           value={betaBranch}
           onChange={(e) => setBetaBranch(e.target.value as PcapBranch)}
           style={{
@@ -69,10 +71,14 @@ export function PcapDownloadButton({ forceBranch }: { readonly forceBranch?: Pca
       )}
       <button
         type="button"
-        aria-label={`Download sandbox PCAP${forceBranch ? ` (${forceBranch})` : ''}`}
+        aria-label={
+          forceBranch
+            ? t('sandbox.edits.pcap.download.branchLabel', { branch: forceBranch })
+            : t('sandbox.edits.pcap.download.label')
+        }
         onClick={handleDownload}
         disabled={disabled}
-        title={disabled ? 'Disable Fast mode to enable PCAP export' : undefined}
+        title={disabled ? t('sandbox.edits.pcap.disabled.title') : undefined}
         className="netlab-focus-ring"
         style={{
           ...sessionIoButtonStyle,
@@ -80,7 +86,7 @@ export function PcapDownloadButton({ forceBranch }: { readonly forceBranch?: Pca
           cursor: disabled ? 'not-allowed' : sessionIoButtonStyle.cursor,
         }}
       >
-        PCAP
+        {t('sandbox.edits.pcap.text')}
       </button>
     </div>
   );

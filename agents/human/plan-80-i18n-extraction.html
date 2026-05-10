@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>plan/80 i18n 抽出フォローアップ</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        line-height: 1.6;
+      }
+      body {
+        margin: 0;
+        background: #f7f7f4;
+        color: #20231f;
+      }
+      main {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+      h1,
+      h2 {
+        line-height: 1.25;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 32px;
+      }
+      h2 {
+        margin-top: 28px;
+        font-size: 20px;
+      }
+      .lede {
+        max-width: 760px;
+        margin: 0 0 24px;
+        color: #4b5148;
+      }
+      section,
+      details {
+        border-top: 1px solid #d9ddd3;
+        padding-top: 18px;
+      }
+      code {
+        padding: 2px 5px;
+        border-radius: 4px;
+        background: #eceee7;
+      }
+      ul {
+        padding-left: 22px;
+      }
+      li {
+        margin: 8px 0;
+      }
+      .status {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+        margin: 18px 0;
+      }
+      .status div {
+        border: 1px solid #d9ddd3;
+        border-radius: 8px;
+        padding: 12px;
+        background: #fff;
+      }
+      summary {
+        cursor: pointer;
+        font-weight: 700;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #1b1d19;
+          color: #eef1ea;
+        }
+        .lede {
+          color: #c3c9bd;
+        }
+        section,
+        details,
+        .status div {
+          border-color: #3a4036;
+        }
+        .status div,
+        code {
+          background: #252922;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>plan/80 i18n 抽出フォローアップ</h1>
+      <p class="lede">
+        既に入っている i18n 基盤を変えず、未抽出の sandbox 関連 UI 文字列を英語カタログへ移します。
+        表示される英語文言は変更しません。
+      </p>
+
+      <section>
+        <h2>成功条件</h2>
+        <ul>
+          <li>Wave 1c〜1f の対象文字列が <code>t('sandbox.*')</code> に置き換わっている。</li>
+          <li>
+            抽出済みファイルが <code>I18N_ENFORCED_FILES</code> に追加され、回帰 lint が効く。
+          </li>
+          <li>catalog completeness と対象コンポーネントテストが通る。</li>
+          <li><code>plan/80.md</code> と i18n ドキュメントが実装状態と一致する。</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>作業順序</h2>
+        <div class="status">
+          <div><strong>1. baseline</strong><br />先に <code>npm run size</code> の現状を記録。</div>
+          <div><strong>2. intro</strong><br /><code>sandbox.intro.*</code> を抽出。</div>
+          <div>
+            <strong>3. edits/annotations</strong><br /><code>sandbox.edits.*</code> と
+            <code>sandbox.annotations.*</code> を抽出。
+          </div>
+          <div>
+            <strong>4. recording/snapshots</strong><br /><code>sandbox.recording.*</code> と
+            <code>sandbox.snapshots.*</code> を抽出。
+          </div>
+          <div><strong>5. assessment</strong><br /><code>sandbox.assessment.*</code> を抽出。</div>
+          <div><strong>6. validation</strong><br />targeted tests から full gate まで実行。</div>
+        </div>
+      </section>
+
+      <details>
+        <summary>注意点</summary>
+        <ul>
+          <li>annotation 本文、recording title、snapshot name などユーザー入力は i18n 対象外。</li>
+          <li>文言改善はしない。既存の英語文字列をそのままカタログ化する。</li>
+          <li>新しい i18n ライブラリや ICU 構文は導入しない。</li>
+        </ul>
+      </details>
+    </main>
+  </body>
+</html>

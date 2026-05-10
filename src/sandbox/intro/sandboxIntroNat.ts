@@ -1,4 +1,5 @@
 import type { PredicateInput, Tutorial } from '../../tutorials/types';
+import { intro } from '../../i18n/locales/en/intro';
 import { editOf, eventLog, findLastEditIndex, hasEvent, isRecord } from './predicateUtils';
 
 function openedNatNodeTab(input: PredicateInput): boolean {
@@ -50,38 +51,38 @@ function removedRuleAndRetried(input: PredicateInput): boolean {
 export const sandboxIntroNat: Tutorial = Object.freeze({
   id: 'sandbox-intro-nat',
   scenarioId: 'nat-basics',
-  title: 'NAT intro',
-  summary: 'Add DNAT, test it, remove it.',
+  title: intro['sandbox.intro.nat.title'],
+  summary: intro['sandbox.intro.nat.summary'],
   difficulty: 'intro',
   steps: Object.freeze([
     {
       id: 'open-node-tab',
-      title: 'Open Node',
-      description: 'Open Node.',
+      title: intro['sandbox.intro.nat.step.openNodeTab.title'],
+      description: intro['sandbox.intro.nat.step.openNodeTab.description'],
       predicate: openedNatNodeTab,
     },
     {
       id: 'add-dnat-rule',
-      title: 'Add DNAT',
-      description: 'Add DNAT.',
+      title: intro['sandbox.intro.nat.step.addDnatRule.title'],
+      description: intro['sandbox.intro.nat.step.addDnatRule.description'],
       predicate: addedDnatRule,
     },
     {
       id: 'launch-external-probe',
-      title: 'Launch outside',
-      description: 'Launch outside.',
+      title: intro['sandbox.intro.nat.step.launchExternalProbe.title'],
+      description: intro['sandbox.intro.nat.step.launchExternalProbe.description'],
       predicate: launchedExternalProbe,
     },
     {
       id: 'observe-dnat-translation',
-      title: 'Observe DNAT',
-      description: 'See rewrite.',
+      title: intro['sandbox.intro.nat.step.observeDnatTranslation.title'],
+      description: intro['sandbox.intro.nat.step.observeDnatTranslation.description'],
       predicate: observedDnatTranslation,
     },
     {
       id: 'remove-rule-and-retry',
-      title: 'Remove and retry',
-      description: 'Retry.',
+      title: intro['sandbox.intro.nat.step.removeRuleAndRetry.title'],
+      description: intro['sandbox.intro.nat.step.removeRuleAndRetry.description'],
       predicate: removedRuleAndRetried,
     },
   ]),

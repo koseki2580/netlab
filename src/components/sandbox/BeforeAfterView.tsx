@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useI18n } from '../../i18n';
 import { getSnapshotAt } from '../../sandbox/snapshots/getSnapshotAt';
 import type { NamedSnapshot } from '../../sandbox/snapshots/types';
 import { toEngine } from '../../sandbox/SimulationSnapshot';
@@ -34,6 +35,7 @@ export function BeforeAfterView({
   };
 } = {}) {
   const sandbox = useSandbox();
+  const { t } = useI18n();
   const [viewport, setViewport] = useState<NetlabViewport>({ x: 0, y: 0, zoom: 1 });
   const leftSnapshot = snapshotPair
     ? getSnapshotAt(sandbox.engine.root, sandbox.session, snapshotPair.left.editIndex)
@@ -111,7 +113,7 @@ export function BeforeAfterView({
     >
       <SimulationContext.Provider value={baselineValue}>
         <section
-          aria-label="Baseline simulation"
+          aria-label={t('sandbox.edits.beforeAfter.baseline')}
           style={{ flex: 1, minWidth: 0, position: 'relative', overflow: 'hidden' }}
         >
           <NetlabCanvas viewport={viewport} onViewportChange={setViewport} />
@@ -119,7 +121,7 @@ export function BeforeAfterView({
       </SimulationContext.Provider>
       <SimulationContext.Provider value={whatIfValue}>
         <section
-          aria-label="What-if simulation"
+          aria-label={t('sandbox.edits.beforeAfter.whatIf')}
           style={{ flex: 1, minWidth: 0, position: 'relative', overflow: 'hidden' }}
         >
           <NetlabCanvas viewport={viewport} onViewportChange={setViewport} />

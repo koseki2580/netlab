@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useI18n } from '../../i18n';
 import type { NamedSnapshot } from '../../sandbox/snapshots/types';
 import { useSandbox } from '../../sandbox/useSandbox';
 import { AnnotationListPanel } from './annotations/AnnotationListPanel';
@@ -9,6 +10,7 @@ import { SnapshotListSection } from './snapshots/SnapshotListSection';
 
 export function EditsTab() {
   const sandbox = useSandbox();
+  const { t } = useI18n();
   const [annotationsOnly, setAnnotationsOnly] = useState(false);
   const [comparePair, setComparePair] = useState<{
     readonly left: NamedSnapshot;
@@ -26,13 +28,13 @@ export function EditsTab() {
   };
 
   const resetAll = () => {
-    if (confirm(`This removes all ${activeCount} edits.`)) {
+    if (confirm(t('sandbox.edits.resetAll.confirm', { count: activeCount }))) {
       sandbox.resetAll();
     }
   };
 
   return (
-    <section aria-label="Sandbox edit history">
+    <section aria-label={t('sandbox.edits.history.label')}>
       {comparePair ? (
         <SnapshotCompareView
           snapshotA={comparePair.left}
@@ -41,16 +43,16 @@ export function EditsTab() {
         />
       ) : null}
       <header>
-        <h3 style={{ margin: 0, fontSize: 13 }}>History</h3>
+        <h3 style={{ margin: 0, fontSize: 13 }}>{t('sandbox.edits.history.heading')}</h3>
         <button
           type="button"
-          aria-label="Reset all edits"
+          aria-label={t('sandbox.edits.resetAll.label')}
           disabled={activeCount === 0}
           onClick={resetAll}
           className="netlab-focus-ring"
           style={buttonStyle}
         >
-          Reset all
+          {t('sandbox.edits.resetAll.text')}
         </button>
       </header>
       <label style={{ display: 'block', margin: '8px 0', fontSize: 11 }}>
@@ -59,7 +61,7 @@ export function EditsTab() {
           checked={annotationsOnly}
           onChange={(event) => setAnnotationsOnly(event.currentTarget.checked)}
         />{' '}
-        Show annotations only
+        {t('sandbox.edits.annotationsOnly')}
       </label>
 
       {annotationsOnly ? <AnnotationListPanel /> : null}
@@ -67,7 +69,9 @@ export function EditsTab() {
       <SnapshotListSection onComparePair={(left, right) => setComparePair({ left, right })} />
 
       {entries.length === 0 ? (
-        <p style={{ margin: 0, color: 'var(--netlab-text-muted)', fontSize: 11 }}>No edits yet</p>
+        <p style={{ margin: 0, color: 'var(--netlab-text-muted)', fontSize: 11 }}>
+          {t('sandbox.edits.empty')}
+        </p>
       ) : (
         <ol style={{ paddingLeft: 18, margin: 0 }}>
           {entries.map((edit, index) => (

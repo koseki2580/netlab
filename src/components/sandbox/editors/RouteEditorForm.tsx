@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useI18n } from '../../../i18n';
 import { useSandbox } from '../../../sandbox/useSandbox';
 import type { StaticRoute } from '../../../sandbox/types';
 import { validateStaticRoute } from '../../../sandbox/validation/route';
@@ -18,6 +19,7 @@ export function RouteEditorForm({
   readonly onSubmitted?: () => void;
 }) {
   const sandbox = useSandbox();
+  const { t } = useI18n();
   const topology = sandbox.engine.whatIf.getTopology();
   const node = topology.nodes.find((candidate) => candidate.id === nodeId);
   const interfaces = node?.data.interfaces ?? [];
@@ -51,7 +53,7 @@ export function RouteEditorForm({
     };
     const validation = validateStaticRoute(topology, nodeId, route);
     if (!validation.ok) {
-      setError(`Route rejected: ${validation.reason}`);
+      setError(t('sandbox.edits.editor.route.rejected', { reason: validation.reason }));
       return;
     }
 
@@ -61,14 +63,18 @@ export function RouteEditorForm({
   };
 
   if (!node) {
-    return <p style={{ color: 'var(--netlab-text-muted)' }}>Node not found.</p>;
+    return (
+      <p style={{ color: 'var(--netlab-text-muted)' }}>{t('sandbox.edits.editor.nodeMissing')}</p>
+    );
   }
 
   return (
-    <section style={sectionStyle} aria-label="Route editor">
-      <strong>Routes</strong>
+    <section style={sectionStyle} aria-label={t('sandbox.edits.editor.route.label')}>
+      <strong>{t('sandbox.edits.editor.route.heading')}</strong>
       {routeRows.length === 0 ? (
-        <span style={{ color: 'var(--netlab-text-muted)', fontSize: 11 }}>No static routes.</span>
+        <span style={{ color: 'var(--netlab-text-muted)', fontSize: 11 }}>
+          {t('sandbox.edits.editor.route.empty')}
+        </span>
       ) : (
         routeRows.map((route) => (
           <div key={route.id} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
@@ -88,13 +94,13 @@ export function RouteEditorForm({
                 onSubmitted?.();
               }}
             >
-              Remove
+              {t('sandbox.edits.editor.remove')}
             </button>
           </div>
         ))
       )}
       <label style={{ display: 'grid', gap: 3 }}>
-        <span>Prefix</span>
+        <span>{t('sandbox.edits.editor.route.prefix')}</span>
         <input
           value={prefix}
           onChange={(event) => setPrefix(event.target.value)}
@@ -102,18 +108,18 @@ export function RouteEditorForm({
         />
       </label>
       <label style={{ display: 'grid', gap: 3 }}>
-        <span>Next hop</span>
+        <span>{t('sandbox.edits.editor.route.nextHop')}</span>
         <input
-          aria-label="Next hop"
+          aria-label={t('sandbox.edits.editor.route.nextHop')}
           value={nextHop}
           onChange={(event) => setNextHop(event.target.value)}
           style={fieldStyle}
         />
       </label>
       <label style={{ display: 'grid', gap: 3 }}>
-        <span>Interface</span>
+        <span>{t('sandbox.edits.editor.route.interface')}</span>
         <select
-          aria-label="Route interface"
+          aria-label={t('sandbox.edits.editor.route.interfaceLabel')}
           value={outInterface}
           onChange={(event) => setOutInterface(event.target.value)}
           style={fieldStyle}
@@ -126,9 +132,9 @@ export function RouteEditorForm({
         </select>
       </label>
       <label style={{ display: 'grid', gap: 3 }}>
-        <span>Metric</span>
+        <span>{t('sandbox.edits.editor.route.metric')}</span>
         <input
-          aria-label="Route metric"
+          aria-label={t('sandbox.edits.editor.route.metricLabel')}
           value={metric}
           onChange={(event) => setMetric(event.target.value)}
           style={fieldStyle}
@@ -136,7 +142,7 @@ export function RouteEditorForm({
       </label>
       {error && <div style={{ color: 'var(--netlab-accent-red)', fontSize: 11 }}>{error}</div>}
       <button type="button" style={buttonStyle} onClick={submit}>
-        Add route
+        {t('sandbox.edits.editor.route.add')}
       </button>
     </section>
   );

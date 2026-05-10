@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import { useEffect, useState } from 'react';
 import { hookEngine } from '../../hooks/HookEngine';
+import { useI18n } from '../../i18n';
 import { useSandboxIntro } from '../../sandbox/intro/useSandboxIntro';
 
 const CARD_STYLE: CSSProperties = {
@@ -34,8 +35,19 @@ function buttonStyle(background: string): CSSProperties {
   };
 }
 
+function introKey(introId: string, slot: 'title' | 'summary'): string {
+  return `sandbox.intro.${introId.replace(/^sandbox-intro-/, '')}.${slot}`;
+}
+
+function stepKey(introId: string, stepId: string, slot: 'title' | 'description'): string {
+  const normalizedIntro = introId.replace(/^sandbox-intro-/, '');
+  const normalizedStep = stepId.replace(/-([a-z])/g, (_match, char: string) => char.toUpperCase());
+  return `sandbox.intro.${normalizedIntro}.step.${normalizedStep}.${slot}`;
+}
+
 export function SandboxIntroOverlay() {
   const intro = useSandboxIntro();
+  const { t } = useI18n();
   const [undoBlocked, setUndoBlocked] = useState(false);
 
   useEffect(() => {
@@ -70,38 +82,45 @@ export function SandboxIntroOverlay() {
         style={{ ...CARD_STYLE, pointerEvents: 'auto' }}
       >
         <div style={{ color: '#38bdf8', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em' }}>
-          SANDBOX INTRO
+          {t('sandbox.intro.chrome.label')}
         </div>
         <h2 id="netlab-sandbox-intro-title" style={{ margin: '10px 0 0', fontSize: 20 }}>
           {intro.status === 'pending'
-            ? intro.intro.title
-            : (intro.currentStep?.title ?? intro.intro.title)}
+            ? t(introKey(intro.intro.id, 'title'))
+            : intro.currentStep
+              ? t(stepKey(intro.intro.id, intro.currentStep.id, 'title'))
+              : t(introKey(intro.intro.id, 'title'))}
         </h2>
         <p style={{ ...MUTED_STYLE, margin: '8px 0 0' }}>
           {intro.status === 'pending'
-            ? intro.intro.summary
-            : (intro.currentStep?.description ?? intro.intro.summary)}
+            ? t(introKey(intro.intro.id, 'summary'))
+            : intro.currentStep
+              ? t(stepKey(intro.intro.id, intro.currentStep.id, 'description'))
+              : t(introKey(intro.intro.id, 'summary'))}
         </p>
         <p style={{ ...MUTED_STYLE, margin: '12px 0 0' }}>
-          Step {Math.min(intro.currentStepIndex + 1, intro.totalSteps)} / {intro.totalSteps}
+          {t('sandbox.intro.progress', {
+            current: Math.min(intro.currentStepIndex + 1, intro.totalSteps),
+            total: intro.totalSteps,
+          })}
         </p>
         {undoBlocked ? (
           <p role="status" style={{ ...MUTED_STYLE, margin: '10px 0 0' }}>
-            Undo is blocked for this intro step.
+            {t('sandbox.intro.undoBlocked')}
           </p>
         ) : null}
         <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
           {intro.status === 'pending' ? (
             <button type="button" onClick={intro.start} style={buttonStyle('#1d4ed8')}>
-              Start Intro
+              {t('sandbox.intro.start')}
             </button>
           ) : (
             <button type="button" onClick={intro.restart} style={buttonStyle('#1d4ed8')}>
-              Restart Intro
+              {t('sandbox.intro.restart')}
             </button>
           )}
           <button type="button" onClick={intro.skip} style={buttonStyle('#334155')}>
-            Skip Intro
+            {t('sandbox.intro.skip')}
           </button>
         </div>
       </section>

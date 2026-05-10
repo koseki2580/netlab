@@ -1,4 +1,5 @@
 import type { PredicateInput, Tutorial } from '../../tutorials/types';
+import { intro } from '../../i18n/locales/en/intro';
 import { editOf, hasEvent, isRecord } from './predicateUtils';
 
 function isPacketTab(input: PredicateInput): boolean {
@@ -38,38 +39,38 @@ function handshakeFailedAfterRst(input: PredicateInput): boolean {
 export const sandboxIntroTcp: Tutorial = Object.freeze({
   id: 'sandbox-intro-tcp',
   scenarioId: 'tcp-handshake',
-  title: 'TCP intro',
-  summary: 'Flip SYN to RST.',
+  title: intro['sandbox.intro.tcp.title'],
+  summary: intro['sandbox.intro.tcp.summary'],
   difficulty: 'intro',
   steps: Object.freeze([
     {
       id: 'open-packet-tab',
-      title: 'Open Packet',
-      description: 'Open Packet.',
+      title: intro['sandbox.intro.tcp.step.openPacketTab.title'],
+      description: intro['sandbox.intro.tcp.step.openPacketTab.description'],
       predicate: isPacketTab,
     },
     {
       id: 'pause-on-syn',
-      title: 'Launch TCP',
-      description: 'Launch TCP.',
+      title: intro['sandbox.intro.tcp.step.pauseOnSyn.title'],
+      description: intro['sandbox.intro.tcp.step.pauseOnSyn.description'],
       predicate: isPausedOnSyn,
     },
     {
       id: 'flip-syn-to-rst',
-      title: 'Flip SYN to RST',
-      description: 'SYN off, RST on.',
+      title: intro['sandbox.intro.tcp.step.flipSynToRst.title'],
+      description: intro['sandbox.intro.tcp.step.flipSynToRst.description'],
       predicate: hasSynFlippedToRst,
     },
     {
       id: 'resume-after-edit',
-      title: 'Resume',
-      description: 'Continue.',
+      title: intro['sandbox.intro.tcp.step.resumeAfterEdit.title'],
+      description: intro['sandbox.intro.tcp.step.resumeAfterEdit.description'],
       predicate: hasResumedAfterFlagEdit,
     },
     {
       id: 'observe-handshake-failure',
-      title: 'Observe reset',
-      description: 'Confirm reset.',
+      title: intro['sandbox.intro.tcp.step.observeHandshakeFailure.title'],
+      description: intro['sandbox.intro.tcp.step.observeHandshakeFailure.description'],
       predicate: handshakeFailedAfterRst,
     },
   ]),

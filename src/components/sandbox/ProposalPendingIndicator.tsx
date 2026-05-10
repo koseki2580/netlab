@@ -1,4 +1,7 @@
+import { useI18n } from '../../i18n';
+
 export function ProposalPendingIndicator({ count }: { readonly count: number }) {
+  const { t } = useI18n();
   if (count <= 0) return null;
 
   return (
@@ -16,7 +19,7 @@ export function ProposalPendingIndicator({ count }: { readonly count: number }) 
         lineHeight: 1.4,
       }}
     >
-      Pending proposals: {count}
+      {t('sandbox.edits.proposals.pending')} {count}
     </div>
   );
 }

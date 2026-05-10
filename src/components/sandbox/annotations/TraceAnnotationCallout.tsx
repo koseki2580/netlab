@@ -1,3 +1,4 @@
+import { useI18n } from '../../../i18n';
 import type { TraceAnnotation } from '../../../sandbox/annotations/types';
 
 export interface TraceAnnotationCalloutProps {
@@ -11,10 +12,11 @@ export function TraceAnnotationCallout({
   count = 1,
   onClick,
 }: TraceAnnotationCalloutProps) {
+  const { t } = useI18n();
   return (
     <button
       type="button"
-      aria-label={`Annotation by ${annotation.author}`}
+      aria-label={t('sandbox.annotations.callout.label', { author: annotation.author })}
       onClick={onClick}
       style={{
         minWidth: count > 1 ? 48 : 16,
