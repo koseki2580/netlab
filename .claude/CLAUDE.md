@@ -53,6 +53,17 @@ Before implementing:
 - To reduce ambiguity, write a short specification before implementation when requirements are unclear or behavior changes are significant
 - **If available and appropriate, consider using the `writing-plans` skill** when you have a spec or requirements for a multi-step task, before touching code.
 
+**Plan-first rule for implementations and fixes:**
+
+- For any implementation or modification, you MUST write a plan and obtain explicit user approval before starting the work.
+- For investigations or trivial fixes (typos, formatting-only changes), a plan is not required.
+
+**Plan artifacts — two formats, two audiences:**
+
+- **`agents/tasks/active/<task-name>.md`** — the canonical Markdown plan that Claude works from. Written in **English** and follows the existing task-file convention.
+- **`agents/human/<task-name>.html`** — a human-facing companion of the same plan, authored as a **single richly interactive HTML file** that makes the change concrete and visible. Show **the current state and the post-implementation state** so the human can see exactly what will change and what the desired outcome looks like. Make active use of **JavaScript, CSS, Mermaid, and SVG** to convey this — for example, before/after diff panels, animated or toggle-able diagrams, interactive flowcharts (Mermaid), illustrative SVG visuals, collapsible details, and syntax-highlighted code blocks. Infer the user's native language from the language of their request and author the HTML in that language.
+- When implementing, reference the HTML file as needed to stay aligned with what the human approved.
+
 ---
 
 ### 3. Sub-Agent Strategy
