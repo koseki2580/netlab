@@ -17,17 +17,155 @@ export type { FailureContextValue } from './simulation/FailureContext';
 
 // Failure simulation UI
 export { FailureTogglePanel } from './components/simulation/FailureTogglePanel';
+export { FlowCollectorPanel } from './components/observability/FlowCollectorPanel';
+export type { FlowCollectorPanelProps } from './components/observability/FlowCollectorPanel';
 
 // Simulation types
 export type {
   NatTranslation,
+  EcmpTrace,
+  ObservabilityTrace,
   PacketHop,
   PacketTrace,
   RoutingCandidate,
   RoutingDecision,
+  ShaperTrace,
   SimulationState,
   SimulationStatus,
 } from './types/simulation';
+export type { TlsAnnotation } from './types/tls';
+export {
+  NETFLOW_TEMPLATE_ID,
+  NETFLOW_VERSION,
+  SFLOW_SAMPLE_FORMAT_FLOW,
+  SFLOW_VERSION,
+} from './types/observability';
+export type {
+  FlowProtocol,
+  NetflowConfig,
+  NetflowRecord,
+  SflowConfig,
+  SflowSample,
+} from './types/observability';
+export { FlowCollector } from './observability/FlowCollector';
+export type {
+  FlowCollectorFilter,
+  FlowCollectorOptions,
+  FlowEvent,
+  FlowSubscriber,
+} from './observability/FlowCollector';
+export {
+  TLS_AES_128_GCM_SHA256,
+  TLS_GROUP_X25519,
+  TLS_RECORD_LEGACY_VERSION,
+  TLS_SIGNATURE_ED25519,
+  TLS_VERSION_1_3,
+} from './types/tls';
+export type {
+  TlsAlertDescription,
+  TlsAlertLevel,
+  TlsClientHello,
+  TlsConnectionContext,
+  TlsContentType,
+  TlsHandshakeState,
+  TlsRecord,
+  TlsServerConfig,
+  TlsServerHello,
+} from './types/tls';
+export { FakeDeterministicProvider, buildHkdfLabel } from './crypto/FakeDeterministicProvider';
+export { WebCryptoProvider, aeadNonce } from './crypto/WebCryptoProvider';
+export { selectProvider, resolveProviderSync } from './crypto/select';
+export type { CryptoProviderSelection } from './crypto/select';
+export { CryptoContext, useCrypto } from './crypto/CryptoContext';
+export type {
+  CapabilitySet,
+  CryptoCurve,
+  CryptoHash,
+  CryptoProvider,
+  CryptoProviderId,
+  ProviderInfo,
+} from './crypto/CryptoProvider';
+export {
+  ProgressContext,
+  ProgressProvider,
+  createMemoryProgressStorage,
+  createSafeProgressStorage,
+  isValidLearnerId,
+  parseProgressJson,
+  progressStorageKey,
+  safeStorage,
+  useOptionalProgress,
+  useProgress,
+} from './progress';
+export type {
+  LearnerProgress,
+  ProgressCompletion,
+  ProgressCompletionInput,
+  ProgressCompletionKind,
+  ProgressContextValue,
+  ProgressImportOptions,
+  ProgressImportResult,
+  ProgressProviderProps,
+  ProgressScore,
+  ProgressStorageBackend,
+  SafeProgressStorage,
+} from './progress';
+export { TlsOrchestrator } from './layers/l5-tls/TlsOrchestrator';
+export type { TlsHandshakeOptions, TlsHandshakeRun } from './layers/l5-tls/TlsOrchestrator';
+export { negotiateAlpn } from './layers/l5-tls/TlsAlpn';
+export {
+  decodeQuicVarint,
+  deriveQuicKeys,
+  encodeQuicVarint,
+  openQuicPayload,
+  parseQuicFrame,
+  protectQuicPayload,
+  QuicHandshake,
+  reassembleQuicStream,
+  respondToPathChallenge,
+  serializeQuicFrame,
+  startPathValidation,
+  streamDirection,
+  streamInitiator,
+} from './layers/l4-transport';
+export type {
+  QuicAeadKeys,
+  QuicAnnotation,
+  QuicFrame,
+  QuicHandshakeRun,
+  QuicPathChallenge,
+  QuicStreamChunk,
+} from './layers/l4-transport';
+export {
+  decodeHpack,
+  decodeQpack,
+  encodeHpack,
+  encodeQpack,
+  HPACK_STATIC_TABLE,
+  hpackStaticHeader,
+  hpackStaticIndex,
+  Http2Orchestrator,
+  Http3Orchestrator,
+  HTTP2_FLAGS,
+  HTTP2_FRAME_TYPE,
+  parseHttp2Frame,
+  parseHttp3Frame,
+  QPACK_STATIC_TABLE,
+  qpackStaticHeader,
+  qpackStaticIndex,
+  serializeHttp2Frame,
+  serializeHttp3Frame,
+} from './layers/l7-application';
+export type {
+  HeaderTuple,
+  Http2Frame,
+  Http2Run,
+  Http2Setting,
+  Http2StreamSummary,
+  Http3Frame,
+  Http3Run,
+  Http3StreamSummary,
+} from './layers/l7-application';
 
 // Simulation engine
 export { SimulationEngine } from './simulation/SimulationEngine';
@@ -78,6 +216,12 @@ export {
 } from './simulation/SessionContext';
 export type { SessionContextValue, SessionProviderProps } from './simulation/SessionContext';
 export { SessionTracker } from './simulation/SessionTracker';
+export {
+  distanceMeters,
+  lossPctFromRssi,
+  rssiDbm,
+  wirelessLinkQosFromRssi,
+} from './utils/pathLoss';
 
 // Simulation UI components
 export { HopInspector } from './components/simulation/HopInspector';
@@ -89,6 +233,8 @@ export { SessionDetail } from './components/simulation/SessionDetail';
 export { SessionList } from './components/simulation/SessionList';
 export { SimulationControls } from './components/simulation/SimulationControls';
 export { StepControls } from './components/simulation/StepControls';
+export { TlsHandshakeView } from './components/simulation/TlsHandshakeView';
+export type { TlsHandshakeViewProps } from './components/simulation/TlsHandshakeView';
 export { TraceSelector } from './components/simulation/TraceSelector';
 export { TraceSummary } from './components/simulation/TraceSummary';
 
@@ -109,17 +255,27 @@ export type {
   DnsMessage,
   DnsQuestion,
   DnsRecord,
+  DscpCodePointName,
   EthernetFrame,
   HttpMessage,
   IcmpMessage,
+  Icmpv6Message,
   InFlightPacket,
   IpPacket,
+  Ipv6Packet,
   Packet,
   RawPayload,
   TcpFlags,
   TcpSegment,
   UdpDatagram,
   VlanTag,
+} from './types/packets';
+export {
+  DSCP_CODE_POINTS,
+  assertDscp,
+  dscpFromTos,
+  isIpv6Packet,
+  tosFromDscp,
 } from './types/packets';
 export type {
   TcpAction,
@@ -129,6 +285,61 @@ export type {
   TcpState,
   TcpTransitionResult,
 } from './types/tcp';
+export type {
+  TcpCongestionEvent,
+  TcpCongestionPhase,
+  TcpCongestionState,
+} from './types/tcp-congestion';
+export {
+  isAckReceivedEvent,
+  isCwndUpdateEvent,
+  isDupAckEvent,
+  isFastRetransmitEvent,
+  isPhaseChangeEvent,
+  isRtoFireEvent,
+  isSegmentSentEvent,
+  isTcpCongestionEvent,
+} from './types/tcp-congestion';
+
+export type {
+  LinkQosConfig,
+  LinkQosDropReason,
+  LinkQosTrace,
+  LinkShaperClass,
+  LinkShaperConfig,
+  NormalizedLinkQosConfig,
+} from './types/link';
+export { hasActiveLinkQos, normalizeLinkQos } from './types/link';
+export type { LacpConfig, LacpPdu, LacpPortState, LacpRuntimePort } from './types/lacp';
+export type { VrrpConfig, VrrpEvent, VrrpMember, VrrpRole, VrrpState } from './types/vrrp';
+export type {
+  WifiConfig,
+  WifiRole,
+  WirelessAssociationPhase,
+  WirelessAssociationState,
+  WirelessEvent,
+  WirelessLinkConfig,
+} from './types/wireless';
+export type {
+  EvpnMacIpEntry,
+  EvpnRoute,
+  EvpnType2,
+  EvpnType5,
+  GreEnvelope,
+  GreHeader,
+  GreTunnelConfig,
+  MplsLabel,
+  MplsLabelStack,
+  RouteDistinguisher,
+  RouteTarget,
+  Vpnv4Route,
+  VrfConfig,
+  VrfRuntime,
+  VtepConfig,
+  VxlanEncapConfig,
+  VxlanEnvelope,
+  VxlanHeader,
+} from './types/tunneling';
 
 export type {
   ForwardContext,
@@ -157,6 +368,7 @@ export type {
   BgpConfig,
   BgpNeighborConfig,
   BgpPathAttributes,
+  EqualCostNextHop,
   OspfAreaConfig,
   OspfConfig,
   PortForwardingRule,
@@ -165,15 +377,56 @@ export type {
   RouteEntry,
   RouterInterface,
   RoutingProtocol,
+  StaticRoute6Config,
   StaticRouteConfig,
   SubInterface,
   TopologyChangeEvent,
 } from './types/routing';
+export {
+  bucketFlow,
+  flowKeyFromIpPacket,
+  flowKeyFromPacket,
+  hashFlow,
+  hashString32,
+  serializeFlowKey,
+} from './utils/hashFlow';
+export type { FlowKey } from './utils/hashFlow';
+export { parseGreHeader, serializeGreHeader } from './layers/l3-network/tunneling/GreHeader';
+export { decapGre, encapGre } from './layers/l3-network/tunneling/GreEncap';
+export {
+  parseMplsStack,
+  popMplsLabel,
+  pushMplsLabel,
+  serializeMplsStack,
+  swapMplsLabel,
+} from './layers/l3-network/tunneling/MplsLabelStack';
+export { convergeLdp } from './layers/l3-network/tunneling/MplsLdp';
+export { installVpnv4Route, lookupVrfRoute } from './layers/l3-network/tunneling/MplsVrf';
+export { parseVxlanHeader, serializeVxlanHeader } from './layers/l3-network/tunneling/VxlanHeader';
+export { decapVxlan, encapVxlan, replicateBum } from './layers/l3-network/tunneling/VxlanEncap';
+export {
+  advertiseType2,
+  advertiseType5,
+  learnType2,
+} from './layers/l3-network/tunneling/EvpnControlPlane';
+export { answerArpFromEvpnCache } from './layers/l3-network/tunneling/ArpSuppression';
 
 export type { AreaType, AreaVisualConfig, NetworkArea } from './types/areas';
 
 export { ICMP_CODE, ICMP_TYPE } from './simulation/icmp';
 export type { IcmpCode, IcmpType } from './simulation/icmp';
+export {
+  ICMPV6_CODE,
+  ICMPV6_TYPE,
+  buildIcmpv6EchoReply,
+  buildIcmpv6EchoRequest,
+  buildNeighborAdvertisement,
+  buildNeighborSolicitation,
+  applyRouterAdvertisement,
+  buildRouterAdvertisement,
+} from './simulation/icmpv6';
+export type { Icmpv6Code, Icmpv6Type, RouterAdvertisementResult } from './simulation/icmpv6';
+export { NdpCache } from './simulation/NdpCache';
 export type {
   BridgeId,
   NetlabEdge,
@@ -211,7 +464,7 @@ export { HookEngine, hookEngine } from './hooks/HookEngine';
 export { useNetlabHooks } from './hooks/useNetlabHooks';
 
 // Scenarios + tutorials
-export { scenarioRegistry, ScenarioRegistry } from './scenarios';
+export { scenarioRegistry, ScenarioRegistry } from './scenarios/ScenarioRegistry';
 export type { Scenario, ScenarioMetadata, ScenarioSampleFlow } from './scenarios/types';
 export { tutorialRegistry, TutorialRunner, TutorialProvider, useTutorialRunner } from './tutorials';
 export type {
@@ -286,6 +539,20 @@ export type {
 
 // Routing protocols
 export {
+  deterministicBackoffSlot,
+  detectHiddenNodeCollision,
+  transitionWirelessState,
+  WirelessLinkController,
+  WpaFourWayHandshake,
+} from './layers/l1-physical';
+export type {
+  HiddenNodeCollisionInput,
+  HiddenNodeTransmission,
+  WpaFourWayHandshakeInput,
+  WpaFourWayHandshakeResult,
+  WpaHandshakeMessage,
+} from './layers/l1-physical';
+export {
   collectSwitchBridges,
   compareBridgeId,
   computeStp,
@@ -293,9 +560,19 @@ export {
   DEFAULT_STP_PATH_COST,
   electRoot,
   formatBridgeId,
+  lacpTimeoutMs,
   makeBridgeId,
+  PortChannel,
+  receiveLacpPdu,
 } from './layers/l2-datalink';
-export type { StpResult, SwitchBridge } from './layers/l2-datalink';
+export type { PortChannelConfig, StpResult, SwitchBridge } from './layers/l2-datalink';
+export {
+  electVrrpMaster,
+  masterDownIntervalMs,
+  transitionVrrpState,
+  virtualRouterMac,
+  VrrpOrchestrator,
+} from './layers/l3-network';
 export { TcpConnectionTracker } from './layers/l4-transport/TcpConnectionTracker';
 export { TcpOrchestrator } from './layers/l4-transport/TcpOrchestrator';
 export type { TcpHandshakeResult, TcpTeardownResult } from './layers/l4-transport/TcpOrchestrator';
@@ -316,9 +593,40 @@ export {
 export { buildUdpPacket, generateEphemeralPort } from './layers/l4-transport/udpPacketBuilder';
 export type { UdpPacketOptions } from './layers/l4-transport/udpPacketBuilder';
 export { BgpProtocol, bgpProtocol } from './routing/bgp/BgpProtocol';
+export { decodeMpReachNlri, encodeMpReachNlri } from './routing/bgp/BgpMpReachNlri';
+export type { MpReachNlri } from './routing/bgp/BgpMpReachNlri';
+export { inferRouteAddressFamily, routeResolutionKey } from './routing/AddressFamily';
+export type { AddressFamily, FamilyAware } from './routing/AddressFamily';
 export { OspfProtocol, ospfProtocol } from './routing/ospf/OspfProtocol';
+export {
+  buildOspfV3Hello,
+  buildOspfV3LinkLsa,
+  OspfV3Protocol,
+  ospfV3Protocol,
+} from './routing/ospf/OspfV3Protocol';
+export type {
+  OspfV3Hello,
+  OspfV3IntraAreaPrefixLsa,
+  OspfV3LinkLsa,
+} from './routing/ospf/OspfV3Protocol';
 export { RipProtocol, ripProtocol } from './routing/rip/RipProtocol';
 export { StaticProtocol, staticProtocol } from './routing/static/StaticProtocol';
+export { Dhcpv6Client } from './services/dhcpv6/Dhcpv6Client';
+export { Dhcpv6Server } from './services/dhcpv6/Dhcpv6Server';
+export {
+  buildDuidLl,
+  decodeDhcpv6Options,
+  encodeDhcpv6Options,
+} from './services/dhcpv6/Dhcpv6Options';
+export type { Dhcpv6RawOption } from './services/dhcpv6/Dhcpv6Options';
+export { DHCPV6_MESSAGE_TYPE } from './services/dhcpv6/Dhcpv6MessageTypes';
+export type {
+  Dhcpv6IaAddress,
+  Dhcpv6IaNa,
+  Dhcpv6Lease,
+  Dhcpv6Message,
+  Dhcpv6MessageType,
+} from './services/dhcpv6/Dhcpv6MessageTypes';
 export {
   UDP_EPHEMERAL_PORT_MAX,
   UDP_EPHEMERAL_PORT_MIN,
@@ -377,6 +685,15 @@ export type { ResizableSidebarProps } from './components/ResizableSidebar';
 
 // Utilities
 export { isInSameSubnet, isInSubnet, parseCidr } from './utils/cidr';
+export {
+  canonicalizeIpv6,
+  deriveEui64InterfaceId,
+  isInIpv6Subnet,
+  isIpv6Address,
+  parseIpv6,
+  parseIpv6Cidr,
+  prefixLength6,
+} from './utils/ipv6';
 export {
   isValidConnection,
   isValidConnectionBetweenNodes,

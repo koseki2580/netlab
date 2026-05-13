@@ -1,6 +1,7 @@
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ProgressPanel } from '../src/components/progress/ProgressPanel';
 import { scenarioRegistry } from '../src/scenarios';
 import { NETLAB_DARK_THEME, NETLAB_LIGHT_THEME, themeToVars } from '../src/theme';
 import { tutorialRegistry } from '../src/tutorials';
@@ -135,6 +136,80 @@ const CATEGORIES: Category[] = [
         meta: { difficulty: 'advanced', tags: ['L3', 'ICMP'] },
       },
       {
+        path: '/networking/link-qos',
+        title: 'Per-Link QoS',
+        desc: 'Constrain one routed link with bandwidth, propagation delay, seeded loss, and a finite drop-tail queue.',
+        sandboxReady: true,
+        defaultSandboxTab: 'node',
+        meta: { difficulty: 'advanced', tags: ['QoS', 'Loss'] },
+      },
+      {
+        path: '/networking/dscp',
+        title: 'DSCP Shaping',
+        desc: 'Classify EF and best-effort packets into DRR traffic classes on a shaped link.',
+        meta: { difficulty: 'advanced', tags: ['QoS', 'DSCP'] },
+      },
+      {
+        path: '/networking/ecmp',
+        title: 'ECMP Multipath',
+        desc: 'Hash equal-cost routed flows across two spine paths and inspect the selected bucket per flow.',
+        meta: { difficulty: 'advanced', tags: ['Routing', 'ECMP'] },
+      },
+      {
+        path: '/networking/ipv6',
+        title: 'IPv6 Dual-Stack',
+        desc: 'Send ICMPv6 echo across a dual-stack router and compare v4/v6 route-table entries.',
+        meta: { difficulty: 'advanced', tags: ['IPv6', 'ICMPv6'] },
+      },
+      {
+        path: '/networking/ipv6-routing',
+        title: 'IPv6 Routing Ecosystem',
+        desc: 'Compare OSPFv3 ECMP with MP-BGP IPv6 unicast route exchange.',
+        meta: { difficulty: 'advanced', tags: ['IPv6', 'OSPFv3', 'BGP'] },
+      },
+      {
+        path: '/networking/dhcpv6',
+        title: 'DHCPv6 And SLAAC',
+        desc: 'Toggle Router Advertisement M/O flags and inspect DHCPv6 versus SLAAC address behavior.',
+        meta: { difficulty: 'advanced', tags: ['IPv6', 'DHCPv6', 'SLAAC'] },
+      },
+      {
+        path: '/networking/ha',
+        title: 'Gateway HA And Link Aggregation',
+        desc: 'Fail a first-hop gateway and a LACP member while VRRP and port-channel hashing stay deterministic.',
+        meta: { difficulty: 'advanced', tags: ['VRRP', 'HSRP', 'LACP'] },
+      },
+      {
+        path: '/networking/wireless',
+        title: 'Wireless 802.11',
+        desc: 'Inspect RSSI-derived loss, association, WPA2 four-way messages, and hidden-node collision behavior.',
+        meta: { difficulty: 'advanced', tags: ['Wi-Fi', 'WPA2', 'CSMA/CA'] },
+      },
+      {
+        path: '/networking/tunneling/gre',
+        title: 'GRE Tunnel',
+        desc: 'Wrap an inner IP packet in GRE over an IPv4 underlay and toggle the tunnel key.',
+        meta: { difficulty: 'advanced', tags: ['GRE', 'Overlay'] },
+      },
+      {
+        path: '/networking/tunneling/mpls-l3vpn',
+        title: 'MPLS L3VPN',
+        desc: 'Inspect LDP label mappings, a VPNv4 route import, and a two-label L3VPN stack.',
+        meta: { difficulty: 'advanced', tags: ['MPLS', 'L3VPN'] },
+      },
+      {
+        path: '/networking/tunneling/vxlan-evpn',
+        title: 'VXLAN EVPN',
+        desc: 'Inspect VXLAN UDP/4789 encapsulation, EVPN Type-2/Type-5 learning, and ARP suppression.',
+        meta: { difficulty: 'advanced', tags: ['VXLAN', 'EVPN'] },
+      },
+      {
+        path: '/networking/observability',
+        title: 'Flow Observability',
+        desc: 'Inspect router NetFlow updates and deterministic switch sFlow samples for each forwarded flow.',
+        meta: { difficulty: 'advanced', tags: ['NetFlow', 'sFlow'] },
+      },
+      {
         path: '/networking/udp',
         title: 'UDP Datagram',
         desc: 'Fire a stateless UDP datagram with no handshake. Adjust the port and payload, or send a large payload to trigger fragmentation.',
@@ -145,6 +220,24 @@ const CATEGORIES: Category[] = [
         title: 'HTTP/1.1',
         desc: 'Send GET and POST requests over TCP. Inspect the HTTP request/response lifecycle with Connection: close semantics.',
         meta: { difficulty: 'intermediate', tags: ['L7', 'HTTP'] },
+      },
+      {
+        path: '/networking/https',
+        title: 'HTTPS TLS 1.3',
+        desc: 'Inspect a deterministic TLS 1.3 handshake before HTTP/1.1 application data.',
+        meta: { difficulty: 'advanced', tags: ['TLS', 'HTTPS'] },
+      },
+      {
+        path: '/networking/http2',
+        title: 'HTTP/2 Multiplexing',
+        desc: 'Inspect interleaved HTTP/2 streams and TCP transport head-of-line blocking.',
+        meta: { difficulty: 'advanced', tags: ['HTTP/2', 'HOL'] },
+      },
+      {
+        path: '/networking/http3',
+        title: 'HTTP/3 over QUIC',
+        desc: 'Inspect QUIC stream isolation and HTTP/3 frame flow under per-stream loss.',
+        meta: { difficulty: 'advanced', tags: ['HTTP/3', 'QUIC'] },
       },
       {
         path: '/areas/dmz',
@@ -239,6 +332,12 @@ const CATEGORIES: Category[] = [
         meta: { difficulty: 'intermediate', tags: ['L4', 'TCP'] },
       },
       {
+        path: '/simulation/tcp-congestion',
+        title: 'TCP Congestion Control',
+        desc: 'Watch slow start, congestion avoidance, fast retransmit, recovery, and RTO on a deterministic loss trace.',
+        meta: { difficulty: 'advanced', tags: ['L4', 'TCP'] },
+      },
+      {
         path: '/simulation/enterprise',
         title: 'Enterprise Edge',
         desc: 'Boot a corporate client with DHCP, resolve internal DNS, browse through NAT, and inspect ACL decisions in one topology.',
@@ -299,11 +398,75 @@ export { CATEGORIES };
 export type { Category, DemoCard };
 
 type GalleryThemeMode = 'light' | 'dark';
+type GalleryLocale = 'en' | 'ja';
 
 interface GalleryProps {
   initialQuery?: string;
   initialThemeMode?: GalleryThemeMode;
   initialActiveSectionId?: string;
+  initialLocale?: GalleryLocale;
+}
+
+const GALLERY_LOCALE_KEY = 'netlab-locale';
+
+const GALLERY_COPY: Record<
+  GalleryLocale,
+  {
+    themeEyebrow: Record<GalleryThemeMode, string>;
+    title: string;
+    body: string;
+    localeLabel: string;
+    demos: string;
+    guidedIntros: string;
+    assessments: string;
+    sandboxReady: string;
+    filteredFrom: string;
+  }
+> = {
+  en: {
+    themeEyebrow: {
+      light: 'Light-mode demo index',
+      dark: 'Dark-mode demo index',
+    },
+    title: 'Demo gallery',
+    body: 'Browse packet-level intros, protocol drills, and full-stack topologies without the flat single-surface look. Each track now has its own visual layer so you can scan by category before opening a demo.',
+    localeLabel: 'Language',
+    demos: 'demos',
+    guidedIntros: 'guided intros',
+    assessments: 'assessments',
+    sandboxReady: 'sandbox-ready',
+    filteredFrom: 'filtered from',
+  },
+  ja: {
+    themeEyebrow: {
+      light: 'ライトモードのデモ一覧',
+      dark: 'ダークモードのデモ一覧',
+    },
+    title: 'デモギャラリー',
+    body: 'パケット単位のイントロ、プロトコル演習、フルスタックのトポロジをカテゴリごとに見渡せます。デモを開く前に、学びたい領域をすばやく絞り込めます。',
+    localeLabel: '言語',
+    demos: '件のデモ',
+    guidedIntros: '件のガイド',
+    assessments: '件のアセスメント',
+    sandboxReady: '件がサンドボックス対応',
+    filteredFrom: '全件数',
+  },
+};
+
+function isGalleryLocale(value: string | null): value is GalleryLocale {
+  return value === 'en' || value === 'ja';
+}
+
+function readStoredGalleryLocale(): GalleryLocale {
+  if (typeof window === 'undefined') {
+    return 'en';
+  }
+  try {
+    const value = window.localStorage.getItem(GALLERY_LOCALE_KEY);
+    return isGalleryLocale(value) ? value : 'en';
+  } catch {
+    return 'en';
+  }
 }
 
 const SANDBOX_DEMO_ORDER = new Map(
@@ -508,6 +671,70 @@ function ThemeModeToggle({
   );
 }
 
+function LocaleToggle({
+  locale,
+  label,
+  onChange,
+}: {
+  locale: GalleryLocale;
+  label: string;
+  onChange: (locale: GalleryLocale) => void;
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
+      <span
+        style={{
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: 0.8,
+          color: 'var(--netlab-text-muted)',
+          textTransform: 'uppercase',
+        }}
+      >
+        {label}
+      </span>
+      <div
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: 4,
+          borderRadius: 999,
+          background: 'color-mix(in srgb, var(--netlab-bg-surface) 72%, var(--netlab-bg-primary))',
+          border: '1px solid var(--netlab-border)',
+        }}
+      >
+        {(['en', 'ja'] as const).map((option) => {
+          const isActive = locale === option;
+          return (
+            <button
+              key={option}
+              type="button"
+              aria-pressed={isActive}
+              onClick={() => onChange(option)}
+              style={{
+                border: 'none',
+                borderRadius: 999,
+                padding: '7px 12px',
+                background: isActive
+                  ? 'color-mix(in srgb, var(--netlab-accent-green) 14%, var(--netlab-bg-surface))'
+                  : 'transparent',
+                color: isActive ? 'var(--netlab-text-primary)' : 'var(--netlab-text-secondary)',
+                fontFamily: 'monospace',
+                fontSize: 11,
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              {option === 'en' ? 'en' : '日本語'}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function SectionHeader({
   dot,
   title,
@@ -572,13 +799,18 @@ export default function Gallery({
   initialQuery = '',
   initialThemeMode = 'light',
   initialActiveSectionId = 'featured',
+  initialLocale,
 }: GalleryProps) {
   const [query, setQuery] = useState(initialQuery);
   const [themeMode, setThemeMode] = useState<GalleryThemeMode>(initialThemeMode);
   const [activeSectionId, setActiveSectionId] = useState(initialActiveSectionId);
+  const [locale, setLocale] = useState<GalleryLocale>(
+    () => initialLocale ?? readStoredGalleryLocale(),
+  );
   const mainRef = useRef<HTMLElement | null>(null);
   const normalizedQuery = query.trim().toLowerCase();
   const activeTheme = themeMode === 'dark' ? NETLAB_DARK_THEME : NETLAB_LIGHT_THEME;
+  const copy = GALLERY_COPY[locale];
 
   const filteredCategories = useMemo(() => {
     if (!normalizedQuery) {
@@ -634,6 +866,17 @@ export default function Gallery({
   }, [assessmentDemos.length, filteredCategories, filteredIntros.length]);
 
   const visibleSectionIds = browseItems.map((item) => item.id);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    try {
+      window.localStorage.setItem(GALLERY_LOCALE_KEY, locale);
+    } catch {
+      // Storage is optional for embedded/private contexts.
+    }
+  }, [locale]);
 
   useEffect(() => {
     if (visibleSectionIds.length === 0) {
@@ -775,7 +1018,7 @@ export default function Gallery({
                 marginBottom: 12,
               }}
             >
-              {themeMode === 'light' ? 'Light-mode demo index' : 'Dark-mode demo index'}
+              {copy.themeEyebrow[themeMode]}
             </div>
             <h1
               style={{
@@ -785,7 +1028,7 @@ export default function Gallery({
                 margin: 0,
               }}
             >
-              Demo gallery
+              {copy.title}
             </h1>
             <p
               style={{
@@ -796,26 +1039,24 @@ export default function Gallery({
                 maxWidth: 620,
               }}
             >
-              Browse packet-level intros, protocol drills, and full-stack topologies without the
-              flat single-surface look. Each track now has its own visual layer so you can scan by
-              category before opening a demo.
+              {copy.body}
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
               <span style={getStatChipStyle('var(--netlab-accent-blue)')}>
-                {allDemos.length} demos
+                {allDemos.length} {copy.demos}
               </span>
               <span style={getStatChipStyle('var(--netlab-accent-yellow)')}>
-                {filteredIntros.length} guided intros
+                {filteredIntros.length} {copy.guidedIntros}
               </span>
               <span style={getStatChipStyle('var(--netlab-accent-green)')}>
-                {assessmentDemos.length} assessments
+                {assessmentDemos.length} {copy.assessments}
               </span>
               <span style={getStatChipStyle('var(--netlab-accent-cyan)')}>
-                {sandboxDemos} sandbox-ready
+                {sandboxDemos} {copy.sandboxReady}
               </span>
               {normalizedQuery && (
                 <span style={getStatChipStyle('var(--netlab-accent-orange)')}>
-                  filtered from {totalDemoCount}
+                  {copy.filteredFrom} {totalDemoCount}
                 </span>
               )}
             </div>
@@ -830,6 +1071,7 @@ export default function Gallery({
             }}
           >
             <ThemeModeToggle themeMode={themeMode} onChange={setThemeMode} />
+            <LocaleToggle locale={locale} label={copy.localeLabel} onChange={setLocale} />
             <SearchBox
               value={query}
               onChange={setQuery}
@@ -841,6 +1083,8 @@ export default function Gallery({
         </div>
 
         <div style={{ padding: '28px 0 0', display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <ProgressPanel />
+
           {filteredIntros.length > 0 && (
             <div data-gallery-section="featured">
               <FeaturedStrip intros={filteredIntros} />
@@ -870,6 +1114,7 @@ export default function Gallery({
                       key={demo.path}
                       demo={demo}
                       category={cat}
+                      progressTargetId={demo.scenarioId ?? demo.path}
                       tutorialHref={
                         tutorial
                           ? `?tutorial=${encodeURIComponent(tutorial.id)}#${demo.path}`
@@ -907,6 +1152,7 @@ export default function Gallery({
                       key={demo.path}
                       demo={demo}
                       category={cat}
+                      progressTargetId={demo.scenarioId ?? demo.path}
                       tutorialHref={
                         tutorial
                           ? `?tutorial=${encodeURIComponent(tutorial.id)}#${demo.path}`

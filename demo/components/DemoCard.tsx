@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { ProgressBadge } from '../../src/components/progress/ProgressBadge';
 import { getDemoIcon } from './demoIcons';
 
 interface DemoCardData {
@@ -93,6 +94,7 @@ interface DemoCardProps {
   tutorialHref: string | null;
   sandboxHref: string | null;
   assessmentHref: string | null;
+  progressTargetId?: string;
 }
 
 export function DemoCard({
@@ -101,6 +103,7 @@ export function DemoCard({
   tutorialHref,
   sandboxHref,
   assessmentHref,
+  progressTargetId,
 }: DemoCardProps) {
   const difficulty = demo.meta?.difficulty;
   const tags = demo.meta?.tags ?? [];
@@ -178,6 +181,7 @@ export function DemoCard({
           {protoTags.map((tag) => (
             <Tag key={tag} label={tag} bg={PROTO_TAG_STYLE.bg} fg={PROTO_TAG_STYLE.fg} />
           ))}
+          {progressTargetId && <ProgressBadge targetId={progressTargetId} />}
         </div>
       )}
 

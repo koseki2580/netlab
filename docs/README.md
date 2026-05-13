@@ -24,6 +24,8 @@ Core specifications for the overall design of Netlab and for creating extensions
 - [Overview](core/overview.md) - General concepts and basic structure of Netlab
 - [Architecture](core/architecture.md) - Overall system structure and design of key components
 - [API](core/api.md) - API specifications for external and internal use
+- [API Deprecation Lifecycle](core/deprecation-lifecycle.md) - Required runway, removal tags, and migration guidance for public API deprecations
+- [Scenarios](core/scenarios.md) - Pure-data scenario primitive, built-in registry, and registration contract
 - [Controlled Topology API](api/controlled-topology.md) - Prop-based controlled/uncontrolled topology state with mutation callbacks
 - [Controlled Topology + Sandbox](api/controlled-topology-sandbox.md) - Explicit coexistence modes for parent-owned topology and sandbox-owned edits
 - [Mismatch Report](api/mismatch-report.md) - Results of the API documentation audit
@@ -41,6 +43,7 @@ Specifications regarding user interface implementation and canvas operations.
 - [Packet Visualization](ui/packet-visualization.md) - Animation features and timeline display for packet communication
 - [Step-by-Step Simulation](ui/step-simulation.md) - Routing decision data model, StepSimulationController, and StepControls component
 - [Trace Inspector](ui/trace-inspector.md) - PacketTimeline, HopInspector, and TraceSummary for end-to-end packet trace inspection
+- [Trace Display Filter](ui/trace-filter.md) - PacketTimeline display-filter grammar, URL persistence, and accessibility behavior
 - [PCAP Export](ui/pcap-export.md) - libpcap export format, trace export API, and PacketTimeline download action
 - [Sandbox Trace Annotations](ui/sandbox-annotations.md) - Trace-event notes, author model, markdown subset, and persistence behavior
 - [Failure Simulation](ui/failure-simulation.md) - Node/link failure injection, FailureTogglePanel, and visual styling
@@ -56,6 +59,8 @@ Specifications regarding user interface implementation and canvas operations.
 - [Sandbox Session Recording & Replay](ui/sandbox-recording.md) - Chronological event recording, scrubber-driven replay, fork-from-here, and desync detection
 - [Sandbox Named Snapshots](ui/sandbox-snapshots.md) - Named history bookmarks, arbitrary snapshot comparison, revert, and edit-chain inspection
 - [Assessment Sandbox](ui/assessments.md) - Goal-based free-form sandbox exercises, rubrics, constraints, hints, and submission files
+- [Learner Progress](ui/learner-progress.md) - Opt-in cross-session completion persistence, progress panel, and Gallery badges
+- [日本語 i18n ガイド](ui/i18n-ja.md) - Japanese locale contribution flow, parity check, and translation guardrails
 - [Sandbox Keyboard Shortcuts & Narration](ui/sandbox-shortcuts.md) - Built-in shortcut registry, dispatcher, help modal, and `aria-live` screen-reader narration
 - [Sandbox Scenario Authoring](ui/sandbox-authoring.md) - Browser export flow for turning sandbox states into commit-ready Scenario source
 - [Tutorials](ui/tutorials.md) - Scenario-backed guided tutorial mode, tutorial registry, predicate contract, and authoring rules
@@ -75,6 +80,12 @@ Specifications focused on simulation-time packet traversal and trace annotation.
 - [Data Transfer Simulation](simulation/data-transfer.md) - Application-level data transfer model with chunking, reassembly, checksum verification, and per-hop forwarding visualization
 - [Session Correlation](simulation/session-correlation.md) - Session-aware request/response lifecycle grouping, correlation logic, and SessionList/SessionDetail UI
 
+### ✅ Testing (`testing/`)
+
+Specifications for regression harnesses and shared test infrastructure.
+
+- [Property-Based Testing](testing/property-based.md) - fast-check arbitraries, oracle helpers, seed policy, and failure workflow
+
 ### 🌐 Networking Models & Features (`networking/`)
 
 Specifications for protocol implementations based on the OSI model and network device behaviors.
@@ -92,10 +103,26 @@ Specifications for protocol implementations based on the OSI model and network d
 - [Spanning Tree (802.1D)](networking/stp.md) - Root election, port roles, and blocked-port enforcement in switch forwarding
 - [MTU & IPv4 Fragmentation](networking/mtu-fragmentation.md) - Per-link/per-interface MTU, DF-bit handling, ICMP Fragmentation Needed, and destination reassembly
 - [Path MTU Discovery](networking/pmtud.md) - TCP `DF=1` defaults, per-host PMTU cache, and adaptive chunk sizing from ICMP Fragmentation Needed
+- [TCP Congestion Control](networking/tcp-congestion.md) - Educational slow start, congestion avoidance, fast retransmit/recovery, RTO, and deterministic loss hooks
+- [Per-Link QoS](networking/link-qos.md) - Deterministic bandwidth, propagation delay, loss, and drop-tail queue annotations on topology links
+- [DSCP Marking And Shaping](networking/dscp.md) - DSCP code points, DRR class queues, sandbox validation, and shaper trace annotations
+- [ECMP Multipath](networking/ecmp.md) - Equal-cost next-hop installation, deterministic flow hashing, and trace bucket annotations
+- [IPv6 Dual-Stack](networking/ipv6.md) - RFC 5952 address canonicalization, static v6 routing, ICMPv6 echo, and dual-stack trace display
+- [IPv6 Routing Ecosystem](networking/ipv6-routing.md) - OSPFv3, MP-BGP IPv6 unicast, and family-aware route selection
+- [DHCPv6 And Stateful SLAAC](networking/dhcpv6.md) - DHCPv6 4-message exchange, DUID-LL, and RA M/O flag semantics
+- [High Availability](networking/ha.md) - VRRP/HSRP gateway election, virtual MACs, LACP, and port-channel hashing
+- [Wireless 802.11](networking/wireless.md) - RSSI/loss modeling, association state, WPA2 four-way handshake, and hidden-node detection
+- [Tunneling](networking/tunneling.md) - GRE encapsulation, MPLS label/VRF helpers, VXLAN EVPN learning, and ARP suppression
+- [Flow Observability](networking/observability.md) - NetFlow v9 records, deterministic sFlow samples, and the in-process collector model
 - [NAT / PAT](networking/nat.md) - Stateful SNAT, DNAT, port forwarding, and per-router NAT table behavior
 - [Firewalls & ACLs](networking/acl.md) - Interface ACL rules, default deny, and optional stateful conn-track behavior
 - [UDP](networking/udp.md) - Stateless L4 datagram; real packet plumbing shared by DHCP/DNS and future UDP apps
 - [HTTP/1.1](networking/http.md) - Educational subset: request/response builder, line-based parser, TCP-backed client and server
+- [TLS 1.3](networking/tls.md) - Deterministic HTTPS handshake subset with placeholder crypto and ALPN trace annotations
+- [Crypto Providers](networking/crypto-providers.md) - Deterministic and WebCrypto-backed provider selection for TLS and WPA teaching protocols
+- [HTTP/2](networking/http2.md) - Binary framing, HPACK static/literal headers, multiplexed streams, and TCP HOL teaching state
+- [QUIC](networking/quic.md) - Varints, frame helpers, CryptoProvider packet protection, stream reassembly, and path validation
+- [HTTP/3](networking/http3.md) - HTTP frames over QUIC streams with static-only QPACK and per-stream HOL contrast
 - [Services Overview](networking/services/index.md) - DHCP/DNS service sessions, runtime state, and UDP service architecture
 - [DHCP](networking/services/dhcp.md) - DORA address assignment simulation for runtime host IPs
 - [DNS](networking/services/dns.md) - Static A-record resolution and automatic pre-HTTP lookup

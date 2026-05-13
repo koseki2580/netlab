@@ -57,6 +57,8 @@ describe('demo chrome', () => {
     expect(html).toContain('/simulation/enterprise');
     expect(html).toContain('Spanning Tree');
     expect(html).toContain('/networking/stp');
+    expect(html).toContain('TCP Congestion Control');
+    expect(html).toContain('/simulation/tcp-congestion');
   });
 
   it('Gallery highlights sandbox-ready demos in the featured strip', () => {
@@ -146,6 +148,14 @@ describe('demo chrome', () => {
     expect(html).toContain('Theme');
     expect(html).toContain('Light');
     expect(html).toContain('Dark');
+  });
+
+  it('Gallery can render Japanese chrome from an initial locale', () => {
+    const html = renderGallery({ initialLocale: 'ja' });
+
+    expect(html).toContain('デモギャラリー');
+    expect(html).toContain('日本語');
+    expect(html).toContain('言語');
   });
 
   it('Gallery can start in dark mode', () => {

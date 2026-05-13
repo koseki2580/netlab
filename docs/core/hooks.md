@@ -14,6 +14,7 @@ netlab provides a Koa-style middleware hook system that lets you observe and mod
 | `packet:drop`               | A packet is dropped (TTL=0, no route, etc.)             |
 | `switch:learn`              | A switch learns a new MAC→port mapping                  |
 | `router:lookup`             | A router performs a route table lookup                  |
+| `tcp:congestion`            | TCP congestion state emitted a sender-side event        |
 | `fetch:intercept`           | `window.fetch` is called and intercepted                |
 | `fetch:respond`             | A mock response is about to be returned                 |
 | `sandbox:edit-rejected`     | A sandbox edit was rejected during validation or apply  |
@@ -122,6 +123,15 @@ hookEngine.on('router:lookup', async (ctx, next) => {
   nodeId: string;
   destination: string;
   resolvedRoute: RouteEntry | null;
+}
+```
+
+### `tcp:congestion`
+
+```typescript
+{
+  connId: string;
+  event: TcpCongestionEvent;
 }
 ```
 

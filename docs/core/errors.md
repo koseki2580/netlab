@@ -53,6 +53,36 @@ A received packet or response violates protocol rules.
 | `protocol/handshake-failed` | `HttpClient.ts`             | TCP handshake did not succeed             |
 | `protocol/session-desync`   | `DataTransferController.ts` | Trace or session state inconsistency      |
 
+### `tcp/*` — TCP Model Accounting
+
+The educational TCP model rejected an invalid congestion/retransmission input.
+
+| Code                      | Thrown By               | Description                                   |
+| ------------------------- | ----------------------- | --------------------------------------------- |
+| `tcp/partial-segment-ack` | `TcpRetransmitQueue.ts` | Cumulative ACK landed inside a queued segment |
+
+### `link-qos/*` — Link QoS Validation
+
+Per-link QoS configuration rejected a non-deterministic lossy link.
+
+| Code                    | Thrown By  | Description                                    |
+| ----------------------- | ---------- | ---------------------------------------------- |
+| `link-qos/missing-seed` | `edits.ts` | `lossPct > 0` was applied without a `lossSeed` |
+
+### `link-shaper/*` — Link Shaper Validation
+
+Per-class DSCP shaping configuration was invalid.
+
+| Code                              | Thrown By  | Description                                  |
+| --------------------------------- | ---------- | -------------------------------------------- |
+| `link-shaper/no-default`          | `edits.ts` | No class was marked as the default class     |
+| `link-shaper/multiple-defaults`   | `edits.ts` | More than one class was marked as default    |
+| `link-shaper/weight-out-of-range` | `edits.ts` | A class weight was outside `1..100`          |
+| `link-shaper/weight-sum`          | `edits.ts` | Class weights did not sum to `100 +/- 1`     |
+| `link-shaper/dscp-out-of-range`   | `edits.ts` | A DSCP value was outside `0..63`             |
+| `link-shaper/dscp-overlap`        | `edits.ts` | A DSCP value appeared in more than one class |
+| `link-shaper/duplicate-class-id`  | `edits.ts` | Two classes used the same class id           |
+
 ## API
 
 ### `NetlabError`
