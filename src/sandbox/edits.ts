@@ -1,9 +1,16 @@
+import { NetlabError } from '../errors';
 import { hookEngine } from '../hooks/HookEngine';
 import type { InFlightPacket, TcpFlags } from '../types/packets';
 import type { AclRule as RuntimeAclRule } from '../types/acl';
+import type { LacpConfig } from '../types/lacp';
+import type { LinkQosConfig, LinkShaperConfig } from '../types/link';
+import type { NetflowConfig, SflowConfig } from '../types/observability';
 import type { PortForwardingRule, StaticRouteConfig } from '../types/routing';
 import type { PacketHop, PacketTrace, SimulationState } from '../types/simulation';
 import type { NetlabNode, NetworkTopology } from '../types/topology';
+import type { VrrpConfig } from '../types/vrrp';
+import type { WifiConfig, WirelessLinkConfig } from '../types/wireless';
+import type { GreTunnelConfig, VrfConfig, VtepConfig } from '../types/tunneling';
 import { isTraceAnnotation, isTraceAnnotationEdit } from './annotations/edits';
 import { reduceAnnotation } from './annotations/reducer';
 import type { TraceAnnotationEdit } from './annotations/types';
@@ -91,6 +98,73 @@ export type Edit =
       readonly before: LinkState;
       readonly after: LinkState;
     }
+  | {
+      readonly kind: 'link.qos';
+      readonly target: EdgeRef;
+      readonly before: LinkQosConfig | null;
+      readonly after: LinkQosConfig;
+    }
+  | {
+      readonly kind: 'link.shaper';
+      readonly target: EdgeRef;
+      readonly before: LinkShaperConfig | null;
+      readonly after: LinkShaperConfig | null;
+    }
+  | {
+      readonly kind: 'link.lacp';
+      readonly target: NodeRef;
+      readonly portId: string;
+      readonly before: LacpConfig | null;
+      readonly after: LacpConfig | null;
+    }
+  | {
+      readonly kind: 'node.vrrp';
+      readonly target: InterfaceRef;
+      readonly before: VrrpConfig | null;
+      readonly after: VrrpConfig | null;
+    }
+  | {
+      readonly kind: 'link.wireless';
+      readonly target: EdgeRef;
+      readonly before: WirelessLinkConfig | null;
+      readonly after: WirelessLinkConfig | null;
+    }
+  | {
+      readonly kind: 'node.wifi';
+      readonly target: NodeRef;
+      readonly before: WifiConfig | null;
+      readonly after: WifiConfig | null;
+    }
+  | {
+      readonly kind: 'node.gre';
+      readonly target: InterfaceRef;
+      readonly before: GreTunnelConfig | null;
+      readonly after: GreTunnelConfig | null;
+    }
+  | {
+      readonly kind: 'node.mpls-vrf';
+      readonly target: NodeRef;
+      readonly before: VrfConfig | null;
+      readonly after: VrfConfig | null;
+    }
+  | {
+      readonly kind: 'node.vxlan-vni';
+      readonly target: NodeRef;
+      readonly before: VtepConfig | null;
+      readonly after: VtepConfig | null;
+    }
+  | {
+      readonly kind: 'node.netflow';
+      readonly target: NodeRef;
+      readonly before: NetflowConfig | null;
+      readonly after: NetflowConfig | null;
+    }
+  | {
+      readonly kind: 'node.sflow';
+      readonly target: NodeRef;
+      readonly before: SflowConfig | null;
+      readonly after: SflowConfig | null;
+    }
   | { readonly kind: 'node.nat.add'; readonly target: NodeRef; readonly rule: NatRule }
   | { readonly kind: 'node.nat.remove'; readonly target: NodeRef; readonly ruleId: string }
   | {
@@ -137,6 +211,148 @@ function hasNumber(value: Record<string, unknown>, key: string): boolean {
 
 function isLinkState(value: unknown): value is LinkState {
   return value === 'up' || value === 'down';
+}
+
+function isLinkQosConfig(value: unknown): value is LinkQosConfig {
+  if (!isRecord(value)) return false;
+  const optionalNumber = (key: string) => value[key] === undefined || hasNumber(value, key);
+  return (
+    optionalNumber('bandwidthBps') &&
+    optionalNumber('propagationDelayMs') &&
+    optionalNumber('lossPct') &&
+    optionalNumber('queueDepthSegments') &&
+    optionalNumber('lossSeed') &&
+    (value.shaper === undefined || isLinkShaperConfig(value.shaper))
+  );
+}
+
+function isLinkShaperConfig(value: unknown): value is LinkShaperConfig {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.classes) &&
+    value.classes.every(
+      (klass) =>
+        isRecord(klass) &&
+        typeof klass.id === 'string' &&
+        Array.isArray(klass.dscp) &&
+        klass.dscp.every((dscp) => typeof dscp === 'number') &&
+        typeof klass.weightPct === 'number' &&
+        typeof klass.queueDepthSegments === 'number' &&
+        (klass.default === undefined || typeof klass.default === 'boolean'),
+    )
+  );
+}
+
+function isNetflowConfig(value: unknown): value is NetflowConfig {
+  return (
+    isRecord(value) &&
+    typeof value.enabled === 'boolean' &&
+    (value.inactiveTimeoutMs === undefined || hasNumber(value, 'inactiveTimeoutMs')) &&
+    (value.activeTimeoutMs === undefined || hasNumber(value, 'activeTimeoutMs')) &&
+    (value.maxCacheEntries === undefined || hasNumber(value, 'maxCacheEntries'))
+  );
+}
+
+function isSflowConfig(value: unknown): value is SflowConfig {
+  return (
+    isRecord(value) &&
+    typeof value.enabled === 'boolean' &&
+    hasNumber(value, 'rate') &&
+    (value.headerCaptureBytes === undefined || hasNumber(value, 'headerCaptureBytes')) &&
+    (value.samplingSeed === undefined || hasNumber(value, 'samplingSeed'))
+  );
+}
+
+function isLacpConfig(value: unknown): value is LacpConfig {
+  return (
+    isRecord(value) &&
+    hasNumber(value, 'key') &&
+    typeof value.systemId === 'string' &&
+    (value.mode === 'active' || value.mode === 'passive') &&
+    (value.fastTimer === undefined || typeof value.fastTimer === 'boolean') &&
+    (value.channelId === undefined || typeof value.channelId === 'string')
+  );
+}
+
+function isVrrpConfig(value: unknown): value is VrrpConfig {
+  return (
+    isRecord(value) &&
+    hasNumber(value, 'vrid') &&
+    typeof value.virtualIp === 'string' &&
+    hasNumber(value, 'priority') &&
+    (value.advertIntervalMs === undefined || hasNumber(value, 'advertIntervalMs')) &&
+    (value.preempt === undefined || typeof value.preempt === 'boolean') &&
+    (value.hsrpMode === undefined || typeof value.hsrpMode === 'boolean')
+  );
+}
+
+function isWirelessLinkConfig(value: unknown): value is WirelessLinkConfig {
+  return (
+    isRecord(value) &&
+    typeof value.ssid === 'string' &&
+    hasNumber(value, 'channel') &&
+    hasNumber(value, 'bandMhz') &&
+    hasNumber(value, 'txPowerDbm') &&
+    (value.antennaGainDbi === undefined || hasNumber(value, 'antennaGainDbi')) &&
+    (value.lossSeed === undefined || hasNumber(value, 'lossSeed'))
+  );
+}
+
+function isWifiConfig(value: unknown): value is WifiConfig {
+  return (
+    isRecord(value) &&
+    (value.role === 'access-point' || value.role === 'station') &&
+    typeof value.ssid === 'string' &&
+    (value.psk === undefined || typeof value.psk === 'string') &&
+    (value.apId === undefined || typeof value.apId === 'string')
+  );
+}
+
+function isGreTunnelConfig(value: unknown): value is GreTunnelConfig {
+  return (
+    isRecord(value) &&
+    hasString(value, 'sourceIp') &&
+    hasString(value, 'destinationIp') &&
+    (value.key === undefined || hasNumber(value, 'key')) &&
+    (value.sequence === undefined || hasNumber(value, 'sequence'))
+  );
+}
+
+function isRouteDistinguisher(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    (value.type === 0 || value.type === 1 || value.type === 2) &&
+    typeof value.value === 'string'
+  );
+}
+
+function isRouteTarget(value: unknown): boolean {
+  return isRecord(value) && value.type === 0x0002 && typeof value.value === 'string';
+}
+
+function isVrfConfig(value: unknown): value is VrfConfig {
+  return (
+    isRecord(value) &&
+    hasString(value, 'name') &&
+    isRouteDistinguisher(value.rd) &&
+    Array.isArray(value.importRts) &&
+    value.importRts.every(isRouteTarget) &&
+    Array.isArray(value.exportRts) &&
+    value.exportRts.every(isRouteTarget) &&
+    Array.isArray(value.attachedInterfaces) &&
+    value.attachedInterfaces.every((iface) => typeof iface === 'string')
+  );
+}
+
+function isVtepConfig(value: unknown): value is VtepConfig {
+  return (
+    isRecord(value) &&
+    hasNumber(value, 'vni') &&
+    hasString(value, 'sourceVtepIp') &&
+    Array.isArray(value.peerVtepIps) &&
+    value.peerVtepIps.every((peer) => typeof peer === 'string') &&
+    (value.arpSuppression === undefined || typeof value.arpSuppression === 'boolean')
+  );
 }
 
 function isTcpFlags(value: unknown): value is TcpFlags {
@@ -234,6 +450,73 @@ export function isEdit(value: unknown): value is Edit {
       );
     case 'link.state':
       return hasTarget(value, isEdgeRef) && isLinkState(value.before) && isLinkState(value.after);
+    case 'link.qos':
+      return (
+        hasTarget(value, isEdgeRef) &&
+        (value.before === null || isLinkQosConfig(value.before)) &&
+        isLinkQosConfig(value.after)
+      );
+    case 'link.shaper':
+      return (
+        hasTarget(value, isEdgeRef) &&
+        (value.before === null || isLinkShaperConfig(value.before)) &&
+        (value.after === null || isLinkShaperConfig(value.after))
+      );
+    case 'link.lacp':
+      return (
+        hasTarget(value, isNodeRef) &&
+        hasString(value, 'portId') &&
+        (value.before === null || isLacpConfig(value.before)) &&
+        (value.after === null || isLacpConfig(value.after))
+      );
+    case 'node.vrrp':
+      return (
+        hasTarget(value, isInterfaceRef) &&
+        (value.before === null || isVrrpConfig(value.before)) &&
+        (value.after === null || isVrrpConfig(value.after))
+      );
+    case 'link.wireless':
+      return (
+        hasTarget(value, isEdgeRef) &&
+        (value.before === null || isWirelessLinkConfig(value.before)) &&
+        (value.after === null || isWirelessLinkConfig(value.after))
+      );
+    case 'node.wifi':
+      return (
+        hasTarget(value, isNodeRef) &&
+        (value.before === null || isWifiConfig(value.before)) &&
+        (value.after === null || isWifiConfig(value.after))
+      );
+    case 'node.gre':
+      return (
+        hasTarget(value, isInterfaceRef) &&
+        (value.before === null || isGreTunnelConfig(value.before)) &&
+        (value.after === null || isGreTunnelConfig(value.after))
+      );
+    case 'node.mpls-vrf':
+      return (
+        hasTarget(value, isNodeRef) &&
+        (value.before === null || isVrfConfig(value.before)) &&
+        (value.after === null || isVrfConfig(value.after))
+      );
+    case 'node.vxlan-vni':
+      return (
+        hasTarget(value, isNodeRef) &&
+        (value.before === null || isVtepConfig(value.before)) &&
+        (value.after === null || isVtepConfig(value.after))
+      );
+    case 'node.netflow':
+      return (
+        hasTarget(value, isNodeRef) &&
+        (value.before === null || isNetflowConfig(value.before)) &&
+        (value.after === null || isNetflowConfig(value.after))
+      );
+    case 'node.sflow':
+      return (
+        hasTarget(value, isNodeRef) &&
+        (value.before === null || isSflowConfig(value.before)) &&
+        (value.after === null || isSflowConfig(value.after))
+      );
     case 'node.nat.add':
       return hasTarget(value, isNodeRef) && isNatRule(value.rule);
     case 'node.nat.remove':
@@ -422,6 +705,309 @@ function linkState(snapshot: SimulationSnapshot, edit: Extract<Edit, { kind: 'li
   });
 
   return changed ? withTopology(snapshot, { ...snapshot.topology, edges }) : snapshot;
+}
+
+function linkQos(snapshot: SimulationSnapshot, edit: Extract<Edit, { kind: 'link.qos' }>) {
+  if ((edit.after.lossPct ?? 0) > 0 && edit.after.lossSeed === undefined) {
+    throw new NetlabError({
+      code: 'link-qos/missing-seed',
+      message: `Link ${edit.target.edgeId} has lossPct but no lossSeed`,
+      context: { edgeId: edit.target.edgeId },
+    });
+  }
+
+  let changed = false;
+  const edges = snapshot.topology.edges.map((edge) => {
+    if (edge.id !== edit.target.edgeId) return edge;
+    changed = true;
+    return {
+      ...edge,
+      data: {
+        ...(edge.data ?? {}),
+        link: edit.after,
+      },
+    };
+  });
+
+  return changed ? withTopology(snapshot, { ...snapshot.topology, edges }) : snapshot;
+}
+
+function validateLinkShaper(edgeId: string, config: LinkShaperConfig): void {
+  const defaultCount = config.classes.filter((klass) => klass.default === true).length;
+  if (defaultCount === 0) {
+    throw new NetlabError({
+      code: 'link-shaper/no-default',
+      message: `Link ${edgeId} shaper has no default class`,
+      context: { edgeId },
+    });
+  }
+  if (defaultCount > 1) {
+    throw new NetlabError({
+      code: 'link-shaper/multiple-defaults',
+      message: `Link ${edgeId} shaper has multiple default classes`,
+      context: { edgeId },
+    });
+  }
+
+  const classIds = new Set<string>();
+  const dscpValues = new Set<number>();
+  let weightSum = 0;
+
+  for (const klass of config.classes) {
+    if (classIds.has(klass.id)) {
+      throw new NetlabError({
+        code: 'link-shaper/duplicate-class-id',
+        message: `Link ${edgeId} shaper class ${klass.id} is duplicated`,
+        context: { edgeId, classId: klass.id },
+      });
+    }
+    classIds.add(klass.id);
+
+    if (klass.weightPct < 1 || klass.weightPct > 100) {
+      throw new NetlabError({
+        code: 'link-shaper/weight-out-of-range',
+        message: `Link ${edgeId} shaper class ${klass.id} has invalid weight`,
+        context: { edgeId, classId: klass.id },
+      });
+    }
+    weightSum += klass.weightPct;
+
+    for (const dscp of klass.dscp) {
+      if (!Number.isInteger(dscp) || dscp < 0 || dscp > 63) {
+        throw new NetlabError({
+          code: 'link-shaper/dscp-out-of-range',
+          message: `Link ${edgeId} shaper class ${klass.id} has invalid DSCP ${dscp}`,
+          context: { edgeId, classId: klass.id, dscp },
+        });
+      }
+      if (dscpValues.has(dscp)) {
+        throw new NetlabError({
+          code: 'link-shaper/dscp-overlap',
+          message: `Link ${edgeId} shaper has overlapping DSCP ${dscp}`,
+          context: { edgeId, dscp },
+        });
+      }
+      dscpValues.add(dscp);
+    }
+  }
+
+  if (weightSum < 99 || weightSum > 101) {
+    throw new NetlabError({
+      code: 'link-shaper/weight-sum',
+      message: `Link ${edgeId} shaper weights sum to ${weightSum}`,
+      context: { edgeId, weightSum },
+    });
+  }
+}
+
+function linkShaper(snapshot: SimulationSnapshot, edit: Extract<Edit, { kind: 'link.shaper' }>) {
+  if (edit.after) {
+    validateLinkShaper(edit.target.edgeId, edit.after);
+  }
+
+  let changed = false;
+  const edges = snapshot.topology.edges.map((edge) => {
+    if (edge.id !== edit.target.edgeId) return edge;
+    changed = true;
+    const link = {
+      ...(edge.data?.link ?? {}),
+      ...(edit.after === null ? {} : { shaper: edit.after }),
+    };
+    if (edit.after === null) {
+      delete link.shaper;
+    }
+    return {
+      ...edge,
+      data: {
+        ...(edge.data ?? {}),
+        link,
+      },
+    };
+  });
+
+  return changed ? withTopology(snapshot, { ...snapshot.topology, edges }) : snapshot;
+}
+
+function linkLacp(snapshot: SimulationSnapshot, edit: Extract<Edit, { kind: 'link.lacp' }>) {
+  const topology = replaceNode(snapshot.topology, edit.target.nodeId, (node) => ({
+    ...node,
+    data: {
+      ...node.data,
+      ports: (node.data.ports ?? []).map((port) => {
+        if (port.id !== edit.portId) return port;
+        if (edit.after === null) {
+          const { lacp: _lacp, ...restPort } = port;
+          return restPort;
+        }
+        return { ...port, lacp: edit.after };
+      }),
+    },
+  }));
+
+  return topology ? withTopology(snapshot, topology) : snapshot;
+}
+
+function nodeVrrp(snapshot: SimulationSnapshot, edit: Extract<Edit, { kind: 'node.vrrp' }>) {
+  const topology = replaceNode(snapshot.topology, edit.target.nodeId, (node) => ({
+    ...node,
+    data: {
+      ...node.data,
+      interfaces: (node.data.interfaces ?? []).map((iface) => {
+        if (iface.id !== edit.target.ifaceId) return iface;
+        if (edit.after === null) {
+          const { vrrp: _vrrp, ...restIface } = iface;
+          return restIface;
+        }
+        return { ...iface, vrrp: edit.after };
+      }),
+    },
+  }));
+
+  return topology ? withTopology(snapshot, topology) : snapshot;
+}
+
+function linkWireless(
+  snapshot: SimulationSnapshot,
+  edit: Extract<Edit, { kind: 'link.wireless' }>,
+) {
+  let changed = false;
+  const edges = snapshot.topology.edges.map((edge) => {
+    if (edge.id !== edit.target.edgeId) return edge;
+    changed = true;
+    if (edit.after === null) {
+      const data = { ...(edge.data ?? {}) };
+      delete data.wireless;
+      return { ...edge, data };
+    }
+    return {
+      ...edge,
+      data: {
+        ...(edge.data ?? {}),
+        wireless: edit.after,
+      },
+    };
+  });
+
+  return changed ? withTopology(snapshot, { ...snapshot.topology, edges }) : snapshot;
+}
+
+function nodeWifi(snapshot: SimulationSnapshot, edit: Extract<Edit, { kind: 'node.wifi' }>) {
+  const topology = replaceNode(snapshot.topology, edit.target.nodeId, (node) => {
+    if (edit.after === null) {
+      const data = { ...node.data };
+      delete data.wifi;
+      return { ...node, data };
+    }
+    return {
+      ...node,
+      data: {
+        ...node.data,
+        wifi: edit.after,
+      },
+    };
+  });
+
+  return topology ? withTopology(snapshot, topology) : snapshot;
+}
+
+function nodeGre(snapshot: SimulationSnapshot, edit: Extract<Edit, { kind: 'node.gre' }>) {
+  const topology = replaceNode(snapshot.topology, edit.target.nodeId, (node) => ({
+    ...node,
+    data: {
+      ...node.data,
+      interfaces: (node.data.interfaces ?? []).map((iface) => {
+        if (iface.id !== edit.target.ifaceId) return iface;
+        if (edit.after === null) {
+          const { greTunnel: _greTunnel, ...restIface } = iface;
+          return restIface;
+        }
+        return { ...iface, greTunnel: edit.after };
+      }),
+    },
+  }));
+
+  return topology ? withTopology(snapshot, topology) : snapshot;
+}
+
+function nodeMplsVrf(snapshot: SimulationSnapshot, edit: Extract<Edit, { kind: 'node.mpls-vrf' }>) {
+  const topology = replaceNode(snapshot.topology, edit.target.nodeId, (node) => {
+    const existing = node.data.vrfs ?? [];
+    const vrfs =
+      edit.after === null
+        ? existing.filter((vrf) => edit.before === null || vrf.name !== edit.before.name)
+        : [...existing.filter((vrf) => vrf.name !== edit.after!.name), edit.after];
+    if (vrfs.length === 0) {
+      const { vrfs: _vrfs, ...data } = node.data;
+      return { ...node, data };
+    }
+    return { ...node, data: { ...node.data, vrfs } };
+  });
+
+  return topology ? withTopology(snapshot, topology) : snapshot;
+}
+
+function nodeVxlanVni(
+  snapshot: SimulationSnapshot,
+  edit: Extract<Edit, { kind: 'node.vxlan-vni' }>,
+) {
+  const topology = replaceNode(snapshot.topology, edit.target.nodeId, (node) => {
+    if (edit.after === null) {
+      const data = { ...node.data };
+      delete data.vtep;
+      return { ...node, data };
+    }
+    return {
+      ...node,
+      data: {
+        ...node.data,
+        vtep: edit.after,
+      },
+    };
+  });
+
+  return topology ? withTopology(snapshot, topology) : snapshot;
+}
+
+function nodeNetflow(snapshot: SimulationSnapshot, edit: Extract<Edit, { kind: 'node.netflow' }>) {
+  const topology = replaceNode(snapshot.topology, edit.target.nodeId, (node) => ({
+    ...node,
+    data: {
+      ...node.data,
+      ...(edit.after === null ? {} : { netflow: edit.after }),
+    },
+  }));
+  if (!topology) return snapshot;
+  if (edit.after === null) {
+    const nodes = topology.nodes.map((node) => {
+      if (node.id !== edit.target.nodeId) return node;
+      const data = { ...node.data };
+      delete data.netflow;
+      return { ...node, data };
+    });
+    return withTopology(snapshot, { ...topology, nodes });
+  }
+  return withTopology(snapshot, topology);
+}
+
+function nodeSflow(snapshot: SimulationSnapshot, edit: Extract<Edit, { kind: 'node.sflow' }>) {
+  const topology = replaceNode(snapshot.topology, edit.target.nodeId, (node) => ({
+    ...node,
+    data: {
+      ...node.data,
+      ...(edit.after === null ? {} : { sflow: edit.after }),
+    },
+  }));
+  if (!topology) return snapshot;
+  if (edit.after === null) {
+    const nodes = topology.nodes.map((node) => {
+      if (node.id !== edit.target.nodeId) return node;
+      const data = { ...node.data };
+      delete data.sflow;
+      return { ...node, data };
+    });
+    return withTopology(snapshot, { ...topology, nodes });
+  }
+  return withTopology(snapshot, topology);
 }
 
 function nodeRuleAdd<R extends NatRule | SandboxAclRule>(
@@ -809,6 +1395,17 @@ registerReducer('node.route.remove', routeRemove);
 registerReducer('node.route.edit', routeEdit);
 registerReducer('interface.mtu', interfaceMtu);
 registerReducer('link.state', linkState);
+registerReducer('link.qos', linkQos);
+registerReducer('link.shaper', linkShaper);
+registerReducer('link.lacp', linkLacp);
+registerReducer('node.vrrp', nodeVrrp);
+registerReducer('link.wireless', linkWireless);
+registerReducer('node.wifi', nodeWifi);
+registerReducer('node.gre', nodeGre);
+registerReducer('node.mpls-vrf', nodeMplsVrf);
+registerReducer('node.vxlan-vni', nodeVxlanVni);
+registerReducer('node.netflow', nodeNetflow);
+registerReducer('node.sflow', nodeSflow);
 registerReducer('node.nat.add', (snapshot, edit) =>
   applyRuntimeNatPortForward(
     nodeRuleAdd(snapshot, edit.target.nodeId, 'sandboxNatRules', edit.rule),

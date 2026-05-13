@@ -57,6 +57,6 @@ describe('RouteTable a11y', () => {
 
   it('column headers have scope="col"', () => {
     const ths = container.querySelectorAll('th[scope="col"]');
-    expect(ths.length).toBe(3);
+    expect(ths.length).toBe(4);
   });
 });

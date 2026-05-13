@@ -134,6 +134,154 @@ describe('sandbox url codec', () => {
     expect(decodeSandboxEdits(updateSandboxSearch('?sandbox=1', [edit]))).toEqual([edit]);
   });
 
+  it('round-trips link.qos edits through sandboxState', () => {
+    const edit: Edit = {
+      kind: 'link.qos',
+      target: { kind: 'edge', edgeId: 'e1' },
+      before: null,
+      after: {
+        bandwidthBps: 1_000_000,
+        propagationDelayMs: 20,
+        lossPct: 5,
+        queueDepthSegments: 100,
+        lossSeed: 42,
+      },
+    };
+
+    expect(decodeSandboxEdits(updateSandboxSearch('?sandbox=1', [edit]))).toEqual([edit]);
+  });
+
+  it('round-trips link.shaper edits through sandboxState', () => {
+    const edit: Edit = {
+      kind: 'link.shaper',
+      target: { kind: 'edge', edgeId: 'e1' },
+      before: null,
+      after: {
+        classes: [
+          { id: 'ef', dscp: [46], weightPct: 80, queueDepthSegments: 8 },
+          { id: 'be', dscp: [], weightPct: 20, queueDepthSegments: 8, default: true },
+        ],
+      },
+    };
+
+    expect(decodeSandboxEdits(updateSandboxSearch('?sandbox=1', [edit]))).toEqual([edit]);
+  });
+
+  it('round-trips node observability edits through sandboxState', () => {
+    const edits: Edit[] = [
+      {
+        kind: 'node.netflow',
+        target: { kind: 'node', nodeId: 'r1' },
+        before: null,
+        after: { enabled: true, inactiveTimeoutMs: 15_000, maxCacheEntries: 128 },
+      },
+      {
+        kind: 'node.sflow',
+        target: { kind: 'node', nodeId: 'sw1' },
+        before: null,
+        after: { enabled: true, rate: 8, samplingSeed: 0x5a4b12 },
+      },
+    ];
+
+    expect(decodeSandboxEdits(updateSandboxSearch('?sandbox=1', edits))).toEqual(edits);
+  });
+
+  it('round-trips VRRP and LACP edits through sandboxState', () => {
+    const edits: Edit[] = [
+      {
+        kind: 'node.vrrp',
+        target: { kind: 'interface', nodeId: 'r1', ifaceId: 'eth0' },
+        before: null,
+        after: {
+          vrid: 10,
+          virtualIp: '10.0.0.254',
+          priority: 120,
+          advertIntervalMs: 1000,
+        },
+      },
+      {
+        kind: 'link.lacp',
+        target: { kind: 'node', nodeId: 'sw1' },
+        portId: 'fa0/1',
+        before: null,
+        after: {
+          key: 100,
+          systemId: '00:00:00:00:10:ff',
+          mode: 'active',
+          fastTimer: true,
+          channelId: 'po1',
+        },
+      },
+    ];
+
+    expect(decodeSandboxEdits(updateSandboxSearch('?sandbox=1', edits))).toEqual(edits);
+  });
+
+  it('round-trips wireless node and link edits through sandboxState', () => {
+    const edits: Edit[] = [
+      {
+        kind: 'node.wifi',
+        target: { kind: 'node', nodeId: 'ap-1' },
+        before: null,
+        after: {
+          role: 'access-point',
+          ssid: 'netlab-wifi',
+          psk: 'correct horse battery staple',
+        },
+      },
+      {
+        kind: 'link.wireless',
+        target: { kind: 'edge', edgeId: 'wifi-a' },
+        before: null,
+        after: {
+          ssid: 'netlab-wifi',
+          channel: 6,
+          bandMhz: 2437,
+          txPowerDbm: 20,
+          lossSeed: 12,
+        },
+      },
+    ];
+
+    expect(decodeSandboxEdits(updateSandboxSearch('?sandbox=1', edits))).toEqual(edits);
+  });
+
+  it('round-trips tunneling edits through sandboxState', () => {
+    const edits: Edit[] = [
+      {
+        kind: 'node.gre',
+        target: { kind: 'interface', nodeId: 'r1', ifaceId: 'eth0' },
+        before: null,
+        after: { sourceIp: '198.51.100.1', destinationIp: '198.51.100.2', key: 100 },
+      },
+      {
+        kind: 'node.mpls-vrf',
+        target: { kind: 'node', nodeId: 'pe1' },
+        before: null,
+        after: {
+          name: 'blue',
+          rd: { type: 0, value: '65000:10' },
+          importRts: [{ type: 0x0002, value: '65000:10' }],
+          exportRts: [{ type: 0x0002, value: '65000:10' }],
+          attachedInterfaces: ['ce'],
+        },
+      },
+      {
+        kind: 'node.vxlan-vni',
+        target: { kind: 'node', nodeId: 'leaf1' },
+        before: null,
+        after: {
+          vni: 10000,
+          sourceVtepIp: '192.0.2.1',
+          peerVtepIps: ['192.0.2.2'],
+          arpSuppression: true,
+        },
+      },
+    ];
+
+    expect(decodeSandboxEdits(updateSandboxSearch('?sandbox=1', edits))).toEqual(edits);
+  });
+
   it('omits long trace annotation edits from sandboxState', () => {
     const edit: Edit = {
       kind: 'trace.annotate.add',

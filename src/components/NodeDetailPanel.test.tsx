@@ -340,6 +340,26 @@ describe('NodeDetailPanel', () => {
     expect(html).toContain('client');
   });
 
+  it('displays configured wireless metadata on nodes', () => {
+    const client = makeClientNode();
+    client.data.role = 'station';
+    client.data.layerId = 'l1';
+    client.data.wifi = {
+      role: 'station',
+      ssid: 'netlab-wifi',
+      apId: 'ap-1',
+    };
+    uiMock.selectedNodeId = 'client-1';
+    netlabMock.topology = makeTopology([client]);
+
+    const html = renderMarkup();
+
+    expect(html).toContain('WIRELESS');
+    expect(html).toContain('station');
+    expect(html).toContain('netlab-wifi');
+    expect(html).toContain('ap-1');
+  });
+
   it('displays router interfaces with IP and MAC', () => {
     uiMock.selectedNodeId = 'router-1';
     netlabMock.topology = makeTopology([makeRouterNode()]);
@@ -351,6 +371,26 @@ describe('NodeDetailPanel', () => {
     expect(html).toContain('00:00:00:00:00:01');
   });
 
+  it('displays configured VRRP gateway redundancy on router interfaces', () => {
+    const router = makeRouterNode();
+    router.data.interfaces = (router.data.interfaces ?? []).map((iface) => ({
+      ...iface,
+      vrrp: {
+        vrid: 10,
+        virtualIp: '10.0.0.254',
+        priority: 120,
+      },
+    }));
+    uiMock.selectedNodeId = 'router-1';
+    netlabMock.topology = makeTopology([router]);
+
+    const html = renderMarkup();
+
+    expect(html).toContain('VRRP group 10');
+    expect(html).toContain('10.0.0.254');
+    expect(html).toContain('120');
+  });
+
   it('displays switch ports', () => {
     uiMock.selectedNodeId = 'switch-1';
     netlabMock.topology = makeTopology([makeSwitchNodeWithoutVlanConfig()]);
@@ -359,6 +399,27 @@ describe('NodeDetailPanel', () => {
 
     expect(html).toContain('fa0/1');
     expect(html).toContain('00:00:00:00:00:02');
+  });
+
+  it('displays configured LACP port-channel membership on switch ports', () => {
+    const switchNode = makeSwitchNodeWithoutVlanConfig();
+    switchNode.data.ports = (switchNode.data.ports ?? []).map((port) => ({
+      ...port,
+      lacp: {
+        key: 100,
+        systemId: '00:00:00:00:10:ff',
+        mode: 'active',
+        fastTimer: true,
+        channelId: 'po1',
+      },
+    }));
+    uiMock.selectedNodeId = 'switch-1';
+    netlabMock.topology = makeTopology([switchNode]);
+
+    const html = renderMarkup();
+
+    expect(html).toContain('LACP');
+    expect(html).toContain('po1 active fast');
   });
 
   it('displays host static IP and MAC', () => {
@@ -773,6 +834,31 @@ describe('NodeDetailPanel', () => {
       const html = renderMarkup();
 
       expect(html).toContain('MTU 600');
+    });
+
+    it('displays configured wireless metadata on edges', () => {
+      uiMock.selectedEdgeId = 'edge-1';
+      netlabMock.topology = makeTopology([makeRouterNode(), makeClientNode()], {
+        edges: [
+          {
+            ...makeEdge(),
+            data: {
+              wireless: {
+                ssid: 'netlab-wifi',
+                channel: 6,
+                bandMhz: 2437,
+                txPowerDbm: 20,
+              },
+            },
+          },
+        ],
+      });
+
+      const html = renderMarkup();
+
+      expect(html).toContain('WIRELESS LINK');
+      expect(html).toContain('netlab-wifi');
+      expect(html).toContain('ch 6 / 2437 MHz');
     });
 
     it('updates edge.data.mtuBytes via onTopologyChange', () => {

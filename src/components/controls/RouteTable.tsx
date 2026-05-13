@@ -123,13 +123,28 @@ export function RouteTablePanel({ floating = false }: RouteTablePanelProps) {
                       background: 'var(--netlab-bg-panel)',
                     }}
                   >
-                    <th scope="col" style={{ textAlign: 'left', padding: '2px 4px', fontWeight: 600 }}>
+                    <th
+                      scope="col"
+                      style={{ textAlign: 'left', padding: '2px 4px', fontWeight: 600 }}
+                    >
+                      AF
+                    </th>
+                    <th
+                      scope="col"
+                      style={{ textAlign: 'left', padding: '2px 4px', fontWeight: 600 }}
+                    >
                       Destination
                     </th>
-                    <th scope="col" style={{ textAlign: 'left', padding: '2px 4px', fontWeight: 600 }}>
+                    <th
+                      scope="col"
+                      style={{ textAlign: 'left', padding: '2px 4px', fontWeight: 600 }}
+                    >
                       Next Hop
                     </th>
-                    <th scope="col" style={{ textAlign: 'right', padding: '2px 4px', fontWeight: 600 }}>
+                    <th
+                      scope="col"
+                      style={{ textAlign: 'right', padding: '2px 4px', fontWeight: 600 }}
+                    >
                       AD
                     </th>
                   </tr>
@@ -137,6 +152,16 @@ export function RouteTablePanel({ floating = false }: RouteTablePanelProps) {
                 <tbody>
                   {routes.map((r, idx) => (
                     <tr key={idx} style={{ color: 'var(--netlab-text-primary)' }}>
+                      <td
+                        style={{
+                          padding: '2px 4px',
+                          color: r.destination.includes(':')
+                            ? 'var(--netlab-accent-cyan)'
+                            : 'var(--netlab-text-muted)',
+                        }}
+                      >
+                        {r.destination.includes(':') ? 'v6' : 'v4'}
+                      </td>
                       <td
                         style={{
                           padding: '2px 4px',
@@ -164,7 +189,13 @@ export function RouteTablePanel({ floating = false }: RouteTablePanelProps) {
                           r.nextHop
                         )}
                       </td>
-                      <td style={{ padding: '2px 4px', textAlign: 'right', color: 'var(--netlab-text-muted)' }}>
+                      <td
+                        style={{
+                          padding: '2px 4px',
+                          textAlign: 'right',
+                          color: 'var(--netlab-text-muted)',
+                        }}
+                      >
                         {r.adminDistance ?? 0}
                       </td>
                     </tr>

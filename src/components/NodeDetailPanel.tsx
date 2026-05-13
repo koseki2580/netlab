@@ -7,6 +7,7 @@ import {
   makeBridgeId,
 } from '../layers/l2-datalink/stp/BridgeId';
 import { SimulationContext } from '../simulation/SimulationContext';
+import type { LinkQosConfig } from '../types/link';
 import type { DhcpLeaseState, DnsCache } from '../types/services';
 import type {
   NetlabNode,
@@ -27,6 +28,7 @@ import {
 import { getRequired } from '../utils';
 import { useNetlabContext } from './NetlabContext';
 import { useNetlabUI } from './NetlabUIContext';
+import { LinkDetailPanel } from './LinkDetailPanel';
 
 const PANEL_STYLE: React.CSSProperties = {
   position: 'absolute',
@@ -194,12 +196,18 @@ function collectConfiguredIps(
     if (candidate.id !== ignore?.nodeId && typeof candidate.data.ip === 'string') {
       ips.push(candidate.data.ip);
     }
+    if (candidate.id !== ignore?.nodeId && typeof candidate.data.ipv6 === 'string') {
+      ips.push(candidate.data.ipv6);
+    }
 
     for (const iface of candidate.data.interfaces ?? []) {
       if (candidate.id === ignore?.nodeId && iface.id === ignore?.interfaceId) {
         continue;
       }
       ips.push(iface.ipAddress);
+      if (iface.ipv6Address) {
+        ips.push(iface.ipv6Address);
+      }
 
       for (const subInterface of iface.subInterfaces ?? []) {
         if (
@@ -210,6 +218,9 @@ function collectConfiguredIps(
           continue;
         }
         ips.push(subInterface.ipAddress);
+        if (subInterface.ipv6Address) {
+          ips.push(subInterface.ipv6Address);
+        }
       }
     }
 
@@ -405,10 +416,72 @@ function RouterDetail({
                 {iface.ipAddress}/{iface.prefixLength}
               </span>
             </div>
+            {iface.ipv6Address && iface.prefixLength6 !== undefined && (
+              <div style={ROW_STYLE}>
+                <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 36 }}>IPv6</span>
+                <span style={{ color: 'var(--netlab-accent-cyan)' }}>
+                  {iface.ipv6Address}/{iface.prefixLength6}
+                </span>
+              </div>
+            )}
             <div style={ROW_STYLE}>
               <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 36 }}>MAC</span>
               <span style={{ color: 'var(--netlab-accent-yellow)' }}>{iface.macAddress}</span>
             </div>
+            {iface.greTunnel && (
+              <div
+                style={{
+                  marginTop: 6,
+                  padding: '5px 7px',
+                  border: '1px solid var(--netlab-border-subtle)',
+                  borderRadius: 6,
+                }}
+              >
+                <div style={{ color: 'var(--netlab-accent-green)', fontWeight: 'bold' }}>
+                  GRE tunnel
+                </div>
+                <div style={ROW_STYLE}>
+                  <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>Outer</span>
+                  <span style={{ color: 'var(--netlab-accent-cyan)' }}>
+                    {iface.greTunnel.sourceIp}
+                    {' -> '}
+                    {iface.greTunnel.destinationIp}
+                  </span>
+                </div>
+                {iface.greTunnel.key !== undefined && (
+                  <div style={ROW_STYLE}>
+                    <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>Key</span>
+                    <span style={{ color: 'var(--netlab-text-primary)' }}>
+                      {iface.greTunnel.key}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+            {iface.vrrp && (
+              <div
+                style={{
+                  marginTop: 6,
+                  padding: '5px 7px',
+                  border: '1px solid var(--netlab-border-subtle)',
+                  borderRadius: 6,
+                }}
+              >
+                <div style={{ color: 'var(--netlab-accent-green)', fontWeight: 'bold' }}>
+                  {iface.vrrp.hsrpMode ? 'HSRP' : 'VRRP'} group {iface.vrrp.vrid}
+                </div>
+                <div style={ROW_STYLE}>
+                  <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>VIP</span>
+                  <span style={{ color: 'var(--netlab-accent-cyan)' }}>{iface.vrrp.virtualIp}</span>
+                </div>
+                <div style={ROW_STYLE}>
+                  <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>
+                    Priority
+                  </span>
+                  <span style={{ color: 'var(--netlab-text-primary)' }}>{iface.vrrp.priority}</span>
+                </div>
+              </div>
+            )}
             <div style={{ ...ROW_STYLE, alignItems: 'center' }}>
               <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 36 }}>MTU</span>
               <MtuBadge mtu={iface.mtu} />
@@ -463,6 +536,21 @@ function RouterDetail({
                         {subInterface.ipAddress}/{subInterface.prefixLength}
                       </span>
                     </div>
+                    {subInterface.ipv6Address && subInterface.prefixLength6 !== undefined && (
+                      <div style={ROW_STYLE}>
+                        <span
+                          style={{
+                            color: 'var(--netlab-text-secondary)',
+                            minWidth: 36,
+                          }}
+                        >
+                          IPv6
+                        </span>
+                        <span style={{ color: 'var(--netlab-accent-cyan)' }}>
+                          {subInterface.ipv6Address}/{subInterface.prefixLength6}
+                        </span>
+                      </div>
+                    )}
                     <div style={ROW_STYLE}>
                       <span
                         style={{
@@ -511,10 +599,12 @@ function EdgeDetail({
   edge,
   topology,
   onMtuChange,
+  onQosChange,
 }: {
   edge: NetlabEdge;
   topology: NetworkTopology;
   onMtuChange?: (mtu: number | undefined) => void;
+  onQosChange?: (qos: LinkQosConfig) => void;
 }) {
   const sourceLabel =
     topology.nodes.find((node) => node.id === edge.source)?.data.label ?? edge.source;
@@ -537,6 +627,22 @@ function EdgeDetail({
         <MtuBadge mtu={mtu} />
         {onMtuChange && <MtuInput name={`edge-mtu-${edge.id}`} mtu={mtu} onCommit={onMtuChange} />}
       </div>
+      <LinkDetailPanel edge={edge} {...(onQosChange ? { onQosChange } : {})} />
+      {edge.data?.wireless && (
+        <>
+          <div style={SECTION_HEADER_STYLE}>WIRELESS LINK</div>
+          <div style={ROW_STYLE}>
+            <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>SSID</span>
+            <span style={{ color: 'var(--netlab-accent-cyan)' }}>{edge.data.wireless.ssid}</span>
+          </div>
+          <div style={ROW_STYLE}>
+            <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>Radio</span>
+            <span style={{ color: 'var(--netlab-text-primary)' }}>
+              ch {edge.data.wireless.channel} / {edge.data.wireless.bandMhz} MHz
+            </span>
+          </div>
+        </>
+      )}
     </>
   );
 }
@@ -593,6 +699,15 @@ function SwitchDetail({
               <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 36 }}>MAC</span>
               <span style={{ color: 'var(--netlab-accent-yellow)' }}>{port.macAddress}</span>
             </div>
+            {port.lacp && (
+              <div style={ROW_STYLE}>
+                <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 36 }}>LACP</span>
+                <span style={{ color: 'var(--netlab-accent-green)' }}>
+                  {port.lacp.channelId ?? `key-${port.lacp.key}`} {port.lacp.mode}
+                  {port.lacp.fastTimer ? ' fast' : ' slow'}
+                </span>
+              </div>
+            )}
           </div>
         ))
       )}
@@ -718,6 +833,12 @@ function HostDetail({ data, runtimeIp }: { data: NetlabNodeData; runtimeIp?: str
         <div style={ROW_STYLE}>
           <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 36 }}>IP</span>
           <span style={{ color: 'var(--netlab-accent-cyan)' }}>{runtimeIp ?? data.ip}</span>
+        </div>
+      )}
+      {data.ipv6 && (
+        <div style={ROW_STYLE}>
+          <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 36 }}>IPv6</span>
+          <span style={{ color: 'var(--netlab-accent-cyan)' }}>{data.ipv6}</span>
         </div>
       )}
       {data.mac && (
@@ -1647,6 +1768,26 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
                   },
                 }
               : {})}
+            {...(onTopologyChange
+              ? {
+                  onQosChange: (link: LinkQosConfig) => {
+                    updateSnapshot((snapshot) => ({
+                      ...snapshot,
+                      edges: snapshot.edges.map((candidate) =>
+                        candidate.id === edge.id
+                          ? {
+                              ...candidate,
+                              data: {
+                                ...(candidate.data ?? {}),
+                                link,
+                              },
+                            }
+                          : candidate,
+                      ),
+                    }));
+                  },
+                }
+              : {})}
           />
         </div>
       </div>
@@ -1740,6 +1881,53 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
           paddingTop: 8,
         }}
       >
+        {d.wifi && (
+          <>
+            <div style={SECTION_HEADER_STYLE}>WIRELESS</div>
+            <div style={ROW_STYLE}>
+              <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>Role</span>
+              <span style={{ color: 'var(--netlab-accent-green)' }}>{d.wifi.role}</span>
+            </div>
+            <div style={ROW_STYLE}>
+              <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>SSID</span>
+              <span style={{ color: 'var(--netlab-accent-cyan)' }}>{d.wifi.ssid}</span>
+            </div>
+            {d.wifi.apId && (
+              <div style={ROW_STYLE}>
+                <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>AP</span>
+                <span style={{ color: 'var(--netlab-text-primary)' }}>{d.wifi.apId}</span>
+              </div>
+            )}
+          </>
+        )}
+        {(d.vrfs?.length ?? 0) > 0 && (
+          <>
+            <div style={SECTION_HEADER_STYLE}>MPLS VRF</div>
+            {d.vrfs?.map((vrf) => (
+              <div key={vrf.name} style={ROW_STYLE}>
+                <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>
+                  {vrf.name}
+                </span>
+                <span style={{ color: 'var(--netlab-accent-cyan)' }}>
+                  RD {vrf.rd.value} / RT {vrf.importRts.map((rt) => rt.value).join(', ')}
+                </span>
+              </div>
+            ))}
+          </>
+        )}
+        {d.vtep && (
+          <>
+            <div style={SECTION_HEADER_STYLE}>VXLAN VTEP</div>
+            <div style={ROW_STYLE}>
+              <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>VNI</span>
+              <span style={{ color: 'var(--netlab-accent-cyan)' }}>{d.vtep.vni}</span>
+            </div>
+            <div style={ROW_STYLE}>
+              <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>VTEP</span>
+              <span style={{ color: 'var(--netlab-text-primary)' }}>{d.vtep.sourceVtepIp}</span>
+            </div>
+          </>
+        )}
         {d.role === 'router' && (
           <RouterDetail
             data={d}
