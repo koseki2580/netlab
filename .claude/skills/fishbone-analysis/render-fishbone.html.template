@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fishbone Analysis</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #161a22;
+    --panel-2: #1d2330;
+    --border: #2a3142;
+    --fg: #e6e9ef;
+    --muted: #97a0b0;
+    --accent: #6cb6ff;
+    --accent-2: #9d8df1;
+    --good: #5fd07a;
+    --warn: #f5c451;
+    --bad: #f06a6a;
+    --code-bg: #0b0d12;
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--fg); margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", sans-serif;
+    line-height: 1.6; }
+  body { max-width: 1200px; margin: 0 auto; padding: 32px 24px 96px; }
+  h1 { font-size: 24px; margin: 0 0 8px; }
+  h2 { font-size: 18px; margin: 36px 0 12px; padding-top: 18px; border-top: 1px solid var(--border); }
+  h2:first-of-type { border-top: none; padding-top: 0; }
+  code, pre { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; }
+  code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; overflow-x: auto; font-size: 13px; }
+
+  .hero { background: linear-gradient(135deg, #1a2030 0%, #221d36 100%);
+    border: 1px solid var(--border); border-radius: 12px; padding: 20px;
+    margin-bottom: 24px; }
+  .hero .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .hero .problem { font-size: 18px; font-weight: 600; line-height: 1.4; margin: 4px 0 8px; }
+  .hero .meta { color: var(--muted); font-size: 13px; }
+
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .pill.high { background: rgba(240,106,106,0.15); color: var(--bad); border: 1px solid rgba(240,106,106,0.4); }
+  .pill.med  { background: rgba(245,196,81,0.15); color: var(--warn); border: 1px solid rgba(245,196,81,0.4); }
+  .pill.low  { background: rgba(95,208,122,0.15); color: var(--good); border: 1px solid rgba(95,208,122,0.4); }
+
+  /* Fishbone */
+  #fishbone-stage { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 12px;
+    overflow-x: auto; }
+  #fishbone-svg { width: 100%; min-width: 1050px; height: auto; display: block; overflow: visible; }
+  .fb-spine { stroke: var(--accent); stroke-width: 3; }
+  .fb-bone  { stroke: var(--accent-2); stroke-width: 2; cursor: pointer; }
+  .fb-bone:hover { stroke: #fff; }
+  .fb-twig  { stroke: var(--muted); stroke-width: 1.2; }
+  .fb-cat-label { fill: var(--fg); font-size: 13px; font-weight: 600; cursor: pointer; user-select: none; }
+  .fb-cat-label:hover { fill: var(--accent); }
+  .fb-hyp-label { fill: var(--muted); font-size: 11px; user-select: none; }
+  .fb-hyp-label.adopted { fill: var(--good); font-weight: 600; }
+  .fb-hyp-label.rejected { fill: var(--bad); text-decoration: line-through; opacity: 0.6; }
+  .fb-head { fill: var(--bad); }
+  .fb-head-label { fill: #fff; font-size: 14px; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+
+  /* Hypothesis panel */
+  .hyp-list { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 12px; }
+  .hyp-item { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; transition: border-color 0.15s; }
+  .hyp-item.adopted { border-color: var(--good); box-shadow: inset 3px 0 0 var(--good); }
+  .hyp-item.rejected { opacity: 0.55; border-color: var(--bad); }
+  .hyp-item.held { border-color: var(--warn); }
+  .hyp-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+  .hyp-head .cat { font-size: 11px; color: var(--muted); }
+  .hyp-head .title { font-weight: 600; font-size: 14px; flex: 1; }
+  .hyp-meta { display: flex; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin: 6px 0; }
+  .hyp-actions { display: flex; gap: 6px; margin-top: 8px; }
+  .hyp-actions button { background: var(--panel); color: var(--fg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 4px 10px; font-size: 12px; cursor: pointer; }
+  .hyp-actions button.adopt.active { background: rgba(95,208,122,0.2); border-color: var(--good); color: var(--good); }
+  .hyp-actions button.reject.active { background: rgba(240,106,106,0.2); border-color: var(--bad); color: var(--bad); }
+  .hyp-actions button.hold.active { background: rgba(245,196,81,0.2); border-color: var(--warn); color: var(--warn); }
+  .hyp-detail { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .hyp-detail b { color: var(--fg); font-weight: 600; }
+
+  /* Quadrant */
+  #quadrant-svg { width: 100%; height: 320px; background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; }
+  .quad-axis { stroke: var(--muted); stroke-width: 1; }
+  .quad-grid { stroke: var(--border); stroke-width: 1; stroke-dasharray: 3 3; }
+  .quad-label { fill: var(--muted); font-size: 11px; }
+  .quad-zone { fill: rgba(95,208,122,0.06); }
+  .quad-dot { cursor: pointer; }
+  .quad-dot-label { fill: var(--fg); font-size: 10px; pointer-events: none; }
+
+  /* Adopted summary */
+  #adopted-list .empty { color: var(--muted); font-style: italic; }
+  .next-action { background: var(--panel-2); border-left: 3px solid var(--good); border-radius: 0 6px 6px 0;
+    padding: 10px 12px; margin-bottom: 8px; font-size: 13px; }
+  .next-action .head { font-weight: 600; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="label">Problem</div>
+  <div class="problem" id="problem-display"></div>
+  <div class="meta" id="meta-display"></div>
+</div>
+
+<h2>Cause map</h2>
+<div id="fishbone-stage">
+  <svg id="fishbone-svg" viewBox="-280 -10 1400 450"></svg>
+</div>
+
+<h2>Hypotheses (adopt / hold / reject)</h2>
+<div class="hyp-list" id="hyp-list"></div>
+
+<h2>Priority matrix (impact × verify_cost)</h2>
+<p style="font-size:13px;color:var(--muted);">Top-right (high impact / low verify_cost) is the optimal next-action zone. Green region highlights it.</p>
+<svg id="quadrant-svg" viewBox="0 0 700 320"></svg>
+
+<h2>Adopted hypotheses → next actions</h2>
+<div id="adopted-list"><div class="empty">No adopted hypotheses yet. Use the Adopt button above.</div></div>
+
+<h2>Prompt for Claude (auto-generated)</h2>
+<p style="font-size:13px;color:var(--muted);">Pick a template, copy the prompt, and paste it into a new Claude session to continue.</p>
+<div class="card" id="prompt-card">
+  <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+    <label class="label" for="prompt-variant" style="margin:0;">Template</label>
+    <select id="prompt-variant"
+      style="background:var(--panel-2);color:var(--fg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;">
+      <option value="verify-sequential">Verify adopted hypotheses sequentially via systematic-debugging (recommended)</option>
+      <option value="top-deep-dive">Deep-dive on the single top-priority hypothesis</option>
+      <option value="reexpand">Nothing adopted — re-expand with a different domain_hint</option>
+      <option value="raw-state">Raw state JSON (for other-skill handoff)</option>
+    </select>
+    <span id="prompt-stat" style="font-size:12px;color:var(--muted);"></span>
+  </div>
+  <textarea id="prompt-output" readonly
+    style="width:100%;min-height:260px;background:var(--code-bg);color:var(--fg);border:1px solid var(--border);border-radius:6px;padding:12px;font-family:ui-monospace,SFMono-Regular,monospace;font-size:12px;line-height:1.55;resize:vertical;"></textarea>
+  <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+    <button id="copy-prompt"
+      style="background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#0b0d12;border:none;border-radius:6px;padding:9px 16px;font-weight:700;cursor:pointer;font-size:13px;">
+      Copy prompt
+    </button>
+    <button id="copy-state-json"
+      style="background:var(--panel-2);color:var(--fg);border:1px solid var(--border);border-radius:6px;padding:9px 14px;cursor:pointer;font-size:13px;">
+      Copy state JSON
+    </button>
+    <button id="reset-state"
+      style="background:var(--panel-2);color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:9px 14px;cursor:pointer;font-size:13px;">
+      Reset adoptions
+    </button>
+    <span id="copy-feedback"
+      style="color:var(--good);font-size:13px;opacity:0;transition:opacity 0.25s;font-weight:600;"></span>
+  </div>
+</div>
+
+<!--
+  =====================================================================
+  FB_DATA is injected by the fishbone-analysis skill at emit time.
+  Replace the placeholder JSON below with the structured hypothesis tree.
+  Schema:
+    {
+      "problem": "string (one-line symptom)",
+      "domain":  "software | manufacturing | ops | human-process",
+      "slug":    "string (used for the localStorage namespace)",
+      "categories": [
+        {
+          "id": "string",
+          "name": "string (display name)",
+          "hypotheses": [
+            {
+              "id": "string",
+              "text": "string",
+              "impact": "low | med | high",
+              "verify_cost": "low | med | high",
+              "confidence": "low | med | high",
+              "evidence": "string (evidence_needed)",
+              "action":   "string (next_action)",
+              "cross_category": ["catId", ...]   // optional
+            }
+          ]
+        }
+      ]
+    }
+  =====================================================================
+-->
+<script type="application/json" id="fb-data">
+{"problem":"REPLACE_ME","domain":"software","slug":"placeholder","categories":[]}
+</script>
+
+<script>
+const FB_DATA = JSON.parse(document.getElementById("fb-data").textContent);
+
+// Per-problem localStorage namespace so multiple fishbones on the same host don't collide.
+const STORE_KEY = "fishbone-analysis-state:" + (FB_DATA.slug || "default");
+function loadState() { try { return JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); } catch(_) { return {}; } }
+function saveState(s) { localStorage.setItem(STORE_KEY, JSON.stringify(s)); }
+let state = loadState();
+
+// Header
+document.getElementById("problem-display").textContent = FB_DATA.problem || "(no problem statement)";
+const catNames = (FB_DATA.categories || []).map(c => c.name).join(" / ");
+document.getElementById("meta-display").textContent =
+  `domain: ${FB_DATA.domain || "?"} · categories: ${catNames}`;
+document.title = `Fishbone: ${FB_DATA.problem || ""}`.slice(0, 80);
+
+// ───────── Fishbone SVG (data-driven) ─────────
+function renderFishbone() {
+  const svg = document.getElementById("fishbone-svg");
+  const W = 1100, H = 420;
+  svg.innerHTML = "";
+  const ns = "http://www.w3.org/2000/svg";
+  const make = (tag, attrs) => {
+    const el = document.createElementNS(ns, tag);
+    for (const k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  };
+
+  const spineY = H/2;
+  svg.appendChild(make("line", { class:"fb-spine", x1:60, y1:spineY, x2:W-140, y2:spineY }));
+  svg.appendChild(make("polygon", { class:"fb-head",
+    points: `${W-140},${spineY-30} ${W-40},${spineY} ${W-140},${spineY+30}` }));
+  const head = make("text", { class:"fb-head-label", x:W-90, y:spineY });
+  head.textContent = "Problem";
+  svg.appendChild(head);
+
+  const cats = FB_DATA.categories || [];
+  if (!cats.length) return;
+  const usableW = W - 60 - 160;
+  const step = usableW / (cats.length + 1);
+  cats.forEach((cat, idx) => {
+    const x = 60 + step * (idx + 1);
+    const above = idx % 2 === 0;
+    const dy = above ? -140 : 140;
+    const startX = x;
+    const startY = spineY + (above ? -2 : 2);
+    const endX = x - 70;
+    const endY = spineY + dy;
+
+    svg.appendChild(make("line", {
+      class:"fb-bone", x1:startX, y1:startY, x2:endX, y2:endY,
+      "data-cat": cat.id
+    }));
+    const label = make("text", {
+      class:"fb-cat-label", x:endX-6, y:endY + (above ? -8 : 16),
+      "text-anchor":"end", "data-cat": cat.id
+    });
+    label.textContent = cat.name;
+    svg.appendChild(label);
+
+    (cat.hypotheses || []).forEach((h, hi) => {
+      const t = (hi + 1) / (cat.hypotheses.length + 1);
+      const bx = startX + (endX - startX) * t;
+      const by = startY + (endY - startY) * t;
+      const twigLen = 60;
+      const tx = bx - twigLen;
+      const ty = by;
+      svg.appendChild(make("line", {
+        class:"fb-twig", x1:bx, y1:by, x2:tx, y2:ty
+      }));
+      const ht = make("text", {
+        class:"fb-hyp-label", x:tx-4, y:ty + (above ? -3 : 10),
+        "text-anchor":"end", "data-hyp": h.id
+      });
+      ht.textContent = h.text.length > 22 ? h.text.slice(0,22) + "…" : h.text;
+      const title = document.createElementNS(ns, "title");
+      title.textContent = `[${cat.name}] ${h.text}\nimpact: ${h.impact} / verify_cost: ${h.verify_cost} / confidence: ${h.confidence}`;
+      ht.appendChild(title);
+      ht.style.cursor = "pointer";
+      ht.addEventListener("click", () => {
+        const target = document.querySelector(`.hyp-item[data-hyp="${h.id}"]`);
+        if (target) target.scrollIntoView({behavior:"smooth", block:"center"});
+      });
+      svg.appendChild(ht);
+    });
+  });
+
+  svg.querySelectorAll("[data-cat]").forEach(el => {
+    el.addEventListener("click", () => {
+      const cat = el.getAttribute("data-cat");
+      const target = document.querySelector(`.hyp-item[data-cat="${cat}"]`);
+      if (target) target.scrollIntoView({behavior:"smooth", block:"center"});
+    });
+  });
+  refreshFishboneStyles();
+}
+function refreshFishboneStyles() {
+  document.querySelectorAll("#fishbone-svg .fb-hyp-label").forEach(el => {
+    const id = el.getAttribute("data-hyp");
+    el.classList.remove("adopted","rejected");
+    if (state[id] === "adopt") el.classList.add("adopted");
+    else if (state[id] === "reject") el.classList.add("rejected");
+  });
+}
+
+// ───────── Hypothesis list ─────────
+function renderHypList() {
+  const root = document.getElementById("hyp-list");
+  root.innerHTML = "";
+  (FB_DATA.categories || []).forEach(cat => {
+    (cat.hypotheses || []).forEach(h => {
+      const div = document.createElement("div");
+      div.className = "hyp-item";
+      div.dataset.cat = cat.id;
+      div.dataset.hyp = h.id;
+      const status = state[h.id] || "";
+      if (status === "adopt") div.classList.add("adopted");
+      else if (status === "reject") div.classList.add("rejected");
+      else if (status === "hold") div.classList.add("held");
+      const crossNote = (h.cross_category && h.cross_category.length)
+        ? `<span class="cat" style="color:var(--accent-2);">+ cross: ${h.cross_category.join(", ")}</span>` : "";
+      div.innerHTML = `
+        <div class="hyp-head">
+          <span class="cat">[${cat.name}]</span>
+          <span class="title">${h.text}</span>
+          ${crossNote}
+        </div>
+        <div class="hyp-meta">
+          <span>impact: <span class="pill ${h.impact}">${h.impact}</span></span>
+          <span>verify_cost: <span class="pill ${h.verify_cost}">${h.verify_cost}</span></span>
+          <span>confidence: <span class="pill ${h.confidence}">${h.confidence}</span></span>
+        </div>
+        <div class="hyp-detail"><b>Evidence needed:</b> ${h.evidence || "—"}</div>
+        <div class="hyp-detail"><b>Next action if adopted:</b> ${h.action || "—"}</div>
+        <div class="hyp-actions">
+          <button class="adopt ${status==="adopt"?"active":""}" data-act="adopt">Adopt</button>
+          <button class="hold ${status==="hold"?"active":""}" data-act="hold">Hold</button>
+          <button class="reject ${status==="reject"?"active":""}" data-act="reject">Reject</button>
+          <button class="clear" data-act="clear">Clear</button>
+        </div>`;
+      root.appendChild(div);
+      div.querySelectorAll(".hyp-actions button").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const act = btn.dataset.act;
+          if (act === "clear") delete state[h.id];
+          else state[h.id] = act;
+          saveState(state);
+          renderHypList(); refreshFishboneStyles(); renderQuadrant(); renderAdopted();
+        });
+      });
+    });
+  });
+}
+
+// ───────── Priority quadrant (impact × verify_cost) ─────────
+function renderQuadrant() {
+  const svg = document.getElementById("quadrant-svg");
+  const W = 700, H = 320;
+  svg.innerHTML = "";
+  const ns = "http://www.w3.org/2000/svg";
+  const make = (tag, attrs, txt) => {
+    const el = document.createElementNS(ns, tag);
+    for (const k in attrs) el.setAttribute(k, attrs[k]);
+    if (txt !== undefined) el.textContent = txt;
+    return el;
+  };
+  const padL = 60, padR = 30, padT = 24, padB = 40;
+  const xMap = (vc) => padL + ({high:0.18, med:0.5, low:0.82}[vc] ?? 0.5) * (W-padL-padR);
+  const yMap = (im) => padT + ({low:0.82, med:0.5, high:0.18}[im] ?? 0.5) * (H-padT-padB);
+  const jitter = (id) => {
+    let h = 0; for (let i=0;i<id.length;i++) h = (h*31 + id.charCodeAt(i)) & 0xffff;
+    return [((h & 0xff) - 128) / 8, (((h >> 8) & 0xff) - 128) / 8];
+  };
+
+  svg.appendChild(make("rect", { class:"quad-zone",
+    x: xMap("med"), y: padT, width: xMap("low") - xMap("med") + 40, height: yMap("med") - padT }));
+
+  svg.appendChild(make("line", { class:"quad-axis", x1:padL, y1:H-padB, x2:W-padR, y2:H-padB }));
+  svg.appendChild(make("line", { class:"quad-axis", x1:padL, y1:padT, x2:padL, y2:H-padB }));
+  svg.appendChild(make("line", { class:"quad-grid", x1:xMap("med"), y1:padT, x2:xMap("med"), y2:H-padB }));
+  svg.appendChild(make("line", { class:"quad-grid", x1:padL, y1:yMap("med"), x2:W-padR, y2:yMap("med") }));
+  svg.appendChild(make("text", { class:"quad-label", x:padL, y:H-padB+18 }, "verify_cost: high"));
+  svg.appendChild(make("text", { class:"quad-label", x:W-padR-60, y:H-padB+18 }, "low (easier)"));
+  svg.appendChild(make("text", { class:"quad-label", x:padL-44, y:padT+10 }, "impact"));
+  svg.appendChild(make("text", { class:"quad-label", x:padL-32, y:padT+24 }, "high"));
+  svg.appendChild(make("text", { class:"quad-label", x:padL-32, y:H-padB-4 }, "low"));
+  svg.appendChild(make("text", { class:"quad-label", x:W-padR-160, y:padT+14 }, "★ priority zone (high impact / low cost)"));
+
+  (FB_DATA.categories || []).forEach(cat => {
+    (cat.hypotheses || []).forEach(h => {
+      const [jx, jy] = jitter(h.id);
+      const cx = xMap(h.verify_cost) + jx;
+      const cy = yMap(h.impact) + jy;
+      const status = state[h.id];
+      const fill = status==="adopt" ? "#5fd07a" : status==="reject" ? "#f06a6a" : status==="hold" ? "#f5c451" : "#9d8df1";
+      const dot = make("circle", { class:"quad-dot", cx, cy, r:7, fill, stroke:"#fff", "stroke-width":1, "data-hyp":h.id });
+      const title = document.createElementNS(ns, "title");
+      title.textContent = `[${cat.name}] ${h.text}`;
+      dot.appendChild(title);
+      svg.appendChild(dot);
+      svg.appendChild(make("text", { class:"quad-dot-label", x:cx+10, y:cy+3 }, h.id));
+      dot.addEventListener("click", () => {
+        const target = document.querySelector(`.hyp-item[data-hyp="${h.id}"]`);
+        if (target) target.scrollIntoView({behavior:"smooth", block:"center"});
+      });
+    });
+  });
+}
+
+// ───────── Adopted summary ─────────
+function renderAdopted() {
+  const root = document.getElementById("adopted-list");
+  const adopted = [];
+  (FB_DATA.categories || []).forEach(cat => (cat.hypotheses || []).forEach(h => {
+    if (state[h.id] === "adopt") adopted.push({cat, h});
+  }));
+  if (!adopted.length) {
+    root.innerHTML = `<div class="empty">No adopted hypotheses yet. Use the Adopt button above.</div>`;
+    refreshPrompt();
+    return;
+  }
+  root.innerHTML = adopted.map(({cat, h}) => `
+    <div class="next-action">
+      <div class="head">[${cat.name}] ${h.text}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px;"><b>Evidence needed:</b> ${h.evidence || "—"}</div>
+      <div style="font-size:13px;"><b>Next action:</b> ${h.action || "—"}</div>
+    </div>`).join("");
+  refreshPrompt();
+}
+
+// ───────── Prompt generation ─────────
+function collectByStatus() {
+  const out = { adopted: [], held: [], rejected: [] };
+  (FB_DATA.categories || []).forEach(cat => (cat.hypotheses || []).forEach(h => {
+    const s = state[h.id];
+    if (s === "adopt") out.adopted.push({cat, h});
+    else if (s === "hold") out.held.push({cat, h});
+    else if (s === "reject") out.rejected.push({cat, h});
+  }));
+  const priority = (h) => ({high:3, med:2, low:1}[h.impact] ?? 2) * ({low:3, med:2, high:1}[h.verify_cost] ?? 2);
+  out.adopted.sort((a, b) => priority(b.h) - priority(a.h));
+  return out;
+}
+
+function generatePrompt(variant) {
+  const { adopted, held, rejected } = collectByStatus();
+  const P = FB_DATA.problem || "(no problem statement)";
+
+  if (variant === "verify-sequential") {
+    if (!adopted.length) {
+      return `# State: no adopted hypotheses\n\nAdopt at least one hypothesis in the UI, or switch to the "re-expand" template.`;
+    }
+    let s = `# fishbone-analysis result → systematic-debugging handoff\n\n`;
+    s += `The following hypotheses were enumerated by fishbone-analysis and adopted by the reviewer.\n`;
+    s += `Follow the systematic-debugging skill (Phases 1–4). Verify the hypotheses **in order, one at a time**.\n`;
+    s += `Stop and report as soon as one verification confirms the root cause.\n\n`;
+    s += `## Problem\n${P}\n\n`;
+    s += `## Adopted hypotheses (sorted by impact × 1/verify_cost)\n`;
+    adopted.forEach((item, i) => {
+      s += `\n### ${i+1}. [${item.cat.name}] ${item.h.text}\n`;
+      s += `- impact: **${item.h.impact}** / verify_cost: **${item.h.verify_cost}** / confidence: **${item.h.confidence}**\n`;
+      s += `- Evidence needed: ${item.h.evidence || "—"}\n`;
+      s += `- First action: ${item.h.action || "—"}\n`;
+    });
+    if (held.length) {
+      s += `\n## Held (for reference, not in the verification queue)\n`;
+      held.forEach(({cat, h}) => { s += `- [${cat.name}] ${h.text}\n`; });
+    }
+    s += `\n## Completion criteria\n`;
+    s += `- Root cause confirmed → stop and report the cause + a minimal fix.\n`;
+    s += `- After trying the top ${Math.min(3, adopted.length)} hypotheses without confirmation, propose returning to fishbone-analysis.\n`;
+    s += `\n## Rules\n`;
+    s += `- Do not introduce new hypotheses beyond the adopted set on the fly. If new candidates emerge, return to fishbone-analysis.\n`;
+    s += `- Verify only one hypothesis per change.\n`;
+    return s;
+  }
+
+  if (variant === "top-deep-dive") {
+    if (!adopted.length) {
+      return `# State: no adopted hypotheses\n\nAdopt the single top-priority hypothesis first.`;
+    }
+    const top = adopted[0];
+    let s = `# fishbone-analysis result → deep dive on the single top hypothesis\n\n`;
+    s += `Verify the following hypothesis using systematic-debugging. Other candidates are deliberately set aside.\n\n`;
+    s += `## Problem\n${P}\n\n`;
+    s += `## Hypothesis under verification\n[${top.cat.name}] **${top.h.text}**\n`;
+    s += `- impact: ${top.h.impact} / verify_cost: ${top.h.verify_cost} / confidence: ${top.h.confidence}\n`;
+    s += `- Evidence needed: ${top.h.evidence || "—"}\n`;
+    s += `- Starting action: ${top.h.action || "—"}\n\n`;
+    s += `## Steps\n`;
+    s += `1. Propose the minimum-cost way to gather the evidence above.\n`;
+    s += `2. From the evidence, decide whether the hypothesis is true.\n`;
+    s += `3. If true: propose a minimal fix. If false: propose returning to fishbone-analysis.\n`;
+    return s;
+  }
+
+  if (variant === "reexpand") {
+    let s = `# fishbone-analysis re-expansion request\n\n`;
+    s += `The current domain_hint did not surface a decisive hypothesis. Re-expand the cause space on a different axis.\n\n`;
+    s += `## Problem\n${P}\n\n`;
+    if (rejected.length) {
+      s += `## Already rejected (do not re-emit)\n`;
+      rejected.forEach(({cat, h}) => { s += `- [${cat.name}] ${h.text}\n`; });
+      s += `\n`;
+    }
+    if (held.length) {
+      s += `## Held (carry forward as reference)\n`;
+      held.forEach(({cat, h}) => { s += `- [${cat.name}] ${h.text}\n`; });
+      s += `\n`;
+    }
+    s += `## Re-expansion plan\n`;
+    s += `- Switch domain_hint away from \`${FB_DATA.domain}\`.\n`;
+    s += `  - Candidates: \`ops\` (Change / Load / Dependency / Config / Permission / Human)\n`;
+    s += `  - Candidates: \`human-process\` (People / Communication / Tool / Process / Environment)\n`;
+    s += `- Emit 3–5 hypotheses per category and write the new HTML to \`agents/human/fishbone-${FB_DATA.slug || "next"}-v2.html\`.\n`;
+    s += `- Skip semantic duplicates of the rejected hypotheses above.\n`;
+    return s;
+  }
+
+  if (variant === "raw-state") {
+    return JSON.stringify({
+      problem: P,
+      domain: FB_DATA.domain,
+      slug: FB_DATA.slug,
+      state: state,
+      adopted: adopted.map(({cat, h}) => ({ id:h.id, category:cat.name, hypothesis:h.text,
+        impact:h.impact, verify_cost:h.verify_cost, confidence:h.confidence,
+        evidence_needed:h.evidence, next_action:h.action })),
+      held: held.map(({cat, h}) => ({ id:h.id, category:cat.name, hypothesis:h.text })),
+      rejected: rejected.map(({cat, h}) => ({ id:h.id, category:cat.name, hypothesis:h.text }))
+    }, null, 2);
+  }
+  return "";
+}
+
+function refreshPrompt() {
+  const sel = document.getElementById("prompt-variant");
+  const out = document.getElementById("prompt-output");
+  const stat = document.getElementById("prompt-stat");
+  const { adopted, held, rejected } = collectByStatus();
+  stat.textContent = `adopted ${adopted.length} / held ${held.length} / rejected ${rejected.length}`;
+  out.value = generatePrompt(sel.value);
+}
+
+function flashFeedback(msg) {
+  const el = document.getElementById("copy-feedback");
+  el.textContent = msg;
+  el.style.opacity = "1";
+  clearTimeout(flashFeedback._t);
+  flashFeedback._t = setTimeout(() => { el.style.opacity = "0"; }, 1800);
+}
+
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (_) {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand("copy"); } catch(_) {}
+    document.body.removeChild(ta);
+    return ok;
+  }
+}
+
+document.getElementById("prompt-variant").addEventListener("change", refreshPrompt);
+document.getElementById("copy-prompt").addEventListener("click", async () => {
+  const text = document.getElementById("prompt-output").value;
+  if (!text) { flashFeedback("(empty)"); return; }
+  const ok = await copyToClipboard(text);
+  flashFeedback(ok ? "✓ Copied" : "Copy failed — select the text manually");
+});
+document.getElementById("copy-state-json").addEventListener("click", async () => {
+  const json = generatePrompt("raw-state");
+  const ok = await copyToClipboard(json);
+  flashFeedback(ok ? "✓ JSON copied" : "Copy failed");
+});
+document.getElementById("reset-state").addEventListener("click", () => {
+  if (!confirm("Clear all adopt / hold / reject state for this fishbone?")) return;
+  state = {};
+  saveState(state);
+  renderHypList(); refreshFishboneStyles(); renderQuadrant(); renderAdopted();
+});
+
+renderFishbone();
+renderHypList();
+renderQuadrant();
+renderAdopted();
+window.addEventListener("resize", () => { renderFishbone(); renderQuadrant(); });
+</script>
+</body>
+</html>
