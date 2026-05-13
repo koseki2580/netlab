@@ -1,4 +1,26 @@
 import type React from 'react';
+import { densityToVars, type NetlabDensity } from './densities';
+import { paletteOverrides, type NetlabPalette } from './palettes';
+
+export type { NetlabPalette } from './palettes';
+export type { NetlabDensity, NetlabDensityTokens } from './densities';
+export { NETLAB_PALETTES } from './palettes';
+export { NETLAB_DENSITIES, densityToVars } from './densities';
+
+/**
+ * Audience axis — does not affect tokens but is read by components to
+ * show or hide explanatory copy ("what is this?" callouts, hint pulses,
+ * legends). Learner mode adds scaffolding; pro mode is chrome-only.
+ */
+export type NetlabAudience = 'learner' | 'pro';
+
+/** Optional theme axes layered on top of the base {@link NetlabTheme}. */
+export interface NetlabThemeAxes {
+  /** Accent flavor — defaults to `studio` (current palette). */
+  palette?: NetlabPalette;
+  /** Layout density — defaults to `standard`. */
+  density?: NetlabDensity;
+}
 
 /**
  * Color token configuration for NetlabApp.
@@ -110,28 +132,41 @@ export const NETLAB_LIGHT_THEME: NetlabTheme = {
  * Converts a `NetlabTheme` to a `React.CSSProperties` object of `--netlab-*`
  * CSS custom properties. The result can be spread into any element's `style`
  * prop to scope the theme to that subtree.
+ *
+ * Optional axes can be layered on top:
+ * - `palette` overrides the accent channel (studio / academic).
+ * - `density` emits `--netlab-pad / -gap / -font / -title / -eyebrow`.
+ *
+ * Omitting `axes` (or passing only a subset) preserves the pre-axis behavior,
+ * so existing callers are unaffected.
  */
-export function themeToVars(theme: NetlabTheme): React.CSSProperties {
-  return {
-    '--netlab-bg-primary': theme.bgPrimary,
-    '--netlab-bg-surface': theme.bgSurface,
-    '--netlab-bg-elevated': theme.bgElevated,
-    '--netlab-bg-panel': theme.bgPanel,
-    '--netlab-border': theme.border,
-    '--netlab-border-subtle': theme.borderSubtle,
-    '--netlab-text-primary': theme.textPrimary,
-    '--netlab-text-secondary': theme.textSecondary,
-    '--netlab-text-muted': theme.textMuted,
-    '--netlab-text-faint': theme.textFaint,
-    '--netlab-accent-blue': theme.accentBlue,
-    '--netlab-accent-green': theme.accentGreen,
-    '--netlab-accent-red': theme.accentRed,
-    '--netlab-accent-orange': theme.accentOrange,
-    '--netlab-accent-yellow': theme.accentYellow,
-    '--netlab-accent-cyan': theme.accentCyan,
-    '--netlab-node-router-bg': theme.nodeRouterBg,
-    '--netlab-node-switch-bg': theme.nodeSwitchBg,
-    '--netlab-node-client-bg': theme.nodeClientBg,
-    '--netlab-node-server-bg': theme.nodeServerBg,
+export function themeToVars(theme: NetlabTheme, axes?: NetlabThemeAxes): React.CSSProperties {
+  const palette = axes?.palette ?? 'studio';
+  const resolved: NetlabTheme = { ...theme, ...paletteOverrides(palette) };
+  const base: React.CSSProperties = {
+    '--netlab-bg-primary': resolved.bgPrimary,
+    '--netlab-bg-surface': resolved.bgSurface,
+    '--netlab-bg-elevated': resolved.bgElevated,
+    '--netlab-bg-panel': resolved.bgPanel,
+    '--netlab-border': resolved.border,
+    '--netlab-border-subtle': resolved.borderSubtle,
+    '--netlab-text-primary': resolved.textPrimary,
+    '--netlab-text-secondary': resolved.textSecondary,
+    '--netlab-text-muted': resolved.textMuted,
+    '--netlab-text-faint': resolved.textFaint,
+    '--netlab-accent-blue': resolved.accentBlue,
+    '--netlab-accent-green': resolved.accentGreen,
+    '--netlab-accent-red': resolved.accentRed,
+    '--netlab-accent-orange': resolved.accentOrange,
+    '--netlab-accent-yellow': resolved.accentYellow,
+    '--netlab-accent-cyan': resolved.accentCyan,
+    '--netlab-node-router-bg': resolved.nodeRouterBg,
+    '--netlab-node-switch-bg': resolved.nodeSwitchBg,
+    '--netlab-node-client-bg': resolved.nodeClientBg,
+    '--netlab-node-server-bg': resolved.nodeServerBg,
   } as React.CSSProperties;
+  if (axes?.density) {
+    return { ...base, ...densityToVars(axes.density) };
+  }
+  return base;
 }

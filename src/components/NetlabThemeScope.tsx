@@ -1,23 +1,50 @@
 import type React from 'react';
 import { createContext, useMemo, type ReactNode } from 'react';
-import { NETLAB_DARK_THEME, themeToVars, type NetlabTheme } from '../theme';
+import {
+  NETLAB_DARK_THEME,
+  themeToVars,
+  type NetlabAudience,
+  type NetlabDensity,
+  type NetlabPalette,
+  type NetlabTheme,
+} from '../theme';
 import { resolveColorMode, type NetlabColorMode } from '../utils/themeUtils';
 
 export interface NetlabThemeScopeValue {
   theme: NetlabTheme;
   colorMode: NetlabColorMode;
+  /** Resolved palette axis. Defaults to `studio`. */
+  palette: NetlabPalette;
+  /** Resolved density axis. Defaults to `standard`. */
+  density: NetlabDensity;
+  /** Resolved audience axis. Defaults to `pro`. */
+  audience: NetlabAudience;
 }
 
 export const NetlabThemeScopeContext = createContext<NetlabThemeScopeValue | null>(null);
 
 export interface NetlabThemeScopeProps {
   theme?: Partial<NetlabTheme>;
+  /** Accent flavor — `studio` (default) keeps current accents; `academic` mutes them. */
+  palette?: NetlabPalette;
+  /** Layout density — drives `--netlab-pad / -gap / -font / -title / -eyebrow`. */
+  density?: NetlabDensity;
+  /** Audience flag — `learner` shows scaffolding copy, `pro` hides it. */
+  audience?: NetlabAudience;
   style?: React.CSSProperties;
   className?: string;
   children: ReactNode;
 }
 
-export function NetlabThemeScope({ theme, style, className, children }: NetlabThemeScopeProps) {
+export function NetlabThemeScope({
+  theme,
+  palette = 'studio',
+  density = 'standard',
+  audience = 'pro',
+  style,
+  className,
+  children,
+}: NetlabThemeScopeProps) {
   const resolvedTheme = useMemo<NetlabTheme>(() => ({ ...NETLAB_DARK_THEME, ...theme }), [theme]);
 
   const colorMode = useMemo(
@@ -25,7 +52,10 @@ export function NetlabThemeScope({ theme, style, className, children }: NetlabTh
     [resolvedTheme.bgPrimary],
   );
 
-  const value = useMemo(() => ({ theme: resolvedTheme, colorMode }), [resolvedTheme, colorMode]);
+  const value = useMemo<NetlabThemeScopeValue>(
+    () => ({ theme: resolvedTheme, colorMode, palette, density, audience }),
+    [resolvedTheme, colorMode, palette, density, audience],
+  );
 
   return (
     <NetlabThemeScopeContext.Provider value={value}>
@@ -37,8 +67,11 @@ export function NetlabThemeScope({ theme, style, className, children }: NetlabTh
         }
       `}</style>
       <div
+        data-netlab-palette={palette}
+        data-netlab-density={density}
+        data-netlab-audience={audience}
         style={{
-          ...themeToVars(resolvedTheme),
+          ...themeToVars(resolvedTheme, { palette, density }),
           width: '100%',
           height: '100%',
           display: 'flex',

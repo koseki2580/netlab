@@ -204,6 +204,59 @@ const vars = themeToVars(NETLAB_LIGHT_THEME);
 <div style={vars}>...</div>
 ```
 
+An optional second argument layers theme **axes** on top of the base theme:
+
+```typescript
+themeToVars(NETLAB_LIGHT_THEME, { palette: 'academic', density: 'relaxed' });
+```
+
+Omitting the argument (or omitting a particular axis) preserves the pre-axis behavior, so existing callers are unaffected.
+
+## Theme axes (palette · density · audience)
+
+Three orthogonal axes are available on top of the dark/light **mode** axis:
+
+| Axis       | Values                                       | Effect                                                                     |
+| ---------- | -------------------------------------------- | -------------------------------------------------------------------------- |
+| `palette`  | `studio` (default) · `academic`              | Overrides the accent channel (`accent-green/-cyan/-blue/...`).             |
+| `density`  | `compact` · `standard` (default) · `relaxed` | Emits `--netlab-pad / -gap / -font / -title / -eyebrow` for layout sizing. |
+| `audience` | `learner` · `pro` (default)                  | Surfaced via context; components opt in to show or hide explanatory copy.  |
+
+The `studio` palette keeps the saturated accent colors used by the existing built-in themes; `academic` desaturates them toward primary-color territory for projector and print-friendly readability.
+
+`NetlabThemeScope` accepts the axes as props and emits matching data-attributes on the wrapper:
+
+```tsx
+<NetlabThemeScope palette="academic" density="relaxed" audience="learner">
+  <NetlabApp topology={topology} />
+</NetlabThemeScope>
+```
+
+The wrapper element gets `data-netlab-palette="academic" data-netlab-density="relaxed" data-netlab-audience="learner"`. Host CSS can target descendants by those attributes when needed.
+
+### Reading axes from descendants
+
+Use `useNetlabTheme()` to read the resolved axes (plus `theme` and `colorMode`) from any descendant of `NetlabThemeScope`:
+
+```tsx
+import { useNetlabTheme } from 'netlab';
+
+function HintBlock() {
+  const { audience } = useNetlabTheme();
+  if (audience !== 'learner') return null;
+  return <aside>…explainer copy…</aside>;
+}
+```
+
+### URL persistence
+
+The demo app uses `useUrlParamSync(key, value, { defaultValue })` to two-way bind axis state to URL search params without firing a navigation event. Defaults are omitted so shareable URLs stay clean. Example URLs that pre-configure a session:
+
+```text
+/?palette=academic&density=relaxed
+/?audience=learner&theme=dark
+```
+
 ## Primitive Composition
 
 `NetlabApp` is the batteries-included entry point: it injects `--netlab-*` variables and keeps `ReactFlow`'s `colorMode` aligned automatically.

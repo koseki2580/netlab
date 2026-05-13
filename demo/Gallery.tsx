@@ -2,12 +2,21 @@ import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ProgressPanel } from '../src/components/progress/ProgressPanel';
+import { readUrlParam, useUrlParamSync } from '../src/hooks/useUrlParamSync';
 import { scenarioRegistry } from '../src/scenarios';
-import { NETLAB_DARK_THEME, NETLAB_LIGHT_THEME, themeToVars } from '../src/theme';
+import {
+  NETLAB_DARK_THEME,
+  NETLAB_LIGHT_THEME,
+  themeToVars,
+  type NetlabAudience,
+  type NetlabDensity,
+  type NetlabPalette,
+} from '../src/theme';
 import { tutorialRegistry } from '../src/tutorials';
 import { DemoCard } from './components/DemoCard';
 import { FeaturedStrip } from './components/FeaturedStrip';
 import { SearchBox } from './components/SearchBox';
+import { SettingsPopover, type GallerySettings } from './components/SettingsPopover';
 import { Sidebar } from './components/Sidebar';
 
 const GITHUB_ICON = (
@@ -408,6 +417,46 @@ interface GalleryProps {
 }
 
 const GALLERY_LOCALE_KEY = 'netlab-locale';
+const GALLERY_PALETTE_KEY = 'netlab-palette';
+const GALLERY_DENSITY_KEY = 'netlab-density';
+const GALLERY_AUDIENCE_KEY = 'netlab-audience';
+
+const PALETTE_VALUES: readonly NetlabPalette[] = ['studio', 'academic'];
+const DENSITY_VALUES: readonly NetlabDensity[] = ['compact', 'standard', 'relaxed'];
+const AUDIENCE_VALUES: readonly NetlabAudience[] = ['learner', 'pro'];
+
+function isPalette(value: string | null): value is NetlabPalette {
+  return value !== null && (PALETTE_VALUES as readonly string[]).includes(value);
+}
+function isDensity(value: string | null): value is NetlabDensity {
+  return value !== null && (DENSITY_VALUES as readonly string[]).includes(value);
+}
+function isAudience(value: string | null): value is NetlabAudience {
+  return value !== null && (AUDIENCE_VALUES as readonly string[]).includes(value);
+}
+
+function readStoredAxis<T extends string>(
+  key: string,
+  guard: (v: string | null) => v is T,
+  fallback: T,
+): T {
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const value = window.localStorage.getItem(key);
+    return guard(value) ? value : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function persistAxis(key: string, value: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Storage is optional for embedded/private contexts.
+  }
+}
 
 const GALLERY_COPY: Record<
   GalleryLocale,
@@ -802,7 +851,30 @@ export default function Gallery({
   initialLocale,
 }: GalleryProps) {
   const [query, setQuery] = useState(initialQuery);
-  const [themeMode, setThemeMode] = useState<GalleryThemeMode>(initialThemeMode);
+  const [themeMode, setThemeMode] = useState<GalleryThemeMode>(() => {
+    const fromUrl = readUrlParam('theme');
+    if (fromUrl === 'dark' || fromUrl === 'light') return fromUrl;
+    return readStoredAxis<GalleryThemeMode>(
+      'netlab-theme-mode',
+      (v): v is GalleryThemeMode => v === 'dark' || v === 'light',
+      initialThemeMode,
+    );
+  });
+  const [palette, setPalette] = useState<NetlabPalette>(() => {
+    const fromUrl = readUrlParam('palette');
+    if (isPalette(fromUrl)) return fromUrl;
+    return readStoredAxis(GALLERY_PALETTE_KEY, isPalette, 'studio');
+  });
+  const [density, setDensity] = useState<NetlabDensity>(() => {
+    const fromUrl = readUrlParam('density');
+    if (isDensity(fromUrl)) return fromUrl;
+    return readStoredAxis(GALLERY_DENSITY_KEY, isDensity, 'standard');
+  });
+  const [audience, setAudience] = useState<NetlabAudience>(() => {
+    const fromUrl = readUrlParam('audience');
+    if (isAudience(fromUrl)) return fromUrl;
+    return readStoredAxis(GALLERY_AUDIENCE_KEY, isAudience, 'pro');
+  });
   const [activeSectionId, setActiveSectionId] = useState(initialActiveSectionId);
   const [locale, setLocale] = useState<GalleryLocale>(
     () => initialLocale ?? readStoredGalleryLocale(),
@@ -811,6 +883,34 @@ export default function Gallery({
   const normalizedQuery = query.trim().toLowerCase();
   const activeTheme = themeMode === 'dark' ? NETLAB_DARK_THEME : NETLAB_LIGHT_THEME;
   const copy = GALLERY_COPY[locale];
+
+  // Two-way bind theme axes to URL params for shareable links.
+  useUrlParamSync('theme', themeMode, { defaultValue: 'light' });
+  useUrlParamSync('palette', palette, { defaultValue: 'studio' });
+  useUrlParamSync('density', density, { defaultValue: 'standard' });
+  useUrlParamSync('audience', audience, { defaultValue: 'pro' });
+
+  // Persist axes to localStorage so demo visitors keep their prefs.
+  useEffect(() => {
+    persistAxis('netlab-theme-mode', themeMode);
+  }, [themeMode]);
+  useEffect(() => {
+    persistAxis(GALLERY_PALETTE_KEY, palette);
+  }, [palette]);
+  useEffect(() => {
+    persistAxis(GALLERY_DENSITY_KEY, density);
+  }, [density]);
+  useEffect(() => {
+    persistAxis(GALLERY_AUDIENCE_KEY, audience);
+  }, [audience]);
+
+  const settings: GallerySettings = { themeMode, palette, density, audience };
+  const handleSettingsChange = (next: GallerySettings) => {
+    if (next.themeMode !== themeMode) setThemeMode(next.themeMode);
+    if (next.palette !== palette) setPalette(next.palette);
+    if (next.density !== density) setDensity(next.density);
+    if (next.audience !== audience) setAudience(next.audience);
+  };
 
   const filteredCategories = useMemo(() => {
     if (!normalizedQuery) {
@@ -959,8 +1059,11 @@ export default function Gallery({
 
   return (
     <div
+      data-netlab-palette={palette}
+      data-netlab-density={density}
+      data-netlab-audience={audience}
       style={{
-        ...themeToVars(activeTheme),
+        ...themeToVars(activeTheme, { palette, density }),
         minHeight: '100vh',
         background:
           'radial-gradient(circle at top left, color-mix(in srgb, var(--netlab-accent-cyan) 10%, var(--netlab-bg-surface)), transparent 26%), radial-gradient(circle at top right, color-mix(in srgb, var(--netlab-accent-yellow) 10%, var(--netlab-bg-surface)), transparent 24%), linear-gradient(180deg, color-mix(in srgb, var(--netlab-bg-surface) 28%, var(--netlab-bg-primary)) 0%, var(--netlab-bg-primary) 100%)',
@@ -1071,6 +1174,7 @@ export default function Gallery({
             }}
           >
             <ThemeModeToggle themeMode={themeMode} onChange={setThemeMode} />
+            <SettingsPopover settings={settings} onChange={handleSettingsChange} />
             <LocaleToggle locale={locale} label={copy.localeLabel} onChange={setLocale} />
             <SearchBox
               value={query}

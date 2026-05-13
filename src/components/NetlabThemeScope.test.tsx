@@ -62,4 +62,40 @@ describe('NetlabThemeScope', () => {
     );
     expect(scope?.style.background).toBe('var(--netlab-bg-primary)');
   });
+
+  it('defaults theme axis data-attributes to studio / standard / pro', () => {
+    render(
+      <NetlabThemeScope theme={NETLAB_LIGHT_THEME}>
+        <div>content</div>
+      </NetlabThemeScope>,
+    );
+
+    const scope = container?.querySelector('div[data-netlab-palette]') as HTMLDivElement | null;
+    expect(scope).not.toBeNull();
+    expect(scope?.dataset.netlabPalette).toBe('studio');
+    expect(scope?.dataset.netlabDensity).toBe('standard');
+    expect(scope?.dataset.netlabAudience).toBe('pro');
+  });
+
+  it('emits data-netlab-* attributes + density tokens when axes are provided', () => {
+    render(
+      <NetlabThemeScope
+        theme={NETLAB_LIGHT_THEME}
+        palette="academic"
+        density="compact"
+        audience="learner"
+      >
+        <div>content</div>
+      </NetlabThemeScope>,
+    );
+
+    const scope = container?.querySelector('div[data-netlab-palette]') as HTMLDivElement | null;
+    expect(scope).not.toBeNull();
+    expect(scope?.dataset.netlabPalette).toBe('academic');
+    expect(scope?.dataset.netlabDensity).toBe('compact');
+    expect(scope?.dataset.netlabAudience).toBe('learner');
+    expect(scope?.style.getPropertyValue('--netlab-pad')).toBe('10px');
+    // academic palette overrides the cyan accent
+    expect(scope?.style.getPropertyValue('--netlab-accent-cyan')).toBe('#356dab');
+  });
 });
