@@ -74,6 +74,7 @@ function toMetadataHop(hop: PacketHop): PacketHop {
       : {}),
     ...(hop.reason !== undefined ? { reason: hop.reason } : {}),
     ...(hop.action !== undefined ? { action: hop.action } : {}),
+    ...(hop.linkQos !== undefined ? { linkQos: hop.linkQos } : {}),
     ...(hop.fragmentIndex !== undefined ? { fragmentIndex: hop.fragmentIndex } : {}),
     ...(hop.fragmentCount !== undefined ? { fragmentCount: hop.fragmentCount } : {}),
     ...(hop.identification !== undefined ? { identification: hop.identification } : {}),

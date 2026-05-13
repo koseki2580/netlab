@@ -25,3 +25,6 @@ export { computeStp } from './stp/computeStp';
 export type { StpResult } from './stp/computeStp';
 export { collectSwitchBridges, electRoot } from './stp/rootElection';
 export type { SwitchBridge } from './stp/rootElection';
+export { receiveLacpPdu, lacpTimeoutMs } from './LacpStateMachine';
+export { PortChannel } from './PortChannel';
+export type { PortChannelConfig } from './PortChannel';

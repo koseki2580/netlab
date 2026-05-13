@@ -8,8 +8,13 @@ import { ArpBuilder, FrameMaterializer, IcmpBuilder } from './pipeline/builders'
 import { ArpDispatcher, ForwardingLoop } from './pipeline/dispatch';
 import { InterfaceResolver, MacResolver, PortResolver } from './pipeline/resolvers';
 import { ServiceOrchestrator } from './ServiceOrchestrator';
+import { LinkQueueRegistry } from './LinkQueueRegistry';
 import { TraceRecorder } from './TraceRecorder';
+import { FlowCollector } from '../observability/FlowCollector';
+import { NetflowExporter } from '../observability/NetflowExporter';
+import { SflowSampler } from '../observability/SflowSampler';
 import type { PrecomputeOptions, PrecomputeResult } from './types';
+import { canonicalizeIpv6, isIpv6Address } from '../utils/ipv6';
 
 export { deriveDeterministicMac } from '../utils/network';
 
@@ -94,6 +99,15 @@ export class ForwardingPipeline {
     return this.services.getRuntimeNodeIp(node.id) ?? node.data.ip;
   }
 
+  getEffectiveNodeIpv6(node: NetlabNode | null): string | undefined {
+    if (!node) return undefined;
+    if (typeof node.data.ipv6 === 'string' && node.data.ipv6.trim()) {
+      return canonicalizeIpv6(node.data.ipv6);
+    }
+    const iface = (node.data.interfaces ?? []).find((candidate) => candidate.ipv6Address);
+    return iface?.ipv6Address ? canonicalizeIpv6(iface.ipv6Address) : undefined;
+  }
+
   withPacketIps(packet: InFlightPacket, ips: { srcIp?: string; dstIp?: string }): InFlightPacket {
     const srcIp = ips.srcIp ?? packet.frame.payload.srcIp;
     const dstIp = ips.dstIp ?? packet.frame.payload.dstIp;
@@ -125,6 +139,10 @@ export class ForwardingPipeline {
     const nodeArpTables: Record<string, Record<string, string>> = {};
     const arpCache = new Map<string, string>();
     const reassemblers = new Map<string, import('./Reassembler').Reassembler>();
+    const linkQueues = new LinkQueueRegistry();
+    const flowCollector = new FlowCollector();
+    const netflowExporters = new Map<string, NetflowExporter>();
+    const sflowSamplers = new Map<string, SflowSampler>();
     this.forwardingLoop.seedArpCache(arpCache);
     const baseTs = Date.now();
     const current = packet.srcNodeId;
@@ -151,6 +169,10 @@ export class ForwardingPipeline {
         nodeArpTables,
         arpCache,
         reassemblers,
+        linkQueues,
+        flowCollector,
+        netflowExporters,
+        sflowSamplers,
         failureState,
         options,
       },
@@ -199,6 +221,10 @@ export class ForwardingPipeline {
     dstIp: string,
     options?: { ttl?: number },
   ): Promise<PrecomputeResult> {
+    if (isIpv6Address(dstIp)) {
+      return this.ping6(srcNodeId, dstIp, options);
+    }
+
     const srcNode = this.findNode(srcNodeId);
     if (!srcNode) {
       throw new NetlabError({
@@ -233,6 +259,57 @@ export class ForwardingPipeline {
         dstNode.id,
         srcNodeId,
         dstIp,
+        srcIp,
+        requestPacket,
+      );
+      const replyResult = await this.precomputeDetailed(replyPacket, EMPTY_FAILURE_STATE);
+      result = this.traceRecorder.mergeResults(result, replyResult);
+      this.traceRecorder.setSnapshots(result.trace.packetId, result.snapshots);
+    }
+
+    return result;
+  }
+
+  async ping6(
+    srcNodeId: string,
+    dstIp: string,
+    options?: { ttl?: number },
+  ): Promise<PrecomputeResult> {
+    const srcNode = this.findNode(srcNodeId);
+    if (!srcNode) {
+      throw new NetlabError({
+        code: 'invariant/not-found',
+        message: `Node ${srcNodeId} not found`,
+        context: { nodeId: srcNodeId },
+      });
+    }
+
+    const srcIp = this.getEffectiveNodeIpv6(srcNode);
+    if (!srcIp) {
+      throw new NetlabError({
+        code: 'invariant/no-ip',
+        message: `Node ${srcNodeId} has no effective IPv6 address`,
+        context: { nodeId: srcNodeId },
+      });
+    }
+
+    const canonicalDst = canonicalizeIpv6(dstIp);
+    const dstNode = this.macResolver.findNodeByIp(canonicalDst);
+    const requestPacket = this.icmpBuilder.buildIpv6EchoRequest(
+      srcNodeId,
+      dstNode?.id ?? canonicalDst,
+      srcIp,
+      canonicalDst,
+      options?.ttl ?? 64,
+    );
+
+    let result = await this.precomputeDetailed(requestPacket, EMPTY_FAILURE_STATE);
+
+    if (result.trace.status === 'delivered' && dstNode) {
+      const replyPacket = this.icmpBuilder.buildIpv6EchoReply(
+        dstNode.id,
+        srcNodeId,
+        canonicalDst,
         srcIp,
         requestPacket,
       );

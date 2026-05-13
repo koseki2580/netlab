@@ -6,6 +6,7 @@ import {
   bytesToRawString,
 } from '../../../utils/packetLayout';
 import { ICMP_CODE, ICMP_TYPE } from '../../icmp';
+import { buildIcmpv6EchoReply, buildIcmpv6EchoRequest, ICMPV6_TYPE } from '../../icmpv6';
 
 const BROADCAST_IP = '255.255.255.255';
 
@@ -70,6 +71,45 @@ export class IcmpBuilder {
     });
   }
 
+  buildIpv6EchoRequest(
+    srcNodeId: string,
+    dstNodeId: string,
+    srcIp: string,
+    dstIp: string,
+    hopLimit: number,
+  ): InFlightPacket {
+    const packetId = this.makePacketId('icmpv6-echo-request');
+    return {
+      id: packetId,
+      srcNodeId,
+      dstNodeId,
+      currentDeviceId: srcNodeId,
+      ingressPortId: '',
+      path: [],
+      timestamp: Date.now(),
+      frame: {
+        layer: 'L2',
+        srcMac: '00:00:00:00:00:00',
+        dstMac: '00:00:00:00:00:00',
+        etherType: 0x86dd,
+        payload: {
+          layer: 'L3',
+          version: 6,
+          srcIp,
+          dstIp,
+          ttl: hopLimit,
+          hopLimit,
+          protocol: 58,
+          nextHeader: 58,
+          payload: buildIcmpv6EchoRequest({
+            identifier: stableHash32(packetId) & 0xffff,
+            sequenceNumber: 1,
+          }),
+        },
+      },
+    };
+  }
+
   buildEchoReply(
     srcNodeId: string,
     dstNodeId: string,
@@ -91,6 +131,64 @@ export class IcmpBuilder {
         ? { sequenceNumber: requestPayload.sequenceNumber }
         : {}),
     });
+  }
+
+  buildIpv6EchoReply(
+    srcNodeId: string,
+    dstNodeId: string,
+    srcIp: string,
+    dstIp: string,
+    requestPacket: InFlightPacket,
+  ): InFlightPacket {
+    const requestPayload = requestPacket.frame.payload.payload;
+    const packetId = `${requestPacket.id}-reply`;
+    const echoReply =
+      'type' in requestPayload && requestPayload.type === ICMPV6_TYPE.ECHO_REQUEST
+        ? {
+            layer: 'L4' as const,
+            type: ICMPV6_TYPE.ECHO_REPLY,
+            code: 0,
+            checksum: 0,
+            ...(requestPayload.identifier !== undefined
+              ? { identifier: requestPayload.identifier }
+              : {}),
+            ...(requestPayload.sequenceNumber !== undefined
+              ? { sequenceNumber: requestPayload.sequenceNumber }
+              : {}),
+          }
+        : buildIcmpv6EchoReply({
+            layer: 'L4',
+            type: ICMPV6_TYPE.ECHO_REQUEST,
+            code: 0,
+            checksum: 0,
+          });
+
+    return {
+      id: packetId,
+      srcNodeId,
+      dstNodeId,
+      currentDeviceId: srcNodeId,
+      ingressPortId: '',
+      path: [],
+      timestamp: Date.now(),
+      frame: {
+        layer: 'L2',
+        srcMac: '00:00:00:00:00:00',
+        dstMac: '00:00:00:00:00:00',
+        etherType: 0x86dd,
+        payload: {
+          layer: 'L3',
+          version: 6,
+          srcIp,
+          dstIp,
+          ttl: 64,
+          hopLimit: 64,
+          protocol: 58,
+          nextHeader: 58,
+          payload: echoReply,
+        },
+      },
+    };
   }
 
   buildTimeExceeded(

@@ -1,11 +1,14 @@
 import type { ForwardContext, ForwardDecision, Forwarder } from '../../types/layers';
-import type { InFlightPacket } from '../../types/packets';
-import type { RouteEntry } from '../../types/routing';
+import { isIpv6Packet, type InFlightPacket } from '../../types/packets';
+import type { EqualCostNextHop, RouteEntry } from '../../types/routing';
+import type { EcmpTrace } from '../../types/simulation';
 import type { Neighbor } from '../../types/simulation';
 import type { NetworkTopology } from '../../types/topology';
 import { stripTag, tagFrame } from '../l2-datalink/vlan';
 import { isInSubnet, prefixLength } from '../../utils/cidr';
 import { computeIpv4Checksum } from '../../utils/checksum';
+import { bucketFlow, flowKeyFromPacket, hashFlow, hashString32 } from '../../utils/hashFlow';
+import { isIpv6Address } from '../../utils/ipv6';
 import { buildIpv4HeaderBytes } from '../../utils/packetLayout';
 
 interface LogicalRouterInterface {
@@ -13,19 +16,32 @@ interface LogicalRouterInterface {
   name: string;
   ipAddress: string;
   prefixLength: number;
+  ipv6Address?: string;
+  prefixLength6?: number;
   macAddress: string;
   parentInterfaceId?: string;
   vlanId?: number;
+}
+
+function interfaceMatchesTarget(iface: LogicalRouterInterface, targetIp: string): boolean {
+  if (isIpv6Address(targetIp)) {
+    return iface.ipv6Address !== undefined && iface.prefixLength6 !== undefined
+      ? isInSubnet(targetIp, `${iface.ipv6Address}/${iface.prefixLength6}`)
+      : false;
+  }
+  return isInSubnet(targetIp, `${iface.ipAddress}/${iface.prefixLength}`);
 }
 
 export class RouterForwarder implements Forwarder {
   private readonly nodeId: string;
   private readonly topology: NetworkTopology;
   private readonly arpTable = new Map<string, string>();
+  private readonly routerSeed: number;
 
   constructor(nodeId: string, topology: NetworkTopology) {
     this.nodeId = nodeId;
     this.topology = topology;
+    this.routerSeed = hashString32(nodeId, 0x81e);
     this.seedArpTable();
   }
 
@@ -60,6 +76,8 @@ export class RouterForwarder implements Forwarder {
         name: iface.name,
         ipAddress: iface.ipAddress,
         prefixLength: iface.prefixLength,
+        ...(iface.ipv6Address !== undefined ? { ipv6Address: iface.ipv6Address } : {}),
+        ...(iface.prefixLength6 !== undefined ? { prefixLength6: iface.prefixLength6 } : {}),
         macAddress: iface.macAddress,
       };
       const subInterfaces = (iface.subInterfaces ?? []).map((subInterface) => ({
@@ -67,6 +85,12 @@ export class RouterForwarder implements Forwarder {
         name: subInterface.id,
         ipAddress: subInterface.ipAddress,
         prefixLength: subInterface.prefixLength,
+        ...(subInterface.ipv6Address !== undefined
+          ? { ipv6Address: subInterface.ipv6Address }
+          : {}),
+        ...(subInterface.prefixLength6 !== undefined
+          ? { prefixLength6: subInterface.prefixLength6 }
+          : {}),
         macAddress: iface.macAddress,
         parentInterfaceId: iface.id,
         vlanId: subInterface.vlanId,
@@ -127,7 +151,7 @@ export class RouterForwarder implements Forwarder {
 
   private resolveNeighborForRoute(
     dstIp: string,
-    route: RouteEntry,
+    nextHop: string,
     neighbors: Neighbor[],
   ): Neighbor | null {
     for (const neighbor of neighbors) {
@@ -136,12 +160,17 @@ export class RouterForwarder implements Forwarder {
 
       const neighborInterfaceIps =
         neighborNode.data.role === 'router'
-          ? this.getLogicalInterfacesForNode(neighborNode.id).map((iface) => iface.ipAddress)
+          ? this.getLogicalInterfacesForNode(neighborNode.id).flatMap((iface) => [
+              iface.ipAddress,
+              ...(iface.ipv6Address !== undefined ? [iface.ipv6Address] : []),
+            ])
           : (neighborNode.data.interfaces ?? []).map((iface) => iface.ipAddress);
+      const neighborNodeIp = isIpv6Address(dstIp)
+        ? neighborNode.data.ipv6
+        : (neighborNode.data.runtimeIp ?? neighborNode.data.ip);
 
-      if (route.nextHop === 'direct') {
-        const nodeIp = neighborNode.data.runtimeIp ?? neighborNode.data.ip;
-        if (nodeIp === dstIp) return neighbor;
+      if (nextHop === 'direct') {
+        if (neighborNodeIp === dstIp) return neighbor;
         if (neighborInterfaceIps.includes(dstIp)) {
           return neighbor;
         }
@@ -149,7 +178,7 @@ export class RouterForwarder implements Forwarder {
         continue;
       }
 
-      if (neighborInterfaceIps.includes(route.nextHop)) {
+      if (neighborInterfaceIps.includes(nextHop)) {
         return neighbor;
       }
       if (neighborNode.data.role === 'switch') return neighbor;
@@ -160,21 +189,81 @@ export class RouterForwarder implements Forwarder {
 
   private lookupReachable(
     dstIp: string,
+    packet: InFlightPacket,
     neighbors: Neighbor[],
-  ): { route: RouteEntry; neighbor: Neighbor } | null {
+  ): { route: RouteEntry; neighbor: Neighbor; ecmpTrace?: EcmpTrace } | null {
     const routes = this.topology.routeTables.get(this.nodeId) ?? [];
     const candidates = [...routes]
       .filter((route) => isInSubnet(dstIp, route.destination))
       .sort((a, b) => prefixLength(b.destination) - prefixLength(a.destination));
 
     for (const route of candidates) {
-      const neighbor = this.resolveNeighborForRoute(dstIp, route, neighbors);
-      if (neighbor) {
-        return { route, neighbor };
+      const nextHops = this.expandNextHops(route);
+      const reachable = nextHops
+        .map((nextHop) => ({
+          nextHop,
+          neighbor: this.resolveNeighborForRoute(dstIp, nextHop.nextHop, neighbors),
+        }))
+        .filter(
+          (candidate): candidate is { nextHop: EqualCostNextHop; neighbor: Neighbor } =>
+            candidate.neighbor !== null,
+        );
+      if (reachable.length === 0) {
+        continue;
       }
+
+      const flowKey = flowKeyFromPacket(packet);
+      const bucket =
+        reachable.length === 1 ? 0 : bucketFlow(flowKey, reachable.length, this.routerSeed);
+      const selected = reachable[bucket];
+      if (!selected) {
+        continue;
+      }
+      const selectedRoute: RouteEntry = {
+        ...route,
+        nextHop: selected.nextHop.nextHop,
+        ...(selected.nextHop.outIfId !== undefined ? { outIfId: selected.nextHop.outIfId } : {}),
+      };
+      const ecmpTrace =
+        reachable.length > 1
+          ? {
+              routerId: this.nodeId,
+              flowHash: hashFlow(flowKey, this.routerSeed),
+              bucket,
+              candidateCount: reachable.length,
+              chosen: {
+                nextHop: selected.nextHop.nextHop,
+                ...(selected.nextHop.outIfId !== undefined
+                  ? { outIfId: selected.nextHop.outIfId }
+                  : {}),
+              },
+            }
+          : undefined;
+
+      return {
+        route: selectedRoute,
+        neighbor: selected.neighbor,
+        ...(ecmpTrace !== undefined ? { ecmpTrace } : {}),
+      };
     }
 
     return null;
+  }
+
+  private expandNextHops(route: RouteEntry): EqualCostNextHop[] {
+    const configured = route.equalCostNextHops ?? [];
+    if (configured.length > 0) {
+      return configured.map((candidate) => ({
+        nextHop: candidate.nextHop,
+        ...(candidate.outIfId !== undefined ? { outIfId: candidate.outIfId } : {}),
+      }));
+    }
+    return [
+      {
+        nextHop: route.nextHop,
+        ...(route.outIfId !== undefined ? { outIfId: route.outIfId } : {}),
+      },
+    ];
   }
 
   private resolveEgressInterface(
@@ -182,6 +271,10 @@ export class RouterForwarder implements Forwarder {
     dstIp: string,
     edgeId: string,
   ): string | undefined {
+    if (route.outIfId) {
+      return route.outIfId;
+    }
+
     const logicalInterfaces = this.getLogicalInterfacesForNode(this.nodeId);
     const edge = this.topology.edges.find((candidate) => candidate.id === edgeId);
     const edgeHandle =
@@ -193,7 +286,7 @@ export class RouterForwarder implements Forwarder {
     const targetIp = route.nextHop === 'direct' ? dstIp : route.nextHop;
 
     const matchedInterface = logicalInterfaces.find((iface) => {
-      if (!isInSubnet(targetIp, `${iface.ipAddress}/${iface.prefixLength}`)) {
+      if (!interfaceMatchesTarget(iface, targetIp)) {
         return false;
       }
       if (!edgeHandle) {
@@ -210,9 +303,7 @@ export class RouterForwarder implements Forwarder {
       return edgeHandle;
     }
 
-    return logicalInterfaces.find((iface) =>
-      isInSubnet(targetIp, `${iface.ipAddress}/${iface.prefixLength}`),
-    )?.id;
+    return logicalInterfaces.find((iface) => interfaceMatchesTarget(iface, targetIp))?.id;
   }
 
   async receive(
@@ -230,18 +321,23 @@ export class RouterForwarder implements Forwarder {
       return { action: 'drop', reason: 'ttl-exceeded' };
     }
 
-    const result = this.lookupReachable(ipPacket.dstIp, ctx.neighbors);
+    const result = this.lookupReachable(ipPacket.dstIp, packet, ctx.neighbors);
     if (!result) {
       return { action: 'drop', reason: 'no-route' };
     }
-    const { route, neighbor } = result;
+    const { route, neighbor, ecmpTrace } = result;
 
-    const updatedIp = { ...ipPacket, ttl: ipPacket.ttl - 1 };
-    const headerBytes = buildIpv4HeaderBytes(updatedIp, { checksumOverride: 0 });
-    const updatedIpWithChecksum = {
-      ...updatedIp,
-      headerChecksum: computeIpv4Checksum(headerBytes),
-    };
+    const updatedIp = isIpv6Packet(ipPacket)
+      ? { ...ipPacket, ttl: ipPacket.ttl - 1, hopLimit: ipPacket.hopLimit - 1 }
+      : { ...ipPacket, ttl: ipPacket.ttl - 1 };
+    const updatedIpWithChecksum = isIpv6Packet(updatedIp)
+      ? updatedIp
+      : {
+          ...updatedIp,
+          headerChecksum: computeIpv4Checksum(
+            buildIpv4HeaderBytes(updatedIp, { checksumOverride: 0 }),
+          ),
+        };
 
     const egressInterfaceId = this.resolveEgressInterface(route, ipPacket.dstIp, neighbor.edgeId);
     const egressInterface = egressInterfaceId
@@ -276,6 +372,7 @@ export class RouterForwarder implements Forwarder {
         : {}),
       ...(egressInterfaceId !== undefined ? { egressInterfaceId } : {}),
       selectedRoute: route,
+      ...(ecmpTrace !== undefined ? { ecmpTrace } : {}),
     };
   }
 }

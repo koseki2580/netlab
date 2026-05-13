@@ -4,13 +4,28 @@ import type { RouteEntry } from '../../../types/routing';
 import type { NetlabNode, NetworkTopology } from '../../../types/topology';
 import { isInSubnet, prefixLength } from '../../../utils/cidr';
 import { deriveDeterministicMac } from '../../../utils/network';
+import { canonicalizeIpv6, isIpv6Address } from '../../../utils/ipv6';
 import type { InterfaceResolver } from './InterfaceResolver';
+import type { LogicalRouterInterface } from './InterfaceResolver';
 
 function bestRoute(dstIp: string, routes: RouteEntry[]): RouteEntry | null {
   const sorted = [...routes].sort(
     (a, b) => prefixLength(b.destination) - prefixLength(a.destination),
   );
   return sorted.find((r) => isInSubnet(dstIp, r.destination)) ?? null;
+}
+
+function interfaceMatchesTarget(iface: LogicalRouterInterface, targetIp: string): boolean {
+  if (isIpv6Address(targetIp)) {
+    return iface.ipv6Address !== undefined && iface.prefixLength6 !== undefined
+      ? isInSubnet(targetIp, `${iface.ipv6Address}/${iface.prefixLength6}`)
+      : false;
+  }
+  return isInSubnet(targetIp, `${iface.ipAddress}/${iface.prefixLength}`);
+}
+
+function interfaceAddress(iface: LogicalRouterInterface, targetIp: string): string {
+  return isIpv6Address(targetIp) && iface.ipv6Address ? iface.ipv6Address : iface.ipAddress;
 }
 
 export class MacResolver {
@@ -44,7 +59,18 @@ export class MacResolver {
 
   nodeOwnsIp(node: NetlabNode, ip: string): boolean {
     if (this.getEffectiveNodeIp(node) === ip) return true;
-    return this.ifaceResolver.getLogical(node).some((iface) => iface.ipAddress === ip);
+    if (isIpv6Address(ip) && typeof node.data.ipv6 === 'string') {
+      if (canonicalizeIpv6(node.data.ipv6) === canonicalizeIpv6(ip)) return true;
+    }
+    return this.ifaceResolver
+      .getLogical(node)
+      .some(
+        (iface) =>
+          iface.ipAddress === ip ||
+          (isIpv6Address(ip) &&
+            iface.ipv6Address !== undefined &&
+            canonicalizeIpv6(iface.ipv6Address) === canonicalizeIpv6(ip)),
+      );
   }
 
   findMatchingNodeThroughSwitches(
@@ -75,7 +101,9 @@ export class MacResolver {
         (targetNodeId !== undefined && node.id === targetNodeId) ||
         (targetIp !== null &&
           (this.getEffectiveNodeIp(node) === targetIp ||
-            interfaces.some((iface) => iface.ipAddress === targetIp)));
+            interfaces.some(
+              (iface) => iface.ipAddress === targetIp || iface.ipv6Address === targetIp,
+            )));
 
       if (matchesTarget) {
         return node;
@@ -154,10 +182,7 @@ export class MacResolver {
           senderIp,
           failureState,
         );
-        if (
-          gateway &&
-          !isInSubnet(targetIp, `${gateway.iface.ipAddress}/${gateway.iface.prefixLength}`)
-        ) {
+        if (gateway && !interfaceMatchesTarget(gateway.iface, targetIp)) {
           return gateway.node;
         }
       }
@@ -215,16 +240,18 @@ export class MacResolver {
             )?.nextHop;
 
       if (nextHop && nextHop !== 'direct') {
-        const nextHopInterface = routerInterfaces.find((iface) => iface.ipAddress === nextHop);
+        const nextHopInterface = routerInterfaces.find(
+          (iface) => iface.ipAddress === nextHop || iface.ipv6Address === nextHop,
+        );
         if (nextHopInterface) return nextHopInterface.macAddress;
       }
 
       const egressInterface = this.ifaceResolver.findLogicalById(currentNodeId, egressInterfaceId);
       if (egressInterface) {
         const subnetInterface = routerInterfaces.find((iface) =>
-          isInSubnet(
-            iface.ipAddress,
-            `${egressInterface.ipAddress}/${egressInterface.prefixLength}`,
+          interfaceMatchesTarget(
+            iface,
+            interfaceAddress(egressInterface, packet.frame.payload.dstIp),
           ),
         );
         if (subnetInterface) return subnetInterface.macAddress;
@@ -233,7 +260,7 @@ export class MacResolver {
 
     const sourceIp = packet.frame.payload.srcIp;
     const ingressFacingInterface = routerInterfaces.find((iface) =>
-      isInSubnet(sourceIp, `${iface.ipAddress}/${iface.prefixLength}`),
+      interfaceMatchesTarget(iface, sourceIp),
     );
 
     return ingressFacingInterface?.macAddress ?? routerInterfaces[0]?.macAddress ?? null;

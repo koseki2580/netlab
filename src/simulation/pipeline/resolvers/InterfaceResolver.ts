@@ -3,6 +3,7 @@ import type { RouteEntry } from '../../../types/routing';
 import type { Neighbor } from '../../../types/simulation';
 import type { NetlabNode, NetworkTopology } from '../../../types/topology';
 import { isInSubnet, prefixLength } from '../../../utils/cidr';
+import { isIpv6Address } from '../../../utils/ipv6';
 
 export interface ResolvedInterface {
   id: string;
@@ -12,6 +13,8 @@ export interface ResolvedInterface {
 export interface LogicalRouterInterface extends ResolvedInterface {
   ipAddress: string;
   prefixLength: number;
+  ipv6Address?: string;
+  prefixLength6?: number;
   macAddress: string;
   mtu?: number;
   parentInterfaceId?: string;
@@ -23,6 +26,15 @@ function bestRoute(dstIp: string, routes: RouteEntry[]): RouteEntry | null {
     (a, b) => prefixLength(b.destination) - prefixLength(a.destination),
   );
   return sorted.find((r) => isInSubnet(dstIp, r.destination)) ?? null;
+}
+
+function interfaceMatchesTarget(iface: LogicalRouterInterface, targetIp: string): boolean {
+  if (isIpv6Address(targetIp)) {
+    return iface.ipv6Address !== undefined && iface.prefixLength6 !== undefined
+      ? isInSubnet(targetIp, `${iface.ipv6Address}/${iface.prefixLength6}`)
+      : false;
+  }
+  return isInSubnet(targetIp, `${iface.ipAddress}/${iface.prefixLength}`);
 }
 
 export class InterfaceResolver {
@@ -64,9 +76,7 @@ export class InterfaceResolver {
       targetIp = route.nextHop === 'direct' ? dstIp : route.nextHop;
     }
 
-    const match = this.getLogical(node).find((iface) =>
-      isInSubnet(targetIp, `${iface.ipAddress}/${iface.prefixLength}`),
-    );
+    const match = this.getLogical(node).find((iface) => interfaceMatchesTarget(iface, targetIp));
 
     return match ? { id: match.id, name: match.name } : null;
   }
@@ -75,9 +85,7 @@ export class InterfaceResolver {
     const node = this.topology.nodes.find((n) => n.id === nodeId);
     if (!node) return null;
 
-    const match = this.getLogical(node).find((iface) =>
-      isInSubnet(senderIp, `${iface.ipAddress}/${iface.prefixLength}`),
-    );
+    const match = this.getLogical(node).find((iface) => interfaceMatchesTarget(iface, senderIp));
 
     return match ? { id: match.id, name: match.name } : null;
   }
@@ -93,6 +101,8 @@ export class InterfaceResolver {
         name: iface.name,
         ipAddress: iface.ipAddress,
         prefixLength: iface.prefixLength,
+        ...(iface.ipv6Address !== undefined ? { ipv6Address: iface.ipv6Address } : {}),
+        ...(iface.prefixLength6 !== undefined ? { prefixLength6: iface.prefixLength6 } : {}),
         macAddress: iface.macAddress,
         ...(iface.mtu !== undefined ? { mtu: iface.mtu } : {}),
       };
@@ -101,6 +111,12 @@ export class InterfaceResolver {
         name: subInterface.id,
         ipAddress: subInterface.ipAddress,
         prefixLength: subInterface.prefixLength,
+        ...(subInterface.ipv6Address !== undefined
+          ? { ipv6Address: subInterface.ipv6Address }
+          : {}),
+        ...(subInterface.prefixLength6 !== undefined
+          ? { prefixLength6: subInterface.prefixLength6 }
+          : {}),
         macAddress: iface.macAddress,
         ...((subInterface.mtu ?? iface.mtu) !== undefined
           ? { mtu: subInterface.mtu ?? iface.mtu }
@@ -134,7 +150,7 @@ export class InterfaceResolver {
       if (!node) continue;
       if (node.data.role === 'router') {
         const iface = this.getLogical(node).find((candidate) =>
-          isInSubnet(senderIp, `${candidate.ipAddress}/${candidate.prefixLength}`),
+          interfaceMatchesTarget(candidate, senderIp),
         );
         if (iface) {
           return { node, iface };

@@ -159,6 +159,21 @@ describe('TcpOrchestrator', () => {
       );
     });
 
+    it('initializes congestion state for the established connection', async () => {
+      const sender = makeSender(['delivered', 'delivered', 'delivered']);
+      const orchestrator = new TcpOrchestrator(TOPOLOGY, sender);
+
+      const result = await orchestrator.handshake('client-1', 'server-1', 12345, 80, makeSink());
+
+      expect(result.connection?.congestion).toMatchObject({
+        phase: 'slow-start',
+        cwnd: 1460,
+        ssthresh: 93440,
+        mss: 1460,
+        inflight: 0,
+      });
+    });
+
     it('generates 3 traces (SYN, SYN-ACK, ACK)', async () => {
       const sender = makeSender(['delivered', 'delivered', 'delivered']);
       const sink = makeSink();

@@ -5,11 +5,13 @@ import type {
   HttpMessage,
   IcmpMessage,
   IpPacket,
+  Ipv6Packet,
   RawPayload,
   TcpFlags,
   TcpSegment,
   UdpDatagram,
 } from '../types/packets';
+import { parseIpv6 } from './ipv6';
 
 export const DEFAULT_ETHERNET_PREAMBLE = [0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xab];
 
@@ -21,6 +23,10 @@ export function parseMac(mac: string): number[] {
 
 export function parseIp(ip: string): number[] {
   return ip.split('.').map(Number);
+}
+
+export function parseIpv6Bytes(ip: string): number[] {
+  return parseIpv6(ip).hextets.flatMap((hextet) => uint16BE(hextet));
 }
 
 export function uint16BE(value: number): [number, number] {
@@ -262,6 +268,26 @@ export function buildIpv4PacketBytes(ip: IpPacket): number[] {
   return [...buildIpv4HeaderBytes(ip), ...buildIpv4PayloadBytes(ip)];
 }
 
+export function buildIpv6HeaderBytes(ip: Ipv6Packet): number[] {
+  const payloadBytes = buildTransportBytes(ip.payload);
+  const trafficClass = ip.trafficClass ?? 0;
+  const flowLabel = ip.flowLabel ?? 0;
+  const firstWord = ((6 & 0x0f) << 28) | ((trafficClass & 0xff) << 20) | (flowLabel & 0x000fffff);
+
+  return [
+    ...uint32BE(firstWord),
+    ...uint16BE(ip.payloadLength ?? payloadBytes.length),
+    ip.nextHeader & 0xff,
+    ip.hopLimit & 0xff,
+    ...parseIpv6Bytes(ip.srcIp),
+    ...parseIpv6Bytes(ip.dstIp),
+  ];
+}
+
+export function buildIpv6PacketBytes(ip: Ipv6Packet): number[] {
+  return [...buildIpv6HeaderBytes(ip), ...buildTransportBytes(ip.payload)];
+}
+
 export interface BuildEthernetFrameOptions {
   includePreamble?: boolean;
   includeFcs?: boolean;
@@ -284,7 +310,9 @@ export function buildEthernetFrameBytes(
     ...parseMac(frame.dstMac),
     ...parseMac(frame.srcMac),
     ...uint16BE(frame.etherType),
-    ...buildIpv4PacketBytes(frame.payload),
+    ...('hopLimit' in frame.payload
+      ? buildIpv6PacketBytes(frame.payload)
+      : buildIpv4PacketBytes(frame.payload)),
   );
 
   if (includeFcs) {

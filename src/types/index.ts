@@ -5,6 +5,7 @@ export {
   isHttpMessage,
   isIcmpMessage,
   isIgmpMessage,
+  isIpv6Packet,
   isPortBearingPayload,
   isTcpSegment,
   isUdpDatagram,
@@ -20,9 +21,11 @@ export type {
   EthernetFrame,
   HttpMessage,
   IcmpMessage,
+  Icmpv6Message,
   IgmpMessage,
   InFlightPacket,
   IpPacket,
+  Ipv6Packet,
   Packet,
   RawPayload,
   TcpFlags,
@@ -42,11 +45,15 @@ export type {
 
 export { ADMIN_DISTANCES } from './routing';
 export type {
+  BgpAddressFamily,
+  OspfV3AreaConfig,
+  OspfV3Config,
   PortForwardingRule,
   ProtocolName,
   RouteEntry,
   RouterInterface,
   RoutingProtocol,
+  StaticRoute6Config,
   StaticRouteConfig,
   TopologyChangeEvent,
 } from './routing';
@@ -73,6 +80,36 @@ export type {
   SwitchPort,
   TopologySnapshot,
 } from './topology';
+export type { LacpConfig, LacpPdu, LacpPortState, LacpRuntimePort } from './lacp';
+export type { VrrpConfig, VrrpEvent, VrrpMember, VrrpRole, VrrpState } from './vrrp';
+export type {
+  WifiConfig,
+  WifiRole,
+  WirelessAssociationPhase,
+  WirelessAssociationState,
+  WirelessEvent,
+  WirelessLinkConfig,
+} from './wireless';
+export type {
+  EvpnMacIpEntry,
+  EvpnRoute,
+  EvpnType2,
+  EvpnType5,
+  GreEnvelope,
+  GreHeader,
+  GreTunnelConfig,
+  MplsLabel,
+  MplsLabelStack,
+  RouteDistinguisher,
+  RouteTarget,
+  Vpnv4Route,
+  VrfConfig,
+  VrfRuntime,
+  VtepConfig,
+  VxlanEncapConfig,
+  VxlanEnvelope,
+  VxlanHeader,
+} from './tunneling';
 
 export type {
   DhcpClientConfig,

@@ -77,6 +77,20 @@ function resultError(message: string): Error {
   return new Error(`[netlab] simulation worker ${message}`);
 }
 
+function formatWorkerErrorDetail(detail: unknown): string {
+  if (detail instanceof Error) {
+    return `${detail.name}: ${detail.message}`;
+  }
+  if (typeof detail === 'object' && detail !== null) {
+    try {
+      return JSON.stringify(detail);
+    } catch {
+      return String(detail);
+    }
+  }
+  return String(detail);
+}
+
 export class WorkerEngine {
   private worker: WorkerLike;
   private state: SimulationState;
@@ -495,7 +509,7 @@ export class WorkerEngine {
       case 'error':
         this.rejectPending(
           rawEvent.id,
-          resultError(`${rawEvent.code}: ${String(rawEvent.detail)}`),
+          resultError(`${rawEvent.code}: ${formatWorkerErrorDetail(rawEvent.detail)}`),
         );
         break;
       case 'disposed':

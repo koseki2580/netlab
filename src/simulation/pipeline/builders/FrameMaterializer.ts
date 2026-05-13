@@ -1,3 +1,4 @@
+import { isIpv6Packet } from '../../../types/packets';
 import type {
   ArpEthernetFrame,
   IcmpMessage,
@@ -65,6 +66,10 @@ export class FrameMaterializer {
 
   withIpv4HeaderChecksum(packet: InFlightPacket): InFlightPacket {
     const ipPacket = packet.frame.payload;
+    if (isIpv6Packet(ipPacket)) {
+      return packet;
+    }
+
     const checksum = computeIpv4Checksum(buildIpv4HeaderBytes(ipPacket, { checksumOverride: 0 }));
 
     if (ipPacket.headerChecksum === checksum) {

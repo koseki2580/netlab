@@ -125,6 +125,28 @@ describe('HookEngine', () => {
       await expect(engine.emit('switch:learn', makeSwitchLearnContext())).resolves.toBeUndefined();
     });
 
+    it('registers and emits tcp:congestion events', async () => {
+      const engine = new HookEngine();
+      const handler = vi.fn(async (_ctx, next) => {
+        await next();
+      });
+      const ctx = {
+        connId: '10.0.0.10:12345-203.0.113.10:80',
+        event: {
+          type: 'cwnd-update',
+          prev: 1460,
+          next: 2920,
+          reason: 'ss-increment',
+          stepIndex: 3,
+        } as const,
+      };
+
+      engine.on('tcp:congestion', handler);
+      await engine.emit('tcp:congestion', ctx);
+
+      expect(handler).toHaveBeenCalledWith(ctx, expect.any(Function));
+    });
+
     it('propagates async handler results', async () => {
       const engine = new HookEngine();
       const order: string[] = [];

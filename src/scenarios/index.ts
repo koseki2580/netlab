@@ -3,6 +3,7 @@ import { fragmentedEcho } from './fragmented-echo';
 import { natBasics } from './nat-basics';
 import { ospfConvergence } from './ospf-convergence';
 import { scenarioRegistry, ScenarioRegistry } from './ScenarioRegistry';
+import { stpLoop } from './stp-loop';
 import { tcpHandshake } from './tcp-handshake';
 
 const BUILTIN_SCENARIOS = [
@@ -10,6 +11,7 @@ const BUILTIN_SCENARIOS = [
   fragmentedEcho,
   tcpHandshake,
   ospfConvergence,
+  stpLoop,
   natBasics,
 ] as const;
 
@@ -20,4 +22,4 @@ for (const scenario of BUILTIN_SCENARIOS) {
 }
 
 export { ScenarioRegistry, scenarioRegistry };
-export { basicArp, fragmentedEcho, natBasics, ospfConvergence, tcpHandshake };
+export { basicArp, fragmentedEcho, natBasics, ospfConvergence, stpLoop, tcpHandshake };

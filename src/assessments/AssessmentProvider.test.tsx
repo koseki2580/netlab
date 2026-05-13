@@ -17,6 +17,8 @@ import type { AssessmentRubric, AssessmentStatus } from './types';
 import { AssessmentProvider } from './AssessmentProvider';
 import { useAssessment } from './useAssessment';
 
+let assessmentScenarioSequence = 0;
+
 function makeState(overrides: Partial<SimulationState> = {}): SimulationState {
   return {
     status: 'idle',
@@ -59,7 +61,8 @@ function makeRubric(overrides: Partial<AssessmentRubric> = {}): AssessmentRubric
 }
 
 function registerScenario(rubric: AssessmentRubric): string {
-  const id = `assessment-scenario-${Math.random()}`;
+  assessmentScenarioSequence += 1;
+  const id = `assessment-scenario-${assessmentScenarioSequence}`;
   scenarioRegistry.register({
     metadata: {
       id,
@@ -215,7 +218,8 @@ describe('AssessmentProvider', () => {
   });
 
   it('throws for scenarios without an assessment rubric', () => {
-    const scenarioId = `plain-scenario-${Math.random()}`;
+    assessmentScenarioSequence += 1;
+    const scenarioId = `plain-scenario-${assessmentScenarioSequence}`;
     scenarioRegistry.register({
       metadata: {
         id: scenarioId,

@@ -2,11 +2,26 @@ import { layerRegistry } from '../../../registry/LayerRegistry';
 import { type FailureState, makeInterfaceFailureId } from '../../../types/failure';
 import type { ForwardContext } from '../../../types/layers';
 import { IGMP_PROTOCOL } from '../../../types/multicast';
-import type { IgmpMessage, InFlightPacket, IpPacket } from '../../../types/packets';
+import {
+  isIpv6Packet,
+  type IgmpMessage,
+  type InFlightPacket,
+  type IpPacket,
+} from '../../../types/packets';
 import type { RouteEntry } from '../../../types/routing';
-import type { NatTranslation, Neighbor, PacketHop } from '../../../types/simulation';
+import type {
+  NatTranslation,
+  Neighbor,
+  ObservabilityTrace,
+  PacketHop,
+} from '../../../types/simulation';
 import type { NetlabNode, NetworkTopology } from '../../../types/topology';
+import { FlowCollector } from '../../../observability/FlowCollector';
+import { NetflowExporter } from '../../../observability/NetflowExporter';
+import { SflowSampler } from '../../../observability/SflowSampler';
 import { effectiveMtu, fragment, packetSizeBytes } from '../../fragmentation';
+import { stepsToPropagate, stepsToTransmit } from '../../LinkQueue';
+import type { LinkQueueRegistry } from '../../LinkQueueRegistry';
 import { Reassembler } from '../../Reassembler';
 import type { ServiceOrchestrator } from '../../ServiceOrchestrator';
 import type { TraceRecorder } from '../../TraceRecorder';
@@ -40,6 +55,10 @@ export interface ForwardLoopShared {
   nodeArpTables: Record<string, Record<string, string>>;
   arpCache: Map<string, string>;
   reassemblers: Map<string, Reassembler>;
+  linkQueues: LinkQueueRegistry;
+  flowCollector?: FlowCollector;
+  netflowExporters?: Map<string, NetflowExporter>;
+  sflowSamplers?: Map<string, SflowSampler>;
   failureState: FailureState;
   options: PrecomputeOptions;
 }
@@ -131,14 +150,16 @@ export class ForwardingLoop {
         currentNode.id,
         egressInterface?.id,
       )?.macAddress;
-      const arpTarget = this.arpDispatcher.resolveTargetInfo(
-        packet.currentDeviceId,
-        next.nodeId,
-        workingPacket,
-        failureState,
-        egressInterface?.id,
-        next.edgeId,
-      );
+      const arpTarget = isIpv6Packet(workingPacket.frame.payload)
+        ? null
+        : this.arpDispatcher.resolveTargetInfo(
+            packet.currentDeviceId,
+            next.nodeId,
+            workingPacket,
+            failureState,
+            egressInterface?.id,
+            next.edgeId,
+          );
       const dstMac = arpTarget
         ? (arpCache.get(arpTarget.targetIp) ?? null)
         : this.macResolver.resolveDstMac(
@@ -159,17 +180,18 @@ export class ForwardingLoop {
       };
     } else if (currentNode?.data.role === 'client' || currentNode?.data.role === 'server') {
       const resolvedSrcMac = this.macResolver.resolveEndpointMac(currentNode.id);
-      const arpTarget = next
-        ? this.arpDispatcher.resolveTargetInfo(
-            currentNode.id,
-            next.nodeId,
-            workingPacket,
-            failureState,
-            undefined,
-            next.edgeId,
-            undefined,
-          )
-        : null;
+      const arpTarget =
+        next && !isIpv6Packet(workingPacket.frame.payload)
+          ? this.arpDispatcher.resolveTargetInfo(
+              currentNode.id,
+              next.nodeId,
+              workingPacket,
+              failureState,
+              undefined,
+              next.edgeId,
+              undefined,
+            )
+          : null;
       const resolvedDstMac = next
         ? arpTarget
           ? (arpCache.get(arpTarget.targetIp) ?? null)
@@ -216,6 +238,270 @@ export class ForwardingLoop {
     return `${node.id}:${ingressKey}:${this.portResolver.getForwardingVlanId(packet)}`;
   }
 
+  private edgeById(edgeId: string) {
+    return this.topology.edges.find((candidate) => candidate.id === edgeId) ?? null;
+  }
+
+  private appendLinkQosTrace(
+    hopBase: Omit<PacketHop, 'step'>,
+    workingPacket: InFlightPacket,
+    edgeId: string,
+    stepCounter: number,
+    hops: PacketHop[],
+    snapshots: InFlightPacket[],
+    failureState: FailureState,
+    linkQueues: LinkQueueRegistry,
+  ): { stepCounter: number; dropped: boolean } {
+    const edge = this.edgeById(edgeId);
+    const queue = linkQueues.getOrCreate(edgeId, edge?.data?.link);
+    if (!queue) {
+      return { stepCounter, dropped: false };
+    }
+
+    const byteLength = packetSizeBytes(workingPacket.frame.payload);
+    const enqueueStep = stepCounter;
+    const packetDscp = workingPacket.frame.payload.dscp ?? 0;
+    const queueDepth = () => {
+      const state = queue.getState();
+      if (state.shaper) {
+        return state.shaper.classes.reduce((total, klass) => total + klass.queue.length, 0);
+      }
+      return state.queue.length;
+    };
+
+    if (failureState.downEdgeIds.has(edgeId) || edge?.data?.state === 'down') {
+      stepCounter = this.traceRecorder.appendHop(
+        hops,
+        snapshots,
+        this.frameMaterializer.withPacketMacs(
+          {
+            ...hopBase,
+            event: 'drop',
+            action: 'link:dropped',
+            activeEdgeId: edgeId,
+            reason: 'link-failed',
+            linkQos: { edgeId, segSeq: 0, queueDepth: 0, reason: 'link-failed' },
+          },
+          workingPacket,
+        ),
+        workingPacket,
+        stepCounter,
+      );
+      return { stepCounter, dropped: true };
+    }
+
+    const enqueue = queue.enqueue({ id: workingPacket.id, byteLength }, enqueueStep, packetDscp);
+    if (enqueue.status === 'dropped') {
+      stepCounter = this.traceRecorder.appendHop(
+        hops,
+        snapshots,
+        this.frameMaterializer.withPacketMacs(
+          {
+            ...hopBase,
+            event: 'drop',
+            action: enqueue.reason === 'class-queue-full' ? 'shaper:dropped' : 'link:dropped',
+            activeEdgeId: edgeId,
+            reason: enqueue.reason,
+            ...(enqueue.classId
+              ? {
+                  shaperTrace: {
+                    edgeId,
+                    classId: enqueue.classId,
+                    dscp: packetDscp,
+                    segSeq: enqueue.segSeq,
+                    queueDepth: enqueue.queueDepth,
+                    reason: enqueue.reason,
+                  },
+                }
+              : {}),
+            linkQos: {
+              edgeId,
+              segSeq: enqueue.segSeq,
+              queueDepth: enqueue.queueDepth,
+              reason: enqueue.reason,
+            },
+          },
+          workingPacket,
+        ),
+        workingPacket,
+        stepCounter,
+      );
+      return { stepCounter, dropped: true };
+    }
+
+    if (enqueue.classId) {
+      stepCounter = this.traceRecorder.appendHop(
+        hops,
+        snapshots,
+        this.frameMaterializer.withPacketMacs(
+          {
+            ...hopBase,
+            event: 'forward',
+            action: 'shaper:classified',
+            activeEdgeId: edgeId,
+            shaperTrace: {
+              edgeId,
+              classId: enqueue.classId,
+              dscp: packetDscp,
+              segSeq: enqueue.segSeq,
+              queueDepth: enqueue.queueDepth,
+            },
+          },
+          workingPacket,
+        ),
+        workingPacket,
+        stepCounter,
+      );
+    }
+
+    stepCounter = this.traceRecorder.appendHop(
+      hops,
+      snapshots,
+      this.frameMaterializer.withPacketMacs(
+        {
+          ...hopBase,
+          event: 'forward',
+          action: 'link:enqueued',
+          activeEdgeId: edgeId,
+          linkQos: {
+            edgeId,
+            segSeq: enqueue.segSeq,
+            queueDepth: enqueue.queueDepth,
+          },
+        },
+        workingPacket,
+      ),
+      workingPacket,
+      stepCounter,
+    );
+
+    const txStartAtStep = stepCounter;
+    const firstTick = queue.tickStep(txStartAtStep);
+    const loss = firstTick.dropped[0];
+    if (loss) {
+      stepCounter = this.traceRecorder.appendHop(
+        hops,
+        snapshots,
+        this.frameMaterializer.withPacketMacs(
+          {
+            ...hopBase,
+            event: 'drop',
+            action: 'link:dropped',
+            activeEdgeId: edgeId,
+            reason: loss.reason,
+            linkQos: {
+              edgeId,
+              segSeq: loss.queued.seq,
+              queueDepth: queueDepth(),
+              reason: loss.reason,
+            },
+          },
+          workingPacket,
+        ),
+        workingPacket,
+        stepCounter,
+      );
+      return { stepCounter, dropped: true };
+    }
+
+    const dequeued = firstTick.dequeued[0];
+    if (!dequeued) {
+      return { stepCounter, dropped: false };
+    }
+
+    stepCounter = this.traceRecorder.appendHop(
+      hops,
+      snapshots,
+      this.frameMaterializer.withPacketMacs(
+        {
+          ...hopBase,
+          event: 'forward',
+          action: dequeued.classId ? 'shaper:dequeued' : 'link:dequeued',
+          activeEdgeId: edgeId,
+          ...(dequeued.classId
+            ? {
+                shaperTrace: {
+                  edgeId,
+                  classId: dequeued.classId,
+                  dscp: packetDscp,
+                  segSeq: dequeued.queued.seq,
+                  queueDepth: queueDepth(),
+                  ...(dequeued.deficit !== undefined ? { deficit: dequeued.deficit } : {}),
+                },
+              }
+            : {}),
+          linkQos: {
+            edgeId,
+            segSeq: dequeued.queued.seq,
+            queueDepth: queueDepth(),
+            txStartAtStep: dequeued.txStartAtStep,
+            txEndAtStep: dequeued.txEndAtStep,
+          },
+        },
+        workingPacket,
+      ),
+      workingPacket,
+      stepCounter,
+    );
+
+    const cfg = edge?.data?.link ?? {};
+    const arrivalStep =
+      dequeued.txStartAtStep +
+      stepsToTransmit(byteLength, cfg.bandwidthBps) +
+      stepsToPropagate(cfg.propagationDelayMs);
+    queue.tickStep(dequeued.txEndAtStep);
+    queue.tickStep(arrivalStep);
+
+    stepCounter = this.traceRecorder.appendHop(
+      hops,
+      snapshots,
+      this.frameMaterializer.withPacketMacs(
+        {
+          ...hopBase,
+          event: 'forward',
+          action: 'link:arrived',
+          activeEdgeId: edgeId,
+          linkQos: {
+            edgeId,
+            segSeq: dequeued.queued.seq,
+            queueDepth: queueDepth(),
+            totalLatencySteps: arrivalStep - dequeued.txStartAtStep,
+          },
+        },
+        workingPacket,
+      ),
+      workingPacket,
+      arrivalStep,
+    );
+
+    return { stepCounter, dropped: false };
+  }
+
+  private appendObservabilityTrace(
+    hopBase: Omit<PacketHop, 'step'>,
+    trace: ObservabilityTrace,
+    workingPacket: InFlightPacket,
+    stepCounter: number,
+    hops: PacketHop[],
+    snapshots: InFlightPacket[],
+  ): number {
+    return this.traceRecorder.appendHop(
+      hops,
+      snapshots,
+      this.frameMaterializer.withPacketMacs(
+        {
+          ...hopBase,
+          event: 'forward',
+          action: trace.kind,
+          observabilityTrace: trace,
+        },
+        workingPacket,
+      ),
+      workingPacket,
+      stepCounter,
+    );
+  }
+
   async run(
     params: ForwardLoopParams,
     shared: ForwardLoopShared,
@@ -229,7 +515,18 @@ export class ForwardingLoop {
       stepCounter,
     } = params;
     const { baseTs, visitedStates } = params;
-    const { hops, snapshots, nodeArpTables, arpCache, failureState, options } = shared;
+    const {
+      hops,
+      snapshots,
+      nodeArpTables,
+      arpCache,
+      linkQueues,
+      flowCollector = new FlowCollector(),
+      netflowExporters = new Map<string, NetflowExporter>(),
+      sflowSamplers = new Map<string, SflowSampler>(),
+      failureState,
+      options,
+    } = shared;
     const generatedIcmpPackets: InFlightPacket[] = [];
 
     for (let iter = 0; iter < MAX_HOPS; iter += 1) {
@@ -632,6 +929,10 @@ export class ForwardingLoop {
 
           if (node.data.role === 'router') {
             selectedRoute = decision.selectedRoute ?? null;
+            if (decision.ecmpTrace) {
+              hopBase.action = 'ecmp:bucketed';
+              hopBase.ecmpTrace = decision.ecmpTrace;
+            }
             const ingressInterfaceMatch = this.ifaceResolver.findLogicalById(
               current,
               decision.ingressInterfaceId,
@@ -815,7 +1116,8 @@ export class ForwardingLoop {
       }
 
       const arpTarget =
-        node.data.role === 'router' || node.data.role === 'client' || node.data.role === 'server'
+        !isIpv6Packet(workingPacket.frame.payload) &&
+        (node.data.role === 'router' || node.data.role === 'client' || node.data.role === 'server')
           ? this.arpDispatcher.resolveTargetInfo(
               current,
               next.nodeId,
@@ -1104,6 +1406,88 @@ export class ForwardingLoop {
       );
       if (changedFields.length > 0) {
         forwardHop.changedFields = changedFields;
+      }
+
+      if (node.data.role === 'router' && node.data.netflow?.enabled) {
+        const exporter =
+          netflowExporters.get(current) ??
+          new NetflowExporter(current, node.data.netflow, flowCollector);
+        netflowExporters.set(current, exporter);
+        const update = exporter.observe(
+          workingPacket,
+          hopBase.ingressInterfaceId ?? 'unknown',
+          hopBase.egressInterfaceId ?? 'unknown',
+          stepCounter,
+        );
+        if (update) {
+          stepCounter = this.appendObservabilityTrace(
+            forwardHop,
+            {
+              kind: 'netflow:flow-update',
+              routerId: update.routerId,
+              flowKey: update.flowKey,
+              packets: update.packets ?? 0,
+              bytes: update.bytes ?? 0,
+            },
+            workingPacket,
+            stepCounter,
+            hops,
+            snapshots,
+          );
+        }
+      }
+
+      if (node.data.role === 'switch' && node.data.sflow?.enabled) {
+        const egressPortId = hopBase.egressInterfaceId ?? 'unknown';
+        const port = (node.data.ports ?? []).find((candidate) => candidate.id === egressPortId);
+        if (port?.sflowEnabled !== false) {
+          const sampler =
+            sflowSamplers.get(current) ?? new SflowSampler(current, node.data.sflow, flowCollector);
+          sflowSamplers.set(current, sampler);
+          const update = sampler.observe(
+            workingPacket.frame,
+            workingPacket.ingressPortId || 'unknown',
+            egressPortId,
+            stepCounter,
+          );
+          if (update) {
+            stepCounter = this.appendObservabilityTrace(
+              forwardHop,
+              update.action === 'sflow:sampled'
+                ? {
+                    kind: 'sflow:sampled',
+                    switchId: update.switchId,
+                    portId: update.portId,
+                    sequence: update.sequence,
+                  }
+                : {
+                    kind: 'sflow:dropped',
+                    switchId: update.switchId,
+                    portId: update.portId,
+                    reason: update.reason,
+                  },
+              workingPacket,
+              stepCounter,
+              hops,
+              snapshots,
+            );
+          }
+        }
+      }
+
+      const qosResult = this.appendLinkQosTrace(
+        forwardHop,
+        workingPacket,
+        next.edgeId,
+        stepCounter,
+        hops,
+        snapshots,
+        failureState,
+        linkQueues,
+      );
+      stepCounter = qosResult.stepCounter;
+      if (qosResult.dropped) {
+        break;
       }
 
       stepCounter = this.traceRecorder.appendHop(

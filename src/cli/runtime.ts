@@ -3,6 +3,7 @@ import { protocolRegistry } from '../registry/ProtocolRegistry';
 import { getConnectedNetworks } from '../routing/graphBuilder';
 import { bgpProtocol } from '../routing/bgp/BgpProtocol';
 import { ospfProtocol } from '../routing/ospf/OspfProtocol';
+import { ospfV3Protocol } from '../routing/ospf/OspfV3Protocol';
 import { ripProtocol } from '../routing/rip/RipProtocol';
 import { staticProtocol } from '../routing/static/StaticProtocol';
 import type { RouteEntry } from '../types/routing';
@@ -16,6 +17,9 @@ export function ensureCliRuntimeRegistered(): void {
   }
   if (!registered.has(ospfProtocol.name)) {
     protocolRegistry.register(ospfProtocol);
+  }
+  if (!registered.has(ospfV3Protocol.name)) {
+    protocolRegistry.register(ospfV3Protocol);
   }
   if (!registered.has(bgpProtocol.name)) {
     protocolRegistry.register(bgpProtocol);

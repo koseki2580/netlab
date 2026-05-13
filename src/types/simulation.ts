@@ -1,5 +1,7 @@
 import type { AclMatchInfo, ConnTrackTable } from './acl';
+import type { LinkQosTrace } from './link';
 import type { NatTable } from './nat';
+import type { TlsAnnotation } from './tls';
 
 export interface Neighbor {
   nodeId: string;
@@ -23,6 +25,54 @@ export interface RoutingDecision {
   winner: RoutingCandidate | null; // null = no matching route
   explanation: string; // e.g. "Matched 10.0.0.0/24 via direct (static, AD=1)"
 }
+
+export interface EcmpTrace {
+  routerId: string;
+  flowHash: number;
+  bucket: number;
+  candidateCount: number;
+  chosen: {
+    nextHop: string;
+    outIfId?: string;
+  };
+}
+
+export interface ShaperTrace {
+  readonly edgeId: string;
+  readonly classId: string;
+  readonly dscp: number;
+  readonly segSeq: number;
+  readonly queueDepth: number;
+  readonly deficit?: number;
+  readonly reason?: string;
+}
+
+export type ObservabilityTrace =
+  | {
+      readonly kind: 'netflow:flow-update';
+      readonly routerId: string;
+      readonly flowKey: string;
+      readonly packets: number;
+      readonly bytes: number;
+    }
+  | {
+      readonly kind: 'netflow:flow-export';
+      readonly routerId: string;
+      readonly flowKey: string;
+      readonly reason: string;
+    }
+  | {
+      readonly kind: 'sflow:sampled';
+      readonly switchId: string;
+      readonly portId: string;
+      readonly sequence: number;
+    }
+  | {
+      readonly kind: 'sflow:dropped';
+      readonly switchId: string;
+      readonly portId: string;
+      readonly reason: 'collector-full';
+    };
 
 export interface NatTranslation {
   type: 'snat' | 'dnat';
@@ -59,7 +109,22 @@ export interface PacketHop {
   egressInterfaceName?: string;
   arpFrame?: import('./packets').ArpEthernetFrame;
   reason?: string; // known values include node-down, interface-down, no-route, ttl-exceeded
-  action?: 'fragment' | 'reassembly-pending' | 'reassembly-complete' | `IGMP ${string}`;
+  action?:
+    | 'fragment'
+    | 'reassembly-pending'
+    | 'reassembly-complete'
+    | `IGMP ${string}`
+    | 'ecmp:bucketed'
+    | `shaper:${string}`
+    | `netflow:${string}`
+    | `sflow:${string}`
+    | `tls:${string}`
+    | `link:${string}`;
+  ecmpTrace?: EcmpTrace;
+  shaperTrace?: ShaperTrace;
+  observabilityTrace?: ObservabilityTrace;
+  tlsTrace?: TlsAnnotation;
+  linkQos?: LinkQosTrace;
   fragmentIndex?: number;
   fragmentCount?: number;
   identification?: number;

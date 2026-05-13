@@ -1,4 +1,5 @@
 import { getRequired } from './typedAccess';
+import { isInIpv6Subnet, isIpv6Address, parseIpv6Cidr } from './ipv6';
 
 function ipToInt(ip: string): number {
   return ip.split('.').reduce((acc, octet) => (acc << 8) | parseInt(octet, 10), 0) >>> 0;
@@ -17,6 +18,14 @@ function networkAddress(ip: string, prefix: number): string {
 }
 
 export function isInSubnet(ip: string, cidr: string): boolean {
+  const ipIsV6 = isIpv6Address(ip);
+  const cidrIsV6 = cidr.includes(':');
+  if (ipIsV6 !== cidrIsV6) {
+    return false;
+  }
+  if (ipIsV6) {
+    return isInIpv6Subnet(ip, cidr);
+  }
   const parts = cidr.split('/');
   const prefix = getRequired(parts, 0, { cidr });
   const lengthStr = getRequired(parts, 1, { cidr });
@@ -27,6 +36,10 @@ export function isInSubnet(ip: string, cidr: string): boolean {
 }
 
 export function parseCidr(cidr: string): { prefix: string; length: number } {
+  if (cidr.includes(':')) {
+    const parsed = parseIpv6Cidr(cidr);
+    return { prefix: parsed.prefix, length: parsed.length };
+  }
   const parts = cidr.split('/');
   const prefix = getRequired(parts, 0, { cidr });
   const lengthStr = getRequired(parts, 1, { cidr });
@@ -39,6 +52,10 @@ export function isInSameSubnet(cidr1: string, cidr2: string): boolean {
 
   if (first.length !== second.length) {
     return false;
+  }
+
+  if (first.prefix.includes(':') || second.prefix.includes(':')) {
+    return isInIpv6Subnet(first.prefix, `${second.prefix}/${second.length}`);
   }
 
   return (

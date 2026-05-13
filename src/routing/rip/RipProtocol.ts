@@ -1,11 +1,12 @@
 import { ADMIN_DISTANCES, type RoutingProtocol, type RouteEntry } from '../../types/routing';
 import type { NetworkTopology } from '../../types/topology';
+import { withEqualCostNextHops } from '../ecmp';
 import { buildRouterAdjacency, getConnectedNetworks } from '../graphBuilder';
 
 interface RipRouteState {
   destination: string;
   metric: number;
-  nextHop: string;
+  nextHops: string[];
 }
 
 export class RipProtocol implements RoutingProtocol {
@@ -33,7 +34,7 @@ export class RipProtocol implements RoutingProtocol {
         routeTable.set(network, {
           destination: network,
           metric: 0,
-          nextHop: 'direct',
+          nextHops: ['direct'],
         });
       }
 
@@ -60,7 +61,16 @@ export class RipProtocol implements RoutingProtocol {
               routeTable.set(route.destination, {
                 destination: route.destination,
                 metric: newMetric,
-                nextHop: neighbor.neighborIface.ipAddress,
+                nextHops: [neighbor.neighborIface.ipAddress],
+              });
+              changed = true;
+            } else if (
+              newMetric === existing.metric &&
+              !existing.nextHops.includes(neighbor.neighborIface.ipAddress)
+            ) {
+              routeTable.set(route.destination, {
+                ...existing,
+                nextHops: [...existing.nextHops, neighbor.neighborIface.ipAddress].sort(),
               });
               changed = true;
             }
@@ -76,14 +86,19 @@ export class RipProtocol implements RoutingProtocol {
 
     return Array.from(tables.entries())
       .flatMap(([nodeId, routeTable]) =>
-        Array.from(routeTable.values()).map<RouteEntry>((route) => ({
-          destination: route.destination,
-          nextHop: route.nextHop,
-          metric: route.metric,
-          protocol: 'rip',
-          adminDistance: this.adminDistance,
-          nodeId,
-        })),
+        Array.from(routeTable.values()).map<RouteEntry>((route) =>
+          withEqualCostNextHops(
+            {
+              destination: route.destination,
+              nextHop: route.nextHops[0] ?? 'direct',
+              metric: route.metric,
+              protocol: 'rip',
+              adminDistance: this.adminDistance,
+              nodeId,
+            },
+            route.nextHops.map((nextHop) => ({ nextHop })),
+          ),
+        ),
       )
       .sort(
         (left, right) =>
@@ -102,7 +117,10 @@ function cloneTables(
     Array.from(tables.entries()).map(([nodeId, routeTable]) => [
       nodeId,
       new Map(
-        Array.from(routeTable.entries()).map(([destination, route]) => [destination, { ...route }]),
+        Array.from(routeTable.entries()).map(([destination, route]) => [
+          destination,
+          { ...route, nextHops: [...route.nextHops] },
+        ]),
       ),
     ]),
   );

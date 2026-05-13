@@ -1,11 +1,12 @@
 import { ADMIN_DISTANCES, type RoutingProtocol, type RouteEntry } from '../../types/routing';
 import type { RouterInterface } from '../../types/routing';
 import type { NetlabNode, NetworkTopology } from '../../types/topology';
+import { withEqualCostNextHops } from '../ecmp';
 import { buildRouterAdjacency, getConnectedNetworks } from '../graphBuilder';
 
 interface SpfState {
   distance: number;
-  nextHop: string | null;
+  nextHops: string[];
 }
 
 function ipToInt(ip: string): number {
@@ -58,7 +59,7 @@ export class OspfProtocol implements RoutingProtocol {
       }
 
       for (const [targetId, state] of spf.entries()) {
-        if (targetId === router.id || state.nextHop === null) continue;
+        if (targetId === router.id || state.nextHops.length === 0) continue;
 
         const targetRouter = routerById.get(targetId);
         if (!targetRouter) continue;
@@ -66,14 +67,21 @@ export class OspfProtocol implements RoutingProtocol {
         for (const network of getAdvertisedNetworks(targetRouter)) {
           const existing = bestRoutes.get(network);
           if (!existing || state.distance < existing.metric) {
-            bestRoutes.set(network, {
+            const route: RouteEntry = {
               destination: network,
-              nextHop: state.nextHop,
+              nextHop: state.nextHops[0] ?? 'direct',
               metric: state.distance,
               protocol: 'ospf',
               adminDistance: this.adminDistance,
               nodeId: router.id,
-            });
+            };
+            bestRoutes.set(
+              network,
+              withEqualCostNextHops(
+                route,
+                state.nextHops.map((nextHop) => ({ nextHop })),
+              ),
+            );
           }
         }
       }
@@ -118,7 +126,7 @@ function runSpf(
   routerById: Map<string, NetlabNode>,
   participatingRouterIds: Set<string>,
 ): Map<string, SpfState> {
-  const states = new Map<string, SpfState>([[source.id, { distance: 0, nextHop: null }]]);
+  const states = new Map<string, SpfState>([[source.id, { distance: 0, nextHops: [] }]]);
   const queue: { nodeId: string; distance: number }[] = [{ nodeId: source.id, distance: 0 }];
   const visited = new Set<string>();
 
@@ -139,19 +147,23 @@ function runSpf(
 
       const newDistance = currentState.distance + resolveLinkCost(currentNode, neighbor.localIface);
       const nextHop =
-        current.nodeId === source.id ? neighbor.neighborIface.ipAddress : currentState.nextHop;
+        current.nodeId === source.id ? neighbor.neighborIface.ipAddress : currentState.nextHops[0];
       const existing = states.get(neighbor.neighborId);
+      if (!nextHop) continue;
 
-      if (
-        !existing ||
-        newDistance < existing.distance ||
-        (newDistance === existing.distance &&
-          nextHop !== null &&
-          (existing.nextHop === null || nextHop < existing.nextHop))
-      ) {
+      if (!existing || newDistance < existing.distance) {
         states.set(neighbor.neighborId, {
           distance: newDistance,
-          nextHop,
+          nextHops: [nextHop],
+        });
+        queue.push({ nodeId: neighbor.neighborId, distance: newDistance });
+        continue;
+      }
+
+      if (newDistance === existing.distance && !existing.nextHops.includes(nextHop)) {
+        states.set(neighbor.neighborId, {
+          distance: existing.distance,
+          nextHops: [...existing.nextHops, nextHop].sort(),
         });
         queue.push({ nodeId: neighbor.neighborId, distance: newDistance });
       }

@@ -27,3 +27,14 @@ export {
 export type { TcpPacketOptions } from './tcpPacketBuilder';
 export { buildUdpPacket, generateEphemeralPort } from './udpPacketBuilder';
 export type { UdpPacketOptions } from './udpPacketBuilder';
+export { decodeQuicVarint, encodeQuicVarint } from './quic/QuicVarint';
+export { parseQuicFrame, serializeQuicFrame } from './quic/QuicFrame';
+export type { QuicFrame } from './quic/QuicFrame';
+export { deriveQuicKeys, openQuicPayload, protectQuicPayload } from './quic/QuicPacketProtection';
+export type { QuicAeadKeys } from './quic/QuicPacketProtection';
+export { QuicHandshake } from './quic/QuicHandshake';
+export type { QuicAnnotation, QuicHandshakeRun } from './quic/QuicHandshake';
+export { reassembleQuicStream, streamDirection, streamInitiator } from './quic/QuicStream';
+export type { QuicStreamChunk } from './quic/QuicStream';
+export { respondToPathChallenge, startPathValidation } from './quic/QuicPathValidation';
+export type { QuicPathChallenge } from './quic/QuicPathValidation';

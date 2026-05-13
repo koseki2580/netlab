@@ -96,6 +96,40 @@ describe('StaticProtocol', () => {
     expect(firstRoute.metric).toBe(5);
   });
 
+  it('installs equal-cost static next hops as one canonical ECMP route', () => {
+    const protocol = new StaticProtocol();
+    const topology = makeTopology({
+      nodes: [
+        {
+          id: 'router-1',
+          type: 'router',
+          position: { x: 0, y: 0 },
+          data: {
+            label: 'R-1',
+            role: 'router',
+            layerId: 'l3',
+            staticRoutes: [
+              { destination: '203.0.113.0/24', nextHop: '172.17.0.2', metric: 10 },
+              { destination: '203.0.113.0/24', nextHop: '172.16.0.2', metric: 10 },
+            ],
+          },
+        },
+      ],
+    });
+
+    expect(protocol.computeRoutes(topology)).toEqual([
+      {
+        destination: '203.0.113.0/24',
+        nextHop: '172.16.0.2',
+        metric: 10,
+        protocol: 'static',
+        adminDistance: 1,
+        nodeId: 'router-1',
+        equalCostNextHops: [{ nextHop: '172.16.0.2' }, { nextHop: '172.17.0.2' }],
+      },
+    ]);
+  });
+
   it('aggregates routes from multiple routers', () => {
     const protocol = new StaticProtocol();
     const topology = makeTopology({

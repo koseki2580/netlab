@@ -6,6 +6,7 @@ import { computeStp } from '../layers/l2-datalink/stp/computeStp';
 import { protocolRegistry } from '../registry/ProtocolRegistry';
 import { bgpProtocol } from '../routing/bgp/BgpProtocol';
 import { ospfProtocol } from '../routing/ospf/OspfProtocol';
+import { ospfV3Protocol } from '../routing/ospf/OspfV3Protocol';
 import { ripProtocol } from '../routing/rip/RipProtocol';
 import { staticProtocol } from '../routing/static/StaticProtocol';
 import { SandboxNarrationRegion } from '../sandbox/narration/SandboxNarrationRegion';
@@ -18,6 +19,8 @@ import {
   type SandboxControlMode,
   type SandboxEditProposalHandler,
 } from '../controlled/sandbox-mode';
+import { CryptoContext } from '../crypto/CryptoContext';
+import { resolveProviderSync, type CryptoProviderSelection } from '../crypto/select';
 import { NetlabContext } from './NetlabContext';
 
 function ensureBuiltInProtocolsRegistered() {
@@ -28,6 +31,9 @@ function ensureBuiltInProtocolsRegistered() {
   }
   if (!registered.has(ospfProtocol.name)) {
     protocolRegistry.register(ospfProtocol);
+  }
+  if (!registered.has(ospfV3Protocol.name)) {
+    protocolRegistry.register(ospfV3Protocol);
   }
   if (!registered.has(bgpProtocol.name)) {
     protocolRegistry.register(bgpProtocol);
@@ -50,6 +56,7 @@ interface ControlledNetlabProviderProps {
   sandboxControlMode?: SandboxControlMode;
   sandboxProposalTimeoutMs?: number;
   locale?: string;
+  cryptoProvider?: CryptoProviderSelection;
   onTopologyChange?: ControlledTopologyChangeHandler;
   onSandboxEditProposed?: SandboxEditProposalHandler;
 }
@@ -67,6 +74,7 @@ interface UncontrolledNetlabProviderProps {
   sandboxControlMode?: SandboxControlMode;
   sandboxProposalTimeoutMs?: number;
   locale?: string;
+  cryptoProvider?: CryptoProviderSelection;
   onTopologyChange?: ControlledTopologyChangeHandler;
   onSandboxEditProposed?: SandboxEditProposalHandler;
 }
@@ -86,6 +94,7 @@ export function NetlabProvider({
   sandboxControlMode: sandboxControlModeProp,
   sandboxProposalTimeoutMs = DEFAULT_SANDBOX_PROPOSAL_TIMEOUT_MS,
   locale = 'en',
+  cryptoProvider,
   onTopologyChange,
   onSandboxEditProposed,
 }: NetlabProviderProps) {
@@ -106,6 +115,7 @@ export function NetlabProvider({
   }
 
   const hookEngine = useMemo(() => new HookEngine(), []);
+  const cryptoSelection = useMemo(() => resolveProviderSync(cryptoProvider), [cryptoProvider]);
   const effectiveSandboxEnabled = sandboxEnabled || assessmentScenarioId !== undefined;
   const effectiveSandboxControlModeProp =
     sandboxControlModeProp ?? (assessmentScenarioId !== undefined ? 'sandbox-owns' : undefined);
@@ -178,10 +188,12 @@ export function NetlabProvider({
 
   return (
     <I18nProvider locale={locale}>
-      <NetlabContext.Provider value={value}>
-        {children}
-        {effectiveSandboxEnabled && <SandboxNarrationRegion hookEngine={hookEngine} />}
-      </NetlabContext.Provider>
+      <CryptoContext.Provider value={cryptoSelection}>
+        <NetlabContext.Provider value={value}>
+          {children}
+          {effectiveSandboxEnabled && <SandboxNarrationRegion hookEngine={hookEngine} />}
+        </NetlabContext.Provider>
+      </CryptoContext.Provider>
     </I18nProvider>
   );
 }

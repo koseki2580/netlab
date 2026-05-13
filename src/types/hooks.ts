@@ -4,6 +4,7 @@ import type { RouteEntry } from './routing';
 import type { Edit } from '../sandbox/edits';
 import type { SandboxMode } from '../sandbox/types';
 import type { AssessmentConstraint } from '../assessments/types';
+import type { TcpCongestionEvent } from './tcp-congestion';
 
 export type HookFn<T> = (ctx: T, next: () => Promise<void>) => Promise<void>;
 
@@ -36,6 +37,10 @@ export interface HookMap {
     nodeId: string;
     destination: string;
     resolvedRoute: RouteEntry | null;
+  }>;
+  'tcp:congestion': HookFn<{
+    connId: string;
+    event: TcpCongestionEvent;
   }>;
   'fetch:intercept': HookFn<{
     request: Request;

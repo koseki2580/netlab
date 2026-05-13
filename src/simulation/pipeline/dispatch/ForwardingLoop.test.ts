@@ -4,6 +4,7 @@ import { EMPTY_FAILURE_STATE } from '../../../types/failure';
 import type { NetworkTopology } from '../../../types/topology';
 import { ServiceOrchestrator } from '../../ServiceOrchestrator';
 import { TraceRecorder } from '../../TraceRecorder';
+import { LinkQueueRegistry } from '../../LinkQueueRegistry';
 import { makePacket } from '../../__fixtures__/helpers';
 import { directTopology, singleRouterTopology } from '../../__fixtures__/topologies';
 import { ArpBuilder } from '../builders/ArpBuilder';
@@ -103,6 +104,7 @@ describe('ForwardingLoop', () => {
         nodeArpTables: {},
         arpCache: cache,
         reassemblers: new Map(),
+        linkQueues: new LinkQueueRegistry(),
         failureState: EMPTY_FAILURE_STATE,
         options: {},
       },

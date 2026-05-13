@@ -109,6 +109,7 @@ export function buildRoutingDecision(
 
 export function protocolName(num: number): string {
   if (num === 1) return 'ICMP';
+  if (num === 58) return 'ICMPv6';
   if (num === IGMP_PROTOCOL) return 'IGMP';
   if (num === 6) return 'TCP';
   if (num === 17) return 'UDP';

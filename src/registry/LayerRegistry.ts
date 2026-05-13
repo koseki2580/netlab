@@ -32,6 +32,10 @@ class LayerRegistry {
   list(): LayerId[] {
     return Array.from(this.plugins.keys());
   }
+
+  listRegistered(): LayerPlugin[] {
+    return Array.from(this.plugins.values());
+  }
 }
 
 export const layerRegistry = new LayerRegistry();

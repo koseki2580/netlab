@@ -1,3 +1,5 @@
+import type { TcpCongestionState } from './tcp-congestion';
+
 export type TcpState =
   | 'CLOSED'
   | 'LISTEN'
@@ -34,6 +36,7 @@ export interface TcpConnection {
   localAck: number;
   remoteSeq: number;
   createdAt: number;
+  congestion?: TcpCongestionState;
 }
 
 export interface TcpTransitionResult {

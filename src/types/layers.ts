@@ -23,6 +23,7 @@ export type ForwardDecision =
       egressInterfaceId?: string;
       packet: InFlightPacket;
       selectedRoute?: RouteEntry;
+      ecmpTrace?: import('./simulation').EcmpTrace;
     }
   | { action: 'deliver'; packet: InFlightPacket }
   | { action: 'drop'; reason: string };

@@ -9,12 +9,13 @@ describe('scenario-loader', () => {
     expect(scenario.topology.nodes.map((node) => node.id)).toContain('client-1');
   });
 
-  it('lists the five initial built-in scenarios', () => {
+  it('lists the shipped built-in scenarios', () => {
     expect(listScenarioIds()).toEqual([
       'basic-arp',
       'fragmented-echo',
       'tcp-handshake',
       'ospf-convergence',
+      'stp-loop',
       'nat-basics',
     ]);
   });

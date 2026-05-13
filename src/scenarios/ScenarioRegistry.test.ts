@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { scenarioRegistry } from './index';
 import { ScenarioRegistry } from './ScenarioRegistry';
 import type { Scenario } from './types';
 
@@ -23,6 +24,17 @@ function makeScenario(id: string): Scenario {
 }
 
 describe('ScenarioRegistry', () => {
+  it('registers the shipped built-in scenarios at repo boot', () => {
+    expect(scenarioRegistry.list().map((scenario) => scenario.metadata.id)).toEqual([
+      'basic-arp',
+      'fragmented-echo',
+      'tcp-handshake',
+      'ospf-convergence',
+      'stp-loop',
+      'nat-basics',
+    ]);
+  });
+
   it('registers and retrieves a scenario by id', () => {
     const registry = new ScenarioRegistry();
     const scenario = makeScenario('basic-arp');
@@ -54,5 +66,35 @@ describe('ScenarioRegistry', () => {
     const registry = new ScenarioRegistry();
 
     expect(registry.get('missing')).toBeUndefined();
+  });
+
+  it('rejects scenario ids that are not kebab-case', () => {
+    const registry = new ScenarioRegistry();
+
+    expect(() => registry.register(makeScenario('Bad Id'))).toThrow(
+      'scenario id must be kebab-case',
+    );
+  });
+
+  it('rejects summaries longer than 140 characters', () => {
+    const registry = new ScenarioRegistry();
+    const scenario = makeScenario('too-long');
+
+    expect(() =>
+      registry.register({
+        ...scenario,
+        metadata: {
+          ...scenario.metadata,
+          summary: 'x'.repeat(141),
+        },
+      }),
+    ).toThrow('scenario summary must be 140 characters or fewer');
+  });
+
+  it('returns a fresh list array for each call', () => {
+    const registry = new ScenarioRegistry();
+    registry.register(makeScenario('one'));
+
+    expect(registry.list()).not.toBe(registry.list());
   });
 });

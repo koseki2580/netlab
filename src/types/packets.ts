@@ -1,5 +1,49 @@
 // Packet encapsulation chain: HTTP (L7) inside TCP (L4) inside IP (L3) inside Ethernet (L2)
 
+export const DSCP_CODE_POINTS = {
+  CS0: 0,
+  CS1: 8,
+  AF11: 10,
+  AF12: 12,
+  AF13: 14,
+  CS2: 16,
+  AF21: 18,
+  AF22: 20,
+  AF23: 22,
+  CS3: 24,
+  AF31: 26,
+  AF32: 28,
+  AF33: 30,
+  CS4: 32,
+  AF41: 34,
+  AF42: 36,
+  AF43: 38,
+  CS5: 40,
+  EF: 46,
+  CS6: 48,
+  CS7: 56,
+} as const;
+
+export type DscpCodePointName = keyof typeof DSCP_CODE_POINTS;
+
+export function assertDscp(value: number): void {
+  if (!Number.isInteger(value) || value < 0 || value > 63) {
+    throw new RangeError(`DSCP must be an integer in [0, 63], got ${value}`);
+  }
+}
+
+export function tosFromDscp(dscp: number): number {
+  assertDscp(dscp);
+  return (dscp & 0x3f) << 2;
+}
+
+export function dscpFromTos(tos: number): number {
+  if (!Number.isInteger(tos) || tos < 0 || tos > 255) {
+    throw new RangeError(`ToS must be an integer in [0, 255], got ${tos}`);
+  }
+  return (tos >> 2) & 0x3f;
+}
+
 export interface TcpFlags {
   syn: boolean;
   ack: boolean;
@@ -95,6 +139,15 @@ export interface IcmpMessage {
   data?: string;
 }
 
+export interface Icmpv6Message extends IcmpMessage {
+  targetAddress?: string;
+  sourceMac?: string;
+  targetMac?: string;
+  prefix?: string;
+  managed?: boolean;
+  otherConfig?: boolean;
+}
+
 export interface IgmpMessage {
   layer: 'L4';
   igmpType: 'v2-membership-query' | 'v2-membership-report' | 'v2-leave-group';
@@ -105,6 +158,7 @@ export interface IgmpMessage {
 
 export interface IpPacket {
   layer: 'L3';
+  version?: 4 | 6;
   ihl?: number;
   dscp?: number;
   ecn?: number;
@@ -126,6 +180,17 @@ export interface IpPacket {
   reassemblyPayload?: IcmpMessage | TcpSegment | UdpDatagram | IgmpMessage;
 }
 
+export interface Ipv6Packet extends Omit<IpPacket, 'version' | 'payload' | 'reassemblyPayload'> {
+  version: 6;
+  trafficClass?: number;
+  flowLabel?: number;
+  payloadLength?: number;
+  nextHeader: number;
+  hopLimit: number;
+  protocol: number;
+  payload: Icmpv6Message | TcpSegment | UdpDatagram | RawPayload;
+}
+
 /**
  * 802.1Q VLAN tag carried between the source MAC and EtherType fields of an
  * Ethernet frame. Untagged frames omit this object.
@@ -142,9 +207,9 @@ export interface EthernetFrame {
   preamble?: number[];
   srcMac: string;
   dstMac: string;
-  etherType: number; // 0x0800 = IPv4
+  etherType: number; // 0x0800 = IPv4, 0x86DD = IPv6
   vlanTag?: VlanTag;
-  payload: IpPacket;
+  payload: IpPacket | Ipv6Packet;
   fcs?: number;
 }
 
@@ -190,6 +255,10 @@ export interface InFlightPacket {
 /** Narrows an L3 payload to IcmpMessage. */
 export function isIcmpMessage(payload: IpPacket['payload']): payload is IcmpMessage {
   return 'type' in payload && 'code' in payload;
+}
+
+export function isIpv6Packet(packet: IpPacket | Ipv6Packet): packet is Ipv6Packet {
+  return packet.version === 6;
 }
 
 /** Narrows an L3 payload to IgmpMessage. */

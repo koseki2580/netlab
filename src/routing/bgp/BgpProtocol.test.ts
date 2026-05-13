@@ -396,6 +396,63 @@ describe('BgpProtocol', () => {
       });
     });
 
+    it('installs equivalent BGP best paths up to maxEcmpPaths', () => {
+      const r1 = makeRouter(
+        'r1',
+        65001,
+        '1.1.1.1',
+        [
+          makeIface('to-r2', '10.0.12.1'),
+          makeIface('to-r3', '10.0.13.1'),
+          makeIface('to-r4', '10.0.14.1'),
+        ],
+        [
+          makeNeighbor('10.0.12.2', 65002),
+          makeNeighbor('10.0.13.2', 65003),
+          makeNeighbor('10.0.14.2', 65004),
+        ],
+      );
+      if (r1.data.role === 'router' && r1.data.bgpConfig) {
+        r1.data.bgpConfig.maxEcmpPaths = 2;
+      }
+      const topology = makeTopology({
+        nodes: [
+          r1,
+          makeRouter(
+            'r2',
+            65002,
+            '2.2.2.2',
+            [makeIface('to-r1', '10.0.12.2')],
+            [makeNeighbor('10.0.12.1', 65001)],
+            ['203.0.113.0/24'],
+          ),
+          makeRouter(
+            'r3',
+            65003,
+            '3.3.3.3',
+            [makeIface('to-r1', '10.0.13.2')],
+            [makeNeighbor('10.0.13.1', 65001)],
+            ['203.0.113.0/24'],
+          ),
+          makeRouter(
+            'r4',
+            65004,
+            '4.4.4.4',
+            [makeIface('to-r1', '10.0.14.2')],
+            [makeNeighbor('10.0.14.1', 65001)],
+            ['203.0.113.0/24'],
+          ),
+        ],
+      });
+
+      expect(
+        findRoute(new BgpProtocol().computeRoutes(topology), 'r1', '203.0.113.0/24'),
+      ).toMatchObject({
+        nextHop: '10.0.12.2',
+        equalCostNextHops: [{ nextHop: '10.0.12.2' }, { nextHop: '10.0.13.2' }],
+      });
+    });
+
     it('handles multi-AS triangle (AS1—AS2—AS3)', () => {
       const topology = makeTopology({
         nodes: [

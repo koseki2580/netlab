@@ -5,6 +5,7 @@ import type {
   TopologyChangeEvent,
 } from '../types/routing';
 import type { NetworkTopology } from '../types/topology';
+import { routeResolutionKey } from '../routing/AddressFamily';
 
 class ProtocolRegistry {
   private protocols = new Map<ProtocolName, RoutingProtocol>();
@@ -28,10 +29,10 @@ class ProtocolRegistry {
       all.push(...protocol.computeRoutes(topology));
     }
 
-    // Best route per (nodeId, destination)
+    // Best route per (nodeId, address family, destination)
     const best = new Map<string, RouteEntry>();
     for (const entry of all) {
-      const key = `${entry.nodeId}::${entry.destination}`;
+      const key = routeResolutionKey(entry);
       const existing = best.get(key);
       if (!existing) {
         best.set(key, entry);

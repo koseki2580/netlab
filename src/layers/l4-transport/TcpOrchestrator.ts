@@ -10,6 +10,9 @@ import {
   buildSynPacket,
   generateISN,
 } from './tcpPacketBuilder';
+import { TcpCongestionControl } from './TcpCongestionControl';
+
+const DEFAULT_TCP_MSS_BYTES = 1460;
 
 export interface TcpPacketSender {
   precompute: (
@@ -160,6 +163,7 @@ export class TcpOrchestrator {
       localAck: serverIsn + 1,
       remoteSeq: serverIsn + 1,
       createdAt: Date.now(),
+      congestion: new TcpCongestionControl({ mss: DEFAULT_TCP_MSS_BYTES }).state,
     };
 
     return {

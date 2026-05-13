@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { RouterForwarder } from './RouterForwarder';
 import type { InFlightPacket } from '../../types/packets';
+import type { RouteEntry } from '../../types/routing';
 import type { Neighbor } from '../../types/simulation';
 import type { NetworkTopology } from '../../types/topology';
 import { computeIpv4Checksum } from '../../utils/checksum';
@@ -8,7 +9,7 @@ import { buildIpv4HeaderBytes } from '../../utils/packetLayout';
 
 function makeRouteEntries(
   nodeId: string,
-  routes: { destination: string; nextHop: string; metric?: number }[],
+  routes: (RouteEntry | { destination: string; nextHop: string; metric?: number })[],
 ) {
   return routes.map((route) => ({
     destination: route.destination,
@@ -17,6 +18,7 @@ function makeRouteEntries(
     protocol: 'static' as const,
     adminDistance: 1,
     nodeId,
+    ...('equalCostNextHops' in route ? { equalCostNextHops: route.equalCostNextHops } : {}),
   }));
 }
 
@@ -78,7 +80,7 @@ function makeSwitch(id: string) {
 function makeTopology(options: {
   nodes: NetworkTopology['nodes'];
   edges?: NetworkTopology['edges'];
-  routeTable?: { destination: string; nextHop: string; metric?: number }[];
+  routeTable?: (RouteEntry | { destination: string; nextHop: string; metric?: number })[];
 }): NetworkTopology {
   return {
     nodes: options.nodes,
@@ -219,6 +221,100 @@ describe('RouterForwarder', () => {
     expect(result.selectedRoute).toMatchObject({
       destination: '203.0.113.0/24',
       nextHop: '172.16.0.2',
+    });
+  });
+
+  it('keeps the same ECMP flow on the same next hop', async () => {
+    const topology = makeTopology({
+      nodes: [
+        makeRouter('router-1', [
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:00',
+          },
+          {
+            id: 'eth1',
+            name: 'eth1',
+            ipAddress: '172.16.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:01',
+          },
+          {
+            id: 'eth2',
+            name: 'eth2',
+            ipAddress: '172.17.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:02',
+          },
+        ]),
+        makeRouter('router-2', [
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '172.16.0.2',
+            prefixLength: 24,
+            macAddress: '00:00:00:02:00:00',
+          },
+        ]),
+        makeRouter('router-3', [
+          {
+            id: 'eth0',
+            name: 'eth0',
+            ipAddress: '172.17.0.2',
+            prefixLength: 24,
+            macAddress: '00:00:00:03:00:00',
+          },
+        ]),
+      ],
+      edges: [
+        {
+          id: 'e-r2',
+          source: 'router-1',
+          target: 'router-2',
+          sourceHandle: 'eth1',
+          targetHandle: 'eth0',
+        },
+        {
+          id: 'e-r3',
+          source: 'router-1',
+          target: 'router-3',
+          sourceHandle: 'eth2',
+          targetHandle: 'eth0',
+        },
+      ],
+      routeTable: [
+        {
+          destination: '203.0.113.0/24',
+          nextHop: '172.16.0.2',
+          metric: 10,
+          protocol: 'static',
+          adminDistance: 1,
+          nodeId: 'router-1',
+          equalCostNextHops: [{ nextHop: '172.16.0.2' }, { nextHop: '172.17.0.2' }],
+        },
+      ],
+    });
+    const forwarder = new RouterForwarder('router-1', topology);
+    const neighbors: Neighbor[] = [
+      { nodeId: 'router-2', edgeId: 'e-r2' },
+      { nodeId: 'router-3', edgeId: 'e-r3' },
+    ];
+
+    const first = expectForward(
+      await forwarder.receive(makePacket('203.0.113.10'), 'eth0', { neighbors }),
+    );
+    const second = expectForward(
+      await forwarder.receive(makePacket('203.0.113.10'), 'eth0', { neighbors }),
+    );
+
+    expect(second.edgeId).toBe(first.edgeId);
+    expect(second.ecmpTrace).toEqual(first.ecmpTrace);
+    expect(first.ecmpTrace).toMatchObject({
+      routerId: 'router-1',
+      candidateCount: 2,
     });
   });
 
