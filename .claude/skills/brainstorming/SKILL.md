@@ -12,10 +12,21 @@ Help turn ideas into fully formed designs and specs through natural collaborativ
 - Ambiguous, user-facing, architectural, or multi-component feature design.
 - Stress-testing an existing plan or design (see "Stress-Testing Mode" below).
 - **Do not use** for obvious small changes, bug fixes with clear reproduction, or implementation tasks already covered by an existing spec.
+- **For diagnosing why an existing system is failing**, use `fishbone-analysis` first to enumerate the cause space across multiple perspectives. Return here only if a redesign is warranted.
 
 Start by understanding the current project context, then ask questions one at a time to refine the idea. Once you understand what you're building, present the design and get user approval.
 
-## Checklist
+## Scope-Adaptive Lanes
+
+Pick a lane based on the complexity of the change **before** running the checklist:
+
+- **Light lane (1–3 questions, no spec doc)** — ambiguous-but-small: a single function, a localized UX choice, a config decision, a naming question, anything that just needs a chosen direction. Ask the minimum questions, propose a direction inline, confirm, hand off to implementation directly. Steps 6–8 of the full checklist are skipped.
+- **Full lane (full checklist below)** — feature-sized: user-facing behavior, multiple components, new architecture, schema or public-API impact. Write the spec, run the spec self-review, get user approval before implementation.
+- **Stress-test mode** — see the section at the bottom. Used when a plan/design already exists and just needs interrogation.
+
+If you start in the light lane and discover hidden complexity (more components than expected, conflicting requirements, schema impact), **explicitly upgrade** to the full lane and tell the user.
+
+## Checklist (Full Lane)
 
 You MUST create a task for each of these items and complete them in order:
 
@@ -48,7 +59,9 @@ graph TD
     N10 -->|approved| N11[Invoke writing-plans skill]
 ```
 
-**The terminal state is invoking writing-plans.** Do NOT invoke frontend-design, mcp-builder, or any other implementation skill. The ONLY skill you invoke after brainstorming is writing-plans.
+**Terminal state by lane:**
+- **Full lane** — invoke `writing-plans`. Do NOT invoke frontend-design, mcp-builder, or any other implementation skill. The ONLY skill you invoke after the full-lane checklist is `writing-plans`.
+- **Light lane** — proceed directly to the small change. Do NOT write a plan doc; the chosen direction from the inline confirmation is the plan.
 
 ## The Process
 
@@ -119,6 +132,58 @@ Wait for the user's response. If they request changes, make them and re-run the 
 
 - Invoke the writing-plans skill to create a detailed implementation plan
 - Do NOT invoke any other skill. writing-plans is the next step.
+
+## Worked Examples
+
+These show the shape of the work, not the content. Substitute your topic.
+
+### Clarifying question — good vs bad
+
+```
+❌ "What are the requirements for the new dashboard? Who's the audience?
+   What metrics? How real-time? What about mobile? Auth? Permissions?"
+   (Wall of questions — user can't answer in one pass.)
+
+✅ "Before I look at metrics or layout, one scope question: is this dashboard
+   for internal ops use only, or will customers see it? That changes auth,
+   data freshness expectations, and the look."
+   (One question. Names what downstream decisions hinge on it.)
+```
+
+### Approach proposal — good vs bad
+
+```
+❌ "We could build it many ways — what do you want to do?"
+   (No recommendation, no trade-offs, throws the work back to the user.)
+
+✅ "Three viable approaches:
+   1. **Server-rendered (recommended).** Simple, no client state, fast first
+      paint. Trade-off: full reload on filter change.
+   2. **SPA with client cache.** Smooth filtering, more code, needs a state
+      story for staleness.
+   3. **Hybrid: server-rendered shell + island for filters.** Best UX-to-
+      complexity ratio if the team already uses islands; otherwise a new
+      pattern to learn.
+
+   I'd start with (1) because the dataset is small (<200 rows) and the team
+   has no SPA infrastructure yet. (3) becomes worth it if usage grows."
+   (Named options, trade-offs, recommendation with reasoning.)
+```
+
+### Design section presentation — scale to complexity
+
+```
+❌ For a one-page dashboard, writing 1500 words of architecture, layering,
+   and futureproofing. The reviewer skims and misses the actual decision.
+
+✅ For the same dashboard:
+   - **Architecture:** Two sentences. Server-rendered handler at
+     `app/dashboards/ops/route.ts`, reads from existing `OpsReport` view.
+   - **Components:** Bullet list of the 4 widgets. Each widget gets one
+     sentence saying what it shows.
+   - **Open questions:** Three bullets that need the user's answer before
+     the spec is written.
+```
 
 ## Stress-Testing Mode
 

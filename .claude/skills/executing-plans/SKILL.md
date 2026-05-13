@@ -33,11 +33,16 @@ For each task:
 
 ### Step 3: Complete Development
 
-After all tasks complete and verified:
+After all tasks complete and verified, decide how to finish:
 
-- Announce: "I'm using the finishing-a-development-branch skill to complete this work."
-- **REQUIRED SUB-SKILL:** Use finishing-a-development-branch
-- Follow that skill to verify tests, present options, execute choice
+- **Default — branch-based work intended to merge/PR:**
+  - Announce: "I'm using the finishing-a-development-branch skill to complete this work."
+  - **REQUIRED SUB-SKILL:** Use finishing-a-development-branch
+  - Follow that skill to verify tests, present options, execute choice.
+- **Exploratory / spike / throwaway plan (no PR intended):**
+  - Skip finishing-a-development-branch.
+  - Run the plan's own verification commands, summarize results and any artifacts produced, and report back. Do NOT auto-discard the branch — let the user decide.
+- **Unsure?** Default to finishing-a-development-branch and let its option menu surface the choice.
 
 ## When to Stop and Ask for Help
 

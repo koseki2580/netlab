@@ -11,7 +11,7 @@ Write the test first. Watch it fail. Write minimal code to pass.
 
 **Core principle:** If you didn't watch the test fail, you don't know if it tests the right thing.
 
-**TOOL EXECUTION MANDATE:** You MUST use the `run_in_terminal`, `create_and_run_task`, or `runTests` tools to execute your tests. Do not just output testing code and wait for the user to run it. You are responsible for test execution.
+**TOOL EXECUTION MANDATE:** You MUST execute your tests with whatever terminal/shell or test-runner tool the host harness exposes (e.g. `Bash` in Claude Code, `run_in_terminal` / `create_and_run_task` / `runTests` in VSCode Copilot). Do not just output testing code and wait for the user to run it. You are responsible for test execution.
 
 **Violating the letter of the rules is violating the spirit of the rules.**
 
@@ -347,39 +347,27 @@ Tests-first force edge case discovery before implementing. Tests-after verify yo
 
 30 minutes of tests after ≠ TDD. You get coverage, lose proof tests work.
 
-## Common Rationalizations
+## Rationalizations and Red Flags — STOP and Start Over
 
-| Excuse                                 | Reality                                                                 |
-| -------------------------------------- | ----------------------------------------------------------------------- |
-| "Too simple to test"                   | Simple code breaks. Test takes 30 seconds.                              |
-| "I'll test after"                      | Tests passing immediately prove nothing.                                |
-| "Tests after achieve same goals"       | Tests-after = "what does this do?" Tests-first = "what should this do?" |
-| "Already manually tested"              | Ad-hoc ≠ systematic. No record, can't re-run.                           |
-| "Deleting X hours is wasteful"         | Sunk cost fallacy. Keeping unverified code is technical debt.           |
-| "Keep as reference, write tests first" | You'll adapt it. That's testing after. Delete means delete.             |
-| "Need to explore first"                | Fine. Throw away exploration, start with TDD.                           |
-| "Test hard = design unclear"           | Listen to test. Hard to test = hard to use.                             |
-| "TDD will slow me down"                | TDD faster than debugging. Pragmatic = test-first.                      |
-| "Manual test faster"                   | Manual doesn't prove edge cases. You'll re-test every change.           |
-| "Existing code has no tests"           | You're improving it. Add tests for existing code.                       |
+If you catch yourself thinking, saying, or writing any of these, **delete the code and start over with TDD**. The excuse is on the left; the actual situation is on the right.
 
-## Red Flags - STOP and Start Over
-
-- Code before test
-- Test after implementation
-- Test passes immediately
-- Can't explain why test failed
-- Tests added "later"
-- Rationalizing "just this once"
-- "I already manually tested it"
-- "Tests after achieve the same purpose"
-- "It's about spirit not ritual"
-- "Keep as reference" or "adapt existing code"
-- "Already spent X hours, deleting is wasteful"
-- "TDD is dogmatic, I'm being pragmatic"
-- "This is different because..."
-
-**All of these mean: Delete code. Start over with TDD.**
+| Excuse / Red flag                                | Reality                                                                 |
+| ------------------------------------------------ | ----------------------------------------------------------------------- |
+| "Too simple to test"                             | Simple code breaks. Test takes 30 seconds.                              |
+| "I'll test after" / tests added "later"          | Tests passing immediately prove nothing.                                |
+| "Tests after achieve the same purpose / spirit"  | Tests-after = "what does this do?" Tests-first = "what should this do?" |
+| "Already manually tested"                        | Ad-hoc ≠ systematic. No record, can't re-run.                           |
+| "Deleting X hours is wasteful"                   | Sunk cost fallacy. Keeping unverified code is technical debt.           |
+| "Keep as reference" / "adapt existing code"      | You'll adapt it. That's testing after. Delete means delete.             |
+| "Need to explore first"                          | Fine. Throw away exploration, start with TDD.                           |
+| "Test hard = design unclear"                     | Listen to test. Hard to test = hard to use.                             |
+| "TDD will slow me down" / "TDD is dogmatic"      | TDD faster than debugging. Pragmatic = test-first.                      |
+| "Manual test faster"                             | Manual doesn't prove edge cases. You'll re-test every change.           |
+| "Existing code has no tests"                     | You're improving it. Add tests for existing code.                       |
+| "This is different because..." / "just this once"| It isn't. No exceptions without your human partner's permission.        |
+| Code written before test                         | Delete it. Start over from the failing test.                            |
+| Test passes immediately                          | You're testing existing behavior. Fix the test.                         |
+| Can't explain why a test failed                  | You skipped the watch-it-fail step. Re-run RED.                         |
 
 ## Example: Bug Fix
 
@@ -454,7 +442,7 @@ Never fix bugs without a test.
 
 ## Testing Anti-Patterns
 
-When adding mocks or test utilities, read @testing-anti-patterns.md to avoid common pitfalls:
+When adding mocks or test utilities, read [testing-anti-patterns.md](testing-anti-patterns.md) to avoid common pitfalls:
 
 - Testing mock behavior instead of real behavior
 - Adding test-only methods to production classes

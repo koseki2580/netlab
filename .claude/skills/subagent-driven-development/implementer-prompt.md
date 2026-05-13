@@ -1,9 +1,9 @@
 # Implementer Subagent Prompt Template
 
-Use this template when dispatching an implementer subagent.
+Use this template when dispatching an implementer subagent via your harness's agent-dispatch tool (`Agent` in Claude Code, `Task` in VSCode Copilot, etc.). The `(type: ...)` line indicates which subagent type to dispatch.
 
 ```
-Task tool (general-purpose):
+Subagent dispatch (type: general-purpose):
   description: "Implement Task N: [task name]"
   prompt: |
     You are implementing Task N: [task name]

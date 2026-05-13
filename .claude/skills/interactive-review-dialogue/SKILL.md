@@ -1,6 +1,6 @@
 ---
 name: interactive-review-dialogue
-description: Used after a PR author replies to a review comment so the agent can re-evaluate the context and, if needed, update, withdraw, or add explanation to the comment
+description: Use after a PR author replies to a review comment so the agent can re-evaluate the context and, if needed, update, withdraw, or add explanation to the comment
 ---
 
 # Interactive Review Dialogue

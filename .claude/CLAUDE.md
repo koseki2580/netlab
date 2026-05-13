@@ -55,14 +55,54 @@ Before implementing:
 
 **Plan-first rule for implementations and fixes:**
 
-- For any implementation or modification, you MUST write a plan and obtain explicit user approval before starting the work.
-- For investigations or trivial fixes (typos, formatting-only changes), a plan is not required.
+- For **Standard** or **Comprehensive** implementation work, write a plan before starting.
+- For **Minimal** changes, state the intended edit briefly and proceed without a separate plan artifact unless risk or ambiguity appears.
+- **Explicit user approval** is required only when the plan changes scope, affects risky areas, public APIs, data models, security, infrastructure, or has meaningful ambiguity.
 
 **Plan artifacts — two formats, two audiences:**
 
 - **`agents/tasks/active/<task-name>.md`** — the canonical Markdown plan that Claude works from. Written in **English** and follows the existing task-file convention.
-- **`agents/human/<task-name>.html`** — a human-facing companion of the same plan, authored as a **single richly interactive HTML file** that makes the change concrete and visible. Show **the current state and the post-implementation state** so the human can see exactly what will change and what the desired outcome looks like. Make active use of **JavaScript, CSS, Mermaid, and SVG** to convey this — for example, before/after diff panels, animated or toggle-able diagrams, interactive flowcharts (Mermaid), illustrative SVG visuals, collapsible details, and syntax-highlighted code blocks. Infer the user's native language from the language of their request and author the HTML in that language.
+- **`agents/human/<task-name>.html`** — a human-facing companion of the plan. **Required for Comprehensive tasks; recommended for Standard tasks only when the change is hard to review from Markdown alone** (UI/UX, architecture, data flow, multi-file behavior, schema, etc.). For small Standard tasks, a Markdown plan with concrete diffs and examples is sufficient. **When authored**, the HTML is a **single richly interactive file** that makes the change concrete and visible: show **the current state and the post-implementation state** so the human can see exactly what will change and what the desired outcome looks like. Make active use of **JavaScript, CSS, Mermaid, and SVG** — before/after diff panels, animated or toggle-able diagrams, Mermaid flowcharts, illustrative SVG, collapsible details, syntax-highlighted code blocks. Infer the user's native language from the language of their request and author the HTML in that language.
 - When implementing, reference the HTML file as needed to stay aligned with what the human approved.
+
+**HTML plan checklist — when an HTML companion is authored, it MUST satisfy at minimum:**
+
+- **Hero**: one-line goal stating what changes by the end.
+- **Why now**: concrete evidence of the current pain — actual file paths, error output, screenshots, or numbers. No vague "currently we can't ..." paragraphs.
+- **Before / After concrete comparison**: pick at least one form and show the **artifact itself**, not a description of it:
+  - file tree diff (+/- colored), code diff (syntax-highlighted before vs after), command/output diff, UI mockup or screenshot pair, schema or data-model diff, paired Mermaid diagrams, configuration diff.
+- **Flow / structure visualization**: at least one Mermaid diagram (preferred) or animated/labeled SVG showing the change in process, dependencies, or state.
+- **Stepwise plan**: each step paired with a **verifiable** check.
+- **Risks & out-of-scope**: what could break and what is intentionally NOT done.
+- **At least one real interactivity affordance**: tab/toggle between before↔after, hover/click reveal, animated transition, or a playable demo. A bare `<details>` collapsible does not count.
+
+**Anti-patterns (do not):**
+
+- Do NOT write "Now: ... / After: ..." paragraphs that only describe the change. Show the concrete artifact.
+- Do NOT list bullet points where a diagram or diff would convey the same thing more directly.
+- Do NOT ship a page that is essentially Markdown rendered as HTML with cards.
+- Do NOT hand-draw SVG when Mermaid can express the same diagram.
+
+**Smell test:** A reviewer who does not know the codebase opens the HTML and can answer (1) what is broken/missing now, (2) what will be concretely different after, (3) how they will know it worked. If any answer is unclear, redo the HTML.
+
+**Inline commenting overlay — when an HTML companion is authored, embed the overlay so the reviewer can comment in-browser:**
+
+- Read `~/.claude/assets/plan-comments.js` and inline its full contents inside a `<script>...</script>` block at the end of `<body>`. Do NOT use `<script src="...">` — the plan must be a self-contained file the reviewer can share or open from anywhere.
+- Give every commentable element an `id` so anchors are stable in exported feedback. Naming convention:
+  - `id="section-<kebab>"` — top-level sections (overview, before-after, risks, out-of-scope, ...)
+  - `id="diff-<n>"` — each code/diff block (`diff-1`, `diff-2`, ...)
+  - `id="step-<n>"` — each stepwise plan item (`step-1`, `step-2`, ...)
+  - `id="risk-<kebab>"` — each risk callout (`risk-token-leak`, `risk-rollback`, ...)
+- The reviewer adds comments by selecting text or clicking the 💬 icon on an anchored element. The bottom-right panel exposes **Copy as Markdown** and **Download JSON**.
+
+**Reading reviewer comments back:** The Markdown export produced by the overlay is a three-layer record per comment — `### [#anchor]` / optional `— selection: "..."` / comment body. Example:
+
+```markdown
+### [#step-3] — selection: "verify: e2e green"
+このverifyだとどのe2eテストが対象か分からない。
+```
+
+Treat the anchor (`#step-3`) as authoritative for locating context in the plan; the selection text disambiguates within long anchors; the body is the actual feedback.
 
 ---
 

@@ -34,7 +34,7 @@ HEAD_SHA=$(git rev-parse HEAD)
 
 **2. Dispatch code-reviewer subagent:**
 
-Use Task tool with code-reviewer type, fill template at `code-reviewer.md`
+Dispatch a code-reviewer subagent via your harness's agent-dispatch tool (e.g. `Agent` with `subagent_type: code-reviewer` in Claude Code, `Task` with `code-reviewer` type in VSCode Copilot). Fill the template at `code-reviewer.md`.
 
 **Placeholders:**
 

@@ -1,6 +1,6 @@
 ---
 name: implementation-review-orchestration
-description: Used by a main agent during coding to select and run implementation-time review subagents and to organize next actions
+description: Use during coding when the main agent needs to select and run implementation-time review subagents and organize next actions
 ---
 
 # Implementation-Time Review Orchestration

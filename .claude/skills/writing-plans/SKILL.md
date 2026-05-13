@@ -64,6 +64,8 @@ This structure informs the task decomposition. Each task should produce self-con
 
 ## Task Structure
 
+The example below uses Python/pytest for concreteness. **Substitute your stack's equivalents** — the structural requirements (exact paths, complete code, exact commands, expected output) apply to any language. `pytest -v` → `vitest run path/file.test.ts -t name`, `cargo test test_name`, `go test -run TestName ./pkg/...`, etc.
+
 ````markdown
 ### Task N: [Component Name]
 

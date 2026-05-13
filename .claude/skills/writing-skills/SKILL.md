@@ -144,11 +144,9 @@ Link to file for heavy reference or reusable tools
 ## Common Mistakes
 
 What goes wrong + fixes
-
-## Real-World Impact (optional)
-
-Concrete results
 ```
+
+**Do NOT add a "Real-World Impact" section with session-specific anecdotes or unsourced statistics.** Past iterations of this template suggested such a section; in practice it became a magnet for dated diary entries ("From debugging session 2025-XX-XX:") and fabricated metrics ("First-time fix rate: 95% vs 40%") that undercut the skill's authority. If a skill genuinely needs to show impact, link to a permanent reference (a published post-mortem, a benchmark file, etc.), not a one-off session log.
 
 ## Claude Search Optimization (CSO)
 
@@ -338,7 +336,7 @@ graph TD
 - Linear instructions → Numbered lists
 - Labels without semantic meaning (step1, helper2)
 
-See @graphviz-conventions.dot for graphviz style rules.
+See [graphviz-conventions.dot](graphviz-conventions.dot) for graphviz style rules.
 
 **Visualizing for your human partner:** Use `render-graphs.js` in this directory to render a skill's flowcharts to SVG:
 
@@ -596,7 +594,7 @@ Run same scenarios WITH skill. Agent should now comply.
 
 Agent found new rationalization? Add explicit counter. Re-test until bulletproof.
 
-**Testing methodology:** See @testing-skills-with-subagents.md for the complete testing methodology:
+**Testing methodology:** See [testing-skills-with-subagents.md](testing-skills-with-subagents.md) for the complete testing methodology:
 
 - How to write pressure scenarios
 - Pressure types (time, sunk cost, authority, exhaustion)

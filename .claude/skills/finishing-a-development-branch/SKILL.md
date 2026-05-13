@@ -13,7 +13,7 @@ Guide completion of development work by presenting clear options and handling ch
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
-**TOOL EXECUTION MANDATE:** Do not just print bash code blocks. You MUST execute all verification and git commands using the `run_in_terminal` tool to actually perform the operations. Use `vscode_askQuestions` or direct chat to present the options to the user.
+**TOOL EXECUTION MANDATE:** Do not just print bash code blocks. You MUST execute all verification and git commands using whatever terminal/shell tool the host harness exposes (e.g. `Bash` in Claude Code, `run_in_terminal` in VSCode Copilot). Present the options using the harness's question tool (e.g. `AskUserQuestion` in Claude Code, `vscode_askQuestions` in VSCode Copilot) or fall back to direct chat.
 
 ## The Process
 

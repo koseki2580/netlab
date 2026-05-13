@@ -1,6 +1,6 @@
 ---
 name: create-pr-comment
-description: Used when a PR review subagent posts validated findings as PR comments, formatted for the hosting service (GitHub / Bitbucket / etc.) detected from the Git remote
+description: Use when a PR review subagent posts validated findings as PR comments, formatted for the hosting service (GitHub / Bitbucket / etc.) detected from the Git remote
 ---
 
 # Create PR Comment
