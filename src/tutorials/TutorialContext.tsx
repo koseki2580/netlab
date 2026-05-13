@@ -13,6 +13,7 @@ import type { HookMap, HookPoint } from '../types/hooks';
 import type { SimulationEngine } from '../simulation/SimulationEngine';
 import type { SimulationState } from '../types/simulation';
 import type { RouteEntry } from '../types/routing';
+import { useOptionalProgress } from '../progress';
 import { TutorialRunner } from './TutorialRunner';
 import { tutorialRegistry } from './index';
 import type { Tutorial, TutorialRunnerState } from './types';
@@ -90,6 +91,8 @@ export function TutorialProvider({
 
   const runner = useMemo(() => (tutorial ? new TutorialRunner(tutorial) : null), [tutorial]);
   const latestStateRef = useRef(simulationState);
+  const lastPassedRef = useRef(false);
+  const progress = useOptionalProgress();
   const [runnerState, setRunnerState] = useState<TutorialRunnerState | null>(
     () => runner?.state ?? null,
   );
@@ -142,6 +145,26 @@ export function TutorialProvider({
 
   const effectiveRunnerState =
     tutorial && runnerState?.tutorialId !== tutorial.id ? (runner?.state ?? null) : runnerState;
+
+  useEffect(() => {
+    if (!tutorial || !effectiveRunnerState || effectiveRunnerState.status !== 'passed') {
+      lastPassedRef.current = false;
+      return;
+    }
+    if (lastPassedRef.current) {
+      return;
+    }
+    lastPassedRef.current = true;
+    progress.recordCompletion({
+      kind: 'tutorial',
+      id: tutorial.id,
+      label: tutorial.title,
+      score: {
+        passed: tutorial.steps.length,
+        total: tutorial.steps.length,
+      },
+    });
+  }, [effectiveRunnerState, progress, tutorial]);
 
   const value = useMemo<TutorialContextValue | null>(() => {
     if (!tutorial || !effectiveRunnerState || !runner) {

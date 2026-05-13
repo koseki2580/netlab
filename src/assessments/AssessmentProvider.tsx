@@ -11,6 +11,7 @@ import { NetlabContext } from '../components/NetlabContext';
 import { NetlabError } from '../errors';
 import { hookEngine as sharedHookEngine } from '../hooks/HookEngine';
 import type { HookEngine } from '../hooks/HookEngine';
+import { useOptionalProgress } from '../progress';
 import { scenarioRegistry } from '../scenarios/ScenarioRegistry';
 import { useSandbox } from '../sandbox/useSandbox';
 import type { HookMap, HookPoint } from '../types/hooks';
@@ -76,6 +77,7 @@ export function AssessmentProvider({ assessmentScenarioId, children }: Assessmen
   const runner = runnerRef.current;
   const [status, setStatus] = useState<AssessmentStatus>(runner.status);
   const lastPassedAtRef = useRef<number | null>(null);
+  const progress = useOptionalProgress();
 
   useEffect(() => {
     sessionRef.current = sandbox.session;
@@ -96,12 +98,21 @@ export function AssessmentProvider({ assessmentScenarioId, children }: Assessmen
     if (lastPassedAtRef.current === status.passedAt) return;
 
     lastPassedAtRef.current = status.passedAt;
+    progress.recordCompletion({
+      kind: 'assessment',
+      id: assessmentScenarioId,
+      label: rubric.goal,
+      score: {
+        passed: status.subgoalResults.filter((result) => result.passed).length,
+        total: rubric.subgoals.length,
+      },
+    });
     void hookEngine.emit('sandbox:assessment-passed', {
       rubricId: status.rubricId,
       hintsUsed: status.hintsUsed.length,
       durationMs: Math.max(0, status.passedAt - status.startedAt),
     });
-  }, [hookEngine, status]);
+  }, [assessmentScenarioId, hookEngine, progress, rubric.goal, rubric.subgoals.length, status]);
 
   useEffect(() => {
     const evaluate = () => {

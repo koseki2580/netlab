@@ -12,6 +12,7 @@ import { NetlabContext } from '../../components/NetlabContext';
 import { NetlabError } from '../../errors';
 import { hookEngine as sharedHookEngine } from '../../hooks/HookEngine';
 import type { HookEngine } from '../../hooks/HookEngine';
+import { useOptionalProgress } from '../../progress';
 import { TutorialRunner } from '../../tutorials/TutorialRunner';
 import type { Tutorial, TutorialRunnerState, TutorialStep } from '../../tutorials/types';
 import type { HookMap, HookPoint } from '../../types/hooks';
@@ -82,11 +83,33 @@ export function SandboxIntroProvider({ introId, children, onExit }: SandboxIntro
 
   const runner = runnerRef.current;
   const [runnerState, setRunnerState] = useState<TutorialRunnerState>(runner.state);
+  const progress = useOptionalProgress();
+  const lastPassedRef = useRef(false);
 
   useEffect(() => {
     setRunnerState(runner.state);
     return runner.subscribe(setRunnerState);
   }, [runner]);
+
+  useEffect(() => {
+    if (runnerState.status !== 'passed') {
+      lastPassedRef.current = false;
+      return;
+    }
+    if (lastPassedRef.current) {
+      return;
+    }
+    lastPassedRef.current = true;
+    progress.recordCompletion({
+      kind: 'sandbox-intro',
+      id: intro.id,
+      label: intro.title,
+      score: {
+        passed: intro.steps.length,
+        total: intro.steps.length,
+      },
+    });
+  }, [intro.id, intro.steps.length, intro.title, progress, runnerState.status]);
 
   useEffect(() => {
     runner.onSimulationState(sandbox.engine.whatIf.getState());
