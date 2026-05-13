@@ -1,3 +1,6 @@
+/**
+ * @property-seed 0x5a4b78 CLI property-suite seed assigned by plan/78.
+ */
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
 import { EditSession } from '../../sandbox/EditSession';

@@ -1,0 +1,3 @@
+export const PROPERTY_SEED_DEFAULT = 0x5a4b12;
+export const PROPERTY_NUM_RUNS_DEFAULT = 100;
+export const PROPERTY_NUM_RUNS_HEAVY = 500;

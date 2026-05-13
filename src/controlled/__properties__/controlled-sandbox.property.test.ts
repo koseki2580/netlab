@@ -1,3 +1,7 @@
+/**
+ * @property-seed 0x5a4b76 controlled-sandbox property-suite seed assigned by plan/76.
+ * @property-num-runs 80 keeps controlled-provider DOM-heavy properties inside the unit-test budget.
+ */
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
 import { HookEngine } from '../../hooks/HookEngine';

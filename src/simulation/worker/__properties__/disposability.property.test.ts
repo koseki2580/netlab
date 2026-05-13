@@ -1,3 +1,7 @@
+/**
+ * @property-seed 0x7301 worker-disposal counterexample seed assigned by plan/73.
+ * @property-num-runs 20 keeps worker lifecycle allocation tests inside the unit-test budget.
+ */
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { HookEngine } from '../../../hooks/HookEngine';

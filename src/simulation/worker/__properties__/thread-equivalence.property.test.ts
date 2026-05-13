@@ -1,3 +1,7 @@
+/**
+ * @property-seed 0x73 worker-thread equivalence seed assigned by plan/73.
+ * @property-num-runs 20 keeps async worker equivalence checks inside the unit-test budget.
+ */
 import fc from 'fast-check';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { HookEngine } from '../../../hooks/HookEngine';
