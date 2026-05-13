@@ -361,6 +361,7 @@ describe('NetlabProvider', () => {
       );
 
       expect(i18n?.locale).toBe('ja');
+      expect(i18n?.t('sandbox.panel.heading')).toBe('サンドボックス');
     });
   });
 });

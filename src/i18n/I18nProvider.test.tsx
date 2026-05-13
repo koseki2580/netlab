@@ -79,6 +79,15 @@ describe('I18nProvider + useI18n', () => {
     expect(captured?.locale).toBe('ja');
   });
 
+  it('uses the built-in ja catalog when locale is ja', () => {
+    render(
+      <I18nProvider locale="ja">
+        <Capture />
+      </I18nProvider>,
+    );
+    expect(captured?.t('sandbox.panel.heading')).toBe('サンドボックス');
+  });
+
   it('uses the supplied catalog for translation', () => {
     render(
       <I18nProvider locale="en" catalog={{ 'a.b': 'A B value' }}>

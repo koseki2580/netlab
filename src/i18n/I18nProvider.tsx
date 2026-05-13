@@ -2,6 +2,7 @@ import { useMemo, type ReactNode } from 'react';
 import { I18nContext } from './I18nContext';
 import { createTranslator } from './createTranslator';
 import { en } from './locales/en';
+import { ja } from './locales/ja';
 import type { Catalog, I18nContextValue } from './types';
 
 export interface I18nProviderProps {
@@ -12,6 +13,7 @@ export interface I18nProviderProps {
 
 const BUILT_IN_CATALOGS: Record<string, Catalog> = {
   en,
+  ja,
 };
 
 export function I18nProvider({ locale = 'en', catalog, children }: I18nProviderProps) {

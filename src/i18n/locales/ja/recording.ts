@@ -1,0 +1,31 @@
+import type { Catalog } from '../../types';
+
+export const recording: Catalog = {
+  'sandbox.recording.desync.message':
+    'イベント {{seq}} でリプレイの同期ずれを検出しました。この録画は破損しているか、別の netlab バージョンで作成された可能性があります。',
+  'sandbox.recording.desync.dismiss.label': '同期ずれ警告を閉じる',
+  'sandbox.recording.desync.dismiss.text': '閉じる',
+  'sandbox.recording.metadata.heading': '録画を保存',
+  'sandbox.recording.metadata.captured': '{{count}} 件の {{label}} を取得しました。',
+  'sandbox.recording.metadata.event': 'イベント',
+  'sandbox.recording.metadata.events': 'イベント',
+  'sandbox.recording.metadata.title': 'タイトル',
+  'sandbox.recording.metadata.titlePreview': 'タイトルプレビュー',
+  'sandbox.recording.metadata.author': '作成者',
+  'sandbox.recording.metadata.notes': 'メモ (任意)',
+  'sandbox.recording.metadata.cancel': 'キャンセル',
+  'sandbox.recording.metadata.save': '保存',
+  'sandbox.recording.replay.label': 'サンドボックス録画リプレイスクラバー',
+  'sandbox.recording.replay.playLabel': 'リプレイを再生',
+  'sandbox.recording.replay.pauseLabel': 'リプレイを一時停止',
+  'sandbox.recording.replay.play': '再生',
+  'sandbox.recording.replay.pause': '一時停止',
+  'sandbox.recording.replay.stepBackward': '1ステップ戻る',
+  'sandbox.recording.replay.stepForward': '1ステップ進む',
+  'sandbox.recording.replay.speed': '速度',
+  'sandbox.recording.replay.speedLabel': 'リプレイ速度',
+  'sandbox.recording.replay.fork.label': 'ここから分岐',
+  'sandbox.recording.replay.fork.text': 'ここから分岐',
+  'sandbox.recording.replay.timeline': 'リプレイタイムライン',
+  'sandbox.recording.replay.valueText': 'イベント {{current}} / {{total}}',
+} as const;
