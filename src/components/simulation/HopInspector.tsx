@@ -127,7 +127,24 @@ function formatHopAction(action: PacketHop['action']): string {
       return 'Reassembly Pending';
     case 'reassembly-complete':
       return 'Reassembly Complete';
+    case 'ecmp:bucketed':
+      return 'ECMP Bucketed';
     default:
+      if (action?.startsWith('link:')) {
+        return action.slice('link:'.length).replace(/-/g, ' ');
+      }
+      if (action?.startsWith('shaper:')) {
+        return action.slice('shaper:'.length).replace(/-/g, ' ');
+      }
+      if (action?.startsWith('netflow:')) {
+        return action.slice('netflow:'.length).replace(/-/g, ' ');
+      }
+      if (action?.startsWith('sflow:')) {
+        return action.slice('sflow:'.length).replace(/-/g, ' ');
+      }
+      if (action?.startsWith('tls:')) {
+        return action.slice('tls:'.length).replace(/-/g, ' ');
+      }
       return '-';
   }
 }
@@ -298,6 +315,52 @@ function HopFields({
 
   if (hop.nextHopMtu !== undefined) {
     fields.push({ label: 'Next-hop MTU', value: String(hop.nextHopMtu) });
+  }
+
+  if (hop.ecmpTrace) {
+    fields.push(
+      {
+        label: 'ECMP Bucket',
+        value: `${hop.ecmpTrace.bucket + 1}/${hop.ecmpTrace.candidateCount}`,
+      },
+      { label: 'ECMP Next Hop', value: hop.ecmpTrace.chosen.nextHop },
+      { label: 'ECMP Hash', value: `0x${hop.ecmpTrace.flowHash.toString(16).padStart(8, '0')}` },
+    );
+  }
+
+  if (hop.shaperTrace) {
+    fields.push(
+      { label: 'Shaper Class', value: hop.shaperTrace.classId },
+      { label: 'Shaper DSCP', value: String(hop.shaperTrace.dscp) },
+      { label: 'Shaper Queue', value: String(hop.shaperTrace.queueDepth) },
+    );
+  }
+
+  if (hop.observabilityTrace) {
+    const trace = hop.observabilityTrace;
+    if (trace.kind === 'netflow:flow-update') {
+      fields.push(
+        { label: 'NetFlow Router', value: trace.routerId },
+        { label: 'NetFlow Packets', value: String(trace.packets) },
+        { label: 'NetFlow Bytes', value: String(trace.bytes) },
+      );
+    } else if (trace.kind === 'netflow:flow-export') {
+      fields.push(
+        { label: 'NetFlow Router', value: trace.routerId },
+        { label: 'NetFlow Export', value: trace.reason },
+      );
+    } else if (trace.kind === 'sflow:sampled') {
+      fields.push(
+        { label: 'sFlow Switch', value: trace.switchId },
+        { label: 'sFlow Port', value: trace.portId },
+        { label: 'sFlow Sequence', value: String(trace.sequence) },
+      );
+    } else {
+      fields.push(
+        { label: 'sFlow Switch', value: trace.switchId },
+        { label: 'sFlow Drop', value: trace.reason },
+      );
+    }
   }
 
   return (

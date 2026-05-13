@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { traceEventId } from '../../sandbox/annotations/anchors';
 import { useSandboxOrNull } from '../../sandbox/useSandbox';
 import { useSimulation } from '../../simulation/SimulationContext';
@@ -6,6 +6,8 @@ import type { PacketHop, PacketTrace } from '../../types/simulation';
 import { TraceAnnotationAnchor } from '../sandbox/annotations/TraceAnnotationAnchor';
 import { useNetlabContext } from '../NetlabContext';
 import { TraceSelector } from './TraceSelector';
+import { TraceFilterInput } from './traceFilter/TraceFilterInput';
+import type { TraceFilterPredicate, TraceFilterResult } from './traceFilter/parser';
 
 const EVENT_COLORS: Record<string, string> = {
   create: '#7dd3fc',
@@ -56,6 +58,76 @@ function formatHopAnnotation(hop: PacketHop): string | null {
 
   if (hop.nextHopMtu !== undefined) {
     parts.push(`mtu ${hop.nextHopMtu}`);
+  }
+
+  if (hop.action?.startsWith('link:')) {
+    const label = hop.action.slice('link:'.length);
+    const qos = hop.linkQos;
+    if (qos?.totalLatencySteps !== undefined) {
+      parts.push(`${label} ${qos.totalLatencySteps}ms`);
+    } else if (qos?.reason !== undefined) {
+      parts.push(`${label} ${qos.reason}`);
+    } else if (qos?.queueDepth !== undefined) {
+      parts.push(`${label} q=${qos.queueDepth}`);
+    } else {
+      parts.push(label);
+    }
+  }
+
+  if (hop.action?.startsWith('shaper:')) {
+    const label = hop.action.slice('shaper:'.length);
+    const shaper = hop.shaperTrace;
+    if (shaper?.reason) {
+      parts.push(`${label} ${shaper.classId} ${shaper.reason}`);
+    } else if (shaper) {
+      parts.push(`${label} ${shaper.classId} q=${shaper.queueDepth}`);
+    } else {
+      parts.push(label);
+    }
+  }
+
+  if (hop.action === 'ecmp:bucketed' && hop.ecmpTrace) {
+    parts.push(
+      `ecmp bucket ${hop.ecmpTrace.bucket + 1}/${hop.ecmpTrace.candidateCount} via ${
+        hop.ecmpTrace.chosen.nextHop
+      }`,
+    );
+  }
+
+  if (hop.action?.startsWith('netflow:') && hop.observabilityTrace) {
+    if (hop.observabilityTrace.kind === 'netflow:flow-update') {
+      parts.push(
+        `netflow update ${hop.observabilityTrace.packets} packets ${hop.observabilityTrace.bytes} bytes`,
+      );
+    } else if (hop.observabilityTrace.kind === 'netflow:flow-export') {
+      parts.push(`netflow export ${hop.observabilityTrace.reason}`);
+    }
+  }
+
+  if (hop.action?.startsWith('sflow:') && hop.observabilityTrace) {
+    if (hop.observabilityTrace.kind === 'sflow:sampled') {
+      parts.push(`sflow sample #${hop.observabilityTrace.sequence}`);
+    } else if (hop.observabilityTrace.kind === 'sflow:dropped') {
+      parts.push(`sflow dropped ${hop.observabilityTrace.reason}`);
+    }
+  }
+
+  if (hop.action?.startsWith('tls:') && hop.tlsTrace) {
+    if (hop.tlsTrace.kind === 'tls:client-hello') {
+      parts.push(`tls client hello alpn=${hop.tlsTrace.alpnList.join(',')}`);
+    } else if (hop.tlsTrace.kind === 'tls:server-hello') {
+      parts.push(`tls server hello alpn=${hop.tlsTrace.selectedAlpn ?? '-'}`);
+    } else if (hop.tlsTrace.kind === 'tls:certificate') {
+      parts.push(`tls certificate ${hop.tlsTrace.certBytes} bytes`);
+    } else if (hop.tlsTrace.kind === 'tls:certificate-verify') {
+      parts.push(`tls certificate verify ${hop.tlsTrace.sigBytes} bytes`);
+    } else if (hop.tlsTrace.kind === 'tls:finished') {
+      parts.push(`tls finished ${hop.tlsTrace.who}`);
+    } else if (hop.tlsTrace.kind === 'tls:application-data') {
+      parts.push(`tls application data ${hop.tlsTrace.bytes} bytes`);
+    } else {
+      parts.push(`tls alert ${hop.tlsTrace.description}`);
+    }
   }
 
   if (hop.event === 'drop') {
@@ -197,20 +269,33 @@ function HopRow({
   );
 }
 
-export const PacketTimeline = memo(function PacketTimeline() {
+const identityFilter: TraceFilterPredicate = () => true;
+
+export interface PacketTimelineProps {
+  readonly filter?: TraceFilterPredicate;
+}
+
+export const PacketTimeline = memo(function PacketTimeline({ filter }: PacketTimelineProps = {}) {
   const { topology } = useNetlabContext();
   const { engine, state, exportPcap } = useSimulation();
   const sandbox = useSandboxOrNull();
   const { traces, currentTraceId, currentStep, selectedHop } = state;
   const trace = traces.find((t) => t.packetId === currentTraceId);
+  const [inputFilter, setInputFilter] = useState<TraceFilterPredicate>(() => identityFilter);
+  const activeFilter = filter ?? inputFilter;
+  const visibleHops = trace ? trace.hops.filter(activeFilter) : [];
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeStep = selectedHop?.step ?? currentStep;
+  const handleParseFilter = useCallback((result: TraceFilterResult) => {
+    if (result.ok) {
+      setInputFilter(() => result.predicate);
+    }
+  }, []);
 
   // Auto-scroll to active row
   useEffect(() => {
     if (!scrollRef.current || activeStep < 0) return;
-    const rows = scrollRef.current.querySelectorAll('[data-step]');
-    const activeRow = rows[activeStep] as HTMLElement | undefined;
+    const activeRow = scrollRef.current.querySelector<HTMLElement>(`[data-step="${activeStep}"]`);
     activeRow?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, [activeStep]);
 
@@ -292,6 +377,21 @@ export const PacketTimeline = memo(function PacketTimeline() {
         </button>
       </div>
 
+      {filter === undefined && <TraceFilterInput onParse={handleParseFilter} />}
+      {trace && (
+        <div
+          aria-live="polite"
+          style={{
+            padding: '2px 10px 0',
+            fontSize: 10,
+            color: 'var(--netlab-text-muted)',
+            fontFamily: 'monospace',
+          }}
+        >
+          {visibleHops.length} of {trace.hops.length} hops shown
+        </div>
+      )}
+
       <div
         style={{
           padding: '8px 10px 0',
@@ -335,7 +435,7 @@ export const PacketTimeline = memo(function PacketTimeline() {
             No trace yet — click "Send Packet" to start.
           </div>
         ) : (
-          trace.hops.map((hop) => (
+          visibleHops.map((hop) => (
             <div key={hop.step} data-step={hop.step}>
               <HopRow
                 hop={hop}

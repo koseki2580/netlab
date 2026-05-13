@@ -157,6 +157,13 @@ function getDownloadButton(): HTMLButtonElement {
   return button;
 }
 
+function setInputValue(input: HTMLInputElement, value: string) {
+  const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+  setter?.call(input, value);
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  input.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
 beforeEach(() => {
   actEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
   clickedDownloads = [];
@@ -277,6 +284,43 @@ describe('PacketTimeline', () => {
 
     expect(container?.textContent).toContain('fragment 1/3');
     expect(container?.textContent).toContain('mtu 600');
+  });
+
+  it('filters visible hops from the display-filter input without changing engine state', () => {
+    vi.useFakeTimers();
+    const engine = new SimulationEngine(TOPOLOGY, new HookEngine());
+    const before = engine.getState();
+    render(
+      makeSimulationContextValue({
+        engine,
+        state: makeState({
+          traces: [
+            {
+              ...TRACE,
+              hops: [
+                { ...TRACE_CREATE_HOP, protocol: 'TCP', srcPort: 49152, dstPort: 80 },
+                { ...TRACE_DELIVER_HOP, protocol: 'UDP', srcPort: 49153, dstPort: 53 },
+              ],
+            },
+          ],
+        }),
+      }),
+    );
+
+    const input = container?.querySelector('[role="searchbox"]');
+    if (!(input instanceof HTMLInputElement)) {
+      throw new Error('trace filter input was not rendered');
+    }
+
+    act(() => {
+      setInputValue(input, 'tcp.port == 80');
+      vi.advanceTimersByTime(300);
+    });
+
+    expect(container?.querySelectorAll('[role="option"]')).toHaveLength(1);
+    expect(container?.textContent).toContain('1 of 2 hops shown');
+    expect(engine.getState()).toEqual(before);
+    vi.useRealTimers();
   });
 
   it('perf: is wrapped in React.memo', () => {
