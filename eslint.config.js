@@ -3,10 +3,14 @@ import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
 import noHardcodedSandboxString from './eslint-rules/no-hardcoded-sandbox-string.mjs';
+import deprecationAnnotations from './eslint-rules/deprecation-annotations.cjs';
+import propertyTestSeeds from './eslint-rules/property-test-seeds.cjs';
 
 const netlabPlugin = {
   rules: {
+    'deprecation-annotations': deprecationAnnotations,
     'no-hardcoded-sandbox-string': noHardcodedSandboxString,
+    'property-test-seeds': propertyTestSeeds,
   },
 };
 
@@ -102,6 +106,13 @@ export default tseslint.config(
     },
   },
   {
+    files: ['src/**/*.ts', 'src/**/*.tsx'],
+    plugins: { netlab: netlabPlugin },
+    rules: {
+      'netlab/deprecation-annotations': 'error',
+    },
+  },
+  {
     files: ['e2e/**/*.ts'],
     rules: {
       'react-hooks/rules-of-hooks': 'off',
@@ -112,6 +123,13 @@ export default tseslint.config(
     plugins: { netlab: netlabPlugin },
     rules: {
       'netlab/no-hardcoded-sandbox-string': 'error',
+    },
+  },
+  {
+    files: ['src/**/__properties__/**/*.test.ts', 'src/**/*.property.test.ts'],
+    plugins: { netlab: netlabPlugin },
+    rules: {
+      'netlab/property-test-seeds': 'error',
     },
   },
   prettierConfig,

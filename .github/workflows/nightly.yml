@@ -1,0 +1,47 @@
+name: Nightly Quality Gates
+
+on:
+  schedule:
+    - cron: '17 18 * * *'
+  workflow_dispatch:
+
+jobs:
+  soak:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Long-running soak invariants
+        run: npm run soak:test
+
+  browser-matrix:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        node-version: ['22', '24']
+        browser: [chromium, firefox, webkit]
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - run: npm ci
+      - name: Install browser
+        if: runner.os == 'Linux'
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Install browser
+        if: runner.os != 'Linux'
+        run: npx playwright install ${{ matrix.browser }}
+      - name: Browser smoke
+        run: MODE=test npm run e2e -- e2e/i18n-ja.spec.ts --project=${{ matrix.browser }}

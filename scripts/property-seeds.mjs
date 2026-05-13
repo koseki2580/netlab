@@ -1,0 +1,9 @@
+export const PROPERTY_SEED_DEFAULT = 0x5a4b12;
+export const PROPERTY_NUM_RUNS_DEFAULT = 100;
+export const PROPERTY_NUM_RUNS_HEAVY = 500;
+
+export const PROPERTY_TEST_SEEDS = Object.freeze({
+  default: PROPERTY_SEED_DEFAULT,
+  runs: PROPERTY_NUM_RUNS_DEFAULT,
+  heavyRuns: PROPERTY_NUM_RUNS_HEAVY,
+});
