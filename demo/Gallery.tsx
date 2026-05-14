@@ -13,6 +13,7 @@ import {
   type NetlabPalette,
 } from '../src/theme';
 import { tutorialRegistry } from '../src/tutorials';
+import { CategoryLanding, type CategoryLandingDemo } from './components/CategoryLanding';
 import { DemoCard } from './components/DemoCard';
 import { FeaturedStrip } from './components/FeaturedStrip';
 import { SearchBox } from './components/SearchBox';
@@ -633,6 +634,26 @@ function getSectionBlurb(sectionId: string): string {
   return SECTION_BLURBS[sectionId] ?? 'Focused demos in this track';
 }
 
+/**
+ * Category ids that render the new track landing (hero + recommended order)
+ * instead of the legacy card grid. Other categories keep the card grid.
+ */
+const TRACK_LANDING_IDS = new Set(['routing']);
+
+function demoToLandingDemo(demo: DemoCard): CategoryLandingDemo {
+  const layerTag = demo.meta?.tags?.find((t) => /^L\d/.test(t));
+  const out: CategoryLandingDemo = {
+    id: demo.scenarioId ?? demo.path,
+    title: demo.title,
+    desc: demo.desc,
+    path: demo.path,
+  };
+  if (demo.meta?.difficulty) out.difficulty = demo.meta.difficulty;
+  if (demo.sandboxReady) out.sandboxReady = true;
+  if (layerTag) out.layer = layerTag;
+  return out;
+}
+
 function getSectionSurfaceStyle(accent: string): React.CSSProperties {
   return {
     padding: '24px',
@@ -1233,43 +1254,57 @@ export default function Gallery({
             </section>
           )}
 
-          {filteredCategories.map((cat) => (
-            <section
-              key={cat.id}
-              id={cat.id}
-              data-gallery-section={cat.id}
-              style={getSectionSurfaceStyle(cat.color)}
-            >
-              <SectionHeader
-                dot={cat.color}
-                title={cat.label}
-                blurb={getSectionBlurb(cat.id)}
-                count={cat.demos.length}
-              />
-              <div style={CARD_GRID}>
-                {cat.demos.map((demo) => {
-                  const tutorial = demo.scenarioId
-                    ? tutorialRegistry.findByScenarioId(demo.scenarioId)
-                    : undefined;
-                  return (
-                    <DemoCard
-                      key={demo.path}
-                      demo={demo}
-                      category={cat}
-                      progressTargetId={demo.scenarioId ?? demo.path}
-                      tutorialHref={
-                        tutorial
-                          ? `?tutorial=${encodeURIComponent(tutorial.id)}#${demo.path}`
-                          : null
-                      }
-                      sandboxHref={getSandboxHref(demo)}
-                      assessmentHref={getAssessmentHref(demo)}
-                    />
-                  );
-                })}
-              </div>
-            </section>
-          ))}
+          {filteredCategories.map((cat) => {
+            if (TRACK_LANDING_IDS.has(cat.id)) {
+              return (
+                <CategoryLanding
+                  key={cat.id}
+                  trackId={cat.id}
+                  title={cat.label}
+                  blurb={getSectionBlurb(cat.id)}
+                  accent={cat.color}
+                  demos={cat.demos.map(demoToLandingDemo)}
+                />
+              );
+            }
+            return (
+              <section
+                key={cat.id}
+                id={cat.id}
+                data-gallery-section={cat.id}
+                style={getSectionSurfaceStyle(cat.color)}
+              >
+                <SectionHeader
+                  dot={cat.color}
+                  title={cat.label}
+                  blurb={getSectionBlurb(cat.id)}
+                  count={cat.demos.length}
+                />
+                <div style={CARD_GRID}>
+                  {cat.demos.map((demo) => {
+                    const tutorial = demo.scenarioId
+                      ? tutorialRegistry.findByScenarioId(demo.scenarioId)
+                      : undefined;
+                    return (
+                      <DemoCard
+                        key={demo.path}
+                        demo={demo}
+                        category={cat}
+                        progressTargetId={demo.scenarioId ?? demo.path}
+                        tutorialHref={
+                          tutorial
+                            ? `?tutorial=${encodeURIComponent(tutorial.id)}#${demo.path}`
+                            : null
+                        }
+                        sandboxHref={getSandboxHref(demo)}
+                        assessmentHref={getAssessmentHref(demo)}
+                      />
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
 
           {noMatches && (
             <section style={getSectionSurfaceStyle('var(--netlab-accent-orange)')}>

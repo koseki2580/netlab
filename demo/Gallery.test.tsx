@@ -177,4 +177,27 @@ describe('demo chrome', () => {
 
     expect(html).toContain('data-section-id="routing" data-active="true"');
   });
+
+  it('Gallery renders the routing track as a CategoryLanding (hero + recommended order)', () => {
+    const html = renderGallery();
+
+    // The category landing marker replaces the legacy section header.
+    expect(html).toContain('data-category-landing="routing"');
+    // Recommended-order list keeps every routing demo discoverable.
+    expect(html).toContain('OSPF Convergence');
+    expect(html).toContain('Multi-Hop');
+    expect(html).toContain('Dynamic Routing');
+    // Hero progress bar surfaces a11y semantics.
+    expect(html).toContain('role="progressbar"');
+    // Open action is rendered as the recommended-order CTA.
+    expect(html).toContain('Open →');
+  });
+
+  it('Non-track categories still render the legacy card grid', () => {
+    const html = renderGallery();
+
+    // 'basic' is not in TRACK_LANDING_IDS, so its grid stays.
+    expect(html).toContain('data-gallery-section="basic"');
+    expect(html).toContain('Three-Tier LAN');
+  });
 });
