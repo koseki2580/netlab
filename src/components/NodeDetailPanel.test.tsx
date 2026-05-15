@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SimulationContext, type SimulationContextValue } from '../simulation/SimulationContext';
 import type { NetworkTopology, StpPortRuntime } from '../types/topology';
 import { assertDefined } from '../utils';
+import { NetlabThemeScopeContext } from './NetlabThemeScope';
 import { NodeDetailPanel, vlanColor } from './NodeDetailPanel';
 
 const uiMock = vi.hoisted(() => ({
@@ -1140,5 +1141,48 @@ describe('NodeDetailPanel', () => {
 
     expect(html1).toBe(html2);
     expect(html1).toContain('NODE DETAIL');
+  });
+
+  describe('flow-v1 panel chrome', () => {
+    it('renders role="dialog" and the slide-in animation class on the panel container', () => {
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+
+      const html = renderMarkup();
+      expect(html).toContain('role="dialog"');
+      expect(html).toContain('class="netlab-dp-slide-in"');
+      expect(html).toContain('aria-label="Node detail · R1"');
+    });
+
+    it('hides the learner explainer block when audience is "pro" (default)', () => {
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+
+      const html = renderMarkup();
+      expect(html).not.toContain('data-learner-explainer');
+    });
+
+    it('shows the learner explainer block when audience is "learner"', () => {
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+
+      const html = renderToStaticMarkup(
+        <NetlabThemeScopeContext.Provider
+          value={{
+            theme: {} as never,
+            colorMode: 'dark',
+            palette: 'studio',
+            density: 'standard',
+            audience: 'learner',
+          }}
+        >
+          <SimulationContext.Provider value={makeSimulationValue()}>
+            <NodeDetailPanel />
+          </SimulationContext.Provider>
+        </NetlabThemeScopeContext.Provider>,
+      );
+      expect(html).toContain('data-learner-explainer="router"');
+      expect(html).toContain('routing table');
+    });
   });
 });
