@@ -2,6 +2,7 @@
 
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import AllInOneDemo from './comprehensive/AllInOneDemo';
 import ArpDemo from './networking/ArpDemo';
@@ -185,7 +186,7 @@ function render(ui: React.ReactElement) {
   }
 
   act(() => {
-    root?.render(ui);
+    root?.render(<MemoryRouter>{ui}</MemoryRouter>);
   });
 }
 

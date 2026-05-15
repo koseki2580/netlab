@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DemoShell from '../DemoShell';
+import { NetlabAppShell } from '../../src/components/NetlabAppShell';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
@@ -7,6 +9,7 @@ import { ResizableSidebar } from '../../src/components/ResizableSidebar';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationOverlayDock } from '../../src/components/simulation/SimulationOverlayDock';
 import { StepControls } from '../../src/components/simulation/StepControls';
+import { ToolGroup, ToolGroupButton } from '../../src/components/ToolGroup';
 import { buildOspfConvergenceTopology } from '../../src/scenarios/ospf-convergence';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import { readDemoEmbedParams } from '../embedParams';
@@ -60,134 +63,146 @@ function RouteSummaryPanel() {
 function OspfConvergenceInner({
   primaryLinkDown,
   onTogglePrimaryLink,
+  onBackToGallery,
+  embedded,
 }: {
   primaryLinkDown: boolean;
   onTogglePrimaryLink: () => void;
+  onBackToGallery: () => void;
+  embedded: boolean;
 }) {
-  const { engine } = useSimulation();
+  const { engine, state } = useSimulation();
 
   const sendProbe = async () => {
     engine.clearTraces();
     await engine.ping('c1', '10.4.0.10');
   };
 
+  const status =
+    state.status === 'running'
+      ? { label: 'running', tone: 'running' as const }
+      : state.traces.length > 0
+        ? { label: 'ready', tone: 'ready' as const }
+        : { label: 'idle', tone: 'idle' as const };
+
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-        <NetlabCanvas />
-        <SimulationOverlayDock showRouteTable />
-        <div
+    <NetlabAppShell
+      scenarioId="ospf-convergence"
+      scenarioLayer="L3"
+      {...(embedded ? {} : { onBackToGallery })}
+      topologyZone={
+        <ToolGroup title="TOPOLOGY" accent="var(--netlab-accent-blue)">
+          <ToolGroupButton active accent="var(--netlab-accent-blue)">
+            View
+          </ToolGroupButton>
+        </ToolGroup>
+      }
+      runZone={
+        <ToolGroup title="RUN" accent="var(--netlab-accent-green)">
+          <ToolGroupButton
+            accent="var(--netlab-accent-green)"
+            onClick={() => void sendProbe()}
+            title="Send probe C1 → C2"
+          >
+            ▶ Send Probe
+          </ToolGroupButton>
+        </ToolGroup>
+      }
+      inspectZone={
+        <ToolGroup title="INSPECT" accent="var(--netlab-accent-cyan)">
+          <ToolGroupButton active accent="var(--netlab-accent-cyan)">
+            Routes
+          </ToolGroupButton>
+        </ToolGroup>
+      }
+      sandboxZone={
+        <ToolGroup title="SANDBOX" accent="var(--netlab-accent-yellow)">
+          <ToolGroupButton
+            active={primaryLinkDown}
+            accent={primaryLinkDown ? 'var(--netlab-accent-red)' : 'var(--netlab-accent-yellow)'}
+            onClick={onTogglePrimaryLink}
+            title={
+              primaryLinkDown
+                ? 'Restore primary inter-router link'
+                : 'Fail primary inter-router link'
+            }
+          >
+            {primaryLinkDown ? '↺ Restore link' : '✎ Fail link'}
+          </ToolGroupButton>
+        </ToolGroup>
+      }
+      status={status}
+    >
+      <div style={{ display: 'flex', height: '100%' }}>
+        <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
+          <NetlabCanvas />
+          <SimulationOverlayDock showRouteTable />
+          <div
+            style={{
+              position: 'absolute',
+              top: 12,
+              left: 12,
+              maxWidth: 360,
+              padding: '10px 12px',
+              borderRadius: 10,
+              background: 'rgba(15, 23, 42, 0.9)',
+              border: '1px solid rgba(148, 163, 184, 0.2)',
+              color: '#cbd5e1',
+              fontFamily: 'monospace',
+              fontSize: 11,
+              lineHeight: 1.5,
+            }}
+          >
+            <div style={{ color: '#f8fafc', fontWeight: 700, marginBottom: 4 }}>
+              OSPF Route Choice
+            </div>
+            <div>
+              R1 prefers the lower-cost path through R2 until the primary inter-router link is
+              removed.
+            </div>
+            <div style={{ marginTop: 6, color: '#94a3b8' }}>
+              Toggle the primary link, then resend the probe to confirm the recomputed path now
+              leaves through R3.
+            </div>
+          </div>
+        </div>
+
+        <ResizableSidebar
+          defaultWidth={460}
+          maxWidth={760}
           style={{
-            position: 'absolute',
-            top: 12,
-            left: 12,
-            maxWidth: 360,
-            padding: '10px 12px',
-            borderRadius: 10,
-            background: 'rgba(15, 23, 42, 0.9)',
-            border: '1px solid rgba(148, 163, 184, 0.2)',
-            color: '#cbd5e1',
-            fontFamily: 'monospace',
-            fontSize: 11,
-            lineHeight: 1.5,
+            background: '#0f172a',
+            borderLeft: '1px solid #1e293b',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
-          <div style={{ color: '#f8fafc', fontWeight: 700, marginBottom: 4 }}>
-            OSPF Route Choice
-          </div>
-          <div>
-            R1 prefers the lower-cost path through R2 until the primary inter-router link is
-            removed.
-          </div>
-          <div style={{ marginTop: 6, color: '#94a3b8' }}>
-            Toggle the primary link, then resend the probe to confirm the recomputed path now leaves
-            through R3.
-          </div>
-        </div>
-      </div>
-
-      <ResizableSidebar
-        defaultWidth={460}
-        maxWidth={760}
-        style={{
-          background: '#0f172a',
-          borderLeft: '1px solid #1e293b',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <div style={{ padding: 12, display: 'grid', gap: 12, borderBottom: '1px solid #1e293b' }}>
-          <div
-            style={{
-              background: '#0b1220',
-              border: '1px solid #1e293b',
-              borderRadius: 10,
-              padding: 12,
-              display: 'grid',
-              gap: 10,
-            }}
-          >
-            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>
-              CONTROLS
+          <div style={{ padding: 12, display: 'grid', gap: 12, borderBottom: '1px solid #1e293b' }}>
+            <RouteSummaryPanel />
+            <div
+              style={{
+                background: '#0b1220',
+                border: '1px solid #1e293b',
+                borderRadius: 10,
+                padding: 12,
+              }}
+            >
+              <StepControls />
             </div>
-            <button
-              type="button"
-              onClick={() => void sendProbe()}
-              style={{
-                padding: '8px 12px',
-                borderRadius: 8,
-                border: '1px solid #0f766e',
-                background: '#115e59',
-                color: '#ecfeff',
-                cursor: 'pointer',
-                fontFamily: 'monospace',
-                fontSize: 12,
-                fontWeight: 700,
-              }}
-            >
-              send probe C1 → C2
-            </button>
-            <button
-              type="button"
-              onClick={onTogglePrimaryLink}
-              style={{
-                padding: '8px 12px',
-                borderRadius: 8,
-                border: `1px solid ${primaryLinkDown ? '#f87171' : '#38bdf8'}`,
-                background: primaryLinkDown ? '#7f1d1d' : '#0f172a',
-                color: primaryLinkDown ? '#fecaca' : '#bae6fd',
-                cursor: 'pointer',
-                fontFamily: 'monospace',
-                fontSize: 12,
-                fontWeight: 700,
-              }}
-            >
-              {primaryLinkDown ? 'restore primary link' : 'fail primary link'}
-            </button>
           </div>
-          <RouteSummaryPanel />
-          <div
-            style={{
-              background: '#0b1220',
-              border: '1px solid #1e293b',
-              borderRadius: 10,
-              padding: 12,
-            }}
-          >
-            <StepControls />
-          </div>
-        </div>
 
-        <div style={{ flex: 1, minHeight: 0 }}>
-          <PacketTimeline />
-        </div>
-      </ResizableSidebar>
-    </div>
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <PacketTimeline />
+          </div>
+        </ResizableSidebar>
+      </div>
+    </NetlabAppShell>
   );
 }
 
 export default function OspfConvergenceDemo() {
   const [primaryLinkDown, setPrimaryLinkDown] = useState(false);
+  const navigate = useNavigate();
   const topology = useMemo(() => buildOspfConvergenceTopology(primaryLinkDown), [primaryLinkDown]);
   const params = new URLSearchParams(window.location.search);
   const sandboxIntroId = params.get('intro') ?? null;
@@ -219,6 +234,8 @@ export default function OspfConvergenceDemo() {
           <OspfConvergenceInner
             primaryLinkDown={primaryLinkDown}
             onTogglePrimaryLink={() => setPrimaryLinkDown((value) => !value)}
+            onBackToGallery={() => navigate('/')}
+            embedded={embedded}
           />
         </SimulationProvider>
       </NetlabProvider>
