@@ -1,0 +1,74 @@
+/**
+ * Shared netlab keyframes used by the gallery → simulator → detail flow.
+ *
+ * Consumers import this stylesheet once (e.g. in `demo/main.tsx`) and apply
+ * the animation by class or via inline `animation: ...` styles. All
+ * animations are disabled under `prefers-reduced-motion: reduce` — visual
+ * state is communicated via final-frame styling, not motion.
+ */
+
+@keyframes netlab-page-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes netlab-dp-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes netlab-hint-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.6;
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes netlab-orbit-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.netlab-page-fade-in {
+  animation: netlab-page-fade-in 320ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.netlab-dp-slide-in {
+  animation: netlab-dp-slide-in 220ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.netlab-hint-pulse {
+  animation: netlab-hint-pulse 2.4s ease-in-out infinite;
+}
+
+.netlab-orbit-ring {
+  animation: netlab-orbit-rotate 2.4s linear infinite;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .netlab-page-fade-in,
+  .netlab-dp-slide-in,
+  .netlab-hint-pulse,
+  .netlab-orbit-ring {
+    animation: none !important;
+  }
+}

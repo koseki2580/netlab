@@ -5,6 +5,9 @@ import '../src/layers/l3-network/index';
 import '../src/layers/l4-transport/index';
 import '../src/layers/l7-application/index';
 
+// Flow-v1 shared keyframes (page-fade-in / dp-slide-in / hint-pulse / orbit).
+import '../src/components/animations.css';
+
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
