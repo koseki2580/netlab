@@ -183,9 +183,11 @@ export function Sidebar({ browseItems, activeSectionId, onSelectSection }: Sideb
   return (
     <aside
       aria-label="Demo navigation"
+      data-netlab-sidebar
       style={{
         width: 248,
         flexShrink: 0,
+        alignSelf: 'start',
         background:
           'linear-gradient(180deg, color-mix(in srgb, var(--netlab-bg-surface) 84%, var(--netlab-bg-primary)) 0%, var(--netlab-bg-primary) 100%)',
         borderRight: '1px solid var(--netlab-border)',

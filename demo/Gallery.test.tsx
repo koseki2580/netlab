@@ -28,6 +28,20 @@ describe('demo chrome', () => {
     expect(html).toContain('Example');
   });
 
+  it('DemoShell marks the simulator route as a fixed-viewport sim shell', () => {
+    // The simulator must stay a 100vh region even after the gallery is freed
+    // from the body height trap — the shell wrapper is the marker for that.
+    const html = renderToStaticMarkup(
+      <MemoryRouter>
+        <DemoShell title="Example" desc="Shared shell">
+          <div>demo body</div>
+        </DemoShell>
+      </MemoryRouter>,
+    );
+    expect(html).toContain('data-netlab-sim-shell');
+    expect(html).toContain('netlab-sim-shell');
+  });
+
   it('DemoShell hides Gallery navigation in embedded mode', () => {
     const html = renderToStaticMarkup(
       <MemoryRouter>
@@ -199,5 +213,56 @@ describe('demo chrome', () => {
     // 'basic' is not in TRACK_LANDING_IDS, so its grid stays.
     expect(html).toContain('data-gallery-section="basic"');
     expect(html).toContain('Three-Tier LAN');
+  });
+});
+
+describe('Gallery — canvas-first layout (P3)', () => {
+  it('exposes a sticky sidebar via data hook with sticky positioning', () => {
+    const html = renderGallery();
+
+    // The sidebar should keep its sticky placement so it stays visible while
+    // the document scrolls past the viewport.
+    expect(html).toContain('data-netlab-sidebar');
+    const sidebarOpen = html.indexOf('data-netlab-sidebar');
+    expect(sidebarOpen).toBeGreaterThan(-1);
+    const sidebarSlice = html.slice(sidebarOpen, sidebarOpen + 800);
+    expect(sidebarSlice).toContain('position:sticky');
+    expect(sidebarSlice).toContain('top:0');
+  });
+
+  it('wraps the search/control row in a sticky element with backdrop blur', () => {
+    const html = renderGallery();
+
+    expect(html).toContain('data-netlab-search-bar');
+    const open = html.indexOf('data-netlab-search-bar');
+    expect(open).toBeGreaterThan(-1);
+    const slice = html.slice(open, open + 800);
+    expect(slice).toContain('position:sticky');
+    expect(slice).toContain('top:0');
+    // Translucent backdrop so canvas content peeks through while the bar
+    // remains pinned to the top of the main column.
+    expect(slice).toContain('backdrop-filter:blur');
+  });
+
+  it('does not put overflow:auto on the main column (so document scrolls naturally)', () => {
+    const html = renderGallery();
+
+    // Tag the main column so we can scope the assertion.
+    expect(html).toContain('data-netlab-gallery-main');
+    const open = html.indexOf('data-netlab-gallery-main');
+    const slice = html.slice(open, open + 800);
+    expect(slice).not.toMatch(/overflow-y:\s*auto/);
+    expect(slice).not.toMatch(/overflow:\s*auto/);
+    expect(slice).not.toMatch(/overflow:\s*hidden/);
+  });
+
+  it('keeps the gallery root at min-height 100vh with no overflow trap', () => {
+    const html = renderGallery();
+
+    // Root opens with a known data attribute already (palette) — anchor on it.
+    const open = html.indexOf('data-netlab-palette');
+    const slice = html.slice(open, open + 1200);
+    expect(slice).toContain('min-height:100vh');
+    expect(slice).not.toMatch(/overflow:\s*hidden/);
   });
 });

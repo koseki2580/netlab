@@ -23,6 +23,8 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
   return (
     <div
       data-testid="netlab-root"
+      data-netlab-sim-shell
+      className="netlab-sim-shell"
       style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0f172a' }}
     >
       {!embedded && (

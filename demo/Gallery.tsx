@@ -1102,13 +1102,42 @@ export default function Gallery({
 
       <main
         ref={mainRef}
+        data-netlab-gallery-main
         style={{
-          overflowY: 'auto',
           padding: '24px',
           background:
             'linear-gradient(180deg, color-mix(in srgb, var(--netlab-bg-surface) 18%, var(--netlab-bg-primary)) 0%, color-mix(in srgb, var(--netlab-bg-primary) 92%, transparent) 100%)',
         }}
       >
+        <div
+          data-netlab-search-bar
+          style={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 5,
+            marginBottom: 18,
+            padding: '14px 18px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            gap: 12,
+            flexWrap: 'wrap',
+            borderRadius: 18,
+            border: '1px solid var(--netlab-border)',
+            background: 'color-mix(in srgb, var(--netlab-bg-primary) 86%, transparent)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06)',
+          }}
+        >
+          <SearchBox
+            value={query}
+            onChange={setQuery}
+            onClear={() => setQuery('')}
+            resultCount={allDemos.length}
+            totalCount={totalDemoCount}
+          />
+        </div>
         <div
           style={{
             padding: '28px 32px',
@@ -1197,13 +1226,6 @@ export default function Gallery({
             <ThemeModeToggle themeMode={themeMode} onChange={setThemeMode} />
             <SettingsPopover settings={settings} onChange={handleSettingsChange} />
             <LocaleToggle locale={locale} label={copy.localeLabel} onChange={setLocale} />
-            <SearchBox
-              value={query}
-              onChange={setQuery}
-              onClear={() => setQuery('')}
-              resultCount={allDemos.length}
-              totalCount={totalDemoCount}
-            />
           </div>
         </div>
 
