@@ -27,6 +27,30 @@ The sandbox has two modes:
 
 The mode toggle lives in the panel header. When `beta` is active, the primary simulation canvas is replaced by `<BeforeAfterView>` and `<DiffTimeline>` stays visible below the main surface.
 
+## Layout
+
+The sandbox surface is a flex container — the simulation canvas and the `SandboxPanel` share the same row (or column on narrow viewports) and never overlap.
+
+| Container width | Mode     | Canvas slot              | Sandbox panel                                                                   |
+| --------------- | -------- | ------------------------ | ------------------------------------------------------------------------------- |
+| ≥ 901 px        | `wide`   | `flex: 1; min-width: 0`  | right-side column, `width = clamp(280, persisted, min(50vw, 720))`, default 320 |
+| ≤ 900 px        | `drawer` | `flex: 1; min-height: 0` | bottom drawer, `flex: 0 0 40vh; width: 100%`                                    |
+
+The mode is decided by `window.matchMedia('(max-width: 900px)')` on the host viewport — not the canvas-surface's own width — to avoid the breakpoint flipping the panel on and off in a feedback loop. The opener pill (visible when the sandbox is collapsed) anchors to `top: 12, right: 12` in wide mode and to `bottom: 12, right: 12` in drawer mode.
+
+In wide mode, the panel exposes a 6 px-wide drag handle on its left edge with `role="separator"` and `aria-orientation="vertical"`. The handle is keyboard-operable:
+
+| Key          | Action                                     |
+| ------------ | ------------------------------------------ |
+| `ArrowLeft`  | widen the panel by 10 px                   |
+| `ArrowRight` | narrow the panel by 10 px                  |
+| `Home`       | jump to the minimum width (280 px)         |
+| `End`        | jump to the maximum width (min(50vw, 720)) |
+
+The width is persisted to `localStorage` under the key `netlab.sandbox.width`. On reload the stored value is clamped against the current viewport so a wide-viewport setting cannot strand the panel offscreen on a narrow device. The drag handle is not rendered in drawer mode, in `minimal` embeds, or in `compact` embeds.
+
+`SimulationOverlayDock` (route table + packet viewer) anchors to the canvas slot's `right: 12`, which sits outside the panel's x-range, so dock items are always visible while the sandbox is open.
+
 ## Editing Surface
 
 `SandboxPanel` exposes five default tabs, plus an `Assessment` tab when the active scenario has an assessment rubric:

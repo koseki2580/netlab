@@ -52,7 +52,7 @@ Specifications regarding user interface implementation and canvas operations.
 - [Node Theming](ui/node-theming.md) - Per-node-type color tokens and CSS variable wiring for theme-aware node rendering
 - [Packet Structure Viewer](ui/packet-structure-viewer.md) - Byte-level hex dump and field table showing per-layer color-coded packet structure
 - [Accessibility](ui/accessibility.md) - WCAG 2.1 AA compliance: color contrast tokens, keyboard model, ARIA roles, and axe-core verification
-- [Interactive Sandbox](ui/sandbox.md) - Sandbox surface, edit tabs, URL persistence, supported demos, and provider mutex
+- [Interactive Sandbox](ui/sandbox.md) - Sandbox surface, wide/drawer layout, resizable panel, edit tabs, URL persistence, supported demos, and provider mutex
 - [Sandbox Introduction](ui/sandbox-intro.md) - Built-in onboarding flows for MTU, TCP, OSPF, and NAT sandbox demos
 - [Sandbox Undo And History](ui/sandbox-undo.md) - Undo/redo cursor semantics, edit history UI, reset-all, shortcuts, and hook events
 - [Sandbox Session Import / Export](ui/sandbox-session-io.md) - Local JSON session files with schema versioning, import preview, and redo-tail preservation
