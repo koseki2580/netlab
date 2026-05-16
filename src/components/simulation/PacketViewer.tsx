@@ -93,7 +93,10 @@ export function PacketViewerPanel({ floating = false }: PacketViewerPanelProps) 
   const totalHops = trace?.hops.length ?? 0;
 
   return (
-    <div style={floating ? { ...PANEL, ...FLOATING_PANEL } : PANEL}>
+    <div
+      data-testid="packet-viewer-panel"
+      style={floating ? { ...PANEL, ...FLOATING_PANEL } : PANEL}
+    >
       <div style={LABEL}>PACKET VIEWER</div>
 
       {!selectedHop ? (

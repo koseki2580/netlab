@@ -596,6 +596,148 @@ describe('SandboxPanel', () => {
   });
 });
 
+describe('SandboxPanel layout', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  it('renders as a layout-participating column in wide mode (no absolute positioning)', () => {
+    render(
+      <SandboxContext.Provider value={makeSandboxValue()}>
+        <SandboxPanel layoutMode="wide" />
+      </SandboxContext.Provider>,
+    );
+
+    const panel = container?.querySelector<HTMLElement>('[data-testid="sandbox-panel"]');
+    expect(panel).not.toBeNull();
+    expect(panel?.getAttribute('data-layout-mode')).toBe('wide');
+    expect(panel?.style.position).not.toBe('absolute');
+    expect(panel?.style.flex).toBe('0 0 auto');
+    expect(panel?.style.borderLeft).toContain('1px solid');
+    expect(panel?.style.borderTop).toBe('');
+  });
+
+  it('renders as a bottom drawer when layoutMode=drawer (no resize handle)', () => {
+    render(
+      <SandboxContext.Provider value={makeSandboxValue()}>
+        <SandboxPanel layoutMode="drawer" />
+      </SandboxContext.Provider>,
+    );
+
+    const panel = container?.querySelector<HTMLElement>('[data-testid="sandbox-panel"]');
+    expect(panel?.getAttribute('data-layout-mode')).toBe('drawer');
+    expect(panel?.style.width).toBe('100%');
+    expect(panel?.style.flex).toBe('0 0 40vh');
+    expect(panel?.style.borderTop).toContain('1px solid');
+    expect(container?.querySelector('[data-testid="sandbox-panel-resize-handle"]')).toBeNull();
+  });
+
+  it('places the opener pill at top-right in wide mode and bottom-right in drawer mode', () => {
+    const setOpen = vi.fn();
+    void setOpen;
+
+    function CollapsedHarness({ mode }: { readonly mode: 'wide' | 'drawer' }) {
+      return (
+        <SandboxContext.Provider value={makeSandboxValue()}>
+          <SandboxPanel layoutMode={mode} />
+        </SandboxContext.Provider>
+      );
+    }
+
+    render(<CollapsedHarness mode="wide" />);
+    act(() => {
+      container?.querySelector<HTMLButtonElement>('[aria-label="Collapse sandbox"]')?.click();
+    });
+    const wideOpener = container?.querySelector<HTMLButtonElement>('[aria-label="Open sandbox"]');
+    expect(wideOpener?.style.top).toBe('12px');
+    expect(wideOpener?.style.bottom).toBe('');
+
+    render(<CollapsedHarness mode="drawer" />);
+    act(() => {
+      container?.querySelector<HTMLButtonElement>('[aria-label="Collapse sandbox"]')?.click();
+    });
+    const drawerOpener = container?.querySelector<HTMLButtonElement>('[aria-label="Open sandbox"]');
+    expect(drawerOpener?.style.bottom).toBe('12px');
+    expect(drawerOpener?.style.top).toBe('');
+  });
+
+  it('reads the persisted width from localStorage on mount', () => {
+    window.localStorage.setItem('netlab.sandbox.width', '480');
+    render(
+      <SandboxContext.Provider value={makeSandboxValue()}>
+        <SandboxPanel layoutMode="wide" />
+      </SandboxContext.Provider>,
+    );
+
+    const panel = container?.querySelector<HTMLElement>('[data-testid="sandbox-panel"]');
+    expect(panel?.style.width).toBe('480px');
+  });
+
+  it('clamps an oversized stored width down to min(50vw, 720)', () => {
+    window.localStorage.setItem('netlab.sandbox.width', '9999');
+    render(
+      <SandboxContext.Provider value={makeSandboxValue()}>
+        <SandboxPanel layoutMode="wide" />
+      </SandboxContext.Provider>,
+    );
+
+    const panel = container?.querySelector<HTMLElement>('[data-testid="sandbox-panel"]');
+    const widthPx = Number(panel?.style.width.replace('px', ''));
+    expect(widthPx).toBeLessThanOrEqual(720);
+    expect(widthPx).toBeLessThanOrEqual(window.innerWidth * 0.5);
+  });
+
+  it('keyboard ArrowLeft widens, ArrowRight narrows, and writes to localStorage', () => {
+    window.localStorage.setItem('netlab.sandbox.width', '400');
+    render(
+      <SandboxContext.Provider value={makeSandboxValue()}>
+        <SandboxPanel layoutMode="wide" />
+      </SandboxContext.Provider>,
+    );
+
+    const handle = container?.querySelector<HTMLDivElement>(
+      '[data-testid="sandbox-panel-resize-handle"]',
+    );
+    expect(handle).not.toBeNull();
+
+    act(() => {
+      handle?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    });
+    expect(window.localStorage.getItem('netlab.sandbox.width')).toBe('410');
+
+    act(() => {
+      handle?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+      handle?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    });
+    expect(window.localStorage.getItem('netlab.sandbox.width')).toBe('390');
+  });
+
+  it('resize handle mousedown does not bubble to ancestor handlers', () => {
+    const parentMouseDown = vi.fn();
+
+    render(
+      <div onMouseDown={parentMouseDown}>
+        <SandboxContext.Provider value={makeSandboxValue()}>
+          <SandboxPanel layoutMode="wide" />
+        </SandboxContext.Provider>
+      </div>,
+    );
+
+    const handle = container?.querySelector<HTMLDivElement>(
+      '[data-testid="sandbox-panel-resize-handle"]',
+    );
+    act(() => {
+      handle?.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true, clientX: 100, button: 0 }),
+      );
+      // release synthesized drag listeners
+      window.dispatchEvent(new MouseEvent('mouseup'));
+    });
+
+    expect(parentMouseDown).not.toHaveBeenCalled();
+  });
+});
+
 describe('EmptySandboxTab', () => {
   it('links to the sandbox documentation', () => {
     render(<EmptySandboxTab axis="traffic" />);
