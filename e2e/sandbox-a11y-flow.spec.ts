@@ -9,11 +9,13 @@ test('sandbox popovers and compare flow remain accessible', async ({ page }) => 
   const routedNode = page.locator('.react-flow__node').filter({ hasText: 'R1' }).first();
   await routedNode.click({ button: 'right', force: true });
 
-  const popover = page.getByRole('dialog');
+  const popover = page.getByRole('dialog', { name: 'Edit in sandbox' });
   await expect(popover).toBeVisible();
   await expect(popover).toContainText('Edit in sandbox');
 
-  const popoverA11y = await new AxeBuilder({ page }).include('[role="dialog"]').analyze();
+  const popoverA11y = await new AxeBuilder({ page })
+    .include('[role="dialog"][data-anchor-kind]')
+    .analyze();
   expect(popoverA11y.violations).toEqual([]);
 
   await page.getByLabel('MTU bytes').fill('500');

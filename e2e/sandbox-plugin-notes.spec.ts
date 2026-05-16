@@ -8,7 +8,7 @@ test('sandbox notes plugin registers an editor and persists a custom edit', asyn
     button: 'right',
     force: true,
   });
-  await expect(page.getByRole('dialog')).toContainText('Node note');
+  await expect(page.getByRole('dialog', { name: 'Edit in sandbox' })).toContainText('Node note');
 
   await page.getByLabel('Node note').fill('Investigate R1 after MTU change');
   await page.getByRole('button', { name: 'Apply note' }).click();
