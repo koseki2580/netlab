@@ -6,6 +6,7 @@ export const panel: Catalog = {
   'sandbox.panel.openButton.text': 'Sandbox',
   'sandbox.panel.collapse.label': 'Collapse sandbox',
   'sandbox.panel.collapse.text': 'x',
+  'sandbox.panel.resizeHandle.label': 'Resize sandbox panel',
   'sandbox.panel.export.scenarioLabel': 'Export as scenario',
   'sandbox.panel.export.scenarioText': 'Scenario',
   'sandbox.panel.export.dialogPlaceholderLabel': 'Export scenario',

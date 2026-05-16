@@ -1,5 +1,14 @@
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { hookEngine as sharedHookEngine } from '../../hooks/HookEngine';
+import {
+  SANDBOX_DEFAULT_WIDTH,
+  SANDBOX_MAX_ABS_WIDTH,
+  SANDBOX_MAX_VW_RATIO,
+  SANDBOX_MIN_WIDTH,
+  clampSandboxWidth,
+  readSandboxWidth,
+  writeSandboxWidth,
+} from './sandboxLayoutStorage';
 import { useI18n } from '../../i18n/useI18n';
 import { shortcutRegistry } from '../../sandbox/shortcuts/registry';
 import { useSandbox } from '../../sandbox/useSandbox';
@@ -76,7 +85,13 @@ function SandboxTabBody({ axis }: { readonly axis: SandboxAxis }) {
   }
 }
 
-export function SandboxPanel() {
+export type SandboxPanelLayoutMode = 'wide' | 'drawer';
+
+export interface SandboxPanelProps {
+  readonly layoutMode?: SandboxPanelLayoutMode;
+}
+
+export function SandboxPanel({ layoutMode = 'wide' }: SandboxPanelProps = {}) {
   const { t } = useI18n();
   const sandbox = useSandbox();
   const assessment = useContext(AssessmentContext);
@@ -84,6 +99,8 @@ export function SandboxPanel() {
   const hookEngine = netlabContext?.hookEngine ?? sharedHookEngine;
   const embedMode = netlabContext?.embedMode;
   const isMinimalEmbed = embedMode === 'minimal';
+  const isDrawer = layoutMode === 'drawer';
+  const isResizeEnabled = !isDrawer && embedMode !== 'minimal' && embedMode !== 'compact';
   const [open, setOpen] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
   const [scenarioExportOpen, setScenarioExportOpen] = useState(false);
@@ -92,6 +109,10 @@ export function SandboxPanel() {
   const [activeAxis, setActiveAxis] = useState<SandboxAxis>(() =>
     getInitialAxis(assessment !== null),
   );
+  const [panelWidth, setPanelWidth] = useState<number>(() => {
+    if (typeof window === 'undefined') return SANDBOX_DEFAULT_WIDTH;
+    return readSandboxWidth(window.innerWidth);
+  });
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const tabs = getTabs(assessment !== null);
   const nodeCount = sandbox.engine.snapshot.topology.nodes.length;
@@ -121,6 +142,76 @@ export function SandboxPanel() {
       setOpen(true);
     }
   }, [isMinimalEmbed]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onResize = () => {
+      setPanelWidth((current) => clampSandboxWidth(current, window.innerWidth));
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  const beginResize = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (typeof window === 'undefined') return;
+      const startX = event.clientX;
+      const startWidth = panelWidth;
+      const onMove = (moveEvent: MouseEvent) => {
+        const delta = startX - moveEvent.clientX;
+        const next = clampSandboxWidth(startWidth + delta, window.innerWidth);
+        setPanelWidth(next);
+      };
+      const onUp = () => {
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+        setPanelWidth((current) => {
+          writeSandboxWidth(current);
+          return current;
+        });
+      };
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+    },
+    [panelWidth],
+  );
+
+  const handleResizeKey = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (typeof window === 'undefined') return;
+    const viewport = window.innerWidth;
+    const step = 10;
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      setPanelWidth((current) => {
+        const next = clampSandboxWidth(current + step, viewport);
+        writeSandboxWidth(next);
+        return next;
+      });
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      setPanelWidth((current) => {
+        const next = clampSandboxWidth(current - step, viewport);
+        writeSandboxWidth(next);
+        return next;
+      });
+    } else if (event.key === 'Home') {
+      event.preventDefault();
+      setPanelWidth(() => {
+        const next = clampSandboxWidth(SANDBOX_MIN_WIDTH, viewport);
+        writeSandboxWidth(next);
+        return next;
+      });
+    } else if (event.key === 'End') {
+      event.preventDefault();
+      setPanelWidth(() => {
+        const next = clampSandboxWidth(SANDBOX_MAX_ABS_WIDTH, viewport);
+        writeSandboxWidth(next);
+        return next;
+      });
+    }
+  }, []);
 
   useEffect(() => {
     if (!scenarioExportOpen || ScenarioExportDialog) return;
@@ -160,7 +251,7 @@ export function SandboxPanel() {
           style={{
             position: 'absolute',
             right: 12,
-            top: 12,
+            ...(isDrawer ? { bottom: 12 } : { top: 12 }),
             zIndex: 20,
             border: '1px solid var(--netlab-border)',
             borderRadius: 8,
@@ -202,23 +293,65 @@ export function SandboxPanel() {
         role="region"
         aria-labelledby="sandbox-panel-heading"
         data-testid="sandbox-panel"
+        data-layout-mode={layoutMode}
         {...(embedMode !== undefined ? { 'data-embed-mode': embedMode } : {})}
-        style={{
-          width: embedMode === 'minimal' ? 260 : embedMode === 'compact' ? 280 : 320,
-          height: '100%',
-          position: 'absolute',
-          right: 0,
-          top: 0,
-          zIndex: 15,
-          display: 'flex',
-          flexDirection: 'column',
-          background: 'var(--netlab-bg-primary)',
-          borderLeft: '1px solid var(--netlab-border)',
-          boxShadow: '0 16px 40px rgba(2, 6, 23, 0.35)',
-          color: 'var(--netlab-text-primary)',
-          fontFamily: 'monospace',
-        }}
+        style={
+          isDrawer
+            ? {
+                position: 'relative',
+                width: '100%',
+                flex: '0 0 40vh',
+                height: '40vh',
+                display: 'flex',
+                flexDirection: 'column',
+                background: 'var(--netlab-bg-primary)',
+                borderTop: '1px solid var(--netlab-border)',
+                color: 'var(--netlab-text-primary)',
+                fontFamily: 'monospace',
+              }
+            : {
+                position: 'relative',
+                width: embedMode === 'minimal' ? 260 : embedMode === 'compact' ? 280 : panelWidth,
+                flex: '0 0 auto',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                background: 'var(--netlab-bg-primary)',
+                borderLeft: '1px solid var(--netlab-border)',
+                color: 'var(--netlab-text-primary)',
+                fontFamily: 'monospace',
+              }
+        }
       >
+        {isResizeEnabled ? (
+          <div
+            role="separator"
+            aria-label={t('sandbox.panel.resizeHandle.label')}
+            aria-orientation="vertical"
+            aria-valuemin={SANDBOX_MIN_WIDTH}
+            aria-valuemax={
+              typeof window !== 'undefined'
+                ? Math.min(window.innerWidth * SANDBOX_MAX_VW_RATIO, SANDBOX_MAX_ABS_WIDTH)
+                : SANDBOX_MAX_ABS_WIDTH
+            }
+            aria-valuenow={Math.round(panelWidth)}
+            tabIndex={0}
+            data-testid="sandbox-panel-resize-handle"
+            onMouseDown={beginResize}
+            onKeyDown={handleResizeKey}
+            className="netlab-focus-ring"
+            style={{
+              position: 'absolute',
+              left: -2,
+              top: 0,
+              width: 6,
+              height: '100%',
+              cursor: 'col-resize',
+              background: 'transparent',
+              zIndex: 1,
+            }}
+          />
+        ) : null}
         <header
           style={{
             padding: '10px 12px',

@@ -6,6 +6,7 @@ export const panel: Catalog = {
   'sandbox.panel.openButton.text': 'サンドボックス',
   'sandbox.panel.collapse.label': 'サンドボックスを折りたたむ',
   'sandbox.panel.collapse.text': 'x',
+  'sandbox.panel.resizeHandle.label': 'サンドボックスパネルの幅を変更',
   'sandbox.panel.export.scenarioLabel': 'シナリオとしてエクスポート',
   'sandbox.panel.export.scenarioText': 'シナリオ',
   'sandbox.panel.export.dialogPlaceholderLabel': 'シナリオをエクスポート',
