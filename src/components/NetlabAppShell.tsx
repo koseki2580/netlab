@@ -29,6 +29,13 @@ export interface NetlabAppShellProps {
    * Zone slots — each is rendered as a flex item between the identity chip
    * and the right-aligned status/export adornments. Compose them with
    * `<ToolGroup>` + `<ToolGroupButton>`.
+   *
+   * @deprecated New simulator scenes should use `<NetlabAppShellV2 />` with
+   * `<CommandBar />` props instead of composing four toolbar zones.
+   * @migrate Move primary run controls to `onPlay / onPause / onStep /
+   * onReset`, export to `onExport`, and scene-specific controls to
+   * `extraActions`.
+   * @removeAt v0.next
    */
   topologyZone?: React.ReactNode;
   runZone?: React.ReactNode;
@@ -103,6 +110,12 @@ function statusPillStyle(tone: ShellStatusTone): React.CSSProperties {
  * status pill + export adornment on the right. The shell is layout-only
  * — it owns no state. Compose it with `<NetlabApp>` or any other body
  * content.
+ *
+ * @deprecated Use `<NetlabAppShellV2 />` for new simulator scenes. V1 remains
+ * for existing four-zone toolbar consumers during the shell-chrome migration.
+ * @migrate Pass command-bar controls directly to `<NetlabAppShellV2 />` and
+ * move scene-specific buttons into `extraActions`.
+ * @removeAt v0.next
  */
 export function NetlabAppShell({
   scenarioId,

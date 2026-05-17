@@ -1,7 +1,7 @@
+import type React from 'react';
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import DemoShell from '../DemoShell';
-import { NetlabAppShell } from '../../src/components/NetlabAppShell';
+import { NetlabAppShellV2 } from '../../src/components/NetlabAppShellV2';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
@@ -11,7 +11,6 @@ import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationOverlayDock } from '../../src/components/simulation/SimulationOverlayDock';
 import { StepControls } from '../../src/components/simulation/StepControls';
 import { StatusLine } from '../../src/components/StatusLine';
-import { ToolGroup, ToolGroupButton } from '../../src/components/ToolGroup';
 import { ZeroStateHint } from '../../src/components/ZeroStateHint';
 import { buildOspfConvergenceTopology } from '../../src/scenarios/ospf-convergence';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
@@ -66,15 +65,11 @@ function RouteSummaryPanel() {
 function OspfConvergenceInner({
   primaryLinkDown,
   onTogglePrimaryLink,
-  onBackToGallery,
-  embedded,
 }: {
   primaryLinkDown: boolean;
   onTogglePrimaryLink: () => void;
-  onBackToGallery: () => void;
-  embedded: boolean;
 }) {
-  const { engine, state } = useSimulation();
+  const { engine, state, exportPcap } = useSimulation();
 
   const sendProbe = async () => {
     engine.clearTraces();
@@ -103,51 +98,57 @@ function OspfConvergenceInner({
     0,
   );
 
+  const downloadPcap = () => {
+    const traceId = state.currentTraceId ?? undefined;
+    const bytes = exportPcap(traceId);
+    const blob = new Blob([Uint8Array.from(bytes)], { type: 'application/vnd.tcpdump.pcap' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `netlab-trace-${traceId ?? 'export'}.pcap`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <NetlabAppShell
+    <NetlabAppShellV2
       scenarioId="ospf-convergence"
       scenarioLayer="L3"
-      {...(embedded ? {} : { onBackToGallery })}
-      topologyZone={
-        <ToolGroup title="TOPOLOGY" accent="var(--netlab-accent-blue)">
-          <ToolGroupButton active accent="var(--netlab-accent-blue)">
-            View
-          </ToolGroupButton>
-        </ToolGroup>
-      }
-      runZone={
-        <ToolGroup title="RUN" accent="var(--netlab-accent-green)">
-          <ToolGroupButton
-            accent="var(--netlab-accent-green)"
+      isPlaying={state.status === 'running'}
+      step={stepIdx}
+      {...(totalHops > 0 ? { totalSteps: totalHops } : {})}
+      onPlay={() => engine.play()}
+      onPause={() => engine.pause()}
+      onStep={() => engine.step()}
+      onReset={() => engine.reset()}
+      onExport={downloadPcap}
+      extraActions={
+        <>
+          <button
+            type="button"
             onClick={() => void sendProbe()}
-            title="Send probe C1 → C2"
+            title="Send probe C1 -> C2"
+            style={commandActionStyle('var(--netlab-accent-green)')}
           >
-            ▶ Send Probe
-          </ToolGroupButton>
-        </ToolGroup>
-      }
-      inspectZone={
-        <ToolGroup title="INSPECT" accent="var(--netlab-accent-cyan)">
-          <ToolGroupButton active accent="var(--netlab-accent-cyan)">
-            Routes
-          </ToolGroupButton>
-        </ToolGroup>
-      }
-      sandboxZone={
-        <ToolGroup title="SANDBOX" accent="var(--netlab-accent-yellow)">
-          <ToolGroupButton
-            active={primaryLinkDown}
-            accent={primaryLinkDown ? 'var(--netlab-accent-red)' : 'var(--netlab-accent-yellow)'}
+            Send Probe
+          </button>
+          <button
+            type="button"
             onClick={onTogglePrimaryLink}
             title={
               primaryLinkDown
                 ? 'Restore primary inter-router link'
                 : 'Fail primary inter-router link'
             }
+            style={commandActionStyle(
+              primaryLinkDown ? 'var(--netlab-accent-red)' : 'var(--netlab-accent-yellow)',
+            )}
           >
-            {primaryLinkDown ? '↺ Restore link' : '✎ Fail link'}
-          </ToolGroupButton>
-        </ToolGroup>
+            {primaryLinkDown ? 'Restore link' : 'Fail link'}
+          </button>
+        </>
       }
       status={status}
       statusLine={
@@ -228,13 +229,28 @@ function OspfConvergenceInner({
           </div>
         </ResizableSidebar>
       </div>
-    </NetlabAppShell>
+    </NetlabAppShellV2>
   );
+}
+
+function commandActionStyle(accent: string): React.CSSProperties {
+  return {
+    height: 28,
+    padding: '0 8px',
+    borderRadius: 6,
+    border: `1px solid color-mix(in srgb, ${accent} 34%, var(--netlab-border))`,
+    color: accent,
+    background: `color-mix(in srgb, ${accent} 10%, transparent)`,
+    fontFamily: 'ui-monospace, monospace',
+    fontSize: 10,
+    fontWeight: 700,
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+  };
 }
 
 export default function OspfConvergenceDemo() {
   const [primaryLinkDown, setPrimaryLinkDown] = useState(false);
-  const navigate = useNavigate();
   const topology = useMemo(() => buildOspfConvergenceTopology(primaryLinkDown), [primaryLinkDown]);
   const params = new URLSearchParams(window.location.search);
   const sandboxIntroId = params.get('intro') ?? null;
@@ -266,8 +282,6 @@ export default function OspfConvergenceDemo() {
           <OspfConvergenceInner
             primaryLinkDown={primaryLinkDown}
             onTogglePrimaryLink={() => setPrimaryLinkDown((value) => !value)}
-            onBackToGallery={() => navigate('/')}
-            embedded={embedded}
           />
         </SimulationProvider>
       </NetlabProvider>
