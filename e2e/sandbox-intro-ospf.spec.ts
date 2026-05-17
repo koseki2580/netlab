@@ -8,7 +8,7 @@ test('sandbox intro guides the learner through the OSPF convergence flow', async
   await page.getByRole('button', { name: 'Start Intro' }).click();
   await page.getByRole('tab', { name: 'Node' }).click();
 
-  await page.getByRole('button', { name: 'fail primary link' }).click({ force: true });
+  await page.getByRole('button', { name: /Fail link/i }).click({ force: true });
 
   await page.getByRole('tab', { name: 'Traffic' }).click();
   await page.getByLabel('Source').selectOption({ label: 'C1' });
@@ -20,10 +20,12 @@ test('sandbox intro guides the learner through the OSPF convergence flow', async
     button: 'right',
     force: true,
   });
-  await page.locator('input').first().fill('10.4.0.0/24');
-  await page.getByLabel('Next hop').fill('10.0.13.2');
-  await page.getByLabel('Route interface').selectOption({ label: 'to-r3' });
-  await page.getByRole('button', { name: 'Add route' }).click();
+  const sandboxPopover = page.getByRole('dialog', { name: 'Edit in sandbox' });
+  await expect(sandboxPopover).toBeVisible();
+  await sandboxPopover.locator('input').first().fill('10.4.0.0/24');
+  await sandboxPopover.getByLabel('Next hop').fill('10.0.13.2');
+  await sandboxPopover.getByLabel('Route interface').selectOption({ label: 'to-r3' });
+  await sandboxPopover.getByRole('button', { name: 'Add route' }).click();
 
   await page.getByRole('tab', { name: 'Traffic' }).click();
   await page.getByLabel('Source').selectOption({ label: 'C1' });
