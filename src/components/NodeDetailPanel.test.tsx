@@ -1186,3 +1186,302 @@ describe('NodeDetailPanel', () => {
     });
   });
 });
+
+describe('NodeDetailPanel — canvas-first dock (P2)', () => {
+  const DP_MODE_KEY = 'netlab_dp_mode';
+  const DP_WIDTH_KEY = 'netlab_dp_width';
+  const DP_TAB_KEY = 'netlab_dp_tab';
+
+  function getDpRoot(): HTMLElement {
+    const el = container?.querySelector<HTMLElement>('[data-netlab-dp]');
+    if (!el) {
+      throw new Error('NodeDetailPanel root element ([data-netlab-dp]) not found');
+    }
+    return el;
+  }
+
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  describe('shell — dock, resize, persistence', () => {
+    it('renders at the default width 420 in overlay mode when no localStorage is set', () => {
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+
+      renderDom();
+
+      const root = getDpRoot();
+      expect(root.getAttribute('data-dp-mode')).toBe('overlay');
+      expect(root.getAttribute('data-dp-width')).toBe('420');
+      // Overlay mode floats over the canvas — absolute positioning.
+      expect(root.style.position).toBe('absolute');
+      // Right-edge dock.
+      expect(root.style.right).toBe('0px');
+    });
+
+    it('hydrates mode/width from localStorage on mount', () => {
+      window.localStorage.setItem(DP_MODE_KEY, 'pinned');
+      window.localStorage.setItem(DP_WIDTH_KEY, '500');
+
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+
+      renderDom();
+
+      const root = getDpRoot();
+      expect(root.getAttribute('data-dp-mode')).toBe('pinned');
+      expect(root.getAttribute('data-dp-width')).toBe('500');
+      // Pinned mode pushes the canvas as a flex sibling — relative positioning.
+      expect(root.style.position).toBe('relative');
+    });
+
+    it('clamps a hydrated width below the floor up to 320', () => {
+      window.localStorage.setItem(DP_WIDTH_KEY, '120');
+
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+
+      renderDom();
+
+      expect(getDpRoot().getAttribute('data-dp-width')).toBe('320');
+    });
+
+    it('clamps a hydrated width above the ceiling down to 640', () => {
+      window.localStorage.setItem(DP_WIDTH_KEY, '9999');
+
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+
+      renderDom();
+
+      expect(getDpRoot().getAttribute('data-dp-width')).toBe('640');
+    });
+
+    it('toggles mode via the pin button and persists to localStorage', () => {
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+
+      renderDom();
+
+      const toggle = container?.querySelector<HTMLButtonElement>('[data-netlab-dp-mode-toggle]');
+      expect(toggle).toBeTruthy();
+      act(() => {
+        toggle?.click();
+      });
+
+      const root = getDpRoot();
+      expect(root.getAttribute('data-dp-mode')).toBe('pinned');
+      expect(root.style.position).toBe('relative');
+      expect(window.localStorage.getItem(DP_MODE_KEY)).toBe('pinned');
+
+      act(() => {
+        toggle?.click();
+      });
+      expect(getDpRoot().getAttribute('data-dp-mode')).toBe('overlay');
+      expect(window.localStorage.getItem(DP_MODE_KEY)).toBe('overlay');
+    });
+
+    it('dragging the left-edge handle resizes the panel and persists', () => {
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+
+      renderDom();
+
+      const handle = container?.querySelector<HTMLElement>('[data-netlab-dp-resize-handle]');
+      expect(handle).toBeTruthy();
+
+      // Drag leftward by 100px → panel grows from 420 → 520 (left edge moves left).
+      act(() => {
+        handle?.dispatchEvent(new MouseEvent('mousedown', { clientX: 1000, bubbles: true }));
+      });
+      act(() => {
+        window.dispatchEvent(new MouseEvent('mousemove', { clientX: 900 }));
+      });
+      act(() => {
+        window.dispatchEvent(new MouseEvent('mouseup', { clientX: 900 }));
+      });
+
+      const root = getDpRoot();
+      expect(root.getAttribute('data-dp-width')).toBe('520');
+      expect(window.localStorage.getItem(DP_WIDTH_KEY)).toBe('520');
+    });
+
+    it('drag clamps the resulting width to [320, 640]', () => {
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+
+      renderDom();
+
+      const handle = container?.querySelector<HTMLElement>('[data-netlab-dp-resize-handle]');
+
+      // Drag leftward by 10_000px → would yield ~10420 → clamped to 640.
+      act(() => {
+        handle?.dispatchEvent(new MouseEvent('mousedown', { clientX: 1000, bubbles: true }));
+      });
+      act(() => {
+        window.dispatchEvent(new MouseEvent('mousemove', { clientX: -9000 }));
+      });
+      act(() => {
+        window.dispatchEvent(new MouseEvent('mouseup', { clientX: -9000 }));
+      });
+
+      expect(getDpRoot().getAttribute('data-dp-width')).toBe('640');
+
+      // Drag rightward by 10_000px → would yield negative → clamped to 320.
+      act(() => {
+        handle?.dispatchEvent(new MouseEvent('mousedown', { clientX: 1000, bubbles: true }));
+      });
+      act(() => {
+        window.dispatchEvent(new MouseEvent('mousemove', { clientX: 11000 }));
+      });
+      act(() => {
+        window.dispatchEvent(new MouseEvent('mouseup', { clientX: 11000 }));
+      });
+
+      expect(getDpRoot().getAttribute('data-dp-width')).toBe('320');
+    });
+
+    it('still closes on Escape after restructuring', () => {
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+
+      renderDom();
+
+      act(() => {
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      });
+
+      expect(uiMock.setSelectedNodeId).toHaveBeenCalledWith(null);
+    });
+  });
+
+  describe('tabs — six-tab inspector with role-aware visibility', () => {
+    function getTabButtons(): HTMLButtonElement[] {
+      return Array.from(
+        container?.querySelectorAll<HTMLButtonElement>('[data-netlab-dp-tab]') ?? [],
+      );
+    }
+    function tabIds(): string[] {
+      return getTabButtons().map((b) => b.getAttribute('data-netlab-dp-tab') ?? '');
+    }
+
+    it('renders the canonical six tab IDs for a router with full data', () => {
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+
+      renderDom(makeSimulationValue(), { editable: true, onTopologyChange: () => {} });
+
+      expect(tabIds()).toEqual(['overview', 'ifaces', 'routes', 'arp', 'acl', 'sandbox']);
+    });
+
+    it('hides routes/acl on a switch', () => {
+      uiMock.selectedNodeId = 'switch-1';
+      netlabMock.topology = makeTopology([makeSwitchNode()]);
+
+      renderDom();
+
+      const ids = tabIds();
+      expect(ids).toContain('overview');
+      expect(ids).toContain('ifaces');
+      expect(ids).not.toContain('routes');
+      expect(ids).not.toContain('acl');
+    });
+
+    it('hides routes/acl/ifaces on an edge selection (only overview)', () => {
+      uiMock.selectedNodeId = null;
+      uiMock.selectedEdgeId = 'edge-1';
+      netlabMock.topology = makeTopology([makeRouterNode(), makeClientNode()], {
+        edges: [makeEdge(1500)],
+      });
+
+      renderDom();
+
+      expect(tabIds()).toEqual(['overview']);
+    });
+
+    it('persists the active tab to localStorage and hydrates from it', () => {
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+
+      renderDom();
+
+      // Click "routes" tab.
+      const tabs = getTabButtons();
+      const routesTab = tabs.find((b) => b.getAttribute('data-netlab-dp-tab') === 'routes');
+      expect(routesTab).toBeTruthy();
+      act(() => {
+        routesTab?.click();
+      });
+
+      expect(window.localStorage.getItem(DP_TAB_KEY)).toBe('routes');
+
+      // Re-mount → routes is restored.
+      act(() => {
+        root?.unmount();
+      });
+      root = null;
+      if (container) {
+        container.remove();
+        container = null;
+      }
+      renderDom();
+
+      const refreshed = getTabButtons();
+      const active = refreshed.find((b) => b.getAttribute('data-active') === 'true');
+      expect(active?.getAttribute('data-netlab-dp-tab')).toBe('routes');
+    });
+
+    it('uses the role-appropriate default tab when localStorage is unset', () => {
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+
+      renderDom();
+
+      const active = getTabButtons().find((b) => b.getAttribute('data-active') === 'true');
+      expect(active?.getAttribute('data-netlab-dp-tab')).toBe('ifaces');
+    });
+
+    it('falls back to a visible tab when the persisted tab is hidden for this role', () => {
+      window.localStorage.setItem(DP_TAB_KEY, 'routes');
+
+      uiMock.selectedNodeId = 'switch-1';
+      netlabMock.topology = makeTopology([makeSwitchNode()]);
+
+      renderDom();
+
+      const active = getTabButtons().find((b) => b.getAttribute('data-active') === 'true');
+      const id = active?.getAttribute('data-netlab-dp-tab');
+      // 'routes' is not visible on switch → must fall back to a visible tab.
+      expect(id).not.toBe('routes');
+      expect(id).toBeTruthy();
+    });
+  });
+
+  describe('tab nav layout — adapts to width', () => {
+    it('renders the tab nav as a left-side column when width >= 380', () => {
+      window.localStorage.setItem(DP_WIDTH_KEY, '420');
+
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+
+      renderDom();
+
+      const nav = container?.querySelector<HTMLElement>('[data-netlab-dp-nav]');
+      expect(nav).toBeTruthy();
+      expect(nav?.getAttribute('data-dp-nav-orientation')).toBe('column');
+    });
+
+    it('renders the tab nav as a top horizontal strip when width < 380', () => {
+      window.localStorage.setItem(DP_WIDTH_KEY, '340');
+
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+
+      renderDom();
+
+      const nav = container?.querySelector<HTMLElement>('[data-netlab-dp-nav]');
+      expect(nav?.getAttribute('data-dp-nav-orientation')).toBe('row');
+    });
+  });
+});
