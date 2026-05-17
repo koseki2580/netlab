@@ -6,6 +6,7 @@ import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
 import { ResizableSidebar } from '../../src/components/ResizableSidebar';
+import { PacketScrubTimeline } from '../../src/components/simulation/PacketScrubTimeline';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationOverlayDock } from '../../src/components/simulation/SimulationOverlayDock';
 import { StepControls } from '../../src/components/simulation/StepControls';
@@ -161,38 +162,41 @@ function OspfConvergenceInner({
       }
     >
       <div style={{ display: 'flex', height: '100%' }}>
-        <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-          <NetlabCanvas />
-          <SimulationOverlayDock showRouteTable />
-          <ZeroStateHint />
-          <div
-            style={{
-              position: 'absolute',
-              top: 12,
-              left: 12,
-              maxWidth: 360,
-              padding: '10px 12px',
-              borderRadius: 10,
-              background: 'rgba(15, 23, 42, 0.9)',
-              border: '1px solid rgba(148, 163, 184, 0.2)',
-              color: '#cbd5e1',
-              fontFamily: 'monospace',
-              fontSize: 11,
-              lineHeight: 1.5,
-            }}
-          >
-            <div style={{ color: '#f8fafc', fontWeight: 700, marginBottom: 4 }}>
-              OSPF Route Choice
-            </div>
-            <div>
-              R1 prefers the lower-cost path through R2 until the primary inter-router link is
-              removed.
-            </div>
-            <div style={{ marginTop: 6, color: '#94a3b8' }}>
-              Toggle the primary link, then resend the probe to confirm the recomputed path now
-              leaves through R3.
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
+            <NetlabCanvas />
+            <SimulationOverlayDock showRouteTable />
+            <ZeroStateHint />
+            <div
+              style={{
+                position: 'absolute',
+                top: 12,
+                left: 12,
+                maxWidth: 360,
+                padding: '10px 12px',
+                borderRadius: 10,
+                background: 'rgba(15, 23, 42, 0.9)',
+                border: '1px solid rgba(148, 163, 184, 0.2)',
+                color: '#cbd5e1',
+                fontFamily: 'monospace',
+                fontSize: 11,
+                lineHeight: 1.5,
+              }}
+            >
+              <div style={{ color: '#f8fafc', fontWeight: 700, marginBottom: 4 }}>
+                OSPF Route Choice
+              </div>
+              <div>
+                R1 prefers the lower-cost path through R2 until the primary inter-router link is
+                removed.
+              </div>
+              <div style={{ marginTop: 6, color: '#94a3b8' }}>
+                Toggle the primary link, then resend the probe to confirm the recomputed path now
+                leaves through R3.
+              </div>
             </div>
           </div>
+          <PacketScrubTimeline />
         </div>
 
         <ResizableSidebar
