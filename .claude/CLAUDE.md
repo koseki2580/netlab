@@ -88,6 +88,7 @@ Before implementing:
 **Inline commenting overlay — when an HTML companion is authored, embed the overlay so the reviewer can comment in-browser:**
 
 - Read `~/.claude/assets/plan-comments.js` and inline its full contents inside a `<script>...</script>` block at the end of `<body>`. Do NOT use `<script src="...">` — the plan must be a self-contained file the reviewer can share or open from anywhere.
+  - **Escape any literal `</script>` in the JS body before inlining** (replace with `<\/script>`). JavaScript treats the two forms identically, but the HTML parser would otherwise terminate the surrounding `<script>` block at the first `</script>` it encounters — even inside comments or string literals — and the overlay would silently fail to initialize. A quick grep before inlining is enough: `grep '</script>' plan-comments.js`.
 - Give every commentable element an `id` so anchors are stable in exported feedback. Naming convention:
   - `id="section-<kebab>"` — top-level sections (overview, before-after, risks, out-of-scope, ...)
   - `id="diff-<n>"` — each code/diff block (`diff-1`, `diff-2`, ...)
@@ -99,10 +100,16 @@ Before implementing:
 
 ```markdown
 ### [#step-3] — selection: "verify: e2e green"
-このverifyだとどのe2eテストが対象か分からない。
+Which e2e tests does this verify step cover? It's ambiguous.
 ```
 
 Treat the anchor (`#step-3`) as authoritative for locating context in the plan; the selection text disambiguates within long anchors; the body is the actual feedback.
+
+**Worktree usage requires user confirmation:**
+
+- Do NOT create a git worktree automatically — even when a skill defaults to one (e.g., `using-git-worktrees`, or `executing-plans` which lists it as REQUIRED). The default is to work in the current checkout.
+- Worktrees pay off only when isolation genuinely matters: parallel work on multiple branches, a dirty working tree you want to preserve, long-running experimental refactors, or running an agent in an isolated copy. For most single-branch tasks they add friction (extra paths, duplicated installs, cleanup overhead).
+- If you judge a worktree is appropriate, briefly state why and ask the user before creating one. Proceed only after explicit confirmation; otherwise stay in the current checkout.
 
 ---
 
