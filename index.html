@@ -14,12 +14,20 @@
       body,
       #root {
         width: 100%;
-        height: 100%;
+        min-height: 100%;
+      }
+      /* Simulator routes opt into a fixed 100vh viewport via this class — they
+         render through DemoShell which sets the height itself, but the class
+         documents the contract and is available for any other simulator-like
+         consumer that wants to escape the document scroll. */
+      .netlab-sim-shell {
+        height: 100vh;
+        overflow: hidden;
       }
     </style>
-    <script type="module" crossorigin src="/netlab/assets/index-Bmcdt-l6.js"></script>
+    <script type="module" crossorigin src="/netlab/assets/index-tNZ0k4aj.js"></script>
     <link rel="modulepreload" crossorigin href="/netlab/assets/EditSession-CRkWYCZX.js">
-    <link rel="modulepreload" crossorigin href="/netlab/assets/NetlabCanvas-BRY2rOYW.js">
+    <link rel="modulepreload" crossorigin href="/netlab/assets/NetlabCanvas-wYugqgjb.js">
     <link rel="stylesheet" crossorigin href="/netlab/assets/NetlabCanvas-CHpVij2M.css">
     <link rel="stylesheet" crossorigin href="/netlab/assets/index-Dv3S_eFY.css">
   </head>
