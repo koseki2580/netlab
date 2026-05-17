@@ -2,8 +2,9 @@ import { NetlabError } from '../errors';
 import type { FailureState } from '../types/failure';
 import { EMPTY_FAILURE_STATE } from '../types/failure';
 import type { InFlightPacket } from '../types/packets';
+import type { RouteEntry } from '../types/routing';
 import type { Neighbor, PacketTrace } from '../types/simulation';
-import type { NetlabNode, NetworkTopology } from '../types/topology';
+import type { NetlabNode } from '../types/topology';
 import type {
   DataTransferState,
   ReassemblyState,
@@ -14,7 +15,6 @@ import { isInSubnet, prefixLength } from '../utils/cidr';
 import { sha256Hex } from '../utils/hash';
 import { deriveDeterministicMac } from './ForwardingPipeline';
 import type { SessionTracker } from './SessionTracker';
-import type { SimulationEngine } from './SimulationEngine';
 
 const DEFAULT_CHUNK_SIZE = 1400;
 const DEFAULT_CHUNK_DELAY = 100;
@@ -25,9 +25,10 @@ const IP_HEADER_BYTES = 20;
 const TCP_HEADER_BYTES = 20;
 const textEncoder = new TextEncoder();
 
-interface ForwardingPipelineLike {
+export interface DataTransferPipeline {
   findNode(nodeId: string): NetlabNode | null;
   getEffectiveNodeIp(node: NetlabNode | null): string | undefined;
+  getRouteTable(nodeId: string): readonly RouteEntry[];
   getNeighbors(
     nodeId: string,
     excludeNodeId?: string | null,
@@ -38,6 +39,17 @@ interface ForwardingPipelineLike {
     dstIp: string,
     overrideNextHop?: string,
   ): { id: string; name: string } | null;
+}
+
+export interface DataTransferEngine {
+  getRuntimeNodeIp(nodeId: string): string | null;
+  getState(): { readonly traces: readonly PacketTrace[] };
+  send(packet: InFlightPacket, failureState?: FailureState): Promise<void>;
+}
+
+export interface DataTransferControllerDeps {
+  readonly engine: DataTransferEngine;
+  readonly pipeline: DataTransferPipeline;
 }
 
 type DataTransferListener = (state: DataTransferState) => void;
@@ -178,7 +190,7 @@ export class DataTransferController {
   private readonly listeners = new Set<DataTransferListener>();
 
   constructor(
-    private readonly engine: SimulationEngine,
+    private readonly deps: DataTransferControllerDeps,
     private readonly sessionTracker?: SessionTracker,
   ) {}
 
@@ -273,7 +285,7 @@ export class DataTransferController {
         ...(sessionId !== undefined ? { sessionId } : {}),
       });
 
-      await this.engine.send(packet, failureState);
+      await this.deps.engine.send(packet, failureState);
 
       const trace = this.findTrace(packet.id);
       if (!trace) {
@@ -473,7 +485,7 @@ export class DataTransferController {
   }
 
   private findTrace(packetId: string): PacketTrace | undefined {
-    const traces = this.engine.getState().traces;
+    const traces = this.deps.engine.getState().traces;
     for (let index = traces.length - 1; index >= 0; index--) {
       const trace = traces[index];
       if (trace?.packetId === packetId) {
@@ -483,26 +495,13 @@ export class DataTransferController {
     return undefined;
   }
 
-  private getPipeline(): ForwardingPipelineLike | undefined {
-    return Reflect.get(this.engine as object, 'pipeline') as ForwardingPipelineLike | undefined;
-  }
-
-  private getTopology(): NetworkTopology | undefined {
-    const pipeline = this.getPipeline();
-    if (!pipeline) {
-      return undefined;
-    }
-
-    return Reflect.get(pipeline as object, 'topology') as NetworkTopology | undefined;
-  }
-
   private resolveNodeIp(nodeId: string): string {
-    const runtimeIp = this.engine.getRuntimeNodeIp(nodeId);
+    const runtimeIp = this.deps.engine.getRuntimeNodeIp(nodeId);
     if (runtimeIp) {
       return runtimeIp;
     }
 
-    const pipeline = this.getPipeline();
+    const pipeline = this.deps.pipeline;
     const node = pipeline?.findNode(nodeId) ?? null;
     const effectiveIp = pipeline?.getEffectiveNodeIp(node);
 
@@ -518,7 +517,7 @@ export class DataTransferController {
   }
 
   private resolveSourceMac(nodeId: string, dstIp: string): string {
-    const pipeline = this.getPipeline();
+    const pipeline = this.deps.pipeline;
     const node = pipeline?.findNode(nodeId) ?? null;
 
     if (node?.data.role === 'router') {
@@ -549,7 +548,7 @@ export class DataTransferController {
     srcNodeId: string,
     dstIp: string,
   ): { nextHopIp?: string; nextHopNodeId?: string } {
-    const srcNode = this.getPipeline()?.findNode(srcNodeId) ?? null;
+    const srcNode = this.deps.pipeline.findNode(srcNodeId);
     if (!srcNode) {
       return {};
     }
@@ -566,10 +565,8 @@ export class DataTransferController {
   }
 
   private resolveNextHopIp(srcNode: NetlabNode, dstIp: string): string {
-    const topology = this.getTopology();
-
     if (srcNode.data.role === 'router') {
-      const route = this.selectBestRoute(dstIp, topology?.routeTables.get(srcNode.id) ?? []);
+      const route = this.selectBestRoute(dstIp, [...this.deps.pipeline.getRouteTable(srcNode.id)]);
       if (route) {
         return route.nextHop === 'direct' ? dstIp : route.nextHop;
       }
@@ -596,10 +593,7 @@ export class DataTransferController {
   }
 
   private findReachableNode(srcNodeId: string, targetIp: string): NetlabNode | null {
-    const pipeline = this.getPipeline();
-    if (!pipeline) {
-      return null;
-    }
+    const pipeline = this.deps.pipeline;
 
     const queue = pipeline
       .getNeighbors(srcNodeId, null, EMPTY_FAILURE_STATE)
@@ -639,8 +633,7 @@ export class DataTransferController {
   }
 
   private nodeOwnsIp(node: NetlabNode, ip: string): boolean {
-    const pipeline = this.getPipeline();
-    const effectiveIp = pipeline?.getEffectiveNodeIp(node) ?? node.data.ip;
+    const effectiveIp = this.deps.pipeline.getEffectiveNodeIp(node) ?? node.data.ip;
     if (effectiveIp === ip) {
       return true;
     }
@@ -649,7 +642,7 @@ export class DataTransferController {
   }
 
   private resolveNodeMac(nodeId: string, preferredIp?: string): string {
-    const node = this.getPipeline()?.findNode(nodeId) ?? null;
+    const node = this.deps.pipeline.findNode(nodeId);
     const mac = node ? this.extractNodeMac(node, preferredIp) : null;
 
     if (mac && !this.isPlaceholderMac(mac)) {
@@ -683,7 +676,7 @@ export class DataTransferController {
       }
     }
 
-    const effectiveIp = this.getPipeline()?.getEffectiveNodeIp(node) ?? node.data.ip;
+    const effectiveIp = this.deps.pipeline.getEffectiveNodeIp(node) ?? node.data.ip;
     if (effectiveIp) {
       const effectiveMatch = interfaces.find((iface) => iface.ipAddress === effectiveIp);
       if (effectiveMatch?.macAddress) {

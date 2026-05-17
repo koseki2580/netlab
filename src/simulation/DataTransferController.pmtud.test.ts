@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { InFlightPacket } from '../types/packets';
+import { assertDefined } from '../utils/typedAccess';
 import { makeEngine } from './__fixtures__/helpers';
 import { directTopology, singleRouterTopology } from './__fixtures__/topologies';
-import { DataTransferController } from './DataTransferController';
+import { DataTransferController, type DataTransferControllerDeps } from './DataTransferController';
 
 const textEncoder = new TextEncoder();
 
@@ -15,10 +16,15 @@ function payloadBytes(packet: InFlightPacket): number {
   return textEncoder.encode(payload.payload.data).length;
 }
 
+function dataTransferDeps(engine: ReturnType<typeof makeEngine>): DataTransferControllerDeps {
+  assertDefined(engine.pipeline, 'expected main-thread data transfer pipeline');
+  return { engine, pipeline: engine.pipeline };
+}
+
 describe('DataTransferController — PMTU-aware chunking', () => {
   it('uses DEFAULT_CHUNK_SIZE when pmtuLookup returns Infinity', async () => {
     const engine = makeEngine(singleRouterTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
     const sentSizes: number[] = [];
     const packetHeaders: { dstIp: string; srcIp: string; seq: number }[] = [];
     const originalSend = engine.send.bind(engine);
@@ -45,7 +51,7 @@ describe('DataTransferController — PMTU-aware chunking', () => {
 
   it('clamps chunk size to (pathMtu - 40) when pathMtu is finite', async () => {
     const engine = makeEngine(singleRouterTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
     const sentSizes: number[] = [];
     const originalSend = engine.send.bind(engine);
 
@@ -65,7 +71,7 @@ describe('DataTransferController — PMTU-aware chunking', () => {
 
   it('re-evaluates chunk size between chunks when pmtuLookup reports a smaller pathMtu', async () => {
     const engine = makeEngine(singleRouterTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
     const sentSizes: number[] = [];
     const originalSend = engine.send.bind(engine);
     let currentPmtu = Number.POSITIVE_INFINITY;
@@ -91,7 +97,7 @@ describe('DataTransferController — PMTU-aware chunking', () => {
 
   it('never sends a chunk larger than pmtuLookup reports at the moment of send', async () => {
     const engine = makeEngine(singleRouterTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
     const observations: { currentPmtu: number; sizeBytes: number }[] = [];
     const originalSend = engine.send.bind(engine);
     let currentPmtu = Number.POSITIVE_INFINITY;
@@ -122,7 +128,7 @@ describe('DataTransferController — PMTU-aware chunking', () => {
 
   it('handles pathMtu = 68 (minimum) without crashing', async () => {
     const engine = makeEngine(directTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
     const sentSizes: number[] = [];
     const originalSend = engine.send.bind(engine);
 
@@ -144,7 +150,7 @@ describe('DataTransferController — PMTU-aware chunking', () => {
 describe('DataTransferController — regression', () => {
   it('an existing 3000-byte transfer demo (no pmtuLookup) behaves byte-for-byte identically to pre-T04', async () => {
     const engine = makeEngine(singleRouterTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
 
     const transfer = await controller.startTransfer('client-1', 'server-1', 'f'.repeat(3000), {
       chunkDelay: 0,

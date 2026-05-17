@@ -12,7 +12,7 @@ import {
   multiHopTopology,
   singleRouterTopology,
 } from './__fixtures__/topologies';
-import { DataTransferController } from './DataTransferController';
+import { DataTransferController, type DataTransferControllerDeps } from './DataTransferController';
 import { deriveDeterministicMac } from './ForwardingPipeline';
 import { SessionTracker } from './SessionTracker';
 
@@ -70,10 +70,15 @@ function makeSessionTracker(engine: ReturnType<typeof makeEngine>): SessionTrack
   return new SessionTracker(hookEngine);
 }
 
+function dataTransferDeps(engine: ReturnType<typeof makeEngine>): DataTransferControllerDeps {
+  assertDefined(engine.pipeline, 'expected main-thread data transfer pipeline');
+  return { engine, pipeline: engine.pipeline };
+}
+
 describe('DataTransferController', () => {
   it('single chunk transfer delivers successfully', async () => {
     const engine = makeEngine(singleRouterTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
 
     const transfer = await controller.startTransfer('client-1', 'server-1', 'hello from netlab', {
       chunkDelay: 0,
@@ -93,7 +98,7 @@ describe('DataTransferController', () => {
 
   it('large payload splits into multiple chunks', async () => {
     const engine = makeEngine(singleRouterTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
 
     const transfer = await controller.startTransfer('client-1', 'server-1', 'a'.repeat(4200), {
       chunkSize: 1400,
@@ -106,7 +111,7 @@ describe('DataTransferController', () => {
 
   it('all chunks delivered leads to complete reassembly and checksum match', async () => {
     const engine = makeEngine(multiHopTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
     const payload = 'netlab-transfer-'.repeat(300);
 
     const transfer = await controller.startTransfer('client-1', 'server-1', payload, {
@@ -124,7 +129,7 @@ describe('DataTransferController', () => {
 
   it('chunk dropped due to failure results in partial delivery', async () => {
     const engine = makeEngine(singleRouterTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
     const downEdgeIds = new Set<string>();
     const failureState: FailureState = {
       downNodeIds: new Set(),
@@ -160,7 +165,7 @@ describe('DataTransferController', () => {
 
   it('clear resets all state', async () => {
     const engine = makeEngine(singleRouterTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
 
     await controller.startTransfer('client-1', 'server-1', 'payload', { chunkDelay: 0 });
     controller.clear();
@@ -174,7 +179,7 @@ describe('DataTransferController', () => {
 
   it('subscribe notifies on state change', async () => {
     const engine = makeEngine(singleRouterTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
     const snapshots: DataTransferState[] = [];
 
     const unsubscribe = controller.subscribe((state) => {
@@ -195,7 +200,7 @@ describe('DataTransferController', () => {
 
   it('getChunks returns chunks in sequence order', async () => {
     const engine = makeEngine(singleRouterTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
 
     const transfer = await controller.startTransfer('client-1', 'server-1', 'c'.repeat(4200), {
       chunkSize: 1400,
@@ -209,7 +214,7 @@ describe('DataTransferController', () => {
 
   it('chunk traceId links to PacketTrace', async () => {
     const engine = makeEngine(multiHopTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
 
     const transfer = await controller.startTransfer(
       'client-1',
@@ -228,7 +233,7 @@ describe('DataTransferController', () => {
 
   it('does not create sessions when no SessionTracker is provided', async () => {
     const engine = makeEngine(singleRouterTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
 
     const transfer = await controller.startTransfer('client-1', 'server-1', 's'.repeat(4200), {
       chunkSize: 1400,
@@ -242,7 +247,7 @@ describe('DataTransferController', () => {
   it('creates a session per chunk when SessionTracker is provided', async () => {
     const engine = makeEngine(singleRouterTopology());
     const tracker = makeSessionTracker(engine);
-    const controller = new DataTransferController(engine, tracker);
+    const controller = new DataTransferController(dataTransferDeps(engine), tracker);
 
     const transfer = await controller.startTransfer('client-1', 'server-1', 's'.repeat(4200), {
       chunkSize: 1400,
@@ -257,7 +262,7 @@ describe('DataTransferController', () => {
   it('sets transferId on created sessions', async () => {
     const engine = makeEngine(singleRouterTopology());
     const tracker = makeSessionTracker(engine);
-    const controller = new DataTransferController(engine, tracker);
+    const controller = new DataTransferController(dataTransferDeps(engine), tracker);
 
     const transfer = await controller.startTransfer(
       'client-1',
@@ -274,7 +279,7 @@ describe('DataTransferController', () => {
   it('attaches each chunk trace to its session', async () => {
     const engine = makeEngine(multiHopTopology());
     const tracker = makeSessionTracker(engine);
-    const controller = new DataTransferController(engine, tracker);
+    const controller = new DataTransferController(dataTransferDeps(engine), tracker);
 
     const transfer = await controller.startTransfer(
       'client-1',
@@ -297,7 +302,7 @@ describe('DataTransferController', () => {
 
   it('per-hop shows MAC rewrite and TTL decrement', async () => {
     const engine = makeEngine(dataTransferDemoTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
 
     const transfer = await controller.startTransfer('server-a', 'server-b', 'hop-visualization', {
       chunkDelay: 0,
@@ -337,7 +342,7 @@ describe('DataTransferController', () => {
 
   it('changedFields includes MAC and TTL at router hops', async () => {
     const engine = makeEngine(dataTransferDemoTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
 
     const transfer = await controller.startTransfer('server-a', 'server-b', 'field-highlights', {
       chunkDelay: 0,
@@ -358,7 +363,7 @@ describe('DataTransferController', () => {
 
   it('initial chunk packet has source MAC from the sending node', async () => {
     const engine = makeEngine(dataTransferDemoTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
 
     const transfer = await controller.startTransfer(
       'server-a',
@@ -378,7 +383,7 @@ describe('DataTransferController', () => {
 
   it('initial chunk packet has the first-hop MAC as destination', async () => {
     const engine = makeEngine(dataTransferDemoTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
 
     const transfer = await controller.startTransfer(
       'server-a',
@@ -409,7 +414,7 @@ describe('DataTransferController', () => {
           : node,
       ),
     });
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
 
     const transfer = await controller.startTransfer('client-1', 'server-1', 'fallback-mac', {
       chunkDelay: 0,
@@ -425,7 +430,7 @@ describe('DataTransferController', () => {
 
   it('reassembly remains incomplete when a dropped chunk prevents checksum verification', async () => {
     const engine = makeEngine(dataTransferDemoTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
     const downEdgeIds = new Set<string>();
     const failureState: FailureState = {
       downNodeIds: new Set(),
@@ -459,7 +464,7 @@ describe('DataTransferController', () => {
 
   it('large payload with multiple chunks maintains correct sequence ordering', async () => {
     const engine = makeEngine(dataTransferDemoTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
 
     const transfer = await controller.startTransfer(
       'server-a',
@@ -478,7 +483,7 @@ describe('DataTransferController', () => {
 
   it('hop srcMac and dstMac are populated for each chunk trace', async () => {
     const engine = makeEngine(dataTransferDemoTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
 
     const transfer = await controller.startTransfer(
       'server-a',
@@ -505,7 +510,7 @@ describe('DataTransferController', () => {
 
   it('MAC addresses change at router hops while IP addresses stay constant', async () => {
     const engine = makeEngine(dataTransferDemoTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
 
     const transfer = await controller.startTransfer(
       'server-a',
@@ -532,7 +537,7 @@ describe('DataTransferController', () => {
 
   it('dropped chunks remain identifiable for the missing chunks UI', async () => {
     const engine = makeEngine(singleRouterTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
     const downEdgeIds = new Set<string>();
     const failureState: FailureState = {
       downNodeIds: new Set(),
@@ -580,7 +585,7 @@ describe('DataTransferController', () => {
 
   it('summary data is derivable from transfer, chunks, and reassembly during partial delivery', async () => {
     const engine = makeEngine(singleRouterTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
     const downEdgeIds = new Set<string>();
     const failureState: FailureState = {
       downNodeIds: new Set(),
@@ -619,7 +624,7 @@ describe('DataTransferController', () => {
 
   it('payload preview remains accessible alongside the full payload data', async () => {
     const engine = makeEngine(singleRouterTopology());
-    const controller = new DataTransferController(engine);
+    const controller = new DataTransferController(dataTransferDeps(engine));
     const payload = 'preview-segment-'.repeat(12);
 
     const transfer = await controller.startTransfer('client-1', 'server-1', payload, {

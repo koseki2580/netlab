@@ -43,10 +43,18 @@ export interface DataTransferProviderProps {
 export function DataTransferProvider({ children }: DataTransferProviderProps) {
   const { engine } = useSimulation();
   const sessionTracker = useOptionalSessionTracker();
-  const controller = useMemo(
-    () => new DataTransferController(engine, sessionTracker ?? undefined),
-    [engine, sessionTracker],
-  );
+  const controller = useMemo(() => {
+    if (!engine.pipeline) {
+      throw new NetlabError({
+        code: 'invariant/not-found',
+        message: 'DataTransferProvider requires a main-thread simulation pipeline',
+      });
+    }
+    return new DataTransferController(
+      { engine, pipeline: engine.pipeline },
+      sessionTracker ?? undefined,
+    );
+  }, [engine, sessionTracker]);
   const [controllerState, setControllerState] = useState<DataTransferState>(() =>
     controller.getState(),
   );

@@ -79,7 +79,7 @@ vi.mock('./DataTransferController', () => {
     listeners = new Set<(state: DataTransferState) => void>();
 
     constructor(
-      public engine: unknown,
+      public deps: unknown,
       public sessionTracker?: unknown,
     ) {
       controllerMocks.instances.push(this);
@@ -183,7 +183,7 @@ interface FakeDataTransferController {
 }
 
 const SIMULATION_VALUE: SimulationContextValue = {
-  engine: { name: 'engine' } as never,
+  engine: { name: 'engine', pipeline: { name: 'pipeline' } } as never,
   state: {
     status: 'idle',
     traces: [],
