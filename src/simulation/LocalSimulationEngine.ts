@@ -19,7 +19,6 @@ import { parseIcmpFragNeeded } from './pmtudParser';
 import { ServiceOrchestrator } from './ServiceOrchestrator';
 import { TraceRecorder } from './TraceRecorder';
 import type { TraceDetailLevel } from './TraceRecorder';
-import type { SimulationEngine } from './SimulationEngine';
 
 const DEFAULT_PLAY_INTERVAL_MS = 500;
 const INITIAL_STATE: SimulationState = {
@@ -59,7 +58,7 @@ export class LocalSimulationEngine {
   private readonly pathMtuCaches = new Map<string, PathMtuCache>();
   private readonly traceRecorder: TraceRecorder;
   private readonly services: ServiceOrchestrator;
-  private readonly pipeline: ForwardingPipeline;
+  readonly pipeline: ForwardingPipeline;
 
   constructor(
     private readonly topology: NetworkTopology,
@@ -196,7 +195,10 @@ export class LocalSimulationEngine {
     options?: DataTransferOptions,
   ): Promise<TransferMessage> {
     if (!this.transferController) {
-      this.transferController = new DataTransferController(this as unknown as SimulationEngine);
+      this.transferController = new DataTransferController({
+        engine: this,
+        pipeline: this.pipeline,
+      });
     }
 
     return this.transferController.startTransfer(srcNodeId, dstNodeId, payload, {

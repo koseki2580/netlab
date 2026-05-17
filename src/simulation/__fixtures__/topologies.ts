@@ -186,6 +186,66 @@ export function switchPassthroughTopologyWithHandles(): NetworkTopology {
   };
 }
 
+/** client-1 -- p1 hub-1 p2 -- server-1; p3 -- server-2 */
+export function hubFanoutTopology(): NetworkTopology {
+  return {
+    nodes: [
+      {
+        id: 'client-1',
+        type: 'client',
+        position: { x: 0, y: 0 },
+        data: { label: 'Client', role: 'client', layerId: 'l7', ip: '10.0.0.10', mac: CLIENT_MAC },
+      },
+      {
+        id: 'hub-1',
+        type: 'hub',
+        position: { x: 200, y: 0 },
+        data: {
+          label: 'Hub',
+          role: 'hub',
+          layerId: 'l1',
+          ports: [
+            { id: 'p1', name: 'port 1', macAddress: '00:00:00:01:00:01' },
+            { id: 'p2', name: 'port 2', macAddress: '00:00:00:01:00:02' },
+            { id: 'p3', name: 'port 3', macAddress: '00:00:00:01:00:03' },
+          ],
+        },
+      },
+      {
+        id: 'server-1',
+        type: 'server',
+        position: { x: 400, y: -100 },
+        data: {
+          label: 'Server 1',
+          role: 'server',
+          layerId: 'l7',
+          ip: '10.0.0.20',
+          mac: SERVER_MAC,
+        },
+      },
+      {
+        id: 'server-2',
+        type: 'server',
+        position: { x: 400, y: 100 },
+        data: {
+          label: 'Server 2',
+          role: 'server',
+          layerId: 'l7',
+          ip: '10.0.0.21',
+          mac: SERVER_TWO_MAC,
+        },
+      },
+    ],
+    edges: [
+      { id: 'e-client-hub', source: 'client-1', target: 'hub-1', targetHandle: 'p1' },
+      { id: 'e-hub-server-1', source: 'hub-1', target: 'server-1', sourceHandle: 'p2' },
+      { id: 'e-hub-server-2', source: 'hub-1', target: 'server-2', sourceHandle: 'p3' },
+    ],
+    areas: [],
+    routeTables: new Map(),
+  };
+}
+
 /** client-1 -- e1 -- router-1 -- e2 -- switch-1 -- e3 -- server-1 */
 export function routerSwitchHostTopology(): NetworkTopology {
   const routeTables = new Map<string, RouteEntry[]>([

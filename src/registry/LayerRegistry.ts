@@ -1,14 +1,13 @@
 import type { NodeTypes } from '@xyflow/react';
 import type { LayerId, LayerPlugin, ForwarderFactory } from '../types/layers';
+import { logger } from '../utils/logger';
 
 class LayerRegistry {
   private plugins = new Map<LayerId, LayerPlugin>();
 
   register(plugin: LayerPlugin): void {
     if (this.plugins.has(plugin.layerId)) {
-      console.warn(
-        `[netlab] Layer plugin for "${plugin.layerId}" is already registered. Overwriting.`,
-      );
+      logger.warn('Layer plugin already registered. Overwriting.', { layerId: plugin.layerId });
     }
     this.plugins.set(plugin.layerId, plugin);
   }

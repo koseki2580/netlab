@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { HookEngine } from '../../../hooks/HookEngine';
 import { EMPTY_FAILURE_STATE } from '../../../types/failure';
+import type { InFlightPacket } from '../../../types/packets';
+import type { PacketHop } from '../../../types/simulation';
 import type { NetworkTopology } from '../../../types/topology';
 import { ServiceOrchestrator } from '../../ServiceOrchestrator';
 import { TraceRecorder } from '../../TraceRecorder';
@@ -84,8 +86,8 @@ describe('ForwardingLoop', () => {
     const cache = new Map<string, string>();
     loop.seedArpCache(cache);
     const materialized = loop.materializePacket(packet, EMPTY_FAILURE_STATE, cache);
-    const hops: any[] = [];
-    const snapshots: any[] = [];
+    const hops: PacketHop[] = [];
+    const snapshots: InFlightPacket[] = [];
 
     const result = await loop.run(
       {
@@ -111,6 +113,43 @@ describe('ForwardingLoop', () => {
     );
 
     expect(result.stepCounter).toBeGreaterThan(0);
-    expect(hops.some((h: any) => h.event === 'deliver')).toBe(true);
+    expect(hops.some((h) => h.event === 'deliver')).toBe(true);
+  });
+
+  it('preserves direct topology trace event sequence', async () => {
+    const loop = makeForwardingLoop(directTopology());
+    const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
+    const cache = new Map<string, string>();
+    loop.seedArpCache(cache);
+    const materialized = loop.materializePacket(packet, EMPTY_FAILURE_STATE, cache);
+    const hops: PacketHop[] = [];
+
+    await loop.run(
+      {
+        packet: materialized,
+        current: 'client-1',
+        ingressFrom: null,
+        ingressEdgeId: null,
+        senderIp: null,
+        stepCounter: 0,
+        baseTs: 1,
+        visitedStates: new Set(),
+      },
+      {
+        hops,
+        snapshots: [],
+        nodeArpTables: {},
+        arpCache: cache,
+        reassemblers: new Map(),
+        linkQueues: new LinkQueueRegistry(),
+        failureState: EMPTY_FAILURE_STATE,
+        options: {},
+      },
+    );
+
+    expect(hops.map((hop) => `${hop.event}:${hop.nodeId}`)).toEqual([
+      'create:client-1',
+      'deliver:server-1',
+    ]);
   });
 });

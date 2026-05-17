@@ -93,7 +93,7 @@ Specifications for protocol implementations based on the OSI model and network d
 
 #### Devices & Layers
 
-- [Devices](networking/devices/) - Detailed design for specific devices such as routers (`router.md`) and switches (`switch.md`)
+- [Devices](networking/devices/) - Detailed design for specific devices such as hubs (`hub.md`), routers (`router.md`), and switches (`switch.md`)
 - [Layers](networking/layers/) - Protocol processing and communication flow from L1 to L7 (`l1-physical.md` to `l7-application.md`)
 
 #### Specific Features

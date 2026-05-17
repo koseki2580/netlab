@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LayerPlugin } from '../types/layers';
+import { logger } from '../utils/logger';
 import { layerRegistry, registerLayerPlugin } from './LayerRegistry';
 
 function makePlugin(overrides: Partial<LayerPlugin> = {}): LayerPlugin {
@@ -41,16 +42,16 @@ describe('LayerRegistry', () => {
     });
 
     it('warns and overwrites on duplicate layerId', () => {
-      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const warn = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
       const first = makePlugin({ layerId: 'l3', nodeTypes: { router: () => null } });
       const second = makePlugin({ layerId: 'l3', nodeTypes: { router: () => 'override' } });
 
       layerRegistry.register(first);
       layerRegistry.register(second);
 
-      expect(warn).toHaveBeenCalledWith(
-        '[netlab] Layer plugin for "l3" is already registered. Overwriting.',
-      );
+      expect(warn).toHaveBeenCalledWith('Layer plugin already registered. Overwriting.', {
+        layerId: 'l3',
+      });
       expect(layerRegistry.getPlugin('l3')).toBe(second);
     });
 

@@ -2,6 +2,7 @@ import { NetlabError } from '../errors';
 import type { HookEngine } from '../hooks/HookEngine';
 import { EMPTY_FAILURE_STATE, type FailureState } from '../types/failure';
 import type { IgmpMessage, InFlightPacket, IpPacket } from '../types/packets';
+import type { RouteEntry } from '../types/routing';
 import type { Neighbor, PacketHop } from '../types/simulation';
 import type { NetlabNode, NetworkTopology } from '../types/topology';
 import { ArpBuilder, FrameMaterializer, IcmpBuilder } from './pipeline/builders';
@@ -41,7 +42,7 @@ export class ForwardingPipeline {
   private readonly forwardingLoop: ForwardingLoop;
 
   constructor(
-    topology: NetworkTopology,
+    private readonly topology: NetworkTopology,
     _hookEngine: HookEngine,
     private readonly traceRecorder: TraceRecorder,
     private readonly services: ServiceOrchestrator,
@@ -97,6 +98,10 @@ export class ForwardingPipeline {
   getEffectiveNodeIp(node: NetlabNode | null): string | undefined {
     if (!node) return undefined;
     return this.services.getRuntimeNodeIp(node.id) ?? node.data.ip;
+  }
+
+  getRouteTable(nodeId: string): readonly RouteEntry[] {
+    return this.topology.routeTables.get(nodeId) ?? [];
   }
 
   getEffectiveNodeIpv6(node: NetlabNode | null): string | undefined {

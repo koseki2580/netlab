@@ -10,7 +10,11 @@ import type { TransferMessage } from '../types/transfer';
 import type { UdpBindings } from '../types/udp';
 import type { TcpConnection } from '../types/tcp';
 import type { PcapRecord } from '../utils/pcapSerializer';
-import type { DataTransferController, DataTransferOptions } from './DataTransferController';
+import type {
+  DataTransferController,
+  DataTransferOptions,
+  DataTransferPipeline,
+} from './DataTransferController';
 import type { PathMtuCache } from './PathMtuCache';
 import type { TraceDetailLevel } from './TraceRecorder';
 import { MainThreadEngine } from './worker/MainThreadEngine';
@@ -29,7 +33,7 @@ function shouldUseWorker(opts: SimulationEngineOptions): boolean {
 
 export class SimulationEngine {
   readonly hookEngine: HookEngine;
-  readonly pipeline: unknown;
+  readonly pipeline: DataTransferPipeline | undefined;
   private readonly impl: SimulationEngineImpl;
 
   constructor(
@@ -41,7 +45,7 @@ export class SimulationEngine {
     this.impl = shouldUseWorker(opts)
       ? new WorkerEngine(topology, hookEngine, opts)
       : new MainThreadEngine(topology, hookEngine, opts);
-    this.pipeline = Reflect.get(this.impl as object, 'pipeline');
+    this.pipeline = this.impl instanceof MainThreadEngine ? this.impl.pipeline : undefined;
   }
 
   getState(): SimulationState {
