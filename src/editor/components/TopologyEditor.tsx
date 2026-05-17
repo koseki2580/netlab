@@ -21,13 +21,16 @@ export interface TopologyEditorProps {
 function TopologyEditorInner() {
   const { state, setSelectedNodeId } = useTopologyEditorContext();
   const [highlightEdgeId, setHighlightEdgeId] = useState<string | null>(null);
+  const [highlightedAreaId, setHighlightedAreaId] = useState<string | null>(null);
 
   const uiCtx = useMemo(
     () => ({
       selectedNodeId: state.selectedNodeId,
       setSelectedNodeId,
+      highlightedAreaId,
+      setHighlightedAreaId,
     }),
-    [state.selectedNodeId, setSelectedNodeId],
+    [state.selectedNodeId, setSelectedNodeId, highlightedAreaId],
   );
 
   // Build a NetworkTopology from the editor's EditorTopology for NetlabProvider.

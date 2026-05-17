@@ -81,9 +81,8 @@ interface LayoutFlags {
 function StaticLayout({ showRouteTable, showAreaLegend, colorMode }: LayoutFlags) {
   return (
     <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-      <NetlabCanvas colorMode={colorMode} />
+      <NetlabCanvas colorMode={colorMode}>{showAreaLegend && <AreaLegend />}</NetlabCanvas>
       {showRouteTable && <RouteTable />}
-      {showAreaLegend && <AreaLegend />}
     </div>
   );
 }
@@ -113,9 +112,8 @@ function SimulationLayout({
       {/* Canvas row */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-          <NetlabCanvas colorMode={colorMode} />
+          <NetlabCanvas colorMode={colorMode}>{showAreaLegend && <AreaLegend />}</NetlabCanvas>
           <SimulationOverlayDock showRouteTable={showRouteTable} />
-          {showAreaLegend && <AreaLegend />}
         </div>
 
         {showTimeline && (

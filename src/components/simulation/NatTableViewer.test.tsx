@@ -83,6 +83,8 @@ function renderNatTableViewer(
           setSelectedNodeId: () => {},
           selectedEdgeId: null,
           setSelectedEdgeId: () => {},
+          highlightedAreaId: null,
+          setHighlightedAreaId: () => {},
         }}
       >
         <SimulationContext.Provider

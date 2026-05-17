@@ -21,8 +21,12 @@ import { AreaLegend } from './AreaLegend';
 
 let container: HTMLDivElement;
 let root: Root;
+const actEnvironment = globalThis as typeof globalThis & {
+  IS_REACT_ACT_ENVIRONMENT?: boolean;
+};
 
 beforeEach(() => {
+  actEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
   container = document.createElement('div');
   document.body.appendChild(container);
   act(() => {
@@ -34,6 +38,7 @@ beforeEach(() => {
 afterEach(() => {
   act(() => root.unmount());
   container.remove();
+  actEnvironment.IS_REACT_ACT_ENVIRONMENT = false;
 });
 
 describe('AreaLegend a11y', () => {

@@ -5,6 +5,7 @@ import type { AreaBackgroundData } from './AreaBackground';
 export function areasToNodes(areas: NetworkArea[]): NetlabNode[] {
   return areas.map((area) => {
     const areaData: AreaBackgroundData & Record<string, unknown> = {
+      areaId: area.id,
       label: area.visualConfig?.label ?? area.name,
       layerId: 'l1' as const,
       role: 'area',

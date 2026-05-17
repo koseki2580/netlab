@@ -6,6 +6,8 @@ export interface NetlabUIContextValue {
   setSelectedNodeId: (id: string | null) => void;
   selectedEdgeId?: string | null;
   setSelectedEdgeId?: (id: string | null) => void;
+  highlightedAreaId: string | null;
+  setHighlightedAreaId: (id: string | null) => void;
 }
 
 export const NetlabUIContext = createContext<NetlabUIContextValue | null>(null);

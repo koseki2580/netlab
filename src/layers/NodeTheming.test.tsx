@@ -45,7 +45,14 @@ function renderNode(Component: NodeComponent, data: Record<string, unknown>) {
 
   act(() => {
     root?.render(
-      <NetlabUIContext.Provider value={{ selectedNodeId: null, setSelectedNodeId: vi.fn() }}>
+      <NetlabUIContext.Provider
+        value={{
+          selectedNodeId: null,
+          setSelectedNodeId: vi.fn(),
+          highlightedAreaId: null,
+          setHighlightedAreaId: vi.fn(),
+        }}
+      >
         <Component id="node-1" data={data} />
       </NetlabUIContext.Provider>,
     );

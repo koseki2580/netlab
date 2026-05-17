@@ -30,7 +30,12 @@ function rerender(ui: React.ReactElement) {
 }
 
 function makeCtx(selectedNodeId: string | null): NetlabUIContextValue {
-  return { selectedNodeId, setSelectedNodeId: () => {} };
+  return {
+    selectedNodeId,
+    setSelectedNodeId: () => {},
+    highlightedAreaId: null,
+    setHighlightedAreaId: () => {},
+  };
 }
 
 beforeEach(() => {

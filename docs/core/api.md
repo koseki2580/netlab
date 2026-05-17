@@ -162,7 +162,7 @@ import { useNetlabContext, useNetlabUI } from 'netlab';
 | Hook                 | Description                                                                 |
 | -------------------- | --------------------------------------------------------------------------- |
 | `useNetlabContext()` | Access the enriched topology, route table, areas, and provider `HookEngine` |
-| `useNetlabUI()`      | Access selection state used by `NodeDetailPanel` and canvas UI              |
+| `useNetlabUI()`      | Access canvas UI state for node/edge selection and area highlight overlays  |
 
 ### Simulation Context
 

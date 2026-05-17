@@ -1,4 +1,6 @@
+import { useContext } from 'react';
 import { useNetlabContext } from '../NetlabContext';
+import { NetlabUIContext } from '../NetlabUIContext';
 
 const LEGEND_STYLE: React.CSSProperties = {
   position: 'fixed',
@@ -24,6 +26,7 @@ const AREA_COLORS: Record<string, string> = {
 
 export function AreaLegend() {
   const { areas } = useNetlabContext();
+  const ui = useContext(NetlabUIContext);
 
   if (areas.length === 0) return null;
 
@@ -43,54 +46,61 @@ export function AreaLegend() {
         NETWORK AREAS
       </div>
       <ul role="list" style={{ listStyle: 'none', margin: 0, padding: '4px 0' }}>
-        {areas.map((area) => (
-          <li
-            key={area.id}
-            role="listitem"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '5px 12px',
-              cursor: 'pointer',
-              transition: 'background 0.1s',
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLLIElement).style.background = 'var(--netlab-bg-elevated)';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLLIElement).style.background = '';
-            }}
-            onClick={() => {
-              // TODO(highlight): emit highlight signal to canvas
-              window.postMessage({ type: '__highlight_area', areaId: area.id }, '*');
-            }}
-          >
-            <div
-              aria-hidden="true"
+        {areas.map((area) => {
+          const isHighlighted = ui?.highlightedAreaId === area.id;
+
+          return (
+            <li
+              key={area.id}
+              role="listitem"
+              aria-current={isHighlighted ? 'true' : undefined}
               style={{
-                width: 10,
-                height: 10,
-                borderRadius: 2,
-                background: AREA_COLORS[area.type] ?? 'var(--netlab-text-secondary)',
-                opacity: 0.7,
-                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '5px 12px',
+                cursor: 'pointer',
+                transition: 'background 0.1s',
+                background: isHighlighted ? 'var(--netlab-bg-elevated)' : undefined,
               }}
-            />
-            <span style={{ color: 'var(--netlab-text-primary)', flex: 1 }}>{area.name}</span>
-            <span
-              style={{
-                color: 'var(--netlab-text-muted)',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                maxWidth: 100,
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLLIElement).style.background = 'var(--netlab-bg-elevated)';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLLIElement).style.background = isHighlighted
+                  ? 'var(--netlab-bg-elevated)'
+                  : '';
+              }}
+              onClick={() => {
+                ui?.setHighlightedAreaId(isHighlighted ? null : area.id);
               }}
             >
-              {area.subnet}
-            </span>
-          </li>
-        ))}
+              <div
+                aria-hidden="true"
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: 2,
+                  background: AREA_COLORS[area.type] ?? 'var(--netlab-text-secondary)',
+                  opacity: 0.7,
+                  flexShrink: 0,
+                }}
+              />
+              <span style={{ color: 'var(--netlab-text-primary)', flex: 1 }}>{area.name}</span>
+              <span
+                style={{
+                  color: 'var(--netlab-text-muted)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: 100,
+                }}
+              >
+                {area.subnet}
+              </span>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

@@ -28,7 +28,7 @@
 │  NetlabCanvas  (React Flow wrapper)                 │
 │  ├─ LayerRegistry.getAllNodeTypes()                  │
 │  ├─ AreaBackground nodes (zIndex: -1)               │
-│  ├─ NetlabUIContext  (selectedNodeId, setter)        │
+│  ├─ NetlabUIContext  (selection + area highlight)    │
 │  └─ NodeDetailPanel  (overlay, zIndex: 200)         │
 └────────────────────┬────────────────────────────────┘
                      │
@@ -116,7 +116,8 @@ that would cause React Flow to remount all nodes.
 ### Separation of Simulation and UI Contexts
 
 `NetlabContext` (provided by `NetlabProvider`) carries simulation data: topology, route tables, hook engine.
-`NetlabUIContext` (provided by `NetlabCanvas`) carries view-only state: the currently selected node ID.
+`NetlabUIContext` (provided by `NetlabCanvas`) carries view-only state: the selected node/edge IDs and
+the currently highlighted network area ID.
 
 Keeping them separate ensures node components can trigger the detail panel without coupling to the simulation
 layer, and simulation logic never depends on display state.

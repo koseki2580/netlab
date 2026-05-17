@@ -56,6 +56,7 @@ function withValidationEdgeType(edge: NetlabEdge): NetlabEdge {
 export interface NetlabCanvasProps {
   style?: React.CSSProperties;
   className?: string;
+  children?: React.ReactNode;
   colorMode?: NetlabColorMode;
   viewport?: NetlabViewport;
   onViewportChange?: (viewport: NetlabViewport) => void;
@@ -74,6 +75,7 @@ export interface NetlabViewport {
 export function NetlabCanvas({
   style,
   className,
+  children,
   colorMode,
   viewport,
   onViewportChange,
@@ -85,6 +87,7 @@ export function NetlabCanvas({
   const { topology, areas } = useNetlabContext();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
+  const [highlightedAreaId, setHighlightedAreaId] = useState<string | null>(null);
   const isControlled = Boolean(onTopologyChange || onNodesChangeProp || onEdgesChangeProp);
 
   // Optional: read active edge IDs from SimulationContext (non-throwing)
@@ -200,11 +203,13 @@ export function NetlabCanvas({
 
   const selectNode = useCallback((id: string | null) => {
     setSelectedEdgeId(null);
+    setHighlightedAreaId(null);
     setSelectedNodeId(id);
   }, []);
 
   const selectEdge = useCallback((id: string | null) => {
     setSelectedNodeId(null);
+    setHighlightedAreaId(null);
     setSelectedEdgeId(id);
   }, []);
 
@@ -393,8 +398,10 @@ export function NetlabCanvas({
       setSelectedNodeId: selectNode,
       selectedEdgeId,
       setSelectedEdgeId: selectEdge,
+      highlightedAreaId,
+      setHighlightedAreaId,
     }),
-    [selectedNodeId, selectNode, selectedEdgeId, selectEdge],
+    [selectedNodeId, selectNode, selectedEdgeId, selectEdge, highlightedAreaId],
   );
 
   // Dock state drives the auto-pan target offset: when the panel is pinned
@@ -472,6 +479,7 @@ export function NetlabCanvas({
           editable={nodeDetailsEditable}
           {...(onTopologyChange !== undefined ? { onTopologyChange } : {})}
         />
+        {children}
       </div>
     </NetlabUIContext.Provider>
   );

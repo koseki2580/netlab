@@ -1,7 +1,10 @@
+import { useContext } from 'react';
 import type { NodeProps } from '@xyflow/react';
 import type { AreaType } from '../types/areas';
+import { NetlabUIContext } from '../components/NetlabUIContext';
 
 export interface AreaBackgroundData extends Record<string, unknown> {
+  areaId: string;
   name: string;
   type: AreaType;
   width: number;
@@ -33,6 +36,8 @@ const LABEL_COLORS: Record<string, string> = {
 
 export function AreaBackground({ data }: NodeProps) {
   const d = data as AreaBackgroundData;
+  const ui = useContext(NetlabUIContext);
+  const isHighlighted = ui?.highlightedAreaId === d.areaId;
   const bgColor = d.color ?? AREA_COLORS[d.type] ?? 'rgba(100,100,100,0.08)';
   const borderColor = BORDER_COLORS[d.type] ?? 'rgba(100,100,100,0.3)';
   const labelColor = LABEL_COLORS[d.type] ?? 'rgba(100,100,100,0.8)';
@@ -45,6 +50,10 @@ export function AreaBackground({ data }: NodeProps) {
         height: d.height,
         background: bgColor,
         border: `2px dashed ${borderColor}`,
+        outline: isHighlighted ? '2px solid var(--netlab-accent-cyan)' : 'none',
+        outlineOffset: 2,
+        opacity: isHighlighted ? 0.95 : 1,
+        boxShadow: isHighlighted ? '0 0 0 6px rgba(34, 211, 238, 0.10)' : 'none',
         borderRadius: 12,
         position: 'relative',
         pointerEvents: 'none',

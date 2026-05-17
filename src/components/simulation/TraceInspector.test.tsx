@@ -572,7 +572,14 @@ describe('Trace Inspector components', () => {
     ];
 
     const html = renderWithContexts(
-      <NetlabUIContext.Provider value={{ selectedNodeId: 'router-1', setSelectedNodeId: () => {} }}>
+      <NetlabUIContext.Provider
+        value={{
+          selectedNodeId: 'router-1',
+          setSelectedNodeId: () => {},
+          highlightedAreaId: null,
+          setHighlightedAreaId: () => {},
+        }}
+      >
         <NatTableViewer />
       </NetlabUIContext.Provider>,
       makeState({

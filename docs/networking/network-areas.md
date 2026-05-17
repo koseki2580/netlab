@@ -73,6 +73,10 @@ Properties:
 - `selectable: false` — clicking an area does not select it
 - `draggable: false` — areas cannot be dragged
 
+When `AreaLegend` is rendered inside `NetlabCanvas`, clicking a legend row toggles that area's
+highlight. The highlight is stored in `NetlabUIContext.highlightedAreaId`, and `AreaBackground`
+renders the active area with a solid cyan outline.
+
 ## Router Spanning Multiple Areas
 
 A router that connects two areas (e.g., a NAT router between Private and Public) should **not**

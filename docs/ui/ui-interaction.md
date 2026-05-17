@@ -142,12 +142,16 @@ If `topology` changes after mount (e.g. a new node is added externally), the can
 
 ## NetlabUIContext
 
-`NetlabUIContext` is an internal React context scoped to `NetlabCanvas`. It carries the selected node ID and its setter, allowing node components to trigger the detail panel without prop drilling.
+`NetlabUIContext` is an internal React context scoped to `NetlabCanvas`. It carries canvas-only interaction state, allowing node components and overlays to coordinate selection and highlights without prop drilling.
 
 ```typescript
 interface NetlabUIContextValue {
   selectedNodeId: string | null;
   setSelectedNodeId: (id: string | null) => void;
+  selectedEdgeId?: string | null;
+  setSelectedEdgeId?: (id: string | null) => void;
+  highlightedAreaId: string | null;
+  setHighlightedAreaId: (id: string | null) => void;
 }
 ```
 
@@ -168,8 +172,10 @@ NetlabProvider  (NetlabContext — simulation data)
   └─ NetlabCanvas
        └─ NetlabUIContext.Provider  (UI interaction state)
             ├─ <ReactFlow>
-            │    └─ node components  (read useNetlabUI)
-            └─ <NodeDetailPanel>     (read useNetlabUI + useNetlabContext)
+            │    ├─ AreaBackground nodes  (read highlightedAreaId)
+            │    └─ node components       (read useNetlabUI)
+            ├─ <NodeDetailPanel>          (read useNetlabUI + useNetlabContext)
+            └─ <AreaLegend>               (toggles highlightedAreaId)
 ```
 
 Simulation context (`NetlabContext`) and UI context (`NetlabUIContext`) are intentionally separate. View state does not pollute the simulation layer.
