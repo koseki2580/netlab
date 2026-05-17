@@ -1,4 +1,6 @@
-import { Link } from 'react-router-dom';
+import type React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { NavRail, type NavRailView } from '../src/components/NavRail';
 import { NetlabThemeScope } from '../src/components/NetlabThemeScope';
 import { E2eTraceHook } from './__e2e_hook';
 
@@ -20,81 +22,84 @@ interface DemoShellProps {
 }
 
 export default function DemoShell({ title, desc, children, embedded = false }: DemoShellProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const view: NavRailView = location.pathname === '/' ? 'gallery' : 'simulator';
+
+  const selectView = (nextView: NavRailView) => {
+    if (nextView === 'gallery') {
+      navigate('/');
+    }
+  };
+
   return (
     <div
       data-testid="netlab-root"
       data-netlab-sim-shell
       className="netlab-sim-shell"
-      style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0f172a' }}
+      style={{ display: 'flex', height: '100vh', background: '#0f172a' }}
     >
-      {!embedded && (
-        <div
-          style={{
-            padding: '10px 16px',
-            background: '#1e293b',
-            borderBottom: '1px solid #334155',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 16,
-            flexShrink: 0,
-          }}
-        >
-          <Link
-            to="/"
+      {!embedded && <NavRail view={view} onSelectView={selectView} />}
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+        {!embedded && (
+          <div
             style={{
-              color: '#94a3b8',
-              textDecoration: 'none',
-              fontFamily: 'monospace',
-              fontSize: 13,
+              padding: '10px 16px',
+              background: '#1e293b',
+              borderBottom: '1px solid #334155',
               display: 'flex',
               alignItems: 'center',
-              gap: 4,
+              gap: 16,
+              flexShrink: 0,
             }}
           >
-            ← Gallery
-          </Link>
-          <div style={{ width: 1, height: 18, background: '#334155' }} />
-          <span
-            style={{ color: '#e2e8f0', fontWeight: 'bold', fontFamily: 'monospace', fontSize: 15 }}
-          >
-            📡 netlab
-          </span>
-          <span
-            style={{ color: '#94a3b8', fontFamily: 'monospace', fontSize: 14, fontWeight: 600 }}
-          >
-            {title}
-          </span>
-          <span style={{ color: '#94a3b8', fontSize: 12, fontFamily: 'monospace' }}>{desc}</span>
-          <a
-            href="https://github.com/koseki2580/netlab"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              marginLeft: 'auto',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              color: '#94a3b8',
-              textDecoration: 'none',
-              fontFamily: 'monospace',
-              fontSize: 12,
-            }}
-            onMouseEnter={(event) => {
-              (event.currentTarget as HTMLAnchorElement).style.color = '#94a3b8';
-            }}
-            onMouseLeave={(event) => {
-              (event.currentTarget as HTMLAnchorElement).style.color = '#94a3b8';
-            }}
-          >
-            {GITHUB_ICON}
-            GitHub
-          </a>
-        </div>
-      )}
-      <NetlabThemeScope style={{ flex: 1, overflow: 'hidden' }}>
-        {isE2e && <E2eTraceHook />}
-        {children}
-      </NetlabThemeScope>
+            <span
+              style={{
+                color: '#e2e8f0',
+                fontWeight: 'bold',
+                fontFamily: 'monospace',
+                fontSize: 15,
+              }}
+            >
+              📡 netlab
+            </span>
+            <span
+              style={{ color: '#94a3b8', fontFamily: 'monospace', fontSize: 14, fontWeight: 600 }}
+            >
+              {title}
+            </span>
+            <span style={{ color: '#94a3b8', fontSize: 12, fontFamily: 'monospace' }}>{desc}</span>
+            <a
+              href="https://github.com/koseki2580/netlab"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                marginLeft: 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                color: '#94a3b8',
+                textDecoration: 'none',
+                fontFamily: 'monospace',
+                fontSize: 12,
+              }}
+              onMouseEnter={(event) => {
+                (event.currentTarget as HTMLAnchorElement).style.color = '#94a3b8';
+              }}
+              onMouseLeave={(event) => {
+                (event.currentTarget as HTMLAnchorElement).style.color = '#94a3b8';
+              }}
+            >
+              {GITHUB_ICON}
+              GitHub
+            </a>
+          </div>
+        )}
+        <NetlabThemeScope style={{ flex: 1, overflow: 'hidden' }}>
+          {isE2e && <E2eTraceHook />}
+          {children}
+        </NetlabThemeScope>
+      </div>
     </div>
   );
 }

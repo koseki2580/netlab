@@ -14,14 +14,18 @@ function renderGallery(props?: ComponentProps<typeof Gallery>) {
 }
 
 describe('demo chrome', () => {
-  it('DemoShell includes a GitHub source link in the shared header', () => {
-    const html = renderToStaticMarkup(
-      <MemoryRouter>
-        <DemoShell title="Example" desc="Shared shell">
+  function renderDemoShell(path = '/routing/ospf-convergence', embedded = false) {
+    return renderToStaticMarkup(
+      <MemoryRouter initialEntries={[path]}>
+        <DemoShell title="Example" desc="Shared shell" embedded={embedded}>
           <div>demo body</div>
         </DemoShell>
       </MemoryRouter>,
     );
+  }
+
+  it('DemoShell includes a GitHub source link in the shared header', () => {
+    const html = renderDemoShell();
 
     expect(html).toContain('https://github.com/koseki2580/netlab');
     expect(html).toContain('GitHub');
@@ -31,27 +35,25 @@ describe('demo chrome', () => {
   it('DemoShell marks the simulator route as a fixed-viewport sim shell', () => {
     // The simulator must stay a 100vh region even after the gallery is freed
     // from the body height trap — the shell wrapper is the marker for that.
-    const html = renderToStaticMarkup(
-      <MemoryRouter>
-        <DemoShell title="Example" desc="Shared shell">
-          <div>demo body</div>
-        </DemoShell>
-      </MemoryRouter>,
-    );
+    const html = renderDemoShell();
     expect(html).toContain('data-netlab-sim-shell');
     expect(html).toContain('netlab-sim-shell');
   });
 
+  it('DemoShell mounts the nav rail with simulator active state outside embedded mode', () => {
+    const html = renderDemoShell('/routing/ospf-convergence');
+
+    expect(html).toContain('data-netlab-nav-rail');
+    expect(html).toContain('aria-label="Run"');
+    expect(html).toContain('aria-current="page"');
+    expect(html).not.toContain('← Gallery');
+  });
+
   it('DemoShell hides Gallery navigation in embedded mode', () => {
-    const html = renderToStaticMarkup(
-      <MemoryRouter>
-        <DemoShell title="Example" desc="Shared shell" embedded>
-          <div>demo body</div>
-        </DemoShell>
-      </MemoryRouter>,
-    );
+    const html = renderDemoShell('/routing/ospf-convergence', true);
 
     expect(html).not.toContain('Gallery');
+    expect(html).not.toContain('data-netlab-nav-rail');
     expect(html).not.toContain('GitHub');
     expect(html).toContain('demo body');
   });
