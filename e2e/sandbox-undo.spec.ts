@@ -3,12 +3,17 @@ import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures/harness';
 
 async function applyMtuEdit(page: Page, value: string) {
+  const sandboxPopover = page.getByRole('dialog', { name: 'Edit in sandbox' });
   await page.locator('.react-flow__node').filter({ hasText: 'R1' }).first().click({
     button: 'right',
     force: true,
   });
-  await page.getByLabel('MTU bytes').fill(value);
-  await page.getByRole('button', { name: 'Apply MTU' }).click();
+  await expect(sandboxPopover).toBeVisible();
+  await sandboxPopover.getByLabel('MTU bytes').fill(value);
+  await sandboxPopover.getByRole('button', { name: 'Apply MTU' }).click();
+  // Close the co-mounted NodeDetailPanel so subsequent right-clicks reach the
+  // node instead of the overlay panel covering the canvas right band.
+  await page.getByLabel('Close panel').click();
 }
 
 test('sandbox undo, redo, per-entry revert, and reset all', async ({ page }) => {
