@@ -45,8 +45,21 @@ export interface NetlabAppShellProps {
    * `'Tip · click R1 to inspect →'`). Use `prefers-reduced-motion: reduce`
    * to disable the pulse animation — the `netlab-hint-pulse` class in
    * `animations.css` already handles this.
+   *
+   * @deprecated Use `<ZeroStateHint />` for one-time onboarding pills and
+   * `statusLine` for live status; the pulsing tip slot is being retired.
+   * @migrate Pass `<ZeroStateHint />` inside the canvas body and supply
+   * `statusLine={<StatusLine ... />}` to the shell.
+   * @removeAt v0.next
    */
   hint?: React.ReactNode;
+
+  /**
+   * Optional persistent status bar rendered between the canvas body and the
+   * outer frame edge. Typically `<StatusLine />`. Height is owned by the
+   * caller (the recommended bar is 22px). When omitted, no bar is rendered.
+   */
+  statusLine?: React.ReactNode;
 
   /** Optional className applied to the outermost wrapper. */
   className?: string;
@@ -103,6 +116,7 @@ export function NetlabAppShell({
   status,
   rightAdornment,
   hint,
+  statusLine,
   className,
   style,
   children,
@@ -224,6 +238,8 @@ export function NetlabAppShell({
         style={{
           flex: 1,
           minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
           position: 'relative',
           border: '1px solid var(--netlab-border)',
           borderRadius: 10,
@@ -231,28 +247,35 @@ export function NetlabAppShell({
           background: 'var(--netlab-bg-primary)',
         }}
       >
-        {children}
-        {hint && (
-          <div
-            className="netlab-hint-pulse"
-            data-netlab-shell-hint=""
-            style={{
-              position: 'absolute',
-              top: 12,
-              right: 12,
-              padding: '6px 10px',
-              borderRadius: 999,
-              background:
-                'color-mix(in srgb, var(--netlab-accent-cyan) 14%, var(--netlab-bg-surface))',
-              border:
-                '1px solid color-mix(in srgb, var(--netlab-accent-cyan) 30%, var(--netlab-border))',
-              color: 'var(--netlab-accent-cyan)',
-              fontFamily: 'ui-monospace, monospace',
-              fontSize: 10,
-              fontWeight: 700,
-            }}
-          >
-            {hint}
+        <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+          {children}
+          {hint && (
+            <div
+              className="netlab-hint-pulse"
+              data-netlab-shell-hint=""
+              style={{
+                position: 'absolute',
+                top: 12,
+                right: 12,
+                padding: '6px 10px',
+                borderRadius: 999,
+                background:
+                  'color-mix(in srgb, var(--netlab-accent-cyan) 14%, var(--netlab-bg-surface))',
+                border:
+                  '1px solid color-mix(in srgb, var(--netlab-accent-cyan) 30%, var(--netlab-border))',
+                color: 'var(--netlab-accent-cyan)',
+                fontFamily: 'ui-monospace, monospace',
+                fontSize: 10,
+                fontWeight: 700,
+              }}
+            >
+              {hint}
+            </div>
+          )}
+        </div>
+        {statusLine && (
+          <div data-netlab-shell-status-line="" style={{ flexShrink: 0 }}>
+            {statusLine}
           </div>
         )}
       </section>

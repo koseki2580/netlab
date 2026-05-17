@@ -9,7 +9,9 @@ import { ResizableSidebar } from '../../src/components/ResizableSidebar';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationOverlayDock } from '../../src/components/simulation/SimulationOverlayDock';
 import { StepControls } from '../../src/components/simulation/StepControls';
+import { StatusLine } from '../../src/components/StatusLine';
 import { ToolGroup, ToolGroupButton } from '../../src/components/ToolGroup';
+import { ZeroStateHint } from '../../src/components/ZeroStateHint';
 import { buildOspfConvergenceTopology } from '../../src/scenarios/ospf-convergence';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import { readDemoEmbedParams } from '../embedParams';
@@ -85,6 +87,21 @@ function OspfConvergenceInner({
         ? { label: 'ready', tone: 'ready' as const }
         : { label: 'idle', tone: 'idle' as const };
 
+  // Status line (N5) — surface live counts and progress through the bar
+  // below the canvas so the user can read state without watching the toolbar.
+  const currentTrace =
+    state.traces.find((t) => t.packetId === state.currentTraceId) ??
+    state.traces[state.traces.length - 1] ??
+    null;
+  const totalHops = currentTrace?.hops.length ?? 0;
+  const stepIdx = state.currentStep >= 0 ? state.currentStep : 0;
+  const packetsCount = state.traces.length;
+  const dropsCount = state.traces.filter((t) => t.status === 'dropped').length;
+  const arpCount = Object.values(state.nodeArpTables).reduce(
+    (acc, table) => acc + Object.keys(table).length,
+    0,
+  );
+
   return (
     <NetlabAppShell
       scenarioId="ospf-convergence"
@@ -132,11 +149,22 @@ function OspfConvergenceInner({
         </ToolGroup>
       }
       status={status}
+      statusLine={
+        <StatusLine
+          scenarioId="ospf-convergence"
+          status={status.tone}
+          {...(totalHops > 0 ? { step: stepIdx, totalSteps: totalHops } : {})}
+          packetsCount={packetsCount}
+          dropsCount={dropsCount}
+          arpCount={arpCount}
+        />
+      }
     >
       <div style={{ display: 'flex', height: '100%' }}>
         <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
           <NetlabCanvas />
           <SimulationOverlayDock showRouteTable />
+          <ZeroStateHint />
           <div
             style={{
               position: 'absolute',
