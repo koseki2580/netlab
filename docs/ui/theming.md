@@ -83,6 +83,16 @@ Each `NetlabTheme` field maps to a CSS custom property scoped to the component c
 
 ---
 
+## Repeated Style Primitives
+
+Reusable component-level style primitives live in `src/components/_styles/tokens.ts`.
+Use that module for repeated monospace typography, field rows, section headers,
+cards, and badge-like status pills. Prefer spreading a token for local
+adjustments, for example `style={{ ...CARD, padding: 8 }}`, instead of
+copying the whole object into a component.
+
+---
+
 ## Built-in Themes
 
 ### Dark theme (default)

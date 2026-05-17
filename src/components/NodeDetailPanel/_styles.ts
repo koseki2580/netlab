@@ -1,4 +1,5 @@
 import type React from 'react';
+import { CARD, INLINE_FIELD_ROW, MONO_FONT_STACK, NODE_SECTION_HEADER } from '../_styles/tokens';
 
 /**
  * Shared CSSProperties tokens used by NodeDetailPanel sections.
@@ -9,36 +10,24 @@ import type React from 'react';
  */
 
 export const PANEL_STYLE: React.CSSProperties = {
+  ...CARD,
   position: 'absolute',
   left: 12,
   top: 12,
-  background: 'var(--netlab-bg-panel)',
-  border: '1px solid var(--netlab-border-subtle)',
-  borderRadius: 8,
   padding: '10px 14px',
   minWidth: 260,
   maxHeight: 360,
   overflowY: 'auto',
   color: 'var(--netlab-text-primary)',
   fontSize: 11,
-  fontFamily: 'monospace',
+  fontFamily: MONO_FONT_STACK,
   zIndex: 200,
   pointerEvents: 'all',
 };
 
-export const ROW_STYLE: React.CSSProperties = {
-  display: 'flex',
-  gap: 8,
-  marginBottom: 3,
-};
+export const ROW_STYLE: React.CSSProperties = INLINE_FIELD_ROW;
 
-export const SECTION_HEADER_STYLE: React.CSSProperties = {
-  color: 'var(--netlab-text-secondary)',
-  fontSize: 10,
-  fontWeight: 'bold',
-  letterSpacing: 1,
-  margin: '10px 0 6px',
-};
+export const SECTION_HEADER_STYLE: React.CSSProperties = NODE_SECTION_HEADER;
 
 export const BADGE_STYLE: React.CSSProperties = {
   display: 'inline-flex',

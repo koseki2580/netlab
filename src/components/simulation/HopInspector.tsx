@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { useSimulation } from '../../simulation/SimulationContext';
 import type { AclRule } from '../../types/acl';
 import type { NatTranslation, PacketHop, RoutingDecision } from '../../types/simulation';
+import { CARD, FIELD_ROW, MONO_FONT_STACK, SECTION_HEADER, TEXT } from '../_styles/tokens';
 import { useNetlabContext } from '../NetlabContext';
 
 const EVENT_COLORS: Record<PacketHop['event'], string> = {
@@ -76,16 +77,12 @@ function FieldRow({
   return (
     <div
       style={{
-        display: 'grid',
-        gridTemplateColumns: '84px minmax(0, 1fr)',
-        gap: 10,
+        ...FIELD_ROW,
         alignItems: 'start',
       }}
     >
-      <span style={{ color: 'var(--netlab-text-secondary)' }}>{label}</span>
-      <span style={{ color: valueColor ?? 'var(--netlab-text-primary)', wordBreak: 'break-word' }}>
-        {value}
-      </span>
+      <span style={{ color: TEXT.secondary }}>{label}</span>
+      <span style={{ color: valueColor ?? TEXT.primary, wordBreak: 'break-word' }}>{value}</span>
     </div>
   );
 }
@@ -162,25 +159,8 @@ function NatTranslationSection({ translation }: { translation: NatTranslation })
     translation.preDstPort !== translation.postDstPort;
 
   return (
-    <section
-      style={{
-        background: 'var(--netlab-bg-panel)',
-        border: '1px solid var(--netlab-border-subtle)',
-        borderRadius: 8,
-        padding: 12,
-      }}
-    >
-      <div
-        style={{
-          color: 'var(--netlab-text-secondary)',
-          fontSize: 10,
-          fontWeight: 'bold',
-          letterSpacing: 1,
-          marginBottom: 10,
-        }}
-      >
-        NAT TRANSLATION
-      </div>
+    <section style={CARD}>
+      <div style={SECTION_HEADER}>NAT TRANSLATION</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
         <FieldRow label="Type" value={translation.type.toUpperCase()} />
         <FieldRow
@@ -223,25 +203,8 @@ function AclFilterSection({ hop }: { hop: PacketHop }) {
     hop.aclMatch.action === 'permit' ? 'var(--netlab-accent-green)' : 'var(--netlab-accent-red)';
 
   return (
-    <section
-      style={{
-        background: 'var(--netlab-bg-panel)',
-        border: '1px solid var(--netlab-border-subtle)',
-        borderRadius: 8,
-        padding: 12,
-      }}
-    >
-      <div
-        style={{
-          color: 'var(--netlab-text-secondary)',
-          fontSize: 10,
-          fontWeight: 'bold',
-          letterSpacing: 1,
-          marginBottom: 10,
-        }}
-      >
-        ACL FILTER
-      </div>
+    <section style={CARD}>
+      <div style={SECTION_HEADER}>ACL FILTER</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
         <FieldRow label="Direction" value={hop.aclMatch.direction.toUpperCase()} />
         <FieldRow label="Interface" value={hop.aclMatch.interfaceName} />
@@ -364,25 +327,8 @@ function HopFields({
   }
 
   return (
-    <section
-      style={{
-        background: 'var(--netlab-bg-panel)',
-        border: '1px solid var(--netlab-border-subtle)',
-        borderRadius: 8,
-        padding: 12,
-      }}
-    >
-      <div
-        style={{
-          color: 'var(--netlab-text-secondary)',
-          fontSize: 10,
-          fontWeight: 'bold',
-          letterSpacing: 1,
-          marginBottom: 10,
-        }}
-      >
-        HOP FIELDS
-      </div>
+    <section style={CARD}>
+      <div style={SECTION_HEADER}>HOP FIELDS</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
         {fields.map((field) => (
           <FieldRow key={field.label} label={field.label} value={field.value} />
@@ -408,14 +354,7 @@ function ArpHopDetails({ hop }: { hop: PacketHop }) {
   ];
 
   return (
-    <section
-      style={{
-        background: 'var(--netlab-bg-panel)',
-        border: '1px solid #78350f',
-        borderRadius: 8,
-        padding: 12,
-      }}
-    >
+    <section style={{ ...CARD, border: '1px solid #78350f' }}>
       <div
         style={{
           color: '#f59e0b',
@@ -438,25 +377,8 @@ function ArpHopDetails({ hop }: { hop: PacketHop }) {
 
 function RoutingSection({ decision }: { decision: RoutingDecision }) {
   return (
-    <section
-      style={{
-        background: 'var(--netlab-bg-panel)',
-        border: '1px solid var(--netlab-border-subtle)',
-        borderRadius: 8,
-        padding: 12,
-      }}
-    >
-      <div
-        style={{
-          color: 'var(--netlab-text-secondary)',
-          fontSize: 10,
-          fontWeight: 'bold',
-          letterSpacing: 1,
-          marginBottom: 10,
-        }}
-      >
-        ROUTING DECISION
-      </div>
+    <section style={CARD}>
+      <div style={SECTION_HEADER}>ROUTING DECISION</div>
 
       <div
         style={{
@@ -600,14 +522,7 @@ function DropReasonBlock({ reason }: { reason: string }) {
 
 function ChangedFieldsBlock({ fields }: { fields: string[] }) {
   return (
-    <section
-      style={{
-        background: 'var(--netlab-bg-panel)',
-        border: '1px solid #78350f',
-        borderRadius: 8,
-        padding: 12,
-      }}
-    >
+    <section style={{ ...CARD, border: '1px solid #78350f' }}>
       <div
         style={{
           color: '#fbbf24',
@@ -658,26 +573,23 @@ export const HopInspector = memo(function HopInspector() {
           flexDirection: 'column',
           height: '100%',
           minHeight: 0,
-          background: 'var(--netlab-bg-panel)',
-          border: '1px solid var(--netlab-border-subtle)',
-          borderRadius: 8,
+          ...CARD,
+          padding: 0,
           overflow: 'hidden',
-          color: 'var(--netlab-text-primary)',
-          fontFamily: 'monospace',
+          color: TEXT.primary,
+          fontFamily: MONO_FONT_STACK,
         }}
       >
         <div
           style={{
             padding: '12px 14px',
             borderBottom: '1px solid var(--netlab-border-subtle)',
-            color: 'var(--netlab-text-secondary)',
-            fontSize: 10,
-            fontWeight: 'bold',
-            letterSpacing: 1,
+            ...SECTION_HEADER,
             position: 'sticky',
             top: 0,
             background: 'var(--netlab-bg-panel)',
             zIndex: 1,
+            marginBottom: 0,
           }}
         >
           HOP INSPECTOR
@@ -685,7 +597,7 @@ export const HopInspector = memo(function HopInspector() {
         <div
           style={{
             padding: '16px 14px',
-            color: 'var(--netlab-text-secondary)',
+            color: TEXT.secondary,
             fontSize: 12,
           }}
         >
@@ -702,12 +614,11 @@ export const HopInspector = memo(function HopInspector() {
         flexDirection: 'column',
         height: '100%',
         minHeight: 0,
-        background: 'var(--netlab-bg-panel)',
-        border: '1px solid var(--netlab-border-subtle)',
-        borderRadius: 8,
+        ...CARD,
+        padding: 0,
         overflow: 'hidden',
-        color: 'var(--netlab-text-primary)',
-        fontFamily: 'monospace',
+        color: TEXT.primary,
+        fontFamily: MONO_FONT_STACK,
       }}
     >
       <div
@@ -720,17 +631,7 @@ export const HopInspector = memo(function HopInspector() {
           zIndex: 1,
         }}
       >
-        <div
-          style={{
-            color: 'var(--netlab-text-secondary)',
-            fontSize: 10,
-            fontWeight: 'bold',
-            letterSpacing: 1,
-            marginBottom: 8,
-          }}
-        >
-          HOP INSPECTOR
-        </div>
+        <header style={{ ...SECTION_HEADER, marginBottom: 8 }}>HOP INSPECTOR</header>
         <div
           style={{
             display: 'flex',
@@ -739,7 +640,7 @@ export const HopInspector = memo(function HopInspector() {
             gap: 12,
           }}
         >
-          <span style={{ fontSize: 12, color: 'var(--netlab-text-secondary)' }}>
+          <span style={{ fontSize: 12, color: TEXT.secondary }}>
             Hop {selectedHop.step + 1} / {totalHops || selectedHop.step + 1}
           </span>
           <EventBadge event={selectedHop.event} />

@@ -28,6 +28,7 @@ import { SandboxNodeTabBody } from './SandboxNodeTabBody';
 import { SaveSnapshotButton } from './snapshots/SaveSnapshotButton';
 import { ShortcutsHelpModal } from './ShortcutsHelpModal';
 import { TrafficTab } from './TrafficTab';
+import { MONO_FONT_STACK, TEXT } from '../_styles/tokens';
 
 type SandboxAxis = 'packet' | 'node' | 'parameters' | 'traffic' | 'edits' | 'assessment';
 type ScenarioExportDialogComponent =
@@ -256,9 +257,9 @@ export function SandboxPanel({ layoutMode = 'wide' }: SandboxPanelProps = {}) {
             border: '1px solid var(--netlab-border)',
             borderRadius: 8,
             background: 'var(--netlab-bg-surface)',
-            color: 'var(--netlab-text-primary)',
+            color: TEXT.primary,
             padding: '6px 10px',
-            fontFamily: 'monospace',
+            fontFamily: MONO_FONT_STACK,
             cursor: 'pointer',
           }}
         >
@@ -306,8 +307,8 @@ export function SandboxPanel({ layoutMode = 'wide' }: SandboxPanelProps = {}) {
                 flexDirection: 'column',
                 background: 'var(--netlab-bg-primary)',
                 borderTop: '1px solid var(--netlab-border)',
-                color: 'var(--netlab-text-primary)',
-                fontFamily: 'monospace',
+                color: TEXT.primary,
+                fontFamily: MONO_FONT_STACK,
               }
             : {
                 position: 'relative',
@@ -318,8 +319,8 @@ export function SandboxPanel({ layoutMode = 'wide' }: SandboxPanelProps = {}) {
                 flexDirection: 'column',
                 background: 'var(--netlab-bg-primary)',
                 borderLeft: '1px solid var(--netlab-border)',
-                color: 'var(--netlab-text-primary)',
-                fontFamily: 'monospace',
+                color: TEXT.primary,
+                fontFamily: MONO_FONT_STACK,
               }
         }
       >
@@ -375,9 +376,9 @@ export function SandboxPanel({ layoutMode = 'wide' }: SandboxPanelProps = {}) {
               border: '1px solid var(--netlab-border)',
               borderRadius: 6,
               background: 'var(--netlab-bg-surface)',
-              color: 'var(--netlab-text-primary)',
+              color: TEXT.primary,
               padding: '3px 7px',
-              fontFamily: 'monospace',
+              fontFamily: MONO_FONT_STACK,
               fontSize: 11,
               cursor: 'pointer',
             }}
@@ -394,7 +395,7 @@ export function SandboxPanel({ layoutMode = 'wide' }: SandboxPanelProps = {}) {
               border: '1px solid var(--netlab-border)',
               borderRadius: 999,
               background: fastMode ? 'rgba(14, 165, 233, 0.16)' : 'var(--netlab-bg-surface)',
-              color: 'var(--netlab-text-primary)',
+              color: TEXT.primary,
               padding: '4px 7px',
               fontSize: 10,
               cursor: 'pointer',
@@ -419,9 +420,9 @@ export function SandboxPanel({ layoutMode = 'wide' }: SandboxPanelProps = {}) {
               border: '1px solid var(--netlab-border)',
               borderRadius: 999,
               background: 'var(--netlab-bg-surface)',
-              color: 'var(--netlab-text-primary)',
+              color: TEXT.primary,
               padding: '4px 9px',
-              fontFamily: 'monospace',
+              fontFamily: MONO_FONT_STACK,
               fontSize: 11,
               cursor: 'pointer',
             }}
@@ -440,9 +441,9 @@ export function SandboxPanel({ layoutMode = 'wide' }: SandboxPanelProps = {}) {
               border: '1px solid var(--netlab-border)',
               borderRadius: 6,
               background: 'var(--netlab-bg-surface)',
-              color: 'var(--netlab-text-muted)',
+              color: TEXT.muted,
               padding: '3px 7px',
-              fontFamily: 'monospace',
+              fontFamily: MONO_FONT_STACK,
               fontSize: 12,
               cursor: 'pointer',
             }}
@@ -459,9 +460,9 @@ export function SandboxPanel({ layoutMode = 'wide' }: SandboxPanelProps = {}) {
                 border: '1px solid var(--netlab-border)',
                 borderRadius: 6,
                 background: 'var(--netlab-bg-surface)',
-                color: 'var(--netlab-text-muted)',
+                color: TEXT.muted,
                 padding: '3px 7px',
-                fontFamily: 'monospace',
+                fontFamily: MONO_FONT_STACK,
                 cursor: 'pointer',
               }}
             >
@@ -518,9 +519,9 @@ export function SandboxPanel({ layoutMode = 'wide' }: SandboxPanelProps = {}) {
                     ? '2px solid var(--netlab-accent-cyan)'
                     : '1px solid var(--netlab-border)',
                   background: selected ? 'var(--netlab-bg-surface)' : 'transparent',
-                  color: selected ? 'var(--netlab-text-primary)' : 'var(--netlab-text-muted)',
+                  color: selected ? TEXT.primary : TEXT.muted,
                   padding: '8px 4px',
-                  fontFamily: 'monospace',
+                  fontFamily: MONO_FONT_STACK,
                   fontSize: 10,
                   cursor: 'pointer',
                 }}
