@@ -51,10 +51,13 @@ interface MockReactFlowProps {
   nodes: MockNode[];
   edges: MockEdge[];
   colorMode?: 'light' | 'dark';
+  className?: string;
   onNodesChange?: (changes: MockNodeChange[]) => void;
   onEdgesChange?: (changes: MockEdgeChange[]) => void;
   onConnect?: (connection: MockConnection) => void;
   onNodeDragStop?: (event: unknown, node: MockNode, nodes: MockNode[]) => void;
+  onNodeClick?: (event: unknown, node: MockNode) => void;
+  onPaneClick?: () => void;
   isValidConnection?: (connection: MockConnection) => boolean;
 }
 
@@ -143,6 +146,14 @@ vi.mock('@xyflow/react', async () => {
     return React.createElement('div', { 'data-testid': 'react-flow' });
   }
 
+  function useReactFlow() {
+    return {
+      getNode: (_id: string) => undefined,
+      getZoom: () => 1,
+      setCenter: () => Promise.resolve(true),
+    };
+  }
+
   return {
     ReactFlow,
     Background: () => null,
@@ -151,6 +162,7 @@ vi.mock('@xyflow/react', async () => {
     ConnectionMode: { Loose: 'Loose' },
     useNodesState,
     useEdgesState,
+    useReactFlow,
     addEdge,
     BaseEdge: () => null,
     EdgeLabelRenderer: ({ children }: { children: React.ReactNode }) =>
@@ -899,5 +911,73 @@ describe('NetlabCanvas controlled topology API', () => {
         stroke: 'var(--netlab-accent-red)',
       }),
     });
+  });
+});
+
+describe('NetlabCanvas selection choreography (N2)', () => {
+  it('decorates the selected node, 1-hop neighbors, and connecting edge with selection classes', () => {
+    render(
+      <NetlabProvider
+        topology={makeTopology({
+          nodes: [
+            {
+              id: 'r1',
+              type: 'router',
+              position: { x: 0, y: 0 },
+              data: { label: 'R1', role: 'router', layerId: 'l3' },
+            },
+            {
+              id: 'r2',
+              type: 'router',
+              position: { x: 200, y: 0 },
+              data: { label: 'R2', role: 'router', layerId: 'l3' },
+            },
+            {
+              id: 'r3',
+              type: 'router',
+              position: { x: 400, y: 0 },
+              data: { label: 'R3', role: 'router', layerId: 'l3' },
+            },
+          ],
+          edges: [{ id: 'e12', source: 'r1', target: 'r2', type: 'smoothstep' }],
+        })}
+      >
+        <NetlabCanvas />
+      </NetlabProvider>,
+    );
+
+    // No selection initially — no node gets the selection or neighbor class.
+    const initial = currentReactFlowProps();
+    expect(initial.nodes.find((n) => n.id === 'r1')?.className ?? '').not.toContain(
+      'netlab-node-selected',
+    );
+    expect(initial.nodes.find((n) => n.id === 'r2')?.className ?? '').not.toContain(
+      'netlab-node-neighbor',
+    );
+
+    // Simulate selecting r1.
+    const r1Node = initial.nodes.find((n) => n.id === 'r1');
+    if (!r1Node) throw new Error('r1 node missing');
+    act(() => {
+      initial.onNodeClick?.({} as Event, r1Node);
+    });
+
+    const after = currentReactFlowProps();
+    expect(after.nodes.find((n) => n.id === 'r1')?.className).toContain('netlab-node-selected');
+    expect(after.nodes.find((n) => n.id === 'r2')?.className).toContain('netlab-node-neighbor');
+    expect(after.nodes.find((n) => n.id === 'r3')?.className ?? '').not.toMatch(/netlab-node-/);
+    expect(after.edges.find((e) => e.id === 'e12')?.className).toContain('netlab-edge-neighbor');
+
+    // Clearing the selection (pane click) drops the classes.
+    act(() => {
+      after.onPaneClick?.();
+    });
+    const cleared = currentReactFlowProps();
+    expect(cleared.nodes.find((n) => n.id === 'r1')?.className ?? '').not.toContain(
+      'netlab-node-selected',
+    );
+    expect(cleared.edges.find((e) => e.id === 'e12')?.className ?? '').not.toContain(
+      'netlab-edge-neighbor',
+    );
   });
 });

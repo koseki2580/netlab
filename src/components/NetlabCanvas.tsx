@@ -9,6 +9,7 @@ import {
   ReactFlow,
   useEdgesState,
   useNodesState,
+  useReactFlow,
   type Connection,
   type Edge,
   type EdgeChange,
@@ -17,7 +18,7 @@ import {
   type OnNodeDrag,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AreaBackground } from '../areas/AreaBackground';
 import { areasToNodes } from '../areas/AreaRegistry';
@@ -32,6 +33,7 @@ import { useNetlabContext } from './NetlabContext';
 import { NetlabThemeScopeContext } from './NetlabThemeScope';
 import { NetlabUIContext } from './NetlabUIContext';
 import { NodeDetailPanel } from './NodeDetailPanel';
+import { useNodeDetailDock } from './NodeDetailPanel/useNodeDetailDock';
 import { ValidationSmoothStepEdge } from './ValidationEdgeLabel';
 
 const AREA_NODE_TYPE: NodeTypes = {
@@ -219,15 +221,52 @@ export function NetlabCanvas({
     [nodes, edges],
   );
 
+  /**
+   * Selection choreography (N2) — derive the 1-hop neighbor set from the
+   * current selection. Edges where either endpoint is the selected node
+   * become "neighbor" edges; their other endpoint becomes a neighbor node.
+   */
+  const { neighborNodeIds, neighborEdgeIds } = useMemo(() => {
+    if (!selectedNodeId) {
+      return {
+        neighborNodeIds: new Set<string>(),
+        neighborEdgeIds: new Set<string>(),
+      };
+    }
+    const nodeIds = new Set<string>();
+    const edgeIds = new Set<string>();
+    for (const edge of edges) {
+      if (edge.source === selectedNodeId) {
+        nodeIds.add(edge.target);
+        edgeIds.add(edge.id);
+      } else if (edge.target === selectedNodeId) {
+        nodeIds.add(edge.source);
+        edgeIds.add(edge.id);
+      }
+    }
+    return { neighborNodeIds: nodeIds, neighborEdgeIds: edgeIds };
+  }, [selectedNodeId, edges]);
+
   const styledNodes = useMemo(
     () =>
       nodes.map((node) => {
         const downInterfaceCount = (node.data.interfaces ?? []).filter((iface) =>
           failureCtx?.isInterfaceDown(node.id, iface.id),
         ).length;
+        const isAreaNode = node.id.startsWith(AREA_NODE_PREFIX);
+        const selectionClass = isAreaNode
+          ? undefined
+          : node.id === selectedNodeId
+            ? 'netlab-node-selected'
+            : neighborNodeIds.has(node.id)
+              ? 'netlab-node-neighbor'
+              : undefined;
+        const mergedClassName = [node.className, selectionClass].filter(Boolean).join(' ');
+        const classNameChanged = (mergedClassName || undefined) !== node.className;
 
         if (!failureCtx?.isNodeDown(node.id) && downInterfaceCount === 0) {
-          return node;
+          if (!classNameChanged) return node;
+          return mergedClassName ? { ...node, className: mergedClassName } : node;
         }
 
         const nodeStyle = failureCtx?.isNodeDown(node.id)
@@ -238,19 +277,27 @@ export function NetlabCanvas({
         return {
           ...restNode,
           ...(nodeStyle !== undefined ? { style: nodeStyle } : {}),
+          ...(mergedClassName ? { className: mergedClassName } : {}),
           data:
             downInterfaceCount > 0
               ? { ...node.data, _downInterfaceCount: downInterfaceCount }
               : node.data,
         };
       }),
-    [nodes, failureCtx],
+    [nodes, failureCtx, selectedNodeId, neighborNodeIds],
   );
 
   const styledEdges = useMemo(
     () =>
       edges.map((edge) => {
-        const validationEdge = withValidationEdgeType(edge);
+        const baseValidationEdge = withValidationEdgeType(edge);
+        const selectionClass = neighborEdgeIds.has(edge.id) ? 'netlab-edge-neighbor' : undefined;
+        const mergedClassName = [baseValidationEdge.className, selectionClass]
+          .filter(Boolean)
+          .join(' ');
+        const validationEdge: NetlabEdge = mergedClassName
+          ? { ...baseValidationEdge, className: mergedClassName }
+          : baseValidationEdge;
 
         if (failureCtx?.isEdgeDown(edge.id) || edge.data?.state === 'down') {
           return {
@@ -328,7 +375,16 @@ export function NetlabCanvas({
 
         return validationEdge;
       }),
-    [edges, nodes, activeEdgeIds, activePathEdgeIds, highlightMode, currentTraceColor, failureCtx],
+    [
+      edges,
+      nodes,
+      activeEdgeIds,
+      activePathEdgeIds,
+      highlightMode,
+      currentTraceColor,
+      failureCtx,
+      neighborEdgeIds,
+    ],
   );
 
   const uiCtx = useMemo(
@@ -341,6 +397,14 @@ export function NetlabCanvas({
     [selectedNodeId, selectNode, selectedEdgeId, selectEdge],
   );
 
+  // Dock state drives the auto-pan target offset: when the panel is pinned
+  // the canvas's visual center shifts left by panel-width / 2 so the selected
+  // node sits in the visible region rather than behind the panel.
+  const dock = useNodeDetailDock();
+  const wrapperClassName =
+    [className, selectedNodeId ? 'netlab-canvas-selection' : null].filter(Boolean).join(' ') ||
+    undefined;
+
   return (
     <NetlabUIContext.Provider value={uiCtx}>
       <div
@@ -350,7 +414,7 @@ export function NetlabCanvas({
           position: 'relative',
           ...style,
         }}
-        className={className}
+        className={wrapperClassName}
       >
         <ReactFlow
           nodes={styledNodes}
@@ -398,6 +462,11 @@ export function NetlabCanvas({
           <Background />
           <Controls />
           <MiniMap />
+          <CanvasAutoPan
+            selectedNodeId={selectedNodeId}
+            panelMode={dock.mode}
+            panelWidth={dock.width}
+          />
         </ReactFlow>
         <NodeDetailPanel
           editable={nodeDetailsEditable}
@@ -406,4 +475,58 @@ export function NetlabCanvas({
       </div>
     </NetlabUIContext.Provider>
   );
+}
+
+interface CanvasAutoPanProps {
+  selectedNodeId: string | null;
+  panelMode: 'overlay' | 'pinned';
+  panelWidth: number;
+}
+
+/**
+ * Pan the viewport once per selection so the chosen node sits in the
+ * canvas-minus-panel visual center. After the initial pan, subsequent
+ * interactions (zoom, drag) are not overridden — the user owns the viewport.
+ * The pan is suppressed under `prefers-reduced-motion: reduce`.
+ */
+function CanvasAutoPan({ selectedNodeId, panelMode, panelWidth }: CanvasAutoPanProps) {
+  const rf = useReactFlow();
+  const lastPannedRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!selectedNodeId) {
+      lastPannedRef.current = null;
+      return;
+    }
+    if (lastPannedRef.current === selectedNodeId) return;
+
+    const node = rf.getNode(selectedNodeId);
+    if (!node) return;
+
+    const reduceMotion =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const measured = (node as { measured?: { width?: number; height?: number } }).measured;
+    const width = measured?.width ?? (node as { width?: number }).width ?? 80;
+    const height = measured?.height ?? (node as { height?: number }).height ?? 80;
+    const centerX = node.position.x + width / 2;
+    const centerY = node.position.y + height / 2;
+
+    // In pinned mode the panel takes panelWidth from the right; we offset the
+    // pan target left by half that so the selected node lands in the visible
+    // center of "canvas minus panel". In overlay mode treat it the same — the
+    // overlay still hovers over the right side and obscures it visually.
+    const offsetX = panelWidth / 2;
+    const targetX = centerX + offsetX;
+
+    rf.setCenter(targetX, centerY, {
+      duration: reduceMotion ? 0 : 280,
+      zoom: rf.getZoom(),
+    });
+    lastPannedRef.current = selectedNodeId;
+  }, [selectedNodeId, panelMode, panelWidth, rf]);
+
+  return null;
 }
