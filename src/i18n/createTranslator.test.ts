@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { logger } from '../utils/logger';
 import { _resetTranslatorWarnings, createTranslator } from './createTranslator';
 import { _resetSubstituteWarnings } from './substitute';
 
@@ -23,7 +24,7 @@ describe('createTranslator', () => {
   });
 
   it('falls back to en catalog when key missing in non-en locale', () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const warn = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
     // en catalog (the imported singleton) is empty in Wave 0; simulate fallback by
     // creating a translator with a non-en locale + empty catalog and verifying the
     // last-resort key fallback path is taken with a warning.
@@ -33,13 +34,13 @@ describe('createTranslator', () => {
   });
 
   it('returns the key itself as last-resort fallback', () => {
-    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
     const t = createTranslator('en', {});
     expect(t('does.not.exist')).toBe('does.not.exist');
   });
 
   it('warns once per missing key per session', () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const warn = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
     const t = createTranslator('en', {});
     t('missing.key');
     t('missing.key');

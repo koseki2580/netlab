@@ -1,6 +1,7 @@
 import { en } from './locales/en';
 import { substitute } from './substitute';
 import type { Catalog, TranslatorFn } from './types';
+import { logger } from '../utils/logger';
 
 const warnedMissingKeys = new Set<string>();
 
@@ -8,9 +9,7 @@ function warnMissingKey(scope: string, key: string, message: string): void {
   const id = `${scope}::${key}`;
   if (warnedMissingKeys.has(id)) return;
   warnedMissingKeys.add(id);
-  if (typeof console !== 'undefined') {
-    console.warn(message);
-  }
+  logger.warn(message);
 }
 
 export function createTranslator(locale: string, catalog: Catalog): TranslatorFn {

@@ -3,6 +3,7 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { logger } from '../utils/logger';
 import { _resetTranslatorWarnings } from './createTranslator';
 import { I18nProvider } from './I18nProvider';
 import { _resetSubstituteWarnings } from './substitute';
@@ -58,14 +59,14 @@ afterEach(() => {
 
 describe('I18nProvider + useI18n', () => {
   it('provides the default en locale when no provider is present', () => {
-    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
     render(<Capture />);
     expect(captured?.locale).toBe('en');
     expect(typeof captured?.t).toBe('function');
   });
 
   it('returns the key as fallback when called without a registered catalog entry', () => {
-    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
     render(<Capture />);
     expect(captured?.t('not.in.catalog')).toBe('not.in.catalog');
   });
@@ -107,7 +108,7 @@ describe('I18nProvider + useI18n', () => {
   });
 
   it('falls back to en catalog when a non-en locale lacks the key', () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const warn = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
     render(
       <I18nProvider locale="ja" catalog={{}}>
         <Capture />

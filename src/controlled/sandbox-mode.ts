@@ -30,6 +30,8 @@ export function resolveSandboxControlMode({
   sandboxEnabled,
   sandboxControlMode,
   dev,
+  // Public override surface: callers that provide a custom warn function own
+  // any desired prefixing or filtering.
   warn = console.warn,
 }: {
   readonly hasControlledTopology: boolean;

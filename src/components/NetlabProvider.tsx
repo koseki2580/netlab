@@ -10,6 +10,7 @@ import { ospfV3Protocol } from '../routing/ospf/OspfV3Protocol';
 import { ripProtocol } from '../routing/rip/RipProtocol';
 import { staticProtocol } from '../routing/static/StaticProtocol';
 import { SandboxNarrationRegion } from '../sandbox/narration/SandboxNarrationRegion';
+import { logger } from '../utils/logger';
 import type { NetlabEmbedMode, ParentOrigin } from '../embed/protocol';
 import type { NetworkTopology, TopologySnapshot } from '../types/topology';
 import {
@@ -130,7 +131,7 @@ export function NetlabProvider({
     warn: (message) => {
       if (warnedImplicitSandboxModeRef.current) return;
       warnedImplicitSandboxModeRef.current = true;
-      console.warn(message);
+      logger.warn(message);
     },
   });
 

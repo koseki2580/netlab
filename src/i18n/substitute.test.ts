@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { logger } from '../utils/logger';
 import { _resetSubstituteWarnings, substitute } from './substitute';
 
 describe('substitute', () => {
@@ -35,11 +36,12 @@ describe('substitute', () => {
   });
 
   it('leaves unmatched placeholder text intact', () => {
+    vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
     expect(substitute('hello {{name}}', { other: 'x' })).toBe('hello {{name}}');
   });
 
   it('warns once per (template, placeholder name) for missing param', () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const warn = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
     substitute('hello {{name}}', {});
     substitute('hello {{name}}', {});
     expect(warn).toHaveBeenCalledTimes(1);
@@ -47,7 +49,7 @@ describe('substitute', () => {
   });
 
   it('warns again when the same placeholder appears in a different template', () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const warn = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
     substitute('a {{name}}', {});
     substitute('b {{name}}', {});
     expect(warn).toHaveBeenCalledTimes(2);

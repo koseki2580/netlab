@@ -1,4 +1,5 @@
 import type { TranslatorParams } from './types';
+import { logger } from '../utils/logger';
 
 const PLACEHOLDER_RE = /\{\{(\w+)\}\}/g;
 
@@ -8,9 +9,7 @@ function warnMissingPlaceholder(template: string, name: string): void {
   const id = `${template}::${name}`;
   if (warnedPlaceholders.has(id)) return;
   warnedPlaceholders.add(id);
-  if (typeof console !== 'undefined') {
-    console.warn(`[netlab/i18n] missing placeholder param '${name}' for template "${template}"`);
-  }
+  logger.warn(`[netlab/i18n] missing placeholder param '${name}' for template "${template}"`);
 }
 
 export function substitute(template: string, params?: TranslatorParams): string {
