@@ -1,6 +1,14 @@
 import type React from 'react';
 import { CommandBar, type CommandBarProps } from './CommandBar';
 
+export type ShellStatusTone = 'idle' | 'ready' | 'running' | 'paused' | 'error';
+
+export interface NetlabAppShellStatus {
+  /** Short label such as `'running'` or `'ready'`. */
+  label: string;
+  tone: ShellStatusTone;
+}
+
 export interface NetlabAppShellV2Props extends CommandBarProps {
   hint?: React.ReactNode;
   statusLine?: React.ReactNode;
@@ -11,8 +19,6 @@ export interface NetlabAppShellV2Props extends CommandBarProps {
 
 /**
  * Flow-v2 simulator shell: one-row command bar above a canvas-first frame.
- * The legacy `NetlabAppShell` remains available for existing four-zone
- * toolbar consumers while new scenes migrate here.
  */
 export function NetlabAppShellV2({
   hint,

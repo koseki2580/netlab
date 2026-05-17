@@ -1,5 +1,5 @@
 import type React from 'react';
-import type { ShellStatusTone } from './NetlabAppShell';
+import type { ShellStatusTone } from './NetlabAppShellV2';
 
 /**
  * `StatusLine` is the persistent, one-line status bar that sits between the

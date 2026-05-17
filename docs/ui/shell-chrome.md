@@ -24,10 +24,10 @@ navigation.
 
 ## Command Bar
 
-New simulator routes should use `NetlabAppShellV2`, which renders a single
-40px `CommandBar` above the canvas frame. The legacy `NetlabAppShell` remains
-available for existing four-zone toolbar consumers, but its
-`topologyZone / runZone / inspectZone / sandboxZone` props are deprecated.
+Simulator routes use `NetlabAppShellV2`, which renders a single 40px
+`CommandBar` above the canvas frame. The earlier four-zone `NetlabAppShell`
+API has been removed; migrate scene-specific controls to command-bar
+`extraActions` or `overflowActions`.
 
 The command bar owns scenario-level controls:
 

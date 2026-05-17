@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import type { NetlabAppShellStatus, ShellStatusTone } from './NetlabAppShell';
+import type { NetlabAppShellStatus, ShellStatusTone } from './NetlabAppShellV2';
 
 export interface CommandBarProps {
   scenarioId: string;
