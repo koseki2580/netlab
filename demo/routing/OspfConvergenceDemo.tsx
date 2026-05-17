@@ -1,6 +1,7 @@
 import type React from 'react';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import DemoShell from '../DemoShell';
+import type { CommandPaletteItem } from '../../src/components/CommandPalette';
 import { NetlabAppShellV2 } from '../../src/components/NetlabAppShellV2';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
@@ -15,6 +16,7 @@ import { ZeroStateHint } from '../../src/components/ZeroStateHint';
 import { buildOspfConvergenceTopology } from '../../src/scenarios/ospf-convergence';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import { readDemoEmbedParams } from '../embedParams';
+import { useShellChrome } from '../ShellChromeContext';
 
 function RouteSummaryPanel() {
   const { routeTable } = useNetlabContext();
@@ -70,6 +72,7 @@ function OspfConvergenceInner({
   onTogglePrimaryLink: () => void;
 }) {
   const { engine, state, exportPcap } = useSimulation();
+  const shellChrome = useShellChrome();
 
   const sendProbe = async () => {
     engine.clearTraces();
@@ -98,6 +101,67 @@ function OspfConvergenceInner({
     0,
   );
 
+  const jumpTo = useCallback(
+    (step: number) => {
+      if (totalHops === 0) return;
+      engine.selectHop(Math.max(0, Math.min(totalHops - 1, step)));
+    },
+    [engine, totalHops],
+  );
+
+  const togglePlay = useCallback(() => {
+    if (totalHops === 0) return;
+    if (state.status === 'running') {
+      engine.pause();
+    } else {
+      engine.play();
+    }
+  }, [engine, state.status, totalHops]);
+
+  useEffect(
+    () =>
+      shellChrome.registerKeymapActions({
+        playPause: togglePlay,
+        stepBackward: (delta) => jumpTo(stepIdx - delta),
+        stepForward: (delta) => jumpTo(stepIdx + delta),
+        jumpStart: () => jumpTo(0),
+        jumpEnd: () => jumpTo(totalHops - 1),
+      }),
+    [jumpTo, shellChrome, stepIdx, togglePlay, totalHops],
+  );
+
+  const tracePaletteItems = useMemo<CommandPaletteItem[]>(
+    () =>
+      currentTrace?.hops.map((hop, index) => ({
+        id: `trace-hop:${currentTrace.packetId}:${index}`,
+        label: `Hop ${String(index).padStart(2, '0')} ${hop.event} ${hop.nodeLabel}`,
+        subtitle:
+          hop.toNodeId != null
+            ? `${hop.nodeId} -> ${hop.toNodeId}`
+            : `${hop.srcIp} -> ${hop.dstIp}`,
+        group: 'Current trace',
+        keywords: [
+          currentTrace.packetId,
+          hop.event,
+          hop.nodeId,
+          hop.nodeLabel,
+          hop.protocol,
+          hop.srcIp,
+          hop.dstIp,
+          hop.fromNodeId ?? '',
+          hop.toNodeId ?? '',
+          hop.reason ?? '',
+        ],
+        onSelect: () => jumpTo(index),
+      })) ?? [],
+    [currentTrace, jumpTo],
+  );
+
+  useEffect(
+    () => shellChrome.registerPaletteItems(tracePaletteItems),
+    [shellChrome, tracePaletteItems],
+  );
+
   const downloadPcap = () => {
     const traceId = state.currentTraceId ?? undefined;
     const bytes = exportPcap(traceId);
@@ -123,6 +187,7 @@ function OspfConvergenceInner({
       onPause={() => engine.pause()}
       onStep={() => engine.step()}
       onReset={() => engine.reset()}
+      onOpenPalette={shellChrome.openPalette}
       onExport={downloadPcap}
       extraActions={
         <>
@@ -197,7 +262,7 @@ function OspfConvergenceInner({
               </div>
             </div>
           </div>
-          <PacketScrubTimeline />
+          <PacketScrubTimeline ownKeyboard={false} />
         </div>
 
         <ResizableSidebar

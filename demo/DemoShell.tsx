@@ -1,8 +1,13 @@
 import type React from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { CommandPalette, type CommandPaletteItem } from '../src/components/CommandPalette';
 import { NavRail, type NavRailView } from '../src/components/NavRail';
 import { NetlabThemeScope } from '../src/components/NetlabThemeScope';
+import { scenarioRegistry } from '../src/scenarios';
+import { installKeymap, type KeymapActions } from '../src/utils/keymap';
 import { E2eTraceHook } from './__e2e_hook';
+import { ShellChromeProvider } from './ShellChromeContext';
 
 const GITHUB_ICON = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -14,6 +19,15 @@ const isE2e =
   (import.meta as ImportMeta & { readonly env?: { readonly VITE_E2E?: string } }).env?.VITE_E2E ===
   'true';
 
+const SCENARIO_ROUTES: Record<string, string> = {
+  'basic-arp': '/networking/arp',
+  'fragmented-echo': '/networking/mtu-fragmentation',
+  'tcp-handshake': '/simulation/tcp-handshake',
+  'ospf-convergence': '/routing/ospf-convergence',
+  'stp-loop': '/networking/stp',
+  'nat-basics': '/simulation/nat',
+};
+
 interface DemoShellProps {
   title: string;
   desc: string;
@@ -24,13 +38,123 @@ interface DemoShellProps {
 export default function DemoShell({ title, desc, children, embedded = false }: DemoShellProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [registeredActions, setRegisteredActions] = useState<KeymapActions>({});
+  const [registeredPaletteItems, setRegisteredPaletteItems] = useState<CommandPaletteItem[]>([]);
   const view: NavRailView = location.pathname === '/' ? 'gallery' : 'simulator';
+
+  const openPalette = useCallback(() => {
+    setHelpOpen(false);
+    setPaletteOpen(true);
+  }, []);
+
+  const togglePalette = useCallback(() => {
+    setHelpOpen(false);
+    setPaletteOpen((value) => !value);
+  }, []);
+
+  const openHelp = useCallback(() => {
+    setPaletteOpen(false);
+    setHelpOpen(true);
+  }, []);
+
+  const closeShellOverlays = useCallback(() => {
+    setPaletteOpen(false);
+    setHelpOpen(false);
+  }, []);
+
+  const registerKeymapActions = useCallback((actions: KeymapActions) => {
+    setRegisteredActions(actions);
+    return () => setRegisteredActions({});
+  }, []);
+
+  const registerPaletteItems = useCallback((items: CommandPaletteItem[]) => {
+    setRegisteredPaletteItems(items);
+    return () => setRegisteredPaletteItems([]);
+  }, []);
 
   const selectView = (nextView: NavRailView) => {
     if (nextView === 'gallery') {
       navigate('/');
     }
   };
+
+  const commandItems = useMemo<CommandPaletteItem[]>(() => {
+    const scenarioItems = scenarioRegistry
+      .list()
+      .map((scenario): CommandPaletteItem | null => {
+        const path = SCENARIO_ROUTES[scenario.metadata.id];
+        if (!path) return null;
+        return {
+          id: `scenario:${scenario.metadata.id}`,
+          label: scenario.metadata.title,
+          subtitle: scenario.metadata.summary,
+          group: 'Scenarios',
+          keywords: [
+            scenario.metadata.id,
+            ...scenario.metadata.protocols,
+            scenario.metadata.difficulty,
+          ],
+          onSelect: () => {
+            void navigate(path);
+          },
+        };
+      })
+      .filter((item): item is CommandPaletteItem => item !== null);
+
+    return [
+      ...scenarioItems,
+      ...registeredPaletteItems,
+      {
+        id: 'command:gallery',
+        label: 'Open Gallery',
+        subtitle: 'Return to the demo gallery',
+        group: 'Commands',
+        keywords: ['browse', 'home'],
+        onSelect: () => {
+          void navigate('/');
+        },
+      },
+      {
+        id: 'command:help',
+        label: 'Show keyboard shortcuts',
+        subtitle: 'Open the shell help popover',
+        group: 'Commands',
+        keywords: ['help', 'shortcuts', '?'],
+        onSelect: openHelp,
+      },
+    ];
+  }, [navigate, openHelp, registeredPaletteItems]);
+
+  useEffect(() => {
+    if (embedded) return undefined;
+    return installKeymap({
+      togglePalette,
+      openHelp,
+      closeOverlays: closeShellOverlays,
+      ...registeredActions,
+    });
+  }, [closeShellOverlays, embedded, openHelp, registeredActions, togglePalette]);
+
+  const shellChrome = useMemo(
+    () => ({
+      openPalette,
+      togglePalette,
+      openHelp,
+      closeShellOverlays,
+      registerKeymapActions,
+      registerPaletteItems,
+    }),
+    [
+      closeShellOverlays,
+      openHelp,
+      openPalette,
+      registerKeymapActions,
+      registerPaletteItems,
+      togglePalette,
+    ],
+  );
 
   return (
     <div
@@ -39,7 +163,7 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
       className="netlab-sim-shell"
       style={{ display: 'flex', height: '100vh', background: '#0f172a' }}
     >
-      {!embedded && <NavRail view={view} onSelectView={selectView} />}
+      {!embedded && <NavRail view={view} onSelectView={selectView} onOpenHelp={openHelp} />}
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
         {!embedded && (
           <div
@@ -97,8 +221,68 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
         )}
         <NetlabThemeScope style={{ flex: 1, overflow: 'hidden' }}>
           {isE2e && <E2eTraceHook />}
-          {children}
+          <ShellChromeProvider value={shellChrome}>{children}</ShellChromeProvider>
+          {!embedded && (
+            <>
+              <CommandPalette
+                open={paletteOpen}
+                items={commandItems}
+                onClose={() => setPaletteOpen(false)}
+              />
+              {helpOpen && <ShortcutsHelp onClose={() => setHelpOpen(false)} />}
+            </>
+          )}
         </NetlabThemeScope>
+      </div>
+    </div>
+  );
+}
+
+function ShortcutsHelp({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      data-netlab-shortcuts-help=""
+      role="dialog"
+      aria-modal="true"
+      aria-label="Keyboard shortcuts"
+      style={{
+        position: 'fixed',
+        right: 14,
+        bottom: 14,
+        zIndex: 110,
+        width: 300,
+        padding: 12,
+        borderRadius: 8,
+        border: '1px solid var(--netlab-border)',
+        background: 'var(--netlab-bg-panel, var(--netlab-bg-surface))',
+        color: 'var(--netlab-text-primary)',
+        fontFamily: 'ui-monospace, monospace',
+        fontSize: 11,
+        boxShadow: '0 18px 48px rgba(0, 0, 0, 0.35)',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        <strong style={{ flex: 1 }}>Keyboard shortcuts</strong>
+        <button type="button" aria-label="Close keyboard shortcuts" onClick={onClose}>
+          Close
+        </button>
+      </div>
+      <div style={{ display: 'grid', gap: 6, color: 'var(--netlab-text-secondary)' }}>
+        <span>
+          <kbd>⌘K</kbd> / <kbd>Ctrl+K</kbd> Command palette
+        </span>
+        <span>
+          <kbd>?</kbd> Show this help
+        </span>
+        <span>
+          <kbd>Space</kbd> Play or pause trace
+        </span>
+        <span>
+          <kbd>←</kbd> / <kbd>→</kbd> Step trace
+        </span>
+        <span>
+          <kbd>Home</kbd> / <kbd>End</kbd> Jump trace
+        </span>
       </div>
     </div>
   );
