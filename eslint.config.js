@@ -5,12 +5,14 @@ import tseslint from 'typescript-eslint';
 import noHardcodedSandboxString from './eslint-rules/no-hardcoded-sandbox-string.mjs';
 import deprecationAnnotations from './eslint-rules/deprecation-annotations.cjs';
 import propertyTestSeeds from './eslint-rules/property-test-seeds.cjs';
+import noRawLocatorsInE2e from './eslint-rules/no-raw-locators-in-e2e.cjs';
 
 const netlabPlugin = {
   rules: {
     'deprecation-annotations': deprecationAnnotations,
     'no-hardcoded-sandbox-string': noHardcodedSandboxString,
     'property-test-seeds': propertyTestSeeds,
+    'no-raw-locators-in-e2e': noRawLocatorsInE2e,
   },
 };
 
@@ -116,6 +118,21 @@ export default tseslint.config(
     files: ['e2e/**/*.ts'],
     rules: {
       'react-hooks/rules-of-hooks': 'off',
+    },
+  },
+  {
+    // Enforce testid-only locator policy on Playwright specs. The pages/
+    // POMs and selectors module sit alongside the specs and follow the
+    // same rule. See docs/dev/e2e-locators.md.
+    files: ['e2e/**/*.ts'],
+    ignores: [
+      // a11y-focused specs intentionally exercise the role/aria tree.
+      'e2e/a11y.spec.ts',
+      'e2e/**/*a11y*.spec.ts',
+    ],
+    plugins: { netlab: netlabPlugin },
+    rules: {
+      'netlab/no-raw-locators-in-e2e': 'error',
     },
   },
   {
