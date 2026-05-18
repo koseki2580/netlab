@@ -95,12 +95,24 @@ Specifications for protocol implementations based on the OSI model and network d
 
 #### Devices & Layers
 
-- [Devices](networking/devices/) - Detailed design for specific devices such as hubs (`hub.md`), routers (`router.md`), and switches (`switch.md`)
-- [Layers](networking/layers/) - Protocol processing and communication flow from L1 to L7 (`l1-physical.md` to `l7-application.md`)
+- [Devices Overview](networking/devices/index.md) - Device model index for hubs, routers, and switches
+- [Hub](networking/devices/hub.md) - L1 broadcast device and shared-medium behavior
+- [Router](networking/devices/router.md) - L3 forwarding device with route tables and protocol configuration
+- [Switch](networking/devices/switch.md) - L2 forwarding device with MAC learning and VLAN behavior
+- [Layers Overview](networking/layers/index.md) - Protocol processing and communication flow from L1 to L7
+- [L1 Physical](networking/layers/l1-physical.md) - Physical-layer device and link behavior
+- [L2 Data Link](networking/layers/l2-datalink.md) - Ethernet, MAC forwarding, and frame behavior
+- [L3 Network](networking/layers/l3-network.md) - IP forwarding, routing, and network-layer behavior
+- [L4 Transport](networking/layers/l4-transport.md) - Transport-layer packet handling and ports
+- [L7 Application](networking/layers/l7-application.md) - Application-layer flows and UI behavior
 
 #### Specific Features
 
-- [Routing](networking/routing/) - Operational specifications for OSPF (`ospf.md`), BGP (`bgp.md`), RIP (`rip.md`), and static routing (`static.md`)
+- [Routing Overview](networking/routing/index.md) - Route resolution and administrative distance across protocols
+- [Static Routing](networking/routing/static.md) - Manually configured route entries and priority
+- [OSPF](networking/routing/ospf.md) - Link-state convergence and area behavior
+- [BGP](networking/routing/bgp.md) - Path-vector routing and AS-level behavior
+- [RIP](networking/routing/rip.md) - Distance-vector routing and convergence behavior
 - [ARP](networking/arp.md) - Address Resolution Protocol simulation: cache seeding, request/reply hop injection, and node ARP table visualization
 - [VLAN (802.1Q)](networking/vlan.md) - 802.1Q tagging, access/trunk ports, router-on-a-stick inter-VLAN routing
 - [Spanning Tree (802.1D)](networking/stp.md) - Root election, port roles, and blocked-port enforcement in switch forwarding
