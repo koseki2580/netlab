@@ -1,16 +1,16 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/harness';
 
-test('opens the OSPF backup-path assessment from the Gallery', async ({ page }) => {
+test('opens the OSPF backup-path assessment from the Gallery', async ({
+  page,
+  sandboxPage,
+  galleryPage,
+}) => {
   await page.goto('/');
-  await page
-    .getByRole('link', { name: /Assessment/i })
-    .first()
-    .click();
+  await galleryPage.assessmentEntryLink().first().click();
 
-  await expect(page.getByTestId('sandbox-panel')).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Assessment' })).toHaveAttribute(
-    'aria-selected',
-    'true',
+  await expect(sandboxPage.panel()).toBeVisible();
+  await expect(sandboxPage.tab('assessment')).toHaveAttribute('aria-selected', 'true');
+  await expect(sandboxPage.tabpanel()).toContainText(
+    'Make C1 reach C2 through the OSPF backup path',
   );
-  await expect(page.getByText(/Make C1 reach C2 through the OSPF backup path/i)).toBeVisible();
 });

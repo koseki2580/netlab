@@ -1,22 +1,24 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
-import { DemoPage } from './pages/DemoPage';
+import { expect, test } from './fixtures/harness';
+import { SEL } from './selectors';
 
 test('trace display filter narrows hops, persists through refresh, and clears with Escape', async ({
   page,
+  demoPage,
 }) => {
-  const demoPage = new DemoPage(page);
   await demoPage.goto('/networking/udp');
   await demoPage.pressStart();
   await demoPage.waitForTraceCount(1);
 
-  const searchbox = page.getByRole('searchbox', { name: /trace display filter/i });
-  const rows = page.getByRole('option');
+  const searchbox = page.getByTestId(SEL.traceFilter.searchbox);
+  const rows = page.getByTestId(SEL.traceFilter.hop);
   const initialCount = await rows.count();
   expect(initialCount).toBeGreaterThan(0);
 
   await searchbox.fill('protocol == tcp');
-  await expect(page.getByText(`0 of ${initialCount} hops shown`)).toBeVisible();
+  await expect(page.getByTestId(SEL.traceFilter.statusLabel)).toContainText(
+    `0 of ${initialCount} hops shown`,
+  );
   await expect
     .poll(() =>
       page.evaluate(() => new URLSearchParams(window.location.search).get('trace_filter')),
@@ -31,16 +33,18 @@ test('trace display filter narrows hops, persists through refresh, and clears wi
   expect(results.violations).toEqual([]);
 
   await page.reload();
-  await page.locator('[data-testid="netlab-root"]').waitFor();
+  await page.getByTestId(SEL.app.root).waitFor();
   await demoPage.pressStart();
   await demoPage.waitForTraceCount(1);
-  await expect(page.getByRole('searchbox', { name: /trace display filter/i })).toHaveValue(
-    'protocol == tcp',
+  await expect(page.getByTestId(SEL.traceFilter.searchbox)).toHaveValue('protocol == tcp');
+  await expect(page.getByTestId(SEL.traceFilter.statusLabel)).toContainText(
+    `0 of ${initialCount} hops shown`,
   );
-  await expect(page.getByText(`0 of ${initialCount} hops shown`)).toBeVisible();
 
-  await page.getByRole('searchbox', { name: /trace display filter/i }).press('Escape');
-  await expect(page.getByText(`${initialCount} of ${initialCount} hops shown`)).toBeVisible();
+  await page.getByTestId(SEL.traceFilter.searchbox).press('Escape');
+  await expect(page.getByTestId(SEL.traceFilter.statusLabel)).toContainText(
+    `${initialCount} of ${initialCount} hops shown`,
+  );
   await expect
     .poll(() =>
       page.evaluate(() => new URLSearchParams(window.location.search).get('trace_filter')),

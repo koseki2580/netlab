@@ -1,38 +1,32 @@
-import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures/harness';
+import { SEL } from './selectors';
 
-async function applyMtuEdit(page: Page, value: string) {
-  await page.locator('.react-flow__node').filter({ hasText: 'R1' }).first().click({
-    button: 'right',
-    force: true,
-  });
-  await page.getByLabel('MTU bytes').fill(value);
-  await page.getByRole('button', { name: 'Apply MTU' }).click();
-}
-
-test('sandbox session export and import preserves an MTU edit', async ({ page }, testInfo) => {
+test('sandbox session export and import preserves an MTU edit', async ({
+  page,
+  sandboxPage,
+}, testInfo) => {
   await page.goto('/?sandbox=1&sandboxTab=node#/networking/mtu-fragmentation');
-  await expect(page.locator('[data-testid="sandbox-panel"]')).toBeVisible();
+  await expect(sandboxPage.panel()).toBeVisible();
 
-  await applyMtuEdit(page, '500');
-  await expect(page.getByRole('tab', { name: /Edits \(1\)/ })).toBeVisible();
+  await sandboxPage.applyMtuEdit('R1', '500');
+  await sandboxPage.expectEditsCount(1);
 
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Export sandbox session' }).click();
+  await sandboxPage.exportSession();
   const download = await downloadPromise;
   const sessionPath = testInfo.outputPath('sandbox-session.json');
   await download.saveAs(sessionPath);
 
   await page.goto('/?sandbox=1&sandboxTab=node#/networking/mtu-fragmentation');
-  await expect(page.getByRole('tab', { name: /Edits \(0\)/ })).toBeVisible();
+  await sandboxPage.expectEditsCount(0);
 
-  await page.locator('input[aria-label="Import sandbox session file"]').setInputFiles(sessionPath);
-  await expect(page.locator('[aria-label="Sandbox session import preview"]')).toContainText(
+  await sandboxPage.importSessionInput().setInputFiles(sessionPath);
+  await expect(sandboxPage.importSessionPreview()).toContainText(
     'Import 1 edit from scenario fragmented-echo',
   );
-  await page.getByRole('button', { name: 'Apply imported sandbox session' }).click();
+  await sandboxPage.applyImportedSession();
 
-  await page.getByRole('tab', { name: /Edits \(1\)/ }).click();
-  await expect(page.locator('[data-testid="edit-list-item"]')).toContainText('interface.mtu');
-  await expect(page.locator('[data-testid="edit-list-item"]')).toContainText('1500 -> 500');
+  await sandboxPage.clickTab('edits');
+  await expect(page.getByTestId(SEL.sandbox.edits.list)).toContainText('interface.mtu');
+  await expect(page.getByTestId(SEL.sandbox.edits.list)).toContainText('1500 -> 500');
 });

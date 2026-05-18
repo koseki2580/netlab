@@ -1,12 +1,14 @@
 import { expect, test } from './fixtures/harness';
 
-test('alpha mode: PCAP button downloads a libpcap file', async ({ page }, testInfo) => {
+test('alpha mode: PCAP button downloads a libpcap file', async ({
+  page,
+  sandboxPage,
+}, testInfo) => {
   await page.goto('/?sandbox=1#/networking/mtu-fragmentation');
-  const panel = page.locator('[data-testid="sandbox-panel"]');
-  await expect(panel).toBeVisible();
+  await expect(sandboxPage.panel()).toBeVisible();
 
   const downloadPromise = page.waitForEvent('download');
-  await panel.getByRole('button', { name: 'Download sandbox PCAP', exact: true }).click();
+  await sandboxPage.pcapDownload().click();
   const download = await downloadPromise;
 
   expect(download.suggestedFilename()).toMatch(/^netlab-sandbox-fragmented-echo-\d{12}\.pcap$/);
@@ -22,20 +24,20 @@ test('alpha mode: PCAP button downloads a libpcap file', async ({ page }, testIn
 
 test('beta mode: branch selector appears and baseline download works', async ({
   page,
+  sandboxPage,
 }, testInfo) => {
   await page.goto('/?sandbox=1#/networking/mtu-fragmentation');
-  const panel = page.locator('[data-testid="sandbox-panel"]');
-  await expect(panel).toBeVisible();
+  await expect(sandboxPage.panel()).toBeVisible();
 
-  await page.getByRole('button', { name: 'Switch sandbox mode' }).click();
-  await expect(page.getByRole('button', { name: 'Switch sandbox mode' })).toContainText('Compare');
+  await sandboxPage.toggleMode();
+  await expect(sandboxPage.modeSwitch()).toContainText('Compare');
 
-  await expect(panel.getByLabel('PCAP branch selection')).toBeVisible();
+  await expect(sandboxPage.pcapBranchSelect()).toBeVisible();
 
-  await panel.getByLabel('PCAP branch selection').selectOption('baseline');
+  await sandboxPage.pcapBranchSelect().selectOption('baseline');
 
   const downloadPromise = page.waitForEvent('download');
-  await panel.getByRole('button', { name: 'Download sandbox PCAP', exact: true }).click();
+  await sandboxPage.pcapDownload().click();
   const download = await downloadPromise;
 
   expect(download.suggestedFilename()).toMatch(/baseline/);
@@ -49,18 +51,20 @@ test('beta mode: branch selector appears and baseline download works', async ({
   expect(magic >>> 0).toBe(0xa1b2c3d4);
 });
 
-test('beta mode: combined download produces a pcapng file', async ({ page }, testInfo) => {
+test('beta mode: combined download produces a pcapng file', async ({
+  page,
+  sandboxPage,
+}, testInfo) => {
   await page.goto('/?sandbox=1#/networking/mtu-fragmentation');
-  const panel = page.locator('[data-testid="sandbox-panel"]');
-  await expect(panel).toBeVisible();
+  await expect(sandboxPage.panel()).toBeVisible();
 
-  await page.getByRole('button', { name: 'Switch sandbox mode' }).click();
-  await expect(page.getByRole('button', { name: 'Switch sandbox mode' })).toContainText('Compare');
+  await sandboxPage.toggleMode();
+  await expect(sandboxPage.modeSwitch()).toContainText('Compare');
 
-  await panel.getByLabel('PCAP branch selection').selectOption('combined');
+  await sandboxPage.pcapBranchSelect().selectOption('combined');
 
   const downloadPromise = page.waitForEvent('download');
-  await panel.getByRole('button', { name: 'Download sandbox PCAP', exact: true }).click();
+  await sandboxPage.pcapDownload().click();
   const download = await downloadPromise;
 
   // combined mode produces either .pcapng or two .pcap files depending on browser
@@ -85,18 +89,14 @@ test('beta mode: combined download produces a pcapng file', async ({ page }, tes
   }
 });
 
-test('diff timeline shows PCAP buttons for each branch', async ({ page }) => {
+test('diff timeline shows PCAP buttons for each branch', async ({ page, sandboxPage }) => {
   await page.goto('/?sandbox=1#/networking/mtu-fragmentation');
-  await expect(page.locator('[data-testid="sandbox-panel"]')).toBeVisible();
+  await expect(sandboxPage.panel()).toBeVisible();
 
-  await page.getByRole('button', { name: 'Switch sandbox mode' }).click();
-  await expect(page.getByRole('button', { name: 'Switch sandbox mode' })).toContainText('Compare');
+  await sandboxPage.toggleMode();
+  await expect(sandboxPage.modeSwitch()).toContainText('Compare');
 
-  await expect(
-    page.getByRole('button', { name: 'Download sandbox PCAP (baseline)' }),
-  ).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Download sandbox PCAP (whatif)' })).toBeVisible();
-  await expect(
-    page.getByRole('button', { name: 'Download sandbox PCAP (combined)' }),
-  ).toBeVisible();
+  await expect(sandboxPage.pcapDownloadBaseline()).toBeVisible();
+  await expect(sandboxPage.pcapDownloadWhatif()).toBeVisible();
+  await expect(sandboxPage.pcapDownloadCombined()).toBeVisible();
 });

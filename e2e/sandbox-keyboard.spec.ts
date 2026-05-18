@@ -1,80 +1,80 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures/harness';
+import { SandboxPage } from './pages/SandboxPage';
+import { SEL } from './selectors';
 
-async function openSandboxMtu(page: Page) {
+async function openSandboxMtu(page: Page, sandboxPage: SandboxPage) {
   await page.goto('/?sandbox=1&sandboxTab=node#/networking/mtu-fragmentation');
-  await expect(page.locator('[data-testid="netlab-root"]')).toBeVisible();
-  await expect(page.locator('[data-testid="sandbox-panel"]')).toBeVisible();
+  await sandboxPage.expectMounted();
 }
 
-async function applyMtuEdit(page: Page, value: string) {
-  await page.locator('.react-flow__node').filter({ hasText: 'R1' }).first().click({
-    button: 'right',
-    force: true,
-  });
-  await page.getByLabel('MTU bytes').fill(value);
-  await page.getByRole('button', { name: 'Apply MTU' }).click();
-}
-
-test('? key opens the shortcuts help modal', async ({ page }) => {
-  await openSandboxMtu(page);
+test('? key opens the shortcuts help modal', async ({ page, sandboxPage }) => {
+  await openSandboxMtu(page, sandboxPage);
 
   await page.keyboard.press('?');
-  const dialog = page.getByRole('dialog', { name: 'Keyboard shortcuts' });
+  const dialog = sandboxPage.shortcutsDialog();
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText('Key');
   await expect(dialog).toContainText('Action');
 });
 
-test('shortcuts help modal lists built-in shortcuts', async ({ page }) => {
-  await openSandboxMtu(page);
+test('shortcuts help modal lists built-in shortcuts', async ({ page, sandboxPage }) => {
+  await openSandboxMtu(page, sandboxPage);
 
   await page.keyboard.press('?');
-  const dialog = page.getByRole('dialog', { name: 'Keyboard shortcuts' });
+  const dialog = sandboxPage.shortcutsDialog();
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText('Escape');
   await expect(dialog).toContainText('Cmd+Z');
 });
 
-test('Escape closes the shortcuts help modal', async ({ page }) => {
-  await openSandboxMtu(page);
+test('Escape closes the shortcuts help modal', async ({ page, sandboxPage }) => {
+  await openSandboxMtu(page, sandboxPage);
 
   await page.keyboard.press('?');
-  await expect(page.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeVisible();
+  await expect(sandboxPage.shortcutsDialog()).toBeVisible();
   await page.keyboard.press('Escape');
-  await expect(page.getByRole('dialog', { name: 'Keyboard shortcuts' })).toHaveCount(0);
+  await expect(sandboxPage.shortcutsDialog()).toHaveCount(0);
 });
 
-test('? button in sandbox panel header opens the shortcuts modal', async ({ page }) => {
-  await openSandboxMtu(page);
+test('? button in sandbox panel header opens the shortcuts modal', async ({
+  page,
+  sandboxPage,
+}) => {
+  await openSandboxMtu(page, sandboxPage);
 
-  await page.getByLabel('Show keyboard shortcuts').click();
-  await expect(page.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeVisible();
+  await sandboxPage.shortcutsHelpBtn().click();
+  await expect(sandboxPage.shortcutsDialog()).toBeVisible();
 });
 
-test('shortcuts help modal is axe-core accessible', async ({ page }) => {
-  await openSandboxMtu(page);
+test('shortcuts help modal is axe-core accessible', async ({ page, sandboxPage }) => {
+  await openSandboxMtu(page, sandboxPage);
 
   await page.keyboard.press('?');
-  await expect(page.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeVisible();
+  await expect(sandboxPage.shortcutsDialog()).toBeVisible();
 
-  const results = await new AxeBuilder({ page }).include('[role="dialog"]').analyze();
+  const results = await new AxeBuilder({ page })
+    .include(`[data-testid="${SEL.sandbox.shortcutsDialog}"]`)
+    .analyze();
   expect(results.violations).toEqual([]);
 });
 
-test('Shift+S keyboard shortcut toggles sandbox panel visibility', async ({ page }) => {
-  await openSandboxMtu(page);
+test('Shift+S keyboard shortcut toggles sandbox panel visibility', async ({
+  page,
+  sandboxPage,
+}) => {
+  await openSandboxMtu(page, sandboxPage);
 
-  await expect(page.locator('[data-testid="sandbox-panel"]')).toBeVisible();
+  await expect(sandboxPage.panel()).toBeVisible();
   await page.keyboard.press('Shift+S');
-  await expect(page.locator('[data-testid="sandbox-panel"]')).toHaveCount(0);
+  await expect(sandboxPage.panel()).toHaveCount(0);
   await page.keyboard.press('Shift+S');
-  await expect(page.locator('[data-testid="sandbox-panel"]')).toBeVisible();
+  await expect(sandboxPage.panel()).toBeVisible();
 });
 
-test('Shift+C toggles sandbox into compare mode', async ({ page }) => {
-  await openSandboxMtu(page);
+test('Shift+C toggles sandbox into compare mode', async ({ page, sandboxPage }) => {
+  await openSandboxMtu(page, sandboxPage);
 
   await expect(page.locator('.react-flow')).toHaveCount(1);
   await page.keyboard.press('Shift+C');
@@ -83,15 +83,15 @@ test('Shift+C toggles sandbox into compare mode', async ({ page }) => {
   await expect(page.locator('.react-flow')).toHaveCount(1);
 });
 
-test('keyboard-only complete an edit flow (Cmd+Z to undo)', async ({ page }) => {
-  await openSandboxMtu(page);
+test('keyboard-only complete an edit flow (Cmd+Z to undo)', async ({ page, sandboxPage }) => {
+  await openSandboxMtu(page, sandboxPage);
 
-  await applyMtuEdit(page, '500');
-  await expect(page.getByRole('tab', { name: /Edits \(1\)/ })).toBeVisible();
+  await sandboxPage.applyMtuEdit('R1', '500');
+  await sandboxPage.expectEditsCount(1);
 
   await page.keyboard.press('Control+Z');
-  await expect(page.getByRole('tab', { name: /Edits \(0\)/ })).toBeVisible();
+  await sandboxPage.expectEditsCount(0);
 
   await page.keyboard.press('Control+Shift+Z');
-  await expect(page.getByRole('tab', { name: /Edits \(1\)/ })).toBeVisible();
+  await sandboxPage.expectEditsCount(1);
 });

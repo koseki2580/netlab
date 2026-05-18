@@ -1,16 +1,16 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
-import { DemoPage } from './pages/DemoPage';
+import { expect, test } from './fixtures/harness';
+import { SEL } from './selectors';
 
-test('observability demo records NetFlow and sFlow annotations', async ({ page }) => {
-  const demoPage = new DemoPage(page);
+test('observability demo records NetFlow and sFlow annotations', async ({ page, demoPage }) => {
   await demoPage.goto('/networking/observability');
 
-  await page.getByRole('button', { name: /send observed flow/i }).click();
+  await page.getByTestId(SEL.demo.observabilityFlow).click();
 
-  await expect(page.getByText(/netflow:flow-update/i).first()).toBeVisible();
-  await page.getByRole('button', { name: 'sFlow' }).click();
-  await expect(page.getByText(/sflow:sampled/i).first()).toBeVisible();
+  const traceLog = page.getByTestId(SEL.demo.traceLog).first();
+  await expect(traceLog).toContainText('netflow:flow-update');
+  await page.getByTestId(SEL.demo.observabilitySflow).click();
+  await expect(traceLog).toContainText('sflow:sampled');
 
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa'])

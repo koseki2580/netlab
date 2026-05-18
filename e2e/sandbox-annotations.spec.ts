@@ -21,32 +21,29 @@ const annotationEdit = {
 
 test('sandbox annotations appear in the Edits tab and survive session export/import', async ({
   page,
+  sandboxPage,
 }, testInfo) => {
   await page.goto(
     `/?sandbox=1&sandboxTab=edits&sandboxState=${sandboxState([annotationEdit])}#/networking/mtu-fragmentation`,
   );
-  await expect(page.locator('[data-testid="sandbox-panel"]')).toBeVisible();
-  await expect(page.getByRole('tab', { name: /Edits \(1\)/ })).toBeVisible();
+  await expect(sandboxPage.panel()).toBeVisible();
+  await sandboxPage.expectEditsCount(1);
 
-  await page.getByLabel('Show annotations only').check();
-  await expect(page.locator('[data-testid="annotation-list-item"]')).toContainText(
-    'Fragmentation happens here',
-  );
+  await sandboxPage.showAnnotationsOnly();
+  await expect(sandboxPage.annotationListItem()).toContainText('Fragmentation happens here');
 
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Export sandbox session' }).click();
+  await sandboxPage.exportSession();
   const download = await downloadPromise;
   const sessionPath = testInfo.outputPath('sandbox-annotations-session.json');
   await download.saveAs(sessionPath);
 
   await page.goto('/?sandbox=1&sandboxTab=edits#/networking/mtu-fragmentation');
-  await expect(page.getByRole('tab', { name: /Edits \(0\)/ })).toBeVisible();
+  await sandboxPage.expectEditsCount(0);
 
-  await page.locator('input[aria-label="Import sandbox session file"]').setInputFiles(sessionPath);
-  await page.getByRole('button', { name: 'Apply imported sandbox session' }).click();
+  await sandboxPage.importSessionInput().setInputFiles(sessionPath);
+  await sandboxPage.applyImportedSession();
 
-  await page.getByLabel('Show annotations only').check();
-  await expect(page.locator('[data-testid="annotation-list-item"]')).toContainText(
-    'Fragmentation happens here',
-  );
+  await sandboxPage.showAnnotationsOnly();
+  await expect(sandboxPage.annotationListItem()).toContainText('Fragmentation happens here');
 });

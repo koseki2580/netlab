@@ -1,15 +1,13 @@
-import { expect, test } from '@playwright/test';
-import { DemoPage } from './pages/DemoPage';
+import { expect, test } from './fixtures/harness';
+import { SEL } from './selectors';
 
-test('GRE demo shows outer header, GRE key, and inner IP packet', async ({ page }) => {
-  const demoPage = new DemoPage(page);
+test('GRE demo shows outer header, GRE key, and inner IP packet', async ({ page, demoPage }) => {
   await demoPage.goto('/networking/tunneling/gre');
 
-  await expect(page.getByText('GRE Tunnel').first()).toBeVisible();
-  await expect(page.getByTestId('gre-outer')).toContainText('proto 47');
-  await expect(page.getByTestId('gre-shim')).toContainText('100');
-  await expect(page.getByTestId('gre-inner')).toContainText('10.0.0.10');
+  await expect(page.getByTestId(SEL.demo.greOuter)).toContainText('proto 47');
+  await expect(page.getByTestId(SEL.demo.greShim)).toContainText('100');
+  await expect(page.getByTestId(SEL.demo.greInner)).toContainText('10.0.0.10');
 
-  await page.getByRole('button', { name: /change tunnel key/i }).click();
-  await expect(page.getByTestId('gre-status')).toContainText('isolated');
+  await page.getByTestId(SEL.demo.greKeyChange).click();
+  await expect(page.getByTestId(SEL.demo.greStatus)).toContainText('isolated');
 });

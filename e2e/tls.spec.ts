@@ -1,18 +1,21 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
-import { DemoPage } from './pages/DemoPage';
+import { expect, test } from './fixtures/harness';
+import { SEL } from './selectors';
 
-test('HTTPS demo shows TLS handshake annotations and ALPN alert path', async ({ page }) => {
-  const demoPage = new DemoPage(page);
+test('HTTPS demo shows TLS handshake annotations and ALPN alert path', async ({
+  page,
+  demoPage,
+}) => {
   await demoPage.goto('/networking/https');
 
-  await page.getByRole('button', { name: /run https handshake/i }).click();
-  await expect(page.getByText(/tls:client-hello/i).first()).toBeVisible();
-  await expect(page.getByText(/tls:finished/i).nth(1)).toBeVisible();
-  await expect(page.getByText(/ALPN: http\/1\.1/i)).toBeVisible();
+  await page.getByTestId(SEL.demo.tlsRunHandshake).click();
+  const traceLog = page.getByTestId(SEL.demo.traceLog).first();
+  await expect(traceLog).toContainText('tls:client-hello');
+  await expect(traceLog).toContainText('tls:finished');
+  await expect(traceLog).toContainText('ALPN: http/1.1');
 
-  await page.getByRole('button', { name: /force alpn mismatch/i }).click();
-  await expect(page.getByText(/tls:alert \(no_application_protocol\)/i)).toBeVisible();
+  await page.getByTestId(SEL.demo.tlsForceAlpnMismatch).click();
+  await expect(traceLog).toContainText('tls:alert (no_application_protocol)');
 
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(results.violations).toEqual([]);

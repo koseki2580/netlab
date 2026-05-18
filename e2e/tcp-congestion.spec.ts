@@ -1,22 +1,20 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
-import { DemoPage } from './pages/DemoPage';
+import { expect, test } from './fixtures/harness';
+import { SEL } from './selectors';
 
-test('tcp congestion demo renders deterministic phase transitions', async ({ page }) => {
-  const demoPage = new DemoPage(page);
+test('tcp congestion demo renders deterministic phase transitions', async ({ page, demoPage }) => {
   await demoPage.goto('/simulation/tcp-congestion');
 
   await expect(page.locator('.react-flow').first()).toBeAttached();
-  await expect(page.getByRole('img', { name: /tcp congestion window timeline/i })).toBeVisible();
-  await expect(page.getByText('RTO', { exact: true })).toBeVisible();
-  await expect(page.getByText('step 9: fast-retransmit', { exact: true })).toBeVisible();
-  await expect(page.getByText('step 12: rto-fire', { exact: true })).toBeVisible();
+  await expect(page.getByTestId(SEL.demo.tcpCongestionChart)).toBeVisible();
+  await expect(page.getByTestId(SEL.demo.tcpCongestionEvent(9))).toContainText('fast-retransmit');
+  await expect(page.getByTestId(SEL.demo.tcpCongestionEvent(12))).toContainText('rto-fire');
 
-  await page.getByRole('button', { name: /reset/i }).click();
-  await expect(page.getByText('No congestion events')).toBeVisible();
+  await page.getByTestId(SEL.demo.tcpCongestionReset).click();
+  await expect(page.getByTestId(SEL.demo.tcpCongestionEmpty)).toBeVisible();
 
-  await page.getByRole('button', { name: /run trace/i }).click();
-  await expect(page.getByText('step 9: fast-retransmit', { exact: true })).toBeVisible();
+  await page.getByTestId(SEL.demo.tcpCongestionRun).click();
+  await expect(page.getByTestId(SEL.demo.tcpCongestionEvent(9))).toContainText('fast-retransmit');
 
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa'])

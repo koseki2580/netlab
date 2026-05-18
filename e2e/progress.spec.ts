@@ -1,8 +1,12 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures/harness';
+import { SEL } from './selectors';
 
-test('learner progress is opt-in, exportable, importable, and clearable', async ({ page }) => {
+test('learner progress is opt-in, exportable, importable, and clearable', async ({
+  page,
+  galleryPage,
+}) => {
   await page.goto('/#/?learnerId=learner-e2e');
-  await expect(page.getByText('Demo gallery')).toBeVisible();
+  await expect(page.getByTestId(SEL.gallery.heading)).toContainText('Demo gallery');
 
   await page.evaluate(() => {
     window.localStorage.setItem(
@@ -25,19 +29,20 @@ test('learner progress is opt-in, exportable, importable, and clearable', async 
   });
   await page.reload();
 
-  await expect(page.getByText('Learner progress')).toBeVisible();
-  await expect(page.getByRole('cell', { name: 'OSPF convergence' })).toBeVisible();
-  await expect(page.getByText('Completed').first()).toBeVisible();
+  const progressSection = page.getByTestId(SEL.gallery.progressSection);
+  await expect(progressSection).toContainText('Learner progress');
+  await expect(progressSection).toContainText('OSPF convergence');
+  await expect(progressSection).toContainText('Complete');
 
-  await page.getByRole('button', { name: 'Export JSON' }).click();
-  await expect(page.getByLabel('Exported progress JSON')).toContainText('ospf-convergence');
+  await galleryPage.exportProgressJson();
+  await expect(galleryPage.exportedProgressJsonOutput()).toContainText('ospf-convergence');
 
-  await page.getByRole('button', { name: 'Clear progress' }).click();
-  await page.getByLabel('Confirm learner id').fill('learner-e2e');
-  await page.getByRole('button', { name: 'Confirm clear' }).click();
-  await expect(page.getByRole('cell', { name: 'OSPF convergence' })).not.toBeVisible();
+  await galleryPage.clearProgress();
+  await galleryPage.confirmLearnerIdInput().fill('learner-e2e');
+  await galleryPage.confirmClear();
+  await expect(progressSection).not.toContainText('OSPF convergence');
 
-  await page.getByLabel('Import progress JSON').fill(
+  await galleryPage.importProgressJsonInput().fill(
     JSON.stringify({
       schemaVersion: 1,
       learnerId: 'learner-e2e',
@@ -53,6 +58,6 @@ test('learner progress is opt-in, exportable, importable, and clearable', async 
       updatedAt: '2026-05-11T00:00:00.000Z',
     }),
   );
-  await page.getByRole('button', { name: 'Import JSON' }).click();
-  await expect(page.getByRole('cell', { name: 'OSPF convergence' })).toBeVisible();
+  await galleryPage.importProgressJson();
+  await expect(progressSection).toContainText('OSPF convergence');
 });

@@ -1,43 +1,43 @@
 import { expect, test } from './fixtures/harness';
+import { SEL } from './selectors';
 
-test('sandbox intro guides the learner through the NAT rule flow', async ({ page }) => {
+test('sandbox intro guides the learner through the NAT rule flow', async ({
+  page,
+  sandboxPage,
+  nodeDetailPage,
+}) => {
   await page.goto('/?sandbox=1&sandboxTab=node&intro=sandbox-intro-nat#/simulation/nat');
-  await expect(page.locator('[data-testid="netlab-root"]')).toBeVisible();
-  await expect(page.locator('[data-testid="sandbox-intro-overlay"]')).toBeVisible();
+  await expect(page.getByTestId(SEL.app.root)).toBeVisible();
+  await expect(sandboxPage.introOverlay()).toBeVisible();
 
-  await page.getByRole('button', { name: 'Start Intro' }).click();
-  await page.getByRole('tab', { name: 'Node' }).click();
+  await sandboxPage.startIntro();
+  await sandboxPage.clickTab('node');
 
-  const sandboxPopover = page.getByRole('dialog', { name: 'Edit in sandbox' });
   const openNodePopover = async () => {
-    await page.locator('.react-flow__node').filter({ hasText: 'R-Edge' }).first().click({
-      button: 'right',
-      force: true,
-    });
-    await expect(sandboxPopover).toBeVisible();
+    await sandboxPage.rightClickNodeByLabel('R-Edge');
   };
 
   await openNodePopover();
-  await sandboxPopover.getByLabel('NAT kind').selectOption('dnat');
-  await sandboxPopover.getByLabel('Translate to').fill('192.168.1.10');
-  await sandboxPopover.getByRole('button', { name: 'Add NAT rule' }).click();
+  await sandboxPage.popoverNatKind().selectOption('dnat');
+  await sandboxPage.popoverNatTranslateTo().fill('192.168.1.10');
+  await sandboxPage.popoverNatAdd();
   // Close the co-mounted NodeDetailPanel so the next right-click reaches the
   // node instead of the overlay panel covering the canvas right band.
-  await page.getByLabel('Close panel').click();
+  await nodeDetailPage.close();
 
-  await page.getByRole('tab', { name: 'Traffic' }).click();
-  await page.getByLabel('Source').selectOption({ label: 'Internet Host' });
-  await page.getByLabel('Destination').selectOption({ label: 'R-Edge' });
-  await page.getByRole('button', { name: 'Launch traffic' }).click();
+  await sandboxPage.clickTab('traffic');
+  await sandboxPage.trafficSource().selectOption({ label: 'Internet Host' });
+  await sandboxPage.trafficDestination().selectOption({ label: 'R-Edge' });
+  await sandboxPage.launchTraffic();
 
-  await page.getByRole('tab', { name: 'Node' }).click();
+  await sandboxPage.clickTab('node');
   await openNodePopover();
-  await sandboxPopover.getByLabel('NAT editor').getByRole('button', { name: 'Remove' }).click();
+  await sandboxPage.popoverNatEditorRemoveFirst().click();
 
-  await page.getByRole('tab', { name: 'Traffic' }).click();
-  await page.getByLabel('Source').selectOption({ label: 'Internet Host' });
-  await page.getByLabel('Destination').selectOption({ label: 'R-Edge' });
-  await page.getByRole('button', { name: 'Launch traffic' }).click();
+  await sandboxPage.clickTab('traffic');
+  await sandboxPage.trafficSource().selectOption({ label: 'Internet Host' });
+  await sandboxPage.trafficDestination().selectOption({ label: 'R-Edge' });
+  await sandboxPage.launchTraffic();
 
-  await expect(page.locator('[data-testid="sandbox-intro-overlay"]')).toHaveCount(0);
+  await expect(sandboxPage.introOverlay()).toHaveCount(0);
 });

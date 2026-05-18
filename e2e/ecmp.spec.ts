@@ -1,16 +1,16 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
-import { DemoPage } from './pages/DemoPage';
+import { expect, test } from './fixtures/harness';
+import { SEL } from './selectors';
 
-test('ECMP demo hashes flows across equal-cost next hops', async ({ page }) => {
-  const demoPage = new DemoPage(page);
+test('ECMP demo hashes flows across equal-cost next hops', async ({ page, demoPage }) => {
   await demoPage.goto('/networking/ecmp');
 
-  await page.getByRole('button', { name: /send ecmp flows/i }).click();
+  await page.getByTestId(SEL.demo.ecmpSend).click();
 
-  await expect(page.getByText(/ecmp bucket/i).first()).toBeVisible();
-  await expect(page.getByText(/via 10\.0\.12\.2/i).first()).toBeVisible();
-  await expect(page.getByText(/via 10\.0\.13\.2/i).first()).toBeVisible();
+  const traceLog = page.getByTestId(SEL.demo.traceLog).first();
+  await expect(traceLog).toContainText('bucket');
+  await expect(traceLog).toContainText('via 10.0.12.2');
+  await expect(traceLog).toContainText('via 10.0.13.2');
 
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa'])

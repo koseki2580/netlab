@@ -1,16 +1,17 @@
-import { expect, test } from '@playwright/test';
-import { DemoPage } from './pages/DemoPage';
+import { expect, test } from './fixtures/harness';
+import { SEL } from './selectors';
 
-test('VXLAN EVPN demo shows UDP/4789, EVPN routes, and ARP suppression', async ({ page }) => {
-  const demoPage = new DemoPage(page);
+test('VXLAN EVPN demo shows UDP/4789, EVPN routes, and ARP suppression', async ({
+  page,
+  demoPage,
+}) => {
   await demoPage.goto('/networking/tunneling/vxlan-evpn');
 
-  await expect(page.getByText('VXLAN EVPN').first()).toBeVisible();
-  await expect(page.getByTestId('vxlan-outer')).toContainText('UDP/4789');
-  await expect(page.getByTestId('evpn-type2')).toContainText('10.10.0.20');
-  await expect(page.getByTestId('evpn-type5')).toContainText('10.10.0.0/24');
-  await expect(page.getByTestId('arp-suppression')).toContainText('hit');
+  await expect(page.getByTestId(SEL.demo.vxlanOuter)).toContainText('UDP/4789');
+  await expect(page.getByTestId(SEL.demo.evpnType2)).toContainText('10.10.0.20');
+  await expect(page.getByTestId(SEL.demo.evpnType5)).toContainText('10.10.0.0/24');
+  await expect(page.getByTestId(SEL.demo.arpSuppression)).toContainText('hit');
 
-  await page.getByRole('button', { name: /disable arp suppression/i }).click();
-  await expect(page.getByTestId('arp-suppression')).toContainText('flood');
+  await page.getByTestId(SEL.demo.arpSuppressionToggle).click();
+  await expect(page.getByTestId(SEL.demo.arpSuppression)).toContainText('flood');
 });

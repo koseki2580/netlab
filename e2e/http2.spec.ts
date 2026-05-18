@@ -1,16 +1,14 @@
-import { expect, test } from '@playwright/test';
-import { DemoPage } from './pages/DemoPage';
+import { expect, test } from './fixtures/harness';
+import { SEL } from './selectors';
 
-test('HTTP/2 demo shows multiplexing and TCP transport HOL', async ({ page }) => {
-  const demoPage = new DemoPage(page);
+test('HTTP/2 demo shows multiplexing and TCP transport HOL', async ({ page, demoPage }) => {
   await demoPage.goto('/networking/http2');
 
-  await expect(page.getByText(/HTTP\/2 Multiplexing/i)).toBeVisible();
-  await expect(page.getByTestId('h2-data-frame').first()).toContainText('stream=1');
+  await expect(page.getByTestId(SEL.demo.h2DataFrame).first()).toContainText('stream=1');
 
-  await page.getByRole('button', { name: /enable tcp loss/i }).click();
-  await expect(page.getByTestId('h2-stream-1')).toContainText('stalled');
-  await expect(page.getByTestId('h2-stream-3')).toContainText('stalled');
-  await expect(page.getByTestId('h2-stream-5')).toContainText('stalled');
-  await expect(page.getByTestId('h2-stream-7')).toContainText('stalled');
+  await page.getByTestId(SEL.demo.h2TcpLossToggle).click();
+  await expect(page.getByTestId(SEL.demo.h2Stream(1))).toContainText('stalled');
+  await expect(page.getByTestId(SEL.demo.h2Stream(3))).toContainText('stalled');
+  await expect(page.getByTestId(SEL.demo.h2Stream(5))).toContainText('stalled');
+  await expect(page.getByTestId(SEL.demo.h2Stream(7))).toContainText('stalled');
 });

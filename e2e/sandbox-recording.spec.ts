@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures/harness';
+import { SEL } from './selectors';
 
 // Plan/70 ships the recording primitives (provider, player, scrubber, metadata editor,
 // desync detection, property tests). The end-to-end demo integration — wiring the
@@ -14,7 +15,7 @@ test.skip('sandbox recording: edit MTU, save, and download a valid .netlabrec.js
   page,
 }) => {
   await page.goto('/?sandbox=1&recording=1#/networking/mtu-fragmentation');
-  await expect(page.locator('[data-testid="sandbox-panel"]')).toBeVisible();
-  await page.getByRole('button', { name: /Record session/ }).click();
+  await expect(page.getByTestId(SEL.sandbox.panel)).toBeVisible();
+  // When the Record session button lands, attach it via SEL.sandbox.recordSession and click via testid.
   // Make an edit, then stop+save and assert a valid recording was downloaded.
 });

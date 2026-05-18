@@ -1,36 +1,35 @@
 import { expect, test } from './fixtures/harness';
+import { SEL } from './selectors';
 
-test('sandbox intro guides the learner through the OSPF convergence flow', async ({ page }) => {
+test('sandbox intro guides the learner through the OSPF convergence flow', async ({
+  page,
+  sandboxPage,
+}) => {
   await page.goto('/?sandbox=1&sandboxTab=node&intro=sandbox-intro-ospf#/routing/ospf-convergence');
-  await expect(page.locator('[data-testid="netlab-root"]')).toBeVisible();
-  await expect(page.locator('[data-testid="sandbox-intro-overlay"]')).toBeVisible();
+  await expect(page.getByTestId(SEL.app.root)).toBeVisible();
+  await expect(sandboxPage.introOverlay()).toBeVisible();
 
-  await page.getByRole('button', { name: 'Start Intro' }).click();
-  await page.getByRole('tab', { name: 'Node' }).click();
+  await sandboxPage.startIntro();
+  await sandboxPage.clickTab('node');
 
-  await page.getByRole('button', { name: /Fail link/i }).click({ force: true });
+  await page.getByTestId(SEL.demo.ospfFailLink).click({ force: true });
 
-  await page.getByRole('tab', { name: 'Traffic' }).click();
-  await page.getByLabel('Source').selectOption({ label: 'C1' });
-  await page.getByLabel('Destination').selectOption({ label: 'C2' });
-  await page.getByRole('button', { name: 'Launch traffic' }).click();
+  await sandboxPage.clickTab('traffic');
+  await sandboxPage.trafficSource().selectOption({ label: 'C1' });
+  await sandboxPage.trafficDestination().selectOption({ label: 'C2' });
+  await sandboxPage.launchTraffic();
 
-  await page.getByRole('tab', { name: 'Node' }).click();
-  await page.locator('.react-flow__node').filter({ hasText: 'R1' }).first().click({
-    button: 'right',
-    force: true,
-  });
-  const sandboxPopover = page.getByRole('dialog', { name: 'Edit in sandbox' });
-  await expect(sandboxPopover).toBeVisible();
-  await sandboxPopover.locator('input').first().fill('10.4.0.0/24');
-  await sandboxPopover.getByLabel('Next hop').fill('10.0.13.2');
-  await sandboxPopover.getByLabel('Route interface').selectOption({ label: 'to-r3' });
-  await sandboxPopover.getByRole('button', { name: 'Add route' }).click();
+  await sandboxPage.clickTab('node');
+  await sandboxPage.rightClickNodeByLabel('R1');
+  await sandboxPage.popoverRouteNetwork().fill('10.4.0.0/24');
+  await sandboxPage.popoverRouteNextHop().fill('10.0.13.2');
+  await sandboxPage.popoverRouteInterface().selectOption({ label: 'to-r3' });
+  await sandboxPage.popoverRouteAdd();
 
-  await page.getByRole('tab', { name: 'Traffic' }).click();
-  await page.getByLabel('Source').selectOption({ label: 'C1' });
-  await page.getByLabel('Destination').selectOption({ label: 'C2' });
-  await page.getByRole('button', { name: 'Launch traffic' }).click();
+  await sandboxPage.clickTab('traffic');
+  await sandboxPage.trafficSource().selectOption({ label: 'C1' });
+  await sandboxPage.trafficDestination().selectOption({ label: 'C2' });
+  await sandboxPage.launchTraffic();
 
-  await expect(page.locator('[data-testid="sandbox-intro-overlay"]')).toHaveCount(0);
+  await expect(sandboxPage.introOverlay()).toHaveCount(0);
 });

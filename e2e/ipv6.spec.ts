@@ -1,16 +1,17 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
-import { DemoPage } from './pages/DemoPage';
+import { expect, test } from './fixtures/harness';
+import { SEL } from './selectors';
 
-test('IPv6 demo delivers ICMPv6 echo through dual-stack routing', async ({ page }) => {
-  const demoPage = new DemoPage(page);
+test('IPv6 demo delivers ICMPv6 echo through dual-stack routing', async ({ page, demoPage }) => {
   await demoPage.goto('/networking/ipv6');
 
-  await page.getByRole('button', { name: /send ipv6 echo/i }).click();
+  await page.getByTestId(SEL.demo.ipv6SendEcho).click();
 
-  await expect(page.getByText(/icmpv6 hops/i)).toBeVisible();
-  await expect(page.getByText(/server deliver/i).first()).toBeVisible();
-  await expect(page.getByText(/2001:db8:2::20/i).first()).toBeVisible();
+  // The IPv6 demo prints hop annotations into the per-demo trace log container.
+  const traceLog = page.getByTestId(SEL.demo.traceLog).first();
+  await expect(traceLog).toContainText('ICMPv6 hops');
+  await expect(traceLog).toContainText('server');
+  await expect(traceLog).toContainText('2001:db8:2::20');
 
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa'])

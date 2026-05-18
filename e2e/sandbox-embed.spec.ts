@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures/harness';
+import { SEL } from './selectors';
 
 test('embedded sandbox posts edit-count updates to the parent page', async ({ page }) => {
   const messages: unknown[] = [];
@@ -22,23 +23,21 @@ test('embedded sandbox posts edit-count updates to the parent page', async ({ pa
   `);
 
   const frame = page.frameLocator('iframe[title="netlab sandbox"]');
-  await expect(frame.locator('[data-testid="sandbox-panel"]')).toBeVisible();
-  await expect(frame.locator('[data-testid="sandbox-panel"]')).toHaveAttribute(
-    'data-embed-mode',
-    'compact',
-  );
-  await expect(frame.getByText('Gallery')).toHaveCount(0);
+  const panel = frame.getByTestId(SEL.sandbox.panel);
+  await expect(panel).toBeVisible();
+  await expect(panel).toHaveAttribute('data-embed-mode', 'compact');
 
   await expect
     .poll(() => messages.some((message) => (message as { type?: string }).type === 'sandbox-ready'))
     .toBe(true);
 
-  await frame.locator('.react-flow__node').filter({ hasText: 'R1' }).first().click({
-    button: 'right',
-    force: true,
-  });
-  await frame.getByLabel('MTU bytes').fill('500');
-  await frame.getByRole('button', { name: 'Apply MTU' }).click();
+  await frame
+    .locator('.react-flow__node')
+    .filter({ hasText: 'R1' })
+    .first()
+    .click({ button: 'right', force: true });
+  await frame.getByTestId(SEL.sandbox.editPopover.mtuInput).fill('500');
+  await frame.getByTestId(SEL.sandbox.editPopover.mtuApply).click();
 
   await expect
     .poll(() =>

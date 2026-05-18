@@ -1,22 +1,22 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
-import { DemoPage } from './pages/DemoPage';
+import { expect, test } from './fixtures/harness';
+import { SEL } from './selectors';
 
-test('link QoS demo records deterministic link annotations', async ({ page }) => {
-  const demoPage = new DemoPage(page);
+test('link QoS demo records deterministic link annotations', async ({ page, demoPage }) => {
   await demoPage.goto('/networking/link-qos');
 
-  await page.getByRole('button', { name: /send qos burst/i }).click();
+  await page.getByTestId(SEL.demo.linkQosBurst).click();
 
-  await expect(page.getByText(/enqueued q=1/i)).toBeVisible();
-  await expect(page.getByText(/dequeued q=0/i)).toBeVisible();
-  await expect(page.getByText(/arrived 32ms/i)).toBeVisible();
+  const traceLog = page.getByTestId(SEL.demo.traceLog).first();
+  await expect(traceLog).toContainText('enqueued q=1');
+  await expect(traceLog).toContainText('dequeued q=0');
+  await expect(traceLog).toContainText('arrived 32ms');
 
-  await page.getByLabel('Loss percent').fill('50');
-  await page.getByRole('button', { name: /^apply$/i }).click();
-  await page.getByRole('button', { name: /send qos burst/i }).click();
+  await page.getByTestId(SEL.sandbox.editPopover.lossPercent).fill('50');
+  await page.getByTestId(SEL.sandbox.editPopover.linkApply).click();
+  await page.getByTestId(SEL.demo.linkQosBurst).click();
 
-  await expect(page.getByText('LINK QOS', { exact: true })).toBeVisible();
+  await expect(page.getByTestId(SEL.demo.linkQosSection)).toContainText('LINK QOS');
 
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa'])
