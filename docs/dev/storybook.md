@@ -66,6 +66,23 @@ export const EmptyState: Story = { args: { items: [] } };
 For β-aware sandbox components, ship one `Alpha…` and one `Beta…` story so
 mode-specific visuals are reviewable side-by-side.
 
+## When to Add a Story
+
+Add or update a story when a component is part of a public or review-facing
+surface:
+
+- Components exported from `src/index.ts` or otherwise intended for external
+  consumers.
+- Sandbox UI components, including edit forms, replay controls, snapshots,
+  annotations, assessments, warnings, and empty states.
+- State-bearing leaf components where visual states matter, such as loading,
+  empty, error, disabled, selected, or beta-mode variants.
+- Components with non-trivial accessibility behavior that should run through the
+  Storybook axe gate.
+
+Do not add a story only because a private implementation detail exists. If a
+component is useful solely through its parent, cover the parent state instead.
+
 ## Fixtures
 
 Reusable fixtures live under
