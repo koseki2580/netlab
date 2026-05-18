@@ -16,6 +16,7 @@ Developer-facing tooling that does not ship in the published library bundle.
 
 - [Storybook](dev/storybook.md) - Component story harness with sandbox fixtures and axe-core a11y gate
 - [i18n](dev/i18n.md) - Translator hook, catalog conventions, locale switching, and the ESLint regression gate
+- [E2E Locator Policy](dev/e2e-locators.md) - testid-only locator convention for Playwright specs, POM layout, and the `no-raw-locators-in-e2e` lint rule
 
 ### 🧠 Core Architecture & APIs (`core/`)
 
