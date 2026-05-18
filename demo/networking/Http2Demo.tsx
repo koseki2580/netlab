@@ -33,7 +33,12 @@ export default function Http2Demo() {
     >
       <main style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: 16 }}>
         <section style={PANEL_STYLE} aria-label="HTTP/2 streams">
-          <button type="button" style={BUTTON_STYLE} onClick={() => setLoss((value) => !value)}>
+          <button
+            type="button"
+            data-testid="h2-tcp-loss-toggle"
+            style={BUTTON_STYLE}
+            onClick={() => setLoss((value) => !value)}
+          >
             {loss ? 'Disable TCP Loss' : 'Enable TCP Loss'}
           </button>
           <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>

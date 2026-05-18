@@ -235,7 +235,12 @@ function UdpDemoInner() {
                 />
               </label>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={sendSmallPayload} disabled={isRecomputing} style={BUTTON_STYLE}>
+                <button
+                  data-testid="demo-primary-action"
+                  onClick={sendSmallPayload}
+                  disabled={isRecomputing}
+                  style={BUTTON_STYLE}
+                >
                   Send UDP → port {port}
                 </button>
                 <button

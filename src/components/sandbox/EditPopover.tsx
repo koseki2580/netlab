@@ -102,6 +102,7 @@ export function EditPopover({
       aria-modal="false"
       aria-labelledby={labelledBy}
       data-anchor-kind={anchor.kind}
+      data-testid="sandbox-edit-popover"
       onKeyDown={handleKeyDown}
       style={{
         position: 'absolute',

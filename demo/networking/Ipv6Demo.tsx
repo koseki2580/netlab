@@ -139,6 +139,7 @@ function DemoInner() {
       <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <button
           type="button"
+          data-testid="ipv6-send-echo"
           style={BUTTON_STYLE}
           onClick={() => void engine.ping('client-1', '2001:db8:2::20')}
         >
@@ -146,6 +147,7 @@ function DemoInner() {
         </button>
         <TraceSummary />
         <div
+          data-testid="demo-trace-log"
           style={{
             border: '1px solid var(--netlab-border-subtle)',
             borderRadius: 8,

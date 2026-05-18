@@ -84,6 +84,7 @@ export default function TcpCongestionDemo() {
           <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
             <button
               type="button"
+              data-testid="tcp-congestion-run"
               onClick={() => setEvents(runCongestionScenario())}
               style={{
                 border: '1px solid var(--netlab-border-strong)',
@@ -99,6 +100,7 @@ export default function TcpCongestionDemo() {
             </button>
             <button
               type="button"
+              data-testid="tcp-congestion-reset"
               onClick={() => setEvents([])}
               style={{
                 border: '1px solid var(--netlab-border-subtle)',

@@ -64,6 +64,7 @@ function NotesEditor({
       createElement('span', null, 'Note'),
       createElement('textarea', {
         'aria-label': 'Node note',
+        'data-testid': 'sandbox-node-note',
         value: note,
         onChange: (event: ChangeEvent<HTMLTextAreaElement>) => setNote(event.target.value),
         style: {
@@ -82,6 +83,7 @@ function NotesEditor({
       'button',
       {
         type: 'button',
+        'data-testid': 'sandbox-node-note-apply',
         onClick: () => onCommit(createNoteEdit(target.nodeId, note)),
         disabled: note.trim().length === 0,
       },

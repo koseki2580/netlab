@@ -223,7 +223,11 @@ export function DemoCard({
           </a>
         )}
         {assessmentHref && (
-          <a href={assessmentHref} style={getActionLinkStyle('var(--netlab-accent-green)')}>
+          <a
+            href={assessmentHref}
+            data-testid="gallery-assessment-link"
+            style={getActionLinkStyle('var(--netlab-accent-green)')}
+          >
             Assessment →
           </a>
         )}

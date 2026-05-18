@@ -274,7 +274,7 @@ function DemoInner({
           padding: 14,
         }}
       >
-        <button type="button" onClick={sendBurst} style={BUTTON_STYLE}>
+        <button type="button" data-testid="link-qos-burst" onClick={sendBurst} style={BUTTON_STYLE}>
           Send QoS burst
         </button>
         {edge && <LinkDetailPanel edge={edge} onQosChange={onQosChange} />}

@@ -102,7 +102,11 @@ export default function GreDemo() {
             <NetlabCanvas style={{ height: 560 }} />
           </section>
           <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <button type="button" onClick={() => setKey((value) => (value === 100 ? 200 : 100))}>
+            <button
+              type="button"
+              data-testid="gre-key-change"
+              onClick={() => setKey((value) => (value === 100 ? 200 : 100))}
+            >
               {key === 100 ? 'Change Tunnel Key' : 'Restore Tunnel Key'}
             </button>
             <div style={PANEL_STYLE}>

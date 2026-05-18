@@ -63,7 +63,12 @@ export function TutorialStepPanel() {
         <p style={{ ...MUTED_STYLE, margin: '8px 0 0' }}>{tutorial.summary}</p>
         <p style={{ ...MUTED_STYLE, margin: '12px 0 0' }}>{progressLabel}</p>
         <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-          <button type="button" onClick={start} style={buttonStyle('#1d4ed8', '#f8fafc')}>
+          <button
+            type="button"
+            data-testid="tutorial-start"
+            onClick={start}
+            style={buttonStyle('#1d4ed8', '#f8fafc')}
+          >
             Start Tutorial
           </button>
           <button type="button" onClick={exit} style={buttonStyle('#334155', '#f8fafc')}>

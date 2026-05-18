@@ -781,6 +781,7 @@ function LocaleToggle({
               key={option}
               type="button"
               aria-pressed={isActive}
+              data-testid={option === 'ja' ? 'gallery-locale-toggle-ja' : undefined}
               onClick={() => onChange(option)}
               style={{
                 border: 'none',
@@ -1174,6 +1175,7 @@ export default function Gallery({
               {copy.themeEyebrow[themeMode]}
             </div>
             <h1
+              data-testid="gallery-heading"
               style={{
                 fontSize: 26,
                 fontWeight: 700,

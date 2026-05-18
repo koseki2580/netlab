@@ -162,6 +162,7 @@ export function PanelHeader({
         type="button"
         onClick={onClose}
         aria-label="Close panel"
+        data-testid="node-detail-close"
         style={{
           background: 'none',
           border: 'none',

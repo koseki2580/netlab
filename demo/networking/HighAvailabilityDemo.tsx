@@ -193,6 +193,7 @@ export default function HighAvailabilityDemo() {
           <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <button
               type="button"
+              data-testid="ha-fail-gateway"
               style={BUTTON_STYLE}
               onClick={() => setMasterDown((value) => !value)}
             >
@@ -200,6 +201,7 @@ export default function HighAvailabilityDemo() {
             </button>
             <button
               type="button"
+              data-testid="ha-fail-lacp"
               style={BUTTON_STYLE}
               onClick={() => setMemberDown((value) => !value)}
             >

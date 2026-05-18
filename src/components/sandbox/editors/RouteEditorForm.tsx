@@ -102,6 +102,7 @@ export function RouteEditorForm({
       <label style={{ display: 'grid', gap: 3 }}>
         <span>{t('sandbox.edits.editor.route.prefix')}</span>
         <input
+          data-testid="sandbox-route-network"
           value={prefix}
           onChange={(event) => setPrefix(event.target.value)}
           style={fieldStyle}
@@ -111,6 +112,7 @@ export function RouteEditorForm({
         <span>{t('sandbox.edits.editor.route.nextHop')}</span>
         <input
           aria-label={t('sandbox.edits.editor.route.nextHop')}
+          data-testid="sandbox-route-next-hop"
           value={nextHop}
           onChange={(event) => setNextHop(event.target.value)}
           style={fieldStyle}
@@ -120,6 +122,7 @@ export function RouteEditorForm({
         <span>{t('sandbox.edits.editor.route.interface')}</span>
         <select
           aria-label={t('sandbox.edits.editor.route.interfaceLabel')}
+          data-testid="sandbox-route-interface"
           value={outInterface}
           onChange={(event) => setOutInterface(event.target.value)}
           style={fieldStyle}
@@ -141,7 +144,7 @@ export function RouteEditorForm({
         />
       </label>
       {error && <div style={{ color: 'var(--netlab-accent-red)', fontSize: 11 }}>{error}</div>}
-      <button type="button" style={buttonStyle} onClick={submit}>
+      <button type="button" data-testid="sandbox-route-add" style={buttonStyle} onClick={submit}>
         {t('sandbox.edits.editor.route.add')}
       </button>
     </section>

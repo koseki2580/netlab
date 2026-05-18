@@ -370,6 +370,7 @@ export function SandboxPanel({ layoutMode = 'wide' }: SandboxPanelProps = {}) {
           <button
             type="button"
             aria-label={t('sandbox.panel.export.scenarioLabel')}
+            data-testid="sandbox-export-scenario-open"
             onClick={() => setScenarioExportOpen(true)}
             className="netlab-focus-ring"
             style={{
@@ -404,6 +405,7 @@ export function SandboxPanel({ layoutMode = 'wide' }: SandboxPanelProps = {}) {
             <input
               type="checkbox"
               aria-label={t('sandbox.panel.fast.label')}
+              data-testid="sandbox-fast-mode-toggle"
               checked={fastMode}
               onChange={(event) => sandbox.setFastMode?.(event.currentTarget.checked)}
               style={{ margin: 0 }}
@@ -414,6 +416,7 @@ export function SandboxPanel({ layoutMode = 'wide' }: SandboxPanelProps = {}) {
             type="button"
             aria-label={t('sandbox.panel.mode.toggleLabel')}
             aria-pressed={sandbox.mode === 'beta'}
+            data-testid="sandbox-mode-switch"
             onClick={() => sandbox.switchMode(nextMode(sandbox.mode))}
             className="netlab-focus-ring"
             style={{
@@ -454,6 +457,7 @@ export function SandboxPanel({ layoutMode = 'wide' }: SandboxPanelProps = {}) {
             <button
               type="button"
               aria-label={t('sandbox.panel.collapse.label')}
+              data-testid="sandbox-collapse"
               onClick={() => setOpen(false)}
               className="netlab-focus-ring"
               style={{
@@ -496,6 +500,7 @@ export function SandboxPanel({ layoutMode = 'wide' }: SandboxPanelProps = {}) {
                 type="button"
                 role="tab"
                 data-axis={tab.axis}
+                data-testid={`sandbox-tab-${tab.axis}`}
                 id={`sandbox-tab-${tab.axis}`}
                 aria-selected={selected}
                 aria-controls={`sandbox-tabpanel-${tab.axis}`}

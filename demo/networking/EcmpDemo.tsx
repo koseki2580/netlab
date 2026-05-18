@@ -268,10 +268,10 @@ function DemoInner() {
           padding: 14,
         }}
       >
-        <button type="button" onClick={sendFlows} style={BUTTON_STYLE}>
+        <button type="button" data-testid="ecmp-send" onClick={sendFlows} style={BUTTON_STYLE}>
           Send ECMP flows
         </button>
-        <section aria-label="ECMP decisions" style={{ marginTop: 12 }}>
+        <section aria-label="ECMP decisions" data-testid="demo-trace-log" style={{ marginTop: 12 }}>
           <h2
             style={{
               fontSize: 12,

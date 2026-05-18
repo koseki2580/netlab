@@ -101,7 +101,11 @@ export default function MplsL3vpnDemo() {
             <NetlabCanvas style={{ height: 560 }} />
           </section>
           <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <button type="button" onClick={() => setPhp((value) => !value)}>
+            <button
+              type="button"
+              data-testid="mpls-php-disable"
+              onClick={() => setPhp((value) => !value)}
+            >
               {php ? 'Disable PHP' : 'Enable PHP'}
             </button>
             <div style={PANEL_STYLE}>

@@ -245,6 +245,7 @@ function FragmentationDemoInner({
             </label>
             <button
               type="button"
+              data-testid="demo-primary-action"
               style={BUTTON_STYLE}
               disabled={isRecomputing}
               onClick={() => void sendPing()}

@@ -46,6 +46,7 @@ export function ExportButton() {
     <button
       type="button"
       aria-label="Export sandbox session"
+      data-testid="sandbox-export-session"
       onClick={() => {
         void handleExport();
       }}

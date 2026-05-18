@@ -59,6 +59,7 @@ export function ImportDialog() {
         type="file"
         accept=".json,application/json"
         aria-label={t('sandbox.edits.import.file.label')}
+        data-testid="sandbox-import-session-input"
         onChange={(event) => {
           const file = event.currentTarget.files?.[0];
           if (file) {

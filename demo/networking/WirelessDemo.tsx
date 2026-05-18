@@ -167,6 +167,7 @@ export default function WirelessDemo() {
                 Station distance
                 <input
                   aria-label="Station distance"
+                  data-testid="wireless-station-distance"
                   type="range"
                   min={5}
                   max={300}
@@ -189,6 +190,7 @@ export default function WirelessDemo() {
             </div>
             <button
               type="button"
+              data-testid="hidden-node-toggle"
               style={BUTTON_STYLE}
               onClick={() => setHiddenNode((value) => !value)}
             >

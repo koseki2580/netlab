@@ -126,6 +126,7 @@ export function SimulationControls() {
           style={BTN_PRIMARY}
           title="Send Packet"
           aria-label="Send Packet"
+          data-testid="demo-primary-action"
           className="netlab-focus-ring"
         >
           ▶ Send Packet

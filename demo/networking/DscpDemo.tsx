@@ -186,10 +186,19 @@ function DemoInner() {
           padding: 14,
         }}
       >
-        <button type="button" onClick={sendShapedPackets} style={BUTTON_STYLE}>
+        <button
+          type="button"
+          data-testid="dscp-send"
+          onClick={sendShapedPackets}
+          style={BUTTON_STYLE}
+        >
           Send shaped packets
         </button>
-        <section aria-label="Shaper decisions" style={{ marginTop: 12 }}>
+        <section
+          aria-label="Shaper decisions"
+          data-testid="demo-trace-log"
+          style={{ marginTop: 12 }}
+        >
           <h2
             style={{
               fontSize: 12,

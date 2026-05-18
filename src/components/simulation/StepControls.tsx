@@ -352,6 +352,7 @@ export function StepControls() {
         <div style={{ display: 'flex', gap: 8 }}>
           <button
             onClick={() => engine.step()}
+            data-testid="demo-primary-action"
             disabled={stepDisabled}
             style={{
               flex: 1,

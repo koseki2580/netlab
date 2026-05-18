@@ -144,7 +144,11 @@ export default function VxlanEvpnDemo() {
             <NetlabCanvas style={{ height: 560 }} />
           </section>
           <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <button type="button" onClick={() => setSuppression((value) => !value)}>
+            <button
+              type="button"
+              data-testid="arp-suppression-toggle"
+              onClick={() => setSuppression((value) => !value)}
+            >
               {suppression ? 'Disable ARP Suppression' : 'Enable ARP Suppression'}
             </button>
             <div style={PANEL_STYLE}>

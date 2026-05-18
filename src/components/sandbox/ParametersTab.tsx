@@ -9,6 +9,7 @@ const PARAMS: {
   readonly min: number;
   readonly max: number;
   readonly step: number;
+  readonly testId?: string;
 }[] = [
   { key: 'tcp.initialWindow', label: 'TCP initial window', min: 1024, max: 262144, step: 1024 },
   { key: 'tcp.mss', label: 'TCP MSS', min: 256, max: 9000, step: 1 },
@@ -16,8 +17,22 @@ const PARAMS: {
   { key: 'ospf.helloIntervalMs', label: 'OSPF hello ms', min: 1000, max: 60000, step: 1000 },
   { key: 'ospf.deadIntervalMs', label: 'OSPF dead ms', min: 1000, max: 240000, step: 1000 },
   { key: 'arp.cacheTtlMs', label: 'ARP cache TTL ms', min: 1000, max: 3600000, step: 1000 },
-  { key: 'engine.tickMs', label: 'Engine tick ms', min: 50, max: 5000, step: 50 },
-  { key: 'engine.maxTtl', label: 'Max TTL', min: 1, max: 255, step: 1 },
+  {
+    key: 'engine.tickMs',
+    label: 'Engine tick ms',
+    min: 50,
+    max: 5000,
+    step: 50,
+    testId: 'sandbox-param-engine-tick-ms',
+  },
+  {
+    key: 'engine.maxTtl',
+    label: 'Max TTL',
+    min: 1,
+    max: 255,
+    step: 1,
+    testId: 'sandbox-param-max-ttl',
+  },
 ];
 
 function readParameter(sandbox: ReturnType<typeof useSandbox>, key: ParameterKey): number {
@@ -44,6 +59,7 @@ export function ParametersTab() {
             <input
               type="range"
               aria-label={param.label}
+              data-testid={param.testId}
               min={param.min}
               max={param.max}
               step={param.step}

@@ -31,7 +31,12 @@ export default function Http3Demo() {
     >
       <main style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: 16 }}>
         <section style={PANEL_STYLE} aria-label="HTTP/3 streams">
-          <button type="button" style={BUTTON_STYLE} onClick={() => setLoss((value) => !value)}>
+          <button
+            type="button"
+            data-testid="h3-quic-loss-toggle"
+            style={BUTTON_STYLE}
+            onClick={() => setLoss((value) => !value)}
+          >
             {loss ? 'Disable QUIC Stream Loss' : 'Enable QUIC Stream Loss'}
           </button>
           <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
@@ -42,7 +47,7 @@ export default function Http3Demo() {
             ))}
           </div>
         </section>
-        <aside style={PANEL_STYLE} aria-label="HTTP/3 frame order">
+        <aside style={PANEL_STYLE} aria-label="HTTP/3 frame order" data-testid="demo-trace-log">
           <h3 style={{ marginTop: 0 }}>Frame Order</h3>
           {run.annotations.map((annotation, index) => (
             <div key={`${annotation}-${index}`}>{annotation}</div>

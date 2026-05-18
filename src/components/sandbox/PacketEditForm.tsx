@@ -146,6 +146,7 @@ export function PacketEditForm({
             <input
               type="checkbox"
               aria-label={t('sandbox.edits.packet.tcp.syn.label')}
+              data-testid="sandbox-tcp-syn-flag"
               checked={syn}
               onChange={(event) => setSyn(event.target.checked)}
             />
@@ -155,12 +156,18 @@ export function PacketEditForm({
             <input
               type="checkbox"
               aria-label={t('sandbox.edits.packet.tcp.rst.label')}
+              data-testid="sandbox-tcp-rst-flag"
               checked={rst}
               onChange={(event) => setRst(event.target.checked)}
             />
             <span>RST</span>
           </label>
-          <button type="button" style={buttonStyle} onClick={applyTcpFlags}>
+          <button
+            type="button"
+            data-testid="sandbox-tcp-flags-apply"
+            style={buttonStyle}
+            onClick={applyTcpFlags}
+          >
             {t('sandbox.edits.packet.tcp.apply')}
           </button>
         </section>

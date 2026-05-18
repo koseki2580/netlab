@@ -163,6 +163,7 @@ function HopRow({
   return (
     <div
       role="option"
+      data-testid="trace-hop"
       aria-selected={isActive}
       tabIndex={0}
       onClick={onClick}
@@ -314,6 +315,7 @@ export const PacketTimeline = memo(function PacketTimeline({ filter }: PacketTim
 
   return (
     <div
+      data-testid="demo-trace-log"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -381,6 +383,7 @@ export const PacketTimeline = memo(function PacketTimeline({ filter }: PacketTim
       {trace && (
         <div
           aria-live="polite"
+          data-testid="trace-filter-status"
           style={{
             padding: '2px 10px 0',
             fontSize: 10,

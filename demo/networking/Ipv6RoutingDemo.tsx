@@ -180,6 +180,7 @@ export default function Ipv6RoutingDemo() {
           <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <button
               type="button"
+              data-testid="ospfv3-link-fail"
               style={BUTTON_STYLE}
               onClick={() => setLinkFailed((value) => !value)}
             >

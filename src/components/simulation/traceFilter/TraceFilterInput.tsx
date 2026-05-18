@@ -48,6 +48,7 @@ export function TraceFilterInput({ onParse }: TraceFilterInputProps) {
         id={inputId}
         role="searchbox"
         aria-label="Trace display filter"
+        data-testid="trace-filter-searchbox"
         aria-describedby={describedBy}
         aria-invalid={error ? 'true' : 'false'}
         type="search"

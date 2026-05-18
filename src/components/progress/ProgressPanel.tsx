@@ -23,6 +23,7 @@ export function ProgressPanel() {
   return (
     <section
       aria-label="Learner progress"
+      data-testid="gallery-progress-section"
       style={{
         border: '1px solid var(--netlab-border)',
         borderRadius: 8,
@@ -40,10 +41,18 @@ export function ProgressPanel() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          <button type="button" onClick={() => setExportedJson(progress.exportJson())}>
+          <button
+            type="button"
+            data-testid="gallery-progress-export"
+            onClick={() => setExportedJson(progress.exportJson())}
+          >
             Export JSON
           </button>
-          <button type="button" onClick={() => setConfirmingClear(true)}>
+          <button
+            type="button"
+            data-testid="gallery-progress-clear"
+            onClick={() => setConfirmingClear(true)}
+          >
             Clear progress
           </button>
         </div>
@@ -83,6 +92,7 @@ export function ProgressPanel() {
           <span>Exported progress JSON</span>
           <textarea
             aria-label="Exported progress JSON"
+            data-testid="gallery-progress-export-json"
             readOnly
             value={exportedJson}
             rows={5}
@@ -96,6 +106,7 @@ export function ProgressPanel() {
           <span>Import progress JSON</span>
           <textarea
             aria-label="Import progress JSON"
+            data-testid="gallery-progress-import-json"
             value={importJson}
             onChange={(event) => setImportJson(event.target.value)}
             rows={4}
@@ -105,6 +116,7 @@ export function ProgressPanel() {
         <div>
           <button
             type="button"
+            data-testid="gallery-progress-import"
             onClick={() => {
               const result = progress.importJson(importJson);
               setImportStatus(result.ok ? 'Imported' : `Import failed: ${result.reason}`);
@@ -131,6 +143,7 @@ export function ProgressPanel() {
             <span>Confirm learner id</span>
             <input
               aria-label="Confirm learner id"
+              data-testid="gallery-progress-confirm-id"
               value={confirmLearnerId}
               onChange={(event) => setConfirmLearnerId(event.target.value)}
             />
@@ -138,6 +151,7 @@ export function ProgressPanel() {
           <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
             <button
               type="button"
+              data-testid="gallery-progress-confirm-clear"
               disabled={confirmLearnerId !== progress.learnerId}
               onClick={() => {
                 progress.clear();

@@ -133,6 +133,7 @@ export function CommandPalette({ open, items, onClose }: CommandPaletteProps) {
         <input
           ref={inputRef}
           aria-label="Command palette search"
+          data-testid="command-palette-search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           onInput={(event) => setQuery(event.currentTarget.value)}
@@ -185,6 +186,7 @@ export function CommandPalette({ open, items, onClose }: CommandPaletteProps) {
                 key={item.id}
                 type="button"
                 role="option"
+                data-testid="command-palette-option"
                 aria-selected={index === activeIndex}
                 onMouseEnter={() => setActiveIndex(index)}
                 onClick={() => runItem(item)}

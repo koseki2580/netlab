@@ -50,6 +50,7 @@ export function EditListItem({ edit, index, active, onRevert, onUndoTo }: EditLi
         <div>
           <button
             aria-label={t('sandbox.edits.item.revert.label', { step })}
+            data-testid={`sandbox-edits-revert-${step}`}
             onClick={() => onRevert(index)}
           >
             {t('sandbox.edits.item.revert.text')}

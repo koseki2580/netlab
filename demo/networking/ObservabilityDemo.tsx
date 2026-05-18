@@ -161,7 +161,12 @@ function DemoInner() {
           padding: 14,
         }}
       >
-        <button type="button" onClick={sendObservedFlow} style={BUTTON_STYLE}>
+        <button
+          type="button"
+          data-testid="observability-send-flow"
+          onClick={sendObservedFlow}
+          style={BUTTON_STYLE}
+        >
           Send observed flow
         </button>
         <div style={{ marginTop: 14 }}>

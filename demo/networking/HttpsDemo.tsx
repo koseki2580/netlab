@@ -54,6 +54,7 @@ export default function HttpsDemo() {
           <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
             <button
               type="button"
+              data-testid="tls-run-handshake"
               onClick={() => void execute(['http/1.1'])}
               style={{ ...BUTTON_STYLE, background: 'var(--netlab-accent-cyan)', color: '#082f49' }}
             >
@@ -61,6 +62,7 @@ export default function HttpsDemo() {
             </button>
             <button
               type="button"
+              data-testid="tls-force-alpn-mismatch"
               onClick={() => void execute(['h2'])}
               style={{
                 ...BUTTON_STYLE,
@@ -73,6 +75,7 @@ export default function HttpsDemo() {
           </div>
           <ol
             aria-label="TLS annotation sequence"
+            data-testid="demo-trace-log"
             style={{
               display: 'grid',
               gap: 6,

@@ -171,6 +171,7 @@ function DhcpDnsDemoInner() {
         >
           <button
             type="button"
+            data-testid="dhcp-run"
             onClick={() => void handleRunDhcp()}
             style={{
               padding: '6px 12px',

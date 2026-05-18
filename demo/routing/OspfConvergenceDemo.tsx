@@ -201,6 +201,7 @@ function OspfConvergenceInner({
           </button>
           <button
             type="button"
+            data-testid="ospf-fail-link"
             onClick={onTogglePrimaryLink}
             title={
               primaryLinkDown

@@ -286,7 +286,7 @@ export function LinkDetailPanel({ edge, onQosChange }: LinkDetailPanelProps) {
   };
 
   return (
-    <section aria-label="Link QoS" style={{ marginTop: 10 }}>
+    <section aria-label="Link QoS" data-testid="link-qos-section" style={{ marginTop: 10 }}>
       <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 10, fontWeight: 700 }}>
         LINK QOS
       </div>
@@ -317,6 +317,7 @@ export function LinkDetailPanel({ edge, onQosChange }: LinkDetailPanelProps) {
         <span>Loss percent</span>
         <input
           aria-label="Loss percent"
+          data-testid="sandbox-link-loss-percent"
           type="range"
           min={0}
           max={50}
@@ -379,7 +380,13 @@ export function LinkDetailPanel({ edge, onQosChange }: LinkDetailPanelProps) {
           {counters.dropped} ({counters.queueFull} / {counters.loss} / {counters.linkFailed})
         </dd>
       </dl>
-      <button type="button" disabled={errors.length > 0} onClick={apply} style={BUTTON_STYLE}>
+      <button
+        type="button"
+        data-testid="sandbox-link-apply"
+        disabled={errors.length > 0}
+        onClick={apply}
+        style={BUTTON_STYLE}
+      >
         Apply
       </button>
       <section aria-label="Traffic Shaping" style={{ marginTop: 18 }}>

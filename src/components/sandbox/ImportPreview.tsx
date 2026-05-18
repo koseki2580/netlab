@@ -14,7 +14,11 @@ export function ImportPreview({ decoded, onApply, onCancel }: ImportPreviewProps
   const editLabel = count === 1 ? 'edit' : 'edits';
 
   return (
-    <section aria-label={t('sandbox.edits.import.preview.label')} style={sessionIoPanelStyle}>
+    <section
+      aria-label={t('sandbox.edits.import.preview.label')}
+      data-testid="sandbox-import-session-preview"
+      style={sessionIoPanelStyle}
+    >
       <div>
         {t('sandbox.edits.import.preview.heading')} {count} {editLabel}{' '}
         {t('sandbox.edits.import.preview.fromScenario')} {decoded.exported.scenarioId}
@@ -23,6 +27,7 @@ export function ImportPreview({ decoded, onApply, onCancel }: ImportPreviewProps
         <button
           type="button"
           aria-label={t('sandbox.edits.import.preview.apply.label')}
+          data-testid="sandbox-import-session-apply"
           onClick={onApply}
           className="netlab-focus-ring"
           style={sessionIoButtonStyle}

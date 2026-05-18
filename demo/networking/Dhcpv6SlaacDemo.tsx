@@ -119,10 +119,20 @@ export default function Dhcpv6SlaacDemo() {
             <button type="button" style={BUTTON_STYLE} onClick={() => setMode('managed')}>
               M=1 DHCPv6 Address
             </button>
-            <button type="button" style={BUTTON_STYLE} onClick={() => setMode('other')}>
+            <button
+              type="button"
+              data-testid="dhcpv6-flag-m0-o1"
+              style={BUTTON_STYLE}
+              onClick={() => setMode('other')}
+            >
               M=0 O=1 SLAAC + DNS
             </button>
-            <button type="button" style={BUTTON_STYLE} onClick={() => setMode('slaac')}>
+            <button
+              type="button"
+              data-testid="dhcpv6-flag-m0-o0"
+              style={BUTTON_STYLE}
+              onClick={() => setMode('slaac')}
+            >
               M=0 O=0 Pure SLAAC
             </button>
             <div

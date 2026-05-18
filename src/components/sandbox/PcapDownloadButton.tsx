@@ -54,6 +54,7 @@ export function PcapDownloadButton({ forceBranch }: { readonly forceBranch?: Pca
       {!isAlpha && !forceBranch && (
         <select
           aria-label={t('sandbox.edits.pcap.branch.label')}
+          data-testid="sandbox-pcap-branch-select"
           value={betaBranch}
           onChange={(e) => setBetaBranch(e.target.value as PcapBranch)}
           style={{
@@ -76,6 +77,7 @@ export function PcapDownloadButton({ forceBranch }: { readonly forceBranch?: Pca
             ? t('sandbox.edits.pcap.download.branchLabel', { branch: forceBranch })
             : t('sandbox.edits.pcap.download.label')
         }
+        data-testid={forceBranch ? `sandbox-pcap-download-${forceBranch}` : 'sandbox-pcap-download'}
         onClick={handleDownload}
         disabled={disabled}
         title={disabled ? t('sandbox.edits.pcap.disabled.title') : undefined}

@@ -38,6 +38,7 @@ export function TrafficTab() {
         <span>{t('sandbox.edits.traffic.source')}</span>
         <select
           aria-label={t('sandbox.edits.traffic.source')}
+          data-testid="sandbox-traffic-source"
           value={srcNodeId}
           onChange={(event) => setSrcNodeId(event.target.value)}
           style={fieldStyle}
@@ -53,6 +54,7 @@ export function TrafficTab() {
         <span>{t('sandbox.edits.traffic.destination')}</span>
         <select
           aria-label={t('sandbox.edits.traffic.destination')}
+          data-testid="sandbox-traffic-destination"
           value={dstNodeId}
           onChange={(event) => setDstNodeId(event.target.value)}
           style={fieldStyle}
@@ -68,6 +70,7 @@ export function TrafficTab() {
         <span>{t('sandbox.edits.traffic.protocol')}</span>
         <select
           aria-label={t('sandbox.edits.traffic.protocol')}
+          data-testid="sandbox-traffic-protocol"
           value={protocol}
           onChange={(event) => setProtocol(event.target.value as TrafficProtocol)}
           style={fieldStyle}
@@ -84,7 +87,12 @@ export function TrafficTab() {
         style={{ ...fieldStyle, minHeight: 58 }}
       />
       <div style={{ display: 'flex', gap: 6 }}>
-        <button type="button" style={buttonStyle} onClick={() => launch()}>
+        <button
+          type="button"
+          data-testid="sandbox-traffic-launch"
+          style={buttonStyle}
+          onClick={() => launch()}
+        >
           {t('sandbox.edits.traffic.launch')}
         </button>
         <button

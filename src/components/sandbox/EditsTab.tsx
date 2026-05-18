@@ -47,6 +47,7 @@ export function EditsTab() {
         <button
           type="button"
           aria-label={t('sandbox.edits.resetAll.label')}
+          data-testid="sandbox-edits-reset-all"
           disabled={activeCount === 0}
           onClick={resetAll}
           className="netlab-focus-ring"
@@ -58,6 +59,7 @@ export function EditsTab() {
       <label style={{ display: 'block', margin: '8px 0', fontSize: 11 }}>
         <input
           type="checkbox"
+          data-testid="sandbox-annotations-filter"
           checked={annotationsOnly}
           onChange={(event) => setAnnotationsOnly(event.currentTarget.checked)}
         />{' '}

@@ -78,6 +78,7 @@ export function FlowCollectorPanel({ traces }: FlowCollectorPanelProps) {
         </button>
         <button
           type="button"
+          data-testid="observability-sflow-tab"
           onClick={() => setTab('sflow')}
           aria-pressed={tab === 'sflow'}
           style={BUTTON_STYLE}

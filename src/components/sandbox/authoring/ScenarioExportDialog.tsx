@@ -95,6 +95,7 @@ export function ScenarioExportDialog({ open, onClose }: ScenarioExportDialogProp
     <section
       role="dialog"
       aria-label="Export scenario"
+      data-testid="sandbox-export-scenario-dialog"
       style={{
         ...sessionIoPanelStyle,
         position: 'absolute',
@@ -123,6 +124,7 @@ export function ScenarioExportDialog({ open, onClose }: ScenarioExportDialogProp
         Scenario id
         <input
           aria-label="Scenario id"
+          data-testid="sandbox-export-scenario-id"
           value={scenarioId}
           onChange={(event) => setScenarioId(event.currentTarget.value)}
         />
@@ -131,6 +133,7 @@ export function ScenarioExportDialog({ open, onClose }: ScenarioExportDialogProp
         Title
         <input
           aria-label="Scenario title"
+          data-testid="sandbox-export-scenario-title"
           value={title}
           onChange={(event) => setTitle(event.currentTarget.value)}
         />
@@ -139,6 +142,7 @@ export function ScenarioExportDialog({ open, onClose }: ScenarioExportDialogProp
         Summary
         <textarea
           aria-label="Scenario summary"
+          data-testid="sandbox-export-scenario-summary"
           value={summary}
           onChange={(event) => setSummary(event.currentTarget.value)}
           rows={2}
@@ -159,6 +163,7 @@ export function ScenarioExportDialog({ open, onClose }: ScenarioExportDialogProp
           <input
             type="radio"
             aria-label="Export as preseed edit delta"
+            data-testid="sandbox-export-scenario-preseed"
             checked={preseedStrategy === 'as-delta'}
             onChange={() => setPreseedStrategy('as-delta')}
           />{' '}
@@ -197,6 +202,7 @@ export function ScenarioExportDialog({ open, onClose }: ScenarioExportDialogProp
 
       <pre
         aria-label="Scenario TypeScript preview"
+        data-testid="sandbox-export-scenario-preview"
         style={{
           margin: '8px 0',
           maxHeight: 220,
@@ -215,6 +221,7 @@ export function ScenarioExportDialog({ open, onClose }: ScenarioExportDialogProp
         <button
           type="button"
           aria-label="Download scenario TypeScript"
+          data-testid="sandbox-export-scenario-download"
           onClick={() => exportNow('ts')}
           className="netlab-focus-ring"
           style={sessionIoButtonStyle}

@@ -307,6 +307,7 @@ function TcpHandshakeDemoInner() {
         >
           <button
             type="button"
+            data-testid="tcp-connect"
             disabled={activeConnection !== null}
             onClick={() => void handleConnect()}
             style={{

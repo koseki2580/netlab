@@ -53,14 +53,18 @@ export function NatEditorForm({
   };
 
   return (
-    <section style={sectionStyle} aria-label={t('sandbox.edits.editor.nat.label')}>
+    <section
+      style={sectionStyle}
+      aria-label={t('sandbox.edits.editor.nat.label')}
+      data-testid="sandbox-nat-editor"
+    >
       <strong>{t('sandbox.edits.editor.nat.heading')}</strong>
       {rules.length === 0 ? (
         <span style={{ color: 'var(--netlab-text-muted)', fontSize: 11 }}>
           {t('sandbox.edits.editor.nat.noRules')}
         </span>
       ) : (
-        rules.map((rule) => (
+        rules.map((rule, index) => (
           <div key={rule.id} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
             <span style={{ flex: 1, fontSize: 11 }}>
               {rule.kind.toUpperCase()} to {rule.translateTo}
@@ -68,6 +72,7 @@ export function NatEditorForm({
             <button
               type="button"
               style={buttonStyle}
+              data-testid={index === 0 ? 'sandbox-nat-editor-remove' : undefined}
               onClick={() => {
                 sandbox.setDiffFilter('route');
                 sandbox.pushEdit({
@@ -87,6 +92,7 @@ export function NatEditorForm({
         <span>{t('sandbox.edits.editor.nat.kind')}</span>
         <select
           aria-label={t('sandbox.edits.editor.nat.kind')}
+          data-testid="sandbox-nat-kind"
           value={kind}
           onChange={(event) => setKind(event.target.value as NatRuleKind)}
           style={fieldStyle}
@@ -99,6 +105,7 @@ export function NatEditorForm({
         <span>{t('sandbox.edits.editor.nat.translateTo')}</span>
         <input
           aria-label={t('sandbox.edits.editor.nat.translateTo')}
+          data-testid="sandbox-nat-translate-to"
           value={translateTo}
           onChange={(event) => setTranslateTo(event.target.value)}
           style={fieldStyle}
@@ -120,7 +127,7 @@ export function NatEditorForm({
         </select>
       </label>
       {error && <div style={{ color: 'var(--netlab-accent-red)', fontSize: 11 }}>{error}</div>}
-      <button type="button" style={buttonStyle} onClick={submit}>
+      <button type="button" data-testid="sandbox-nat-add" style={buttonStyle} onClick={submit}>
         {t('sandbox.edits.editor.nat.add')}
       </button>
     </section>

@@ -111,7 +111,12 @@ export function SandboxIntroOverlay() {
         ) : null}
         <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
           {intro.status === 'pending' ? (
-            <button type="button" onClick={intro.start} style={buttonStyle('#1d4ed8')}>
+            <button
+              type="button"
+              data-testid="sandbox-intro-start"
+              onClick={intro.start}
+              style={buttonStyle('#1d4ed8')}
+            >
               {t('sandbox.intro.start')}
             </button>
           ) : (

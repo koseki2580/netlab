@@ -94,6 +94,7 @@ export function ShortcutsHelpModal({ onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="shortcuts-modal-heading"
+        data-testid="sandbox-shortcuts-dialog"
         tabIndex={-1}
         onKeyDown={onKeyDown}
         onClick={(e) => e.stopPropagation()}

@@ -133,6 +133,7 @@ function ArpDemoInner() {
             <div style={LABEL_STYLE}>Controls</div>
             <button
               type="button"
+              data-testid="demo-primary-action"
               onClick={() => void sendPing()}
               style={{
                 padding: '8px 12px',

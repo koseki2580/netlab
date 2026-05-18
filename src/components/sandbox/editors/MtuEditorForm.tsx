@@ -72,6 +72,7 @@ export function MtuEditorForm({
         <span>{t('sandbox.edits.editor.mtu.bytes')}</span>
         <input
           aria-label={t('sandbox.edits.editor.mtu.bytes')}
+          data-testid="sandbox-mtu-bytes"
           value={mtu}
           onChange={(event) => setMtu(event.target.value)}
           style={fieldStyle}
@@ -81,7 +82,7 @@ export function MtuEditorForm({
         {t('sandbox.edits.editor.mtu.allowed')}
       </span>
       {error && <div style={{ color: 'var(--netlab-accent-red)', fontSize: 11 }}>{error}</div>}
-      <button type="button" style={buttonStyle} onClick={submit}>
+      <button type="button" data-testid="sandbox-mtu-apply" style={buttonStyle} onClick={submit}>
         {t('sandbox.edits.editor.mtu.apply')}
       </button>
     </section>

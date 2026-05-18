@@ -127,7 +127,10 @@ export const TcpCongestionPanel = memo(function TcpCongestionPanel({
       </div>
 
       {events.length === 0 ? (
-        <p style={{ margin: 0, color: 'var(--netlab-text-secondary)', fontSize: 12 }}>
+        <p
+          data-testid="tcp-congestion-empty"
+          style={{ margin: 0, color: 'var(--netlab-text-secondary)', fontSize: 12 }}
+        >
           No congestion events
         </p>
       ) : (
@@ -160,6 +163,7 @@ export const TcpCongestionPanel = memo(function TcpCongestionPanel({
           <svg
             role="img"
             aria-label="TCP congestion window timeline"
+            data-testid="tcp-congestion-chart"
             viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
             style={{
               width: '100%',
@@ -229,7 +233,10 @@ export const TcpCongestionPanel = memo(function TcpCongestionPanel({
               }}
             >
               {markerEvents.map((event, index) => (
-                <li key={`${event.type}-${event.stepIndex}-${index}`}>
+                <li
+                  key={`${event.type}-${event.stepIndex}-${index}`}
+                  data-testid={`tcp-congestion-event-${event.stepIndex}`}
+                >
                   step {event.stepIndex}: {event.type}
                 </li>
               ))}
