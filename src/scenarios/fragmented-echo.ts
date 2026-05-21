@@ -138,5 +138,25 @@ export const fragmentedEcho: Scenario = {
     prerequisiteIds: ['basic-arp'],
   },
   topology: buildFragmentedEchoTopology(),
+  brief: {
+    goal: 'See why an oversized ICMP echo must fragment to cross a low-MTU tunnel, and where it reassembles.',
+    est: '~2 min',
+    prereq: [
+      { id: 'basic-arp', label: 'arp', done: true },
+      { id: 'ipv4-basics', label: 'ipv4', done: true },
+    ],
+    watchPoints: [
+      { step: 1, kind: 'route', label: 'Host A sends an echo larger than the tunnel MTU (600B)' },
+      { step: 2, kind: 'fragment', label: 'R1 splits the packet into fragments at the tunnel hop' },
+      { step: 4, kind: 'reassembly', label: 'Host B reassembles the fragments before replying' },
+    ],
+    conclusion: {
+      headline:
+        'The oversized echo was fragmented at the tunnel and reassembled at the destination.',
+      detail:
+        'A routed hop with a smaller MTU forced IPv4 fragmentation; only the receiving host reassembles, so every fragment had to arrive.',
+      actions: [{ id: 'gallery', label: 'browse more scenarios →', kind: 'primary' }],
+    },
+  },
   sampleFlows: [{ from: 'host-a', to: 'host-b', note: 'Low tunnel MTU forces IPv4 fragmentation' }],
 };

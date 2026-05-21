@@ -1,8 +1,11 @@
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DemoShell from '../DemoShell';
 import type { CommandPaletteItem } from '../../src/components/CommandPalette';
 import { NetlabAppShellV2 } from '../../src/components/NetlabAppShellV2';
+import { PreFlightBrief } from '../../src/components/PreFlightBrief';
+import type { NetlabAudience } from '../../src/theme';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
@@ -73,6 +76,8 @@ function OspfConvergenceInner({
 }) {
   const { engine, state, exportPcap } = useSimulation();
   const shellChrome = useShellChrome();
+  const navigate = useNavigate();
+  const audience = useMemo(() => readAudience(), []);
 
   const sendProbe = async () => {
     engine.clearTraces();
@@ -94,6 +99,7 @@ function OspfConvergenceInner({
     null;
   const totalHops = currentTrace?.hops.length ?? 0;
   const stepIdx = state.currentStep >= 0 ? state.currentStep : 0;
+  const isLastStep = totalHops > 0 && stepIdx === totalHops - 1;
   const packetsCount = state.traces.length;
   const dropsCount = state.traces.filter((t) => t.status === 'dropped').length;
   const arpCount = Object.values(state.nodeArpTables).reduce(
@@ -262,6 +268,14 @@ function OspfConvergenceInner({
                 leaves through R3.
               </div>
             </div>
+            <PreFlightBrief
+              scenarioId="ospf-convergence"
+              audience={audience}
+              isLastStep={isLastStep}
+              onAction={(actionId) => {
+                if (actionId === 'gallery') void navigate('/');
+              }}
+            />
           </div>
           <PacketScrubTimeline ownKeyboard={false} />
         </div>
@@ -297,6 +311,19 @@ function OspfConvergenceInner({
       </div>
     </NetlabAppShellV2>
   );
+}
+
+/** Resolve the active audience from the URL or the persisted gallery setting. */
+function readAudience(): NetlabAudience {
+  const fromUrl = new URLSearchParams(window.location.search).get('audience');
+  if (fromUrl === 'learner' || fromUrl === 'pro') return fromUrl;
+  try {
+    const stored = window.localStorage.getItem('netlab-audience');
+    if (stored === 'learner' || stored === 'pro') return stored;
+  } catch {
+    /* localStorage unavailable — fall through to default */
+  }
+  return 'pro';
 }
 
 function commandActionStyle(accent: string): React.CSSProperties {

@@ -465,7 +465,15 @@ export { useNetlabHooks } from './hooks/useNetlabHooks';
 
 // Scenarios + tutorials
 export { scenarioRegistry, ScenarioRegistry } from './scenarios/ScenarioRegistry';
+export { getScenarioBrief } from './scenarios';
 export type { Scenario, ScenarioMetadata, ScenarioSampleFlow } from './scenarios/types';
+export type {
+  BriefConclusion,
+  BriefConclusionAction,
+  BriefPrereq,
+  BriefWatchPoint,
+  ScenarioBrief,
+} from './scenarios/types';
 export { tutorialRegistry, TutorialRunner, TutorialProvider, useTutorialRunner } from './tutorials';
 export type {
   HookEventLog,
@@ -647,6 +655,8 @@ export { NetlabThemeScope } from './components/NetlabThemeScope';
 export type { NetlabThemeScopeProps } from './components/NetlabThemeScope';
 
 // Components
+export { PreFlightBrief } from './components/PreFlightBrief';
+export type { PreFlightBriefProps } from './components/PreFlightBrief';
 export { AreaLegend } from './components/controls/AreaLegend';
 export { RouteTable } from './components/controls/RouteTable';
 export { NetlabCanvas } from './components/NetlabCanvas';

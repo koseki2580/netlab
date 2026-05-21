@@ -111,6 +111,7 @@ interface NetlabThemeScopeProps {
 | Export                     | Description                                                             |
 | -------------------------- | ----------------------------------------------------------------------- |
 | `<NodeDetailPanel>`        | Floating overlay for the currently selected node                        |
+| `<PreFlightBrief>`         | Pre-flight scenario brief overlay (goal / prereqs / watch-points)       |
 | `<RouteTable>`             | Debug/teaching overlay showing resolved routes                          |
 | `<AreaLegend>`             | Legend for configured network areas                                     |
 | `<ResizableSidebar>`       | Generic right-side drag-resizable panel                                 |
@@ -388,6 +389,28 @@ import type { IcmpType, IcmpCode } from 'netlab';
 | `ADMIN_DISTANCES` | Built-in routing admin distances for static, eBGP, OSPF, RIP, and iBGP |
 | `ICMP_TYPE`       | ICMP message type constants used by `ping()` and `traceroute()`        |
 | `ICMP_CODE`       | ICMP code constants including TTL-exceeded                             |
+
+### Scenario Briefs
+
+```typescript
+import { getScenarioBrief, PreFlightBrief } from 'netlab';
+import type { ScenarioBrief, PreFlightBriefProps } from 'netlab';
+```
+
+A scenario may carry an optional `brief` describing its learning goal, prerequisites, timeline
+watch-points, and a closing conclusion. When present, `<PreFlightBrief>` renders it as a full
+overlay card on a learner's first visit, a compact strip on repeat visits (or for `audience='pro'`),
+and a conclusion card on the final step. Dismissal persists to `localStorage['nl_brief_seen_<id>']`.
+
+| Export                 | Description                                                                    |
+| ---------------------- | ------------------------------------------------------------------------------ |
+| `getScenarioBrief(id)` | Resolves a registered scenario's `brief`, or `undefined` when it has none      |
+| `<PreFlightBrief>`     | Renders the brief overlay / strip / conclusion based on `audience` and state   |
+| `ScenarioBrief`        | Brief shape: `goal`, optional `est`, `prereq[]`, `watchPoints[]`, `conclusion` |
+
+`<PreFlightBrief>` is mounted by the host inside the simulator's positioned container; pass
+`scenarioId`, the resolved `audience`, and `isLastStep` (derived from the timeline). The `onAction`
+callback receives the id of a conclusion action button so the host can route it.
 
 ### Theming
 

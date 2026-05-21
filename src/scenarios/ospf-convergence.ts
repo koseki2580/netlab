@@ -240,6 +240,26 @@ export const ospfConvergence: Scenario = {
     prerequisiteIds: ['basic-arp'],
   },
   topology: buildOspfConvergenceTopology(),
+  brief: {
+    goal: 'Watch how OSPF prefers the lowest-cost path, then recomputes a backup when the primary inter-router link fails.',
+    est: '~3 min',
+    prereq: [
+      { id: 'basic-arp', label: 'arp', done: true },
+      { id: 'static-routes', label: 'static', done: true },
+      { id: 'ospf-basics', label: 'ospf-b', done: false },
+    ],
+    watchPoints: [
+      { step: 1, kind: 'route', label: 'R1 forwards toward C2 via the lower-cost R2 path' },
+      { step: 3, kind: 'spf', label: 'Failing the primary link triggers an SPF recompute on R1' },
+      { step: 5, kind: 'route', label: 'The recomputed route now leaves R1 through R3' },
+    ],
+    conclusion: {
+      headline: 'OSPF recomputed a backup path after the primary link failed.',
+      detail:
+        'R1 preferred the lower-cost path through R2, then converged onto R3 once that link went down — no static reconfiguration needed.',
+      actions: [{ id: 'gallery', label: 'browse more scenarios →', kind: 'primary' }],
+    },
+  },
   sampleFlows: [
     { from: 'c1', to: 'c2', note: 'Healthy path prefers R2 before recomputing via R3' },
   ],
