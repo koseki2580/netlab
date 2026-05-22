@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSimulation } from '../../simulation/SimulationContext';
 import type { PacketHop } from '../../types/simulation';
+import { Marker } from './Marker';
+import { hopEventMarker } from './hopMarkers';
 
 /**
  * Horizontal scrub track for the active packet trace. The playbook (v5, N3)
@@ -14,20 +16,7 @@ import type { PacketHop } from '../../types/simulation';
  * The visible bar still uses fractional widths to give a smooth visual.
  */
 
-const EVENT_COLORS: Record<string, string> = {
-  create: 'var(--netlab-accent-cyan)',
-  forward: 'var(--netlab-accent-green)',
-  deliver: 'var(--netlab-accent-green)',
-  drop: 'var(--netlab-accent-red)',
-  'arp-request': 'var(--netlab-accent-yellow)',
-  'arp-reply': 'var(--netlab-accent-yellow)',
-};
-
 const TRACK_HEIGHT = 28;
-
-function hopColor(hop: PacketHop): string {
-  return EVENT_COLORS[hop.event] ?? 'var(--netlab-text-muted)';
-}
 
 function hopLabel(hop: PacketHop): string {
   return `${String(hop.step).padStart(2, '0')} ${hop.event}`;
@@ -268,9 +257,10 @@ export function PacketScrubTimeline({
             />
           );
         })}
-        {/* event markers */}
+        {/* event markers — shape encodes the event so it reads without color (M6) */}
         {trace?.hops.map((hop, i) => {
           const x = ((i + 0.5) / totalSteps) * 100;
+          const marker = hopEventMarker(hop.event);
           return (
             <button
               key={`m-${hop.step}`}
@@ -286,16 +276,17 @@ export function PacketScrubTimeline({
                 position: 'absolute',
                 top: '50%',
                 left: `${x}%`,
-                width: 10,
-                height: 10,
-                borderRadius: '50%',
-                background: hopColor(hop),
-                border: 'none',
+                display: 'flex',
                 transform: 'translate(-50%, -50%)',
+                border: 'none',
+                background: 'none',
                 cursor: 'pointer',
                 padding: 0,
+                lineHeight: 0,
               }}
-            />
+            >
+              <Marker shape={marker.shape} color={marker.color} label={marker.label} size={13} />
+            </button>
           );
         })}
         {/* playhead */}

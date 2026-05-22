@@ -1,6 +1,7 @@
 import DemoShell from '../DemoShell';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
+import { LegendPanel } from '../../src/components/LegendPanel';
 import { ResizableSidebar } from '../../src/components/ResizableSidebar';
 import { DropEventOverlay } from '../../src/components/simulation/DropEventOverlay';
 import { HopInspector } from '../../src/components/simulation/HopInspector';
@@ -187,6 +188,7 @@ function AclDemoInner() {
         <NetlabCanvas>
           <DropEventOverlay />
         </NetlabCanvas>
+        <LegendPanel />
       </div>
 
       <ResizableSidebar
