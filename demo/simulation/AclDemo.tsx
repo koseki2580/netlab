@@ -2,6 +2,7 @@ import DemoShell from '../DemoShell';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { ResizableSidebar } from '../../src/components/ResizableSidebar';
+import { DropEventOverlay } from '../../src/components/simulation/DropEventOverlay';
 import { HopInspector } from '../../src/components/simulation/HopInspector';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationControls } from '../../src/components/simulation/SimulationControls';
@@ -183,7 +184,9 @@ function AclDemoInner() {
   return (
     <div style={{ display: 'flex', height: '100%' }}>
       <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-        <NetlabCanvas />
+        <NetlabCanvas>
+          <DropEventOverlay />
+        </NetlabCanvas>
       </div>
 
       <ResizableSidebar

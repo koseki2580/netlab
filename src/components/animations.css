@@ -78,8 +78,7 @@
     filter 220ms cubic-bezier(0.2, 0.7, 0.3, 1);
 }
 
-.netlab-canvas-selection
-  .react-flow__node:not(.netlab-node-selected):not(.netlab-node-neighbor) {
+.netlab-canvas-selection .react-flow__node:not(.netlab-node-selected):not(.netlab-node-neighbor) {
   opacity: 0.32;
 }
 
@@ -110,6 +109,23 @@
   opacity: 0.18;
 }
 
+/* M2 — drop pulse. Applied imperatively to the dropping node's
+ * `.react-flow__node` wrapper for ~750ms (3 × 250ms). */
+@keyframes netlab-drop-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  50% {
+    box-shadow: 0 0 0 7px color-mix(in srgb, var(--netlab-accent-red) 48%, transparent);
+  }
+}
+
+.netlab-drop-pulse {
+  animation: netlab-drop-pulse 250ms ease-in-out 3;
+  border-radius: 10px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .netlab-page-fade-in,
   .netlab-dp-slide-in,
@@ -120,5 +136,22 @@
   .netlab-canvas-selection .react-flow__node,
   .netlab-canvas-selection .react-flow__edge {
     transition: none;
+  }
+  /* Replace the drop pulse with a static × marker on the dropping node. */
+  .netlab-drop-pulse {
+    animation: none !important;
+  }
+  .netlab-drop-pulse::after {
+    content: '×';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--netlab-accent-red);
+    font:
+      700 1.4rem/1 ui-monospace,
+      monospace;
+    pointer-events: none;
   }
 }

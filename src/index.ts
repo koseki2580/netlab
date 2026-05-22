@@ -224,6 +224,12 @@ export {
 } from './utils/pathLoss';
 
 // Simulation UI components
+export { DropEventCard, pulseDroppingNode } from './components/simulation/DropEventCard';
+export type { DropEventCardProps, DropNavigateTarget } from './components/simulation/DropEventCard';
+export { DropEventOverlay } from './components/simulation/DropEventOverlay';
+export type { DropEventOverlayProps } from './components/simulation/DropEventOverlay';
+export { getDropLesson, DROP_LESSONS } from './components/simulation/dropLessons';
+export type { DropLesson, DropLessonRef } from './components/simulation/dropLessons';
 export { HopInspector } from './components/simulation/HopInspector';
 export { NatTableViewer } from './components/simulation/NatTableViewer';
 export { PacketStructureViewer } from './components/simulation/PacketStructureViewer';
