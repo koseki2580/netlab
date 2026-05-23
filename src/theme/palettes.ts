@@ -38,3 +38,15 @@ export const NETLAB_PALETTES: Record<NetlabPalette, AccentOverrides> = {
 export function paletteOverrides(palette: NetlabPalette): AccentOverrides {
   return NETLAB_PALETTES[palette] ?? {};
 }
+
+/**
+ * Color-blind-safe accent overrides (M6). Applied on top of the active palette
+ * when the `colorBlindSafe` axis is `'on'`. Red → magenta, green → teal,
+ * yellow → amber — a set distinguishable under deuteranopia/protanopia (the
+ * blue/cyan channel is already CVD-safe, so it is left untouched).
+ */
+export const CBSAFE_ACCENTS: AccentOverrides = {
+  accentRed: '#ee3377',
+  accentGreen: '#009988',
+  accentYellow: '#ee7733',
+};

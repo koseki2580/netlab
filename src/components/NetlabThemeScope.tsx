@@ -4,6 +4,8 @@ import {
   NETLAB_DARK_THEME,
   themeToVars,
   type NetlabAudience,
+  type NetlabCbSafe,
+  type NetlabContrast,
   type NetlabDensity,
   type NetlabPalette,
   type NetlabTheme,
@@ -19,6 +21,10 @@ export interface NetlabThemeScopeValue {
   density: NetlabDensity;
   /** Resolved audience axis. Defaults to `pro`. */
   audience: NetlabAudience;
+  /** Resolved color-blind-safe axis. Defaults to `off`. */
+  colorBlindSafe: NetlabCbSafe;
+  /** Resolved contrast axis. Defaults to `normal`. */
+  contrast: NetlabContrast;
 }
 
 export const NetlabThemeScopeContext = createContext<NetlabThemeScopeValue | null>(null);
@@ -31,6 +37,10 @@ export interface NetlabThemeScopeProps {
   density?: NetlabDensity;
   /** Audience flag — `learner` shows scaffolding copy, `pro` hides it. */
   audience?: NetlabAudience;
+  /** Color-blind-safe accent remap — `off` (default) or `on`. */
+  colorBlindSafe?: NetlabCbSafe;
+  /** Contrast level — `normal` (default) or `more`. */
+  contrast?: NetlabContrast;
   style?: React.CSSProperties;
   className?: string;
   children: ReactNode;
@@ -41,6 +51,8 @@ export function NetlabThemeScope({
   palette = 'studio',
   density = 'standard',
   audience = 'pro',
+  colorBlindSafe = 'off',
+  contrast = 'normal',
   style,
   className,
   children,
@@ -53,8 +65,16 @@ export function NetlabThemeScope({
   );
 
   const value = useMemo<NetlabThemeScopeValue>(
-    () => ({ theme: resolvedTheme, colorMode, palette, density, audience }),
-    [resolvedTheme, colorMode, palette, density, audience],
+    () => ({
+      theme: resolvedTheme,
+      colorMode,
+      palette,
+      density,
+      audience,
+      colorBlindSafe,
+      contrast,
+    }),
+    [resolvedTheme, colorMode, palette, density, audience, colorBlindSafe, contrast],
   );
 
   return (
@@ -70,8 +90,10 @@ export function NetlabThemeScope({
         data-netlab-palette={palette}
         data-netlab-density={density}
         data-netlab-audience={audience}
+        data-cbsafe={colorBlindSafe}
+        data-contrast={contrast}
         style={{
-          ...themeToVars(resolvedTheme, { palette, density }),
+          ...themeToVars(resolvedTheme, { palette, density, colorBlindSafe, contrast }),
           width: '100%',
           height: '100%',
           display: 'flex',

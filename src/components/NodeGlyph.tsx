@@ -87,18 +87,12 @@ function ShapeOutline({
   /** Expand the shape outward (px) — used for the selection ring. */
   grow: number;
 }): React.ReactElement {
+  // Color via `style` (not attributes) so it matches the node-icon idiom and
+  // keeps theme tokens visible to style-based assertions.
+  const paint: React.CSSProperties = { fill, stroke, strokeWidth };
   switch (shape) {
     case 'circle':
-      return (
-        <circle
-          cx="20"
-          cy="20"
-          r={15 + grow}
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={strokeWidth}
-        />
-      );
+      return <circle cx="20" cy="20" r={15 + grow} style={paint} />;
     case 'square':
       return (
         <rect
@@ -107,9 +101,7 @@ function ShapeOutline({
           width={28 + grow * 2}
           height={28 + grow * 2}
           rx="3"
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={strokeWidth}
+          style={paint}
         />
       );
     case 'rounded-rect':
@@ -120,15 +112,11 @@ function ShapeOutline({
           width={32 + grow * 2}
           height={22 + grow * 2}
           rx="7"
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={strokeWidth}
+          style={paint}
         />
       );
-    case 'hexagon': {
-      const pts = hexagonPoints(grow);
-      return <polygon points={pts} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />;
-    }
+    case 'hexagon':
+      return <polygon points={hexagonPoints(grow)} style={paint} />;
   }
 }
 

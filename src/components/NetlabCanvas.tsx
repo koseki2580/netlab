@@ -45,6 +45,23 @@ function excludeAreaNodes(nodes: { id: string }[]): NetlabNode[] {
   return nodes.filter((node) => !node.id.startsWith(AREA_NODE_PREFIX)) as NetlabNode[];
 }
 
+/** Tracks `prefers-reduced-motion: reduce`, updating live if the OS setting changes (M6). */
+function usePrefersReducedMotion(): boolean {
+  const query = '(prefers-reduced-motion: reduce)';
+  const supported = typeof window !== 'undefined' && typeof window.matchMedia === 'function';
+  const [reduced, setReduced] = useState(() =>
+    supported ? window.matchMedia(query).matches : false,
+  );
+  useEffect(() => {
+    if (!supported) return undefined;
+    const mq = window.matchMedia(query);
+    const onChange = () => setReduced(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, [supported]);
+  return reduced;
+}
+
 function withValidationEdgeType(edge: NetlabEdge): NetlabEdge {
   if (edge.type && edge.type !== 'smoothstep') {
     return edge;
@@ -85,6 +102,7 @@ export function NetlabCanvas({
   onTopologyChange,
 }: NetlabCanvasProps) {
   const { topology, areas } = useNetlabContext();
+  const reducedMotion = usePrefersReducedMotion();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [highlightedAreaId, setHighlightedAreaId] = useState<string | null>(null);
@@ -324,7 +342,7 @@ export function NetlabCanvas({
         if (isCurrentHopEdge) {
           return {
             ...validationEdge,
-            animated: true,
+            animated: !reducedMotion,
             style: {
               ...validationEdge.style,
               stroke: currentTraceColor,
@@ -337,7 +355,7 @@ export function NetlabCanvas({
         if (isPathEdge) {
           return {
             ...validationEdge,
-            animated: true,
+            animated: !reducedMotion,
             style: {
               ...validationEdge.style,
               stroke: currentTraceColor,
@@ -389,6 +407,7 @@ export function NetlabCanvas({
       currentTraceColor,
       failureCtx,
       neighborEdgeIds,
+      reducedMotion,
     ],
   );
 

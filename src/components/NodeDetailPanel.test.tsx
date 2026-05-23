@@ -1174,6 +1174,8 @@ describe('NodeDetailPanel', () => {
             palette: 'studio',
             density: 'standard',
             audience: 'learner',
+            colorBlindSafe: 'off',
+            contrast: 'normal',
           }}
         >
           <SimulationContext.Provider value={makeSimulationValue()}>

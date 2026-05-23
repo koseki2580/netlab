@@ -1,6 +1,12 @@
 import type React from 'react';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import type { NetlabAudience, NetlabDensity, NetlabPalette } from '../../src/theme';
+import type {
+  NetlabAudience,
+  NetlabCbSafe,
+  NetlabContrast,
+  NetlabDensity,
+  NetlabPalette,
+} from '../../src/theme';
 
 export type GallerySettingsThemeMode = 'dark' | 'light';
 
@@ -9,6 +15,8 @@ export interface GallerySettings {
   palette: NetlabPalette;
   density: NetlabDensity;
   audience: NetlabAudience;
+  colorBlindSafe: NetlabCbSafe;
+  contrast: NetlabContrast;
 }
 
 export interface SettingsPopoverProps {
@@ -42,6 +50,16 @@ const DENSITY_OPTIONS: AxisOption<NetlabDensity>[] = [
 const AUDIENCE_OPTIONS: AxisOption<NetlabAudience>[] = [
   { value: 'learner', label: 'Learner' },
   { value: 'pro', label: 'Pro' },
+];
+
+const CBSAFE_OPTIONS: AxisOption<NetlabCbSafe>[] = [
+  { value: 'off', label: 'Off' },
+  { value: 'on', label: 'On' },
+];
+
+const CONTRAST_OPTIONS: AxisOption<NetlabContrast>[] = [
+  { value: 'normal', label: 'Normal' },
+  { value: 'more', label: 'More' },
 ];
 
 const GEAR_ICON = (
@@ -249,6 +267,20 @@ export function SettingsPopover({ settings, onChange, label = 'Settings' }: Sett
             value={settings.audience}
             options={AUDIENCE_OPTIONS}
             onChange={(v) => update('audience', v)}
+          />
+          <AxisGroup
+            groupName={`${popoverId}-cbsafe`}
+            label="Color-blind safe"
+            value={settings.colorBlindSafe}
+            options={CBSAFE_OPTIONS}
+            onChange={(v) => update('colorBlindSafe', v)}
+          />
+          <AxisGroup
+            groupName={`${popoverId}-contrast`}
+            label="Contrast"
+            value={settings.contrast}
+            options={CONTRAST_OPTIONS}
+            onChange={(v) => update('contrast', v)}
           />
         </div>
       )}

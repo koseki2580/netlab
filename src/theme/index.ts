@@ -1,6 +1,6 @@
 import type React from 'react';
 import { densityToVars, type NetlabDensity } from './densities';
-import { paletteOverrides, type NetlabPalette } from './palettes';
+import { CBSAFE_ACCENTS, paletteOverrides, type NetlabPalette } from './palettes';
 
 export type { NetlabPalette } from './palettes';
 export type { NetlabDensity, NetlabDensityTokens } from './densities';
@@ -14,12 +14,21 @@ export { NETLAB_DENSITIES, densityToVars } from './densities';
  */
 export type NetlabAudience = 'learner' | 'pro';
 
+/** Color-blind-safe accent remap toggle (M6). */
+export type NetlabCbSafe = 'off' | 'on';
+/** Contrast level (M6). `'more'` promotes muted text and strengthens borders. */
+export type NetlabContrast = 'normal' | 'more';
+
 /** Optional theme axes layered on top of the base {@link NetlabTheme}. */
 export interface NetlabThemeAxes {
   /** Accent flavor — defaults to `studio` (current palette). */
   palette?: NetlabPalette;
   /** Layout density — defaults to `standard`. */
   density?: NetlabDensity;
+  /** Color-blind-safe accent remap — defaults to `'off'`. */
+  colorBlindSafe?: NetlabCbSafe;
+  /** Contrast level — defaults to `'normal'`. */
+  contrast?: NetlabContrast;
 }
 
 /**
@@ -140,9 +149,23 @@ export const NETLAB_LIGHT_THEME: NetlabTheme = {
  * Omitting `axes` (or passing only a subset) preserves the pre-axis behavior,
  * so existing callers are unaffected.
  */
+function contrastOverrides(theme: NetlabTheme, contrast: NetlabContrast): Partial<NetlabTheme> {
+  if (contrast !== 'more') return {};
+  // Promote dim text toward primary and make subtle borders solid for legibility.
+  return {
+    textMuted: theme.textPrimary,
+    textFaint: theme.textSecondary,
+    borderSubtle: theme.border,
+  };
+}
+
 export function themeToVars(theme: NetlabTheme, axes?: NetlabThemeAxes): React.CSSProperties {
   const palette = axes?.palette ?? 'studio';
-  const resolved: NetlabTheme = { ...theme, ...paletteOverrides(palette) };
+  let resolved: NetlabTheme = { ...theme, ...paletteOverrides(palette) };
+  if (axes?.colorBlindSafe === 'on') {
+    resolved = { ...resolved, ...CBSAFE_ACCENTS };
+  }
+  resolved = { ...resolved, ...contrastOverrides(resolved, axes?.contrast ?? 'normal') };
   const base: React.CSSProperties = {
     '--netlab-bg-primary': resolved.bgPrimary,
     '--netlab-bg-surface': resolved.bgSurface,

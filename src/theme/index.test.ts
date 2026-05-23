@@ -6,6 +6,7 @@ import {
   NETLAB_PALETTES,
   themeToVars,
 } from './index';
+import { CBSAFE_ACCENTS } from './palettes';
 
 describe('themeToVars', () => {
   it('includes node background tokens from the built-in themes', () => {
@@ -53,6 +54,34 @@ describe('themeToVars', () => {
       '--netlab-accent-cyan': NETLAB_PALETTES.academic.accentCyan,
       '--netlab-accent-blue': NETLAB_PALETTES.academic.accentBlue,
     });
+  });
+
+  it('remaps red/green/yellow accents when colorBlindSafe is on (M6)', () => {
+    const normal = themeToVars(NETLAB_DARK_THEME) as Record<string, string | undefined>;
+    const cbsafe = themeToVars(NETLAB_DARK_THEME, { colorBlindSafe: 'on' }) as Record<
+      string,
+      string | undefined
+    >;
+    expect(normal['--netlab-accent-red']).toBe(NETLAB_DARK_THEME.accentRed);
+    expect(cbsafe).toMatchObject({
+      '--netlab-accent-red': CBSAFE_ACCENTS.accentRed,
+      '--netlab-accent-green': CBSAFE_ACCENTS.accentGreen,
+      '--netlab-accent-yellow': CBSAFE_ACCENTS.accentYellow,
+    });
+    // The blue/cyan channel is already CVD-safe and is left untouched.
+    expect(cbsafe['--netlab-accent-cyan']).toBe(NETLAB_DARK_THEME.accentCyan);
+  });
+
+  it('promotes muted text and solidifies subtle borders when contrast = more (M6)', () => {
+    const more = themeToVars(NETLAB_DARK_THEME, { contrast: 'more' });
+    expect(more).toMatchObject({
+      '--netlab-text-muted': NETLAB_DARK_THEME.textPrimary,
+      '--netlab-text-faint': NETLAB_DARK_THEME.textSecondary,
+      '--netlab-border-subtle': NETLAB_DARK_THEME.border,
+    });
+    // Normal contrast keeps the dim tokens.
+    const normal = themeToVars(NETLAB_DARK_THEME) as Record<string, string | undefined>;
+    expect(normal['--netlab-text-muted']).toBe(NETLAB_DARK_THEME.textMuted);
   });
 
   it('emits density tokens (pad/gap/font/title/eyebrow) when density is supplied', () => {

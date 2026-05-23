@@ -1,5 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { NetlabNodeData } from '../../types/topology';
+import { NodeGlyph } from '../../components/NodeGlyph';
 import { useNetlabUI } from '../../components/NetlabUIContext';
 
 const ROUTER_STYLE: React.CSSProperties = {
@@ -23,78 +24,6 @@ const HANDLE_STYLE: React.CSSProperties = {
   border: '1px solid var(--netlab-accent-green)',
 };
 
-function RouterIcon() {
-  return (
-    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle
-        cx="20"
-        cy="20"
-        r="13"
-        style={{ stroke: 'var(--netlab-accent-green)', fill: 'var(--netlab-accent-green)' }}
-        strokeWidth="1.5"
-        fillOpacity="0.2"
-      />
-      <line
-        x1="7"
-        y1="20"
-        x2="13"
-        y2="20"
-        style={{ stroke: 'var(--netlab-accent-green)' }}
-        strokeWidth="1.5"
-      />
-      <polyline
-        points="9,17.5 7,20 9,22.5"
-        style={{ stroke: 'var(--netlab-accent-green)' }}
-        strokeWidth="1.5"
-        fill="none"
-      />
-      <line
-        x1="27"
-        y1="20"
-        x2="33"
-        y2="20"
-        style={{ stroke: 'var(--netlab-accent-green)' }}
-        strokeWidth="1.5"
-      />
-      <polyline
-        points="31,17.5 33,20 31,22.5"
-        style={{ stroke: 'var(--netlab-accent-green)' }}
-        strokeWidth="1.5"
-        fill="none"
-      />
-      <line
-        x1="20"
-        y1="7"
-        x2="20"
-        y2="13"
-        style={{ stroke: 'var(--netlab-accent-green)' }}
-        strokeWidth="1.5"
-      />
-      <polyline
-        points="17.5,9 20,7 22.5,9"
-        style={{ stroke: 'var(--netlab-accent-green)' }}
-        strokeWidth="1.5"
-        fill="none"
-      />
-      <line
-        x1="20"
-        y1="27"
-        x2="20"
-        y2="33"
-        style={{ stroke: 'var(--netlab-accent-green)' }}
-        strokeWidth="1.5"
-      />
-      <polyline
-        points="17.5,31 20,33 22.5,31"
-        style={{ stroke: 'var(--netlab-accent-green)' }}
-        strokeWidth="1.5"
-        fill="none"
-      />
-      <circle cx="20" cy="20" r="3" style={{ fill: 'var(--netlab-accent-green)' }} />
-    </svg>
-  );
-}
-
 export function RouterNode({ id, data }: NodeProps) {
   const { setSelectedNodeId } = useNetlabUI();
   const d = data as NetlabNodeData;
@@ -106,7 +35,7 @@ export function RouterNode({ id, data }: NodeProps) {
       <Handle type="source" position={Position.Bottom} id="bottom" style={HANDLE_STYLE} />
       <Handle type="source" position={Position.Left} id="left" style={HANDLE_STYLE} />
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}>
-        <RouterIcon />
+        <NodeGlyph kind="router" />
       </div>
       <div style={{ fontWeight: 'bold', fontSize: 11, color: 'var(--netlab-text-primary)' }}>
         {d.label}

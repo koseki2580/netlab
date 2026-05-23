@@ -9,6 +9,8 @@ import {
   NETLAB_LIGHT_THEME,
   themeToVars,
   type NetlabAudience,
+  type NetlabCbSafe,
+  type NetlabContrast,
   type NetlabDensity,
   type NetlabPalette,
 } from '../src/theme';
@@ -421,10 +423,14 @@ const GALLERY_LOCALE_KEY = 'netlab-locale';
 const GALLERY_PALETTE_KEY = 'netlab-palette';
 const GALLERY_DENSITY_KEY = 'netlab-density';
 const GALLERY_AUDIENCE_KEY = 'netlab-audience';
+const GALLERY_CBSAFE_KEY = 'nl_a11y_cbsafe';
+const GALLERY_CONTRAST_KEY = 'nl_a11y_contrast';
 
 const PALETTE_VALUES: readonly NetlabPalette[] = ['studio', 'academic'];
 const DENSITY_VALUES: readonly NetlabDensity[] = ['compact', 'standard', 'relaxed'];
 const AUDIENCE_VALUES: readonly NetlabAudience[] = ['learner', 'pro'];
+const CBSAFE_VALUES: readonly NetlabCbSafe[] = ['off', 'on'];
+const CONTRAST_VALUES: readonly NetlabContrast[] = ['normal', 'more'];
 
 function isPalette(value: string | null): value is NetlabPalette {
   return value !== null && (PALETTE_VALUES as readonly string[]).includes(value);
@@ -434,6 +440,12 @@ function isDensity(value: string | null): value is NetlabDensity {
 }
 function isAudience(value: string | null): value is NetlabAudience {
   return value !== null && (AUDIENCE_VALUES as readonly string[]).includes(value);
+}
+function isCbsafe(value: string | null): value is NetlabCbSafe {
+  return value !== null && (CBSAFE_VALUES as readonly string[]).includes(value);
+}
+function isContrast(value: string | null): value is NetlabContrast {
+  return value !== null && (CONTRAST_VALUES as readonly string[]).includes(value);
 }
 
 function readStoredAxis<T extends string>(
@@ -897,6 +909,12 @@ export default function Gallery({
     if (isAudience(fromUrl)) return fromUrl;
     return readStoredAxis(GALLERY_AUDIENCE_KEY, isAudience, 'pro');
   });
+  const [colorBlindSafe, setColorBlindSafe] = useState<NetlabCbSafe>(() =>
+    readStoredAxis(GALLERY_CBSAFE_KEY, isCbsafe, 'off'),
+  );
+  const [contrast, setContrast] = useState<NetlabContrast>(() =>
+    readStoredAxis(GALLERY_CONTRAST_KEY, isContrast, 'normal'),
+  );
   const [activeSectionId, setActiveSectionId] = useState(initialActiveSectionId);
   const [locale, setLocale] = useState<GalleryLocale>(
     () => initialLocale ?? readStoredGalleryLocale(),
@@ -925,13 +943,28 @@ export default function Gallery({
   useEffect(() => {
     persistAxis(GALLERY_AUDIENCE_KEY, audience);
   }, [audience]);
+  useEffect(() => {
+    persistAxis(GALLERY_CBSAFE_KEY, colorBlindSafe);
+  }, [colorBlindSafe]);
+  useEffect(() => {
+    persistAxis(GALLERY_CONTRAST_KEY, contrast);
+  }, [contrast]);
 
-  const settings: GallerySettings = { themeMode, palette, density, audience };
+  const settings: GallerySettings = {
+    themeMode,
+    palette,
+    density,
+    audience,
+    colorBlindSafe,
+    contrast,
+  };
   const handleSettingsChange = (next: GallerySettings) => {
     if (next.themeMode !== themeMode) setThemeMode(next.themeMode);
     if (next.palette !== palette) setPalette(next.palette);
     if (next.density !== density) setDensity(next.density);
     if (next.audience !== audience) setAudience(next.audience);
+    if (next.colorBlindSafe !== colorBlindSafe) setColorBlindSafe(next.colorBlindSafe);
+    if (next.contrast !== contrast) setContrast(next.contrast);
   };
 
   const filteredCategories = useMemo(() => {
@@ -1084,8 +1117,10 @@ export default function Gallery({
       data-netlab-palette={palette}
       data-netlab-density={density}
       data-netlab-audience={audience}
+      data-cbsafe={colorBlindSafe}
+      data-contrast={contrast}
       style={{
-        ...themeToVars(activeTheme, { palette, density }),
+        ...themeToVars(activeTheme, { palette, density, colorBlindSafe, contrast }),
         minHeight: '100vh',
         background:
           'radial-gradient(circle at top left, color-mix(in srgb, var(--netlab-accent-cyan) 10%, var(--netlab-bg-surface)), transparent 26%), radial-gradient(circle at top right, color-mix(in srgb, var(--netlab-accent-yellow) 10%, var(--netlab-bg-surface)), transparent 24%), linear-gradient(180deg, color-mix(in srgb, var(--netlab-bg-surface) 28%, var(--netlab-bg-primary)) 0%, var(--netlab-bg-primary) 100%)',

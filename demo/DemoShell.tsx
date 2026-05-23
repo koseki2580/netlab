@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { CommandPalette, type CommandPaletteItem } from '../src/components/CommandPalette';
 import { NavRail, type NavRailView } from '../src/components/NavRail';
 import { NetlabThemeScope } from '../src/components/NetlabThemeScope';
+import type { NetlabCbSafe, NetlabContrast } from '../src/theme';
 import { scenarioRegistry } from '../src/scenarios';
 import { installKeymap, type KeymapActions } from '../src/utils/keymap';
 import { E2eTraceHook } from './__e2e_hook';
@@ -28,6 +29,19 @@ const SCENARIO_ROUTES: Record<string, string> = {
   'nat-basics': '/simulation/nat',
 };
 
+/** Read the persisted a11y axes so scenario views honor the gallery's Settings (M6). */
+function readPersistedA11yAxes(): { colorBlindSafe: NetlabCbSafe; contrast: NetlabContrast } {
+  let colorBlindSafe: NetlabCbSafe = 'off';
+  let contrast: NetlabContrast = 'normal';
+  try {
+    if (window.localStorage.getItem('nl_a11y_cbsafe') === 'on') colorBlindSafe = 'on';
+    if (window.localStorage.getItem('nl_a11y_contrast') === 'more') contrast = 'more';
+  } catch {
+    /* localStorage unavailable — fall back to defaults */
+  }
+  return { colorBlindSafe, contrast };
+}
+
 interface DemoShellProps {
   title: string;
   desc: string;
@@ -43,6 +57,7 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
   const [registeredActions, setRegisteredActions] = useState<KeymapActions>({});
   const [registeredPaletteItems, setRegisteredPaletteItems] = useState<CommandPaletteItem[]>([]);
   const view: NavRailView = location.pathname === '/' ? 'gallery' : 'simulator';
+  const a11yAxes = useMemo(() => readPersistedA11yAxes(), []);
 
   const openPalette = useCallback(() => {
     setHelpOpen(false);
@@ -219,7 +234,11 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
             </a>
           </div>
         )}
-        <NetlabThemeScope style={{ flex: 1, overflow: 'hidden' }}>
+        <NetlabThemeScope
+          colorBlindSafe={a11yAxes.colorBlindSafe}
+          contrast={a11yAxes.contrast}
+          style={{ flex: 1, overflow: 'hidden' }}
+        >
           {isE2e && <E2eTraceHook />}
           <ShellChromeProvider value={shellChrome}>{children}</ShellChromeProvider>
           {!embedded && (

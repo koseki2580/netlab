@@ -38,6 +38,8 @@ const DEFAULT_SETTINGS: GallerySettings = {
   palette: 'studio',
   density: 'standard',
   audience: 'pro',
+  colorBlindSafe: 'off',
+  contrast: 'normal',
 };
 
 describe('SettingsPopover', () => {
