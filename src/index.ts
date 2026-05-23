@@ -232,6 +232,11 @@ export { getDropLesson, DROP_LESSONS } from './components/simulation/dropLessons
 export type { DropLesson, DropLessonRef } from './components/simulation/dropLessons';
 export { Marker, MARKER_SHAPES } from './components/simulation/Marker';
 export type { MarkerProps, MarkerShape } from './components/simulation/Marker';
+export { StateDiffTable } from './components/simulation/StateDiffTable';
+export type {
+  StateDiffTableProps,
+  StateDiffTableKind,
+} from './components/simulation/StateDiffTable';
 export { HopInspector } from './components/simulation/HopInspector';
 export { NatTableViewer } from './components/simulation/NatTableViewer';
 export { PacketStructureViewer } from './components/simulation/PacketStructureViewer';
@@ -253,6 +258,18 @@ export type { AnnotatedField, LayerTag, SerializedPacket } from './utils/packetS
 // Step simulation controller
 export { StepSimulationController } from './simulation/StepSimulationController';
 export type { StepSimState, StepSimStatus } from './simulation/StepSimulationController';
+
+// Per-step state snapshots + diff (M3)
+export { buildStepSnapshots, diffRoutes, diffArp } from './simulation/snapshots';
+export type {
+  StepSnapshots,
+  NodeStepState,
+  RouteRow,
+  ArpRow,
+  RouteDiffRow,
+  ArpDiffRow,
+  DiffStatus,
+} from './simulation/snapshots';
 
 // Types
 export type {

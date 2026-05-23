@@ -1,13 +1,16 @@
-import type { CSSProperties } from 'react';
+import { useMemo, type CSSProperties } from 'react';
 import DemoShell from '../DemoShell';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
+import { useNetlabContext } from '../../src/components/NetlabContext';
 import { ResizableSidebar } from '../../src/components/ResizableSidebar';
 import { HopInspector } from '../../src/components/simulation/HopInspector';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationOverlayDock } from '../../src/components/simulation/SimulationOverlayDock';
+import { StateDiffTable } from '../../src/components/simulation/StateDiffTable';
 import { StepControls } from '../../src/components/simulation/StepControls';
 import { basicArp } from '../../src/scenarios';
+import { buildStepSnapshots } from '../../src/simulation/snapshots';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import { readDemoEmbedParams } from '../embedParams';
 
@@ -72,6 +75,33 @@ function ArpTablePanel() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function ArpDiffCard() {
+  const { state } = useSimulation();
+  const { topology, routeTable } = useNetlabContext();
+  const trace =
+    state.traces.find((t) => t.packetId === state.currentTraceId) ??
+    state.traces[state.traces.length - 1] ??
+    null;
+  const router = topology.nodes.find((n) => n.data.role === 'router');
+  const snapshots = useMemo(
+    () => (trace ? buildStepSnapshots(trace, routeTable) : null),
+    [trace, routeTable],
+  );
+  if (!trace || !router || !snapshots) return null;
+  const stepIndex = state.currentStep >= 0 ? state.currentStep : 0;
+  return (
+    <div style={CARD_STYLE}>
+      <div style={LABEL_STYLE}>ARP over time · {router.data.label ?? router.id}</div>
+      <StateDiffTable
+        snapshots={snapshots}
+        nodeId={router.id}
+        stepIndex={stepIndex}
+        tableKind="arp"
+      />
     </div>
   );
 }
@@ -151,6 +181,7 @@ function ArpDemoInner() {
             </button>
           </div>
           <ArpTablePanel />
+          <ArpDiffCard />
           <div style={CARD_STYLE}>
             <StepControls />
           </div>
