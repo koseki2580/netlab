@@ -123,7 +123,8 @@ const topology: NetworkTopology = {
 Register one or more routing protocols with the `ProtocolRegistry`. Routes are computed automatically when the topology changes.
 
 ```tsx
-import { protocolRegistry, staticProtocol, ospfProtocol } from 'netlab';
+import { protocolRegistry } from 'netlab';
+import { staticProtocol, ospfProtocol } from 'netlab/layers/l3-network';
 
 // Register protocols at startup
 protocolRegistry.register(staticProtocol);
