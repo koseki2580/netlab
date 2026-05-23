@@ -1,9 +1,10 @@
 import { memo } from 'react';
 import { useSimulation } from '../../simulation/SimulationContext';
-import type { AclRule } from '../../types/acl';
 import type { NatTranslation, PacketHop, RoutingDecision } from '../../types/simulation';
 import { CARD, FIELD_ROW, MONO_FONT_STACK, SECTION_HEADER, TEXT } from '../_styles/tokens';
 import { useNetlabContext } from '../NetlabContext';
+import { AclMatchView } from './AclMatchView';
+import { HopObservabilityView } from './HopObservabilityView';
 
 const EVENT_COLORS: Record<PacketHop['event'], string> = {
   create: '#7dd3fc',
@@ -87,28 +88,6 @@ function FieldRow({
   );
 }
 
-function formatPortSpec(port: AclRule['srcPort']): string {
-  if (port === undefined) return 'any';
-  if (typeof port === 'number') return String(port);
-  return `${port.from}-${port.to}`;
-}
-
-function formatAclRule(rule: AclRule): string {
-  const tokens = [`#${rule.priority}`, rule.action, rule.protocol, rule.srcIp ?? 'any'];
-
-  if (rule.srcPort !== undefined) {
-    tokens.push('src', formatPortSpec(rule.srcPort));
-  }
-
-  tokens.push(rule.dstIp ?? 'any');
-
-  if (rule.dstPort !== undefined) {
-    tokens.push('dst', formatPortSpec(rule.dstPort));
-  }
-
-  return tokens.join(' ');
-}
-
 function formatDropReason(reason: string): string {
   if (reason === 'acl-deny') {
     return 'ACL Deny';
@@ -186,54 +165,6 @@ function NatTranslationSection({ translation }: { translation: NatTranslation })
   );
 }
 
-function AclFilterSection({ hop }: { hop: PacketHop }) {
-  if (!hop.aclMatch) return null;
-
-  const ruleText = hop.aclMatch.byConnTrack
-    ? 'stateful return traffic'
-    : hop.aclMatch.matchedRule
-      ? formatAclRule(hop.aclMatch.matchedRule)
-      : '(default policy)';
-  const ruleColor = hop.aclMatch.byConnTrack
-    ? 'var(--netlab-text-primary)'
-    : hop.aclMatch.matchedRule
-      ? 'var(--netlab-text-primary)'
-      : 'var(--netlab-text-muted)';
-  const actionColor =
-    hop.aclMatch.action === 'permit' ? 'var(--netlab-accent-green)' : 'var(--netlab-accent-red)';
-
-  return (
-    <section style={CARD}>
-      <div style={SECTION_HEADER}>ACL FILTER</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
-        <FieldRow label="Direction" value={hop.aclMatch.direction.toUpperCase()} />
-        <FieldRow label="Interface" value={hop.aclMatch.interfaceName} />
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '84px minmax(0, 1fr)',
-            gap: 10,
-            alignItems: 'start',
-          }}
-        >
-          <span style={{ color: 'var(--netlab-text-secondary)' }}>Rule</span>
-          <span style={{ color: ruleColor, wordBreak: 'break-word' }}>
-            {ruleText}
-            {hop.aclMatch.byConnTrack && (
-              <span style={{ color: 'var(--netlab-text-secondary)' }}> (conn-track)</span>
-            )}
-          </span>
-        </div>
-        <FieldRow
-          label="Action"
-          value={hop.aclMatch.action.toUpperCase()}
-          valueColor={actionColor}
-        />
-      </div>
-    </section>
-  );
-}
-
 function HopFields({
   hop,
   nodes,
@@ -297,33 +228,6 @@ function HopFields({
       { label: 'Shaper DSCP', value: String(hop.shaperTrace.dscp) },
       { label: 'Shaper Queue', value: String(hop.shaperTrace.queueDepth) },
     );
-  }
-
-  if (hop.observabilityTrace) {
-    const trace = hop.observabilityTrace;
-    if (trace.kind === 'netflow:flow-update') {
-      fields.push(
-        { label: 'NetFlow Router', value: trace.routerId },
-        { label: 'NetFlow Packets', value: String(trace.packets) },
-        { label: 'NetFlow Bytes', value: String(trace.bytes) },
-      );
-    } else if (trace.kind === 'netflow:flow-export') {
-      fields.push(
-        { label: 'NetFlow Router', value: trace.routerId },
-        { label: 'NetFlow Export', value: trace.reason },
-      );
-    } else if (trace.kind === 'sflow:sampled') {
-      fields.push(
-        { label: 'sFlow Switch', value: trace.switchId },
-        { label: 'sFlow Port', value: trace.portId },
-        { label: 'sFlow Sequence', value: String(trace.sequence) },
-      );
-    } else {
-      fields.push(
-        { label: 'sFlow Switch', value: trace.switchId },
-        { label: 'sFlow Drop', value: trace.reason },
-      );
-    }
   }
 
   return (
@@ -667,7 +571,12 @@ export const HopInspector = memo(function HopInspector() {
         {selectedHop.natTranslation && !selectedHop.arpFrame && (
           <NatTranslationSection translation={selectedHop.natTranslation} />
         )}
-        {selectedHop.aclMatch && !selectedHop.arpFrame && <AclFilterSection hop={selectedHop} />}
+        {selectedHop.aclMatch && !selectedHop.arpFrame && (
+          <AclMatchView aclMatch={selectedHop.aclMatch} />
+        )}
+        {selectedHop.observabilityTrace && !selectedHop.arpFrame && (
+          <HopObservabilityView trace={selectedHop.observabilityTrace} />
+        )}
         {selectedHop.routingDecision && !selectedHop.arpFrame && (
           <RoutingSection decision={selectedHop.routingDecision} />
         )}

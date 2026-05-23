@@ -1,21 +1,21 @@
 import type { HookEngine } from '../hooks/HookEngine';
 import type { TcpHandshakeResult, TcpTeardownResult } from '../layers/l4-transport/TcpOrchestrator';
 import { EMPTY_FAILURE_STATE, type FailureState } from '../types/failure';
-import type { HttpMessage, InFlightPacket, IpPacket } from '../types/packets';
+import type { InFlightPacket } from '../types/packets';
 import type { DhcpLeaseState, DnsCache } from '../types/services';
-import type { HighlightMode, PacketHop, PacketTrace, SimulationState } from '../types/simulation';
+import type { HighlightMode, PacketTrace, SimulationState } from '../types/simulation';
 import type { PcapRecord } from '../utils/pcapSerializer';
 import type { TcpConnection } from '../types/tcp';
 import type { NetworkTopology } from '../types/topology';
 import type { TransferMessage } from '../types/transfer';
 import type { UdpBindings } from '../types/udp';
-import { extractHostname, isIpAddress } from '../utils/network';
 import { getRequired } from '../utils/typedAccess';
 import { DataTransferController, type DataTransferOptions } from './DataTransferController';
 import { ForwardingPipeline } from './ForwardingPipeline';
-import { PathMtuCache } from './PathMtuCache';
+import type { PathMtuCache } from './PathMtuCache';
+import { HookEmitter } from './HookEmitter';
+import { TraceCoordinator } from './TraceCoordinator';
 import { extractPathEdgeIds } from './extractPathEdgeIds';
-import { parseIcmpFragNeeded } from './pmtudParser';
 import { ServiceOrchestrator } from './ServiceOrchestrator';
 import { TraceRecorder } from './TraceRecorder';
 import type { TraceDetailLevel } from './TraceRecorder';
@@ -41,12 +41,6 @@ export interface LocalSimulationEngineOptions {
   readonly traceDetailLevel?: TraceDetailLevel;
 }
 
-function isHttpPayload(
-  payload: IpPacket['payload'],
-): payload is IpPacket['payload'] & { payload: HttpMessage } {
-  return 'seq' in payload && payload.payload.layer === 'L7' && 'headers' in payload.payload;
-}
-
 export class LocalSimulationEngine {
   private state: SimulationState = { ...INITIAL_STATE };
   private listeners = new Set<(state: SimulationState) => void>();
@@ -55,14 +49,15 @@ export class LocalSimulationEngine {
   private lastPacket: InFlightPacket | null = null;
   private lastFailureState: FailureState = EMPTY_FAILURE_STATE;
   private transferController: DataTransferController | null = null;
-  private readonly pathMtuCaches = new Map<string, PathMtuCache>();
   private readonly traceRecorder: TraceRecorder;
   private readonly services: ServiceOrchestrator;
+  private readonly traceCoordinator: TraceCoordinator;
+  private readonly hookEmitter: HookEmitter;
   readonly pipeline: ForwardingPipeline;
 
   constructor(
     private readonly topology: NetworkTopology,
-    private readonly hookEngine: HookEngine,
+    hookEngine: HookEngine,
     opts: LocalSimulationEngineOptions = {},
   ) {
     this.traceRecorder = new TraceRecorder(
@@ -77,6 +72,13 @@ export class LocalSimulationEngine {
       getNeighbors: (nodeId, excludeNodeId = null, failureState = EMPTY_FAILURE_STATE) =>
         this.pipeline.getNeighbors(nodeId, excludeNodeId, failureState),
     });
+    this.traceCoordinator = new TraceCoordinator(
+      topology,
+      this.pipeline,
+      this.services,
+      this.traceRecorder,
+    );
+    this.hookEmitter = new HookEmitter(hookEngine);
   }
 
   getState(): SimulationState {
@@ -214,7 +216,10 @@ export class LocalSimulationEngine {
     this.clearPlay();
     this.lastPacket = packet;
     this.lastFailureState = failureState;
-    const preparedPacket = await this.preparePacketForSend(packet, failureState);
+    const preparedPacket = await this.traceCoordinator.prepareForSend(packet, failureState, {
+      appendTrace: (trace, nodeArpTables = {}) => this.commitTrace(trace, nodeArpTables),
+      notify: () => this.notify(),
+    });
     if (!preparedPacket) return;
 
     const { trace, nodeArpTables } = await this.pipeline.precompute(preparedPacket, failureState);
@@ -244,18 +249,11 @@ export class LocalSimulationEngine {
   }
 
   getPathMtuCache(nodeId: string): PathMtuCache {
-    const existing = this.pathMtuCaches.get(nodeId);
-    if (existing) {
-      return existing;
-    }
-
-    const cache = new PathMtuCache();
-    this.pathMtuCaches.set(nodeId, cache);
-    return cache;
+    return this.traceCoordinator.getPathMtuCache(nodeId);
   }
 
   clearPathMtuCaches(): void {
-    this.pathMtuCaches.forEach((cache) => cache.clear());
+    this.traceCoordinator.clearAllCacheEntries();
     this.notify();
   }
 
@@ -303,7 +301,7 @@ export class LocalSimulationEngine {
     this.notify();
 
     if (packetAtStep) {
-      this.emitHookForHop(hop, packetAtStep);
+      this.hookEmitter.emitForHop(hop, packetAtStep);
     }
 
     if (isDone) {
@@ -373,7 +371,7 @@ export class LocalSimulationEngine {
     this.services.clearAll();
     this.transferController?.clear();
     this.transferController = null;
-    this.pathMtuCaches.clear();
+    this.traceCoordinator.dropAllCaches();
     this.lastPacket = null;
     this.lastFailureState = EMPTY_FAILURE_STATE;
     this.state = { ...INITIAL_STATE };
@@ -557,157 +555,13 @@ export class LocalSimulationEngine {
       nodeArpTables,
       this.mergeNodeArpTables.bind(this),
     );
-    this.observePathMtuSignals(trace);
+    this.traceCoordinator.observePathMtuSignals(trace);
     this.notify();
-  }
-
-  private commitSyntheticDropTrace(packet: InFlightPacket, reason: string): void {
-    const sourceNode = this.pipeline.findNode(packet.srcNodeId);
-    const trace = this.traceRecorder.emitDropTrace(
-      packet,
-      reason,
-      sourceNode?.data.label ?? packet.srcNodeId,
-    );
-    this.traceRecorder.setSnapshots(packet.id, [packet]);
-    this.commitTrace(trace);
-  }
-
-  private async preparePacketForSend(
-    packet: InFlightPacket,
-    failureState: FailureState,
-  ): Promise<InFlightPacket | null> {
-    const sessionId = packet.sessionId ?? crypto.randomUUID();
-    let workingPacket: InFlightPacket = { ...packet, sessionId };
-    const sourceNode = this.pipeline.findNode(workingPacket.srcNodeId);
-
-    if (
-      sourceNode?.data.dhcpClient?.enabled &&
-      this.services.getRuntimeNodeIp(sourceNode.id) === null
-    ) {
-      const bound = await this.simulateDhcp(sourceNode.id, failureState, sessionId);
-      if (!bound) {
-        this.commitSyntheticDropTrace(workingPacket, 'dhcp-assignment-failed');
-        return null;
-      }
-    }
-
-    const effectiveSrcIp = this.pipeline.getEffectiveNodeIp(sourceNode);
-    if (effectiveSrcIp) {
-      workingPacket = this.pipeline.withPacketIps(workingPacket, {
-        srcIp: effectiveSrcIp,
-      });
-    }
-
-    const transport = workingPacket.frame.payload.payload;
-    if (isHttpPayload(transport) && transport.payload.url) {
-      const hostname = extractHostname(transport.payload.url);
-      if (hostname && !isIpAddress(hostname)) {
-        const resolvedIp = await this.simulateDns(
-          workingPacket.srcNodeId,
-          hostname,
-          failureState,
-          sessionId,
-        );
-        if (!resolvedIp) {
-          this.commitSyntheticDropTrace(workingPacket, 'dns-resolution-failed');
-          return null;
-        }
-        workingPacket = this.pipeline.withPacketIps(workingPacket, {
-          dstIp: resolvedIp,
-        });
-      }
-    }
-
-    return workingPacket;
-  }
-
-  private observePathMtuSignals(trace: PacketTrace): void {
-    const snapshots = this.traceRecorder.getSnapshots(trace.packetId);
-
-    trace.hops.forEach((hop, index) => {
-      if (hop.event !== 'deliver') {
-        return;
-      }
-
-      const snapshot = snapshots[index];
-      const ipPacket = snapshot?.frame.payload;
-      if (!ipPacket) {
-        return;
-      }
-
-      const signal = parseIcmpFragNeeded(ipPacket);
-      if (!signal) {
-        return;
-      }
-
-      const arrivalNode = this.findNodeByIp(ipPacket.dstIp);
-      if (!arrivalNode || arrivalNode.data.role === 'router') {
-        return;
-      }
-
-      this.getPathMtuCache(arrivalNode.id).update(signal.originalDstIp, signal.nextHopMtu);
-    });
-  }
-
-  private findNodeByIp(ip: string) {
-    return (
-      this.topology.nodes.find((node) => {
-        if (typeof node.data.ip === 'string' && node.data.ip === ip) {
-          return true;
-        }
-
-        return (node.data.interfaces ?? []).some((iface) => iface.ipAddress === ip);
-      }) ?? null
-    );
   }
 
   private currentTrace(): PacketTrace | null {
     if (!this.state.currentTraceId) return null;
     return this.state.traces.find((trace) => trace.packetId === this.state.currentTraceId) ?? null;
-  }
-
-  private emitHookForHop(hop: PacketHop, packet: InFlightPacket): void {
-    switch (hop.event) {
-      case 'create':
-        void this.hookEngine.emit('packet:create', {
-          packet,
-          sourceNodeId: hop.nodeId,
-        });
-        break;
-      case 'forward':
-        void this.hookEngine.emit('packet:forward', {
-          packet,
-          fromNodeId: hop.fromNodeId ?? hop.nodeId,
-          toNodeId: hop.toNodeId ?? '',
-          decision: {
-            action: 'forward',
-            nextNodeId: hop.toNodeId ?? '',
-            edgeId: hop.activeEdgeId ?? '',
-            egressPort: hop.egressInterfaceId ?? hop.activeEdgeId ?? '',
-            packet,
-            ...(hop.egressInterfaceId !== undefined
-              ? { egressInterfaceId: hop.egressInterfaceId }
-              : {}),
-          },
-        });
-        break;
-      case 'deliver':
-        void this.hookEngine.emit('packet:deliver', {
-          packet,
-          destinationNodeId: hop.nodeId,
-        });
-        break;
-      case 'drop':
-        void this.hookEngine.emit('packet:drop', {
-          packet,
-          nodeId: hop.nodeId,
-          reason: hop.reason ?? 'unknown',
-        });
-        break;
-      case 'arp-request':
-      case 'arp-reply':
-        break;
-    }
   }
 
   private clearPlay(): void {

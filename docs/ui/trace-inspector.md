@@ -100,6 +100,15 @@ ttlAfter =
 
 Router detection is based on `useNetlabContext().topology.nodes` and `node.data.role === 'router'`.
 
+#### Sub-view modules
+
+`HopInspector` composes two extracted sub-views for cohesive parts of the panel:
+
+- `AclMatchView` renders the `ACL FILTER` section from a `PacketHop.aclMatch` value. It also re-exports `formatAclRule(rule)` as a named utility for any caller that needs the same rule string.
+- `HopObservabilityView` renders the `NETFLOW` or `SFLOW` section from a `PacketHop.observabilityTrace` value. NetFlow and sFlow observability is no longer mixed into the `HOP FIELDS` section.
+
+Both sub-views are pure presentational components that take only their input data as props.
+
 #### Routing section
 
 The routing section follows the same information model already used in `StepControls`:

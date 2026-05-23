@@ -77,9 +77,11 @@ dependencies. This enables unit testing without a DOM and clean separation from 
 
 ### SimulationEngine Is a Thin Facade
 
-`SimulationEngine` now owns playback state, selection state, and hook emission only.
+`SimulationEngine` now owns playback state and selection state only.
 Forwarding and packet mutation live in `ForwardingPipeline`, runtime service state lives in
 `ServiceOrchestrator`, and trace/snapshot export logic lives in `TraceRecorder`.
+The engine composes `TraceCoordinator` (DHCP/DNS-aware send preparation, PMTU observation,
+path-MTU cache ownership) and `HookEmitter` (per-hop hook fan-out) — both are replaceable for testing.
 
 ### Forwarders Own Next-Hop Selection
 
@@ -88,6 +90,23 @@ Transit forwarding is protocol-driven:
 - `RouterForwarder` returns the definitive next-hop node, traversed edge, selected route, and egress interface
 - `SwitchForwarder` returns the definitive next-hop node and traversed edge, including deterministic handling of unknown unicast on shared LAN demos
 - `ForwardingPipeline` executes those decisions and no longer performs a second router LPM or switch-path search for transit hops
+
+### Forwarding Loop Stages
+
+The per-hop work inside `ForwardingLoop.run()` is split into eleven single-purpose stage functions under
+[src/simulation/pipeline/dispatch/stages/](../../src/simulation/pipeline/dispatch/stages/). Each stage has the
+contract `(LoopContext) => StageResult` (or `Promise<StageResult>`) and returns one of:
+
+- `{ kind: 'continue', ctx }` — proceed to the next stage with possibly mutated context
+- `{ kind: 'break', stepCounter }` — terminate the hop loop (drop / deliver)
+- `{ kind: 'return', value }` — short-circuit the entire `run()` (fragmentation recurses into a fresh run)
+
+`stages/_shared.ts` owns the `LoopContext` shape, `StageResult` union, and small helpers (`appendHop`,
+`appendDropHop`, `requireNode`, …). Stages depend only on `_shared.ts` and external utilities — never on
+each other — to keep the import graph acyclic. `forwardingStages.ts` is now a coordinator that re-exports
+the stage functions and shared symbols; `ForwardingLoop.run()` is the only orderer of the eleven calls
+(`preflight → deliverToSelf → ingressInterface → routerPreRouting → forwarderDispatch → routerPostRouting →
+arpInjection → egressFraming → observability → linkQos → forwardCommit`).
 
 ### Module-Level Singletons for Registries
 
