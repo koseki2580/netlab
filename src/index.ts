@@ -562,6 +562,15 @@ export type {
   TraceAnnotationEdit,
 } from './sandbox';
 export { BeforeAfterView, DiffTimeline, EditPopover, SandboxPanel } from './components/sandbox';
+export {
+  forkScenario,
+  getSandbox,
+  getSandboxes,
+  recordSandboxDiff,
+  removeSandbox,
+  resetSandbox,
+} from './sandbox/fork';
+export type { Sandbox, SandboxDiff } from './sandbox/fork';
 export { buildSandboxEmbedUrl } from './embed/buildSandboxEmbedUrl';
 export type {
   EmbedUrlParams,
@@ -685,6 +694,8 @@ export type { PreFlightBriefProps } from './components/PreFlightBrief';
 export { NodeGlyph, NODE_GLYPHS } from './components/NodeGlyph';
 export type { NodeGlyphProps, NodeGlyphKind } from './components/NodeGlyph';
 export { LegendPanel } from './components/LegendPanel';
+export { LineageBanner } from './components/LineageBanner';
+export type { LineageBannerProps } from './components/LineageBanner';
 export type { LegendPanelProps } from './components/LegendPanel';
 export { AreaLegend } from './components/controls/AreaLegend';
 export { RouteTable } from './components/controls/RouteTable';

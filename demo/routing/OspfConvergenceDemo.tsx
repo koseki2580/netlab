@@ -4,7 +4,15 @@ import { useNavigate } from 'react-router-dom';
 import DemoShell from '../DemoShell';
 import type { CommandPaletteItem } from '../../src/components/CommandPalette';
 import { NetlabAppShellV2 } from '../../src/components/NetlabAppShellV2';
+import { LineageBanner } from '../../src/components/LineageBanner';
 import { PreFlightBrief } from '../../src/components/PreFlightBrief';
+import {
+  forkScenario,
+  getSandbox,
+  recordSandboxDiff,
+  resetSandbox,
+  type Sandbox,
+} from '../../src/sandbox/fork';
 import type { NetlabAudience } from '../../src/theme';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
@@ -100,6 +108,34 @@ function OspfConvergenceInner({
   const totalHops = currentTrace?.hops.length ?? 0;
   const stepIdx = state.currentStep >= 0 ? state.currentStep : 0;
   const isLastStep = totalHops > 0 && stepIdx === totalHops - 1;
+
+  // M5 — fork-to-sandbox lineage. `?fork=<id>` marks a forked session.
+  const forkId = useMemo(() => new URLSearchParams(window.location.search).get('fork'), []);
+  const [sandbox, setSandbox] = useState<Sandbox | null>(() =>
+    forkId ? (getSandbox(forkId) ?? null) : null,
+  );
+
+  const handleFork = useCallback(() => {
+    const created = forkScenario('ospf-convergence', stepIdx);
+    window.location.href = `?sandbox=1&fork=${created.id}#/routing/ospf-convergence`;
+  }, [stepIdx]);
+
+  const handleToggleLink = useCallback(() => {
+    onTogglePrimaryLink();
+    if (forkId) setSandbox(recordSandboxDiff(forkId, { edges: 1 }) ?? null);
+  }, [onTogglePrimaryLink, forkId]);
+
+  const handleResetFork = useCallback(() => {
+    if (forkId) setSandbox(resetSandbox(forkId) ?? null);
+  }, [forkId]);
+
+  const handleCompareFork = useCallback(() => {
+    void navigate('/compare/ospf-convergence/rip-convergence');
+  }, [navigate]);
+
+  const handleCloseFork = useCallback(() => {
+    window.location.href = `${window.location.pathname}#/routing/ospf-convergence`;
+  }, []);
   const packetsCount = state.traces.length;
   const dropsCount = state.traces.filter((t) => t.status === 'dropped').length;
   const arpCount = Object.values(state.nodeArpTables).reduce(
@@ -208,7 +244,7 @@ function OspfConvergenceInner({
           <button
             type="button"
             data-testid="ospf-fail-link"
-            onClick={onTogglePrimaryLink}
+            onClick={handleToggleLink}
             title={
               primaryLinkDown
                 ? 'Restore primary inter-router link'
@@ -234,80 +270,94 @@ function OspfConvergenceInner({
         />
       }
     >
-      <div style={{ display: 'flex', height: '100%' }}>
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
-            <NetlabCanvas />
-            <SimulationOverlayDock showRouteTable />
-            <ZeroStateHint />
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        {sandbox && (
+          <LineageBanner
+            sandbox={sandbox}
+            originTitle="OSPF Preferred Path"
+            onReset={handleResetFork}
+            onCompare={handleCompareFork}
+            onClose={handleCloseFork}
+          />
+        )}
+        <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
+              <NetlabCanvas />
+              <SimulationOverlayDock showRouteTable />
+              <ZeroStateHint />
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 12,
+                  left: 12,
+                  maxWidth: 360,
+                  padding: '10px 12px',
+                  borderRadius: 10,
+                  background: 'rgba(15, 23, 42, 0.9)',
+                  border: '1px solid rgba(148, 163, 184, 0.2)',
+                  color: '#cbd5e1',
+                  fontFamily: 'monospace',
+                  fontSize: 11,
+                  lineHeight: 1.5,
+                }}
+              >
+                <div style={{ color: '#f8fafc', fontWeight: 700, marginBottom: 4 }}>
+                  OSPF Route Choice
+                </div>
+                <div>
+                  R1 prefers the lower-cost path through R2 until the primary inter-router link is
+                  removed.
+                </div>
+                <div style={{ marginTop: 6, color: '#94a3b8' }}>
+                  Toggle the primary link, then resend the probe to confirm the recomputed path now
+                  leaves through R3.
+                </div>
+              </div>
+              <PreFlightBrief
+                scenarioId="ospf-convergence"
+                audience={audience}
+                isLastStep={isLastStep}
+                onAction={(actionId) => {
+                  if (actionId === 'gallery') void navigate('/');
+                  else if (actionId === 'fork') handleFork();
+                }}
+              />
+            </div>
+            <PacketScrubTimeline ownKeyboard={false} />
+          </div>
+
+          <ResizableSidebar
+            defaultWidth={460}
+            maxWidth={760}
+            style={{
+              background: '#0f172a',
+              borderLeft: '1px solid #1e293b',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
             <div
-              style={{
-                position: 'absolute',
-                top: 12,
-                left: 12,
-                maxWidth: 360,
-                padding: '10px 12px',
-                borderRadius: 10,
-                background: 'rgba(15, 23, 42, 0.9)',
-                border: '1px solid rgba(148, 163, 184, 0.2)',
-                color: '#cbd5e1',
-                fontFamily: 'monospace',
-                fontSize: 11,
-                lineHeight: 1.5,
-              }}
+              style={{ padding: 12, display: 'grid', gap: 12, borderBottom: '1px solid #1e293b' }}
             >
-              <div style={{ color: '#f8fafc', fontWeight: 700, marginBottom: 4 }}>
-                OSPF Route Choice
-              </div>
-              <div>
-                R1 prefers the lower-cost path through R2 until the primary inter-router link is
-                removed.
-              </div>
-              <div style={{ marginTop: 6, color: '#94a3b8' }}>
-                Toggle the primary link, then resend the probe to confirm the recomputed path now
-                leaves through R3.
+              <RouteSummaryPanel />
+              <div
+                style={{
+                  background: '#0b1220',
+                  border: '1px solid #1e293b',
+                  borderRadius: 10,
+                  padding: 12,
+                }}
+              >
+                <StepControls />
               </div>
             </div>
-            <PreFlightBrief
-              scenarioId="ospf-convergence"
-              audience={audience}
-              isLastStep={isLastStep}
-              onAction={(actionId) => {
-                if (actionId === 'gallery') void navigate('/');
-              }}
-            />
-          </div>
-          <PacketScrubTimeline ownKeyboard={false} />
+
+            <div style={{ flex: 1, minHeight: 0 }}>
+              <PacketTimeline />
+            </div>
+          </ResizableSidebar>
         </div>
-
-        <ResizableSidebar
-          defaultWidth={460}
-          maxWidth={760}
-          style={{
-            background: '#0f172a',
-            borderLeft: '1px solid #1e293b',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <div style={{ padding: 12, display: 'grid', gap: 12, borderBottom: '1px solid #1e293b' }}>
-            <RouteSummaryPanel />
-            <div
-              style={{
-                background: '#0b1220',
-                border: '1px solid #1e293b',
-                borderRadius: 10,
-                padding: 12,
-              }}
-            >
-              <StepControls />
-            </div>
-          </div>
-
-          <div style={{ flex: 1, minHeight: 0 }}>
-            <PacketTimeline />
-          </div>
-        </ResizableSidebar>
       </div>
     </NetlabAppShellV2>
   );

@@ -258,7 +258,10 @@ export const ospfConvergence: Scenario = {
       headline: 'OSPF recomputed a backup path after the primary link failed.',
       detail:
         'R1 preferred the lower-cost path through R2, then converged onto R3 once that link went down — no static reconfiguration needed.',
-      actions: [{ id: 'gallery', label: 'browse more scenarios →', kind: 'primary' }],
+      actions: [
+        { id: 'fork', label: 'fork to sandbox →', kind: 'primary' },
+        { id: 'gallery', label: 'browse more scenarios →' },
+      ],
     },
   },
   sampleFlows: [
