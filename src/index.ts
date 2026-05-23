@@ -490,7 +490,7 @@ export { useNetlabHooks } from './hooks/useNetlabHooks';
 
 // Scenarios + tutorials
 export { scenarioRegistry, ScenarioRegistry } from './scenarios/ScenarioRegistry';
-export { getScenarioBrief } from './scenarios';
+export { getScenarioBrief, scenariosInGroup } from './scenarios';
 export type { Scenario, ScenarioMetadata, ScenarioSampleFlow } from './scenarios/types';
 export type {
   BriefConclusion,

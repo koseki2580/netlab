@@ -75,6 +75,11 @@ export interface Scenario {
   readonly sampleFlows?: readonly ScenarioSampleFlow[];
   /** Pre-flight brief (M1). When omitted, no brief overlay is shown. */
   readonly brief?: ScenarioBrief;
+  /**
+   * Compare group (M4). Scenarios that share a `topologyGroup` can be opened
+   * side by side. When omitted, the scenario has no compare siblings.
+   */
+  readonly topologyGroup?: string;
   readonly preseedEdits?: readonly Edit[];
   readonly preseedAnnotations?: readonly TraceAnnotation[];
   readonly assessmentRubric?: AssessmentRubric;

@@ -30,6 +30,7 @@ describe('ScenarioRegistry', () => {
       'fragmented-echo',
       'tcp-handshake',
       'ospf-convergence',
+      'rip-convergence',
       'stp-loop',
       'nat-basics',
     ]);

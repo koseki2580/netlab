@@ -240,6 +240,7 @@ export const ospfConvergence: Scenario = {
     prerequisiteIds: ['basic-arp'],
   },
   topology: buildOspfConvergenceTopology(),
+  topologyGroup: 'convergence-4router',
   brief: {
     goal: 'Watch how OSPF prefers the lowest-cost path, then recomputes a backup when the primary inter-router link fails.',
     est: '~3 min',
