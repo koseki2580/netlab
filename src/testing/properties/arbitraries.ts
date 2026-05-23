@@ -1,9 +1,10 @@
 import fc from 'fast-check';
 import type { HookEventLogEntry, PredicateInput } from '../../tutorials';
-import type { InFlightPacket } from '../../types/packets';
+import type { InFlightPacket, IpPacket } from '../../types/packets';
 import type { RouterInterface } from '../../types/routing';
 import type { PacketHop, PacketTrace, SimulationState } from '../../types/simulation';
 import type { NetworkTopology, NetlabNode } from '../../types/topology';
+import { fragment } from '../../simulation/fragmentation';
 
 function octetArb(): fc.Arbitrary<number> {
   return fc.integer({ min: 0, max: 255 });
@@ -123,6 +124,66 @@ export function inFlightPacketArb(topology: NetworkTopology): fc.Arbitrary<InFli
       timestamp: 0,
     };
   });
+}
+
+export interface FragmentSet {
+  readonly original: IpPacket;
+  readonly fragments: readonly IpPacket[];
+  readonly identification: number;
+  readonly mtu: number;
+  readonly payload: Uint8Array;
+}
+
+function tcpIpPacket(payload: Uint8Array): IpPacket {
+  return {
+    layer: 'L3',
+    srcIp: '10.0.0.1',
+    dstIp: '10.0.0.2',
+    ttl: 64,
+    protocol: 6,
+    flags: { df: false, mf: false },
+    payload: {
+      layer: 'L4',
+      srcPort: 12345,
+      dstPort: 80,
+      seq: 1,
+      ack: 1,
+      flags: { syn: false, ack: true, fin: false, rst: false, psh: true, urg: false },
+      payload: { layer: 'raw', data: String.fromCharCode(...payload) },
+    },
+  };
+}
+
+export function fragmentSetArb(
+  opts: {
+    minPayloadLength?: number;
+    maxPayloadLength?: number;
+    minMtu?: number;
+    maxMtu?: number;
+  } = {},
+): fc.Arbitrary<FragmentSet> {
+  const minPayloadLength = opts.minPayloadLength ?? 64;
+  const maxPayloadLength = opts.maxPayloadLength ?? 512;
+  const minMtu = opts.minMtu ?? 68;
+  const maxMtu = opts.maxMtu ?? 180;
+
+  return fc
+    .tuple(
+      fc.uint8Array({ minLength: minPayloadLength, maxLength: maxPayloadLength }),
+      fc.integer({ min: 0, max: 0xffff }),
+    )
+    .chain(([payload, identification]) =>
+      fc.integer({ min: minMtu, max: Math.min(maxMtu, payload.length + 39) }).map((mtu) => {
+        const original = tcpIpPacket(payload);
+        return {
+          original,
+          fragments: fragment(original, mtu, identification),
+          identification,
+          mtu,
+          payload,
+        };
+      }),
+    );
 }
 
 const hopEventArb = fc.constantFrom<PacketHop['event']>(

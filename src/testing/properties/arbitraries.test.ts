@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { PROPERTY_NUM_RUNS_DEFAULT, PROPERTY_SEED_DEFAULT } from '../seeds';
 import {
   cidrArb,
+  fragmentSetArb,
   inFlightPacketArb,
   interfaceArb,
   ipv4Arb,
@@ -102,6 +103,21 @@ describe('property arbitraries', () => {
         );
       }),
       { seed: PROPERTY_SEED_DEFAULT, numRuns: 20 },
+    );
+  });
+
+  it('generates fragment sets with more than one fragment', () => {
+    fc.assert(
+      fc.property(fragmentSetArb(), (set) => {
+        expect(set.fragments.length).toBeGreaterThan(1);
+        expect(
+          set.fragments.every((fragment) => fragment.identification === set.identification),
+        ).toBe(true);
+        expect(set.fragments.every((fragment) => (fragment.totalLength ?? 0) <= set.mtu)).toBe(
+          true,
+        );
+      }),
+      { seed: PROPERTY_SEED_DEFAULT, numRuns: PROPERTY_NUM_RUNS_DEFAULT },
     );
   });
 });
