@@ -8,5 +8,16 @@
     "allowImportingTsExtensions": false
   },
   "include": ["src"],
-  "exclude": ["demo", "node_modules"]
+  "exclude": [
+    "demo",
+    "node_modules",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.spec.ts",
+    "src/**/*.spec.tsx",
+    "src/**/*.stories.ts",
+    "src/**/*.stories.tsx",
+    "src/**/__tests__/**",
+    "src/**/__properties__/**"
+  ]
 }

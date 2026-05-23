@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "scenario": "10-router-chain-precompute",
+  "routerCount": 10,
+  "packetsPerSample": 180,
+  "samples": 5,
+  "warmupPackets": 30,
+  "tolerance": 0.15,
+  "baselineOpsPerSecond": 2322.67,
+  "minOpsPerSecond": 1974.27,
+  "updatedAt": "2026-05-21T13:23:45.362Z"
+}

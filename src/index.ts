@@ -110,24 +110,7 @@ export type {
   ProgressStorageBackend,
   SafeProgressStorage,
 } from './progress';
-export { TlsOrchestrator } from './layers/l5-tls/TlsOrchestrator';
 export type { TlsHandshakeOptions, TlsHandshakeRun } from './layers/l5-tls/TlsOrchestrator';
-export { negotiateAlpn } from './layers/l5-tls/TlsAlpn';
-export {
-  decodeQuicVarint,
-  deriveQuicKeys,
-  encodeQuicVarint,
-  openQuicPayload,
-  parseQuicFrame,
-  protectQuicPayload,
-  QuicHandshake,
-  reassembleQuicStream,
-  respondToPathChallenge,
-  serializeQuicFrame,
-  startPathValidation,
-  streamDirection,
-  streamInitiator,
-} from './layers/l4-transport';
 export type {
   QuicAeadKeys,
   QuicAnnotation,
@@ -136,26 +119,6 @@ export type {
   QuicPathChallenge,
   QuicStreamChunk,
 } from './layers/l4-transport';
-export {
-  decodeHpack,
-  decodeQpack,
-  encodeHpack,
-  encodeQpack,
-  HPACK_STATIC_TABLE,
-  hpackStaticHeader,
-  hpackStaticIndex,
-  Http2Orchestrator,
-  Http3Orchestrator,
-  HTTP2_FLAGS,
-  HTTP2_FRAME_TYPE,
-  parseHttp2Frame,
-  parseHttp3Frame,
-  QPACK_STATIC_TABLE,
-  qpackStaticHeader,
-  qpackStaticIndex,
-  serializeHttp2Frame,
-  serializeHttp3Frame,
-} from './layers/l7-application';
 export type {
   HeaderTuple,
   Http2Frame,
@@ -416,26 +379,6 @@ export {
   serializeFlowKey,
 } from './utils/hashFlow';
 export type { FlowKey } from './utils/hashFlow';
-export { parseGreHeader, serializeGreHeader } from './layers/l3-network/tunneling/GreHeader';
-export { decapGre, encapGre } from './layers/l3-network/tunneling/GreEncap';
-export {
-  parseMplsStack,
-  popMplsLabel,
-  pushMplsLabel,
-  serializeMplsStack,
-  swapMplsLabel,
-} from './layers/l3-network/tunneling/MplsLabelStack';
-export { convergeLdp } from './layers/l3-network/tunneling/MplsLdp';
-export { installVpnv4Route, lookupVrfRoute } from './layers/l3-network/tunneling/MplsVrf';
-export { parseVxlanHeader, serializeVxlanHeader } from './layers/l3-network/tunneling/VxlanHeader';
-export { decapVxlan, encapVxlan, replicateBum } from './layers/l3-network/tunneling/VxlanEncap';
-export {
-  advertiseType2,
-  advertiseType5,
-  learnType2,
-} from './layers/l3-network/tunneling/EvpnControlPlane';
-export { answerArpFromEvpnCache } from './layers/l3-network/tunneling/ArpSuppression';
-
 export type { AreaType, AreaVisualConfig, NetworkArea } from './types/areas';
 
 export { ICMP_CODE, ICMP_TYPE } from './simulation/icmp';
@@ -580,13 +523,6 @@ export type {
 } from './embed/protocol';
 
 // Routing protocols
-export {
-  deterministicBackoffSlot,
-  detectHiddenNodeCollision,
-  transitionWirelessState,
-  WirelessLinkController,
-  WpaFourWayHandshake,
-} from './layers/l1-physical';
 export type {
   HiddenNodeCollisionInput,
   HiddenNodeTransmission,
@@ -594,65 +530,17 @@ export type {
   WpaFourWayHandshakeResult,
   WpaHandshakeMessage,
 } from './layers/l1-physical';
-export {
-  collectSwitchBridges,
-  compareBridgeId,
-  computeStp,
-  DEFAULT_BRIDGE_PRIORITY,
-  DEFAULT_STP_PATH_COST,
-  electRoot,
-  formatBridgeId,
-  lacpTimeoutMs,
-  makeBridgeId,
-  PortChannel,
-  receiveLacpPdu,
-} from './layers/l2-datalink';
 export type { PortChannelConfig, StpResult, SwitchBridge } from './layers/l2-datalink';
-export {
-  electVrrpMaster,
-  masterDownIntervalMs,
-  transitionVrrpState,
-  virtualRouterMac,
-  VrrpOrchestrator,
-} from './layers/l3-network';
-export { TcpConnectionTracker } from './layers/l4-transport/TcpConnectionTracker';
-export { TcpOrchestrator } from './layers/l4-transport/TcpOrchestrator';
 export type { TcpHandshakeResult, TcpTeardownResult } from './layers/l4-transport/TcpOrchestrator';
-export {
-  buildAckPacket,
-  buildFinPacket,
-  buildRstPacket,
-  buildSynAckPacket,
-  buildSynPacket,
-  generateISN,
-} from './layers/l4-transport/tcpPacketBuilder';
 export type { TcpPacketOptions } from './layers/l4-transport/tcpPacketBuilder';
-export {
-  describeTransition as describeTcpTransition,
-  TcpStateMachine,
-  transition as transitionTcpState,
-} from './layers/l4-transport/TcpStateMachine';
-export { buildUdpPacket, generateEphemeralPort } from './layers/l4-transport/udpPacketBuilder';
 export type { UdpPacketOptions } from './layers/l4-transport/udpPacketBuilder';
-export { BgpProtocol, bgpProtocol } from './routing/bgp/BgpProtocol';
-export { decodeMpReachNlri, encodeMpReachNlri } from './routing/bgp/BgpMpReachNlri';
 export type { MpReachNlri } from './routing/bgp/BgpMpReachNlri';
-export { inferRouteAddressFamily, routeResolutionKey } from './routing/AddressFamily';
 export type { AddressFamily, FamilyAware } from './routing/AddressFamily';
-export { OspfProtocol, ospfProtocol } from './routing/ospf/OspfProtocol';
-export {
-  buildOspfV3Hello,
-  buildOspfV3LinkLsa,
-  OspfV3Protocol,
-  ospfV3Protocol,
-} from './routing/ospf/OspfV3Protocol';
 export type {
   OspfV3Hello,
   OspfV3IntraAreaPrefixLsa,
   OspfV3LinkLsa,
 } from './routing/ospf/OspfV3Protocol';
-export { RipProtocol, ripProtocol } from './routing/rip/RipProtocol';
-export { StaticProtocol, staticProtocol } from './routing/static/StaticProtocol';
 export { Dhcpv6Client } from './services/dhcpv6/Dhcpv6Client';
 export { Dhcpv6Server } from './services/dhcpv6/Dhcpv6Server';
 export {

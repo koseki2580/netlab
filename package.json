@@ -6,8 +6,21 @@
   "module": "dist/netlab.es.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist",
-    "bin"
+    "dist/**/*.js",
+    "dist/**/*.mjs",
+    "dist/**/*.css",
+    "dist/**/*.d.ts",
+    "bin/*.mjs"
+  ],
+  "sideEffects": [
+    "./dist/layers/*/index.js",
+    "./dist/layers/*/index.cjs.js",
+    "./src/layers/*/index.ts",
+    "./src/layers/registerAllLayers.ts",
+    "./src/layers/registerForwarders.ts",
+    "./src/sandbox/edits/*.ts",
+    "./src/scenarios/index.ts",
+    "./src/tutorials/index.ts"
   ],
   "bin": {
     "netlab-run": "bin/netlab-run.mjs"
@@ -19,24 +32,49 @@
       "require": "./dist/netlab.cjs.js"
     },
     "./layers/l1-physical": {
+      "types": "./dist/layers/l1-physical/index.d.ts",
       "import": "./dist/layers/l1-physical/index.js",
       "require": "./dist/layers/l1-physical/index.cjs.js"
     },
     "./layers/l2-datalink": {
+      "types": "./dist/layers/l2-datalink/index.d.ts",
       "import": "./dist/layers/l2-datalink/index.js",
       "require": "./dist/layers/l2-datalink/index.cjs.js"
     },
     "./layers/l3-network": {
+      "types": "./dist/layers/l3-network/index.d.ts",
       "import": "./dist/layers/l3-network/index.js",
       "require": "./dist/layers/l3-network/index.cjs.js"
     },
     "./layers/l4-transport": {
+      "types": "./dist/layers/l4-transport/index.d.ts",
       "import": "./dist/layers/l4-transport/index.js",
       "require": "./dist/layers/l4-transport/index.cjs.js"
     },
     "./layers/l7-application": {
+      "types": "./dist/layers/l7-application/index.d.ts",
       "import": "./dist/layers/l7-application/index.js",
       "require": "./dist/layers/l7-application/index.cjs.js"
+    },
+    "./protocols/tls": {
+      "types": "./dist/protocols/tls/index.d.ts",
+      "import": "./dist/protocols/tls/index.js",
+      "require": "./dist/protocols/tls/index.cjs.js"
+    },
+    "./protocols/quic": {
+      "types": "./dist/protocols/quic/index.d.ts",
+      "import": "./dist/protocols/quic/index.js",
+      "require": "./dist/protocols/quic/index.cjs.js"
+    },
+    "./protocols/http2": {
+      "types": "./dist/protocols/http2/index.d.ts",
+      "import": "./dist/protocols/http2/index.js",
+      "require": "./dist/protocols/http2/index.cjs.js"
+    },
+    "./protocols/http3": {
+      "types": "./dist/protocols/http3/index.d.ts",
+      "import": "./dist/protocols/http3/index.js",
+      "require": "./dist/protocols/http3/index.cjs.js"
     }
   },
   "scripts": {
@@ -54,9 +92,12 @@
     "format:check": "prettier --check .",
     "coverage": "vitest run --coverage",
     "size": "npm run build && size-limit",
+    "size:delta": "node scripts/size-limit-delta.mjs",
+    "size:comment": "node scripts/post-pr-comment.mjs",
     "i18n:check": "node scripts/i18n-check.mjs",
     "soak:test": "node scripts/soak-test.mjs",
     "changelog:gen": "node scripts/changelog-gen.mjs",
+    "bench:forwarding": "node scripts/bench-forwarding.mjs",
     "bench:tls": "node scripts/bench-tls.mjs",
     "bench:h2-h3": "node scripts/bench-h2-h3.mjs",
     "regression": "npm run build:cli && node scripts/run-regression-matrix.mjs",
@@ -67,6 +108,8 @@
     "storybook:test": "test-storybook --url http://127.0.0.1:6006",
     "plan:index": "node scripts/build-plan-index.mjs",
     "plan:index:check": "node scripts/build-plan-index.mjs --check",
+    "tree-shake:check": "node scripts/measure-tree-shake.mjs",
+    "tarball:check": "node scripts/check-published-tarball.mjs",
     "prepare": "husky"
   },
   "lint-staged": {

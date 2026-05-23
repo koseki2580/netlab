@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -38,6 +42,9 @@ jobs:
       - name: Run unit tests
         run: npm run test
 
+      - name: Bundle isolation
+        run: npm run build && npm run tree-shake:check
+
       - name: Coverage
         run: npm run coverage
 
@@ -50,6 +57,40 @@ jobs:
 
       - name: Size check
         run: npm run size
+
+      - name: Checkout size baseline
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: .size-baseline
+
+      - name: Size delta report
+        if: github.event_name == 'pull_request'
+        run: |
+          npm --prefix .size-baseline ci
+          npm --prefix .size-baseline run build
+          (cd .size-baseline && npx size-limit --json) > .size-main.json
+          npx size-limit --json > .size-current.json
+          npm run size:delta -- --base .size-main.json --current .size-current.json --markdown .size-delta.md --json .size-delta.json
+          cat .size-delta.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Post size delta comment
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: npm run size:comment -- --body .size-delta.md
+
+      # Phased rollout (P-BP-3): runs as a non-blocking notice while we gather a baseline of
+      # green data on shared CI runners, whose CPU variance can otherwise flake the gate.
+      # Promote to a hard gate by removing `continue-on-error` once the baseline is proven.
+      - name: Forwarding throughput bench
+        run: npm run bench:forwarding
+        continue-on-error: true
+
+      - name: Published tarball notice
+        run: npm run tarball:check
+        continue-on-error: true
 
       - name: Audit
         run: npm audit --audit-level=high --omit=dev

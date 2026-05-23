@@ -1,1 +1,72 @@
-[{ "path": "dist/netlab.es.js", "limit": "176 kB", "gzip": true }]
+[
+  { "path": "dist/netlab.es.js", "limit": "176 kB", "gzip": true },
+  {
+    "path": "dist/layers/l1-physical/index.js",
+    "limit": "4 kB",
+    "gzip": true
+  },
+  {
+    "path": "dist/layers/l2-datalink/index.js",
+    "limit": "7 kB",
+    "gzip": true
+  },
+  {
+    "path": "dist/layers/l3-network/index.js",
+    "limit": "15 kB",
+    "gzip": true
+  },
+  {
+    "path": "dist/layers/l4-transport/index.js",
+    "limit": "7 kB",
+    "gzip": true
+  },
+  {
+    "path": "dist/layers/l7-application/index.js",
+    "limit": "5 kB",
+    "gzip": true
+  },
+  {
+    "path": "dist/protocols/tls/index.js",
+    "limit": "4 kB",
+    "gzip": true
+  },
+  {
+    "path": "dist/protocols/quic/index.js",
+    "limit": "3 kB",
+    "gzip": true
+  },
+  {
+    "path": "dist/protocols/http2/index.js",
+    "limit": "2 kB",
+    "gzip": true
+  },
+  {
+    "path": "dist/protocols/http3/index.js",
+    "limit": "2 kB",
+    "gzip": true
+  },
+  {
+    "name": "worker",
+    "path": "dist/assets/worker.entry-*.js",
+    "limit": "42 kB",
+    "gzip": true
+  },
+  {
+    "name": "ui:simulation-context",
+    "path": "dist/SimulationContext-*.mjs",
+    "limit": "115 kB",
+    "gzip": true
+  },
+  {
+    "name": "ui:netlab-context",
+    "path": "dist/NetlabUIContext-*.mjs",
+    "limit": "2 kB",
+    "gzip": true
+  },
+  {
+    "name": "ui:scenario-export",
+    "path": "dist/ScenarioExportDialog-*.mjs",
+    "limit": "32 kB",
+    "gzip": true
+  }
+]

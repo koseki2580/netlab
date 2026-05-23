@@ -2,9 +2,12 @@
 
 > **Status**: ✅ Implemented
 
-All documented exports below are available from the root `netlab` package unless noted otherwise.
-If you compose the lower-level primitives directly, you must also register the built-in layer
-plugins via the published side-effect imports:
+The root `netlab` package is the facade for React components, contexts, registries, shared types,
+and core utilities. Concrete layer and protocol implementations live behind explicit subpath
+imports so consumers can opt into only the OSI stacks they use.
+
+If you compose the lower-level primitives directly, you must register the built-in layer plugins via
+the published side-effect imports:
 
 ```typescript
 import 'netlab/layers/l1-physical';
@@ -14,6 +17,23 @@ import 'netlab/layers/l4-transport';
 import 'netlab/layers/l7-application';
 ```
 
+Layer imports are intentionally side-effectful. Importing `netlab` alone does not register built-in
+layers or routing protocols; importing `netlab/layers/l3-network`, for example, registers the L3
+plugin and the built-in routing protocols.
+
+| Import path                    | Runtime contract                                                                  |
+| ------------------------------ | --------------------------------------------------------------------------------- |
+| `netlab`                       | Facade components, contexts, registries, shared types, and core utilities         |
+| `netlab/layers/l1-physical`    | Registers L1 devices and exports physical/wireless helpers                        |
+| `netlab/layers/l2-datalink`    | Registers L2 devices and exports switching, STP, VLAN, and LACP helpers           |
+| `netlab/layers/l3-network`     | Registers L3 devices and exports routing, NAT, HA, tunneling, and routing helpers |
+| `netlab/layers/l4-transport`   | Registers L4 and exports TCP, UDP, and QUIC helpers                               |
+| `netlab/layers/l7-application` | Registers L7 devices and exports HTTP/2 and HTTP/3 helpers                        |
+| `netlab/protocols/tls`         | Exports TLS orchestration helpers without registering a layer                     |
+| `netlab/protocols/quic`        | Exports QUIC helpers without registering a layer                                  |
+| `netlab/protocols/http2`       | Exports HTTP/2 helpers without registering a layer                                |
+| `netlab/protocols/http3`       | Exports HTTP/3 helpers without registering a layer                                |
+
 `installFetchInterceptor()` is intentionally excluded from this page's runnable examples because it
 is still a planned API and is not exported in the current package build.
 
@@ -21,10 +41,16 @@ is still a planned API and is not exported in the current package build.
 
 ### `<NetlabApp>`
 
-High-level embeddable component that auto-registers the built-in layers and internally mounts
-`<NetlabProvider>` plus `<SimulationProvider>` when `simulation={true}`.
+High-level embeddable component that internally mounts `<NetlabProvider>` plus
+`<SimulationProvider>` when `simulation={true}`. Register the layer plugins you need before
+rendering it.
 
 ```typescript
+import 'netlab/layers/l1-physical';
+import 'netlab/layers/l2-datalink';
+import 'netlab/layers/l3-network';
+import 'netlab/layers/l4-transport';
+import 'netlab/layers/l7-application';
 import { NetlabApp } from 'netlab';
 import type { NetlabAppProps, NetworkTopology } from 'netlab';
 ```
@@ -330,7 +356,7 @@ import {
   buildFinPacket,
   buildRstPacket,
   generateISN,
-} from 'netlab';
+} from 'netlab/layers/l4-transport';
 ```
 
 | Export                                                                                          | Description                                                                         |
@@ -353,7 +379,7 @@ import {
   bgpProtocol,
   RipProtocol,
   ripProtocol,
-} from 'netlab';
+} from 'netlab/layers/l3-network';
 ```
 
 | Export                              | Description                                                                           |

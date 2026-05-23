@@ -6,13 +6,18 @@
 
 `NetlabApp` is an all-in-one embeddable React component that renders a full netlab topology viewer inside a bounded container. Unlike the demo pages which assume full-page rendering (`height: 100vh`), `NetlabApp` respects explicit `width` and `height` props so it can be placed inside any host page layout.
 
-All built-in OSI layer plugins (L1–L7) are automatically registered when `NetlabApp` is first imported. No manual layer setup is required.
+Register the layer plugins you need once at the host app entry point. `NetlabApp` does not import all built-in layers at module load time, so root `netlab` imports remain tree-shakeable.
 
 ---
 
 ## Quick Start
 
 ```tsx
+import 'netlab/layers/l1-physical';
+import 'netlab/layers/l2-datalink';
+import 'netlab/layers/l3-network';
+import 'netlab/layers/l4-transport';
+import 'netlab/layers/l7-application';
 import { NetlabApp } from 'netlab';
 import type { NetworkTopology } from 'netlab';
 

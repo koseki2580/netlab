@@ -51,6 +51,18 @@ Use `node scripts/bench-large-topology.mjs` to measure synthetic 50, 100, and 20
 at 100, 500, and 1000 requested edit depths. `EditSession.MAX_HISTORY` currently caps the visible
 head at 100 edits, so the script reports both requested depth and the visible replay depth.
 
+Use `npm run bench:forwarding` to measure the forwarding pipeline itself. The script builds a
+deterministic router chain, precomputes a fixed packet set through `SimulationEngine`, and reports
+median packets per second across repeated samples. The checked-in baseline lives at
+`scripts/bench-results/forwarding.json`.
+
+The forwarding benchmark is a regression gate:
+
+- `minOpsPerSecond` stores the tolerated floor for the benchmarked scenario.
+- A normal run exits non-zero when measured median throughput is below that floor.
+- `npm run bench:forwarding -- --update-baseline` rewrites the baseline from the current machine.
+- Baseline increases are expected after optimizations; baseline decreases require a PR explanation.
+
 Current local result:
 
 | Nodes | Requested edits | Visible head | Full replay ms | Checkpoint replay ms | Speedup |

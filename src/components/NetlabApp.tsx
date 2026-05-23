@@ -1,6 +1,3 @@
-// Auto-register all built-in OSI layer plugins on first import.
-import '../layers/registerAllLayers';
-
 import type React from 'react';
 import { NetlabProvider } from './NetlabProvider';
 import { NetlabCanvas } from './NetlabCanvas';

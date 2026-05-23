@@ -4,11 +4,6 @@ import { HookEngine } from '../hooks/HookEngine';
 import { I18nProvider } from '../i18n/I18nProvider';
 import { computeStp } from '../layers/l2-datalink/stp/computeStp';
 import { protocolRegistry } from '../registry/ProtocolRegistry';
-import { bgpProtocol } from '../routing/bgp/BgpProtocol';
-import { ospfProtocol } from '../routing/ospf/OspfProtocol';
-import { ospfV3Protocol } from '../routing/ospf/OspfV3Protocol';
-import { ripProtocol } from '../routing/rip/RipProtocol';
-import { staticProtocol } from '../routing/static/StaticProtocol';
 import { SandboxNarrationRegion } from '../sandbox/narration/SandboxNarrationRegion';
 import { logger } from '../utils/logger';
 import type { NetlabEmbedMode, ParentOrigin } from '../embed/protocol';
@@ -23,26 +18,6 @@ import {
 import { CryptoContext } from '../crypto/CryptoContext';
 import { resolveProviderSync, type CryptoProviderSelection } from '../crypto/select';
 import { NetlabContext } from './NetlabContext';
-
-function ensureBuiltInProtocolsRegistered() {
-  const registered = new Set(protocolRegistry.list());
-
-  if (!registered.has(staticProtocol.name)) {
-    protocolRegistry.register(staticProtocol);
-  }
-  if (!registered.has(ospfProtocol.name)) {
-    protocolRegistry.register(ospfProtocol);
-  }
-  if (!registered.has(ospfV3Protocol.name)) {
-    protocolRegistry.register(ospfV3Protocol);
-  }
-  if (!registered.has(bgpProtocol.name)) {
-    protocolRegistry.register(bgpProtocol);
-  }
-  if (!registered.has(ripProtocol.name)) {
-    protocolRegistry.register(ripProtocol);
-  }
-}
 
 interface ControlledNetlabProviderProps {
   topology: NetworkTopology;
@@ -99,7 +74,6 @@ export function NetlabProvider({
   onTopologyChange,
   onSandboxEditProposed,
 }: NetlabProviderProps) {
-  ensureBuiltInProtocolsRegistered();
   const warnedImplicitSandboxModeRef = useRef(false);
 
   const defaultTopologyRef = useRef<NetworkTopology | null>(null);
