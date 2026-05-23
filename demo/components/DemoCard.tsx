@@ -94,6 +94,8 @@ interface DemoCardProps {
   tutorialHref: string | null;
   sandboxHref: string | null;
   assessmentHref: string | null;
+  /** `/compare/...` route when this scenario has a topology-group sibling (M4). */
+  compareHref?: string | null;
   progressTargetId?: string;
 }
 
@@ -103,6 +105,7 @@ export function DemoCard({
   tutorialHref,
   sandboxHref,
   assessmentHref,
+  compareHref,
   progressTargetId,
 }: DemoCardProps) {
   const difficulty = demo.meta?.difficulty;
@@ -212,6 +215,15 @@ export function DemoCard({
         <Link to={demo.path} style={getActionLinkStyle(category.color)}>
           Open →
         </Link>
+        {compareHref && (
+          <Link
+            to={compareHref}
+            data-testid="gallery-compare-link"
+            style={getActionLinkStyle('var(--netlab-accent-blue)')}
+          >
+            Compare ⇄
+          </Link>
+        )}
         {sandboxHref && (
           <a href={sandboxHref} style={getActionLinkStyle('var(--netlab-accent-yellow)')}>
             Sandbox →

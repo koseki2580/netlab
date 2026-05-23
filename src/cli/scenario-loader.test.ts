@@ -15,6 +15,7 @@ describe('scenario-loader', () => {
       'fragmented-echo',
       'tcp-handshake',
       'ospf-convergence',
+      'rip-convergence',
       'stp-loop',
       'nat-basics',
     ]);

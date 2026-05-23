@@ -59,6 +59,7 @@ import TcpCongestionDemo from './simulation/TcpCongestionDemo';
 import TcpHandshakeDemo from './simulation/TcpHandshakeDemo';
 import TraceInspectorDemo from './simulation/TraceInspectorDemo';
 import ControlledTopologyDemo from './topology/ControlledTopologyDemo';
+import CompareDemo from './compare/CompareDemo';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Root element not found');
@@ -104,6 +105,7 @@ function DemoRoutes() {
         <Route path="/services/dhcp-dns" element={<DhcpDnsDemo />} />
         <Route path="/editor" element={<EditorDemo />} />
         <Route path="/topology/controlled" element={<ControlledTopologyDemo />} />
+        <Route path="/compare/:left/:right" element={<CompareDemo />} />
         <Route path="/simulation/step" element={<StepSimDemo />} />
         <Route path="/simulation/failure" element={<FailureSimDemo />} />
         <Route path="/simulation/trace-inspector" element={<TraceInspectorDemo />} />

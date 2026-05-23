@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ProgressPanel } from '../src/components/progress/ProgressPanel';
 import { readUrlParam, useUrlParamSync } from '../src/hooks/useUrlParamSync';
-import { scenarioRegistry } from '../src/scenarios';
+import { scenarioRegistry, scenariosInGroup } from '../src/scenarios';
 import {
   NETLAB_DARK_THEME,
   NETLAB_LIGHT_THEME,
@@ -600,6 +600,16 @@ function getAssessmentHref(demo: DemoCard): string | null {
     sandboxTab: 'assessment',
   });
   return `?${params.toString()}#${demo.path}`;
+}
+
+function getCompareHref(demo: DemoCard): string | null {
+  if (!demo.scenarioId) return null;
+  const group = scenarioRegistry.get(demo.scenarioId)?.topologyGroup;
+  if (!group) return null;
+  const sibling = scenariosInGroup(group).find(
+    (scenario) => scenario.metadata.id !== demo.scenarioId,
+  );
+  return sibling ? `/compare/${demo.scenarioId}/${sibling.metadata.id}` : null;
 }
 
 function normalizeSearchText(parts: (string | undefined)[]): string {
@@ -1306,6 +1316,7 @@ export default function Gallery({
                       }
                       sandboxHref={getSandboxHref(demo)}
                       assessmentHref={getAssessmentHref(demo)}
+                      compareHref={getCompareHref(demo)}
                     />
                   );
                 })}
