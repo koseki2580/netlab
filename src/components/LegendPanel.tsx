@@ -132,7 +132,7 @@ export function LegendPanel({ style }: LegendPanelProps) {
       >
         <span>legend</span>
         <span aria-hidden style={{ color: 'var(--netlab-text-faint)' }}>
-          {open ? '▾' : '▴'}
+          {open ? '▴' : '▾'}
         </span>
       </button>
     </div>

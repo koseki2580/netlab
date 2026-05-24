@@ -71,6 +71,16 @@ describe('LegendPanel', () => {
     expect(window.localStorage.getItem('nl_a11y_legend')).toBe('1');
   });
 
+  it('points the toggle arrow down when closed and up when open (P6)', () => {
+    render(<LegendPanel />);
+    // Closed: ▾ (expandable downward).
+    expect(q('legend-toggle')?.textContent ?? '').toContain('▾');
+
+    click(q('legend-toggle') as HTMLElement);
+    // Open: ▴ (collapsible upward).
+    expect(q('legend-toggle')?.textContent ?? '').toContain('▴');
+  });
+
   it('persists the open state and reopens from localStorage', () => {
     window.localStorage.setItem('nl_a11y_legend', '1');
     render(<LegendPanel />);

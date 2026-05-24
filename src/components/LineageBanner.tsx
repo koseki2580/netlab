@@ -1,7 +1,13 @@
 import type React from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Sandbox, SandboxDiff } from '../sandbox/fork';
 
 const MONO = 'ui-monospace, monospace';
+const RESET_CONFIRM_TIMEOUT_MS = 5000;
+
+function totalEdits(diff: SandboxDiff): number {
+  return Object.values(diff).reduce<number>((sum, v) => sum + (typeof v === 'number' ? v : 0), 0);
+}
 
 export interface LineageBannerProps {
   sandbox: Sandbox;
@@ -65,16 +71,7 @@ export function LineageBanner({
         {parts.length > 0 ? parts.join(' · ') : 'no edits yet'}
       </span>
       <span style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-        {onReset && (
-          <button
-            type="button"
-            data-testid="lineage-reset"
-            onClick={onReset}
-            style={bannerButton('var(--netlab-text-secondary)')}
-          >
-            reset to origin
-          </button>
-        )}
+        {onReset && <LineageResetButton diff={sandbox.diff} onReset={onReset} />}
         {onCompare && (
           <button
             type="button"
@@ -97,6 +94,67 @@ export function LineageBanner({
         )}
       </span>
     </div>
+  );
+}
+
+/**
+ * P7 — confirm before discarding edits. With a non-empty diff, the first click
+ * arms a `discard N edits?` confirm state (auto-clearing after 5s); the second
+ * click within the window actually resets. An empty diff resets on first click
+ * since there is nothing to lose.
+ */
+function LineageResetButton({ diff, onReset }: { diff: SandboxDiff; onReset: () => void }) {
+  const [confirming, setConfirming] = useState(false);
+  const total = useMemo(() => totalEdits(diff), [diff]);
+
+  // Auto-clear the confirm state after a few seconds of inaction.
+  useEffect(() => {
+    if (!confirming) return undefined;
+    const id = window.setTimeout(() => setConfirming(false), RESET_CONFIRM_TIMEOUT_MS);
+    return () => window.clearTimeout(id);
+  }, [confirming]);
+
+  // If the diff drops to zero while armed, there is nothing left to confirm.
+  useEffect(() => {
+    if (total === 0) setConfirming(false);
+  }, [total]);
+
+  const handleClick = () => {
+    if (total === 0) {
+      onReset();
+      return;
+    }
+    if (!confirming) {
+      setConfirming(true);
+      return;
+    }
+    onReset();
+    setConfirming(false);
+  };
+
+  const label = confirming ? `discard ${total} edit${total === 1 ? '' : 's'}?` : 'reset to origin';
+  const color = confirming ? 'var(--netlab-accent-red)' : 'var(--netlab-text-secondary)';
+  return (
+    <button
+      type="button"
+      data-testid="lineage-reset"
+      data-confirming={confirming || undefined}
+      onClick={handleClick}
+      style={{
+        ...bannerButton(color),
+        ...(confirming
+          ? {
+              // Keep the `border` shorthand (not borderColor) so toggling confirm
+              // off doesn't mix shorthand + longhand and trip React's style warning.
+              border: '1px solid var(--netlab-accent-red)',
+              background: 'color-mix(in srgb, var(--netlab-accent-red) 8%, transparent)',
+            }
+          : {}),
+        transition: 'color 120ms, background 120ms, border-color 120ms',
+      }}
+    >
+      {label}
+    </button>
   );
 }
 
