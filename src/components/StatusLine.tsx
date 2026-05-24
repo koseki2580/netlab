@@ -1,5 +1,6 @@
 import type React from 'react';
 import type { ShellStatusTone } from './NetlabAppShellV2';
+import { STATUS_TONE_COLOR, STATUS_TONE_LABEL } from './shellStatusTones';
 
 /**
  * `StatusLine` is the persistent, one-line status bar that sits between the
@@ -35,22 +36,6 @@ export interface StatusLineProps {
   /** ClassName forwarded to the outer wrapper. */
   className?: string;
 }
-
-const STATUS_TONE_COLOR: Record<ShellStatusTone, string> = {
-  idle: 'var(--netlab-text-muted)',
-  ready: 'var(--netlab-accent-yellow)',
-  running: 'var(--netlab-accent-green)',
-  paused: 'var(--netlab-accent-yellow)',
-  error: 'var(--netlab-accent-red)',
-};
-
-const STATUS_TONE_LABEL: Record<ShellStatusTone, string> = {
-  idle: 'idle',
-  ready: 'ready',
-  running: 'running',
-  paused: 'paused',
-  error: 'error',
-};
 
 function sep() {
   return (

@@ -1,6 +1,7 @@
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import type { NetlabAppShellStatus, ShellStatusTone } from './NetlabAppShellV2';
+import type { NetlabAppShellStatus } from './NetlabAppShellV2';
+import { STATUS_TONE_COLOR } from './shellStatusTones';
 
 export interface CommandBarProps {
   scenarioId: string;
@@ -20,14 +21,6 @@ export interface CommandBarProps {
   className?: string;
   style?: React.CSSProperties;
 }
-
-const STATUS_TONE_COLOR: Record<ShellStatusTone, string> = {
-  idle: 'var(--netlab-text-muted)',
-  ready: 'var(--netlab-accent-green)',
-  running: 'var(--netlab-accent-cyan)',
-  paused: 'var(--netlab-accent-yellow)',
-  error: 'var(--netlab-accent-red)',
-};
 
 function useObservedWidth() {
   const ref = useRef<HTMLDivElement>(null);
