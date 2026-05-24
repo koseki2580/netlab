@@ -5,7 +5,7 @@ import { CommandPalette, type CommandPaletteItem } from '../src/components/Comma
 import { NavRail, type NavRailView } from '../src/components/NavRail';
 import { NetlabThemeScope } from '../src/components/NetlabThemeScope';
 import type { NetlabCbSafe, NetlabContrast } from '../src/theme';
-import { scenarioRegistry } from '../src/scenarios';
+import { scenarioRegistry, scenariosInGroup } from '../src/scenarios';
 import { installKeymap, type KeymapActions } from '../src/utils/keymap';
 import { E2eTraceHook } from './__e2e_hook';
 import { ShellChromeProvider } from './ShellChromeContext';
@@ -118,8 +118,31 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
       })
       .filter((item): item is CommandPaletteItem => item !== null);
 
+    // M4 — "compare with <sibling>" for the scenario on the current route.
+    const currentScenarioId = Object.keys(SCENARIO_ROUTES).find(
+      (id) => SCENARIO_ROUTES[id] === location.pathname,
+    );
+    const currentGroup = currentScenarioId
+      ? scenarioRegistry.get(currentScenarioId)?.topologyGroup
+      : undefined;
+    const compareItems: CommandPaletteItem[] = currentGroup
+      ? scenariosInGroup(currentGroup)
+          .filter((sibling) => sibling.metadata.id !== currentScenarioId)
+          .map((sibling) => ({
+            id: `compare:${currentScenarioId}:${sibling.metadata.id}`,
+            label: `Compare with ${sibling.metadata.title}`,
+            subtitle: 'Open both scenarios side by side',
+            group: 'Commands',
+            keywords: ['compare', sibling.metadata.id, ...sibling.metadata.protocols],
+            onSelect: () => {
+              void navigate(`/compare/${currentScenarioId}/${sibling.metadata.id}`);
+            },
+          }))
+      : [];
+
     return [
       ...scenarioItems,
+      ...compareItems,
       ...registeredPaletteItems,
       {
         id: 'command:gallery',
@@ -140,7 +163,7 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
         onSelect: openHelp,
       },
     ];
-  }, [navigate, openHelp, registeredPaletteItems]);
+  }, [navigate, openHelp, registeredPaletteItems, location.pathname]);
 
   useEffect(() => {
     if (embedded) return undefined;
