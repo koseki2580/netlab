@@ -5,7 +5,7 @@ import { useNetlabUI } from '../../components/NetlabUIContext';
 
 const SERVER_STYLE: React.CSSProperties = {
   background: 'var(--netlab-node-server-bg)',
-  border: '2px solid var(--netlab-accent-green)',
+  border: '2px solid var(--netlab-accent-purple)',
   borderRadius: 10,
   padding: '12px 8px',
   width: 80,
@@ -19,8 +19,8 @@ const SERVER_STYLE: React.CSSProperties = {
 const HANDLE_STYLE: React.CSSProperties = {
   width: 8,
   height: 8,
-  background: 'var(--netlab-accent-green)',
-  border: '1px solid var(--netlab-accent-green)',
+  background: 'var(--netlab-accent-purple)',
+  border: '1px solid var(--netlab-accent-purple)',
 };
 
 export function ServerNode({ id, data }: NodeProps) {

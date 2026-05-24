@@ -13,14 +13,14 @@ interface GlyphMeta {
 
 /**
  * Per-kind glyph metadata. Color is one channel; the shape and letter make the
- * encoding legible without it (e.g. router and server share green but differ in
- * both shape and letter).
+ * encoding legible without it. Every kind now has a distinct color, so the
+ * four glyphs differ across all three encodings (color + shape + letter).
  */
 export const NODE_GLYPHS: Readonly<Record<NodeGlyphKind, GlyphMeta>> = {
   router: { letter: 'R', color: 'var(--netlab-accent-green)', shape: 'rounded-rect' },
-  switch: { letter: 'S', color: 'var(--netlab-accent-blue)', shape: 'hexagon' },
+  switch: { letter: 'Sw', color: 'var(--netlab-accent-blue)', shape: 'hexagon' },
   client: { letter: 'C', color: 'var(--netlab-accent-cyan)', shape: 'circle' },
-  server: { letter: 'Sv', color: 'var(--netlab-accent-green)', shape: 'square' },
+  server: { letter: 'S', color: 'var(--netlab-accent-purple)', shape: 'square' },
 };
 
 export interface NodeGlyphProps {
@@ -63,7 +63,7 @@ export function NodeGlyph({ kind, label, selected = false, size = 40 }: NodeGlyp
         textAnchor="middle"
         dominantBaseline="central"
         fontFamily="ui-monospace, monospace"
-        fontSize={meta.letter.length > 1 ? 12 : 16}
+        fontSize={16}
         fontWeight={700}
         fill={meta.color}
       >

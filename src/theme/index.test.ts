@@ -35,6 +35,21 @@ describe('themeToVars', () => {
     });
   });
 
+  it('emits the accent-purple token from base, academic, and cbsafe (P8)', () => {
+    expect(themeToVars(NETLAB_DARK_THEME)).toMatchObject({
+      '--netlab-accent-purple': '#a371f7',
+    });
+    expect(themeToVars(NETLAB_LIGHT_THEME)).toMatchObject({
+      '--netlab-accent-purple': '#7c3aed',
+    });
+    expect(themeToVars(NETLAB_DARK_THEME, { palette: 'academic' })).toMatchObject({
+      '--netlab-accent-purple': NETLAB_PALETTES.academic.accentPurple,
+    });
+    expect(themeToVars(NETLAB_DARK_THEME, { colorBlindSafe: 'on' })).toMatchObject({
+      '--netlab-accent-purple': CBSAFE_ACCENTS.accentPurple,
+    });
+  });
+
   it('omits density tokens when no density axis is supplied (backwards compatible)', () => {
     const vars = themeToVars(NETLAB_DARK_THEME) as Record<string, string | undefined>;
     expect(vars['--netlab-pad']).toBeUndefined();

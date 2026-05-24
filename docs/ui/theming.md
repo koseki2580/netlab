@@ -76,6 +76,7 @@ Each `NetlabTheme` field maps to a CSS custom property scoped to the component c
 | `accentOrange`  | `--netlab-accent-orange`  |
 | `accentYellow`  | `--netlab-accent-yellow`  |
 | `accentCyan`    | `--netlab-accent-cyan`    |
+| `accentPurple`  | `--netlab-accent-purple`  |
 | `nodeRouterBg`  | `--netlab-node-router-bg` |
 | `nodeSwitchBg`  | `--netlab-node-switch-bg` |
 | `nodeClientBg`  | `--netlab-node-client-bg` |

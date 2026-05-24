@@ -107,7 +107,7 @@ describe('node theming', () => {
       Component: ServerNode,
       label: 'SRV1',
       backgroundVar: '--netlab-node-server-bg',
-      accentVar: '--netlab-accent-green',
+      accentVar: '--netlab-accent-purple',
     },
   ])(
     'uses CSS variables for $name node colors',

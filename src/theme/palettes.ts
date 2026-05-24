@@ -13,7 +13,13 @@ export type NetlabPalette = 'studio' | 'academic';
 type AccentOverrides = Partial<
   Pick<
     NetlabTheme,
-    'accentBlue' | 'accentGreen' | 'accentRed' | 'accentOrange' | 'accentYellow' | 'accentCyan'
+    | 'accentBlue'
+    | 'accentGreen'
+    | 'accentRed'
+    | 'accentOrange'
+    | 'accentYellow'
+    | 'accentCyan'
+    | 'accentPurple'
   >
 >;
 
@@ -32,6 +38,7 @@ export const NETLAB_PALETTES: Record<NetlabPalette, AccentOverrides> = {
     accentYellow: '#a26b00',
     accentOrange: '#c45a14',
     accentRed: '#a83a2e',
+    accentPurple: '#6b3fcb',
   },
 };
 
@@ -42,11 +49,13 @@ export function paletteOverrides(palette: NetlabPalette): AccentOverrides {
 /**
  * Color-blind-safe accent overrides (M6). Applied on top of the active palette
  * when the `colorBlindSafe` axis is `'on'`. Red → magenta, green → teal,
- * yellow → amber — a set distinguishable under deuteranopia/protanopia (the
- * blue/cyan channel is already CVD-safe, so it is left untouched).
+ * yellow → amber, purple → a CVD-distinct violet — a set distinguishable under
+ * deuteranopia/protanopia (the blue/cyan channel is already CVD-safe, so it is
+ * left untouched).
  */
 export const CBSAFE_ACCENTS: AccentOverrides = {
   accentRed: '#ee3377',
   accentGreen: '#009988',
   accentYellow: '#ee7733',
+  accentPurple: '#aa44ee',
 };

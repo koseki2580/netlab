@@ -77,6 +77,8 @@ export interface NetlabTheme {
   accentYellow: string;
   /** IP address highlights and primary text accents. */
   accentCyan: string;
+  /** Server nodes, sandbox edits, and lineage markers. */
+  accentPurple: string;
 
   // ── Node backgrounds ────────────────────────────────────────────────────
   /** Router node container background. */
@@ -107,6 +109,7 @@ export const NETLAB_DARK_THEME: NetlabTheme = {
   accentOrange: '#f59e0b',
   accentYellow: '#fbbf24',
   accentCyan: '#7dd3fc',
+  accentPurple: '#a371f7',
   nodeRouterBg: '#0f2a1a',
   nodeSwitchBg: '#0d1f3c',
   nodeClientBg: '#0d1a2e',
@@ -131,6 +134,7 @@ export const NETLAB_LIGHT_THEME: NetlabTheme = {
   accentOrange: '#f59e0b',
   accentYellow: '#d97706',
   accentCyan: '#0369a1',
+  accentPurple: '#7c3aed',
   nodeRouterBg: '#f0fdf4',
   nodeSwitchBg: '#eff6ff',
   nodeClientBg: '#f0f9ff',
@@ -183,6 +187,7 @@ export function themeToVars(theme: NetlabTheme, axes?: NetlabThemeAxes): React.C
     '--netlab-accent-orange': resolved.accentOrange,
     '--netlab-accent-yellow': resolved.accentYellow,
     '--netlab-accent-cyan': resolved.accentCyan,
+    '--netlab-accent-purple': resolved.accentPurple,
     '--netlab-node-router-bg': resolved.nodeRouterBg,
     '--netlab-node-switch-bg': resolved.nodeSwitchBg,
     '--netlab-node-client-bg': resolved.nodeClientBg,

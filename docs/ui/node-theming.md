@@ -45,9 +45,11 @@ These map to CSS custom properties on the `NetlabApp` container:
 
 Node components MUST reuse existing semantic theme tokens for non-background colors:
 
-- Router and server borders, handles, and primary icon strokes use `--netlab-accent-green`
+- Router borders, handles, and primary icon strokes use `--netlab-accent-green`
 - Switch borders, handles, and primary icon strokes use `--netlab-accent-blue`
 - Client borders, handles, and primary icon strokes use `--netlab-accent-cyan`
+- Server borders, handles, and primary icon strokes use `--netlab-accent-purple`
+  (distinct from the router's green so the two read apart, including under CVD)
 - Node labels use `--netlab-text-primary`
 - Router interface-down badges use `--netlab-accent-red`
 - Switch status indicators use:

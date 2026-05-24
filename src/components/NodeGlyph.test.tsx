@@ -65,4 +65,21 @@ describe('NodeGlyph', () => {
     render(<NodeGlyph kind="server" />);
     expect(container?.querySelector('svg')?.getAttribute('aria-label')).toBe('server');
   });
+
+  it('gives each kind a distinct color so the legend has four colors (P8)', () => {
+    const colors = KINDS.map((kind) => NODE_GLYPHS[kind].color);
+    expect(new Set(colors).size).toBe(KINDS.length);
+    // Server moved off green onto its own purple channel.
+    expect(NODE_GLYPHS.server.color).toBe('var(--netlab-accent-purple)');
+    expect(NODE_GLYPHS.router.color).not.toBe(NODE_GLYPHS.server.color);
+  });
+
+  it('renders every glyph letter at the same font size (P9)', () => {
+    expect(NODE_GLYPHS.switch.letter).toBe('Sw');
+    expect(NODE_GLYPHS.server.letter).toBe('S');
+    for (const kind of KINDS) {
+      render(<NodeGlyph kind={kind} />);
+      expect(container?.querySelector('svg text')?.getAttribute('font-size')).toBe('16');
+    }
+  });
 });
