@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import type { RouteEntry } from '../types/routing';
 import type { PacketHop, PacketTrace } from '../types/simulation';
-import { buildStepSnapshots, diffArp, diffRoutes, type ArpRow, type RouteRow } from './snapshots';
+import {
+  buildStepSnapshots,
+  diffArp,
+  diffMac,
+  diffRoutes,
+  type ArpRow,
+  type MacRow,
+  type RouteRow,
+} from './snapshots';
 
 function hop(step: number, nodeId: string, overrides: Partial<PacketHop> = {}): PacketHop {
   return {
@@ -82,6 +90,15 @@ describe('buildStepSnapshots', () => {
     expect(snaps.get(0)?.r1).toBeDefined();
     expect(snaps.get(0)?.r1?.arp).toEqual([]);
   });
+
+  it('learns MAC → ingress port from the source MAC on each hop', () => {
+    const snaps = buildStepSnapshots(
+      trace([hop(0, 'sw1'), hop(1, 'sw1', { srcMac: 'aa:bb', ingressInterfaceName: 'eth0' })]),
+      new Map(),
+    );
+    expect(snaps.get(0)?.sw1?.mac).toEqual([]);
+    expect(snaps.get(1)?.sw1?.mac).toEqual([{ mac: 'aa:bb', port: 'eth0' }]);
+  });
 });
 
 describe('diffRoutes', () => {
@@ -113,5 +130,20 @@ describe('diffArp', () => {
     expect(changed?.status).toBe('changed');
     expect(changed?.from).toEqual({ mac: 'aa' });
     expect(rows.find((r) => r.ip === '10.0.0.3')?.status).toBe('added');
+  });
+});
+
+describe('diffMac', () => {
+  it('detects added and changed (moved port) entries by MAC', () => {
+    const prev: MacRow[] = [{ mac: 'aa', port: 'p1' }];
+    const next: MacRow[] = [
+      { mac: 'aa', port: 'p2' },
+      { mac: 'bb', port: 'p3' },
+    ];
+    const rows = diffMac(prev, next);
+    const moved = rows.find((r) => r.mac === 'aa');
+    expect(moved?.status).toBe('changed');
+    expect(moved?.from).toEqual({ port: 'p1' });
+    expect(rows.find((r) => r.mac === 'bb')?.status).toBe('added');
   });
 });

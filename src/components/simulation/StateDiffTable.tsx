@@ -2,9 +2,12 @@ import type React from 'react';
 import { useMemo, useState } from 'react';
 import {
   diffArp,
+  diffMac,
   diffRoutes,
   type ArpDiffRow,
   type DiffStatus,
+  type MacDiffRow,
+  type NodeStepState,
   type RouteDiffRow,
   type StepSnapshots,
 } from '../../simulation/snapshots';
@@ -12,8 +15,9 @@ import {
 const MONO = 'ui-monospace, monospace';
 const MAX_HEATMAP_COLS = 32;
 
-export type StateDiffTableKind = 'routes' | 'arp';
+export type StateDiffTableKind = 'routes' | 'arp' | 'mac';
 type DiffMode = 'now' | 'diff' | 'history';
+type AnyDiffRow = RouteDiffRow | ArpDiffRow | MacDiffRow;
 
 export interface StateDiffTableProps {
   snapshots: StepSnapshots;
@@ -39,8 +43,18 @@ const STATUS_SYMBOL: Record<DiffStatus, string> = {
   unchanged: '=',
 };
 
-function rowKey(kind: StateDiffTableKind, row: { dst?: string; ip?: string }): string {
-  return kind === 'routes' ? (row.dst ?? '') : (row.ip ?? '');
+function rowKey(
+  kind: StateDiffTableKind,
+  row: { dst?: string; ip?: string; mac?: string },
+): string {
+  if (kind === 'routes') return row.dst ?? '';
+  if (kind === 'arp') return row.ip ?? '';
+  return row.mac ?? '';
+}
+
+function rowsOf(state: NodeStepState | undefined, kind: StateDiffTableKind) {
+  if (!state) return [];
+  return kind === 'routes' ? state.routes : kind === 'arp' ? state.arp : state.mac;
 }
 
 /**
@@ -61,16 +75,14 @@ export function StateDiffTable({
   const prevState = snapshots.get(prevStep)?.[nodeId];
   const currState = snapshots.get(stepIndex)?.[nodeId];
 
-  const diff = useMemo<(RouteDiffRow | ArpDiffRow)[]>(() => {
-    if (tableKind === 'routes') {
-      return diffRoutes(prevState?.routes ?? [], currState?.routes ?? []);
-    }
-    return diffArp(prevState?.arp ?? [], currState?.arp ?? []);
+  const diff = useMemo<AnyDiffRow[]>(() => {
+    if (tableKind === 'routes') return diffRoutes(prevState?.routes ?? [], currState?.routes ?? []);
+    if (tableKind === 'arp') return diffArp(prevState?.arp ?? [], currState?.arp ?? []);
+    return diffMac(prevState?.mac ?? [], currState?.mac ?? []);
   }, [tableKind, prevState, currState]);
 
-  const nowRows = useMemo<(RouteDiffRow | ArpDiffRow)[]>(() => {
-    const rows = tableKind === 'routes' ? (currState?.routes ?? []) : (currState?.arp ?? []);
-    return rows.map((r) => ({ ...r, status: 'unchanged' }) as RouteDiffRow | ArpDiffRow);
+  const nowRows = useMemo<AnyDiffRow[]>(() => {
+    return rowsOf(currState, tableKind).map((r) => ({ ...r, status: 'unchanged' }) as AnyDiffRow);
   }, [tableKind, currState]);
 
   const counts = diff.reduce<Record<string, number>>((acc, r) => {
@@ -165,13 +177,7 @@ function modeBtnStyle(active: boolean): React.CSSProperties {
   };
 }
 
-function DiffRows({
-  kind,
-  rows,
-}: {
-  kind: StateDiffTableKind;
-  rows: (RouteDiffRow | ArpDiffRow)[];
-}) {
+function DiffRows({ kind, rows }: { kind: StateDiffTableKind; rows: AnyDiffRow[] }) {
   if (rows.length === 0) {
     return (
       <div
@@ -194,10 +200,15 @@ function DiffRows({
               <th style={CELL}>proto</th>
               <th style={CELL}>metric</th>
             </>
-          ) : (
+          ) : kind === 'arp' ? (
             <>
               <th style={CELL}>ip</th>
               <th style={CELL}>mac</th>
+            </>
+          ) : (
+            <>
+              <th style={CELL}>mac</th>
+              <th style={CELL}>port</th>
             </>
           )}
         </tr>
@@ -212,8 +223,10 @@ function DiffRows({
             <td style={{ ...CELL, color: STATUS_COLOR[r.status] }}>{STATUS_SYMBOL[r.status]}</td>
             {kind === 'routes' ? (
               <RouteCells row={r as RouteDiffRow} />
-            ) : (
+            ) : kind === 'arp' ? (
               <ArpCells row={r as ArpDiffRow} />
+            ) : (
+              <MacCells row={r as MacDiffRow} />
             )}
           </tr>
         ))}
@@ -246,6 +259,17 @@ function ArpCells({ row }: { row: ArpDiffRow }) {
   );
 }
 
+function MacCells({ row }: { row: MacDiffRow }) {
+  return (
+    <>
+      <td style={CELL}>{row.mac}</td>
+      <td style={CELL}>
+        {row.status === 'changed' && row.from ? `${row.from.port} → ${row.port}` : row.port}
+      </td>
+    </>
+  );
+}
+
 const CELL: React.CSSProperties = { padding: '3px 8px' };
 
 function collectKeys(
@@ -256,11 +280,7 @@ function collectKeys(
   const steps = [...snapshots.keys()].sort((a, b) => a - b).slice(0, MAX_HEATMAP_COLS);
   const keys = new Set<string>();
   for (const step of steps) {
-    const rows =
-      kind === 'routes'
-        ? snapshots.get(step)?.[nodeId]?.routes
-        : snapshots.get(step)?.[nodeId]?.arp;
-    for (const r of rows ?? []) keys.add(rowKey(kind, r));
+    for (const r of rowsOf(snapshots.get(step)?.[nodeId], kind)) keys.add(rowKey(kind, r));
   }
   return { steps, keys: [...keys] };
 }
@@ -272,9 +292,7 @@ function hasKey(
   step: number,
   key: string,
 ): boolean {
-  const rows =
-    kind === 'routes' ? snapshots.get(step)?.[nodeId]?.routes : snapshots.get(step)?.[nodeId]?.arp;
-  return (rows ?? []).some((r) => rowKey(kind, r) === key);
+  return rowsOf(snapshots.get(step)?.[nodeId], kind).some((r) => rowKey(kind, r) === key);
 }
 
 function HistoryHeatmap({
@@ -371,7 +389,11 @@ function stepChanged(
   const curr = snapshots.get(step)?.[nodeId];
   if (!prev || !curr) return 'none';
   const diff =
-    kind === 'routes' ? diffRoutes(prev.routes, curr.routes) : diffArp(prev.arp, curr.arp);
+    kind === 'routes'
+      ? diffRoutes(prev.routes, curr.routes)
+      : kind === 'arp'
+        ? diffArp(prev.arp, curr.arp)
+        : diffMac(prev.mac, curr.mac);
   const changed = diff.find((r) => r.status !== 'unchanged');
   return changed ? changed.status : 'none';
 }

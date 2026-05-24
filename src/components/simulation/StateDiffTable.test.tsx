@@ -34,8 +34,8 @@ function click(el: HTMLElement) {
 }
 
 const ARP_SNAPSHOTS: StepSnapshots = new Map([
-  [0, { r1: { routes: [], arp: [] } }],
-  [1, { r1: { routes: [], arp: [{ ip: '10.0.0.2', mac: 'aa' }] } }],
+  [0, { r1: { routes: [], arp: [], mac: [] } }],
+  [1, { r1: { routes: [], arp: [{ ip: '10.0.0.2', mac: 'aa' }], mac: [] } }],
   [
     2,
     {
@@ -45,6 +45,7 @@ const ARP_SNAPSHOTS: StepSnapshots = new Map([
           { ip: '10.0.0.2', mac: 'aa' },
           { ip: '10.0.0.3', mac: 'bb' },
         ],
+        mac: [],
       },
     },
   ],
@@ -57,6 +58,7 @@ const ROUTE_SNAPSHOTS: StepSnapshots = new Map([
       r1: {
         routes: [{ dst: '10.4.0.0/24', via: 'r2', proto: 'ospf', metric: 20, ad: 110 }],
         arp: [],
+        mac: [],
       },
     },
   ],
@@ -66,6 +68,7 @@ const ROUTE_SNAPSHOTS: StepSnapshots = new Map([
       r1: {
         routes: [{ dst: '10.4.0.0/24', via: 'r2', proto: 'ospf', metric: 30, ad: 110 }],
         arp: [],
+        mac: [],
       },
     },
   ],
@@ -118,6 +121,17 @@ describe('StateDiffTable', () => {
     const changed = container?.querySelector('tr[data-status="changed"]');
     expect(changed).not.toBeNull();
     expect(changed?.textContent ?? '').toContain('20 → 30');
+  });
+
+  it('renders a changed MAC port as `from → to`', () => {
+    const macSnaps: StepSnapshots = new Map([
+      [0, { sw1: { routes: [], arp: [], mac: [{ mac: 'aa', port: 'p1' }] } }],
+      [1, { sw1: { routes: [], arp: [], mac: [{ mac: 'aa', port: 'p2' }] } }],
+    ]);
+    render(<StateDiffTable snapshots={macSnaps} nodeId="sw1" stepIndex={1} tableKind="mac" />);
+    const changed = container?.querySelector('tr[data-status="changed"]');
+    expect(changed).not.toBeNull();
+    expect(changed?.textContent ?? '').toContain('p1 → p2');
   });
 
   it('renders an empty state when the node has no rows', () => {

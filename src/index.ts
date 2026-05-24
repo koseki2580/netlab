@@ -223,14 +223,16 @@ export { StepSimulationController } from './simulation/StepSimulationController'
 export type { StepSimState, StepSimStatus } from './simulation/StepSimulationController';
 
 // Per-step state snapshots + diff (M3)
-export { buildStepSnapshots, diffRoutes, diffArp } from './simulation/snapshots';
+export { buildStepSnapshots, diffRoutes, diffArp, diffMac } from './simulation/snapshots';
 export type {
   StepSnapshots,
   NodeStepState,
   RouteRow,
   ArpRow,
+  MacRow,
   RouteDiffRow,
   ArpDiffRow,
+  MacDiffRow,
   DiffStatus,
 } from './simulation/snapshots';
 

@@ -5,10 +5,11 @@ import type { PacketTrace } from '../types/simulation';
  * M3 — per-step state snapshots.
  *
  * The simulator replays one packet trace hop by hop. Routes are topology-derived
- * (static across hops); ARP is the table that genuinely evolves — entries are
- * learned as the packet traverses hops carrying ARP frames. {@link buildStepSnapshots}
- * reconstructs, for every hop step, each node's route table plus the ARP bindings it
- * has learned through that step. MAC is intentionally omitted (not yet surfaced).
+ * (static across hops); ARP and MAC are the tables that genuinely evolve — entries
+ * are learned as the packet traverses hops (ARP from ARP frames, MAC from the source
+ * MAC observed on each ingress port). {@link buildStepSnapshots} reconstructs, for
+ * every hop step, each node's route table plus the ARP and MAC entries it has learned
+ * through that step.
  */
 
 export interface RouteRow {
@@ -24,9 +25,15 @@ export interface ArpRow {
   mac: string;
 }
 
+export interface MacRow {
+  mac: string;
+  port: string;
+}
+
 export interface NodeStepState {
   routes: RouteRow[];
   arp: ArpRow[];
+  mac: MacRow[];
 }
 
 /** step index → (nodeId → state at that step). */
@@ -42,6 +49,11 @@ export interface RouteDiffRow extends RouteRow {
 export interface ArpDiffRow extends ArpRow {
   status: DiffStatus;
   from?: { mac: string };
+}
+
+export interface MacDiffRow extends MacRow {
+  status: DiffStatus;
+  from?: { port: string };
 }
 
 function routeRows(
@@ -67,6 +79,7 @@ export function buildStepSnapshots(
 ): StepSnapshots {
   const snapshots: StepSnapshots = new Map();
   const arpByNode = new Map<string, Map<string, string>>();
+  const macByNode = new Map<string, Map<string, string>>();
   const nodeIds = new Set<string>(routeTable.keys());
   for (const hop of trace.hops) nodeIds.add(hop.nodeId);
 
@@ -78,6 +91,14 @@ export function buildStepSnapshots(
       arpByNode.set(hop.nodeId, learned);
     }
 
+    // MAC learning: a node maps the source MAC to the port it arrived on.
+    const ingressPort = hop.ingressInterfaceName ?? hop.ingressInterfaceId;
+    if (hop.srcMac && ingressPort) {
+      const learned = macByNode.get(hop.nodeId) ?? new Map<string, string>();
+      learned.set(hop.srcMac, ingressPort);
+      macByNode.set(hop.nodeId, learned);
+    }
+
     const perNode: Record<string, NodeStepState> = {};
     for (const nodeId of nodeIds) {
       perNode[nodeId] = {
@@ -85,6 +106,9 @@ export function buildStepSnapshots(
         arp: [...(arpByNode.get(nodeId) ?? new Map()).entries()]
           .map(([ip, mac]) => ({ ip, mac }))
           .sort((a, b) => a.ip.localeCompare(b.ip)),
+        mac: [...(macByNode.get(nodeId) ?? new Map()).entries()]
+          .map(([mac, port]) => ({ mac, port }))
+          .sort((a, b) => a.mac.localeCompare(b.mac)),
       };
     }
     snapshots.set(step, perNode);
@@ -132,6 +156,23 @@ export function diffArp(prev: readonly ArpRow[], next: readonly ArpRow[]): ArpDi
   const nextIps = new Set(next.map((r) => r.ip));
   for (const p of prev) {
     if (!nextIps.has(p.ip)) rows.push({ ...p, status: 'removed' });
+  }
+  return rows.sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]);
+}
+
+/** Diff two MAC-row sets, keyed by MAC address. Pure. */
+export function diffMac(prev: readonly MacRow[], next: readonly MacRow[]): MacDiffRow[] {
+  const prevMap = new Map(prev.map((r) => [r.mac, r]));
+  const rows: MacDiffRow[] = [];
+  for (const r of next) {
+    const p = prevMap.get(r.mac);
+    if (!p) rows.push({ ...r, status: 'added' });
+    else if (r.port !== p.port) rows.push({ ...r, status: 'changed', from: { port: p.port } });
+    else rows.push({ ...r, status: 'unchanged' });
+  }
+  const nextMacs = new Set(next.map((r) => r.mac));
+  for (const p of prev) {
+    if (!nextMacs.has(p.mac)) rows.push({ ...p, status: 'removed' });
   }
   return rows.sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]);
 }
