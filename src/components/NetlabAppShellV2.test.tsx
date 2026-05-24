@@ -65,14 +65,13 @@ describe('NetlabAppShellV2', () => {
     expect(container?.querySelector('[data-testid="body"]')?.textContent).toBe('canvas');
   });
 
-  it('preserves the hint and statusLine slots in the canvas frame', () => {
+  it('renders the statusLine slot in the canvas frame (and no hint pulse pill)', () => {
     act(() => {
       root?.render(
         <NetlabAppShellV2
           scenarioId="ospf"
           isPlaying={false}
           step={0}
-          hint="Tip · inspect R1"
           statusLine={<div data-testid="status-line">status line</div>}
         >
           body
@@ -80,9 +79,9 @@ describe('NetlabAppShellV2', () => {
       );
     });
 
-    expect(container?.querySelector('[data-netlab-shell-hint]')?.textContent).toContain(
-      'inspect R1',
-    );
+    // P13 — the ephemeral hint-pulse pill is gone; StatusLine is the only
+    // ambient-status surface.
+    expect(container?.querySelector('[data-netlab-shell-hint]')).toBeNull();
     expect(container?.querySelector('[data-netlab-shell-status-line]')?.textContent).toContain(
       'status line',
     );

@@ -1,6 +1,91 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { ComparePane } from './ComparePane';
 
+// P12 — shared-playhead speed control. The play loop interval is 450ms / speed.
+export type CompareSpeed = 0.25 | 0.5 | 1 | 1.5 | 2;
+const SPEED_SEGMENTS: readonly CompareSpeed[] = [0.5, 1, 2] as const;
+const SPEED_KEY = 'nl_compare_speed';
+
+function clampSpeed(v: number): CompareSpeed {
+  if (v <= 0.25) return 0.25;
+  if (v <= 0.5) return 0.5;
+  if (v <= 1) return 1;
+  if (v <= 1.5) return 1.5;
+  return 2;
+}
+
+function loadInitialSpeed(): CompareSpeed {
+  try {
+    const raw = window.localStorage.getItem(SPEED_KEY);
+    if (raw == null) return 1;
+    const parsed = Number.parseFloat(raw);
+    return Number.isFinite(parsed) ? clampSpeed(parsed) : 1;
+  } catch {
+    return 1;
+  }
+}
+
+function persistSpeed(speed: CompareSpeed): void {
+  try {
+    window.localStorage.setItem(SPEED_KEY, String(speed));
+  } catch {
+    /* localStorage unavailable — speed stays in-memory only */
+  }
+}
+
+function CompareSpeedControl({
+  speed,
+  onChange,
+}: {
+  speed: CompareSpeed;
+  onChange: (next: CompareSpeed) => void;
+}) {
+  return (
+    <div
+      data-testid="compare-speed"
+      role="radiogroup"
+      aria-label="Playback speed"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: 2,
+        borderRadius: 999,
+        background: 'var(--netlab-bg-elevated)',
+        border: '1px solid var(--netlab-border)',
+        fontFamily: 'ui-monospace, monospace',
+        fontSize: 10,
+      }}
+    >
+      {SPEED_SEGMENTS.map((opt) => {
+        const active = speed === opt;
+        return (
+          <button
+            key={opt}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            aria-label={`${opt}× speed`}
+            onClick={() => onChange(opt)}
+            style={{
+              all: 'unset',
+              cursor: 'pointer',
+              padding: '2px 10px',
+              borderRadius: 999,
+              color: active ? 'var(--netlab-accent-cyan)' : 'var(--netlab-text-muted)',
+              background: active
+                ? 'color-mix(in srgb, var(--netlab-accent-cyan) 14%, transparent)'
+                : 'transparent',
+              fontWeight: active ? 700 : 400,
+            }}
+          >
+            {opt}×
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 /**
  * M4 — shared timeline for a compare view. Provided by {@link CompareShell} and
  * consumed by both panes: one playhead drives `engine.selectHop` in each pane,
@@ -38,6 +123,12 @@ export function CompareShell({ leftId, rightId }: CompareShellProps) {
   const [step, setStepRaw] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [totals, setTotals] = useState<Record<string, number>>({});
+  const [speed, setSpeedRaw] = useState<CompareSpeed>(loadInitialSpeed);
+
+  const setSpeed = useCallback((next: CompareSpeed) => {
+    setSpeedRaw(next);
+    persistSpeed(next);
+  }, []);
 
   const maxTotal = Math.max(0, ...Object.values(totals));
   const maxStep = Math.max(0, maxTotal - 1);
@@ -59,7 +150,7 @@ export function CompareShell({ leftId, rightId }: CompareShellProps) {
     setStepRaw((current) => Math.min(current, maxStep));
   }, [maxStep]);
 
-  // Play loop — advance ~2 steps/sec, stop at the end.
+  // Play loop — base cadence ~2 steps/sec, scaled by the speed control.
   useEffect(() => {
     if (!playing) return undefined;
     if (maxStep === 0) {
@@ -74,9 +165,9 @@ export function CompareShell({ leftId, rightId }: CompareShellProps) {
         }
         return current + 1;
       });
-    }, 450);
+    }, 450 / speed);
     return () => window.clearInterval(id);
-  }, [playing, maxStep]);
+  }, [playing, maxStep, speed]);
 
   // Keyboard: space play/pause, arrows step (ignored while typing).
   useEffect(() => {
@@ -95,11 +186,20 @@ export function CompareShell({ leftId, rightId }: CompareShellProps) {
       } else if (event.key === 'ArrowRight') {
         event.preventDefault();
         setStep(Math.min(maxStep, step + 1));
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        setSpeed(clampSpeed(speed + 0.25));
+      } else if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        setSpeed(clampSpeed(speed - 0.25));
+      } else if (event.key === '0') {
+        event.preventDefault();
+        setSpeed(1);
       }
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [togglePlay, setStep, step, maxStep]);
+  }, [togglePlay, setStep, step, maxStep, setSpeed, speed]);
 
   const timeline = useMemo<CompareTimelineValue>(
     () => ({ step, playing, maxStep, setStep, togglePlay, registerTotal }),
@@ -121,8 +221,10 @@ export function CompareShell({ leftId, rightId }: CompareShellProps) {
           step={step}
           maxStep={maxStep}
           playing={playing}
+          speed={speed}
           onStep={setStep}
           onTogglePlay={togglePlay}
+          onSpeedChange={setSpeed}
         />
       </div>
     </CompareTimelineContext.Provider>
@@ -133,14 +235,18 @@ function SharedTimelineBar({
   step,
   maxStep,
   playing,
+  speed,
   onStep,
   onTogglePlay,
+  onSpeedChange,
 }: {
   step: number;
   maxStep: number;
   playing: boolean;
+  speed: CompareSpeed;
   onStep: (n: number) => void;
   onTogglePlay: () => void;
+  onSpeedChange: (next: CompareSpeed) => void;
 }) {
   return (
     <div
@@ -187,7 +293,10 @@ function SharedTimelineBar({
       <span style={{ color: 'var(--netlab-accent-cyan)', whiteSpace: 'nowrap' }}>
         step {step} / {maxStep}
       </span>
-      <span style={{ color: 'var(--netlab-text-muted)', whiteSpace: 'nowrap' }}>space · ← / →</span>
+      <CompareSpeedControl speed={speed} onChange={onSpeedChange} />
+      <span style={{ color: 'var(--netlab-text-muted)', whiteSpace: 'nowrap' }}>
+        space · ← / → · ↑ / ↓ speed
+      </span>
     </div>
   );
 }

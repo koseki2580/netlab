@@ -28,6 +28,11 @@ function q(testid: string): HTMLElement | null {
 
 beforeEach(() => {
   actEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+  try {
+    window.localStorage.clear();
+  } catch {
+    // ignore
+  }
 });
 
 afterEach(() => {
@@ -57,5 +62,26 @@ describe('CompareShell', () => {
     const play = q('compare-play') as HTMLButtonElement | null;
     expect(play?.disabled).toBe(true);
     expect(container?.textContent ?? '').toContain('step 0 / 0');
+  });
+
+  it('renders the speed control defaulting to 1× (P12)', () => {
+    render(<CompareShell leftId="left-unknown" rightId="right-unknown" />);
+    expect(q('compare-speed')).not.toBeNull();
+    const oneX = container?.querySelector('[aria-label="1× speed"]') as HTMLElement | null;
+    expect(oneX?.getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('changes and persists the speed when a segment is clicked (P12)', () => {
+    render(<CompareShell leftId="left-unknown" rightId="right-unknown" />);
+    const twoX = container?.querySelector('[aria-label="2× speed"]') as HTMLButtonElement | null;
+    act(() => {
+      twoX?.click();
+    });
+    expect(
+      (container?.querySelector('[aria-label="2× speed"]') as HTMLElement | null)?.getAttribute(
+        'aria-checked',
+      ),
+    ).toBe('true');
+    expect(window.localStorage.getItem('nl_compare_speed')).toBe('2');
   });
 });

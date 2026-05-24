@@ -150,4 +150,36 @@ describe('PreFlightBrief', () => {
     render(<PreFlightBrief scenarioId="does-not-exist" />);
     expect(container?.textContent ?? '').toBe('');
   });
+
+  it('reopens the brief from the strip when B is pressed (P11)', () => {
+    render(<PreFlightBrief scenarioId="ospf" brief={BRIEF} audience="pro" />);
+    expect(q('preflight-strip')).not.toBeNull();
+    expect(q('preflight-fullcard')).toBeNull();
+
+    pressKey('b');
+    expect(q('preflight-fullcard')).not.toBeNull();
+  });
+
+  it('does not reopen on B while a text field is focused (P11)', () => {
+    render(<PreFlightBrief scenarioId="ospf" brief={BRIEF} audience="pro" />);
+    const input = document.createElement('input');
+    document.body.appendChild(input);
+    input.focus();
+    act(() => {
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'b', bubbles: true }));
+    });
+    expect(q('preflight-fullcard')).toBeNull();
+    input.remove();
+  });
+
+  it('does not reopen on B while the command palette is open (P11)', () => {
+    const palette = document.createElement('div');
+    palette.setAttribute('data-netlab-command-palette', '');
+    document.body.appendChild(palette);
+    render(<PreFlightBrief scenarioId="ospf" brief={BRIEF} audience="pro" />);
+
+    pressKey('b');
+    expect(q('preflight-fullcard')).toBeNull();
+    palette.remove();
+  });
 });

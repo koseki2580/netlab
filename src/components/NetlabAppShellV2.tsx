@@ -10,7 +10,6 @@ export interface NetlabAppShellStatus {
 }
 
 export interface NetlabAppShellV2Props extends CommandBarProps {
-  hint?: React.ReactNode;
   statusLine?: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
@@ -19,9 +18,12 @@ export interface NetlabAppShellV2Props extends CommandBarProps {
 
 /**
  * Flow-v2 simulator shell: one-row command bar above a canvas-first frame.
+ *
+ * There is no ephemeral hint-pulse pill: the StatusLine is the durable
+ * ambient-status surface (N5). Transient messages route through it rather than
+ * a one-shot pulse that the learner has to catch.
  */
 export function NetlabAppShellV2({
-  hint,
   statusLine,
   className,
   style,
@@ -59,32 +61,7 @@ export function NetlabAppShellV2({
           background: 'var(--netlab-bg-primary)',
         }}
       >
-        <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
-          {children}
-          {hint && (
-            <div
-              className="netlab-hint-pulse"
-              data-netlab-shell-hint=""
-              style={{
-                position: 'absolute',
-                top: 12,
-                right: 12,
-                padding: '6px 10px',
-                borderRadius: 999,
-                background:
-                  'color-mix(in srgb, var(--netlab-accent-cyan) 14%, var(--netlab-bg-surface))',
-                border:
-                  '1px solid color-mix(in srgb, var(--netlab-accent-cyan) 30%, var(--netlab-border))',
-                color: 'var(--netlab-accent-cyan)',
-                fontFamily: 'ui-monospace, monospace',
-                fontSize: 10,
-                fontWeight: 700,
-              }}
-            >
-              {hint}
-            </div>
-          )}
-        </div>
+        <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>{children}</div>
         {statusLine && (
           <div data-netlab-shell-status-line="" style={{ flexShrink: 0 }}>
             {statusLine}

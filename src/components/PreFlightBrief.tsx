@@ -51,6 +51,40 @@ function writeSeen(storageKey: string): void {
   }
 }
 
+function isTypingTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  const tag = target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+  return target.isContentEditable;
+}
+
+/** The CommandPalette mounts `[data-netlab-command-palette]`; don't steal its keys. */
+function isCommandPaletteOpen(): boolean {
+  if (typeof document === 'undefined') return false;
+  return Boolean(document.querySelector('[data-netlab-command-palette]'));
+}
+
+/**
+ * P11 — reopen the brief with `B` when it is currently closed. `B` (not `?`,
+ * which the shell already binds to the help popover) avoids a double-fire.
+ * Suppressed while typing or while the command palette owns the keyboard.
+ */
+function useReopenShortcut(enabled: boolean, onReopen: () => void): void {
+  useEffect(() => {
+    if (!enabled) return undefined;
+    const handler = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() !== 'b') return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isTypingTarget(event.target)) return;
+      if (isCommandPaletteOpen()) return;
+      event.preventDefault();
+      onReopen();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [enabled, onReopen]);
+}
+
 /**
  * M1 — Pre-flight brief overlay.
  *
@@ -81,6 +115,8 @@ export function PreFlightBrief({
     onStart?.();
   }, [storageKey, onStart]);
 
+  const reopen = useCallback(() => setExpanded(true), []);
+
   // Which full card is on screen (if any) drives the keyboard handler.
   const fullCardMode: 'fresh' | 'expanded' | null =
     brief && !isLastStep
@@ -90,6 +126,9 @@ export function PreFlightBrief({
           ? 'fresh'
           : null
       : null;
+
+  // P11 — `B` reopens the brief only when no full card is already showing.
+  useReopenShortcut(Boolean(brief) && !isLastStep && !fullCardMode, reopen);
 
   useEffect(() => {
     if (!fullCardMode) return undefined;
@@ -136,8 +175,9 @@ const SCRIM_STYLE: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   padding: 16,
-  background: 'color-mix(in srgb, var(--netlab-bg-primary) 70%, transparent)',
-  backdropFilter: 'blur(2px)',
+  // P10: dim only — no backdrop blur. The learner is about to study the
+  // topology behind the card, so it must stay in focus, just de-emphasised.
+  background: 'color-mix(in srgb, var(--netlab-bg-primary) 55%, transparent)',
 };
 
 const CARD_STYLE: React.CSSProperties = {
@@ -333,7 +373,7 @@ function BriefStrip({ brief, onExpand }: { brief: ScenarioBrief; onExpand: () =>
       type="button"
       data-testid="preflight-strip"
       onClick={onExpand}
-      title="Show brief"
+      title="Show brief (press B)"
       style={{
         position: 'absolute',
         left: 12,
