@@ -2,6 +2,7 @@ import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import type { NetlabAppShellStatus } from './NetlabAppShellV2';
 import { STATUS_TONE_COLOR } from './shellStatusTones';
+import { useKbdMod } from '../utils/useKbdMod';
 
 export interface CommandBarProps {
   scenarioId: string;
@@ -44,6 +45,8 @@ function useObservedWidth() {
 function iconButtonStyle(disabled?: boolean): React.CSSProperties {
   return {
     all: 'unset',
+    // P5: anchor for the invisible ::before 44px hit-area expander (see shell-chrome.css).
+    position: 'relative',
     width: 28,
     height: 28,
     boxSizing: 'border-box',
@@ -105,6 +108,12 @@ export function CommandBar({
 }: CommandBarProps) {
   const { ref, width } = useObservedWidth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const mod = useKbdMod();
+  const paletteLabel = mod === '⌘' ? '⌘K' : 'Ctrl+K';
+  // P3: a menu with no actions is dead chrome — keep it closed when none are supplied.
+  useEffect(() => {
+    if (!overflowActions) setMenuOpen(false);
+  }, [overflowActions]);
   const hideSubline = width !== null && width < 1280;
   const hideTotal = width !== null && width < 1024;
   const collapseStatus = width !== null && width < 800;
@@ -263,19 +272,20 @@ export function CommandBar({
         <button
           type="button"
           aria-label="Open command palette"
-          title="Open command palette"
+          title={`Open command palette (${paletteLabel})`}
           onClick={onOpenPalette}
           style={iconButtonStyle(false)}
         >
-          ⌘K
+          {paletteLabel}
         </button>
         <button
           type="button"
           aria-label="More actions"
-          aria-expanded={menuOpen}
-          title="More actions"
-          onClick={() => setMenuOpen((value) => !value)}
-          style={iconButtonStyle(false)}
+          aria-expanded={overflowActions ? menuOpen : undefined}
+          title={overflowActions ? 'More actions' : 'No actions available'}
+          onClick={overflowActions ? () => setMenuOpen((value) => !value) : undefined}
+          disabled={!overflowActions}
+          style={iconButtonStyle(!overflowActions)}
         >
           ⋯
         </button>
@@ -291,7 +301,7 @@ export function CommandBar({
         </button>
       </div>
 
-      {menuOpen && (
+      {menuOpen && overflowActions && (
         <div
           data-netlab-command-bar-menu=""
           style={{
@@ -309,13 +319,7 @@ export function CommandBar({
             boxShadow: '0 16px 36px rgba(0, 0, 0, 0.3)',
           }}
         >
-          {overflowActions ?? (
-            <>
-              <Chip>Topology</Chip>
-              <Chip>Inspect</Chip>
-              <Chip>Sandbox</Chip>
-            </>
-          )}
+          {overflowActions}
         </div>
       )}
     </div>

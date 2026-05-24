@@ -165,19 +165,47 @@ describe('CommandBar', () => {
     expect(container?.querySelector('[data-netlab-command-bar-status-dot]')).not.toBeNull();
   });
 
-  it('reveals overflow actions from the More menu', () => {
+  it('disables the More button and opens no menu when no overflow actions are supplied', () => {
     act(() => {
       root?.render(<CommandBar scenarioId="ospf" isPlaying={false} step={0} />);
     });
 
+    const more = container?.querySelector(
+      '[aria-label="More actions"]',
+    ) as HTMLButtonElement | null;
+    expect(more?.disabled).toBe(true);
+    expect(more?.getAttribute('title')).toBe('No actions available');
+
     act(() => {
-      (
-        container?.querySelector('[aria-label="More actions"]') as HTMLButtonElement | null
-      )?.click();
+      more?.click();
     });
 
-    expect(container?.textContent).toContain('Topology');
-    expect(container?.textContent).toContain('Inspect');
-    expect(container?.textContent).toContain('Sandbox');
+    // No dead-control fallback chips, and the menu never opens.
+    expect(container?.querySelector('[data-netlab-command-bar-menu]')).toBeNull();
+    expect(container?.textContent).not.toContain('Topology');
+  });
+
+  it('reveals the supplied overflow actions from the More menu', () => {
+    act(() => {
+      root?.render(
+        <CommandBar
+          scenarioId="ospf"
+          isPlaying={false}
+          step={0}
+          overflowActions={<button type="button">Snapshot</button>}
+        />,
+      );
+    });
+
+    const more = container?.querySelector(
+      '[aria-label="More actions"]',
+    ) as HTMLButtonElement | null;
+    expect(more?.disabled).toBe(false);
+    act(() => {
+      more?.click();
+    });
+
+    expect(container?.querySelector('[data-netlab-command-bar-menu]')).not.toBeNull();
+    expect(container?.textContent).toContain('Snapshot');
   });
 });

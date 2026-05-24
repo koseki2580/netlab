@@ -1,0 +1,27 @@
+/**
+ * P5 — WCAG 2.5.5 (Target Size) hit-area expansion for shell chrome.
+ *
+ * The CommandBar (28px) and NavRail (32px) icon buttons stay visually small,
+ * but an invisible `::before` overlay grows the *interactive* area to ≥44×44.
+ * The visible chip size is unchanged. Pseudo-elements can't be set inline, so
+ * the rule lives here; the buttons set `position: relative` in their inline
+ * styles to anchor the overlay.
+ *
+ * Imported once from `demo/main.tsx` (these are demo-shell components).
+ */
+
+[data-netlab-command-bar] button::before {
+  content: '';
+  position: absolute;
+  inset: -8px; /* 28 + 8*2 = 44 */
+  border-radius: inherit;
+  pointer-events: auto;
+}
+
+[data-netlab-nav-rail] button::before {
+  content: '';
+  position: absolute;
+  inset: -6px; /* 32 + 6*2 = 44 */
+  border-radius: inherit;
+  pointer-events: auto;
+}

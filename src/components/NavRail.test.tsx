@@ -3,7 +3,7 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { NavRail } from './NavRail';
+import { NavRail, type NavRailItem } from './NavRail';
 
 const actEnvironment = globalThis as typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -33,22 +33,30 @@ afterEach(() => {
   actEnvironment.IS_REACT_ACT_ENVIRONMENT = false;
 });
 
+function items(overrides: Partial<NavRailItem> = {}): NavRailItem[] {
+  return [
+    { id: 'gallery', label: 'Browse', icon: '⊞', active: false, onClick: vi.fn() },
+    { id: 'simulator', label: 'Run', icon: '▶', active: true, onClick: vi.fn(), ...overrides },
+  ];
+}
+
 describe('NavRail', () => {
-  it('renders four primary items plus the bottom help item', () => {
+  it('renders exactly the caller-supplied items plus the bottom help item', () => {
     act(() => {
-      root?.render(<NavRail view="simulator" onSelectView={vi.fn()} />);
+      root?.render(<NavRail items={items()} onOpenHelp={vi.fn()} />);
     });
 
     const labels = Array.from(container?.querySelectorAll('[data-netlab-rail-item]') ?? []).map(
       (item) => item.getAttribute('aria-label'),
     );
 
-    expect(labels).toEqual(['Browse', 'Run', 'Sandbox', 'Settings', 'Help']);
+    // No "Sandbox" / "Settings" placeholders — the rail ships no disabled defaults (P4).
+    expect(labels).toEqual(['Browse', 'Run', 'Help']);
   });
 
   it('marks the active item with aria-current and a cyan rail accent', () => {
     act(() => {
-      root?.render(<NavRail view="simulator" onSelectView={vi.fn()} />);
+      root?.render(<NavRail items={items()} onOpenHelp={vi.fn()} />);
     });
 
     const active = container?.querySelector('[aria-current="page"]') as HTMLElement | null;
@@ -56,10 +64,11 @@ describe('NavRail', () => {
     expect(active?.style.borderLeftColor).toBe('var(--netlab-accent-cyan)');
   });
 
-  it('calls onSelectView when Browse is clicked', () => {
-    const onSelectView = vi.fn();
+  it('calls the item onClick when a nav item is clicked', () => {
+    const onClick = vi.fn();
+    const list: NavRailItem[] = [{ id: 'gallery', label: 'Browse', icon: '⊞', onClick }];
     act(() => {
-      root?.render(<NavRail view="simulator" onSelectView={onSelectView} />);
+      root?.render(<NavRail items={list} />);
     });
 
     const browse = container?.querySelector('[aria-label="Browse"]') as HTMLButtonElement | null;
@@ -67,13 +76,28 @@ describe('NavRail', () => {
       browse?.click();
     });
 
-    expect(onSelectView).toHaveBeenCalledWith('gallery');
+    expect(onClick).toHaveBeenCalledOnce();
+  });
+
+  it('calls onOpenBrand when the brand mark is clicked', () => {
+    const onOpenBrand = vi.fn();
+    act(() => {
+      root?.render(<NavRail items={items()} onOpenBrand={onOpenBrand} />);
+    });
+
+    act(() => {
+      (
+        container?.querySelector('[aria-label="Netlab gallery"]') as HTMLButtonElement | null
+      )?.click();
+    });
+
+    expect(onOpenBrand).toHaveBeenCalledOnce();
   });
 
   it('calls onOpenHelp when the bottom Help item is clicked', () => {
     const onOpenHelp = vi.fn();
     act(() => {
-      root?.render(<NavRail view="simulator" onSelectView={vi.fn()} onOpenHelp={onOpenHelp} />);
+      root?.render(<NavRail items={items()} onOpenHelp={onOpenHelp} />);
     });
 
     act(() => {
@@ -83,36 +107,23 @@ describe('NavRail', () => {
     expect(onOpenHelp).toHaveBeenCalledOnce();
   });
 
-  it('keeps disabled placeholder items unfocusable and inert', () => {
-    const onOpenSandbox = vi.fn();
-    const onOpenSettings = vi.fn();
+  it('keeps a runtime-disabled item unfocusable and inert', () => {
+    const onClick = vi.fn();
+    const list: NavRailItem[] = [
+      { id: 'compare', label: 'Compare', icon: '⇄', disabled: true, onClick },
+    ];
     act(() => {
-      root?.render(
-        <NavRail
-          view="simulator"
-          onSelectView={vi.fn()}
-          onOpenSandbox={onOpenSandbox}
-          onOpenSettings={onOpenSettings}
-        />,
-      );
+      root?.render(<NavRail items={list} />);
     });
 
-    const sandbox = container?.querySelector('[aria-label="Sandbox"]') as HTMLButtonElement | null;
-    const settings = container?.querySelector(
-      '[aria-label="Settings"]',
-    ) as HTMLButtonElement | null;
-
-    expect(sandbox?.disabled).toBe(true);
-    expect(sandbox?.tabIndex).toBe(-1);
-    expect(settings?.disabled).toBe(true);
-    expect(settings?.tabIndex).toBe(-1);
+    const compare = container?.querySelector('[aria-label="Compare"]') as HTMLButtonElement | null;
+    expect(compare?.disabled).toBe(true);
+    expect(compare?.tabIndex).toBe(-1);
 
     act(() => {
-      sandbox?.click();
-      settings?.click();
+      compare?.click();
     });
 
-    expect(onOpenSandbox).not.toHaveBeenCalled();
-    expect(onOpenSettings).not.toHaveBeenCalled();
+    expect(onClick).not.toHaveBeenCalled();
   });
 });

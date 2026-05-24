@@ -2,7 +2,7 @@
 
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { StatusLine } from './StatusLine';
 
 let root: Root | null = null;
@@ -80,5 +80,34 @@ describe('StatusLine', () => {
 
     render(<StatusLine />);
     expect(container?.textContent ?? '').toContain('— selected');
+  });
+
+  it('renders the palette/help affordances as inert muted text when no handlers are wired', () => {
+    render(<StatusLine />);
+    // No buttons advertised when there is nothing to do (P2).
+    expect(container?.querySelector('[aria-label="Open command palette"]')).toBeNull();
+    expect(container?.querySelector('[aria-label="Open help"]')).toBeNull();
+    expect(container?.textContent ?? '').toContain('? help');
+  });
+
+  it('makes ⌘K / ? help real buttons that fire their handlers when wired (P2)', () => {
+    const onOpenPalette = vi.fn();
+    const onOpenHelp = vi.fn();
+    render(<StatusLine onOpenPalette={onOpenPalette} onOpenHelp={onOpenHelp} />);
+
+    const palette = container?.querySelector(
+      '[aria-label="Open command palette"]',
+    ) as HTMLButtonElement | null;
+    const help = container?.querySelector('[aria-label="Open help"]') as HTMLButtonElement | null;
+    expect(palette).not.toBeNull();
+    expect(help).not.toBeNull();
+
+    act(() => {
+      palette?.click();
+      help?.click();
+    });
+
+    expect(onOpenPalette).toHaveBeenCalledOnce();
+    expect(onOpenHelp).toHaveBeenCalledOnce();
   });
 });

@@ -2,7 +2,7 @@ import type React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CommandPalette, type CommandPaletteItem } from '../src/components/CommandPalette';
-import { NavRail, type NavRailView } from '../src/components/NavRail';
+import { NavRail, type NavRailItem, type NavRailView } from '../src/components/NavRail';
 import { NetlabThemeScope } from '../src/components/NetlabThemeScope';
 import type { NetlabCbSafe, NetlabContrast } from '../src/theme';
 import { scenarioRegistry, scenariosInGroup } from '../src/scenarios';
@@ -94,6 +94,25 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
       navigate('/');
     }
   };
+
+  // P4 — caller-controlled nav items. Only views that are actually wired ship
+  // here; the rail no longer hardcodes disabled "not wired yet" placeholders.
+  const navItems: NavRailItem[] = [
+    {
+      id: 'gallery',
+      label: 'Browse',
+      icon: '⊞',
+      active: view === 'gallery',
+      onClick: () => selectView('gallery'),
+    },
+    {
+      id: 'simulator',
+      label: 'Run',
+      icon: '▶',
+      active: view === 'simulator',
+      onClick: () => selectView('simulator'),
+    },
+  ];
 
   const commandItems = useMemo<CommandPaletteItem[]>(() => {
     const scenarioItems = scenarioRegistry
@@ -201,7 +220,9 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
       className="netlab-sim-shell"
       style={{ display: 'flex', height: '100vh', background: '#0f172a' }}
     >
-      {!embedded && <NavRail view={view} onSelectView={selectView} onOpenHelp={openHelp} />}
+      {!embedded && (
+        <NavRail items={navItems} onOpenBrand={() => selectView('gallery')} onOpenHelp={openHelp} />
+      )}
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
         {!embedded && (
           <div

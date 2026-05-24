@@ -10,11 +10,14 @@ Simulator routes use a 48px left navigation rail when they are not embedded.
 The rail is global chrome, not scenario content.
 
 - Width is fixed at 48px.
+- The rail is item-driven: callers pass `items: NavRailItem[]`; the rail ships
+  no hardcoded items. Unimplemented destinations are simply omitted rather than
+  shown as disabled placeholders.
 - The top brand button and the `Browse` item navigate to the gallery route.
 - `Browse` is active on the gallery route. `Run` is active on simulator routes.
-- `Sandbox` and `Settings` are visible placeholders until those global surfaces
-  are wired. Disabled rail items must not be focusable and must not fire
-  handlers.
+- An item may set `disabled` to mark itself inert at runtime (e.g. an action
+  with no current target). Disabled rail items must not be focusable and must
+  not fire handlers. `disabled` is not a stand-in for "not built yet".
 - The bottom help button opens the global keyboard shortcut popover. It is
   part of shell chrome and must be omitted in embedded mode with the rest of
   the rail.
@@ -35,8 +38,11 @@ The command bar owns scenario-level controls:
 - run controls: play/pause, step, reset
 - step counter: current step plus optional total
 - status: labeled status pill, reduced to a dot at narrow widths
-- palette affordance: `⌘K` button wired to the global command palette
-- overflow affordance: secondary topology/inspect/sandbox controls
+- palette affordance: a `⌘K` (macOS) / `Ctrl+K` (elsewhere) button wired to the
+  global command palette
+- overflow affordance: opens a menu of caller-supplied `overflowActions`. When
+  no actions are supplied the `⋯` button is disabled (`title="No actions
+available"`) — it never opens an empty or placeholder menu.
 - export affordance: PCAP/download action when supplied
 
 The bar must stay one row (`flex-wrap: nowrap`). Width fallbacks are measured

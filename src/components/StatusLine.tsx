@@ -1,6 +1,9 @@
 import type React from 'react';
 import type { ShellStatusTone } from './NetlabAppShellV2';
 import { STATUS_TONE_COLOR, STATUS_TONE_LABEL } from './shellStatusTones';
+import { useKbdMod } from '../utils/useKbdMod';
+
+const MONO = 'ui-monospace, monospace';
 
 /**
  * `StatusLine` is the persistent, one-line status bar that sits between the
@@ -31,6 +34,14 @@ export interface StatusLineProps {
   arpCount?: number;
   /** Currently selected node id, or `null` when nothing is selected. */
   selectedId?: string | null;
+  /**
+   * P2: when wired, the `⌘K` segment becomes a real button that opens the
+   * command palette. When omitted it renders as muted, non-interactive text —
+   * the bar never advertises an action that does nothing.
+   */
+  onOpenPalette?: () => void;
+  /** P2: when wired, the `? help` segment becomes a real button. */
+  onOpenHelp?: () => void;
   /** Style override for the outer wrapper. */
   style?: React.CSSProperties;
   /** ClassName forwarded to the outer wrapper. */
@@ -45,6 +56,19 @@ function sep() {
   );
 }
 
+/** Ghost styling for the right-side StatusLine actions; cyan + pointer only when interactive. */
+function statusLineActionStyle(interactive: boolean): React.CSSProperties {
+  return {
+    all: 'unset',
+    cursor: interactive ? 'pointer' : 'default',
+    color: interactive ? 'var(--netlab-accent-cyan)' : 'var(--netlab-text-muted)',
+    fontFamily: MONO,
+    fontSize: 10,
+    padding: '0 2px',
+    borderRadius: 3,
+  };
+}
+
 export function StatusLine({
   scenarioId,
   step,
@@ -54,9 +78,13 @@ export function StatusLine({
   dropsCount = 0,
   arpCount = 0,
   selectedId,
+  onOpenPalette,
+  onOpenHelp,
   style,
   className,
 }: StatusLineProps) {
+  const mod = useKbdMod();
+  const paletteLabel = mod === '⌘' ? '⌘K' : 'Ctrl+K';
   const showStep = typeof step === 'number' && typeof totalSteps === 'number' && totalSteps > 0;
   const toneColor = STATUS_TONE_COLOR[status];
   const toneLabel = STATUS_TONE_LABEL[status];
@@ -134,9 +162,33 @@ export function StatusLine({
       <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center' }}>
         <span style={{ color: 'var(--netlab-text-muted)' }}>{selectedId ?? '—'} selected</span>
         {sep()}
-        <span style={{ color: 'var(--netlab-accent-cyan)' }}>⌘K</span>
+        {onOpenPalette ? (
+          <button
+            type="button"
+            aria-label="Open command palette"
+            title={`Open command palette (${paletteLabel})`}
+            onClick={onOpenPalette}
+            style={statusLineActionStyle(true)}
+          >
+            {paletteLabel}
+          </button>
+        ) : (
+          <span style={statusLineActionStyle(false)}>{paletteLabel}</span>
+        )}
         {sep()}
-        <span style={{ color: 'var(--netlab-accent-cyan)' }}>? help</span>
+        {onOpenHelp ? (
+          <button
+            type="button"
+            aria-label="Open help"
+            title="Open help"
+            onClick={onOpenHelp}
+            style={statusLineActionStyle(true)}
+          >
+            ? help
+          </button>
+        ) : (
+          <span style={statusLineActionStyle(false)}>? help</span>
+        )}
       </span>
     </div>
   );

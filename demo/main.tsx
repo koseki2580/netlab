@@ -7,6 +7,8 @@ import '../src/layers/l7-application/index';
 
 // Flow-v1 shared keyframes (page-fade-in / dp-slide-in / hint-pulse / orbit).
 import '../src/components/animations.css';
+// P5 — 44px hit-area expanders for CommandBar / NavRail icon buttons.
+import '../src/components/shell-chrome.css';
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';

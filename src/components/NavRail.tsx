@@ -2,21 +2,29 @@ import type React from 'react';
 
 export type NavRailView = 'gallery' | 'simulator';
 
-export interface NavRailProps {
-  view: NavRailView;
-  onSelectView: (view: NavRailView) => void;
-  onOpenSandbox?: () => void;
-  onOpenSettings?: () => void;
-  onOpenHelp?: () => void;
-}
-
-interface RailItem {
+export interface NavRailItem {
+  /** Stable identity used as the React key. */
+  id: string;
   label: string;
   icon: string;
   active?: boolean;
+  /**
+   * Disabled at runtime for an item that legitimately can't act yet (e.g.
+   * "Compare" with no sibling). NOT a placeholder for "not implemented" — those
+   * items must be omitted from the array entirely (P4).
+   */
   disabled?: boolean;
   title?: string;
   onClick?: (() => void) | undefined;
+}
+
+export interface NavRailProps {
+  /** Primary navigation items. Caller-controlled — the rail ships no defaults. */
+  items: NavRailItem[];
+  /** Brand mark click; returns to the gallery. Omit to render the brand as decoration. */
+  onOpenBrand?: () => void;
+  /** Bottom help button — opens the global keyboard shortcut popover. */
+  onOpenHelp?: () => void;
 }
 
 const RAIL_STYLE: React.CSSProperties = {
@@ -36,6 +44,8 @@ const RAIL_STYLE: React.CSSProperties = {
 
 const CELL_STYLE: React.CSSProperties = {
   all: 'unset',
+  // P5: anchor for the invisible ::before 44px hit-area expander (see shell-chrome.css).
+  position: 'relative',
   width: 32,
   height: 32,
   boxSizing: 'border-box',
@@ -68,7 +78,7 @@ function itemStyle(active?: boolean, disabled?: boolean): React.CSSProperties {
   };
 }
 
-function RailButton({ item }: { item: RailItem }) {
+function RailButton({ item }: { item: NavRailItem }) {
   return (
     <button
       type="button"
@@ -86,49 +96,14 @@ function RailButton({ item }: { item: RailItem }) {
   );
 }
 
-export function NavRail({
-  view,
-  onSelectView,
-  onOpenSandbox,
-  onOpenSettings,
-  onOpenHelp,
-}: NavRailProps) {
-  const items: RailItem[] = [
-    {
-      label: 'Browse',
-      icon: '⊞',
-      active: view === 'gallery',
-      onClick: () => onSelectView('gallery'),
-    },
-    {
-      label: 'Run',
-      icon: '▶',
-      active: view === 'simulator',
-      onClick: () => onSelectView('simulator'),
-    },
-    {
-      label: 'Sandbox',
-      icon: '✎',
-      disabled: true,
-      title: 'Sandbox global view is not wired yet',
-      onClick: onOpenSandbox,
-    },
-    {
-      label: 'Settings',
-      icon: '⚙',
-      disabled: true,
-      title: 'Settings global view is not wired yet',
-      onClick: onOpenSettings,
-    },
-  ];
-
+export function NavRail({ items, onOpenBrand, onOpenHelp }: NavRailProps) {
   return (
     <nav data-netlab-nav-rail="" aria-label="Global navigation" style={RAIL_STYLE}>
       <button
         type="button"
         aria-label="Netlab gallery"
         title="Netlab gallery"
-        onClick={() => onSelectView('gallery')}
+        onClick={onOpenBrand}
         style={{
           ...CELL_STYLE,
           borderLeftColor: 'transparent',
@@ -140,16 +115,10 @@ export function NavRail({
         📡
       </button>
       {items.map((item) => (
-        <RailButton key={item.label} item={item} />
+        <RailButton key={item.id} item={item} />
       ))}
       <div style={{ marginTop: 'auto' }}>
-        <RailButton
-          item={{
-            label: 'Help',
-            icon: '?',
-            onClick: onOpenHelp,
-          }}
-        />
+        <RailButton item={{ id: 'help', label: 'Help', icon: '?', onClick: onOpenHelp }} />
       </div>
     </nav>
   );

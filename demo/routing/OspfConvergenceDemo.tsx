@@ -286,6 +286,8 @@ function OspfConvergenceInner({
           packetsCount={packetsCount}
           dropsCount={dropsCount}
           arpCount={arpCount}
+          onOpenPalette={shellChrome.openPalette}
+          onOpenHelp={shellChrome.openHelp}
         />
       }
     >
