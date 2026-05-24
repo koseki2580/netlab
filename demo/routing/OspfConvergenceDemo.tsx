@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DemoShell from '../DemoShell';
 import type { CommandPaletteItem } from '../../src/components/CommandPalette';
@@ -87,10 +87,10 @@ function OspfConvergenceInner({
   const navigate = useNavigate();
   const audience = useMemo(() => readAudience(), []);
 
-  const sendProbe = async () => {
+  const sendProbe = useCallback(async () => {
     engine.clearTraces();
     await engine.ping('c1', '10.4.0.10');
-  };
+  }, [engine]);
 
   const status =
     state.status === 'running'
@@ -117,8 +117,10 @@ function OspfConvergenceInner({
 
   const handleFork = useCallback(() => {
     const created = forkScenario('ospf-convergence', stepIdx);
-    window.location.href = `?sandbox=1&fork=${created.id}#/routing/ospf-convergence`;
-  }, [stepIdx]);
+    // Round-trip the topology state (failed link) so the fork reopens as it was.
+    const linkParam = primaryLinkDown ? '&link=down' : '';
+    window.location.href = `?sandbox=1&fork=${created.id}${linkParam}#/routing/ospf-convergence`;
+  }, [stepIdx, primaryLinkDown]);
 
   const handleToggleLink = useCallback(() => {
     onTogglePrimaryLink();
@@ -159,6 +161,23 @@ function OspfConvergenceInner({
       engine.play();
     }
   }, [engine, state.status, totalHops]);
+
+  // M5 deep-seed — a forked session replays the probe and opens at the forked step,
+  // so the sandbox shows the simulation state as of the fork (topology restored above).
+  const forkProbeStartedRef = useRef(false);
+  const forkPositionedRef = useRef(false);
+  useEffect(() => {
+    if (forkId && !forkProbeStartedRef.current) {
+      forkProbeStartedRef.current = true;
+      void sendProbe();
+    }
+  }, [forkId, sendProbe]);
+  useEffect(() => {
+    if (forkId && sandbox && totalHops > 0 && !forkPositionedRef.current) {
+      forkPositionedRef.current = true;
+      jumpTo(sandbox.forkedAtStep);
+    }
+  }, [forkId, sandbox, totalHops, jumpTo]);
 
   useEffect(
     () =>
@@ -393,7 +412,10 @@ function commandActionStyle(accent: string): React.CSSProperties {
 }
 
 export default function OspfConvergenceDemo() {
-  const [primaryLinkDown, setPrimaryLinkDown] = useState(false);
+  // M5 — a forked session restores the topology state it was forked at (`?link=down`).
+  const [primaryLinkDown, setPrimaryLinkDown] = useState(
+    () => new URLSearchParams(window.location.search).get('link') === 'down',
+  );
   const topology = useMemo(() => buildOspfConvergenceTopology(primaryLinkDown), [primaryLinkDown]);
   const params = new URLSearchParams(window.location.search);
   const sandboxIntroId = params.get('intro') ?? null;
