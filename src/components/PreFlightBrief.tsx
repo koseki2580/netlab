@@ -17,6 +17,12 @@ export interface PreFlightBriefProps {
   onStart?: () => void;
   /** Called with a conclusion action id when an action button is clicked. */
   onAction?: (actionId: string) => void;
+  /**
+   * Extra content rendered inside the conclusion card, below the action row
+   * (Q8 — the next-scenario rail). The caller owns routing, so this stays a
+   * slot rather than the brief reaching into the scenario registry / router.
+   */
+  conclusionExtra?: React.ReactNode;
 }
 
 const SANS = 'system-ui, -apple-system, "Segoe UI", sans-serif';
@@ -102,6 +108,7 @@ export function PreFlightBrief({
   isLastStep = false,
   onStart,
   onAction,
+  conclusionExtra,
 }: PreFlightBriefProps) {
   const brief = briefProp ?? getScenarioBrief(scenarioId);
   const storageKey = `nl_brief_seen_${scenarioId}`;
@@ -147,7 +154,14 @@ export function PreFlightBrief({
   }, [fullCardMode, dismiss]);
 
   if (!brief) return null;
-  if (isLastStep) return <BriefConclusionCard conclusion={brief.conclusion} onAction={onAction} />;
+  if (isLastStep)
+    return (
+      <BriefConclusionCard
+        conclusion={brief.conclusion}
+        onAction={onAction}
+        extra={conclusionExtra}
+      />
+    );
 
   if (fullCardMode === 'fresh') {
     return <BriefFullCard brief={brief} onStart={dismiss} />;
@@ -428,9 +442,11 @@ function BriefStrip({ brief, onExpand }: { brief: ScenarioBrief; onExpand: () =>
 function BriefConclusionCard({
   conclusion,
   onAction,
+  extra,
 }: {
   conclusion: BriefConclusion;
   onAction?: ((actionId: string) => void) | undefined;
+  extra?: React.ReactNode;
 }) {
   return (
     <div
@@ -514,6 +530,7 @@ function BriefConclusionCard({
           );
         })}
       </div>
+      {extra}
     </div>
   );
 }

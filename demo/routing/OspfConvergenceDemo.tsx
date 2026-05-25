@@ -7,6 +7,9 @@ import { AudiencePill, useAudience } from '../../src/components/AudiencePill';
 import { NetlabAppShellV2 } from '../../src/components/NetlabAppShellV2';
 import { LineageBanner } from '../../src/components/LineageBanner';
 import { PreFlightBrief } from '../../src/components/PreFlightBrief';
+import { getRecommendedNext, NextScenarioRail } from '../../src/components/NextScenarioRail';
+import { scenarioRegistry } from '../../src/scenarios';
+import type { Scenario } from '../../src/scenarios/types';
 import {
   forkScenario,
   getSandbox,
@@ -88,6 +91,19 @@ function OspfConvergenceInner({
   // Reactive (Q7): the terminal-surface pill broadcasts netlab:audience, so the
   // PreFlightBrief full/strip mode switches live without a reload.
   const audience = useAudience();
+
+  // Q8 — recommend what to do next once the scenario finishes.
+  const nextScenarios = useMemo(() => {
+    const current = scenarioRegistry.get('ospf-convergence');
+    return current ? getRecommendedNext(current, scenarioRegistry.list(), 3) : [];
+  }, []);
+  const openScenario = useCallback(
+    (id: string) => {
+      const current = scenarioRegistry.get('ospf-convergence');
+      void navigate(resolveScenarioHref(id, current));
+    },
+    [navigate],
+  );
 
   const sendProbe = useCallback(async () => {
     engine.clearTraces();
@@ -347,6 +363,7 @@ function OspfConvergenceInner({
                   if (actionId === 'gallery') void navigate('/');
                   else if (actionId === 'fork') handleFork();
                 }}
+                conclusionExtra={<NextScenarioRail next={nextScenarios} onOpen={openScenario} />}
               />
             </div>
             <PacketScrubTimeline ownKeyboard={false} />
@@ -386,6 +403,34 @@ function OspfConvergenceInner({
       </div>
     </NetlabAppShellV2>
   );
+}
+
+/**
+ * scenarioId → demo route. There is no scenarioId→path registry (routes live
+ * in demo/main.tsx), so this small map mirrors the registered-scenario routes
+ * for the next-scenario rail (Q8). Keep in sync with demo/main.tsx.
+ */
+const SCENARIO_ROUTES: Record<string, string> = {
+  'basic-arp': '/networking/arp',
+  'fragmented-echo': '/networking/mtu-fragmentation',
+  'tcp-handshake': '/simulation/tcp-handshake',
+  'ospf-convergence': '/routing/ospf-convergence',
+  'stp-loop': '/networking/stp',
+  'nat-basics': '/simulation/nat',
+};
+
+/**
+ * Resolve where the rail should send the learner. Prefer a standalone demo
+ * route; for a same-topology-group sibling without one (e.g. rip-convergence),
+ * open the side-by-side compare view; otherwise fall back to the gallery.
+ */
+function resolveScenarioHref(id: string, current: Scenario | undefined): string {
+  if (SCENARIO_ROUTES[id]) return SCENARIO_ROUTES[id];
+  const sibling = scenarioRegistry.get(id);
+  if (current?.topologyGroup && sibling?.topologyGroup === current.topologyGroup) {
+    return `/compare/${current.metadata.id}/${id}`;
+  }
+  return '/';
 }
 
 function commandActionStyle(accent: string): React.CSSProperties {
