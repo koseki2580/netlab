@@ -14,6 +14,62 @@ Theming is implemented via **CSS custom properties (CSS variables)**:
 
 ---
 
+## Surfaces
+
+netlab ships **two distinct visual surfaces**. Each has its own token
+vocabulary, its own rules, and a fixed list of components that may use it.
+Mixing them is a design bug — review will reject it.
+
+### terminal-surface · the simulator
+
+The simulator is an **analytical workspace**. Information density wins; visual
+hierarchy comes from typography and color, never from depth or motion.
+
+| Rule            | Value                                |
+| --------------- | ------------------------------------ |
+| Background      | `--netlab-bg-primary`, flat          |
+| Radius          | 4–8 px (hardcoded — no radius scale) |
+| Shadow          | none                                 |
+| Backdrop filter | **forbidden**                        |
+| Type            | monospace primary                    |
+| Transition      | 120 ms · single axis                 |
+
+Components: `Simulator`, `NetlabCanvas`, `CommandBar`, `StatusLine`, `NavRail`,
+`NodeDetailPanel`, `Timeline`, `LegendPanel`, `LineageBanner`.
+
+### learning-surface · the onboarding layer
+
+The learning surface is **a teacher**. It introduces, summarizes, and points to
+the next thing. Hierarchy uses depth (one shadow, one glass) and larger radii so
+beginners can scan by silhouette.
+
+| Rule       | Value                                                                 |
+| ---------- | --------------------------------------------------------------------- |
+| Background | `--netlab-learning-surface-bg` (radial wash)                          |
+| Radius     | `--netlab-radius-sm/md/lg` (8 / 16 / 24 px) · `--netlab-radius-pill`  |
+| Shadow     | `--netlab-learning-shadow` · single value · **does not animate**      |
+| Glass      | `--netlab-learning-glass-bg` + `--netlab-learning-glass-blur` · strip |
+| Type       | sans-serif body · monospace for tags / metadata                       |
+| Transition | 180 ms · 2 axes (border-color + translateY)                           |
+
+Components: `Gallery` (all sections), `PreFlightBrief` (full card view),
+`BriefConclusionCard`, `NextScenarioRail`, future sandbox-intro views.
+
+### Why two surfaces?
+
+An earlier draft collapsed everything into terminal-surface. Beginners read the
+flat Gallery grid as "documentation" rather than a curated entry point. Adding
+learning-surface gave the entry layer the affordance it needed without
+compromising the analytical workspace. Going forward: **be conservative — if a
+component is unsure which surface to claim, default to terminal.** Do not add a
+third surface; propose extending one of the two instead.
+
+The learning-surface washes reference the active accent / background vars via
+`color-mix`, so they track the palette, contrast, and color-blind-safe axes
+automatically. The `academic` palette additionally desaturates the washes.
+
+---
+
 ## Theme Interface
 
 ```typescript
@@ -49,6 +105,14 @@ interface NetlabTheme {
   nodeSwitchBg: string; // Switch node container background
   nodeClientBg: string; // Client node container background
   nodeServerBg: string; // Server node container background
+
+  // Learning-surface (second tier — see "Surfaces" above)
+  learningSurfaceBg: string; // Page wash (radial gradient)
+  learningSurfaceBorder: string; // Card / frame border
+  learningSurfaceShadow: string; // The one resting shadow (never animates)
+  learningSurfaceHeroBg: string; // Hero card gradient
+  learningSurfaceGlassBg: string; // Glass strip background
+  learningSurfaceGlassBlur: string; // Glass strip blur amount
 }
 ```
 
@@ -81,6 +145,22 @@ Each `NetlabTheme` field maps to a CSS custom property scoped to the component c
 | `nodeSwitchBg`  | `--netlab-node-switch-bg` |
 | `nodeClientBg`  | `--netlab-node-client-bg` |
 | `nodeServerBg`  | `--netlab-node-server-bg` |
+
+Learning-surface tokens (second tier) and the shared radius scale are emitted
+alongside the above. The radius scale is fixed (not a `NetlabTheme` field):
+
+| Field                      | CSS Variable                       |
+| -------------------------- | ---------------------------------- |
+| `learningSurfaceBg`        | `--netlab-learning-surface-bg`     |
+| `learningSurfaceBorder`    | `--netlab-learning-surface-border` |
+| `learningSurfaceShadow`    | `--netlab-learning-shadow`         |
+| `learningSurfaceHeroBg`    | `--netlab-learning-hero-bg`        |
+| `learningSurfaceGlassBg`   | `--netlab-learning-glass-bg`       |
+| `learningSurfaceGlassBlur` | `--netlab-learning-glass-blur`     |
+| _(fixed)_                  | `--netlab-radius-sm` `8px`         |
+| _(fixed)_                  | `--netlab-radius-md` `16px`        |
+| _(fixed)_                  | `--netlab-radius-lg` `24px`        |
+| _(fixed)_                  | `--netlab-radius-pill` `999px`     |
 
 ---
 

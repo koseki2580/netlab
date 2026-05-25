@@ -224,6 +224,25 @@ import 'netlab/layers/l4-transport'; // TCP/UDP
 import 'netlab/layers/l7-application'; // Client / Server nodes
 ```
 
+## Design rules — two surfaces
+
+netlab has two visual surfaces. **Pick one per component.**
+
+|                   | terminal-surface                       | learning-surface                         |
+| ----------------- | -------------------------------------- | ---------------------------------------- |
+| Purpose           | analyse · observe · debug              | introduce · teach · summarize            |
+| Used by           | Simulator, NodeDetailPanel, StatusLine | Gallery, PreFlightBrief, conclusion card |
+| Background        | flat                                   | radial wash                              |
+| Radius            | 4–8 px                                 | 8 / 16 / 24 px scale                     |
+| Shadow            | **none**                               | one resting shadow                       |
+| Backdrop blur     | **forbidden**                          | one hero / search glass strip            |
+| Type              | mono primary                           | sans primary, mono for metadata          |
+| Transition budget | 120 ms · 1 axis                        | 180 ms · 2 axes                          |
+| Audience          | pro                                    | learner-first; pro opts out via the pill |
+
+See [`docs/ui/theming.md`](docs/ui/theming.md#surfaces) for the token list. PRs
+that mix surfaces will be rejected — the boundary is enforced in code review.
+
 ## Development
 
 ```bash

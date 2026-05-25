@@ -138,3 +138,19 @@ Disabled UI components (e.g., grayed-out buttons when no simulation is running) 
 | `AreaLegend`                 | `list` / `listitem` | color swatches `aria-hidden`  |
 | `PacketTimeline`             | `listbox`           | `aria-label`, `tabIndex={0}`  |
 | `SessionList`                | `listbox`           | `aria-label`, `tabIndex={0}`  |
+| `AudiencePill`               | `radiogroup`        | `aria-label`, `aria-checked`  |
+
+---
+
+## Audience axis · always visible
+
+The `audience` axis (`learner` | `pro`) is no longer Tweaks-only. It is surfaced
+as a **segmented pill** (`AudiencePill`, a `radiogroup`) in:
+
+- **Gallery** — top right, beside the theme / settings controls
+- **Simulator** — in the CommandBar action row
+
+Both pills reflect the same persistent state (`localStorage['netlab-audience']`
+plus the `?audience=` URL param) and broadcast a `netlab:audience` event. The M1
+`PreFlightBrief` full/strip mode, the Gallery guided-intro hero strip, and
+demo-card density all reflow when the pill changes — no page reload required.
