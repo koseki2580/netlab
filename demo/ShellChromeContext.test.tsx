@@ -65,7 +65,7 @@ describe('DemoShell command palette chrome', () => {
     expect(container?.querySelector('[data-netlab-command-palette]')).toBeNull();
   });
 
-  it('opens the shortcuts help popover from the rail help button', () => {
+  it('opens the keyboard help overlay from the rail help button', () => {
     act(() => {
       root?.render(
         <MemoryRouter initialEntries={['/routing/ospf-convergence']}>
@@ -80,10 +80,50 @@ describe('DemoShell command palette chrome', () => {
       (container?.querySelector('[aria-label="Help"]') as HTMLButtonElement | null)?.click();
     });
 
-    expect(container?.querySelector('[data-netlab-shortcuts-help]')?.textContent).toContain('⌘K');
-    expect(container?.querySelector('[data-netlab-shortcuts-help]')?.textContent).toContain(
-      'Command palette',
-    );
+    const overlay = container?.querySelector('[data-testid="keyboard-help-overlay"]');
+    expect(overlay).not.toBeNull();
+    expect(overlay?.textContent).toContain('⌘K');
+    expect(overlay?.textContent).toContain('Open command palette');
+  });
+
+  it('opens the keyboard help overlay with the global ? key and closes it with Escape', () => {
+    act(() => {
+      root?.render(
+        <MemoryRouter initialEntries={['/routing/ospf-convergence']}>
+          <DemoShell title="Example" desc="Shared shell">
+            <div>body</div>
+          </DemoShell>
+        </MemoryRouter>,
+      );
+    });
+
+    press('?');
+    expect(container?.querySelector('[data-testid="keyboard-help-overlay"]')).not.toBeNull();
+
+    press('Escape');
+    expect(container?.querySelector('[data-testid="keyboard-help-overlay"]')).toBeNull();
+  });
+
+  it('lets the brief full card preempt the global ? key', () => {
+    // Stand in for an open pre-flight brief: the guard keys off this testid.
+    const brief = document.createElement('div');
+    brief.setAttribute('data-testid', 'preflight-fullcard');
+    document.body.appendChild(brief);
+
+    act(() => {
+      root?.render(
+        <MemoryRouter initialEntries={['/routing/ospf-convergence']}>
+          <DemoShell title="Example" desc="Shared shell">
+            <div>body</div>
+          </DemoShell>
+        </MemoryRouter>,
+      );
+    });
+
+    press('?');
+    expect(container?.querySelector('[data-testid="keyboard-help-overlay"]')).toBeNull();
+
+    brief.remove();
   });
 
   it('includes palette items registered by the active simulator', () => {

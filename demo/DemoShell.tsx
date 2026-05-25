@@ -2,6 +2,7 @@ import type React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CommandPalette, type CommandPaletteItem } from '../src/components/CommandPalette';
+import { KeyboardHelpOverlay } from '../src/components/KeyboardHelpOverlay';
 import { NavRail, type NavRailItem, type NavRailView } from '../src/components/NavRail';
 import { NetlabThemeScope } from '../src/components/NetlabThemeScope';
 import type { NetlabCbSafe, NetlabContrast } from '../src/theme';
@@ -73,6 +74,20 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
     setPaletteOpen(false);
     setHelpOpen(true);
   }, []);
+
+  // R1 — the global `?` key is inert while the pre-flight brief full card owns
+  // the screen (it has its own affordances; `B` reopens it per 07 P11). The
+  // explicit entry points (StatusLine `? help`, rail Help, palette command)
+  // still open the cheat sheet unconditionally.
+  const openHelpFromKey = useCallback(() => {
+    if (
+      typeof document !== 'undefined' &&
+      document.querySelector('[data-testid="preflight-fullcard"]')
+    ) {
+      return;
+    }
+    openHelp();
+  }, [openHelp]);
 
   const closeShellOverlays = useCallback(() => {
     setPaletteOpen(false);
@@ -188,11 +203,11 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
     if (embedded) return undefined;
     return installKeymap({
       togglePalette,
-      openHelp,
+      openHelp: openHelpFromKey,
       closeOverlays: closeShellOverlays,
       ...registeredActions,
     });
-  }, [closeShellOverlays, embedded, openHelp, registeredActions, togglePalette]);
+  }, [closeShellOverlays, embedded, openHelpFromKey, registeredActions, togglePalette]);
 
   const shellChrome = useMemo(
     () => ({
@@ -292,60 +307,10 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
                 items={commandItems}
                 onClose={() => setPaletteOpen(false)}
               />
-              {helpOpen && <ShortcutsHelp onClose={() => setHelpOpen(false)} />}
+              <KeyboardHelpOverlay open={helpOpen} onClose={() => setHelpOpen(false)} />
             </>
           )}
         </NetlabThemeScope>
-      </div>
-    </div>
-  );
-}
-
-function ShortcutsHelp({ onClose }: { onClose: () => void }) {
-  return (
-    <div
-      data-netlab-shortcuts-help=""
-      role="dialog"
-      aria-modal="true"
-      aria-label="Keyboard shortcuts"
-      style={{
-        position: 'fixed',
-        right: 14,
-        bottom: 14,
-        zIndex: 110,
-        width: 300,
-        padding: 12,
-        borderRadius: 8,
-        border: '1px solid var(--netlab-border)',
-        background: 'var(--netlab-bg-panel, var(--netlab-bg-surface))',
-        color: 'var(--netlab-text-primary)',
-        fontFamily: 'ui-monospace, monospace',
-        fontSize: 11,
-        boxShadow: '0 18px 48px rgba(0, 0, 0, 0.35)',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-        <strong style={{ flex: 1 }}>Keyboard shortcuts</strong>
-        <button type="button" aria-label="Close keyboard shortcuts" onClick={onClose}>
-          Close
-        </button>
-      </div>
-      <div style={{ display: 'grid', gap: 6, color: 'var(--netlab-text-secondary)' }}>
-        <span>
-          <kbd>⌘K</kbd> / <kbd>Ctrl+K</kbd> Command palette
-        </span>
-        <span>
-          <kbd>?</kbd> Show this help
-        </span>
-        <span>
-          <kbd>Space</kbd> Play or pause trace
-        </span>
-        <span>
-          <kbd>←</kbd> / <kbd>→</kbd> Step trace
-        </span>
-        <span>
-          <kbd>Home</kbd> / <kbd>End</kbd> Jump trace
-        </span>
       </div>
     </div>
   );
