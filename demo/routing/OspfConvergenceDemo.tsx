@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DemoShell from '../DemoShell';
 import type { CommandPaletteItem } from '../../src/components/CommandPalette';
+import { AudiencePill, useAudience } from '../../src/components/AudiencePill';
 import { NetlabAppShellV2 } from '../../src/components/NetlabAppShellV2';
 import { LineageBanner } from '../../src/components/LineageBanner';
 import { PreFlightBrief } from '../../src/components/PreFlightBrief';
@@ -13,7 +14,6 @@ import {
   resetSandbox,
   type Sandbox,
 } from '../../src/sandbox/fork';
-import type { NetlabAudience } from '../../src/theme';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
@@ -85,7 +85,9 @@ function OspfConvergenceInner({
   const { engine, state, exportPcap } = useSimulation();
   const shellChrome = useShellChrome();
   const navigate = useNavigate();
-  const audience = useMemo(() => readAudience(), []);
+  // Reactive (Q7): the terminal-surface pill broadcasts netlab:audience, so the
+  // PreFlightBrief full/strip mode switches live without a reload.
+  const audience = useAudience();
 
   const sendProbe = useCallback(async () => {
     engine.clearTraces();
@@ -275,6 +277,8 @@ function OspfConvergenceInner({
           >
             {primaryLinkDown ? 'Restore link' : 'Fail link'}
           </button>
+          {/* Q7 — persistent audience pill; uncontrolled, self-syncs via localStorage + event. */}
+          <AudiencePill variant="terminal" />
         </>
       }
       status={status}
@@ -382,19 +386,6 @@ function OspfConvergenceInner({
       </div>
     </NetlabAppShellV2>
   );
-}
-
-/** Resolve the active audience from the URL or the persisted gallery setting. */
-function readAudience(): NetlabAudience {
-  const fromUrl = new URLSearchParams(window.location.search).get('audience');
-  if (fromUrl === 'learner' || fromUrl === 'pro') return fromUrl;
-  try {
-    const stored = window.localStorage.getItem('netlab-audience');
-    if (stored === 'learner' || stored === 'pro') return stored;
-  } catch {
-    /* localStorage unavailable — fall through to default */
-  }
-  return 'pro';
 }
 
 function commandActionStyle(accent: string): React.CSSProperties {

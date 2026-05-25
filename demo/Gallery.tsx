@@ -1,6 +1,7 @@
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { AudiencePill } from '../src/components/AudiencePill';
 import { ProgressPanel } from '../src/components/progress/ProgressPanel';
 import { readUrlParam, useUrlParamSync } from '../src/hooks/useUrlParamSync';
 import { scenarioRegistry, scenariosInGroup } from '../src/scenarios';
@@ -1272,6 +1273,20 @@ export default function Gallery({
               justifyContent: 'flex-end',
             }}
           >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: 0.8,
+                  color: 'var(--netlab-text-muted)',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Audience
+              </span>
+              <AudiencePill variant="learning" value={audience} onChange={setAudience} />
+            </div>
             <ThemeModeToggle themeMode={themeMode} onChange={setThemeMode} />
             <SettingsPopover settings={settings} onChange={handleSettingsChange} />
             <LocaleToggle locale={locale} label={copy.localeLabel} onChange={setLocale} />
