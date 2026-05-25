@@ -13,6 +13,19 @@ function renderGallery(props?: ComponentProps<typeof Gallery>) {
   );
 }
 
+/**
+ * Extract the full `style="..."` attribute of the gallery root element (the
+ * one carrying `data-netlab-palette`). The themeToVars spread makes the style
+ * string long, so layout props like `min-height` / `background` sit at the end
+ * — a fixed-width slice would miss them.
+ */
+function rootStyle(html: string): string {
+  const at = html.indexOf('data-netlab-palette');
+  const start = html.indexOf('style="', at) + 'style="'.length;
+  const end = html.indexOf('"', start);
+  return html.slice(start, end);
+}
+
 describe('demo chrome', () => {
   function renderDemoShell(path = '/routing/ospf-convergence', embedded = false) {
     return renderToStaticMarkup(
@@ -78,7 +91,8 @@ describe('demo chrome', () => {
   });
 
   it('Gallery highlights sandbox-ready demos in the featured strip', () => {
-    const html = renderGallery();
+    // The guided-intro strip is learner-only (08 · Q9).
+    const html = renderGallery({ initialAudience: 'learner' });
 
     // FeaturedStrip renders all sandbox intro hrefs
     expect(html).toContain(
@@ -98,7 +112,8 @@ describe('demo chrome', () => {
   });
 
   it('Gallery exposes sandbox intros before non-intro sandbox demos', () => {
-    const html = renderGallery();
+    // The guided-intro strip is learner-only (08 · Q9).
+    const html = renderGallery({ initialAudience: 'learner' });
 
     expect(html).toContain('Start here: Sandbox intro');
     expect(html).toContain(
@@ -242,8 +257,9 @@ describe('Gallery — canvas-first layout (P3)', () => {
     expect(slice).toContain('position:sticky');
     expect(slice).toContain('top:0');
     // Translucent backdrop so canvas content peeks through while the bar
-    // remains pinned to the top of the main column.
-    expect(slice).toContain('backdrop-filter:blur');
+    // remains pinned to the top of the main column. The blur is now the shared
+    // learning-surface glass token (08 · Q4) rather than an inline blur(8px).
+    expect(slice).toContain('backdrop-filter:var(--netlab-learning-glass-blur)');
   });
 
   it('does not put overflow:auto on the main column (so document scrolls naturally)', () => {
@@ -259,12 +275,52 @@ describe('Gallery — canvas-first layout (P3)', () => {
   });
 
   it('keeps the gallery root at min-height 100vh with no overflow trap', () => {
-    const html = renderGallery();
+    const style = rootStyle(renderGallery());
+    expect(style).toContain('min-height:100vh');
+    expect(style).not.toMatch(/overflow:\s*hidden/);
+  });
 
-    // Root opens with a known data attribute already (palette) — anchor on it.
-    const open = html.indexOf('data-netlab-palette');
-    const slice = html.slice(open, open + 1200);
-    expect(slice).toContain('min-height:100vh');
-    expect(slice).not.toMatch(/overflow:\s*hidden/);
+  it('paints the page wrapper from the learning-surface bg token (08 · Q2)', () => {
+    const style = rootStyle(renderGallery());
+    expect(style).toContain('background:var(--netlab-learning-surface-bg)');
+  });
+});
+
+describe('learning-surface adaptive Gallery (08)', () => {
+  it('renders the guided-intro hero strip only for learners (Q9)', () => {
+    const learner = renderGallery({ initialAudience: 'learner' });
+    const pro = renderGallery({ initialAudience: 'pro' });
+
+    expect(learner).toContain('data-gallery-section="featured"');
+    expect(learner).toContain('Start here: Sandbox intro');
+
+    // Pro reaches the tracks directly — no hero strip, no "Start here" rail item.
+    expect(pro).not.toContain('data-gallery-section="featured"');
+    expect(pro).not.toContain('Start here: Sandbox intro');
+  });
+
+  it('keeps the metric ribbon visible regardless of audience (Q9)', () => {
+    // The hero card stat chips summarize the catalog and stay for pro too.
+    const pro = renderGallery({ initialAudience: 'pro' });
+    expect(pro).toContain('data-testid="gallery-heading"');
+    expect(pro).toMatch(/demos/);
+  });
+
+  it('reflows demo-card density with the audience axis (Q10)', () => {
+    const learner = renderGallery({ initialAudience: 'learner' });
+    const pro = renderGallery({ initialAudience: 'pro' });
+
+    // Learner = looser (18px title), pro = denser (14px title).
+    expect(learner).toContain('--demo-card-title:18px');
+    expect(learner).toContain('--demo-card-meta-dir:column');
+    expect(pro).toContain('--demo-card-title:14px');
+    expect(pro).toContain('--demo-card-meta-dir:row');
+  });
+
+  it('uses the constant learning-surface shadow on demo cards, never a hover lift (Q6)', () => {
+    const html = renderGallery({ initialAudience: 'pro' });
+    // The card class drives a fixed shadow; the markup must not inline a
+    // second (hover) box-shadow value on the card root.
+    expect(html).toContain('nl-demo-card');
   });
 });

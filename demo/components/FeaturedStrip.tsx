@@ -20,11 +20,12 @@ export function FeaturedStrip({ intros }: FeaturedStripProps) {
       style={{
         marginBottom: 0,
         padding: '24px',
-        borderRadius: 28,
-        border: '1px solid color-mix(in srgb, var(--netlab-accent-cyan) 20%, var(--netlab-border))',
+        borderRadius: 'var(--netlab-radius-lg)',
+        border:
+          '1px solid color-mix(in srgb, var(--netlab-accent-cyan) 20%, var(--netlab-learning-surface-border))',
         background:
           'linear-gradient(180deg, color-mix(in srgb, var(--netlab-accent-cyan) 12%, var(--netlab-bg-surface)) 0%, color-mix(in srgb, var(--netlab-accent-cyan) 5%, var(--netlab-bg-primary)) 100%)',
-        boxShadow: '0 20px 44px rgba(15, 23, 42, 0.07)',
+        boxShadow: 'var(--netlab-learning-shadow)',
       }}
     >
       <div

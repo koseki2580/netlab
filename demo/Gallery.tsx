@@ -15,6 +15,7 @@ import {
   type NetlabPalette,
 } from '../src/theme';
 import { tutorialRegistry } from '../src/tutorials';
+import { scrollToSection } from './hooks/scrollToSection';
 import { CategoryLanding, type CategoryLandingDemo } from './components/CategoryLanding';
 import { DemoCard } from './components/DemoCard';
 import { FeaturedStrip } from './components/FeaturedStrip';
@@ -417,6 +418,8 @@ interface GalleryProps {
   initialThemeMode?: GalleryThemeMode;
   initialActiveSectionId?: string;
   initialLocale?: GalleryLocale;
+  /** Audience fallback when neither URL `?audience=` nor localStorage is set. */
+  initialAudience?: NetlabAudience;
 }
 
 const GALLERY_LOCALE_KEY = 'netlab-locale';
@@ -679,10 +682,10 @@ function demoToLandingDemo(demo: DemoCard): CategoryLandingDemo {
 function getSectionSurfaceStyle(accent: string): React.CSSProperties {
   return {
     padding: '24px',
-    borderRadius: 28,
-    border: `1px solid color-mix(in srgb, ${accent} 18%, var(--netlab-border))`,
-    background: `linear-gradient(180deg, color-mix(in srgb, ${accent} 8%, var(--netlab-bg-surface)) 0%, color-mix(in srgb, ${accent} 4%, var(--netlab-bg-primary)) 100%)`,
-    boxShadow: '0 20px 44px rgba(15, 23, 42, 0.07)',
+    borderRadius: 'var(--netlab-radius-lg)',
+    border: `1px solid color-mix(in srgb, ${accent} 18%, var(--netlab-learning-surface-border))`,
+    background: `linear-gradient(180deg, color-mix(in srgb, ${accent} 6%, var(--netlab-bg-surface)) 0%, var(--netlab-bg-surface) 100%)`,
+    boxShadow: 'var(--netlab-learning-shadow)',
   };
 }
 
@@ -692,7 +695,7 @@ function getStatChipStyle(accent: string): React.CSSProperties {
     alignItems: 'center',
     gap: 6,
     padding: '6px 10px',
-    borderRadius: 999,
+    borderRadius: 'var(--netlab-radius-pill)',
     background: `color-mix(in srgb, ${accent} 10%, var(--netlab-bg-surface))`,
     border: `1px solid color-mix(in srgb, ${accent} 16%, var(--netlab-border))`,
     color: 'var(--netlab-text-primary)',
@@ -727,7 +730,7 @@ function ThemeModeToggle({
           alignItems: 'center',
           gap: 6,
           padding: 4,
-          borderRadius: 999,
+          borderRadius: 'var(--netlab-radius-pill)',
           background: 'color-mix(in srgb, var(--netlab-bg-surface) 72%, var(--netlab-bg-primary))',
           border: '1px solid var(--netlab-border)',
         }}
@@ -742,7 +745,7 @@ function ThemeModeToggle({
               onClick={() => onChange(mode)}
               style={{
                 border: 'none',
-                borderRadius: 999,
+                borderRadius: 'var(--netlab-radius-pill)',
                 padding: '7px 12px',
                 background: isActive
                   ? 'color-mix(in srgb, var(--netlab-accent-blue) 14%, var(--netlab-bg-surface))'
@@ -791,7 +794,7 @@ function LocaleToggle({
           alignItems: 'center',
           gap: 6,
           padding: 4,
-          borderRadius: 999,
+          borderRadius: 'var(--netlab-radius-pill)',
           background: 'color-mix(in srgb, var(--netlab-bg-surface) 72%, var(--netlab-bg-primary))',
           border: '1px solid var(--netlab-border)',
         }}
@@ -807,7 +810,7 @@ function LocaleToggle({
               onClick={() => onChange(option)}
               style={{
                 border: 'none',
-                borderRadius: 999,
+                borderRadius: 'var(--netlab-radius-pill)',
                 padding: '7px 12px',
                 background: isActive
                   ? 'color-mix(in srgb, var(--netlab-accent-green) 14%, var(--netlab-bg-surface))'
@@ -876,7 +879,7 @@ function SectionHeader({
           color: 'var(--netlab-text-secondary)',
           background: 'rgba(255, 255, 255, 0.72)',
           border: '1px solid var(--netlab-border)',
-          borderRadius: 999,
+          borderRadius: 'var(--netlab-radius-pill)',
           padding: '6px 10px',
           fontWeight: 700,
           whiteSpace: 'nowrap',
@@ -893,6 +896,7 @@ export default function Gallery({
   initialThemeMode = 'light',
   initialActiveSectionId = 'featured',
   initialLocale,
+  initialAudience = 'pro',
 }: GalleryProps) {
   const [query, setQuery] = useState(initialQuery);
   const [themeMode, setThemeMode] = useState<GalleryThemeMode>(() => {
@@ -917,7 +921,7 @@ export default function Gallery({
   const [audience, setAudience] = useState<NetlabAudience>(() => {
     const fromUrl = readUrlParam('audience');
     if (isAudience(fromUrl)) return fromUrl;
-    return readStoredAxis(GALLERY_AUDIENCE_KEY, isAudience, 'pro');
+    return readStoredAxis(GALLERY_AUDIENCE_KEY, isAudience, initialAudience);
   });
   const [colorBlindSafe, setColorBlindSafe] = useState<NetlabCbSafe>(() =>
     readStoredAxis(GALLERY_CBSAFE_KEY, isCbsafe, 'off'),
@@ -1001,9 +1005,11 @@ export default function Gallery({
     return SANDBOX_INTROS.filter((intro) => getIntroSearchText(intro).includes(normalizedQuery));
   }, [normalizedQuery]);
 
+  // Q9 — the guided-intro hero strip is learner-only; pro reaches tracks directly.
+  const showHeroStrip = audience === 'learner' && filteredIntros.length > 0;
   const browseItems = useMemo(() => {
     const items: { id: string; label: string; color: string; count: number }[] = [];
-    if (filteredIntros.length > 0) {
+    if (showHeroStrip) {
       items.push({
         id: 'featured',
         label: 'Start here',
@@ -1028,7 +1034,7 @@ export default function Gallery({
       });
     });
     return items;
-  }, [assessmentDemos.length, filteredCategories, filteredIntros.length]);
+  }, [assessmentDemos.length, filteredCategories, filteredIntros.length, showHeroStrip]);
 
   const visibleSectionIds = browseItems.map((item) => item.id);
 
@@ -1112,11 +1118,8 @@ export default function Gallery({
     const section = mainRef.current?.querySelector<HTMLElement>(
       `[data-gallery-section="${sectionId}"]`,
     );
-    if (!section) {
-      return;
-    }
-
-    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Container-bound scroll (Q5): never bubbles to a host page / iframe.
+    scrollToSection(mainRef.current, section ?? null);
   };
 
   const totalDemoCount = CATEGORIES.reduce((count, category) => count + category.demos.length, 0);
@@ -1132,8 +1135,7 @@ export default function Gallery({
       style={{
         ...themeToVars(activeTheme, { palette, density, colorBlindSafe, contrast }),
         minHeight: '100vh',
-        background:
-          'radial-gradient(circle at top left, color-mix(in srgb, var(--netlab-accent-cyan) 10%, var(--netlab-bg-surface)), transparent 26%), radial-gradient(circle at top right, color-mix(in srgb, var(--netlab-accent-yellow) 10%, var(--netlab-bg-surface)), transparent 24%), linear-gradient(180deg, color-mix(in srgb, var(--netlab-bg-surface) 28%, var(--netlab-bg-primary)) 0%, var(--netlab-bg-primary) 100%)',
+        background: 'var(--netlab-learning-surface-bg)',
         fontFamily: 'monospace',
         color: 'var(--netlab-text-primary)',
         display: 'grid',
@@ -1150,6 +1152,8 @@ export default function Gallery({
         ref={mainRef}
         data-netlab-gallery-main
         style={{
+          // position: relative anchors section offsetTop for container scroll (Q5).
+          position: 'relative',
           padding: '24px',
           background:
             'linear-gradient(180deg, color-mix(in srgb, var(--netlab-bg-surface) 18%, var(--netlab-bg-primary)) 0%, color-mix(in srgb, var(--netlab-bg-primary) 92%, transparent) 100%)',
@@ -1168,12 +1172,12 @@ export default function Gallery({
             justifyContent: 'flex-end',
             gap: 12,
             flexWrap: 'wrap',
-            borderRadius: 18,
-            border: '1px solid var(--netlab-border)',
-            background: 'color-mix(in srgb, var(--netlab-bg-primary) 86%, transparent)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06)',
+            borderRadius: 'var(--netlab-radius-md)',
+            border: '1px solid var(--netlab-learning-surface-border)',
+            background: 'var(--netlab-learning-glass-bg)',
+            backdropFilter: 'var(--netlab-learning-glass-blur)',
+            WebkitBackdropFilter: 'var(--netlab-learning-glass-blur)',
+            boxShadow: 'var(--netlab-learning-shadow)',
           }}
         >
           <SearchBox
@@ -1191,12 +1195,10 @@ export default function Gallery({
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: 24,
-            borderRadius: 30,
-            border:
-              '1px solid color-mix(in srgb, var(--netlab-accent-blue) 16%, var(--netlab-border))',
-            background:
-              'linear-gradient(135deg, color-mix(in srgb, var(--netlab-accent-blue) 10%, var(--netlab-bg-surface)) 0%, color-mix(in srgb, var(--netlab-bg-surface) 86%, var(--netlab-bg-primary)) 55%, color-mix(in srgb, var(--netlab-accent-yellow) 10%, var(--netlab-bg-primary)) 100%)',
-            boxShadow: '0 24px 50px rgba(15, 23, 42, 0.08)',
+            borderRadius: 'var(--netlab-radius-lg)',
+            border: '1px solid var(--netlab-learning-surface-border)',
+            background: 'var(--netlab-learning-hero-bg)',
+            boxShadow: 'var(--netlab-learning-shadow)',
           }}
         >
           <div style={{ minWidth: 0 }}>
@@ -1205,7 +1207,7 @@ export default function Gallery({
                 display: 'inline-flex',
                 alignItems: 'center',
                 padding: '4px 10px',
-                borderRadius: 999,
+                borderRadius: 'var(--netlab-radius-pill)',
                 background:
                   'color-mix(in srgb, var(--netlab-bg-surface) 80%, var(--netlab-bg-primary))',
                 border: '1px solid var(--netlab-border)',
@@ -1279,7 +1281,7 @@ export default function Gallery({
         <div style={{ padding: '28px 0 0', display: 'flex', flexDirection: 'column', gap: 24 }}>
           <ProgressPanel />
 
-          {filteredIntros.length > 0 && (
+          {showHeroStrip && (
             <div data-gallery-section="featured">
               <FeaturedStrip intros={filteredIntros} />
             </div>
@@ -1308,6 +1310,7 @@ export default function Gallery({
                       key={demo.path}
                       demo={demo}
                       category={cat}
+                      audience={audience}
                       progressTargetId={demo.scenarioId ?? demo.path}
                       tutorialHref={
                         tutorial
@@ -1360,6 +1363,7 @@ export default function Gallery({
                         key={demo.path}
                         demo={demo}
                         category={cat}
+                        audience={audience}
                         progressTargetId={demo.scenarioId ?? demo.path}
                         tutorialHref={
                           tutorial

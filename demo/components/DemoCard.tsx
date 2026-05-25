@@ -1,6 +1,9 @@
+import type React from 'react';
 import { Link } from 'react-router-dom';
 import { ProgressBadge } from '../../src/components/progress/ProgressBadge';
+import type { NetlabAudience } from '../../src/theme';
 import { getDemoIcon } from './demoIcons';
+import './DemoCard.css';
 
 interface DemoCardData {
   path: string;
@@ -50,8 +53,8 @@ function getCardBackground(color: string) {
   return `linear-gradient(180deg, color-mix(in srgb, ${color} 11%, var(--netlab-bg-surface)) 0%, color-mix(in srgb, var(--netlab-bg-surface) 82%, var(--netlab-bg-primary)) 34%, color-mix(in srgb, ${color} 4%, var(--netlab-bg-primary)) 100%)`;
 }
 
-function getCardBorder(color: string) {
-  return `1px solid color-mix(in srgb, ${color} 24%, var(--netlab-border))`;
+function getCardBorderColor(color: string) {
+  return `color-mix(in srgb, ${color} 24%, var(--netlab-learning-surface-border))`;
 }
 
 function getActionLinkStyle(color: string) {
@@ -67,6 +70,29 @@ function getActionLinkStyle(color: string) {
     textDecoration: 'none',
     fontWeight: 700,
   } as const;
+}
+
+/**
+ * Q10 — audience-aware density. Learner cards are looser with a larger title
+ * and tags stacked below; pro cards are denser with the tags beside the title.
+ * Returned as CSS vars the `.nl-demo-card` class and inline sizes consume.
+ */
+function cardDensityVars(audience: NetlabAudience): React.CSSProperties {
+  return audience === 'learner'
+    ? ({
+        '--demo-card-title': '18px',
+        '--demo-card-desc': '13px',
+        '--demo-card-pad': '20px',
+        '--demo-card-meta-dir': 'column',
+        '--demo-card-meta-align': 'flex-start',
+      } as React.CSSProperties)
+    : ({
+        '--demo-card-title': '14px',
+        '--demo-card-desc': '12px',
+        '--demo-card-pad': '14px',
+        '--demo-card-meta-dir': 'row',
+        '--demo-card-meta-align': 'center',
+      } as React.CSSProperties);
 }
 
 function Tag({ label, bg, fg }: { label: string; bg: string; fg: string }) {
@@ -97,6 +123,8 @@ interface DemoCardProps {
   /** `/compare/...` route when this scenario has a topology-group sibling (M4). */
   compareHref?: string | null;
   progressTargetId?: string;
+  /** Audience axis (Q10) — drives card density. Defaults to `pro`. */
+  audience?: NetlabAudience;
 }
 
 export function DemoCard({
@@ -107,36 +135,25 @@ export function DemoCard({
   assessmentHref,
   compareHref,
   progressTargetId,
+  audience = 'pro',
 }: DemoCardProps) {
   const difficulty = demo.meta?.difficulty;
   const tags = demo.meta?.tags ?? [];
   const [layerTag, ...protoTags] = tags;
-  const defaultShadow = '0 18px 36px rgba(15, 23, 42, 0.07)';
-  const hoverShadow = '0 24px 44px rgba(15, 23, 42, 0.12)';
 
   return (
     <div
+      className="nl-demo-card"
       style={{
-        background: getCardBackground(category.color),
-        border: getCardBorder(category.color),
-        borderRadius: 18,
-        padding: '16px 16px 18px',
+        ...cardDensityVars(audience),
+        // Learning-surface card: bg/border/hover-border feed the CSS class so
+        // the resting shadow is constant and only border-color + translateY
+        // animate (Q6). The per-category accent rides in via these vars.
+        ['--demo-card-bg' as string]: getCardBackground(category.color),
+        ['--demo-card-border' as string]: getCardBorderColor(category.color),
+        ['--demo-card-border-hover' as string]: category.color,
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: defaultShadow,
-        transition: 'border-color 0.18s, transform 0.18s, box-shadow 0.18s',
-      }}
-      onMouseEnter={(e) => {
-        const el = e.currentTarget as HTMLDivElement;
-        el.style.borderColor = category.color;
-        el.style.transform = 'translateY(-3px)';
-        el.style.boxShadow = hoverShadow;
-      }}
-      onMouseLeave={(e) => {
-        const el = e.currentTarget as HTMLDivElement;
-        el.style.borderColor = `color-mix(in srgb, ${category.color} 24%, var(--netlab-border))`;
-        el.style.transform = '';
-        el.style.boxShadow = defaultShadow;
       }}
     >
       {/* Icon tile */}
@@ -158,41 +175,51 @@ export function DemoCard({
         {getDemoIcon(demo.path)}
       </div>
 
-      {/* Title */}
+      {/* Title + tags — stacked (learner) or inline (pro) via --demo-card-meta-dir */}
       <div
         style={{
-          fontSize: 14,
-          fontWeight: 700,
-          color: 'var(--netlab-text-primary)',
-          marginBottom: 6,
+          display: 'flex',
+          flexDirection:
+            'var(--demo-card-meta-dir, column)' as React.CSSProperties['flexDirection'],
+          alignItems: 'var(--demo-card-meta-align, flex-start)',
+          flexWrap: 'wrap',
+          gap: '6px 10px',
+          marginBottom: 8,
         }}
       >
-        {demo.title}
-      </div>
-
-      {/* Tags row */}
-      {(difficulty || layerTag || protoTags.length > 0) && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
-          {difficulty && (
-            <Tag
-              label={difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
-              bg={DIFFICULTY_STYLES[difficulty].bg}
-              fg={DIFFICULTY_STYLES[difficulty].fg}
-            />
-          )}
-          {layerTag && <Tag label={layerTag} bg={LAYER_TAG_STYLE.bg} fg={LAYER_TAG_STYLE.fg} />}
-          {protoTags.map((tag) => (
-            <Tag key={tag} label={tag} bg={PROTO_TAG_STYLE.bg} fg={PROTO_TAG_STYLE.fg} />
-          ))}
-          {progressTargetId && <ProgressBadge targetId={progressTargetId} />}
+        <div
+          style={{
+            fontSize: 'var(--demo-card-title, 14px)',
+            fontWeight: 700,
+            color: 'var(--netlab-text-primary)',
+          }}
+        >
+          {demo.title}
         </div>
-      )}
+
+        {(difficulty || layerTag || protoTags.length > 0) && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            {difficulty && (
+              <Tag
+                label={difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+                bg={DIFFICULTY_STYLES[difficulty].bg}
+                fg={DIFFICULTY_STYLES[difficulty].fg}
+              />
+            )}
+            {layerTag && <Tag label={layerTag} bg={LAYER_TAG_STYLE.bg} fg={LAYER_TAG_STYLE.fg} />}
+            {protoTags.map((tag) => (
+              <Tag key={tag} label={tag} bg={PROTO_TAG_STYLE.bg} fg={PROTO_TAG_STYLE.fg} />
+            ))}
+            {progressTargetId && <ProgressBadge targetId={progressTargetId} />}
+          </div>
+        )}
+      </div>
 
       {/* Description */}
       <div
         style={{
           color: 'var(--netlab-text-secondary)',
-          fontSize: 12,
+          fontSize: 'var(--demo-card-desc, 12px)',
           lineHeight: 1.6,
           flex: 1,
           marginBottom: 12,
