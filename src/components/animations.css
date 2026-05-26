@@ -18,6 +18,25 @@
   }
 }
 
+/* R09 R5 — toast slide+fade entrance (bottom-right viewport). */
+@keyframes nl-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-testid='toast-viewport'] [role='status'],
+  [data-testid='toast-viewport'] [role='alert'] {
+    animation: none !important;
+  }
+}
+
 @keyframes netlab-dp-slide-in {
   from {
     opacity: 0;

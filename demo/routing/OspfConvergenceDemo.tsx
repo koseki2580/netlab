@@ -6,6 +6,7 @@ import type { CommandPaletteItem } from '../../src/components/CommandPalette';
 import { AudiencePill, useAudience } from '../../src/components/AudiencePill';
 import { NetlabAppShellV2 } from '../../src/components/NetlabAppShellV2';
 import { LineageBanner } from '../../src/components/LineageBanner';
+import { toast } from '../../src/components/ToastBus';
 import { PreFlightBrief } from '../../src/components/PreFlightBrief';
 import { getRecommendedNext, NextScenarioRail } from '../../src/components/NextScenarioRail';
 import { scenarioRegistry } from '../../src/scenarios';
@@ -92,6 +93,21 @@ function OspfConvergenceInner({
   // PreFlightBrief full/strip mode switches live without a reload.
   const audience = useAudience();
 
+  // R5 — acknowledge the mode switch with a toast (skip the initial mount so a
+  // page load is silent).
+  const audienceMounted = useRef(false);
+  useEffect(() => {
+    if (!audienceMounted.current) {
+      audienceMounted.current = true;
+      return;
+    }
+    toast.info(
+      audience === 'learner'
+        ? 'Audience: learner — briefs will show in full'
+        : 'Audience: pro — briefs collapse to a strip',
+    );
+  }, [audience]);
+
   // Q8 — recommend what to do next once the scenario finishes.
   const nextScenarios = useMemo(() => {
     const current = scenarioRegistry.get('ospf-convergence');
@@ -146,7 +162,10 @@ function OspfConvergenceInner({
   }, [onTogglePrimaryLink, forkId]);
 
   const handleResetFork = useCallback(() => {
-    if (forkId) setSandbox(resetSandbox(forkId) ?? null);
+    if (forkId) {
+      setSandbox(resetSandbox(forkId) ?? null);
+      toast.success('Sandbox reset to origin');
+    }
   }, [forkId]);
 
   const handleCompareFork = useCallback(() => {
@@ -243,16 +262,24 @@ function OspfConvergenceInner({
 
   const downloadPcap = () => {
     const traceId = state.currentTraceId ?? undefined;
-    const bytes = exportPcap(traceId);
-    const blob = new Blob([Uint8Array.from(bytes)], { type: 'application/vnd.tcpdump.pcap' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `netlab-trace-${traceId ?? 'export'}.pcap`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    toast.info('Exporting PCAP…');
+    try {
+      const bytes = exportPcap(traceId);
+      const blob = new Blob([Uint8Array.from(bytes)], { type: 'application/vnd.tcpdump.pcap' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `netlab-trace-${traceId ?? 'export'}.pcap`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      const packetCount =
+        state.traces.find((t) => t.packetId === traceId)?.hops.length ?? state.traces.length;
+      toast.success(`PCAP saved · ${packetCount} packets`);
+    } catch {
+      toast.error('PCAP export failed', { sticky: true });
+    }
   };
 
   return (

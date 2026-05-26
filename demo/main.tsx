@@ -14,6 +14,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { ProgressProvider } from '../src/progress';
+import { ToastViewport } from '../src/components/ToastViewport';
 import Gallery from './Gallery';
 import DmzDemo from './areas/DmzDemo';
 import MinimalDemo from './basic/MinimalDemo';
@@ -123,6 +124,7 @@ function DemoRoutes() {
         <Route path="/comprehensive/all-in-one" element={<AllInOneDemo />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <ToastViewport />
     </ProgressProvider>
   );
 }

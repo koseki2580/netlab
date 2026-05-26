@@ -1,9 +1,12 @@
 import type React from 'react';
+import { useEffect, useState } from 'react';
 import type { ShellStatusTone } from './NetlabAppShellV2';
 import { STATUS_TONE_COLOR, STATUS_TONE_LABEL } from './shellStatusTones';
+import { TOAST_EMIT_EVENT, type ToastEmitDetail } from './ToastBus';
 import { useKbdMod } from '../utils/useKbdMod';
 
 const MONO = 'ui-monospace, monospace';
+const TOAST_MIRROR_MS = 5000;
 
 /**
  * `StatusLine` is the persistent, one-line status bar that sits between the
@@ -85,6 +88,26 @@ export function StatusLine({
 }: StatusLineProps) {
   const mod = useKbdMod();
   const paletteLabel = mod === '⌘' ? '⌘K' : 'Ctrl+K';
+
+  // R5 — briefly mirror the latest toast message into the selection slot so the
+  // bar acknowledges the action even after the toast itself auto-dismisses.
+  const [toastMirror, setToastMirror] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    let timer: number | null = null;
+    function onEmit(event: Event) {
+      const detail = (event as CustomEvent<ToastEmitDetail>).detail;
+      if (!detail) return;
+      setToastMirror(detail.message);
+      if (timer !== null) window.clearTimeout(timer);
+      timer = window.setTimeout(() => setToastMirror(null), TOAST_MIRROR_MS);
+    }
+    window.addEventListener(TOAST_EMIT_EVENT, onEmit);
+    return () => {
+      window.removeEventListener(TOAST_EMIT_EVENT, onEmit);
+      if (timer !== null) window.clearTimeout(timer);
+    };
+  }, []);
   const showStep = typeof step === 'number' && typeof totalSteps === 'number' && totalSteps > 0;
   const toneColor = STATUS_TONE_COLOR[status];
   const toneLabel = STATUS_TONE_LABEL[status];
@@ -160,7 +183,13 @@ export function StatusLine({
 
       {/* Right segment (pushed right) */}
       <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center' }}>
-        <span style={{ color: 'var(--netlab-text-muted)' }}>{selectedId ?? '—'} selected</span>
+        {toastMirror ? (
+          <span data-netlab-status-toast="" style={{ color: 'var(--netlab-accent-cyan)' }}>
+            {toastMirror}
+          </span>
+        ) : (
+          <span style={{ color: 'var(--netlab-text-muted)' }}>{selectedId ?? '—'} selected</span>
+        )}
         {sep()}
         {onOpenPalette ? (
           <button
