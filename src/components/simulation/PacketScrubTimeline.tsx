@@ -3,6 +3,7 @@ import { useSimulation } from '../../simulation/SimulationContext';
 import type { PacketHop } from '../../types/simulation';
 import { Marker } from './Marker';
 import { hopEventMarker } from './hopMarkers';
+import { StepHoverCard, resolveStepPreview, useStepHover } from './StepHoverCard';
 
 /**
  * Horizontal scrub track for the active packet trace. The playbook (v5, N3)
@@ -34,8 +35,10 @@ export function PacketScrubTimeline({
   ownKeyboard = true,
 }: PacketScrubTimelineProps = {}) {
   const { engine, state } = useSimulation();
+  const rootRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<{ step: number; x: number } | null>(null);
+  const stepHover = useStepHover();
 
   const trace = useMemo(
     () => state.traces.find((t) => t.packetId === state.currentTraceId) ?? null,
@@ -173,6 +176,7 @@ export function PacketScrubTimeline({
 
   return (
     <div
+      ref={rootRef}
       data-netlab-scrub-timeline=""
       style={{
         background: 'var(--netlab-bg-surface)',
@@ -272,6 +276,10 @@ export function PacketScrubTimeline({
                 jumpTo(hop.step);
                 engine.pause();
               }}
+              onMouseEnter={(e) => stepHover.onEnter(i, e.currentTarget)}
+              onMouseLeave={stepHover.onLeave}
+              onFocus={(e) => stepHover.onFocus(i, e.currentTarget)}
+              onBlur={stepHover.onBlur}
               style={{
                 position: 'absolute',
                 top: '50%',
@@ -319,7 +327,7 @@ export function PacketScrubTimeline({
             pointerEvents: 'none',
           }}
         />
-        {hover && hoveredHop && (
+        {hover && hoveredHop && !stepHover.hovered && (
           <div
             data-netlab-scrub-tooltip=""
             role="tooltip"
@@ -344,6 +352,13 @@ export function PacketScrubTimeline({
           </div>
         )}
       </div>
+      {stepHover.hovered && trace?.hops[stepHover.hovered.index] && (
+        <StepHoverCard
+          step={resolveStepPreview(trace.hops[stepHover.hovered.index]!)}
+          anchorRect={stepHover.hovered.rect}
+          container={rootRef.current}
+        />
+      )}
       {!hideKeyboardHint && (
         <div
           style={{
