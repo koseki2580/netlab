@@ -17,6 +17,15 @@ import {
 } from '../src/theme';
 import { tutorialRegistry } from '../src/tutorials';
 import { scrollToSection } from './hooks/scrollToSection';
+import {
+  ActiveFilters,
+  aggregateTags,
+  GalleryEmptyState,
+  GalleryFilterControls,
+  matchesFilters,
+  useGalleryFilters,
+  type DemoLike,
+} from './galleryFilters';
 import { CategoryLanding, type CategoryLandingDemo } from './components/CategoryLanding';
 import { DemoCard } from './components/DemoCard';
 import { FeaturedStrip } from './components/FeaturedStrip';
@@ -899,7 +908,17 @@ export default function Gallery({
   initialLocale,
   initialAudience = 'pro',
 }: GalleryProps) {
-  const [query, setQuery] = useState(initialQuery);
+  const {
+    filters,
+    debouncedQ,
+    setQuery,
+    toggleDifficulty,
+    toggleTag,
+    setSandboxOnly,
+    clearAll,
+    isEmpty: filtersEmpty,
+  } = useGalleryFilters(initialQuery);
+  const query = filters.q;
   const [themeMode, setThemeMode] = useState<GalleryThemeMode>(() => {
     const fromUrl = readUrlParam('theme');
     if (fromUrl === 'dark' || fromUrl === 'light') return fromUrl;
@@ -935,7 +954,7 @@ export default function Gallery({
     () => initialLocale ?? readStoredGalleryLocale(),
   );
   const mainRef = useRef<HTMLElement | null>(null);
-  const normalizedQuery = query.trim().toLowerCase();
+  const normalizedQuery = debouncedQ.trim().toLowerCase();
   const activeTheme = themeMode === 'dark' ? NETLAB_DARK_THEME : NETLAB_LIGHT_THEME;
   const copy = GALLERY_COPY[locale];
 
@@ -983,17 +1002,28 @@ export default function Gallery({
   };
 
   const filteredCategories = useMemo(() => {
-    if (!normalizedQuery) {
+    if (filtersEmpty) {
       return CATEGORIES;
     }
 
     return CATEGORIES.map((category) => ({
       ...category,
       demos: category.demos.filter((demo) =>
-        getDemoSearchText(category, demo).includes(normalizedQuery),
+        matchesFilters(
+          { ...demo, searchText: getDemoSearchText(category, demo) } as DemoLike,
+          filters,
+          debouncedQ,
+        ),
       ),
     })).filter((category) => category.demos.length > 0);
-  }, [normalizedQuery]);
+  }, [filtersEmpty, filters, debouncedQ]);
+
+  // Tag chips are aggregated over the full catalog so they stay stable
+  // regardless of the currently applied filters.
+  const allTags = useMemo(
+    () => aggregateTags(CATEGORIES.flatMap((category) => category.demos as DemoLike[])),
+    [],
+  );
 
   const allDemos = filteredCategories.flatMap((cat) => cat.demos);
   const assessmentDemos = allDemos.filter((demo) => getAssessmentHref(demo) !== null);
@@ -1124,7 +1154,7 @@ export default function Gallery({
   };
 
   const totalDemoCount = CATEGORIES.reduce((count, category) => count + category.demos.length, 0);
-  const noMatches = normalizedQuery.length > 0 && browseItems.length === 0;
+  const noMatches = !filtersEmpty && allDemos.length === 0;
 
   return (
     <div
@@ -1257,7 +1287,7 @@ export default function Gallery({
               <span style={getStatChipStyle('var(--netlab-accent-cyan)')}>
                 {sandboxDemos} {copy.sandboxReady}
               </span>
-              {normalizedQuery && (
+              {!filtersEmpty && (
                 <span style={getStatChipStyle('var(--netlab-accent-orange)')}>
                   {copy.filteredFrom} {totalDemoCount}
                 </span>
@@ -1291,6 +1321,28 @@ export default function Gallery({
             <SettingsPopover settings={settings} onChange={handleSettingsChange} />
             <LocaleToggle locale={locale} label={copy.localeLabel} onChange={setLocale} />
           </div>
+        </div>
+
+        <div
+          data-netlab-gallery-filters
+          style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}
+        >
+          <GalleryFilterControls
+            filters={filters}
+            tags={allTags}
+            onToggleDifficulty={toggleDifficulty}
+            onToggleTag={toggleTag}
+            onSetSandboxOnly={setSandboxOnly}
+          />
+          {!filtersEmpty && (
+            <ActiveFilters
+              filters={filters}
+              onToggleDifficulty={toggleDifficulty}
+              onToggleTag={toggleTag}
+              onSetSandboxOnly={setSandboxOnly}
+              onClearAll={clearAll}
+            />
+          )}
         </div>
 
         <div style={{ padding: '28px 0 0', display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -1395,16 +1447,7 @@ export default function Gallery({
             );
           })}
 
-          {noMatches && (
-            <section style={getSectionSurfaceStyle('var(--netlab-accent-orange)')}>
-              <SectionHeader
-                dot="var(--netlab-accent-orange)"
-                title="No matches"
-                blurb={`No demos matched “${query}”. Try a protocol name, category, or layer tag.`}
-                count={0}
-              />
-            </section>
-          )}
+          {noMatches && <GalleryEmptyState onClear={clearAll} />}
         </div>
       </main>
     </div>
