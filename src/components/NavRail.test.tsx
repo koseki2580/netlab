@@ -107,6 +107,31 @@ describe('NavRail', () => {
     expect(onOpenHelp).toHaveBeenCalledOnce();
   });
 
+  it('defaults to the rail variant', () => {
+    act(() => {
+      root?.render(<NavRail items={items()} onOpenHelp={vi.fn()} />);
+    });
+
+    const nav = container?.querySelector('[data-netlab-nav-rail]') as HTMLElement | null;
+    expect(nav?.getAttribute('data-variant')).toBe('rail');
+    expect(nav?.style.flexDirection).toBe('column');
+  });
+
+  it('lays out horizontally in the bottom variant with the same items', () => {
+    act(() => {
+      root?.render(<NavRail items={items()} onOpenHelp={vi.fn()} variant="bottom" />);
+    });
+
+    const nav = container?.querySelector('[data-netlab-nav-rail]') as HTMLElement | null;
+    expect(nav?.getAttribute('data-variant')).toBe('bottom');
+    expect(nav?.style.flexDirection).toBe('row');
+
+    const labels = Array.from(container?.querySelectorAll('[data-netlab-rail-item]') ?? []).map(
+      (item) => item.getAttribute('aria-label'),
+    );
+    expect(labels).toEqual(['Browse', 'Run', 'Help']);
+  });
+
   it('keeps a runtime-disabled item unfocusable and inert', () => {
     const onClick = vi.fn();
     const list: NavRailItem[] = [

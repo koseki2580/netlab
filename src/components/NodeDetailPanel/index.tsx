@@ -4,6 +4,7 @@ import type { TopologySnapshot } from '../../types/topology';
 import { useNetlabContext } from '../NetlabContext';
 import { NetlabThemeScopeContext } from '../NetlabThemeScope';
 import { useNetlabUI } from '../NetlabUIContext';
+import { useViewport } from '../../utils/useViewport';
 import {
   getDefaultTab,
   getPanelStyle,
@@ -36,6 +37,7 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
   const simCtx = useContext(SimulationContext);
   const themeScope = useContext(NetlabThemeScopeContext);
   const dock = useNodeDetailDock();
+  const { isNarrow } = useViewport();
   const activeSelectionId = selectedEdgeId ?? selectedNodeId;
   const canEdit = editable && onTopologyChange !== undefined;
 
@@ -78,77 +80,92 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
   const orientation = getTabOrientation(dock.width);
 
   return (
-    <div
-      role="dialog"
-      aria-modal="false"
-      aria-label={panelTarget.ariaLabel}
-      tabIndex={0}
-      className="netlab-dp-slide-in"
-      data-netlab-dp
-      data-dp-mode={dock.mode}
-      data-dp-width={dock.width}
-      style={getPanelStyle(dock.mode, dock.width)}
-    >
-      <ResizeHandle currentWidth={dock.width} onResize={dock.setWidth} />
-
-      <PanelHeader
-        targetKind={panelTarget.target.kind}
-        title={panelTarget.title}
-        headerEyebrow={panelTarget.headerEyebrow}
-        mode={dock.mode}
-        onToggleMode={() => dock.setMode(dock.mode === 'overlay' ? 'pinned' : 'overlay')}
-        onClose={closePanel}
-      />
-
-      {learnerCopy && (
-        <LearnerExplainerCallout learnerKind={learnerKind} learnerCopy={learnerCopy} />
-      )}
-
-      <div
-        style={{
-          flex: 1,
-          minHeight: 0,
-          display: 'flex',
-          flexDirection: orientation === 'column' ? 'row' : 'column',
-        }}
-      >
-        <TabNav
-          tabs={visibleTabs}
-          activeTab={activeTab}
-          orientation={orientation}
-          onSelect={dock.setTab}
-        />
+    <>
+      {isNarrow && (
         <div
-          data-netlab-dp-content
+          data-netlab-dp-backdrop
+          aria-hidden="true"
+          onClick={closePanel}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 30,
+            background: 'color-mix(in srgb, var(--netlab-bg-primary) 55%, transparent)',
+          }}
+        />
+      )}
+      <div
+        role="dialog"
+        aria-modal="false"
+        aria-label={panelTarget.ariaLabel}
+        tabIndex={0}
+        className="netlab-dp-slide-in"
+        data-netlab-dp
+        data-dp-mode={isNarrow ? 'drawer' : dock.mode}
+        data-dp-width={dock.width}
+        style={getPanelStyle(dock.mode, dock.width, isNarrow)}
+      >
+        <ResizeHandle currentWidth={dock.width} onResize={dock.setWidth} />
+
+        <PanelHeader
+          targetKind={panelTarget.target.kind}
+          title={panelTarget.title}
+          headerEyebrow={panelTarget.headerEyebrow}
+          mode={dock.mode}
+          onToggleMode={() => dock.setMode(dock.mode === 'overlay' ? 'pinned' : 'overlay')}
+          onClose={closePanel}
+        />
+
+        {learnerCopy && (
+          <LearnerExplainerCallout learnerKind={learnerKind} learnerCopy={learnerCopy} />
+        )}
+
+        <div
           style={{
             flex: 1,
-            minWidth: 0,
             minHeight: 0,
-            overflow: 'auto',
-            padding: '10px 14px',
+            display: 'flex',
+            flexDirection: orientation === 'column' ? 'row' : 'column',
           }}
         >
-          {panelTarget.edge ? (
-            <EdgeTab
-              edge={panelTarget.edge}
-              topology={topology}
-              onTopologyChange={onTopologyChange}
-              updateSnapshot={updateSnapshot}
-            />
-          ) : panelTarget.node && selectedNodeId ? (
-            <NodeTabs
-              activeTab={activeTab}
-              node={panelTarget.node}
-              nodeId={selectedNodeId}
-              canEdit={canEdit}
-              topology={topology}
-              updateSnapshot={updateSnapshot}
-              simCtx={simCtx}
-            />
-          ) : null}
+          <TabNav
+            tabs={visibleTabs}
+            activeTab={activeTab}
+            orientation={orientation}
+            onSelect={dock.setTab}
+          />
+          <div
+            data-netlab-dp-content
+            style={{
+              flex: 1,
+              minWidth: 0,
+              minHeight: 0,
+              overflow: 'auto',
+              padding: '10px 14px',
+            }}
+          >
+            {panelTarget.edge ? (
+              <EdgeTab
+                edge={panelTarget.edge}
+                topology={topology}
+                onTopologyChange={onTopologyChange}
+                updateSnapshot={updateSnapshot}
+              />
+            ) : panelTarget.node && selectedNodeId ? (
+              <NodeTabs
+                activeTab={activeTab}
+                node={panelTarget.node}
+                nodeId={selectedNodeId}
+                canEdit={canEdit}
+                topology={topology}
+                updateSnapshot={updateSnapshot}
+                simCtx={simCtx}
+              />
+            ) : null}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 });
 

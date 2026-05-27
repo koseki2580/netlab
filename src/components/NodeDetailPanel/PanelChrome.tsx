@@ -47,7 +47,30 @@ export function getTabOrientation(width: number): 'row' | 'column' {
   return width < DP_NARROW_BREAKPOINT ? 'row' : 'column';
 }
 
-export function getPanelStyle(mode: DpMode, width: number): React.CSSProperties {
+export function getPanelStyle(mode: DpMode, width: number, isNarrow = false): React.CSSProperties {
+  // S1: on narrow viewports the panel is always a right-edge drawer, ignoring
+  // the persisted dock mode — a pinned full-width panel makes no sense on a
+  // phone. The drawer overlays the canvas and is dismissed via its backdrop.
+  if (isNarrow) {
+    return {
+      width: 'min(420px, 100%)',
+      height: '100%',
+      background: 'var(--netlab-bg-panel)',
+      color: 'var(--netlab-text-primary)',
+      fontFamily: 'monospace',
+      fontSize: 11,
+      display: 'flex',
+      flexDirection: 'column',
+      borderLeft: '1px solid var(--netlab-border-subtle)',
+      pointerEvents: 'all',
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 31,
+      boxShadow: '-16px 0 40px rgba(0, 0, 0, 0.35)',
+    };
+  }
   const isOverlay = mode === 'overlay';
   return {
     width: `${width}px`,

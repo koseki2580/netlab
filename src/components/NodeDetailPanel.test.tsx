@@ -1486,4 +1486,57 @@ describe('NodeDetailPanel — canvas-first dock (P2)', () => {
       expect(nav?.getAttribute('data-dp-nav-orientation')).toBe('row');
     });
   });
+
+  describe('S1 responsive drawer', () => {
+    let originalWidth: number;
+
+    beforeEach(() => {
+      originalWidth = window.innerWidth;
+    });
+
+    afterEach(() => {
+      Object.defineProperty(window, 'innerWidth', {
+        value: originalWidth,
+        configurable: true,
+        writable: true,
+      });
+    });
+
+    function setWidth(width: number) {
+      Object.defineProperty(window, 'innerWidth', {
+        value: width,
+        configurable: true,
+        writable: true,
+      });
+    }
+
+    it('renders a dismissable backdrop and a drawer panel on narrow viewports', () => {
+      setWidth(375);
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+
+      renderDom();
+
+      const panel = container?.querySelector<HTMLElement>('[data-netlab-dp]');
+      expect(panel?.getAttribute('data-dp-mode')).toBe('drawer');
+
+      const backdrop = container?.querySelector<HTMLElement>('[data-netlab-dp-backdrop]');
+      expect(backdrop).toBeTruthy();
+
+      act(() => backdrop?.click());
+      expect(uiMock.setSelectedNodeId).toHaveBeenCalledWith(null);
+    });
+
+    it('has no backdrop on wide viewports', () => {
+      setWidth(1200);
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+
+      renderDom();
+
+      const panel = container?.querySelector<HTMLElement>('[data-netlab-dp]');
+      expect(panel?.getAttribute('data-dp-mode')).not.toBe('drawer');
+      expect(container?.querySelector('[data-netlab-dp-backdrop]')).toBeNull();
+    });
+  });
 });

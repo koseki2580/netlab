@@ -25,6 +25,30 @@ The rail is global chrome, not scenario content.
 Embedded simulator routes omit the nav rail because their host page owns global
 navigation.
 
+## Responsive Layout
+
+The shell adapts to narrow viewports (iframe embeds, phones, split-screen) at a
+single breakpoint. `useViewport()` (`src/utils/useViewport.ts`) reports the
+window size and a derived `isNarrow` flag, true when `width < 900`. The boundary
+is exclusive: exactly 900px is still the wide layout.
+
+When `isNarrow`:
+
+- The shell root switches from a horizontal row to a vertical column and the nav
+  rail renders with `variant="bottom"` — a 56px horizontal bar pinned to the
+  bottom of the shell. Items run left-to-right; the help button is pushed to the
+  right edge. The item array is unchanged from the rail variant.
+- The `NodeDetailPanel` ignores its persisted dock mode and renders as a
+  right-edge drawer (`data-dp-mode="drawer"`, `width: min(420px, 100%)`) over the
+  canvas, with a dismissable backdrop (`data-netlab-dp-backdrop`) that clears the
+  selection on click. The wide layout has no backdrop.
+- The shell uses `height: 100dvh` rather than `100vh` so the iOS Safari toolbar
+  does not push content under the browser chrome, and `overflow: hidden` on the
+  root prevents horizontal scrolling.
+
+Canvas pan and pinch-zoom are handled by React Flow's defaults, which already
+support touch, so no narrow-specific canvas wiring is required.
+
 ## Command Bar
 
 Simulator routes use `NetlabAppShellV2`, which renders a single 40px
@@ -92,6 +116,9 @@ Shell chrome changes should be covered by component tests that assert:
 - route-aware active state
 - gallery navigation from the rail
 - embedded mode omits global shell navigation
+- `useViewport` reports the 900px narrow boundary (exclusive)
+- narrow viewports render the bottom nav rail variant and the node-detail drawer
+  with a dismissable backdrop
 - command bar required controls and no-wrap layout
 - command bar narrow-width fallback behavior
 - route migration keeps existing scene controls reachable

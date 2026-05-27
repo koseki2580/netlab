@@ -8,6 +8,7 @@ import { NetlabThemeScope } from '../src/components/NetlabThemeScope';
 import type { NetlabCbSafe, NetlabContrast } from '../src/theme';
 import { scenarioRegistry, scenariosInGroup } from '../src/scenarios';
 import { installKeymap, type KeymapActions } from '../src/utils/keymap';
+import { useViewport } from '../src/utils/useViewport';
 import { E2eTraceHook } from './__e2e_hook';
 import { ShellChromeProvider } from './ShellChromeContext';
 
@@ -59,6 +60,9 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
   const [registeredPaletteItems, setRegisteredPaletteItems] = useState<CommandPaletteItem[]>([]);
   const view: NavRailView = location.pathname === '/' ? 'gallery' : 'simulator';
   const a11yAxes = useMemo(() => readPersistedA11yAxes(), []);
+  // S1 — below 900px the rail becomes a bottom bar and the shell switches to a
+  // single vertical column so iframe/phone embeds don't horizontally scroll.
+  const { isNarrow } = useViewport();
 
   const openPalette = useCallback(() => {
     setHelpOpen(false);
@@ -232,13 +236,22 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
     <div
       data-testid="netlab-root"
       data-netlab-sim-shell
+      data-narrow={isNarrow ? '' : undefined}
       className="netlab-sim-shell"
-      style={{ display: 'flex', height: '100vh', background: '#0f172a' }}
+      style={{
+        display: 'flex',
+        // `100dvh` tracks the visible viewport on iOS Safari where the toolbar
+        // shrinks the usable area — `100vh` would overflow under the chrome.
+        flexDirection: isNarrow ? 'column' : 'row',
+        height: '100dvh',
+        overflow: 'hidden',
+        background: '#0f172a',
+      }}
     >
-      {!embedded && (
+      {!embedded && !isNarrow && (
         <NavRail items={navItems} onOpenBrand={() => selectView('gallery')} onOpenHelp={openHelp} />
       )}
-      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, minHeight: 0 }}>
         {!embedded && (
           <div
             style={{
@@ -247,7 +260,8 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
               borderBottom: '1px solid #334155',
               display: 'flex',
               alignItems: 'center',
-              gap: 16,
+              gap: isNarrow ? 8 : 16,
+              flexWrap: isNarrow ? 'wrap' : 'nowrap',
               flexShrink: 0,
             }}
           >
@@ -312,6 +326,14 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
           )}
         </NetlabThemeScope>
       </div>
+      {!embedded && isNarrow && (
+        <NavRail
+          variant="bottom"
+          items={navItems}
+          onOpenBrand={() => selectView('gallery')}
+          onOpenHelp={openHelp}
+        />
+      )}
     </div>
   );
 }
