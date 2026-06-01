@@ -122,6 +122,23 @@ describe('DropEventCard', () => {
     );
   });
 
+  it('shows the sandbox fix only when editable, and fires onApply', () => {
+    const onApply = vi.fn();
+    const fix = { label: 'permit this traffic', onApply };
+
+    // Read-only (editable=false): the fix is hidden even when supplied.
+    render(<DropEventCard hop={makeDropHop('acl-deny')} fix={fix} />);
+    expect(q('drop-fix')).toBeNull();
+
+    // Editable (sandbox): the fix renders and fires its action.
+    render(<DropEventCard hop={makeDropHop('acl-deny')} fix={fix} editable />);
+    const fixButton = q('drop-fix');
+    expect(fixButton).not.toBeNull();
+    expect(fixButton?.textContent).toContain('permit this traffic');
+    click(fixButton as HTMLElement);
+    expect(onApply).toHaveBeenCalledOnce();
+  });
+
   it('closes on the close button and on Escape', () => {
     const onClose = vi.fn();
     render(<DropEventCard hop={makeDropHop('no-route')} onClose={onClose} />);

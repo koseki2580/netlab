@@ -90,6 +90,28 @@ describe('StatusLine', () => {
     expect(container?.textContent ?? '').toContain('? help');
   });
 
+  it('makes `drops N` a button only when a handler is wired and there are drops', () => {
+    const onJumpToDrop = vi.fn();
+
+    // No drops → plain text even with a handler.
+    render(<StatusLine dropsCount={0} onJumpToDrop={onJumpToDrop} />);
+    expect(container?.querySelector('[aria-label="Jump to first dropped packet"]')).toBeNull();
+
+    // Drops but no handler → plain text.
+    render(<StatusLine dropsCount={3} />);
+    expect(container?.querySelector('[aria-label="Jump to first dropped packet"]')).toBeNull();
+
+    // Drops + handler → real button that fires.
+    render(<StatusLine dropsCount={3} onJumpToDrop={onJumpToDrop} />);
+    const button = container?.querySelector(
+      '[aria-label="Jump to first dropped packet"]',
+    ) as HTMLButtonElement | null;
+    expect(button).not.toBeNull();
+    expect(button?.textContent).toBe('3');
+    act(() => button?.click());
+    expect(onJumpToDrop).toHaveBeenCalledOnce();
+  });
+
   it('makes ⌘K / ? help real buttons that fire their handlers when wired (P2)', () => {
     const onOpenPalette = vi.fn();
     const onOpenHelp = vi.fn();

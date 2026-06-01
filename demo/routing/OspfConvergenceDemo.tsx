@@ -25,6 +25,7 @@ import { ResizableSidebar } from '../../src/components/ResizableSidebar';
 import { PacketScrubTimeline } from '../../src/components/simulation/PacketScrubTimeline';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationOverlayDock } from '../../src/components/simulation/SimulationOverlayDock';
+import { DropEventOverlay } from '../../src/components/simulation/DropEventOverlay';
 import { StepControls } from '../../src/components/simulation/StepControls';
 import { StatusLine } from '../../src/components/StatusLine';
 import { ZeroStateHint } from '../../src/components/ZeroStateHint';
@@ -190,6 +191,11 @@ function OspfConvergenceInner({
     [engine, totalHops],
   );
 
+  const jumpToFirstDrop = useCallback(() => {
+    const dropHop = currentTrace?.hops.find((hop) => hop.event === 'drop');
+    if (dropHop) jumpTo(dropHop.step);
+  }, [currentTrace, jumpTo]);
+
   const togglePlay = useCallback(() => {
     if (totalHops === 0) return;
     if (state.status === 'running') {
@@ -333,6 +339,7 @@ function OspfConvergenceInner({
           packetsCount={packetsCount}
           dropsCount={dropsCount}
           arpCount={arpCount}
+          onJumpToDrop={jumpToFirstDrop}
           onOpenPalette={shellChrome.openPalette}
           onOpenHelp={shellChrome.openHelp}
         />
@@ -351,7 +358,9 @@ function OspfConvergenceInner({
         <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
           <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
-              <NetlabCanvas />
+              <NetlabCanvas>
+                <DropEventOverlay />
+              </NetlabCanvas>
               <SimulationOverlayDock showRouteTable />
               <ZeroStateHint />
               <div

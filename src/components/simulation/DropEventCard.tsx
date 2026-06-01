@@ -13,6 +13,14 @@ export interface DropNavigateTarget {
   tab?: DpTab;
 }
 
+/** Advisory, sandbox-only corrective action surfaced on a drop card. */
+export interface DropFix {
+  /** Button copy, e.g. `'permit this traffic'`. */
+  label: string;
+  /** Runs the corrective action (e.g. open the editable ACL tab). */
+  onApply: () => void;
+}
+
 export interface DropEventCardProps {
   /** The dropped hop. The card resolves its lesson from `hop.reason`. */
   hop: PacketHop;
@@ -20,6 +28,13 @@ export interface DropEventCardProps {
   onClose?: () => void;
   /** Called when a tab-ref is clicked; the host opens the node's detail panel. */
   onNavigate?: ((target: DropNavigateTarget) => void) | undefined;
+  /**
+   * Advisory fix for the drop. Rendered only when `editable` is true (sandbox /
+   * editor), so read-only scenarios stop at the cause display.
+   */
+  fix?: DropFix | undefined;
+  /** Gates the {@link fix} affordance; defaults to `false` (read-only). */
+  editable?: boolean;
 }
 
 /** Imperative helper: pulse a canvas node element to mark a drop (M2). */
@@ -47,7 +62,13 @@ const SECTION_LABEL: React.CSSProperties = {
  * into the dropping node's detail panel or an external RFC. Renders nothing when
  * the hop is not a drop or its `reason` has no authored lesson. Esc closes.
  */
-export function DropEventCard({ hop, onClose, onNavigate }: DropEventCardProps) {
+export function DropEventCard({
+  hop,
+  onClose,
+  onNavigate,
+  fix,
+  editable = false,
+}: DropEventCardProps) {
   const lesson = hop.event === 'drop' ? getDropLesson(hop.reason) : undefined;
 
   useEffect(() => {
@@ -161,6 +182,25 @@ export function DropEventCard({ hop, onClose, onNavigate }: DropEventCardProps) 
             {ref.label} →
           </button>
         ))}
+        {editable && fix && (
+          <button
+            type="button"
+            data-testid="drop-fix"
+            onClick={fix.onApply}
+            style={{
+              fontFamily: MONO,
+              fontSize: 11,
+              padding: '2px 8px',
+              borderRadius: 6,
+              border: '1px solid var(--netlab-accent-cyan)',
+              background: 'transparent',
+              color: 'var(--netlab-accent-cyan)',
+              cursor: 'pointer',
+            }}
+          >
+            {fix.label} →
+          </button>
+        )}
         {onClose && (
           <button
             type="button"

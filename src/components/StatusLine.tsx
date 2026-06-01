@@ -33,6 +33,12 @@ export interface StatusLineProps {
   packetsCount?: number;
   /** Cumulative dropped packets. */
   dropsCount?: number;
+  /**
+   * When wired, the `drops N` count becomes a button that jumps to the first
+   * dropped hop (the cheapest entry into the trace-explainer chain). Only
+   * interactive while `dropsCount > 0`; otherwise it stays plain text.
+   */
+  onJumpToDrop?: () => void;
   /** Cumulative ARP resolutions (or table entries — caller's choice). */
   arpCount?: number;
   /** Currently selected node id, or `null` when nothing is selected. */
@@ -81,6 +87,7 @@ export function StatusLine({
   dropsCount = 0,
   arpCount = 0,
   selectedId,
+  onJumpToDrop,
   onOpenPalette,
   onOpenHelp,
   style,
@@ -168,13 +175,32 @@ export function StatusLine({
       {sep()}
       <span>
         drops{' '}
-        <span
-          style={{
-            color: dropsCount > 0 ? 'var(--netlab-accent-red)' : 'var(--netlab-accent-green)',
-          }}
-        >
-          {dropsCount}
-        </span>
+        {onJumpToDrop && dropsCount > 0 ? (
+          <button
+            type="button"
+            aria-label="Jump to first dropped packet"
+            title="Jump to the first dropped packet"
+            onClick={onJumpToDrop}
+            style={{
+              all: 'unset',
+              cursor: 'pointer',
+              color: 'var(--netlab-accent-red)',
+              fontFamily: MONO,
+              fontSize: 10,
+              borderRadius: 3,
+            }}
+          >
+            {dropsCount}
+          </button>
+        ) : (
+          <span
+            style={{
+              color: dropsCount > 0 ? 'var(--netlab-accent-red)' : 'var(--netlab-accent-green)',
+            }}
+          >
+            {dropsCount}
+          </span>
+        )}
       </span>
       {sep()}
       <span>
