@@ -1,5 +1,5 @@
 /**
- * @property-seed 0x5a4b12 plan/52 ARP table consistency property.
+ * @property-seed 0x5a4b12 ARP table consistency property.
  */
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';

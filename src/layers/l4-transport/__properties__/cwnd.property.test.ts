@@ -1,5 +1,5 @@
 /**
- * @property-seed 0x7c0c01 plan/53 congestion-window properties.
+ * @property-seed 0x7c0c01 congestion-window properties.
  */
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';

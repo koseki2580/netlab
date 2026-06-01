@@ -1,5 +1,5 @@
 /**
- * @property-seed 0x5a4b12 trace-filter parser canonical seed from plan/81p.
+ * @property-seed 0x5a4b12 trace-filter parser canonical seed.
  */
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';

@@ -1,5 +1,5 @@
 /**
- * @property-seed 0x5a4b12 plan/52 routing longest-prefix property.
+ * @property-seed 0x5a4b12 routing longest-prefix property.
  */
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';

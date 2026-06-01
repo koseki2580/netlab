@@ -153,11 +153,6 @@ Specifications for protocol implementations based on the OSI model and network d
 - [Connection Validation](networking/connection-validation.md) - Validation logic for port compatibility and link limits
 - [Multicast (IGMPv2)](networking/multicast.md) - Class D forwarding, IGMP Query/Report/Leave, switch snooping with VLAN scope
 
-### �️ Roadmap
-
-- [Protocol Coverage Roadmap](../plan/35.md) - Meta-plan sequencing UDP/HTTP/IGMP/IPv6 work
-- [Complete Backlog Execution Plan](../plan/81.md) - Master ledger that ships every Planning-state plan and 15 newly-commissioned sub-plans (81a–81o)
-
 ### �🚀 Deployment & Integration (`deployment/`)
 
 Specifications related to demo environment setup, integration using query parameters, and continuous integration.

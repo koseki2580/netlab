@@ -117,6 +117,6 @@ The reducer updates only the target edge's `data.link` object. It validates that
 ## Out Of Scope
 
 - RED, WRED, ECN, and priority queueing.
-- DSCP-aware shaping; that belongs to plan/81g.
+- DSCP-aware shaping.
 - Half-duplex, collision domains, and variable bandwidth.
 - A live wall-clock queue that persists across independently precomputed traces.

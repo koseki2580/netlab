@@ -1,5 +1,5 @@
 /**
- * @property-seed 0x7c0c01 plan/53 RTO properties.
+ * @property-seed 0x7c0c01 RTO properties.
  */
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';

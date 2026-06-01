@@ -36,16 +36,16 @@ React components or mutate their topology during registration.
 
 The built-in registry contains:
 
-| ID                 | Purpose                                                                    |
-| ------------------ | -------------------------------------------------------------------------- |
-| `basic-arp`        | Observe first-hop ARP before an IP packet forwards.                        |
-| `fragmented-echo`  | Observe IPv4 fragmentation and destination reassembly.                     |
-| `tcp-handshake`    | Observe SYN, SYN-ACK, ACK reaching established state.                      |
-| `ospf-convergence` | Observe OSPF reconvergence over alternate paths.                           |
-| `stp-loop`         | Observe STP blocking a redundant L2 triangle link.                         |
-| `nat-basics`       | Support sandbox/tutorial NAT flows added after the original Plan 52 scope. |
+| ID                 | Purpose                                                            |
+| ------------------ | ------------------------------------------------------------------ |
+| `basic-arp`        | Observe first-hop ARP before an IP packet forwards.                |
+| `fragmented-echo`  | Observe IPv4 fragmentation and destination reassembly.             |
+| `tcp-handshake`    | Observe SYN, SYN-ACK, ACK reaching established state.              |
+| `ospf-convergence` | Observe OSPF reconvergence over alternate paths.                   |
+| `stp-loop`         | Observe STP blocking a redundant L2 triangle link.                 |
+| `nat-basics`       | Support sandbox/tutorial NAT flows added after the original scope. |
 
-The original Plan 52 target was five built-ins. Later sandbox/tutorial work added
+The original target was five built-ins. Later sandbox/tutorial work added
 `nat-basics` as a first-class scenario, so the shipped contract is six registered
 built-ins while preserving the original five learning anchors.
 

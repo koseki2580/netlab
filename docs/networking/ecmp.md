@@ -56,5 +56,5 @@ HopInspector render this as an ECMP bucket annotation.
 ## Out Of Scope
 
 Weighted ECMP, resilient hashing, policy-based routing, and L2 link aggregation
-are outside this model. LACP is tracked separately by `plan/81d` and must reuse
+are outside this model. LACP is tracked separately and must reuse
 `hashFlow` for its port-channel hashing.

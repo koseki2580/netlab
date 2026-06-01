@@ -8,7 +8,7 @@ Routers already enforce per-hop MTU and emit ICMP Destination Unreachable, code 
 the host-side consumer for that signal: the sender learns the reported MTU, caches it per
 destination, and shrinks later TCP payload chunks so the path stops dropping them.
 
-This document describes the intended PMTUD behavior for `plan/34.md`.
+This document describes the intended PMTUD behavior.
 
 ## Overview
 

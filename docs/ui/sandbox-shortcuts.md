@@ -1,6 +1,5 @@
 # Sandbox Keyboard Shortcuts & Screen-Reader Narration
 
-**Plan**: plan/67  
 **Status**: Shipped  
 **Related**: [sandbox.md](sandbox.md), [accessibility.md](accessibility.md), [sandbox-undo.md](sandbox-undo.md)
 
@@ -51,7 +50,7 @@ unregister();
 shortcutRegistry.list();
 ```
 
-The registry is the **single source of truth** for all sandbox shortcuts. Plan/63's `Cmd+Z` registers through this registry. Feature code must not add separate `window.addEventListener('keydown', ...)` listeners for sandbox actions.
+The registry is the **single source of truth** for all sandbox shortcuts. The undo/redo `Cmd+Z` registers through this registry. Feature code must not add separate `window.addEventListener('keydown', ...)` listeners for sandbox actions.
 
 ### Help modal
 
@@ -103,7 +102,7 @@ All strings are centralised in `src/sandbox/narration/messages.ts`. One function
 | `sandbox:mode-changed` (alpha)          | `Compare mode exited.`                                                 |
 | `sandbox:reset-all`                     | `All edits reset; sandbox returned to baseline.`                       |
 
-> **i18n**: strings are in `messages.ts` for future extraction into plan/80.
+> **i18n**: strings are in `messages.ts` for future extraction.
 
 ### Enabling narration
 
@@ -113,11 +112,11 @@ Narration is enabled whenever `<NetlabProvider sandboxEnabled>` is mounted. No e
 
 ## Screen-reader compatibility
 
-| Reader    | Browser | Tested                 |
-| --------- | ------- | ---------------------- |
-| VoiceOver | Safari  | Manual smoke (plan/67) |
-| NVDA      | Firefox | Best-effort            |
-| JAWS      | Chrome  | Best-effort            |
+| Reader    | Browser | Tested       |
+| --------- | ------- | ------------ |
+| VoiceOver | Safari  | Manual smoke |
+| NVDA      | Firefox | Best-effort  |
+| JAWS      | Chrome  | Best-effort  |
 
 `aria-live="polite"` with `aria-atomic="true"` is the broadest-compatibility pattern. The region is visually hidden with the standard clip/overflow technique (`clip: rect(0,0,0,0)`, `width: 1px`, `height: 1px`).
 

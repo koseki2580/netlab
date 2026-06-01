@@ -1,6 +1,6 @@
 # Sandbox Undo, Redo, And Edit History
 
-> **Status**: ✅ Implemented in `plan/63.md`
+> **Status**: ✅ Implemented
 
 The sandbox edit session is a deterministic history stack. Edits remain plain reducer payloads, while `EditSession` owns a `head` cursor into a frozen backing array. The visible session is `backing.slice(0, head)`, and redo entries are the inactive tail after `head`.
 

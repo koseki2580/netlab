@@ -1,5 +1,5 @@
 /**
- * @property-seed 0x5a4b12 plan/52 TCP handshake reachability property.
+ * @property-seed 0x5a4b12 TCP handshake reachability property.
  */
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';

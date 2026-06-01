@@ -1,6 +1,6 @@
 # Sandbox Session Recording & Replay
 
-> **Status**: 🚧 In progress (plan/70)
+> **Status**: 🚧 In progress
 
 A sandbox session can be recorded as a chronological event stream and later replayed at user-controlled pacing. Recording captures _the sequence of edits that produced the final state_; replay re-drives those edits against a fresh engine so the learner sees the simulation evolve at their own pace.
 
@@ -40,7 +40,7 @@ interface RecordedSession {
 }
 ```
 
-- The `kind: 'recording'` discriminator distinguishes a recording from a plain `ExportedSession` (plan/64). The plan/64 decoder must accept a `RecordedSession` by reading `initialSnapshot` and ignoring `events`.
+- The `kind: 'recording'` discriminator distinguishes a recording from a plain `ExportedSession`. The exported-session decoder must accept a `RecordedSession` by reading `initialSnapshot` and ignoring `events`.
 - Events are capped at **10,000** per recording. Warn at 8,000; block at 10,000.
 - Recordings are produced once and not editable. They are local files; nothing is uploaded.
 
@@ -67,7 +67,7 @@ A recording is loaded via URL query (`?replay=...`) or the **Open recording** ac
 
 Replay must reproduce the recorded snapshot chain byte-for-byte. After each `edit` event is replayed, the resulting snapshot is compared (via `snapshotEquals`) to the event's `resultingSnapshotId`. A mismatch transitions the player to `desynced` and renders a warning banner: _"Replay desync detected at event {seq}. The recording may be corrupt or from a different netlab version."_
 
-Replay determinism rests on the plan/56 L017 purity contract: `EditSession.apply` MUST be a pure reducer. Any impurity surfaces here as a desync.
+Replay determinism rests on the L017 purity contract: `EditSession.apply` MUST be a pure reducer. Any impurity surfaces here as a desync.
 
 ### Step-clock vs wall-clock
 
@@ -79,12 +79,12 @@ The **Fork from here** button (or `F`) ends replay and seeds a fresh live `<Sand
 
 ## File Compatibility
 
-A `RecordedSession` is structurally a superset of `ExportedSession` (plan/64). Tools that only understand `ExportedSession` should:
+A `RecordedSession` is structurally a superset of `ExportedSession`. Tools that only understand `ExportedSession` should:
 
 1. Detect `kind === 'recording'` and either refuse with a clear error, or
 2. Use `initialSnapshot` as the entry point and ignore `events`.
 
-The plan/64 decoder follows option 2 and reconstructs the final state via event replay where possible.
+The exported-session decoder follows option 2 and reconstructs the final state via event replay where possible.
 
 ## Limitations (v1)
 

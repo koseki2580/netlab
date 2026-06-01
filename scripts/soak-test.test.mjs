@@ -8,7 +8,7 @@ import {
 } from './soak-test.mjs';
 
 describe('soak test harness', () => {
-  it('builds the default plan/81p long-running scenario shape', () => {
+  it('builds the default long-running scenario shape', () => {
     const scenario = buildSoakScenario();
 
     expect(scenario.routerCount).toBe(50);

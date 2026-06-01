@@ -1,5 +1,5 @@
 /**
- * @property-seed 0x5a4b12 plan/81a link queue bounds and determinism.
+ * @property-seed 0x5a4b12 link queue bounds and determinism.
  */
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';

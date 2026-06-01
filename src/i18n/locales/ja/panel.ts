@@ -27,6 +27,6 @@ export const panel: Catalog = {
   'sandbox.panel.tab.edits': '編集',
   'sandbox.panel.tab.assessment': 'アセスメント',
   'sandbox.panel.tab.editsWithCount': '{{label}} ({{count}})',
-  'sandbox.panel.empty.body': '{{axis}} 軸は {{plan}} で提供されます。',
+  'sandbox.panel.empty.body': '{{axis}} 軸はこのサンドボックスでは利用できません。',
   'sandbox.panel.empty.docsLink': 'サンドボックス primitive ドキュメントを読む',
 } as const;

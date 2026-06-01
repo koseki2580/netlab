@@ -1,6 +1,6 @@
 # Simulation Worker
 
-Plan 73 moves simulation execution behind a worker-capable facade while preserving the existing `SimulationEngine` public API used by demos, React contexts, sandbox flows, and tests.
+The simulation worker moves simulation execution behind a worker-capable facade while preserving the existing `SimulationEngine` public API used by demos, React contexts, sandbox flows, and tests.
 
 ## Goals
 
@@ -84,7 +84,7 @@ Worker and fallback execution must produce structurally equal snapshots for the 
 
 ## Validation
 
-Plan 73 is complete only when these gates have fresh evidence:
+This work is complete only when these gates have fresh evidence:
 
 - Protocol validator unit tests.
 - Worker dispatcher tests with a fake worker global.
@@ -95,7 +95,7 @@ Plan 73 is complete only when these gates have fresh evidence:
 - `npm run typecheck -- --pretty false`.
 - `npm run lint`.
 
-Current Plan 73 measurements:
+Current measurements:
 
 - `scripts/bench-worker.mjs` on `/simulation/step` with `RUNS=2` measured `p50Ms`/`p95Ms` at 133.8ms against the 1000ms smoke target.
 - Vite build emits `dist/netlab.es.js` at 88.63 kB gzip.

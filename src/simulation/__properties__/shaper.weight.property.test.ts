@@ -1,5 +1,5 @@
 /**
- * @property-seed 0x5a4b12 plan/81g DSCP shaper weight ratios.
+ * @property-seed 0x5a4b12 DSCP shaper weight ratios.
  */
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';

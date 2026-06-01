@@ -3280,7 +3280,7 @@ Add an entry for any non-obvious pattern discovered during this implementation.
 
 - [ ] **Step 5: Update agents/tasks/todo.md**
 
-Replace the Plan 73 section header with a new Plan 74 section capturing this work.
+Replace the previous section header with a new section capturing this work.
 
 ---
 

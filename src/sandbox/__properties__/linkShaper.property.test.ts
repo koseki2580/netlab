@@ -1,5 +1,5 @@
 /**
- * @property-seed 0x5a4b12 plan/81g link.shaper reducer validation.
+ * @property-seed 0x5a4b12 link.shaper reducer validation.
  */
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';

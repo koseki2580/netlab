@@ -17,7 +17,7 @@ export interface ProviderInfo {
 export interface CryptoProvider {
   readonly id: CryptoProviderId;
 
-  /** Generates a raw X25519 key pair. Plan/81k must keep this signature stable. */
+  /** Generates a raw X25519 key pair. This signature must stay stable. */
   generateKeyPair(curve: CryptoCurve): Promise<{ pub: Uint8Array; priv: Uint8Array }>;
 
   /** Derives a 32-byte ECDH shared secret. */

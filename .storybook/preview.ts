@@ -9,10 +9,10 @@ const preview: Preview = {
       },
     },
     a11y: {
-      // WCAG 2.1 AA per plan/47. Story-level overrides may add `disabledRules`
+      // WCAG 2.1 AA. Story-level overrides may add `disabledRules`
       // with documented justification (see docs/dev/storybook.md).
       config: {},
-      // Block CI / fail the story when axe-core finds violations (plan/79 gate).
+      // Block CI / fail the story when axe-core finds violations.
       test: 'error',
     },
   },

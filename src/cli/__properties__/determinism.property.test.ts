@@ -1,5 +1,5 @@
 /**
- * @property-seed 0x5a4b78 CLI property-suite seed assigned by plan/78.
+ * @property-seed 0x5a4b78 CLI property-suite seed.
  */
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';

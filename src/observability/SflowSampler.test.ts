@@ -1,5 +1,5 @@
 /**
- * @property-seed 0x5a4b12 plan/81h deterministic sFlow sampling.
+ * @property-seed 0x5a4b12 deterministic sFlow sampling.
  */
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';

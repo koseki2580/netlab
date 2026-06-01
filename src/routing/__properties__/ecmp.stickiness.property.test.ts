@@ -1,5 +1,5 @@
 /**
- * @property-seed 0x5a4b12 plan/81e ECMP flow stickiness.
+ * @property-seed 0x5a4b12 ECMP flow stickiness.
  */
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';

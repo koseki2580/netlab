@@ -1,6 +1,6 @@
 # Demo Experience
 
-> **Status**: ✅ Implemented (`plan/55.md`)
+> **Status**: ✅ Implemented
 
 Specification for the next demo-surface improvements:
 

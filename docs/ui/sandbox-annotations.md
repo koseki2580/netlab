@@ -1,6 +1,6 @@
 # Sandbox Trace Annotations
 
-> **Status**: Implemented by `plan/69.md`.
+> **Status**: Implemented
 
 Sandbox trace annotations let instructors and learners attach short notes to packet trace events without changing simulation behavior. An annotation is metadata stored at the `SimulationSnapshot` root and anchored to a trace event id.
 

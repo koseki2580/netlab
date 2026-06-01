@@ -1,5 +1,5 @@
 /**
- * @property-seed 0x5a4b12 plan/81f placeholder crypto determinism.
+ * @property-seed 0x5a4b12 placeholder crypto determinism.
  */
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';

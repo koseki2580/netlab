@@ -1,5 +1,5 @@
 /**
- * @property-seed 0x5a4b12 plan/81f TLS record framing round-trip.
+ * @property-seed 0x5a4b12 TLS record framing round-trip.
  */
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';

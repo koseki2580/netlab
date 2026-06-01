@@ -7,7 +7,7 @@ Netlab models a deterministic TLS 1.3 handshake so learners can see what HTTPS a
 - ALPN negotiation for `http/1.1`; later HTTP/2 and HTTP/3 plans reuse the same path.
 - Trace annotations for `ClientHello`, `ServerHello`, `Certificate`, `CertificateVerify`, `Finished`, application data, and fatal alerts.
 
-The placeholder provider preserves TLS structure but not cryptographic strength. It builds RFC-shaped labels, records, and transcript steps while using deterministic byte math so tests, demos, sandbox replay, and future wireless handshakes remain reproducible. Real WebCrypto-backed primitives are scoped to `plan/81k` and should replace the provider, not the call sites.
+The placeholder provider preserves TLS structure but not cryptographic strength. It builds RFC-shaped labels, records, and transcript steps while using deterministic byte math so tests, demos, sandbox replay, and future wireless handshakes remain reproducible. Real WebCrypto-backed primitives should replace the provider, not the call sites.
 
 ```mermaid
 sequenceDiagram

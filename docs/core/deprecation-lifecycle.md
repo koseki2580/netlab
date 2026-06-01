@@ -25,7 +25,7 @@ Every `@deprecated` JSDoc block in `src/` must include both:
 
 The `@removeAt` tag records the earliest minor release where removal is allowed. The `@migrate` tag gives the concrete replacement so downstream users are not left with a warning that cannot be acted on.
 
-`plan/81c` will lock the public API snapshot. This lifecycle document defines how later plans can intentionally deprecate and eventually remove public symbols without silent consumer breakage.
+This lifecycle document defines how later changes can intentionally deprecate and eventually remove public symbols without silent consumer breakage.
 
 ## Root Export Boundary Migration
 

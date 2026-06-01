@@ -5,7 +5,7 @@ import { DEFAULT_PARAMETERS } from '../sandbox/types';
 import { decodeSessionInput } from './session-loader';
 
 describe('decodeSessionInput', () => {
-  it('decodes plan/64 exported session JSON', () => {
+  it('decodes exported session JSON', () => {
     const exported = encodeSession(EditSession.empty().push({ kind: 'noop' }), {
       scenarioId: 'basic-arp',
       initialParameters: DEFAULT_PARAMETERS,

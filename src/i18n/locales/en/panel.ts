@@ -27,6 +27,6 @@ export const panel: Catalog = {
   'sandbox.panel.tab.edits': 'Edits',
   'sandbox.panel.tab.assessment': 'Assessment',
   'sandbox.panel.tab.editsWithCount': '{{label}} ({{count}})',
-  'sandbox.panel.empty.body': 'The {{axis}} axis ships in {{plan}}.',
+  'sandbox.panel.empty.body': 'The {{axis}} axis is not available in this sandbox.',
   'sandbox.panel.empty.docsLink': 'Read the sandbox primitive docs',
 } as const;

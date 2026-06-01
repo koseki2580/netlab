@@ -19,4 +19,4 @@ The initial salt follows RFC 9001 v1. `deriveQuicKeys()` uses HKDF labels `clien
 
 ## Out Of Scope
 
-0-RTT, Retry, Version Negotiation, connection-ID rotation, header protection, advanced loss recovery, and QUIC congestion control. Congestion-control teaching remains in the plan/53 TCP congestion model.
+0-RTT, Retry, Version Negotiation, connection-ID rotation, header protection, advanced loss recovery, and QUIC congestion control. Congestion-control teaching remains in the TCP congestion model.

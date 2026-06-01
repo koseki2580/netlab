@@ -1,5 +1,5 @@
 /**
- * @property-seed 0x7c0c01 plan/53 fast-retransmit properties.
+ * @property-seed 0x7c0c01 fast-retransmit properties.
  */
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';

@@ -1,5 +1,5 @@
 /**
- * @property-seed 0x5a4b12 plan/81a link.qos reducer idempotency.
+ * @property-seed 0x5a4b12 link.qos reducer idempotency.
  */
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';

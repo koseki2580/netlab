@@ -1,5 +1,5 @@
 /**
- * @property-seed 0x73 worker-thread equivalence seed assigned by plan/73.
+ * @property-seed 0x73 worker-thread equivalence seed.
  * @property-num-runs 20 keeps async worker equivalence checks inside the unit-test budget.
  */
 import fc from 'fast-check';

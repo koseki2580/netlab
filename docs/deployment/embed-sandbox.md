@@ -1,6 +1,6 @@
 # Sandbox Embed Integration
 
-> **Status**: Implemented in `plan/75.md`
+> **Status**: Implemented
 
 ## Overview
 

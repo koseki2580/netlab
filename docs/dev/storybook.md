@@ -117,7 +117,7 @@ const meta: Meta<typeof Component> = {
     a11y: {
       // The panel relies on CSS variables that resolve to real colours only
       // inside the demo shell. axe's color-contrast check is therefore not
-      // meaningful here; runtime contrast is enforced by plan/47 tests.
+      // meaningful here; runtime contrast is enforced by the accessibility tests.
       config: {
         rules: [{ id: 'color-contrast', enabled: false }],
       },
@@ -144,5 +144,4 @@ tests against real demos with story `play` functions — see lesson L040.
   canvas in Storybook but require enough viewport height — set
   `parameters.layout = 'fullscreen'`.
 - **Worker context** is unavailable in some story variants. Components that
-  resolve via the worker fall back to the main-thread engine path delivered by
-  plan/73.
+  resolve via the worker fall back to the main-thread engine path.

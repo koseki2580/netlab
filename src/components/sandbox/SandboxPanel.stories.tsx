@@ -17,7 +17,7 @@ const meta: Meta<typeof SandboxPanel> = {
     a11y: {
       // The panel uses CSS variables that are not present in Storybook's
       // bare canvas. Color-contrast violations produced by var() fallbacks
-      // are tracked in plan/47, not by this story.
+      // are not covered by this story.
       config: {
         rules: [{ id: 'color-contrast', enabled: false }],
       },

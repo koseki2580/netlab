@@ -1,5 +1,5 @@
 /**
- * @property-seed 0x5a4b12 plan/81f TLS state-machine totality and determinism.
+ * @property-seed 0x5a4b12 TLS state-machine totality and determinism.
  */
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';

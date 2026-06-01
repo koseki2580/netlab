@@ -16,7 +16,7 @@ const netlabPlugin = {
   },
 };
 
-// Files already swept by plan/80 — enforce no-hardcoded-sandbox-string here.
+// Files already swept for i18n — enforce no-hardcoded-sandbox-string here.
 // Add new entries as additional sub-catalogs are extracted.
 const I18N_ENFORCED_FILES = [
   'src/components/sandbox/SandboxPanel.tsx',
@@ -93,11 +93,11 @@ export default tseslint.config(
       'react-hooks/exhaustive-deps': 'warn',
       'react/react-in-jsx-scope': 'off',
       'react/no-unescaped-entities': 'off',
-      // Relax for now — plan/42 addresses `any` elimination with type-checked rules
+      // Relax for now — `any` elimination is tracked separately with type-checked rules
       '@typescript-eslint/no-explicit-any': 'warn',
       // Empty functions are used for default context values — valid pattern
       '@typescript-eslint/no-empty-function': 'off',
-      // Non-null assertions on optional chains exist in tested code paths — plan/42 tightens
+      // Non-null assertions on optional chains exist in tested code paths — tightened separately
       '@typescript-eslint/no-non-null-asserted-optional-chain': 'warn',
       '@typescript-eslint/prefer-for-of': 'warn',
       // Allow underscore-prefixed unused vars (destructuring patterns)

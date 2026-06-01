@@ -1,7 +1,7 @@
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
-// Plan/70 ships the recording primitives (provider, player, scrubber, metadata editor,
+// The recording primitives (provider, player, scrubber, metadata editor,
 // desync detection, property tests). The end-to-end demo integration — wiring the
 // "Record session" button into SandboxPanel and exposing a `?recording=1` query
 // flag — lands in a follow-up integration plan that opts the MTU/TCP demos into

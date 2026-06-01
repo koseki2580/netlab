@@ -1,5 +1,5 @@
 /**
- * @property-seed 0x5a4b12 plan/52 STP tree property.
+ * @property-seed 0x5a4b12 STP tree property.
  * @property-num-runs 50 STP convergence is heavier than pure parser/oracle properties.
  *
  * Uses 50 runs because each generated topology runs STP convergence before the

@@ -1,5 +1,5 @@
 /**
- * @property-seed 0x5a4b77 scenario-authoring property-suite seed assigned by plan/77.
+ * @property-seed 0x5a4b77 scenario-authoring property-suite seed.
  * @property-num-runs 25 keeps TypeScript source generation round-trips inside the unit-test budget.
  */
 import fc from 'fast-check';

@@ -25,7 +25,7 @@ The synchronous provider used by React starts with conservative `P-256`/`ECDSA` 
 
 ## Key Formats
 
-Public ECDH key shares remain the TLS/WPA call-site boundary. `WebCryptoProvider` exports X25519/P-256 public keys as WebCrypto `raw` bytes. Private keys are provider-local bundles that contain an ECDH private key and a signing private key in `pkcs8` form. This keeps `CryptoProvider.generateKeyPair('X25519')` stable for existing plan/81f TLS and plan/81i WPA call sites while allowing WebCrypto to use separate ECDH and signature key material internally.
+Public ECDH key shares remain the TLS/WPA call-site boundary. `WebCryptoProvider` exports X25519/P-256 public keys as WebCrypto `raw` bytes. Private keys are provider-local bundles that contain an ECDH private key and a signing private key in `pkcs8` form. This keeps `CryptoProvider.generateKeyPair('X25519')` stable for existing TLS and WPA call sites while allowing WebCrypto to use separate ECDH and signature key material internally.
 
 ## Provider Selection
 
@@ -43,7 +43,7 @@ const { provider, info } = await selectProvider();
 
 ## Teaching Deviations
 
-TLS traces still use the teaching handshake structure from plan/81f. The cryptographic math is real when `WebCryptoProvider` is active, but the handshake remains a compact educational subset rather than a full TLS stack with certificates, transcript verification, or every extension from RFC 8446.
+TLS traces still use the teaching handshake structure. The cryptographic math is real when `WebCryptoProvider` is active, but the handshake remains a compact educational subset rather than a full TLS stack with certificates, transcript verification, or every extension from RFC 8446.
 
 WPA2 four-way handshake demos derive PMK/PTK through the shared `CryptoProvider` surface. Real WPA2 PMK derivation uses PBKDF2-SHA1; deterministic demos continue to use the fake provider so their outputs stay replayable.
 

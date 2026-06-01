@@ -1,6 +1,6 @@
 # Sandbox Edit Plugins
 
-> **Status**: Implemented by `plan/68.md`.
+> **Status**: Implemented
 
 Sandbox edit plugins let host applications register custom edit variants without forking netlab. A plugin edit is any edit whose `kind` starts with a namespace-prefixed plugin kind such as `plugin:example.notes`.
 

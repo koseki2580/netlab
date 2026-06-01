@@ -78,9 +78,7 @@ export function TlsHandshakeView({
         >
           <div>
             Provider: {providerId}
-            {providerId === 'fake-deterministic'
-              ? ' (math is illustrative; plan/81k upgrades the provider)'
-              : ''}
+            {providerId === 'fake-deterministic' ? ' (math is illustrative)' : ''}
           </div>
           {secrets.map((secret) => (
             <div key={secret.label}>

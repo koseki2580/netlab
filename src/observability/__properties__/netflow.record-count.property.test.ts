@@ -1,5 +1,5 @@
 /**
- * @property-seed 0x5a4b12 plan/81h NetFlow record count and packet conservation.
+ * @property-seed 0x5a4b12 NetFlow record count and packet conservation.
  */
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';

@@ -121,7 +121,7 @@ The file is downloaded locally. Netlab does not upload it to a server. Teachers 
 
 ## Built-In Assessment
 
-Plan/72 ships one built-in assessment:
+The library ships one built-in assessment:
 
 - `ospf-backup-path`: make C1 reach C2 through the OSPF backup path after the primary R2-R4 link fails.
 

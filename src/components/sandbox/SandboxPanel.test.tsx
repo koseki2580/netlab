@@ -744,6 +744,5 @@ describe('EmptySandboxTab', () => {
 
     const link = container?.querySelector<HTMLAnchorElement>('a');
     expect(link?.getAttribute('href')).toBe('docs/ui/sandbox.md');
-    expect(container?.textContent).toContain('plan/60');
   });
 });

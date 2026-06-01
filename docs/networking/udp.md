@@ -85,7 +85,7 @@ real UDP length field (header + data).
 
 ## Service Integrations
 
-Both DHCP and DNS use `buildUdpPacket` internally (migrated in Plan 36 T03/T04):
+Both DHCP and DNS use `buildUdpPacket` internally:
 
 | Service | Client Port | Server Port | Migration Scope             |
 | ------- | ----------- | ----------- | --------------------------- |
@@ -128,7 +128,7 @@ const topology: NetworkTopology = {
 | Length field    | Exact byte count      | `JSON.stringify(payload).length` approximation |
 | Checksum        | Mandatory (IPv6)      | Not computed — left `undefined`                |
 | Pseudo-header   | Required for checksum | Not modeled                                    |
-| PMTUD on UDP    | Application-driven    | Not wired (see plan/34 §5)                     |
+| PMTUD on UDP    | Application-driven    | Not wired                                      |
 | Socket-like API | `bind()` / `sendto()` | Direct `buildUdpPacket` calls                  |
 
 ## Related Specs
