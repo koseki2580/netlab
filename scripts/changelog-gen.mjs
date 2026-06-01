@@ -9,7 +9,8 @@ const SECTION_ORDER = [
   ['Docs', (commit) => commit.type === 'docs' && !commit.breaking],
   [
     'Internal',
-    (commit) => ['chore', 'refactor', 'test', 'perf', 'ci'].includes(commit.type) && !commit.breaking,
+    (commit) =>
+      ['chore', 'refactor', 'test', 'perf', 'ci'].includes(commit.type) && !commit.breaking,
   ],
 ];
 

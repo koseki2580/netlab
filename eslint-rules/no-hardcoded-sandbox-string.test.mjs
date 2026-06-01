@@ -28,10 +28,7 @@ ruleTester.run('no-hardcoded-sandbox-string', rule, {
     },
     {
       code: `const x = <button aria-label="Open sandbox">Click</button>;`,
-      errors: [
-        { messageId: 'hardcodedAttribute' },
-        { messageId: 'hardcodedJsxText' },
-      ],
+      errors: [{ messageId: 'hardcodedAttribute' }, { messageId: 'hardcodedJsxText' }],
     },
     {
       code: `const x = <input placeholder="Search edits..." />;`,

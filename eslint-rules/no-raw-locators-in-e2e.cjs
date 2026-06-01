@@ -35,7 +35,7 @@ module.exports = {
       getByRoleWithName:
         'Avoid `getByRole(..., { name: ... })` in e2e specs. The role-name approach couples to microcopy; add a `data-testid` and use `getByTestId(SEL.<area>.<element>)`. Role assertions belong in `*-a11y.spec.ts`.',
       locatorTextEngine:
-        'Avoid `locator(\'text=...\')` in e2e specs. Use `getByTestId(SEL.<area>.<element>)` and `toContainText(...)` to scope text assertions.',
+        "Avoid `locator('text=...')` in e2e specs. Use `getByTestId(SEL.<area>.<element>)` and `toContainText(...)` to scope text assertions.",
     },
   },
   create(context) {

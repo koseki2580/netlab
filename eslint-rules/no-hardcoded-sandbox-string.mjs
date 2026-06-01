@@ -1,9 +1,4 @@
-const ATTRIBUTE_NAMES = new Set([
-  'aria-label',
-  'aria-roledescription',
-  'placeholder',
-  'title',
-]);
+const ATTRIBUTE_NAMES = new Set(['aria-label', 'aria-roledescription', 'placeholder', 'title']);
 
 const ENGLISH_LIKE_RE = /[A-Za-z]{4,}/;
 

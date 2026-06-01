@@ -62,8 +62,7 @@ export function evaluateSoakInvariants({ scenario, samples }) {
     },
     {
       id: 'flow-collector',
-      ok:
-        maxSampleValue(samples, 'flowCollectorRecords') <= scenario.maxFlowCollectorRecords,
+      ok: maxSampleValue(samples, 'flowCollectorRecords') <= scenario.maxFlowCollectorRecords,
       detail: `${maxSampleValue(samples, 'flowCollectorRecords')} <= ${scenario.maxFlowCollectorRecords}`,
     },
     {
@@ -77,7 +76,8 @@ export function evaluateSoakInvariants({ scenario, samples }) {
     },
     {
       id: 'learner-storage-writes',
-      ok: maxSampleValue(samples, 'localStorageWrites') <= maxSampleValue(samples, 'completionCount'),
+      ok:
+        maxSampleValue(samples, 'localStorageWrites') <= maxSampleValue(samples, 'completionCount'),
       detail: `${maxSampleValue(samples, 'localStorageWrites')} <= ${maxSampleValue(
         samples,
         'completionCount',
@@ -95,7 +95,9 @@ export function evaluateSoakInvariants({ scenario, samples }) {
     },
     {
       id: 'broadcast-channels',
-      ok: maxSampleValue(samples, 'openBroadcastChannels') <= maxSampleValue(samples, 'providerCount'),
+      ok:
+        maxSampleValue(samples, 'openBroadcastChannels') <=
+        maxSampleValue(samples, 'providerCount'),
       detail: `${maxSampleValue(samples, 'openBroadcastChannels')} <= ${maxSampleValue(
         samples,
         'providerCount',

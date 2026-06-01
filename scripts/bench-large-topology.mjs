@@ -113,7 +113,9 @@ for (const nodes of [50, 100, 200]) {
   }
 }
 
-console.log('| Nodes | Requested edits | Visible head | Full replay ms | Checkpoint replay ms | Speedup |');
+console.log(
+  '| Nodes | Requested edits | Visible head | Full replay ms | Checkpoint replay ms | Speedup |',
+);
 console.log('| --- | ---: | ---: | ---: | ---: | ---: |');
 for (const row of rows) {
   console.log(
