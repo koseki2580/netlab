@@ -15,6 +15,8 @@ export interface TopologyEditorContextValue {
   addEdge: (edge: NetlabEdge) => void;
   deleteEdge: (edgeId: string) => void;
   updateNodeData: (nodeId: string, patch: NodeDataPatch) => void;
+  /** Replace the whole topology in one history entry (used by one-click fixes). */
+  replaceTopology: (topology: { nodes: NetlabNode[]; edges: NetlabEdge[] }) => void;
   // Position sync — does NOT push to history
   updateNodePositions: (updates: PositionUpdate[]) => void;
   // History controls

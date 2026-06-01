@@ -227,4 +227,58 @@ describe('ValidationPanel', () => {
     expect(container?.textContent).toContain('Topology Issues');
     expect(container?.textContent).toContain('Endpoint-to-endpoint connections are not allowed');
   });
+
+  it('hides fix buttons when not editable (read-only)', () => {
+    const nodes = [
+      makeNode('client-1', 'client', { ip: '10.0.0.10' }),
+      makeNode('server-1', 'server', { ip: '10.0.0.20' }),
+    ];
+    const edges = [makeEdge('client-1', 'server-1', { id: 'e-invalid' })];
+    render(<ValidationPanel nodes={nodes} edges={edges} />);
+    expect(container?.querySelector('[data-testid="issue-fixes"]')).toBeNull();
+  });
+
+  it('applies the recommended mutation fix via onApplyFix when editable', () => {
+    const onApplyFix = vi.fn();
+    const nodes = [
+      makeNode('client-1', 'client', { ip: '10.0.0.10' }),
+      makeNode('server-1', 'server', { ip: '10.0.0.20' }),
+    ];
+    const edges = [makeEdge('client-1', 'server-1', { id: 'e-invalid' })];
+    render(<ValidationPanel nodes={nodes} edges={edges} editable onApplyFix={onApplyFix} />);
+
+    const apply = container?.querySelector('[data-testid="fix-apply"]') as HTMLButtonElement;
+    expect(apply.textContent).toContain('insert switch between');
+    act(() => apply.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    expect(onApplyFix).toHaveBeenCalledWith({
+      kind: 'insert-switch',
+      edgeId: 'e-invalid',
+      sourceId: 'client-1',
+      targetId: 'server-1',
+    });
+  });
+
+  it('routes a ghost fix through onEdgeClick (focus), never onApplyFix', () => {
+    const onApplyFix = vi.fn();
+    const onEdgeClick = vi.fn();
+    const nodes = [
+      makeNode('client-1', 'client', { ip: '10.0.0.10' }),
+      makeNode('server-1', 'server', { ip: '10.0.0.20' }),
+    ];
+    const edges = [makeEdge('client-1', 'server-1', { id: 'e-invalid' })];
+    render(
+      <ValidationPanel
+        nodes={nodes}
+        edges={edges}
+        editable
+        onApplyFix={onApplyFix}
+        onEdgeClick={onEdgeClick}
+      />,
+    );
+
+    const ghost = container?.querySelector('[data-testid="fix-ghost"]') as HTMLButtonElement;
+    act(() => ghost.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    expect(onEdgeClick).toHaveBeenCalledWith('e-invalid');
+    expect(onApplyFix).not.toHaveBeenCalled();
+  });
 });

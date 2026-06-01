@@ -63,6 +63,7 @@ function makeEditorValue(nodes: NetlabNode[]): TopologyEditorContextValue {
     addEdge: vi.fn(),
     deleteEdge: vi.fn(),
     updateNodeData: vi.fn(),
+    replaceTopology: vi.fn(),
     updateNodePositions: vi.fn(),
     undo: vi.fn(),
     redo: vi.fn(),

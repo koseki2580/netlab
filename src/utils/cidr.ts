@@ -1,17 +1,17 @@
 import { getRequired } from './typedAccess';
 import { isInIpv6Subnet, isIpv6Address, parseIpv6Cidr } from './ipv6';
 
-function ipToInt(ip: string): number {
+export function ipToInt(ip: string): number {
   return ip.split('.').reduce((acc, octet) => (acc << 8) | parseInt(octet, 10), 0) >>> 0;
 }
 
-function intToIp(value: number): string {
+export function intToIp(value: number): string {
   return [(value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff].join(
     '.',
   );
 }
 
-function networkAddress(ip: string, prefix: number): string {
+export function networkAddress(ip: string, prefix: number): string {
   if (prefix === 0) return '0.0.0.0';
   const mask = (~0 << (32 - prefix)) >>> 0;
   return intToIp(ipToInt(ip) & mask);

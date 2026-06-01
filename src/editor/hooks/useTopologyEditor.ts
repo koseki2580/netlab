@@ -146,6 +146,10 @@ export function useTopologyEditor(
     [state.topology],
   );
 
+  const replaceTopology = useCallback((topology: EditorTopology) => {
+    dispatch({ type: 'COMMIT', topology });
+  }, []);
+
   const addEdge = useCallback(
     (edge: NetlabEdge) => {
       dispatch({
@@ -214,6 +218,7 @@ export function useTopologyEditor(
       addEdge,
       deleteEdge,
       updateNodeData,
+      replaceTopology,
       updateNodePositions,
       undo,
       redo,
@@ -228,6 +233,7 @@ export function useTopologyEditor(
       addEdge,
       deleteEdge,
       updateNodeData,
+      replaceTopology,
       updateNodePositions,
       undo,
       redo,

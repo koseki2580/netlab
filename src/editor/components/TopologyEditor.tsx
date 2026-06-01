@@ -8,6 +8,7 @@ import { EditorToolbar } from './EditorToolbar';
 import { TopologyEditorCanvas } from './TopologyEditorCanvas';
 import { NodeEditorPanel } from './NodeEditorPanel';
 import { ValidationPanel } from './ValidationPanel';
+import { applyTopologyPatch } from '../../utils/connectionFixers';
 import type { EditorTopology } from '../types';
 
 export interface TopologyEditorProps {
@@ -19,7 +20,7 @@ export interface TopologyEditorProps {
 
 // Inner component: can read editor context to pass NetlabUIContext values
 function TopologyEditorInner() {
-  const { state, setSelectedNodeId } = useTopologyEditorContext();
+  const { state, setSelectedNodeId, replaceTopology } = useTopologyEditorContext();
   const [highlightEdgeId, setHighlightEdgeId] = useState<string | null>(null);
   const [highlightedAreaId, setHighlightedAreaId] = useState<string | null>(null);
 
@@ -64,6 +65,8 @@ function TopologyEditorInner() {
             nodes={state.topology.nodes}
             edges={state.topology.edges}
             onEdgeClick={setHighlightEdgeId}
+            editable
+            onApplyFix={(patch) => replaceTopology(applyTopologyPatch(patch, state.topology))}
           />
           <NodeEditorPanel />
         </NetlabUIContext.Provider>

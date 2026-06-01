@@ -1,11 +1,25 @@
 import { useMemo } from 'react';
 import type { NetlabNode, NetlabEdge } from '../../types/topology';
 import { validateTopology, type TopologyValidationResult } from '../../utils/connectionValidator';
+import {
+  suggestFix,
+  type ConnectionFix,
+  type FixableCode,
+  type TopologyPatch,
+} from '../../utils/connectionFixers';
 
 export interface ValidationPanelProps {
   nodes: NetlabNode[];
   edges: NetlabEdge[];
+  /** Focus an edge (kept for ghost fixes and the issue header). */
   onEdgeClick?: (edgeId: string) => void;
+  /**
+   * Apply a one-click fix. Only wired in the editor/sandbox; when absent the
+   * panel is read-only (cause list + focus only).
+   */
+  onApplyFix?: (patch: TopologyPatch) => void;
+  /** Gates the fix buttons; defaults to `false` (read-only). */
+  editable?: boolean;
 }
 
 const PANEL_STYLE: React.CSSProperties = {
@@ -50,11 +64,41 @@ const EDGE_BUTTON_STYLE: React.CSSProperties = {
   cursor: 'pointer',
 };
 
+function fixButtonStyle(recommended: boolean): React.CSSProperties {
+  return {
+    fontFamily: 'inherit',
+    fontSize: 10,
+    padding: '2px 8px',
+    borderRadius: 6,
+    cursor: 'pointer',
+    border: `1px solid ${
+      recommended ? 'var(--netlab-accent-cyan, #22d3ee)' : 'var(--netlab-border, #334155)'
+    }`,
+    background: recommended
+      ? 'color-mix(in srgb, var(--netlab-accent-cyan, #22d3ee) 14%, transparent)'
+      : 'transparent',
+    color: recommended ? 'var(--netlab-accent-cyan, #22d3ee)' : 'var(--netlab-text-muted, #94a3b8)',
+  };
+}
+
 function resolveNodeLabel(nodes: NetlabNode[], nodeId: string): string {
   return nodes.find((node) => node.id === nodeId)?.data.label ?? nodeId;
 }
 
-export function ValidationPanel({ nodes, edges, onEdgeClick }: ValidationPanelProps) {
+interface PanelIssue {
+  level: 'error' | 'warning';
+  code: FixableCode;
+  message: string;
+  fixes: ConnectionFix[];
+}
+
+export function ValidationPanel({
+  nodes,
+  edges,
+  onEdgeClick,
+  onApplyFix,
+  editable = false,
+}: ValidationPanelProps) {
   const result: TopologyValidationResult = useMemo(
     () => validateTopology(nodes, edges),
     [nodes, edges],
@@ -65,27 +109,27 @@ export function ValidationPanel({ nodes, edges, onEdgeClick }: ValidationPanelPr
       Array.from(result.edgeResults.entries())
         .map(([edgeId, edgeResult]) => {
           const edge = edges.find((candidate) => candidate.id === edgeId);
-          const issues = [
+          if (!edge) return null;
+          const issues: PanelIssue[] = [
             ...edgeResult.errors.map((error) => ({
               level: 'error' as const,
+              code: error.code,
               message: error.message,
+              fixes: suggestFix(error.code, { edge, nodes }),
             })),
             ...edgeResult.warnings.map((warning) => ({
               level: 'warning' as const,
+              code: warning.code,
               message: warning.message,
+              fixes: suggestFix(warning.code, { edge, nodes }),
             })),
           ];
 
-          if (!edge || issues.length === 0) {
-            return null;
-          }
-
-          const sourceLabel = resolveNodeLabel(nodes, edge.source);
-          const targetLabel = resolveNodeLabel(nodes, edge.target);
+          if (issues.length === 0) return null;
 
           return {
             edgeId,
-            title: `${sourceLabel} ↔ ${targetLabel}`,
+            title: `${resolveNodeLabel(nodes, edge.source)} ↔ ${resolveNodeLabel(nodes, edge.target)}`,
             issues,
           };
         })
@@ -156,13 +200,40 @@ export function ValidationPanel({ nodes, edges, onEdgeClick }: ValidationPanelPr
                   key={`${entry.edgeId}-${index}`}
                   className={`issue-${issue.level}`}
                   style={{
+                    marginBottom: 6,
                     color:
                       issue.level === 'error'
                         ? 'var(--netlab-accent-red, #f87171)'
                         : 'var(--netlab-accent-orange, #f59e0b)',
                   }}
                 >
-                  {issue.level === 'error' ? '❌' : '⚠️'} {issue.message}
+                  <div>
+                    {issue.level === 'error' ? '❌' : '⚠️'} {issue.message}
+                  </div>
+                  {editable && issue.fixes.length > 0 && (
+                    <div
+                      data-testid="issue-fixes"
+                      style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}
+                    >
+                      {issue.fixes.map((fix, fixIndex) => (
+                        <button
+                          key={`${entry.edgeId}-${index}-${fixIndex}`}
+                          type="button"
+                          data-testid={fix.ghost ? 'fix-ghost' : 'fix-apply'}
+                          onClick={() => {
+                            if (fix.ghost || !fix.patch) {
+                              onEdgeClick?.(entry.edgeId);
+                              return;
+                            }
+                            onApplyFix?.(fix.patch);
+                          }}
+                          style={fixButtonStyle(!fix.ghost && fixIndex === 0)}
+                        >
+                          {fix.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
