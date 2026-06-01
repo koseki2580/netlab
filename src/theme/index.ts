@@ -224,6 +224,9 @@ export function themeToVars(theme: NetlabTheme, axes?: NetlabThemeAxes): React.C
     '--netlab-radius-md': RADIUS_SCALE.md,
     '--netlab-radius-lg': RADIUS_SCALE.lg,
     '--netlab-radius-pill': RADIUS_SCALE.pill,
+    // ── Edge motion (C4) — centralises the marching-ants duration so it can be
+    //    tuned in one place and is disabled under prefers-reduced-motion. ──────
+    '--netlab-edge-motion': '600ms',
   } as React.CSSProperties;
   if (axes?.density) {
     return { ...base, ...densityToVars(axes.density) };

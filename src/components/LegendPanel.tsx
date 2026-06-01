@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { Marker } from './simulation/Marker';
 import { LEGEND_MARKERS } from './simulation/hopMarkers';
 import { NodeGlyph, type NodeGlyphKind } from './NodeGlyph';
+import { EDGE_KINDS, NL_EDGE_KINDS } from './edgeEncoding';
+import { EdgeKindCap } from './EdgeKindCap';
 
 const LEGEND_KEY = 'nl_a11y_legend';
 const MONO = 'ui-monospace, monospace';
@@ -87,6 +89,49 @@ export function LegendPanel({ style }: LegendPanelProps) {
                   </span>
                 </div>
               ))}
+            </div>
+          </section>
+          <section style={{ borderTop: '1px solid var(--netlab-border-subtle)', paddingTop: 10 }}>
+            <div style={EYEBROW}>packet edges</div>
+            <div style={{ display: 'grid', gap: 4, marginTop: 8 }}>
+              {EDGE_KINDS.map((kind) => {
+                const meta = NL_EDGE_KINDS[kind];
+                return (
+                  <div key={kind} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <svg viewBox="0 0 145 24" width={72} height={12} aria-hidden>
+                      <line
+                        x1="6"
+                        y1="12"
+                        x2="120"
+                        y2="12"
+                        stroke={meta.color}
+                        strokeWidth="3"
+                        {...(meta.dash === 'none' ? {} : { strokeDasharray: meta.dash })}
+                      />
+                      <EdgeKindCap cap={meta.cap} color={meta.color} />
+                    </svg>
+                    <span
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: 10,
+                        color: 'var(--netlab-text-secondary)',
+                      }}
+                    >
+                      {meta.label}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: 9,
+                        color: 'var(--netlab-text-muted)',
+                        marginLeft: 'auto',
+                      }}
+                    >
+                      {meta.dash === 'none' ? 'solid' : meta.cap}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </section>
           <section style={{ borderTop: '1px solid var(--netlab-border-subtle)', paddingTop: 10 }}>

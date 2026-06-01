@@ -71,6 +71,17 @@ describe('LegendPanel', () => {
     expect(window.localStorage.getItem('nl_a11y_legend')).toBe('1');
   });
 
+  it('lists the packet-edge kinds with their color+dash+cap encoding', () => {
+    render(<LegendPanel />);
+    click(q('legend-toggle') as HTMLElement);
+    const text = q('legend-body')?.textContent ?? '';
+    expect(text).toContain('packet edges');
+    expect(text).toContain('ICMP request');
+    expect(text).toContain('ICMP reply');
+    // Cap names surface as the encoding hint for dashed kinds.
+    expect(text).toContain('diamond');
+  });
+
   it('points the toggle arrow down when closed and up when open (P6)', () => {
     render(<LegendPanel />);
     // Closed: ▾ (expandable downward).

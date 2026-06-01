@@ -1,0 +1,18 @@
+/* C4 — edge motion budget.
+ *
+ * Centralises the marching-ants speed on `--netlab-edge-motion` and, crucially,
+ * disables it under prefers-reduced-motion. The `animated` prop is already
+ * gated in JS; this CSS guard hardens it at the style layer so an animated edge
+ * can never march when the user asked for reduced motion. */
+
+.react-flow__edge.animated .react-flow__edge-path {
+  animation-duration: var(--netlab-edge-motion, 600ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .react-flow__edge.animated .react-flow__edge-path {
+    animation: none !important;
+    /* Keep direction legible without motion: a static dash + the arrow marker. */
+    stroke-dasharray: 6 4;
+  }
+}

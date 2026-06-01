@@ -18,6 +18,7 @@ import {
   type OnNodeDrag,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import './edges.css';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AreaBackground } from '../areas/AreaBackground';
@@ -487,7 +488,14 @@ export function NetlabCanvas({
         >
           <Background />
           <Controls />
-          <MiniMap />
+          <MiniMap
+            // Theme via --netlab-* tokens rather than React Flow's defaults so
+            // the minimap matches both light and dark themes (C4).
+            style={{ background: 'var(--netlab-bg-surface)' }}
+            maskColor="color-mix(in srgb, var(--netlab-bg-primary) 70%, transparent)"
+            nodeColor="var(--netlab-accent-cyan)"
+            nodeStrokeColor="var(--netlab-border)"
+          />
           <CanvasAutoPan
             selectedNodeId={selectedNodeId}
             panelMode={dock.mode}
