@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AudiencePill } from '../src/components/AudiencePill';
 import { ProgressPanel } from '../src/components/progress/ProgressPanel';
 import { readUrlParam, useUrlParamSync } from '../src/hooks/useUrlParamSync';
@@ -27,6 +27,8 @@ import {
   type DemoLike,
 } from './galleryFilters';
 import { CategoryLanding, type CategoryLandingDemo } from './components/CategoryLanding';
+import { LearningMap } from './components/LearningMap';
+import { useLearningMap, type LearningTrackInput } from './hooks/useLearningMap';
 import { DemoCard } from './components/DemoCard';
 import { FeaturedStrip } from './components/FeaturedStrip';
 import { SearchBox } from './components/SearchBox';
@@ -419,6 +421,22 @@ const CATEGORIES: Category[] = [
 
 export { CATEGORIES };
 export type { Category, DemoCard };
+
+/**
+ * Concept tracks for the learning map (C2) — derived from the gallery
+ * categories, not authored by hand. Each category is a track; each demo a step
+ * keyed by `scenarioId ?? path` so it lines up with the progress provider.
+ */
+const LEARNING_TRACKS: LearningTrackInput[] = CATEGORIES.map((category) => ({
+  id: category.id,
+  name: category.label,
+  steps: category.demos.map((demo) => ({
+    id: demo.scenarioId ?? demo.path,
+    label: demo.title,
+    path: demo.path,
+    ...(demo.meta?.difficulty ? { difficulty: demo.meta.difficulty } : {}),
+  })),
+}));
 
 type GalleryThemeMode = 'light' | 'dark';
 type GalleryLocale = 'en' | 'ja';
@@ -919,6 +937,8 @@ export default function Gallery({
     isEmpty: filtersEmpty,
   } = useGalleryFilters(initialQuery);
   const query = filters.q;
+  const navigate = useNavigate();
+  const learningMap = useLearningMap(LEARNING_TRACKS);
   const [themeMode, setThemeMode] = useState<GalleryThemeMode>(() => {
     const fromUrl = readUrlParam('theme');
     if (fromUrl === 'dark' || fromUrl === 'light') return fromUrl;
@@ -1346,6 +1366,12 @@ export default function Gallery({
         </div>
 
         <div style={{ padding: '28px 0 0', display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <LearningMap
+            map={learningMap}
+            compact={audience === 'pro'}
+            onOpen={(_id, path) => navigate(path)}
+            onResume={(_id, path) => navigate(path)}
+          />
           <ProgressPanel />
 
           {showHeroStrip && (
