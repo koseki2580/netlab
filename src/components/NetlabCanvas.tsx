@@ -10,6 +10,7 @@ import {
   useEdgesState,
   useNodesState,
   useReactFlow,
+  useViewport,
   type Connection,
   type Edge,
   type EdgeChange,
@@ -23,6 +24,8 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 
 import { AreaBackground } from '../areas/AreaBackground';
 import { areasToNodes } from '../areas/AreaRegistry';
+import { applyAreaLod, AREA_CLUSTER_NODE_TYPE, type AreaClusterNodeData } from '../areas/areaLod';
+import { AreaClusterNode } from './AreaClusterNode';
 import { layerRegistry } from '../registry/LayerRegistry';
 import { useSandboxOrNull } from '../sandbox/useSandbox';
 import { useOptionalFailure } from '../simulation/FailureContext';
@@ -128,10 +131,17 @@ export function NetlabCanvas({
   const nodeTypes = useMemo(
     () => ({
       ...AREA_NODE_TYPE,
+      [AREA_CLUSTER_NODE_TYPE]: AreaClusterNode as NodeTypes[string],
       ...layerRegistry.getAllNodeTypes(),
     }),
     [],
   );
+
+  // C4 LOD: collapse crowded / zoomed-out areas into a single cluster. Live zoom
+  // comes from a ViewportWatcher child of <ReactFlow>; clicking a cluster pins
+  // its area open regardless of zoom.
+  const [lodZoom, setLodZoom] = useState(1);
+  const [expandedAreaIds, setExpandedAreaIds] = useState<ReadonlySet<string>>(() => new Set());
   const edgeTypes = useMemo(
     () => ({
       'validation-smoothstep': ValidationSmoothStepEdge,
@@ -412,6 +422,45 @@ export function NetlabCanvas({
     ],
   );
 
+  const expandArea = useCallback((areaId: string) => {
+    setExpandedAreaIds((prev) => new Set(prev).add(areaId));
+  }, []);
+
+  const { nodes: displayNodes, edges: displayEdges } = useMemo(() => {
+    const lod = applyAreaLod({
+      areas: topology.areas,
+      nodes: styledNodes,
+      edges: styledEdges,
+      zoom: lodZoom,
+      expandedAreaIds,
+    });
+    // Inject the expand callback into cluster nodes (the pure transform stays
+    // callback-free); the cluster button pins its area open when clicked.
+    const nodes = lod.nodes.map((node) =>
+      node.type === AREA_CLUSTER_NODE_TYPE
+        ? {
+            ...node,
+            data: {
+              ...node.data,
+              onExpand: () => expandArea((node.data as unknown as AreaClusterNodeData).areaId),
+            },
+          }
+        : node,
+    );
+    return { nodes, edges: lod.edges };
+  }, [topology.areas, styledNodes, styledEdges, lodZoom, expandedAreaIds, expandArea]);
+
+  const handleNodeClick = useCallback(
+    (node: NetlabNode) => {
+      if (node.type === AREA_CLUSTER_NODE_TYPE) {
+        expandArea((node.data as unknown as AreaClusterNodeData).areaId);
+        return;
+      }
+      selectNode(node.id);
+    },
+    [selectNode, expandArea],
+  );
+
   const uiCtx = useMemo(
     () => ({
       selectedNodeId,
@@ -444,8 +493,8 @@ export function NetlabCanvas({
         className={wrapperClassName}
       >
         <ReactFlow
-          nodes={styledNodes}
-          edges={styledEdges}
+          nodes={displayNodes}
+          edges={displayEdges}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           colorMode={resolvedColorMode}
@@ -458,7 +507,7 @@ export function NetlabCanvas({
             ? { onMove: (_event, nextViewport) => onViewportChange(nextViewport) }
             : {})}
           onEdgeClick={(_event, edge) => selectEdge(edge.id)}
-          onNodeClick={(_event, node) => selectNode(node.id)}
+          onNodeClick={(_event, node) => handleNodeClick(node)}
           onNodeContextMenu={(event, node) => {
             if (!sandbox) return;
             event.preventDefault();
@@ -501,6 +550,7 @@ export function NetlabCanvas({
             panelMode={dock.mode}
             panelWidth={dock.width}
           />
+          <ViewportWatcher onZoom={setLodZoom} />
         </ReactFlow>
         <NodeDetailPanel
           editable={nodeDetailsEditable}
@@ -516,6 +566,19 @@ interface CanvasAutoPanProps {
   selectedNodeId: string | null;
   panelMode: 'overlay' | 'pinned';
   panelWidth: number;
+}
+
+/**
+ * Reports the live React Flow zoom up to the canvas so the LOD transform can
+ * collapse areas when the user zooms out. Rendered inside <ReactFlow> so the
+ * viewport store is available.
+ */
+function ViewportWatcher({ onZoom }: { onZoom: (zoom: number) => void }) {
+  const { zoom } = useViewport();
+  useEffect(() => {
+    onZoom(zoom);
+  }, [zoom, onZoom]);
+  return null;
 }
 
 /**
