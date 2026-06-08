@@ -36,6 +36,12 @@ Core specifications for the overall design of Netlab and for creating extensions
 - [Sandbox Edit Plugins](core/sandbox-plugin.md) - Public API for registering custom sandbox edit variants
 - [Errors](core/errors.md) - NetlabError taxonomy and recovery guidance
 
+### 🎓 Learning (`learning/`)
+
+Framework-agnostic skill-building modules that complement the visual scenarios and tutorials with active-recall practice.
+
+- [Subnetting Practice](learning/subnetting.md) - Pure solver, deterministic problem generator, and answer grader for drilling IPv4 subnet reasoning
+
 ### 💻 UI & Interaction (`ui/`)
 
 Specifications regarding user interface implementation and canvas operations.

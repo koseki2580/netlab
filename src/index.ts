@@ -467,6 +467,21 @@ export type {
   AssessmentSubgoalResult,
 } from './assessments/types';
 
+// Learning — active-recall skill drills (framework-agnostic)
+export {
+  subnetFacts,
+  generateProblem,
+  generateSet,
+  grade,
+  expectedAnswer,
+} from './learning/subnetting';
+export type {
+  SubnetFacts,
+  SubnetProblem,
+  SubnetQuestionKind,
+  GradeResult,
+} from './learning/subnetting';
+
 // Interactive sandbox primitives
 export {
   BranchedSimulationEngine,
