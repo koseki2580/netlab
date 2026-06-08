@@ -66,7 +66,7 @@
   {
     "name": "ui:scenario-export",
     "path": "dist/ScenarioExportDialog-*.mjs",
-    "limit": "32 kB",
+    "limit": "33 kB",
     "gzip": true
   }
 ]

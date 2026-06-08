@@ -1,3 +1,4 @@
+import type { NatEntry, NatTable } from '../../types/nat';
 import type { RouteEntry } from '../../types/routing';
 import type { PacketHop, PacketTrace, SimulationState } from '../../types/simulation';
 
@@ -36,6 +37,27 @@ export function hasHopAction(
   action: NonNullable<PacketHop['action']>,
 ): boolean {
   return allHops(state).some((hop) => hop.action === action);
+}
+
+export function natEntriesForRouter(state: SimulationState, routerId: string): NatEntry[] {
+  if (typeof state !== 'object' || state === null) {
+    return [];
+  }
+
+  const candidate = (state as unknown as Record<string, unknown>).natTables;
+  if (!Array.isArray(candidate)) {
+    return [];
+  }
+
+  const table = candidate.find(
+    (entry): entry is NatTable =>
+      typeof entry === 'object' &&
+      entry !== null &&
+      (entry as NatTable).routerId === routerId &&
+      Array.isArray((entry as NatTable).entries),
+  );
+
+  return table ? table.entries : [];
 }
 
 export function routeEntriesForNode(state: SimulationState, nodeId: string): RouteEntry[] {

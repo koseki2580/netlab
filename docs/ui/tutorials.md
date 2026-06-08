@@ -112,12 +112,20 @@ The runner keeps only the most recent 256 hook events. If a step needs more hist
 
 ## Built-In Tutorials
 
-This release ships four built-in tutorials:
+This release ships five built-in tutorials:
 
 - `arp-basics` on scenario `basic-arp`
 - `fragmentation-roundtrip` on scenario `fragmented-echo`
 - `tcp-three-way` on scenario `tcp-handshake`
 - `ospf-reconverge` on scenario `ospf-convergence`
+- `nat-translation` on scenario `nat-basics`
+
+The `nat-translation` tutorial is hosted by the NAT / PAT demo. It reads the
+live `state.natTables` and per-hop `natTranslation` annotations rather than the
+routing table: step 1 confirms the outbound SNAT rewrite (`192.168.1.10` →
+`203.0.113.1`), step 2 confirms the session is tracked in the edge router's NAT
+table, and step 3 confirms the inbound DNAT port-forward (`:8080` → internal
+`192.168.1.10:80`) is delivered.
 
 Their scenarios are registered in `src/scenarios/` and are also available as standalone topology seeds for demo code.
 
