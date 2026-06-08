@@ -99,6 +99,16 @@ tutorials:
 - `grade`
 - types: `SubnetFacts`, `SubnetProblem`, `SubnetQuestionKind`, `GradeResult`
 
+## Demo surface
+
+The logic module backs a learner-facing drill in the demo app at
+`/learning/subnetting` (`SubnetDrillPanel` in `demo/learning/SubnetDrillDemo.tsx`),
+surfaced as the **Subnetting Practice** card in the gallery's Basic category. It
+is a learning-surface panel: read the question, type an answer, get immediate
+green/red feedback with the canonical answer and the one-line "why", then
+advance. The panel takes a `seed` prop so a drill session is reproducible and
+component-testable.
+
 ## Testing expectations
 
 - solver: known-answer table across `/0`, `/8`, `/24`, `/26`, `/30`, `/31`, `/32`

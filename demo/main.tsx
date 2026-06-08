@@ -34,6 +34,7 @@ import HttpsDemo from './networking/HttpsDemo';
 import GreDemo from './networking/GreDemo';
 import Dhcpv6SlaacDemo from './networking/Dhcpv6SlaacDemo';
 import HighAvailabilityDemo from './networking/HighAvailabilityDemo';
+import SubnetDrillDemo from './learning/SubnetDrillDemo';
 import Ipv6Demo from './networking/Ipv6Demo';
 import Ipv6RoutingDemo from './networking/Ipv6RoutingDemo';
 import LinkQosDemo from './networking/LinkQosDemo';
@@ -75,6 +76,7 @@ function DemoRoutes() {
     <ProgressProvider learnerId={learnerId}>
       <Routes>
         <Route path="/" element={<Gallery />} />
+        <Route path="/learning/subnetting" element={<SubnetDrillDemo />} />
         <Route path="/basic/minimal" element={<MinimalDemo />} />
         <Route path="/basic/three-tier" element={<ThreeTierDemo />} />
         <Route path="/basic/star" element={<StarDemo />} />

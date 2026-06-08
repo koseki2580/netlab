@@ -72,6 +72,12 @@ const CATEGORIES: Category[] = [
     color: '#3b82f6',
     demos: [
       {
+        path: '/learning/subnetting',
+        title: 'Subnetting Practice',
+        desc: 'Drill network/broadcast/mask/host-count and CIDR with instant, explained feedback.',
+        meta: { difficulty: 'beginner', tags: ['CIDR', 'Drill'] },
+      },
+      {
         path: '/basic/minimal',
         title: 'Minimal',
         desc: 'Two nodes directly connected. The simplest possible setup.',
