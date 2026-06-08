@@ -102,3 +102,18 @@ A running record of corrections and feedback received during sessions. Use this 
 **Why**: `stash pop` always targets `stash@{0}`, which may belong to the user; consuming it is data loss that a clean tree makes invisible.
 
 **Apply-when**: Any throwaway `checkout`/rebuild to measure or compare across commits.
+
+---
+
+## L008 — Verify learner-facing UI with jsdom component tests when e2e can't run
+
+**What happened**: Playwright e2e is unreliable in this environment (the reference arp tutorial e2e fails locally), so a new drill UI could not be validated that way — but it still needed proof a human can use it.
+
+**Rule**:
+
+- When e2e is unavailable, verify a UI feature with a jsdom component test using the repo's `createRoot` + `act` pattern: render the real component, drive real interactions (set input value + dispatch `input`, dispatch `click`), and assert on rendered output and testids.
+- Give the component a deterministic prop (e.g. `seed`) and compute expected answers from the same module the UI uses, so the test stays robust instead of hardcoding values.
+
+**Why**: A pure-logic module is not a usable feature; shipping it as "done" without a consumer surface or UI verification fails the actual goal (a human can use it).
+
+**Apply-when**: Adding learner-facing demo panels/components, especially when e2e is flaky or unavailable.
