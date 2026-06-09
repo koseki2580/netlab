@@ -492,6 +492,14 @@ export type {
   DrillAnswer,
   KindMastery,
 } from './learning/subnetting';
+export {
+  generateRouteProblem,
+  generateRouteSet,
+  gradeRoute,
+  expectedNextHop,
+  chosenRoute,
+} from './learning/routing-decision';
+export type { RouteProblem, RouteGradeResult } from './learning/routing-decision';
 
 // Interactive sandbox primitives
 export {

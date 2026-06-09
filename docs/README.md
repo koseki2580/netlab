@@ -41,6 +41,7 @@ Core specifications for the overall design of Netlab and for creating extensions
 Framework-agnostic skill-building modules that complement the visual scenarios and tutorials with active-recall practice.
 
 - [Subnetting Practice](learning/subnetting.md) - Pure solver, deterministic problem generator, and answer grader for drilling IPv4 subnet reasoning
+- [Routing Decision Practice](learning/routing-decision.md) - Longest-prefix-match drill graded by the same algorithm the engine uses
 
 ### 💻 UI & Interaction (`ui/`)
 

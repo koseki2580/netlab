@@ -103,6 +103,12 @@ const CATEGORIES: Category[] = [
     color: '#10b981',
     demos: [
       {
+        path: '/learning/routing-decision',
+        title: 'Routing Decision',
+        desc: 'Drill longest-prefix match: given a destination and a routing table, pick the next-hop.',
+        meta: { difficulty: 'beginner', tags: ['LPM', 'Drill'] },
+      },
+      {
         path: '/routing/client-server',
         title: 'Client–Server',
         desc: 'Full stack: private/public areas, router with static routes, live packet log.',
