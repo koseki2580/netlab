@@ -4,7 +4,11 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { SubnetDrillPanel } from './SubnetDrillDemo';
-import { expectedAnswer, generateProblem } from '../../src/learning/subnetting';
+import {
+  DEFAULT_SESSION_LENGTH,
+  expectedAnswer,
+  generateProblem,
+} from '../../src/learning/subnetting';
 
 const actEnvironment = globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean };
 
@@ -45,43 +49,63 @@ function click(id: string) {
   act(() => el.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0 })));
 }
 
-describe('SubnetDrillPanel', () => {
-  it('shows the first generated problem prompt', () => {
+/** Answer the current question with the given strategy, then advance. */
+function answerCurrent(index: number, mode: 'correct' | 'wrong') {
+  const value = mode === 'correct' ? expectedAnswer(generateProblem(SEED, index)).expected : 'xx';
+  type(value);
+  click('subnet-drill-check');
+  click('subnet-drill-advance');
+}
+
+describe('SubnetDrillPanel session', () => {
+  it('shows the first problem and session progress', () => {
     act(() => root?.render(<SubnetDrillPanel seed={SEED} />));
     expect(testid('subnet-drill-prompt')?.textContent).toBe(generateProblem(SEED, 0).prompt);
-    expect(testid('subnet-drill-score')?.textContent).toContain('0 / 0');
+    expect(testid('subnet-drill-progress')?.textContent).toContain(`1 / ${DEFAULT_SESSION_LENGTH}`);
   });
 
-  it('grades a correct answer and updates the score', () => {
+  it('grades a correct answer then advances to the next question', () => {
     act(() => root?.render(<SubnetDrillPanel seed={SEED} />));
     type(expectedAnswer(generateProblem(SEED, 0)).expected);
     click('subnet-drill-check');
-
     expect(testid('subnet-drill-correct')).not.toBeNull();
-    expect(testid('subnet-drill-incorrect')).toBeNull();
-    expect(testid('subnet-drill-score')?.textContent).toContain('1 / 1');
+
+    click('subnet-drill-advance');
+    expect(testid('subnet-drill-prompt')?.textContent).toBe(generateProblem(SEED, 1).prompt);
+    expect(testid('subnet-drill-progress')?.textContent).toContain(`2 / ${DEFAULT_SESSION_LENGTH}`);
+    expect(testid('subnet-drill-correct')).toBeNull();
   });
 
-  it('reveals the canonical answer and explanation for a wrong answer', () => {
+  it('reveals the canonical answer for a wrong answer', () => {
     act(() => root?.render(<SubnetDrillPanel seed={SEED} />));
     type('definitely-wrong');
     click('subnet-drill-check');
-
     const feedback = testid('subnet-drill-incorrect');
-    expect(feedback).not.toBeNull();
     expect(feedback?.textContent).toContain(expectedAnswer(generateProblem(SEED, 0)).expected);
-    expect(testid('subnet-drill-score')?.textContent).toContain('0 / 1');
   });
 
-  it('advances to a new problem on Next and clears feedback', () => {
+  it('ends with a perfect-score summary and restarts on Practice again', () => {
     act(() => root?.render(<SubnetDrillPanel seed={SEED} />));
-    type('whatever');
-    click('subnet-drill-check');
-    expect(testid('subnet-drill-feedback')?.textContent).not.toBe('');
+    for (let i = 0; i < DEFAULT_SESSION_LENGTH; i += 1) answerCurrent(i, 'correct');
 
-    click('subnet-drill-next');
-    expect(testid('subnet-drill-prompt')?.textContent).toBe(generateProblem(SEED, 1).prompt);
-    expect(testid('subnet-drill-correct')).toBeNull();
-    expect(testid('subnet-drill-incorrect')).toBeNull();
+    expect(testid('subnet-drill-summary')).not.toBeNull();
+    expect(testid('subnet-drill-score')?.textContent).toContain(
+      `${DEFAULT_SESSION_LENGTH} / ${DEFAULT_SESSION_LENGTH}`,
+    );
+    expect(testid('subnet-drill-mastered')).not.toBeNull();
+    expect(testid('subnet-drill-review')).toBeNull();
+
+    click('subnet-drill-restart');
+    expect(testid('subnet-drill-summary')).toBeNull();
+    expect(testid('subnet-drill-progress')?.textContent).toContain(`1 / ${DEFAULT_SESSION_LENGTH}`);
+  });
+
+  it('lists missed skills under review when answers are wrong', () => {
+    act(() => root?.render(<SubnetDrillPanel seed={SEED} />));
+    for (let i = 0; i < DEFAULT_SESSION_LENGTH; i += 1) answerCurrent(i, 'wrong');
+
+    expect(testid('subnet-drill-score')?.textContent).toContain(`0 / ${DEFAULT_SESSION_LENGTH}`);
+    expect(testid('subnet-drill-review')).not.toBeNull();
+    expect(testid('subnet-drill-mastered')).toBeNull();
   });
 });

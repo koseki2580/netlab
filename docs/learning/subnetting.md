@@ -99,15 +99,30 @@ tutorials:
 - `grade`
 - types: `SubnetFacts`, `SubnetProblem`, `SubnetQuestionKind`, `GradeResult`
 
+## Session
+
+A drill is run as a measurable **session** so practice is goal-shaped, not
+endless. `src/learning/subnetting/session.ts` is pure and immutable:
+
+- `startSession(seed, length = 10)` — a fixed-length run seeded for reproducibility.
+- `sessionProblem(session)` / `currentIndex(session)` — the current question.
+- `recordAnswer(session, problem, correct)` — append a graded answer (no-op once complete).
+- `isComplete(session)` — all questions answered.
+- `sessionSummary(session)` → `{ correct, total, perKind, mastered, review }`.
+
+A question kind is **mastered** when every instance of it was answered
+correctly and lands in **review** when any was missed, so the learner finishes
+with an actionable "drill these next" list rather than just a score.
+
 ## Demo surface
 
 The logic module backs a learner-facing drill in the demo app at
 `/learning/subnetting` (`SubnetDrillPanel` in `demo/learning/SubnetDrillDemo.tsx`),
 surfaced as the **Subnetting Practice** card in the gallery's Basic category. It
 is a learning-surface panel: read the question, type an answer, get immediate
-green/red feedback with the canonical answer and the one-line "why", then
-advance. The panel takes a `seed` prop so a drill session is reproducible and
-component-testable.
+green/red feedback with the canonical answer and the one-line "why", advance
+through the session, then see a mastery summary with a **Practice again** reset.
+The panel takes a `seed` prop so a session is reproducible and component-testable.
 
 ## Testing expectations
 

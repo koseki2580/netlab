@@ -474,12 +474,23 @@ export {
   generateSet,
   grade,
   expectedAnswer,
+  startSession,
+  recordAnswer,
+  sessionProblem,
+  sessionSummary,
+  currentIndex,
+  isComplete,
+  DEFAULT_SESSION_LENGTH,
 } from './learning/subnetting';
 export type {
   SubnetFacts,
   SubnetProblem,
   SubnetQuestionKind,
   GradeResult,
+  DrillSession,
+  DrillSummary,
+  DrillAnswer,
+  KindMastery,
 } from './learning/subnetting';
 
 // Interactive sandbox primitives

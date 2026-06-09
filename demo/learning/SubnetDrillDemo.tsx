@@ -1,6 +1,14 @@
 import { useCallback, useMemo, useState } from 'react';
 import DemoShell from '../DemoShell';
-import { generateProblem, grade } from '../../src/learning/subnetting';
+import {
+  currentIndex,
+  grade,
+  isComplete,
+  recordAnswer,
+  sessionProblem,
+  sessionSummary,
+  startSession,
+} from '../../src/learning/subnetting';
 import type { GradeResult, SubnetProblem } from '../../src/learning/subnetting';
 import { readDemoEmbedParams } from '../embedParams';
 
@@ -16,6 +24,17 @@ function placeholderFor(problem: SubnetProblem): string {
       return 'e.g. 192.168.1.0';
   }
 }
+
+const KIND_LABEL: Record<SubnetProblem['kind'], string> = {
+  'network-address': 'Network address',
+  'broadcast-address': 'Broadcast address',
+  'subnet-mask': 'Subnet mask',
+  'prefix-from-mask': 'Prefix from mask',
+  'usable-host-count': 'Usable host count',
+  'first-usable-host': 'First usable host',
+  'last-usable-host': 'Last usable host',
+  'contains-host': 'Host membership',
+};
 
 const cardStyle: React.CSSProperties = {
   background: 'var(--netlab-bg-surface)',
@@ -41,57 +60,96 @@ const buttonStyle = (accent: string): React.CSSProperties => ({
 });
 
 /**
- * Active-recall subnetting drill. Pure-logic `generateProblem`/`grade` drive a
- * learning-surface practice loop: read a question, answer, get immediate
- * feedback with the canonical answer and a one-line "why", then advance.
+ * Active-recall subnetting drill, run as a measurable session: a fixed number
+ * of generated questions, immediate explained feedback per answer, and an
+ * end-of-session mastery summary that tells the learner which subnet skills to
+ * drill next. `generateProblem`/`grade`/session helpers are pure logic.
  */
 export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
-  const [seq, setSeq] = useState(0);
+  const [session, setSession] = useState(() => startSession(seed));
   const [answer, setAnswer] = useState('');
   const [result, setResult] = useState<GradeResult | null>(null);
-  const [correct, setCorrect] = useState(0);
-  const [total, setTotal] = useState(0);
 
-  const problem = useMemo(() => generateProblem(seed, seq), [seed, seq]);
+  const problem = useMemo(() => sessionProblem(session), [session]);
+  const done = isComplete(session);
+  const index = currentIndex(session);
+  const isLast = index === session.length - 1;
 
   const check = useCallback(() => {
     if (result || answer.trim() === '') return;
-    const graded = grade(problem, answer);
-    setResult(graded);
-    setTotal((value) => value + 1);
-    if (graded.correct) setCorrect((value) => value + 1);
+    setResult(grade(problem, answer));
   }, [answer, problem, result]);
 
-  const next = useCallback(() => {
-    setSeq((value) => value + 1);
+  const advance = useCallback(() => {
+    if (!result) return;
+    setSession((current) => recordAnswer(current, problem, result.correct));
     setAnswer('');
     setResult(null);
-  }, []);
+  }, [problem, result]);
+
+  const restart = useCallback(() => {
+    setSession(startSession(seed + session.length));
+    setAnswer('');
+    setResult(null);
+  }, [seed, session.length]);
+
+  if (done) {
+    const summary = sessionSummary(session);
+    return (
+      <DrillFrame>
+        <div data-testid="subnet-drill-summary" style={cardStyle}>
+          <h2 style={{ margin: 0, color: 'var(--netlab-text-primary)', fontSize: 18 }}>
+            Session complete
+          </h2>
+          <div
+            data-testid="subnet-drill-score"
+            style={{ fontSize: 28, fontWeight: 800, color: 'var(--netlab-text-primary)' }}
+          >
+            {summary.correct} / {summary.total}
+          </div>
+
+          <SkillList
+            testid="subnet-drill-mastered"
+            label="Mastered"
+            accent="var(--netlab-accent-green)"
+            kinds={summary.mastered}
+          />
+          <SkillList
+            testid="subnet-drill-review"
+            label="Review these next"
+            accent="var(--netlab-accent-yellow)"
+            kinds={summary.review}
+          />
+
+          <button
+            type="button"
+            data-testid="subnet-drill-restart"
+            onClick={restart}
+            style={buttonStyle('var(--netlab-accent-blue)')}
+          >
+            Practice again
+          </button>
+        </div>
+      </DrillFrame>
+    );
+  }
 
   return (
-    <div
-      data-testid="subnet-drill"
-      style={{
-        background: 'var(--netlab-learning-surface-bg)',
-        minHeight: '100%',
-        padding: '32px 16px',
-        boxSizing: 'border-box',
-      }}
-    >
+    <DrillFrame>
       <div style={cardStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <h2 style={{ margin: 0, color: 'var(--netlab-text-primary)', fontSize: 18 }}>
             Subnetting Practice
           </h2>
           <span
-            data-testid="subnet-drill-score"
+            data-testid="subnet-drill-progress"
             style={{
               fontFamily: 'ui-monospace, monospace',
               fontSize: 13,
               color: 'var(--netlab-text-secondary)',
             }}
           >
-            Score: {correct} / {total}
+            Question {index + 1} / {session.length}
           </span>
         </div>
 
@@ -111,7 +169,7 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
               event.preventDefault();
-              if (result) next();
+              if (result) advance();
               else check();
             }
           }}
@@ -145,11 +203,12 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
           </button>
           <button
             type="button"
-            data-testid="subnet-drill-next"
-            onClick={next}
-            style={buttonStyle('var(--netlab-accent-green)')}
+            data-testid="subnet-drill-advance"
+            onClick={advance}
+            disabled={result === null}
+            style={{ ...buttonStyle('var(--netlab-accent-green)'), opacity: result ? 1 : 0.5 }}
           >
-            Next question
+            {isLast ? 'See results' : 'Next question'}
           </button>
         </div>
 
@@ -182,6 +241,57 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
             </div>
           )}
         </div>
+      </div>
+    </DrillFrame>
+  );
+}
+
+function DrillFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      data-testid="subnet-drill"
+      style={{
+        background: 'var(--netlab-learning-surface-bg)',
+        minHeight: '100%',
+        padding: '32px 16px',
+        boxSizing: 'border-box',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function SkillList({
+  testid,
+  label,
+  accent,
+  kinds,
+}: {
+  testid: string;
+  label: string;
+  accent: string;
+  kinds: readonly SubnetProblem['kind'][];
+}) {
+  if (kinds.length === 0) return null;
+  return (
+    <div data-testid={testid}>
+      <div style={{ color: accent, fontWeight: 700, fontSize: 13, marginBottom: 6 }}>{label}</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {kinds.map((kind) => (
+          <span
+            key={kind}
+            style={{
+              padding: '3px 10px',
+              borderRadius: 'var(--netlab-radius-pill)',
+              border: `1px solid color-mix(in srgb, ${accent} 40%, var(--netlab-learning-surface-border))`,
+              color: 'var(--netlab-text-primary)',
+              fontSize: 12,
+            }}
+          >
+            {KIND_LABEL[kind]}
+          </span>
+        ))}
       </div>
     </div>
   );
