@@ -9,6 +9,12 @@ import {
   expectedAnswer,
   generateProblem,
 } from '../../src/learning/subnetting';
+import {
+  createMemoryProgressStorage,
+  parseProgressJson,
+  ProgressProvider,
+  progressStorageKey,
+} from '../../src/progress';
 
 const actEnvironment = globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean };
 
@@ -125,5 +131,30 @@ describe('SubnetDrillPanel session', () => {
     expect(testid('subnet-drill-score')?.textContent).toContain(`0 / ${DEFAULT_SESSION_LENGTH}`);
     expect(testid('subnet-drill-review')).not.toBeNull();
     expect(testid('subnet-drill-mastered')).toBeNull();
+  });
+
+  it('records a drill completion with the score in learner progress', () => {
+    const storage = createMemoryProgressStorage();
+    act(() =>
+      root?.render(
+        <ProgressProvider learnerId="learner-1" storage={storage}>
+          <SubnetDrillPanel seed={SEED} />
+        </ProgressProvider>,
+      ),
+    );
+    for (let i = 0; i < DEFAULT_SESSION_LENGTH; i += 1) answerCurrent(i, 'correct');
+
+    const raw = storage.get(progressStorageKey('learner-1'));
+    expect(raw.ok).toBe(true);
+    const parsed = parseProgressJson(raw.ok ? (raw.value ?? '') : '');
+    expect(parsed.ok).toBe(true);
+    if (parsed.ok) {
+      const completion = parsed.progress.completions.find((entry) => entry.id === 'subnet-drill');
+      expect(completion?.kind).toBe('drill');
+      expect(completion?.score).toEqual({
+        passed: DEFAULT_SESSION_LENGTH,
+        total: DEFAULT_SESSION_LENGTH,
+      });
+    }
   });
 });

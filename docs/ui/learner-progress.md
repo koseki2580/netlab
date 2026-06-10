@@ -52,7 +52,7 @@ The v1 JSON shape is:
 }
 ```
 
-`kind` is one of `assessment`, `tutorial`, or `sandbox-intro`. Completions are deduped by `(kind, id)` so replaying a pass updates the entry instead of appending duplicates.
+`kind` is one of `assessment`, `tutorial`, `sandbox-intro`, or `drill`. Completions are deduped by `(kind, id)` so replaying a pass updates the entry instead of appending duplicates.
 
 The parser accepts the current v1 schema and migrates the legacy v0 tutorial-array shape into v1 completions. Unknown schemas return `unknown-schema`; malformed JSON returns `invalid-json`.
 
@@ -63,8 +63,10 @@ The shipped emit sites are intentionally additive:
 - `AssessmentProvider` records an `assessment` completion when the rubric status reaches `passed`.
 - `TutorialProvider` records a `tutorial` completion when its runner reaches `passed`.
 - `SandboxIntroProvider` records a `sandbox-intro` completion when the intro runner reaches `passed`.
+- The learning drill panels (`SubnetDrillPanel`, `RoutingDrillPanel`) record a `drill` completion
+  with the session score when a practice session finishes; each restart can update the entry.
 
-All three use `useOptionalProgress()`, so missing provider or missing `learnerId` is a no-op.
+All emit sites use `useOptionalProgress()`, so missing provider or missing `learnerId` is a no-op.
 
 ## UI
 

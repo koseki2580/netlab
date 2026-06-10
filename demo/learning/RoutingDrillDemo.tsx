@@ -10,6 +10,7 @@ import {
   drillCardStyle,
   drillInputStyle,
   pillButton,
+  useDrillCompletion,
   useFocusWhen,
   useQuestionFocus,
 } from './drillKit';
@@ -33,6 +34,7 @@ export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
   const isLast = index === SESSION_LENGTH - 1;
   const inputRef = useQuestionFocus<HTMLInputElement>(done ? 'done' : index);
   const summaryRef = useFocusWhen<HTMLHeadingElement>(done);
+  useDrillCompletion('routing-drill', 'Routing Decision', done, correct, SESSION_LENGTH);
 
   const check = useCallback(() => {
     if (result || answer.trim() === '') return;

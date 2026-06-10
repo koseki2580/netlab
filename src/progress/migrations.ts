@@ -18,7 +18,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function isValidCompletion(value: unknown): value is ProgressCompletion {
   if (!isRecord(value)) return false;
   return (
-    (value.kind === 'assessment' || value.kind === 'tutorial' || value.kind === 'sandbox-intro') &&
+    (value.kind === 'assessment' ||
+      value.kind === 'tutorial' ||
+      value.kind === 'sandbox-intro' ||
+      value.kind === 'drill') &&
     typeof value.id === 'string' &&
     typeof value.completedAt === 'string'
   );

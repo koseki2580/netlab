@@ -1,6 +1,6 @@
 export const CURRENT_PROGRESS_SCHEMA_VERSION = 1;
 
-export type ProgressCompletionKind = 'assessment' | 'tutorial' | 'sandbox-intro';
+export type ProgressCompletionKind = 'assessment' | 'tutorial' | 'sandbox-intro' | 'drill';
 
 export interface ProgressScore {
   readonly passed: number;

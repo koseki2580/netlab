@@ -18,6 +18,7 @@ import {
   drillCardStyle,
   drillInputStyle,
   pillButton,
+  useDrillCompletion,
   useFocusWhen,
   useQuestionFocus,
 } from './drillKit';
@@ -63,6 +64,13 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
   const isLast = index === session.length - 1;
   const inputRef = useQuestionFocus<HTMLInputElement>(done ? 'done' : index);
   const summaryRef = useFocusWhen<HTMLHeadingElement>(done);
+  useDrillCompletion(
+    'subnet-drill',
+    'Subnetting Practice',
+    done,
+    session.answers.filter((entry) => entry.correct).length,
+    session.length,
+  );
 
   const check = useCallback(() => {
     if (result || answer.trim() === '') return;

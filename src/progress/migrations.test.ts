@@ -26,6 +26,29 @@ describe('progress migrations', () => {
     }
   });
 
+  it('accepts drill completions', () => {
+    const result = parseProgressJson(
+      JSON.stringify({
+        schemaVersion: CURRENT_PROGRESS_SCHEMA_VERSION,
+        learnerId: 'learner-1',
+        completions: [
+          {
+            kind: 'drill',
+            id: 'subnet-drill',
+            completedAt: '2026-06-10T00:00:00.000Z',
+            score: { passed: 9, total: 10 },
+          },
+        ],
+        updatedAt: '2026-06-10T00:00:00.000Z',
+      }),
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.progress.completions[0]?.kind).toBe('drill');
+    }
+  });
+
   it('migrates legacy v0 tutorial arrays into v1 completions', () => {
     const result = parseProgressJson(
       JSON.stringify({

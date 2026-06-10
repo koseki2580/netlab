@@ -1,4 +1,5 @@
 import { useEffect, useRef, type RefObject } from 'react';
+import { useOptionalProgress } from '../../src/progress';
 
 /**
  * Shared building blocks for the active-recall drill panels (subnetting,
@@ -190,4 +191,31 @@ export function useFocusWhen<T extends HTMLElement>(active: boolean): RefObject<
     if (active) ref.current?.focus();
   }, [active]);
   return ref;
+}
+
+/**
+ * Record a `drill` completion in learner progress when a session finishes, so
+ * drills show up alongside tutorials/assessments in the progress panel and
+ * learning map. Uses `useOptionalProgress()`, so without a provider or
+ * learnerId it is a no-op. Records once per completed session and re-arms on
+ * restart (when `done` flips back to false).
+ */
+export function useDrillCompletion(
+  id: string,
+  label: string,
+  done: boolean,
+  passed: number,
+  total: number,
+): void {
+  const progress = useOptionalProgress();
+  const recorded = useRef(false);
+  useEffect(() => {
+    if (!done) {
+      recorded.current = false;
+      return;
+    }
+    if (recorded.current) return;
+    recorded.current = true;
+    progress.recordCompletion({ kind: 'drill', id, label, score: { passed, total } });
+  }, [done, id, label, passed, progress, total]);
 }
