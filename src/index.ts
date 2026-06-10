@@ -500,6 +500,9 @@ export {
   chosenRoute,
 } from './learning/routing-decision';
 export type { RouteProblem, RouteGradeResult } from './learning/routing-decision';
+// Learning — embeddable drill UI (learning-surface panels host apps can mount)
+export { SubnetDrillPanel } from './components/learning/SubnetDrillPanel';
+export { RoutingDrillPanel } from './components/learning/RoutingDrillPanel';
 
 // Interactive sandbox primitives
 export {

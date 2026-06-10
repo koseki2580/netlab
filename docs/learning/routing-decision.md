@@ -44,13 +44,24 @@ is shuffled before display.
 local so the learning module stays decoupled from the simulation pipeline, and a
 test asserts the two agree on every generated problem so they can never drift.
 
-## Demo surface
+## Demo surface & embedding
 
-Backed by `RoutingDrillPanel` (`demo/learning/RoutingDrillDemo.tsx`) at
-`/learning/routing-decision`, shown as the **Routing Decision** card in the
-gallery's Routing category. An 8-question session renders the destination and the
-routing table, takes a next-hop answer, gives immediate feedback naming the
-winning route, then shows a score with **Practice again**.
+The drill UI is a library component — `RoutingDrillPanel`
+(`src/components/learning/RoutingDrillPanel.tsx`), exported from the package
+root so host applications can mount it directly:
+
+```tsx
+import { RoutingDrillPanel } from 'netlab';
+
+<RoutingDrillPanel seed={42} />; // optional seed for a reproducible session
+```
+
+The demo app hosts it at `/learning/routing-decision` (thin `DemoShell`
+wrapper), shown as the **Routing Decision** card in the gallery's Routing
+category. An 8-question session renders the destination and the routing table,
+takes a next-hop answer, gives immediate feedback naming the winning route,
+then shows a score with **Practice again**. Inside a `ProgressProvider` it
+records a `drill` completion with the session score.
 
 ## Public API
 

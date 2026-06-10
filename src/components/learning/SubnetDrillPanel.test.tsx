@@ -3,18 +3,14 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { SubnetDrillPanel } from './SubnetDrillDemo';
-import {
-  DEFAULT_SESSION_LENGTH,
-  expectedAnswer,
-  generateProblem,
-} from '../../src/learning/subnetting';
+import { SubnetDrillPanel } from './SubnetDrillPanel';
+import { DEFAULT_SESSION_LENGTH, expectedAnswer, generateProblem } from '../../learning/subnetting';
 import {
   createMemoryProgressStorage,
   parseProgressJson,
   ProgressProvider,
   progressStorageKey,
-} from '../../src/progress';
+} from '../../progress';
 
 const actEnvironment = globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean };
 

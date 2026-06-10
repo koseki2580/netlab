@@ -1,5 +1,5 @@
 import { useEffect, useRef, type RefObject } from 'react';
-import { useOptionalProgress } from '../../src/progress';
+import { useOptionalProgress } from '../../progress';
 
 /**
  * Shared building blocks for the active-recall drill panels (subnetting,

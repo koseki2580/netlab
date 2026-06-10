@@ -3,8 +3,8 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { RoutingDrillPanel } from './RoutingDrillDemo';
-import { expectedNextHop, generateRouteProblem } from '../../src/learning/routing-decision';
+import { RoutingDrillPanel } from './RoutingDrillPanel';
+import { expectedNextHop, generateRouteProblem } from '../../learning/routing-decision';
 
 const actEnvironment = globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean };
 

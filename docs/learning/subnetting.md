@@ -114,10 +114,23 @@ A question kind is **mastered** when every instance of it was answered
 correctly and lands in **review** when any was missed, so the learner finishes
 with an actionable "drill these next" list rather than just a score.
 
-## Demo surface
+## Demo surface & embedding
 
-The logic module backs a learner-facing drill in the demo app at
-`/learning/subnetting` (`SubnetDrillPanel` in `demo/learning/SubnetDrillDemo.tsx`),
+The drill UI is a library component — `SubnetDrillPanel`
+(`src/components/learning/SubnetDrillPanel.tsx`), exported from the package
+root so host applications can mount the full practice experience:
+
+```tsx
+import { SubnetDrillPanel } from 'netlab';
+
+<SubnetDrillPanel seed={42} />; // optional seed for a reproducible session
+```
+
+Mounted inside a `ProgressProvider` it records a `drill` completion with the
+session score; without one it still works and skips persistence.
+
+The demo app hosts it at `/learning/subnetting`
+(`demo/learning/SubnetDrillDemo.tsx` is a thin `DemoShell` wrapper),
 surfaced as the **Subnetting Practice** card in the gallery's Basic category. It
 is a learning-surface panel: read the question, type an answer, get immediate
 green/red feedback with the canonical answer and the one-line "why", advance
