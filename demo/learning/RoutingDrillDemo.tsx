@@ -3,31 +3,18 @@ import DemoShell from '../DemoShell';
 import { generateRouteProblem, gradeRoute } from '../../src/learning/routing-decision';
 import type { RouteGradeResult } from '../../src/learning/routing-decision';
 import { readDemoEmbedParams } from '../embedParams';
+import {
+  ConceptCallout,
+  DrillFeedback,
+  DrillFrame,
+  drillCardStyle,
+  drillInputStyle,
+  pillButton,
+  useFocusWhen,
+  useQuestionFocus,
+} from './drillKit';
 
 const SESSION_LENGTH = 8;
-
-const cardStyle: React.CSSProperties = {
-  background: 'var(--netlab-bg-surface)',
-  border: '1px solid var(--netlab-learning-surface-border)',
-  borderRadius: 'var(--netlab-radius-lg)',
-  boxShadow: 'var(--netlab-learning-surface-shadow)',
-  padding: 24,
-  maxWidth: 560,
-  margin: '0 auto',
-  display: 'grid',
-  gap: 16,
-};
-
-const buttonStyle = (accent: string): React.CSSProperties => ({
-  padding: '10px 16px',
-  borderRadius: 'var(--netlab-radius-pill)',
-  border: `1px solid color-mix(in srgb, ${accent} 40%, var(--netlab-learning-surface-border))`,
-  background: `color-mix(in srgb, ${accent} 14%, var(--netlab-bg-surface))`,
-  color: 'var(--netlab-text-primary)',
-  fontWeight: 700,
-  fontSize: 14,
-  cursor: 'pointer',
-});
 
 /**
  * Active-recall drill for the router's core decision: longest-prefix match.
@@ -44,6 +31,8 @@ export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
   const problem = useMemo(() => generateRouteProblem(baseSeed, index), [baseSeed, index]);
   const done = index >= SESSION_LENGTH;
   const isLast = index === SESSION_LENGTH - 1;
+  const inputRef = useQuestionFocus<HTMLInputElement>(done ? 'done' : index);
+  const summaryRef = useFocusWhen<HTMLHeadingElement>(done);
 
   const check = useCallback(() => {
     if (result || answer.trim() === '') return;
@@ -68,9 +57,18 @@ export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
 
   if (done) {
     return (
-      <DrillFrame>
-        <div data-testid="routing-drill-summary" style={cardStyle}>
-          <h2 style={{ margin: 0, color: 'var(--netlab-text-primary)', fontSize: 18 }}>
+      <DrillFrame idPrefix="routing-drill">
+        <div data-testid="routing-drill-summary" style={drillCardStyle}>
+          <h2
+            ref={summaryRef}
+            tabIndex={-1}
+            style={{
+              margin: 0,
+              color: 'var(--netlab-text-primary)',
+              fontSize: 18,
+              outline: 'none',
+            }}
+          >
             Session complete
           </h2>
           <div
@@ -87,7 +85,7 @@ export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
             type="button"
             data-testid="routing-drill-restart"
             onClick={restart}
-            style={buttonStyle('var(--netlab-accent-blue)')}
+            style={pillButton('var(--netlab-accent-blue)')}
           >
             Practice again
           </button>
@@ -97,8 +95,8 @@ export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
   }
 
   return (
-    <DrillFrame>
-      <div style={cardStyle}>
+    <DrillFrame idPrefix="routing-drill">
+      <div style={drillCardStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <h2 style={{ margin: 0, color: 'var(--netlab-text-primary)', fontSize: 18 }}>
             Routing Decision
@@ -114,6 +112,13 @@ export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
             Question {index + 1} / {SESSION_LENGTH}
           </span>
         </div>
+
+        <ConceptCallout idPrefix="routing-drill" title="New to routing tables? Start here">
+          A destination can match several routes at once — a default route, a summary prefix, and a
+          specific subnet. The router always forwards via the <strong>most specific</strong> match:
+          the one with the <strong>longest prefix</strong> (largest /n). Table order and the other
+          routes don't matter — only which subnet most tightly contains the destination.
+        </ConceptCallout>
 
         <label
           htmlFor="routing-drill-answer"
@@ -133,10 +138,24 @@ export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
             color: 'var(--netlab-text-primary)',
           }}
         >
+          <caption
+            style={{
+              textAlign: 'left',
+              color: 'var(--netlab-text-secondary)',
+              fontSize: 12,
+              paddingBottom: 4,
+            }}
+          >
+            Routing table
+          </caption>
           <thead>
             <tr style={{ color: 'var(--netlab-text-secondary)', textAlign: 'left' }}>
-              <th style={{ padding: '4px 8px' }}>Destination</th>
-              <th style={{ padding: '4px 8px' }}>Next-hop</th>
+              <th scope="col" style={{ padding: '4px 8px' }}>
+                Destination
+              </th>
+              <th scope="col" style={{ padding: '4px 8px' }}>
+                Next-hop
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -152,6 +171,7 @@ export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
         <input
           id="routing-drill-answer"
           data-testid="routing-drill-input"
+          ref={inputRef}
           value={answer}
           onChange={(event) => setAnswer(event.target.value)}
           onKeyDown={(event) => {
@@ -165,15 +185,7 @@ export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
           aria-label="Chosen next-hop"
           autoComplete="off"
           spellCheck={false}
-          style={{
-            padding: '10px 12px',
-            borderRadius: 'var(--netlab-radius-sm)',
-            border: '1px solid var(--netlab-learning-surface-border)',
-            background: 'var(--netlab-bg-primary)',
-            color: 'var(--netlab-text-primary)',
-            fontFamily: 'ui-monospace, monospace',
-            fontSize: 15,
-          }}
+          style={drillInputStyle}
         />
 
         <div style={{ display: 'flex', gap: 12 }}>
@@ -183,7 +195,7 @@ export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
             onClick={check}
             disabled={result !== null || answer.trim() === ''}
             style={{
-              ...buttonStyle('var(--netlab-accent-blue)'),
+              ...pillButton('var(--netlab-accent-blue)'),
               opacity: result !== null || answer.trim() === '' ? 0.5 : 1,
             }}
           >
@@ -194,59 +206,15 @@ export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
             data-testid="routing-drill-advance"
             onClick={advance}
             disabled={result === null}
-            style={{ ...buttonStyle('var(--netlab-accent-green)'), opacity: result ? 1 : 0.5 }}
+            style={{ ...pillButton('var(--netlab-accent-green)'), opacity: result ? 1 : 0.5 }}
           >
             {isLast ? 'See results' : 'Next question'}
           </button>
         </div>
 
-        <div
-          data-testid="routing-drill-feedback"
-          role="status"
-          aria-live="polite"
-          style={{ minHeight: 44 }}
-        >
-          {result && (
-            <div
-              data-testid={result.correct ? 'routing-drill-correct' : 'routing-drill-incorrect'}
-              style={{
-                borderRadius: 'var(--netlab-radius-md)',
-                padding: '10px 12px',
-                background: `color-mix(in srgb, ${
-                  result.correct ? 'var(--netlab-accent-green)' : 'var(--netlab-accent-red)'
-                } 12%, var(--netlab-bg-surface))`,
-                color: 'var(--netlab-text-primary)',
-                fontSize: 14,
-                lineHeight: 1.5,
-              }}
-            >
-              <strong>
-                {result.correct ? '✓ Correct' : `✗ Not quite — answer: ${result.expected}`}
-              </strong>
-              <div style={{ marginTop: 4, color: 'var(--netlab-text-secondary)' }}>
-                {result.explanation}
-              </div>
-            </div>
-          )}
-        </div>
+        <DrillFeedback idPrefix="routing-drill" result={result} />
       </div>
     </DrillFrame>
-  );
-}
-
-function DrillFrame({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      data-testid="routing-drill"
-      style={{
-        background: 'var(--netlab-learning-surface-bg)',
-        minHeight: '100%',
-        padding: '32px 16px',
-        boxSizing: 'border-box',
-      }}
-    >
-      {children}
-    </div>
   );
 }
 

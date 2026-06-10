@@ -51,6 +51,10 @@ describe('RoutingDrillPanel', () => {
     act(() => root?.render(<RoutingDrillPanel seed={SEED} />));
     expect(testid('routing-drill-prompt')?.textContent).toBe(generateRouteProblem(SEED, 0).prompt);
     expect(testid('routing-drill-table')?.querySelectorAll('tbody tr')).toHaveLength(4);
+    expect(testid('routing-drill-table')?.querySelector('caption')?.textContent).toBe(
+      'Routing table',
+    );
+    expect(testid('routing-drill-table')?.querySelectorAll('th[scope="col"]')).toHaveLength(2);
     expect(testid('routing-drill-progress')?.textContent).toContain(`1 / ${LENGTH}`);
   });
 
@@ -73,6 +77,17 @@ describe('RoutingDrillPanel', () => {
     expect(feedback?.textContent).toContain(expectedNextHop(generateRouteProblem(SEED, 0)));
   });
 
+  it('shows a concept primer, keeps load focus, and moves focus on advance', () => {
+    act(() => root?.render(<RoutingDrillPanel seed={SEED} />));
+    expect(testid('routing-drill-concept')).not.toBeNull();
+    expect(document.activeElement).not.toBe(testid('routing-drill-input'));
+
+    type(expectedNextHop(generateRouteProblem(SEED, 0)));
+    click('routing-drill-check');
+    click('routing-drill-advance');
+    expect(document.activeElement).toBe(testid('routing-drill-input'));
+  });
+
   it('reaches a scored summary and restarts', () => {
     act(() => root?.render(<RoutingDrillPanel seed={SEED} />));
     for (let i = 0; i < LENGTH; i += 1) {
@@ -82,6 +97,9 @@ describe('RoutingDrillPanel', () => {
     }
     expect(testid('routing-drill-summary')).not.toBeNull();
     expect(testid('routing-drill-score')?.textContent).toContain(`${LENGTH} / ${LENGTH}`);
+    expect(container?.querySelector('[data-testid="routing-drill-summary"] h2')).toBe(
+      document.activeElement,
+    );
 
     click('routing-drill-restart');
     expect(testid('routing-drill-summary')).toBeNull();

@@ -11,6 +11,16 @@ import {
 } from '../../src/learning/subnetting';
 import type { GradeResult, SubnetProblem } from '../../src/learning/subnetting';
 import { readDemoEmbedParams } from '../embedParams';
+import {
+  ConceptCallout,
+  DrillFeedback,
+  DrillFrame,
+  drillCardStyle,
+  drillInputStyle,
+  pillButton,
+  useFocusWhen,
+  useQuestionFocus,
+} from './drillKit';
 
 function placeholderFor(problem: SubnetProblem): string {
   switch (problem.kind) {
@@ -36,29 +46,6 @@ const KIND_LABEL: Record<SubnetProblem['kind'], string> = {
   'contains-host': 'Host membership',
 };
 
-const cardStyle: React.CSSProperties = {
-  background: 'var(--netlab-bg-surface)',
-  border: '1px solid var(--netlab-learning-surface-border)',
-  borderRadius: 'var(--netlab-radius-lg)',
-  boxShadow: 'var(--netlab-learning-surface-shadow)',
-  padding: 24,
-  maxWidth: 560,
-  margin: '0 auto',
-  display: 'grid',
-  gap: 16,
-};
-
-const buttonStyle = (accent: string): React.CSSProperties => ({
-  padding: '10px 16px',
-  borderRadius: 'var(--netlab-radius-pill)',
-  border: `1px solid color-mix(in srgb, ${accent} 40%, var(--netlab-learning-surface-border))`,
-  background: `color-mix(in srgb, ${accent} 14%, var(--netlab-bg-surface))`,
-  color: 'var(--netlab-text-primary)',
-  fontWeight: 700,
-  fontSize: 14,
-  cursor: 'pointer',
-});
-
 /**
  * Active-recall subnetting drill, run as a measurable session: a fixed number
  * of generated questions, immediate explained feedback per answer, and an
@@ -74,6 +61,8 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
   const done = isComplete(session);
   const index = currentIndex(session);
   const isLast = index === session.length - 1;
+  const inputRef = useQuestionFocus<HTMLInputElement>(done ? 'done' : index);
+  const summaryRef = useFocusWhen<HTMLHeadingElement>(done);
 
   const check = useCallback(() => {
     if (result || answer.trim() === '') return;
@@ -96,9 +85,18 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
   if (done) {
     const summary = sessionSummary(session);
     return (
-      <DrillFrame>
-        <div data-testid="subnet-drill-summary" style={cardStyle}>
-          <h2 style={{ margin: 0, color: 'var(--netlab-text-primary)', fontSize: 18 }}>
+      <DrillFrame idPrefix="subnet-drill">
+        <div data-testid="subnet-drill-summary" style={drillCardStyle}>
+          <h2
+            ref={summaryRef}
+            tabIndex={-1}
+            style={{
+              margin: 0,
+              color: 'var(--netlab-text-primary)',
+              fontSize: 18,
+              outline: 'none',
+            }}
+          >
             Session complete
           </h2>
           <div
@@ -125,7 +123,7 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
             type="button"
             data-testid="subnet-drill-restart"
             onClick={restart}
-            style={buttonStyle('var(--netlab-accent-blue)')}
+            style={pillButton('var(--netlab-accent-blue)')}
           >
             Practice again
           </button>
@@ -135,8 +133,8 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
   }
 
   return (
-    <DrillFrame>
-      <div style={cardStyle}>
+    <DrillFrame idPrefix="subnet-drill">
+      <div style={drillCardStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <h2 style={{ margin: 0, color: 'var(--netlab-text-primary)', fontSize: 18 }}>
             Subnetting Practice
@@ -153,6 +151,14 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
           </span>
         </div>
 
+        <ConceptCallout idPrefix="subnet-drill" title="New to subnetting? Start here">
+          A subnet splits an address into a <strong>network</strong> part (the prefix, e.g. /24) and
+          a <strong>host</strong> part. The <strong>network address</strong> has all host bits 0;
+          the <strong>broadcast</strong> has them all 1. <strong>Usable hosts</strong> = 2^(host
+          bits) − 2 (network and broadcast aren't assignable). The <strong>mask</strong> marks the
+          network bits with 1s, so /24 = 255.255.255.0.
+        </ConceptCallout>
+
         <label
           htmlFor="subnet-drill-answer"
           data-testid="subnet-drill-prompt"
@@ -164,6 +170,7 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
         <input
           id="subnet-drill-answer"
           data-testid="subnet-drill-input"
+          ref={inputRef}
           value={answer}
           onChange={(event) => setAnswer(event.target.value)}
           onKeyDown={(event) => {
@@ -177,15 +184,7 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
           aria-label="Your answer"
           autoComplete="off"
           spellCheck={false}
-          style={{
-            padding: '10px 12px',
-            borderRadius: 'var(--netlab-radius-sm)',
-            border: '1px solid var(--netlab-learning-surface-border)',
-            background: 'var(--netlab-bg-primary)',
-            color: 'var(--netlab-text-primary)',
-            fontFamily: 'ui-monospace, monospace',
-            fontSize: 15,
-          }}
+          style={drillInputStyle}
         />
 
         <div style={{ display: 'flex', gap: 12 }}>
@@ -195,7 +194,7 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
             onClick={check}
             disabled={result !== null || answer.trim() === ''}
             style={{
-              ...buttonStyle('var(--netlab-accent-blue)'),
+              ...pillButton('var(--netlab-accent-blue)'),
               opacity: result !== null || answer.trim() === '' ? 0.5 : 1,
             }}
           >
@@ -206,59 +205,15 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
             data-testid="subnet-drill-advance"
             onClick={advance}
             disabled={result === null}
-            style={{ ...buttonStyle('var(--netlab-accent-green)'), opacity: result ? 1 : 0.5 }}
+            style={{ ...pillButton('var(--netlab-accent-green)'), opacity: result ? 1 : 0.5 }}
           >
             {isLast ? 'See results' : 'Next question'}
           </button>
         </div>
 
-        <div
-          data-testid="subnet-drill-feedback"
-          role="status"
-          aria-live="polite"
-          style={{ minHeight: 44 }}
-        >
-          {result && (
-            <div
-              data-testid={result.correct ? 'subnet-drill-correct' : 'subnet-drill-incorrect'}
-              style={{
-                borderRadius: 'var(--netlab-radius-md)',
-                padding: '10px 12px',
-                background: `color-mix(in srgb, ${
-                  result.correct ? 'var(--netlab-accent-green)' : 'var(--netlab-accent-red)'
-                } 12%, var(--netlab-bg-surface))`,
-                color: 'var(--netlab-text-primary)',
-                fontSize: 14,
-                lineHeight: 1.5,
-              }}
-            >
-              <strong>
-                {result.correct ? '✓ Correct' : `✗ Not quite — answer: ${result.expected}`}
-              </strong>
-              <div style={{ marginTop: 4, color: 'var(--netlab-text-secondary)' }}>
-                {result.explanation}
-              </div>
-            </div>
-          )}
-        </div>
+        <DrillFeedback idPrefix="subnet-drill" result={result} />
       </div>
     </DrillFrame>
-  );
-}
-
-function DrillFrame({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      data-testid="subnet-drill"
-      style={{
-        background: 'var(--netlab-learning-surface-bg)',
-        minHeight: '100%',
-        padding: '32px 16px',
-        boxSizing: 'border-box',
-      }}
-    >
-      {children}
-    </div>
   );
 }
 

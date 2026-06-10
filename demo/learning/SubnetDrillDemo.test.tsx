@@ -94,10 +94,28 @@ describe('SubnetDrillPanel session', () => {
     );
     expect(testid('subnet-drill-mastered')).not.toBeNull();
     expect(testid('subnet-drill-review')).toBeNull();
+    // Focus moves to the results heading rather than being stranded at <body>.
+    expect(container?.querySelector('[data-testid="subnet-drill-summary"] h2')).toBe(
+      document.activeElement,
+    );
 
     click('subnet-drill-restart');
     expect(testid('subnet-drill-summary')).toBeNull();
     expect(testid('subnet-drill-progress')?.textContent).toContain(`1 / ${DEFAULT_SESSION_LENGTH}`);
+  });
+
+  it('shows a concept primer and does not steal focus on initial load', () => {
+    act(() => root?.render(<SubnetDrillPanel seed={SEED} />));
+    expect(testid('subnet-drill-concept')).not.toBeNull();
+    expect(document.activeElement).not.toBe(testid('subnet-drill-input'));
+  });
+
+  it('moves focus to the input after advancing so keyboard/SR users continue smoothly', () => {
+    act(() => root?.render(<SubnetDrillPanel seed={SEED} />));
+    type(expectedAnswer(generateProblem(SEED, 0)).expected);
+    click('subnet-drill-check');
+    click('subnet-drill-advance');
+    expect(document.activeElement).toBe(testid('subnet-drill-input'));
   });
 
   it('lists missed skills under review when answers are wrong', () => {
