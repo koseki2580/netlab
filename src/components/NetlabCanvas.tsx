@@ -85,6 +85,12 @@ export interface NetlabCanvasProps {
   onNodesChange?: (nodes: NetlabNode[]) => void;
   onEdgesChange?: (edges: NetlabEdge[]) => void;
   onTopologyChange?: (topology: TopologySnapshot) => void;
+  /**
+   * Passive observation hook: fires whenever the canvas's node selection
+   * changes (node click, or pane click clearing it). Does not alter selection
+   * behavior — learning surfaces use it to answer by clicking a node.
+   */
+  onNodeSelect?: (nodeId: string | null) => void;
 }
 
 export interface NetlabViewport {
@@ -104,6 +110,7 @@ export function NetlabCanvas({
   onNodesChange: onNodesChangeProp,
   onEdgesChange: onEdgesChangeProp,
   onTopologyChange,
+  onNodeSelect,
 }: NetlabCanvasProps) {
   const { topology, areas } = useNetlabContext();
   const reducedMotion = usePrefersReducedMotion();
@@ -230,17 +237,37 @@ export function NetlabCanvas({
     [isControlled, onNodesChangeProp, emitTopologyChange, edges],
   );
 
-  const selectNode = useCallback((id: string | null) => {
-    setSelectedEdgeId(null);
-    setHighlightedAreaId(null);
-    setSelectedNodeId(id);
-  }, []);
+  // Dedupe the passive observation hook: notify only when the selected node
+  // actually changes (pane click clears via both selectNode and selectEdge).
+  const lastNotifiedNodeId = useRef<string | null>(null);
+  const notifyNodeSelect = useCallback(
+    (id: string | null) => {
+      if (lastNotifiedNodeId.current === id) return;
+      lastNotifiedNodeId.current = id;
+      onNodeSelect?.(id);
+    },
+    [onNodeSelect],
+  );
 
-  const selectEdge = useCallback((id: string | null) => {
-    setSelectedNodeId(null);
-    setHighlightedAreaId(null);
-    setSelectedEdgeId(id);
-  }, []);
+  const selectNode = useCallback(
+    (id: string | null) => {
+      setSelectedEdgeId(null);
+      setHighlightedAreaId(null);
+      setSelectedNodeId(id);
+      notifyNodeSelect(id);
+    },
+    [notifyNodeSelect],
+  );
+
+  const selectEdge = useCallback(
+    (id: string | null) => {
+      setSelectedNodeId(null);
+      setHighlightedAreaId(null);
+      setSelectedEdgeId(id);
+      notifyNodeSelect(null);
+    },
+    [notifyNodeSelect],
+  );
 
   const isConnectionValid = useCallback(
     (connection: Connection | Edge) =>

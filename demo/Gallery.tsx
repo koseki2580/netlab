@@ -109,6 +109,12 @@ const CATEGORIES: Category[] = [
         meta: { difficulty: 'beginner', tags: ['LPM', 'Drill'] },
       },
       {
+        path: '/learning/visual-routing',
+        title: 'Routing Decision — on the network',
+        desc: 'Same longest-prefix drill, answered by clicking the next-hop router on the live canvas.',
+        meta: { difficulty: 'beginner', tags: ['LPM', 'Drill', 'Canvas'] },
+      },
+      {
         path: '/routing/client-server',
         title: 'Client–Server',
         desc: 'Full stack: private/public areas, router with static routes, live packet log.',

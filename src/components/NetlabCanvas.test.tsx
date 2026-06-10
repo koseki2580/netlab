@@ -980,4 +980,44 @@ describe('NetlabCanvas selection choreography (N2)', () => {
       'netlab-edge-neighbor',
     );
   });
+
+  it('notifies onNodeSelect on node click and on pane-click clearing', () => {
+    const selections: (string | null)[] = [];
+    render(
+      <NetlabProvider
+        topology={makeTopology({
+          nodes: [
+            {
+              id: 'r1',
+              type: 'router',
+              position: { x: 0, y: 0 },
+              data: { label: 'R1', role: 'router', layerId: 'l3' },
+            },
+            {
+              id: 'r2',
+              type: 'router',
+              position: { x: 200, y: 0 },
+              data: { label: 'R2', role: 'router', layerId: 'l3' },
+            },
+          ],
+          edges: [{ id: 'e12', source: 'r1', target: 'r2', type: 'smoothstep' }],
+        })}
+      >
+        <NetlabCanvas onNodeSelect={(id) => selections.push(id)} />
+      </NetlabProvider>,
+    );
+
+    const initial = currentReactFlowProps();
+    const r2Node = initial.nodes.find((n) => n.id === 'r2');
+    if (!r2Node) throw new Error('r2 node missing');
+    act(() => {
+      initial.onNodeClick?.({} as Event, r2Node);
+    });
+    expect(selections).toEqual(['r2']);
+
+    act(() => {
+      currentReactFlowProps().onPaneClick?.();
+    });
+    expect(selections).toEqual(['r2', null]);
+  });
 });

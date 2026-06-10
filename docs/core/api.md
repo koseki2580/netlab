@@ -108,10 +108,16 @@ interface NetlabCanvasProps {
   onNodesChange?: (nodes: NetlabNode[]) => void;
   onEdgesChange?: (edges: NetlabEdge[]) => void;
   onTopologyChange?: (topology: TopologySnapshot) => void;
+  onNodeSelect?: (nodeId: string | null) => void;
 }
 ```
 
 Providing any of the change callbacks switches the canvas into controlled-sync mode.
+
+`onNodeSelect` is a passive observation hook: it fires whenever the canvas's
+node selection changes (node click, pane click clearing the selection) and does
+not affect selection behavior. Learning surfaces use it to let a learner answer
+by clicking a node.
 
 See [Controlled Topology API](../api/controlled-topology.md) and
 [UI Interaction](../ui/ui-interaction.md).

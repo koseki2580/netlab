@@ -1,0 +1,243 @@
+import { useCallback, useMemo, useState } from 'react';
+import { generateRouteProblem, gradeRoute } from '../../learning/routing-decision';
+import type { RouteGradeResult } from '../../learning/routing-decision';
+import { nextHopFromNodeId, routeProblemTopology } from '../../learning/routing-decision/topology';
+import { NetlabCanvas } from '../NetlabCanvas';
+import { NetlabProvider } from '../NetlabProvider';
+import {
+  ConceptCallout,
+  DrillFeedback,
+  DrillFrame,
+  drillCardStyle,
+  pillButton,
+  useDrillCompletion,
+  useFocusWhen,
+} from './drillKit';
+
+const SESSION_LENGTH = 8;
+
+/**
+ * The routing drill ON the visualization: the deciding router and its
+ * neighbors are rendered on the NetlabCanvas, and the learner answers by
+ * clicking the neighbor the router will forward to. The same answers are
+ * mirrored as buttons so keyboard and screen-reader users drill the identical
+ * question. Graded by the longest-prefix match the engine uses.
+ */
+export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
+  const [baseSeed, setBaseSeed] = useState(seed);
+  const [index, setIndex] = useState(0);
+  const [correct, setCorrect] = useState(0);
+  const [result, setResult] = useState<RouteGradeResult | null>(null);
+
+  const problem = useMemo(() => generateRouteProblem(baseSeed, index), [baseSeed, index]);
+  const topology = useMemo(() => routeProblemTopology(problem), [problem]);
+  const nextHops = useMemo(
+    () => [...new Set(problem.routes.map((route) => route.nextHop))],
+    [problem],
+  );
+  const done = index >= SESSION_LENGTH;
+  const isLast = index === SESSION_LENGTH - 1;
+  const summaryRef = useFocusWhen<HTMLHeadingElement>(done);
+  useDrillCompletion(
+    'visual-routing-drill',
+    'Visual Routing Decision',
+    done,
+    correct,
+    SESSION_LENGTH,
+  );
+
+  const answer = useCallback(
+    (nextHop: string) => {
+      if (result) return; // one answer per question
+      setResult(gradeRoute(problem, nextHop));
+    },
+    [problem, result],
+  );
+
+  const handleNodeSelect = useCallback(
+    (nodeId: string | null) => {
+      if (!nodeId) return;
+      const nextHop = nextHopFromNodeId(nodeId);
+      if (nextHop) answer(nextHop);
+    },
+    [answer],
+  );
+
+  const advance = useCallback(() => {
+    if (!result) return;
+    if (result.correct) setCorrect((value) => value + 1);
+    setIndex((value) => value + 1);
+    setResult(null);
+  }, [result]);
+
+  const restart = useCallback(() => {
+    setBaseSeed((value) => value + SESSION_LENGTH);
+    setIndex(0);
+    setCorrect(0);
+    setResult(null);
+  }, []);
+
+  if (done) {
+    return (
+      <DrillFrame idPrefix="visual-routing-drill">
+        <div data-testid="visual-routing-drill-summary" style={drillCardStyle}>
+          <h2
+            ref={summaryRef}
+            tabIndex={-1}
+            style={{
+              margin: 0,
+              color: 'var(--netlab-text-primary)',
+              fontSize: 18,
+              outline: 'none',
+            }}
+          >
+            Session complete
+          </h2>
+          <div
+            data-testid="visual-routing-drill-score"
+            style={{ fontSize: 28, fontWeight: 800, color: 'var(--netlab-text-primary)' }}
+          >
+            {correct} / {SESSION_LENGTH}
+          </div>
+          <p style={{ margin: 0, color: 'var(--netlab-text-secondary)', fontSize: 14 }}>
+            Routers always forward via the <strong>most specific</strong> matching route — the
+            longest prefix — no matter how the table is ordered.
+          </p>
+          <button
+            type="button"
+            data-testid="visual-routing-drill-restart"
+            onClick={restart}
+            style={pillButton('var(--netlab-accent-blue)')}
+          >
+            Practice again
+          </button>
+        </div>
+      </DrillFrame>
+    );
+  }
+
+  return (
+    <DrillFrame idPrefix="visual-routing-drill">
+      <div style={{ ...drillCardStyle, maxWidth: 760 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <h2 style={{ margin: 0, color: 'var(--netlab-text-primary)', fontSize: 18 }}>
+            Routing Decision — on the network
+          </h2>
+          <span
+            data-testid="visual-routing-drill-progress"
+            style={{
+              fontFamily: 'ui-monospace, monospace',
+              fontSize: 13,
+              color: 'var(--netlab-text-secondary)',
+            }}
+          >
+            Question {index + 1} / {SESSION_LENGTH}
+          </span>
+        </div>
+
+        <ConceptCallout idPrefix="visual-routing-drill" title="How to answer">
+          R1 sits in the middle; each neighbor router is one of its next-hops. Read the routing
+          table, find the <strong>most specific</strong> route that contains the destination
+          (longest prefix wins), then <strong>click that neighbor on the network</strong> — or use
+          the answer buttons below the canvas.
+        </ConceptCallout>
+
+        <p
+          data-testid="visual-routing-drill-prompt"
+          style={{ margin: 0, color: 'var(--netlab-text-primary)', fontSize: 16, lineHeight: 1.5 }}
+        >
+          {problem.prompt}
+        </p>
+
+        <table
+          data-testid="visual-routing-drill-table"
+          style={{
+            width: '100%',
+            borderCollapse: 'collapse',
+            fontFamily: 'ui-monospace, monospace',
+            fontSize: 13,
+            color: 'var(--netlab-text-primary)',
+          }}
+        >
+          <caption
+            style={{
+              textAlign: 'left',
+              color: 'var(--netlab-text-secondary)',
+              fontSize: 12,
+              paddingBottom: 4,
+            }}
+          >
+            Routing table
+          </caption>
+          <thead>
+            <tr style={{ color: 'var(--netlab-text-secondary)', textAlign: 'left' }}>
+              <th scope="col" style={{ padding: '4px 8px' }}>
+                Destination
+              </th>
+              <th scope="col" style={{ padding: '4px 8px' }}>
+                Next-hop
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {problem.routes.map((entry) => (
+              <tr key={entry.destination} style={{ borderTop: '1px solid var(--netlab-border)' }}>
+                <td style={{ padding: '4px 8px' }}>{entry.destination}</td>
+                <td style={{ padding: '4px 8px' }}>{entry.nextHop}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div
+          data-testid="visual-routing-drill-canvas"
+          style={{
+            height: 380,
+            border: '1px solid var(--netlab-learning-surface-border)',
+            borderRadius: 'var(--netlab-radius-md)',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Remount per question so canvas selection state starts fresh. */}
+          <NetlabProvider key={problem.id} topology={topology}>
+            <NetlabCanvas onNodeSelect={handleNodeSelect} />
+          </NetlabProvider>
+        </div>
+
+        <div
+          role="group"
+          aria-label="Answer by next-hop"
+          style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
+        >
+          {nextHops.map((nextHop) => (
+            <button
+              key={nextHop}
+              type="button"
+              data-testid={`visual-routing-drill-answer-${nextHop}`}
+              onClick={() => answer(nextHop)}
+              disabled={result !== null}
+              style={{
+                ...pillButton('var(--netlab-accent-blue)'),
+                fontFamily: 'ui-monospace, monospace',
+                opacity: result !== null ? 0.5 : 1,
+              }}
+            >
+              {nextHop}
+            </button>
+          ))}
+          <button
+            type="button"
+            data-testid="visual-routing-drill-advance"
+            onClick={advance}
+            disabled={result === null}
+            style={{ ...pillButton('var(--netlab-accent-green)'), opacity: result ? 1 : 0.5 }}
+          >
+            {isLast ? 'See results' : 'Next question'}
+          </button>
+        </div>
+
+        <DrillFeedback idPrefix="visual-routing-drill" result={result} />
+      </div>
+    </DrillFrame>
+  );
+}

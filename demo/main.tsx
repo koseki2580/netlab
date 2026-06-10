@@ -36,6 +36,7 @@ import Dhcpv6SlaacDemo from './networking/Dhcpv6SlaacDemo';
 import HighAvailabilityDemo from './networking/HighAvailabilityDemo';
 import SubnetDrillDemo from './learning/SubnetDrillDemo';
 import RoutingDrillDemo from './learning/RoutingDrillDemo';
+import VisualRoutingDrillDemo from './learning/VisualRoutingDrillDemo';
 import Ipv6Demo from './networking/Ipv6Demo';
 import Ipv6RoutingDemo from './networking/Ipv6RoutingDemo';
 import LinkQosDemo from './networking/LinkQosDemo';
@@ -79,6 +80,7 @@ function DemoRoutes() {
         <Route path="/" element={<Gallery />} />
         <Route path="/learning/subnetting" element={<SubnetDrillDemo />} />
         <Route path="/learning/routing-decision" element={<RoutingDrillDemo />} />
+        <Route path="/learning/visual-routing" element={<VisualRoutingDrillDemo />} />
         <Route path="/basic/minimal" element={<MinimalDemo />} />
         <Route path="/basic/three-tier" element={<ThreeTierDemo />} />
         <Route path="/basic/star" element={<StarDemo />} />

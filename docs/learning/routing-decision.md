@@ -63,11 +63,29 @@ takes a next-hop answer, gives immediate feedback naming the winning route,
 then shows a score with **Practice again**. Inside a `ProgressProvider` it
 records a `drill` completion with the session score.
 
+## Visual drill — learning on the canvas
+
+`VisualRoutingDrillPanel` (`src/components/learning/VisualRoutingDrillPanel.tsx`)
+puts the same drill **on the network visualization**: `routeProblemTopology`
+renders the deciding router with one neighbor per next-hop on `NetlabCanvas`,
+and the learner answers by **clicking the neighbor node** (via the canvas's
+passive `onNodeSelect` hook). The same answers are mirrored as buttons below
+the canvas so keyboard and screen-reader users drill the identical question.
+One answer per question; the canvas remounts per question so selection state
+starts fresh. Hosted in the demo at `/learning/visual-routing`.
+
+```tsx
+import { VisualRoutingDrillPanel } from 'netlab';
+
+<VisualRoutingDrillPanel seed={42} />;
+```
+
 ## Public API
 
 Exported from the package root: `generateRouteProblem`, `generateRouteSet`,
-`gradeRoute`, `expectedNextHop`, `chosenRoute`, and the `RouteProblem` /
-`RouteGradeResult` types.
+`gradeRoute`, `expectedNextHop`, `chosenRoute`, `routeProblemTopology`,
+`nextHopNodeId`, `nextHopFromNodeId`, `DECIDING_ROUTER_ID`,
+`VisualRoutingDrillPanel`, and the `RouteProblem` / `RouteGradeResult` types.
 
 ## Testing expectations
 
