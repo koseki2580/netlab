@@ -31,7 +31,21 @@ export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }
   const [chosen, setChosen] = useState<string | null>(null);
 
   const problem = useMemo(() => generateRouteProblem(baseSeed, index), [baseSeed, index]);
-  const topology = useMemo(() => routeProblemTopology(problem), [problem]);
+  // After grading, rebuild with the winner (and a wrong pick) highlighted so
+  // the feedback shows on the network itself; the provider syncs the update.
+  const topology = useMemo(
+    () =>
+      routeProblemTopology(
+        problem,
+        result
+          ? {
+              winner: result.expected,
+              ...(chosen && !result.correct ? { wrongChoice: chosen } : {}),
+            }
+          : undefined,
+      ),
+    [problem, result, chosen],
+  );
   const nextHops = useMemo(
     () => [...new Set(problem.routes.map((route) => route.nextHop))],
     [problem],

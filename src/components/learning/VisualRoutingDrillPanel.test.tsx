@@ -18,12 +18,22 @@ const canvasState = vi.hoisted(() => ({
   onNodeSelect: null as ((nodeId: string | null) => void) | null,
 }));
 
-vi.mock('../NetlabCanvas', () => ({
-  NetlabCanvas: ({ onNodeSelect }: { onNodeSelect?: (nodeId: string | null) => void }) => {
-    canvasState.onNodeSelect = onNodeSelect ?? null;
-    return <div data-testid="stub-canvas" />;
-  },
-}));
+vi.mock('../NetlabCanvas', async () => {
+  const { useNetlabContext } = await import('../NetlabContext');
+  return {
+    NetlabCanvas: ({ onNodeSelect }: { onNodeSelect?: (nodeId: string | null) => void }) => {
+      canvasState.onNodeSelect = onNodeSelect ?? null;
+      // Surface the live context edges so tests can assert canvas feedback.
+      const { topology } = useNetlabContext();
+      const edges = topology.edges.map((edge) => ({
+        target: edge.target,
+        animated: edge.animated ?? false,
+        stroke: (edge.style as { stroke?: string } | undefined)?.stroke ?? null,
+      }));
+      return <div data-testid="stub-canvas" data-edges={JSON.stringify(edges)} />;
+    },
+  };
+});
 
 const actEnvironment = globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean };
 
@@ -126,6 +136,32 @@ describe('VisualRoutingDrillPanel', () => {
     expect(winner?.textContent).toContain('✓');
     expect(chosen?.getAttribute('data-answer-state')).toBe('wrong-choice');
     expect(chosen?.textContent).toContain('✗');
+  });
+
+  it('highlights the winning edge (and a wrong pick) on the canvas after grading', () => {
+    act(() => root?.render(<VisualRoutingDrillPanel seed={SEED} />));
+    const problem = generateRouteProblem(SEED, 0);
+    const expected = expectedNextHop(problem);
+    const wrong = problem.routes.find((route) => route.nextHop !== expected)?.nextHop ?? '';
+
+    const readEdges = () =>
+      JSON.parse(testid('stub-canvas')?.getAttribute('data-edges') ?? '[]') as {
+        target: string;
+        animated: boolean;
+        stroke: string | null;
+      }[];
+
+    // Before answering: no edge is styled.
+    expect(readEdges().every((edge) => !edge.animated && edge.stroke === null)).toBe(true);
+
+    click(`visual-routing-drill-answer-${wrong}`);
+
+    const edges = readEdges();
+    const winnerEdge = edges.find((edge) => edge.target === nextHopNodeId(expected));
+    const wrongEdge = edges.find((edge) => edge.target === nextHopNodeId(wrong));
+    expect(winnerEdge?.animated).toBe(true);
+    expect(winnerEdge?.stroke).toContain('green');
+    expect(wrongEdge?.stroke).toContain('red');
   });
 
   it('completes a session with a focused summary and restarts', () => {

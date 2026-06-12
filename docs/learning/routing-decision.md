@@ -74,6 +74,11 @@ the canvas so keyboard and screen-reader users drill the identical question.
 One answer per question; the canvas remounts per question so selection state
 starts fresh. Hosted in the demo at `/learning/visual-routing`.
 
+Feedback happens **on the network too**: after grading, `routeProblemTopology`
+is rebuilt with a `RouteHighlight` — the longest-prefix winner's edge turns
+green and animates, and a wrongly chosen hop's edge turns red — while the
+answer buttons mirror the same outcome (✓ winner / ✗ wrong choice).
+
 ```tsx
 import { VisualRoutingDrillPanel } from 'netlab';
 
