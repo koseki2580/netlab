@@ -49,6 +49,8 @@ interface DemoCard {
   title: string;
   desc: string;
   scenarioId?: string;
+  /** Progress completion id when it differs from scenarioId/path (drill cards). */
+  progressId?: string;
   sandboxReady?: boolean;
   defaultSandboxTab?: 'packet' | 'node' | 'parameters' | 'traffic';
   /** Difficulty and protocol/layer tags for the redesigned gallery. */
@@ -75,6 +77,7 @@ const CATEGORIES: Category[] = [
         path: '/learning/subnetting',
         title: 'Subnetting Practice',
         desc: 'Drill network/broadcast/mask/host-count and CIDR with instant, explained feedback.',
+        progressId: 'subnet-drill',
         meta: { difficulty: 'beginner', tags: ['CIDR', 'Drill'] },
       },
       {
@@ -106,12 +109,14 @@ const CATEGORIES: Category[] = [
         path: '/learning/routing-decision',
         title: 'Routing Decision',
         desc: 'Drill longest-prefix match: given a destination and a routing table, pick the next-hop.',
+        progressId: 'routing-drill',
         meta: { difficulty: 'beginner', tags: ['LPM', 'Drill'] },
       },
       {
         path: '/learning/visual-routing',
         title: 'Routing Decision — on the network',
         desc: 'Same longest-prefix drill, answered by clicking the next-hop router on the live canvas.',
+        progressId: 'visual-routing-drill',
         meta: { difficulty: 'beginner', tags: ['LPM', 'Drill', 'Canvas'] },
       },
       {
@@ -441,15 +446,24 @@ export { CATEGORIES };
 export type { Category, DemoCard };
 
 /**
+ * Stable id used to look a card up in the progress provider. Drill cards
+ * record completions under their own ids (`progressId`); scenario-backed
+ * cards use the scenario id; everything else falls back to the route path.
+ */
+export function progressTargetIdFor(demo: DemoCard): string {
+  return demo.progressId ?? demo.scenarioId ?? demo.path;
+}
+
+/**
  * Concept tracks for the learning map (C2) — derived from the gallery
  * categories, not authored by hand. Each category is a track; each demo a step
- * keyed by `scenarioId ?? path` so it lines up with the progress provider.
+ * keyed by `progressTargetIdFor` so it lines up with the progress provider.
  */
 const LEARNING_TRACKS: LearningTrackInput[] = CATEGORIES.map((category) => ({
   id: category.id,
   name: category.label,
   steps: category.demos.map((demo) => ({
-    id: demo.scenarioId ?? demo.path,
+    id: progressTargetIdFor(demo),
     label: demo.title,
     path: demo.path,
     ...(demo.meta?.difficulty ? { difficulty: demo.meta.difficulty } : {}),
@@ -714,7 +728,7 @@ const TRACK_LANDING_IDS = new Set(['routing']);
 function demoToLandingDemo(demo: DemoCard): CategoryLandingDemo {
   const layerTag = demo.meta?.tags?.find((t) => /^L\d/.test(t));
   const out: CategoryLandingDemo = {
-    id: demo.scenarioId ?? demo.path,
+    id: progressTargetIdFor(demo),
     title: demo.title,
     desc: demo.desc,
     path: demo.path,
@@ -1422,7 +1436,7 @@ export default function Gallery({
                       demo={demo}
                       category={cat}
                       audience={audience}
-                      progressTargetId={demo.scenarioId ?? demo.path}
+                      progressTargetId={progressTargetIdFor(demo)}
                       tutorialHref={
                         tutorial
                           ? `?tutorial=${encodeURIComponent(tutorial.id)}#${demo.path}`
@@ -1475,7 +1489,7 @@ export default function Gallery({
                         demo={demo}
                         category={cat}
                         audience={audience}
-                        progressTargetId={demo.scenarioId ?? demo.path}
+                        progressTargetId={progressTargetIdFor(demo)}
                         tutorialHref={
                           tutorial
                             ? `?tutorial=${encodeURIComponent(tutorial.id)}#${demo.path}`

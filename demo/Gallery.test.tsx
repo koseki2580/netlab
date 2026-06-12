@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import DemoShell from './DemoShell';
-import Gallery, { CATEGORIES } from './Gallery';
+import Gallery, { CATEGORIES, progressTargetIdFor } from './Gallery';
 
 function renderGallery(props?: ComponentProps<typeof Gallery>) {
   return renderToStaticMarkup(
@@ -322,5 +322,25 @@ describe('learning-surface adaptive Gallery (08)', () => {
     // The card class drives a fixed shadow; the markup must not inline a
     // second (hover) box-shadow value on the card root.
     expect(html).toContain('nl-demo-card');
+  });
+});
+
+describe('progress target ids', () => {
+  const allDemos = CATEGORIES.flatMap((category) => category.demos);
+
+  it('drill cards resolve to the completion ids the drill panels record', () => {
+    const byPath = new Map(allDemos.map((demo) => [demo.path, demo]));
+    expect(progressTargetIdFor(byPath.get('/learning/subnetting')!)).toBe('subnet-drill');
+    expect(progressTargetIdFor(byPath.get('/learning/routing-decision')!)).toBe('routing-drill');
+    expect(progressTargetIdFor(byPath.get('/learning/visual-routing')!)).toBe(
+      'visual-routing-drill',
+    );
+  });
+
+  it('scenario-backed cards use the scenario id and plain cards fall back to the path', () => {
+    const ospf = allDemos.find((demo) => demo.path === '/routing/ospf-convergence');
+    expect(progressTargetIdFor(ospf!)).toBe('ospf-convergence');
+    const minimal = allDemos.find((demo) => demo.path === '/basic/minimal');
+    expect(progressTargetIdFor(minimal!)).toBe('/basic/minimal');
   });
 });
