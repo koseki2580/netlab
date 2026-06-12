@@ -506,7 +506,10 @@ export {
   nextHopNodeId,
   routeProblemTopology,
 } from './learning/routing-decision';
+export { subnetBarLayout } from './learning/subnetting';
+export type { SubnetBarLayout } from './learning/subnetting';
 // Learning — embeddable drill UI (learning-surface panels host apps can mount)
+export { SubnetVisual } from './components/learning/SubnetVisual';
 export { SubnetDrillPanel } from './components/learning/SubnetDrillPanel';
 export { RoutingDrillPanel } from './components/learning/RoutingDrillPanel';
 export { VisualRoutingDrillPanel } from './components/learning/VisualRoutingDrillPanel';

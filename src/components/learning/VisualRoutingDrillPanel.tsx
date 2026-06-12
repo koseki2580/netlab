@@ -28,6 +28,7 @@ export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }
   const [index, setIndex] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [result, setResult] = useState<RouteGradeResult | null>(null);
+  const [chosen, setChosen] = useState<string | null>(null);
 
   const problem = useMemo(() => generateRouteProblem(baseSeed, index), [baseSeed, index]);
   const topology = useMemo(() => routeProblemTopology(problem), [problem]);
@@ -49,6 +50,7 @@ export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }
   const answer = useCallback(
     (nextHop: string) => {
       if (result) return; // one answer per question
+      setChosen(nextHop);
       setResult(gradeRoute(problem, nextHop));
     },
     [problem, result],
@@ -68,6 +70,7 @@ export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }
     if (result.correct) setCorrect((value) => value + 1);
     setIndex((value) => value + 1);
     setResult(null);
+    setChosen(null);
   }, [result]);
 
   const restart = useCallback(() => {
@@ -75,6 +78,7 @@ export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }
     setIndex(0);
     setCorrect(0);
     setResult(null);
+    setChosen(null);
   }, []);
 
   if (done) {
@@ -209,22 +213,34 @@ export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }
           aria-label="Answer by next-hop"
           style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
         >
-          {nextHops.map((nextHop) => (
-            <button
-              key={nextHop}
-              type="button"
-              data-testid={`visual-routing-drill-answer-${nextHop}`}
-              onClick={() => answer(nextHop)}
-              disabled={result !== null}
-              style={{
-                ...pillButton('var(--netlab-accent-blue)'),
-                fontFamily: 'ui-monospace, monospace',
-                opacity: result !== null ? 0.5 : 1,
-              }}
-            >
-              {nextHop}
-            </button>
-          ))}
+          {nextHops.map((nextHop) => {
+            // After grading: highlight the LPM winner, mark a wrongly chosen hop.
+            const isWinner = result !== null && nextHop === result.expected;
+            const isWrongChoice = result !== null && !result.correct && nextHop === chosen;
+            const accent = isWinner
+              ? 'var(--netlab-accent-green)'
+              : isWrongChoice
+                ? 'var(--netlab-accent-red)'
+                : 'var(--netlab-accent-blue)';
+            return (
+              <button
+                key={nextHop}
+                type="button"
+                data-testid={`visual-routing-drill-answer-${nextHop}`}
+                {...(isWinner ? { 'data-answer-state': 'winner' } : {})}
+                {...(isWrongChoice ? { 'data-answer-state': 'wrong-choice' } : {})}
+                onClick={() => answer(nextHop)}
+                disabled={result !== null}
+                style={{
+                  ...pillButton(accent),
+                  fontFamily: 'ui-monospace, monospace',
+                  opacity: result !== null && !isWinner && !isWrongChoice ? 0.4 : 1,
+                }}
+              >
+                {isWinner ? `✓ ${nextHop}` : isWrongChoice ? `✗ ${nextHop}` : nextHop}
+              </button>
+            );
+          })}
           <button
             type="button"
             data-testid="visual-routing-drill-advance"

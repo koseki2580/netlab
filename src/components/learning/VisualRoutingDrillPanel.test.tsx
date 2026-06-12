@@ -112,6 +112,22 @@ describe('VisualRoutingDrillPanel', () => {
     expect(testid('visual-routing-drill-progress')?.textContent).toContain(`2 / ${LENGTH}`);
   });
 
+  it('marks the LPM winner and a wrongly chosen hop on the answer buttons', () => {
+    act(() => root?.render(<VisualRoutingDrillPanel seed={SEED} />));
+    const problem = generateRouteProblem(SEED, 0);
+    const expected = expectedNextHop(problem);
+    const wrong = problem.routes.find((route) => route.nextHop !== expected)?.nextHop ?? '';
+
+    click(`visual-routing-drill-answer-${wrong}`);
+
+    const winner = testid(`visual-routing-drill-answer-${expected}`);
+    const chosen = testid(`visual-routing-drill-answer-${wrong}`);
+    expect(winner?.getAttribute('data-answer-state')).toBe('winner');
+    expect(winner?.textContent).toContain('✓');
+    expect(chosen?.getAttribute('data-answer-state')).toBe('wrong-choice');
+    expect(chosen?.textContent).toContain('✗');
+  });
+
   it('completes a session with a focused summary and restarts', () => {
     act(() => root?.render(<VisualRoutingDrillPanel seed={SEED} />));
     for (let i = 0; i < LENGTH; i += 1) {

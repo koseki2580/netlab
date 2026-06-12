@@ -1,4 +1,6 @@
 export { subnetFacts, maskInt } from './solver';
+export { subnetBarLayout } from './barLayout';
+export type { SubnetBarLayout } from './barLayout';
 export { generateProblem, generateSet } from './generator';
 export { grade, expectedAnswer } from './grader';
 export {

@@ -114,6 +114,16 @@ A question kind is **mastered** when every instance of it was answered
 correctly and lands in **review** when any was missed, so the learner finishes
 with an actionable "drill these next" list rather than just a score.
 
+## Visual feedback — the subnet as a picture
+
+After every graded answer the drill renders `SubnetVisual`: a horizontal bar
+spanning the block from network address to broadcast, the usable-host range
+shaded inside it, and — for membership questions — a marker showing where the
+asked address falls (green inside, red outside, clamped to the padded domain
+when far away). Positions come from the pure `subnetBarLayout(facts, probeIp?)`
+helper, so the geometry is unit-tested independently of rendering. Both are
+exported from the package root for host apps.
+
 ## Demo surface & embedding
 
 The drill UI is a library component — `SubnetDrillPanel`

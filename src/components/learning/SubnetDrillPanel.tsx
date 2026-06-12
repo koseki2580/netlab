@@ -7,8 +7,11 @@ import {
   sessionProblem,
   sessionSummary,
   startSession,
+  subnetFacts,
 } from '../../learning/subnetting';
 import type { GradeResult, SubnetProblem } from '../../learning/subnetting';
+import { parseCidr } from '../../utils/cidr';
+import { SubnetVisual } from './SubnetVisual';
 import {
   ConceptCallout,
   DrillFeedback,
@@ -57,6 +60,10 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
   const [result, setResult] = useState<GradeResult | null>(null);
 
   const problem = useMemo(() => sessionProblem(session), [session]);
+  const facts = useMemo(() => {
+    const { length } = parseCidr(problem.givenCidr);
+    return subnetFacts(problem.givenCidr.split('/')[0] ?? '0.0.0.0', length);
+  }, [problem]);
   const done = isComplete(session);
   const index = currentIndex(session);
   const isLast = index === session.length - 1;
@@ -218,6 +225,15 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
         </div>
 
         <DrillFeedback idPrefix="subnet-drill" result={result} />
+
+        {/* Every answer ends as a visual lesson: the block, its usable range,
+            and (for membership questions) where the asked address falls. */}
+        {result && (
+          <SubnetVisual
+            facts={facts}
+            {...(problem.probeHost ? { probeIp: problem.probeHost } : {})}
+          />
+        )}
       </div>
     </DrillFrame>
   );

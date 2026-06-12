@@ -129,6 +129,19 @@ describe('SubnetDrillPanel session', () => {
     expect(testid('subnet-drill-mastered')).toBeNull();
   });
 
+  it('shows the subnet visually after an answer — block, host range, and labels', () => {
+    act(() => root?.render(<SubnetDrillPanel seed={SEED} />));
+    expect(testid('subnet-visual')).toBeNull(); // not before answering
+
+    type('whatever');
+    click('subnet-drill-check');
+
+    expect(testid('subnet-visual')).not.toBeNull();
+    expect(testid('subnet-visual-block')).not.toBeNull();
+    expect(testid('subnet-visual-network')?.textContent).toContain('network ');
+    expect(testid('subnet-visual-broadcast')?.textContent).toContain('broadcast ');
+  });
+
   it('records a drill completion with the score in learner progress', () => {
     const storage = createMemoryProgressStorage();
     act(() =>
