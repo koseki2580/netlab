@@ -84,4 +84,19 @@ export const learning: Catalog = {
   'learning.route.answerGroup': 'Answer by next-hop',
   'learning.route.summary.lesson':
     'Routers always pick the most specific matching route — the longest prefix — regardless of how the table is ordered.',
+
+  // Packet journey (predict-then-observe)
+  'learning.journey.title': 'Packet Journey — predict, then watch',
+  'learning.journey.primer.title': 'How this works',
+  'learning.journey.primer.body':
+    'A real packet is about to cross this network, simulated by the actual netlab engine. At every router you predict where it goes next — click the node on the network or use the buttons — and the engine reveals what really happened and why. Three journeys: a specific route, the default route, and a packet that dies.',
+  'learning.journey.label': 'Journey {{current}} / {{total}} — to {{dst}}',
+  'learning.journey.prompt': 'The packet is at {{node}}. Where does it forward next?',
+  'learning.journey.outcome.delivered': '📬 Delivered — the packet reached {{dst}}.',
+  'learning.journey.outcome.dropped':
+    '💀 Dropped — no route matched at the last router (reason: {{reason}}).',
+  'learning.journey.engineSays': 'The engine decided: {{explanation}}',
+  'learning.journey.nextJourney': 'Next journey',
+  'learning.journey.summary.lesson':
+    'You just watched the real forwarding engine at work: the most specific route wins, the default route catches the rest, and a router with no matching route drops the packet.',
 } as const;

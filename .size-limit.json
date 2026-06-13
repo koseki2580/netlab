@@ -1,7 +1,7 @@
 [
   {
     "path": "dist/netlab.es.js",
-    "limit": "180 kB",
+    "limit": "182 kB",
     "gzip": true
   },
   {

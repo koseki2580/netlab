@@ -120,6 +120,13 @@ const CATEGORIES: Category[] = [
         meta: { difficulty: 'beginner', tags: ['LPM', 'Drill', 'Canvas'] },
       },
       {
+        path: '/learning/packet-journey',
+        title: 'Packet Journey',
+        desc: 'Predict each hop of a real packet — the live engine grades you and explains its decisions.',
+        progressId: 'packet-journey-drill',
+        meta: { difficulty: 'intermediate', tags: ['LPM', 'Drill', 'Engine'] },
+      },
+      {
         path: '/routing/client-server',
         title: 'Client–Server',
         desc: 'Full stack: private/public areas, router with static routes, live packet log.',

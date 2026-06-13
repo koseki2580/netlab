@@ -508,11 +508,20 @@ export {
 } from './learning/routing-decision';
 export { subnetBarLayout } from './learning/subnetting';
 export type { SubnetBarLayout } from './learning/subnetting';
+export {
+  JOURNEY_FLOWS,
+  buildJourney,
+  buildJourneyTopology,
+  journeyProbe,
+  journeyTopologyView,
+} from './learning/packet-journey';
+export type { JourneyFlow, JourneyStep, PacketJourney } from './learning/packet-journey';
 // Learning — embeddable drill UI (learning-surface panels host apps can mount)
 export { SubnetVisual } from './components/learning/SubnetVisual';
 export { SubnetDrillPanel } from './components/learning/SubnetDrillPanel';
 export { RoutingDrillPanel } from './components/learning/RoutingDrillPanel';
 export { VisualRoutingDrillPanel } from './components/learning/VisualRoutingDrillPanel';
+export { PacketJourneyPanel } from './components/learning/PacketJourneyPanel';
 
 // Interactive sandbox primitives
 export {

@@ -86,4 +86,19 @@ export const learning: Catalog = {
   'learning.route.answerGroup': 'ネクストホップで回答',
   'learning.route.summary.lesson':
     'ルータは常に最も具体的な一致経路 — 最長プレフィックス — を選びます。テーブルの並び順は関係ありません。',
+
+  // パケットジャーニー(予測→観測)
+  'learning.journey.title': 'パケットジャーニー — 予測して、見届ける',
+  'learning.journey.primer.title': '遊び方',
+  'learning.journey.primer.body':
+    '本物のパケットが netlab の実エンジンでこのネットワークを横断します。各ルータで「次はどこへ?」を予測してください — ネットワーク上のノードをクリックするか、ボタンで回答。エンジンが実際の結果とその理由を明かします。ジャーニーは3つ: 特定経路、デフォルトルート、そして死ぬパケット。',
+  'learning.journey.label': 'ジャーニー {{current}} / {{total}} — 宛先 {{dst}}',
+  'learning.journey.prompt': 'パケットは {{node}} にいます。次はどこへ転送される？',
+  'learning.journey.outcome.delivered': '📬 配送成功 — パケットは {{dst}} に届きました。',
+  'learning.journey.outcome.dropped':
+    '💀 破棄 — 最後のルータで一致する経路がありませんでした(理由: {{reason}})。',
+  'learning.journey.engineSays': 'エンジンの判断: {{explanation}}',
+  'learning.journey.nextJourney': '次のジャーニー',
+  'learning.journey.summary.lesson':
+    '本物の転送エンジンの仕事を見届けました: 最も具体的な経路が勝ち、デフォルトルートが残りを受け止め、一致する経路のないルータはパケットを破棄します。',
 } as const;
