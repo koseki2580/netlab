@@ -1,6 +1,8 @@
 import DemoShell from '../DemoShell';
 import { VisualRoutingDrillPanel } from '../../src/components/learning/VisualRoutingDrillPanel';
+import { I18nProvider } from '../../src/i18n';
 import { readDemoEmbedParams } from '../embedParams';
+import { readLearningLocale } from './learningLocale';
 
 export { VisualRoutingDrillPanel };
 
@@ -12,7 +14,9 @@ export default function VisualRoutingDrillDemo() {
       desc="Answer longest-prefix-match questions by clicking the next-hop router on the canvas"
       embedded={embedded}
     >
-      <VisualRoutingDrillPanel />
+      <I18nProvider locale={readLearningLocale()}>
+        <VisualRoutingDrillPanel />
+      </I18nProvider>
     </DemoShell>
   );
 }

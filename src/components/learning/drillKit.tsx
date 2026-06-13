@@ -1,4 +1,5 @@
 import { useEffect, useRef, type RefObject } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import { useOptionalProgress } from '../../progress';
 
 /**
@@ -127,6 +128,7 @@ export function DrillFeedback({
   idPrefix: string;
   result: DrillResult | null;
 }) {
+  const { t } = useI18n();
   return (
     <div
       data-testid={`${idPrefix}-feedback`}
@@ -149,7 +151,9 @@ export function DrillFeedback({
           }}
         >
           <strong>
-            {result.correct ? '✓ Correct' : `✗ Not quite — answer: ${result.expected}`}
+            {result.correct
+              ? t('learning.drill.correct')
+              : t('learning.drill.incorrect', { expected: result.expected })}
           </strong>
           <div style={{ marginTop: 4, color: 'var(--netlab-text-secondary)' }}>
             {result.explanation}

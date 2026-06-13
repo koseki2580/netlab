@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/useI18n';
 import { subnetBarLayout } from '../../learning/subnetting/barLayout';
 import type { SubnetFacts } from '../../learning/subnetting';
 
@@ -8,6 +9,7 @@ import type { SubnetFacts } from '../../learning/subnetting';
  * Rendered after each drill answer so every question ends as a visual lesson.
  */
 export function SubnetVisual({ facts, probeIp }: { facts: SubnetFacts; probeIp?: string }) {
+  const { t } = useI18n();
   const layout = subnetBarLayout(facts, probeIp);
 
   return (
@@ -19,8 +21,11 @@ export function SubnetVisual({ facts, probeIp }: { facts: SubnetFacts; probeIp?:
           fontFamily: 'ui-monospace, monospace',
         }}
       >
-        {facts.cidr} — {facts.totalAddresses.toLocaleString('en-US')} addresses,{' '}
-        {facts.usableHostCount.toLocaleString('en-US')} usable
+        {t('learning.visual.caption', {
+          cidr: facts.cidr,
+          total: facts.totalAddresses.toLocaleString('en-US'),
+          usable: facts.usableHostCount.toLocaleString('en-US'),
+        })}
       </figcaption>
 
       <div
@@ -87,13 +92,20 @@ export function SubnetVisual({ facts, probeIp }: { facts: SubnetFacts; probeIp?:
           color: 'var(--netlab-text-secondary)',
         }}
       >
-        <span data-testid="subnet-visual-network">network {facts.networkAddress}</span>
+        <span data-testid="subnet-visual-network">
+          {t('learning.visual.network', { address: facts.networkAddress })}
+        </span>
         {facts.firstUsableHost && facts.lastUsableHost && (
           <span data-testid="subnet-visual-hosts">
-            hosts {facts.firstUsableHost} – {facts.lastUsableHost}
+            {t('learning.visual.hosts', {
+              first: facts.firstUsableHost,
+              last: facts.lastUsableHost,
+            })}
           </span>
         )}
-        <span data-testid="subnet-visual-broadcast">broadcast {facts.broadcastAddress}</span>
+        <span data-testid="subnet-visual-broadcast">
+          {t('learning.visual.broadcast', { address: facts.broadcastAddress })}
+        </span>
       </div>
     </figure>
   );

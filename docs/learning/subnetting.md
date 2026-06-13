@@ -124,6 +124,17 @@ when far away). Positions come from the pure `subnetBarLayout(facts, probeIp?)`
 helper, so the geometry is unit-tested independently of rendering. Both are
 exported from the package root for host apps.
 
+## Internationalization
+
+Every learner-facing string — prompts, explanations, chrome, and the visual
+labels — routes through the `learning.*` keys of the i18n catalog (English and
+Japanese ship built in; parity is enforced by `npm run i18n:check`). Prompts
+and explanations are rebuilt from problem data via the pure `drillI18n`
+helpers, and a consistency test pins the English catalog output to the exact
+generator/grader wording so the two can never drift. The demo pages honor the
+gallery's persisted `netlab-locale`; embedded panels follow the nearest
+`I18nProvider` (English without one).
+
 ## Demo surface & embedding
 
 The drill UI is a library component — `SubnetDrillPanel`

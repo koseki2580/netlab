@@ -1,5 +1,9 @@
 [
-  { "path": "dist/netlab.es.js", "limit": "176 kB", "gzip": true },
+  {
+    "path": "dist/netlab.es.js",
+    "limit": "180 kB",
+    "gzip": true
+  },
   {
     "path": "dist/layers/l1-physical/index.js",
     "limit": "4 kB",
@@ -66,7 +70,7 @@
   {
     "name": "ui:scenario-export",
     "path": "dist/ScenarioExportDialog-*.mjs",
-    "limit": "33 kB",
+    "limit": "35 kB",
     "gzip": true
   }
 ]

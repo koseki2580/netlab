@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { SubnetDrillPanel } from './SubnetDrillPanel';
 import { DEFAULT_SESSION_LENGTH, expectedAnswer, generateProblem } from '../../learning/subnetting';
+import { I18nProvider } from '../../i18n';
 import {
   createMemoryProgressStorage,
   parseProgressJson,
@@ -140,6 +141,22 @@ describe('SubnetDrillPanel session', () => {
     expect(testid('subnet-visual-block')).not.toBeNull();
     expect(testid('subnet-visual-network')?.textContent).toContain('network ');
     expect(testid('subnet-visual-broadcast')?.textContent).toContain('broadcast ');
+  });
+
+  it('renders Japanese when mounted inside an I18nProvider with locale ja', () => {
+    act(() =>
+      root?.render(
+        <I18nProvider locale="ja">
+          <SubnetDrillPanel seed={SEED} />
+        </I18nProvider>,
+      ),
+    );
+    expect(container?.textContent).toContain('サブネット計算の練習');
+    expect(testid('subnet-drill-prompt')?.textContent).not.toBe(generateProblem(SEED, 0).prompt);
+
+    type('whatever');
+    click('subnet-drill-check');
+    expect(testid('subnet-drill-incorrect')?.textContent).toContain('不正解');
   });
 
   it('records a drill completion with the score in learner progress', () => {

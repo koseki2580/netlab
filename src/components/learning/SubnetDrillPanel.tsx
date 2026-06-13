@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import {
   currentIndex,
   grade,
@@ -11,6 +12,7 @@ import {
 } from '../../learning/subnetting';
 import type { GradeResult, SubnetProblem } from '../../learning/subnetting';
 import { parseCidr } from '../../utils/cidr';
+import { subnetExplanation, subnetKindLabelKey, subnetPrompt } from './drillI18n';
 import { SubnetVisual } from './SubnetVisual';
 import {
   ConceptCallout,
@@ -24,37 +26,28 @@ import {
   useQuestionFocus,
 } from './drillKit';
 
-function placeholderFor(problem: SubnetProblem): string {
+function placeholderKeyFor(problem: SubnetProblem): string {
   switch (problem.kind) {
     case 'contains-host':
-      return 'yes / no';
+      return 'learning.subnet.placeholder.yesNo';
     case 'prefix-from-mask':
-      return 'e.g. /24';
+      return 'learning.subnet.placeholder.prefix';
     case 'usable-host-count':
-      return 'e.g. 254';
+      return 'learning.subnet.placeholder.count';
     default:
-      return 'e.g. 192.168.1.0';
+      return 'learning.subnet.placeholder.address';
   }
 }
-
-const KIND_LABEL: Record<SubnetProblem['kind'], string> = {
-  'network-address': 'Network address',
-  'broadcast-address': 'Broadcast address',
-  'subnet-mask': 'Subnet mask',
-  'prefix-from-mask': 'Prefix from mask',
-  'usable-host-count': 'Usable host count',
-  'first-usable-host': 'First usable host',
-  'last-usable-host': 'Last usable host',
-  'contains-host': 'Host membership',
-};
 
 /**
  * Active-recall subnetting drill, run as a measurable session: a fixed number
  * of generated questions, immediate explained feedback per answer, and an
  * end-of-session mastery summary that tells the learner which subnet skills to
- * drill next. `generateProblem`/`grade`/session helpers are pure logic.
+ * drill next. `generateProblem`/`grade`/session helpers are pure logic; every
+ * learner-facing string routes through the i18n catalog (en/ja).
  */
 export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
+  const { t } = useI18n();
   const [session, setSession] = useState(() => startSession(seed));
   const [answer, setAnswer] = useState('');
   const [result, setResult] = useState<GradeResult | null>(null);
@@ -95,6 +88,18 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
     setResult(null);
   }, [seed, session.length]);
 
+  // Localized prompt and explanation, built from the same problem data the
+  // logic layer uses (drillI18n tests pin the en output to the grader text).
+  const promptText = useMemo(() => {
+    const { key, params } = subnetPrompt(problem);
+    return t(key, params);
+  }, [problem, t]);
+  const localizedResult = useMemo(() => {
+    if (!result) return null;
+    const { key, params } = subnetExplanation(problem, facts, result.expected);
+    return { ...result, explanation: t(key, params) };
+  }, [facts, problem, result, t]);
+
   if (done) {
     const summary = sessionSummary(session);
     return (
@@ -110,7 +115,7 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
               outline: 'none',
             }}
           >
-            Session complete
+            {t('learning.drill.sessionComplete')}
           </h2>
           <div
             data-testid="subnet-drill-score"
@@ -121,13 +126,13 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
 
           <SkillList
             testid="subnet-drill-mastered"
-            label="Mastered"
+            label={t('learning.subnet.mastered')}
             accent="var(--netlab-accent-green)"
             kinds={summary.mastered}
           />
           <SkillList
             testid="subnet-drill-review"
-            label="Review these next"
+            label={t('learning.subnet.review')}
             accent="var(--netlab-accent-yellow)"
             kinds={summary.review}
           />
@@ -138,7 +143,7 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
             onClick={restart}
             style={pillButton('var(--netlab-accent-blue)')}
           >
-            Practice again
+            {t('learning.drill.practiceAgain')}
           </button>
         </div>
       </DrillFrame>
@@ -150,7 +155,7 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
       <div style={drillCardStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <h2 style={{ margin: 0, color: 'var(--netlab-text-primary)', fontSize: 18 }}>
-            Subnetting Practice
+            {t('learning.subnet.title')}
           </h2>
           <span
             data-testid="subnet-drill-progress"
@@ -160,16 +165,12 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
               color: 'var(--netlab-text-secondary)',
             }}
           >
-            Question {index + 1} / {session.length}
+            {t('learning.drill.progress', { current: index + 1, total: session.length })}
           </span>
         </div>
 
-        <ConceptCallout idPrefix="subnet-drill" title="New to subnetting? Start here">
-          A subnet splits an address into a <strong>network</strong> part (the prefix, e.g. /24) and
-          a <strong>host</strong> part. The <strong>network address</strong> has all host bits 0;
-          the <strong>broadcast</strong> has them all 1. <strong>Usable hosts</strong> = 2^(host
-          bits) − 2 (network and broadcast aren't assignable). The <strong>mask</strong> marks the
-          network bits with 1s, so /24 = 255.255.255.0.
+        <ConceptCallout idPrefix="subnet-drill" title={t('learning.subnet.primer.title')}>
+          {t('learning.subnet.primer.body')}
         </ConceptCallout>
 
         <label
@@ -177,7 +178,7 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
           data-testid="subnet-drill-prompt"
           style={{ color: 'var(--netlab-text-primary)', fontSize: 16, lineHeight: 1.5 }}
         >
-          {problem.prompt}
+          {promptText}
         </label>
 
         <input
@@ -193,8 +194,8 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
               else check();
             }
           }}
-          placeholder={placeholderFor(problem)}
-          aria-label="Your answer"
+          placeholder={t(placeholderKeyFor(problem))}
+          aria-label={t('learning.subnet.answerLabel')}
           autoComplete="off"
           spellCheck={false}
           style={drillInputStyle}
@@ -211,7 +212,7 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
               opacity: result !== null || answer.trim() === '' ? 0.5 : 1,
             }}
           >
-            Check
+            {t('learning.drill.check')}
           </button>
           <button
             type="button"
@@ -220,11 +221,11 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
             disabled={result === null}
             style={{ ...pillButton('var(--netlab-accent-green)'), opacity: result ? 1 : 0.5 }}
           >
-            {isLast ? 'See results' : 'Next question'}
+            {isLast ? t('learning.drill.seeResults') : t('learning.drill.next')}
           </button>
         </div>
 
-        <DrillFeedback idPrefix="subnet-drill" result={result} />
+        <DrillFeedback idPrefix="subnet-drill" result={localizedResult} />
 
         {/* Every answer ends as a visual lesson: the block, its usable range,
             and (for membership questions) where the asked address falls. */}
@@ -250,6 +251,7 @@ function SkillList({
   accent: string;
   kinds: readonly SubnetProblem['kind'][];
 }) {
+  const { t } = useI18n();
   if (kinds.length === 0) return null;
   return (
     <div data-testid={testid}>
@@ -266,7 +268,7 @@ function SkillList({
               fontSize: 12,
             }}
           >
-            {KIND_LABEL[kind]}
+            {t(subnetKindLabelKey(kind))}
           </span>
         ))}
       </div>

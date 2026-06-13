@@ -85,6 +85,17 @@ import { VisualRoutingDrillPanel } from 'netlab';
 <VisualRoutingDrillPanel seed={42} />;
 ```
 
+## Internationalization
+
+Every learner-facing string — prompts, explanations, chrome, and the visual
+labels — routes through the `learning.*` keys of the i18n catalog (English and
+Japanese ship built in; parity is enforced by `npm run i18n:check`). Prompts
+and explanations are rebuilt from problem data via the pure `drillI18n`
+helpers, and a consistency test pins the English catalog output to the exact
+generator/grader wording so the two can never drift. The demo pages honor the
+gallery's persisted `netlab-locale`; embedded panels follow the nearest
+`I18nProvider` (English without one).
+
 ## Public API
 
 Exported from the package root: `generateRouteProblem`, `generateRouteSet`,

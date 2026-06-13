@@ -19,6 +19,11 @@ const netlabPlugin = {
 // Files already swept for i18n — enforce no-hardcoded-sandbox-string here.
 // Add new entries as additional sub-catalogs are extracted.
 const I18N_ENFORCED_FILES = [
+  'src/components/learning/drillKit.tsx',
+  'src/components/learning/SubnetDrillPanel.tsx',
+  'src/components/learning/RoutingDrillPanel.tsx',
+  'src/components/learning/VisualRoutingDrillPanel.tsx',
+  'src/components/learning/SubnetVisual.tsx',
   'src/components/sandbox/SandboxPanel.tsx',
   'src/components/sandbox/EmptySandboxTab.tsx',
   'src/components/sandbox/SandboxIntroOverlay.tsx',

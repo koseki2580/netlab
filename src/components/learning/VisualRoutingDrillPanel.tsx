@@ -1,9 +1,11 @@
 import { useCallback, useMemo, useState } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import { generateRouteProblem, gradeRoute } from '../../learning/routing-decision';
 import type { RouteGradeResult } from '../../learning/routing-decision';
 import { nextHopFromNodeId, routeProblemTopology } from '../../learning/routing-decision/topology';
 import { NetlabCanvas } from '../NetlabCanvas';
 import { NetlabProvider } from '../NetlabProvider';
+import { routeExplanation, routePrompt } from './drillI18n';
 import {
   ConceptCallout,
   DrillFeedback,
@@ -24,6 +26,7 @@ const SESSION_LENGTH = 8;
  * question. Graded by the longest-prefix match the engine uses.
  */
 export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
+  const { t } = useI18n();
   const [baseSeed, setBaseSeed] = useState(seed);
   const [index, setIndex] = useState(0);
   const [correct, setCorrect] = useState(0);
@@ -95,6 +98,18 @@ export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }
     setChosen(null);
   }, []);
 
+  // Localized prompt/explanation built from the same problem data the logic
+  // layer uses (drillI18n tests pin the en output to the grader text).
+  const promptText = useMemo(() => {
+    const { key, params } = routePrompt(problem);
+    return t(key, params);
+  }, [problem, t]);
+  const localizedResult = useMemo(() => {
+    if (!result) return null;
+    const { key, params } = routeExplanation(problem);
+    return { ...result, explanation: t(key, params) };
+  }, [problem, result, t]);
+
   if (done) {
     return (
       <DrillFrame idPrefix="visual-routing-drill">
@@ -109,7 +124,7 @@ export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }
               outline: 'none',
             }}
           >
-            Session complete
+            {t('learning.drill.sessionComplete')}
           </h2>
           <div
             data-testid="visual-routing-drill-score"
@@ -118,8 +133,7 @@ export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }
             {correct} / {SESSION_LENGTH}
           </div>
           <p style={{ margin: 0, color: 'var(--netlab-text-secondary)', fontSize: 14 }}>
-            Routers always forward via the <strong>most specific</strong> matching route — the
-            longest prefix — no matter how the table is ordered.
+            {t('learning.route.summary.lesson')}
           </p>
           <button
             type="button"
@@ -127,7 +141,7 @@ export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }
             onClick={restart}
             style={pillButton('var(--netlab-accent-blue)')}
           >
-            Practice again
+            {t('learning.drill.practiceAgain')}
           </button>
         </div>
       </DrillFrame>
@@ -139,7 +153,7 @@ export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }
       <div style={{ ...drillCardStyle, maxWidth: 760 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <h2 style={{ margin: 0, color: 'var(--netlab-text-primary)', fontSize: 18 }}>
-            Routing Decision — on the network
+            {t('learning.route.visualTitle')}
           </h2>
           <span
             data-testid="visual-routing-drill-progress"
@@ -149,22 +163,22 @@ export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }
               color: 'var(--netlab-text-secondary)',
             }}
           >
-            Question {index + 1} / {SESSION_LENGTH}
+            {t('learning.drill.progress', { current: index + 1, total: SESSION_LENGTH })}
           </span>
         </div>
 
-        <ConceptCallout idPrefix="visual-routing-drill" title="How to answer">
-          R1 sits in the middle; each neighbor router is one of its next-hops. Read the routing
-          table, find the <strong>most specific</strong> route that contains the destination
-          (longest prefix wins), then <strong>click that neighbor on the network</strong> — or use
-          the answer buttons below the canvas.
+        <ConceptCallout
+          idPrefix="visual-routing-drill"
+          title={t('learning.route.visualPrimer.title')}
+        >
+          {t('learning.route.visualPrimer.body')}
         </ConceptCallout>
 
         <p
           data-testid="visual-routing-drill-prompt"
           style={{ margin: 0, color: 'var(--netlab-text-primary)', fontSize: 16, lineHeight: 1.5 }}
         >
-          {problem.prompt}
+          {promptText}
         </p>
 
         <table
@@ -185,15 +199,15 @@ export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }
               paddingBottom: 4,
             }}
           >
-            Routing table
+            {t('learning.route.table.caption')}
           </caption>
           <thead>
             <tr style={{ color: 'var(--netlab-text-secondary)', textAlign: 'left' }}>
               <th scope="col" style={{ padding: '4px 8px' }}>
-                Destination
+                {t('learning.route.table.destination')}
               </th>
               <th scope="col" style={{ padding: '4px 8px' }}>
-                Next-hop
+                {t('learning.route.table.nextHop')}
               </th>
             </tr>
           </thead>
@@ -224,7 +238,7 @@ export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }
 
         <div
           role="group"
-          aria-label="Answer by next-hop"
+          aria-label={t('learning.route.answerGroup')}
           style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
         >
           {nextHops.map((nextHop) => {
@@ -262,11 +276,11 @@ export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }
             disabled={result === null}
             style={{ ...pillButton('var(--netlab-accent-green)'), opacity: result ? 1 : 0.5 }}
           >
-            {isLast ? 'See results' : 'Next question'}
+            {isLast ? t('learning.drill.seeResults') : t('learning.drill.next')}
           </button>
         </div>
 
-        <DrillFeedback idPrefix="visual-routing-drill" result={result} />
+        <DrillFeedback idPrefix="visual-routing-drill" result={localizedResult} />
       </div>
     </DrillFrame>
   );

@@ -3,6 +3,7 @@ import { annotations } from './ja/annotations';
 import { assessment } from './ja/assessment';
 import { edits } from './ja/edits';
 import { intro } from './ja/intro';
+import { learning } from './ja/learning';
 import { narration } from './ja/narration';
 import { panel } from './ja/panel';
 import { recording } from './ja/recording';
@@ -13,6 +14,7 @@ export const ja: Catalog = {
   ...assessment,
   ...edits,
   ...intro,
+  ...learning,
   ...narration,
   ...panel,
   ...recording,

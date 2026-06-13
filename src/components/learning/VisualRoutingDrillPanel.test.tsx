@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { expectedNextHop, generateRouteProblem } from '../../learning/routing-decision';
 import { nextHopNodeId } from '../../learning/routing-decision/topology';
+import { I18nProvider } from '../../i18n';
 import { VisualRoutingDrillPanel } from './VisualRoutingDrillPanel';
 
 /**
@@ -162,6 +163,18 @@ describe('VisualRoutingDrillPanel', () => {
     expect(winnerEdge?.animated).toBe(true);
     expect(winnerEdge?.stroke).toContain('green');
     expect(wrongEdge?.stroke).toContain('red');
+  });
+
+  it('renders Japanese when mounted inside an I18nProvider with locale ja', () => {
+    act(() =>
+      root?.render(
+        <I18nProvider locale="ja">
+          <VisualRoutingDrillPanel seed={SEED} />
+        </I18nProvider>,
+      ),
+    );
+    expect(container?.textContent).toContain('ルーティング判断 — ネットワーク上で');
+    expect(testid('visual-routing-drill-prompt')?.textContent).toContain('宛先');
   });
 
   it('completes a session with a focused summary and restarts', () => {

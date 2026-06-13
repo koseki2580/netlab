@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import { generateRouteProblem, gradeRoute } from '../../learning/routing-decision';
 import type { RouteGradeResult } from '../../learning/routing-decision';
+import { routeExplanation, routePrompt } from './drillI18n';
 import {
   ConceptCallout,
   DrillFeedback,
@@ -18,9 +20,11 @@ const SESSION_LENGTH = 8;
 /**
  * Active-recall drill for the router's core decision: longest-prefix match.
  * Read a destination and a routing table, pick the next-hop, get immediate
- * feedback naming the winning route. Graded by the same LPM the engine uses.
+ * feedback naming the winning route. Graded by the same LPM the engine uses;
+ * every learner-facing string routes through the i18n catalog (en/ja).
  */
 export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
+  const { t } = useI18n();
   const [baseSeed, setBaseSeed] = useState(seed);
   const [index, setIndex] = useState(0);
   const [correct, setCorrect] = useState(0);
@@ -55,6 +59,18 @@ export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
     setResult(null);
   }, []);
 
+  // Localized prompt/explanation built from the same problem data the logic
+  // layer uses (drillI18n tests pin the en output to the grader text).
+  const promptText = useMemo(() => {
+    const { key, params } = routePrompt(problem);
+    return t(key, params);
+  }, [problem, t]);
+  const localizedResult = useMemo(() => {
+    if (!result) return null;
+    const { key, params } = routeExplanation(problem);
+    return { ...result, explanation: t(key, params) };
+  }, [problem, result, t]);
+
   if (done) {
     return (
       <DrillFrame idPrefix="routing-drill">
@@ -69,7 +85,7 @@ export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
               outline: 'none',
             }}
           >
-            Session complete
+            {t('learning.drill.sessionComplete')}
           </h2>
           <div
             data-testid="routing-drill-score"
@@ -78,8 +94,7 @@ export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
             {correct} / {SESSION_LENGTH}
           </div>
           <p style={{ margin: 0, color: 'var(--netlab-text-secondary)', fontSize: 14 }}>
-            Routers always pick the <strong>most specific</strong> matching route — the longest
-            prefix — regardless of how the table is ordered.
+            {t('learning.route.summary.lesson')}
           </p>
           <button
             type="button"
@@ -87,7 +102,7 @@ export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
             onClick={restart}
             style={pillButton('var(--netlab-accent-blue)')}
           >
-            Practice again
+            {t('learning.drill.practiceAgain')}
           </button>
         </div>
       </DrillFrame>
@@ -99,7 +114,7 @@ export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
       <div style={drillCardStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <h2 style={{ margin: 0, color: 'var(--netlab-text-primary)', fontSize: 18 }}>
-            Routing Decision
+            {t('learning.route.title')}
           </h2>
           <span
             data-testid="routing-drill-progress"
@@ -109,15 +124,12 @@ export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
               color: 'var(--netlab-text-secondary)',
             }}
           >
-            Question {index + 1} / {SESSION_LENGTH}
+            {t('learning.drill.progress', { current: index + 1, total: SESSION_LENGTH })}
           </span>
         </div>
 
-        <ConceptCallout idPrefix="routing-drill" title="New to routing tables? Start here">
-          A destination can match several routes at once — a default route, a summary prefix, and a
-          specific subnet. The router always forwards via the <strong>most specific</strong> match:
-          the one with the <strong>longest prefix</strong> (largest /n). Table order and the other
-          routes don't matter — only which subnet most tightly contains the destination.
+        <ConceptCallout idPrefix="routing-drill" title={t('learning.route.primer.title')}>
+          {t('learning.route.primer.body')}
         </ConceptCallout>
 
         <label
@@ -125,7 +137,7 @@ export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
           data-testid="routing-drill-prompt"
           style={{ color: 'var(--netlab-text-primary)', fontSize: 16, lineHeight: 1.5 }}
         >
-          {problem.prompt}
+          {promptText}
         </label>
 
         <table
@@ -146,15 +158,15 @@ export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
               paddingBottom: 4,
             }}
           >
-            Routing table
+            {t('learning.route.table.caption')}
           </caption>
           <thead>
             <tr style={{ color: 'var(--netlab-text-secondary)', textAlign: 'left' }}>
               <th scope="col" style={{ padding: '4px 8px' }}>
-                Destination
+                {t('learning.route.table.destination')}
               </th>
               <th scope="col" style={{ padding: '4px 8px' }}>
-                Next-hop
+                {t('learning.route.table.nextHop')}
               </th>
             </tr>
           </thead>
@@ -181,8 +193,8 @@ export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
               else check();
             }
           }}
-          placeholder="next-hop, e.g. 192.0.2.3"
-          aria-label="Chosen next-hop"
+          placeholder={t('learning.route.placeholder')}
+          aria-label={t('learning.route.answerLabel')}
           autoComplete="off"
           spellCheck={false}
           style={drillInputStyle}
@@ -199,7 +211,7 @@ export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
               opacity: result !== null || answer.trim() === '' ? 0.5 : 1,
             }}
           >
-            Check
+            {t('learning.drill.check')}
           </button>
           <button
             type="button"
@@ -208,11 +220,11 @@ export function RoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
             disabled={result === null}
             style={{ ...pillButton('var(--netlab-accent-green)'), opacity: result ? 1 : 0.5 }}
           >
-            {isLast ? 'See results' : 'Next question'}
+            {isLast ? t('learning.drill.seeResults') : t('learning.drill.next')}
           </button>
         </div>
 
-        <DrillFeedback idPrefix="routing-drill" result={result} />
+        <DrillFeedback idPrefix="routing-drill" result={localizedResult} />
       </div>
     </DrillFrame>
   );
