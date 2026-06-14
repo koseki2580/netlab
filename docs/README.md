@@ -44,7 +44,7 @@ Framework-agnostic skill-building modules that complement the visual scenarios a
 - [Routing Decision Practice](learning/routing-decision.md) - Longest-prefix-match drill graded by the same algorithm the engine uses, including the canvas-based visual variant
 - [Packet Journey](learning/packet-journey.md) - Predict-then-observe: the live simulation engine grades hop-by-hop predictions and explains its own routing decisions
 - [Resilience Lab](learning/resilience.md) - Break a link or router and predict the fallout; the live engine reveals what reroutes and what dies
-- [Protocol Concept Checks](learning/concept-check.md) - Data-driven active-recall quizzes spanning 18 protocols across the stack (Ethernet/ARP/STP/VLAN, IPv4/IPv6/ICMP/NAT, TCP/UDP/QUIC, DNS/DHCP/HTTP, TLS, OSPF/BGP/RIP), built to scale to almost any protocol
+- [Protocol Concept Checks](learning/concept-check.md) - Data-driven active-recall quizzes spanning 30 protocols across the stack — essentially the whole protocol surface the engine simulates — built to scale to almost any protocol
 
 ### 💻 UI & Interaction (`ui/`)
 

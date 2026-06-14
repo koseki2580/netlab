@@ -83,7 +83,7 @@ const CATEGORIES: Category[] = [
       {
         path: '/learning/protocols',
         title: 'Protocol Concept Checks',
-        desc: 'Active-recall quizzes across 18 protocols — Ethernet/ARP/STP/VLAN, IPv4/IPv6/ICMP/NAT, TCP/UDP/QUIC, DNS/DHCP/HTTP, TLS, OSPF/BGP/RIP.',
+        desc: 'Active-recall quizzes across 30 protocols — every layer, all three routing families, tunneling, wireless, QoS and security.',
         meta: { difficulty: 'beginner', tags: ['Quiz', 'Protocols'] },
       },
       {

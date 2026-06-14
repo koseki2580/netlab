@@ -668,4 +668,448 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
       },
     ],
   },
+  {
+    id: 'http2',
+    layer: 'l7',
+    nameKey: 'learning.concept.http2.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.http2.q1.prompt',
+        explanationKey: 'learning.concept.http2.q1.why',
+        options: [
+          { key: 'learning.concept.http2.q1.a', correct: true },
+          { key: 'learning.concept.http2.q1.b' },
+          { key: 'learning.concept.http2.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.http2.q2.prompt',
+        explanationKey: 'learning.concept.http2.q2.why',
+        options: [
+          { key: 'learning.concept.http2.q2.a' },
+          { key: 'learning.concept.http2.q2.b', correct: true },
+          { key: 'learning.concept.http2.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.http2.q3.prompt',
+        explanationKey: 'learning.concept.http2.q3.why',
+        options: [
+          { key: 'learning.concept.http2.q3.a' },
+          { key: 'learning.concept.http2.q3.b' },
+          { key: 'learning.concept.http2.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'http3',
+    layer: 'l7',
+    nameKey: 'learning.concept.http3.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.http3.q1.prompt',
+        explanationKey: 'learning.concept.http3.q1.why',
+        options: [
+          { key: 'learning.concept.http3.q1.a', correct: true },
+          { key: 'learning.concept.http3.q1.b' },
+          { key: 'learning.concept.http3.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.http3.q2.prompt',
+        explanationKey: 'learning.concept.http3.q2.why',
+        options: [
+          { key: 'learning.concept.http3.q2.a' },
+          { key: 'learning.concept.http3.q2.b', correct: true },
+          { key: 'learning.concept.http3.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.http3.q3.prompt',
+        explanationKey: 'learning.concept.http3.q3.why',
+        options: [
+          { key: 'learning.concept.http3.q3.a' },
+          { key: 'learning.concept.http3.q3.b' },
+          { key: 'learning.concept.http3.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'qos',
+    layer: 'l3',
+    nameKey: 'learning.concept.qos.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.qos.q1.prompt',
+        explanationKey: 'learning.concept.qos.q1.why',
+        options: [
+          { key: 'learning.concept.qos.q1.a', correct: true },
+          { key: 'learning.concept.qos.q1.b' },
+          { key: 'learning.concept.qos.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.qos.q2.prompt',
+        explanationKey: 'learning.concept.qos.q2.why',
+        options: [
+          { key: 'learning.concept.qos.q2.a' },
+          { key: 'learning.concept.qos.q2.b', correct: true },
+          { key: 'learning.concept.qos.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.qos.q3.prompt',
+        explanationKey: 'learning.concept.qos.q3.why',
+        options: [
+          { key: 'learning.concept.qos.q3.a' },
+          { key: 'learning.concept.qos.q3.b' },
+          { key: 'learning.concept.qos.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'ecmp',
+    layer: 'routing',
+    nameKey: 'learning.concept.ecmp.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.ecmp.q1.prompt',
+        explanationKey: 'learning.concept.ecmp.q1.why',
+        options: [
+          { key: 'learning.concept.ecmp.q1.a', correct: true },
+          { key: 'learning.concept.ecmp.q1.b' },
+          { key: 'learning.concept.ecmp.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.ecmp.q2.prompt',
+        explanationKey: 'learning.concept.ecmp.q2.why',
+        options: [
+          { key: 'learning.concept.ecmp.q2.a' },
+          { key: 'learning.concept.ecmp.q2.b', correct: true },
+          { key: 'learning.concept.ecmp.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.ecmp.q3.prompt',
+        explanationKey: 'learning.concept.ecmp.q3.why',
+        options: [
+          { key: 'learning.concept.ecmp.q3.a' },
+          { key: 'learning.concept.ecmp.q3.b' },
+          { key: 'learning.concept.ecmp.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'vrrp',
+    layer: 'l3',
+    nameKey: 'learning.concept.vrrp.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.vrrp.q1.prompt',
+        explanationKey: 'learning.concept.vrrp.q1.why',
+        options: [
+          { key: 'learning.concept.vrrp.q1.a', correct: true },
+          { key: 'learning.concept.vrrp.q1.b' },
+          { key: 'learning.concept.vrrp.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.vrrp.q2.prompt',
+        explanationKey: 'learning.concept.vrrp.q2.why',
+        options: [
+          { key: 'learning.concept.vrrp.q2.a' },
+          { key: 'learning.concept.vrrp.q2.b', correct: true },
+          { key: 'learning.concept.vrrp.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.vrrp.q3.prompt',
+        explanationKey: 'learning.concept.vrrp.q3.why',
+        options: [
+          { key: 'learning.concept.vrrp.q3.a' },
+          { key: 'learning.concept.vrrp.q3.b' },
+          { key: 'learning.concept.vrrp.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'multicast',
+    layer: 'l3',
+    nameKey: 'learning.concept.multicast.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.multicast.q1.prompt',
+        explanationKey: 'learning.concept.multicast.q1.why',
+        options: [
+          { key: 'learning.concept.multicast.q1.a', correct: true },
+          { key: 'learning.concept.multicast.q1.b' },
+          { key: 'learning.concept.multicast.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.multicast.q2.prompt',
+        explanationKey: 'learning.concept.multicast.q2.why',
+        options: [
+          { key: 'learning.concept.multicast.q2.a' },
+          { key: 'learning.concept.multicast.q2.b', correct: true },
+          { key: 'learning.concept.multicast.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.multicast.q3.prompt',
+        explanationKey: 'learning.concept.multicast.q3.why',
+        options: [
+          { key: 'learning.concept.multicast.q3.a' },
+          { key: 'learning.concept.multicast.q3.b' },
+          { key: 'learning.concept.multicast.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'mtu',
+    layer: 'l3',
+    nameKey: 'learning.concept.mtu.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.mtu.q1.prompt',
+        explanationKey: 'learning.concept.mtu.q1.why',
+        options: [
+          { key: 'learning.concept.mtu.q1.a', correct: true },
+          { key: 'learning.concept.mtu.q1.b' },
+          { key: 'learning.concept.mtu.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.mtu.q2.prompt',
+        explanationKey: 'learning.concept.mtu.q2.why',
+        options: [
+          { key: 'learning.concept.mtu.q2.a' },
+          { key: 'learning.concept.mtu.q2.b', correct: true },
+          { key: 'learning.concept.mtu.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.mtu.q3.prompt',
+        explanationKey: 'learning.concept.mtu.q3.why',
+        options: [
+          { key: 'learning.concept.mtu.q3.a' },
+          { key: 'learning.concept.mtu.q3.b' },
+          { key: 'learning.concept.mtu.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'gre',
+    layer: 'l3',
+    nameKey: 'learning.concept.gre.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.gre.q1.prompt',
+        explanationKey: 'learning.concept.gre.q1.why',
+        options: [
+          { key: 'learning.concept.gre.q1.a', correct: true },
+          { key: 'learning.concept.gre.q1.b' },
+          { key: 'learning.concept.gre.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.gre.q2.prompt',
+        explanationKey: 'learning.concept.gre.q2.why',
+        options: [
+          { key: 'learning.concept.gre.q2.a' },
+          { key: 'learning.concept.gre.q2.b', correct: true },
+          { key: 'learning.concept.gre.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.gre.q3.prompt',
+        explanationKey: 'learning.concept.gre.q3.why',
+        options: [
+          { key: 'learning.concept.gre.q3.a' },
+          { key: 'learning.concept.gre.q3.b' },
+          { key: 'learning.concept.gre.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'mpls',
+    layer: 'routing',
+    nameKey: 'learning.concept.mpls.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.mpls.q1.prompt',
+        explanationKey: 'learning.concept.mpls.q1.why',
+        options: [
+          { key: 'learning.concept.mpls.q1.a', correct: true },
+          { key: 'learning.concept.mpls.q1.b' },
+          { key: 'learning.concept.mpls.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.mpls.q2.prompt',
+        explanationKey: 'learning.concept.mpls.q2.why',
+        options: [
+          { key: 'learning.concept.mpls.q2.a' },
+          { key: 'learning.concept.mpls.q2.b', correct: true },
+          { key: 'learning.concept.mpls.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.mpls.q3.prompt',
+        explanationKey: 'learning.concept.mpls.q3.why',
+        options: [
+          { key: 'learning.concept.mpls.q3.a' },
+          { key: 'learning.concept.mpls.q3.b' },
+          { key: 'learning.concept.mpls.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'vxlan',
+    layer: 'l2',
+    nameKey: 'learning.concept.vxlan.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.vxlan.q1.prompt',
+        explanationKey: 'learning.concept.vxlan.q1.why',
+        options: [
+          { key: 'learning.concept.vxlan.q1.a', correct: true },
+          { key: 'learning.concept.vxlan.q1.b' },
+          { key: 'learning.concept.vxlan.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.vxlan.q2.prompt',
+        explanationKey: 'learning.concept.vxlan.q2.why',
+        options: [
+          { key: 'learning.concept.vxlan.q2.a' },
+          { key: 'learning.concept.vxlan.q2.b', correct: true },
+          { key: 'learning.concept.vxlan.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.vxlan.q3.prompt',
+        explanationKey: 'learning.concept.vxlan.q3.why',
+        options: [
+          { key: 'learning.concept.vxlan.q3.a' },
+          { key: 'learning.concept.vxlan.q3.b' },
+          { key: 'learning.concept.vxlan.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'wifi',
+    layer: 'l2',
+    nameKey: 'learning.concept.wifi.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.wifi.q1.prompt',
+        explanationKey: 'learning.concept.wifi.q1.why',
+        options: [
+          { key: 'learning.concept.wifi.q1.a', correct: true },
+          { key: 'learning.concept.wifi.q1.b' },
+          { key: 'learning.concept.wifi.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.wifi.q2.prompt',
+        explanationKey: 'learning.concept.wifi.q2.why',
+        options: [
+          { key: 'learning.concept.wifi.q2.a' },
+          { key: 'learning.concept.wifi.q2.b', correct: true },
+          { key: 'learning.concept.wifi.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.wifi.q3.prompt',
+        explanationKey: 'learning.concept.wifi.q3.why',
+        options: [
+          { key: 'learning.concept.wifi.q3.a' },
+          { key: 'learning.concept.wifi.q3.b' },
+          { key: 'learning.concept.wifi.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'acl',
+    layer: 'l5',
+    nameKey: 'learning.concept.acl.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.acl.q1.prompt',
+        explanationKey: 'learning.concept.acl.q1.why',
+        options: [
+          { key: 'learning.concept.acl.q1.a', correct: true },
+          { key: 'learning.concept.acl.q1.b' },
+          { key: 'learning.concept.acl.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.acl.q2.prompt',
+        explanationKey: 'learning.concept.acl.q2.why',
+        options: [
+          { key: 'learning.concept.acl.q2.a' },
+          { key: 'learning.concept.acl.q2.b', correct: true },
+          { key: 'learning.concept.acl.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.acl.q3.prompt',
+        explanationKey: 'learning.concept.acl.q3.why',
+        options: [
+          { key: 'learning.concept.acl.q3.a' },
+          { key: 'learning.concept.acl.q3.b' },
+          { key: 'learning.concept.acl.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
 ];

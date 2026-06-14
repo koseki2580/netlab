@@ -41,18 +41,19 @@ drift.
 
 ## Shipped decks
 
-Eighteen protocols across the stack (layer → decks):
+Thirty protocols across the stack (layer → decks):
 
-| Layer            | Decks                    |
-| ---------------- | ------------------------ |
-| L2 — Link        | Ethernet, ARP, STP, VLAN |
-| L3 — Network     | IPv4, IPv6, ICMP, NAT    |
-| L4 — Transport   | TCP, UDP, QUIC           |
-| L7 — Application | DNS, DHCP, HTTP          |
-| Security         | TLS                      |
-| Routing          | OSPF, BGP, RIP           |
+| Layer            | Decks                                                            |
+| ---------------- | ---------------------------------------------------------------- |
+| L2 — Link        | Ethernet, ARP, STP, VLAN, VXLAN/EVPN, Wi-Fi                      |
+| L3 — Network     | IPv4, IPv6, ICMP, NAT, QoS/DSCP, VRRP, Multicast, MTU/PMTUD, GRE |
+| L4 — Transport   | TCP, UDP, QUIC                                                   |
+| Security         | TLS, ACL/Firewall                                                |
+| L7 — Application | DNS, DHCP, HTTP, HTTP/2, HTTP/3                                  |
+| Routing          | OSPF, BGP, RIP, ECMP, MPLS                                       |
 
-`decksByLayer()` groups them in stack order for the picker.
+`decksByLayer()` groups them in stack order for the picker. This is essentially
+the protocol surface the netlab engine itself simulates.
 
 ## Panel
 

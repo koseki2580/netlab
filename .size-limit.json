@@ -1,7 +1,7 @@
 [
   {
     "path": "dist/netlab.es.js",
-    "limit": "200 kB",
+    "limit": "210 kB",
     "gzip": true
   },
   {
@@ -58,7 +58,7 @@
   {
     "name": "ui:simulation-context",
     "path": "dist/SimulationContext-*.mjs",
-    "limit": "122 kB",
+    "limit": "127 kB",
     "gzip": true
   },
   {
@@ -70,7 +70,7 @@
   {
     "name": "ui:scenario-export",
     "path": "dist/ScenarioExportDialog-*.mjs",
-    "limit": "42 kB",
+    "limit": "46 kB",
     "gzip": true
   }
 ]
