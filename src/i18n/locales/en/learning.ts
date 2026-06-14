@@ -99,4 +99,28 @@ export const learning: Catalog = {
   'learning.journey.nextJourney': 'Next journey',
   'learning.journey.summary.lesson':
     'You just watched the real forwarding engine at work: the most specific route wins, the default route catches the rest, and a router with no matching route drops the packet.',
+
+  // Resilience Lab (predict failure outcomes)
+  'learning.resilience.title': 'Resilience Lab — predict the failure',
+  'learning.resilience.primer.title': 'How this works',
+  'learning.resilience.primer.body':
+    'Each scenario breaks one part of the network, then runs the real engine. Before you see the result, predict it: does the packet reroute and survive, or get dropped? The network has a redundant R2–R3 link, so the answer is not always the same — that is the whole point of redundancy.',
+  'learning.resilience.label': 'Scenario {{current}} / {{total}} — to {{dst}}',
+  'learning.resilience.break': '💥 {{what}} fails. Will the packet reach {{dst}}?',
+  'learning.resilience.fail.r1r2Link': 'The R1–R2 link',
+  'learning.resilience.fail.r2Node': 'Router R2',
+  'learning.resilience.fail.r1r3Link': 'The R1–R3 link',
+  'learning.resilience.predict.survived': '✅ It reroutes and survives',
+  'learning.resilience.predict.dropped': '❌ It gets dropped',
+  'learning.resilience.outcome.survived': '✅ Survived — rerouted and reached {{dst}}.',
+  'learning.resilience.outcome.dropped': '💀 Dropped at {{node}} — {{reason}}.',
+  'learning.resilience.lesson.reroute':
+    'The redundant R2–R3 link gave the packet a detour: R1 → R3 → R2 → the server. Redundancy turned a broken link into a longer route, not an outage.',
+  'learning.resilience.lesson.lastHop':
+    'Server A only attaches to R2. When R2 itself dies, no amount of redundancy elsewhere can reach it — the last hop is a single point of failure.',
+  'learning.resilience.lesson.uselessBackup':
+    'A backup link only helps if a route uses it. R1 has no route to Server B except via R3, so losing that link drops the packet immediately — redundancy in the wrong place is no redundancy.',
+  'learning.resilience.next': 'Next scenario',
+  'learning.resilience.summary.lesson':
+    'Redundancy is about paths AND routes: a spare link saves you only when something can route over it, and a single-attached host is always exposed.',
 } as const;

@@ -38,6 +38,7 @@ import SubnetDrillDemo from './learning/SubnetDrillDemo';
 import RoutingDrillDemo from './learning/RoutingDrillDemo';
 import VisualRoutingDrillDemo from './learning/VisualRoutingDrillDemo';
 import PacketJourneyDemo from './learning/PacketJourneyDemo';
+import ResilienceLabDemo from './learning/ResilienceLabDemo';
 import Ipv6Demo from './networking/Ipv6Demo';
 import Ipv6RoutingDemo from './networking/Ipv6RoutingDemo';
 import LinkQosDemo from './networking/LinkQosDemo';
@@ -83,6 +84,7 @@ function DemoRoutes() {
         <Route path="/learning/routing-decision" element={<RoutingDrillDemo />} />
         <Route path="/learning/visual-routing" element={<VisualRoutingDrillDemo />} />
         <Route path="/learning/packet-journey" element={<PacketJourneyDemo />} />
+        <Route path="/learning/resilience" element={<ResilienceLabDemo />} />
         <Route path="/basic/minimal" element={<MinimalDemo />} />
         <Route path="/basic/three-tier" element={<ThreeTierDemo />} />
         <Route path="/basic/star" element={<StarDemo />} />

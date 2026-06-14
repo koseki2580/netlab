@@ -101,4 +101,28 @@ export const learning: Catalog = {
   'learning.journey.nextJourney': '次のジャーニー',
   'learning.journey.summary.lesson':
     '本物の転送エンジンの仕事を見届けました: 最も具体的な経路が勝ち、デフォルトルートが残りを受け止め、一致する経路のないルータはパケットを破棄します。',
+
+  // レジリエンスラボ(障害結果を予測)
+  'learning.resilience.title': 'レジリエンスラボ — 障害を予測する',
+  'learning.resilience.primer.title': '遊び方',
+  'learning.resilience.primer.body':
+    '各シナリオはネットワークの一部を壊し、実エンジンで動かします。結果を見る前に予測してください: パケットは迂回して生き残る？ それとも破棄される？ このネットワークには冗長な R2–R3 リンクがあるため、答えは常に同じではありません — それこそが冗長性の意味です。',
+  'learning.resilience.label': 'シナリオ {{current}} / {{total}} — 宛先 {{dst}}',
+  'learning.resilience.break': '💥 {{what}}が故障。パケットは {{dst}} に届く？',
+  'learning.resilience.fail.r1r2Link': 'R1–R2 リンク',
+  'learning.resilience.fail.r2Node': 'ルータ R2',
+  'learning.resilience.fail.r1r3Link': 'R1–R3 リンク',
+  'learning.resilience.predict.survived': '✅ 迂回して生き残る',
+  'learning.resilience.predict.dropped': '❌ 破棄される',
+  'learning.resilience.outcome.survived': '✅ 生存 — 迂回して {{dst}} に到達。',
+  'learning.resilience.outcome.dropped': '💀 {{node}} で破棄 — {{reason}}。',
+  'learning.resilience.lesson.reroute':
+    '冗長な R2–R3 リンクが迂回路になりました: R1 → R3 → R2 → サーバ。冗長性はリンク断を「障害」ではなく「遠回り」に変えます。',
+  'learning.resilience.lesson.lastHop':
+    'Server A は R2 にしか接続していません。R2 自体が死ぬと、他のどこに冗長性があっても到達できません — 最後の1ホップは単一障害点です。',
+  'learning.resilience.lesson.uselessBackup':
+    'バックアップリンクは、それを使う経路があって初めて役立ちます。R1 は Server B へ R3 経由の経路しか持たないため、そのリンクを失うと即破棄 — 場所違いの冗長は冗長ではありません。',
+  'learning.resilience.next': '次のシナリオ',
+  'learning.resilience.summary.lesson':
+    '冗長性は「経路」と「ルート」の両方です: 予備リンクは何かがそこを通れるときだけ救い、単一接続のホストは常に危険にさらされます。',
 } as const;

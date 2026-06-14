@@ -43,6 +43,7 @@ Framework-agnostic skill-building modules that complement the visual scenarios a
 - [Subnetting Practice](learning/subnetting.md) - Pure solver, deterministic problem generator, and answer grader for drilling IPv4 subnet reasoning
 - [Routing Decision Practice](learning/routing-decision.md) - Longest-prefix-match drill graded by the same algorithm the engine uses, including the canvas-based visual variant
 - [Packet Journey](learning/packet-journey.md) - Predict-then-observe: the live simulation engine grades hop-by-hop predictions and explains its own routing decisions
+- [Resilience Lab](learning/resilience.md) - Break a link or router and predict the fallout; the live engine reveals what reroutes and what dies
 
 ### 💻 UI & Interaction (`ui/`)
 

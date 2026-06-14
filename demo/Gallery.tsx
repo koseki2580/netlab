@@ -127,6 +127,13 @@ const CATEGORIES: Category[] = [
         meta: { difficulty: 'intermediate', tags: ['LPM', 'Drill', 'Engine'] },
       },
       {
+        path: '/learning/resilience',
+        title: 'Resilience Lab',
+        desc: 'Break a link or router and predict the fallout — the live engine shows what reroutes and what dies.',
+        progressId: 'resilience-lab-drill',
+        meta: { difficulty: 'intermediate', tags: ['Failure', 'Drill', 'Engine'] },
+      },
+      {
         path: '/routing/client-server',
         title: 'Client–Server',
         desc: 'Full stack: private/public areas, router with static routes, live packet log.',
