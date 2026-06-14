@@ -26,6 +26,7 @@ const I18N_ENFORCED_FILES = [
   'src/components/learning/SubnetVisual.tsx',
   'src/components/learning/PacketJourneyPanel.tsx',
   'src/components/learning/ResilienceLabPanel.tsx',
+  'src/components/learning/ConceptCheckPanel.tsx',
   'src/components/sandbox/SandboxPanel.tsx',
   'src/components/sandbox/EmptySandboxTab.tsx',
   'src/components/sandbox/SandboxIntroOverlay.tsx',

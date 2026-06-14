@@ -81,6 +81,12 @@ const CATEGORIES: Category[] = [
         meta: { difficulty: 'beginner', tags: ['CIDR', 'Drill'] },
       },
       {
+        path: '/learning/protocols',
+        title: 'Protocol Concept Checks',
+        desc: 'Quick active-recall quizzes across the stack — ARP, STP, VLAN, TCP, UDP, NAT, DNS, TLS.',
+        meta: { difficulty: 'beginner', tags: ['Quiz', 'Protocols'] },
+      },
+      {
         path: '/basic/minimal',
         title: 'Minimal',
         desc: 'Two nodes directly connected. The simplest possible setup.',

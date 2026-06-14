@@ -523,6 +523,20 @@ export {
   resilienceTopologyView,
 } from './learning/resilience';
 export type { ResilienceScenario, ResilienceOutcome } from './learning/resilience';
+export {
+  CONCEPT_DECKS,
+  CONCEPT_LAYER_ORDER,
+  decksByLayer,
+  getDeck,
+  correctOption,
+  isCorrectChoice,
+} from './learning/concept-check';
+export type {
+  ConceptDeck,
+  ConceptLayer,
+  ConceptOption,
+  ConceptQuestion,
+} from './learning/concept-check';
 // Learning — embeddable drill UI (learning-surface panels host apps can mount)
 export { SubnetVisual } from './components/learning/SubnetVisual';
 export { SubnetDrillPanel } from './components/learning/SubnetDrillPanel';
@@ -530,6 +544,7 @@ export { RoutingDrillPanel } from './components/learning/RoutingDrillPanel';
 export { VisualRoutingDrillPanel } from './components/learning/VisualRoutingDrillPanel';
 export { PacketJourneyPanel } from './components/learning/PacketJourneyPanel';
 export { ResilienceLabPanel } from './components/learning/ResilienceLabPanel';
+export { ConceptCheckPanel } from './components/learning/ConceptCheckPanel';
 
 // Interactive sandbox primitives
 export {

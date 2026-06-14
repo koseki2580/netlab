@@ -1,0 +1,71 @@
+import { describe, expect, it } from 'vitest';
+import { en } from '../../i18n/locales/en';
+import { ja } from '../../i18n/locales/ja';
+import { CONCEPT_DECKS } from './decks';
+import { correctOption, decksByLayer, getDeck, isCorrectChoice } from './grade';
+
+describe('concept-check decks', () => {
+  it('every deck has a unique id, a name key, and at least one question', () => {
+    const ids = CONCEPT_DECKS.map((deck) => deck.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const deck of CONCEPT_DECKS) {
+      expect(deck.nameKey).toMatch(/^learning\.concept\./);
+      expect(deck.questions.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('every question has exactly one correct option among three choices', () => {
+    for (const deck of CONCEPT_DECKS) {
+      for (const question of deck.questions) {
+        expect(question.options).toHaveLength(3);
+        const correct = question.options.filter((option) => option.correct);
+        expect(correct, `${deck.id}/${question.id}`).toHaveLength(1);
+      }
+    }
+  });
+
+  it('the correct answer is not always in the same slot (varied positions)', () => {
+    const slots = new Set<number>();
+    for (const deck of CONCEPT_DECKS) {
+      for (const question of deck.questions) {
+        slots.add(question.options.findIndex((option) => option.correct));
+      }
+    }
+    expect(slots.size).toBeGreaterThan(1);
+  });
+
+  it('every catalog key referenced by a deck exists in both en and ja', () => {
+    for (const deck of CONCEPT_DECKS) {
+      const keys = [
+        deck.nameKey,
+        ...deck.questions.flatMap((question) => [
+          question.promptKey,
+          question.explanationKey,
+          ...question.options.map((option) => option.key),
+        ]),
+      ];
+      for (const key of keys) {
+        expect(en, `en missing ${key}`).toHaveProperty([key]);
+        expect(ja, `ja missing ${key}`).toHaveProperty([key]);
+      }
+    }
+  });
+
+  it('grading helpers identify the correct choice', () => {
+    const arp = getDeck('arp');
+    expect(arp).toBeDefined();
+    const q1 = arp!.questions[0]!;
+    const right = correctOption(q1)!;
+    expect(isCorrectChoice(q1, right.key)).toBe(true);
+    const wrong = q1.options.find((option) => !option.correct)!;
+    expect(isCorrectChoice(q1, wrong.key)).toBe(false);
+  });
+
+  it('groups decks by layer in stack order, covering several layers', () => {
+    const groups = decksByLayer();
+    expect(groups.length).toBeGreaterThanOrEqual(4);
+    expect(groups.map((group) => group.layer)).toEqual([
+      ...new Set(groups.map((group) => group.layer)),
+    ]);
+  });
+});
