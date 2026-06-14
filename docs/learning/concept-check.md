@@ -41,15 +41,16 @@ drift.
 
 ## Shipped decks
 
-Eight protocols across the stack (layer → decks):
+Eighteen protocols across the stack (layer → decks):
 
-| Layer            | Decks          |
-| ---------------- | -------------- |
-| L2 — Link        | ARP, STP, VLAN |
-| L3 — Network     | NAT            |
-| L4 — Transport   | TCP, UDP       |
-| L7 — Application | DNS            |
-| Security         | TLS            |
+| Layer            | Decks                    |
+| ---------------- | ------------------------ |
+| L2 — Link        | Ethernet, ARP, STP, VLAN |
+| L3 — Network     | IPv4, IPv6, ICMP, NAT    |
+| L4 — Transport   | TCP, UDP, QUIC           |
+| L7 — Application | DNS, DHCP, HTTP          |
+| Security         | TLS                      |
+| Routing          | OSPF, BGP, RIP           |
 
 `decksByLayer()` groups them in stack order for the picker.
 
