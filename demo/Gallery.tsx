@@ -83,7 +83,7 @@ const CATEGORIES: Category[] = [
       {
         path: '/learning/protocols',
         title: 'Protocol Concept Checks',
-        desc: 'Start with the foundations (layered model, addressing, ports) then drill 30 protocols across every layer — 120 explained questions, bilingual.',
+        desc: 'Foundations first (layered model, addressing, ports), then 42 protocols across every layer — switching, routing (OSPF/BGP/IS-IS/EIGRP), transport, email, security, VPN and more. 156 explained questions, bilingual.',
         meta: { difficulty: 'beginner', tags: ['Quiz', 'Protocols'] },
       },
       {

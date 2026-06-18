@@ -1433,4 +1433,448 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
       },
     ],
   },
+  {
+    id: 'ssh',
+    layer: 'l5',
+    nameKey: 'learning.concept.ssh.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.ssh.q1.prompt',
+        explanationKey: 'learning.concept.ssh.q1.why',
+        options: [
+          { key: 'learning.concept.ssh.q1.a', correct: true },
+          { key: 'learning.concept.ssh.q1.b' },
+          { key: 'learning.concept.ssh.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.ssh.q2.prompt',
+        explanationKey: 'learning.concept.ssh.q2.why',
+        options: [
+          { key: 'learning.concept.ssh.q2.a' },
+          { key: 'learning.concept.ssh.q2.b', correct: true },
+          { key: 'learning.concept.ssh.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.ssh.q3.prompt',
+        explanationKey: 'learning.concept.ssh.q3.why',
+        options: [
+          { key: 'learning.concept.ssh.q3.a' },
+          { key: 'learning.concept.ssh.q3.b' },
+          { key: 'learning.concept.ssh.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'ftp',
+    layer: 'l7',
+    nameKey: 'learning.concept.ftp.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.ftp.q1.prompt',
+        explanationKey: 'learning.concept.ftp.q1.why',
+        options: [
+          { key: 'learning.concept.ftp.q1.a', correct: true },
+          { key: 'learning.concept.ftp.q1.b' },
+          { key: 'learning.concept.ftp.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.ftp.q2.prompt',
+        explanationKey: 'learning.concept.ftp.q2.why',
+        options: [
+          { key: 'learning.concept.ftp.q2.a' },
+          { key: 'learning.concept.ftp.q2.b', correct: true },
+          { key: 'learning.concept.ftp.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.ftp.q3.prompt',
+        explanationKey: 'learning.concept.ftp.q3.why',
+        options: [
+          { key: 'learning.concept.ftp.q3.a' },
+          { key: 'learning.concept.ftp.q3.b' },
+          { key: 'learning.concept.ftp.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'smtp',
+    layer: 'l7',
+    nameKey: 'learning.concept.smtp.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.smtp.q1.prompt',
+        explanationKey: 'learning.concept.smtp.q1.why',
+        options: [
+          { key: 'learning.concept.smtp.q1.a', correct: true },
+          { key: 'learning.concept.smtp.q1.b' },
+          { key: 'learning.concept.smtp.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.smtp.q2.prompt',
+        explanationKey: 'learning.concept.smtp.q2.why',
+        options: [
+          { key: 'learning.concept.smtp.q2.a' },
+          { key: 'learning.concept.smtp.q2.b', correct: true },
+          { key: 'learning.concept.smtp.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.smtp.q3.prompt',
+        explanationKey: 'learning.concept.smtp.q3.why',
+        options: [
+          { key: 'learning.concept.smtp.q3.a' },
+          { key: 'learning.concept.smtp.q3.b' },
+          { key: 'learning.concept.smtp.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'email',
+    layer: 'l7',
+    nameKey: 'learning.concept.email.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.email.q1.prompt',
+        explanationKey: 'learning.concept.email.q1.why',
+        options: [
+          { key: 'learning.concept.email.q1.a', correct: true },
+          { key: 'learning.concept.email.q1.b' },
+          { key: 'learning.concept.email.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.email.q2.prompt',
+        explanationKey: 'learning.concept.email.q2.why',
+        options: [
+          { key: 'learning.concept.email.q2.a' },
+          { key: 'learning.concept.email.q2.b', correct: true },
+          { key: 'learning.concept.email.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.email.q3.prompt',
+        explanationKey: 'learning.concept.email.q3.why',
+        options: [
+          { key: 'learning.concept.email.q3.a' },
+          { key: 'learning.concept.email.q3.b' },
+          { key: 'learning.concept.email.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'ntp',
+    layer: 'l7',
+    nameKey: 'learning.concept.ntp.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.ntp.q1.prompt',
+        explanationKey: 'learning.concept.ntp.q1.why',
+        options: [
+          { key: 'learning.concept.ntp.q1.a', correct: true },
+          { key: 'learning.concept.ntp.q1.b' },
+          { key: 'learning.concept.ntp.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.ntp.q2.prompt',
+        explanationKey: 'learning.concept.ntp.q2.why',
+        options: [
+          { key: 'learning.concept.ntp.q2.a' },
+          { key: 'learning.concept.ntp.q2.b', correct: true },
+          { key: 'learning.concept.ntp.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.ntp.q3.prompt',
+        explanationKey: 'learning.concept.ntp.q3.why',
+        options: [
+          { key: 'learning.concept.ntp.q3.a' },
+          { key: 'learning.concept.ntp.q3.b' },
+          { key: 'learning.concept.ntp.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'snmp',
+    layer: 'l7',
+    nameKey: 'learning.concept.snmp.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.snmp.q1.prompt',
+        explanationKey: 'learning.concept.snmp.q1.why',
+        options: [
+          { key: 'learning.concept.snmp.q1.a', correct: true },
+          { key: 'learning.concept.snmp.q1.b' },
+          { key: 'learning.concept.snmp.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.snmp.q2.prompt',
+        explanationKey: 'learning.concept.snmp.q2.why',
+        options: [
+          { key: 'learning.concept.snmp.q2.a' },
+          { key: 'learning.concept.snmp.q2.b', correct: true },
+          { key: 'learning.concept.snmp.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.snmp.q3.prompt',
+        explanationKey: 'learning.concept.snmp.q3.why',
+        options: [
+          { key: 'learning.concept.snmp.q3.a' },
+          { key: 'learning.concept.snmp.q3.b' },
+          { key: 'learning.concept.snmp.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'ipsec',
+    layer: 'l5',
+    nameKey: 'learning.concept.ipsec.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.ipsec.q1.prompt',
+        explanationKey: 'learning.concept.ipsec.q1.why',
+        options: [
+          { key: 'learning.concept.ipsec.q1.a', correct: true },
+          { key: 'learning.concept.ipsec.q1.b' },
+          { key: 'learning.concept.ipsec.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.ipsec.q2.prompt',
+        explanationKey: 'learning.concept.ipsec.q2.why',
+        options: [
+          { key: 'learning.concept.ipsec.q2.a' },
+          { key: 'learning.concept.ipsec.q2.b', correct: true },
+          { key: 'learning.concept.ipsec.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.ipsec.q3.prompt',
+        explanationKey: 'learning.concept.ipsec.q3.why',
+        options: [
+          { key: 'learning.concept.ipsec.q3.a' },
+          { key: 'learning.concept.ipsec.q3.b' },
+          { key: 'learning.concept.ipsec.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'radius',
+    layer: 'l5',
+    nameKey: 'learning.concept.radius.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.radius.q1.prompt',
+        explanationKey: 'learning.concept.radius.q1.why',
+        options: [
+          { key: 'learning.concept.radius.q1.a', correct: true },
+          { key: 'learning.concept.radius.q1.b' },
+          { key: 'learning.concept.radius.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.radius.q2.prompt',
+        explanationKey: 'learning.concept.radius.q2.why',
+        options: [
+          { key: 'learning.concept.radius.q2.a' },
+          { key: 'learning.concept.radius.q2.b', correct: true },
+          { key: 'learning.concept.radius.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.radius.q3.prompt',
+        explanationKey: 'learning.concept.radius.q3.why',
+        options: [
+          { key: 'learning.concept.radius.q3.a' },
+          { key: 'learning.concept.radius.q3.b' },
+          { key: 'learning.concept.radius.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'isis',
+    layer: 'routing',
+    nameKey: 'learning.concept.isis.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.isis.q1.prompt',
+        explanationKey: 'learning.concept.isis.q1.why',
+        options: [
+          { key: 'learning.concept.isis.q1.a', correct: true },
+          { key: 'learning.concept.isis.q1.b' },
+          { key: 'learning.concept.isis.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.isis.q2.prompt',
+        explanationKey: 'learning.concept.isis.q2.why',
+        options: [
+          { key: 'learning.concept.isis.q2.a' },
+          { key: 'learning.concept.isis.q2.b', correct: true },
+          { key: 'learning.concept.isis.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.isis.q3.prompt',
+        explanationKey: 'learning.concept.isis.q3.why',
+        options: [
+          { key: 'learning.concept.isis.q3.a' },
+          { key: 'learning.concept.isis.q3.b' },
+          { key: 'learning.concept.isis.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'eigrp',
+    layer: 'routing',
+    nameKey: 'learning.concept.eigrp.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.eigrp.q1.prompt',
+        explanationKey: 'learning.concept.eigrp.q1.why',
+        options: [
+          { key: 'learning.concept.eigrp.q1.a', correct: true },
+          { key: 'learning.concept.eigrp.q1.b' },
+          { key: 'learning.concept.eigrp.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.eigrp.q2.prompt',
+        explanationKey: 'learning.concept.eigrp.q2.why',
+        options: [
+          { key: 'learning.concept.eigrp.q2.a' },
+          { key: 'learning.concept.eigrp.q2.b', correct: true },
+          { key: 'learning.concept.eigrp.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.eigrp.q3.prompt',
+        explanationKey: 'learning.concept.eigrp.q3.why',
+        options: [
+          { key: 'learning.concept.eigrp.q3.a' },
+          { key: 'learning.concept.eigrp.q3.b' },
+          { key: 'learning.concept.eigrp.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'lacp',
+    layer: 'l2',
+    nameKey: 'learning.concept.lacp.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.lacp.q1.prompt',
+        explanationKey: 'learning.concept.lacp.q1.why',
+        options: [
+          { key: 'learning.concept.lacp.q1.a', correct: true },
+          { key: 'learning.concept.lacp.q1.b' },
+          { key: 'learning.concept.lacp.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.lacp.q2.prompt',
+        explanationKey: 'learning.concept.lacp.q2.why',
+        options: [
+          { key: 'learning.concept.lacp.q2.a' },
+          { key: 'learning.concept.lacp.q2.b', correct: true },
+          { key: 'learning.concept.lacp.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.lacp.q3.prompt',
+        explanationKey: 'learning.concept.lacp.q3.why',
+        options: [
+          { key: 'learning.concept.lacp.q3.a' },
+          { key: 'learning.concept.lacp.q3.b' },
+          { key: 'learning.concept.lacp.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'lldp',
+    layer: 'l2',
+    nameKey: 'learning.concept.lldp.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.lldp.q1.prompt',
+        explanationKey: 'learning.concept.lldp.q1.why',
+        options: [
+          { key: 'learning.concept.lldp.q1.a', correct: true },
+          { key: 'learning.concept.lldp.q1.b' },
+          { key: 'learning.concept.lldp.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.lldp.q2.prompt',
+        explanationKey: 'learning.concept.lldp.q2.why',
+        options: [
+          { key: 'learning.concept.lldp.q2.a' },
+          { key: 'learning.concept.lldp.q2.b', correct: true },
+          { key: 'learning.concept.lldp.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.lldp.q3.prompt',
+        explanationKey: 'learning.concept.lldp.q3.why',
+        options: [
+          { key: 'learning.concept.lldp.q3.a' },
+          { key: 'learning.concept.lldp.q3.b' },
+          { key: 'learning.concept.lldp.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
 ];

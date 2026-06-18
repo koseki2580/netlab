@@ -41,19 +41,20 @@ drift.
 
 ## Shipped decks
 
-33 decks / 120 questions. A **Foundations** group comes first so a learner can
-build the bedrock mental model before any single protocol, then the per-protocol
-decks span the whole engine surface (layer → decks):
+45 decks / 156 questions. A **Foundations** group comes first so a learner can
+build the bedrock mental model before any single protocol; the per-protocol
+decks then span the whole engine surface **and** widely-taught protocols beyond
+it (concept checks are knowledge quizzes, so they need not be simulated):
 
-| Layer            | Decks                                                            |
-| ---------------- | ---------------------------------------------------------------- |
-| Foundations      | TCP/IP & OSI model, Addressing & delivery, Ports & sockets       |
-| L2 — Link        | Ethernet, ARP, STP, VLAN, VXLAN/EVPN, Wi-Fi                      |
-| L3 — Network     | IPv4, IPv6, ICMP, NAT, QoS/DSCP, VRRP, Multicast, MTU/PMTUD, GRE |
-| L4 — Transport   | TCP, UDP, QUIC                                                   |
-| Security         | TLS, ACL/Firewall                                                |
-| L7 — Application | DNS, DHCP, HTTP, HTTP/2, HTTP/3                                  |
-| Routing          | OSPF, BGP, RIP, ECMP, MPLS                                       |
+| Layer            | Decks                                                                    |
+| ---------------- | ------------------------------------------------------------------------ |
+| Foundations      | TCP/IP & OSI model, Addressing & delivery, Ports & sockets               |
+| L2 — Link        | Ethernet, ARP, STP, VLAN, VXLAN/EVPN, Wi-Fi, LACP, LLDP                  |
+| L3 — Network     | IPv4, IPv6, ICMP, NAT, QoS/DSCP, VRRP, Multicast, MTU/PMTUD, GRE         |
+| L4 — Transport   | TCP, UDP, QUIC                                                           |
+| Security         | TLS, ACL/Firewall, SSH, IPsec, RADIUS/802.1X                             |
+| L7 — Application | DNS, DHCP, HTTP, HTTP/2, HTTP/3, FTP, SMTP, Email (IMAP/POP3), NTP, SNMP |
+| Routing          | OSPF, BGP, RIP, ECMP, MPLS, IS-IS, EIGRP                                 |
 
 The Foundations decks (6 questions each) build the connective concepts —
 **why networking is layered and how encapsulation works; how L2 (MAC) and L3
