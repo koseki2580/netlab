@@ -8,6 +8,26 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
     nameKey: 'learning.concept.arp.name',
     questions: [
       {
+        id: 'q4',
+        promptKey: 'learning.concept.arp.q4.prompt',
+        explanationKey: 'learning.concept.arp.q4.why',
+        options: [
+          { key: 'learning.concept.arp.q4.a', correct: true },
+          { key: 'learning.concept.arp.q4.b' },
+          { key: 'learning.concept.arp.q4.c' },
+        ],
+      },
+      {
+        id: 'q5',
+        promptKey: 'learning.concept.arp.q5.prompt',
+        explanationKey: 'learning.concept.arp.q5.why',
+        options: [
+          { key: 'learning.concept.arp.q5.a' },
+          { key: 'learning.concept.arp.q5.b', correct: true },
+          { key: 'learning.concept.arp.q5.c' },
+        ],
+      },
+      {
         id: 'q1',
         promptKey: 'learning.concept.arp.q1.prompt',
         explanationKey: 'learning.concept.arp.q1.why',
@@ -119,6 +139,26 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
     nameKey: 'learning.concept.tcp.name',
     questions: [
       {
+        id: 'q4',
+        promptKey: 'learning.concept.tcp.q4.prompt',
+        explanationKey: 'learning.concept.tcp.q4.why',
+        options: [
+          { key: 'learning.concept.tcp.q4.a', correct: true },
+          { key: 'learning.concept.tcp.q4.b' },
+          { key: 'learning.concept.tcp.q4.c' },
+        ],
+      },
+      {
+        id: 'q5',
+        promptKey: 'learning.concept.tcp.q5.prompt',
+        explanationKey: 'learning.concept.tcp.q5.why',
+        options: [
+          { key: 'learning.concept.tcp.q5.a' },
+          { key: 'learning.concept.tcp.q5.b', correct: true },
+          { key: 'learning.concept.tcp.q5.c' },
+        ],
+      },
+      {
         id: 'q1',
         promptKey: 'learning.concept.tcp.q1.prompt',
         explanationKey: 'learning.concept.tcp.q1.why',
@@ -155,6 +195,26 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
     layer: 'l4',
     nameKey: 'learning.concept.udp.name',
     questions: [
+      {
+        id: 'q4',
+        promptKey: 'learning.concept.udp.q4.prompt',
+        explanationKey: 'learning.concept.udp.q4.why',
+        options: [
+          { key: 'learning.concept.udp.q4.a', correct: true },
+          { key: 'learning.concept.udp.q4.b' },
+          { key: 'learning.concept.udp.q4.c' },
+        ],
+      },
+      {
+        id: 'q5',
+        promptKey: 'learning.concept.udp.q5.prompt',
+        explanationKey: 'learning.concept.udp.q5.why',
+        options: [
+          { key: 'learning.concept.udp.q5.a' },
+          { key: 'learning.concept.udp.q5.b', correct: true },
+          { key: 'learning.concept.udp.q5.c' },
+        ],
+      },
       {
         id: 'q1',
         promptKey: 'learning.concept.udp.q1.prompt',
@@ -230,6 +290,26 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
     nameKey: 'learning.concept.dns.name',
     questions: [
       {
+        id: 'q4',
+        promptKey: 'learning.concept.dns.q4.prompt',
+        explanationKey: 'learning.concept.dns.q4.why',
+        options: [
+          { key: 'learning.concept.dns.q4.a', correct: true },
+          { key: 'learning.concept.dns.q4.b' },
+          { key: 'learning.concept.dns.q4.c' },
+        ],
+      },
+      {
+        id: 'q5',
+        promptKey: 'learning.concept.dns.q5.prompt',
+        explanationKey: 'learning.concept.dns.q5.why',
+        options: [
+          { key: 'learning.concept.dns.q5.a' },
+          { key: 'learning.concept.dns.q5.b', correct: true },
+          { key: 'learning.concept.dns.q5.c' },
+        ],
+      },
+      {
         id: 'q1',
         promptKey: 'learning.concept.dns.q1.prompt',
         explanationKey: 'learning.concept.dns.q1.why',
@@ -303,6 +383,26 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
     layer: 'l2',
     nameKey: 'learning.concept.ethernet.name',
     questions: [
+      {
+        id: 'q4',
+        promptKey: 'learning.concept.ethernet.q4.prompt',
+        explanationKey: 'learning.concept.ethernet.q4.why',
+        options: [
+          { key: 'learning.concept.ethernet.q4.a', correct: true },
+          { key: 'learning.concept.ethernet.q4.b' },
+          { key: 'learning.concept.ethernet.q4.c' },
+        ],
+      },
+      {
+        id: 'q5',
+        promptKey: 'learning.concept.ethernet.q5.prompt',
+        explanationKey: 'learning.concept.ethernet.q5.why',
+        options: [
+          { key: 'learning.concept.ethernet.q5.a' },
+          { key: 'learning.concept.ethernet.q5.b', correct: true },
+          { key: 'learning.concept.ethernet.q5.c' },
+        ],
+      },
       {
         id: 'q1',
         promptKey: 'learning.concept.ethernet.q1.prompt',
@@ -414,6 +514,26 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
     layer: 'l3',
     nameKey: 'learning.concept.ipv4.name',
     questions: [
+      {
+        id: 'q4',
+        promptKey: 'learning.concept.ipv4.q4.prompt',
+        explanationKey: 'learning.concept.ipv4.q4.why',
+        options: [
+          { key: 'learning.concept.ipv4.q4.a', correct: true },
+          { key: 'learning.concept.ipv4.q4.b' },
+          { key: 'learning.concept.ipv4.q4.c' },
+        ],
+      },
+      {
+        id: 'q5',
+        promptKey: 'learning.concept.ipv4.q5.prompt',
+        explanationKey: 'learning.concept.ipv4.q5.why',
+        options: [
+          { key: 'learning.concept.ipv4.q5.a' },
+          { key: 'learning.concept.ipv4.q5.b', correct: true },
+          { key: 'learning.concept.ipv4.q5.c' },
+        ],
+      },
       {
         id: 'q1',
         promptKey: 'learning.concept.ipv4.q1.prompt',
@@ -1108,6 +1228,207 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
           { key: 'learning.concept.acl.q3.a' },
           { key: 'learning.concept.acl.q3.b' },
           { key: 'learning.concept.acl.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'model',
+    layer: 'fundamentals',
+    nameKey: 'learning.concept.model.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.model.q1.prompt',
+        explanationKey: 'learning.concept.model.q1.why',
+        options: [
+          { key: 'learning.concept.model.q1.a', correct: true },
+          { key: 'learning.concept.model.q1.b' },
+          { key: 'learning.concept.model.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.model.q2.prompt',
+        explanationKey: 'learning.concept.model.q2.why',
+        options: [
+          { key: 'learning.concept.model.q2.a' },
+          { key: 'learning.concept.model.q2.b', correct: true },
+          { key: 'learning.concept.model.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.model.q3.prompt',
+        explanationKey: 'learning.concept.model.q3.why',
+        options: [
+          { key: 'learning.concept.model.q3.a' },
+          { key: 'learning.concept.model.q3.b' },
+          { key: 'learning.concept.model.q3.c', correct: true },
+        ],
+      },
+      {
+        id: 'q4',
+        promptKey: 'learning.concept.model.q4.prompt',
+        explanationKey: 'learning.concept.model.q4.why',
+        options: [
+          { key: 'learning.concept.model.q4.a', correct: true },
+          { key: 'learning.concept.model.q4.b' },
+          { key: 'learning.concept.model.q4.c' },
+        ],
+      },
+      {
+        id: 'q5',
+        promptKey: 'learning.concept.model.q5.prompt',
+        explanationKey: 'learning.concept.model.q5.why',
+        options: [
+          { key: 'learning.concept.model.q5.a' },
+          { key: 'learning.concept.model.q5.b', correct: true },
+          { key: 'learning.concept.model.q5.c' },
+        ],
+      },
+      {
+        id: 'q6',
+        promptKey: 'learning.concept.model.q6.prompt',
+        explanationKey: 'learning.concept.model.q6.why',
+        options: [
+          { key: 'learning.concept.model.q6.a' },
+          { key: 'learning.concept.model.q6.b' },
+          { key: 'learning.concept.model.q6.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'addressing',
+    layer: 'fundamentals',
+    nameKey: 'learning.concept.addressing.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.addressing.q1.prompt',
+        explanationKey: 'learning.concept.addressing.q1.why',
+        options: [
+          { key: 'learning.concept.addressing.q1.a', correct: true },
+          { key: 'learning.concept.addressing.q1.b' },
+          { key: 'learning.concept.addressing.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.addressing.q2.prompt',
+        explanationKey: 'learning.concept.addressing.q2.why',
+        options: [
+          { key: 'learning.concept.addressing.q2.a' },
+          { key: 'learning.concept.addressing.q2.b', correct: true },
+          { key: 'learning.concept.addressing.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.addressing.q3.prompt',
+        explanationKey: 'learning.concept.addressing.q3.why',
+        options: [
+          { key: 'learning.concept.addressing.q3.a' },
+          { key: 'learning.concept.addressing.q3.b' },
+          { key: 'learning.concept.addressing.q3.c', correct: true },
+        ],
+      },
+      {
+        id: 'q4',
+        promptKey: 'learning.concept.addressing.q4.prompt',
+        explanationKey: 'learning.concept.addressing.q4.why',
+        options: [
+          { key: 'learning.concept.addressing.q4.a', correct: true },
+          { key: 'learning.concept.addressing.q4.b' },
+          { key: 'learning.concept.addressing.q4.c' },
+        ],
+      },
+      {
+        id: 'q5',
+        promptKey: 'learning.concept.addressing.q5.prompt',
+        explanationKey: 'learning.concept.addressing.q5.why',
+        options: [
+          { key: 'learning.concept.addressing.q5.a' },
+          { key: 'learning.concept.addressing.q5.b', correct: true },
+          { key: 'learning.concept.addressing.q5.c' },
+        ],
+      },
+      {
+        id: 'q6',
+        promptKey: 'learning.concept.addressing.q6.prompt',
+        explanationKey: 'learning.concept.addressing.q6.why',
+        options: [
+          { key: 'learning.concept.addressing.q6.a' },
+          { key: 'learning.concept.addressing.q6.b' },
+          { key: 'learning.concept.addressing.q6.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'ports',
+    layer: 'fundamentals',
+    nameKey: 'learning.concept.ports.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.ports.q1.prompt',
+        explanationKey: 'learning.concept.ports.q1.why',
+        options: [
+          { key: 'learning.concept.ports.q1.a', correct: true },
+          { key: 'learning.concept.ports.q1.b' },
+          { key: 'learning.concept.ports.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.ports.q2.prompt',
+        explanationKey: 'learning.concept.ports.q2.why',
+        options: [
+          { key: 'learning.concept.ports.q2.a' },
+          { key: 'learning.concept.ports.q2.b', correct: true },
+          { key: 'learning.concept.ports.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.ports.q3.prompt',
+        explanationKey: 'learning.concept.ports.q3.why',
+        options: [
+          { key: 'learning.concept.ports.q3.a' },
+          { key: 'learning.concept.ports.q3.b' },
+          { key: 'learning.concept.ports.q3.c', correct: true },
+        ],
+      },
+      {
+        id: 'q4',
+        promptKey: 'learning.concept.ports.q4.prompt',
+        explanationKey: 'learning.concept.ports.q4.why',
+        options: [
+          { key: 'learning.concept.ports.q4.a', correct: true },
+          { key: 'learning.concept.ports.q4.b' },
+          { key: 'learning.concept.ports.q4.c' },
+        ],
+      },
+      {
+        id: 'q5',
+        promptKey: 'learning.concept.ports.q5.prompt',
+        explanationKey: 'learning.concept.ports.q5.why',
+        options: [
+          { key: 'learning.concept.ports.q5.a' },
+          { key: 'learning.concept.ports.q5.b', correct: true },
+          { key: 'learning.concept.ports.q5.c' },
+        ],
+      },
+      {
+        id: 'q6',
+        promptKey: 'learning.concept.ports.q6.prompt',
+        explanationKey: 'learning.concept.ports.q6.why',
+        options: [
+          { key: 'learning.concept.ports.q6.a' },
+          { key: 'learning.concept.ports.q6.b' },
+          { key: 'learning.concept.ports.q6.c', correct: true },
         ],
       },
     ],

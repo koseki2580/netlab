@@ -83,7 +83,7 @@ const CATEGORIES: Category[] = [
       {
         path: '/learning/protocols',
         title: 'Protocol Concept Checks',
-        desc: 'Active-recall quizzes across 30 protocols — every layer, all three routing families, tunneling, wireless, QoS and security.',
+        desc: 'Start with the foundations (layered model, addressing, ports) then drill 30 protocols across every layer — 120 explained questions, bilingual.',
         meta: { difficulty: 'beginner', tags: ['Quiz', 'Protocols'] },
       },
       {

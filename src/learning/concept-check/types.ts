@@ -1,5 +1,5 @@
 /** OSI-ish grouping used to organize protocol decks in the picker. */
-export type ConceptLayer = 'l2' | 'l3' | 'l4' | 'l5' | 'l7' | 'routing';
+export type ConceptLayer = 'fundamentals' | 'l2' | 'l3' | 'l4' | 'l5' | 'l7' | 'routing';
 
 /** One answer choice; exactly one option per question is `correct`. */
 export interface ConceptOption {

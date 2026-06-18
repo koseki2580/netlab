@@ -41,10 +41,13 @@ drift.
 
 ## Shipped decks
 
-Thirty protocols across the stack (layer → decks):
+33 decks / 120 questions. A **Foundations** group comes first so a learner can
+build the bedrock mental model before any single protocol, then the per-protocol
+decks span the whole engine surface (layer → decks):
 
 | Layer            | Decks                                                            |
 | ---------------- | ---------------------------------------------------------------- |
+| Foundations      | TCP/IP & OSI model, Addressing & delivery, Ports & sockets       |
 | L2 — Link        | Ethernet, ARP, STP, VLAN, VXLAN/EVPN, Wi-Fi                      |
 | L3 — Network     | IPv4, IPv6, ICMP, NAT, QoS/DSCP, VRRP, Multicast, MTU/PMTUD, GRE |
 | L4 — Transport   | TCP, UDP, QUIC                                                   |
@@ -52,8 +55,12 @@ Thirty protocols across the stack (layer → decks):
 | L7 — Application | DNS, DHCP, HTTP, HTTP/2, HTTP/3                                  |
 | Routing          | OSPF, BGP, RIP, ECMP, MPLS                                       |
 
-`decksByLayer()` groups them in stack order for the picker. This is essentially
-the protocol surface the netlab engine itself simulates.
+The Foundations decks (6 questions each) build the connective concepts —
+**why networking is layered and how encapsulation works; how L2 (MAC) and L3
+(IP) delivery differ and cooperate; ports, sockets and the 5-tuple** — that turn
+isolated protocol facts into a coherent understanding. The most fundamental
+protocol decks (Ethernet, ARP, IPv4, TCP, UDP, DNS) carry 5 questions each;
+the rest carry 3. `decksByLayer()` groups them in stack order for the picker.
 
 ## Panel
 

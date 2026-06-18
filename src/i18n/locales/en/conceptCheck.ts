@@ -584,4 +584,193 @@ export const conceptCheck: Catalog = {
   'learning.concept.acl.q3.c': 'Default deny — block unless explicitly allowed',
   'learning.concept.acl.q3.why':
     'Default-deny means only explicitly permitted traffic passes, shrinking the attack surface.',
+  'learning.concept.layer.fundamentals': 'Foundations',
+  'learning.concept.model.name': 'TCP/IP & OSI Model',
+  'learning.concept.model.q1.prompt': 'Why is networking split into layers?',
+  'learning.concept.model.q1.a': 'So each layer solves one problem and can change independently',
+  'learning.concept.model.q1.b': 'To make it slower',
+  'learning.concept.model.q1.c': 'To use more cables',
+  'learning.concept.model.q1.why':
+    'Layering lets Ethernet, IP, TCP and HTTP each do one job and evolve independently — TCP does not care if the link is fibre or Wi-Fi.',
+  'learning.concept.model.q2.prompt': 'Going DOWN the stack on send, data passes…',
+  'learning.concept.model.q2.a': 'Link → Internet → Transport → Application',
+  'learning.concept.model.q2.b': 'Application → Transport → Internet → Link',
+  'learning.concept.model.q2.c': 'In random order',
+  'learning.concept.model.q2.why':
+    'The sender wraps app data in transport (TCP/UDP), then IP, then a link frame; the receiver unwraps in reverse.',
+  'learning.concept.model.q3.prompt': 'Encapsulation means…',
+  'learning.concept.model.q3.a': 'Encrypting every packet',
+  'learning.concept.model.q3.b': 'Dropping all headers',
+  'learning.concept.model.q3.c': 'Each layer wraps the layer above in its own header',
+  'learning.concept.model.q3.why':
+    'Going down, each layer adds a header (and a trailer at L2); one layer’s payload is the whole unit of the layer above.',
+  'learning.concept.model.q4.prompt': 'A router primarily operates at…',
+  'learning.concept.model.q4.a': 'The Network layer (L3 / IP)',
+  'learning.concept.model.q4.b': 'The Application layer',
+  'learning.concept.model.q4.c': 'The Physical layer',
+  'learning.concept.model.q4.why':
+    'Routers forward by IP address (L3); switches forward by MAC (L2); the two cooperate to move a packet end-to-end.',
+  'learning.concept.model.q5.prompt': 'A switch primarily operates at…',
+  'learning.concept.model.q5.a': 'The Transport layer',
+  'learning.concept.model.q5.b': 'The Data-link layer (L2 / MAC)',
+  'learning.concept.model.q5.c': 'The Network layer',
+  'learning.concept.model.q5.why':
+    'A switch forwards Ethernet frames by MAC within a LAN and never looks at the IP header.',
+  'learning.concept.model.q6.prompt': 'The payload TCP delivers to a web server is…',
+  'learning.concept.model.q6.a': 'Another IP header',
+  'learning.concept.model.q6.b': 'A MAC address',
+  'learning.concept.model.q6.c': 'The application data (e.g. the HTTP request)',
+  'learning.concept.model.q6.why':
+    'Each layer’s payload is the data of the layer above; TCP carries the application’s bytes up to the server.',
+  'learning.concept.addressing.name': 'Addressing & Delivery',
+  'learning.concept.addressing.q1.prompt': 'A MAC address delivers a frame…',
+  'learning.concept.addressing.q1.a': 'To the next device on the local link (L2)',
+  'learning.concept.addressing.q1.b': 'Across the whole internet',
+  'learning.concept.addressing.q1.c': 'To a TCP port',
+  'learning.concept.addressing.q1.why':
+    'MAC addresses are link-local: they move a frame to the next hop on the same segment and are rewritten at each router.',
+  'learning.concept.addressing.q2.prompt': 'An IP address delivers a packet…',
+  'learning.concept.addressing.q2.a': 'Only within one cable',
+  'learning.concept.addressing.q2.b': 'End-to-end across networks (L3)',
+  'learning.concept.addressing.q2.c': 'To a specific application',
+  'learning.concept.addressing.q2.why':
+    'The IP src/dst stays constant end-to-end (barring NAT); routers use it to choose the path hop by hop.',
+  'learning.concept.addressing.q3.prompt':
+    'Sending to a host in a DIFFERENT subnet, the frame goes to…',
+  'learning.concept.addressing.q3.a': 'The destination host MAC directly',
+  'learning.concept.addressing.q3.b': 'A broadcast forever',
+  'learning.concept.addressing.q3.c':
+    'The default gateway MAC, but the packet dst IP is the final host',
+  'learning.concept.addressing.q3.why':
+    'Off-subnet means ARP for the gateway: the L2 destination is the gateway MAC while the L3 destination stays the final host — the core L2/L3 split.',
+  'learning.concept.addressing.q4.prompt': 'Private IP ranges (10.0.0.0/8, 192.168.0.0/16) are…',
+  'learning.concept.addressing.q4.a':
+    'Reusable in any network and not routable on the public internet',
+  'learning.concept.addressing.q4.b': 'Globally unique',
+  'learning.concept.addressing.q4.c': 'Only for routers',
+  'learning.concept.addressing.q4.why':
+    'Private addresses are reused everywhere behind NAT; only public addresses are globally unique and routable.',
+  'learning.concept.addressing.q5.prompt': 'A broadcast reaches…',
+  'learning.concept.addressing.q5.a': 'One specific host',
+  'learning.concept.addressing.q5.b': 'Every host in the broadcast domain',
+  'learning.concept.addressing.q5.c': 'A subscribed group only',
+  'learning.concept.addressing.q5.why':
+    'Broadcast = all hosts on the segment (e.g. an ARP request); unicast = one host; multicast = a group that joined.',
+  'learning.concept.addressing.q6.prompt': 'Why does the internet need NAT?',
+  'learning.concept.addressing.q6.a': 'To encrypt traffic',
+  'learning.concept.addressing.q6.b': 'To resolve names',
+  'learning.concept.addressing.q6.c':
+    'IPv4 addresses are scarce, so many private hosts share public ones',
+  'learning.concept.addressing.q6.why':
+    'NAT lets a whole private network share a few public IPv4 addresses, working around IPv4 exhaustion.',
+  'learning.concept.ports.name': 'Ports, Sockets & Connections',
+  'learning.concept.ports.q1.prompt': 'A port number identifies…',
+  'learning.concept.ports.q1.a': 'Which application/service on a host',
+  'learning.concept.ports.q1.b': 'Which router to use',
+  'learning.concept.ports.q1.c': 'The MAC address',
+  'learning.concept.ports.q1.why':
+    'IP gets you to the host; the port gets you to the right service on it (e.g. 443 for HTTPS).',
+  'learning.concept.ports.q2.prompt': 'A TCP connection is uniquely identified by…',
+  'learning.concept.ports.q2.a': 'Just the destination IP',
+  'learning.concept.ports.q2.b': 'The 5-tuple: src IP, src port, dst IP, dst port, protocol',
+  'learning.concept.ports.q2.c': 'The pair of MAC addresses',
+  'learning.concept.ports.q2.why':
+    'The 5-tuple lets a server keep thousands of simultaneous connections apart, even to the same port.',
+  'learning.concept.ports.q3.prompt': 'HTTPS servers listen by default on port…',
+  'learning.concept.ports.q3.a': '22',
+  'learning.concept.ports.q3.b': '53',
+  'learning.concept.ports.q3.c': '443',
+  'learning.concept.ports.q3.why':
+    '443 is HTTPS, 80 is HTTP, 22 is SSH, 53 is DNS — the well-known ports below 1024.',
+  'learning.concept.ports.q4.prompt': 'One server handles many clients on port 443 because…',
+  'learning.concept.ports.q4.a':
+    'Each client uses a different source IP/port, so the 5-tuples differ',
+  'learning.concept.ports.q4.b': 'It opens a new IP per client',
+  'learning.concept.ports.q4.c': 'It can only serve one at a time',
+  'learning.concept.ports.q4.why':
+    'The server port is shared; connections are told apart by the client side of the tuple.',
+  'learning.concept.ports.q5.prompt': 'A socket is…',
+  'learning.concept.ports.q5.a': 'A kind of cable',
+  'learning.concept.ports.q5.b': 'An endpoint = an IP address plus a port',
+  'learning.concept.ports.q5.c': 'A routing protocol',
+  'learning.concept.ports.q5.why':
+    'A socket binds a service to (IP, port); a connection joins two sockets.',
+  'learning.concept.ports.q6.prompt': 'A DNS lookup then a web fetch typically use…',
+  'learning.concept.ports.q6.a': 'Both over TCP/80',
+  'learning.concept.ports.q6.b': 'Both over ICMP',
+  'learning.concept.ports.q6.c': 'DNS over UDP/53, then HTTPS over TCP/443',
+  'learning.concept.ports.q6.why':
+    'A small DNS query goes over UDP/53; the page is then fetched over a reliable TCP/443 connection.',
+  'learning.concept.ethernet.q4.prompt': 'An Ethernet frame carries a source and destination…',
+  'learning.concept.ethernet.q4.a': 'MAC address',
+  'learning.concept.ethernet.q4.b': 'IP address',
+  'learning.concept.ethernet.q4.c': 'Port number',
+  'learning.concept.ethernet.q4.why':
+    'Layer-2 frames are addressed by MAC; the IP addresses live inside the payload.',
+  'learning.concept.ethernet.q5.prompt': 'Connecting two switches together extends…',
+  'learning.concept.ethernet.q5.a': 'Two separate internets',
+  'learning.concept.ethernet.q5.b': 'The same broadcast domain',
+  'learning.concept.ethernet.q5.c': 'A routing table',
+  'learning.concept.ethernet.q5.why':
+    'Plain switching keeps one broadcast domain; you need a router (or VLANs) to split it.',
+  'learning.concept.arp.q4.prompt':
+    'ARP is needed because a host knows the destination IP but not its…',
+  'learning.concept.arp.q4.a': 'MAC address',
+  'learning.concept.arp.q4.b': 'Port',
+  'learning.concept.arp.q4.c': 'Hostname',
+  'learning.concept.arp.q4.why':
+    'To build the L2 frame the host must learn the MAC that owns that IP on the local link.',
+  'learning.concept.arp.q5.prompt': 'ARP replies are cached so that…',
+  'learning.concept.arp.q5.a': 'The network stays slow',
+  'learning.concept.arp.q5.b': 'The host need not ARP before every packet',
+  'learning.concept.arp.q5.c': 'IP addresses change',
+  'learning.concept.arp.q5.why':
+    'The ARP cache skips a broadcast lookup before each frame; entries expire after a timeout.',
+  'learning.concept.ipv4.q4.prompt': 'The network vs host split of an IPv4 address is set by…',
+  'learning.concept.ipv4.q4.a': 'The subnet mask / prefix length',
+  'learning.concept.ipv4.q4.b': 'The TTL',
+  'learning.concept.ipv4.q4.c': 'The port',
+  'learning.concept.ipv4.q4.why':
+    'The mask says how many leading bits are the network; the remaining bits identify the host.',
+  'learning.concept.ipv4.q5.prompt': 'In a routing table, 0.0.0.0/0 is…',
+  'learning.concept.ipv4.q5.a': 'A broadcast address',
+  'learning.concept.ipv4.q5.b': 'The default route — it matches anything',
+  'learning.concept.ipv4.q5.c': 'An invalid entry',
+  'learning.concept.ipv4.q5.why':
+    'The all-zeros /0 matches every destination and is used when no more specific route does.',
+  'learning.concept.tcp.q4.prompt': 'When a TCP segment is lost, TCP…',
+  'learning.concept.tcp.q4.a': 'Retransmits it',
+  'learning.concept.tcp.q4.b': 'Ignores it',
+  'learning.concept.tcp.q4.c': 'Closes the connection',
+  'learning.concept.tcp.q4.why':
+    'Missing acknowledgements trigger retransmission — how TCP delivers reliably over an unreliable network.',
+  'learning.concept.tcp.q5.prompt': 'TCP flow and congestion control exist to…',
+  'learning.concept.tcp.q5.a': 'Encrypt the data',
+  'learning.concept.tcp.q5.b': 'Avoid overwhelming the receiver and the network',
+  'learning.concept.tcp.q5.c': 'Assign IP addresses',
+  'learning.concept.tcp.q5.why':
+    'Windows adapt the send rate to the receiver buffer and to congestion signals from the network.',
+  'learning.concept.udp.q4.prompt': 'If a UDP datagram is lost, the protocol…',
+  'learning.concept.udp.q4.a': 'Does nothing — the application must handle it if needed',
+  'learning.concept.udp.q4.b': 'Retransmits it',
+  'learning.concept.udp.q4.c': 'Resets the link',
+  'learning.concept.udp.q4.why':
+    'UDP offers no reliability; apps that need it (or tolerate loss) build that on top.',
+  'learning.concept.udp.q5.prompt': 'DNS often uses UDP because…',
+  'learning.concept.udp.q5.a': 'It needs encryption',
+  'learning.concept.udp.q5.b': 'A small query/response is fast and can simply be retried',
+  'learning.concept.udp.q5.c': 'It needs strict ordering',
+  'learning.concept.udp.q5.why':
+    'A single small exchange does not justify TCP setup cost; the client just retries on loss.',
+  'learning.concept.dns.q4.prompt': 'Caching DNS answers…',
+  'learning.concept.dns.q4.a': 'Speeds up repeat lookups and cuts load, honoring the TTL',
+  'learning.concept.dns.q4.b': 'Changes the IP address',
+  'learning.concept.dns.q4.c': 'Is forbidden',
+  'learning.concept.dns.q4.why':
+    'Resolvers cache records for their TTL, so popular names resolve instantly without re-querying.',
+  'learning.concept.dns.q5.prompt': 'An AAAA record holds…',
+  'learning.concept.dns.q5.a': 'An IPv4 address',
+  'learning.concept.dns.q5.b': 'An IPv6 address',
+  'learning.concept.dns.q5.c': 'A mail server name',
+  'learning.concept.dns.q5.why': 'A = IPv4, AAAA = IPv6, MX = mail exchanger, CNAME = alias.',
 } as const;

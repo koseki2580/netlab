@@ -2,6 +2,7 @@ import { CONCEPT_DECKS } from './decks';
 import type { ConceptDeck, ConceptLayer, ConceptOption, ConceptQuestion } from './types';
 
 export const CONCEPT_LAYER_ORDER: readonly ConceptLayer[] = [
+  'fundamentals',
   'l2',
   'l3',
   'l4',
