@@ -645,6 +645,35 @@ describe('NetlabCanvas controlled topology API', () => {
     expect(props.disableKeyboardA11y).toBe(false);
   });
 
+  it('stops edge animation under prefers-reduced-motion, including topology reveals', () => {
+    const original = window.matchMedia;
+    window.matchMedia = ((q: string) => ({
+      matches: q.includes('reduce'),
+      media: q,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia;
+    try {
+      render(
+        <NetlabProvider
+          topology={makeTopology({
+            // A learning-reveal edge sets `animated` directly on the topology.
+            edges: [{ id: 'e1', source: 'n1', target: 'n2', type: 'smoothstep', animated: true }],
+          })}
+        >
+          <NetlabCanvas />
+        </NetlabProvider>,
+      );
+      expect(currentReactFlowProps().edges[0]?.animated).toBe(false);
+    } finally {
+      window.matchMedia = original;
+    }
+  });
+
   it('does not re-sync local React Flow state when callbacks are absent', () => {
     const initial = makeTopology();
     const updated = makeTopology({

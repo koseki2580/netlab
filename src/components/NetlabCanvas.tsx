@@ -388,106 +388,110 @@ export function NetlabCanvas({
     [nodes, failureCtx, selectedNodeId, neighborNodeIds],
   );
 
-  const styledEdges = useMemo(
-    () =>
-      edges.map((edge) => {
-        const baseValidationEdge = withValidationEdgeType(edge);
-        const selectionClass = neighborEdgeIds.has(edge.id) ? 'netlab-edge-neighbor' : undefined;
-        const mergedClassName = [baseValidationEdge.className, selectionClass]
-          .filter(Boolean)
-          .join(' ');
-        const validationEdge: NetlabEdge = mergedClassName
-          ? { ...baseValidationEdge, className: mergedClassName }
-          : baseValidationEdge;
+  const styledEdges = useMemo(() => {
+    const decorated = edges.map((edge) => {
+      const baseValidationEdge = withValidationEdgeType(edge);
+      const selectionClass = neighborEdgeIds.has(edge.id) ? 'netlab-edge-neighbor' : undefined;
+      const mergedClassName = [baseValidationEdge.className, selectionClass]
+        .filter(Boolean)
+        .join(' ');
+      const validationEdge: NetlabEdge = mergedClassName
+        ? { ...baseValidationEdge, className: mergedClassName }
+        : baseValidationEdge;
 
-        if (failureCtx?.isEdgeDown(edge.id) || edge.data?.state === 'down') {
-          return {
-            ...validationEdge,
-            animated: false,
-            style: {
-              ...validationEdge.style,
-              stroke: 'var(--netlab-accent-red)',
-              strokeDasharray: '6 3',
-              strokeWidth: 2,
-              opacity: 0.7,
-            },
-          };
-        }
+      if (failureCtx?.isEdgeDown(edge.id) || edge.data?.state === 'down') {
+        return {
+          ...validationEdge,
+          animated: false,
+          style: {
+            ...validationEdge.style,
+            stroke: 'var(--netlab-accent-red)',
+            strokeDasharray: '6 3',
+            strokeWidth: 2,
+            opacity: 0.7,
+          },
+        };
+      }
 
-        const isCurrentHopEdge = activeEdgeIds.includes(edge.id);
-        const isPathEdge = highlightMode === 'path' && activePathEdgeIds.includes(edge.id);
+      const isCurrentHopEdge = activeEdgeIds.includes(edge.id);
+      const isPathEdge = highlightMode === 'path' && activePathEdgeIds.includes(edge.id);
 
-        if (isCurrentHopEdge) {
-          return {
-            ...validationEdge,
-            animated: !reducedMotion,
-            style: {
-              ...validationEdge.style,
-              stroke: currentTraceColor,
-              strokeWidth: isPathEdge ? 3 : 2,
-              opacity: 1,
-            },
-          };
-        }
+      if (isCurrentHopEdge) {
+        return {
+          ...validationEdge,
+          animated: !reducedMotion,
+          style: {
+            ...validationEdge.style,
+            stroke: currentTraceColor,
+            strokeWidth: isPathEdge ? 3 : 2,
+            opacity: 1,
+          },
+        };
+      }
 
-        if (isPathEdge) {
-          return {
-            ...validationEdge,
-            animated: !reducedMotion,
-            style: {
-              ...validationEdge.style,
-              stroke: currentTraceColor,
-              strokeWidth: 2,
-              opacity: 0.45,
-            },
-          };
-        }
+      if (isPathEdge) {
+        return {
+          ...validationEdge,
+          animated: !reducedMotion,
+          style: {
+            ...validationEdge.style,
+            stroke: currentTraceColor,
+            strokeWidth: 2,
+            opacity: 0.45,
+          },
+        };
+      }
 
-        const validationResult = validateCanvasConnection(
-          nodes,
-          edges.filter((candidate) => candidate.id !== edge.id),
-          edge.source,
-          edge.target,
-          edge.sourceHandle,
-          edge.targetHandle,
-        );
+      const validationResult = validateCanvasConnection(
+        nodes,
+        edges.filter((candidate) => candidate.id !== edge.id),
+        edge.source,
+        edge.target,
+        edge.sourceHandle,
+        edge.targetHandle,
+      );
 
-        if (!validationResult.valid) {
-          return {
-            ...validationEdge,
-            style: {
-              ...validationEdge.style,
-              stroke: 'var(--netlab-accent-red)',
-            },
-            data: { ...validationEdge.data, validationResult },
-          };
-        }
+      if (!validationResult.valid) {
+        return {
+          ...validationEdge,
+          style: {
+            ...validationEdge.style,
+            stroke: 'var(--netlab-accent-red)',
+          },
+          data: { ...validationEdge.data, validationResult },
+        };
+      }
 
-        if (validationResult.warnings.length > 0) {
-          return {
-            ...validationEdge,
-            style: {
-              ...validationEdge.style,
-              stroke: 'var(--netlab-accent-orange, orange)',
-            },
-            data: { ...validationEdge.data, validationResult },
-          };
-        }
+      if (validationResult.warnings.length > 0) {
+        return {
+          ...validationEdge,
+          style: {
+            ...validationEdge.style,
+            stroke: 'var(--netlab-accent-orange, orange)',
+          },
+          data: { ...validationEdge.data, validationResult },
+        };
+      }
 
-        return validationEdge;
-      }),
-    [
-      edges,
-      nodes,
-      activeEdgeIds,
-      activePathEdgeIds,
-      highlightMode,
-      currentTraceColor,
-      failureCtx,
-      neighborEdgeIds,
-      reducedMotion,
-    ],
-  );
+      return validationEdge;
+    });
+    // Honor prefers-reduced-motion globally: nothing should march, whether the
+    // animation came from the sim path or directly from the topology (the
+    // learning reveal sets `animated` on its edges, bypassing the sim branches).
+    return reducedMotion
+      ? decorated.map((edge) => (edge.animated ? { ...edge, animated: false } : edge))
+      : decorated;
+  }, [
+    edges,
+    nodes,
+    activeEdgeIds,
+    activePathEdgeIds,
+    highlightMode,
+    currentTraceColor,
+    failureCtx,
+    neighborEdgeIds,
+    reducedMotion,
+  ]);
 
   const expandArea = useCallback((areaId: string) => {
     setExpandedAreaIds((prev) => new Set(prev).add(areaId));
