@@ -60,6 +60,9 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
   const [registeredPaletteItems, setRegisteredPaletteItems] = useState<CommandPaletteItem[]>([]);
   const view: NavRailView = location.pathname === '/' ? 'gallery' : 'simulator';
   const a11yAxes = useMemo(() => readPersistedA11yAxes(), []);
+  // Keyboard users would otherwise tab through the whole nav rail + chrome before
+  // reaching the demo. A skip link (hidden until focused) jumps straight there.
+  const [skipFocused, setSkipFocused] = useState(false);
   // S1 — below 900px the rail becomes a bottom bar and the shell switches to a
   // single vertical column so iframe/phone embeds don't horizontally scroll.
   const { isNarrow } = useViewport();
@@ -248,6 +251,30 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
         background: '#0f172a',
       }}
     >
+      <button
+        type="button"
+        data-testid="skip-to-content"
+        onFocus={() => setSkipFocused(true)}
+        onBlur={() => setSkipFocused(false)}
+        onClick={() => document.getElementById('netlab-demo-content')?.focus()}
+        style={{
+          position: 'absolute',
+          left: 8,
+          top: skipFocused ? 8 : -48,
+          zIndex: 1000,
+          padding: '8px 14px',
+          background: '#2563eb',
+          color: '#ffffff',
+          border: 'none',
+          borderRadius: 6,
+          fontFamily: 'monospace',
+          fontSize: 13,
+          cursor: 'pointer',
+          transition: 'top 120ms ease',
+        }}
+      >
+        Skip to content
+      </button>
       {!embedded && !isNarrow && (
         <NavRail items={navItems} onOpenBrand={() => selectView('gallery')} onOpenHelp={openHelp} />
       )}
@@ -313,7 +340,13 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
           style={{ flex: 1, overflow: 'hidden' }}
         >
           {isE2e && <E2eTraceHook />}
-          <ShellChromeProvider value={shellChrome}>{children}</ShellChromeProvider>
+          <ShellChromeProvider value={shellChrome}>
+            {/* Skip-link target. height:100% keeps the drill frames' own scroll
+                working (they constrain to this slot and scroll internally). */}
+            <div id="netlab-demo-content" tabIndex={-1} style={{ height: '100%', outline: 'none' }}>
+              {children}
+            </div>
+          </ShellChromeProvider>
           {!embedded && (
             <>
               <CommandPalette
