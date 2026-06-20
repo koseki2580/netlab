@@ -130,6 +130,48 @@ describe('PacketJourneyPanel', () => {
     expect(document.activeElement).toBe(testid('packet-journey-prompt'));
   });
 
+  it('explains the origin hop instead of showing empty first feedback', async () => {
+    await render();
+    const journey = await realJourney(0);
+    // The first hop is the host's single-link send — no engine routing line.
+    click(`packet-journey-answer-${journey.steps[0]!.correctNodeId}`);
+    expect(testid('packet-journey-correct')).not.toBeNull();
+    const feedback = testid('packet-journey-feedback')?.textContent ?? '';
+    expect(feedback).toContain('single link');
+    expect(feedback.length).toBeGreaterThan('Correct'.length + 10);
+  });
+
+  it('cumulatively reveals every traversed edge as hops are answered (no off-by-one)', async () => {
+    await render();
+    const topology = buildJourneyTopology();
+    const journey = await realJourney(0); // via-lpm: delivers in 3 hops
+
+    const edgeId = (a: string, b: string) =>
+      topology.edges.find(
+        (e) => (e.source === a && e.target === b) || (e.source === b && e.target === a),
+      )?.id;
+    const animatedIds = () => {
+      const edges = JSON.parse(testid('stub-canvas')?.getAttribute('data-edges') ?? '[]') as {
+        id: string;
+        animated: boolean;
+      }[];
+      return new Set(edges.filter((e) => e.animated).map((e) => e.id));
+    };
+
+    const expectedSoFar: string[] = [];
+    for (const step of journey.steps) {
+      click(`packet-journey-answer-${step.correctNodeId}`);
+      const id = edgeId(step.nodeId, step.correctNodeId)!;
+      expect(id).toBeTruthy();
+      expectedSoFar.push(id);
+      const animated = animatedIds();
+      // Every edge traversed so far is lit — and nothing beyond the current hop.
+      for (const want of expectedSoFar) expect(animated.has(want)).toBe(true);
+      expect(animated.size).toBe(expectedSoFar.length);
+      click('packet-journey-advance');
+    }
+  });
+
   it('marks a wrong prediction and names the engine decision in the feedback', async () => {
     await render();
     const journey = await realJourney(0);

@@ -88,12 +88,16 @@ export function PacketJourneyPanel() {
       if (!step || result) return;
       const correct = nodeId === step.correctNodeId;
       const engineLine = step.hop.routingDecision?.explanation;
+      const targetLabel = labels.get(step.correctNodeId) ?? step.correctNodeId;
       setResult({
         correct,
-        expected: labels.get(step.correctNodeId) ?? step.correctNodeId,
+        expected: targetLabel,
+        // Forward hops carry the engine's routing decision; the origin hop (the
+        // host's single-link send) has none, so explain that instead of leaving
+        // the learner's very first feedback empty.
         explanation: engineLine
           ? t('learning.journey.engineSays', { explanation: engineLine })
-          : '',
+          : t('learning.journey.originHop', { node: targetLabel }),
       });
       setWrongPick(correct ? null : nodeId);
       setTotalCount((value) => value + 1);

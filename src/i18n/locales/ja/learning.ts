@@ -98,6 +98,8 @@ export const learning: Catalog = {
   'learning.journey.outcome.dropped':
     '💀 破棄 — 最後のルータで一致する経路がありませんでした(理由: {{reason}})。',
   'learning.journey.engineSays': 'エンジンの判断: {{explanation}}',
+  'learning.journey.originHop':
+    'パケットはホストから始まります。ホストのリンクは {{node}} への1本だけなので、送信するパケットはすべてそこから始まります。',
   'learning.journey.nextJourney': '次のジャーニー',
   'learning.journey.summary.lesson':
     '本物の転送エンジンの仕事を見届けました: 最も具体的な経路が勝ち、デフォルトルートが残りを受け止め、一致する経路のないルータはパケットを破棄します。',

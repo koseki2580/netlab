@@ -96,6 +96,8 @@ export const learning: Catalog = {
   'learning.journey.outcome.dropped':
     '💀 Dropped — no route matched at the last router (reason: {{reason}}).',
   'learning.journey.engineSays': 'The engine decided: {{explanation}}',
+  'learning.journey.originHop':
+    'The packet starts at the host, which has a single link — to {{node}} — so every packet it sends begins there.',
   'learning.journey.nextJourney': 'Next journey',
   'learning.journey.summary.lesson':
     'You just watched the real forwarding engine at work: the most specific route wins, the default route catches the rest, and a router with no matching route drops the packet.',
