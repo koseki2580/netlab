@@ -16,3 +16,15 @@
     stroke-dasharray: 6 4;
   }
 }
+
+/* React Flow's built-in attribution link ships at ~4.3:1 contrast (#999 on its
+ * panel), just under WCAG AA's 4.5:1 — axe flags it as a serious violation. We
+ * can't hide it without a Pro licence, but we can make it readable: theme
+ * colours keep it visible (licence-compliant) while clearing AA. */
+.react-flow__attribution {
+  background: color-mix(in srgb, var(--netlab-bg-surface) 90%, transparent);
+}
+
+.react-flow__attribution a {
+  color: var(--netlab-text-secondary);
+}
