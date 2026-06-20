@@ -170,6 +170,33 @@ describe('ConceptCheckPanel', () => {
     spy.mockRestore();
   });
 
+  it('offers an immediate review from the summary when questions were missed', () => {
+    render();
+    const total = getDeck('arp')!.questions.length;
+    click('concept-check-deck-arp');
+    for (let i = 0; i < total; i += 1) {
+      clickOption('arp', i, 'wrong');
+      click('concept-check-next');
+    }
+    // The summary surfaces the review action directly (no trip back to the picker).
+    const review = testid('concept-check-summary-review');
+    expect(review).not.toBeNull();
+    expect(review?.textContent).toContain(String(total));
+    click('concept-check-summary-review');
+    // A review session starts straight away.
+    expect(testid('concept-check-prompt')).not.toBeNull();
+  });
+
+  it('shows a mastery progress bar reflecting total questions', () => {
+    render();
+    const bar = testid('concept-check-mastery-bar');
+    expect(bar).not.toBeNull();
+    // Nothing mastered yet; the bar spans all questions across every deck.
+    const totalQuestions = CONCEPT_DECKS.reduce((sum, deck) => sum + deck.questions.length, 0);
+    expect(bar?.getAttribute('aria-valuenow')).toBe('0');
+    expect(bar?.getAttribute('aria-valuemax')).toBe(String(totalQuestions));
+  });
+
   it('moves focus to the new question prompt on advance (keyboard/SR users)', () => {
     render();
     click('concept-check-deck-arp');

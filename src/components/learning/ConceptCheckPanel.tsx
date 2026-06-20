@@ -196,6 +196,33 @@ export function ConceptCheckPanel({
               })}
             </span>
           </div>
+          <div
+            data-testid="concept-check-mastery-bar"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={indexed.length}
+            aria-valuenow={stats.mastered}
+            aria-label={t('learning.concept.review.mastered', {
+              mastered: stats.mastered,
+              total: indexed.length,
+            })}
+            style={{
+              height: 6,
+              borderRadius: 999,
+              background: 'color-mix(in srgb, var(--netlab-text-secondary) 22%, transparent)',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                height: '100%',
+                width: `${indexed.length ? (stats.mastered / indexed.length) * 100 : 0}%`,
+                background: 'var(--netlab-accent-green)',
+                borderRadius: 999,
+                transition: 'width 240ms ease',
+              }}
+            />
+          </div>
           <ConceptCallout idPrefix="concept-check" title={t('learning.concept.primer.title')}>
             {t('learning.concept.primer.body')}
           </ConceptCallout>
@@ -300,14 +327,28 @@ export function ConceptCheckPanel({
           >
             {correct} / {total}
           </div>
-          <button
-            type="button"
-            data-testid="concept-check-back"
-            onClick={backToDecks}
-            style={pillButton('var(--netlab-accent-blue)')}
-          >
-            {t('learning.concept.backToDecks')}
-          </button>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {/* Closes the loop: missed items just seeded the review pool, so offer
+                to drill them immediately rather than hunting on the picker. */}
+            {stats.inReview > 0 && (
+              <button
+                type="button"
+                data-testid="concept-check-summary-review"
+                onClick={startReview}
+                style={pillButton('var(--netlab-accent-yellow)')}
+              >
+                {t('learning.concept.review.start', { count: stats.inReview })}
+              </button>
+            )}
+            <button
+              type="button"
+              data-testid="concept-check-back"
+              onClick={backToDecks}
+              style={pillButton('var(--netlab-accent-blue)')}
+            >
+              {t('learning.concept.backToDecks')}
+            </button>
+          </div>
         </div>
       </DrillFrame>
     );

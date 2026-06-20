@@ -201,31 +201,34 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
           style={drillInputStyle}
         />
 
-        <div style={{ display: 'flex', gap: 12 }}>
+        {result === null && (
           <button
             type="button"
             data-testid="subnet-drill-check"
             onClick={check}
-            disabled={result !== null || answer.trim() === ''}
+            disabled={answer.trim() === ''}
             style={{
               ...pillButton('var(--netlab-accent-blue)'),
-              opacity: result !== null || answer.trim() === '' ? 0.5 : 1,
+              justifySelf: 'start',
+              opacity: answer.trim() === '' ? 0.5 : 1,
             }}
           >
             {t('learning.drill.check')}
           </button>
+        )}
+
+        <DrillFeedback idPrefix="subnet-drill" result={localizedResult} />
+
+        {result !== null && (
           <button
             type="button"
             data-testid="subnet-drill-advance"
             onClick={advance}
-            disabled={result === null}
-            style={{ ...pillButton('var(--netlab-accent-green)'), opacity: result ? 1 : 0.5 }}
+            style={{ ...pillButton('var(--netlab-accent-green)'), justifySelf: 'start' }}
           >
             {isLast ? t('learning.drill.seeResults') : t('learning.drill.next')}
           </button>
-        </div>
-
-        <DrillFeedback idPrefix="subnet-drill" result={localizedResult} />
+        )}
 
         {/* Every answer ends as a visual lesson: the block, its usable range,
             and (for membership questions) where the asked address falls. */}
