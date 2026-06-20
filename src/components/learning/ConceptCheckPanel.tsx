@@ -31,6 +31,20 @@ import type { DrillResult } from './drillKit';
 
 const REVIEW_SESSION_LIMIT = 10;
 
+/**
+ * Fisher-Yates shuffle into a new array. Option order is varied on every
+ * presentation so spaced-repetition reviews stay genuine retrieval — a learner
+ * recalls the concept rather than memorizing the answer's fixed position.
+ */
+function shuffle<T>(items: readonly T[]): T[] {
+  const out = items.slice();
+  for (let i = out.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j]!, out[i]!];
+  }
+  return out;
+}
+
 interface Session {
   readonly kind: 'deck' | 'review';
   readonly id: string;
@@ -67,6 +81,9 @@ export function ConceptCheckPanel({
   const total = session?.items.length ?? 0;
   const indexedQ = session?.items[qIdx];
   const question = indexedQ?.question;
+  // Re-shuffle options each time a new question is presented (stable across the
+  // answer/reveal re-renders since `question` keeps its identity until advance).
+  const options = useMemo(() => (question ? shuffle(question.options) : []), [question]);
   const summaryRef = useFocusWhen<HTMLHeadingElement>(complete);
   useDrillCompletion(
     session ? `concept-${session.id}` : 'concept-none',
@@ -321,7 +338,7 @@ export function ConceptCheckPanel({
         </p>
 
         <div style={{ display: 'grid', gap: 8 }}>
-          {question?.options.map((option, index) => {
+          {options.map((option, index) => {
             const isWinner = result !== null && option.correct === true;
             const isWrongChoice = result !== null && selected === option.key && !option.correct;
             const accent = isWinner

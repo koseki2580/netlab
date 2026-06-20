@@ -107,13 +107,19 @@ button runs a virtual session over the weakest items, mixing questions across
 decks. `reviewStore` is an injectable prop so tests and embeddings can supply an
 in-memory store.
 
+Option order is **shuffled on every presentation** (Fisher-Yates), so when a
+question resurfaces in spaced review the learner recalls the concept rather than
+memorizing the answer's fixed position — keeping every repetition a genuine
+retrieval.
+
 ## Testing expectations
 
 - decks: unique ids, exactly one correct option per question, varied answer
   slots, and every referenced key present in both en and ja
 - panel (jsdom): the picker lists every deck; a correct answer grades, a wrong
   answer reveals the right one; a full deck reaches a scored summary; ja renders;
-  after a deck the Review pool appears and is replayable
+  after a deck the Review pool appears and is replayable; options are shuffled
+  per presentation (no option lost)
 - scheduler (pure): correct promotes + delays, wrong resets to box 1, promotion
   caps at mastered, `isDue` honors the clock, `reviewQueue` orders weakest-first
   and excludes mastered, stats count seen/mastered/due/inReview, and

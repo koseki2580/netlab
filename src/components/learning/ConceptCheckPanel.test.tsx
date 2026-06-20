@@ -2,8 +2,9 @@
 
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../i18n';
+import { en } from '../../i18n/locales/en';
 import { CONCEPT_DECKS, correctOption, getDeck } from '../../learning/concept-check';
 import { createReviewStore } from '../../learning/review';
 import { createMemoryProgressStorage } from '../../progress';
@@ -42,10 +43,34 @@ function click(id: string) {
   act(() => el.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0 })));
 }
 
-function correctIndex(deckId: string, qIdx: number): number {
+/** The en-rendered text of a deck question's correct option. */
+function correctText(deckId: string, qIdx: number): string {
   const question = getDeck(deckId)!.questions[qIdx]!;
-  const right = correctOption(question)!;
-  return question.options.findIndex((option) => option.key === right.key);
+  return (en as Record<string, string>)[correctOption(question)!.key]!.trim();
+}
+
+/** Visible option text with any ✓/✗ reveal prefix stripped. */
+function optionText(index: number): string {
+  return (testid(`concept-check-option-${index}`)?.textContent ?? '')
+    .replace(/^[✓✗]\s*/, '')
+    .trim();
+}
+
+/**
+ * Options are shuffled per presentation, so the correct one is located by its
+ * rendered text, not a fixed slot. `which: 'correct'` clicks the right answer;
+ * `'wrong'` clicks any distractor.
+ */
+function clickOption(deckId: string, qIdx: number, which: 'correct' | 'wrong') {
+  const want = correctText(deckId, qIdx);
+  for (let i = 0; i < 3; i += 1) {
+    const matchesCorrect = optionText(i) === want;
+    if (which === 'correct' ? matchesCorrect : !matchesCorrect) {
+      click(`concept-check-option-${i}`);
+      return;
+    }
+  }
+  throw new Error(`no ${which} option found for ${deckId}/${qIdx}`);
 }
 
 function render() {
@@ -66,14 +91,16 @@ describe('ConceptCheckPanel', () => {
     click('concept-check-deck-arp');
     expect(testid('concept-check-prompt')).not.toBeNull();
 
-    click(`concept-check-option-${correctIndex('arp', 0)}`);
+    clickOption('arp', 0, 'correct');
     expect(testid('concept-check-correct')).not.toBeNull();
 
     click('concept-check-next');
-    const wrongIdx = (correctIndex('arp', 1) + 1) % 3;
-    click(`concept-check-option-${wrongIdx}`);
+    clickOption('arp', 1, 'wrong');
     expect(testid('concept-check-incorrect')).not.toBeNull();
-    expect(testid(`concept-check-option-${correctIndex('arp', 1)}`)?.textContent).toContain('✓');
+    // The revealed correct option is marked with a ✓, wherever it landed.
+    const want = correctText('arp', 1);
+    const winner = [0, 1, 2].find((i) => optionText(i) === want);
+    expect(testid(`concept-check-option-${winner}`)?.textContent).toContain('✓');
   });
 
   it('finishes a deck to a scored summary and returns to the picker', () => {
@@ -81,7 +108,7 @@ describe('ConceptCheckPanel', () => {
     click('concept-check-deck-tcp');
     const total = getDeck('tcp')!.questions.length;
     for (let i = 0; i < total; i += 1) {
-      click(`concept-check-option-${correctIndex('tcp', i)}`);
+      clickOption('tcp', i, 'correct');
       click('concept-check-next');
     }
     expect(testid('concept-check-summary')).not.toBeNull();
@@ -100,7 +127,7 @@ describe('ConceptCheckPanel', () => {
     click('concept-check-deck-udp');
     for (let i = 0; i < total; i += 1) {
       // Answer wrong so the items land in low boxes (definitely in-review).
-      click(`concept-check-option-${(correctIndex('udp', i) + 1) % 3}`);
+      clickOption('udp', i, 'wrong');
       click('concept-check-next');
     }
     click('concept-check-back');
@@ -123,6 +150,24 @@ describe('ConceptCheckPanel', () => {
     // Running the review session quizzes the weak items.
     click('concept-check-review');
     expect(testid('concept-check-prompt')).not.toBeNull();
+  });
+
+  it('shuffles option order each presentation so reviews are genuine recall', () => {
+    // Force a deterministic permutation: Fisher-Yates with random()→0 maps the
+    // original order [o0,o1,o2] to [o1,o2,o0], so slot 0 shows the 2nd option.
+    const spy = vi.spyOn(Math, 'random').mockReturnValue(0);
+    render();
+    click('concept-check-deck-arp');
+    const original = getDeck('arp')!.questions[0]!.options.map(
+      (option) => (en as Record<string, string>)[option.key]!,
+    );
+    expect(optionText(0)).toBe(original[1]!.trim());
+    expect(optionText(2)).toBe(original[0]!.trim());
+    // Every original option is still present exactly once (none lost in shuffle).
+    expect([optionText(0), optionText(1), optionText(2)].sort()).toEqual(
+      original.map((text) => text.trim()).sort(),
+    );
+    spy.mockRestore();
   });
 
   it('renders Japanese inside an I18nProvider with locale ja', () => {
