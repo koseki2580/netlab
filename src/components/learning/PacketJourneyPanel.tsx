@@ -214,7 +214,7 @@ export function PacketJourneyPanel() {
           }}
         >
           <NetlabProvider key={flow.id} topology={viewTopology}>
-            <NetlabCanvas onNodeSelect={handleNodeSelect} />
+            <NetlabCanvas followTopology onNodeSelect={handleNodeSelect} />
           </NetlabProvider>
         </div>
 

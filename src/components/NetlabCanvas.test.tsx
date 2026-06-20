@@ -550,6 +550,50 @@ describe('NetlabCanvas controlled topology API', () => {
     expect(currentReactFlowProps().nodes[0]?.position).toEqual({ x: 320, y: 200 });
   });
 
+  it('re-syncs from the topology prop when followTopology is set, even without callbacks', () => {
+    const initial = makeTopology();
+    const updated = makeTopology({
+      nodes: [
+        { ...topologyNodeAt(initial, 0), position: { x: 320, y: 200 } },
+        topologyNodeAt(initial, 1),
+      ],
+      // The learning reveal: the edge lights up green and animates.
+      edges: [
+        {
+          id: 'e1',
+          source: 'n1',
+          target: 'n2',
+          type: 'smoothstep',
+          animated: true,
+          style: { stroke: 'var(--netlab-accent-green)', strokeWidth: 2.5 },
+        },
+      ],
+    });
+
+    const view = render(
+      <NetlabProvider topology={initial}>
+        <NetlabCanvas followTopology />
+      </NetlabProvider>,
+    );
+
+    expect(currentReactFlowProps().nodes[0]?.position).toEqual({ x: 50, y: 80 });
+    expect(currentReactFlowProps().edges[0]?.animated ?? false).toBe(false);
+
+    view.rerender(
+      <NetlabProvider topology={updated}>
+        <NetlabCanvas followTopology />
+      </NetlabProvider>,
+    );
+
+    // Display follows the prop: the node moves and the revealed edge now animates
+    // with the styling carried on the synced topology edge (strokeWidth 2.5).
+    expect(currentReactFlowProps().nodes[0]?.position).toEqual({ x: 320, y: 200 });
+    expect(currentReactFlowProps().edges[0]?.animated).toBe(true);
+    expect(currentReactFlowProps().edges[0]?.style).toEqual(
+      expect.objectContaining({ strokeWidth: 2.5 }),
+    );
+  });
+
   it('does not re-sync local React Flow state when callbacks are absent', () => {
     const initial = makeTopology();
     const updated = makeTopology({

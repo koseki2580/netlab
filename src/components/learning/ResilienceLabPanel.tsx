@@ -203,7 +203,7 @@ export function ResilienceLabPanel() {
           }}
         >
           <NetlabProvider key={scenario.id} topology={viewTopology}>
-            <NetlabCanvas />
+            <NetlabCanvas followTopology />
           </NetlabProvider>
         </div>
 

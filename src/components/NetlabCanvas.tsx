@@ -91,6 +91,14 @@ export interface NetlabCanvasProps {
    * behavior — learning surfaces use it to answer by clicking a node.
    */
   onNodeSelect?: (nodeId: string | null) => void;
+  /**
+   * Display-follows-prop mode: re-sync the canvas from the `topology` prop on
+   * every change even without edit callbacks. Use for read-only surfaces that
+   * drive the canvas entirely from outside (e.g. the learning panels, which
+   * restyle/animate edges as a packet is revealed). Without it, an uncontrolled
+   * canvas freezes to its initial topology to preserve in-canvas drags.
+   */
+  followTopology?: boolean;
 }
 
 export interface NetlabViewport {
@@ -111,6 +119,7 @@ export function NetlabCanvas({
   onEdgesChange: onEdgesChangeProp,
   onTopologyChange,
   onNodeSelect,
+  followTopology = false,
 }: NetlabCanvasProps) {
   const { topology, areas } = useNetlabContext();
   const reducedMotion = usePrefersReducedMotion();
@@ -167,14 +176,14 @@ export function NetlabCanvas({
   const [edges, setEdges, rfOnEdgesChange] = useEdgesState(topology.edges);
 
   useEffect(() => {
-    if (!isControlled) return;
+    if (!isControlled && !followTopology) return;
     setNodes([...areaNodes, ...topology.nodes]);
-  }, [topology.nodes, areaNodes, setNodes, isControlled]);
+  }, [topology.nodes, areaNodes, setNodes, isControlled, followTopology]);
 
   useEffect(() => {
-    if (!isControlled) return;
+    if (!isControlled && !followTopology) return;
     setEdges(topology.edges);
-  }, [topology.edges, setEdges, isControlled]);
+  }, [topology.edges, setEdges, isControlled, followTopology]);
 
   const emitTopologyChange = useCallback(
     (nextNodes: NetlabNode[], nextEdges: NetlabEdge[]) => {

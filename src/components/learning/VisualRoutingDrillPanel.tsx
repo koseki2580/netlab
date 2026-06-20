@@ -232,7 +232,7 @@ export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }
         >
           {/* Remount per question so canvas selection state starts fresh. */}
           <NetlabProvider key={problem.id} topology={topology}>
-            <NetlabCanvas onNodeSelect={handleNodeSelect} />
+            <NetlabCanvas followTopology onNodeSelect={handleNodeSelect} />
           </NetlabProvider>
         </div>
 
