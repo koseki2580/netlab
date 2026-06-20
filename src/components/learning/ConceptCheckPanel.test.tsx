@@ -113,6 +113,13 @@ describe('ConceptCheckPanel', () => {
     // Mastery indicator reflects progress out of all questions.
     expect(testid('concept-check-mastery')?.textContent).toMatch(/\/\s*\d+/);
 
+    // The practiced deck shows a per-deck progress badge (0 mastered / total seen).
+    const badge = testid('concept-check-deck-progress-udp');
+    expect(badge).not.toBeNull();
+    expect(badge?.textContent).toContain(`0/${total}`);
+    // A deck never practiced shows no badge.
+    expect(testid('concept-check-deck-progress-arp')).toBeNull();
+
     // Running the review session quizzes the weak items.
     click('concept-check-review');
     expect(testid('concept-check-prompt')).not.toBeNull();

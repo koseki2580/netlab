@@ -999,4 +999,5 @@ export const conceptCheck: Catalog = {
   'learning.concept.review.mastered': '{{mastered}} / {{total}} 習得',
   'learning.concept.review.empty':
     'まず問題に答えてください — 弱点がここに集まり、間隔をあけて復習できます。',
+  'learning.concept.review.deckProgress': '{{mastered}}/{{total}}',
 } as const;

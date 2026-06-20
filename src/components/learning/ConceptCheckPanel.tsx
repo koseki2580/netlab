@@ -3,6 +3,7 @@ import { useI18n } from '../../i18n/useI18n';
 import {
   allConceptQuestions,
   correctOption,
+  deckMastery,
   decksByLayer,
   getDeck,
   isCorrectChoice,
@@ -12,6 +13,7 @@ import {
 import {
   createReviewStore,
   gradeReview,
+  isMastered,
   reviewQueue,
   reviewStats,
   type ReviewState,
@@ -150,6 +152,8 @@ export function ConceptCheckPanel({
   // ── Deck picker ──────────────────────────────────────────────────────────
   if (!session) {
     const reviewCount = stats.inReview;
+    const seenItem = (id: string) => review[id] !== undefined;
+    const masteredItem = (id: string) => isMastered(review, id);
     return (
       <DrillFrame idPrefix="concept-check">
         <div data-testid="concept-check-picker" style={drillCardStyle}>
@@ -202,17 +206,44 @@ export function ConceptCheckPanel({
                 {t(`learning.concept.layer.${group.layer}`)}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {group.decks.map((entry) => (
-                  <button
-                    key={entry.id}
-                    type="button"
-                    data-testid={`concept-check-deck-${entry.id}`}
-                    onClick={() => startDeck(entry.id)}
-                    style={pillButton('var(--netlab-accent-blue)')}
-                  >
-                    {t(entry.nameKey)}
-                  </button>
-                ))}
+                {group.decks.map((entry) => {
+                  const progress = deckMastery(entry, seenItem, masteredItem);
+                  const allMastered = progress.mastered === progress.total;
+                  return (
+                    <button
+                      key={entry.id}
+                      type="button"
+                      data-testid={`concept-check-deck-${entry.id}`}
+                      onClick={() => startDeck(entry.id)}
+                      style={{
+                        ...pillButton(
+                          allMastered ? 'var(--netlab-accent-green)' : 'var(--netlab-accent-blue)',
+                        ),
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                      }}
+                    >
+                      {t(entry.nameKey)}
+                      {progress.seen > 0 && (
+                        <span
+                          data-testid={`concept-check-deck-progress-${entry.id}`}
+                          style={{
+                            fontFamily: 'ui-monospace, monospace',
+                            fontSize: 11,
+                            opacity: 0.85,
+                          }}
+                        >
+                          {allMastered ? '✓ ' : ''}
+                          {t('learning.concept.review.deckProgress', {
+                            mastered: progress.mastered,
+                            total: progress.total,
+                          })}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           ))}

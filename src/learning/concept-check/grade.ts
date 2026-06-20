@@ -45,6 +45,33 @@ export interface IndexedQuestion {
   readonly question: ConceptQuestion;
 }
 
+export interface DeckMastery {
+  /** Questions answered at least once. */
+  readonly seen: number;
+  /** Questions at the top Leitner box. */
+  readonly mastered: number;
+  /** Questions in the deck. */
+  readonly total: number;
+}
+
+/**
+ * Per-deck spaced-repetition progress, computed from caller-supplied predicates
+ * over each question's review item id. Pure, so the deck module stays unaware of
+ * the review store while remaining unit-testable.
+ */
+export function deckMastery(
+  deck: ConceptDeck,
+  seen: (itemId: string) => boolean,
+  mastered: (itemId: string) => boolean,
+): DeckMastery {
+  const ids = deck.questions.map((question) => questionItemId(deck.id, question.id));
+  return {
+    total: ids.length,
+    seen: ids.filter(seen).length,
+    mastered: ids.filter(mastered).length,
+  };
+}
+
 /** Flat index of every question across all decks, keyed by review item id. */
 export function allConceptQuestions(): IndexedQuestion[] {
   return CONCEPT_DECKS.flatMap((deck) =>

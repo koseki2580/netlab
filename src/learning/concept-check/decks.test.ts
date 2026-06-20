@@ -2,7 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { en } from '../../i18n/locales/en';
 import { ja } from '../../i18n/locales/ja';
 import { CONCEPT_DECKS } from './decks';
-import { correctOption, decksByLayer, getDeck, isCorrectChoice } from './grade';
+import {
+  correctOption,
+  deckMastery,
+  decksByLayer,
+  getDeck,
+  isCorrectChoice,
+  questionItemId,
+} from './grade';
 
 describe('concept-check decks', () => {
   it('every deck has a unique id, a name key, and at least one question', () => {
@@ -59,6 +66,36 @@ describe('concept-check decks', () => {
     expect(isCorrectChoice(q1, right.key)).toBe(true);
     const wrong = q1.options.find((option) => !option.correct)!;
     expect(isCorrectChoice(q1, wrong.key)).toBe(false);
+  });
+
+  it('deckMastery counts seen and mastered questions from the supplied predicates', () => {
+    const arp = getDeck('arp')!;
+    const ids = arp.questions.map((question) => questionItemId(arp.id, question.id));
+
+    // Nothing answered yet.
+    expect(
+      deckMastery(
+        arp,
+        () => false,
+        () => false,
+      ),
+    ).toEqual({
+      seen: 0,
+      mastered: 0,
+      total: arp.questions.length,
+    });
+
+    // First two seen, the first one mastered.
+    const seen = new Set([ids[0]!, ids[1]!]);
+    const mastered = new Set([ids[0]!]);
+    const progress = deckMastery(
+      arp,
+      (id) => seen.has(id),
+      (id) => mastered.has(id),
+    );
+    expect(progress.seen).toBe(2);
+    expect(progress.mastered).toBe(1);
+    expect(progress.total).toBe(arp.questions.length);
   });
 
   it('groups decks by layer in stack order, covering several layers', () => {
