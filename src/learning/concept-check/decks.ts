@@ -1877,4 +1877,189 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
       },
     ],
   },
+  {
+    id: 'tunneling',
+    layer: 'l3',
+    nameKey: 'learning.concept.tunneling.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.tunneling.q1.prompt',
+        explanationKey: 'learning.concept.tunneling.q1.why',
+        options: [
+          { key: 'learning.concept.tunneling.q1.a', correct: true },
+          { key: 'learning.concept.tunneling.q1.b' },
+          { key: 'learning.concept.tunneling.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.tunneling.q2.prompt',
+        explanationKey: 'learning.concept.tunneling.q2.why',
+        options: [
+          { key: 'learning.concept.tunneling.q2.a' },
+          { key: 'learning.concept.tunneling.q2.b', correct: true },
+          { key: 'learning.concept.tunneling.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.tunneling.q3.prompt',
+        explanationKey: 'learning.concept.tunneling.q3.why',
+        options: [
+          { key: 'learning.concept.tunneling.q3.a' },
+          { key: 'learning.concept.tunneling.q3.b' },
+          { key: 'learning.concept.tunneling.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'vpn',
+    layer: 'l5',
+    nameKey: 'learning.concept.vpn.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.vpn.q1.prompt',
+        explanationKey: 'learning.concept.vpn.q1.why',
+        options: [
+          { key: 'learning.concept.vpn.q1.a', correct: true },
+          { key: 'learning.concept.vpn.q1.b' },
+          { key: 'learning.concept.vpn.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.vpn.q2.prompt',
+        explanationKey: 'learning.concept.vpn.q2.why',
+        options: [
+          { key: 'learning.concept.vpn.q2.a' },
+          { key: 'learning.concept.vpn.q2.b', correct: true },
+          { key: 'learning.concept.vpn.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.vpn.q3.prompt',
+        explanationKey: 'learning.concept.vpn.q3.why',
+        options: [
+          { key: 'learning.concept.vpn.q3.a' },
+          { key: 'learning.concept.vpn.q3.b' },
+          { key: 'learning.concept.vpn.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'wireguard',
+    layer: 'l5',
+    nameKey: 'learning.concept.wireguard.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.wireguard.q1.prompt',
+        explanationKey: 'learning.concept.wireguard.q1.why',
+        options: [
+          { key: 'learning.concept.wireguard.q1.a' },
+          { key: 'learning.concept.wireguard.q1.b', correct: true },
+          { key: 'learning.concept.wireguard.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.wireguard.q2.prompt',
+        explanationKey: 'learning.concept.wireguard.q2.why',
+        options: [
+          { key: 'learning.concept.wireguard.q2.a' },
+          { key: 'learning.concept.wireguard.q2.b' },
+          { key: 'learning.concept.wireguard.q2.c', correct: true },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.wireguard.q3.prompt',
+        explanationKey: 'learning.concept.wireguard.q3.why',
+        options: [
+          { key: 'learning.concept.wireguard.q3.a', correct: true },
+          { key: 'learning.concept.wireguard.q3.b' },
+          { key: 'learning.concept.wireguard.q3.c' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'l2tp',
+    layer: 'l5',
+    nameKey: 'learning.concept.l2tp.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.l2tp.q1.prompt',
+        explanationKey: 'learning.concept.l2tp.q1.why',
+        options: [
+          { key: 'learning.concept.l2tp.q1.a' },
+          { key: 'learning.concept.l2tp.q1.b', correct: true },
+          { key: 'learning.concept.l2tp.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.l2tp.q2.prompt',
+        explanationKey: 'learning.concept.l2tp.q2.why',
+        options: [
+          { key: 'learning.concept.l2tp.q2.a', correct: true },
+          { key: 'learning.concept.l2tp.q2.b' },
+          { key: 'learning.concept.l2tp.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.l2tp.q3.prompt',
+        explanationKey: 'learning.concept.l2tp.q3.why',
+        options: [
+          { key: 'learning.concept.l2tp.q3.a' },
+          { key: 'learning.concept.l2tp.q3.b' },
+          { key: 'learning.concept.l2tp.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'pppoe',
+    layer: 'l2',
+    nameKey: 'learning.concept.pppoe.name',
+    questions: [
+      {
+        id: 'q1',
+        promptKey: 'learning.concept.pppoe.q1.prompt',
+        explanationKey: 'learning.concept.pppoe.q1.why',
+        options: [
+          { key: 'learning.concept.pppoe.q1.a', correct: true },
+          { key: 'learning.concept.pppoe.q1.b' },
+          { key: 'learning.concept.pppoe.q1.c' },
+        ],
+      },
+      {
+        id: 'q2',
+        promptKey: 'learning.concept.pppoe.q2.prompt',
+        explanationKey: 'learning.concept.pppoe.q2.why',
+        options: [
+          { key: 'learning.concept.pppoe.q2.a' },
+          { key: 'learning.concept.pppoe.q2.b', correct: true },
+          { key: 'learning.concept.pppoe.q2.c' },
+        ],
+      },
+      {
+        id: 'q3',
+        promptKey: 'learning.concept.pppoe.q3.prompt',
+        explanationKey: 'learning.concept.pppoe.q3.why',
+        options: [
+          { key: 'learning.concept.pppoe.q3.a' },
+          { key: 'learning.concept.pppoe.q3.b' },
+          { key: 'learning.concept.pppoe.q3.c', correct: true },
+        ],
+      },
+    ],
+  },
 ];

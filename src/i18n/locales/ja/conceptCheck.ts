@@ -994,6 +994,112 @@ export const conceptCheck: Catalog = {
   'learning.concept.lldp.q3.c': '物理トポロジ把握や VoIP/PoE 設定の補助',
   'learning.concept.lldp.q3.why':
     'NMS は LLDP から配線図を作り、電話が音声 VLAN や PoE 情報を学ぶのにも役立ちます。',
+  'learning.concept.tunneling.name': 'トンネリングとカプセル化',
+  'learning.concept.tunneling.q1.prompt': 'トンネリング（カプセル化）の仕組みは…',
+  'learning.concept.tunneling.q1.a':
+    '元のパケットを新しい外側ヘッダで包み、本来そのままでは運べないネットワークを越えられるようにする',
+  'learning.concept.tunneling.q1.b': 'すべてのパケットを端から端まで暗号化する',
+  'learning.concept.tunneling.q1.c': 'ペイロードを圧縮して帯域を節約する',
+  'learning.concept.tunneling.q1.why':
+    'トンネルは元パケットの外側にヘッダ（GRE/IP、VXLAN/UDP、MPLS など）を付け、内側のパケットはペイロードとして中継網を通ります。',
+  'learning.concept.tunneling.q2.prompt': 'トンネルの両端では…',
+  'learning.concept.tunneling.q2.a': '両端ともすぐに外側ヘッダを捨てる',
+  'learning.concept.tunneling.q2.b':
+    '入口でカプセル化（外側ヘッダを付与）し、出口でデカプセル化（外側を剥がす）して内側パケットを転送する',
+  'learning.concept.tunneling.q2.c': '受信側だけがヘッダを付ける',
+  'learning.concept.tunneling.q2.why':
+    'カプセル化はトンネル入口で、デカプセル化は出口で行われ、出口は復元した内側パケットを通常どおりルーティングします。',
+  'learning.concept.tunneling.q3.prompt': 'トンネリングで実効 MTU が下がるのはなぜ？',
+  'learning.concept.tunneling.q3.a': 'ネットワークが遅くなるから',
+  'learning.concept.tunneling.q3.b': '内側パケットが暗号化されるから',
+  'learning.concept.tunneling.q3.c':
+    '外側ヘッダの分だけバイトを消費するため、内側ペイロードを小さくしないと断片化や破棄が起きる',
+  'learning.concept.tunneling.q3.why':
+    '外側ヘッダはオーバーヘッドです。内側＋外側が経路 MTU を超え DF が立つと破棄されるため、MSS クランプやトンネル MTU の引き下げを行います。',
+  'learning.concept.vpn.name': 'VPN',
+  'learning.concept.vpn.q1.prompt': 'VPN の主な目的は…',
+  'learning.concept.vpn.q1.a':
+    '信頼できないネットワーク越しに暗号化トンネルを作り、通信を秘匿・認証する',
+  'learning.concept.vpn.q1.b': 'インターネット回線を高速化する',
+  'learning.concept.vpn.q1.c': 'ホストにグローバル IP を割り当てる',
+  'learning.concept.vpn.q1.why':
+    'VPN は通信をカプセル化して暗号化し、公衆網をあたかも専用線のように越えられるようにします。',
+  'learning.concept.vpn.q2.prompt': 'サイト間 VPN とリモートアクセス VPN の違いは…',
+  'learning.concept.vpn.q2.a': 'サイト間は暗号化が不要',
+  'learning.concept.vpn.q2.b':
+    'サイト間はゲートウェイ同士でネットワーク全体を接続し、リモートアクセスは 1 台のクライアント端末を社内網に接続する',
+  'learning.concept.vpn.q2.c': 'リモートアクセスは Ethernet 上でしか動かない',
+  'learning.concept.vpn.q2.why':
+    'サイト間はゲートウェイが 2 つのサブネット間をトンネルし、リモートアクセス（クライアント VPN）は 1 ユーザー端末を社内網に参加させます。',
+  'learning.concept.vpn.q3.prompt': 'スプリットトンネルとは…',
+  'learning.concept.vpn.q3.a': 'すべての通信が遮断される',
+  'learning.concept.vpn.q3.b': 'VPN が二重に暗号化する',
+  'learning.concept.vpn.q3.c':
+    '一部の通信（例：社内サブネット）だけ VPN を通し、残りは直接インターネットへ出す',
+  'learning.concept.vpn.q3.why':
+    'スプリットトンネルは選んだ宛先だけ VPN 経由にします。負荷は減りますが、フルトンネルより露出が広がります。',
+  'learning.concept.wireguard.name': 'WireGuard',
+  'learning.concept.wireguard.q1.prompt': 'WireGuard が動作するトランスポートは…',
+  'learning.concept.wireguard.q1.a': 'TCP（TLS ハンドシェイク付き）',
+  'learning.concept.wireguard.q1.b': '単一ポートの UDP — 軽量で NAT 越えしやすい',
+  'learning.concept.wireguard.q1.c': 'ICMP',
+  'learning.concept.wireguard.q1.why':
+    'WireGuard は UDP プロトコルで、1 ポートで済むため高速かつ NAT・ファイアウォール越えが容易です。',
+  'learning.concept.wireguard.q2.prompt': 'WireGuard がピアを識別する方法は…',
+  'learning.concept.wireguard.q2.a': 'ユーザー名とパスワード',
+  'learning.concept.wireguard.q2.b': 'MAC アドレス',
+  'learning.concept.wireguard.q2.c': '公開鍵（許可 IP のセットに紐づく）',
+  'learning.concept.wireguard.q2.why':
+    '各ピアは静的な鍵ペアを持ち、公開鍵と AllowedIPs が「どの送信元を誰が送れるか」を定めます（クリプトキー・ルーティング）。',
+  'learning.concept.wireguard.q3.prompt': 'WireGuard が IPsec より単純で高速とされる理由は…',
+  'learning.concept.wireguard.q3.a':
+    'コードベースが小さく、暗号方式が固定（ネゴシエーション不要）で、カーネル内で動く',
+  'learning.concept.wireguard.q3.b': '暗号化を一切行わない',
+  'learning.concept.wireguard.q3.c': '1 つの OS でしか動かない',
+  'learning.concept.wireguard.q3.why':
+    '暗号スイートのネゴシエーションがなく（最新の 1 セット）、小さく監査しやすいコードとカーネル内データパスで低オーバーヘッドです。',
+  'learning.concept.l2tp.name': 'L2TP',
+  'learning.concept.l2tp.q1.prompt': 'L2TP 単体が提供するのは…',
+  'learning.concept.l2tp.q1.a': '全通信の強力な暗号化',
+  'learning.concept.l2tp.q1.b': '暗号化なし — トンネリングのみのプロトコル',
+  'learning.concept.l2tp.q1.c': 'サブネット間のルーティング',
+  'learning.concept.l2tp.q1.why':
+    'L2TP は通信をカプセル化しますが秘匿性は提供しないため、通常 IPsec と組み合わせます（L2TP/IPsec）。',
+  'learning.concept.l2tp.q2.prompt': 'L2TP がトンネルするのは…',
+  'learning.concept.l2tp.q2.a': 'IP 網越しの L2（PPP）フレーム（LAC と LNS の間）',
+  'learning.concept.l2tp.q2.b': 'HTTP リクエストだけ',
+  'learning.concept.l2tp.q2.c': 'BGP のルーティングテーブル',
+  'learning.concept.l2tp.q2.why':
+    'L2TP はアクセス集約装置（LAC）とネットワークサーバ（LNS）の間で PPP セッションを IP 上で運びます。',
+  'learning.concept.l2tp.q3.prompt': 'L2TP が IPsec とよく併用されるのは…',
+  'learning.concept.l2tp.q3.a': 'IPsec が速くするから',
+  'learning.concept.l2tp.q3.b': 'L2TP が NAT を一切越えられないから',
+  'learning.concept.l2tp.q3.c':
+    'L2TP がトンネル／カプセル化を担い、IPsec が暗号化と認証を加えるから',
+  'learning.concept.l2tp.q3.why':
+    'L2TP/IPsec は定番の組み合わせで、L2TP がトンネル、IPsec（ESP）が秘匿性と完全性を担います。',
+  'learning.concept.pppoe.name': 'PPP / PPPoE',
+  'learning.concept.pppoe.q1.prompt': 'PPP（Point-to-Point Protocol）が提供するのは…',
+  'learning.concept.pppoe.q1.a':
+    '1 本のポイントツーポイント・リンク上での L2 カプセル化と認証（PAP/CHAP）',
+  'learning.concept.pppoe.q1.b': '多数のネットワーク間のルーティング',
+  'learning.concept.pppoe.q1.c': 'インターネット全体へのグローバル IP 割り当て',
+  'learning.concept.pppoe.q1.why':
+    'PPP は 1 本のリンク上で通信をフレーム化し、相手の認証やアドレスのネゴシエーション（IPCP）を行えます。',
+  'learning.concept.pppoe.q2.prompt': 'PPPoE が PPP に加える能力は…',
+  'learning.concept.pppoe.q2.a': '全パケットの暗号化',
+  'learning.concept.pppoe.q2.b':
+    'PPP セッションを Ethernet フレーム内で運び、多数の加入者が 1 つの Ethernet/DSL アクセス網を共有できるようにする',
+  'learning.concept.pppoe.q2.c': 'IP アドレッシングの置き換え',
+  'learning.concept.pppoe.q2.why':
+    'PPPoE（PPP over Ethernet）は共有 Ethernet アクセス網上で加入者ごとの PPP セッションを実行します（DSL で一般的）。',
+  'learning.concept.pppoe.q3.prompt': 'PPPoE の Discovery 段階（PADI/PADO/PADR/PADS）は…',
+  'learning.concept.pppoe.q3.a': 'セッション鍵を暗号化する',
+  'learning.concept.pppoe.q3.b': '顧客の IP アドレスを割り当てる',
+  'learning.concept.pppoe.q3.c':
+    'アクセス集約装置（AC）を発見・選択し、PPP セッション開始前にセッション ID を確立する',
+  'learning.concept.pppoe.q3.why':
+    'Discovery（PADI→PADO→PADR→PADS）が AC を選びセッション ID を割り当て、その上で PPP セッション段階が動きます。',
   'learning.concept.review.title': '復習',
   'learning.concept.review.start': '弱点を復習({{count}})',
   'learning.concept.review.mastered': '{{mastered}} / {{total}} 習得',

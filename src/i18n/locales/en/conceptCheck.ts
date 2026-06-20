@@ -998,6 +998,114 @@ export const conceptCheck: Catalog = {
   'learning.concept.lldp.q3.c': 'Mapping physical topology and aiding VoIP/PoE setup',
   'learning.concept.lldp.q3.why':
     'NMS tools build wiring maps from LLDP; it also helps phones learn voice VLAN and PoE info.',
+  'learning.concept.tunneling.name': 'Tunneling & encapsulation',
+  'learning.concept.tunneling.q1.prompt': 'Tunneling (encapsulation) works by…',
+  'learning.concept.tunneling.q1.a':
+    "Wrapping an original packet inside a new outer header so it can cross a network that wouldn't otherwise carry it",
+  'learning.concept.tunneling.q1.b': 'Encrypting every packet end to end',
+  'learning.concept.tunneling.q1.c': 'Compressing the payload to save bandwidth',
+  'learning.concept.tunneling.q1.why':
+    'A tunnel adds an outer header (GRE/IP, VXLAN/UDP, MPLS, …) around the original packet; the inner packet rides as payload across the transit network.',
+  'learning.concept.tunneling.q2.prompt': 'At the two ends of a tunnel…',
+  'learning.concept.tunneling.q2.a': 'Both ends drop the outer header immediately',
+  'learning.concept.tunneling.q2.b':
+    'The ingress encapsulates (adds the outer header) and the egress decapsulates (strips it) and forwards the inner packet',
+  'learning.concept.tunneling.q2.c': 'Only the receiver adds a header',
+  'learning.concept.tunneling.q2.why':
+    'Encapsulation happens at the tunnel ingress; decapsulation at the egress, which then routes the recovered inner packet normally.',
+  'learning.concept.tunneling.q3.prompt': 'Why does tunneling lower the usable MTU?',
+  'learning.concept.tunneling.q3.a': 'Because the network runs slower',
+  'learning.concept.tunneling.q3.b': 'Because the inner packet is encrypted',
+  'learning.concept.tunneling.q3.c':
+    'The extra outer header consumes bytes, so the inner payload must be smaller or it fragments/drops',
+  'learning.concept.tunneling.q3.why':
+    'Outer headers are overhead. If inner + outer exceeds the path MTU with DF set, the packet is dropped — hence MSS clamping or a lower tunnel MTU.',
+  'learning.concept.vpn.name': 'VPN',
+  'learning.concept.vpn.q1.prompt': 'The primary purpose of a VPN is to…',
+  'learning.concept.vpn.q1.a':
+    'Create a secure, encrypted tunnel across an untrusted network so traffic stays private and authenticated',
+  'learning.concept.vpn.q1.b': 'Speed up the internet connection',
+  'learning.concept.vpn.q1.c': 'Assign public IP addresses to hosts',
+  'learning.concept.vpn.q1.why':
+    'A VPN encapsulates and encrypts traffic so it can traverse a public network as if it were a private link.',
+  'learning.concept.vpn.q2.prompt': 'Site-to-site and remote-access VPNs differ in that…',
+  'learning.concept.vpn.q2.a': 'Site-to-site needs no encryption',
+  'learning.concept.vpn.q2.b':
+    'Site-to-site links whole networks via gateways; remote-access connects a single client device into the network',
+  'learning.concept.vpn.q2.c': 'Remote-access only works over Ethernet',
+  'learning.concept.vpn.q2.why':
+    'Site-to-site gateways tunnel between two subnets; remote-access (client VPN) attaches one user device to the corporate network.',
+  'learning.concept.vpn.q3.prompt': 'Split tunneling means…',
+  'learning.concept.vpn.q3.a': 'All traffic is blocked',
+  'learning.concept.vpn.q3.b': 'The VPN encrypts everything twice',
+  'learning.concept.vpn.q3.c':
+    'Only some traffic (e.g. corporate subnets) goes through the VPN; the rest goes directly to the internet',
+  'learning.concept.vpn.q3.why':
+    'Split tunneling routes only selected destinations over the VPN — less load, but wider exposure than a full tunnel.',
+  'learning.concept.wireguard.name': 'WireGuard',
+  'learning.concept.wireguard.q1.prompt': 'WireGuard runs over…',
+  'learning.concept.wireguard.q1.a': 'TCP, with a TLS handshake',
+  'learning.concept.wireguard.q1.b': 'UDP, on a single port — lightweight and NAT-friendly',
+  'learning.concept.wireguard.q1.c': 'ICMP',
+  'learning.concept.wireguard.q1.why':
+    'WireGuard is a UDP protocol; using one port keeps it fast and easy to pass through NAT and firewalls.',
+  'learning.concept.wireguard.q2.prompt': 'WireGuard identifies each peer by…',
+  'learning.concept.wireguard.q2.a': 'A username and password',
+  'learning.concept.wireguard.q2.b': 'Its MAC address',
+  'learning.concept.wireguard.q2.c': 'Its public key, pinned to a set of allowed IPs',
+  'learning.concept.wireguard.q2.why':
+    'Each peer has a static keypair; the public key plus AllowedIPs defines who may send which source addresses (cryptokey routing).',
+  'learning.concept.wireguard.q3.prompt':
+    'WireGuard is considered simpler and faster than IPsec because…',
+  'learning.concept.wireguard.q3.a':
+    'It has a tiny codebase and fixed modern crypto with no cipher negotiation, and runs in the kernel',
+  'learning.concept.wireguard.q3.b': 'It skips encryption entirely',
+  'learning.concept.wireguard.q3.c': 'It only works on one operating system',
+  'learning.concept.wireguard.q3.why':
+    'No ciphersuite negotiation (one modern set), a small auditable codebase, and an in-kernel data path give it low overhead.',
+  'learning.concept.l2tp.name': 'L2TP',
+  'learning.concept.l2tp.q1.prompt': 'On its own, L2TP provides…',
+  'learning.concept.l2tp.q1.a': 'Strong encryption of all traffic',
+  'learning.concept.l2tp.q1.b': 'No encryption — it is a tunneling protocol only',
+  'learning.concept.l2tp.q1.c': 'Routing between subnets',
+  'learning.concept.l2tp.q1.why':
+    'L2TP encapsulates traffic but offers no confidentiality, which is why it is usually paired with IPsec (L2TP/IPsec).',
+  'learning.concept.l2tp.q2.prompt': 'L2TP tunnels…',
+  'learning.concept.l2tp.q2.a':
+    'Layer-2 PPP frames across an IP network (between a LAC and an LNS)',
+  'learning.concept.l2tp.q2.b': 'Only HTTP requests',
+  'learning.concept.l2tp.q2.c': 'BGP routing tables',
+  'learning.concept.l2tp.q2.why':
+    'L2TP carries PPP sessions over IP between the access concentrator (LAC) and the network server (LNS).',
+  'learning.concept.l2tp.q3.prompt': 'L2TP is commonly combined with IPsec because…',
+  'learning.concept.l2tp.q3.a': 'IPsec makes it faster',
+  'learning.concept.l2tp.q3.b': 'L2TP cannot cross NAT at all',
+  'learning.concept.l2tp.q3.c':
+    'L2TP supplies the tunnel/encapsulation while IPsec adds encryption and authentication',
+  'learning.concept.l2tp.q3.why':
+    'L2TP/IPsec is a common pairing: L2TP for the tunnel, IPsec (ESP) for confidentiality and integrity.',
+  'learning.concept.pppoe.name': 'PPP / PPPoE',
+  'learning.concept.pppoe.q1.prompt': 'PPP (Point-to-Point Protocol) provides…',
+  'learning.concept.pppoe.q1.a':
+    'Link-layer encapsulation and authentication (PAP/CHAP) over a single point-to-point link',
+  'learning.concept.pppoe.q1.b': 'Routing between many networks',
+  'learning.concept.pppoe.q1.c': 'Public IP allocation for the whole internet',
+  'learning.concept.pppoe.q1.why':
+    'PPP frames traffic on a single link and can authenticate the peer and negotiate addresses (via IPCP).',
+  'learning.concept.pppoe.q2.prompt': 'PPPoE adds to PPP the ability to…',
+  'learning.concept.pppoe.q2.a': 'Encrypt all packets',
+  'learning.concept.pppoe.q2.b':
+    'Carry PPP sessions inside Ethernet frames, so many subscribers share one Ethernet/DSL access network',
+  'learning.concept.pppoe.q2.c': 'Replace IP addressing',
+  'learning.concept.pppoe.q2.why':
+    'PPPoE (PPP over Ethernet) runs per-subscriber PPP sessions over a shared Ethernet access network — common in DSL.',
+  'learning.concept.pppoe.q3.prompt': 'The PPPoE Discovery stage (PADI/PADO/PADR/PADS)…',
+  'learning.concept.pppoe.q3.a': 'Encrypts the session keys',
+  'learning.concept.pppoe.q3.b': "Assigns the customer's IP address",
+  'learning.concept.pppoe.q3.c':
+    'Finds and selects an access concentrator and establishes a session id before the PPP session starts',
+  'learning.concept.pppoe.q3.why':
+    'Discovery (PADI→PADO→PADR→PADS) picks the access concentrator and assigns a session id; the PPP session phase then runs over it.',
   'learning.concept.review.title': 'Review',
   'learning.concept.review.start': 'Review weak spots ({{count}})',
   'learning.concept.review.mastered': '{{mastered}} / {{total}} mastered',
