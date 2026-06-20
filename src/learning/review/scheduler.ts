@@ -81,6 +81,8 @@ export interface ReviewStats {
   readonly due: number;
   /** Seen items not yet at the top box (the review pool). */
   readonly inReview: number;
+  /** Review-pool items whose scheduled time has arrived — the actionable "due now". */
+  readonly dueInReview: number;
 }
 
 export function reviewStats(state: ReviewState, now: number): ReviewStats {
@@ -90,5 +92,6 @@ export function reviewStats(state: ReviewState, now: number): ReviewStats {
     mastered: entries.filter((entry) => entry.box >= MAX_BOX).length,
     due: entries.filter((entry) => entry.dueAt <= now).length,
     inReview: entries.filter((entry) => entry.box < MAX_BOX).length,
+    dueInReview: entries.filter((entry) => entry.box < MAX_BOX && entry.dueAt <= now).length,
   };
 }

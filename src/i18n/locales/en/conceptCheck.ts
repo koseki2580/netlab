@@ -1004,4 +1004,5 @@ export const conceptCheck: Catalog = {
   'learning.concept.review.empty':
     'Answer some questions first — your weak spots will collect here for spaced review.',
   'learning.concept.review.deckProgress': '{{mastered}}/{{total}}',
+  'learning.concept.review.due': 'Review due now ({{count}})',
 } as const;

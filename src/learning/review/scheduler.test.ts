@@ -75,6 +75,15 @@ describe('spaced-repetition scheduler', () => {
     expect(stats.mastered).toBe(1);
     expect(stats.inReview).toBe(1);
     expect(stats.due).toBe(2); // both scheduled in the past relative to now
+    expect(stats.dueInReview).toBe(1); // only the non-mastered one is actionable
+  });
+
+  it('dueInReview excludes not-yet-due items right after a session', () => {
+    let s: ReviewState = {};
+    s = gradeReview(s, 'a', false, T0); // box 1, due in 10 min
+    const stats = reviewStats(s, T0); // checked immediately
+    expect(stats.inReview).toBe(1);
+    expect(stats.dueInReview).toBe(0); // not due yet — no false "review now" signal
   });
 });
 

@@ -184,9 +184,13 @@ export function ConceptCheckPanel({
               type="button"
               data-testid="concept-check-review"
               onClick={startReview}
-              style={pillButton('var(--netlab-accent-yellow)')}
+              style={pillButton(
+                stats.dueInReview > 0 ? 'var(--netlab-accent-red)' : 'var(--netlab-accent-yellow)',
+              )}
             >
-              {t('learning.concept.review.start', { count: reviewCount })}
+              {stats.dueInReview > 0
+                ? t('learning.concept.review.due', { count: stats.dueInReview })
+                : t('learning.concept.review.start', { count: reviewCount })}
             </button>
           )}
 

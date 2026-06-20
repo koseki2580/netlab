@@ -1000,4 +1000,5 @@ export const conceptCheck: Catalog = {
   'learning.concept.review.empty':
     'まず問題に答えてください — 弱点がここに集まり、間隔をあけて復習できます。',
   'learning.concept.review.deckProgress': '{{mastered}}/{{total}}',
+  'learning.concept.review.due': '復習の期限({{count}})',
 } as const;

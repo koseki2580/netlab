@@ -90,16 +90,22 @@ five boxes:
 An item in the top box is **mastered** and drops out of review.
 `reviewQueue(state, limit)` surfaces the non-mastered items weakest-first (lower
 box, then most overdue), and `reviewStats(state, now)` reports
-`{ seen, mastered, due, inReview }`. State persists under the
-`netlab-review-v1` key via `createReviewStore`, which is **SSR- and
-storage-failure-safe** (degrades to empty, never throws) and tolerant of
-malformed/legacy stored values.
+`{ seen, mastered, due, inReview, dueInReview }` — where `dueInReview` is the
+actionable count (in the review pool **and** past its scheduled time), distinct
+from `due` (which also counts mastered items whose long cadence has elapsed).
+State persists under the `netlab-review-v1` key via `createReviewStore`, which is
+**SSR- and storage-failure-safe** (degrades to empty, never throws) and tolerant
+of malformed/legacy stored values.
 
-In the panel this shows up as a **"Review weak spots (N)"** button on the picker
-(appears once anything is in review) and a **mastery indicator** (`mastered /
-total`). The review button runs a virtual session over the weakest items, mixing
-questions across decks. `reviewStore` is an injectable prop so tests and
-embeddings can supply an in-memory store.
+In the panel this shows up as a **mastery indicator** (`mastered / total`),
+**per-deck progress badges** on each deck button (green ✓ once a deck is fully
+mastered), and a review button that adapts to the spaced-repetition clock: it
+reads **"Review due now (N)"** (red) when `dueInReview > 0` — the signal that
+makes the daily-review ritual work — and otherwise **"Review weak spots (N)"**
+(yellow) for immediate post-session practice of just-missed items. The review
+button runs a virtual session over the weakest items, mixing questions across
+decks. `reviewStore` is an injectable prop so tests and embeddings can supply an
+in-memory store.
 
 ## Testing expectations
 
@@ -110,6 +116,8 @@ embeddings can supply an in-memory store.
   after a deck the Review pool appears and is replayable
 - scheduler (pure): correct promotes + delays, wrong resets to box 1, promotion
   caps at mastered, `isDue` honors the clock, `reviewQueue` orders weakest-first
-  and excludes mastered, stats count seen/mastered/due/inReview
+  and excludes mastered, stats count seen/mastered/due/inReview, and
+  `dueInReview` excludes not-yet-due and mastered items
+- deckMastery (pure): counts seen/mastered against caller predicates
 - store: round-trips through storage, tolerates malformed/legacy values, and
   degrades to empty when storage is unavailable
