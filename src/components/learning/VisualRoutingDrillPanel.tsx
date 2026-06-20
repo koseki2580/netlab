@@ -232,7 +232,12 @@ export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }
         >
           {/* Remount per question so canvas selection state starts fresh. */}
           <NetlabProvider key={problem.id} topology={topology}>
-            <NetlabCanvas followTopology onNodeSelect={handleNodeSelect} />
+            <NetlabCanvas
+              followTopology
+              minimap={false}
+              fitViewPadding={0.3}
+              onNodeSelect={handleNodeSelect}
+            />
           </NetlabProvider>
         </div>
 
@@ -269,18 +274,20 @@ export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }
               </button>
             );
           })}
+        </div>
+
+        <DrillFeedback idPrefix="visual-routing-drill" result={localizedResult} />
+
+        {result && (
           <button
             type="button"
             data-testid="visual-routing-drill-advance"
             onClick={advance}
-            disabled={result === null}
-            style={{ ...pillButton('var(--netlab-accent-green)'), opacity: result ? 1 : 0.5 }}
+            style={{ ...pillButton('var(--netlab-accent-green)'), justifySelf: 'start' }}
           >
             {isLast ? t('learning.drill.seeResults') : t('learning.drill.next')}
           </button>
-        </div>
-
-        <DrillFeedback idPrefix="visual-routing-drill" result={localizedResult} />
+        )}
       </div>
     </DrillFrame>
   );

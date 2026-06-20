@@ -594,6 +594,18 @@ describe('NetlabCanvas controlled topology API', () => {
     );
   });
 
+  it('forwards fitViewPadding to React Flow fitViewOptions (small learning canvases)', () => {
+    render(
+      <NetlabProvider topology={makeTopology()}>
+        <NetlabCanvas fitViewPadding={0.3} />
+      </NetlabProvider>,
+    );
+
+    expect(
+      (currentReactFlowProps() as { fitViewOptions?: { padding?: number } }).fitViewOptions,
+    ).toEqual({ padding: 0.3 });
+  });
+
   it('does not re-sync local React Flow state when callbacks are absent', () => {
     const initial = makeTopology();
     const updated = makeTopology({

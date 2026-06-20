@@ -99,6 +99,19 @@ export interface NetlabCanvasProps {
    * canvas freezes to its initial topology to preserve in-canvas drags.
    */
   followTopology?: boolean;
+  /**
+   * Render the React Flow minimap. Default `true`. Small, focused canvases (the
+   * learning panels) set this `false`: on a handful of nodes the minimap adds no
+   * navigation value and its fixed bottom-right overlay sits on top of the
+   * graph, hiding nodes.
+   */
+  minimap?: boolean;
+  /**
+   * Padding passed to React Flow's initial `fitView` (fraction of the viewport).
+   * Defaults to `0.1`. Small canvases use a larger value so wide node labels at
+   * the extremes aren't clipped against the canvas edges.
+   */
+  fitViewPadding?: number;
 }
 
 export interface NetlabViewport {
@@ -120,6 +133,8 @@ export function NetlabCanvas({
   onTopologyChange,
   onNodeSelect,
   followTopology = false,
+  minimap = true,
+  fitViewPadding = 0.1,
 }: NetlabCanvasProps) {
   const { topology, areas } = useNetlabContext();
   const reducedMotion = usePrefersReducedMotion();
@@ -569,18 +584,21 @@ export function NetlabCanvas({
           isValidConnection={isConnectionValid}
           connectionMode={ConnectionMode.Loose}
           fitView
+          fitViewOptions={{ padding: fitViewPadding }}
           proOptions={{ hideAttribution: false }}
         >
           <Background />
           <Controls />
-          <MiniMap
-            // Theme via --netlab-* tokens rather than React Flow's defaults so
-            // the minimap matches both light and dark themes (C4).
-            style={{ background: 'var(--netlab-bg-surface)' }}
-            maskColor="color-mix(in srgb, var(--netlab-bg-primary) 70%, transparent)"
-            nodeColor="var(--netlab-accent-cyan)"
-            nodeStrokeColor="var(--netlab-border)"
-          />
+          {minimap && (
+            <MiniMap
+              // Theme via --netlab-* tokens rather than React Flow's defaults so
+              // the minimap matches both light and dark themes (C4).
+              style={{ background: 'var(--netlab-bg-surface)' }}
+              maskColor="color-mix(in srgb, var(--netlab-bg-primary) 70%, transparent)"
+              nodeColor="var(--netlab-accent-cyan)"
+              nodeStrokeColor="var(--netlab-border)"
+            />
+          )}
           <CanvasAutoPan
             selectedNodeId={selectedNodeId}
             panelMode={dock.mode}

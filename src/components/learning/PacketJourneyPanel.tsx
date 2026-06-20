@@ -214,7 +214,12 @@ export function PacketJourneyPanel() {
           }}
         >
           <NetlabProvider key={flow.id} topology={viewTopology}>
-            <NetlabCanvas followTopology onNodeSelect={handleNodeSelect} />
+            <NetlabCanvas
+              followTopology
+              minimap={false}
+              fitViewPadding={0.3}
+              onNodeSelect={handleNodeSelect}
+            />
           </NetlabProvider>
         </div>
 
@@ -265,18 +270,20 @@ export function PacketJourneyPanel() {
                   </button>
                 );
               })}
+            </div>
+
+            <DrillFeedback idPrefix="packet-journey" result={result} />
+
+            {result && (
               <button
                 type="button"
                 data-testid="packet-journey-advance"
                 onClick={advance}
-                disabled={result === null}
-                style={{ ...pillButton('var(--netlab-accent-green)'), opacity: result ? 1 : 0.5 }}
+                style={{ ...pillButton('var(--netlab-accent-green)'), justifySelf: 'start' }}
               >
                 {t('learning.drill.next')}
               </button>
-            </div>
-
-            <DrillFeedback idPrefix="packet-journey" result={result} />
+            )}
           </>
         )}
 
