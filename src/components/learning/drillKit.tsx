@@ -57,7 +57,13 @@ export function DrillFrame({
       data-testid={idPrefix}
       style={{
         background: 'var(--netlab-learning-surface-bg)',
-        minHeight: '100%',
+        // Own the scroll: in a fixed-height host slot (the demo shell clips
+        // overflow) `height:100%` constrains the frame and `overflowY:auto`
+        // lets a tall drill scroll instead of clipping its prompt/answers off
+        // the bottom. In an auto-height embed `height:100%` resolves to auto, so
+        // the frame just grows with its content (no scrollbar).
+        height: '100%',
+        overflowY: 'auto',
         padding: '32px 16px',
         boxSizing: 'border-box',
       }}

@@ -112,6 +112,20 @@ export interface NetlabCanvasProps {
    * the extremes aren't clipped against the canvas edges.
    */
   fitViewPadding?: number;
+  /**
+   * Render the React Flow zoom/fit/lock controls. Default `true`. Presentational
+   * canvases (the learning panels) hide them: the graph auto-fits, so they add
+   * only chrome and extra keyboard tab stops.
+   */
+  controls?: boolean;
+  /**
+   * Whether the graph is keyboard-interactive (nodes/edges focusable & draggable).
+   * Default `true` for the editor/sandbox. The learning panels set this `false`:
+   * the canvas is a *visualization* answered via buttons, so making every node and
+   * edge a tab stop buries the real controls behind a dozen invisible focus stops.
+   * Mouse interaction (node-click answering) is unaffected.
+   */
+  interactiveGraph?: boolean;
 }
 
 export interface NetlabViewport {
@@ -135,6 +149,8 @@ export function NetlabCanvas({
   followTopology = false,
   minimap = true,
   fitViewPadding = 0.1,
+  controls = true,
+  interactiveGraph = true,
 }: NetlabCanvasProps) {
   const { topology, areas } = useNetlabContext();
   const reducedMotion = usePrefersReducedMotion();
@@ -585,10 +601,23 @@ export function NetlabCanvas({
           connectionMode={ConnectionMode.Loose}
           fitView
           fitViewOptions={{ padding: fitViewPadding }}
+          nodesFocusable={interactiveGraph}
+          edgesFocusable={interactiveGraph}
+          nodesDraggable={interactiveGraph}
+          disableKeyboardA11y={!interactiveGraph}
+          // Presentational canvases must not hijack the page: with these on
+          // (React Flow's defaults) wheeling/pinching over a mid-page learning
+          // canvas zooms the graph and blocks page scroll. Off = a calm static
+          // picture that scrolls through.
+          zoomOnScroll={interactiveGraph}
+          zoomOnPinch={interactiveGraph}
+          zoomOnDoubleClick={interactiveGraph}
+          panOnDrag={interactiveGraph}
+          preventScrolling={interactiveGraph}
           proOptions={{ hideAttribution: false }}
         >
           <Background />
-          <Controls />
+          {controls && <Controls />}
           {minimap && (
             <MiniMap
               // Theme via --netlab-* tokens rather than React Flow's defaults so

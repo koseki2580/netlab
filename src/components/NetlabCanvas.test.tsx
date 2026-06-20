@@ -606,6 +606,45 @@ describe('NetlabCanvas controlled topology API', () => {
     ).toEqual({ padding: 0.3 });
   });
 
+  it('makes the graph non-focusable & non-draggable when interactiveGraph is false', () => {
+    render(
+      <NetlabProvider topology={makeTopology()}>
+        <NetlabCanvas interactiveGraph={false} />
+      </NetlabProvider>,
+    );
+    const props = currentReactFlowProps() as {
+      nodesFocusable?: boolean;
+      edgesFocusable?: boolean;
+      nodesDraggable?: boolean;
+      disableKeyboardA11y?: boolean;
+      zoomOnScroll?: boolean;
+      preventScrolling?: boolean;
+      panOnDrag?: boolean;
+    };
+    expect(props.nodesFocusable).toBe(false);
+    expect(props.edgesFocusable).toBe(false);
+    expect(props.nodesDraggable).toBe(false);
+    expect(props.disableKeyboardA11y).toBe(true);
+    // Static & scroll-transparent: it must not hijack page scroll / zoom.
+    expect(props.zoomOnScroll).toBe(false);
+    expect(props.preventScrolling).toBe(false);
+    expect(props.panOnDrag).toBe(false);
+  });
+
+  it('keeps the graph keyboard-interactive by default', () => {
+    render(
+      <NetlabProvider topology={makeTopology()}>
+        <NetlabCanvas />
+      </NetlabProvider>,
+    );
+    const props = currentReactFlowProps() as {
+      nodesFocusable?: boolean;
+      disableKeyboardA11y?: boolean;
+    };
+    expect(props.nodesFocusable).toBe(true);
+    expect(props.disableKeyboardA11y).toBe(false);
+  });
+
   it('does not re-sync local React Flow state when callbacks are absent', () => {
     const initial = makeTopology();
     const updated = makeTopology({

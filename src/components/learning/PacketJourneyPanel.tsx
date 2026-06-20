@@ -221,6 +221,8 @@ export function PacketJourneyPanel() {
             <NetlabCanvas
               followTopology
               minimap={false}
+              controls={false}
+              interactiveGraph={false}
               fitViewPadding={0.3}
               onNodeSelect={handleNodeSelect}
             />

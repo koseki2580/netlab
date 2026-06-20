@@ -203,7 +203,13 @@ export function ResilienceLabPanel() {
           }}
         >
           <NetlabProvider key={scenario.id} topology={viewTopology}>
-            <NetlabCanvas followTopology minimap={false} fitViewPadding={0.3} />
+            <NetlabCanvas
+              followTopology
+              minimap={false}
+              controls={false}
+              interactiveGraph={false}
+              fitViewPadding={0.3}
+            />
           </NetlabProvider>
         </div>
 

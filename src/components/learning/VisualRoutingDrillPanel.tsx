@@ -235,6 +235,8 @@ export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }
             <NetlabCanvas
               followTopology
               minimap={false}
+              controls={false}
+              interactiveGraph={false}
               fitViewPadding={0.3}
               onNodeSelect={handleNodeSelect}
             />
