@@ -1106,6 +1106,117 @@ export const conceptCheck: Catalog = {
     'Finds and selects an access concentrator and establishes a session id before the PPP session starts',
   'learning.concept.pppoe.q3.why':
     'Discovery (PADI→PADO→PADR→PADS) picks the access concentrator and assigns a session id; the PPP session phase then runs over it.',
+  'learning.concept.ndp.name': 'NDP / SLAAC (IPv6)',
+  'learning.concept.ndp.q1.prompt': 'In IPv6, NDP takes over the job IPv4 used which protocol for?',
+  'learning.concept.ndp.q1.a':
+    'ARP — resolving a neighbor IP to its link-layer (MAC) address, via ICMPv6 Neighbor Solicitation/Advertisement',
+  'learning.concept.ndp.q1.b': 'Routing between autonomous systems',
+  'learning.concept.ndp.q1.c': 'Encrypting traffic',
+  'learning.concept.ndp.q1.why':
+    'NDP runs over ICMPv6: Neighbor Solicitation/Advertisement replace ARP, and Router Solicitation/Advertisement handle router discovery.',
+  'learning.concept.ndp.q2.prompt':
+    'How does SLAAC let a host get an address without a DHCP server?',
+  'learning.concept.ndp.q2.a': 'It guesses an address at random',
+  'learning.concept.ndp.q2.b':
+    'A Router Advertisement supplies a prefix, and the host forms its address from that prefix plus an interface identifier',
+  'learning.concept.ndp.q2.c': "It copies the router's address",
+  'learning.concept.ndp.q2.why':
+    'Stateless Address Autoconfiguration: the RA carries the /64 prefix; the host appends an interface ID (EUI-64 or random) to build a global address.',
+  'learning.concept.ndp.q3.prompt': 'What is Duplicate Address Detection (DAD)?',
+  'learning.concept.ndp.q3.a': 'A way to encrypt the address',
+  'learning.concept.ndp.q3.b': 'A method to compress addresses',
+  'learning.concept.ndp.q3.c':
+    'Before using an address, the host sends a Neighbor Solicitation for it to confirm no one else already has it',
+  'learning.concept.ndp.q3.why':
+    'DAD prevents address collisions: a tentative address is verified with an NS; if a reply comes back, the address is already in use.',
+  'learning.concept.sip.name': 'SIP (VoIP signaling)',
+  'learning.concept.sip.q1.prompt': 'What is SIP responsible for?',
+  'learning.concept.sip.q1.a': 'Carrying the actual voice audio',
+  'learning.concept.sip.q1.b':
+    'Setting up, modifying and tearing down real-time sessions (calls) — the signaling, not the media',
+  'learning.concept.sip.q1.c': 'Assigning IP addresses',
+  'learning.concept.sip.q1.why':
+    'SIP is a signaling protocol: it locates users and negotiates sessions, while the media travels in a separate stream.',
+  'learning.concept.sip.q2.prompt': 'Does the voice/video itself travel inside SIP?',
+  'learning.concept.sip.q2.a': 'Yes, SIP carries the audio samples',
+  'learning.concept.sip.q2.b': 'Only for video, not audio',
+  'learning.concept.sip.q2.c':
+    'No — media flows separately (usually over RTP); SIP just negotiates it, often using SDP',
+  'learning.concept.sip.q2.why':
+    'SIP carries SDP to agree codecs/ports, then the media (RTP) flows directly between endpoints, separate from signaling.',
+  'learning.concept.sip.q3.prompt': 'A SIP request such as INVITE most resembles…',
+  'learning.concept.sip.q3.a':
+    'HTTP — text-based requests/responses with methods, headers and status codes',
+  'learning.concept.sip.q3.b': 'A binary routing protocol',
+  'learning.concept.sip.q3.c': 'An Ethernet frame',
+  'learning.concept.sip.q3.why':
+    'SIP was modeled on HTTP/SMTP: human-readable methods (INVITE, BYE) and responses (200 OK, 404) make it familiar to web developers.',
+  'learning.concept.rtp.name': 'RTP / RTCP',
+  'learning.concept.rtp.q1.prompt': 'What does RTP carry, and over what transport?',
+  'learning.concept.rtp.q1.a':
+    'Real-time audio/video media, usually over UDP, with sequence numbers and timestamps',
+  'learning.concept.rtp.q1.b': 'Routing tables over TCP',
+  'learning.concept.rtp.q1.c': 'Email over TLS',
+  'learning.concept.rtp.q1.why':
+    'RTP adds sequence numbers and timestamps so the receiver can reorder, detect loss, and play media out at the right time.',
+  'learning.concept.rtp.q2.prompt': 'Why does RTP usually run over UDP instead of TCP?',
+  'learning.concept.rtp.q2.a': 'Because TCP cannot carry audio',
+  'learning.concept.rtp.q2.b':
+    'Low latency matters more than reliability — a retransmitted late packet is useless, so loss is tolerated/concealed',
+  'learning.concept.rtp.q2.c': 'Because UDP is encrypted',
+  'learning.concept.rtp.q2.why':
+    "For live media a packet that arrives too late can't be played, so TCP's retransmit/ordering would add harmful delay; RTP conceals loss instead.",
+  'learning.concept.rtp.q3.prompt': 'What does RTCP add alongside an RTP stream?',
+  'learning.concept.rtp.q3.a': 'Stronger encryption',
+  'learning.concept.rtp.q3.b': 'A backup copy of the media',
+  'learning.concept.rtp.q3.c':
+    'Control and quality feedback (jitter, packet loss, round-trip) so senders can adapt',
+  'learning.concept.rtp.q3.why':
+    "RTCP reports reception quality periodically, letting endpoints adjust bitrate or diagnose problems — control to RTP's data.",
+  'learning.concept.stun.name': 'STUN / TURN / ICE',
+  'learning.concept.stun.q1.prompt': 'What does STUN let a host behind NAT discover?',
+  'learning.concept.stun.q1.a': 'The fastest route to a server',
+  'learning.concept.stun.q1.b': 'The DNS name of a peer',
+  'learning.concept.stun.q1.c':
+    'Its own public (NAT-mapped) IP address and port, so peers can reach it through the NAT',
+  'learning.concept.stun.q1.why':
+    'A STUN server reflects back the source IP:port it sees, revealing the public mapping a NAT created — the basis of hole punching.',
+  'learning.concept.stun.q2.prompt':
+    'When direct connectivity fails (e.g. symmetric NAT), what carries the media?',
+  'learning.concept.stun.q2.a': 'TURN — a relay server forwards the traffic between the two peers',
+  'learning.concept.stun.q2.b': 'The DNS root servers',
+  'learning.concept.stun.q2.c': 'BGP',
+  'learning.concept.stun.q2.why':
+    "TURN is the fallback: when peers can't reach each other directly, a relay forwards packets for both — reliable but costlier.",
+  'learning.concept.stun.q3.prompt': "What is ICE's role?",
+  'learning.concept.stun.q3.a': 'It encrypts the call',
+  'learning.concept.stun.q3.b':
+    'It gathers candidate addresses (host, STUN-reflexive, TURN-relayed) and runs connectivity checks to pick a working pair',
+  'learning.concept.stun.q3.c': 'It assigns phone numbers',
+  'learning.concept.stun.q3.why':
+    'ICE coordinates STUN and TURN: it collects candidates from both ends and probes them to find the best path that actually works.',
+  'learning.concept.dnssec.name': 'DNSSEC',
+  'learning.concept.dnssec.q1.prompt': 'What does DNSSEC add to DNS?',
+  'learning.concept.dnssec.q1.a':
+    'Cryptographic signatures so a resolver can verify records are authentic and unmodified',
+  'learning.concept.dnssec.q1.b': 'Faster lookups',
+  'learning.concept.dnssec.q1.c': 'Automatic IP assignment',
+  'learning.concept.dnssec.q1.why':
+    'DNSSEC signs records (RRSIG) under zone keys (DNSKEY), letting resolvers detect tampering and forged answers (cache poisoning).',
+  'learning.concept.dnssec.q2.prompt': 'Does DNSSEC encrypt your DNS queries?',
+  'learning.concept.dnssec.q2.a': 'Yes, fully end to end',
+  'learning.concept.dnssec.q2.b':
+    'No — it authenticates responses for integrity; confidentiality is a different problem (DoH/DoT)',
+  'learning.concept.dnssec.q2.c': 'Only for the root zone',
+  'learning.concept.dnssec.q2.why':
+    'DNSSEC proves answers are genuine but is sent in clear; encrypting the query is what DNS-over-HTTPS/TLS adds.',
+  'learning.concept.dnssec.q3.prompt': 'How is trust established in DNSSEC?',
+  'learning.concept.dnssec.q3.a': 'Every resolver trusts every zone by default',
+  'learning.concept.dnssec.q3.b': 'By IP allow-lists',
+  'learning.concept.dnssec.q3.c':
+    "A chain of trust from the root down: each zone's key is vouched for by its parent via DS records",
+  'learning.concept.dnssec.q3.why':
+    "A parent zone publishes a DS record hashing the child's key, so validation walks root→TLD→domain — anchored at the trusted root key.",
   'learning.concept.review.title': 'Review',
   'learning.concept.review.start': 'Review weak spots ({{count}})',
   'learning.concept.review.mastered': '{{mastered}} / {{total}} mastered',

@@ -1100,6 +1100,115 @@ export const conceptCheck: Catalog = {
     'アクセス集約装置（AC）を発見・選択し、PPP セッション開始前にセッション ID を確立する',
   'learning.concept.pppoe.q3.why':
     'Discovery（PADI→PADO→PADR→PADS）が AC を選びセッション ID を割り当て、その上で PPP セッション段階が動きます。',
+  'learning.concept.ndp.name': 'NDP / SLAAC（IPv6）',
+  'learning.concept.ndp.q1.prompt': 'IPv6 で NDP は、IPv4 が何のために使っていた役割を引き継ぐ？',
+  'learning.concept.ndp.q1.a':
+    'ARP — 近隣の IP をリンク層（MAC）アドレスに解決する（ICMPv6 の近隣要請/近隣広告を使う）',
+  'learning.concept.ndp.q1.b': '自律システム間のルーティング',
+  'learning.concept.ndp.q1.c': '通信の暗号化',
+  'learning.concept.ndp.q1.why':
+    'NDP は ICMPv6 上で動きます。近隣要請/近隣広告が ARP を、ルータ要請/ルータ広告がルータ発見を担います。',
+  'learning.concept.ndp.q2.prompt': 'SLAAC はどうやって DHCP サーバなしでアドレスを得る？',
+  'learning.concept.ndp.q2.a': 'ランダムにアドレスを推測する',
+  'learning.concept.ndp.q2.b':
+    'ルータ広告がプレフィックスを配り、ホストはそのプレフィックス＋インターフェース識別子で自分のアドレスを作る',
+  'learning.concept.ndp.q2.c': 'ルータのアドレスをコピーする',
+  'learning.concept.ndp.q2.why':
+    'ステートレス・アドレス自動設定：RA が /64 プレフィックスを運び、ホストがインターフェース ID（EUI-64 やランダム）を付けてグローバルアドレスを作ります。',
+  'learning.concept.ndp.q3.prompt': '重複アドレス検出（DAD）とは？',
+  'learning.concept.ndp.q3.a': 'アドレスを暗号化する仕組み',
+  'learning.concept.ndp.q3.b': 'アドレスを圧縮する方法',
+  'learning.concept.ndp.q3.c':
+    'アドレスを使う前に、そのアドレス宛の近隣要請を送り、他に使っている者がいないか確認する',
+  'learning.concept.ndp.q3.why':
+    'DAD はアドレス衝突を防ぎます。仮アドレスを NS で検証し、応答が返れば既に使用中と判断します。',
+  'learning.concept.sip.name': 'SIP（VoIP シグナリング）',
+  'learning.concept.sip.q1.prompt': 'SIP が担うのは？',
+  'learning.concept.sip.q1.a': '実際の音声データの運搬',
+  'learning.concept.sip.q1.b':
+    'リアルタイムセッション（通話）の確立・変更・切断 — メディアではなくシグナリング',
+  'learning.concept.sip.q1.c': 'IP アドレスの割り当て',
+  'learning.concept.sip.q1.why':
+    'SIP はシグナリングプロトコルで、ユーザーを探しセッションを交渉します。メディアは別ストリームで流れます。',
+  'learning.concept.sip.q2.prompt': '音声・映像そのものは SIP の中を流れる？',
+  'learning.concept.sip.q2.a': 'はい、SIP が音声サンプルを運ぶ',
+  'learning.concept.sip.q2.b': '映像だけ運ぶ（音声は運ばない）',
+  'learning.concept.sip.q2.c':
+    'いいえ — メディアは別途（通常 RTP で）流れる。SIP は（多くは SDP で）それを交渉するだけ',
+  'learning.concept.sip.q2.why':
+    'SIP は SDP を運んでコーデックやポートを合意し、その後メディア（RTP）はエンドポイント間を直接、シグナリングとは別に流れます。',
+  'learning.concept.sip.q3.prompt': 'INVITE のような SIP リクエストが最も似ているのは…',
+  'learning.concept.sip.q3.a':
+    'HTTP — メソッド・ヘッダ・ステータスコードを持つテキストベースの要求/応答',
+  'learning.concept.sip.q3.b': 'バイナリのルーティングプロトコル',
+  'learning.concept.sip.q3.c': 'Ethernet フレーム',
+  'learning.concept.sip.q3.why':
+    'SIP は HTTP/SMTP を手本にしており、読みやすいメソッド（INVITE、BYE）や応答（200 OK、404）で Web 開発者に馴染みやすい設計です。',
+  'learning.concept.rtp.name': 'RTP / RTCP',
+  'learning.concept.rtp.q1.prompt': 'RTP は何を、どのトランスポートで運ぶ？',
+  'learning.concept.rtp.q1.a':
+    'リアルタイムの音声/映像メディアを、通常 UDP 上で、シーケンス番号とタイムスタンプ付きで運ぶ',
+  'learning.concept.rtp.q1.b': 'ルーティングテーブルを TCP で',
+  'learning.concept.rtp.q1.c': 'メールを TLS で',
+  'learning.concept.rtp.q1.why':
+    'RTP はシーケンス番号とタイムスタンプを付け、受信側が並べ替え・損失検出・正しいタイミングでの再生をできるようにします。',
+  'learning.concept.rtp.q2.prompt': 'RTP が TCP ではなく UDP を使うことが多いのはなぜ？',
+  'learning.concept.rtp.q2.a': 'TCP は音声を運べないから',
+  'learning.concept.rtp.q2.b':
+    '信頼性より低遅延が重要だから — 遅れて再送された 1 パケットは無価値で、損失は許容/補間される',
+  'learning.concept.rtp.q2.c': 'UDP は暗号化されているから',
+  'learning.concept.rtp.q2.why':
+    'ライブメディアでは遅すぎるパケットは再生できないため、TCP の再送/順序付けは有害な遅延になります。RTP は代わりに損失を補間します。',
+  'learning.concept.rtp.q3.prompt': 'RTP ストリームに加えて RTCP が提供するのは？',
+  'learning.concept.rtp.q3.a': 'より強い暗号化',
+  'learning.concept.rtp.q3.b': 'メディアのバックアップコピー',
+  'learning.concept.rtp.q3.c':
+    '制御・品質フィードバック（ジッタ、損失、往復時間）を提供し、送信側が適応できるようにする',
+  'learning.concept.rtp.q3.why':
+    'RTCP は受信品質を定期的に報告し、エンドポイントがビットレート調整や問題診断をできるようにします（RTP のデータに対する制御）。',
+  'learning.concept.stun.name': 'STUN / TURN / ICE',
+  'learning.concept.stun.q1.prompt': 'NAT 配下のホストが STUN で分かるのは？',
+  'learning.concept.stun.q1.a': 'サーバへの最速経路',
+  'learning.concept.stun.q1.b': 'ピアの DNS 名',
+  'learning.concept.stun.q1.c':
+    '自分のパブリック（NAT 変換後）IP アドレスとポート。これで NAT 越しにピアから到達できる',
+  'learning.concept.stun.q1.why':
+    'STUN サーバは見えた送信元 IP:ポートを返し、NAT が作った公開マッピングを明らかにします — ホールパンチングの基礎です。',
+  'learning.concept.stun.q2.prompt':
+    '直接接続が失敗したとき（例：対称型 NAT）、メディアを運ぶのは？',
+  'learning.concept.stun.q2.a': 'TURN — リレーサーバが両ピア間のトラフィックを中継する',
+  'learning.concept.stun.q2.b': 'DNS ルートサーバ',
+  'learning.concept.stun.q2.c': 'BGP',
+  'learning.concept.stun.q2.why':
+    'TURN はフォールバックです。ピア同士が直接届かないとき、リレーが双方のパケットを転送します — 確実ですがコストは高め。',
+  'learning.concept.stun.q3.prompt': 'ICE の役割は？',
+  'learning.concept.stun.q3.a': '通話を暗号化する',
+  'learning.concept.stun.q3.b':
+    '候補アドレス（ホスト、STUN 反射、TURN リレー）を集め、接続性チェックで動作するペアを選ぶ',
+  'learning.concept.stun.q3.c': '電話番号を割り当てる',
+  'learning.concept.stun.q3.why':
+    'ICE は STUN と TURN を統括し、両端から候補を集めて検査し、実際に動く最良の経路を見つけます。',
+  'learning.concept.dnssec.name': 'DNSSEC',
+  'learning.concept.dnssec.q1.prompt': 'DNSSEC が DNS に加えるのは？',
+  'learning.concept.dnssec.q1.a': 'リゾルバがレコードの真正性と改ざんのなさを検証できる暗号署名',
+  'learning.concept.dnssec.q1.b': 'より速い名前解決',
+  'learning.concept.dnssec.q1.c': '自動 IP 割り当て',
+  'learning.concept.dnssec.q1.why':
+    'DNSSEC はゾーン鍵（DNSKEY）でレコードに署名（RRSIG）し、改ざんや偽造応答（キャッシュ汚染）を検出できるようにします。',
+  'learning.concept.dnssec.q2.prompt': 'DNSSEC は DNS クエリを暗号化する？',
+  'learning.concept.dnssec.q2.a': 'はい、完全に端から端まで',
+  'learning.concept.dnssec.q2.b':
+    'いいえ — 完全性のために応答を認証する。機密性は別問題（DoH/DoT が担う）',
+  'learning.concept.dnssec.q2.c': 'ルートゾーンだけ',
+  'learning.concept.dnssec.q2.why':
+    'DNSSEC は応答の真正性を証明しますが平文で送られます。クエリの暗号化は DNS over HTTPS/TLS が担います。',
+  'learning.concept.dnssec.q3.prompt': 'DNSSEC で信頼はどう確立される？',
+  'learning.concept.dnssec.q3.a': 'すべてのリゾルバがすべてのゾーンを既定で信頼する',
+  'learning.concept.dnssec.q3.b': 'IP 許可リストで',
+  'learning.concept.dnssec.q3.c':
+    'ルートから下への信頼の連鎖：各ゾーンの鍵を親が DS レコードで保証する',
+  'learning.concept.dnssec.q3.why':
+    '親ゾーンが子の鍵をハッシュした DS レコードを公開するため、検証は root→TLD→ドメインと辿り、信頼されたルート鍵に錨を下ろします。',
   'learning.concept.review.title': '復習',
   'learning.concept.review.start': '弱点を復習({{count}})',
   'learning.concept.review.mastered': '{{mastered}} / {{total}} 習得',
