@@ -1,11 +1,21 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useI18n } from '../../i18n/useI18n';
 import {
+  allConceptQuestions,
   correctOption,
   decksByLayer,
   getDeck,
   isCorrectChoice,
+  questionItemId,
+  type IndexedQuestion,
 } from '../../learning/concept-check';
+import {
+  createReviewStore,
+  gradeReview,
+  reviewQueue,
+  reviewStats,
+  type ReviewState,
+} from '../../learning/review';
 import {
   ConceptCallout,
   DrillFeedback,
@@ -17,42 +27,88 @@ import {
 } from './drillKit';
 import type { DrillResult } from './drillKit';
 
+const REVIEW_SESSION_LIMIT = 10;
+
+interface Session {
+  readonly kind: 'deck' | 'review';
+  readonly id: string;
+  readonly title: string;
+  readonly items: readonly IndexedQuestion[];
+}
+
 /**
- * Active-recall quiz that scales across protocols: pick a protocol deck, answer
- * its multiple-choice questions, get explained feedback and a score. Decks are
- * pure data (`CONCEPT_DECKS`) addressed by i18n key, so adding a protocol is a
- * data change — the path to covering almost the whole stack. All chrome and
- * content route through the catalog (en/ja).
+ * Active-recall quiz across protocols, now with **spaced repetition**: every
+ * answer feeds a Leitner scheduler, missed/weak questions collect into a Review
+ * pool, and a mastery indicator tracks long-term progress. This turns one-shot
+ * quizzes into durable knowledge. Decks are pure data; all text is i18n (en/ja).
+ *
+ * `reviewStore` is injectable for tests/embedding; it defaults to the
+ * localStorage-backed store (SSR- and storage-failure-safe).
  */
-export function ConceptCheckPanel() {
+export function ConceptCheckPanel({
+  reviewStore = createReviewStore(),
+}: {
+  reviewStore?: ReturnType<typeof createReviewStore>;
+} = {}) {
   const { t } = useI18n();
   const groups = useMemo(() => decksByLayer(), []);
+  const indexed = useMemo(() => allConceptQuestions(), []);
+  const byItemId = useMemo(() => new Map(indexed.map((entry) => [entry.itemId, entry])), [indexed]);
 
-  const [deckId, setDeckId] = useState<string | null>(null);
+  const [review, setReview] = useState<ReviewState>(() => reviewStore.load());
+  const [session, setSession] = useState<Session | null>(null);
   const [qIdx, setQIdx] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [correct, setCorrect] = useState(0);
   const [complete, setComplete] = useState(false);
 
-  const deck = deckId ? getDeck(deckId) : undefined;
-  const total = deck?.questions.length ?? 0;
-  const question = deck?.questions[qIdx];
+  const total = session?.items.length ?? 0;
+  const indexedQ = session?.items[qIdx];
+  const question = indexedQ?.question;
   const summaryRef = useFocusWhen<HTMLHeadingElement>(complete);
   useDrillCompletion(
-    `concept-${deckId ?? 'none'}`,
-    deck ? `Concept Check — ${deckId}` : 'Concept Check',
+    session ? `concept-${session.id}` : 'concept-none',
+    session ? `Concept Check — ${session.id}` : 'Concept Check',
     complete,
     correct,
     total,
   );
 
-  const startDeck = useCallback((id: string) => {
-    setDeckId(id);
+  const stats = useMemo(() => reviewStats(review, Date.now()), [review]);
+
+  const start = useCallback((next: Session) => {
+    setSession(next);
     setQIdx(0);
     setSelected(null);
     setCorrect(0);
     setComplete(false);
   }, []);
+
+  const startDeck = useCallback(
+    (deckId: string) => {
+      const deck = getDeck(deckId);
+      if (!deck) return;
+      start({
+        kind: 'deck',
+        id: deckId,
+        title: t(deck.nameKey),
+        items: deck.questions.map((q) => ({
+          itemId: questionItemId(deck.id, q.id),
+          deck,
+          question: q,
+        })),
+      });
+    },
+    [start, t],
+  );
+
+  const startReview = useCallback(() => {
+    const items = reviewQueue(review, REVIEW_SESSION_LIMIT)
+      .map((id) => byItemId.get(id))
+      .filter((entry): entry is IndexedQuestion => entry !== undefined);
+    if (items.length === 0) return;
+    start({ kind: 'review', id: 'review', title: t('learning.concept.review.title'), items });
+  }, [review, byItemId, start, t]);
 
   const result = useMemo<DrillResult | null>(() => {
     if (!question || selected === null) return null;
@@ -66,11 +122,18 @@ export function ConceptCheckPanel() {
 
   const answer = useCallback(
     (optionKey: string) => {
-      if (!question || selected !== null) return;
+      if (!question || !indexedQ || selected !== null) return;
+      const ok = isCorrectChoice(question, optionKey);
       setSelected(optionKey);
-      if (isCorrectChoice(question, optionKey)) setCorrect((value) => value + 1);
+      if (ok) setCorrect((value) => value + 1);
+      // Feed the spaced-repetition scheduler and persist.
+      setReview((prev) => {
+        const nextState = gradeReview(prev, indexedQ.itemId, ok, Date.now());
+        reviewStore.save(nextState);
+        return nextState;
+      });
     },
-    [question, selected],
+    [question, indexedQ, selected, reviewStore],
   );
 
   const next = useCallback(() => {
@@ -82,19 +145,47 @@ export function ConceptCheckPanel() {
     setSelected(null);
   }, [qIdx, total]);
 
-  const backToDecks = useCallback(() => setDeckId(null), []);
+  const backToDecks = useCallback(() => setSession(null), []);
 
   // ── Deck picker ──────────────────────────────────────────────────────────
-  if (!deck) {
+  if (!session) {
+    const reviewCount = stats.inReview;
     return (
       <DrillFrame idPrefix="concept-check">
         <div data-testid="concept-check-picker" style={drillCardStyle}>
-          <h2 style={{ margin: 0, color: 'var(--netlab-text-primary)', fontSize: 18 }}>
-            {t('learning.concept.title')}
-          </h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <h2 style={{ margin: 0, color: 'var(--netlab-text-primary)', fontSize: 18 }}>
+              {t('learning.concept.title')}
+            </h2>
+            <span
+              data-testid="concept-check-mastery"
+              style={{
+                fontFamily: 'ui-monospace, monospace',
+                fontSize: 12,
+                color: 'var(--netlab-text-secondary)',
+              }}
+            >
+              {t('learning.concept.review.mastered', {
+                mastered: stats.mastered,
+                total: indexed.length,
+              })}
+            </span>
+          </div>
           <ConceptCallout idPrefix="concept-check" title={t('learning.concept.primer.title')}>
             {t('learning.concept.primer.body')}
           </ConceptCallout>
+
+          {reviewCount > 0 && (
+            <button
+              type="button"
+              data-testid="concept-check-review"
+              onClick={startReview}
+              style={pillButton('var(--netlab-accent-yellow)')}
+            >
+              {t('learning.concept.review.start', { count: reviewCount })}
+            </button>
+          )}
+
           <p style={{ margin: 0, color: 'var(--netlab-text-secondary)', fontSize: 13 }}>
             {t('learning.concept.pickDeck')}
           </p>
@@ -173,7 +264,7 @@ export function ConceptCheckPanel() {
       <div style={drillCardStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <h2 style={{ margin: 0, color: 'var(--netlab-text-primary)', fontSize: 18 }}>
-            {t(deck.nameKey)}
+            {session.title}
           </h2>
           <span
             data-testid="concept-check-progress"

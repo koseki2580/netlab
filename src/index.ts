@@ -537,6 +537,16 @@ export type {
   ConceptOption,
   ConceptQuestion,
 } from './learning/concept-check';
+export {
+  MAX_BOX,
+  gradeReview,
+  reviewQueue,
+  reviewStats,
+  isDue,
+  isMastered,
+  createReviewStore,
+} from './learning/review';
+export type { ReviewEntry, ReviewState, ReviewStats } from './learning/review';
 // Learning — embeddable drill UI (learning-surface panels host apps can mount)
 export { SubnetVisual } from './components/learning/SubnetVisual';
 export { SubnetDrillPanel } from './components/learning/SubnetDrillPanel';

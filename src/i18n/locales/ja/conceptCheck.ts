@@ -994,4 +994,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.lldp.q3.c': '物理トポロジ把握や VoIP/PoE 設定の補助',
   'learning.concept.lldp.q3.why':
     'NMS は LLDP から配線図を作り、電話が音声 VLAN や PoE 情報を学ぶのにも役立ちます。',
+  'learning.concept.review.title': '復習',
+  'learning.concept.review.start': '弱点を復習({{count}})',
+  'learning.concept.review.mastered': '{{mastered}} / {{total}} 習得',
+  'learning.concept.review.empty':
+    'まず問題に答えてください — 弱点がここに集まり、間隔をあけて復習できます。',
 } as const;

@@ -72,9 +72,44 @@ records a `drill` completion (`concept-<deck>`). Chrome and content are i18n'd
 (en/ja) under `learning.concept.*` and lint-enforced. Demo route
 `/learning/protocols` (Basic gallery card).
 
+## Spaced repetition
+
+A one-shot quiz tests recall once; durable knowledge needs **repeated retrieval
+spaced over time**. So every answer feeds a Leitner scheduler
+(`src/learning/review/`), turning the concept checks into a long-term review
+system rather than a single pass.
+
+Each question is tracked by a stable `itemId` (`questionItemId(deckId, qId)` →
+`"arp:q1"`). `gradeReview(state, itemId, correct, now)` moves the item between
+five boxes:
+
+- **correct** → promote one box (capped at `MAX_BOX = 5`), pushing the next due
+  date further out along `BOX_INTERVAL_MS` (`10 min → 1 d → 3 d → 7 d → 21 d`);
+- **wrong** → reset to box 1, due again in 10 minutes.
+
+An item in the top box is **mastered** and drops out of review.
+`reviewQueue(state, limit)` surfaces the non-mastered items weakest-first (lower
+box, then most overdue), and `reviewStats(state, now)` reports
+`{ seen, mastered, due, inReview }`. State persists under the
+`netlab-review-v1` key via `createReviewStore`, which is **SSR- and
+storage-failure-safe** (degrades to empty, never throws) and tolerant of
+malformed/legacy stored values.
+
+In the panel this shows up as a **"Review weak spots (N)"** button on the picker
+(appears once anything is in review) and a **mastery indicator** (`mastered /
+total`). The review button runs a virtual session over the weakest items, mixing
+questions across decks. `reviewStore` is an injectable prop so tests and
+embeddings can supply an in-memory store.
+
 ## Testing expectations
 
 - decks: unique ids, exactly one correct option per question, varied answer
   slots, and every referenced key present in both en and ja
 - panel (jsdom): the picker lists every deck; a correct answer grades, a wrong
-  answer reveals the right one; a full deck reaches a scored summary; ja renders
+  answer reveals the right one; a full deck reaches a scored summary; ja renders;
+  after a deck the Review pool appears and is replayable
+- scheduler (pure): correct promotes + delays, wrong resets to box 1, promotion
+  caps at mastered, `isDue` honors the clock, `reviewQueue` orders weakest-first
+  and excludes mastered, stats count seen/mastered/due/inReview
+- store: round-trips through storage, tolerates malformed/legacy values, and
+  degrades to empty when storage is unavailable

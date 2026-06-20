@@ -998,4 +998,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.lldp.q3.c': 'Mapping physical topology and aiding VoIP/PoE setup',
   'learning.concept.lldp.q3.why':
     'NMS tools build wiring maps from LLDP; it also helps phones learn voice VLAN and PoE info.',
+  'learning.concept.review.title': 'Review',
+  'learning.concept.review.start': 'Review weak spots ({{count}})',
+  'learning.concept.review.mastered': '{{mastered}} / {{total}} mastered',
+  'learning.concept.review.empty':
+    'Answer some questions first — your weak spots will collect here for spaced review.',
 } as const;

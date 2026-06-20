@@ -33,3 +33,25 @@ export function correctOption(question: ConceptQuestion): ConceptOption | undefi
 export function isCorrectChoice(question: ConceptQuestion, optionKey: string): boolean {
   return correctOption(question)?.key === optionKey;
 }
+
+/** Stable spaced-repetition item id for a question: `<deckId>:<questionId>`. */
+export function questionItemId(deckId: string, questionId: string): string {
+  return `${deckId}:${questionId}`;
+}
+
+export interface IndexedQuestion {
+  readonly itemId: string;
+  readonly deck: ConceptDeck;
+  readonly question: ConceptQuestion;
+}
+
+/** Flat index of every question across all decks, keyed by review item id. */
+export function allConceptQuestions(): IndexedQuestion[] {
+  return CONCEPT_DECKS.flatMap((deck) =>
+    deck.questions.map((question) => ({
+      itemId: questionItemId(deck.id, question.id),
+      deck,
+      question,
+    })),
+  );
+}
