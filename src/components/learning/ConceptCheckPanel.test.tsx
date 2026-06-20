@@ -170,6 +170,15 @@ describe('ConceptCheckPanel', () => {
     spy.mockRestore();
   });
 
+  it('moves focus to the new question prompt on advance (keyboard/SR users)', () => {
+    render();
+    click('concept-check-deck-arp');
+    clickOption('arp', 0, 'correct');
+    click('concept-check-next');
+    // After advancing, the prompt is focused so a screen reader announces it.
+    expect(document.activeElement).toBe(testid('concept-check-prompt'));
+  });
+
   it('renders Japanese inside an I18nProvider with locale ja', () => {
     act(() =>
       root?.render(

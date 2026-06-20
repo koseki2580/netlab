@@ -26,6 +26,7 @@ import {
   pillButton,
   useDrillCompletion,
   useFocusWhen,
+  useQuestionFocus,
 } from './drillKit';
 import type { DrillResult } from './drillKit';
 
@@ -85,6 +86,9 @@ export function ConceptCheckPanel({
   // answer/reveal re-renders since `question` keeps its identity until advance).
   const options = useMemo(() => (question ? shuffle(question.options) : []), [question]);
   const summaryRef = useFocusWhen<HTMLHeadingElement>(complete);
+  // Move focus to each new question's prompt so keyboard/screen-reader users hear
+  // the question announced when advancing — not just sighted users seeing it swap.
+  const promptRef = useQuestionFocus<HTMLParagraphElement>(`${session?.id ?? ''}:${qIdx}`);
   useDrillCompletion(
     session ? `concept-${session.id}` : 'concept-none',
     session ? `Concept Check — ${session.id}` : 'Concept Check',
@@ -331,8 +335,16 @@ export function ConceptCheckPanel({
         </div>
 
         <p
+          ref={promptRef}
+          tabIndex={-1}
           data-testid="concept-check-prompt"
-          style={{ margin: 0, color: 'var(--netlab-text-primary)', fontSize: 16, lineHeight: 1.5 }}
+          style={{
+            margin: 0,
+            color: 'var(--netlab-text-primary)',
+            fontSize: 16,
+            lineHeight: 1.5,
+            outline: 'none',
+          }}
         >
           {question ? t(question.promptKey) : ''}
         </p>

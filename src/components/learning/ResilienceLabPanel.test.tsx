@@ -149,6 +149,14 @@ describe('ResilienceLabPanel', () => {
     expect(testid('resilience-lab-prompt')).not.toBeNull();
   });
 
+  it('focuses the next scenario prompt on advance (keyboard/SR users)', async () => {
+    await render();
+    click('resilience-lab-predict-survived');
+    click('resilience-lab-next');
+    await waitForPredict();
+    expect(document.activeElement).toBe(testid('resilience-lab-prompt'));
+  });
+
   it('renders Japanese inside an I18nProvider with locale ja', async () => {
     act(() =>
       root?.render(

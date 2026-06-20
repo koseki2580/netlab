@@ -20,6 +20,7 @@ import {
   pillButton,
   useDrillCompletion,
   useFocusWhen,
+  useQuestionFocus,
 } from './drillKit';
 import type { DrillResult } from './drillKit';
 
@@ -52,6 +53,8 @@ export function PacketJourneyPanel() {
 
   const flow = JOURNEY_FLOWS[flowIdx % JOURNEY_FLOWS.length] ?? JOURNEY_FLOWS[0]!;
   const summaryRef = useFocusWhen<HTMLHeadingElement>(done);
+  // Announce each new hop's prompt to keyboard/screen-reader users on advance.
+  const promptRef = useQuestionFocus<HTMLParagraphElement>(`${flowIdx}:${stepIdx}`);
   useDrillCompletion('packet-journey-drill', 'Packet Journey', done, correctCount, totalCount);
 
   // The real engine precomputes the truth for the current journey.
@@ -218,12 +221,15 @@ export function PacketJourneyPanel() {
         {step && !journeyComplete && (
           <>
             <p
+              ref={promptRef}
+              tabIndex={-1}
               data-testid="packet-journey-prompt"
               style={{
                 margin: 0,
                 color: 'var(--netlab-text-primary)',
                 fontSize: 16,
                 lineHeight: 1.5,
+                outline: 'none',
               }}
             >
               {t('learning.journey.prompt', { node: labels.get(step.nodeId) ?? step.nodeId })}

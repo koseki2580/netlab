@@ -20,6 +20,7 @@ import {
   pillButton,
   useDrillCompletion,
   useFocusWhen,
+  useQuestionFocus,
 } from './drillKit';
 import type { DrillResult } from './drillKit';
 
@@ -51,6 +52,8 @@ export function ResilienceLabPanel() {
 
   const scenario = RESILIENCE_SCENARIOS[idx % RESILIENCE_SCENARIOS.length]!;
   const summaryRef = useFocusWhen<HTMLHeadingElement>(done);
+  // Announce each new scenario's prompt to keyboard/screen-reader users on advance.
+  const promptRef = useQuestionFocus<HTMLParagraphElement>(idx);
   useDrillCompletion('resilience-lab-drill', 'Resilience Lab', done, correctCount, totalCount);
 
   // The real engine computes the failure outcome for the current scenario.
@@ -173,8 +176,16 @@ export function ResilienceLabPanel() {
         </ConceptCallout>
 
         <p
+          ref={promptRef}
+          tabIndex={-1}
           data-testid="resilience-lab-prompt"
-          style={{ margin: 0, color: 'var(--netlab-text-primary)', fontSize: 16, lineHeight: 1.5 }}
+          style={{
+            margin: 0,
+            color: 'var(--netlab-text-primary)',
+            fontSize: 16,
+            lineHeight: 1.5,
+            outline: 'none',
+          }}
         >
           {t('learning.resilience.break', {
             what: t(scenario.failureKey),

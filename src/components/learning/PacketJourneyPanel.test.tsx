@@ -126,6 +126,8 @@ describe('PacketJourneyPanel', () => {
 
     click('packet-journey-advance');
     expect(testid('packet-journey-prompt')?.textContent).toContain('R1');
+    // The new hop's prompt is focused so a screen reader announces it on advance.
+    expect(document.activeElement).toBe(testid('packet-journey-prompt'));
   });
 
   it('marks a wrong prediction and names the engine decision in the feedback', async () => {
