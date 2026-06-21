@@ -143,7 +143,11 @@ export function AudiencePill({
               cursor: 'pointer',
               padding: size.pad,
               borderRadius: 'var(--netlab-radius-pill, 999px)',
-              color: active ? 'var(--netlab-accent-cyan)' : 'var(--netlab-text-muted)',
+              // Darkened cyan (vs raw accent) so the active label clears WCAG AA
+              // on its light cyan-tinted pill; text-secondary for the inactive.
+              color: active
+                ? 'color-mix(in srgb, var(--netlab-accent-cyan) 45%, var(--netlab-text-primary))'
+                : 'var(--netlab-text-secondary)',
               background: active
                 ? 'color-mix(in srgb, var(--netlab-accent-cyan) 14%, transparent)'
                 : 'transparent',

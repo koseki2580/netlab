@@ -24,29 +24,40 @@ interface Category {
 
 type Difficulty = 'beginner' | 'intermediate' | 'advanced';
 
+/**
+ * Pull an accent toward the theme's text colour. On the light accent-tinted
+ * chip/link backgrounds the raw accent (e.g. orange #f59e0b) fails WCAG AA;
+ * mixing it ~40% with text-primary darkens it enough to clear 4.5:1 in light
+ * theme (and lightens it in dark theme) while keeping the hue. Used for every
+ * accent-on-tint label in the card.
+ */
+function readableAccent(color: string): string {
+  return `color-mix(in srgb, ${color} 40%, var(--netlab-text-primary))`;
+}
+
 const DIFFICULTY_STYLES: Record<Difficulty, { bg: string; fg: string }> = {
   beginner: {
     bg: 'color-mix(in srgb, var(--netlab-accent-green) 12%, transparent)',
-    fg: 'var(--netlab-accent-green)',
+    fg: readableAccent('var(--netlab-accent-green)'),
   },
   intermediate: {
     bg: 'color-mix(in srgb, var(--netlab-accent-yellow) 12%, transparent)',
-    fg: 'var(--netlab-accent-yellow)',
+    fg: readableAccent('var(--netlab-accent-yellow)'),
   },
   advanced: {
     bg: 'color-mix(in srgb, var(--netlab-accent-red) 12%, transparent)',
-    fg: 'var(--netlab-accent-red)',
+    fg: readableAccent('var(--netlab-accent-red)'),
   },
 };
 
 const LAYER_TAG_STYLE = {
   bg: 'color-mix(in srgb, var(--netlab-accent-cyan) 10%, transparent)',
-  fg: 'var(--netlab-accent-cyan)',
+  fg: readableAccent('var(--netlab-accent-cyan)'),
 };
 
 const PROTO_TAG_STYLE = {
   bg: 'color-mix(in srgb, var(--netlab-text-primary) 10%, transparent)',
-  fg: 'var(--netlab-text-secondary)',
+  fg: 'var(--netlab-text-primary)',
 };
 
 function getCardBackground(color: string) {
@@ -66,7 +77,7 @@ function getActionLinkStyle(color: string) {
     borderRadius: 999,
     background: `color-mix(in srgb, ${color} 10%, var(--netlab-bg-surface))`,
     border: `1px solid color-mix(in srgb, ${color} 20%, var(--netlab-border))`,
-    color,
+    color: readableAccent(color),
     textDecoration: 'none',
     fontWeight: 700,
   } as const;

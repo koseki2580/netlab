@@ -31,6 +31,14 @@ const STATE_COLOR: Record<TrackItemState, string> = {
   next: 'var(--netlab-accent-yellow)',
 };
 
+/**
+ * Darken an accent toward the theme text colour so it stays readable as text on
+ * the light accent-tinted pills/badges (WCAG AA) while keeping its hue.
+ */
+function readable(color: string): string {
+  return `color-mix(in srgb, ${color} 40%, var(--netlab-text-primary))`;
+}
+
 function statePillStyle(state: TrackItemState): React.CSSProperties {
   const color = STATE_COLOR[state];
   return {
@@ -42,7 +50,7 @@ function statePillStyle(state: TrackItemState): React.CSSProperties {
     fontSize: 10,
     fontWeight: 700,
     letterSpacing: 0.4,
-    color,
+    color: readable(color),
     background: `color-mix(in srgb, ${color} 12%, transparent)`,
     border: `1px solid color-mix(in srgb, ${color} 28%, var(--netlab-border))`,
   };
@@ -55,7 +63,7 @@ function actionStyle(state: TrackItemState): React.CSSProperties {
     fontWeight: 700,
     padding: '5px 12px',
     borderRadius: 999,
-    color,
+    color: readable(color),
     background: `color-mix(in srgb, ${color} 14%, transparent)`,
     border: `1px solid color-mix(in srgb, ${color} 28%, transparent)`,
     fontFamily: 'ui-monospace, monospace',
@@ -73,7 +81,7 @@ function badgeStyle(state: TrackItemState): React.CSSProperties {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color,
+    color: readable(color),
     fontFamily: 'ui-monospace, monospace',
     fontWeight: 700,
     fontSize: 12,

@@ -140,7 +140,9 @@ export const NETLAB_LIGHT_THEME: NetlabTheme = {
   borderSubtle: 'rgba(148, 163, 184, 0.4)',
   textPrimary: '#0f172a',
   textSecondary: '#475569',
-  textMuted: '#5a6a7e',
+  // Darkened from #5a6a7e (4.48:1 on bg-elevated — just under AA) to clear 4.5:1
+  // while staying lighter than text-secondary so the muted hierarchy holds.
+  textMuted: '#4f5a6b',
   textFaint: '#94a3b8',
   accentBlue: '#2563eb',
   accentGreen: '#166534',

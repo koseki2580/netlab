@@ -177,6 +177,7 @@ export function LearningMap({ map, onOpen, onResume, compact = false }: Learning
 
       <div
         role="progressbar"
+        aria-label="track progress"
         aria-valuenow={pct}
         aria-valuemin={0}
         aria-valuemax={100}
