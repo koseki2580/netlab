@@ -18,6 +18,7 @@ import {
   DrillFrame,
   drillCardStyle,
   pillButton,
+  useDecorativeCanvasRef,
   useDrillCompletion,
   useFocusWhen,
   useQuestionFocus,
@@ -55,6 +56,7 @@ export function PacketJourneyPanel() {
   const summaryRef = useFocusWhen<HTMLHeadingElement>(done);
   // Announce each new hop's prompt to keyboard/screen-reader users on advance.
   const promptRef = useQuestionFocus<HTMLParagraphElement>(`${flowIdx}:${stepIdx}`);
+  const canvasRef = useDecorativeCanvasRef<HTMLDivElement>();
   useDrillCompletion('packet-journey-drill', 'Packet Journey', done, correctCount, totalCount);
 
   // The real engine precomputes the truth for the current journey.
@@ -209,7 +211,12 @@ export function PacketJourneyPanel() {
         </ConceptCallout>
 
         <div
+          ref={canvasRef}
           data-testid="packet-journey-canvas"
+          // Visual aid only: the prompt, answer buttons and feedback describe the
+          // state in full text, so hide the node/edge jumble from assistive tech
+          // (the ref keeps React Flow's attribution out of the tab order).
+          aria-hidden="true"
           style={{
             height: 380,
             border: '1px solid var(--netlab-learning-surface-border)',

@@ -12,6 +12,7 @@ import {
   DrillFrame,
   drillCardStyle,
   pillButton,
+  useDecorativeCanvasRef,
   useDrillCompletion,
   useFocusWhen,
 } from './drillKit';
@@ -56,6 +57,7 @@ export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }
   const done = index >= SESSION_LENGTH;
   const isLast = index === SESSION_LENGTH - 1;
   const summaryRef = useFocusWhen<HTMLHeadingElement>(done);
+  const canvasRef = useDecorativeCanvasRef<HTMLDivElement>();
   useDrillCompletion(
     'visual-routing-drill',
     'Visual Routing Decision',
@@ -222,7 +224,11 @@ export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }
         </table>
 
         <div
+          ref={canvasRef}
           data-testid="visual-routing-drill-canvas"
+          // Visual aid only — the mirrored answer buttons below carry the same
+          // choices for keyboard/SR users; hide the node/edge jumble.
+          aria-hidden="true"
           style={{
             height: 380,
             border: '1px solid var(--netlab-learning-surface-border)',

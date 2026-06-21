@@ -18,6 +18,7 @@ import {
   DrillFrame,
   drillCardStyle,
   pillButton,
+  useDecorativeCanvasRef,
   useDrillCompletion,
   useFocusWhen,
   useQuestionFocus,
@@ -54,6 +55,7 @@ export function ResilienceLabPanel() {
   const summaryRef = useFocusWhen<HTMLHeadingElement>(done);
   // Announce each new scenario's prompt to keyboard/screen-reader users on advance.
   const promptRef = useQuestionFocus<HTMLParagraphElement>(idx);
+  const canvasRef = useDecorativeCanvasRef<HTMLDivElement>();
   useDrillCompletion('resilience-lab-drill', 'Resilience Lab', done, correctCount, totalCount);
 
   // The real engine computes the failure outcome for the current scenario.
@@ -194,7 +196,11 @@ export function ResilienceLabPanel() {
         </p>
 
         <div
+          ref={canvasRef}
           data-testid="resilience-lab-canvas"
+          // Visual aid only — the prompt, predictions and outcome describe it in
+          // text; hide the node/edge jumble from assistive tech.
+          aria-hidden="true"
           style={{
             height: 380,
             border: '1px solid var(--netlab-learning-surface-border)',

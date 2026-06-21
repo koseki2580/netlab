@@ -44,6 +44,35 @@ export const drillInputStyle: React.CSSProperties = {
   fontSize: 15,
 };
 
+/**
+ * Ref for a `role="img"` canvas wrapper. React Flow renders a focusable
+ * attribution link; left in place it makes the image a nested-interactive a11y
+ * violation. This pins that link out of the tab order (it stays visible — the
+ * licence only requires display), re-applying if React Flow re-renders. The
+ * node/edge text is then summarized by the wrapper's aria-label rather than read
+ * out as a jumble, since the question/answers/feedback already describe it.
+ */
+export function useDecorativeCanvasRef<T extends HTMLElement>(): RefObject<T> {
+  const ref = useRef<T>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    const pin = () =>
+      el.querySelectorAll('.react-flow__attribution a').forEach((link) => {
+        // Out of the tab order AND out of the a11y tree: a link role inside the
+        // role="img" wrapper is otherwise a nested-interactive violation. It
+        // stays visually displayed (the licence only requires display).
+        if (link.getAttribute('tabindex') !== '-1') link.setAttribute('tabindex', '-1');
+        if (link.getAttribute('aria-hidden') !== 'true') link.setAttribute('aria-hidden', 'true');
+      });
+    pin();
+    const observer = new MutationObserver(pin);
+    observer.observe(el, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+  return ref;
+}
+
 /** Learning-surface page wrapper for a drill. */
 export function DrillFrame({
   idPrefix,
