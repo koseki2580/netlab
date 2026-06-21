@@ -135,6 +135,15 @@ export function DrillFeedback({
   result: DrillResult | null;
 }) {
   const { t } = useI18n();
+  const cardRef = useRef<HTMLDivElement>(null);
+  const hadResult = useRef(false);
+  useEffect(() => {
+    // When the answer disables/unmounts the chosen option, focus would fall to
+    // <body>. Move it onto the feedback so a keyboard/SR user lands on the
+    // explanation (the learning payload) and can Tab straight on to "Next".
+    if (result && !hadResult.current) cardRef.current?.focus();
+    hadResult.current = result !== null;
+  }, [result]);
   return (
     <div
       data-testid={`${idPrefix}-feedback`}
@@ -144,8 +153,11 @@ export function DrillFeedback({
     >
       {result && (
         <div
+          ref={cardRef}
+          tabIndex={-1}
           data-testid={`${idPrefix}-${result.correct ? 'correct' : 'incorrect'}`}
           style={{
+            outline: 'none',
             borderRadius: 'var(--netlab-radius-md)',
             padding: '10px 12px',
             background: `color-mix(in srgb, ${

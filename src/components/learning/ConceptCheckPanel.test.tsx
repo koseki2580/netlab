@@ -197,6 +197,15 @@ describe('ConceptCheckPanel', () => {
     expect(bar?.getAttribute('aria-valuemax')).toBe(String(totalQuestions));
   });
 
+  it('moves focus onto the feedback after answering (no focus-loss to body)', () => {
+    render();
+    click('concept-check-deck-arp');
+    clickOption('arp', 0, 'correct');
+    // The answered option disables itself; focus must land on the feedback, not body.
+    expect(document.activeElement).toBe(testid('concept-check-correct'));
+    expect(document.activeElement).not.toBe(document.body);
+  });
+
   it('moves focus to the new question prompt on advance (keyboard/SR users)', () => {
     render();
     click('concept-check-deck-arp');
