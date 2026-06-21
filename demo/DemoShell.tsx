@@ -63,6 +63,17 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
   // Keyboard users would otherwise tab through the whole nav rail + chrome before
   // reaching the demo. A skip link (hidden until focused) jumps straight there.
   const [skipFocused, setSkipFocused] = useState(false);
+
+  // Keep <html lang> in step with the chosen locale so screen readers use the
+  // right pronunciation for Japanese content (the panels honor the same key).
+  useEffect(() => {
+    try {
+      document.documentElement.lang =
+        window.localStorage.getItem('netlab-locale') === 'ja' ? 'ja' : 'en';
+    } catch {
+      /* localStorage unavailable — leave the default */
+    }
+  }, []);
   // S1 — below 900px the rail becomes a bottom bar and the shell switches to a
   // single vertical column so iframe/phone embeds don't horizontally scroll.
   const { isNarrow } = useViewport();
@@ -280,7 +291,7 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
       )}
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, minHeight: 0 }}>
         {!embedded && (
-          <div
+          <header
             style={{
               padding: '10px 16px',
               background: '#1e293b',
@@ -302,11 +313,17 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
             >
               📡 netlab
             </span>
-            <span
-              style={{ color: '#94a3b8', fontFamily: 'monospace', fontSize: 14, fontWeight: 600 }}
+            <h1
+              style={{
+                margin: 0,
+                color: '#94a3b8',
+                fontFamily: 'monospace',
+                fontSize: 14,
+                fontWeight: 600,
+              }}
             >
               {title}
-            </span>
+            </h1>
             <span style={{ color: '#94a3b8', fontSize: 12, fontFamily: 'monospace' }}>{desc}</span>
             <a
               href="https://github.com/koseki2580/netlab"
@@ -332,7 +349,7 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
               {GITHUB_ICON}
               GitHub
             </a>
-          </div>
+          </header>
         )}
         <NetlabThemeScope
           colorBlindSafe={a11yAxes.colorBlindSafe}
@@ -341,11 +358,16 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
         >
           {isE2e && <E2eTraceHook />}
           <ShellChromeProvider value={shellChrome}>
-            {/* Skip-link target. height:100% keeps the drill frames' own scroll
-                working (they constrain to this slot and scroll internally). */}
-            <div id="netlab-demo-content" tabIndex={-1} style={{ height: '100%', outline: 'none' }}>
+            {/* Skip-link target + main landmark. height:100% keeps the drill
+                frames' own scroll working (they constrain to this slot and
+                scroll internally). */}
+            <main
+              id="netlab-demo-content"
+              tabIndex={-1}
+              style={{ height: '100%', outline: 'none' }}
+            >
               {children}
-            </div>
+            </main>
           </ShellChromeProvider>
           {!embedded && (
             <>
