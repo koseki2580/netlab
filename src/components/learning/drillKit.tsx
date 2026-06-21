@@ -161,7 +161,10 @@ export function DrillFeedback({
               ? t('learning.drill.correct')
               : t('learning.drill.incorrect', { expected: result.expected })}
           </strong>
-          <div style={{ marginTop: 4, color: 'var(--netlab-text-secondary)' }}>
+          {/* Primary (not secondary) text: this explanation is the learning
+              payload, and text-secondary drops below 4.5:1 on the accent-tinted
+              card (axe-confirmed). Hierarchy comes from the bold heading above. */}
+          <div style={{ marginTop: 4, color: 'var(--netlab-text-primary)' }}>
             {result.explanation}
           </div>
         </div>
