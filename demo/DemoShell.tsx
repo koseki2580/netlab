@@ -74,6 +74,12 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
       /* localStorage unavailable — leave the default */
     }
   }, []);
+
+  // Descriptive per-demo <title> (WCAG 2.4.2): a single generic title leaves
+  // screen-reader, tab and history users unable to tell the demos apart.
+  useEffect(() => {
+    document.title = `${title} – netlab`;
+  }, [title]);
   // S1 — below 900px the rail becomes a bottom bar and the shell switches to a
   // single vertical column so iframe/phone embeds don't horizontally scroll.
   const { isNarrow } = useViewport();
