@@ -73,6 +73,7 @@ export function ConceptCheckPanel({
   const byItemId = useMemo(() => new Map(indexed.map((entry) => [entry.itemId, entry])), [indexed]);
 
   const [review, setReview] = useState<ReviewState>(() => reviewStore.load());
+  const [query, setQuery] = useState('');
   const [session, setSession] = useState<Session | null>(null);
   const [qIdx, setQIdx] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
@@ -175,6 +176,17 @@ export function ConceptCheckPanel({
     const reviewCount = stats.inReview;
     const seenItem = (id: string) => review[id] !== undefined;
     const masteredItem = (id: string) => isMastered(review, id);
+    // Filter decks by name so a learner (keyboard especially) can jump to a
+    // protocol without tabbing through all of them.
+    const q = query.trim().toLowerCase();
+    const filteredGroups = q
+      ? groups
+          .map((group) => ({
+            ...group,
+            decks: group.decks.filter((deck) => t(deck.nameKey).toLowerCase().includes(q)),
+          }))
+          .filter((group) => group.decks.length > 0)
+      : groups;
     return (
       <DrillFrame idPrefix="concept-check">
         <div data-testid="concept-check-picker" style={drillCardStyle}>
@@ -245,7 +257,32 @@ export function ConceptCheckPanel({
           <p style={{ margin: 0, color: 'var(--netlab-text-secondary)', fontSize: 13 }}>
             {t('learning.concept.pickDeck')}
           </p>
-          {groups.map((group) => (
+          <input
+            type="text"
+            data-testid="concept-check-search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t('learning.concept.search')}
+            aria-label={t('learning.concept.search')}
+            autoComplete="off"
+            style={{
+              padding: '8px 12px',
+              borderRadius: 'var(--netlab-radius-sm)',
+              border: '1px solid var(--netlab-learning-surface-border)',
+              background: 'var(--netlab-bg-primary)',
+              color: 'var(--netlab-text-primary)',
+              fontSize: 13,
+            }}
+          />
+          {filteredGroups.length === 0 && (
+            <p
+              data-testid="concept-check-search-empty"
+              style={{ margin: 0, color: 'var(--netlab-text-secondary)', fontSize: 13 }}
+            >
+              {t('learning.concept.searchEmpty', { query: query.trim() })}
+            </p>
+          )}
+          {filteredGroups.map((group) => (
             <div key={group.layer} style={{ display: 'grid', gap: 6 }}>
               <div
                 style={{

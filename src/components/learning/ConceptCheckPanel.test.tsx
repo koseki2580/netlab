@@ -187,6 +187,31 @@ describe('ConceptCheckPanel', () => {
     expect(testid('concept-check-prompt')).not.toBeNull();
   });
 
+  it('filters the deck list by the search query', () => {
+    render();
+    // All decks visible initially.
+    expect(testid('concept-check-deck-bgp')).not.toBeNull();
+    expect(testid('concept-check-deck-arp')).not.toBeNull();
+
+    const input = testid('concept-check-search') as HTMLInputElement;
+    const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
+    act(() => {
+      setValue.call(input, 'bgp');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    // Only matching decks remain; non-matches are gone.
+    expect(testid('concept-check-deck-bgp')).not.toBeNull();
+    expect(testid('concept-check-deck-arp')).toBeNull();
+
+    // A no-match query shows the empty message.
+    act(() => {
+      setValue.call(input, 'zzzznope');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(testid('concept-check-search-empty')).not.toBeNull();
+  });
+
   it('shows a mastery progress bar reflecting total questions', () => {
     render();
     const bar = testid('concept-check-mastery-bar');

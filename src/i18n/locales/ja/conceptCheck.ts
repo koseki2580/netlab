@@ -6,6 +6,8 @@ export const conceptCheck: Catalog = {
   'learning.concept.primer.body':
     'プロトコルを選び、いくつかの問いに答えて理解度を確認します。各回答には一行の解説が付き、セッション終了時にスコアが出ます。デッキは L2 からセキュリティまでスタックを横断します。',
   'learning.concept.pickDeck': 'ドリルするプロトコルを選択',
+  'learning.concept.search': 'プロトコルを絞り込み（例：BGP、TLS）',
+  'learning.concept.searchEmpty': '「{{query}}」に一致するプロトコルがありません。',
   'learning.concept.backToDecks': '← すべてのプロトコル',
   'learning.concept.deckProgress': '問題 {{current}} / {{total}}',
   'learning.concept.layer.l2': 'レイヤー2 — リンク',

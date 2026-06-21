@@ -6,6 +6,8 @@ export const conceptCheck: Catalog = {
   'learning.concept.primer.body':
     'Pick a protocol and answer a few quick questions to check what you really understand. Every answer comes with a one-line explanation, and a session ends with your score. Decks span the stack from L2 to security.',
   'learning.concept.pickDeck': 'Choose a protocol to drill',
+  'learning.concept.search': 'Filter protocols (e.g. BGP, TLS)',
+  'learning.concept.searchEmpty': 'No protocols match “{{query}}”.',
   'learning.concept.backToDecks': '← All protocols',
   'learning.concept.deckProgress': 'Question {{current}} / {{total}}',
   'learning.concept.layer.l2': 'Layer 2 — Link',
