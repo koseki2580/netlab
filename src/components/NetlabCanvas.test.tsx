@@ -620,6 +620,7 @@ describe('NetlabCanvas controlled topology API', () => {
       zoomOnScroll?: boolean;
       preventScrolling?: boolean;
       panOnDrag?: boolean;
+      minZoom?: number;
     };
     expect(props.nodesFocusable).toBe(false);
     expect(props.edgesFocusable).toBe(false);
@@ -629,6 +630,8 @@ describe('NetlabCanvas controlled topology API', () => {
     expect(props.zoomOnScroll).toBe(false);
     expect(props.preventScrolling).toBe(false);
     expect(props.panOnDrag).toBe(false);
+    // Lower zoom floor so fitView fits a wide topology on a narrow phone.
+    expect(props.minZoom).toBe(0.2);
   });
 
   it('keeps the graph keyboard-interactive by default', () => {
@@ -640,9 +643,11 @@ describe('NetlabCanvas controlled topology API', () => {
     const props = currentReactFlowProps() as {
       nodesFocusable?: boolean;
       disableKeyboardA11y?: boolean;
+      minZoom?: number;
     };
     expect(props.nodesFocusable).toBe(true);
     expect(props.disableKeyboardA11y).toBe(false);
+    expect(props.minZoom).toBe(0.5);
   });
 
   it('stops edge animation under prefers-reduced-motion, including topology reveals', () => {

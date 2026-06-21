@@ -605,6 +605,10 @@ export function NetlabCanvas({
           connectionMode={ConnectionMode.Loose}
           fitView
           fitViewOptions={{ padding: fitViewPadding }}
+          // Presentational canvases let fitView zoom out further than React Flow's
+          // 0.5 floor so a wide topology + padding fits a narrow phone without the
+          // edge nodes clipping; the editor keeps the default.
+          minZoom={interactiveGraph ? 0.5 : 0.2}
           nodesFocusable={interactiveGraph}
           edgesFocusable={interactiveGraph}
           nodesDraggable={interactiveGraph}
