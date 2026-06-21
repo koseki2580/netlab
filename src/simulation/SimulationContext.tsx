@@ -52,6 +52,12 @@ export interface SimulationProviderProps {
   children: ReactNode;
   autoRecompute?: boolean;
   animationSpeed?: number;
+  /**
+   * Force the main-thread engine. Browsers default to the worker engine, which
+   * has no `pipeline` — required by the Data Transfer surface. Surfaces that use
+   * the pipeline must opt in so they don't crash on a worker engine.
+   */
+  useMainThread?: boolean;
 }
 
 const NARROW_VIEWPORT_QUERY = '(max-width: 900px)';
@@ -128,6 +134,7 @@ export function SimulationProvider({
   children,
   autoRecompute = false,
   animationSpeed,
+  useMainThread = false,
 }: SimulationProviderProps) {
   const {
     topology,
@@ -140,7 +147,10 @@ export function SimulationProvider({
   } = useNetlabContext();
   const failureCtx = useOptionalFailure();
 
-  const engine = useMemo(() => new SimulationEngine(topology, hookEngine), [topology, hookEngine]);
+  const engine = useMemo(
+    () => new SimulationEngine(topology, hookEngine, useMainThread ? { useMainThread: true } : {}),
+    [topology, hookEngine, useMainThread],
+  );
 
   const [state, setState] = useState<SimulationState>(() => engine.getState());
   const [currentSpeed, setCurrentSpeed] = useState<number>(

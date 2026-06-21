@@ -862,7 +862,10 @@ export default function DataTransferDemo() {
     >
       <NetlabProvider topology={TOPOLOGY}>
         <FailureProvider>
-          <SimulationProvider>
+          {/* useMainThread: this surface drives the DataTransfer pipeline, which
+              only the main-thread engine exposes (the browser-default worker
+              engine has none, which previously crashed the page). */}
+          <SimulationProvider useMainThread>
             <SessionProvider>
               <DataTransferProvider>
                 <DataTransferDemoInner />
