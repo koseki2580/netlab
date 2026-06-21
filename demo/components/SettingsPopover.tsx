@@ -129,7 +129,11 @@ function AxisGroup<V extends string>({
                 cursor: 'pointer',
                 fontSize: 11,
                 fontFamily: 'ui-monospace, monospace',
-                color: selected ? 'var(--netlab-accent-blue)' : 'var(--netlab-text-secondary)',
+                // Darkened blue (vs raw accent) so the selected label clears
+                // WCAG AA on its light blue-tinted background.
+                color: selected
+                  ? 'color-mix(in srgb, var(--netlab-accent-blue) 45%, var(--netlab-text-primary))'
+                  : 'var(--netlab-text-secondary)',
                 background: selected
                   ? 'color-mix(in srgb, var(--netlab-accent-blue) 16%, transparent)'
                   : 'transparent',
