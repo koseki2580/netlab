@@ -54,11 +54,15 @@ export function ToastViewport() {
   );
 }
 
+// The viewport mounts at the app root, which can be *outside* a NetlabThemeScope
+// (e.g. some sandbox shells). Without fallbacks the theme vars are undefined there
+// and the text collapses to black on the dark page (1.17:1 — axe-confirmed). The
+// fallbacks match the dark palette so toasts stay readable everywhere.
 const LEVEL_COLOR: Record<ToastLevel, string> = {
-  info: 'var(--netlab-accent-cyan)',
-  success: 'var(--netlab-accent-green)',
-  warn: 'var(--netlab-accent-yellow)',
-  error: 'var(--netlab-accent-red)',
+  info: 'var(--netlab-accent-cyan, #7dd3fc)',
+  success: 'var(--netlab-accent-green, #4ade80)',
+  warn: 'var(--netlab-accent-yellow, #fbbf24)',
+  error: 'var(--netlab-accent-red, #f87171)',
 };
 
 const LEVEL_ICON: Record<ToastLevel, string> = {
@@ -81,8 +85,8 @@ function ToastCard({ entry }: { entry: ToastEntry }) {
         alignItems: 'flex-start',
         gap: 10,
         padding: '10px 12px',
-        background: 'var(--netlab-bg-surface)',
-        border: `1px solid color-mix(in srgb, ${color} 38%, var(--netlab-border))`,
+        background: 'var(--netlab-bg-surface, #1e293b)',
+        border: `1px solid color-mix(in srgb, ${color} 38%, var(--netlab-border, #334155))`,
         borderLeft: `3px solid ${color}`,
         borderRadius: 'var(--netlab-radius-sm, 8px)',
         boxShadow: 'var(--netlab-learning-shadow, 0 12px 28px rgba(0,0,0,.32))',
@@ -94,7 +98,7 @@ function ToastCard({ entry }: { entry: ToastEntry }) {
       <span aria-hidden style={{ color, fontWeight: 700 }}>
         {LEVEL_ICON[entry.level]}
       </span>
-      <span style={{ flex: 1, color: 'var(--netlab-text-primary)', lineHeight: 1.5 }}>
+      <span style={{ flex: 1, color: 'var(--netlab-text-primary, #e2e8f0)', lineHeight: 1.5 }}>
         {entry.message}
       </span>
       {entry.actionLabel && (
@@ -123,7 +127,7 @@ function ToastCard({ entry }: { entry: ToastEntry }) {
         style={{
           all: 'unset',
           cursor: 'pointer',
-          color: 'var(--netlab-text-muted)',
+          color: 'var(--netlab-text-muted, #94a3b8)',
           fontSize: 12,
           padding: '0 2px',
         }}
