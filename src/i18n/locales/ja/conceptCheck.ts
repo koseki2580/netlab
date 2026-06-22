@@ -688,6 +688,30 @@ export const conceptCheck: Catalog = {
     'IPv4 が枯渇気味で、多数のプライベートホストが公開 IP を共有するため',
   'learning.concept.addressing.q6.why':
     'NAT は私設網全体が少数の公開 IPv4 を共有できるようにし、IPv4 枯渇を回避します。',
+  'learning.concept.addressing.q1.b.why':
+    'MAC はローカルリンク内でのみ意味を持ちます。ネットワークをまたぐのは IP アドレス（L3）の役割です。',
+  'learning.concept.addressing.q1.c.why':
+    'TCP ポートはアプリケーション（L4）を選びます。MAC は同じ線上の次の機器に届けるだけ（L2）です。',
+  'learning.concept.addressing.q2.a.why':
+    '1 本のケーブル内に留まるのは L2（MAC）です。IP アドレスは多数のリンクをまたいでエンドツーエンドに転送します。',
+  'learning.concept.addressing.q2.c.why':
+    '特定のアプリへ届けるのはポート（L4）の役割です。IP はパケットをホスト（L3）まで届けるだけです。',
+  'learning.concept.addressing.q3.a.why':
+    'サブネット外では宛先ホストの MAC に直接は届きません（別リンク上）。代わりにゲートウェイへ ARP します。',
+  'learning.concept.addressing.q3.b.why':
+    'ブロードキャストはサブネットを越えません。フレームはゲートウェイの MAC へ送られ、その後 IP ルーティングが引き継ぎます。',
+  'learning.concept.addressing.q4.b.why':
+    'グローバルに一意なのは公開アドレスだけです。私設レンジは NAT の背後で無数のネットワークに再利用されます。',
+  'learning.concept.addressing.q4.c.why':
+    '私設レンジはルータ専用ではなく、内部の任意のホスト（スマホ・サーバ・PC）が使います。',
+  'learning.concept.addressing.q5.a.why':
+    '特定の 1 ホストへ届けるのはユニキャストです。ブロードキャストはドメイン内の全ホストへ届きます。',
+  'learning.concept.addressing.q5.c.why':
+    '購読グループへの配送はマルチキャストです。ブロードキャストはブロードキャストドメインの全員へ届きます。',
+  'learning.concept.addressing.q6.a.why':
+    '暗号化は TLS の役割で NAT ではありません。NAT はアドレスを書き換え、私設ホストが公開 IP を共有できるようにします。',
+  'learning.concept.addressing.q6.b.why':
+    '名前解決は DNS です。NAT は枯渇しがちな IPv4 アドレスを引き伸ばすために存在し、名前を引くものではありません。',
   'learning.concept.ports.name': 'ポート・ソケット・接続',
   'learning.concept.ports.q1.prompt': 'ポート番号が識別するのは…',
   'learning.concept.ports.q1.a': 'ホスト上のどのアプリ/サービスか',
@@ -727,6 +751,28 @@ export const conceptCheck: Catalog = {
   'learning.concept.ports.q6.c': 'DNS は UDP/53、続いて HTTPS は TCP/443',
   'learning.concept.ports.q6.why':
     '小さな DNS 問い合わせは UDP/53、その後ページは信頼性のある TCP/443 接続で取得します。',
+  'learning.concept.ports.q1.b.why':
+    'ルータの選択は IP ルーティング（L3）です。ポートはホスト上のアプリ（L4）を選びます。',
+  'learning.concept.ports.q1.c.why':
+    'MAC は L2 のハードウェアアドレスです。ポートはサービスを識別する L4 の番号です。',
+  'learning.concept.ports.q2.a.why':
+    '宛先 IP だけでは同一サーバへの多数の接続を区別できません。完全な 5 タプルが必要です。',
+  'learning.concept.ports.q2.c.why':
+    'MAC はホップごとに変わる L2 です。接続は L3/L4 の 5 タプルで識別します。',
+  'learning.concept.ports.q3.a.why': 'ポート 22 は SSH です。HTTPS は 443 で待ち受けます。',
+  'learning.concept.ports.q3.b.why': 'ポート 53 は DNS です。HTTPS は 443 で待ち受けます。',
+  'learning.concept.ports.q4.b.why':
+    'サーバの IP は 1 つのままです。クライアントは送信元 IP/ポートで区別され、サーバ IP を増やすわけではありません。',
+  'learning.concept.ports.q4.c.why':
+    'サーバは 1 つのポートで多数のクライアントを同時に扱います。タプルのクライアント側の違いで区別されます。',
+  'learning.concept.ports.q5.a.why':
+    'ソケットはハードウェアではなくソフトウェアのエンドポイント — IP アドレスとポートの組です。',
+  'learning.concept.ports.q5.c.why':
+    'ルーティングプロトコル（OSPF など）はネットワーク間でパケットを運びます。ソケットは接続のエンドポイントにすぎません。',
+  'learning.concept.ports.q6.a.why':
+    'DNS は通常 UDP/53、現代の Web は HTTPS の TCP/443 を使います。両方が素の TCP/80 ではありません。',
+  'learning.concept.ports.q6.b.why':
+    'ICMP は診断用（ping）です。DNS は UDP/53、Web 取得は TCP/443 を使います。',
   'learning.concept.ethernet.q4.prompt': 'Ethernet フレームが運ぶ送信元/宛先は…',
   'learning.concept.ethernet.q4.a': 'MAC アドレス',
   'learning.concept.ethernet.q4.b': 'IP アドレス',

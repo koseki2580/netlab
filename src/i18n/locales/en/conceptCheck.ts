@@ -690,6 +690,30 @@ export const conceptCheck: Catalog = {
     'IPv4 addresses are scarce, so many private hosts share public ones',
   'learning.concept.addressing.q6.why':
     'NAT lets a whole private network share a few public IPv4 addresses, working around IPv4 exhaustion.',
+  'learning.concept.addressing.q1.b.why':
+    'A MAC only has meaning on the local link; crossing networks is the IP address’s job (L3).',
+  'learning.concept.addressing.q1.c.why':
+    'A TCP port picks the application (L4); a MAC just reaches the next device on the wire (L2).',
+  'learning.concept.addressing.q2.a.why':
+    'Staying on one cable is L2 (the MAC); an IP address routes a packet across many links end-to-end.',
+  'learning.concept.addressing.q2.c.why':
+    'Reaching a specific application is the port’s job (L4); IP only gets the packet to the host (L3).',
+  'learning.concept.addressing.q3.a.why':
+    'Off-subnet you cannot reach the host’s MAC directly — it is on another link; you ARP for the gateway instead.',
+  'learning.concept.addressing.q3.b.why':
+    'Broadcasts do not leave the subnet; the frame goes to the gateway’s MAC, then IP routing takes over.',
+  'learning.concept.addressing.q4.b.why':
+    'Only public addresses are globally unique; private ranges are reused in countless networks behind NAT.',
+  'learning.concept.addressing.q4.c.why':
+    'Private ranges are for any internal host, not just routers — phones, servers and laptops all use them.',
+  'learning.concept.addressing.q5.a.why':
+    'Reaching one specific host is unicast; a broadcast is delivered to every host in the domain.',
+  'learning.concept.addressing.q5.c.why':
+    'Delivery to a subscribed group is multicast; a broadcast goes to everyone in the broadcast domain.',
+  'learning.concept.addressing.q6.a.why':
+    'Encryption is TLS’s job, not NAT’s; NAT rewrites addresses so private hosts can share a public IP.',
+  'learning.concept.addressing.q6.b.why':
+    'Name resolution is DNS; NAT exists to stretch scarce IPv4 addresses, not to look up names.',
   'learning.concept.ports.name': 'Ports, Sockets & Connections',
   'learning.concept.ports.q1.prompt': 'A port number identifies…',
   'learning.concept.ports.q1.a': 'Which application/service on a host',
@@ -728,6 +752,28 @@ export const conceptCheck: Catalog = {
   'learning.concept.ports.q6.c': 'DNS over UDP/53, then HTTPS over TCP/443',
   'learning.concept.ports.q6.why':
     'A small DNS query goes over UDP/53; the page is then fetched over a reliable TCP/443 connection.',
+  'learning.concept.ports.q1.b.why':
+    'Choosing a router is IP routing (L3); a port selects the application on the host (L4).',
+  'learning.concept.ports.q1.c.why':
+    'The MAC is an L2 hardware address; a port is an L4 number identifying the service.',
+  'learning.concept.ports.q2.a.why':
+    'The destination IP alone cannot separate many connections to the same server — you need the full 5-tuple.',
+  'learning.concept.ports.q2.c.why':
+    'MACs change at every hop and are L2; a connection is identified by the L3/L4 5-tuple.',
+  'learning.concept.ports.q3.a.why': 'Port 22 is SSH; HTTPS listens on 443.',
+  'learning.concept.ports.q3.b.why': 'Port 53 is DNS; HTTPS listens on 443.',
+  'learning.concept.ports.q4.b.why':
+    'The server keeps one IP; clients are told apart by their source IP/port, not by new server IPs.',
+  'learning.concept.ports.q4.c.why':
+    'Servers handle many clients at once on one port — the differing client side of the tuple keeps them separate.',
+  'learning.concept.ports.q5.a.why':
+    'A socket is not hardware; it is a software endpoint — an IP address paired with a port.',
+  'learning.concept.ports.q5.c.why':
+    'A routing protocol (like OSPF) moves packets between networks; a socket is just a connection endpoint.',
+  'learning.concept.ports.q6.a.why':
+    'DNS normally uses UDP/53, and the modern web uses HTTPS on TCP/443 — not plain TCP/80 for both.',
+  'learning.concept.ports.q6.b.why':
+    'ICMP is for diagnostics (ping); DNS uses UDP/53 and the web fetch uses TCP/443.',
   'learning.concept.ethernet.q4.prompt': 'An Ethernet frame carries a source and destination…',
   'learning.concept.ethernet.q4.a': 'MAC address',
   'learning.concept.ethernet.q4.b': 'IP address',
