@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useI18n } from '../../i18n/useI18n';
 import {
   allConceptQuestions,
@@ -78,6 +78,7 @@ export function ConceptCheckPanel({
   const [qIdx, setQIdx] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [correct, setCorrect] = useState(0);
+  const [streak, setStreak] = useState(0);
   const [complete, setComplete] = useState(false);
 
   const total = session?.items.length ?? 0;
@@ -105,6 +106,7 @@ export function ConceptCheckPanel({
     setQIdx(0);
     setSelected(null);
     setCorrect(0);
+    setStreak(0);
     setComplete(false);
   }, []);
 
@@ -150,6 +152,7 @@ export function ConceptCheckPanel({
       const ok = isCorrectChoice(question, optionKey);
       setSelected(optionKey);
       if (ok) setCorrect((value) => value + 1);
+      setStreak((value) => (ok ? value + 1 : 0));
       // Feed the spaced-repetition scheduler and persist.
       setReview((prev) => {
         const nextState = gradeReview(prev, indexedQ.itemId, ok, Date.now());
@@ -170,6 +173,29 @@ export function ConceptCheckPanel({
   }, [qIdx, total]);
 
   const backToDecks = useCallback(() => setSession(null), []);
+
+  // Power-keys for the quiz: 1–3 pick an option, Enter advances after answering.
+  // Skipped while typing in a field (e.g. the picker search) and once complete.
+  useEffect(() => {
+    if (!session || complete || !question) return undefined;
+    const onKey = (event: KeyboardEvent) => {
+      const tag = (event.target as HTMLElement | null)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (selected === null) {
+        const index = ['1', '2', '3'].indexOf(event.key);
+        const option = index >= 0 ? options[index] : undefined;
+        if (option) {
+          event.preventDefault();
+          answer(option.key);
+        }
+      } else if (event.key === 'Enter') {
+        event.preventDefault();
+        next();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [session, complete, question, selected, options, answer, next]);
 
   // ── Deck picker ──────────────────────────────────────────────────────────
   if (!session) {
@@ -400,16 +426,32 @@ export function ConceptCheckPanel({
           <h2 style={{ margin: 0, color: 'var(--netlab-text-primary)', fontSize: 18 }}>
             {session.title}
           </h2>
-          <span
-            data-testid="concept-check-progress"
-            style={{
-              fontFamily: 'ui-monospace, monospace',
-              fontSize: 13,
-              color: 'var(--netlab-text-secondary)',
-            }}
-          >
-            {t('learning.concept.deckProgress', { current: qIdx + 1, total })}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+            {streak >= 2 && (
+              <span
+                data-testid="concept-check-streak"
+                aria-label={t('learning.concept.streak', { count: streak })}
+                style={{
+                  fontFamily: 'ui-monospace, monospace',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: 'var(--netlab-accent-yellow)',
+                }}
+              >
+                🔥 {streak}
+              </span>
+            )}
+            <span
+              data-testid="concept-check-progress"
+              style={{
+                fontFamily: 'ui-monospace, monospace',
+                fontSize: 13,
+                color: 'var(--netlab-text-secondary)',
+              }}
+            >
+              {t('learning.concept.deckProgress', { current: qIdx + 1, total })}
+            </span>
+          </div>
         </div>
 
         <p
@@ -445,13 +487,28 @@ export function ConceptCheckPanel({
                 disabled={selected !== null}
                 style={{
                   ...pillButton(accent),
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
                   textAlign: 'left',
                   borderRadius: 'var(--netlab-radius-sm)',
                   opacity: result !== null && !isWinner && !isWrongChoice ? 0.5 : 1,
                 }}
               >
-                {isWinner ? '✓ ' : isWrongChoice ? '✗ ' : ''}
-                {t(option.key)}
+                <span
+                  aria-hidden="true"
+                  style={{
+                    fontFamily: 'ui-monospace, monospace',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    minWidth: 16,
+                    textAlign: 'center',
+                    opacity: 0.85,
+                  }}
+                >
+                  {result !== null ? (isWinner ? '✓' : isWrongChoice ? '✗' : '·') : index + 1}
+                </span>
+                <span>{t(option.key)}</span>
               </button>
             );
           })}

@@ -8,6 +8,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.pickDeck': 'ドリルするプロトコルを選択',
   'learning.concept.search': 'プロトコルを絞り込み（例：BGP、TLS）',
   'learning.concept.searchEmpty': '「{{query}}」に一致するプロトコルがありません。',
+  'learning.concept.streak': '{{count}}問連続正解',
   'learning.concept.backToDecks': '← すべてのプロトコル',
   'learning.concept.deckProgress': '問題 {{current}} / {{total}}',
   'learning.concept.layer.l2': 'レイヤー2 — リンク',

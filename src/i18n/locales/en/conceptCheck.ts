@@ -8,6 +8,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.pickDeck': 'Choose a protocol to drill',
   'learning.concept.search': 'Filter protocols (e.g. BGP, TLS)',
   'learning.concept.searchEmpty': 'No protocols match “{{query}}”.',
+  'learning.concept.streak': '{{count}} correct in a row',
   'learning.concept.backToDecks': '← All protocols',
   'learning.concept.deckProgress': 'Question {{current}} / {{total}}',
   'learning.concept.layer.l2': 'Layer 2 — Link',

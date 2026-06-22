@@ -49,11 +49,11 @@ function correctText(deckId: string, qIdx: number): string {
   return (en as Record<string, string>)[correctOption(question)!.key]!.trim();
 }
 
-/** Visible option text with any ✓/✗ reveal prefix stripped. */
+/** The option's label text (last span), separate from the leading number/✓/✗ badge. */
 function optionText(index: number): string {
-  return (testid(`concept-check-option-${index}`)?.textContent ?? '')
-    .replace(/^[✓✗]\s*/, '')
-    .trim();
+  const button = testid(`concept-check-option-${index}`);
+  const label = button?.querySelector('span:last-child');
+  return (label?.textContent ?? button?.textContent ?? '').trim();
 }
 
 /**
@@ -210,6 +210,28 @@ describe('ConceptCheckPanel', () => {
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
     expect(testid('concept-check-search-empty')).not.toBeNull();
+  });
+
+  it('answers via number keys, advances on Enter, and tracks a streak', () => {
+    render();
+    click('concept-check-deck-arp');
+    const press = (key: string) =>
+      act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true })));
+    const correctIndexNow = (qIdx: number) => {
+      const want = correctText('arp', qIdx);
+      return [0, 1, 2].findIndex((i) => optionText(i) === want);
+    };
+
+    // q0: press the correct option's number key → graded correct.
+    press(String(correctIndexNow(0) + 1));
+    expect(testid('concept-check-correct')).not.toBeNull();
+    // No streak chip yet (1 in a row).
+    expect(testid('concept-check-streak')).toBeNull();
+
+    // Enter advances; answer q1 correctly too → streak chip shows 2.
+    press('Enter');
+    press(String(correctIndexNow(1) + 1));
+    expect(testid('concept-check-streak')?.textContent).toContain('2');
   });
 
   it('shows a mastery progress bar reflecting total questions', () => {
