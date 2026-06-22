@@ -174,3 +174,18 @@
     pointer-events: none;
   }
 }
+
+/* App-wide safety net: any inline transition/animation not gated explicitly
+ * above (e.g. the concept-check mastery-bar width fill, the gallery track pills)
+ * collapses to ~instant under prefers-reduced-motion. 0.01ms (not 0) keeps
+ * transition/animation-end events firing. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
