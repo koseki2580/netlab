@@ -846,6 +846,66 @@ export const conceptCheck: Catalog = {
   'learning.concept.dns.q5.b': 'An IPv6 address',
   'learning.concept.dns.q5.c': 'A mail server name',
   'learning.concept.dns.q5.why': 'A = IPv4, AAAA = IPv6, MX = mail exchanger, CNAME = alias.',
+  'learning.concept.arp.q1.b.why':
+    'Mapping a hostname to an IP is DNS; ARP maps a known IP to its MAC on the local link.',
+  'learning.concept.arp.q1.c.why':
+    'A switch learns MAC→port on its own; ARP resolves an IP to a MAC, not a MAC to a port.',
+  'learning.concept.arp.q2.a.why':
+    'You do not know the target’s MAC yet — that is exactly what ARP is asking for — so the request must broadcast.',
+  'learning.concept.arp.q2.c.why':
+    'The gateway only matters for off-subnet traffic; an ARP request broadcasts to the whole LAN.',
+  'learning.concept.arp.q3.a.why':
+    'ARP cannot cross routers; it works only inside one broadcast domain, never the whole internet.',
+  'learning.concept.arp.q3.b.why':
+    'ARP runs between hosts on a LAN, not router-to-router; it resolves IP→MAC within the segment.',
+  'learning.concept.arp.q4.b.why':
+    'A port (L4) selects an application, not a frame’s destination; what ARP supplies is the missing MAC.',
+  'learning.concept.arp.q4.c.why':
+    'The hostname was resolved earlier by DNS; what the host still lacks to build the frame is the MAC.',
+  'learning.concept.arp.q5.a.why':
+    'Caching makes the network FASTER, not slower — it avoids an ARP round-trip before each packet.',
+  'learning.concept.arp.q5.c.why':
+    'Caching does not change IP addresses; it just remembers the IP→MAC mapping for a while.',
+  'learning.concept.tcp.q1.b.why':
+    'FIN tears a connection DOWN; opening one is SYN → SYN-ACK → ACK.',
+  'learning.concept.tcp.q1.c.why':
+    'The middle step is a combined SYN-ACK and the ACK comes last: SYN → SYN-ACK → ACK.',
+  'learning.concept.tcp.q2.a.why':
+    'TCP trades a little latency for reliability (retransmits, ordering); UDP is the low-latency choice.',
+  'learning.concept.tcp.q2.c.why':
+    'TCP does not encrypt — that is TLS layered on top; TCP guarantees reliable, in-order bytes.',
+  'learning.concept.tcp.q3.a.why':
+    'An RST is an abrupt abort, not a graceful close; a clean shutdown is a FIN exchange.',
+  'learning.concept.tcp.q3.b.why':
+    'A second SYN tries to OPEN, not close; graceful teardown is a FIN/ACK in each direction.',
+  'learning.concept.tcp.q4.b.why':
+    'TCP never just ignores loss — that would break reliability; it retransmits the missing segment.',
+  'learning.concept.tcp.q4.c.why':
+    'A single loss triggers retransmission, not a close; TCP only tears down on real failure.',
+  'learning.concept.tcp.q5.a.why':
+    'Encryption is TLS’s job; flow and congestion control pace the sender to match receiver and network.',
+  'learning.concept.tcp.q5.c.why':
+    'Assigning IP addresses is DHCP; TCP’s windows throttle the send rate to avoid overload.',
+  'learning.concept.dns.q1.b.why':
+    'IP→MAC is ARP’s job on the local link; DNS maps human names to IP addresses.',
+  'learning.concept.dns.q1.c.why':
+    'Ports are just well-known numbers; DNS resolves names to IP addresses, not ports to names.',
+  'learning.concept.dns.q2.a.why':
+    'MX records point to mail servers, not a host’s IPv4; the name→IPv4 record is the A record.',
+  'learning.concept.dns.q2.c.why':
+    'A CNAME is an alias to another name, not an address; the IPv4 mapping is the A record.',
+  'learning.concept.dns.q3.a.why':
+    'Answering only from its own zone is an authoritative server; a recursive resolver chases the answer for you.',
+  'learning.concept.dns.q3.b.why':
+    'DNS caches name→IP answers, not MAC addresses; a recursive resolver queries other servers until the name resolves.',
+  'learning.concept.dns.q4.b.why':
+    'Caching reuses the existing answer; it never changes the IP — it just serves it until the TTL expires.',
+  'learning.concept.dns.q4.c.why':
+    'Caching is encouraged, not forbidden — TTLs exist precisely so resolvers can cache safely.',
+  'learning.concept.dns.q5.a.why':
+    'An IPv4 address lives in an A record; the quad-A (AAAA) record holds an IPv6 address.',
+  'learning.concept.dns.q5.c.why':
+    'A mail server name is an MX record; AAAA holds an IPv6 address.',
   'learning.concept.ssh.name': 'SSH',
   'learning.concept.ssh.q1.prompt': 'SSH provides…',
   'learning.concept.ssh.q1.a': 'An encrypted remote shell and tunnel',

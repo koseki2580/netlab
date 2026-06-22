@@ -844,6 +844,64 @@ export const conceptCheck: Catalog = {
   'learning.concept.dns.q5.b': 'IPv6 アドレス',
   'learning.concept.dns.q5.c': 'メールサーバ名',
   'learning.concept.dns.q5.why': 'A は IPv4、AAAA は IPv6、MX はメール、CNAME は別名です。',
+  'learning.concept.arp.q1.b.why':
+    'ホスト名→IP の対応付けは DNS です。ARP はローカルリンク上で既知の IP を MAC に解決します。',
+  'learning.concept.arp.q1.c.why':
+    'MAC→ポートはスイッチが自分で学習します。ARP は IP を MAC に解決するもので、MAC をポートに対応づけるものではありません。',
+  'learning.concept.arp.q2.a.why':
+    'ターゲットの MAC はまだ分かりません — それこそ ARP が問い合わせている相手です — だから要求はブロードキャストします。',
+  'learning.concept.arp.q2.c.why':
+    'ゲートウェイはサブネット外宛ての通信でのみ関係します。ARP 要求は LAN 全体へブロードキャストします。',
+  'learning.concept.arp.q3.a.why':
+    'ARP はルータを越えられません。インターネット全体ではなく、1 つのブロードキャストドメイン内でのみ働きます。',
+  'learning.concept.arp.q3.b.why':
+    'ARP はルータ間ではなく LAN 上のホスト間で動作し、セグメント内で IP→MAC を解決します。',
+  'learning.concept.arp.q4.b.why':
+    'ポート（L4）はアプリを選ぶもので、フレームの宛先ではありません。ARP が補うのは欠けている MAC です。',
+  'learning.concept.arp.q4.c.why':
+    'ホスト名は先に DNS で解決済みです。フレーム構築にまだ足りないのは MAC です。',
+  'learning.concept.arp.q5.a.why':
+    'キャッシュはネットワークを遅くするのではなく速くします — パケットごとの ARP 往復を省きます。',
+  'learning.concept.arp.q5.c.why':
+    'キャッシュは IP アドレスを変えません。しばらくの間 IP→MAC の対応を覚えておくだけです。',
+  'learning.concept.tcp.q1.b.why': 'FIN は接続を切断します。確立は SYN → SYN-ACK → ACK です。',
+  'learning.concept.tcp.q1.c.why': '中間は SYN-ACK の結合で、ACK は最後です：SYN → SYN-ACK → ACK。',
+  'learning.concept.tcp.q2.a.why':
+    'TCP は信頼性（再送・順序）のために少しの遅延を引き換えにします。低遅延を選ぶなら UDP です。',
+  'learning.concept.tcp.q2.c.why':
+    'TCP は暗号化しません — それは上位の TLS です。TCP は信頼性のある順序通りのバイト列を保証します。',
+  'learning.concept.tcp.q3.a.why':
+    'RST は正常終了ではなく強制中断です。クリーンな切断は FIN 交換です。',
+  'learning.concept.tcp.q3.b.why':
+    '2 回目の SYN は確立しようとするもので切断ではありません。正常な切断は双方向の FIN/ACK です。',
+  'learning.concept.tcp.q4.b.why':
+    'TCP は損失を単に無視しません — それでは信頼性が壊れます。欠けたセグメントを再送します。',
+  'learning.concept.tcp.q4.c.why':
+    '1 回の損失は再送のトリガーであって切断ではありません。TCP は本当の障害時のみ切断します。',
+  'learning.concept.tcp.q5.a.why':
+    '暗号化は TLS の役割です。フロー/輻輳制御は受信側とネットワークに合わせて送信側を調整します。',
+  'learning.concept.tcp.q5.c.why':
+    'IP アドレスの割り当ては DHCP です。TCP のウィンドウは過負荷を避けるため送信レートを絞ります。',
+  'learning.concept.dns.q1.b.why':
+    'IP→MAC はローカルリンク上の ARP の役割です。DNS は人間が読む名前を IP アドレスに対応づけます。',
+  'learning.concept.dns.q1.c.why':
+    'ポートは単なる既知の番号です。DNS は名前を IP アドレスに解決するもので、ポートを名前に対応づけるものではありません。',
+  'learning.concept.dns.q2.a.why':
+    'MX レコードはホストの IPv4 ではなくメールサーバを指します。名前→IPv4 のレコードは A です。',
+  'learning.concept.dns.q2.c.why':
+    'CNAME はアドレスではなく別の名前への別名です。IPv4 の対応は A レコードです。',
+  'learning.concept.dns.q3.a.why':
+    '自分のゾーンからのみ答えるのは権威サーバです。再帰リゾルバはあなたの代わりに答えを追いかけます。',
+  'learning.concept.dns.q3.b.why':
+    'DNS がキャッシュするのは名前→IP の答えで MAC ではありません。再帰リゾルバは名前が解決するまで他サーバへ問い合わせます。',
+  'learning.concept.dns.q4.b.why':
+    'キャッシュは既存の答えを再利用します。IP を変えることはなく、TTL が切れるまで提供するだけです。',
+  'learning.concept.dns.q4.c.why':
+    'キャッシュは禁止どころか推奨されます。TTL はまさにリゾルバが安全にキャッシュできるよう存在します。',
+  'learning.concept.dns.q5.a.why':
+    'IPv4 アドレスは A レコードに入ります。クアッド A（AAAA）レコードは IPv6 アドレスを保持します。',
+  'learning.concept.dns.q5.c.why':
+    'メールサーバ名は MX レコードです。AAAA は IPv6 アドレスを保持します。',
   'learning.concept.ssh.name': 'SSH',
   'learning.concept.ssh.q1.prompt': 'SSH が提供するのは…',
   'learning.concept.ssh.q1.a': '暗号化されたリモートシェルとトンネル',
