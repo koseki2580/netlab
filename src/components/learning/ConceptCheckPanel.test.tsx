@@ -4,11 +4,15 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../i18n';
-import { en } from '../../i18n/locales/en';
+// Concept-check strings are a lazy sub-catalog now (not in the assembled en).
+import { conceptCheck as en } from '../../i18n/locales/en/conceptCheck';
 import { CONCEPT_DECKS, correctOption, getDeck } from '../../learning/concept-check';
 import { createReviewStore } from '../../learning/review';
 import { createMemoryProgressStorage } from '../../progress';
-import { ConceptCheckPanel } from './ConceptCheckPanel';
+// Render the inner directly: the public ConceptCheckPanel is a React.lazy wrapper
+// (the concept catalog is lazy-loaded out of the root bundle), and the inner
+// provides the concept-check i18n strings synchronously for the test.
+import ConceptCheckPanel from './ConceptCheckPanelInner';
 
 const actEnvironment = globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean };
 

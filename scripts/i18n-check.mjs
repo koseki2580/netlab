@@ -108,7 +108,19 @@ async function loadCatalog(entryPoint, exportName) {
 async function main() {
   const enCatalog = await loadCatalog(path.join(repoRoot, 'src/i18n/locales/en.ts'), 'en');
   const jaCatalog = await loadCatalog(path.join(repoRoot, 'src/i18n/locales/ja.ts'), 'ja');
-  const report = compareCatalogs(enCatalog, jaCatalog);
+  // The conceptCheck sub-catalog is kept out of the assembled en/ja (lazy-loaded
+  // by the panel to stay out of the root bundle) but still needs en/ja parity.
+  const enConcept = await loadCatalog(
+    path.join(repoRoot, 'src/i18n/locales/en/conceptCheck.ts'),
+    'conceptCheck',
+  );
+  const jaConcept = await loadCatalog(
+    path.join(repoRoot, 'src/i18n/locales/ja/conceptCheck.ts'),
+    'conceptCheck',
+  );
+  const enMerged = { ...enCatalog, ...enConcept };
+  const jaMerged = { ...jaCatalog, ...jaConcept };
+  const report = compareCatalogs(enMerged, jaMerged);
 
   if (!report.ok) {
     console.error(formatI18nReport(report));
@@ -116,7 +128,7 @@ async function main() {
     return;
   }
 
-  console.log(`i18n parity ok: ${Object.keys(enCatalog).length} keys`);
+  console.log(`i18n parity ok: ${Object.keys(enMerged).length} keys`);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === scriptPath) {

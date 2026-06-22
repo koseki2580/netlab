@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { en } from '../../i18n/locales/en';
-import { ja } from '../../i18n/locales/ja';
+// The concept-check strings are a lazy-loaded sub-catalog (kept out of the root
+// bundle), so they live in their own files rather than the assembled en/ja.
+import { conceptCheck as en } from '../../i18n/locales/en/conceptCheck';
+import { conceptCheck as ja } from '../../i18n/locales/ja/conceptCheck';
 import { CONCEPT_DECKS } from './decks';
 import {
   correctOption,

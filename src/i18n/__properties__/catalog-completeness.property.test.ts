@@ -1,7 +1,13 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { en } from '../locales/en';
+import { en as enBase } from '../locales/en';
+import { conceptCheck } from '../locales/en/conceptCheck';
+
+// conceptCheck is a lazy sub-catalog (kept out of the assembled `en` so it stays
+// out of the root bundle — see locales/en.ts) but is merged into the translator
+// at runtime by ConceptCheckPanel. For coverage it must be checked alongside en.
+const en: Record<string, string> = { ...enBase, ...conceptCheck };
 
 const SRC_ROOT = resolve(__dirname, '../..');
 
