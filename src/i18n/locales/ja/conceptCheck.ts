@@ -624,6 +624,30 @@ export const conceptCheck: Catalog = {
   'learning.concept.model.q6.c': 'アプリケーションデータ(例: HTTP リクエスト)',
   'learning.concept.model.q6.why':
     '各層のペイロードは上位層のデータです。TCP はアプリのバイト列をサーバへ運びます。',
+  'learning.concept.model.q1.b.why':
+    '階層化はそれ自体で遅くするものではありません。仕事を分割し、各層を単純で置き換え可能に保ちます。',
+  'learning.concept.model.q1.c.why':
+    '階層化は責務の分割であって配線の話ではありません。ケーブルの本数は規定しません。',
+  'learning.concept.model.q2.a.why':
+    'それは受信時にスタックを上へ展開する順序です。送信ではアプリケーションから始まり下へ向かいます。',
+  'learning.concept.model.q2.c.why':
+    '順序は固定です。各層が順にヘッダを付け、ランダムにはなりません。',
+  'learning.concept.model.q3.a.why':
+    'カプセル化は「包む」ことで暗号化ではありません。機密性は別の関心事（TLS・IPsec）です。',
+  'learning.concept.model.q3.b.why':
+    'カプセル化は各層でヘッダを「付与」します。ヘッダを外すのは上りのデカプセル化のときだけです。',
+  'learning.concept.model.q4.b.why':
+    'アプリケーション層は端末側の関心事です。ルータはアプリのデータではなく L3 の IP ヘッダで転送します。',
+  'learning.concept.model.q4.c.why':
+    '物理層はビット/信号を運ぶだけです。次ホップの選択には L3 の IP アドレスが必要です。',
+  'learning.concept.model.q5.a.why':
+    'トランスポート層（L4）はホスト間のエンドツーエンドの関心事です。スイッチは L2 の MAC でフレームを転送します。',
+  'learning.concept.model.q5.c.why':
+    'IP による転送はルータ（L3）の仕事です。素のスイッチは L2 の MAC で動作します。',
+  'learning.concept.model.q6.a.why':
+    'IP ヘッダは L3 で、データがアプリに届く前に外されます。TCP はアプリのバイト列を上位へ渡します。',
+  'learning.concept.model.q6.b.why':
+    'MAC アドレスは L2 フレームヘッダにあり、アプリが受け取るペイロードには含まれません。',
   'learning.concept.addressing.name': 'アドレッシングと配送',
   'learning.concept.addressing.q1.prompt': 'MAC アドレスがフレームを届けるのは…',
   'learning.concept.addressing.q1.a': 'ローカルリンク上の次の機器へ(L2)',

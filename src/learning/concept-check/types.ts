@@ -6,6 +6,12 @@ export interface ConceptOption {
   /** i18n key for the option text. */
   readonly key: string;
   readonly correct?: boolean;
+  /**
+   * Optional i18n key for a distractor explanation — *why this wrong choice is
+   * wrong*. Shown (before the general explanation) when a learner picks it.
+   * Rolled out deck-by-deck; absent options fall back to the general one.
+   */
+  readonly whyKey?: string;
 }
 
 /** A single multiple-choice question, all text addressed by i18n key. */

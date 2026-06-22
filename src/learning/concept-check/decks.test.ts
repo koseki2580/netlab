@@ -48,7 +48,9 @@ describe('concept-check decks', () => {
         ...deck.questions.flatMap((question) => [
           question.promptKey,
           question.explanationKey,
-          ...question.options.map((option) => option.key),
+          ...question.options.flatMap((option) =>
+            option.whyKey ? [option.key, option.whyKey] : [option.key],
+          ),
         ]),
       ];
       for (const key of keys) {

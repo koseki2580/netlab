@@ -234,6 +234,16 @@ describe('ConceptCheckPanel', () => {
     expect(testid('concept-check-streak')?.textContent).toContain('2');
   });
 
+  it('explains why a wrong choice is wrong (distractor explanation)', () => {
+    render();
+    click('concept-check-deck-model');
+    clickOption('model', 0, 'wrong');
+    const feedback = testid('concept-check-feedback')?.textContent ?? '';
+    // The distractor-specific "why" leads, and the general explanation follows.
+    expect(feedback).toMatch(/adds no delay|divides responsibilities/);
+    expect(feedback).toContain('evolve independently');
+  });
+
   it('shows a mastery progress bar reflecting total questions', () => {
     render();
     const bar = testid('concept-check-mastery-bar');

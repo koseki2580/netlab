@@ -625,6 +625,30 @@ export const conceptCheck: Catalog = {
   'learning.concept.model.q6.c': 'The application data (e.g. the HTTP request)',
   'learning.concept.model.q6.why':
     'Each layer’s payload is the data of the layer above; TCP carries the application’s bytes up to the server.',
+  'learning.concept.model.q1.b.why':
+    'Layering adds no delay for its own sake — it splits the work so each layer stays simple and replaceable.',
+  'learning.concept.model.q1.c.why':
+    'Layering divides responsibilities, not wiring — it says nothing about how many cables you run.',
+  'learning.concept.model.q2.a.why':
+    'That is the receive order, unwrapping UP the stack; on send the data starts at the Application and moves DOWN.',
+  'learning.concept.model.q2.c.why':
+    'The order is fixed — each layer adds its header in sequence — never random.',
+  'learning.concept.model.q3.a.why':
+    'Encapsulation wraps, it does not encrypt; confidentiality is a separate concern (TLS, IPsec).',
+  'learning.concept.model.q3.b.why':
+    'Encapsulation ADDS a header at each layer; headers are only removed on the way back up (decapsulation).',
+  'learning.concept.model.q4.b.why':
+    'The Application layer lives on the end hosts; a router forwards on the L3 IP header, not application data.',
+  'learning.concept.model.q4.c.why':
+    'The Physical layer only moves bits and signals; choosing a next hop needs the L3 IP address.',
+  'learning.concept.model.q5.a.why':
+    'The Transport layer (L4) is an end-to-end host concern; a switch forwards frames by MAC at L2.',
+  'learning.concept.model.q5.c.why':
+    'Forwarding by IP is a router’s L3 job; a plain switch works at L2 on MAC addresses.',
+  'learning.concept.model.q6.a.why':
+    'The IP header is L3 and is stripped before the data reaches the app; TCP hands up the application bytes.',
+  'learning.concept.model.q6.b.why':
+    'A MAC address sits in the L2 frame header, not in the payload the application consumes.',
   'learning.concept.addressing.name': 'Addressing & Delivery',
   'learning.concept.addressing.q1.prompt': 'A MAC address delivers a frame…',
   'learning.concept.addressing.q1.a': 'To the next device on the local link (L2)',

@@ -139,10 +139,16 @@ export function ConceptCheckPanel({
   const result = useMemo<DrillResult | null>(() => {
     if (!question || selected === null) return null;
     const right = correctOption(question);
+    const ok = isCorrectChoice(question, selected);
+    const chosen = question.options.find((option) => option.key === selected);
+    const general = t(question.explanationKey);
+    // On a wrong pick, lead with why *that* choice is wrong (when authored),
+    // then the general explanation of the right answer.
+    const distractorWhy = !ok && chosen?.whyKey ? t(chosen.whyKey) : '';
     return {
-      correct: isCorrectChoice(question, selected),
+      correct: ok,
       expected: right ? t(right.key) : '',
-      explanation: t(question.explanationKey),
+      explanation: distractorWhy ? `${distractorWhy} ${general}` : general,
     };
   }, [question, selected, t]);
 
