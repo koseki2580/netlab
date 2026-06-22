@@ -23,7 +23,9 @@ export const drillCardStyle: React.CSSProperties = {
 
 export function pillButton(accent: string): React.CSSProperties {
   return {
-    padding: '10px 16px',
+    // ~44px tall (equal padding keeps the label centred) so it's a comfortable
+    // phone tap target (WCAG 2.5.5 / Apple HIG) rather than the old 38px.
+    padding: '13px 16px',
     borderRadius: 'var(--netlab-radius-pill)',
     border: `1px solid color-mix(in srgb, ${accent} 40%, var(--netlab-learning-surface-border))`,
     background: `color-mix(in srgb, ${accent} 14%, var(--netlab-bg-surface))`,
@@ -35,7 +37,7 @@ export function pillButton(accent: string): React.CSSProperties {
 }
 
 export const drillInputStyle: React.CSSProperties = {
-  padding: '10px 12px',
+  padding: '12px 12px',
   borderRadius: 'var(--netlab-radius-sm)',
   border: '1px solid var(--netlab-learning-surface-border)',
   background: 'var(--netlab-bg-primary)',

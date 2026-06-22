@@ -266,7 +266,7 @@ export function ConceptCheckPanel({
             aria-label={t('learning.concept.search')}
             autoComplete="off"
             style={{
-              padding: '8px 12px',
+              padding: '12px 12px',
               borderRadius: 'var(--netlab-radius-sm)',
               border: '1px solid var(--netlab-learning-surface-border)',
               background: 'var(--netlab-bg-primary)',
