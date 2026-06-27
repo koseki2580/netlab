@@ -258,8 +258,8 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         explanationKey: 'learning.concept.nat.q1.why',
         options: [
           { key: 'learning.concept.nat.q1.a', correct: true },
-          { key: 'learning.concept.nat.q1.b' },
-          { key: 'learning.concept.nat.q1.c' },
+          { key: 'learning.concept.nat.q1.b', whyKey: 'learning.concept.nat.q1.b.why' },
+          { key: 'learning.concept.nat.q1.c', whyKey: 'learning.concept.nat.q1.c.why' },
         ],
       },
       {
@@ -267,9 +267,9 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         promptKey: 'learning.concept.nat.q2.prompt',
         explanationKey: 'learning.concept.nat.q2.why',
         options: [
-          { key: 'learning.concept.nat.q2.a' },
+          { key: 'learning.concept.nat.q2.a', whyKey: 'learning.concept.nat.q2.a.why' },
           { key: 'learning.concept.nat.q2.b', correct: true },
-          { key: 'learning.concept.nat.q2.c' },
+          { key: 'learning.concept.nat.q2.c', whyKey: 'learning.concept.nat.q2.c.why' },
         ],
       },
       {
@@ -277,8 +277,8 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         promptKey: 'learning.concept.nat.q3.prompt',
         explanationKey: 'learning.concept.nat.q3.why',
         options: [
-          { key: 'learning.concept.nat.q3.a' },
-          { key: 'learning.concept.nat.q3.b' },
+          { key: 'learning.concept.nat.q3.a', whyKey: 'learning.concept.nat.q3.a.why' },
+          { key: 'learning.concept.nat.q3.b', whyKey: 'learning.concept.nat.q3.b.why' },
           { key: 'learning.concept.nat.q3.c', correct: true },
         ],
       },
@@ -614,8 +614,8 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         explanationKey: 'learning.concept.ospf.q1.why',
         options: [
           { key: 'learning.concept.ospf.q1.a', correct: true },
-          { key: 'learning.concept.ospf.q1.b' },
-          { key: 'learning.concept.ospf.q1.c' },
+          { key: 'learning.concept.ospf.q1.b', whyKey: 'learning.concept.ospf.q1.b.why' },
+          { key: 'learning.concept.ospf.q1.c', whyKey: 'learning.concept.ospf.q1.c.why' },
         ],
       },
       {
@@ -623,9 +623,9 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         promptKey: 'learning.concept.ospf.q2.prompt',
         explanationKey: 'learning.concept.ospf.q2.why',
         options: [
-          { key: 'learning.concept.ospf.q2.a' },
+          { key: 'learning.concept.ospf.q2.a', whyKey: 'learning.concept.ospf.q2.a.why' },
           { key: 'learning.concept.ospf.q2.b', correct: true },
-          { key: 'learning.concept.ospf.q2.c' },
+          { key: 'learning.concept.ospf.q2.c', whyKey: 'learning.concept.ospf.q2.c.why' },
         ],
       },
       {
@@ -633,8 +633,8 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         promptKey: 'learning.concept.ospf.q3.prompt',
         explanationKey: 'learning.concept.ospf.q3.why',
         options: [
-          { key: 'learning.concept.ospf.q3.a' },
-          { key: 'learning.concept.ospf.q3.b' },
+          { key: 'learning.concept.ospf.q3.a', whyKey: 'learning.concept.ospf.q3.a.why' },
+          { key: 'learning.concept.ospf.q3.b', whyKey: 'learning.concept.ospf.q3.b.why' },
           { key: 'learning.concept.ospf.q3.c', correct: true },
         ],
       },
@@ -651,8 +651,8 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         explanationKey: 'learning.concept.bgp.q1.why',
         options: [
           { key: 'learning.concept.bgp.q1.a', correct: true },
-          { key: 'learning.concept.bgp.q1.b' },
-          { key: 'learning.concept.bgp.q1.c' },
+          { key: 'learning.concept.bgp.q1.b', whyKey: 'learning.concept.bgp.q1.b.why' },
+          { key: 'learning.concept.bgp.q1.c', whyKey: 'learning.concept.bgp.q1.c.why' },
         ],
       },
       {
@@ -660,9 +660,9 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         promptKey: 'learning.concept.bgp.q2.prompt',
         explanationKey: 'learning.concept.bgp.q2.why',
         options: [
-          { key: 'learning.concept.bgp.q2.a' },
+          { key: 'learning.concept.bgp.q2.a', whyKey: 'learning.concept.bgp.q2.a.why' },
           { key: 'learning.concept.bgp.q2.b', correct: true },
-          { key: 'learning.concept.bgp.q2.c' },
+          { key: 'learning.concept.bgp.q2.c', whyKey: 'learning.concept.bgp.q2.c.why' },
         ],
       },
       {
@@ -670,8 +670,8 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         promptKey: 'learning.concept.bgp.q3.prompt',
         explanationKey: 'learning.concept.bgp.q3.why',
         options: [
-          { key: 'learning.concept.bgp.q3.a' },
-          { key: 'learning.concept.bgp.q3.b' },
+          { key: 'learning.concept.bgp.q3.a', whyKey: 'learning.concept.bgp.q3.a.why' },
+          { key: 'learning.concept.bgp.q3.b', whyKey: 'learning.concept.bgp.q3.b.why' },
           { key: 'learning.concept.bgp.q3.c', correct: true },
         ],
       },
@@ -688,8 +688,8 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         explanationKey: 'learning.concept.rip.q1.why',
         options: [
           { key: 'learning.concept.rip.q1.a', correct: true },
-          { key: 'learning.concept.rip.q1.b' },
-          { key: 'learning.concept.rip.q1.c' },
+          { key: 'learning.concept.rip.q1.b', whyKey: 'learning.concept.rip.q1.b.why' },
+          { key: 'learning.concept.rip.q1.c', whyKey: 'learning.concept.rip.q1.c.why' },
         ],
       },
       {
@@ -697,9 +697,9 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         promptKey: 'learning.concept.rip.q2.prompt',
         explanationKey: 'learning.concept.rip.q2.why',
         options: [
-          { key: 'learning.concept.rip.q2.a' },
+          { key: 'learning.concept.rip.q2.a', whyKey: 'learning.concept.rip.q2.a.why' },
           { key: 'learning.concept.rip.q2.b', correct: true },
-          { key: 'learning.concept.rip.q2.c' },
+          { key: 'learning.concept.rip.q2.c', whyKey: 'learning.concept.rip.q2.c.why' },
         ],
       },
       {
@@ -707,8 +707,8 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         promptKey: 'learning.concept.rip.q3.prompt',
         explanationKey: 'learning.concept.rip.q3.why',
         options: [
-          { key: 'learning.concept.rip.q3.a' },
-          { key: 'learning.concept.rip.q3.b' },
+          { key: 'learning.concept.rip.q3.a', whyKey: 'learning.concept.rip.q3.a.why' },
+          { key: 'learning.concept.rip.q3.b', whyKey: 'learning.concept.rip.q3.b.why' },
           { key: 'learning.concept.rip.q3.c', correct: true },
         ],
       },

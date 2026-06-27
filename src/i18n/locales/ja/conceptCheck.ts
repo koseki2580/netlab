@@ -996,6 +996,53 @@ export const conceptCheck: Catalog = {
     'IPv6 はもちろんルーティングします。なくしたのはブロードキャストで、代わりにマルチキャストを使います。',
   'learning.concept.ipv6.q3.b.why':
     'IPv6 はまさにアドレス（128 ビット）の話です。なくしたのはブロードキャストで、マルチキャストに置き換えました。',
+  'learning.concept.nat.q1.b.why':
+    'スイッチの MAC 学習は L2 の機能です。NAT の仕事は多数の私設ホストが 1 つの公開 IP を共有できるようにすることです。',
+  'learning.concept.nat.q1.c.why':
+    'OSPF はルーティングプロトコルです。NAT はアドレスを書き換え、私設網が公開 IP を共有できるようにします。',
+  'learning.concept.nat.q2.a.why':
+    'デフォルトルートは外向きの通信を送り出します。外から内部サーバへ届かせるにはポート転送（DNAT）が必要です。',
+  'learning.concept.nat.q2.c.why':
+    'VLAN トランクはスイッチ間で L2 の VLAN を運びます。内部サーバの公開はポート転送（DNAT）で行います。',
+  'learning.concept.nat.q3.a.why':
+    'NAT は暗号化しません。テーブルは応答を正しい内部ホストとポートへ戻すために存在します。',
+  'learning.concept.nat.q3.b.why':
+    'ルートブリッジ選出は STP（L2）です。NAT のテーブルは戻りの通信を正しい内部ホストに対応づけます。',
+  'learning.concept.ospf.q1.b.why':
+    'ディスタンスベクタは RIP/EIGRP です。OSPF はリンクステートで、各ルータが完全な地図を作り SPF を実行します。',
+  'learning.concept.ospf.q1.c.why':
+    'パスベクタは BGP です。OSPF は LSA をフラッディングし最短経路を計算するリンクステート IGP です。',
+  'learning.concept.ospf.q2.a.why':
+    'ホップ数は RIP の指標です。OSPF は素のホップ数ではなくリンクコスト（多くは帯域ベース）の合計で選びます。',
+  'learning.concept.ospf.q2.c.why':
+    'AS パス長は BGP のものです。AS 内では OSPF は総リンクコストで選びます。',
+  'learning.concept.ospf.q3.a.why':
+    'OSPF はタイマーを受け身で待つのではなく、LSA を再フラッディングして即座に変化へ反応します。',
+  'learning.concept.ospf.q3.b.why':
+    'OSPF は障害を無視できません — LSA を再フラッディングし最短経路ツリーを再計算します。',
+  'learning.concept.bgp.q1.b.why':
+    'アドレス割り当ては DHCP です。BGP はインターネット全体で自律システム間の到達性を経路制御します。',
+  'learning.concept.bgp.q1.c.why':
+    '名前解決は DNS です。BGP はインターネットをつなぐ AS 間ルーティングプロトコルです。',
+  'learning.concept.bgp.q2.a.why':
+    'BGP はホップ数ベースではありません（それは RIP）。ポリシーと AS パス属性で経路を選びます。',
+  'learning.concept.bgp.q2.c.why':
+    'リンクコストは OSPF の AS 内指標です。BGP は AS 間をポリシーと AS パスで決めます。',
+  'learning.concept.bgp.q3.a.why':
+    'AS は単一のルータではなく、1 つの管理下にあるネットワーク全体です。',
+  'learning.concept.bgp.q3.b.why':
+    'サブネットは L3 のアドレスブロックです。AS は独自の番号を持つ多数のネットワークの管理ドメインです。',
+  'learning.concept.rip.q1.b.why':
+    'リンクコストは OSPF の指標です。RIP はディスタンスベクタで単純にホップ数を数えます。',
+  'learning.concept.rip.q1.c.why': 'AS パスは BGP のものです。RIP はホップ数で経路を選びます。',
+  'learning.concept.rip.q2.a.why':
+    'RIP の上限は 255 よりはるかに低く、使えるのは 15 ホップ、16 は到達不能を意味します（ループ抑止）。',
+  'learning.concept.rip.q2.c.why':
+    'RIP は意図的に制限されています。最大 15 ホップ、16 で到達不能 — 無制限にはスケールしません。',
+  'learning.concept.rip.q3.a.why':
+    'RIP は OSPF より収束が遅く（定期更新・無限カウント）、速くはありません。',
+  'learning.concept.rip.q3.b.why':
+    'RIP は 15 ホップ制限で小規模向けです。大規模にスケールするのは OSPF です。',
   'learning.concept.ssh.name': 'SSH',
   'learning.concept.ssh.q1.prompt': 'SSH が提供するのは…',
   'learning.concept.ssh.q1.a': '暗号化されたリモートシェルとトンネル',

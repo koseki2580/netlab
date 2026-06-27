@@ -1000,6 +1000,53 @@ export const conceptCheck: Catalog = {
     'IPv6 of course routes; what it drops is broadcast — it uses multicast instead.',
   'learning.concept.ipv6.q3.b.why':
     'IPv6 is all about addresses (128-bit ones); what it removed is broadcast, replaced by multicast.',
+  'learning.concept.nat.q1.b.why':
+    'Switch MAC learning is an L2 function; NAT’s job is letting many private hosts share one public IP.',
+  'learning.concept.nat.q1.c.why':
+    'OSPF is a routing protocol; NAT instead rewrites addresses so a private network shares a public IP.',
+  'learning.concept.nat.q2.a.why':
+    'A default route sends outbound traffic out; reaching an inside server from outside needs port forwarding (DNAT).',
+  'learning.concept.nat.q2.c.why':
+    'A VLAN trunk carries L2 VLANs between switches; exposing an inside server uses port forwarding (DNAT).',
+  'learning.concept.nat.q3.a.why':
+    'NAT does not encrypt; the table exists so replies map back to the correct inside host and port.',
+  'learning.concept.nat.q3.b.why':
+    'Root-bridge election is STP (L2); NAT’s table matches return traffic to the right inside host.',
+  'learning.concept.ospf.q1.b.why':
+    'Distance-vector is RIP/EIGRP; OSPF is link-state — every router builds a full map and runs SPF.',
+  'learning.concept.ospf.q1.c.why':
+    'Path-vector is BGP; OSPF is a link-state IGP that floods LSAs and computes shortest paths.',
+  'learning.concept.ospf.q2.a.why':
+    'Hop count is RIP’s metric; OSPF sums link costs (often bandwidth-based), not raw hops.',
+  'learning.concept.ospf.q2.c.why':
+    'AS-path length is BGP’s; within an AS, OSPF chooses by total link cost.',
+  'learning.concept.ospf.q3.a.why':
+    'OSPF reacts to the topology change immediately by re-flooding LSAs, not by passively waiting on a timer.',
+  'learning.concept.ospf.q3.b.why':
+    'OSPF can’t ignore a failure — it re-floods LSAs and recomputes the shortest-path tree.',
+  'learning.concept.bgp.q1.b.why':
+    'Address assignment is DHCP; BGP routes reachability between autonomous systems across the internet.',
+  'learning.concept.bgp.q1.c.why':
+    'Name resolution is DNS; BGP is the inter-AS routing protocol that glues the internet together.',
+  'learning.concept.bgp.q2.a.why':
+    'BGP is not hop-count based (that’s RIP); it picks paths by policy and AS-path attributes.',
+  'learning.concept.bgp.q2.c.why':
+    'Link cost is OSPF’s intra-AS metric; BGP decides between ASes by policy and AS-path.',
+  'learning.concept.bgp.q3.a.why':
+    'An AS is a whole network under one administration, not a single router.',
+  'learning.concept.bgp.q3.b.why':
+    'A subnet is an L3 address block; an AS is an administrative domain of many networks with its own number.',
+  'learning.concept.rip.q1.b.why':
+    'Link cost is OSPF’s metric; RIP is distance-vector and simply counts hops.',
+  'learning.concept.rip.q1.c.why': 'AS-path is BGP’s; RIP picks routes by hop count.',
+  'learning.concept.rip.q2.a.why':
+    'RIP caps far lower than 255 — 15 hops are usable and 16 means unreachable (limiting loops).',
+  'learning.concept.rip.q2.c.why':
+    'RIP is deliberately limited: 15 hops max, with 16 marking unreachable — it does not scale unbounded.',
+  'learning.concept.rip.q3.a.why':
+    'RIP converges slower than OSPF (periodic updates, counting to infinity), not faster.',
+  'learning.concept.rip.q3.b.why':
+    'RIP’s 15-hop limit keeps it small; OSPF is the one that scales to large networks.',
   'learning.concept.ssh.name': 'SSH',
   'learning.concept.ssh.q1.prompt': 'SSH provides…',
   'learning.concept.ssh.q1.a': 'An encrypted remote shell and tunnel',
