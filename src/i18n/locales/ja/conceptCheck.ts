@@ -1043,6 +1043,65 @@ export const conceptCheck: Catalog = {
     'RIP は OSPF より収束が遅く（定期更新・無限カウント）、速くはありません。',
   'learning.concept.rip.q3.b.why':
     'RIP は 15 ホップ制限で小規模向けです。大規模にスケールするのは OSPF です。',
+  'learning.concept.tls.q1.a.why':
+    'ルーティングは IP（L3）の仕事です。TLS は TCP の上に暗号化・完全性・サーバ認証を加えます。',
+  'learning.concept.tls.q1.c.why':
+    'アドレス割り当ては DHCP です。TLS は暗号化・完全性・認証でセッションを保護します。',
+  'learning.concept.tls.q2.a.why':
+    'MAC は偽装も容易な L2 のハードウェアアドレスにすぎません。TLS の身元は X.509 証明書で証明します。',
+  'learning.concept.tls.q2.b.why':
+    'VLAN タグは L2 トラフィックを分けるもので身元とは無関係です。TLS は X.509 証明書を使います。',
+  'learning.concept.tls.q3.b.why':
+    'TLS は IP の下ではなくトランスポートの上にあり、下に TCP のような信頼できるバイト列を必要とします。',
+  'learning.concept.tls.q3.c.why':
+    'TLS は Ethernet（L2）を置き換えません。TCP のような信頼できるトランスポートの上に重なります。',
+  'learning.concept.http.q1.b.why':
+    'パブリッシュ/サブスクライブはメッセージング様式（MQTT など）です。HTTP はクライアント要求→サーバ応答のやり取りです。',
+  'learning.concept.http.q1.c.why':
+    'HTTP はブロードキャストではありません。クライアントが要求を送り、サーバがそのクライアントへ応答します。',
+  'learning.concept.http.q2.a.why':
+    'POST はデータを送信/作成しサーバ状態を変えます。安全で読み取り専用なのは GET です。',
+  'learning.concept.http.q2.c.why':
+    'DELETE はリソースを削除し読み取り専用ではありません。読み取りだけの安全なメソッドは GET です。',
+  'learning.concept.http.q3.a.why':
+    '成功は 2xx（例: 200）です。404 はリソースが見つからないことを示すクライアントエラーです。',
+  'learning.concept.http.q3.b.why':
+    'サーバエラーは 5xx です。404 は 4xx のクライアントエラーで、要求されたリソースが存在しません。',
+  'learning.concept.quic.q1.b.why':
+    'QUIC はヘッドオブラインブロッキングを避けるため意図的に TCP を使わず、UDP の上で動きます。',
+  'learning.concept.quic.q1.c.why':
+    'ICMP はデータ転送ではなく診断用です。QUIC は UDP の上に構築されます。',
+  'learning.concept.quic.q2.a.why':
+    'QUIC は常に暗号化されます（TLS 1.3 を内蔵）。利点は暗号化の省略ではなく接続確立の速さです。',
+  'learning.concept.quic.q2.c.why':
+    'QUIC はスループットを同等以上に狙います。目玉は接続確立の速さ（1-RTT/0-RTT）です。',
+  'learning.concept.quic.q3.a.why':
+    '逆です — 独立したストリームにより多数の要求が 1 接続を同時に共有できます。',
+  'learning.concept.quic.q3.b.why':
+    'QUIC はパケット損失を防げません。損失の影響を抑え、そのストリームだけが止まるようにします。',
+  'learning.concept.http2.q1.b.why':
+    'HTTP/2 は IPsec を加えません。利点は多数の要求を 1 つの TCP 接続で多重化することです。',
+  'learning.concept.http2.q1.c.why':
+    'HTTP/2 は依然 TCP を使います（UDP は HTTP/3 の QUIC）。1 接続でストリームを多重化します。',
+  'learning.concept.http2.q2.a.why':
+    'プレーンテキスト行は HTTP/1.1 です。HTTP/2 は効率的なバイナリフレーミング層を使います。',
+  'learning.concept.http2.q2.c.why':
+    '固定 1500 バイトのセルは ATM/Ethernet の MTU を思わせます。HTTP/2 は可変長のバイナリフレームです。',
+  'learning.concept.http2.q3.a.why':
+    'gzip は本文を圧縮します。HTTP/2 のヘッダは専用の HPACK で圧縮します。',
+  'learning.concept.http2.q3.b.why':
+    'HTTP/2 はヘッダ（特に繰り返しの多いもの）を HPACK で圧縮します。',
+  'learning.concept.http3.q1.b.why':
+    '素の TCP は HTTP/1.1 と HTTP/2 です。HTTP/3 は UDP 上に構築された QUIC の上で動きます。',
+  'learning.concept.http3.q1.c.why': 'ICMP は診断用です。HTTP/3 は QUIC（UDP）の上で動きます。',
+  'learning.concept.http3.q2.a.why':
+    'HTTP/3 はヘッダを小さく保ちます（QPACK）。利点はストリーム間の TCP ヘッドオブラインブロッキングの解消です。',
+  'learning.concept.http3.q2.c.why':
+    'HTTP/3 は QUIC/TLS 1.3 で常に暗号化されます。利点はストリーム間の TCP ヘッドオブラインブロッキングがないことです。',
+  'learning.concept.http3.q3.a.why':
+    'HPACK は HTTP/2 のものです。HTTP/3 は QUIC の順不同配送に耐える QPACK を使います。',
+  'learning.concept.http3.q3.b.why':
+    'gzip は本文用です。HTTP/3 はヘッダを QPACK（QUIC 向けに適応した HPACK）で圧縮します。',
   'learning.concept.ssh.name': 'SSH',
   'learning.concept.ssh.q1.prompt': 'SSH が提供するのは…',
   'learning.concept.ssh.q1.a': '暗号化されたリモートシェルとトンネル',

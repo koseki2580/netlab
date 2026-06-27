@@ -1047,6 +1047,65 @@ export const conceptCheck: Catalog = {
     'RIP converges slower than OSPF (periodic updates, counting to infinity), not faster.',
   'learning.concept.rip.q3.b.why':
     'RIP’s 15-hop limit keeps it small; OSPF is the one that scales to large networks.',
+  'learning.concept.tls.q1.a.why':
+    'Routing is IP’s job (L3); TLS adds encryption, integrity and server authentication on top of TCP.',
+  'learning.concept.tls.q1.c.why':
+    'Address assignment is DHCP; TLS secures a session with encryption, integrity and authentication.',
+  'learning.concept.tls.q2.a.why':
+    'A MAC is just an L2 hardware address, easily spoofed; TLS identity is proven with an X.509 certificate.',
+  'learning.concept.tls.q2.b.why':
+    'A VLAN tag segments L2 traffic; it says nothing about identity — TLS uses an X.509 certificate.',
+  'learning.concept.tls.q3.b.why':
+    'TLS sits above the transport, not below IP; it needs a reliable byte stream like TCP underneath.',
+  'learning.concept.tls.q3.c.why':
+    'TLS does not replace Ethernet (L2); it layers on top of a reliable transport such as TCP.',
+  'learning.concept.http.q1.b.why':
+    'Publish/subscribe is a messaging pattern (e.g. MQTT); HTTP is a client request → server response exchange.',
+  'learning.concept.http.q1.c.why':
+    'HTTP is not broadcast; a client sends a request and the server returns a response to that client.',
+  'learning.concept.http.q2.a.why':
+    'POST submits/creates data and changes server state; the safe, read-only method is GET.',
+  'learning.concept.http.q2.c.why':
+    'DELETE removes a resource — anything but read-only; GET is the safe method that only reads.',
+  'learning.concept.http.q3.a.why':
+    'Success is 2xx (e.g. 200); 404 is a client error meaning the resource was not found.',
+  'learning.concept.http.q3.b.why':
+    'Server errors are 5xx; 404 is a 4xx client error — the requested resource does not exist.',
+  'learning.concept.quic.q1.b.why':
+    'QUIC deliberately avoids TCP to escape its head-of-line blocking; it runs over UDP.',
+  'learning.concept.quic.q1.c.why':
+    'ICMP is for diagnostics, not data transport; QUIC is built on UDP.',
+  'learning.concept.quic.q2.a.why':
+    'QUIC is always encrypted (TLS 1.3 is built in); its edge is faster setup, not skipping encryption.',
+  'learning.concept.quic.q2.c.why':
+    'QUIC aims for equal-or-better throughput; its headline win is faster connection setup (1-RTT/0-RTT).',
+  'learning.concept.quic.q3.a.why':
+    'It is the opposite — independent streams let many requests share one connection concurrently.',
+  'learning.concept.quic.q3.b.why':
+    'QUIC cannot prevent packet loss; it limits the damage so a loss stalls only its own stream.',
+  'learning.concept.http2.q1.b.why':
+    'HTTP/2 does not add IPsec; its gain is multiplexing many requests over a single TCP connection.',
+  'learning.concept.http2.q1.c.why':
+    'HTTP/2 still uses TCP (UDP is HTTP/3’s QUIC); it multiplexes streams over one connection.',
+  'learning.concept.http2.q2.a.why':
+    'Plain-text lines are HTTP/1.1; HTTP/2 uses an efficient binary framing layer.',
+  'learning.concept.http2.q2.c.why':
+    'Fixed 1500-byte cells evoke ATM/Ethernet MTU, not HTTP/2 — it uses variable-length binary frames.',
+  'learning.concept.http2.q3.a.why':
+    'gzip compresses bodies; HTTP/2 headers are compressed with the purpose-built HPACK.',
+  'learning.concept.http2.q3.b.why':
+    'HTTP/2 does compress headers — repetitive ones especially — using HPACK.',
+  'learning.concept.http3.q1.b.why':
+    'Raw TCP is HTTP/1.1 and HTTP/2; HTTP/3 runs over QUIC, which is built on UDP.',
+  'learning.concept.http3.q1.c.why': 'ICMP is for diagnostics; HTTP/3 runs over QUIC (UDP).',
+  'learning.concept.http3.q2.a.why':
+    'HTTP/3 keeps headers compact (QPACK); its win is removing TCP’s cross-stream head-of-line blocking.',
+  'learning.concept.http3.q2.c.why':
+    'HTTP/3 is always encrypted via QUIC/TLS 1.3; the gain is no TCP head-of-line blocking across streams.',
+  'learning.concept.http3.q3.a.why':
+    'HPACK is HTTP/2’s; HTTP/3 needs QPACK, which tolerates QUIC’s out-of-order stream delivery.',
+  'learning.concept.http3.q3.b.why':
+    'gzip is for bodies; HTTP/3 compresses headers with QPACK (HPACK adapted for QUIC).',
   'learning.concept.ssh.name': 'SSH',
   'learning.concept.ssh.q1.prompt': 'SSH provides…',
   'learning.concept.ssh.q1.a': 'An encrypted remote shell and tunnel',
