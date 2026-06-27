@@ -902,6 +902,100 @@ export const conceptCheck: Catalog = {
     'IPv4 アドレスは A レコードに入ります。クアッド A（AAAA）レコードは IPv6 アドレスを保持します。',
   'learning.concept.dns.q5.c.why':
     'メールサーバ名は MX レコードです。AAAA は IPv6 アドレスを保持します。',
+  'learning.concept.udp.q1.a.why':
+    '再送は TCP の機能です。UDP は送りっぱなしで、再送が必要ならアプリの仕事です。',
+  'learning.concept.udp.q1.b.why':
+    '順序保証は TCP のものです。UDP のデータグラムは順不同で届くことも、届かないこともあります。',
+  'learning.concept.udp.q2.a.why':
+    '大きなダウンロードは全バイトが欠けず順序通りである必要があり、それは TCP の信頼性で UDP ではありません。',
+  'learning.concept.udp.q2.c.why':
+    '銀行取引は確実な配送を要します。ベストエフォートの UDP ではなく TCP が必要です。',
+  'learning.concept.udp.q3.b.why':
+    'シーケンス/ACK 番号は TCP の信頼性のものです。UDP のヘッダはポート・長さ・チェックサムだけです。',
+  'learning.concept.udp.q3.c.why':
+    '輻輳ウィンドウは TCP の仕組みです。UDP はコネクションレスで絞るものがありません。',
+  'learning.concept.udp.q4.b.why':
+    '再送は TCP です。UDP は再送せず、回復が必要ならアプリの仕事です。',
+  'learning.concept.udp.q4.c.why':
+    'UDP にはリセットする接続がありません。失われたデータグラムはアプリが再送しない限り消えるだけです。',
+  'learning.concept.udp.q5.a.why':
+    'UDP 自体は暗号化しません。DNS が使うのは小さな問い合わせ/応答が速く再試行も容易だからです。',
+  'learning.concept.udp.q5.c.why':
+    '小さな DNS のやり取りに順序は不要です。だから軽量な UDP が適し、TCP ではありません。',
+  'learning.concept.ethernet.q1.b.why':
+    'IP アドレスは L3 です。Ethernet フレームは L2 の MAC で宛先指定します。',
+  'learning.concept.ethernet.q1.c.why':
+    'ポート番号は L4 です。フレームは次の機器へ届くため L2 の MAC を使います。',
+  'learning.concept.ethernet.q2.a.why':
+    'スイッチは IP ヘッダ（L3 ルーティング）を読みません。L2 の送信元 MAC から学習します。',
+  'learning.concept.ethernet.q2.c.why':
+    'OSPF はルータ向けのルーティングプロトコルです。スイッチはフレームの送信元 MAC を学習するだけです。',
+  'learning.concept.ethernet.q3.a.why':
+    '宛先不明のフレームは破棄ではなくフラッディングされ、ホストに届く可能性を残します。',
+  'learning.concept.ethernet.q3.b.why':
+    'スイッチはゲートウェイへルーティングしません（L3）。不明ユニキャストは他の全ポートへフラッディングします。',
+  'learning.concept.ethernet.q4.b.why':
+    'IP アドレスはペイロード内（L3）にあります。フレーム自身の送信元/宛先は MAC アドレスです。',
+  'learning.concept.ethernet.q4.c.why':
+    'ポート番号は L4 ヘッダにあります。Ethernet フレームは MAC で宛先指定します。',
+  'learning.concept.ethernet.q5.a.why':
+    'スイッチをつないでも別々のインターネットはできません。1 つのブロードキャストドメインに結合します。',
+  'learning.concept.ethernet.q5.c.why':
+    'ルーティングテーブルはルータの L3 構造です。スイッチ同士の接続は L2 ドメインを広げるだけです。',
+  'learning.concept.dhcp.q1.a.why':
+    'SYN/ACK/FIN は TCP のハンドシェイクです。DHCP の 4 段階は Discover・Offer・Request・Ack です。',
+  'learning.concept.dhcp.q1.c.why':
+    'それらは DHCP の段階名ではありません。やり取りは Discover → Offer → Request → Ack（DORA）です。',
+  'learning.concept.dhcp.q2.b.why':
+    'クライアントは IP を持たずサーバも未知なのでユニキャストできず、ブロードキャストします。',
+  'learning.concept.dhcp.q2.c.why':
+    'Discover はルータ宛マルチキャストではなく LAN 上の L2 ブロードキャストです。クライアントはまだアドレスを持ちません。',
+  'learning.concept.dhcp.q3.a.why':
+    'MAC は NIC に焼かれていて DHCP が配るものではありません。DHCP はゲートウェイと DNS サーバを提供します。',
+  'learning.concept.dhcp.q3.b.why':
+    'TCP ポートはアプリが選ぶもので DHCP は割り当てません。DHCP はゲートウェイと DNS を提供します。',
+  'learning.concept.icmp.q1.b.why':
+    'ping は TCP ではありません — ポートもハンドシェイクもなく、ICMP Echo Request/Reply を使います。',
+  'learning.concept.icmp.q1.c.why':
+    'ping は UDP も使いません。ICMP Echo Request/Reply の上で直接動きます。',
+  'learning.concept.icmp.q2.a.why':
+    'ARP はローカルリンクで IP→MAC を解決します。TTL 切れではルータが ICMP Time Exceeded を送ります。',
+  'learning.concept.icmp.q2.c.why':
+    'TCP RST は接続を中断します。TTL が 0 になるのは L3 の事象で ICMP Time Exceeded を生みます。',
+  'learning.concept.icmp.q3.a.why':
+    'ICMP はアプリのペイロード用ではありません。制御・エラー・診断メッセージを運びます。',
+  'learning.concept.icmp.q3.b.why':
+    'ルーティングテーブルはルーティングプロトコル（OSPF/BGP）が交換します。ICMP はエラー/診断メッセージを運びます。',
+  'learning.concept.ipv4.q1.a.why':
+    'TTL は暗号化しません。各ルータが減らすホップ数で、パケットが無限にループするのを防ぎます。',
+  'learning.concept.ipv4.q1.c.why':
+    '優先度は DSCP/ToS フィールドです。TTL は無限ループを防ぐホップ上限です。',
+  'learning.concept.ipv4.q2.b.why':
+    '48 ビットは MAC アドレスです。IPv4 アドレスは 32 ビット（4 オクテット）です。',
+  'learning.concept.ipv4.q2.c.why': '128 ビットは IPv6 アドレスです。IPv4 は 32 ビットです。',
+  'learning.concept.ipv4.q3.a.why':
+    'DF がセットされている場合だけ破棄されます。DF が立っていなければルータは MTU に合わせて分割します。',
+  'learning.concept.ipv4.q3.b.why':
+    'ルータは暗号化しません。DF が立っていない大きすぎるパケットはリンク MTU に合わせて分割されます。',
+  'learning.concept.ipv4.q4.b.why':
+    'TTL はアドレッシングと無関係なホップ数です。ネットワーク/ホストの境界はマスク/プレフィックス長が決めます。',
+  'learning.concept.ipv4.q4.c.why':
+    'ポートは L4 です。ネットワークとホストの境界はサブネットマスク/プレフィックス長によります。',
+  'learning.concept.ipv4.q5.a.why':
+    'ブロードキャストは 255.255.255.255 です。0.0.0.0/0 はあらゆる宛先に一致するデフォルトルートです。',
+  'learning.concept.ipv4.q5.c.why':
+    '0.0.0.0/0 は完全に有効です — 任意のアドレスに最も大まかに一致するデフォルトルートです。',
+  'learning.concept.ipv6.q1.b.why': '32 ビットは IPv4 です。IPv6 アドレスは 128 ビットです。',
+  'learning.concept.ipv6.q1.c.why':
+    '64 ビットはインターフェース識別子の半分にすぎません。完全な IPv6 アドレスは 128 ビットです。',
+  'learning.concept.ipv6.q2.a.why':
+    'DHCP はアドレスを配ります。IPv6 は ARP に代わり NDP（近隣探索）で近隣を解決します。',
+  'learning.concept.ipv6.q2.c.why':
+    'STP は L2 ループを防ぎます。ARP の IPv6 後継は近隣探索（NDP）です。',
+  'learning.concept.ipv6.q3.a.why':
+    'IPv6 はもちろんルーティングします。なくしたのはブロードキャストで、代わりにマルチキャストを使います。',
+  'learning.concept.ipv6.q3.b.why':
+    'IPv6 はまさにアドレス（128 ビット）の話です。なくしたのはブロードキャストで、マルチキャストに置き換えました。',
   'learning.concept.ssh.name': 'SSH',
   'learning.concept.ssh.q1.prompt': 'SSH が提供するのは…',
   'learning.concept.ssh.q1.a': '暗号化されたリモートシェルとトンネル',

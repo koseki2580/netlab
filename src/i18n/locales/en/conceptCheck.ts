@@ -906,6 +906,100 @@ export const conceptCheck: Catalog = {
     'An IPv4 address lives in an A record; the quad-A (AAAA) record holds an IPv6 address.',
   'learning.concept.dns.q5.c.why':
     'A mail server name is an MX record; AAAA holds an IPv6 address.',
+  'learning.concept.udp.q1.a.why':
+    'Retransmission is TCP’s feature; UDP sends and forgets — any resend is up to the app.',
+  'learning.concept.udp.q1.b.why':
+    'Ordering is a TCP guarantee; UDP datagrams can arrive out of order or not at all.',
+  'learning.concept.udp.q2.a.why':
+    'Large downloads need every byte intact and ordered — that is TCP’s reliability, not UDP.',
+  'learning.concept.udp.q2.c.why':
+    'Bank transactions demand guaranteed delivery; that calls for TCP, not best-effort UDP.',
+  'learning.concept.udp.q3.b.why':
+    'Sequence/ack numbers belong to TCP’s reliability; UDP’s header is just ports, length and checksum.',
+  'learning.concept.udp.q3.c.why':
+    'A congestion window is TCP machinery; UDP is connectionless and has nothing to throttle.',
+  'learning.concept.udp.q4.b.why':
+    'Retransmission is TCP; UDP never resends — recovery, if any, is the application’s job.',
+  'learning.concept.udp.q4.c.why':
+    'UDP has no connection to reset; a lost datagram is simply gone unless the app resends.',
+  'learning.concept.udp.q5.a.why':
+    'UDP itself adds no encryption; DNS uses it because a tiny query/response is fast and easily retried.',
+  'learning.concept.udp.q5.c.why':
+    'A single small DNS exchange needs no ordering; that is why lightweight UDP fits — not TCP.',
+  'learning.concept.ethernet.q1.b.why':
+    'IP addresses are L3; an Ethernet frame is addressed at L2 by MAC.',
+  'learning.concept.ethernet.q1.c.why':
+    'Port numbers are L4; a frame uses L2 MAC addresses to reach the next device.',
+  'learning.concept.ethernet.q2.a.why':
+    'A switch does not read IP headers (that is L3 routing); it learns from L2 source MACs.',
+  'learning.concept.ethernet.q2.c.why':
+    'OSPF is a routing protocol for routers; a switch just learns source MACs from frames.',
+  'learning.concept.ethernet.q3.a.why':
+    'An unknown-destination frame is flooded, not dropped, so it can still reach the host.',
+  'learning.concept.ethernet.q3.b.why':
+    'Switches do not route to a gateway (that is L3); they flood unknown unicast out every other port.',
+  'learning.concept.ethernet.q4.b.why':
+    'The IP address rides inside the payload (L3); the frame’s own src/dst are MAC addresses.',
+  'learning.concept.ethernet.q4.c.why':
+    'Port numbers live in the L4 header; the Ethernet frame addresses by MAC.',
+  'learning.concept.ethernet.q5.a.why':
+    'Linking switches does not create separate internets; it joins them into one broadcast domain.',
+  'learning.concept.ethernet.q5.c.why':
+    'A routing table is a router’s L3 structure; cabling two switches just extends the L2 domain.',
+  'learning.concept.dhcp.q1.a.why':
+    'SYN/ACK/FIN is the TCP handshake; DHCP’s four steps are Discover, Offer, Request, Ack.',
+  'learning.concept.dhcp.q1.c.why':
+    'Those are not the DHCP step names; the exchange is Discover → Offer → Request → Ack (DORA).',
+  'learning.concept.dhcp.q2.b.why':
+    'The client has no IP and does not know the server yet, so it cannot unicast — it broadcasts.',
+  'learning.concept.dhcp.q2.c.why':
+    'Discover is an L2 broadcast on the LAN, not a multicast to routers; the client has no address yet.',
+  'learning.concept.dhcp.q3.a.why':
+    'A MAC is burned into the NIC, not handed out by DHCP; DHCP provides the gateway and DNS servers.',
+  'learning.concept.dhcp.q3.b.why':
+    'TCP ports are chosen by applications, not assigned by DHCP; DHCP supplies the gateway and DNS.',
+  'learning.concept.icmp.q1.b.why':
+    'ping is not TCP — it has no ports or handshake; it uses ICMP Echo Request/Reply.',
+  'learning.concept.icmp.q1.c.why':
+    'ping does not use UDP either; it rides directly on ICMP Echo Request/Reply.',
+  'learning.concept.icmp.q2.a.why':
+    'ARP resolves IP→MAC on the local link; an expired TTL makes the router send ICMP Time Exceeded.',
+  'learning.concept.icmp.q2.c.why':
+    'A TCP RST aborts a connection; TTL hitting 0 is an L3 event that yields ICMP Time Exceeded.',
+  'learning.concept.icmp.q3.a.why':
+    'ICMP is not for application payloads; it carries control, error and diagnostic messages.',
+  'learning.concept.icmp.q3.b.why':
+    'Routing tables are exchanged by routing protocols (OSPF/BGP); ICMP carries error/diagnostic messages.',
+  'learning.concept.ipv4.q1.a.why':
+    'TTL does not encrypt; it is a hop counter each router decrements to stop packets looping forever.',
+  'learning.concept.ipv4.q1.c.why':
+    'Priority is the DSCP/ToS field; TTL is a hop limit that prevents endless loops.',
+  'learning.concept.ipv4.q2.b.why':
+    '48 bits is a MAC address; an IPv4 address is 32 bits (four octets).',
+  'learning.concept.ipv4.q2.c.why': '128 bits is an IPv6 address; IPv4 is 32 bits.',
+  'learning.concept.ipv4.q3.a.why':
+    'It is only dropped if DF is set; with DF clear the router fragments the packet to fit the MTU.',
+  'learning.concept.ipv4.q3.b.why':
+    'Routers do not encrypt; an oversized packet with DF clear is fragmented to fit the link MTU.',
+  'learning.concept.ipv4.q4.b.why':
+    'TTL is a hop counter, unrelated to addressing; the mask/prefix length sets the network/host split.',
+  'learning.concept.ipv4.q4.c.why':
+    'A port is L4; the network-vs-host boundary comes from the subnet mask / prefix length.',
+  'learning.concept.ipv4.q5.a.why':
+    'The broadcast is 255.255.255.255; 0.0.0.0/0 is the default route that matches every destination.',
+  'learning.concept.ipv4.q5.c.why':
+    '0.0.0.0/0 is perfectly valid — it is the default route, the least-specific match for any address.',
+  'learning.concept.ipv6.q1.b.why': '32 bits is IPv4; an IPv6 address is 128 bits.',
+  'learning.concept.ipv6.q1.c.why':
+    '64 bits is just the interface-identifier half; a full IPv6 address is 128 bits.',
+  'learning.concept.ipv6.q2.a.why':
+    'DHCP hands out addresses; IPv6 resolves neighbors with NDP (Neighbor Discovery), replacing ARP.',
+  'learning.concept.ipv6.q2.c.why':
+    'STP prevents L2 loops; the IPv6 successor to ARP is Neighbor Discovery (NDP).',
+  'learning.concept.ipv6.q3.a.why':
+    'IPv6 of course routes; what it drops is broadcast — it uses multicast instead.',
+  'learning.concept.ipv6.q3.b.why':
+    'IPv6 is all about addresses (128-bit ones); what it removed is broadcast, replaced by multicast.',
   'learning.concept.ssh.name': 'SSH',
   'learning.concept.ssh.q1.prompt': 'SSH provides…',
   'learning.concept.ssh.q1.a': 'An encrypted remote shell and tunnel',
