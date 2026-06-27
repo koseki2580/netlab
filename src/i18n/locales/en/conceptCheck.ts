@@ -1106,6 +1106,78 @@ export const conceptCheck: Catalog = {
     'HPACK is HTTP/2’s; HTTP/3 needs QPACK, which tolerates QUIC’s out-of-order stream delivery.',
   'learning.concept.http3.q3.b.why':
     'gzip is for bodies; HTTP/3 compresses headers with QPACK (HPACK adapted for QUIC).',
+  'learning.concept.stp.q1.a.why':
+    'IP exhaustion is solved by NAT/IPv6; STP prevents Layer-2 forwarding loops in a switched network.',
+  'learning.concept.stp.q1.c.why':
+    'Routing loops are an L3 concern (TTL, routing protocols); STP stops L2 forwarding loops between switches.',
+  'learning.concept.stp.q2.b.why':
+    'A designated router is an OSPF (L3) role; STP’s reference point is the elected root bridge.',
+  'learning.concept.stp.q2.c.why':
+    'The default gateway is the exit router for a subnet (L3); STP’s anchor is the root bridge.',
+  'learning.concept.stp.q3.a.why':
+    'A blocked port is still physically up; it just stops forwarding data while listening to BPDUs.',
+  'learning.concept.stp.q3.b.why':
+    'It is the opposite — a blocked port drops data frames but still processes BPDUs to watch the topology.',
+  'learning.concept.vlan.q1.b.why':
+    'A VLAN is logical, not physical — it splits one switch into separate broadcast domains without new cabling.',
+  'learning.concept.vlan.q1.c.why':
+    'A routing table is an L3 router structure; a VLAN just creates a separate L2 broadcast domain.',
+  'learning.concept.vlan.q2.a.why':
+    'Carrying one VLAN is an access port; a trunk carries many VLANs, tagged with 802.1Q.',
+  'learning.concept.vlan.q2.c.why':
+    'A trunk tags frames with 802.1Q so VLANs stay distinct; untagged-only describes an access port.',
+  'learning.concept.vlan.q3.a.why':
+    'Cabling does not bridge VLANs — they are separate L3 networks; you need a router or L3 switch.',
+  'learning.concept.vlan.q3.b.why':
+    'A root bridge is an STP concept within one L2 domain; crossing VLANs needs L3 routing.',
+  'learning.concept.vxlan.q1.b.why':
+    'VXLAN is not IPv6-only; it tunnels L2 frames inside UDP/IP (L2-over-L3) regardless of inner protocol.',
+  'learning.concept.vxlan.q1.c.why':
+    'VXLAN does not carry routing tables; it encapsulates L2 frames in UDP/IP to stretch a segment over L3.',
+  'learning.concept.vxlan.q2.a.why':
+    'A 12-bit VLAN ID caps at ~4094; VXLAN uses a 24-bit VNI for ~16M segments.',
+  'learning.concept.vxlan.q2.c.why':
+    'A MAC identifies a host, not a segment; VXLAN segments are identified by the 24-bit VNI.',
+  'learning.concept.vxlan.q3.a.why':
+    'EVPN is a control plane, not encryption; it distributes MAC/IP reachability via BGP.',
+  'learning.concept.vxlan.q3.b.why':
+    'Address assignment is DHCP; EVPN gives VXLAN a BGP control plane to advertise MAC/IP reachability.',
+  'learning.concept.wifi.q1.b.why':
+    'CSMA/CD (detection) is wired Ethernet; a radio can’t hear while sending, so Wi-Fi uses CSMA/CA to avoid collisions.',
+  'learning.concept.wifi.q1.c.why':
+    'Token passing is Token Ring/FDDI; Wi-Fi uses CSMA/CA to avoid collisions on the shared air.',
+  'learning.concept.wifi.q2.a.why':
+    'A radio can’t transmit and receive at once on one channel; the medium is shared and half-duplex.',
+  'learning.concept.wifi.q2.c.why':
+    'Wireless is not collision-free — that is why Wi-Fi needs CSMA/CA; the air is shared and half-duplex.',
+  'learning.concept.wifi.q3.a.why':
+    'OSPF is a router routing protocol, irrelevant here; a Wi-Fi client must first associate with an access point.',
+  'learning.concept.wifi.q3.b.why':
+    'A public IP is not required (NAT/private IPs work); first the client must associate and authenticate with the AP.',
+  'learning.concept.lacp.q1.b.why':
+    'Loop prevention is STP; LACP bundles several physical links into one logical link.',
+  'learning.concept.lacp.q1.c.why':
+    'VLAN assignment is switch config (802.1Q); LACP aggregates multiple links into one.',
+  'learning.concept.lacp.q2.a.why':
+    'Aggregation is an L2 bandwidth/redundancy feature, not a new subnet (that is L3 addressing).',
+  'learning.concept.lacp.q2.c.why':
+    'LACP does not encrypt; bundling links gives more aggregate bandwidth and link redundancy.',
+  'learning.concept.lacp.q3.a.why':
+    'That is the point of bundling — STP sees one logical link, so it does not block the members as loops.',
+  'learning.concept.lacp.q3.b.why':
+    'A port-channel is still L2, not a router; STP treats the correct bundle as a single logical link.',
+  'learning.concept.lldp.q1.b.why':
+    'Routing between subnets is L3; LLDP just discovers directly-connected neighbors and their capabilities.',
+  'learning.concept.lldp.q1.c.why':
+    'LLDP does not encrypt; it advertises a device’s identity/capabilities to directly-connected neighbors.',
+  'learning.concept.lldp.q2.a.why':
+    'LLDP frames are link-local and never forwarded by switches/routers; it works per link, not internet-wide.',
+  'learning.concept.lldp.q2.c.why':
+    'LLDP is an L2 protocol with its own EtherType, not carried over TCP; it stays within one link.',
+  'learning.concept.lldp.q3.a.why':
+    'IP assignment is DHCP; LLDP maps physical topology and helps auto-configure VoIP phones and PoE.',
+  'learning.concept.lldp.q3.b.why':
+    'Route selection is a routing protocol’s job; LLDP discovers neighbors to map topology and aid VoIP/PoE.',
   'learning.concept.ssh.name': 'SSH',
   'learning.concept.ssh.q1.prompt': 'SSH provides…',
   'learning.concept.ssh.q1.a': 'An encrypted remote shell and tunnel',

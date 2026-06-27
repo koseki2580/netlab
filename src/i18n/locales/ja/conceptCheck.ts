@@ -1102,6 +1102,78 @@ export const conceptCheck: Catalog = {
     'HPACK は HTTP/2 のものです。HTTP/3 は QUIC の順不同配送に耐える QPACK を使います。',
   'learning.concept.http3.q3.b.why':
     'gzip は本文用です。HTTP/3 はヘッダを QPACK（QUIC 向けに適応した HPACK）で圧縮します。',
+  'learning.concept.stp.q1.a.why':
+    'IP 枯渇は NAT/IPv6 で解決します。STP はスイッチ網の L2 転送ループを防ぎます。',
+  'learning.concept.stp.q1.c.why':
+    'ルーティングループは L3 の問題（TTL・ルーティングプロトコル）です。STP はスイッチ間の L2 転送ループを止めます。',
+  'learning.concept.stp.q2.b.why':
+    '指定ルータは OSPF（L3）の役割です。STP の基準点は選出されたルートブリッジです。',
+  'learning.concept.stp.q2.c.why':
+    'デフォルトゲートウェイはサブネットの出口ルータ（L3）です。STP の起点はルートブリッジです。',
+  'learning.concept.stp.q3.a.why':
+    'ブロックされたポートも物理的には生きています。BPDU を聞きつつデータ転送だけを止めます。',
+  'learning.concept.stp.q3.b.why':
+    '逆です — ブロックポートはデータフレームを落としつつ、トポロジ監視のため BPDU は処理します。',
+  'learning.concept.vlan.q1.b.why':
+    'VLAN は物理ではなく論理です — 新たな配線なしに 1 台のスイッチを別々のブロードキャストドメインに分けます。',
+  'learning.concept.vlan.q1.c.why':
+    'ルーティングテーブルは L3 ルータの構造です。VLAN は別々の L2 ブロードキャストドメインを作るだけです。',
+  'learning.concept.vlan.q2.a.why':
+    '1 つの VLAN だけを運ぶのはアクセスポートです。トランクは 802.1Q でタグ付けし複数 VLAN を運びます。',
+  'learning.concept.vlan.q2.c.why':
+    'トランクは 802.1Q でタグ付けし VLAN を区別します。タグなしのみはアクセスポートの説明です。',
+  'learning.concept.vlan.q3.a.why':
+    '配線では VLAN をまたげません — それらは別々の L3 ネットワークで、ルータか L3 スイッチが必要です。',
+  'learning.concept.vlan.q3.b.why':
+    'ルートブリッジは 1 つの L2 ドメイン内の STP の概念です。VLAN 間の移動には L3 ルーティングが必要です。',
+  'learning.concept.vxlan.q1.b.why':
+    'VXLAN は IPv6 専用ではありません。内側のプロトコルに関係なく L2 フレームを UDP/IP（L2 over L3）にトンネルします。',
+  'learning.concept.vxlan.q1.c.why':
+    'VXLAN はルーティングテーブルを運びません。L2 フレームを UDP/IP にカプセル化し、セグメントを L3 上に延ばします。',
+  'learning.concept.vxlan.q2.a.why':
+    '12 ビットの VLAN ID は約 4094 が上限です。VXLAN は 24 ビットの VNI で約 1600 万セグメントを扱います。',
+  'learning.concept.vxlan.q2.c.why':
+    'MAC はセグメントではなくホストを識別します。VXLAN のセグメントは 24 ビットの VNI で識別します。',
+  'learning.concept.vxlan.q3.a.why':
+    'EVPN は暗号化ではなくコントロールプレーンです。MAC/IP 到達性を BGP で配布します。',
+  'learning.concept.vxlan.q3.b.why':
+    'アドレス割り当ては DHCP です。EVPN は VXLAN に BGP コントロールプレーンを与え MAC/IP 到達性を広告します。',
+  'learning.concept.wifi.q1.b.why':
+    'CSMA/CD（検出）は有線 Ethernet です。無線は送信中に聞けないため、Wi-Fi は衝突回避の CSMA/CA を使います。',
+  'learning.concept.wifi.q1.c.why':
+    'トークンパッシングは Token Ring/FDDI です。Wi-Fi は共有の電波上で衝突を避ける CSMA/CA を使います。',
+  'learning.concept.wifi.q2.a.why':
+    '無線は 1 チャネルで同時に送受信できません。媒体は共有で半二重です。',
+  'learning.concept.wifi.q2.c.why':
+    '無線は衝突がないわけではありません — だから Wi-Fi は CSMA/CA を要します。電波は共有で半二重です。',
+  'learning.concept.wifi.q3.a.why':
+    'OSPF はルータのルーティングプロトコルで無関係です。Wi-Fi クライアントはまずアクセスポイントに接続（アソシエート）します。',
+  'learning.concept.wifi.q3.b.why':
+    '公開 IP は不要です（NAT/私設 IP で動きます）。まずクライアントは AP とアソシエートし認証します。',
+  'learning.concept.lacp.q1.b.why':
+    'ループ防止は STP です。LACP は複数の物理リンクを 1 つの論理リンクに束ねます。',
+  'learning.concept.lacp.q1.c.why':
+    'VLAN の割り当てはスイッチ設定（802.1Q）です。LACP は複数リンクを 1 つに集約します。',
+  'learning.concept.lacp.q2.a.why':
+    '集約は L2 の帯域/冗長機能で、新しいサブネット（L3 アドレッシング）ではありません。',
+  'learning.concept.lacp.q2.c.why':
+    'LACP は暗号化しません。リンクの束ね合わせは合計帯域とリンク冗長を高めます。',
+  'learning.concept.lacp.q3.a.why':
+    'それが束ねる狙いです — STP は 1 つの論理リンクと見なし、メンバーをループとしてブロックしません。',
+  'learning.concept.lacp.q3.b.why':
+    'ポートチャネルはルータではなく依然 L2 です。STP は正しい束を 1 つの論理リンクとして扱います。',
+  'learning.concept.lldp.q1.b.why':
+    'サブネット間のルーティングは L3 です。LLDP は直結の近隣とその能力を発見するだけです。',
+  'learning.concept.lldp.q1.c.why':
+    'LLDP は暗号化しません。機器の識別情報/能力を直結の近隣に広告します。',
+  'learning.concept.lldp.q2.a.why':
+    'LLDP フレームはリンクローカルでスイッチ/ルータに転送されません。インターネット全体ではなくリンク単位で動きます。',
+  'learning.concept.lldp.q2.c.why':
+    'LLDP は独自の EtherType を持つ L2 プロトコルで TCP では運ばれません。1 つのリンク内に留まります。',
+  'learning.concept.lldp.q3.a.why':
+    'IP の割り当ては DHCP です。LLDP は物理トポロジを把握し、VoIP 電話や PoE の自動設定を助けます。',
+  'learning.concept.lldp.q3.b.why':
+    '経路選択はルーティングプロトコルの仕事です。LLDP は近隣を発見してトポロジを描き VoIP/PoE を助けます。',
   'learning.concept.ssh.name': 'SSH',
   'learning.concept.ssh.q1.prompt': 'SSH が提供するのは…',
   'learning.concept.ssh.q1.a': '暗号化されたリモートシェルとトンネル',
