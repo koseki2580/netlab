@@ -33,7 +33,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.arp.q3.prompt': 'ARP が働く範囲は…',
   'learning.concept.arp.q3.a': 'インターネット全体',
   'learning.concept.arp.q3.b': 'ルータ間のみ',
-  'learning.concept.arp.q3.c': '単一のブロードキャストドメイン(LAN)',
+  'learning.concept.arp.q3.c': '単一のブロードキャストドメイン（LAN）',
   'learning.concept.arp.q3.why':
     'ARP はリンクローカルです。遠隔ネットワークへはリモートホストではなくゲートウェイを ARP します。',
   'learning.concept.stp.name': 'STP',
@@ -118,10 +118,10 @@ export const conceptCheck: Catalog = {
   'learning.concept.nat.q1.b': 'スイッチが MAC を学習',
   'learning.concept.nat.q1.c': 'ルータが OSPF を実行',
   'learning.concept.nat.q1.why':
-    'ソース NAT/PAT はプライベートアドレスを公開アドレスに(ポートを追跡して)書き換え、LAN 全体が公開 IP を共有します。',
+    'ソース NAT/PAT はプライベートアドレスを公開アドレスに（ポートを追跡して）書き換え、LAN 全体が公開 IP を共有します。',
   'learning.concept.nat.q2.prompt': '外部から内部サーバへ届かせるには…',
   'learning.concept.nat.q2.a': 'デフォルトルート',
-  'learning.concept.nat.q2.b': 'ポートフォワーディング(DNAT)',
+  'learning.concept.nat.q2.b': 'ポートフォワーディング（DNAT）',
   'learning.concept.nat.q2.c': 'VLAN トランク',
   'learning.concept.nat.q2.why':
     'DNAT は 公開 ip:port を内部 host:port に対応づけ、外部クライアントが到達できるようにします。',
@@ -149,7 +149,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.dns.q3.b': 'MAC アドレスだけをキャッシュする',
   'learning.concept.dns.q3.c': '答えを得るまで代わりに他サーバへ問い合わせる',
   'learning.concept.dns.q3.why':
-    '再帰リゾルバは DNS 階層(ルート→TLD→権威)をたどり、最終的な答えを返します。',
+    '再帰リゾルバは DNS 階層（ルート→TLD→権威）をたどり、最終的な答えを返します。',
   'learning.concept.tls.name': 'TLS',
   'learning.concept.tls.q1.prompt': 'TLS が提供するのは…',
   'learning.concept.tls.q1.a': 'ネットワーク間のルーティング',
@@ -168,7 +168,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.tls.q3.b': 'IP の下',
   'learning.concept.tls.q3.c': 'イーサネットの代わり',
   'learning.concept.tls.q3.why':
-    'TLS は順序通りで信頼できるバイトストリームを前提とするため TCP の上に乗ります(QUIC は独自に提供)。',
+    'TLS は順序通りで信頼できるバイトストリームを前提とするため TCP の上に乗ります（QUIC は独自に提供）。',
   'learning.concept.ethernet.name': 'イーサネット',
   'learning.concept.ethernet.q1.prompt': 'イーサネットフレームの宛先指定は…',
   'learning.concept.ethernet.q1.a': 'MAC アドレス',
@@ -191,7 +191,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.dhcp.name': 'DHCP',
   'learning.concept.dhcp.q1.prompt': 'DHCP の4ステップ交換は…',
   'learning.concept.dhcp.q1.a': 'SYN, SYN-ACK, ACK, FIN',
-  'learning.concept.dhcp.q1.b': 'Discover, Offer, Request, Ack(DORA)',
+  'learning.concept.dhcp.q1.b': 'Discover, Offer, Request, Ack（DORA）',
   'learning.concept.dhcp.q1.c': 'Query, Response, Renew, Release',
   'learning.concept.dhcp.q1.why':
     'クライアントが Discover、サーバが Offer、クライアントが Request、サーバが Ack でリースを確定します。',
@@ -225,7 +225,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.icmp.q3.b': 'ルーティングテーブル',
   'learning.concept.icmp.q3.c': 'エラーと診断メッセージ',
   'learning.concept.icmp.q3.why':
-    'ICMP は問題(到達不能・フラグメント必要・時間超過)の通知と診断を担い、ユーザデータは運びません。',
+    'ICMP は問題（到達不能・フラグメント必要・時間超過）の通知と診断を担い、ユーザデータは運びません。',
   'learning.concept.ipv4.name': 'IPv4',
   'learning.concept.ipv4.q1.prompt': 'IPv4 の TTL フィールドは…',
   'learning.concept.ipv4.q1.a': 'パケットを暗号化する',
@@ -244,7 +244,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ipv4.q3.b': '暗号化する',
   'learning.concept.ipv4.q3.c': 'フラグメント化する',
   'learning.concept.ipv4.q3.why':
-    'IPv4 ルータは過大パケットをフラグメント化します(DF ビットがあれば代わりに ICMP を返す)。',
+    'IPv4 ルータは過大パケットをフラグメント化します（DF ビットがあれば代わりに ICMP を返す）。',
   'learning.concept.ipv6.name': 'IPv6',
   'learning.concept.ipv6.q1.prompt': 'IPv6 アドレスは…',
   'learning.concept.ipv6.q1.a': '128 ビット',
@@ -254,14 +254,14 @@ export const conceptCheck: Catalog = {
     'IPv6 はアドレスを 128 ビットに拡張し、8つの16進グループで表記します。',
   'learning.concept.ipv6.q2.prompt': 'IPv6 が ARP の代わりに使うのは…',
   'learning.concept.ipv6.q2.a': 'DHCP',
-  'learning.concept.ipv6.q2.b': '近隣探索(NDP)',
+  'learning.concept.ipv6.q2.b': '近隣探索（NDP）',
   'learning.concept.ipv6.q2.c': 'STP',
   'learning.concept.ipv6.q2.why':
     'NDP は ICMPv6 の近隣要請/近隣広告でリンク層アドレスを解決します。',
   'learning.concept.ipv6.q3.prompt': 'IPv6 に存在しないのは…',
   'learning.concept.ipv6.q3.a': 'ルーティング',
   'learning.concept.ipv6.q3.b': 'アドレス',
-  'learning.concept.ipv6.q3.c': 'ブロードキャスト(マルチキャストを使う)',
+  'learning.concept.ipv6.q3.c': 'ブロードキャスト（マルチキャストを使う）',
   'learning.concept.ipv6.q3.why':
     'IPv6 はブロードキャストを廃止し、全ノード宛にはマルチキャストグループを使います。',
   'learning.concept.ospf.name': 'OSPF',
@@ -270,10 +270,10 @@ export const conceptCheck: Catalog = {
   'learning.concept.ospf.q1.b': '距離ベクトル型プロトコル',
   'learning.concept.ospf.q1.c': 'パスベクトル型プロトコル',
   'learning.concept.ospf.q1.why':
-    'OSPF はリンクステート広告をフラッディングし、全ルータが同じ地図を作って SPF(ダイクストラ)を実行します。',
+    'OSPF はリンクステート広告をフラッディングし、全ルータが同じ地図を作って SPF（ダイクストラ）を実行します。',
   'learning.concept.ospf.q2.prompt': 'OSPF が最良経路を選ぶ基準は…',
   'learning.concept.ospf.q2.a': 'ホップ数',
-  'learning.concept.ospf.q2.b': '総リンクコスト(多くは帯域ベース)',
+  'learning.concept.ospf.q2.b': '総リンクコスト（多くは帯域ベース）',
   'learning.concept.ospf.q2.c': 'AS パス長',
   'learning.concept.ospf.q2.why':
     'OSPF はリンクごとのコストを合算し、総コスト最小が勝ちます。RIP のホップ数とは異なります。',
@@ -285,14 +285,14 @@ export const conceptCheck: Catalog = {
     'トポロジ変化が新しい LSA と SPF 再計算を引き起こし、OSPF は障害を迂回して再収束します。',
   'learning.concept.bgp.name': 'BGP',
   'learning.concept.bgp.q1.prompt': 'BGP は…',
-  'learning.concept.bgp.q1.a': '自律システム間をルーティングする(インターネットの背骨)',
+  'learning.concept.bgp.q1.a': '自律システム間をルーティングする（インターネットの背骨）',
   'learning.concept.bgp.q1.b': 'IP アドレスを割り当てる',
   'learning.concept.bgp.q1.c': '名前を解決する',
   'learning.concept.bgp.q1.why':
     'BGP は AS 間で到達性を交換し、独立したネットワーク群が世界規模のインターネットを形成する仕組みです。',
   'learning.concept.bgp.q2.prompt': 'BGP が経路を選ぶ主基準は…',
   'learning.concept.bgp.q2.a': '最小ホップ数',
-  'learning.concept.bgp.q2.b': 'ポリシーと AS パス(パスベクトル)',
+  'learning.concept.bgp.q2.b': 'ポリシーと AS パス（パスベクトル）',
   'learning.concept.bgp.q2.c': 'リンクコスト',
   'learning.concept.bgp.q2.why':
     'BGP はパスベクトル型で、運用者は AS パス長やローカルプリファレンス等の属性にポリシーを適用します。',
@@ -303,14 +303,14 @@ export const conceptCheck: Catalog = {
   'learning.concept.bgp.q3.why': '各 AS は番号を持ち、自分が到達できるプレフィックスを広告します。',
   'learning.concept.rip.name': 'RIP',
   'learning.concept.rip.q1.prompt': 'RIP の経路選択基準は…',
-  'learning.concept.rip.q1.a': 'ホップ数(距離ベクトル)',
+  'learning.concept.rip.q1.a': 'ホップ数（距離ベクトル）',
   'learning.concept.rip.q1.b': 'リンクコスト',
   'learning.concept.rip.q1.c': 'AS パス',
   'learning.concept.rip.q1.why':
     'RIP はルータのホップ数を数え、回線速度に関わらず最少ホップが勝ちます。',
   'learning.concept.rip.q2.prompt': 'RIP の使用可能な最大ホップ数は…',
   'learning.concept.rip.q2.a': '255',
-  'learning.concept.rip.q2.b': '15(16 は到達不能)',
+  'learning.concept.rip.q2.b': '15（16 は到達不能）',
   'learning.concept.rip.q2.c': '無制限',
   'learning.concept.rip.q2.why':
     'RIP は 15 ホップが上限で、16 は「無限大」。このため小規模ネットワーク向けです。',
@@ -326,7 +326,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.http.q1.b': '発行/購読',
   'learning.concept.http.q1.c': 'ブロードキャスト',
   'learning.concept.http.q1.why':
-    'クライアントが要求(メソッド + URL)を送り、サーバがステータスと本文を含む応答を返します。',
+    'クライアントが要求（メソッド + URL）を送り、サーバがステータスと本文を含む応答を返します。',
   'learning.concept.http.q2.prompt': '安全な読み取り専用 HTTP メソッドは？',
   'learning.concept.http.q2.a': 'POST',
   'learning.concept.http.q2.b': 'GET',
@@ -338,7 +338,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.http.q3.b': 'サーバエラー',
   'learning.concept.http.q3.c': 'リソースが見つからない',
   'learning.concept.http.q3.why':
-    '4xx はクライアントエラーで、404 は要求リソースが存在しないこと(2xx 成功、5xx サーバエラー)。',
+    '4xx はクライアントエラーで、404 は要求リソースが存在しないこと（2xx 成功、5xx サーバエラー）。',
   'learning.concept.quic.name': 'QUIC',
   'learning.concept.quic.q1.prompt': 'QUIC が上に乗るのは…',
   'learning.concept.quic.q1.a': 'UDP',
@@ -348,7 +348,7 @@ export const conceptCheck: Catalog = {
     'QUIC は信頼性・順序・暗号を自前で実装し UDP の上に乗り、TCP の HOL ブロッキングとハンドシェイク遅延を避けます。',
   'learning.concept.quic.q2.prompt': 'QUIC の TCP+TLS に対する利点は…',
   'learning.concept.quic.q2.a': '暗号化しない',
-  'learning.concept.quic.q2.b': '接続確立が速い(多くは 1-RTT や 0-RTT)',
+  'learning.concept.quic.q2.b': '接続確立が速い（多くは 1-RTT や 0-RTT）',
   'learning.concept.quic.q2.c': 'スループットが低い',
   'learning.concept.quic.q2.why':
     'QUIC はトランスポートと TLS のハンドシェイクを統合し、データ送出前の往復を削減します。',
@@ -379,7 +379,7 @@ export const conceptCheck: Catalog = {
     'HPACK は共有の動的テーブルで反復ヘッダを圧縮し、リクエストごとのオーバーヘッドを削減します。',
   'learning.concept.http3.name': 'HTTP/3',
   'learning.concept.http3.q1.prompt': 'HTTP/3 が動くのは…',
-  'learning.concept.http3.q1.a': 'QUIC(UDP)',
+  'learning.concept.http3.q1.a': 'QUIC（UDP）',
   'learning.concept.http3.q1.b': '生の TCP',
   'learning.concept.http3.q1.c': 'ICMP',
   'learning.concept.http3.q1.why':
@@ -414,7 +414,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.qos.q3.b': 'マークされた全パケットを破棄する',
   'learning.concept.qos.q3.c': '優先キューイング等のホップ単位動作を適用する',
   'learning.concept.qos.q3.why':
-    '各ホップは DSCP 値をキュー/スケジューリング方針(PHB)に対応づけます。エンドツーエンドには一貫したマーキングが必要です。',
+    '各ホップは DSCP 値をキュー/スケジューリング方針（PHB）に対応づけます。エンドツーエンドには一貫したマーキングが必要です。',
   'learning.concept.ecmp.name': 'ECMP',
   'learning.concept.ecmp.q1.prompt': 'ECMP を使うのは…',
   'learning.concept.ecmp.q1.a': '宛先への複数経路が同コストのとき',
@@ -443,7 +443,7 @@ export const conceptCheck: Catalog = {
     'ホストは1つの仮想 IP を向き、マスタ障害時に VRRP がバックアップルータへ引き継ぎます。',
   'learning.concept.vrrp.q2.prompt': 'VRRP で仮想 IP を保持するのは、ある時点で…',
   'learning.concept.vrrp.q2.a': '全ルータが同時に',
-  'learning.concept.vrrp.q2.b': '1台のマスタ(他はバックアップ)',
+  'learning.concept.vrrp.q2.b': '1台のマスタ（他はバックアップ）',
   'learning.concept.vrrp.q2.c': 'DNS サーバ',
   'learning.concept.vrrp.q2.why':
     '1台がマスタとして仮想 IP/MAC に応答し、バックアップは監視して障害時に引き継ぎます。',
@@ -469,7 +469,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.multicast.q3.prompt': 'マルチキャスト宛先アドレスが指すのは…',
   'learning.concept.multicast.q3.a': '単一ホスト',
   'learning.concept.multicast.q3.b': '物理ポート',
-  'learning.concept.multicast.q3.c': 'グループ(IPv4 では 224.0.0.0/4 等)',
+  'learning.concept.multicast.q3.c': 'グループ（IPv4 では 224.0.0.0/4 等）',
   'learning.concept.multicast.q3.why':
     'マルチキャストは専用のグループアドレス範囲を使い、受信者は個別指定でなく購読します。',
   'learning.concept.mtu.name': 'MTU / PMTUD',
@@ -519,39 +519,39 @@ export const conceptCheck: Catalog = {
     'エッジルータがラベルを付与し、コアは事前設定パスに沿ってラベルを交換、ホップごとの全ルート検索を避けます。',
   'learning.concept.mpls.q2.prompt': 'ラベル付きパケットがたどる経路を…',
   'learning.concept.mpls.q2.a': 'ブロードキャストドメイン',
-  'learning.concept.mpls.q2.b': 'ラベルスイッチドパス(LSP)',
+  'learning.concept.mpls.q2.b': 'ラベルスイッチドパス（LSP）',
   'learning.concept.mpls.q2.c': '自律システム',
   'learning.concept.mpls.q2.why':
     'ラベルは MPLS コアを通る LSP を定義し、ホップごとの宛先検索とは独立に設定されます。',
   'learning.concept.mpls.q3.prompt': 'MPLS の位置づけは…',
   'learning.concept.mpls.q3.a': 'HTTP の上',
   'learning.concept.mpls.q3.b': 'イーサネットの下',
-  'learning.concept.mpls.q3.c': 'L2 と L3 の間(「レイヤー2.5」)',
+  'learning.concept.mpls.q3.c': 'L2 と L3 の間（「レイヤー2.5」）',
   'learning.concept.mpls.q3.why':
     'MPLS はリンクヘッダとネットワークヘッダの間にシムラベルを足すため「レイヤー2.5」と呼ばれます。',
   'learning.concept.vxlan.name': 'VXLAN / EVPN',
   'learning.concept.vxlan.q1.prompt': 'VXLAN が運ぶのは…',
-  'learning.concept.vxlan.q1.a': 'UDP/IP の中の L2 フレーム(L3 上の L2)',
+  'learning.concept.vxlan.q1.a': 'UDP/IP の中の L2 フレーム（L3 上の L2）',
   'learning.concept.vxlan.q1.b': 'IPv6 のみ',
   'learning.concept.vxlan.q1.c': 'ルーティングテーブル',
   'learning.concept.vxlan.q1.why':
-    'VXLAN はイーサネットフレームを UDP でトンネルし、ルーテッド(L3)なデータセンタファブリック上に L2 を延伸します。',
+    'VXLAN はイーサネットフレームを UDP でトンネルし、ルーテッド（L3）なデータセンタファブリック上に L2 を延伸します。',
   'learning.concept.vxlan.q2.prompt': 'VXLAN セグメントを識別するのは…',
-  'learning.concept.vxlan.q2.a': 'VLAN ID(12ビット)',
-  'learning.concept.vxlan.q2.b': 'VNI(24ビットのネットワーク識別子)',
+  'learning.concept.vxlan.q2.a': 'VLAN ID（12ビット）',
+  'learning.concept.vxlan.q2.b': 'VNI（24ビットのネットワーク識別子）',
   'learning.concept.vxlan.q2.c': 'MAC アドレス',
   'learning.concept.vxlan.q2.why':
     '24ビットの VNI は約1600万セグメントを可能にし、802.1Q VLAN の 4094 をはるかに超えます。',
   'learning.concept.vxlan.q3.prompt': 'EVPN が VXLAN とよく併用されるのは…',
   'learning.concept.vxlan.q3.a': 'フレームを暗号化するため',
   'learning.concept.vxlan.q3.b': 'IP を割り当てるため',
-  'learning.concept.vxlan.q3.c': 'MAC/IP 到達性を制御プレーン(BGP)で配布するため',
+  'learning.concept.vxlan.q3.c': 'MAC/IP 到達性を制御プレーン（BGP）で配布するため',
   'learning.concept.vxlan.q3.why':
-    'EVPN(BGP のアドレスファミリ)はどの MAC/IP がどのトンネル端点の背後にあるかを広告し、フラッド&ラーンを置き換えます。',
+    'EVPN（BGP のアドレスファミリ）はどの MAC/IP がどのトンネル端点の背後にあるかを広告し、フラッド&ラーンを置き換えます。',
   'learning.concept.wifi.name': 'Wi-Fi / 802.11',
   'learning.concept.wifi.q1.prompt': 'Wi-Fi が衝突を避ける方式は…',
-  'learning.concept.wifi.q1.a': 'CSMA/CA(衝突回避)',
-  'learning.concept.wifi.q1.b': 'CSMA/CD(衝突検出)',
+  'learning.concept.wifi.q1.a': 'CSMA/CA（衝突回避）',
+  'learning.concept.wifi.q1.b': 'CSMA/CD（衝突検出）',
   'learning.concept.wifi.q1.c': 'トークンパッシング',
   'learning.concept.wifi.q1.why':
     '無線では衝突を確実に検出できないため、802.11 は検出ではなく、聞いてバックオフして回避します。',
@@ -564,9 +564,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.wifi.q3.prompt': 'データ送信前、Wi-Fi クライアントはまず…',
   'learning.concept.wifi.q3.a': 'OSPF を実行',
   'learning.concept.wifi.q3.b': '公開 IP を取得',
-  'learning.concept.wifi.q3.c': 'アクセスポイントと結合(と認証)する',
+  'learning.concept.wifi.q3.c': 'アクセスポイントと結合（と認証）する',
   'learning.concept.wifi.q3.why':
-    'クライアントは AP を探索し、認証して結合(例: WPA2)してからトラフィックを流せます。',
+    'クライアントは AP を探索し、認証して結合（例: WPA2）してからトラフィックを流せます。',
   'learning.concept.acl.name': 'ACL / ファイアウォール',
   'learning.concept.acl.q1.prompt': 'ACL がトラフィックを選別する基準は…',
   'learning.concept.acl.q1.a': 'パケットのフィールドを permit/deny ルールと照合',
@@ -599,29 +599,29 @@ export const conceptCheck: Catalog = {
   'learning.concept.model.q2.b': 'アプリ → トランスポート → インターネット → リンク',
   'learning.concept.model.q2.c': 'ランダム順',
   'learning.concept.model.q2.why':
-    '送信側はアプリデータをトランスポート(TCP/UDP)→ IP → リンクフレームの順で包み、受信側は逆順で開きます。',
+    '送信側はアプリデータをトランスポート（TCP/UDP）→ IP → リンクフレームの順で包み、受信側は逆順で開きます。',
   'learning.concept.model.q3.prompt': 'カプセル化とは…',
   'learning.concept.model.q3.a': '全パケットを暗号化する',
   'learning.concept.model.q3.b': '全ヘッダを捨てる',
   'learning.concept.model.q3.c': '各層が上位層を自分のヘッダで包む',
   'learning.concept.model.q3.why':
-    '下るにつれ各層がヘッダ(L2 ではトレーラも)を足します。ある層のペイロードは上位層の単位そのものです。',
+    '下るにつれ各層がヘッダ（L2 ではトレーラも）を足します。ある層のペイロードは上位層の単位そのものです。',
   'learning.concept.model.q4.prompt': 'ルータが主に動作する層は…',
-  'learning.concept.model.q4.a': 'ネットワーク層(L3 / IP)',
+  'learning.concept.model.q4.a': 'ネットワーク層（L3 / IP）',
   'learning.concept.model.q4.b': 'アプリケーション層',
   'learning.concept.model.q4.c': '物理層',
   'learning.concept.model.q4.why':
-    'ルータは IP(L3)で、スイッチは MAC(L2)で転送します。両者が協調してパケットを端から端へ運びます。',
+    'ルータは IP（L3）で、スイッチは MAC（L2）で転送します。両者が協調してパケットを端から端へ運びます。',
   'learning.concept.model.q5.prompt': 'スイッチが主に動作する層は…',
   'learning.concept.model.q5.a': 'トランスポート層',
-  'learning.concept.model.q5.b': 'データリンク層(L2 / MAC)',
+  'learning.concept.model.q5.b': 'データリンク層（L2 / MAC）',
   'learning.concept.model.q5.c': 'ネットワーク層',
   'learning.concept.model.q5.why':
     'スイッチは LAN 内で Ethernet フレームを MAC で転送し、IP ヘッダは見ません。',
   'learning.concept.model.q6.prompt': 'TCP が Web サーバに渡すペイロードは…',
   'learning.concept.model.q6.a': '別の IP ヘッダ',
   'learning.concept.model.q6.b': 'MAC アドレス',
-  'learning.concept.model.q6.c': 'アプリケーションデータ(例: HTTP リクエスト)',
+  'learning.concept.model.q6.c': 'アプリケーションデータ（例: HTTP リクエスト）',
   'learning.concept.model.q6.why':
     '各層のペイロードは上位層のデータです。TCP はアプリのバイト列をサーバへ運びます。',
   'learning.concept.model.q1.b.why':
@@ -650,17 +650,17 @@ export const conceptCheck: Catalog = {
     'MAC アドレスは L2 フレームヘッダにあり、アプリが受け取るペイロードには含まれません。',
   'learning.concept.addressing.name': 'アドレッシングと配送',
   'learning.concept.addressing.q1.prompt': 'MAC アドレスがフレームを届けるのは…',
-  'learning.concept.addressing.q1.a': 'ローカルリンク上の次の機器へ(L2)',
+  'learning.concept.addressing.q1.a': 'ローカルリンク上の次の機器へ（L2）',
   'learning.concept.addressing.q1.b': 'インターネット全体を越えて',
   'learning.concept.addressing.q1.c': 'TCP ポートへ',
   'learning.concept.addressing.q1.why':
     'MAC はリンクローカルで、同一セグメントの次ホップへフレームを運び、各ルータで書き換えられます。',
   'learning.concept.addressing.q2.prompt': 'IP アドレスがパケットを届けるのは…',
   'learning.concept.addressing.q2.a': '1本のケーブル内のみ',
-  'learning.concept.addressing.q2.b': 'ネットワークを越えて端から端へ(L3)',
+  'learning.concept.addressing.q2.b': 'ネットワークを越えて端から端へ（L3）',
   'learning.concept.addressing.q2.c': '特定のアプリへ',
   'learning.concept.addressing.q2.why':
-    'IP の送信元/宛先は(NAT を除き)端から端まで一定で、ルータはこれを使って各ホップの経路を選びます。',
+    'IP の送信元/宛先は（NAT を除き）端から端まで一定で、ルータはこれを使って各ホップの経路を選びます。',
   'learning.concept.addressing.q3.prompt': '別サブネットのホスト宛では、フレームは…',
   'learning.concept.addressing.q3.a': '宛先ホストの MAC へ直接',
   'learning.concept.addressing.q3.b': '永久にブロードキャスト',
@@ -668,7 +668,7 @@ export const conceptCheck: Catalog = {
     'デフォルトゲートウェイの MAC へ。ただしパケットの宛先 IP は最終ホスト',
   'learning.concept.addressing.q3.why':
     'サブネット外ではゲートウェイを ARP します。L2 宛先はゲートウェイ MAC、L3 宛先は最終ホストのまま — これが L2/L3 分離の核心です。',
-  'learning.concept.addressing.q4.prompt': 'プライベート IP(10.0.0.0/8, 192.168.0.0/16)は…',
+  'learning.concept.addressing.q4.prompt': 'プライベート IP（10.0.0.0/8, 192.168.0.0/16）は…',
   'learning.concept.addressing.q4.a':
     'どのネットワークでも再利用でき、公開インターネットでは経路されない',
   'learning.concept.addressing.q4.b': '世界で一意',
@@ -680,7 +680,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.addressing.q5.b': 'ブロードキャストドメイン内の全ホスト',
   'learning.concept.addressing.q5.c': '購読したグループのみ',
   'learning.concept.addressing.q5.why':
-    'ブロードキャスト=セグメントの全ホスト(例: ARP 要求)、ユニキャスト=1ホスト、マルチキャスト=参加したグループ。',
+    'ブロードキャスト=セグメントの全ホスト（例: ARP 要求）、ユニキャスト=1ホスト、マルチキャスト=参加したグループ。',
   'learning.concept.addressing.q6.prompt': 'インターネットに NAT が必要な理由は？',
   'learning.concept.addressing.q6.a': 'トラフィックを暗号化するため',
   'learning.concept.addressing.q6.b': '名前を解決するため',
@@ -718,7 +718,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ports.q1.b': 'どのルータを使うか',
   'learning.concept.ports.q1.c': 'MAC アドレス',
   'learning.concept.ports.q1.why':
-    'IP でホストへ、ポートでその上の正しいサービスへ届きます(例: HTTPS は 443)。',
+    'IP でホストへ、ポートでその上の正しいサービスへ届きます（例: HTTPS は 443）。',
   'learning.concept.ports.q2.prompt': 'TCP 接続を一意に識別するのは…',
   'learning.concept.ports.q2.a': '宛先 IP だけ',
   'learning.concept.ports.q2.b':
@@ -744,7 +744,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ports.q5.b': 'エンドポイント = IP アドレス + ポート',
   'learning.concept.ports.q5.c': 'ルーティングプロトコル',
   'learning.concept.ports.q5.why':
-    'ソケットはサービスを (IP, ポート) に結びつけます。接続は2つのソケットを結びます。',
+    'ソケットはサービスを （IP, ポート） に結びつけます。接続は2つのソケットを結びます。',
   'learning.concept.ports.q6.prompt': 'DNS 参照と Web 取得が通常使うのは…',
   'learning.concept.ports.q6.a': 'どちらも TCP/80',
   'learning.concept.ports.q6.b': 'どちらも ICMP',
@@ -784,7 +784,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ethernet.q5.b': '同一のブロードキャストドメイン',
   'learning.concept.ethernet.q5.c': 'ルーティングテーブル',
   'learning.concept.ethernet.q5.why':
-    '素のスイッチングは1つのブロードキャストドメインを保ちます。分割にはルータ(または VLAN)が必要です。',
+    '素のスイッチングは1つのブロードキャストドメインを保ちます。分割にはルータ（または VLAN）が必要です。',
   'learning.concept.arp.q4.prompt': 'ARP が要るのは、宛先 IP は分かるが分からないのが…',
   'learning.concept.arp.q4.a': 'MAC アドレス',
   'learning.concept.arp.q4.b': 'ポート',
@@ -826,7 +826,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.udp.q4.b': '再送する',
   'learning.concept.udp.q4.c': 'リンクをリセットする',
   'learning.concept.udp.q4.why':
-    'UDP は信頼性を提供しません。必要なアプリ(または損失を許容するアプリ)が上位で実装します。',
+    'UDP は信頼性を提供しません。必要なアプリ（または損失を許容するアプリ）が上位で実装します。',
   'learning.concept.udp.q5.prompt': 'DNS が UDP をよく使うのは…',
   'learning.concept.udp.q5.a': '暗号化が要るから',
   'learning.concept.udp.q5.b': '小さな問い合わせ/応答は速く、単純に再試行できるから',
@@ -834,7 +834,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.udp.q5.why':
     '単一の小さなやり取りに TCP の確立コストは見合わず、損失時はクライアントが再試行するだけです。',
   'learning.concept.dns.q4.prompt': 'DNS 応答のキャッシュは…',
-  'learning.concept.dns.q4.a': '再参照を高速化し負荷を減らす(TTL を尊重)',
+  'learning.concept.dns.q4.a': '再参照を高速化し負荷を減らす（TTL を尊重）',
   'learning.concept.dns.q4.b': 'IP アドレスを変える',
   'learning.concept.dns.q4.c': '禁止されている',
   'learning.concept.dns.q4.why':
@@ -1414,9 +1414,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.vrrp.q1.c.why':
     'ループ防止は STP です。VRRP は共有の仮想 IP でデフォルトゲートウェイを冗長化します。',
   'learning.concept.vrrp.q2.a.why':
-    '仮想 IP に応答するのは一度に 1 台 — マスターだけです。他はバックアップとして待機します。',
+    '仮想 IP に応答するのは一度に 1 台 — マスタだけです。他はバックアップとして待機します。',
   'learning.concept.vrrp.q2.c.why':
-    'DNS サーバは無関係です。仮想 IP は選出されたマスターが持ち、バックアップが控えます。',
+    'DNS サーバは無関係です。仮想 IP は選出されたマスタが持ち、バックアップが控えます。',
   'learning.concept.vrrp.q3.a.why':
     'VRRP はサブネット数ではなくゲートウェイ冗長の話です。単一ゲートウェイの単一障害点を取り除きます。',
   'learning.concept.vrrp.q3.b.why':
@@ -1535,7 +1535,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ftp.q2.b': '21',
   'learning.concept.ftp.q2.c': '53',
   'learning.concept.ftp.q2.why':
-    'ポート 21 が FTP コマンドを運び、データは 20(アクティブ)か交渉したポート(パッシブ)を使います。',
+    'ポート 21 が FTP コマンドを運び、データは 20（アクティブ）か交渉したポート（パッシブ）を使います。',
   'learning.concept.ftp.q3.prompt': 'パッシブ FTP が導入された理由は…',
   'learning.concept.ftp.q3.a': 'データを暗号化するため',
   'learning.concept.ftp.q3.b': 'DNS を速くするため',
@@ -1551,7 +1551,7 @@ export const conceptCheck: Catalog = {
     'SMTP はクライアント→サーバ、サーバ→サーバへメールを押し出します。受信は IMAP/POP3 です。',
   'learning.concept.smtp.q2.prompt': 'SMTP がよく使うポートは…',
   'learning.concept.smtp.q2.a': '110',
-  'learning.concept.smtp.q2.b': '25(送信は 587)',
+  'learning.concept.smtp.q2.b': '25（送信は 587）',
   'learning.concept.smtp.q2.c': '22',
   'learning.concept.smtp.q2.why':
     '25 はサーバ間 SMTP、587 は認証付きクライアント送信、110 は POP3 です。',
@@ -1560,7 +1560,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.smtp.q3.b': 'CNAME',
   'learning.concept.smtp.q3.c': 'MX',
   'learning.concept.smtp.q3.why': 'MX レコードはドメインのメール交換ホストを示します。',
-  'learning.concept.email.name': 'メール(IMAP/POP3)',
+  'learning.concept.email.name': 'メール（IMAP/POP3）',
   'learning.concept.email.q1.prompt': 'IMAP と POP3 の用途は…',
   'learning.concept.email.q1.a': 'メールボックスサーバからメールを受信する',
   'learning.concept.email.q1.b': 'サーバ間でメールを送る',
@@ -1587,14 +1587,14 @@ export const conceptCheck: Catalog = {
   'learning.concept.ntp.q1.why': 'NTP は機器の時刻を基準時刻源に合わせ続けます。',
   'learning.concept.ntp.q2.prompt': 'NTP の時刻源の構成は…',
   'learning.concept.ntp.q2.a': 'VLAN',
-  'learning.concept.ntp.q2.b': 'ストラタム(0=基準、1=サーバ…)',
+  'learning.concept.ntp.q2.b': 'ストラタム（0=基準、1=サーバ…）',
   'learning.concept.ntp.q2.c': '自律システム',
   'learning.concept.ntp.q2.why':
     'ストラタム番号は基準時計からの距離で、小さいほど近く権威があります。',
   'learning.concept.ntp.q3.prompt': '正確な時刻が重要なのは…',
   'learning.concept.ntp.q3.a': '速いケーブル',
   'learning.concept.ntp.q3.b': '大きい MTU',
-  'learning.concept.ntp.q3.c': 'ログ・証明書・時刻依存の認証(TLS/Kerberos)',
+  'learning.concept.ntp.q3.c': 'ログ・証明書・時刻依存の認証（TLS/Kerberos）',
   'learning.concept.ntp.q3.why':
     '証明書の有効期間・ログ突合・時刻ベース認証は、時刻がずれると壊れます。',
   'learning.concept.snmp.name': 'SNMP',
@@ -1603,12 +1603,12 @@ export const conceptCheck: Catalog = {
   'learning.concept.snmp.q1.b': 'パケットのルーティング',
   'learning.concept.snmp.q1.c': 'リンクの暗号化',
   'learning.concept.snmp.q1.why':
-    'SNMP は機器の状態(カウンタ・ステータス)を読み書きし、ネットワーク管理に使います。',
+    'SNMP は機器の状態（カウンタ・ステータス）を読み書きし、ネットワーク管理に使います。',
   'learning.concept.snmp.q2.prompt': 'SNMP の管理データの構成は…',
   'learning.concept.snmp.q2.a': 'ルーティングテーブル',
   'learning.concept.snmp.q2.b': 'MIB ツリー内の OID',
   'learning.concept.snmp.q2.c': 'MAC テーブル',
-  'learning.concept.snmp.q2.why': '各値は MIB 階層内のオブジェクト識別子(OID)を持ちます。',
+  'learning.concept.snmp.q2.why': '各値は MIB 階層内のオブジェクト識別子（OID）を持ちます。',
   'learning.concept.snmp.q3.prompt': '機器がイベント時に自発送信する SNMP 通知は…',
   'learning.concept.snmp.q3.a': 'GET',
   'learning.concept.snmp.q3.b': 'ACK',
@@ -1617,7 +1617,7 @@ export const conceptCheck: Catalog = {
     'トラップ/通知は機器発の警報で、マネージャ発の GET/SET ポーリングとは別です。',
   'learning.concept.ipsec.name': 'IPsec',
   'learning.concept.ipsec.q1.prompt': 'IPsec が提供するのは…',
-  'learning.concept.ipsec.q1.a': '認証・暗号化された IP パケット(セキュア VPN)',
+  'learning.concept.ipsec.q1.a': '認証・暗号化された IP パケット（セキュア VPN）',
   'learning.concept.ipsec.q1.b': '名前解決',
   'learning.concept.ipsec.q1.c': 'スイッチング',
   'learning.concept.ipsec.q1.why':
@@ -1627,23 +1627,23 @@ export const conceptCheck: Catalog = {
   'learning.concept.ipsec.q2.b': 'ESP',
   'learning.concept.ipsec.q2.c': 'ARP',
   'learning.concept.ipsec.q2.why':
-    'ESP(カプセル化セキュリティペイロード)は暗号化と認証、AH は認証のみです。',
+    'ESP（カプセル化セキュリティペイロード）は暗号化と認証、AH は認証のみです。',
   'learning.concept.ipsec.q3.prompt': 'IPsec のトンネルモードは…',
   'learning.concept.ipsec.q3.a': 'ポートだけ暗号化',
   'learning.concept.ipsec.q3.b': 'ルーティングを無効化',
-  'learning.concept.ipsec.q3.c': '元パケット全体を新パケットに包んで暗号化(ゲートウェイ間)',
+  'learning.concept.ipsec.q3.c': '元パケット全体を新パケットに包んで暗号化（ゲートウェイ間）',
   'learning.concept.ipsec.q3.why':
-    'トンネルモードはパケット全体を包み(VPN ゲートウェイ間)、トランスポートモードはホスト間でペイロードを保護します。',
+    'トンネルモードはパケット全体を包み（VPN ゲートウェイ間）、トランスポートモードはホスト間でペイロードを保護します。',
   'learning.concept.radius.name': 'RADIUS / 802.1X',
   'learning.concept.radius.q1.prompt': '802.1X が提供するのは…',
-  'learning.concept.radius.q1.a': 'ポートベースのアクセス制御(接続前に認証)',
+  'learning.concept.radius.q1.a': 'ポートベースのアクセス制御（接続前に認証）',
   'learning.concept.radius.q1.b': 'ルーティング',
   'learning.concept.radius.q1.c': '名前解決',
   'learning.concept.radius.q1.why':
     '802.1X はクライアントが認証するまでスイッチポートや Wi-Fi を遮断します。',
   'learning.concept.radius.q2.prompt': 'RADIUS は…',
   'learning.concept.radius.q2.a': 'ルーティングプロトコル',
-  'learning.concept.radius.q2.b': 'AAA サーバプロトコル(認証・認可・課金)',
+  'learning.concept.radius.q2.b': 'AAA サーバプロトコル（認証・認可・アカウンティング）',
   'learning.concept.radius.q2.c': 'トンネリングプロトコル',
   'learning.concept.radius.q2.why': 'RADIUS は誰がアクセスできるかの判断とログを集中管理します。',
   'learning.concept.radius.q3.prompt': '802.1X で資格情報を中継するスイッチ/AP は…',
@@ -1651,24 +1651,24 @@ export const conceptCheck: Catalog = {
   'learning.concept.radius.q3.b': 'DNS サーバ',
   'learning.concept.radius.q3.c': 'オーセンティケータ',
   'learning.concept.radius.q3.why':
-    'サプリカント(クライアント)↔ オーセンティケータ(スイッチ/AP)↔ 認証サーバ(RADIUS)。',
+    'サプリカント（クライアント）↔ オーセンティケータ（スイッチ/AP）↔ 認証サーバ（RADIUS）。',
   'learning.concept.isis.name': 'IS-IS',
   'learning.concept.isis.q1.prompt': 'IS-IS は…',
-  'learning.concept.isis.q1.a': 'リンクステート IGP(OSPF 同様)、ISP コアで一般的',
+  'learning.concept.isis.q1.a': 'リンクステート IGP（OSPF 同様）、ISP コアで一般的',
   'learning.concept.isis.q1.b': '距離ベクトル型',
   'learning.concept.isis.q1.c': 'アプリケーションプロトコル',
   'learning.concept.isis.q1.why':
     'IS-IS はリンクステートをフラッディングし SPF を実行、大規模 ISP 網で広く使われます。',
   'learning.concept.isis.q2.prompt': 'OSPF と比べて IS-IS は…',
   'learning.concept.isis.q2.a': 'ホップ数を使う',
-  'learning.concept.isis.q2.b': 'リンク層上で直接動く(IP 内ではない)',
+  'learning.concept.isis.q2.b': 'リンク層上で直接動く（IP 内ではない）',
   'learning.concept.isis.q2.c': 'TCP を必要とする',
   'learning.concept.isis.q2.why':
     'IS-IS の PDU は L2 上を直接流れます — IP 上で動く OSPF との設計上の違いです。',
   'learning.concept.isis.q3.prompt': 'OSPF と IS-IS の経路選択は…',
   'learning.concept.isis.q3.a': 'AS パス長',
   'learning.concept.isis.q3.b': 'MAC アドレス',
-  'learning.concept.isis.q3.c': '総リンクコスト最小(ダイクストラ/SPF)',
+  'learning.concept.isis.q3.c': '総リンクコスト最小（ダイクストラ/SPF）',
   'learning.concept.isis.q3.why':
     'どちらもリンクステートで、SPF により最小コスト経路を計算します。',
   'learning.concept.eigrp.name': 'EIGRP',
@@ -1687,9 +1687,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.eigrp.q3.prompt': 'EIGRP のメトリックの基礎は…',
   'learning.concept.eigrp.q3.a': 'ホップ数のみ',
   'learning.concept.eigrp.q3.b': 'AS パス',
-  'learning.concept.eigrp.q3.c': '帯域と遅延(複合)',
+  'learning.concept.eigrp.q3.c': '帯域と遅延（複合）',
   'learning.concept.eigrp.q3.why':
-    'EIGRP は帯域と遅延(任意で負荷/信頼性)を複合します。RIP のホップ数とは異なります。',
+    'EIGRP は帯域と遅延（任意で負荷/信頼性）を複合します。RIP のホップ数とは異なります。',
   'learning.concept.lacp.name': 'LACP',
   'learning.concept.lacp.q1.prompt': 'LACP の用途は…',
   'learning.concept.lacp.q1.a': '複数リンクを1つの論理リンクに束ねる',
@@ -1706,7 +1706,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.lacp.q3.prompt': 'STP は正しい LACP 束を…',
   'learning.concept.lacp.q3.a': 'ブロックすべき複数ループ',
   'learning.concept.lacp.q3.b': 'ルータ',
-  'learning.concept.lacp.q3.c': '単一の論理リンク(ループとしてブロックしない)',
+  'learning.concept.lacp.q3.c': '単一の論理リンク（ループとしてブロックしない）',
   'learning.concept.lacp.q3.why':
     '束は STP には1リンクに見えるため、冗長メンバをブロックしません。',
   'learning.concept.lldp.name': 'LLDP',
@@ -1715,10 +1715,10 @@ export const conceptCheck: Catalog = {
   'learning.concept.lldp.q1.b': 'サブネット間をルーティングする',
   'learning.concept.lldp.q1.c': 'フレームを暗号化する',
   'learning.concept.lldp.q1.why':
-    '機器は識別子・ポート・能力を広告し、隣接が局所トポロジを学びます(CDP は Cisco 版)。',
+    '機器は識別子・ポート・能力を広告し、隣接が局所トポロジを学びます（CDP は Cisco 版）。',
   'learning.concept.lldp.q2.prompt': 'LLDP が動作するのは…',
   'learning.concept.lldp.q2.a': 'インターネット全体',
-  'learning.concept.lldp.q2.b': 'リンク単位・単一セグメント内(ルーティングされない)',
+  'learning.concept.lldp.q2.b': 'リンク単位・単一セグメント内（ルーティングされない）',
   'learning.concept.lldp.q2.c': 'TCP 上',
   'learning.concept.lldp.q2.why':
     'LLDP フレームはリンクローカルで、スイッチやルータに転送されません。',
@@ -1764,7 +1764,7 @@ export const conceptCheck: Catalog = {
     'サイト間はゲートウェイ同士でネットワーク全体を接続し、リモートアクセスは 1 台のクライアント端末を社内網に接続する',
   'learning.concept.vpn.q2.c': 'リモートアクセスは Ethernet 上でしか動かない',
   'learning.concept.vpn.q2.why':
-    'サイト間はゲートウェイが 2 つのサブネット間をトンネルし、リモートアクセス（クライアント VPN）は 1 ユーザー端末を社内網に参加させます。',
+    'サイト間はゲートウェイが 2 つのサブネット間をトンネルし、リモートアクセス（クライアント VPN）は 1 ユーザ端末を社内網に参加させます。',
   'learning.concept.vpn.q3.prompt': 'スプリットトンネルとは…',
   'learning.concept.vpn.q3.a': 'すべての通信が遮断される',
   'learning.concept.vpn.q3.b': 'VPN が二重に暗号化する',
@@ -1780,7 +1780,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.wireguard.q1.why':
     'WireGuard は UDP プロトコルで、1 ポートで済むため高速かつ NAT・ファイアウォール越えが容易です。',
   'learning.concept.wireguard.q2.prompt': 'WireGuard がピアを識別する方法は…',
-  'learning.concept.wireguard.q2.a': 'ユーザー名とパスワード',
+  'learning.concept.wireguard.q2.a': 'ユーザ名とパスワード',
   'learning.concept.wireguard.q2.b': 'MAC アドレス',
   'learning.concept.wireguard.q2.c': '公開鍵（許可 IP のセットに紐づく）',
   'learning.concept.wireguard.q2.why':
@@ -1863,7 +1863,7 @@ export const conceptCheck: Catalog = {
     'リアルタイムセッション（通話）の確立・変更・切断 — メディアではなくシグナリング',
   'learning.concept.sip.q1.c': 'IP アドレスの割り当て',
   'learning.concept.sip.q1.why':
-    'SIP はシグナリングプロトコルで、ユーザーを探しセッションを交渉します。メディアは別ストリームで流れます。',
+    'SIP はシグナリングプロトコルで、ユーザを探しセッションを交渉します。メディアは別ストリームで流れます。',
   'learning.concept.sip.q2.prompt': '音声・映像そのものは SIP の中を流れる？',
   'learning.concept.sip.q2.a': 'はい、SIP が音声サンプルを運ぶ',
   'learning.concept.sip.q2.b': '映像だけ運ぶ（音声は運ばない）',
@@ -1944,10 +1944,10 @@ export const conceptCheck: Catalog = {
   'learning.concept.dnssec.q3.why':
     '親ゾーンが子の鍵をハッシュした DS レコードを公開するため、検証は root→TLD→ドメインと辿り、信頼されたルート鍵に錨を下ろします。',
   'learning.concept.review.title': '復習',
-  'learning.concept.review.start': '弱点を復習({{count}})',
+  'learning.concept.review.start': '弱点を復習（{{count}}）',
   'learning.concept.review.mastered': '{{mastered}} / {{total}} 習得',
   'learning.concept.review.empty':
     'まず問題に答えてください — 弱点がここに集まり、間隔をあけて復習できます。',
   'learning.concept.review.deckProgress': '{{mastered}}/{{total}}',
-  'learning.concept.review.due': '復習の期限({{count}})',
+  'learning.concept.review.due': '復習の期限（{{count}}）',
 } as const;
