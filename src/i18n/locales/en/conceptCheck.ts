@@ -1317,6 +1317,78 @@ export const conceptCheck: Catalog = {
     'Discovery does no encryption; it finds and selects an access concentrator and sets up a session id.',
   'learning.concept.pppoe.q3.b.why':
     'IP assignment happens later in the PPP session (IPCP); Discovery just locates the concentrator and gets a session id.',
+  'learning.concept.mtu.q1.b.why':
+    'It is the MAXIMUM, not minimum — the largest payload a link carries in one frame.',
+  'learning.concept.mtu.q1.c.why':
+    'A routing metric ranks paths; the MTU is the largest frame payload a link allows.',
+  'learning.concept.mtu.q2.a.why':
+    'PMTUD does not ping every host; it sends DF-set packets and reads back ICMP Fragmentation Needed.',
+  'learning.concept.mtu.q2.c.why':
+    'DNS resolves names, not path sizes; PMTUD probes with DF packets and ICMP feedback.',
+  'learning.concept.mtu.q3.a.why':
+    'DF (Don’t Fragment) forbids fragmentation — the router drops it and returns an ICMP message instead.',
+  'learning.concept.mtu.q3.b.why':
+    'It can’t be silently delivered if it exceeds the MTU; with DF set the router drops it and signals ICMP.',
+  'learning.concept.gre.q1.b.why':
+    'GRE does not encrypt (pair it with IPsec for that); it wraps a packet inside another IP packet.',
+  'learning.concept.gre.q1.c.why':
+    'MAC switching is L2 forwarding; GRE encapsulates a packet inside an outer IP packet to tunnel it.',
+  'learning.concept.gre.q2.a.why':
+    'GRE alone has no encryption — that is why GRE-over-IPsec exists; by itself it only encapsulates.',
+  'learning.concept.gre.q2.c.why':
+    'Address assignment is DHCP; GRE just encapsulates traffic for tunneling, without encryption.',
+  'learning.concept.gre.q3.a.why':
+    'A tunnel joins whole networks, not collapse them to one host; they appear directly connected over the underlay.',
+  'learning.concept.gre.q3.b.why':
+    'The point of a tunnel is reachability — the two networks look directly connected across the underlay.',
+  'learning.concept.mpls.q1.b.why':
+    'MPLS does not broadcast; it swaps short labels along a pre-set path instead of a per-hop IP lookup.',
+  'learning.concept.mpls.q1.c.why':
+    'ARP resolves IP→MAC; MPLS forwards by swapping labels, skipping the IP routing lookup.',
+  'learning.concept.mpls.q2.a.why':
+    'A broadcast domain is an L2 concept; the label-switched route through an MPLS network is the LSP.',
+  'learning.concept.mpls.q2.c.why':
+    'An AS is a BGP routing domain; within MPLS the labeled path is the Label Switched Path (LSP).',
+  'learning.concept.mpls.q3.a.why':
+    'HTTP is an L7 application; MPLS sits low, between L2 and L3 (often called layer 2.5).',
+  'learning.concept.mpls.q3.b.why':
+    'MPLS rides on top of L2 links (like Ethernet), not below them — it sits between L2 and L3.',
+  'learning.concept.isis.q1.b.why':
+    'Distance-vector is RIP/EIGRP; IS-IS is a link-state IGP like OSPF, common in ISP cores.',
+  'learning.concept.isis.q1.c.why':
+    'IS-IS is not an application protocol; it is a link-state routing IGP used in large cores.',
+  'learning.concept.isis.q2.a.why':
+    'Like OSPF, IS-IS uses link cost, not hop count; what differs is it runs directly on L2, not inside IP.',
+  'learning.concept.isis.q2.c.why':
+    'IS-IS does not use TCP — it runs directly on the link layer, whereas OSPF rides in IP.',
+  'learning.concept.isis.q3.a.why':
+    'AS-path is BGP’s; both OSPF and IS-IS run Dijkstra/SPF over total link cost.',
+  'learning.concept.isis.q3.b.why':
+    'MAC addresses are L2 forwarding; these link-state IGPs pick paths by shortest total link cost.',
+  'learning.concept.eigrp.q1.b.why':
+    'EIGRP is not pure link-state (that is OSPF/IS-IS); it is an advanced distance-vector protocol using DUAL.',
+  'learning.concept.eigrp.q1.c.why':
+    'EIGRP is a routing protocol, not an application; it is advanced distance-vector with the DUAL algorithm.',
+  'learning.concept.eigrp.q2.a.why':
+    'A feasible successor is a pre-computed backup route, not encryption; it enables instant reconvergence.',
+  'learning.concept.eigrp.q2.c.why':
+    'IP assignment is DHCP; a feasible successor is a loop-free backup so EIGRP reconverges without recomputing.',
+  'learning.concept.eigrp.q3.a.why':
+    'Hop-count-only is RIP; EIGRP uses a composite metric of bandwidth and delay.',
+  'learning.concept.eigrp.q3.b.why':
+    'AS-path is BGP’s; EIGRP’s composite metric is based on bandwidth and delay.',
+  'learning.concept.ndp.q1.b.why':
+    'Inter-AS routing is BGP; NDP takes over ARP’s job — resolving a neighbor’s IP to its MAC.',
+  'learning.concept.ndp.q1.c.why':
+    'NDP does not encrypt; it replaces ARP, resolving neighbor IP→MAC via ICMPv6 messages.',
+  'learning.concept.ndp.q2.a.why':
+    'SLAAC is not random; the host combines the Router Advertisement’s prefix with its own interface identifier.',
+  'learning.concept.ndp.q2.c.why':
+    'The host does not copy the router’s address; it builds its own from the advertised prefix plus an interface id.',
+  'learning.concept.ndp.q3.a.why':
+    'DAD does not encrypt; it sends a Neighbor Solicitation to check the address is not already in use.',
+  'learning.concept.ndp.q3.b.why':
+    'DAD does not compress addresses; it verifies uniqueness by soliciting for the tentative address first.',
   'learning.concept.ssh.name': 'SSH',
   'learning.concept.ssh.q1.prompt': 'SSH provides…',
   'learning.concept.ssh.q1.a': 'An encrypted remote shell and tunnel',

@@ -1313,6 +1313,78 @@ export const conceptCheck: Catalog = {
     'Discovery は暗号化しません。アクセスコンセントレータを発見・選択し、セッション ID を確立します。',
   'learning.concept.pppoe.q3.b.why':
     'IP の割り当ては後の PPP セッション（IPCP）で行われます。Discovery はコンセントレータを見つけセッション ID を得るだけです。',
+  'learning.concept.mtu.q1.b.why':
+    '最小ではなく最大です — 1 フレームでリンクが運べる最大のペイロードです。',
+  'learning.concept.mtu.q1.c.why':
+    'ルーティング指標は経路を順位付けします。MTU はリンクが許す最大フレームペイロードです。',
+  'learning.concept.mtu.q2.a.why':
+    'PMTUD は全ホストへ ping しません。DF を立てたパケットを送り ICMP Fragmentation Needed を読みます。',
+  'learning.concept.mtu.q2.c.why':
+    'DNS は名前を解決し経路サイズではありません。PMTUD は DF パケットと ICMP の応答で探ります。',
+  'learning.concept.mtu.q3.a.why':
+    'DF（分割禁止）は分割を禁じます — ルータは破棄して代わりに ICMP メッセージを返します。',
+  'learning.concept.mtu.q3.b.why':
+    'MTU を超えれば黙って配送はできません。DF が立っているとルータは破棄し ICMP で通知します。',
+  'learning.concept.gre.q1.b.why':
+    'GRE は暗号化しません（必要なら IPsec と組み合わせます）。パケットを別の IP パケットで包みます。',
+  'learning.concept.gre.q1.c.why':
+    'MAC スイッチングは L2 転送です。GRE はパケットを外側 IP パケットにカプセル化してトンネルします。',
+  'learning.concept.gre.q2.a.why':
+    'GRE 単体に暗号化はありません — だから GRE over IPsec があります。単体ではカプセル化のみです。',
+  'learning.concept.gre.q2.c.why':
+    'アドレス割り当ては DHCP です。GRE は暗号化なしでトラフィックをカプセル化しトンネルするだけです。',
+  'learning.concept.gre.q3.a.why':
+    'トンネルは網全体を結ぶもので 1 ホストにまとめません。アンダーレイ越しに直結して見えます。',
+  'learning.concept.gre.q3.b.why':
+    'トンネルの目的は到達性です — 2 つの網はアンダーレイ越しに直結して見えます。',
+  'learning.concept.mpls.q1.b.why':
+    'MPLS はブロードキャストしません。ホップごとの IP 探索の代わりに、定めた経路で短いラベルを付け替えます。',
+  'learning.concept.mpls.q1.c.why':
+    'ARP は IP→MAC を解決します。MPLS はラベルを付け替えて転送し、IP ルーティング探索を省きます。',
+  'learning.concept.mpls.q2.a.why':
+    'ブロードキャストドメインは L2 の概念です。MPLS 網を通るラベルスイッチ経路が LSP です。',
+  'learning.concept.mpls.q2.c.why':
+    'AS は BGP のルーティングドメインです。MPLS 内のラベル付き経路は Label Switched Path（LSP）です。',
+  'learning.concept.mpls.q3.a.why':
+    'HTTP は L7 のアプリです。MPLS は低層に位置し、L2 と L3 の間（しばしばレイヤ 2.5）です。',
+  'learning.concept.mpls.q3.b.why':
+    'MPLS は Ethernet のような L2 リンクの上に乗り、その下ではありません — L2 と L3 の間にあります。',
+  'learning.concept.isis.q1.b.why':
+    'ディスタンスベクタは RIP/EIGRP です。IS-IS は OSPF のようなリンクステート IGP で、ISP コアで一般的です。',
+  'learning.concept.isis.q1.c.why':
+    'IS-IS はアプリケーションプロトコルではありません。大規模コアで使われるリンクステートの IGP です。',
+  'learning.concept.isis.q2.a.why':
+    'OSPF 同様、IS-IS はホップ数ではなくリンクコストを使います。違いは IP の中ではなく L2 上で直接動く点です。',
+  'learning.concept.isis.q2.c.why':
+    'IS-IS は TCP を使いません — リンク層上で直接動きます（OSPF は IP の中で動く）。',
+  'learning.concept.isis.q3.a.why':
+    'AS パスは BGP のものです。OSPF も IS-IS も総リンクコストで Dijkstra/SPF を実行します。',
+  'learning.concept.isis.q3.b.why':
+    'MAC アドレスは L2 転送です。これらリンクステート IGP は最小の総リンクコストで経路を選びます。',
+  'learning.concept.eigrp.q1.b.why':
+    'EIGRP は純粋なリンクステートではありません（それは OSPF/IS-IS）。DUAL を使う高度なディスタンスベクタです。',
+  'learning.concept.eigrp.q1.c.why':
+    'EIGRP はアプリではなくルーティングプロトコルです。DUAL アルゴリズムを使う高度なディスタンスベクタです。',
+  'learning.concept.eigrp.q2.a.why':
+    'フィージブルサクセサは暗号化ではなく事前計算済みのバックアップ経路です。即時の再収束を可能にします。',
+  'learning.concept.eigrp.q2.c.why':
+    'IP 割り当ては DHCP です。フィージブルサクセサはループのないバックアップで、再計算なしに EIGRP を再収束させます。',
+  'learning.concept.eigrp.q3.a.why':
+    'ホップ数のみは RIP です。EIGRP は帯域と遅延の複合指標を使います。',
+  'learning.concept.eigrp.q3.b.why':
+    'AS パスは BGP のものです。EIGRP の複合指標は帯域と遅延に基づきます。',
+  'learning.concept.ndp.q1.b.why':
+    'AS 間ルーティングは BGP です。NDP は ARP の仕事 — 近隣の IP を MAC に解決する役割を引き継ぎます。',
+  'learning.concept.ndp.q1.c.why':
+    'NDP は暗号化しません。ARP を置き換え、ICMPv6 メッセージで近隣の IP→MAC を解決します。',
+  'learning.concept.ndp.q2.a.why':
+    'SLAAC はランダムではありません。ホストは Router Advertisement のプレフィックスと自分のインターフェース識別子を組み合わせます。',
+  'learning.concept.ndp.q2.c.why':
+    'ホストはルータのアドレスをコピーしません。広告されたプレフィックスとインターフェース ID から自分のアドレスを作ります。',
+  'learning.concept.ndp.q3.a.why':
+    'DAD は暗号化しません。近隣要請を送り、アドレスが未使用か確認します。',
+  'learning.concept.ndp.q3.b.why':
+    'DAD はアドレスを圧縮しません。仮アドレスをまず要請して一意性を検証します。',
   'learning.concept.ssh.name': 'SSH',
   'learning.concept.ssh.q1.prompt': 'SSH が提供するのは…',
   'learning.concept.ssh.q1.a': '暗号化されたリモートシェルとトンネル',

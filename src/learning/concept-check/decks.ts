@@ -1021,8 +1021,8 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         explanationKey: 'learning.concept.mtu.q1.why',
         options: [
           { key: 'learning.concept.mtu.q1.a', correct: true },
-          { key: 'learning.concept.mtu.q1.b' },
-          { key: 'learning.concept.mtu.q1.c' },
+          { key: 'learning.concept.mtu.q1.b', whyKey: 'learning.concept.mtu.q1.b.why' },
+          { key: 'learning.concept.mtu.q1.c', whyKey: 'learning.concept.mtu.q1.c.why' },
         ],
       },
       {
@@ -1030,9 +1030,9 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         promptKey: 'learning.concept.mtu.q2.prompt',
         explanationKey: 'learning.concept.mtu.q2.why',
         options: [
-          { key: 'learning.concept.mtu.q2.a' },
+          { key: 'learning.concept.mtu.q2.a', whyKey: 'learning.concept.mtu.q2.a.why' },
           { key: 'learning.concept.mtu.q2.b', correct: true },
-          { key: 'learning.concept.mtu.q2.c' },
+          { key: 'learning.concept.mtu.q2.c', whyKey: 'learning.concept.mtu.q2.c.why' },
         ],
       },
       {
@@ -1040,8 +1040,8 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         promptKey: 'learning.concept.mtu.q3.prompt',
         explanationKey: 'learning.concept.mtu.q3.why',
         options: [
-          { key: 'learning.concept.mtu.q3.a' },
-          { key: 'learning.concept.mtu.q3.b' },
+          { key: 'learning.concept.mtu.q3.a', whyKey: 'learning.concept.mtu.q3.a.why' },
+          { key: 'learning.concept.mtu.q3.b', whyKey: 'learning.concept.mtu.q3.b.why' },
           { key: 'learning.concept.mtu.q3.c', correct: true },
         ],
       },
@@ -1058,8 +1058,8 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         explanationKey: 'learning.concept.gre.q1.why',
         options: [
           { key: 'learning.concept.gre.q1.a', correct: true },
-          { key: 'learning.concept.gre.q1.b' },
-          { key: 'learning.concept.gre.q1.c' },
+          { key: 'learning.concept.gre.q1.b', whyKey: 'learning.concept.gre.q1.b.why' },
+          { key: 'learning.concept.gre.q1.c', whyKey: 'learning.concept.gre.q1.c.why' },
         ],
       },
       {
@@ -1067,9 +1067,9 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         promptKey: 'learning.concept.gre.q2.prompt',
         explanationKey: 'learning.concept.gre.q2.why',
         options: [
-          { key: 'learning.concept.gre.q2.a' },
+          { key: 'learning.concept.gre.q2.a', whyKey: 'learning.concept.gre.q2.a.why' },
           { key: 'learning.concept.gre.q2.b', correct: true },
-          { key: 'learning.concept.gre.q2.c' },
+          { key: 'learning.concept.gre.q2.c', whyKey: 'learning.concept.gre.q2.c.why' },
         ],
       },
       {
@@ -1077,8 +1077,8 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         promptKey: 'learning.concept.gre.q3.prompt',
         explanationKey: 'learning.concept.gre.q3.why',
         options: [
-          { key: 'learning.concept.gre.q3.a' },
-          { key: 'learning.concept.gre.q3.b' },
+          { key: 'learning.concept.gre.q3.a', whyKey: 'learning.concept.gre.q3.a.why' },
+          { key: 'learning.concept.gre.q3.b', whyKey: 'learning.concept.gre.q3.b.why' },
           { key: 'learning.concept.gre.q3.c', correct: true },
         ],
       },
@@ -1095,8 +1095,8 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         explanationKey: 'learning.concept.mpls.q1.why',
         options: [
           { key: 'learning.concept.mpls.q1.a', correct: true },
-          { key: 'learning.concept.mpls.q1.b' },
-          { key: 'learning.concept.mpls.q1.c' },
+          { key: 'learning.concept.mpls.q1.b', whyKey: 'learning.concept.mpls.q1.b.why' },
+          { key: 'learning.concept.mpls.q1.c', whyKey: 'learning.concept.mpls.q1.c.why' },
         ],
       },
       {
@@ -1104,9 +1104,9 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         promptKey: 'learning.concept.mpls.q2.prompt',
         explanationKey: 'learning.concept.mpls.q2.why',
         options: [
-          { key: 'learning.concept.mpls.q2.a' },
+          { key: 'learning.concept.mpls.q2.a', whyKey: 'learning.concept.mpls.q2.a.why' },
           { key: 'learning.concept.mpls.q2.b', correct: true },
-          { key: 'learning.concept.mpls.q2.c' },
+          { key: 'learning.concept.mpls.q2.c', whyKey: 'learning.concept.mpls.q2.c.why' },
         ],
       },
       {
@@ -1114,8 +1114,8 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         promptKey: 'learning.concept.mpls.q3.prompt',
         explanationKey: 'learning.concept.mpls.q3.why',
         options: [
-          { key: 'learning.concept.mpls.q3.a' },
-          { key: 'learning.concept.mpls.q3.b' },
+          { key: 'learning.concept.mpls.q3.a', whyKey: 'learning.concept.mpls.q3.a.why' },
+          { key: 'learning.concept.mpls.q3.b', whyKey: 'learning.concept.mpls.q3.b.why' },
           { key: 'learning.concept.mpls.q3.c', correct: true },
         ],
       },
@@ -1776,8 +1776,8 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         explanationKey: 'learning.concept.isis.q1.why',
         options: [
           { key: 'learning.concept.isis.q1.a', correct: true },
-          { key: 'learning.concept.isis.q1.b' },
-          { key: 'learning.concept.isis.q1.c' },
+          { key: 'learning.concept.isis.q1.b', whyKey: 'learning.concept.isis.q1.b.why' },
+          { key: 'learning.concept.isis.q1.c', whyKey: 'learning.concept.isis.q1.c.why' },
         ],
       },
       {
@@ -1785,9 +1785,9 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         promptKey: 'learning.concept.isis.q2.prompt',
         explanationKey: 'learning.concept.isis.q2.why',
         options: [
-          { key: 'learning.concept.isis.q2.a' },
+          { key: 'learning.concept.isis.q2.a', whyKey: 'learning.concept.isis.q2.a.why' },
           { key: 'learning.concept.isis.q2.b', correct: true },
-          { key: 'learning.concept.isis.q2.c' },
+          { key: 'learning.concept.isis.q2.c', whyKey: 'learning.concept.isis.q2.c.why' },
         ],
       },
       {
@@ -1795,8 +1795,8 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         promptKey: 'learning.concept.isis.q3.prompt',
         explanationKey: 'learning.concept.isis.q3.why',
         options: [
-          { key: 'learning.concept.isis.q3.a' },
-          { key: 'learning.concept.isis.q3.b' },
+          { key: 'learning.concept.isis.q3.a', whyKey: 'learning.concept.isis.q3.a.why' },
+          { key: 'learning.concept.isis.q3.b', whyKey: 'learning.concept.isis.q3.b.why' },
           { key: 'learning.concept.isis.q3.c', correct: true },
         ],
       },
@@ -1813,8 +1813,8 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         explanationKey: 'learning.concept.eigrp.q1.why',
         options: [
           { key: 'learning.concept.eigrp.q1.a', correct: true },
-          { key: 'learning.concept.eigrp.q1.b' },
-          { key: 'learning.concept.eigrp.q1.c' },
+          { key: 'learning.concept.eigrp.q1.b', whyKey: 'learning.concept.eigrp.q1.b.why' },
+          { key: 'learning.concept.eigrp.q1.c', whyKey: 'learning.concept.eigrp.q1.c.why' },
         ],
       },
       {
@@ -1822,9 +1822,9 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         promptKey: 'learning.concept.eigrp.q2.prompt',
         explanationKey: 'learning.concept.eigrp.q2.why',
         options: [
-          { key: 'learning.concept.eigrp.q2.a' },
+          { key: 'learning.concept.eigrp.q2.a', whyKey: 'learning.concept.eigrp.q2.a.why' },
           { key: 'learning.concept.eigrp.q2.b', correct: true },
-          { key: 'learning.concept.eigrp.q2.c' },
+          { key: 'learning.concept.eigrp.q2.c', whyKey: 'learning.concept.eigrp.q2.c.why' },
         ],
       },
       {
@@ -1832,8 +1832,8 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         promptKey: 'learning.concept.eigrp.q3.prompt',
         explanationKey: 'learning.concept.eigrp.q3.why',
         options: [
-          { key: 'learning.concept.eigrp.q3.a' },
-          { key: 'learning.concept.eigrp.q3.b' },
+          { key: 'learning.concept.eigrp.q3.a', whyKey: 'learning.concept.eigrp.q3.a.why' },
+          { key: 'learning.concept.eigrp.q3.b', whyKey: 'learning.concept.eigrp.q3.b.why' },
           { key: 'learning.concept.eigrp.q3.c', correct: true },
         ],
       },
@@ -2109,8 +2109,8 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         explanationKey: 'learning.concept.ndp.q1.why',
         options: [
           { key: 'learning.concept.ndp.q1.a', correct: true },
-          { key: 'learning.concept.ndp.q1.b' },
-          { key: 'learning.concept.ndp.q1.c' },
+          { key: 'learning.concept.ndp.q1.b', whyKey: 'learning.concept.ndp.q1.b.why' },
+          { key: 'learning.concept.ndp.q1.c', whyKey: 'learning.concept.ndp.q1.c.why' },
         ],
       },
       {
@@ -2118,9 +2118,9 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         promptKey: 'learning.concept.ndp.q2.prompt',
         explanationKey: 'learning.concept.ndp.q2.why',
         options: [
-          { key: 'learning.concept.ndp.q2.a' },
+          { key: 'learning.concept.ndp.q2.a', whyKey: 'learning.concept.ndp.q2.a.why' },
           { key: 'learning.concept.ndp.q2.b', correct: true },
-          { key: 'learning.concept.ndp.q2.c' },
+          { key: 'learning.concept.ndp.q2.c', whyKey: 'learning.concept.ndp.q2.c.why' },
         ],
       },
       {
@@ -2128,8 +2128,8 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
         promptKey: 'learning.concept.ndp.q3.prompt',
         explanationKey: 'learning.concept.ndp.q3.why',
         options: [
-          { key: 'learning.concept.ndp.q3.a' },
-          { key: 'learning.concept.ndp.q3.b' },
+          { key: 'learning.concept.ndp.q3.a', whyKey: 'learning.concept.ndp.q3.a.why' },
+          { key: 'learning.concept.ndp.q3.b', whyKey: 'learning.concept.ndp.q3.b.why' },
           { key: 'learning.concept.ndp.q3.c', correct: true },
         ],
       },
