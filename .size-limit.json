@@ -1,13 +1,13 @@
 [
   {
     "path": "dist/netlab.es.js",
-    "limit": "266 kB",
+    "limit": "272 kB",
     "gzip": true
   },
   {
     "name": "ui:concept-check",
     "path": "dist/ConceptCheckPanelInner-*.mjs",
-    "limit": "88 kB",
+    "limit": "96 kB",
     "gzip": true
   },
   {

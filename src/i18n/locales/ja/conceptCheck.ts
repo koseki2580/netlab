@@ -1385,6 +1385,126 @@ export const conceptCheck: Catalog = {
     'DAD は暗号化しません。近隣要請を送り、アドレスが未使用か確認します。',
   'learning.concept.ndp.q3.b.why':
     'DAD はアドレスを圧縮しません。仮アドレスをまず要請して一意性を検証します。',
+  'learning.concept.qos.q1.b.why':
+    'プリアンブルは受信側のクロック同期用です。DSCP の優先度は IP ヘッダの DS フィールドにあります。',
+  'learning.concept.qos.q1.c.why':
+    'TCP ペイロードはアプリデータです。DSCP は各ルータが読む IP ヘッダで優先度を示します。',
+  'learning.concept.qos.q2.a.why':
+    'アイドルなリンクでは優先順位を付けるものがありません。QoS は輻輳し遅延に敏感な通信があるときに効きます。',
+  'learning.concept.qos.q2.c.why':
+    'ホストが 1 台では競合を管理する必要がありません。QoS は輻輳したリンクで通信が競合するときに価値があります。',
+  'learning.concept.qos.q3.a.why':
+    'DSCP はセキュリティではなくスケジューリングの話です。ルータは優先キューイングなどのホップごとの動作を適用します。',
+  'learning.concept.qos.q3.b.why':
+    'マークされたパケットは破棄ではなく優先されます。ルータは優先キューイングなどのホップごとの動作を適用します。',
+  'learning.concept.ecmp.q1.b.why':
+    '経路が 1 本では分散するものがありません。ECMP は同じ最小コストの経路が複数あるときに使います。',
+  'learning.concept.ecmp.q1.c.why':
+    'リンク障害はフェイルオーバーの話です。ECMP は生きている等コスト経路に負荷を分散します。',
+  'learning.concept.ecmp.q2.a.why':
+    'パケットごとのランダムはフローを並べ替えてしまいます。ECMP は 5 タプルをハッシュし各フローを 1 経路に固定します。',
+  'learning.concept.ecmp.q2.c.why':
+    '最小 IP を選ぶだけではありません。ECMP はフローの 5 タプルをハッシュし一貫した次ホップを選びます。',
+  'learning.concept.ecmp.q3.a.why':
+    'ECMP は暗号化しません。等コスト経路に負荷を分け、合計帯域を増やします。',
+  'learning.concept.ecmp.q3.b.why':
+    'ECMP は経路を減らすのではなく多く使います。利点は負荷分散と合計帯域の増加です。',
+  'learning.concept.vrrp.q1.b.why':
+    '名前解決は DNS です。VRRP は 1 つの仮想 IP の背後にある冗長なデフォルトゲートウェイをホストに与えます。',
+  'learning.concept.vrrp.q1.c.why':
+    'ループ防止は STP です。VRRP は共有の仮想 IP でデフォルトゲートウェイを冗長化します。',
+  'learning.concept.vrrp.q2.a.why':
+    '仮想 IP に応答するのは一度に 1 台 — マスターだけです。他はバックアップとして待機します。',
+  'learning.concept.vrrp.q2.c.why':
+    'DNS サーバは無関係です。仮想 IP は選出されたマスターが持ち、バックアップが控えます。',
+  'learning.concept.vrrp.q3.a.why':
+    'VRRP はサブネット数ではなくゲートウェイ冗長の話です。単一ゲートウェイの単一障害点を取り除きます。',
+  'learning.concept.vrrp.q3.b.why':
+    'DNS の速度は無関係です。VRRP はデフォルトゲートウェイが単一障害点になる問題を解決します。',
+  'learning.concept.multicast.q1.b.why':
+    '全員へ送るのはブロードキャストです（しかも越えられません）。マルチキャストは関心のある受信者だけを狙います。',
+  'learning.concept.multicast.q1.c.why':
+    '2 ホスト間はユニキャストです。マルチキャストは参加したグループへ 1 つのストリームを送ります。',
+  'learning.concept.multicast.q2.a.why':
+    'ARP は IP→MAC を解決します。ホストは IGMP でマルチキャストグループへの参加を通知します。',
+  'learning.concept.multicast.q2.c.why':
+    'BGP は AS 間を経路制御します。LAN でマルチキャストグループに参加するには IGMP を使います。',
+  'learning.concept.multicast.q3.a.why':
+    '単一ホストはユニキャストアドレスです。マルチキャストアドレス（224.0.0.0/4）は受信者のグループを指します。',
+  'learning.concept.multicast.q3.b.why':
+    '物理ポートはハードウェアです。マルチキャスト宛先は 224.0.0.0/4 のような論理的なグループアドレスです。',
+  'learning.concept.acl.q1.b.why':
+    'ACL は暗号化しません。パケットのフィールドを順序付きの許可/拒否ルールと照合します。',
+  'learning.concept.acl.q1.c.why':
+    '圧縮は帯域節約でフィルタリングと無関係です。ACL はパケットフィールドの照合で許可/拒否します。',
+  'learning.concept.acl.q2.a.why':
+    'ステートフルは「常に遅い」わけではありません。本質は接続を追跡し、戻りの通信を自動許可する点です。',
+  'learning.concept.acl.q2.c.why':
+    'どちらもポートを見ます。ステートフルファイアウォールはさらに接続状態を追跡し応答を自動的に許可します。',
+  'learning.concept.acl.q3.a.why':
+    '「permit any any」は全許可で安全の逆です。安全な既定は、明示的に許可しない限り拒否です。',
+  'learning.concept.acl.q3.b.why':
+    'ルールなしは暗黙の許可や未定義動作になりがちです。安全な設計は明示的なデフォルト拒否です。',
+  'learning.concept.tunneling.q1.b.why':
+    '暗号化は別の追加機能（IPsec）です。トンネリング自体はパケットを新しい外側ヘッダで包むだけです。',
+  'learning.concept.tunneling.q1.c.why':
+    'トンネリングは圧縮しません。本来運べない網を越えられるよう、パケットをカプセル化します。',
+  'learning.concept.tunneling.q2.a.why':
+    '外側ヘッダは経路の間ずっと必要です。入口で付け、出口でだけ外します。',
+  'learning.concept.tunneling.q2.c.why':
+    '外側ヘッダを付けるのは送信側（入口）です。受信側（出口）がそれを外します。',
+  'learning.concept.tunneling.q3.a.why':
+    '速度は無関係です。外側ヘッダがバイトを消費するため、内側ペイロードは分割前の余地が減ります。',
+  'learning.concept.tunneling.q3.b.why':
+    '暗号化は任意で原因ではありません。余分な外側ヘッダ自体が MTU からバイトを消費します。',
+  'learning.concept.sip.q1.a.why':
+    '音声は SIP ではなく RTP で流れます。SIP は通話を確立・変更・終了する制御（シグナリング）です。',
+  'learning.concept.sip.q1.c.why':
+    'アドレス割り当ては DHCP です。SIP は通話の確立/切断を制御し、メディアは RTP に任せます。',
+  'learning.concept.sip.q2.a.why':
+    'SIP はメディアのサンプルを運びません。音声は RTP で別に流れ、SIP/SDP は交渉するだけです。',
+  'learning.concept.sip.q2.b.why':
+    '音声も映像も SIP には乗りません。どちらも RTP で流れ、SIP は SDP で交渉します。',
+  'learning.concept.sip.q3.b.why':
+    'SIP はバイナリのルーティングプロトコルではなく HTTP のようなテキストベースです。INVITE はメソッドとヘッダを持つ要求です。',
+  'learning.concept.sip.q3.c.why':
+    'Ethernet フレームは L2 のバイナリフレーミングです。SIP はメソッドとステータスコードを持つ HTTP 風のテキストプロトコルです。',
+  'learning.concept.rtp.q1.b.why':
+    'ルーティングテーブルはルーティングプロトコルが交換します。RTP はリアルタイムメディアを主に UDP で運びます。',
+  'learning.concept.rtp.q1.c.why':
+    'メールは SMTP/IMAP です。RTP はリアルタイムの音声/映像を、シーケンス番号とタイムスタンプ付きで UDP 上に運びます。',
+  'learning.concept.rtp.q2.a.why':
+    'TCP も音声を運べますが、再送が遅すぎて役に立ちません。RTP は UDP の低遅延を選びます。',
+  'learning.concept.rtp.q2.c.why':
+    'UDP は暗号化されません（暗号化は SRTP）。RTP は確実さより適時性が勝るため UDP を使います。',
+  'learning.concept.rtp.q3.a.why':
+    'RTCP は暗号化ではありません（それは SRTP）。ジッタ・損失・往復時間などの品質フィードバックを運びます。',
+  'learning.concept.rtp.q3.b.why':
+    'RTCP はメディアを複製しません。送信側が適応できるよう統計（ジッタ・損失・RTT）を報告します。',
+  'learning.concept.stun.q1.a.why':
+    '経路選択はルーティングの仕事です。STUN はホストに自分の公開（NAT 変換後の）IP とポートを教えます。',
+  'learning.concept.stun.q1.b.why':
+    '名前解決は DNS です。STUN はホストの NAT 変換後の公開アドレスを明らかにし、ピアが到達できるようにします。',
+  'learning.concept.stun.q2.b.why':
+    'DNS ルートサーバは名前を解決しメディアは運びません。直接経路が失敗すると TURN リレーが転送します。',
+  'learning.concept.stun.q2.c.why':
+    'BGP は AS 間を経路制御します。遮断する NAT 越しにメディアを中継するのは TURN の役割で BGP ではありません。',
+  'learning.concept.stun.q3.a.why':
+    '暗号化は SRTP/DTLS です。ICE は候補アドレスを集め、動く経路を見つけるため検査します。',
+  'learning.concept.stun.q3.c.why':
+    'ICE は番号を割り当てません。ホスト/STUN/TURN の候補を集め、検査して動く組を選びます。',
+  'learning.concept.dnssec.q1.b.why':
+    'DNSSEC は速度ではなく検証の手間を足します。レコードが本物か検証できるよう署名を付けます。',
+  'learning.concept.dnssec.q1.c.why':
+    'IP 割り当ては DHCP です。DNSSEC は DNS レコードに署名し、リゾルバが改ざんを検知できるようにします。',
+  'learning.concept.dnssec.q2.a.why':
+    'DNSSEC は暗号化ではなく認証します。問い合わせの秘匿は DoH/DoT が解く別問題です。',
+  'learning.concept.dnssec.q2.c.why':
+    'どのゾーンも暗号化しません。DNSSEC は完全性のため署名し、機密性は DoH/DoT が加えます。',
+  'learning.concept.dnssec.q3.a.why':
+    '無条件の信頼は目的を損ないます。DNSSEC は DS レコードでルートから下へ信頼の連鎖を築きます。',
+  'learning.concept.dnssec.q3.b.why':
+    'IP 許可リストは DNSSEC の仕組みではありません。信頼はルートから流れ、各ゾーンの鍵は親が署名します。',
   'learning.concept.ssh.name': 'SSH',
   'learning.concept.ssh.q1.prompt': 'SSH が提供するのは…',
   'learning.concept.ssh.q1.a': '暗号化されたリモートシェルとトンネル',

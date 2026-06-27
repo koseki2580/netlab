@@ -1389,6 +1389,126 @@ export const conceptCheck: Catalog = {
     'DAD does not encrypt; it sends a Neighbor Solicitation to check the address is not already in use.',
   'learning.concept.ndp.q3.b.why':
     'DAD does not compress addresses; it verifies uniqueness by soliciting for the tentative address first.',
+  'learning.concept.qos.q1.b.why':
+    'The preamble just syncs the receiver’s clock; DSCP priority lives in the IP header’s DS field.',
+  'learning.concept.qos.q1.c.why':
+    'The TCP payload is application data; DSCP marks priority in the IP header, read by every router.',
+  'learning.concept.qos.q2.a.why':
+    'On idle links there is nothing to prioritize; QoS matters when links are congested and some traffic is latency-sensitive.',
+  'learning.concept.qos.q2.c.why':
+    'With one host there is no contention to manage; QoS earns its keep when traffic competes on congested links.',
+  'learning.concept.qos.q3.a.why':
+    'DSCP is about scheduling, not security; a router applies a per-hop behavior such as priority queuing.',
+  'learning.concept.qos.q3.b.why':
+    'Marked packets are prioritized, not dropped; the router applies a per-hop behavior like priority queuing.',
+  'learning.concept.ecmp.q1.b.why':
+    'With one path there is nothing to balance; ECMP applies when several paths share the same lowest cost.',
+  'learning.concept.ecmp.q1.c.why':
+    'A down link is failover’s concern; ECMP spreads traffic across multiple equal-cost paths that are up.',
+  'learning.concept.ecmp.q2.a.why':
+    'Per-packet randomness would reorder a flow; ECMP hashes the 5-tuple so each flow sticks to one path.',
+  'learning.concept.ecmp.q2.c.why':
+    'It does not just pick the lowest IP; ECMP hashes the flow’s 5-tuple to choose a consistent next-hop.',
+  'learning.concept.ecmp.q3.a.why':
+    'ECMP does not encrypt; it shares load across equal-cost paths for more aggregate bandwidth.',
+  'learning.concept.ecmp.q3.b.why':
+    'ECMP uses MORE paths, not fewer routes; the payoff is load sharing and greater total bandwidth.',
+  'learning.concept.vrrp.q1.b.why':
+    'Name resolution is DNS; VRRP gives hosts a redundant default gateway behind one virtual IP.',
+  'learning.concept.vrrp.q1.c.why':
+    'Loop prevention is STP; VRRP makes the default gateway redundant via a shared virtual IP.',
+  'learning.concept.vrrp.q2.a.why':
+    'Only one router answers for the virtual IP at a time — the master; the others stand by as backups.',
+  'learning.concept.vrrp.q2.c.why':
+    'The DNS server is unrelated; the virtual IP is held by the elected master router, with backups ready.',
+  'learning.concept.vrrp.q3.a.why':
+    'VRRP is about gateway redundancy, not subnet count; it removes the single-gateway point of failure.',
+  'learning.concept.vrrp.q3.b.why':
+    'DNS speed is unrelated; VRRP fixes the default gateway being a single point of failure.',
+  'learning.concept.multicast.q1.b.why':
+    'Sending to everyone is broadcast (and broadcasts don’t cross the internet); multicast targets only interested receivers.',
+  'learning.concept.multicast.q1.c.why':
+    'Two-host delivery is unicast; multicast sends one stream to a group that opted in.',
+  'learning.concept.multicast.q2.a.why':
+    'ARP resolves IP→MAC; hosts signal multicast group membership with IGMP.',
+  'learning.concept.multicast.q2.c.why':
+    'BGP routes between ASes; joining a multicast group on the LAN uses IGMP.',
+  'learning.concept.multicast.q3.a.why':
+    'A single host is a unicast address; a multicast address (224.0.0.0/4) names a group of receivers.',
+  'learning.concept.multicast.q3.b.why':
+    'A physical port is hardware; a multicast destination is a logical group address like 224.0.0.0/4.',
+  'learning.concept.acl.q1.b.why':
+    'An ACL does not encrypt; it matches packet fields against ordered permit/deny rules.',
+  'learning.concept.acl.q1.c.why':
+    'Compression saves bandwidth, unrelated to filtering; an ACL permits or denies by matching packet fields.',
+  'learning.concept.acl.q2.a.why':
+    'Stateful is not "always slower"; the real difference is it tracks connections so return traffic is auto-allowed.',
+  'learning.concept.acl.q2.c.why':
+    'Both inspect ports; a stateful firewall additionally tracks connection state to permit replies automatically.',
+  'learning.concept.acl.q3.a.why':
+    '"Permit any any" allows everything — the opposite of secure; the safe default is deny unless explicitly allowed.',
+  'learning.concept.acl.q3.b.why':
+    'No rules often means an implicit allow or undefined behavior; secure design is an explicit default-deny.',
+  'learning.concept.tunneling.q1.b.why':
+    'Encryption is a separate add-on (IPsec); tunneling itself just wraps a packet in a new outer header.',
+  'learning.concept.tunneling.q1.c.why':
+    'Tunneling does not compress; it encapsulates a packet so it can cross a network that otherwise couldn’t carry it.',
+  'learning.concept.tunneling.q2.a.why':
+    'The outer header must survive the transit; the ingress adds it and only the egress strips it.',
+  'learning.concept.tunneling.q2.c.why':
+    'It is the sender (ingress) that adds the outer header; the receiver (egress) removes it.',
+  'learning.concept.tunneling.q3.a.why':
+    'Speed is unrelated; the outer header eats bytes, so the inner payload has less room before fragmenting.',
+  'learning.concept.tunneling.q3.b.why':
+    'Encryption is optional and not the cause; the extra outer header itself consumes bytes from the MTU.',
+  'learning.concept.sip.q1.a.why':
+    'The audio travels in RTP, not SIP; SIP is the signaling that sets up, changes and ends the call.',
+  'learning.concept.sip.q1.c.why':
+    'Address assignment is DHCP; SIP signals call setup/teardown, leaving the media to RTP.',
+  'learning.concept.sip.q2.a.why':
+    'SIP carries no media samples; the audio flows separately over RTP, with SIP/SDP just negotiating it.',
+  'learning.concept.sip.q2.b.why':
+    'Neither audio nor video rides in SIP; both flow over RTP, which SIP negotiates via SDP.',
+  'learning.concept.sip.q3.b.why':
+    'SIP is text-based like HTTP, not a binary routing protocol; INVITE is a request with methods and headers.',
+  'learning.concept.sip.q3.c.why':
+    'An Ethernet frame is L2 binary framing; SIP is an HTTP-like text protocol with methods and status codes.',
+  'learning.concept.rtp.q1.b.why':
+    'Routing tables are exchanged by routing protocols; RTP carries real-time media, typically over UDP.',
+  'learning.concept.rtp.q1.c.why':
+    'Email uses SMTP/IMAP; RTP carries real-time audio/video over UDP with sequence numbers and timestamps.',
+  'learning.concept.rtp.q2.a.why':
+    'TCP can carry audio, but its retransmits arrive too late to be useful; RTP prefers UDP’s low latency.',
+  'learning.concept.rtp.q2.c.why':
+    'UDP is not encrypted (SRTP adds that); RTP uses UDP because timely delivery beats guaranteed delivery.',
+  'learning.concept.rtp.q3.a.why':
+    'RTCP is not encryption (that is SRTP); it carries quality feedback like jitter, loss and round-trip time.',
+  'learning.concept.rtp.q3.b.why':
+    'RTCP does not duplicate the media; it reports stats (jitter, loss, RTT) so senders can adapt.',
+  'learning.concept.stun.q1.a.why':
+    'Route selection is routing’s job; STUN tells a host its own public (NAT-mapped) IP and port.',
+  'learning.concept.stun.q1.b.why':
+    'Name lookup is DNS; STUN reveals the host’s NAT-mapped public address so peers can reach it.',
+  'learning.concept.stun.q2.b.why':
+    'DNS root servers resolve names, not media; when direct paths fail, a TURN relay forwards the traffic.',
+  'learning.concept.stun.q2.c.why':
+    'BGP routes between ASes; relaying media through a blocking NAT is TURN’s job, not BGP’s.',
+  'learning.concept.stun.q3.a.why':
+    'Encryption is SRTP/DTLS; ICE gathers candidate addresses and tests them to find a working path.',
+  'learning.concept.stun.q3.c.why':
+    'ICE does not assign numbers; it collects host/STUN/TURN candidates and probes them to pick a working pair.',
+  'learning.concept.dnssec.q1.b.why':
+    'DNSSEC adds validation work, not speed; it attaches signatures so records can be verified authentic.',
+  'learning.concept.dnssec.q1.c.why':
+    'IP assignment is DHCP; DNSSEC signs DNS records so resolvers can detect tampering.',
+  'learning.concept.dnssec.q2.a.why':
+    'DNSSEC does not encrypt — it authenticates; query privacy is a separate problem solved by DoH/DoT.',
+  'learning.concept.dnssec.q2.c.why':
+    'It is not about encrypting any zone; DNSSEC signs records for integrity, while DoH/DoT add confidentiality.',
+  'learning.concept.dnssec.q3.a.why':
+    'Blind trust would defeat the purpose; DNSSEC builds a chain of trust from the root down via DS records.',
+  'learning.concept.dnssec.q3.b.why':
+    'IP allow-lists are not how DNSSEC works; trust flows from the root, each zone’s key signed by its parent.',
   'learning.concept.ssh.name': 'SSH',
   'learning.concept.ssh.q1.prompt': 'SSH provides…',
   'learning.concept.ssh.q1.a': 'An encrypted remote shell and tunnel',
