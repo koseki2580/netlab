@@ -1241,6 +1241,78 @@ export const conceptCheck: Catalog = {
     'GET はマネージャが機器を問い合わせる操作です。機器が自発的に送る通知は Trap です。',
   'learning.concept.snmp.q3.b.why':
     'ACK は受領確認にすぎません。機器がイベント駆動で押し出すメッセージは SNMP Trap です。',
+  'learning.concept.ipsec.q1.b.why':
+    '名前解決は DNS です。IPsec は IP パケットを認証・暗号化し安全な VPN を構築します。',
+  'learning.concept.ipsec.q1.c.why':
+    'スイッチングは L2 のフレーム転送です。IPsec は IP パケットを認証・暗号化でエンドツーエンドに保護します。',
+  'learning.concept.ipsec.q2.a.why':
+    'AH は認証と完全性検査を行いますが暗号化はしません。ペイロードを暗号化するのは ESP です。',
+  'learning.concept.ipsec.q2.c.why':
+    'ARP は IP→MAC を解決し IPsec と無関係です。暗号化を担うのは ESP です。',
+  'learning.concept.ipsec.q3.a.why':
+    'IPsec は「ポート」を選んで暗号化しません。トンネルモードは元のパケット全体を包んで暗号化します。',
+  'learning.concept.ipsec.q3.b.why':
+    'トンネルモードはルーティングを止めません — 新しい IP ヘッダを付け、暗号化パケットがゲートウェイ間を経路制御されます。',
+  'learning.concept.radius.q1.b.why':
+    'ルーティングはネットワーク間でパケットを動かします。802.1X はポートベースのアクセス制御で、ポートを開く前に認証します。',
+  'learning.concept.radius.q1.c.why':
+    '名前解決は DNS です。802.1X は機器が認証するまでネットワークアクセスを遮ります。',
+  'learning.concept.radius.q2.a.why':
+    'RADIUS はルーティングプロトコルではありません。認証・認可・アカウンティングの AAA サーバプロトコルです。',
+  'learning.concept.radius.q2.c.why':
+    'トンネリングはトラフィックを運びます（L2TP/GRE）。RADIUS は AAA（認証・認可・アカウンティング）を扱います。',
+  'learning.concept.radius.q3.a.why':
+    'サプリカントは接続しようとするクライアントです。資格情報を中継するスイッチ/AP がオーセンティケータです。',
+  'learning.concept.radius.q3.b.why':
+    'DNS サーバは名前を解決します。資格情報を RADIUS サーバへ渡す機器がオーセンティケータです。',
+  'learning.concept.vpn.q1.b.why':
+    'VPN は通常わずかなオーバーヘッドを足すもので高速化ではありません。目的は信頼できない網上の安全な暗号化トンネルです。',
+  'learning.concept.vpn.q1.c.why':
+    '公開 IP の割り当ては VPN の役割ではありません。トラフィックを秘匿する暗号化・認証済みトンネルを作ります。',
+  'learning.concept.vpn.q2.a.why':
+    'どちらも暗号化します。本質的な違いは、サイト間はゲートウェイ経由で網全体を結び、リモートアクセスは 1 台のクライアントをつなぐ点です。',
+  'learning.concept.vpn.q2.c.why':
+    'リモートアクセスは Ethernet に限らず任意の IP 経路（多くはインターネット）で動きます。違いは網全体か単一クライアントかです。',
+  'learning.concept.vpn.q3.a.why':
+    'スプリットトンネリングはトラフィックを遮断しません。選んだ宛先だけ VPN を通し、残りは直接送ります。',
+  'learning.concept.vpn.q3.b.why':
+    '二重暗号化ではありません。スプリットトンネリングは一部のトラフィックだけ VPN を通し、残りはそのまま外へ出します。',
+  'learning.concept.wireguard.q1.a.why':
+    'WireGuard は TCP+TLS のオーバーヘッドを避けます。単一ポートの UDP 上で動き、軽量で NAT 親和的です。',
+  'learning.concept.wireguard.q1.c.why':
+    'ICMP は診断用です。WireGuard は単一ポートの UDP 上で動きます。',
+  'learning.concept.wireguard.q2.a.why':
+    'WireGuard はパスワードを使いません。各ピアは公開鍵で識別され、許可 IP の集合に結び付きます。',
+  'learning.concept.wireguard.q2.b.why':
+    'MAC はルータを越えないローカルな L2 アドレスです。WireGuard は各ピアの公開鍵を許可 IP に固定します。',
+  'learning.concept.wireguard.q3.b.why':
+    'WireGuard は常に暗号化されます。単純なのは小さなコードと固定の現代暗号によるもので、暗号化を省くからではありません。',
+  'learning.concept.wireguard.q3.c.why':
+    'WireGuard はクロスプラットフォームです。速さは小さなカーネル実装と暗号交渉の不在によります。',
+  'learning.concept.l2tp.q1.a.why':
+    'L2TP 単体に暗号化はありません — だから IPsec と組み合わせます。単体ではトンネルするだけです。',
+  'learning.concept.l2tp.q1.c.why':
+    'サブネット間のルーティングはルータ（L3）の仕事です。L2TP は独自の暗号化を持たないトンネリングプロトコルです。',
+  'learning.concept.l2tp.q2.b.why':
+    'L2TP は HTTP 専用ではありません。LAC と LNS の間で L2 の PPP フレームを IP 網越しにトンネルします。',
+  'learning.concept.l2tp.q2.c.why':
+    'BGP はルーティングテーブルを交換します。L2TP は L2 の PPP フレームを IP 上で運び、テーブルは運びません。',
+  'learning.concept.l2tp.q3.a.why':
+    'IPsec は速度ではなくセキュリティのオーバーヘッドを足します。L2TP に欠ける暗号化を補うため組み合わせます。',
+  'learning.concept.l2tp.q3.b.why':
+    '組み合わせは NAT ではなく機密性のためです — L2TP がトンネルを、IPsec が暗号化/認証を提供します。',
+  'learning.concept.pppoe.q1.b.why':
+    'ネットワーク間のルーティングは L3 のルータです。PPP は 1 本の P2P リンク上のリンク層カプセル化と認証です。',
+  'learning.concept.pppoe.q1.c.why':
+    'PPP はインターネット規模の IP を割り当てません。単一の P2P リンクをカプセル化し認証します。',
+  'learning.concept.pppoe.q2.a.why':
+    'PPPoE は暗号化しません。PPP セッションを Ethernet 内で運び、多数の加入者が 1 つのアクセス網を共有します。',
+  'learning.concept.pppoe.q2.c.why':
+    'PPPoE は IP アドレッシングを置き換えません。共有の DSL/Ethernet アクセスのため PPP を Ethernet フレームに収めます。',
+  'learning.concept.pppoe.q3.a.why':
+    'Discovery は暗号化しません。アクセスコンセントレータを発見・選択し、セッション ID を確立します。',
+  'learning.concept.pppoe.q3.b.why':
+    'IP の割り当ては後の PPP セッション（IPCP）で行われます。Discovery はコンセントレータを見つけセッション ID を得るだけです。',
   'learning.concept.ssh.name': 'SSH',
   'learning.concept.ssh.q1.prompt': 'SSH が提供するのは…',
   'learning.concept.ssh.q1.a': '暗号化されたリモートシェルとトンネル',

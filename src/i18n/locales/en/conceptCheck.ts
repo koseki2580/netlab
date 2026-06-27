@@ -1245,6 +1245,78 @@ export const conceptCheck: Catalog = {
     'A GET is the manager polling the device; an unsolicited device-initiated alert is a Trap.',
   'learning.concept.snmp.q3.b.why':
     'An ACK just confirms receipt; the event-driven message a device pushes is an SNMP Trap.',
+  'learning.concept.ipsec.q1.b.why':
+    'Name resolution is DNS; IPsec authenticates and encrypts IP packets to build a secure VPN.',
+  'learning.concept.ipsec.q1.c.why':
+    'Switching is L2 frame forwarding; IPsec secures IP packets end-to-end with authentication and encryption.',
+  'learning.concept.ipsec.q2.a.why':
+    'AH authenticates and checks integrity but does not encrypt; ESP is the one that encrypts the payload.',
+  'learning.concept.ipsec.q2.c.why':
+    'ARP resolves IP→MAC and is unrelated to IPsec; ESP provides the encryption.',
+  'learning.concept.ipsec.q3.a.why':
+    'IPsec does not encrypt "ports" selectively; tunnel mode wraps and encrypts the entire original packet.',
+  'learning.concept.ipsec.q3.b.why':
+    'Tunnel mode does not disable routing — it adds a new IP header so encrypted packets route between gateways.',
+  'learning.concept.radius.q1.b.why':
+    'Routing moves packets between networks; 802.1X is port-based access control — authenticate before the port opens.',
+  'learning.concept.radius.q1.c.why':
+    'Name resolution is DNS; 802.1X gates network access until the device authenticates.',
+  'learning.concept.radius.q2.a.why':
+    'RADIUS is not a routing protocol; it is an AAA server protocol — Authentication, Authorization, Accounting.',
+  'learning.concept.radius.q2.c.why':
+    'Tunneling carries traffic (L2TP/GRE); RADIUS handles AAA — authentication, authorization and accounting.',
+  'learning.concept.radius.q3.a.why':
+    'The supplicant is the client trying to connect; the switch/AP relaying its credentials is the authenticator.',
+  'learning.concept.radius.q3.b.why':
+    'A DNS server resolves names; the device passing credentials to the RADIUS server is the authenticator.',
+  'learning.concept.vpn.q1.b.why':
+    'A VPN usually adds slight overhead, not speed; its purpose is a secure, encrypted tunnel over an untrusted network.',
+  'learning.concept.vpn.q1.c.why':
+    'Public-IP assignment is not a VPN’s job; it creates an encrypted, authenticated tunnel to keep traffic private.',
+  'learning.concept.vpn.q2.a.why':
+    'Both types encrypt; the real difference is site-to-site joins whole networks via gateways, remote-access connects one client.',
+  'learning.concept.vpn.q2.c.why':
+    'Remote-access works over any IP path (often the internet), not just Ethernet; the difference is whole-network vs single-client.',
+  'learning.concept.vpn.q3.a.why':
+    'Split tunneling does not block traffic; it sends only selected destinations through the VPN and the rest direct.',
+  'learning.concept.vpn.q3.b.why':
+    'It is not double encryption; split tunneling routes only some traffic through the VPN, the rest goes straight out.',
+  'learning.concept.wireguard.q1.a.why':
+    'WireGuard avoids TCP+TLS overhead; it runs over UDP on a single port — lean and NAT-friendly.',
+  'learning.concept.wireguard.q1.c.why':
+    'ICMP is for diagnostics; WireGuard runs over UDP on one port.',
+  'learning.concept.wireguard.q2.a.why':
+    'WireGuard uses no passwords; each peer is identified by its public key, bound to a set of allowed IPs.',
+  'learning.concept.wireguard.q2.b.why':
+    'A MAC is a local L2 address that doesn’t cross routers; WireGuard pins each peer’s public key to allowed IPs.',
+  'learning.concept.wireguard.q3.b.why':
+    'WireGuard is always encrypted; it is simpler because of a tiny codebase and fixed modern crypto, not by skipping encryption.',
+  'learning.concept.wireguard.q3.c.why':
+    'WireGuard is cross-platform; its speed comes from a small kernel implementation and no cipher negotiation.',
+  'learning.concept.l2tp.q1.a.why':
+    'L2TP alone has no encryption — that is why it is paired with IPsec; by itself it only tunnels.',
+  'learning.concept.l2tp.q1.c.why':
+    'Routing between subnets is a router’s L3 job; L2TP is a tunneling protocol with no encryption of its own.',
+  'learning.concept.l2tp.q2.b.why':
+    'L2TP is not HTTP-specific; it tunnels Layer-2 PPP frames across an IP network between a LAC and an LNS.',
+  'learning.concept.l2tp.q2.c.why':
+    'BGP exchanges routing tables; L2TP carries L2 PPP frames over IP, it does not move routing tables.',
+  'learning.concept.l2tp.q3.a.why':
+    'IPsec adds security overhead, not speed; it is paired with L2TP to supply the encryption L2TP lacks.',
+  'learning.concept.l2tp.q3.b.why':
+    'The pairing is about confidentiality, not NAT — L2TP provides the tunnel and IPsec adds encryption/auth.',
+  'learning.concept.pppoe.q1.b.why':
+    'Routing between networks is L3 routers; PPP is link-layer encapsulation and authentication over one point-to-point link.',
+  'learning.concept.pppoe.q1.c.why':
+    'PPP does not allocate internet-wide IPs; it encapsulates and authenticates a single point-to-point link.',
+  'learning.concept.pppoe.q2.a.why':
+    'PPPoE does not encrypt; it carries PPP sessions inside Ethernet so many subscribers share one access network.',
+  'learning.concept.pppoe.q2.c.why':
+    'PPPoE does not replace IP addressing; it puts PPP inside Ethernet frames for shared DSL/Ethernet access.',
+  'learning.concept.pppoe.q3.a.why':
+    'Discovery does no encryption; it finds and selects an access concentrator and sets up a session id.',
+  'learning.concept.pppoe.q3.b.why':
+    'IP assignment happens later in the PPP session (IPCP); Discovery just locates the concentrator and gets a session id.',
   'learning.concept.ssh.name': 'SSH',
   'learning.concept.ssh.q1.prompt': 'SSH provides…',
   'learning.concept.ssh.q1.a': 'An encrypted remote shell and tunnel',
