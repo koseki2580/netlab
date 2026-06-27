@@ -1174,6 +1174,73 @@ export const conceptCheck: Catalog = {
     'IP の割り当ては DHCP です。LLDP は物理トポロジを把握し、VoIP 電話や PoE の自動設定を助けます。',
   'learning.concept.lldp.q3.b.why':
     '経路選択はルーティングプロトコルの仕事です。LLDP は近隣を発見してトポロジを描き VoIP/PoE を助けます。',
+  'learning.concept.ssh.q1.b.why':
+    '平文転送は FTP/Telnet です。SSH は暗号化されたリモートシェルと安全なトンネルを提供します。',
+  'learning.concept.ssh.q1.c.why':
+    'アドレス割り当ては DHCP です。SSH は暗号化されたリモートシェルとトンネリングを提供します。',
+  'learning.concept.ssh.q2.a.why': 'ポート 23 は Telnet（非暗号）です。SSH は 22 で待ち受けます。',
+  'learning.concept.ssh.q2.c.why': 'ポート 443 は HTTPS です。SSH は 22 で待ち受けます。',
+  'learning.concept.ssh.q3.a.why':
+    'MAC フィルタリングは偽装も容易な弱い L2 アクセス制御です。SSH の強力な方式は公開鍵認証です。',
+  'learning.concept.ssh.q3.b.why':
+    'VLAN タグはトラフィックを分けるもので利用者認証ではありません。SSH は公開鍵認証を使います。',
+  'learning.concept.ftp.q1.b.why':
+    'FTP は単一の UDP データグラムではなく 2 本の接続を持つ TCP ベースで、制御とデータを分けます。',
+  'learning.concept.ftp.q1.c.why':
+    'ICMP は診断用です。FTP は制御とデータを別チャネルに分け TCP 上で動きます。',
+  'learning.concept.ftp.q2.a.why':
+    'ポート 80 は HTTP です。FTP の制御接続はポート 21 を使います（データは 20 か交渉されたポート）。',
+  'learning.concept.ftp.q2.c.why': 'ポート 53 は DNS です。FTP の制御接続はポート 21 を使います。',
+  'learning.concept.ftp.q3.a.why':
+    'パッシブモードは暗号化しません（それは FTPS/SFTP）。クライアントが自分のファイアウォール/NAT 越しにデータ接続を開けるようにします。',
+  'learning.concept.ftp.q3.b.why':
+    'パッシブ FTP は DNS と無関係です。データ接続をクライアント側のファイアウォールや NAT を越えられるようにします。',
+  'learning.concept.smtp.q1.b.why':
+    'クライアントへの受信は IMAP/POP3 です。SMTP はサーバ間でメールを送信・中継します。',
+  'learning.concept.smtp.q1.c.why':
+    'ホスト名解決は DNS です。SMTP はメールを送信・中継するプロトコルです。',
+  'learning.concept.smtp.q2.a.why':
+    'ポート 110 は POP3（受信）です。SMTP は 25（サーバ間中継）か 587（投稿）を使います。',
+  'learning.concept.smtp.q2.c.why': 'ポート 22 は SSH です。SMTP は 25 か 587 を使います。',
+  'learning.concept.smtp.q3.a.why':
+    'A レコードはホストの IPv4 を返します。メール配送は MX レコードが指示します。',
+  'learning.concept.smtp.q3.b.why':
+    'CNAME は別名です。ドメインのメールサーバを示すレコードは MX です。',
+  'learning.concept.email.q1.b.why':
+    'サーバ間の送信・中継は SMTP です。IMAP と POP3 はクライアントへメールを受信します。',
+  'learning.concept.email.q1.c.why':
+    'アドレス割り当ては DHCP です。IMAP/POP3 はメールボックスサーバからメールを取得します。',
+  'learning.concept.email.q2.a.why':
+    '両方とも TLS で動かせます。本質的な違いは IMAP がサーバ側で同期し、POP3 はダウンロードして削除する点です。',
+  'learning.concept.email.q2.c.why':
+    'POP3 は受信であって送信ではありません（送信は SMTP）。IMAP はサーバ上で同期し、POP3 はダウンロードします。',
+  'learning.concept.email.q3.a.why':
+    'ICMP はメールではなく診断用です。安全な IMAP/POP3 は TLS で包まれます。',
+  'learning.concept.email.q3.b.why':
+    'ARP は LAN で IP→MAC を解決します。メール受信は TLS で保護します。',
+  'learning.concept.ntp.q1.b.why': 'ホスト名解決は DNS です。NTP は機器の時計を同期します。',
+  'learning.concept.ntp.q1.c.why':
+    'アドレス割り当ては DHCP です。NTP は機器間で時計を同期し続けます。',
+  'learning.concept.ntp.q2.a.why':
+    'VLAN は L2 トラフィックを分けます。NTP は時刻源を階層（基準時計からの距離）で整理します。',
+  'learning.concept.ntp.q2.c.why':
+    '自律システムは BGP のルーティングドメインです。NTP は階層で時刻源を順位付けします。',
+  'learning.concept.ntp.q3.a.why':
+    '時刻はケーブル速度と無関係です。ログの相関、証明書の有効性、認証で重要になります。',
+  'learning.concept.ntp.q3.b.why':
+    'MTU はフレームサイズの上限で時刻と無関係です。正確な時計は証明書・ログ・TLS/Kerberos で重要です。',
+  'learning.concept.snmp.q1.b.why':
+    'パケットの経路制御はルータの仕事です。SNMP はネットワーク機器を監視・管理します。',
+  'learning.concept.snmp.q1.c.why':
+    'リンク暗号化は TLS/IPsec/MACsec です。SNMP は機器の監視・管理用です。',
+  'learning.concept.snmp.q2.a.why':
+    'ルーティングテーブルはルータにあります。SNMP は管理データを MIB ツリーの OID として公開します。',
+  'learning.concept.snmp.q2.c.why':
+    'MAC テーブルはスイッチの L2 構造です。SNMP は管理対象を MIB の OID として整理します。',
+  'learning.concept.snmp.q3.a.why':
+    'GET はマネージャが機器を問い合わせる操作です。機器が自発的に送る通知は Trap です。',
+  'learning.concept.snmp.q3.b.why':
+    'ACK は受領確認にすぎません。機器がイベント駆動で押し出すメッセージは SNMP Trap です。',
   'learning.concept.ssh.name': 'SSH',
   'learning.concept.ssh.q1.prompt': 'SSH が提供するのは…',
   'learning.concept.ssh.q1.a': '暗号化されたリモートシェルとトンネル',

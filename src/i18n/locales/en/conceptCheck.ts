@@ -1178,6 +1178,73 @@ export const conceptCheck: Catalog = {
     'IP assignment is DHCP; LLDP maps physical topology and helps auto-configure VoIP phones and PoE.',
   'learning.concept.lldp.q3.b.why':
     'Route selection is a routing protocol’s job; LLDP discovers neighbors to map topology and aid VoIP/PoE.',
+  'learning.concept.ssh.q1.b.why':
+    'Plaintext transfer is FTP/Telnet; SSH gives an encrypted remote shell and secure tunnel.',
+  'learning.concept.ssh.q1.c.why':
+    'Address assignment is DHCP; SSH provides an encrypted remote shell and tunneling.',
+  'learning.concept.ssh.q2.a.why': 'Port 23 is Telnet (unencrypted); SSH listens on 22.',
+  'learning.concept.ssh.q2.c.why': 'Port 443 is HTTPS; SSH listens on 22.',
+  'learning.concept.ssh.q3.a.why':
+    'MAC filtering is weak L2 access control, easily spoofed; SSH’s strong method is public-key authentication.',
+  'learning.concept.ssh.q3.b.why':
+    'A VLAN tag segments traffic, not authenticates users; SSH uses public-key authentication.',
+  'learning.concept.ftp.q1.b.why':
+    'FTP is TCP-based with two connections, not a single UDP datagram; it separates control and data.',
+  'learning.concept.ftp.q1.c.why':
+    'ICMP is for diagnostics; FTP runs over TCP with separate control and data channels.',
+  'learning.concept.ftp.q2.a.why':
+    'Port 80 is HTTP; FTP’s control connection uses port 21 (data on 20 or a negotiated port).',
+  'learning.concept.ftp.q2.c.why': 'Port 53 is DNS; the FTP control connection uses port 21.',
+  'learning.concept.ftp.q3.a.why':
+    'Passive mode does not encrypt (that is FTPS/SFTP); it lets the client open the data connection through its firewall/NAT.',
+  'learning.concept.ftp.q3.b.why':
+    'Passive FTP has nothing to do with DNS; it makes the data connection traverse client-side firewalls and NAT.',
+  'learning.concept.smtp.q1.b.why':
+    'Retrieving mail to a client is IMAP/POP3; SMTP sends and relays mail between servers.',
+  'learning.concept.smtp.q1.c.why':
+    'Hostname resolution is DNS; SMTP is the protocol for sending and relaying email.',
+  'learning.concept.smtp.q2.a.why':
+    'Port 110 is POP3 (retrieval); SMTP uses 25 (server relay) or 587 (submission).',
+  'learning.concept.smtp.q2.c.why': 'Port 22 is SSH; SMTP uses 25 or 587.',
+  'learning.concept.smtp.q3.a.why':
+    'An A record gives a host’s IPv4; mail delivery is directed by the MX record.',
+  'learning.concept.smtp.q3.b.why':
+    'A CNAME is an alias; the record that names a domain’s mail servers is MX.',
+  'learning.concept.email.q1.b.why':
+    'Sending/relaying between servers is SMTP; IMAP and POP3 retrieve mail to a client.',
+  'learning.concept.email.q1.c.why':
+    'Address assignment is DHCP; IMAP/POP3 fetch mail from the mailbox server.',
+  'learning.concept.email.q2.a.why':
+    'Both can run over TLS; the real difference is IMAP syncs server-side while POP3 downloads and removes.',
+  'learning.concept.email.q2.c.why':
+    'POP3 retrieves, it does not send (that is SMTP); IMAP keeps mail synced on the server, POP3 downloads it.',
+  'learning.concept.email.q3.a.why':
+    'ICMP is for diagnostics, not mail; secure IMAP/POP3 are wrapped in TLS.',
+  'learning.concept.email.q3.b.why':
+    'ARP resolves IP→MAC on the LAN; mail retrieval is secured with TLS.',
+  'learning.concept.ntp.q1.b.why': 'Hostname resolution is DNS; NTP synchronizes device clocks.',
+  'learning.concept.ntp.q1.c.why':
+    'Address assignment is DHCP; NTP keeps clocks synchronized across devices.',
+  'learning.concept.ntp.q2.a.why':
+    'VLANs segment L2 traffic; NTP arranges time sources into strata (distance from a reference clock).',
+  'learning.concept.ntp.q2.c.why':
+    'Autonomous systems are BGP routing domains; NTP uses strata to rank time sources.',
+  'learning.concept.ntp.q3.a.why':
+    'Time has nothing to do with cable speed; it matters for log correlation, certificate validity and auth.',
+  'learning.concept.ntp.q3.b.why':
+    'MTU is a frame-size limit, unrelated to time; accurate clocks matter for certs, logs and TLS/Kerberos.',
+  'learning.concept.snmp.q1.b.why':
+    'Routing packets is the routers’ job; SNMP monitors and manages network devices.',
+  'learning.concept.snmp.q1.c.why':
+    'Link encryption is TLS/IPsec/MACsec; SNMP is for monitoring and managing devices.',
+  'learning.concept.snmp.q2.a.why':
+    'Routing tables live in routers; SNMP exposes managed data as OIDs in a MIB tree.',
+  'learning.concept.snmp.q2.c.why':
+    'MAC tables are a switch’s L2 structure; SNMP organizes managed objects as OIDs in a MIB.',
+  'learning.concept.snmp.q3.a.why':
+    'A GET is the manager polling the device; an unsolicited device-initiated alert is a Trap.',
+  'learning.concept.snmp.q3.b.why':
+    'An ACK just confirms receipt; the event-driven message a device pushes is an SNMP Trap.',
   'learning.concept.ssh.name': 'SSH',
   'learning.concept.ssh.q1.prompt': 'SSH provides…',
   'learning.concept.ssh.q1.a': 'An encrypted remote shell and tunnel',
