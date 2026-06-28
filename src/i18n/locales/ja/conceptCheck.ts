@@ -405,10 +405,10 @@ export const conceptCheck: Catalog = {
     'DSCP は IPv4/IPv6 の ToS/Traffic Class フィールドの 6 ビットを使い、各パケットをホップごとの扱いに分類します。',
   'learning.concept.qos.q2.prompt': 'QoS が最も役立つのは…',
   'learning.concept.qos.q2.a': 'リンクが常に空いている',
-  'learning.concept.qos.q2.b': 'リンクが混雑し一部が遅延に敏感',
+  'learning.concept.qos.q2.b': 'リンクが輻輳し一部が遅延に敏感',
   'learning.concept.qos.q2.c': 'ホストが1台だけ',
   'learning.concept.qos.q2.why':
-    '混雑時、QoS はルータが一括転送より音声/映像を優先でき、全てを同等に扱わずに済みます。',
+    '輻輳時、QoS はルータが一括転送より音声/映像を優先でき、全てを同等に扱わずに済みます。',
   'learning.concept.qos.q3.prompt': 'ルータが DSCP に従う方法は…',
   'learning.concept.qos.q3.a': 'パケットを暗号化する',
   'learning.concept.qos.q3.b': 'マークされた全パケットを破棄する',
@@ -500,10 +500,10 @@ export const conceptCheck: Catalog = {
     'GRE は元パケットを新しい IP+GRE ヘッダでカプセル化し、途中のネットワークをペイロードとして通過させます。',
   'learning.concept.gre.q2.prompt': 'GRE 自体が提供するのは…',
   'learning.concept.gre.q2.a': '強力な暗号化',
-  'learning.concept.gre.q2.b': '内包のみで暗号化なし',
+  'learning.concept.gre.q2.b': 'カプセル化のみで暗号化なし',
   'learning.concept.gre.q2.c': 'アドレス割り当て',
   'learning.concept.gre.q2.why':
-    'GRE はトンネリング/内包プロトコルで、保護するには IPsec と組み合わせます。',
+    'GRE はトンネリング/カプセル化プロトコルで、保護するには IPsec と組み合わせます。',
   'learning.concept.gre.q3.prompt': 'トンネルは2つの遠隔ネットワークを…',
   'learning.concept.gre.q3.a': '1つのホストのように見せる',
   'learning.concept.gre.q3.b': '到達不能に見せる',
@@ -1344,7 +1344,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.mpls.q2.a.why':
     'ブロードキャストドメインは L2 の概念です。MPLS 網を通る経路がラベルスイッチドパス（LSP）です。',
   'learning.concept.mpls.q2.c.why':
-    'AS は BGP のルーティングドメインです。MPLS 内のラベル付き経路は Label Switched Path（LSP）です。',
+    'AS は BGP のルーティングドメインです。MPLS 内のラベル付き経路はラベルスイッチドパス（LSP）です。',
   'learning.concept.mpls.q3.a.why':
     'HTTP は L7 のアプリです。MPLS は低層に位置し、L2 と L3 の間（しばしばレイヤー2.5）です。',
   'learning.concept.mpls.q3.b.why':
