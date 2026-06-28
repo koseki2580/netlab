@@ -687,7 +687,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.addressing.q6.c':
     'IPv4 が枯渇気味で、多数のプライベートホストが公開 IP を共有するため',
   'learning.concept.addressing.q6.why':
-    'NAT は私設網全体が少数の公開 IPv4 を共有できるようにし、IPv4 枯渇を回避します。',
+    'NAT はプライベート網全体が少数の公開 IPv4 を共有できるようにし、IPv4 枯渇を回避します。',
   'learning.concept.addressing.q1.b.why':
     'MAC はローカルリンク内でのみ意味を持ちます。ネットワークをまたぐのは IP アドレス（L3）の役割です。',
   'learning.concept.addressing.q1.c.why':
@@ -701,15 +701,15 @@ export const conceptCheck: Catalog = {
   'learning.concept.addressing.q3.b.why':
     'ブロードキャストはサブネットを越えません。フレームはゲートウェイの MAC へ送られ、その後 IP ルーティングが引き継ぎます。',
   'learning.concept.addressing.q4.b.why':
-    'グローバルに一意なのは公開アドレスだけです。私設レンジは NAT の背後で無数のネットワークに再利用されます。',
+    'グローバルに一意なのは公開アドレスだけです。プライベートレンジは NAT の背後で無数のネットワークに再利用されます。',
   'learning.concept.addressing.q4.c.why':
-    '私設レンジはルータ専用ではなく、内部の任意のホスト（スマホ・サーバ・PC）が使います。',
+    'プライベートレンジはルータ専用ではなく、内部の任意のホスト（スマホ・サーバ・PC）が使います。',
   'learning.concept.addressing.q5.a.why':
     '特定の 1 ホストへ届けるのはユニキャストです。ブロードキャストはドメイン内の全ホストへ届きます。',
   'learning.concept.addressing.q5.c.why':
     '購読グループへの配送はマルチキャストです。ブロードキャストはブロードキャストドメインの全員へ届きます。',
   'learning.concept.addressing.q6.a.why':
-    '暗号化は TLS の役割で NAT ではありません。NAT はアドレスを書き換え、私設ホストが公開 IP を共有できるようにします。',
+    '暗号化は TLS の役割で NAT ではありません。NAT はアドレスを書き換え、プライベートホストが公開 IP を共有できるようにします。',
   'learning.concept.addressing.q6.b.why':
     '名前解決は DNS です。NAT は枯渇しがちな IPv4 アドレスを引き伸ばすために存在し、名前を引くものではありません。',
   'learning.concept.ports.name': 'ポート・ソケット・接続',
@@ -997,9 +997,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.ipv6.q3.b.why':
     'IPv6 はまさにアドレス（128 ビット）の話です。なくしたのはブロードキャストで、マルチキャストに置き換えました。',
   'learning.concept.nat.q1.b.why':
-    'スイッチの MAC 学習は L2 の機能です。NAT の仕事は多数の私設ホストが 1 つの公開 IP を共有できるようにすることです。',
+    'スイッチの MAC 学習は L2 の機能です。NAT の仕事は多数のプライベートホストが 1 つの公開 IP を共有できるようにすることです。',
   'learning.concept.nat.q1.c.why':
-    'OSPF はルーティングプロトコルです。NAT はアドレスを書き換え、私設網が公開 IP を共有できるようにします。',
+    'OSPF はルーティングプロトコルです。NAT はアドレスを書き換え、プライベート網が公開 IP を共有できるようにします。',
   'learning.concept.nat.q2.a.why':
     'デフォルトルートは外向きの通信を送り出します。外から内部サーバへ届かせるにはポート転送（DNAT）が必要です。',
   'learning.concept.nat.q2.c.why':
@@ -1149,7 +1149,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.wifi.q3.a.why':
     'OSPF はルータのルーティングプロトコルで無関係です。Wi-Fi クライアントはまずアクセスポイントに結合します。',
   'learning.concept.wifi.q3.b.why':
-    '公開 IP は不要です（NAT/私設 IP で動きます）。まずクライアントはアクセスポイントと結合し認証します。',
+    '公開 IP は不要です（NAT/プライベート IP で動きます）。まずクライアントはアクセスポイントと結合し認証します。',
   'learning.concept.lacp.q1.b.why':
     'ループ防止は STP です。LACP は複数の物理リンクを 1 つの論理リンクに束ねます。',
   'learning.concept.lacp.q1.c.why':
