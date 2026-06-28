@@ -1001,9 +1001,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.nat.q1.c.why':
     'OSPF はルーティングプロトコルです。NAT はアドレスを書き換え、プライベート網が公開 IP を共有できるようにします。',
   'learning.concept.nat.q2.a.why':
-    'デフォルトルートは外向きの通信を送り出します。外から内部サーバへ届かせるにはポート転送（DNAT）が必要です。',
+    'デフォルトルートは外向きの通信を送り出します。外から内部サーバへ届かせるにはポートフォワーディング（DNAT）が必要です。',
   'learning.concept.nat.q2.c.why':
-    'VLAN トランクはスイッチ間で L2 の VLAN を運びます。内部サーバの公開はポート転送（DNAT）で行います。',
+    'VLAN トランクはスイッチ間で L2 の VLAN を運びます。内部サーバの公開はポートフォワーディング（DNAT）で行います。',
   'learning.concept.nat.q3.a.why':
     'NAT は暗号化しません。テーブルは応答を正しい内部ホストとポートへ戻すために存在します。',
   'learning.concept.nat.q3.b.why':
@@ -1021,7 +1021,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ospf.q3.b.why':
     'OSPF は障害を無視できません — LSA を再フラッディングし最短経路ツリーを再計算します。',
   'learning.concept.bgp.q1.b.why':
-    'アドレス割り当ては DHCP です。BGP はインターネット全体で自律システム間の到達性を経路制御します。',
+    'アドレス割り当ては DHCP です。BGP はインターネット全体で自律システム間の到達性をルーティングします。',
   'learning.concept.bgp.q1.c.why':
     '名前解決は DNS です。BGP はインターネットをつなぐ AS 間ルーティングプロトコルです。',
   'learning.concept.bgp.q2.a.why':
@@ -1230,7 +1230,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ntp.q3.b.why':
     'MTU はフレームサイズの上限で時刻と無関係です。正確な時計は証明書・ログ・TLS/Kerberos で重要です。',
   'learning.concept.snmp.q1.b.why':
-    'パケットの経路制御はルータの仕事です。SNMP はネットワーク機器を監視・管理します。',
+    'パケットのルーティングはルータの仕事です。SNMP はネットワーク機器を監視・管理します。',
   'learning.concept.snmp.q1.c.why':
     'リンク暗号化は TLS/IPsec/MACsec です。SNMP は機器の監視・管理用です。',
   'learning.concept.snmp.q2.a.why':
@@ -1252,7 +1252,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ipsec.q3.a.why':
     'IPsec は「ポート」を選んで暗号化しません。トンネルモードは元のパケット全体を包んで暗号化します。',
   'learning.concept.ipsec.q3.b.why':
-    'トンネルモードはルーティングを止めません — 新しい IP ヘッダを付け、暗号化パケットがゲートウェイ間を経路制御されます。',
+    'トンネルモードはルーティングを止めません — 新しい IP ヘッダを付け、暗号化パケットがゲートウェイ間をルーティングされます。',
   'learning.concept.radius.q1.b.why':
     'ルーティングはネットワーク間でパケットを動かします。802.1X はポートベースのアクセス制御で、ポートを開く前に認証します。',
   'learning.concept.radius.q1.c.why':
@@ -1428,7 +1428,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.multicast.q2.a.why':
     'ARP は IP→MAC を解決します。ホストは IGMP でマルチキャストグループへの参加を通知します。',
   'learning.concept.multicast.q2.c.why':
-    'BGP は AS 間を経路制御します。LAN でマルチキャストグループに参加するには IGMP を使います。',
+    'BGP は AS 間をルーティングします。LAN でマルチキャストグループに参加するには IGMP を使います。',
   'learning.concept.multicast.q3.a.why':
     '単一ホストはユニキャストアドレスです。マルチキャストアドレス（224.0.0.0/4）は受信者のグループを指します。',
   'learning.concept.multicast.q3.b.why':
@@ -1488,7 +1488,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.stun.q2.b.why':
     'DNS ルートサーバは名前を解決しメディアは運びません。直接経路が失敗すると TURN リレーが転送します。',
   'learning.concept.stun.q2.c.why':
-    'BGP は AS 間を経路制御します。遮断する NAT 越しにメディアを中継するのは TURN の役割で BGP ではありません。',
+    'BGP は AS 間をルーティングします。遮断する NAT 越しにメディアを中継するのは TURN の役割で BGP ではありません。',
   'learning.concept.stun.q3.a.why':
     '暗号化は SRTP/DTLS です。ICE は候補アドレスを集め、動く経路を見つけるため検査します。',
   'learning.concept.stun.q3.c.why':
