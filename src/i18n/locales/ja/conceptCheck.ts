@@ -68,9 +68,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.vlan.q2.c': 'タグなしトラフィックのみ',
   'learning.concept.vlan.q2.why':
     'トランクはフレームに VLAN ID を付与し、複数 VLAN がスイッチ間の1リンクを共有します。',
-  'learning.concept.vlan.q3.prompt': '2つの VLAN 間でトラフィックを通すには…',
+  'learning.concept.vlan.q3.prompt': '2 つの VLAN 間でトラフィックを通すには…',
   'learning.concept.vlan.q3.a': 'より長いケーブル',
-  'learning.concept.vlan.q3.b': '2台目のルートブリッジ',
+  'learning.concept.vlan.q3.b': '2 台目のルートブリッジ',
   'learning.concept.vlan.q3.c': 'ルータまたは L3 スイッチ',
   'learning.concept.vlan.q3.why':
     'VLAN は別々の L3 サブネットなので、VLAN 間トラフィックはルーティングが必要です。',
@@ -114,7 +114,7 @@ export const conceptCheck: Catalog = {
     'UDP は最小限 — ポート・長さ・任意のチェックサムのみで、接続状態を持ちません。',
   'learning.concept.nat.name': 'NAT',
   'learning.concept.nat.q1.prompt': 'NAT が主に可能にするのは…',
-  'learning.concept.nat.q1.a': '多数のプライベートホストが1つの公開 IP を共有',
+  'learning.concept.nat.q1.a': '多数のプライベートホストが1 つの公開 IP を共有',
   'learning.concept.nat.q1.b': 'スイッチが MAC を学習',
   'learning.concept.nat.q1.c': 'ルータが OSPF を実行',
   'learning.concept.nat.q1.why':
@@ -251,7 +251,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ipv6.q1.b': '32 ビット',
   'learning.concept.ipv6.q1.c': '64 ビット',
   'learning.concept.ipv6.q1.why':
-    'IPv6 はアドレスを 128 ビットに拡張し、8つの16進グループで表記します。',
+    'IPv6 はアドレスを 128 ビットに拡張し、8 つの16進グループで表記します。',
   'learning.concept.ipv6.q2.prompt': 'IPv6 が ARP の代わりに使うのは…',
   'learning.concept.ipv6.q2.a': 'DHCP',
   'learning.concept.ipv6.q2.b': '近隣探索（NDP）',
@@ -297,7 +297,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.bgp.q2.why':
     'BGP はパスベクタ型で、運用者は AS パス長やローカルプリファレンス等の属性にポリシーを適用します。',
   'learning.concept.bgp.q3.prompt': 'BGP の「AS」とは…',
-  'learning.concept.bgp.q3.a': '1台のルータ',
+  'learning.concept.bgp.q3.a': '1 台のルータ',
   'learning.concept.bgp.q3.b': 'サブネット',
   'learning.concept.bgp.q3.c': '自律システム — 単一管理下のネットワーク',
   'learning.concept.bgp.q3.why': '各 AS は番号を持ち、自分が到達できるプレフィックスを広告します。',
@@ -355,9 +355,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.quic.q3.prompt': 'QUIC が複数ストリームを持つ理由は…',
   'learning.concept.quic.q3.a': '接続ごとに1要求しか入らない',
   'learning.concept.quic.q3.b': 'パケットが決して失われない',
-  'learning.concept.quic.q3.c': '1つのパケット損失が他ストリームを止めない',
+  'learning.concept.quic.q3.c': '1 つのパケット損失が他ストリームを止めない',
   'learning.concept.quic.q3.why':
-    '独立したストリームは、1つの損失が全体を遅らせる TCP の HOL ブロッキングを回避します。',
+    '独立したストリームは、1 つの損失が全体を遅らせる TCP の HOL ブロッキングを回避します。',
   'learning.concept.http2.name': 'HTTP/2',
   'learning.concept.http2.q1.prompt': 'HTTP/2 が HTTP/1.1 を改善する主な点は…',
   'learning.concept.http2.q1.a': '1接続で多数のリクエストを多重化',
@@ -389,7 +389,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.http3.q2.b': 'ストリーム間で TCP の HOL ブロッキングが無い',
   'learning.concept.http3.q2.c': '暗号化が無い',
   'learning.concept.http3.q2.why':
-    'QUIC のストリームは独立なので、1つのパケット損失が TCP のように他を止めません。',
+    'QUIC のストリームは独立なので、1 つのパケット損失が TCP のように他を止めません。',
   'learning.concept.http3.q3.prompt': 'HTTP/3 のヘッダ圧縮は…',
   'learning.concept.http3.q3.a': 'HPACK',
   'learning.concept.http3.q3.b': 'gzip',
@@ -406,7 +406,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.qos.q2.prompt': 'QoS が最も役立つのは…',
   'learning.concept.qos.q2.a': 'リンクが常に空いている',
   'learning.concept.qos.q2.b': 'リンクが輻輳し一部が遅延に敏感',
-  'learning.concept.qos.q2.c': 'ホストが1台だけ',
+  'learning.concept.qos.q2.c': 'ホストが1 台だけ',
   'learning.concept.qos.q2.why':
     '輻輳時、QoS はルータが一括転送より音声/映像を優先でき、全てを同等に扱わずに済みます。',
   'learning.concept.qos.q3.prompt': 'ルータが DSCP に従う方法は…',
@@ -418,7 +418,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ecmp.name': 'ECMP',
   'learning.concept.ecmp.q1.prompt': 'ECMP を使うのは…',
   'learning.concept.ecmp.q1.a': '宛先への複数経路が同コストのとき',
-  'learning.concept.ecmp.q1.b': '経路が1つだけのとき',
+  'learning.concept.ecmp.q1.b': '経路が1 つだけのとき',
   'learning.concept.ecmp.q1.c': 'リンクが落ちているとき',
   'learning.concept.ecmp.q1.why':
     'ルーティングが同コストの複数ネクストホップを見つけると、ECMP はトラフィックをそれらに分散します。',
@@ -440,13 +440,13 @@ export const conceptCheck: Catalog = {
   'learning.concept.vrrp.q1.b': '名前解決',
   'learning.concept.vrrp.q1.c': 'ループ防止',
   'learning.concept.vrrp.q1.why':
-    'ホストは1つの仮想 IP を向き、マスタ障害時に VRRP がバックアップルータへ引き継ぎます。',
+    'ホストは1 つの仮想 IP を向き、マスタ障害時に VRRP がバックアップルータへ引き継ぎます。',
   'learning.concept.vrrp.q2.prompt': 'VRRP で仮想 IP を保持するのは、ある時点で…',
   'learning.concept.vrrp.q2.a': '全ルータが同時に',
-  'learning.concept.vrrp.q2.b': '1台のマスタ（他はバックアップ）',
+  'learning.concept.vrrp.q2.b': '1 台のマスタ（他はバックアップ）',
   'learning.concept.vrrp.q2.c': 'DNS サーバ',
   'learning.concept.vrrp.q2.why':
-    '1台がマスタとして仮想 IP/MAC に応答し、バックアップは監視して障害時に引き継ぎます。',
+    '1 台がマスタとして仮想 IP/MAC に応答し、バックアップは監視して障害時に引き継ぎます。',
   'learning.concept.vrrp.q3.prompt': 'VRRP が解決する問題は…',
   'learning.concept.vrrp.q3.a': 'サブネットが多すぎる',
   'learning.concept.vrrp.q3.b': 'DNS が遅い',
@@ -455,7 +455,7 @@ export const conceptCheck: Catalog = {
     'ファーストホップ冗長が無いとゲートウェイ障害でサブネット全体が孤立します。VRRP はその単一障害点を解消します。',
   'learning.concept.multicast.name': 'マルチキャスト / IGMP',
   'learning.concept.multicast.q1.prompt': 'マルチキャストの配送は…',
-  'learning.concept.multicast.q1.a': '1つの送信元から、関心のある受信者グループへ',
+  'learning.concept.multicast.q1.a': '1 つの送信元から、関心のある受信者グループへ',
   'learning.concept.multicast.q1.b': 'インターネット上の全ホストへ',
   'learning.concept.multicast.q1.c': '2ホスト間のみ',
   'learning.concept.multicast.q1.why':
@@ -504,8 +504,8 @@ export const conceptCheck: Catalog = {
   'learning.concept.gre.q2.c': 'アドレス割り当て',
   'learning.concept.gre.q2.why':
     'GRE はトンネリング/カプセル化プロトコルで、保護するには IPsec と組み合わせます。',
-  'learning.concept.gre.q3.prompt': 'トンネルは2つの遠隔ネットワークを…',
-  'learning.concept.gre.q3.a': '1つのホストのように見せる',
+  'learning.concept.gre.q3.prompt': 'トンネルは2 つの遠隔ネットワークを…',
+  'learning.concept.gre.q3.a': '1 つのホストのように見せる',
   'learning.concept.gre.q3.b': '到達不能に見せる',
   'learning.concept.gre.q3.c': 'アンダーレイ越しに直結のように見せる',
   'learning.concept.gre.q3.why':
@@ -589,11 +589,11 @@ export const conceptCheck: Catalog = {
   'learning.concept.layer.fundamentals': '基礎',
   'learning.concept.model.name': 'TCP/IP・OSI モデル',
   'learning.concept.model.q1.prompt': 'ネットワークを層に分ける理由は？',
-  'learning.concept.model.q1.a': '各層が1つの問題を解き、独立に変更できるように',
+  'learning.concept.model.q1.a': '各層が1 つの問題を解き、独立に変更できるように',
   'learning.concept.model.q1.b': '遅くするため',
   'learning.concept.model.q1.c': 'ケーブルを増やすため',
   'learning.concept.model.q1.why':
-    '層化により Ethernet・IP・TCP・HTTP がそれぞれ1つの仕事を担い独立に進化できます — TCP は回線が光か Wi-Fi かを気にしません。',
+    '層化により Ethernet・IP・TCP・HTTP がそれぞれ1 つの仕事を担い独立に進化できます — TCP は回線が光か Wi-Fi かを気にしません。',
   'learning.concept.model.q2.prompt': '送信時にスタックを下る順序は…',
   'learning.concept.model.q2.a': 'リンク → インターネット → トランスポート → アプリ',
   'learning.concept.model.q2.b': 'アプリ → トランスポート → インターネット → リンク',
@@ -656,7 +656,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.addressing.q1.why':
     'MAC はリンクローカルで、同一セグメントのネクストホップへフレームを運び、各ルータで書き換えられます。',
   'learning.concept.addressing.q2.prompt': 'IP アドレスがパケットを届けるのは…',
-  'learning.concept.addressing.q2.a': '1本のケーブル内のみ',
+  'learning.concept.addressing.q2.a': '1 本のケーブル内のみ',
   'learning.concept.addressing.q2.b': 'ネットワークを越えて端から端へ（L3）',
   'learning.concept.addressing.q2.c': '特定のアプリへ',
   'learning.concept.addressing.q2.why':
@@ -732,11 +732,11 @@ export const conceptCheck: Catalog = {
   'learning.concept.ports.q3.c': '443',
   'learning.concept.ports.q3.why':
     '443 は HTTPS、80 は HTTP、22 は SSH、53 は DNS — 1024 未満のウェルノウンポートです。',
-  'learning.concept.ports.q4.prompt': '1台のサーバがポート 443 で多数のクライアントを捌けるのは…',
+  'learning.concept.ports.q4.prompt': '1 台のサーバがポート 443 で多数のクライアントを捌けるのは…',
   'learning.concept.ports.q4.a':
     '各クライアントが異なる送信元 IP/ポートを使い、5タプルが異なるから',
   'learning.concept.ports.q4.b': 'クライアントごとに新しい IP を開くから',
-  'learning.concept.ports.q4.c': '一度に1つしか捌けない',
+  'learning.concept.ports.q4.c': '一度に1 つしか捌けない',
   'learning.concept.ports.q4.why':
     'サーバ側ポートは共有で、接続はタプルのクライアント側で区別されます。',
   'learning.concept.ports.q5.prompt': 'ソケットとは…',
@@ -744,7 +744,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ports.q5.b': 'エンドポイント = IP アドレス + ポート',
   'learning.concept.ports.q5.c': 'ルーティングプロトコル',
   'learning.concept.ports.q5.why':
-    'ソケットはサービスを （IP, ポート） に結びつけます。接続は2つのソケットを結びます。',
+    'ソケットはサービスを（IP, ポート）に結びつけます。接続は2 つのソケットを結びます。',
   'learning.concept.ports.q6.prompt': 'DNS 参照と Web 取得が通常使うのは…',
   'learning.concept.ports.q6.a': 'どちらも TCP/80',
   'learning.concept.ports.q6.b': 'どちらも ICMP',
@@ -779,12 +779,12 @@ export const conceptCheck: Catalog = {
   'learning.concept.ethernet.q4.c': 'ポート番号',
   'learning.concept.ethernet.q4.why':
     'L2 フレームは MAC で宛先指定し、IP アドレスはペイロード内にあります。',
-  'learning.concept.ethernet.q5.prompt': '2台のスイッチを接続すると拡張されるのは…',
-  'learning.concept.ethernet.q5.a': '2つの別インターネット',
+  'learning.concept.ethernet.q5.prompt': '2 台のスイッチを接続すると拡張されるのは…',
+  'learning.concept.ethernet.q5.a': '2 つの別インターネット',
   'learning.concept.ethernet.q5.b': '同一のブロードキャストドメイン',
   'learning.concept.ethernet.q5.c': 'ルーティングテーブル',
   'learning.concept.ethernet.q5.why':
-    '素のスイッチングは1つのブロードキャストドメインを保ちます。分割にはルータ（または VLAN）が必要です。',
+    '素のスイッチングは1 つのブロードキャストドメインを保ちます。分割にはルータ（または VLAN）が必要です。',
   'learning.concept.arp.q4.prompt': 'ARP が要るのは、宛先 IP は分かるが分からないのが…',
   'learning.concept.arp.q4.a': 'MAC アドレス',
   'learning.concept.arp.q4.b': 'ポート',
@@ -1378,9 +1378,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.ndp.q1.c.why':
     'NDP は暗号化しません。ARP を置き換え、ICMPv6 メッセージで近隣の IP→MAC を解決します。',
   'learning.concept.ndp.q2.a.why':
-    'SLAAC はランダムではありません。ホストは ルータ広告（RA） のプレフィックスと自分のインターフェース識別子を組み合わせます。',
+    'SLAAC はランダムではありません。ホストはルータ広告（RA）のプレフィックスと自分のインターフェース識別子を組み合わせます。',
   'learning.concept.ndp.q2.c.why':
-    'ホストはルータのアドレスをコピーしません。広告されたプレフィックスとインターフェース識別子 から自分のアドレスを作ります。',
+    'ホストはルータのアドレスをコピーしません。広告されたプレフィックスとインターフェース識別子から自分のアドレスを作ります。',
   'learning.concept.ndp.q3.a.why':
     'DAD は暗号化しません。近隣要請を送り、アドレスが未使用か確認します。',
   'learning.concept.ndp.q3.b.why':
@@ -1692,7 +1692,7 @@ export const conceptCheck: Catalog = {
     'EIGRP は帯域と遅延（任意で負荷/信頼性）を複合します。RIP のホップ数とは異なります。',
   'learning.concept.lacp.name': 'LACP',
   'learning.concept.lacp.q1.prompt': 'LACP の用途は…',
-  'learning.concept.lacp.q1.a': '複数リンクを1つの論理リンクに束ねる',
+  'learning.concept.lacp.q1.a': '複数リンクを1 つの論理リンクに束ねる',
   'learning.concept.lacp.q1.b': 'ループを防ぐ',
   'learning.concept.lacp.q1.c': 'VLAN を割り当てる',
   'learning.concept.lacp.q1.why':
@@ -1702,7 +1702,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.lacp.q2.b': '帯域増加とリンク冗長性',
   'learning.concept.lacp.q2.c': '暗号化',
   'learning.concept.lacp.q2.why':
-    'トラフィックはメンバリンクにハッシュ分散され、1本が落ちても他が継続します。',
+    'トラフィックはメンバリンクにハッシュ分散され、1 本が落ちても他が継続します。',
   'learning.concept.lacp.q3.prompt': 'STP は正しい LACP 束を…',
   'learning.concept.lacp.q3.a': 'ブロックすべき複数ループ',
   'learning.concept.lacp.q3.b': 'ルータ',
