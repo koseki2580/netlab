@@ -6,7 +6,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.primer.body':
     'プロトコルを選び、いくつかの問いに答えて理解度を確認します。各回答には一行の解説が付き、セッション終了時にスコアが出ます。デッキは L2 からセキュリティまでスタックを横断します。',
   'learning.concept.pickDeck': 'ドリルするプロトコルを選択',
-  'learning.concept.search': 'プロトコルを絞り込み（例：BGP、TLS）',
+  'learning.concept.search': 'プロトコルを絞り込み（例: BGP、TLS）',
   'learning.concept.searchEmpty': '「{{query}}」に一致するプロトコルがありません。',
   'learning.concept.streak': '{{count}}問連続正解',
   'learning.concept.backToDecks': '← すべてのプロトコル',
@@ -541,7 +541,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.vxlan.q2.b': 'VNI（24 ビットのネットワーク識別子）',
   'learning.concept.vxlan.q2.c': 'MAC アドレス',
   'learning.concept.vxlan.q2.why':
-    '24 ビットの VNI は約1600万セグメントを可能にし、802.1Q VLAN の 4094 をはるかに超えます。',
+    '24 ビットの VNI は約 1600 万セグメントを可能にし、802.1Q VLAN の 4094 をはるかに超えます。',
   'learning.concept.vxlan.q3.prompt': 'EVPN が VXLAN とよく併用されるのは…',
   'learning.concept.vxlan.q3.a': 'フレームを暗号化するため',
   'learning.concept.vxlan.q3.b': 'IP を割り当てるため',
@@ -566,7 +566,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.wifi.q3.b': '公開 IP を取得',
   'learning.concept.wifi.q3.c': 'アクセスポイントと結合（と認証）する',
   'learning.concept.wifi.q3.why':
-    'クライアントは AP を探索し、認証して結合（例: WPA2）してからトラフィックを流せます。',
+    'クライアントはアクセスポイントを探索し、認証して結合（例: WPA2）してからトラフィックを流せます。',
   'learning.concept.acl.name': 'ACL / ファイアウォール',
   'learning.concept.acl.q1.prompt': 'ACL がトラフィックを選別する基準は…',
   'learning.concept.acl.q1.a': 'パケットのフィールドを permit/deny ルールと照合',
@@ -1149,7 +1149,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.wifi.q3.a.why':
     'OSPF はルータのルーティングプロトコルで無関係です。Wi-Fi クライアントはまずアクセスポイントに結合します。',
   'learning.concept.wifi.q3.b.why':
-    '公開 IP は不要です（NAT/私設 IP で動きます）。まずクライアントは AP と結合し認証します。',
+    '公開 IP は不要です（NAT/私設 IP で動きます）。まずクライアントはアクセスポイントと結合し認証します。',
   'learning.concept.lacp.q1.b.why':
     'ループ防止は STP です。LACP は複数の物理リンクを 1 つの論理リンクに束ねます。',
   'learning.concept.lacp.q1.c.why':
@@ -1358,7 +1358,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.isis.q2.c.why':
     'IS-IS は TCP を使いません — リンク層上で直接動きます（OSPF は IP の中で動く）。',
   'learning.concept.isis.q3.a.why':
-    'AS パスは BGP のものです。OSPF も IS-IS も総リンクコストで Dijkstra/SPF を実行します。',
+    'AS パスは BGP のものです。OSPF も IS-IS も総リンクコストで ダイクストラ/SPF を実行します。',
   'learning.concept.isis.q3.b.why':
     'MAC アドレスは L2 転送です。これらリンクステート IGP は最小の総リンクコストで経路を選びます。',
   'learning.concept.eigrp.q1.b.why':
@@ -1541,7 +1541,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ftp.q3.b': 'DNS を速くするため',
   'learning.concept.ftp.q3.c': 'クライアント側のファイアウォールや NAT を通すため',
   'learning.concept.ftp.q3.why':
-    'パッシブモードではクライアントがデータ接続を開くため、アクティブモードの着信を塞ぐ NAT/FW を通れます。',
+    'パッシブモードではクライアントがデータ接続を開くため、アクティブモードの着信を塞ぐ NAT/ファイアウォール を通れます。',
   'learning.concept.smtp.name': 'SMTP',
   'learning.concept.smtp.q1.prompt': 'SMTP の用途は…',
   'learning.concept.smtp.q1.a': 'サーバ間でメールを送信・中継する',
@@ -1769,7 +1769,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.vpn.q3.a': 'すべての通信が遮断される',
   'learning.concept.vpn.q3.b': 'VPN が二重に暗号化する',
   'learning.concept.vpn.q3.c':
-    '一部の通信（例：社内サブネット）だけ VPN を通し、残りは直接インターネットへ出す',
+    '一部の通信（例: 社内サブネット）だけ VPN を通し、残りは直接インターネットへ出す',
   'learning.concept.vpn.q3.why':
     'スプリットトンネルは選んだ宛先だけ VPN 経由にします。負荷は減りますが、フルトンネルより露出が広がります。',
   'learning.concept.wireguard.name': 'WireGuard',
@@ -1909,7 +1909,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.stun.q1.why':
     'STUN サーバは見えた送信元 IP:ポートを返し、NAT が作った公開マッピングを明らかにします — ホールパンチングの基礎です。',
   'learning.concept.stun.q2.prompt':
-    '直接接続が失敗したとき（例：対称型 NAT）、メディアを運ぶのは？',
+    '直接接続が失敗したとき（例: 対称型 NAT）、メディアを運ぶのは？',
   'learning.concept.stun.q2.a': 'TURN — リレーサーバが両ピア間のトラフィックを中継する',
   'learning.concept.stun.q2.b': 'DNS ルートサーバ',
   'learning.concept.stun.q2.c': 'BGP',
