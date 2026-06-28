@@ -1559,7 +1559,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.smtp.q2.c': '22',
   'learning.concept.smtp.q2.why':
     'Port 25 is server-to-server SMTP; 587 is authenticated client submission; 110 is POP3.',
-  'learning.concept.smtp.q3.prompt': 'Which DNS record says where to deliver a domain mail?',
+  'learning.concept.smtp.q3.prompt': 'Which DNS record says where to deliver a domain’s mail?',
   'learning.concept.smtp.q3.a': 'A',
   'learning.concept.smtp.q3.b': 'CNAME',
   'learning.concept.smtp.q3.c': 'MX',

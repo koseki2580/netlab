@@ -234,7 +234,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ipv4.q1.why':
     '各ホップで TTL は減算され、0 で破棄されることで、パケットの巡回時間を制限します。',
   'learning.concept.ipv4.q2.prompt': 'IPv4 アドレスは…',
-  'learning.concept.ipv4.q2.a': '32 ビット、4オクテット表記',
+  'learning.concept.ipv4.q2.a': '32 ビット、4 オクテット表記',
   'learning.concept.ipv4.q2.b': '48 ビット',
   'learning.concept.ipv4.q2.c': '128 ビット',
   'learning.concept.ipv4.q2.why':
@@ -268,7 +268,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ospf.q1.prompt': 'OSPF は…',
   'learning.concept.ospf.q1.a': 'リンクステート型プロトコル',
   'learning.concept.ospf.q1.b': 'ディスタンスベクタ型プロトコル',
-  'learning.concept.ospf.q1.c': 'パスベクトル型プロトコル',
+  'learning.concept.ospf.q1.c': 'パスベクタ型プロトコル',
   'learning.concept.ospf.q1.why':
     'OSPF はリンクステート広告をフラッディングし、全ルータが同じ地図を作って SPF（ダイクストラ）を実行します。',
   'learning.concept.ospf.q2.prompt': 'OSPF が最良経路を選ぶ基準は…',
@@ -292,10 +292,10 @@ export const conceptCheck: Catalog = {
     'BGP は AS 間で到達性を交換し、独立したネットワーク群が世界規模のインターネットを形成する仕組みです。',
   'learning.concept.bgp.q2.prompt': 'BGP が経路を選ぶ主基準は…',
   'learning.concept.bgp.q2.a': '最小ホップ数',
-  'learning.concept.bgp.q2.b': 'ポリシーと AS パス（パスベクトル）',
+  'learning.concept.bgp.q2.b': 'ポリシーと AS パス（パスベクタ）',
   'learning.concept.bgp.q2.c': 'リンクコスト',
   'learning.concept.bgp.q2.why':
-    'BGP はパスベクトル型で、運用者は AS パス長やローカルプリファレンス等の属性にポリシーを適用します。',
+    'BGP はパスベクタ型で、運用者は AS パス長やローカルプリファレンス等の属性にポリシーを適用します。',
   'learning.concept.bgp.q3.prompt': 'BGP の「AS」とは…',
   'learning.concept.bgp.q3.a': '1台のルータ',
   'learning.concept.bgp.q3.b': 'サブネット',
@@ -537,15 +537,15 @@ export const conceptCheck: Catalog = {
   'learning.concept.vxlan.q1.why':
     'VXLAN はイーサネットフレームを UDP でトンネルし、ルーテッド（L3）なデータセンタファブリック上に L2 を延伸します。',
   'learning.concept.vxlan.q2.prompt': 'VXLAN セグメントを識別するのは…',
-  'learning.concept.vxlan.q2.a': 'VLAN ID（12ビット）',
-  'learning.concept.vxlan.q2.b': 'VNI（24ビットのネットワーク識別子）',
+  'learning.concept.vxlan.q2.a': 'VLAN ID（12 ビット）',
+  'learning.concept.vxlan.q2.b': 'VNI（24 ビットのネットワーク識別子）',
   'learning.concept.vxlan.q2.c': 'MAC アドレス',
   'learning.concept.vxlan.q2.why':
-    '24ビットの VNI は約1600万セグメントを可能にし、802.1Q VLAN の 4094 をはるかに超えます。',
+    '24 ビットの VNI は約1600万セグメントを可能にし、802.1Q VLAN の 4094 をはるかに超えます。',
   'learning.concept.vxlan.q3.prompt': 'EVPN が VXLAN とよく併用されるのは…',
   'learning.concept.vxlan.q3.a': 'フレームを暗号化するため',
   'learning.concept.vxlan.q3.b': 'IP を割り当てるため',
-  'learning.concept.vxlan.q3.c': 'MAC/IP 到達性を制御プレーン（BGP）で配布するため',
+  'learning.concept.vxlan.q3.c': 'MAC/IP 到達性をコントロールプレーン（BGP）で配布するため',
   'learning.concept.vxlan.q3.why':
     'EVPN（BGP のアドレスファミリ）はどの MAC/IP がどのトンネル端点の背後にあるかを広告し、フラッド&ラーンを置き換えます。',
   'learning.concept.wifi.name': 'Wi-Fi / 802.11',
@@ -756,9 +756,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.ports.q1.c.why':
     'MAC は L2 のハードウェアアドレスです。ポートはサービスを識別する L4 の番号です。',
   'learning.concept.ports.q2.a.why':
-    '宛先 IP だけでは同一サーバへの多数の接続を区別できません。完全な 5 タプルが必要です。',
+    '宛先 IP だけでは同一サーバへの多数の接続を区別できません。完全な 5タプルが必要です。',
   'learning.concept.ports.q2.c.why':
-    'MAC はホップごとに変わる L2 です。接続は L3/L4 の 5 タプルで識別します。',
+    'MAC はホップごとに変わる L2 です。接続は L3/L4 の 5タプルで識別します。',
   'learning.concept.ports.q3.a.why': 'ポート 22 は SSH です。HTTPS は 443 で待ち受けます。',
   'learning.concept.ports.q3.b.why': 'ポート 53 は DNS です。HTTPS は 443 で待ち受けます。',
   'learning.concept.ports.q4.b.why':
@@ -1147,9 +1147,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.wifi.q2.c.why':
     '無線は衝突がないわけではありません — だから Wi-Fi は CSMA/CA を要します。電波は共有で半二重です。',
   'learning.concept.wifi.q3.a.why':
-    'OSPF はルータのルーティングプロトコルで無関係です。Wi-Fi クライアントはまずアクセスポイントに接続（アソシエート）します。',
+    'OSPF はルータのルーティングプロトコルで無関係です。Wi-Fi クライアントはまずアクセスポイントに結合します。',
   'learning.concept.wifi.q3.b.why':
-    '公開 IP は不要です（NAT/私設 IP で動きます）。まずクライアントは AP とアソシエートし認証します。',
+    '公開 IP は不要です（NAT/私設 IP で動きます）。まずクライアントは AP と結合し認証します。',
   'learning.concept.lacp.q1.b.why':
     'ループ防止は STP です。LACP は複数の物理リンクを 1 つの論理リンクに束ねます。',
   'learning.concept.lacp.q1.c.why':
@@ -1302,17 +1302,17 @@ export const conceptCheck: Catalog = {
   'learning.concept.l2tp.q3.b.why':
     '組み合わせは NAT ではなく機密性のためです — L2TP がトンネルを、IPsec が暗号化/認証を提供します。',
   'learning.concept.pppoe.q1.b.why':
-    'ネットワーク間のルーティングは L3 のルータです。PPP は 1 本の P2P リンク上のリンク層カプセル化と認証です。',
+    'ネットワーク間のルーティングは L3 のルータです。PPP は 1 本のポイントツーポイント・リンク上のリンク層カプセル化と認証です。',
   'learning.concept.pppoe.q1.c.why':
-    'PPP はインターネット規模の IP を割り当てません。単一の P2P リンクをカプセル化し認証します。',
+    'PPP はインターネット規模の IP を割り当てません。単一のポイントツーポイント・リンクをカプセル化し認証します。',
   'learning.concept.pppoe.q2.a.why':
     'PPPoE は暗号化しません。PPP セッションを Ethernet 内で運び、多数の加入者が 1 つのアクセス網を共有します。',
   'learning.concept.pppoe.q2.c.why':
     'PPPoE は IP アドレッシングを置き換えません。共有の DSL/Ethernet アクセスのため PPP を Ethernet フレームに収めます。',
   'learning.concept.pppoe.q3.a.why':
-    'Discovery は暗号化しません。アクセスコンセントレータを発見・選択し、セッション ID を確立します。',
+    'Discovery は暗号化しません。アクセス集約装置（AC）を発見・選択し、セッション ID を確立します。',
   'learning.concept.pppoe.q3.b.why':
-    'IP の割り当ては後の PPP セッション（IPCP）で行われます。Discovery はコンセントレータを見つけセッション ID を得るだけです。',
+    'IP の割り当ては後の PPP セッション（IPCP）で行われます。Discovery はアクセス集約装置（AC）を見つけセッション ID を得るだけです。',
   'learning.concept.mtu.q1.b.why':
     '最小ではなく最大です — 1 フレームでリンクが運べる最大のペイロードです。',
   'learning.concept.mtu.q1.c.why':
@@ -1402,9 +1402,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.ecmp.q1.c.why':
     'リンク障害はフェイルオーバーの話です。ECMP は生きている等コスト経路に負荷を分散します。',
   'learning.concept.ecmp.q2.a.why':
-    'パケットごとのランダムはフローを並べ替えてしまいます。ECMP は 5 タプルをハッシュし各フローを 1 経路に固定します。',
+    'パケットごとのランダムはフローを並べ替えてしまいます。ECMP は 5タプルをハッシュし各フローを 1 経路に固定します。',
   'learning.concept.ecmp.q2.c.why':
-    '最小 IP を選ぶだけではありません。ECMP はフローの 5 タプルをハッシュし一貫した次ホップを選びます。',
+    '最小 IP を選ぶだけではありません。ECMP はフローの 5タプルをハッシュし一貫した次ホップを選びます。',
   'learning.concept.ecmp.q3.a.why':
     'ECMP は暗号化しません。等コスト経路に負荷を分け、合計帯域を増やします。',
   'learning.concept.ecmp.q3.b.why':
