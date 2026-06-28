@@ -459,7 +459,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.multicast.q1.b': 'インターネット上の全ホストへ',
   'learning.concept.multicast.q1.c': '2ホスト間のみ',
   'learning.concept.multicast.q1.why':
-    '1部だけ送られ、ネットワークがマルチキャストグループのメンバーへのみ複製します — 効率的な一対多です。',
+    '1部だけ送られ、ネットワークがマルチキャストグループのメンバへのみ複製します — 効率的な一対多です。',
   'learning.concept.multicast.q2.prompt': 'ホストがマルチキャストグループに参加する手段は…',
   'learning.concept.multicast.q2.a': 'ARP',
   'learning.concept.multicast.q2.b': 'IGMP',
@@ -1068,7 +1068,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.http.q3.b.why':
     'サーバエラーは 5xx です。404 は 4xx のクライアントエラーで、要求されたリソースが存在しません。',
   'learning.concept.quic.q1.b.why':
-    'QUIC はヘッドオブラインブロッキングを避けるため意図的に TCP を使わず、UDP の上で動きます。',
+    'QUIC は HOL ブロッキングを避けるため意図的に TCP を使わず、UDP の上で動きます。',
   'learning.concept.quic.q1.c.why':
     'ICMP はデータ転送ではなく診断用です。QUIC は UDP の上に構築されます。',
   'learning.concept.quic.q2.a.why':
@@ -1095,9 +1095,9 @@ export const conceptCheck: Catalog = {
     '素の TCP は HTTP/1.1 と HTTP/2 です。HTTP/3 は UDP 上に構築された QUIC の上で動きます。',
   'learning.concept.http3.q1.c.why': 'ICMP は診断用です。HTTP/3 は QUIC（UDP）の上で動きます。',
   'learning.concept.http3.q2.a.why':
-    'HTTP/3 はヘッダを小さく保ちます（QPACK）。利点はストリーム間の TCP ヘッドオブラインブロッキングの解消です。',
+    'HTTP/3 はヘッダを小さく保ちます（QPACK）。利点はストリーム間の TCP の HOL ブロッキングの解消です。',
   'learning.concept.http3.q2.c.why':
-    'HTTP/3 は QUIC/TLS 1.3 で常に暗号化されます。利点はストリーム間の TCP ヘッドオブラインブロッキングがないことです。',
+    'HTTP/3 は QUIC/TLS 1.3 で常に暗号化されます。利点はストリーム間の TCP の HOL ブロッキングがないことです。',
   'learning.concept.http3.q3.a.why':
     'HPACK は HTTP/2 のものです。HTTP/3 は QUIC の順不同配送に耐える QPACK を使います。',
   'learning.concept.http3.q3.b.why':
@@ -1159,7 +1159,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.lacp.q2.c.why':
     'LACP は暗号化しません。リンクの束ね合わせは合計帯域とリンク冗長を高めます。',
   'learning.concept.lacp.q3.a.why':
-    'それが束ねる狙いです — STP は 1 つの論理リンクと見なし、メンバーをループとしてブロックしません。',
+    'それが束ねる狙いです — STP は 1 つの論理リンクと見なし、メンバをループとしてブロックしません。',
   'learning.concept.lacp.q3.b.why':
     'ポートチャネルはルータではなく依然 L2 です。STP は正しい束を 1 つの論理リンクとして扱います。',
   'learning.concept.lldp.q1.b.why':
@@ -1318,7 +1318,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.mtu.q1.c.why':
     'ルーティング指標は経路を順位付けします。MTU はリンクが許す最大フレームペイロードです。',
   'learning.concept.mtu.q2.a.why':
-    'PMTUD は全ホストへ ping しません。DF を立てたパケットを送り ICMP Fragmentation Needed を読みます。',
+    'PMTUD は全ホストへ ping しません。DF を立てたパケットを送り ICMP「フラグメント必要」を読みます。',
   'learning.concept.mtu.q2.c.why':
     'DNS は名前を解決し経路サイズではありません。PMTUD は DF パケットと ICMP の応答で探ります。',
   'learning.concept.mtu.q3.a.why':
