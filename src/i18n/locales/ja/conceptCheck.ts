@@ -267,7 +267,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ospf.name': 'OSPF',
   'learning.concept.ospf.q1.prompt': 'OSPF は…',
   'learning.concept.ospf.q1.a': 'リンクステート型プロトコル',
-  'learning.concept.ospf.q1.b': '距離ベクトル型プロトコル',
+  'learning.concept.ospf.q1.b': 'ディスタンスベクタ型プロトコル',
   'learning.concept.ospf.q1.c': 'パスベクトル型プロトコル',
   'learning.concept.ospf.q1.why':
     'OSPF はリンクステート広告をフラッディングし、全ルータが同じ地図を作って SPF（ダイクストラ）を実行します。',
@@ -303,7 +303,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.bgp.q3.why': '各 AS は番号を持ち、自分が到達できるプレフィックスを広告します。',
   'learning.concept.rip.name': 'RIP',
   'learning.concept.rip.q1.prompt': 'RIP の経路選択基準は…',
-  'learning.concept.rip.q1.a': 'ホップ数（距離ベクトル）',
+  'learning.concept.rip.q1.a': 'ホップ数（ディスタンスベクタ）',
   'learning.concept.rip.q1.b': 'リンクコスト',
   'learning.concept.rip.q1.c': 'AS パス',
   'learning.concept.rip.q1.why':
@@ -319,7 +319,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.rip.q3.b': '巨大ネットワークに拡張できる',
   'learning.concept.rip.q3.c': '単純だが遅く規模が限られる',
   'learning.concept.rip.q3.why':
-    'RIP の周期的な距離ベクトル更新は簡単ですが収束が遅く、リンクステートの OSPF ほど拡張しません。',
+    'RIP の周期的なディスタンスベクタ更新は簡単ですが収束が遅く、リンクステートの OSPF ほど拡張しません。',
   'learning.concept.http.name': 'HTTP',
   'learning.concept.http.q1.prompt': 'HTTP のモデルは？',
   'learning.concept.http.q1.a': '要求/応答',
@@ -478,7 +478,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.mtu.q1.b': '最小パケットサイズ',
   'learning.concept.mtu.q1.c': 'ルーティングメトリック',
   'learning.concept.mtu.q1.why':
-    '各リンクには最大転送単位があり、それを超えるパケットは分割されるか拒否されます。',
+    '各リンクには最大転送単位があり、それを超えるパケットはフラグメント化されるか拒否されます。',
   'learning.concept.mtu.q2.prompt': 'Path MTU Discovery の仕組みは…',
   'learning.concept.mtu.q2.a': '全ホストに ping する',
   'learning.concept.mtu.q2.b': 'DF 付きパケットを送り ICMP「フラグメント必要」を読む',
@@ -486,11 +486,11 @@ export const conceptCheck: Catalog = {
   'learning.concept.mtu.q2.why':
     '送信側は DF を設定し、転送できないルータが次ホップ MTU 付き ICMP を返すので、送信側はパケットを縮めます。',
   'learning.concept.mtu.q3.prompt': 'DF 付きの過大パケットは…',
-  'learning.concept.mtu.q3.a': 'とにかく分割される',
+  'learning.concept.mtu.q3.a': 'とにかくフラグメント化される',
   'learning.concept.mtu.q3.b': '黙って配送される',
   'learning.concept.mtu.q3.c': '破棄され ICMP が返される',
   'learning.concept.mtu.q3.why':
-    'DF があるとルータは分割できず、パケットを破棄して ICMP で問題を通知します。',
+    'DF があるとルータはフラグメント化できず、パケットを破棄して ICMP で問題を通知します。',
   'learning.concept.gre.name': 'GRE トンネル',
   'learning.concept.gre.q1.prompt': 'GRE トンネルの仕組みは…',
   'learning.concept.gre.q1.a': 'パケットを別の IP パケットに内包する',
@@ -974,9 +974,9 @@ export const conceptCheck: Catalog = {
     '48 ビットは MAC アドレスです。IPv4 アドレスは 32 ビット（4 オクテット）です。',
   'learning.concept.ipv4.q2.c.why': '128 ビットは IPv6 アドレスです。IPv4 は 32 ビットです。',
   'learning.concept.ipv4.q3.a.why':
-    'DF がセットされている場合だけ破棄されます。DF が立っていなければルータは MTU に合わせて分割します。',
+    'DF がセットされている場合だけ破棄されます。DF が立っていなければルータは MTU に合わせてフラグメント化します。',
   'learning.concept.ipv4.q3.b.why':
-    'ルータは暗号化しません。DF が立っていない大きすぎるパケットはリンク MTU に合わせて分割されます。',
+    'ルータは暗号化しません。DF が立っていない大きすぎるパケットはリンク MTU に合わせてフラグメント化されます。',
   'learning.concept.ipv4.q4.b.why':
     'TTL はアドレッシングと無関係なホップ数です。ネットワーク/ホストの境界はマスク/プレフィックス長が決めます。',
   'learning.concept.ipv4.q4.c.why':
@@ -1322,7 +1322,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.mtu.q2.c.why':
     'DNS は名前を解決し経路サイズではありません。PMTUD は DF パケットと ICMP の応答で探ります。',
   'learning.concept.mtu.q3.a.why':
-    'DF（分割禁止）は分割を禁じます — ルータは破棄して代わりに ICMP メッセージを返します。',
+    'DF（フラグメント禁止）はフラグメント化を禁じます — ルータは破棄して代わりに ICMP メッセージを返します。',
   'learning.concept.mtu.q3.b.why':
     'MTU を超えれば黙って配送はできません。DF が立っているとルータは破棄し ICMP で通知します。',
   'learning.concept.gre.q1.b.why':
@@ -1454,7 +1454,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.tunneling.q2.c.why':
     '外側ヘッダを付けるのは送信側（入口）です。受信側（出口）がそれを外します。',
   'learning.concept.tunneling.q3.a.why':
-    '速度は無関係です。外側ヘッダがバイトを消費するため、内側ペイロードは分割前の余地が減ります。',
+    '速度は無関係です。外側ヘッダがバイトを消費するため、内側ペイロードはフラグメント化前の余地が減ります。',
   'learning.concept.tunneling.q3.b.why':
     '暗号化は任意で原因ではありません。余分な外側ヘッダ自体が MTU からバイトを消費します。',
   'learning.concept.sip.q1.a.why':
@@ -1655,7 +1655,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.isis.name': 'IS-IS',
   'learning.concept.isis.q1.prompt': 'IS-IS は…',
   'learning.concept.isis.q1.a': 'リンクステート IGP（OSPF 同様）、ISP コアで一般的',
-  'learning.concept.isis.q1.b': '距離ベクトル型',
+  'learning.concept.isis.q1.b': 'ディスタンスベクタ型',
   'learning.concept.isis.q1.c': 'アプリケーションプロトコル',
   'learning.concept.isis.q1.why':
     'IS-IS はリンクステートをフラッディングし SPF を実行、大規模 ISP 網で広く使われます。',
@@ -1673,11 +1673,11 @@ export const conceptCheck: Catalog = {
     'どちらもリンクステートで、SPF により最小コスト経路を計算します。',
   'learning.concept.eigrp.name': 'EIGRP',
   'learning.concept.eigrp.q1.prompt': 'EIGRP は…',
-  'learning.concept.eigrp.q1.a': 'DUAL を用いる高度な距離ベクトル型',
+  'learning.concept.eigrp.q1.a': 'DUAL を用いる高度なディスタンスベクタ型',
   'learning.concept.eigrp.q1.b': '純粋なリンクステート型',
   'learning.concept.eigrp.q1.c': 'アプリケーションプロトコル',
   'learning.concept.eigrp.q1.why':
-    'EIGRP は高度な距離ベクトル型で、DUAL アルゴリズムが高速でループのない収束を実現します。',
+    'EIGRP は高度なディスタンスベクタ型で、DUAL アルゴリズムが高速でループのない収束を実現します。',
   'learning.concept.eigrp.q2.prompt': 'フィージブルサクセサにより EIGRP は…',
   'learning.concept.eigrp.q2.a': 'トラフィックを暗号化する',
   'learning.concept.eigrp.q2.b': '再計算なしで高速に再収束する',
@@ -1747,7 +1747,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.tunneling.q3.a': 'ネットワークが遅くなるから',
   'learning.concept.tunneling.q3.b': '内側パケットが暗号化されるから',
   'learning.concept.tunneling.q3.c':
-    '外側ヘッダの分だけバイトを消費するため、内側ペイロードを小さくしないと断片化や破棄が起きる',
+    '外側ヘッダの分だけバイトを消費するため、内側ペイロードを小さくしないとフラグメント化や破棄が起きる',
   'learning.concept.tunneling.q3.why':
     '外側ヘッダはオーバーヘッドです。内側＋外側が経路 MTU を超え DF が立つと破棄されるため、MSS クランプやトンネル MTU の引き下げを行います。',
   'learning.concept.vpn.name': 'VPN',
