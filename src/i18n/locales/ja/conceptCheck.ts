@@ -484,7 +484,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.mtu.q2.b': 'DF 付きパケットを送り ICMP「フラグメント必要」を読む',
   'learning.concept.mtu.q2.c': 'DNS に尋ねる',
   'learning.concept.mtu.q2.why':
-    '送信側は DF を設定し、転送できないルータが次ホップ MTU 付き ICMP を返すので、送信側はパケットを縮めます。',
+    '送信側は DF を設定し、転送できないルータがネクストホップ MTU 付き ICMP を返すので、送信側はパケットを縮めます。',
   'learning.concept.mtu.q3.prompt': 'DF 付きの過大パケットは…',
   'learning.concept.mtu.q3.a': 'とにかくフラグメント化される',
   'learning.concept.mtu.q3.b': '黙って配送される',
@@ -493,11 +493,11 @@ export const conceptCheck: Catalog = {
     'DF があるとルータはフラグメント化できず、パケットを破棄して ICMP で問題を通知します。',
   'learning.concept.gre.name': 'GRE トンネル',
   'learning.concept.gre.q1.prompt': 'GRE トンネルの仕組みは…',
-  'learning.concept.gre.q1.a': 'パケットを別の IP パケットに内包する',
+  'learning.concept.gre.q1.a': 'パケットを別の IP パケットにカプセル化する',
   'learning.concept.gre.q1.b': 'AES で暗号化する',
   'learning.concept.gre.q1.c': 'MAC アドレスを切り替える',
   'learning.concept.gre.q1.why':
-    'GRE は元パケットを新しい IP+GRE ヘッダで包み、途中のネットワークをペイロードとして通過させます。',
+    'GRE は元パケットを新しい IP+GRE ヘッダでカプセル化し、途中のネットワークをペイロードとして通過させます。',
   'learning.concept.gre.q2.prompt': 'GRE 自体が提供するのは…',
   'learning.concept.gre.q2.a': '強力な暗号化',
   'learning.concept.gre.q2.b': '内包のみで暗号化なし',
@@ -639,7 +639,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.model.q4.b.why':
     'アプリケーション層は端末側の関心事です。ルータはアプリのデータではなく L3 の IP ヘッダで転送します。',
   'learning.concept.model.q4.c.why':
-    '物理層はビット/信号を運ぶだけです。次ホップの選択には L3 の IP アドレスが必要です。',
+    '物理層はビット/信号を運ぶだけです。ネクストホップの選択には L3 の IP アドレスが必要です。',
   'learning.concept.model.q5.a.why':
     'トランスポート層（L4）はホスト間のエンドツーエンドの関心事です。スイッチは L2 の MAC でフレームを転送します。',
   'learning.concept.model.q5.c.why':
@@ -654,7 +654,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.addressing.q1.b': 'インターネット全体を越えて',
   'learning.concept.addressing.q1.c': 'TCP ポートへ',
   'learning.concept.addressing.q1.why':
-    'MAC はリンクローカルで、同一セグメントの次ホップへフレームを運び、各ルータで書き換えられます。',
+    'MAC はリンクローカルで、同一セグメントのネクストホップへフレームを運び、各ルータで書き換えられます。',
   'learning.concept.addressing.q2.prompt': 'IP アドレスがパケットを届けるのは…',
   'learning.concept.addressing.q2.a': '1本のケーブル内のみ',
   'learning.concept.addressing.q2.b': 'ネットワークを越えて端から端へ（L3）',
@@ -1274,9 +1274,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.vpn.q2.c.why':
     'リモートアクセスは Ethernet に限らず任意の IP 経路（多くはインターネット）で動きます。違いは網全体か単一クライアントかです。',
   'learning.concept.vpn.q3.a.why':
-    'スプリットトンネリングはトラフィックを遮断しません。選んだ宛先だけ VPN を通し、残りは直接送ります。',
+    'スプリットトンネルはトラフィックを遮断しません。選んだ宛先だけ VPN を通し、残りは直接送ります。',
   'learning.concept.vpn.q3.b.why':
-    '二重暗号化ではありません。スプリットトンネリングは一部のトラフィックだけ VPN を通し、残りはそのまま外へ出します。',
+    '二重暗号化ではありません。スプリットトンネルは一部のトラフィックだけ VPN を通し、残りはそのまま外へ出します。',
   'learning.concept.wireguard.q1.a.why':
     'WireGuard は TCP+TLS のオーバーヘッドを避けます。単一ポートの UDP 上で動き、軽量で NAT 親和的です。',
   'learning.concept.wireguard.q1.c.why':
@@ -1326,7 +1326,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.mtu.q3.b.why':
     'MTU を超えれば黙って配送はできません。DF が立っているとルータは破棄し ICMP で通知します。',
   'learning.concept.gre.q1.b.why':
-    'GRE は暗号化しません（必要なら IPsec と組み合わせます）。パケットを別の IP パケットで包みます。',
+    'GRE は暗号化しません（必要なら IPsec と組み合わせます）。パケットを別の IP パケットでカプセル化します。',
   'learning.concept.gre.q1.c.why':
     'MAC スイッチングは L2 転送です。GRE はパケットを外側 IP パケットにカプセル化してトンネルします。',
   'learning.concept.gre.q2.a.why':
@@ -1342,7 +1342,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.mpls.q1.c.why':
     'ARP は IP→MAC を解決します。MPLS はラベルを付け替えて転送し、IP ルーティング探索を省きます。',
   'learning.concept.mpls.q2.a.why':
-    'ブロードキャストドメインは L2 の概念です。MPLS 網を通るラベルスイッチ経路が LSP です。',
+    'ブロードキャストドメインは L2 の概念です。MPLS 網を通る経路がラベルスイッチドパス（LSP）です。',
   'learning.concept.mpls.q2.c.why':
     'AS は BGP のルーティングドメインです。MPLS 内のラベル付き経路は Label Switched Path（LSP）です。',
   'learning.concept.mpls.q3.a.why':
@@ -1378,9 +1378,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.ndp.q1.c.why':
     'NDP は暗号化しません。ARP を置き換え、ICMPv6 メッセージで近隣の IP→MAC を解決します。',
   'learning.concept.ndp.q2.a.why':
-    'SLAAC はランダムではありません。ホストは Router Advertisement のプレフィックスと自分のインターフェース識別子を組み合わせます。',
+    'SLAAC はランダムではありません。ホストは ルータ広告（RA） のプレフィックスと自分のインターフェース識別子を組み合わせます。',
   'learning.concept.ndp.q2.c.why':
-    'ホストはルータのアドレスをコピーしません。広告されたプレフィックスとインターフェース ID から自分のアドレスを作ります。',
+    'ホストはルータのアドレスをコピーしません。広告されたプレフィックスとインターフェース識別子 から自分のアドレスを作ります。',
   'learning.concept.ndp.q3.a.why':
     'DAD は暗号化しません。近隣要請を送り、アドレスが未使用か確認します。',
   'learning.concept.ndp.q3.b.why':
@@ -1404,7 +1404,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ecmp.q2.a.why':
     'パケットごとのランダムはフローを並べ替えてしまいます。ECMP は 5タプルをハッシュし各フローを 1 経路に固定します。',
   'learning.concept.ecmp.q2.c.why':
-    '最小 IP を選ぶだけではありません。ECMP はフローの 5タプルをハッシュし一貫した次ホップを選びます。',
+    '最小 IP を選ぶだけではありません。ECMP はフローの 5タプルをハッシュし一貫したネクストホップを選びます。',
   'learning.concept.ecmp.q3.a.why':
     'ECMP は暗号化しません。等コスト経路に負荷を分け、合計帯域を増やします。',
   'learning.concept.ecmp.q3.b.why':
@@ -1480,7 +1480,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.rtp.q3.a.why':
     'RTCP は暗号化ではありません（それは SRTP）。ジッタ・損失・往復時間などの品質フィードバックを運びます。',
   'learning.concept.rtp.q3.b.why':
-    'RTCP はメディアを複製しません。送信側が適応できるよう統計（ジッタ・損失・RTT）を報告します。',
+    'RTCP はメディアを複製しません。送信側が適応できるよう統計（ジッタ・損失・往復時間）を報告します。',
   'learning.concept.stun.q1.a.why':
     '経路選択はルーティングの仕事です。STUN はホストに自分の公開（NAT 変換後の）IP とポートを教えます。',
   'learning.concept.stun.q1.b.why':
@@ -1848,14 +1848,14 @@ export const conceptCheck: Catalog = {
     'ルータ広告がプレフィックスを配り、ホストはそのプレフィックス＋インターフェース識別子で自分のアドレスを作る',
   'learning.concept.ndp.q2.c': 'ルータのアドレスをコピーする',
   'learning.concept.ndp.q2.why':
-    'ステートレス・アドレス自動設定：RA が /64 プレフィックスを運び、ホストがインターフェース ID（EUI-64 やランダム）を付けてグローバルアドレスを作ります。',
+    'ステートレス・アドレス自動設定：RA が /64 プレフィックスを運び、ホストがインターフェース識別子（EUI-64 やランダム）を付けてグローバルアドレスを作ります。',
   'learning.concept.ndp.q3.prompt': '重複アドレス検出（DAD）とは？',
   'learning.concept.ndp.q3.a': 'アドレスを暗号化する仕組み',
   'learning.concept.ndp.q3.b': 'アドレスを圧縮する方法',
   'learning.concept.ndp.q3.c':
     'アドレスを使う前に、そのアドレス宛の近隣要請を送り、他に使っている者がいないか確認する',
   'learning.concept.ndp.q3.why':
-    'DAD はアドレス衝突を防ぎます。仮アドレスを NS で検証し、応答が返れば既に使用中と判断します。',
+    'DAD はアドレス衝突を防ぎます。仮アドレスを近隣要請（NS）で検証し、応答が返れば既に使用中と判断します。',
   'learning.concept.sip.name': 'SIP（VoIP シグナリング）',
   'learning.concept.sip.q1.prompt': 'SIP が担うのは？',
   'learning.concept.sip.q1.a': '実際の音声データの運搬',
@@ -1905,7 +1905,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.stun.q1.a': 'サーバへの最速経路',
   'learning.concept.stun.q1.b': 'ピアの DNS 名',
   'learning.concept.stun.q1.c':
-    '自分のパブリック（NAT 変換後）IP アドレスとポート。これで NAT 越しにピアから到達できる',
+    '自分の公開（NAT 変換後）IP アドレスとポート。これで NAT 越しにピアから到達できる',
   'learning.concept.stun.q1.why':
     'STUN サーバは見えた送信元 IP:ポートを返し、NAT が作った公開マッピングを明らかにします — ホールパンチングの基礎です。',
   'learning.concept.stun.q2.prompt':
