@@ -849,9 +849,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.arp.q1.c.why':
     'MAC→ポートはスイッチが自分で学習します。ARP は IP を MAC に解決するもので、MAC をポートに対応づけるものではありません。',
   'learning.concept.arp.q2.a.why':
-    'ターゲットの MAC はまだ分かりません — それこそ ARP が問い合わせている相手です — だから要求はブロードキャストします。',
+    'ターゲットの MAC はまだ分かりません — それこそ ARP が問い合わせている相手です — だからリクエストはブロードキャストします。',
   'learning.concept.arp.q2.c.why':
-    'ゲートウェイはサブネット外宛ての通信でのみ関係します。ARP 要求は LAN 全体へブロードキャストします。',
+    'ゲートウェイはサブネット外宛ての通信でのみ関係します。ARP リクエストは LAN 全体へブロードキャストします。',
   'learning.concept.arp.q3.a.why':
     'ARP はルータを越えられません。インターネット全体ではなく、1 つのブロードキャストドメイン内でのみ働きます。',
   'learning.concept.arp.q3.b.why':
