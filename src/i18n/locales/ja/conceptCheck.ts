@@ -1346,7 +1346,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.mpls.q2.c.why':
     'AS は BGP のルーティングドメインです。MPLS 内のラベル付き経路は Label Switched Path（LSP）です。',
   'learning.concept.mpls.q3.a.why':
-    'HTTP は L7 のアプリです。MPLS は低層に位置し、L2 と L3 の間（しばしばレイヤ 2.5）です。',
+    'HTTP は L7 のアプリです。MPLS は低層に位置し、L2 と L3 の間（しばしばレイヤー2.5）です。',
   'learning.concept.mpls.q3.b.why':
     'MPLS は Ethernet のような L2 リンクの上に乗り、その下ではありません — L2 と L3 の間にあります。',
   'learning.concept.isis.q1.b.why':
