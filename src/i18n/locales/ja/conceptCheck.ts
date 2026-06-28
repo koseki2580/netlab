@@ -412,9 +412,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.qos.q3.prompt': 'ルータが DSCP に従う方法は…',
   'learning.concept.qos.q3.a': 'パケットを暗号化する',
   'learning.concept.qos.q3.b': 'マークされた全パケットを破棄する',
-  'learning.concept.qos.q3.c': '優先キューイング等のホップ単位動作を適用する',
+  'learning.concept.qos.q3.c': '優先キューイング等のホップごとの動作を適用する',
   'learning.concept.qos.q3.why':
-    '各ホップは DSCP 値をキュー/スケジューリング方針（PHB）に対応づけます。エンドツーエンドには一貫したマーキングが必要です。',
+    '各ホップは DSCP 値をキュー/スケジューリングのホップごとの動作（PHB）に対応づけます。エンドツーエンドには一貫したマーキングが必要です。',
   'learning.concept.ecmp.name': 'ECMP',
   'learning.concept.ecmp.q1.prompt': 'ECMP を使うのは…',
   'learning.concept.ecmp.q1.a': '宛先への複数経路が同コストのとき',
