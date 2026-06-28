@@ -39,7 +39,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.stp.name': 'STP',
   'learning.concept.stp.q1.prompt': 'スパニングツリーが防ぐ問題は？',
   'learning.concept.stp.q1.a': 'IP アドレス枯渇',
-  'learning.concept.stp.q1.b': 'レイヤー2 の転送ループ',
+  'learning.concept.stp.q1.b': 'L2 の転送ループ',
   'learning.concept.stp.q1.c': 'ルーティングループ',
   'learning.concept.stp.q1.why':
     '冗長なスイッチ間リンクはブロードキャストを永久に巡回させます。STP はポートをブロックしてループのない木を作ります。',
