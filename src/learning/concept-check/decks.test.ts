@@ -62,6 +62,28 @@ describe('concept-check decks', () => {
     }
   });
 
+  // Enforce the distractor-explanation schema invariants so a future deck cannot
+  // silently regress the feature (a missing whyKey would fall back to the general
+  // explanation; a typo'd whyKey could point at a different existing key).
+  it('every wrong option has whyKey === key + ".why"; correct options have none', () => {
+    for (const deck of CONCEPT_DECKS) {
+      for (const question of deck.questions) {
+        for (const option of question.options) {
+          if (option.correct) {
+            expect(
+              option.whyKey,
+              `${option.key} is correct and must not carry a whyKey`,
+            ).toBeUndefined();
+          } else {
+            expect(option.whyKey, `${option.key} (wrong) must have its whyKey`).toBe(
+              `${option.key}.why`,
+            );
+          }
+        }
+      }
+    }
+  });
+
   it('grading helpers identify the correct choice', () => {
     const arp = getDeck('arp');
     expect(arp).toBeDefined();

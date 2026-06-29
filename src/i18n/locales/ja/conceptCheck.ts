@@ -1238,9 +1238,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.snmp.q2.c.why':
     'MAC テーブルはスイッチの L2 構造です。SNMP は管理対象を MIB の OID として整理します。',
   'learning.concept.snmp.q3.a.why':
-    'GET はマネージャが機器を問い合わせる操作です。機器が自発的に送る通知は Trap です。',
+    'GET はマネージャが機器を問い合わせる操作です。機器が自発的に送る通知はトラップです。',
   'learning.concept.snmp.q3.b.why':
-    'ACK は受領確認にすぎません。機器がイベント駆動で押し出すメッセージは SNMP Trap です。',
+    'ACK は受領確認にすぎません。機器がイベント駆動で押し出すメッセージは SNMP トラップです。',
   'learning.concept.ipsec.q1.b.why':
     '名前解決は DNS です。IPsec は IP パケットを認証・暗号化し安全な VPN を構築します。',
   'learning.concept.ipsec.q1.c.why':
@@ -1288,7 +1288,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.wireguard.q3.b.why':
     'WireGuard は常に暗号化されます。単純なのは小さなコードと固定の現代暗号によるもので、暗号化を省くからではありません。',
   'learning.concept.wireguard.q3.c.why':
-    'WireGuard はクロスプラットフォームです。速さは小さなカーネル実装と暗号交渉の不在によります。',
+    'WireGuard はクロスプラットフォームです。速さは小さなカーネル実装と暗号スイートのネゴシエーションの不在によります。',
   'learning.concept.l2tp.q1.a.why':
     'L2TP 単体に暗号化はありません — だから IPsec と組み合わせます。単体ではトンネルするだけです。',
   'learning.concept.l2tp.q1.c.why':
