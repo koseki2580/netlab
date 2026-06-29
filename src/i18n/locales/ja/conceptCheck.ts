@@ -67,7 +67,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.vlan.q2.b': '802.1Q タグ付きの複数 VLAN',
   'learning.concept.vlan.q2.c': 'タグなしトラフィックのみ',
   'learning.concept.vlan.q2.why':
-    'トランクはフレームに VLAN ID を付与し、複数 VLAN がスイッチ間の1リンクを共有します。',
+    'トランクはフレームに VLAN ID を付与し、複数 VLAN がスイッチ間の1 リンクを共有します。',
   'learning.concept.vlan.q3.prompt': '2 つの VLAN 間でトラフィックを通すには…',
   'learning.concept.vlan.q3.a': 'より長いケーブル',
   'learning.concept.vlan.q3.b': '2 台目のルートブリッジ',
@@ -189,7 +189,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ethernet.q3.why':
     '宛先不明ユニキャストはフラッディングされ、宛先が応答して学習されます。',
   'learning.concept.dhcp.name': 'DHCP',
-  'learning.concept.dhcp.q1.prompt': 'DHCP の4ステップ交換は…',
+  'learning.concept.dhcp.q1.prompt': 'DHCP の4 ステップ交換は…',
   'learning.concept.dhcp.q1.a': 'SYN, SYN-ACK, ACK, FIN',
   'learning.concept.dhcp.q1.b': 'Discover, Offer, Request, Ack（DORA）',
   'learning.concept.dhcp.q1.c': 'Query, Response, Renew, Release',
@@ -353,14 +353,14 @@ export const conceptCheck: Catalog = {
   'learning.concept.quic.q2.why':
     'QUIC はトランスポートと TLS のハンドシェイクを統合し、データ送出前の往復を削減します。',
   'learning.concept.quic.q3.prompt': 'QUIC が複数ストリームを持つ理由は…',
-  'learning.concept.quic.q3.a': '接続ごとに1要求しか入らない',
+  'learning.concept.quic.q3.a': '接続ごとに1 要求しか入らない',
   'learning.concept.quic.q3.b': 'パケットが決して失われない',
   'learning.concept.quic.q3.c': '1 つのパケット損失が他ストリームを止めない',
   'learning.concept.quic.q3.why':
     '独立したストリームは、1 つの損失が全体を遅らせる TCP の HOL ブロッキングを回避します。',
   'learning.concept.http2.name': 'HTTP/2',
   'learning.concept.http2.q1.prompt': 'HTTP/2 が HTTP/1.1 を改善する主な点は…',
-  'learning.concept.http2.q1.a': '1接続で多数のリクエストを多重化',
+  'learning.concept.http2.q1.a': '1 接続で多数のリクエストを多重化',
   'learning.concept.http2.q1.b': 'IPsec で暗号化',
   'learning.concept.http2.q1.c': 'TCP の代わりに UDP を使う',
   'learning.concept.http2.q1.why':
@@ -422,12 +422,12 @@ export const conceptCheck: Catalog = {
   'learning.concept.ecmp.q1.c': 'リンクが落ちているとき',
   'learning.concept.ecmp.q1.why':
     'ルーティングが同コストの複数ネクストホップを見つけると、ECMP はトラフィックをそれらに分散します。',
-  'learning.concept.ecmp.q2.prompt': 'ECMP が同一フローを1経路に保つ方法は…',
+  'learning.concept.ecmp.q2.prompt': 'ECMP が同一フローを1 経路に保つ方法は…',
   'learning.concept.ecmp.q2.a': 'パケットごとにランダム選択',
   'learning.concept.ecmp.q2.b': '5タプルをハッシュしてネクストホップを選ぶ',
   'learning.concept.ecmp.q2.c': '常に最小 IP を使う',
   'learning.concept.ecmp.q2.why':
-    'フロー単位ハッシュは並べ替えを避けるため接続を1経路に保ち、異なるフローは経路間で分散します。',
+    'フロー単位ハッシュは並べ替えを避けるため接続を1 経路に保ち、異なるフローは経路間で分散します。',
   'learning.concept.ecmp.q3.prompt': 'ECMP の利点は…',
   'learning.concept.ecmp.q3.a': '暗号化',
   'learning.concept.ecmp.q3.b': '経路が減る',
@@ -457,9 +457,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.multicast.q1.prompt': 'マルチキャストの配送は…',
   'learning.concept.multicast.q1.a': '1 つの送信元から、関心のある受信者グループへ',
   'learning.concept.multicast.q1.b': 'インターネット上の全ホストへ',
-  'learning.concept.multicast.q1.c': '2ホスト間のみ',
+  'learning.concept.multicast.q1.c': '2 ホスト間のみ',
   'learning.concept.multicast.q1.why':
-    '1部だけ送られ、ネットワークがマルチキャストグループのメンバへのみ複製します — 効率的な一対多です。',
+    '1 部だけ送られ、ネットワークがマルチキャストグループのメンバへのみ複製します — 効率的な一対多です。',
   'learning.concept.multicast.q2.prompt': 'ホストがマルチキャストグループに参加する手段は…',
   'learning.concept.multicast.q2.a': 'ARP',
   'learning.concept.multicast.q2.b': 'IGMP',
@@ -474,7 +474,7 @@ export const conceptCheck: Catalog = {
     'マルチキャストは専用のグループアドレス範囲を使い、受信者は個別指定でなく購読します。',
   'learning.concept.mtu.name': 'MTU / PMTUD',
   'learning.concept.mtu.q1.prompt': 'MTU とは…',
-  'learning.concept.mtu.q1.a': '1フレームでリンクが運べる最大ペイロード',
+  'learning.concept.mtu.q1.a': '1 フレームでリンクが運べる最大ペイロード',
   'learning.concept.mtu.q1.b': '最小パケットサイズ',
   'learning.concept.mtu.q1.c': 'ルーティングメトリック',
   'learning.concept.mtu.q1.why':
@@ -676,11 +676,11 @@ export const conceptCheck: Catalog = {
   'learning.concept.addressing.q4.why':
     'プライベートアドレスは NAT の背後でどこでも再利用されます。世界で一意で経路可能なのは公開アドレスだけです。',
   'learning.concept.addressing.q5.prompt': 'ブロードキャストが届くのは…',
-  'learning.concept.addressing.q5.a': '特定の1ホスト',
+  'learning.concept.addressing.q5.a': '特定の1 ホスト',
   'learning.concept.addressing.q5.b': 'ブロードキャストドメイン内の全ホスト',
   'learning.concept.addressing.q5.c': '購読したグループのみ',
   'learning.concept.addressing.q5.why':
-    'ブロードキャスト=セグメントの全ホスト（例: ARP 要求）、ユニキャスト=1ホスト、マルチキャスト=参加したグループ。',
+    'ブロードキャスト=セグメントの全ホスト（例: ARP 要求）、ユニキャスト=1 ホスト、マルチキャスト=参加したグループ。',
   'learning.concept.addressing.q6.prompt': 'インターネットに NAT が必要な理由は？',
   'learning.concept.addressing.q6.a': 'トラフィックを暗号化するため',
   'learning.concept.addressing.q6.b': '名前を解決するため',
@@ -1080,7 +1080,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.quic.q3.b.why':
     'QUIC はパケット損失を防げません。損失の影響を抑え、そのストリームだけが止まるようにします。',
   'learning.concept.http2.q1.b.why':
-    'HTTP/2 は IPsec を加えません。利点は多数の要求を 1 つの TCP 接続で多重化することです。',
+    'HTTP/2 は IPsec を加えません。利点は多数のリクエストを 1 つの TCP 接続で多重化することです。',
   'learning.concept.http2.q1.c.why':
     'HTTP/2 は依然 TCP を使います（UDP は HTTP/3 の QUIC）。1 接続でストリームを多重化します。',
   'learning.concept.http2.q2.a.why':
@@ -1573,7 +1573,7 @@ export const conceptCheck: Catalog = {
     'IMAP はサーバに残し複数端末で同期、POP3 は基本ダウンロードして削除',
   'learning.concept.email.q2.c': 'POP3 は送信する',
   'learning.concept.email.q2.why':
-    'IMAP はサーバ側・複数端末向け、POP3 は従来1端末へダウンロードします。',
+    'IMAP はサーバ側・複数端末向け、POP3 は従来1 端末へダウンロードします。',
   'learning.concept.email.q3.prompt': 'セキュアな IMAP/POP3 が乗るのは…',
   'learning.concept.email.q3.a': 'ICMP',
   'learning.concept.email.q3.b': 'ARP',
@@ -1708,7 +1708,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.lacp.q3.b': 'ルータ',
   'learning.concept.lacp.q3.c': '単一の論理リンク（ループとしてブロックしない）',
   'learning.concept.lacp.q3.why':
-    '束は STP には1リンクに見えるため、冗長メンバをブロックしません。',
+    '束は STP には1 リンクに見えるため、冗長メンバをブロックしません。',
   'learning.concept.lldp.name': 'LLDP',
   'learning.concept.lldp.q1.prompt': 'LLDP により機器は…',
   'learning.concept.lldp.q1.a': '直結の隣接機器とその能力を発見する',
