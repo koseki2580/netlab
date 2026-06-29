@@ -873,7 +873,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.tcp.q3.a.why':
     'RST は正常終了ではなく強制中断です。クリーンな切断は FIN 交換です。',
   'learning.concept.tcp.q3.b.why':
-    '2 回目の SYN は確立しようとするもので切断ではありません。正常な切断は双方向の FIN/ACK です。',
+    '2度目の SYN は確立しようとするもので切断ではありません。正常な切断は双方向の FIN/ACK です。',
   'learning.concept.tcp.q4.b.why':
     'TCP は損失を単に無視しません — それでは信頼性が壊れます。欠けたセグメントを再送します。',
   'learning.concept.tcp.q4.c.why':
