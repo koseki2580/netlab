@@ -1466,7 +1466,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.sip.q2.b.why':
     '音声も映像も SIP には乗りません。どちらも RTP で流れ、SIP は SDP で交渉します。',
   'learning.concept.sip.q3.b.why':
-    'SIP はバイナリのルーティングプロトコルではなく HTTP のようなテキストベースです。INVITE はメソッドとヘッダを持つ要求です。',
+    'SIP はバイナリのルーティングプロトコルではなく HTTP のようなテキストベースです。INVITE はメソッドとヘッダを持つリクエストです。',
   'learning.concept.sip.q3.c.why':
     'Ethernet フレームは L2 のバイナリフレーミングです。SIP はメソッドとステータスコードを持つ HTTP 風のテキストプロトコルです。',
   'learning.concept.rtp.q1.b.why':
