@@ -25,11 +25,11 @@ export const conceptCheck: Catalog = {
   'learning.concept.arp.q1.why':
     'ARP maps a known IPv4 address to the link-layer MAC needed to frame the packet on the LAN.',
   'learning.concept.arp.q2.prompt': 'An ARP request is sent to which destination MAC?',
-  'learning.concept.arp.q2.a': "The target host's MAC",
+  'learning.concept.arp.q2.a': 'The target host’s MAC',
   'learning.concept.arp.q2.b': 'The broadcast address ff:ff:ff:ff:ff:ff',
-  'learning.concept.arp.q2.c': "The default gateway's MAC",
+  'learning.concept.arp.q2.c': 'The default gateway’s MAC',
   'learning.concept.arp.q2.why':
-    "The sender doesn't know the target MAC yet, so the request is broadcast to every host on the segment.",
+    'The sender doesn’t know the target MAC yet, so the request is broadcast to every host on the segment.',
   'learning.concept.arp.q3.prompt': 'ARP operates within…',
   'learning.concept.arp.q3.a': 'The entire internet',
   'learning.concept.arp.q3.b': 'Only between routers',
@@ -92,7 +92,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.tcp.q3.b': 'A second SYN',
   'learning.concept.tcp.q3.c': 'A FIN exchange',
   'learning.concept.tcp.q3.why':
-    "Each side sends FIN and ACKs the other's FIN; RST is an abrupt abort, not a graceful close.",
+    'Each side sends FIN and ACKs the other’s FIN; RST is an abrupt abort, not a graceful close.',
   'learning.concept.udp.name': 'UDP',
   'learning.concept.udp.q1.prompt': 'Compared to TCP, UDP…',
   'learning.concept.udp.q1.a': 'Adds retransmission',
@@ -105,7 +105,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.udp.q2.b': 'Real-time voice/video and DNS',
   'learning.concept.udp.q2.c': 'Bank transactions',
   'learning.concept.udp.q2.why':
-    "Latency-sensitive or simple request/response traffic prefers UDP's low overhead over TCP's reliability cost.",
+    'Latency-sensitive or simple request/response traffic prefers UDP’s low overhead over TCP’s reliability cost.',
   'learning.concept.udp.q3.prompt': 'A UDP header contains…',
   'learning.concept.udp.q3.a': 'Source/destination ports, length, checksum',
   'learning.concept.udp.q3.b': 'Sequence and acknowledgement numbers',
@@ -163,7 +163,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.tls.q2.b': 'A VLAN tag',
   'learning.concept.tls.q2.c': 'An X.509 certificate',
   'learning.concept.tls.q2.why':
-    "The certificate, signed by a CA the client trusts, binds the server's name to its public key.",
+    'The certificate, signed by a CA the client trusts, binds the server’s name to its public key.',
   'learning.concept.tls.q3.prompt': 'TLS runs…',
   'learning.concept.tls.q3.a': 'Over a reliable transport like TCP',
   'learning.concept.tls.q3.b': 'Below IP',
@@ -201,7 +201,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.dhcp.q2.b': 'A unicast to the server',
   'learning.concept.dhcp.q2.c': 'A multicast to routers',
   'learning.concept.dhcp.q2.why':
-    "The client has no IP yet and doesn't know the server, so Discover is broadcast.",
+    'The client has no IP yet and doesn’t know the server, so Discover is broadcast.',
   'learning.concept.dhcp.q3.prompt': 'Besides an IP address, DHCP commonly provides…',
   'learning.concept.dhcp.q3.a': 'A MAC address',
   'learning.concept.dhcp.q3.b': 'A TCP port',
@@ -245,7 +245,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ipv4.q3.b': 'Encrypts it',
   'learning.concept.ipv4.q3.c': 'Fragments it',
   'learning.concept.ipv4.q3.why':
-    "IPv4 routers fragment oversized packets unless the Don't-Fragment bit is set, when they return ICMP instead.",
+    'IPv4 routers fragment oversized packets unless the Don’t-Fragment bit is set, when they return ICMP instead.',
   'learning.concept.ipv6.name': 'IPv6',
   'learning.concept.ipv6.q1.prompt': 'An IPv6 address is…',
   'learning.concept.ipv6.q1.a': '128 bits',
@@ -277,7 +277,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ospf.q2.b': 'Total link cost (often bandwidth-based)',
   'learning.concept.ospf.q2.c': 'AS-path length',
   'learning.concept.ospf.q2.why':
-    "OSPF sums per-link costs; the lowest total cost wins, unlike RIP's hop count.",
+    'OSPF sums per-link costs; the lowest total cost wins, unlike RIP’s hop count.',
   'learning.concept.ospf.q3.prompt': 'When a link fails, OSPF…',
   'learning.concept.ospf.q3.a': 'Waits for a timer only',
   'learning.concept.ospf.q3.b': 'Does nothing',
@@ -297,7 +297,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.bgp.q2.c': 'Link cost',
   'learning.concept.bgp.q2.why':
     'BGP is a path-vector protocol; operators apply policy on attributes like AS-path length and local preference.',
-  'learning.concept.bgp.q3.prompt': "An 'AS' in BGP is…",
+  'learning.concept.bgp.q3.prompt': 'An ’AS’ in BGP is…',
   'learning.concept.bgp.q3.a': 'A single router',
   'learning.concept.bgp.q3.b': 'A subnet',
   'learning.concept.bgp.q3.c': 'An autonomous system — a network under one administration',
@@ -309,7 +309,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.rip.q1.c': 'AS path',
   'learning.concept.rip.q1.why':
     'RIP counts router hops; the fewest-hops path wins, regardless of link speed.',
-  'learning.concept.rip.q2.prompt': "RIP's maximum usable hop count is…",
+  'learning.concept.rip.q2.prompt': 'RIP’s maximum usable hop count is…',
   'learning.concept.rip.q2.a': '255',
   'learning.concept.rip.q2.b': '15 (16 means unreachable)',
   'learning.concept.rip.q2.c': 'Unlimited',
@@ -320,7 +320,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.rip.q3.b': 'Scales to huge networks',
   'learning.concept.rip.q3.c': 'Is simpler but slower and limited in size',
   'learning.concept.rip.q3.why':
-    "RIP's periodic distance-vector updates are easy but converge slowly and don't scale like link-state OSPF.",
+    'RIP’s periodic distance-vector updates are easy but converge slowly and don’t scale like link-state OSPF.',
   'learning.concept.http.name': 'HTTP',
   'learning.concept.http.q1.prompt': 'HTTP follows which model?',
   'learning.concept.http.q1.a': 'Request/response',
@@ -346,7 +346,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.quic.q1.b': 'TCP',
   'learning.concept.quic.q1.c': 'ICMP',
   'learning.concept.quic.q1.why':
-    "QUIC builds reliability, ordering, and encryption itself, on UDP, to avoid TCP's head-of-line blocking and handshake latency.",
+    'QUIC builds reliability, ordering, and encryption itself, on UDP, to avoid TCP’s head-of-line blocking and handshake latency.',
   'learning.concept.quic.q2.prompt': 'A key QUIC advantage over TCP+TLS is…',
   'learning.concept.quic.q2.a': 'No encryption',
   'learning.concept.quic.q2.b': 'Faster connection setup (often 1-RTT or 0-RTT)',
@@ -356,9 +356,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.quic.q3.prompt': 'QUIC carries multiple streams so that…',
   'learning.concept.quic.q3.a': 'Only one request fits per connection',
   'learning.concept.quic.q3.b': 'Packets are never lost',
-  'learning.concept.quic.q3.c': "One lost packet doesn't stall the other streams",
+  'learning.concept.quic.q3.c': 'One lost packet doesn’t stall the other streams',
   'learning.concept.quic.q3.why':
-    "Independent streams avoid TCP's head-of-line blocking, where one loss delays everything.",
+    'Independent streams avoid TCP’s head-of-line blocking, where one loss delays everything.',
   'learning.concept.http2.name': 'HTTP/2',
   'learning.concept.http2.q1.prompt': 'HTTP/2 improves on HTTP/1.1 mainly by…',
   'learning.concept.http2.q1.a': 'Multiplexing many requests over one connection',
@@ -1737,7 +1737,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.tunneling.name': 'Tunneling & encapsulation',
   'learning.concept.tunneling.q1.prompt': 'Tunneling (encapsulation) works by…',
   'learning.concept.tunneling.q1.a':
-    "Wrapping an original packet inside a new outer header so it can cross a network that wouldn't otherwise carry it",
+    'Wrapping an original packet inside a new outer header so it can cross a network that wouldn’t otherwise carry it',
   'learning.concept.tunneling.q1.b': 'Encrypting every packet end to end',
   'learning.concept.tunneling.q1.c': 'Compressing the payload to save bandwidth',
   'learning.concept.tunneling.q1.why':
@@ -1837,7 +1837,7 @@ export const conceptCheck: Catalog = {
     'PPPoE (PPP over Ethernet) runs per-subscriber PPP sessions over a shared Ethernet access network — common in DSL.',
   'learning.concept.pppoe.q3.prompt': 'The PPPoE Discovery stage (PADI/PADO/PADR/PADS)…',
   'learning.concept.pppoe.q3.a': 'Encrypts the session keys',
-  'learning.concept.pppoe.q3.b': "Assigns the customer's IP address",
+  'learning.concept.pppoe.q3.b': 'Assigns the customer’s IP address',
   'learning.concept.pppoe.q3.c':
     'Finds and selects an access concentrator and establishes a session id before the PPP session starts',
   'learning.concept.pppoe.q3.why':
@@ -1855,7 +1855,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ndp.q2.a': 'It guesses an address at random',
   'learning.concept.ndp.q2.b':
     'A Router Advertisement supplies a prefix, and the host forms its address from that prefix plus an interface identifier',
-  'learning.concept.ndp.q2.c': "It copies the router's address",
+  'learning.concept.ndp.q2.c': 'It copies the router’s address',
   'learning.concept.ndp.q2.why':
     'Stateless Address Autoconfiguration: the RA carries the /64 prefix; the host appends an interface ID (EUI-64 or random) to build a global address.',
   'learning.concept.ndp.q3.prompt': 'What is Duplicate Address Detection (DAD)?',
@@ -1901,14 +1901,14 @@ export const conceptCheck: Catalog = {
     'Low latency matters more than reliability — a retransmitted late packet is useless, so loss is tolerated/concealed',
   'learning.concept.rtp.q2.c': 'Because UDP is encrypted',
   'learning.concept.rtp.q2.why':
-    "For live media a packet that arrives too late can't be played, so TCP's retransmit/ordering would add harmful delay; RTP conceals loss instead.",
+    'For live media a packet that arrives too late can’t be played, so TCP’s retransmit/ordering would add harmful delay; RTP conceals loss instead.',
   'learning.concept.rtp.q3.prompt': 'What does RTCP add alongside an RTP stream?',
   'learning.concept.rtp.q3.a': 'Stronger encryption',
   'learning.concept.rtp.q3.b': 'A backup copy of the media',
   'learning.concept.rtp.q3.c':
     'Control and quality feedback (jitter, packet loss, round-trip) so senders can adapt',
   'learning.concept.rtp.q3.why':
-    "RTCP reports reception quality periodically, letting endpoints adjust bitrate or diagnose problems — control to RTP's data.",
+    'RTCP reports reception quality periodically, letting endpoints adjust bitrate or diagnose problems — control to RTP’s data.',
   'learning.concept.stun.name': 'STUN / TURN / ICE',
   'learning.concept.stun.q1.prompt': 'What does STUN let a host behind NAT discover?',
   'learning.concept.stun.q1.a': 'The fastest route to a server',
@@ -1923,8 +1923,8 @@ export const conceptCheck: Catalog = {
   'learning.concept.stun.q2.b': 'The DNS root servers',
   'learning.concept.stun.q2.c': 'BGP',
   'learning.concept.stun.q2.why':
-    "TURN is the fallback: when peers can't reach each other directly, a relay forwards packets for both — reliable but costlier.",
-  'learning.concept.stun.q3.prompt': "What is ICE's role?",
+    'TURN is the fallback: when peers can’t reach each other directly, a relay forwards packets for both — reliable but costlier.',
+  'learning.concept.stun.q3.prompt': 'What is ICE’s role?',
   'learning.concept.stun.q3.a': 'It encrypts the call',
   'learning.concept.stun.q3.b':
     'It gathers candidate addresses (host, STUN-reflexive, TURN-relayed) and runs connectivity checks to pick a working pair',
@@ -1950,9 +1950,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.dnssec.q3.a': 'Every resolver trusts every zone by default',
   'learning.concept.dnssec.q3.b': 'By IP allow-lists',
   'learning.concept.dnssec.q3.c':
-    "A chain of trust from the root down: each zone's key is vouched for by its parent via DS records",
+    'A chain of trust from the root down: each zone’s key is vouched for by its parent via DS records',
   'learning.concept.dnssec.q3.why':
-    "A parent zone publishes a DS record hashing the child's key, so validation walks root→TLD→domain — anchored at the trusted root key.",
+    'A parent zone publishes a DS record hashing the child’s key, so validation walks root→TLD→domain — anchored at the trusted root key.',
   'learning.concept.review.title': 'Review',
   'learning.concept.review.start': 'Review weak spots ({{count}})',
   'learning.concept.review.mastered': '{{mastered}} / {{total}} mastered',
