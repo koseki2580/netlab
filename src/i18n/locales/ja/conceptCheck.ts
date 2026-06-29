@@ -680,7 +680,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.addressing.q5.b': 'ブロードキャストドメイン内の全ホスト',
   'learning.concept.addressing.q5.c': '購読したグループのみ',
   'learning.concept.addressing.q5.why':
-    'ブロードキャスト=セグメントの全ホスト（例: ARP 要求）、ユニキャスト=1 ホスト、マルチキャスト=参加したグループ。',
+    'ブロードキャスト=セグメントの全ホスト（例: ARP リクエスト）、ユニキャスト=1 ホスト、マルチキャスト=参加したグループ。',
   'learning.concept.addressing.q6.prompt': 'インターネットに NAT が必要な理由は？',
   'learning.concept.addressing.q6.a': 'トラフィックを暗号化するため',
   'learning.concept.addressing.q6.b': '名前を解決するため',
