@@ -297,7 +297,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.bgp.q2.c': 'Link cost',
   'learning.concept.bgp.q2.why':
     'BGP is a path-vector protocol; operators apply policy on attributes like AS-path length and local preference.',
-  'learning.concept.bgp.q3.prompt': 'An ’AS’ in BGP is…',
+  'learning.concept.bgp.q3.prompt': 'An AS in BGP is…',
   'learning.concept.bgp.q3.a': 'A single router',
   'learning.concept.bgp.q3.b': 'A subnet',
   'learning.concept.bgp.q3.c': 'An autonomous system — a network under one administration',
