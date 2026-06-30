@@ -1929,13 +1929,13 @@ export const conceptCheck: Catalog = {
   'learning.concept.dnssec.q1.c': '自動 IP 割り当て',
   'learning.concept.dnssec.q1.why':
     'DNSSEC はゾーン鍵（DNSKEY）でレコードに署名（RRSIG）し、改ざんや偽造応答（キャッシュ汚染）を検出できるようにします。',
-  'learning.concept.dnssec.q2.prompt': 'DNSSEC は DNS クエリを暗号化する？',
+  'learning.concept.dnssec.q2.prompt': 'DNSSEC は DNS 問い合わせを暗号化する？',
   'learning.concept.dnssec.q2.a': 'はい、完全に端から端まで',
   'learning.concept.dnssec.q2.b':
     'いいえ — 完全性のために応答を認証する。機密性は別問題（DoH/DoT が担う）',
   'learning.concept.dnssec.q2.c': 'ルートゾーンだけ',
   'learning.concept.dnssec.q2.why':
-    'DNSSEC は応答の真正性を証明しますが平文で送られます。クエリの暗号化は DNS over HTTPS/TLS が担います。',
+    'DNSSEC は応答の真正性を証明しますが平文で送られます。問い合わせの暗号化は DNS over HTTPS/TLS が担います。',
   'learning.concept.dnssec.q3.prompt': 'DNSSEC で信頼はどう確立される？',
   'learning.concept.dnssec.q3.a': 'すべてのリゾルバがすべてのゾーンを既定で信頼する',
   'learning.concept.dnssec.q3.b': 'IP 許可リストで',
