@@ -703,7 +703,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.addressing.q3.b.why':
     'Broadcasts do not leave the subnet; the frame goes to the gateway’s MAC, then IP routing takes over.',
   'learning.concept.addressing.q4.b.why':
-    'Only public addresses are globally unique; private ranges are reused in countless networks behind NAT.',
+    'The same private range (e.g. 10.0.0.0/8) appears in millions of networks at once — the opposite of globally unique.',
   'learning.concept.addressing.q4.c.why':
     'Private ranges are for any internal host, not just routers — phones, servers and laptops all use them.',
   'learning.concept.addressing.q5.a.why':
@@ -1070,7 +1070,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.http.q3.a.why':
     'Success is 2xx (e.g. 200); 404 is a client error meaning the resource was not found.',
   'learning.concept.http.q3.b.why':
-    'Server errors are 5xx; 404 is a 4xx client error — the requested resource does not exist.',
+    'Server errors are 5xx (e.g. 500); 404 is a 4xx client error, not a server error.',
   'learning.concept.quic.q1.b.why':
     'QUIC deliberately avoids TCP to escape its head-of-line blocking; it runs over UDP.',
   'learning.concept.quic.q1.c.why':
@@ -1171,7 +1171,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.lldp.q1.c.why':
     'LLDP does not encrypt; it advertises a device’s identity/capabilities to directly-connected neighbors.',
   'learning.concept.lldp.q2.a.why':
-    'LLDP frames are link-local and never forwarded by switches/routers; it works per link, not internet-wide.',
+    'The whole internet is out of reach: LLDP is strictly per-link, discovering only its directly-connected neighbor, never a remote device.',
   'learning.concept.lldp.q2.c.why':
     'LLDP is an L2 protocol with its own EtherType, not carried over TCP; it stays within one link.',
   'learning.concept.lldp.q3.a.why':

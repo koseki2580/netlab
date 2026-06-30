@@ -701,7 +701,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.addressing.q3.b.why':
     'ブロードキャストはサブネットを越えません。フレームはゲートウェイの MAC へ送られ、その後 IP ルーティングが引き継ぎます。',
   'learning.concept.addressing.q4.b.why':
-    'グローバルに一意なのは公開アドレスだけです。プライベートレンジは NAT の背後で無数のネットワークに再利用されます。',
+    '同じプライベートレンジ（例: 10.0.0.0/8）は無数のネットワークに同時に存在するため、グローバルに一意とは正反対です。',
   'learning.concept.addressing.q4.c.why':
     'プライベートレンジはルータ専用ではなく、内部の任意のホスト（スマホ・サーバ・PC）が使います。',
   'learning.concept.addressing.q5.a.why':
@@ -1066,7 +1066,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.http.q3.a.why':
     '成功は 2xx（例: 200）です。404 はリソースが見つからないことを示すクライアントエラーです。',
   'learning.concept.http.q3.b.why':
-    'サーバエラーは 5xx です。404 は 4xx のクライアントエラーで、要求されたリソースが存在しません。',
+    'サーバエラーは 5xx（例: 500）です。404 はサーバエラーではなく 4xx のクライアントエラーです。',
   'learning.concept.quic.q1.b.why':
     'QUIC は HOL ブロッキングを避けるため意図的に TCP を使わず、UDP の上で動きます。',
   'learning.concept.quic.q1.c.why':
@@ -1167,7 +1167,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.lldp.q1.c.why':
     'LLDP は暗号化しません。機器の識別情報/能力を直結の隣接機器に広告します。',
   'learning.concept.lldp.q2.a.why':
-    'LLDP フレームはリンクローカルでスイッチ/ルータに転送されません。インターネット全体ではなくリンク単位で動きます。',
+    'インターネット全体には届きません。LLDP はリンク単位で、直結の隣接機器だけを発見し、遠隔の機器は見えません。',
   'learning.concept.lldp.q2.c.why':
     'LLDP は独自の EtherType を持つ L2 プロトコルで TCP では運ばれません。1 つのリンク内に留まります。',
   'learning.concept.lldp.q3.a.why':
