@@ -516,7 +516,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.mpls.q1.b': 'ブロードキャスト',
   'learning.concept.mpls.q1.c': 'ARP 解決',
   'learning.concept.mpls.q1.why':
-    'エッジルータがラベルを付与し、コアは事前設定パスに沿ってラベルを交換、ホップごとの全ルート検索を避けます。',
+    'エッジルータがラベルを付与し、コアは定めた経路に沿ってラベルを交換、ホップごとの IP ルックアップを避けます。',
   'learning.concept.mpls.q2.prompt': 'ラベル付きパケットがたどる経路を…',
   'learning.concept.mpls.q2.a': 'ブロードキャストドメイン',
   'learning.concept.mpls.q2.b': 'ラベルスイッチドパス（LSP）',
@@ -1338,9 +1338,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.gre.q3.b.why':
     'トンネルの目的は到達性です — 2 つの網はアンダーレイ越しに直結して見えます。',
   'learning.concept.mpls.q1.b.why':
-    'MPLS はブロードキャストしません。ホップごとの IP 探索の代わりに、定めた経路で短いラベルを付け替えます。',
+    'MPLS はブロードキャストしません。ホップごとの IP ルックアップの代わりに、定めた経路で短いラベルを交換します。',
   'learning.concept.mpls.q1.c.why':
-    'ARP は IP→MAC を解決します。MPLS はラベルを付け替えて転送し、IP ルーティング探索を省きます。',
+    'ARP は IP→MAC を解決します。MPLS はラベルを交換して転送し、IP ルックアップを省きます。',
   'learning.concept.mpls.q2.a.why':
     'ブロードキャストドメインは L2 の概念です。MPLS 網を通る経路がラベルスイッチドパス（LSP）です。',
   'learning.concept.mpls.q2.c.why':
