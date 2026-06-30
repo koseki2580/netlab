@@ -1163,9 +1163,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.lacp.q3.b.why':
     'ポートチャネルはルータではなく依然 L2 です。STP は正しい束を 1 つの論理リンクとして扱います。',
   'learning.concept.lldp.q1.b.why':
-    'サブネット間のルーティングは L3 です。LLDP は直結の近隣とその能力を発見するだけです。',
+    'サブネット間のルーティングは L3 です。LLDP は直結の隣接機器とその能力を発見するだけです。',
   'learning.concept.lldp.q1.c.why':
-    'LLDP は暗号化しません。機器の識別情報/能力を直結の近隣に広告します。',
+    'LLDP は暗号化しません。機器の識別情報/能力を直結の隣接機器に広告します。',
   'learning.concept.lldp.q2.a.why':
     'LLDP フレームはリンクローカルでスイッチ/ルータに転送されません。インターネット全体ではなくリンク単位で動きます。',
   'learning.concept.lldp.q2.c.why':
@@ -1173,7 +1173,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.lldp.q3.a.why':
     'IP の割り当ては DHCP です。LLDP は物理トポロジを把握し、VoIP 電話や PoE の自動設定を助けます。',
   'learning.concept.lldp.q3.b.why':
-    '経路選択はルーティングプロトコルの仕事です。LLDP は近隣を発見してトポロジを描き VoIP/PoE を助けます。',
+    '経路選択はルーティングプロトコルの仕事です。LLDP は隣接機器を発見してトポロジを描き VoIP/PoE を助けます。',
   'learning.concept.ssh.q1.b.why':
     '平文転送は FTP/Telnet です。SSH は暗号化されたリモートシェルと安全なトンネルを提供します。',
   'learning.concept.ssh.q1.c.why':
