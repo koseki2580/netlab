@@ -773,7 +773,7 @@ export const conceptCheck: Catalog = {
     'DNS は通常 UDP/53、現代の Web は HTTPS の TCP/443 を使います。両方が素の TCP/80 ではありません。',
   'learning.concept.ports.q6.b.why':
     'ICMP は診断用（ping）です。DNS は UDP/53、Web 取得は TCP/443 を使います。',
-  'learning.concept.ethernet.q4.prompt': 'Ethernet フレームが運ぶ送信元/宛先は…',
+  'learning.concept.ethernet.q4.prompt': 'イーサネットフレームが運ぶ送信元/宛先は…',
   'learning.concept.ethernet.q4.a': 'MAC アドレス',
   'learning.concept.ethernet.q4.b': 'IP アドレス',
   'learning.concept.ethernet.q4.c': 'ポート番号',
@@ -923,7 +923,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.udp.q5.c.why':
     '小さな DNS のやり取りに順序は不要です。だから軽量な UDP が適し、TCP ではありません。',
   'learning.concept.ethernet.q1.b.why':
-    'IP アドレスは L3 です。Ethernet フレームは L2 の MAC で宛先指定します。',
+    'IP アドレスは L3 です。イーサネットフレームは L2 の MAC で宛先指定します。',
   'learning.concept.ethernet.q1.c.why':
     'ポート番号は L4 です。フレームは次の機器へ届くため L2 の MAC を使います。',
   'learning.concept.ethernet.q2.a.why':
@@ -937,7 +937,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ethernet.q4.b.why':
     'IP アドレスはペイロード内（L3）にあります。フレーム自身の送信元/宛先は MAC アドレスです。',
   'learning.concept.ethernet.q4.c.why':
-    'ポート番号は L4 ヘッダにあります。Ethernet フレームは MAC で宛先指定します。',
+    'ポート番号は L4 ヘッダにあります。イーサネットフレームは MAC で宛先指定します。',
   'learning.concept.ethernet.q5.a.why':
     'スイッチをつないでも別々のインターネットはできません。1 つのブロードキャストドメインに結合します。',
   'learning.concept.ethernet.q5.c.why':
@@ -1054,7 +1054,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.tls.q3.b.why':
     'TLS は IP の下ではなくトランスポートの上にあり、下に TCP のような信頼できるバイト列を必要とします。',
   'learning.concept.tls.q3.c.why':
-    'TLS は Ethernet（L2）を置き換えません。TCP のような信頼できるトランスポートの上に重なります。',
+    'TLS はイーサネット（L2）を置き換えません。TCP のような信頼できるトランスポートの上に重なります。',
   'learning.concept.http.q1.b.why':
     'パブリッシュ/サブスクライブはメッセージング様式（MQTT など）です。HTTP はクライアント要求→サーバ応答のやり取りです。',
   'learning.concept.http.q1.c.why':
@@ -1159,7 +1159,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.lacp.q2.c.why':
     'LACP は暗号化しません。リンクの束ね合わせは合計帯域とリンク冗長を高めます。',
   'learning.concept.lacp.q3.a.why':
-    'それが束ねる狙いです — STP は 1 つの論理リンクと見なし、メンバをループとしてブロックしません。',
+    '逆です — 束ねなければ並列リンクはまさに STP がブロックするループになります。LACP の交渉がそれらを 1 つの論理リンクにします。',
   'learning.concept.lacp.q3.b.why':
     'ポートチャネルはルータではなく依然 L2 です。STP は正しい束を 1 つの論理リンクとして扱います。',
   'learning.concept.lldp.q1.b.why':
@@ -1196,7 +1196,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ftp.q3.b.why':
     'パッシブ FTP は DNS と無関係です。データ接続をクライアント側のファイアウォールや NAT を越えられるようにします。',
   'learning.concept.smtp.q1.b.why':
-    'クライアントへの受信は IMAP/POP3 です。SMTP はサーバ間でメールを送信・中継します。',
+    '受信は IMAP/POP3 の役割です。メールクライアントが SMTP を使うのは送信（投稿）側だけで、メールの取得には使いません。',
   'learning.concept.smtp.q1.c.why':
     'ホスト名解決は DNS です。SMTP はメールを送信・中継するプロトコルです。',
   'learning.concept.smtp.q2.a.why':
@@ -1222,9 +1222,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.ntp.q1.c.why':
     'アドレス割り当ては DHCP です。NTP は機器間で時計を同期し続けます。',
   'learning.concept.ntp.q2.a.why':
-    'VLAN は L2 トラフィックを分けます。NTP は時刻源を階層（基準時計からの距離）で整理します。',
+    'VLAN は L2 トラフィックを分けます。NTP は時刻源をストラタム（基準時計からの距離）で整理します。',
   'learning.concept.ntp.q2.c.why':
-    '自律システムは BGP のルーティングドメインです。NTP は階層で時刻源を順位付けします。',
+    '自律システムは BGP のルーティングドメインです。NTP はストラタムで時刻源を順位付けします。',
   'learning.concept.ntp.q3.a.why':
     '時刻はケーブル速度と無関係です。ログの相関、証明書の有効性、認証で重要になります。',
   'learning.concept.ntp.q3.b.why':
@@ -1348,7 +1348,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.mpls.q3.a.why':
     'HTTP は L7 のアプリです。MPLS は低層に位置し、L2 と L3 の間（しばしばレイヤー2.5）です。',
   'learning.concept.mpls.q3.b.why':
-    'MPLS は Ethernet のような L2 リンクの上に乗り、その下ではありません — L2 と L3 の間にあります。',
+    'MPLS はイーサネットのような L2 リンクの上に乗り、その下ではありません — L2 と L3 の間にあります。',
   'learning.concept.isis.q1.b.why':
     'ディスタンスベクタは RIP/EIGRP です。IS-IS は OSPF のようなリンクステート IGP で、ISP コアで一般的です。',
   'learning.concept.isis.q1.c.why':

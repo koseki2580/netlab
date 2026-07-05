@@ -52,7 +52,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.stp.q3.prompt': 'A blocked STP port…',
   'learning.concept.stp.q3.a': 'Is physically disconnected',
   'learning.concept.stp.q3.b': 'Forwards data but ignores BPDUs',
-  'learning.concept.stp.q3.c': 'Forwards only BPDUs, not data frames',
+  'learning.concept.stp.q3.c': 'Listens to BPDUs but does not forward data frames',
   'learning.concept.stp.q3.why':
     'Blocked ports still listen to BPDUs so STP can reactivate them if the topology changes.',
   'learning.concept.vlan.name': 'VLAN',
@@ -1163,7 +1163,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.lacp.q2.c.why':
     'LACP does not encrypt; bundling links gives more aggregate bandwidth and link redundancy.',
   'learning.concept.lacp.q3.a.why':
-    'That is the point of bundling — STP sees one logical link, so it does not block the members as loops.',
+    'Just the opposite — without aggregation those parallel links would be a loop for STP to block; LACP’s negotiation is what makes them one logical link.',
   'learning.concept.lacp.q3.b.why':
     'A port-channel is still L2, not a router; STP treats the correct bundle as a single logical link.',
   'learning.concept.lldp.q1.b.why':
@@ -1200,7 +1200,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ftp.q3.b.why':
     'Passive FTP has nothing to do with DNS; it makes the data connection traverse client-side firewalls and NAT.',
   'learning.concept.smtp.q1.b.why':
-    'Retrieving mail to a client is IMAP/POP3; SMTP sends and relays mail between servers.',
+    'Retrieval is IMAP/POP3’s job — a mail client speaks SMTP only for the outgoing submission hop, never to fetch mail.',
   'learning.concept.smtp.q1.c.why':
     'Hostname resolution is DNS; SMTP is the protocol for sending and relaying email.',
   'learning.concept.smtp.q2.a.why':
