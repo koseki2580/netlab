@@ -875,7 +875,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.tcp.q2.c.why':
     'TCP does not encrypt — that is TLS layered on top; TCP guarantees reliable, in-order bytes.',
   'learning.concept.tcp.q3.a.why':
-    'An RST is an abrupt abort, not a graceful close; a clean shutdown is a FIN exchange.',
+    'An RST is for error cases — a refused port or a broken connection — killing the session instantly with no FIN exchange.',
   'learning.concept.tcp.q3.b.why':
     'A second SYN tries to OPEN, not close; graceful teardown is a FIN/ACK in each direction.',
   'learning.concept.tcp.q4.b.why':
@@ -951,7 +951,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.dhcp.q1.c.why':
     'Those are not the DHCP step names; the exchange is Discover → Offer → Request → Ack (DORA).',
   'learning.concept.dhcp.q2.b.why':
-    'The client has no IP and does not know the server yet, so it cannot unicast — it broadcasts.',
+    'Unicasting needs the server’s address — the very thing the client is trying to discover (and it has no source IP of its own either).',
   'learning.concept.dhcp.q2.c.why':
     'Discover is an L2 broadcast on the LAN, not a multicast to routers; the client has no address yet.',
   'learning.concept.dhcp.q3.a.why':

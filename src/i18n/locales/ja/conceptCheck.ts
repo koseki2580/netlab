@@ -871,7 +871,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.tcp.q2.c.why':
     'TCP は暗号化しません — それは上位の TLS です。TCP は信頼性のある順序通りのバイト列を保証します。',
   'learning.concept.tcp.q3.a.why':
-    'RST は正常終了ではなく強制中断です。クリーンな切断は FIN 交換です。',
+    'RST はエラー用です — 拒否されたポートや壊れた接続を即座に打ち切り、FIN 交換を一切踏みません。',
   'learning.concept.tcp.q3.b.why':
     '2度目の SYN は確立しようとするもので切断ではありません。正常な切断は双方向の FIN/ACK です。',
   'learning.concept.tcp.q4.b.why':
@@ -947,7 +947,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.dhcp.q1.c.why':
     'それらは DHCP の段階名ではありません。やり取りは Discover → Offer → Request → Ack（DORA）です。',
   'learning.concept.dhcp.q2.b.why':
-    'クライアントは IP を持たずサーバも未知なのでユニキャストできず、ブロードキャストします。',
+    'ユニキャストにはサーバのアドレスが必要ですが、それこそクライアントが探しているものです（自分の送信元 IP もまだありません）。',
   'learning.concept.dhcp.q2.c.why':
     'Discover はルータ宛マルチキャストではなく LAN 上の L2 ブロードキャストです。クライアントはまだアドレスを持ちません。',
   'learning.concept.dhcp.q3.a.why':
