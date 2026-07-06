@@ -561,7 +561,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.wifi.q2.b': 'Shared and half-duplex',
   'learning.concept.wifi.q2.c': 'Collision-free',
   'learning.concept.wifi.q2.why':
-    'All stations share the same channel and can only transmit or receive at a time, so the airtime is contended.',
+    'All stations share the same channel and can only transmit or receive at any one time, so the airtime is contended.',
   'learning.concept.wifi.q3.prompt': 'Before sending data, a Wi-Fi client must first…',
   'learning.concept.wifi.q3.a': 'Run OSPF',
   'learning.concept.wifi.q3.b': 'Get a public IP',
@@ -774,12 +774,13 @@ export const conceptCheck: Catalog = {
     'DNS normally uses UDP/53, and the modern web uses HTTPS on TCP/443 — not plain TCP/80 for both.',
   'learning.concept.ports.q6.b.why':
     'ICMP is for diagnostics (ping); DNS uses UDP/53 and the web fetch uses TCP/443.',
-  'learning.concept.ethernet.q4.prompt': 'An Ethernet frame carries a source and destination…',
-  'learning.concept.ethernet.q4.a': 'MAC address',
-  'learning.concept.ethernet.q4.b': 'IP address',
-  'learning.concept.ethernet.q4.c': 'Port number',
+  'learning.concept.ethernet.q4.prompt':
+    'Besides addresses and payload, an Ethernet frame’s trailer carries…',
+  'learning.concept.ethernet.q4.a': 'A frame check sequence (FCS) for detecting corrupted frames',
+  'learning.concept.ethernet.q4.b': 'A TTL that limits how far the frame travels',
+  'learning.concept.ethernet.q4.c': 'A TCP checksum',
   'learning.concept.ethernet.q4.why':
-    'Layer-2 frames are addressed by MAC; the IP addresses live inside the payload.',
+    'The FCS — a CRC computed over the frame — lets the receiver detect transmission errors and discard damaged frames.',
   'learning.concept.ethernet.q5.prompt': 'Connecting two switches together extends…',
   'learning.concept.ethernet.q5.a': 'Two separate internets',
   'learning.concept.ethernet.q5.b': 'The same broadcast domain',
@@ -939,9 +940,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.ethernet.q3.b.why':
     'Switches do not route to a gateway (that is L3); they flood unknown unicast out every other port.',
   'learning.concept.ethernet.q4.b.why':
-    'The IP address rides inside the payload (L3); the frame’s own src/dst are MAC addresses.',
+    'A TTL is an IP (L3) field that routers decrement; frames have no hop limit — they never leave their L2 segment anyway.',
   'learning.concept.ethernet.q4.c.why':
-    'Port numbers live in the L4 header; the Ethernet frame addresses by MAC.',
+    'The TCP checksum is an L4 field inside the payload; the frame’s own error check is the FCS in its trailer.',
   'learning.concept.ethernet.q5.a.why':
     'Linking switches does not create separate internets; it joins them into one broadcast domain.',
   'learning.concept.ethernet.q5.c.why':
@@ -1023,7 +1024,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ospf.q3.a.why':
     'OSPF reacts to the topology change immediately by re-flooding LSAs, not by passively waiting on a timer.',
   'learning.concept.ospf.q3.b.why':
-    'OSPF can’t ignore a failure — it re-floods LSAs and recomputes the shortest-path tree.',
+    'Doing nothing would keep sending traffic into the dead link — link-state protocols react by design, flooding the change to every router.',
   'learning.concept.bgp.q1.b.why':
     'Address assignment is DHCP; BGP routes reachability between autonomous systems across the internet.',
   'learning.concept.bgp.q1.c.why':
@@ -1326,9 +1327,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.mtu.q2.c.why':
     'DNS resolves names, not path sizes; PMTUD probes with DF packets and ICMP feedback.',
   'learning.concept.mtu.q3.a.why':
-    'DF (Don’t Fragment) forbids fragmentation — the router drops it and returns an ICMP message instead.',
+    'Fragmenting would defeat DF’s whole purpose — Path MTU Discovery sets that bit precisely so the sender learns of the bottleneck instead.',
   'learning.concept.mtu.q3.b.why':
-    'It can’t be silently delivered if it exceeds the MTU; with DF set the router drops it and signals ICMP.',
+    'An oversized packet physically cannot fit through the smaller link — and far from silent, the sender is explicitly told so it can resend smaller.',
   'learning.concept.gre.q1.b.why':
     'GRE does not encrypt (pair it with IPsec for that); it wraps a packet inside another IP packet.',
   'learning.concept.gre.q1.c.why':
@@ -1382,7 +1383,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ndp.q1.c.why':
     'NDP does not encrypt; it replaces ARP, resolving neighbor IP→MAC via ICMPv6 messages.',
   'learning.concept.ndp.q2.a.why':
-    'SLAAC is not random; the host combines the Router Advertisement’s prefix with its own interface identifier.',
+    'SLAAC never guesses the network part — the prefix always comes from the Router Advertisement; only the interface-ID half may be randomized.',
   'learning.concept.ndp.q2.c.why':
     'The host does not copy the router’s address; it builds its own from the advertised prefix plus an interface id.',
   'learning.concept.ndp.q3.a.why':
@@ -1418,7 +1419,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.vrrp.q1.c.why':
     'Loop prevention is STP; VRRP makes the default gateway redundant via a shared virtual IP.',
   'learning.concept.vrrp.q2.a.why':
-    'Only one router answers for the virtual IP at a time — the master; the others stand by as backups.',
+    'If every router answered at once, hosts would get duplicate and conflicting replies — that is why VRRP elects exactly one master.',
   'learning.concept.vrrp.q2.c.why':
     'The DNS server is unrelated; the virtual IP is held by the elected master router, with backups ready.',
   'learning.concept.vrrp.q3.a.why':

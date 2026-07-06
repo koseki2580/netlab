@@ -124,7 +124,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.nat.q2.b': 'ポートフォワーディング（DNAT）',
   'learning.concept.nat.q2.c': 'VLAN トランク',
   'learning.concept.nat.q2.why':
-    'DNAT は 公開 ip:port を内部 host:port に対応づけ、外部クライアントが到達できるようにします。',
+    'DNAT は公開 ip:port を内部 host:port に対応づけ、外部クライアントが到達できるようにします。',
   'learning.concept.nat.q3.prompt': 'NAT が変換テーブルを保持するのは…',
   'learning.concept.nat.q3.a': 'トラフィックを暗号化するため',
   'learning.concept.nat.q3.b': 'ルートブリッジを選出するため',
@@ -459,7 +459,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.multicast.q1.b': 'インターネット上の全ホストへ',
   'learning.concept.multicast.q1.c': '2 ホスト間のみ',
   'learning.concept.multicast.q1.why':
-    '1 部だけ送られ、ネットワークがマルチキャストグループのメンバへのみ複製します — 効率的な一対多です。',
+    'コピーは 1 つだけ送られ、ネットワークがマルチキャストグループのメンバへのみ複製します — 効率的な一対多です。',
   'learning.concept.multicast.q2.prompt': 'ホストがマルチキャストグループに参加する手段は…',
   'learning.concept.multicast.q2.a': 'ARP',
   'learning.concept.multicast.q2.b': 'IGMP',
@@ -670,11 +670,11 @@ export const conceptCheck: Catalog = {
     'サブネット外ではゲートウェイを ARP します。L2 宛先はゲートウェイ MAC、L3 宛先は最終ホストのまま — これが L2/L3 分離の核心です。',
   'learning.concept.addressing.q4.prompt': 'プライベート IP（10.0.0.0/8, 192.168.0.0/16）は…',
   'learning.concept.addressing.q4.a':
-    'どのネットワークでも再利用でき、公開インターネットでは経路されない',
+    'どのネットワークでも再利用でき、公開インターネットではルーティングされない',
   'learning.concept.addressing.q4.b': '世界で一意',
   'learning.concept.addressing.q4.c': 'ルータ専用',
   'learning.concept.addressing.q4.why':
-    'プライベートアドレスは NAT の背後でどこでも再利用されます。世界で一意で経路可能なのは公開アドレスだけです。',
+    'プライベートアドレスは NAT の背後でどこでも再利用されます。世界で一意でルーティング可能なのは公開アドレスだけです。',
   'learning.concept.addressing.q5.prompt': 'ブロードキャストが届くのは…',
   'learning.concept.addressing.q5.a': '特定の1 ホスト',
   'learning.concept.addressing.q5.b': 'ブロードキャストドメイン内の全ホスト',
@@ -773,12 +773,13 @@ export const conceptCheck: Catalog = {
     'DNS は通常 UDP/53、現代の Web は HTTPS の TCP/443 を使います。両方が素の TCP/80 ではありません。',
   'learning.concept.ports.q6.b.why':
     'ICMP は診断用（ping）です。DNS は UDP/53、Web 取得は TCP/443 を使います。',
-  'learning.concept.ethernet.q4.prompt': 'イーサネットフレームが運ぶ送信元/宛先は…',
-  'learning.concept.ethernet.q4.a': 'MAC アドレス',
-  'learning.concept.ethernet.q4.b': 'IP アドレス',
-  'learning.concept.ethernet.q4.c': 'ポート番号',
+  'learning.concept.ethernet.q4.prompt':
+    'アドレスとペイロードのほかに、イーサネットフレームのトレーラが運ぶのは…',
+  'learning.concept.ethernet.q4.a': '壊れたフレームを検出するフレームチェックシーケンス（FCS）',
+  'learning.concept.ethernet.q4.b': 'フレームの到達範囲を制限する TTL',
+  'learning.concept.ethernet.q4.c': 'TCP チェックサム',
   'learning.concept.ethernet.q4.why':
-    'L2 フレームは MAC で宛先指定し、IP アドレスはペイロード内にあります。',
+    'FCS はフレーム全体から計算される CRC で、受信側は伝送エラーを検出して壊れたフレームを破棄できます。',
   'learning.concept.ethernet.q5.prompt': '2 台のスイッチを接続すると拡張されるのは…',
   'learning.concept.ethernet.q5.a': '2 つの別インターネット',
   'learning.concept.ethernet.q5.b': '同一のブロードキャストドメイン',
@@ -935,9 +936,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.ethernet.q3.b.why':
     'スイッチはゲートウェイへルーティングしません（L3）。不明ユニキャストは他の全ポートへフラッディングします。',
   'learning.concept.ethernet.q4.b.why':
-    'IP アドレスはペイロード内（L3）にあります。フレーム自身の送信元/宛先は MAC アドレスです。',
+    'TTL はルータが減らす IP（L3）のフィールドです。フレームにホップ上限はなく、そもそも L2 セグメントの外へは出ません。',
   'learning.concept.ethernet.q4.c.why':
-    'ポート番号は L4 ヘッダにあります。イーサネットフレームは MAC で宛先指定します。',
+    'TCP チェックサムはペイロード内の L4 フィールドです。フレーム自身のエラー検査はトレーラの FCS です。',
   'learning.concept.ethernet.q5.a.why':
     'スイッチをつないでも別々のインターネットはできません。1 つのブロードキャストドメインに結合します。',
   'learning.concept.ethernet.q5.c.why':
@@ -987,7 +988,7 @@ export const conceptCheck: Catalog = {
     '0.0.0.0/0 は完全に有効です — 任意のアドレスに最も大まかに一致するデフォルトルートです。',
   'learning.concept.ipv6.q1.b.why': '32 ビットは IPv4 です。IPv6 アドレスは 128 ビットです。',
   'learning.concept.ipv6.q1.c.why':
-    '64 ビットはインターフェース識別子の半分にすぎません。完全な IPv6 アドレスは 128 ビットです。',
+    '64 ビットはアドレスの半分（インターフェース識別子の部分）にすぎません。完全な IPv6 アドレスは 128 ビットです。',
   'learning.concept.ipv6.q2.a.why':
     'DHCP はアドレスを配ります。IPv6 は ARP に代わり NDP（近隣探索）で近隣を解決します。',
   'learning.concept.ipv6.q2.c.why':
@@ -1019,7 +1020,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ospf.q3.a.why':
     'OSPF はタイマーを受け身で待つのではなく、LSA を再フラッディングして即座に変化へ反応します。',
   'learning.concept.ospf.q3.b.why':
-    'OSPF は障害を無視できません — LSA を再フラッディングし最短経路ツリーを再計算します。',
+    '何もしなければ死んだリンクへ通信を送り続けてしまいます。リンクステートは設計上、変化を全ルータへフラッディングして反応します。',
   'learning.concept.bgp.q1.b.why':
     'アドレス割り当ては DHCP です。BGP はインターネット全体で自律システム間の到達性をルーティングします。',
   'learning.concept.bgp.q1.c.why':
@@ -1238,7 +1239,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.snmp.q2.c.why':
     'MAC テーブルはスイッチの L2 構造です。SNMP は管理対象を MIB の OID として整理します。',
   'learning.concept.snmp.q3.a.why':
-    'GET はマネージャが機器を問い合わせる操作です。機器が自発的に送る通知はトラップです。',
+    'GET はマネージャが機器に問い合わせる操作です。機器が自発的に送る通知はトラップです。',
   'learning.concept.snmp.q3.b.why':
     'ACK は受領確認にすぎません。機器がイベント駆動で押し出すメッセージは SNMP トラップです。',
   'learning.concept.ipsec.q1.b.why':
@@ -1322,9 +1323,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.mtu.q2.c.why':
     'DNS は名前を解決し経路サイズではありません。PMTUD は DF パケットと ICMP の応答で探ります。',
   'learning.concept.mtu.q3.a.why':
-    'DF（フラグメント禁止）はフラグメント化を禁じます — ルータは破棄して代わりに ICMP メッセージを返します。',
+    'フラグメント化してしまえば DF の意味がありません — PMTUD は送信元がボトルネックを知るために、まさにこのビットを立てています。',
   'learning.concept.mtu.q3.b.why':
-    'MTU を超えれば黙って配送はできません。DF が立っているとルータは破棄し ICMP で通知します。',
+    '大きすぎるパケットは物理的に細いリンクを通れません。しかも黙ってどころか、送信元は小さく再送できるよう明示的に通知されます。',
   'learning.concept.gre.q1.b.why':
     'GRE は暗号化しません（必要なら IPsec と組み合わせます）。パケットを別の IP パケットでカプセル化します。',
   'learning.concept.gre.q1.c.why':
@@ -1358,7 +1359,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.isis.q2.c.why':
     'IS-IS は TCP を使いません — リンク層上で直接動きます（OSPF は IP の中で動く）。',
   'learning.concept.isis.q3.a.why':
-    'AS パスは BGP のものです。OSPF も IS-IS も総リンクコストで ダイクストラ/SPF を実行します。',
+    'AS パスは BGP のものです。OSPF も IS-IS も総リンクコストでダイクストラ/SPF を実行します。',
   'learning.concept.isis.q3.b.why':
     'MAC アドレスは L2 転送です。これらリンクステート IGP は最小の総リンクコストで経路を選びます。',
   'learning.concept.eigrp.q1.b.why':
@@ -1378,7 +1379,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ndp.q1.c.why':
     'NDP は暗号化しません。ARP を置き換え、ICMPv6 メッセージで近隣の IP→MAC を解決します。',
   'learning.concept.ndp.q2.a.why':
-    'SLAAC はランダムではありません。ホストはルータ広告（RA）のプレフィックスと自分のインターフェース識別子を組み合わせます。',
+    'SLAAC はネットワーク部を当てずっぽうにしません — プレフィックスは必ずルータ広告（RA）から来ます。ランダムになり得るのはインターフェース識別子の半分だけです。',
   'learning.concept.ndp.q2.c.why':
     'ホストはルータのアドレスをコピーしません。広告されたプレフィックスとインターフェース識別子から自分のアドレスを作ります。',
   'learning.concept.ndp.q3.a.why':
@@ -1414,7 +1415,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.vrrp.q1.c.why':
     'ループ防止は STP です。VRRP は共有の仮想 IP でデフォルトゲートウェイを冗長化します。',
   'learning.concept.vrrp.q2.a.why':
-    '仮想 IP に応答するのは一度に 1 台 — マスタだけです。他はバックアップとして待機します。',
+    '全ルータが同時に応答すると、重複や競合する返事が混ざってしまいます。だから VRRP はマスタを 1 台だけ選出します。',
   'learning.concept.vrrp.q2.c.why':
     'DNS サーバは無関係です。仮想 IP は選出されたマスタが持ち、バックアップが控えます。',
   'learning.concept.vrrp.q3.a.why':
@@ -1422,7 +1423,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.vrrp.q3.b.why':
     'DNS の速度は無関係です。VRRP はデフォルトゲートウェイが単一障害点になる問題を解決します。',
   'learning.concept.multicast.q1.b.why':
-    '全員へ送るのはブロードキャストです（しかも越えられません）。マルチキャストは関心のある受信者だけを狙います。',
+    '全員へ送るのはブロードキャストです（しかもインターネットを越えられません）。マルチキャストは関心のある受信者だけを狙います。',
   'learning.concept.multicast.q1.c.why':
     '2 ホスト間はユニキャストです。マルチキャストは参加したグループへ 1 つのストリームを送ります。',
   'learning.concept.multicast.q2.a.why':
@@ -1541,7 +1542,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ftp.q3.b': 'DNS を速くするため',
   'learning.concept.ftp.q3.c': 'クライアント側のファイアウォールや NAT を通すため',
   'learning.concept.ftp.q3.why':
-    'パッシブモードではクライアントがデータ接続を開くため、アクティブモードの着信を塞ぐ NAT/ファイアウォール を通れます。',
+    'パッシブモードではクライアントがデータ接続を開くため、アクティブモードの着信を塞ぐ NAT/ファイアウォールを通れます。',
   'learning.concept.smtp.name': 'SMTP',
   'learning.concept.smtp.q1.prompt': 'SMTP の用途は…',
   'learning.concept.smtp.q1.a': 'サーバ間でメールを送信・中継する',
