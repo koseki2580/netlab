@@ -1663,7 +1663,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.isis.q1.prompt': 'IS-IS is a…',
   'learning.concept.isis.q1.a': 'Link-state IGP (like OSPF), common in ISP cores',
   'learning.concept.isis.q1.b': 'Distance-vector protocol',
-  'learning.concept.isis.q1.c': 'An application protocol',
+  'learning.concept.isis.q1.c': 'Application protocol',
   'learning.concept.isis.q1.why':
     'IS-IS floods link state and runs SPF; it is widely used in large service-provider networks.',
   'learning.concept.isis.q2.prompt': 'Compared with OSPF, IS-IS…',

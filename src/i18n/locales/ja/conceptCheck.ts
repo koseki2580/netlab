@@ -244,7 +244,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ipv4.q3.b': '暗号化する',
   'learning.concept.ipv4.q3.c': 'フラグメント化する',
   'learning.concept.ipv4.q3.why':
-    'IPv4 ルータは過大パケットをフラグメント化します（DF ビットがあれば代わりに ICMP を返す）。',
+    'IPv4 ルータは過大パケットをフラグメント化します（DF ビットが立っていれば代わりに ICMP を返す）。',
   'learning.concept.ipv6.name': 'IPv6',
   'learning.concept.ipv6.q1.prompt': 'IPv6 アドレスは…',
   'learning.concept.ipv6.q1.a': '128 ビット',
@@ -408,7 +408,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.qos.q2.b': 'リンクが輻輳し一部が遅延に敏感',
   'learning.concept.qos.q2.c': 'ホストが1 台だけ',
   'learning.concept.qos.q2.why':
-    '輻輳時、QoS はルータが一括転送より音声/映像を優先でき、全てを同等に扱わずに済みます。',
+    '輻輳時、QoS によりルータはバルク（大容量）転送より音声/映像を優先でき、全てを同等に扱わずに済みます。',
   'learning.concept.qos.q3.prompt': 'ルータが DSCP に従う方法は…',
   'learning.concept.qos.q3.a': 'パケットを暗号化する',
   'learning.concept.qos.q3.b': 'マークされた全パケットを破棄する',
@@ -1756,7 +1756,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.vpn.q1.a':
     '信頼できないネットワーク越しに暗号化トンネルを作り、通信を秘匿・認証する',
   'learning.concept.vpn.q1.b': 'インターネット回線を高速化する',
-  'learning.concept.vpn.q1.c': 'ホストにグローバル IP を割り当てる',
+  'learning.concept.vpn.q1.c': 'ホストに公開 IP を割り当てる',
   'learning.concept.vpn.q1.why':
     'VPN は通信をカプセル化して暗号化し、公衆網をあたかも専用線のように越えられるようにします。',
   'learning.concept.vpn.q2.prompt': 'サイト間 VPN とリモートアクセス VPN の違いは…',
