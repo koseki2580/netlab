@@ -1108,7 +1108,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.stp.q1.c.why':
     'ルーティングループは L3 の問題（TTL・ルーティングプロトコル）です。STP はスイッチ間の L2 転送ループを止めます。',
   'learning.concept.stp.q2.b.why':
-    '指定ルータは OSPF（L3）の役割です。STP の基準点は選出されたルートブリッジです。',
+    '代表ルータ（DR）は OSPF（L3）の役割です。STP の基準点は選出されたルートブリッジです。',
   'learning.concept.stp.q2.c.why':
     'デフォルトゲートウェイはサブネットの出口ルータ（L3）です。STP の起点はルートブリッジです。',
   'learning.concept.stp.q3.a.why':
