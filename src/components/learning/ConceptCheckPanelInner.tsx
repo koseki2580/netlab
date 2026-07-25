@@ -104,7 +104,18 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
     total,
   );
 
-  const stats = useMemo(() => reviewStats(review, Date.now()), [review]);
+  // Stats must describe only what this catalog can actually present: persisted
+  // state may name items from a removed/renamed deck (the store is a public export
+  // sharing one key across versions). Counting those would render a Review button
+  // that starts nothing, and a mastery bar that can exceed its own max.
+  const liveReview = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(review).filter(([itemId]) => byItemId.has(itemId)),
+      ) as typeof review,
+    [review, byItemId],
+  );
+  const stats = useMemo(() => reviewStats(liveReview, Date.now()), [liveReview]);
 
   const start = useCallback((next: Session) => {
     setSession(next);
@@ -134,12 +145,12 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
   );
 
   const startReview = useCallback(() => {
-    const items = reviewQueue(review, REVIEW_SESSION_LIMIT)
+    const items = reviewQueue(liveReview, REVIEW_SESSION_LIMIT)
       .map((id) => byItemId.get(id))
       .filter((entry): entry is IndexedQuestion => entry !== undefined);
     if (items.length === 0) return;
     start({ kind: 'review', id: 'review', titleKey: 'learning.concept.review.title', items });
-  }, [review, byItemId, start]);
+  }, [liveReview, byItemId, start]);
 
   const result = useMemo<DrillResult | null>(() => {
     if (!question || selected === null) return null;
@@ -190,8 +201,19 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
   useEffect(() => {
     if (!session || complete || !question) return undefined;
     const onKey = (event: KeyboardEvent) => {
-      const tag = (event.target as HTMLElement | null)?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      const target = event.target;
+      if (target instanceof HTMLElement) {
+        const tag = target.tagName;
+        // Never steal keys from a field the user is typing in — including a host
+        // page's own <select> or rich-text editor, since this listener is on document.
+        // The attribute is checked too: jsdom does not implement isContentEditable.
+        const editable =
+          target.isContentEditable ||
+          target.closest('[contenteditable]:not([contenteditable=false])');
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || editable) return;
+      }
+      // Leave browser/OS shortcuts alone: ⌘1 switches tabs, it must not answer.
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
       if (selected === null) {
         const index = ['1', '2', '3'].indexOf(event.key);
         const option = index >= 0 ? options[index] : undefined;
@@ -211,8 +233,8 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
   // ── Deck picker ──────────────────────────────────────────────────────────
   if (!session) {
     const reviewCount = stats.inReview;
-    const seenItem = (id: string) => review[id] !== undefined;
-    const masteredItem = (id: string) => isMastered(review, id);
+    const seenItem = (id: string) => liveReview[id] !== undefined;
+    const masteredItem = (id: string) => isMastered(liveReview, id);
     // Filter decks by name so a learner (keyboard especially) can jump to a
     // protocol without tabbing through all of them.
     const q = query.trim().toLowerCase();

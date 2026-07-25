@@ -289,6 +289,45 @@ describe('ConceptCheckPanel', () => {
     expect(testid('concept-check-prompt')?.textContent).toContain('DNS');
   });
 
+  it('ignores number keys pressed with a modifier (⌘1 switches tabs, it must not answer)', () => {
+    render();
+    click('concept-check-deck-arp');
+    act(() =>
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', { key: '1', metaKey: true, bubbles: true }),
+      ),
+    );
+    // Still unanswered: no feedback, and nothing was graded into the review store.
+    expect(testid('concept-check-correct')).toBeNull();
+    expect(testid('concept-check-incorrect')).toBeNull();
+    expect(store.load()).toEqual({});
+  });
+
+  it('does not steal keys from a host page rich-text field', () => {
+    render();
+    click('concept-check-deck-arp');
+    const editor = document.createElement('div');
+    editor.setAttribute('contenteditable', 'true');
+    document.body.appendChild(editor);
+    const event = new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true });
+    act(() => {
+      editor.dispatchEvent(event);
+    });
+    expect(event.defaultPrevented).toBe(false);
+    expect(testid('concept-check-correct')).toBeNull();
+    expect(testid('concept-check-incorrect')).toBeNull();
+    editor.remove();
+  });
+
+  it('ignores persisted review items that are no longer in the catalog', () => {
+    // A stale entry (deck removed/renamed) must not be counted, or the Review
+    // button would render a number yet start nothing when clicked.
+    store.save({ 'ghost-deck:q1': { box: 1, dueAt: 0 } });
+    render();
+    expect(testid('concept-check-review')).toBeNull();
+    expect(testid('concept-check-mastery-bar')?.getAttribute('aria-valuenow')).toBe('0');
+  });
+
   it('re-translates the session header when the locale changes mid-quiz', () => {
     // The header must follow the locale like every other string: a session stores
     // the deck's i18n key, not the text translated at start time.
