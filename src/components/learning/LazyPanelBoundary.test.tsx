@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { act } from 'react';
+import { Suspense, act, lazy, useMemo, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LazyPanelBoundary } from './LazyPanelBoundary';
@@ -60,6 +60,55 @@ describe('LazyPanelBoundary', () => {
     const button = container?.querySelector('button') as HTMLButtonElement;
     act(() => button.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0 })));
     expect(onRetry).toHaveBeenCalledTimes(1);
+    spy.mockRestore();
+  });
+
+  it('recovers from a genuinely rejected dynamic import when retried', async () => {
+    // The end-to-end contract: React caches a rejected lazy forever, so the retry
+    // is only real if a *fresh* import runs and the panel then renders.
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    let calls = 0;
+    const importer = () => {
+      calls += 1;
+      return calls === 1
+        ? Promise.reject(new Error('chunk 404'))
+        : Promise.resolve({ default: () => <div data-testid="loaded-panel">panel</div> });
+    };
+
+    function Host() {
+      const [attempt, setAttempt] = useState(0);
+      const Inner = useMemo(() => {
+        void attempt;
+        return lazy(importer);
+      }, [attempt]);
+      return (
+        <LazyPanelBoundary onRetry={() => setAttempt((value) => value + 1)}>
+          <Suspense fallback={null}>
+            <Inner />
+          </Suspense>
+        </LazyPanelBoundary>
+      );
+    }
+
+    await act(async () => {
+      root?.render(<Host />);
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(container?.querySelector('[role="alert"]')).not.toBeNull();
+
+    const button = container?.querySelector('button') as HTMLButtonElement;
+    await act(async () => {
+      button.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0 }));
+    });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(calls).toBe(2);
+    expect(container?.querySelector('[data-testid="loaded-panel"]')).not.toBeNull();
     spy.mockRestore();
   });
 });
