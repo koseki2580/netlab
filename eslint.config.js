@@ -27,6 +27,10 @@ const I18N_ENFORCED_FILES = [
   'src/components/learning/PacketJourneyPanel.tsx',
   'src/components/learning/ResilienceLabPanel.tsx',
   'src/components/learning/ConceptCheckPanel.tsx',
+  // The lazy split moved every t() call site and all JSX into the inner panel,
+  // so the rule must follow it there — the shell has no user-facing text left.
+  'src/components/learning/ConceptCheckPanelInner.tsx',
+  'src/components/learning/LazyPanelBoundary.tsx',
   'src/components/sandbox/SandboxPanel.tsx',
   'src/components/sandbox/EmptySandboxTab.tsx',
   'src/components/sandbox/SandboxIntroOverlay.tsx',

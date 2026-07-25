@@ -701,7 +701,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.addressing.q3.b.why':
     'ブロードキャストはサブネットを越えません。フレームはゲートウェイの MAC へ送られ、その後 IP ルーティングが引き継ぎます。',
   'learning.concept.addressing.q4.b.why':
-    '同じプライベートレンジ（例: 10.0.0.0/8）は無数のネットワークに同時に存在するため、グローバルに一意とは正反対です。',
+    '同じプライベートレンジ（例: 10.0.0.0/8）は無数のネットワークに同時に存在するため、世界で一意とは正反対です。',
   'learning.concept.addressing.q4.c.why':
     'プライベートレンジはルータ専用ではなく、内部の任意のホスト（スマホ・サーバ・PC）が使います。',
   'learning.concept.addressing.q5.a.why':
@@ -1043,7 +1043,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.rip.q3.a.why':
     'RIP は OSPF より収束が遅く（定期更新・無限カウント）、速くはありません。',
   'learning.concept.rip.q3.b.why':
-    'RIP は 15 ホップ制限で小規模向けです。大規模にスケールするのは OSPF です。',
+    'RIP は 15 ホップ制限で小規模向けです。大規模に拡張できるのは OSPF です。',
   'learning.concept.tls.q1.a.why':
     'ルーティングは IP（L3）の仕事です。TLS は TCP の上に暗号化・完全性・サーバ認証を加えます。',
   'learning.concept.tls.q1.c.why':
@@ -1365,7 +1365,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.eigrp.q1.b.why':
     'EIGRP は純粋なリンクステートではありません（それは OSPF/IS-IS）。DUAL を使う高度なディスタンスベクタです。',
   'learning.concept.eigrp.q1.c.why':
-    'EIGRP はアプリではなくルーティングプロトコルです。DUAL アルゴリズムを使う高度なディスタンスベクタです。',
+    'EIGRP はアプリケーションプロトコルではなくルーティングプロトコルです。DUAL アルゴリズムを使う高度なディスタンスベクタです。',
   'learning.concept.eigrp.q2.a.why':
     'フィージブルサクセサは暗号化ではなく事前計算済みのバックアップ経路です。即時の再収束を可能にします。',
   'learning.concept.eigrp.q2.c.why':
