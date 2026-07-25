@@ -2,6 +2,10 @@ import type { Catalog } from '../../types';
 
 export const learning: Catalog = {
   // Shared drill chrome
+  'learning.drill.loadError.heading': 'This exercise could not be loaded.',
+  'learning.drill.loadError.body':
+    'The download failed — often a lost connection or a page left open across a deploy.',
+  'learning.drill.loadError.retry': 'Try again',
   'learning.drill.correct': '✓ Correct',
   'learning.drill.incorrect': '✗ Not quite — answer: {{expected}}',
   'learning.drill.check': 'Check',

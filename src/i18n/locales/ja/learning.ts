@@ -2,6 +2,10 @@ import type { Catalog } from '../../types';
 
 export const learning: Catalog = {
   // ドリル共通
+  'learning.drill.loadError.heading': 'この演習を読み込めませんでした。',
+  'learning.drill.loadError.body':
+    '取得に失敗しました。接続が切れたか、デプロイをまたいでページを開いたままだった可能性があります。',
+  'learning.drill.loadError.retry': '再試行',
   'learning.drill.correct': '✓ 正解',
   'learning.drill.incorrect': '✗ 不正解 — 答え: {{expected}}',
   'learning.drill.check': '判定',

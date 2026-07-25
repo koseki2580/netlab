@@ -1,22 +1,37 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useMemo, useState } from 'react';
 import type { createReviewStore } from '../../learning/review';
+import { LazyPanelBoundary } from './LazyPanelBoundary';
 
 /**
  * Public entry for the Protocol Concept Checks. The implementation — the panel
  * body plus the large concept-check deck catalog and its i18n strings — is
  * lazy-loaded so none of it weighs down the root bundle for consumers that don't
  * render it. See ConceptCheckPanelInner for the actual panel + merged catalog.
+ *
+ * The import is wrapped in an error boundary because this is a package export: a
+ * chunk that fails to load (page left open across a deploy, dropped connection)
+ * must degrade to an in-panel message, not throw into the consumer's app. Retry
+ * re-creates the `lazy()` — React caches a rejected one for the component's life.
  */
-const ConceptCheckPanelInner = lazy(() => import('./ConceptCheckPanelInner'));
-
 export function ConceptCheckPanel(
   props: {
     reviewStore?: ReturnType<typeof createReviewStore>;
   } = {},
 ) {
+  const [attempt, setAttempt] = useState(0);
+  const Inner = useMemo(() => {
+    // `attempt` is what this memo keys on: a retry must mint a NEW lazy, because
+    // React caches the rejection on the old one for good. The import specifier
+    // stays static so Vite can still split the chunk.
+    void attempt;
+    return lazy(() => import('./ConceptCheckPanelInner'));
+  }, [attempt]);
+
   return (
-    <Suspense fallback={null}>
-      <ConceptCheckPanelInner {...props} />
-    </Suspense>
+    <LazyPanelBoundary onRetry={() => setAttempt((value) => value + 1)}>
+      <Suspense fallback={null}>
+        <Inner {...props} />
+      </Suspense>
+    </LazyPanelBoundary>
   );
 }

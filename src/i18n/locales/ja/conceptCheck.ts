@@ -86,7 +86,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.tcp.q2.b': '信頼性のある順序通りの配送',
   'learning.concept.tcp.q2.c': 'ペイロードの暗号化',
   'learning.concept.tcp.q2.why':
-    'シーケンス番号・確認応答・再送が順序通りの信頼配送を実現します。暗号化は TLS の役割です。',
+    'シーケンス番号・確認応答・再送が信頼性のある順序通りの配送を実現します。暗号化は TLS の役割です。',
   'learning.concept.tcp.q3.prompt': 'TCP 接続を正常に閉じるのは？',
   'learning.concept.tcp.q3.a': 'RST セグメント',
   'learning.concept.tcp.q3.b': '2度目の SYN',
@@ -164,7 +164,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.tls.q2.why':
     'クライアントが信頼する CA が署名した証明書が、サーバ名とその公開鍵を結びつけます。',
   'learning.concept.tls.q3.prompt': 'TLS が動作するのは…',
-  'learning.concept.tls.q3.a': 'TCP のような信頼トランスポートの上',
+  'learning.concept.tls.q3.a': 'TCP のような信頼できるトランスポートの上',
   'learning.concept.tls.q3.b': 'IP の下',
   'learning.concept.tls.q3.c': 'イーサネットの代わり',
   'learning.concept.tls.q3.why':
@@ -693,7 +693,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.addressing.q1.c.why':
     'TCP ポートはアプリケーション（L4）を選びます。MAC は同じ線上の次の機器に届けるだけ（L2）です。',
   'learning.concept.addressing.q2.a.why':
-    '1 本のケーブル内に留まるのは L2（MAC）です。IP アドレスは多数のリンクをまたいでエンドツーエンドに転送します。',
+    '1 本のケーブル内に留まるのは L2（MAC）です。IP アドレスは多数のリンクをまたいで端から端へ転送します。',
   'learning.concept.addressing.q2.c.why':
     '特定のアプリへ届けるのはポート（L4）の役割です。IP はパケットをホスト（L3）まで届けるだけです。',
   'learning.concept.addressing.q3.a.why':
@@ -912,7 +912,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.udp.q2.c.why':
     '銀行取引は確実な配送を要します。ベストエフォートの UDP ではなく TCP が必要です。',
   'learning.concept.udp.q3.b.why':
-    'シーケンス/ACK 番号は TCP の信頼性のものです。UDP のヘッダはポート・長さ・チェックサムだけです。',
+    'シーケンス番号や確認応答番号は TCP の信頼性のものです。UDP のヘッダはポート・長さ・チェックサムだけです。',
   'learning.concept.udp.q3.c.why':
     '輻輳ウィンドウは TCP の仕組みです。UDP はコネクションレスで絞るものがありません。',
   'learning.concept.udp.q4.b.why':
@@ -1810,7 +1810,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.l2tp.q3.a': 'IPsec が速くするから',
   'learning.concept.l2tp.q3.b': 'L2TP が NAT を一切越えられないから',
   'learning.concept.l2tp.q3.c':
-    'L2TP がトンネル／カプセル化を担い、IPsec が暗号化と認証を加えるから',
+    'L2TP がトンネル/カプセル化を担い、IPsec が暗号化と認証を加えるから',
   'learning.concept.l2tp.q3.why':
     'L2TP/IPsec は定番の組み合わせで、L2TP がトンネル、IPsec（ESP）が秘匿性と完全性を担います。',
   'learning.concept.pppoe.name': 'PPP / PPPoE',
