@@ -858,7 +858,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.arp.q3.a.why':
     'ARP cannot cross routers; it works only inside one broadcast domain, never the whole internet.',
   'learning.concept.arp.q3.b.why':
-    'ARP runs between hosts on a LAN, not router-to-router; it resolves IP→MAC within the segment.',
+    'ARP is not limited to routers — every device on the segment, host or router, ARPs for a neighbour’s IP; the real boundary is the broadcast domain.',
   'learning.concept.arp.q4.b.why':
     'A port (L4) selects an application, not a frame’s destination; what ARP supplies is the missing MAC.',
   'learning.concept.arp.q4.c.why':

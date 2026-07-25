@@ -856,7 +856,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.arp.q3.a.why':
     'ARP はルータを越えられません。インターネット全体ではなく、1 つのブロードキャストドメイン内でのみ働きます。',
   'learning.concept.arp.q3.b.why':
-    'ARP はルータ間ではなく LAN 上のホスト間で動作し、セグメント内で IP→MAC を解決します。',
+    'ARP はルータ間に限りません。同一セグメント上のホストもルータも隣接の IP を ARP で解決します。境界になるのはブロードキャストドメインです。',
   'learning.concept.arp.q4.b.why':
     'ポート（L4）はアプリを選ぶもので、フレームの宛先ではありません。ARP が補うのは欠けている MAC です。',
   'learning.concept.arp.q4.c.why':
