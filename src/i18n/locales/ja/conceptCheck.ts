@@ -641,7 +641,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.model.q4.c.why':
     '物理層はビット/信号を運ぶだけです。ネクストホップの選択には L3 の IP アドレスが必要です。',
   'learning.concept.model.q5.a.why':
-    'トランスポート層（L4）はホスト間のエンドツーエンドの関心事です。スイッチは L2 の MAC でフレームを転送します。',
+    'トランスポート層（L4）はホスト間で端から端をつなぐ関心事です。スイッチは L2 の MAC でフレームを転送します。',
   'learning.concept.model.q5.c.why':
     'IP による転送はルータ（L3）の仕事です。素のスイッチは L2 の MAC で動作します。',
   'learning.concept.model.q6.a.why':
