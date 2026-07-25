@@ -1098,7 +1098,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.http3.q2.a.why':
     'HTTP/3 はヘッダを小さく保ちます（QPACK）。利点はストリーム間の TCP の HOL ブロッキングの解消です。',
   'learning.concept.http3.q2.c.why':
-    'HTTP/3 は QUIC/TLS 1.3 で常に暗号化されます。利点はストリーム間の TCP の HOL ブロッキングがないことです。',
+    'HTTP/3 は QUIC/TLS 1.3 で常に暗号化されます。利点はストリーム間の TCP の HOL ブロッキングが無いことです。',
   'learning.concept.http3.q3.a.why':
     'HPACK は HTTP/2 のものです。HTTP/3 は QUIC の順不同配送に耐える QPACK を使います。',
   'learning.concept.http3.q3.b.why':

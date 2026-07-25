@@ -53,7 +53,8 @@ function shuffle<T>(items: readonly T[]): T[] {
 interface Session {
   readonly kind: 'deck' | 'review';
   readonly id: string;
-  readonly title: string;
+  /** i18n key, not translated text — so the header follows a mid-session locale switch. */
+  readonly titleKey: string;
   readonly items: readonly IndexedQuestion[];
 }
 
@@ -121,7 +122,7 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
       start({
         kind: 'deck',
         id: deckId,
-        title: t(deck.nameKey),
+        titleKey: deck.nameKey,
         items: deck.questions.map((q) => ({
           itemId: questionItemId(deck.id, q.id),
           deck,
@@ -129,7 +130,7 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
         })),
       });
     },
-    [start, t],
+    [start],
   );
 
   const startReview = useCallback(() => {
@@ -137,8 +138,8 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
       .map((id) => byItemId.get(id))
       .filter((entry): entry is IndexedQuestion => entry !== undefined);
     if (items.length === 0) return;
-    start({ kind: 'review', id: 'review', title: t('learning.concept.review.title'), items });
-  }, [review, byItemId, start, t]);
+    start({ kind: 'review', id: 'review', titleKey: 'learning.concept.review.title', items });
+  }, [review, byItemId, start]);
 
   const result = useMemo<DrillResult | null>(() => {
     if (!question || selected === null) return null;
@@ -433,8 +434,11 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
     <DrillFrame idPrefix="concept-check">
       <div style={drillCardStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <h2 style={{ margin: 0, color: 'var(--netlab-text-primary)', fontSize: 18 }}>
-            {session.title}
+          <h2
+            data-testid="concept-check-session-title"
+            style={{ margin: 0, color: 'var(--netlab-text-primary)', fontSize: 18 }}
+          >
+            {t(session.titleKey)}
           </h2>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
             {streak >= 2 && (
@@ -549,7 +553,13 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
  */
 export default function ConceptCheckPanelInner(props: ConceptCheckPanelProps = {}) {
   const { locale, t: baseT } = useI18n();
-  const strings = locale === 'ja' ? conceptCheckJa : conceptCheckEn;
+  // Layer the locale over en so a partial locale still resolves (docs/dev/i18n.md:
+  // "missing keys fall back to en"). Membership is therefore tested against the
+  // en key set — a ja gap yields English, never a raw `learning.concept.*` key.
+  const strings = useMemo(
+    () => (locale === 'ja' ? { ...conceptCheckEn, ...conceptCheckJa } : conceptCheckEn),
+    [locale],
+  );
   const conceptT = useMemo(() => createTranslator(locale, strings), [locale, strings]);
   const value = useMemo(
     () => ({

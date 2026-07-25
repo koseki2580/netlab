@@ -288,4 +288,27 @@ describe('ConceptCheckPanel', () => {
     click('concept-check-deck-dns');
     expect(testid('concept-check-prompt')?.textContent).toContain('DNS');
   });
+
+  it('re-translates the session header when the locale changes mid-quiz', () => {
+    // The header must follow the locale like every other string: a session stores
+    // the deck's i18n key, not the text translated at start time.
+    act(() =>
+      root?.render(
+        <I18nProvider locale="en">
+          <ConceptCheckPanel reviewStore={store} />
+        </I18nProvider>,
+      ),
+    );
+    click('concept-check-deck-ethernet');
+    expect(testid('concept-check-session-title')?.textContent).toBe('Ethernet');
+
+    act(() =>
+      root?.render(
+        <I18nProvider locale="ja">
+          <ConceptCheckPanel reviewStore={store} />
+        </I18nProvider>,
+      ),
+    );
+    expect(testid('concept-check-session-title')?.textContent).toBe('イーサネット');
+  });
 });
