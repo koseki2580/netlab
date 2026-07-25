@@ -408,11 +408,11 @@ export const conceptCheck: Catalog = {
   'learning.concept.qos.q2.b': 'リンクが輻輳し一部が遅延に敏感',
   'learning.concept.qos.q2.c': 'ホストが1 台だけ',
   'learning.concept.qos.q2.why':
-    '輻輳時、QoS によりルータはバルク（大容量）転送より音声/映像を優先でき、全てを同等に扱わずに済みます。',
+    '輻輳時、QoS によりルータはバルク（大容量）転送より音声/映像を優先でき、すべてを同等に扱わずに済みます。',
   'learning.concept.qos.q3.prompt': 'ルータが DSCP に従う方法は…',
   'learning.concept.qos.q3.a': 'パケットを暗号化する',
   'learning.concept.qos.q3.b': 'マークされた全パケットを破棄する',
-  'learning.concept.qos.q3.c': '優先キューイング等のホップごとの動作を適用する',
+  'learning.concept.qos.q3.c': '優先キューイングなどのホップごとの動作を適用する',
   'learning.concept.qos.q3.why':
     '各ホップは DSCP 値をキュー/スケジューリングのホップごとの動作（PHB）に対応づけます。エンドツーエンドには一貫したマーキングが必要です。',
   'learning.concept.ecmp.name': 'ECMP',
@@ -880,7 +880,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.tcp.q4.c.why':
     '1 回の損失は再送のトリガーであって切断ではありません。TCP は本当の障害時のみ切断します。',
   'learning.concept.tcp.q5.a.why':
-    '暗号化は TLS の役割です。フロー/輻輳制御は受信側とネットワークに合わせて送信側を調整します。',
+    '暗号化は TLS の役割です。フロー/輻輳制御は受信側と網に合わせて送信側を調整します。',
   'learning.concept.tcp.q5.c.why':
     'IP アドレスの割り当ては DHCP です。TCP のウィンドウは過負荷を避けるため送信レートを絞ります。',
   'learning.concept.dns.q1.b.why':
@@ -944,9 +944,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.ethernet.q5.c.why':
     'ルーティングテーブルはルータの L3 構造です。スイッチ同士の接続は L2 ドメインを広げるだけです。',
   'learning.concept.dhcp.q1.a.why':
-    'SYN/ACK/FIN は TCP のハンドシェイクです。DHCP の 4 段階は Discover・Offer・Request・Ack です。',
+    'SYN/ACK/FIN は TCP のハンドシェイクです。DHCP の 4 ステップは Discover, Offer, Request, Ack です。',
   'learning.concept.dhcp.q1.c.why':
-    'それらは DHCP の段階名ではありません。やり取りは Discover → Offer → Request → Ack（DORA）です。',
+    'それらは DHCP のステップ名ではありません。やり取りは Discover → Offer → Request → Ack（DORA）です。',
   'learning.concept.dhcp.q2.b.why':
     'ユニキャストにはサーバのアドレスが必要ですが、それこそクライアントが探しているものです（自分の送信元 IP もまだありません）。',
   'learning.concept.dhcp.q2.c.why':
@@ -1053,7 +1053,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.tls.q2.b.why':
     'VLAN タグは L2 トラフィックを分けるもので身元とは無関係です。TLS は X.509 証明書を使います。',
   'learning.concept.tls.q3.b.why':
-    'TLS は IP の下ではなくトランスポートの上にあり、下に TCP のような信頼できるバイト列を必要とします。',
+    'TLS は IP の下ではなくトランスポートの上にあり、下に TCP のような信頼できるバイトストリームを必要とします。',
   'learning.concept.tls.q3.c.why':
     'TLS はイーサネット（L2）を置き換えません。TCP のような信頼できるトランスポートの上に重なります。',
   'learning.concept.http.q1.b.why':
@@ -1267,17 +1267,17 @@ export const conceptCheck: Catalog = {
   'learning.concept.radius.q3.b.why':
     'DNS サーバは名前を解決します。資格情報を RADIUS サーバへ渡す機器がオーセンティケータです。',
   'learning.concept.vpn.q1.b.why':
-    'VPN は通常わずかなオーバーヘッドを足すもので高速化ではありません。目的は信頼できない網上の安全な暗号化トンネルです。',
+    'VPN は通常わずかなオーバーヘッドを足すもので高速化ではありません。目的は信頼できないネットワーク上の安全な暗号化トンネルです。',
   'learning.concept.vpn.q1.c.why':
-    '公開 IP の割り当ては VPN の役割ではありません。トラフィックを秘匿する暗号化・認証済みトンネルを作ります。',
+    '公開 IP の割り当ては VPN の役割ではありません。通信を秘匿する暗号化・認証済みトンネルを作ります。',
   'learning.concept.vpn.q2.a.why':
-    'どちらも暗号化します。本質的な違いは、サイト間はゲートウェイ経由で網全体を結び、リモートアクセスは 1 台のクライアントをつなぐ点です。',
+    'どちらも暗号化します。本質的な違いは、サイト間はゲートウェイ経由でネットワーク全体を結び、リモートアクセスは 1 台のクライアントをつなぐ点です。',
   'learning.concept.vpn.q2.c.why':
-    'リモートアクセスは Ethernet に限らず任意の IP 経路（多くはインターネット）で動きます。違いは網全体か単一クライアントかです。',
+    'リモートアクセスは Ethernet に限らず任意の IP 経路（多くはインターネット）で動きます。違いはネットワーク全体か単一クライアントかです。',
   'learning.concept.vpn.q3.a.why':
-    'スプリットトンネルはトラフィックを遮断しません。選んだ宛先だけ VPN を通し、残りは直接送ります。',
+    'スプリットトンネルは通信を遮断しません。選んだ宛先だけ VPN を通し、残りは直接送ります。',
   'learning.concept.vpn.q3.b.why':
-    '二重暗号化ではありません。スプリットトンネルは一部のトラフィックだけ VPN を通し、残りはそのまま外へ出します。',
+    '二重暗号化ではありません。スプリットトンネルは一部の通信だけ VPN を通し、残りはそのまま外へ出します。',
   'learning.concept.wireguard.q1.a.why':
     'WireGuard は TCP+TLS のオーバーヘッドを避けます。単一ポートの UDP 上で動き、軽量で NAT 親和的です。',
   'learning.concept.wireguard.q1.c.why':
@@ -1335,9 +1335,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.gre.q2.c.why':
     'アドレス割り当ては DHCP です。GRE は暗号化なしでトラフィックをカプセル化しトンネルするだけです。',
   'learning.concept.gre.q3.a.why':
-    'トンネルは網全体を結ぶもので 1 ホストにまとめません。アンダーレイ越しに直結して見えます。',
+    'トンネルはネットワーク全体を結ぶもので 1 ホストにまとめません。アンダーレイ越しに直結して見えます。',
   'learning.concept.gre.q3.b.why':
-    'トンネルの目的は到達性です — 2 つの網はアンダーレイ越しに直結して見えます。',
+    'トンネルの目的は到達性です — 2 つのネットワークはアンダーレイ越しに直結して見えます。',
   'learning.concept.mpls.q1.b.why':
     'MPLS はブロードキャストしません。ホップごとの IP ルックアップの代わりに、定めた経路で短いラベルを交換します。',
   'learning.concept.mpls.q1.c.why':
@@ -1439,17 +1439,17 @@ export const conceptCheck: Catalog = {
   'learning.concept.acl.q1.c.why':
     '圧縮は帯域節約でフィルタリングと無関係です。ACL はパケットフィールドの照合で許可/拒否します。',
   'learning.concept.acl.q2.a.why':
-    'ステートフルは「常に遅い」わけではありません。本質は接続を追跡し、戻りの通信を自動許可する点です。',
+    'ステートフルは「常に遅い」わけではありません。本質は接続を追跡し、戻りトラフィックを自動許可する点です。',
   'learning.concept.acl.q2.c.why':
     'どちらもポートを見ます。ステートフルファイアウォールはさらに接続状態を追跡し応答を自動的に許可します。',
   'learning.concept.acl.q3.a.why':
     '「permit any any」は全許可で安全の逆です。安全な既定は、明示的に許可しない限り拒否です。',
   'learning.concept.acl.q3.b.why':
-    'ルールなしは暗黙の許可や未定義動作になりがちです。安全な設計は明示的なデフォルト拒否です。',
+    'ルールなしは暗黙の許可や未定義動作になりがちです。安全な設計は明示的な既定拒否です。',
   'learning.concept.tunneling.q1.b.why':
     '暗号化は別の追加機能（IPsec）です。トンネリング自体はパケットを新しい外側ヘッダで包むだけです。',
   'learning.concept.tunneling.q1.c.why':
-    'トンネリングは圧縮しません。本来運べない網を越えられるよう、パケットをカプセル化します。',
+    'トンネリングは圧縮しません。本来運べないネットワークを越えられるよう、パケットをカプセル化します。',
   'learning.concept.tunneling.q2.a.why':
     '外側ヘッダは経路の間ずっと必要です。入口で付け、出口でだけ外します。',
   'learning.concept.tunneling.q2.c.why':
