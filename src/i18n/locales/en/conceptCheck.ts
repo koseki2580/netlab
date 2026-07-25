@@ -769,7 +769,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ports.q5.a.why':
     'A socket is not hardware; it is a software endpoint — an IP address paired with a port.',
   'learning.concept.ports.q5.c.why':
-    'A routing protocol (like OSPF) moves packets between networks; a socket is just a connection endpoint.',
+    'A routing protocol (like OSPF) tells routers which paths exist so they can forward packets; a socket is just a connection endpoint.',
   'learning.concept.ports.q6.a.why':
     'DNS normally uses UDP/53, and the modern web uses HTTPS on TCP/443 — not plain TCP/80 for both.',
   'learning.concept.ports.q6.b.why':

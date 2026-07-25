@@ -768,7 +768,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ports.q5.a.why':
     'ソケットはハードウェアではなくソフトウェアのエンドポイント — IP アドレスとポートの組です。',
   'learning.concept.ports.q5.c.why':
-    'ルーティングプロトコル（OSPF など）はネットワーク間でパケットを運びます。ソケットは接続のエンドポイントにすぎません。',
+    'ルーティングプロトコル（OSPF など）はルータに経路を教えるもので、パケットを転送するのはルータです。ソケットは接続のエンドポイントにすぎません。',
   'learning.concept.ports.q6.a.why':
     'DNS は通常 UDP/53、現代の Web は HTTPS の TCP/443 を使います。両方が素の TCP/80 ではありません。',
   'learning.concept.ports.q6.b.why':
