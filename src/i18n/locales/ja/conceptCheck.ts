@@ -73,7 +73,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.vlan.q3.b': '2 台目のルートブリッジ',
   'learning.concept.vlan.q3.c': 'ルータまたは L3 スイッチ',
   'learning.concept.vlan.q3.why':
-    'VLAN は別々の L3 サブネットなので、VLAN 間トラフィックはルーティングが必要です。',
+    '各 VLAN は別々のブロードキャストドメインで、それぞれ独自の IP サブネットを持つため、VLAN 間トラフィックはルーティングが必要です。',
   'learning.concept.tcp.name': 'TCP',
   'learning.concept.tcp.q1.prompt': 'TCP 3ウェイハンドシェイクの順序は…',
   'learning.concept.tcp.q1.a': 'SYN, SYN-ACK, ACK',
@@ -1124,7 +1124,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.vlan.q2.c.why':
     'トランクは 802.1Q でタグ付けし VLAN を区別します。タグなしのみはアクセスポートの説明です。',
   'learning.concept.vlan.q3.a.why':
-    '配線では VLAN をまたげません — それらは別々の L3 ネットワークで、ルータか L3 スイッチが必要です。',
+    '配線では VLAN をまたげません — 802.1Q が別々のブロードキャストドメインとして分離し、サブネットも異なるため、ルータか L3 スイッチが必要です。',
   'learning.concept.vlan.q3.b.why':
     'ルートブリッジは 1 つの L2 ドメイン内の STP の概念です。VLAN 間の移動には L3 ルーティングが必要です。',
   'learning.concept.vxlan.q1.b.why':

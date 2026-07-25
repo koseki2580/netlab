@@ -73,7 +73,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.vlan.q3.b': 'A second root bridge',
   'learning.concept.vlan.q3.c': 'A router or L3 switch',
   'learning.concept.vlan.q3.why':
-    'VLANs are separate L3 subnets; inter-VLAN traffic must be routed.',
+    'Each VLAN is a separate broadcast domain carrying its own IP subnet, so inter-VLAN traffic must be routed.',
   'learning.concept.tcp.name': 'TCP',
   'learning.concept.tcp.q1.prompt': 'The TCP three-way handshake order is…',
   'learning.concept.tcp.q1.a': 'SYN, SYN-ACK, ACK',
@@ -1128,7 +1128,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.vlan.q2.c.why':
     'A trunk tags frames with 802.1Q so VLANs stay distinct; untagged-only describes an access port.',
   'learning.concept.vlan.q3.a.why':
-    'Cabling does not bridge VLANs — they are separate L3 networks; you need a router or L3 switch.',
+    'Cabling does not bridge VLANs — 802.1Q keeps them as separate broadcast domains in different subnets; you need a router or L3 switch.',
   'learning.concept.vlan.q3.b.why':
     'A root bridge is an STP concept within one L2 domain; crossing VLANs needs L3 routing.',
   'learning.concept.vxlan.q1.b.why':
