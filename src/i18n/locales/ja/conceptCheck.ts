@@ -380,7 +380,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.http3.name': 'HTTP/3',
   'learning.concept.http3.q1.prompt': 'HTTP/3 が動くのは…',
   'learning.concept.http3.q1.a': 'QUIC（UDP）',
-  'learning.concept.http3.q1.b': '生の TCP',
+  'learning.concept.http3.q1.b': '素の TCP',
   'learning.concept.http3.q1.c': 'ICMP',
   'learning.concept.http3.q1.why':
     'HTTP/3 は HTTP の意味を QUIC に載せます。QUIC は UDP 上でストリーム・信頼性・TLS を提供します。',
@@ -846,7 +846,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.dns.q5.c': 'メールサーバ名',
   'learning.concept.dns.q5.why': 'A は IPv4、AAAA は IPv6、MX はメール、CNAME は別名です。',
   'learning.concept.arp.q1.b.why':
-    'ホスト名→IP の対応付けは DNS です。ARP はローカルリンク上で既知の IP を MAC に解決します。',
+    'ホスト名→IP の対応づけは DNS です。ARP はローカルリンク上で既知の IP を MAC に解決します。',
   'learning.concept.arp.q1.c.why':
     'MAC→ポートはスイッチが自分で学習します。ARP は IP を MAC に解決するもので、MAC をポートに対応づけるものではありません。',
   'learning.concept.arp.q2.a.why':
@@ -1219,9 +1219,9 @@ export const conceptCheck: Catalog = {
     'ICMP はメールではなく診断用です。セキュアな IMAP/POP3 は TLS で包まれます。',
   'learning.concept.email.q3.b.why':
     'ARP は LAN で IP→MAC を解決します。メール受信は TLS で保護します。',
-  'learning.concept.ntp.q1.b.why': 'ホスト名解決は DNS です。NTP は機器の時計を同期します。',
+  'learning.concept.ntp.q1.b.why': 'ホスト名解決は DNS です。NTP は機器の時刻を同期します。',
   'learning.concept.ntp.q1.c.why':
-    'アドレス割り当ては DHCP です。NTP は機器間で時計を同期し続けます。',
+    'アドレス割り当ては DHCP です。NTP は機器間で時刻を同期し続けます。',
   'learning.concept.ntp.q2.a.why':
     'VLAN は L2 トラフィックを分けます。NTP は時刻源をストラタム（基準時計からの距離）で整理します。',
   'learning.concept.ntp.q2.c.why':
@@ -1229,7 +1229,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ntp.q3.a.why':
     '時刻はケーブル速度と無関係です。ログの相関、証明書の有効性、認証で重要になります。',
   'learning.concept.ntp.q3.b.why':
-    'MTU はフレームサイズの上限で時刻と無関係です。正確な時計は証明書・ログ・TLS/Kerberos で重要です。',
+    'MTU はフレームサイズの上限で時刻と無関係です。正確な時刻は証明書・ログ・TLS/Kerberos で重要です。',
   'learning.concept.snmp.q1.b.why':
     'パケットのルーティングはルータの仕事です。SNMP はネットワーク機器を監視・管理します。',
   'learning.concept.snmp.q1.c.why':
@@ -1615,7 +1615,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.snmp.q3.b': 'ACK',
   'learning.concept.snmp.q3.c': 'トラップ',
   'learning.concept.snmp.q3.why':
-    'トラップ/通知は機器発の警報で、マネージャ発の GET/SET ポーリングとは別です。',
+    'トラップ（通知）は機器発で、マネージャ発の GET/SET ポーリングとは別です。',
   'learning.concept.ipsec.name': 'IPsec',
   'learning.concept.ipsec.q1.prompt': 'IPsec が提供するのは…',
   'learning.concept.ipsec.q1.a': '認証・暗号化された IP パケット（セキュア VPN）',

@@ -79,12 +79,16 @@ export function useDecorativeCanvasRef<T extends HTMLElement>(): RefObject<T> {
 export function DrillFrame({
   idPrefix,
   children,
+  containerRef,
 }: {
   idPrefix: string;
   children: React.ReactNode;
+  /** Optional handle on the frame, e.g. to scope document-level key handling. */
+  containerRef?: React.Ref<HTMLDivElement>;
 }) {
   return (
     <div
+      ref={containerRef}
       data-testid={idPrefix}
       style={{
         background: 'var(--netlab-learning-surface-bg)',

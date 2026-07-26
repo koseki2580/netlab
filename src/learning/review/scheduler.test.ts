@@ -60,6 +60,31 @@ describe('spaced-repetition scheduler', () => {
     expect(queue.indexOf('weak')).toBeLessThan(queue.indexOf('mid')); // lower box first
   });
 
+  it('front-loads genuinely due items so a fresh backlog cannot starve them', () => {
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    // Without a clock, a pile of just-missed box-1 items (not due for 10 minutes)
+    // fills every capped session and overdue box-2 items never surface again.
+    let s: ReviewState = {};
+    s = gradeReview(s, 'overdue', true, T0); // box 2, due T0 + 1d
+    s = gradeReview(s, 'overdue', true, T0);
+    for (let i = 0; i < 12; i += 1) s = gradeReview(s, `fresh${i}`, false, T0); // box 1
+
+    // 'overdue' (box 2, +1d) is due; the box-1 backlog (+10m) was graded later so
+    // it is NOT yet due — exactly the shape that used to bury the due item.
+    const notYetDue = Object.fromEntries(
+      Array.from({ length: 12 }, (_, i) => [`fresh${i}`, { box: 1, dueAt: T0 + 2 * DAY_MS }]),
+    );
+    s = { ...s, ...notYetDue };
+    const now = T0 + 1 * DAY_MS;
+    expect(s.overdue!.dueAt).toBeLessThanOrEqual(now);
+    expect(s.fresh0!.dueAt).toBeGreaterThan(now);
+    const queue = reviewQueue(s, 10, now);
+    expect(queue).toContain('overdue');
+    expect(queue[0]).toBe('overdue');
+    // Without `now` the same call buries it behind the lower-box backlog.
+    expect(reviewQueue(s, 10)).not.toContain('overdue');
+  });
+
   it('respects the queue limit', () => {
     let s: ReviewState = {};
     for (const id of ['a', 'b', 'c', 'd']) s = gradeReview(s, id, false, T0);

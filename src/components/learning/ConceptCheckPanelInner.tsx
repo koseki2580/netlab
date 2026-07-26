@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createTranslator } from '../../i18n/createTranslator';
 import { I18nContext } from '../../i18n/I18nContext';
 import { conceptCheck as conceptCheckEn } from '../../i18n/locales/en/conceptCheck';
@@ -73,6 +73,8 @@ interface ConceptCheckPanelProps {
 
 function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptCheckPanelProps = {}) {
   const { t } = useI18n();
+  // Scopes the document-level key handler to this panel (see the keydown effect).
+  const panelRef = useRef<HTMLDivElement>(null);
   const groups = useMemo(() => decksByLayer(), []);
   const indexed = useMemo(() => allConceptQuestions(), []);
   const byItemId = useMemo(() => new Map(indexed.map((entry) => [entry.itemId, entry])), [indexed]);
@@ -115,7 +117,25 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
       ) as typeof review,
     [review, byItemId],
   );
-  const stats = useMemo(() => reviewStats(liveReview, Date.now()), [liveReview]);
+  // Re-read the clock while the picker is open so an item becoming due flips the
+  // CTA to "due now" without needing a remount (the memo's other input is state).
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+  const stats = useMemo(() => reviewStats(liveReview, now), [liveReview, now]);
+  // What the Review button will actually deliver: due items first, capped by the
+  // session limit. Labelling with anything else promises a session we won't start.
+  const queuedIds = useMemo(
+    () => reviewQueue(liveReview, REVIEW_SESSION_LIMIT, now),
+    [liveReview, now],
+  );
+  const queuedCount = queuedIds.length;
+  const queuedDueCount = useMemo(
+    () => queuedIds.filter((id) => (liveReview[id]?.dueAt ?? Infinity) <= now).length,
+    [queuedIds, liveReview, now],
+  );
 
   const start = useCallback((next: Session) => {
     setSession(next);
@@ -145,12 +165,12 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
   );
 
   const startReview = useCallback(() => {
-    const items = reviewQueue(liveReview, REVIEW_SESSION_LIMIT)
+    const items = queuedIds
       .map((id) => byItemId.get(id))
       .filter((entry): entry is IndexedQuestion => entry !== undefined);
     if (items.length === 0) return;
     start({ kind: 'review', id: 'review', titleKey: 'learning.concept.review.title', items });
-  }, [liveReview, byItemId, start]);
+  }, [queuedIds, byItemId, start]);
 
   const result = useMemo<DrillResult | null>(() => {
     if (!question || selected === null) return null;
@@ -214,6 +234,12 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
       }
       // Leave browser/OS shortcuts alone: ⌘1 switches tabs, it must not answer.
       if (event.metaKey || event.ctrlKey || event.altKey) return;
+      // Only claim keys the panel owns. The listener is on `document` so that the
+      // shortcuts work with nothing focused (body), but a focused control in the
+      // HOST page must keep its own Enter/1-3 — preventDefault() here would cancel
+      // that button's activation and silently advance the quiz instead.
+      const unfocused = target === document.body || target === document || target === null;
+      if (!unfocused && !(target instanceof Node && panelRef.current?.contains(target))) return;
       if (selected === null) {
         const index = ['1', '2', '3'].indexOf(event.key);
         const option = index >= 0 ? options[index] : undefined;
@@ -232,7 +258,6 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
 
   // ── Deck picker ──────────────────────────────────────────────────────────
   if (!session) {
-    const reviewCount = stats.inReview;
     const seenItem = (id: string) => liveReview[id] !== undefined;
     const masteredItem = (id: string) => isMastered(liveReview, id);
     // Filter decks by name so a learner (keyboard especially) can jump to a
@@ -247,7 +272,7 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
           .filter((group) => group.decks.length > 0)
       : groups;
     return (
-      <DrillFrame idPrefix="concept-check">
+      <DrillFrame idPrefix="concept-check" containerRef={panelRef}>
         <div data-testid="concept-check-picker" style={drillCardStyle}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <h2 style={{ margin: 0, color: 'var(--netlab-text-primary)', fontSize: 18 }}>
@@ -298,18 +323,18 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
             {t('learning.concept.primer.body')}
           </ConceptCallout>
 
-          {reviewCount > 0 && (
+          {queuedCount > 0 && (
             <button
               type="button"
               data-testid="concept-check-review"
               onClick={startReview}
               style={pillButton(
-                stats.dueInReview > 0 ? 'var(--netlab-accent-red)' : 'var(--netlab-accent-yellow)',
+                queuedDueCount > 0 ? 'var(--netlab-accent-red)' : 'var(--netlab-accent-yellow)',
               )}
             >
-              {stats.dueInReview > 0
-                ? t('learning.concept.review.due', { count: stats.dueInReview })
-                : t('learning.concept.review.start', { count: reviewCount })}
+              {queuedDueCount > 0
+                ? t('learning.concept.review.due', { count: queuedDueCount })
+                : t('learning.concept.review.start', { count: queuedCount })}
             </button>
           )}
 
@@ -403,7 +428,7 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
   // ── Summary ──────────────────────────────────────────────────────────────
   if (complete) {
     return (
-      <DrillFrame idPrefix="concept-check">
+      <DrillFrame idPrefix="concept-check" containerRef={panelRef}>
         <div data-testid="concept-check-summary" style={drillCardStyle}>
           <h2
             ref={summaryRef}
@@ -426,14 +451,14 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {/* Closes the loop: missed items just seeded the review pool, so offer
                 to drill them immediately rather than hunting on the picker. */}
-            {stats.inReview > 0 && (
+            {queuedCount > 0 && (
               <button
                 type="button"
                 data-testid="concept-check-summary-review"
                 onClick={startReview}
                 style={pillButton('var(--netlab-accent-yellow)')}
               >
-                {t('learning.concept.review.start', { count: stats.inReview })}
+                {t('learning.concept.review.start', { count: queuedCount })}
               </button>
             )}
             <button
@@ -453,7 +478,7 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
   // ── Quiz ─────────────────────────────────────────────────────────────────
   const isLast = qIdx + 1 >= total;
   return (
-    <DrillFrame idPrefix="concept-check">
+    <DrillFrame idPrefix="concept-check" containerRef={panelRef}>
       <div style={drillCardStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <h2

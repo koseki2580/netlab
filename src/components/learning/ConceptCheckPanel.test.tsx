@@ -303,6 +303,22 @@ describe('ConceptCheckPanel', () => {
     expect(store.load()).toEqual({});
   });
 
+  it('does not steal keys from a focused control outside the panel', () => {
+    render();
+    click('concept-check-deck-arp');
+    // A host page's own button, focused: Enter must activate IT, not advance the quiz.
+    const hostButton = document.createElement('button');
+    document.body.appendChild(hostButton);
+    const before = testid('concept-check-progress')?.textContent;
+    const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+    act(() => {
+      hostButton.dispatchEvent(event);
+    });
+    expect(event.defaultPrevented).toBe(false);
+    expect(testid('concept-check-progress')?.textContent).toBe(before);
+    hostButton.remove();
+  });
+
   it('does not steal keys from a host page rich-text field', () => {
     render();
     click('concept-check-deck-arp');

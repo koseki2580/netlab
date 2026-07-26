@@ -59,15 +59,21 @@ export function isMastered(state: ReviewState, itemId: string): boolean {
 }
 
 /**
- * The review queue: seen-but-not-yet-mastered items, weakest and most overdue
- * first (lowest box, then earliest due), capped at `limit`. This stays
- * actionable right after a session (just-missed items sit in box 1) while the
- * `dueAt` ordering still front-loads what spaced repetition says is most due.
+ * The review queue: seen-but-not-yet-mastered items, capped at `limit`.
+ *
+ * With `now`, items the scheduler says are actually due come first — otherwise a
+ * backlog of just-missed box-1 items (never due yet) would fill every session and
+ * genuinely overdue items in higher boxes could starve forever. Within each group
+ * the order is weakest-then-most-overdue (lowest box, then earliest due).
  */
-export function reviewQueue(state: ReviewState, limit = Infinity): string[] {
+export function reviewQueue(state: ReviewState, limit = Infinity, now?: number): string[] {
+  const isDueNow = ([, entry]: [string, ReviewEntry]) => now !== undefined && entry.dueAt <= now;
   return Object.entries(state)
     .filter(([, entry]) => entry.box < MAX_BOX)
-    .sort((a, b) => a[1].box - b[1].box || a[1].dueAt - b[1].dueAt)
+    .sort(
+      (a, b) =>
+        Number(isDueNow(b)) - Number(isDueNow(a)) || a[1].box - b[1].box || a[1].dueAt - b[1].dueAt,
+    )
     .slice(0, limit === Infinity ? undefined : limit)
     .map(([id]) => id);
 }
