@@ -1216,7 +1216,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.email.q2.c.why':
     'POP3 は受信であって送信ではありません（送信は SMTP）。IMAP はサーバ上で同期し、POP3 はダウンロードします。',
   'learning.concept.email.q3.a.why':
-    'ICMP はメールではなく診断用です。安全な IMAP/POP3 は TLS で包まれます。',
+    'ICMP はメールではなく診断用です。セキュアな IMAP/POP3 は TLS で包まれます。',
   'learning.concept.email.q3.b.why':
     'ARP は LAN で IP→MAC を解決します。メール受信は TLS で保護します。',
   'learning.concept.ntp.q1.b.why': 'ホスト名解決は DNS です。NTP は機器の時計を同期します。',
@@ -1243,7 +1243,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.snmp.q3.b.why':
     'ACK は受領確認にすぎません。機器がイベント駆動で押し出すメッセージは SNMP トラップです。',
   'learning.concept.ipsec.q1.b.why':
-    '名前解決は DNS です。IPsec は IP パケットを認証・暗号化し安全な VPN を構築します。',
+    '名前解決は DNS です。IPsec は IP パケットを認証・暗号化しセキュア VPN を構築します。',
   'learning.concept.ipsec.q1.c.why':
     'スイッチングは L2 のフレーム転送です。IPsec は IP パケットを認証・暗号化でエンドツーエンドに保護します。',
   'learning.concept.ipsec.q2.a.why':
@@ -1329,7 +1329,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.gre.q1.b.why':
     'GRE は暗号化しません（必要なら IPsec と組み合わせます）。パケットを別の IP パケットでカプセル化します。',
   'learning.concept.gre.q1.c.why':
-    'MAC スイッチングは L2 転送です。GRE はパケットを外側 IP パケットにカプセル化してトンネルします。',
+    'MAC アドレスの切り替えは L2 転送です。GRE はパケットを外側 IP パケットにカプセル化してトンネルします。',
   'learning.concept.gre.q2.a.why':
     'GRE 単体に暗号化はありません — だから GRE over IPsec があります。単体ではカプセル化のみです。',
   'learning.concept.gre.q2.c.why':
