@@ -799,7 +799,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.arp.q5.why':
     'ARP キャッシュは各フレーム前のブロードキャスト探索を省きます。エントリは時間で失効します。',
   'learning.concept.ipv4.q4.prompt': 'IPv4 のネットワーク部とホスト部の境界を決めるのは…',
-  'learning.concept.ipv4.q4.a': 'サブネットマスク / プレフィックス長',
+  'learning.concept.ipv4.q4.a': 'サブネットマスク/プレフィックス長',
   'learning.concept.ipv4.q4.b': 'TTL',
   'learning.concept.ipv4.q4.c': 'ポート',
   'learning.concept.ipv4.q4.why':
@@ -1283,7 +1283,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.wireguard.q1.c.why':
     'ICMP は診断用です。WireGuard は単一ポートの UDP 上で動きます。',
   'learning.concept.wireguard.q2.a.why':
-    'WireGuard はパスワードを使いません。各ピアは公開鍵で識別され、許可 IP の集合に結び付きます。',
+    'WireGuard はパスワードを使いません。各ピアは公開鍵で識別され、許可 IP のセットに結び付きます。',
   'learning.concept.wireguard.q2.b.why':
     'MAC はルータを越えないローカルな L2 アドレスです。WireGuard は各ピアの公開鍵を許可 IP に固定します。',
   'learning.concept.wireguard.q3.b.why':
@@ -1497,7 +1497,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.dnssec.q1.b.why':
     'DNSSEC は速度ではなく検証の手間を足します。レコードの真正性を検証できるよう署名を付けます。',
   'learning.concept.dnssec.q1.c.why':
-    'IP 割り当ては DHCP です。DNSSEC は DNS レコードに署名し、リゾルバが改ざんを検知できるようにします。',
+    'IP 割り当ては DHCP です。DNSSEC は DNS レコードに署名し、リゾルバが改ざんを検出できるようにします。',
   'learning.concept.dnssec.q2.a.why':
     'DNSSEC は暗号化ではなく認証します。問い合わせの秘匿は DoH/DoT が解く別問題です。',
   'learning.concept.dnssec.q2.c.why':
