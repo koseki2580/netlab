@@ -306,15 +306,29 @@ describe('ConceptCheckPanel', () => {
   it('does not steal keys from a focused control outside the panel', () => {
     render();
     click('concept-check-deck-arp');
-    // A host page's own button, focused: Enter must activate IT, not advance the quiz.
+    // The host page's own button, focused. Both keys below are ones the panel WOULD
+    // claim from the body, so this fails if the ownership gate is removed.
     const hostButton = document.createElement('button');
     document.body.appendChild(hostButton);
+    const fromHost = (key: string) => {
+      const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+      act(() => {
+        hostButton.dispatchEvent(event);
+      });
+      return event;
+    };
+
+    // Unanswered: "1" must not grade the question.
+    const numberKey = fromHost('1');
+    expect(numberKey.defaultPrevented).toBe(false);
+    expect(testid('concept-check-correct')).toBeNull();
+    expect(testid('concept-check-incorrect')).toBeNull();
+
+    // Answered: Enter must activate the host button, not advance the quiz.
+    clickOption('arp', 0, 'correct');
     const before = testid('concept-check-progress')?.textContent;
-    const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
-    act(() => {
-      hostButton.dispatchEvent(event);
-    });
-    expect(event.defaultPrevented).toBe(false);
+    const enterKey = fromHost('Enter');
+    expect(enterKey.defaultPrevented).toBe(false);
     expect(testid('concept-check-progress')?.textContent).toBe(before);
     hostButton.remove();
   });

@@ -145,7 +145,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.dns.q2.why':
     'A レコードは IPv4 アドレスを保持します。AAAA は IPv6、MX はメール、CNAME は別名です。',
   'learning.concept.dns.q3.prompt': '再帰リゾルバは…',
-  'learning.concept.dns.q3.a': '自分のゾーンからのみ回答する',
+  'learning.concept.dns.q3.a': '自分のゾーンからのみ答える',
   'learning.concept.dns.q3.b': 'MAC アドレスだけをキャッシュする',
   'learning.concept.dns.q3.c': '答えを得るまで代わりに他サーバへ問い合わせる',
   'learning.concept.dns.q3.why':
@@ -1301,7 +1301,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.l2tp.q3.a.why':
     'IPsec は速度ではなくセキュリティのオーバーヘッドを足します。L2TP に欠ける暗号化を補うため組み合わせます。',
   'learning.concept.l2tp.q3.b.why':
-    '組み合わせは NAT ではなく機密性のためです — L2TP がトンネルを、IPsec が暗号化/認証を提供します。',
+    '組み合わせは NAT ではなく秘匿性のためです — L2TP がトンネルを、IPsec が暗号化/認証を提供します。',
   'learning.concept.pppoe.q1.b.why':
     'ネットワーク間のルーティングは L3 のルータです。PPP は 1 本のポイントツーポイント・リンク上のリンク層カプセル化と認証です。',
   'learning.concept.pppoe.q1.c.why':
@@ -1495,7 +1495,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.stun.q3.c.why':
     'ICE は番号を割り当てません。ホスト/STUN/TURN の候補を集め、検査して動く組を選びます。',
   'learning.concept.dnssec.q1.b.why':
-    'DNSSEC は速度ではなく検証の手間を足します。レコードが本物か検証できるよう署名を付けます。',
+    'DNSSEC は速度ではなく検証の手間を足します。レコードの真正性を検証できるよう署名を付けます。',
   'learning.concept.dnssec.q1.c.why':
     'IP 割り当ては DHCP です。DNSSEC は DNS レコードに署名し、リゾルバが改ざんを検知できるようにします。',
   'learning.concept.dnssec.q2.a.why':
@@ -1716,7 +1716,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.lldp.q1.b': 'サブネット間をルーティングする',
   'learning.concept.lldp.q1.c': 'フレームを暗号化する',
   'learning.concept.lldp.q1.why':
-    '機器は識別子・ポート・能力を広告し、隣接が局所トポロジを学びます（CDP は Cisco 版）。',
+    '機器は識別情報・ポート・能力を広告し、隣接が局所トポロジを学びます（CDP は Cisco 版）。',
   'learning.concept.lldp.q2.prompt': 'LLDP が動作するのは…',
   'learning.concept.lldp.q2.a': 'インターネット全体',
   'learning.concept.lldp.q2.b': 'リンク単位・単一セグメント内（ルーティングされない）',

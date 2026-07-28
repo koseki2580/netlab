@@ -96,8 +96,12 @@ five boxes:
 - **wrong** → reset to box 1, due again in 10 minutes.
 
 An item in the top box is **mastered** and drops out of review.
-`reviewQueue(state, limit)` surfaces the non-mastered items weakest-first (lower
-box, then most overdue), and `reviewStats(state, now)` reports
+`reviewQueue(state, limit, now)` surfaces the non-mastered items: when `now` is
+supplied, items the scheduler says are actually **due** come first (otherwise a
+backlog of just-missed box-1 items would fill every capped session and overdue
+items could starve), then weakest-first (lower box, then most overdue). Omitting
+`now` keeps the original weakest-first-only ordering. `reviewStats(state, now)`
+reports
 `{ seen, mastered, due, inReview, dueInReview }` — where `dueInReview` is the
 actionable count (in the review pool **and** past its scheduled time), distinct
 from `due` (which also counts mastered items whose long cadence has elapsed).
@@ -108,9 +112,11 @@ of malformed/legacy stored values.
 In the panel this shows up as a **mastery indicator** (`mastered / total`),
 **per-deck progress badges** on each deck button (green ✓ once a deck is fully
 mastered), and a review button that adapts to the spaced-repetition clock: it
-reads **"Review due now (N)"** (red) when `dueInReview > 0` — the signal that
-makes the daily-review ritual work — and otherwise **"Review weak spots (N)"**
-(yellow) for immediate post-session practice of just-missed items. The review
+reads **"Review due now (N)"** (red) when the next session contains due items —
+the signal that makes the daily-review ritual work — and otherwise **"Review weak
+spots (N)"** (yellow) for immediate post-session practice of just-missed items. In
+both labels `N` is what the session will actually deliver (capped by the session
+limit), so the button never promises more than it starts. The review
 button runs a virtual session over the weakest items, mixing questions across
 decks. `reviewStore` is an injectable prop so tests and embeddings can supply an
 in-memory store.
