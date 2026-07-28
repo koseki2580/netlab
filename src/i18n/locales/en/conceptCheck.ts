@@ -970,7 +970,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.icmp.q3.a.why':
     'ICMP is not for application payloads; it carries control, error and diagnostic messages.',
   'learning.concept.icmp.q3.b.why':
-    'Routing tables are exchanged by routing protocols (OSPF/BGP); ICMP carries error/diagnostic messages.',
+    'Reachability is distributed by routing protocols — OSPF floods link-state advertisements, BGP advertises prefixes — and each router computes its own table; ICMP carries error/diagnostic messages.',
   'learning.concept.ipv4.q1.a.why':
     'TTL does not encrypt; it is a hop counter each router decrements to stop packets looping forever.',
   'learning.concept.ipv4.q1.c.why':
@@ -1475,7 +1475,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.sip.q3.c.why':
     'An Ethernet frame is L2 binary framing; SIP is an HTTP-like text protocol with methods and status codes.',
   'learning.concept.rtp.q1.b.why':
-    'Routing tables are exchanged by routing protocols; RTP carries real-time media, typically over UDP.',
+    'Reachability is distributed by routing protocols; RTP carries real-time media, typically over UDP.',
   'learning.concept.rtp.q1.c.why':
     'Email uses SMTP/IMAP; RTP carries real-time audio/video over UDP with sequence numbers and timestamps.',
   'learning.concept.rtp.q2.a.why':

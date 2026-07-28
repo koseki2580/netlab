@@ -966,7 +966,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.icmp.q3.a.why':
     'ICMP はアプリのペイロード用ではありません。制御・エラー・診断メッセージを運びます。',
   'learning.concept.icmp.q3.b.why':
-    'ルーティングテーブルはルーティングプロトコル（OSPF/BGP）が交換します。ICMP はエラー/診断メッセージを運びます。',
+    '到達性を配るのはルーティングプロトコルです（OSPF は LSA をフラッディング、BGP はプレフィックスを広告）。各ルータは自分でテーブルを計算します。ICMP はエラー/診断メッセージを運びます。',
   'learning.concept.ipv4.q1.a.why':
     'TTL は暗号化しません。各ルータが減らすホップ数で、パケットが無限にループするのを防ぎます。',
   'learning.concept.ipv4.q1.c.why':
@@ -1471,7 +1471,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.sip.q3.c.why':
     'Ethernet フレームは L2 のバイナリフレーミングです。SIP はメソッドとステータスコードを持つ HTTP 風のテキストプロトコルです。',
   'learning.concept.rtp.q1.b.why':
-    'ルーティングテーブルはルーティングプロトコルが交換します。RTP はリアルタイムメディアを主に UDP で運びます。',
+    '到達性を配るのはルーティングプロトコルです。RTP はリアルタイムメディアを主に UDP で運びます。',
   'learning.concept.rtp.q1.c.why':
     'メールは SMTP/IMAP です。RTP はリアルタイムの音声/映像を、シーケンス番号とタイムスタンプ付きで UDP 上に運びます。',
   'learning.concept.rtp.q2.a.why':
