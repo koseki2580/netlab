@@ -13,18 +13,22 @@ import { LazyPanelBoundary } from './LazyPanelBoundary';
  * must degrade to an in-panel message, not throw into the consumer's app. Retry
  * re-creates the `lazy()` — React caches a rejected one for the component's life.
  */
-export function ConceptCheckPanel(
-  props: {
-    reviewStore?: ReturnType<typeof createReviewStore>;
-  } = {},
-) {
+export function ConceptCheckPanel({
+  importInner = () => import('./ConceptCheckPanelInner'),
+  ...props
+}: {
+  reviewStore?: ReturnType<typeof createReviewStore>;
+  /** Seam for tests to simulate a failing chunk; never set by consumers. */
+  importInner?: () => Promise<{ default: React.ComponentType<Record<string, unknown>> }>;
+} = {}) {
   const [attempt, setAttempt] = useState(0);
   const Inner = useMemo(() => {
     // `attempt` is what this memo keys on: a retry must mint a NEW lazy, because
     // React caches the rejection on the old one for good. The import specifier
     // stays static so Vite can still split the chunk.
     void attempt;
-    return lazy(() => import('./ConceptCheckPanelInner'));
+    return lazy(importInner);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- a retry must mint a new lazy
   }, [attempt]);
 
   return (

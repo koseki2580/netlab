@@ -236,6 +236,11 @@ describe('ConceptCheckPanel', () => {
     press('Enter');
     press(String(correctIndexNow(1) + 1));
     expect(testid('concept-check-streak')?.textContent).toContain('2');
+
+    // A wrong answer breaks the streak — the chip must disappear, not keep climbing.
+    press('Enter');
+    clickOption('arp', 2, 'wrong');
+    expect(testid('concept-check-streak')).toBeNull();
   });
 
   it('explains why a wrong choice is wrong (distractor explanation)', () => {
@@ -333,12 +338,14 @@ describe('ConceptCheckPanel', () => {
     hostButton.remove();
   });
 
-  it('does not steal keys from a host page rich-text field', () => {
+  it('does not steal keys from a rich-text field inside the panel', () => {
     render();
     click('concept-check-deck-arp');
+    // Inside the panel, so the ownership gate passes and the typing-target bail is
+    // what has to stop us — a host app may render an editor within our slot.
     const editor = document.createElement('div');
     editor.setAttribute('contenteditable', 'true');
-    document.body.appendChild(editor);
+    testid('concept-check')!.appendChild(editor);
     const event = new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true });
     act(() => {
       editor.dispatchEvent(event);
@@ -356,6 +363,34 @@ describe('ConceptCheckPanel', () => {
     render();
     expect(testid('concept-check-review')).toBeNull();
     expect(testid('concept-check-mastery-bar')?.getAttribute('aria-valuenow')).toBe('0');
+  });
+
+  it('shows the due-now label when the pool holds an item past its due time', () => {
+    // The red "due now" branch is the signal the daily-review ritual depends on.
+    store.save({
+      'arp:q1': { box: 1, dueAt: 0 },
+      'tcp:q1': { box: 1, dueAt: Date.now() + 60_000 },
+    });
+    render();
+    const button = testid('concept-check-review');
+    expect(button?.textContent).toContain('due now');
+    expect(button?.textContent).toContain('1'); // only the past-due item counts
+  });
+
+  it('focuses the prompt when a one-item review session restarts', () => {
+    // Regression: the focus key was `${session.id}:${qIdx}`; a review session's id
+    // is always 'review' and qIdx stays 0, so restarting a single-item pool reused
+    // the same key, the effect never re-ran, and focus fell to <body>.
+    store.save({ 'arp:q1': { box: 1, dueAt: 0 } });
+    render();
+    click('concept-check-review');
+    clickOption('arp', 2, 'correct'); // arp deck order: q4, q5, q1 → index 2 is q1
+    click('concept-check-next'); // one item, so this completes the session
+    expect(testid('concept-check-summary')).not.toBeNull();
+
+    click('concept-check-summary-review');
+    expect(testid('concept-check-prompt')).not.toBeNull();
+    expect(document.activeElement).toBe(testid('concept-check-prompt'));
   });
 
   it('re-translates the session header when the locale changes mid-quiz', () => {

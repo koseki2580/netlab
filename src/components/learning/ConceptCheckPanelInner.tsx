@@ -53,6 +53,12 @@ function shuffle<T>(items: readonly T[]): T[] {
 interface Session {
   readonly kind: 'deck' | 'review';
   readonly id: string;
+  /**
+   * Distinguishes consecutive sessions with the same id — restarting the review
+   * pool keeps `id === 'review'`, so a one-item pool would otherwise reuse the
+   * key `review:0` and never re-focus the prompt.
+   */
+  readonly token: number;
   /** i18n key, not translated text — so the header follows a mid-session locale switch. */
   readonly titleKey: string;
   readonly items: readonly IndexedQuestion[];
@@ -97,7 +103,7 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
   const summaryRef = useFocusWhen<HTMLHeadingElement>(complete);
   // Move focus to each new question's prompt so keyboard/screen-reader users hear
   // the question announced when advancing — not just sighted users seeing it swap.
-  const promptRef = useQuestionFocus<HTMLParagraphElement>(`${session?.id ?? ''}:${qIdx}`);
+  const promptRef = useQuestionFocus<HTMLParagraphElement>(`${session?.token ?? 0}:${qIdx}`);
   useDrillCompletion(
     session ? `concept-${session.id}` : 'concept-none',
     session ? `Concept Check — ${session.id}` : 'Concept Check',
@@ -137,8 +143,10 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
     [queuedIds, liveReview, now],
   );
 
-  const start = useCallback((next: Session) => {
-    setSession(next);
+  const sessionToken = useRef(0);
+  const start = useCallback((next: Omit<Session, 'token'>) => {
+    sessionToken.current += 1;
+    setSession({ ...next, token: sessionToken.current });
     setQIdx(0);
     setSelected(null);
     setCorrect(0);
