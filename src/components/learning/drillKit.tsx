@@ -229,12 +229,13 @@ export function DrillFeedback({
  */
 export function useQuestionFocus<T extends HTMLElement>(key: unknown): RefObject<T> {
   const ref = useRef<T>(null);
-  const mounted = useRef(false);
+  // Remember the key we last focused for, not "have we mounted": a boolean flag
+  // survives StrictMode's simulated unmount/remount, so the replayed mount effect
+  // would focus on first render — the opposite of this hook's contract.
+  const focusedFor = useRef<unknown>(key);
   useEffect(() => {
-    if (!mounted.current) {
-      mounted.current = true;
-      return;
-    }
+    if (Object.is(focusedFor.current, key)) return;
+    focusedFor.current = key;
     ref.current?.focus();
   }, [key]);
   return ref;

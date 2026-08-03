@@ -17,6 +17,10 @@ let store = createReviewStore(createMemoryProgressStorage());
 
 beforeEach(() => {
   actEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+  // jsdom shares one localStorage across every test in the file, and the panel's
+  // default store writes there — without this, spaced-repetition state from an
+  // earlier test leaks in and the review counts become order-dependent.
+  localStorage.clear();
   store = createReviewStore(createMemoryProgressStorage());
   container = document.createElement('div');
   document.body.appendChild(container);

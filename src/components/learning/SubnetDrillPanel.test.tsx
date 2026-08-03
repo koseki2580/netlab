@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { act } from 'react';
+import { StrictMode, act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { SubnetDrillPanel } from './SubnetDrillPanel';
@@ -110,6 +110,20 @@ describe('SubnetDrillPanel session', () => {
   it('shows a concept primer and does not steal focus on initial load', () => {
     act(() => root?.render(<SubnetDrillPanel seed={SEED} />));
     expect(testid('subnet-drill-concept')).not.toBeNull();
+    expect(document.activeElement).not.toBe(testid('subnet-drill-input'));
+  });
+
+  it('still does not steal focus under StrictMode (effects run twice)', () => {
+    // The demo mounts in StrictMode, where the mount effect is replayed. A boolean
+    // "have we mounted" guard survives that replay and focuses on first render,
+    // dropping a screen-reader user straight into the input past the primer.
+    act(() =>
+      root?.render(
+        <StrictMode>
+          <SubnetDrillPanel seed={SEED} />
+        </StrictMode>,
+      ),
+    );
     expect(document.activeElement).not.toBe(testid('subnet-drill-input'));
   });
 

@@ -125,10 +125,19 @@ describe('concept-check decks', () => {
   });
 
   it('groups decks by layer in stack order, covering several layers', () => {
+    // The literal order matters pedagogically: the picker teaches bottom-up, so
+    // assert it outright. (Deriving it from CONCEPT_LAYER_ORDER would pass even if
+    // that constant were reversed, and comparing against a Set of itself is a
+    // tautology that passes for any order at all.)
     const groups = decksByLayer();
-    expect(groups.length).toBeGreaterThanOrEqual(4);
     expect(groups.map((group) => group.layer)).toEqual([
-      ...new Set(groups.map((group) => group.layer)),
+      'fundamentals',
+      'l2',
+      'l3',
+      'l4',
+      'l5',
+      'l7',
+      'routing',
     ]);
   });
 });

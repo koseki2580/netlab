@@ -1279,7 +1279,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.vpn.q3.b.why':
     '二重暗号化ではありません。スプリットトンネルは一部の通信だけ VPN を通し、残りはそのまま外へ出します。',
   'learning.concept.wireguard.q1.a.why':
-    'WireGuard は TCP+TLS のオーバーヘッドを避けます。単一ポートの UDP 上で動き、軽量で NAT 親和的です。',
+    'WireGuard は TCP+TLS のオーバーヘッドを避けます。単一ポートの UDP 上で動き、軽量で NAT 越えしやすいです。',
   'learning.concept.wireguard.q1.c.why':
     'ICMP は診断用です。WireGuard は単一ポートの UDP 上で動きます。',
   'learning.concept.wireguard.q2.a.why':
@@ -1409,7 +1409,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ecmp.q3.a.why':
     'ECMP は暗号化しません。等コスト経路に負荷を分け、合計帯域を増やします。',
   'learning.concept.ecmp.q3.b.why':
-    'ECMP は経路を減らすのではなく多く使います。利点は負荷分散と合計帯域の増加です。',
+    'ECMP は経路を減らすのではなく多く使います。利点は負荷分散と総帯域の増加です。',
   'learning.concept.vrrp.q1.b.why':
     '名前解決は DNS です。VRRP は 1 つの仮想 IP の背後にある冗長なデフォルトゲートウェイをホストに与えます。',
   'learning.concept.vrrp.q1.c.why':
@@ -1684,7 +1684,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.eigrp.q2.b': '再計算なしで高速に再収束する',
   'learning.concept.eigrp.q2.c': 'IP を割り当てる',
   'learning.concept.eigrp.q2.why':
-    '事前計算した予備経路により、主経路の障害時に即座に切り替えられます。',
+    '事前計算したバックアップ経路により、主経路の障害時に即座に切り替えられます。',
   'learning.concept.eigrp.q3.prompt': 'EIGRP のメトリックの基礎は…',
   'learning.concept.eigrp.q3.a': 'ホップ数のみ',
   'learning.concept.eigrp.q3.b': 'AS パス',

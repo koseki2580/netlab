@@ -19,7 +19,7 @@ export function ConceptCheckPanel({
 }: {
   reviewStore?: ReturnType<typeof createReviewStore>;
   /** Seam for tests to simulate a failing chunk; never set by consumers. */
-  importInner?: () => Promise<{ default: React.ComponentType<Record<string, unknown>> }>;
+  importInner?: () => Promise<{ default: typeof import('./ConceptCheckPanelInner').default }>;
 } = {}) {
   const [attempt, setAttempt] = useState(0);
   const Inner = useMemo(() => {
