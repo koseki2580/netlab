@@ -395,7 +395,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.http3.q3.b': 'gzip',
   'learning.concept.http3.q3.c': 'QPACK',
   'learning.concept.http3.q3.why':
-    'QPACK は QUIC 向けに調整した HPACK で、ヘッダテーブル更新での HOL ブロッキングを避けます。',
+    'QPACK は QUIC 向けに適応した HPACK で、ヘッダテーブル更新での HOL ブロッキングを避けます。',
   'learning.concept.qos.name': 'QoS / DSCP',
   'learning.concept.qos.q1.prompt': 'DSCP が優先度を記すのは…',
   'learning.concept.qos.q1.a': 'IP ヘッダ',
@@ -975,7 +975,7 @@ export const conceptCheck: Catalog = {
     '48 ビットは MAC アドレスです。IPv4 アドレスは 32 ビット（4 オクテット）です。',
   'learning.concept.ipv4.q2.c.why': '128 ビットは IPv6 アドレスです。IPv4 は 32 ビットです。',
   'learning.concept.ipv4.q3.a.why':
-    'DF がセットされている場合だけ破棄されます。DF が立っていなければルータは MTU に合わせてフラグメント化します。',
+    'DF が立っている場合だけ破棄されます。DF が立っていなければルータは MTU に合わせてフラグメント化します。',
   'learning.concept.ipv4.q3.b.why':
     'ルータは暗号化しません。DF が立っていない大きすぎるパケットはリンク MTU に合わせてフラグメント化されます。',
   'learning.concept.ipv4.q4.b.why':
@@ -1174,7 +1174,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.lldp.q3.a.why':
     'IP の割り当ては DHCP です。LLDP は物理トポロジを把握し、VoIP 電話や PoE の自動設定を助けます。',
   'learning.concept.lldp.q3.b.why':
-    '経路選択はルーティングプロトコルの仕事です。LLDP は隣接機器を発見してトポロジを描き VoIP/PoE を助けます。',
+    '経路選択はルーティングプロトコルの仕事です。LLDP は隣接機器を発見してトポロジを把握し VoIP/PoE を助けます。',
   'learning.concept.ssh.q1.b.why':
     '平文転送は FTP/Telnet です。SSH は暗号化されたリモートシェルと安全なトンネルを提供します。',
   'learning.concept.ssh.q1.c.why':
@@ -1493,7 +1493,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.stun.q3.a.why':
     '暗号化は SRTP/DTLS です。ICE は候補アドレスを集め、動く経路を見つけるため検査します。',
   'learning.concept.stun.q3.c.why':
-    'ICE は番号を割り当てません。ホスト/STUN/TURN の候補を集め、検査して動く組を選びます。',
+    'ICE は番号を割り当てません。ホスト/STUN/TURN の候補を集め、検査して動くペアを選びます。',
   'learning.concept.dnssec.q1.b.why':
     'DNSSEC は速度ではなく検証の手間を足します。レコードの真正性を検証できるよう署名を付けます。',
   'learning.concept.dnssec.q1.c.why':

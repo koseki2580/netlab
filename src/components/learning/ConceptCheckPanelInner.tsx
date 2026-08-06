@@ -97,9 +97,16 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
   const total = session?.items.length ?? 0;
   const indexedQ = session?.items[qIdx];
   const question = indexedQ?.question;
-  // Re-shuffle options each time a new question is presented (stable across the
-  // answer/reveal re-renders since `question` keeps its identity until advance).
-  const options = useMemo(() => (question ? shuffle(question.options) : []), [question]);
+  const options = useMemo(
+    () => (question ? shuffle(question.options) : []),
+    // Keyed on the PRESENTATION, not the question object: deck questions are
+    // module-level singletons, so keying on `question` alone would replay the
+    // previous order when the same item resurfaces in a new session — exactly the
+    // position-memorisation the shuffle exists to prevent. Stable across the
+    // answer/reveal re-renders because all three inputs hold until we advance.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- presentation identity
+    [question, session?.token, qIdx],
+  );
   const summaryRef = useFocusWhen<HTMLHeadingElement>(complete);
   // Move focus to each new question's prompt so keyboard/screen-reader users hear
   // the question announced when advancing — not just sighted users seeing it swap.

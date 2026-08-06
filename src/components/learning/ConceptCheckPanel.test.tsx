@@ -179,6 +179,28 @@ describe('ConceptCheckPanel', () => {
     spy.mockRestore();
   });
 
+  it('re-shuffles when the same question is presented again in a new session', () => {
+    // Deck questions are module-level singletons, so memoising the shuffle on the
+    // question object alone replays the previous order — position memorisation,
+    // the exact thing the shuffle exists to prevent.
+    store.save({ 'arp:q1': { box: 1, dueAt: 0 } });
+    const first = vi.spyOn(Math, 'random').mockReturnValue(0);
+    render();
+    click('concept-check-review');
+    const before = [optionText(0), optionText(1), optionText(2)];
+    clickOption('arp', 2, 'correct'); // arp order: q4, q5, q1 → the pool's only item
+    click('concept-check-next');
+    first.mockRestore();
+
+    // Restart the same one-item pool with a different draw: a real re-shuffle must
+    // produce a different order, not replay the memoised one.
+    const second = vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    click('concept-check-summary-review');
+    const after = [optionText(0), optionText(1), optionText(2)];
+    second.mockRestore();
+    expect(after).not.toEqual(before);
+  });
+
   it('offers an immediate review from the summary when questions were missed', () => {
     render();
     const total = getDeck('arp')!.questions.length;
