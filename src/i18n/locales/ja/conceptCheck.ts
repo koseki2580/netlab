@@ -629,7 +629,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.model.q1.c.why':
     '階層化は責務の分割であって配線の話ではありません。ケーブルの本数は規定しません。',
   'learning.concept.model.q2.a.why':
-    'それは受信時にスタックを上へ展開する順序です。送信ではアプリケーションから始まり下へ向かいます。',
+    'それは受信時にスタックを上へ展開する順序です。送信ではアプリから始まり下へ向かいます。',
   'learning.concept.model.q2.c.why':
     '順序は固定です。各層が順にヘッダを付け、ランダムにはなりません。',
   'learning.concept.model.q3.a.why':
