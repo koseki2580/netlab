@@ -530,6 +530,9 @@ export {
   getDeck,
   correctOption,
   isCorrectChoice,
+  // The id every review function below is keyed by — without it a consumer has to
+  // hardcode the `deckId:questionId` format that the panel already defends against.
+  questionItemId,
 } from './learning/concept-check';
 export type {
   ConceptDeck,
@@ -538,6 +541,7 @@ export type {
   ConceptQuestion,
 } from './learning/concept-check';
 export {
+  BOX_INTERVAL_MS,
   MAX_BOX,
   gradeReview,
   reviewQueue,

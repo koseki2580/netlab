@@ -11,6 +11,12 @@
     "gzip": true
   },
   {
+    "name": "ui:drill-kit",
+    "path": "dist/drillKit-*.mjs",
+    "limit": "17 kB",
+    "gzip": true
+  },
+  {
     "path": "dist/layers/l1-physical/index.js",
     "limit": "4 kB",
     "gzip": true

@@ -255,6 +255,12 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
       // that button's activation and silently advance the quiz instead.
       const unfocused = target === document.body || target === document || target === null;
       if (!unfocused && !(target instanceof Node && panelRef.current?.contains(target))) return;
+      // Owning the focus is not enough: a modal can cover us without moving focus
+      // (the shell's `?` cheat sheet does exactly that), and a covered question must
+      // not be graded — the learner cannot even read it. A modal we live inside is
+      // still ours.
+      const modal = document.querySelector('[aria-modal="true"]');
+      if (modal && !modal.contains(panelRef.current)) return;
       if (selected === null) {
         const index = ['1', '2', '3'].indexOf(event.key);
         const option = index >= 0 ? options[index] : undefined;

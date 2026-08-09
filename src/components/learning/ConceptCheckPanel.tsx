@@ -3,10 +3,15 @@ import type { createReviewStore } from '../../learning/review';
 import { LazyPanelBoundary } from './LazyPanelBoundary';
 
 /**
- * Public entry for the Protocol Concept Checks. The implementation — the panel
- * body plus the large concept-check deck catalog and its i18n strings — is
- * lazy-loaded so none of it weighs down the root bundle for consumers that don't
- * render it. See ConceptCheckPanelInner for the actual panel + merged catalog.
+ * Public entry for the Protocol Concept Checks. The panel body and its large
+ * en+ja concept-check catalogs are lazy-loaded, so consumers that never render it
+ * pay nothing for the strings. See ConceptCheckPanelInner for the merged catalog.
+ *
+ * The deck DATA is not lazy: `src/index.ts` re-exports `CONCEPT_DECKS` (and
+ * `decksByLayer`/`getDeck`) at value level, so it lands in the statically-imported
+ * drillKit chunk — 85 kB of that chunk's 92 kB, measured on dist/. That is the
+ * price of the decks being a public export; the `ui:drill-kit` size budget watches
+ * it, since the root budget is far too loose to notice the catalog growing.
  *
  * The import is wrapped in an error boundary because this is a package export: a
  * chunk that fails to load (page left open across a deploy, dropped connection)

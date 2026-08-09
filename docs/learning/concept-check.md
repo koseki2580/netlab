@@ -23,14 +23,25 @@ deck is **pure data** (`CONCEPT_DECKS`) whose every string is an i18n key:
       explanationKey: 'learning.concept.arp.q1.why',
       options: [
         { key: 'learning.concept.arp.q1.a', correct: true },
-        { key: 'learning.concept.arp.q1.b' },
-        { key: 'learning.concept.arp.q1.c' },
+        // `whyKey` explains why THIS wrong choice is wrong (see below).
+        { key: 'learning.concept.arp.q1.b', whyKey: 'learning.concept.arp.q1.b.why' },
+        { key: 'learning.concept.arp.q1.c', whyKey: 'learning.concept.arp.q1.c.why' },
       ],
     },
     // …
   ],
 }
 ```
+
+### Distractor explanations
+
+Being told "wrong, here is the right answer" leaves the learner's own reasoning
+untouched. So every wrong option carries a `whyKey` addressing that specific
+misconception, and the feedback reads **distractor first, general second** —
+`` `${distractorWhy} ${general}` `` — so the learner sees why their pick fails
+before the model answer. Correct options carry no `whyKey`, and by convention a
+distractor's key is its option key + `.why`; both are enforced by a structural
+test.
 
 **To add a protocol:** append a deck to `src/learning/concept-check/decks.ts`
 and its `learning.concept.<deck>.*` keys to the en/ja sub-catalogs
@@ -129,11 +140,14 @@ retrieval.
 ## Testing expectations
 
 - decks: unique ids, exactly one correct option per question, varied answer
-  slots, and every referenced key present in both en and ja
+  slots, every referenced key present in both en and ja, and every wrong option
+  carrying a `whyKey` equal to its option key + `.why` (correct options: none)
 - panel (jsdom): the picker lists every deck; a correct answer grades, a wrong
-  answer reveals the right one; a full deck reaches a scored summary; ja renders;
-  after a deck the Review pool appears and is replayable; options are shuffled
-  per presentation (no option lost)
+  answer reveals the right one **with its distractor explanation ahead of the
+  general one**; a full deck reaches a scored summary; ja renders; after a deck
+  the Review pool appears and is replayable; options are shuffled per
+  presentation (no option lost); number keys answer only when the panel is
+  neither covered by a modal nor competing with a focused host control
 - scheduler (pure): correct promotes + delays, wrong resets to box 1, promotion
   caps at mastered, `isDue` honors the clock, `reviewQueue` orders weakest-first
   and excludes mastered, stats count seen/mastered/due/inReview, and

@@ -270,14 +270,26 @@ describe('ConceptCheckPanel', () => {
     expect(testid('concept-check-streak')).toBeNull();
   });
 
-  it('explains why a wrong choice is wrong (distractor explanation)', () => {
+  it('explains why a wrong choice is wrong, distractor first then the general why', () => {
     render();
     click('concept-check-deck-model');
-    clickOption('model', 0, 'wrong');
+    const strings = en as Record<string, string>;
+    const question = getDeck('model')!.questions[0]!;
+    // Options are shuffled, so map the rendered distractor back to its own key to
+    // know which "why" must lead.
+    const want = correctText('model', 0);
+    const wrongIdx = [0, 1, 2].find((i) => optionText(i) !== want)!;
+    const chosen = question.options.find((o) => strings[o.key]!.trim() === optionText(wrongIdx))!;
+    click(`concept-check-option-${wrongIdx}`);
+
     const feedback = testid('concept-check-feedback')?.textContent ?? '';
-    // The distractor-specific "why" leads, and the general explanation follows.
-    expect(feedback).toMatch(/adds no delay|divides responsibilities/);
-    expect(feedback).toContain('evolve independently');
+    const distractor = strings[chosen.whyKey!]!;
+    const general = strings[question.explanationKey]!;
+    // Order is the design decision, not just membership: the learner must first
+    // read why THEIR pick fails, then the general explanation. Both whys here open
+    // with "Layering", so only an index comparison catches a swapped composition.
+    expect(feedback).toContain(distractor);
+    expect(feedback.indexOf(general)).toBeGreaterThan(feedback.indexOf(distractor));
   });
 
   it('shows a mastery progress bar reflecting total questions', () => {
@@ -363,6 +375,54 @@ describe('ConceptCheckPanel', () => {
     expect(enterKey.defaultPrevented).toBe(false);
     expect(testid('concept-check-progress')?.textContent).toBe(before);
     hostButton.remove();
+  });
+
+  it('does not answer while a modal covers the panel', () => {
+    render();
+    click('concept-check-deck-arp');
+    // The shell's `?` cheat sheet is a real modal that does NOT move focus, so focus
+    // stays on the prompt — inside the panel, which the ownership gate accepts. The
+    // question is covered and unreadable, yet "1" would grade and persist it.
+    const modal = document.createElement('div');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    document.body.appendChild(modal);
+    const event = new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true });
+    act(() => {
+      testid('concept-check-prompt')!.dispatchEvent(event);
+    });
+    expect(event.defaultPrevented).toBe(false);
+    expect(testid('concept-check-correct')).toBeNull();
+    expect(testid('concept-check-incorrect')).toBeNull();
+    expect(store.load()).toEqual({});
+
+    // Closing it hands the keys straight back — no re-focus required.
+    modal.remove();
+    act(() =>
+      testid('concept-check-prompt')!.dispatchEvent(
+        new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true }),
+      ),
+    );
+    expect(testid('concept-check-feedback')).not.toBeNull();
+  });
+
+  it('still answers when the panel itself is inside the modal', () => {
+    // A host app may mount the panel in its own dialog — the guard must gate on
+    // "covered by someone else", not "a modal exists".
+    const modal = document.createElement('div');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    document.body.appendChild(modal);
+    modal.appendChild(container!);
+    render();
+    click('concept-check-deck-arp');
+    act(() =>
+      testid('concept-check-prompt')!.dispatchEvent(
+        new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true }),
+      ),
+    );
+    expect(testid('concept-check-feedback')).not.toBeNull();
+    modal.remove();
   });
 
   it('does not steal keys from a rich-text field inside the panel', () => {
