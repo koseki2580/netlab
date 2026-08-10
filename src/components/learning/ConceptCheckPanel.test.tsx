@@ -396,14 +396,15 @@ describe('ConceptCheckPanel', () => {
     expect(testid('concept-check-incorrect')).toBeNull();
     expect(store.load()).toEqual({});
 
-    // Closing it hands the keys straight back — no re-focus required.
+    // Closing it hands the keys straight back — no re-focus required. (The feedback
+    // region is always mounted, so "graded" is read off the store and the verdict.)
     modal.remove();
     act(() =>
       testid('concept-check-prompt')!.dispatchEvent(
         new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true }),
       ),
     );
-    expect(testid('concept-check-feedback')).not.toBeNull();
+    expect(Object.keys(store.load())).toHaveLength(1);
   });
 
   it('still answers when the panel itself is inside the modal', () => {
@@ -421,8 +422,36 @@ describe('ConceptCheckPanel', () => {
         new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true }),
       ),
     );
-    expect(testid('concept-check-feedback')).not.toBeNull();
+    expect(Object.keys(store.load())).toHaveLength(1);
     modal.remove();
+  });
+
+  it('does not answer when a second modal covers the modal holding the panel', () => {
+    // Host dialog first in document order, cheat sheet stacked on top: checking only
+    // the FIRST aria-modal node would find our own container and let "1" through.
+    const host = document.createElement('div');
+    host.setAttribute('role', 'dialog');
+    host.setAttribute('aria-modal', 'true');
+    document.body.appendChild(host);
+    host.appendChild(container!);
+    render();
+    click('concept-check-deck-arp');
+
+    const covering = document.createElement('div');
+    covering.setAttribute('role', 'dialog');
+    covering.setAttribute('aria-modal', 'true');
+    document.body.appendChild(covering);
+    const event = new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true });
+    act(() => {
+      testid('concept-check-prompt')!.dispatchEvent(event);
+    });
+    expect(event.defaultPrevented).toBe(false);
+    expect(testid('concept-check-correct')).toBeNull();
+    expect(testid('concept-check-incorrect')).toBeNull();
+    expect(store.load()).toEqual({});
+
+    covering.remove();
+    host.remove();
   });
 
   it('does not steal keys from a rich-text field inside the panel', () => {

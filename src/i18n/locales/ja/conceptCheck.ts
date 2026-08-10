@@ -880,9 +880,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.tcp.q4.c.why':
     '1 回の損失は再送のトリガーであって切断ではありません。TCP は本当の障害時のみ切断します。',
   'learning.concept.tcp.q5.a.why':
-    '暗号化は TLS の役割です。フロー/輻輳制御は受信側と網に合わせて送信側を調整します。',
+    '暗号化は TLS の役割です。フロー制御と輻輳制御は受信側と網に合わせて送信側を調整します。',
   'learning.concept.tcp.q5.c.why':
-    'IP アドレスの割り当ては DHCP です。TCP のウィンドウは過負荷を避けるため送信レートを絞ります。',
+    'IP アドレスの割り当ては DHCP です。TCP のウィンドウは過負荷を避けるため送信速度を絞ります。',
   'learning.concept.dns.q1.b.why':
     'IP→MAC はローカルリンク上の ARP の役割です。DNS は人間が読む名前を IP アドレスに対応づけます。',
   'learning.concept.dns.q1.c.why':
