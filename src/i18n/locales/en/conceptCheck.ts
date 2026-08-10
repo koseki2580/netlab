@@ -210,7 +210,7 @@ export const conceptCheck: Catalog = {
     'DHCP options carry gateway, subnet mask, DNS, and lease time alongside the address.',
   'learning.concept.icmp.name': 'ICMP',
   'learning.concept.icmp.q1.prompt': 'ping uses which protocol?',
-  'learning.concept.icmp.q1.a': 'ICMP Echo Request/Reply',
+  'learning.concept.icmp.q1.a': 'ICMP',
   'learning.concept.icmp.q1.b': 'TCP',
   'learning.concept.icmp.q1.c': 'UDP',
   'learning.concept.icmp.q1.why': 'ping sends ICMP Echo Requests and times the Echo Replies.',
@@ -234,7 +234,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ipv4.q1.why':
     'Every hop decrements TTL; at 0 the packet is dropped, bounding how long it can circulate.',
   'learning.concept.ipv4.q2.prompt': 'An IPv4 address is…',
-  'learning.concept.ipv4.q2.a': '32 bits, written as four octets',
+  'learning.concept.ipv4.q2.a': '32 bits',
   'learning.concept.ipv4.q2.b': '48 bits',
   'learning.concept.ipv4.q2.c': '128 bits',
   'learning.concept.ipv4.q2.why':
@@ -255,14 +255,14 @@ export const conceptCheck: Catalog = {
     'IPv6 expands the address to 128 bits, written as eight hex groups.',
   'learning.concept.ipv6.q2.prompt': 'IPv6 replaces ARP with…',
   'learning.concept.ipv6.q2.a': 'DHCP',
-  'learning.concept.ipv6.q2.b': 'Neighbor Discovery (NDP)',
+  'learning.concept.ipv6.q2.b': 'NDP',
   'learning.concept.ipv6.q2.c': 'STP',
   'learning.concept.ipv6.q2.why':
     'NDP uses ICMPv6 Neighbor Solicitation/Advertisement to resolve link-layer addresses.',
   'learning.concept.ipv6.q3.prompt': 'IPv6 has no…',
-  'learning.concept.ipv6.q3.a': 'Routing',
-  'learning.concept.ipv6.q3.b': 'Addresses',
-  'learning.concept.ipv6.q3.c': 'Broadcast (it uses multicast)',
+  'learning.concept.ipv6.q3.a': 'Routing between networks',
+  'learning.concept.ipv6.q3.b': 'Addresses for hosts',
+  'learning.concept.ipv6.q3.c': 'Broadcast addressing',
   'learning.concept.ipv6.q3.why':
     'IPv6 drops broadcast entirely; "all-nodes" traffic uses multicast groups instead.',
   'learning.concept.ospf.name': 'OSPF',
@@ -298,9 +298,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.bgp.q2.why':
     'BGP is a path-vector protocol; operators apply policy on attributes like AS-path length and local preference.',
   'learning.concept.bgp.q3.prompt': 'An AS in BGP is…',
-  'learning.concept.bgp.q3.a': 'A single router',
-  'learning.concept.bgp.q3.b': 'A subnet',
-  'learning.concept.bgp.q3.c': 'An autonomous system — a network under one administration',
+  'learning.concept.bgp.q3.a': 'A single router with its own routing table',
+  'learning.concept.bgp.q3.b': 'A subnet inside one routing domain',
+  'learning.concept.bgp.q3.c': 'An autonomous system under one administration',
   'learning.concept.bgp.q3.why': 'Each AS has a number and announces which prefixes it can reach.',
   'learning.concept.rip.name': 'RIP',
   'learning.concept.rip.q1.prompt': 'RIP selects routes by…',
@@ -449,9 +449,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.vrrp.q2.why':
     'One router is master and answers for the virtual IP/MAC; backups monitor and take over on failure.',
   'learning.concept.vrrp.q3.prompt': 'VRRP solves the problem of…',
-  'learning.concept.vrrp.q3.a': 'Too many subnets',
-  'learning.concept.vrrp.q3.b': 'Slow DNS',
-  'learning.concept.vrrp.q3.c': 'A single default gateway being a single point of failure',
+  'learning.concept.vrrp.q3.a': 'Having too many subnets on one switch',
+  'learning.concept.vrrp.q3.b': 'Slow DNS resolution on the clients',
+  'learning.concept.vrrp.q3.c': 'The default gateway being a single point of failure',
   'learning.concept.vrrp.q3.why':
     'Without a first-hop redundancy protocol, a dead gateway strands a whole subnet; VRRP removes that SPOF.',
   'learning.concept.multicast.name': 'Multicast / IGMP',
@@ -513,9 +513,9 @@ export const conceptCheck: Catalog = {
     'The endpoints behave like neighbors on a point-to-point link even though many hops separate them.',
   'learning.concept.mpls.name': 'MPLS',
   'learning.concept.mpls.q1.prompt': 'MPLS forwards packets by…',
-  'learning.concept.mpls.q1.a': 'Swapping short labels instead of doing an IP lookup',
-  'learning.concept.mpls.q1.b': 'Broadcasting',
-  'learning.concept.mpls.q1.c': 'ARP resolution',
+  'learning.concept.mpls.q1.a': 'Swapping short labels instead of an IP lookup',
+  'learning.concept.mpls.q1.b': 'Broadcasting the packet to every interface',
+  'learning.concept.mpls.q1.c': 'Resolving the next hop with ARP each time',
   'learning.concept.mpls.q1.why':
     'An edge router pushes a label; core routers swap labels along a pre-set path, avoiding a full routing-table lookup per hop.',
   'learning.concept.mpls.q2.prompt': 'The path a labeled packet follows is called…',
@@ -563,16 +563,16 @@ export const conceptCheck: Catalog = {
   'learning.concept.wifi.q2.why':
     'All stations share the same channel and can only transmit or receive at any one time, so the airtime is contended.',
   'learning.concept.wifi.q3.prompt': 'Before sending data, a Wi-Fi client must first…',
-  'learning.concept.wifi.q3.a': 'Run OSPF',
-  'learning.concept.wifi.q3.b': 'Get a public IP',
-  'learning.concept.wifi.q3.c': 'Associate (and authenticate) with an access point',
+  'learning.concept.wifi.q3.a': 'Run OSPF with the access point first',
+  'learning.concept.wifi.q3.b': 'Get a public IP address from the ISP',
+  'learning.concept.wifi.q3.c': 'Associate and authenticate with an access point',
   'learning.concept.wifi.q3.why':
     'A client scans, authenticates and associates with an AP (e.g. via WPA2) before it can pass traffic.',
   'learning.concept.acl.name': 'ACL / Firewall',
   'learning.concept.acl.q1.prompt': 'An ACL filters traffic by…',
   'learning.concept.acl.q1.a': 'Matching packet fields against permit/deny rules',
-  'learning.concept.acl.q1.b': 'Encrypting it',
-  'learning.concept.acl.q1.c': 'Compressing it',
+  'learning.concept.acl.q1.b': 'Encrypting the payload so only the peer reads it',
+  'learning.concept.acl.q1.c': 'Compressing the payload to save bandwidth',
   'learning.concept.acl.q1.why':
     'An access control list checks fields like src/dst IP and port against ordered rules and permits or denies.',
   'learning.concept.acl.q2.prompt': 'A stateful firewall differs from a stateless ACL by…',
@@ -590,11 +590,11 @@ export const conceptCheck: Catalog = {
   'learning.concept.layer.fundamentals': 'Foundations',
   'learning.concept.model.name': 'TCP/IP & OSI Model',
   'learning.concept.model.q1.prompt': 'Why is networking split into layers?',
-  'learning.concept.model.q1.a': 'So each layer solves one problem and can change independently',
-  'learning.concept.model.q1.b': 'To make it slower',
-  'learning.concept.model.q1.c': 'To use more cables',
+  'learning.concept.model.q1.a': 'So each layer solves one problem independently',
+  'learning.concept.model.q1.b': 'So the network deliberately runs slower',
+  'learning.concept.model.q1.c': 'So the network needs more physical cables',
   'learning.concept.model.q1.why':
-    'Layering lets Ethernet, IP, TCP and HTTP each do one job and evolve independently — TCP does not care if the link is fibre or Wi-Fi.',
+    'Layering lets Ethernet, IP, TCP and HTTP each do one job and evolve independently — TCP does not care if the link is fiber or Wi-Fi.',
   'learning.concept.model.q2.prompt': 'Going DOWN the stack on send, data passes…',
   'learning.concept.model.q2.a': 'Link → Internet → Transport → Application',
   'learning.concept.model.q2.b': 'Application → Transport → Internet → Link',
@@ -671,10 +671,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.addressing.q3.why':
     'Off-subnet means ARP for the gateway: the L2 destination is the gateway MAC while the L3 destination stays the final host — the core L2/L3 split.',
   'learning.concept.addressing.q4.prompt': 'Private IP ranges (10.0.0.0/8, 192.168.0.0/16) are…',
-  'learning.concept.addressing.q4.a':
-    'Reusable in any network and not routable on the public internet',
-  'learning.concept.addressing.q4.b': 'Globally unique',
-  'learning.concept.addressing.q4.c': 'Only for routers',
+  'learning.concept.addressing.q4.a': 'Reusable anywhere, never routed on the public internet',
+  'learning.concept.addressing.q4.b': 'Globally unique, like public addresses',
+  'learning.concept.addressing.q4.c': 'Reserved for routers and switches',
   'learning.concept.addressing.q4.why':
     'Private addresses are reused everywhere behind NAT; only public addresses are globally unique and routable.',
   'learning.concept.addressing.q5.prompt': 'A broadcast reaches…',
@@ -684,10 +683,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.addressing.q5.why':
     'Broadcast = all hosts on the segment (e.g. an ARP request); unicast = one host; multicast = a group that joined.',
   'learning.concept.addressing.q6.prompt': 'Why does the internet need NAT?',
-  'learning.concept.addressing.q6.a': 'To encrypt traffic',
-  'learning.concept.addressing.q6.b': 'To resolve names',
-  'learning.concept.addressing.q6.c':
-    'IPv4 addresses are scarce, so many private hosts share public ones',
+  'learning.concept.addressing.q6.a': 'To encrypt traffic as it leaves the network',
+  'learning.concept.addressing.q6.b': 'To resolve names into IP addresses',
+  'learning.concept.addressing.q6.c': 'To let private hosts share scarce public IPv4 addresses',
   'learning.concept.addressing.q6.why':
     'NAT lets a whole private network share a few public IPv4 addresses, working around IPv4 exhaustion.',
   'learning.concept.addressing.q1.b.why':
@@ -802,8 +800,8 @@ export const conceptCheck: Catalog = {
     'The ARP cache skips a broadcast lookup before each frame; entries expire after a timeout.',
   'learning.concept.ipv4.q4.prompt': 'The network vs host split of an IPv4 address is set by…',
   'learning.concept.ipv4.q4.a': 'The subnet mask / prefix length',
-  'learning.concept.ipv4.q4.b': 'The TTL',
-  'learning.concept.ipv4.q4.c': 'The port',
+  'learning.concept.ipv4.q4.b': 'The TTL field in the header',
+  'learning.concept.ipv4.q4.c': 'The transport port number',
   'learning.concept.ipv4.q4.why':
     'The mask says how many leading bits are the network; the remaining bits identify the host.',
   'learning.concept.ipv4.q5.prompt': 'In a routing table, 0.0.0.0/0 is…',
@@ -825,9 +823,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.tcp.q5.why':
     'Windows adapt the send rate to the receiver buffer and to congestion signals from the network.',
   'learning.concept.udp.q4.prompt': 'If a UDP datagram is lost, the protocol…',
-  'learning.concept.udp.q4.a': 'Does nothing — the application must handle it if needed',
-  'learning.concept.udp.q4.b': 'Retransmits it',
-  'learning.concept.udp.q4.c': 'Resets the link',
+  'learning.concept.udp.q4.a': 'Does nothing — the application must handle it',
+  'learning.concept.udp.q4.b': 'Retransmits it automatically after a timeout',
+  'learning.concept.udp.q4.c': 'Resets the connection and starts again',
   'learning.concept.udp.q4.why':
     'UDP offers no reliability; apps that need it (or tolerate loss) build that on top.',
   'learning.concept.udp.q5.prompt': 'DNS often uses UDP because…',
@@ -858,7 +856,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.arp.q3.a.why':
     'ARP cannot cross routers; it works only inside one broadcast domain, never the whole internet.',
   'learning.concept.arp.q3.b.why':
-    'ARP is not limited to routers — every device on the segment, host or router, ARPs for a neighbour’s IP; the real boundary is the broadcast domain.',
+    'ARP is not limited to routers — any host on the segment ARPs for a neighbor’s IP, and routers on the same segment ARP each other too.',
   'learning.concept.arp.q4.b.why':
     'A port (L4) selects an application, not a frame’s destination; what ARP supplies is the missing MAC.',
   'learning.concept.arp.q4.c.why':
@@ -992,7 +990,7 @@ export const conceptCheck: Catalog = {
     '0.0.0.0/0 is perfectly valid — it is the default route, the least-specific match for any address.',
   'learning.concept.ipv6.q1.b.why': '32 bits is IPv4; an IPv6 address is 128 bits.',
   'learning.concept.ipv6.q1.c.why':
-    '64 bits is just the interface-identifier half; a full IPv6 address is 128 bits.',
+    '64 bits is just the interface-ID half; a full IPv6 address is 128 bits.',
   'learning.concept.ipv6.q2.a.why':
     'DHCP hands out addresses; IPv6 resolves neighbors with NDP (Neighbor Discovery), replacing ARP.',
   'learning.concept.ipv6.q2.c.why':
@@ -1265,7 +1263,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.radius.q2.a.why':
     'RADIUS is not a routing protocol; it is an AAA server protocol — Authentication, Authorization, Accounting.',
   'learning.concept.radius.q2.c.why':
-    'Tunneling carries traffic (L2TP/GRE); RADIUS handles AAA — authentication, authorization and accounting.',
+    'Tunneling carries traffic (L2TP/GRE); RADIUS handles AAA — Authentication, Authorization, Accounting.',
   'learning.concept.radius.q3.a.why':
     'The supplicant is the client trying to connect; the switch/AP relaying its credentials is the authenticator.',
   'learning.concept.radius.q3.b.why':
@@ -1385,7 +1383,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ndp.q2.a.why':
     'SLAAC never guesses the network part — the prefix always comes from the Router Advertisement; only the interface-ID half may be randomized.',
   'learning.concept.ndp.q2.c.why':
-    'The host does not copy the router’s address; it builds its own from the advertised prefix plus an interface id.',
+    'The host does not copy the router’s address; it builds its own from the advertised prefix plus an interface ID.',
   'learning.concept.ndp.q3.a.why':
     'DAD does not encrypt; it sends a Neighbor Solicitation to check the address is not already in use.',
   'learning.concept.ndp.q3.b.why':
@@ -1556,7 +1554,7 @@ export const conceptCheck: Catalog = {
     'SMTP pushes mail from client to server and server to server; retrieval is IMAP/POP3.',
   'learning.concept.smtp.q2.prompt': 'SMTP commonly uses port…',
   'learning.concept.smtp.q2.a': '110',
-  'learning.concept.smtp.q2.b': '25 (or 587 for submission)',
+  'learning.concept.smtp.q2.b': '25',
   'learning.concept.smtp.q2.c': '22',
   'learning.concept.smtp.q2.why':
     'Port 25 is server-to-server SMTP; 587 is authenticated client submission; 110 is POP3.',
@@ -1572,10 +1570,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.email.q1.c': 'Assign IP addresses',
   'learning.concept.email.q1.why': 'They pull mail down to the client; SMTP is what sends it.',
   'learning.concept.email.q2.prompt': 'A key IMAP vs POP3 difference is…',
-  'learning.concept.email.q2.a': 'IMAP is unencrypted only',
-  'learning.concept.email.q2.b':
-    'IMAP keeps mail on the server and syncs devices; POP3 typically downloads and removes',
-  'learning.concept.email.q2.c': 'POP3 sends mail',
+  'learning.concept.email.q2.a': 'IMAP can only run unencrypted',
+  'learning.concept.email.q2.b': 'IMAP keeps mail on the server; POP3 removes it',
+  'learning.concept.email.q2.c': 'POP3 is the protocol that sends mail',
   'learning.concept.email.q2.why':
     'IMAP is server-side and multi-device; POP3 historically downloads to a single device.',
   'learning.concept.email.q3.prompt': 'Secure IMAP/POP3 runs over…',
@@ -1596,9 +1593,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.ntp.q2.why':
     'Stratum number is the distance from the reference clock; lower is closer and more authoritative.',
   'learning.concept.ntp.q3.prompt': 'Accurate time matters for…',
-  'learning.concept.ntp.q3.a': 'Faster cables',
-  'learning.concept.ntp.q3.b': 'Bigger MTUs',
-  'learning.concept.ntp.q3.c': 'Logs, certificates and time-sensitive auth (TLS/Kerberos)',
+  'learning.concept.ntp.q3.a': 'Faster cables and lower propagation delay',
+  'learning.concept.ntp.q3.b': 'Bigger MTUs and fewer fragmented packets',
+  'learning.concept.ntp.q3.c': 'Log correlation, certificate validity and time-based auth',
   'learning.concept.ntp.q3.why':
     'Certificate validity windows, log correlation, and time-based auth all break with skewed clocks.',
   'learning.concept.snmp.name': 'SNMP',
@@ -1622,9 +1619,9 @@ export const conceptCheck: Catalog = {
     'Traps/notifications are device-initiated alerts, versus manager-initiated GET/SET polls.',
   'learning.concept.ipsec.name': 'IPsec',
   'learning.concept.ipsec.q1.prompt': 'IPsec provides…',
-  'learning.concept.ipsec.q1.a': 'Authenticated, encrypted IP packets (a secure VPN)',
-  'learning.concept.ipsec.q1.b': 'Name resolution',
-  'learning.concept.ipsec.q1.c': 'Switching',
+  'learning.concept.ipsec.q1.a': 'Authenticated, encrypted IP packets',
+  'learning.concept.ipsec.q1.b': 'Name resolution for hosts',
+  'learning.concept.ipsec.q1.c': 'Switching frames between ports',
   'learning.concept.ipsec.q1.why':
     'IPsec secures IP traffic itself — confidentiality, integrity, authentication — commonly for VPNs.',
   'learning.concept.ipsec.q2.prompt': 'Which IPsec protocol encrypts the payload?',
@@ -1634,23 +1631,22 @@ export const conceptCheck: Catalog = {
   'learning.concept.ipsec.q2.why':
     'ESP (Encapsulating Security Payload) encrypts and authenticates; AH only authenticates.',
   'learning.concept.ipsec.q3.prompt': 'IPsec tunnel mode…',
-  'learning.concept.ipsec.q3.a': 'Encrypts only ports',
-  'learning.concept.ipsec.q3.b': 'Disables routing',
-  'learning.concept.ipsec.q3.c':
-    'Encrypts the whole original packet inside a new one (gateway-to-gateway)',
+  'learning.concept.ipsec.q3.a': 'Encrypts only the port numbers in the header',
+  'learning.concept.ipsec.q3.b': 'Disables routing between the two gateways',
+  'learning.concept.ipsec.q3.c': 'Encrypts the whole original packet inside a new one',
   'learning.concept.ipsec.q3.why':
     'Tunnel mode wraps the entire packet (VPN gateways); transport mode protects the payload host-to-host.',
   'learning.concept.radius.name': 'RADIUS / 802.1X',
   'learning.concept.radius.q1.prompt': '802.1X provides…',
-  'learning.concept.radius.q1.a': 'Port-based network access control (authenticate before access)',
-  'learning.concept.radius.q1.b': 'Routing',
-  'learning.concept.radius.q1.c': 'Name resolution',
+  'learning.concept.radius.q1.a': 'Port-based network access control',
+  'learning.concept.radius.q1.b': 'Routing between networks',
+  'learning.concept.radius.q1.c': 'Name-to-address resolution',
   'learning.concept.radius.q1.why':
     '802.1X gates a switch port or Wi-Fi until the client authenticates.',
   'learning.concept.radius.q2.prompt': 'RADIUS is a…',
-  'learning.concept.radius.q2.a': 'Routing protocol',
-  'learning.concept.radius.q2.b': 'AAA server protocol (Authentication, Authorization, Accounting)',
-  'learning.concept.radius.q2.c': 'Tunneling protocol',
+  'learning.concept.radius.q2.a': 'A routing protocol',
+  'learning.concept.radius.q2.b': 'An AAA server protocol',
+  'learning.concept.radius.q2.c': 'A tunneling protocol',
   'learning.concept.radius.q2.why':
     'RADIUS centralizes who-can-access decisions and logging for network devices.',
   'learning.concept.radius.q3.prompt': 'In 802.1X, the switch/AP relaying credentials is the…',
@@ -1667,9 +1663,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.isis.q1.why':
     'IS-IS floods link state and runs SPF; it is widely used in large service-provider networks.',
   'learning.concept.isis.q2.prompt': 'Compared with OSPF, IS-IS…',
-  'learning.concept.isis.q2.a': 'Uses hop count',
-  'learning.concept.isis.q2.b': 'Runs directly on the link layer (not inside IP)',
-  'learning.concept.isis.q2.c': 'Requires TCP',
+  'learning.concept.isis.q2.a': 'Uses hop count as its only metric',
+  'learning.concept.isis.q2.b': 'Runs directly on the link layer, not inside IP',
+  'learning.concept.isis.q2.c': 'Requires a TCP session between neighbors',
   'learning.concept.isis.q2.why':
     'IS-IS PDUs ride directly on L2 — a design difference from OSPF, which runs over IP.',
   'learning.concept.isis.q3.prompt': 'Both OSPF and IS-IS choose paths by…',
@@ -1700,8 +1696,8 @@ export const conceptCheck: Catalog = {
   'learning.concept.lacp.name': 'LACP',
   'learning.concept.lacp.q1.prompt': 'LACP is used to…',
   'learning.concept.lacp.q1.a': 'Bundle several links into one logical link',
-  'learning.concept.lacp.q1.b': 'Prevent loops',
-  'learning.concept.lacp.q1.c': 'Assign VLANs',
+  'learning.concept.lacp.q1.b': 'Prevent loops between switches',
+  'learning.concept.lacp.q1.c': 'Assign VLANs to switch ports',
   'learning.concept.lacp.q1.why':
     'LACP negotiates a Link Aggregation Group, combining links for bandwidth and redundancy.',
   'learning.concept.lacp.q2.prompt': 'An aggregated port-channel gives…',
@@ -1773,10 +1769,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.vpn.q2.why':
     'Site-to-site gateways tunnel between two subnets; remote-access (client VPN) attaches one user device to the corporate network.',
   'learning.concept.vpn.q3.prompt': 'Split tunneling means…',
-  'learning.concept.vpn.q3.a': 'All traffic is blocked',
-  'learning.concept.vpn.q3.b': 'The VPN encrypts everything twice',
-  'learning.concept.vpn.q3.c':
-    'Only some traffic (e.g. corporate subnets) goes through the VPN; the rest goes directly to the internet',
+  'learning.concept.vpn.q3.a': 'All traffic is blocked until the VPN is up',
+  'learning.concept.vpn.q3.b': 'The VPN encrypts everything twice over',
+  'learning.concept.vpn.q3.c': 'Only some traffic goes through the VPN; the rest goes direct',
   'learning.concept.vpn.q3.why':
     'Split tunneling routes only selected destinations over the VPN — less load, but wider exposure than a full tunnel.',
   'learning.concept.wireguard.name': 'WireGuard',
@@ -1808,10 +1803,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.l2tp.q1.why':
     'L2TP encapsulates traffic but offers no confidentiality, which is why it is usually paired with IPsec (L2TP/IPsec).',
   'learning.concept.l2tp.q2.prompt': 'L2TP tunnels…',
-  'learning.concept.l2tp.q2.a':
-    'Layer-2 PPP frames across an IP network (between a LAC and an LNS)',
-  'learning.concept.l2tp.q2.b': 'Only HTTP requests',
-  'learning.concept.l2tp.q2.c': 'BGP routing tables',
+  'learning.concept.l2tp.q2.a': 'Layer-2 PPP frames across an IP network',
+  'learning.concept.l2tp.q2.b': 'Only HTTP requests and responses',
+  'learning.concept.l2tp.q2.c': 'BGP routing tables between peers',
   'learning.concept.l2tp.q2.why':
     'L2TP carries PPP sessions over IP between the access concentrator (LAC) and the network server (LNS).',
   'learning.concept.l2tp.q3.prompt': 'L2TP is commonly combined with IPsec because…',
@@ -1830,10 +1824,10 @@ export const conceptCheck: Catalog = {
   'learning.concept.pppoe.q1.why':
     'PPP frames traffic on a single link and can authenticate the peer and negotiate addresses (via IPCP).',
   'learning.concept.pppoe.q2.prompt': 'PPPoE adds to PPP the ability to…',
-  'learning.concept.pppoe.q2.a': 'Encrypt all packets',
+  'learning.concept.pppoe.q2.a': 'Encrypt every packet between subscriber and ISP',
   'learning.concept.pppoe.q2.b':
-    'Carry PPP sessions inside Ethernet frames, so many subscribers share one Ethernet/DSL access network',
-  'learning.concept.pppoe.q2.c': 'Replace IP addressing',
+    'Carry PPP sessions inside Ethernet frames on a shared access network',
+  'learning.concept.pppoe.q2.c': 'Replace IP addressing with its own scheme',
   'learning.concept.pppoe.q2.why':
     'PPPoE (PPP over Ethernet) runs per-subscriber PPP sessions over a shared Ethernet access network — common in DSL.',
   'learning.concept.pppoe.q3.prompt': 'The PPPoE Discovery stage (PADI/PADO/PADR/PADS)…',
@@ -1844,26 +1838,24 @@ export const conceptCheck: Catalog = {
   'learning.concept.pppoe.q3.why':
     'Discovery (PADI→PADO→PADR→PADS) picks the access concentrator and assigns a session id; the PPP session phase then runs over it.',
   'learning.concept.ndp.name': 'NDP / SLAAC (IPv6)',
-  'learning.concept.ndp.q1.prompt': 'In IPv6, NDP takes over the job IPv4 used which protocol for?',
-  'learning.concept.ndp.q1.a':
-    'ARP — resolving a neighbor IP to its link-layer (MAC) address, via ICMPv6 Neighbor Solicitation/Advertisement',
-  'learning.concept.ndp.q1.b': 'Routing between autonomous systems',
-  'learning.concept.ndp.q1.c': 'Encrypting traffic',
+  'learning.concept.ndp.q1.prompt': 'In IPv6, which IPv4 protocol does NDP replace?',
+  'learning.concept.ndp.q1.a': 'ARP — resolving a neighbor IP to its MAC address',
+  'learning.concept.ndp.q1.b': 'BGP — routing between autonomous systems',
+  'learning.concept.ndp.q1.c': 'IPsec — encrypting traffic',
   'learning.concept.ndp.q1.why':
     'NDP runs over ICMPv6: Neighbor Solicitation/Advertisement replace ARP, and Router Solicitation/Advertisement handle router discovery.',
   'learning.concept.ndp.q2.prompt':
     'How does SLAAC let a host get an address without a DHCP server?',
-  'learning.concept.ndp.q2.a': 'It guesses an address at random',
+  'learning.concept.ndp.q2.a': 'It guesses an address at random and hopes no one else has it',
   'learning.concept.ndp.q2.b':
-    'A Router Advertisement supplies a prefix, and the host forms its address from that prefix plus an interface identifier',
-  'learning.concept.ndp.q2.c': 'It copies the router’s address',
+    'A Router Advertisement supplies the prefix and the host adds an interface ID',
+  'learning.concept.ndp.q2.c': 'It copies the router’s address and changes the last digit',
   'learning.concept.ndp.q2.why':
     'Stateless Address Autoconfiguration: the RA carries the /64 prefix; the host appends an interface ID (EUI-64 or random) to build a global address.',
   'learning.concept.ndp.q3.prompt': 'What is Duplicate Address Detection (DAD)?',
-  'learning.concept.ndp.q3.a': 'A way to encrypt the address',
-  'learning.concept.ndp.q3.b': 'A method to compress addresses',
-  'learning.concept.ndp.q3.c':
-    'Before using an address, the host sends a Neighbor Solicitation for it to confirm no one else already has it',
+  'learning.concept.ndp.q3.a': 'A way to encrypt the address before use',
+  'learning.concept.ndp.q3.b': 'A method to compress addresses for transport',
+  'learning.concept.ndp.q3.c': 'A check that no one else already has the address',
   'learning.concept.ndp.q3.why':
     'DAD prevents address collisions: a tentative address is verified with an NS; if a reply comes back, the address is already in use.',
   'learning.concept.sip.name': 'SIP (VoIP signaling)',
@@ -1890,26 +1882,23 @@ export const conceptCheck: Catalog = {
     'SIP was modeled on HTTP/SMTP: human-readable methods (INVITE, BYE) and responses (200 OK, 404) make it familiar to web developers.',
   'learning.concept.rtp.name': 'RTP / RTCP',
   'learning.concept.rtp.q1.prompt': 'What does RTP carry, and over what transport?',
-  'learning.concept.rtp.q1.a':
-    'Real-time audio/video media, usually over UDP, with sequence numbers and timestamps',
-  'learning.concept.rtp.q1.b': 'Routing tables over TCP',
-  'learning.concept.rtp.q1.c': 'Email over TLS',
+  'learning.concept.rtp.q1.a': 'Real-time audio/video media, usually over UDP',
+  'learning.concept.rtp.q1.b': 'Routing table updates, over TCP',
+  'learning.concept.rtp.q1.c': 'Email messages and attachments, over TLS',
   'learning.concept.rtp.q1.why':
     'RTP adds sequence numbers and timestamps so the receiver can reorder, detect loss, and play media out at the right time.',
   'learning.concept.rtp.q2.prompt': 'Why does RTP usually run over UDP instead of TCP?',
-  'learning.concept.rtp.q2.a': 'Because TCP cannot carry audio',
-  'learning.concept.rtp.q2.b':
-    'Low latency matters more than reliability — a retransmitted late packet is useless, so loss is tolerated/concealed',
-  'learning.concept.rtp.q2.c': 'Because UDP is encrypted',
+  'learning.concept.rtp.q2.a': 'Because TCP cannot carry audio or video streams',
+  'learning.concept.rtp.q2.b': 'Because a late retransmission is useless for live media',
+  'learning.concept.rtp.q2.c': 'Because UDP encrypts the media by default',
   'learning.concept.rtp.q2.why':
     'For live media a packet that arrives too late can’t be played, so TCP’s retransmit/ordering would add harmful delay; RTP conceals loss instead.',
   'learning.concept.rtp.q3.prompt': 'What does RTCP add alongside an RTP stream?',
-  'learning.concept.rtp.q3.a': 'Stronger encryption',
-  'learning.concept.rtp.q3.b': 'A backup copy of the media',
-  'learning.concept.rtp.q3.c':
-    'Control and quality feedback (jitter, packet loss, round-trip) so senders can adapt',
+  'learning.concept.rtp.q3.a': 'Stronger encryption of the media',
+  'learning.concept.rtp.q3.b': 'A backup copy of the media stream',
+  'learning.concept.rtp.q3.c': 'Control and quality feedback so senders can adapt',
   'learning.concept.rtp.q3.why':
-    'RTCP reports reception quality periodically, letting endpoints adjust bitrate or diagnose problems — control to RTP’s data.',
+    'RTCP reports reception quality — jitter, packet loss, round-trip time — periodically, letting endpoints adjust bitrate or diagnose problems: control to RTP’s data.',
   'learning.concept.stun.name': 'STUN / TURN / ICE',
   'learning.concept.stun.q1.prompt': 'What does STUN let a host behind NAT discover?',
   'learning.concept.stun.q1.a': 'The fastest route to a server',
@@ -1920,31 +1909,30 @@ export const conceptCheck: Catalog = {
     'A STUN server reflects back the source IP:port it sees, revealing the public mapping a NAT created — the basis of hole punching.',
   'learning.concept.stun.q2.prompt':
     'When direct connectivity fails (e.g. symmetric NAT), what carries the media?',
-  'learning.concept.stun.q2.a': 'TURN — a relay server forwards the traffic between the two peers',
-  'learning.concept.stun.q2.b': 'The DNS root servers',
-  'learning.concept.stun.q2.c': 'BGP',
+  'learning.concept.stun.q2.a': 'TURN — a relay server forwards the traffic',
+  'learning.concept.stun.q2.b': 'The DNS root servers relay it',
+  'learning.concept.stun.q2.c': 'BGP — the peers advertise a route',
   'learning.concept.stun.q2.why':
     'TURN is the fallback: when peers can’t reach each other directly, a relay forwards packets for both — reliable but costlier.',
   'learning.concept.stun.q3.prompt': 'What is ICE’s role?',
-  'learning.concept.stun.q3.a': 'It encrypts the call',
+  'learning.concept.stun.q3.a': 'It encrypts the call so only the endpoints can hear it',
   'learning.concept.stun.q3.b':
-    'It gathers candidate addresses (host, STUN-reflexive, TURN-relayed) and runs connectivity checks to pick a working pair',
-  'learning.concept.stun.q3.c': 'It assigns phone numbers',
+    'It gathers candidate addresses and checks them to pick a working pair',
+  'learning.concept.stun.q3.c': 'It assigns each endpoint a number to be dialled on',
   'learning.concept.stun.q3.why':
-    'ICE coordinates STUN and TURN: it collects candidates from both ends and probes them to find the best path that actually works.',
+    'ICE coordinates STUN and TURN: it collects host, reflexive and relayed candidates from both ends and probes them to find the best path that actually works.',
   'learning.concept.dnssec.name': 'DNSSEC',
   'learning.concept.dnssec.q1.prompt': 'What does DNSSEC add to DNS?',
-  'learning.concept.dnssec.q1.a':
-    'Cryptographic signatures so a resolver can verify records are authentic and unmodified',
-  'learning.concept.dnssec.q1.b': 'Faster lookups',
-  'learning.concept.dnssec.q1.c': 'Automatic IP assignment',
+  'learning.concept.dnssec.q1.a': 'Cryptographic signatures a resolver can verify',
+  'learning.concept.dnssec.q1.b': 'Faster lookups by caching more aggressively',
+  'learning.concept.dnssec.q1.c': 'Automatic IP assignment for new hosts',
   'learning.concept.dnssec.q1.why':
     'DNSSEC signs records (RRSIG) under zone keys (DNSKEY), letting resolvers detect tampering and forged answers (cache poisoning).',
   'learning.concept.dnssec.q2.prompt': 'Does DNSSEC encrypt your DNS queries?',
-  'learning.concept.dnssec.q2.a': 'Yes, fully end to end',
+  'learning.concept.dnssec.q2.a': 'Yes, fully end to end between you and the server',
   'learning.concept.dnssec.q2.b':
-    'No — it authenticates responses for integrity; confidentiality is a different problem (DoH/DoT)',
-  'learning.concept.dnssec.q2.c': 'Only for the root zone',
+    'No — it authenticates responses; confidentiality is a separate problem',
+  'learning.concept.dnssec.q2.c': 'Only for queries that reach the root zone',
   'learning.concept.dnssec.q2.why':
     'DNSSEC proves answers are genuine but is sent in clear; encrypting the query is what DNS-over-HTTPS/TLS adds.',
   'learning.concept.dnssec.q3.prompt': 'How is trust established in DNSSEC?',
