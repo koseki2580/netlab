@@ -146,8 +146,11 @@ describe('ConceptCheckPanel', () => {
     expect(review).not.toBeNull();
     expect(review?.textContent).toContain(String(total));
 
-    // Mastery indicator reflects progress out of all questions.
-    expect(testid('concept-check-mastery')?.textContent).toMatch(/\/\s*\d+/);
+    // Mastery indicator counts MASTERED, not merely seen: every item here was
+    // answered wrong, so the numerator must be 0 even though `seen` is now `total`.
+    // Asserting the shape (`n / m mastered`) alone would pass for any field.
+    expect(testid('concept-check-mastery')?.textContent).toContain('0 / ');
+    expect(testid('concept-check-mastery-bar')?.getAttribute('aria-valuenow')).toBe('0');
 
     // The practiced deck shows a per-deck progress badge (0 mastered / total seen).
     const badge = testid('concept-check-deck-progress-udp');
@@ -423,6 +426,23 @@ describe('ConceptCheckPanel', () => {
       ),
     );
     expect(Object.keys(store.load())).toHaveLength(1);
+    modal.remove();
+  });
+
+  it('does not answer via click while a modal covers the panel', () => {
+    render();
+    click('concept-check-deck-arp');
+    // None of the shell's modals trap Tab or mark the background inert, so a covered
+    // option button stays reachable — Enter on it fires a native click that never
+    // passes through the keydown handler.
+    const modal = document.createElement('div');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    document.body.appendChild(modal);
+    click('concept-check-option-0');
+    expect(testid('concept-check-correct')).toBeNull();
+    expect(testid('concept-check-incorrect')).toBeNull();
+    expect(store.load()).toEqual({});
     modal.remove();
   });
 

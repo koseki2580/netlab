@@ -203,9 +203,21 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
     };
   }, [question, selected, t]);
 
+  // A modal that does not contain us is covering us. None of the shell's modals
+  // traps Tab or marks the background inert, so a covered option button stays both
+  // clickable and keyboard-reachable — and a question the learner cannot read must
+  // never be graded into spaced repetition. A modal we live inside is still ours.
+  const isCovered = useCallback(
+    () =>
+      Array.from(document.querySelectorAll('[aria-modal="true"]')).some(
+        (modal) => !modal.contains(panelRef.current),
+      ),
+    [],
+  );
+
   const answer = useCallback(
     (optionKey: string) => {
-      if (!question || !indexedQ || selected !== null) return;
+      if (!question || !indexedQ || selected !== null || isCovered()) return;
       const ok = isCorrectChoice(question, optionKey);
       setSelected(optionKey);
       if (ok) setCorrect((value) => value + 1);
@@ -217,7 +229,7 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
         return nextState;
       });
     },
-    [question, indexedQ, selected, reviewStore],
+    [question, indexedQ, selected, reviewStore, isCovered],
   );
 
   const next = useCallback(() => {
@@ -255,14 +267,8 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
       // that button's activation and silently advance the quiz instead.
       const unfocused = target === document.body || target === document || target === null;
       if (!unfocused && !(target instanceof Node && panelRef.current?.contains(target))) return;
-      // Owning the focus is not enough: a modal can cover us without moving focus
-      // (the shell's `?` cheat sheet does exactly that), and a covered question must
-      // not be graded — the learner cannot even read it. A modal we live inside is
-      // still ours.
-      const covered = Array.from(document.querySelectorAll('[aria-modal="true"]')).some(
-        (modal) => !modal.contains(panelRef.current),
-      );
-      if (covered) return;
+      // `answer` re-checks this, but Enter-to-advance is graded by no one else.
+      if (isCovered()) return;
       if (selected === null) {
         const index = ['1', '2', '3'].indexOf(event.key);
         const option = index >= 0 ? options[index] : undefined;
@@ -277,7 +283,7 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [session, complete, question, selected, options, answer, next]);
+  }, [session, complete, question, selected, options, answer, next, isCovered]);
 
   // ── Deck picker ──────────────────────────────────────────────────────────
   if (!session) {
