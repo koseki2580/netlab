@@ -33,6 +33,22 @@ deck is **pure data** (`CONCEPT_DECKS`) whose every string is an i18n key:
 }
 ```
 
+### Option length carries no signal
+
+The classic multiple-choice tell is that the correct answer is the longest one,
+because the author qualifies it and leaves the wrong ones terse. Measured here,
+it was: the correct option was longest in **168 of 186 questions (90%; chance is
+33%)**, up to 8.7x the longest distractor. A learner could score ~90% knowing no
+networking — and worse, the Leitner scheduler would read that as recall and
+promote items nobody remembers.
+
+So options are written to comparable length: put qualifying detail in the `why`,
+not in the correct option, and give distractors the same specificity. A
+structural test enforces it — no question's correct option may exceed **1.6x**
+its longest distractor (options under 12 characters, like port numbers, are
+exempt), and the correct option may be the longest in **under 75%** of
+questions.
+
 ### Distractor explanations
 
 Being told "wrong, here is the right answer" leaves the learner's own reasoning
@@ -140,14 +156,16 @@ retrieval.
 ## Testing expectations
 
 - decks: unique ids, exactly one correct option per question, varied answer
-  slots, every referenced key present in both en and ja, and every wrong option
-  carrying a `whyKey` equal to its option key + `.why` (correct options: none)
+  slots, every referenced key present in both en and ja, every wrong option
+  carrying a `whyKey` equal to its option key + `.why` (correct options: none),
+  and **option length that does not identify the answer** (see below)
 - panel (jsdom): the picker lists every deck; a correct answer grades, a wrong
   answer reveals the right one **with its distractor explanation ahead of the
   general one**; a full deck reaches a scored summary; ja renders; after a deck
   the Review pool appears and is replayable; options are shuffled per
-  presentation (no option lost); number keys answer only when the panel is
-  neither covered by a modal nor competing with a focused host control
+  presentation (no option lost); the mastery indicator counts mastered rather
+  than merely seen; grading is refused while a modal covers the panel, by key
+  **and by click**, and keys are never stolen from a focused host control
 - scheduler (pure): correct promotes + delays, wrong resets to box 1, promotion
   caps at mastered, `isDue` honors the clock, `reviewQueue` orders weakest-first
   and excludes mastered, stats count seen/mastered/due/inReview, and

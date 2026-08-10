@@ -124,6 +124,41 @@ describe('concept-check decks', () => {
     expect(progress.total).toBe(arp.questions.length);
   });
 
+  it('does not let option length give the answer away', () => {
+    // The answer must be found by knowing the material, not by noticing which
+    // option is longest. Both bounds were measured: this catalog once had the
+    // correct option longest in 90% of questions (chance is 33%) and up to 8.7x
+    // the longest distractor, so a learner could score ~90% on shape alone — and
+    // the Leitner scheduler would then promote items nobody actually recalled.
+    for (const [locale, catalog] of [
+      ['en', en],
+      ['ja', ja],
+    ] as const) {
+      const strings = catalog as Record<string, string>;
+      let correctIsLongest = 0;
+      for (const deck of CONCEPT_DECKS) {
+        for (const question of deck.questions) {
+          const right = correctOption(question)!;
+          const correct = strings[right.key]!.length;
+          const distractor = Math.max(
+            ...question.options.filter((o) => o !== right).map((o) => strings[o.key]!.length),
+          );
+          if (correct > distractor) correctIsLongest += 1;
+          // Options of a few characters (port numbers, "TCP") can't hide a tell.
+          if (Math.max(correct, distractor) < 12) continue;
+          expect(
+            correct / distractor,
+            `${locale} ${deck.id}.${question.id}: correct option is ${(correct / distractor).toFixed(1)}x the longest distractor`,
+          ).toBeLessThanOrEqual(1.6);
+        }
+      }
+      const total = CONCEPT_DECKS.reduce((sum, deck) => sum + deck.questions.length, 0);
+      expect(correctIsLongest / total, `${locale}: correct option is the longest`).toBeLessThan(
+        0.75,
+      );
+    }
+  });
+
   it('groups decks by layer in stack order, covering several layers', () => {
     // The literal order matters pedagogically: the picker teaches bottom-up, so
     // assert it outright. (Deriving it from CONCEPT_LAYER_ORDER would pass even if
