@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Cell, Graph, InternalEvent } from '@maxgraph/core';
+import { Cell, Graph, InternalEvent, Outline } from '@maxgraph/core';
 import type { FitPlugin } from '@maxgraph/core';
 import { MaxGraphControls } from './MaxGraphControls';
 import { wireConnect, wireDelete } from './maxGraphInteraction';
@@ -30,6 +30,7 @@ export default function MaxGraphEngineInner({
   const hostRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<Graph | null>(null);
   const layersRef = useRef<Cell[]>([]);
+  const outlineHostRef = useRef<HTMLDivElement>(null);
   const [gridEnabled, setGridEnabled] = useState(true);
 
   // Mount once: rebuilding the Graph every render would drop selection, the
@@ -47,8 +48,11 @@ export default function MaxGraphEngineInner({
     graph.setGridEnabled(true);
     graphRef.current = graph;
     layersRef.current = createLayers(graph);
+    // Overview of the whole diagram — the counterpart to React Flow's MiniMap.
+    const outline = outlineHostRef.current ? new Outline(graph, outlineHostRef.current) : null;
 
     return () => {
+      outline?.destroy();
       graph.destroy();
       graphRef.current = null;
       layersRef.current = [];
@@ -118,6 +122,23 @@ export default function MaxGraphEngineInner({
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <div ref={hostRef} data-testid="maxgraph-canvas" style={{ width: '100%', height: '100%' }} />
+      <div
+        ref={outlineHostRef}
+        data-testid="maxgraph-minimap"
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          right: 8,
+          bottom: 8,
+          width: 140,
+          height: 100,
+          border: '1px solid #334155',
+          borderRadius: 4,
+          background: '#0f172a',
+          overflow: 'hidden',
+          zIndex: 2,
+        }}
+      />
       <MaxGraphControls
         onZoomIn={() => withGraph((graph) => graph.zoomIn())}
         onZoomOut={() => withGraph((graph) => graph.zoomOut())}
