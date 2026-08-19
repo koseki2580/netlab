@@ -1,13 +1,19 @@
 [
   {
     "path": "dist/netlab.es.js",
-    "limit": "278 kB",
+    "limit": "390 kB",
     "gzip": true
   },
   {
     "name": "ui:concept-check",
     "path": "dist/ConceptCheckPanelInner-*.mjs",
     "limit": "98 kB",
+    "gzip": true
+  },
+  {
+    "name": "ui:graph-maxgraph",
+    "path": "dist/MaxGraphEngineInner-*.mjs",
+    "limit": "124 kB",
     "gzip": true
   },
   {

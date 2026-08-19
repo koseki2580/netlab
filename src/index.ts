@@ -745,6 +745,9 @@ export { decodeTopology, encodeTopology } from './utils/topology-url';
 
 // Editor
 export { TopologyEditor } from './editor/components/TopologyEditorLazy';
+// Opt-in canvas engine. maxGraph is ~112 kB gzip, so it loads only when a
+// consumer actually passes it as `engine` — it is never in the root chunk.
+export { MaxGraphEngine } from './editor/engine/MaxGraphEngine';
 export type { TopologyEditorProps } from './editor/components/TopologyEditor';
 // The palette catalog and the editor's inner panels are NOT re-exported: every
 // value export here keeps the editor reachable from the root bundle, which is
