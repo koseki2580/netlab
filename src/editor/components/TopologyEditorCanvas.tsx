@@ -18,6 +18,8 @@ import { layerRegistry } from '../../registry/LayerRegistry';
 import { validateConnection as validateEditorConnection } from '../../utils/connectionValidator';
 import type { NetlabNode, NetlabEdge } from '../../types/topology';
 import { useTopologyEditorContext } from '../context/TopologyEditorContext';
+import { visibleTopology } from '../layerVisibility';
+import type { LayerId } from '../../types/layers';
 
 // ─── Inner canvas (keyed so it remounts on undo/redo) ─────────────────────
 
@@ -188,17 +190,28 @@ function EditorCanvasInner({
 
 export interface TopologyEditorCanvasProps {
   highlightEdgeId?: string | null;
+  /** Layers to paint. Omit to paint the whole topology. */
+  visibleLayers?: ReadonlySet<LayerId>;
 }
 
-export function TopologyEditorCanvas({ highlightEdgeId }: TopologyEditorCanvasProps) {
+export function TopologyEditorCanvas({
+  highlightEdgeId,
+  visibleLayers,
+}: TopologyEditorCanvasProps) {
   const { state } = useTopologyEditorContext();
+  // Presentation only: the canonical topology keeps every node, so hiding a
+  // layer never changes what the simulation runs.
+  const view = useMemo(
+    () => (visibleLayers ? visibleTopology(state.topology, visibleLayers) : state.topology),
+    [state.topology, visibleLayers],
+  );
 
   return (
     <div style={{ width: '100%', height: '100%' }}>
       <EditorCanvasInner
         key={state.reactFlowKey}
-        initialNodes={state.topology.nodes}
-        initialEdges={state.topology.edges}
+        initialNodes={view.nodes}
+        initialEdges={view.edges}
         {...(highlightEdgeId !== undefined ? { highlightEdgeId } : {})}
       />
     </div>

@@ -2,8 +2,14 @@ import type { NetlabNode } from '../../types/topology';
 
 // ─── ID & MAC helpers ──────────────────────────────────────────────────────
 
+// Date.now() alone collides: two nodes created inside the same millisecond —
+// which is what clicking a palette item twice does — would share an id, and the
+// topology keys edges, selection and route tables by it.
+let nodeSequence = 0;
+
 function generateNodeId(role: string): string {
-  return `${role}-${Date.now().toString(36)}`;
+  nodeSequence += 1;
+  return `${role}-${Date.now().toString(36)}-${nodeSequence.toString(36)}`;
 }
 
 function generateMac(): string {

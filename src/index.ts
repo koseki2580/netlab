@@ -746,6 +746,16 @@ export { decodeTopology, encodeTopology } from './utils/topology-url';
 // Editor
 export { TopologyEditor } from './editor/components/TopologyEditor';
 export type { TopologyEditorProps } from './editor/components/TopologyEditor';
+// The palette catalog is public so a host can see what `layers` will actually
+// offer before scoping an exercise to a layer that has no elements yet.
+export {
+  PALETTE_ITEMS,
+  PALETTE_LAYER_ORDER,
+  isLayerAllowed,
+  paletteByLayer,
+} from './editor/palette';
+export type { PaletteGroup, PaletteItem } from './editor/palette';
+export { visibleTopology } from './editor/layerVisibility';
 export { ValidationPanel } from './editor/components/ValidationPanel';
 export type { ValidationPanelProps } from './editor/components/ValidationPanel';
 export { useTopologyEditorContext } from './editor/context/TopologyEditorContext';
