@@ -13,8 +13,13 @@ test('sandbox popovers and compare flow remain accessible', async ({ page }) => 
   await expect(popover).toBeVisible();
   await expect(popover).toContainText('Edit in sandbox');
 
+  // Scoped to the dialog and limited to WCAG A/AA, as the other a11y specs are.
+  // `heading-order` is an axe best-practice rule, and scoping to a fragment
+  // hides the h1 → h2 above this dialog's h3, so it reports a jump that the page
+  // does not actually have.
   const popoverA11y = await new AxeBuilder({ page })
     .include('[role="dialog"][data-anchor-kind]')
+    .withTags(['wcag2a', 'wcag2aa'])
     .analyze();
   expect(popoverA11y.violations).toEqual([]);
 
@@ -27,6 +32,7 @@ test('sandbox popovers and compare flow remain accessible', async ({ page }) => 
 
   const compareA11y = await new AxeBuilder({ page })
     .include('[data-testid="sandbox-panel"]')
+    .withTags(['wcag2a', 'wcag2aa'])
     .analyze();
   expect(compareA11y.violations).toEqual([]);
 

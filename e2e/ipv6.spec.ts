@@ -10,7 +10,9 @@ test('IPv6 demo delivers ICMPv6 echo through dual-stack routing', async ({ page,
   // The IPv6 demo prints hop annotations into the per-demo trace log container.
   const traceLog = page.getByTestId(SEL.demo.traceLog).first();
   await expect(traceLog).toContainText('ICMPv6 hops');
-  await expect(traceLog).toContainText('server');
+  // The node's real label, so this asserts the echo reached the server rather
+  // than that the word appears somewhere in some casing.
+  await expect(traceLog).toContainText('Dual-stack Server');
   await expect(traceLog).toContainText('2001:db8:2::20');
 
   const results = await new AxeBuilder({ page })

@@ -180,11 +180,14 @@ export const SEL = {
     h2Stream: (id: number) => `h2-stream-${id}`,
     h3StreamLossToggle: 'h3-quic-loss-toggle',
     h3Stream: (id: number) => `h3-stream-${id}`,
+    /** The negotiated protocol, or the alert when the negotiation failed. */
+    tlsAlpn: 'tls-alpn',
     tcpCongestionReset: 'tcp-congestion-reset',
     tcpCongestionRun: 'tcp-congestion-run',
     tcpCongestionChart: 'tcp-congestion-chart',
     tcpCongestionEmpty: 'tcp-congestion-empty',
-    tcpCongestionEvent: (step: number) => `tcp-congestion-event-${step}`,
+    /** A step can carry several events, so the id names both. */
+    tcpCongestionEvent: (step: number, type: string) => `tcp-congestion-event-${step}-${type}`,
     tlsRunHandshake: 'tls-run-handshake',
     tlsForceAlpnMismatch: 'tls-force-alpn-mismatch',
     httpsAlertBanner: 'https-alert-banner',

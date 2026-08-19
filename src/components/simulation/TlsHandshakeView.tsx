@@ -60,7 +60,10 @@ export function TlsHandshakeView({
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
         <strong>TLS 1.3 handshake</strong>
-        <span style={{ color: alert ? 'var(--netlab-accent-red)' : 'var(--netlab-accent-green)' }}>
+        <span
+          data-testid="tls-alpn"
+          style={{ color: alert ? 'var(--netlab-accent-red)' : 'var(--netlab-accent-green)' }}
+        >
           {alert ? `ALPN: ${alert.description}` : `ALPN: ${selectedAlpn ?? '-'}`}
         </span>
       </div>

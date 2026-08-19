@@ -7,14 +7,15 @@ test('tcp congestion demo renders deterministic phase transitions', async ({ pag
 
   await expect(page.locator('.react-flow').first()).toBeAttached();
   await expect(page.getByTestId(SEL.demo.tcpCongestionChart)).toBeVisible();
-  await expect(page.getByTestId(SEL.demo.tcpCongestionEvent(9))).toContainText('fast-retransmit');
-  await expect(page.getByTestId(SEL.demo.tcpCongestionEvent(12))).toContainText('rto-fire');
+  // The element existing IS the assertion: step 9 produced a fast retransmit.
+  await expect(page.getByTestId(SEL.demo.tcpCongestionEvent(9, 'fast-retransmit'))).toBeVisible();
+  await expect(page.getByTestId(SEL.demo.tcpCongestionEvent(12, 'rto-fire'))).toBeVisible();
 
   await page.getByTestId(SEL.demo.tcpCongestionReset).click();
   await expect(page.getByTestId(SEL.demo.tcpCongestionEmpty)).toBeVisible();
 
   await page.getByTestId(SEL.demo.tcpCongestionRun).click();
-  await expect(page.getByTestId(SEL.demo.tcpCongestionEvent(9))).toContainText('fast-retransmit');
+  await expect(page.getByTestId(SEL.demo.tcpCongestionEvent(9, 'fast-retransmit'))).toBeVisible();
 
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa'])

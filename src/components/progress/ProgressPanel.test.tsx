@@ -96,4 +96,36 @@ describe('ProgressPanel and ProgressBadge', () => {
     );
     expect(exported?.value).toContain('ospf-convergence');
   });
+
+  it('drops the exported JSON when progress is cleared', () => {
+    // A JSON blob still listing what the learner just deleted reads as "your
+    // progress is still here" — the opposite of what clearing said it did.
+    render(
+      <ProgressProvider learnerId="learner-1" storage={createMemoryProgressStorage()}>
+        <Recorder />
+        <ProgressPanel />
+      </ProgressProvider>,
+    );
+    const buttons = () => Array.from(container?.querySelectorAll('button') ?? []);
+    act(() => {
+      container?.querySelector('button')?.click();
+    });
+    act(() => buttons().find((b) => b.textContent === 'Export JSON')?.click());
+    expect(
+      container?.querySelector('textarea[aria-label="Exported progress JSON"]'),
+    ).not.toBeNull();
+
+    act(() => buttons().find((b) => b.textContent === 'Clear progress')?.click());
+    const idInput = container?.querySelector<HTMLInputElement>(
+      '[data-testid="gallery-progress-confirm-id"]',
+    )!;
+    const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
+    act(() => {
+      setValue.call(idInput, 'learner-1');
+      idInput.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    act(() => buttons().find((b) => b.textContent === 'Confirm clear')?.click());
+
+    expect(container?.querySelector('textarea[aria-label="Exported progress JSON"]')).toBeNull();
+  });
 });

@@ -157,6 +157,10 @@ export function ProgressPanel() {
                 progress.clear();
                 setConfirmingClear(false);
                 setConfirmLearnerId('');
+                // Drop any earlier export too: leaving a JSON blob on screen
+                // that lists completions the learner just deleted says their
+                // progress is still here.
+                setExportedJson('');
               }}
             >
               Confirm clear

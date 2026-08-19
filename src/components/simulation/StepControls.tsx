@@ -264,7 +264,19 @@ function StepEntry({ hop, isCurrent, isLast, totalHops }: StepEntryProps) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function StepControls() {
+export interface StepControlsProps {
+  /**
+   * Whether stepping is this demo's primary action.
+   *
+   * Most demos are driven entirely by stepping, so it defaults to true. A demo
+   * that has its own "start the exchange" button passes false: two elements
+   * claiming `demo-primary-action` on one page makes the id ambiguous, and the
+   * test then clicks whichever happens to come first.
+   */
+  primary?: boolean;
+}
+
+export function StepControls({ primary = true }: StepControlsProps = {}) {
   const { engine, state } = useSimulation();
   const { status, currentStep, traces, currentTraceId } = state;
   const trace = traces.find((t) => t.packetId === currentTraceId);
@@ -352,7 +364,7 @@ export function StepControls() {
         <div style={{ display: 'flex', gap: 8 }}>
           <button
             onClick={() => engine.step()}
-            data-testid="demo-primary-action"
+            data-testid={primary ? 'demo-primary-action' : 'demo-step-action'}
             disabled={stepDisabled}
             style={{
               flex: 1,

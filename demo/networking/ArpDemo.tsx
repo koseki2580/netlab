@@ -183,7 +183,8 @@ function ArpDemoInner() {
           <ArpTablePanel />
           <ArpDiffCard />
           <div style={CARD_STYLE}>
-            <StepControls />
+            {/* Ping starts the exchange; stepping replays it. */}
+            <StepControls primary={false} />
           </div>
         </div>
 

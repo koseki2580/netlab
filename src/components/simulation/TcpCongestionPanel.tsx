@@ -235,7 +235,9 @@ export const TcpCongestionPanel = memo(function TcpCongestionPanel({
               {markerEvents.map((event, index) => (
                 <li
                   key={`${event.type}-${event.stepIndex}-${index}`}
-                  data-testid={`tcp-congestion-event-${event.stepIndex}`}
+                  // Keyed by step AND type: one step can carry more than one
+                  // event, and a step-only id makes two elements share a name.
+                  data-testid={`tcp-congestion-event-${event.stepIndex}-${event.type}`}
                 >
                   step {event.stepIndex}: {event.type}
                 </li>
