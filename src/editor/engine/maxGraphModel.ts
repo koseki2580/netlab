@@ -3,6 +3,7 @@ import { NODE_GLYPHS, type NodeGlyphKind } from '../../components/NodeGlyph';
 import type { LayerId } from '../../types/layers';
 import type { NetlabEdge, NetlabNode } from '../../types/topology';
 import { GRAPH_LAYER_ORDER, layerIndex, layerVisibility } from './maxGraphLayers';
+import { nodeLabelHtml } from './maxGraphNodeLabel';
 
 export const NODE_W = 120;
 export const NODE_H = 44;
@@ -66,7 +67,7 @@ export function syncCells(
         graph.insertVertex({
           parent,
           id: node.id,
-          value: node.data.label,
+          value: nodeLabelHtml(node),
           position: [node.position.x, node.position.y],
           size: [NODE_W, NODE_H],
           style: styleFor(node),

@@ -1,5 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Cell, Graph, InternalEvent } from '@maxgraph/core';
+import type { FitPlugin } from '@maxgraph/core';
+import { MaxGraphControls } from './MaxGraphControls';
 import { wireConnect, wireDelete } from './maxGraphInteraction';
 import { applyVisibility, createLayers, syncCells } from './maxGraphModel';
 import type { GraphEngineProps } from './types';
@@ -28,6 +30,7 @@ export default function MaxGraphEngineInner({
   const hostRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<Graph | null>(null);
   const layersRef = useRef<Cell[]>([]);
+  const [gridEnabled, setGridEnabled] = useState(true);
 
   // Mount once: rebuilding the Graph every render would drop selection, the
   // viewport and any gesture in progress.
@@ -38,6 +41,10 @@ export default function MaxGraphEngineInner({
     const graph = new Graph(host);
     graph.setPanning(true);
     graph.setCellsEditable(false);
+    // Vertex labels are markup (glyph + name + health badge), matching what the
+    // React node components draw.
+    graph.setHtmlLabels(true);
+    graph.setGridEnabled(true);
     graphRef.current = graph;
     layersRef.current = createLayers(graph);
 
@@ -95,7 +102,30 @@ export default function MaxGraphEngineInner({
     };
   }, [onNodesMoved, onSelectNode]);
 
+  const withGraph = useCallback((fn: (graph: Graph) => void) => {
+    const graph = graphRef.current;
+    if (graph) fn(graph);
+  }, []);
+
+  const toggleGrid = useCallback(() => {
+    setGridEnabled((on) => {
+      const next = !on;
+      withGraph((graph) => graph.setGridEnabled(next));
+      return next;
+    });
+  }, [withGraph]);
+
   return (
-    <div ref={hostRef} data-testid="maxgraph-canvas" style={{ width: '100%', height: '100%' }} />
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <div ref={hostRef} data-testid="maxgraph-canvas" style={{ width: '100%', height: '100%' }} />
+      <MaxGraphControls
+        onZoomIn={() => withGraph((graph) => graph.zoomIn())}
+        onZoomOut={() => withGraph((graph) => graph.zoomOut())}
+        onZoomActual={() => withGraph((graph) => graph.zoomActual())}
+        onFit={() => withGraph((graph) => graph.getPlugin<FitPlugin>('fit')?.fitCenter())}
+        gridEnabled={gridEnabled}
+        onToggleGrid={toggleGrid}
+      />
+    </div>
   );
 }

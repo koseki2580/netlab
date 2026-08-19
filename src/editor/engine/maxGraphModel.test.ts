@@ -76,6 +76,16 @@ describe('maxGraph model building', () => {
     expect(layers[layerIndex('l2')]!.children?.map((c) => c.id)).toEqual(['sw1']);
   });
 
+  it('gives each vertex the glyph label, not a bare name', () => {
+    // The label is what a learner reads to tell a router from a switch; a plain
+    // string would drop the shape and letter that carry that without colour.
+    const layers = createLayers(graph);
+    syncCells(graph, layers, [node('r1', 'l3')], []);
+    const value = String(layers[layerIndex('l3')]!.children![0]!.value);
+    expect(value).toContain('<svg');
+    expect(value).toContain('r1');
+  });
+
   it('replaces the drawn cells on re-sync rather than accumulating them', () => {
     const layers = createLayers(graph);
     syncCells(graph, layers, [node('sw1', 'l2'), node('sw2', 'l2', 200)], []);

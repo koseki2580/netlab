@@ -3,7 +3,9 @@ import type React from 'react';
 /** Node kinds that get a redundant shape + letter + color glyph (M6). */
 export type NodeGlyphKind = 'router' | 'switch' | 'client' | 'server';
 
-type GlyphShape = 'rounded-rect' | 'hexagon' | 'circle' | 'square';
+import { glyphPrimitive, type GlyphShape } from './glyphGeometry';
+
+export type { GlyphShape };
 
 interface GlyphMeta {
   letter: string;
@@ -90,45 +92,10 @@ function ShapeOutline({
   // Color via `style` (not attributes) so it matches the node-icon idiom and
   // keeps theme tokens visible to style-based assertions.
   const paint: React.CSSProperties = { fill, stroke, strokeWidth };
-  switch (shape) {
-    case 'circle':
-      return <circle cx="20" cy="20" r={15 + grow} style={paint} />;
-    case 'square':
-      return (
-        <rect
-          x={6 - grow}
-          y={6 - grow}
-          width={28 + grow * 2}
-          height={28 + grow * 2}
-          rx="3"
-          style={paint}
-        />
-      );
-    case 'rounded-rect':
-      return (
-        <rect
-          x={4 - grow}
-          y={9 - grow}
-          width={32 + grow * 2}
-          height={22 + grow * 2}
-          rx="7"
-          style={paint}
-        />
-      );
-    case 'hexagon':
-      return <polygon points={hexagonPoints(grow)} style={paint} />;
-  }
-}
-
-function hexagonPoints(grow: number): string {
-  const cx = 20;
-  const cy = 20;
-  const r = 16 + grow;
-  // Flat-top hexagon.
-  return [0, 60, 120, 180, 240, 300]
-    .map((deg) => {
-      const rad = (Math.PI / 180) * deg;
-      return `${(cx + r * Math.cos(rad)).toFixed(2)},${(cy + r * Math.sin(rad)).toFixed(2)}`;
-    })
-    .join(' ');
+  const { tag, attrs } = glyphPrimitive(shape, grow);
+  // The geometry is shared with the maxGraph adapter, so both canvases draw the
+  // same shape; only the paint differs between the two call sites here.
+  if (tag === 'circle') return <circle {...attrs} style={paint} />;
+  if (tag === 'rect') return <rect {...attrs} style={paint} />;
+  return <polygon {...attrs} style={paint} />;
 }
