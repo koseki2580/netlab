@@ -23,6 +23,7 @@ import './edges.css';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AreaBackground } from '../areas/AreaBackground';
+import { interactionProfile } from '../editor/engine/types';
 import { areasToNodes } from '../areas/AreaRegistry';
 import { applyAreaLod, AREA_CLUSTER_NODE_TYPE, type AreaClusterNodeData } from '../areas/areaLod';
 import { AreaClusterNode } from './AreaClusterNode';
@@ -196,6 +197,12 @@ export function NetlabCanvas({
     [],
   );
 
+  // One definition of what "presentational" means, shared with the editor's
+  // engine seam so both canvases treat a mid-page diagram the same way.
+  const profile = useMemo(
+    () => interactionProfile(interactiveGraph ? 'interactive' : 'presentational'),
+    [interactiveGraph],
+  );
   const areaNodes = useMemo(() => areasToNodes(areas), [areas]);
 
   const initialNodes = useMemo(
@@ -608,20 +615,20 @@ export function NetlabCanvas({
           // Presentational canvases let fitView zoom out further than React Flow's
           // 0.5 floor so a wide topology + padding fits a narrow phone without the
           // edge nodes clipping; the editor keeps the default.
-          minZoom={interactiveGraph ? 0.5 : 0.2}
-          nodesFocusable={interactiveGraph}
-          edgesFocusable={interactiveGraph}
-          nodesDraggable={interactiveGraph}
-          disableKeyboardA11y={!interactiveGraph}
+          minZoom={profile.minZoom}
+          nodesFocusable={profile.nodesFocusable}
+          edgesFocusable={profile.nodesFocusable}
+          nodesDraggable={profile.nodesDraggable}
+          disableKeyboardA11y={!profile.nodesFocusable}
           // Presentational canvases must not hijack the page: with these on
           // (React Flow's defaults) wheeling/pinching over a mid-page learning
           // canvas zooms the graph and blocks page scroll. Off = a calm static
           // picture that scrolls through.
-          zoomOnScroll={interactiveGraph}
-          zoomOnPinch={interactiveGraph}
-          zoomOnDoubleClick={interactiveGraph}
-          panOnDrag={interactiveGraph}
-          preventScrolling={interactiveGraph}
+          zoomOnScroll={profile.zoomOnScroll}
+          zoomOnPinch={profile.zoomOnPinch}
+          zoomOnDoubleClick={profile.zoomOnScroll}
+          panOnDrag={profile.panOnDrag}
+          preventScrolling={profile.preventPageScroll}
           proOptions={{ hideAttribution: false }}
         >
           <Background />

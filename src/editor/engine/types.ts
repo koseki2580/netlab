@@ -40,6 +40,54 @@ export interface GraphEngineProps {
   readonly onDeleteNode: (nodeId: string) => void;
   readonly onDeleteEdge: (edgeId: string) => void;
   readonly onSelectNode?: (nodeId: string | null) => void;
+
+  /**
+   * Interaction profile. The simulator mounts the same canvas twice over: as an
+   * editable diagram, and as a picture in the middle of a page.
+   *
+   * `presentational` must not hijack the page — wheeling or pinching over a
+   * mid-page canvas has to scroll the article, not zoom the graph — and must not
+   * put its nodes in the tab order, since they are illustration rather than
+   * controls. Defaults to `interactive`.
+   */
+  readonly interaction?: 'interactive' | 'presentational';
+
+  /** Live zoom, so the owner can collapse detail as the learner zooms out. */
+  readonly onZoomChange?: (zoom: number) => void;
+
+  /** Fit the diagram on mount, with this much padding. */
+  readonly fitOnMount?: { readonly padding: number } | false;
+}
+
+/** What `interaction` means, in the terms every engine has to honour. */
+export interface InteractionProfile {
+  readonly zoomOnScroll: boolean;
+  readonly zoomOnPinch: boolean;
+  readonly panOnDrag: boolean;
+  readonly preventPageScroll: boolean;
+  readonly nodesDraggable: boolean;
+  readonly nodesFocusable: boolean;
+  /** Lowest zoom `fitOnMount` may reach — a wide topology must fit a phone. */
+  readonly minZoom: number;
+}
+
+export function interactionProfile(
+  interaction: GraphEngineProps['interaction'] = 'interactive',
+): InteractionProfile {
+  const interactive = interaction === 'interactive';
+  return {
+    zoomOnScroll: interactive,
+    zoomOnPinch: interactive,
+    panOnDrag: interactive,
+    // Presentational canvases sit inside prose: the page must keep scrolling.
+    preventPageScroll: interactive,
+    nodesDraggable: interactive,
+    // Illustration is not a control, so it does not belong in the tab order.
+    nodesFocusable: interactive,
+    // Presentational canvases may zoom out further than the interactive floor so
+    // a wide topology plus padding fits a narrow phone without clipping.
+    minZoom: interactive ? 0.5 : 0.2,
+  };
 }
 
 export type GraphEngine = ComponentType<GraphEngineProps>;
