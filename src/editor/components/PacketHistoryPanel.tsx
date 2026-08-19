@@ -81,9 +81,9 @@ export function PacketHistoryPanel({ traces, selectedStep, onSelectHop }: Packet
                     color: EVENT_TONE[hop.event] ?? '#e2e8f0',
                   }}
                 >
-                  <span style={{ color: '#64748b' }}>{hop.step}</span> {hop.event}{' '}
+                  <span style={{ color: '#94a3b8' }}>{hop.step}</span> {hop.event}{' '}
                   <span style={{ color: '#94a3b8' }}>@{hop.nodeLabel}</span>
-                  <span style={{ display: 'block', color: '#64748b', fontSize: 10.5 }}>
+                  <span style={{ display: 'block', color: '#94a3b8', fontSize: 10.5 }}>
                     {hop.srcIp} → {hop.dstIp} · TTL {hop.ttl}
                     {hop.reason ? ` · ${hop.reason}` : ''}
                   </span>

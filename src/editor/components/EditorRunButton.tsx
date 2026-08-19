@@ -61,7 +61,7 @@ export function EditorRunButton({ style }: EditorRunButtonProps) {
       style={{
         padding: '4px 12px',
         background: disabled ? '#334155' : '#166534',
-        color: disabled ? '#64748b' : '#dcfce7',
+        color: disabled ? '#cbd5e1' : '#dcfce7',
         border: '1px solid #334155',
         borderRadius: 4,
         cursor: disabled ? 'not-allowed' : 'pointer',

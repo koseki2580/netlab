@@ -69,7 +69,7 @@ export function LayerPalette({ layers, visibleLayers, onToggleLayer }: LayerPale
                   style={{
                     border: '1px solid #334155',
                     background: shown ? '#334155' : 'transparent',
-                    color: shown ? '#e2e8f0' : '#64748b',
+                    color: shown ? '#e2e8f0' : '#94a3b8',
                     borderRadius: 4,
                     cursor: 'pointer',
                     font: 'inherit',
@@ -106,7 +106,7 @@ export function LayerPalette({ layers, visibleLayers, onToggleLayer }: LayerPale
                   <NodeGlyph kind={item.glyph} size={26} />
                   <span style={{ minWidth: 0 }}>
                     {item.label}
-                    <span style={{ display: 'block', color: '#64748b', fontSize: 10.5 }}>
+                    <span style={{ display: 'block', color: '#94a3b8', fontSize: 10.5 }}>
                       {item.hint}
                     </span>
                   </span>
