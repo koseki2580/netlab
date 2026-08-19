@@ -20,7 +20,24 @@ export interface ValidationPanelProps {
   onApplyFix?: (patch: TopologyPatch) => void;
   /** Gates the fix buttons; defaults to `false` (read-only). */
   editable?: boolean;
+  /**
+   * Render inline inside a sidebar instead of floating over the canvas. Floating
+   * is the default so existing embeds are unaffected.
+   */
+  docked?: boolean;
 }
+
+/** Positioning is the only difference; docked drops the overlay chrome. */
+const DOCKED_OVERRIDES: React.CSSProperties = {
+  position: 'static',
+  width: '100%',
+  maxHeight: 'none',
+  padding: 0,
+  border: 'none',
+  borderRadius: 0,
+  background: 'transparent',
+  zIndex: 'auto',
+};
 
 const PANEL_STYLE: React.CSSProperties = {
   position: 'absolute',
@@ -98,6 +115,7 @@ export function ValidationPanel({
   onEdgeClick,
   onApplyFix,
   editable = false,
+  docked,
 }: ValidationPanelProps) {
   const result: TopologyValidationResult = useMemo(
     () => validateTopology(nodes, edges),
@@ -139,14 +157,20 @@ export function ValidationPanel({
 
   if (result.valid && result.warningCount === 0) {
     return (
-      <div className="netlab-validation-panel" style={PANEL_STYLE}>
+      <div
+        className="netlab-validation-panel"
+        style={docked ? { ...PANEL_STYLE, ...DOCKED_OVERRIDES } : PANEL_STYLE}
+      >
         <span>✅ No issues found</span>
       </div>
     );
   }
 
   return (
-    <div className="netlab-validation-panel" style={PANEL_STYLE}>
+    <div
+      className="netlab-validation-panel"
+      style={docked ? { ...PANEL_STYLE, ...DOCKED_OVERRIDES } : PANEL_STYLE}
+    >
       <div
         style={{
           display: 'flex',

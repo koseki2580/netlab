@@ -756,6 +756,12 @@ export {
 } from './editor/palette';
 export type { PaletteGroup, PaletteItem } from './editor/palette';
 export { visibleTopology } from './editor/layerVisibility';
+export { EditorSidebar } from './editor/components/EditorSidebar';
+export type { EditorSidebarProps, EditorSidebarTab } from './editor/components/EditorSidebar';
+export { PacketHistoryPanel } from './editor/components/PacketHistoryPanel';
+export type { PacketHistoryPanelProps } from './editor/components/PacketHistoryPanel';
+export { historyRows, hopEdgeId, summarizeTraces } from './editor/simulationSummary';
+export type { EditorRunSummary } from './editor/simulationSummary';
 export { ValidationPanel } from './editor/components/ValidationPanel';
 export type { ValidationPanelProps } from './editor/components/ValidationPanel';
 export { useTopologyEditorContext } from './editor/context/TopologyEditorContext';

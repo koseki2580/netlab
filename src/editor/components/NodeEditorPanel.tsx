@@ -463,7 +463,27 @@ function RouteRow({ route, onUpdate, onDelete }: RouteRowProps) {
 
 // ─── Main panel ────────────────────────────────────────────────────────────
 
-export function NodeEditorPanel() {
+export interface NodeEditorPanelProps {
+  /**
+   * Render inline inside a sidebar instead of floating over the canvas. Floating
+   * is the default so existing embeds are unaffected.
+   */
+  docked?: boolean;
+}
+
+/** Positioning is the only difference; docked drops the overlay chrome. */
+const DOCKED_OVERRIDES: React.CSSProperties = {
+  position: 'static',
+  width: '100%',
+  maxHeight: 'none',
+  padding: 0,
+  border: 'none',
+  borderRadius: 0,
+  background: 'transparent',
+  zIndex: 'auto',
+};
+
+export function NodeEditorPanel({ docked }: NodeEditorPanelProps = {}) {
   const { selectedNodeId, setSelectedNodeId } = useNetlabUI();
   const { state, updateNodeData, deleteNode } = useTopologyEditorContext();
 
@@ -498,7 +518,7 @@ export function NodeEditorPanel() {
           : '#f472b6';
 
   return (
-    <div style={PANEL_STYLE}>
+    <div style={docked ? { ...PANEL_STYLE, ...DOCKED_OVERRIDES } : PANEL_STYLE}>
       {/* Header */}
       <div
         style={{

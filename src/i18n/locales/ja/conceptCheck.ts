@@ -917,7 +917,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.udp.q5.a.why':
     'UDP 自体は暗号化しません。DNS が使うのは小さな問い合わせ/応答が速く再試行も容易だからです。',
   'learning.concept.udp.q5.c.why':
-    '小さな DNS のやり取りに順序は不要です。だから軽量な UDP が適し、TCP ではありません。',
+    'UDP は順序を保証しません（それは TCP）。そもそも小さな DNS のやり取りに順序は不要で、だから軽量な UDP が適します。',
   'learning.concept.ethernet.q1.b.why':
     'IP アドレスは L3 です。イーサネットフレームは L2 の MAC で宛先指定します。',
   'learning.concept.ethernet.q1.c.why':
@@ -1866,7 +1866,7 @@ export const conceptCheck: Catalog = {
     'RTP はシーケンス番号とタイムスタンプを付け、受信側が並べ替え・損失検出・正しいタイミングでの再生をできるようにします。',
   'learning.concept.rtp.q2.prompt': 'RTP が TCP ではなく UDP を使うことが多いのはなぜ？',
   'learning.concept.rtp.q2.a': 'TCP は音声や映像のストリームを運べないから',
-  'learning.concept.rtp.q2.b': '生放送では遅れて届いた再送が役に立たないから',
+  'learning.concept.rtp.q2.b': 'ライブメディアでは遅れて届いた再送が役に立たないから',
   'learning.concept.rtp.q2.c': 'UDP がメディアを既定で暗号化するから',
   'learning.concept.rtp.q2.why':
     'ライブメディアでは遅すぎるパケットは再生できないため、TCP の再送/順序付けは有害な遅延になります。RTP は代わりに損失を補間します。',

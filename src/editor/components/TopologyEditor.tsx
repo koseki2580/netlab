@@ -5,12 +5,15 @@ import { NetlabUIContext } from '../../components/NetlabUIContext';
 import { TopologyEditorProvider } from '../context/TopologyEditorProvider';
 import { useTopologyEditorContext } from '../context/TopologyEditorContext';
 import { EditorToolbar } from './EditorToolbar';
+import { EditorSidebar } from './EditorSidebar';
 import { LayerPalette } from './LayerPalette';
 import { TopologyEditorCanvas } from './TopologyEditorCanvas';
 import { NodeEditorPanel } from './NodeEditorPanel';
 import { ValidationPanel } from './ValidationPanel';
 import { applyTopologyPatch } from '../../utils/connectionFixers';
 import { paletteByLayer } from '../palette';
+import { useOptionalSimulation } from '../../simulation/SimulationContext';
+import type { PacketHop } from '../../types/simulation';
 import type { LayerId } from '../../types/layers';
 import type { EditorTopology } from '../types';
 
@@ -41,6 +44,15 @@ function TopologyEditorInner({ layers }: { layers?: readonly LayerId[] }) {
   const [visibleLayers, setVisibleLayers] = useState<ReadonlySet<LayerId>>(
     () => new Set(scopedLayers),
   );
+  const [selectedStep, setSelectedStep] = useState<number | null>(null);
+  // The editor may be mounted without a SimulationProvider (it is today), so the
+  // Run tab must degrade to its empty state rather than throw.
+  const simulation = useOptionalSimulation();
+  const traces = simulation?.state.traces ?? [];
+  const onSelectHop = useCallback((hop: PacketHop, edgeId: string | null) => {
+    setSelectedStep(hop.step);
+    setHighlightEdgeId(edgeId);
+  }, []);
   const toggleLayer = useCallback((layerId: LayerId) => {
     setVisibleLayers((prev) => {
       const next = new Set(prev);
@@ -93,16 +105,26 @@ function TopologyEditorInner({ layers }: { layers?: readonly LayerId[] }) {
         <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
           <NetlabUIContext.Provider value={uiCtx}>
             <TopologyEditorCanvas highlightEdgeId={highlightEdgeId} visibleLayers={visibleLayers} />
-            <ValidationPanel
-              nodes={state.topology.nodes}
-              edges={state.topology.edges}
-              onEdgeClick={setHighlightEdgeId}
-              editable
-              onApplyFix={(patch) => replaceTopology(applyTopologyPatch(patch, state.topology))}
-            />
-            <NodeEditorPanel />
           </NetlabUIContext.Provider>
         </div>
+        <NetlabUIContext.Provider value={uiCtx}>
+          <EditorSidebar
+            node={<NodeEditorPanel docked />}
+            validation={
+              <ValidationPanel
+                nodes={state.topology.nodes}
+                edges={state.topology.edges}
+                onEdgeClick={setHighlightEdgeId}
+                editable
+                docked
+                onApplyFix={(patch) => replaceTopology(applyTopologyPatch(patch, state.topology))}
+              />
+            }
+            traces={traces}
+            selectedStep={selectedStep}
+            onSelectHop={onSelectHop}
+          />
+        </NetlabUIContext.Provider>
       </div>
     </NetlabProvider>
   );

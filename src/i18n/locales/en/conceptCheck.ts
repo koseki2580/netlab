@@ -922,7 +922,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.udp.q5.a.why':
     'UDP itself adds no encryption; DNS uses it because a tiny query/response is fast and easily retried.',
   'learning.concept.udp.q5.c.why':
-    'A single small DNS exchange needs no ordering; that is why lightweight UDP fits — not TCP.',
+    'UDP guarantees no ordering at all — that is TCP; and a single small DNS exchange needs none, which is why lightweight UDP fits.',
   'learning.concept.ethernet.q1.b.why':
     'IP addresses are L3; an Ethernet frame is addressed at L2 by MAC.',
   'learning.concept.ethernet.q1.c.why':
