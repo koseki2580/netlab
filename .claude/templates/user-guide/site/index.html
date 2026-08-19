@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ja" data-theme="auto">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Product User Guide</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow" id="guide-label">USER GUIDE</p>
+      <h1 id="site-title">Product User Guide</h1>
+    </div>
+    <div class="controls" aria-label="Guide controls">
+      <label>
+        <span id="language-label">Language</span>
+        <select id="language-select" aria-labelledby="language-label">
+          <option value="ja">日本語</option>
+          <option value="en">English</option>
+        </select>
+      </label>
+      <button id="theme-toggle" type="button" aria-pressed="false">Theme</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" aria-label="Guide navigation">
+      <label class="search-label" for="search-input" id="search-label">検索</label>
+      <input id="search-input" type="search" autocomplete="off" placeholder="ガイドを検索...">
+      <p id="search-status" class="search-status" aria-live="polite"></p>
+      <nav id="toc" aria-label="Table of contents"></nav>
+    </aside>
+
+    <main id="main-content" tabindex="-1">
+      <div id="content"></div>
+      <div id="no-results" class="no-results" hidden></div>
+    </main>
+  </div>
+
+  <footer>
+    <span id="offline-note">This guide is designed to work offline.</span>
+  </footer>
+
+  <script src="assets/js/content.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

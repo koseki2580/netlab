@@ -1,89 +1,26 @@
 ---
 name: verification-before-completion
-description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs.
+description: Gather fresh evidence before claiming behavior-changing work is done, fixed, passing, or ready. Use after implementation, review, E2E work, and documentation updates.
 ---
 
-# Verification Before Completion
+<!-- Skill metadata: 振る舞いを変更する作業について、完了・修正済み・成功・準備完了を宣言する前に新しい証拠を集める Skill です。 -->
 
-## Overview
+# Verification before completion
+<!-- 完了前の検証 -->
 
-Claiming work is complete without verification is dishonesty, not efficiency.
-
-**Core principle:** Evidence before claims, always.
-
-**TOOL EXECUTION MANDATE:** You MUST actually execute these verification commands with whatever terminal/shell tool the host harness exposes (e.g. `Bash` in Claude Code, `run_in_terminal` in VSCode Copilot). Do not just write bash code blocks and assume the user will run them.
-
-## The Iron Law
-
-```
-NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
-```
-
-If you haven't run the verification command in this message, you cannot claim it passes. The rule applies to exact phrases, paraphrases, and any wording that implies success.
-
-## The Gate
-
-Before ANY claim of success, completion, or satisfaction:
-
-1. **IDENTIFY** — What command proves this claim?
-2. **RUN** — Execute the full command fresh.
-3. **READ** — Full output, exit code, failure count.
-4. **VERIFY** — Does the output confirm the claim?
-5. **CLAIM** — Only now, with the evidence cited.
-
-Skipping any step is lying, not verifying.
-
-## What Counts as Evidence
-
-| Claim                 | Sufficient evidence              | Not sufficient                   |
-| --------------------- | -------------------------------- | -------------------------------- |
-| Tests pass            | Test command output: 0 failures  | Previous run, "should pass"      |
-| Linter clean          | Linter output: 0 errors          | Partial check, extrapolation     |
-| Build succeeds        | Build command: exit 0            | Linter passing, logs look good   |
-| Bug fixed             | Original symptom test: passes    | Code changed, assumed fixed      |
-| Regression test works | Red → green cycle verified       | Test passes once                 |
-| Agent completed       | VCS diff shows expected changes  | Agent self-reports "success"     |
-| Requirements met      | Line-by-line checklist verified  | Tests passing                    |
-
-## Rationalizations That Mean STOP
-
-| Excuse                                  | Reality                       |
-| --------------------------------------- | ----------------------------- |
-| "Should work now" / "I'm confident"     | Confidence ≠ evidence. Run it.|
-| "Just this once" / "I'm tired"          | No exceptions.                |
-| "Linter passed"                         | Linter ≠ compiler.            |
-| "Agent said success"                    | Verify independently via diff.|
-| "Partial check is enough"               | Partial proves nothing.       |
-| "Different words so rule doesn't apply" | Spirit over letter.           |
-
-Trigger words that mean you skipped the gate: "should", "probably", "seems to", "Great!", "Perfect!", "Done!" — and any positive framing emitted before running the command.
-
-## Two Patterns Worth Spelling Out
-
-**Regression tests (TDD red-green):**
-
-```
-Write → Run (must FAIL) → Apply fix → Run (must PASS) → Revert fix → Run (FAIL) → Restore → Run (PASS)
-```
-
-Without the red-green loop you have not proven the test catches the bug.
-
-**Agent delegation:**
-
-```
-Agent reports success → Read VCS diff → Verify expected changes exist → Report actual state
-```
-
-Never propagate an agent's self-report as a completion claim.
-
-## When To Apply
-
-Always, before:
-
-- Any success / completion / "done" wording
-- Committing, opening PRs, or moving to the next task
-- Trusting a subagent's report
-
-## Bottom Line
-
-Run the command. Read the output. Then claim the result. Non-negotiable.
+1. Re-read the relevant `REQ-*`, `AC-*`, and `TC-*` entries and confirm the specification quality checklist is honestly complete for the changed behavior.
+<!-- 1. 仕様書の関連する `REQ-*`、`AC-*`、`TC-*` を読み直し、変更した振る舞いについて仕様品質チェックリストが実態どおりに完了していることを確認します。 -->
+2. Confirm every changed behavior has automated evidence that asserts observable outcomes rather than only implementation interactions.
+<!-- 2. 変更した各振る舞いに、実装上の相互作用だけではなく観測可能な結果を検証する自動化された証拠があることを確認します。 -->
+3. Run the smallest relevant behavior tests with fresh commands and inspect the actual results.
+<!-- 3. 関連する最小の振る舞いテストを新しいコマンドで実行し、実際の結果を確認します。 -->
+4. For applicable browser-visible acceptance flows, run the mapped Playwright Test E2E cases.
+<!-- 4. 該当するブラウザ向け受け入れフローでは、対応する Playwright Test E2E ケースを実行します。 -->
+5. Run relevant broader regression, lint, type-check, and build commands required by the project.
+<!-- 5. プロジェクトで必要な関連する広範囲の回帰、lint、型チェック、build コマンドを実行します。 -->
+6. If documentation exists or user-visible behavior changed, run `python3 .claude/scripts/validate_docs.py` and confirm the guide matches the implementation.
+<!-- 6. ドキュメントが存在するかユーザー向け振る舞いを変更した場合、`python3 .claude/scripts/validate_docs.py` を実行し、ガイドが実装と一致することを確認します。 -->
+7. Update specification traceability with real automated-test locations and actual verification status. Never mark skipped, unavailable, flaky, or failing checks as passed.
+<!-- 7. 仕様書の追跡情報を実際の自動テスト場所と検証状態で更新します。スキップ、利用不可、不安定、失敗したチェックを成功として記録しません。 -->
+8. Report the commands/checks executed and the observed results before using completion language.
+<!-- 8. 完了表現を使用する前に、実行したコマンド・チェックと観測した結果を報告します。 -->

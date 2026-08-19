@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project_operating_context version="3.0">
+  <mission>
+    Build maintainable software whose externally observable behavior is defined by a Markdown specification, implemented with behavior-focused test-driven development, verified end to end where applicable, and documented for end users in a portable offline HTML guide.
+    <!-- 外部から観測できる振る舞いを Markdown 仕様書で定義し、振る舞い中心の TDD で実装し、必要に応じて E2E で検証し、持ち運び可能なオフライン HTML ユーザーガイドで利用者向けに文書化された保守しやすいソフトウェアを作ります。 -->
+  </mission>
+
+  <interaction_policy>
+    <clarify_when>
+      Ask focused questions before implementation when ambiguity could materially change observable behavior, public interfaces, data semantics, compatibility, security, acceptance criteria, or user experience.
+      <!-- 曖昧さによって観測可能な振る舞い、公開インターフェース、データの意味、互換性、セキュリティ、受け入れ条件、UX が実質的に変わり得る場合は、実装前に焦点を絞った質問をします。 -->
+    </clarify_when>
+    <do_not_overask>
+      Do not ask about minor implementation choices that can be safely selected without changing requested behavior. Use reasonable defaults and record important assumptions in the specification.
+      <!-- 求められた振る舞いを変えず安全に決められる細かな実装判断については質問しません。妥当なデフォルトを選び、重要な仮定は仕様書に記録します。 -->
+    </do_not_overask>
+  </interaction_policy>
+
+  <source_of_truth>
+    <specification path="docs/user-guide/specifications/specification.md" template=".claude/templates/specification.md">
+      Define externally observable behavior, acceptance criteria, and behavior-defining test scenarios here before implementation.
+      <!-- 実装前に、外部から観測できる振る舞い、受け入れ条件、振る舞いを定義するテストシナリオをここへ記述します。 -->
+    </specification>
+    <specification_quality>
+      Before implementation, the specification must be precise enough to define observable acceptance behavior and must address applicable non-functional requirements, constraints, failure behavior, security, and compatibility or migration concerns. Irrelevant areas may be marked N/A with a reason.
+      <!-- 実装前に、仕様書は観測可能な受け入れ振る舞いを定義できる程度に明確で、該当する非機能要件、制約、失敗時の振る舞い、セキュリティ、互換性または移行観点を扱わなければなりません。該当しない項目は理由付きで N/A とできます。 -->
+    </specification_quality>
+    <implementation>
+      Production code must conform to the accepted specification. Internal design may change unless it is part of the public contract.
+      <!-- 本番コードは合意済みの仕様書に一致しなければなりません。内部設計は、それ自体が公開契約でない限り変更可能です。 -->
+    </implementation>
+    <user_guide path="docs/user-guide/site/index.html" template=".claude/templates/user-guide/">
+      Document implemented user-facing behavior only.
+      <!-- ユーザーガイドには実装済みのユーザー向け振る舞いだけを記載します。 -->
+    </user_guide>
+  </source_of_truth>
+
+  <testing_contract>
+    <observable_behavior>
+      Tests must prove observable outcomes, not merely that internal functions, methods, callbacks, or mocks were invoked. Prefer assertions on state, output, documented errors, persisted effects, protocol responses, or other contract-level outcomes.
+      <!-- テストは内部関数・メソッド・コールバック・mock が呼ばれた事実だけではなく、観測可能な結果を証明しなければなりません。状態、出力、仕様化されたエラー、永続化された効果、プロトコル応答など契約レベルの結果を検証します。 -->
+    </observable_behavior>
+    <interaction_assertions>
+      Use interaction assertions only when the interaction itself is an explicit observable contract or no stronger outcome can reasonably be observed.
+      <!-- 呼び出し自体が明示的な観測可能契約である場合、またはより強い結果を合理的に観測できない場合に限り interaction assertion を使用します。 -->
+    </interaction_assertions>
+    <traceability>
+      Every newly added behavior-defining automated test must map to a stable `TC-*` scenario recorded in the specification. Record scenario intent and expected observable outcome, not test-framework implementation details.
+      <!-- 新しく追加する振る舞い定義用の自動テストは、仕様書に記録された安定した `TC-*` シナリオに対応付けます。仕様書にはシナリオの意図と期待する観測可能結果を記録し、テストフレームワークの実装詳細は記録しません。 -->
+    </traceability>
+    <bug_regression>
+      A behavior-affecting bug fix must be represented by a stable regression TC scenario and a test that fails for the reported behavioral defect before the production fix is written.
+      <!-- 振る舞いに影響するバグ修正は、安定した回帰 TC シナリオと、本番修正を書く前に報告された振る舞い上の不具合を理由として失敗するテストで表現しなければなりません。 -->
+    </bug_regression>
+    <browser_e2e>
+      Browser-visible acceptance behavior must be verifiable with Playwright Test. Prefer user-facing locators and explicit UI contracts over DOM structure or implementation selectors.
+      <!-- ブラウザから観測できる受け入れ振る舞いは Playwright Test で検証可能にします。DOM 構造や実装用 selector より、ユーザー向け locator と明示的な UI 契約を優先します。 -->
+    </browser_e2e>
+  </testing_contract>
+
+  <documentation_contract root="docs/user-guide">
+    <portability>
+      Zipping the entire docs/user-guide directory and sending it to another person must include everything needed to read the Markdown specification and use the HTML guide.
+      <!-- docs/user-guide ディレクトリ全体を ZIP にして他者へ送るだけで、Markdown 仕様書を読み HTML ガイドを利用するために必要なものがすべて含まれなければなりません。 -->
+    </portability>
+    <offline>
+      Core guide functionality must work without network access or a development server. Opening site/index.html directly with a file URL should work in modern desktop browsers.
+      <!-- ガイドの主要機能はネットワーク接続や開発サーバーなしで動作しなければなりません。最新のデスクトップブラウザでは site/index.html を file URL で直接開いて利用できる状態にします。 -->
+    </offline>
+    <features>
+      <language_switching required="true">Provide at least Japanese and English.</language_switching>
+      <!-- 少なくとも日本語と英語の言語切り替えを提供します。 -->
+      <search required="true">Provide client-side search with no server dependency.</search>
+      <!-- サーバーに依存しないクライアントサイド検索を提供します。 -->
+      <theme required="true">Provide light and dark modes, honor system preference by default, and preserve explicit user preference when storage is available.</theme>
+      <!-- ライト・ダークモードを提供し、デフォルトではシステム設定を尊重し、ストレージ利用時は明示的なユーザー設定を保持します。 -->
+    </features>
+  </documentation_contract>
+
+  <portable_resources>
+    <reference_dir>.claude/references</reference_dir>
+    <!-- 参照資料ディレクトリです。 -->
+    <template_dir>.claude/templates</template_dir>
+    <!-- テンプレートディレクトリです。 -->
+    <script_dir>.claude/scripts</script_dir>
+    <!-- 補助スクリプトディレクトリです。 -->
+  </portable_resources>
+</project_operating_context>
