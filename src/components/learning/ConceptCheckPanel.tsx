@@ -1,6 +1,7 @@
 import { Suspense, lazy, useMemo, useState } from 'react';
+import { LazyPanelBoundary } from '../LazyPanelBoundary';
+import { useI18n } from '../../i18n/useI18n';
 import type { createReviewStore } from '../../learning/review';
-import { LazyPanelBoundary } from './LazyPanelBoundary';
 
 /**
  * Public entry for the Protocol Concept Checks. The panel body and its large
@@ -26,6 +27,9 @@ export function ConceptCheckPanel({
   /** Seam for tests to simulate a failing chunk; never set by consumers. */
   importInner?: () => Promise<{ default: typeof import('./ConceptCheckPanelInner').default }>;
 } = {}) {
+  // The fallback copy lives in the BASE catalog, not the lazy concept one: when
+  // the chunk is what failed, its strings failed with it.
+  const { t } = useI18n();
   const [attempt, setAttempt] = useState(0);
   const Inner = useMemo(() => {
     // `attempt` is what this memo keys on: a retry must mint a NEW lazy, because
@@ -37,7 +41,12 @@ export function ConceptCheckPanel({
   }, [attempt]);
 
   return (
-    <LazyPanelBoundary onRetry={() => setAttempt((value) => value + 1)}>
+    <LazyPanelBoundary
+      onRetry={() => setAttempt((value) => value + 1)}
+      heading={t('learning.drill.loadError.heading')}
+      body={t('learning.drill.loadError.body')}
+      retryLabel={t('learning.drill.loadError.retry')}
+    >
       <Suspense fallback={null}>
         <Inner {...props} />
       </Suspense>

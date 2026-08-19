@@ -36,7 +36,12 @@ describe('LazyPanelBoundary', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     act(() =>
       root?.render(
-        <LazyPanelBoundary onRetry={() => {}}>
+        <LazyPanelBoundary
+          onRetry={() => {}}
+          heading="Panel could not be loaded"
+          body="The code for this panel failed to download."
+          retryLabel="Retry"
+        >
           <Boom />
         </LazyPanelBoundary>,
       ),
@@ -52,7 +57,12 @@ describe('LazyPanelBoundary', () => {
     const onRetry = vi.fn();
     act(() =>
       root?.render(
-        <LazyPanelBoundary onRetry={onRetry}>
+        <LazyPanelBoundary
+          onRetry={onRetry}
+          heading="Panel could not be loaded"
+          body="The code for this panel failed to download."
+          retryLabel="Retry"
+        >
           <Boom />
         </LazyPanelBoundary>,
       ),
@@ -82,7 +92,12 @@ describe('LazyPanelBoundary', () => {
         return lazy(importer);
       }, [attempt]);
       return (
-        <LazyPanelBoundary onRetry={() => setAttempt((value) => value + 1)}>
+        <LazyPanelBoundary
+          onRetry={() => setAttempt((value) => value + 1)}
+          heading="Panel could not be loaded"
+          body="The code for this panel failed to download."
+          retryLabel="Retry"
+        >
           <Suspense fallback={null}>
             <Inner />
           </Suspense>

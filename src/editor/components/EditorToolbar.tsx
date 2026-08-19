@@ -1,4 +1,5 @@
 import { useTopologyEditorContext } from '../context/TopologyEditorContext';
+import { EditorRunButton } from './EditorRunButton';
 import {
   createRouterNode,
   createSwitchNode,
@@ -84,6 +85,10 @@ export function EditorToolbar() {
       <Btn onClick={redo} disabled={!canRedo} title="Redo">
         ↪ Redo
       </Btn>
+
+      <div style={SEPARATOR_STYLE} />
+
+      <EditorRunButton />
     </div>
   );
 }
