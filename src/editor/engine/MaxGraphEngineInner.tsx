@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Cell, Graph, InternalEvent } from '@maxgraph/core';
+import { wireConnect, wireDelete } from './maxGraphInteraction';
 import { applyVisibility, createLayers, syncCells } from './maxGraphModel';
 import type { GraphEngineProps } from './types';
 
@@ -17,7 +18,11 @@ export default function MaxGraphEngineInner({
   edges,
   visibleLayers,
   highlightEdgeId,
+  isValidConnection,
+  onConnect,
   onNodesMoved,
+  onDeleteNode,
+  onDeleteEdge,
   onSelectNode,
 }: GraphEngineProps) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -50,6 +55,20 @@ export default function MaxGraphEngineInner({
     // Re-drawing replaced the cells, so the layer flags have to be re-applied.
     applyVisibility(graph, layersRef.current, visibleLayers);
   }, [nodes, edges, highlightEdgeId, visibleLayers]);
+
+  // Drawing and deleting go through the seam: the owner holds the topology and
+  // the undo history, so the engine reports rather than decides.
+  useEffect(() => {
+    const graph = graphRef.current;
+    if (!graph) return undefined;
+    const handlers = { isValidConnection, onConnect, onDeleteNode, onDeleteEdge };
+    const stopConnect = wireConnect(graph, handlers);
+    const stopDelete = wireDelete(graph, handlers);
+    return () => {
+      stopConnect();
+      stopDelete();
+    };
+  }, [isValidConnection, onConnect, onDeleteNode, onDeleteEdge]);
 
   useEffect(() => {
     const graph = graphRef.current;
