@@ -3,6 +3,7 @@ import { NODE_GLYPHS, type NodeGlyphKind } from '../../components/NodeGlyph';
 import type { LayerId } from '../../types/layers';
 import type { NetlabEdge, NetlabNode } from '../../types/topology';
 import { GRAPH_LAYER_ORDER, layerIndex, layerVisibility } from './maxGraphLayers';
+import { EDGE_TONE_COLOR, edgeVerdict } from './edgeValidation';
 import { nodeLabelHtml } from './maxGraphNodeLabel';
 
 export const NODE_W = 120;
@@ -84,12 +85,19 @@ export function syncCells(
       // links too. A cross-layer link lives on the overflow layer, which is
       // always visible — otherwise the uplink would vanish with either end.
       const parent = source.parent === target.parent ? source.parent! : layers[layers.length - 1]!;
+      // A wrong cable is the lesson, so the verdict is painted rather than left
+      // for the validation panel alone. Same helper as the React Flow engine.
+      const verdict = edgeVerdict(nodes, edges, edge);
       graph.insertEdge({
         parent,
         id: edge.id,
         source,
         target,
-        style: { strokeWidth: edge.id === highlightEdgeId ? 3 : 1, strokeColor: '#94a3b8' },
+        value: verdict.messages.join('\n'),
+        style: {
+          strokeWidth: edge.id === highlightEdgeId ? 3 : 1,
+          strokeColor: EDGE_TONE_COLOR[verdict.tone],
+        },
       });
     }
   } finally {

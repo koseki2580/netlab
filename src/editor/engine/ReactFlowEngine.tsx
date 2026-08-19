@@ -15,7 +15,7 @@ import '@xyflow/react/dist/style.css';
 
 import { ValidationSmoothStepEdge } from '../../components/ValidationEdgeLabel';
 import { layerRegistry } from '../../registry/LayerRegistry';
-import { validateConnection as validateEditorConnection } from '../../utils/connectionValidator';
+import { EDGE_TONE_COLOR, edgeVerdict } from './edgeValidation';
 import type { NetlabNode, NetlabEdge } from '../../types/topology';
 import { visibleTopology } from '../layerVisibility';
 import type { GraphEngineProps } from './types';
@@ -72,40 +72,19 @@ function EditorCanvasInner({
     () =>
       edges.map((edge) => {
         const validationEdge = withValidationEdgeType(edge);
-        const validationResult = validateEditorConnection(
-          nodes,
-          edges.filter((candidate) => candidate.id !== edge.id),
-          edge.source,
-          edge.target,
-          edge.sourceHandle,
-          edge.targetHandle,
-        );
-
-        const edgeWithValidation = !validationResult.valid
-          ? {
-              ...validationEdge,
-              style: { ...validationEdge.style, stroke: 'var(--netlab-accent-red)' },
-              data: { ...validationEdge.data, validationResult },
-            }
-          : validationResult.warnings.length > 0
-            ? {
+        // Shared with the maxGraph engine: the same link must read the same way
+        // whichever canvas is mounted.
+        const { tone, result } = edgeVerdict(nodes, edges, edge);
+        const toned =
+          tone === 'ok'
+            ? validationEdge
+            : {
                 ...validationEdge,
-                style: { ...validationEdge.style, stroke: 'var(--netlab-accent-orange, orange)' },
-                data: { ...validationEdge.data, validationResult },
-              }
-            : validationEdge;
-
-        if (highlightEdgeId !== edge.id) {
-          return edgeWithValidation;
-        }
-
-        return {
-          ...edgeWithValidation,
-          style: {
-            ...edgeWithValidation.style,
-            strokeWidth: 3,
-          },
-        };
+                style: { ...validationEdge.style, stroke: EDGE_TONE_COLOR[tone] },
+                data: { ...validationEdge.data, validationResult: result },
+              };
+        if (highlightEdgeId !== edge.id) return toned;
+        return { ...toned, style: { ...toned.style, strokeWidth: 3 } };
       }),
     [edges, nodes, highlightEdgeId],
   );

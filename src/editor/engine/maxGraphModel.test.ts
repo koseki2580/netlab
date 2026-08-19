@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { LayerId } from '../../types/layers';
 import type { NetlabEdge, NetlabNode } from '../../types/topology';
 import { GRAPH_LAYER_ORDER, layerIndex } from './maxGraphLayers';
+import { EDGE_TONE_COLOR } from './edgeValidation';
 import { applyVisibility, createLayers, syncCells } from './maxGraphModel';
 
 function node(id: string, layerId: LayerId, x = 0): NetlabNode {
@@ -84,6 +85,25 @@ describe('maxGraph model building', () => {
     const value = String(layers[layerIndex('l3')]!.children![0]!.value);
     expect(value).toContain('<svg');
     expect(value).toContain('r1');
+  });
+
+  it('paints a bad link in the error colour and carries its reason', () => {
+    // A wrong cable is the lesson; leaving it the same grey as a good one hides
+    // the very thing the learner should notice.
+    const layers = createLayers(graph);
+    const bad = edge('loop', 'sw1', 'sw1');
+    syncCells(graph, layers, [node('sw1', 'l2')], [bad]);
+    const drawn = layers.flatMap((l) => l.children ?? []).find((c) => String(c.id) === 'loop')!;
+    expect(String(drawn.style?.strokeColor)).toBe(EDGE_TONE_COLOR.error);
+    expect(String(drawn.value)).toMatch(/Self-loop/);
+  });
+
+  it('leaves a good link in the default colour', () => {
+    const layers = createLayers(graph);
+    const ok = edge('e1', 'sw1', 'sw2');
+    syncCells(graph, layers, [node('sw1', 'l2'), node('sw2', 'l2', 200)], [ok]);
+    const drawn = layers.flatMap((l) => l.children ?? []).find((c) => String(c.id) === 'e1')!;
+    expect(String(drawn.style?.strokeColor)).toBe(EDGE_TONE_COLOR.ok);
   });
 
   it('replaces the drawn cells on re-sync rather than accumulating them', () => {
