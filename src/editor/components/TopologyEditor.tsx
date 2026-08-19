@@ -14,7 +14,7 @@ import { ValidationPanel } from './ValidationPanel';
 import { applyTopologyPatch } from '../../utils/connectionFixers';
 import { validateConnection } from '../../utils/connectionValidator';
 import { paletteByLayer } from '../palette';
-import { SimulationProvider, useOptionalSimulation } from '../../simulation/SimulationContext';
+import { SimulationProvider } from '../../simulation/SimulationContext';
 import type { PacketHop } from '../../types/simulation';
 import type { LayerId } from '../../types/layers';
 import type { EditorTopology } from '../types';
@@ -63,10 +63,6 @@ function TopologyEditorInner({
     () => new Set(scopedLayers),
   );
   const [selectedStep, setSelectedStep] = useState<number | null>(null);
-  // The editor may be mounted without a SimulationProvider (it is today), so the
-  // Run tab must degrade to its empty state rather than throw.
-  const simulation = useOptionalSimulation();
-  const traces = simulation?.state.traces ?? [];
   const onSelectHop = useCallback((hop: PacketHop, edgeId: string | null) => {
     setSelectedStep(hop.step);
     setHighlightEdgeId(edgeId);
@@ -169,7 +165,6 @@ function TopologyEditorInner({
                   onApplyFix={(patch) => replaceTopology(applyTopologyPatch(patch, state.topology))}
                 />
               }
-              traces={traces}
               selectedStep={selectedStep}
               onSelectHop={onSelectHop}
             />

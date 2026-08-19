@@ -184,7 +184,9 @@ export function ReactFlowEngine({ nodes, edges, visibleLayers, ...handlers }: Gr
   );
 
   return (
-    <div style={{ width: '100%', height: '100%' }}>
+    // Both engines expose the canvas under one name so a test can address the
+    // drawing surface without knowing which library is mounted.
+    <div data-testid="editor-canvas" style={{ width: '100%', height: '100%' }}>
       <EditorCanvasInner {...handlers} initialNodes={view.nodes} initialEdges={view.edges} />
     </div>
   );

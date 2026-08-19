@@ -24,7 +24,6 @@ function render() {
       <EditorSidebar
         node={<p data-testid="probe-node">node editor</p>}
         validation={<p data-testid="probe-validation">checks</p>}
-        traces={[]}
       />,
     ),
   );

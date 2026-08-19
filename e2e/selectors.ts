@@ -201,6 +201,32 @@ export const SEL = {
     dhcpRun: 'dhcp-run',
     tcpConnect: 'tcp-connect',
   },
+  /** The 3-pane topology editor: layer palette, canvas, inspector rail. */
+  editor: {
+    canvas: 'editor-canvas',
+    palette: 'editor-palette',
+    paletteEmpty: 'editor-palette-empty',
+    paletteItem: (id: string) => `editor-palette-${id}`,
+    layerToggle: (layer: string) => `editor-layer-toggle-${layer}`,
+    sidebar: 'editor-sidebar',
+    sidebarTab: (tab: string) => `editor-sidebar-tab-${tab}`,
+    sidebarPanel: (tab: string) => `editor-sidebar-panel-${tab}`,
+    run: 'editor-run',
+    results: 'editor-results',
+    resultsDelivered: 'editor-results-delivered',
+    historyEmpty: 'editor-history-empty',
+  },
+  /** The opt-in maxGraph canvas engine. */
+  maxGraph: {
+    canvas: 'maxgraph-canvas',
+    controls: 'maxgraph-controls',
+    minimap: 'maxgraph-minimap',
+    zoomIn: 'maxgraph-zoom-in',
+    zoomOut: 'maxgraph-zoom-out',
+    zoomReset: 'maxgraph-zoom-reset',
+    fit: 'maxgraph-fit',
+    grid: 'maxgraph-grid',
+  },
   traceFilter: {
     searchbox: 'trace-filter-searchbox',
     statusLabel: 'trace-filter-status',

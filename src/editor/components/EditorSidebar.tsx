@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { PacketHop, PacketTrace } from '../../types/simulation';
+import { useOptionalSimulation } from '../../simulation/SimulationContext';
+import type { PacketHop } from '../../types/simulation';
 import { PacketHistoryPanel } from './PacketHistoryPanel';
 
 export type EditorSidebarTab = 'node' | 'validation' | 'history';
@@ -8,7 +9,6 @@ export interface EditorSidebarProps {
   /** The node editor, rendered in its own tab instead of floating over the canvas. */
   node: React.ReactNode;
   validation: React.ReactNode;
-  traces: readonly PacketTrace[];
   selectedStep?: number | null;
   onSelectHop?: (hop: PacketHop, edgeId: string | null) => void;
 }
@@ -36,14 +36,12 @@ const TABS: readonly { id: EditorSidebarTab; label: string }[] = [
  * canvas, hiding the topology underneath; here they are tabs beside it, sharing
  * the rail with the run results and the packet history.
  */
-export function EditorSidebar({
-  node,
-  validation,
-  traces,
-  selectedStep,
-  onSelectHop,
-}: EditorSidebarProps) {
+export function EditorSidebar({ node, validation, selectedStep, onSelectHop }: EditorSidebarProps) {
   const [tab, setTab] = useState<EditorSidebarTab>('node');
+  // Read the run here rather than being handed it: the editor renders the
+  // SimulationProvider, so it cannot subscribe to the context it creates.
+  // Optional, so the rail still works when a host mounts it without one.
+  const traces = useOptionalSimulation()?.state.traces ?? [];
 
   return (
     <aside style={PANEL_STYLE} data-testid="editor-sidebar" aria-label="Inspector">
