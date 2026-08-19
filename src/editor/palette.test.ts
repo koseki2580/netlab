@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { NODE_GLYPHS } from '../components/NodeGlyph';
 import { PALETTE_ITEMS, PALETTE_LAYER_ORDER, isLayerAllowed, paletteByLayer } from './palette';
 
 describe('editor palette', () => {
@@ -33,6 +34,17 @@ describe('editor palette', () => {
       const node = item.create({ x: 0, y: 0 });
       expect(node.data.layerId, item.id).toBe(item.layerId);
       expect(node.type, item.id).toBe(item.id);
+    }
+  });
+
+  it('every element shows the glyph the canvas will paint for it', () => {
+    // A palette icon that differs from the node on the canvas teaches the wrong
+    // association; the glyph is also what carries the meaning without colour.
+    for (const item of PALETTE_ITEMS) {
+      expect(NODE_GLYPHS[item.glyph], item.id).toBeDefined();
+      // The node type IS the glyph kind for these elements — a rename of either
+      // side without the other must fail here.
+      expect(item.glyph, item.id).toBe(item.create({ x: 0, y: 0 }).type);
     }
   });
 

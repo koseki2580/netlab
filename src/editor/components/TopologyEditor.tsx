@@ -7,10 +7,12 @@ import { useTopologyEditorContext } from '../context/TopologyEditorContext';
 import { EditorToolbar } from './EditorToolbar';
 import { EditorSidebar } from './EditorSidebar';
 import { LayerPalette } from './LayerPalette';
-import { TopologyEditorCanvas } from './TopologyEditorCanvas';
+import { ReactFlowEngine } from '../engine/ReactFlowEngine';
+import type { GraphEngine } from '../engine/types';
 import { NodeEditorPanel } from './NodeEditorPanel';
 import { ValidationPanel } from './ValidationPanel';
 import { applyTopologyPatch } from '../../utils/connectionFixers';
+import { validateConnection } from '../../utils/connectionValidator';
 import { paletteByLayer } from '../palette';
 import { SimulationProvider, useOptionalSimulation } from '../../simulation/SimulationContext';
 import type { PacketHop } from '../../types/simulation';
@@ -26,13 +28,29 @@ export interface TopologyEditorProps {
    * the palette, so they cannot be placed.
    */
   layers?: readonly LayerId[];
+  /** Swap the canvas engine. Defaults to the React Flow adapter. */
+  engine?: GraphEngine;
   style?: React.CSSProperties;
   className?: string;
 }
 
 // Inner component: can read editor context to pass NetlabUIContext values
-function TopologyEditorInner({ layers }: { layers?: readonly LayerId[] }) {
-  const { state, setSelectedNodeId, replaceTopology } = useTopologyEditorContext();
+function TopologyEditorInner({
+  layers,
+  engine: Engine = ReactFlowEngine,
+}: {
+  layers?: readonly LayerId[];
+  engine?: GraphEngine;
+}) {
+  const {
+    state,
+    setSelectedNodeId,
+    replaceTopology,
+    addEdge,
+    deleteNode,
+    deleteEdge,
+    updateNodePositions,
+  } = useTopologyEditorContext();
   const [highlightEdgeId, setHighlightEdgeId] = useState<string | null>(null);
   const [highlightedAreaId, setHighlightedAreaId] = useState<string | null>(null);
   // Every scoped layer starts visible: the editor opens showing what it holds,
@@ -106,9 +124,35 @@ function TopologyEditorInner({ layers }: { layers?: readonly LayerId[] }) {
           />
           <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
             <NetlabUIContext.Provider value={uiCtx}>
-              <TopologyEditorCanvas
-                highlightEdgeId={highlightEdgeId}
+              <Engine
+                key={state.reactFlowKey}
+                nodes={state.topology.nodes}
+                edges={state.topology.edges}
                 visibleLayers={visibleLayers}
+                highlightEdgeId={highlightEdgeId}
+                isValidConnection={(c) =>
+                  validateConnection(
+                    state.topology.nodes,
+                    state.topology.edges,
+                    c.source,
+                    c.target,
+                    c.sourceHandle,
+                    c.targetHandle,
+                  ).valid
+                }
+                onConnect={(c) =>
+                  addEdge({
+                    id: `e-${Date.now()}`,
+                    source: c.source,
+                    target: c.target,
+                    ...(c.sourceHandle != null ? { sourceHandle: c.sourceHandle } : {}),
+                    ...(c.targetHandle != null ? { targetHandle: c.targetHandle } : {}),
+                    type: 'smoothstep',
+                  })
+                }
+                onNodesMoved={(moves) => updateNodePositions([...moves])}
+                onDeleteNode={deleteNode}
+                onDeleteEdge={deleteEdge}
               />
             </NetlabUIContext.Provider>
           </div>
@@ -140,6 +184,7 @@ export function TopologyEditor({
   initialTopology,
   onTopologyChange,
   layers,
+  engine,
   style,
   className,
 }: TopologyEditorProps) {
@@ -158,7 +203,10 @@ export function TopologyEditor({
         }}
         {...(className !== undefined ? { className } : {})}
       >
-        <TopologyEditorInner {...(layers !== undefined ? { layers } : {})} />
+        <TopologyEditorInner
+          {...(layers !== undefined ? { layers } : {})}
+          {...(engine !== undefined ? { engine } : {})}
+        />
       </NetlabThemeScope>
     </TopologyEditorProvider>
   );

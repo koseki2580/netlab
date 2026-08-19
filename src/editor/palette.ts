@@ -1,3 +1,4 @@
+import type { NodeGlyphKind } from '../components/NodeGlyph';
 import type { NetlabNode } from '../types/topology';
 import type { LayerId } from '../types/layers';
 import {
@@ -17,6 +18,12 @@ export interface PaletteItem {
   readonly id: string;
   readonly layerId: LayerId;
   readonly label: string;
+  /**
+   * The glyph the canvas paints for this element. The palette shows the same
+   * one, so a learner recognises what they placed — and it is shape + letter +
+   * colour, never colour alone.
+   */
+  readonly glyph: NodeGlyphKind;
   /** One-line hint shown under the label; keeps the palette teaching, not just listing. */
   readonly hint: string;
   readonly create: (position: { x: number; y: number }) => NetlabNode;
@@ -39,6 +46,7 @@ export const PALETTE_LAYER_LABELS: Readonly<Record<LayerId, string>> = {
 export const PALETTE_ITEMS: readonly PaletteItem[] = [
   {
     id: 'switch',
+    glyph: 'switch',
     layerId: 'l2',
     label: 'Switch',
     hint: 'Forwards frames by MAC within one broadcast domain',
@@ -46,6 +54,7 @@ export const PALETTE_ITEMS: readonly PaletteItem[] = [
   },
   {
     id: 'router',
+    glyph: 'router',
     layerId: 'l3',
     label: 'Router',
     hint: 'Forwards packets between subnets by IP',
@@ -53,6 +62,7 @@ export const PALETTE_ITEMS: readonly PaletteItem[] = [
   },
   {
     id: 'client',
+    glyph: 'client',
     layerId: 'l7',
     label: 'Client',
     hint: 'Originates requests',
@@ -60,6 +70,7 @@ export const PALETTE_ITEMS: readonly PaletteItem[] = [
   },
   {
     id: 'server',
+    glyph: 'server',
     layerId: 'l7',
     label: 'Server',
     hint: 'Answers requests',

@@ -17,16 +17,17 @@ import { ValidationSmoothStepEdge } from '../../components/ValidationEdgeLabel';
 import { layerRegistry } from '../../registry/LayerRegistry';
 import { validateConnection as validateEditorConnection } from '../../utils/connectionValidator';
 import type { NetlabNode, NetlabEdge } from '../../types/topology';
-import { useTopologyEditorContext } from '../context/TopologyEditorContext';
 import { visibleTopology } from '../layerVisibility';
-import type { LayerId } from '../../types/layers';
+import type { GraphEngineProps } from './types';
 
 // ─── Inner canvas (keyed so it remounts on undo/redo) ─────────────────────
 
-interface EditorCanvasInnerProps {
+interface EditorCanvasInnerProps extends Omit<
+  GraphEngineProps,
+  'nodes' | 'edges' | 'visibleLayers'
+> {
   initialNodes: NetlabNode[];
   initialEdges: NetlabEdge[];
-  highlightEdgeId?: string | null;
 }
 
 function withValidationEdgeType(edge: NetlabEdge): NetlabEdge {
@@ -41,9 +42,12 @@ function EditorCanvasInner({
   initialNodes,
   initialEdges,
   highlightEdgeId,
+  isValidConnection: isValidConnectionProp,
+  onConnect: onConnectProp,
+  onNodesMoved,
+  onDeleteNode,
+  onDeleteEdge,
 }: EditorCanvasInnerProps) {
-  const { addEdge, deleteNode, deleteEdge, updateNodePositions } = useTopologyEditorContext();
-
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
@@ -108,40 +112,34 @@ function EditorCanvasInner({
 
   const isConnectionValid = useCallback(
     (connection: Connection | NetlabEdge) =>
-      validateEditorConnection(
-        nodes,
-        edges,
-        connection.source ?? '',
-        connection.target ?? '',
-        connection.sourceHandle,
-        connection.targetHandle,
-      ).valid,
-    [nodes, edges],
-  );
-
-  const onConnect = useCallback(
-    (connection: Connection) => {
-      const newEdge: NetlabEdge = {
-        id: `e-${Date.now()}`,
+      isValidConnectionProp({
         source: connection.source ?? '',
         target: connection.target ?? '',
         sourceHandle: connection.sourceHandle,
         targetHandle: connection.targetHandle,
-        type: 'smoothstep',
-      };
-      // Update local RF state for immediate visual feedback
+      }),
+    [isValidConnectionProp],
+  );
+
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      // Local RF state first for immediate feedback; the owner commits it.
       setEdges((eds) => rfAddEdge({ ...connection, type: 'smoothstep' }, eds));
-      // Commit to canonical editor state
-      addEdge(newEdge);
+      onConnectProp({
+        source: connection.source ?? '',
+        target: connection.target ?? '',
+        sourceHandle: connection.sourceHandle,
+        targetHandle: connection.targetHandle,
+      });
     },
-    [setEdges, addEdge],
+    [setEdges, onConnectProp],
   );
 
   const onNodeDragStop: OnNodeDrag = useCallback(
     (_event, _node, allNodes) => {
-      updateNodePositions(allNodes.map((n) => ({ id: n.id, position: n.position })));
+      onNodesMoved(allNodes.map((n) => ({ id: n.id, position: n.position })));
     },
-    [updateNodePositions],
+    [onNodesMoved],
   );
 
   // Delete key handler — removes selected nodes/edges from canonical state
@@ -155,13 +153,13 @@ function EditorCanvasInner({
       const selectedNodes = nodes.filter((n) => n.selected);
       const selectedEdges = edges.filter((ed) => ed.selected);
 
-      selectedNodes.forEach((n) => deleteNode(n.id));
-      selectedEdges.forEach((ed) => deleteEdge(ed.id));
+      selectedNodes.forEach((n) => onDeleteNode(n.id));
+      selectedEdges.forEach((ed) => onDeleteEdge(ed.id));
     };
 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [nodes, edges, deleteNode, deleteEdge]);
+  }, [nodes, edges, onDeleteNode, onDeleteEdge]);
 
   return (
     <ReactFlow
@@ -188,32 +186,27 @@ function EditorCanvasInner({
 
 // ─── Outer wrapper — applies reactFlowKey to force remount on undo/redo ───
 
-export interface TopologyEditorCanvasProps {
-  highlightEdgeId?: string | null;
-  /** Layers to paint. Omit to paint the whole topology. */
-  visibleLayers?: ReadonlySet<LayerId>;
-}
-
-export function TopologyEditorCanvas({
-  highlightEdgeId,
-  visibleLayers,
-}: TopologyEditorCanvasProps) {
-  const { state } = useTopologyEditorContext();
-  // Presentation only: the canonical topology keeps every node, so hiding a
-  // layer never changes what the simulation runs.
+/**
+ * React Flow implementation of the editor's GraphEngine.
+ *
+ * The only file in the editor that may import a graph library. Everything it
+ * needs arrives as props, so a second engine can be dropped in beside it and
+ * held to the same tests.
+ */
+export function ReactFlowEngine({ nodes, edges, visibleLayers, ...handlers }: GraphEngineProps) {
+  // Presentation only: the caller keeps every node, so hiding a layer never
+  // changes what the simulation runs.
   const view = useMemo(
-    () => (visibleLayers ? visibleTopology(state.topology, visibleLayers) : state.topology),
-    [state.topology, visibleLayers],
+    () =>
+      visibleLayers
+        ? visibleTopology({ nodes, edges }, visibleLayers)
+        : { nodes: [...nodes], edges: [...edges] },
+    [nodes, edges, visibleLayers],
   );
 
   return (
     <div style={{ width: '100%', height: '100%' }}>
-      <EditorCanvasInner
-        key={state.reactFlowKey}
-        initialNodes={view.nodes}
-        initialEdges={view.edges}
-        {...(highlightEdgeId !== undefined ? { highlightEdgeId } : {})}
-      />
+      <EditorCanvasInner {...handlers} initialNodes={view.nodes} initialEdges={view.edges} />
     </div>
   );
 }

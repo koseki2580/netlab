@@ -1,3 +1,4 @@
+import { NodeGlyph } from '../../components/NodeGlyph';
 import { useTopologyEditorContext } from '../context/TopologyEditorContext';
 import { paletteByLayer, type PaletteItem } from '../palette';
 import { randomPosition } from '../utils/nodeFactory';
@@ -86,7 +87,9 @@ export function LayerPalette({ layers, visibleLayers, onToggleLayer }: LayerPale
                   data-testid={`editor-palette-${item.id}`}
                   title={item.hint}
                   style={{
-                    display: 'block',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
                     width: '100%',
                     textAlign: 'left',
                     marginBottom: 4,
@@ -99,9 +102,13 @@ export function LayerPalette({ layers, visibleLayers, onToggleLayer }: LayerPale
                     font: 'inherit',
                   }}
                 >
-                  {item.label}
-                  <span style={{ display: 'block', color: '#64748b', fontSize: 10.5 }}>
-                    {item.hint}
+                  {/* The same glyph the canvas paints, so what you pick is what appears. */}
+                  <NodeGlyph kind={item.glyph} size={26} />
+                  <span style={{ minWidth: 0 }}>
+                    {item.label}
+                    <span style={{ display: 'block', color: '#64748b', fontSize: 10.5 }}>
+                      {item.hint}
+                    </span>
                   </span>
                 </button>
               ))}
