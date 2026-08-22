@@ -120,7 +120,12 @@ export default function MaxGraphEngineInner({
   }, [withGraph]);
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+    // `editor-canvas` is the name both engines answer to, so a test addresses
+    // the drawing surface without knowing which one is mounted.
+    <div
+      data-testid="editor-canvas"
+      style={{ position: 'relative', width: '100%', height: '100%' }}
+    >
       <div ref={hostRef} data-testid="maxgraph-canvas" style={{ width: '100%', height: '100%' }} />
       <div
         ref={outlineHostRef}

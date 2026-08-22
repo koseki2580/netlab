@@ -28,6 +28,14 @@ describe('maxGraph node label', () => {
     }
   });
 
+  it('publishes the same data-node-kind hook the React node does', () => {
+    // Tests address device glyphs by this attribute; if only one renderer emits
+    // it, a spec that passes on one engine silently finds nothing on the other.
+    for (const kind of ['router', 'switch', 'client', 'server'] as const) {
+      expect(glyphSvg(kind), kind).toContain(`data-node-kind="${kind}"`);
+    }
+  });
+
   it('carries the letter, so meaning survives without colour', () => {
     expect(glyphSvg('switch')).toContain('>Sw<');
     expect(glyphSvg('router')).toContain('>R<');

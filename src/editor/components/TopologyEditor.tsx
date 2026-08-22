@@ -7,7 +7,7 @@ import { useTopologyEditorContext } from '../context/TopologyEditorContext';
 import { EditorToolbar } from './EditorToolbar';
 import { EditorSidebar } from './EditorSidebar';
 import { LayerPalette } from './LayerPalette';
-import { ReactFlowEngine } from '../engine/ReactFlowEngine';
+import { MaxGraphEngine } from '../engine/MaxGraphEngine';
 import type { GraphEngine } from '../engine/types';
 import { NodeEditorPanel } from './NodeEditorPanel';
 import { ValidationPanel } from './ValidationPanel';
@@ -28,7 +28,7 @@ export interface TopologyEditorProps {
    * the palette, so they cannot be placed.
    */
   layers?: readonly LayerId[];
-  /** Swap the canvas engine. Defaults to the React Flow adapter. */
+  /** Swap the canvas engine. Defaults to the maxGraph adapter. */
   engine?: GraphEngine;
   style?: React.CSSProperties;
   className?: string;
@@ -37,7 +37,7 @@ export interface TopologyEditorProps {
 // Inner component: can read editor context to pass NetlabUIContext values
 function TopologyEditorInner({
   layers,
-  engine: Engine = ReactFlowEngine,
+  engine: Engine = MaxGraphEngine,
 }: {
   layers?: readonly LayerId[];
   engine?: GraphEngine;

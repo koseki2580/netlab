@@ -26,7 +26,10 @@ export function glyphSvg(kind: NodeGlyphKind, size = 28): string {
   if (!meta) return '';
   const { tag, attrs: shape } = glyphPrimitive(meta.shape);
   return [
-    `<svg width="${size}" height="${size}" viewBox="0 0 40 40" role="img" aria-label="${escapeHtml(kind)}">`,
+    // `data-node-kind` is the contract both canvases publish for their device
+    // glyphs; the React NodeGlyph emits it, so this must too or the two engines
+    // stop being addressable the same way.
+    `<svg width="${size}" height="${size}" viewBox="0 0 40 40" role="img" aria-label="${escapeHtml(kind)}" data-node-kind="${escapeHtml(kind)}">`,
     `<${tag} ${attrs(shape)} fill="none" stroke="${meta.color}" stroke-width="2" />`,
     `<text x="20" y="21" text-anchor="middle" dominant-baseline="central" font-family="ui-monospace, monospace" font-size="16" font-weight="700" fill="${meta.color}">${escapeHtml(meta.letter)}</text>`,
     `</svg>`,
