@@ -1,0 +1,1 @@
+var e=Symbol.for(`netlab.NetlabError`),t=class t extends Error{code;context;cause;[e]=!0;constructor(e){super(e.message),this.name=`NetlabError`,this.code=e.code,e.context!==void 0&&(this.context=e.context),e.cause!==void 0&&(this.cause=e.cause),Object.setPrototypeOf(this,t.prototype)}static isInstance(t){return typeof t==`object`&&!!t&&t[e]===!0}};export{t};

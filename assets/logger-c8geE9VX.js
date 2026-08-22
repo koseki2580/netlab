@@ -1,0 +1,1 @@
+var e=typeof window<`u`&&window.__NETLAB_DEBUG__===!0,t={debug:(...t)=>{e&&console.debug(`[netlab]`,...t)},info:(...e)=>console.info(`[netlab]`,...e),warn:(...e)=>console.warn(`[netlab]`,...e),error:(...e)=>console.error(`[netlab]`,...e)};export{t};
