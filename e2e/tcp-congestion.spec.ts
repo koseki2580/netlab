@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from './fixtures/harness';
+import { excludingCanvasInternals } from './axe';
 import { SEL } from './selectors';
 
 test('tcp congestion demo renders deterministic phase transitions', async ({ page, demoPage }) => {
@@ -17,10 +18,8 @@ test('tcp congestion demo renders deterministic phase transitions', async ({ pag
   await page.getByTestId(SEL.demo.tcpCongestionRun).click();
   await expect(page.getByTestId(SEL.demo.tcpCongestionEvent(9, 'fast-retransmit'))).toBeVisible();
 
-  const results = await new AxeBuilder({ page })
+  const results = await excludingCanvasInternals(new AxeBuilder({ page }))
     .withTags(['wcag2a', 'wcag2aa'])
-    .exclude('.react-flow__renderer')
-    .exclude('.react-flow__attribution')
     .analyze();
   expect(results.violations).toEqual([]);
 });

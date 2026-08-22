@@ -79,6 +79,7 @@ type ValidationSmoothStepEdgeProps = EdgeProps<Edge<ValidationEdgeData, 'validat
 export function ValidationSmoothStepEdge({
   id,
   data,
+  animated,
   style,
   markerStart,
   markerEnd,
@@ -107,6 +108,9 @@ export function ValidationSmoothStepEdge({
       <BaseEdge
         id={id}
         path={edgePath}
+        // The canvas's own mark for "this link is shown moving" (REQ-013), so
+        // the behaviour can be asserted without naming the engine that drew it.
+        {...(animated ? { 'data-edge-animated': 'true' } : {})}
         {...(style !== undefined ? { style } : {})}
         {...(markerStart !== undefined ? { markerStart } : {})}
         {...(markerEnd !== undefined ? { markerEnd } : {})}

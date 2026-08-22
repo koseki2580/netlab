@@ -242,3 +242,19 @@ export const SEL = {
     hop: 'trace-hop',
   },
 } as const;
+
+/**
+ * The parts of the drawing surface an accessibility scan skips.
+ *
+ * These name the graph engine's own DOM — the one place a spec cannot avoid
+ * doing so, because the excluded regions carry no test id of ours. Collected
+ * here so that replacing the engine is one edit rather than twenty, and so it
+ * is visible how much of the canvas the scans are not covering.
+ *
+ * The canvas root is deliberately NOT excluded: the viewport controls beside
+ * the drawing must stay in the scan.
+ */
+export const CANVAS_A11Y_EXCLUSIONS: readonly string[] = [
+  '.react-flow__renderer', // the transformed pane, which is role=application
+  '.react-flow__attribution', // engine branding, out of scope
+];

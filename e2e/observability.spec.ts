@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from './fixtures/harness';
+import { excludingCanvasInternals } from './axe';
 import { SEL } from './selectors';
 
 test('observability demo records NetFlow and sFlow annotations', async ({ page, demoPage }) => {
@@ -16,10 +17,8 @@ test('observability demo records NetFlow and sFlow annotations', async ({ page, 
   await page.getByTestId(SEL.demo.observabilitySflow).click();
   await expect(traceLog).toContainText('sflow sample #');
 
-  const results = await new AxeBuilder({ page })
+  const results = await excludingCanvasInternals(new AxeBuilder({ page }))
     .withTags(['wcag2a', 'wcag2aa'])
-    .exclude('.react-flow__renderer')
-    .exclude('.react-flow__attribution')
     .analyze();
   expect(results.violations).toEqual([]);
 });

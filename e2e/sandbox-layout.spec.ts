@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures/harness';
 import { SandboxPage } from './pages/SandboxPage';
+import { excludingCanvasInternals } from './axe';
 import { SEL } from './selectors';
 
 async function openSandbox(page: Page, sandboxPage: SandboxPage) {
@@ -111,10 +112,8 @@ test.describe('sandbox layout at 800x1000 (drawer mode)', () => {
 
   test('drawer-mode sandbox is axe-clean', async ({ page, sandboxPage }) => {
     await openSandbox(page, sandboxPage);
-    const results = await new AxeBuilder({ page })
+    const results = await excludingCanvasInternals(new AxeBuilder({ page }))
       .include(`[data-testid="${SEL.sandbox.surface}"]`)
-      .exclude('.react-flow__renderer')
-      .exclude('.react-flow__attribution')
       .analyze();
     expect(results.violations).toEqual([]);
   });

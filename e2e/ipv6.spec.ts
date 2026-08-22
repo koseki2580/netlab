@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from './fixtures/harness';
+import { excludingCanvasInternals } from './axe';
 import { SEL } from './selectors';
 
 test('IPv6 demo delivers ICMPv6 echo through dual-stack routing', async ({ page, demoPage }) => {
@@ -15,10 +16,8 @@ test('IPv6 demo delivers ICMPv6 echo through dual-stack routing', async ({ page,
   await expect(traceLog).toContainText('Dual-stack Server');
   await expect(traceLog).toContainText('2001:db8:2::20');
 
-  const results = await new AxeBuilder({ page })
+  const results = await excludingCanvasInternals(new AxeBuilder({ page }))
     .withTags(['wcag2a', 'wcag2aa'])
-    .exclude('.react-flow__renderer')
-    .exclude('.react-flow__attribution')
     .analyze();
   expect(results.violations).toEqual([]);
 });

@@ -229,13 +229,13 @@ export class SandboxPage {
   // -- edit popover (anchored to a canvas node) ----------------------------
 
   /**
-   * Right-click a React Flow node by its visible label text and wait for the
-   * sandbox edit popover. React Flow renders nodes through `.react-flow__node`
-   * with no testid we control, so this is the one place we anchor by text.
+   * Right-click a device by its visible name and wait for the sandbox edit
+   * popover. Anchored on the device's own test id, so it finds the device
+   * whichever engine drew it.
    */
   async rightClickNodeByLabel(label: string) {
     await this.page
-      .locator('.react-flow__node')
+      .getByTestId(SEL.canvas.node)
       .filter({ hasText: label })
       .first()
       .click({ button: 'right', force: true });

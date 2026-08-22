@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from './fixtures/harness';
+import { excludingCanvasInternals } from './axe';
 import { SEL } from './selectors';
 
 /**
@@ -115,10 +116,8 @@ test('the editor has no WCAG A/AA violations with the palette and rail on screen
   await demoPage.goto('/editor');
   await expect(page.getByTestId(SEL.editor.palette)).toBeVisible();
 
-  const results = await new AxeBuilder({ page })
+  const results = await excludingCanvasInternals(new AxeBuilder({ page }))
     .withTags(['wcag2a', 'wcag2aa'])
-    .exclude('.react-flow__renderer')
-    .exclude('.react-flow__attribution')
     .analyze();
   expect(results.violations).toEqual([]);
 });

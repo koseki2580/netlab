@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from './fixtures/harness';
+import { excludingCanvasInternals } from './axe';
 import { SEL } from './selectors';
 
 test('DSCP demo records shaper annotations', async ({ page, demoPage }) => {
@@ -12,10 +13,8 @@ test('DSCP demo records shaper annotations', async ({ page, demoPage }) => {
   await expect(traceLog).toContainText('shaper:classified ef dscp 46');
   await expect(traceLog).toContainText('dequeued ef');
 
-  const results = await new AxeBuilder({ page })
+  const results = await excludingCanvasInternals(new AxeBuilder({ page }))
     .withTags(['wcag2a', 'wcag2aa'])
-    .exclude('.react-flow__renderer')
-    .exclude('.react-flow__attribution')
     .analyze();
   expect(results.violations).toEqual([]);
 });

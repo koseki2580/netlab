@@ -1,4 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
+import { excludingCanvasInternals } from './axe';
 import { CATEGORIES, expect, test } from './fixtures/harness';
 
 for (const category of CATEGORIES) {
@@ -7,10 +8,8 @@ for (const category of CATEGORIES) {
       await demoPage.goto(demo.path);
       await expect(page.locator('[data-testid="netlab-root"]')).toBeVisible();
 
-      const results = await new AxeBuilder({ page })
+      const results = await excludingCanvasInternals(new AxeBuilder({ page }))
         .withTags(['wcag2a', 'wcag2aa'])
-        .exclude('.react-flow__renderer') // React Flow canvas is role=application
-        .exclude('.react-flow__attribution') // React Flow branding; out of scope
         .analyze();
 
       expect(results.violations).toEqual([]);
