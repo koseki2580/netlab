@@ -26,6 +26,9 @@ test('places elements from the layer palette and paints them on the canvas', asy
   // `data-node-kind` is the product's own attribute on the device glyph, so this
   // counts drawn devices without depending on the engine's generated markup.
   const nodes = page.getByTestId(SEL.editor.canvas).locator('[data-node-kind]');
+  // The canvas draws after mount, so a count taken too early reads zero and the
+  // assertion below would compare against a baseline that never existed.
+  await expect(nodes.first()).toBeVisible();
   const before = await nodes.count();
   await page.getByTestId(SEL.editor.paletteItem('router')).click();
   await expect(nodes).toHaveCount(before + 1);
@@ -41,6 +44,8 @@ test('hiding a layer removes its nodes from the canvas, and showing brings them 
   const canvas = page.getByTestId(SEL.editor.canvas);
   const l3Nodes = canvas.locator('[data-node-kind="router"]');
   const allNodes = canvas.locator('[data-node-kind]');
+  // Wait for the first draw before taking the baseline (see above).
+  await expect(allNodes.first()).toBeVisible();
   const total = await allNodes.count();
   const routers = await l3Nodes.count();
   expect(routers).toBeGreaterThan(0);

@@ -24,9 +24,9 @@ test('sandbox intro guides the learner through the MTU flow', async ({ page, san
   await sandboxPage.launchTraffic();
 
   await sandboxPage.toggleMode();
-  await expect(page.locator('.react-flow')).toHaveCount(2);
+  await expect(page.getByTestId(SEL.canvas.root)).toHaveCount(2);
 
   await sandboxPage.toggleMode();
-  await expect(page.locator('.react-flow')).toHaveCount(1);
+  await expect(page.getByTestId(SEL.canvas.root)).toHaveCount(1);
   await expect(sandboxPage.introOverlay()).toHaveCount(0);
 });

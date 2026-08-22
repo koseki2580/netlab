@@ -5,7 +5,7 @@ import { SEL } from './selectors';
 test('tcp congestion demo renders deterministic phase transitions', async ({ page, demoPage }) => {
   await demoPage.goto('/simulation/tcp-congestion');
 
-  await expect(page.locator('.react-flow').first()).toBeAttached();
+  await expect(page.getByTestId(SEL.canvas.root).first()).toBeAttached();
   await expect(page.getByTestId(SEL.demo.tcpCongestionChart)).toBeVisible();
   // The element existing IS the assertion: step 9 produced a fast retransmit.
   await expect(page.getByTestId(SEL.demo.tcpCongestionEvent(9, 'fast-retransmit'))).toBeVisible();

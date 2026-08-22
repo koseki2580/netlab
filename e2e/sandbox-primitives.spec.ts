@@ -25,13 +25,13 @@ test('sandbox primitives mount, switch mode, and pass axe checks', async ({
   await sandboxPage.clickTab('parameters');
   await expect(sandboxPage.tabpanel()).toContainText('TCP initial window');
 
-  await expect(page.locator('.react-flow')).toHaveCount(1);
+  await expect(page.getByTestId(SEL.canvas.root)).toHaveCount(1);
   await sandboxPage.toggleMode();
   await expect(sandboxPage.modeSwitch()).toContainText('Compare');
-  await expect(page.locator('.react-flow')).toHaveCount(2);
+  await expect(page.getByTestId(SEL.canvas.root)).toHaveCount(2);
   await sandboxPage.toggleMode();
   await expect(sandboxPage.modeSwitch()).toContainText('Live');
-  await expect(page.locator('.react-flow')).toHaveCount(1);
+  await expect(page.getByTestId(SEL.canvas.root)).toHaveCount(1);
 
   const results = await new AxeBuilder({ page })
     .include(`[data-testid="${SEL.sandbox.panel}"]`)

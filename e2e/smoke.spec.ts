@@ -1,4 +1,5 @@
 import { CATEGORIES, expect, test } from './fixtures/harness';
+import { SEL } from './selectors';
 
 /**
  * Demos that deliberately have no topology canvas.
@@ -23,7 +24,12 @@ for (const category of CATEGORIES) {
       await demoPage.goto(demo.path);
       await expect(page.locator('[data-testid="netlab-root"]')).toBeVisible();
       if (!NON_CANVAS_DEMO_PATHS.has(demo.path)) {
-        await expect(page.locator('.react-flow').first()).toBeAttached();
+        // Two canvases exist: the simulator's and the editor's, and the editor
+        // draws on a different engine. Either one means this demo mounted a
+        // diagram.
+        await expect(
+          page.getByTestId(SEL.canvas.root).or(page.getByTestId(SEL.editor.canvas)).first(),
+        ).toBeAttached();
       }
     });
   }

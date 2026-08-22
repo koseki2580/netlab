@@ -562,6 +562,10 @@ export function NetlabCanvas({
   return (
     <NetlabUIContext.Provider value={uiCtx}>
       <div
+        // The simulator canvas's own name. Tests address the drawing surface
+        // through this rather than the graph library's generated classes, so a
+        // change of engine does not invalidate them.
+        data-testid="netlab-canvas"
         style={{
           width: '100%',
           height: '100%',

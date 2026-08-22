@@ -53,7 +53,7 @@ export function nodeLabelHtml(node: NetlabNode): string {
       ? `<div style="margin-top:2px;color:#fff;background:var(--netlab-accent-red,#ef4444);border-radius:4px;padding:0 4px;font-size:9px;font-weight:700;">${down} iface${down > 1 ? 's' : ''} down</div>`
       : '';
   return [
-    `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;font-family:ui-monospace,monospace;">`,
+    `<div data-testid="topology-node" style="display:flex;flex-direction:column;align-items:center;gap:2px;font-family:ui-monospace,monospace;">`,
     glyphSvg(kind),
     `<div style="font-size:11px;font-weight:700;">${escapeHtml(node.data.label)}</div>`,
     badge,

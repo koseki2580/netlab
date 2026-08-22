@@ -218,6 +218,10 @@ export const SEL = {
   },
   /** The simulator canvas: area clustering, illustration mode, host control. */
   canvas: {
+    /** The simulator canvas's drawing surface, whichever engine renders it. */
+    root: 'netlab-canvas',
+    /** One device on the canvas, named the same way by every engine. */
+    node: 'topology-node',
     areaCluster: 'area-cluster',
     controlledJson: 'controlled-topology-json',
   },

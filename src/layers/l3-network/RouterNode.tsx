@@ -29,7 +29,13 @@ export function RouterNode({ id, data }: NodeProps) {
   const d = data as NetlabNodeData;
   const downInterfaceCount = typeof d._downInterfaceCount === 'number' ? d._downInterfaceCount : 0;
   return (
-    <div style={ROUTER_STYLE} onClick={() => setSelectedNodeId(id)}>
+    <div
+      // The device, named the same way whichever engine draws it, so a test
+      // can find it without knowing the graph library.
+      data-testid="topology-node"
+      style={ROUTER_STYLE}
+      onClick={() => setSelectedNodeId(id)}
+    >
       <Handle type="source" position={Position.Top} id="top" style={HANDLE_STYLE} />
       <Handle type="source" position={Position.Right} id="right" style={HANDLE_STYLE} />
       <Handle type="source" position={Position.Bottom} id="bottom" style={HANDLE_STYLE} />

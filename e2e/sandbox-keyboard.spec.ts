@@ -76,11 +76,11 @@ test('Shift+S keyboard shortcut toggles sandbox panel visibility', async ({
 test('Shift+C toggles sandbox into compare mode', async ({ page, sandboxPage }) => {
   await openSandboxMtu(page, sandboxPage);
 
-  await expect(page.locator('.react-flow')).toHaveCount(1);
+  await expect(page.getByTestId(SEL.canvas.root)).toHaveCount(1);
   await page.keyboard.press('Shift+C');
-  await expect(page.locator('.react-flow')).toHaveCount(2);
+  await expect(page.getByTestId(SEL.canvas.root)).toHaveCount(2);
   await page.keyboard.press('Shift+C');
-  await expect(page.locator('.react-flow')).toHaveCount(1);
+  await expect(page.getByTestId(SEL.canvas.root)).toHaveCount(1);
 });
 
 test('keyboard-only complete an edit flow (Cmd+Z to undo)', async ({ page, sandboxPage }) => {

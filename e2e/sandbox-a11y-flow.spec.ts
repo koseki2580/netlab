@@ -1,12 +1,13 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from './fixtures/harness';
+import { SEL } from './selectors';
 
 test('sandbox popovers and compare flow remain accessible', async ({ page }) => {
   await page.goto('/?sandbox=1&sandboxTab=node#/networking/mtu-fragmentation');
   await expect(page.locator('[data-testid="netlab-root"]')).toBeVisible();
   await expect(page.locator('[data-testid="sandbox-panel"]')).toBeVisible();
 
-  const routedNode = page.locator('.react-flow__node').filter({ hasText: 'R1' }).first();
+  const routedNode = page.getByTestId(SEL.canvas.node).filter({ hasText: 'R1' }).first();
   await routedNode.click({ button: 'right', force: true });
 
   const popover = page.getByRole('dialog', { name: 'Edit in sandbox' });
@@ -28,7 +29,7 @@ test('sandbox popovers and compare flow remain accessible', async ({ page }) => 
   await expect(popover).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Switch sandbox mode' }).click();
-  await expect(page.locator('.react-flow')).toHaveCount(2);
+  await expect(page.getByTestId(SEL.canvas.root)).toHaveCount(2);
 
   const compareA11y = await new AxeBuilder({ page })
     .include('[data-testid="sandbox-panel"]')
@@ -37,5 +38,5 @@ test('sandbox popovers and compare flow remain accessible', async ({ page }) => 
   expect(compareA11y.violations).toEqual([]);
 
   await page.getByRole('button', { name: 'Switch sandbox mode' }).click();
-  await expect(page.locator('.react-flow')).toHaveCount(1);
+  await expect(page.getByTestId(SEL.canvas.root)).toHaveCount(1);
 });

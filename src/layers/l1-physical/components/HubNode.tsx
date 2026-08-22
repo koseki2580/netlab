@@ -26,7 +26,13 @@ export function HubNode({ id, data }: NodeProps) {
   const { setSelectedNodeId } = useNetlabUI();
   const d = data as NetlabNodeData;
   return (
-    <div style={HUB_STYLE} onClick={() => setSelectedNodeId(id)}>
+    <div
+      // The device, named the same way whichever engine draws it, so a test
+      // can find it without knowing the graph library.
+      data-testid="topology-node"
+      style={HUB_STYLE}
+      onClick={() => setSelectedNodeId(id)}
+    >
       <Handle type="source" position={Position.Top} id="top" style={HANDLE_STYLE} />
       <Handle type="source" position={Position.Right} id="right" style={HANDLE_STYLE} />
       <Handle type="source" position={Position.Bottom} id="bottom" style={HANDLE_STYLE} />

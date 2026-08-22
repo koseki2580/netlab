@@ -32,7 +32,7 @@ test('embedded sandbox posts edit-count updates to the parent page', async ({ pa
     .toBe(true);
 
   await frame
-    .locator('.react-flow__node')
+    .getByTestId(SEL.canvas.node)
     .filter({ hasText: 'R1' })
     .first()
     .click({ button: 'right', force: true });
