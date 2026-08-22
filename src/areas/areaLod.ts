@@ -90,6 +90,12 @@ export function applyAreaLod(input: AreaLodInput): AreaLodResult {
       id: clusterNodeId(areaId),
       type: AREA_CLUSTER_NODE_TYPE,
       position: { x, y },
+      // Declare the size the cluster is drawn at. Without it the canvas holds
+      // the node hidden until it has measured it, and a cluster that is created
+      // fresh on every zoom step never gets that far — so zooming out replaced
+      // the devices with clusters nobody could see.
+      width: CLUSTER_W,
+      height: CLUSTER_H,
       draggable: false,
       data: {
         areaId,

@@ -55,6 +55,19 @@ and the gallery — each already has its own tests and docs.
 - **REQ-009 (SHOULD):** The editor SHOULD support swapping the canvas engine
   without changing the editor's own behavior.
 
+### Simulator canvas
+
+- **REQ-010 (MUST):** When a topology defines areas, zooming out far enough MUST
+  collapse an area into a single cluster, and expanding it MUST restore its
+  members. A learner reading a large topology needs the shape before the detail.
+- **REQ-011 (MUST):** A canvas mounted as an illustration MUST NOT capture the
+  page's scroll, and its nodes MUST stay out of the tab order.
+- **REQ-012 (MUST):** A host MUST be able to drive the canvas entirely from
+  outside — supplying the topology and receiving every change — so an embedding
+  application can own the state.
+- **REQ-013 (SHOULD):** Motion used to show a packet travelling SHOULD be
+  suppressed when the viewer prefers reduced motion.
+
 ## 5. Non-functional requirements
 
 - **NFR-001 (accessibility):** The editor MUST have no axe-detectable WCAG 2 A/AA
@@ -120,6 +133,14 @@ not part of this specification.
   hops are listed in order.
 - **AC-008:** Given the editor on screen, when axe analyses it for WCAG 2 A/AA,
   then there are no violations.
+- **AC-009:** Given a topology with areas, when the learner zooms out past the
+  collapse threshold, then the area is shown as one cluster.
+- **AC-010:** Given a collapsed area, when the learner expands it, then its
+  member nodes are drawn again.
+- **AC-011:** Given a canvas mounted as an illustration, when the learner
+  scrolls over it, then the page scrolls rather than the diagram zooming.
+- **AC-012:** Given a host-controlled canvas, when the host changes the
+  topology, then the canvas shows the new topology.
 
 ## 13. Behavior test cases
 
@@ -136,12 +157,17 @@ not part of this specification.
 | TC-009 | AC-008 | E2E | The editor with palette and rail visible | axe analyses for WCAG 2 A/AA | No violations | `e2e/editor-layers.spec.ts` |
 | TC-010 | AC-003 | unit/behavior | A maxGraph canvas with layers | One layer is hidden | Only that layer's cells stop being visible | `src/editor/engine/maxGraphModel.test.ts` |
 | TC-011 | AC-007 | unit/behavior | A recorded run | A history row is selected | The link that hop crossed is reported | `src/editor/components/PacketHistoryPanel.test.tsx` |
+| TC-013 | AC-009 | E2E | A topology with areas | The learner zooms out | The area is drawn as a single cluster | `e2e/canvas-areas.spec.ts` |
+| TC-014 | AC-010 | E2E | A collapsed area | The learner expands it | Its member devices are drawn again | `e2e/canvas-areas.spec.ts` |
+| TC-015 | AC-011 | E2E | An illustration canvas mid-page | The learner scrolls over it | The page scrolls | `e2e/canvas-areas.spec.ts` |
+| TC-016 | AC-012 | E2E | A host-controlled canvas | The host applies a change | The canvas reflects it | `e2e/canvas-controlled.spec.ts` |
 | TC-012 | REQ-009 | unit/behavior | A stand-in engine | The editor drives it | The whole topology and the visible-layer set are handed over | `src/editor/engine/engineContract.test.tsx` |
 
 Regression scenarios kept permanently:
 
 | Test case | Level | Defect it pins | Automated test |
 |---|---|---|---|
+| TC-104 | E2E | Zooming out collapsed the areas but never drew the clusters that replace them, so the canvas went nearly blank | `e2e/canvas-areas.spec.ts` |
 | TC-101 | E2E | Run recorded nothing because the editor subscribed to a simulation context it rendered itself | `e2e/editor-layers.spec.ts` |
 | TC-102 | unit/behavior | Two elements created in the same millisecond shared a node id | `src/editor/palette.test.ts` |
 | TC-103 | unit/behavior | Clearing learner progress left the exported JSON on screen | `src/components/progress/ProgressPanel.test.tsx` |

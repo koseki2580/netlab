@@ -2,7 +2,6 @@ export { TopologyEditor } from './components/TopologyEditor';
 export type { TopologyEditorProps } from './components/TopologyEditor';
 
 export { NodeEditorPanel } from './components/NodeEditorPanel';
-export { ReactFlowEngine } from './engine/ReactFlowEngine';
 export type { GraphEngine, GraphEngineProps } from './engine/types';
 export { EditorToolbar } from './components/EditorToolbar';
 export { ValidationPanel } from './components/ValidationPanel';

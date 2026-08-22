@@ -216,6 +216,11 @@ export const SEL = {
     resultsDelivered: 'editor-results-delivered',
     historyEmpty: 'editor-history-empty',
   },
+  /** The simulator canvas: area clustering, illustration mode, host control. */
+  canvas: {
+    areaCluster: 'area-cluster',
+    controlledJson: 'controlled-topology-json',
+  },
   /** The opt-in maxGraph canvas engine. */
   maxGraph: {
     canvas: 'maxgraph-canvas',
