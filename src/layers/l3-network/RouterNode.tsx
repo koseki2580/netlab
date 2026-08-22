@@ -1,4 +1,5 @@
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import type { NodeProps } from '@xyflow/react';
+import { NodePorts } from '../../components/NodePorts';
 import type { NetlabNodeData } from '../../types/topology';
 import { NodeGlyph } from '../../components/NodeGlyph';
 import { useNetlabUI } from '../../components/NetlabUIContext';
@@ -36,10 +37,7 @@ export function RouterNode({ id, data }: NodeProps) {
       style={ROUTER_STYLE}
       onClick={() => setSelectedNodeId(id)}
     >
-      <Handle type="source" position={Position.Top} id="top" style={HANDLE_STYLE} />
-      <Handle type="source" position={Position.Right} id="right" style={HANDLE_STYLE} />
-      <Handle type="source" position={Position.Bottom} id="bottom" style={HANDLE_STYLE} />
-      <Handle type="source" position={Position.Left} id="left" style={HANDLE_STYLE} />
+      <NodePorts style={HANDLE_STYLE} />
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}>
         <NodeGlyph kind="router" />
       </div>

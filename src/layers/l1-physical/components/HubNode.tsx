@@ -1,4 +1,5 @@
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import type { NodeProps } from '@xyflow/react';
+import { NodePorts } from '../../../components/NodePorts';
 import { useNetlabUI } from '../../../components/NetlabUIContext';
 import type { NetlabNodeData } from '../../../types/topology';
 
@@ -33,10 +34,7 @@ export function HubNode({ id, data }: NodeProps) {
       style={HUB_STYLE}
       onClick={() => setSelectedNodeId(id)}
     >
-      <Handle type="source" position={Position.Top} id="top" style={HANDLE_STYLE} />
-      <Handle type="source" position={Position.Right} id="right" style={HANDLE_STYLE} />
-      <Handle type="source" position={Position.Bottom} id="bottom" style={HANDLE_STYLE} />
-      <Handle type="source" position={Position.Left} id="left" style={HANDLE_STYLE} />
+      <NodePorts style={HANDLE_STYLE} />
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontWeight: 'bold', fontSize: 20 }}>H</div>
         <div style={{ fontSize: 10 }}>{d.label}</div>

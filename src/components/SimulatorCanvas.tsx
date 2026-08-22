@@ -3,7 +3,9 @@ import {
   Background,
   ConnectionMode,
   Controls,
+  Handle,
   MiniMap,
+  Position,
   ReactFlow,
   useReactFlow,
   useViewport,
@@ -17,6 +19,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import type { NetlabColorMode } from '../utils/themeUtils';
+import { NodePortsProvider, type NodePortsRenderer } from './NodePorts';
 import type { NetlabEdge, NetlabNode } from '../types/topology';
 import type { InteractionProfile } from '../editor/engine/types';
 
@@ -29,6 +32,31 @@ import type { InteractionProfile } from '../editor/engine/types';
  * 700-line component, and it means the current tests prove the move changed no
  * behaviour.
  */
+/**
+ * React Flow's answer to "where does an edge attach?": DOM anchors inside the
+ * node. Supplied from here so the device components never import the library —
+ * they ask for anchors, and the mounted engine decides what one is.
+ */
+const reactFlowPorts: NodePortsRenderer = ({ variant = 'device', style }) => {
+  const styleProp = style ? { style } : {};
+  if (variant === 'cluster') {
+    return (
+      <>
+        <Handle type="target" position={Position.Left} {...styleProp} />
+        <Handle type="source" position={Position.Right} {...styleProp} />
+      </>
+    );
+  }
+  return (
+    <>
+      <Handle type="source" position={Position.Top} id="top" {...styleProp} />
+      <Handle type="source" position={Position.Right} id="right" {...styleProp} />
+      <Handle type="source" position={Position.Bottom} id="bottom" {...styleProp} />
+      <Handle type="source" position={Position.Left} id="left" {...styleProp} />
+    </>
+  );
+};
+
 export interface SimulatorCanvasProps {
   nodes: NetlabNode[];
   edges: NetlabEdge[];
@@ -86,86 +114,88 @@ export function SimulatorCanvas({
   sandbox,
 }: SimulatorCanvasProps) {
   return (
-  <ReactFlow
-    nodes={displayNodes}
-    edges={displayEdges}
-    nodeTypes={nodeTypes}
-    edgeTypes={edgeTypes}
-    colorMode={resolvedColorMode}
-    onNodesChange={onNodesChange}
-    onEdgesChange={onEdgesChange}
-    onConnect={onConnect}
-    onNodeDragStop={onNodeDragStop}
-    {...(viewport !== undefined ? { viewport } : {})}
-    {...(onViewportChange !== undefined
-      ? { onMove: (_event, nextViewport) => onViewportChange(nextViewport) }
-      : {})}
-    onEdgeClick={(_event, edge) => selectEdge(edge.id)}
-    onNodeClick={(_event, node) => handleNodeClick(node)}
-    onNodeContextMenu={(event, node) => {
-      if (!sandbox) return;
-      event.preventDefault();
-      selectNode(node.id);
-      sandbox.openEditPopover({
-        target: { kind: 'node', nodeId: node.id },
-        anchorElement: event.currentTarget as HTMLElement,
-      });
-    }}
-    onEdgeContextMenu={(event, edge) => {
-      if (!sandbox) return;
-      event.preventDefault();
-      selectEdge(edge.id);
-      sandbox.openEditPopover({
-        target: { kind: 'edge', edgeId: edge.id },
-        anchorElement: event.currentTarget as HTMLElement,
-      });
-    }}
-    onPaneClick={() => {
-      selectNode(null);
-      selectEdge(null);
-    }}
-    isValidConnection={isConnectionValid}
-    connectionMode={ConnectionMode.Loose}
-    fitView
-    fitViewOptions={{ padding: fitViewPadding }}
-    // Presentational canvases let fitView zoom out further than React Flow's
-    // 0.5 floor so a wide topology + padding fits a narrow phone without the
-    // edge nodes clipping; the editor keeps the default.
-    minZoom={profile.minZoom}
-    nodesFocusable={profile.nodesFocusable}
-    edgesFocusable={profile.nodesFocusable}
-    nodesDraggable={profile.nodesDraggable}
-    disableKeyboardA11y={!profile.nodesFocusable}
-    // Presentational canvases must not hijack the page: with these on
-    // (React Flow's defaults) wheeling/pinching over a mid-page learning
-    // canvas zooms the graph and blocks page scroll. Off = a calm static
-    // picture that scrolls through.
-    zoomOnScroll={profile.zoomOnScroll}
-    zoomOnPinch={profile.zoomOnPinch}
-    zoomOnDoubleClick={profile.zoomOnScroll}
-    panOnDrag={profile.panOnDrag}
-    preventScrolling={profile.preventPageScroll}
-    proOptions={{ hideAttribution: false }}
-  >
-    <Background />
-    {controls && <Controls />}
-    {minimap && (
-      <MiniMap
-        // Theme via --netlab-* tokens rather than React Flow's defaults so
-        // the minimap matches both light and dark themes (C4).
-        style={{ background: 'var(--netlab-bg-surface)' }}
-        maskColor="color-mix(in srgb, var(--netlab-bg-primary) 70%, transparent)"
-        nodeColor="var(--netlab-accent-cyan)"
-        nodeStrokeColor="var(--netlab-border)"
-      />
-    )}
-    <CanvasAutoPan
-      selectedNodeId={selectedNodeId}
-      panelMode={dock.mode}
-      panelWidth={dock.width}
-    />
-    <ViewportWatcher onZoom={setLodZoom} />
-  </ReactFlow>
+    <NodePortsProvider value={reactFlowPorts}>
+      <ReactFlow
+        nodes={displayNodes}
+        edges={displayEdges}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        colorMode={resolvedColorMode}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onNodeDragStop={onNodeDragStop}
+        {...(viewport !== undefined ? { viewport } : {})}
+        {...(onViewportChange !== undefined
+          ? { onMove: (_event, nextViewport) => onViewportChange(nextViewport) }
+          : {})}
+        onEdgeClick={(_event, edge) => selectEdge(edge.id)}
+        onNodeClick={(_event, node) => handleNodeClick(node)}
+        onNodeContextMenu={(event, node) => {
+          if (!sandbox) return;
+          event.preventDefault();
+          selectNode(node.id);
+          sandbox.openEditPopover({
+            target: { kind: 'node', nodeId: node.id },
+            anchorElement: event.currentTarget as HTMLElement,
+          });
+        }}
+        onEdgeContextMenu={(event, edge) => {
+          if (!sandbox) return;
+          event.preventDefault();
+          selectEdge(edge.id);
+          sandbox.openEditPopover({
+            target: { kind: 'edge', edgeId: edge.id },
+            anchorElement: event.currentTarget as HTMLElement,
+          });
+        }}
+        onPaneClick={() => {
+          selectNode(null);
+          selectEdge(null);
+        }}
+        isValidConnection={isConnectionValid}
+        connectionMode={ConnectionMode.Loose}
+        fitView
+        fitViewOptions={{ padding: fitViewPadding }}
+        // Presentational canvases let fitView zoom out further than React Flow's
+        // 0.5 floor so a wide topology + padding fits a narrow phone without the
+        // edge nodes clipping; the editor keeps the default.
+        minZoom={profile.minZoom}
+        nodesFocusable={profile.nodesFocusable}
+        edgesFocusable={profile.nodesFocusable}
+        nodesDraggable={profile.nodesDraggable}
+        disableKeyboardA11y={!profile.nodesFocusable}
+        // Presentational canvases must not hijack the page: with these on
+        // (React Flow's defaults) wheeling/pinching over a mid-page learning
+        // canvas zooms the graph and blocks page scroll. Off = a calm static
+        // picture that scrolls through.
+        zoomOnScroll={profile.zoomOnScroll}
+        zoomOnPinch={profile.zoomOnPinch}
+        zoomOnDoubleClick={profile.zoomOnScroll}
+        panOnDrag={profile.panOnDrag}
+        preventScrolling={profile.preventPageScroll}
+        proOptions={{ hideAttribution: false }}
+      >
+        <Background />
+        {controls && <Controls />}
+        {minimap && (
+          <MiniMap
+            // Theme via --netlab-* tokens rather than React Flow's defaults so
+            // the minimap matches both light and dark themes (C4).
+            style={{ background: 'var(--netlab-bg-surface)' }}
+            maskColor="color-mix(in srgb, var(--netlab-bg-primary) 70%, transparent)"
+            nodeColor="var(--netlab-accent-cyan)"
+            nodeStrokeColor="var(--netlab-border)"
+          />
+        )}
+        <CanvasAutoPan
+          selectedNodeId={selectedNodeId}
+          panelMode={dock.mode}
+          panelWidth={dock.width}
+        />
+        <ViewportWatcher onZoom={setLodZoom} />
+      </ReactFlow>
+    </NodePortsProvider>
   );
 }
 

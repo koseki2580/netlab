@@ -5,25 +5,22 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NetlabUIContext } from '../components/NetlabUIContext';
+import { NodePortsProvider, type NodePortsRenderer } from '../components/NodePorts';
 import { SwitchNode } from './l2-datalink/SwitchNode';
 import { RouterNode } from './l3-network/RouterNode';
 import { ClientNode } from './l7-application/ClientNode';
 import { ServerNode } from './l7-application/ServerNode';
 
-vi.mock('@xyflow/react', async () => {
-  const React = await import('react');
-
-  return {
-    Handle: ({ id, style }: { id?: string; style?: React.CSSProperties }) =>
-      React.createElement('div', { 'data-testid': `handle-${id ?? 'unknown'}`, style }),
-    Position: {
-      Top: 'top',
-      Right: 'right',
-      Bottom: 'bottom',
-      Left: 'left',
-    },
-  };
-});
+// A stand-in engine rather than a mocked library: the device hands its accent
+// style to whichever engine draws the anchors, and that hand-off is what these
+// colour assertions are about.
+const testPorts: NodePortsRenderer = ({ style }) => (
+  <>
+    {['top', 'right', 'bottom', 'left'].map((side) => (
+      <div key={side} data-testid={`handle-${side}`} style={style} />
+    ))}
+  </>
+);
 
 type NodeComponent = (props: Record<string, unknown>) => React.ReactElement;
 
@@ -53,7 +50,9 @@ function renderNode(Component: NodeComponent, data: Record<string, unknown>) {
           setHighlightedAreaId: vi.fn(),
         }}
       >
-        <Component id="node-1" data={data} />
+        <NodePortsProvider value={testPorts}>
+          <Component id="node-1" data={data} />
+        </NodePortsProvider>
       </NetlabUIContext.Provider>,
     );
   });
