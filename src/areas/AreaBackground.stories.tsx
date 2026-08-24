@@ -27,14 +27,6 @@ function AreaBackgroundStory({ highlighted }: AreaBackgroundStoryProps) {
         id="__area__area-private"
         type="netlab-area"
         selected={false}
-        dragging={false}
-        zIndex={-1}
-        selectable={false}
-        deletable={false}
-        draggable={false}
-        isConnectable={false}
-        positionAbsoluteX={0}
-        positionAbsoluteY={0}
       />
     </NetlabUIContext.Provider>
   );

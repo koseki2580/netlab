@@ -4,7 +4,8 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NETLAB_LIGHT_THEME } from '../theme';
-import type { NetworkTopology, TopologySnapshot } from '../types/topology';
+import type { NetlabEdge, NetlabNode, NetworkTopology, TopologySnapshot } from '../types/topology';
+import type { GraphConnection, GraphEdgeChange, GraphNodeChange } from '../types/graph';
 import { assertDefined } from '../utils';
 import { useNetlabContext } from './NetlabContext';
 import { NetlabCanvas } from './NetlabCanvas';
@@ -14,162 +15,45 @@ import { FailureContext, type FailureContextValue } from '../simulation/FailureC
 import { SimulationContext, type SimulationContextValue } from '../simulation/SimulationContext';
 import { EMPTY_FAILURE_STATE } from '../types/failure';
 
-interface MockNode {
-  id: string;
-  position: { x: number; y: number };
-  data: Record<string, unknown>;
-  selected?: boolean;
-  [key: string]: unknown;
-}
+// The graph types are netlab's own now, so the tests use them directly rather
+// than a parallel set of stand-in shapes that can drift from the real thing.
+type MockNode = NetlabNode;
+type MockEdge = NetlabEdge;
+type MockNodeChange = GraphNodeChange<NetlabNode>;
+type MockEdgeChange = GraphEdgeChange<NetlabEdge>;
+type MockConnection = GraphConnection;
 
-interface MockEdge {
-  id: string;
-  source: string;
-  target: string;
-  selected?: boolean;
-  [key: string]: unknown;
-}
-
-type MockNodeChange =
-  | { type: 'remove'; id: string }
-  | { type: 'position'; id: string; position: { x: number; y: number } }
-  | { type: 'select'; id: string; selected: boolean };
-
-type MockEdgeChange =
-  | { type: 'remove'; id: string }
-  | { type: 'select'; id: string; selected: boolean };
-
-interface MockConnection {
-  source?: string | null;
-  target?: string | null;
-  sourceHandle?: string | null;
-  targetHandle?: string | null;
-  type?: string;
-}
-
-interface MockReactFlowProps {
+interface MockEngineProps {
   nodes: MockNode[];
   edges: MockEdge[];
   colorMode?: 'light' | 'dark';
   className?: string;
+  fitViewPadding?: number;
+  profile?: Record<string, unknown>;
   onNodesChange?: (changes: MockNodeChange[]) => void;
   onEdgesChange?: (changes: MockEdgeChange[]) => void;
   onConnect?: (connection: MockConnection) => void;
-  onNodeDragStop?: (event: unknown, node: MockNode, nodes: MockNode[]) => void;
-  onNodeClick?: (event: unknown, node: MockNode) => void;
-  onPaneClick?: () => void;
+  onNodeDragStop?: (node: MockNode, nodes: MockNode[]) => void;
+  handleNodeClick?: (node: MockNode) => void;
+  selectNode?: (id: string | null) => void;
+  selectEdge?: (id: string | null) => void;
   isValidConnection?: (connection: MockConnection) => boolean;
 }
 
-const reactFlowState = vi.hoisted(() => ({
-  latestProps: null as MockReactFlowProps | null,
+const engineState = vi.hoisted(() => ({
+  latestProps: null as MockEngineProps | null,
 }));
 
-vi.mock('@xyflow/react', async () => {
+// A stand-in engine, not a mocked graph library. NetlabCanvas's job is to
+// decide what to draw and what a change means; the engine is the boundary it
+// hands the result to, so that is what these tests drive.
+vi.mock('./engine/SimulatorMaxGraph', async () => {
   const React = await import('react');
-
-  function applyNodeChanges(changes: MockNodeChange[], nodes: MockNode[]): MockNode[] {
-    return changes.reduce<MockNode[]>((currentNodes, change) => {
-      if (change.type === 'remove') {
-        return currentNodes.filter((node) => node.id !== change.id);
-      }
-
-      if (change.type === 'position') {
-        return currentNodes.map((node) =>
-          node.id === change.id ? { ...node, position: change.position } : node,
-        );
-      }
-
-      if (change.type === 'select') {
-        return currentNodes.map((node) =>
-          node.id === change.id ? { ...node, selected: change.selected } : node,
-        );
-      }
-
-      return currentNodes;
-    }, nodes);
-  }
-
-  function applyEdgeChanges(changes: MockEdgeChange[], edges: MockEdge[]): MockEdge[] {
-    return changes.reduce<MockEdge[]>((currentEdges, change) => {
-      if (change.type === 'remove') {
-        return currentEdges.filter((edge) => edge.id !== change.id);
-      }
-
-      if (change.type === 'select') {
-        return currentEdges.map((edge) =>
-          edge.id === change.id ? { ...edge, selected: change.selected } : edge,
-        );
-      }
-
-      return currentEdges;
-    }, edges);
-  }
-
-  function addEdge(connection: MockConnection, edges: MockEdge[]): MockEdge[] {
-    const source = connection.source ?? '';
-    const target = connection.target ?? '';
-
-    return [
-      ...edges,
-      {
-        id: `e-${source}-${target}-${edges.length}`,
-        source,
-        target,
-        sourceHandle: connection.sourceHandle,
-        targetHandle: connection.targetHandle,
-        type: connection.type,
-      },
-    ];
-  }
-
-  function useNodesState(initialNodes: MockNode[]) {
-    const [nodes, setNodes] = React.useState(initialNodes);
-    const onNodesChange = React.useCallback((changes: MockNodeChange[]) => {
-      setNodes((currentNodes) => applyNodeChanges(changes, currentNodes));
-    }, []);
-
-    return [nodes, setNodes, onNodesChange] as const;
-  }
-
-  function useEdgesState(initialEdges: MockEdge[]) {
-    const [edges, setEdges] = React.useState(initialEdges);
-    const onEdgesChange = React.useCallback((changes: MockEdgeChange[]) => {
-      setEdges((currentEdges) => applyEdgeChanges(changes, currentEdges));
-    }, []);
-
-    return [edges, setEdges, onEdgesChange] as const;
-  }
-
-  function ReactFlow(props: MockReactFlowProps) {
-    reactFlowState.latestProps = props;
-    return React.createElement('div', { 'data-testid': 'react-flow' });
-  }
-
-  function useReactFlow() {
-    return {
-      getNode: (_id: string) => undefined,
-      getZoom: () => 1,
-      setCenter: () => Promise.resolve(true),
-    };
-  }
-
   return {
-    ReactFlow,
-    Background: () => null,
-    Controls: () => null,
-    MiniMap: () => null,
-    ConnectionMode: { Loose: 'Loose' },
-    useNodesState,
-    useEdgesState,
-    useReactFlow,
-    addEdge,
-    BaseEdge: () => null,
-    EdgeLabelRenderer: ({ children }: { children: React.ReactNode }) =>
-      React.createElement(React.Fragment, null, children),
-    getSmoothStepPath: () => ['M0 0', 0, 0],
-    applyNodeChanges,
-    applyEdgeChanges,
+    SimulatorMaxGraph: (props: MockEngineProps) => {
+      engineState.latestProps = props;
+      return React.createElement('div', { 'data-testid': 'netlab-graph-engine' });
+    },
   };
 });
 
@@ -252,12 +136,12 @@ function render(ui: React.ReactElement) {
   };
 }
 
-function currentReactFlowProps(): MockReactFlowProps {
-  if (!reactFlowState.latestProps) {
-    throw new Error('ReactFlow props were not captured');
+function currentEngineProps(): MockEngineProps {
+  if (!engineState.latestProps) {
+    throw new Error('the engine was never handed any props');
   }
 
-  return reactFlowState.latestProps;
+  return engineState.latestProps;
 }
 
 function makeFailureContextValue(
@@ -311,7 +195,7 @@ function makeSimulationContextValue(
 
 beforeEach(() => {
   actEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
-  reactFlowState.latestProps = null;
+  engineState.latestProps = null;
   capturedTopology = null;
 });
 
@@ -321,7 +205,7 @@ afterEach(() => {
   });
 
   root = null;
-  reactFlowState.latestProps = null;
+  engineState.latestProps = null;
   capturedTopology = null;
   actEnvironment.IS_REACT_ACT_ENVIRONMENT = false;
 
@@ -367,7 +251,7 @@ describe('NetlabCanvas controlled topology API', () => {
       </NetlabProvider>,
     );
 
-    const props = currentReactFlowProps();
+    const props = currentEngineProps();
     expect(props.nodes).toHaveLength(2);
     expect(props.edges).toHaveLength(1);
   });
@@ -379,7 +263,7 @@ describe('NetlabCanvas controlled topology API', () => {
       </NetlabProvider>,
     );
 
-    expect(currentReactFlowProps().colorMode).toBe('dark');
+    expect(currentEngineProps().colorMode).toBe('dark');
   });
 
   it('forwards the requested React Flow color mode', () => {
@@ -389,7 +273,7 @@ describe('NetlabCanvas controlled topology API', () => {
       </NetlabProvider>,
     );
 
-    expect(currentReactFlowProps().colorMode).toBe('light');
+    expect(currentEngineProps().colorMode).toBe('light');
   });
 
   it('inherits React Flow color mode from NetlabThemeScope when the prop is omitted', () => {
@@ -401,7 +285,7 @@ describe('NetlabCanvas controlled topology API', () => {
       </NetlabThemeScope>,
     );
 
-    expect(currentReactFlowProps().colorMode).toBe('light');
+    expect(currentEngineProps().colorMode).toBe('light');
   });
 
   it('fires onTopologyChange when a new edge is connected', () => {
@@ -415,7 +299,7 @@ describe('NetlabCanvas controlled topology API', () => {
     );
 
     act(() => {
-      currentReactFlowProps().onConnect?.({ source: 'n1', target: 'n2' });
+      currentEngineProps().onConnect?.({ source: 'n1', target: 'n2' });
     });
 
     expect(onTopologyChange).toHaveBeenCalledTimes(1);
@@ -445,7 +329,7 @@ describe('NetlabCanvas controlled topology API', () => {
     );
 
     act(() => {
-      currentReactFlowProps().onEdgesChange?.([{ id: 'e1', type: 'remove' }]);
+      currentEngineProps().onEdgesChange?.([{ id: 'e1', type: 'remove' }]);
     });
 
     expect(onTopologyChange).toHaveBeenCalledTimes(1);
@@ -474,7 +358,7 @@ describe('NetlabCanvas controlled topology API', () => {
     assertDefined(movedNode, 'expected moved node');
 
     act(() => {
-      currentReactFlowProps().onNodeDragStop?.({}, movedNode, movedNodes);
+      currentEngineProps().onNodeDragStop?.(movedNode, movedNodes);
     });
 
     expect(onTopologyChange).toHaveBeenCalledTimes(1);
@@ -502,7 +386,7 @@ describe('NetlabCanvas controlled topology API', () => {
     );
 
     act(() => {
-      currentReactFlowProps().onConnect?.({ source: 'n1', target: 'n2' });
+      currentEngineProps().onConnect?.({ source: 'n1', target: 'n2' });
     });
 
     expect(onEdgesChange).toHaveBeenCalledTimes(1);
@@ -516,7 +400,7 @@ describe('NetlabCanvas controlled topology API', () => {
     assertDefined(movedNode, 'expected moved node');
 
     act(() => {
-      currentReactFlowProps().onNodeDragStop?.({}, movedNode, movedNodes);
+      currentEngineProps().onNodeDragStop?.(movedNode, movedNodes);
     });
 
     expect(onNodesChange).toHaveBeenCalledTimes(1);
@@ -539,7 +423,7 @@ describe('NetlabCanvas controlled topology API', () => {
       </NetlabProvider>,
     );
 
-    expect(currentReactFlowProps().nodes[0]?.position).toEqual({ x: 50, y: 80 });
+    expect(currentEngineProps().nodes[0]?.position).toEqual({ x: 50, y: 80 });
 
     view.rerender(
       <NetlabProvider topology={updated}>
@@ -547,7 +431,7 @@ describe('NetlabCanvas controlled topology API', () => {
       </NetlabProvider>,
     );
 
-    expect(currentReactFlowProps().nodes[0]?.position).toEqual({ x: 320, y: 200 });
+    expect(currentEngineProps().nodes[0]?.position).toEqual({ x: 320, y: 200 });
   });
 
   it('re-syncs from the topology prop when followTopology is set, even without callbacks', () => {
@@ -576,8 +460,8 @@ describe('NetlabCanvas controlled topology API', () => {
       </NetlabProvider>,
     );
 
-    expect(currentReactFlowProps().nodes[0]?.position).toEqual({ x: 50, y: 80 });
-    expect(currentReactFlowProps().edges[0]?.animated ?? false).toBe(false);
+    expect(currentEngineProps().nodes[0]?.position).toEqual({ x: 50, y: 80 });
+    expect(currentEngineProps().edges[0]?.animated ?? false).toBe(false);
 
     view.rerender(
       <NetlabProvider topology={updated}>
@@ -587,9 +471,9 @@ describe('NetlabCanvas controlled topology API', () => {
 
     // Display follows the prop: the node moves and the revealed edge now animates
     // with the styling carried on the synced topology edge (strokeWidth 2.5).
-    expect(currentReactFlowProps().nodes[0]?.position).toEqual({ x: 320, y: 200 });
-    expect(currentReactFlowProps().edges[0]?.animated).toBe(true);
-    expect(currentReactFlowProps().edges[0]?.style).toEqual(
+    expect(currentEngineProps().nodes[0]?.position).toEqual({ x: 320, y: 200 });
+    expect(currentEngineProps().edges[0]?.animated).toBe(true);
+    expect(currentEngineProps().edges[0]?.style).toEqual(
       expect.objectContaining({ strokeWidth: 2.5 }),
     );
   });
@@ -601,9 +485,7 @@ describe('NetlabCanvas controlled topology API', () => {
       </NetlabProvider>,
     );
 
-    expect(
-      (currentReactFlowProps() as { fitViewOptions?: { padding?: number } }).fitViewOptions,
-    ).toEqual({ padding: 0.3 });
+    expect(currentEngineProps().fitViewPadding).toBe(0.3);
   });
 
   it('makes the graph non-focusable & non-draggable when interactiveGraph is false', () => {
@@ -612,26 +494,15 @@ describe('NetlabCanvas controlled topology API', () => {
         <NetlabCanvas interactiveGraph={false} />
       </NetlabProvider>,
     );
-    const props = currentReactFlowProps() as {
-      nodesFocusable?: boolean;
-      edgesFocusable?: boolean;
-      nodesDraggable?: boolean;
-      disableKeyboardA11y?: boolean;
-      zoomOnScroll?: boolean;
-      preventScrolling?: boolean;
-      panOnDrag?: boolean;
-      minZoom?: number;
-    };
-    expect(props.nodesFocusable).toBe(false);
-    expect(props.edgesFocusable).toBe(false);
-    expect(props.nodesDraggable).toBe(false);
-    expect(props.disableKeyboardA11y).toBe(true);
+    const profile = currentEngineProps().profile;
+    expect(profile?.nodesFocusable).toBe(false);
+    expect(profile?.nodesDraggable).toBe(false);
     // Static & scroll-transparent: it must not hijack page scroll / zoom.
-    expect(props.zoomOnScroll).toBe(false);
-    expect(props.preventScrolling).toBe(false);
-    expect(props.panOnDrag).toBe(false);
-    // Lower zoom floor so fitView fits a wide topology on a narrow phone.
-    expect(props.minZoom).toBe(0.2);
+    expect(profile?.zoomOnScroll).toBe(false);
+    expect(profile?.preventPageScroll).toBe(false);
+    expect(profile?.panOnDrag).toBe(false);
+    // Lower zoom floor so fitting a wide topology works on a narrow phone.
+    expect(profile?.minZoom).toBe(0.2);
   });
 
   it('keeps the graph keyboard-interactive by default', () => {
@@ -640,14 +511,9 @@ describe('NetlabCanvas controlled topology API', () => {
         <NetlabCanvas />
       </NetlabProvider>,
     );
-    const props = currentReactFlowProps() as {
-      nodesFocusable?: boolean;
-      disableKeyboardA11y?: boolean;
-      minZoom?: number;
-    };
-    expect(props.nodesFocusable).toBe(true);
-    expect(props.disableKeyboardA11y).toBe(false);
-    expect(props.minZoom).toBe(0.5);
+    const profile = currentEngineProps().profile;
+    expect(profile?.nodesFocusable).toBe(true);
+    expect(profile?.minZoom).toBe(0.5);
   });
 
   it('stops edge animation under prefers-reduced-motion, including topology reveals', () => {
@@ -673,7 +539,7 @@ describe('NetlabCanvas controlled topology API', () => {
           <NetlabCanvas />
         </NetlabProvider>,
       );
-      expect(currentReactFlowProps().edges[0]?.animated).toBe(false);
+      expect(currentEngineProps().edges[0]?.animated).toBe(false);
     } finally {
       window.matchMedia = original;
     }
@@ -694,7 +560,7 @@ describe('NetlabCanvas controlled topology API', () => {
       </NetlabProvider>,
     );
 
-    expect(currentReactFlowProps().nodes[0]?.position).toEqual({ x: 50, y: 80 });
+    expect(currentEngineProps().nodes[0]?.position).toEqual({ x: 50, y: 80 });
 
     view.rerender(
       <NetlabProvider topology={updated}>
@@ -702,7 +568,7 @@ describe('NetlabCanvas controlled topology API', () => {
       </NetlabProvider>,
     );
 
-    expect(currentReactFlowProps().nodes[0]?.position).toEqual({ x: 50, y: 80 });
+    expect(currentEngineProps().nodes[0]?.position).toEqual({ x: 50, y: 80 });
   });
 
   it('uses theme CSS variables for failed edges', () => {
@@ -716,7 +582,7 @@ describe('NetlabCanvas controlled topology API', () => {
       </NetlabProvider>,
     );
 
-    expect(currentReactFlowProps().edges[0]).toMatchObject({
+    expect(currentEngineProps().edges[0]).toMatchObject({
       animated: false,
       style: expect.objectContaining({
         stroke: 'var(--netlab-accent-red)',
@@ -735,7 +601,7 @@ describe('NetlabCanvas controlled topology API', () => {
       </NetlabProvider>,
     );
 
-    expect(currentReactFlowProps().edges[0]).toMatchObject({
+    expect(currentEngineProps().edges[0]).toMatchObject({
       animated: true,
       style: expect.objectContaining({
         stroke: 'var(--netlab-accent-cyan)',
@@ -848,7 +714,7 @@ describe('NetlabCanvas controlled topology API', () => {
       </NetlabProvider>,
     );
 
-    expect(currentReactFlowProps().edges).toEqual(
+    expect(currentEngineProps().edges).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: 'e1',
@@ -904,7 +770,7 @@ describe('NetlabCanvas controlled topology API', () => {
       </NetlabProvider>,
     );
 
-    expect(currentReactFlowProps().edges[0]).toMatchObject({
+    expect(currentEngineProps().edges[0]).toMatchObject({
       style: expect.objectContaining({
         stroke: 'var(--netlab-accent-red)',
       }),
@@ -983,7 +849,7 @@ describe('NetlabCanvas controlled topology API', () => {
       </NetlabProvider>,
     );
 
-    expect(currentReactFlowProps().edges[0]).toMatchObject({
+    expect(currentEngineProps().edges[0]).toMatchObject({
       style: expect.objectContaining({
         stroke: 'var(--netlab-accent-orange, orange)',
       }),
@@ -1010,7 +876,7 @@ describe('NetlabCanvas controlled topology API', () => {
     );
 
     expect(
-      currentReactFlowProps().isValidConnection?.({
+      currentEngineProps().isValidConnection?.({
         source: 'n2',
         target: 'n1',
       }),
@@ -1035,7 +901,7 @@ describe('NetlabCanvas controlled topology API', () => {
       </NetlabProvider>,
     );
 
-    expect(currentReactFlowProps().edges[0]).toMatchObject({
+    expect(currentEngineProps().edges[0]).toMatchObject({
       style: expect.objectContaining({
         stroke: 'var(--netlab-accent-red)',
       }),
@@ -1076,7 +942,7 @@ describe('NetlabCanvas selection choreography (N2)', () => {
     );
 
     // No selection initially — no node gets the selection or neighbor class.
-    const initial = currentReactFlowProps();
+    const initial = currentEngineProps();
     expect(initial.nodes.find((n) => n.id === 'r1')?.className ?? '').not.toContain(
       'netlab-node-selected',
     );
@@ -1088,10 +954,10 @@ describe('NetlabCanvas selection choreography (N2)', () => {
     const r1Node = initial.nodes.find((n) => n.id === 'r1');
     if (!r1Node) throw new Error('r1 node missing');
     act(() => {
-      initial.onNodeClick?.({} as Event, r1Node);
+      initial.handleNodeClick?.(r1Node);
     });
 
-    const after = currentReactFlowProps();
+    const after = currentEngineProps();
     expect(after.nodes.find((n) => n.id === 'r1')?.className).toContain('netlab-node-selected');
     expect(after.nodes.find((n) => n.id === 'r2')?.className).toContain('netlab-node-neighbor');
     expect(after.nodes.find((n) => n.id === 'r3')?.className ?? '').not.toMatch(/netlab-node-/);
@@ -1099,9 +965,11 @@ describe('NetlabCanvas selection choreography (N2)', () => {
 
     // Clearing the selection (pane click) drops the classes.
     act(() => {
-      after.onPaneClick?.();
+      // Clicking empty canvas: the engine clears both selections.
+      after.selectNode?.(null);
+      after.selectEdge?.(null);
     });
-    const cleared = currentReactFlowProps();
+    const cleared = currentEngineProps();
     expect(cleared.nodes.find((n) => n.id === 'r1')?.className ?? '').not.toContain(
       'netlab-node-selected',
     );
@@ -1136,16 +1004,18 @@ describe('NetlabCanvas selection choreography (N2)', () => {
       </NetlabProvider>,
     );
 
-    const initial = currentReactFlowProps();
+    const initial = currentEngineProps();
     const r2Node = initial.nodes.find((n) => n.id === 'r2');
     if (!r2Node) throw new Error('r2 node missing');
     act(() => {
-      initial.onNodeClick?.({} as Event, r2Node);
+      initial.handleNodeClick?.(r2Node);
     });
     expect(selections).toEqual(['r2']);
 
     act(() => {
-      currentReactFlowProps().onPaneClick?.();
+      const props = currentEngineProps();
+      props.selectNode?.(null);
+      props.selectEdge?.(null);
     });
     expect(selections).toEqual(['r2', null]);
   });

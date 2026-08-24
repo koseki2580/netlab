@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import type { NodeProps } from '@xyflow/react';
+import type { GraphNodeProps as NodeProps } from '../types/graph';
 import type { AreaType } from '../types/areas';
 import { NetlabUIContext } from '../components/NetlabUIContext';
 

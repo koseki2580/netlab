@@ -14,10 +14,10 @@ import { ServerNode } from './l7-application/ServerNode';
 /**
  * TC-017 / AC-013 — a device must draw itself with no graph engine mounted.
  *
- * Deliberately does NOT mock `@xyflow/react`: a mock would answer the question
- * the test is asking. What is being proved is that the device components are
- * free of the engine, which is what lets the engine be replaced without
- * redrawing every device.
+ * Deliberately mocks nothing. What is being proved is that the device
+ * components are free of any graph engine, which is what let the engine be
+ * replaced without redrawing every device — and a mock of the engine would
+ * answer the question the test is asking.
  */
 
 const actEnvironment = globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean };

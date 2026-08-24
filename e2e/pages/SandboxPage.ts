@@ -242,6 +242,16 @@ export class SandboxPage {
     await expect(this.editPopover()).toBeVisible();
   }
 
+  /**
+   * Right-click a link on the canvas. A link is drawn by the graph engine, so
+   * it is addressed through the engine's own shape rather than a test id of
+   * ours — the one gesture with no product-side hook to aim at.
+   */
+  async rightClickLink() {
+    await this.page.locator('.netlab-edge').first().click({ button: 'right', force: true });
+    await expect(this.editPopover()).toBeVisible();
+  }
+
   editPopover(): Locator {
     return this.page.getByTestId(SEL.sandbox.editPopover.root);
   }

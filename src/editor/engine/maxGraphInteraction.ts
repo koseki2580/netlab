@@ -3,10 +3,8 @@ import { InternalEvent } from '@maxgraph/core';
 import type { ConnectionHandler } from '@maxgraph/core';
 import type { GraphEngineProps } from './types';
 
-type Handlers = Pick<
-  GraphEngineProps,
-  'isValidConnection' | 'onConnect' | 'onDeleteNode' | 'onDeleteEdge'
->;
+type ConnectHandlers = Pick<GraphEngineProps, 'isValidConnection' | 'onConnect'>;
+type DeleteHandlers = Pick<GraphEngineProps, 'onDeleteNode' | 'onDeleteEdge'>;
 
 /** The id a cell carries, or null for cells the adapter did not name. */
 function cellId(cell: Cell | null): string | null {
@@ -21,7 +19,7 @@ function cellId(cell: Cell | null): string | null {
  * edge — the owner is the one that decides whether an edge exists, and it will
  * push the topology back down. Leaving both would double the link.
  */
-export function wireConnect(graph: Graph, handlers: Handlers): () => void {
+export function wireConnect(graph: Graph, handlers: ConnectHandlers): () => void {
   graph.setConnectable(true);
   // Refuse a connection the owner rejects, at the point the gesture is made,
   // so the learner sees the refusal instead of an edge that vanishes later.
@@ -57,7 +55,7 @@ export function wireConnect(graph: Graph, handlers: Handlers): () => void {
  * for the same reason: the owner holds the topology and the undo history.
  * Typing in a field must never delete the diagram.
  */
-export function wireDelete(graph: Graph, handlers: Handlers): () => void {
+export function wireDelete(graph: Graph, handlers: DeleteHandlers): () => void {
   const onKey = (event: KeyboardEvent) => {
     if (event.key !== 'Delete' && event.key !== 'Backspace') return;
     const target = event.target as HTMLElement | null;

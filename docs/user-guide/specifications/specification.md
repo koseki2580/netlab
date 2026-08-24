@@ -67,9 +67,23 @@ and the gallery — each already has its own tests and docs.
   application can own the state.
 - **REQ-013 (SHOULD):** Motion used to show a packet travelling SHOULD be
   suppressed when the viewer prefers reduced motion.
-- **REQ-014 (MUST):** What a device looks like on the canvas MUST NOT depend on
-  which graph engine draws it. The same device shape, name and health badge MUST
-  appear either way, so replacing the engine is not a redrawing of every device.
+- **REQ-014 (MUST):** What a device or a link looks like on the canvas MUST NOT
+  depend on which graph engine draws it. The same device shape, name and health
+  badge, and the same link colour, weight and dashes, MUST appear either way, so
+  replacing the engine is not a redrawing of every device.
+- **REQ-015 (MUST):** A link whose device is not drawn — a collapsed area, a
+  half-built topology — MUST be omitted rather than failing the canvas.
+- **REQ-016 (MUST):** In the sandbox, right-clicking a link on the canvas MUST
+  open that link's editor, so a learner can take a link down where they can see
+  it rather than through a separate form.
+- **REQ-017 (MUST):** When two canvases are shown for comparison, they MUST
+  share one viewport: panning or zooming either MUST move both, so the learner
+  is comparing the same part of the topology at the same size.
+- **REQ-018 (MUST):** A link the canvas has found errors or warnings on MUST be
+  marked on the link itself, and hovering the mark MUST say what is wrong.
+- **REQ-019 (MUST):** Opening a device MUST bring it clear of the detail panel,
+  and MUST leave the rest of the topology where the learner can still reach it —
+  opening devices repeatedly MUST NOT walk the drawing off the canvas.
 
 ## 5. Non-functional requirements
 
@@ -147,6 +161,23 @@ not part of this specification.
 - **AC-013:** Given a device with an interface down, when it is drawn with no
   graph engine mounted at all, then the device, its name and its "iface down"
   badge are all present.
+- **AC-014:** Given a topology, when the canvas draws it, then every device is
+  drawn showing that device's own rendering, and redrawing replaces the previous
+  drawing rather than adding to it.
+- **AC-015:** Given a link the canvas has marked down or highlighted, when it is
+  drawn, then it keeps the colour, weight and dashes the canvas asked for; and a
+  link to a device that is not drawn is omitted while the devices stay.
+- **AC-016:** Given a sandbox canvas, when the learner right-clicks a link and
+  takes it down, then the link editor opens and the edit is recorded in the
+  sandbox's edit list.
+- **AC-017:** Given compare mode, when the learner zooms one canvas, then the
+  other is drawn at the same zoom.
+- **AC-018:** Given a link with a validation error, when it is drawn, then it
+  carries an error mark; a link with only warnings carries a warning mark, and a
+  clean link carries none.
+- **AC-019:** Given a device that has been opened and dismissed, when it is
+  opened again, then it is drawn in the same place as the first time and stays
+  within the canvas.
 
 ## 13. Behavior test cases
 

@@ -1,4 +1,4 @@
-import type { NodeProps } from '@xyflow/react';
+import type { GraphNodeProps as NodeProps } from '../../types/graph';
 import { NodePorts } from '../../components/NodePorts';
 import type { NetlabNodeData } from '../../types/topology';
 import { NodeGlyph } from '../../components/NodeGlyph';

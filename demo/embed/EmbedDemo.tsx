@@ -170,7 +170,9 @@ export default function EmbedDemo() {
             style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#0f172a', marginBottom: 16 }}
           >
             <strong>My Documentation Site</strong>
-            <span style={{ color: '#94a3b8', marginLeft: 8, fontSize: 12 }}>
+            {/* Slate-500 rather than slate-400: on this card's #f8fafc the
+                lighter tone sits at 2.45:1, well under WCAG AA. */}
+            <span style={{ color: '#64748b', marginLeft: 8, fontSize: 12 }}>
               light-mode host page
             </span>
           </div>

@@ -1,4 +1,4 @@
-import type { Node, Edge } from '@xyflow/react';
+import type { GraphEdge, GraphNode } from './graph';
 import type { LayerId } from './layers';
 import type {
   BgpConfig,
@@ -71,7 +71,7 @@ export interface VlanConfig {
   name?: string;
 }
 
-export type NetlabNode = Node<NetlabNodeData>;
+export type NetlabNode = GraphNode<NetlabNodeData>;
 
 export interface NetlabEdgeData extends Record<string, unknown> {
   mtuBytes?: number;
@@ -80,7 +80,7 @@ export interface NetlabEdgeData extends Record<string, unknown> {
   wireless?: WirelessLinkConfig;
 }
 
-export type NetlabEdge = Edge<NetlabEdgeData>;
+export type NetlabEdge = GraphEdge<NetlabEdgeData>;
 
 export interface NetworkTopology {
   nodes: NetlabNode[];

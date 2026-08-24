@@ -48,12 +48,11 @@ export default defineConfig(({ command }) => {
           },
         },
         rollupOptions: {
-          external: ['react', 'react-dom', '@xyflow/react', 'zustand'],
+          external: ['react', 'react-dom', 'zustand'],
           output: {
             globals: {
               react: 'React',
               'react-dom': 'ReactDOM',
-              '@xyflow/react': 'ReactFlow',
               zustand: 'zustand',
             },
           },

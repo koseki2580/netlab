@@ -1,4 +1,4 @@
-import type { NodeTypes } from '@xyflow/react';
+import type { GraphNodeTypes as NodeTypes } from './graph';
 import type { InFlightPacket } from './packets';
 import type { RouteEntry } from './routing';
 import type { Neighbor } from './simulation';

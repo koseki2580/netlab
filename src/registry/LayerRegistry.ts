@@ -1,4 +1,4 @@
-import type { NodeTypes } from '@xyflow/react';
+import type { GraphNodeTypes as NodeTypes } from '../types/graph';
 import type { LayerId, LayerPlugin, ForwarderFactory } from '../types/layers';
 import { logger } from '../utils/logger';
 

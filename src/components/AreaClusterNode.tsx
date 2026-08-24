@@ -1,4 +1,4 @@
-import type { NodeProps } from '@xyflow/react';
+import type { GraphNodeProps as NodeProps } from '../types/graph';
 import { NodePorts } from './NodePorts';
 import type { AreaClusterNodeData } from '../areas/areaLod';
 import { AreaCluster } from './AreaCluster';

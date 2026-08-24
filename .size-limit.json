@@ -76,13 +76,13 @@
   {
     "name": "ui:simulation-context",
     "path": "dist/SimulationContext-*.mjs",
-    "limit": "132 kB",
+    "limit": "235 kB",
     "gzip": true
   },
   {
-    "name": "ui:netlab-context",
-    "path": "dist/NetlabUIContext-*.mjs",
-    "limit": "2 kB",
+    "name": "ui:node-ports",
+    "path": "dist/NodePorts-*.mjs",
+    "limit": "3 kB",
     "gzip": true
   },
   {

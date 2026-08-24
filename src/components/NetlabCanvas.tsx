@@ -1,25 +1,27 @@
 // What is left of the graph library here is state plumbing and types; every
-// rendering call lives in SimulatorCanvas, which is the only file that mounts an
-// engine. That is what makes replacing the engine a contained change.
+// rendering call lives in the engine component, which is the only file that
+// mounts a graph library. That is what makes replacing the engine a contained
+// change.
 import {
   addEdge,
   applyEdgeChanges,
   applyNodeChanges,
   useEdgesState,
   useNodesState,
-  type Connection,
-  type Edge,
-  type EdgeChange,
-  type NodeChange,
-  type NodeTypes,
-  type OnNodeDrag,
-} from '@xyflow/react';
+} from './graphState';
+import type {
+  GraphConnection as Connection,
+  GraphEdge as Edge,
+  GraphEdgeChange as EdgeChange,
+  GraphNodeChange as NodeChange,
+  GraphNodeTypes as NodeTypes,
+} from '../types/graph';
 import './edges.css';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AreaBackground } from '../areas/AreaBackground';
 import { interactionProfile } from '../editor/engine/types';
-import { SimulatorCanvas } from './SimulatorCanvas';
+import { SimulatorMaxGraph as SimulatorCanvas } from './engine/SimulatorMaxGraph';
 import { areasToNodes } from '../areas/AreaRegistry';
 import { applyAreaLod, AREA_CLUSTER_NODE_TYPE, type AreaClusterNodeData } from '../areas/areaLod';
 import { AreaClusterNode } from './AreaClusterNode';
@@ -35,7 +37,6 @@ import { NetlabThemeScopeContext } from './NetlabThemeScope';
 import { NetlabUIContext } from './NetlabUIContext';
 import { NodeDetailPanel } from './NodeDetailPanel';
 import { useNodeDetailDock } from './NodeDetailPanel/useNodeDetailDock';
-import { ValidationSmoothStepEdge } from './ValidationEdgeLabel';
 
 const AREA_NODE_TYPE: NodeTypes = {
   'netlab-area': AreaBackground as NodeTypes[string],
@@ -186,12 +187,6 @@ export function NetlabCanvas({
   // its area open regardless of zoom.
   const [lodZoom, setLodZoom] = useState(1);
   const [expandedAreaIds, setExpandedAreaIds] = useState<ReadonlySet<string>>(() => new Set());
-  const edgeTypes = useMemo(
-    () => ({
-      'validation-smoothstep': ValidationSmoothStepEdge,
-    }),
-    [],
-  );
 
   // One definition of what "presentational" means, shared with the editor's
   // engine seam so both canvases treat a mid-page diagram the same way.
@@ -269,8 +264,8 @@ export function NetlabCanvas({
     [edges, setEdges, isControlled, onEdgesChangeProp, emitTopologyChange, nodes],
   );
 
-  const onNodeDragStop: OnNodeDrag = useCallback(
-    (_event, _node, allNodes) => {
+  const onNodeDragStop = useCallback(
+    (_node: NetlabNode, allNodes: NetlabNode[]) => {
       if (!isControlled) return;
 
       const nextNodes = excludeAreaNodes(allNodes);
@@ -574,7 +569,6 @@ export function NetlabCanvas({
           nodes={displayNodes}
           edges={displayEdges}
           nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
           colorMode={resolvedColorMode}
           profile={profile}
           fitViewPadding={fitViewPadding}
@@ -604,4 +598,3 @@ export function NetlabCanvas({
     </NetlabUIContext.Provider>
   );
 }
-

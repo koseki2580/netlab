@@ -3,14 +3,28 @@
  * Centralises the marching-ants speed on `--netlab-edge-motion` and, crucially,
  * disables it under prefers-reduced-motion. The `animated` prop is already
  * gated in JS; this CSS guard hardens it at the style layer so an animated edge
- * can never march when the user asked for reduced motion. */
+ * can never march when the user asked for reduced motion.
+ *
+ * Keyed on `data-edge-animated`, the canvas's own mark for a link it is showing
+ * in motion, so the motion belongs to the canvas rather than to whichever graph
+ * engine drew it. The `path` half is for engines that mark the group rather
+ * than the stroke. */
 
-.react-flow__edge.animated .react-flow__edge-path {
-  animation-duration: var(--netlab-edge-motion, 600ms);
+@keyframes netlab-edge-march {
+  to {
+    stroke-dashoffset: -10;
+  }
+}
+
+[data-edge-animated='true'],
+[data-edge-animated='true'] path {
+  stroke-dasharray: 5;
+  animation: netlab-edge-march var(--netlab-edge-motion, 600ms) linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .react-flow__edge.animated .react-flow__edge-path {
+  [data-edge-animated='true'],
+  [data-edge-animated='true'] path {
     animation: none !important;
     /* Keep direction legible without motion: a static dash + the arrow marker. */
     stroke-dasharray: 6 4;

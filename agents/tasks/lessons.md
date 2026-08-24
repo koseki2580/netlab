@@ -117,3 +117,33 @@ A running record of corrections and feedback received during sessions. Use this 
 **Why**: A pure-logic module is not a usable feature; shipping it as "done" without a consumer surface or UI verification fails the actual goal (a human can use it).
 
 **Apply-when**: Adding learner-facing demo panels/components, especially when e2e is flaky or unavailable.
+
+---
+
+## L009 — Never edit source while a Playwright run is in flight
+
+**What happened**: I edited `SimulatorMaxGraph.tsx` and `LinkEditorForm.tsx` while a full Playwright run was executing against the Vite dev server. HMR remounted components mid-test; they threw `useSandbox must be used within <SandboxProvider>` and seven specs failed on timeouts that looked exactly like real regressions.
+
+**Rule**:
+
+- Once a Playwright run starts against the dev server, make no edits under `src/` or `e2e/` until it reports. Use the wait to read code or write notes outside the served tree.
+- A failure whose symptom is "the app never mounted" during a run you were editing through is suspect until reproduced on a quiet tree.
+
+**Why**: HMR failures are indistinguishable from product failures in the report, and chasing them costs a full six-minute run each time.
+
+**Apply-when**: Any long browser-test run against a dev server.
+
+---
+
+## L010 — A feature with no test disappears silently in a migration
+
+**What happened**: Porting the canvas to a new graph engine, four features had no coverage at all — right-click to edit a link, the shared viewport that locks compare mode's two canvases, the mark on a miswired link, and drawing a new link. The full browser suite went green while every one of them was gone.
+
+**Rule**:
+
+- Before replacing an engine or library, enumerate what the old adapter's interface actually did — every prop, every callback — and check each against the tests. Write the missing tests before the port, not after.
+- Green does not mean preserved. It means preserved _where covered_.
+
+**Why**: A migration only reports what the tests describe, and interface breadth is exactly what nobody writes tests for.
+
+**Apply-when**: Swapping any library that sits behind a wide prop surface.

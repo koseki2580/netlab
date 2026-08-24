@@ -122,7 +122,6 @@
     ]
   },
   "peerDependencies": {
-    "@xyflow/react": ">=12.0.0",
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0"
   },
@@ -138,7 +137,6 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^6.0.1",
     "@vitest/coverage-v8": "^4.1.4",
-    "@xyflow/react": "^12.10.2",
     "axe-playwright": "2.2.2",
     "esbuild": "^0.28.0",
     "eslint": "^9.39.4",

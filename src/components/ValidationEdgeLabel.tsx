@@ -1,11 +1,4 @@
 import type { CSSProperties } from 'react';
-import {
-  BaseEdge,
-  EdgeLabelRenderer,
-  getSmoothStepPath,
-  type Edge,
-  type EdgeProps,
-} from '@xyflow/react';
 import type { ValidationResult } from '../utils/connectionValidator';
 
 export interface ValidationEdgeData extends Record<string, unknown> {
@@ -71,60 +64,5 @@ export function ValidationEdgeLabel({
     >
       {hasErrors ? '❌' : '⚠️'}
     </div>
-  );
-}
-
-type ValidationSmoothStepEdgeProps = EdgeProps<Edge<ValidationEdgeData, 'validation-smoothstep'>>;
-
-export function ValidationSmoothStepEdge({
-  id,
-  data,
-  animated,
-  style,
-  markerStart,
-  markerEnd,
-  interactionWidth,
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
-  sourcePosition,
-  targetPosition,
-  pathOptions,
-}: ValidationSmoothStepEdgeProps) {
-  const [edgePath, labelX, labelY] = getSmoothStepPath({
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
-    sourcePosition,
-    targetPosition,
-    borderRadius: pathOptions?.borderRadius,
-    offset: pathOptions?.offset,
-  });
-
-  return (
-    <>
-      <BaseEdge
-        id={id}
-        path={edgePath}
-        // The canvas's own mark for "this link is shown moving" (REQ-013), so
-        // the behaviour can be asserted without naming the engine that drew it.
-        {...(animated ? { 'data-edge-animated': 'true' } : {})}
-        {...(style !== undefined ? { style } : {})}
-        {...(markerStart !== undefined ? { markerStart } : {})}
-        {...(markerEnd !== undefined ? { markerEnd } : {})}
-        {...(interactionWidth !== undefined ? { interactionWidth } : {})}
-      />
-      <EdgeLabelRenderer>
-        <ValidationEdgeLabel
-          {...(data?.validationResult !== undefined
-            ? { validationResult: data.validationResult }
-            : {})}
-          labelX={labelX}
-          labelY={labelY}
-        />
-      </EdgeLabelRenderer>
-    </>
   );
 }

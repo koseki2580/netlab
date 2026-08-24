@@ -72,6 +72,11 @@ export const SEL = {
     introStart: 'sandbox-intro-start',
     annotationListItem: 'annotation-list-item',
     annotationsFilter: 'sandbox-annotations-filter',
+    linkEditor: {
+      root: 'sandbox-link-editor',
+      stateDown: 'sandbox-link-state-down',
+      apply: 'sandbox-link-state-apply',
+    },
     edits: {
       list: 'edit-list-item',
       resetAll: 'sandbox-edits-reset-all',

@@ -26,7 +26,11 @@ export function LinkEditorForm({
   }
 
   return (
-    <section style={sectionStyle} aria-label={t('sandbox.edits.editor.link.label')}>
+    <section
+      data-testid="sandbox-link-editor"
+      style={sectionStyle}
+      aria-label={t('sandbox.edits.editor.link.label')}
+    >
       <strong>{t('sandbox.edits.editor.link.state')}</strong>
       <div
         role="group"
@@ -37,6 +41,7 @@ export function LinkEditorForm({
           <button
             key={state}
             type="button"
+            data-testid={`sandbox-link-state-${state}`}
             aria-pressed={after === state}
             style={{
               ...buttonStyle,
@@ -57,6 +62,7 @@ export function LinkEditorForm({
       </span>
       <button
         type="button"
+        data-testid="sandbox-link-state-apply"
         style={buttonStyle}
         onClick={() => {
           sandbox.setDiffFilter('link');
