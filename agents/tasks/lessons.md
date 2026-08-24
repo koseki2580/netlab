@@ -147,3 +147,18 @@ A running record of corrections and feedback received during sessions. Use this 
 **Why**: A migration only reports what the tests describe, and interface breadth is exactly what nobody writes tests for.
 
 **Apply-when**: Swapping any library that sits behind a wide prop surface.
+
+---
+
+## L011 — A silent `.replace()` is a claim you did not verify
+
+**What happened**: Twice, a Python edit script no-op'd because its anchor string no longer matched after prettier reformatted the file — once duplicating a const, once dropping eight specification rows I then told the user were recorded. Both looked like success: the script printed "ok" and exited 0.
+
+**Rule**:
+
+- Every scripted edit asserts its anchor exists before replacing (`assert anchor in s`), and greps for the result afterwards.
+- Never report a file as updated on the strength of the script exiting cleanly. Read back the thing you claim to have written.
+
+**Why**: A string replace that matches nothing is indistinguishable from one that worked, and the failure surfaces as a false claim to the user rather than as an error.
+
+**Apply-when**: Any scripted edit to a file that a formatter also rewrites (specs, JSON, anything under lint-staged).

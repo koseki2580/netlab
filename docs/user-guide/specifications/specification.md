@@ -81,6 +81,11 @@ and the gallery — each already has its own tests and docs.
   is comparing the same part of the topology at the same size.
 - **REQ-018 (MUST):** A link the canvas has found errors or warnings on MUST be
   marked on the link itself, and hovering the mark MUST say what is wrong.
+- **REQ-020 (MUST):** The canvas's own controls MUST be drawn in the theme the
+  canvas was given, so a diagram embedded in a light-mode page does not carry a
+  dark control cluster in its corner.
+- **REQ-021 (MUST):** The canvas MUST NOT offer a control that does nothing on
+  it. Snapping to a grid is offered only where devices can be dragged.
 - **REQ-019 (MUST):** Opening a device MUST bring it clear of the detail panel,
   and MUST leave the rest of the topology where the learner can still reach it —
   opening devices repeatedly MUST NOT walk the drawing off the canvas.
@@ -175,40 +180,52 @@ not part of this specification.
 - **AC-018:** Given a link with a validation error, when it is drawn, then it
   carries an error mark; a link with only warnings carries a warning mark, and a
   clean link carries none.
+- **AC-020:** Given the same topology drawn once in a light theme and once in a
+  dark one, when both are on screen, then their viewport controls are drawn
+  differently, the light one lighter than the dark one.
 - **AC-019:** Given a device that has been opened and dismissed, when it is
   opened again, then it is drawn in the same place as the first time and stays
   within the canvas.
 
 ## 13. Behavior test cases
 
-| Test case | Related AC | Level         | Given / precondition                      | When / action                            | Then / observable result                                     | Automated test                                      |
-| --------- | ---------- | ------------- | ----------------------------------------- | ---------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------- |
-| TC-001    | AC-001     | E2E           | The editor is open                        | The learner clicks the router element    | The canvas shows one more node                               | `e2e/editor-layers.spec.ts`                         |
-| TC-002    | AC-002     | unit/behavior | `layers={['l3']}`                         | The palette renders                      | Only the router is offered; switch and client are absent     | `src/editor/components/LayerPalette.test.tsx`       |
-| TC-003    | AC-003     | E2E           | The topology has routers                  | The learner hides, then shows, L3        | The routers leave the canvas, then return                    | `e2e/editor-layers.spec.ts`                         |
-| TC-004    | AC-004     | unit/behavior | A topology and a layer selection          | Visible topology is computed             | The canonical topology is unchanged                          | `src/editor/layerVisibility.test.ts`                |
-| TC-005    | AC-004     | unit/behavior | A hidden layer with a link to a shown one | Visible topology is computed             | The link is not drawn                                        | `src/editor/layerVisibility.test.ts`                |
-| TC-006    | AC-005     | E2E           | The editor is open                        | The learner switches inspector tabs      | Only the chosen panel is present                             | `e2e/editor-layers.spec.ts`                         |
-| TC-007    | AC-006     | unit/behavior | Two nodes without IP addresses            | Run is rendered                          | Run is disabled and names the missing IP address             | `src/editor/components/EditorRunButton.test.tsx`    |
-| TC-008    | AC-007     | E2E           | The editor with addressable hosts         | The learner runs, then opens the run tab | The run is listed rather than reported empty                 | `e2e/editor-layers.spec.ts`                         |
-| TC-009    | AC-008     | E2E           | The editor with palette and rail visible  | axe analyses for WCAG 2 A/AA             | No violations                                                | `e2e/editor-layers.spec.ts`                         |
-| TC-010    | AC-003     | unit/behavior | A maxGraph canvas with layers             | One layer is hidden                      | Only that layer's cells stop being visible                   | `src/editor/engine/maxGraphModel.test.ts`           |
-| TC-011    | AC-007     | unit/behavior | A recorded run                            | A history row is selected                | The link that hop crossed is reported                        | `src/editor/components/PacketHistoryPanel.test.tsx` |
-| TC-013    | AC-009     | E2E           | A topology with areas                     | The learner zooms out                    | The area is drawn as a single cluster                        | `e2e/canvas-areas.spec.ts`                          |
-| TC-014    | AC-010     | E2E           | A collapsed area                          | The learner expands it                   | Its member devices are drawn again                           | `e2e/canvas-areas.spec.ts`                          |
-| TC-015    | AC-011     | E2E           | An illustration canvas mid-page           | The learner scrolls over it              | The page scrolls                                             | `e2e/canvas-areas.spec.ts`                          |
-| TC-016    | AC-012     | E2E           | A host-controlled canvas                  | The host applies a change                | The canvas reflects it                                       | `e2e/canvas-controlled.spec.ts`                     |
-| TC-017    | AC-013     | unit/behavior | Every device drawing and the area cluster | Drawn with no graph engine mounted       | Each shows its device, name and badge                        | `src/layers/nodeEngineIndependence.test.tsx`        |
-| TC-012    | REQ-009    | unit/behavior | A stand-in engine                         | The editor drives it                     | The whole topology and the visible-layer set are handed over | `src/editor/engine/engineContract.test.tsx`         |
+| Test case | Related AC | Level         | Given / precondition                            | When / action                                     | Then / observable result                                                             | Automated test                                      |
+| --------- | ---------- | ------------- | ----------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------- |
+| TC-001    | AC-001     | E2E           | The editor is open                              | The learner clicks the router element             | The canvas shows one more node                                                       | `e2e/editor-layers.spec.ts`                         |
+| TC-002    | AC-002     | unit/behavior | `layers={['l3']}`                               | The palette renders                               | Only the router is offered; switch and client are absent                             | `src/editor/components/LayerPalette.test.tsx`       |
+| TC-003    | AC-003     | E2E           | The topology has routers                        | The learner hides, then shows, L3                 | The routers leave the canvas, then return                                            | `e2e/editor-layers.spec.ts`                         |
+| TC-004    | AC-004     | unit/behavior | A topology and a layer selection                | Visible topology is computed                      | The canonical topology is unchanged                                                  | `src/editor/layerVisibility.test.ts`                |
+| TC-005    | AC-004     | unit/behavior | A hidden layer with a link to a shown one       | Visible topology is computed                      | The link is not drawn                                                                | `src/editor/layerVisibility.test.ts`                |
+| TC-006    | AC-005     | E2E           | The editor is open                              | The learner switches inspector tabs               | Only the chosen panel is present                                                     | `e2e/editor-layers.spec.ts`                         |
+| TC-007    | AC-006     | unit/behavior | Two nodes without IP addresses                  | Run is rendered                                   | Run is disabled and names the missing IP address                                     | `src/editor/components/EditorRunButton.test.tsx`    |
+| TC-008    | AC-007     | E2E           | The editor with addressable hosts               | The learner runs, then opens the run tab          | The run is listed rather than reported empty                                         | `e2e/editor-layers.spec.ts`                         |
+| TC-009    | AC-008     | E2E           | The editor with palette and rail visible        | axe analyses for WCAG 2 A/AA                      | No violations                                                                        | `e2e/editor-layers.spec.ts`                         |
+| TC-010    | AC-003     | unit/behavior | A maxGraph canvas with layers                   | One layer is hidden                               | Only that layer's cells stop being visible                                           | `src/editor/engine/maxGraphModel.test.ts`           |
+| TC-011    | AC-007     | unit/behavior | A recorded run                                  | A history row is selected                         | The link that hop crossed is reported                                                | `src/editor/components/PacketHistoryPanel.test.tsx` |
+| TC-013    | AC-009     | E2E           | A topology with areas                           | The learner zooms out                             | The area is drawn as a single cluster                                                | `e2e/canvas-areas.spec.ts`                          |
+| TC-014    | AC-010     | E2E           | A collapsed area                                | The learner expands it                            | Its member devices are drawn again                                                   | `e2e/canvas-areas.spec.ts`                          |
+| TC-015    | AC-011     | E2E           | An illustration canvas mid-page                 | The learner scrolls over it                       | The page scrolls                                                                     | `e2e/canvas-areas.spec.ts`                          |
+| TC-016    | AC-012     | E2E           | A host-controlled canvas                        | The host applies a change                         | The canvas reflects it                                                               | `e2e/canvas-controlled.spec.ts`                     |
+| TC-017    | AC-013     | unit/behavior | Every device drawing and the area cluster       | Drawn with no graph engine mounted                | Each shows its device, name and badge                                                | `src/layers/nodeEngineIndependence.test.tsx`        |
+| TC-018    | AC-014     | unit/behavior | A topology and a device rendering for each node | The canvas is drawn on maxGraph                   | Every device is drawn carrying its own rendering, and a redraw replaces the last one | `src/components/engine/simulatorGraphModel.test.ts` |
+| TC-019    | AC-015     | unit/behavior | A link to a device that is not drawn            | The canvas is drawn                               | The link is omitted and the devices stay                                             | `src/components/engine/simulatorGraphModel.test.ts` |
+| TC-020    | AC-015     | unit/behavior | A link the canvas marked down                   | The link is drawn                                 | Its colour, weight and dashes are the ones asked for                                 | `src/components/engine/simulatorGraphModel.test.ts` |
+| TC-021    | AC-016     | E2E           | A sandbox canvas with links                     | The learner right-clicks a link and takes it down | The link editor opens and the edit is listed                                         | `e2e/sandbox-link-edit.spec.ts`                     |
+| TC-022    | AC-017     | E2E           | Two canvases in compare mode                    | The learner zooms one                             | Both are drawn at the same zoom                                                      | `e2e/canvas-compare-viewport.spec.ts`               |
+| TC-023    | AC-018     | unit/behavior | Links with errors, with warnings, and clean     | They are drawn                                    | Each carries the right mark, and the messages are readable                           | `src/components/engine/simulatorGraphModel.test.ts` |
+| TC-024    | AC-019     | E2E           | A device opened, dismissed and opened again     | Its position is compared across openings          | It lands in the same place each time and stays on the canvas                         | `e2e/canvas-select-pan.spec.ts`                     |
+| TC-025    | AC-020     | E2E           | The embed demo's light and dark canvases        | Their viewport controls are compared              | The light canvas's controls are drawn light                                          | `e2e/canvas-theme.spec.ts`                          |
+| TC-012    | REQ-009    | unit/behavior | A stand-in engine                               | The editor drives it                              | The whole topology and the visible-layer set are handed over                         | `src/editor/engine/engineContract.test.tsx`         |
 
 Regression scenarios kept permanently:
 
-| Test case | Level         | Defect it pins                                                                                                 | Automated test                                   |
-| --------- | ------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| TC-104    | E2E           | Zooming out collapsed the areas but never drew the clusters that replace them, so the canvas went nearly blank | `e2e/canvas-areas.spec.ts`                       |
-| TC-101    | E2E           | Run recorded nothing because the editor subscribed to a simulation context it rendered itself                  | `e2e/editor-layers.spec.ts`                      |
-| TC-102    | unit/behavior | Two elements created in the same millisecond shared a node id                                                  | `src/editor/palette.test.ts`                     |
-| TC-103    | unit/behavior | Clearing learner progress left the exported JSON on screen                                                     | `src/components/progress/ProgressPanel.test.tsx` |
+| Test case | Level         | Defect it pins                                                                                                                         | Automated test                                   |
+| --------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| TC-105    | E2E           | A link that names the router interfaces it joins was not drawn at all, so the OSPF convergence lesson showed six routers and no cables | `e2e/canvas-interface-links.spec.ts`             |
+| TC-104    | E2E           | Zooming out collapsed the areas but never drew the clusters that replace them, so the canvas went nearly blank                         | `e2e/canvas-areas.spec.ts`                       |
+| TC-101    | E2E           | Run recorded nothing because the editor subscribed to a simulation context it rendered itself                                          | `e2e/editor-layers.spec.ts`                      |
+| TC-102    | unit/behavior | Two elements created in the same millisecond shared a node id                                                                          | `src/editor/palette.test.ts`                     |
+| TC-103    | unit/behavior | Clearing learner progress left the exported JSON on screen                                                                             | `src/components/progress/ProgressPanel.test.tsx` |
 
 ## 14. Examples
 

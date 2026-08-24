@@ -406,6 +406,17 @@ export default function SimulatorMaxGraphInner({
     return () => host.removeEventListener('wheel', onWheel);
   }, [ready, profile.zoomOnScroll, profile.preventPageScroll]);
 
+  // A grid to line devices up against, the same affordance the editor offers.
+  // It was a button that did nothing here until it was wired.
+  const [gridEnabled, setGridEnabled] = useState(false);
+  const toggleGrid = useCallback(() => {
+    setGridEnabled((on) => {
+      const next = !on;
+      graphRef.current?.setGridEnabled(next);
+      return next;
+    });
+  }, []);
+
   const withGraph = useCallback((fn: (graph: Graph) => void) => {
     const graph = graphRef.current;
     if (graph) fn(graph);
@@ -496,8 +507,7 @@ export default function SimulatorMaxGraphInner({
               }
             })
           }
-          gridEnabled={false}
-          onToggleGrid={() => undefined}
+          {...(profile.nodesDraggable ? { gridEnabled, onToggleGrid: toggleGrid } : {})}
         />
       ) : null}
     </div>

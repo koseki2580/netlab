@@ -159,6 +159,7 @@ export default function EmbedDemo() {
 
         {/* Simulated light-mode host page */}
         <div
+          data-testid="embed-light-host"
           style={{
             background: '#f8fafc',
             borderRadius: 8,

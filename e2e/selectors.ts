@@ -230,6 +230,10 @@ export const SEL = {
     areaCluster: 'area-cluster',
     controlledJson: 'controlled-topology-json',
   },
+  /** The embed demo's simulated light-mode host page. */
+  embed: {
+    lightHost: 'embed-light-host',
+  },
   /** The opt-in maxGraph canvas engine. */
   maxGraph: {
     canvas: 'maxgraph-canvas',

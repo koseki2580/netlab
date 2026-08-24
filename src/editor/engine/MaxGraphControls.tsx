@@ -3,20 +3,28 @@ export interface MaxGraphControlsProps {
   onZoomOut: () => void;
   onZoomActual: () => void;
   onFit: () => void;
-  gridEnabled: boolean;
-  onToggleGrid: () => void;
+  /**
+   * Snapping only means anything where devices can be dragged, so a canvas
+   * that does not move its devices omits these and the control with them —
+   * a button that does nothing is worse than no button.
+   */
+  gridEnabled?: boolean;
+  onToggleGrid?: () => void;
 }
 
+// Theme tokens rather than fixed slate: a canvas dropped into a light-mode
+// page draws these controls too, and a dark cluster in the corner of an
+// otherwise light diagram reads as a rendering fault.
 const BTN: React.CSSProperties = {
   font: 'inherit',
   fontSize: 12,
   lineHeight: 1,
   padding: '5px 8px',
   minWidth: 28,
-  background: '#1e293b',
-  border: '1px solid #334155',
+  background: 'var(--netlab-bg-surface)',
+  border: '1px solid var(--netlab-border)',
   borderRadius: 4,
-  color: '#e2e8f0',
+  color: 'var(--netlab-text-primary)',
   cursor: 'pointer',
 };
 
@@ -85,16 +93,21 @@ export function MaxGraphControls({
       >
         fit
       </button>
-      <button
-        type="button"
-        style={{ ...BTN, background: gridEnabled ? '#334155' : '#1e293b' }}
-        onClick={onToggleGrid}
-        aria-pressed={gridEnabled}
-        aria-label="Snap to grid"
-        data-testid="maxgraph-grid"
-      >
-        grid
-      </button>
+      {onToggleGrid ? (
+        <button
+          type="button"
+          style={{
+            ...BTN,
+            background: gridEnabled ? 'var(--netlab-bg-elevated)' : 'var(--netlab-bg-surface)',
+          }}
+          onClick={onToggleGrid}
+          aria-pressed={gridEnabled ?? false}
+          aria-label="Snap to grid"
+          data-testid="maxgraph-grid"
+        >
+          grid
+        </button>
+      ) : null}
     </div>
   );
 }
