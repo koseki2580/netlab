@@ -1,4 +1,5 @@
 import { Cell, type CellStyle, type Graph } from '@maxgraph/core';
+import { markDrawnLinks } from '../../editor/engine/maxGraphLinkMarks';
 import { getValidationMessages, type ValidationEdgeData } from '../ValidationEdgeLabel';
 import type { NetlabEdge, NetlabNode } from '../../types/topology';
 
@@ -154,14 +155,5 @@ export function syncSimulatorCells(
  * against the canvas's class names rather than any engine's.
  */
 export function decorateEdges(graph: Graph, edges: readonly NetlabEdge[]): void {
-  const view = graph.getView();
-  for (const edge of edges) {
-    const cell = graph.getDataModel().getCell(edge.id);
-    if (!cell) continue;
-    const node = view.getState(cell)?.shape?.node;
-    if (!node) continue;
-    node.setAttribute('class', ['netlab-edge', edge.className].filter(Boolean).join(' '));
-    if (edge.animated) node.setAttribute('data-edge-animated', 'true');
-    else node.removeAttribute('data-edge-animated');
-  }
+  markDrawnLinks(graph, edges);
 }

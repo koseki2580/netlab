@@ -3,6 +3,7 @@ import { Cell, Graph, InternalEvent, Outline } from '@maxgraph/core';
 import type { FitPlugin } from '@maxgraph/core';
 import { MaxGraphControls } from './MaxGraphControls';
 import { wireConnect, wireDelete } from './maxGraphInteraction';
+import { markDrawnLinks } from './maxGraphLinkMarks';
 import { applyVisibility, createLayers, syncCells } from './maxGraphModel';
 import type { GraphEngineProps } from './types';
 
@@ -65,6 +66,9 @@ export default function MaxGraphEngineInner({
     syncCells(graph, layersRef.current, nodes, edges, highlightEdgeId);
     // Re-drawing replaced the cells, so the layer flags have to be re-applied.
     applyVisibility(graph, layersRef.current, visibleLayers);
+    // The same mark the simulator canvas puts on its links, so one locator
+    // answers "is this link drawn?" on either canvas.
+    markDrawnLinks(graph, edges);
   }, [nodes, edges, highlightEdgeId, visibleLayers]);
 
   // Drawing and deleting go through the seam: the owner holds the topology and

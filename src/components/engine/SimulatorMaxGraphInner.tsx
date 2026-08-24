@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ComponentType,
+} from 'react';
 import { createPortal } from 'react-dom';
 import {
   Cell,
@@ -8,8 +15,10 @@ import {
   type FitPlugin,
   type TooltipHandler,
 } from '@maxgraph/core';
+import { DefaultNode } from '../DefaultNode';
 import { MaxGraphControls } from '../../editor/engine/MaxGraphControls';
 import { wireConnect } from '../../editor/engine/maxGraphInteraction';
+import type { GraphNodeProps } from '../../types/graph';
 import type { NetlabNode } from '../../types/topology';
 import type { SimulatorCanvasProps } from './canvasEngine';
 import {
@@ -452,10 +461,10 @@ export default function SimulatorMaxGraphInner({
         style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}
       />
       {nodes.map((node) => {
-        const Component = nodeTypes[node.type ?? ''] as
-          | ((props: Record<string, unknown>) => React.ReactElement)
-          | undefined;
-        if (!Component) return null;
+        // Falling back rather than returning null: a device the canvas has no
+        // drawing for still has to be on screen. Dropping it left the wireless
+        // lesson with a canvas and nothing on it.
+        const Component: ComponentType<GraphNodeProps> = nodeTypes[node.type ?? ''] ?? DefaultNode;
         return createPortal(
           <div
             // `data-id` is how the drop pulse finds the device that dropped a
