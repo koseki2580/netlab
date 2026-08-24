@@ -94,9 +94,17 @@ export function createServerNode(
 }
 
 /** Default position with slight randomization to avoid exact stacking. */
-export function randomPosition(): { x: number; y: number } {
+/**
+ * Where to drop a newly placed element.
+ *
+ * Around whatever the learner is looking at, scattered a little so repeated
+ * clicks do not stack devices on one spot. `centre` comes from the canvas; the
+ * fallback is only for a canvas that has not reported one yet.
+ */
+export function randomPosition(centre?: { x: number; y: number }): { x: number; y: number } {
+  const origin = centre ?? { x: 300, y: 300 };
   return {
-    x: 200 + Math.random() * 200,
-    y: 200 + Math.random() * 200,
+    x: Math.round(origin.x - 100 + Math.random() * 200),
+    y: Math.round(origin.y - 100 + Math.random() * 200),
   };
 }

@@ -10,6 +10,8 @@ export interface LayerPaletteProps {
   /** Layers currently painted on the canvas. */
   visibleLayers: ReadonlySet<LayerId>;
   onToggleLayer: (layerId: LayerId) => void;
+  /** Where the canvas is looking, so a new element lands in view. */
+  viewCentre?: { x: number; y: number };
 }
 
 const PANEL_STYLE: React.CSSProperties = {
@@ -33,11 +35,16 @@ const PANEL_STYLE: React.CSSProperties = {
  * then L3 alone is how a learner sees that the same physical wiring carries two
  * different connection graphs.
  */
-export function LayerPalette({ layers, visibleLayers, onToggleLayer }: LayerPaletteProps) {
+export function LayerPalette({
+  layers,
+  visibleLayers,
+  onToggleLayer,
+  viewCentre,
+}: LayerPaletteProps) {
   const { addNode } = useTopologyEditorContext();
   const groups = paletteByLayer(layers);
 
-  const place = (item: PaletteItem) => addNode(item.create(randomPosition()));
+  const place = (item: PaletteItem) => addNode(item.create(randomPosition(viewCentre)));
 
   return (
     <aside style={PANEL_STYLE} data-testid="editor-palette" aria-label="Elements by layer">

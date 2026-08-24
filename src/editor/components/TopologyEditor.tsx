@@ -63,6 +63,8 @@ function TopologyEditorInner({
     () => new Set(scopedLayers),
   );
   const [selectedStep, setSelectedStep] = useState<number | null>(null);
+  // Where the canvas is looking, so the palette drops a new element in view.
+  const [viewCentre, setViewCentre] = useState<{ x: number; y: number } | null>(null);
   const onSelectHop = useCallback((hop: PacketHop, edgeId: string | null) => {
     setSelectedStep(hop.step);
     setHighlightEdgeId(edgeId);
@@ -117,6 +119,7 @@ function TopologyEditorInner({
             {...(layers !== undefined ? { layers } : {})}
             visibleLayers={visibleLayers}
             onToggleLayer={toggleLayer}
+            {...(viewCentre !== null ? { viewCentre } : {})}
           />
           <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
             <NetlabUIContext.Provider value={uiCtx}>
@@ -149,6 +152,7 @@ function TopologyEditorInner({
                 onNodesMoved={(moves) => updateNodePositions([...moves])}
                 onDeleteNode={deleteNode}
                 onDeleteEdge={deleteEdge}
+                onViewCentre={setViewCentre}
               />
             </NetlabUIContext.Provider>
           </div>

@@ -27,6 +27,7 @@ export default function MaxGraphEngineInner({
   onDeleteNode,
   onDeleteEdge,
   onSelectNode,
+  onViewCentre,
 }: GraphEngineProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<Graph | null>(null);
@@ -113,6 +114,27 @@ export default function MaxGraphEngineInner({
       graph.getSelectionModel().removeListener(onSelect);
     };
   }, [onNodesMoved, onSelectNode]);
+
+  // Report the centre of the visible canvas so new elements land in view.
+  useEffect(() => {
+    const graph = graphRef.current;
+    const host = hostRef.current;
+    if (!graph || !host || !onViewCentre) return undefined;
+    const view = graph.getView();
+    const report = () => {
+      const { scale, translate } = view;
+      if (!(scale > 0)) return;
+      onViewCentre({
+        x: Math.round(host.clientWidth / 2 / scale - translate.x),
+        y: Math.round(host.clientHeight / 2 / scale - translate.y),
+      });
+    };
+    view.addListener(InternalEvent.TRANSLATE, report);
+    view.addListener(InternalEvent.SCALE, report);
+    view.addListener(InternalEvent.SCALE_AND_TRANSLATE, report);
+    report();
+    return () => view.removeListener(report);
+  }, [onViewCentre]);
 
   const withGraph = useCallback((fn: (graph: Graph) => void) => {
     const graph = graphRef.current;

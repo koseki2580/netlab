@@ -40,6 +40,13 @@ export interface GraphEngineProps {
   readonly onDeleteNode: (nodeId: string) => void;
   readonly onDeleteEdge: (edgeId: string) => void;
   readonly onSelectNode?: (nodeId: string | null) => void;
+  /**
+   * Where the learner is looking, in graph coordinates: the point at the centre
+   * of the visible canvas. The palette drops new elements there — placing them
+   * at a fixed spot near the origin meant that after panning away, the button
+   * added a device the learner could not see.
+   */
+  readonly onViewCentre?: (centre: { x: number; y: number }) => void;
 
   /**
    * Interaction profile. The simulator mounts the same canvas twice over: as an

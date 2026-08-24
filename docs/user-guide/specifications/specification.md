@@ -81,6 +81,8 @@ and the gallery — each already has its own tests and docs.
   is comparing the same part of the topology at the same size.
 - **REQ-018 (MUST):** A link the canvas has found errors or warnings on MUST be
   marked on the link itself, and hovering the mark MUST say what is wrong.
+- **REQ-029 (MUST):** A newly placed element MUST appear where the learner is
+  looking, not at a fixed point in the topology's coordinates.
 - **REQ-026 (MUST):** Dragging an empty part of a canvas that allows panning
   MUST move the diagram.
 - **REQ-027 (MUST):** A link MUST be drawn without an arrowhead on either
@@ -197,6 +199,8 @@ not part of this specification.
 - **AC-018:** Given a link with a validation error, when it is drawn, then it
   carries an error mark; a link with only warnings carries a warning mark, and a
   clean link carries none.
+- **AC-026:** Given an editor canvas panned away from the origin, when the
+  learner places an element from the palette, then it is drawn on screen.
 - **AC-024:** Given a canvas the learner can pan, when they drag an empty part
   of it, then the diagram moves with the pointer.
 - **AC-025:** Given the editor's inspector rail with no device selected, when
@@ -241,6 +245,7 @@ not part of this specification.
 | TC-022    | AC-017     | E2E           | Two canvases in compare mode                         | The learner zooms one                             | Both are drawn at the same zoom                                                      | `e2e/canvas-compare-viewport.spec.ts`               |
 | TC-023    | AC-018     | unit/behavior | Links with errors, with warnings, and clean          | They are drawn                                    | Each carries the right mark, and the messages are readable                           | `src/components/engine/simulatorGraphModel.test.ts` |
 | TC-024    | AC-019     | E2E           | A device opened, dismissed and opened again          | Its position is compared across openings          | It lands in the same place each time and stays on the canvas                         | `e2e/canvas-select-pan.spec.ts`                     |
+| TC-032    | AC-026     | E2E           | An editor canvas panned away from the origin         | An element is placed from the palette             | It is drawn within the canvas                                                        | `e2e/editor-placement.spec.ts`                      |
 | TC-029    | AC-025     | unit/behavior | The editor's node tab, docked, with nothing selected | It is rendered                                    | It tells the learner to select a device                                              | `src/editor/components/NodeEditorPanel.test.tsx`    |
 | TC-030    | REQ-027    | unit/behavior | A link drawn by the editor                           | Its style is read                                 | It carries no arrowhead                                                              | `src/editor/engine/maxGraphModel.test.ts`           |
 | TC-031    | AC-024     | E2E           | A canvas the learner can pan                         | An empty part of it is dragged                    | The diagram moves                                                                    | `e2e/canvas-pan.spec.ts`                            |
