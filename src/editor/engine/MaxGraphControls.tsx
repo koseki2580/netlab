@@ -10,6 +10,14 @@ export interface MaxGraphControlsProps {
    */
   gridEnabled?: boolean;
   onToggleGrid?: () => void;
+  /**
+   * Which corner the controls sit in, and how far up. The canvases put
+   * different things in different corners — an areas legend bottom-left on the
+   * simulator, nothing there on the editor — and controls hidden behind a panel
+   * are controls the learner does not have.
+   */
+  placement?: 'bottom-left' | 'bottom-right';
+  bottomOffset?: number;
 }
 
 // Theme tokens rather than fixed slate: a canvas dropped into a light-mode
@@ -43,14 +51,16 @@ export function MaxGraphControls({
   onFit,
   gridEnabled,
   onToggleGrid,
+  placement = 'bottom-left',
+  bottomOffset = 8,
 }: MaxGraphControlsProps) {
   return (
     <div
       data-testid="maxgraph-controls"
       style={{
         position: 'absolute',
-        left: 8,
-        bottom: 8,
+        ...(placement === 'bottom-right' ? { right: 8 } : { left: 8 }),
+        bottom: bottomOffset,
         display: 'flex',
         gap: 4,
         fontFamily: 'monospace',

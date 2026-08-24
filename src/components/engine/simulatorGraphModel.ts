@@ -34,10 +34,22 @@ export interface DrawnNode {
  * cell bounds, and since the cell bounds are measured from that same element,
  * each redraw would measure a device that the previous redraw had inflated.
  */
-export function nodeStyle(): CellStyle {
+/**
+ * An area background is a tint the devices sit on; anything painted behind it
+ * shows through and ruins it. Devices are opaque, so a box behind them is
+ * invisible on the canvas and is what makes them legible in the overview.
+ */
+const AREA_NODE_TYPES = new Set(['netlab-area', 'netlab-area-cluster']);
+
+export function nodeStyle(node: NetlabNode): CellStyle {
+  const transparent = AREA_NODE_TYPES.has(node.type ?? '');
   return {
-    fillColor: 'none',
-    strokeColor: 'none',
+    // A box behind the device, not instead of it. The overview renders shapes
+    // rather than HTML labels, and without a shape it showed an empty frame
+    // with the viewport rectangle floating in it.
+    fillColor: transparent ? 'none' : '#334155',
+    strokeColor: transparent ? 'none' : '#475569',
+    rounded: true,
     verticalAlign: 'middle',
     align: 'center',
   };
@@ -119,7 +131,7 @@ export function syncSimulatorCells(
           value: host.element,
           position: [node.position.x, node.position.y],
           size: [host.width, host.height],
-          style: nodeStyle(),
+          style: nodeStyle(node),
         }),
       );
     }

@@ -38,6 +38,24 @@ import {
  * RouterNode component the rest of the app draws — the engine owns placement,
  * links, selection and the viewport, and nothing else.
  */
+/**
+ * How much room to leave around the drawing when framing it.
+ *
+ * `fitViewPadding` is a fraction of the canvas, the way React Flow read it —
+ * passing it as pixels padded a 1350px canvas by ten of them and left the last
+ * device of a wide topology clipped. Capped, because on a tall canvas the
+ * fraction zooms out far enough to drop a readable topology below the level of
+ * detail threshold, and a lesson that opens fully collapsed is a different
+ * lesson.
+ */
+function fitMargin(host: HTMLElement, padding: number): number {
+  const smaller = Math.min(host.clientWidth, host.clientHeight);
+  // Never a large share of the container: maxGraph subtracts twice the margin
+  // from the container before dividing by it, and a margin that eats the canvas
+  // takes the arithmetic negative and then to NaN, which it throws on.
+  return Math.round(Math.max(0, Math.min(padding * smaller, 48, smaller / 6)));
+}
+
 export default function SimulatorMaxGraphInner({
   nodes,
   edges,
@@ -199,11 +217,23 @@ export default function SimulatorMaxGraphInner({
     // beside the canvas.
     if (viewport || fittedRef.current || nodes.length === 0 || sizesRef.current.size === 0) return;
     const fit = graph.getPlugin<FitPlugin>('fit');
-    if (!fit) return;
-    // maxGraph will happily blow a small topology up eight times over. A device
-    // is drawn at the size it was designed at, and fitting only zooms out.
-    fit.maxFitScale = 1;
-    fit.fitCenter({ margin: Math.round(fitViewPadding * 100) });
+    const host = hostRef.current;
+    if (!fit || !host) return;
+    // Nothing to frame, or nowhere to frame it in. Leaving `fitted` unset means
+    // this is tried again once the canvas has been laid out — a canvas that is
+    // measured as zero-sized on its first pass is common enough inside a
+    // collapsed panel or an embed.
+    const bounds = graph.getGraphBounds();
+    if (host.clientWidth < 2 || host.clientHeight < 2) return;
+    if (!(bounds.width > 0 && bounds.height > 0) || !(graph.getView().scale > 0)) return;
+    // maxGraph will happily blow a small topology up eight times over; React
+    // Flow's fitView stopped at 2, and a three-device lesson left at 1 sits in
+    // the corner of a canvas mostly full of nothing.
+    fit.maxFitScale = 2;
+    // `fitViewPadding` is a fraction of the canvas, the way React Flow read it.
+    // Passing it as pixels padded a 1350px canvas by ten of them, so the
+    // topology sat flush against both edges with its last device clipped.
+    fit.fitCenter({ margin: fitMargin(host, fitViewPadding) });
     fittedRef.current = true;
   }, [nodes, edges, drawnFor, ready, fitViewPadding, viewport]);
 
@@ -504,15 +534,20 @@ export default function SimulatorMaxGraphInner({
       ) : null}
       {controls ? (
         <MaxGraphControls
+          // Bottom-right, clear of the areas legend that sits bottom-left on
+          // this canvas, and raised over the overview when one is shown.
+          placement="bottom-right"
+          bottomOffset={minimap ? 116 : 8}
           onZoomIn={() => withGraph((graph) => graph.zoomIn())}
           onZoomOut={() => withGraph((graph) => graph.zoomOut())}
           onZoomActual={() => withGraph((graph) => graph.zoomActual())}
           onFit={() =>
             withGraph((graph) => {
+              const host = hostRef.current;
               const fit = graph.getPlugin<FitPlugin>('fit');
-              if (fit) {
-                fit.maxFitScale = 1;
-                fit.fitCenter({ margin: fitViewPadding * 100 });
+              if (fit && host) {
+                fit.maxFitScale = 2;
+                fit.fitCenter({ margin: fitMargin(host, fitViewPadding) });
               }
             })
           }

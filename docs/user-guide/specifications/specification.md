@@ -81,6 +81,11 @@ and the gallery — each already has its own tests and docs.
   is comparing the same part of the topology at the same size.
 - **REQ-018 (MUST):** A link the canvas has found errors or warnings on MUST be
   marked on the link itself, and hovering the mark MUST say what is wrong.
+- **REQ-024 (MUST):** A canvas MUST open with what it draws framed inside it —
+  nothing clipped by an edge. A topology too large to read at that size MAY open
+  with its areas collapsed; that is the level of detail, not a failure to frame.
+- **REQ-025 (MUST):** An embedded canvas MUST keep the height it was given, even
+  inside a flexible page layout that would otherwise squeeze it away.
 - **REQ-022 (MUST):** Every lesson with a network MUST draw its devices and the
   links between them. A device whose kind the canvas has no drawing for MUST
   still be drawn, carrying its name.
@@ -186,6 +191,8 @@ not part of this specification.
 - **AC-018:** Given a link with a validation error, when it is drawn, then it
   carries an error mark; a link with only warnings carries a warning mark, and a
   clean link carries none.
+- **AC-023:** Given the embed demo, when it is opened, then every embedded
+  canvas on it has real width and height.
 - **AC-021:** Given a device whose kind the canvas has no drawing for, when the
   canvas draws it, then the device and its name are on screen.
 - **AC-022:** Given any lesson in the gallery, when it is opened, then its
@@ -224,6 +231,7 @@ not part of this specification.
 | TC-022    | AC-017     | E2E           | Two canvases in compare mode                    | The learner zooms one                             | Both are drawn at the same zoom                                                      | `e2e/canvas-compare-viewport.spec.ts`               |
 | TC-023    | AC-018     | unit/behavior | Links with errors, with warnings, and clean     | They are drawn                                    | Each carries the right mark, and the messages are readable                           | `src/components/engine/simulatorGraphModel.test.ts` |
 | TC-024    | AC-019     | E2E           | A device opened, dismissed and opened again     | Its position is compared across openings          | It lands in the same place each time and stays on the canvas                         | `e2e/canvas-select-pan.spec.ts`                     |
+| TC-028    | AC-023     | E2E           | The embed demo's three embedded canvases        | The page is opened                                | Each has real width and height                                                       | `e2e/embed-sizing.spec.ts`                          |
 | TC-026    | AC-021     | unit/behavior | A device of a kind the canvas does not know     | It is drawn                                       | The device and its name are present                                                  | `src/components/DefaultNode.test.tsx`               |
 | TC-027    | AC-022     | E2E           | Every lesson in the gallery                     | It is opened                                      | Devices and links are drawn, and nothing is logged                                   | `e2e/smoke.spec.ts`                                 |
 | TC-025    | AC-020     | E2E           | The embed demo's light and dark canvases        | Their viewport controls are compared              | The light canvas's controls are drawn light                                          | `e2e/canvas-theme.spec.ts`                          |

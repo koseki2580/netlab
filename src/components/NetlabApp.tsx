@@ -165,6 +165,11 @@ export function NetlabApp({
     ...themeToVars(resolvedTheme),
     width,
     height,
+    // The height is a floor, not an opening bid. Dropped into a flexible
+    // column — which is most page layouts — an item with `overflow: hidden` can
+    // be shrunk to nothing, and the embed demo showed two blank bands of page
+    // where a network should have been.
+    flexShrink: 0,
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',

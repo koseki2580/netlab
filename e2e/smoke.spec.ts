@@ -44,9 +44,37 @@ for (const category of CATEGORIES) {
           page.getByTestId(SEL.canvas.root).or(page.getByTestId(SEL.editor.canvas)).first(),
         ).toBeAttached();
         // Devices without cables is what the defect above looked like: almost
-        // right, and wrong in the one way the lesson is about.
-        await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+        // right, and wrong in the one way the lesson is about. A large topology
+        // may open with its areas collapsed instead — that is the level of
+        // detail feature showing the shape before the detail, and it is still a
+        // network on screen.
+        const drawn = page
+          .getByTestId(SEL.canvas.node)
+          .or(page.getByTestId(SEL.canvas.areaCluster));
+        await expect(drawn.first()).toBeVisible();
         await expect(page.locator('.netlab-edge').first()).toBeAttached();
+
+        // And what is drawn is on screen when the lesson opens. Framing it is
+        // the canvas's job; getting the padding wrong left the last device of a
+        // wide topology clipped by the edge, which reads as a diagram that
+        // simply stops.
+        const canvas = page.getByTestId(SEL.canvas.root).first();
+        if ((await canvas.count()) > 0) {
+          const frame = await canvas.boundingBox();
+          const inside = canvas.getByTestId(SEL.canvas.node);
+          const count = await inside.count();
+          for (let index = 0; index < count && frame; index += 1) {
+            const device = await inside.nth(index).boundingBox();
+            if (!device) continue;
+            expect(
+              device.x >= frame.x - 1 &&
+                device.y >= frame.y - 1 &&
+                device.x + device.width <= frame.x + frame.width + 1 &&
+                device.y + device.height <= frame.y + frame.height + 1,
+              `device ${index} is framed by the canvas`,
+            ).toBe(true);
+          }
+        }
       }
 
       expect(complaints, 'the demo mounts without complaining').toEqual([]);
