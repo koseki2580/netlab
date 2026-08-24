@@ -30,6 +30,18 @@ beforeEach(() => {
 });
 
 describe('maxGraph model building', () => {
+  // TC-030 — a link is a cable, not a direction.
+  it('draws a link without an arrowhead, the way the simulator canvas does', () => {
+    const layers = createLayers(graph);
+    syncCells(graph, layers, [node('r1', 'l3'), node('r2', 'l3', 200)], [edge('e1', 'r1', 'r2')]);
+
+    const drawn = graph.getDataModel().getCell('e1');
+    expect(drawn?.isEdge()).toBe(true);
+    // maxGraph's default is a classic arrowhead, which reads as "traffic flows
+    // this way" on something that is a piece of cable.
+    expect(drawn?.style?.endArrow).toBe('none');
+  });
+
   it('creates one layer per LayerId plus an overflow layer, all as model layers', () => {
     const layers = createLayers(graph);
     expect(layers).toHaveLength(GRAPH_LAYER_ORDER.length + 1);

@@ -171,6 +171,19 @@ describe('NodeEditorPanel', () => {
 
       expect(html()).toBe('');
     });
+
+    // TC-029 — docked, the panel is a tab the learner opened on purpose. An
+    // empty rail under a tab labelled "Node" says nothing about why.
+    it('tells the learner what to do when docked with nothing selected', () => {
+      const markup = renderToStaticMarkup(<NodeEditorPanel docked />);
+
+      expect(markup).not.toBe('');
+      expect(markup).toContain('device');
+    });
+
+    it('still shows nothing when it floats over the canvas', () => {
+      expect(html()).toBe('');
+    });
   });
 
   describe('HostEditor', () => {

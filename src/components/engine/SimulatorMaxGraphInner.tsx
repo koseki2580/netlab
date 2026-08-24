@@ -13,6 +13,7 @@ import {
   InternalEvent,
   Outline,
   type FitPlugin,
+  type PanningHandler,
   type TooltipHandler,
 } from '@maxgraph/core';
 import { DefaultNode } from '../DefaultNode';
@@ -163,6 +164,16 @@ export default function SimulatorMaxGraphInner({
     graph.setCellsResizable(false);
     graph.setConnectable(false);
     graph.setPanning(profile.panOnDrag);
+    // Enabling panning is not enough: maxGraph's handler waits for the right
+    // button or ctrl-shift by default, so dragging the canvas did nothing —
+    // the first gesture a learner tries on a diagram larger than its frame.
+    // `ignoreCell` keeps the drag from starting on a device, which stays
+    // draggable in its own right.
+    const panning = graph.getPlugin<PanningHandler>('PanningHandler');
+    if (panning) {
+      panning.useLeftButtonForPanning = profile.panOnDrag;
+      panning.ignoreCell = false;
+    }
     graph.setCellsMovable(profile.nodesDraggable);
     graphRef.current = graph;
     const outline = outlineHostRef.current ? new Outline(graph, outlineHostRef.current) : null;

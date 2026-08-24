@@ -97,6 +97,10 @@ export function syncCells(
         style: {
           strokeWidth: edge.id === highlightEdgeId ? 3 : 1,
           strokeColor: EDGE_TONE_COLOR[verdict.tone],
+          // A link is a cable, not a direction. maxGraph's default arrowhead
+          // reads as "traffic flows this way", and the simulator canvas draws
+          // the same cable plain.
+          endArrow: 'none',
         },
       });
     }

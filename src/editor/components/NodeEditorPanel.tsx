@@ -483,6 +483,17 @@ const DOCKED_OVERRIDES: React.CSSProperties = {
   zIndex: 'auto',
 };
 
+function EmptySelection() {
+  return (
+    <p
+      data-testid="editor-node-empty"
+      style={{ color: 'var(--netlab-text-muted)', fontSize: 12, lineHeight: 1.6, margin: 0 }}
+    >
+      Select a device on the canvas to edit its addresses, interfaces and routes.
+    </p>
+  );
+}
+
 export function NodeEditorPanel({ docked }: NodeEditorPanelProps = {}) {
   const { selectedNodeId, setSelectedNodeId } = useNetlabUI();
   const { state, updateNodeData, deleteNode } = useTopologyEditorContext();
@@ -497,7 +508,11 @@ export function NodeEditorPanel({ docked }: NodeEditorPanelProps = {}) {
     return () => window.removeEventListener('keydown', handler);
   }, [selectedNodeId, setSelectedNodeId]);
 
-  if (!selectedNodeId) return null;
+  // Docked, this is a tab the learner opened on purpose, so it has to account
+  // for itself; floating over the canvas it should simply not be there.
+  if (!selectedNodeId) {
+    return docked ? <EmptySelection /> : null;
+  }
 
   const node = state.topology.nodes.find((n) => n.id === selectedNodeId);
   if (!node) return null;

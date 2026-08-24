@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Cell, Graph, InternalEvent, Outline } from '@maxgraph/core';
-import type { FitPlugin } from '@maxgraph/core';
+import type { FitPlugin, PanningHandler } from '@maxgraph/core';
 import { MaxGraphControls } from './MaxGraphControls';
 import { wireConnect, wireDelete } from './maxGraphInteraction';
 import { markDrawnLinks } from './maxGraphLinkMarks';
@@ -42,6 +42,10 @@ export default function MaxGraphEngineInner({
     InternalEvent.disableContextMenu(host);
     const graph = new Graph(host);
     graph.setPanning(true);
+    // Enabling panning is not enough: maxGraph's handler waits for the right
+    // button or ctrl-shift by default, so dragging the canvas did nothing.
+    const panning = graph.getPlugin<PanningHandler>('PanningHandler');
+    if (panning) panning.useLeftButtonForPanning = true;
     graph.setCellsEditable(false);
     // Vertex labels are markup (glyph + name + health badge), matching what the
     // React node components draw.
