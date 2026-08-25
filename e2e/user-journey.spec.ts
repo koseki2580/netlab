@@ -15,6 +15,8 @@ import { SEL } from './selectors';
  */
 
 const FULL_SCREEN = { width: 1920, height: 1080 };
+/** A laptop, where the panels crowd the canvas and things start to overlap. */
+const LAPTOP = { width: 1366, height: 768 };
 
 /** Press a control the way a learner would, failing if it cannot be reached. */
 async function press(control: Locator, what: string): Promise<void> {
@@ -138,4 +140,55 @@ test('a learner builds a link in the editor and runs it', async ({ page, demoPag
   // And the run tab is reachable and reports itself.
   await press(page.getByTestId(SEL.editor.sidebarTab('history')), 'the run tab');
   await expect(page.getByTestId(SEL.editor.sidebarPanel('history'))).not.toBeEmpty();
+});
+
+test.describe('on a laptop, where the panels crowd', () => {
+  test('the same lesson still works end to end', async ({ page, demoPage }) => {
+    await page.setViewportSize(LAPTOP);
+    await demoPage.goto('/routing/client-server');
+    await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+
+    await press(page.getByTestId(SEL.demo.primaryAction).first(), 'the send button');
+    await demoPage.waitForTraceCount(1);
+    await press(page.getByTestId(SEL.traceFilter.hop).first(), 'the first hop');
+    await expect(page.getByTestId(SEL.packetViewer.panel)).toBeVisible();
+
+    await press(page.getByTestId(SEL.canvas.node).first(), 'a device');
+    const close = page.getByTestId(SEL.nodeDetail.closePanel);
+    await press(close, 'the panel close button');
+    await expect(close).toHaveCount(0);
+  });
+});
+
+test('a learner edits a device in the sandbox and takes the edit back', async ({
+  page,
+  sandboxPage,
+}) => {
+  await page.setViewportSize(FULL_SCREEN);
+  await page.goto('/?sandbox=1&sandboxTab=node#/networking/mtu-fragmentation');
+  await expect(page.getByTestId(SEL.app.root)).toBeVisible();
+  await expect(page.getByTestId(SEL.sandbox.panel)).toBeVisible();
+  await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+
+  // Right-clicking a device is how the sandbox is reached from the diagram.
+  await sandboxPage.rightClickNodeByLabel('R1');
+  await press(page.getByTestId(SEL.sandbox.editPopover.mtuInput), 'the MTU field');
+  await page.getByTestId(SEL.sandbox.editPopover.mtuInput).fill('500');
+  await press(page.getByTestId(SEL.sandbox.editPopover.mtuApply), 'apply MTU');
+
+  // The edit is listed where the learner can see what they changed.
+  await press(page.getByTestId(SEL.sandbox.tabs.edits), 'the edits tab');
+  await expect(page.getByTestId(SEL.sandbox.edits.list).first()).toBeVisible();
+
+  // Compare mode puts before and after side by side, and comes back.
+  await press(page.getByTestId(SEL.sandbox.modeSwitch), 'the mode switch');
+  await expect(page.getByTestId(SEL.canvas.root)).toHaveCount(2);
+  await press(page.getByTestId(SEL.sandbox.modeSwitch), 'the mode switch back');
+  await expect(page.getByTestId(SEL.canvas.root)).toHaveCount(1);
+
+  // And taking it back leaves nothing behind. Reset asks first, through a
+  // native confirm, which is part of the flow rather than an obstacle to it.
+  page.once('dialog', (dialog) => void dialog.accept());
+  await press(page.getByTestId(SEL.sandbox.edits.resetAll), 'reset all');
+  await expect(page.getByTestId(SEL.sandbox.edits.list)).toHaveCount(0);
 });
