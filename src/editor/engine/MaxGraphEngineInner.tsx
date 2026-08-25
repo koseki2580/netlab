@@ -34,6 +34,7 @@ export default function MaxGraphEngineInner({
   const layersRef = useRef<Cell[]>([]);
   const outlineHostRef = useRef<HTMLDivElement>(null);
   const [gridEnabled, setGridEnabled] = useState(true);
+  const fittedRef = useRef(false);
 
   // Mount once: rebuilding the Graph every render would drop selection, the
   // viewport and any gesture in progress.
@@ -62,6 +63,7 @@ export default function MaxGraphEngineInner({
       graph.destroy();
       graphRef.current = null;
       layersRef.current = [];
+      fittedRef.current = false;
     };
   }, []);
 
@@ -114,6 +116,26 @@ export default function MaxGraphEngineInner({
       graph.getSelectionModel().removeListener(onSelect);
     };
   }, [onNodesMoved, onSelectNode]);
+
+  // Frame the topology once, after the cells are drawn. The simulator canvas
+  // does the same; the editor did not, because framing moved the canvas away
+  // from the fixed spot the palette dropped new elements at. It now drops them
+  // where the learner is looking, so there is nothing left to fight.
+  useEffect(() => {
+    const graph = graphRef.current;
+    const host = hostRef.current;
+    if (!graph || !host || fittedRef.current || nodes.length === 0) return;
+    if (host.clientWidth < 2 || host.clientHeight < 2) return;
+    const bounds = graph.getGraphBounds();
+    if (!(bounds.width > 0 && bounds.height > 0) || !(graph.getView().scale > 0)) return;
+    const fit = graph.getPlugin<FitPlugin>('fit');
+    if (!fit) return;
+    // An element is drawn at the size it was designed at; fitting only ever
+    // zooms out from there, and never past what the level of detail expects.
+    fit.maxFitScale = 1;
+    fit.fitCenter({ margin: Math.round(Math.min(host.clientWidth, host.clientHeight) / 8) });
+    fittedRef.current = true;
+  }, [nodes, edges]);
 
   // Report the centre of the visible canvas so new elements land in view.
   useEffect(() => {
