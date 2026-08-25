@@ -176,6 +176,7 @@ export function ControlledTopologyDemo() {
           flexWrap: 'wrap',
           gap: 16,
           height: '100%',
+          minHeight: 0,
           padding: 16,
           boxSizing: 'border-box',
           background: '#020617',
@@ -220,6 +221,11 @@ export function ControlledTopologyDemo() {
             minWidth: 280,
             display: 'flex',
             flexDirection: 'column',
+            // Scroll inside rather than growing the row: this column holds a
+            // JSON snapshot and an encoded URL, both of which get long, and the
+            // canvas beside it is stretched to whatever height they reach.
+            minHeight: 0,
+            overflowY: 'auto',
             gap: 12,
             padding: 16,
             border: '1px solid #1e293b',
@@ -227,7 +233,6 @@ export function ControlledTopologyDemo() {
             background: '#111827',
             color: '#e5e7eb',
             fontFamily: 'monospace',
-            overflow: 'hidden',
           }}
         >
           <div>
@@ -320,6 +325,10 @@ export function ControlledTopologyDemo() {
           <div>
             <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 6 }}>URL Query</div>
             <pre
+              // Focusable because it scrolls: a keyboard user has no other way
+              // to reach the rest of an encoded topology this long.
+              tabIndex={0}
+              aria-label="Encoded topology URL query"
               style={{
                 margin: 0,
                 padding: 12,
@@ -330,6 +339,12 @@ export function ControlledTopologyDemo() {
                 fontSize: 11,
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-all',
+                // The encoded topology runs to thousands of characters. Left
+                // unbounded it stretched this column, and the canvas beside it,
+                // to 4476px — putting the whole network below the fold on the
+                // demo that exists to show the canvas being driven.
+                maxHeight: 160,
+                overflow: 'auto',
               }}
             >
               {encodedSearch}
@@ -338,10 +353,17 @@ export function ControlledTopologyDemo() {
 
           <pre
             data-testid="controlled-topology-json"
+            tabIndex={0}
+            aria-label="Topology snapshot JSON"
             style={{
               margin: 0,
               flex: 1,
               minHeight: 0,
+              // `flex: 1` only bounds this where the column itself is bounded,
+              // and this column's height comes from its own content. Without a
+              // ceiling the snapshot grew the column, the row and the canvas
+              // beside it, until the network sat thousands of pixels down.
+              maxHeight: 420,
               overflow: 'auto',
               padding: 12,
               borderRadius: 8,

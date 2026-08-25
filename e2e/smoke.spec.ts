@@ -63,6 +63,17 @@ for (const category of CATEGORIES) {
         await expect(drawn.first()).toBeVisible();
         await expect(page.locator('.netlab-edge').first()).toBeAttached();
 
+        // The network is on screen when the lesson opens, without scrolling.
+        // One lesson's canvas had been stretched to 4476px by an unbounded
+        // block of text beside it, so its whole network sat below the fold
+        // while the page cheerfully reported five nodes.
+        const viewport = page.viewportSize();
+        const firstBox = await drawn.first().boundingBox();
+        if (viewport && firstBox) {
+          expect(firstBox.y, 'the network is not below the fold').toBeLessThan(viewport.height);
+          expect(firstBox.x, 'the network is not off to the side').toBeLessThan(viewport.width);
+        }
+
         // And what is drawn is on screen when the lesson opens. Framing it is
         // the canvas's job; getting the padding wrong left the last device of a
         // wide topology clipped by the edge, which reads as a diagram that
