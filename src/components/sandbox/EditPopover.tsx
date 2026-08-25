@@ -1,3 +1,4 @@
+import { CANVAS_LAYER } from '../canvasLayers';
 import { useEffect, useMemo, useRef, type KeyboardEvent, type ReactNode } from 'react';
 import type { EdgeRef, InterfaceRef, NodeRef, PacketRef } from '../../sandbox/types';
 
@@ -108,7 +109,7 @@ export function EditPopover({
         position: 'absolute',
         left: position.left,
         top: position.top,
-        zIndex: 30,
+        zIndex: CANVAS_LAYER.editPopover,
         minWidth: 240,
         maxWidth: 360,
         padding: 12,

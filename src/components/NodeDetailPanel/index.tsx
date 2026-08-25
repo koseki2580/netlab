@@ -1,3 +1,4 @@
+import { CANVAS_LAYER } from '../canvasLayers';
 import { memo, useContext, useEffect } from 'react';
 import { SimulationContext } from '../../simulation/SimulationContext';
 import type { TopologySnapshot } from '../../types/topology';
@@ -89,7 +90,7 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
           style={{
             position: 'absolute',
             inset: 0,
-            zIndex: 30,
+            zIndex: CANVAS_LAYER.panelScrim,
             background: 'color-mix(in srgb, var(--netlab-bg-primary) 55%, transparent)',
           }}
         />

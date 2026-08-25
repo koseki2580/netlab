@@ -1,3 +1,4 @@
+import { CANVAS_LAYER } from '../canvasLayers';
 import { RouteTablePanel } from '../controls/RouteTable';
 import { PacketViewerPanel } from './PacketViewer';
 
@@ -9,7 +10,7 @@ const STACK_STYLE: React.CSSProperties = {
   flexDirection: 'column',
   gap: 12,
   alignItems: 'flex-end',
-  zIndex: 120,
+  zIndex: CANVAS_LAYER.referenceOverlay,
   pointerEvents: 'none',
 };
 

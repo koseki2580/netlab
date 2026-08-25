@@ -1,3 +1,4 @@
+import { CANVAS_LAYER } from '../canvasLayers';
 import type React from 'react';
 import { useEffect, useRef } from 'react';
 import { DP_NARROW_BREAKPOINT, type DpMode, type DpTab } from './useNodeDetailDock';
@@ -67,7 +68,7 @@ export function getPanelStyle(mode: DpMode, width: number, isNarrow = false): Re
       top: 0,
       right: 0,
       bottom: 0,
-      zIndex: 31,
+      zIndex: CANVAS_LAYER.devicePanel,
       boxShadow: '-16px 0 40px rgba(0, 0, 0, 0.35)',
     };
   }
@@ -90,7 +91,7 @@ export function getPanelStyle(mode: DpMode, width: number, isNarrow = false): Re
           position: 'absolute',
           top: 0,
           right: 0,
-          zIndex: 20,
+          zIndex: CANVAS_LAYER.devicePanel,
           boxShadow: '-16px 0 40px rgba(0, 0, 0, 0.35)',
           backdropFilter: 'blur(10px)',
           WebkitBackdropFilter: 'blur(10px)',
@@ -287,7 +288,7 @@ export function ResizeHandle({ currentWidth, onResize }: ResizeHandleProps): JSX
         bottom: 0,
         width: 6,
         cursor: 'col-resize',
-        zIndex: 30,
+        zIndex: CANVAS_LAYER.devicePanel,
         background: 'transparent',
       }}
     />
