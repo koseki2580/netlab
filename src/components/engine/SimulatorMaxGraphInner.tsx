@@ -16,6 +16,7 @@ import {
   type PanningHandler,
   type TooltipHandler,
 } from '@maxgraph/core';
+import { AREA_CLUSTER_NODE_TYPE } from '../../areas/areaLod';
 import { DefaultNode } from '../DefaultNode';
 import { MaxGraphControls } from '../../editor/engine/MaxGraphControls';
 import { wireConnect } from '../../editor/engine/maxGraphInteraction';
@@ -511,6 +512,28 @@ export default function SimulatorMaxGraphInner({
             // `data-id` is how the drop pulse finds the device that dropped a
             // packet; it used to be React Flow's own attribute on its wrapper.
             data-id={node.id}
+            // Reachable without a mouse. Selecting a device is how a learner
+            // reads its addresses and routes, and a canvas whose devices are
+            // not in the tab order puts all of that out of reach. React Flow
+            // made its nodes focusable and the interaction profile still asks
+            // for it, so losing it was silent.
+            // A collapsed area is skipped: it carries its own expand button, and
+            // wrapping that in another button is interactive content nested
+            // inside interactive content.
+            {...(profile.nodesFocusable &&
+            node.selectable !== false &&
+            node.type !== AREA_CLUSTER_NODE_TYPE
+              ? {
+                  tabIndex: 0,
+                  role: 'button',
+                  'aria-label': String((node.data as { label?: string }).label ?? node.id),
+                  onKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => {
+                    if (event.key !== 'Enter' && event.key !== ' ') return;
+                    event.preventDefault();
+                    handlers.current.handleNodeClick(node);
+                  },
+                }
+              : {})}
             // `netlab-node` plus the class the canvas computed is what the
             // selection choreography is styled against — the canvas's names,
             // not the engine's.
