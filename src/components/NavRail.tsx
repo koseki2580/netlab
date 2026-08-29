@@ -93,7 +93,7 @@ function itemStyle(active?: boolean, disabled?: boolean): React.CSSProperties {
     color: active
       ? 'var(--netlab-accent-cyan)'
       : disabled
-        ? 'var(--netlab-text-faint, #64748b)'
+        ? 'var(--netlab-text-faint, var(--netlab-text-muted))'
         : 'var(--netlab-text-secondary, #94a3b8)',
     background: active
       ? 'color-mix(in srgb, var(--netlab-accent-cyan) 12%, transparent)'

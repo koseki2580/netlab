@@ -19,7 +19,7 @@ const LEGEND_STYLE: React.CSSProperties = {
 
 const AREA_COLORS: Record<string, string> = {
   private: '#3b82f6',
-  public: '#22c55e',
+  public: 'var(--netlab-accent-green)',
   dmz: '#fb923c',
   management: '#a855f7',
 };

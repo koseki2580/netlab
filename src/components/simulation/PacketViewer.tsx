@@ -43,12 +43,12 @@ const VAL: React.CSSProperties = {
 };
 
 const EVENT_COLORS: Record<string, string> = {
-  create: '#7dd3fc',
-  forward: '#4ade80',
-  deliver: '#34d399',
-  drop: '#f87171',
-  'arp-request': '#f59e0b',
-  'arp-reply': '#f59e0b',
+  create: 'var(--netlab-accent-cyan)',
+  forward: 'var(--netlab-accent-green)',
+  deliver: 'var(--netlab-accent-green)',
+  drop: 'var(--netlab-accent-red)',
+  'arp-request': 'var(--netlab-accent-orange)',
+  'arp-reply': 'var(--netlab-accent-orange)',
 };
 
 function Field({ label, value }: { label: string; value: string }) {
@@ -61,7 +61,7 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 function EventBadge({ event }: { event: PacketHop['event'] }) {
-  const color = EVENT_COLORS[event] ?? '#94a3b8';
+  const color = EVENT_COLORS[event] ?? 'var(--netlab-text-secondary)';
   return (
     <span
       style={{
@@ -113,7 +113,7 @@ export function PacketViewerPanel({ floating = false }: PacketViewerPanelProps) 
               justifyContent: 'space-between',
             }}
           >
-            <span style={{ color: '#94a3b8', fontSize: 10 }}>
+            <span style={{ color: 'var(--netlab-text-secondary)', fontSize: 10 }}>
               Hop {selectedHop.step + 1} / {totalHops}
             </span>
             <EventBadge event={selectedHop.event} />

@@ -56,7 +56,11 @@ export default function HttpsDemo() {
               type="button"
               data-testid="tls-run-handshake"
               onClick={() => void execute(['http/1.1'])}
-              style={{ ...BUTTON_STYLE, background: 'var(--netlab-accent-cyan)', color: '#082f49' }}
+              style={{
+                ...BUTTON_STYLE,
+                background: 'var(--netlab-accent-cyan)',
+                color: 'var(--netlab-bg-primary)',
+              }}
             >
               Run HTTPS handshake
             </button>

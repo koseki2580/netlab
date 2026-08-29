@@ -167,8 +167,8 @@ function TabBar({ activeTab, onChange }: { activeTab: TabId; onChange: (tab: Tab
     <div
       style={{
         display: 'flex',
-        background: '#0f172a',
-        borderBottom: '1px solid #1e293b',
+        background: 'var(--netlab-bg-primary)',
+        borderBottom: '1px solid var(--netlab-bg-surface)',
         flexShrink: 0,
       }}
     >
@@ -178,10 +178,14 @@ function TabBar({ activeTab, onChange }: { activeTab: TabId; onChange: (tab: Tab
           onClick={() => onChange(tab.id)}
           style={{
             padding: '8px 18px',
-            background: activeTab === tab.id ? '#263144' : 'transparent',
+            background: activeTab === tab.id ? 'var(--netlab-bg-elevated)' : 'transparent',
             border: 'none',
-            borderBottom: activeTab === tab.id ? '2px solid #2563eb' : '2px solid transparent',
-            color: activeTab === tab.id ? '#e2e8f0' : '#94a3b8',
+            borderBottom:
+              activeTab === tab.id
+                ? '2px solid var(--netlab-accent-blue)'
+                : '2px solid transparent',
+            color:
+              activeTab === tab.id ? 'var(--netlab-text-primary)' : 'var(--netlab-text-secondary)',
             fontFamily: 'monospace',
             fontSize: 12,
             cursor: 'pointer',
@@ -189,12 +193,14 @@ function TabBar({ activeTab, onChange }: { activeTab: TabId; onChange: (tab: Tab
           }}
           onMouseEnter={(event) => {
             if (activeTab !== tab.id) {
-              (event.currentTarget as HTMLButtonElement).style.color = '#94a3b8';
+              (event.currentTarget as HTMLButtonElement).style.color =
+                'var(--netlab-text-secondary)';
             }
           }}
           onMouseLeave={(event) => {
             if (activeTab !== tab.id) {
-              (event.currentTarget as HTMLButtonElement).style.color = '#94a3b8';
+              (event.currentTarget as HTMLButtonElement).style.color =
+                'var(--netlab-text-secondary)';
             }
           }}
         >
@@ -290,8 +296,8 @@ function SimulationTabInner() {
       <ResizableSidebar
         defaultWidth={380}
         style={{
-          background: '#0f172a',
-          borderLeft: '1px solid #1e293b',
+          background: 'var(--netlab-bg-primary)',
+          borderLeft: '1px solid var(--netlab-bg-surface)',
         }}
       >
         <div style={{ flex: 1, overflow: 'hidden' }}>
@@ -371,7 +377,9 @@ function FailureTabInner() {
             Send Packet
           </button>
           {downCount > 0 && (
-            <span style={{ fontSize: 11, color: '#f87171', fontFamily: 'monospace' }}>
+            <span
+              style={{ fontSize: 11, color: 'var(--netlab-accent-red)', fontFamily: 'monospace' }}
+            >
               {downCount} failure{downCount > 1 ? 's' : ''} active
             </span>
           )}
@@ -380,8 +388,8 @@ function FailureTabInner() {
       <ResizableSidebar
         defaultWidth={300}
         style={{
-          background: '#0f172a',
-          borderLeft: '1px solid #1e293b',
+          background: 'var(--netlab-bg-primary)',
+          borderLeft: '1px solid var(--netlab-bg-surface)',
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -389,7 +397,7 @@ function FailureTabInner() {
         <div style={{ flex: 1, overflowY: 'auto', padding: 12 }}>
           <FailureTogglePanel />
         </div>
-        <div style={{ height: 1, background: '#1e293b', flexShrink: 0 }} />
+        <div style={{ height: 1, background: 'var(--netlab-bg-surface)', flexShrink: 0 }} />
         <div style={{ flex: 1, overflowY: 'auto' }}>
           <StepControls />
         </div>
@@ -443,8 +451,8 @@ function TraceTabInner() {
         defaultWidth={420}
         maxWidth={700}
         style={{
-          background: '#0f172a',
-          borderLeft: '1px solid #1e293b',
+          background: 'var(--netlab-bg-primary)',
+          borderLeft: '1px solid var(--netlab-bg-surface)',
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>

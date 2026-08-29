@@ -19,7 +19,7 @@ const BUTTON_BASE: CSSProperties = {
   borderRadius: 8,
   borderStyle: 'solid',
   borderWidth: 1,
-  borderColor: '#334155',
+  borderColor: 'var(--netlab-border)',
   cursor: 'pointer',
   textAlign: 'left',
 };
@@ -33,15 +33,15 @@ const BUTTON_PRIMARY: CSSProperties = {
 
 const BUTTON_SECONDARY: CSSProperties = {
   ...BUTTON_BASE,
-  background: '#0f172a',
-  color: '#cbd5e1',
+  background: 'var(--netlab-bg-primary)',
+  color: 'var(--netlab-text-primary)',
 };
 
 const BUTTON_DISABLED: CSSProperties = {
   ...BUTTON_BASE,
-  background: '#111827',
+  background: 'var(--netlab-bg-primary)',
   borderColor: '#1f2937',
-  color: '#64748b',
+  color: 'var(--netlab-text-muted)',
   cursor: 'not-allowed',
 };
 
@@ -618,7 +618,7 @@ function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
         style={{
           border: '1px solid var(--netlab-border-subtle)',
           borderRadius: 10,
-          background: 'rgba(15, 23, 42, 0.9)',
+          background: 'color-mix(in srgb, var(--netlab-bg-primary) 90%, transparent)',
           padding: 12,
         }}
       >
@@ -712,7 +712,7 @@ function MetricCard({ label, value }: { label: string; value: string }) {
       style={{
         border: '1px solid var(--netlab-border-subtle)',
         borderRadius: 8,
-        background: 'rgba(15, 23, 42, 0.75)',
+        background: 'color-mix(in srgb, var(--netlab-bg-primary) 75%, transparent)',
         padding: '10px 12px',
       }}
     >
@@ -743,7 +743,7 @@ function EnterpriseDemoInner({
             maxWidth: 340,
             border: '1px solid rgba(20, 184, 166, 0.35)',
             borderRadius: 10,
-            background: 'rgba(15, 23, 42, 0.88)',
+            background: 'color-mix(in srgb, var(--netlab-bg-primary) 88%, transparent)',
             padding: 12,
           }}
         >
@@ -760,7 +760,7 @@ function EnterpriseDemoInner({
           </div>
           <div
             style={{
-              color: '#cbd5e1',
+              color: 'var(--netlab-text-primary)',
               fontFamily: 'monospace',
               fontSize: 11,
               lineHeight: 1.5,
@@ -777,8 +777,8 @@ function EnterpriseDemoInner({
         defaultWidth={520}
         maxWidth={760}
         style={{
-          background: '#0f172a',
-          borderLeft: '1px solid #1e293b',
+          background: 'var(--netlab-bg-primary)',
+          borderLeft: '1px solid var(--netlab-bg-surface)',
           display: 'flex',
           flexDirection: 'column',
         }}

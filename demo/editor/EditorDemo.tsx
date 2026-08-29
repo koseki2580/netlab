@@ -114,15 +114,15 @@ export default function EditorDemo() {
         <div
           style={{
             padding: '6px 14px',
-            background: '#0f172a',
-            borderBottom: '1px solid #1e293b',
+            background: 'var(--netlab-bg-primary)',
+            borderBottom: '1px solid var(--netlab-bg-surface)',
             display: 'flex',
             alignItems: 'center',
             gap: 8,
             flexShrink: 0,
             fontFamily: 'monospace',
             fontSize: 11,
-            color: '#94a3b8',
+            color: 'var(--netlab-text-secondary)',
           }}
         >
           <span>
@@ -133,9 +133,9 @@ export default function EditorDemo() {
             onClick={() => setJsonOpen((o) => !o)}
             style={{
               padding: '3px 10px',
-              background: jsonOpen ? '#1e3a5f' : '#1e293b',
-              color: jsonOpen ? '#7dd3fc' : '#94a3b8',
-              border: `1px solid ${jsonOpen ? '#2563eb' : '#334155'}`,
+              background: jsonOpen ? '#1e3a5f' : 'var(--netlab-bg-surface)',
+              color: jsonOpen ? 'var(--netlab-accent-cyan)' : 'var(--netlab-text-secondary)',
+              border: `1px solid ${jsonOpen ? 'var(--netlab-accent-blue)' : 'var(--netlab-border)'}`,
               borderRadius: 5,
               cursor: 'pointer',
               fontFamily: 'monospace',
@@ -148,9 +148,11 @@ export default function EditorDemo() {
             onClick={handleCopyLink}
             style={{
               padding: '3px 10px',
-              background: copied ? '#14532d' : '#1e293b',
-              color: copied ? '#4ade80' : '#94a3b8',
-              border: `1px solid ${copied ? '#16a34a' : '#334155'}`,
+              background: copied
+                ? 'color-mix(in srgb, var(--netlab-accent-green) 18%, transparent)'
+                : 'var(--netlab-bg-surface)',
+              color: copied ? 'var(--netlab-accent-green)' : 'var(--netlab-text-secondary)',
+              border: `1px solid ${copied ? '#16a34a' : 'var(--netlab-border)'}`,
               borderRadius: 5,
               cursor: 'pointer',
               fontFamily: 'monospace',
@@ -178,8 +180,8 @@ export default function EditorDemo() {
             <ResizableSidebar
               defaultWidth={300}
               style={{
-                background: '#0f172a',
-                borderLeft: '1px solid #1e293b',
+                background: 'var(--netlab-bg-primary)',
+                borderLeft: '1px solid var(--netlab-bg-surface)',
                 display: 'flex',
                 flexDirection: 'column',
               }}
@@ -187,8 +189,8 @@ export default function EditorDemo() {
               <div
                 style={{
                   padding: '8px 12px',
-                  borderBottom: '1px solid #1e293b',
-                  color: '#94a3b8',
+                  borderBottom: '1px solid var(--netlab-bg-surface)',
+                  color: 'var(--netlab-text-secondary)',
                   fontFamily: 'monospace',
                   fontSize: 10,
                   fontWeight: 'bold',
@@ -205,7 +207,7 @@ export default function EditorDemo() {
                   padding: '8px 12px',
                   fontFamily: 'monospace',
                   fontSize: 10,
-                  color: '#94a3b8',
+                  color: 'var(--netlab-text-secondary)',
                   whiteSpace: 'pre-wrap',
                   wordBreak: 'break-all',
                 }}

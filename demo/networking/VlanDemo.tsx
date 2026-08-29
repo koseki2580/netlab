@@ -195,9 +195,9 @@ const BTN_PRIMARY: CSSProperties = {
 
 const BTN_SECONDARY: CSSProperties = {
   ...BTN_BASE,
-  background: '#1e293b',
-  borderColor: '#334155',
-  color: '#cbd5e1',
+  background: 'var(--netlab-bg-surface)',
+  borderColor: 'var(--netlab-border)',
+  color: 'var(--netlab-text-primary)',
 };
 
 const BTN_DANGER: CSSProperties = {
@@ -208,7 +208,7 @@ const BTN_DANGER: CSSProperties = {
 
 const BTN_DISABLED: CSSProperties = {
   ...BTN_BASE,
-  background: '#111827',
+  background: 'var(--netlab-bg-primary)',
   borderColor: '#1f2937',
   color: '#6b7280',
   cursor: 'not-allowed',
@@ -301,9 +301,9 @@ function VlanDemoInner() {
             left: 12,
             padding: '10px 12px',
             borderRadius: 8,
-            background: 'rgba(15, 23, 42, 0.88)',
+            background: 'color-mix(in srgb, var(--netlab-bg-primary) 88%, transparent)',
             border: '1px solid rgba(148, 163, 184, 0.2)',
-            color: '#cbd5e1',
+            color: 'var(--netlab-text-primary)',
             fontFamily: 'monospace',
             fontSize: 11,
             maxWidth: 320,
@@ -312,7 +312,7 @@ function VlanDemoInner() {
         >
           <div style={{ color: '#f8fafc', fontWeight: 700, marginBottom: 4 }}>VLAN Demo</div>
           <div>{headline}</div>
-          <div style={{ marginTop: 6, color: '#94a3b8' }}>
+          <div style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}>
             Click <strong>SW1</strong> to inspect access/trunk port VLANs and <strong>R1</strong> to
             inspect sub-interfaces.
           </div>
@@ -323,15 +323,15 @@ function VlanDemoInner() {
         defaultWidth={420}
         maxWidth={680}
         style={{
-          background: '#0f172a',
-          borderLeft: '1px solid #1e293b',
+          background: 'var(--netlab-bg-primary)',
+          borderLeft: '1px solid var(--netlab-bg-surface)',
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
           <div
             style={{
               padding: 12,
-              borderBottom: '1px solid #1e293b',
+              borderBottom: '1px solid var(--netlab-bg-surface)',
               display: 'grid',
               gap: 10,
             }}
@@ -347,15 +347,23 @@ function VlanDemoInner() {
                 style={{
                   padding: 10,
                   borderRadius: 8,
-                  background: '#111827',
+                  background: 'var(--netlab-bg-primary)',
                   border: '1px solid #1f2937',
                 }}
               >
-                <div style={{ fontSize: 10, color: '#94a3b8', fontFamily: 'monospace' }}>TRUNK</div>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: 'var(--netlab-text-secondary)',
+                    fontFamily: 'monospace',
+                  }}
+                >
+                  TRUNK
+                </div>
                 <div
                   style={{
                     marginTop: 4,
-                    color: trunkDown ? '#fca5a5' : '#86efac',
+                    color: trunkDown ? 'var(--netlab-accent-red)' : 'var(--netlab-accent-green)',
                     fontFamily: 'monospace',
                     fontWeight: 700,
                   }}
@@ -368,17 +376,26 @@ function VlanDemoInner() {
                 style={{
                   padding: 10,
                   borderRadius: 8,
-                  background: '#111827',
+                  background: 'var(--netlab-bg-primary)',
                   border: '1px solid #1f2937',
                 }}
               >
-                <div style={{ fontSize: 10, color: '#94a3b8', fontFamily: 'monospace' }}>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: 'var(--netlab-text-secondary)',
+                    fontFamily: 'monospace',
+                  }}
+                >
                   LATEST RESULT
                 </div>
                 <div
                   style={{
                     marginTop: 4,
-                    color: lastHop?.event === 'drop' ? '#fca5a5' : '#93c5fd',
+                    color:
+                      lastHop?.event === 'drop'
+                        ? 'var(--netlab-accent-red)'
+                        : 'var(--netlab-accent-cyan)',
                     fontFamily: 'monospace',
                     fontWeight: 700,
                   }}
@@ -421,7 +438,13 @@ function VlanDemoInner() {
               </button>
             </div>
 
-            <div style={{ fontSize: 11, color: '#94a3b8', fontFamily: 'monospace' }}>
+            <div
+              style={{
+                fontSize: 11,
+                color: 'var(--netlab-text-secondary)',
+                fontFamily: 'monospace',
+              }}
+            >
               {isRecomputing && 'Recomputing last packet after topology failure change...'}
               {!isRecomputing && lastHop?.event === 'drop' && `Last drop reason: ${lastHop.reason}`}
               {!isRecomputing &&

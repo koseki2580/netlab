@@ -81,6 +81,11 @@ and the gallery — each already has its own tests and docs.
   is comparing the same part of the topology at the same size.
 - **REQ-018 (MUST):** A link the canvas has found errors or warnings on MUST be
   marked on the link itself, and hovering the mark MUST say what is wrong.
+- **REQ-036 (MUST):** Every lesson MUST be readable in the light theme, to the
+  same WCAG 2 AA standard already required in dark.
+- **REQ-037 (MUST):** Each theme's text and accent tokens MUST clear 4.5:1
+  against that theme's own backgrounds. A colour used as a fill MUST instead
+  carry a label that clears 4.5:1 against it.
 - **REQ-035 (MUST):** A control that grows its touch target with an overlay MUST
   anchor that overlay to itself. An overlay that escapes onto the surrounding
   toolbar shields every other control on it while looking entirely correct.
@@ -215,6 +220,10 @@ not part of this specification.
 - **AC-018:** Given a link with a validation error, when it is drawn, then it
   carries an error mark; a link with only warnings carries a warning mark, and a
   clean link carries none.
+- **AC-033:** Given any lesson opened after choosing Light, when it is scanned
+  for WCAG 2 A/AA, then there are no violations.
+- **AC-034:** Given either built-in theme, when its tokens are measured against
+  its own backgrounds, then every text and accent token clears 4.5:1.
 - **AC-032:** Given the OSPF lesson, when the learner presses "Fail link", then
   the link fails and the control offers to restore it; and no button on the
   command bar lets its hit area escape onto the toolbar.
@@ -276,6 +285,8 @@ not part of this specification.
 | TC-022    | AC-017     | E2E           | Two canvases in compare mode                         | The learner zooms one                                                             | Both are drawn at the same zoom                                                      | `e2e/canvas-compare-viewport.spec.ts`               |
 | TC-023    | AC-018     | unit/behavior | Links with errors, with warnings, and clean          | They are drawn                                                                    | Each carries the right mark, and the messages are readable                           | `src/components/engine/simulatorGraphModel.test.ts` |
 | TC-024    | AC-019     | E2E           | A device opened, dismissed and opened again          | Its position is compared across openings                                          | It lands in the same place each time and stays on the canvas                         | `e2e/canvas-select-pan.spec.ts`                     |
+| TC-041    | AC-033     | E2E           | Every lesson, opened in the light theme              | It is scanned for WCAG 2 A/AA                                                     | No violations                                                                        | `e2e/light-theme.spec.ts`                           |
+| TC-042    | AC-034     | unit/behavior | Both built-in themes                                 | Token contrast is computed against each theme's backgrounds                       | Every text and accent token clears 4.5:1                                             | `src/theme/index.test.ts`                           |
 | TC-039    | AC-032     | E2E           | The OSPF lesson's central control                    | It is pressed                                                                     | The link fails and can be restored                                                   | `e2e/lesson-controls.spec.ts`                       |
 | TC-040    | AC-032     | E2E           | Command-bar and nav-rail buttons                     | Their positioning is read                                                         | Each anchors its own hit-area overlay                                                | `e2e/lesson-controls.spec.ts`                       |
 | TC-038    | AC-031     | E2E           | The gallery's theme setting                          | A theme is chosen, then a lesson opened                                           | The lesson follows the choice, and an unmade choice changes nothing                  | `e2e/settings-carry.spec.ts`                        |

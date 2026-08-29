@@ -86,7 +86,7 @@ export function SaveSnapshotButton() {
             background: 'var(--netlab-bg-primary)',
             color: 'var(--netlab-text-primary)',
             padding: 12,
-            boxShadow: '0 12px 32px rgba(2, 6, 23, 0.35)',
+            boxShadow: '0 12px 32px color-mix(in srgb, var(--netlab-bg-primary) 35%, transparent)',
           }}
         >
           <label style={{ display: 'block', fontSize: 11 }}>

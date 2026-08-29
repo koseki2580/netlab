@@ -23,7 +23,7 @@ function ToggleRow({
     >
       <span
         style={{
-          color: '#cbd5e1',
+          color: 'var(--netlab-text-primary)',
           fontSize: 12,
           flex: 1,
           overflow: 'hidden',
@@ -37,7 +37,7 @@ function ToggleRow({
         style={{
           fontSize: 10,
           fontWeight: 'bold',
-          color: isDown ? '#f87171' : '#4ade80',
+          color: isDown ? 'var(--netlab-accent-red)' : 'var(--netlab-accent-green)',
           minWidth: 30,
           textAlign: 'right',
         }}
@@ -53,9 +53,11 @@ function ToggleRow({
         style={{
           fontSize: 10,
           padding: '2px 8px',
-          background: isDown ? '#7f1d1d' : '#14532d',
-          color: isDown ? '#fca5a5' : '#86efac',
-          border: `1px solid ${isDown ? '#ef4444' : '#22c55e'}`,
+          background: isDown
+            ? '#7f1d1d'
+            : 'color-mix(in srgb, var(--netlab-accent-green) 18%, transparent)',
+          color: isDown ? 'var(--netlab-accent-red)' : 'var(--netlab-accent-green)',
+          border: `1px solid ${isDown ? '#ef4444' : 'var(--netlab-accent-green)'}`,
           borderRadius: 4,
           cursor: 'pointer',
           fontFamily: 'monospace',
@@ -89,13 +91,13 @@ export function FailureTogglePanel() {
   return (
     <div
       style={{
-        background: '#0f172a',
-        border: '1px solid #1e293b',
+        background: 'var(--netlab-bg-primary)',
+        border: '1px solid var(--netlab-bg-surface)',
         borderRadius: 8,
         padding: '12px 14px',
         fontFamily: 'monospace',
         fontSize: 12,
-        color: '#e2e8f0',
+        color: 'var(--netlab-text-primary)',
         display: 'flex',
         flexDirection: 'column',
         gap: 10,
@@ -107,7 +109,7 @@ export function FailureTogglePanel() {
         style={{
           fontWeight: 'bold',
           fontSize: 11,
-          color: '#94a3b8',
+          color: 'var(--netlab-text-secondary)',
           letterSpacing: '0.08em',
         }}
       >
@@ -147,7 +149,7 @@ export function FailureTogglePanel() {
         <div
           style={{
             fontSize: 10,
-            color: '#94a3b8',
+            color: 'var(--netlab-text-secondary)',
             marginBottom: 4,
             letterSpacing: '0.06em',
           }}
@@ -168,7 +170,7 @@ export function FailureTogglePanel() {
         <div
           style={{
             fontSize: 10,
-            color: '#94a3b8',
+            color: 'var(--netlab-text-secondary)',
             marginBottom: 4,
             letterSpacing: '0.06em',
           }}
@@ -196,7 +198,7 @@ export function FailureTogglePanel() {
           <div
             style={{
               fontSize: 10,
-              color: '#94a3b8',
+              color: 'var(--netlab-text-secondary)',
               marginBottom: 4,
               letterSpacing: '0.06em',
             }}
@@ -221,9 +223,9 @@ export function FailureTogglePanel() {
         style={{
           marginTop: 4,
           padding: '5px 0',
-          background: '#1e293b',
-          color: '#94a3b8',
-          border: '1px solid #334155',
+          background: 'var(--netlab-bg-surface)',
+          color: 'var(--netlab-text-secondary)',
+          border: '1px solid var(--netlab-border)',
           borderRadius: 4,
           cursor: 'pointer',
           fontFamily: 'monospace',

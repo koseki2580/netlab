@@ -26,7 +26,7 @@ type Difficulty = 'beginner' | 'intermediate' | 'advanced';
 
 /**
  * Pull an accent toward the theme's text colour. On the light accent-tinted
- * chip/link backgrounds the raw accent (e.g. orange #f59e0b) fails WCAG AA;
+ * chip/link backgrounds the raw accent (e.g. orange var(--netlab-accent-orange)) fails WCAG AA;
  * mixing it ~40% with text-primary darkens it enough to clear 4.5:1 in light
  * theme (and lightens it in dark theme) while keeping the hue. Used for every
  * accent-on-tint label in the card.

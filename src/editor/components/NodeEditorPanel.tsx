@@ -17,7 +17,7 @@ const PANEL_STYLE: React.CSSProperties = {
   width: 280,
   maxHeight: 'calc(100% - 24px)',
   overflowY: 'auto',
-  color: '#e2e8f0',
+  color: 'var(--netlab-text-primary)',
   fontSize: 11,
   fontFamily: 'monospace',
   zIndex: 200,
@@ -31,17 +31,17 @@ const SECTION_STYLE: React.CSSProperties = {
 };
 
 const LABEL_STYLE: React.CSSProperties = {
-  color: '#94a3b8',
+  color: 'var(--netlab-text-secondary)',
   fontSize: 10,
   letterSpacing: 1,
   marginBottom: 3,
 };
 
 const INPUT_STYLE: React.CSSProperties = {
-  background: '#0f172a',
-  border: '1px solid #334155',
+  background: 'var(--netlab-bg-primary)',
+  border: '1px solid var(--netlab-border)',
   borderRadius: 4,
-  color: '#e2e8f0',
+  color: 'var(--netlab-text-primary)',
   fontFamily: 'monospace',
   fontSize: 11,
   padding: '3px 6px',
@@ -50,10 +50,10 @@ const INPUT_STYLE: React.CSSProperties = {
 };
 
 const SMALL_BTN: React.CSSProperties = {
-  background: '#1e293b',
-  border: '1px solid #334155',
+  background: 'var(--netlab-bg-surface)',
+  border: '1px solid var(--netlab-border)',
   borderRadius: 4,
-  color: '#94a3b8',
+  color: 'var(--netlab-text-secondary)',
   cursor: 'pointer',
   fontFamily: 'monospace',
   fontSize: 10,
@@ -63,9 +63,9 @@ const SMALL_BTN: React.CSSProperties = {
 
 const DELETE_BTN: React.CSSProperties = {
   ...SMALL_BTN,
-  background: '#450a0a',
+  background: 'color-mix(in srgb, var(--netlab-accent-red) 18%, transparent)',
   border: '1px solid #7f1d1d',
-  color: '#fca5a5',
+  color: 'var(--netlab-accent-red)',
   width: '100%',
   marginTop: 8,
   padding: '5px 0',
@@ -75,7 +75,7 @@ const DELETE_BTN: React.CSSProperties = {
 const ICON_BTN: React.CSSProperties = {
   background: 'none',
   border: 'none',
-  color: '#94a3b8',
+  color: 'var(--netlab-text-secondary)',
   cursor: 'pointer',
   fontSize: 11,
   padding: '0 2px',
@@ -115,7 +115,7 @@ function TextField({
   value,
   placeholder,
   onCommit,
-  accentColor = '#e2e8f0',
+  accentColor = 'var(--netlab-text-primary)',
 }: TextFieldProps) {
   const [local, setLocal] = useState(value);
 
@@ -154,14 +154,14 @@ function HostEditor({
         value={data.ip ?? ''}
         placeholder="e.g. 10.0.0.10"
         onCommit={(v) => onCommit({ ip: v || undefined })}
-        accentColor="#7dd3fc"
+        accentColor="var(--netlab-accent-cyan)"
       />
       <TextField
         label="MAC ADDRESS"
         value={data.mac ?? ''}
         placeholder="e.g. aa:bb:cc:dd:ee:ff"
         onCommit={(v) => onCommit({ mac: v || undefined })}
-        accentColor="#fbbf24"
+        accentColor="var(--netlab-accent-yellow)"
       />
     </div>
   );
@@ -245,9 +245,9 @@ function IfaceRow({ iface, onUpdate, onDelete }: IfaceRowProps) {
       style={{
         marginBottom: 8,
         padding: '6px 8px',
-        background: '#0f172a',
+        background: 'var(--netlab-bg-primary)',
         borderRadius: 4,
-        border: '1px solid #1e293b',
+        border: '1px solid var(--netlab-bg-surface)',
       }}
     >
       <div
@@ -259,7 +259,12 @@ function IfaceRow({ iface, onUpdate, onDelete }: IfaceRowProps) {
         }}
       >
         <input
-          style={{ ...INPUT_STYLE, color: '#4ade80', width: 90, marginBottom: 0 }}
+          style={{
+            ...INPUT_STYLE,
+            color: 'var(--netlab-accent-green)',
+            width: 90,
+            marginBottom: 0,
+          }}
           value={localName}
           onChange={(e) => setLocalName(e.target.value)}
           onBlur={() => {
@@ -271,7 +276,7 @@ function IfaceRow({ iface, onUpdate, onDelete }: IfaceRowProps) {
         </button>
       </div>
       <input
-        style={{ ...INPUT_STYLE, color: '#7dd3fc', marginBottom: 3 }}
+        style={{ ...INPUT_STYLE, color: 'var(--netlab-accent-cyan)', marginBottom: 3 }}
         value={localIpPrefix}
         placeholder="10.0.0.1/24"
         onChange={(e) => setLocalIpPrefix(e.target.value)}
@@ -280,7 +285,7 @@ function IfaceRow({ iface, onUpdate, onDelete }: IfaceRowProps) {
         }}
       />
       <input
-        style={{ ...INPUT_STYLE, color: '#fbbf24' }}
+        style={{ ...INPUT_STYLE, color: 'var(--netlab-accent-yellow)' }}
         value={localMac}
         placeholder="00:00:00:00:00:00"
         onChange={(e) => setLocalMac(e.target.value)}
@@ -364,7 +369,7 @@ function PortRow({ port, onUpdate, onDelete }: PortRowProps) {
         }}
       />
       <input
-        style={{ ...INPUT_STYLE, color: '#fbbf24', flex: 1 }}
+        style={{ ...INPUT_STYLE, color: 'var(--netlab-accent-yellow)', flex: 1 }}
         value={localMac}
         onChange={(e) => setLocalMac(e.target.value)}
         onBlur={() => {
@@ -437,7 +442,7 @@ function RouteRow({ route, onUpdate, onDelete }: RouteRowProps) {
   return (
     <div style={{ display: 'flex', gap: 4, alignItems: 'center', marginBottom: 4 }}>
       <input
-        style={{ ...INPUT_STYLE, color: '#7dd3fc', flex: 1 }}
+        style={{ ...INPUT_STYLE, color: 'var(--netlab-accent-cyan)', flex: 1 }}
         value={localDest}
         placeholder="0.0.0.0/0"
         onChange={(e) => setLocalDest(e.target.value)}
@@ -446,7 +451,7 @@ function RouteRow({ route, onUpdate, onDelete }: RouteRowProps) {
         }}
       />
       <input
-        style={{ ...INPUT_STYLE, color: '#4ade80', flex: 1 }}
+        style={{ ...INPUT_STYLE, color: 'var(--netlab-accent-green)', flex: 1 }}
         value={localHop}
         placeholder="next-hop or 'direct'"
         onChange={(e) => setLocalHop(e.target.value)}
@@ -525,11 +530,11 @@ export function NodeEditorPanel({ docked }: NodeEditorPanelProps = {}) {
 
   const roleColor =
     d.role === 'router'
-      ? '#4ade80'
+      ? 'var(--netlab-accent-green)'
       : d.role === 'switch'
         ? '#60a5fa'
         : d.role === 'client'
-          ? '#7dd3fc'
+          ? 'var(--netlab-accent-cyan)'
           : '#f472b6';
 
   return (
@@ -543,7 +548,14 @@ export function NodeEditorPanel({ docked }: NodeEditorPanelProps = {}) {
           marginBottom: 8,
         }}
       >
-        <div style={{ fontWeight: 'bold', color: '#94a3b8', fontSize: 10, letterSpacing: 1 }}>
+        <div
+          style={{
+            fontWeight: 'bold',
+            color: 'var(--netlab-text-secondary)',
+            fontSize: 10,
+            letterSpacing: 1,
+          }}
+        >
           EDIT NODE
         </div>
         <button
@@ -551,7 +563,7 @@ export function NodeEditorPanel({ docked }: NodeEditorPanelProps = {}) {
           style={{
             background: 'none',
             border: 'none',
-            color: '#94a3b8',
+            color: 'var(--netlab-text-secondary)',
             cursor: 'pointer',
             fontSize: 14,
             padding: '0 2px',
@@ -574,7 +586,9 @@ export function NodeEditorPanel({ docked }: NodeEditorPanelProps = {}) {
         >
           {d.role}
         </span>
-        <span style={{ color: '#94a3b8', fontSize: 10, marginLeft: 6 }}>{d.layerId}</span>
+        <span style={{ color: 'var(--netlab-text-secondary)', fontSize: 10, marginLeft: 6 }}>
+          {d.layerId}
+        </span>
       </div>
 
       {/* Label */}

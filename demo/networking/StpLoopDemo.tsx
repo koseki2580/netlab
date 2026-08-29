@@ -77,14 +77,14 @@ const HOST_META: Record<
 };
 
 const CARD_STYLE: CSSProperties = {
-  background: '#111827',
+  background: 'var(--netlab-bg-primary)',
   border: '1px solid #1f2937',
   borderRadius: 10,
   padding: '12px 14px',
 };
 
 const SECTION_TITLE_STYLE: CSSProperties = {
-  color: '#94a3b8',
+  color: 'var(--netlab-text-secondary)',
   fontFamily: 'monospace',
   fontSize: 11,
   fontWeight: 700,
@@ -105,29 +105,29 @@ const BUTTON_BASE: CSSProperties = {
 
 const PRIMARY_BUTTON: CSSProperties = {
   ...BUTTON_BASE,
-  background: '#14532d',
-  color: '#dcfce7',
+  background: 'color-mix(in srgb, var(--netlab-accent-green) 18%, transparent)',
+  color: 'var(--netlab-accent-green)',
 };
 
 const SECONDARY_BUTTON: CSSProperties = {
   ...BUTTON_BASE,
-  background: '#0f172a',
-  borderColor: '#334155',
-  color: '#cbd5e1',
+  background: 'var(--netlab-bg-primary)',
+  borderColor: 'var(--netlab-border)',
+  color: 'var(--netlab-text-primary)',
 };
 
 function roleColor(role: 'ROOT' | 'DESIGNATED' | 'BLOCKED' | 'DISABLED'): string {
   switch (role) {
     case 'ROOT':
-      return '#38bdf8';
+      return 'var(--netlab-accent-cyan)';
     case 'DESIGNATED':
-      return '#22c55e';
+      return 'var(--netlab-accent-green)';
     case 'BLOCKED':
       return '#ef4444';
     case 'DISABLED':
-      return '#94a3b8';
+      return 'var(--netlab-text-secondary)';
     default:
-      return '#e2e8f0';
+      return 'var(--netlab-text-primary)';
   }
 }
 
@@ -334,7 +334,9 @@ function StpStatusCard({ switchId }: { switchId: SwitchId }) {
           <div style={{ color: '#f8fafc', fontFamily: 'monospace', fontWeight: 700 }}>
             {node.data.label}
           </div>
-          <div style={{ color: '#94a3b8', fontFamily: 'monospace', fontSize: 12 }}>
+          <div
+            style={{ color: 'var(--netlab-text-secondary)', fontFamily: 'monospace', fontSize: 12 }}
+          >
             priority {node.data.stpConfig?.priority ?? DEFAULT_BRIDGE_PRIORITY}
           </div>
         </div>
@@ -344,7 +346,7 @@ function StpStatusCard({ switchId }: { switchId: SwitchId }) {
             padding: '4px 8px',
             borderRadius: 999,
             background: isRoot ? 'rgba(56, 189, 248, 0.14)' : 'rgba(148, 163, 184, 0.12)',
-            color: isRoot ? '#38bdf8' : '#cbd5e1',
+            color: isRoot ? 'var(--netlab-accent-cyan)' : 'var(--netlab-text-primary)',
             fontFamily: 'monospace',
             fontSize: 11,
             fontWeight: 700,
@@ -368,8 +370,10 @@ function StpStatusCard({ switchId }: { switchId: SwitchId }) {
               fontSize: 12,
             }}
           >
-            <span style={{ color: '#94a3b8' }}>{port.id}</span>
-            <span style={{ color: runtime ? roleColor(runtime.role) : '#e2e8f0' }}>
+            <span style={{ color: 'var(--netlab-text-secondary)' }}>{port.id}</span>
+            <span
+              style={{ color: runtime ? roleColor(runtime.role) : 'var(--netlab-text-primary)' }}
+            >
               {runtime ? `${runtime.role} (${runtime.state})` : 'FORWARDING'}
             </span>
           </div>
@@ -396,16 +400,30 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
       <div style={{ color: '#f8fafc', fontFamily: 'monospace', fontSize: 12, marginBottom: 6 }}>
         Last flow: {lastScenario ?? 'none'}
       </div>
-      <div style={{ color: '#cbd5e1', fontFamily: 'monospace', fontSize: 12, lineHeight: 1.6 }}>
+      <div
+        style={{
+          color: 'var(--netlab-text-primary)',
+          fontFamily: 'monospace',
+          fontSize: 12,
+          lineHeight: 1.6,
+        }}
+      >
         {hopLabels}
       </div>
-      <div style={{ marginTop: 10, color: '#94a3b8', fontFamily: 'monospace', fontSize: 12 }}>
+      <div
+        style={{
+          marginTop: 10,
+          color: 'var(--netlab-text-secondary)',
+          fontFamily: 'monospace',
+          fontSize: 12,
+        }}
+      >
         Root bridge: {rootLabel}
       </div>
       <div
         style={{
           marginTop: 6,
-          color: usedBlockedSegment ? '#f97316' : '#22c55e',
+          color: usedBlockedSegment ? 'var(--netlab-accent-orange)' : 'var(--netlab-accent-green)',
           fontFamily: 'monospace',
           fontSize: 12,
         }}
@@ -413,12 +431,26 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
         Blocked segment used: {usedBlockedSegment ? 'yes' : 'no'}
       </div>
       {activeTrace?.status && (
-        <div style={{ marginTop: 6, color: '#94a3b8', fontFamily: 'monospace', fontSize: 12 }}>
+        <div
+          style={{
+            marginTop: 6,
+            color: 'var(--netlab-text-secondary)',
+            fontFamily: 'monospace',
+            fontSize: 12,
+          }}
+        >
           Trace status: {activeTrace.status}
         </div>
       )}
       {isRecomputing && (
-        <div style={{ marginTop: 6, color: '#fbbf24', fontFamily: 'monospace', fontSize: 12 }}>
+        <div
+          style={{
+            marginTop: 6,
+            color: 'var(--netlab-accent-yellow)',
+            fontFamily: 'monospace',
+            fontSize: 12,
+          }}
+        >
           Recomputing simulation…
         </div>
       )}
@@ -500,7 +532,7 @@ function StpLoopDemoInner({
             borderRadius: 10,
             background: 'rgba(15, 23, 42, 0.92)',
             border: '1px solid rgba(51, 65, 85, 0.9)',
-            color: '#cbd5e1',
+            color: 'var(--netlab-text-primary)',
             fontFamily: 'monospace',
             fontSize: 12,
             lineHeight: 1.6,
@@ -517,8 +549,8 @@ function StpLoopDemoInner({
           style={{
             height: '100%',
             overflowY: 'auto',
-            background: '#020617',
-            borderLeft: '1px solid #1e293b',
+            background: 'var(--netlab-bg-primary)',
+            borderLeft: '1px solid var(--netlab-bg-surface)',
             padding: 16,
             display: 'flex',
             flexDirection: 'column',
@@ -565,7 +597,7 @@ function StpLoopDemoInner({
                   justifyContent: 'space-between',
                   gap: 12,
                   marginBottom: 10,
-                  color: '#cbd5e1',
+                  color: 'var(--netlab-text-primary)',
                   fontFamily: 'monospace',
                   fontSize: 12,
                 }}
@@ -577,8 +609,8 @@ function StpLoopDemoInner({
                   onChange={(event) => updatePriority(switchId, event.target.value)}
                   style={{
                     width: 112,
-                    background: '#0f172a',
-                    border: '1px solid #334155',
+                    background: 'var(--netlab-bg-primary)',
+                    border: '1px solid var(--netlab-border)',
                     borderRadius: 6,
                     color: '#f8fafc',
                     padding: '6px 8px',
@@ -606,7 +638,7 @@ function StpLoopDemoInner({
               <div key={switchId} style={{ marginBottom: 12 }}>
                 <div
                   style={{
-                    color: '#e2e8f0',
+                    color: 'var(--netlab-text-primary)',
                     fontFamily: 'monospace',
                     fontSize: 12,
                     marginBottom: 6,
@@ -622,7 +654,7 @@ function StpLoopDemoInner({
                         display: 'flex',
                         alignItems: 'center',
                         gap: 8,
-                        color: '#94a3b8',
+                        color: 'var(--netlab-text-secondary)',
                         fontFamily: 'monospace',
                         fontSize: 12,
                       }}

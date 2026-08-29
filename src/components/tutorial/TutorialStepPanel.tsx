@@ -3,17 +3,17 @@ import { useTutorialRunner } from '../../tutorials';
 
 const CARD_STYLE: CSSProperties = {
   background: 'rgba(15, 23, 42, 0.96)',
-  border: '1px solid #334155',
+  border: '1px solid var(--netlab-border)',
   borderRadius: 14,
-  color: '#e2e8f0',
+  color: 'var(--netlab-text-primary)',
   fontFamily: 'monospace',
   maxWidth: 360,
   padding: 16,
-  boxShadow: '0 16px 40px rgba(2, 6, 23, 0.45)',
+  boxShadow: '0 16px 40px color-mix(in srgb, var(--netlab-bg-primary) 45%, transparent)',
 };
 
 const MUTED_STYLE: CSSProperties = {
-  color: '#94a3b8',
+  color: 'var(--netlab-text-secondary)',
   fontSize: 12,
   lineHeight: 1.5,
 };
@@ -54,7 +54,14 @@ export function TutorialStepPanel() {
   if (state.status === 'pending') {
     return (
       <section data-testid="tutorial-step-panel" data-tutorial-status="pending" style={CARD_STYLE}>
-        <div style={{ color: '#38bdf8', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em' }}>
+        <div
+          style={{
+            color: 'var(--netlab-accent-cyan)',
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+          }}
+        >
           GUIDED TUTORIAL
         </div>
         <h2 id="netlab-tutorial-title" style={{ margin: '10px 0 0', fontSize: 20 }}>
@@ -71,7 +78,11 @@ export function TutorialStepPanel() {
           >
             Start Tutorial
           </button>
-          <button type="button" onClick={exit} style={buttonStyle('#334155', '#f8fafc')}>
+          <button
+            type="button"
+            onClick={exit}
+            style={buttonStyle('var(--netlab-border)', '#f8fafc')}
+          >
             Dismiss
           </button>
         </div>
@@ -82,7 +93,14 @@ export function TutorialStepPanel() {
   if (state.status === 'passed') {
     return (
       <section data-testid="tutorial-step-panel" data-tutorial-status="passed" style={CARD_STYLE}>
-        <div style={{ color: '#22c55e', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em' }}>
+        <div
+          style={{
+            color: 'var(--netlab-accent-green)',
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+          }}
+        >
           DONE
         </div>
         <h2 id="netlab-tutorial-title" style={{ margin: '10px 0 0', fontSize: 20 }}>
@@ -95,7 +113,11 @@ export function TutorialStepPanel() {
           <button type="button" onClick={restart} style={buttonStyle('#166534', '#f8fafc')}>
             Restart
           </button>
-          <button type="button" onClick={exit} style={buttonStyle('#334155', '#f8fafc')}>
+          <button
+            type="button"
+            onClick={exit}
+            style={buttonStyle('var(--netlab-border)', '#f8fafc')}
+          >
             Close
           </button>
         </div>
@@ -109,7 +131,14 @@ export function TutorialStepPanel() {
       data-tutorial-status={state.status}
       style={CARD_STYLE}
     >
-      <div style={{ color: '#38bdf8', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em' }}>
+      <div
+        style={{
+          color: 'var(--netlab-accent-cyan)',
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: '0.08em',
+        }}
+      >
         {progressLabel}
       </div>
       <h2 id="netlab-tutorial-title" style={{ margin: '10px 0 0', fontSize: 18 }}>
@@ -124,7 +153,7 @@ export function TutorialStepPanel() {
             marginTop: 12,
             padding: 10,
             borderRadius: 10,
-            border: '1px solid #f59e0b',
+            border: '1px solid var(--netlab-accent-orange)',
             background: 'rgba(120, 53, 15, 0.25)',
             color: '#fef3c7',
             fontSize: 12,
@@ -140,7 +169,7 @@ export function TutorialStepPanel() {
             Restart Step Flow
           </button>
         ) : null}
-        <button type="button" onClick={exit} style={buttonStyle('#334155', '#f8fafc')}>
+        <button type="button" onClick={exit} style={buttonStyle('var(--netlab-border)', '#f8fafc')}>
           Exit Tutorial
         </button>
       </div>

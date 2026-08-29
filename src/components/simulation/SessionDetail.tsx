@@ -4,18 +4,18 @@ import type { PacketHop, PacketTrace } from '../../types/simulation';
 import { useNetlabContext } from '../NetlabContext';
 
 const STATUS_META = {
-  pending: { icon: '◌', label: 'pending', color: '#94a3b8' },
-  success: { icon: '✓', label: 'success', color: '#34d399' },
-  failed: { icon: '✗', label: 'failed', color: '#f87171' },
+  pending: { icon: '◌', label: 'pending', color: 'var(--netlab-text-secondary)' },
+  success: { icon: '✓', label: 'success', color: 'var(--netlab-accent-green)' },
+  failed: { icon: '✗', label: 'failed', color: 'var(--netlab-accent-red)' },
 } as const;
 
 const EVENT_META: Record<PacketHop['event'], { label: string; color: string }> = {
-  create: { label: 'CREATE', color: '#7dd3fc' },
-  forward: { label: 'FORWARD', color: '#4ade80' },
-  deliver: { label: 'DELIVER', color: '#34d399' },
-  drop: { label: 'DROP', color: '#f87171' },
-  'arp-request': { label: 'ARP-REQ', color: '#f59e0b' },
-  'arp-reply': { label: 'ARP-REP', color: '#f59e0b' },
+  create: { label: 'CREATE', color: 'var(--netlab-accent-cyan)' },
+  forward: { label: 'FORWARD', color: 'var(--netlab-accent-green)' },
+  deliver: { label: 'DELIVER', color: 'var(--netlab-accent-green)' },
+  drop: { label: 'DROP', color: 'var(--netlab-accent-red)' },
+  'arp-request': { label: 'ARP-REQ', color: 'var(--netlab-accent-orange)' },
+  'arp-reply': { label: 'ARP-REP', color: 'var(--netlab-accent-orange)' },
 };
 
 function shortSessionId(sessionId: string): string {
@@ -260,7 +260,7 @@ function SessionPathView({ label, trace }: { label: string; trace?: PacketTrace 
                   </div>
                   <div
                     style={{
-                      color: isDrop ? '#fca5a5' : 'var(--netlab-text-secondary)',
+                      color: isDrop ? 'var(--netlab-accent-red)' : 'var(--netlab-text-secondary)',
                       fontSize: 11,
                       marginTop: 2,
                     }}
@@ -436,7 +436,7 @@ export const SessionDetail = memo(function SessionDetail() {
 
         {selectedSession.error && (
           <Section title="ERROR">
-            <div style={{ color: '#fca5a5', fontSize: 12, marginBottom: 4 }}>
+            <div style={{ color: 'var(--netlab-accent-red)', fontSize: 12, marginBottom: 4 }}>
               {selectedSession.error.reason}
             </div>
             <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 11 }}>

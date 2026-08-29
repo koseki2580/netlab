@@ -19,10 +19,10 @@ const PANEL_STYLE: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   minHeight: 0,
-  background: '#1e293b',
-  borderLeft: '1px solid #334155',
+  background: 'var(--netlab-bg-surface)',
+  borderLeft: '1px solid var(--netlab-border)',
   fontFamily: 'monospace',
-  color: '#e2e8f0',
+  color: 'var(--netlab-text-primary)',
 };
 
 const TABS: readonly { id: EditorSidebarTab; label: string }[] = [
@@ -45,7 +45,10 @@ export function EditorSidebar({ node, validation, selectedStep, onSelectHop }: E
 
   return (
     <aside style={PANEL_STYLE} data-testid="editor-sidebar" aria-label="Inspector">
-      <div role="tablist" style={{ display: 'flex', borderBottom: '1px solid #334155' }}>
+      <div
+        role="tablist"
+        style={{ display: 'flex', borderBottom: '1px solid var(--netlab-border)' }}
+      >
         {TABS.map((entry) => (
           <button
             key={entry.id}
@@ -63,7 +66,8 @@ export function EditorSidebar({ node, validation, selectedStep, onSelectHop }: E
               border: 'none',
               borderBottom: `2px solid ${tab === entry.id ? '#60a5fa' : 'transparent'}`,
               background: 'transparent',
-              color: tab === entry.id ? '#e2e8f0' : '#94a3b8',
+              color:
+                tab === entry.id ? 'var(--netlab-text-primary)' : 'var(--netlab-text-secondary)',
             }}
           >
             {entry.label}

@@ -1,14 +1,14 @@
 import { getRequired } from '../../utils';
 
 const VLAN_PALETTE = [
-  '#38bdf8',
-  '#f59e0b',
-  '#22c55e',
-  '#f97316',
+  'var(--netlab-accent-cyan)',
+  'var(--netlab-accent-orange)',
+  'var(--netlab-accent-green)',
+  'var(--netlab-accent-orange)',
   '#eab308',
   '#ef4444',
   '#14b8a6',
-  '#a78bfa',
+  'var(--netlab-accent-purple)',
 ];
 
 /**
@@ -22,13 +22,13 @@ export function vlanColor(vid: number): string {
 export function stpRoleColor(role: 'ROOT' | 'DESIGNATED' | 'BLOCKED' | 'DISABLED'): string {
   switch (role) {
     case 'ROOT':
-      return '#38bdf8';
+      return 'var(--netlab-accent-cyan)';
     case 'DESIGNATED':
-      return '#22c55e';
+      return 'var(--netlab-accent-green)';
     case 'BLOCKED':
       return '#ef4444';
     case 'DISABLED':
-      return '#94a3b8';
+      return 'var(--netlab-text-secondary)';
     default:
       return 'var(--netlab-text-primary)';
   }

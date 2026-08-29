@@ -26,9 +26,9 @@ const PHASE_LABELS: Record<TcpCongestionPhase, string> = {
 
 const PHASE_COLORS: Record<TcpCongestionPhase, string> = {
   'slow-start': '#16a34a',
-  'congestion-avoidance': '#2563eb',
+  'congestion-avoidance': 'var(--netlab-accent-blue)',
   'fast-recovery': '#ca8a04',
-  rto: '#f87171',
+  rto: 'var(--netlab-accent-red)',
 };
 
 function buildSamples(events: readonly TcpCongestionEvent[]): TimelineSample[] {
@@ -192,13 +192,13 @@ export const TcpCongestionPanel = memo(function TcpCongestionPanel({
             <polyline
               points={polyline(samples, (sample) => sample.cwnd)}
               fill="none"
-              stroke="#38bdf8"
+              stroke="var(--netlab-accent-cyan)"
               strokeWidth={3}
             />
             <polyline
               points={polyline(samples, (sample) => sample.inflight)}
               fill="none"
-              stroke="#f97316"
+              stroke="var(--netlab-accent-orange)"
               strokeWidth={2}
               strokeDasharray="5 4"
             />
@@ -219,8 +219,8 @@ export const TcpCongestionPanel = memo(function TcpCongestionPanel({
           </svg>
 
           <div style={{ display: 'flex', gap: 12, marginTop: 8, fontSize: 11 }}>
-            <span style={{ color: '#38bdf8' }}>cwnd</span>
-            <span style={{ color: '#f97316' }}>inflight</span>
+            <span style={{ color: 'var(--netlab-accent-cyan)' }}>cwnd</span>
+            <span style={{ color: 'var(--netlab-accent-orange)' }}>inflight</span>
           </div>
 
           {markerEvents.length > 0 ? (

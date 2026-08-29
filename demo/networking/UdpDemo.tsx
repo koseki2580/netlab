@@ -15,14 +15,14 @@ const DEFAULT_PORT = 7777;
 const DEFAULT_PAYLOAD = 'hello';
 
 const CARD_STYLE: CSSProperties = {
-  background: '#111827',
+  background: 'var(--netlab-bg-primary)',
   border: '1px solid #1f2937',
   borderRadius: 10,
   padding: 12,
 };
 
 const LABEL_STYLE: CSSProperties = {
-  color: '#94a3b8',
+  color: 'var(--netlab-text-secondary)',
   fontFamily: 'monospace',
   fontSize: 11,
   fontWeight: 700,
@@ -44,10 +44,10 @@ const BUTTON_STYLE: CSSProperties = {
 };
 
 const INPUT_STYLE: CSSProperties = {
-  background: '#1e293b',
-  border: '1px solid #334155',
+  background: 'var(--netlab-bg-surface)',
+  border: '1px solid var(--netlab-border)',
   borderRadius: 6,
-  color: '#e2e8f0',
+  color: 'var(--netlab-text-primary)',
   fontFamily: 'monospace',
   fontSize: 12,
   padding: '6px 8px',
@@ -172,9 +172,9 @@ function UdpDemoInner() {
             maxWidth: 360,
             padding: '10px 12px',
             borderRadius: 10,
-            background: 'rgba(15, 23, 42, 0.9)',
+            background: 'color-mix(in srgb, var(--netlab-bg-primary) 90%, transparent)',
             border: '1px solid rgba(148, 163, 184, 0.2)',
-            color: '#cbd5e1',
+            color: 'var(--netlab-text-primary)',
             fontFamily: 'monospace',
             fontSize: 11,
             lineHeight: 1.5,
@@ -201,7 +201,7 @@ function UdpDemoInner() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
-                  color: '#94a3b8',
+                  color: 'var(--netlab-text-secondary)',
                   fontSize: 11,
                   fontFamily: 'monospace',
                 }}
@@ -221,7 +221,7 @@ function UdpDemoInner() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
-                  color: '#94a3b8',
+                  color: 'var(--netlab-text-secondary)',
                   fontSize: 11,
                   fontFamily: 'monospace',
                 }}

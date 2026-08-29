@@ -3,9 +3,9 @@ import { useSimulation } from '../../simulation/SimulationContext';
 import { useNetlabContext } from '../NetlabContext';
 
 const STATUS_META = {
-  delivered: { label: 'delivered', color: '#34d399' },
-  dropped: { label: 'dropped', color: '#f87171' },
-  'in-flight': { label: 'in-progress', color: '#94a3b8' },
+  delivered: { label: 'delivered', color: 'var(--netlab-accent-green)' },
+  dropped: { label: 'dropped', color: 'var(--netlab-accent-red)' },
+  'in-flight': { label: 'in-progress', color: 'var(--netlab-text-secondary)' },
 } as const;
 
 export const TraceSummary = memo(function TraceSummary() {

@@ -121,10 +121,10 @@ function readSelectedSegment(
 }
 
 function stateAccent(state: TcpState): string {
-  if (state === 'ESTABLISHED') return '#34d399';
-  if (state === 'TIME_WAIT') return '#f59e0b';
-  if (state === 'CLOSED') return '#94a3b8';
-  return '#7dd3fc';
+  if (state === 'ESTABLISHED') return 'var(--netlab-accent-green)';
+  if (state === 'TIME_WAIT') return 'var(--netlab-accent-orange)';
+  if (state === 'CLOSED') return 'var(--netlab-text-secondary)';
+  return 'var(--netlab-accent-cyan)';
 }
 
 function StateBadge({
@@ -150,16 +150,16 @@ function StateBadge({
         borderRadius: 10,
         border: `1px solid ${accent}55`,
         background: '#020617dd',
-        color: '#e2e8f0',
+        color: 'var(--netlab-text-primary)',
         fontFamily: 'monospace',
         fontSize: 11,
         lineHeight: 1.4,
-        boxShadow: '0 8px 24px rgba(2, 6, 23, 0.35)',
+        boxShadow: '0 8px 24px color-mix(in srgb, var(--netlab-bg-primary) 35%, transparent)',
         pointerEvents: 'none',
         minWidth: 124,
       }}
     >
-      <div style={{ color: '#94a3b8', marginBottom: 4 }}>{label}</div>
+      <div style={{ color: 'var(--netlab-text-secondary)', marginBottom: 4 }}>{label}</div>
       <div style={{ color: accent, fontWeight: 'bold' }}>{state}</div>
     </div>
   );
@@ -186,17 +186,26 @@ function SidebarPanel({
         flexDirection: 'column',
         gap: 16,
         padding: 16,
-        border: '1px solid #1e293b',
+        border: '1px solid var(--netlab-bg-surface)',
         borderRadius: 10,
-        background: '#0b1220',
+        background: 'var(--netlab-bg-primary)',
       }}
     >
       <div>
-        <div style={{ fontSize: 11, color: '#94a3b8', letterSpacing: 1, marginBottom: 6 }}>
+        <div
+          style={{
+            fontSize: 11,
+            color: 'var(--netlab-text-secondary)',
+            letterSpacing: 1,
+            marginBottom: 6,
+          }}
+        >
           ACTIVE TCP CONNECTIONS
         </div>
         {activeConnections.length === 0 ? (
-          <div style={{ color: '#94a3b8', fontSize: 12 }}>No active connections.</div>
+          <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 12 }}>
+            No active connections.
+          </div>
         ) : (
           activeConnections.map((connection) => (
             <div
@@ -204,20 +213,22 @@ function SidebarPanel({
               style={{
                 padding: '10px 12px',
                 borderRadius: 8,
-                background: '#020617',
-                border: '1px solid #1e293b',
-                color: '#e2e8f0',
+                background: 'var(--netlab-bg-primary)',
+                border: '1px solid var(--netlab-bg-surface)',
+                color: 'var(--netlab-text-primary)',
                 fontSize: 12,
                 fontFamily: 'monospace',
               }}
             >
-              <div style={{ color: '#34d399', fontWeight: 'bold', marginBottom: 4 }}>
+              <div
+                style={{ color: 'var(--netlab-accent-green)', fontWeight: 'bold', marginBottom: 4 }}
+              >
                 {connection.state}
               </div>
               <div>
                 {connection.srcIp}:{connection.srcPort} → {connection.dstIp}:{connection.dstPort}
               </div>
-              <div style={{ color: '#94a3b8', marginTop: 4 }}>
+              <div style={{ color: 'var(--netlab-text-secondary)', marginTop: 4 }}>
                 localSeq={connection.localSeq} localAck={connection.localAck} remoteSeq=
                 {connection.remoteSeq}
               </div>
@@ -227,7 +238,14 @@ function SidebarPanel({
       </div>
 
       <div>
-        <div style={{ fontSize: 11, color: '#94a3b8', letterSpacing: 1, marginBottom: 6 }}>
+        <div
+          style={{
+            fontSize: 11,
+            color: 'var(--netlab-text-secondary)',
+            letterSpacing: 1,
+            marginBottom: 6,
+          }}
+        >
           SELECTED SEGMENT
         </div>
         {selected ? (
@@ -235,16 +253,16 @@ function SidebarPanel({
             style={{
               padding: '10px 12px',
               borderRadius: 8,
-              background: '#020617',
-              border: '1px solid #1e293b',
-              color: '#e2e8f0',
+              background: 'var(--netlab-bg-primary)',
+              border: '1px solid var(--netlab-bg-surface)',
+              color: 'var(--netlab-text-primary)',
               fontSize: 12,
               fontFamily: 'monospace',
               display: 'grid',
               gap: 4,
             }}
           >
-            <div style={{ color: '#7dd3fc', fontWeight: 'bold' }}>
+            <div style={{ color: 'var(--netlab-accent-cyan)', fontWeight: 'bold' }}>
               {activeTrace?.label ?? 'TCP'}
             </div>
             <div>
@@ -255,7 +273,7 @@ function SidebarPanel({
             <div>ACK: {selected.ack}</div>
           </div>
         ) : (
-          <div style={{ color: '#94a3b8', fontSize: 12 }}>
+          <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 12 }}>
             Select a trace and step into a hop to inspect TCP header fields.
           </div>
         )}
@@ -314,7 +332,7 @@ function TcpHandshakeDemoInner() {
               padding: '6px 12px',
               borderRadius: 6,
               border: 'none',
-              background: activeConnection ? '#334155' : '#0f766e',
+              background: activeConnection ? 'var(--netlab-border)' : '#0f766e',
               color: '#fff',
               fontFamily: 'monospace',
               fontSize: 12,
@@ -330,9 +348,13 @@ function TcpHandshakeDemoInner() {
             style={{
               padding: '6px 12px',
               borderRadius: 6,
-              border: '1px solid #334155',
-              background: activeConnection ? '#020617' : '#111827',
-              color: activeConnection ? '#e2e8f0' : '#94a3b8',
+              border: '1px solid var(--netlab-border)',
+              background: activeConnection
+                ? 'var(--netlab-bg-elevated)'
+                : 'var(--netlab-bg-primary)',
+              color: activeConnection
+                ? 'var(--netlab-text-primary)'
+                : 'var(--netlab-text-secondary)',
               fontFamily: 'monospace',
               fontSize: 12,
               cursor: activeConnection ? 'pointer' : 'not-allowed',
@@ -340,7 +362,9 @@ function TcpHandshakeDemoInner() {
           >
             Disconnect
           </button>
-          <span style={{ color: '#94a3b8', fontFamily: 'monospace', fontSize: 11 }}>
+          <span
+            style={{ color: 'var(--netlab-text-secondary)', fontFamily: 'monospace', fontSize: 11 }}
+          >
             Use the trace selector on the right to step through SYN, SYN-ACK, ACK, and FIN
             exchanges.
           </span>
@@ -354,21 +378,21 @@ function TcpHandshakeDemoInner() {
             width: 320,
             padding: '12px 14px',
             borderRadius: 10,
-            border: '1px solid #1e293b',
+            border: '1px solid var(--netlab-bg-surface)',
             background: '#020617dd',
-            color: '#cbd5e1',
+            color: 'var(--netlab-text-primary)',
             fontFamily: 'monospace',
             fontSize: 11,
             lineHeight: 1.5,
             zIndex: 20,
           }}
         >
-          <div style={{ color: '#7dd3fc', fontWeight: 'bold', marginBottom: 6 }}>
+          <div style={{ color: 'var(--netlab-accent-cyan)', fontWeight: 'bold', marginBottom: 6 }}>
             TCP Teaching Flow
           </div>
           <div>Handshake: SYN → SYN-ACK → ACK</div>
           <div>Teardown: FIN → ACK → FIN → ACK</div>
-          <div style={{ color: '#94a3b8', marginTop: 6 }}>
+          <div style={{ color: 'var(--netlab-text-secondary)', marginTop: 6 }}>
             State badges are derived from the recorded packet sequence so you can inspect historical
             handshake and teardown phases even after the engine finishes the exchange.
           </div>
@@ -382,8 +406,8 @@ function TcpHandshakeDemoInner() {
         defaultWidth={520}
         maxWidth={760}
         style={{
-          background: '#0f172a',
-          borderLeft: '1px solid #1e293b',
+          background: 'var(--netlab-bg-primary)',
+          borderLeft: '1px solid var(--netlab-bg-surface)',
           overflow: 'auto',
         }}
       >
@@ -393,9 +417,9 @@ function TcpHandshakeDemoInner() {
           <div
             style={{
               padding: 16,
-              border: '1px solid #1e293b',
+              border: '1px solid var(--netlab-bg-surface)',
               borderRadius: 10,
-              background: '#0b1220',
+              background: 'var(--netlab-bg-primary)',
             }}
           >
             <PacketStructureViewer />

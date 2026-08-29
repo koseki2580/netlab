@@ -2,10 +2,10 @@ const TRACE_COLORS = [
   'var(--netlab-accent-cyan)',
   'var(--netlab-accent-orange)',
   '#4ade80',
-  '#a78bfa',
+  'var(--netlab-accent-purple)',
   '#f472b6',
   '#facc15',
-  '#38bdf8',
+  'var(--netlab-accent-cyan)',
   '#fb7185',
 ] as const;
 

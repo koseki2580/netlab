@@ -49,7 +49,8 @@ const PANEL_STYLE: React.CSSProperties = {
   padding: '10px 12px',
   borderRadius: 8,
   border: '1px solid var(--netlab-border-subtle, rgba(100, 116, 139, 0.4))',
-  background: 'var(--netlab-bg-panel, rgba(15, 23, 42, 0.95))',
+  background:
+    'var(--netlab-bg-panel, color-mix(in srgb, var(--netlab-bg-primary) 95%, transparent))',
   color: 'var(--netlab-text-primary, #e2e8f0)',
   fontFamily: 'monospace',
   fontSize: 11,
@@ -94,7 +95,9 @@ function fixButtonStyle(recommended: boolean): React.CSSProperties {
     background: recommended
       ? 'color-mix(in srgb, var(--netlab-accent-cyan, #22d3ee) 14%, transparent)'
       : 'transparent',
-    color: recommended ? 'var(--netlab-accent-cyan, #22d3ee)' : 'var(--netlab-text-muted, #94a3b8)',
+    color: recommended
+      ? 'var(--netlab-accent-cyan, #22d3ee)'
+      : 'var(--netlab-text-muted, var(--netlab-text-secondary))',
   };
 }
 

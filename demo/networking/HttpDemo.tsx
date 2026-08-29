@@ -106,15 +106,15 @@ const BUTTON_BASE: CSSProperties = {
 const BUTTON_PRIMARY: CSSProperties = { ...BUTTON_BASE, background: '#1d4ed8', color: '#fff' };
 const BUTTON_SECONDARY: CSSProperties = {
   ...BUTTON_BASE,
-  background: '#1e293b',
-  color: '#cbd5e1',
-  border: '1px solid #334155',
+  background: 'var(--netlab-bg-surface)',
+  color: 'var(--netlab-text-primary)',
+  border: '1px solid var(--netlab-border)',
 };
 const BUTTON_DISABLED: CSSProperties = {
   ...BUTTON_BASE,
-  background: '#0f172a',
-  color: '#94a3b8',
-  border: '1px solid #1e293b',
+  background: 'var(--netlab-bg-primary)',
+  color: 'var(--netlab-text-secondary)',
+  border: '1px solid var(--netlab-bg-surface)',
   cursor: 'not-allowed',
 };
 
@@ -413,7 +413,9 @@ function HttpDemoInner() {
             Clear
           </button>
 
-          <span style={{ color: '#94a3b8', fontFamily: 'monospace', fontSize: 11 }}>
+          <span
+            style={{ color: 'var(--netlab-text-secondary)', fontFamily: 'monospace', fontSize: 11 }}
+          >
             {sessionCount} session{sessionCount === 1 ? '' : 's'}
           </span>
         </div>
@@ -427,17 +429,17 @@ function HttpDemoInner() {
               right: 12,
               maxHeight: 100,
               overflow: 'auto',
-              background: '#0f172a',
-              border: '1px solid #334155',
+              background: 'var(--netlab-bg-primary)',
+              border: '1px solid var(--netlab-border)',
               borderRadius: 6,
               padding: '8px 12px',
               fontFamily: 'monospace',
               fontSize: 11,
-              color: '#94a3b8',
+              color: 'var(--netlab-text-secondary)',
             }}
             tabIndex={0}
           >
-            <span style={{ color: '#94a3b8', marginRight: 8 }}>Response:</span>
+            <span style={{ color: 'var(--netlab-text-secondary)', marginRight: 8 }}>Response:</span>
             {lastResponseBody.length > 200
               ? `${lastResponseBody.slice(0, 200)}…`
               : lastResponseBody}

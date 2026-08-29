@@ -122,7 +122,8 @@ export const NETLAB_DARK_THEME: NetlabTheme = {
   accentOrange: '#f59e0b',
   accentYellow: '#fbbf24',
   accentCyan: '#7dd3fc',
-  accentPurple: '#a371f7',
+  // 6.09:1 at worst against bg-elevated; #a371f7 read 3.90 there.
+  accentPurple: '#bfa2fb',
   nodeRouterBg: '#0f2a1a',
   nodeSwitchBg: '#0d1f3c',
   nodeClientBg: '#0d1a2e',
@@ -143,14 +144,21 @@ export const NETLAB_LIGHT_THEME: NetlabTheme = {
   // Darkened from #5a6a7e (4.48:1 on bg-elevated — just under AA) to clear 4.5:1
   // while staying lighter than text-secondary so the muted hierarchy holds.
   textMuted: '#4f5a6b',
-  textFaint: '#94a3b8',
-  accentBlue: '#2563eb',
+  // 4.73:1 at worst against bg-elevated; the dark palette's #94a3b8, carried
+  // over unchanged, read 2.08 and was effectively invisible.
+  textFaint: '#5b6675',
+  // Every accent clears 4.5:1 as text on all three light backgrounds
+  // (bg-primary, bg-surface, bg-elevated). The previous amber and orange were
+  // carried over from the dark palette and read at 3.04 and 2.05 against
+  // bg-primary — invisible as label text, and unmeasured because nothing had
+  // ever run an accessibility scan in light mode.
+  accentBlue: '#1d4ed8',
   accentGreen: '#166534',
-  accentRed: '#dc2626',
-  accentOrange: '#f59e0b',
-  accentYellow: '#d97706',
+  accentRed: '#b91c1c',
+  accentOrange: '#9a3412',
+  accentYellow: '#854d0e',
   accentCyan: '#0369a1',
-  accentPurple: '#7c3aed',
+  accentPurple: '#6d28d9',
   nodeRouterBg: '#f0fdf4',
   nodeSwitchBg: '#eff6ff',
   nodeClientBg: '#f0f9ff',

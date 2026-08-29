@@ -13,10 +13,10 @@ export const NODE_H = 44;
 export function styleFor(node: NetlabNode): CellStyle {
   const glyph = NODE_GLYPHS[node.type as NodeGlyphKind];
   return {
-    fillColor: '#0f172a',
-    strokeColor: glyph ? glyph.color : '#64748b',
+    fillColor: 'var(--netlab-bg-primary)',
+    strokeColor: glyph ? glyph.color : 'var(--netlab-text-muted)',
     strokeWidth: 2,
-    fontColor: '#e2e8f0',
+    fontColor: 'var(--netlab-text-primary)',
     fontSize: 12,
     rounded: true,
   };

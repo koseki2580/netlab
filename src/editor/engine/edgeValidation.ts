@@ -12,7 +12,7 @@ export interface EdgeVerdict {
 }
 
 export const EDGE_TONE_COLOR: Readonly<Record<EdgeTone, string>> = {
-  ok: 'var(--netlab-edge-default, #94a3b8)',
+  ok: 'var(--netlab-edge-default, var(--netlab-text-secondary))',
   warning: 'var(--netlab-accent-orange, orange)',
   error: 'var(--netlab-accent-red, #ef4444)',
 };

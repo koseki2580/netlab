@@ -235,7 +235,9 @@ function FailureSimDemoInner() {
         <NetlabCanvas />
         {downCount > 0 && (
           <div style={{ position: 'absolute', top: 12, left: 12 }}>
-            <span style={{ fontSize: 11, color: '#f87171', fontFamily: 'monospace' }}>
+            <span
+              style={{ fontSize: 11, color: 'var(--netlab-accent-red)', fontFamily: 'monospace' }}
+            >
               {downCount} failure{downCount > 1 ? 's' : ''} active
             </span>
           </div>
@@ -245,8 +247,8 @@ function FailureSimDemoInner() {
       <ResizableSidebar
         defaultWidth={300}
         style={{
-          background: '#0f172a',
-          borderLeft: '1px solid #1e293b',
+          background: 'var(--netlab-bg-primary)',
+          borderLeft: '1px solid var(--netlab-bg-surface)',
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -255,11 +257,16 @@ function FailureSimDemoInner() {
           <FailureTogglePanel />
         </div>
 
-        <div style={{ height: 1, background: '#1e293b', flexShrink: 0 }} />
+        <div style={{ height: 1, background: 'var(--netlab-bg-surface)', flexShrink: 0 }} />
 
-        <div style={{ padding: '8px 12px', borderBottom: '1px solid #1e293b' }}>
+        <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--netlab-bg-surface)' }}>
           <label
-            style={{ display: 'block', fontSize: 10, color: '#94a3b8', fontFamily: 'monospace' }}
+            style={{
+              display: 'block',
+              fontSize: 10,
+              color: 'var(--netlab-text-secondary)',
+              fontFamily: 'monospace',
+            }}
           >
             SPEED: {animationSpeed}ms
             <input

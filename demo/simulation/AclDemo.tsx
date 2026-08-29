@@ -195,8 +195,8 @@ function AclDemoInner() {
         defaultWidth={500}
         maxWidth={760}
         style={{
-          background: '#0f172a',
-          borderLeft: '1px solid #1e293b',
+          background: 'var(--netlab-bg-primary)',
+          borderLeft: '1px solid var(--netlab-bg-surface)',
           display: 'flex',
           flexDirection: 'column',
         }}

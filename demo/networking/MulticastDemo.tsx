@@ -287,9 +287,9 @@ function MulticastDemoInner() {
             left: 12,
             padding: '10px 12px',
             borderRadius: 8,
-            background: 'rgba(15, 23, 42, 0.88)',
+            background: 'color-mix(in srgb, var(--netlab-bg-primary) 88%, transparent)',
             border: '1px solid rgba(148, 163, 184, 0.2)',
-            color: '#cbd5e1',
+            color: 'var(--netlab-text-primary)',
             fontFamily: 'monospace',
             fontSize: 11,
             maxWidth: 340,
@@ -298,7 +298,7 @@ function MulticastDemoInner() {
         >
           <div style={{ color: '#f8fafc', fontWeight: 700, marginBottom: 4 }}>Multicast Demo</div>
           <div>{getCaption(joined)}</div>
-          <div style={{ marginTop: 6, color: '#94a3b8' }}>
+          <div style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}>
             Click <strong>SW1</strong> to inspect the multicast snooping table in the detail panel.
           </div>
         </div>
@@ -308,15 +308,15 @@ function MulticastDemoInner() {
         defaultWidth={420}
         maxWidth={680}
         style={{
-          background: '#0f172a',
-          borderLeft: '1px solid #1e293b',
+          background: 'var(--netlab-bg-primary)',
+          borderLeft: '1px solid var(--netlab-bg-surface)',
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
           <div
             style={{
               padding: 12,
-              borderBottom: '1px solid #1e293b',
+              borderBottom: '1px solid var(--netlab-bg-surface)',
               display: 'grid',
               gap: 10,
             }}
@@ -333,15 +333,23 @@ function MulticastDemoInner() {
                 style={{
                   padding: 10,
                   borderRadius: 8,
-                  background: '#111827',
+                  background: 'var(--netlab-bg-primary)',
                   border: '1px solid #1f2937',
                 }}
               >
-                <div style={{ fontSize: 10, color: '#94a3b8', fontFamily: 'monospace' }}>GROUP</div>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: 'var(--netlab-text-secondary)',
+                    fontFamily: 'monospace',
+                  }}
+                >
+                  GROUP
+                </div>
                 <div
                   style={{
                     marginTop: 4,
-                    color: '#a78bfa',
+                    color: 'var(--netlab-accent-purple)',
                     fontFamily: 'monospace',
                     fontWeight: 700,
                     fontSize: 11,
@@ -354,17 +362,26 @@ function MulticastDemoInner() {
                 style={{
                   padding: 10,
                   borderRadius: 8,
-                  background: '#111827',
+                  background: 'var(--netlab-bg-primary)',
                   border: '1px solid #1f2937',
                 }}
               >
-                <div style={{ fontSize: 10, color: '#94a3b8', fontFamily: 'monospace' }}>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: 'var(--netlab-text-secondary)',
+                    fontFamily: 'monospace',
+                  }}
+                >
                   JOINED
                 </div>
                 <div
                   style={{
                     marginTop: 4,
-                    color: joined.size > 0 ? '#86efac' : '#94a3b8',
+                    color:
+                      joined.size > 0
+                        ? 'var(--netlab-accent-green)'
+                        : 'var(--netlab-text-secondary)',
                     fontFamily: 'monospace',
                     fontWeight: 700,
                   }}
@@ -380,17 +397,26 @@ function MulticastDemoInner() {
                 style={{
                   padding: 10,
                   borderRadius: 8,
-                  background: '#111827',
+                  background: 'var(--netlab-bg-primary)',
                   border: '1px solid #1f2937',
                 }}
               >
-                <div style={{ fontSize: 10, color: '#94a3b8', fontFamily: 'monospace' }}>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: 'var(--netlab-text-secondary)',
+                    fontFamily: 'monospace',
+                  }}
+                >
                   RESULT
                 </div>
                 <div
                   style={{
                     marginTop: 4,
-                    color: lastHop?.event === 'drop' ? '#fca5a5' : '#93c5fd',
+                    color:
+                      lastHop?.event === 'drop'
+                        ? 'var(--netlab-accent-red)'
+                        : 'var(--netlab-accent-cyan)',
                     fontFamily: 'monospace',
                     fontWeight: 700,
                   }}
@@ -411,7 +437,9 @@ function MulticastDemoInner() {
                       style={{
                         fontFamily: 'monospace',
                         fontSize: 11,
-                        color: isOtherVlan ? '#f59e0b' : '#cbd5e1',
+                        color: isOtherVlan
+                          ? 'var(--netlab-accent-orange)'
+                          : 'var(--netlab-text-primary)',
                         width: 100,
                       }}
                     >
@@ -434,7 +462,13 @@ function MulticastDemoInner() {
               Send multicast UDP to {MULTICAST_GROUP}:{MULTICAST_PORT}
             </button>
 
-            <div style={{ fontSize: 11, color: '#94a3b8', fontFamily: 'monospace' }}>
+            <div
+              style={{
+                fontSize: 11,
+                color: 'var(--netlab-text-secondary)',
+                fontFamily: 'monospace',
+              }}
+            >
               {lastHop?.event === 'drop'
                 ? `Drop reason: ${lastHop.reason}`
                 : 'Use Join/Leave to control IGMP snooping entries, then send multicast to see the effect.'}

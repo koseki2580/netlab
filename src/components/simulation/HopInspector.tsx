@@ -7,12 +7,12 @@ import { AclMatchView } from './AclMatchView';
 import { HopObservabilityView } from './HopObservabilityView';
 
 const EVENT_COLORS: Record<PacketHop['event'], string> = {
-  create: '#7dd3fc',
-  forward: '#4ade80',
-  deliver: '#34d399',
-  drop: '#f87171',
-  'arp-request': '#f59e0b',
-  'arp-reply': '#f59e0b',
+  create: 'var(--netlab-accent-cyan)',
+  forward: 'var(--netlab-accent-green)',
+  deliver: 'var(--netlab-accent-green)',
+  drop: 'var(--netlab-accent-red)',
+  'arp-request': 'var(--netlab-accent-orange)',
+  'arp-reply': 'var(--netlab-accent-orange)',
 };
 
 function resolveNodeLabel(
@@ -44,7 +44,7 @@ function getTtlOut(
 }
 
 function EventBadge({ event }: { event: PacketHop['event'] }) {
-  const color = EVENT_COLORS[event] ?? '#94a3b8';
+  const color = EVENT_COLORS[event] ?? 'var(--netlab-text-secondary)';
 
   return (
     <span
@@ -258,10 +258,15 @@ function ArpHopDetails({ hop }: { hop: PacketHop }) {
   ];
 
   return (
-    <section style={{ ...CARD, border: '1px solid #78350f' }}>
+    <section
+      style={{
+        ...CARD,
+        border: '1px solid color-mix(in srgb, var(--netlab-accent-yellow) 18%, transparent)',
+      }}
+    >
       <div
         style={{
-          color: '#f59e0b',
+          color: 'var(--netlab-accent-orange)',
           fontSize: 10,
           fontWeight: 'bold',
           letterSpacing: 1,
@@ -287,11 +292,11 @@ function RoutingSection({ decision }: { decision: RoutingDecision }) {
       <div
         style={{
           fontSize: 12,
-          color: decision.winner ? '#4ade80' : '#fbbf24',
+          color: decision.winner ? 'var(--netlab-accent-green)' : 'var(--netlab-accent-yellow)',
           padding: '8px 10px',
           background: decision.winner ? '#052e1644' : '#45190344',
           borderRadius: 6,
-          border: `1px solid ${decision.winner ? '#14532d' : '#78350f'}`,
+          border: `1px solid ${decision.winner ? 'color-mix(in srgb, var(--netlab-accent-green) 18%, transparent)' : 'color-mix(in srgb, var(--netlab-accent-yellow) 18%, transparent)'}`,
           marginBottom: 10,
         }}
       >
@@ -340,14 +345,14 @@ function RoutingSection({ decision }: { decision: RoutingDecision }) {
             let badgeText = '';
 
             if (candidate.selectedByLpm) {
-              background = '#052e16';
-              badgeBackground = '#14532d';
-              badgeColor = '#4ade80';
+              background = 'color-mix(in srgb, var(--netlab-accent-green) 18%, transparent)';
+              badgeBackground = 'color-mix(in srgb, var(--netlab-accent-green) 18%, transparent)';
+              badgeColor = 'var(--netlab-accent-green)';
               badgeText = 'MATCH';
             } else if (candidate.matched) {
-              background = '#451a03';
-              badgeBackground = '#78350f';
-              badgeColor = '#fbbf24';
+              background = 'color-mix(in srgb, var(--netlab-accent-orange) 18%, transparent)';
+              badgeBackground = 'color-mix(in srgb, var(--netlab-accent-yellow) 18%, transparent)';
+              badgeColor = 'var(--netlab-accent-yellow)';
               badgeText = 'MATCHED';
             }
 
@@ -403,14 +408,14 @@ function DropReasonBlock({ reason }: { reason: string }) {
     <section
       style={{
         background: '#450a0a44',
-        border: '1px solid #991b1b',
+        border: '1px solid color-mix(in srgb, var(--netlab-accent-red) 30%, transparent)',
         borderRadius: 8,
         padding: 12,
       }}
     >
       <div
         style={{
-          color: '#fca5a5',
+          color: 'var(--netlab-accent-red)',
           fontSize: 10,
           fontWeight: 'bold',
           letterSpacing: 1,
@@ -426,10 +431,15 @@ function DropReasonBlock({ reason }: { reason: string }) {
 
 function ChangedFieldsBlock({ fields }: { fields: string[] }) {
   return (
-    <section style={{ ...CARD, border: '1px solid #78350f' }}>
+    <section
+      style={{
+        ...CARD,
+        border: '1px solid color-mix(in srgb, var(--netlab-accent-yellow) 18%, transparent)',
+      }}
+    >
       <div
         style={{
-          color: '#fbbf24',
+          color: 'var(--netlab-accent-yellow)',
           fontSize: 10,
           fontWeight: 'bold',
           letterSpacing: 1,
@@ -448,9 +458,9 @@ function ChangedFieldsBlock({ fields }: { fields: string[] }) {
               borderRadius: 999,
               fontSize: 10,
               fontWeight: 'bold',
-              background: '#451a03',
+              background: 'color-mix(in srgb, var(--netlab-accent-orange) 18%, transparent)',
               border: '1px solid #92400e',
-              color: '#fbbf24',
+              color: 'var(--netlab-accent-yellow)',
               letterSpacing: 0.4,
             }}
           >

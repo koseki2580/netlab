@@ -23,7 +23,7 @@ const BUTTON_STYLE: CSSProperties = {
   background: 'var(--netlab-accent-cyan)',
   border: '1px solid var(--netlab-accent-cyan)',
   borderRadius: 6,
-  color: '#082f49',
+  color: 'var(--netlab-bg-primary)',
   cursor: 'pointer',
   fontWeight: 700,
   padding: '6px 10px',

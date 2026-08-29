@@ -6,12 +6,12 @@ import { useReplay } from '../../../sandbox/recording/useReplay';
 import type { ReplaySpeed } from '../../../sandbox/recording/player';
 
 const TICK_COLOR: Record<RecordedEventKind, string> = {
-  edit: 'var(--netlab-color-accent, #2563eb)',
+  edit: 'var(--netlab-color-accent, var(--netlab-accent-blue))',
   'mode-changed': 'var(--netlab-color-warning, #d97706)',
-  'tab-opened': 'var(--netlab-color-neutral, #94a3b8)',
-  paused: 'var(--netlab-color-neutral, #94a3b8)',
-  resumed: 'var(--netlab-color-neutral, #94a3b8)',
-  forked: 'var(--netlab-color-accent, #2563eb)',
+  'tab-opened': 'var(--netlab-color-neutral, var(--netlab-text-secondary))',
+  paused: 'var(--netlab-color-neutral, var(--netlab-text-secondary))',
+  resumed: 'var(--netlab-color-neutral, var(--netlab-text-secondary))',
+  forked: 'var(--netlab-color-accent, var(--netlab-accent-blue))',
 };
 
 const SCRUBBER_TEST_ID = 'sandbox-replay-scrubber';
@@ -146,7 +146,7 @@ export function ReplayScrubber({ testId = SCRUBBER_TEST_ID }: ReplayScrubberProp
         flexDirection: 'column',
         gap: 8,
         padding: '8px 12px',
-        borderTop: '1px solid var(--netlab-color-border, #e2e8f0)',
+        borderTop: '1px solid var(--netlab-color-border, var(--netlab-text-primary))',
         background: 'var(--netlab-color-surface, #f8fafc)',
       }}
     >

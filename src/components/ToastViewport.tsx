@@ -127,7 +127,7 @@ function ToastCard({ entry }: { entry: ToastEntry }) {
         style={{
           all: 'unset',
           cursor: 'pointer',
-          color: 'var(--netlab-text-muted, #94a3b8)',
+          color: 'var(--netlab-text-muted, var(--netlab-text-secondary))',
           fontSize: 12,
           padding: '0 2px',
         }}

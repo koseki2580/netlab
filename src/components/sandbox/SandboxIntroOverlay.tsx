@@ -6,17 +6,17 @@ import { useSandboxIntro } from '../../sandbox/intro/useSandboxIntro';
 
 const CARD_STYLE: CSSProperties = {
   background: 'rgba(15, 23, 42, 0.96)',
-  border: '1px solid #334155',
+  border: '1px solid var(--netlab-border)',
   borderRadius: 14,
-  color: '#e2e8f0',
+  color: 'var(--netlab-text-primary)',
   fontFamily: 'monospace',
   maxWidth: 360,
   padding: 16,
-  boxShadow: '0 16px 40px rgba(2, 6, 23, 0.45)',
+  boxShadow: '0 16px 40px color-mix(in srgb, var(--netlab-bg-primary) 45%, transparent)',
 };
 
 const MUTED_STYLE: CSSProperties = {
-  color: '#94a3b8',
+  color: 'var(--netlab-text-secondary)',
   fontSize: 12,
   lineHeight: 1.5,
 };
@@ -81,7 +81,14 @@ export function SandboxIntroOverlay() {
         data-intro-status={intro.status}
         style={{ ...CARD_STYLE, pointerEvents: 'auto' }}
       >
-        <div style={{ color: '#38bdf8', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em' }}>
+        <div
+          style={{
+            color: 'var(--netlab-accent-cyan)',
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+          }}
+        >
           {t('sandbox.intro.chrome.label')}
         </div>
         <h2 id="netlab-sandbox-intro-title" style={{ margin: '10px 0 0', fontSize: 20 }}>
@@ -124,7 +131,7 @@ export function SandboxIntroOverlay() {
               {t('sandbox.intro.restart')}
             </button>
           )}
-          <button type="button" onClick={intro.skip} style={buttonStyle('#334155')}>
+          <button type="button" onClick={intro.skip} style={buttonStyle('var(--netlab-border)')}>
             {t('sandbox.intro.skip')}
           </button>
         </div>

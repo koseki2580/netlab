@@ -140,7 +140,7 @@ describe('PacketStructureViewer', () => {
 
       const html = renderViewer();
 
-      expect(html).toContain('outline:1px solid #fbbf24');
+      expect(html).toContain('outline:1px solid var(--netlab-accent-yellow)');
     });
 
     it('renders row with offset labels', () => {

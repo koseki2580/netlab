@@ -17,19 +17,19 @@ interface ProtocolMeta {
 const PROTOCOL_META: Record<DynamicProtocol, ProtocolMeta> = {
   rip: {
     label: 'RIP',
-    accent: '#22c55e',
+    accent: 'var(--netlab-accent-green)',
     summary:
       'Hop count only. The diamond looks equal-cost, so RIP prefers the first 2-hop path it learns.',
   },
   ospf: {
     label: 'OSPF',
-    accent: '#38bdf8',
+    accent: 'var(--netlab-accent-cyan)',
     summary:
       'SPF uses interface cost. The R1 → R3 link is penalized with cost 3, so R1 prefers R2 toward C2.',
   },
   bgp: {
     label: 'BGP',
-    accent: '#f59e0b',
+    accent: 'var(--netlab-accent-orange)',
     summary:
       'Policy wins over equal AS_PATH length. R1 prefers the AS65002 path via higher LOCAL_PREF.',
   },
@@ -286,9 +286,9 @@ function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
       style={{
         width: 360,
         minWidth: 320,
-        borderLeft: '1px solid #334155',
-        background: '#0b1120',
-        color: '#e2e8f0',
+        borderLeft: '1px solid var(--netlab-border)',
+        background: 'var(--netlab-bg-primary)',
+        color: 'var(--netlab-text-primary)',
         padding: 16,
         overflowY: 'auto',
         fontFamily: 'monospace',
@@ -297,7 +297,14 @@ function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
       <div style={{ color: PROTOCOL_META[protocol].accent, fontSize: 12, fontWeight: 700 }}>
         {PROTOCOL_META[protocol].label} Route Tables
       </div>
-      <p style={{ color: '#94a3b8', fontSize: 12, lineHeight: 1.5, margin: '8px 0 16px' }}>
+      <p
+        style={{
+          color: 'var(--netlab-text-secondary)',
+          fontSize: 12,
+          lineHeight: 1.5,
+          margin: '8px 0 16px',
+        }}
+      >
         {PROTOCOL_META[protocol].summary}
       </p>
       {routers.map((router) => {
@@ -311,25 +318,28 @@ function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
               {router.data.label}
             </div>
             {routes.length === 0 ? (
-              <div style={{ color: '#94a3b8', fontSize: 12 }}>No routes</div>
+              <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 12 }}>No routes</div>
             ) : (
               <div style={{ display: 'grid', gap: 6 }}>
                 {routes.map((route) => (
                   <div
                     key={`${router.id}-${route.destination}`}
                     style={{
-                      border: '1px solid #1e293b',
+                      border: '1px solid var(--netlab-bg-surface)',
                       borderRadius: 8,
                       padding: 10,
-                      background: '#111827',
+                      background: 'var(--netlab-bg-primary)',
                       fontSize: 11,
                     }}
                   >
-                    <div style={{ color: '#7dd3fc', fontWeight: 700 }}>{route.destination}</div>
-                    <div style={{ color: '#cbd5e1', marginTop: 4 }}>
-                      next-hop: <span style={{ color: '#fbbf24' }}>{route.nextHop}</span>
+                    <div style={{ color: 'var(--netlab-accent-cyan)', fontWeight: 700 }}>
+                      {route.destination}
                     </div>
-                    <div style={{ color: '#94a3b8', marginTop: 4 }}>
+                    <div style={{ color: 'var(--netlab-text-primary)', marginTop: 4 }}>
+                      next-hop:{' '}
+                      <span style={{ color: 'var(--netlab-accent-yellow)' }}>{route.nextHop}</span>
+                    </div>
+                    <div style={{ color: 'var(--netlab-text-secondary)', marginTop: 4 }}>
                       metric {route.metric} • {route.protocol}/{route.adminDistance}
                     </div>
                   </div>
@@ -358,8 +368,8 @@ export default function DynamicRoutingDemo() {
             display: 'flex',
             gap: 8,
             padding: '12px 16px',
-            borderBottom: '1px solid #334155',
-            background: '#0b1120',
+            borderBottom: '1px solid var(--netlab-border)',
+            background: 'var(--netlab-bg-primary)',
           }}
         >
           {(['rip', 'ospf', 'bgp'] as DynamicProtocol[]).map((option) => {
@@ -370,9 +380,11 @@ export default function DynamicRoutingDemo() {
                 type="button"
                 onClick={() => setProtocol(option)}
                 style={{
-                  border: `1px solid ${active ? PROTOCOL_META[option].accent : '#334155'}`,
-                  background: active ? 'rgba(15, 23, 42, 0.95)' : '#111827',
-                  color: active ? '#f8fafc' : '#94a3b8',
+                  border: `1px solid ${active ? PROTOCOL_META[option].accent : 'var(--netlab-border)'}`,
+                  background: active
+                    ? 'color-mix(in srgb, var(--netlab-bg-primary) 95%, transparent)'
+                    : 'var(--netlab-bg-primary)',
+                  color: active ? '#f8fafc' : 'var(--netlab-text-secondary)',
                   padding: '8px 12px',
                   borderRadius: 999,
                   fontFamily: 'monospace',

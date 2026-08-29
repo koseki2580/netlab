@@ -15,15 +15,15 @@ const TOOLBAR_STYLE: React.CSSProperties = {
   alignItems: 'center',
   gap: 6,
   padding: '0 12px',
-  background: '#1e293b',
-  borderBottom: '1px solid #334155',
+  background: 'var(--netlab-bg-surface)',
+  borderBottom: '1px solid var(--netlab-border)',
   fontFamily: 'monospace',
 };
 
 const SEPARATOR_STYLE: React.CSSProperties = {
   width: 1,
   height: 20,
-  background: '#334155',
+  background: 'var(--netlab-border)',
   margin: '0 4px',
 };
 
@@ -42,8 +42,8 @@ function Btn({ onClick, disabled, children, title }: BtnProps) {
       title={title}
       style={{
         padding: '4px 10px',
-        background: '#334155',
-        color: disabled ? '#475569' : '#e2e8f0',
+        background: 'var(--netlab-border)',
+        color: disabled ? 'var(--netlab-text-muted)' : 'var(--netlab-text-primary)',
         border: 'none',
         borderRadius: 5,
         cursor: disabled ? 'not-allowed' : 'pointer',
@@ -63,7 +63,16 @@ export function EditorToolbar() {
 
   return (
     <div style={TOOLBAR_STYLE}>
-      <span style={{ color: '#94a3b8', fontSize: 10, letterSpacing: 1, marginRight: 4 }}>ADD</span>
+      <span
+        style={{
+          color: 'var(--netlab-text-secondary)',
+          fontSize: 10,
+          letterSpacing: 1,
+          marginRight: 4,
+        }}
+      >
+        ADD
+      </span>
       <Btn onClick={() => addNode(createRouterNode(randomPosition()))} title="Add Router">
         + Router
       </Btn>

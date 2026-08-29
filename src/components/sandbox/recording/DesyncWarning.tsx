@@ -9,7 +9,8 @@ const containerStyle: React.CSSProperties = {
   background: 'var(--netlab-color-warning-surface, #fef3c7)',
   border: '1px solid var(--netlab-color-warning, #d97706)',
   borderRadius: 4,
-  color: 'var(--netlab-color-warning-foreground, #78350f)',
+  color:
+    'var(--netlab-color-warning-foreground, color-mix(in srgb, var(--netlab-accent-yellow) 18%, transparent))',
   fontSize: 13,
 };
 

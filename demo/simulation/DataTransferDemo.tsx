@@ -17,8 +17,8 @@ const DEFAULT_PAYLOAD = 'Hello, this is a test message from Server A to Server B
 const TOPOLOGY = dataTransferDemoTopology();
 
 const SECTION_STYLE: CSSProperties = {
-  background: '#0f172a',
-  border: '1px solid #1e293b',
+  background: 'var(--netlab-bg-primary)',
+  border: '1px solid var(--netlab-bg-surface)',
   borderRadius: 10,
   padding: 12,
 };
@@ -26,7 +26,7 @@ const SECTION_STYLE: CSSProperties = {
 const LABEL_STYLE: CSSProperties = {
   display: 'block',
   fontSize: 10,
-  color: '#94a3b8',
+  color: 'var(--netlab-text-secondary)',
   fontFamily: 'monospace',
   marginBottom: 6,
   letterSpacing: 0.6,
@@ -35,28 +35,28 @@ const LABEL_STYLE: CSSProperties = {
 function transferStatusColor(status: TransferMessage['status']): string {
   switch (status) {
     case 'delivered':
-      return '#22c55e';
+      return 'var(--netlab-accent-green)';
     case 'partial':
-      return '#f59e0b';
+      return 'var(--netlab-accent-orange)';
     case 'failed':
       return '#ef4444';
     case 'in-progress':
-      return '#38bdf8';
+      return 'var(--netlab-accent-cyan)';
     default:
-      return '#94a3b8';
+      return 'var(--netlab-text-secondary)';
   }
 }
 
 function chunkStateColor(state: TransferChunk['state']): string {
   switch (state) {
     case 'delivered':
-      return '#22c55e';
+      return 'var(--netlab-accent-green)';
     case 'dropped':
       return '#ef4444';
     case 'in-flight':
-      return '#38bdf8';
+      return 'var(--netlab-accent-cyan)';
     default:
-      return '#94a3b8';
+      return 'var(--netlab-text-secondary)';
   }
 }
 
@@ -91,7 +91,8 @@ function TransferSummaryCard({
     <div
       style={{
         ...SECTION_STYLE,
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+        background:
+          'linear-gradient(135deg, var(--netlab-bg-primary) 0%, var(--netlab-bg-surface) 100%)',
         borderLeft: `3px solid ${transferStatusColor(transfer.status)}`,
       }}
     >
@@ -113,7 +114,7 @@ function TransferSummaryCard({
           gap: 6,
           fontSize: 11,
           fontFamily: 'monospace',
-          color: '#cbd5e1',
+          color: 'var(--netlab-text-primary)',
         }}
       >
         <div>source: {transfer.srcNodeId}</div>
@@ -168,18 +169,25 @@ function IpMacSummary({
   }, 0);
 
   return (
-    <div style={{ ...SECTION_STYLE, fontSize: 11, fontFamily: 'monospace', color: '#94a3b8' }}>
+    <div
+      style={{
+        ...SECTION_STYLE,
+        fontSize: 11,
+        fontFamily: 'monospace',
+        color: 'var(--netlab-text-secondary)',
+      }}
+    >
       <label style={LABEL_STYLE}>IP VS MAC (EDUCATIONAL)</label>
       <div style={{ display: 'grid', gap: 4 }}>
         <div>
           End-to-end IP: {firstHop.srcIp} -&gt; {firstHop.dstIp}
-          <span style={{ color: '#22c55e' }}> (unchanged)</span>
+          <span style={{ color: 'var(--netlab-accent-green)' }}> (unchanged)</span>
         </div>
         <div>
           Hop-by-hop MAC rewrite: {macChanges} change(s) across {hops.length} hop(s)
         </div>
         {firstHop.srcMac && lastHop.dstMac && (
-          <div style={{ marginTop: 4, color: '#94a3b8' }}>
+          <div style={{ marginTop: 4, color: 'var(--netlab-text-secondary)' }}>
             Initial: {firstHop.srcMac} -&gt; {firstHop.dstMac} | Final: {lastHop.srcMac} -&gt;{' '}
             {lastHop.dstMac}
           </div>
@@ -203,8 +211,8 @@ function PayloadPreviewSection({ transfer }: { transfer: TransferMessage }) {
           margin: 0,
           padding: 10,
           borderRadius: 8,
-          background: '#020617',
-          color: '#94a3b8',
+          background: 'var(--netlab-bg-primary)',
+          color: 'var(--netlab-text-secondary)',
           fontSize: 11,
           fontFamily: 'monospace',
           whiteSpace: 'pre-wrap',
@@ -249,9 +257,9 @@ function MissingChunksSection({
                 padding: '3px 8px',
                 borderRadius: 999,
                 fontSize: 10,
-                background: '#450a0a',
-                border: '1px solid #991b1b',
-                color: '#fca5a5',
+                background: 'color-mix(in srgb, var(--netlab-accent-red) 18%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--netlab-accent-red) 30%, transparent)',
+                color: 'var(--netlab-accent-red)',
                 fontFamily: 'monospace',
               }}
             >
@@ -284,7 +292,14 @@ function MessageView({
 
   if (!transfer) {
     return (
-      <div style={{ ...SECTION_STYLE, color: '#94a3b8', fontFamily: 'monospace', fontSize: 12 }}>
+      <div
+        style={{
+          ...SECTION_STYLE,
+          color: 'var(--netlab-text-secondary)',
+          fontFamily: 'monospace',
+          fontSize: 12,
+        }}
+      >
         Start a transfer to inspect payloads, missing chunks, and hop-by-hop traces.
       </div>
     );
@@ -305,7 +320,9 @@ function MessageView({
             alignItems: 'center',
           }}
         >
-          <div style={{ fontFamily: 'monospace', fontSize: 13, color: '#e2e8f0' }}>
+          <div
+            style={{ fontFamily: 'monospace', fontSize: 13, color: 'var(--netlab-text-primary)' }}
+          >
             {transfer.srcNodeId} → {transfer.dstNodeId}
           </div>
           <span
@@ -329,7 +346,7 @@ function MessageView({
             marginTop: 12,
             fontFamily: 'monospace',
             fontSize: 11,
-            color: '#cbd5e1',
+            color: 'var(--netlab-text-primary)',
           }}
         >
           <div>messageId: {transfer.messageId}</div>
@@ -342,10 +359,10 @@ function MessageView({
             marginTop: 10,
             padding: 8,
             borderRadius: 8,
-            background: '#020617',
+            background: 'var(--netlab-bg-primary)',
             fontFamily: 'monospace',
             fontSize: 11,
-            color: '#94a3b8',
+            color: 'var(--netlab-text-secondary)',
             wordBreak: 'break-all',
           }}
         >
@@ -381,14 +398,18 @@ function MessageView({
                 style={{
                   borderRadius: 8,
                   border: `1px solid ${
-                    isSelectedTrace ? '#38bdf8' : isHovered && chunk.traceId ? '#94a3b8' : '#334155'
+                    isSelectedTrace
+                      ? 'var(--netlab-accent-cyan)'
+                      : isHovered && chunk.traceId
+                        ? 'var(--netlab-text-secondary)'
+                        : 'var(--netlab-border)'
                   }`,
                   background: isSelectedTrace
-                    ? '#082f49'
+                    ? 'var(--netlab-bg-primary)'
                     : isHovered && chunk.traceId
                       ? '#172033'
-                      : '#111827',
-                  color: '#e2e8f0',
+                      : 'var(--netlab-bg-primary)',
+                  color: 'var(--netlab-text-primary)',
                   padding: 10,
                   textAlign: 'left',
                   cursor: chunk.traceId ? 'pointer' : 'default',
@@ -402,11 +423,11 @@ function MessageView({
                 <div style={{ marginTop: 6, fontSize: 10, color: chunkStateColor(chunk.state) }}>
                   {chunk.state}
                 </div>
-                <div style={{ marginTop: 6, fontSize: 10, color: '#94a3b8' }}>
+                <div style={{ marginTop: 6, fontSize: 10, color: 'var(--netlab-text-secondary)' }}>
                   {chunk.sizeBytes} bytes
                 </div>
                 {chunk.traceId && (
-                  <div style={{ marginTop: 6, fontSize: 9, color: '#38bdf8' }}>
+                  <div style={{ marginTop: 6, fontSize: 9, color: 'var(--netlab-accent-cyan)' }}>
                     ▶ Inspect hop trace
                   </div>
                 )}
@@ -422,7 +443,7 @@ function MessageView({
           style={{
             fontFamily: 'monospace',
             fontSize: 11,
-            color: '#cbd5e1',
+            color: 'var(--netlab-text-primary)',
             display: 'grid',
             gap: 6,
           }}
@@ -463,9 +484,9 @@ function TabButton({
       onClick={onClick}
       style={{
         borderRadius: 8,
-        border: `1px solid ${active ? '#38bdf8' : '#334155'}`,
-        background: active ? '#082f49' : '#111827',
-        color: active ? '#e0f2fe' : '#94a3b8',
+        border: `1px solid ${active ? 'var(--netlab-accent-cyan)' : 'var(--netlab-border)'}`,
+        background: active ? 'var(--netlab-bg-elevated)' : 'var(--netlab-bg-primary)',
+        color: active ? 'var(--netlab-text-primary)' : 'var(--netlab-text-secondary)',
         fontFamily: 'monospace',
         fontSize: 11,
         padding: '8px 12px',
@@ -543,7 +564,7 @@ function DataTransferDemoInner() {
           flex: '0 0 44%',
           minHeight: 280,
           position: 'relative',
-          borderBottom: '1px solid #1e293b',
+          borderBottom: '1px solid var(--netlab-bg-surface)',
         }}
       >
         <NetlabCanvas />
@@ -554,9 +575,9 @@ function DataTransferDemoInner() {
             left: 12,
             fontFamily: 'monospace',
             fontSize: 11,
-            color: failureCount > 0 ? '#f87171' : '#94a3b8',
+            color: failureCount > 0 ? 'var(--netlab-accent-red)' : 'var(--netlab-text-secondary)',
             background: 'rgba(2, 6, 23, 0.82)',
-            border: '1px solid #1e293b',
+            border: '1px solid var(--netlab-bg-surface)',
             borderRadius: 999,
             padding: '4px 10px',
           }}
@@ -572,11 +593,11 @@ function DataTransferDemoInner() {
           alignItems: 'center',
           gap: 12,
           padding: '8px 12px',
-          background: '#0f172a',
-          borderBottom: '1px solid #1e293b',
+          background: 'var(--netlab-bg-primary)',
+          borderBottom: '1px solid var(--netlab-bg-surface)',
           fontFamily: 'monospace',
           fontSize: 11,
-          color: '#cbd5e1',
+          color: 'var(--netlab-text-primary)',
           position: 'sticky',
           top: 0,
           zIndex: 10,
@@ -589,8 +610,8 @@ function DataTransferDemoInner() {
           style={{
             borderRadius: 8,
             border: 'none',
-            background: isSending ? '#1e293b' : '#0ea5e9',
-            color: isSending ? '#94a3b8' : '#082f49',
+            background: isSending ? 'var(--netlab-bg-surface)' : 'var(--netlab-accent-cyan)',
+            color: isSending ? 'var(--netlab-text-secondary)' : 'var(--netlab-bg-primary)',
             fontFamily: 'monospace',
             fontWeight: 'bold',
             padding: '8px 12px',
@@ -600,13 +621,18 @@ function DataTransferDemoInner() {
           {isSending ? 'Sending...' : '▶ Start Transfer'}
         </button>
 
-        <span style={{ color: failureCount > 0 ? '#f87171' : '#94a3b8', whiteSpace: 'nowrap' }}>
+        <span
+          style={{
+            color: failureCount > 0 ? 'var(--netlab-accent-red)' : 'var(--netlab-text-secondary)',
+            whiteSpace: 'nowrap',
+          }}
+        >
           {failureCount > 0 ? `■ ${failureCount} failure(s)` : '■ No failures'}
         </span>
 
         <span
           style={{
-            color: '#94a3b8',
+            color: 'var(--netlab-text-secondary)',
             flex: 1,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -633,13 +659,13 @@ function DataTransferDemoInner() {
         <div
           style={{
             flex: '0 0 300px',
-            borderRight: '1px solid #1e293b',
+            borderRight: '1px solid var(--netlab-bg-surface)',
             padding: 12,
             display: 'flex',
             flexDirection: 'column',
             gap: 12,
             overflow: 'auto',
-            background: '#020617',
+            background: 'var(--netlab-bg-primary)',
           }}
         >
           <div style={SECTION_STYLE}>
@@ -652,9 +678,9 @@ function DataTransferDemoInner() {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 borderRadius: 8,
-                border: '1px solid #334155',
-                background: '#111827',
-                color: '#e2e8f0',
+                border: '1px solid var(--netlab-border)',
+                background: 'var(--netlab-bg-primary)',
+                color: 'var(--netlab-text-primary)',
                 fontFamily: 'monospace',
                 fontSize: 12,
                 padding: '10px 12px',
@@ -663,7 +689,7 @@ function DataTransferDemoInner() {
               }}
             >
               <span>{showPayloadConfig ? '▼' : '▶'} Payload Configuration</span>
-              <span style={{ color: '#94a3b8', fontSize: 10 }}>
+              <span style={{ color: 'var(--netlab-text-secondary)', fontSize: 10 }}>
                 {payload.length} chars · {chunkSize}B
               </span>
             </button>
@@ -681,9 +707,9 @@ function DataTransferDemoInner() {
                     width: '100%',
                     resize: 'vertical',
                     borderRadius: 8,
-                    border: '1px solid #334155',
-                    background: '#020617',
-                    color: '#e2e8f0',
+                    border: '1px solid var(--netlab-border)',
+                    background: 'var(--netlab-bg-primary)',
+                    color: 'var(--netlab-text-primary)',
                     fontFamily: 'monospace',
                     fontSize: 12,
                     padding: 10,
@@ -709,9 +735,9 @@ function DataTransferDemoInner() {
                   style={{
                     width: '100%',
                     borderRadius: 8,
-                    border: '1px solid #334155',
-                    background: '#020617',
-                    color: '#e2e8f0',
+                    border: '1px solid var(--netlab-border)',
+                    background: 'var(--netlab-bg-primary)',
+                    color: 'var(--netlab-text-primary)',
                     fontFamily: 'monospace',
                     fontSize: 12,
                     padding: 10,
@@ -732,7 +758,12 @@ function DataTransferDemoInner() {
             }}
           >
             <div
-              style={{ fontFamily: 'monospace', fontSize: 12, color: '#e2e8f0', marginBottom: 10 }}
+              style={{
+                fontFamily: 'monospace',
+                fontSize: 12,
+                color: 'var(--netlab-text-primary)',
+                marginBottom: 10,
+              }}
             >
               Failure Injection
             </div>
@@ -741,13 +772,24 @@ function DataTransferDemoInner() {
 
           <div style={SECTION_STYLE}>
             <div
-              style={{ fontFamily: 'monospace', fontSize: 12, color: '#e2e8f0', marginBottom: 10 }}
+              style={{
+                fontFamily: 'monospace',
+                fontSize: 12,
+                color: 'var(--netlab-text-primary)',
+                marginBottom: 10,
+              }}
             >
               Transfers
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {transfers.length === 0 && (
-                <div style={{ fontFamily: 'monospace', fontSize: 11, color: '#94a3b8' }}>
+                <div
+                  style={{
+                    fontFamily: 'monospace',
+                    fontSize: 11,
+                    color: 'var(--netlab-text-secondary)',
+                  }}
+                >
                   No transfers yet.
                 </div>
               )}
@@ -764,9 +806,11 @@ function DataTransferDemoInner() {
                     }}
                     style={{
                       borderRadius: 8,
-                      border: `1px solid ${isSelected ? '#38bdf8' : '#334155'}`,
-                      background: isSelected ? '#082f49' : '#111827',
-                      color: '#e2e8f0',
+                      border: `1px solid ${isSelected ? 'var(--netlab-accent-cyan)' : 'var(--netlab-border)'}`,
+                      background: isSelected
+                        ? 'var(--netlab-bg-elevated)'
+                        : 'var(--netlab-bg-primary)',
+                      color: 'var(--netlab-text-primary)',
                       padding: 10,
                       textAlign: 'left',
                       cursor: 'pointer',
@@ -800,7 +844,7 @@ function DataTransferDemoInner() {
             padding: 12,
             display: 'flex',
             flexDirection: 'column',
-            background: '#020617',
+            background: 'var(--netlab-bg-primary)',
             overflow: 'auto',
           }}
         >

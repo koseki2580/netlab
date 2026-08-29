@@ -82,7 +82,7 @@ export function SwitchDetail({
                 padding: '4px 8px',
                 borderRadius: 6,
                 background: isRootBridge ? 'rgba(56, 189, 248, 0.14)' : 'rgba(148, 163, 184, 0.12)',
-                color: isRootBridge ? '#38bdf8' : 'var(--netlab-text-secondary)',
+                color: isRootBridge ? 'var(--netlab-accent-cyan)' : 'var(--netlab-text-secondary)',
               }}
             >
               {isRootBridge

@@ -60,9 +60,12 @@ export function EditorRunButton({ style }: EditorRunButtonProps) {
       aria-label={reason}
       style={{
         padding: '4px 12px',
-        background: disabled ? '#334155' : '#166534',
-        color: disabled ? '#cbd5e1' : '#dcfce7',
-        border: '1px solid #334155',
+        // A filled accent button: the label takes the theme's own background so
+        // it contrasts with the fill in either theme. Using the accent for both
+        // the fill and the label left them 4.09:1 apart in light mode.
+        background: disabled ? 'var(--netlab-border)' : 'var(--netlab-accent-green)',
+        color: disabled ? 'var(--netlab-text-primary)' : 'var(--netlab-bg-primary)',
+        border: '1px solid var(--netlab-border)',
         borderRadius: 4,
         cursor: disabled ? 'not-allowed' : 'pointer',
         font: 'inherit',

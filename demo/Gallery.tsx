@@ -171,7 +171,7 @@ const CATEGORIES: Category[] = [
   {
     id: 'areas',
     label: 'Network Areas',
-    color: '#f59e0b',
+    color: 'var(--netlab-accent-orange)',
     demos: [
       {
         path: '/networking/arp',

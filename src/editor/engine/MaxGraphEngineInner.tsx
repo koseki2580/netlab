@@ -189,9 +189,9 @@ export default function MaxGraphEngineInner({
           bottom: 8,
           width: 140,
           height: 100,
-          border: '1px solid #334155',
+          border: '1px solid var(--netlab-border)',
           borderRadius: 4,
-          background: '#0f172a',
+          background: 'var(--netlab-bg-primary)',
           overflow: 'hidden',
           zIndex: 2,
         }}

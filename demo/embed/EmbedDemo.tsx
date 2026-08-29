@@ -71,18 +71,18 @@ export const EMBED_DEMO_TOPOLOGY = TOPOLOGY;
 const PROSE_STYLE: React.CSSProperties = {
   fontFamily: 'monospace',
   fontSize: 13,
-  color: '#94a3b8',
+  color: 'var(--netlab-text-secondary)',
   lineHeight: 1.6,
 };
 
 const CODE_STYLE: React.CSSProperties = {
   display: 'block',
-  background: '#1e293b',
-  border: '1px solid #334155',
+  background: 'var(--netlab-bg-surface)',
+  border: '1px solid var(--netlab-border)',
   borderRadius: 6,
   padding: '10px 14px',
   fontSize: 12,
-  color: '#7dd3fc',
+  color: 'var(--netlab-accent-cyan)',
   whiteSpace: 'pre',
   overflowX: 'auto',
 };
@@ -99,17 +99,25 @@ export default function EmbedDemo() {
           display: 'flex',
           flexDirection: 'column',
           gap: 24,
-          background: '#0f172a',
+          background: 'var(--netlab-bg-primary)',
         }}
       >
         {/* Host page header */}
         <div style={PROSE_STYLE}>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginBottom: 4 }}>
+          <div
+            style={{
+              fontSize: 18,
+              fontWeight: 700,
+              color: 'var(--netlab-text-primary)',
+              marginBottom: 4,
+            }}
+          >
             My Network Documentation
           </div>
-          <div style={{ color: '#94a3b8' }}>
-            The component below is a live <code style={{ color: '#7dd3fc' }}>NetlabApp</code> embed
-            — width: 100%, height: 480px. It lives inside this prose layout and does not overflow.
+          <div style={{ color: 'var(--netlab-text-secondary)' }}>
+            The component below is a live{' '}
+            <code style={{ color: 'var(--netlab-accent-cyan)' }}>NetlabApp</code> embed — width:
+            100%, height: 480px. It lives inside this prose layout and does not overflow.
           </div>
         </div>
 
@@ -119,13 +127,13 @@ export default function EmbedDemo() {
           width="100%"
           height={480}
           simulation
-          style={{ borderRadius: 8, border: '1px solid #334155' }}
+          style={{ borderRadius: 8, border: '1px solid var(--netlab-border)' }}
         />
         {/* ──────────────────────────────────────────────────────────────────── */}
 
         {/* Usage example */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ ...PROSE_STYLE, color: '#94a3b8' }}>
+          <div style={{ ...PROSE_STYLE, color: 'var(--netlab-text-secondary)' }}>
             The embed above is produced by the following JSX. Copy it into any React page:
           </div>
           <code tabIndex={0} style={CODE_STYLE}>{`import { NetlabApp } from 'netlab';
@@ -135,26 +143,26 @@ export default function EmbedDemo() {
   width="100%"
   height={480}
   simulation
-  style={{ borderRadius: 8, border: '1px solid #334155' }}
+  style={{ borderRadius: 8, border: '1px solid var(--netlab-border)' }}
 />`}</code>
         </div>
 
         {/* Static variant */}
-        <div style={{ ...PROSE_STYLE, color: '#94a3b8' }}>
+        <div style={{ ...PROSE_STYLE, color: 'var(--netlab-text-secondary)' }}>
           Static view (no simulation controls) — width: 100%, height: 260px:
         </div>
         <NetlabApp
           topology={TOPOLOGY}
           width="100%"
           height={260}
-          style={{ borderRadius: 8, border: '1px solid #334155' }}
+          style={{ borderRadius: 8, border: '1px solid var(--netlab-border)' }}
         />
 
         {/* ── LIGHT THEME EXAMPLE ───────────────────────────────────────────── */}
-        <div style={{ ...PROSE_STYLE, color: '#94a3b8', marginTop: 8 }}>
+        <div style={{ ...PROSE_STYLE, color: 'var(--netlab-text-secondary)', marginTop: 8 }}>
           Light theme — pass{' '}
-          <code style={{ color: '#7dd3fc' }}>theme={'{NETLAB_LIGHT_THEME}'}</code> to blend into a
-          light-mode host page:
+          <code style={{ color: 'var(--netlab-accent-cyan)' }}>theme={'{NETLAB_LIGHT_THEME}'}</code>{' '}
+          to blend into a light-mode host page:
         </div>
 
         {/* Simulated light-mode host page */}
@@ -164,16 +172,21 @@ export default function EmbedDemo() {
             background: '#f8fafc',
             borderRadius: 8,
             padding: 24,
-            border: '1px solid #e2e8f0',
+            border: '1px solid var(--netlab-text-primary)',
           }}
         >
           <div
-            style={{ fontFamily: 'sans-serif', fontSize: 14, color: '#0f172a', marginBottom: 16 }}
+            style={{
+              fontFamily: 'sans-serif',
+              fontSize: 14,
+              color: 'var(--netlab-bg-primary)',
+              marginBottom: 16,
+            }}
           >
             <strong>My Documentation Site</strong>
             {/* Slate-500 rather than slate-400: on this card's #f8fafc the
                 lighter tone sits at 2.45:1, well under WCAG AA. */}
-            <span style={{ color: '#64748b', marginLeft: 8, fontSize: 12 }}>
+            <span style={{ color: 'var(--netlab-text-muted)', marginLeft: 8, fontSize: 12 }}>
               light-mode host page
             </span>
           </div>
@@ -182,7 +195,7 @@ export default function EmbedDemo() {
             width="100%"
             height={260}
             theme={NETLAB_LIGHT_THEME}
-            style={{ borderRadius: 6, border: '1px solid #cbd5e1' }}
+            style={{ borderRadius: 6, border: '1px solid var(--netlab-text-primary)' }}
           />
         </div>
 
@@ -200,11 +213,11 @@ export default function EmbedDemo() {
 // Or override individual tokens:
 <NetlabApp
   topology={topology}
-  theme={{ bgPrimary: '#ffffff', bgSurface: '#f1f5f9', textPrimary: '#0f172a' }}
+  theme={{ bgPrimary: '#ffffff', bgSurface: 'var(--netlab-text-primary)', textPrimary: 'var(--netlab-bg-primary)' }}
 />`}</code>
 
         {/* Host page footer */}
-        <div style={{ ...PROSE_STYLE, color: '#94a3b8', fontSize: 12 }}>
+        <div style={{ ...PROSE_STYLE, color: 'var(--netlab-text-secondary)', fontSize: 12 }}>
           All components are fully contained — they do not use viewport height and can be placed
           anywhere in a document.
         </div>

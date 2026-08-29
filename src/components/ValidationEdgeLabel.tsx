@@ -19,7 +19,8 @@ const LABEL_STYLE: CSSProperties = {
   height: 18,
   borderRadius: '999px',
   border: '1px solid var(--netlab-border, rgba(100, 116, 139, 0.4))',
-  background: 'var(--netlab-bg-panel, rgba(15, 23, 42, 0.95))',
+  background:
+    'var(--netlab-bg-panel, color-mix(in srgb, var(--netlab-bg-primary) 95%, transparent))',
   boxShadow: '0 2px 8px rgba(15, 23, 42, 0.35)',
   color: 'var(--netlab-text-primary, #e2e8f0)',
   fontSize: 11,

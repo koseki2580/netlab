@@ -113,7 +113,7 @@ export function MtuBadge({ mtu }: { mtu: number | undefined }) {
       data-low-mtu={lowMtu ? 'true' : 'false'}
       style={{
         ...BADGE_STYLE,
-        color: lowMtu ? '#f59e0b' : 'var(--netlab-text-primary)',
+        color: lowMtu ? 'var(--netlab-accent-orange)' : 'var(--netlab-text-primary)',
         background: lowMtu ? 'rgba(245, 158, 11, 0.12)' : 'rgba(148, 163, 184, 0.08)',
         borderColor: lowMtu ? 'rgba(245, 158, 11, 0.3)' : 'var(--netlab-border-subtle)',
       }}

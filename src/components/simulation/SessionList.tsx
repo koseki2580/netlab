@@ -4,9 +4,9 @@ import type { NetworkSession } from '../../types/session';
 import { useNetlabContext } from '../NetlabContext';
 
 const STATUS_META = {
-  pending: { icon: '◌', label: 'pending', color: '#94a3b8' },
-  success: { icon: '✓', label: 'success', color: '#34d399' },
-  failed: { icon: '✗', label: 'failed', color: '#f87171' },
+  pending: { icon: '◌', label: 'pending', color: 'var(--netlab-text-secondary)' },
+  success: { icon: '✓', label: 'success', color: 'var(--netlab-accent-green)' },
+  failed: { icon: '✗', label: 'failed', color: 'var(--netlab-accent-red)' },
 } as const;
 
 const STATUS_ORDER: Record<NetworkSession['status'], number> = {
@@ -152,7 +152,7 @@ export function SessionList() {
                       <span
                         data-testid="http-method"
                         style={{
-                          color: '#7dd3fc',
+                          color: 'var(--netlab-accent-cyan)',
                           fontWeight: 'bold',
                         }}
                       >
@@ -178,7 +178,10 @@ export function SessionList() {
                       <span
                         data-testid="http-status"
                         style={{
-                          color: session.httpMeta.statusCode < 400 ? '#34d399' : '#f87171',
+                          color:
+                            session.httpMeta.statusCode < 400
+                              ? 'var(--netlab-accent-green)'
+                              : 'var(--netlab-accent-red)',
                           fontWeight: 'bold',
                         }}
                       >

@@ -13,7 +13,7 @@ const BUTTON_STYLE: CSSProperties = {
   border: '1px solid var(--netlab-border-strong)',
   borderRadius: 6,
   background: 'var(--netlab-accent-cyan)',
-  color: '#082f49',
+  color: 'var(--netlab-bg-primary)',
   cursor: 'pointer',
   fontFamily: 'monospace',
   fontWeight: 700,

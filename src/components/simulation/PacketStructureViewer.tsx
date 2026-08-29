@@ -5,12 +5,12 @@ import { serializeArpFrame, serializePacket } from '../../utils/packetSerializer
 // ── Layer color palette ───────────────────────────────────────────────────────
 
 const LAYER_COLORS: Record<LayerTag, string> = {
-  L2: '#7dd3fc', // sky-300   — matches existing CREATE event badge
-  L3: '#a78bfa', // violet-400
-  L4: '#4ade80', // green-400 — matches existing FORWARD event badge
+  L2: 'var(--netlab-accent-cyan)', // sky-300   — matches existing CREATE event badge
+  L3: 'var(--netlab-accent-purple)', // violet-400
+  L4: 'var(--netlab-accent-green)', // green-400 — matches existing FORWARD event badge
   L7: '#f472b6', // pink-400
-  ARP: '#f59e0b', // amber-500 — matches ARP event badges
-  raw: '#94a3b8', // slate-400
+  ARP: 'var(--netlab-accent-orange)', // amber-500 — matches ARP event badges
+  raw: 'var(--netlab-text-secondary)', // slate-400
 };
 
 const LAYER_LABELS: Record<LayerTag, string> = {
@@ -50,7 +50,7 @@ function EmptyState() {
   return (
     <div
       style={{
-        color: '#94a3b8',
+        color: 'var(--netlab-text-secondary)',
         fontSize: 11,
         fontStyle: 'italic',
         padding: '12px 0',
@@ -107,7 +107,7 @@ function HexDump({
         <span
           style={{
             fontSize: 10,
-            color: '#94a3b8',
+            color: 'var(--netlab-text-secondary)',
             width: 30,
             flexShrink: 0,
             textAlign: 'right',
@@ -138,7 +138,7 @@ function HexDump({
                 padding: '1px 0',
                 color,
                 background: `${color}18`,
-                outline: isChangedByte ? '1px solid #fbbf24' : undefined,
+                outline: isChangedByte ? '1px solid var(--netlab-accent-yellow)' : undefined,
                 outlineOffset: isChangedByte ? '-1px' : undefined,
                 cursor: 'default',
                 userSelect: 'none',
@@ -159,7 +159,7 @@ function HexDump({
           fontSize: 10,
           fontWeight: 'bold',
           letterSpacing: 1,
-          color: '#94a3b8',
+          color: 'var(--netlab-text-secondary)',
           marginBottom: 4,
         }}
       >
@@ -167,7 +167,7 @@ function HexDump({
       </div>
       {rows}
       {truncated && (
-        <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 4 }}>
+        <div style={{ fontSize: 10, color: 'var(--netlab-text-secondary)', marginTop: 4 }}>
           +{bytes.length - MAX_RENDER_BYTES} more bytes…
         </div>
       )}
@@ -191,7 +191,7 @@ function FieldTable({
           fontSize: 10,
           fontWeight: 'bold',
           letterSpacing: 1,
-          color: '#94a3b8',
+          color: 'var(--netlab-text-secondary)',
           marginBottom: 4,
         }}
       >
@@ -199,7 +199,7 @@ function FieldTable({
       </div>
       <div
         style={{
-          border: '1px solid #1e293b',
+          border: '1px solid var(--netlab-bg-surface)',
           borderRadius: 6,
           overflow: 'hidden',
           fontSize: 11,
@@ -213,8 +213,8 @@ function FieldTable({
             gridTemplateColumns: '60px 110px 1fr 30px',
             gap: 4,
             padding: '4px 8px',
-            background: '#1e293b',
-            color: '#94a3b8',
+            background: 'var(--netlab-bg-surface)',
+            color: 'var(--netlab-text-secondary)',
             fontSize: 10,
             letterSpacing: 0.5,
           }}
@@ -233,7 +233,7 @@ function FieldTable({
               gridTemplateColumns: '60px 110px 1fr 30px',
               gap: 4,
               padding: '3px 8px',
-              borderTop: idx > 0 ? '1px solid #0f172a' : undefined,
+              borderTop: idx > 0 ? '1px solid var(--netlab-bg-primary)' : undefined,
               background: changedFieldSet.has(field.name)
                 ? '#92400e33'
                 : idx % 2 === 0
@@ -245,7 +245,7 @@ function FieldTable({
             <span style={layerBadgeStyle(field.layer)}>{field.layer}</span>
             <span
               style={{
-                color: '#94a3b8',
+                color: 'var(--netlab-text-secondary)',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -255,7 +255,7 @@ function FieldTable({
             </span>
             <span
               style={{
-                color: '#e2e8f0',
+                color: 'var(--netlab-text-primary)',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -264,7 +264,9 @@ function FieldTable({
             >
               {field.displayValue}
             </span>
-            <span style={{ color: '#94a3b8', textAlign: 'right' }}>{field.byteLength}</span>
+            <span style={{ color: 'var(--netlab-text-secondary)', textAlign: 'right' }}>
+              {field.byteLength}
+            </span>
           </div>
         ))}
       </div>
@@ -284,11 +286,11 @@ export function PacketStructureViewer() {
       style={{
         height: 320,
         overflowY: 'auto',
-        borderTop: '1px solid #1e293b',
+        borderTop: '1px solid var(--netlab-bg-surface)',
         padding: '10px 12px',
-        background: '#0f172a',
+        background: 'var(--netlab-bg-primary)',
         fontFamily: 'monospace',
-        color: '#e2e8f0',
+        color: 'var(--netlab-text-primary)',
         flexShrink: 0,
         boxSizing: 'border-box',
       }}
@@ -299,7 +301,7 @@ export function PacketStructureViewer() {
           fontSize: 10,
           fontWeight: 'bold',
           letterSpacing: 1,
-          color: '#94a3b8',
+          color: 'var(--netlab-text-secondary)',
           marginBottom: 6,
         }}
       >

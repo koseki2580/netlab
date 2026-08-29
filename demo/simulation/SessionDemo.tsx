@@ -130,16 +130,16 @@ const BUTTON_PRIMARY: CSSProperties = {
 
 const BUTTON_SECONDARY: CSSProperties = {
   ...BUTTON_BASE,
-  background: '#1e293b',
-  color: '#cbd5e1',
-  border: '1px solid #334155',
+  background: 'var(--netlab-bg-surface)',
+  color: 'var(--netlab-text-primary)',
+  border: '1px solid var(--netlab-border)',
 };
 
 const BUTTON_DISABLED: CSSProperties = {
   ...BUTTON_BASE,
-  background: '#0f172a',
-  color: '#94a3b8',
-  border: '1px solid #1e293b',
+  background: 'var(--netlab-bg-primary)',
+  color: 'var(--netlab-text-secondary)',
+  border: '1px solid var(--netlab-bg-surface)',
   cursor: 'not-allowed',
 };
 
@@ -365,7 +365,9 @@ function SessionDemoInner() {
             Clear
           </button>
 
-          <span style={{ color: '#94a3b8', fontFamily: 'monospace', fontSize: 11 }}>
+          <span
+            style={{ color: 'var(--netlab-text-secondary)', fontFamily: 'monospace', fontSize: 11 }}
+          >
             {sessions.length} session{sessions.length === 1 ? '' : 's'}
             {failureCount > 0
               ? ` · ${failureCount} failure${failureCount === 1 ? '' : 's'} active`
@@ -378,8 +380,8 @@ function SessionDemoInner() {
         defaultWidth={460}
         maxWidth={760}
         style={{
-          background: '#0f172a',
-          borderLeft: '1px solid #1e293b',
+          background: 'var(--netlab-bg-primary)',
+          borderLeft: '1px solid var(--netlab-bg-surface)',
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -393,7 +395,7 @@ function SessionDemoInner() {
 
           <div
             style={{
-              borderTop: '1px solid #1e293b',
+              borderTop: '1px solid var(--netlab-bg-surface)',
               padding: 12,
               minHeight: 220,
               maxHeight: 320,

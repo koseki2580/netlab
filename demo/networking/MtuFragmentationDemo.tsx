@@ -19,14 +19,14 @@ import { readDemoEmbedParams } from '../embedParams';
 const PING_PAYLOAD_BYTES = 1200;
 
 const CARD_STYLE: CSSProperties = {
-  background: '#111827',
+  background: 'var(--netlab-bg-primary)',
   border: '1px solid #1f2937',
   borderRadius: 10,
   padding: 12,
 };
 
 const LABEL_STYLE: CSSProperties = {
-  color: '#94a3b8',
+  color: 'var(--netlab-text-secondary)',
   fontFamily: 'monospace',
   fontSize: 11,
   fontWeight: 700,
@@ -169,9 +169,9 @@ function FragmentationDemoInner({
             maxWidth: 360,
             padding: '10px 12px',
             borderRadius: 10,
-            background: 'rgba(15, 23, 42, 0.9)',
+            background: 'color-mix(in srgb, var(--netlab-bg-primary) 90%, transparent)',
             border: '1px solid rgba(148, 163, 184, 0.2)',
-            color: '#cbd5e1',
+            color: 'var(--netlab-text-primary)',
             fontFamily: 'monospace',
             fontSize: 11,
             lineHeight: 1.5,
@@ -185,7 +185,7 @@ function FragmentationDemoInner({
             Host A sends toward Host B across a low-MTU tunnel. R1 fragments on egress when DF is
             clear, or drops and emits ICMP Fragmentation Needed when DF is set.
           </div>
-          <div style={{ marginTop: 6, color: '#94a3b8' }}>
+          <div style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}>
             With the default `600`-byte tunnel MTU and a `1200`-byte ICMP data field, Netlab shows
             three IPv4 fragments because the ICMP header is part of the fragmented payload.
           </div>
@@ -196,20 +196,27 @@ function FragmentationDemoInner({
         defaultWidth={460}
         maxWidth={760}
         style={{
-          background: '#0f172a',
-          borderLeft: '1px solid #1e293b',
+          background: 'var(--netlab-bg-primary)',
+          borderLeft: '1px solid var(--netlab-bg-surface)',
           display: 'flex',
           flexDirection: 'column',
         }}
       >
-        <div style={{ padding: 12, display: 'grid', gap: 12, borderBottom: '1px solid #1e293b' }}>
+        <div
+          style={{
+            padding: 12,
+            display: 'grid',
+            gap: 12,
+            borderBottom: '1px solid var(--netlab-bg-surface)',
+          }}
+        >
           <div style={CARD_STYLE}>
             <div style={LABEL_STYLE}>Controls</div>
             <label
               style={{
                 display: 'grid',
                 gap: 6,
-                color: '#e2e8f0',
+                color: 'var(--netlab-text-primary)',
                 fontFamily: 'monospace',
                 fontSize: 12,
               }}
@@ -229,7 +236,7 @@ function FragmentationDemoInner({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
-                color: '#cbd5e1',
+                color: 'var(--netlab-text-primary)',
                 fontFamily: 'monospace',
                 fontSize: 12,
                 marginTop: 10,
@@ -257,7 +264,7 @@ function FragmentationDemoInner({
             <div style={LABEL_STYLE}>Trace Notes</div>
             <div
               style={{
-                color: '#cbd5e1',
+                color: 'var(--netlab-text-primary)',
                 fontFamily: 'monospace',
                 fontSize: 12,
                 display: 'grid',
@@ -282,7 +289,12 @@ function FragmentationDemoInner({
           <div style={CARD_STYLE}>
             <div style={LABEL_STYLE}>Why You See Multiple Packets</div>
             <div
-              style={{ color: '#94a3b8', fontFamily: 'monospace', fontSize: 12, lineHeight: 1.6 }}
+              style={{
+                color: 'var(--netlab-text-secondary)',
+                fontFamily: 'monospace',
+                fontSize: 12,
+                lineHeight: 1.6,
+              }}
             >
               R1&apos;s egress link to R2 has a finite MTU. With DF disabled, the packet is split
               into RFC 791 fragments. Host B reassembles them before the echo reaches the
@@ -300,10 +312,10 @@ function FragmentationDemoInner({
             gridTemplateRows: 'auto minmax(220px, 0.9fr) minmax(220px, 1.1fr)',
           }}
         >
-          <div style={{ padding: 12, borderBottom: '1px solid #1e293b' }}>
+          <div style={{ padding: 12, borderBottom: '1px solid var(--netlab-bg-surface)' }}>
             <TraceSummary />
           </div>
-          <div style={{ minHeight: 0, borderBottom: '1px solid #1e293b' }}>
+          <div style={{ minHeight: 0, borderBottom: '1px solid var(--netlab-bg-surface)' }}>
             <PacketTimeline />
           </div>
           <div style={{ minHeight: 0 }}>

@@ -64,7 +64,7 @@ function ControlledSandboxHarness() {
         data-testid="controlled-sandbox-propose-down"
         onClick={() => sandbox.pushEdit(LINK_DOWN_EDIT)}
         style={{
-          border: '1px solid #2563eb',
+          border: '1px solid var(--netlab-accent-blue)',
           borderRadius: 8,
           padding: '8px 10px',
           background: '#1d4ed8',
@@ -80,11 +80,11 @@ function ControlledSandboxHarness() {
         data-testid="controlled-sandbox-propose-up"
         onClick={() => sandbox.pushEdit(LINK_UP_EDIT)}
         style={{
-          border: '1px solid #334155',
+          border: '1px solid var(--netlab-border)',
           borderRadius: 8,
           padding: '8px 10px',
-          background: '#0f172a',
-          color: '#e2e8f0',
+          background: 'var(--netlab-bg-primary)',
+          color: 'var(--netlab-text-primary)',
           fontFamily: 'monospace',
           cursor: 'pointer',
         }}
@@ -179,17 +179,17 @@ export function ControlledTopologyDemo() {
           minHeight: 0,
           padding: 16,
           boxSizing: 'border-box',
-          background: '#020617',
+          background: 'var(--netlab-bg-primary)',
         }}
       >
         <div
           style={{
             flex: '1 1 640px',
             minHeight: 420,
-            border: '1px solid #1e293b',
+            border: '1px solid var(--netlab-bg-surface)',
             borderRadius: 12,
             overflow: 'hidden',
-            background: '#0f172a',
+            background: 'var(--netlab-bg-primary)',
           }}
         >
           <NetlabProvider
@@ -228,25 +228,34 @@ export function ControlledTopologyDemo() {
             overflowY: 'auto',
             gap: 12,
             padding: 16,
-            border: '1px solid #1e293b',
+            border: '1px solid var(--netlab-bg-surface)',
             borderRadius: 12,
-            background: '#111827',
+            background: 'var(--netlab-bg-primary)',
             color: '#e5e7eb',
             fontFamily: 'monospace',
           }}
         >
           <div>
-            <div style={{ fontSize: 12, letterSpacing: 1, color: '#93c5fd', marginBottom: 6 }}>
+            <div
+              style={{
+                fontSize: 12,
+                letterSpacing: 1,
+                color: 'var(--netlab-accent-cyan)',
+                marginBottom: 6,
+              }}
+            >
               TOPOLOGY STATE (JSON)
             </div>
-            <div style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.5 }}>{status}</div>
+            <div style={{ fontSize: 12, color: 'var(--netlab-text-secondary)', lineHeight: 1.5 }}>
+              {status}
+            </div>
           </div>
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button
               onClick={handleEncode}
               style={{
-                border: '1px solid #2563eb',
+                border: '1px solid var(--netlab-accent-blue)',
                 borderRadius: 8,
                 padding: '8px 12px',
                 background: '#1d4ed8',
@@ -260,11 +269,11 @@ export function ControlledTopologyDemo() {
             <button
               onClick={handleRestore}
               style={{
-                border: '1px solid #334155',
+                border: '1px solid var(--netlab-border)',
                 borderRadius: 8,
                 padding: '8px 12px',
-                background: '#0f172a',
-                color: '#e2e8f0',
+                background: 'var(--netlab-bg-primary)',
+                color: 'var(--netlab-text-primary)',
                 cursor: 'pointer',
                 fontFamily: 'inherit',
               }}
@@ -273,7 +282,7 @@ export function ControlledTopologyDemo() {
             </button>
           </div>
 
-          <div style={{ fontSize: 12, color: '#cbd5e1', lineHeight: 1.6 }}>
+          <div style={{ fontSize: 12, color: 'var(--netlab-text-primary)', lineHeight: 1.6 }}>
             <div>Nodes: {snapshot.nodes.length}</div>
             <div>Edges: {snapshot.edges.length}</div>
             {showSandboxHarness && (
@@ -311,7 +320,9 @@ export function ControlledTopologyDemo() {
                   border: '1px solid #dc2626',
                   borderRadius: 8,
                   padding: '8px 12px',
-                  background: pendingProposal ? '#991b1b' : '#1f2937',
+                  background: pendingProposal
+                    ? 'color-mix(in srgb, var(--netlab-accent-red) 30%, transparent)'
+                    : '#1f2937',
                   color: '#fef2f2',
                   cursor: pendingProposal ? 'pointer' : 'default',
                   fontFamily: 'inherit',
@@ -323,7 +334,9 @@ export function ControlledTopologyDemo() {
           )}
 
           <div>
-            <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 6 }}>URL Query</div>
+            <div style={{ fontSize: 11, color: 'var(--netlab-text-secondary)', marginBottom: 6 }}>
+              URL Query
+            </div>
             <pre
               // Focusable because it scrolls: a keyboard user has no other way
               // to reach the rest of an encoded topology this long.
@@ -333,9 +346,9 @@ export function ControlledTopologyDemo() {
                 margin: 0,
                 padding: 12,
                 borderRadius: 8,
-                border: '1px solid #1e293b',
-                background: '#020617',
-                color: '#7dd3fc',
+                border: '1px solid var(--netlab-bg-surface)',
+                background: 'var(--netlab-bg-primary)',
+                color: 'var(--netlab-accent-cyan)',
                 fontSize: 11,
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-all',
@@ -367,9 +380,9 @@ export function ControlledTopologyDemo() {
               overflow: 'auto',
               padding: 12,
               borderRadius: 8,
-              border: '1px solid #1e293b',
-              background: '#020617',
-              color: '#cbd5e1',
+              border: '1px solid var(--netlab-bg-surface)',
+              background: 'var(--netlab-bg-primary)',
+              color: 'var(--netlab-text-primary)',
               fontSize: 11,
               lineHeight: 1.5,
             }}

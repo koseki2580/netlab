@@ -104,7 +104,7 @@ export function ScenarioExportDialog({ open, onClose }: ScenarioExportDialogProp
         zIndex: 30,
         width: 360,
         maxWidth: 'calc(100vw - 24px)',
-        boxShadow: '0 16px 32px rgba(2, 6, 23, 0.35)',
+        boxShadow: '0 16px 32px color-mix(in srgb, var(--netlab-bg-primary) 35%, transparent)',
       }}
     >
       <header style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>

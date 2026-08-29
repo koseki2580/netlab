@@ -12,7 +12,7 @@ import type { TraceFilterPredicate, TraceFilterResult } from './traceFilter/pars
 const EVENT_COLORS: Record<string, string> = {
   create: 'var(--netlab-accent-cyan)',
   forward: 'var(--netlab-accent-green)',
-  deliver: '#34d399',
+  deliver: 'var(--netlab-accent-green)',
   drop: 'var(--netlab-accent-red)',
   'arp-request': 'var(--netlab-accent-orange)',
   'arp-reply': 'var(--netlab-accent-orange)',
@@ -259,7 +259,8 @@ function HopRow({
           style={{
             color: 'var(--netlab-accent-orange)',
             fontSize: 9,
-            opacity: 0.8,
+            // No opacity: the accent is already chosen to clear AA against the
+            // theme's backgrounds, and fading it took this line to 4.49:1.
             paddingLeft: 28,
           }}
         >

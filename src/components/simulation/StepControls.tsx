@@ -8,7 +8,7 @@ import { TraceSelector } from './TraceSelector';
 const EVENT_COLORS: Record<string, string> = {
   create: 'var(--netlab-accent-cyan)',
   forward: 'var(--netlab-accent-green)',
-  deliver: '#34d399',
+  deliver: 'var(--netlab-accent-green)',
   drop: 'var(--netlab-accent-red)',
   'arp-request': 'var(--netlab-accent-orange)',
   'arp-reply': 'var(--netlab-accent-orange)',
@@ -114,13 +114,13 @@ function RoutingTable({ decision }: RoutingTableProps) {
           let badgeText = '';
 
           if (c.selectedByLpm) {
-            rowBg = '#052e16';
-            badgeColor = '#14532d';
+            rowBg = 'color-mix(in srgb, var(--netlab-accent-green) 18%, transparent)';
+            badgeColor = 'color-mix(in srgb, var(--netlab-accent-green) 18%, transparent)';
             badgeTextColor = 'var(--netlab-accent-green)';
             badgeText = 'MATCH ✓';
           } else if (c.matched) {
-            rowBg = '#451a03';
-            badgeColor = '#78350f';
+            rowBg = 'color-mix(in srgb, var(--netlab-accent-orange) 18%, transparent)';
+            badgeColor = 'color-mix(in srgb, var(--netlab-accent-yellow) 18%, transparent)';
             badgeTextColor = 'var(--netlab-accent-yellow)';
             badgeText = 'MATCHED';
           }
@@ -173,7 +173,7 @@ function RoutingTable({ decision }: RoutingTableProps) {
           padding: '6px 8px',
           background: winner ? '#052e1644' : '#45190344',
           borderRadius: 4,
-          border: `1px solid ${winner ? '#14532d' : '#78350f'}`,
+          border: `1px solid ${winner ? 'color-mix(in srgb, var(--netlab-accent-green) 18%, transparent)' : 'color-mix(in srgb, var(--netlab-accent-yellow) 18%, transparent)'}`,
         }}
       >
         {explanation}
@@ -256,11 +256,11 @@ function StepEntry({ hop, isCurrent, isLast, totalHops }: StepEntryProps) {
             style={{
               marginTop: 8,
               padding: '8px 12px',
-              background: '#450a0a',
-              border: '1px solid #991b1b',
+              background: 'color-mix(in srgb, var(--netlab-accent-red) 18%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--netlab-accent-red) 30%, transparent)',
               borderRadius: 6,
               fontSize: 12,
-              color: '#fca5a5',
+              color: 'var(--netlab-accent-red)',
             }}
           >
             Drop reason: {hop.reason}

@@ -117,7 +117,13 @@ export function RecordingMetadataEditor({
         <h2 id={titleId} style={{ margin: 0 }}>
           {t('sandbox.recording.metadata.heading')}
         </h2>
-        <p style={{ margin: 0, fontSize: 13, color: 'var(--netlab-color-muted, #64748b)' }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: 13,
+            color: 'var(--netlab-color-muted, var(--netlab-text-muted))',
+          }}
+        >
           {t('sandbox.recording.metadata.captured', {
             count: recorder.eventCount,
             label:
@@ -141,7 +147,10 @@ export function RecordingMetadataEditor({
             aria-describedby={`${titleId}-help`}
             className="netlab-focus-ring"
           />
-          <small id={`${titleId}-help`} style={{ color: titleTooLong ? '#dc2626' : '#64748b' }}>
+          <small
+            id={`${titleId}-help`}
+            style={{ color: titleTooLong ? '#dc2626' : 'var(--netlab-text-muted)' }}
+          >
             {title.length} / {RECORDING_TITLE_MAX_LENGTH}
           </small>
         </label>
@@ -149,7 +158,7 @@ export function RecordingMetadataEditor({
           aria-label={t('sandbox.recording.metadata.titlePreview')}
           data-testid="recording-title-preview"
           style={{
-            border: '1px solid var(--netlab-color-border, #e2e8f0)',
+            border: '1px solid var(--netlab-color-border, var(--netlab-text-primary))',
             borderRadius: 4,
             padding: '6px 8px',
             minHeight: 24,

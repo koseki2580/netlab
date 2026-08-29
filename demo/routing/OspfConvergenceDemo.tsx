@@ -44,18 +44,18 @@ function RouteSummaryPanel() {
   return (
     <div
       style={{
-        background: '#0b1220',
-        border: '1px solid #1e293b',
+        background: 'var(--netlab-bg-primary)',
+        border: '1px solid var(--netlab-bg-surface)',
         borderRadius: 10,
         padding: 12,
-        color: '#e2e8f0',
+        color: 'var(--netlab-text-primary)',
         fontFamily: 'monospace',
         fontSize: 12,
       }}
     >
       <div
         style={{
-          color: '#94a3b8',
+          color: 'var(--netlab-text-secondary)',
           fontSize: 11,
           fontWeight: 700,
           letterSpacing: 1,
@@ -66,15 +66,19 @@ function RouteSummaryPanel() {
       </div>
       {preferredRoute ? (
         <div style={{ display: 'grid', gap: 6 }}>
-          <div style={{ color: '#7dd3fc', fontWeight: 700 }}>{preferredRoute.destination}</div>
+          <div style={{ color: 'var(--netlab-accent-cyan)', fontWeight: 700 }}>
+            {preferredRoute.destination}
+          </div>
           <div>next-hop: {preferredRoute.nextHop}</div>
-          <div style={{ color: '#94a3b8' }}>
+          <div style={{ color: 'var(--netlab-text-secondary)' }}>
             metric {preferredRoute.metric} • {preferredRoute.protocol}/
             {preferredRoute.adminDistance}
           </div>
         </div>
       ) : (
-        <div style={{ color: '#94a3b8' }}>No OSPF route currently resolves at R1.</div>
+        <div style={{ color: 'var(--netlab-text-secondary)' }}>
+          No OSPF route currently resolves at R1.
+        </div>
       )}
     </div>
   );
@@ -371,9 +375,9 @@ function OspfConvergenceInner({
                   maxWidth: 360,
                   padding: '10px 12px',
                   borderRadius: 10,
-                  background: 'rgba(15, 23, 42, 0.9)',
+                  background: 'color-mix(in srgb, var(--netlab-bg-primary) 90%, transparent)',
                   border: '1px solid rgba(148, 163, 184, 0.2)',
-                  color: '#cbd5e1',
+                  color: 'var(--netlab-text-primary)',
                   fontFamily: 'monospace',
                   fontSize: 11,
                   lineHeight: 1.5,
@@ -386,7 +390,7 @@ function OspfConvergenceInner({
                   R1 prefers the lower-cost path through R2 until the primary inter-router link is
                   removed.
                 </div>
-                <div style={{ marginTop: 6, color: '#94a3b8' }}>
+                <div style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}>
                   Toggle the primary link, then resend the probe to confirm the recomputed path now
                   leaves through R3.
                 </div>
@@ -409,20 +413,25 @@ function OspfConvergenceInner({
             defaultWidth={460}
             maxWidth={760}
             style={{
-              background: '#0f172a',
-              borderLeft: '1px solid #1e293b',
+              background: 'var(--netlab-bg-primary)',
+              borderLeft: '1px solid var(--netlab-bg-surface)',
               display: 'flex',
               flexDirection: 'column',
             }}
           >
             <div
-              style={{ padding: 12, display: 'grid', gap: 12, borderBottom: '1px solid #1e293b' }}
+              style={{
+                padding: 12,
+                display: 'grid',
+                gap: 12,
+                borderBottom: '1px solid var(--netlab-bg-surface)',
+              }}
             >
               <RouteSummaryPanel />
               <div
                 style={{
-                  background: '#0b1220',
-                  border: '1px solid #1e293b',
+                  background: 'var(--netlab-bg-primary)',
+                  border: '1px solid var(--netlab-bg-surface)',
                   borderRadius: 10,
                   padding: 12,
                 }}

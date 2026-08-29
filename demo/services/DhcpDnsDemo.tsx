@@ -218,8 +218,8 @@ function DhcpDnsDemoInner() {
         defaultWidth={420}
         maxWidth={700}
         style={{
-          background: '#0f172a',
-          borderLeft: '1px solid #1e293b',
+          background: 'var(--netlab-bg-primary)',
+          borderLeft: '1px solid var(--netlab-bg-surface)',
         }}
       >
         <StepControls />

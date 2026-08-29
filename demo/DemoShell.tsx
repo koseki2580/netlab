@@ -342,7 +342,7 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
           top: skipFocused ? 8 : -48,
           zIndex: 1000,
           padding: '8px 14px',
-          background: '#2563eb',
+          background: 'var(--netlab-accent-blue)',
           color: '#ffffff',
           border: 'none',
           borderRadius: 6,
