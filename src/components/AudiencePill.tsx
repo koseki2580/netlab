@@ -139,7 +139,24 @@ export function AudiencePill({
             aria-label={opt}
             onClick={() => handleClick(opt)}
             style={{
-              all: 'unset',
+              // Explicit resets rather than `all: unset`. Unsetting everything
+              // takes `display` back to inline and drops the button's own box,
+              // and the result hit-tested far outside its bounding rectangle:
+              // this pill made the OSPF lesson's "Fail link" button —
+              // three hundred pixels away — impossible to click, while every
+              // rectangle involved looked correct.
+              appearance: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              margin: 0,
+              border: 0,
+              font: 'inherit',
+              // Anchors the hit-area overlay that `shell-chrome.css` puts on
+              // every button in the command bar. Without it the overlay
+              // anchored to the toolbar row instead and became an invisible
+              // full-width shield: the OSPF lesson's "Fail link" button, three
+              // hundred pixels away, could not be clicked at all.
+              position: 'relative',
               cursor: 'pointer',
               padding: size.pad,
               borderRadius: 'var(--netlab-radius-pill, 999px)',

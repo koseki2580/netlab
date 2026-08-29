@@ -471,6 +471,10 @@ function resolveScenarioHref(id: string, current: Scenario | undefined): string 
 
 function commandActionStyle(accent: string): React.CSSProperties {
   return {
+    // Anchors the hit-area overlay `shell-chrome.css` puts on every button in
+    // the command bar. Unanchored, that overlay attaches to the toolbar row and
+    // becomes an invisible full-width shield over its neighbours.
+    position: 'relative',
     height: 28,
     padding: '0 8px',
     borderRadius: 6,
