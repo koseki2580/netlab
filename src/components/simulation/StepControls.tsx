@@ -6,12 +6,12 @@ import { TraceSelector } from './TraceSelector';
 // ── Style constants (dark theme, monospace) ───────────────────────────────────
 
 const EVENT_COLORS: Record<string, string> = {
-  create: '#7dd3fc',
-  forward: '#4ade80',
+  create: 'var(--netlab-accent-cyan)',
+  forward: 'var(--netlab-accent-green)',
   deliver: '#34d399',
-  drop: '#f87171',
-  'arp-request': '#f59e0b',
-  'arp-reply': '#f59e0b',
+  drop: 'var(--netlab-accent-red)',
+  'arp-request': 'var(--netlab-accent-orange)',
+  'arp-reply': 'var(--netlab-accent-orange)',
 };
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -23,10 +23,10 @@ interface HopHeaderProps {
 }
 
 function HopHeader({ hop, current, total }: HopHeaderProps) {
-  const eventColor = EVENT_COLORS[hop.event] ?? '#94a3b8';
+  const eventColor = EVENT_COLORS[hop.event] ?? 'var(--netlab-text-secondary)';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <div style={{ fontSize: 11, color: '#94a3b8' }}>
+      <div style={{ fontSize: 11, color: 'var(--netlab-text-secondary)' }}>
         Hop {current} of {total}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -45,9 +45,11 @@ function HopHeader({ hop, current, total }: HopHeaderProps) {
         >
           {hop.event.toUpperCase()}
         </span>
-        <span style={{ fontSize: 13, fontWeight: 'bold', color: '#f1f5f9' }}>{hop.nodeLabel}</span>
+        <span style={{ fontSize: 13, fontWeight: 'bold', color: 'var(--netlab-text-primary)' }}>
+          {hop.nodeLabel}
+        </span>
       </div>
-      <div style={{ fontSize: 11, color: '#94a3b8' }}>
+      <div style={{ fontSize: 11, color: 'var(--netlab-text-secondary)' }}>
         {hop.srcIp} → {hop.dstIp} &nbsp;|&nbsp; TTL {hop.ttl} &nbsp;|&nbsp; {hop.protocol}
       </div>
     </div>
@@ -63,13 +65,20 @@ function RoutingTable({ decision }: RoutingTableProps) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ fontSize: 10, fontWeight: 'bold', letterSpacing: 1, color: '#94a3b8' }}>
+      <div
+        style={{
+          fontSize: 10,
+          fontWeight: 'bold',
+          letterSpacing: 1,
+          color: 'var(--netlab-text-secondary)',
+        }}
+      >
         LPM ROUTING TABLE
       </div>
 
       <div
         style={{
-          border: '1px solid #1e293b',
+          border: '1px solid var(--netlab-bg-surface)',
           borderRadius: 6,
           overflow: 'hidden',
           fontSize: 11,
@@ -82,8 +91,8 @@ function RoutingTable({ decision }: RoutingTableProps) {
             display: 'grid',
             gridTemplateColumns: '1fr 1fr 80px 40px 60px 70px',
             padding: '4px 8px',
-            background: '#1e293b',
-            color: '#94a3b8',
+            background: 'var(--netlab-bg-surface)',
+            color: 'var(--netlab-text-secondary)',
             fontWeight: 'bold',
             letterSpacing: 0.5,
             fontSize: 10,
@@ -99,7 +108,7 @@ function RoutingTable({ decision }: RoutingTableProps) {
 
         {/* Data rows */}
         {candidates.map((c, i) => {
-          let rowBg = '#0f172a';
+          let rowBg = 'var(--netlab-bg-primary)';
           let badgeColor = 'transparent';
           let badgeTextColor = 'transparent';
           let badgeText = '';
@@ -107,12 +116,12 @@ function RoutingTable({ decision }: RoutingTableProps) {
           if (c.selectedByLpm) {
             rowBg = '#052e16';
             badgeColor = '#14532d';
-            badgeTextColor = '#4ade80';
+            badgeTextColor = 'var(--netlab-accent-green)';
             badgeText = 'MATCH ✓';
           } else if (c.matched) {
             rowBg = '#451a03';
             badgeColor = '#78350f';
-            badgeTextColor = '#fbbf24';
+            badgeTextColor = 'var(--netlab-accent-yellow)';
             badgeText = 'MATCHED';
           }
 
@@ -124,8 +133,8 @@ function RoutingTable({ decision }: RoutingTableProps) {
                 gridTemplateColumns: '1fr 1fr 80px 40px 60px 70px',
                 padding: '5px 8px',
                 background: rowBg,
-                borderTop: '1px solid #1e293b',
-                color: c.matched ? '#e2e8f0' : '#94a3b8',
+                borderTop: '1px solid var(--netlab-bg-surface)',
+                color: c.matched ? 'var(--netlab-text-primary)' : 'var(--netlab-text-secondary)',
                 alignItems: 'center',
               }}
             >
@@ -160,7 +169,7 @@ function RoutingTable({ decision }: RoutingTableProps) {
       <div
         style={{
           fontSize: 11,
-          color: winner ? '#4ade80' : '#fbbf24',
+          color: winner ? 'var(--netlab-accent-green)' : 'var(--netlab-accent-yellow)',
           padding: '6px 8px',
           background: winner ? '#052e1644' : '#45190344',
           borderRadius: 4,
@@ -183,8 +192,8 @@ interface StepEntryProps {
 }
 
 function StepEntry({ hop, isCurrent, isLast, totalHops }: StepEntryProps) {
-  const circleColor = isCurrent ? '#7dd3fc' : '#334155';
-  const circleBorder = isCurrent ? '#7dd3fc' : '#475569';
+  const circleColor = isCurrent ? 'var(--netlab-accent-cyan)' : 'var(--netlab-border)';
+  const circleBorder = isCurrent ? 'var(--netlab-accent-cyan)' : 'var(--netlab-text-muted)';
 
   return (
     <div style={{ display: 'flex', gap: 0 }}>
@@ -217,7 +226,7 @@ function StepEntry({ hop, isCurrent, isLast, totalHops }: StepEntryProps) {
               width: 2,
               flex: 1,
               minHeight: 12,
-              background: '#1e293b',
+              background: 'var(--netlab-bg-surface)',
               marginTop: 2,
             }}
           />
@@ -297,8 +306,8 @@ export function StepControls({ primary = true }: StepControlsProps = {}) {
     <div
       style={{
         fontFamily: 'monospace',
-        color: '#e2e8f0',
-        background: '#0f172a',
+        color: 'var(--netlab-text-primary)',
+        background: 'var(--netlab-bg-primary)',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
@@ -309,12 +318,12 @@ export function StepControls({ primary = true }: StepControlsProps = {}) {
       <div
         style={{
           padding: '10px 16px',
-          borderBottom: '1px solid #1e293b',
+          borderBottom: '1px solid var(--netlab-bg-surface)',
           flexShrink: 0,
           fontSize: 10,
           fontWeight: 'bold',
           letterSpacing: 1,
-          color: '#94a3b8',
+          color: 'var(--netlab-text-secondary)',
         }}
       >
         STEP-BY-STEP SIMULATION
@@ -334,7 +343,7 @@ export function StepControls({ primary = true }: StepControlsProps = {}) {
           <TraceSelector />
         </div>
         {revealedHops.length === 0 ? (
-          <div style={{ color: '#94a3b8', fontSize: 12 }}>
+          <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 12 }}>
             {status === 'idle' ? 'Send a packet to begin.' : 'Press Next Step to start stepping.'}
           </div>
         ) : (
@@ -354,7 +363,7 @@ export function StepControls({ primary = true }: StepControlsProps = {}) {
       <div
         style={{
           padding: '12px 16px',
-          borderTop: '1px solid #1e293b',
+          borderTop: '1px solid var(--netlab-bg-surface)',
           flexShrink: 0,
           display: 'flex',
           flexDirection: 'column',
@@ -375,8 +384,8 @@ export function StepControls({ primary = true }: StepControlsProps = {}) {
               fontSize: 13,
               fontWeight: 'bold',
               fontFamily: 'monospace',
-              background: stepDisabled ? '#1e293b' : '#2563eb',
-              color: stepDisabled ? '#475569' : '#fff',
+              background: stepDisabled ? 'var(--netlab-bg-surface)' : 'var(--netlab-accent-blue)',
+              color: stepDisabled ? 'var(--netlab-text-muted)' : '#fff',
             }}
           >
             → Next Step
@@ -392,14 +401,14 @@ export function StepControls({ primary = true }: StepControlsProps = {}) {
               fontSize: 13,
               fontWeight: 'bold',
               fontFamily: 'monospace',
-              background: resetDisabled ? '#1e293b' : '#334155',
-              color: resetDisabled ? '#475569' : '#cbd5e1',
+              background: resetDisabled ? 'var(--netlab-bg-surface)' : 'var(--netlab-border)',
+              color: resetDisabled ? 'var(--netlab-text-muted)' : 'var(--netlab-text-primary)',
             }}
           >
             ⟳ Reset
           </button>
         </div>
-        <div style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center' }}>
+        <div style={{ fontSize: 11, color: 'var(--netlab-text-secondary)', textAlign: 'center' }}>
           {status === 'idle' && 'Send a packet to begin'}
           {status === 'paused' && currentStep === -1 && 'Loaded — press Next Step'}
           {status === 'paused' &&

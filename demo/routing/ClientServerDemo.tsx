@@ -159,8 +159,8 @@ export default function ClientServerDemo() {
             <div
               style={{
                 padding: '4px 12px',
-                background: '#1e293b',
-                borderBottom: '1px solid #334155',
+                background: 'var(--netlab-bg-surface)',
+                borderBottom: '1px solid var(--netlab-border)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 12,
@@ -175,8 +175,8 @@ export default function ClientServerDemo() {
                   onClick={handleCopyLink}
                   style={{
                     padding: '5px 14px',
-                    background: copied ? '#16a34a' : '#334155',
-                    color: '#fff',
+                    background: copied ? '#16a34a' : 'var(--netlab-bg-elevated)',
+                    color: copied ? '#fff' : 'var(--netlab-text-primary)',
                     border: 'none',
                     borderRadius: 6,
                     cursor: 'pointer',
@@ -203,8 +203,8 @@ export default function ClientServerDemo() {
               <ResizableSidebar
                 defaultWidth={260}
                 style={{
-                  background: '#0f172a',
-                  borderLeft: '1px solid #1e293b',
+                  background: 'var(--netlab-bg-primary)',
+                  borderLeft: '1px solid var(--netlab-bg-surface)',
                   display: 'flex',
                   flexDirection: 'column',
                 }}

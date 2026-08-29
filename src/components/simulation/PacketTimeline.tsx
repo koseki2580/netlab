@@ -10,12 +10,12 @@ import { TraceFilterInput } from './traceFilter/TraceFilterInput';
 import type { TraceFilterPredicate, TraceFilterResult } from './traceFilter/parser';
 
 const EVENT_COLORS: Record<string, string> = {
-  create: '#7dd3fc',
-  forward: '#4ade80',
+  create: 'var(--netlab-accent-cyan)',
+  forward: 'var(--netlab-accent-green)',
   deliver: '#34d399',
-  drop: '#f87171',
-  'arp-request': '#f59e0b',
-  'arp-reply': '#f59e0b',
+  drop: 'var(--netlab-accent-red)',
+  'arp-request': 'var(--netlab-accent-orange)',
+  'arp-reply': 'var(--netlab-accent-orange)',
 };
 
 const EVENT_LABELS: Record<string, string> = {
@@ -155,7 +155,7 @@ function HopRow({
   onClick: () => void;
   onEdit: (anchorElement: HTMLElement) => void;
 }) {
-  const color = EVENT_COLORS[hop.event] ?? '#94a3b8';
+  const color = EVENT_COLORS[hop.event] ?? 'var(--netlab-text-secondary)';
   const label = EVENT_LABELS[hop.event] ?? hop.event.toUpperCase();
   const dropReason = hop.event === 'drop' ? formatDropReason(hop.reason) : null;
   const annotation = formatHopAnnotation(hop);
@@ -255,7 +255,14 @@ function HopRow({
         )}
       </div>
       {(hop.event === 'arp-request' || hop.event === 'arp-reply') && hop.arpFrame && (
-        <span style={{ color: '#f59e0b', fontSize: 9, opacity: 0.8, paddingLeft: 28 }}>
+        <span
+          style={{
+            color: 'var(--netlab-accent-orange)',
+            fontSize: 9,
+            opacity: 0.8,
+            paddingLeft: 28,
+          }}
+        >
           {hop.event === 'arp-request'
             ? `who has ${hop.dstIp}?`
             : `${hop.srcIp} is at ${hop.arpFrame.srcMac}`}

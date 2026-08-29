@@ -211,8 +211,11 @@ describe('StepControls', () => {
       simulationMock.state = makeState({ currentStep: 1 });
       render();
 
+      // The accent token rather than its dark-theme value: the same component
+      // is drawn in a light theme too, and the contract is "the current hop
+      // wears the accent colour", not "the current hop is #7dd3fc".
       expect(container?.innerHTML).toContain(
-        'background: rgb(125, 211, 252); border: 2px solid rgb(125, 211, 252);',
+        'background: var(--netlab-accent-cyan); border: 2px solid var(--netlab-accent-cyan);',
       );
     });
 
