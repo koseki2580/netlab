@@ -47,8 +47,10 @@ export function nodeStyle(node: NetlabNode): CellStyle {
     // A box behind the device, not instead of it. The overview renders shapes
     // rather than HTML labels, and without a shape it showed an empty frame
     // with the viewport rectangle floating in it.
-    fillColor: transparent ? 'none' : '#334155',
-    strokeColor: transparent ? 'none' : '#475569',
+    // Theme tokens, not fixed slate: on a light canvas the overview showed a
+    // row of black boxes where the devices are.
+    fillColor: transparent ? 'none' : 'var(--netlab-bg-surface)',
+    strokeColor: transparent ? 'none' : 'var(--netlab-border)',
     rounded: true,
     verticalAlign: 'middle',
     align: 'center',

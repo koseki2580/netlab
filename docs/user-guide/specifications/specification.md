@@ -81,6 +81,9 @@ and the gallery — each already has its own tests and docs.
   is comparing the same part of the topology at the same size.
 - **REQ-018 (MUST):** A link the canvas has found errors or warnings on MUST be
   marked on the link itself, and hovering the mark MUST say what is wrong.
+- **REQ-034 (MUST):** A setting the learner chooses in the gallery MUST apply to
+  the lessons they open. A setting they never chose MUST NOT be recorded as
+  though they had.
 - **REQ-033 (MUST):** On a canvas the learner can interact with, a device MUST
   be reachable and openable by keyboard alone, and MUST say which device it is.
 - **REQ-032 (MUST):** A control the learner needs MUST be reachable: visible,
@@ -209,6 +212,9 @@ not part of this specification.
 - **AC-018:** Given a link with a validation error, when it is drawn, then it
   carries an error mark; a link with only warnings carries a warning mark, and a
   clean link carries none.
+- **AC-031:** Given the gallery, when the learner chooses Dark or Light and then
+  opens a lesson, then the lesson is drawn in that theme; and a lesson opened
+  without choosing keeps its own default.
 - **AC-030:** Given an interactive canvas, when the learner tabs to a device and
   presses Enter, then that device's panel opens.
 - **AC-029:** Given a lesson on a full-screen display, when the learner sends a
@@ -264,6 +270,7 @@ not part of this specification.
 | TC-022    | AC-017     | E2E           | Two canvases in compare mode                         | The learner zooms one                                                             | Both are drawn at the same zoom                                                      | `e2e/canvas-compare-viewport.spec.ts`               |
 | TC-023    | AC-018     | unit/behavior | Links with errors, with warnings, and clean          | They are drawn                                                                    | Each carries the right mark, and the messages are readable                           | `src/components/engine/simulatorGraphModel.test.ts` |
 | TC-024    | AC-019     | E2E           | A device opened, dismissed and opened again          | Its position is compared across openings                                          | It lands in the same place each time and stays on the canvas                         | `e2e/canvas-select-pan.spec.ts`                     |
+| TC-038    | AC-031     | E2E           | The gallery's theme setting                          | A theme is chosen, then a lesson opened                                           | The lesson follows the choice, and an unmade choice changes nothing                  | `e2e/settings-carry.spec.ts`                        |
 | TC-037    | AC-030     | E2E           | An interactive canvas                                | The learner tabs to a device and presses Enter                                    | The device is focusable, named, and opens                                            | `e2e/canvas-keyboard.spec.ts`                       |
 | TC-036    | AC-029     | E2E           | A laptop display, and the sandbox                    | The same lesson is worked through, and a device is edited and the edit taken back | Every control is pressable and every result appears                                  | `e2e/user-journey.spec.ts`                          |
 | TC-035    | AC-029     | E2E           | A full-screen display                                | The learner works through a lesson and the editor                                 | Every control is pressable and every result appears                                  | `e2e/user-journey.spec.ts`                          |

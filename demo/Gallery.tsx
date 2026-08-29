@@ -554,6 +554,21 @@ function persistAxis(key: string, value: string): void {
   }
 }
 
+/**
+ * Remember an axis once the visitor changes it — never on the way in.
+ *
+ * Writing on mount recorded the default as though it had been chosen, and
+ * since lessons honour these settings, merely opening the gallery would have
+ * repainted every lesson. A preference nobody expressed is not a preference.
+ */
+function usePersistedAxis(key: string, value: string): void {
+  const previous = useRef<string | null>(null);
+  useEffect(() => {
+    if (previous.current !== null && previous.current !== value) persistAxis(key, value);
+    previous.current = value;
+  }, [key, value]);
+}
+
 const GALLERY_COPY: Record<
   GalleryLocale,
   {
@@ -821,6 +836,7 @@ function ThemeModeToggle({
             <button
               key={mode}
               type="button"
+              data-testid={`gallery-theme-${mode}`}
               aria-pressed={isActive}
               onClick={() => onChange(mode)}
               style={{
@@ -1037,24 +1053,12 @@ export default function Gallery({
   useUrlParamSync('audience', audience, { defaultValue: 'pro' });
 
   // Persist axes to localStorage so demo visitors keep their prefs.
-  useEffect(() => {
-    persistAxis('netlab-theme-mode', themeMode);
-  }, [themeMode]);
-  useEffect(() => {
-    persistAxis(GALLERY_PALETTE_KEY, palette);
-  }, [palette]);
-  useEffect(() => {
-    persistAxis(GALLERY_DENSITY_KEY, density);
-  }, [density]);
-  useEffect(() => {
-    persistAxis(GALLERY_AUDIENCE_KEY, audience);
-  }, [audience]);
-  useEffect(() => {
-    persistAxis(GALLERY_CBSAFE_KEY, colorBlindSafe);
-  }, [colorBlindSafe]);
-  useEffect(() => {
-    persistAxis(GALLERY_CONTRAST_KEY, contrast);
-  }, [contrast]);
+  usePersistedAxis('netlab-theme-mode', themeMode);
+  usePersistedAxis(GALLERY_PALETTE_KEY, palette);
+  usePersistedAxis(GALLERY_DENSITY_KEY, density);
+  usePersistedAxis(GALLERY_AUDIENCE_KEY, audience);
+  usePersistedAxis(GALLERY_CBSAFE_KEY, colorBlindSafe);
+  usePersistedAxis(GALLERY_CONTRAST_KEY, contrast);
 
   const settings: GallerySettings = {
     themeMode,

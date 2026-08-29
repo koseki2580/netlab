@@ -5,7 +5,17 @@ import { CommandPalette, type CommandPaletteItem } from '../src/components/Comma
 import { KeyboardHelpOverlay } from '../src/components/KeyboardHelpOverlay';
 import { NavRail, type NavRailItem, type NavRailView } from '../src/components/NavRail';
 import { NetlabThemeScope } from '../src/components/NetlabThemeScope';
-import type { NetlabCbSafe, NetlabContrast } from '../src/theme';
+import {
+  themeToVars,
+  NETLAB_DARK_THEME,
+  NETLAB_LIGHT_THEME,
+  type NetlabAudience,
+  type NetlabCbSafe,
+  type NetlabContrast,
+  type NetlabDensity,
+  type NetlabPalette,
+  type NetlabTheme,
+} from '../src/theme';
 import { scenarioRegistry, scenariosInGroup } from '../src/scenarios';
 import { installKeymap, type KeymapActions } from '../src/utils/keymap';
 import { useViewport } from '../src/utils/useViewport';
@@ -31,17 +41,58 @@ const SCENARIO_ROUTES: Record<string, string> = {
   'nat-basics': '/simulation/nat',
 };
 
-/** Read the persisted a11y axes so scenario views honor the gallery's Settings (M6). */
-function readPersistedA11yAxes(): { colorBlindSafe: NetlabCbSafe; contrast: NetlabContrast } {
+/**
+ * Read the persisted settings so a lesson honours the gallery's Settings panel.
+ *
+ * The panel offers five axes and writes all five to storage; a lesson used to
+ * honour two of them, so a learner who chose Light got a dark lesson with no
+ * way to tell whether the setting had been ignored or forgotten.
+ *
+ * Only what is actually stored is applied. A lesson opened by someone who never
+ * expressed a preference keeps the dark it is designed as.
+ */
+function readPersistedAxes(): {
+  colorBlindSafe: NetlabCbSafe;
+  contrast: NetlabContrast;
+  theme?: Partial<NetlabTheme>;
+  palette?: NetlabPalette;
+  density?: NetlabDensity;
+  audience?: NetlabAudience;
+} {
   let colorBlindSafe: NetlabCbSafe = 'off';
   let contrast: NetlabContrast = 'normal';
+  let theme: Partial<NetlabTheme> | undefined;
+  let palette: NetlabPalette | undefined;
+  let density: NetlabDensity | undefined;
+  let audience: NetlabAudience | undefined;
   try {
-    if (window.localStorage.getItem('nl_a11y_cbsafe') === 'on') colorBlindSafe = 'on';
-    if (window.localStorage.getItem('nl_a11y_contrast') === 'more') contrast = 'more';
+    const storage = window.localStorage;
+    if (storage.getItem('nl_a11y_cbsafe') === 'on') colorBlindSafe = 'on';
+    if (storage.getItem('nl_a11y_contrast') === 'more') contrast = 'more';
+
+    const storedTheme = storage.getItem('netlab-theme-mode');
+    if (storedTheme === 'light') theme = NETLAB_LIGHT_THEME;
+    else if (storedTheme === 'dark') theme = NETLAB_DARK_THEME;
+
+    const storedPalette = storage.getItem('netlab-palette');
+    if (storedPalette === 'studio' || storedPalette === 'academic') palette = storedPalette;
+
+    const storedDensity = storage.getItem('netlab-density');
+    if (storedDensity === 'standard' || storedDensity === 'compact') density = storedDensity;
+
+    const storedAudience = storage.getItem('netlab-audience');
+    if (storedAudience === 'learner' || storedAudience === 'pro') audience = storedAudience;
   } catch {
     /* localStorage unavailable — fall back to defaults */
   }
-  return { colorBlindSafe, contrast };
+  return {
+    colorBlindSafe,
+    contrast,
+    ...(theme ? { theme } : {}),
+    ...(palette ? { palette } : {}),
+    ...(density ? { density } : {}),
+    ...(audience ? { audience } : {}),
+  };
 }
 
 interface DemoShellProps {
@@ -59,7 +110,13 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
   const [registeredActions, setRegisteredActions] = useState<KeymapActions>({});
   const [registeredPaletteItems, setRegisteredPaletteItems] = useState<CommandPaletteItem[]>([]);
   const view: NavRailView = location.pathname === '/' ? 'gallery' : 'simulator';
-  const a11yAxes = useMemo(() => readPersistedA11yAxes(), []);
+  const settings = useMemo(() => readPersistedAxes(), []);
+  // The shell chrome needs the resolved theme too; the scope below resolves the
+  // same way for the lesson itself.
+  const shellTheme = useMemo<NetlabTheme>(
+    () => ({ ...NETLAB_DARK_THEME, ...settings.theme }),
+    [settings.theme],
+  );
   // Keyboard users would otherwise tab through the whole nav rail + chrome before
   // reaching the demo. A skip link (hidden until focused) jumps straight there.
   const [skipFocused, setSkipFocused] = useState(false);
@@ -259,13 +316,18 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
       data-narrow={isNarrow ? '' : undefined}
       className="netlab-sim-shell"
       style={{
+        // The theme's variables reach the shell chrome, not just the lesson
+        // inside it: this element sits outside NetlabThemeScope, and while its
+        // background was a fixed slate a learner who chose Light got a light
+        // lesson framed in a dark shell.
+        ...themeToVars(shellTheme),
         display: 'flex',
         // `100dvh` tracks the visible viewport on iOS Safari where the toolbar
         // shrinks the usable area — `100vh` would overflow under the chrome.
         flexDirection: isNarrow ? 'column' : 'row',
         height: '100dvh',
         overflow: 'hidden',
-        background: '#0f172a',
+        background: 'var(--netlab-bg-primary)',
       }}
     >
       <button
@@ -300,8 +362,8 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
           <header
             style={{
               padding: '10px 16px',
-              background: '#1e293b',
-              borderBottom: '1px solid #334155',
+              background: 'var(--netlab-bg-surface)',
+              borderBottom: '1px solid var(--netlab-border)',
               display: 'flex',
               alignItems: 'center',
               gap: isNarrow ? 8 : 16,
@@ -311,7 +373,7 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
           >
             <span
               style={{
-                color: '#e2e8f0',
+                color: 'var(--netlab-text-primary)',
                 fontWeight: 'bold',
                 fontFamily: 'monospace',
                 fontSize: 15,
@@ -322,7 +384,7 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
             <h1
               style={{
                 margin: 0,
-                color: '#94a3b8',
+                color: 'var(--netlab-text-secondary)',
                 fontFamily: 'monospace',
                 fontSize: 14,
                 fontWeight: 600,
@@ -330,7 +392,15 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
             >
               {title}
             </h1>
-            <span style={{ color: '#94a3b8', fontSize: 12, fontFamily: 'monospace' }}>{desc}</span>
+            <span
+              style={{
+                color: 'var(--netlab-text-secondary)',
+                fontSize: 12,
+                fontFamily: 'monospace',
+              }}
+            >
+              {desc}
+            </span>
             <a
               href="https://github.com/koseki2580/netlab"
               target="_blank"
@@ -340,16 +410,18 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
-                color: '#94a3b8',
+                color: 'var(--netlab-text-secondary)',
                 textDecoration: 'none',
                 fontFamily: 'monospace',
                 fontSize: 12,
               }}
               onMouseEnter={(event) => {
-                (event.currentTarget as HTMLAnchorElement).style.color = '#94a3b8';
+                (event.currentTarget as HTMLAnchorElement).style.color =
+                  'var(--netlab-text-secondary)';
               }}
               onMouseLeave={(event) => {
-                (event.currentTarget as HTMLAnchorElement).style.color = '#94a3b8';
+                (event.currentTarget as HTMLAnchorElement).style.color =
+                  'var(--netlab-text-secondary)';
               }}
             >
               {GITHUB_ICON}
@@ -357,11 +429,7 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
             </a>
           </header>
         )}
-        <NetlabThemeScope
-          colorBlindSafe={a11yAxes.colorBlindSafe}
-          contrast={a11yAxes.contrast}
-          style={{ flex: 1, overflow: 'hidden' }}
-        >
+        <NetlabThemeScope {...settings} style={{ flex: 1, overflow: 'hidden' }}>
           {isE2e && <E2eTraceHook />}
           <ShellChromeProvider value={shellChrome}>
             {/* Skip-link target + main landmark. height:100% keeps the drill

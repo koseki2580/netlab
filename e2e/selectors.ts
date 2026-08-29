@@ -22,6 +22,7 @@ export const SEL = {
     heading: 'gallery-heading',
     progressSection: 'gallery-progress-section',
     localeToggleJa: 'gallery-locale-toggle-ja',
+    themeMode: (mode: 'light' | 'dark') => `gallery-theme-${mode}`,
     progressExport: 'gallery-progress-export',
     progressClear: 'gallery-progress-clear',
     progressConfirmId: 'gallery-progress-confirm-id',
