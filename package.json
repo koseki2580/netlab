@@ -102,7 +102,7 @@
     "bench:h2-h3": "node scripts/bench-h2-h3.mjs",
     "regression": "npm run build:cli && node scripts/run-regression-matrix.mjs",
     "e2e": "playwright test",
-    "e2e:install": "playwright install --with-deps chromium",
+    "e2e:install": "playwright install --with-deps chromium firefox webkit",
     "storybook": "storybook dev -p 6006 --no-open",
     "storybook:build": "storybook build",
     "storybook:test": "test-storybook --url http://127.0.0.1:6006",

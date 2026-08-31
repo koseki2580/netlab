@@ -42,6 +42,12 @@ function runCongestionScenario(): readonly TcpCongestionEvent[] {
 function TopologyPanel() {
   return (
     <div
+      // A label on a plain div is dropped by assistive tech — `aria-label` is
+      // prohibited without a role that takes a name, so this one announced
+      // nothing at all. `group` rather than `img`: the panel holds the canvas
+      // with its focusable devices and zoom controls, and calling that a
+      // picture claims it has nothing to interact with.
+      role="group"
       aria-label="TCP congestion demo topology"
       style={{
         position: 'relative',

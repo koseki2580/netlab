@@ -81,6 +81,9 @@ and the gallery — each already has its own tests and docs.
   is comparing the same part of the topology at the same size.
 - **REQ-018 (MUST):** A link the canvas has found errors or warnings on MUST be
   marked on the link itself, and hovering the mark MUST say what is wrong.
+- **REQ-038 (MUST):** The browser suite MUST run on Chromium, Firefox and
+  WebKit. A rendering or accessibility defect that only one engine reports is
+  still a defect for the learners using it.
 - **REQ-036 (MUST):** Every lesson MUST be readable in the light theme, to the
   same WCAG 2 AA standard already required in dark.
 - **REQ-037 (MUST):** Each theme's text and accent tokens MUST clear 4.5:1
@@ -220,6 +223,8 @@ not part of this specification.
 - **AC-018:** Given a link with a validation error, when it is drawn, then it
   carries an error mark; a link with only warnings carries a warning mark, and a
   clean link carries none.
+- **AC-035:** Given the browser suite, when it is run, then it runs on all three
+  engines the configuration names, and each is installed by `e2e:install`.
 - **AC-033:** Given any lesson opened after choosing Light, when it is scanned
   for WCAG 2 A/AA, then there are no violations.
 - **AC-034:** Given either built-in theme, when its tokens are measured against
