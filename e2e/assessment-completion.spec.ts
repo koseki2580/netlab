@@ -42,3 +42,31 @@ test('an assessment sub-goal passes when the learner makes the edit it asks for'
   await expect(panel, 'the sub-goal saw the edit').toContainText('2 / 4 sub-goals');
   await expect(panel).toContainText('Disable the primary link');
 });
+
+/**
+ * TC-045 — the control the goal describes is the one that satisfies it.
+ *
+ * "Disable the primary link" is the sub-goal; "Fail link" sits in the lesson's
+ * own toolbar and does exactly that. It changed the topology directly and
+ * recorded nothing, so the assessment — which reads the learner's sandbox
+ * edits — never saw it, and the sandbox's history of what the learner changed
+ * was missing the change. The controlled-topology demo's buttons have always
+ * pushed their edits; this one now does too.
+ */
+test("the lesson's own control satisfies the goal it describes", async ({ page, sandboxPage }) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.goto(
+    '/?learnerId=e2e-fail&assessment=ospf-convergence&sandbox=1&sandboxTab=assessment#/routing/ospf-convergence',
+  );
+  await expect(page.getByTestId(SEL.app.root)).toBeVisible();
+  await expect(page.getByTestId(SEL.sandbox.panel)).toBeVisible();
+  const panel = sandboxPage.tabpanel();
+  await expect(panel).toContainText('1 / 4 sub-goals');
+
+  await page.getByTestId('ospf-fail-link').click();
+  await page.waitForTimeout(1200);
+  await sandboxPage.clickTab('assessment');
+  await expect(panel, "the lesson's own control satisfies the goal it describes").toContainText(
+    '2 / 4 sub-goals',
+  );
+});

@@ -33,6 +33,10 @@ import { buildOspfConvergenceTopology } from '../../src/scenarios/ospf-convergen
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import { readDemoEmbedParams } from '../embedParams';
 import { useShellChrome } from '../ShellChromeContext';
+import { useSandboxOrNull } from '../../src/sandbox/useSandbox';
+
+/** The inter-router link this lesson fails; the assessment names the same id. */
+const PRIMARY_LINK_ID = 'e-r2-r4';
 
 function RouteSummaryPanel() {
   const { routeTable } = useNetlabContext();
@@ -161,10 +165,23 @@ function OspfConvergenceInner({
     window.location.href = `?sandbox=1&fork=${created.id}${linkParam}#/routing/ospf-convergence`;
   }, [stepIdx, primaryLinkDown]);
 
+  const editSession = useSandboxOrNull();
+
   const handleToggleLink = useCallback(() => {
     onTogglePrimaryLink();
+    // Record it as an edit the learner made, the way the link editor and the
+    // controlled-topology demo's own buttons do. Without this the sandbox's
+    // history omitted the change, and the assessment sub-goal that asks for
+    // exactly this link to go down was never satisfied by the control labelled
+    // to do it.
+    editSession?.pushEdit({
+      kind: 'link.state',
+      target: { kind: 'edge', edgeId: PRIMARY_LINK_ID },
+      before: primaryLinkDown ? 'down' : 'up',
+      after: primaryLinkDown ? 'up' : 'down',
+    });
     if (forkId) setSandbox(recordSandboxDiff(forkId, { edges: 1 }) ?? null);
-  }, [onTogglePrimaryLink, forkId]);
+  }, [onTogglePrimaryLink, forkId, editSession, primaryLinkDown]);
 
   const handleResetFork = useCallback(() => {
     if (forkId) {

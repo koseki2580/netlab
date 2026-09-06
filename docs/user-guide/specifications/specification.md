@@ -81,6 +81,9 @@ and the gallery — each already has its own tests and docs.
   is comparing the same part of the topology at the same size.
 - **REQ-018 (MUST):** A link the canvas has found errors or warnings on MUST be
   marked on the link itself, and hovering the mark MUST say what is wrong.
+- **REQ-040 (MUST):** A lesson control that changes the topology MUST record the
+  change as a sandbox edit when a sandbox is present. The sandbox's history is
+  what the learner changed, and an assessment reads it.
 - **REQ-039 (MUST):** When a tutorial finishes, it MUST say what was observed.
   One action can satisfy several steps at once, and the steps it skipped past
   carry the things the learner was meant to notice.
@@ -226,6 +229,9 @@ not part of this specification.
 - **AC-018:** Given a link with a validation error, when it is drawn, then it
   carries an error mark; a link with only warnings carries a warning mark, and a
   clean link carries none.
+- **AC-037:** Given the OSPF lesson with its assessment open, when the learner
+  presses the lesson's own "Fail link", then the sub-goal that asks for that
+  link to go down passes.
 - **AC-036:** Given a finished tutorial, when its completion card is shown, then
   every step's title is listed.
 - **AC-035:** Given the browser suite, when it is run, then it runs on all three
@@ -295,6 +301,7 @@ not part of this specification.
 | TC-022    | AC-017     | E2E           | Two canvases in compare mode                         | The learner zooms one                                                             | Both are drawn at the same zoom                                                      | `e2e/canvas-compare-viewport.spec.ts`                |
 | TC-023    | AC-018     | unit/behavior | Links with errors, with warnings, and clean          | They are drawn                                                                    | Each carries the right mark, and the messages are readable                           | `src/components/engine/simulatorGraphModel.test.ts`  |
 | TC-024    | AC-019     | E2E           | A device opened, dismissed and opened again          | Its position is compared across openings                                          | It lands in the same place each time and stays on the canvas                         | `e2e/canvas-select-pan.spec.ts`                      |
+| TC-045    | AC-037     | E2E           | The OSPF lesson's own Fail link control              | It is pressed with the assessment open                                            | The matching sub-goal passes                                                         | `e2e/assessment-completion.spec.ts`                  |
 | TC-044    | AC-016     | E2E           | An assessment reading the learner's sandbox edits    | The primary link is taken down by id                                              | The matching sub-goal passes                                                         | `e2e/assessment-completion.spec.ts`                  |
 | TC-043    | AC-036     | unit/behavior | A finished tutorial                                  | Its completion card is rendered                                                   | Every step's title is listed                                                         | `src/components/tutorial/TutorialStepPanel.test.tsx` |
 | TC-041    | AC-033     | E2E           | Every lesson, opened in the light theme              | It is scanned for WCAG 2 A/AA                                                     | No violations                                                                        | `e2e/light-theme.spec.ts`                            |
@@ -346,7 +353,9 @@ layers are the engine's own rather than a filtered redraw.
   rather than triggering a routing pass. Deciding that is a design question, and
   guessing at it would reproduce the CLI's assumption in the product. Recorded
   rather than guessed. `e2e/assessment-completion.spec.ts` covers the sub-goals
-  that do work and says where it stops.
+  that do work and says where it stops. (The related question — whether the
+  lesson's own "Fail link" should count — is answered: it records a sandbox edit
+  now, as the controlled-topology demo's buttons always have.)
 - One action can satisfy several tutorial steps at once (all three ARP
   predicates are true after the first packet). The completion card lists what
   was observed; whether the steps should instead gate on distinct moments is a
