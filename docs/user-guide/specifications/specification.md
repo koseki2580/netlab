@@ -295,6 +295,7 @@ not part of this specification.
 | TC-022    | AC-017     | E2E           | Two canvases in compare mode                         | The learner zooms one                                                             | Both are drawn at the same zoom                                                      | `e2e/canvas-compare-viewport.spec.ts`                |
 | TC-023    | AC-018     | unit/behavior | Links with errors, with warnings, and clean          | They are drawn                                                                    | Each carries the right mark, and the messages are readable                           | `src/components/engine/simulatorGraphModel.test.ts`  |
 | TC-024    | AC-019     | E2E           | A device opened, dismissed and opened again          | Its position is compared across openings                                          | It lands in the same place each time and stays on the canvas                         | `e2e/canvas-select-pan.spec.ts`                      |
+| TC-044    | AC-016     | E2E           | An assessment reading the learner's sandbox edits    | The primary link is taken down by id                                              | The matching sub-goal passes                                                         | `e2e/assessment-completion.spec.ts`                  |
 | TC-043    | AC-036     | unit/behavior | A finished tutorial                                  | Its completion card is rendered                                                   | Every step's title is listed                                                         | `src/components/tutorial/TutorialStepPanel.test.tsx` |
 | TC-041    | AC-033     | E2E           | Every lesson, opened in the light theme              | It is scanned for WCAG 2 A/AA                                                     | No violations                                                                        | `e2e/light-theme.spec.ts`                            |
 | TC-042    | AC-034     | unit/behavior | Both built-in themes                                 | Token contrast is computed against each theme's backgrounds                       | Every text and accent token clears 4.5:1                                             | `src/theme/index.test.ts`                            |
@@ -336,8 +337,20 @@ layers are the engine's own rather than a filtered redraw.
 
 - L1 and L4 have no placeable elements yet, so those groups do not appear.
   Whether to add a hub and a transport-layer element is open.
-- `npm run e2e` requests chromium, firefox and webkit while `e2e:install`
-  installs only chromium. Runs here are chromium-only.
+- **The OSPF backup-path assessment cannot be finished in a browser.** Its
+  second required sub-goal waits for an `ospf:reconverged` event, and nothing in
+  the app emits one — the only producer is the CLI, which assumes it: "a
+  link.state edit went down, therefore reconverged". Emitting it honestly means
+  deciding what reconvergence _is_ here, and this engine has no discrete
+  recompute to point at: a downed link is avoided by the forwarding pipeline
+  rather than triggering a routing pass. Deciding that is a design question, and
+  guessing at it would reproduce the CLI's assumption in the product. Recorded
+  rather than guessed. `e2e/assessment-completion.spec.ts` covers the sub-goals
+  that do work and says where it stops.
+- One action can satisfy several tutorial steps at once (all three ARP
+  predicates are true after the first packet). The completion card lists what
+  was observed; whether the steps should instead gate on distinct moments is a
+  content decision, left to the author.
 
 ## 16. Specification quality checklist
 

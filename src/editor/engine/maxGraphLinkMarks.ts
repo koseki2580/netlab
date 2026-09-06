@@ -26,6 +26,10 @@ export function markDrawnLinks(graph: Graph, links: readonly LinkMark[]): void {
     const node = view.getState(cell)?.shape?.node;
     if (!node) continue;
     node.setAttribute('class', ['netlab-edge', link.className].filter(Boolean).join(' '));
+    // Which link this is. A device says so through `data-id`; a link said
+    // nothing, so nothing could address one — not a test, and not a learner's
+    // click landing on "the R2-R4 link" rather than "some link".
+    node.setAttribute('data-edge-id', link.id);
     if (link.animated) node.setAttribute('data-edge-animated', 'true');
     else node.removeAttribute('data-edge-animated');
   }
