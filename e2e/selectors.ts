@@ -233,6 +233,20 @@ export const SEL = {
     areaLegend: 'area-legend',
     controlledJson: 'controlled-topology-json',
   },
+  /** The guided six-step course a beginner starts with. */
+  course: {
+    banner: 'gallery-course-banner',
+    progress: 'course-progress',
+    title: 'course-title',
+    goal: 'course-goal',
+    task: 'course-task',
+    warning: 'course-warning',
+    send: 'course-send',
+    outcome: 'course-outcome',
+    next: 'course-next',
+    finished: 'course-finished',
+    restart: 'course-restart',
+  },
   /** The spanning-tree lesson's own trace panel. */
   stp: {
     /** The hop-by-hop path the last ping took, written out. */

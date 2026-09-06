@@ -16,6 +16,7 @@ import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-d
 import { ProgressProvider } from '../src/progress';
 import { ToastViewport } from '../src/components/ToastViewport';
 import Gallery from './Gallery';
+import CoursePage from './course/CoursePage';
 import DmzDemo from './areas/DmzDemo';
 import MinimalDemo from './basic/MinimalDemo';
 import StarDemo from './basic/StarDemo';
@@ -81,6 +82,7 @@ function DemoRoutes() {
     <ProgressProvider learnerId={learnerId}>
       <Routes>
         <Route path="/" element={<Gallery />} />
+        <Route path="/course" element={<CoursePage />} />
         <Route path="/learning/subnetting" element={<SubnetDrillDemo />} />
         <Route path="/learning/routing-decision" element={<RoutingDrillDemo />} />
         <Route path="/learning/visual-routing" element={<VisualRoutingDrillDemo />} />

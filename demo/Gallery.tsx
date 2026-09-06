@@ -27,6 +27,7 @@ import {
   type DemoLike,
 } from './galleryFilters';
 import { CategoryLanding, type CategoryLandingDemo } from './components/CategoryLanding';
+import { CATEGORY_LABELS_JA, DEMO_COPY_JA } from './galleryJa';
 import { LearningMap } from './components/LearningMap';
 import { useLearningMap, type LearningTrackInput } from './hooks/useLearningMap';
 import { DemoCard } from './components/DemoCard';
@@ -581,6 +582,10 @@ const GALLERY_COPY: Record<
     assessments: string;
     sandboxReady: string;
     filteredFrom: string;
+    courseEyebrow: string;
+    courseTitle: string;
+    courseBody: string;
+    courseCta: string;
   }
 > = {
   en: {
@@ -596,6 +601,11 @@ const GALLERY_COPY: Record<
     assessments: 'assessments',
     sandboxReady: 'sandbox-ready',
     filteredFrom: 'filtered from',
+    courseEyebrow: 'New here?',
+    courseTitle: 'Start with the six-step course',
+    courseBody:
+      'Six small networks in order, one thing to do in each: a wire, a switch, why one network cannot reach another, and the router that joins them. About ten minutes.',
+    courseCta: 'Start the course',
   },
   ja: {
     themeEyebrow: {
@@ -610,6 +620,11 @@ const GALLERY_COPY: Record<
     assessments: '件のアセスメント',
     sandboxReady: '件がサンドボックス対応',
     filteredFrom: '全件数',
+    courseEyebrow: 'はじめての方へ',
+    courseTitle: 'まずは6ステップの入門コースから',
+    courseBody:
+      '小さなネットワークを6つ、順番に見ていきます。各ステップでやることは1つだけです。ケーブル1本から始まり、スイッチ、ネットワークが違うと届かないこと、そしてそれをつなぐルータまで。10分ほどです。',
+    courseCta: '入門コースを始める',
   },
 };
 
@@ -715,6 +730,24 @@ function normalizeSearchText(parts: (string | undefined)[]): string {
     .filter((part): part is string => Boolean(part && part.trim().length > 0))
     .join(' ')
     .toLowerCase();
+}
+
+/**
+ * The catalogue in the reader's language. Applied once, before anything else
+ * reads it, so the cards, the search index, the learning map and the track
+ * landings all speak the same language without each needing to know about it.
+ * A lesson with no translation keeps its English text rather than vanishing.
+ */
+function localizeCategories(categories: Category[], locale: GalleryLocale): Category[] {
+  if (locale !== 'ja') return categories;
+  return categories.map((category) => ({
+    ...category,
+    label: CATEGORY_LABELS_JA[category.id] ?? category.label,
+    demos: category.demos.map((demo) => {
+      const translated = DEMO_COPY_JA[demo.path];
+      return translated ? { ...demo, title: translated.title, desc: translated.desc } : demo;
+    }),
+  }));
 }
 
 function getDemoSearchText(category: Category, demo: DemoCard): string {
@@ -1077,22 +1110,26 @@ export default function Gallery({
     if (next.contrast !== contrast) setContrast(next.contrast);
   };
 
+  const localizedCategories = useMemo(() => localizeCategories(CATEGORIES, locale), [locale]);
+
   const filteredCategories = useMemo(() => {
     if (filtersEmpty) {
-      return CATEGORIES;
+      return localizedCategories;
     }
 
-    return CATEGORIES.map((category) => ({
-      ...category,
-      demos: category.demos.filter((demo) =>
-        matchesFilters(
-          { ...demo, searchText: getDemoSearchText(category, demo) } as DemoLike,
-          filters,
-          debouncedQ,
+    return localizedCategories
+      .map((category) => ({
+        ...category,
+        demos: category.demos.filter((demo) =>
+          matchesFilters(
+            { ...demo, searchText: getDemoSearchText(category, demo) } as DemoLike,
+            filters,
+            debouncedQ,
+          ),
         ),
-      ),
-    })).filter((category) => category.demos.length > 0);
-  }, [filtersEmpty, filters, debouncedQ]);
+      }))
+      .filter((category) => category.demos.length > 0);
+  }, [filtersEmpty, filters, debouncedQ, localizedCategories]);
 
   // Tag chips are aggregated over the full catalog so they stay stable
   // regardless of the currently applied filters.
@@ -1398,6 +1435,57 @@ export default function Gallery({
             <LocaleToggle locale={locale} label={copy.localeLabel} onChange={setLocale} />
           </div>
         </div>
+
+        <a
+          href="#/course"
+          data-testid="gallery-course-banner"
+          style={{
+            marginTop: 20,
+            display: 'block',
+            padding: '18px 22px',
+            borderRadius: 14,
+            border: '1px solid var(--netlab-accent-blue)',
+            background: 'var(--netlab-bg-panel)',
+            color: 'var(--netlab-text-primary)',
+            textDecoration: 'none',
+          }}
+        >
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: 0.8,
+              textTransform: 'uppercase',
+              color: 'var(--netlab-accent-blue)',
+            }}
+          >
+            {copy.courseEyebrow}
+          </div>
+          <div style={{ margin: '8px 0 0', fontSize: 20, fontWeight: 700 }}>{copy.courseTitle}</div>
+          <p
+            style={{
+              margin: '8px 0 0',
+              maxWidth: 720,
+              lineHeight: 1.8,
+              color: 'var(--netlab-text-secondary)',
+            }}
+          >
+            {copy.courseBody}
+          </p>
+          <span
+            style={{
+              marginTop: 14,
+              display: 'inline-block',
+              padding: '9px 16px',
+              borderRadius: 8,
+              background: 'var(--netlab-accent-blue)',
+              color: '#f8fafc',
+              fontWeight: 700,
+            }}
+          >
+            {copy.courseCta} →
+          </span>
+        </a>
 
         <div
           data-netlab-gallery-filters

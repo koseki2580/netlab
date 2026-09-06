@@ -81,6 +81,20 @@ and the gallery — each already has its own tests and docs.
   is comparing the same part of the topology at the same size.
 - **REQ-018 (MUST):** A link the canvas has found errors or warnings on MUST be
   marked on the link itself, and hovering the mark MUST say what is wrong.
+- **REQ-044 (MUST):** The product MUST offer a guided course a beginner can
+  follow from the start without choosing anything. Each step MUST present one
+  network small enough to read at a glance, one instruction, and one action,
+  and MUST say what the step taught before offering the next. Fifty-two lessons
+  behind a category list answer "what can this show me"; they do not answer
+  "what do I do first", which is the question a beginner actually has.
+- **REQ-045 (MUST):** The course and the gallery MUST be readable in Japanese as
+  well as English, following the language the learner chose. A learner who
+  cannot read the instruction cannot follow it, whatever the diagram shows.
+- **REQ-046 (SHOULD):** A step whose packet is meant to fail SHOULD say so
+  before the learner presses, and MUST report the failure as the expected
+  result. A course that teaches "different networks cannot reach each other"
+  by showing an error the learner cannot distinguish from a broken product
+  teaches distrust instead.
 - **REQ-043 (MUST):** When a router forwards along a directly connected route,
   it MUST send the packet towards the subnet the destination is on, not down
   whichever link happens to have a switch on it. Both ends of a router are
@@ -257,6 +271,15 @@ not part of this specification.
   for WCAG 2 A/AA, then there are no violations.
 - **AC-034:** Given either built-in theme, when its tokens are measured against
   its own backgrounds, then every text and accent token clears 4.5:1.
+- **AC-041:** Given the course opened at its first step, when the learner
+  presses the step's single action and then "next" through to the end, then
+  every step reports the result it predicted and the course finishes.
+- **AC-042:** Given the course in Japanese, when any step is shown, then its
+  title, instruction and takeaway are in Japanese; and the same holds in
+  English.
+- **AC-043:** Given the gallery in Japanese, when the categories are listed,
+  then every category name and every lesson's title and description is in
+  Japanese.
 - **AC-040:** Given the client-server lesson, when the learner sends a packet,
   then the router resolves the server's address and the packet is delivered to
   the server, with no hop dropped.
@@ -349,6 +372,16 @@ not part of this specification.
 | TC-115    | AC-039     | E2E           | All three pings the lesson offers                    | Each is pressed                                                                   | Each arrives by its forwarding legs, using no blocked segment                        | `e2e/stp-detour.spec.ts`                                      |
 | TC-116    | AC-040     | unit/behavior | A router whose two neighbours are both switches      | It forwards along a directly connected route                                      | It sends the packet towards the subnet the destination is on                         | `src/layers/l3-network/RouterForwarder.directRoute.test.ts`   |
 | TC-117    | AC-040     | E2E           | The client-server lesson                             | The learner sends a packet                                                        | The address is resolved and the packet arrives, with nothing dropped                 | `e2e/client-server-delivery.spec.ts`                          |
+| TC-118    | AC-042     | unit/behavior | Every course step                                    | Its copy is read in both languages                                                | Nothing is blank, and the Japanese differs from the English                          | `demo/course/courseSteps.test.ts`                             |
+| TC-119    | AC-041     | unit/behavior | Every course step                                    | Its sender and destination are looked up                                          | Both exist in that step's own network and carry an address                           | `demo/course/courseSteps.test.ts`                             |
+| TC-120    | AC-041     | unit/behavior | The course as a sequence                             | Each step's network is measured                                                   | It starts at two machines and never shrinks                                          | `demo/course/courseSteps.test.ts`                             |
+| TC-121    | AC-041     | unit/behavior | A step whose packet is meant to fail                 | Its instruction is read                                                           | It says so before the learner presses                                                | `demo/course/courseSteps.test.ts`                             |
+| TC-122    | AC-043     | unit/behavior | Every lesson the gallery lists                       | The Japanese catalogue is looked up                                               | Each has a Japanese title and description                                            | `demo/galleryJa.test.ts`                                      |
+| TC-123    | AC-043     | unit/behavior | Every gallery category                               | The Japanese catalogue is looked up                                               | Each has a Japanese name                                                             | `demo/galleryJa.test.ts`                                      |
+| TC-124    | AC-043     | unit/behavior | Every Japanese description                           | Its characters are read                                                           | It contains Japanese rather than English left in place                               | `demo/galleryJa.test.ts`                                      |
+| TC-125    | AC-041     | E2E           | The course opened at its first step                  | Every step is run and passed through                                              | Each reports the result it predicted, and the course finishes without complaint      | `e2e/course.spec.ts`                                          |
+| TC-126    | AC-042     | E2E           | The course with Japanese chosen                      | A step is shown                                                                   | Its title, goal, instruction and button are in Japanese                              | `e2e/course.spec.ts`                                          |
+| TC-127    | AC-041     | E2E           | The gallery as it opens                              | The course banner is pressed                                                      | The course opens at its first step                                                   | `e2e/course.spec.ts`                                          |
 | TC-038    | AC-031     | E2E           | The gallery's theme setting                          | A theme is chosen, then a lesson opened                                           | The lesson follows the choice, and an unmade choice changes nothing                  | `e2e/settings-carry.spec.ts`                                  |
 | TC-037    | AC-030     | E2E           | An interactive canvas                                | The learner tabs to a device and presses Enter                                    | The device is focusable, named, and opens                                            | `e2e/canvas-keyboard.spec.ts`                                 |
 | TC-036    | AC-029     | E2E           | A laptop display, and the sandbox                    | The same lesson is worked through, and a device is edited and the edit taken back | Every control is pressable and every result appears                                  | `e2e/user-journey.spec.ts`                                    |
