@@ -213,9 +213,14 @@ export default function DmzDemo() {
       desc="Three-zone topology: Private → DMZ → Public with two border firewalls"
     >
       <NetlabProvider topology={TOPOLOGY}>
-        <NetlabCanvas />
-        <AreaLegend />
-        <RouteTable />
+        {/* The legend and route table are placed against their nearest
+            positioned ancestor. Without this wrapper that is the shell, which
+            put the legend on top of the navigation rail. */}
+        <div style={{ height: '100%', position: 'relative' }}>
+          <NetlabCanvas />
+          <AreaLegend />
+          <RouteTable />
+        </div>
       </NetlabProvider>
     </DemoShell>
   );

@@ -242,8 +242,8 @@ not part of this specification.
   its own backgrounds, then every text and accent token clears 4.5:1.
 - **AC-032:** Given the OSPF lesson, when the learner presses "Fail link", then
   the link fails and the control offers to restore it; and no button on the
-  command bar lets its hit area escape onto the toolbar; and no overlay drawn
-  inside the canvas covers a navigation-rail button.
+  command bar lets its hit area escape onto the toolbar; and on no lesson does
+  an overlay cover an enabled navigation-rail or command-bar button.
 - **AC-031:** Given the gallery, when the learner chooses Dark or Light and then
   opens a lesson, then the lesson is drawn in that theme; and a lesson opened
   without choosing keeps its own default.
@@ -309,7 +309,7 @@ not part of this specification.
 | TC-042    | AC-034     | unit/behavior | Both built-in themes                                 | Token contrast is computed against each theme's backgrounds                       | Every text and accent token clears 4.5:1                                             | `src/theme/index.test.ts`                            |
 | TC-039    | AC-032     | E2E           | The OSPF lesson's central control                    | It is pressed                                                                     | The link fails and can be restored                                                   | `e2e/lesson-controls.spec.ts`                        |
 | TC-040    | AC-032     | E2E           | Command-bar and nav-rail buttons                     | Their positioning is read                                                         | Each anchors its own hit-area overlay                                                | `e2e/lesson-controls.spec.ts`                        |
-| TC-106    | AC-032     | E2E           | A lesson that draws the area legend                  | Every navigation-rail button is tried                                             | Each is reachable, none covered by the legend                                        | `e2e/lesson-controls.spec.ts`                        |
+| TC-106    | AC-032     | E2E           | Every lesson in the gallery                          | Every enabled navigation-rail and command-bar button is tried                     | Each can be pressed, none covered by an overlay                                      | `e2e/lesson-controls.spec.ts`                        |
 | TC-038    | AC-031     | E2E           | The gallery's theme setting                          | A theme is chosen, then a lesson opened                                           | The lesson follows the choice, and an unmade choice changes nothing                  | `e2e/settings-carry.spec.ts`                         |
 | TC-037    | AC-030     | E2E           | An interactive canvas                                | The learner tabs to a device and presses Enter                                    | The device is focusable, named, and opens                                            | `e2e/canvas-keyboard.spec.ts`                        |
 | TC-036    | AC-029     | E2E           | A laptop display, and the sandbox                    | The same lesson is worked through, and a device is edited and the edit taken back | Every control is pressable and every result appears                                  | `e2e/user-journey.spec.ts`                           |
