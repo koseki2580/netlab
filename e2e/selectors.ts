@@ -229,6 +229,8 @@ export const SEL = {
     /** One device on the canvas, named the same way by every engine. */
     node: 'topology-node',
     areaCluster: 'area-cluster',
+    /** The bottom-left legend naming each area and its prefix. */
+    areaLegend: 'area-legend',
     controlledJson: 'controlled-topology-json',
   },
   /** The embed demo's simulated light-mode host page. */

@@ -3,7 +3,10 @@ import { useNetlabContext } from '../NetlabContext';
 import { NetlabUIContext } from '../NetlabUIContext';
 
 const LEGEND_STYLE: React.CSSProperties = {
-  position: 'fixed',
+  // The legend is a child of the canvas, so it is placed against the canvas.
+  // `fixed` anchored it to the viewport instead, which put it on top of the
+  // navigation rail and buried the Help button beneath it.
+  position: 'absolute',
   left: 12,
   bottom: 20,
   background: 'var(--netlab-bg-panel)',
@@ -31,7 +34,7 @@ export function AreaLegend() {
   if (areas.length === 0) return null;
 
   return (
-    <div style={LEGEND_STYLE}>
+    <div data-testid="area-legend" style={LEGEND_STYLE}>
       <div
         style={{
           padding: '8px 12px 6px',

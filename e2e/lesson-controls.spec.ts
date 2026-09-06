@@ -61,3 +61,32 @@ test('every command-bar button anchors its own hit area', async ({ page, demoPag
   });
   expect(unanchored, 'no button lets its hit area escape onto the toolbar').toEqual([]);
 });
+
+/**
+ * TC-041 — the area legend does not sit on the navigation rail.
+ *
+ * `AreaLegend` was the only canvas overlay positioned `fixed` rather than
+ * `absolute`, so it anchored to the viewport instead of the canvas it is a
+ * child of. At `left: 12` that put it on top of the 48px rail, and the Help
+ * button — the rail's bottom item, and the only route to the keyboard
+ * shortcuts — sat underneath it on every lesson that draws areas.
+ */
+test('the navigation rail stays reachable beside the area legend', async ({ page, demoPage }) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await demoPage.goto('/routing/client-server');
+  await expect(page.getByTestId(SEL.app.root)).toBeVisible();
+  await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+  // The lesson must actually draw the legend, or this proves nothing.
+  await expect(page.getByTestId(SEL.canvas.areaLegend)).toBeVisible();
+
+  const rail = page.locator('[data-netlab-nav-rail] button');
+  const count = await rail.count();
+  expect(count).toBeGreaterThan(0);
+  for (let index = 0; index < count; index += 1) {
+    const button = rail.nth(index);
+    const label = (await button.getAttribute('aria-label')) ?? `#${index}`;
+    await test.step(`rail button ${label} is reachable`, async () => {
+      await button.click({ trial: true });
+    });
+  }
+});
