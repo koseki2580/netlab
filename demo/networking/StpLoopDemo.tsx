@@ -401,6 +401,7 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
         Last flow: {lastScenario ?? 'none'}
       </div>
       <div
+        data-testid="stp-trace-path"
         style={{
           color: 'var(--netlab-text-primary)',
           fontFamily: 'monospace',
@@ -421,6 +422,7 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
         Root bridge: {rootLabel}
       </div>
       <div
+        data-testid="stp-blocked-segment"
         style={{
           marginTop: 6,
           color: usedBlockedSegment ? 'var(--netlab-accent-orange)' : 'var(--netlab-accent-green)',
@@ -432,6 +434,7 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
       </div>
       {activeTrace?.status && (
         <div
+          data-testid="stp-trace-status"
           style={{
             marginTop: 6,
             color: 'var(--netlab-text-secondary)',

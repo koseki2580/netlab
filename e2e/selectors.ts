@@ -233,6 +233,15 @@ export const SEL = {
     areaLegend: 'area-legend',
     controlledJson: 'controlled-topology-json',
   },
+  /** The spanning-tree lesson's own trace panel. */
+  stp: {
+    /** The hop-by-hop path the last ping took, written out. */
+    tracePath: 'stp-trace-path',
+    /** Whether the segment spanning tree blocked was used. */
+    blockedSegment: 'stp-blocked-segment',
+    /** Whether the last ping arrived. */
+    traceStatus: 'stp-trace-status',
+  },
   /** The IGMP snooping lesson's own controls. */
   multicast: {
     /** Join or leave the group, per receiver, named by its label. */

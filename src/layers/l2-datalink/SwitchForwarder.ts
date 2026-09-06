@@ -109,6 +109,22 @@ export class SwitchForwarder implements Forwarder {
       }
     }
 
+    // Nothing here is the destination, so the frame has to be sent on. A real
+    // switch floods and every branch is walked; a trace follows one, and which
+    // one decides whether the lesson shows an arrival or a dead end. Prefer a
+    // neighbour the destination is actually behind: without this, the frame
+    // went to whichever neighbour was listed first, which in a triangle of
+    // switches is a leaf host that discards it — the spanning-tree lesson's
+    // detour stopped one hop short of the host it was addressed to.
+    const destinationId = packet.dstNodeId;
+    if (destinationId) {
+      for (const neighbor of neighbors) {
+        const egressPortId = this.resolvePortForEdge(neighbor.edgeId);
+        if (egressPortId && !this.isPortForwarding(egressPortId)) continue;
+        if (this.leadsTo(neighbor.nodeId, destinationId)) return neighbor;
+      }
+    }
+
     for (const neighbor of neighbors) {
       const egressPortId = this.resolvePortForEdge(neighbor.edgeId);
       if (!egressPortId || this.isPortForwarding(egressPortId)) {
@@ -117,6 +133,32 @@ export class SwitchForwarder implements Forwarder {
     }
 
     return null;
+  }
+
+  /**
+   * Whether `destinationId` can be reached from `startId` without coming back
+   * through this switch. Blocked ports elsewhere are not consulted: this only
+   * chooses between branches, and the pipeline still walks the path it picked,
+   * so a branch that turns out to be blocked is reported as blocked rather
+   * than silently preferred.
+   */
+  private leadsTo(startId: string, destinationId: string): boolean {
+    if (startId === destinationId) return true;
+
+    const seen = new Set([this.nodeId, startId]);
+    const queue = [startId];
+    while (queue.length > 0) {
+      const current = queue.shift() as string;
+      for (const edge of this.topology.edges) {
+        const next =
+          edge.source === current ? edge.target : edge.target === current ? edge.source : null;
+        if (next === null || seen.has(next)) continue;
+        if (next === destinationId) return true;
+        seen.add(next);
+        queue.push(next);
+      }
+    }
+    return false;
   }
 
   forward(
