@@ -109,6 +109,18 @@ export function TutorialStepPanel() {
         <p style={{ ...MUTED_STYLE, margin: '8px 0 0' }}>
           All {tutorial.steps.length} steps passed. Restart to walk through it again.
         </p>
+        {/* One action can satisfy several steps at once — the ARP tutorial's
+            three predicates are all true the moment the first packet lands — so
+            the later steps are never shown as anything to look for. Listing
+            them here keeps what they were teaching. */}
+        <ul
+          data-testid="tutorial-observed"
+          style={{ ...MUTED_STYLE, margin: '10px 0 0', paddingLeft: 18, lineHeight: 1.7 }}
+        >
+          {tutorial.steps.map((observed) => (
+            <li key={observed.id}>{observed.title}</li>
+          ))}
+        </ul>
         <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
           <button type="button" onClick={restart} style={buttonStyle('#166534', '#f8fafc')}>
             Restart

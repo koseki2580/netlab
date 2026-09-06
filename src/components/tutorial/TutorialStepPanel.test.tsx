@@ -122,6 +122,17 @@ describe('TutorialStepPanel', () => {
     expect(container?.textContent).toContain('Restart');
   });
 
+  // TC-043 — a learner can finish several steps with one action, and then never
+  // sees what the later ones were asking them to notice. The ARP tutorial does
+  // exactly that: one packet satisfies all three predicates at once, and the
+  // panel jumps from step 1 to DONE. What was learned has to survive the jump.
+  it('lists what was observed when it finishes', () => {
+    mockState('passed');
+    render(<TutorialStepPanel />);
+
+    expect(container?.textContent).toContain('Send the first packet');
+  });
+
   it('renders the exited reopen state', () => {
     mockState('exited');
     render(<TutorialStepPanel />);
