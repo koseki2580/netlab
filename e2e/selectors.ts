@@ -241,6 +241,8 @@ export const SEL = {
     blockedSegment: 'stp-blocked-segment',
     /** Whether the last ping arrived. */
     traceStatus: 'stp-trace-status',
+    /** Ping one host pair, named by the two hosts' letters. */
+    ping: (pair: string) => `stp-ping-${pair}`,
   },
   /** The IGMP snooping lesson's own controls. */
   multicast: {

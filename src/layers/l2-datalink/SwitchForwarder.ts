@@ -137,10 +137,10 @@ export class SwitchForwarder implements Forwarder {
 
   /**
    * Whether `destinationId` can be reached from `startId` without coming back
-   * through this switch. Blocked ports elsewhere are not consulted: this only
-   * chooses between branches, and the pipeline still walks the path it picked,
-   * so a branch that turns out to be blocked is reported as blocked rather
-   * than silently preferred.
+   * through this switch, following only links the spanning tree left
+   * forwarding. Ignoring the tree is not good enough: in a triangle every leg
+   * "reaches" every host if you are willing to cross a blocked one, so the
+   * A → C ping went the long way round and died on the blocked segment.
    */
   private leadsTo(startId: string, destinationId: string): boolean {
     if (startId === destinationId) return true;
@@ -153,12 +153,28 @@ export class SwitchForwarder implements Forwarder {
         const next =
           edge.source === current ? edge.target : edge.target === current ? edge.source : null;
         if (next === null || seen.has(next)) continue;
+        if (this.isEdgeBlocked(edge)) continue;
         if (next === destinationId) return true;
         seen.add(next);
         queue.push(next);
       }
     }
     return false;
+  }
+
+  /** Whether either end of `edge` has been put out of forwarding by STP. */
+  private isEdgeBlocked(edge: NetworkTopology['edges'][number]): boolean {
+    const states = this.topology.stpStates;
+    if (!states) return false;
+    const ends: [string, string | undefined][] = [
+      [edge.source, edge.sourceHandle ?? undefined],
+      [edge.target, edge.targetHandle ?? undefined],
+    ];
+    return ends.some(([nodeId, portId]) => {
+      if (portId === undefined) return false;
+      const state = states.get(`${nodeId}:${portId}`)?.state;
+      return state !== undefined && state !== 'FORWARDING';
+    });
   }
 
   forward(

@@ -565,6 +565,7 @@ function StpLoopDemoInner({
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               <button
                 type="button"
+                data-testid="stp-ping-ab"
                 style={PRIMARY_BUTTON}
                 onClick={() => void runPing('host-a', 'host-b', 'A → B')}
               >
@@ -572,6 +573,7 @@ function StpLoopDemoInner({
               </button>
               <button
                 type="button"
+                data-testid="stp-ping-ac"
                 style={PRIMARY_BUTTON}
                 onClick={() => void runPing('host-a', 'host-c', 'A → C')}
               >
@@ -579,6 +581,7 @@ function StpLoopDemoInner({
               </button>
               <button
                 type="button"
+                data-testid="stp-ping-bc"
                 style={PRIMARY_BUTTON}
                 onClick={() => void runPing('host-b', 'host-c', 'B → C')}
               >

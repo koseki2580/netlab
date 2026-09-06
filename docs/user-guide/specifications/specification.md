@@ -83,9 +83,10 @@ and the gallery — each already has its own tests and docs.
   marked on the link itself, and hovering the mark MUST say what is wrong.
 - **REQ-042 (MUST):** When a switch has not learned where a destination is, it
   MUST send the frame on towards a neighbour the destination is reachable
-  behind, when one exists. A real switch floods and every branch is walked; a
-  trace follows one, so which branch it picks decides whether a lesson shows an
-  arrival or a dead end on an unrelated host.
+  behind over links the spanning tree left forwarding, when one exists. A real
+  switch floods and every branch is walked; a trace follows one, so which
+  branch it picks decides whether a lesson shows an arrival, a dead end on an
+  unrelated host, or a crossing of the very segment the lesson blocked.
 - **REQ-041 (MUST):** A host MUST accept an IPv4 multicast datagram addressed to
   a group it has joined, and MUST refuse one addressed to a group it has not,
   saying which. Refusing every group datagram alike, as "no route", makes the
@@ -251,9 +252,10 @@ not part of this specification.
   for WCAG 2 A/AA, then there are no violations.
 - **AC-034:** Given either built-in theme, when its tokens are measured against
   its own backgrounds, then every text and accent token clears 4.5:1.
-- **AC-039:** Given the spanning-tree lesson's triangle of switches, when Host B
-  pings Host C, then the packet arrives at Host C by way of the third switch,
-  and the segment spanning tree blocked is not used.
+- **AC-039:** Given the spanning-tree lesson's triangle of switches, when any of
+  the three pings is pressed, then the packet arrives at the host it is
+  addressed to, over the legs spanning tree left forwarding, and the blocked
+  segment is not used.
 - **AC-038:** Given a host that has joined 224.1.2.3, when a datagram addressed
   to that group reaches it, then the datagram is delivered; and given a host
   that has not joined it, then the datagram is dropped as `not-group-member`
@@ -335,6 +337,8 @@ not part of this specification.
 | TC-111    | AC-039     | unit/behavior | A switch with an unlearned destination two hops away | It chooses where to send the frame                                                | It sends it towards the destination, not to a leaf host                              | `src/layers/l2-datalink/SwitchForwarder.reachability.test.ts` |
 | TC-112    | AC-039     | unit/behavior | A destination behind none of the neighbours          | The same choice is made                                                           | The frame is still forwarded                                                         | `src/layers/l2-datalink/SwitchForwarder.reachability.test.ts` |
 | TC-113    | AC-039     | E2E           | The spanning-tree lesson as it opens                 | Its first trace is read                                                           | The packet reaches Host C via Switch C, and no blocked segment is used               | `e2e/stp-detour.spec.ts`                                      |
+| TC-114    | AC-039     | unit/behavior | Two legs that both reach the destination             | One crosses the segment spanning tree blocked                                     | The leg the tree left forwarding is chosen                                           | `src/layers/l2-datalink/SwitchForwarder.reachability.test.ts` |
+| TC-115    | AC-039     | E2E           | All three pings the lesson offers                    | Each is pressed                                                                   | Each arrives by its forwarding legs, using no blocked segment                        | `e2e/stp-detour.spec.ts`                                      |
 | TC-038    | AC-031     | E2E           | The gallery's theme setting                          | A theme is chosen, then a lesson opened                                           | The lesson follows the choice, and an unmade choice changes nothing                  | `e2e/settings-carry.spec.ts`                                  |
 | TC-037    | AC-030     | E2E           | An interactive canvas                                | The learner tabs to a device and presses Enter                                    | The device is focusable, named, and opens                                            | `e2e/canvas-keyboard.spec.ts`                                 |
 | TC-036    | AC-029     | E2E           | A laptop display, and the sandbox                    | The same lesson is worked through, and a device is edited and the edit taken back | Every control is pressable and every result appears                                  | `e2e/user-journey.spec.ts`                                    |

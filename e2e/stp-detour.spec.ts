@@ -31,3 +31,32 @@ test('the spanning-tree lesson delivers B to C around the blocked segment', asyn
     'Host B → Switch B → Switch A → Switch C → Host C',
   );
 });
+
+/**
+ * TC-114 — and every pair the lesson offers arrives, by the leg that leads
+ * there. A → C had both problems at once: Switch A sent it to Switch B, from
+ * where the only way on is the leg spanning tree blocked, so the ping the
+ * learner presses to see the direct path instead demonstrated a dead end and
+ * reported "Blocked segment used: yes" on a lesson about not using it.
+ */
+const PAIRS = [
+  { id: 'ab', path: 'Host A → Switch A → Switch B → Host B' },
+  { id: 'ac', path: 'Host A → Switch A → Switch C → Host C' },
+  { id: 'bc', path: 'Host B → Switch B → Switch A → Switch C → Host C' },
+];
+
+test('every ping the spanning-tree lesson offers arrives', async ({ page, demoPage }) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await demoPage.goto('/networking/stp');
+  await expect(page.getByTestId(SEL.app.root)).toBeVisible();
+  await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+
+  for (const pair of PAIRS) {
+    await test.step(`ping ${pair.id}`, async () => {
+      await page.getByTestId(SEL.stp.ping(pair.id)).click();
+      await expect(page.getByTestId(SEL.stp.tracePath)).toHaveText(pair.path);
+      await expect(page.getByTestId(SEL.stp.traceStatus)).toHaveText('Trace status: delivered');
+      await expect(page.getByTestId(SEL.stp.blockedSegment)).toHaveText('Blocked segment used: no');
+    });
+  }
+});

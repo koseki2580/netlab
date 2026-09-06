@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { InFlightPacket } from '../../types/packets';
-import type { NetworkTopology, SwitchPort } from '../../types/topology';
+import type { NetworkTopology, StpPortRuntime, SwitchPort } from '../../types/topology';
 import { SwitchForwarder } from './SwitchForwarder';
 
 /**
@@ -13,6 +13,17 @@ import { SwitchForwarder } from './SwitchForwarder';
  */
 function ports(ids: string[]): SwitchPort[] {
   return ids.map((id) => ({ id, name: id, macAddress: '' }));
+}
+
+function blocking(switchNodeId: string, portId: string): StpPortRuntime {
+  return {
+    switchNodeId,
+    portId,
+    role: 'BLOCKED',
+    state: 'BLOCKING',
+    designatedBridge: { priority: 4096, mac: '02:00:00:0a:00:01' },
+    rootPathCost: 4,
+  };
 }
 
 function triangle(): NetworkTopology {
@@ -94,7 +105,13 @@ function triangle(): NetworkTopology {
       { id: 'e-c-host', source: 'host-c', target: 'sw-c', targetHandle: 'pc-host' },
       { id: 'e-ab', source: 'sw-a', target: 'sw-b', sourceHandle: 'pa-b', targetHandle: 'pb-a' },
       { id: 'e-ac', source: 'sw-a', target: 'sw-c', sourceHandle: 'pa-c', targetHandle: 'pc-a' },
+      { id: 'e-bc', source: 'sw-b', target: 'sw-c', sourceHandle: 'pb-c', targetHandle: 'pc-b' },
     ],
+    // Spanning tree blocks the B–C leg, which is the lesson's whole point.
+    stpStates: new Map([
+      ['sw-b:pb-c', blocking('sw-b', 'pb-c')],
+      ['sw-c:pc-b', blocking('sw-c', 'pc-b')],
+    ]),
     routeTables: new Map(),
     areas: [],
   };
@@ -144,6 +161,27 @@ describe('a switch choosing where to send an unlearned frame', () => {
     const decision = await forwarder.receive(pingToC(), 'pa-b', {
       neighbors: [
         { nodeId: 'host-a', edgeId: 'e-a-host' },
+        { nodeId: 'sw-c', edgeId: 'e-ac' },
+      ],
+    });
+
+    expect(decision.action).toBe('forward');
+    expect(decision.action === 'forward' ? decision.nextNodeId : null).toBe('sw-c');
+  });
+
+  /**
+   * TC-114 — and it takes the leg that leads there, not merely one that
+   * eventually would. From Switch A both neighbours can reach C, but only one
+   * does so without crossing the segment spanning tree blocked; the lesson's
+   * A → C ping went the long way, over the blocked leg, and died there.
+   */
+  it('prefers the leg that reaches the destination over the spanning tree', async () => {
+    const forwarder = new SwitchForwarder('sw-a', triangle());
+    const packet = { ...pingToC(), ingressPortId: 'pa-host' };
+
+    const decision = await forwarder.receive(packet, 'pa-host', {
+      neighbors: [
+        { nodeId: 'sw-b', edgeId: 'e-ab' },
         { nodeId: 'sw-c', edgeId: 'e-ac' },
       ],
     });
