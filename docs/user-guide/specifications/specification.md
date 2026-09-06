@@ -81,6 +81,11 @@ and the gallery — each already has its own tests and docs.
   is comparing the same part of the topology at the same size.
 - **REQ-018 (MUST):** A link the canvas has found errors or warnings on MUST be
   marked on the link itself, and hovering the mark MUST say what is wrong.
+- **REQ-043 (MUST):** When a router forwards along a directly connected route,
+  it MUST send the packet towards the subnet the destination is on, not down
+  whichever link happens to have a switch on it. Both ends of a router are
+  usually switches, so accepting either sends a packet back the way it came and
+  reports the result as a routing loop.
 - **REQ-042 (MUST):** When a switch has not learned where a destination is, it
   MUST send the frame on towards a neighbour the destination is reachable
   behind over links the spanning tree left forwarding, when one exists. A real
@@ -252,6 +257,9 @@ not part of this specification.
   for WCAG 2 A/AA, then there are no violations.
 - **AC-034:** Given either built-in theme, when its tokens are measured against
   its own backgrounds, then every text and accent token clears 4.5:1.
+- **AC-040:** Given the client-server lesson, when the learner sends a packet,
+  then the router resolves the server's address and the packet is delivered to
+  the server, with no hop dropped.
 - **AC-039:** Given the spanning-tree lesson's triangle of switches, when any of
   the three pings is pressed, then the packet arrives at the host it is
   addressed to, over the legs spanning tree left forwarding, and the blocked
@@ -339,6 +347,8 @@ not part of this specification.
 | TC-113    | AC-039     | E2E           | The spanning-tree lesson as it opens                 | Its first trace is read                                                           | The packet reaches Host C via Switch C, and no blocked segment is used               | `e2e/stp-detour.spec.ts`                                      |
 | TC-114    | AC-039     | unit/behavior | Two legs that both reach the destination             | One crosses the segment spanning tree blocked                                     | The leg the tree left forwarding is chosen                                           | `src/layers/l2-datalink/SwitchForwarder.reachability.test.ts` |
 | TC-115    | AC-039     | E2E           | All three pings the lesson offers                    | Each is pressed                                                                   | Each arrives by its forwarding legs, using no blocked segment                        | `e2e/stp-detour.spec.ts`                                      |
+| TC-116    | AC-040     | unit/behavior | A router whose two neighbours are both switches      | It forwards along a directly connected route                                      | It sends the packet towards the subnet the destination is on                         | `src/layers/l3-network/RouterForwarder.directRoute.test.ts`   |
+| TC-117    | AC-040     | E2E           | The client-server lesson                             | The learner sends a packet                                                        | The address is resolved and the packet arrives, with nothing dropped                 | `e2e/client-server-delivery.spec.ts`                          |
 | TC-038    | AC-031     | E2E           | The gallery's theme setting                          | A theme is chosen, then a lesson opened                                           | The lesson follows the choice, and an unmade choice changes nothing                  | `e2e/settings-carry.spec.ts`                                  |
 | TC-037    | AC-030     | E2E           | An interactive canvas                                | The learner tabs to a device and presses Enter                                    | The device is focusable, named, and opens                                            | `e2e/canvas-keyboard.spec.ts`                                 |
 | TC-036    | AC-029     | E2E           | A laptop display, and the sandbox                    | The same lesson is worked through, and a device is edited and the edit taken back | Every control is pressable and every result appears                                  | `e2e/user-journey.spec.ts`                                    |

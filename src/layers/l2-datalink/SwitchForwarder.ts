@@ -1,8 +1,9 @@
 import type { ForwardContext, ForwardDecision, Forwarder } from '../../types/layers';
 import { IGMP_PROTOCOL, isLinkLocalMulticast } from '../../types/multicast';
 import type { IgmpMessage, InFlightPacket } from '../../types/packets';
-import type { NetworkTopology, SwitchPort } from '../../types/topology';
+import type { NetlabEdge, NetworkTopology, SwitchPort } from '../../types/topology';
 import { getRequired } from '../../utils';
+import { reachesFrom } from '../reachability';
 import { ipToMulticastMac, isMulticastMac } from '../../utils/multicastMac';
 import { MulticastTable } from './MulticastTable';
 import { isVlanAllowedOnPort, prepareEgressFrame, resolveIngressVlan } from './vlan';
@@ -143,27 +144,17 @@ export class SwitchForwarder implements Forwarder {
    * A → C ping went the long way round and died on the blocked segment.
    */
   private leadsTo(startId: string, destinationId: string): boolean {
-    if (startId === destinationId) return true;
-
-    const seen = new Set([this.nodeId, startId]);
-    const queue = [startId];
-    while (queue.length > 0) {
-      const current = queue.shift() as string;
-      for (const edge of this.topology.edges) {
-        const next =
-          edge.source === current ? edge.target : edge.target === current ? edge.source : null;
-        if (next === null || seen.has(next)) continue;
-        if (this.isEdgeBlocked(edge)) continue;
-        if (next === destinationId) return true;
-        seen.add(next);
-        queue.push(next);
-      }
-    }
-    return false;
+    return reachesFrom(
+      this.topology,
+      this.nodeId,
+      startId,
+      (nodeId) => nodeId === destinationId,
+      (edge) => !this.isEdgeBlocked(edge),
+    );
   }
 
   /** Whether either end of `edge` has been put out of forwarding by STP. */
-  private isEdgeBlocked(edge: NetworkTopology['edges'][number]): boolean {
+  private isEdgeBlocked(edge: NetlabEdge): boolean {
     const states = this.topology.stpStates;
     if (!states) return false;
     const ends: [string, string | undefined][] = [

@@ -2,6 +2,7 @@ import type { ForwardContext, ForwardDecision, Forwarder } from '../../types/lay
 import { isIpv6Packet, type InFlightPacket } from '../../types/packets';
 import type { EqualCostNextHop, RouteEntry } from '../../types/routing';
 import type { EcmpTrace } from '../../types/simulation';
+import { reachesFrom } from '../reachability';
 import type { Neighbor } from '../../types/simulation';
 import type { NetworkTopology } from '../../types/topology';
 import { stripTag, tagFrame } from '../l2-datalink/vlan';
@@ -149,6 +150,27 @@ export class RouterForwarder implements Forwarder {
     };
   }
 
+  /**
+   * Whether the address `dstIp` names is somewhere behind `neighbor`, rather
+   * than merely behind some switch. Accepting any switch sent the gallery's
+   * first lesson back down the link its packet arrived on: both of that
+   * router's routes are `direct` and both of its neighbours are switches, so
+   * the first one listed won, and the client's packet returned to the client
+   * as a routing loop.
+   */
+  private ownerOfIpIsBehind(neighborNodeId: string, dstIp: string): boolean {
+    return reachesFrom(this.topology, this.nodeId, neighborNodeId, (nodeId) => {
+      const node = this.topology.nodes.find((candidate) => candidate.id === nodeId);
+      if (!node) return false;
+      if (node.data.ip === dstIp || node.data.runtimeIp === dstIp || node.data.ipv6 === dstIp) {
+        return true;
+      }
+      return (node.data.interfaces ?? []).some(
+        (iface) => iface.ipAddress === dstIp || iface.ipv6Address === dstIp,
+      );
+    });
+  }
+
   private resolveNeighborForRoute(
     dstIp: string,
     nextHop: string,
@@ -174,14 +196,25 @@ export class RouterForwarder implements Forwarder {
         if (neighborInterfaceIps.includes(dstIp)) {
           return neighbor;
         }
-        if (neighborNode.data.role === 'switch') return neighbor;
+        if (neighborNode.data.role === 'switch' && this.ownerOfIpIsBehind(neighbor.nodeId, dstIp)) {
+          return neighbor;
+        }
         continue;
       }
 
       if (neighborInterfaceIps.includes(nextHop)) {
         return neighbor;
       }
-      if (neighborNode.data.role === 'switch') return neighbor;
+      if (neighborNode.data.role === 'switch' && this.ownerOfIpIsBehind(neighbor.nodeId, nextHop)) {
+        return neighbor;
+      }
+    }
+
+    // Nothing named the destination, which is the ordinary case for a subnet
+    // whose hosts are not in the topology. Any switch will do then, as before.
+    for (const neighbor of neighbors) {
+      const neighborNode = this.topology.nodes.find((node) => node.id === neighbor.nodeId);
+      if (neighborNode?.data.role === 'switch') return neighbor;
     }
 
     return null;
