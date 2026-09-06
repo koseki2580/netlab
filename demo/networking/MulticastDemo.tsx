@@ -447,6 +447,7 @@ function MulticastDemoInner() {
                     </span>
                     <button
                       type="button"
+                      data-testid={`multicast-membership-${r.label.toLowerCase()}`}
                       onClick={() => toggle(r)}
                       style={isJoined ? BTN_LEAVE : BTN_JOIN}
                     >
@@ -458,7 +459,12 @@ function MulticastDemoInner() {
             </div>
 
             {/* Send button */}
-            <button type="button" onClick={() => void sendMulticast()} style={BTN_PRIMARY}>
+            <button
+              type="button"
+              data-testid="multicast-send"
+              onClick={() => void sendMulticast()}
+              style={BTN_PRIMARY}
+            >
               Send multicast UDP to {MULTICAST_GROUP}:{MULTICAST_PORT}
             </button>
 

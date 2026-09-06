@@ -104,6 +104,22 @@ export type SimulationWorkerCommand =
       readonly payload: string;
       readonly options?: DataTransferOptions;
     }
+  | {
+      readonly type: 'joinGroup';
+      readonly id: string;
+      readonly nodeId: string;
+      readonly group: string;
+      readonly join: boolean;
+    }
+  | {
+      readonly type: 'multicastMembership';
+      readonly id: string;
+      readonly switchId: string;
+      readonly vlanId: number;
+      readonly multicastMac: string;
+      readonly portId: string;
+      readonly join: boolean;
+    }
   | { readonly type: 'reset'; readonly id: string }
   | { readonly type: 'clear'; readonly id: string }
   | { readonly type: 'clearPathMtuCaches'; readonly id: string }
@@ -226,6 +242,18 @@ export function isSimulationWorkerCommand(value: unknown): value is SimulationWo
       return hasObject(value, 'packet');
     case 'ping':
       return hasString(value, 'srcNodeId') && hasString(value, 'dstIp');
+    case 'joinGroup':
+      return (
+        hasString(value, 'nodeId') && hasString(value, 'group') && typeof value.join === 'boolean'
+      );
+    case 'multicastMembership':
+      return (
+        hasString(value, 'switchId') &&
+        typeof value.vlanId === 'number' &&
+        hasString(value, 'multicastMac') &&
+        hasString(value, 'portId') &&
+        typeof value.join === 'boolean'
+      );
     case 'traceroute':
       return (
         hasString(value, 'srcNodeId') &&

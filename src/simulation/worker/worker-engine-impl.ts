@@ -195,6 +195,30 @@ export class SimulationWorkerRuntime {
           command.payload,
           command.options,
         );
+      case 'joinGroup':
+        if (command.join) {
+          engine.addJoinedGroup(command.nodeId, command.group);
+        } else {
+          engine.removeJoinedGroup(command.nodeId, command.group);
+        }
+        return null;
+      case 'multicastMembership':
+        if (command.join) {
+          engine.addMulticastMembership(
+            command.switchId,
+            command.vlanId,
+            command.multicastMac,
+            command.portId,
+          );
+        } else {
+          engine.removeMulticastMembership(
+            command.switchId,
+            command.vlanId,
+            command.multicastMac,
+            command.portId,
+          );
+        }
+        return null;
       case 'reset':
         engine.reset();
         return null;

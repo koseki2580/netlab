@@ -394,29 +394,43 @@ export class WorkerEngine {
   }
 
   addMulticastMembership(
-    _switchId: string,
-    _vlanId: number,
-    _multicastMac: string,
-    _portId: string,
+    switchId: string,
+    vlanId: number,
+    multicastMac: string,
+    portId: string,
   ): void {
-    return undefined;
+    void this.request({
+      type: 'multicastMembership',
+      switchId,
+      vlanId,
+      multicastMac,
+      portId,
+      join: true,
+    });
   }
 
   removeMulticastMembership(
-    _switchId: string,
-    _vlanId: number,
-    _multicastMac: string,
-    _portId: string,
+    switchId: string,
+    vlanId: number,
+    multicastMac: string,
+    portId: string,
   ): void {
-    return undefined;
+    void this.request({
+      type: 'multicastMembership',
+      switchId,
+      vlanId,
+      multicastMac,
+      portId,
+      join: false,
+    });
   }
 
-  addJoinedGroup(_nodeId: string, _group: string): void {
-    return undefined;
+  addJoinedGroup(nodeId: string, group: string): void {
+    void this.request({ type: 'joinGroup', nodeId, group, join: true });
   }
 
-  removeJoinedGroup(_nodeId: string, _group: string): void {
-    return undefined;
+  removeJoinedGroup(nodeId: string, group: string): void {
+    void this.request({ type: 'joinGroup', nodeId, group, join: false });
   }
 
   dispose(): void {

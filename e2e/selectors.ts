@@ -233,6 +233,12 @@ export const SEL = {
     areaLegend: 'area-legend',
     controlledJson: 'controlled-topology-json',
   },
+  /** The IGMP snooping lesson's own controls. */
+  multicast: {
+    /** Join or leave the group, per receiver, named by its label. */
+    membership: (label: string) => `multicast-membership-${label.toLowerCase()}`,
+    send: 'multicast-send',
+  },
   /** The embed demo's simulated light-mode host page. */
   embed: {
     lightHost: 'embed-light-host',
