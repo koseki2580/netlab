@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AudiencePill } from '../src/components/AudiencePill';
 import { ProgressPanel } from '../src/components/progress/ProgressPanel';
+import { I18nProvider } from '../src/i18n/I18nProvider';
 import { readUrlParam, useUrlParamSync } from '../src/hooks/useUrlParamSync';
 import { scenarioRegistry, scenariosInGroup } from '../src/scenarios';
 import {
@@ -28,6 +29,7 @@ import {
 } from './galleryFilters';
 import { CategoryLanding, type CategoryLandingDemo } from './components/CategoryLanding';
 import { CATEGORY_LABELS_JA, DEMO_COPY_JA } from './galleryJa';
+import { GalleryLocaleProvider, useT } from './localeContext';
 import { LearningMap } from './components/LearningMap';
 import { useLearningMap, type LearningTrackInput } from './hooks/useLearningMap';
 import { DemoCard } from './components/DemoCard';
@@ -783,7 +785,22 @@ const SECTION_BLURBS: Record<string, string> = {
   comprehensive: 'End-to-end workflows that combine multiple tools',
 };
 
-function getSectionBlurb(sectionId: string): string {
+const SECTION_BLURBS_JA: Record<string, string> = {
+  assessments: '目標を決めて試す、採点つきの練習',
+  basic: 'リンク・スイッチ・ホストの基本の動き',
+  routing: '経路の選び方、経路の制御、収束',
+  areas: '区画分け、サービス、プロトコルごとの領域',
+  services: 'アドレスの割り当てと名前解決',
+  simulation: '通信の追跡、障害、状態を持つ解析',
+  editor: 'トポロジの編集と、外部から制御する使い方',
+  integration: '別のページへの埋め込み例',
+  comprehensive: '複数の道具を組み合わせた一連の流れ',
+};
+
+function getSectionBlurb(sectionId: string, locale: GalleryLocale): string {
+  if (locale === 'ja') {
+    return SECTION_BLURBS_JA[sectionId] ?? 'このカテゴリのデモ';
+  }
   return SECTION_BLURBS[sectionId] ?? 'Focused demos in this track';
 }
 
@@ -839,6 +856,7 @@ function ThemeModeToggle({
   themeMode: GalleryThemeMode;
   onChange: (themeMode: GalleryThemeMode) => void;
 }) {
+  const t = useT();
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
       <span
@@ -850,7 +868,7 @@ function ThemeModeToggle({
           textTransform: 'uppercase',
         }}
       >
-        Theme
+        {t('Theme', 'テーマ')}
       </span>
       <div
         style={{
@@ -886,7 +904,7 @@ function ThemeModeToggle({
                 cursor: 'pointer',
               }}
             >
-              {mode === 'light' ? 'Light' : 'Dark'}
+              {mode === 'light' ? t('Light', 'ライト') : t('Dark', 'ダーク')}
             </button>
           );
         })}
@@ -971,6 +989,7 @@ function SectionHeader({
   blurb: string;
   count: number;
 }) {
+  const t = useT();
   return (
     <div
       style={{
@@ -1014,7 +1033,7 @@ function SectionHeader({
           whiteSpace: 'nowrap',
         }}
       >
-        {count} demos
+        {count} {t('demos', '件')}
       </span>
     </div>
   );
@@ -1164,7 +1183,7 @@ export default function Gallery({
     if (assessmentDemos.length > 0) {
       items.push({
         id: 'assessments',
-        label: 'Assessments',
+        label: (locale === 'ja' ? CATEGORY_LABELS_JA.assessments : undefined) ?? 'Assessments',
         color: 'var(--netlab-accent-green)',
         count: assessmentDemos.length,
       });
@@ -1270,328 +1289,286 @@ export default function Gallery({
   const noMatches = !filtersEmpty && allDemos.length === 0;
 
   return (
-    <div
-      data-netlab-palette={palette}
-      data-netlab-density={density}
-      data-netlab-audience={audience}
-      data-cbsafe={colorBlindSafe}
-      data-contrast={contrast}
-      style={{
-        ...themeToVars(activeTheme, { palette, density, colorBlindSafe, contrast }),
-        minHeight: '100vh',
-        background: 'var(--netlab-learning-surface-bg)',
-        fontFamily: 'monospace',
-        color: 'var(--netlab-text-primary)',
-        display: 'grid',
-        gridTemplateColumns: '248px minmax(0, 1fr)',
-      }}
-    >
-      <Sidebar
-        browseItems={browseItems}
-        activeSectionId={activeSectionId}
-        onSelectSection={handleSelectSection}
-      />
-
-      <main
-        ref={mainRef}
-        data-netlab-gallery-main
+    // One language for the whole index: the catalogue is translated as data,
+    // and the chrome around it reads the same choice from here.
+    <GalleryLocaleProvider locale={locale}>
+      <div
+        data-netlab-palette={palette}
+        data-netlab-density={density}
+        data-netlab-audience={audience}
+        data-cbsafe={colorBlindSafe}
+        data-contrast={contrast}
         style={{
-          // position: relative anchors section offsetTop for container scroll (Q5).
-          position: 'relative',
-          padding: '24px',
-          background:
-            'linear-gradient(180deg, color-mix(in srgb, var(--netlab-bg-surface) 18%, var(--netlab-bg-primary)) 0%, color-mix(in srgb, var(--netlab-bg-primary) 92%, transparent) 100%)',
+          ...themeToVars(activeTheme, { palette, density, colorBlindSafe, contrast }),
+          minHeight: '100vh',
+          background: 'var(--netlab-learning-surface-bg)',
+          fontFamily: 'monospace',
+          color: 'var(--netlab-text-primary)',
+          display: 'grid',
+          gridTemplateColumns: '248px minmax(0, 1fr)',
         }}
       >
-        <div
-          data-netlab-search-bar
+        <Sidebar
+          browseItems={browseItems}
+          activeSectionId={activeSectionId}
+          onSelectSection={handleSelectSection}
+        />
+
+        <main
+          ref={mainRef}
+          data-netlab-gallery-main
           style={{
-            position: 'sticky',
-            top: 0,
-            zIndex: 5,
-            marginBottom: 18,
-            padding: '14px 18px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            gap: 12,
-            flexWrap: 'wrap',
-            borderRadius: 'var(--netlab-radius-md)',
-            border: '1px solid var(--netlab-learning-surface-border)',
-            background: 'var(--netlab-learning-glass-bg)',
-            backdropFilter: 'var(--netlab-learning-glass-blur)',
-            WebkitBackdropFilter: 'var(--netlab-learning-glass-blur)',
-            boxShadow: 'var(--netlab-learning-shadow)',
+            // position: relative anchors section offsetTop for container scroll (Q5).
+            position: 'relative',
+            padding: '24px',
+            background:
+              'linear-gradient(180deg, color-mix(in srgb, var(--netlab-bg-surface) 18%, var(--netlab-bg-primary)) 0%, color-mix(in srgb, var(--netlab-bg-primary) 92%, transparent) 100%)',
           }}
         >
-          <SearchBox
-            value={query}
-            onChange={setQuery}
-            onClear={() => setQuery('')}
-            resultCount={allDemos.length}
-            totalCount={totalDemoCount}
-          />
-        </div>
-        <div
-          style={{
-            padding: '28px 32px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 24,
-            borderRadius: 'var(--netlab-radius-lg)',
-            border: '1px solid var(--netlab-learning-surface-border)',
-            background: 'var(--netlab-learning-hero-bg)',
-            boxShadow: 'var(--netlab-learning-shadow)',
-          }}
-        >
-          <div style={{ minWidth: 0 }}>
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '4px 10px',
-                borderRadius: 'var(--netlab-radius-pill)',
-                background:
-                  'color-mix(in srgb, var(--netlab-bg-surface) 80%, var(--netlab-bg-primary))',
-                border: '1px solid var(--netlab-border)',
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: 0.6,
-                color: 'var(--netlab-text-secondary)',
-                textTransform: 'uppercase',
-                marginBottom: 12,
-              }}
-            >
-              {copy.themeEyebrow[themeMode]}
-            </div>
-            <h1
-              data-testid="gallery-heading"
-              style={{
-                fontSize: 26,
-                fontWeight: 700,
-                color: 'var(--netlab-text-primary)',
-                margin: 0,
-              }}
-            >
-              {copy.title}
-            </h1>
-            <p
-              style={{
-                marginTop: 8,
-                color: 'var(--netlab-text-secondary)',
-                fontSize: 13,
-                lineHeight: 1.65,
-                maxWidth: 620,
-              }}
-            >
-              {copy.body}
-            </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
-              <span style={getStatChipStyle('var(--netlab-accent-blue)')}>
-                {allDemos.length} {copy.demos}
-              </span>
-              <span style={getStatChipStyle('var(--netlab-accent-yellow)')}>
-                {filteredIntros.length} {copy.guidedIntros}
-              </span>
-              <span style={getStatChipStyle('var(--netlab-accent-green)')}>
-                {assessmentDemos.length} {copy.assessments}
-              </span>
-              <span style={getStatChipStyle('var(--netlab-accent-cyan)')}>
-                {sandboxDemos} {copy.sandboxReady}
-              </span>
-              {!filtersEmpty && (
-                <span style={getStatChipStyle('var(--netlab-accent-orange)')}>
-                  {copy.filteredFrom} {totalDemoCount}
-                </span>
-              )}
-            </div>
-          </div>
           <div
+            data-netlab-search-bar
             style={{
+              position: 'sticky',
+              top: 0,
+              zIndex: 5,
+              marginBottom: 18,
+              padding: '14px 18px',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'flex-end',
               gap: 12,
               flexWrap: 'wrap',
-              justifyContent: 'flex-end',
+              borderRadius: 'var(--netlab-radius-md)',
+              border: '1px solid var(--netlab-learning-surface-border)',
+              background: 'var(--netlab-learning-glass-bg)',
+              backdropFilter: 'var(--netlab-learning-glass-blur)',
+              WebkitBackdropFilter: 'var(--netlab-learning-glass-blur)',
+              boxShadow: 'var(--netlab-learning-shadow)',
             }}
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
-              <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  letterSpacing: 0.8,
-                  color: 'var(--netlab-text-muted)',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Audience
-              </span>
-              <AudiencePill variant="learning" value={audience} onChange={setAudience} />
-            </div>
-            <ThemeModeToggle themeMode={themeMode} onChange={setThemeMode} />
-            <SettingsPopover settings={settings} onChange={handleSettingsChange} />
-            <LocaleToggle locale={locale} label={copy.localeLabel} onChange={setLocale} />
+            <SearchBox
+              value={query}
+              onChange={setQuery}
+              onClear={() => setQuery('')}
+              resultCount={allDemos.length}
+              totalCount={totalDemoCount}
+            />
           </div>
-        </div>
-
-        <a
-          href="#/course"
-          data-testid="gallery-course-banner"
-          style={{
-            marginTop: 20,
-            display: 'block',
-            padding: '18px 22px',
-            borderRadius: 14,
-            border: '1px solid var(--netlab-accent-blue)',
-            background: 'var(--netlab-bg-panel)',
-            color: 'var(--netlab-text-primary)',
-            textDecoration: 'none',
-          }}
-        >
           <div
             style={{
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: 0.8,
-              textTransform: 'uppercase',
-              color: 'var(--netlab-accent-blue)',
+              padding: '28px 32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 24,
+              borderRadius: 'var(--netlab-radius-lg)',
+              border: '1px solid var(--netlab-learning-surface-border)',
+              background: 'var(--netlab-learning-hero-bg)',
+              boxShadow: 'var(--netlab-learning-shadow)',
             }}
           >
-            {copy.courseEyebrow}
+            <div style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '4px 10px',
+                  borderRadius: 'var(--netlab-radius-pill)',
+                  background:
+                    'color-mix(in srgb, var(--netlab-bg-surface) 80%, var(--netlab-bg-primary))',
+                  border: '1px solid var(--netlab-border)',
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: 0.6,
+                  color: 'var(--netlab-text-secondary)',
+                  textTransform: 'uppercase',
+                  marginBottom: 12,
+                }}
+              >
+                {copy.themeEyebrow[themeMode]}
+              </div>
+              <h1
+                data-testid="gallery-heading"
+                style={{
+                  fontSize: 26,
+                  fontWeight: 700,
+                  color: 'var(--netlab-text-primary)',
+                  margin: 0,
+                }}
+              >
+                {copy.title}
+              </h1>
+              <p
+                style={{
+                  marginTop: 8,
+                  color: 'var(--netlab-text-secondary)',
+                  fontSize: 13,
+                  lineHeight: 1.65,
+                  maxWidth: 620,
+                }}
+              >
+                {copy.body}
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
+                <span style={getStatChipStyle('var(--netlab-accent-blue)')}>
+                  {allDemos.length} {copy.demos}
+                </span>
+                <span style={getStatChipStyle('var(--netlab-accent-yellow)')}>
+                  {filteredIntros.length} {copy.guidedIntros}
+                </span>
+                <span style={getStatChipStyle('var(--netlab-accent-green)')}>
+                  {assessmentDemos.length} {copy.assessments}
+                </span>
+                <span style={getStatChipStyle('var(--netlab-accent-cyan)')}>
+                  {sandboxDemos} {copy.sandboxReady}
+                </span>
+                {!filtersEmpty && (
+                  <span style={getStatChipStyle('var(--netlab-accent-orange)')}>
+                    {copy.filteredFrom} {totalDemoCount}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                flexWrap: 'wrap',
+                justifyContent: 'flex-end',
+              }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: 0.8,
+                    color: 'var(--netlab-text-muted)',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {locale === 'ja' ? '対象' : 'Audience'}
+                </span>
+                <AudiencePill variant="learning" value={audience} onChange={setAudience} />
+              </div>
+              <ThemeModeToggle themeMode={themeMode} onChange={setThemeMode} />
+              <SettingsPopover settings={settings} onChange={handleSettingsChange} />
+              <LocaleToggle locale={locale} label={copy.localeLabel} onChange={setLocale} />
+            </div>
           </div>
-          <div style={{ margin: '8px 0 0', fontSize: 20, fontWeight: 700 }}>{copy.courseTitle}</div>
-          <p
-            style={{
-              margin: '8px 0 0',
-              maxWidth: 720,
-              lineHeight: 1.8,
-              color: 'var(--netlab-text-secondary)',
-            }}
-          >
-            {copy.courseBody}
-          </p>
-          <span
-            style={{
-              marginTop: 14,
-              display: 'inline-block',
-              padding: '9px 16px',
-              borderRadius: 8,
-              background: 'var(--netlab-accent-blue)',
-              color: '#f8fafc',
-              fontWeight: 700,
-            }}
-          >
-            {copy.courseCta} →
-          </span>
-        </a>
 
-        <div
-          data-netlab-gallery-filters
-          style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}
-        >
-          <GalleryFilterControls
-            filters={filters}
-            tags={allTags}
-            onToggleDifficulty={toggleDifficulty}
-            onToggleTag={toggleTag}
-            onSetSandboxOnly={setSandboxOnly}
-          />
-          {!filtersEmpty && (
-            <ActiveFilters
+          <a
+            href="#/course"
+            data-testid="gallery-course-banner"
+            style={{
+              marginTop: 20,
+              display: 'block',
+              padding: '18px 22px',
+              borderRadius: 14,
+              border: '1px solid var(--netlab-accent-blue)',
+              background: 'var(--netlab-bg-panel)',
+              color: 'var(--netlab-text-primary)',
+              textDecoration: 'none',
+            }}
+          >
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: 0.8,
+                textTransform: 'uppercase',
+                color: 'var(--netlab-accent-blue)',
+              }}
+            >
+              {copy.courseEyebrow}
+            </div>
+            <div style={{ margin: '8px 0 0', fontSize: 20, fontWeight: 700 }}>
+              {copy.courseTitle}
+            </div>
+            <p
+              style={{
+                margin: '8px 0 0',
+                maxWidth: 720,
+                lineHeight: 1.8,
+                color: 'var(--netlab-text-secondary)',
+              }}
+            >
+              {copy.courseBody}
+            </p>
+            <span
+              style={{
+                marginTop: 14,
+                display: 'inline-block',
+                padding: '9px 16px',
+                borderRadius: 8,
+                background: 'var(--netlab-accent-blue)',
+                color: '#f8fafc',
+                fontWeight: 700,
+              }}
+            >
+              {copy.courseCta} →
+            </span>
+          </a>
+
+          <div
+            data-netlab-gallery-filters
+            style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}
+          >
+            <GalleryFilterControls
               filters={filters}
+              tags={allTags}
               onToggleDifficulty={toggleDifficulty}
               onToggleTag={toggleTag}
               onSetSandboxOnly={setSandboxOnly}
-              onClearAll={clearAll}
             />
-          )}
-        </div>
-
-        <div style={{ padding: '28px 0 0', display: 'flex', flexDirection: 'column', gap: 24 }}>
-          <LearningMap
-            map={learningMap}
-            compact={audience === 'pro'}
-            onOpen={(_id, path) => navigate(path)}
-            onResume={(_id, path) => navigate(path)}
-          />
-          <ProgressPanel />
-
-          {showHeroStrip && (
-            <div data-gallery-section="featured">
-              <FeaturedStrip intros={filteredIntros} />
-            </div>
-          )}
-
-          {assessmentDemos.length > 0 && (
-            <section
-              id="assessments"
-              data-gallery-section="assessments"
-              style={getSectionSurfaceStyle('var(--netlab-accent-green)')}
-            >
-              <SectionHeader
-                dot="var(--netlab-accent-green)"
-                title="Assessments"
-                blurb={getSectionBlurb('assessments')}
-                count={assessmentDemos.length}
+            {!filtersEmpty && (
+              <ActiveFilters
+                filters={filters}
+                onToggleDifficulty={toggleDifficulty}
+                onToggleTag={toggleTag}
+                onSetSandboxOnly={setSandboxOnly}
+                onClearAll={clearAll}
               />
-              <div style={CARD_GRID}>
-                {assessmentDemos.map((demo) => {
-                  const cat = CATEGORIES.find((c) => c.demos.some((d) => d.path === demo.path))!;
-                  const tutorial = demo.scenarioId
-                    ? tutorialRegistry.findByScenarioId(demo.scenarioId)
-                    : undefined;
-                  return (
-                    <DemoCard
-                      key={demo.path}
-                      demo={demo}
-                      category={cat}
-                      audience={audience}
-                      progressTargetId={progressTargetIdFor(demo)}
-                      tutorialHref={
-                        tutorial
-                          ? `?tutorial=${encodeURIComponent(tutorial.id)}#${demo.path}`
-                          : null
-                      }
-                      sandboxHref={getSandboxHref(demo)}
-                      assessmentHref={getAssessmentHref(demo)}
-                      compareHref={getCompareHref(demo)}
-                    />
-                  );
-                })}
-              </div>
-            </section>
-          )}
+            )}
+          </div>
 
-          {filteredCategories.map((cat) => {
-            if (TRACK_LANDING_IDS.has(cat.id)) {
-              return (
-                <CategoryLanding
-                  key={cat.id}
-                  trackId={cat.id}
-                  title={cat.label}
-                  blurb={getSectionBlurb(cat.id)}
-                  accent={cat.color}
-                  demos={cat.demos.map(demoToLandingDemo)}
-                />
-              );
-            }
-            return (
+          <div style={{ padding: '28px 0 0', display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <LearningMap
+              map={learningMap}
+              compact={audience === 'pro'}
+              onOpen={(_id, path) => navigate(path)}
+              onResume={(_id, path) => navigate(path)}
+            />
+            {/* The panel is library code with its own catalogue, so it is
+                given the same language rather than a second copy of it. */}
+            <I18nProvider locale={locale}>
+              <ProgressPanel />
+            </I18nProvider>
+
+            {showHeroStrip && (
+              <div data-gallery-section="featured">
+                <FeaturedStrip intros={filteredIntros} />
+              </div>
+            )}
+
+            {assessmentDemos.length > 0 && (
               <section
-                key={cat.id}
-                id={cat.id}
-                data-gallery-section={cat.id}
-                style={getSectionSurfaceStyle(cat.color)}
+                id="assessments"
+                data-gallery-section="assessments"
+                style={getSectionSurfaceStyle('var(--netlab-accent-green)')}
               >
                 <SectionHeader
-                  dot={cat.color}
-                  title={cat.label}
-                  blurb={getSectionBlurb(cat.id)}
-                  count={cat.demos.length}
+                  dot="var(--netlab-accent-green)"
+                  title={
+                    (locale === 'ja' ? CATEGORY_LABELS_JA.assessments : undefined) ?? 'Assessments'
+                  }
+                  blurb={getSectionBlurb('assessments', locale)}
+                  count={assessmentDemos.length}
                 />
                 <div style={CARD_GRID}>
-                  {cat.demos.map((demo) => {
+                  {assessmentDemos.map((demo) => {
+                    const cat = CATEGORIES.find((c) => c.demos.some((d) => d.path === demo.path))!;
                     const tutorial = demo.scenarioId
                       ? tutorialRegistry.findByScenarioId(demo.scenarioId)
                       : undefined;
@@ -1609,18 +1586,72 @@ export default function Gallery({
                         }
                         sandboxHref={getSandboxHref(demo)}
                         assessmentHref={getAssessmentHref(demo)}
+                        compareHref={getCompareHref(demo)}
                       />
                     );
                   })}
                 </div>
               </section>
-            );
-          })}
+            )}
 
-          {noMatches && <GalleryEmptyState onClear={clearAll} />}
-        </div>
-      </main>
-    </div>
+            {filteredCategories.map((cat) => {
+              if (TRACK_LANDING_IDS.has(cat.id)) {
+                return (
+                  <CategoryLanding
+                    key={cat.id}
+                    trackId={cat.id}
+                    title={cat.label}
+                    blurb={getSectionBlurb(cat.id, locale)}
+                    accent={cat.color}
+                    demos={cat.demos.map(demoToLandingDemo)}
+                  />
+                );
+              }
+              return (
+                <section
+                  key={cat.id}
+                  id={cat.id}
+                  data-gallery-section={cat.id}
+                  style={getSectionSurfaceStyle(cat.color)}
+                >
+                  <SectionHeader
+                    dot={cat.color}
+                    title={cat.label}
+                    blurb={getSectionBlurb(cat.id, locale)}
+                    count={cat.demos.length}
+                  />
+                  <div style={CARD_GRID}>
+                    {cat.demos.map((demo) => {
+                      const tutorial = demo.scenarioId
+                        ? tutorialRegistry.findByScenarioId(demo.scenarioId)
+                        : undefined;
+                      return (
+                        <DemoCard
+                          key={demo.path}
+                          demo={demo}
+                          category={cat}
+                          audience={audience}
+                          progressTargetId={progressTargetIdFor(demo)}
+                          tutorialHref={
+                            tutorial
+                              ? `?tutorial=${encodeURIComponent(tutorial.id)}#${demo.path}`
+                              : null
+                          }
+                          sandboxHref={getSandboxHref(demo)}
+                          assessmentHref={getAssessmentHref(demo)}
+                        />
+                      );
+                    })}
+                  </div>
+                </section>
+              );
+            })}
+
+            {noMatches && <GalleryEmptyState onClear={clearAll} />}
+          </div>
+        </main>
+      </div>
+    </GalleryLocaleProvider>
   );
 }
 

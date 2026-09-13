@@ -78,3 +78,33 @@ test('the gallery offers the course before anything else', async ({ page, galler
   await expect(page.getByTestId(SEL.course.title)).toBeVisible();
   await expect(page.getByTestId(SEL.course.progress)).toContainText('1');
 });
+
+/**
+ * TC-128 — the gallery a Japanese reader meets is Japanese.
+ *
+ * The language toggle already existed and already changed the surrounding
+ * prose, while every category, every lesson and every control around them
+ * stayed in English — which is all of what a learner reads on the way in.
+ * Counting is the only honest check here: a spot assertion on one heading
+ * passes while the rest of the page is untouched, which is exactly what
+ * happened before.
+ */
+test('the gallery is in Japanese when Japanese is chosen', async ({ page, galleryPage }) => {
+  await page.setViewportSize({ width: 1600, height: 1100 });
+  await galleryPage.goto();
+  await page.getByTestId(SEL.gallery.localeToggleJa).click();
+
+  const english = await page.locator('body').evaluate((body: HTMLElement) => {
+    const lines = body.innerText
+      .split('\n')
+      .map((line: string) => line.trim())
+      .filter(Boolean);
+    // Protocol names, acronyms and product names are correctly left alone, so
+    // this counts lines that are prose: several words, no Japanese in them.
+    return lines.filter(
+      (line: string) => !/[ぁ-んァ-ヶ一-龯]/.test(line) && line.split(/\s+/).length >= 4,
+    );
+  });
+
+  expect(english, 'no English sentences remain in the Japanese gallery').toEqual([]);
+});

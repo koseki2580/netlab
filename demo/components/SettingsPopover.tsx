@@ -7,6 +7,10 @@ import type {
   NetlabDensity,
   NetlabPalette,
 } from '../../src/theme';
+import { useT } from '../localeContext';
+
+/** English first, Japanese second — see `useT`. */
+type Translate = (en: string, ja: string) => string;
 
 export type GallerySettingsThemeMode = 'dark' | 'light';
 
@@ -22,7 +26,7 @@ export interface GallerySettings {
 export interface SettingsPopoverProps {
   settings: GallerySettings;
   onChange: (next: GallerySettings) => void;
-  /** Optional label for the trigger button (defaults to `'Settings'`). */
+  /** Optional label for the trigger button (defaults to the translated "Settings"). */
   label?: string;
 }
 
@@ -31,36 +35,48 @@ interface AxisOption<V extends string> {
   label: string;
 }
 
-const THEME_OPTIONS: AxisOption<GallerySettingsThemeMode>[] = [
-  { value: 'dark', label: 'Dark' },
-  { value: 'light', label: 'Light' },
-];
+function themeOptions(t: Translate): AxisOption<GallerySettingsThemeMode>[] {
+  return [
+    { value: 'dark', label: t('Dark', 'ダーク') },
+    { value: 'light', label: t('Light', 'ライト') },
+  ];
+}
 
-const PALETTE_OPTIONS: AxisOption<NetlabPalette>[] = [
-  { value: 'studio', label: 'Studio (current)' },
-  { value: 'academic', label: 'Academic muted' },
-];
+function paletteOptions(t: Translate): AxisOption<NetlabPalette>[] {
+  return [
+    { value: 'studio', label: t('Studio (current)', 'スタジオ（既定）') },
+    { value: 'academic', label: t('Academic muted', '落ち着いた配色') },
+  ];
+}
 
-const DENSITY_OPTIONS: AxisOption<NetlabDensity>[] = [
-  { value: 'compact', label: 'Compact' },
-  { value: 'standard', label: 'Standard' },
-  { value: 'relaxed', label: 'Relaxed' },
-];
+function densityOptions(t: Translate): AxisOption<NetlabDensity>[] {
+  return [
+    { value: 'compact', label: t('Compact', 'せまい') },
+    { value: 'standard', label: t('Standard', 'ふつう') },
+    { value: 'relaxed', label: t('Relaxed', 'ひろい') },
+  ];
+}
 
-const AUDIENCE_OPTIONS: AxisOption<NetlabAudience>[] = [
-  { value: 'learner', label: 'Learner' },
-  { value: 'pro', label: 'Pro' },
-];
+function audienceOptions(t: Translate): AxisOption<NetlabAudience>[] {
+  return [
+    { value: 'learner', label: t('Learner', '学習者') },
+    { value: 'pro', label: t('Pro', '実務者') },
+  ];
+}
 
-const CBSAFE_OPTIONS: AxisOption<NetlabCbSafe>[] = [
-  { value: 'off', label: 'Off' },
-  { value: 'on', label: 'On' },
-];
+function cbsafeOptions(t: Translate): AxisOption<NetlabCbSafe>[] {
+  return [
+    { value: 'off', label: t('Off', 'オフ') },
+    { value: 'on', label: t('On', 'オン') },
+  ];
+}
 
-const CONTRAST_OPTIONS: AxisOption<NetlabContrast>[] = [
-  { value: 'normal', label: 'Normal' },
-  { value: 'more', label: 'More' },
-];
+function contrastOptions(t: Translate): AxisOption<NetlabContrast>[] {
+  return [
+    { value: 'normal', label: t('Normal', 'ふつう') },
+    { value: 'more', label: t('More', '高める') },
+  ];
+}
 
 const GEAR_ICON = (
   <svg
@@ -161,7 +177,9 @@ function AxisGroup<V extends string>({
   );
 }
 
-export function SettingsPopover({ settings, onChange, label = 'Settings' }: SettingsPopoverProps) {
+export function SettingsPopover({ settings, onChange, label }: SettingsPopoverProps) {
+  const t = useT();
+  const trigger = label ?? t('Settings', '表示設定');
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -203,7 +221,7 @@ export function SettingsPopover({ settings, onChange, label = 'Settings' }: Sett
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={open ? popoverId : undefined}
-        aria-label={label}
+        aria-label={trigger}
         onClick={() => setOpen((v) => !v)}
         style={{
           display: 'inline-flex',
@@ -227,7 +245,7 @@ export function SettingsPopover({ settings, onChange, label = 'Settings' }: Sett
         <div
           id={popoverId}
           role="dialog"
-          aria-label={label}
+          aria-label={trigger}
           style={{
             position: 'absolute',
             top: 'calc(100% + 6px)',
@@ -246,44 +264,44 @@ export function SettingsPopover({ settings, onChange, label = 'Settings' }: Sett
         >
           <AxisGroup
             groupName={`${popoverId}-theme`}
-            label="Mode"
+            label={t('Mode', '表示')}
             value={settings.themeMode}
-            options={THEME_OPTIONS}
+            options={themeOptions(t)}
             onChange={(v) => update('themeMode', v)}
           />
           <AxisGroup
             groupName={`${popoverId}-palette`}
-            label="Palette"
+            label={t('Palette', '配色')}
             value={settings.palette}
-            options={PALETTE_OPTIONS}
+            options={paletteOptions(t)}
             onChange={(v) => update('palette', v)}
           />
           <AxisGroup
             groupName={`${popoverId}-density`}
-            label="Density"
+            label={t('Density', '文字と余白')}
             value={settings.density}
-            options={DENSITY_OPTIONS}
+            options={densityOptions(t)}
             onChange={(v) => update('density', v)}
           />
           <AxisGroup
             groupName={`${popoverId}-audience`}
-            label="Audience"
+            label={t('Audience', '対象')}
             value={settings.audience}
-            options={AUDIENCE_OPTIONS}
+            options={audienceOptions(t)}
             onChange={(v) => update('audience', v)}
           />
           <AxisGroup
             groupName={`${popoverId}-cbsafe`}
-            label="Color-blind safe"
+            label={t('Color-blind safe', '色覚に配慮')}
             value={settings.colorBlindSafe}
-            options={CBSAFE_OPTIONS}
+            options={cbsafeOptions(t)}
             onChange={(v) => update('colorBlindSafe', v)}
           />
           <AxisGroup
             groupName={`${popoverId}-contrast`}
-            label="Contrast"
+            label={t('Contrast', 'コントラスト')}
             value={settings.contrast}
-            options={CONTRAST_OPTIONS}
+            options={contrastOptions(t)}
             onChange={(v) => update('contrast', v)}
           />
         </div>

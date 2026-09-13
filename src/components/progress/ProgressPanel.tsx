@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import { useOptionalProgress } from '../../progress';
 
 export function ProgressPanel() {
+  const { t } = useI18n();
   const progress = useOptionalProgress();
   const [exportedJson, setExportedJson] = useState('');
   const [importJson, setImportJson] = useState('');
@@ -11,9 +13,9 @@ export function ProgressPanel() {
 
   if (!progress.enabled) {
     return (
-      <section aria-label="Learner progress">
-        <h2>Learner progress</h2>
-        <p>Progress persistence is disabled.</p>
+      <section aria-label={t('learning.progress.panel.heading')}>
+        <h2>{t('learning.progress.panel.heading')}</h2>
+        <p>{t('learning.progress.panel.disabled')}</p>
       </section>
     );
   }
@@ -22,7 +24,7 @@ export function ProgressPanel() {
 
   return (
     <section
-      aria-label="Learner progress"
+      aria-label={t('learning.progress.panel.heading')}
       data-testid="gallery-progress-section"
       style={{
         border: '1px solid var(--netlab-border)',
@@ -35,7 +37,7 @@ export function ProgressPanel() {
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}
       >
         <div>
-          <h2 style={{ margin: 0, fontSize: 16 }}>Learner progress</h2>
+          <h2 style={{ margin: 0, fontSize: 16 }}>{t('learning.progress.panel.heading')}</h2>
           <div style={{ marginTop: 4, fontSize: 12, color: 'var(--netlab-text-secondary)' }}>
             {progress.learnerId}
           </div>
@@ -62,10 +64,10 @@ export function ProgressPanel() {
         <table style={{ width: '100%', marginTop: 14, borderCollapse: 'collapse', fontSize: 12 }}>
           <thead>
             <tr>
-              <th style={{ textAlign: 'left' }}>Item</th>
-              <th style={{ textAlign: 'left' }}>Kind</th>
-              <th style={{ textAlign: 'left' }}>Score</th>
-              <th style={{ textAlign: 'left' }}>Completed</th>
+              <th style={{ textAlign: 'left' }}>{t('learning.progress.panel.column.item')}</th>
+              <th style={{ textAlign: 'left' }}>{t('learning.progress.panel.column.kind')}</th>
+              <th style={{ textAlign: 'left' }}>{t('learning.progress.panel.column.score')}</th>
+              <th style={{ textAlign: 'left' }}>{t('learning.progress.panel.completed')}</th>
             </tr>
           </thead>
           <tbody>
@@ -84,12 +86,12 @@ export function ProgressPanel() {
           </tbody>
         </table>
       ) : (
-        <p style={{ marginTop: 14 }}>No completed items yet.</p>
+        <p style={{ marginTop: 14 }}>{t('learning.progress.panel.none')}</p>
       )}
 
       {exportedJson ? (
         <label style={{ display: 'grid', gap: 6, marginTop: 14 }}>
-          <span>Exported progress JSON</span>
+          <span>{t('learning.progress.panel.export')}</span>
           <textarea
             aria-label="Exported progress JSON"
             data-testid="gallery-progress-export-json"
@@ -103,7 +105,7 @@ export function ProgressPanel() {
 
       <div style={{ display: 'grid', gap: 8, marginTop: 14 }}>
         <label style={{ display: 'grid', gap: 6 }}>
-          <span>Import progress JSON</span>
+          <span>{t('learning.progress.panel.import')}</span>
           <textarea
             aria-label="Import progress JSON"
             data-testid="gallery-progress-import-json"
@@ -140,7 +142,7 @@ export function ProgressPanel() {
           }}
         >
           <label style={{ display: 'grid', gap: 6 }}>
-            <span>Confirm learner id</span>
+            <span>{t('learning.progress.panel.confirmLearnerId')}</span>
             <input
               aria-label="Confirm learner id"
               data-testid="gallery-progress-confirm-id"

@@ -129,4 +129,14 @@ export const learning: Catalog = {
   'learning.resilience.next': 'Next scenario',
   'learning.resilience.summary.lesson':
     'Redundancy is about paths AND routes: a spare link saves you only when something can route over it, and a single-attached host is always exposed.',
+  'learning.progress.panel.heading': 'Learner progress',
+  'learning.progress.panel.disabled': 'Progress persistence is disabled.',
+  'learning.progress.panel.completed': 'Completed',
+  'learning.progress.panel.none': 'No completed items yet.',
+  'learning.progress.panel.column.item': 'Item',
+  'learning.progress.panel.column.kind': 'Kind',
+  'learning.progress.panel.column.score': 'Score',
+  'learning.progress.panel.export': 'Exported progress JSON',
+  'learning.progress.panel.import': 'Import progress JSON',
+  'learning.progress.panel.confirmLearnerId': 'Confirm learner id',
 } as const;

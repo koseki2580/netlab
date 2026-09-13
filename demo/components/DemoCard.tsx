@@ -4,6 +4,17 @@ import { ProgressBadge } from '../../src/components/progress/ProgressBadge';
 import type { NetlabAudience } from '../../src/theme';
 import { getDemoIcon } from './demoIcons';
 import './DemoCard.css';
+import { useT } from '../localeContext';
+
+/** The three levels as a reader meets them on a card. */
+const DIFFICULTY_BADGE: Record<
+  'beginner' | 'intermediate' | 'advanced',
+  (t: (en: string, ja: string) => string) => string
+> = {
+  beginner: (t) => t('Beginner', 'はじめて'),
+  intermediate: (t) => t('Intermediate', '慣れてきた'),
+  advanced: (t) => t('Advanced', '詳しく'),
+};
 
 interface DemoCardData {
   path: string;
@@ -148,6 +159,7 @@ export function DemoCard({
   progressTargetId,
   audience = 'pro',
 }: DemoCardProps) {
+  const t = useT();
   const difficulty = demo.meta?.difficulty;
   const tags = demo.meta?.tags ?? [];
   const [layerTag, ...protoTags] = tags;
@@ -212,7 +224,7 @@ export function DemoCard({
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
             {difficulty && (
               <Tag
-                label={difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+                label={DIFFICULTY_BADGE[difficulty](t)}
                 bg={DIFFICULTY_STYLES[difficulty].bg}
                 fg={DIFFICULTY_STYLES[difficulty].fg}
               />
@@ -251,7 +263,7 @@ export function DemoCard({
         }}
       >
         <Link to={demo.path} style={getActionLinkStyle(category.color)}>
-          Open →
+          {t('Open →', '開く →')}
         </Link>
         {compareHref && (
           <Link
@@ -259,17 +271,17 @@ export function DemoCard({
             data-testid="gallery-compare-link"
             style={getActionLinkStyle('var(--netlab-accent-blue)')}
           >
-            Compare ⇄
+            {t('Compare ⇄', '比べる ⇄')}
           </Link>
         )}
         {sandboxHref && (
           <a href={sandboxHref} style={getActionLinkStyle('var(--netlab-accent-yellow)')}>
-            Sandbox →
+            {t('Sandbox →', 'いじる →')}
           </a>
         )}
         {tutorialHref && (
           <a href={tutorialHref} style={getActionLinkStyle('var(--netlab-accent-cyan)')}>
-            Tutorial →
+            {t('Tutorial →', '手順つき →')}
           </a>
         )}
         {assessmentHref && (
@@ -278,7 +290,7 @@ export function DemoCard({
             data-testid="gallery-assessment-link"
             style={getActionLinkStyle('var(--netlab-accent-green)')}
           >
-            Assessment →
+            {t('Assessment →', '力だめし →')}
           </a>
         )}
       </div>

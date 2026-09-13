@@ -5,6 +5,8 @@ import type {
   LearningStep,
   LearningStepState,
 } from '../hooks/useLearningMap';
+import { DEMO_COPY_JA } from '../galleryJa';
+import { useT } from '../localeContext';
 
 export interface LearningMapProps {
   map: LearningMapData;
@@ -117,6 +119,7 @@ function StepNode({
  * state from {@link useLearningMap}; it owns no state of its own.
  */
 export function LearningMap({ map, onOpen, onResume, compact = false }: LearningMapProps) {
+  const t = useT();
   if (map.totalCount === 0) return null;
   const pct = Math.round((map.doneCount / map.totalCount) * 100);
 
@@ -154,10 +157,10 @@ export function LearningMap({ map, onOpen, onResume, compact = false }: Learning
               color: 'var(--netlab-text-muted)',
             }}
           >
-            your progress
+            {t('your progress', 'これまでの進み具合')}
           </div>
           <div style={{ fontSize: 20, fontWeight: 700, marginTop: 2 }}>
-            {map.doneCount} / {map.totalCount} scenarios
+            {map.doneCount} / {map.totalCount} {t('scenarios', '件')}
           </div>
         </div>
         <div
@@ -168,9 +171,14 @@ export function LearningMap({ map, onOpen, onResume, compact = false }: Learning
             color: 'var(--netlab-text-secondary)',
           }}
         >
-          ~{formatRemaining(map.remainingMinutes)} left
+          {t('~', 'のこり約')}
+          {formatRemaining(map.remainingMinutes)}
+          {t(' left', '')}
           <div style={{ color: 'var(--netlab-text-muted)', marginTop: 2 }}>
-            {map.totalCount - map.doneCount} scenarios · {map.conceptsLeft} concepts left
+            {t(
+              `${map.totalCount - map.doneCount} scenarios · ${map.conceptsLeft} concepts left`,
+              `のこり ${map.totalCount - map.doneCount} 件・${map.conceptsLeft} 個の項目`,
+            )}
           </div>
         </div>
       </header>
@@ -256,7 +264,8 @@ export function LearningMap({ map, onOpen, onResume, compact = false }: Learning
             textDecoration: 'none',
           }}
         >
-          <span aria-hidden>▶</span> Resume — {map.resume.label}
+          <span aria-hidden>▶</span> {t('Resume', '続きから')} —{' '}
+          {DEMO_COPY_JA[map.resume.path]?.title ?? map.resume.label}
         </Link>
       )}
     </section>

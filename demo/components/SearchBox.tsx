@@ -1,3 +1,5 @@
+import { useT } from '../localeContext';
+
 const SEARCH_ICON = (
   <svg
     viewBox="0 0 24 24"
@@ -22,6 +24,7 @@ interface SearchBoxProps {
 }
 
 export function SearchBox({ value, onChange, onClear, resultCount, totalCount }: SearchBoxProps) {
+  const t = useT();
   const hasQuery = value.trim().length > 0;
 
   return (
@@ -44,8 +47,8 @@ export function SearchBox({ value, onChange, onClear, resultCount, totalCount }:
       <span style={{ color: 'var(--netlab-text-muted)', flexShrink: 0 }}>{SEARCH_ICON}</span>
       <input
         type="search"
-        aria-label="Search demos, protocols, layers"
-        placeholder="Search demos, protocols, layers…"
+        aria-label={t('Search demos, protocols, layers', 'デモ・プロトコル・レイヤーを検索')}
+        placeholder={t('Search demos, protocols, layers…', 'デモ・プロトコル・レイヤーを検索…')}
         value={value}
         autoComplete="off"
         onChange={(event) => onChange(event.target.value)}

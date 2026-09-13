@@ -1,4 +1,5 @@
 import type React from 'react';
+import { useT } from '../localeContext';
 
 interface Category {
   id: string;
@@ -9,6 +10,8 @@ interface Category {
 
 interface ReferenceLink {
   label: string;
+  /** Japanese name, where the link has one; an acronym like "API" does not. */
+  labelJa?: string;
   href: string;
 }
 
@@ -137,7 +140,8 @@ function NavButtonRow({
   );
 }
 
-function NavLinkRow({ label, href }: ReferenceLink) {
+function NavLinkRow({ label, labelJa, href }: ReferenceLink) {
+  const t = useT();
   return (
     <a
       href={href}
@@ -158,7 +162,7 @@ function NavLinkRow({ label, href }: ReferenceLink) {
       }}
     >
       <span style={{ width: 8, flexShrink: 0 }} />
-      <span style={{ flex: 1 }}>{label}</span>
+      <span style={{ flex: 1 }}>{t(label, labelJa ?? label)}</span>
       <span style={{ color: 'var(--netlab-text-muted)', fontSize: 12 }}>↗</span>
     </a>
   );
@@ -167,6 +171,7 @@ function NavLinkRow({ label, href }: ReferenceLink) {
 const REFERENCE_LINKS: ReferenceLink[] = [
   {
     label: 'Docs',
+    labelJa: 'ドキュメント',
     href: 'https://github.com/koseki2580/netlab/blob/main/docs/README.md',
   },
   {
@@ -175,14 +180,16 @@ const REFERENCE_LINKS: ReferenceLink[] = [
   },
   {
     label: 'Layer Plugins',
+    labelJa: 'レイヤープラグイン',
     href: 'https://github.com/koseki2580/netlab/blob/main/docs/core/plugins.md',
   },
 ];
 
 export function Sidebar({ browseItems, activeSectionId, onSelectSection }: SidebarProps) {
+  const t = useT();
   return (
     <aside
-      aria-label="Demo navigation"
+      aria-label={t('Demo navigation', 'デモの案内')}
       data-netlab-sidebar
       style={{
         width: 248,
@@ -225,7 +232,7 @@ export function Sidebar({ browseItems, activeSectionId, onSelectSection }: Sideb
       </div>
 
       {/* Browse */}
-      <NavGroup label="Browse">
+      <NavGroup label={t('Browse', 'さがす')}>
         {browseItems.map((item) => (
           <NavButtonRow
             key={item.id}
@@ -240,7 +247,7 @@ export function Sidebar({ browseItems, activeSectionId, onSelectSection }: Sideb
       </NavGroup>
 
       {/* Reference */}
-      <NavGroup label="Reference">
+      <NavGroup label={t('Reference', '参考資料')}>
         {REFERENCE_LINKS.map((link) => (
           <NavLinkRow key={link.label} {...link} />
         ))}
@@ -290,7 +297,7 @@ export function Sidebar({ browseItems, activeSectionId, onSelectSection }: Sideb
           }}
         >
           <span>⌘</span>
-          Keyboard shortcuts
+          {t('Keyboard shortcuts', 'キーボード操作')}
         </button>
       </div>
     </aside>

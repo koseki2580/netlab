@@ -131,4 +131,14 @@ export const learning: Catalog = {
   'learning.resilience.next': '次のシナリオ',
   'learning.resilience.summary.lesson':
     '冗長性は「経路」と「ルート」の両方です: 予備リンクは何かがそこを通れるときだけ救い、単一接続のホストは常に危険にさらされます。',
+  'learning.progress.panel.heading': '学習の記録',
+  'learning.progress.panel.disabled': '学習の記録は保存されない設定です。',
+  'learning.progress.panel.completed': '終えたもの',
+  'learning.progress.panel.none': 'まだ終えたものはありません。',
+  'learning.progress.panel.column.item': '項目',
+  'learning.progress.panel.column.kind': '種類',
+  'learning.progress.panel.column.score': '結果',
+  'learning.progress.panel.export': '書き出した記録（JSON）',
+  'learning.progress.panel.import': '記録を読み込む（JSON）',
+  'learning.progress.panel.confirmLearnerId': '学習者IDの確認',
 } as const;

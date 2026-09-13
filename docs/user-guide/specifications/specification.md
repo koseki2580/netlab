@@ -277,9 +277,10 @@ not part of this specification.
 - **AC-042:** Given the course in Japanese, when any step is shown, then its
   title, instruction and takeaway are in Japanese; and the same holds in
   English.
-- **AC-043:** Given the gallery in Japanese, when the categories are listed,
-  then every category name and every lesson's title and description is in
-  Japanese.
+- **AC-043:** Given the gallery in Japanese, then no sentence on the page is
+  left in English — the categories and their descriptions, every lesson's title
+  and description, the navigation, the filters, the settings and the progress
+  panel. Protocol names and acronyms are not sentences and stay as they are.
 - **AC-040:** Given the client-server lesson, when the learner sends a packet,
   then the router resolves the server's address and the packet is delivered to
   the server, with no hop dropped.
@@ -382,6 +383,7 @@ not part of this specification.
 | TC-125    | AC-041     | E2E           | The course opened at its first step                  | Every step is run and passed through                                              | Each reports the result it predicted, and the course finishes without complaint      | `e2e/course.spec.ts`                                          |
 | TC-126    | AC-042     | E2E           | The course with Japanese chosen                      | A step is shown                                                                   | Its title, goal, instruction and button are in Japanese                              | `e2e/course.spec.ts`                                          |
 | TC-127    | AC-041     | E2E           | The gallery as it opens                              | The course banner is pressed                                                      | The course opens at its first step                                                   | `e2e/course.spec.ts`                                          |
+| TC-128    | AC-043     | E2E           | The gallery with Japanese chosen                     | Every line of prose on the page is read                                           | None of it is left in English                                                        | `e2e/course.spec.ts`                                          |
 | TC-038    | AC-031     | E2E           | The gallery's theme setting                          | A theme is chosen, then a lesson opened                                           | The lesson follows the choice, and an unmade choice changes nothing                  | `e2e/settings-carry.spec.ts`                                  |
 | TC-037    | AC-030     | E2E           | An interactive canvas                                | The learner tabs to a device and presses Enter                                    | The device is focusable, named, and opens                                            | `e2e/canvas-keyboard.spec.ts`                                 |
 | TC-036    | AC-029     | E2E           | A laptop display, and the sandbox                    | The same lesson is worked through, and a device is edited and the edit taken back | Every control is pressable and every result appears                                  | `e2e/user-journey.spec.ts`                                    |

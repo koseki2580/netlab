@@ -12,11 +12,19 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { useT } from './localeContext';
 
 const MONO = 'ui-monospace, monospace';
 
 export type Difficulty = 'beginner' | 'intermediate' | 'advanced';
 export const DIFFICULTY_VALUES: readonly Difficulty[] = ['beginner', 'intermediate', 'advanced'];
+
+/** The three levels, named for a reader rather than for the filter's value. */
+const DIFFICULTY_LABELS: Record<Difficulty, (t: (en: string, ja: string) => string) => string> = {
+  beginner: (t) => t('beginner', 'はじめて'),
+  intermediate: (t) => t('intermediate', '慣れてきた'),
+  advanced: (t) => t('advanced', '詳しく'),
+};
 
 export interface DemoLike {
   title: string;
@@ -246,6 +254,7 @@ export function GalleryFilterControls({
   onToggleTag,
   onSetSandboxOnly,
 }: GalleryFilterControlsProps) {
+  const t = useT();
   const [showAllTags, setShowAllTags] = useState(false);
   const visibleTags = showAllTags ? tags : tags.slice(0, TOP_TAGS);
 
@@ -254,11 +263,11 @@ export function GalleryFilterControls({
       data-testid="gallery-filter-controls"
       style={{ display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'center' }}
     >
-      <div style={CHIP_ROW} role="group" aria-label="Difficulty">
+      <div style={CHIP_ROW} role="group" aria-label={t('Difficulty', 'むずかしさ')}>
         {DIFFICULTY_VALUES.map((d) => (
           <FilterChip
             key={d}
-            label={d}
+            label={DIFFICULTY_LABELS[d](t)}
             active={filters.difficulties.includes(d)}
             onClick={() => onToggleDifficulty(d)}
           />
@@ -267,7 +276,7 @@ export function GalleryFilterControls({
       <span aria-hidden style={{ color: 'var(--netlab-text-muted)' }}>
         ·
       </span>
-      <div style={CHIP_ROW} role="group" aria-label="Tags">
+      <div style={CHIP_ROW} role="group" aria-label={t('Tags', 'タグ')}>
         {visibleTags.map(({ tag, count }) => (
           <FilterChip
             key={tag}

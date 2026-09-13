@@ -1,6 +1,7 @@
 import type React from 'react';
 import { Link } from 'react-router-dom';
 import type { TrackItemState } from '../hooks/useScenarioProgress';
+import { useT } from '../localeContext';
 
 export interface RecommendedOrderItem {
   /** Stable id (typically scenarioId or path). Used for React keys. */
@@ -108,11 +109,12 @@ function rowStyle(state: TrackItemState): React.CSSProperties {
   };
 }
 
-function actionLabel(state: TrackItemState): string {
-  return state === 'done' ? 'Review →' : 'Open →';
+function actionLabel(state: TrackItemState, t: (en: string, ja: string) => string): string {
+  return state === 'done' ? t('Review →', 'もう一度 →') : t('Open →', '開く →');
 }
 
 export function RecommendedOrder({ items, onOpen }: RecommendedOrderProps) {
+  const t = useT();
   return (
     <div role="list" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div
@@ -132,7 +134,7 @@ export function RecommendedOrder({ items, onOpen }: RecommendedOrderProps) {
             textTransform: 'uppercase',
           }}
         >
-          recommended order
+          {t('recommended order', 'おすすめの順番')}
         </span>
         <span
           style={{
@@ -141,7 +143,7 @@ export function RecommendedOrder({ items, onOpen }: RecommendedOrderProps) {
             fontFamily: 'ui-monospace, monospace',
           }}
         >
-          click any demo to open it →
+          {t('click any demo to open it →', 'どれでも押すと開きます →')}
         </span>
       </div>
       {items.map((it) => (
@@ -175,7 +177,7 @@ export function RecommendedOrder({ items, onOpen }: RecommendedOrderProps) {
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <span style={statePillStyle(it.state)}>{it.state}</span>
-            <span style={actionStyle(it.state)}>{actionLabel(it.state)}</span>
+            <span style={actionStyle(it.state)}>{actionLabel(it.state, t)}</span>
           </div>
         </Link>
       ))}
