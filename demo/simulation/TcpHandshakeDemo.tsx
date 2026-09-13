@@ -132,16 +132,19 @@ function StateBadge({
   state,
   left,
   top,
+  testId,
 }: {
   label: string;
   state: TcpState;
   left: number;
   top: number;
+  testId: string;
 }) {
   const accent = stateAccent(state);
 
   return (
     <div
+      data-testid={testId}
       style={{
         position: 'absolute',
         left,
@@ -398,8 +401,20 @@ function TcpHandshakeDemoInner() {
           </div>
         </div>
 
-        <StateBadge label="Client State" state={nodeStates.client} left={24} top={100} />
-        <StateBadge label="Server State" state={nodeStates.server} left={602} top={100} />
+        <StateBadge
+          label="Client State"
+          state={nodeStates.client}
+          left={24}
+          top={100}
+          testId="tcp-client-state"
+        />
+        <StateBadge
+          label="Server State"
+          state={nodeStates.server}
+          left={602}
+          top={100}
+          testId="tcp-server-state"
+        />
       </div>
 
       <ResizableSidebar

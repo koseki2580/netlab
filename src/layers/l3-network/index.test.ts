@@ -10,7 +10,7 @@ describe('l3-network layer entry', () => {
     await import('./index');
 
     expect(new Set(protocolRegistry.list())).toEqual(
-      new Set(['static', 'ospf', 'ospfv3', 'bgp', 'rip']),
+      new Set(['connected', 'static', 'ospf', 'ospfv3', 'bgp', 'rip']),
     );
   });
 });

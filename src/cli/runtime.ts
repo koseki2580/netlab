@@ -8,10 +8,14 @@ import { ripProtocol } from '../routing/rip/RipProtocol';
 import { staticProtocol } from '../routing/static/StaticProtocol';
 import type { RouteEntry } from '../types/routing';
 import type { NetworkTopology } from '../types/topology';
+import { connectedProtocol } from '../routing/connected/ConnectedProtocol';
 
 export function ensureCliRuntimeRegistered(): void {
   const registered = new Set(protocolRegistry.list());
 
+  if (!registered.has(connectedProtocol.name)) {
+    protocolRegistry.register(connectedProtocol);
+  }
   if (!registered.has(staticProtocol.name)) {
     protocolRegistry.register(staticProtocol);
   }

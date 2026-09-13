@@ -20,7 +20,14 @@ registerLayerPlugin({
   forwarder: (nodeId: string, topology: NetworkTopology) => new RouterForwarder(nodeId, topology),
 });
 
-for (const protocol of [staticProtocol, ospfProtocol, ospfV3Protocol, bgpProtocol, ripProtocol]) {
+for (const protocol of [
+  connectedProtocol,
+  staticProtocol,
+  ospfProtocol,
+  ospfV3Protocol,
+  bgpProtocol,
+  ripProtocol,
+]) {
   if (!protocolRegistry.list().includes(protocol.name)) {
     protocolRegistry.register(protocol);
   }
@@ -56,6 +63,7 @@ export {
   serializeMplsStack,
   swapMplsLabel,
 } from './tunneling/MplsLabelStack';
+import { connectedProtocol } from '../../routing/connected/ConnectedProtocol';
 export { convergeLdp } from './tunneling/MplsLdp';
 export { installVpnv4Route, lookupVrfRoute } from './tunneling/MplsVrf';
 export { parseVxlanHeader, serializeVxlanHeader } from './tunneling/VxlanHeader';

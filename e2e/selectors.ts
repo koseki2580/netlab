@@ -240,6 +240,12 @@ export const SEL = {
     postEcho: 'http-post-echo',
     sessionCount: 'http-session-count',
   },
+  /** The TCP handshake lesson's connection state. */
+  tcp: {
+    connect: 'tcp-connect',
+    clientState: 'tcp-client-state',
+    serverState: 'tcp-server-state',
+  },
   /** The session-inspector lesson's controls. */
   session: {
     send: 'session-send',
