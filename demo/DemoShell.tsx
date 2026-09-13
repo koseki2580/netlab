@@ -24,6 +24,7 @@ import { ShellChromeProvider } from './ShellChromeContext';
 import { I18nProvider } from '../src/i18n/I18nProvider';
 import { readLearningLocale } from './learning/learningLocale';
 import { DEMO_COPY_JA } from './galleryJa';
+import { GalleryLocaleProvider } from './localeContext';
 
 const GITHUB_ICON = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -452,7 +453,9 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
             >
               {/* Every lesson inside follows the same choice: NetlabProvider
                   inherits it when a lesson does not name a language itself. */}
-              <I18nProvider locale={locale}>{children}</I18nProvider>
+              <I18nProvider locale={locale}>
+                <GalleryLocaleProvider locale={locale}>{children}</GalleryLocaleProvider>
+              </I18nProvider>
             </main>
           </ShellChromeProvider>
           {!embedded && (

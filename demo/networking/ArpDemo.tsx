@@ -1,3 +1,4 @@
+import { useT } from '../localeContext';
 import { useMemo, type CSSProperties } from 'react';
 import DemoShell from '../DemoShell';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
@@ -32,17 +33,21 @@ const LABEL_STYLE: CSSProperties = {
 };
 
 function ArpTablePanel() {
+  const t = useT();
   const { state } = useSimulation();
   const entries = Object.entries(state.nodeArpTables ?? {});
 
   return (
     <div style={CARD_STYLE}>
-      <div style={LABEL_STYLE}>ARP Tables</div>
+      <div style={LABEL_STYLE}>{t('ARP Tables', 'ARP テーブル')}</div>
       {entries.length === 0 ? (
         <div
           style={{ color: 'var(--netlab-text-secondary)', fontFamily: 'monospace', fontSize: 12 }}
         >
-          Send the first packet to populate the sender cache.
+          {t(
+            'Send the first packet to populate the sender cache.',
+            '最初のパケットを送ると、送信側のキャッシュに対応が記録されます。',
+          )}
         </div>
       ) : (
         <div style={{ display: 'grid', gap: 10 }}>
@@ -63,7 +68,9 @@ function ArpTablePanel() {
                 {nodeId}
               </div>
               {Object.entries(table).length === 0 ? (
-                <div style={{ color: 'var(--netlab-text-secondary)' }}>No learned entries.</div>
+                <div style={{ color: 'var(--netlab-text-secondary)' }}>
+                  {t('No learned entries.', 'まだ覚えた対応はありません。')}
+                </div>
               ) : (
                 Object.entries(table).map(([ip, mac]) => (
                   <div
@@ -84,6 +91,7 @@ function ArpTablePanel() {
 }
 
 function ArpDiffCard() {
+  const t = useT();
   const { state } = useSimulation();
   const { topology, routeTable } = useNetlabContext();
   const trace =
@@ -99,7 +107,9 @@ function ArpDiffCard() {
   const stepIndex = state.currentStep >= 0 ? state.currentStep : 0;
   return (
     <div style={CARD_STYLE}>
-      <div style={LABEL_STYLE}>ARP over time · {router.data.label ?? router.id}</div>
+      <div style={LABEL_STYLE}>
+        {t('ARP over time', 'ARP の変化')} · {router.data.label ?? router.id}
+      </div>
       <StateDiffTable
         snapshots={snapshots}
         nodeId={router.id}
@@ -111,6 +121,7 @@ function ArpDiffCard() {
 }
 
 function ArpDemoInner() {
+  const t = useT();
   const { engine } = useSimulation();
 
   const sendPing = async () => {
@@ -124,6 +135,7 @@ function ArpDemoInner() {
         <NetlabCanvas />
         <SimulationOverlayDock showRouteTable={false} />
         <div
+          data-testid="lesson-brief"
           style={{
             position: 'absolute',
             top: 12,
@@ -140,14 +152,19 @@ function ArpDemoInner() {
           }}
         >
           <div style={{ color: 'var(--netlab-text-primary)', fontWeight: 700, marginBottom: 4 }}>
-            ARP Teaching Flow
+            {t('ARP Teaching Flow', 'ARP のしくみ')}
           </div>
           <div>
-            The first IPv4 packet cannot leave the sender until it learns a first-hop MAC address.
+            {t(
+              'The first IPv4 packet cannot leave the sender until it learns a first-hop MAC address.',
+              '最初の IPv4 パケットは、次に渡す相手の MAC アドレスがわかるまで送り出せません。',
+            )}
           </div>
           <div style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}>
-            Use the trace on the right to inspect the ARP request and reply before the routed packet
-            continues.
+            {t(
+              'Use the trace on the right to inspect the ARP request and reply before the routed packet continues.',
+              '右のタイムラインで、パケットが先へ進む前に行われる ARP の要求と応答を確かめてください。',
+            )}
           </div>
         </div>
       </div>
@@ -171,7 +188,7 @@ function ArpDemoInner() {
           }}
         >
           <div style={CARD_STYLE}>
-            <div style={LABEL_STYLE}>Controls</div>
+            <div style={LABEL_STYLE}>{t('Controls', '操作')}</div>
             <button
               type="button"
               data-testid="demo-primary-action"
@@ -188,7 +205,7 @@ function ArpDemoInner() {
                 fontWeight: 700,
               }}
             >
-              ping client → server
+              {t('ping client → server', 'client から server へ ping')}
             </button>
           </div>
           <ArpTablePanel />

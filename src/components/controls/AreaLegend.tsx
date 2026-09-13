@@ -1,4 +1,5 @@
 import { useContext } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import { useNetlabContext } from '../NetlabContext';
 import { NetlabUIContext } from '../NetlabUIContext';
 
@@ -28,6 +29,7 @@ const AREA_COLORS: Record<string, string> = {
 };
 
 export function AreaLegend() {
+  const { t } = useI18n();
   const { areas } = useNetlabContext();
   const ui = useContext(NetlabUIContext);
 
@@ -46,7 +48,7 @@ export function AreaLegend() {
           textTransform: 'uppercase',
         }}
       >
-        NETWORK AREAS
+        {t('simulation.areas.heading')}
       </div>
       <ul role="list" style={{ listStyle: 'none', margin: 0, padding: '4px 0' }}>
         {areas.map((area) => {

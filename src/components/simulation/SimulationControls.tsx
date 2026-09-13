@@ -1,4 +1,5 @@
 import type React from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import { useSimulation } from '../../simulation/SimulationContext';
 import type { InFlightPacket } from '../../types/packets';
 import type { NetworkTopology } from '../../types/topology';
@@ -89,6 +90,7 @@ const BTN_DISABLED: React.CSSProperties = {
 };
 
 export function SimulationControls() {
+  const { t } = useI18n();
   const { topology } = useNetlabContext();
   const { engine, state, sendPacket } = useSimulation();
   const { status, highlightMode } = state;
@@ -124,19 +126,19 @@ export function SimulationControls() {
         <button
           onClick={handleSend}
           style={BTN_PRIMARY}
-          title="Send Packet"
-          aria-label="Send Packet"
+          title={t('simulation.controls.sendLabel')}
+          aria-label={t('simulation.controls.sendLabel')}
           data-testid="demo-primary-action"
           className="netlab-focus-ring"
         >
-          ▶ Send Packet
+          {t('simulation.controls.send')}
         </button>
         <button
           onClick={() => engine.play()}
           disabled={playDisabled}
           style={playDisabled ? BTN_DISABLED : BTN_SECONDARY}
-          title="Play"
-          aria-label="Play"
+          title={t('simulation.controls.play')}
+          aria-label={t('simulation.controls.play')}
           className="netlab-focus-ring"
         >
           ▶
@@ -145,8 +147,8 @@ export function SimulationControls() {
           onClick={() => engine.pause()}
           disabled={pauseDisabled}
           style={pauseDisabled ? BTN_DISABLED : BTN_SECONDARY}
-          title="Pause"
-          aria-label="Pause"
+          title={t('simulation.controls.pause')}
+          aria-label={t('simulation.controls.pause')}
           className="netlab-focus-ring"
         >
           ⏸
@@ -155,8 +157,8 @@ export function SimulationControls() {
           onClick={() => engine.step()}
           disabled={stepDisabled}
           style={stepDisabled ? BTN_DISABLED : BTN_SECONDARY}
-          title="Step Forward"
-          aria-label="Step Forward"
+          title={t('simulation.controls.step')}
+          aria-label={t('simulation.controls.step')}
           className="netlab-focus-ring"
         >
           →
@@ -165,8 +167,8 @@ export function SimulationControls() {
           onClick={() => engine.reset()}
           disabled={resetDisabled}
           style={resetDisabled ? BTN_DISABLED : BTN_SECONDARY}
-          title="Reset"
-          aria-label="Reset"
+          title={t('simulation.controls.reset')}
+          aria-label={t('simulation.controls.reset')}
           className="netlab-focus-ring"
         >
           ⟳
@@ -180,12 +182,12 @@ export function SimulationControls() {
         <button
           onClick={() => engine.setHighlightMode(highlightMode === 'path' ? 'hop' : 'path')}
           style={BTN_SECONDARY}
-          title="Highlight mode"
-          aria-label="Highlight Mode"
+          title={t('simulation.controls.highlightTitle')}
+          aria-label={t('simulation.controls.highlightLabel')}
           aria-pressed={highlightMode === 'path'}
           className="netlab-focus-ring"
         >
-          {highlightMode === 'path' ? 'Path' : 'Hop'}
+          {highlightMode === 'path' ? t('simulation.controls.path') : t('simulation.controls.hop')}
         </button>
       </div>
 
@@ -197,11 +199,14 @@ export function SimulationControls() {
           color: 'var(--netlab-text-muted)',
         }}
       >
-        {status === 'idle' && 'Click "Send Packet" to begin'}
-        {status === 'paused' && state.currentStep === -1 && 'Loaded — press Step or Play'}
-        {status === 'paused' && state.currentStep >= 0 && `Paused — hop ${state.currentStep + 1}`}
-        {status === 'running' && `Running — hop ${state.currentStep + 1}`}
-        {status === 'done' && 'Done'}
+        {status === 'idle' && t('simulation.controls.statusIdle')}
+        {status === 'paused' && state.currentStep === -1 && t('simulation.controls.statusLoaded')}
+        {status === 'paused' &&
+          state.currentStep >= 0 &&
+          t('simulation.controls.statusPaused', { current: state.currentStep + 1 })}
+        {status === 'running' &&
+          t('simulation.controls.statusRunning', { current: state.currentStep + 1 })}
+        {status === 'done' && t('simulation.controls.statusDone')}
       </div>
     </div>
   );

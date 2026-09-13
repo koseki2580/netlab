@@ -233,6 +233,10 @@ export const SEL = {
     areaLegend: 'area-legend',
     controlledJson: 'controlled-topology-json',
   },
+  /** A lesson page's own teaching copy. */
+  lesson: {
+    brief: 'lesson-brief',
+  },
   /** The header every lesson page shares. */
   shell: {
     title: 'demo-shell-title',

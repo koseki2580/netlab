@@ -3,8 +3,9 @@ import { createContext, useContext, useMemo, type ReactNode } from 'react';
 export type GalleryLocale = 'en' | 'ja';
 
 /**
- * The language the learner chose in the gallery, for the chrome around the
- * catalogue — the navigation, the filters, the progress line.
+ * The language the learner chose in the gallery, for the demo app's own words:
+ * the chrome around the catalogue, and each lesson page's brief, captions and
+ * buttons. The gallery and the lesson shell both provide it.
  *
  * The catalogue itself is translated as data (`galleryJa.ts`); this is for the
  * words the components own. Defaulting to English rather than throwing means a

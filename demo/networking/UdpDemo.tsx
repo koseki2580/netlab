@@ -1,3 +1,4 @@
+import { useT } from '../localeContext';
 import { useState, type CSSProperties } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
@@ -123,6 +124,7 @@ export default function UdpDemo() {
 }
 
 function UdpDemoInner() {
+  const t = useT();
   const { topology } = useNetlabContext();
   const { engine, sendPacket, state, isRecomputing } = useSimulation();
   const [port, setPort] = useState(DEFAULT_PORT);
@@ -165,6 +167,7 @@ function UdpDemoInner() {
       <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
         <NetlabCanvas />
         <div
+          data-testid="lesson-brief"
           style={{
             position: 'absolute',
             top: 12,
@@ -182,11 +185,13 @@ function UdpDemoInner() {
           }}
         >
           <div style={{ color: 'var(--netlab-text-primary)', fontWeight: 700, marginBottom: 4 }}>
-            UDP — Stateless Datagrams
+            {t('UDP — Stateless Datagrams', 'UDP — 状態を持たないデータグラム')}
           </div>
           <div>
-            UDP is stateless — no handshake. The client fires a single datagram toward the server.
-            Compare with TCP (which sets up a 3-way handshake first).
+            {t(
+              'UDP is stateless — no handshake. The client fires a single datagram toward the server. Compare with TCP (which sets up a 3-way handshake first).',
+              'UDP は状態を持たず、ハンドシェイクもありません。クライアントはデータグラムを1つサーバへ送るだけです。先に3ウェイハンドシェイクで接続を作る TCP と比べてみてください。',
+            )}
           </div>
         </div>
       </div>
@@ -194,7 +199,7 @@ function UdpDemoInner() {
       <ResizableSidebar defaultWidth={360}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={CARD_STYLE}>
-            <div style={LABEL_STYLE}>UDP CONTROLS</div>
+            <div style={LABEL_STYLE}>{t('UDP CONTROLS', 'UDP の操作')}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <label
                 style={{
@@ -206,7 +211,7 @@ function UdpDemoInner() {
                   fontFamily: 'monospace',
                 }}
               >
-                Port:
+                {t('Port:', 'ポート:')}
                 <input
                   type="number"
                   min={1}
@@ -226,7 +231,7 @@ function UdpDemoInner() {
                   fontFamily: 'monospace',
                 }}
               >
-                Payload:
+                {t('Payload:', '中身:')}
                 <input
                   type="text"
                   value={payload}
@@ -241,7 +246,7 @@ function UdpDemoInner() {
                   disabled={isRecomputing}
                   style={BUTTON_STYLE}
                 >
-                  Send UDP → port {port}
+                  {t(`Send UDP → port ${port}`, `UDP を送る → ポート ${port}`)}
                 </button>
                 <button
                   onClick={sendLargePayload}
@@ -252,7 +257,7 @@ function UdpDemoInner() {
                     borderColor: '#9a3412',
                   }}
                 >
-                  Send Large (4000 B)
+                  {t('Send Large (4000 B)', '大きく送る（4000 バイト）')}
                 </button>
               </div>
             </div>
@@ -261,17 +266,17 @@ function UdpDemoInner() {
           {activeTrace && (
             <>
               <div style={CARD_STYLE}>
-                <div style={LABEL_STYLE}>TRACE SUMMARY</div>
+                <div style={LABEL_STYLE}>{t('TRACE SUMMARY', '通信のまとめ')}</div>
                 <TraceSummary />
               </div>
 
               <div style={CARD_STYLE}>
-                <div style={LABEL_STYLE}>TIMELINE</div>
+                <div style={LABEL_STYLE}>{t('TIMELINE', 'タイムライン')}</div>
                 <PacketTimeline />
               </div>
 
               <div style={CARD_STYLE}>
-                <div style={LABEL_STYLE}>HOP INSPECTOR</div>
+                <div style={LABEL_STYLE}>{t('HOP INSPECTOR', 'ホップの詳細')}</div>
                 <HopInspector />
               </div>
             </>

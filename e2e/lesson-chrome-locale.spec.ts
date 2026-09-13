@@ -79,3 +79,49 @@ test('a lesson is named in the language chosen in the gallery', async ({ page, d
   await expect(page.getByTestId(SEL.shell.desc)).toHaveText(/[ぁ-んァ-ヶ一-龯]/);
   await expect(page).toHaveTitle(/スパニングツリー/);
 });
+
+/**
+ * TC-163 — the command bar and area legend follow the choice too.
+ *
+ * "▶ Send Packet" is the first thing a learner presses on the client-server
+ * lesson, and it stayed English on a Japanese page.
+ */
+test('the command bar and area legend follow the chosen language', async ({ page, demoPage }) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.addInitScript(() => {
+    try {
+      window.localStorage.setItem('netlab-locale', 'ja');
+    } catch {
+      /* no storage means no choice, which this test would then catch */
+    }
+  });
+  await demoPage.goto('/routing/client-server');
+  await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+
+  await expect(page.getByTestId(SEL.demo.primaryAction).first()).toHaveText('▶ パケットを送る');
+  await expect(page.getByTestId(SEL.canvas.areaLegend)).toContainText('ネットワークの区画');
+});
+
+/**
+ * TC-164 — a beginner lesson's own brief is in the chosen language.
+ *
+ * The shared panels reach every lesson at once; a lesson's teaching copy does
+ * not, so it is translated lesson by lesson, beginner lessons first.
+ */
+test('the ARP lesson teaches in the chosen language', async ({ page, demoPage }) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.addInitScript(() => {
+    try {
+      window.localStorage.setItem('netlab-locale', 'ja');
+    } catch {
+      /* no storage means no choice, which this test would then catch */
+    }
+  });
+  await demoPage.goto('/networking/arp');
+  await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+
+  const brief = page.getByTestId(SEL.lesson.brief);
+  await expect(brief).toContainText('ARP のしくみ');
+  await expect(brief).not.toContainText('ARP Teaching Flow');
+  await expect(page.getByTestId(SEL.demo.primaryAction)).toHaveText('client から server へ ping');
+});
