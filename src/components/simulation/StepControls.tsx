@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import { useSimulation } from '../../simulation/SimulationContext';
 import type { PacketHop, RoutingDecision } from '../../types/simulation';
 import { TraceSelector } from './TraceSelector';
@@ -23,11 +24,12 @@ interface HopHeaderProps {
 }
 
 function HopHeader({ hop, current, total }: HopHeaderProps) {
+  const { t } = useI18n();
   const eventColor = EVENT_COLORS[hop.event] ?? 'var(--netlab-text-secondary)';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <div style={{ fontSize: 11, color: 'var(--netlab-text-secondary)' }}>
-        Hop {current} of {total}
+        {t('simulation.steps.hopOf', { current, total })}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span
@@ -62,6 +64,7 @@ interface RoutingTableProps {
 
 function RoutingTable({ decision }: RoutingTableProps) {
   const { candidates, winner, explanation } = decision;
+  const { t } = useI18n();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -73,7 +76,7 @@ function RoutingTable({ decision }: RoutingTableProps) {
           color: 'var(--netlab-text-secondary)',
         }}
       >
-        LPM ROUTING TABLE
+        {t('simulation.steps.lpmHeading')}
       </div>
 
       <div
@@ -98,11 +101,11 @@ function RoutingTable({ decision }: RoutingTableProps) {
             fontSize: 10,
           }}
         >
-          <span>DESTINATION</span>
-          <span>NEXT HOP</span>
-          <span>PROTOCOL</span>
+          <span>{t('simulation.steps.column.destination')}</span>
+          <span>{t('simulation.steps.column.nextHop')}</span>
+          <span>{t('simulation.steps.column.protocol')}</span>
           <span>AD</span>
-          <span>METRIC</span>
+          <span>{t('simulation.steps.column.metric')}</span>
           <span></span>
         </div>
 
@@ -117,12 +120,12 @@ function RoutingTable({ decision }: RoutingTableProps) {
             rowBg = 'color-mix(in srgb, var(--netlab-accent-green) 18%, transparent)';
             badgeColor = 'color-mix(in srgb, var(--netlab-accent-green) 18%, transparent)';
             badgeTextColor = 'var(--netlab-accent-green)';
-            badgeText = 'MATCH ✓';
+            badgeText = t('simulation.steps.match');
           } else if (c.matched) {
             rowBg = 'color-mix(in srgb, var(--netlab-accent-orange) 18%, transparent)';
             badgeColor = 'color-mix(in srgb, var(--netlab-accent-yellow) 18%, transparent)';
             badgeTextColor = 'var(--netlab-accent-yellow)';
-            badgeText = 'MATCHED';
+            badgeText = t('simulation.steps.matched');
           }
 
           return (
@@ -192,6 +195,7 @@ interface StepEntryProps {
 }
 
 function StepEntry({ hop, isCurrent, isLast, totalHops }: StepEntryProps) {
+  const { t } = useI18n();
   const circleColor = isCurrent ? 'var(--netlab-accent-cyan)' : 'var(--netlab-border)';
   const circleBorder = isCurrent ? 'var(--netlab-accent-cyan)' : 'var(--netlab-text-muted)';
 
@@ -263,7 +267,7 @@ function StepEntry({ hop, isCurrent, isLast, totalHops }: StepEntryProps) {
               color: 'var(--netlab-accent-red)',
             }}
           >
-            Drop reason: {hop.reason}
+            {t('simulation.steps.dropReason', { reason: hop.reason })}
           </div>
         )}
       </div>
@@ -286,6 +290,7 @@ export interface StepControlsProps {
 }
 
 export function StepControls({ primary = true }: StepControlsProps = {}) {
+  const { t } = useI18n();
   const { engine, state } = useSimulation();
   const { status, currentStep, traces, currentTraceId } = state;
   const trace = traces.find((t) => t.packetId === currentTraceId);
@@ -326,7 +331,7 @@ export function StepControls({ primary = true }: StepControlsProps = {}) {
           color: 'var(--netlab-text-secondary)',
         }}
       >
-        STEP-BY-STEP SIMULATION
+        {t('simulation.steps.heading')}
       </div>
 
       {/* Scrollable accumulated log */}
@@ -344,7 +349,7 @@ export function StepControls({ primary = true }: StepControlsProps = {}) {
         </div>
         {revealedHops.length === 0 ? (
           <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 12 }}>
-            {status === 'idle' ? 'Send a packet to begin.' : 'Press Next Step to start stepping.'}
+            {status === 'idle' ? t('simulation.steps.logIdle') : t('simulation.steps.logLoaded')}
           </div>
         ) : (
           revealedHops.map((hop, idx) => (
@@ -388,7 +393,7 @@ export function StepControls({ primary = true }: StepControlsProps = {}) {
               color: stepDisabled ? 'var(--netlab-text-muted)' : '#fff',
             }}
           >
-            → Next Step
+            {t('simulation.steps.next')}
           </button>
           <button
             onClick={() => engine.reset()}
@@ -405,17 +410,18 @@ export function StepControls({ primary = true }: StepControlsProps = {}) {
               color: resetDisabled ? 'var(--netlab-text-muted)' : 'var(--netlab-text-primary)',
             }}
           >
-            ⟳ Reset
+            {t('simulation.steps.reset')}
           </button>
         </div>
         <div style={{ fontSize: 11, color: 'var(--netlab-text-secondary)', textAlign: 'center' }}>
-          {status === 'idle' && 'Send a packet to begin'}
-          {status === 'paused' && currentStep === -1 && 'Loaded — press Next Step'}
+          {status === 'idle' && t('simulation.steps.statusIdle')}
+          {status === 'paused' && currentStep === -1 && t('simulation.steps.statusLoaded')}
           {status === 'paused' &&
             currentStep >= 0 &&
-            `Paused at hop ${currentStep + 1} of ${totalHops}`}
-          {status === 'running' && `Running — hop ${currentStep + 1}`}
-          {status === 'done' && `Complete — ${totalHops} hops`}
+            t('simulation.steps.statusPaused', { current: currentStep + 1, total: totalHops })}
+          {status === 'running' &&
+            t('simulation.steps.statusRunning', { current: currentStep + 1 })}
+          {status === 'done' && t('simulation.steps.statusDone', { total: totalHops })}
         </div>
       </div>
     </div>

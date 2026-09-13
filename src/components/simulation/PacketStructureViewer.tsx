@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/useI18n';
 import { useSimulation } from '../../simulation/SimulationContext';
 import type { AnnotatedField, LayerTag, SerializedPacket } from '../../utils/packetSerializer';
 import { serializeArpFrame, serializePacket } from '../../utils/packetSerializer';
@@ -47,6 +48,7 @@ function layerBadgeStyle(layer: LayerTag): React.CSSProperties {
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function EmptyState() {
+  const { t } = useI18n();
   return (
     <div
       style={{
@@ -57,7 +59,7 @@ function EmptyState() {
         fontFamily: 'monospace',
       }}
     >
-      No packet selected — step through the simulation to inspect packet bytes.
+      {t('simulation.packet.empty')}
     </div>
   );
 }
@@ -83,6 +85,7 @@ function HexDump({
   changedFields?: string[];
 }) {
   const { bytes, annotations, fields } = serialized;
+  const { t } = useI18n();
   const truncated = bytes.length > MAX_RENDER_BYTES;
   const renderBytes = truncated ? bytes.slice(0, MAX_RENDER_BYTES) : bytes;
   const changedFieldSet = new Set(changedFields ?? []);
@@ -163,12 +166,12 @@ function HexDump({
           marginBottom: 4,
         }}
       >
-        HEX DUMP
+        {t('simulation.packet.hexDump')}
       </div>
       {rows}
       {truncated && (
         <div style={{ fontSize: 10, color: 'var(--netlab-text-secondary)', marginTop: 4 }}>
-          +{bytes.length - MAX_RENDER_BYTES} more bytes…
+          {t('simulation.packet.moreBytes', { count: bytes.length - MAX_RENDER_BYTES })}
         </div>
       )}
     </div>
@@ -182,6 +185,7 @@ function FieldTable({
   fields: AnnotatedField[];
   changedFields?: string[];
 }) {
+  const { t } = useI18n();
   if (fields.length === 0) return null;
   const changedFieldSet = new Set(changedFields ?? []);
   return (
@@ -195,7 +199,7 @@ function FieldTable({
           marginBottom: 4,
         }}
       >
-        FIELD DETAILS
+        {t('simulation.packet.fieldDetails')}
       </div>
       <div
         style={{
@@ -219,9 +223,9 @@ function FieldTable({
             letterSpacing: 0.5,
           }}
         >
-          <span>Layer</span>
-          <span>Field</span>
-          <span>Value</span>
+          <span>{t('simulation.packet.column.layer')}</span>
+          <span>{t('simulation.packet.column.field')}</span>
+          <span>{t('simulation.packet.column.value')}</span>
           <span style={{ textAlign: 'right' }}>B</span>
         </div>
         {/* Data rows */}
@@ -277,6 +281,7 @@ function FieldTable({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function PacketStructureViewer() {
+  const { t } = useI18n();
   const { state } = useSimulation();
   const { selectedHop, selectedPacket } = state;
 
@@ -305,7 +310,7 @@ export function PacketStructureViewer() {
           marginBottom: 6,
         }}
       >
-        PACKET STRUCTURE
+        {t('simulation.packet.heading')}
       </div>
 
       {!selectedPacket ? (

@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import { traceEventId } from '../../sandbox/annotations/anchors';
 import { useSandboxOrNull } from '../../sandbox/useSandbox';
 import { useSimulation } from '../../simulation/SimulationContext';
@@ -285,6 +286,7 @@ export interface PacketTimelineProps {
 }
 
 export const PacketTimeline = memo(function PacketTimeline({ filter }: PacketTimelineProps = {}) {
+  const { t } = useI18n();
   const { topology } = useNetlabContext();
   const { engine, state, exportPcap } = useSimulation();
   const sandbox = useSandboxOrNull();
@@ -352,7 +354,7 @@ export const PacketTimeline = memo(function PacketTimeline({ filter }: PacketTim
             textTransform: 'uppercase',
           }}
         >
-          PACKET TIMELINE
+          {t('simulation.timeline.heading')}
         </span>
         {trace && (
           <span
@@ -369,7 +371,7 @@ export const PacketTimeline = memo(function PacketTimeline({ filter }: PacketTim
         )}
         <button
           type="button"
-          aria-label="Clear timeline"
+          aria-label={t('simulation.timeline.clear')}
           onClick={() => engine.reset()}
           style={{
             marginLeft: 'auto',
@@ -399,7 +401,10 @@ export const PacketTimeline = memo(function PacketTimeline({ filter }: PacketTim
             fontFamily: 'monospace',
           }}
         >
-          {visibleHops.length} of {trace.hops.length} hops shown
+          {t('simulation.timeline.hopsShown', {
+            shown: visibleHops.length,
+            total: trace.hops.length,
+          })}
         </div>
       )}
 
@@ -430,20 +435,20 @@ export const PacketTimeline = memo(function PacketTimeline({ filter }: PacketTim
             fontFamily: 'monospace',
           }}
         >
-          Download PCAP
+          {t('simulation.timeline.downloadPcap')}
         </button>
       </div>
 
       <div
         ref={scrollRef}
         role={trace ? 'listbox' : 'region'}
-        aria-label="Packet hops"
+        aria-label={t('simulation.timeline.hops')}
         tabIndex={0}
         style={{ flex: 1, overflowY: 'auto', padding: '6px 4px' }}
       >
         {!trace ? (
           <div style={{ color: 'var(--netlab-text-muted)', fontSize: 11, padding: '8px 8px' }}>
-            No trace yet — click "Send Packet" to start.
+            {t('simulation.timeline.empty')}
           </div>
         ) : (
           visibleHops.map((hop) => (

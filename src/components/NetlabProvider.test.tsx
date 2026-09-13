@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HookEngine } from '../hooks/HookEngine';
+import { I18nProvider } from '../i18n/I18nProvider';
 import { useI18n } from '../i18n/useI18n';
 import type { I18nContextValue } from '../i18n/types';
 import * as stpModule from '../layers/l2-datalink/stp/computeStp';
@@ -362,6 +363,39 @@ describe('NetlabProvider', () => {
 
       expect(i18n?.locale).toBe('ja');
       expect(i18n?.t('sandbox.panel.heading')).toBe('サンドボックス');
+    });
+
+    /**
+     * TC-158 — a lesson inside a page that chose Japanese follows that choice.
+     *
+     * Defaulting to English regardless reset every lesson to English inside a
+     * page the learner had switched to 日本語, because each lesson mounts its own
+     * provider and none of them names a language.
+     */
+    it('inherits the surrounding language when no locale is given', () => {
+      render(
+        <I18nProvider locale="ja">
+          <NetlabProvider topology={makeTopology('Inherited')}>
+            <CaptureI18n />
+          </NetlabProvider>
+        </I18nProvider>,
+      );
+
+      expect(i18n?.locale).toBe('ja');
+      expect(i18n?.t('simulation.timeline.heading')).toBe('パケットタイムライン');
+    });
+
+    /** TC-159 — and a language named on the provider still wins. */
+    it('prefers its own locale over the surrounding one', () => {
+      render(
+        <I18nProvider locale="ja">
+          <NetlabProvider topology={makeTopology('Explicit')} locale="en">
+            <CaptureI18n />
+          </NetlabProvider>
+        </I18nProvider>,
+      );
+
+      expect(i18n?.locale).toBe('en');
     });
   });
 });

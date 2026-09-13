@@ -61,7 +61,7 @@ window.USER_GUIDE_CONTENT = {
       {
         id: "pcap",
         title: "パケットを書き出す",
-        html: `<p>パケットタイムラインの「Download PCAP」から、選んでいる通信を <code>.pcap</code> ファイルとして保存できます。Wireshark などでそのまま開けます。</p>
+        html: `<p>パケットタイムラインの「PCAP を保存」（英語表示では「Download PCAP」）から、選んでいる通信を <code>.pcap</code> ファイルとして保存できます。Wireshark などでそのまま開けます。</p>
                <p>書き出されるのは<strong>選択中の通信だけ</strong>です。別の通信を書き出すときは、先にその通信を選んでください。</p>`
       },
       {

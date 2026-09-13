@@ -2,6 +2,7 @@ import { useMemo, useRef, type ReactNode } from 'react';
 import { NetlabError } from '../errors';
 import { HookEngine } from '../hooks/HookEngine';
 import { I18nProvider } from '../i18n/I18nProvider';
+import { useI18n } from '../i18n/useI18n';
 import { computeStp } from '../layers/l2-datalink/stp/computeStp';
 import { protocolRegistry } from '../registry/ProtocolRegistry';
 import { SandboxNarrationRegion } from '../sandbox/narration/SandboxNarrationRegion';
@@ -69,12 +70,18 @@ export function NetlabProvider({
   parentOrigin,
   sandboxControlMode: sandboxControlModeProp,
   sandboxProposalTimeoutMs = DEFAULT_SANDBOX_PROPOSAL_TIMEOUT_MS,
-  locale = 'en',
+  locale: localeProp,
   cryptoProvider,
   onTopologyChange,
   onSandboxEditProposed,
 }: NetlabProviderProps) {
   const warnedImplicitSandboxModeRef = useRef(false);
+  // An explicit `locale` wins. Without one, follow the language of whatever
+  // surrounds the provider — a page that has chosen Japanese should not have
+  // every lesson inside it reset to English. With nothing surrounding it the
+  // inherited value is the i18n default, English, exactly as before.
+  const inheritedLocale = useI18n().locale;
+  const locale = localeProp ?? inheritedLocale;
 
   const defaultTopologyRef = useRef<NetworkTopology | null>(null);
   if (defaultTopologyRef.current === null && defaultTopology) {

@@ -81,6 +81,14 @@ and the gallery — each already has its own tests and docs.
   is comparing the same part of the topology at the same size.
 - **REQ-018 (MUST):** A link the canvas has found errors or warnings on MUST be
   marked on the link itself, and hovering the mark MUST say what is wrong.
+- **REQ-052 (MUST):** The controls every lesson shares — the packet timeline,
+  the step controls, the route table, the hop inspector, the packet structure
+  viewer and the display filter — MUST follow the language the learner chose in
+  the gallery. Hop events (`CREATE`, `FWD`, `DELIVER`, `DROP`) and drop reasons
+  are codes the guide documents and a learner searches for, and stay as they
+  are. A library consumer that does not ask for a language MUST still get
+  English, and one that names a language on `NetlabProvider` MUST still get that
+  one.
 - **REQ-051 (MUST):** The product MUST ship a user guide that works opened
   straight from disk, with no server and no network, and that can be read in
   Japanese and in English, searched, and read in a light or a dark theme. It
@@ -298,6 +306,14 @@ not part of this specification.
   for WCAG 2 A/AA, then there are no violations.
 - **AC-034:** Given either built-in theme, when its tokens are measured against
   its own backgrounds, then every text and accent token clears 4.5:1.
+- **AC-052:** Given Japanese chosen in the gallery, when a lesson with a packet
+  timeline and step controls is opened and a packet is sent, then those
+  controls' headings, buttons and empty-state messages are in Japanese, while
+  the hop events stay as codes; and given no choice, then they are in English.
+- **AC-053:** Given a lesson with a route table drawn over its canvas, when the
+  learner presses the table's collapse control, then the table's contents are
+  hidden and the control reports itself collapsed; and pressing it again shows
+  them.
 - **AC-050:** Given a canvas the learner can drag devices on, when its controls
   are shown, then snapping to a grid is offered; and given a presentational
   canvas, then it is not.
@@ -466,6 +482,11 @@ not part of this specification.
 | TC-152    | AC-050     | unit/behavior | A presentational canvas                                      | What it offers is read                                                            | Grid snap is not offered                                                             | `src/components/engine/canvasOffers.test.ts`                  |
 | TC-153    | AC-051     | E2E           | A viewer who prefers reduced motion                          | A packet is sent                                                                  | No link is shown animated                                                            | `e2e/canvas-reduced-motion.spec.ts`                           |
 | TC-154    | AC-051     | E2E           | A viewer with no motion preference                           | A packet is sent                                                                  | The travelling packet's link is animated                                             | `e2e/canvas-reduced-motion.spec.ts`                           |
+| TC-155    | AC-053     | E2E           | The route table over the DMZ lesson                          | Its collapse control is pressed twice                                             | The contents hide and return, and the control reports each state                     | `e2e/route-table.spec.ts`                                     |
+| TC-156    | AC-052     | E2E           | A lesson opened with Japanese chosen                         | A packet is sent                                                                  | The timeline is in Japanese and the hop events stay as codes                         | `e2e/lesson-chrome-locale.spec.ts`                            |
+| TC-157    | AC-052     | E2E           | A lesson opened with no language chosen                      | A packet is sent                                                                  | The timeline is in English, as before                                                | `e2e/lesson-chrome-locale.spec.ts`                            |
+| TC-158    | AC-052     | unit/behavior | A provider inside a page that chose Japanese                 | It names no language                                                              | It follows the surrounding Japanese                                                  | `src/components/NetlabProvider.test.tsx`                      |
+| TC-159    | AC-052     | unit/behavior | A provider naming English inside a Japanese page             | Its language is resolved                                                          | Its own choice wins                                                                  | `src/components/NetlabProvider.test.tsx`                      |
 | TC-038    | AC-031     | E2E           | The gallery's theme setting                                  | A theme is chosen, then a lesson opened                                           | The lesson follows the choice, and an unmade choice changes nothing                  | `e2e/settings-carry.spec.ts`                                  |
 | TC-037    | AC-030     | E2E           | An interactive canvas                                        | The learner tabs to a device and presses Enter                                    | The device is focusable, named, and opens                                            | `e2e/canvas-keyboard.spec.ts`                                 |
 | TC-036    | AC-029     | E2E           | A laptop display, and the sandbox                            | The same lesson is worked through, and a device is edited and the edit taken back | Every control is pressable and every result appears                                  | `e2e/user-journey.spec.ts`                                    |
@@ -567,7 +588,7 @@ with no criterion or no test is shown as such rather than given one.
 | REQ-018     | AC-018         | TC-023                                                                         | `src/components/engine/simulatorGraphModel.test.ts`                                                 | Reading a lesson    | Verified |
 | REQ-019     | AC-019         | TC-024                                                                         | `e2e/canvas-select-pan.spec.ts`                                                                     | —                   | Verified |
 | REQ-020     | AC-020         | TC-025                                                                         | `e2e/canvas-theme.spec.ts`                                                                          | —                   | Verified |
-| REQ-021     | AC-050         | TC-151, TC-152                                                                 | `src/components/engine/canvasOffers.test.ts`                                                        | —                   | Verified |
+| REQ-021     | AC-050, AC-053 | TC-151, TC-152, TC-155                                                         | `src/components/engine/canvasOffers.test.ts`<br>`e2e/route-table.spec.ts`                           | —                   | Verified |
 | REQ-022     | AC-021, AC-022 | TC-026, TC-027                                                                 | `src/components/DefaultNode.test.tsx`<br>`e2e/smoke.spec.ts`                                        | Reading a lesson    | Verified |
 | REQ-023     | AC-022         | TC-027                                                                         | `e2e/smoke.spec.ts`                                                                                 | —                   | Verified |
 | REQ-024     | AC-028         | TC-034                                                                         | `e2e/smoke.spec.ts`                                                                                 | —                   | Verified |
@@ -598,3 +619,4 @@ with no criterion or no test is shown as such rather than given one.
 | REQ-049     | AC-047         | TC-141, TC-142, TC-143, TC-146                                                 | `e2e/authored-links.spec.ts`<br>`src/utils/connectionValidator.test.ts`                             | Reading a lesson    | Verified |
 | REQ-050     | AC-048         | TC-144, TC-145                                                                 | `e2e/authored-links.spec.ts`                                                                        | Reading a lesson    | Verified |
 | REQ-051     | AC-049         | TC-147, TC-148, TC-149, TC-150                                                 | `e2e/user-guide.spec.ts`                                                                            | Getting started     | Verified |
+| REQ-052     | AC-052         | TC-156, TC-157, TC-158, TC-159                                                 | `e2e/lesson-chrome-locale.spec.ts`<br>`src/components/NetlabProvider.test.tsx`                      | Using the gallery   | Verified |

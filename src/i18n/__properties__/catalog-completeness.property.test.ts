@@ -75,7 +75,7 @@ describe('i18n catalog completeness', () => {
   });
 
   it('all keys start with a known top-level namespace', () => {
-    const allowedNamespaces = new Set(['sandbox', 'learning']);
+    const allowedNamespaces = new Set(['sandbox', 'learning', 'simulation']);
     const offenders = Object.keys(en).filter((key) => {
       const top = key.split('.')[0];
       return top === undefined || !allowedNamespaces.has(top);

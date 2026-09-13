@@ -21,6 +21,8 @@ import { installKeymap, type KeymapActions } from '../src/utils/keymap';
 import { useViewport } from '../src/utils/useViewport';
 import { E2eTraceHook } from './__e2e_hook';
 import { ShellChromeProvider } from './ShellChromeContext';
+import { I18nProvider } from '../src/i18n/I18nProvider';
+import { readLearningLocale } from './learning/learningLocale';
 
 const GITHUB_ICON = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -121,16 +123,15 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
   // reaching the demo. A skip link (hidden until focused) jumps straight there.
   const [skipFocused, setSkipFocused] = useState(false);
 
+  // The language chosen in the gallery. Read once: choosing another happens on
+  // the gallery page, and arriving back here mounts the shell afresh.
+  const [locale] = useState(readLearningLocale);
+
   // Keep <html lang> in step with the chosen locale so screen readers use the
-  // right pronunciation for Japanese content (the panels honor the same key).
+  // right pronunciation for Japanese content.
   useEffect(() => {
-    try {
-      document.documentElement.lang =
-        window.localStorage.getItem('netlab-locale') === 'ja' ? 'ja' : 'en';
-    } catch {
-      /* localStorage unavailable — leave the default */
-    }
-  }, []);
+    document.documentElement.lang = locale;
+  }, [locale]);
 
   // Descriptive per-demo <title> (WCAG 2.4.2): a single generic title leaves
   // screen-reader, tab and history users unable to tell the demos apart.
@@ -440,7 +441,9 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
               tabIndex={-1}
               style={{ height: '100%', outline: 'none' }}
             >
-              {children}
+              {/* Every lesson inside follows the same choice: NetlabProvider
+                  inherits it when a lesson does not name a language itself. */}
+              <I18nProvider locale={locale}>{children}</I18nProvider>
             </main>
           </ShellChromeProvider>
           {!embedded && (

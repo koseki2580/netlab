@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useI18n } from '../../../i18n/useI18n';
 import { parseTraceFilter, type TraceFilterResult } from './parser';
 
 export const TRACE_FILTER_PARAM = 'trace_filter';
@@ -9,6 +10,7 @@ export interface TraceFilterInputProps {
 }
 
 export function TraceFilterInput({ onParse }: TraceFilterInputProps) {
+  const { t } = useI18n();
   const inputId = useId();
   const statusId = useId();
   const [value, setValue] = useState(() => readTraceFilterFromUrl());
@@ -42,12 +44,12 @@ export function TraceFilterInput({ onParse }: TraceFilterInputProps) {
         htmlFor={inputId}
         style={{ fontSize: 10, color: 'var(--netlab-text-secondary)', fontFamily: 'monospace' }}
       >
-        Display filter
+        {t('simulation.filter.label')}
       </label>
       <input
         id={inputId}
         role="searchbox"
-        aria-label="Trace display filter"
+        aria-label={t('simulation.filter.aria')}
         data-testid="trace-filter-searchbox"
         aria-describedby={describedBy}
         aria-invalid={error ? 'true' : 'false'}
@@ -91,7 +93,12 @@ export function TraceFilterInput({ onParse }: TraceFilterInputProps) {
           fontFamily: 'monospace',
         }}
       >
-        {error ? `Parse error at column ${error.context?.column}: ${error.message}` : ' '}
+        {error
+          ? t('simulation.filter.parseError', {
+              column: String(error.context?.column),
+              message: error.message,
+            })
+          : ' '}
       </div>
     </div>
   );

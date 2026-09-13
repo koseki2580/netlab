@@ -233,6 +233,11 @@ export const SEL = {
     areaLegend: 'area-legend',
     controlledJson: 'controlled-topology-json',
   },
+  /** The route table drawn over a lesson's canvas. */
+  routeTable: {
+    toggle: 'route-table-toggle',
+    body: 'route-table-body',
+  },
   /**
    * The offline HTML user guide. It is a static page built from a template,
    * so these are its element ids rather than test ids.

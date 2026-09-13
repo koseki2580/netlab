@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import { useNetlabContext } from '../NetlabContext';
 
 const PANEL_STYLE: React.CSSProperties = {
@@ -36,7 +37,11 @@ interface RouteTablePanelProps {
 }
 
 export function RouteTablePanel({ floating = false }: RouteTablePanelProps) {
+  const { t } = useI18n();
   const { topology, routeTable } = useNetlabContext();
+  // The panel floats over the diagram and can cover the devices a learner is
+  // looking at, so its collapse control has to actually collapse it.
+  const [collapsed, setCollapsed] = useState(false);
 
   const routers = topology.nodes.filter((n) => n.data.role === 'router');
 
@@ -56,11 +61,16 @@ export function RouteTablePanel({ floating = false }: RouteTablePanelProps) {
             textTransform: 'uppercase',
           }}
         >
-          ROUTE TABLE
+          {t('simulation.routeTable.heading')}
         </span>
         <button
           type="button"
-          aria-label="Collapse route table"
+          data-testid="route-table-toggle"
+          aria-expanded={!collapsed}
+          aria-label={
+            collapsed ? t('simulation.routeTable.expand') : t('simulation.routeTable.collapse')
+          }
+          onClick={() => setCollapsed((value) => !value)}
           style={{
             background: 'none',
             border: 'none',
@@ -71,141 +81,149 @@ export function RouteTablePanel({ floating = false }: RouteTablePanelProps) {
             fontFamily: 'monospace',
           }}
         >
-          ⌃
+          {collapsed ? '⌄' : '⌃'}
         </button>
       </div>
-      {routers.map((router) => {
-        const routes = routeTable.get(router.id) ?? [];
-        return (
-          <div key={router.id} style={{ marginBottom: 12 }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                color: 'var(--netlab-accent-green)',
-                fontWeight: 700,
-                marginBottom: 4,
-                fontSize: 11,
-              }}
-            >
-              <span aria-hidden="true">●</span>
-              {router.data.label}
-            </div>
-            {routes.length === 0 ? (
-              <div style={{ color: 'var(--netlab-text-muted)', fontSize: 11 }}>No routes</div>
-            ) : (
-              <table
-                style={{
-                  width: '100%',
-                  borderCollapse: 'collapse',
-                  fontSize: 11,
-                  fontFamily: 'monospace',
-                }}
-              >
-                <caption
+      {collapsed ? null : (
+        <div data-testid="route-table-body">
+          {routers.map((router) => {
+            const routes = routeTable.get(router.id) ?? [];
+            return (
+              <div key={router.id} style={{ marginBottom: 12 }}>
+                <div
                   style={{
-                    color: 'var(--netlab-text-secondary)',
-                    fontSize: 10,
-                    textAlign: 'left',
-                    marginBottom: 2,
-                    captionSide: 'top',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    color: 'var(--netlab-accent-green)',
+                    fontWeight: 700,
+                    marginBottom: 4,
+                    fontSize: 11,
                   }}
                 >
-                  Route table for {router.data.label}
-                </caption>
-                <thead>
-                  <tr
+                  <span aria-hidden="true">●</span>
+                  {router.data.label}
+                </div>
+                {routes.length === 0 ? (
+                  <div style={{ color: 'var(--netlab-text-muted)', fontSize: 11 }}>
+                    {t('simulation.routeTable.none')}
+                  </div>
+                ) : (
+                  <table
                     style={{
-                      color: 'var(--netlab-text-muted)',
-                      position: 'sticky',
-                      top: 0,
-                      background: 'var(--netlab-bg-panel)',
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      fontSize: 11,
+                      fontFamily: 'monospace',
                     }}
                   >
-                    <th
-                      scope="col"
-                      style={{ textAlign: 'left', padding: '2px 4px', fontWeight: 600 }}
+                    <caption
+                      style={{
+                        color: 'var(--netlab-text-secondary)',
+                        fontSize: 10,
+                        textAlign: 'left',
+                        marginBottom: 2,
+                        captionSide: 'top',
+                      }}
                     >
-                      AF
-                    </th>
-                    <th
-                      scope="col"
-                      style={{ textAlign: 'left', padding: '2px 4px', fontWeight: 600 }}
-                    >
-                      Destination
-                    </th>
-                    <th
-                      scope="col"
-                      style={{ textAlign: 'left', padding: '2px 4px', fontWeight: 600 }}
-                    >
-                      Next Hop
-                    </th>
-                    <th
-                      scope="col"
-                      style={{ textAlign: 'right', padding: '2px 4px', fontWeight: 600 }}
-                    >
-                      AD
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {routes.map((r, idx) => (
-                    <tr key={idx} style={{ color: 'var(--netlab-text-primary)' }}>
-                      <td
+                      {t('simulation.routeTable.caption', { router: router.data.label })}
+                    </caption>
+                    <thead>
+                      <tr
                         style={{
-                          padding: '2px 4px',
-                          color: r.destination.includes(':')
-                            ? 'var(--netlab-accent-cyan)'
-                            : 'var(--netlab-text-muted)',
-                        }}
-                      >
-                        {r.destination.includes(':') ? 'v6' : 'v4'}
-                      </td>
-                      <td
-                        style={{
-                          padding: '2px 4px',
-                          maxWidth: 100,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {r.destination}
-                      </td>
-                      <td
-                        style={{
-                          padding: '2px 4px',
-                          maxWidth: 80,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          color: 'var(--netlab-text-secondary)',
-                        }}
-                      >
-                        {r.nextHop === 'direct' ? (
-                          <span style={{ color: 'var(--netlab-accent-green)' }}>direct</span>
-                        ) : (
-                          r.nextHop
-                        )}
-                      </td>
-                      <td
-                        style={{
-                          padding: '2px 4px',
-                          textAlign: 'right',
                           color: 'var(--netlab-text-muted)',
+                          position: 'sticky',
+                          top: 0,
+                          background: 'var(--netlab-bg-panel)',
                         }}
                       >
-                        {r.adminDistance ?? 0}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        );
-      })}
+                        <th
+                          scope="col"
+                          style={{ textAlign: 'left', padding: '2px 4px', fontWeight: 600 }}
+                        >
+                          AF
+                        </th>
+                        <th
+                          scope="col"
+                          style={{ textAlign: 'left', padding: '2px 4px', fontWeight: 600 }}
+                        >
+                          {t('simulation.routeTable.column.destination')}
+                        </th>
+                        <th
+                          scope="col"
+                          style={{ textAlign: 'left', padding: '2px 4px', fontWeight: 600 }}
+                        >
+                          {t('simulation.routeTable.column.nextHop')}
+                        </th>
+                        <th
+                          scope="col"
+                          style={{ textAlign: 'right', padding: '2px 4px', fontWeight: 600 }}
+                        >
+                          AD
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {routes.map((r, idx) => (
+                        <tr key={idx} style={{ color: 'var(--netlab-text-primary)' }}>
+                          <td
+                            style={{
+                              padding: '2px 4px',
+                              color: r.destination.includes(':')
+                                ? 'var(--netlab-accent-cyan)'
+                                : 'var(--netlab-text-muted)',
+                            }}
+                          >
+                            {r.destination.includes(':') ? 'v6' : 'v4'}
+                          </td>
+                          <td
+                            style={{
+                              padding: '2px 4px',
+                              maxWidth: 100,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {r.destination}
+                          </td>
+                          <td
+                            style={{
+                              padding: '2px 4px',
+                              maxWidth: 80,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              color: 'var(--netlab-text-secondary)',
+                            }}
+                          >
+                            {r.nextHop === 'direct' ? (
+                              <span style={{ color: 'var(--netlab-accent-green)' }}>
+                                {t('simulation.routeTable.direct')}
+                              </span>
+                            ) : (
+                              r.nextHop
+                            )}
+                          </td>
+                          <td
+                            style={{
+                              padding: '2px 4px',
+                              textAlign: 'right',
+                              color: 'var(--netlab-text-muted)',
+                            }}
+                          >
+                            {r.adminDistance ?? 0}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

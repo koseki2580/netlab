@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import { useSimulation } from '../../simulation/SimulationContext';
 import type { NatTranslation, PacketHop, RoutingDecision } from '../../types/simulation';
 import { CARD, FIELD_ROW, MONO_FONT_STACK, SECTION_HEADER, TEXT } from '../_styles/tokens';
@@ -130,6 +131,7 @@ function formatEndpoint(ip: string, port: number): string {
 }
 
 function NatTranslationSection({ translation }: { translation: NatTranslation }) {
+  const { t } = useI18n();
   const srcChanged =
     translation.preSrcIp !== translation.postSrcIp ||
     translation.preSrcPort !== translation.postSrcPort;
@@ -139,9 +141,9 @@ function NatTranslationSection({ translation }: { translation: NatTranslation })
 
   return (
     <section style={CARD}>
-      <div style={SECTION_HEADER}>NAT TRANSLATION</div>
+      <div style={SECTION_HEADER}>{t('simulation.hop.nat')}</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
-        <FieldRow label="Type" value={translation.type.toUpperCase()} />
+        <FieldRow label={t('simulation.hop.field.type')} value={translation.type.toUpperCase()} />
         <FieldRow
           label="Pre Src"
           value={formatEndpoint(translation.preSrcIp, translation.preSrcPort)}
@@ -172,27 +174,28 @@ function HopFields({
   hop: PacketHop;
   nodes: { id: string; data: { label: string; role: string } }[];
 }) {
+  const { t } = useI18n();
   const fields = [
-    { label: 'Node', value: resolveNodeLabel(hop.nodeId, nodes) },
-    { label: 'Next Hop', value: resolveNodeLabel(hop.toNodeId, nodes) },
+    { label: t('simulation.hop.field.node'), value: resolveNodeLabel(hop.nodeId, nodes) },
+    { label: t('simulation.hop.field.nextHop'), value: resolveNodeLabel(hop.toNodeId, nodes) },
     { label: 'Src IP', value: hop.srcIp },
     { label: 'Dst IP', value: hop.dstIp },
     { label: 'Src MAC', value: hop.srcMac ?? '—' },
     { label: 'Dst MAC', value: hop.dstMac ?? '—' },
     { label: 'TTL In', value: String(hop.ttl) },
     { label: 'TTL Out', value: String(getTtlOut(hop, nodes)) },
-    { label: 'Protocol', value: hop.protocol },
+    { label: t('simulation.hop.field.protocol'), value: hop.protocol },
   ];
 
   if (hop.ingressInterfaceName || hop.egressInterfaceName) {
     fields.push(
-      { label: 'Ingress If', value: hop.ingressInterfaceName ?? '—' },
-      { label: 'Egress If', value: hop.egressInterfaceName ?? '—' },
+      { label: t('simulation.hop.field.ingress'), value: hop.ingressInterfaceName ?? '—' },
+      { label: t('simulation.hop.field.egress'), value: hop.egressInterfaceName ?? '—' },
     );
   }
 
   if (hop.action) {
-    fields.push({ label: 'Action', value: formatHopAction(hop.action) });
+    fields.push({ label: t('simulation.hop.field.action'), value: formatHopAction(hop.action) });
   }
 
   if (
@@ -200,11 +203,17 @@ function HopFields({
     hop.fragmentIndex !== undefined &&
     hop.fragmentCount !== undefined
   ) {
-    fields.push({ label: 'Fragment', value: `${hop.fragmentIndex + 1}/${hop.fragmentCount}` });
+    fields.push({
+      label: t('simulation.hop.field.fragment'),
+      value: `${hop.fragmentIndex + 1}/${hop.fragmentCount}`,
+    });
   }
 
   if (hop.action === 'reassembly-complete' && hop.fragmentCount !== undefined) {
-    fields.push({ label: 'Fragment', value: `${hop.fragmentCount} total` });
+    fields.push({
+      label: t('simulation.hop.field.fragment'),
+      value: t('simulation.hop.field.fragmentTotal', { count: hop.fragmentCount }),
+    });
   }
 
   if (hop.nextHopMtu !== undefined) {
@@ -232,7 +241,7 @@ function HopFields({
 
   return (
     <section style={CARD}>
-      <div style={SECTION_HEADER}>HOP FIELDS</div>
+      <div style={SECTION_HEADER}>{t('simulation.hop.fields')}</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
         {fields.map((field) => (
           <FieldRow key={field.label} label={field.label} value={field.value} />
@@ -243,11 +252,15 @@ function HopFields({
 }
 
 function ArpHopDetails({ hop }: { hop: PacketHop }) {
+  const { t } = useI18n();
   const frame = hop.arpFrame;
   if (!frame) return null;
 
   const rows: [string, string][] = [
-    ['Operation', frame.payload.operation === 'request' ? 'REQUEST (1)' : 'REPLY (2)'],
+    [
+      t('simulation.hop.field.operation'),
+      frame.payload.operation === 'request' ? 'REQUEST (1)' : 'REPLY (2)',
+    ],
     ['Sender MAC', frame.payload.senderMac],
     ['Sender IP', frame.payload.senderIp],
     ['Target MAC', frame.payload.operation === 'request' ? '(unknown)' : frame.payload.targetMac],
@@ -273,7 +286,7 @@ function ArpHopDetails({ hop }: { hop: PacketHop }) {
           marginBottom: 10,
         }}
       >
-        ARP FIELDS
+        {t('simulation.hop.arpFields')}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
         {rows.map(([label, value]) => (
@@ -285,9 +298,10 @@ function ArpHopDetails({ hop }: { hop: PacketHop }) {
 }
 
 function RoutingSection({ decision }: { decision: RoutingDecision }) {
+  const { t } = useI18n();
   return (
     <section style={CARD}>
-      <div style={SECTION_HEADER}>ROUTING DECISION</div>
+      <div style={SECTION_HEADER}>{t('simulation.hop.routing')}</div>
 
       <div
         style={{
@@ -325,17 +339,17 @@ function RoutingSection({ decision }: { decision: RoutingDecision }) {
             alignItems: 'center',
           }}
         >
-          <span>DESTINATION</span>
-          <span>NEXT HOP</span>
-          <span>PROTO</span>
+          <span>{t('simulation.steps.column.destination')}</span>
+          <span>{t('simulation.steps.column.nextHop')}</span>
+          <span>{t('simulation.hop.column.protocol')}</span>
           <span>AD</span>
-          <span>METRIC</span>
+          <span>{t('simulation.steps.column.metric')}</span>
           <span></span>
         </div>
 
         {decision.candidates.length === 0 ? (
           <div style={{ padding: '10px 8px', color: 'var(--netlab-text-secondary)' }}>
-            No routing candidates.
+            {t('simulation.hop.noCandidates')}
           </div>
         ) : (
           decision.candidates.map((candidate, index) => {
@@ -348,12 +362,12 @@ function RoutingSection({ decision }: { decision: RoutingDecision }) {
               background = 'color-mix(in srgb, var(--netlab-accent-green) 18%, transparent)';
               badgeBackground = 'color-mix(in srgb, var(--netlab-accent-green) 18%, transparent)';
               badgeColor = 'var(--netlab-accent-green)';
-              badgeText = 'MATCH';
+              badgeText = t('simulation.hop.match');
             } else if (candidate.matched) {
               background = 'color-mix(in srgb, var(--netlab-accent-orange) 18%, transparent)';
               badgeBackground = 'color-mix(in srgb, var(--netlab-accent-yellow) 18%, transparent)';
               badgeColor = 'var(--netlab-accent-yellow)';
-              badgeText = 'MATCHED';
+              badgeText = t('simulation.steps.matched');
             }
 
             return (
@@ -404,6 +418,7 @@ function RoutingSection({ decision }: { decision: RoutingDecision }) {
 }
 
 function DropReasonBlock({ reason }: { reason: string }) {
+  const { t } = useI18n();
   return (
     <section
       style={{
@@ -422,7 +437,7 @@ function DropReasonBlock({ reason }: { reason: string }) {
           marginBottom: 8,
         }}
       >
-        DROP REASON
+        {t('simulation.hop.dropReason')}
       </div>
       <div style={{ color: '#fecaca', fontSize: 12 }}>{formatDropReason(reason)}</div>
     </section>
@@ -430,6 +445,7 @@ function DropReasonBlock({ reason }: { reason: string }) {
 }
 
 function ChangedFieldsBlock({ fields }: { fields: string[] }) {
+  const { t } = useI18n();
   return (
     <section
       style={{
@@ -446,7 +462,7 @@ function ChangedFieldsBlock({ fields }: { fields: string[] }) {
           marginBottom: 8,
         }}
       >
-        MUTATED FIELDS
+        {t('simulation.hop.mutated')}
       </div>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
         {fields.map((field) => (
@@ -473,6 +489,7 @@ function ChangedFieldsBlock({ fields }: { fields: string[] }) {
 }
 
 export const HopInspector = memo(function HopInspector() {
+  const { t } = useI18n();
   const { topology } = useNetlabContext();
   const { state } = useSimulation();
   const { selectedHop, traces, currentTraceId } = state;
@@ -506,7 +523,7 @@ export const HopInspector = memo(function HopInspector() {
             marginBottom: 0,
           }}
         >
-          HOP INSPECTOR
+          {t('simulation.hop.heading')}
         </div>
         <div
           style={{
@@ -515,7 +532,7 @@ export const HopInspector = memo(function HopInspector() {
             fontSize: 12,
           }}
         >
-          No hop selected. Click a timeline row to inspect packet details.
+          {t('simulation.hop.empty')}
         </div>
       </div>
     );
@@ -545,7 +562,9 @@ export const HopInspector = memo(function HopInspector() {
           zIndex: 1,
         }}
       >
-        <header style={{ ...SECTION_HEADER, marginBottom: 8 }}>HOP INSPECTOR</header>
+        <header style={{ ...SECTION_HEADER, marginBottom: 8 }}>
+          {t('simulation.hop.heading')}
+        </header>
         <div
           style={{
             display: 'flex',
@@ -555,7 +574,10 @@ export const HopInspector = memo(function HopInspector() {
           }}
         >
           <span style={{ fontSize: 12, color: TEXT.secondary }}>
-            Hop {selectedHop.step + 1} / {totalHops || selectedHop.step + 1}
+            {t('simulation.hop.position', {
+              current: selectedHop.step + 1,
+              total: totalHops || selectedHop.step + 1,
+            })}
           </span>
           <EventBadge event={selectedHop.event} />
         </div>

@@ -8,6 +8,7 @@ import { narration } from './en/narration';
 import { panel } from './en/panel';
 import { recording } from './en/recording';
 import { snapshots } from './en/snapshots';
+import { simulation } from './en/simulation';
 
 // NOTE: conceptCheck is intentionally NOT spread here. It is the largest
 // sub-catalog and is lazy-loaded by ConceptCheckPanel (see ConceptCheckPanelInner)
@@ -22,4 +23,5 @@ export const en: Catalog = {
   ...panel,
   ...recording,
   ...snapshots,
+  ...simulation,
 } as const;

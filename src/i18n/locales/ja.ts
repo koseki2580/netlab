@@ -8,6 +8,7 @@ import { narration } from './ja/narration';
 import { panel } from './ja/panel';
 import { recording } from './ja/recording';
 import { snapshots } from './ja/snapshots';
+import { simulation } from './ja/simulation';
 
 // conceptCheck is lazy-loaded (see en.ts note) and intentionally not spread here.
 export const ja: Catalog = {
@@ -20,4 +21,5 @@ export const ja: Catalog = {
   ...panel,
   ...recording,
   ...snapshots,
+  ...simulation,
 } as const;
