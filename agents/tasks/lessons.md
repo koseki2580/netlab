@@ -162,3 +162,33 @@ A running record of corrections and feedback received during sessions. Use this 
 **Why**: A string replace that matches nothing is indistinguishable from one that worked, and the failure surfaces as a false claim to the user rather than as an error.
 
 **Apply-when**: Any scripted edit to a file that a formatter also rewrites (specs, JSON, anything under lint-staged).
+
+---
+
+## L012 — A lesson's own words are a test oracle
+
+**What happened**: Four engine defects hid behind passing tests until I compared what a lesson _said_ to what its trace _did_: the IGMP lesson promised "observe VLAN-scoped delivery" and never delivered; the spanning-tree brief said the packet "detours through Switch A" and it died on Switch A's host; the gallery's first lesson called a routing loop a packet flow; the TCP lesson dropped the SYN it exists to show.
+
+**Rule**:
+
+- When a lesson, doc, or error message states what should happen, run it and diff the claim against the observed result. Disagreement means one of the two is a bug — decide which, never assume the text is stale.
+- Sweep one measurable property across every instance (all 52 lessons), not a sample. The single-lesson version of the legend fix missed the one lesson that mounted it differently.
+
+**Why**: Unit tests assert what the author thought the code did. Prose written for a learner asserts what it is _for_, which is the stronger claim and the one nothing else checks.
+
+**Apply-when**: Any product whose content describes its own behavior — tutorials, demos, docs with examples, error messages that name a cause.
+
+---
+
+## L013 — A sweep that reuses one page attributes faults to the wrong place
+
+**What happened**: A sweep across 52 lessons reported `routing-loop` on three routing lessons. Two of them had no controls at all: the app is hash-routed, so `goto('/#/next')` never reloads, and `window.__NETLAB_TRACE__` carried the previous lesson's traces into the next one's report.
+
+**Rule**:
+
+- In a per-instance sweep, reload the page between instances, and re-check any finding in isolation before acting on it.
+- Prefer one test per instance over one test looping over all of them: a crash then names the instance instead of killing the batch.
+
+**Why**: Shared state across iterations turns a sweep into a rumour mill — real findings and leaked ones look identical, and the cheap ones to chase are the false ones.
+
+**Apply-when**: Any bulk audit over routes, fixtures, or files that reuses a process, page, or client between iterations.
