@@ -1,3 +1,4 @@
+import { useT } from '../localeContext';
 import DemoShell from '../DemoShell';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
@@ -177,6 +178,7 @@ function SidebarPanel({
   traces: PacketTrace[];
   currentTraceId: string | null;
 }) {
+  const t = useT();
   const { engine, state } = useSimulation();
   const activeConnections = engine.getTcpConnections();
   const selected = readSelectedSegment(state.selectedPacket);
@@ -205,11 +207,11 @@ function SidebarPanel({
             marginBottom: 6,
           }}
         >
-          ACTIVE TCP CONNECTIONS
+          {t('ACTIVE TCP CONNECTIONS', '確立中の TCP 接続')}
         </div>
         {activeConnections.length === 0 ? (
           <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 12 }}>
-            No active connections.
+            {t('No active connections.', 'いま確立している接続はありません。')}
           </div>
         ) : (
           activeConnections.map((connection) => (
@@ -251,7 +253,7 @@ function SidebarPanel({
             marginBottom: 6,
           }}
         >
-          SELECTED SEGMENT
+          {t('SELECTED SEGMENT', '選択中のセグメント')}
         </div>
         {selected ? (
           <div
@@ -279,7 +281,10 @@ function SidebarPanel({
           </div>
         ) : (
           <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 12 }}>
-            Select a trace and step into a hop to inspect TCP header fields.
+            {t(
+              'Select a trace and step into a hop to inspect TCP header fields.',
+              '通信を選んでホップを進めると、TCP ヘッダの値が見られます。',
+            )}
           </div>
         )}
       </div>
@@ -288,6 +293,7 @@ function SidebarPanel({
 }
 
 function TcpHandshakeDemoInner() {
+  const t = useT();
   const { engine, state } = useSimulation();
   const activeConnection = engine.getTcpConnections()[0] ?? null;
   const nodeStates = deriveNodeStates(
@@ -344,7 +350,7 @@ function TcpHandshakeDemoInner() {
               cursor: activeConnection ? 'not-allowed' : 'pointer',
             }}
           >
-            Connect (TCP)
+            {t('Connect (TCP)', 'TCP で接続')}
           </button>
           <button
             type="button"
@@ -365,13 +371,15 @@ function TcpHandshakeDemoInner() {
               cursor: activeConnection ? 'pointer' : 'not-allowed',
             }}
           >
-            Disconnect
+            {t('Disconnect', '切断')}
           </button>
           <span
             style={{ color: 'var(--netlab-text-secondary)', fontFamily: 'monospace', fontSize: 11 }}
           >
-            Use the trace selector on the right to step through SYN, SYN-ACK, ACK, and FIN
-            exchanges.
+            {t(
+              'Use the trace selector on the right to step through SYN, SYN-ACK, ACK, and FIN exchanges.',
+              '右の通信一覧から、SYN・SYN-ACK・ACK・FIN のやり取りを1つずつ追えます。',
+            )}
           </span>
         </div>
 
@@ -397,25 +405,27 @@ function TcpHandshakeDemoInner() {
           }}
         >
           <div style={{ color: 'var(--netlab-accent-cyan)', fontWeight: 'bold', marginBottom: 6 }}>
-            TCP Teaching Flow
+            {t('TCP Teaching Flow', 'TCP のしくみ')}
           </div>
-          <div>Handshake: SYN → SYN-ACK → ACK</div>
-          <div>Teardown: FIN → ACK → FIN → ACK</div>
+          <div>{t('Handshake', '接続')}: SYN → SYN-ACK → ACK</div>
+          <div>{t('Teardown', '切断')}: FIN → ACK → FIN → ACK</div>
           <div style={{ color: 'var(--netlab-text-secondary)', marginTop: 6 }}>
-            State badges are derived from the recorded packet sequence so you can inspect historical
-            handshake and teardown phases even after the engine finishes the exchange.
+            {t(
+              'State badges are derived from the recorded packet sequence so you can inspect historical handshake and teardown phases even after the engine finishes the exchange.',
+              '状態の表示は記録されたパケットの並びから決めているので、やり取りが終わったあとでも接続と切断の各段階を見返せます。',
+            )}
           </div>
         </div>
 
         <StateBadge
-          label="Client State"
+          label={t('Client State', 'クライアントの状態')}
           state={nodeStates.client}
           left={24}
           top={100}
           testId="tcp-client-state"
         />
         <StateBadge
-          label="Server State"
+          label={t('Server State', 'サーバの状態')}
           state={nodeStates.server}
           left={602}
           top={100}

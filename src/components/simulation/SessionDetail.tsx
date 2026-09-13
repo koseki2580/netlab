@@ -1,12 +1,22 @@
+import { useI18n } from '../../i18n/useI18n';
+import type { TranslatorFn } from '../../i18n/types';
 import { memo, useState } from 'react';
 import { useSession } from '../../simulation/SessionContext';
 import type { PacketHop, PacketTrace } from '../../types/simulation';
 import { useNetlabContext } from '../NetlabContext';
 
 const STATUS_META = {
-  pending: { icon: '◌', label: 'pending', color: 'var(--netlab-text-secondary)' },
-  success: { icon: '✓', label: 'success', color: 'var(--netlab-accent-green)' },
-  failed: { icon: '✗', label: 'failed', color: 'var(--netlab-accent-red)' },
+  pending: {
+    icon: '◌',
+    labelKey: 'simulation.sessions.pending',
+    color: 'var(--netlab-text-secondary)',
+  },
+  success: {
+    icon: '✓',
+    labelKey: 'simulation.sessions.success',
+    color: 'var(--netlab-accent-green)',
+  },
+  failed: { icon: '✗', labelKey: 'simulation.sessions.failed', color: 'var(--netlab-accent-red)' },
 } as const;
 
 const EVENT_META: Record<PacketHop['event'], { label: string; color: string }> = {
@@ -54,12 +64,16 @@ function resolveNodeAddress(
   return node.data.interfaces?.[0]?.ipAddress ?? null;
 }
 
-function describeHop(hop: PacketHop, nodes: { id: string; data: { label: string } }[]): string {
+function describeHop(
+  hop: PacketHop,
+  nodes: { id: string; data: { label: string } }[],
+  t: TranslatorFn,
+): string {
   if (hop.event === 'drop') {
     return `drop: ${hop.reason ?? 'unknown'}`;
   }
   if (hop.event === 'deliver') {
-    return 'delivered';
+    return t('simulation.session.delivered');
   }
   if (hop.event === 'arp-request') {
     return `who has ${hop.dstIp}?`;
@@ -70,14 +84,14 @@ function describeHop(hop: PacketHop, nodes: { id: string; data: { label: string 
 
   const parts: string[] = [];
   if (hop.toNodeId) {
-    parts.push(`to ${resolveNodeLabel(hop.toNodeId, nodes)}`);
+    parts.push(t('simulation.session.to', { node: resolveNodeLabel(hop.toNodeId, nodes) }));
   }
 
   if (hop.ingressInterfaceName || hop.egressInterfaceName) {
     parts.push(`${hop.ingressInterfaceName ?? '—'} → ${hop.egressInterfaceName ?? '—'}`);
   }
 
-  return parts.join(' · ') || 'originated';
+  return parts.join(' · ') || t('simulation.session.originated');
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -120,6 +134,7 @@ function HttpPane({
   headers?: Record<string, string>;
   body?: string;
 }) {
+  const { t } = useI18n();
   const [bodyExpanded, setBodyExpanded] = useState(false);
   const shouldCollapse = (body?.length ?? 0) > BODY_COLLAPSE_THRESHOLD;
 
@@ -198,7 +213,9 @@ function HttpPane({
                 fontFamily: 'inherit',
               }}
             >
-              {bodyExpanded ? 'Collapse' : `Show all (${body.length} chars)`}
+              {bodyExpanded
+                ? t('simulation.session.collapse')
+                : t('simulation.session.showAll', { count: body.length })}
             </button>
           )}
         </div>
@@ -208,16 +225,19 @@ function HttpPane({
 }
 
 function SessionPathView({ label, trace }: { label: string; trace?: PacketTrace }) {
+  const { t } = useI18n();
   const { topology } = useNetlabContext();
 
   return (
     <Section title={label}>
       {!trace ? (
         <div style={{ color: 'var(--netlab-text-muted)', fontSize: 12 }}>
-          No trace attached yet.
+          {t('simulation.session.noTrace')}
         </div>
       ) : trace.hops.length === 0 ? (
-        <div style={{ color: 'var(--netlab-text-muted)', fontSize: 12 }}>No hops recorded.</div>
+        <div style={{ color: 'var(--netlab-text-muted)', fontSize: 12 }}>
+          {t('simulation.session.noHops')}
+        </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {trace.hops.map((hop) => {
@@ -265,7 +285,7 @@ function SessionPathView({ label, trace }: { label: string; trace?: PacketTrace 
                       marginTop: 2,
                     }}
                   >
-                    {describeHop(hop, topology.nodes)}
+                    {describeHop(hop, topology.nodes, t)}
                   </div>
                 </div>
 
@@ -293,6 +313,7 @@ function SessionPathView({ label, trace }: { label: string; trace?: PacketTrace 
 }
 
 export const SessionDetail = memo(function SessionDetail() {
+  const { t } = useI18n();
   const { topology } = useNetlabContext();
   const { selectedSession } = useSession();
 
@@ -322,10 +343,10 @@ export const SessionDetail = memo(function SessionDetail() {
             letterSpacing: 1,
           }}
         >
-          SESSION DETAIL
+          {t('simulation.session.heading')}
         </div>
         <div style={{ padding: '16px 14px', color: 'var(--netlab-text-muted)', fontSize: 12 }}>
-          Select a session to inspect its lifecycle and packet paths.
+          {t('simulation.session.empty')}
         </div>
       </div>
     );
@@ -366,7 +387,7 @@ export const SessionDetail = memo(function SessionDetail() {
             marginBottom: 8,
           }}
         >
-          SESSION DETAIL
+          {t('simulation.session.heading')}
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
@@ -374,12 +395,12 @@ export const SessionDetail = memo(function SessionDetail() {
             SESSION #{shortSessionId(selectedSession.sessionId)}
           </span>
           <span style={{ fontSize: 12, color: status.color }}>
-            {status.icon} {status.label}
+            {status.icon} {t(status.labelKey)}
           </span>
         </div>
 
         <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 12, marginBottom: 4 }}>
-          {selectedSession.requestType ?? 'Unnamed request'}
+          {selectedSession.requestType ?? t('simulation.session.unnamed')}
         </div>
 
         <div style={{ color: 'var(--netlab-text-muted)', fontSize: 11 }}>
@@ -400,10 +421,10 @@ export const SessionDetail = memo(function SessionDetail() {
           gap: 12,
         }}
       >
-        <Section title="LIFECYCLE">
+        <Section title={t('simulation.session.lifecycle')}>
           {selectedSession.events.length === 0 ? (
             <div style={{ color: 'var(--netlab-text-muted)', fontSize: 12 }}>
-              No lifecycle events recorded yet.
+              {t('simulation.session.noLifecycle')}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -435,24 +456,26 @@ export const SessionDetail = memo(function SessionDetail() {
         </Section>
 
         {selectedSession.error && (
-          <Section title="ERROR">
+          <Section title={t('simulation.session.error')}>
             <div style={{ color: 'var(--netlab-accent-red)', fontSize: 12, marginBottom: 4 }}>
               {selectedSession.error.reason}
             </div>
             <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 11 }}>
-              at {resolveNodeLabel(selectedSession.error.nodeId, topology.nodes)}
+              {t('simulation.session.at', {
+                node: resolveNodeLabel(selectedSession.error.nodeId, topology.nodes),
+              })}
             </div>
           </Section>
         )}
 
         <SessionPathView
-          label="REQUEST PATH"
+          label={t('simulation.session.requestPath')}
           {...(selectedSession.requestTrace !== undefined
             ? { trace: selectedSession.requestTrace }
             : {})}
         />
         <SessionPathView
-          label="RESPONSE PATH"
+          label={t('simulation.session.responsePath')}
           {...(selectedSession.responseTrace !== undefined
             ? { trace: selectedSession.responseTrace }
             : {})}
@@ -461,7 +484,7 @@ export const SessionDetail = memo(function SessionDetail() {
         {selectedSession.httpMeta && (
           <>
             <HttpPane
-              label="HTTP REQUEST"
+              label={t('simulation.session.httpRequest')}
               {...(selectedSession.httpMeta.method && selectedSession.httpMeta.path
                 ? {
                     headline: `${selectedSession.httpMeta.method} ${selectedSession.httpMeta.path} HTTP/1.1`,
@@ -475,7 +498,7 @@ export const SessionDetail = memo(function SessionDetail() {
                 : {})}
             />
             <HttpPane
-              label="HTTP RESPONSE"
+              label={t('simulation.session.httpResponse')}
               {...(selectedSession.httpMeta.statusCode != null
                 ? { headline: `HTTP/1.1 ${selectedSession.httpMeta.statusCode}` }
                 : {})}

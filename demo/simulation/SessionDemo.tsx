@@ -1,3 +1,4 @@
+import { useT } from '../localeContext';
 import { useMemo, useState, type CSSProperties } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
@@ -218,6 +219,7 @@ function findTrace(engine: SimulationEngine, packetId: string): PacketTrace | un
 }
 
 function SessionDemoInner() {
+  const t = useT();
   const { topology, hookEngine } = useNetlabContext();
   const { engine, sendPacket } = useSimulation();
   const { sessions, startSession, attachTrace, selectSession, clearSessions } = useSession();
@@ -350,20 +352,23 @@ function SessionDemoInner() {
             disabled={isSending}
             style={isSending ? BUTTON_DISABLED : BUTTON_PRIMARY}
           >
-            {isSending ? 'Sending...' : 'Send Request'}
+            {isSending ? t('Sending...', '送信中…') : t('Send Request', '要求を送る')}
           </button>
 
           <button type="button" onClick={handleClear} style={BUTTON_SECONDARY}>
-            Clear
+            {t('Clear', '消去')}
           </button>
 
           <span
             style={{ color: 'var(--netlab-text-secondary)', fontFamily: 'monospace', fontSize: 11 }}
           >
-            <span data-testid="session-count">{sessions.length}</span> session
-            {sessions.length === 1 ? '' : 's'}
+            <span data-testid="session-count">{sessions.length}</span>
+            {t(sessions.length === 1 ? ' session' : ' sessions', ' 件のセッション')}
             {failureCount > 0
-              ? ` · ${failureCount} failure${failureCount === 1 ? '' : 's'} active`
+              ? t(
+                  ` · ${failureCount} failure${failureCount === 1 ? '' : 's'} active`,
+                  ` · ${failureCount} 件の障害が発生中`,
+                )
               : ''}
           </span>
         </div>

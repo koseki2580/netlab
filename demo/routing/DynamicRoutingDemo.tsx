@@ -1,3 +1,4 @@
+import { useT } from '../localeContext';
 import { useState } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
@@ -12,6 +13,7 @@ interface ProtocolMeta {
   label: string;
   accent: string;
   summary: string;
+  summaryJa: string;
 }
 
 const PROTOCOL_META: Record<DynamicProtocol, ProtocolMeta> = {
@@ -20,18 +22,24 @@ const PROTOCOL_META: Record<DynamicProtocol, ProtocolMeta> = {
     accent: 'var(--netlab-accent-green)',
     summary:
       'Hop count only. The diamond looks equal-cost, so RIP prefers the first 2-hop path it learns.',
+    summaryJa:
+      'ホップ数だけで決めます。ひし形の2経路は同じ数に見えるので、RIP は先に覚えた2ホップの経路を選びます。',
   },
   ospf: {
     label: 'OSPF',
     accent: 'var(--netlab-accent-cyan)',
     summary:
       'SPF uses interface cost. The R1 → R3 link is penalized with cost 3, so R1 prefers R2 toward C2.',
+    summaryJa:
+      'SPF はインタフェースのコストで決めます。R1 → R3 のリンクはコスト 3 に上げてあるので、R1 は C2 へ R2 経由を選びます。',
   },
   bgp: {
     label: 'BGP',
     accent: 'var(--netlab-accent-orange)',
     summary:
       'Policy wins over equal AS_PATH length. R1 prefers the AS65002 path via higher LOCAL_PREF.',
+    summaryJa:
+      'AS_PATH の長さが同じなら、ポリシーが優先されます。R1 は LOCAL_PREF の高い AS65002 経由を選びます。',
   },
 };
 
@@ -277,6 +285,7 @@ export function buildDynamicRoutingTopology(protocol: DynamicProtocol): NetworkT
 }
 
 function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
+  const t = useT();
   const { topology, routeTable } = useNetlabContext();
   const routers = topology.nodes.filter((node) => node.data.role === 'router');
 
@@ -295,7 +304,10 @@ function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
       }}
     >
       <div style={{ color: PROTOCOL_META[protocol].accent, fontSize: 12, fontWeight: 700 }}>
-        {PROTOCOL_META[protocol].label} Route Tables
+        {t(
+          `${PROTOCOL_META[protocol].label} Route Tables`,
+          `${PROTOCOL_META[protocol].label} の経路表`,
+        )}
       </div>
       <p
         style={{
@@ -305,7 +317,7 @@ function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
           margin: '8px 0 16px',
         }}
       >
-        {PROTOCOL_META[protocol].summary}
+        {t(PROTOCOL_META[protocol].summary, PROTOCOL_META[protocol].summaryJa)}
       </p>
       {routers.map((router) => {
         const routes = [...(routeTable.get(router.id) ?? [])].sort((left, right) =>
@@ -318,7 +330,9 @@ function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
               {router.data.label}
             </div>
             {routes.length === 0 ? (
-              <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 12 }}>No routes</div>
+              <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 12 }}>
+                {t('No routes', '経路なし')}
+              </div>
             ) : (
               <div style={{ display: 'grid', gap: 6 }}>
                 {routes.map((route) => (
@@ -336,11 +350,12 @@ function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
                       {route.destination}
                     </div>
                     <div style={{ color: 'var(--netlab-text-primary)', marginTop: 4 }}>
-                      next-hop:{' '}
+                      {t('next-hop:', '次ホップ:')}{' '}
                       <span style={{ color: 'var(--netlab-accent-yellow)' }}>{route.nextHop}</span>
                     </div>
                     <div style={{ color: 'var(--netlab-text-secondary)', marginTop: 4 }}>
-                      metric {route.metric} • {route.protocol}/{route.adminDistance}
+                      {t('metric', 'メトリック')} {route.metric} • {route.protocol}/
+                      {route.adminDistance}
                     </div>
                   </div>
                 ))}

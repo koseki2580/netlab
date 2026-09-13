@@ -1,3 +1,4 @@
+import { useT } from '../localeContext';
 import { useEffect, useRef, type CSSProperties } from 'react';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
@@ -263,6 +264,7 @@ function buildPacket(
 
 function VlanDemoInner() {
   const { topology } = useNetlabContext();
+  const t = useT();
   const { engine, sendPacket, state, isRecomputing } = useSimulation();
   const { isEdgeDown, toggleEdge } = useFailure();
   const didAutoSend = useRef(false);
@@ -287,8 +289,14 @@ function VlanDemoInner() {
 
   const lastHop = activeTrace?.hops[activeTrace.hops.length - 1];
   const headline = trunkDown
-    ? 'Trunk is down. Inter-VLAN traffic should drop while same-VLAN traffic still works.'
-    : 'Trunk is up. Router-on-a-stick can move traffic between VLAN 10 and VLAN 20.';
+    ? t(
+        'Trunk is down. Inter-VLAN traffic should drop while same-VLAN traffic still works.',
+        'トランクが切れています。VLAN をまたぐ通信は落ち、同じ VLAN 内の通信はそのまま届くはずです。',
+      )
+    : t(
+        'Trunk is up. Router-on-a-stick can move traffic between VLAN 10 and VLAN 20.',
+        'トランクはつながっています。ルータオンアスティックで VLAN 10 と VLAN 20 の間を通信できます。',
+      );
 
   return (
     <div style={{ display: 'flex', height: '100%' }}>
@@ -311,12 +319,18 @@ function VlanDemoInner() {
           }}
         >
           <div style={{ color: 'var(--netlab-text-primary)', fontWeight: 700, marginBottom: 4 }}>
-            VLAN Demo
+            {t('VLAN Demo', 'VLAN のしくみ')}
           </div>
           <div>{headline}</div>
           <div style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}>
-            Click <strong>SW1</strong> to inspect access/trunk port VLANs and <strong>R1</strong> to
-            inspect sub-interfaces.
+            {t('Click', '')}
+            <strong>SW1</strong>
+            {t(
+              ' to inspect access/trunk port VLANs and ',
+              ' を押すとアクセス/トランクの各ポートの VLAN が、',
+            )}
+            <strong>R1</strong>
+            {t(' to inspect sub-interfaces.', ' を押すとサブインタフェースが見られます。')}
           </div>
         </div>
       </div>
@@ -360,7 +374,7 @@ function VlanDemoInner() {
                     fontFamily: 'monospace',
                   }}
                 >
-                  TRUNK
+                  {t('TRUNK', 'トランク')}
                 </div>
                 <div
                   style={{
@@ -370,7 +384,7 @@ function VlanDemoInner() {
                     fontWeight: 700,
                   }}
                 >
-                  {trunkDown ? 'DOWN' : 'UP'}
+                  {trunkDown ? t('DOWN', '切断') : t('UP', '接続')}
                 </div>
               </div>
 
@@ -389,7 +403,7 @@ function VlanDemoInner() {
                     fontFamily: 'monospace',
                   }}
                 >
-                  LATEST RESULT
+                  {t('LATEST RESULT', '直近の結果')}
                 </div>
                 <div
                   style={{
@@ -402,7 +416,11 @@ function VlanDemoInner() {
                     fontWeight: 700,
                   }}
                 >
-                  {activeTrace?.status?.toUpperCase() ?? 'IDLE'}
+                  {activeTrace?.status === 'delivered'
+                    ? t('DELIVERED', '届いた')
+                    : activeTrace?.status === 'dropped'
+                      ? t('DROPPED', '落ちた')
+                      : (activeTrace?.status?.toUpperCase() ?? t('IDLE', '待機中'))}
                 </div>
               </div>
             </div>
@@ -428,7 +446,7 @@ function VlanDemoInner() {
                 disabled={trunkDown}
                 style={trunkDown ? BTN_DISABLED : BTN_DANGER}
               >
-                Break trunk
+                {t('Break trunk', 'トランクを切る')}
               </button>
               <button
                 type="button"
@@ -436,7 +454,7 @@ function VlanDemoInner() {
                 disabled={!trunkDown}
                 style={!trunkDown ? BTN_DISABLED : BTN_SECONDARY}
               >
-                Restore trunk
+                {t('Restore trunk', 'トランクを戻す')}
               </button>
             </div>
 
@@ -447,11 +465,20 @@ function VlanDemoInner() {
                 fontFamily: 'monospace',
               }}
             >
-              {isRecomputing && 'Recomputing last packet after topology failure change...'}
-              {!isRecomputing && lastHop?.event === 'drop' && `Last drop reason: ${lastHop.reason}`}
+              {isRecomputing &&
+                t(
+                  'Recomputing last packet after topology failure change...',
+                  '構成の変化を受けて、直前のパケットを計算し直しています…',
+                )}
+              {!isRecomputing &&
+                lastHop?.event === 'drop' &&
+                t(`Last drop reason: ${lastHop.reason}`, `直前の破棄の理由: ${lastHop.reason}`)}
               {!isRecomputing &&
                 lastHop?.event !== 'drop' &&
-                'Send traffic inside one VLAN or across VLANs to compare forwarding paths.'}
+                t(
+                  'Send traffic inside one VLAN or across VLANs to compare forwarding paths.',
+                  '同じ VLAN の中と、VLAN をまたいで送り、転送の経路を比べてみてください。',
+                )}
             </div>
           </div>
 

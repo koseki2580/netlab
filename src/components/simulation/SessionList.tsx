@@ -1,12 +1,21 @@
+import { useI18n } from '../../i18n/useI18n';
 import { useMemo } from 'react';
 import { useSession } from '../../simulation/SessionContext';
 import type { NetworkSession } from '../../types/session';
 import { useNetlabContext } from '../NetlabContext';
 
 const STATUS_META = {
-  pending: { icon: '◌', label: 'pending', color: 'var(--netlab-text-secondary)' },
-  success: { icon: '✓', label: 'success', color: 'var(--netlab-accent-green)' },
-  failed: { icon: '✗', label: 'failed', color: 'var(--netlab-accent-red)' },
+  pending: {
+    icon: '◌',
+    labelKey: 'simulation.sessions.pending',
+    color: 'var(--netlab-text-secondary)',
+  },
+  success: {
+    icon: '✓',
+    labelKey: 'simulation.sessions.success',
+    color: 'var(--netlab-accent-green)',
+  },
+  failed: { icon: '✗', labelKey: 'simulation.sessions.failed', color: 'var(--netlab-accent-red)' },
 } as const;
 
 const STATUS_ORDER: Record<NetworkSession['status'], number> = {
@@ -27,6 +36,7 @@ function resolveNodeLabel(
 }
 
 export function SessionList() {
+  const { t } = useI18n();
   const { topology } = useNetlabContext();
   const { sessions, selectedSessionId, selectSession } = useSession();
 
@@ -64,7 +74,7 @@ export function SessionList() {
           letterSpacing: 1,
         }}
       >
-        SESSIONS
+        {t('simulation.sessions.heading')}
         <span style={{ marginLeft: 8, color: 'var(--netlab-text-muted)', fontWeight: 'normal' }}>
           {sessions.length}
         </span>
@@ -72,13 +82,13 @@ export function SessionList() {
 
       <div
         role={sortedSessions.length > 0 ? 'listbox' : 'region'}
-        aria-label="Network sessions"
+        aria-label={t('simulation.sessions.aria')}
         tabIndex={0}
         style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 6 }}
       >
         {sortedSessions.length === 0 ? (
           <div style={{ padding: '10px 8px', color: 'var(--netlab-text-muted)', fontSize: 12 }}>
-            No sessions yet. Send a request to start tracing a round trip.
+            {t('simulation.sessions.empty')}
           </div>
         ) : (
           sortedSessions.map((session) => {
@@ -93,7 +103,15 @@ export function SessionList() {
                 type="button"
                 role="option"
                 aria-selected={isSelected}
-                aria-label={`${session.requestType ?? session.protocol ?? 'Session'} ${srcLabel} to ${dstLabel} ${status.label}`}
+                aria-label={t('simulation.sessions.itemAria', {
+                  kind:
+                    session.requestType ??
+                    session.protocol ??
+                    t('simulation.sessions.kindFallback'),
+                  src: srcLabel,
+                  dst: dstLabel,
+                  status: t(status.labelKey),
+                })}
                 className="netlab-focus-ring"
                 onClick={() => selectSession(session.sessionId)}
                 style={{
@@ -133,7 +151,7 @@ export function SessionList() {
                       `Session ${shortSessionId(session.sessionId)}`}
                   </span>
                   <span style={{ color: status.color, fontSize: 10, textTransform: 'uppercase' }}>
-                    {status.label}
+                    {t(status.labelKey)}
                   </span>
                 </div>
 
