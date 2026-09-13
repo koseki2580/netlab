@@ -86,10 +86,13 @@ and the gallery — each already has its own tests and docs.
   box under themed text is unreadable in the light theme, and a panel stacked
   over a state badge hides the very thing its lesson is about.
 - **REQ-049 (MUST):** A topology the product ships MUST NOT be drawn as faulty.
-  Rules that guide someone building a network — "put a switch between those two
-  machines" — MUST NOT be applied as verdicts on links that already exist. Two
-  hosts on a cable is a real network, is what the course teaches first, and is
-  what the simulator carries packets across.
+  A link that already exists is faulty only when it is physically impossible —
+  a node joined to itself, or two links claiming one port. Rules that guide
+  someone building a network ("put a switch between those two machines", "those
+  nodes are already connected") MUST NOT be applied as verdicts on it: two
+  hosts on a cable is a real network and is what the course teaches first, and
+  two links between the same pair is a port-channel and is what the
+  link-aggregation lesson exists to show.
 - **REQ-048 (MUST):** A router MUST be able to reach every subnet it holds an
   address on, without a topology having to state that separately. Giving an
   interface an address is what makes its subnet reachable; requiring a matching
@@ -292,9 +295,11 @@ not part of this specification.
 - **AC-048:** Given the TCP handshake lesson in the light theme, when its
   overlays are drawn, then they are light; and given either theme, then neither
   state badge is covered by the teaching panel.
-- **AC-047:** Given a lesson whose topology joins two hosts directly, when it is
-  drawn, then no cable is painted as a fault; and given the editor, when the
-  learner tries to draw that link themselves, then it is still refused.
+- **AC-047:** Given a lesson whose topology joins two hosts directly, or bundles
+  two links into a port-channel, when it is drawn, then no cable is painted as a
+  fault; a link that is physically impossible still is; and given the editor,
+  when the learner tries to draw such a link themselves, then it is still
+  refused.
 - **AC-046:** Given the course, in either theme and at every stage it has — a
   step before its packet has run, a step showing a result, and the finished
   page — when it is scanned for WCAG 2 A/AA, then there are no violations.
@@ -436,6 +441,7 @@ not part of this specification.
 | TC-143    | AC-047     | unit/behavior | An existing self-loop                                        | It is judged the same way                                                         | It is still reported as a fault                                                      | `src/utils/connectionValidator.test.ts`                       |
 | TC-144    | AC-048     | E2E           | The TCP lesson opened after choosing Light                   | Its overlays' backgrounds are measured                                            | Both follow the light theme rather than a fixed near-black                           | `e2e/authored-links.spec.ts`                                  |
 | TC-145    | AC-048     | E2E           | The TCP lesson's two state badges                            | Their boxes are compared with the teaching panel's                                | Neither is underneath it                                                             | `e2e/authored-links.spec.ts`                                  |
+| TC-146    | AC-047     | unit/behavior | A second link between the same pair                          | It is judged as something already authored                                        | It is not faulty, being a port-channel                                               | `src/utils/connectionValidator.test.ts`                       |
 | TC-038    | AC-031     | E2E           | The gallery's theme setting                                  | A theme is chosen, then a lesson opened                                           | The lesson follows the choice, and an unmade choice changes nothing                  | `e2e/settings-carry.spec.ts`                                  |
 | TC-037    | AC-030     | E2E           | An interactive canvas                                        | The learner tabs to a device and presses Enter                                    | The device is focusable, named, and opens                                            | `e2e/canvas-keyboard.spec.ts`                                 |
 | TC-036    | AC-029     | E2E           | A laptop display, and the sandbox                            | The same lesson is worked through, and a device is edited and the edit taken back | Every control is pressable and every result appears                                  | `e2e/user-journey.spec.ts`                                    |

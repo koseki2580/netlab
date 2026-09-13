@@ -256,6 +256,26 @@ describe('validateConnection', () => {
     expect(result.errors).toEqual([]);
   });
 
+  /**
+   * TC-146 — two links between the same pair is a port-channel.
+   *
+   * "Those nodes are already connected" stops someone double-wiring a network
+   * by accident. It is not a fault in one that already exists: link
+   * aggregation is exactly a pair of links between the same two devices, and
+   * the lesson about it was drawn with four faulty cables.
+   */
+  it('does not call a second link between the same pair faulty', () => {
+    const nodes = [makeNode('switch-1', 'switch'), makeNode('server-1', 'server')];
+    const existing = [
+      { id: 'e-first', source: 'switch-1', target: 'server-1' },
+    ] as unknown as Parameters<typeof validateAuthoredConnection>[1];
+
+    const result = validateAuthoredConnection(nodes, existing, 'switch-1', 'server-1');
+
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
   /** TC-143 — and it still reports the faults that are faults. */
   it('still reports a self-loop on an existing link', () => {
     const nodes = [makeNode('client-1', 'client')];

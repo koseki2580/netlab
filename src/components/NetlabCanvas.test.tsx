@@ -739,9 +739,9 @@ describe('NetlabCanvas controlled topology API', () => {
   });
 
   it('uses theme CSS variables for invalid edges', () => {
-    // A duplicate link, which is a fault in a topology however it got there.
-    // This used to reach for two hosts on a cable, but that is a real network
-    // and is no longer painted as a fault — see `validateAuthoredConnection`.
+    // Two links claiming the same switch port, which is physically impossible
+    // however the topology came to be. A duplicate link between the same pair
+    // is not: that is a port-channel — see `validateAuthoredConnection`.
     render(
       <NetlabProvider
         topology={makeTopology({
@@ -749,13 +749,19 @@ describe('NetlabCanvas controlled topology API', () => {
             {
               id: 'client-1',
               type: 'client',
-              position: { x: 50, y: 80 },
+              position: { x: 50, y: 40 },
               data: { label: 'PC1', role: 'client', layerId: 'l7', ip: '10.0.0.10' },
+            },
+            {
+              id: 'client-2',
+              type: 'client',
+              position: { x: 50, y: 160 },
+              data: { label: 'PC2', role: 'client', layerId: 'l7', ip: '10.0.0.11' },
             },
             {
               id: 'switch-1',
               type: 'switch',
-              position: { x: 240, y: 80 },
+              position: { x: 240, y: 100 },
               data: {
                 label: 'SW1',
                 role: 'switch',
@@ -768,8 +774,20 @@ describe('NetlabCanvas controlled topology API', () => {
             },
           ],
           edges: [
-            { id: 'e-first', source: 'client-1', target: 'switch-1', type: 'smoothstep' },
-            { id: 'e-duplicate', source: 'client-1', target: 'switch-1', type: 'smoothstep' },
+            {
+              id: 'e-first',
+              source: 'client-1',
+              target: 'switch-1',
+              targetHandle: 'p0',
+              type: 'smoothstep',
+            },
+            {
+              id: 'e-same-port',
+              source: 'client-2',
+              target: 'switch-1',
+              targetHandle: 'p0',
+              type: 'smoothstep',
+            },
           ],
         })}
       >
@@ -786,8 +804,8 @@ describe('NetlabCanvas controlled topology API', () => {
           valid: false,
           errors: [
             {
-              code: 'duplicate-edge',
-              message: 'Duplicate edge: nodes are already connected',
+              code: 'interface-in-use',
+              message: 'Interface already in use: fa0/0',
             },
           ],
           warnings: [],

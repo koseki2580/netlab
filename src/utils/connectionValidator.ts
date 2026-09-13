@@ -98,15 +98,26 @@ export function isValidConnection(
 }
 
 /**
+ * Faults that are faults however a link came to exist.
+ *
+ * A self-loop is nonsense and two links claiming one physical port is
+ * impossible. The other two rules guide someone drawing a network rather than
+ * describe a broken one: "put a switch between those two machines" and "those
+ * nodes are already connected". Both describe real networks — two hosts on a
+ * crossover cable, and a pair of links bundled into a port-channel, which is
+ * precisely what the link-aggregation lesson is about.
+ */
+const IMPOSSIBLE_LINK_CODES: ReadonlySet<ValidationError['code']> = new Set([
+  'self-loop',
+  'interface-in-use',
+]);
+
+/**
  * The same check, for a link that already exists rather than one being drawn.
  *
- * `endpoint-to-endpoint` is guidance for someone building a network — put a
- * switch between those two machines — and not a fault in one. Two hosts on a
- * crossover cable is a real network, the simulator carries packets across it,
- * and it is the first thing the course teaches. Grading authored topologies by
- * it painted the "simplest possible setup" lesson's only cable red with a cross
- * through it, which contradicted both the lesson's description and the
- * product's own behaviour.
+ * Grading authored topologies by the construction rules painted the "simplest
+ * possible setup" lesson's only cable red with a cross through it, and did the
+ * same to the port-channel the link-aggregation lesson exists to show.
  */
 export function validateAuthoredConnection(
   nodes: NetlabNode[],
@@ -117,7 +128,7 @@ export function validateAuthoredConnection(
   targetHandle?: string | null,
 ): ValidationResult {
   const result = validateConnection(nodes, edges, sourceId, targetId, sourceHandle, targetHandle);
-  const errors = result.errors.filter((error) => error.code !== 'endpoint-to-endpoint');
+  const errors = result.errors.filter((error) => IMPOSSIBLE_LINK_CODES.has(error.code));
   return { valid: errors.length === 0, errors, warnings: result.warnings };
 }
 

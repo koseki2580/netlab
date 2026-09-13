@@ -12,7 +12,13 @@ import { SEL } from './selectors';
  * across that cable perfectly well, so the picture contradicted both the
  * lesson's description and its own behaviour.
  */
-const DIRECT_LINK_LESSONS = ['/basic/minimal', '/course'];
+const DIRECT_LINK_LESSONS = [
+  '/basic/minimal',
+  '/course',
+  // Two links between the same pair is a port-channel, which is this lesson's
+  // subject — not a network wired twice by mistake.
+  '/networking/ha',
+];
 
 for (const path of DIRECT_LINK_LESSONS) {
   test(`no link is drawn as faulty on ${path}`, async ({ page, demoPage }) => {
