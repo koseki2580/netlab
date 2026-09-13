@@ -31,6 +31,7 @@ import {
   syncSimulatorCells,
   type DrawnNode,
 } from './simulatorGraphModel';
+import { offersGridSnap } from './canvasOffers';
 
 /**
  * The simulator canvas drawn by maxGraph.
@@ -585,7 +586,7 @@ export default function SimulatorMaxGraphInner({
               }
             })
           }
-          {...(profile.nodesDraggable ? { gridEnabled, onToggleGrid: toggleGrid } : {})}
+          {...(offersGridSnap(profile) ? { gridEnabled, onToggleGrid: toggleGrid } : {})}
         />
       ) : null}
     </div>
