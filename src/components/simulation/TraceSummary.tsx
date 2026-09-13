@@ -1,14 +1,16 @@
 import { memo } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import { useSimulation } from '../../simulation/SimulationContext';
 import { useNetlabContext } from '../NetlabContext';
 
 const STATUS_META = {
-  delivered: { label: 'delivered', color: 'var(--netlab-accent-green)' },
-  dropped: { label: 'dropped', color: 'var(--netlab-accent-red)' },
-  'in-flight': { label: 'in-progress', color: 'var(--netlab-text-secondary)' },
+  delivered: { labelKey: 'simulation.summary.delivered', color: 'var(--netlab-accent-green)' },
+  dropped: { labelKey: 'simulation.summary.dropped', color: 'var(--netlab-accent-red)' },
+  'in-flight': { labelKey: 'simulation.summary.inProgress', color: 'var(--netlab-text-secondary)' },
 } as const;
 
 export const TraceSummary = memo(function TraceSummary() {
+  const { t } = useI18n();
   const { topology } = useNetlabContext();
   const { state } = useSimulation();
   const trace = state.traces.find((item) => item.packetId === state.currentTraceId);
@@ -19,11 +21,13 @@ export const TraceSummary = memo(function TraceSummary() {
 
   const dstNode = topology.nodes.find((node) => node.id === trace.dstNodeId);
   const dstLabel = dstNode?.data.label ?? trace.dstNodeId;
-  const dstIp = dstNode?.data.ip ?? trace.hops[trace.hops.length - 1]?.dstIp ?? 'unknown';
+  const dstIp =
+    dstNode?.data.ip ?? trace.hops[trace.hops.length - 1]?.dstIp ?? t('simulation.summary.unknown');
   const status = STATUS_META[trace.status] ?? STATUS_META['in-flight'];
 
   return (
     <div
+      data-testid="trace-summary"
       style={{
         background: 'var(--netlab-bg-panel)',
         border: '1px solid var(--netlab-border-subtle)',
@@ -42,20 +46,20 @@ export const TraceSummary = memo(function TraceSummary() {
           marginBottom: 10,
         }}
       >
-        TRACE SUMMARY
+        {t('simulation.summary.heading')}
       </div>
 
       <div
         style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', fontSize: 12 }}
       >
         <span style={{ color: 'var(--netlab-text-secondary)' }}>
-          Hops:{' '}
+          {t('simulation.summary.hops')}{' '}
           <span style={{ color: 'var(--netlab-text-primary)', fontWeight: 'bold' }}>
             {trace.hops.length}
           </span>
         </span>
         <span style={{ color: 'var(--netlab-text-secondary)' }}>
-          Status:{' '}
+          {t('simulation.summary.status')}{' '}
           <span
             style={{
               color: status.color,
@@ -64,13 +68,13 @@ export const TraceSummary = memo(function TraceSummary() {
               letterSpacing: 0.4,
             }}
           >
-            {status.label}
+            {t(status.labelKey)}
           </span>
         </span>
       </div>
 
       <div style={{ marginTop: 8, fontSize: 12, color: 'var(--netlab-text-secondary)' }}>
-        Dst:{' '}
+        {t('simulation.summary.dst')}{' '}
         <span style={{ color: 'var(--netlab-text-primary)', fontWeight: 'bold' }}>{dstLabel}</span>{' '}
         <span style={{ color: 'var(--netlab-text-muted)' }}>({dstIp})</span>
       </div>

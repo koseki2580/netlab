@@ -98,4 +98,18 @@ export const simulation: Catalog = {
   'simulation.controls.statusRunning': '実行中 — {{current}} ホップ目',
   'simulation.controls.statusDone': '完了',
   'simulation.areas.heading': 'ネットワークの区画',
+  'simulation.summary.heading': '通信のまとめ',
+  'simulation.summary.hops': 'ホップ数:',
+  'simulation.summary.status': '状態:',
+  'simulation.summary.dst': '宛先:',
+  'simulation.summary.delivered': '届いた',
+  'simulation.summary.dropped': '落ちた',
+  'simulation.summary.inProgress': '進行中',
+  'simulation.summary.unknown': '不明',
+  'simulation.traces.heading': '通信の一覧',
+  'simulation.viewer.heading': 'パケットの中身',
+  'simulation.viewer.empty':
+    'ホップが選ばれていません。ステップを進めるか、タイムラインの行を押してください。',
+  'simulation.viewer.next': '→ 次',
+  'simulation.viewer.reason': '理由',
 } as const;

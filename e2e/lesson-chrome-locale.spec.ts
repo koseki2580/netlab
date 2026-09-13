@@ -125,3 +125,29 @@ test('the ARP lesson teaches in the chosen language', async ({ page, demoPage })
   await expect(brief).not.toContainText('ARP Teaching Flow');
   await expect(page.getByTestId(SEL.demo.primaryAction)).toHaveText('client から server へ ping');
 });
+
+/**
+ * TC-165 — the result panels read in the chosen language: the packet viewer
+ * over the canvas, and the trace summary a lesson shows once a packet has run.
+ */
+test('the result panels follow the chosen language', async ({ page, demoPage }) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.addInitScript(() => {
+    try {
+      window.localStorage.setItem('netlab-locale', 'ja');
+    } catch {
+      /* no storage means no choice, which this test would then catch */
+    }
+  });
+
+  await demoPage.goto('/networking/arp');
+  await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+  await expect(page.getByTestId(SEL.results.packetViewer)).toContainText('パケットの中身');
+
+  await demoPage.goto('/networking/udp');
+  await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+  await page.getByTestId(SEL.demo.primaryAction).click();
+  const summary = page.getByTestId(SEL.results.traceSummary);
+  await expect(summary).toContainText('通信のまとめ');
+  await expect(summary).toContainText('届いた');
+});

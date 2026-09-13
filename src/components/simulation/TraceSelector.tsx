@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/useI18n';
 import { useSimulation } from '../../simulation/SimulationContext';
 
 function shortId(value: string): string {
@@ -5,6 +6,7 @@ function shortId(value: string): string {
 }
 
 export function TraceSelector() {
+  const { t } = useI18n();
   const { engine, state } = useSimulation();
   const { traces, currentTraceId } = state;
 
@@ -22,7 +24,7 @@ export function TraceSelector() {
           color: 'var(--netlab-text-muted)',
         }}
       >
-        TRACES
+        {t('simulation.traces.heading')}
       </div>
 
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>

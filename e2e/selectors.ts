@@ -233,6 +233,11 @@ export const SEL = {
     areaLegend: 'area-legend',
     controlledJson: 'controlled-topology-json',
   },
+  /** Shared result panels drawn beside or over a lesson. */
+  results: {
+    traceSummary: 'trace-summary',
+    packetViewer: 'packet-viewer-panel',
+  },
   /** A lesson page's own teaching copy. */
   lesson: {
     brief: 'lesson-brief',

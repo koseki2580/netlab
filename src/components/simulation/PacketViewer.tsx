@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/useI18n';
 import { useSimulation } from '../../simulation/SimulationContext';
 import type { PacketHop } from '../../types/simulation';
 
@@ -87,6 +88,7 @@ interface PacketViewerPanelProps {
 }
 
 export function PacketViewerPanel({ floating = false }: PacketViewerPanelProps) {
+  const { t } = useI18n();
   const { state } = useSimulation();
   const { selectedHop, traces, currentTraceId } = state;
   const trace = traces.find((t) => t.packetId === currentTraceId);
@@ -97,11 +99,11 @@ export function PacketViewerPanel({ floating = false }: PacketViewerPanelProps) 
       data-testid="packet-viewer-panel"
       style={floating ? { ...PANEL, ...FLOATING_PANEL } : PANEL}
     >
-      <div style={LABEL}>PACKET VIEWER</div>
+      <div style={LABEL}>{t('simulation.viewer.heading')}</div>
 
       {!selectedHop ? (
         <div style={{ color: 'var(--netlab-text-muted)', fontSize: 11 }}>
-          No hop selected — press Step or click a row in the timeline.
+          {t('simulation.viewer.empty')}
         </div>
       ) : (
         <>
@@ -114,20 +116,24 @@ export function PacketViewerPanel({ floating = false }: PacketViewerPanelProps) 
             }}
           >
             <span style={{ color: 'var(--netlab-text-secondary)', fontSize: 10 }}>
-              Hop {selectedHop.step + 1} / {totalHops}
+              {t('simulation.hop.position', { current: selectedHop.step + 1, total: totalHops })}
             </span>
             <EventBadge event={selectedHop.event} />
           </div>
 
           <div style={{ borderTop: '1px solid var(--netlab-bg-surface)', paddingTop: 8 }}>
-            <Field label="Node" value={selectedHop.nodeLabel} />
+            <Field label={t('simulation.hop.field.node')} value={selectedHop.nodeLabel} />
             <Field label="Src IP" value={selectedHop.srcIp} />
             <Field label="Dst IP" value={selectedHop.dstIp} />
             <Field label="TTL" value={String(selectedHop.ttl)} />
-            <Field label="Protocol" value={selectedHop.protocol} />
+            <Field label={t('simulation.hop.field.protocol')} value={selectedHop.protocol} />
 
-            {selectedHop.toNodeId && <Field label="→ Next" value={selectedHop.toNodeId} />}
-            {selectedHop.reason && <Field label="Reason" value={selectedHop.reason} />}
+            {selectedHop.toNodeId && (
+              <Field label={t('simulation.viewer.next')} value={selectedHop.toNodeId} />
+            )}
+            {selectedHop.reason && (
+              <Field label={t('simulation.viewer.reason')} value={selectedHop.reason} />
+            )}
           </div>
         </>
       )}
