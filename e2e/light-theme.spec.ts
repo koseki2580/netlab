@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { CATEGORIES, expect, test } from './fixtures/harness';
-import { excludingCanvasInternals } from './axe';
+import { excludingCanvasInternals, undecidedContrastFailures } from './axe';
 import { SEL } from './selectors';
 
 /**
@@ -37,6 +37,8 @@ for (const category of CATEGORIES) {
         new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']),
       ).analyze();
       expect(results.violations).toEqual([]);
+      // TC-161 — and nothing axe could not decide falls short either.
+      expect(await undecidedContrastFailures(page, results)).toEqual([]);
     });
   }
 }

@@ -127,7 +127,10 @@ function ToastCard({ entry }: { entry: ToastEntry }) {
         style={{
           all: 'unset',
           cursor: 'pointer',
-          color: 'var(--netlab-text-muted, var(--netlab-text-secondary))',
+          // The viewport sits outside the theme scope, so the tokens are unset here
+          // and the fallback is what renders. A fallback that is itself an unset
+          // token resolves to inherited black on the dark card: an invisible ×.
+          color: 'var(--netlab-text-muted, #94a3b8)',
           fontSize: 12,
           padding: '0 2px',
         }}

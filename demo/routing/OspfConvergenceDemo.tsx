@@ -400,7 +400,9 @@ function OspfConvergenceInner({
                   lineHeight: 1.5,
                 }}
               >
-                <div style={{ color: '#f8fafc', fontWeight: 700, marginBottom: 4 }}>
+                <div
+                  style={{ color: 'var(--netlab-text-primary)', fontWeight: 700, marginBottom: 4 }}
+                >
                   OSPF Route Choice
                 </div>
                 <div>

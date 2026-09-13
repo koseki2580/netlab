@@ -310,7 +310,9 @@ function VlanDemoInner() {
             backdropFilter: 'blur(8px)',
           }}
         >
-          <div style={{ color: '#f8fafc', fontWeight: 700, marginBottom: 4 }}>VLAN Demo</div>
+          <div style={{ color: 'var(--netlab-text-primary)', fontWeight: 700, marginBottom: 4 }}>
+            VLAN Demo
+          </div>
           <div>{headline}</div>
           <div style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}>
             Click <strong>SW1</strong> to inspect access/trunk port VLANs and <strong>R1</strong> to

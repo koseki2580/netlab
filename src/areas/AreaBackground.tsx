@@ -27,11 +27,16 @@ const BORDER_COLORS: Record<string, string> = {
   management: 'rgba(168, 85, 247, 0.3)',
 };
 
+// Text, unlike the fill and border above, has to be read: the theme's accents
+// are measured to clear 4.5:1 against each theme's own backgrounds, where these
+// fixed hues at 80% read 2.2:1 on the light canvas. Private uses cyan rather
+// than blue because the dark theme's blue is a button fill, not a text colour —
+// it read 3.45:1 as a label, and the theme's own contrast test exempts it.
 const LABEL_COLORS: Record<string, string> = {
-  private: 'rgba(59, 130, 246, 0.8)',
-  public: 'rgba(34, 197, 94, 0.8)',
-  dmz: 'rgba(251, 146, 60, 0.8)',
-  management: 'rgba(168, 85, 247, 0.8)',
+  private: 'var(--netlab-accent-cyan)',
+  public: 'var(--netlab-accent-green)',
+  dmz: 'var(--netlab-accent-orange)',
+  management: 'var(--netlab-accent-purple)',
 };
 
 export function AreaBackground({ data }: NodeProps) {

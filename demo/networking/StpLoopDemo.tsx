@@ -331,7 +331,13 @@ function StpStatusCard({ switchId }: { switchId: SwitchId }) {
     <div style={CARD_STYLE}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
         <div>
-          <div style={{ color: '#f8fafc', fontFamily: 'monospace', fontWeight: 700 }}>
+          <div
+            style={{
+              color: 'var(--netlab-text-primary)',
+              fontFamily: 'monospace',
+              fontWeight: 700,
+            }}
+          >
             {node.data.label}
           </div>
           <div
@@ -397,7 +403,14 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
   return (
     <div style={CARD_STYLE}>
       <div style={SECTION_TITLE_STYLE}>Trace</div>
-      <div style={{ color: '#f8fafc', fontFamily: 'monospace', fontSize: 12, marginBottom: 6 }}>
+      <div
+        style={{
+          color: 'var(--netlab-text-primary)',
+          fontFamily: 'monospace',
+          fontSize: 12,
+          marginBottom: 6,
+        }}
+      >
         Last flow: {lastScenario ?? 'none'}
       </div>
       <div
@@ -533,8 +546,8 @@ function StpLoopDemoInner({
             maxWidth: 360,
             padding: '12px 14px',
             borderRadius: 10,
-            background: 'rgba(15, 23, 42, 0.92)',
-            border: '1px solid rgba(51, 65, 85, 0.9)',
+            background: 'color-mix(in srgb, var(--netlab-bg-panel) 94%, transparent)',
+            border: '1px solid var(--netlab-border)',
             color: 'var(--netlab-text-primary)',
             fontFamily: 'monospace',
             fontSize: 12,
@@ -618,7 +631,7 @@ function StpLoopDemoInner({
                     background: 'var(--netlab-bg-primary)',
                     border: '1px solid var(--netlab-border)',
                     borderRadius: 6,
-                    color: '#f8fafc',
+                    color: 'var(--netlab-text-primary)',
                     padding: '6px 8px',
                     fontFamily: 'monospace',
                     fontSize: 12,

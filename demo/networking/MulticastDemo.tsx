@@ -296,7 +296,9 @@ function MulticastDemoInner() {
             backdropFilter: 'blur(8px)',
           }}
         >
-          <div style={{ color: '#f8fafc', fontWeight: 700, marginBottom: 4 }}>Multicast Demo</div>
+          <div style={{ color: 'var(--netlab-text-primary)', fontWeight: 700, marginBottom: 4 }}>
+            Multicast Demo
+          </div>
           <div>{getCaption(joined)}</div>
           <div style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}>
             Click <strong>SW1</strong> to inspect the multicast snooping table in the detail panel.

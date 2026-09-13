@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { excludingCanvasInternals } from './axe';
+import { excludingCanvasInternals, undecidedContrastFailures } from './axe';
 import { CATEGORIES, expect, test } from './fixtures/harness';
 
 for (const category of CATEGORIES) {
@@ -13,6 +13,8 @@ for (const category of CATEGORIES) {
         .analyze();
 
       expect(results.violations).toEqual([]);
+      // TC-162 — the contrast axe could not decide, measured directly.
+      expect(await undecidedContrastFailures(page, results)).toEqual([]);
     });
   }
 }

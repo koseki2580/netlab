@@ -178,7 +178,7 @@ function FragmentationDemoInner({
             backdropFilter: 'blur(8px)',
           }}
         >
-          <div style={{ color: '#f8fafc', fontWeight: 700, marginBottom: 4 }}>
+          <div style={{ color: 'var(--netlab-text-primary)', fontWeight: 700, marginBottom: 4 }}>
             MTU & Fragmentation
           </div>
           <div>

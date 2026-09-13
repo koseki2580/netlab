@@ -158,7 +158,9 @@ and the gallery — each already has its own tests and docs.
   WebKit. A rendering or accessibility defect that only one engine reports is
   still a defect for the learners using it.
 - **REQ-036 (MUST):** Every lesson MUST be readable in the light theme, to the
-  same WCAG 2 AA standard already required in dark.
+  same WCAG 2 AA standard already required in dark. That standard applies to text an automated checker
+  cannot compute a ratio for — through a `color-mix()` background, for one —
+  just as much as to text it can: an unmeasured heading is not a readable one.
 - **REQ-037 (MUST):** Each theme's text and accent tokens MUST clear 4.5:1
   against that theme's own backgrounds. A colour used as a fill MUST instead
   carry a label that clears 4.5:1 against it.
@@ -312,6 +314,9 @@ not part of this specification.
   controls' headings, buttons and empty-state messages, the canvas controls and
   the lesson's name are in Japanese, while the hop events stay as codes; and
   given no choice, then they are in English.
+- **AC-054:** Given any lesson in either theme, when its text contrast is
+  checked, then text whose contrast the accessibility scanner could not decide
+  is measured directly and clears WCAG AA — 4.5:1, or 3:1 for large text.
 - **AC-053:** Given a lesson with a route table drawn over its canvas, when the
   learner presses the table's collapse control, then the table's contents are
   hidden and the control reports itself collapsed; and pressing it again shows
@@ -490,6 +495,8 @@ not part of this specification.
 | TC-158    | AC-052     | unit/behavior | A provider inside a page that chose Japanese                 | It names no language                                                              | It follows the surrounding Japanese                                                  | `src/components/NetlabProvider.test.tsx`                      |
 | TC-159    | AC-052     | unit/behavior | A provider naming English inside a Japanese page             | Its language is resolved                                                          | Its own choice wins                                                                  | `src/components/NetlabProvider.test.tsx`                      |
 | TC-160    | AC-052     | E2E           | A lesson opened with Japanese chosen                         | Its page header is read                                                           | Its name, summary and window title match the gallery's Japanese                      | `e2e/lesson-chrome-locale.spec.ts`                            |
+| TC-161    | AC-054     | E2E           | Every lesson, opened in the light theme                      | The contrast the scanner left undecided is measured                               | Every such text clears WCAG AA                                                       | `e2e/light-theme.spec.ts`                                     |
+| TC-162    | AC-054     | E2E           | Every lesson, in the dark theme                              | The contrast the scanner left undecided is measured                               | Every such text clears WCAG AA                                                       | `e2e/a11y.spec.ts`                                            |
 | TC-038    | AC-031     | E2E           | The gallery's theme setting                                  | A theme is chosen, then a lesson opened                                           | The lesson follows the choice, and an unmade choice changes nothing                  | `e2e/settings-carry.spec.ts`                                  |
 | TC-037    | AC-030     | E2E           | An interactive canvas                                        | The learner tabs to a device and presses Enter                                    | The device is focusable, named, and opens                                            | `e2e/canvas-keyboard.spec.ts`                                 |
 | TC-036    | AC-029     | E2E           | A laptop display, and the sandbox                            | The same lesson is worked through, and a device is edited and the edit taken back | Every control is pressable and every result appears                                  | `e2e/user-journey.spec.ts`                                    |
@@ -606,7 +613,7 @@ with no criterion or no test is shown as such rather than given one.
 | REQ-033     | AC-030         | TC-037                                                                         | `e2e/canvas-keyboard.spec.ts`                                                                       | Keyboard            | Verified |
 | REQ-034     | AC-031         | TC-038                                                                         | `e2e/settings-carry.spec.ts`                                                                        | Using the gallery   | Verified |
 | REQ-035     | AC-032         | TC-039, TC-040, TC-106                                                         | `e2e/lesson-controls.spec.ts`                                                                       | —                   | Verified |
-| REQ-036     | AC-033         | TC-041                                                                         | `e2e/light-theme.spec.ts`                                                                           | Using the gallery   | Verified |
+| REQ-036     | AC-033, AC-054 | TC-041, TC-161, TC-162                                                         | `e2e/light-theme.spec.ts`<br>`e2e/a11y.spec.ts`                                                     | Using the gallery   | Verified |
 | REQ-037     | AC-034         | TC-042                                                                         | `src/theme/index.test.ts`                                                                           | —                   | Verified |
 | REQ-038     | AC-035         | TC-135                                                                         | `playwright.config.test.ts`                                                                         | —                   | Verified |
 | REQ-039     | AC-036         | TC-043                                                                         | `src/components/tutorial/TutorialStepPanel.test.tsx`                                                | —                   | Verified |

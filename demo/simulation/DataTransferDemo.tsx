@@ -576,7 +576,7 @@ function DataTransferDemoInner() {
             fontFamily: 'monospace',
             fontSize: 11,
             color: failureCount > 0 ? 'var(--netlab-accent-red)' : 'var(--netlab-text-secondary)',
-            background: 'rgba(2, 6, 23, 0.82)',
+            background: 'color-mix(in srgb, var(--netlab-bg-panel) 92%, transparent)',
             border: '1px solid var(--netlab-bg-surface)',
             borderRadius: 999,
             padding: '4px 10px',

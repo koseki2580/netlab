@@ -749,7 +749,7 @@ function EnterpriseDemoInner({
         >
           <div
             style={{
-              color: '#f8fafc',
+              color: 'var(--netlab-text-primary)',
               fontFamily: 'monospace',
               fontSize: 13,
               fontWeight: 700,

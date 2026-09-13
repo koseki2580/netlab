@@ -314,7 +314,7 @@ function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
 
         return (
           <section key={router.id} style={{ marginBottom: 18 }}>
-            <div style={{ color: '#f8fafc', fontWeight: 700, marginBottom: 8 }}>
+            <div style={{ color: 'var(--netlab-text-primary)', fontWeight: 700, marginBottom: 8 }}>
               {router.data.label}
             </div>
             {routes.length === 0 ? (
@@ -378,13 +378,14 @@ export default function DynamicRoutingDemo() {
               <button
                 key={option}
                 type="button"
+                aria-pressed={active}
                 onClick={() => setProtocol(option)}
                 style={{
                   border: `1px solid ${active ? PROTOCOL_META[option].accent : 'var(--netlab-border)'}`,
                   background: active
                     ? 'color-mix(in srgb, var(--netlab-bg-primary) 95%, transparent)'
                     : 'var(--netlab-bg-primary)',
-                  color: active ? '#f8fafc' : 'var(--netlab-text-secondary)',
+                  color: active ? 'var(--netlab-text-primary)' : 'var(--netlab-text-secondary)',
                   padding: '8px 12px',
                   borderRadius: 999,
                   fontFamily: 'monospace',
