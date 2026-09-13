@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures/harness';
+import { SEL } from './selectors';
 
 /**
  * REQ-013 — motion that shows a packet travelling is suppressed for a viewer
@@ -25,13 +26,19 @@ test.describe('reduced motion', () => {
       'the page really sees the preference',
     ).toBe(true);
     await page.getByTestId('demo-primary-action').click();
-    await page.waitForTimeout(1500);
 
-    const animated = await page.locator(ANIMATED_LINK).count();
-    expect(animated, 'no link animates under prefers-reduced-motion').toBe(0);
+    // The packet has to have travelled before "nothing moved" means anything.
+    // This used to wait a fixed 1.5s and then check the timeline was not empty —
+    // but the timeline always holds its own heading, so on a loaded machine the
+    // assertion could pass before any packet had gone anywhere.
+    await expect(page.getByTestId(SEL.traceFilter.hop).first()).toBeVisible();
+    // A link is marked in motion within tens of milliseconds of the send, so a
+    // short settle after the trace exists is ample for one to appear if it would.
+    await page.waitForTimeout(500);
 
-    // The packet is still reported — the lesson survives without the motion.
-    await expect(page.getByTestId('demo-trace-log').first()).not.toBeEmpty();
+    await expect(page.locator(ANIMATED_LINK), 'no link animates under reduced motion').toHaveCount(
+      0,
+    );
   });
 });
 
@@ -40,11 +47,14 @@ test.describe('default motion', () => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await demoPage.goto('/networking/arp');
     await page.getByTestId('demo-primary-action').click();
-    await page.waitForTimeout(1500);
 
     // Without this half, the assertion above would pass on a canvas that never
-    // animates anything at all.
-    const animated = await page.locator(ANIMATED_LINK).count();
-    expect(animated, 'the travelling packet is shown moving').toBeGreaterThan(0);
+    // animates anything at all. It waits for the motion rather than sampling
+    // once after a fixed pause: the mark stays for as long as the trace is shown,
+    // but on a loaded machine the send itself can take longer than the pause did.
+    await expect(
+      page.locator(ANIMATED_LINK),
+      'the travelling packet is shown moving',
+    ).not.toHaveCount(0);
   });
 });
