@@ -152,7 +152,9 @@ function StateBadge({
         padding: '8px 10px',
         borderRadius: 10,
         border: `1px solid ${accent}55`,
-        background: '#020617dd',
+        // The panel's own colour rather than a fixed near-black: the text on
+        // it is themed, so a dark box left it unreadable on a light page.
+        background: 'color-mix(in srgb, var(--netlab-bg-panel) 92%, transparent)',
         color: 'var(--netlab-text-primary)',
         fontFamily: 'monospace',
         fontSize: 11,
@@ -374,15 +376,19 @@ function TcpHandshakeDemoInner() {
         </div>
 
         <div
+          data-testid="tcp-teaching-flow"
           style={{
             position: 'absolute',
-            right: 16,
-            top: 12,
+            // Bottom-left, clear of both state badges. In the top-right it sat
+            // on top of the Server State badge and hid it completely — on the
+            // lesson whose whole subject is what those two states do.
+            left: 16,
+            bottom: 16,
             width: 320,
             padding: '12px 14px',
             borderRadius: 10,
             border: '1px solid var(--netlab-bg-surface)',
-            background: '#020617dd',
+            background: 'color-mix(in srgb, var(--netlab-bg-panel) 94%, transparent)',
             color: 'var(--netlab-text-primary)',
             fontFamily: 'monospace',
             fontSize: 11,

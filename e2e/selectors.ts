@@ -244,6 +244,7 @@ export const SEL = {
   tcp: {
     connect: 'tcp-connect',
     clientState: 'tcp-client-state',
+    teachingFlow: 'tcp-teaching-flow',
     serverState: 'tcp-server-state',
   },
   /** The session-inspector lesson's controls. */

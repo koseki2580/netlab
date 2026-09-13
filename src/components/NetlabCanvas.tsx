@@ -30,7 +30,10 @@ import { useSandboxOrNull } from '../sandbox/useSandbox';
 import { useOptionalFailure } from '../simulation/FailureContext';
 import { SimulationContext } from '../simulation/SimulationContext';
 import type { NetlabEdge, NetlabNode, TopologySnapshot } from '../types/topology';
-import { validateConnection as validateCanvasConnection } from '../utils/connectionValidator';
+import {
+  validateAuthoredConnection as validateAuthoredLink,
+  validateConnection as validateCanvasConnection,
+} from '../utils/connectionValidator';
 import type { NetlabColorMode } from '../utils/themeUtils';
 import { useNetlabContext } from './NetlabContext';
 import { NetlabThemeScopeContext } from './NetlabThemeScope';
@@ -440,7 +443,10 @@ export function NetlabCanvas({
         };
       }
 
-      const validationResult = validateCanvasConnection(
+      // The authored variant: this grades a link that already exists, not one a
+      // learner is drawing, so the editor's "put a switch between those two"
+      // guidance is not a fault to paint on it.
+      const validationResult = validateAuthoredLink(
         nodes,
         edges.filter((candidate) => candidate.id !== edge.id),
         edge.source,

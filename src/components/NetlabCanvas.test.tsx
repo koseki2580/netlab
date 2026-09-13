@@ -739,6 +739,9 @@ describe('NetlabCanvas controlled topology API', () => {
   });
 
   it('uses theme CSS variables for invalid edges', () => {
+    // A duplicate link, which is a fault in a topology however it got there.
+    // This used to reach for two hosts on a cable, but that is a real network
+    // and is no longer painted as a fault — see `validateAuthoredConnection`.
     render(
       <NetlabProvider
         topology={makeTopology({
@@ -750,19 +753,23 @@ describe('NetlabCanvas controlled topology API', () => {
               data: { label: 'PC1', role: 'client', layerId: 'l7', ip: '10.0.0.10' },
             },
             {
-              id: 'server-1',
-              type: 'server',
+              id: 'switch-1',
+              type: 'switch',
               position: { x: 240, y: 80 },
-              data: { label: 'SRV1', role: 'server', layerId: 'l7', ip: '10.0.0.20' },
+              data: {
+                label: 'SW1',
+                role: 'switch',
+                layerId: 'l2',
+                ports: [
+                  { id: 'p0', name: 'fa0/0', macAddress: '00:00:00:01:00:00' },
+                  { id: 'p1', name: 'fa0/1', macAddress: '00:00:00:01:00:01' },
+                ],
+              },
             },
           ],
           edges: [
-            {
-              id: 'e-invalid',
-              source: 'client-1',
-              target: 'server-1',
-              type: 'smoothstep',
-            },
+            { id: 'e-first', source: 'client-1', target: 'switch-1', type: 'smoothstep' },
+            { id: 'e-duplicate', source: 'client-1', target: 'switch-1', type: 'smoothstep' },
           ],
         })}
       >
@@ -770,7 +777,7 @@ describe('NetlabCanvas controlled topology API', () => {
       </NetlabProvider>,
     );
 
-    expect(currentEngineProps().edges[0]).toMatchObject({
+    expect(currentEngineProps().edges[1]).toMatchObject({
       style: expect.objectContaining({
         stroke: 'var(--netlab-accent-red)',
       }),
@@ -779,8 +786,8 @@ describe('NetlabCanvas controlled topology API', () => {
           valid: false,
           errors: [
             {
-              code: 'endpoint-to-endpoint',
-              message: 'Endpoint-to-endpoint connections are not allowed',
+              code: 'duplicate-edge',
+              message: 'Duplicate edge: nodes are already connected',
             },
           ],
           warnings: [],

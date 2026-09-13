@@ -5,6 +5,7 @@ import {
   isValidEdge,
   validateConnection,
   validateTopology,
+  validateAuthoredConnection,
 } from './connectionValidator';
 import type { NetlabNode, NetlabEdge } from '../types/topology';
 
@@ -235,6 +236,36 @@ describe('validateConnection', () => {
     expect(result.errors).toContainEqual({
       code: 'endpoint-to-endpoint',
       message: 'Endpoint-to-endpoint connections are not allowed',
+    });
+  });
+
+  /**
+   * TC-142 — the same pair, judged as something that already exists.
+   *
+   * The rule is guidance for someone drawing a link, so the editor keeps
+   * refusing it. A topology that already has one is not faulty: the simulator
+   * carries packets across it, and the "simplest possible setup" lesson is
+   * exactly this pair.
+   */
+  it('does not call an existing endpoint-to-endpoint link faulty', () => {
+    const nodes = [makeNode('client-1', 'client'), makeNode('server-1', 'server')];
+
+    const result = validateAuthoredConnection(nodes, [], 'client-1', 'server-1');
+
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  /** TC-143 — and it still reports the faults that are faults. */
+  it('still reports a self-loop on an existing link', () => {
+    const nodes = [makeNode('client-1', 'client')];
+
+    const result = validateAuthoredConnection(nodes, [], 'client-1', 'client-1');
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContainEqual({
+      code: 'self-loop',
+      message: 'Self-loop: a node cannot connect to itself',
     });
   });
 

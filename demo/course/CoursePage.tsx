@@ -4,6 +4,7 @@ import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { RouteTable } from '../../src/components/controls/RouteTable';
 import { buildUdpPacket } from '../../src/layers/l4-transport/udpPacketBuilder';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
+import { useViewport } from '../../src/utils/useViewport';
 import DemoShell from '../DemoShell';
 import { COURSE_STEPS, type CourseLocale, type CourseStep } from './courseSteps';
 
@@ -150,9 +151,13 @@ function StepRunner({
   const lastHop = lastTrace?.hops[lastTrace.hops.length - 1];
   const arrived = lastHop?.event === 'deliver';
 
+  // The step is finished the moment a hop comes back, whichever way it went:
+  // a packet that failed as the step predicted has taught what it came to
+  // teach, so "next" unlocks either way.
+  const finished = sent && lastHop !== undefined;
   useEffect(() => {
-    if (sent && lastHop) onOutcome(arrived);
-  }, [arrived, lastHop, onOutcome, sent]);
+    if (finished) onOutcome(arrived);
+  }, [arrived, finished, onOutcome]);
 
   const asExpected = step.expect === (arrived ? 'deliver' : 'drop');
 
@@ -186,6 +191,10 @@ function StepRunner({
 }
 
 export default function CoursePage() {
+  // Below the shell's own breakpoint the panel goes under the diagram rather
+  // than beside it: a fixed 380px side column leaves a phone barely a hundred
+  // pixels of network to look at.
+  const { isNarrow } = useViewport();
   const [locale, setLocale] = useState<CourseLocale>(readLocale);
   const [index, setIndex] = useState<number>(readStoredStep);
   const [finished, setFinished] = useState(false);
@@ -208,6 +217,8 @@ export default function CoursePage() {
       /* a course that cannot remember where it was is still usable */
     }
   }, [index]);
+
+  const unlock = useCallback(() => setUnlocked(true), []);
 
   const advance = useCallback(() => {
     setUnlocked(false);
@@ -254,7 +265,14 @@ export default function CoursePage() {
 
   return (
     <DemoShell title={ui.shellTitle} desc={ui.shellDesc}>
-      <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: isNarrow ? 'column' : 'row',
+          height: '100%',
+          overflow: isNarrow ? 'auto' : 'hidden',
+        }}
+      >
         {/* A step is its own network, so remounting on `key` is the point:
             nothing from the previous step's run carries over. */}
         <NetlabProvider key={step.id} topology={step.topology}>
@@ -262,13 +280,20 @@ export default function CoursePage() {
             {/* The panel is a column beside the diagram rather than a sheet on
                 top of it. Overlaid, it covered the machine the learner was
                 sending to, which is the one thing they need to see. */}
-            <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
+            <div
+              style={{
+                flex: 1,
+                position: 'relative',
+                minWidth: 0,
+                minHeight: isNarrow ? 320 : 0,
+              }}
+            >
               <NetlabCanvas />
               {step.id === 'how-it-decides' ? <RouteTable /> : null}
             </div>
             <aside
               style={{
-                width: 380,
+                width: isNarrow ? '100%' : 380,
                 flexShrink: 0,
                 padding: 20,
                 display: 'flex',
@@ -276,7 +301,8 @@ export default function CoursePage() {
                 gap: 14,
                 overflowY: 'auto',
                 background: 'var(--netlab-bg-primary)',
-                borderLeft: '1px solid var(--netlab-border-subtle)',
+                borderTop: isNarrow ? '1px solid var(--netlab-border-subtle)' : 'none',
+                borderLeft: isNarrow ? 'none' : '1px solid var(--netlab-border-subtle)',
               }}
             >
               <div
@@ -301,7 +327,7 @@ export default function CoursePage() {
               <p data-testid="course-task" style={{ ...CARD, margin: 0, lineHeight: 1.8 }}>
                 {body.task}
               </p>
-              <StepRunner step={step} locale={locale} onOutcome={() => setUnlocked(true)} />
+              <StepRunner step={step} locale={locale} onOutcome={unlock} />
               {unlocked ? (
                 <button
                   type="button"

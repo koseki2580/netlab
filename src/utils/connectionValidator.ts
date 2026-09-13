@@ -97,6 +97,30 @@ export function isValidConnection(
   return !(L7_ROLES.has(sourceRole) && L7_ROLES.has(targetRole));
 }
 
+/**
+ * The same check, for a link that already exists rather than one being drawn.
+ *
+ * `endpoint-to-endpoint` is guidance for someone building a network — put a
+ * switch between those two machines — and not a fault in one. Two hosts on a
+ * crossover cable is a real network, the simulator carries packets across it,
+ * and it is the first thing the course teaches. Grading authored topologies by
+ * it painted the "simplest possible setup" lesson's only cable red with a cross
+ * through it, which contradicted both the lesson's description and the
+ * product's own behaviour.
+ */
+export function validateAuthoredConnection(
+  nodes: NetlabNode[],
+  edges: NetlabEdge[],
+  sourceId: string,
+  targetId: string,
+  sourceHandle?: string | null,
+  targetHandle?: string | null,
+): ValidationResult {
+  const result = validateConnection(nodes, edges, sourceId, targetId, sourceHandle, targetHandle);
+  const errors = result.errors.filter((error) => error.code !== 'endpoint-to-endpoint');
+  return { valid: errors.length === 0, errors, warnings: result.warnings };
+}
+
 export function validateConnection(
   nodes: NetlabNode[],
   edges: NetlabEdge[],

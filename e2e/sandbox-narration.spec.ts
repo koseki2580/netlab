@@ -29,8 +29,13 @@ test('narration region announces compare mode change', async ({ page, sandboxPag
 
   await sandboxPage.toggleMode();
 
+  // No budget of its own: unlike the MTU case above, this test makes no claim
+  // about how quickly the announcement lands, only that it does. A borrowed
+  // 1500ms — three times the region's own throttle — is not a requirement, and
+  // under the default parallel run across three engines it was the reason this
+  // failed on Firefox while passing alone.
   await expect
-    .poll(async () => await sandboxPage.narrationRegion().textContent(), { timeout: 1500 })
+    .poll(async () => await sandboxPage.narrationRegion().textContent())
     .toContain('Compare mode enabled');
 });
 

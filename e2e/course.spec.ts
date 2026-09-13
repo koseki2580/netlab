@@ -108,3 +108,67 @@ test('the gallery is in Japanese when Japanese is chosen', async ({ page, galler
 
   expect(english, 'no English sentences remain in the Japanese gallery').toEqual([]);
 });
+
+/**
+ * TC-139 — the course remembers where the learner stopped.
+ *
+ * A course meant to be worked through in short sittings that restarts at step
+ * one every visit is a course nobody finishes. The step is stored under
+ * `netlab-course-step`, which is the same kind of per-browser preference the
+ * gallery's theme and language use.
+ */
+test('the course resumes at the step the learner reached', async ({ page, demoPage }) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.addInitScript(() => {
+    try {
+      window.localStorage.removeItem('netlab-course-step');
+    } catch {
+      /* a first visit has nothing stored anyway */
+    }
+  });
+  await demoPage.goto('/course');
+  await expect(page.getByTestId(SEL.course.progress)).toContainText('1');
+
+  await page.getByTestId(SEL.course.send).click();
+  await expect(page.getByTestId(SEL.course.next)).toBeVisible();
+  await page.getByTestId(SEL.course.next).click();
+  await expect(page.getByTestId(SEL.course.progress)).toContainText('2');
+
+  // Leave and come back, the way someone picking this up again would.
+  await page.goto('/#/');
+  await expect(page.getByTestId(SEL.gallery.heading)).toBeVisible();
+  await page.getByTestId(SEL.course.banner).click();
+
+  await expect(page.getByTestId(SEL.course.progress)).toContainText('2');
+});
+
+/**
+ * TC-140 — the course fits a narrow screen.
+ *
+ * Its panel is a fixed 380px column beside the diagram. On a phone that leaves
+ * the network about a hundred pixels of width, which is not a diagram anyone
+ * can read. Below the shell's own breakpoint the panel goes underneath, and
+ * both halves have to stay usable.
+ */
+test('the course stacks its panel under the diagram on a narrow screen', async ({
+  page,
+  demoPage,
+}) => {
+  await page.setViewportSize({ width: 430, height: 900 });
+  await demoPage.goto('/course');
+  await expect(page.getByTestId(SEL.app.root)).toBeVisible();
+
+  const canvas = await page.getByTestId(SEL.canvas.root).boundingBox();
+  const task = await page.getByTestId(SEL.course.task).boundingBox();
+  expect(canvas, 'the diagram is drawn').not.toBeNull();
+  expect(task, 'the instruction is drawn').not.toBeNull();
+
+  // Stacked, not side by side: the instruction starts below the diagram, and
+  // the diagram keeps enough width to be worth looking at.
+  expect(task!.y).toBeGreaterThanOrEqual(canvas!.y + canvas!.height - 1);
+  expect(canvas!.width).toBeGreaterThan(320);
+
+  // And the step still works from here.
+  await page.getByTestId(SEL.course.send).click();
+  await expect(page.getByTestId(SEL.course.outcome)).toBeVisible();
+});

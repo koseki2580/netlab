@@ -81,6 +81,15 @@ and the gallery — each already has its own tests and docs.
   is comparing the same part of the topology at the same size.
 - **REQ-018 (MUST):** A link the canvas has found errors or warnings on MUST be
   marked on the link itself, and hovering the mark MUST say what is wrong.
+- **REQ-050 (MUST):** A panel drawn over the canvas MUST take its colours from
+  the chosen theme, and MUST NOT cover another panel's content. A fixed dark
+  box under themed text is unreadable in the light theme, and a panel stacked
+  over a state badge hides the very thing its lesson is about.
+- **REQ-049 (MUST):** A topology the product ships MUST NOT be drawn as faulty.
+  Rules that guide someone building a network — "put a switch between those two
+  machines" — MUST NOT be applied as verdicts on links that already exist. Two
+  hosts on a cable is a real network, is what the course teaches first, and is
+  what the simulator carries packets across.
 - **REQ-048 (MUST):** A router MUST be able to reach every subnet it holds an
   address on, without a topology having to state that separately. Giving an
   interface an address is what makes its subnet reachable; requiring a matching
@@ -280,6 +289,15 @@ not part of this specification.
   for WCAG 2 A/AA, then there are no violations.
 - **AC-034:** Given either built-in theme, when its tokens are measured against
   its own backgrounds, then every text and accent token clears 4.5:1.
+- **AC-048:** Given the TCP handshake lesson in the light theme, when its
+  overlays are drawn, then they are light; and given either theme, then neither
+  state badge is covered by the teaching panel.
+- **AC-047:** Given a lesson whose topology joins two hosts directly, when it is
+  drawn, then no cable is painted as a fault; and given the editor, when the
+  learner tries to draw that link themselves, then it is still refused.
+- **AC-046:** Given the course, in either theme and at every stage it has — a
+  step before its packet has run, a step showing a result, and the finished
+  page — when it is scanned for WCAG 2 A/AA, then there are no violations.
 - **AC-045:** Given a router with an address on each of two subnets and no
   static routes, when a packet is sent across it, then it is forwarded; and
   given the TCP handshake lesson, when the learner connects, then both ends
@@ -289,7 +307,8 @@ not part of this specification.
   control can be pressed again.
 - **AC-041:** Given the course opened at its first step, when the learner
   presses the step's single action and then "next" through to the end, then
-  every step reports the result it predicted and the course finishes.
+  every step reports the result it predicted and the course finishes; and a
+  learner who leaves partway through returns to the step they reached.
 - **AC-042:** Given the course in Japanese, when any step is shown, then its
   title, instruction and takeaway are in Japanese; and the same holds in
   English.
@@ -407,6 +426,16 @@ not part of this specification.
 | TC-133    | AC-045     | unit/behavior | A router with no addressed interfaces                        | Its routes are computed                                                           | Nothing is derived                                                                   | `src/routing/connected/ConnectedProtocol.test.ts`             |
 | TC-134    | AC-045     | E2E           | The TCP handshake lesson                                     | The learner presses Connect                                                       | Both ends reach ESTABLISHED, so all three segments were delivered                    | `e2e/tcp-handshake-connect.spec.ts`                           |
 | TC-135    | AC-035     | unit/behavior | The browser suite's configuration and install script         | Both are read                                                                     | Each engine has a project and is installed by `e2e:install`                          | `playwright.config.test.ts`                                   |
+| TC-136    | AC-046     | E2E           | The course in the dark theme, before and after a run         | axe analyses it for WCAG 2 A/AA                                                   | No violations at either stage                                                        | `e2e/course-a11y.spec.ts`                                     |
+| TC-137    | AC-046     | E2E           | The course opened after choosing Light                       | axe analyses it for WCAG 2 A/AA                                                   | No violations                                                                        | `e2e/course-a11y.spec.ts`                                     |
+| TC-138    | AC-046     | E2E           | The page shown when the course is finished                   | axe analyses it for WCAG 2 A/AA                                                   | No violations                                                                        | `e2e/course-a11y.spec.ts`                                     |
+| TC-139    | AC-041     | E2E           | A learner who left the course partway through                | They open it again from the gallery                                               | It resumes at the step they reached                                                  | `e2e/course.spec.ts`                                          |
+| TC-140    | AC-041     | E2E           | The course on a phone-width screen                           | Its layout is measured                                                            | The panel stacks under the diagram, and the step still runs                          | `e2e/course.spec.ts`                                          |
+| TC-141    | AC-047     | E2E           | A lesson joining two hosts directly                          | Its cables are read                                                               | None is painted as a fault                                                           | `e2e/authored-links.spec.ts`                                  |
+| TC-142    | AC-047     | unit/behavior | An existing link between two hosts                           | It is judged as something already authored                                        | It is not faulty                                                                     | `src/utils/connectionValidator.test.ts`                       |
+| TC-143    | AC-047     | unit/behavior | An existing self-loop                                        | It is judged the same way                                                         | It is still reported as a fault                                                      | `src/utils/connectionValidator.test.ts`                       |
+| TC-144    | AC-048     | E2E           | The TCP lesson opened after choosing Light                   | Its overlays' backgrounds are measured                                            | Both follow the light theme rather than a fixed near-black                           | `e2e/authored-links.spec.ts`                                  |
+| TC-145    | AC-048     | E2E           | The TCP lesson's two state badges                            | Their boxes are compared with the teaching panel's                                | Neither is underneath it                                                             | `e2e/authored-links.spec.ts`                                  |
 | TC-038    | AC-031     | E2E           | The gallery's theme setting                                  | A theme is chosen, then a lesson opened                                           | The lesson follows the choice, and an unmade choice changes nothing                  | `e2e/settings-carry.spec.ts`                                  |
 | TC-037    | AC-030     | E2E           | An interactive canvas                                        | The learner tabs to a device and presses Enter                                    | The device is focusable, named, and opens                                            | `e2e/canvas-keyboard.spec.ts`                                 |
 | TC-036    | AC-029     | E2E           | A laptop display, and the sandbox                            | The same lesson is worked through, and a device is edited and the edit taken back | Every control is pressable and every result appears                                  | `e2e/user-journey.spec.ts`                                    |
@@ -455,6 +484,13 @@ layers are the engine's own rather than a filtered redraw.
   that do work and says where it stops. (The related question — whether the
   lesson's own "Fail link" should count — is answered: it records a sandbox edit
   now, as the controlled-topology demo's buttons always have.)
+- **The lessons' own interiors are still English.** The course and the whole
+  gallery index — every category, every lesson's title and description, and the
+  controls around them — are Japanese, which is what a learner reads to choose
+  and to start. Inside a lesson, its brief, captions and buttons are not, and
+  translating fifty-two lessons' prose is a body of work of its own rather than
+  an oversight. The course exists partly so that a beginner has a complete path
+  that does not depend on it.
 - One action can satisfy several tutorial steps at once (all three ARP
   predicates are true after the first packet). The completion card lists what
   was observed; whether the steps should instead gate on distinct moments is a
