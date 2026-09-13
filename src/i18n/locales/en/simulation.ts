@@ -81,4 +81,12 @@ export const simulation: Catalog = {
   'simulation.filter.label': 'Display filter',
   'simulation.filter.aria': 'Trace display filter',
   'simulation.filter.parseError': 'Parse error at column {{column}}: {{message}}',
+
+  'simulation.canvas.zoomIn': 'Zoom in',
+  'simulation.canvas.zoomOut': 'Zoom out',
+  'simulation.canvas.zoomReset': 'Reset zoom to 100%',
+  'simulation.canvas.fitLabel': 'Fit the diagram in view',
+  'simulation.canvas.fit': 'fit',
+  'simulation.canvas.gridLabel': 'Snap to grid',
+  'simulation.canvas.grid': 'grid',
 } as const;

@@ -233,6 +233,11 @@ export const SEL = {
     areaLegend: 'area-legend',
     controlledJson: 'controlled-topology-json',
   },
+  /** The header every lesson page shares. */
+  shell: {
+    title: 'demo-shell-title',
+    desc: 'demo-shell-desc',
+  },
   /** The route table drawn over a lesson's canvas. */
   routeTable: {
     toggle: 'route-table-toggle',

@@ -1,3 +1,5 @@
+import { useI18n } from '../../i18n/useI18n';
+
 export interface MaxGraphControlsProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
@@ -54,6 +56,7 @@ export function MaxGraphControls({
   placement = 'bottom-left',
   bottomOffset = 8,
 }: MaxGraphControlsProps) {
+  const { t } = useI18n();
   return (
     <div
       data-testid="maxgraph-controls"
@@ -71,7 +74,7 @@ export function MaxGraphControls({
         type="button"
         style={BTN}
         onClick={onZoomIn}
-        aria-label="Zoom in"
+        aria-label={t('simulation.canvas.zoomIn')}
         data-testid="maxgraph-zoom-in"
       >
         +
@@ -80,7 +83,7 @@ export function MaxGraphControls({
         type="button"
         style={BTN}
         onClick={onZoomOut}
-        aria-label="Zoom out"
+        aria-label={t('simulation.canvas.zoomOut')}
         data-testid="maxgraph-zoom-out"
       >
         −
@@ -89,7 +92,7 @@ export function MaxGraphControls({
         type="button"
         style={BTN}
         onClick={onZoomActual}
-        aria-label="Reset zoom to 100%"
+        aria-label={t('simulation.canvas.zoomReset')}
         data-testid="maxgraph-zoom-reset"
       >
         1:1
@@ -98,10 +101,10 @@ export function MaxGraphControls({
         type="button"
         style={BTN}
         onClick={onFit}
-        aria-label="Fit the diagram in view"
+        aria-label={t('simulation.canvas.fitLabel')}
         data-testid="maxgraph-fit"
       >
-        fit
+        {t('simulation.canvas.fit')}
       </button>
       {onToggleGrid ? (
         <button
@@ -112,10 +115,10 @@ export function MaxGraphControls({
           }}
           onClick={onToggleGrid}
           aria-pressed={gridEnabled ?? false}
-          aria-label="Snap to grid"
+          aria-label={t('simulation.canvas.gridLabel')}
           data-testid="maxgraph-grid"
         >
-          grid
+          {t('simulation.canvas.grid')}
         </button>
       ) : null}
     </div>

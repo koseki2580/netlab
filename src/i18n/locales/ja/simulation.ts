@@ -74,4 +74,12 @@ export const simulation: Catalog = {
   'simulation.filter.label': '表示フィルタ',
   'simulation.filter.aria': '通信の表示フィルタ',
   'simulation.filter.parseError': '{{column}} 文字目で読み取りエラー: {{message}}',
+
+  'simulation.canvas.zoomIn': '拡大',
+  'simulation.canvas.zoomOut': '縮小',
+  'simulation.canvas.zoomReset': '倍率を 100% に戻す',
+  'simulation.canvas.fitLabel': '図全体を画面に収める',
+  'simulation.canvas.fit': '全体',
+  'simulation.canvas.gridLabel': 'グリッドに合わせる',
+  'simulation.canvas.grid': 'グリッド',
 } as const;

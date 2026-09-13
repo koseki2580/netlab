@@ -91,7 +91,7 @@ window.USER_GUIDE_CONTENT = {
         id: "troubleshooting",
         title: "こまったとき",
         html: `<p><strong>パケットが届かない</strong> — タイムラインの最後の行にある理由を見てください。<code>no-route</code> は経路がない、<code>not-group-member</code> はそのグループに参加していない、<code>acl-deny</code> はフィルタで止められた、という意味です。レッスンによっては、それを見せることが目的です。</p>
-               <p><strong>図が画面に収まらない</strong> — 右下の <code>fit</code> を押すと全体が入ります。</p>
+               <p><strong>図が画面に収まらない</strong> — 右下の「全体」（英語表示では <code>fit</code>）を押すと全体が入ります。</p>
                <p><strong>言語が英語のまま</strong> — ギャラリー右上で「日本語」を選んでください。レッスン内部の解説文はまだ英語のものがあります。</p>
                <p><strong>進み具合が保存されない</strong> — ブラウザのプライベートモードや、サイトデータを保存しない設定では記録できません。</p>`
       }

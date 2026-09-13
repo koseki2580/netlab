@@ -23,6 +23,7 @@ import { E2eTraceHook } from './__e2e_hook';
 import { ShellChromeProvider } from './ShellChromeContext';
 import { I18nProvider } from '../src/i18n/I18nProvider';
 import { readLearningLocale } from './learning/learningLocale';
+import { DEMO_COPY_JA } from './galleryJa';
 
 const GITHUB_ICON = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -126,6 +127,12 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
   // The language chosen in the gallery. Read once: choosing another happens on
   // the gallery page, and arriving back here mounts the shell afresh.
   const [locale] = useState(readLearningLocale);
+  // The lesson's name and summary in that language, from the translations the
+  // gallery card shows, so the card and the page it opens cannot disagree. A
+  // page with no entry keeps what it was given.
+  const translatedCopy = locale === 'ja' ? DEMO_COPY_JA[location.pathname] : undefined;
+  const shownTitle = translatedCopy?.title ?? title;
+  const shownDesc = translatedCopy?.desc ?? desc;
 
   // Keep <html lang> in step with the chosen locale so screen readers use the
   // right pronunciation for Japanese content.
@@ -136,8 +143,8 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
   // Descriptive per-demo <title> (WCAG 2.4.2): a single generic title leaves
   // screen-reader, tab and history users unable to tell the demos apart.
   useEffect(() => {
-    document.title = `${title} – netlab`;
-  }, [title]);
+    document.title = `${shownTitle} – netlab`;
+  }, [shownTitle]);
   // S1 — below 900px the rail becomes a bottom bar and the shell switches to a
   // single vertical column so iframe/phone embeds don't horizontally scroll.
   const { isNarrow } = useViewport();
@@ -353,7 +360,7 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
           transition: 'top 120ms ease',
         }}
       >
-        Skip to content
+        {locale === 'ja' ? 'コンテンツへ移動' : 'Skip to content'}
       </button>
       {!embedded && !isNarrow && (
         <NavRail items={navItems} onOpenBrand={() => selectView('gallery')} onOpenHelp={openHelp} />
@@ -383,6 +390,7 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
               📡 netlab
             </span>
             <h1
+              data-testid="demo-shell-title"
               style={{
                 margin: 0,
                 color: 'var(--netlab-text-secondary)',
@@ -391,16 +399,17 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
                 fontWeight: 600,
               }}
             >
-              {title}
+              {shownTitle}
             </h1>
             <span
+              data-testid="demo-shell-desc"
               style={{
                 color: 'var(--netlab-text-secondary)',
                 fontSize: 12,
                 fontFamily: 'monospace',
               }}
             >
-              {desc}
+              {shownDesc}
             </span>
             <a
               href="https://github.com/koseki2580/netlab"

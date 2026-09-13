@@ -84,7 +84,8 @@ and the gallery — each already has its own tests and docs.
 - **REQ-052 (MUST):** The controls every lesson shares — the packet timeline,
   the step controls, the route table, the hop inspector, the packet structure
   viewer and the display filter — MUST follow the language the learner chose in
-  the gallery. Hop events (`CREATE`, `FWD`, `DELIVER`, `DROP`) and drop reasons
+  the gallery, and so MUST the canvas's own controls and the lesson's name and
+  summary at the top of the page. Hop events (`CREATE`, `FWD`, `DELIVER`, `DROP`) and drop reasons
   are codes the guide documents and a learner searches for, and stay as they
   are. A library consumer that does not ask for a language MUST still get
   English, and one that names a language on `NetlabProvider` MUST still get that
@@ -308,8 +309,9 @@ not part of this specification.
   its own backgrounds, then every text and accent token clears 4.5:1.
 - **AC-052:** Given Japanese chosen in the gallery, when a lesson with a packet
   timeline and step controls is opened and a packet is sent, then those
-  controls' headings, buttons and empty-state messages are in Japanese, while
-  the hop events stay as codes; and given no choice, then they are in English.
+  controls' headings, buttons and empty-state messages, the canvas controls and
+  the lesson's name are in Japanese, while the hop events stay as codes; and
+  given no choice, then they are in English.
 - **AC-053:** Given a lesson with a route table drawn over its canvas, when the
   learner presses the table's collapse control, then the table's contents are
   hidden and the control reports itself collapsed; and pressing it again shows
@@ -487,6 +489,7 @@ not part of this specification.
 | TC-157    | AC-052     | E2E           | A lesson opened with no language chosen                      | A packet is sent                                                                  | The timeline is in English, as before                                                | `e2e/lesson-chrome-locale.spec.ts`                            |
 | TC-158    | AC-052     | unit/behavior | A provider inside a page that chose Japanese                 | It names no language                                                              | It follows the surrounding Japanese                                                  | `src/components/NetlabProvider.test.tsx`                      |
 | TC-159    | AC-052     | unit/behavior | A provider naming English inside a Japanese page             | Its language is resolved                                                          | Its own choice wins                                                                  | `src/components/NetlabProvider.test.tsx`                      |
+| TC-160    | AC-052     | E2E           | A lesson opened with Japanese chosen                         | Its page header is read                                                           | Its name, summary and window title match the gallery's Japanese                      | `e2e/lesson-chrome-locale.spec.ts`                            |
 | TC-038    | AC-031     | E2E           | The gallery's theme setting                                  | A theme is chosen, then a lesson opened                                           | The lesson follows the choice, and an unmade choice changes nothing                  | `e2e/settings-carry.spec.ts`                                  |
 | TC-037    | AC-030     | E2E           | An interactive canvas                                        | The learner tabs to a device and presses Enter                                    | The device is focusable, named, and opens                                            | `e2e/canvas-keyboard.spec.ts`                                 |
 | TC-036    | AC-029     | E2E           | A laptop display, and the sandbox                            | The same lesson is worked through, and a device is edited and the edit taken back | Every control is pressable and every result appears                                  | `e2e/user-journey.spec.ts`                                    |
@@ -619,4 +622,4 @@ with no criterion or no test is shown as such rather than given one.
 | REQ-049     | AC-047         | TC-141, TC-142, TC-143, TC-146                                                 | `e2e/authored-links.spec.ts`<br>`src/utils/connectionValidator.test.ts`                             | Reading a lesson    | Verified |
 | REQ-050     | AC-048         | TC-144, TC-145                                                                 | `e2e/authored-links.spec.ts`                                                                        | Reading a lesson    | Verified |
 | REQ-051     | AC-049         | TC-147, TC-148, TC-149, TC-150                                                 | `e2e/user-guide.spec.ts`                                                                            | Getting started     | Verified |
-| REQ-052     | AC-052         | TC-156, TC-157, TC-158, TC-159                                                 | `e2e/lesson-chrome-locale.spec.ts`<br>`src/components/NetlabProvider.test.tsx`                      | Using the gallery   | Verified |
+| REQ-052     | AC-052         | TC-156, TC-157, TC-158, TC-159, TC-160                                         | `e2e/lesson-chrome-locale.spec.ts`<br>`src/components/NetlabProvider.test.tsx`                      | Using the gallery   | Verified |

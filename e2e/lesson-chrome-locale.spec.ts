@@ -36,6 +36,12 @@ test('a lesson follows the language chosen in the gallery', async ({ page, demoP
   await expect(timeline).toContainText('パケットタイムライン');
   await expect(timeline).toContainText('PCAP を保存');
   await expect(timeline).not.toContainText('PACKET TIMELINE');
+  // So do the canvas's own controls, the part every lesson shows.
+  await expect(page.getByTestId(SEL.maxGraph.fit)).toHaveText('全体');
+  await expect(page.getByTestId(SEL.maxGraph.fit)).toHaveAttribute(
+    'aria-label',
+    '図全体を画面に収める',
+  );
   // The codes a learner looks up by name stay as they are.
   await expect(page.getByTestId(SEL.traceFilter.hop).filter({ hasText: 'DELIVER' })).toHaveCount(1);
 });
@@ -47,4 +53,29 @@ test('a lesson with no language chosen stays in English', async ({ page, demoPag
   const timeline = page.getByTestId(SEL.demo.traceLog);
   await expect(timeline).toContainText('PACKET TIMELINE');
   await expect(timeline).toContainText('Download PCAP');
+  await expect(page.getByTestId(SEL.maxGraph.fit)).toHaveText('fit');
+});
+
+/**
+ * TC-160 — the lesson's own name and summary are in the chosen language.
+ *
+ * The gallery showed a lesson as 「スパニングツリー」, and opening it put
+ * "Spanning Tree" at the top of the page. The header now reads from the same
+ * translations the gallery card does, so the two cannot drift apart.
+ */
+test('a lesson is named in the language chosen in the gallery', async ({ page, demoPage }) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.addInitScript(() => {
+    try {
+      window.localStorage.setItem('netlab-locale', 'ja');
+    } catch {
+      /* no storage means no choice, which this test would then catch */
+    }
+  });
+  await demoPage.goto('/networking/stp');
+  await expect(page.getByTestId(SEL.app.root)).toBeVisible();
+
+  await expect(page.getByTestId(SEL.shell.title)).toHaveText('スパニングツリー');
+  await expect(page.getByTestId(SEL.shell.desc)).toHaveText(/[ぁ-んァ-ヶ一-龯]/);
+  await expect(page).toHaveTitle(/スパニングツリー/);
 });
