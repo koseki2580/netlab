@@ -14,6 +14,7 @@ import type { HttpMessage, InFlightPacket } from '../../src/types/packets';
 import type { PacketTrace } from '../../src/types/simulation';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
+import { stepTraceToEnd } from '../stepTraceToEnd';
 
 export const SESSION_DEMO_TOPOLOGY: NetworkTopology = {
   nodes: [
@@ -216,16 +217,6 @@ function findTrace(engine: SimulationEngine, packetId: string): PacketTrace | un
   return engine.getState().traces.find((trace) => trace.packetId === packetId);
 }
 
-async function flushCurrentTrace(engine: SimulationEngine): Promise<void> {
-  const state = engine.getState();
-  if (!state.currentTraceId) return;
-
-  while (engine.getState().status !== 'done') {
-    engine.step();
-    await Promise.resolve();
-  }
-}
-
 function SessionDemoInner() {
   const { topology, hookEngine } = useNetlabContext();
   const { engine, sendPacket } = useSimulation();
@@ -286,7 +277,7 @@ function SessionDemoInner() {
       if (!requestPacket) return;
 
       await sendPacket(requestPacket);
-      await flushCurrentTrace(engine);
+      await stepTraceToEnd(engine);
 
       const requestTrace = findTrace(engine, requestPacket.id);
       if (!requestTrace) return;
@@ -319,7 +310,7 @@ function SessionDemoInner() {
       if (!responsePacket) return;
 
       await sendPacket(responsePacket);
-      await flushCurrentTrace(engine);
+      await stepTraceToEnd(engine);
 
       const responseTrace = findTrace(engine, responsePacket.id);
       if (responseTrace) {
@@ -354,6 +345,7 @@ function SessionDemoInner() {
         >
           <button
             type="button"
+            data-testid="session-send"
             onClick={() => void handleSend()}
             disabled={isSending}
             style={isSending ? BUTTON_DISABLED : BUTTON_PRIMARY}
@@ -368,7 +360,8 @@ function SessionDemoInner() {
           <span
             style={{ color: 'var(--netlab-text-secondary)', fontFamily: 'monospace', fontSize: 11 }}
           >
-            {sessions.length} session{sessions.length === 1 ? '' : 's'}
+            <span data-testid="session-count">{sessions.length}</span> session
+            {sessions.length === 1 ? '' : 's'}
             {failureCount > 0
               ? ` · ${failureCount} failure${failureCount === 1 ? '' : 's'} active`
               : ''}

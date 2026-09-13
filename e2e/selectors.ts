@@ -233,6 +233,18 @@ export const SEL = {
     areaLegend: 'area-legend',
     controlledJson: 'controlled-topology-json',
   },
+  /** The HTTP/1.1 lesson's request buttons. */
+  http: {
+    getRoot: 'http-get-root',
+    getUser: 'http-get-user',
+    postEcho: 'http-post-echo',
+    sessionCount: 'http-session-count',
+  },
+  /** The session-inspector lesson's controls. */
+  session: {
+    send: 'session-send',
+    count: 'session-count',
+  },
   /** The guided six-step course a beginner starts with. */
   course: {
     banner: 'gallery-course-banner',

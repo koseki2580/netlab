@@ -81,6 +81,10 @@ and the gallery — each already has its own tests and docs.
   is comparing the same part of the topology at the same size.
 - **REQ-018 (MUST):** A link the canvas has found errors or warnings on MUST be
   marked on the link itself, and hovering the mark MUST say what is wrong.
+- **REQ-047 (MUST):** A lesson MUST NOT be able to stop the browser. Driving the
+  simulation forward MUST yield to the task queue, so a reply from the engine's
+  worker can be delivered, and MUST be bounded, so a trace that never reports it
+  has finished costs one unresponsive control rather than the page.
 - **REQ-044 (MUST):** The product MUST offer a guided course a beginner can
   follow from the start without choosing anything. Each step MUST present one
   network small enough to read at a glance, one instruction, and one action,
@@ -271,6 +275,9 @@ not part of this specification.
   for WCAG 2 A/AA, then there are no violations.
 - **AC-034:** Given either built-in theme, when its tokens are measured against
   its own backgrounds, then every text and accent token clears 4.5:1.
+- **AC-044:** Given a lesson that runs a request to completion, when the learner
+  presses it, then the request completes, the page is still there, and the
+  control can be pressed again.
 - **AC-041:** Given the course opened at its first step, when the learner
   presses the step's single action and then "next" through to the end, then
   every step reports the result it predicted and the course finishes.
@@ -384,6 +391,8 @@ not part of this specification.
 | TC-126    | AC-042     | E2E           | The course with Japanese chosen                      | A step is shown                                                                   | Its title, goal, instruction and button are in Japanese                              | `e2e/course.spec.ts`                                          |
 | TC-127    | AC-041     | E2E           | The gallery as it opens                              | The course banner is pressed                                                      | The course opens at its first step                                                   | `e2e/course.spec.ts`                                          |
 | TC-128    | AC-043     | E2E           | The gallery with Japanese chosen                     | Every line of prose on the page is read                                           | None of it is left in English                                                        | `e2e/course.spec.ts`                                          |
+| TC-129    | AC-044     | E2E           | The HTTP lesson                                      | "GET /" is pressed                                                                | One session is recorded, and the page survives to show it                            | `e2e/http-request.spec.ts`                                    |
+| TC-130    | AC-044     | E2E           | The session-inspector lesson                         | "Send Request" is pressed                                                         | One session is recorded, and the page survives to show it                            | `e2e/http-request.spec.ts`                                    |
 | TC-038    | AC-031     | E2E           | The gallery's theme setting                          | A theme is chosen, then a lesson opened                                           | The lesson follows the choice, and an unmade choice changes nothing                  | `e2e/settings-carry.spec.ts`                                  |
 | TC-037    | AC-030     | E2E           | An interactive canvas                                | The learner tabs to a device and presses Enter                                    | The device is focusable, named, and opens                                            | `e2e/canvas-keyboard.spec.ts`                                 |
 | TC-036    | AC-029     | E2E           | A laptop display, and the sandbox                    | The same lesson is worked through, and a device is edited and the edit taken back | Every control is pressable and every result appears                                  | `e2e/user-journey.spec.ts`                                    |

@@ -12,6 +12,7 @@ import type { HttpMessage, InFlightPacket } from '../../src/types/packets';
 import type { PacketTrace } from '../../src/types/simulation';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
+import { stepTraceToEnd } from '../stepTraceToEnd';
 
 // ────────────────────────────────────────────────
 // Topology: Client → Router → Server (port 80)
@@ -188,15 +189,6 @@ function findTrace(engine: SimulationEngine, packetId: string): PacketTrace | un
   return engine.getState().traces.find((t) => t.packetId === packetId);
 }
 
-async function flushCurrentTrace(engine: SimulationEngine): Promise<void> {
-  const state = engine.getState();
-  if (!state.currentTraceId) return;
-  while (engine.getState().status !== 'done') {
-    engine.step();
-    await Promise.resolve();
-  }
-}
-
 // ────────────────────────────────────────────────
 // Server routes (simulated)
 // ────────────────────────────────────────────────
@@ -300,7 +292,7 @@ function HttpDemoInner() {
       if (!requestPacket) return;
 
       await sendPacket(requestPacket);
-      await flushCurrentTrace(engine);
+      await stepTraceToEnd(engine);
 
       const requestTrace = findTrace(engine, requestPacket.id);
       if (requestTrace) {
@@ -350,7 +342,7 @@ function HttpDemoInner() {
       if (!responsePacket) return;
 
       await sendPacket(responsePacket);
-      await flushCurrentTrace(engine);
+      await stepTraceToEnd(engine);
 
       const responseTrace = findTrace(engine, responsePacket.id);
       if (responseTrace) {
@@ -387,6 +379,7 @@ function HttpDemoInner() {
         >
           <button
             type="button"
+            data-testid="http-get-root"
             onClick={() => void sendHttp('GET', '/')}
             disabled={isSending}
             style={isSending ? BUTTON_DISABLED : BUTTON_PRIMARY}
@@ -395,6 +388,7 @@ function HttpDemoInner() {
           </button>
           <button
             type="button"
+            data-testid="http-get-user"
             onClick={() => void sendHttp('GET', '/users/42')}
             disabled={isSending}
             style={isSending ? BUTTON_DISABLED : BUTTON_PRIMARY}
@@ -403,6 +397,7 @@ function HttpDemoInner() {
           </button>
           <button
             type="button"
+            data-testid="http-post-echo"
             onClick={() => void sendHttp('POST', '/echo', 'A'.repeat(3000))}
             disabled={isSending}
             style={isSending ? BUTTON_DISABLED : BUTTON_PRIMARY}
@@ -416,7 +411,8 @@ function HttpDemoInner() {
           <span
             style={{ color: 'var(--netlab-text-secondary)', fontFamily: 'monospace', fontSize: 11 }}
           >
-            {sessionCount} session{sessionCount === 1 ? '' : 's'}
+            <span data-testid="http-session-count">{sessionCount}</span> session
+            {sessionCount === 1 ? '' : 's'}
           </span>
         </div>
 
