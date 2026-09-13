@@ -233,6 +233,18 @@ export const SEL = {
     areaLegend: 'area-legend',
     controlledJson: 'controlled-topology-json',
   },
+  /**
+   * The offline HTML user guide. It is a static page built from a template,
+   * so these are its element ids rather than test ids.
+   */
+  guide: {
+    title: '#site-title',
+    language: '#language-select',
+    search: '#search-input',
+    themeToggle: '#theme-toggle',
+    content: '#content',
+    section: '.guide-section',
+  },
   /** The HTTP/1.1 lesson's request buttons. */
   http: {
     getRoot: 'http-get-root',

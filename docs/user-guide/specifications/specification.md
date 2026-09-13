@@ -81,6 +81,12 @@ and the gallery — each already has its own tests and docs.
   is comparing the same part of the topology at the same size.
 - **REQ-018 (MUST):** A link the canvas has found errors or warnings on MUST be
   marked on the link itself, and hovering the mark MUST say what is wrong.
+- **REQ-051 (MUST):** The product MUST ship a user guide that works opened
+  straight from disk, with no server and no network, and that can be read in
+  Japanese and in English, searched, and read in a light or a dark theme. It
+  MUST describe only behaviour that exists. A guide that needs a server cannot
+  be sent to anyone, and one in English alone does not reach the learners who
+  asked for Japanese.
 - **REQ-050 (MUST):** A panel drawn over the canvas MUST take its colours from
   the chosen theme, and MUST NOT cover another panel's content. A fixed dark
   box under themed text is unreadable in the light theme, and a panel stacked
@@ -292,6 +298,10 @@ not part of this specification.
   for WCAG 2 A/AA, then there are no violations.
 - **AC-034:** Given either built-in theme, when its tokens are measured against
   its own backgrounds, then every text and accent token clears 4.5:1.
+- **AC-049:** Given the user guide opened from a `file://` URL with the network
+  refused, when it loads, then it shows its content and has requested nothing;
+  and when the language, the search box or the theme is used, then the guide
+  changes accordingly.
 - **AC-048:** Given the TCP handshake lesson in the light theme, when its
   overlays are drawn, then they are light; and given either theme, then neither
   state badge is covered by the teaching panel.
@@ -442,6 +452,10 @@ not part of this specification.
 | TC-144    | AC-048     | E2E           | The TCP lesson opened after choosing Light                   | Its overlays' backgrounds are measured                                            | Both follow the light theme rather than a fixed near-black                           | `e2e/authored-links.spec.ts`                                  |
 | TC-145    | AC-048     | E2E           | The TCP lesson's two state badges                            | Their boxes are compared with the teaching panel's                                | Neither is underneath it                                                             | `e2e/authored-links.spec.ts`                                  |
 | TC-146    | AC-047     | unit/behavior | A second link between the same pair                          | It is judged as something already authored                                        | It is not faulty, being a port-channel                                               | `src/utils/connectionValidator.test.ts`                       |
+| TC-147    | AC-049     | E2E           | The guide opened from a file, network refused                | It loads                                                                          | Its content is shown and no request was made                                         | `e2e/user-guide.spec.ts`                                      |
+| TC-148    | AC-049     | E2E           | The guide                                                    | Japanese and then English are chosen                                              | The sections are headed in the chosen language                                       | `e2e/user-guide.spec.ts`                                      |
+| TC-149    | AC-049     | E2E           | The guide                                                    | A word is searched for, then the search is cleared                                | Only matching sections remain, then all return                                       | `e2e/user-guide.spec.ts`                                      |
+| TC-150    | AC-049     | E2E           | The guide                                                    | The theme control is pressed                                                      | The theme changes between light and dark                                             | `e2e/user-guide.spec.ts`                                      |
 | TC-038    | AC-031     | E2E           | The gallery's theme setting                                  | A theme is chosen, then a lesson opened                                           | The lesson follows the choice, and an unmade choice changes nothing                  | `e2e/settings-carry.spec.ts`                                  |
 | TC-037    | AC-030     | E2E           | An interactive canvas                                        | The learner tabs to a device and presses Enter                                    | The device is focusable, named, and opens                                            | `e2e/canvas-keyboard.spec.ts`                                 |
 | TC-036    | AC-029     | E2E           | A laptop display, and the sandbox                            | The same lesson is worked through, and a device is edited and the edit taken back | Every control is pressable and every result appears                                  | `e2e/user-journey.spec.ts`                                    |
@@ -512,3 +526,65 @@ layers are the engine's own rather than a filtered redraw.
 - [x] Security considerations addressed (label escaping) .
 - [x] Migration impact stated.
 - [x] Open questions recorded rather than guessed.
+
+## 17. Traceability
+
+Each requirement against the criteria that accept it, the test cases that
+exercise those, and where a user reads about it. Requirement-to-criterion
+links were not recorded when most of these were written; they are paired
+here by reading each requirement against the criteria, and a requirement
+with no criterion or no test is shown as such rather than given one.
+
+| Requirement | Acceptance     | Test case                                                                      | Test evidence                                                                                       | User guide section  | Status            |
+| ----------- | -------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- | ------------------- | ----------------- |
+| REQ-001     | AC-001         | TC-001                                                                         | `e2e/editor-layers.spec.ts`                                                                         | —                   | Verified          |
+| REQ-002     | AC-002         | TC-002                                                                         | `src/editor/components/LayerPalette.test.tsx`                                                       | —                   | Verified          |
+| REQ-003     | AC-003         | TC-003, TC-010                                                                 | `e2e/editor-layers.spec.ts`<br>`src/editor/engine/maxGraphModel.test.ts`                            | —                   | Verified          |
+| REQ-004     | AC-004         | TC-004, TC-005                                                                 | `src/editor/layerVisibility.test.ts`                                                                | —                   | Verified          |
+| REQ-005     | AC-004         | TC-004, TC-005                                                                 | `src/editor/layerVisibility.test.ts`                                                                | —                   | Verified          |
+| REQ-006     | AC-005         | TC-006                                                                         | `e2e/editor-layers.spec.ts`                                                                         | —                   | Verified          |
+| REQ-007     | AC-006         | TC-007                                                                         | `src/editor/components/EditorRunButton.test.tsx`                                                    | —                   | Verified          |
+| REQ-008     | AC-007         | TC-008, TC-011                                                                 | `e2e/editor-layers.spec.ts`<br>`src/editor/components/PacketHistoryPanel.test.tsx`                  | —                   | Verified          |
+| REQ-009     | —              | TC-012                                                                         | `src/editor/engine/engineContract.test.tsx`                                                         | —                   | Verified          |
+| REQ-010     | AC-009, AC-010 | TC-013, TC-014                                                                 | `e2e/canvas-areas.spec.ts`                                                                          | —                   | Verified          |
+| REQ-011     | AC-011         | TC-015                                                                         | `e2e/canvas-areas.spec.ts`                                                                          | —                   | Verified          |
+| REQ-012     | AC-012         | TC-016                                                                         | `e2e/canvas-controlled.spec.ts`                                                                     | —                   | Verified          |
+| REQ-013     | —              | —                                                                              | `e2e/canvas-reduced-motion.spec.ts`                                                                 | —                   | Tested, no TC row |
+| REQ-014     | AC-013, AC-014 | TC-017, TC-018                                                                 | `src/layers/nodeEngineIndependence.test.tsx`<br>`src/components/engine/simulatorGraphModel.test.ts` | —                   | Verified          |
+| REQ-015     | AC-015         | TC-019, TC-020                                                                 | `src/components/engine/simulatorGraphModel.test.ts`                                                 | —                   | Verified          |
+| REQ-016     | AC-016         | TC-021, TC-044                                                                 | `e2e/sandbox-link-edit.spec.ts`<br>`e2e/assessment-completion.spec.ts`                              | The sandbox         | Verified          |
+| REQ-017     | AC-017         | TC-022                                                                         | `e2e/canvas-compare-viewport.spec.ts`                                                               | —                   | Verified          |
+| REQ-018     | AC-018         | TC-023                                                                         | `src/components/engine/simulatorGraphModel.test.ts`                                                 | Reading a lesson    | Verified          |
+| REQ-019     | AC-019         | TC-024                                                                         | `e2e/canvas-select-pan.spec.ts`                                                                     | —                   | Verified          |
+| REQ-020     | AC-020         | TC-025                                                                         | `e2e/canvas-theme.spec.ts`                                                                          | —                   | Verified          |
+| REQ-021     | —              | —                                                                              | —                                                                                                   | —                   | No test evidence  |
+| REQ-022     | AC-021, AC-022 | TC-026, TC-027                                                                 | `src/components/DefaultNode.test.tsx`<br>`e2e/smoke.spec.ts`                                        | Reading a lesson    | Verified          |
+| REQ-023     | AC-022         | TC-027                                                                         | `e2e/smoke.spec.ts`                                                                                 | —                   | Verified          |
+| REQ-024     | AC-028         | TC-034                                                                         | `e2e/smoke.spec.ts`                                                                                 | —                   | Verified          |
+| REQ-025     | AC-023         | TC-028                                                                         | `e2e/embed-sizing.spec.ts`                                                                          | —                   | Verified          |
+| REQ-026     | AC-024         | TC-031                                                                         | `e2e/canvas-pan.spec.ts`                                                                            | Reading a lesson    | Verified          |
+| REQ-027     | —              | TC-030                                                                         | `src/editor/engine/maxGraphModel.test.ts`                                                           | —                   | Verified          |
+| REQ-028     | AC-025         | TC-029                                                                         | `src/editor/components/NodeEditorPanel.test.tsx`                                                    | —                   | Verified          |
+| REQ-029     | AC-026         | TC-032                                                                         | `e2e/editor-placement.spec.ts`                                                                      | —                   | Verified          |
+| REQ-030     | AC-027         | TC-033                                                                         | `e2e/editor-framing.spec.ts`                                                                        | —                   | Verified          |
+| REQ-031     | AC-028, AC-029 | TC-034, TC-035, TC-036                                                         | `e2e/smoke.spec.ts`<br>`e2e/user-journey.spec.ts`                                                   | Reading a lesson    | Verified          |
+| REQ-032     | AC-029, AC-032 | TC-035, TC-036, TC-039, TC-040, TC-106                                         | `e2e/user-journey.spec.ts`<br>`e2e/lesson-controls.spec.ts`                                         | Reading a lesson    | Verified          |
+| REQ-033     | AC-030         | TC-037                                                                         | `e2e/canvas-keyboard.spec.ts`                                                                       | Keyboard            | Verified          |
+| REQ-034     | AC-031         | TC-038                                                                         | `e2e/settings-carry.spec.ts`                                                                        | Using the gallery   | Verified          |
+| REQ-035     | AC-032         | TC-039, TC-040, TC-106                                                         | `e2e/lesson-controls.spec.ts`                                                                       | —                   | Verified          |
+| REQ-036     | AC-033         | TC-041                                                                         | `e2e/light-theme.spec.ts`                                                                           | Using the gallery   | Verified          |
+| REQ-037     | AC-034         | TC-042                                                                         | `src/theme/index.test.ts`                                                                           | —                   | Verified          |
+| REQ-038     | AC-035         | TC-135                                                                         | `playwright.config.test.ts`                                                                         | —                   | Verified          |
+| REQ-039     | AC-036         | TC-043                                                                         | `src/components/tutorial/TutorialStepPanel.test.tsx`                                                | —                   | Verified          |
+| REQ-040     | AC-037         | TC-045                                                                         | `e2e/assessment-completion.spec.ts`                                                                 | The sandbox         | Verified          |
+| REQ-041     | AC-038         | TC-107, TC-108, TC-109, TC-110                                                 | `src/simulation/ForwardingPipeline.multicast.test.ts`<br>`e2e/multicast-membership.spec.ts`         | Troubleshooting     | Verified          |
+| REQ-042     | AC-039         | TC-111, TC-112, TC-113, TC-114, TC-115                                         | `src/layers/l2-datalink/SwitchForwarder.reachability.test.ts`<br>`e2e/stp-detour.spec.ts`           | —                   | Verified          |
+| REQ-043     | AC-040         | TC-116, TC-117                                                                 | `src/layers/l3-network/RouterForwarder.directRoute.test.ts`<br>`e2e/client-server-delivery.spec.ts` | Troubleshooting     | Verified          |
+| REQ-044     | AC-041, AC-046 | TC-119, TC-120, TC-121, TC-125, TC-127, TC-136, TC-137, TC-138, TC-139, TC-140 | `demo/course/courseSteps.test.ts`<br>`e2e/course.spec.ts`<br>`e2e/course-a11y.spec.ts`              | The six-step course | Verified          |
+| REQ-045     | AC-042, AC-043 | TC-118, TC-122, TC-123, TC-124, TC-126, TC-128                                 | `demo/course/courseSteps.test.ts`<br>`e2e/course.spec.ts`<br>`demo/galleryJa.test.ts`               | Using the gallery   | Verified          |
+| REQ-046     | AC-041         | TC-119, TC-120, TC-121, TC-125, TC-127, TC-139, TC-140                         | `demo/course/courseSteps.test.ts`<br>`e2e/course.spec.ts`                                           | The six-step course | Verified          |
+| REQ-047     | AC-044         | TC-129, TC-130                                                                 | `e2e/http-request.spec.ts`                                                                          | Reading a lesson    | Verified          |
+| REQ-048     | AC-045         | TC-131, TC-132, TC-133, TC-134                                                 | `src/routing/connected/ConnectedProtocol.test.ts`<br>`e2e/tcp-handshake-connect.spec.ts`            | Reading a lesson    | Verified          |
+| REQ-049     | AC-047         | TC-141, TC-142, TC-143, TC-146                                                 | `e2e/authored-links.spec.ts`<br>`src/utils/connectionValidator.test.ts`                             | Reading a lesson    | Verified          |
+| REQ-050     | AC-048         | TC-144, TC-145                                                                 | `e2e/authored-links.spec.ts`                                                                        | Reading a lesson    | Verified          |
+| REQ-051     | AC-049         | TC-147, TC-148, TC-149, TC-150                                                 | `e2e/user-guide.spec.ts`                                                                            | Getting started     | Verified          |

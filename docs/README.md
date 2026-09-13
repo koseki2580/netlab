@@ -4,6 +4,13 @@ This directory contains organized documentation regarding the specifications, ar
 
 ## Table of Contents
 
+### 📖 User Guide & Specification (`user-guide/`)
+
+Self-contained: zip this directory to share the specification and the guide without the repository.
+
+- [User Guide](user-guide/site/index.html) - Offline HTML guide for learners, in Japanese and English, with search and light/dark themes; open it directly from disk
+- [Specification](user-guide/specifications/specification.md) - Externally observable behavior: requirements, acceptance criteria, behavior test cases, and traceability
+
 ### CLI (`cli/`)
 
 Headless command-line workflows for regression checks and grading.
