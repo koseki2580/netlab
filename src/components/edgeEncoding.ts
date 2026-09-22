@@ -17,7 +17,8 @@ export interface EdgeKindStyle {
   readonly dash: string;
   /** End-cap shape — the third, color-independent channel. */
   readonly cap: EdgeCap;
-  readonly label: string;
+  /** i18n catalog key for the legend label. */
+  readonly labelKey: string;
 }
 
 export const NL_EDGE_KINDS: Readonly<Record<EdgeKind, EdgeKindStyle>> = {
@@ -25,25 +26,25 @@ export const NL_EDGE_KINDS: Readonly<Record<EdgeKind, EdgeKindStyle>> = {
     color: 'var(--netlab-accent-cyan)',
     dash: 'none',
     cap: 'dot',
-    label: 'ICMP request',
+    labelKey: 'simulation.edgeKind.icmpRequest',
   },
   'icmp-reply': {
     color: 'var(--netlab-accent-green)',
     dash: '6 4',
     cap: 'diamond',
-    label: 'ICMP reply',
+    labelKey: 'simulation.edgeKind.icmpReply',
   },
   arp: {
     color: 'var(--netlab-accent-yellow)',
     dash: '2 3',
     cap: 'triangle',
-    label: 'ARP',
+    labelKey: 'simulation.edgeKind.arp',
   },
   drop: {
     color: 'var(--netlab-accent-red)',
     dash: '8 3 2 3',
     cap: 'cross',
-    label: 'drop',
+    labelKey: 'simulation.edgeKind.drop',
   },
 };
 

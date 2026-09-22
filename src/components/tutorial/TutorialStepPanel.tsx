@@ -1,4 +1,5 @@
 import { useMemo, type CSSProperties } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import { useTutorialRunner } from '../../tutorials';
 
 const CARD_STYLE: CSSProperties = {
@@ -27,12 +28,16 @@ function renderDescription(description: string) {
 }
 
 export function TutorialStepPanel() {
+  const { t } = useI18n();
   const { tutorial, state, start, exit, restart } = useTutorialRunner();
   const currentStep = tutorial.steps[state.currentStepIndex] ?? null;
   const progressLabel = useMemo(
     () =>
-      `Step ${Math.min(state.currentStepIndex + 1, tutorial.steps.length)} / ${tutorial.steps.length}`,
-    [state.currentStepIndex, tutorial.steps.length],
+      t('simulation.tutorial.progress', {
+        current: Math.min(state.currentStepIndex + 1, tutorial.steps.length),
+        total: tutorial.steps.length,
+      }),
+    [state.currentStepIndex, tutorial.steps.length, t],
   );
 
   if (state.status === 'exited') {
@@ -41,11 +46,9 @@ export function TutorialStepPanel() {
         <div id="netlab-tutorial-title" style={{ color: '#f8fafc', fontWeight: 700 }}>
           {tutorial.title}
         </div>
-        <p style={{ ...MUTED_STYLE, margin: '8px 0 0' }}>
-          Tutorial dismissed. Reopen it whenever you want to continue.
-        </p>
+        <p style={{ ...MUTED_STYLE, margin: '8px 0 0' }}>{t('simulation.tutorial.dismissed')}</p>
         <button type="button" onClick={restart} style={buttonStyle('#1d4ed8', '#f8fafc')}>
-          Reopen Tutorial
+          {t('simulation.tutorial.reopen')}
         </button>
       </section>
     );
@@ -62,7 +65,7 @@ export function TutorialStepPanel() {
             letterSpacing: '0.08em',
           }}
         >
-          GUIDED TUTORIAL
+          {t('simulation.tutorial.eyebrow')}
         </div>
         <h2 id="netlab-tutorial-title" style={{ margin: '10px 0 0', fontSize: 20 }}>
           {tutorial.title}
@@ -76,14 +79,14 @@ export function TutorialStepPanel() {
             onClick={start}
             style={buttonStyle('#1d4ed8', '#f8fafc')}
           >
-            Start Tutorial
+            {t('simulation.tutorial.start')}
           </button>
           <button
             type="button"
             onClick={exit}
             style={buttonStyle('var(--netlab-border)', '#f8fafc')}
           >
-            Dismiss
+            {t('simulation.tutorial.dismiss')}
           </button>
         </div>
       </section>
@@ -101,13 +104,13 @@ export function TutorialStepPanel() {
             letterSpacing: '0.08em',
           }}
         >
-          DONE
+          {t('simulation.tutorial.done')}
         </div>
         <h2 id="netlab-tutorial-title" style={{ margin: '10px 0 0', fontSize: 20 }}>
           {tutorial.title}
         </h2>
         <p style={{ ...MUTED_STYLE, margin: '8px 0 0' }}>
-          All {tutorial.steps.length} steps passed. Restart to walk through it again.
+          {t('simulation.tutorial.allPassed', { count: tutorial.steps.length })}
         </p>
         {/* One action can satisfy several steps at once — the ARP tutorial's
             three predicates are all true the moment the first packet lands — so
@@ -123,14 +126,14 @@ export function TutorialStepPanel() {
         </ul>
         <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
           <button type="button" onClick={restart} style={buttonStyle('#166534', '#f8fafc')}>
-            Restart
+            {t('simulation.tutorial.restart')}
           </button>
           <button
             type="button"
             onClick={exit}
             style={buttonStyle('var(--netlab-border)', '#f8fafc')}
           >
-            Close
+            {t('simulation.tutorial.close')}
           </button>
         </div>
       </section>
@@ -172,17 +175,17 @@ export function TutorialStepPanel() {
             lineHeight: 1.5,
           }}
         >
-          Hint: {state.lastHint}
+          {t('simulation.tutorial.hint', { hint: state.lastHint })}
         </div>
       ) : null}
       <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
         {state.status === 'failed' ? (
           <button type="button" onClick={restart} style={buttonStyle('#92400e', '#f8fafc')}>
-            Restart Step Flow
+            {t('simulation.tutorial.restartSteps')}
           </button>
         ) : null}
         <button type="button" onClick={exit} style={buttonStyle('var(--netlab-border)', '#f8fafc')}>
-          Exit Tutorial
+          {t('simulation.tutorial.exit')}
         </button>
       </div>
     </section>

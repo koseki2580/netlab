@@ -1,3 +1,4 @@
+import { useI18n } from '../../../i18n/useI18n';
 import type { NetlabNode, NetlabNodeData, TopologySnapshot } from '../../../types/topology';
 import {
   validateIpAddress,
@@ -21,11 +22,12 @@ export function HostEditorSection({
   snapshot: TopologySnapshot;
   updateNode: (updater: (node: NetlabNode) => NetlabNode) => void;
 }) {
+  const { t } = useI18n();
   const configuredIps = collectConfiguredIps(snapshot, { nodeId });
 
   return (
     <>
-      <div style={SECTION_HEADER_STYLE}>EDIT HOST</div>
+      <div style={SECTION_HEADER_STYLE}>{t('simulation.nodeDetail.edit.host')}</div>
       <EditableTextRow
         label="IP"
         name={`host-ip-${nodeId}`}

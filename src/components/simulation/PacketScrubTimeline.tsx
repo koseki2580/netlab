@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import { useSimulation } from '../../simulation/SimulationContext';
 import type { PacketHop } from '../../types/simulation';
 import { Marker } from './Marker';
@@ -34,6 +35,7 @@ export function PacketScrubTimeline({
   hideKeyboardHint = false,
   ownKeyboard = true,
 }: PacketScrubTimelineProps = {}) {
+  const { t } = useI18n();
   const { engine, state } = useSimulation();
   const rootRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -165,7 +167,7 @@ export function PacketScrubTimeline({
           borderRadius: 8,
         }}
       >
-        no trace yet — send a probe to populate the timeline
+        {t('simulation.scrub.empty')}
       </div>
     );
   }
@@ -197,7 +199,7 @@ export function PacketScrubTimeline({
         }}
       >
         <span style={{ letterSpacing: 1, color: 'var(--netlab-text-muted)' }}>
-          PACKET TIMELINE · TRACE
+          {t('simulation.scrub.heading')}
         </span>
         <span style={{ color: 'var(--netlab-accent-cyan)' }}>
           {stepIdx + 1} / {totalSteps}
@@ -207,7 +209,7 @@ export function PacketScrubTimeline({
       <div
         ref={trackRef}
         role="slider"
-        aria-label="Packet trace scrub"
+        aria-label={t('simulation.scrub.aria')}
         aria-valuemin={0}
         aria-valuemax={totalSteps - 1}
         aria-valuenow={stepIdx}
@@ -293,7 +295,12 @@ export function PacketScrubTimeline({
                 lineHeight: 0,
               }}
             >
-              <Marker shape={marker.shape} color={marker.color} label={marker.label} size={13} />
+              <Marker
+                shape={marker.shape}
+                color={marker.color}
+                label={t(marker.labelKey)}
+                size={13}
+              />
             </button>
           );
         })}
@@ -347,14 +354,14 @@ export function PacketScrubTimeline({
               fontSize: 10,
             }}
           >
-            step {hoveredHop.step + 1} · {hoveredHop.event}
+            {t('simulation.scrub.tooltip', { step: hoveredHop.step + 1, event: hoveredHop.event })}
             {hoveredHop.nodeLabel ? ` · ${hoveredHop.nodeLabel}` : ''}
           </div>
         )}
       </div>
       {stepHover.hovered && trace?.hops[stepHover.hovered.index] && (
         <StepHoverCard
-          step={resolveStepPreview(trace.hops[stepHover.hovered.index]!)}
+          step={resolveStepPreview(trace.hops[stepHover.hovered.index]!, t)}
           anchorRect={stepHover.hovered.rect}
           container={rootRef.current}
         />
@@ -369,12 +376,14 @@ export function PacketScrubTimeline({
           }}
         >
           <span>
-            <span style={{ color: 'var(--netlab-accent-cyan)' }}>space</span> play ·{' '}
-            <span style={{ color: 'var(--netlab-accent-cyan)' }}>←/→</span> step ·{' '}
+            <span style={{ color: 'var(--netlab-accent-cyan)' }}>space</span>{' '}
+            {t('simulation.scrub.hintPlay')} ·{' '}
+            <span style={{ color: 'var(--netlab-accent-cyan)' }}>←/→</span>{' '}
+            {t('simulation.scrub.hintStep')} ·{' '}
             <span style={{ color: 'var(--netlab-accent-cyan)' }}>⇧+←/→</span> ±5 ·{' '}
             <span style={{ color: 'var(--netlab-accent-cyan)' }}>home/end</span>
           </span>
-          <span>drag the bar to scrub</span>
+          <span>{t('simulation.scrub.hintDrag')}</span>
         </div>
       )}
     </div>

@@ -1,5 +1,6 @@
 import type { ProgressCompletionKind } from '../../progress';
 import { useOptionalProgress } from '../../progress';
+import { useI18n } from '../../i18n/useI18n';
 
 export interface ProgressBadgeProps {
   readonly targetId: string;
@@ -7,6 +8,7 @@ export interface ProgressBadgeProps {
 }
 
 export function ProgressBadge({ targetId, kind }: ProgressBadgeProps) {
+  const { t } = useI18n();
   const progress = useOptionalProgress();
   if (!progress.enabled) {
     return null;
@@ -14,9 +16,12 @@ export function ProgressBadge({ targetId, kind }: ProgressBadgeProps) {
   const completion = progress.completionFor(targetId, kind);
   const text = completion
     ? completion.score
-      ? `Completed ${completion.score.passed}/${completion.score.total}`
-      : 'Completed'
-    : 'Pending';
+      ? t('learning.progress.badge.completedScore', {
+          passed: completion.score.passed,
+          total: completion.score.total,
+        })
+      : t('learning.progress.badge.completed')
+    : t('learning.progress.badge.pending');
 
   return (
     <span

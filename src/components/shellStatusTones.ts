@@ -21,11 +21,14 @@ export const STATUS_TONE_COLOR: Record<ShellStatusTone, string> = {
   error: 'var(--netlab-accent-red)',
 };
 
-/** Default human label per tone. Caller may override (e.g. CommandBar passes scenario-specific status.label). */
-export const STATUS_TONE_LABEL: Record<ShellStatusTone, string> = {
-  idle: 'idle',
-  ready: 'ready',
-  running: 'running',
-  paused: 'paused',
-  error: 'error',
+/**
+ * i18n catalog key for the default human label per tone. Caller may override
+ * (e.g. CommandBar passes scenario-specific status.label).
+ */
+export const STATUS_TONE_LABEL_KEYS: Record<ShellStatusTone, string> = {
+  idle: 'simulation.statusTone.idle',
+  ready: 'simulation.statusTone.ready',
+  running: 'simulation.statusTone.running',
+  paused: 'simulation.statusTone.paused',
+  error: 'simulation.statusTone.error',
 };

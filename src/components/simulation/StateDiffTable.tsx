@@ -309,6 +309,7 @@ function HistoryHeatmap({
   tableKind: StateDiffTableKind;
   stepIndex: number;
 }) {
+  const { t } = useI18n();
   const { steps, keys } = collectKeys(snapshots, nodeId, tableKind);
   const truncated = snapshots.size > MAX_HEATMAP_COLS;
   if (keys.length === 0) {
@@ -317,7 +318,7 @@ function HistoryHeatmap({
         style={{ padding: 14, color: 'var(--netlab-text-muted)' }}
         data-testid="state-diff-empty"
       >
-        no history
+        {t('simulation.diff.noHistory')}
       </div>
     );
   }
@@ -326,7 +327,9 @@ function HistoryHeatmap({
       <table style={{ borderCollapse: 'separate', borderSpacing: 2, fontSize: 10 }}>
         <thead>
           <tr>
-            <th style={{ ...CELL, textAlign: 'left', color: 'var(--netlab-text-muted)' }}>entry</th>
+            <th style={{ ...CELL, textAlign: 'left', color: 'var(--netlab-text-muted)' }}>
+              {t('simulation.diff.entry')}
+            </th>
             {steps.map((s) => (
               <th
                 key={s}
@@ -374,7 +377,7 @@ function HistoryHeatmap({
       </table>
       {truncated && (
         <div style={{ marginTop: 6, color: 'var(--netlab-text-muted)' }}>
-          showing first {MAX_HEATMAP_COLS} steps
+          {t('simulation.diff.truncated', { count: MAX_HEATMAP_COLS })}
         </div>
       )}
     </div>
@@ -412,6 +415,7 @@ function HistoryStrip({
   tableKind: StateDiffTableKind;
   stepIndex: number;
 }) {
+  const { t } = useI18n();
   const steps = [...snapshots.keys()].sort((a, b) => a - b);
   return (
     <div data-testid="state-diff-strip" style={{ display: 'flex', gap: 2, marginLeft: 'auto' }}>
@@ -428,7 +432,7 @@ function HistoryStrip({
         return (
           <div
             key={s}
-            title={`step ${s}`}
+            title={t('simulation.diff.step', { from: s })}
             style={{
               width: 6,
               height: 12,

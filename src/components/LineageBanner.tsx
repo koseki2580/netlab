@@ -1,5 +1,7 @@
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
+import type { TranslatorFn } from '../i18n/types';
+import { useI18n } from '../i18n/useI18n';
 import type { Sandbox, SandboxDiff } from '../sandbox/fork';
 
 const MONO = 'ui-monospace, monospace';
@@ -21,10 +23,22 @@ export interface LineageBannerProps {
   onClose?: () => void;
 }
 
-function diffParts(diff: SandboxDiff): string[] {
+const DIFF_KIND_KEYS: Record<keyof SandboxDiff, string> = {
+  nodes: 'simulation.lineage.kind.nodes',
+  edges: 'simulation.lineage.kind.edges',
+  routes: 'simulation.lineage.kind.routes',
+  acls: 'simulation.lineage.kind.acls',
+};
+
+function diffParts(diff: SandboxDiff, t: TranslatorFn): string[] {
   return (Object.keys(diff) as (keyof SandboxDiff)[])
     .filter((key) => diff[key] !== 0)
-    .map((key) => `+${diff[key]} ${key}`);
+    .map((key) =>
+      t('simulation.lineage.diffPart', {
+        count: diff[key],
+        kind: t(DIFF_KIND_KEYS[key]),
+      }),
+    );
 }
 
 /**
@@ -39,7 +53,8 @@ export function LineageBanner({
   onCompare,
   onClose,
 }: LineageBannerProps) {
-  const parts = diffParts(sandbox.diff);
+  const { t } = useI18n();
+  const parts = diffParts(sandbox.diff, t);
   return (
     <div
       data-testid="lineage-banner"
@@ -61,14 +76,14 @@ export function LineageBanner({
         ⑂
       </span>
       <span>
-        forked from{' '}
+        {t('simulation.lineage.forkedFrom')}{' '}
         <strong style={{ color: 'var(--netlab-text-primary)' }}>
           {originTitle ?? sandbox.forkedFrom}
         </strong>{' '}
-        at step {sandbox.forkedAtStep}
+        {t('simulation.lineage.atStep', { step: sandbox.forkedAtStep })}
       </span>
       <span data-testid="lineage-diff" style={{ color: 'var(--netlab-text-muted)' }}>
-        {parts.length > 0 ? parts.join(' · ') : 'no edits yet'}
+        {parts.length > 0 ? parts.join(' · ') : t('simulation.lineage.noEdits')}
       </span>
       <span style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
         {onReset && <LineageResetButton diff={sandbox.diff} onReset={onReset} />}
@@ -79,7 +94,7 @@ export function LineageBanner({
             onClick={onCompare}
             style={bannerButton('var(--netlab-accent-blue)')}
           >
-            compare ⇄ origin
+            {t('simulation.lineage.compare')}
           </button>
         )}
         {onClose && (
@@ -89,7 +104,7 @@ export function LineageBanner({
             onClick={onClose}
             style={bannerButton('var(--netlab-text-muted)')}
           >
-            close
+            {t('simulation.lineage.close')}
           </button>
         )}
       </span>
@@ -104,6 +119,7 @@ export function LineageBanner({
  * since there is nothing to lose.
  */
 function LineageResetButton({ diff, onReset }: { diff: SandboxDiff; onReset: () => void }) {
+  const { t } = useI18n();
   const [confirming, setConfirming] = useState(false);
   const total = useMemo(() => totalEdits(diff), [diff]);
 
@@ -132,7 +148,11 @@ function LineageResetButton({ diff, onReset }: { diff: SandboxDiff; onReset: () 
     setConfirming(false);
   };
 
-  const label = confirming ? `discard ${total} edit${total === 1 ? '' : 's'}?` : 'reset to origin';
+  const label = confirming
+    ? total === 1
+      ? t('simulation.lineage.discardOne', { count: total })
+      : t('simulation.lineage.discardMany', { count: total })
+    : t('simulation.lineage.reset');
   const color = confirming ? 'var(--netlab-accent-red)' : 'var(--netlab-text-secondary)';
   return (
     <button

@@ -1,4 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
+import { useI18n } from '../i18n/useI18n';
 import { NetlabUIContext } from './NetlabUIContext';
 
 /**
@@ -19,7 +20,7 @@ import { NetlabUIContext } from './NetlabUIContext';
 export interface ZeroStateHintProps {
   /** localStorage key that records "user has seen this hint". */
   storageKey?: string;
-  /** Message text. Defaults to the playbook copy. */
+  /** Message text. Defaults to the playbook copy, in the active language. */
   message?: string;
   /** Suppress the hint regardless of other conditions (e.g. in tests). */
   suppress?: boolean;
@@ -28,7 +29,6 @@ export interface ZeroStateHintProps {
 }
 
 const DEFAULT_STORAGE_KEY = 'nl_seen_select_hint';
-const DEFAULT_MESSAGE = 'select any node to inspect — try R1';
 const DEFAULT_FADE_MS = 6000;
 
 function readSeen(key: string): boolean {
@@ -51,10 +51,11 @@ function markSeen(key: string): void {
 
 export function ZeroStateHint({
   storageKey = DEFAULT_STORAGE_KEY,
-  message = DEFAULT_MESSAGE,
+  message,
   suppress = false,
   fadeAfterMs = DEFAULT_FADE_MS,
 }: ZeroStateHintProps) {
+  const { t } = useI18n();
   const ui = useContext(NetlabUIContext);
   const selectedNodeId = ui?.selectedNodeId ?? null;
   const [seen, setSeen] = useState(() => readSeen(storageKey));
@@ -117,7 +118,7 @@ export function ZeroStateHint({
         zIndex: 5,
       }}
     >
-      {message}
+      {message ?? t('simulation.zeroState.hint')}
     </div>
   );
 }

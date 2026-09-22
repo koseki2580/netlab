@@ -1,5 +1,6 @@
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
+import { useI18n } from '../i18n/useI18n';
 import { getScenarioBrief } from '../scenarios';
 import type { BriefConclusion, BriefWatchPoint, ScenarioBrief } from '../scenarios/types';
 import type { NetlabAudience } from '../theme';
@@ -225,6 +226,7 @@ function eyebrow(text: string): React.ReactElement {
 }
 
 function BriefFullCard({ brief, onStart }: { brief: ScenarioBrief; onStart: () => void }) {
+  const { t } = useI18n();
   return (
     <div
       className="netlab-page-fade-in"
@@ -237,7 +239,7 @@ function BriefFullCard({ brief, onStart }: { brief: ScenarioBrief; onStart: () =
       <div style={CARD_STYLE}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
           <div style={{ flex: 1 }}>
-            {eyebrow('brief · scenario')}
+            {eyebrow(t('simulation.brief.eyebrow'))}
             <h2
               id="preflight-title"
               style={{ margin: '4px 0 0', fontFamily: SANS, fontSize: 16, lineHeight: 1.4 }}
@@ -260,7 +262,7 @@ function BriefFullCard({ brief, onStart }: { brief: ScenarioBrief; onStart: () =
           )}
         </div>
 
-        <BriefRow label="Prereq">
+        <BriefRow label={t('simulation.brief.prereq')}>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {brief.prereq.map((p) => (
               <span
@@ -281,7 +283,7 @@ function BriefFullCard({ brief, onStart }: { brief: ScenarioBrief; onStart: () =
           </div>
         </BriefRow>
 
-        <BriefRow label="Watch for">
+        <BriefRow label={t('simulation.brief.watchFor')}>
           <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 8 }}>
             {brief.watchPoints.map((w) => (
               <WatchItem key={`${w.step}-${w.kind}`} point={w} />
@@ -299,7 +301,8 @@ function BriefFullCard({ brief, onStart }: { brief: ScenarioBrief; onStart: () =
           }}
         >
           <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--netlab-text-muted)' }}>
-            <kbd style={KBD_STYLE}>⏎</kbd> / <kbd style={KBD_STYLE}>space</kbd> to begin
+            <kbd style={KBD_STYLE}>⏎</kbd> / <kbd style={KBD_STYLE}>space</kbd>{' '}
+            {t('simulation.brief.toBegin')}
           </span>
           <button
             type="button"
@@ -318,7 +321,7 @@ function BriefFullCard({ brief, onStart }: { brief: ScenarioBrief; onStart: () =
               border: '1px solid var(--netlab-accent-blue)',
             }}
           >
-            Start ▶
+            {t('simulation.brief.start')}
           </button>
         </div>
       </div>
@@ -357,6 +360,7 @@ function BriefRow({ label, children }: { label: string; children: React.ReactNod
 }
 
 function WatchItem({ point }: { point: BriefWatchPoint }) {
+  const { t } = useI18n();
   return (
     <li style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
       <span aria-hidden style={{ color: watchColor(point.kind), fontSize: 10 }}>
@@ -370,7 +374,7 @@ function WatchItem({ point }: { point: BriefWatchPoint }) {
           whiteSpace: 'nowrap',
         }}
       >
-        step {point.step}
+        {t('simulation.brief.step', { step: point.step })}
       </span>
       <span style={{ fontFamily: SANS, fontSize: 12, color: 'var(--netlab-text-secondary)' }}>
         {point.label}
@@ -382,12 +386,13 @@ function WatchItem({ point }: { point: BriefWatchPoint }) {
 // ─── Compact strip ────────────────────────────────────────────────────────────
 
 function BriefStrip({ brief, onExpand }: { brief: ScenarioBrief; onExpand: () => void }) {
+  const { t } = useI18n();
   return (
     <button
       type="button"
       data-testid="preflight-strip"
       onClick={onExpand}
-      title="Show brief (press B)"
+      title={t('simulation.brief.show')}
       style={{
         position: 'absolute',
         left: 12,
@@ -417,7 +422,7 @@ function BriefStrip({ brief, onExpand }: { brief: ScenarioBrief; onExpand: () =>
           color: 'var(--netlab-text-muted)',
         }}
       >
-        goal
+        {t('simulation.brief.goal')}
       </span>
       <span
         style={{
@@ -431,7 +436,7 @@ function BriefStrip({ brief, onExpand }: { brief: ScenarioBrief; onExpand: () =>
         {brief.goal}
       </span>
       <span style={{ color: 'var(--netlab-text-muted)', whiteSpace: 'nowrap' }}>
-        · {brief.watchPoints.length} watch-points
+        · {t('simulation.brief.watchPoints', { count: brief.watchPoints.length })}
       </span>
     </button>
   );
@@ -448,6 +453,7 @@ function BriefConclusionCard({
   onAction?: ((actionId: string) => void) | undefined;
   extra?: React.ReactNode;
 }) {
+  const { t } = useI18n();
   return (
     <div
       className="netlab-page-fade-in"
@@ -484,7 +490,7 @@ function BriefConclusionCard({
         }}
       >
         <span aria-hidden>✓</span>
-        <span>scenario complete</span>
+        <span>{t('simulation.brief.complete')}</span>
       </div>
       <div style={{ marginTop: 8 }}>
         <strong style={{ fontFamily: SANS, fontSize: 14, lineHeight: 1.4 }}>

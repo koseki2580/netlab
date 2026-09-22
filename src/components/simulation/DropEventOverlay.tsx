@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import { useSimulation } from '../../simulation/SimulationContext';
 import { useSandboxOrNull } from '../../sandbox/useSandbox';
 import type { PacketHop } from '../../types/simulation';
@@ -15,9 +16,9 @@ import { getDropLesson } from './dropLessons';
  * gated — read-only scenarios never see it. Reasons absent here (e.g. inherent
  * `ttl-exceeded`) offer no fix.
  */
-const DROP_FIXES: Readonly<Record<string, { readonly label: string; readonly tab: DpTab }>> = {
-  'acl-deny': { label: 'permit this traffic', tab: 'acl' },
-  'no-route': { label: 'add a route', tab: 'routes' },
+const DROP_FIXES: Readonly<Record<string, { readonly labelKey: string; readonly tab: DpTab }>> = {
+  'acl-deny': { labelKey: 'simulation.dropCard.fix.permit', tab: 'acl' },
+  'no-route': { labelKey: 'simulation.dropCard.fix.addRoute', tab: 'routes' },
 };
 
 export interface DropEventOverlayProps {
@@ -34,6 +35,7 @@ export interface DropEventOverlayProps {
  * until the playhead moves to a different drop.
  */
 export function DropEventOverlay({ onNavigate, openDelayMs = 200 }: DropEventOverlayProps = {}) {
+  const { t } = useI18n();
   const { state } = useSimulation();
   const ui = useNetlabUI();
   const dock = useNodeDetailDock();
@@ -100,7 +102,7 @@ export function DropEventOverlay({ onNavigate, openDelayMs = 200 }: DropEventOve
   const fix =
     editable && fixDef
       ? {
-          label: fixDef.label,
+          label: t(fixDef.labelKey),
           onApply: () => handleNavigate({ nodeId: activeHop.nodeId, tab: fixDef.tab }),
         }
       : undefined;

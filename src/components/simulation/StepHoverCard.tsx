@@ -9,6 +9,8 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import { DEFAULT_I18N_VALUE } from '../../i18n/I18nContext';
+import type { TranslatorFn } from '../../i18n/types';
 import type { PacketHop } from '../../types/simulation';
 import { Marker, type MarkerShape } from './Marker';
 import { hopEventMarker } from './hopMarkers';
@@ -62,38 +64,42 @@ export function computeCardPosition(
   return { left, top: ay - cardH - 14, arrow };
 }
 
-/** Map a packet hop to the card's display model. */
-export function resolveStepPreview(hop: PacketHop): StepPreviewData {
+/** Map a packet hop to the card's display model, in `t`'s language (English by default). */
+export function resolveStepPreview(
+  hop: PacketHop,
+  t: TranslatorFn = DEFAULT_I18N_VALUE.t,
+): StepPreviewData {
   const marker = hopEventMarker(hop.event);
   const out: StepPreviewData = {
     index: hop.step,
     marker: { shape: marker.shape, color: marker.color },
-    label: marker.label,
-    description: describeHop(hop),
+    label: t(marker.labelKey),
+    description: describeHop(hop, t),
   };
   const delta = hopDelta(hop);
   if (delta.length > 0) out.delta = delta;
   return out;
 }
 
-function describeHop(hop: PacketHop): string {
+function describeHop(hop: PacketHop, t: TranslatorFn): string {
+  const node = hop.nodeLabel;
   switch (hop.event) {
     case 'create':
-      return `${hop.protocol} packet created at ${hop.nodeLabel}`;
+      return t('simulation.stepCard.created', { protocol: hop.protocol, node });
     case 'forward':
       return hop.egressInterfaceName
-        ? `forwarded via ${hop.nodeLabel} (${hop.egressInterfaceName})`
-        : `forwarded via ${hop.nodeLabel}`;
+        ? t('simulation.stepCard.forwardedVia', { node, iface: hop.egressInterfaceName })
+        : t('simulation.stepCard.forwarded', { node });
     case 'deliver':
-      return `delivered to ${hop.nodeLabel}`;
+      return t('simulation.stepCard.delivered', { node });
     case 'drop':
       return hop.reason
-        ? `dropped at ${hop.nodeLabel} · ${hop.reason}`
-        : `dropped at ${hop.nodeLabel}`;
+        ? t('simulation.stepCard.droppedReason', { node, reason: hop.reason })
+        : t('simulation.stepCard.dropped', { node });
     case 'arp-request':
-      return `ARP request from ${hop.nodeLabel} (who-has ${hop.dstIp})`;
+      return t('simulation.stepCard.arpRequest', { node, ip: hop.dstIp });
     case 'arp-reply':
-      return `ARP reply from ${hop.nodeLabel}`;
+      return t('simulation.stepCard.arpReply', { node });
     default:
       return hop.nodeLabel;
   }

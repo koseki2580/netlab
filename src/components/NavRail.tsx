@@ -1,4 +1,5 @@
 import type React from 'react';
+import { useI18n } from '../i18n/useI18n';
 
 export type NavRailView = 'gallery' | 'simulator';
 
@@ -122,6 +123,7 @@ function RailButton({ item }: { item: NavRailItem }) {
 }
 
 export function NavRail({ items, onOpenBrand, onOpenHelp, variant = 'rail' }: NavRailProps) {
+  const { t } = useI18n();
   const isBottom = variant === 'bottom';
   // In the rail, the help button drops to the bottom (`marginTop`); in the
   // bottom bar it slides to the right edge (`marginLeft`).
@@ -132,13 +134,13 @@ export function NavRail({ items, onOpenBrand, onOpenHelp, variant = 'rail' }: Na
     <nav
       data-netlab-nav-rail=""
       data-variant={variant}
-      aria-label="Global navigation"
+      aria-label={t('simulation.navRail.label')}
       style={isBottom ? BOTTOM_STYLE : RAIL_STYLE}
     >
       <button
         type="button"
-        aria-label="Netlab gallery"
-        title="Netlab gallery"
+        aria-label={t('simulation.navRail.gallery')}
+        title={t('simulation.navRail.gallery')}
         onClick={onOpenBrand}
         style={{
           ...CELL_STYLE,
@@ -154,7 +156,9 @@ export function NavRail({ items, onOpenBrand, onOpenHelp, variant = 'rail' }: Na
         <RailButton key={item.id} item={item} />
       ))}
       <div style={helpSpacing}>
-        <RailButton item={{ id: 'help', label: 'Help', icon: '?', onClick: onOpenHelp }} />
+        <RailButton
+          item={{ id: 'help', label: t('simulation.navRail.help'), icon: '?', onClick: onOpenHelp }}
+        />
       </div>
     </nav>
   );

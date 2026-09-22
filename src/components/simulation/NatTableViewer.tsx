@@ -1,4 +1,6 @@
 import { memo, useContext } from 'react';
+import type { TranslatorFn } from '../../i18n/types';
+import { useI18n } from '../../i18n/useI18n';
 import { useSimulation } from '../../simulation/SimulationContext';
 import type { NatTable } from '../../types/nat';
 import { useNetlabContext } from '../NetlabContext';
@@ -32,8 +34,9 @@ function isNatCapableRouter(
 function resolveNodeLabel(
   nodeId: string | undefined,
   nodes: { id: string; data: { label: string } }[],
+  t: TranslatorFn,
 ): string {
-  if (!nodeId) return 'Router';
+  if (!nodeId) return t('simulation.nat.routerFallback');
   return nodes.find((node) => node.id === nodeId)?.data.label ?? nodeId;
 }
 
@@ -43,6 +46,7 @@ function resolvePreferredTable(natTables: NatTable[], routerId: string | null): 
 }
 
 export const NatTableViewer = memo(function NatTableViewer() {
+  const { t } = useI18n();
   const { topology } = useNetlabContext();
   const { state } = useSimulation();
   const ui = useContext(NetlabUIContext);
@@ -64,7 +68,7 @@ export const NatTableViewer = memo(function NatTableViewer() {
 
   const entries = preferredTable?.entries ?? [];
   const routerLabel = preferredTable
-    ? resolveNodeLabel(preferredTable.routerId, topology.nodes)
+    ? resolveNodeLabel(preferredTable.routerId, topology.nodes, t)
     : null;
 
   return (
@@ -85,10 +89,12 @@ export const NatTableViewer = memo(function NatTableViewer() {
             marginBottom: 8,
           }}
         >
-          NAT TABLE
+          {t('simulation.nat.heading')}
         </div>
         <div style={{ fontSize: 12, color: 'var(--netlab-text-secondary)' }}>
-          {routerLabel ? `Router: ${routerLabel}` : 'No active NAT entries'}
+          {routerLabel
+            ? t('simulation.nat.router', { router: routerLabel })
+            : t('simulation.nat.empty')}
         </div>
       </div>
 
@@ -100,7 +106,7 @@ export const NatTableViewer = memo(function NatTableViewer() {
             fontSize: 12,
           }}
         >
-          No active NAT entries
+          {t('simulation.nat.empty')}
         </div>
       ) : (
         <div
@@ -118,11 +124,11 @@ export const NatTableViewer = memo(function NatTableViewer() {
               letterSpacing: 0.5,
             }}
           >
-            <span>PROTO</span>
-            <span>INSIDE LOCAL</span>
-            <span>INSIDE GLOBAL</span>
-            <span>OUTSIDE PEER</span>
-            <span>TYPE</span>
+            <span>{t('simulation.nat.column.proto')}</span>
+            <span>{t('simulation.nat.column.insideLocal')}</span>
+            <span>{t('simulation.nat.column.insideGlobal')}</span>
+            <span>{t('simulation.nat.column.outsidePeer')}</span>
+            <span>{t('simulation.nat.column.type')}</span>
           </div>
 
           {entries.map((entry) => (

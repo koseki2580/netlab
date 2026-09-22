@@ -21,4 +21,12 @@ export const assessment: Catalog = {
   'sandbox.assessment.submitDialog.notesLabel': 'Submission notes',
   'sandbox.assessment.submitDialog.cancel': 'Cancel',
   'sandbox.assessment.submitDialog.downloadLabel': 'Download assessment submission',
+  'sandbox.assessment.subgoal.required': 'Required',
+  'sandbox.assessment.subgoal.bonus': 'Bonus',
+  'sandbox.assessment.subgoal.passedLabel': 'Sub-goal passed',
+  'sandbox.assessment.subgoal.pendingLabel': 'Sub-goal not yet passed',
+  'sandbox.assessment.subgoal.passed': 'Passed',
+  'sandbox.assessment.subgoal.pending': 'Not yet',
+  'sandbox.assessment.subgoal.showHint': 'Show hint {{tier}}',
+  'sandbox.assessment.subgoal.allHints': 'All hints shown',
 } as const;

@@ -1,4 +1,6 @@
 import { useContext, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import type { TranslatorFn } from '../i18n/types';
+import { useI18n } from '../i18n/useI18n';
 import type { LinkQosConfig, LinkShaperConfig } from '../types/link';
 import type { NetlabEdge } from '../types/topology';
 import { SimulationContext, type SimulationContextValue } from '../simulation/SimulationContext';
@@ -146,29 +148,31 @@ function parseShaperText(value: string): LinkShaperConfig | null {
   return { classes: classes as LinkShaperConfig['classes'] };
 }
 
-function validateShaper(config: LinkShaperConfig | null): string[] {
-  if (!config) return ['Use id:weight:queueDepth:class|default:dscp,dscp per line.'];
+function validateShaper(config: LinkShaperConfig | null, t: TranslatorFn): string[] {
+  if (!config) return [t('simulation.link.shaperFormat')];
   const defaultCount = config.classes.filter((klass) => klass.default === true).length;
   const weightSum = config.classes.reduce((sum, klass) => sum + klass.weightPct, 0);
   const classIds = new Set<string>();
   const dscps = new Set<number>();
   const errors: string[] = [];
 
-  if (defaultCount !== 1) errors.push('Mark exactly one class as the default.');
-  if (weightSum < 99 || weightSum > 101) errors.push('Weights must sum to 100 +/- 1.');
+  if (defaultCount !== 1) errors.push(t('simulation.link.shaperOneDefault'));
+  if (weightSum < 99 || weightSum > 101) errors.push(t('simulation.link.shaperWeightSum'));
 
   for (const klass of config.classes) {
-    if (classIds.has(klass.id)) errors.push(`Class id ${klass.id} is duplicated.`);
+    if (classIds.has(klass.id)) {
+      errors.push(t('simulation.link.shaperDuplicateId', { id: klass.id }));
+    }
     classIds.add(klass.id);
     if (klass.weightPct < 1 || klass.weightPct > 100) {
-      errors.push(`${klass.id} weight must be 1..100.`);
+      errors.push(t('simulation.link.shaperWeightRange', { id: klass.id }));
     }
     if (klass.queueDepthSegments < 1) {
-      errors.push(`${klass.id} queue depth must be at least 1.`);
+      errors.push(t('simulation.link.shaperQueueDepth', { id: klass.id }));
     }
     for (const dscp of klass.dscp) {
-      if (dscp < 0 || dscp > 63) errors.push(`DSCP ${dscp} must be in 0..63.`);
-      if (dscps.has(dscp)) errors.push(`DSCP ${dscp} is in multiple classes.`);
+      if (dscp < 0 || dscp > 63) errors.push(t('simulation.link.shaperDscpRange', { dscp }));
+      if (dscps.has(dscp)) errors.push(t('simulation.link.shaperDscpShared', { dscp }));
       dscps.add(dscp);
     }
   }
@@ -182,6 +186,7 @@ export interface LinkDetailPanelProps {
 }
 
 export function LinkDetailPanel({ edge, onQosChange }: LinkDetailPanelProps) {
+  const { t } = useI18n();
   const sandbox = useContext(SandboxContext);
   const simulation = useContext(SimulationContext);
   const current = edge.data?.link ?? {};
@@ -237,19 +242,17 @@ export function LinkDetailPanel({ edge, onQosChange }: LinkDetailPanelProps) {
   }, [bandwidthBps, infiniteQueue, lossPct, lossSeed, propagationDelayMs, queueDepthSegments]);
   const lossValue = nextConfig.lossPct ?? 0;
   const errors = [
-    lossValue > 0 && nextConfig.lossSeed === undefined
-      ? 'Set a loss seed; it makes drops reproducible.'
-      : null,
+    lossValue > 0 && nextConfig.lossSeed === undefined ? t('simulation.link.needSeed') : null,
     nextConfig.bandwidthBps !== undefined && nextConfig.bandwidthBps <= 0
-      ? 'Bandwidth must be greater than 0.'
+      ? t('simulation.link.bandwidthPositive')
       : null,
     nextConfig.queueDepthSegments !== undefined && nextConfig.queueDepthSegments < 1
-      ? 'Queue depth must be at least 1.'
+      ? t('simulation.link.queueDepthMin')
       : null,
   ].filter((entry): entry is string => entry !== null);
   const counters = traceCounters(edge.id, simulation);
   const shaperConfig = useMemo(() => parseShaperText(shaperDraft), [shaperDraft]);
-  const shaperErrors = validateShaper(shaperConfig);
+  const shaperErrors = validateShaper(shaperConfig, t);
   const classCounters = shaperCounters(edge.id, simulation);
 
   const apply = () => {
@@ -286,14 +289,18 @@ export function LinkDetailPanel({ edge, onQosChange }: LinkDetailPanelProps) {
   };
 
   return (
-    <section aria-label="Link QoS" data-testid="link-qos-section" style={{ marginTop: 10 }}>
+    <section
+      aria-label={t('simulation.link.qosAria')}
+      data-testid="link-qos-section"
+      style={{ marginTop: 10 }}
+    >
       <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 10, fontWeight: 700 }}>
-        LINK QOS
+        {t('simulation.link.qosHeading')}
       </div>
       <label style={FIELD_STYLE}>
-        <span>Bandwidth</span>
+        <span>{t('simulation.link.bandwidth')}</span>
         <input
-          aria-label="Bandwidth bps"
+          aria-label={t('simulation.link.bandwidthAria')}
           style={INPUT_STYLE}
           type="number"
           min={1}
@@ -302,9 +309,9 @@ export function LinkDetailPanel({ edge, onQosChange }: LinkDetailPanelProps) {
         />
       </label>
       <label style={FIELD_STYLE}>
-        <span>Propagation delay</span>
+        <span>{t('simulation.link.delay')}</span>
         <input
-          aria-label="Propagation delay ms"
+          aria-label={t('simulation.link.delayAria')}
           style={INPUT_STYLE}
           type="number"
           min={0}
@@ -314,9 +321,9 @@ export function LinkDetailPanel({ edge, onQosChange }: LinkDetailPanelProps) {
         />
       </label>
       <label style={FIELD_STYLE}>
-        <span>Loss percent</span>
+        <span>{t('simulation.link.lossPercent')}</span>
         <input
-          aria-label="Loss percent"
+          aria-label={t('simulation.link.lossPercent')}
           data-testid="sandbox-link-loss-percent"
           type="range"
           min={0}
@@ -333,9 +340,9 @@ export function LinkDetailPanel({ edge, onQosChange }: LinkDetailPanelProps) {
         />
       </label>
       <label style={FIELD_STYLE}>
-        <span>Loss seed</span>
+        <span>{t('simulation.link.lossSeed')}</span>
         <input
-          aria-label="Loss seed"
+          aria-label={t('simulation.link.lossSeed')}
           style={INPUT_STYLE}
           type="number"
           value={lossSeed}
@@ -344,18 +351,18 @@ export function LinkDetailPanel({ edge, onQosChange }: LinkDetailPanelProps) {
       </label>
       <label style={{ ...FIELD_STYLE, gridTemplateColumns: 'auto 1fr', alignItems: 'center' }}>
         <input
-          aria-label="Infinite queue"
+          aria-label={t('simulation.link.infiniteQueue')}
           type="checkbox"
           checked={infiniteQueue}
           onChange={(event) => setInfiniteQueue(event.currentTarget.checked)}
         />
-        <span>Infinite queue</span>
+        <span>{t('simulation.link.infiniteQueue')}</span>
       </label>
       {!infiniteQueue && (
         <label style={FIELD_STYLE}>
-          <span>Queue depth</span>
+          <span>{t('simulation.link.queueDepth')}</span>
           <input
-            aria-label="Queue depth segments"
+            aria-label={t('simulation.link.queueDepthAria')}
             style={INPUT_STYLE}
             type="number"
             min={1}
@@ -371,11 +378,11 @@ export function LinkDetailPanel({ edge, onQosChange }: LinkDetailPanelProps) {
         </div>
       )}
       <dl style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 4, margin: '10px 0 0' }}>
-        <dt>Currently queued</dt>
+        <dt>{t('simulation.link.queued')}</dt>
         <dd>{counters.queued}</dd>
-        <dt>Total dequeued</dt>
+        <dt>{t('simulation.link.dequeued')}</dt>
         <dd>{counters.dequeued}</dd>
-        <dt>Dropped</dt>
+        <dt>{t('simulation.link.dropped')}</dt>
         <dd>
           {counters.dropped} ({counters.queueFull} / {counters.loss} / {counters.linkFailed})
         </dd>
@@ -387,16 +394,16 @@ export function LinkDetailPanel({ edge, onQosChange }: LinkDetailPanelProps) {
         onClick={apply}
         style={BUTTON_STYLE}
       >
-        Apply
+        {t('simulation.link.apply')}
       </button>
-      <section aria-label="Traffic Shaping" style={{ marginTop: 18 }}>
+      <section aria-label={t('simulation.link.shapingAria')} style={{ marginTop: 18 }}>
         <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 10, fontWeight: 700 }}>
-          TRAFFIC SHAPING
+          {t('simulation.link.shapingHeading')}
         </div>
         <label style={FIELD_STYLE}>
-          <span>Classes</span>
+          <span>{t('simulation.link.classes')}</span>
           <textarea
-            aria-label="Shaper classes"
+            aria-label={t('simulation.link.classesAria')}
             value={shaperDraft}
             onChange={(event) => setShaperDraft(event.currentTarget.value)}
             rows={4}
@@ -404,7 +411,8 @@ export function LinkDetailPanel({ edge, onQosChange }: LinkDetailPanelProps) {
           />
         </label>
         <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 11, marginTop: 4 }}>
-          id:weight:queueDepth:class|default:dscp,dscp
+          {/* The syntax itself, not a sentence: shown as code in either language. */}
+          <code>id:weight:queueDepth:class|default:dscp,dscp</code>
         </div>
         {shaperErrors.length > 0 && (
           <div role="alert" aria-live="polite" style={{ color: 'var(--netlab-accent-red)' }}>
@@ -424,7 +432,10 @@ export function LinkDetailPanel({ edge, onQosChange }: LinkDetailPanelProps) {
               return (
                 <div key={klass.id} style={{ display: 'contents' }}>
                   <dt>
-                    {klass.id} {klass.default ? '(default)' : `(DSCP ${klass.dscp.join(',')})`}
+                    {klass.id}{' '}
+                    {klass.default
+                      ? t('simulation.link.shaperDefault')
+                      : `(DSCP ${klass.dscp.join(',')})`}
                   </dt>
                   <dd>
                     q {counts.queued} / dq {counts.dequeued} / drop {counts.dropped}
@@ -441,10 +452,10 @@ export function LinkDetailPanel({ edge, onQosChange }: LinkDetailPanelProps) {
             onClick={applyShaper}
             style={BUTTON_STYLE}
           >
-            Apply shaper
+            {t('simulation.link.applyShaper')}
           </button>
           <button type="button" onClick={clearShaper} style={BUTTON_STYLE}>
-            Clear shaper
+            {t('simulation.link.clearShaper')}
           </button>
         </div>
       </section>

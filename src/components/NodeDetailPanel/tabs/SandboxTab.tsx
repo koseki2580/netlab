@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useI18n } from '../../../i18n/useI18n';
 import type { NetlabNode, TopologySnapshot } from '../../../types/topology';
 import { HostEditorSection } from '../sections/HostEditorSection';
 import { RouterEditorSection } from '../sections/RouterEditorSection';
@@ -21,11 +22,12 @@ export const SandboxTab = memo(function SandboxTab({
   snapshot,
   updateSelectedNode,
 }: SandboxTabProps): JSX.Element | null {
+  const { t } = useI18n();
   const data = node.data;
   if (!canEdit) {
     return (
       <div style={{ color: 'var(--netlab-text-muted)' }}>
-        Sandbox edits are disabled for this view.
+        {t('simulation.nodeDetail.sandboxDisabled')}
       </div>
     );
   }

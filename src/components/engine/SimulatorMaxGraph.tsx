@@ -1,4 +1,5 @@
 import { Suspense, lazy, useMemo, useState } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import { LazyPanelBoundary } from '../LazyPanelBoundary';
 import type { SimulatorCanvasProps } from './canvasEngine';
 
@@ -17,6 +18,7 @@ export function SimulatorMaxGraph({
   /** Seam for tests to simulate a failing chunk; never set by consumers. */
   importInner?: () => Promise<{ default: (p: SimulatorCanvasProps) => React.ReactNode }>;
 }) {
+  const { t } = useI18n();
   const [attempt, setAttempt] = useState(0);
   const Inner = useMemo(() => {
     void attempt;
@@ -27,9 +29,9 @@ export function SimulatorMaxGraph({
   return (
     <LazyPanelBoundary
       onRetry={() => setAttempt((value) => value + 1)}
-      heading="Canvas could not be loaded"
-      body="The code for the diagram engine failed to download. Check your connection and try again."
-      retryLabel="Retry"
+      heading={t('simulation.canvasLoad.heading')}
+      body={t('simulation.canvasLoad.body')}
+      retryLabel={t('simulation.canvasLoad.retry')}
     >
       <Suspense fallback={null}>
         <Inner {...props} />

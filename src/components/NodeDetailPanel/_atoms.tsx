@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import { parseMtu } from './_parsers';
 import {
   BADGE_STYLE,
@@ -132,6 +133,7 @@ export function MtuInput({
   mtu: number | undefined;
   onCommit: (mtu: number | undefined) => void;
 }) {
+  const { t } = useI18n();
   const [localValue, setLocalValue] = useState(mtu === undefined ? '' : String(mtu));
 
   useEffect(() => {
@@ -143,7 +145,7 @@ export function MtuInput({
       name={name}
       type="number"
       min={1}
-      placeholder="inherit"
+      placeholder={t('simulation.nodeDetail.mtuInherit')}
       value={localValue}
       onChange={(event) => setLocalValue(event.target.value)}
       onBlur={(event) => onCommit(parseMtu(event.currentTarget.value))}

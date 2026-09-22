@@ -9,12 +9,14 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useI18n } from '../i18n/useI18n';
 import { ToastBus, type ToastEntry, type ToastLevel } from './ToastBus';
 
 const MONO = 'ui-monospace, monospace';
 const MAX_VISIBLE = 3;
 
 export function ToastViewport() {
+  const { t } = useI18n();
   const [entries, setEntries] = useState<ToastEntry[]>([]);
 
   useEffect(() => ToastBus.subscribe(setEntries), []);
@@ -34,7 +36,7 @@ export function ToastViewport() {
     <div
       data-testid="toast-viewport"
       role="region"
-      aria-label="Notifications"
+      aria-label={t('simulation.toast.region')}
       style={{
         position: 'fixed',
         right: 16,
@@ -73,6 +75,7 @@ const LEVEL_ICON: Record<ToastLevel, string> = {
 };
 
 function ToastCard({ entry }: { entry: ToastEntry }) {
+  const { t } = useI18n();
   const color = LEVEL_COLOR[entry.level];
   return (
     <div
@@ -122,7 +125,7 @@ function ToastCard({ entry }: { entry: ToastEntry }) {
       )}
       <button
         type="button"
-        aria-label="Dismiss notification"
+        aria-label={t('simulation.toast.dismissNotification')}
         onClick={() => ToastBus.dismiss(entry.id)}
         style={{
           all: 'unset',

@@ -1,3 +1,4 @@
+import { useI18n } from '../../../i18n/useI18n';
 import type { NetlabNode, NetlabNodeData, TopologySnapshot } from '../../../types/topology';
 import {
   validateCidr,
@@ -23,6 +24,7 @@ export function RouterEditorSection({
   snapshot: TopologySnapshot;
   updateNode: (updater: (node: NetlabNode) => NetlabNode) => void;
 }) {
+  const { t } = useI18n();
   const interfaces = data.interfaces ?? [];
   const staticRoutes = data.staticRoutes ?? [];
   const dhcpServer = data.dhcpServer;
@@ -30,7 +32,7 @@ export function RouterEditorSection({
 
   return (
     <>
-      <div style={SECTION_HEADER_STYLE}>EDIT INTERFACES</div>
+      <div style={SECTION_HEADER_STYLE}>{t('simulation.nodeDetail.edit.interfaces')}</div>
       {interfaces.map((iface) => (
         <div key={`${iface.id}-edit`} style={{ marginBottom: 10 }}>
           <div style={{ color: 'var(--netlab-accent-green)', fontWeight: 'bold', marginBottom: 4 }}>
@@ -73,7 +75,7 @@ export function RouterEditorSection({
             }}
           />
           <EditableTextRow
-            label="Prefix"
+            label={t('simulation.nodeDetail.edit.prefix')}
             name={`interface-prefix-${iface.id}`}
             value={String(iface.prefixLength)}
             editable={editable}
@@ -134,7 +136,7 @@ export function RouterEditorSection({
             editable={editable}
             minWidth={36}
             options={[
-              { label: 'none', value: '' },
+              { label: t('simulation.nodeDetail.edit.natNone'), value: '' },
               { label: 'inside', value: 'inside' },
               { label: 'outside', value: 'outside' },
             ]}
@@ -162,7 +164,7 @@ export function RouterEditorSection({
 
       {staticRoutes.length > 0 && (
         <>
-          <div style={SECTION_HEADER_STYLE}>EDIT STATIC ROUTES</div>
+          <div style={SECTION_HEADER_STYLE}>{t('simulation.nodeDetail.edit.staticRoutes')}</div>
           {staticRoutes.map((route, index) => (
             <div key={`route-${index}`} style={{ marginBottom: 10 }}>
               <EditableTextRow
@@ -196,7 +198,7 @@ export function RouterEditorSection({
                 }}
               />
               <EditableTextRow
-                label="Next"
+                label={t('simulation.nodeDetail.edit.next')}
                 name={`route-next-hop-${index}`}
                 value={route.nextHop}
                 editable={editable}
@@ -230,9 +232,9 @@ export function RouterEditorSection({
 
       {dhcpServer && (
         <>
-          <div style={SECTION_HEADER_STYLE}>EDIT DHCP SERVER</div>
+          <div style={SECTION_HEADER_STYLE}>{t('simulation.nodeDetail.edit.dhcpServer')}</div>
           <EditableTextRow
-            label="Pool"
+            label={t('simulation.nodeDetail.edit.pool')}
             name={`dhcp-pool-${nodeId}`}
             value={dhcpServer.leasePool}
             editable={editable}
@@ -288,13 +290,17 @@ export function RouterEditorSection({
             }}
           />
           <EditableTextRow
-            label="Lease"
+            label={t('simulation.nodeDetail.edit.lease')}
             name={`dhcp-lease-time-${nodeId}`}
             value={String(dhcpServer.leaseTime)}
             editable={editable}
             minWidth={52}
             onCommit={(nextValue) => {
-              const error = validatePositiveInteger(nextValue, 'Lease time');
+              const error = validatePositiveInteger(
+                nextValue,
+                t('simulation.nodeDetail.edit.leaseTime'),
+                t,
+              );
               if (error) {
                 return error;
               }
@@ -320,11 +326,11 @@ export function RouterEditorSection({
 
       {dnsServer && (
         <>
-          <div style={SECTION_HEADER_STYLE}>EDIT DNS ZONES</div>
+          <div style={SECTION_HEADER_STYLE}>{t('simulation.nodeDetail.edit.dnsZones')}</div>
           {dnsServer.zones.map((zone, index) => (
             <div key={`dns-zone-${index}`} style={{ marginBottom: 10 }}>
               <EditableTextRow
-                label="Name"
+                label={t('simulation.nodeDetail.edit.zoneName')}
                 name={`dns-zone-name-${index}`}
                 value={zone.name}
                 editable={editable}
@@ -332,7 +338,7 @@ export function RouterEditorSection({
                 onCommit={(nextValue) => {
                   const trimmed = nextValue.trim();
                   if (!trimmed) {
-                    return 'Zone name is required';
+                    return t('simulation.nodeDetail.edit.zoneNameRequired');
                   }
                   if (trimmed === zone.name) {
                     return null;

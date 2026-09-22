@@ -1,3 +1,5 @@
+import { useI18n } from '../i18n/useI18n';
+
 /**
  * C4 (LOD) — collapsed-area block. When an area has too many nodes to read, or
  * the viewport is zoomed too far out (see {@link shouldCollapseArea}), the area
@@ -13,6 +15,7 @@ export interface AreaClusterProps {
 }
 
 export function AreaCluster({ name, hostCount, onExpand }: AreaClusterProps) {
+  const { t } = useI18n();
   return (
     <button
       type="button"
@@ -36,7 +39,9 @@ export function AreaCluster({ name, hostCount, onExpand }: AreaClusterProps) {
         {name} <span aria-hidden>▾</span>
       </span>
       <span style={{ fontSize: 10, color: 'var(--netlab-text-muted)' }}>
-        {hostCount} {hostCount === 1 ? 'host' : 'hosts'} · collapsed
+        {hostCount === 1
+          ? t('simulation.area.collapsedOne', { count: hostCount })
+          : t('simulation.area.collapsedMany', { count: hostCount })}
       </span>
     </button>
   );

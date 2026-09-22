@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useI18n } from '../../../i18n/useI18n';
 import type { NetworkTopology } from '../../../types/topology';
 import { SECTION_HEADER_STYLE } from '../_styles';
 
@@ -7,19 +8,30 @@ export interface RoutesTabProps {
 }
 
 export const RoutesTab = memo(function RoutesTab({ data }: RoutesTabProps): JSX.Element {
+  const { t } = useI18n();
   const staticRoutes = data.staticRoutes ?? [];
   if (staticRoutes.length === 0) {
-    return <div style={{ color: 'var(--netlab-text-muted)' }}>No static routes configured.</div>;
+    return (
+      <div style={{ color: 'var(--netlab-text-muted)' }}>
+        {t('simulation.nodeDetail.routes.empty')}
+      </div>
+    );
   }
   return (
     <>
-      <div style={SECTION_HEADER_STYLE}>STATIC ROUTES</div>
+      <div style={SECTION_HEADER_STYLE}>{t('simulation.nodeDetail.routes.heading')}</div>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
         <thead>
           <tr style={{ color: 'var(--netlab-text-secondary)', textAlign: 'left' }}>
-            <th style={{ padding: '4px 6px', fontWeight: 600 }}>Destination</th>
-            <th style={{ padding: '4px 6px', fontWeight: 600 }}>Next hop</th>
-            <th style={{ padding: '4px 6px', fontWeight: 600 }}>Metric</th>
+            <th style={{ padding: '4px 6px', fontWeight: 600 }}>
+              {t('simulation.nodeDetail.routes.destination')}
+            </th>
+            <th style={{ padding: '4px 6px', fontWeight: 600 }}>
+              {t('simulation.nodeDetail.routes.nextHop')}
+            </th>
+            <th style={{ padding: '4px 6px', fontWeight: 600 }}>
+              {t('simulation.nodeDetail.routes.metric')}
+            </th>
           </tr>
         </thead>
         <tbody>

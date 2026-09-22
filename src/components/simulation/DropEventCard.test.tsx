@@ -4,8 +4,9 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PacketHop } from '../../types/simulation';
+import { I18nProvider } from '../../i18n/I18nProvider';
 import { DropEventCard } from './DropEventCard';
-import { getDropLesson } from './dropLessons';
+import { DROP_LESSONS, getDropLesson } from './dropLessons';
 
 let root: Root | null = null;
 let container: HTMLDivElement | null = null;
@@ -137,6 +138,34 @@ describe('DropEventCard', () => {
     expect(fixButton?.textContent).toContain('permit this traffic');
     click(fixButton as HTMLElement);
     expect(onApply).toHaveBeenCalledOnce();
+  });
+
+  /**
+   * TC-168 — every authored drop lesson reads in Japanese.
+   *
+   * The card translates the lesson by looking its English text up, because
+   * `DROP_LESSONS` is a public export that authors the copy in English. That
+   * lookup misses silently when the authored text is edited, and the learner
+   * is shown English instead; this holds every lesson to being translated.
+   */
+  it('shows every authored drop lesson in Japanese', () => {
+    for (const [reason, lesson] of Object.entries(DROP_LESSONS)) {
+      render(
+        <I18nProvider locale="ja">
+          <DropEventCard hop={makeDropHop(reason)} />
+        </I18nProvider>,
+      );
+      const text = q('drop-event-card')?.textContent ?? '';
+      expect(text, `${reason} is explained in Japanese`).toMatch(/[ぁ-んァ-ヶ一-龯]/);
+      for (const english of [lesson.cause.text, lesson.response.text, lesson.why]) {
+        expect(text, `${reason}: "${english}" is translated`).not.toContain(english);
+      }
+      // A reference that opens a tab is a phrase the learner reads; one that
+      // opens an RFC is that document's own title and stays as it is.
+      for (const ref of lesson.refs.filter((r) => r.tab)) {
+        expect(text, `${reason}: "${ref.label}" is translated`).not.toContain(ref.label);
+      }
+    }
   });
 
   it('closes on the close button and on Escape', () => {

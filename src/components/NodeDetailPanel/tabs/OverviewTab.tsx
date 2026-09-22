@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useI18n } from '../../../i18n/useI18n';
 import type { SimulationContextValue } from '../../../simulation/SimulationContext';
 import type { NetlabNode } from '../../../types/topology';
 import { ROW_STYLE, SECTION_HEADER_STYLE } from '../_styles';
@@ -29,15 +30,18 @@ export const OverviewTab = memo(function OverviewTab({
   joinedGroups,
   hasSimulation,
 }: OverviewTabProps): JSX.Element {
+  const { t } = useI18n();
   const data = node.data;
   const role = data.role;
   return (
     <>
       {data.wifi && (
         <>
-          <div style={SECTION_HEADER_STYLE}>WIRELESS</div>
+          <div style={SECTION_HEADER_STYLE}>{t('simulation.nodeDetail.wireless')}</div>
           <div style={ROW_STYLE}>
-            <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>Role</span>
+            <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>
+              {t('simulation.nodeDetail.wirelessRole')}
+            </span>
             <span style={{ color: 'var(--netlab-accent-green)' }}>{data.wifi.role}</span>
           </div>
           <div style={ROW_STYLE}>

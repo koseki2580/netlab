@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 
 export type ToastKind = 'info' | 'success' | 'warning' | 'error';
 
@@ -40,6 +41,7 @@ export interface ToastItem {
 }
 
 export function ToastItemView({ item, onDismiss }: { item: ToastItem; onDismiss: () => void }) {
+  const { t } = useI18n();
   return (
     <div
       role="status"
@@ -80,7 +82,7 @@ export function ToastItemView({ item, onDismiss }: { item: ToastItem; onDismiss:
       </div>
       <button
         type="button"
-        aria-label="Dismiss"
+        aria-label={t('simulation.toast.dismiss')}
         onClick={onDismiss}
         style={{
           background: 'none',

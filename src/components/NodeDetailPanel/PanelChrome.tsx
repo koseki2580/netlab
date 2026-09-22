@@ -1,6 +1,7 @@
 import { CANVAS_LAYER } from '../canvasLayers';
 import type React from 'react';
 import { useEffect, useRef } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import { DP_NARROW_BREAKPOINT, type DpMode, type DpTab } from './useNodeDetailDock';
 
 export type NodeRole = 'router' | 'switch' | 'client' | 'server' | string;
@@ -10,13 +11,13 @@ export interface ResolvedTarget {
   role?: NodeRole;
 }
 
-export const TAB_LABELS: Record<DpTab, string> = {
-  overview: 'Overview',
-  ifaces: 'Interfaces',
-  routes: 'Routes',
-  arp: 'ARP / Services',
-  acl: 'ACL',
-  sandbox: 'Sandbox',
+export const TAB_LABEL_KEYS: Record<DpTab, string> = {
+  overview: 'simulation.nodeDetail.tab.overview',
+  ifaces: 'simulation.nodeDetail.tab.interfaces',
+  routes: 'simulation.nodeDetail.tab.routes',
+  arp: 'simulation.nodeDetail.tab.arpServices',
+  acl: 'simulation.nodeDetail.tab.acl',
+  sandbox: 'simulation.nodeDetail.tab.sandbox',
 };
 
 export function getVisibleTabs(target: ResolvedTarget, canEdit: boolean): DpTab[] {
@@ -120,6 +121,7 @@ export function PanelHeader({
   onToggleMode,
   onClose,
 }: PanelHeaderProps): JSX.Element {
+  const { t } = useI18n();
   return (
     <header
       style={{
@@ -161,7 +163,11 @@ export function PanelHeader({
           type="button"
           data-netlab-dp-mode-toggle
           aria-pressed={mode === 'pinned'}
-          title={mode === 'overlay' ? 'Pin panel (push canvas)' : 'Unpin (overlay canvas)'}
+          title={
+            mode === 'overlay'
+              ? t('simulation.nodeDetail.pinTitle')
+              : t('simulation.nodeDetail.unpinTitle')
+          }
           onClick={onToggleMode}
           style={{
             padding: '4px 8px',
@@ -179,13 +185,13 @@ export function PanelHeader({
             lineHeight: 1,
           }}
         >
-          {mode === 'pinned' ? '⇤ Pinned' : '⇥ Pin'}
+          {mode === 'pinned' ? t('simulation.nodeDetail.pinned') : t('simulation.nodeDetail.pin')}
         </button>
       )}
       <button
         type="button"
         onClick={onClose}
-        aria-label="Close panel"
+        aria-label={t('simulation.nodeDetail.close')}
         data-testid="node-detail-close"
         style={{
           background: 'none',
@@ -241,6 +247,7 @@ interface ResizeHandleProps {
 }
 
 export function ResizeHandle({ currentWidth, onResize }: ResizeHandleProps): JSX.Element {
+  const { t } = useI18n();
   const draggingRef = useRef(false);
   const startXRef = useRef(0);
   const startWRef = useRef(currentWidth);
@@ -279,7 +286,7 @@ export function ResizeHandle({ currentWidth, onResize }: ResizeHandleProps): JSX
       data-netlab-dp-resize-handle
       role="separator"
       aria-orientation="vertical"
-      aria-label="Resize panel"
+      aria-label={t('simulation.nodeDetail.resize')}
       onMouseDown={handleMouseDown}
       style={{
         position: 'absolute',
@@ -303,6 +310,7 @@ interface TabNavProps {
 }
 
 export function TabNav({ tabs, activeTab, orientation, onSelect }: TabNavProps): JSX.Element {
+  const { t } = useI18n();
   const isColumn = orientation === 'column';
   return (
     <nav
@@ -358,7 +366,7 @@ export function TabNav({ tabs, activeTab, orientation, onSelect }: TabNavProps):
               letterSpacing: 0.3,
             }}
           >
-            {TAB_LABELS[tab]}
+            {t(TAB_LABEL_KEYS[tab])}
           </button>
         );
       })}

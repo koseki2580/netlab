@@ -1,8 +1,34 @@
 import type React from 'react';
 import { useEffect } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import type { PacketHop } from '../../types/simulation';
 import type { DpTab } from '../NodeDetailPanel/useNodeDetailDock';
 import { getDropLesson } from './dropLessons';
+
+/**
+ * `DROP_LESSONS` is a public export whose copy is English text, so it is
+ * translated here, at render, looked up by that text. Text with no entry (the
+ * RFC reference titles, the ICMP type/code line) is shown as written.
+ */
+const LESSON_TEXT_KEYS: Readonly<Record<string, string>> = {
+  'TTL reached 0 before the packet reached its destination':
+    'simulation.dropLesson.ttlExceeded.cause',
+  'ICMP Time Exceeded sent back to the source': 'simulation.dropLesson.ttlExceeded.response',
+  'Every router decrements the TTL; when it hits zero the packet is discarded so it cannot loop forever. The router notifies the source, which is how traceroute maps the path hop by hop.':
+    'simulation.dropLesson.ttlExceeded.why',
+  "show this router's routes": 'simulation.dropLesson.ttlExceeded.routesRef',
+  'No matching route for the destination address': 'simulation.dropLesson.noRoute.cause',
+  'ICMP Destination Unreachable (no route to host)': 'simulation.dropLesson.noRoute.response',
+  'The router had no route — not even a default — covering the destination prefix, so it cannot decide where to forward and drops the packet, signalling the source.':
+    'simulation.dropLesson.noRoute.why',
+  "inspect this router's routes": 'simulation.dropLesson.noRoute.routesRef',
+  'Denied by an inbound ACL rule on the ingress interface': 'simulation.dropLesson.aclDeny.cause',
+  'ICMP Destination Unreachable (administratively prohibited)':
+    'simulation.dropLesson.aclDeny.response',
+  'An access-control rule matched this packet and explicitly blocked it. The administrator chose to drop it here — some configurations notify the source with an ICMP message, others drop silently.':
+    'simulation.dropLesson.aclDeny.why',
+  'show the matching ACL': 'simulation.dropLesson.aclDeny.aclRef',
+};
 
 const SANS = 'system-ui, -apple-system, "Segoe UI", sans-serif';
 const MONO = 'ui-monospace, monospace';
@@ -69,6 +95,11 @@ export function DropEventCard({
   fix,
   editable = false,
 }: DropEventCardProps) {
+  const { t } = useI18n();
+  const lessonText = (text: string): string => {
+    const key = LESSON_TEXT_KEYS[text];
+    return key ? t(key) : text;
+  };
   const lesson = hop.event === 'drop' ? getDropLesson(hop.reason) : undefined;
 
   useEffect(() => {
@@ -129,20 +160,20 @@ export function DropEventCard({
           }}
         >
           <span aria-hidden>▼</span>
-          <span>drop event</span>
+          <span>{t('simulation.dropCard.heading')}</span>
         </span>
         <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--netlab-text-muted)' }}>
-          step {hop.step + 1}
+          {t('simulation.dropCard.step', { step: hop.step + 1 })}
           {hop.nodeLabel ? ` · ${hop.nodeLabel}` : ''}
         </span>
       </div>
 
-      <DropSection label="Cause">
-        <span style={{ fontFamily: MONO, fontSize: 12 }}>{lesson.cause.text}</span>
+      <DropSection label={t('simulation.dropCard.cause')}>
+        <span style={{ fontFamily: MONO, fontSize: 12 }}>{lessonText(lesson.cause.text)}</span>
       </DropSection>
 
-      <DropSection label="Response">
-        <span style={{ fontFamily: MONO, fontSize: 12 }}>{lesson.response.text}</span>
+      <DropSection label={t('simulation.dropCard.response')}>
+        <span style={{ fontFamily: MONO, fontSize: 12 }}>{lessonText(lesson.response.text)}</span>
         {lesson.response.meta && (
           <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--netlab-text-muted)' }}>
             {' '}
@@ -151,7 +182,7 @@ export function DropEventCard({
         )}
       </DropSection>
 
-      <DropSection label="Why">
+      <DropSection label={t('simulation.dropCard.why')}>
         <span
           style={{
             fontFamily: SANS,
@@ -160,7 +191,7 @@ export function DropEventCard({
             color: 'var(--netlab-text-secondary)',
           }}
         >
-          {lesson.why}
+          {lessonText(lesson.why)}
         </span>
       </DropSection>
 
@@ -179,7 +210,7 @@ export function DropEventCard({
             }}
             style={refStyle('var(--netlab-accent-cyan)')}
           >
-            {ref.label} →
+            {lessonText(ref.label)} →
           </button>
         ))}
         {editable && fix && (
@@ -208,7 +239,7 @@ export function DropEventCard({
             onClick={onClose}
             style={refStyle('var(--netlab-text-muted)')}
           >
-            esc · close
+            {t('simulation.dropCard.close')}
           </button>
         )}
       </div>

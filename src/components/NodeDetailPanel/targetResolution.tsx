@@ -1,6 +1,7 @@
 import type React from 'react';
+import type { TranslatorFn } from '../../i18n/types';
 import type { NetlabNode, NetworkTopology } from '../../types/topology';
-import { explainerFor, type LearnerNodeKind } from './learnerExplainers';
+import { explainerKeyFor, type LearnerNodeKind } from './learnerExplainers';
 import type { ResolvedTarget } from './PanelChrome';
 
 export interface ResolvedPanelTarget {
@@ -16,6 +17,7 @@ export function resolvePanelTarget(
   topology: NetworkTopology,
   selectedNodeId: string | null,
   selectedEdgeId: string | null | undefined,
+  t: TranslatorFn,
 ): ResolvedPanelTarget | null {
   if (selectedEdgeId) {
     const edge = topology.edges.find((candidate) => candidate.id === selectedEdgeId);
@@ -23,12 +25,14 @@ export function resolvePanelTarget(
     return {
       edge,
       target: { kind: 'edge' },
-      ariaLabel: `Edge detail · ${edge.id}`,
-      headerEyebrow: 'EDGE DETAIL',
+      ariaLabel: t('simulation.nodeDetail.edgeAria', { id: edge.id }),
+      headerEyebrow: t('simulation.nodeDetail.edgeHeading'),
       title: (
         <>
           {edge.id}
-          <span style={{ color: 'var(--netlab-text-muted)', marginLeft: 8 }}>link</span>
+          <span style={{ color: 'var(--netlab-text-muted)', marginLeft: 8 }}>
+            {t('simulation.nodeDetail.link')}
+          </span>
         </>
       ),
     };
@@ -40,8 +44,8 @@ export function resolvePanelTarget(
   return {
     node,
     target: { kind: 'node', role: node.data.role },
-    ariaLabel: `Node detail · ${node.data.label}`,
-    headerEyebrow: 'NODE DETAIL',
+    ariaLabel: t('simulation.nodeDetail.nodeAria', { label: node.data.label }),
+    headerEyebrow: t('simulation.nodeDetail.nodeHeading'),
     title: (
       <>
         {node.data.label}
@@ -54,7 +58,11 @@ export function resolvePanelTarget(
   };
 }
 
-export function resolveLearnerExplainer(node: NetlabNode | undefined, audience: string) {
+export function resolveLearnerExplainer(
+  node: NetlabNode | undefined,
+  audience: string,
+  t: TranslatorFn,
+) {
   if (!node) return { learnerKind: null, learnerCopy: undefined };
   const role = node.data.role;
   const learnerKind: LearnerNodeKind | null =
@@ -65,8 +73,9 @@ export function resolveLearnerExplainer(node: NetlabNode | undefined, audience: 
         : role === 'client' || role === 'server'
           ? 'host'
           : null;
+  const learnerKey = audience === 'learner' ? explainerKeyFor(learnerKind, 'overview') : undefined;
   return {
     learnerKind,
-    learnerCopy: audience === 'learner' ? explainerFor(learnerKind, 'overview') : undefined,
+    learnerCopy: learnerKey ? t(learnerKey) : undefined,
   };
 }

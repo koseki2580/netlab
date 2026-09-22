@@ -1,3 +1,4 @@
+import { useI18n } from '../../../i18n/useI18n';
 import type { LinkQosConfig } from '../../../types/link';
 import type { NetlabEdge, NetworkTopology } from '../../../types/topology';
 import { LinkDetailPanel } from '../../LinkDetailPanel';
@@ -15,6 +16,7 @@ export function EdgeDetail({
   onMtuChange?: (mtu: number | undefined) => void;
   onQosChange?: (qos: LinkQosConfig) => void;
 }) {
+  const { t } = useI18n();
   const sourceLabel =
     topology.nodes.find((node) => node.id === edge.source)?.data.label ?? edge.source;
   const targetLabel =
@@ -24,11 +26,15 @@ export function EdgeDetail({
   return (
     <>
       <div style={ROW_STYLE}>
-        <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>Source</span>
+        <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>
+          {t('simulation.nodeDetail.edge.source')}
+        </span>
         <span style={{ color: 'var(--netlab-text-primary)' }}>{sourceLabel}</span>
       </div>
       <div style={ROW_STYLE}>
-        <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>Target</span>
+        <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>
+          {t('simulation.nodeDetail.edge.target')}
+        </span>
         <span style={{ color: 'var(--netlab-text-primary)' }}>{targetLabel}</span>
       </div>
       <div style={{ ...ROW_STYLE, alignItems: 'center' }}>
@@ -39,13 +45,15 @@ export function EdgeDetail({
       <LinkDetailPanel edge={edge} {...(onQosChange ? { onQosChange } : {})} />
       {edge.data?.wireless && (
         <>
-          <div style={SECTION_HEADER_STYLE}>WIRELESS LINK</div>
+          <div style={SECTION_HEADER_STYLE}>{t('simulation.nodeDetail.edge.wirelessLink')}</div>
           <div style={ROW_STYLE}>
             <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>SSID</span>
             <span style={{ color: 'var(--netlab-accent-cyan)' }}>{edge.data.wireless.ssid}</span>
           </div>
           <div style={ROW_STYLE}>
-            <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>Radio</span>
+            <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>
+              {t('simulation.nodeDetail.edge.radio')}
+            </span>
             <span style={{ color: 'var(--netlab-text-primary)' }}>
               ch {edge.data.wireless.channel} / {edge.data.wireless.bandMhz} MHz
             </span>

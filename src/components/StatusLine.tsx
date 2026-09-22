@@ -1,7 +1,8 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
+import { useI18n } from '../i18n/useI18n';
 import type { ShellStatusTone } from './NetlabAppShellV2';
-import { STATUS_TONE_COLOR, STATUS_TONE_LABEL } from './shellStatusTones';
+import { STATUS_TONE_COLOR, STATUS_TONE_LABEL_KEYS } from './shellStatusTones';
 import { TOAST_EMIT_EVENT, type ToastEmitDetail } from './ToastBus';
 import { useKbdMod } from '../utils/useKbdMod';
 
@@ -93,6 +94,7 @@ export function StatusLine({
   style,
   className,
 }: StatusLineProps) {
+  const { t } = useI18n();
   const mod = useKbdMod();
   const paletteLabel = mod === '⌘' ? '⌘K' : 'Ctrl+K';
 
@@ -117,7 +119,7 @@ export function StatusLine({
   }, []);
   const showStep = typeof step === 'number' && typeof totalSteps === 'number' && totalSteps > 0;
   const toneColor = STATUS_TONE_COLOR[status];
-  const toneLabel = STATUS_TONE_LABEL[status];
+  const toneLabel = t(STATUS_TONE_LABEL_KEYS[status]);
 
   return (
     <div
@@ -149,7 +151,7 @@ export function StatusLine({
         <>
           {sep()}
           <span style={{ color: 'var(--netlab-accent-cyan)' }}>
-            step {(step as number) + 1}/{totalSteps}
+            {t('simulation.statusLine.step', { current: (step as number) + 1, total: totalSteps })}
           </span>
         </>
       )}
@@ -170,16 +172,17 @@ export function StatusLine({
       <span style={{ color: toneColor }}>{toneLabel}</span>
       {sep()}
       <span>
-        pkts <span style={{ color: 'var(--netlab-accent-cyan)' }}>{packetsCount}</span>
+        {t('simulation.statusLine.packets')}{' '}
+        <span style={{ color: 'var(--netlab-accent-cyan)' }}>{packetsCount}</span>
       </span>
       {sep()}
       <span>
-        drops{' '}
+        {t('simulation.statusLine.drops')}{' '}
         {onJumpToDrop && dropsCount > 0 ? (
           <button
             type="button"
-            aria-label="Jump to first dropped packet"
-            title="Jump to the first dropped packet"
+            aria-label={t('simulation.statusLine.jumpToDropAria')}
+            title={t('simulation.statusLine.jumpToDropTitle')}
             onClick={onJumpToDrop}
             style={{
               all: 'unset',
@@ -204,7 +207,8 @@ export function StatusLine({
       </span>
       {sep()}
       <span>
-        arp <span style={{ color: 'var(--netlab-accent-yellow)' }}>{arpCount}</span>
+        {t('simulation.statusLine.arp')}{' '}
+        <span style={{ color: 'var(--netlab-accent-yellow)' }}>{arpCount}</span>
       </span>
 
       {/* Right segment (pushed right) */}
@@ -214,14 +218,16 @@ export function StatusLine({
             {toastMirror}
           </span>
         ) : (
-          <span style={{ color: 'var(--netlab-text-muted)' }}>{selectedId ?? '—'} selected</span>
+          <span style={{ color: 'var(--netlab-text-muted)' }}>
+            {t('simulation.statusLine.selected', { id: selectedId ?? '—' })}
+          </span>
         )}
         {sep()}
         {onOpenPalette ? (
           <button
             type="button"
-            aria-label="Open command palette"
-            title={`Open command palette (${paletteLabel})`}
+            aria-label={t('simulation.commandBar.palette')}
+            title={t('simulation.commandBar.paletteTitle', { shortcut: paletteLabel })}
             onClick={onOpenPalette}
             style={statusLineActionStyle(true)}
           >
@@ -234,15 +240,15 @@ export function StatusLine({
         {onOpenHelp ? (
           <button
             type="button"
-            aria-label="Open help"
-            title="Open help"
+            aria-label={t('simulation.statusLine.openHelp')}
+            title={t('simulation.statusLine.openHelp')}
             onClick={onOpenHelp}
             style={statusLineActionStyle(true)}
           >
-            ? help
+            {t('simulation.statusLine.help')}
           </button>
         ) : (
-          <span style={statusLineActionStyle(false)}>? help</span>
+          <span style={statusLineActionStyle(false)}>{t('simulation.statusLine.help')}</span>
         )}
       </span>
     </div>

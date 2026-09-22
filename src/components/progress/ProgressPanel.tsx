@@ -48,14 +48,14 @@ export function ProgressPanel() {
             data-testid="gallery-progress-export"
             onClick={() => setExportedJson(progress.exportJson())}
           >
-            Export JSON
+            {t('learning.progress.panel.exportButton')}
           </button>
           <button
             type="button"
             data-testid="gallery-progress-clear"
             onClick={() => setConfirmingClear(true)}
           >
-            Clear progress
+            {t('learning.progress.panel.clear')}
           </button>
         </div>
       </div>
@@ -78,7 +78,7 @@ export function ProgressPanel() {
                 <td>
                   {completion.score
                     ? `${completion.score.passed}/${completion.score.total}`
-                    : 'Complete'}
+                    : t('learning.progress.panel.complete')}
                 </td>
                 <td>{completion.completedAt}</td>
               </tr>
@@ -93,7 +93,7 @@ export function ProgressPanel() {
         <label style={{ display: 'grid', gap: 6, marginTop: 14 }}>
           <span>{t('learning.progress.panel.export')}</span>
           <textarea
-            aria-label="Exported progress JSON"
+            aria-label={t('learning.progress.panel.export')}
             data-testid="gallery-progress-export-json"
             readOnly
             value={exportedJson}
@@ -107,7 +107,7 @@ export function ProgressPanel() {
         <label style={{ display: 'grid', gap: 6 }}>
           <span>{t('learning.progress.panel.import')}</span>
           <textarea
-            aria-label="Import progress JSON"
+            aria-label={t('learning.progress.panel.import')}
             data-testid="gallery-progress-import-json"
             value={importJson}
             onChange={(event) => setImportJson(event.target.value)}
@@ -121,10 +121,14 @@ export function ProgressPanel() {
             data-testid="gallery-progress-import"
             onClick={() => {
               const result = progress.importJson(importJson);
-              setImportStatus(result.ok ? 'Imported' : `Import failed: ${result.reason}`);
+              setImportStatus(
+                result.ok
+                  ? t('learning.progress.panel.imported')
+                  : t('learning.progress.panel.importFailed', { reason: result.reason }),
+              );
             }}
           >
-            Import JSON
+            {t('learning.progress.panel.importButton')}
           </button>
           {importStatus ? <span style={{ marginLeft: 8 }}>{importStatus}</span> : null}
         </div>
@@ -133,7 +137,7 @@ export function ProgressPanel() {
       {confirmingClear ? (
         <div
           role="dialog"
-          aria-label="Confirm clear progress"
+          aria-label={t('learning.progress.panel.confirmClearLabel')}
           style={{
             border: '1px solid var(--netlab-border)',
             borderRadius: 8,
@@ -144,7 +148,7 @@ export function ProgressPanel() {
           <label style={{ display: 'grid', gap: 6 }}>
             <span>{t('learning.progress.panel.confirmLearnerId')}</span>
             <input
-              aria-label="Confirm learner id"
+              aria-label={t('learning.progress.panel.confirmLearnerId')}
               data-testid="gallery-progress-confirm-id"
               value={confirmLearnerId}
               onChange={(event) => setConfirmLearnerId(event.target.value)}
@@ -165,10 +169,10 @@ export function ProgressPanel() {
                 setExportedJson('');
               }}
             >
-              Confirm clear
+              {t('learning.progress.panel.confirmClear')}
             </button>
             <button type="button" onClick={() => setConfirmingClear(false)}>
-              Cancel
+              {t('learning.progress.panel.cancel')}
             </button>
           </div>
         </div>

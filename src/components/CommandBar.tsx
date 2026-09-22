@@ -1,7 +1,8 @@
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { useI18n } from '../i18n/useI18n';
 import type { NetlabAppShellStatus } from './NetlabAppShellV2';
-import { STATUS_TONE_COLOR } from './shellStatusTones';
+import { STATUS_TONE_COLOR, STATUS_TONE_LABEL_KEYS } from './shellStatusTones';
 import { useKbdMod } from '../utils/useKbdMod';
 
 export interface CommandBarProps {
@@ -106,6 +107,7 @@ export function CommandBar({
   className,
   style,
 }: CommandBarProps) {
+  const { t } = useI18n();
   const { ref, width } = useObservedWidth();
   const [menuOpen, setMenuOpen] = useState(false);
   const mod = useKbdMod();
@@ -120,7 +122,7 @@ export function CommandBar({
   const normalizedStep = Math.max(0, step) + 1;
   const tone = status?.tone ?? 'idle';
   const toneColor = STATUS_TONE_COLOR[tone];
-  const playLabel = isPlaying ? 'Pause' : 'Play';
+  const playLabel = isPlaying ? t('simulation.controls.pause') : t('simulation.controls.play');
 
   const handlePlayPause = () => {
     if (isPlaying) {
@@ -187,7 +189,9 @@ export function CommandBar({
               whiteSpace: 'nowrap',
             }}
           >
-            {scenarioLayer ?? 'scenario'} controls
+            {t('simulation.commandBar.controls', {
+              layer: scenarioLayer ?? t('simulation.commandBar.scenario'),
+            })}
           </span>
         )}
       </div>
@@ -209,8 +213,8 @@ export function CommandBar({
       </button>
       <button
         type="button"
-        aria-label="Step"
-        title="Step"
+        aria-label={t('simulation.commandBar.step')}
+        title={t('simulation.commandBar.step')}
         onClick={onStep}
         disabled={!onStep}
         style={iconButtonStyle(!onStep)}
@@ -219,8 +223,8 @@ export function CommandBar({
       </button>
       <button
         type="button"
-        aria-label="Reset"
-        title="Reset"
+        aria-label={t('simulation.controls.reset')}
+        title={t('simulation.controls.reset')}
         onClick={onReset}
         disabled={!onReset}
         style={iconButtonStyle(!onReset)}
@@ -258,7 +262,9 @@ export function CommandBar({
           style={{ width: 6, height: 6, borderRadius: '50%', background: toneColor }}
         />
         {!collapseStatus && (
-          <span data-netlab-command-bar-status-label="">{status?.label ?? tone}</span>
+          <span data-netlab-command-bar-status-label="">
+            {status?.label ?? t(STATUS_TONE_LABEL_KEYS[tone])}
+          </span>
         )}
       </span>
 
@@ -271,8 +277,8 @@ export function CommandBar({
       <div style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
         <button
           type="button"
-          aria-label="Open command palette"
-          title={`Open command palette (${paletteLabel})`}
+          aria-label={t('simulation.commandBar.palette')}
+          title={t('simulation.commandBar.paletteTitle', { shortcut: paletteLabel })}
           onClick={onOpenPalette}
           style={iconButtonStyle(false)}
         >
@@ -280,9 +286,11 @@ export function CommandBar({
         </button>
         <button
           type="button"
-          aria-label="More actions"
+          aria-label={t('simulation.commandBar.more')}
           aria-expanded={overflowActions ? menuOpen : undefined}
-          title={overflowActions ? 'More actions' : 'No actions available'}
+          title={
+            overflowActions ? t('simulation.commandBar.more') : t('simulation.commandBar.noActions')
+          }
           onClick={overflowActions ? () => setMenuOpen((value) => !value) : undefined}
           disabled={!overflowActions}
           style={iconButtonStyle(!overflowActions)}
@@ -291,8 +299,8 @@ export function CommandBar({
         </button>
         <button
           type="button"
-          aria-label="Export PCAP"
-          title="Export PCAP"
+          aria-label={t('simulation.commandBar.export')}
+          title={t('simulation.commandBar.export')}
           onClick={onExport}
           disabled={!onExport}
           style={iconButtonStyle(!onExport)}

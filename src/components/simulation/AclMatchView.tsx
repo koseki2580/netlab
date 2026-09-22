@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/useI18n';
 import type { AclMatchInfo, AclRule } from '../../types/acl';
 import { CARD, FIELD_ROW, SECTION_HEADER, TEXT } from '../_styles/tokens';
 
@@ -46,11 +47,12 @@ function FieldRow({
 }
 
 export function AclMatchView({ aclMatch }: { aclMatch: AclMatchInfo }) {
+  const { t } = useI18n();
   const ruleText = aclMatch.byConnTrack
-    ? 'stateful return traffic'
+    ? t('simulation.acl.statefulReturn')
     : aclMatch.matchedRule
       ? formatAclRule(aclMatch.matchedRule)
-      : '(default policy)';
+      : t('simulation.acl.defaultPolicy');
   const ruleColor = aclMatch.byConnTrack
     ? 'var(--netlab-text-primary)'
     : aclMatch.matchedRule
@@ -61,10 +63,10 @@ export function AclMatchView({ aclMatch }: { aclMatch: AclMatchInfo }) {
 
   return (
     <section style={CARD}>
-      <div style={SECTION_HEADER}>ACL FILTER</div>
+      <div style={SECTION_HEADER}>{t('simulation.acl.heading')}</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
-        <FieldRow label="Direction" value={aclMatch.direction.toUpperCase()} />
-        <FieldRow label="Interface" value={aclMatch.interfaceName} />
+        <FieldRow label={t('simulation.acl.direction')} value={aclMatch.direction.toUpperCase()} />
+        <FieldRow label={t('simulation.acl.interface')} value={aclMatch.interfaceName} />
         <div
           style={{
             display: 'grid',
@@ -73,7 +75,7 @@ export function AclMatchView({ aclMatch }: { aclMatch: AclMatchInfo }) {
             alignItems: 'start',
           }}
         >
-          <span style={{ color: 'var(--netlab-text-secondary)' }}>Rule</span>
+          <span style={{ color: 'var(--netlab-text-secondary)' }}>{t('simulation.acl.rule')}</span>
           <span style={{ color: ruleColor, wordBreak: 'break-word' }}>
             {ruleText}
             {aclMatch.byConnTrack && (
@@ -81,7 +83,11 @@ export function AclMatchView({ aclMatch }: { aclMatch: AclMatchInfo }) {
             )}
           </span>
         </div>
-        <FieldRow label="Action" value={aclMatch.action.toUpperCase()} valueColor={actionColor} />
+        <FieldRow
+          label={t('simulation.acl.action')}
+          value={aclMatch.action.toUpperCase()}
+          valueColor={actionColor}
+        />
       </div>
     </section>
   );

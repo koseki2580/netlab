@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/useI18n';
 import type { TlsAnnotation } from '../../types/tls';
 
 export interface TlsHandshakeViewProps {
@@ -37,6 +38,7 @@ export function TlsHandshakeView({
   providerId = 'fake-deterministic',
   secrets = [],
 }: TlsHandshakeViewProps) {
+  const { t } = useI18n();
   const selectedAlpn = annotations.find(
     (annotation): annotation is Extract<TlsAnnotation, { kind: 'tls:server-hello' }> =>
       annotation.kind === 'tls:server-hello',
@@ -49,7 +51,7 @@ export function TlsHandshakeView({
   return (
     <section
       role="region"
-      aria-label="TLS 1.3 handshake"
+      aria-label={t('simulation.tls.heading')}
       style={{
         background: 'var(--netlab-bg-panel)',
         border: '1px solid var(--netlab-border-subtle)',
@@ -59,7 +61,7 @@ export function TlsHandshakeView({
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
-        <strong>TLS 1.3 handshake</strong>
+        <strong>{t('simulation.tls.heading')}</strong>
         <span
           data-testid="tls-alpn"
           style={{ color: alert ? 'var(--netlab-accent-red)' : 'var(--netlab-accent-green)' }}
@@ -75,13 +77,13 @@ export function TlsHandshakeView({
         ))}
       </ol>
       <details style={{ marginTop: 12 }}>
-        <summary>Derived secrets</summary>
+        <summary>{t('simulation.tls.secrets')}</summary>
         <div
           style={{ display: 'grid', gap: 6, marginTop: 8, fontFamily: 'monospace', fontSize: 12 }}
         >
           <div>
-            Provider: {providerId}
-            {providerId === 'fake-deterministic' ? ' (math is illustrative)' : ''}
+            {t('simulation.tls.provider', { provider: providerId })}
+            {providerId === 'fake-deterministic' ? t('simulation.tls.illustrative') : ''}
           </div>
           {secrets.map((secret) => (
             <div key={secret.label}>

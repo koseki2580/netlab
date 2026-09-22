@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useI18n } from '../i18n/useI18n';
 
 export interface CommandPaletteItem {
   id: string;
@@ -130,6 +131,8 @@ export interface PaletteView {
   ordered: CommandPaletteItem[];
 }
 
+const DEFAULT_GROUP = 'Commands';
+
 export function buildPaletteView(
   items: readonly CommandPaletteItem[],
   query: string,
@@ -156,7 +159,7 @@ export function buildPaletteView(
   const grouped = new Map<string, CommandPaletteItem[]>();
   for (const item of items) {
     if (seen.has(item.id)) continue; // de-dup: recents are not repeated below
-    const group = item.group ?? 'Commands';
+    const group = item.group ?? DEFAULT_GROUP;
     if (!grouped.has(group)) {
       grouped.set(group, []);
       groupOrder.push(group);
@@ -182,6 +185,7 @@ export interface CommandPaletteProps {
 }
 
 export function CommandPalette({ open, items, onClose }: CommandPaletteProps) {
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const [recents, setRecents] = useState<string[]>([]);
@@ -221,13 +225,20 @@ export function CommandPalette({ open, items, onClose }: CommandPaletteProps) {
   if (!open) return null;
 
   let runningIndex = -1;
+  // The view model keeps its English eyebrows (tests and callers key on them);
+  // only the two labels the palette itself invents are translated for display.
+  const sectionLabel = (section: PaletteSection): string | null => {
+    if (section.key === 'recents') return t('simulation.palette.recents');
+    if (section.key === `group:${DEFAULT_GROUP}`) return t('simulation.palette.commands');
+    return section.label;
+  };
 
   return (
     <div
       data-netlab-command-palette=""
       role="dialog"
       aria-modal="true"
-      aria-label="Command palette"
+      aria-label={t('simulation.palette.aria')}
       style={{
         position: 'fixed',
         inset: 0,
@@ -256,7 +267,7 @@ export function CommandPalette({ open, items, onClose }: CommandPaletteProps) {
       >
         <input
           ref={inputRef}
-          aria-label="Command palette search"
+          aria-label={t('simulation.palette.search')}
           data-testid="command-palette-search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
@@ -281,7 +292,7 @@ export function CommandPalette({ open, items, onClose }: CommandPaletteProps) {
               runItem(live[activeIndexRef.current] ?? live[0] ?? null);
             }
           }}
-          placeholder="Search scenarios and commands..."
+          placeholder={t('simulation.palette.placeholder')}
           autoComplete="off"
           style={{
             width: '100%',
@@ -299,17 +310,17 @@ export function CommandPalette({ open, items, onClose }: CommandPaletteProps) {
         />
         <div
           role="listbox"
-          aria-label="Command results"
+          aria-label={t('simulation.palette.results')}
           style={{ maxHeight: 360, overflow: 'auto' }}
         >
           {ordered.length === 0 ? (
             <div style={{ padding: 14, color: 'var(--netlab-text-muted)', fontSize: 12 }}>
-              No commands found
+              {t('simulation.palette.empty')}
             </div>
           ) : (
             view.sections.map((section) =>
               section.items.length === 0 ? null : (
-                <div key={section.key} role="group" aria-label={section.label ?? undefined}>
+                <div key={section.key} role="group" aria-label={sectionLabel(section) ?? undefined}>
                   {section.label && (
                     <div
                       data-testid="command-palette-group"
@@ -321,7 +332,7 @@ export function CommandPalette({ open, items, onClose }: CommandPaletteProps) {
                         color: 'var(--netlab-text-muted)',
                       }}
                     >
-                      {section.label}
+                      {sectionLabel(section)}
                     </div>
                   )}
                   {section.items.map((item) => {

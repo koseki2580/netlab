@@ -1,4 +1,5 @@
 import type React from 'react';
+import { useI18n } from '../i18n/useI18n';
 import type { Scenario } from '../scenarios/types';
 
 /**
@@ -11,6 +12,12 @@ import type { Scenario } from '../scenarios/types';
 
 const MONO = 'ui-monospace, monospace';
 const SANS = 'system-ui, -apple-system, "Segoe UI", sans-serif';
+
+const DIFFICULTY_LABEL_KEYS: Record<Scenario['metadata']['difficulty'], string> = {
+  intro: 'simulation.nextScenario.difficulty.intro',
+  core: 'simulation.nextScenario.difficulty.core',
+  advanced: 'simulation.nextScenario.difficulty.advanced',
+};
 
 const DIFFICULTY_RANK: Record<Scenario['metadata']['difficulty'], number> = {
   intro: 0,
@@ -64,10 +71,11 @@ export interface NextScenarioRailProps {
 }
 
 export function NextScenarioRail({ next, onOpen }: NextScenarioRailProps) {
+  const { t } = useI18n();
   if (next.length === 0) return null;
   return (
     <div data-testid="next-scenario-rail" style={WRAP}>
-      <div style={EYEBROW}>up next</div>
+      <div style={EYEBROW}>{t('simulation.nextScenario.heading')}</div>
       <div role="list" style={ROW}>
         {next.map((scenario, i) => (
           <NextCard
@@ -94,6 +102,7 @@ function NextCard({
   primary: boolean;
   onOpen: () => void;
 }) {
+  const { t } = useI18n();
   const { title, difficulty } = scenario.metadata;
   const est = scenario.brief?.est;
   return (
@@ -126,7 +135,7 @@ function NextCard({
             color: primary ? 'var(--netlab-accent-cyan)' : 'var(--netlab-text-muted)',
           }}
         >
-          {String(ordinal).padStart(2, '0')} · {difficulty}
+          {String(ordinal).padStart(2, '0')} · {t(DIFFICULTY_LABEL_KEYS[difficulty])}
         </span>
         <span aria-hidden style={{ marginLeft: 'auto', color: 'var(--netlab-text-muted)' }}>
           →

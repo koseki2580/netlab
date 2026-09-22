@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useI18n } from '../../../i18n/useI18n';
 import type { SimulationContextValue } from '../../../simulation/SimulationContext';
 import {
   DhcpLeaseDetail,
@@ -26,11 +27,14 @@ export const ArpServicesTab = memo(function ArpServicesTab({
   multicastTableSnapshot,
   hasSimulation,
 }: ArpServicesTabProps): JSX.Element | null {
+  const { t } = useI18n();
   if (role === 'switch') {
     return hasSimulation ? (
       <MulticastSnoopingDetail entries={multicastTableSnapshot} />
     ) : (
-      <div style={{ color: 'var(--netlab-text-muted)' }}>No simulation runtime attached.</div>
+      <div style={{ color: 'var(--netlab-text-muted)' }}>
+        {t('simulation.nodeDetail.noSimulation')}
+      </div>
     );
   }
   if (role === 'router') {
@@ -42,7 +46,7 @@ export const ArpServicesTab = memo(function ArpServicesTab({
     if (!hasAny) {
       return (
         <div style={{ color: 'var(--netlab-text-muted)' }}>
-          No ARP, DHCP, DNS, or UDP state observed for this router yet.
+          {t('simulation.nodeDetail.noServiceState')}
         </div>
       );
     }

@@ -1,4 +1,5 @@
 import { memo, useMemo } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import type { TcpCongestionEvent, TcpCongestionPhase } from '../../types/tcp-congestion';
 
 interface TcpCongestionPanelProps {
@@ -17,11 +18,11 @@ const WIDTH = 520;
 const HEIGHT = 180;
 const PADDING = 28;
 
-const PHASE_LABELS: Record<TcpCongestionPhase, string> = {
-  'slow-start': 'Slow Start',
-  'congestion-avoidance': 'Congestion Avoidance',
-  'fast-recovery': 'Fast Recovery',
-  rto: 'RTO',
+const PHASE_LABEL_KEYS: Record<TcpCongestionPhase, string> = {
+  'slow-start': 'simulation.tcp.phase.slowStart',
+  'congestion-avoidance': 'simulation.tcp.phase.congestionAvoidance',
+  'fast-recovery': 'simulation.tcp.phase.fastRecovery',
+  rto: 'simulation.tcp.phase.rto',
 };
 
 const PHASE_COLORS: Record<TcpCongestionPhase, string> = {
@@ -92,6 +93,7 @@ function latestSample(samples: readonly TimelineSample[]): TimelineSample | null
 export const TcpCongestionPanel = memo(function TcpCongestionPanel({
   events,
 }: TcpCongestionPanelProps) {
+  const { t } = useI18n();
   const samples = useMemo(() => buildSamples(events), [events]);
   const latest = latestSample(samples);
   const phase = latest?.phase ?? 'slow-start';
@@ -104,7 +106,7 @@ export const TcpCongestionPanel = memo(function TcpCongestionPanel({
 
   return (
     <section
-      aria-label="TCP congestion"
+      aria-label={t('simulation.tcp.aria')}
       style={{
         background: 'var(--netlab-bg-panel)',
         border: '1px solid var(--netlab-border-subtle)',
@@ -123,7 +125,7 @@ export const TcpCongestionPanel = memo(function TcpCongestionPanel({
           marginBottom: 10,
         }}
       >
-        TCP CONGESTION
+        {t('simulation.tcp.heading')}
       </div>
 
       {events.length === 0 ? (
@@ -131,7 +133,7 @@ export const TcpCongestionPanel = memo(function TcpCongestionPanel({
           data-testid="tcp-congestion-empty"
           style={{ margin: 0, color: 'var(--netlab-text-secondary)', fontSize: 12 }}
         >
-          No congestion events
+          {t('simulation.tcp.empty')}
         </p>
       ) : (
         <>
@@ -146,7 +148,7 @@ export const TcpCongestionPanel = memo(function TcpCongestionPanel({
             }}
           >
             <span style={{ color: PHASE_COLORS[phase], fontWeight: 'bold' }}>
-              {PHASE_LABELS[phase]}
+              {t(PHASE_LABEL_KEYS[phase])}
             </span>
             <span style={{ color: 'var(--netlab-text-secondary)' }}>
               cwnd{' '}
@@ -162,7 +164,7 @@ export const TcpCongestionPanel = memo(function TcpCongestionPanel({
 
           <svg
             role="img"
-            aria-label="TCP congestion window timeline"
+            aria-label={t('simulation.tcp.chart')}
             data-testid="tcp-congestion-chart"
             viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
             style={{
@@ -174,7 +176,7 @@ export const TcpCongestionPanel = memo(function TcpCongestionPanel({
               borderRadius: 6,
             }}
           >
-            <title>TCP congestion window timeline</title>
+            <title>{t('simulation.tcp.chart')}</title>
             <line
               x1={PADDING}
               y1={HEIGHT - PADDING}
@@ -213,7 +215,13 @@ export const TcpCongestionPanel = memo(function TcpCongestionPanel({
                 r={3}
                 fill={PHASE_COLORS[sample.phase]}
               >
-                <title>{`${PHASE_LABELS[sample.phase]} step ${sample.stepIndex}: ${sample.eventType}`}</title>
+                <title>
+                  {t('simulation.tcp.sampleTitle', {
+                    phase: t(PHASE_LABEL_KEYS[sample.phase]),
+                    step: sample.stepIndex,
+                    event: sample.eventType,
+                  })}
+                </title>
               </circle>
             ))}
           </svg>
@@ -239,7 +247,7 @@ export const TcpCongestionPanel = memo(function TcpCongestionPanel({
                   // event, and a step-only id makes two elements share a name.
                   data-testid={`tcp-congestion-event-${event.stepIndex}-${event.type}`}
                 >
-                  step {event.stepIndex}: {event.type}
+                  {t('simulation.tcp.marker', { step: event.stepIndex, event: event.type })}
                 </li>
               ))}
             </ol>

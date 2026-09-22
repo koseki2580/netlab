@@ -1,5 +1,6 @@
 import { CANVAS_LAYER } from '../canvasLayers';
 import { memo, useContext, useEffect } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import { SimulationContext } from '../../simulation/SimulationContext';
 import type { TopologySnapshot } from '../../types/topology';
 import { useNetlabContext } from '../NetlabContext';
@@ -33,6 +34,7 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
   editable = false,
   onTopologyChange,
 }: NodeDetailPanelProps = {}) {
+  const { t } = useI18n();
   const { selectedNodeId, setSelectedNodeId, selectedEdgeId, setSelectedEdgeId } = useNetlabUI();
   const { topology } = useNetlabContext();
   const simCtx = useContext(SimulationContext);
@@ -56,7 +58,7 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
 
   if (!selectedNodeId && !selectedEdgeId) return null;
 
-  const panelTarget = resolvePanelTarget(topology, selectedNodeId, selectedEdgeId);
+  const panelTarget = resolvePanelTarget(topology, selectedNodeId, selectedEdgeId, t);
   if (!panelTarget) return null;
 
   const visibleTabs = getVisibleTabs(panelTarget.target, canEdit);
@@ -66,6 +68,7 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
   const { learnerKind, learnerCopy } = resolveLearnerExplainer(
     panelTarget.target.kind === 'node' ? panelTarget.node : undefined,
     themeScope?.audience ?? 'pro',
+    t,
   );
 
   const closePanel = () => {

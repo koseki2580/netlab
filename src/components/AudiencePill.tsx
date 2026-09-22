@@ -1,5 +1,6 @@
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
+import { useI18n } from '../i18n/useI18n';
 import type { NetlabAudience } from '../theme';
 
 /**
@@ -16,6 +17,10 @@ const AUDIENCE_KEY = 'netlab-audience';
 const AUDIENCE_EVENT = 'netlab:audience';
 const MONO = 'ui-monospace, monospace';
 const OPTIONS: NetlabAudience[] = ['learner', 'pro'];
+const OPTION_LABEL_KEYS: Record<NetlabAudience, string> = {
+  learner: 'simulation.audience.learner',
+  pro: 'simulation.audience.pro',
+};
 
 function readAudience(): NetlabAudience {
   try {
@@ -78,6 +83,7 @@ export function AudiencePill({
   className,
   style,
 }: AudiencePillProps) {
+  const { t } = useI18n();
   const controlled = value !== undefined;
   const [internal, setInternal] = useState<NetlabAudience>(() => value ?? readAudience());
   const current = controlled ? value : internal;
@@ -111,7 +117,7 @@ export function AudiencePill({
   return (
     <div
       role="radiogroup"
-      aria-label="Audience"
+      aria-label={t('simulation.audience.label')}
       data-testid="audience-pill"
       data-variant={variant}
       data-audience={current}
@@ -136,7 +142,7 @@ export function AudiencePill({
             type="button"
             role="radio"
             aria-checked={active}
-            aria-label={opt}
+            aria-label={t(OPTION_LABEL_KEYS[opt])}
             onClick={() => handleClick(opt)}
             style={{
               // Explicit resets rather than `all: unset`. Unsetting everything
@@ -172,7 +178,7 @@ export function AudiencePill({
               letterSpacing: 0.3,
             }}
           >
-            {opt}
+            {t(OPTION_LABEL_KEYS[opt])}
           </button>
         );
       })}

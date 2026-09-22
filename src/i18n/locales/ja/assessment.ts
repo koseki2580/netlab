@@ -21,4 +21,12 @@ export const assessment: Catalog = {
   'sandbox.assessment.submitDialog.notesLabel': '提出メモ',
   'sandbox.assessment.submitDialog.cancel': 'キャンセル',
   'sandbox.assessment.submitDialog.downloadLabel': 'アセスメント提出ファイルをダウンロード',
+  'sandbox.assessment.subgoal.required': '必須',
+  'sandbox.assessment.subgoal.bonus': 'ボーナス',
+  'sandbox.assessment.subgoal.passedLabel': 'サブゴール達成',
+  'sandbox.assessment.subgoal.pendingLabel': 'サブゴール未達成',
+  'sandbox.assessment.subgoal.passed': '達成',
+  'sandbox.assessment.subgoal.pending': 'まだ',
+  'sandbox.assessment.subgoal.showHint': 'ヒント {{tier}} を見る',
+  'sandbox.assessment.subgoal.allHints': 'ヒントはすべて表示済み',
 } as const;

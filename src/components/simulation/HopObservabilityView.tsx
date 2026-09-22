@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/useI18n';
 import type { ObservabilityTrace } from '../../types/simulation';
 import { CARD, FIELD_ROW, SECTION_HEADER, TEXT } from '../_styles/tokens';
 
@@ -23,29 +24,31 @@ function FieldRow({
   );
 }
 
-function buildObservabilityFields(trace: ObservabilityTrace): { label: string; value: string }[] {
+function buildObservabilityFields(
+  trace: ObservabilityTrace,
+): { labelKey: string; value: string }[] {
   switch (trace.kind) {
     case 'netflow:flow-update':
       return [
-        { label: 'NetFlow Router', value: trace.routerId },
-        { label: 'NetFlow Packets', value: String(trace.packets) },
-        { label: 'NetFlow Bytes', value: String(trace.bytes) },
+        { labelKey: 'simulation.observability.netflowRouter', value: trace.routerId },
+        { labelKey: 'simulation.observability.netflowPackets', value: String(trace.packets) },
+        { labelKey: 'simulation.observability.netflowBytes', value: String(trace.bytes) },
       ];
     case 'netflow:flow-export':
       return [
-        { label: 'NetFlow Router', value: trace.routerId },
-        { label: 'NetFlow Export', value: trace.reason },
+        { labelKey: 'simulation.observability.netflowRouter', value: trace.routerId },
+        { labelKey: 'simulation.observability.netflowExport', value: trace.reason },
       ];
     case 'sflow:sampled':
       return [
-        { label: 'sFlow Switch', value: trace.switchId },
-        { label: 'sFlow Port', value: trace.portId },
-        { label: 'sFlow Sequence', value: String(trace.sequence) },
+        { labelKey: 'simulation.observability.sflowSwitch', value: trace.switchId },
+        { labelKey: 'simulation.observability.sflowPort', value: trace.portId },
+        { labelKey: 'simulation.observability.sflowSequence', value: String(trace.sequence) },
       ];
     case 'sflow:dropped':
       return [
-        { label: 'sFlow Switch', value: trace.switchId },
-        { label: 'sFlow Drop', value: trace.reason },
+        { labelKey: 'simulation.observability.sflowSwitch', value: trace.switchId },
+        { labelKey: 'simulation.observability.sflowDrop', value: trace.reason },
       ];
   }
 }
@@ -55,6 +58,7 @@ function getHeader(trace: ObservabilityTrace): string {
 }
 
 export function HopObservabilityView({ trace }: { trace: ObservabilityTrace }) {
+  const { t } = useI18n();
   const fields = buildObservabilityFields(trace);
 
   return (
@@ -62,7 +66,7 @@ export function HopObservabilityView({ trace }: { trace: ObservabilityTrace }) {
       <div style={SECTION_HEADER}>{getHeader(trace)}</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
         {fields.map((field) => (
-          <FieldRow key={field.label} label={field.label} value={field.value} />
+          <FieldRow key={field.labelKey} label={t(field.labelKey)} value={field.value} />
         ))}
       </div>
     </section>

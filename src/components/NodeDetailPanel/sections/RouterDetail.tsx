@@ -1,3 +1,4 @@
+import { useI18n } from '../../../i18n/useI18n';
 import type { NetlabNodeData } from '../../../types/topology';
 import { MtuBadge, MtuInput } from '../_atoms';
 import { vlanColor } from '../_colors';
@@ -16,11 +17,14 @@ export function RouterDetail({
     mtu: number | undefined,
   ) => void;
 }) {
+  const { t } = useI18n();
   const ifaces = data.interfaces ?? [];
   return (
     <>
       {ifaces.length === 0 ? (
-        <div style={{ color: 'var(--netlab-text-muted)' }}>No interfaces</div>
+        <div style={{ color: 'var(--netlab-text-muted)' }}>
+          {t('simulation.nodeDetail.router.noInterfaces')}
+        </div>
       ) : (
         ifaces.map((iface) => (
           <div key={iface.id} style={{ marginBottom: 6 }}>
@@ -70,10 +74,12 @@ export function RouterDetail({
                 }}
               >
                 <div style={{ color: 'var(--netlab-accent-green)', fontWeight: 'bold' }}>
-                  GRE tunnel
+                  {t('simulation.nodeDetail.router.greTunnel')}
                 </div>
                 <div style={ROW_STYLE}>
-                  <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>Outer</span>
+                  <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>
+                    {t('simulation.nodeDetail.router.greOuter')}
+                  </span>
                   <span style={{ color: 'var(--netlab-accent-cyan)' }}>
                     {iface.greTunnel.sourceIp}
                     {' -> '}
@@ -82,7 +88,9 @@ export function RouterDetail({
                 </div>
                 {iface.greTunnel.key !== undefined && (
                   <div style={ROW_STYLE}>
-                    <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>Key</span>
+                    <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>
+                      {t('simulation.nodeDetail.router.greKey')}
+                    </span>
                     <span style={{ color: 'var(--netlab-text-primary)' }}>
                       {iface.greTunnel.key}
                     </span>
@@ -100,7 +108,10 @@ export function RouterDetail({
                 }}
               >
                 <div style={{ color: 'var(--netlab-accent-green)', fontWeight: 'bold' }}>
-                  {iface.vrrp.hsrpMode ? 'HSRP' : 'VRRP'} group {iface.vrrp.vrid}
+                  {t('simulation.nodeDetail.router.redundancyGroup', {
+                    protocol: iface.vrrp.hsrpMode ? 'HSRP' : 'VRRP',
+                    vrid: iface.vrrp.vrid,
+                  })}
                 </div>
                 <div style={ROW_STYLE}>
                   <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>VIP</span>
@@ -108,7 +119,7 @@ export function RouterDetail({
                 </div>
                 <div style={ROW_STYLE}>
                   <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 52 }}>
-                    Priority
+                    {t('simulation.nodeDetail.router.priority')}
                   </span>
                   <span style={{ color: 'var(--netlab-text-primary)' }}>{iface.vrrp.priority}</span>
                 </div>
@@ -127,7 +138,9 @@ export function RouterDetail({
             </div>
             {(iface.subInterfaces ?? []).length > 0 && (
               <>
-                <div style={SECTION_HEADER_STYLE}>SUB-INTERFACES</div>
+                <div style={SECTION_HEADER_STYLE}>
+                  {t('simulation.nodeDetail.router.subInterfaces')}
+                </div>
                 {(iface.subInterfaces ?? []).map((subInterface) => (
                   <div
                     key={subInterface.id}

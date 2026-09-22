@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useI18n } from '../../i18n/useI18n';
 import type { ReactNode } from 'react';
 
 /**
@@ -28,6 +29,7 @@ export function Modal({
   maxWidth = 520,
   children,
 }: ModalProps) {
+  const { t } = useI18n();
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<Element | null>(null);
@@ -102,7 +104,7 @@ export function Modal({
           <button
             ref={closeRef}
             type="button"
-            aria-label="Close"
+            aria-label={t('simulation.modal.close')}
             onClick={onClose}
             className="netlab-focus-ring"
             style={{

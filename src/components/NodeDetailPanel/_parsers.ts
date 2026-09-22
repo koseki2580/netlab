@@ -1,3 +1,4 @@
+import type { TranslatorFn } from '../../i18n/types';
 import type { TopologySnapshot } from '../../types/topology';
 
 export function parseMtu(value: string): number | undefined {
@@ -18,23 +19,34 @@ export function parseOptionalInteger(value: string): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-export function validateNonNegativeInteger(value: string, label: string): string | null {
+export function validateNonNegativeInteger(
+  value: string,
+  label: string,
+  t: TranslatorFn,
+): string | null {
   const parsed = parseOptionalInteger(value);
   if (parsed === undefined) {
     return null;
   }
-  return parsed >= 0 ? null : `${label} must be 0 or greater`;
+  return parsed >= 0 ? null : t('simulation.nodeDetail.edit.nonNegative', { label });
 }
 
-export function validatePositiveInteger(value: string, label: string): string | null {
+export function validatePositiveInteger(
+  value: string,
+  label: string,
+  t: TranslatorFn,
+): string | null {
   const parsed = parseOptionalInteger(value);
   if (parsed === undefined || parsed <= 0) {
-    return `${label} must be greater than 0`;
+    return t('simulation.nodeDetail.edit.positive', { label });
   }
   return null;
 }
 
-export function parseTrunkAllowedVlans(value: string): {
+export function parseTrunkAllowedVlans(
+  value: string,
+  t: TranslatorFn,
+): {
   vlans: number[] | undefined;
   error: string | null;
 } {
@@ -46,7 +58,7 @@ export function parseTrunkAllowedVlans(value: string): {
   const parts = trimmed.split(',').map((part) => part.trim());
   const vlans = parts.map((part) => Number.parseInt(part, 10));
   if (vlans.some((v) => !Number.isFinite(v) || v < 0)) {
-    return { vlans: undefined, error: 'Allowed VLANs must be a comma-separated number list' };
+    return { vlans: undefined, error: t('simulation.nodeDetail.edit.allowedVlansInvalid') };
   }
   return { vlans, error: null };
 }

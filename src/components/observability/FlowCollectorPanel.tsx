@@ -1,4 +1,5 @@
 import { useMemo, useState, type CSSProperties } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import type { PacketTrace } from '../../types/simulation';
 import type { ObservabilityTrace } from '../../types/simulation';
 
@@ -32,6 +33,7 @@ function traceDeviceId(trace: ObservabilityTrace): string {
 }
 
 export function FlowCollectorPanel({ traces }: FlowCollectorPanelProps) {
+  const { t } = useI18n();
   const [tab, setTab] = useState<Tab>('netflow');
   const [deviceId, setDeviceId] = useState('');
   const rows = useMemo(
@@ -66,7 +68,7 @@ export function FlowCollectorPanel({ traces }: FlowCollectorPanelProps) {
   });
 
   return (
-    <section aria-label="Flow collector" style={PANEL_STYLE}>
+    <section aria-label={t('simulation.flow.aria')} style={PANEL_STYLE}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
         <button
           type="button"
@@ -86,13 +88,13 @@ export function FlowCollectorPanel({ traces }: FlowCollectorPanelProps) {
           sFlow
         </button>
         <label style={{ marginLeft: 'auto' }}>
-          <span style={{ marginRight: 6 }}>Device</span>
+          <span style={{ marginRight: 6 }}>{t('simulation.flow.device')}</span>
           <select
-            aria-label="Flow device filter"
+            aria-label={t('simulation.flow.deviceFilter')}
             value={deviceId}
             onChange={(event) => setDeviceId(event.currentTarget.value)}
           >
-            <option value="">All</option>
+            <option value="">{t('simulation.flow.all')}</option>
             {devices.map((device) => (
               <option key={device} value={device}>
                 {device}
@@ -104,11 +106,11 @@ export function FlowCollectorPanel({ traces }: FlowCollectorPanelProps) {
       <table role="grid" aria-rowcount={visibleRows.length}>
         <thead>
           <tr>
-            <th>Packet</th>
-            <th>Step</th>
-            <th>Device</th>
-            <th>Action</th>
-            <th>Details</th>
+            <th>{t('simulation.flow.column.packet')}</th>
+            <th>{t('simulation.flow.column.step')}</th>
+            <th>{t('simulation.flow.device')}</th>
+            <th>{t('simulation.flow.column.action')}</th>
+            <th>{t('simulation.flow.column.details')}</th>
           </tr>
         </thead>
         <tbody>
@@ -118,11 +120,11 @@ export function FlowCollectorPanel({ traces }: FlowCollectorPanelProps) {
             const device = traceDeviceId(obs);
             const details =
               obs.kind === 'netflow:flow-update'
-                ? `${obs.packets} packets / ${obs.bytes} bytes`
+                ? t('simulation.flow.counts', { packets: obs.packets, bytes: obs.bytes })
                 : obs.kind === 'netflow:flow-export'
                   ? obs.reason
                   : obs.kind === 'sflow:sampled'
-                    ? `seq ${obs.sequence} port ${obs.portId}`
+                    ? t('simulation.flow.sample', { sequence: obs.sequence, port: obs.portId })
                     : obs.reason;
             return (
               <tr key={`${packetId}-${hop.step}-${index}`}>

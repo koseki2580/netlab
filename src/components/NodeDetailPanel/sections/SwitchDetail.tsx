@@ -4,6 +4,7 @@ import {
   formatBridgeId,
   makeBridgeId,
 } from '../../../layers/l2-datalink/stp/BridgeId';
+import { useI18n } from '../../../i18n/useI18n';
 import type { NetlabNodeData, NetworkTopology, StpPortRuntime } from '../../../types/topology';
 import { stpRoleColor, vlanColor } from '../_colors';
 import { ROW_STYLE, SECTION_HEADER_STYLE } from '../_styles';
@@ -17,6 +18,7 @@ export function SwitchDetail({
   data: NetlabNodeData;
   topology: NetworkTopology;
 }) {
+  const { t } = useI18n();
   const ports = data.ports ?? [];
   const hasVlanConfig = ports.some(
     (port) =>
@@ -48,12 +50,16 @@ export function SwitchDetail({
   return (
     <>
       {ports.length === 0 ? (
-        <div style={{ color: 'var(--netlab-text-muted)' }}>No ports</div>
+        <div style={{ color: 'var(--netlab-text-muted)' }}>
+          {t('simulation.nodeDetail.switch.noPorts')}
+        </div>
       ) : (
         ports.map((port) => (
           <div key={port.id} style={{ marginBottom: 4 }}>
             <div style={ROW_STYLE}>
-              <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 36 }}>Port</span>
+              <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 36 }}>
+                {t('simulation.nodeDetail.switch.port')}
+              </span>
               <span style={{ color: 'var(--netlab-accent-cyan)' }}>{port.name}</span>
             </div>
             <div style={ROW_STYLE}>
@@ -86,8 +92,10 @@ export function SwitchDetail({
               }}
             >
               {isRootBridge
-                ? 'Root bridge'
-                : `Non-root (root = ${formatBridgeId(topology.stpRoot)})`}
+                ? t('simulation.nodeDetail.switch.rootBridge')
+                : t('simulation.nodeDetail.switch.nonRoot', {
+                    root: formatBridgeId(topology.stpRoot),
+                  })}
             </div>
           )}
           {stpPortStates.map(({ port, runtime }) => (
@@ -102,7 +110,7 @@ export function SwitchDetail({
       )}
       {hasVlanConfig && (
         <>
-          <div style={SECTION_HEADER_STYLE}>PORT VLANS</div>
+          <div style={SECTION_HEADER_STYLE}>{t('simulation.nodeDetail.switch.portVlans')}</div>
           {ports.map((port) => (
             <div
               key={`${port.id}-vlan`}
@@ -128,7 +136,7 @@ export function SwitchDetail({
                     minWidth: 52,
                   }}
                 >
-                  Mode
+                  {t('simulation.nodeDetail.switch.mode')}
                 </span>
                 <span style={{ color: 'var(--netlab-text-primary)' }}>
                   {(port.vlanMode ?? 'access').toUpperCase()}
@@ -141,7 +149,7 @@ export function SwitchDetail({
                     minWidth: 52,
                   }}
                 >
-                  Access
+                  {t('simulation.nodeDetail.switch.access')}
                 </span>
                 <span
                   style={{
@@ -160,7 +168,7 @@ export function SwitchDetail({
                     minWidth: 52,
                   }}
                 >
-                  Allowed
+                  {t('simulation.nodeDetail.switch.allowed')}
                 </span>
                 <span style={{ color: 'var(--netlab-text-primary)' }}>
                   {port.trunkAllowedVlans?.join(', ') ?? '-'}
@@ -173,7 +181,7 @@ export function SwitchDetail({
                     minWidth: 52,
                   }}
                 >
-                  Native
+                  {t('simulation.nodeDetail.switch.native')}
                 </span>
                 <span style={{ color: vlanColor(port.nativeVlan ?? 1) }}>
                   {port.nativeVlan ?? 1}

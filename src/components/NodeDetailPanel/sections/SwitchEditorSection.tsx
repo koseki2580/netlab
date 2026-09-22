@@ -1,3 +1,4 @@
+import { useI18n } from '../../../i18n/useI18n';
 import type { NetlabNode, NetlabNodeData } from '../../../types/topology';
 import { EditableSelectRow, EditableTextRow } from '../_atoms';
 import {
@@ -16,15 +17,16 @@ export function SwitchEditorSection({
   editable: boolean;
   updateNode: (updater: (node: NetlabNode) => NetlabNode) => void;
 }) {
+  const { t } = useI18n();
   const ports = data.ports ?? [];
 
   return (
     <>
-      <div style={SECTION_HEADER_STYLE}>EDIT PORTS</div>
+      <div style={SECTION_HEADER_STYLE}>{t('simulation.nodeDetail.edit.ports')}</div>
       {ports.map((port) => (
         <div key={`${port.id}-edit`} style={{ marginBottom: 10 }}>
           <EditableTextRow
-            label="Port"
+            label={t('simulation.nodeDetail.switch.port')}
             name={`switch-port-name-${port.id}`}
             value={port.name}
             editable={editable}
@@ -32,7 +34,7 @@ export function SwitchEditorSection({
             onCommit={(nextValue) => {
               const trimmed = nextValue.trim();
               if (!trimmed || trimmed === port.name) {
-                return trimmed ? null : 'Port name is required';
+                return trimmed ? null : t('simulation.nodeDetail.edit.portNameRequired');
               }
               updateNode((node) => ({
                 ...node,
@@ -47,13 +49,17 @@ export function SwitchEditorSection({
             }}
           />
           <EditableTextRow
-            label="Access"
+            label={t('simulation.nodeDetail.switch.access')}
             name={`switch-port-access-vlan-${port.id}`}
             value={port.accessVlan === undefined ? '' : String(port.accessVlan)}
             editable={editable}
             minWidth={52}
             onCommit={(nextValue) => {
-              const error = validateNonNegativeInteger(nextValue, 'Access VLAN');
+              const error = validateNonNegativeInteger(
+                nextValue,
+                t('simulation.nodeDetail.edit.accessVlan'),
+                t,
+              );
               if (error) {
                 return error;
               }
@@ -81,7 +87,7 @@ export function SwitchEditorSection({
             }}
           />
           <EditableSelectRow
-            label="Mode"
+            label={t('simulation.nodeDetail.switch.mode')}
             name={`switch-port-mode-${port.id}`}
             value={port.vlanMode ?? ''}
             editable={editable}
@@ -105,13 +111,13 @@ export function SwitchEditorSection({
             }}
           />
           <EditableTextRow
-            label="Allowed"
+            label={t('simulation.nodeDetail.switch.allowed')}
             name={`switch-port-allowed-vlans-${port.id}`}
             value={port.trunkAllowedVlans?.join(', ') ?? ''}
             editable={editable}
             minWidth={52}
             onCommit={(nextValue) => {
-              const { vlans, error } = parseTrunkAllowedVlans(nextValue);
+              const { vlans, error } = parseTrunkAllowedVlans(nextValue, t);
               if (error) {
                 return error;
               }
