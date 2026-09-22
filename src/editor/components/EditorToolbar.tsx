@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/useI18n';
 import { useTopologyEditorContext } from '../context/TopologyEditorContext';
 import { EditorRunButton } from './EditorRunButton';
 import {
@@ -59,6 +60,7 @@ function Btn({ onClick, disabled, children, title }: BtnProps) {
 }
 
 export function EditorToolbar() {
+  const { t } = useI18n();
   const { addNode, undo, redo, canUndo, canRedo } = useTopologyEditorContext();
 
   return (
@@ -71,28 +73,40 @@ export function EditorToolbar() {
           marginRight: 4,
         }}
       >
-        ADD
+        {t('editor.toolbar.add')}
       </span>
-      <Btn onClick={() => addNode(createRouterNode(randomPosition()))} title="Add Router">
-        + Router
+      <Btn
+        onClick={() => addNode(createRouterNode(randomPosition()))}
+        title={t('editor.toolbar.addRouter')}
+      >
+        {t('editor.toolbar.router')}
       </Btn>
-      <Btn onClick={() => addNode(createSwitchNode(randomPosition()))} title="Add Switch">
-        + Switch
+      <Btn
+        onClick={() => addNode(createSwitchNode(randomPosition()))}
+        title={t('editor.toolbar.addSwitch')}
+      >
+        {t('editor.toolbar.switch')}
       </Btn>
-      <Btn onClick={() => addNode(createClientNode(randomPosition()))} title="Add Client">
-        + Client
+      <Btn
+        onClick={() => addNode(createClientNode(randomPosition()))}
+        title={t('editor.toolbar.addClient')}
+      >
+        {t('editor.toolbar.client')}
       </Btn>
-      <Btn onClick={() => addNode(createServerNode(randomPosition()))} title="Add Server">
-        + Server
+      <Btn
+        onClick={() => addNode(createServerNode(randomPosition()))}
+        title={t('editor.toolbar.addServer')}
+      >
+        {t('editor.toolbar.server')}
       </Btn>
 
       <div style={SEPARATOR_STYLE} />
 
-      <Btn onClick={undo} disabled={!canUndo} title="Undo (last action)">
-        ↩ Undo
+      <Btn onClick={undo} disabled={!canUndo} title={t('editor.toolbar.undoTitle')}>
+        {t('editor.toolbar.undo')}
       </Btn>
-      <Btn onClick={redo} disabled={!canRedo} title="Redo">
-        ↪ Redo
+      <Btn onClick={redo} disabled={!canRedo} title={t('editor.toolbar.redoTitle')}>
+        {t('editor.toolbar.redo')}
       </Btn>
 
       <div style={SEPARATOR_STYLE} />

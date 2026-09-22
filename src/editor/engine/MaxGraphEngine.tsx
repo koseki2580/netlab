@@ -1,5 +1,6 @@
 import { Suspense, lazy, useMemo, useState } from 'react';
 import { LazyPanelBoundary } from '../../components/LazyPanelBoundary';
+import { useI18n } from '../../i18n/useI18n';
 import type { GraphEngineProps } from './types';
 
 /**
@@ -16,6 +17,7 @@ export function MaxGraphEngine({
   /** Seam for tests to simulate a failing chunk; never set by consumers. */
   importInner?: () => Promise<{ default: (p: GraphEngineProps) => React.ReactNode }>;
 }) {
+  const { t } = useI18n();
   const [attempt, setAttempt] = useState(0);
   const Inner = useMemo(() => {
     void attempt;
@@ -26,9 +28,9 @@ export function MaxGraphEngine({
   return (
     <LazyPanelBoundary
       onRetry={() => setAttempt((value) => value + 1)}
-      heading="Canvas could not be loaded"
-      body="The code for the diagram engine failed to download. Check your connection and try again."
-      retryLabel="Retry"
+      heading={t('editor.load.canvasHeading')}
+      body={t('editor.load.canvasBody')}
+      retryLabel={t('editor.load.retry')}
     >
       <Suspense fallback={null}>
         <Inner {...props} />

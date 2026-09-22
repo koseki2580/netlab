@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNetlabUI } from '../../components/NetlabUIContext';
+import { useI18n } from '../../i18n/useI18n';
 import type { RouterInterface, StaticRouteConfig } from '../../types/routing';
 import type { NetlabNodeData, SwitchPort } from '../../types/topology';
 import { useTopologyEditorContext, type NodeDataPatch } from '../context/TopologyEditorContext';
@@ -147,19 +148,20 @@ function HostEditor({
   data: NetlabNodeData;
   onCommit: (patch: NodeDataPatch) => void;
 }) {
+  const { t } = useI18n();
   return (
     <div style={SECTION_STYLE}>
       <TextField
-        label="IP ADDRESS"
+        label={t('editor.node.ipAddress')}
         value={data.ip ?? ''}
-        placeholder="e.g. 10.0.0.10"
+        placeholder={t('editor.node.ipPlaceholder')}
         onCommit={(v) => onCommit({ ip: v || undefined })}
         accentColor="var(--netlab-accent-cyan)"
       />
       <TextField
-        label="MAC ADDRESS"
+        label={t('editor.node.macAddress')}
         value={data.mac ?? ''}
-        placeholder="e.g. aa:bb:cc:dd:ee:ff"
+        placeholder={t('editor.node.macPlaceholder')}
         onCommit={(v) => onCommit({ mac: v || undefined })}
         accentColor="var(--netlab-accent-yellow)"
       />
@@ -174,6 +176,7 @@ function RouterEditor({
   data: NetlabNodeData;
   onCommit: (patch: NodeDataPatch) => void;
 }) {
+  const { t } = useI18n();
   const ifaces = data.interfaces ?? [];
 
   const updateIface = (id: string, field: Partial<RouterInterface>) => {
@@ -200,7 +203,7 @@ function RouterEditor({
 
   return (
     <div style={SECTION_STYLE}>
-      <div style={{ ...LABEL_STYLE, marginBottom: 6 }}>INTERFACES</div>
+      <div style={{ ...LABEL_STYLE, marginBottom: 6 }}>{t('editor.node.interfaces')}</div>
       {ifaces.map((iface) => (
         <IfaceRow
           key={iface.id}
@@ -210,7 +213,7 @@ function RouterEditor({
         />
       ))}
       <button style={SMALL_BTN} onClick={addIface}>
-        + Add Interface
+        {t('editor.node.addInterface')}
       </button>
     </div>
   );
@@ -223,6 +226,7 @@ interface IfaceRowProps {
 }
 
 function IfaceRow({ iface, onUpdate, onDelete }: IfaceRowProps) {
+  const { t } = useI18n();
   const ipPrefix = `${iface.ipAddress}/${iface.prefixLength}`;
   const [localName, setLocalName] = useState(iface.name);
   const [localIpPrefix, setLocalIpPrefix] = useState(ipPrefix);
@@ -271,7 +275,7 @@ function IfaceRow({ iface, onUpdate, onDelete }: IfaceRowProps) {
             if (localName !== iface.name) onUpdate({ name: localName });
           }}
         />
-        <button style={ICON_BTN} onClick={onDelete} title="Remove interface">
+        <button style={ICON_BTN} onClick={onDelete} title={t('editor.node.removeInterface')}>
           ✕
         </button>
       </div>
@@ -304,6 +308,7 @@ function SwitchEditor({
   data: NetlabNodeData;
   onCommit: (patch: Partial<NetlabNodeData>) => void;
 }) {
+  const { t } = useI18n();
   const ports = data.ports ?? [];
 
   const updatePort = (id: string, field: Partial<SwitchPort>) => {
@@ -329,7 +334,7 @@ function SwitchEditor({
 
   return (
     <div style={SECTION_STYLE}>
-      <div style={{ ...LABEL_STYLE, marginBottom: 6 }}>PORTS</div>
+      <div style={{ ...LABEL_STYLE, marginBottom: 6 }}>{t('editor.node.ports')}</div>
       {ports.map((port) => (
         <PortRow
           key={port.id}
@@ -339,7 +344,7 @@ function SwitchEditor({
         />
       ))}
       <button style={SMALL_BTN} onClick={addPort}>
-        + Add Port
+        {t('editor.node.addPort')}
       </button>
     </div>
   );
@@ -352,6 +357,7 @@ interface PortRowProps {
 }
 
 function PortRow({ port, onUpdate, onDelete }: PortRowProps) {
+  const { t } = useI18n();
   const [localName, setLocalName] = useState(port.name);
   const [localMac, setLocalMac] = useState(port.macAddress);
 
@@ -376,7 +382,7 @@ function PortRow({ port, onUpdate, onDelete }: PortRowProps) {
           if (localMac !== port.macAddress) onUpdate({ macAddress: localMac });
         }}
       />
-      <button style={ICON_BTN} onClick={onDelete} title="Remove port">
+      <button style={ICON_BTN} onClick={onDelete} title={t('editor.node.removePort')}>
         ✕
       </button>
     </div>
@@ -392,6 +398,7 @@ function StaticRoutesEditor({
   data: NetlabNodeData;
   onCommit: (patch: Partial<NetlabNodeData>) => void;
 }) {
+  const { t } = useI18n();
   const routes = data.staticRoutes ?? [];
 
   const updateRoute = (i: number, field: Partial<StaticRouteConfig>) => {
@@ -410,7 +417,7 @@ function StaticRoutesEditor({
 
   return (
     <div style={SECTION_STYLE}>
-      <div style={{ ...LABEL_STYLE, marginBottom: 6 }}>STATIC ROUTES</div>
+      <div style={{ ...LABEL_STYLE, marginBottom: 6 }}>{t('editor.node.staticRoutes')}</div>
       {routes.map((route, i) => (
         <RouteRow
           key={i}
@@ -420,7 +427,7 @@ function StaticRoutesEditor({
         />
       ))}
       <button style={SMALL_BTN} onClick={addRoute}>
-        + Add Route
+        {t('editor.node.addRoute')}
       </button>
     </div>
   );
@@ -433,6 +440,7 @@ interface RouteRowProps {
 }
 
 function RouteRow({ route, onUpdate, onDelete }: RouteRowProps) {
+  const { t } = useI18n();
   const [localDest, setLocalDest] = useState(route.destination);
   const [localHop, setLocalHop] = useState(route.nextHop);
 
@@ -453,13 +461,13 @@ function RouteRow({ route, onUpdate, onDelete }: RouteRowProps) {
       <input
         style={{ ...INPUT_STYLE, color: 'var(--netlab-accent-green)', flex: 1 }}
         value={localHop}
-        placeholder="next-hop or 'direct'"
+        placeholder={t('editor.node.nextHopPlaceholder')}
         onChange={(e) => setLocalHop(e.target.value)}
         onBlur={() => {
           if (localHop !== route.nextHop) onUpdate({ nextHop: localHop });
         }}
       />
-      <button style={ICON_BTN} onClick={onDelete} title="Remove route">
+      <button style={ICON_BTN} onClick={onDelete} title={t('editor.node.removeRoute')}>
         ✕
       </button>
     </div>
@@ -489,17 +497,19 @@ const DOCKED_OVERRIDES: React.CSSProperties = {
 };
 
 function EmptySelection() {
+  const { t } = useI18n();
   return (
     <p
       data-testid="editor-node-empty"
       style={{ color: 'var(--netlab-text-muted)', fontSize: 12, lineHeight: 1.6, margin: 0 }}
     >
-      Select a device on the canvas to edit its addresses, interfaces and routes.
+      {t('editor.node.empty')}
     </p>
   );
 }
 
 export function NodeEditorPanel({ docked }: NodeEditorPanelProps = {}) {
+  const { t } = useI18n();
   const { selectedNodeId, setSelectedNodeId } = useNetlabUI();
   const { state, updateNodeData, deleteNode } = useTopologyEditorContext();
 
@@ -556,7 +566,7 @@ export function NodeEditorPanel({ docked }: NodeEditorPanelProps = {}) {
             letterSpacing: 1,
           }}
         >
-          EDIT NODE
+          {t('editor.node.heading')}
         </div>
         <button
           onClick={() => setSelectedNodeId(null)}
@@ -592,7 +602,11 @@ export function NodeEditorPanel({ docked }: NodeEditorPanelProps = {}) {
       </div>
 
       {/* Label */}
-      <TextField label="LABEL" value={d.label} onCommit={(v) => onCommit({ label: v })} />
+      <TextField
+        label={t('editor.node.label')}
+        value={d.label}
+        onCommit={(v) => onCommit({ label: v })}
+      />
 
       {/* Role-specific editors */}
       {(d.role === 'client' || d.role === 'server') && <HostEditor data={d} onCommit={onCommit} />}
@@ -612,7 +626,7 @@ export function NodeEditorPanel({ docked }: NodeEditorPanelProps = {}) {
           setSelectedNodeId(null);
         }}
       >
-        Delete Node
+        {t('editor.node.delete')}
       </button>
     </div>
   );

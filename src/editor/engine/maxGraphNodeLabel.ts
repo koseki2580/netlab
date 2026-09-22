@@ -1,5 +1,7 @@
 import { glyphPrimitive } from '../../components/glyphGeometry';
 import { NODE_GLYPHS, type NodeGlyphKind } from '../../components/NodeGlyph';
+import { DEFAULT_I18N_VALUE } from '../../i18n/I18nContext';
+import type { TranslatorFn } from '../../i18n/types';
 import type { NetlabNode } from '../../types/topology';
 
 function escapeHtml(text: string): string {
@@ -42,16 +44,21 @@ export function glyphSvg(kind: NodeGlyphKind, size = 28): string {
  * whether it is healthy.
  *
  * Returned as markup because maxGraph renders HTML labels; the label text is
- * escaped, since a node name is learner input.
+ * escaped, since a node name is learner input. `t` translates the badge; it
+ * defaults to English for callers outside a React tree.
  */
-export function nodeLabelHtml(node: NetlabNode): string {
+export function nodeLabelHtml(node: NetlabNode, t: TranslatorFn = DEFAULT_I18N_VALUE.t): string {
   const kind = node.type as NodeGlyphKind;
   const down =
     typeof node.data._downInterfaceCount === 'number' ? node.data._downInterfaceCount : 0;
-  const badge =
-    down > 0
-      ? `<div style="margin-top:2px;color:#fff;background:var(--netlab-accent-red,#ef4444);border-radius:4px;padding:0 4px;font-size:9px;font-weight:700;">${down} iface${down > 1 ? 's' : ''} down</div>`
-      : '';
+  let badge = '';
+  if (down > 0) {
+    const text =
+      down > 1
+        ? t('editor.canvas.ifacesDown', { count: down })
+        : t('editor.canvas.ifaceDown', { count: down });
+    badge = `<div style="margin-top:2px;color:#fff;background:var(--netlab-accent-red,#ef4444);border-radius:4px;padding:0 4px;font-size:9px;font-weight:700;">${escapeHtml(text)}</div>`;
+  }
   return [
     `<div data-testid="topology-node" style="display:flex;flex-direction:column;align-items:center;gap:2px;font-family:ui-monospace,monospace;">`,
     glyphSvg(kind),

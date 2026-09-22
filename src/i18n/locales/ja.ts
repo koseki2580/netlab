@@ -2,6 +2,7 @@ import type { Catalog } from '../types';
 import { annotations } from './ja/annotations';
 import { assessment } from './ja/assessment';
 import { edits } from './ja/edits';
+import { editor } from './ja/editor';
 import { intro } from './ja/intro';
 import { learning } from './ja/learning';
 import { narration } from './ja/narration';
@@ -15,6 +16,7 @@ export const ja: Catalog = {
   ...annotations,
   ...assessment,
   ...edits,
+  ...editor,
   ...intro,
   ...learning,
   ...narration,

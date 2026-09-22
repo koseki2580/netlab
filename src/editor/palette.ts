@@ -35,6 +35,8 @@ export interface PaletteItem {
  */
 export const PALETTE_LAYER_ORDER: readonly LayerId[] = ['l1', 'l2', 'l3', 'l4', 'l7'];
 
+// The palette renders the labels and hints below through `editor.palette.layer.<id>`
+// and `editor.palette.item.<id>.*` catalog keys; keep the English there in step.
 export const PALETTE_LAYER_LABELS: Readonly<Record<LayerId, string>> = {
   l1: 'L1 — Physical',
   l2: 'L2 — Data link',

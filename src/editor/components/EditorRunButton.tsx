@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import { buildUdpPacket } from '../../layers/l4-transport/udpPacketBuilder';
 import { useOptionalSimulation } from '../../simulation/SimulationContext';
 import { useTopologyEditorContext } from '../context/TopologyEditorContext';
@@ -17,16 +18,20 @@ export interface EditorRunButtonProps {
  * could not interpret.
  */
 export function EditorRunButton({ style }: EditorRunButtonProps) {
+  const { t } = useI18n();
   const { state } = useTopologyEditorContext();
   const simulation = useOptionalSimulation();
   const [busy, setBusy] = useState(false);
 
   const endpoints = pickRunEndpoints(state.topology.nodes, state.selectedNodeId);
   const reason = !simulation
-    ? 'Simulation is not available here'
+    ? t('editor.run.unavailable')
     : !endpoints
-      ? 'Give at least two nodes an IP address first'
-      : `Send a packet ${endpoints.src.data.label} → ${endpoints.dst.data.label}`;
+      ? t('editor.run.needAddresses')
+      : t('editor.run.send', {
+          src: endpoints.src.data.label,
+          dst: endpoints.dst.data.label,
+        });
 
   const run = useCallback(async () => {
     if (!simulation || !endpoints) return;
@@ -72,7 +77,7 @@ export function EditorRunButton({ style }: EditorRunButtonProps) {
         ...style,
       }}
     >
-      {busy ? '… running' : '▶ Run'}
+      {busy ? t('editor.run.running') : t('editor.run.label')}
     </button>
   );
 }

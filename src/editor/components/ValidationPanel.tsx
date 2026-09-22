@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import type { NetlabNode, NetlabEdge } from '../../types/topology';
 import { validateTopology, type TopologyValidationResult } from '../../utils/connectionValidator';
 import {
@@ -120,6 +121,7 @@ export function ValidationPanel({
   editable = false,
   docked,
 }: ValidationPanelProps) {
+  const { t } = useI18n();
   const result: TopologyValidationResult = useMemo(
     () => validateTopology(nodes, edges),
     [nodes, edges],
@@ -164,7 +166,7 @@ export function ValidationPanel({
         className="netlab-validation-panel"
         style={docked ? { ...PANEL_STYLE, ...DOCKED_OVERRIDES } : PANEL_STYLE}
       >
-        <span>✅ No issues found</span>
+        <span>{t('editor.validation.none')}</span>
       </div>
     );
   }
@@ -183,7 +185,7 @@ export function ValidationPanel({
           flexWrap: 'wrap',
         }}
       >
-        <strong style={{ fontSize: 12 }}>Topology Issues</strong>
+        <strong style={{ fontSize: 12 }}>{t('editor.validation.heading')}</strong>
         {result.errorCount > 0 ? (
           <span
             className="error-badge"
@@ -193,7 +195,7 @@ export function ValidationPanel({
               color: 'var(--netlab-accent-red, #f87171)',
             }}
           >
-            {result.errorCount} errors
+            {t('editor.validation.errors', { count: result.errorCount })}
           </span>
         ) : null}
         {result.warningCount > 0 ? (
@@ -205,7 +207,7 @@ export function ValidationPanel({
               color: 'var(--netlab-accent-orange, #f59e0b)',
             }}
           >
-            {result.warningCount} warnings
+            {t('editor.validation.warnings', { count: result.warningCount })}
           </span>
         ) : null}
       </div>

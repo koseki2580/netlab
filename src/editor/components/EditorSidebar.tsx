@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 import { useOptionalSimulation } from '../../simulation/SimulationContext';
 import type { PacketHop } from '../../types/simulation';
 import { PacketHistoryPanel } from './PacketHistoryPanel';
@@ -25,10 +26,10 @@ const PANEL_STYLE: React.CSSProperties = {
   color: 'var(--netlab-text-primary)',
 };
 
-const TABS: readonly { id: EditorSidebarTab; label: string }[] = [
-  { id: 'node', label: 'Node' },
-  { id: 'validation', label: 'Checks' },
-  { id: 'history', label: 'Run' },
+const TABS: readonly { id: EditorSidebarTab; labelKey: string }[] = [
+  { id: 'node', labelKey: 'editor.sidebar.tab.node' },
+  { id: 'validation', labelKey: 'editor.sidebar.tab.validation' },
+  { id: 'history', labelKey: 'editor.sidebar.tab.history' },
 ];
 
 /**
@@ -37,6 +38,7 @@ const TABS: readonly { id: EditorSidebarTab; label: string }[] = [
  * the rail with the run results and the packet history.
  */
 export function EditorSidebar({ node, validation, selectedStep, onSelectHop }: EditorSidebarProps) {
+  const { t } = useI18n();
   const [tab, setTab] = useState<EditorSidebarTab>('node');
   // Read the run here rather than being handed it: the editor renders the
   // SimulationProvider, so it cannot subscribe to the context it creates.
@@ -44,7 +46,7 @@ export function EditorSidebar({ node, validation, selectedStep, onSelectHop }: E
   const traces = useOptionalSimulation()?.state.traces ?? [];
 
   return (
-    <aside style={PANEL_STYLE} data-testid="editor-sidebar" aria-label="Inspector">
+    <aside style={PANEL_STYLE} data-testid="editor-sidebar" aria-label={t('editor.sidebar.label')}>
       <div
         role="tablist"
         style={{ display: 'flex', borderBottom: '1px solid var(--netlab-border)' }}
@@ -70,7 +72,7 @@ export function EditorSidebar({ node, validation, selectedStep, onSelectHop }: E
                 tab === entry.id ? 'var(--netlab-text-primary)' : 'var(--netlab-text-secondary)',
             }}
           >
-            {entry.label}
+            {t(entry.labelKey)}
           </button>
         ))}
       </div>

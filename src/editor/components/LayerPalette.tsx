@@ -1,4 +1,5 @@
 import { NodeGlyph } from '../../components/NodeGlyph';
+import { useI18n } from '../../i18n/useI18n';
 import { useTopologyEditorContext } from '../context/TopologyEditorContext';
 import { paletteByLayer, type PaletteItem } from '../palette';
 import { randomPosition } from '../utils/nodeFactory';
@@ -41,20 +42,24 @@ export function LayerPalette({
   onToggleLayer,
   viewCentre,
 }: LayerPaletteProps) {
+  const { t } = useI18n();
   const { addNode } = useTopologyEditorContext();
   const groups = paletteByLayer(layers);
 
   const place = (item: PaletteItem) => addNode(item.create(randomPosition(viewCentre)));
 
   return (
-    <aside style={PANEL_STYLE} data-testid="editor-palette" aria-label="Elements by layer">
+    <aside style={PANEL_STYLE} data-testid="editor-palette" aria-label={t('editor.palette.label')}>
       {groups.length === 0 ? (
         <p data-testid="editor-palette-empty" style={{ color: 'var(--netlab-text-secondary)' }}>
-          No elements available for the selected layers.
+          {t('editor.palette.empty')}
         </p>
       ) : (
         groups.map((group) => {
           const shown = visibleLayers.has(group.layerId);
+          // Shown text is looked up by layer and element id; the English in
+          // palette.ts is the catalog's source and must stay in step with it.
+          const layerLabel = t(`editor.palette.layer.${group.layerId}`);
           return (
             <section key={group.layerId} style={{ marginBottom: 14 }}>
               <header
@@ -67,14 +72,18 @@ export function LayerPalette({
                 }}
               >
                 <span style={{ color: 'var(--netlab-text-secondary)', letterSpacing: 0.4 }}>
-                  {group.label}
+                  {layerLabel}
                 </span>
                 <button
                   type="button"
                   onClick={() => onToggleLayer(group.layerId)}
                   aria-pressed={shown}
                   data-testid={`editor-layer-toggle-${group.layerId}`}
-                  title={shown ? `Hide ${group.label}` : `Show ${group.label}`}
+                  title={
+                    shown
+                      ? t('editor.palette.hideLayer', { layer: layerLabel })
+                      : t('editor.palette.showLayer', { layer: layerLabel })
+                  }
                   style={{
                     border: '1px solid var(--netlab-border)',
                     background: shown ? 'var(--netlab-border)' : 'transparent',
@@ -85,7 +94,7 @@ export function LayerPalette({
                     padding: '1px 6px',
                   }}
                 >
-                  {shown ? 'shown' : 'hidden'}
+                  {shown ? t('editor.palette.shown') : t('editor.palette.hidden')}
                 </button>
               </header>
               {group.items.map((item) => (
@@ -94,7 +103,7 @@ export function LayerPalette({
                   type="button"
                   onClick={() => place(item)}
                   data-testid={`editor-palette-${item.id}`}
-                  title={item.hint}
+                  title={t(`editor.palette.item.${item.id}.hint`)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -114,7 +123,7 @@ export function LayerPalette({
                   {/* The same glyph the canvas paints, so what you pick is what appears. */}
                   <NodeGlyph kind={item.glyph} size={26} />
                   <span style={{ minWidth: 0 }}>
-                    {item.label}
+                    {t(`editor.palette.item.${item.id}.label`)}
                     <span
                       style={{
                         display: 'block',
@@ -122,7 +131,7 @@ export function LayerPalette({
                         fontSize: 10.5,
                       }}
                     >
-                      {item.hint}
+                      {t(`editor.palette.item.${item.id}.hint`)}
                     </span>
                   </span>
                 </button>

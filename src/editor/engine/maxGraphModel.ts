@@ -1,5 +1,6 @@
 import { Cell, type Graph, type CellStyle } from '@maxgraph/core';
 import { NODE_GLYPHS, type NodeGlyphKind } from '../../components/NodeGlyph';
+import type { TranslatorFn } from '../../i18n/types';
 import type { LayerId } from '../../types/layers';
 import type { NetlabEdge, NetlabNode } from '../../types/topology';
 import { GRAPH_LAYER_ORDER, layerIndex, layerVisibility } from './maxGraphLayers';
@@ -52,6 +53,7 @@ export function syncCells(
   nodes: readonly NetlabNode[],
   edges: readonly NetlabEdge[],
   highlightEdgeId?: string | null,
+  t?: TranslatorFn,
 ): void {
   const model = graph.getDataModel();
   model.beginUpdate();
@@ -68,7 +70,7 @@ export function syncCells(
         graph.insertVertex({
           parent,
           id: node.id,
-          value: nodeLabelHtml(node),
+          value: nodeLabelHtml(node, t),
           position: [node.position.x, node.position.y],
           size: [NODE_W, NODE_H],
           style: styleFor(node),

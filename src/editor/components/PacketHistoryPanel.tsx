@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/useI18n';
 import type { PacketHop, PacketTrace } from '../../types/simulation';
 import { historyRows, hopEdgeId, summarizeTraces } from '../simulationSummary';
 
@@ -27,6 +28,7 @@ const EVENT_TONE: Record<string, string> = {
  * that hop crossed so the text and the picture stay connected.
  */
 export function PacketHistoryPanel({ traces, selectedStep, onSelectHop }: PacketHistoryPanelProps) {
+  const { t } = useI18n();
   const summary = summarizeTraces(traces);
   const rows = historyRows(traces);
 
@@ -36,23 +38,23 @@ export function PacketHistoryPanel({ traces, selectedStep, onSelectHop }: Packet
         data-testid="editor-results"
         style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '2px 10px', margin: 0 }}
       >
-        <dt style={{ color: 'var(--netlab-text-secondary)' }}>delivered</dt>
+        <dt style={{ color: 'var(--netlab-text-secondary)' }}>{t('editor.history.delivered')}</dt>
         <dd
           data-testid="editor-results-delivered"
           style={{ margin: 0, color: 'var(--netlab-accent-green)' }}
         >
           {summary.delivered} / {summary.total}
         </dd>
-        <dt style={{ color: 'var(--netlab-text-secondary)' }}>dropped</dt>
+        <dt style={{ color: 'var(--netlab-text-secondary)' }}>{t('editor.history.dropped')}</dt>
         <dd
           data-testid="editor-results-dropped"
           style={{ margin: 0, color: 'var(--netlab-accent-red)' }}
         >
           {summary.dropped}
         </dd>
-        <dt style={{ color: 'var(--netlab-text-secondary)' }}>longest path</dt>
+        <dt style={{ color: 'var(--netlab-text-secondary)' }}>{t('editor.history.longestPath')}</dt>
         <dd data-testid="editor-results-longest" style={{ margin: 0 }}>
-          {summary.longestPath} hops
+          {t('editor.history.hops', { count: summary.longestPath })}
         </dd>
       </dl>
 
@@ -61,7 +63,7 @@ export function PacketHistoryPanel({ traces, selectedStep, onSelectHop }: Packet
           data-testid="editor-history-empty"
           style={{ color: 'var(--netlab-text-secondary)', marginTop: 12 }}
         >
-          No packets yet — run the topology to record a history.
+          {t('editor.history.empty')}
         </p>
       ) : (
         <ol style={{ listStyle: 'none', padding: 0, margin: '12px 0 0' }}>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Cell, Graph, InternalEvent, Outline } from '@maxgraph/core';
 import type { FitPlugin, PanningHandler } from '@maxgraph/core';
+import { useI18n } from '../../i18n/useI18n';
 import { MaxGraphControls } from './MaxGraphControls';
 import { wireConnect, wireDelete } from './maxGraphInteraction';
 import { markDrawnLinks } from './maxGraphLinkMarks';
@@ -29,6 +30,7 @@ export default function MaxGraphEngineInner({
   onSelectNode,
   onViewCentre,
 }: GraphEngineProps) {
+  const { t } = useI18n();
   const hostRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<Graph | null>(null);
   const layersRef = useRef<Cell[]>([]);
@@ -70,13 +72,13 @@ export default function MaxGraphEngineInner({
   useEffect(() => {
     const graph = graphRef.current;
     if (!graph || layersRef.current.length === 0) return;
-    syncCells(graph, layersRef.current, nodes, edges, highlightEdgeId);
+    syncCells(graph, layersRef.current, nodes, edges, highlightEdgeId, t);
     // Re-drawing replaced the cells, so the layer flags have to be re-applied.
     applyVisibility(graph, layersRef.current, visibleLayers);
     // The same mark the simulator canvas puts on its links, so one locator
     // answers "is this link drawn?" on either canvas.
     markDrawnLinks(graph, edges);
-  }, [nodes, edges, highlightEdgeId, visibleLayers]);
+  }, [nodes, edges, highlightEdgeId, visibleLayers, t]);
 
   // Drawing and deleting go through the seam: the owner holds the topology and
   // the undo history, so the engine reports rather than decides.
