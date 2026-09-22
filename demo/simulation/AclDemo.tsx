@@ -1,3 +1,4 @@
+import { useT } from '../localeContext';
 import DemoShell from '../DemoShell';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
@@ -180,6 +181,7 @@ function ActionButton({ label, onClick }: { label: string; onClick: () => void }
 }
 
 function AclDemoInner() {
+  const t = useT();
   const { sendPacket } = useSimulation();
 
   return (
@@ -213,7 +215,7 @@ function AclDemoInner() {
         >
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
             <ActionButton
-              label="HTTP (permitted)"
+              label={t('HTTP (permitted)', 'HTTP (許可)')}
               onClick={() => {
                 void sendPacket(
                   makePacket(
@@ -229,7 +231,7 @@ function AclDemoInner() {
               }}
             />
             <ActionButton
-              label="SSH (blocked)"
+              label={t('SSH (blocked)', 'SSH (拒否)')}
               onClick={() => {
                 void sendPacket(
                   makePacket(
@@ -245,7 +247,7 @@ function AclDemoInner() {
               }}
             />
             <ActionButton
-              label="Return Traffic"
+              label={t('Return Traffic', '戻りの通信')}
               onClick={() => {
                 void sendPacket(
                   makePacket(

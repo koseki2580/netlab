@@ -1,3 +1,4 @@
+import { useT } from '../localeContext';
 import DemoShell from '../DemoShell';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
@@ -77,6 +78,7 @@ function ActionButton({ label, onClick }: { label: string; onClick: () => void }
 }
 
 function NatDemoInner() {
+  const t = useT();
   const { sendPacket } = useSimulation();
 
   return (
@@ -107,7 +109,7 @@ function NatDemoInner() {
         >
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <ActionButton
-              label="Client A -> Internet (SNAT)"
+              label={t('Client A -> Internet (SNAT)', 'Client A -> インターネット (SNAT)')}
               onClick={() => {
                 void sendPacket(
                   makePacket(
@@ -123,7 +125,10 @@ function NatDemoInner() {
               }}
             />
             <ActionButton
-              label="Internet -> Client A (DNAT 8080)"
+              label={t(
+                'Internet -> Client A (DNAT 8080)',
+                'インターネット -> Client A (DNAT 8080)',
+              )}
               onClick={() => {
                 void sendPacket(
                   makePacket(

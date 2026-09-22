@@ -7,6 +7,7 @@ import { buildUdpPacket } from '../../src/layers/l4-transport/udpPacketBuilder';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
+import { useT } from '../localeContext';
 
 const BUTTON_STYLE: CSSProperties = {
   border: '1px solid var(--netlab-border-strong)',
@@ -126,6 +127,7 @@ function buildTopology(): NetworkTopology {
 }
 
 function DemoInner() {
+  const t = useT();
   const { sendPacket, state } = useSimulation();
 
   const sendObservedFlow = async () => {
@@ -152,7 +154,7 @@ function DemoInner() {
         <NetlabCanvas />
       </div>
       <aside
-        aria-label="Observability controls"
+        aria-label={t('Observability controls', 'フローの可視化の操作')}
         style={{
           borderLeft: '1px solid var(--netlab-border-subtle)',
           background: 'var(--netlab-bg-panel)',
@@ -167,7 +169,7 @@ function DemoInner() {
           onClick={sendObservedFlow}
           style={BUTTON_STYLE}
         >
-          Send observed flow
+          {t('Send observed flow', '観測されるフローを送る')}
         </button>
         <div style={{ marginTop: 14 }}>
           <FlowCollectorPanel traces={state.traces} />

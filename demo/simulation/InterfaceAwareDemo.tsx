@@ -1,3 +1,4 @@
+import { useT } from '../localeContext';
 import { useEffect, useRef, type CSSProperties } from 'react';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
@@ -166,6 +167,7 @@ function findFirstRouterHopIndex(
 }
 
 function InterfaceAwareDemoControls() {
+  const t = useT();
   const { topology } = useNetlabContext();
   const { engine, state, sendPacket } = useSimulation();
   const didAutoSend = useRef(false);
@@ -216,14 +218,14 @@ function InterfaceAwareDemoControls() {
         onClick={() => void sendBetween('client-a', 'client-b')}
         style={BTN_PRIMARY}
       >
-        Send A to B
+        {t('Send A to B', 'A から B へ送る')}
       </button>
       <button
         type="button"
         onClick={() => void sendBetween('client-b', 'client-a')}
         style={BTN_SECONDARY}
       >
-        Send B to A
+        {t('Send B to A', 'B から A へ送る')}
       </button>
       <button
         type="button"
@@ -231,7 +233,7 @@ function InterfaceAwareDemoControls() {
         disabled={resetDisabled}
         style={resetDisabled ? BTN_DISABLED : BTN_SECONDARY}
       >
-        Reset
+        {t('Reset', 'リセット')}
       </button>
 
       <div
@@ -242,15 +244,22 @@ function InterfaceAwareDemoControls() {
           color: 'var(--netlab-text-muted)',
         }}
       >
-        {state.status === 'idle' && 'Loading initial trace'}
+        {state.status === 'idle' && t('Loading initial trace', '最初の通信を読み込み中')}
         {state.status === 'paused' &&
           state.currentStep === -1 &&
-          'Router hop selected automatically for interface inspection'}
+          t(
+            'Router hop selected automatically for interface inspection',
+            'インタフェースを確かめられるよう、ルータのホップを自動で選んでいます',
+          )}
         {state.status === 'paused' &&
           state.currentStep >= 0 &&
-          `Paused - hop ${state.currentStep + 1}`}
-        {state.status === 'running' && `Running - hop ${state.currentStep + 1}`}
-        {state.status === 'done' && 'Done'}
+          t(
+            `Paused - hop ${state.currentStep + 1}`,
+            `一時停止 — ${state.currentStep + 1} ホップ目`,
+          )}
+        {state.status === 'running' &&
+          t(`Running - hop ${state.currentStep + 1}`, `実行中 — ${state.currentStep + 1} ホップ目`)}
+        {state.status === 'done' && t('Done', '完了')}
       </div>
     </div>
   );

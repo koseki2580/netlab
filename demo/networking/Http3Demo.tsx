@@ -1,6 +1,7 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { Http3Orchestrator } from '../../src/layers/l7-application/h3/Http3Orchestrator';
 import DemoShell from '../DemoShell';
+import { useT } from '../localeContext';
 
 const PANEL_STYLE: CSSProperties = {
   border: '1px solid var(--netlab-border-subtle)',
@@ -20,40 +21,54 @@ const BUTTON_STYLE: CSSProperties = {
 };
 
 export default function Http3Demo() {
-  const [loss, setLoss] = useState(false);
-  const orchestrator = useMemo(() => new Http3Orchestrator(), []);
-  const run = orchestrator.runRequests(['/a', '/b', '/c', '/d'], loss ? { lostStreamId: 4n } : {});
-
   return (
     <DemoShell
       title="HTTP/3 over QUIC"
       desc="Compare QUIC per-stream progress with HTTP/2 TCP transport HOL."
     >
-      <main style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: 16 }}>
-        <section style={PANEL_STYLE} aria-label="HTTP/3 streams">
-          <button
-            type="button"
-            data-testid="h3-quic-loss-toggle"
-            style={BUTTON_STYLE}
-            onClick={() => setLoss((value) => !value)}
-          >
-            {loss ? 'Disable QUIC Stream Loss' : 'Enable QUIC Stream Loss'}
-          </button>
-          <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
-            {run.streams.map((stream) => (
-              <div key={String(stream.id)} data-testid={`h3-stream-${stream.id}`}>
-                Stream {String(stream.id)} {stream.path}: {stream.status}
-              </div>
-            ))}
-          </div>
-        </section>
-        <aside style={PANEL_STYLE} aria-label="HTTP/3 frame order" data-testid="demo-trace-log">
-          <h3 style={{ marginTop: 0 }}>Frame Order</h3>
-          {run.annotations.map((annotation, index) => (
-            <div key={`${annotation}-${index}`}>{annotation}</div>
-          ))}
-        </aside>
-      </main>
+      <Http3DemoInner />
     </DemoShell>
+  );
+}
+
+function Http3DemoInner() {
+  const t = useT();
+  const [loss, setLoss] = useState(false);
+  const orchestrator = useMemo(() => new Http3Orchestrator(), []);
+  const run = orchestrator.runRequests(['/a', '/b', '/c', '/d'], loss ? { lostStreamId: 4n } : {});
+
+  return (
+    <main style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: 16 }}>
+      <section style={PANEL_STYLE} aria-label={t('HTTP/3 streams', 'HTTP/3 のストリーム')}>
+        <button
+          type="button"
+          data-testid="h3-quic-loss-toggle"
+          style={BUTTON_STYLE}
+          onClick={() => setLoss((value) => !value)}
+        >
+          {loss
+            ? t('Disable QUIC Stream Loss', 'QUIC ストリームのロスを止める')
+            : t('Enable QUIC Stream Loss', 'QUIC ストリームのロスを起こす')}
+        </button>
+        <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
+          {run.streams.map((stream) => (
+            <div key={String(stream.id)} data-testid={`h3-stream-${stream.id}`}>
+              {t('Stream', 'ストリーム')} {String(stream.id)} {stream.path}:{' '}
+              {stream.status === 'stalled' ? t('stalled', '停止中') : t('complete', '完了')}
+            </div>
+          ))}
+        </div>
+      </section>
+      <aside
+        style={PANEL_STYLE}
+        aria-label={t('HTTP/3 frame order', 'HTTP/3 のフレームの順序')}
+        data-testid="demo-trace-log"
+      >
+        <h3 style={{ marginTop: 0 }}>{t('Frame Order', 'フレームの順序')}</h3>
+        {run.annotations.map((annotation, index) => (
+          <div key={`${annotation}-${index}`}>{annotation}</div>
+        ))}
+      </aside>
+    </main>
   );
 }

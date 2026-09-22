@@ -7,6 +7,7 @@ import { virtualRouterMac } from '../../src/layers/l3-network/VrrpStateMachine';
 import type { VrrpMember } from '../../src/types/vrrp';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
+import { useT } from '../localeContext';
 
 const PANEL_STYLE: CSSProperties = {
   border: '1px solid var(--netlab-border-subtle)',
@@ -153,6 +154,79 @@ function topology(masterDown: boolean, memberDown: boolean): NetworkTopology {
   };
 }
 
+// Rendered inside DemoShell so it reads the learner's language; the page
+// component itself sits outside the shell's locale provider.
+function HaControls({
+  masterDown,
+  memberDown,
+  onToggleMaster,
+  onToggleMember,
+  masterNodeId,
+  activeMemberCount,
+  selectedMemberPortId,
+}: {
+  readonly masterDown: boolean;
+  readonly memberDown: boolean;
+  readonly onToggleMaster: () => void;
+  readonly onToggleMember: () => void;
+  readonly masterNodeId: string | undefined;
+  readonly activeMemberCount: number;
+  readonly selectedMemberPortId: string;
+}) {
+  const t = useT();
+
+  return (
+    <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <button
+        type="button"
+        data-testid="ha-fail-gateway"
+        style={BUTTON_STYLE}
+        onClick={onToggleMaster}
+      >
+        {masterDown
+          ? t('Restore R1 Gateway', 'R1 のゲートウェイを戻す')
+          : t('Fail R1 Gateway', 'R1 のゲートウェイを落とす')}
+      </button>
+      <button
+        type="button"
+        data-testid="ha-fail-lacp"
+        style={BUTTON_STYLE}
+        onClick={onToggleMember}
+      >
+        {memberDown
+          ? t('Restore LACP Member', 'LACP のメンバを戻す')
+          : t('Fail LACP Member', 'LACP のメンバを落とす')}
+      </button>
+      <div style={PANEL_STYLE}>
+        <h3 style={{ marginTop: 0 }}>
+          {t('VRRP first-hop gateway', 'VRRP によるゲートウェイの冗長化')}
+        </h3>
+        <div data-testid="vrrp-master">
+          {t('Master: ', 'マスタ: ')}
+          {masterNodeId?.toUpperCase() ?? t('none', 'なし')}
+        </div>
+        <div data-testid="virtual-mac">
+          {t('Virtual MAC: ', '仮想 MAC: ')}
+          {virtualRouterMac(MEMBERS[0]!.config)}
+        </div>
+      </div>
+      <div style={PANEL_STYLE}>
+        <h3 style={{ marginTop: 0 }}>
+          {t('LACP port-channel', 'LACP によるリンク束ね（ポートチャネル）')}
+        </h3>
+        <div data-testid="member-count">
+          {activeMemberCount}
+          {t(' active member', ' 本のメンバが稼働中')}
+        </div>
+        <div data-testid="lacp-member">
+          {t('Selected member: ', '選ばれたメンバ: ')}
+          {selectedMemberPortId}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
 export default function HighAvailabilityDemo() {
   const [masterDown, setMasterDown] = useState(false);
   const [memberDown, setMemberDown] = useState(false);
@@ -190,36 +264,15 @@ export default function HighAvailabilityDemo() {
           <section style={{ minHeight: 560, border: '1px solid var(--netlab-border-subtle)' }}>
             <NetlabCanvas style={{ height: 560 }} />
           </section>
-          <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <button
-              type="button"
-              data-testid="ha-fail-gateway"
-              style={BUTTON_STYLE}
-              onClick={() => setMasterDown((value) => !value)}
-            >
-              {masterDown ? 'Restore R1 Gateway' : 'Fail R1 Gateway'}
-            </button>
-            <button
-              type="button"
-              data-testid="ha-fail-lacp"
-              style={BUTTON_STYLE}
-              onClick={() => setMemberDown((value) => !value)}
-            >
-              {memberDown ? 'Restore LACP Member' : 'Fail LACP Member'}
-            </button>
-            <div style={PANEL_STYLE}>
-              <h3 style={{ marginTop: 0 }}>VRRP first-hop gateway</h3>
-              <div data-testid="vrrp-master">Master: {master?.nodeId.toUpperCase() ?? 'none'}</div>
-              <div data-testid="virtual-mac">
-                Virtual MAC: {virtualRouterMac(MEMBERS[0]!.config)}
-              </div>
-            </div>
-            <div style={PANEL_STYLE}>
-              <h3 style={{ marginTop: 0 }}>LACP port-channel</h3>
-              <div data-testid="member-count">{activeMembers.length} active member</div>
-              <div data-testid="lacp-member">Selected member: {selectedMember.memberPortId}</div>
-            </div>
-          </aside>
+          <HaControls
+            masterDown={masterDown}
+            memberDown={memberDown}
+            onToggleMaster={() => setMasterDown((value) => !value)}
+            onToggleMember={() => setMemberDown((value) => !value)}
+            masterNodeId={master?.nodeId}
+            activeMemberCount={activeMembers.length}
+            selectedMemberPortId={selectedMember.memberPortId}
+          />
         </div>
       </NetlabProvider>
     </DemoShell>

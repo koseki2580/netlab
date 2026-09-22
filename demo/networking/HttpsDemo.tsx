@@ -2,6 +2,7 @@ import { useMemo, useState, type CSSProperties } from 'react';
 import { TlsHandshakeView } from '../../src/components/simulation/TlsHandshakeView';
 import { TlsOrchestrator, type TlsHandshakeRun } from '../../src/layers/l5-tls/TlsOrchestrator';
 import DemoShell from '../DemoShell';
+import { useT } from '../localeContext';
 
 const BUTTON_STYLE: CSSProperties = {
   border: '1px solid var(--netlab-border-strong)',
@@ -21,6 +22,18 @@ const PANEL_STYLE: CSSProperties = {
 };
 
 export default function HttpsDemo() {
+  return (
+    <DemoShell
+      title="HTTPS TLS 1.3"
+      desc="Inspect the TLS handshake that runs before an HTTP/1.1 request over port 443."
+    >
+      <HttpsDemoInner />
+    </DemoShell>
+  );
+}
+
+function HttpsDemoInner() {
+  const t = useT();
   const orchestrator = useMemo(() => new TlsOrchestrator(), []);
   const [run, setRun] = useState<TlsHandshakeRun | null>(null);
 
@@ -38,73 +51,68 @@ export default function HttpsDemo() {
   };
 
   return (
-    <DemoShell
-      title="HTTPS TLS 1.3"
-      desc="Inspect the TLS handshake that runs before an HTTP/1.1 request over port 443."
+    <main
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr) 420px',
+        gap: 14,
+        minHeight: 520,
+      }}
     >
-      <main
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) 420px',
-          gap: 14,
-          minHeight: 520,
-        }}
-      >
-        <section style={PANEL_STYLE} aria-label="HTTPS flow">
-          <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-            <button
-              type="button"
-              data-testid="tls-run-handshake"
-              onClick={() => void execute(['http/1.1'])}
-              style={{
-                ...BUTTON_STYLE,
-                background: 'var(--netlab-accent-cyan)',
-                color: 'var(--netlab-bg-primary)',
-              }}
-            >
-              Run HTTPS handshake
-            </button>
-            <button
-              type="button"
-              data-testid="tls-force-alpn-mismatch"
-              onClick={() => void execute(['h2'])}
-              style={{
-                ...BUTTON_STYLE,
-                background: 'var(--netlab-bg-elevated)',
-                color: 'var(--netlab-text-primary)',
-              }}
-            >
-              Force ALPN mismatch
-            </button>
-          </div>
-          <ol
-            aria-label="TLS annotation sequence"
-            data-testid="demo-trace-log"
+      <section style={PANEL_STYLE} aria-label={t('HTTPS flow', 'HTTPS の流れ')}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+          <button
+            type="button"
+            data-testid="tls-run-handshake"
+            onClick={() => void execute(['http/1.1'])}
             style={{
-              display: 'grid',
-              gap: 6,
-              fontFamily: 'monospace',
-              fontSize: 13,
-              margin: 0,
-              paddingLeft: 22,
+              ...BUTTON_STYLE,
+              background: 'var(--netlab-accent-cyan)',
+              color: 'var(--netlab-bg-primary)',
             }}
           >
-            {(run?.annotations ?? []).map((annotation, index) => (
-              <li key={`${annotation.kind}-${index}`}>
-                {annotation.kind}
-                {annotation.kind === 'tls:alert' ? ` (${annotation.description})` : ''}
-              </li>
-            ))}
-          </ol>
-        </section>
-        <aside>
-          <TlsHandshakeView
-            annotations={run?.annotations ?? []}
-            secrets={run?.secrets ?? []}
-            providerId="fake-deterministic"
-          />
-        </aside>
-      </main>
-    </DemoShell>
+            {t('Run HTTPS handshake', 'HTTPS のハンドシェイクを実行')}
+          </button>
+          <button
+            type="button"
+            data-testid="tls-force-alpn-mismatch"
+            onClick={() => void execute(['h2'])}
+            style={{
+              ...BUTTON_STYLE,
+              background: 'var(--netlab-bg-elevated)',
+              color: 'var(--netlab-text-primary)',
+            }}
+          >
+            {t('Force ALPN mismatch', 'ALPN をわざと食い違わせる')}
+          </button>
+        </div>
+        <ol
+          aria-label={t('TLS annotation sequence', 'TLS のやり取りの順序')}
+          data-testid="demo-trace-log"
+          style={{
+            display: 'grid',
+            gap: 6,
+            fontFamily: 'monospace',
+            fontSize: 13,
+            margin: 0,
+            paddingLeft: 22,
+          }}
+        >
+          {(run?.annotations ?? []).map((annotation, index) => (
+            <li key={`${annotation.kind}-${index}`}>
+              {annotation.kind}
+              {annotation.kind === 'tls:alert' ? ` (${annotation.description})` : ''}
+            </li>
+          ))}
+        </ol>
+      </section>
+      <aside>
+        <TlsHandshakeView
+          annotations={run?.annotations ?? []}
+          secrets={run?.secrets ?? []}
+          providerId="fake-deterministic"
+        />
+      </aside>
+    </main>
   );
 }

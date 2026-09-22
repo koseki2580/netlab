@@ -4,6 +4,7 @@ import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { scenarioRegistry } from '../../src/scenarios';
 import type { Scenario } from '../../src/scenarios/types';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
+import { useT } from '../localeContext';
 import { useCompareTimeline } from './CompareShell';
 
 export interface ComparePaneProps {
@@ -17,6 +18,7 @@ export interface ComparePaneProps {
  * auto-probed once so the timeline has a trace, and driven by the shared playhead.
  */
 export function ComparePane({ scenarioId, side }: ComparePaneProps) {
+  const t = useT();
   const scenario = scenarioRegistry.get(scenarioId);
   if (!scenario) {
     return (
@@ -29,7 +31,7 @@ export function ComparePane({ scenarioId, side }: ComparePaneProps) {
           color: 'var(--netlab-text-muted)',
         }}
       >
-        unknown scenario: {scenarioId}
+        {t(`unknown scenario: ${scenarioId}`, `見つからないシナリオ: ${scenarioId}`)}
       </div>
     );
   }
@@ -57,6 +59,7 @@ function resolveProbeIp(scenario: Scenario): { from: string; dstIp: string } | n
 }
 
 function ComparePaneInner({ scenario, side }: { scenario: Scenario; side: string }) {
+  const t = useT();
   const { engine, state } = useSimulation();
   const timeline = useCompareTimeline();
 
@@ -108,7 +111,13 @@ function ComparePaneInner({ scenario, side }: { scenario: Scenario; side: string
           ))}
           <span
             data-testid={`compare-converged-${side}`}
-            title={converged ? 'delivered' : dropped ? 'dropped' : 'in flight'}
+            title={
+              converged
+                ? t('delivered', '届いた')
+                : dropped
+                  ? t('dropped', '落ちた')
+                  : t('in flight', '転送中')
+            }
             style={{
               color: converged
                 ? 'var(--netlab-accent-green)'

@@ -12,6 +12,7 @@ import { SimulationProvider, useSimulation } from '../../src/simulation/Simulati
 import type { PacketTrace } from '../../src/types/simulation';
 import type { ReassemblyState, TransferChunk, TransferMessage } from '../../src/types/transfer';
 import DemoShell from '../DemoShell';
+import { useT } from '../localeContext';
 
 const DEFAULT_PAYLOAD = 'Hello, this is a test message from Server A to Server B!';
 const TOPOLOGY = dataTransferDemoTopology();
@@ -60,6 +61,40 @@ function chunkStateColor(state: TransferChunk['state']): string {
   }
 }
 
+function transferStatusLabel(
+  status: TransferMessage['status'],
+  t: (en: string, ja: string) => string,
+): string {
+  switch (status) {
+    case 'pending':
+      return t('pending', '待機中');
+    case 'in-progress':
+      return t('in-progress', '転送中');
+    case 'delivered':
+      return t('delivered', '届いた');
+    case 'partial':
+      return t('partial', '一部だけ届いた');
+    case 'failed':
+      return t('failed', '失敗');
+  }
+}
+
+function chunkStateLabel(
+  state: TransferChunk['state'],
+  t: (en: string, ja: string) => string,
+): string {
+  switch (state) {
+    case 'pending':
+      return t('pending', '待機中');
+    case 'in-flight':
+      return t('in-flight', '送信中');
+    case 'delivered':
+      return t('delivered', '届いた');
+    case 'dropped':
+      return t('dropped', '破棄された');
+  }
+}
+
 function TransferSummaryCard({
   transfer,
   chunks,
@@ -69,23 +104,24 @@ function TransferSummaryCard({
   chunks: TransferChunk[];
   reassembly: ReassemblyState | undefined;
 }) {
+  const t = useT();
   const delivered = chunks.filter((chunk) => chunk.state === 'delivered').length;
   const dropped = chunks.filter((chunk) => chunk.state === 'dropped').length;
   const missing = Math.max(0, transfer.expectedChunks - delivered);
   const checksumLabel =
     reassembly?.checksumVerified === undefined
-      ? 'incomplete'
+      ? t('incomplete', '未完了')
       : reassembly.checksumVerified
-        ? 'verified'
-        : 'mismatch';
+        ? t('verified', '一致')
+        : t('mismatch', '不一致');
   const verdictLabel =
     transfer.status === 'delivered'
-      ? 'COMPLETE DELIVERY'
+      ? t('COMPLETE DELIVERY', 'すべて届いた')
       : transfer.status === 'partial'
-        ? 'PARTIAL DELIVERY'
+        ? t('PARTIAL DELIVERY', '一部だけ届いた')
         : transfer.status === 'failed'
-          ? 'FAILED DELIVERY'
-          : 'IN PROGRESS';
+          ? t('FAILED DELIVERY', '届かなかった')
+          : t('IN PROGRESS', '転送中');
 
   return (
     <div
@@ -117,17 +153,36 @@ function TransferSummaryCard({
           color: 'var(--netlab-text-primary)',
         }}
       >
-        <div>source: {transfer.srcNodeId}</div>
-        <div>destination: {transfer.dstNodeId}</div>
-        <div>payload: {transfer.payloadSizeBytes} bytes</div>
         <div>
-          chunks: {delivered}/{transfer.expectedChunks} delivered
+          {t('source:', '送信元:')} {transfer.srcNodeId}
         </div>
-        <div>dropped: {dropped}</div>
-        <div>missing: {missing}</div>
-        <div>checksum: {checksumLabel}</div>
+        <div>
+          {t('destination:', '宛先:')} {transfer.dstNodeId}
+        </div>
+        <div>
+          {t(
+            `payload: ${transfer.payloadSizeBytes} bytes`,
+            `ペイロード: ${transfer.payloadSizeBytes} バイト`,
+          )}
+        </div>
+        <div>
+          {t(
+            `chunks: ${delivered}/${transfer.expectedChunks} delivered`,
+            `チャンク: ${delivered}/${transfer.expectedChunks} 個が届いた`,
+          )}
+        </div>
+        <div>{t(`dropped: ${dropped}`, `破棄: ${dropped}`)}</div>
+        <div>{t(`missing: ${missing}`, `未着: ${missing}`)}</div>
+        <div>
+          {t('checksum:', 'チェックサム:')} {checksumLabel}
+        </div>
         {reassembly?.reassembledPayload && (
-          <div>reconstructed: {reassembly.reassembledPayload.length} bytes</div>
+          <div>
+            {t(
+              `reconstructed: ${reassembly.reassembledPayload.length} bytes`,
+              `復元したデータ: ${reassembly.reassembledPayload.length} バイト`,
+            )}
+          </div>
         )}
       </div>
     </div>
@@ -141,6 +196,7 @@ function IpMacSummary({
   chunks: TransferChunk[];
   tracesById: Map<string, PacketTrace>;
 }) {
+  const t = useT();
   const sampleChunk = chunks.find((chunk) => chunk.traceId && chunk.state === 'delivered');
   const trace = sampleChunk?.traceId ? tracesById.get(sampleChunk.traceId) : undefined;
   const hops =
@@ -177,19 +233,29 @@ function IpMacSummary({
         color: 'var(--netlab-text-secondary)',
       }}
     >
-      <label style={LABEL_STYLE}>IP VS MAC (EDUCATIONAL)</label>
+      <label style={LABEL_STYLE}>{t('IP VS MAC (EDUCATIONAL)', 'IP と MAC の違い (学習用)')}</label>
       <div style={{ display: 'grid', gap: 4 }}>
         <div>
-          End-to-end IP: {firstHop.srcIp} -&gt; {firstHop.dstIp}
-          <span style={{ color: 'var(--netlab-accent-green)' }}> (unchanged)</span>
+          {t(
+            `End-to-end IP: ${firstHop.srcIp} -> ${firstHop.dstIp}`,
+            `端から端までの IP: ${firstHop.srcIp} -> ${firstHop.dstIp}`,
+          )}
+          <span style={{ color: 'var(--netlab-accent-green)' }}>
+            {t(' (unchanged)', ' (変わらない)')}
+          </span>
         </div>
         <div>
-          Hop-by-hop MAC rewrite: {macChanges} change(s) across {hops.length} hop(s)
+          {t(
+            `Hop-by-hop MAC rewrite: ${macChanges} change(s) across ${hops.length} hop(s)`,
+            `ホップごとの MAC の書き換え: ${hops.length} ホップで ${macChanges} 回変化`,
+          )}
         </div>
         {firstHop.srcMac && lastHop.dstMac && (
           <div style={{ marginTop: 4, color: 'var(--netlab-text-secondary)' }}>
-            Initial: {firstHop.srcMac} -&gt; {firstHop.dstMac} | Final: {lastHop.srcMac} -&gt;{' '}
-            {lastHop.dstMac}
+            {t(
+              `Initial: ${firstHop.srcMac} -> ${firstHop.dstMac ?? ''} | Final: ${lastHop.srcMac ?? ''} -> ${lastHop.dstMac}`,
+              `最初: ${firstHop.srcMac} -> ${firstHop.dstMac ?? ''} | 最後: ${lastHop.srcMac ?? ''} -> ${lastHop.dstMac}`,
+            )}
           </div>
         )}
       </div>
@@ -198,6 +264,7 @@ function IpMacSummary({
 }
 
 function PayloadPreviewSection({ transfer }: { transfer: TransferMessage }) {
+  const t = useT();
   const preview =
     transfer.payloadData.length > 200
       ? `${transfer.payloadData.slice(0, 200)}...`
@@ -205,7 +272,7 @@ function PayloadPreviewSection({ transfer }: { transfer: TransferMessage }) {
 
   return (
     <div style={SECTION_STYLE}>
-      <label style={LABEL_STYLE}>PAYLOAD PREVIEW</label>
+      <label style={LABEL_STYLE}>{t('PAYLOAD PREVIEW', 'ペイロードのプレビュー')}</label>
       <pre
         style={{
           margin: 0,
@@ -221,7 +288,7 @@ function PayloadPreviewSection({ transfer }: { transfer: TransferMessage }) {
           overflow: 'auto',
         }}
       >
-        {preview || '(empty payload)'}
+        {preview || t('(empty payload)', '(空のペイロード)')}
       </pre>
     </div>
   );
@@ -234,6 +301,7 @@ function MissingChunksSection({
   chunks: TransferChunk[];
   tracesById: Map<string, PacketTrace>;
 }) {
+  const t = useT();
   const missing = chunks.filter((chunk) => chunk.state === 'dropped');
 
   if (missing.length === 0) {
@@ -242,7 +310,7 @@ function MissingChunksSection({
 
   return (
     <div style={SECTION_STYLE}>
-      <label style={LABEL_STYLE}>MISSING CHUNKS</label>
+      <label style={LABEL_STYLE}>{t('MISSING CHUNKS', '届かなかったチャンク')}</label>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
         {missing.map((chunk) => {
           const trace = chunk.traceId ? tracesById.get(chunk.traceId) : undefined;
@@ -263,7 +331,10 @@ function MissingChunksSection({
                 fontFamily: 'monospace',
               }}
             >
-              #{chunk.sequenceNumber} ({chunk.sizeBytes} bytes) · {reason}
+              {t(
+                `#${chunk.sequenceNumber} (${chunk.sizeBytes} bytes) · ${reason}`,
+                `#${chunk.sequenceNumber} (${chunk.sizeBytes} バイト) · ${reason}`,
+              )}
               {location}
             </span>
           );
@@ -286,6 +357,7 @@ function MessageView({
   tracesById: Map<string, PacketTrace>;
   onChunkSelect: (chunk: TransferChunk) => void;
 }) {
+  const t = useT();
   const { getReassembly } = useDataTransfer();
   const reassembly = transfer ? getReassembly(transfer.messageId) : undefined;
   const [hoveredChunkId, setHoveredChunkId] = useState<string | null>(null);
@@ -300,7 +372,10 @@ function MessageView({
           fontSize: 12,
         }}
       >
-        Start a transfer to inspect payloads, missing chunks, and hop-by-hop traces.
+        {t(
+          'Start a transfer to inspect payloads, missing chunks, and hop-by-hop traces.',
+          '転送を始めると、ペイロード、届かなかったチャンク、ホップごとの経路を確認できます。',
+        )}
       </div>
     );
   }
@@ -335,7 +410,7 @@ function MessageView({
               padding: '2px 8px',
             }}
           >
-            {transfer.status}
+            {transferStatusLabel(transfer.status, t)}
           </span>
         </div>
         <div
@@ -350,9 +425,21 @@ function MessageView({
           }}
         >
           <div>messageId: {transfer.messageId}</div>
-          <div>protocol: {transfer.protocol}</div>
-          <div>payload bytes: {transfer.payloadSizeBytes}</div>
-          <div>expected chunks: {transfer.expectedChunks}</div>
+          <div>
+            {t('protocol:', 'プロトコル:')} {transfer.protocol}
+          </div>
+          <div>
+            {t(
+              `payload bytes: ${transfer.payloadSizeBytes}`,
+              `ペイロードのバイト数: ${transfer.payloadSizeBytes}`,
+            )}
+          </div>
+          <div>
+            {t(
+              `expected chunks: ${transfer.expectedChunks}`,
+              `予定のチャンク数: ${transfer.expectedChunks}`,
+            )}
+          </div>
         </div>
         <div
           style={{
@@ -366,14 +453,14 @@ function MessageView({
             wordBreak: 'break-all',
           }}
         >
-          checksum: {transfer.checksum}
+          {t('checksum:', 'チェックサム:')} {transfer.checksum}
         </div>
       </div>
 
       <PayloadPreviewSection transfer={transfer} />
 
       <div style={SECTION_STYLE}>
-        <label style={LABEL_STYLE}>CHUNKS</label>
+        <label style={LABEL_STYLE}>{t('CHUNKS', 'チャンク')}</label>
         <div
           style={{
             display: 'grid',
@@ -417,18 +504,24 @@ function MessageView({
                   opacity: chunk.traceId ? 1 : 0.65,
                   transition: 'border-color 0.15s, background 0.15s',
                 }}
-                title={chunk.traceId ? 'Click to inspect hop trace' : 'Trace not available'}
+                title={
+                  chunk.traceId
+                    ? t('Click to inspect hop trace', 'クリックするとホップごとの経路が見られます')
+                    : t('Trace not available', 'トレースがありません')
+                }
               >
-                <div style={{ fontSize: 11 }}>chunk #{chunk.sequenceNumber}</div>
+                <div style={{ fontSize: 11 }}>
+                  {t(`chunk #${chunk.sequenceNumber}`, `チャンク #${chunk.sequenceNumber}`)}
+                </div>
                 <div style={{ marginTop: 6, fontSize: 10, color: chunkStateColor(chunk.state) }}>
-                  {chunk.state}
+                  {chunkStateLabel(chunk.state, t)}
                 </div>
                 <div style={{ marginTop: 6, fontSize: 10, color: 'var(--netlab-text-secondary)' }}>
-                  {chunk.sizeBytes} bytes
+                  {t(`${chunk.sizeBytes} bytes`, `${chunk.sizeBytes} バイト`)}
                 </div>
                 {chunk.traceId && (
                   <div style={{ marginTop: 6, fontSize: 9, color: 'var(--netlab-accent-cyan)' }}>
-                    ▶ Inspect hop trace
+                    {t('▶ Inspect hop trace', '▶ ホップごとの経路を見る')}
                   </div>
                 )}
               </button>
@@ -438,7 +531,7 @@ function MessageView({
       </div>
 
       <div style={SECTION_STYLE}>
-        <label style={LABEL_STYLE}>REASSEMBLY</label>
+        <label style={LABEL_STYLE}>{t('REASSEMBLY', '再組み立て')}</label>
         <div
           style={{
             fontFamily: 'monospace',
@@ -449,17 +542,20 @@ function MessageView({
           }}
         >
           <div>
-            received: {reassembly?.receivedChunks.size ?? 0}/
+            {t('received:', '受信:')} {reassembly?.receivedChunks.size ?? 0}/
             {reassembly?.expectedTotal ?? chunks.length}
           </div>
-          <div>complete: {reassembly?.isComplete ? 'yes' : 'no'}</div>
           <div>
-            checksum:{' '}
+            {t('complete:', '完了:')}{' '}
+            {reassembly?.isComplete ? t('yes', 'はい') : t('no', 'いいえ')}
+          </div>
+          <div>
+            {t('checksum:', 'チェックサム:')}{' '}
             {reassembly?.checksumVerified === undefined
-              ? 'incomplete'
+              ? t('incomplete', '未完了')
               : reassembly.checksumVerified
-                ? 'verified'
-                : 'mismatch'}
+                ? t('verified', '一致')
+                : t('mismatch', '不一致')}
           </div>
         </div>
       </div>
@@ -499,6 +595,7 @@ function TabButton({
 }
 
 function DataTransferDemoInner() {
+  const t = useT();
   const { engine, state: simulationState } = useSimulation();
   const { failureState } = useFailure();
   const { state, startTransfer, getChunks, selectedTransferId, selectTransfer } = useDataTransfer();
@@ -582,7 +679,9 @@ function DataTransferDemoInner() {
             padding: '4px 10px',
           }}
         >
-          {failureCount > 0 ? `${failureCount} failure(s) active` : 'No failures active'}
+          {failureCount > 0
+            ? t(`${failureCount} failure(s) active`, `障害 ${failureCount} 件が発生中`)
+            : t('No failures active', '障害は起きていません')}
         </div>
       </div>
 
@@ -618,7 +717,7 @@ function DataTransferDemoInner() {
             cursor: isSending ? 'not-allowed' : 'pointer',
           }}
         >
-          {isSending ? 'Sending...' : '▶ Start Transfer'}
+          {isSending ? t('Sending...', '送信中...') : t('▶ Start Transfer', '▶ 転送を開始')}
         </button>
 
         <span
@@ -627,7 +726,9 @@ function DataTransferDemoInner() {
             whiteSpace: 'nowrap',
           }}
         >
-          {failureCount > 0 ? `■ ${failureCount} failure(s)` : '■ No failures'}
+          {failureCount > 0
+            ? t(`■ ${failureCount} failure(s)`, `■ 障害 ${failureCount} 件`)
+            : t('■ No failures', '■ 障害なし')}
         </span>
 
         <span
@@ -639,18 +740,26 @@ function DataTransferDemoInner() {
             whiteSpace: 'nowrap',
           }}
         >
-          payload: "{payloadSummary}" · {chunkSize}B chunks
-          {selectedTransfer && <> · status: {selectedTransfer.status}</>}
+          {t(
+            `payload: "${payloadSummary}" · ${chunkSize}B chunks`,
+            `ペイロード: "${payloadSummary}" · ${chunkSize}B ずつのチャンク`,
+          )}
+          {selectedTransfer && (
+            <>
+              {t(' · status: ', ' · 状態: ')}
+              {transferStatusLabel(selectedTransfer.status, t)}
+            </>
+          )}
         </span>
 
         <TabButton
           active={activeView === 'message'}
-          label="Message"
+          label={t('Message', 'メッセージ')}
           onClick={() => setActiveView('message')}
         />
         <TabButton
           active={activeView === 'packet'}
-          label="Packet"
+          label={t('Packet', 'パケット')}
           onClick={() => setActiveView('packet')}
         />
       </div>
@@ -688,15 +797,20 @@ function DataTransferDemoInner() {
                 cursor: 'pointer',
               }}
             >
-              <span>{showPayloadConfig ? '▼' : '▶'} Payload Configuration</span>
+              <span>
+                {showPayloadConfig ? '▼' : '▶'} {t('Payload Configuration', 'ペイロードの設定')}
+              </span>
               <span style={{ color: 'var(--netlab-text-secondary)', fontSize: 10 }}>
-                {payload.length} chars · {chunkSize}B
+                {t(
+                  `${payload.length} chars · ${chunkSize}B`,
+                  `${payload.length} 文字 · ${chunkSize}B`,
+                )}
               </span>
             </button>
             {showPayloadConfig && (
               <div style={{ marginTop: 10 }}>
                 <label style={LABEL_STYLE} htmlFor="transfer-payload">
-                  PAYLOAD
+                  {t('PAYLOAD', 'ペイロード')}
                 </label>
                 <textarea
                   id="transfer-payload"
@@ -717,7 +831,7 @@ function DataTransferDemoInner() {
                   }}
                 />
                 <label style={{ ...LABEL_STYLE, marginTop: 10 }} htmlFor="chunk-size">
-                  CHUNK SIZE
+                  {t('CHUNK SIZE', 'チャンクサイズ')}
                 </label>
                 <input
                   id="chunk-size"
@@ -765,7 +879,7 @@ function DataTransferDemoInner() {
                 marginBottom: 10,
               }}
             >
-              Failure Injection
+              {t('Failure Injection', '障害を起こす')}
             </div>
             <FailureTogglePanel />
           </div>
@@ -779,7 +893,7 @@ function DataTransferDemoInner() {
                 marginBottom: 10,
               }}
             >
-              Transfers
+              {t('Transfers', '転送の一覧')}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {transfers.length === 0 && (
@@ -790,7 +904,7 @@ function DataTransferDemoInner() {
                     color: 'var(--netlab-text-secondary)',
                   }}
                 >
-                  No transfers yet.
+                  {t('No transfers yet.', 'まだ転送はありません。')}
                 </div>
               )}
               {transfers.map((transfer) => {
@@ -818,7 +932,7 @@ function DataTransferDemoInner() {
                     }}
                   >
                     <div style={{ fontSize: 11 }}>
-                      {transfer.payloadPreview || '(empty payload)'}
+                      {transfer.payloadPreview || t('(empty payload)', '(空のペイロード)')}
                     </div>
                     <div
                       style={{
@@ -827,7 +941,11 @@ function DataTransferDemoInner() {
                         color: transferStatusColor(transfer.status),
                       }}
                     >
-                      {transfer.status} · {transfer.expectedChunks} chunk(s)
+                      {transferStatusLabel(transfer.status, t)} ·{' '}
+                      {t(
+                        `${transfer.expectedChunks} chunk(s)`,
+                        `${transfer.expectedChunks} チャンク`,
+                      )}
                     </div>
                   </button>
                 );

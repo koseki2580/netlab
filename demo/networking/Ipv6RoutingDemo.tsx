@@ -6,6 +6,7 @@ import { OspfV3Protocol } from '../../src/routing/ospf/OspfV3Protocol';
 import type { RouteEntry } from '../../src/types/routing';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
+import { useT } from '../localeContext';
 
 const PANEL_STYLE: CSSProperties = {
   border: '1px solid var(--netlab-border-subtle)',
@@ -133,6 +134,7 @@ function withRoutes(topology: NetworkTopology): NetworkTopology {
 }
 
 function RouteRows({ routes }: { routes: readonly RouteEntry[] }) {
+  const t = useT();
   return (
     <div style={{ fontFamily: 'monospace', fontSize: 12 }}>
       {routes.map((route) => (
@@ -140,8 +142,14 @@ function RouteRows({ routes }: { routes: readonly RouteEntry[] }) {
           key={`${route.protocol}-${route.destination}-${route.nextHop}`}
           style={{ marginBottom: 6 }}
         >
-          <strong>{route.protocol}</strong> {route.destination} via {route.nextHop}
-          {route.equalCostNextHops ? ` (${route.equalCostNextHops.length} ECMP next hops)` : ''}
+          <strong>{route.protocol}</strong> {route.destination} {t('via', '→ 次ホップ')}{' '}
+          {route.nextHop}
+          {route.equalCostNextHops
+            ? t(
+                ` (${route.equalCostNextHops.length} ECMP next hops)`,
+                `（ECMP の次ホップ ${route.equalCostNextHops.length} 個）`,
+              )
+            : ''}
         </div>
       ))}
     </div>
@@ -149,6 +157,18 @@ function RouteRows({ routes }: { routes: readonly RouteEntry[] }) {
 }
 
 export default function Ipv6RoutingDemo() {
+  return (
+    <DemoShell
+      title="IPv6 Routing Ecosystem"
+      desc="Compare OSPFv3 ECMP with MP-BGP IPv6 unicast route exchange."
+    >
+      <Ipv6RoutingDemoInner />
+    </DemoShell>
+  );
+}
+
+function Ipv6RoutingDemoInner() {
+  const t = useT();
   const [linkFailed, setLinkFailed] = useState(false);
   const topology = useMemo(() => withRoutes(baseTopology(linkFailed)), [linkFailed]);
   const r1Routes = topology.routeTables.get('r1') ?? [];
@@ -159,53 +179,58 @@ export default function Ipv6RoutingDemo() {
   const ospfRoute = r1Routes.find(
     (route) => route.protocol === 'ospfv3' && route.destination === '2001:db8:23::/64',
   );
+  const activeNextHops = ospfRoute?.equalCostNextHops?.length ?? 1;
 
   return (
-    <DemoShell
-      title="IPv6 Routing Ecosystem"
-      desc="Compare OSPFv3 ECMP with MP-BGP IPv6 unicast route exchange."
-    >
-      <NetlabProvider topology={topology}>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1fr) 360px',
-            gap: 16,
-            minHeight: 620,
-          }}
-        >
-          <section style={{ minHeight: 560, border: '1px solid var(--netlab-border-subtle)' }}>
-            <NetlabCanvas style={{ height: 560 }} />
-          </section>
-          <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <button
-              type="button"
-              data-testid="ospfv3-link-fail"
-              style={BUTTON_STYLE}
-              onClick={() => setLinkFailed((value) => !value)}
-            >
-              {linkFailed ? 'Restore R1-R2 OSPFv3 Link' : 'Fail R1-R2 OSPFv3 Link'}
-            </button>
-            <div style={PANEL_STYLE}>
-              <h3 style={{ marginTop: 0 }}>R1 IPv6 routes</h3>
-              <RouteRows routes={r1Routes} />
+    <NetlabProvider topology={topology}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr) 360px',
+          gap: 16,
+          minHeight: 620,
+        }}
+      >
+        <section style={{ minHeight: 560, border: '1px solid var(--netlab-border-subtle)' }}>
+          <NetlabCanvas style={{ height: 560 }} />
+        </section>
+        <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <button
+            type="button"
+            data-testid="ospfv3-link-fail"
+            style={BUTTON_STYLE}
+            onClick={() => setLinkFailed((value) => !value)}
+          >
+            {linkFailed
+              ? t('Restore R1-R2 OSPFv3 Link', 'R1-R2 間の OSPFv3 リンクを戻す')
+              : t('Fail R1-R2 OSPFv3 Link', 'R1-R2 間の OSPFv3 リンクを落とす')}
+          </button>
+          <div style={PANEL_STYLE}>
+            <h3 style={{ marginTop: 0 }}>{t('R1 IPv6 routes', 'R1 の IPv6 経路')}</h3>
+            <RouteRows routes={r1Routes} />
+          </div>
+          <div style={PANEL_STYLE}>
+            <h3 style={{ marginTop: 0 }}>OSPFv3 ECMP</h3>
+            <div data-testid="ospfv3-ecmp">
+              {t(
+                `${activeNextHops} active next hop${activeNextHops === 1 ? '' : 's'}`,
+                `有効な次ホップ ${activeNextHops} 個`,
+              )}
             </div>
-            <div style={PANEL_STYLE}>
-              <h3 style={{ marginTop: 0 }}>OSPFv3 ECMP</h3>
-              <div data-testid="ospfv3-ecmp">
-                {ospfRoute?.equalCostNextHops?.length ?? 1} active next hop
-                {(ospfRoute?.equalCostNextHops?.length ?? 1) === 1 ? '' : 's'}
-              </div>
+          </div>
+          <div style={PANEL_STYLE}>
+            <h3 style={{ marginTop: 0 }}>MP-BGP IPv6</h3>
+            <div data-testid="mp-bgp-route">
+              {bgpRoute
+                ? t(
+                    `${bgpRoute.destination} via ${bgpRoute.nextHop}`,
+                    `${bgpRoute.destination} → 次ホップ ${bgpRoute.nextHop}`,
+                  )
+                : t('No MP-BGP route', 'MP-BGP の経路なし')}
             </div>
-            <div style={PANEL_STYLE}>
-              <h3 style={{ marginTop: 0 }}>MP-BGP IPv6</h3>
-              <div data-testid="mp-bgp-route">
-                {bgpRoute ? `${bgpRoute.destination} via ${bgpRoute.nextHop}` : 'No MP-BGP route'}
-              </div>
-            </div>
-          </aside>
-        </div>
-      </NetlabProvider>
-    </DemoShell>
+          </div>
+        </aside>
+      </div>
+    </NetlabProvider>
   );
 }

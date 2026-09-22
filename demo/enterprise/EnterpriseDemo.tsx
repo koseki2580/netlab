@@ -11,6 +11,7 @@ import type { HttpMessage, InFlightPacket } from '../../src/types/packets';
 import type { PacketTrace } from '../../src/types/simulation';
 import type { NetworkTopology, TopologySnapshot } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
+import { useT } from '../localeContext';
 
 const BUTTON_BASE: CSSProperties = {
   fontFamily: 'monospace',
@@ -416,10 +417,14 @@ function findTrace(engine: ReturnType<typeof useSimulation>['engine'], packetId:
 }
 
 function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
+  const t = useT();
   const { engine, simulateDhcp, simulateDns, sendPacket, state, getDnsCache } = useSimulation();
   const [isRunning, setIsRunning] = useState(false);
   const [statusText, setStatusText] = useState(
-    'Boot Client A, resolve www.example.com, then browse through NAT.',
+    t(
+      'Boot Client A, resolve www.example.com, then browse through NAT.',
+      'Client A を起動し、www.example.com を名前解決してから、NAT 越しにアクセスします。',
+    ),
   );
 
   const clientIp = engine.getRuntimeNodeIp('client-a');
@@ -444,32 +449,56 @@ function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
   };
 
   const handleDhcp = async () => {
-    await runAction('Running DHCP DORA for Client A.', async () => {
-      engine.clear();
-      const leased = await simulateDhcp('client-a');
-      setStatusText(
-        leased
-          ? `Client A leased ${engine.getRuntimeNodeIp('client-a') ?? 'an address'}.`
-          : 'DHCP did not complete successfully.',
-      );
-    });
+    await runAction(
+      t('Running DHCP DORA for Client A.', 'Client A の DHCP (DORA) を実行しています。'),
+      async () => {
+        engine.clear();
+        const leased = await simulateDhcp('client-a');
+        const leasedIp = engine.getRuntimeNodeIp('client-a');
+        setStatusText(
+          leased
+            ? t(
+                `Client A leased ${leasedIp ?? 'an address'}.`,
+                `Client A に ${leasedIp ?? 'アドレス'} が割り当てられました。`,
+              )
+            : t('DHCP did not complete successfully.', 'DHCP が正常に完了しませんでした。'),
+        );
+      },
+    );
   };
 
   const handleDns = async () => {
-    await runAction('Resolving www.example.com through Internal DNS.', async () => {
-      if (!engine.getRuntimeNodeIp('client-a')) {
-        setStatusText('Run DHCP first so Client A has an address and DNS server.');
-        return;
-      }
+    await runAction(
+      t(
+        'Resolving www.example.com through Internal DNS.',
+        '社内 DNS で www.example.com を名前解決しています。',
+      ),
+      async () => {
+        if (!engine.getRuntimeNodeIp('client-a')) {
+          setStatusText(
+            t(
+              'Run DHCP first so Client A has an address and DNS server.',
+              '先に DHCP を実行して、Client A にアドレスと DNS サーバを設定してください。',
+            ),
+          );
+          return;
+        }
 
-      engine.clearTraces();
-      const resolved = await simulateDns('client-a', 'www.example.com');
-      setStatusText(
-        resolved
-          ? `Internal DNS resolved www.example.com to ${resolved}.`
-          : 'DNS resolution failed for www.example.com.',
-      );
-    });
+        engine.clearTraces();
+        const resolved = await simulateDns('client-a', 'www.example.com');
+        setStatusText(
+          resolved
+            ? t(
+                `Internal DNS resolved www.example.com to ${resolved}.`,
+                `社内 DNS が www.example.com を ${resolved} に解決しました。`,
+              )
+            : t(
+                'DNS resolution failed for www.example.com.',
+                'www.example.com の名前解決に失敗しました。',
+              ),
+        );
+      },
+    );
   };
 
   const runHttpExchange = async (sessionId: string): Promise<boolean> => {
@@ -526,83 +555,135 @@ function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
   };
 
   const handleBrowse = async () => {
-    await runAction('Sending HTTP request through NAT and replaying the response.', async () => {
-      if (!clientIp || !dnsRecord) {
-        setStatusText(
-          'Run DHCP and DNS first so the browser stage has source and destination IPs.',
-        );
-        return;
-      }
+    await runAction(
+      t(
+        'Sending HTTP request through NAT and replaying the response.',
+        'NAT 越しに HTTP リクエストを送り、応答を返しています。',
+      ),
+      async () => {
+        if (!clientIp || !dnsRecord) {
+          setStatusText(
+            t(
+              'Run DHCP and DNS first so the browser stage has source and destination IPs.',
+              '先に DHCP と DNS を実行して、アクセスに使う送信元と宛先の IP をそろえてください。',
+            ),
+          );
+          return;
+        }
 
-      engine.clearTraces();
-      const completed = await runHttpExchange(
-        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-          ? crypto.randomUUID()
-          : `enterprise-http-${Date.now()}`,
-      );
-      setStatusText(
-        completed
-          ? 'HTTP request and return traffic completed. Inspect the NAT table and selected trace.'
-          : 'HTTP request failed before a response could be sent.',
-      );
-    });
+        engine.clearTraces();
+        const completed = await runHttpExchange(
+          typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : `enterprise-http-${Date.now()}`,
+        );
+        setStatusText(
+          completed
+            ? t(
+                'HTTP request and return traffic completed. Inspect the NAT table and selected trace.',
+                'HTTP リクエストと戻りの通信が完了しました。NAT の表と選んだトレースを確認しましょう。',
+              )
+            : t(
+                'HTTP request failed before a response could be sent.',
+                '応答を返す前に HTTP リクエストが失敗しました。',
+              ),
+        );
+      },
+    );
   };
 
   const handleBlockedProbe = async () => {
-    await runAction('Sending an outbound SSH probe that the inside ACL should deny.', async () => {
-      if (!clientIp || !webServerIp) {
-        setStatusText('Run DHCP first so Client A has a source IP for the ACL probe.');
-        return;
-      }
+    await runAction(
+      t(
+        'Sending an outbound SSH probe that the inside ACL should deny.',
+        '内側の ACL で拒否されるはずの、外向きの SSH の試しパケットを送っています。',
+      ),
+      async () => {
+        if (!clientIp || !webServerIp) {
+          setStatusText(
+            t(
+              'Run DHCP first so Client A has a source IP for the ACL probe.',
+              '先に DHCP を実行して、ACL を試すための送信元 IP を Client A に設定してください。',
+            ),
+          );
+          return;
+        }
 
-      engine.clearTraces();
-      await sendPacket(
-        buildTcpProbePacket(
-          'client-a',
-          'web-server',
-          clientIp,
-          webServerIp,
-          49160,
-          22,
-          'blocked-ssh',
-        ),
-      );
-      const traces = engine.getState().traces;
-      const trace = traces[traces.length - 1] as PacketTrace | undefined;
-      setStatusText(
-        trace?.status === 'dropped'
-          ? 'ACL denied the SSH probe as expected.'
-          : 'Inspect the selected trace to verify the ACL outcome.',
-      );
-    });
+        engine.clearTraces();
+        await sendPacket(
+          buildTcpProbePacket(
+            'client-a',
+            'web-server',
+            clientIp,
+            webServerIp,
+            49160,
+            22,
+            'blocked-ssh',
+          ),
+        );
+        const traces = engine.getState().traces;
+        const trace = traces[traces.length - 1] as PacketTrace | undefined;
+        setStatusText(
+          trace?.status === 'dropped'
+            ? t(
+                'ACL denied the SSH probe as expected.',
+                '予想どおり、ACL が SSH の試しパケットを拒否しました。',
+              )
+            : t(
+                'Inspect the selected trace to verify the ACL outcome.',
+                '選んだトレースを開いて、ACL の判断を確かめましょう。',
+              ),
+        );
+      },
+    );
   };
 
   const handleFullScenario = async () => {
-    await runAction('Running the full boot → resolve → browse scenario.', async () => {
-      engine.clear();
-      const leased = await simulateDhcp('client-a');
-      if (!leased) {
-        setStatusText('Full scenario stopped during DHCP.');
-        return;
-      }
+    await runAction(
+      t(
+        'Running the full boot → resolve → browse scenario.',
+        '起動 → 名前解決 → アクセスの流れを通しで実行しています。',
+      ),
+      async () => {
+        engine.clear();
+        const leased = await simulateDhcp('client-a');
+        if (!leased) {
+          setStatusText(
+            t('Full scenario stopped during DHCP.', '通しの実行が DHCP の段階で止まりました。'),
+          );
+          return;
+        }
 
-      const resolved = await simulateDns('client-a', 'www.example.com');
-      if (!resolved) {
-        setStatusText('Full scenario stopped during DNS resolution.');
-        return;
-      }
+        const resolved = await simulateDns('client-a', 'www.example.com');
+        if (!resolved) {
+          setStatusText(
+            t(
+              'Full scenario stopped during DNS resolution.',
+              '通しの実行が DNS の名前解決の段階で止まりました。',
+            ),
+          );
+          return;
+        }
 
-      const completed = await runHttpExchange(
-        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-          ? crypto.randomUUID()
-          : `enterprise-full-${Date.now()}`,
-      );
-      setStatusText(
-        completed
-          ? `Full scenario complete: ${engine.getRuntimeNodeIp('client-a') ?? 'client'} → ${resolved}.`
-          : 'Full scenario stopped during the HTTP stage.',
-      );
-    });
+        const completed = await runHttpExchange(
+          typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : `enterprise-full-${Date.now()}`,
+        );
+        const clientAIp = engine.getRuntimeNodeIp('client-a');
+        setStatusText(
+          completed
+            ? t(
+                `Full scenario complete: ${clientAIp ?? 'client'} → ${resolved}.`,
+                `通しの実行が完了しました: ${clientAIp ?? 'client'} → ${resolved}。`,
+              )
+            : t(
+                'Full scenario stopped during the HTTP stage.',
+                '通しの実行が HTTP の段階で止まりました。',
+              ),
+        );
+      },
+    );
   };
 
   return (
@@ -631,7 +712,7 @@ function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
             marginBottom: 8,
           }}
         >
-          Enterprise Workflow
+          {t('Enterprise Workflow', '企業ネットワークの流れ')}
         </div>
         <div
           style={{
@@ -652,7 +733,7 @@ function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
           disabled={isRunning}
           style={isRunning ? BUTTON_DISABLED : BUTTON_PRIMARY}
         >
-          1. DHCP Boot
+          {t('1. DHCP Boot', '1. DHCP で起動')}
         </button>
         <button
           type="button"
@@ -660,7 +741,7 @@ function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
           disabled={isRunning || !clientIp}
           style={isRunning || !clientIp ? BUTTON_DISABLED : BUTTON_SECONDARY}
         >
-          2. Resolve DNS
+          {t('2. Resolve DNS', '2. DNS で名前解決')}
         </button>
         <button
           type="button"
@@ -668,7 +749,7 @@ function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
           disabled={isRunning || !clientIp || !dnsRecord}
           style={isRunning || !clientIp || !dnsRecord ? BUTTON_DISABLED : BUTTON_SECONDARY}
         >
-          3. Browse Through NAT
+          {t('3. Browse Through NAT', '3. NAT 越しにアクセス')}
         </button>
         <button
           type="button"
@@ -676,7 +757,7 @@ function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
           disabled={isRunning || !clientIp}
           style={isRunning || !clientIp ? BUTTON_DISABLED : BUTTON_SECONDARY}
         >
-          4. SSH Probe (ACL Deny)
+          {t('4. SSH Probe (ACL Deny)', '4. SSH を試す (ACL で拒否)')}
         </button>
         <button
           type="button"
@@ -684,7 +765,7 @@ function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
           disabled={isRunning}
           style={isRunning ? BUTTON_DISABLED : BUTTON_SECONDARY}
         >
-          Run Full Scenario
+          {t('Run Full Scenario', '通しで実行')}
         </button>
       </div>
 
@@ -697,10 +778,16 @@ function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
           fontSize: 11,
         }}
       >
-        <MetricCard label="Client A IP" value={clientIp ?? 'pending'} />
-        <MetricCard label="DNS Record" value={dnsRecord?.address ?? 'pending'} />
-        <MetricCard label="Traces" value={String(traceCount)} />
-        <MetricCard label="Highlight" value={state.highlightMode} />
+        <MetricCard
+          label={t('Client A IP', 'Client A の IP')}
+          value={clientIp ?? t('pending', '未取得')}
+        />
+        <MetricCard
+          label={t('DNS Record', 'DNS レコード')}
+          value={dnsRecord?.address ?? t('pending', '未取得')}
+        />
+        <MetricCard label={t('Traces', 'トレース数')} value={String(traceCount)} />
+        <MetricCard label={t('Highlight', 'ハイライト')} value={state.highlightMode} />
       </div>
     </div>
   );
@@ -729,6 +816,8 @@ function EnterpriseDemoInner({
   topology: NetworkTopology;
   onTopologyChange: (snapshot: TopologySnapshot) => void;
 }) {
+  const t = useT();
+
   return (
     <div style={{ display: 'flex', height: '100%' }}>
       <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
@@ -756,7 +845,7 @@ function EnterpriseDemoInner({
               marginBottom: 6,
             }}
           >
-            Enterprise Edge
+            {t('Enterprise Edge', '企業ネットワークの入口')}
           </div>
           <div
             style={{
@@ -766,9 +855,10 @@ function EnterpriseDemoInner({
               lineHeight: 1.5,
             }}
           >
-            Click any node to edit addresses, routes, DHCP scopes, DNS zones, or switch ports in
-            place. Path highlighting is enabled by default so request and response legs remain easy
-            to compare.
+            {t(
+              'Click any node to edit addresses, routes, DHCP scopes, DNS zones, or switch ports in place. Path highlighting is enabled by default so request and response legs remain easy to compare.',
+              '機器を押すと、アドレス・経路・DHCP の配布範囲・DNS のゾーン・スイッチのポートをその場で編集できます。経路のハイライトが最初から有効なので、行きと帰りの通り道を見比べやすくなっています。',
+            )}
           </div>
         </div>
       </div>

@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { NETLAB_LIGHT_THEME, NetlabApp } from '../../src/index';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
+import { readLearningLocale } from '../learning/learningLocale';
 
 // Simple 3-node topology: Client → Router → Server
 const TOPOLOGY: NetworkTopology = {
@@ -88,6 +90,10 @@ const CODE_STYLE: React.CSSProperties = {
 };
 
 export default function EmbedDemo() {
+  // This component renders <DemoShell> itself, so its words sit outside the
+  // shell's language context; read the learner's choice the way the shell does.
+  const [locale] = useState(readLearningLocale);
+  const t = (en: string, ja: string) => (locale === 'ja' ? ja : en);
   return (
     <DemoShell title="Embed" desc="NetlabApp embedded inside a host page">
       <div
@@ -112,12 +118,15 @@ export default function EmbedDemo() {
               marginBottom: 4,
             }}
           >
-            My Network Documentation
+            {t('My Network Documentation', 'わたしのネットワーク資料')}
           </div>
           <div style={{ color: 'var(--netlab-text-secondary)' }}>
-            The component below is a live{' '}
-            <code style={{ color: 'var(--netlab-accent-cyan)' }}>NetlabApp</code> embed — width:
-            100%, height: 480px. It lives inside this prose layout and does not overflow.
+            {t('The component below is a live', 'この下にあるのは、実際に動く')}{' '}
+            <code style={{ color: 'var(--netlab-accent-cyan)' }}>NetlabApp</code>
+            {t(
+              ' embed — width: 100%, height: 480px. It lives inside this prose layout and does not overflow.',
+              ' の埋め込みです（幅 100%、高さ 480px）。この文章のレイアウトの中に収まり、外にはみ出しません。',
+            )}
           </div>
         </div>
 
@@ -134,7 +143,10 @@ export default function EmbedDemo() {
         {/* Usage example */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ ...PROSE_STYLE, color: 'var(--netlab-text-secondary)' }}>
-            The embed above is produced by the following JSX. Copy it into any React page:
+            {t(
+              'The embed above is produced by the following JSX. Copy it into any React page:',
+              '上の埋め込みは、次の JSX で作られています。どの React ページにも貼り付けて使えます：',
+            )}
           </div>
           <code tabIndex={0} style={CODE_STYLE}>{`import { NetlabApp } from 'netlab';
 
@@ -149,7 +161,10 @@ export default function EmbedDemo() {
 
         {/* Static variant */}
         <div style={{ ...PROSE_STYLE, color: 'var(--netlab-text-secondary)' }}>
-          Static view (no simulation controls) — width: 100%, height: 260px:
+          {t(
+            'Static view (no simulation controls) — width: 100%, height: 260px:',
+            'シミュレーションの操作がない静的な表示 — 幅 100%、高さ 260px：',
+          )}
         </div>
         <NetlabApp
           topology={TOPOLOGY}
@@ -160,9 +175,12 @@ export default function EmbedDemo() {
 
         {/* ── LIGHT THEME EXAMPLE ───────────────────────────────────────────── */}
         <div style={{ ...PROSE_STYLE, color: 'var(--netlab-text-secondary)', marginTop: 8 }}>
-          Light theme — pass{' '}
+          {t('Light theme — pass', 'ライトテーマ —')}{' '}
           <code style={{ color: 'var(--netlab-accent-cyan)' }}>theme={'{NETLAB_LIGHT_THEME}'}</code>{' '}
-          to blend into a light-mode host page:
+          {t(
+            'to blend into a light-mode host page:',
+            'を渡すと、ライトモードのホストページになじみます：',
+          )}
         </div>
 
         {/* Simulated light-mode host page */}
@@ -183,11 +201,11 @@ export default function EmbedDemo() {
               marginBottom: 16,
             }}
           >
-            <strong>My Documentation Site</strong>
+            <strong>{t('My Documentation Site', 'わたしの資料サイト')}</strong>
             {/* Slate-500 rather than slate-400: on this card's #f8fafc the
                 lighter tone sits at 2.45:1, well under WCAG AA. */}
             <span style={{ color: 'var(--netlab-text-muted)', marginLeft: 8, fontSize: 12 }}>
-              light-mode host page
+              {t('light-mode host page', 'ライトモードのホストページ')}
             </span>
           </div>
           <NetlabApp
@@ -218,8 +236,10 @@ export default function EmbedDemo() {
 
         {/* Host page footer */}
         <div style={{ ...PROSE_STYLE, color: 'var(--netlab-text-secondary)', fontSize: 12 }}>
-          All components are fully contained — they do not use viewport height and can be placed
-          anywhere in a document.
+          {t(
+            'All components are fully contained — they do not use viewport height and can be placed anywhere in a document.',
+            'どのコンポーネントも自分の枠の中に収まります。ビューポートの高さを使わないので、文書のどこにでも置けます。',
+          )}
         </div>
       </div>
     </DemoShell>

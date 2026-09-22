@@ -7,6 +7,7 @@ import { buildUdpPacket } from '../../src/layers/l4-transport/udpPacketBuilder';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
+import { useT } from '../localeContext';
 
 const BUTTON_STYLE: CSSProperties = {
   border: '1px solid var(--netlab-border-strong)',
@@ -136,6 +137,7 @@ function buildTopology(): NetworkTopology {
 }
 
 function DemoInner() {
+  const t = useT();
   const { sendPacket, state } = useSimulation();
   const shaperHops = useMemo(
     () => state.traces.flatMap((trace) => trace.hops.filter((hop) => hop.shaperTrace)),
@@ -177,7 +179,7 @@ function DemoInner() {
         <NetlabCanvas />
       </div>
       <aside
-        aria-label="DSCP controls"
+        aria-label={t('DSCP controls', 'DSCP の操作')}
         style={{
           borderLeft: '1px solid var(--netlab-border-subtle)',
           background: 'var(--netlab-bg-panel)',
@@ -192,10 +194,10 @@ function DemoInner() {
           onClick={sendShapedPackets}
           style={BUTTON_STYLE}
         >
-          Send shaped packets
+          {t('Send shaped packets', 'シェーパーを通るパケットを送る')}
         </button>
         <section
-          aria-label="Shaper decisions"
+          aria-label={t('Shaper decisions', 'シェーパーの判定')}
           data-testid="demo-trace-log"
           style={{ marginTop: 12 }}
         >
@@ -207,11 +209,11 @@ function DemoInner() {
               textTransform: 'uppercase',
             }}
           >
-            Shaper Decisions
+            {t('Shaper Decisions', 'シェーパーの判定')}
           </h2>
           {shaperHops.length === 0 ? (
             <p style={{ color: 'var(--netlab-text-secondary)', margin: 0 }}>
-              No shaped packet yet.
+              {t('No shaped packet yet.', 'シェーピングされたパケットはまだありません。')}
             </p>
           ) : (
             <ul style={{ display: 'grid', gap: 6, listStyle: 'none', margin: 0, padding: 0 }}>

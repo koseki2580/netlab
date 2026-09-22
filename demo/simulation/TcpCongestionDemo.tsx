@@ -7,6 +7,7 @@ import { DeterministicLossInjector } from '../../src/layers/l4-transport/TcpLoss
 import { tcpHandshake } from '../../src/scenarios';
 import type { TcpCongestionEvent } from '../../src/types/tcp-congestion';
 import DemoShell from '../DemoShell';
+import { useT } from '../localeContext';
 
 const CONN_ID = '10.0.0.10:12345-203.0.113.10:443';
 const MSS = 1000;
@@ -40,6 +41,7 @@ function runCongestionScenario(): readonly TcpCongestionEvent[] {
 }
 
 function TopologyPanel() {
+  const t = useT();
   return (
     <div
       // A label on a plain div is dropped by assistive tech — `aria-label` is
@@ -48,7 +50,7 @@ function TopologyPanel() {
       // with its focusable devices and zoom controls, and calling that a
       // picture claims it has nothing to interact with.
       role="group"
-      aria-label="TCP congestion demo topology"
+      aria-label={t('TCP congestion demo topology', 'TCP 輻輳制御デモのトポロジー')}
       style={{
         position: 'relative',
         height: 240,
@@ -67,90 +69,103 @@ function TopologyPanel() {
 }
 
 export default function TcpCongestionDemo() {
-  const initialEvents = useMemo(() => runCongestionScenario(), []);
-  const [events, setEvents] = useState<readonly TcpCongestionEvent[]>(initialEvents);
-
   return (
     <DemoShell
       title="TCP Congestion Control"
       desc="Slow start, fast retransmit, recovery, and RTO on one deterministic trace."
     >
-      <main
-        style={{
-          height: '100%',
-          overflow: 'auto',
-          padding: 18,
-          background: 'var(--netlab-bg-canvas)',
-          color: 'var(--netlab-text-primary)',
-        }}
-      >
-        <div style={{ maxWidth: 980, margin: '0 auto' }}>
-          <TopologyPanel />
+      <TcpCongestionDemoInner />
+    </DemoShell>
+  );
+}
 
-          <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
-            <button
-              type="button"
-              data-testid="tcp-congestion-run"
-              onClick={() => setEvents(runCongestionScenario())}
-              style={{
-                border: '1px solid var(--netlab-border-strong)',
-                borderRadius: 6,
-                background: 'var(--netlab-bg-panel)',
-                color: 'var(--netlab-text-primary)',
-                padding: '8px 12px',
-                fontFamily: 'monospace',
-                cursor: 'pointer',
-              }}
-            >
-              Run trace
-            </button>
-            <button
-              type="button"
-              data-testid="tcp-congestion-reset"
-              onClick={() => setEvents([])}
-              style={{
-                border: '1px solid var(--netlab-border-subtle)',
-                borderRadius: 6,
-                background: 'transparent',
-                color: 'var(--netlab-text-secondary)',
-                padding: '8px 12px',
-                fontFamily: 'monospace',
-                cursor: 'pointer',
-              }}
-            >
-              Reset
-            </button>
-          </div>
+function TcpCongestionDemoInner() {
+  const t = useT();
+  const initialEvents = useMemo(() => runCongestionScenario(), []);
+  const [events, setEvents] = useState<readonly TcpCongestionEvent[]>(initialEvents);
 
-          <TcpCongestionPanel events={events} />
+  return (
+    <main
+      style={{
+        height: '100%',
+        overflow: 'auto',
+        padding: 18,
+        background: 'var(--netlab-bg-canvas)',
+        color: 'var(--netlab-text-primary)',
+      }}
+    >
+      <div style={{ maxWidth: 980, margin: '0 auto' }}>
+        <TopologyPanel />
 
-          <section
-            aria-label="TCP congestion walkthrough"
+        <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+          <button
+            type="button"
+            data-testid="tcp-congestion-run"
+            onClick={() => setEvents(runCongestionScenario())}
             style={{
-              marginTop: 14,
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              gap: 12,
-              fontSize: 13,
-              lineHeight: 1.6,
-              color: 'var(--netlab-text-secondary)',
+              border: '1px solid var(--netlab-border-strong)',
+              borderRadius: 6,
+              background: 'var(--netlab-bg-panel)',
+              color: 'var(--netlab-text-primary)',
+              padding: '8px 12px',
+              fontFamily: 'monospace',
+              cursor: 'pointer',
             }}
           >
-            <p style={{ margin: 0 }}>
-              The first ACKs grow `cwnd` from one MSS through slow start until the threshold is
-              reached.
-            </p>
-            <p style={{ margin: 0 }}>
-              The deterministic drop at sequence 3001 creates duplicate ACKs and triggers fast
-              retransmit before the RTO path is needed.
-            </p>
-            <p style={{ margin: 0 }}>
-              The later drop at sequence 9001 has no recovery ACKs, so the sender falls back to RTO
-              and resets the window.
-            </p>
-          </section>
+            {t('Run trace', 'トレースを実行')}
+          </button>
+          <button
+            type="button"
+            data-testid="tcp-congestion-reset"
+            onClick={() => setEvents([])}
+            style={{
+              border: '1px solid var(--netlab-border-subtle)',
+              borderRadius: 6,
+              background: 'transparent',
+              color: 'var(--netlab-text-secondary)',
+              padding: '8px 12px',
+              fontFamily: 'monospace',
+              cursor: 'pointer',
+            }}
+          >
+            {t('Reset', 'リセット')}
+          </button>
         </div>
-      </main>
-    </DemoShell>
+
+        <TcpCongestionPanel events={events} />
+
+        <section
+          aria-label={t('TCP congestion walkthrough', 'TCP 輻輳制御の流れ')}
+          style={{
+            marginTop: 14,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: 12,
+            fontSize: 13,
+            lineHeight: 1.6,
+            color: 'var(--netlab-text-secondary)',
+          }}
+        >
+          <p style={{ margin: 0 }}>
+            {t(
+              'The first ACKs grow `cwnd` from one MSS through slow start until the threshold is reached.',
+              '最初の ACK が届くたびに、`cwnd` は 1 MSS からスロースタートで増えていき、しきい値に達するまで続きます。',
+            )}
+          </p>
+          <p style={{ margin: 0 }}>
+            {t(
+              'The deterministic drop at sequence 3001 creates duplicate ACKs and triggers fast retransmit before the RTO path is needed.',
+              'シーケンス番号 3001 で毎回決まって起きる破棄によって重複 ACK が返り、RTO を待つ前に高速再送が始まります。',
+            )}
+          </p>
+          <p style={{ margin: 0 }}>
+            {t(
+              'The later drop at sequence 9001 has no recovery ACKs, so the sender falls back to RTO and resets the window.',
+              '後で起きるシーケンス番号 9001 の破棄では回復のための ACK が返らないため、送信側は RTO による再送に頼り、ウィンドウをリセットします。',
+            )}
+          </p>
+        </section>
+      </div>
+    </main>
   );
 }

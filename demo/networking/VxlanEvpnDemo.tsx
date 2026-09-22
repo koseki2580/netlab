@@ -11,6 +11,7 @@ import { encapVxlan } from '../../src/layers/l3-network/tunneling/VxlanEncap';
 import type { EthernetFrame } from '../../src/types/packets';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
+import { useT } from '../localeContext';
 
 const PANEL_STYLE: CSSProperties = {
   border: '1px solid var(--netlab-border-subtle)',
@@ -97,6 +98,18 @@ const topology: NetworkTopology = {
 };
 
 export default function VxlanEvpnDemo() {
+  return (
+    <DemoShell
+      title="VXLAN EVPN"
+      desc="Inspect VXLAN UDP/4789 encapsulation, EVPN learning, and ARP suppression."
+    >
+      <VxlanEvpnDemoInner />
+    </DemoShell>
+  );
+}
+
+function VxlanEvpnDemoInner() {
+  const t = useT();
   const [suppression, setSuppression] = useState(true);
   const type2 = useMemo(
     () =>
@@ -127,58 +140,55 @@ export default function VxlanEvpnDemo() {
   });
 
   return (
-    <DemoShell
-      title="VXLAN EVPN"
-      desc="Inspect VXLAN UDP/4789 encapsulation, EVPN learning, and ARP suppression."
-    >
-      <NetlabProvider topology={topology}>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1fr) 360px',
-            gap: 16,
-            minHeight: 620,
-          }}
-        >
-          <section style={{ minHeight: 560, border: '1px solid var(--netlab-border-subtle)' }}>
-            <NetlabCanvas style={{ height: 560 }} />
-          </section>
-          <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <button
-              type="button"
-              data-testid="arp-suppression-toggle"
-              onClick={() => setSuppression((value) => !value)}
-            >
-              {suppression ? 'Disable ARP Suppression' : 'Enable ARP Suppression'}
-            </button>
-            <div style={PANEL_STYLE}>
-              <h3 style={{ marginTop: 0 }}>VXLAN</h3>
-              <div data-testid="vxlan-outer">
-                Outer UDP/
-                {outer.payload.layer === 'L4' && 'dstPort' in outer.payload
-                  ? outer.payload.dstPort
-                  : 'n/a'}{' '}
-                VNI 10000
-              </div>
-              <div data-testid="vxlan-inner">
-                Inner Ethernet: {frame.srcMac} → {frame.dstMac}
-              </div>
+    <NetlabProvider topology={topology}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr) 360px',
+          gap: 16,
+          minHeight: 620,
+        }}
+      >
+        <section style={{ minHeight: 560, border: '1px solid var(--netlab-border-subtle)' }}>
+          <NetlabCanvas style={{ height: 560 }} />
+        </section>
+        <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <button
+            type="button"
+            data-testid="arp-suppression-toggle"
+            onClick={() => setSuppression((value) => !value)}
+          >
+            {suppression
+              ? t('Disable ARP Suppression', 'ARP 抑止を無効にする')
+              : t('Enable ARP Suppression', 'ARP 抑止を有効にする')}
+          </button>
+          <div style={PANEL_STYLE}>
+            <h3 style={{ marginTop: 0 }}>VXLAN</h3>
+            <div data-testid="vxlan-outer">
+              {t('Outer UDP/', '外側 UDP/')}
+              {outer.payload.layer === 'L4' && 'dstPort' in outer.payload
+                ? outer.payload.dstPort
+                : t('n/a', 'なし')}{' '}
+              VNI 10000
             </div>
-            <div style={PANEL_STYLE}>
-              <h3 style={{ marginTop: 0 }}>EVPN</h3>
-              <div data-testid="evpn-type2">
-                Type-2: {type2.mac} / {type2.ip}
-              </div>
-              <div data-testid="evpn-type5">Type-5: {type5.prefix}</div>
-              <div data-testid="arp-suppression">
-                {arp.action === 'reply'
-                  ? `ARP suppression hit: ${arp.mac}`
-                  : 'ARP suppression miss: flood'}
-              </div>
+            <div data-testid="vxlan-inner">
+              {t('Inner Ethernet:', '内側 Ethernet:')} {frame.srcMac} → {frame.dstMac}
             </div>
-          </aside>
-        </div>
-      </NetlabProvider>
-    </DemoShell>
+          </div>
+          <div style={PANEL_STYLE}>
+            <h3 style={{ marginTop: 0 }}>EVPN</h3>
+            <div data-testid="evpn-type2">
+              Type-2: {type2.mac} / {type2.ip}
+            </div>
+            <div data-testid="evpn-type5">Type-5: {type5.prefix}</div>
+            <div data-testid="arp-suppression">
+              {arp.action === 'reply'
+                ? t(`ARP suppression hit: ${arp.mac}`, `ARP 抑止でヒット: ${arp.mac}`)
+                : t('ARP suppression miss: flood', 'ARP 抑止でミス: フラッディングします')}
+            </div>
+          </div>
+        </aside>
+      </div>
+    </NetlabProvider>
   );
 }

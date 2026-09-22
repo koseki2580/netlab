@@ -17,6 +17,7 @@ import type { EditorTopology } from '../../src/editor/types';
 import type { InFlightPacket } from '../../src/types/packets';
 import type { NetworkTopology } from '../../src/types/topology';
 import { readDemoEmbedParams } from '../embedParams';
+import { useT } from '../localeContext';
 
 type DemoEmbedProviderProps = Pick<
   ReturnType<typeof readDemoEmbedParams>,
@@ -25,11 +26,11 @@ type DemoEmbedProviderProps = Pick<
 
 type TabId = 'editor' | 'simulation' | 'failure' | 'trace';
 
-const TABS: { id: TabId; label: string }[] = [
-  { id: 'editor', label: 'Editor' },
-  { id: 'simulation', label: 'Step Simulation' },
-  { id: 'failure', label: 'Failure Injection' },
-  { id: 'trace', label: 'Trace Inspector' },
+const TABS: { id: TabId; label: string; labelJa: string }[] = [
+  { id: 'editor', label: 'Editor', labelJa: 'エディタ' },
+  { id: 'simulation', label: 'Step Simulation', labelJa: 'ステップ実行' },
+  { id: 'failure', label: 'Failure Injection', labelJa: '障害の注入' },
+  { id: 'trace', label: 'Trace Inspector', labelJa: 'トレースの確認' },
 ];
 
 const INITIAL_TOPOLOGY: EditorTopology = {
@@ -163,6 +164,7 @@ const INITIAL_TOPOLOGY: EditorTopology = {
 export const ALL_IN_ONE_INITIAL_TOPOLOGY = INITIAL_TOPOLOGY;
 
 function TabBar({ activeTab, onChange }: { activeTab: TabId; onChange: (tab: TabId) => void }) {
+  const t = useT();
   return (
     <div
       style={{
@@ -204,7 +206,7 @@ function TabBar({ activeTab, onChange }: { activeTab: TabId; onChange: (tab: Tab
             }
           }}
         >
-          {tab.label}
+          {t(tab.label, tab.labelJa)}
         </button>
       ))}
     </div>
@@ -332,6 +334,7 @@ function SimulationTab({
 }
 
 function FailureTabInner() {
+  const t = useT();
   const { sendPacket } = useSimulation();
   const { topology } = useNetlabContext();
   const { failureState } = useFailure();
@@ -374,13 +377,16 @@ function FailureTabInner() {
               fontSize: 12,
             }}
           >
-            Send Packet
+            {t('Send Packet', 'パケットを送る')}
           </button>
           {downCount > 0 && (
             <span
               style={{ fontSize: 11, color: 'var(--netlab-accent-red)', fontFamily: 'monospace' }}
             >
-              {downCount} failure{downCount > 1 ? 's' : ''} active
+              {t(
+                `${downCount} failure${downCount > 1 ? 's' : ''} active`,
+                `障害が ${downCount} 件起きています`,
+              )}
             </span>
           )}
         </div>

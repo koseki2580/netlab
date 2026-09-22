@@ -9,6 +9,7 @@ import { SimulationProvider, useSimulation } from '../../src/simulation/Simulati
 import type { LinkQosConfig } from '../../src/types/link';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
+import { useT } from '../localeContext';
 
 const BUTTON_STYLE: CSSProperties = {
   border: '1px solid var(--netlab-border-strong)',
@@ -228,6 +229,7 @@ function DemoInner({
   readonly topology: NetworkTopology;
   readonly onQosChange: (link: LinkQosConfig) => void;
 }) {
+  const t = useT();
   const { sendPacket, state } = useSimulation();
   const edge = useMemo(
     () => topology.edges.find((candidate) => candidate.id === 'e-r2-r3') ?? topology.edges[0],
@@ -265,7 +267,7 @@ function DemoInner({
         <NetlabCanvas />
       </div>
       <aside
-        aria-label="Link QoS controls"
+        aria-label={t('Link QoS controls', 'リンクの QoS の操作')}
         style={{
           borderLeft: '1px solid var(--netlab-border-subtle)',
           background: 'var(--netlab-bg-panel)',
@@ -275,7 +277,7 @@ function DemoInner({
         }}
       >
         <button type="button" data-testid="link-qos-burst" onClick={sendBurst} style={BUTTON_STYLE}>
-          Send QoS burst
+          {t('Send QoS burst', 'QoS を試すパケットを送る')}
         </button>
         {edge && <LinkDetailPanel edge={edge} onQosChange={onQosChange} />}
         <div style={{ marginTop: 14 }}>

@@ -15,6 +15,7 @@ import type { InFlightPacket } from '../../src/types/packets';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
 import { readDemoEmbedParams } from '../embedParams';
+import { useT } from '../localeContext';
 
 const PING_PAYLOAD_BYTES = 1200;
 
@@ -138,6 +139,7 @@ function FragmentationDemoInner({
   tunnelMtu: number;
   onTunnelMtuChange: (value: number) => void;
 }) {
+  const t = useT();
   const { topology } = useNetlabContext();
   const { engine, sendPacket, state, isRecomputing } = useSimulation();
   const activeTrace = state.currentTraceId
@@ -179,15 +181,19 @@ function FragmentationDemoInner({
           }}
         >
           <div style={{ color: 'var(--netlab-text-primary)', fontWeight: 700, marginBottom: 4 }}>
-            MTU & Fragmentation
+            {t('MTU & Fragmentation', 'MTU と分割')}
           </div>
           <div>
-            Host A sends toward Host B across a low-MTU tunnel. R1 fragments on egress when DF is
-            clear, or drops and emits ICMP Fragmentation Needed when DF is set.
+            {t(
+              'Host A sends toward Host B across a low-MTU tunnel. R1 fragments on egress when DF is clear, or drops and emits ICMP Fragmentation Needed when DF is set.',
+              'Host A は MTU の小さいトンネルを通って Host B へ送ります。DF が立っていなければ R1 は出口で分割し、DF が立っていれば破棄して ICMP Fragmentation Needed を返します。',
+            )}
           </div>
           <div style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}>
-            With the default `600`-byte tunnel MTU and a `1200`-byte ICMP data field, Netlab shows
-            three IPv4 fragments because the ICMP header is part of the fragmented payload.
+            {t(
+              'With the default `600`-byte tunnel MTU and a `1200`-byte ICMP data field, Netlab shows three IPv4 fragments because the ICMP header is part of the fragmented payload.',
+              'トンネル MTU が既定の `600` バイトで ICMP のデータ部が `1200` バイトのとき、ICMP ヘッダも分割されるペイロードに含まれるため、Netlab では IPv4 の断片が 3 つになります。',
+            )}
           </div>
         </div>
       </div>
@@ -211,7 +217,7 @@ function FragmentationDemoInner({
           }}
         >
           <div style={CARD_STYLE}>
-            <div style={LABEL_STYLE}>Controls</div>
+            <div style={LABEL_STYLE}>{t('Controls', '操作')}</div>
             <label
               style={{
                 display: 'grid',
@@ -221,7 +227,9 @@ function FragmentationDemoInner({
                 fontSize: 12,
               }}
             >
-              <span>Tunnel MTU: {tunnelMtu} bytes</span>
+              <span>
+                {t(`Tunnel MTU: ${tunnelMtu} bytes`, `トンネル MTU: ${tunnelMtu} バイト`)}
+              </span>
               <input
                 type="range"
                 min={300}
@@ -248,7 +256,7 @@ function FragmentationDemoInner({
                 checked={dfEnabled}
                 onChange={(event) => setDfEnabled(event.target.checked)}
               />
-              Set DF bit on ICMP echo from A
+              {t('Set DF bit on ICMP echo from A', 'A からの ICMP エコーに DF ビットを立てる')}
             </label>
             <button
               type="button"
@@ -257,11 +265,11 @@ function FragmentationDemoInner({
               disabled={isRecomputing}
               onClick={() => void sendPing()}
             >
-              ping A → B (1200-byte payload)
+              {t('ping A → B (1200-byte payload)', 'A から B へ ping (ペイロード 1200 バイト)')}
             </button>
           </div>
           <div style={CARD_STYLE}>
-            <div style={LABEL_STYLE}>Trace Notes</div>
+            <div style={LABEL_STYLE}>{t('Trace Notes', 'トレースのメモ')}</div>
             <div
               style={{
                 color: 'var(--netlab-text-primary)',
@@ -271,23 +279,36 @@ function FragmentationDemoInner({
                 gap: 6,
               }}
             >
-              <div>Fragment hops: {fragmentHops.length}</div>
               <div>
-                Reassembly:{' '}
-                {reassemblyHop
-                  ? `complete (${reassemblyHop.fragmentCount ?? fragmentHops.length} fragments)`
-                  : 'not completed'}
+                {t(
+                  `Fragment hops: ${fragmentHops.length}`,
+                  `分割が起きたホップ: ${fragmentHops.length}`,
+                )}
               </div>
               <div>
-                Frag-Needed ICMP:{' '}
+                {t('Reassembly:', '再組み立て:')}{' '}
+                {reassemblyHop
+                  ? t(
+                      `complete (${reassemblyHop.fragmentCount ?? fragmentHops.length} fragments)`,
+                      `完了 (断片 ${reassemblyHop.fragmentCount ?? fragmentHops.length} 個)`,
+                    )
+                  : t('not completed', '未完了')}
+              </div>
+              <div>
+                {t('Frag-Needed ICMP:', 'Frag-Needed の ICMP:')}{' '}
                 {fragNeededHop
-                  ? `yes (next-hop MTU ${fragNeededHop.nextHopMtu ?? 'unknown'})`
-                  : 'no'}
+                  ? t(
+                      `yes (next-hop MTU ${fragNeededHop.nextHopMtu ?? 'unknown'})`,
+                      `あり (次ホップの MTU ${fragNeededHop.nextHopMtu ?? '不明'})`,
+                    )
+                  : t('no', 'なし')}
               </div>
             </div>
           </div>
           <div style={CARD_STYLE}>
-            <div style={LABEL_STYLE}>Why You See Multiple Packets</div>
+            <div style={LABEL_STYLE}>
+              {t('Why You See Multiple Packets', 'パケットが複数に見える理由')}
+            </div>
             <div
               style={{
                 color: 'var(--netlab-text-secondary)',
@@ -296,10 +317,10 @@ function FragmentationDemoInner({
                 lineHeight: 1.6,
               }}
             >
-              R1&apos;s egress link to R2 has a finite MTU. With DF disabled, the packet is split
-              into RFC 791 fragments. Host B reassembles them before the echo reaches the
-              destination stack. With DF enabled, R1 keeps the packet intact and returns ICMP type 3
-              code 4 instead.
+              {t(
+                "R1's egress link to R2 has a finite MTU. With DF disabled, the packet is split into RFC 791 fragments. Host B reassembles them before the echo reaches the destination stack. With DF enabled, R1 keeps the packet intact and returns ICMP type 3 code 4 instead.",
+                'R1 から R2 への出口のリンクには MTU の上限があります。DF が無効なら、パケットは RFC 791 に従った断片に分割されます。Host B は、エコーが宛先のプロトコルスタックに届く前に断片を再組み立てします。DF が有効なら、R1 はパケットを分割せず、代わりに ICMP type 3 code 4 を返します。',
+              )}
             </div>
           </div>
         </div>

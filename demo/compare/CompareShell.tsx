@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useT } from '../localeContext';
 import { ComparePane } from './ComparePane';
 
 // P12 — shared-playhead speed control. The play loop interval is 450ms / speed.
@@ -40,11 +41,12 @@ function CompareSpeedControl({
   speed: CompareSpeed;
   onChange: (next: CompareSpeed) => void;
 }) {
+  const t = useT();
   return (
     <div
       data-testid="compare-speed"
       role="radiogroup"
-      aria-label="Playback speed"
+      aria-label={t('Playback speed', '再生の速さ')}
       style={{
         display: 'inline-flex',
         alignItems: 'center',
@@ -64,7 +66,7 @@ function CompareSpeedControl({
             type="button"
             role="radio"
             aria-checked={active}
-            aria-label={`${opt}× speed`}
+            aria-label={t(`${opt}× speed`, `${opt}× の速さ`)}
             onClick={() => onChange(opt)}
             style={{
               all: 'unset',
@@ -248,6 +250,7 @@ function SharedTimelineBar({
   onTogglePlay: () => void;
   onSpeedChange: (next: CompareSpeed) => void;
 }) {
+  const t = useT();
   return (
     <div
       data-testid="compare-timeline"
@@ -279,11 +282,11 @@ function SharedTimelineBar({
           fontFamily: 'ui-monospace, monospace',
         }}
       >
-        {playing ? '⏸ pause' : '▶ play'}
+        {playing ? t('⏸ pause', '⏸ 一時停止') : t('▶ play', '▶ 再生')}
       </button>
       <input
         type="range"
-        aria-label="Shared compare timeline"
+        aria-label={t('Shared compare timeline', '両方に共通の比較タイムライン')}
         min={0}
         max={maxStep}
         value={step}
@@ -291,11 +294,11 @@ function SharedTimelineBar({
         style={{ flex: 1 }}
       />
       <span style={{ color: 'var(--netlab-accent-cyan)', whiteSpace: 'nowrap' }}>
-        step {step} / {maxStep}
+        {t(`step ${step} / ${maxStep}`, `ステップ ${step} / ${maxStep}`)}
       </span>
       <CompareSpeedControl speed={speed} onChange={onSpeedChange} />
       <span style={{ color: 'var(--netlab-text-muted)', whiteSpace: 'nowrap' }}>
-        space · ← / → · ↑ / ↓ speed
+        {t('space · ← / → · ↑ / ↓ speed', 'スペースで再生 · ← / → で移動 · ↑ / ↓ で速さ')}
       </span>
     </div>
   );

@@ -4,6 +4,7 @@ import { TopologyEditor } from '../../src/editor/components/TopologyEditor';
 import type { EditorTopology } from '../../src/editor/types';
 import { decodeTopology, encodeTopology } from '../../src/utils/topology-url';
 import DemoShell from '../DemoShell';
+import { readLearningLocale } from '../learning/learningLocale';
 
 // ─── Example starting topology ────────────────────────────────────────────
 
@@ -97,6 +98,10 @@ export default function EditorDemo() {
   const [topology, setTopology] = useState<EditorTopology>(loadInitialTopology);
   const [copied, setCopied] = useState(false);
   const [jsonOpen, setJsonOpen] = useState(false);
+  // This component renders <DemoShell> itself, so its words sit outside the
+  // shell's language context; read the learner's choice the way the shell does.
+  const [locale] = useState(readLearningLocale);
+  const t = (en: string, ja: string) => (locale === 'ja' ? ja : en);
 
   const handleCopyLink = () => {
     const qs = encodeTopology({ ...topology, areas: [] });
@@ -126,7 +131,10 @@ export default function EditorDemo() {
           }}
         >
           <span>
-            {topology.nodes.length} nodes · {topology.edges.length} edges
+            {t(
+              `${topology.nodes.length} nodes · ${topology.edges.length} edges`,
+              `機器 ${topology.nodes.length} 台 · リンク ${topology.edges.length} 本`,
+            )}
           </span>
           <div style={{ flex: 1 }} />
           <button
@@ -142,7 +150,7 @@ export default function EditorDemo() {
               fontSize: 11,
             }}
           >
-            {jsonOpen ? '✕ Hide JSON' : '{ } View JSON'}
+            {jsonOpen ? t('✕ Hide JSON', '✕ JSON を隠す') : t('{ } View JSON', '{ } JSON を見る')}
           </button>
           <button
             onClick={handleCopyLink}
@@ -160,7 +168,7 @@ export default function EditorDemo() {
               transition: 'all 0.2s',
             }}
           >
-            {copied ? '✓ Copied!' : '🔗 Copy Link'}
+            {copied ? t('✓ Copied!', '✓ コピーしました') : t('🔗 Copy Link', '🔗 リンクをコピー')}
           </button>
         </div>
 
@@ -197,7 +205,7 @@ export default function EditorDemo() {
                   letterSpacing: 1,
                 }}
               >
-                TOPOLOGY JSON
+                {t('TOPOLOGY JSON', 'トポロジの JSON')}
               </div>
               <pre
                 style={{

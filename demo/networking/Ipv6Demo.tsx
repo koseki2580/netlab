@@ -7,6 +7,7 @@ import { SimulationProvider, useSimulation } from '../../src/simulation/Simulati
 import type { RouteEntry } from '../../src/types/routing';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
+import { useT } from '../localeContext';
 
 const BUTTON_STYLE: CSSProperties = {
   border: '1px solid var(--netlab-border-strong)',
@@ -118,6 +119,7 @@ function buildTopology(): NetworkTopology {
 }
 
 function DemoInner() {
+  const t = useT();
   const { engine, state } = useSimulation();
   const ipv6Hops = useMemo(
     () => state.traces.flatMap((trace) => trace.hops.filter((hop) => hop.protocol === 'ICMPv6')),
@@ -143,7 +145,7 @@ function DemoInner() {
           style={BUTTON_STYLE}
           onClick={() => void engine.ping('client-1', '2001:db8:2::20')}
         >
-          Send IPv6 Echo
+          {t('Send IPv6 Echo', 'IPv6 の Echo を送る')}
         </button>
         <TraceSummary />
         <div
@@ -156,12 +158,16 @@ function DemoInner() {
             fontSize: 12,
           }}
         >
-          <div style={{ color: 'var(--netlab-text-secondary)', marginBottom: 6 }}>ICMPv6 hops</div>
+          <div style={{ color: 'var(--netlab-text-secondary)', marginBottom: 6 }}>
+            {t('ICMPv6 hops', 'ICMPv6 のホップ')}
+          </div>
           <div style={{ color: 'var(--netlab-text-muted)', marginBottom: 8 }}>
-            2001:db8:1::10 to 2001:db8:2::20
+            {t('2001:db8:1::10 to 2001:db8:2::20', '2001:db8:1::10 から 2001:db8:2::20 へ')}
           </div>
           {ipv6Hops.length === 0 ? (
-            <div style={{ color: 'var(--netlab-text-muted)' }}>No IPv6 trace yet</div>
+            <div style={{ color: 'var(--netlab-text-muted)' }}>
+              {t('No IPv6 trace yet', 'IPv6 のトレースはまだありません')}
+            </div>
           ) : (
             ipv6Hops.map((hop) => (
               <div key={`${hop.step}-${hop.nodeId}`} style={{ marginBottom: 4 }}>

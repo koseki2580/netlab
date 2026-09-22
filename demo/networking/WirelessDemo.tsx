@@ -10,6 +10,7 @@ import type { WpaFourWayHandshakeResult } from '../../src/layers/l1-physical/wir
 import type { WirelessAssociationState, WirelessLinkConfig } from '../../src/types/wireless';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
+import { useT } from '../localeContext';
 
 const PANEL_STYLE: CSSProperties = {
   border: '1px solid var(--netlab-border-subtle)',
@@ -111,6 +112,91 @@ function topology(distanceMetersValue: number): NetworkTopology {
   };
 }
 
+// Rendered inside DemoShell so it reads the learner's language; the page
+// component itself sits outside the shell's locale provider.
+function WirelessControls({
+  distance,
+  onDistanceChange,
+  rssi,
+  loss,
+  associationPhase,
+  handshake,
+  hiddenNode,
+  onToggleHiddenNode,
+  collidedStationIds,
+}: {
+  readonly distance: number;
+  readonly onDistanceChange: (distance: number) => void;
+  readonly rssi: number;
+  readonly loss: number;
+  readonly associationPhase: WirelessAssociationState['phase'];
+  readonly handshake: WpaFourWayHandshakeResult | null;
+  readonly hiddenNode: boolean;
+  readonly onToggleHiddenNode: () => void;
+  readonly collidedStationIds: readonly string[];
+}) {
+  const t = useT();
+
+  return (
+    <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={PANEL_STYLE}>
+        <h3 style={{ marginTop: 0 }}>{t('Radio model', '電波のモデル')}</h3>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {t('Station distance', 'AP から端末までの距離')}
+          <input
+            aria-label={t('Station distance', 'AP から端末までの距離')}
+            data-testid="wireless-station-distance"
+            type="range"
+            min={5}
+            max={300}
+            value={distance}
+            onChange={(event) => onDistanceChange(Number(event.currentTarget.value))}
+          />
+        </label>
+        <div data-testid="wireless-rssi">RSSI: {rssi.toFixed(1)} dBm</div>
+        <div data-testid="wireless-loss">
+          {t('Loss: ', '損失率: ')}
+          {loss}%
+        </div>
+      </div>
+      <div style={PANEL_STYLE}>
+        <h3 style={{ marginTop: 0 }}>{t('Association', 'アソシエーション (AP への接続)')}</h3>
+        <div data-testid="wireless-association">
+          {t('State: ', '状態: ')}
+          {associationPhase}
+        </div>
+        <div data-testid="wpa-messages">
+          WPA2:{' '}
+          {handshake
+            ? handshake.messages.map((message) => message.type).join(' ')
+            : t('pending', '処理中')}
+        </div>
+      </div>
+      <button
+        type="button"
+        data-testid="hidden-node-toggle"
+        style={BUTTON_STYLE}
+        onClick={onToggleHiddenNode}
+      >
+        {hiddenNode
+          ? t('Disable Hidden Node', '隠れ端末問題を解消する')
+          : t('Enable Hidden Node', '隠れ端末問題を起こす')}
+      </button>
+      <div style={PANEL_STYLE}>
+        <h3 style={{ marginTop: 0 }}>CSMA/CA</h3>
+        <div data-testid="hidden-node">
+          {collidedStationIds.length > 0
+            ? t(
+                `Collision: ${collidedStationIds.join(', ')}`,
+                `衝突: ${collidedStationIds.join(', ')}`,
+              )
+            : t('No collision', '衝突なし')}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
 export default function WirelessDemo() {
   const [distance, setDistance] = useState(20);
   const [hiddenNode, setHiddenNode] = useState(false);
@@ -160,51 +246,17 @@ export default function WirelessDemo() {
           <section style={{ minHeight: 560, border: '1px solid var(--netlab-border-subtle)' }}>
             <NetlabCanvas style={{ height: 560 }} />
           </section>
-          <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={PANEL_STYLE}>
-              <h3 style={{ marginTop: 0 }}>Radio model</h3>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                Station distance
-                <input
-                  aria-label="Station distance"
-                  data-testid="wireless-station-distance"
-                  type="range"
-                  min={5}
-                  max={300}
-                  value={distance}
-                  onChange={(event) => setDistance(Number(event.currentTarget.value))}
-                />
-              </label>
-              <div data-testid="wireless-rssi">RSSI: {rssi.toFixed(1)} dBm</div>
-              <div data-testid="wireless-loss">Loss: {loss}%</div>
-            </div>
-            <div style={PANEL_STYLE}>
-              <h3 style={{ marginTop: 0 }}>Association</h3>
-              <div data-testid="wireless-association">State: {association.phase}</div>
-              <div data-testid="wpa-messages">
-                WPA2:{' '}
-                {handshake
-                  ? handshake.messages.map((message) => message.type).join(' ')
-                  : 'pending'}
-              </div>
-            </div>
-            <button
-              type="button"
-              data-testid="hidden-node-toggle"
-              style={BUTTON_STYLE}
-              onClick={() => setHiddenNode((value) => !value)}
-            >
-              {hiddenNode ? 'Disable Hidden Node' : 'Enable Hidden Node'}
-            </button>
-            <div style={PANEL_STYLE}>
-              <h3 style={{ marginTop: 0 }}>CSMA/CA</h3>
-              <div data-testid="hidden-node">
-                {collision.collidedStationIds.length > 0
-                  ? `Collision: ${collision.collidedStationIds.join(', ')}`
-                  : 'No collision'}
-              </div>
-            </div>
-          </aside>
+          <WirelessControls
+            distance={distance}
+            onDistanceChange={setDistance}
+            rssi={rssi}
+            loss={loss}
+            associationPhase={association.phase}
+            handshake={handshake}
+            hiddenNode={hiddenNode}
+            onToggleHiddenNode={() => setHiddenNode((value) => !value)}
+            collidedStationIds={collision.collidedStationIds}
+          />
         </div>
       </NetlabProvider>
     </DemoShell>

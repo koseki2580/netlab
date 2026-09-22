@@ -8,6 +8,8 @@ import type { Edit } from '../../src/sandbox/edits';
 import type { NetworkTopology, TopologySnapshot } from '../../src/types/topology';
 import { decodeTopology, encodeTopology } from '../../src/utils/topology-url';
 import DemoShell from '../DemoShell';
+import { readLearningLocale } from '../learning/learningLocale';
+import { useT } from '../localeContext';
 import { STEP_SIM_TOPOLOGY } from '../simulation/stepSimShared';
 
 const INITIAL_TOPOLOGY: NetworkTopology = {
@@ -46,6 +48,7 @@ function formatSnapshot(snapshot: TopologySnapshot): string {
 }
 
 function ControlledSandboxHarness() {
+  const t = useT();
   const sandbox = useSandbox();
 
   return (
@@ -73,7 +76,7 @@ function ControlledSandboxHarness() {
           cursor: 'pointer',
         }}
       >
-        Propose link down
+        {t('Propose link down', 'リンクの切断を提案')}
       </button>
       <button
         type="button"
@@ -89,7 +92,7 @@ function ControlledSandboxHarness() {
           cursor: 'pointer',
         }}
       >
-        Propose link up
+        {t('Propose link up', 'リンクの復旧を提案')}
       </button>
     </div>
   );
@@ -102,8 +105,15 @@ export function ControlledTopologyDemo() {
   const [topology, setTopology] = useState<NetworkTopology>(INITIAL_TOPOLOGY);
   const [encodedSearch, setEncodedSearch] = useState(() => encodeTopology(INITIAL_TOPOLOGY));
   const [pendingProposal, setPendingProposal] = useState<SandboxEditProposal | null>(null);
-  const [status, setStatus] = useState(
-    'Drag nodes, connect links, or delete edges to update the snapshot.',
+  // This component renders <DemoShell> itself, so its words sit outside the
+  // shell's language context; read the learner's choice the way the shell does.
+  const [locale] = useState(readLearningLocale);
+  const t = (en: string, ja: string) => (locale === 'ja' ? ja : en);
+  const [status, setStatus] = useState(() =>
+    t(
+      'Drag nodes, connect links, or delete edges to update the snapshot.',
+      '機器をドラッグしたり、リンクをつないだり消したりすると、スナップショットが更新されます。',
+    ),
   );
 
   const snapshot: TopologySnapshot = {
@@ -114,7 +124,12 @@ export function ControlledTopologyDemo() {
 
   const handleTopologyChange = (nextSnapshot: TopologySnapshot) => {
     setTopology((prev) => ({ ...prev, ...nextSnapshot }));
-    setStatus('Topology updated from canvas interaction.');
+    setStatus(
+      t(
+        'Topology updated from canvas interaction.',
+        'キャンバスでの操作でトポロジを更新しました。',
+      ),
+    );
   };
 
   const handleProviderTopologyChange = (
@@ -124,12 +139,19 @@ export function ControlledTopologyDemo() {
     if (meta.source !== 'sandbox-informational') {
       setTopology((prev) => ({ ...prev, ...nextSnapshot }));
     }
-    setStatus(`Topology update source: ${meta.source}.`);
+    setStatus(
+      t(`Topology update source: ${meta.source}.`, `トポロジを更新した操作元: ${meta.source}`),
+    );
   };
 
   const handleSandboxEditProposed = (proposal: SandboxEditProposal) => {
     setPendingProposal(proposal);
-    setStatus(`Sandbox proposed ${proposal.edit.kind}.`);
+    setStatus(
+      t(
+        `Sandbox proposed ${proposal.edit.kind}.`,
+        `サンドボックスが ${proposal.edit.kind} を提案しました。`,
+      ),
+    );
   };
 
   const acceptPendingProposal = () => {
@@ -150,19 +172,31 @@ export function ControlledTopologyDemo() {
       '',
       `${window.location.pathname}${nextSearch}${window.location.hash}`,
     );
-    setStatus('Current topology encoded into window.location.search.');
+    setStatus(
+      t(
+        'Current topology encoded into window.location.search.',
+        '今のトポロジを window.location.search に書き込みました。',
+      ),
+    );
   };
 
   const handleRestore = () => {
     const restored = decodeTopology(window.location.search);
     if (!restored) {
-      setStatus('No valid topology found in the current URL.');
+      setStatus(
+        t(
+          'No valid topology found in the current URL.',
+          '今の URL には有効なトポロジが入っていません。',
+        ),
+      );
       return;
     }
 
     setTopology(restored);
     setEncodedSearch(window.location.search || encodeTopology(restored));
-    setStatus('Topology restored from the current URL.');
+    setStatus(
+      t('Topology restored from the current URL.', '今の URL からトポロジを復元しました。'),
+    );
   };
 
   return (
@@ -244,7 +278,7 @@ export function ControlledTopologyDemo() {
                 marginBottom: 6,
               }}
             >
-              TOPOLOGY STATE (JSON)
+              {t('TOPOLOGY STATE (JSON)', 'トポロジの状態 (JSON)')}
             </div>
             <div style={{ fontSize: 12, color: 'var(--netlab-text-secondary)', lineHeight: 1.5 }}>
               {status}
@@ -264,7 +298,7 @@ export function ControlledTopologyDemo() {
                 fontFamily: 'inherit',
               }}
             >
-              Encode to URL
+              {t('Encode to URL', 'URL に書き込む')}
             </button>
             <button
               onClick={handleRestore}
@@ -278,16 +312,21 @@ export function ControlledTopologyDemo() {
                 fontFamily: 'inherit',
               }}
             >
-              Restore from URL
+              {t('Restore from URL', 'URL から復元')}
             </button>
           </div>
 
           <div style={{ fontSize: 12, color: 'var(--netlab-text-primary)', lineHeight: 1.6 }}>
-            <div>Nodes: {snapshot.nodes.length}</div>
-            <div>Edges: {snapshot.edges.length}</div>
+            <div>
+              {t('Nodes:', '機器:')} {snapshot.nodes.length}
+            </div>
+            <div>
+              {t('Edges:', 'リンク:')} {snapshot.edges.length}
+            </div>
             {showSandboxHarness && (
               <div data-testid="controlled-sandbox-pending">
-                Pending sandbox proposal: {pendingProposal ? pendingProposal.edit.kind : 'none'}
+                {t('Pending sandbox proposal:', '保留中のサンドボックスの提案:')}{' '}
+                {pendingProposal ? pendingProposal.edit.kind : t('none', 'なし')}
               </div>
             )}
           </div>
@@ -309,7 +348,7 @@ export function ControlledTopologyDemo() {
                   fontFamily: 'inherit',
                 }}
               >
-                Accept proposal
+                {t('Accept proposal', '提案を受け入れる')}
               </button>
               <button
                 type="button"
@@ -328,20 +367,20 @@ export function ControlledTopologyDemo() {
                   fontFamily: 'inherit',
                 }}
               >
-                Reject proposal
+                {t('Reject proposal', '提案を断る')}
               </button>
             </div>
           )}
 
           <div>
             <div style={{ fontSize: 11, color: 'var(--netlab-text-secondary)', marginBottom: 6 }}>
-              URL Query
+              {t('URL Query', 'URL クエリ')}
             </div>
             <pre
               // Focusable because it scrolls: a keyboard user has no other way
               // to reach the rest of an encoded topology this long.
               tabIndex={0}
-              aria-label="Encoded topology URL query"
+              aria-label={t('Encoded topology URL query', 'トポロジを書き込んだ URL クエリ')}
               style={{
                 margin: 0,
                 padding: 12,
@@ -367,7 +406,7 @@ export function ControlledTopologyDemo() {
           <pre
             data-testid="controlled-topology-json"
             tabIndex={0}
-            aria-label="Topology snapshot JSON"
+            aria-label={t('Topology snapshot JSON', 'トポロジのスナップショット (JSON)')}
             style={{
               margin: 0,
               flex: 1,

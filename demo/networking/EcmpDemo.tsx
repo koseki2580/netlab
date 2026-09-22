@@ -8,6 +8,7 @@ import { SimulationProvider, useSimulation } from '../../src/simulation/Simulati
 import type { RouteEntry } from '../../src/types/routing';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
+import { useT } from '../localeContext';
 
 const BUTTON_STYLE: CSSProperties = {
   border: '1px solid var(--netlab-border-strong)',
@@ -228,6 +229,7 @@ function buildTopology(): NetworkTopology {
 }
 
 function DemoInner() {
+  const t = useT();
   const { sendPacket, state } = useSimulation();
   const ecmpHops = useMemo(
     () => state.traces.flatMap((trace) => trace.hops.filter((hop) => hop.ecmpTrace)),
@@ -259,7 +261,7 @@ function DemoInner() {
         <NetlabCanvas />
       </div>
       <aside
-        aria-label="ECMP controls"
+        aria-label={t('ECMP controls', 'ECMP の操作')}
         style={{
           borderLeft: '1px solid var(--netlab-border-subtle)',
           background: 'var(--netlab-bg-panel)',
@@ -269,9 +271,13 @@ function DemoInner() {
         }}
       >
         <button type="button" data-testid="ecmp-send" onClick={sendFlows} style={BUTTON_STYLE}>
-          Send ECMP flows
+          {t('Send ECMP flows', 'ECMP のフローを送る')}
         </button>
-        <section aria-label="ECMP decisions" data-testid="demo-trace-log" style={{ marginTop: 12 }}>
+        <section
+          aria-label={t('ECMP decisions', 'ECMP の振り分け結果')}
+          data-testid="demo-trace-log"
+          style={{ marginTop: 12 }}
+        >
           <h2
             style={{
               fontSize: 12,
@@ -280,17 +286,18 @@ function DemoInner() {
               textTransform: 'uppercase',
             }}
           >
-            ECMP Decisions
+            {t('ECMP Decisions', 'ECMP の振り分け結果')}
           </h2>
           {ecmpHops.length === 0 ? (
             <p style={{ color: 'var(--netlab-text-secondary)', margin: 0 }}>
-              No ECMP flow sent yet.
+              {t('No ECMP flow sent yet.', 'まだ ECMP のフローを送っていません。')}
             </p>
           ) : (
             <ul style={{ display: 'grid', gap: 6, listStyle: 'none', margin: 0, padding: 0 }}>
               {ecmpHops.map((hop, index) => (
                 <li key={`${hop.step}-${index}`}>
-                  bucket {(hop.ecmpTrace?.bucket ?? 0) + 1}/{hop.ecmpTrace?.candidateCount} via{' '}
+                  {t('bucket', 'バケット')} {(hop.ecmpTrace?.bucket ?? 0) + 1}/
+                  {hop.ecmpTrace?.candidateCount} {t('via', '→ 次ホップ')}{' '}
                   {hop.ecmpTrace?.chosen.nextHop}
                 </li>
               ))}

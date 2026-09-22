@@ -10,6 +10,7 @@ import { SimulationProvider, useSimulation } from '../../src/simulation/Simulati
 import type { InFlightPacket } from '../../src/types/packets';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
+import { useT } from '../localeContext';
 
 // ────────────────────────────────────────────────────────────────────────────
 // Diamond topology with primary and backup paths:
@@ -210,6 +211,7 @@ function makePacket(
 // ── Inner component ──────────────────────────────────────────────────────────
 
 function FailureSimDemoInner() {
+  const t = useT();
   const { sendPacket, state, animationSpeed, setAnimationSpeed } = useSimulation();
   const { topology } = useNetlabContext();
   const { failureState } = useFailure();
@@ -238,7 +240,10 @@ function FailureSimDemoInner() {
             <span
               style={{ fontSize: 11, color: 'var(--netlab-accent-red)', fontFamily: 'monospace' }}
             >
-              {downCount} failure{downCount > 1 ? 's' : ''} active
+              {t(
+                `${downCount} failure${downCount > 1 ? 's' : ''} active`,
+                `障害が ${downCount} 件起きています`,
+              )}
             </span>
           </div>
         )}
@@ -268,7 +273,7 @@ function FailureSimDemoInner() {
               fontFamily: 'monospace',
             }}
           >
-            SPEED: {animationSpeed}ms
+            {t('SPEED:', '速さ:')} {animationSpeed}ms
             <input
               type="range"
               min={50}

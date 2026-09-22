@@ -6,6 +6,7 @@ import { Dhcpv6Client } from '../../src/services/dhcpv6/Dhcpv6Client';
 import { Dhcpv6Server } from '../../src/services/dhcpv6/Dhcpv6Server';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
+import { useT } from '../localeContext';
 
 type Mode = 'managed' | 'other' | 'slaac';
 
@@ -93,6 +94,65 @@ function resolveMode(mode: Mode) {
   };
 }
 
+// Rendered inside DemoShell so it reads the learner's language; the page
+// component itself sits outside the shell's locale provider.
+function ModeControls({
+  resolved,
+  setMode,
+}: {
+  readonly resolved: ReturnType<typeof resolveMode>;
+  readonly setMode: (mode: Mode) => void;
+}) {
+  const t = useT();
+
+  return (
+    <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <button type="button" style={BUTTON_STYLE} onClick={() => setMode('managed')}>
+        {t('M=1 DHCPv6 Address', 'M=1 DHCPv6 でアドレス取得')}
+      </button>
+      <button
+        type="button"
+        data-testid="dhcpv6-flag-m0-o1"
+        style={BUTTON_STYLE}
+        onClick={() => setMode('other')}
+      >
+        M=0 O=1 SLAAC + DNS
+      </button>
+      <button
+        type="button"
+        data-testid="dhcpv6-flag-m0-o0"
+        style={BUTTON_STYLE}
+        onClick={() => setMode('slaac')}
+      >
+        {t('M=0 O=0 Pure SLAAC', 'M=0 O=0 SLAAC のみ')}
+      </button>
+      <div
+        style={{
+          border: '1px solid var(--netlab-border-subtle)',
+          borderRadius: 8,
+          padding: 12,
+          fontFamily: 'monospace',
+          fontSize: 13,
+        }}
+      >
+        <div data-testid="slaac-mode">
+          {t('Mode: ', 'モード: ')}
+          {resolved.modeText === 'DHCPv6 address'
+            ? t('DHCPv6 address', 'DHCPv6 アドレス')
+            : resolved.modeText}
+        </div>
+        <div data-testid="host-ipv6">
+          {t('Host IPv6: ', 'ホストの IPv6: ')}
+          {resolved.address === 'unassigned' ? t('unassigned', '未割り当て') : resolved.address}
+        </div>
+        <div data-testid="host-dns">
+          DNS: {resolved.dns === 'none' ? t('none', 'なし') : resolved.dns}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
 export default function Dhcpv6SlaacDemo() {
   const [mode, setMode] = useState<Mode>('managed');
   const resolved = useMemo(() => resolveMode(mode), [mode]);
@@ -115,40 +175,7 @@ export default function Dhcpv6SlaacDemo() {
           <section style={{ minHeight: 500, border: '1px solid var(--netlab-border-subtle)' }}>
             <NetlabCanvas style={{ height: 500 }} />
           </section>
-          <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <button type="button" style={BUTTON_STYLE} onClick={() => setMode('managed')}>
-              M=1 DHCPv6 Address
-            </button>
-            <button
-              type="button"
-              data-testid="dhcpv6-flag-m0-o1"
-              style={BUTTON_STYLE}
-              onClick={() => setMode('other')}
-            >
-              M=0 O=1 SLAAC + DNS
-            </button>
-            <button
-              type="button"
-              data-testid="dhcpv6-flag-m0-o0"
-              style={BUTTON_STYLE}
-              onClick={() => setMode('slaac')}
-            >
-              M=0 O=0 Pure SLAAC
-            </button>
-            <div
-              style={{
-                border: '1px solid var(--netlab-border-subtle)',
-                borderRadius: 8,
-                padding: 12,
-                fontFamily: 'monospace',
-                fontSize: 13,
-              }}
-            >
-              <div data-testid="slaac-mode">Mode: {resolved.modeText}</div>
-              <div data-testid="host-ipv6">Host IPv6: {resolved.address}</div>
-              <div data-testid="host-dns">DNS: {resolved.dns}</div>
-            </div>
-          </aside>
+          <ModeControls resolved={resolved} setMode={setMode} />
         </div>
       </NetlabProvider>
     </DemoShell>

@@ -10,7 +10,7 @@ import { toast } from '../../src/components/ToastBus';
 import { PreFlightBrief } from '../../src/components/PreFlightBrief';
 import { getRecommendedNext, NextScenarioRail } from '../../src/components/NextScenarioRail';
 import { scenarioRegistry } from '../../src/scenarios';
-import type { Scenario } from '../../src/scenarios/types';
+import type { Scenario, ScenarioBrief } from '../../src/scenarios/types';
 import {
   forkScenario,
   getSandbox,
@@ -29,16 +29,46 @@ import { DropEventOverlay } from '../../src/components/simulation/DropEventOverl
 import { StepControls } from '../../src/components/simulation/StepControls';
 import { StatusLine } from '../../src/components/StatusLine';
 import { ZeroStateHint } from '../../src/components/ZeroStateHint';
-import { buildOspfConvergenceTopology } from '../../src/scenarios/ospf-convergence';
+import {
+  buildOspfConvergenceTopology,
+  ospfConvergence,
+} from '../../src/scenarios/ospf-convergence';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import { readDemoEmbedParams } from '../embedParams';
 import { useShellChrome } from '../ShellChromeContext';
 import { useSandboxOrNull } from '../../src/sandbox/useSandbox';
+import { useGalleryLocale, useT } from '../localeContext';
 
 /** The inter-router link this lesson fails; the assessment names the same id. */
 const PRIMARY_LINK_ID = 'e-r2-r4';
 
+/**
+ * The scenario's brief in Japanese. The scenario authors it in English; the
+ * lesson passes this one to the brief card instead when Japanese is chosen.
+ * Steps, marker kinds, prerequisite codes and action ids are the scenario's own.
+ */
+const BRIEF_JA: ScenarioBrief | undefined = ospfConvergence.brief && {
+  ...ospfConvergence.brief,
+  goal: 'OSPF がコストの最も低い経路を選ぶようすと、ルータ間の主経路のリンクが落ちたときに予備の経路を計算し直すようすを見ます。',
+  est: '約 3 分',
+  watchPoints: [
+    { step: 1, kind: 'route', label: 'R1 はコストの低い R2 経由の経路で C2 へ転送します' },
+    { step: 3, kind: 'spf', label: '主経路のリンクを落とすと、R1 で SPF の再計算が起きます' },
+    { step: 5, kind: 'route', label: '計算し直した経路では、R1 から R3 経由で出ていきます' },
+  ],
+  conclusion: {
+    headline: '主経路のリンクが落ちたあと、OSPF は予備の経路を計算し直しました。',
+    detail:
+      'R1 は最初コストの低い R2 経由の経路を選び、そのリンクが落ちると R3 経由へ収束しました。静的な設定変更は必要ありません。',
+    actions: [
+      { id: 'fork', label: 'サンドボックスで試す →', kind: 'primary' },
+      { id: 'gallery', label: 'ほかのシナリオを見る →' },
+    ],
+  },
+};
+
 function RouteSummaryPanel() {
+  const t = useT();
   const { routeTable } = useNetlabContext();
   const preferredRoute =
     routeTable
@@ -66,22 +96,27 @@ function RouteSummaryPanel() {
           marginBottom: 8,
         }}
       >
-        R1 PREFERRED ROUTE
+        {t('R1 PREFERRED ROUTE', 'R1 の優先経路')}
       </div>
       {preferredRoute ? (
         <div style={{ display: 'grid', gap: 6 }}>
           <div style={{ color: 'var(--netlab-accent-cyan)', fontWeight: 700 }}>
             {preferredRoute.destination}
           </div>
-          <div>next-hop: {preferredRoute.nextHop}</div>
+          <div>
+            {t('next-hop:', '次ホップ:')} {preferredRoute.nextHop}
+          </div>
           <div style={{ color: 'var(--netlab-text-secondary)' }}>
-            metric {preferredRoute.metric} • {preferredRoute.protocol}/
+            {t('metric', 'メトリック')} {preferredRoute.metric} • {preferredRoute.protocol}/
             {preferredRoute.adminDistance}
           </div>
         </div>
       ) : (
         <div style={{ color: 'var(--netlab-text-secondary)' }}>
-          No OSPF route currently resolves at R1.
+          {t(
+            'No OSPF route currently resolves at R1.',
+            '今は R1 で使える OSPF の経路がありません。',
+          )}
         </div>
       )}
     </div>
@@ -95,6 +130,8 @@ function OspfConvergenceInner({
   primaryLinkDown: boolean;
   onTogglePrimaryLink: () => void;
 }) {
+  const t = useT();
+  const locale = useGalleryLocale();
   const { engine, state, exportPcap } = useSimulation();
   const shellChrome = useShellChrome();
   const navigate = useNavigate();
@@ -112,10 +149,16 @@ function OspfConvergenceInner({
     }
     toast.info(
       audience === 'learner'
-        ? 'Audience: learner — briefs will show in full'
-        : 'Audience: pro — briefs collapse to a strip',
+        ? t(
+            'Audience: learner — briefs will show in full',
+            '対象を学習者にしました — 説明をすべて表示します',
+          )
+        : t(
+            'Audience: pro — briefs collapse to a strip',
+            '対象をプロにしました — 説明を1行にたたみます',
+          ),
     );
-  }, [audience]);
+  }, [audience, t]);
 
   // Q8 — recommend what to do next once the scenario finishes.
   const nextScenarios = useMemo(() => {
@@ -137,10 +180,10 @@ function OspfConvergenceInner({
 
   const status =
     state.status === 'running'
-      ? { label: 'running', tone: 'running' as const }
+      ? { label: t('running', '実行中'), tone: 'running' as const }
       : state.traces.length > 0
-        ? { label: 'ready', tone: 'ready' as const }
-        : { label: 'idle', tone: 'idle' as const };
+        ? { label: t('ready', '準備完了'), tone: 'ready' as const }
+        : { label: t('idle', '待機中'), tone: 'idle' as const };
 
   // Status line (N5) — surface live counts and progress through the bar
   // below the canvas so the user can read state without watching the toolbar.
@@ -186,9 +229,9 @@ function OspfConvergenceInner({
   const handleResetFork = useCallback(() => {
     if (forkId) {
       setSandbox(resetSandbox(forkId) ?? null);
-      toast.success('Sandbox reset to origin');
+      toast.success(t('Sandbox reset to origin', 'サンドボックスを元の状態に戻しました'));
     }
-  }, [forkId]);
+  }, [forkId, t]);
 
   const handleCompareFork = useCallback(() => {
     void navigate('/compare/ospf-convergence/rip-convergence');
@@ -259,12 +302,15 @@ function OspfConvergenceInner({
     () =>
       currentTrace?.hops.map((hop, index) => ({
         id: `trace-hop:${currentTrace.packetId}:${index}`,
-        label: `Hop ${String(index).padStart(2, '0')} ${hop.event} ${hop.nodeLabel}`,
+        label: t(
+          `Hop ${String(index).padStart(2, '0')} ${hop.event} ${hop.nodeLabel}`,
+          `ホップ ${String(index).padStart(2, '0')} ${hop.event} ${hop.nodeLabel}`,
+        ),
         subtitle:
           hop.toNodeId != null
             ? `${hop.nodeId} -> ${hop.toNodeId}`
             : `${hop.srcIp} -> ${hop.dstIp}`,
-        group: 'Current trace',
+        group: t('Current trace', '現在のトレース'),
         keywords: [
           currentTrace.packetId,
           hop.event,
@@ -279,7 +325,7 @@ function OspfConvergenceInner({
         ],
         onSelect: () => jumpTo(index),
       })) ?? [],
-    [currentTrace, jumpTo],
+    [currentTrace, jumpTo, t],
   );
 
   useEffect(
@@ -289,7 +335,7 @@ function OspfConvergenceInner({
 
   const downloadPcap = () => {
     const traceId = state.currentTraceId ?? undefined;
-    toast.info('Exporting PCAP…');
+    toast.info(t('Exporting PCAP…', 'PCAP を書き出しています…'));
     try {
       const bytes = exportPcap(traceId);
       const blob = new Blob([Uint8Array.from(bytes)], { type: 'application/vnd.tcpdump.pcap' });
@@ -303,9 +349,11 @@ function OspfConvergenceInner({
       URL.revokeObjectURL(url);
       const packetCount =
         state.traces.find((t) => t.packetId === traceId)?.hops.length ?? state.traces.length;
-      toast.success(`PCAP saved · ${packetCount} packets`);
+      toast.success(
+        t(`PCAP saved · ${packetCount} packets`, `PCAP を保存しました · ${packetCount} パケット`),
+      );
     } catch {
-      toast.error('PCAP export failed', { sticky: true });
+      toast.error(t('PCAP export failed', 'PCAP の書き出しに失敗しました'), { sticky: true });
     }
   };
 
@@ -327,10 +375,10 @@ function OspfConvergenceInner({
           <button
             type="button"
             onClick={() => void sendProbe()}
-            title="Send probe C1 -> C2"
+            title={t('Send probe C1 -> C2', 'C1 -> C2 へプローブを送る')}
             style={commandActionStyle('var(--netlab-accent-green)')}
           >
-            Send Probe
+            {t('Send Probe', 'プローブを送る')}
           </button>
           <button
             type="button"
@@ -338,14 +386,14 @@ function OspfConvergenceInner({
             onClick={handleToggleLink}
             title={
               primaryLinkDown
-                ? 'Restore primary inter-router link'
-                : 'Fail primary inter-router link'
+                ? t('Restore primary inter-router link', 'ルータ間の主経路のリンクを戻す')
+                : t('Fail primary inter-router link', 'ルータ間の主経路のリンクを落とす')
             }
             style={commandActionStyle(
               primaryLinkDown ? 'var(--netlab-accent-red)' : 'var(--netlab-accent-yellow)',
             )}
           >
-            {primaryLinkDown ? 'Restore link' : 'Fail link'}
+            {primaryLinkDown ? t('Restore link', 'リンクを戻す') : t('Fail link', 'リンクを落とす')}
           </button>
           {/* Q7 — persistent audience pill; uncontrolled, self-syncs via localStorage + event. */}
           <AudiencePill variant="terminal" />
@@ -370,7 +418,7 @@ function OspfConvergenceInner({
         {sandbox && (
           <LineageBanner
             sandbox={sandbox}
-            originTitle="OSPF Preferred Path"
+            originTitle={t('OSPF Preferred Path', 'OSPF の優先経路')}
             onReset={handleResetFork}
             onCompare={handleCompareFork}
             onClose={handleCloseFork}
@@ -403,19 +451,24 @@ function OspfConvergenceInner({
                 <div
                   style={{ color: 'var(--netlab-text-primary)', fontWeight: 700, marginBottom: 4 }}
                 >
-                  OSPF Route Choice
+                  {t('OSPF Route Choice', 'OSPF の経路選択')}
                 </div>
                 <div>
-                  R1 prefers the lower-cost path through R2 until the primary inter-router link is
-                  removed.
+                  {t(
+                    'R1 prefers the lower-cost path through R2 until the primary inter-router link is removed.',
+                    'ルータ間の主経路のリンクがなくなるまで、R1 はコストの低い R2 経由の経路を選びます。',
+                  )}
                 </div>
                 <div style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}>
-                  Toggle the primary link, then resend the probe to confirm the recomputed path now
-                  leaves through R3.
+                  {t(
+                    'Toggle the primary link, then resend the probe to confirm the recomputed path now leaves through R3.',
+                    '主経路のリンクを切り替えてからプローブを送り直し、計算し直した経路が R3 経由になったことを確かめてください。',
+                  )}
                 </div>
               </div>
               <PreFlightBrief
                 scenarioId="ospf-convergence"
+                {...(locale === 'ja' && BRIEF_JA ? { brief: BRIEF_JA } : {})}
                 audience={audience}
                 isLastStep={isLastStep}
                 onAction={(actionId) => {

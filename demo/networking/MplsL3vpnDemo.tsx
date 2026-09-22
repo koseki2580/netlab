@@ -7,6 +7,7 @@ import { pushMplsLabel } from '../../src/layers/l3-network/tunneling/MplsLabelSt
 import type { NetworkTopology } from '../../src/types/topology';
 import type { VrfConfig } from '../../src/types/tunneling';
 import DemoShell from '../DemoShell';
+import { useT } from '../localeContext';
 
 const PANEL_STYLE: CSSProperties = {
   border: '1px solid var(--netlab-border-subtle)',
@@ -66,6 +67,18 @@ const topology: NetworkTopology = {
 };
 
 export default function MplsL3vpnDemo() {
+  return (
+    <DemoShell
+      title="MPLS L3VPN"
+      desc="Inspect LDP labels, a VPNv4 route target import, and the two-label data-plane stack."
+    >
+      <MplsL3vpnDemoInner />
+    </DemoShell>
+  );
+}
+
+function MplsL3vpnDemoInner() {
+  const t = useT();
   const [php, setPhp] = useState(true);
   const ldp = useMemo(
     () => convergeLdp({ routers: ['pe1', 'p1', 'pe2'], fec: '10.0.2.0/24', baseLabel: 16000 }),
@@ -84,56 +97,60 @@ export default function MplsL3vpnDemo() {
   );
 
   return (
-    <DemoShell
-      title="MPLS L3VPN"
-      desc="Inspect LDP labels, a VPNv4 route target import, and the two-label data-plane stack."
-    >
-      <NetlabProvider topology={topology}>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1fr) 360px',
-            gap: 16,
-            minHeight: 620,
-          }}
-        >
-          <section style={{ minHeight: 560, border: '1px solid var(--netlab-border-subtle)' }}>
-            <NetlabCanvas style={{ height: 560 }} />
-          </section>
-          <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <button
-              type="button"
-              data-testid="mpls-php-disable"
-              onClick={() => setPhp((value) => !value)}
-            >
-              {php ? 'Disable PHP' : 'Enable PHP'}
-            </button>
-            <div style={PANEL_STYLE}>
-              <h3 style={{ marginTop: 0 }}>LDP</h3>
-              <div data-testid="mpls-ldp">
-                LDP: {ldp.converged ? 'converged' : 'pending'} in {ldp.steps} steps
-              </div>
-              <div data-testid="mpls-mapping">
-                Label mapping: {ldp.mappings.map((m) => `${m.routerId}:${m.label}`).join(' ')}
-              </div>
+    <NetlabProvider topology={topology}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr) 360px',
+          gap: 16,
+          minHeight: 620,
+        }}
+      >
+        <section style={{ minHeight: 560, border: '1px solid var(--netlab-border-subtle)' }}>
+          <NetlabCanvas style={{ height: 560 }} />
+        </section>
+        <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <button
+            type="button"
+            data-testid="mpls-php-disable"
+            onClick={() => setPhp((value) => !value)}
+          >
+            {php ? t('Disable PHP', 'PHP を無効にする') : t('Enable PHP', 'PHP を有効にする')}
+          </button>
+          <div style={PANEL_STYLE}>
+            <h3 style={{ marginTop: 0 }}>LDP</h3>
+            <div data-testid="mpls-ldp">
+              {ldp.converged
+                ? t(`LDP: converged in ${ldp.steps} steps`, `LDP: ${ldp.steps} ステップで収束`)
+                : t(`LDP: pending in ${ldp.steps} steps`, `LDP: ${ldp.steps} ステップ時点で未収束`)}
             </div>
-            <div style={PANEL_STYLE}>
-              <h3 style={{ marginTop: 0 }}>L3VPN</h3>
-              <div data-testid="vpnv4-route">
-                VPNv4: {imported[0]?.routes[0]?.prefix} RT {blue.importRts[0]?.value}
-              </div>
-              <div data-testid="mpls-stack">
-                Label stack: {stack.map((label) => label.label).join(' / ')}
-              </div>
-              <div data-testid="mpls-php">
-                {php
-                  ? 'PHP active: penultimate hop pops transport label'
-                  : 'PHP disabled: transport label remains'}
-              </div>
+            <div data-testid="mpls-mapping">
+              {t('Label mapping:', 'ラベルの割り当て:')}{' '}
+              {ldp.mappings.map((m) => `${m.routerId}:${m.label}`).join(' ')}
             </div>
-          </aside>
-        </div>
-      </NetlabProvider>
-    </DemoShell>
+          </div>
+          <div style={PANEL_STYLE}>
+            <h3 style={{ marginTop: 0 }}>L3VPN</h3>
+            <div data-testid="vpnv4-route">
+              VPNv4: {imported[0]?.routes[0]?.prefix} RT {blue.importRts[0]?.value}
+            </div>
+            <div data-testid="mpls-stack">
+              {t('Label stack:', 'ラベルスタック:')} {stack.map((label) => label.label).join(' / ')}
+            </div>
+            <div data-testid="mpls-php">
+              {php
+                ? t(
+                    'PHP active: penultimate hop pops transport label',
+                    'PHP 有効: 最後から2番目のホップがトランスポートラベルを外します',
+                  )
+                : t(
+                    'PHP disabled: transport label remains',
+                    'PHP 無効: トランスポートラベルは残ります',
+                  )}
+            </div>
+          </div>
+        </aside>
+      </div>
+    </NetlabProvider>
   );
 }
