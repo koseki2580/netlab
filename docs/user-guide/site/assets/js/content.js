@@ -41,7 +41,7 @@ window.USER_GUIDE_CONTENT = {
         html: `<p>ギャラリーはレッスンの一覧です。左の列でカテゴリを選び、上の検索欄で名前・プロトコル・レイヤーから絞り込めます。</p>
                <ul>
                  <li><strong>むずかしさ</strong>（はじめて／慣れてきた／詳しく）とタグで絞り込めます。</li>
-                 <li><strong>言語</strong>は右上で切り替えます。一覧の見出しと説明、入門コース、周りの操作が日本語になります。レッスン内部の解説文はまだ英語のものがあります。</li>
+                 <li><strong>言語</strong>は右上で切り替えます。一覧の見出しと説明、入門コース、レッスン内部の解説文、機器の詳細パネル、エディタまで日本語になります。プロトコル名・アドレス・機器名・パケットの項目名や <code>DROP</code> などの記号は、調べるときの手がかりなので英語のままです。</li>
                  <li><strong>テーマ</strong>（ライト／ダーク）も右上で切り替えます。</li>
                  <li><strong>これまでの進み具合</strong>に、終えた件数と「続きから」が出ます。</li>
                </ul>`
@@ -92,7 +92,7 @@ window.USER_GUIDE_CONTENT = {
         title: "こまったとき",
         html: `<p><strong>パケットが届かない</strong> — タイムラインの最後の行にある理由を見てください。<code>no-route</code> は経路がない、<code>not-group-member</code> はそのグループに参加していない、<code>acl-deny</code> はフィルタで止められた、という意味です。レッスンによっては、それを見せることが目的です。</p>
                <p><strong>図が画面に収まらない</strong> — 右下の「全体」（英語表示では <code>fit</code>）を押すと全体が入ります。</p>
-               <p><strong>言語が英語のまま</strong> — ギャラリー右上で「日本語」を選んでください。レッスン内部の解説文はまだ英語のものがあります。</p>
+               <p><strong>言語が英語のまま</strong> — ギャラリー右上で「日本語」を選んでください。プロトコル名やアドレス、<code>DROP</code> などの記号は、そのまま英語で表示されます。</p>
                <p><strong>進み具合が保存されない</strong> — ブラウザのプライベートモードや、サイトデータを保存しない設定では記録できません。</p>`
       }
     ]
@@ -139,7 +139,7 @@ window.USER_GUIDE_CONTENT = {
         html: `<p>The gallery lists the lessons. Pick a category on the left, or search by name, protocol or layer at the top.</p>
                <ul>
                  <li>Filter by <strong>difficulty</strong> (beginner, intermediate, advanced) and by tag.</li>
-                 <li><strong>Language</strong> is chosen top right. It changes the catalogue, the course and the controls around them; some lesson interiors are not translated yet.</li>
+                 <li><strong>Language</strong> is chosen top right. It changes the catalogue, the course, the lessons themselves, the device detail panel and the editor; protocol names, addresses, device names and codes such as <code>DROP</code> stay as they are.</li>
                  <li><strong>Theme</strong> (light or dark) is chosen there too.</li>
                  <li><strong>Your progress</strong> shows how many you have finished and offers to resume.</li>
                </ul>`
@@ -190,7 +190,7 @@ window.USER_GUIDE_CONTENT = {
         title: "Troubleshooting",
         html: `<p><strong>The packet did not arrive.</strong> Read the reason on the last row of the timeline. <code>no-route</code> means there was no route to it, <code>not-group-member</code> means the host had not joined that multicast group, <code>acl-deny</code> means a filter stopped it. On some lessons, showing you that is the point.</p>
                <p><strong>The diagram does not fit.</strong> Press <code>fit</code> at the bottom right.</p>
-               <p><strong>Still in English.</strong> Choose 日本語 at the top right of the gallery. Some lesson interiors are not translated yet.</p>
+               <p><strong>Still in English.</strong> Choose 日本語 at the top right of the gallery. Protocol names, addresses and codes such as <code>DROP</code> stay in English either way.</p>
                <p><strong>Progress is not remembered.</strong> A private window, or a browser set not to keep site data, has nowhere to store it.</p>`
       }
     ]

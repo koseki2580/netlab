@@ -192,3 +192,18 @@ A running record of corrections and feedback received during sessions. Use this 
 **Why**: Shared state across iterations turns a sweep into a rumour mill — real findings and leaked ones look identical, and the cheap ones to chase are the false ones.
 
 **Apply-when**: Any bulk audit over routes, fixtures, or files that reuses a process, page, or client between iterations.
+
+---
+
+## L014 — A shared leaf that reads the catalogue drags it into every small bundle
+
+**What happened**: Translating `NodeGlyph` — a 40-line SVG used by each per-layer entry point — added `useI18n`, whose context statically imports the English catalogue. The three layer bundles jumped from ~7/15/5 kB to ~23/31/21 kB gzipped, and four other budgets drifted over across earlier translation commits, unnoticed because `npm run size` was never run.
+
+**Rule**:
+
+- Run `npm run size` in the same pass as any change that adds bundled content (catalogues, data tables, copy), not only when touching build config.
+- A leaf component that ships inside a deliberately small entry point takes its text as a prop; only components that already belong to the app read the catalogue.
+
+**Why**: The size budget is the only check that sees a dependency edge; tests and typecheck pass happily while a 60 kB catalogue rides into a bundle that exists to be small.
+
+**Apply-when**: Adding i18n, theming, or any shared registry to a component that leaf-level or library-entry code imports.
