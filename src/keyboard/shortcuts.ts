@@ -22,50 +22,101 @@ export type ShortcutScope = 'global' | 'simulator' | 'compare';
 export interface Shortcut {
   /** Display tokens, e.g. `['Space']` or `['⌘', 'K']`. Each renders as one `<kbd>`. */
   keys: string[];
-  description: string;
+  /** Catalog key of the one-line description, so the overlay shows it in the reader's language. */
+  descriptionKey: string;
   category: ShortcutCategory;
   scope?: ShortcutScope;
 }
 
 export const SHORTCUTS: readonly Shortcut[] = [
   // ── Playback (simulator) — installKeymap + PacketScrubTimeline ─────────────
-  { keys: ['Space'], description: 'Play / pause', category: 'Playback', scope: 'simulator' },
-  { keys: ['←'], description: 'Step back', category: 'Playback', scope: 'simulator' },
-  { keys: ['→'], description: 'Step forward', category: 'Playback', scope: 'simulator' },
-  { keys: ['⇧', '←'], description: 'Step back ×5', category: 'Playback', scope: 'simulator' },
-  { keys: ['⇧', '→'], description: 'Step forward ×5', category: 'Playback', scope: 'simulator' },
-  { keys: ['Home'], description: 'Jump to first step', category: 'Playback', scope: 'simulator' },
-  { keys: ['End'], description: 'Jump to last step', category: 'Playback', scope: 'simulator' },
+  {
+    keys: ['Space'],
+    descriptionKey: 'simulation.shortcuts.playPause',
+    category: 'Playback',
+    scope: 'simulator',
+  },
+  {
+    keys: ['←'],
+    descriptionKey: 'simulation.shortcuts.stepBack',
+    category: 'Playback',
+    scope: 'simulator',
+  },
+  {
+    keys: ['→'],
+    descriptionKey: 'simulation.shortcuts.stepForward',
+    category: 'Playback',
+    scope: 'simulator',
+  },
+  {
+    keys: ['⇧', '←'],
+    descriptionKey: 'simulation.shortcuts.stepBackFive',
+    category: 'Playback',
+    scope: 'simulator',
+  },
+  {
+    keys: ['⇧', '→'],
+    descriptionKey: 'simulation.shortcuts.stepForwardFive',
+    category: 'Playback',
+    scope: 'simulator',
+  },
+  {
+    keys: ['Home'],
+    descriptionKey: 'simulation.shortcuts.firstStep',
+    category: 'Playback',
+    scope: 'simulator',
+  },
+  {
+    keys: ['End'],
+    descriptionKey: 'simulation.shortcuts.lastStep',
+    category: 'Playback',
+    scope: 'simulator',
+  },
   // ── Navigation (global) — installKeymap ────────────────────────────────────
   {
     keys: ['⌘', 'K'],
-    description: 'Open command palette',
+    descriptionKey: 'simulation.shortcuts.openPalette',
     category: 'Navigation',
     scope: 'global',
   },
   {
     keys: ['Esc'],
-    description: 'Close palette / overlay',
+    descriptionKey: 'simulation.shortcuts.closeOverlay',
     category: 'Navigation',
     scope: 'global',
   },
   // ── Compare (compare) — CompareShell ───────────────────────────────────────
   {
     keys: ['↑'],
-    description: 'Increase compare speed (+0.25×)',
+    descriptionKey: 'simulation.shortcuts.compareFaster',
     category: 'Compare',
     scope: 'compare',
   },
   {
     keys: ['↓'],
-    description: 'Decrease compare speed (−0.25×)',
+    descriptionKey: 'simulation.shortcuts.compareSlower',
     category: 'Compare',
     scope: 'compare',
   },
-  { keys: ['0'], description: 'Reset compare speed to 1×', category: 'Compare', scope: 'compare' },
+  {
+    keys: ['0'],
+    descriptionKey: 'simulation.shortcuts.compareReset',
+    category: 'Compare',
+    scope: 'compare',
+  },
   // ── Help (global / simulator) — installKeymap + PreFlightBrief ─────────────
-  { keys: ['?'], description: 'Open keyboard shortcuts', category: 'Help', scope: 'global' },
-  { keys: ['B'], description: 'Reopen scenario brief', category: 'Help', scope: 'simulator' },
+  {
+    keys: ['?'],
+    descriptionKey: 'simulation.shortcuts.openHelp',
+    category: 'Help',
+    scope: 'global',
+  },
+  {
+    keys: ['B'],
+    descriptionKey: 'simulation.shortcuts.reopenBrief',
+    category: 'Help',
+    scope: 'simulator',
+  },
 ];
 
 export const SHORTCUT_CATEGORY_ORDER: readonly ShortcutCategory[] = [

@@ -9,14 +9,23 @@
  */
 
 import { useEffect } from 'react';
+import { useI18n } from '../i18n/useI18n';
 import {
   SHORTCUT_CATEGORY_ORDER,
   shortcutsForScope,
   type Shortcut,
+  type ShortcutCategory,
   type ShortcutScope,
 } from '../keyboard/shortcuts';
 
 const MONO = 'ui-monospace, monospace';
+
+const CATEGORY_LABEL_KEYS: Record<ShortcutCategory, string> = {
+  Playback: 'simulation.shortcuts.category.playback',
+  Navigation: 'simulation.shortcuts.category.navigation',
+  Compare: 'simulation.shortcuts.category.compare',
+  Help: 'simulation.shortcuts.category.help',
+};
 
 export interface KeyboardHelpOverlayProps {
   open: boolean;
@@ -26,6 +35,7 @@ export interface KeyboardHelpOverlayProps {
 }
 
 export function KeyboardHelpOverlay({ open, onClose, scope }: KeyboardHelpOverlayProps) {
+  const { t } = useI18n();
   useEffect(() => {
     if (!open) return undefined;
     function onKey(e: KeyboardEvent) {
@@ -61,7 +71,7 @@ export function KeyboardHelpOverlay({ open, onClose, scope }: KeyboardHelpOverla
         data-netlab-shortcuts-help=""
         role="dialog"
         aria-modal="true"
-        aria-label="Keyboard shortcuts"
+        aria-label={t('simulation.shortcuts.dialog')}
         onClick={(e) => e.stopPropagation()}
         style={{
           width: 'min(640px, calc(100% - 40px))',
@@ -85,12 +95,12 @@ export function KeyboardHelpOverlay({ open, onClose, scope }: KeyboardHelpOverla
               color: 'var(--netlab-accent-cyan)',
             }}
           >
-            keyboard shortcuts
+            {t('simulation.shortcuts.heading')}
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close keyboard shortcuts"
+            aria-label={t('simulation.shortcuts.close')}
             style={{
               all: 'unset',
               marginLeft: 'auto',
@@ -102,7 +112,7 @@ export function KeyboardHelpOverlay({ open, onClose, scope }: KeyboardHelpOverla
               color: 'var(--netlab-text-secondary)',
             }}
           >
-            esc · close
+            {t('simulation.shortcuts.closeText')}
           </button>
         </div>
 
@@ -120,7 +130,7 @@ export function KeyboardHelpOverlay({ open, onClose, scope }: KeyboardHelpOverla
                   marginBottom: 6,
                 }}
               >
-                {cat}
+                {t(CATEGORY_LABEL_KEYS[cat])}
               </div>
               <div
                 style={{
@@ -143,10 +153,11 @@ export function KeyboardHelpOverlay({ open, onClose, scope }: KeyboardHelpOverla
 }
 
 function ShortcutRow({ shortcut }: { shortcut: Shortcut }) {
+  const { t } = useI18n();
   return (
     <>
       <span style={{ fontSize: 12, color: 'var(--netlab-text-primary)' }}>
-        {shortcut.description}
+        {t(shortcut.descriptionKey)}
       </span>
       <span style={{ display: 'inline-flex', gap: 4 }}>
         {shortcut.keys.map((k, i) => (

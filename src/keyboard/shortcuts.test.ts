@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { en } from '../i18n/locales/en';
+import { ja } from '../i18n/locales/ja';
 import {
   SHORTCUTS,
   SHORTCUT_CATEGORY_ORDER,
@@ -12,7 +14,9 @@ describe('keyboard shortcut registry', () => {
     for (const s of SHORTCUTS) {
       expect(s.keys.length).toBeGreaterThan(0);
       expect(s.keys.every((k) => k.length > 0)).toBe(true);
-      expect(s.description.trim().length).toBeGreaterThan(0);
+      // Described in both languages the overlay can be read in.
+      expect(en[s.descriptionKey]?.trim().length ?? 0).toBeGreaterThan(0);
+      expect(ja[s.descriptionKey]?.trim().length ?? 0).toBeGreaterThan(0);
       expect(SHORTCUT_CATEGORY_ORDER).toContain(s.category);
     }
   });
