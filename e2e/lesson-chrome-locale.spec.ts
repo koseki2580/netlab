@@ -184,3 +184,40 @@ test('the failure panel and state-diff table follow the chosen language', async 
   await page.getByTestId(SEL.demo.primaryAction).click();
   await expect(page.getByTestId(SEL.results.diffMode('diff'))).toHaveText('差分');
 });
+
+/**
+ * TC-169 — the device detail panel reads in Japanese, tab by tab.
+ *
+ * Pressing a device is how a learner reads its addresses, its interfaces and
+ * its routes, so it is the panel they open most; it is also the largest one,
+ * with a tab strip whose later tabs only render once they are chosen.
+ */
+test('the device detail panel is Japanese on every tab', async ({ page, demoPage }) => {
+  await openClientServer(page, demoPage, 'ja');
+
+  await page.getByTestId(SEL.canvas.node).first().click();
+  const panel = page.locator('[data-netlab-dp]');
+  await expect(panel).toBeVisible();
+
+  const tabs = panel.locator('[data-netlab-dp-tab]');
+  const tabCount = await tabs.count();
+  expect(tabCount, 'the panel offers its tabs').toBeGreaterThan(0);
+
+  for (let index = 0; index < tabCount; index += 1) {
+    const tab = tabs.nth(index);
+    await expect(tab, 'the tab is named in Japanese').toHaveText(/[ぁ-んァ-ヶ一-龯]/);
+    await tab.click();
+    const prose = await panel.evaluate((el: HTMLElement) =>
+      el.innerText
+        .split('\n')
+        .map((line: string) => line.trim())
+        .filter(
+          (line: string) =>
+            !/[ぁ-んァ-ヶ一-龯]/.test(line) &&
+            (line.match(/[A-Za-z]{2,}/g) ?? []).length >= 4 &&
+            (line.match(/\b[a-z]{2,}\b/g) ?? []).length >= 2,
+        ),
+    );
+    expect(prose, 'no English sentence remains on this tab').toEqual([]);
+  }
+});
