@@ -237,6 +237,9 @@ export const SEL = {
   results: {
     traceSummary: 'trace-summary',
     packetViewer: 'packet-viewer-panel',
+    failurePanel: 'failure-toggle-panel',
+    /** A state-diff table's mode button, by mode. */
+    diffMode: (mode: 'now' | 'diff' | 'history') => `mode-${mode}`,
   },
   /** A lesson page's own teaching copy. */
   lesson: {

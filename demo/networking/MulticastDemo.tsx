@@ -1,3 +1,4 @@
+import { useT } from '../localeContext';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
@@ -213,26 +214,39 @@ const RECEIVERS: ReceiverInfo[] = [
 
 /* ── Educational captions ───────────────────────── */
 
-function getCaption(joined: Set<string>): string {
+function getCaption(joined: Set<string>, t: (en: string, ja: string) => string): string {
   const inVlan = ['receiver-a', 'receiver-b'];
   const joinedInVlan = inVlan.filter((r) => joined.has(r));
   const cJoined = joined.has('receiver-c');
 
   if (joinedInVlan.length === 0) {
     return cJoined
-      ? 'Receiver-C joined but is in VLAN 20 — VLAN isolates multicast. Traffic floods to all VLAN 10 ports (no snooping entries).'
-      : 'No receivers have joined. The switch has no snooping entries, so multicast is flooded to all ports in the same VLAN.';
+      ? t(
+          'Receiver-C joined but is in VLAN 20 — VLAN isolates multicast. Traffic floods to all VLAN 10 ports (no snooping entries).',
+          'Receiver-C は参加しましたが VLAN 20 にいます。マルチキャストは VLAN を越えません。スヌーピングの記録がないので、通信は VLAN 10 の全ポートに流れます。',
+        )
+      : t(
+          'No receivers have joined. The switch has no snooping entries, so multicast is flooded to all ports in the same VLAN.',
+          'まだ誰もグループに参加していません。スイッチにスヌーピングの記録がないので、マルチキャストは同じ VLAN の全ポートに流れます。',
+        );
   }
   if (joinedInVlan.length === 1) {
     const who = joinedInVlan[0] === 'receiver-a' ? 'A' : 'B';
-    return `Only Receiver-${who} has joined. IGMP snooping restricts delivery to ${who}'s port — the other VLAN 10 port no longer receives the traffic.`;
+    return t(
+      `Only Receiver-${who} has joined. IGMP snooping restricts delivery to ${who}'s port — the other VLAN 10 port no longer receives the traffic.`,
+      `Receiver-${who} だけが参加しています。IGMP スヌーピングにより、${who} のポートにだけ配られ、VLAN 10 のもう一方のポートには流れなくなります。`,
+    );
   }
-  return 'Both A and B have joined. The switch forwards multicast to both ports in VLAN 10.';
+  return t(
+    'Both A and B have joined. The switch forwards multicast to both ports in VLAN 10.',
+    'A と B の両方が参加しています。スイッチは VLAN 10 の両方のポートへマルチキャストを転送します。',
+  );
 }
 
 /* ── Inner demo ─────────────────────────────────── */
 
 function MulticastDemoInner() {
+  const t = useT();
   const { engine, sendPacket, state } = useSimulation();
   const [joined, setJoined] = useState<Set<string>>(new Set());
   const didAutoSend = useRef(false);
@@ -297,11 +311,16 @@ function MulticastDemoInner() {
           }}
         >
           <div style={{ color: 'var(--netlab-text-primary)', fontWeight: 700, marginBottom: 4 }}>
-            Multicast Demo
+            {t('Multicast Demo', 'マルチキャストのしくみ')}
           </div>
-          <div>{getCaption(joined)}</div>
+          <div>{getCaption(joined, t)}</div>
           <div style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}>
-            Click <strong>SW1</strong> to inspect the multicast snooping table in the detail panel.
+            {t('Click', '')}
+            <strong>SW1</strong>
+            {t(
+              ' to inspect the multicast snooping table in the detail panel.',
+              ' を押すと、詳細パネルでマルチキャストのスヌーピング表が見られます。',
+            )}
           </div>
         </div>
       </div>
@@ -346,7 +365,7 @@ function MulticastDemoInner() {
                     fontFamily: 'monospace',
                   }}
                 >
-                  GROUP
+                  {t('GROUP', 'グループ')}
                 </div>
                 <div
                   style={{
@@ -375,7 +394,7 @@ function MulticastDemoInner() {
                     fontFamily: 'monospace',
                   }}
                 >
-                  JOINED
+                  {t('JOINED', '参加')}
                 </div>
                 <div
                   style={{
@@ -392,7 +411,7 @@ function MulticastDemoInner() {
                     ? RECEIVERS.filter((r) => joined.has(r.id))
                         .map((r) => r.label)
                         .join(', ')
-                    : 'none'}
+                    : t('none', 'なし')}
                 </div>
               </div>
               <div
@@ -410,7 +429,7 @@ function MulticastDemoInner() {
                     fontFamily: 'monospace',
                   }}
                 >
-                  RESULT
+                  {t('RESULT', '結果')}
                 </div>
                 <div
                   style={{
@@ -423,7 +442,11 @@ function MulticastDemoInner() {
                     fontWeight: 700,
                   }}
                 >
-                  {activeTrace?.status?.toUpperCase() ?? 'IDLE'}
+                  {activeTrace?.status === 'delivered'
+                    ? t('DELIVERED', '届いた')
+                    : activeTrace?.status === 'dropped'
+                      ? t('DROPPED', '落ちた')
+                      : (activeTrace?.status?.toUpperCase() ?? t('IDLE', '待機中'))}
                 </div>
               </div>
             </div>
@@ -453,7 +476,9 @@ function MulticastDemoInner() {
                       onClick={() => toggle(r)}
                       style={isJoined ? BTN_LEAVE : BTN_JOIN}
                     >
-                      {isJoined ? `Leave ${MULTICAST_GROUP}` : `Join ${MULTICAST_GROUP}`}
+                      {isJoined
+                        ? t(`Leave ${MULTICAST_GROUP}`, `${MULTICAST_GROUP} から離脱`)
+                        : t(`Join ${MULTICAST_GROUP}`, `${MULTICAST_GROUP} に参加`)}
                     </button>
                   </div>
                 );
@@ -467,7 +492,10 @@ function MulticastDemoInner() {
               onClick={() => void sendMulticast()}
               style={BTN_PRIMARY}
             >
-              Send multicast UDP to {MULTICAST_GROUP}:{MULTICAST_PORT}
+              {t(
+                `Send multicast UDP to ${MULTICAST_GROUP}:${MULTICAST_PORT}`,
+                `${MULTICAST_GROUP}:${MULTICAST_PORT} へマルチキャスト UDP を送る`,
+              )}
             </button>
 
             <div
@@ -478,8 +506,11 @@ function MulticastDemoInner() {
               }}
             >
               {lastHop?.event === 'drop'
-                ? `Drop reason: ${lastHop.reason}`
-                : 'Use Join/Leave to control IGMP snooping entries, then send multicast to see the effect.'}
+                ? t(`Drop reason: ${lastHop.reason}`, `破棄の理由: ${lastHop.reason}`)
+                : t(
+                    'Use Join/Leave to control IGMP snooping entries, then send multicast to see the effect.',
+                    '参加・離脱で IGMP スヌーピングの記録を変えてから、マルチキャストを送って違いを見てください。',
+                  )}
             </div>
           </div>
 

@@ -151,3 +151,36 @@ test('the result panels follow the chosen language', async ({ page, demoPage }) 
   await expect(summary).toContainText('通信のまとめ');
   await expect(summary).toContainText('届いた');
 });
+
+/**
+ * TC-167 — the short labels too: the failure panel and the state-diff table.
+ *
+ * The prose guard (TC-166) reads sentences, and these are one or two words —
+ * "Toggle", "Reset All", "now / diff / history" — which is exactly what it
+ * would let through.
+ */
+test('the failure panel and state-diff table follow the chosen language', async ({
+  page,
+  demoPage,
+}) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.addInitScript(() => {
+    try {
+      window.localStorage.setItem('netlab-locale', 'ja');
+    } catch {
+      /* no storage means no choice, which this test would then catch */
+    }
+  });
+
+  await demoPage.goto('/simulation/session');
+  await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+  const failures = page.getByTestId(SEL.results.failurePanel);
+  await expect(failures).toContainText('障害を起こす');
+  await expect(failures).toContainText('すべて戻す');
+  await expect(failures).not.toContainText('Toggle');
+
+  await demoPage.goto('/networking/arp');
+  await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+  await page.getByTestId(SEL.demo.primaryAction).click();
+  await expect(page.getByTestId(SEL.results.diffMode('diff'))).toHaveText('差分');
+});

@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/useI18n';
 import type React from 'react';
 import { useMemo, useState } from 'react';
 import {
@@ -69,6 +70,7 @@ export function StateDiffTable({
   tableKind,
   defaultMode = 'diff',
 }: StateDiffTableProps) {
+  const { t } = useI18n();
   const [mode, setMode] = useState<DiffMode>(defaultMode);
 
   const prevStep = Math.max(0, stepIndex - 1);
@@ -95,7 +97,7 @@ export function StateDiffTable({
       data-testid="state-diff-table"
       data-table-kind={tableKind}
       role="region"
-      aria-label={`${tableKind} table`}
+      aria-label={t('simulation.diff.tableLabel', { kind: tableKind })}
       style={{
         border: '1px solid var(--netlab-border)',
         borderRadius: 8,
@@ -119,11 +121,11 @@ export function StateDiffTable({
             onClick={() => setMode(m)}
             style={modeBtnStyle(mode === m)}
           >
-            {m}
+            {t(`simulation.diff.${m}`)}
           </button>
         ))}
         <span style={{ marginLeft: 'auto', color: 'var(--netlab-text-muted)' }}>
-          step {prevStep} <span aria-hidden>→</span> {stepIndex}
+          {t('simulation.diff.step', { from: prevStep })} <span aria-hidden>→</span> {stepIndex}
         </span>
       </div>
 
@@ -148,7 +150,7 @@ export function StateDiffTable({
           color: 'var(--netlab-text-muted)',
         }}
       >
-        <span>{counts.changed ?? 0} changed</span>
+        <span>{t('simulation.diff.changed', { count: counts.changed ?? 0 })}</span>
         <span style={{ color: 'var(--netlab-accent-green)' }}>+{counts.added ?? 0}</span>
         <span style={{ color: 'var(--netlab-accent-red)' }}>−{counts.removed ?? 0}</span>
         <HistoryStrip
@@ -178,13 +180,14 @@ function modeBtnStyle(active: boolean): React.CSSProperties {
 }
 
 function DiffRows({ kind, rows }: { kind: StateDiffTableKind; rows: AnyDiffRow[] }) {
+  const { t } = useI18n();
   if (rows.length === 0) {
     return (
       <div
         style={{ padding: 14, color: 'var(--netlab-text-muted)' }}
         data-testid="state-diff-empty"
       >
-        no entries
+        {t('simulation.diff.empty')}
       </div>
     );
   }
@@ -192,23 +195,23 @@ function DiffRows({ kind, rows }: { kind: StateDiffTableKind; rows: AnyDiffRow[]
     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
       <thead>
         <tr style={{ color: 'var(--netlab-text-muted)', textAlign: 'left' }}>
-          <th style={CELL} aria-label="status" />
+          <th style={CELL} aria-label={t('simulation.diff.status')} />
           {kind === 'routes' ? (
             <>
-              <th style={CELL}>destination</th>
-              <th style={CELL}>via</th>
-              <th style={CELL}>proto</th>
-              <th style={CELL}>metric</th>
+              <th style={CELL}>{t('simulation.diff.column.destination')}</th>
+              <th style={CELL}>{t('simulation.diff.column.via')}</th>
+              <th style={CELL}>{t('simulation.diff.column.proto')}</th>
+              <th style={CELL}>{t('simulation.diff.column.metric')}</th>
             </>
           ) : kind === 'arp' ? (
             <>
-              <th style={CELL}>ip</th>
-              <th style={CELL}>mac</th>
+              <th style={CELL}>{t('simulation.diff.column.ip')}</th>
+              <th style={CELL}>{t('simulation.diff.column.mac')}</th>
             </>
           ) : (
             <>
-              <th style={CELL}>mac</th>
-              <th style={CELL}>port</th>
+              <th style={CELL}>{t('simulation.diff.column.mac')}</th>
+              <th style={CELL}>{t('simulation.diff.column.port')}</th>
             </>
           )}
         </tr>

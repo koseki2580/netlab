@@ -1,3 +1,4 @@
+import { useT } from '../localeContext';
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { useNetlabContext } from '../../src/components/NetlabContext';
@@ -312,6 +313,7 @@ function buildPingPacket(
 }
 
 function StpStatusCard({ switchId }: { switchId: SwitchId }) {
+  const t = useT();
   const { topology } = useNetlabContext();
   const node = topology.nodes.find((candidate) => candidate.id === switchId);
   if (node?.data.role !== 'switch') {
@@ -343,7 +345,7 @@ function StpStatusCard({ switchId }: { switchId: SwitchId }) {
           <div
             style={{ color: 'var(--netlab-text-secondary)', fontFamily: 'monospace', fontSize: 12 }}
           >
-            priority {node.data.stpConfig?.priority ?? DEFAULT_BRIDGE_PRIORITY}
+            {t('priority', '優先度')} {node.data.stpConfig?.priority ?? DEFAULT_BRIDGE_PRIORITY}
           </div>
         </div>
         <div
@@ -358,7 +360,7 @@ function StpStatusCard({ switchId }: { switchId: SwitchId }) {
             fontWeight: 700,
           }}
         >
-          {isRoot ? 'Root' : 'Non-root'}
+          {isRoot ? t('Root', 'ルート') : t('Non-root', 'ルート以外')}
         </div>
       </div>
       {ports.map((port) => {
@@ -390,19 +392,22 @@ function StpStatusCard({ switchId }: { switchId: SwitchId }) {
 }
 
 function TracePanel({ lastScenario }: { lastScenario: string | null }) {
+  const t = useT();
   const { topology } = useNetlabContext();
   const { state, isRecomputing } = useSimulation();
   const activeTrace = state.currentTraceId
     ? (state.traces.find((trace) => trace.packetId === state.currentTraceId) ?? null)
     : null;
-  const hopLabels = activeTrace?.hops.map((hop) => hop.nodeLabel).join(' → ') ?? 'No trace yet';
+  const hopLabels =
+    activeTrace?.hops.map((hop) => hop.nodeLabel).join(' → ') ??
+    t('No trace yet', 'まだ通信はありません');
   const usedBlockedSegment =
     activeTrace?.hops.some((hop) => hop.activeEdgeId === INTER_SWITCH_EDGE_ID) ?? false;
-  const rootLabel = topology.stpRoot ? formatBridgeId(topology.stpRoot) : 'none';
+  const rootLabel = topology.stpRoot ? formatBridgeId(topology.stpRoot) : t('none', 'なし');
 
   return (
     <div style={CARD_STYLE}>
-      <div style={SECTION_TITLE_STYLE}>Trace</div>
+      <div style={SECTION_TITLE_STYLE}>{t('Trace', '通信')}</div>
       <div
         style={{
           color: 'var(--netlab-text-primary)',
@@ -411,7 +416,7 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
           marginBottom: 6,
         }}
       >
-        Last flow: {lastScenario ?? 'none'}
+        {t('Last flow', '直前の通信')}: {lastScenario ?? t('none', 'なし')}
       </div>
       <div
         data-testid="stp-trace-path"
@@ -432,7 +437,7 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
           fontSize: 12,
         }}
       >
-        Root bridge: {rootLabel}
+        {t('Root bridge', 'ルートブリッジ')}: {rootLabel}
       </div>
       <div
         data-testid="stp-blocked-segment"
@@ -443,7 +448,8 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
           fontSize: 12,
         }}
       >
-        Blocked segment used: {usedBlockedSegment ? 'yes' : 'no'}
+        {t('Blocked segment used', '遮断した区間を使ったか')}:{' '}
+        {usedBlockedSegment ? t('yes', 'はい') : t('no', 'いいえ')}
       </div>
       {activeTrace?.status && (
         <div
@@ -455,7 +461,12 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
             fontSize: 12,
           }}
         >
-          Trace status: {activeTrace.status}
+          {t('Trace status', '通信の状態')}:{' '}
+          {activeTrace.status === 'delivered'
+            ? t('delivered', '届いた')
+            : activeTrace.status === 'dropped'
+              ? t('dropped', '落ちた')
+              : activeTrace.status}
         </div>
       )}
       {isRecomputing && (
@@ -467,7 +478,7 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
             fontSize: 12,
           }}
         >
-          Recomputing simulation…
+          {t('Recomputing simulation…', 'シミュレーションを計算し直しています…')}
         </div>
       )}
     </div>
@@ -485,6 +496,7 @@ function StpLoopDemoInner({
   disabledPorts: Record<SwitchId, string[]>;
   setDisabledPorts: React.Dispatch<React.SetStateAction<Record<SwitchId, string[]>>>;
 }) {
+  const t = useT();
   const { topology } = useNetlabContext();
   const { engine, sendPacket, state } = useSimulation();
   const [lastScenario, setLastScenario] = useState<string | null>(null);
@@ -554,9 +566,10 @@ function StpLoopDemoInner({
             lineHeight: 1.6,
           }}
         >
-          Default root is Switch A. In the initial B → C trace, the blocked B–C segment should not
-          appear; traffic detours through Switch A. Lower Switch B or C priority to re-elect the
-          root.
+          {t(
+            'Default root is Switch A. In the initial B → C trace, the blocked B–C segment should not appear; traffic detours through Switch A. Lower Switch B or C priority to re-elect the root.',
+            '最初のルートは Switch A です。B → C の最初の通信では遮断された B–C 区間は使われず、Switch A を経由して迂回します。Switch B か C の優先度を下げると、ルートを選び直します。',
+          )}
         </div>
       </div>
 
@@ -574,7 +587,7 @@ function StpLoopDemoInner({
           }}
         >
           <div style={CARD_STYLE}>
-            <div style={SECTION_TITLE_STYLE}>Ping Controls</div>
+            <div style={SECTION_TITLE_STYLE}>{t('Ping Controls', 'ping の操作')}</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               <button
                 type="button"
@@ -606,7 +619,7 @@ function StpLoopDemoInner({
           <TracePanel lastScenario={lastScenario} />
 
           <div style={CARD_STYLE}>
-            <div style={SECTION_TITLE_STYLE}>Priorities</div>
+            <div style={SECTION_TITLE_STYLE}>{t('Priorities', '優先度')}</div>
             {(['switch-a', 'switch-b', 'switch-c'] as SwitchId[]).map((switchId) => (
               <label
                 key={switchId}
@@ -647,12 +660,12 @@ function StpLoopDemoInner({
                 setDisabledPorts(DEFAULT_DISABLED_PORTS);
               }}
             >
-              Reset STP Controls
+              {t('Reset STP Controls', 'STP の設定を戻す')}
             </button>
           </div>
 
           <div style={CARD_STYLE}>
-            <div style={SECTION_TITLE_STYLE}>Disable Ports</div>
+            <div style={SECTION_TITLE_STYLE}>{t('Disable Ports', 'ポートを止める')}</div>
             {(['switch-a', 'switch-b', 'switch-c'] as SwitchId[]).map((switchId) => (
               <div key={switchId} style={{ marginBottom: 12 }}>
                 <div

@@ -7,7 +7,8 @@ import { SEL } from './selectors';
  * Lesson copy is translated lesson by lesson, so this names the lessons that
  * have been done and holds each of them to it. A line counts as prose when it
  * has four or more English words and no Japanese — which is what a learner
- * reads as an untranslated sentence. Readouts such as
+ * reads as an untranslated sentence, provided at least two of those words are
+ * ordinary lower-case ones. Readouts such as
  * "10.0.0.10 → 203.0.113.10 | TTL 64 | TCP", hop codes, protocol and device
  * names are not prose and are rightly left as they are.
  *
@@ -25,6 +26,10 @@ const TRANSLATED_LESSONS = [
   '/routing/dynamic',
   '/networking/vlan',
   '/simulation/session',
+  '/networking/http',
+  '/services/dhcp-dns',
+  '/networking/multicast',
+  '/networking/stp',
 ];
 
 for (const path of TRANSLATED_LESSONS) {
@@ -54,7 +59,11 @@ for (const path of TRANSLATED_LESSONS) {
         .map((line: string) => line.trim())
         .filter(
           (line: string) =>
-            !/[ぁ-んァ-ヶ一-龯]/.test(line) && (line.match(/[A-Za-z]{2,}/g) ?? []).length >= 4,
+            !/[ぁ-んァ-ヶ一-龯]/.test(line) &&
+            (line.match(/[A-Za-z]{2,}/g) ?? []).length >= 4 &&
+            // Prose has ordinary lower-case words. A line made only of names,
+            // codes and acronyms — "Host B → Switch B → Switch A" — is a readout.
+            (line.match(/\b[a-z]{2,}\b/g) ?? []).length >= 2,
         ),
     );
 

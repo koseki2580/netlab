@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/useI18n';
 import { useFailure } from '../../simulation/FailureContext';
 import { useOptionalSimulation } from '../../simulation/SimulationContext';
 import { useNetlabContext } from '../NetlabContext';
@@ -11,6 +12,7 @@ function ToggleRow({
   isDown: boolean;
   onToggle: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <div
       style={{
@@ -42,13 +44,13 @@ function ToggleRow({
           textAlign: 'right',
         }}
       >
-        {isDown ? 'DOWN' : 'UP'}
+        {isDown ? t('simulation.failure.down') : t('simulation.failure.up')}
       </span>
       <button
         onClick={onToggle}
         role="switch"
         aria-checked={!isDown}
-        aria-label={`Toggle ${label}`}
+        aria-label={t('simulation.failure.toggleLabel', { label })}
         className="netlab-focus-ring"
         style={{
           fontSize: 10,
@@ -64,13 +66,14 @@ function ToggleRow({
           whiteSpace: 'nowrap',
         }}
       >
-        Toggle
+        {t('simulation.failure.toggle')}
       </button>
     </div>
   );
 }
 
 export function FailureTogglePanel() {
+  const { t } = useI18n();
   const {
     toggleNode,
     toggleEdge,
@@ -90,6 +93,7 @@ export function FailureTogglePanel() {
 
   return (
     <div
+      data-testid="failure-toggle-panel"
       style={{
         background: 'var(--netlab-bg-primary)',
         border: '1px solid var(--netlab-bg-surface)',
@@ -113,7 +117,7 @@ export function FailureTogglePanel() {
           letterSpacing: '0.08em',
         }}
       >
-        FAILURE INJECTION
+        {t('simulation.failure.heading')}
       </div>
 
       {simulation?.isRecomputing && (
@@ -141,7 +145,7 @@ export function FailureTogglePanel() {
               flexShrink: 0,
             }}
           />
-          Calculating...
+          {t('simulation.failure.calculating')}
         </div>
       )}
 
@@ -154,7 +158,7 @@ export function FailureTogglePanel() {
             letterSpacing: '0.06em',
           }}
         >
-          NODES
+          {t('simulation.failure.nodes')}
         </div>
         {visibleNodes.map((node) => (
           <ToggleRow
@@ -175,7 +179,7 @@ export function FailureTogglePanel() {
             letterSpacing: '0.06em',
           }}
         >
-          LINKS
+          {t('simulation.failure.links')}
         </div>
         {topology.edges.map((edge) => {
           const srcLabel =
@@ -203,7 +207,7 @@ export function FailureTogglePanel() {
               letterSpacing: '0.06em',
             }}
           >
-            INTERFACES
+            {t('simulation.failure.interfaces')}
           </div>
           {routerNodes.flatMap((node) =>
             (node.data.interfaces ?? []).map((iface) => (
@@ -232,7 +236,7 @@ export function FailureTogglePanel() {
           fontSize: 11,
         }}
       >
-        Reset All
+        {t('simulation.failure.resetAll')}
       </button>
     </div>
   );

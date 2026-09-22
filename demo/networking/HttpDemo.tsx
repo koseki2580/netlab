@@ -1,3 +1,4 @@
+import { useT } from '../localeContext';
 import { useMemo, useState, type CSSProperties } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
@@ -239,6 +240,7 @@ function resolveServerResponse(
 // ────────────────────────────────────────────────
 
 function HttpDemoInner() {
+  const t = useT();
   const { topology } = useNetlabContext();
   const { engine, sendPacket } = useSimulation();
   const { sessions, startSession, attachTrace, selectSession, clearSessions } = useSession();
@@ -405,14 +407,14 @@ function HttpDemoInner() {
             POST /echo (3 KB)
           </button>
           <button type="button" onClick={handleClear} style={BUTTON_SECONDARY}>
-            Clear
+            {t('Clear', '消去')}
           </button>
 
           <span
             style={{ color: 'var(--netlab-text-secondary)', fontFamily: 'monospace', fontSize: 11 }}
           >
-            <span data-testid="http-session-count">{sessionCount}</span> session
-            {sessionCount === 1 ? '' : 's'}
+            <span data-testid="http-session-count">{sessionCount}</span>
+            {t(sessionCount === 1 ? ' session' : ' sessions', ' 件のセッション')}
           </span>
         </div>
 

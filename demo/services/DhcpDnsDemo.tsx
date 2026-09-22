@@ -1,3 +1,4 @@
+import { useT } from '../localeContext';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { ResizableSidebar } from '../../src/components/ResizableSidebar';
@@ -140,6 +141,7 @@ function buildHttpPacket(runtimeIp: string | null): InFlightPacket {
 }
 
 function DhcpDnsDemoInner() {
+  const t = useT();
   const { engine, simulateDhcp, sendPacket } = useSimulation();
 
   const handleRunDhcp = async () => {
@@ -184,7 +186,7 @@ function DhcpDnsDemoInner() {
               cursor: 'pointer',
             }}
           >
-            Run DHCP
+            {t('Run DHCP', 'DHCP を実行')}
           </button>
           <button
             type="button"
@@ -200,7 +202,7 @@ function DhcpDnsDemoInner() {
               cursor: 'pointer',
             }}
           >
-            Resolve DNS + Fetch
+            {t('Resolve DNS + Fetch', 'DNS で名前を引いて取得')}
           </button>
           <span
             style={{
@@ -209,7 +211,10 @@ function DhcpDnsDemoInner() {
               fontSize: 11,
             }}
           >
-            Click a node to inspect runtime DHCP/DNS state.
+            {t(
+              'Click a node to inspect runtime DHCP/DNS state.',
+              '機器を押すと、その時点の DHCP/DNS の状態が見られます。',
+            )}
           </span>
         </div>
       </div>
