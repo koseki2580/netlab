@@ -16,7 +16,7 @@ export const intro = {
     'サンドボックスパネルのノードタブを開き、ノードとリンクの編集に集中します。',
   'sandbox.intro.mtu.step.editMtu.title': 'MTU を小さくする',
   'sandbox.intro.mtu.step.editMtu.description':
-    'ルーティングノードを右クリックし、MTU エディターを開いて、インターフェイス MTU を小さくして適用します。',
+    'ルーティングノードを右クリックし、MTU エディタを開いて、インターフェイス MTU を小さくして適用します。',
   'sandbox.intro.mtu.step.launchTraffic.title': 'サンドボックストラフィックを開始',
   'sandbox.intro.mtu.step.launchTraffic.description':
     'トラフィックタブから、編集後のトポロジーを通る合成フローを開始します。',

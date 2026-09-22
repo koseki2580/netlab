@@ -16,7 +16,7 @@ export const narration: Catalog = {
   'sandbox.narration.edit.aclEdit': '{{nodeId}} の ACL ルールを更新しました。',
   'sandbox.narration.edit.paramSet': 'パラメータ {{key}} を {{after}} に変更しました。',
   'sandbox.narration.edit.packetHeader':
-    'パケットヘッダーフィールド {{fieldPath}} を {{after}} に設定しました。',
+    'パケットヘッダフィールド {{fieldPath}} を {{after}} に設定しました。',
   'sandbox.narration.edit.packetFlagsTcp': 'TCP フラグを更新しました。',
   'sandbox.narration.edit.packetPayload': 'パケットペイロードを更新しました。',
   'sandbox.narration.edit.packetCompose': '新しいパケットを作成しました。',

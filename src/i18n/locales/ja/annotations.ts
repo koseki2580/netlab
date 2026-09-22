@@ -1,7 +1,7 @@
 import type { Catalog } from '../../types';
 
 export const annotations: Catalog = {
-  'sandbox.annotations.editor.label': '注釈エディター',
+  'sandbox.annotations.editor.label': '注釈エディタ',
   'sandbox.annotations.editor.locked': 'シナリオ注釈はロックされています。',
   'sandbox.annotations.editor.close': '閉じる',
   'sandbox.annotations.editor.content': '注釈の内容',
@@ -21,7 +21,7 @@ export const annotations: Catalog = {
   'sandbox.annotations.list.filter': '注釈を絞り込む',
   'sandbox.annotations.list.all': 'すべて',
   'sandbox.annotations.list.scenario': 'シナリオ',
-  'sandbox.annotations.list.user': 'ユーザー',
+  'sandbox.annotations.list.user': 'ユーザ',
   'sandbox.annotations.list.search.label': '注釈を検索',
   'sandbox.annotations.list.search.placeholder': '検索',
   'sandbox.annotations.list.empty': '注釈はありません',

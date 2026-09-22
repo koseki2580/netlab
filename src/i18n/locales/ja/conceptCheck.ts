@@ -202,7 +202,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.dhcp.q2.why':
     'クライアントはまだ IP もサーバも知らないため、Discover はブロードキャストされます。',
   'learning.concept.dhcp.q3.prompt': 'IP アドレス以外に DHCP がよく提供するのは…',
-  'learning.concept.dhcp.q3.a': 'インターフェースの MAC アドレス',
+  'learning.concept.dhcp.q3.a': 'インタフェースの MAC アドレス',
   'learning.concept.dhcp.q3.b': '待ち受ける TCP ポート',
   'learning.concept.dhcp.q3.c': 'デフォルトゲートウェイと DNS サーバ',
   'learning.concept.dhcp.q3.why':
@@ -278,7 +278,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ospf.q2.why':
     'OSPF はリンクごとのコストを合算し、総コスト最小が勝ちます。RIP のホップ数とは異なります。',
   'learning.concept.ospf.q3.prompt': 'リンク障害時、OSPF は…',
-  'learning.concept.ospf.q3.a': '次の定期タイマーが来るのを待つだけ',
+  'learning.concept.ospf.q3.a': '次の定期タイマが来るのを待つだけ',
   'learning.concept.ospf.q3.b': '次の定期更新まで何もしない',
   'learning.concept.ospf.q3.c': 'LSA を再フラッディングし最短経路を再計算する',
   'learning.concept.ospf.q3.why':
@@ -513,7 +513,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.mpls.name': 'MPLS',
   'learning.concept.mpls.q1.prompt': 'MPLS の転送方法は…',
   'learning.concept.mpls.q1.a': 'IP ルックアップの代わりに短いラベルを交換する',
-  'learning.concept.mpls.q1.b': '全インターフェースへブロードキャストする',
+  'learning.concept.mpls.q1.b': '全インタフェースへブロードキャストする',
   'learning.concept.mpls.q1.c': '毎回 ARP で次ホップを解決する',
   'learning.concept.mpls.q1.why':
     'エッジルータがラベルを付与し、コアは定めた経路に沿ってラベルを交換、ホップごとの IP ルックアップを避けます。',
@@ -582,7 +582,7 @@ export const conceptCheck: Catalog = {
     'ステートフルは確立済みフローを記憶し、明示的な逆ルール無しで戻りトラフィックを許可します。',
   'learning.concept.acl.q3.prompt': 'ファイアウォールの安全な既定は…',
   'learning.concept.acl.q3.a': '先頭ですべて許可',
-  'learning.concept.acl.q3.b': 'インターフェースにルールなし',
+  'learning.concept.acl.q3.b': 'インタフェースにルールなし',
   'learning.concept.acl.q3.c': '既定拒否 — 明示許可以外をブロック',
   'learning.concept.acl.q3.why':
     '既定拒否は明示的に許可したトラフィックのみ通し、攻撃面を縮小します。',
@@ -983,7 +983,7 @@ export const conceptCheck: Catalog = {
     '0.0.0.0/0 は完全に有効です — 任意のアドレスに最も大まかに一致するデフォルトルートです。',
   'learning.concept.ipv6.q1.b.why': '32 ビットは IPv4 です。IPv6 アドレスは 128 ビットです。',
   'learning.concept.ipv6.q1.c.why':
-    '64 ビットはアドレスの半分（インターフェース識別子の部分）にすぎません。完全な IPv6 アドレスは 128 ビットです。',
+    '64 ビットはアドレスの半分（インタフェース識別子の部分）にすぎません。完全な IPv6 アドレスは 128 ビットです。',
   'learning.concept.ipv6.q2.a.why':
     'DHCP はアドレスを配ります。IPv6 は ARP に代わり NDP（近隣探索）で近隣を解決します。',
   'learning.concept.ipv6.q2.c.why':
@@ -1013,7 +1013,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ospf.q2.c.why':
     'AS パス長は BGP のものです。AS 内では OSPF は総リンクコストで選びます。',
   'learning.concept.ospf.q3.a.why':
-    'OSPF はタイマーを受け身で待つのではなく、LSA を再フラッディングして即座に変化へ反応します。',
+    'OSPF はタイマを受け身で待つのではなく、LSA を再フラッディングして即座に変化へ反応します。',
   'learning.concept.ospf.q3.b.why':
     '何もしなければ死んだリンクへ通信を送り続けてしまいます。リンクステートは設計上、変化を全ルータへフラッディングして反応します。',
   'learning.concept.bgp.q1.b.why':
@@ -1374,9 +1374,9 @@ export const conceptCheck: Catalog = {
   'learning.concept.ndp.q1.c.why':
     'NDP は暗号化しません。ARP を置き換え、ICMPv6 メッセージで近隣の IP→MAC を解決します。',
   'learning.concept.ndp.q2.a.why':
-    'SLAAC はネットワーク部を当てずっぽうにしません — プレフィックスは必ずルータ広告（RA）から来ます。ランダムになり得るのはインターフェース識別子の半分だけです。',
+    'SLAAC はネットワーク部を当てずっぽうにしません — プレフィックスは必ずルータ広告（RA）から来ます。ランダムになり得るのはインタフェース識別子の半分だけです。',
   'learning.concept.ndp.q2.c.why':
-    'ホストはルータのアドレスをコピーしません。広告されたプレフィックスとインターフェース識別子から自分のアドレスを作ります。',
+    'ホストはルータのアドレスをコピーしません。広告されたプレフィックスとインタフェース識別子から自分のアドレスを作ります。',
   'learning.concept.ndp.q3.a.why':
     'DAD は暗号化しません。近隣要請を送り、アドレスが未使用か確認します。',
   'learning.concept.ndp.q3.b.why':
@@ -1578,7 +1578,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.ntp.q1.prompt': 'NTP の用途は…',
   'learning.concept.ntp.q1.a': '機器間で時刻を同期する',
   'learning.concept.ntp.q1.b': 'ホスト名をアドレスに解決する',
-  'learning.concept.ntp.q1.c': 'インターフェースにアドレスを割り当てる',
+  'learning.concept.ntp.q1.c': 'インタフェースにアドレスを割り当てる',
   'learning.concept.ntp.q1.why': 'NTP は機器の時刻を基準時刻源に合わせ続けます。',
   'learning.concept.ntp.q2.prompt': 'NTP の時刻源の構成は…',
   'learning.concept.ntp.q2.a': 'VLAN 単位のグループ',
@@ -1676,7 +1676,7 @@ export const conceptCheck: Catalog = {
   'learning.concept.eigrp.q2.prompt': 'フィージブルサクセサにより EIGRP は…',
   'learning.concept.eigrp.q2.a': '隣接間のトラフィックを暗号化する',
   'learning.concept.eigrp.q2.b': '再計算なしで高速に再収束する',
-  'learning.concept.eigrp.q2.c': 'インターフェースに IP を割り当てる',
+  'learning.concept.eigrp.q2.c': 'インタフェースに IP を割り当てる',
   'learning.concept.eigrp.q2.why':
     '事前計算したバックアップ経路により、主経路の障害時に即座に切り替えられます。',
   'learning.concept.eigrp.q3.prompt': 'EIGRP のメトリックの基礎は…',
@@ -1828,10 +1828,10 @@ export const conceptCheck: Catalog = {
   'learning.concept.ndp.q2.prompt': 'SLAAC はどうやって DHCP サーバなしでアドレスを得る？',
   'learning.concept.ndp.q2.a': 'ランダムにアドレスを推測し、衝突しないことを祈る',
   'learning.concept.ndp.q2.b':
-    'ルータ広告がプレフィックスを配り、ホストがインターフェース識別子を足す',
+    'ルータ広告がプレフィックスを配り、ホストがインタフェース識別子を足す',
   'learning.concept.ndp.q2.c': 'ルータのアドレスをコピーして末尾だけ変える',
   'learning.concept.ndp.q2.why':
-    'ステートレス・アドレス自動設定：RA が /64 プレフィックスを運び、ホストがインターフェース識別子（EUI-64 やランダム）を付けてグローバルアドレスを作ります。',
+    'ステートレス・アドレス自動設定：RA が /64 プレフィックスを運び、ホストがインタフェース識別子（EUI-64 やランダム）を付けてグローバルアドレスを作ります。',
   'learning.concept.ndp.q3.prompt': '重複アドレス検出（DAD）とは？',
   'learning.concept.ndp.q3.a': '使う前にアドレスを暗号化しておく仕組み',
   'learning.concept.ndp.q3.b': '転送のためアドレスを圧縮する方法',
