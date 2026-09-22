@@ -25,10 +25,26 @@ export const NODE_GLYPHS: Readonly<Record<NodeGlyphKind, GlyphMeta>> = {
   server: { letter: 'S', color: 'var(--netlab-accent-purple)', shape: 'square' },
 };
 
+/**
+ * i18n catalog key for each kind's display name, for callers that have a
+ * translator. This component takes the name as a prop rather than reading the
+ * catalogue itself: it ships inside every per-layer entry point, and pulling
+ * the catalogue in there would put the whole product's text in a bundle that
+ * exists to be small.
+ */
+export const NODE_KIND_LABEL_KEYS: Readonly<Record<NodeGlyphKind, string>> = {
+  router: 'simulation.nodeKind.router',
+  switch: 'simulation.nodeKind.switch',
+  client: 'simulation.nodeKind.client',
+  server: 'simulation.nodeKind.server',
+};
+
 export interface NodeGlyphProps {
   kind: NodeGlyphKind;
   /** Optional label folded into the accessible name (e.g. `'R1'`). */
   label?: string;
+  /** The kind's name for the accessible name. Defaults to the English kind. */
+  kindLabel?: string;
   selected?: boolean;
   size?: number;
 }
@@ -37,7 +53,13 @@ export interface NodeGlyphProps {
  * M6 — node glyph: a shape + letter + color badge for a device kind. Color is
  * never the sole differentiator; the shape and letter carry the meaning too.
  */
-export function NodeGlyph({ kind, label, selected = false, size = 40 }: NodeGlyphProps) {
+export function NodeGlyph({
+  kind,
+  label,
+  kindLabel = kind,
+  selected = false,
+  size = 40,
+}: NodeGlyphProps) {
   const meta = NODE_GLYPHS[kind];
   return (
     <svg
@@ -45,7 +67,7 @@ export function NodeGlyph({ kind, label, selected = false, size = 40 }: NodeGlyp
       height={size}
       viewBox="0 0 40 40"
       role="img"
-      aria-label={label ? `${kind} ${label}` : kind}
+      aria-label={label ? `${kindLabel} ${label}` : kindLabel}
       data-node-kind={kind}
       style={{ display: 'inline-block', flexShrink: 0 }}
     >

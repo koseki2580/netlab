@@ -1,14 +1,21 @@
 import type React from 'react';
 import { useState } from 'react';
+import { useI18n } from '../i18n/useI18n';
 import { Marker } from './simulation/Marker';
 import { LEGEND_MARKERS } from './simulation/hopMarkers';
-import { NodeGlyph, type NodeGlyphKind } from './NodeGlyph';
-import { EDGE_KINDS, NL_EDGE_KINDS } from './edgeEncoding';
+import { NODE_KIND_LABEL_KEYS, NodeGlyph, type NodeGlyphKind } from './NodeGlyph';
+import { EDGE_KINDS, NL_EDGE_KINDS, type EdgeCap } from './edgeEncoding';
 import { EdgeKindCap } from './EdgeKindCap';
 
 const LEGEND_KEY = 'nl_a11y_legend';
 const MONO = 'ui-monospace, monospace';
 const NODE_KINDS: readonly NodeGlyphKind[] = ['router', 'switch', 'client', 'server'];
+const CAP_LABEL_KEYS: Record<EdgeCap, string> = {
+  dot: 'simulation.legend.cap.dot',
+  diamond: 'simulation.legend.cap.diamond',
+  triangle: 'simulation.legend.cap.triangle',
+  cross: 'simulation.legend.cap.cross',
+};
 
 function readOpen(): boolean {
   try {
@@ -36,6 +43,7 @@ export interface LegendPanelProps {
  * without relying on color. Open state persists to `localStorage`.
  */
 export function LegendPanel({ style }: LegendPanelProps) {
+  const { t } = useI18n();
   const [open, setOpen] = useState<boolean>(() => readOpen());
 
   const toggle = () => {
@@ -77,22 +85,22 @@ export function LegendPanel({ style }: LegendPanelProps) {
           }}
         >
           <section>
-            <div style={EYEBROW}>nodes</div>
+            <div style={EYEBROW}>{t('simulation.legend.nodes')}</div>
             <div style={{ display: 'flex', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
               {NODE_KINDS.map((kind) => (
                 <div key={kind} style={{ display: 'grid', justifyItems: 'center', gap: 3 }}>
-                  <NodeGlyph kind={kind} size={28} />
+                  <NodeGlyph kind={kind} kindLabel={t(NODE_KIND_LABEL_KEYS[kind])} size={28} />
                   <span
                     style={{ fontFamily: MONO, fontSize: 9, color: 'var(--netlab-text-muted)' }}
                   >
-                    {kind}
+                    {t(NODE_KIND_LABEL_KEYS[kind])}
                   </span>
                 </div>
               ))}
             </div>
           </section>
           <section style={{ borderTop: '1px solid var(--netlab-border-subtle)', paddingTop: 10 }}>
-            <div style={EYEBROW}>packet edges</div>
+            <div style={EYEBROW}>{t('simulation.legend.edges')}</div>
             <div style={{ display: 'grid', gap: 4, marginTop: 8 }}>
               {EDGE_KINDS.map((kind) => {
                 const meta = NL_EDGE_KINDS[kind];
@@ -117,7 +125,7 @@ export function LegendPanel({ style }: LegendPanelProps) {
                         color: 'var(--netlab-text-secondary)',
                       }}
                     >
-                      {meta.label}
+                      {t(meta.labelKey)}
                     </span>
                     <span
                       style={{
@@ -127,7 +135,9 @@ export function LegendPanel({ style }: LegendPanelProps) {
                         marginLeft: 'auto',
                       }}
                     >
-                      {meta.dash === 'none' ? 'solid' : meta.cap}
+                      {meta.dash === 'none'
+                        ? t('simulation.legend.solid')
+                        : t(CAP_LABEL_KEYS[meta.cap])}
                     </span>
                   </div>
                 );
@@ -135,11 +145,11 @@ export function LegendPanel({ style }: LegendPanelProps) {
             </div>
           </section>
           <section style={{ borderTop: '1px solid var(--netlab-border-subtle)', paddingTop: 10 }}>
-            <div style={EYEBROW}>markers</div>
+            <div style={EYEBROW}>{t('simulation.legend.markers')}</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 8 }}>
               {LEGEND_MARKERS.map((m) => (
-                <div key={m.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Marker shape={m.shape} color={m.color} label={m.label} />
+                <div key={m.labelKey} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Marker shape={m.shape} color={m.color} label={t(m.labelKey)} />
                   <span
                     style={{
                       fontFamily: MONO,
@@ -147,7 +157,7 @@ export function LegendPanel({ style }: LegendPanelProps) {
                       color: 'var(--netlab-text-secondary)',
                     }}
                   >
-                    {m.label}
+                    {t(m.labelKey)}
                   </span>
                 </div>
               ))}
@@ -160,7 +170,7 @@ export function LegendPanel({ style }: LegendPanelProps) {
         data-testid="legend-toggle"
         onClick={toggle}
         aria-expanded={open}
-        title="Toggle legend"
+        title={t('simulation.legend.toggle')}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -175,7 +185,7 @@ export function LegendPanel({ style }: LegendPanelProps) {
           cursor: 'pointer',
         }}
       >
-        <span>legend</span>
+        <span>{t('simulation.legend.label')}</span>
         <span aria-hidden style={{ color: 'var(--netlab-text-faint)' }}>
           {open ? '▴' : '▾'}
         </span>
