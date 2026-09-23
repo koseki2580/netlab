@@ -260,7 +260,26 @@ export default function CoursePage() {
             <h2 style={{ margin: 0, fontSize: 20 }}>{ui.finishTitle}</h2>
             <p style={{ lineHeight: 1.8 }}>{ui.finishBody}</p>
             <div style={{ display: 'flex', gap: 8 }}>
-              <a href="#/" style={{ ...BUTTON, textDecoration: 'none', display: 'inline-block' }}>
+              {/* The course is the first stop on the path the final test covers;
+                  finishing it leads on to the rest of that path and the test. */}
+              <a
+                href="#/course/exam"
+                data-testid="course-to-exam"
+                style={{ ...BUTTON, textDecoration: 'none', display: 'inline-block' }}
+              >
+                {locale === 'ja'
+                  ? '次に学ぶことと修了テストへ →'
+                  : 'What to learn next, and the final test →'}
+              </a>
+              <a
+                href="#/"
+                style={{
+                  ...BUTTON,
+                  textDecoration: 'none',
+                  display: 'inline-block',
+                  background: 'var(--netlab-bg-surface)',
+                }}
+              >
                 {ui.toGallery}
               </a>
               <button

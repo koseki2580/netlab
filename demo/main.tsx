@@ -17,6 +17,7 @@ import { ProgressProvider } from '../src/progress';
 import { ToastViewport } from '../src/components/ToastViewport';
 import Gallery from './Gallery';
 import CoursePage from './course/CoursePage';
+import ExamPage from './course/ExamPage';
 import { resolveLearnerId } from './hooks/localLearnerId';
 import DmzDemo from './areas/DmzDemo';
 import MinimalDemo from './basic/MinimalDemo';
@@ -88,6 +89,7 @@ function DemoRoutes() {
       <Routes>
         <Route path="/" element={<Gallery />} />
         <Route path="/course" element={<CoursePage />} />
+        <Route path="/course/exam" element={<ExamPage />} />
         <Route path="/learning/subnetting" element={<SubnetDrillDemo />} />
         <Route path="/learning/routing-decision" element={<RoutingDrillDemo />} />
         <Route path="/learning/visual-routing" element={<VisualRoutingDrillDemo />} />
