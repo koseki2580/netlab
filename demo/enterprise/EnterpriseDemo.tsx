@@ -416,10 +416,47 @@ function findTrace(engine: ReturnType<typeof useSimulation>['engine'], packetId:
   return engine.getState().traces.find((trace) => trace.packetId === packetId) ?? null;
 }
 
+type StepId = 'dhcp' | 'dns' | 'browse' | 'acl';
+const STEP_ORDER: readonly StepId[] = ['dhcp', 'dns', 'browse', 'acl'];
+
+/** What a step left behind, kept on screen after the next step runs. */
+interface StepResult {
+  readonly ok: boolean;
+  readonly lines: readonly string[];
+}
+
+type StepProgress = 'done' | 'current' | 'todo';
+
+/**
+ * Done once it has succeeded; the first step not yet done is the current one;
+ * the rest are still to come.
+ */
+export function stepProgress(
+  results: Partial<Record<StepId, StepResult>>,
+): Record<StepId, StepProgress> {
+  const current = STEP_ORDER.find((id) => !results[id]?.ok);
+  return Object.fromEntries(
+    STEP_ORDER.map((id) => [id, results[id]?.ok ? 'done' : id === current ? 'current' : 'todo']),
+  ) as Record<StepId, StepProgress>;
+}
+
+/** The address translations the edge router holds right now, one per line. */
+function natRows(engine: ReturnType<typeof useSimulation>['engine']): string[] {
+  return (engine.getState().natTables ?? []).flatMap((table) =>
+    table.entries.map(
+      (entry) =>
+        `${entry.proto.toUpperCase()} ${entry.insideLocalIp}:${entry.insideLocalPort} → ${entry.insideGlobalIp}:${entry.insideGlobalPort} ↔ ${entry.outsidePeerIp}:${entry.outsidePeerPort}`,
+    ),
+  );
+}
+
 function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
   const t = useT();
   const { engine, simulateDhcp, simulateDns, sendPacket, state, getDnsCache } = useSimulation();
   const [isRunning, setIsRunning] = useState(false);
+  const [results, setResults] = useState<Partial<Record<StepId, StepResult>>>({});
+  const record = (id: StepId, result: StepResult) =>
+    setResults((current) => ({ ...current, [id]: result }));
   const [statusText, setStatusText] = useState(
     t(
       'Boot Client A, resolve www.example.com, then browse through NAT.',
@@ -435,6 +472,7 @@ function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
       .find((node) => node.id === 'gw-router')
       ?.data.interfaces?.find((iface) => iface.id === 'wan0')?.ipAddress ?? null;
   const traceCount = state.traces.length;
+  const progress = stepProgress(results);
 
   const runAction = async (description: string, action: () => Promise<void>): Promise<void> => {
     if (isRunning) return;
@@ -453,8 +491,22 @@ function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
       t('Running DHCP DORA for Client A.', 'Client A の DHCP (DORA) を実行しています。'),
       async () => {
         engine.clear();
+        // A fresh boot starts the walk over; what the later steps showed no
+        // longer describes this run.
+        setResults({});
         const leased = await simulateDhcp('client-a');
         const leasedIp = engine.getRuntimeNodeIp('client-a');
+        record('dhcp', {
+          ok: leased,
+          lines: [
+            leased
+              ? t(
+                  `Client A leased ${leasedIp ?? 'an address'}.`,
+                  `Client A に ${leasedIp ?? 'アドレス'} が割り当てられました。`,
+                )
+              : t('DHCP did not complete successfully.', 'DHCP が正常に完了しませんでした。'),
+          ],
+        });
         setStatusText(
           leased
             ? t(
@@ -486,6 +538,17 @@ function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
 
         engine.clearTraces();
         const resolved = await simulateDns('client-a', 'www.example.com');
+        record('dns', {
+          ok: Boolean(resolved),
+          lines: [
+            resolved
+              ? `www.example.com → ${resolved}`
+              : t(
+                  'DNS resolution failed for www.example.com.',
+                  'www.example.com の名前解決に失敗しました。',
+                ),
+          ],
+        });
         setStatusText(
           resolved
             ? t(
@@ -577,6 +640,20 @@ function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
             ? crypto.randomUUID()
             : `enterprise-http-${Date.now()}`,
         );
+        const rows = natRows(engine);
+        record('browse', {
+          ok: completed,
+          lines: completed
+            ? rows.length > 0
+              ? rows
+              : [t('No NAT translation was recorded.', 'NAT の変換は記録されませんでした。')]
+            : [
+                t(
+                  'HTTP request failed before a response could be sent.',
+                  '応答を返す前に HTTP リクエストが失敗しました。',
+                ),
+              ],
+        });
         setStatusText(
           completed
             ? t(
@@ -609,7 +686,8 @@ function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
           return;
         }
 
-        engine.clearTraces();
+        // No clearTraces here: it resets the NAT table too, and the rows step 3
+        // made are the evidence this step is compared with.
         await sendPacket(
           buildTcpProbePacket(
             'client-a',
@@ -623,6 +701,18 @@ function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
         );
         const traces = engine.getState().traces;
         const trace = traces[traces.length - 1] as PacketTrace | undefined;
+        const dropHop = trace?.hops.find((hop) => hop.event === 'drop');
+        record('acl', {
+          ok: trace?.status === 'dropped',
+          lines: [
+            trace?.status === 'dropped'
+              ? t(
+                  `Dropped at ${dropHop?.nodeLabel ?? 'the router'}${dropHop?.reason ? ` (${dropHop.reason})` : ''}.`,
+                  `${dropHop?.nodeLabel ?? 'ルータ'} で破棄されました${dropHop?.reason ? `（${dropHop.reason}）` : ''}。`,
+                )
+              : t('The SSH probe was not dropped.', 'SSH の試しパケットは破棄されませんでした。'),
+          ],
+        });
         setStatusText(
           trace?.status === 'dropped'
             ? t(
@@ -646,7 +736,20 @@ function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
       ),
       async () => {
         engine.clear();
+        setResults({});
         const leased = await simulateDhcp('client-a');
+        const leasedIp = engine.getRuntimeNodeIp('client-a');
+        record('dhcp', {
+          ok: leased,
+          lines: [
+            leased
+              ? t(
+                  `Client A leased ${leasedIp ?? 'an address'}.`,
+                  `Client A に ${leasedIp ?? 'アドレス'} が割り当てられました。`,
+                )
+              : t('DHCP did not complete successfully.', 'DHCP が正常に完了しませんでした。'),
+          ],
+        });
         if (!leased) {
           setStatusText(
             t('Full scenario stopped during DHCP.', '通しの実行が DHCP の段階で止まりました。'),
@@ -655,6 +758,17 @@ function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
         }
 
         const resolved = await simulateDns('client-a', 'www.example.com');
+        record('dns', {
+          ok: Boolean(resolved),
+          lines: [
+            resolved
+              ? `www.example.com → ${resolved}`
+              : t(
+                  'DNS resolution failed for www.example.com.',
+                  'www.example.com の名前解決に失敗しました。',
+                ),
+          ],
+        });
         if (!resolved) {
           setStatusText(
             t(
@@ -670,6 +784,20 @@ function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
             ? crypto.randomUUID()
             : `enterprise-full-${Date.now()}`,
         );
+        const rows = natRows(engine);
+        record('browse', {
+          ok: completed,
+          lines: completed
+            ? rows.length > 0
+              ? rows
+              : [t('No NAT translation was recorded.', 'NAT の変換は記録されませんでした。')]
+            : [
+                t(
+                  'HTTP request failed before a response could be sent.',
+                  '応答を返す前に HTTP リクエストが失敗しました。',
+                ),
+              ],
+        });
         const clientAIp = engine.getRuntimeNodeIp('client-a');
         setStatusText(
           completed
@@ -726,53 +854,123 @@ function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
-        <button
-          type="button"
-          onClick={() => void handleDhcp()}
-          disabled={isRunning}
-          style={isRunning ? BUTTON_DISABLED : BUTTON_PRIMARY}
-        >
-          {t('1. DHCP Boot', '1. DHCP で起動')}
-        </button>
-        <button
-          type="button"
-          onClick={() => void handleDns()}
-          disabled={isRunning || !clientIp}
-          style={isRunning || !clientIp ? BUTTON_DISABLED : BUTTON_SECONDARY}
-        >
-          {t('2. Resolve DNS', '2. DNS で名前解決')}
-        </button>
-        <button
-          type="button"
-          onClick={() => void handleBrowse()}
-          disabled={isRunning || !clientIp || !dnsRecord}
-          style={isRunning || !clientIp || !dnsRecord ? BUTTON_DISABLED : BUTTON_SECONDARY}
-        >
-          {t('3. Browse Through NAT', '3. NAT 越しにアクセス')}
-        </button>
-        <button
-          type="button"
-          onClick={() => void handleBlockedProbe()}
-          disabled={isRunning || !clientIp}
-          style={isRunning || !clientIp ? BUTTON_DISABLED : BUTTON_SECONDARY}
-        >
-          {t('4. SSH Probe (ACL Deny)', '4. SSH を試す (ACL で拒否)')}
-        </button>
-        <button
-          type="button"
-          onClick={() => void handleFullScenario()}
-          disabled={isRunning}
-          style={isRunning ? BUTTON_DISABLED : BUTTON_SECONDARY}
-        >
-          {t('Run Full Scenario', '通しで実行')}
-        </button>
-      </div>
+      <ol
+        data-testid="enterprise-steps"
+        style={{ display: 'grid', gap: 8, listStyle: 'none', margin: 0, padding: 0 }}
+      >
+        {(
+          [
+            {
+              id: 'dhcp',
+              label: t('1. DHCP Boot', '1. DHCP で起動'),
+              run: handleDhcp,
+              disabled: isRunning,
+            },
+            {
+              id: 'dns',
+              label: t('2. Resolve DNS', '2. DNS で名前解決'),
+              run: handleDns,
+              disabled: isRunning || !clientIp,
+            },
+            {
+              id: 'browse',
+              label: t('3. Browse Through NAT', '3. NAT 越しにアクセス'),
+              run: handleBrowse,
+              disabled: isRunning || !clientIp || !dnsRecord,
+            },
+            {
+              id: 'acl',
+              label: t('4. SSH Probe (ACL Deny)', '4. SSH を試す (ACL で拒否)'),
+              run: handleBlockedProbe,
+              disabled: isRunning || !clientIp,
+            },
+          ] as const
+        ).map((step) => {
+          const status = progress[step.id];
+          const result = results[step.id];
+          return (
+            <li
+              key={step.id}
+              data-testid={`enterprise-step-${step.id}`}
+              data-status={status}
+              aria-current={status === 'current' ? 'step' : undefined}
+              style={{
+                display: 'grid',
+                gap: 6,
+                padding: 8,
+                borderRadius: 8,
+                border: `1px solid ${status === 'current' ? '#14b8a6' : 'var(--netlab-border-subtle)'}`,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => void step.run()}
+                  disabled={step.disabled}
+                  style={{
+                    ...(step.disabled
+                      ? BUTTON_DISABLED
+                      : status === 'current'
+                        ? BUTTON_PRIMARY
+                        : BUTTON_SECONDARY),
+                    flex: 1,
+                  }}
+                >
+                  {step.label}
+                </button>
+                <span
+                  style={{
+                    fontFamily: 'monospace',
+                    fontSize: 11,
+                    whiteSpace: 'nowrap',
+                    color:
+                      status === 'done'
+                        ? 'var(--netlab-accent-green)'
+                        : status === 'current'
+                          ? 'var(--netlab-accent-cyan)'
+                          : 'var(--netlab-text-muted)',
+                  }}
+                >
+                  {status === 'done'
+                    ? t('✓ done', '✓ 完了')
+                    : status === 'current'
+                      ? t('▶ next', '▶ 次はここ')
+                      : t('not yet', 'まだ')}
+                </span>
+              </div>
+              {result && (
+                <div
+                  data-testid={`enterprise-step-${step.id}-result`}
+                  style={{
+                    fontFamily: 'monospace',
+                    fontSize: 11,
+                    lineHeight: 1.5,
+                    color: result.ok ? 'var(--netlab-text-primary)' : 'var(--netlab-accent-red)',
+                    overflowWrap: 'anywhere',
+                  }}
+                >
+                  {result.lines.map((line) => (
+                    <div key={line}>{line}</div>
+                  ))}
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+      <button
+        type="button"
+        onClick={() => void handleFullScenario()}
+        disabled={isRunning}
+        style={isRunning ? BUTTON_DISABLED : BUTTON_SECONDARY}
+      >
+        {t('Run Full Scenario', '通しで実行')}
+      </button>
 
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
+          gridTemplateColumns: '1fr 1fr 1fr',
           gap: 8,
           fontFamily: 'monospace',
           fontSize: 11,
@@ -787,7 +985,6 @@ function EnterpriseActions({ topology }: { topology: NetworkTopology }) {
           value={dnsRecord?.address ?? t('pending', '未取得')}
         />
         <MetricCard label={t('Traces', 'トレース数')} value={String(traceCount)} />
-        <MetricCard label={t('Highlight', 'ハイライト')} value={state.highlightMode} />
       </div>
     </div>
   );

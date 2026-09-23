@@ -33,6 +33,8 @@ const LABEL_STYLE: CSSProperties = {
 };
 
 const BUTTON_STYLE: CSSProperties = {
+  // A label is one unit: 「UDP を送る → ポート 7777」 broke after 「ポ」.
+  whiteSpace: 'nowrap',
   padding: '8px 12px',
   borderRadius: 8,
   border: '1px solid #0f766e',
@@ -239,7 +241,7 @@ function UdpDemoInner() {
                   style={{ ...INPUT_STYLE, width: 180 }}
                 />
               </label>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 <button
                   data-testid="demo-primary-action"
                   onClick={sendSmallPayload}
@@ -265,20 +267,19 @@ function UdpDemoInner() {
 
           {activeTrace && (
             <>
-              <div style={CARD_STYLE}>
-                <div style={LABEL_STYLE}>{t('TRACE SUMMARY', '通信のまとめ')}</div>
-                <TraceSummary />
-              </div>
-
-              <div style={CARD_STYLE}>
-                <div style={LABEL_STYLE}>{t('TIMELINE', 'タイムライン')}</div>
+              {/* Each panel carries its own heading; an outer label repeated it. */}
+              <TraceSummary />
+              <div
+                data-testid="lesson-trace-timeline"
+                style={{
+                  border: '1px solid var(--netlab-border-subtle)',
+                  borderRadius: 8,
+                  overflow: 'hidden',
+                }}
+              >
                 <PacketTimeline />
               </div>
-
-              <div style={CARD_STYLE}>
-                <div style={LABEL_STYLE}>{t('HOP INSPECTOR', 'ホップの詳細')}</div>
-                <HopInspector />
-              </div>
+              <HopInspector />
             </>
           )}
         </div>

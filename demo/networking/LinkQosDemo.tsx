@@ -6,7 +6,8 @@ import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { TraceSummary } from '../../src/components/simulation/TraceSummary';
 import { buildUdpPacket } from '../../src/layers/l4-transport/udpPacketBuilder';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
-import type { LinkQosConfig } from '../../src/types/link';
+import type { LinkQosConfig, LinkShaperClass, LinkShaperConfig } from '../../src/types/link';
+import type { PacketTrace } from '../../src/types/simulation';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -222,6 +223,417 @@ function updateQos(topology: NetworkTopology, link: LinkQosConfig): NetworkTopol
   };
 }
 
+const FIELD_LABEL: CSSProperties = {
+  display: 'grid',
+  gap: 4,
+  fontSize: 12,
+  color: 'var(--netlab-text-secondary)',
+};
+
+const INPUT: CSSProperties = {
+  background: 'var(--netlab-bg-primary)',
+  border: '1px solid var(--netlab-border-subtle)',
+  borderRadius: 6,
+  color: 'var(--netlab-text-primary)',
+  fontFamily: 'monospace',
+  padding: '5px 6px',
+  minWidth: 0,
+};
+
+const SECONDARY_BUTTON: CSSProperties = {
+  ...BUTTON_STYLE,
+  background: 'var(--netlab-bg-primary)',
+  color: 'var(--netlab-text-primary)',
+  border: '1px solid var(--netlab-border)',
+};
+
+const CARD: CSSProperties = {
+  marginTop: 14,
+  padding: 12,
+  borderRadius: 8,
+  border: '1px solid var(--netlab-border-subtle)',
+  display: 'grid',
+  gap: 10,
+};
+
+const DEFAULT_CLASSES: readonly LinkShaperClass[] = [
+  { id: 'ef', dscp: [46], weightPct: 80, queueDepthSegments: 8 },
+  { id: 'be', dscp: [], weightPct: 20, queueDepthSegments: 8, default: true },
+];
+
+interface ClassDraft {
+  name: string;
+  weight: string;
+  queue: string;
+  dscp: string;
+  isDefault: boolean;
+}
+
+function toDraft(klass: LinkShaperClass): ClassDraft {
+  return {
+    name: klass.id,
+    weight: String(klass.weightPct),
+    queue: String(klass.queueDepthSegments),
+    dscp: klass.dscp.join(', '),
+    isDefault: klass.default === true,
+  };
+}
+
+/**
+ * Build the shaper from the labelled fields, or say in words what is wrong.
+ * The same rules the advanced text editor applies: one default class, weights
+ * adding up to 100, DSCP values 0–63 each in one class only.
+ */
+export function shaperFromDrafts(
+  drafts: readonly ClassDraft[],
+  t: (en: string, ja: string) => string,
+): { shaper: LinkShaperConfig } | { error: string } {
+  const classes: LinkShaperClass[] = [];
+  const seenDscp = new Set<number>();
+  for (const draft of drafts) {
+    const name = draft.name.trim();
+    const weight = Number(draft.weight);
+    const queue = Number(draft.queue);
+    const dscpParts = draft.dscp
+      .split(',')
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0);
+    const dscp = dscpParts.map(Number);
+    if (name === '') return { error: t('Every class needs a name.', 'クラスには名前が必要です。') };
+    if (!Number.isFinite(weight) || weight < 1 || weight > 100) {
+      return {
+        error: t(`Weight of ${name} must be 1–100.`, `${name} の重みは 1〜100 にしてください。`),
+      };
+    }
+    if (!Number.isInteger(queue) || queue < 1) {
+      return {
+        error: t(
+          `Queue length of ${name} must be 1 or more.`,
+          `${name} のキューの長さは 1 以上にしてください。`,
+        ),
+      };
+    }
+    for (const value of dscp) {
+      if (!Number.isInteger(value) || value < 0 || value > 63) {
+        return {
+          error: t(
+            `DSCP values of ${name} must be whole numbers 0–63.`,
+            `${name} の DSCP は 0〜63 の整数にしてください。`,
+          ),
+        };
+      }
+      if (seenDscp.has(value)) {
+        return {
+          error: t(
+            `DSCP ${value} is in more than one class.`,
+            `DSCP ${value} が複数のクラスに入っています。`,
+          ),
+        };
+      }
+      seenDscp.add(value);
+    }
+    classes.push({
+      id: name,
+      weightPct: weight,
+      queueDepthSegments: queue,
+      dscp,
+      ...(draft.isDefault ? { default: true } : {}),
+    });
+  }
+  if (new Set(classes.map((klass) => klass.id)).size !== classes.length) {
+    return { error: t('Two classes share a name.', '同じ名前のクラスがあります。') };
+  }
+  if (classes.filter((klass) => klass.default).length !== 1) {
+    return {
+      error: t('Choose exactly one default class.', '既定のクラスをちょうど1つ選んでください。'),
+    };
+  }
+  const total = classes.reduce((sum, klass) => sum + klass.weightPct, 0);
+  if (total < 99 || total > 101) {
+    return {
+      error: t(
+        `Weights add up to ${total}; make them 100.`,
+        `重みの合計が ${total} です。100 にしてください。`,
+      ),
+    };
+  }
+  return { shaper: { classes } };
+}
+
+/** One line about what happened to the packet on the shaped link. */
+export function burstOutcome(
+  trace: PacketTrace | null,
+  t: (en: string, ja: string) => string,
+): string {
+  if (!trace) return t('No packet was sent.', 'パケットは送られませんでした。');
+  const drop = trace.hops.find((hop) => hop.action === 'link:dropped');
+  if (drop) {
+    const reason = drop.linkQos?.reason;
+    return reason === 'loss'
+      ? t('Dropped on the link by random loss.', 'リンクのランダムな損失で落ちました。')
+      : reason === 'queue-full'
+        ? t('Dropped: the link queue was full.', 'リンクのキューがいっぱいで落ちました。')
+        : t('Dropped on the link.', 'リンクで落ちました。');
+  }
+  const arrived = trace.hops.find((hop) => hop.action === 'link:arrived');
+  const latency = arrived?.linkQos?.totalLatencySteps;
+  if (trace.status === 'delivered') {
+    return latency !== undefined
+      ? t(
+          `Delivered — ${latency} ms to cross the link.`,
+          `届きました — リンクの通過に ${latency} ms かかりました。`,
+        )
+      : t('Delivered.', '届きました。');
+  }
+  return t('Dropped before reaching the server.', 'サーバに届く前に落ちました。');
+}
+
+function QosFields({
+  link,
+  onQosChange,
+}: {
+  readonly link: LinkQosConfig;
+  readonly onQosChange: (link: LinkQosConfig) => void;
+}) {
+  const t = useT();
+  const [bandwidth, setBandwidth] = useState(String(link.bandwidthBps ?? ''));
+  const [delay, setDelay] = useState(String(link.propagationDelayMs ?? ''));
+  const [loss, setLoss] = useState(link.lossPct ?? 0);
+  const [drafts, setDrafts] = useState<ClassDraft[]>(() =>
+    (link.shaper?.classes ?? DEFAULT_CLASSES).map(toDraft),
+  );
+  const [shaperNote, setShaperNote] = useState<string | null>(null);
+
+  const bandwidthValue = Number(bandwidth);
+  const delayValue = Number(delay);
+  const linkError =
+    !Number.isFinite(bandwidthValue) || bandwidthValue <= 0
+      ? t('Bandwidth must be more than 0 bps.', '帯域は 0 bps より大きくしてください。')
+      : !Number.isFinite(delayValue) || delayValue < 0 || delayValue > 1000
+        ? t('Delay must be 0–1000 ms.', '伝搬遅延は 0〜1000 ms にしてください。')
+        : null;
+  const shaperResult = shaperFromDrafts(drafts, t);
+
+  const updateDraft = (index: number, patch: Partial<ClassDraft>) =>
+    setDrafts((current) =>
+      current.map((draft, i) =>
+        i === index
+          ? { ...draft, ...patch }
+          : patch.isDefault
+            ? { ...draft, isDefault: false }
+            : draft,
+      ),
+    );
+
+  const applyLink = () => {
+    if (linkError) return;
+    onQosChange({
+      ...link,
+      bandwidthBps: bandwidthValue,
+      propagationDelayMs: delayValue,
+      lossPct: loss,
+      lossSeed: link.lossSeed ?? 42,
+    });
+  };
+
+  const applyShaper = () => {
+    if ('error' in shaperResult) return;
+    onQosChange({ ...link, shaper: shaperResult.shaper });
+    setShaperNote(t('Classes applied to R2 → R3.', 'クラスを R2 → R3 のリンクに適用しました。'));
+  };
+
+  return (
+    <>
+      <section data-testid="link-qos-fields" style={CARD}>
+        <div style={{ fontSize: 12, fontWeight: 700 }}>
+          {t('The R2 → R3 link', 'R2 → R3 のリンク')}
+        </div>
+        <label style={FIELD_LABEL}>
+          {t('Bandwidth (bps)', '帯域 (bps)')}
+          <input
+            data-testid="link-qos-bandwidth"
+            type="number"
+            min={1}
+            value={bandwidth}
+            onChange={(event) => setBandwidth(event.currentTarget.value)}
+            style={INPUT}
+          />
+        </label>
+        <label style={FIELD_LABEL}>
+          {t('Propagation delay (ms)', '伝搬遅延 (ms)')}
+          <input
+            data-testid="link-qos-delay"
+            type="number"
+            min={0}
+            max={1000}
+            value={delay}
+            onChange={(event) => setDelay(event.currentTarget.value)}
+            style={INPUT}
+          />
+        </label>
+        <label style={FIELD_LABEL}>
+          <span>
+            {t('Loss', '損失率')}:{' '}
+            <output
+              data-testid="link-qos-loss-value"
+              style={{ color: 'var(--netlab-text-primary)' }}
+            >
+              {loss}%
+            </output>
+          </span>
+          <input
+            data-testid="link-qos-loss"
+            type="range"
+            min={0}
+            max={50}
+            value={loss}
+            aria-valuetext={`${loss}%`}
+            onChange={(event) => setLoss(Number(event.currentTarget.value))}
+          />
+        </label>
+        {linkError && (
+          <div role="alert" style={{ color: 'var(--netlab-accent-red)', fontSize: 12 }}>
+            {linkError}
+          </div>
+        )}
+        <button
+          type="button"
+          data-testid="link-qos-apply"
+          disabled={linkError !== null}
+          onClick={applyLink}
+          style={{ ...BUTTON_STYLE, justifySelf: 'start' }}
+        >
+          {t('Apply to the link', 'リンクに適用')}
+        </button>
+      </section>
+
+      <section data-testid="link-qos-classes" style={CARD}>
+        <div style={{ fontSize: 12, fontWeight: 700 }}>
+          {t('Traffic classes', 'トラフィックのクラス')}
+        </div>
+        {drafts.map((draft, index) => (
+          <fieldset
+            key={index}
+            data-testid={`link-qos-class-${index}`}
+            style={{
+              margin: 0,
+              padding: 8,
+              border: '1px solid var(--netlab-border-subtle)',
+              borderRadius: 6,
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: 8,
+            }}
+          >
+            <legend style={{ fontSize: 11, color: 'var(--netlab-text-secondary)' }}>
+              {t(`Class ${index + 1}`, `クラス ${index + 1}`)}
+            </legend>
+            <label style={FIELD_LABEL}>
+              {t('Name', '名前')}
+              <input
+                data-testid={`link-qos-class-${index}-name`}
+                value={draft.name}
+                onChange={(event) => updateDraft(index, { name: event.currentTarget.value })}
+                style={INPUT}
+              />
+            </label>
+            <label style={FIELD_LABEL}>
+              {t('Weight (%)', '重み (%)')}
+              <input
+                data-testid={`link-qos-class-${index}-weight`}
+                type="number"
+                min={1}
+                max={100}
+                value={draft.weight}
+                onChange={(event) => updateDraft(index, { weight: event.currentTarget.value })}
+                style={INPUT}
+              />
+            </label>
+            <label style={FIELD_LABEL}>
+              {t('Queue length (packets)', 'キューの長さ (パケット数)')}
+              <input
+                data-testid={`link-qos-class-${index}-queue`}
+                type="number"
+                min={1}
+                value={draft.queue}
+                onChange={(event) => updateDraft(index, { queue: event.currentTarget.value })}
+                style={INPUT}
+              />
+            </label>
+            <label style={FIELD_LABEL}>
+              {t('DSCP values (comma-separated)', 'DSCP の値 (カンマ区切り)')}
+              <input
+                data-testid={`link-qos-class-${index}-dscp`}
+                value={draft.dscp}
+                onChange={(event) => updateDraft(index, { dscp: event.currentTarget.value })}
+                style={INPUT}
+              />
+            </label>
+            <label style={{ ...FIELD_LABEL, gridColumn: '1 / -1', display: 'flex', gap: 6 }}>
+              <input
+                type="radio"
+                name="link-qos-default-class"
+                checked={draft.isDefault}
+                onChange={() => updateDraft(index, { isDefault: true })}
+              />
+              {t(
+                'Default class (takes packets no DSCP value matches)',
+                '既定のクラス (どの DSCP にも当てはまらないパケットが入る)',
+              )}
+            </label>
+            {drafts.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setDrafts((current) => current.filter((_, i) => i !== index))}
+                style={{ ...SECONDARY_BUTTON, gridColumn: '1 / -1', justifySelf: 'start' }}
+              >
+                {t('Remove class', 'クラスを削除')}
+              </button>
+            )}
+          </fieldset>
+        ))}
+        <button
+          type="button"
+          onClick={() =>
+            setDrafts((current) => [
+              ...current,
+              {
+                name: `c${current.length + 1}`,
+                weight: '10',
+                queue: '8',
+                dscp: '',
+                isDefault: false,
+              },
+            ])
+          }
+          style={{ ...SECONDARY_BUTTON, justifySelf: 'start' }}
+        >
+          {t('Add class', 'クラスを追加')}
+        </button>
+        {'error' in shaperResult && (
+          <div role="alert" style={{ color: 'var(--netlab-accent-red)', fontSize: 12 }}>
+            {shaperResult.error}
+          </div>
+        )}
+        <button
+          type="button"
+          data-testid="link-qos-apply-classes"
+          disabled={'error' in shaperResult}
+          onClick={applyShaper}
+          style={{ ...BUTTON_STYLE, justifySelf: 'start' }}
+        >
+          {t('Apply classes', 'クラスを適用')}
+        </button>
+        {shaperNote && (
+          <div role="status" style={{ fontSize: 12 }}>
+            {shaperNote}
+          </div>
+        )}
+      </section>
+    </>
+  );
+}
+
 function DemoInner({
   topology,
   onQosChange,
@@ -230,7 +642,8 @@ function DemoInner({
   readonly onQosChange: (link: LinkQosConfig) => void;
 }) {
   const t = useT();
-  const { sendPacket, state } = useSimulation();
+  const { sendPacket, state, engine } = useSimulation();
+  const [burstResult, setBurstResult] = useState<string | null>(null);
   const edge = useMemo(
     () => topology.edges.find((candidate) => candidate.id === 'e-r2-r3') ?? topology.edges[0],
     [topology.edges],
@@ -248,9 +661,10 @@ function DemoInner({
       dstMac: '02:00:00:00:00:20',
       payload: { layer: 'raw', data: 'x'.repeat(1472) },
     });
+    const id = `link-qos-${state.traces.length + 1}`;
     await sendPacket({
       ...packet,
-      id: `link-qos-${state.traces.length + 1}`,
+      id,
       frame: {
         ...packet.frame,
         payload: {
@@ -259,6 +673,8 @@ function DemoInner({
         },
       },
     });
+    const trace = engine.getState().traces.find((candidate) => candidate.packetId === id) ?? null;
+    setBurstResult(burstOutcome(trace, t));
   };
 
   return (
@@ -279,7 +695,35 @@ function DemoInner({
         <button type="button" data-testid="link-qos-burst" onClick={sendBurst} style={BUTTON_STYLE}>
           {t('Send QoS burst', 'QoS を試すパケットを送る')}
         </button>
-        {edge && <LinkDetailPanel edge={edge} onQosChange={onQosChange} />}
+        {burstResult && (
+          <div
+            role="status"
+            data-testid="link-qos-burst-result"
+            style={{ marginTop: 8, fontSize: 12, lineHeight: 1.5 }}
+          >
+            {burstResult}
+          </div>
+        )}
+        {edge && (
+          // Re-read the fields whenever the link changes, including from the
+          // advanced editor below.
+          <QosFields
+            key={JSON.stringify(edge.data?.link ?? {})}
+            link={edge.data?.link ?? {}}
+            onQosChange={onQosChange}
+          />
+        )}
+        {/* The text form for the whole configuration stays, for a reader who
+            already knows the grammar; a beginner uses the fields above. */}
+        <details data-testid="link-qos-advanced" style={{ marginTop: 14 }}>
+          <summary
+            data-testid="link-qos-advanced-toggle"
+            style={{ cursor: 'pointer', fontSize: 12 }}
+          >
+            {t('Advanced: every setting as text', '詳細設定 (上級者向け・テキストで編集)')}
+          </summary>
+          {edge && <LinkDetailPanel edge={edge} onQosChange={onQosChange} />}
+        </details>
         <div style={{ marginTop: 14 }}>
           <TraceSummary />
           <PacketTimeline />

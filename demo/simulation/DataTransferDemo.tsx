@@ -871,16 +871,7 @@ function DataTransferDemoInner() {
               overflow: 'auto',
             }}
           >
-            <div
-              style={{
-                fontFamily: 'monospace',
-                fontSize: 12,
-                color: 'var(--netlab-text-primary)',
-                marginBottom: 10,
-              }}
-            >
-              {t('Failure Injection', '障害を起こす')}
-            </div>
+            {/* The panel names itself; a second title above it read twice. */}
             <FailureTogglePanel />
           </div>
 

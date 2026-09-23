@@ -1,11 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import DemoShell from '../DemoShell';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { ResizableSidebar } from '../../src/components/ResizableSidebar';
-import { HopInspector } from '../../src/components/simulation/HopInspector';
-import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
-import { TraceSummary } from '../../src/components/simulation/TraceSummary';
 import { StepControls } from '../../src/components/simulation/StepControls';
 import { FailureTogglePanel } from '../../src/components/simulation/FailureTogglePanel';
 import { SimulationControls } from '../../src/components/simulation/SimulationControls';
@@ -17,6 +14,7 @@ import type { EditorTopology } from '../../src/editor/types';
 import type { InFlightPacket } from '../../src/types/packets';
 import type { NetworkTopology } from '../../src/types/topology';
 import { readDemoEmbedParams } from '../embedParams';
+import { TraceInspectorColumn } from '../simulation/TraceInspectorColumn';
 import { useT } from '../localeContext';
 
 type DemoEmbedProviderProps = Pick<
@@ -177,6 +175,7 @@ function TabBar({ activeTab, onChange }: { activeTab: TabId; onChange: (tab: Tab
       {TABS.map((tab) => (
         <button
           key={tab.id}
+          data-testid={`all-in-one-tab-${tab.id}`}
           onClick={() => onChange(tab.id)}
           style={{
             padding: '8px 18px',
@@ -213,7 +212,13 @@ function TabBar({ activeTab, onChange }: { activeTab: TabId; onChange: (tab: Tab
   );
 }
 
-function makePacket(topology: NetworkTopology): InFlightPacket | null {
+/**
+ * A flow's session id is its position among the packets a tab has sent —
+ * `flow-1`, `flow-2` — rather than a random UUID. The flow list names a trace
+ * by its session, so the first packet reads the same on every tab instead of
+ * a different hash each time.
+ */
+function makePacket(topology: NetworkTopology, flowNumber = 1): InFlightPacket | null {
   const client = topology.nodes.find((node) => node.data.role === 'client');
   const server = topology.nodes.find((node) => node.data.role === 'server');
   if (!client || !server) return null;
@@ -223,6 +228,7 @@ function makePacket(topology: NetworkTopology): InFlightPacket | null {
 
   return {
     id: `pkt-${Date.now()}`,
+    sessionId: `flow-${flowNumber}`,
     srcNodeId: client.id,
     dstNodeId: server.id,
     frame: {
@@ -283,8 +289,12 @@ function SimulationTabInner() {
   const { topology } = useNetlabContext();
   const { sendPacket, state } = useSimulation();
 
+  // One flow per visit to the tab; the effect otherwise re-sent whenever the
+  // run went idle again, stacking identical flows in the list.
+  const sent = useRef(false);
   useEffect(() => {
-    if (state.status !== 'idle') return;
+    if (sent.current || state.status !== 'idle') return;
+    sent.current = true;
     const packet = makePacket(topology);
     if (!packet) return;
     void sendPacket(packet);
@@ -339,8 +349,10 @@ function FailureTabInner() {
   const { topology } = useNetlabContext();
   const { failureState } = useFailure();
 
+  const [sentCount, setSentCount] = useState(0);
   const handleSend = () => {
-    const packet = makePacket(topology);
+    const packet = makePacket(topology, sentCount + 1);
+    setSentCount((count) => count + 1);
     if (!packet) return;
     void sendPacket(packet);
   };
@@ -365,6 +377,7 @@ function FailureTabInner() {
           }}
         >
           <button
+            data-testid="all-in-one-failure-send"
             onClick={handleSend}
             style={{
               padding: '6px 14px',
@@ -441,8 +454,10 @@ function TraceTabInner() {
   const { topology } = useNetlabContext();
   const { sendPacket, state } = useSimulation();
 
+  const sent = useRef(false);
   useEffect(() => {
-    if (state.status !== 'idle') return;
+    if (sent.current || state.status !== 'idle') return;
+    sent.current = true;
     const packet = makePacket(topology);
     if (!packet) return;
     void sendPacket(packet);
@@ -462,33 +477,7 @@ function TraceTabInner() {
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-          <div
-            style={{
-              flex: 1,
-              minHeight: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12,
-              padding: 12,
-            }}
-          >
-            <TraceSummary />
-            <div
-              style={{
-                flex: 1,
-                minHeight: 0,
-                background: 'var(--netlab-bg-panel)',
-                border: '1px solid var(--netlab-border-subtle)',
-                borderRadius: 8,
-                overflow: 'hidden',
-              }}
-            >
-              <PacketTimeline />
-            </div>
-            <div style={{ flex: 2, minHeight: 0 }}>
-              <HopInspector />
-            </div>
-          </div>
+          <TraceInspectorColumn />
           <SimulationControls />
         </div>
       </ResizableSidebar>

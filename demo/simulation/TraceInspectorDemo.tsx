@@ -1,22 +1,24 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { ResizableSidebar } from '../../src/components/ResizableSidebar';
 import { useNetlabContext } from '../../src/components/NetlabContext';
-import { HopInspector } from '../../src/components/simulation/HopInspector';
-import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationControls } from '../../src/components/simulation/SimulationControls';
-import { TraceSummary } from '../../src/components/simulation/TraceSummary';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import DemoShell from '../DemoShell';
 import { STEP_SIM_TOPOLOGY, buildStepSimPacket } from './stepSimShared';
+import { TraceInspectorColumn } from './TraceInspectorColumn';
 
 function TraceInspectorDemoInner() {
   const { topology } = useNetlabContext();
   const { sendPacket, state } = useSimulation();
 
+  // Once per visit: the effect runs twice in development, and a second
+  // identical trace put two flows the learner never sent into the list.
+  const sent = useRef(false);
   useEffect(() => {
-    if (state.status !== 'idle') return;
+    if (sent.current || state.status !== 'idle') return;
+    sent.current = true;
     const packet = buildStepSimPacket(topology);
     if (!packet) return;
     void sendPacket(packet);
@@ -37,35 +39,7 @@ function TraceInspectorDemoInner() {
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-          <div
-            style={{
-              flex: 1,
-              minHeight: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12,
-              padding: 12,
-            }}
-          >
-            <TraceSummary />
-
-            <div
-              style={{
-                flex: 1,
-                minHeight: 0,
-                background: 'var(--netlab-bg-panel)',
-                border: '1px solid var(--netlab-border-subtle)',
-                borderRadius: 8,
-                overflow: 'hidden',
-              }}
-            >
-              <PacketTimeline />
-            </div>
-
-            <div style={{ flex: 2, minHeight: 0 }}>
-              <HopInspector />
-            </div>
-          </div>
+          <TraceInspectorColumn />
 
           <SimulationControls />
         </div>

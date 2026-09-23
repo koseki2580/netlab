@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { FakeDeterministicProvider } from '../../src/crypto/FakeDeterministicProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
+import { useNetlabContext } from '../../src/components/NetlabContext';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { detectHiddenNodeCollision } from '../../src/layers/l1-physical/wireless/CsmaCa';
 import { WirelessLinkController } from '../../src/layers/l1-physical/wireless/WirelessLinkController';
@@ -136,6 +137,11 @@ function WirelessControls({
   readonly collidedStationIds: readonly string[];
 }) {
   const t = useT();
+  const { topology: shown } = useNetlabContext();
+  // Name stations the way the canvas does — Station A, not sta-a.
+  const collided = collidedStationIds.map(
+    (id) => shown.nodes.find((node) => node.id === id)?.data.label ?? id,
+  );
 
   return (
     <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -185,11 +191,8 @@ function WirelessControls({
       <div style={PANEL_STYLE}>
         <h3 style={{ marginTop: 0 }}>CSMA/CA</h3>
         <div data-testid="hidden-node">
-          {collidedStationIds.length > 0
-            ? t(
-                `Collision: ${collidedStationIds.join(', ')}`,
-                `衝突: ${collidedStationIds.join(', ')}`,
-              )
+          {collided.length > 0
+            ? t(`Collision: ${collided.join(', ')}`, `衝突: ${collided.join(', ')}`)
             : t('No collision', '衝突なし')}
         </div>
       </div>

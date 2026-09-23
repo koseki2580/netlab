@@ -3,11 +3,12 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import EnterpriseDemo from './EnterpriseDemo';
+import EnterpriseDemo, { stepProgress } from './EnterpriseDemo';
 
 interface MockTrace {
   packetId: string;
   status: 'delivered' | 'dropped' | 'in-flight';
+  hops: unknown[];
 }
 
 const engineState: {
@@ -45,9 +46,10 @@ const simulationState: {
 };
 
 let runtimeClientIp: string | null = null;
+let natTables: unknown[] = [];
 let dnsRecord: { address: string } | null = null;
 const sendPacket = vi.fn(async (packet: { id: string }) => {
-  const trace: MockTrace = { packetId: packet.id, status: 'delivered' };
+  const trace: MockTrace = { packetId: packet.id, status: 'delivered', hops: [] };
   engineState.traces.push(trace);
   simulationState.traces = engineState.traces as typeof simulationState.traces;
   simulationState.currentTraceId = packet.id;
@@ -68,6 +70,7 @@ const mockEngine = {
   getRuntimeNodeIp: vi.fn(() => runtimeClientIp),
   getState: vi.fn(() => ({
     ...simulationState,
+    natTables,
     traces: engineState.traces,
     highlightMode: engineState.highlightMode,
   })),
@@ -165,6 +168,7 @@ beforeEach(() => {
   actEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
   runtimeClientIp = null;
   dnsRecord = null;
+  natTables = [];
   engineState.traces.length = 0;
   engineState.highlightMode = 'path';
   simulationState.traces = engineState.traces as typeof simulationState.traces;
@@ -236,5 +240,83 @@ describe('EnterpriseDemo', () => {
     expect(simulateDns).toHaveBeenCalledWith('client-a', 'www.example.com');
     expect(sendPacket).toHaveBeenCalledTimes(2);
     expect(engineState.traces).toHaveLength(2);
+  });
+});
+
+function clickButton(label: string) {
+  const button = Array.from(document.querySelectorAll('button')).find((candidate) =>
+    candidate.textContent?.includes(label),
+  );
+  if (!button) throw new Error(`expected button ${label}`);
+  button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+}
+
+async function settle() {
+  for (let i = 0; i < 6; i += 1) await Promise.resolve();
+}
+
+describe('EnterpriseDemo step list', () => {
+  it('marks steps done, the first unfinished one current, and the rest not yet', () => {
+    expect(stepProgress({})).toEqual({
+      dhcp: 'current',
+      dns: 'todo',
+      browse: 'todo',
+      acl: 'todo',
+    });
+    expect(stepProgress({ dhcp: { ok: true, lines: [] }, dns: { ok: false, lines: [] } })).toEqual({
+      dhcp: 'done',
+      dns: 'current',
+      browse: 'todo',
+      acl: 'todo',
+    });
+  });
+
+  it('keeps the NAT rows from step 3 on screen after step 4 runs', async () => {
+    runtimeClientIp = '10.0.1.100';
+    dnsRecord = { address: '203.0.113.80' };
+    natTables = [
+      {
+        routerId: 'gw-router',
+        entries: [
+          {
+            id: 'n1',
+            proto: 'tcp',
+            type: 'snat',
+            insideLocalIp: '10.0.1.100',
+            insideLocalPort: 49152,
+            insideGlobalIp: '10.0.2.1',
+            insideGlobalPort: 1024,
+            outsidePeerIp: '203.0.113.80',
+            outsidePeerPort: 80,
+            createdAt: 0,
+            lastSeenAt: 0,
+          },
+        ],
+      },
+    ];
+    render();
+
+    await act(async () => {
+      clickButton('3. Browse Through NAT');
+      await settle();
+    });
+    await act(async () => {
+      clickButton('4. SSH Probe (ACL Deny)');
+      await settle();
+    });
+
+    const browse = document.querySelector('[data-testid="enterprise-step-browse"]');
+    expect(browse?.getAttribute('data-status')).toBe('done');
+    expect(
+      document.querySelector('[data-testid="enterprise-step-browse-result"]')?.textContent,
+    ).toBe('TCP 10.0.1.100:49152 → 10.0.2.1:1024 ↔ 203.0.113.80:80');
+    expect(document.querySelector('[data-testid="enterprise-step-acl-result"]')).not.toBeNull();
+    // Step 4 appends its probe instead of clearing the run step 3 left.
+    expect(engineState.traces.length).toBe(3);
+  });
+
+  it('shows no raw highlight-mode value', () => {
+    render();
+    expect(document.body.textContent).not.toContain('Highlight');
   });
 });

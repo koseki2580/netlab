@@ -11,6 +11,7 @@ import { PreFlightBrief } from '../../src/components/PreFlightBrief';
 import { getRecommendedNext, NextScenarioRail } from '../../src/components/NextScenarioRail';
 import { scenarioRegistry } from '../../src/scenarios';
 import type { Scenario, ScenarioBrief } from '../../src/scenarios/types';
+import type { PacketTrace } from '../../src/types/simulation';
 import {
   forkScenario,
   getSandbox,
@@ -67,7 +68,145 @@ const BRIEF_JA: ScenarioBrief | undefined = ospfConvergence.brief && {
   },
 };
 
-function RouteSummaryPanel() {
+/** One probe the learner sent, kept so a later run can be compared with it. */
+export interface ProbeRun {
+  readonly packetId: string;
+  readonly linkDown: boolean;
+  readonly path: string;
+}
+
+/**
+ * The path the probe took to its destination, by device name: the hops up to
+ * the first delivery (or the drop), without the ARP exchanges on the way, each
+ * device once. `C1 → R1 → R2 → R4 → C2`.
+ */
+export function probePath(trace: PacketTrace): string {
+  const labels: string[] = [];
+  for (const hop of trace.hops) {
+    if (hop.event === 'arp-request' || hop.event === 'arp-reply') continue;
+    if (labels[labels.length - 1] !== hop.nodeLabel) labels.push(hop.nodeLabel);
+    if (hop.event === 'deliver' || hop.event === 'drop') break;
+  }
+  return labels.join(' → ');
+}
+
+function RouteComparison({ runs }: { runs: readonly ProbeRun[] }) {
+  const t = useT();
+  const current = runs[runs.length - 1] ?? null;
+  const previous = runs[runs.length - 2] ?? null;
+  const linkWord = (run: ProbeRun) =>
+    run.linkDown ? t('link down', 'リンク断') : t('link up', 'リンクあり');
+
+  return (
+    <div style={{ display: 'grid', gap: 4, marginTop: 10 }}>
+      <div data-testid="ospf-route-current">
+        {t('Probe route', '今回の経路')}:{' '}
+        {current
+          ? `${current.path} (${linkWord(current)})`
+          : t('send a probe to see it', 'プローブを送ると表示されます')}
+      </div>
+      {previous && (
+        <div data-testid="ospf-route-previous" style={{ color: 'var(--netlab-text-secondary)' }}>
+          {t('Previous route', '前回の経路')}: {previous.path} ({linkWord(previous)})
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Every router's table, one at a time, in the side rail. Floating over the
+ * canvas they covered R4 and C2, and more than half of their own rows.
+ */
+function RouterTablesPanel() {
+  const t = useT();
+  const { topology, routeTable } = useNetlabContext();
+  const routers = topology.nodes.filter((node) => node.data.role === 'router');
+  const [selected, setSelected] = useState<string | null>(null);
+  const activeId = selected && routers.some((r) => r.id === selected) ? selected : routers[0]?.id;
+  const routes = activeId ? (routeTable.get(activeId) ?? []) : [];
+
+  return (
+    <div
+      data-testid="ospf-route-tables"
+      style={{
+        background: 'var(--netlab-bg-primary)',
+        border: '1px solid var(--netlab-bg-surface)',
+        borderRadius: 10,
+        padding: 12,
+        color: 'var(--netlab-text-primary)',
+        fontFamily: 'monospace',
+        fontSize: 11,
+      }}
+    >
+      <div
+        style={{
+          color: 'var(--netlab-text-secondary)',
+          fontWeight: 700,
+          letterSpacing: 1,
+          marginBottom: 8,
+        }}
+      >
+        {t('ROUTE TABLES', '経路表')}
+      </div>
+      <div role="tablist" style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
+        {routers.map((router) => {
+          const active = router.id === activeId;
+          return (
+            <button
+              key={router.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              data-testid={`ospf-route-tab-${router.id}`}
+              onClick={() => setSelected(router.id)}
+              style={{
+                padding: '3px 10px',
+                borderRadius: 6,
+                border: `1px solid ${active ? 'var(--netlab-accent-blue)' : 'var(--netlab-border-subtle)'}`,
+                background: active ? 'rgba(59, 130, 246, 0.14)' : 'transparent',
+                color: active ? 'var(--netlab-text-primary)' : 'var(--netlab-text-secondary)',
+                cursor: 'pointer',
+                fontFamily: 'monospace',
+                fontSize: 11,
+              }}
+            >
+              {router.data.label}
+            </button>
+          );
+        })}
+      </div>
+      <table
+        role="tabpanel"
+        data-testid="ospf-route-table-rows"
+        style={{ width: '100%', borderCollapse: 'collapse' }}
+      >
+        <thead>
+          <tr style={{ color: 'var(--netlab-text-muted)', textAlign: 'left' }}>
+            <th style={{ padding: '2px 4px', fontWeight: 600 }}>{t('Destination', '宛先')}</th>
+            <th style={{ padding: '2px 4px', fontWeight: 600 }}>{t('Next hop', '次ホップ')}</th>
+            <th style={{ padding: '2px 4px', fontWeight: 600, textAlign: 'right' }}>
+              {t('Metric', 'メトリック')}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {routes.map((route) => (
+            <tr key={`${route.destination}-${route.nextHop}`}>
+              <td style={{ padding: '2px 4px' }}>{route.destination}</td>
+              <td style={{ padding: '2px 4px', color: 'var(--netlab-text-secondary)' }}>
+                {route.nextHop === 'direct' ? t('direct', '直結') : route.nextHop}
+              </td>
+              <td style={{ padding: '2px 4px', textAlign: 'right' }}>{route.metric}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function RouteSummaryPanel({ runs }: { runs: readonly ProbeRun[] }) {
   const t = useT();
   const { routeTable } = useNetlabContext();
   const preferredRoute =
@@ -119,6 +258,7 @@ function RouteSummaryPanel() {
           )}
         </div>
       )}
+      <RouteComparison runs={runs} />
     </div>
   );
 }
@@ -126,9 +266,13 @@ function RouteSummaryPanel() {
 function OspfConvergenceInner({
   primaryLinkDown,
   onTogglePrimaryLink,
+  runs,
+  onProbeFinished,
 }: {
   primaryLinkDown: boolean;
   onTogglePrimaryLink: () => void;
+  runs: readonly ProbeRun[];
+  onProbeFinished: (run: ProbeRun) => void;
 }) {
   const t = useT();
   const locale = useGalleryLocale();
@@ -183,6 +327,19 @@ function OspfConvergenceInner({
     engine.clearTraces();
     await engine.ping('c1', '10.4.0.10');
   }, [engine]);
+
+  // Keep each finished probe's path. Failing the link rebuilds the topology and
+  // the simulation with it, which wiped the run the learner was meant to compare
+  // the recomputed route against; the page, not the engine, remembers it.
+  const firstTrace = state.traces[0] ?? null;
+  useEffect(() => {
+    if (!firstTrace || firstTrace.status === 'in-flight') return;
+    onProbeFinished({
+      packetId: firstTrace.packetId,
+      linkDown: primaryLinkDown,
+      path: probePath(firstTrace),
+    });
+  }, [firstTrace, primaryLinkDown, onProbeFinished]);
 
   const status =
     state.status === 'running'
@@ -436,7 +593,8 @@ function OspfConvergenceInner({
               <NetlabCanvas>
                 <DropEventOverlay />
               </NetlabCanvas>
-              <SimulationOverlayDock showRouteTable />
+              {/* The route tables live in the side rail; over the canvas they hid R4. */}
+              <SimulationOverlayDock showRouteTable={false} />
               <ZeroStateHint />
               <div
                 style={{
@@ -510,7 +668,17 @@ function OspfConvergenceInner({
                 borderBottom: '1px solid var(--netlab-bg-surface)',
               }}
             >
-              <RouteSummaryPanel />
+              <RouteSummaryPanel runs={runs} />
+              <RouterTablesPanel />
+            </div>
+
+            <div style={{ minHeight: 0 }}>
+              <PacketTimeline />
+            </div>
+
+            {/* The command bar and the scrubber below the canvas step too; this
+                fuller control comes after the results rather than before them. */}
+            <div style={{ padding: 12, borderTop: '1px solid var(--netlab-bg-surface)' }}>
               <div
                 style={{
                   background: 'var(--netlab-bg-primary)',
@@ -521,10 +689,6 @@ function OspfConvergenceInner({
               >
                 <StepControls />
               </div>
-            </div>
-
-            <div style={{ flex: 1, minHeight: 0 }}>
-              <PacketTimeline />
             </div>
           </ResizableSidebar>
         </div>
@@ -587,6 +751,16 @@ export default function OspfConvergenceDemo() {
     () => new URLSearchParams(window.location.search).get('link') === 'down',
   );
   const topology = useMemo(() => buildOspfConvergenceTopology(primaryLinkDown), [primaryLinkDown]);
+  const [runs, setRuns] = useState<readonly ProbeRun[]>([]);
+  const recordRun = useCallback(
+    (run: ProbeRun) =>
+      setRuns((current) =>
+        current.some((existing) => existing.packetId === run.packetId)
+          ? current
+          : [...current, run].slice(-2),
+      ),
+    [],
+  );
   const params = new URLSearchParams(window.location.search);
   const sandboxIntroId = params.get('intro') ?? null;
   const assessmentScenarioId = params.get('assessment') ?? null;
@@ -617,6 +791,8 @@ export default function OspfConvergenceDemo() {
           <OspfConvergenceInner
             primaryLinkDown={primaryLinkDown}
             onTogglePrimaryLink={() => setPrimaryLinkDown((value) => !value)}
+            runs={runs}
+            onProbeFinished={recordRun}
           />
         </SimulationProvider>
       </NetlabProvider>

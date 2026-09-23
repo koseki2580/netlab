@@ -15,5 +15,7 @@ test('wireless demo shows RSSI loss, WPA2 messages, and hidden-node collision', 
   await expect(page.getByTestId(SEL.demo.wirelessLoss)).not.toHaveText(before ?? '');
 
   await page.getByTestId(SEL.demo.hiddenNodeToggle).click();
-  await expect(page.getByTestId(SEL.demo.hiddenNode)).toContainText('Collision: sta-a, sta-b');
+  await expect(page.getByTestId(SEL.demo.hiddenNode)).toContainText(
+    'Collision: Station A, Station B',
+  );
 });

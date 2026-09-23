@@ -1,5 +1,5 @@
 import { useT } from '../localeContext';
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useMemo, useState, type CSSProperties } from 'react';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { useNetlabContext } from '../../src/components/NetlabContext';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
@@ -10,6 +10,7 @@ import {
   formatBridgeId,
   makeBridgeId,
 } from '../../src/layers/l2-datalink/stp/BridgeId';
+import { computeStp } from '../../src/layers/l2-datalink/stp/computeStp';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import type { InFlightPacket } from '../../src/types/packets';
 import type { NetworkTopology, SwitchPort } from '../../src/types/topology';
@@ -254,8 +255,68 @@ function buildTopology(
   };
 }
 
+/**
+ * Tell the canvas what spanning tree did to each link. A link with a BLOCKED
+ * port at either end works but carries no traffic — `blocked`; a link with a
+ * disabled port at either end carries nothing at all — `down`. Everything
+ * else is `up`. Without this the canvas drew the blocked link, the subject of
+ * the lesson, exactly like the ones that forward.
+ */
+export function markSpanningTreeLinks(topology: NetworkTopology): NetworkTopology {
+  const ports = computeStp(topology).ports;
+  const roleAt = (nodeId: string, portId: string | null | undefined) =>
+    portId ? ports.get(`${nodeId}:${portId}`)?.role : undefined;
+
+  return {
+    ...topology,
+    edges: topology.edges.map((edge) => {
+      const roles = [
+        roleAt(edge.source, edge.sourceHandle),
+        roleAt(edge.target, edge.targetHandle),
+      ];
+      const state = roles.includes('DISABLED')
+        ? 'down'
+        : roles.includes('BLOCKED')
+          ? 'blocked'
+          : 'up';
+      return { ...edge, data: { ...(edge.data ?? {}), state } };
+    }),
+  };
+}
+
 export function buildStpDemoTopology(): NetworkTopology {
-  return buildTopology(DEFAULT_PRIORITIES, DEFAULT_DISABLED_PORTS);
+  return markSpanningTreeLinks(buildTopology(DEFAULT_PRIORITIES, DEFAULT_DISABLED_PORTS));
+}
+
+const NODE_LABELS: Record<string, string> = {
+  'switch-a': 'Switch A',
+  'switch-b': 'Switch B',
+  'switch-c': 'Switch C',
+  'host-a': HOST_META['host-a'].label,
+  'host-b': HOST_META['host-b'].label,
+  'host-c': HOST_META['host-c'].label,
+};
+
+/** The device at the far end of a switch port, by the name the canvas shows. */
+function portNeighbourLabel(topology: NetworkTopology, switchId: string, portId: string): string {
+  const edge = topology.edges.find(
+    (candidate) =>
+      (candidate.source === switchId && candidate.sourceHandle === portId) ||
+      (candidate.target === switchId && candidate.targetHandle === portId),
+  );
+  if (!edge) return portId;
+  const neighbourId = edge.source === switchId ? edge.target : edge.source;
+  return NODE_LABELS[neighbourId] ?? neighbourId;
+}
+
+/** The links spanning tree keeps out of forwarding, named by their two ends. */
+function blockedLinkLabels(topology: NetworkTopology): string[] {
+  return topology.edges
+    .filter((edge) => edge.data?.state === 'blocked')
+    .map(
+      (edge) =>
+        `${NODE_LABELS[edge.source] ?? edge.source} – ${NODE_LABELS[edge.target] ?? edge.target}`,
+    );
 }
 
 function buildPingPacket(
@@ -378,7 +439,9 @@ function StpStatusCard({ switchId }: { switchId: SwitchId }) {
               fontSize: 12,
             }}
           >
-            <span style={{ color: 'var(--netlab-text-secondary)' }}>{port.id}</span>
+            <span style={{ color: 'var(--netlab-text-secondary)' }}>
+              → {portNeighbourLabel(topology, switchId, port.id)}
+            </span>
             <span
               style={{ color: runtime ? roleColor(runtime.role) : 'var(--netlab-text-primary)' }}
             >
@@ -401,9 +464,17 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
   const hopLabels =
     activeTrace?.hops.map((hop) => hop.nodeLabel).join(' → ') ??
     t('No trace yet', 'まだ通信はありません');
+  // Whichever link spanning tree blocks now — after a re-election that is no
+  // longer necessarily B–C.
+  const blockedEdgeIds = new Set(
+    topology.edges.filter((edge) => edge.data?.state === 'blocked').map((edge) => edge.id),
+  );
   const usedBlockedSegment =
-    activeTrace?.hops.some((hop) => hop.activeEdgeId === INTER_SWITCH_EDGE_ID) ?? false;
+    activeTrace?.hops.some(
+      (hop) => hop.activeEdgeId !== undefined && blockedEdgeIds.has(hop.activeEdgeId),
+    ) ?? false;
   const rootLabel = topology.stpRoot ? formatBridgeId(topology.stpRoot) : t('none', 'なし');
+  const blockedLinks = blockedLinkLabels(topology);
 
   return (
     <div style={CARD_STYLE}>
@@ -440,17 +511,33 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
         {t('Root bridge', 'ルートブリッジ')}: {rootLabel}
       </div>
       <div
-        data-testid="stp-blocked-segment"
+        data-testid="stp-blocked-link"
         style={{
           marginTop: 6,
-          color: usedBlockedSegment ? 'var(--netlab-accent-orange)' : 'var(--netlab-accent-green)',
+          color: 'var(--netlab-text-primary)',
           fontFamily: 'monospace',
           fontSize: 12,
         }}
       >
-        {t('Blocked segment used', '遮断した区間を使ったか')}:{' '}
-        {usedBlockedSegment ? t('yes', 'はい') : t('no', 'いいえ')}
+        {t('Blocked link', '遮断しているリンク')}:{' '}
+        {blockedLinks.length > 0 ? blockedLinks.join(', ') : t('none', 'なし')}
       </div>
+      {activeTrace && (
+        <div
+          data-testid="stp-blocked-segment"
+          style={{
+            marginTop: 6,
+            color: usedBlockedSegment
+              ? 'var(--netlab-accent-orange)'
+              : 'var(--netlab-accent-green)',
+            fontFamily: 'monospace',
+            fontSize: 12,
+          }}
+        >
+          {t('Blocked segment used', '遮断した区間を使ったか')}:{' '}
+          {usedBlockedSegment ? t('yes', 'はい') : t('no', 'いいえ')}
+        </div>
+      )}
       {activeTrace?.status && (
         <div
           data-testid="stp-trace-status"
@@ -498,9 +585,8 @@ function StpLoopDemoInner({
 }) {
   const t = useT();
   const { topology } = useNetlabContext();
-  const { engine, sendPacket, state } = useSimulation();
+  const { engine, sendPacket } = useSimulation();
   const [lastScenario, setLastScenario] = useState<string | null>(null);
-  const didAutoSend = useRef(false);
 
   const runPing = useCallback(
     async (srcNodeId: HostId, dstNodeId: HostId, label: string) => {
@@ -515,15 +601,6 @@ function StpLoopDemoInner({
     },
     [engine, sendPacket, topology],
   );
-
-  useEffect(() => {
-    if (didAutoSend.current || state.status !== 'idle') {
-      return;
-    }
-
-    didAutoSend.current = true;
-    void runPing('host-b', 'host-c', 'B → C');
-  }, [runPing, state.status]);
 
   const updatePriority = (switchId: SwitchId, value: string) => {
     const parsed = Number(value);
@@ -567,8 +644,8 @@ function StpLoopDemoInner({
           }}
         >
           {t(
-            'Default root is Switch A. In the initial B → C trace, the blocked B–C segment should not appear; traffic detours through Switch A. Lower Switch B or C priority to re-elect the root.',
-            '最初のルートは Switch A です。B → C の最初の通信では遮断された B–C 区間は使われず、Switch A を経由して迂回します。Switch B か C の優先度を下げると、ルートを選び直します。',
+            'Default root is Switch A, and spanning tree blocks the Switch B – Switch C link. Press B → C: the blocked segment is not used; traffic detours through Switch A. Lower Switch B or C priority to re-elect the root.',
+            '最初のルートは Switch A で、スパニングツリーは Switch B – Switch C のリンクを遮断しています。B → C を押すと、遮断された区間は使われず、Switch A を経由して迂回します。Switch B か C の優先度を下げると、ルートを選び直します。',
           )}
         </div>
       </div>
@@ -634,9 +711,10 @@ function StpLoopDemoInner({
                   fontSize: 12,
                 }}
               >
-                <span>{switchId}</span>
+                <span>{NODE_LABELS[switchId]}</span>
                 <input
                   type="number"
+                  data-testid={`stp-priority-${switchId}`}
                   value={priorities[switchId]}
                   onChange={(event) => updatePriority(switchId, event.target.value)}
                   style={{
@@ -676,7 +754,7 @@ function StpLoopDemoInner({
                     marginBottom: 6,
                   }}
                 >
-                  {switchId}
+                  {NODE_LABELS[switchId]}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {SWITCH_PORTS[switchId].map((port) => (
@@ -693,10 +771,13 @@ function StpLoopDemoInner({
                     >
                       <input
                         type="checkbox"
+                        data-testid={`stp-disable-port-${port.id}`}
                         checked={disabledPorts[switchId].includes(port.id)}
                         onChange={() => toggleDisabledPort(switchId, port.id)}
                       />
-                      <span>{port.id}</span>
+                      <span>
+                        {NODE_LABELS[switchId]} → {portNeighbourLabel(topology, switchId, port.id)}
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -720,7 +801,7 @@ export default function StpLoopDemo() {
   const [disabledPorts, setDisabledPorts] =
     useState<Record<SwitchId, string[]>>(DEFAULT_DISABLED_PORTS);
   const topology = useMemo(
-    () => buildTopology(priorities, disabledPorts),
+    () => markSpanningTreeLinks(buildTopology(priorities, disabledPorts)),
     [priorities, disabledPorts],
   );
 

@@ -122,7 +122,9 @@ function ArpDiffCard() {
 
 function ArpDemoInner() {
   const t = useT();
-  const { engine } = useSimulation();
+  const { engine, state } = useSimulation();
+  const hasTrace = state.traces.length > 0;
+  const hopChosen = state.selectedHop !== null;
 
   const sendPing = async () => {
     engine.clear();
@@ -179,14 +181,10 @@ function ArpDemoInner() {
           flexDirection: 'column',
         }}
       >
-        <div
-          style={{
-            padding: 12,
-            display: 'grid',
-            gap: 12,
-            borderBottom: '1px solid var(--netlab-bg-surface)',
-          }}
-        >
+        {/* The timeline comes first once a packet has run: it is what the lesson
+            asks the learner to read. Panels with nothing to show yet stay out
+            of the way instead of taking the top of the rail. */}
+        <div style={{ padding: 12, display: 'grid', gap: 12 }}>
           <div style={CARD_STYLE}>
             <div style={LABEL_STYLE}>{t('Controls', '操作')}</div>
             <button
@@ -208,28 +206,32 @@ function ArpDemoInner() {
               {t('ping client → server', 'client から server へ ping')}
             </button>
           </div>
+          {hasTrace && (
+            <div
+              data-testid="lesson-trace-timeline"
+              style={{
+                height: 360,
+                border: '1px solid var(--netlab-bg-surface)',
+                borderRadius: 10,
+                overflow: 'hidden',
+              }}
+            >
+              <PacketTimeline />
+            </div>
+          )}
+          {hasTrace && (
+            <div style={CARD_STYLE}>
+              {/* Ping starts the exchange; stepping replays it. */}
+              <StepControls primary={false} />
+            </div>
+          )}
           <ArpTablePanel />
           <ArpDiffCard />
-          <div style={CARD_STYLE}>
-            {/* Ping starts the exchange; stepping replays it. */}
-            <StepControls primary={false} />
-          </div>
-        </div>
-
-        <div
-          style={{
-            flex: 1,
-            minHeight: 0,
-            display: 'grid',
-            gridTemplateRows: 'minmax(220px, 0.9fr) minmax(220px, 1.1fr)',
-          }}
-        >
-          <div style={{ minHeight: 0, borderBottom: '1px solid var(--netlab-bg-surface)' }}>
-            <PacketTimeline />
-          </div>
-          <div style={{ minHeight: 0 }}>
-            <HopInspector />
-          </div>
+          {hasTrace && (
+            <div data-testid="lesson-hop-details" style={hopChosen ? { height: 360 } : undefined}>
+              <HopInspector />
+            </div>
+          )}
         </div>
       </ResizableSidebar>
     </div>
