@@ -8,6 +8,7 @@ import {
   DEFAULT_NODE_W,
   edgeStyle,
   edgeVerdictGlyph,
+  decorateEdges,
   edgeVerdictMessages,
   syncSimulatorCells,
 } from './simulatorGraphModel';
@@ -151,5 +152,45 @@ describe('drawing the simulator topology with maxGraph', () => {
     const model = graph.getDataModel();
     expect(model.getCell('r2')).toBeUndefined();
     expect(model.getCell('e1')).toBeUndefined();
+  });
+
+  // Link states: a failed link and a link spanning tree keeps out of forwarding
+  // must each read differently from a healthy one, and not by colour alone.
+  it('marks a failed link with a cross at its middle and names its state on the drawn link', () => {
+    const edges = [
+      edge('down', 'r1', 'r2', { data: { state: 'down' } }),
+      edge('blocked', 'r2', 'r3', { data: { state: 'blocked' } }),
+      edge('up', 'r1', 'r3'),
+    ];
+    syncSimulatorCells(
+      graph,
+      parent,
+      [node('r1'), node('r2', 200), node('r3', 400)],
+      edges,
+      drawnHost,
+    );
+    decorateEdges(graph, edges);
+
+    const model = graph.getDataModel();
+    expect(model.getCell('down')?.value).toBe('\u2715');
+    expect(model.getCell('blocked')?.value).toBe('\u2298');
+    expect(model.getCell('up')?.value).toBe('');
+
+    const drawnState = (id: string) =>
+      graph.getView().getState(model.getCell(id)!)?.shape?.node?.getAttribute('data-edge-state');
+    expect(drawnState('down')).toBe('down');
+    expect(drawnState('blocked')).toBe('blocked');
+    expect(drawnState('up')).toBe('up');
+  });
+
+  it('prefers the link state mark over a cabling verdict', () => {
+    const failedBadCable = edge('e1', 'r1', 'r2', {
+      data: {
+        state: 'down',
+        validationResult: { errors: [{ message: 'crossover' }], warnings: [] },
+      },
+    });
+    syncSimulatorCells(graph, parent, [node('r1'), node('r2', 200)], [failedBadCable], drawnHost);
+    expect(graph.getDataModel().getCell('e1')?.value).toBe('\u2715');
   });
 });

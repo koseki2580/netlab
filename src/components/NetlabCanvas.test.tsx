@@ -592,6 +592,83 @@ describe('NetlabCanvas controlled topology API', () => {
     });
   });
 
+  it('hands a link the failure context took down to the engine marked down', () => {
+    render(
+      <NetlabProvider topology={makeTopology()}>
+        <FailureContext.Provider
+          value={makeFailureContextValue({ isEdgeDown: (edgeId) => edgeId === 'e1' })}
+        >
+          <NetlabCanvas />
+        </FailureContext.Provider>
+      </NetlabProvider>,
+    );
+
+    expect(currentEngineProps().edges[0]?.data?.state).toBe('down');
+  });
+
+  it('draws a blocked link grey and dotted, unlike a failed or a healthy one', () => {
+    const topology = makeTopology({
+      edges: [
+        { id: 'e1', source: 'n1', target: 'n2', type: 'smoothstep', data: { state: 'blocked' } },
+      ],
+    });
+    render(
+      <NetlabProvider topology={topology}>
+        <NetlabCanvas />
+      </NetlabProvider>,
+    );
+
+    const drawn = currentEngineProps().edges[0];
+    expect(drawn?.data?.state).toBe('blocked');
+    expect(drawn?.style).toMatchObject({
+      stroke: 'var(--netlab-text-muted)',
+      strokeDasharray: '1 3',
+    });
+  });
+
+  it('stops drawing a link the host has taken out of the topology, even uncontrolled', () => {
+    const initial = makeTopology();
+    const view = render(
+      <NetlabProvider topology={initial}>
+        <NetlabCanvas />
+      </NetlabProvider>,
+    );
+    expect(currentEngineProps().edges.map((e) => e.id)).toEqual(['e1']);
+
+    view.rerender(
+      <NetlabProvider topology={{ ...initial, edges: [] }}>
+        <NetlabCanvas />
+      </NetlabProvider>,
+    );
+
+    expect(currentEngineProps().edges).toEqual([]);
+  });
+
+  it('follows a link state the host changes, even uncontrolled', () => {
+    const initial = makeTopology();
+    const view = render(
+      <NetlabProvider topology={initial}>
+        <NetlabCanvas />
+      </NetlabProvider>,
+    );
+
+    view.rerender(
+      <NetlabProvider
+        topology={{
+          ...initial,
+          edges: initial.edges.map((e) => ({ ...e, data: { ...e.data, state: 'down' as const } })),
+        }}
+      >
+        <NetlabCanvas />
+      </NetlabProvider>,
+    );
+
+    expect(currentEngineProps().edges[0]?.data?.state).toBe('down');
+    expect(currentEngineProps().edges[0]?.style).toMatchObject({
+      stroke: 'var(--netlab-accent-red)',
+    });
+  });
+
   it('uses theme CSS variables for active edges', () => {
     render(
       <NetlabProvider topology={makeTopology()}>

@@ -1404,7 +1404,29 @@ describe('NodeDetailPanel — canvas-first dock (P2)', () => {
 
       renderDom(makeSimulationValue(), { editable: true, onTopologyChange: () => {} });
 
-      expect(tabIds()).toEqual(['overview', 'ifaces', 'routes', 'arp', 'acl', 'sandbox']);
+      expect(tabIds()).toEqual(['overview', 'ifaces', 'routes', 'arp', 'sandbox']);
+    });
+
+    // The ACL tab only ever said it was not wired; a tab that holds nothing is
+    // one more thing for a learner to open for nothing.
+    it('offers no ACL tab while there is nothing to show in it', () => {
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+
+      renderDom();
+
+      expect(tabIds()).not.toContain('acl');
+    });
+
+    it('falls back to a visible tab when an ACL tab was the one remembered', () => {
+      window.localStorage.setItem(DP_TAB_KEY, 'acl');
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+
+      renderDom();
+
+      const active = getTabButtons().find((b) => b.getAttribute('data-active') === 'true');
+      expect(active?.getAttribute('data-netlab-dp-tab')).toBe('ifaces');
     });
 
     it('hides routes/acl on a switch', () => {
@@ -1568,5 +1590,110 @@ describe('NodeDetailPanel — canvas-first dock (P2)', () => {
       expect(panel?.getAttribute('data-dp-mode')).not.toBe('drawer');
       expect(container?.querySelector('[data-netlab-dp-backdrop]')).toBeNull();
     });
+  });
+});
+
+describe('NodeDetailPanel — overview, header and chrome for a learner', () => {
+  function openOverview() {
+    window.localStorage.setItem('netlab_dp_tab', 'overview');
+    renderDom();
+    const content = container?.querySelector<HTMLElement>('[data-netlab-dp-content]');
+    if (!content) throw new Error('panel content not rendered');
+    return content;
+  }
+
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  it('gives a router an overview: its role, its interfaces, its subnets and what it is linked to', () => {
+    uiMock.selectedNodeId = 'router-1';
+    const router = makeRouterNode();
+    netlabMock.topology = makeTopology([router, makeClientNode(), makeSwitchNode()], {
+      edges: [
+        { id: 'e1', source: 'router-1', target: 'client-1' },
+        { id: 'e2', source: 'switch-1', target: 'router-1', data: { state: 'down' } },
+      ],
+    });
+
+    const overview = openOverview();
+
+    expect(overview.querySelector('[data-overview-row="role"]')?.textContent).toContain(
+      'Joins subnets together',
+    );
+    expect(overview.querySelector('[data-overview-row="interfaces"]')?.textContent).toContain('1');
+    expect(overview.querySelector('[data-overview-row="subnets"]')?.textContent).toContain(
+      '10.0.0.0/24',
+    );
+    const linked = overview.querySelector('[data-overview-row="linkedTo"]')?.textContent ?? '';
+    expect(linked).toContain('Client');
+    expect(linked).toContain('SW1');
+    // A neighbour behind a failed link is named as such.
+    expect(linked).toContain('link down');
+  });
+
+  it('gives a switch an overview with its ports and what it is linked to', () => {
+    uiMock.selectedNodeId = 'switch-1';
+    netlabMock.topology = makeTopology([makeSwitchNode(true), makeClientNode()], {
+      edges: [{ id: 'e1', source: 'switch-1', target: 'client-1' }],
+    });
+
+    const overview = openOverview();
+
+    expect(overview.querySelector('[data-overview-row="role"]')?.textContent).toContain(
+      'MAC address',
+    );
+    expect(overview.querySelector('[data-overview-row="ports"]')?.textContent).toContain('2');
+    expect(overview.querySelector('[data-overview-row="linkedTo"]')?.textContent).toContain(
+      'Client',
+    );
+  });
+
+  it('names the device kind and its layer in words in the header, not as raw tokens', () => {
+    uiMock.selectedNodeId = 'router-1';
+    netlabMock.topology = makeTopology([makeRouterNode()]);
+
+    renderDom();
+
+    const header = container?.querySelector('[data-netlab-dp] header')?.textContent ?? '';
+    expect(header).toContain('R1');
+    expect(header).toContain('router');
+    expect(header).toContain('L3 · network layer');
+    expect(header).not.toMatch(/\bl3\b/);
+  });
+
+  it('shows an unset MTU once per interface, and says in words that there is no limit', () => {
+    uiMock.selectedNodeId = 'router-1';
+    const router = makeRouterNode();
+    netlabMock.topology = makeTopology([
+      {
+        ...router,
+        data: {
+          ...router.data,
+          interfaces: (router.data.interfaces ?? []).map(({ mtu: _mtu, ...rest }) => rest),
+        },
+      },
+    ]);
+
+    renderDom();
+
+    const content = container?.querySelector('[data-netlab-dp-content]')?.textContent ?? '';
+    expect(content.split('MTU ∞').length - 1).toBe(1);
+    expect(content).toContain('no limit: a packet of any size passes');
+  });
+
+  it('lets the panel be resized from the keyboard through its separator', () => {
+    uiMock.selectedNodeId = 'router-1';
+    netlabMock.topology = makeTopology([makeRouterNode()]);
+
+    renderDom();
+
+    const handle = container?.querySelector<HTMLElement>('[data-netlab-dp-resize-handle]');
+    expect(handle?.tabIndex).toBe(0);
+    expect(handle?.getAttribute('aria-valuenow')).toBe('420');
+    act(() => {
+      handle?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    });
+    expect(container?.querySelector('[data-netlab-dp]')?.getAttribute('data-dp-width')).toBe('436');
   });
 });

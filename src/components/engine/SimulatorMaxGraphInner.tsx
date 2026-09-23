@@ -12,11 +12,11 @@ import {
   Graph,
   InternalEvent,
   Outline,
-  type FitPlugin,
   type PanningHandler,
   type TooltipHandler,
 } from '@maxgraph/core';
 import { AREA_CLUSTER_NODE_TYPE } from '../../areas/areaLod';
+import { useI18n } from '../../i18n/useI18n';
 import { DefaultNode } from '../DefaultNode';
 import { MaxGraphControls } from '../../editor/engine/MaxGraphControls';
 import { wireConnect } from '../../editor/engine/maxGraphInteraction';
@@ -28,8 +28,11 @@ import {
   DEFAULT_NODE_W,
   decorateEdges,
   edgeVerdictMessages,
+  LINK_STATE_GLYPH,
+  linkStateOf,
   syncSimulatorCells,
   type DrawnNode,
+  type LinkState,
 } from './simulatorGraphModel';
 import { offersGridSnap } from './canvasOffers';
 
@@ -59,6 +62,81 @@ function fitMargin(host: HTMLElement, padding: number): number {
   return Math.round(Math.max(0, Math.min(padding * smaller, 48, smaller / 6)));
 }
 
+/**
+ * Below this canvas height the overview is not drawn. On a short canvas it
+ * covered a device at every width — the third device of a 240px lesson, the
+ * last server of a 375px one — and a handful of devices needs no overview.
+ */
+export const MINIMAP_MIN_CANVAS_HEIGHT = 400;
+
+/** maxGraph blows a small topology up eight times over; React Flow stopped at 2. */
+const MAX_FIT_SCALE = 2;
+
+/** What a link state is called and what it means, for the key and the hover. */
+const LINK_STATE_KEYS: Record<Exclude<LinkState, 'up'>, { label: string; hint: string }> = {
+  down: { label: 'simulation.linkState.down', hint: 'simulation.linkState.downHint' },
+  blocked: { label: 'simulation.linkState.blocked', hint: 'simulation.linkState.blockedHint' },
+};
+
+/**
+ * Frame the drawing, keeping it clear of what sits over the canvas.
+ *
+ * The zoom strip, the overview and the link-state key sit in the bottom-right
+ * corner. Framed as if they were not there, a short canvas put a device under
+ * them. The drawing is framed once over the whole canvas; only when that lands
+ * it under one of them is it framed again in the band above them.
+ */
+function frameDrawing(graph: Graph, host: HTMLElement, padding: number): void {
+  const view = graph.getView();
+  const place = (bottomReserve: number): boolean => {
+    const bounds = graph.getGraphBounds();
+    const scale = view.scale;
+    if (!(bounds.width > 0 && bounds.height > 0) || !(scale > 0)) return false;
+    const width = host.clientWidth;
+    const height = host.clientHeight - bottomReserve;
+    const margin = fitMargin(host, padding);
+    const drawingW = bounds.width / scale;
+    const drawingH = bounds.height / scale;
+    const next = Math.min(
+      MAX_FIT_SCALE,
+      (width - 2 * margin) / drawingW,
+      (height - 2 * margin) / drawingH,
+    );
+    if (!(next > 0) || !Number.isFinite(next)) return false;
+    const originX = bounds.x / scale - view.translate.x;
+    const originY = bounds.y / scale - view.translate.y;
+    view.scaleAndTranslate(
+      next,
+      (width - drawingW * next) / 2 / next - originX,
+      (height - drawingH * next) / 2 / next - originY,
+    );
+    return true;
+  };
+
+  if (!place(0)) return;
+  const hostBox = host.getBoundingClientRect();
+  const overlays = Array.from(
+    host.parentElement?.querySelectorAll<HTMLElement>('[data-canvas-overlay]') ?? [],
+  ).map((element) => element.getBoundingClientRect());
+  const drawing = graph.getGraphBounds();
+  const left = hostBox.left + drawing.x;
+  const top = hostBox.top + drawing.y;
+  const covered = overlays.some(
+    (box) =>
+      box.width > 0 &&
+      left < box.right &&
+      left + drawing.width > box.left &&
+      top < box.bottom &&
+      top + drawing.height > box.top,
+  );
+  if (!covered) return;
+  const overlayTop = Math.min(...overlays.map((box) => box.top));
+  const reserve = Math.max(0, hostBox.bottom - overlayTop + 8);
+  // A reserve that leaves no room would only shrink the drawing to nothing.
+  if (host.clientHeight - reserve < host.clientHeight / 3) return;
+  place(reserve);
+}
+
 export default function SimulatorMaxGraphInner({
   nodes,
   edges,
@@ -82,8 +160,16 @@ export default function SimulatorMaxGraphInner({
   onZoom,
   sandbox,
 }: SimulatorCanvasProps) {
+  const { t } = useI18n();
   const hostRef = useRef<HTMLDivElement>(null);
   const outlineHostRef = useRef<HTMLDivElement>(null);
+  // The overview draws from the graph, so it has to go before the graph does.
+  const outlineRef = useRef<Outline | null>(null);
+  const [hostHeight, setHostHeight] = useState<number | null>(null);
+  const showMinimap = minimap && hostHeight !== null && hostHeight >= MINIMAP_MIN_CANVAS_HEIGHT;
+  const shownLinkStates = (['down', 'blocked'] as const).filter((state) =>
+    edges.some((edge) => linkStateOf(edge) === state),
+  );
   const graphRef = useRef<Graph | null>(null);
   const containersRef = useRef(new Map<string, HTMLDivElement>());
   const sizesRef = useRef(new Map<string, { width: number; height: number }>());
@@ -104,6 +190,7 @@ export default function SimulatorMaxGraphInner({
     sandbox,
     nodes,
     edges,
+    t,
   });
   handlers.current = {
     onNodesChange,
@@ -116,6 +203,7 @@ export default function SimulatorMaxGraphInner({
     sandbox,
     nodes,
     edges,
+    t,
   };
 
   /** The element a device renders into. Stable per id so the portal survives. */
@@ -158,8 +246,16 @@ export default function SimulatorMaxGraphInner({
     if (tooltips) {
       tooltips.setEnabled(true);
       tooltips.getTooltipForCell = (cell: Cell) => {
-        const edge = handlers.current.edges.find((candidate) => candidate.id === String(cell.id));
-        return edge ? edgeVerdictMessages(edge) : '';
+        const { edges: current, t: translate } = handlers.current;
+        const edge = current.find((candidate) => candidate.id === String(cell.id));
+        if (!edge) return '';
+        const state = linkStateOf(edge);
+        return [
+          state === 'up' ? '' : translate(LINK_STATE_KEYS[state].hint),
+          edgeVerdictMessages(edge),
+        ]
+          .filter(Boolean)
+          .join('\n');
       };
     }
     graph.setCellsEditable(false);
@@ -178,11 +274,15 @@ export default function SimulatorMaxGraphInner({
     }
     graph.setCellsMovable(profile.nodesDraggable);
     graphRef.current = graph;
-    const outline = outlineHostRef.current ? new Outline(graph, outlineHostRef.current) : null;
     setReady(true);
 
     return () => {
-      outline?.destroy();
+      // Unmount runs this cleanup before the overview's own, so the overview
+      // is taken down here first; destroyed after the graph, it reached for
+      // listeners on an element that was gone, and leaving a lesson blanked
+      // the page.
+      outlineRef.current?.destroy();
+      outlineRef.current = null;
       graph.destroy();
       graphRef.current = null;
       setReady(false);
@@ -191,6 +291,34 @@ export default function SimulatorMaxGraphInner({
     // The interaction profile is fixed for the life of a canvas.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // How tall the canvas is decides whether the overview fits on it. Measured
+  // before the drawing is framed, so framing sees the overlays that will stay.
+  useLayoutEffect(() => {
+    const host = hostRef.current;
+    if (!host) return undefined;
+    setHostHeight(host.clientHeight);
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    const observer = new ResizeObserver(() => setHostHeight(host.clientHeight));
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, []);
+
+  // The overview comes and goes with the canvas height, so it is built for the
+  // element it draws into rather than once with the graph.
+  useEffect(() => {
+    const graph = graphRef.current;
+    const outlineHost = outlineHostRef.current;
+    if (!graph || !showMinimap || !outlineHost) return undefined;
+    const outline = new Outline(graph, outlineHost);
+    outlineRef.current = outline;
+    return () => {
+      // Already gone if the graph was torn down first.
+      if (outlineRef.current !== outline) return;
+      outline.destroy();
+      outlineRef.current = null;
+    };
+  }, [ready, showMinimap]);
 
   // Draw after React has put the devices in their containers, so what maxGraph
   // measures and positions is the real device rather than an empty box.
@@ -229,9 +357,11 @@ export default function SimulatorMaxGraphInner({
     // never occupies, which showed up as devices sitting behind the panels
     // beside the canvas.
     if (viewport || fittedRef.current || nodes.length === 0 || sizesRef.current.size === 0) return;
-    const fit = graph.getPlugin<FitPlugin>('fit');
+    // Not before the canvas height is known: it decides whether the overview
+    // is on screen, and framing has to keep clear of it.
+    if (hostHeight === null) return;
     const host = hostRef.current;
-    if (!fit || !host) return;
+    if (!host) return;
     // Nothing to frame, or nowhere to frame it in. Leaving `fitted` unset means
     // this is tried again once the canvas has been laid out — a canvas that is
     // measured as zero-sized on its first pass is common enough inside a
@@ -239,16 +369,12 @@ export default function SimulatorMaxGraphInner({
     const bounds = graph.getGraphBounds();
     if (host.clientWidth < 2 || host.clientHeight < 2) return;
     if (!(bounds.width > 0 && bounds.height > 0) || !(graph.getView().scale > 0)) return;
-    // maxGraph will happily blow a small topology up eight times over; React
-    // Flow's fitView stopped at 2, and a three-device lesson left at 1 sits in
-    // the corner of a canvas mostly full of nothing.
-    fit.maxFitScale = 2;
     // `fitViewPadding` is a fraction of the canvas, the way React Flow read it.
     // Passing it as pixels padded a 1350px canvas by ten of them, so the
     // topology sat flush against both edges with its last device clipped.
-    fit.fitCenter({ margin: fitMargin(host, fitViewPadding) });
+    frameDrawing(graph, host, fitViewPadding);
     fittedRef.current = true;
-  }, [nodes, edges, drawnFor, ready, fitViewPadding, viewport]);
+  }, [nodes, edges, drawnFor, ready, fitViewPadding, viewport, hostHeight]);
 
   // Report the live zoom so the canvas can collapse areas when zoomed out, and
   // the whole viewport so a host can mirror it — the sandbox's compare view
@@ -560,10 +686,11 @@ export default function SimulatorMaxGraphInner({
           node.id,
         );
       })}
-      {minimap ? (
+      {showMinimap ? (
         <div
           ref={outlineHostRef}
           data-testid="maxgraph-minimap"
+          data-canvas-overlay=""
           aria-hidden="true"
           style={{
             position: 'absolute',
@@ -579,23 +706,77 @@ export default function SimulatorMaxGraphInner({
           }}
         />
       ) : null}
+      {shownLinkStates.length > 0 ? (
+        // What the marks on the links mean, shown only while one is on screen.
+        // Stacked over the zoom strip, so framing keeps the drawing clear of
+        // both at once.
+        <div
+          data-testid="canvas-link-state-key"
+          data-canvas-overlay=""
+          role="group"
+          aria-label={t('simulation.linkState.keyLabel')}
+          style={{
+            position: 'absolute',
+            right: 8,
+            bottom: (showMinimap ? 116 : 8) + (controls ? 34 : 0),
+            display: 'flex',
+            gap: 10,
+            padding: '3px 8px',
+            borderRadius: 4,
+            border: '1px solid var(--netlab-border)',
+            background: 'var(--netlab-bg-surface)',
+            color: 'var(--netlab-text-secondary)',
+            fontSize: 11,
+            zIndex: 2,
+          }}
+        >
+          {shownLinkStates.map((state) => (
+            <span
+              key={state}
+              data-link-state={state}
+              title={t(LINK_STATE_KEYS[state].hint)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+            >
+              <svg width={26} height={12} aria-hidden="true">
+                <line
+                  x1={1}
+                  y1={6}
+                  x2={25}
+                  y2={6}
+                  strokeWidth={2}
+                  stroke={
+                    state === 'down' ? 'var(--netlab-accent-red)' : 'var(--netlab-text-muted)'
+                  }
+                  strokeDasharray={state === 'down' ? '6 3' : '1 3'}
+                />
+              </svg>
+              <span
+                aria-hidden="true"
+                style={{
+                  fontWeight: 700,
+                  color: state === 'down' ? 'var(--netlab-accent-red)' : 'var(--netlab-text-muted)',
+                }}
+              >
+                {LINK_STATE_GLYPH[state]}
+              </span>
+              {t(LINK_STATE_KEYS[state].label)}
+            </span>
+          ))}
+        </div>
+      ) : null}
       {controls ? (
         <MaxGraphControls
           // Bottom-right, clear of the areas legend that sits bottom-left on
           // this canvas, and raised over the overview when one is shown.
           placement="bottom-right"
-          bottomOffset={minimap ? 116 : 8}
+          bottomOffset={showMinimap ? 116 : 8}
           onZoomIn={() => withGraph((graph) => graph.zoomIn())}
           onZoomOut={() => withGraph((graph) => graph.zoomOut())}
           onZoomActual={() => withGraph((graph) => graph.zoomActual())}
           onFit={() =>
             withGraph((graph) => {
               const host = hostRef.current;
-              const fit = graph.getPlugin<FitPlugin>('fit');
-              if (fit && host) {
-                fit.maxFitScale = 2;
-                fit.fitCenter({ margin: fitMargin(host, fitViewPadding) });
-              }
+              if (host) frameDrawing(graph, host, fitViewPadding);
             })
           }
           {...(offersGridSnap(profile) ? { gridEnabled, onToggleGrid: toggleGrid } : {})}

@@ -13,6 +13,21 @@ export interface ResolvedPanelTarget {
   edge?: NetworkTopology['edges'][number];
 }
 
+const NODE_KIND_KEYS: Readonly<Record<string, string>> = {
+  router: 'simulation.nodeKind.router',
+  switch: 'simulation.nodeKind.switch',
+  client: 'simulation.nodeKind.client',
+  server: 'simulation.nodeKind.server',
+};
+
+const LAYER_KEYS: Readonly<Record<string, string>> = {
+  l1: 'simulation.nodeDetail.layer.l1',
+  l2: 'simulation.nodeDetail.layer.l2',
+  l3: 'simulation.nodeDetail.layer.l3',
+  l4: 'simulation.nodeDetail.layer.l4',
+  l7: 'simulation.nodeDetail.layer.l7',
+};
+
 export function resolvePanelTarget(
   topology: NetworkTopology,
   selectedNodeId: string | null,
@@ -46,13 +61,19 @@ export function resolvePanelTarget(
     target: { kind: 'node', role: node.data.role },
     ariaLabel: t('simulation.nodeDetail.nodeAria', { label: node.data.label }),
     headerEyebrow: t('simulation.nodeDetail.nodeHeading'),
+    // The kind and the layer in words: `router l3` read as two raw tokens.
+    // A role the catalogue does not name is shown as it is written.
     title: (
       <>
         {node.data.label}
-        <span style={{ color: 'var(--netlab-text-muted)', marginLeft: 8 }}>{node.data.role}</span>
-        <span style={{ color: 'var(--netlab-text-faint)', marginLeft: 8 }}>
-          {node.data.layerId}
+        <span data-dp-node-kind style={{ color: 'var(--netlab-text-muted)', marginLeft: 8 }}>
+          {NODE_KIND_KEYS[node.data.role] ? t(NODE_KIND_KEYS[node.data.role]!) : node.data.role}
         </span>
+        {LAYER_KEYS[node.data.layerId] && (
+          <span data-dp-node-layer style={{ color: 'var(--netlab-text-faint)', marginLeft: 8 }}>
+            {t(LAYER_KEYS[node.data.layerId]!)}
+          </span>
+        )}
       </>
     ),
   };

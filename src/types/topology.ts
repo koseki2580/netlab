@@ -75,7 +75,12 @@ export type NetlabNode = GraphNode<NetlabNodeData>;
 
 export interface NetlabEdgeData extends Record<string, unknown> {
   mtuBytes?: number;
-  state?: 'up' | 'down';
+  /**
+   * `down` — the link has failed and carries nothing. `blocked` — the link
+   * works but is deliberately kept out of forwarding, as spanning tree does to
+   * break a loop. The canvas draws each differently from a healthy link.
+   */
+  state?: 'up' | 'down' | 'blocked';
   link?: LinkQosConfig;
   wireless?: WirelessLinkConfig;
 }

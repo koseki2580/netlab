@@ -110,6 +110,29 @@ describe('buildRouterAdjacency', () => {
     ]);
   });
 
+  /**
+   * TC-186 — a failed link forms no adjacency.
+   *
+   * A lesson marks a failed link `state: 'down'` so the canvas can draw it as
+   * failed, rather than deleting it. OSPF and RIP must then route around it:
+   * only the forwarding loop honoured the state, so the protocols kept a route
+   * through a link the learner had just watched fail.
+   */
+  it('forms no adjacency over a link that is down', () => {
+    const topology = makeTopology({
+      nodes: [
+        makeRouter('r1', [{ ipAddress: '10.0.12.1', prefixLength: 30 }]),
+        makeRouter('r2', [{ ipAddress: '10.0.12.2', prefixLength: 30 }]),
+      ],
+      edges: [{ ...makeEdge('e1', 'r1', 'r2'), data: { state: 'down' } }],
+    });
+
+    const adjacency = buildRouterAdjacency(topology);
+
+    expect(adjacency.get('r1')).toEqual([]);
+    expect(adjacency.get('r2')).toEqual([]);
+  });
+
   it('resolves interfaces via edge sourceHandle/targetHandle', () => {
     const topology = makeTopology({
       nodes: [

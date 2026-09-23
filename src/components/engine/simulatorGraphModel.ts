@@ -2,6 +2,9 @@ import { Cell, type CellStyle, type Graph } from '@maxgraph/core';
 import { markDrawnLinks } from '../../editor/engine/maxGraphLinkMarks';
 import { getValidationMessages, type ValidationEdgeData } from '../ValidationEdgeLabel';
 import type { NetlabEdge, NetlabNode } from '../../types/topology';
+import { LINK_STATE_GLYPH, type LinkState } from '../edgeEncoding';
+
+export { LINK_STATE_GLYPH, type LinkState };
 
 /**
  * Drawing the simulator's topology with maxGraph.
@@ -58,6 +61,16 @@ export function nodeStyle(node: NetlabNode): CellStyle {
 }
 
 /**
+ * What a link is doing, as the canvas decided it: carrying traffic, failed, or
+ * working but kept out of forwarding (spanning tree). NetlabCanvas folds the
+ * failure context into `data.state`, so this is the one place to ask.
+ */
+export function linkStateOf(edge: NetlabEdge): LinkState {
+  const state = edge.data?.state;
+  return state === 'down' || state === 'blocked' ? state : 'up';
+}
+
+/**
  * A link's appearance comes from the same `style` the canvas already computes
  * for it, so failure red, path highlight and dashed "down" links look the same
  * whichever engine draws them.
@@ -71,11 +84,22 @@ export function edgeStyle(edge: NetlabEdge): CellStyle {
   };
   const width = Number(style.strokeWidth);
   const opacity = Number(style.opacity);
+  const stroke = style.stroke ?? 'var(--netlab-border)';
   return {
-    strokeColor: style.stroke ?? 'var(--netlab-border)',
+    strokeColor: stroke,
     strokeWidth: Number.isFinite(width) && width > 0 ? width : 1,
     ...(style.strokeDasharray ? { dashed: true, dashPattern: style.strokeDasharray } : {}),
     ...(Number.isFinite(opacity) ? { opacity: opacity * 100 } : {}),
+    // The state mark sits on a chip of canvas colour so the line does not run
+    // through it, in the colour of the line it belongs to.
+    ...(linkStateOf(edge) !== 'up'
+      ? {
+          fontColor: stroke,
+          fontSize: 14,
+          fontStyle: 1,
+          labelBackgroundColor: 'var(--netlab-bg-primary)',
+        }
+      : {}),
     endArrow: 'none',
     edgeStyle: 'orthogonalEdgeStyle',
     rounded: true,
@@ -95,6 +119,15 @@ export function edgeVerdictGlyph(edge: NetlabEdge): string {
   if (result.errors.length > 0) return '\u274c';
   if (result.warnings.length > 0) return '\u26a0\ufe0f';
   return '';
+}
+
+/**
+ * What is drawn at a link's middle: its state when it is not carrying traffic,
+ * else the cabling verdict. A failed link's cable is not the lesson.
+ */
+export function edgeLabel(edge: NetlabEdge): string {
+  const state = linkStateOf(edge);
+  return state === 'up' ? edgeVerdictGlyph(edge) : LINK_STATE_GLYPH[state];
 }
 
 /** The messages behind that mark, shown on hover. */
@@ -149,7 +182,7 @@ export function syncSimulatorCells(
         id: edge.id,
         source,
         target,
-        value: edgeVerdictGlyph(edge),
+        value: edgeLabel(edge),
         style: edgeStyle(edge),
       });
     }
@@ -167,7 +200,17 @@ export function syncSimulatorCells(
  * rather than "this was asked to animate". `netlab-edge` plus whatever class
  * the canvas computed carries the selection choreography, which is styled
  * against the canvas's class names rather than any engine's.
+ *
+ * `data-edge-state` says whether the drawn link is `up`, `down` or `blocked`,
+ * so what the learner sees can be asserted without reading colours.
  */
 export function decorateEdges(graph: Graph, edges: readonly NetlabEdge[]): void {
   markDrawnLinks(graph, edges);
+  const view = graph.getView();
+  const model = graph.getDataModel();
+  for (const edge of edges) {
+    const cell = model.getCell(edge.id);
+    const node = cell ? view.getState(cell)?.shape?.node : undefined;
+    node?.setAttribute('data-edge-state', linkStateOf(edge));
+  }
 }

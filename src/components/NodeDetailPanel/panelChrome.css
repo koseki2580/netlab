@@ -1,0 +1,49 @@
+/* The device panel's resize edge.
+ *
+ * It is a real separator (drag, or arrow keys once focused) but drew nothing,
+ * so nobody could find it. At rest it is a hairline; on hover and on keyboard
+ * focus it becomes a grip: a lit edge with a handle of three dots at its
+ * middle. */
+
+.netlab-dp-resize-handle {
+  background: transparent;
+  outline: none;
+  transition: background-color 120ms ease;
+}
+
+.netlab-dp-resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 28px;
+  transform: translate(-50%, -50%);
+  border-radius: 2px;
+  background-image: radial-gradient(circle, var(--netlab-text-secondary) 1.5px, transparent 1.6px);
+  background-size: 4px 9px;
+  background-repeat: repeat-y;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.netlab-dp-resize-handle:hover,
+.netlab-dp-resize-handle:focus-visible {
+  background: color-mix(in srgb, var(--netlab-accent-cyan) 35%, transparent);
+}
+
+.netlab-dp-resize-handle:hover::after,
+.netlab-dp-resize-handle:focus-visible::after {
+  opacity: 1;
+}
+
+.netlab-dp-resize-handle:focus-visible {
+  box-shadow: 0 0 0 2px var(--netlab-accent-cyan);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .netlab-dp-resize-handle,
+  .netlab-dp-resize-handle::after {
+    transition: none;
+  }
+}

@@ -108,19 +108,28 @@ export function EditableSelectRow({
 }
 
 export function MtuBadge({ mtu }: { mtu: number | undefined }) {
+  const { t } = useI18n();
   const lowMtu = mtu !== undefined && mtu < 1500;
   return (
-    <span
-      data-low-mtu={lowMtu ? 'true' : 'false'}
-      style={{
-        ...BADGE_STYLE,
-        color: lowMtu ? 'var(--netlab-accent-orange)' : 'var(--netlab-text-primary)',
-        background: lowMtu ? 'rgba(245, 158, 11, 0.12)' : 'rgba(148, 163, 184, 0.08)',
-        borderColor: lowMtu ? 'rgba(245, 158, 11, 0.3)' : 'var(--netlab-border-subtle)',
-      }}
-    >
-      {mtu === undefined ? 'MTU ∞' : `MTU ${mtu}`}
-    </span>
+    <>
+      <span
+        data-low-mtu={lowMtu ? 'true' : 'false'}
+        style={{
+          ...BADGE_STYLE,
+          color: lowMtu ? 'var(--netlab-accent-orange)' : 'var(--netlab-text-primary)',
+          background: lowMtu ? 'rgba(245, 158, 11, 0.12)' : 'rgba(148, 163, 184, 0.08)',
+          borderColor: lowMtu ? 'rgba(245, 158, 11, 0.3)' : 'var(--netlab-border-subtle)',
+        }}
+      >
+        {mtu === undefined ? 'MTU ∞' : `MTU ${mtu}`}
+      </span>
+      {/* `∞` alone does not say what it means to a packet. */}
+      {mtu === undefined && (
+        <span data-mtu-unlimited style={{ color: 'var(--netlab-text-muted)' }}>
+          {t('simulation.nodeDetail.mtuUnlimited')}
+        </span>
+      )}
+    </>
   );
 }
 

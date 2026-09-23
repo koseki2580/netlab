@@ -4,10 +4,25 @@ import { useI18n } from '../i18n/useI18n';
 import { Marker } from './simulation/Marker';
 import { LEGEND_MARKERS } from './simulation/hopMarkers';
 import { NODE_KIND_LABEL_KEYS, NodeGlyph, type NodeGlyphKind } from './NodeGlyph';
-import { EDGE_KINDS, NL_EDGE_KINDS, type EdgeCap } from './edgeEncoding';
+import { EDGE_KINDS, LINK_STATE_GLYPH, NL_EDGE_KINDS, type EdgeCap } from './edgeEncoding';
 import { EdgeKindCap } from './EdgeKindCap';
 
 const LEGEND_KEY = 'nl_a11y_legend';
+/** How the canvas draws a link that carries nothing — the same three channels. */
+const LINK_STATES = [
+  {
+    state: 'down',
+    color: 'var(--netlab-accent-red)',
+    dash: '6 3',
+    labelKey: 'simulation.linkState.down',
+  },
+  {
+    state: 'blocked',
+    color: 'var(--netlab-text-muted)',
+    dash: '1 3',
+    labelKey: 'simulation.linkState.blocked',
+  },
+] as const;
 const MONO = 'ui-monospace, monospace';
 const NODE_KINDS: readonly NodeGlyphKind[] = ['router', 'switch', 'client', 'server'];
 const CAP_LABEL_KEYS: Record<EdgeCap, string> = {
@@ -142,6 +157,52 @@ export function LegendPanel({ style }: LegendPanelProps) {
                   </div>
                 );
               })}
+            </div>
+          </section>
+          <section
+            data-testid="legend-link-states"
+            style={{ borderTop: '1px solid var(--netlab-border-subtle)', paddingTop: 10 }}
+          >
+            <div style={EYEBROW}>{t('simulation.legend.linkStates')}</div>
+            <div style={{ display: 'grid', gap: 4, marginTop: 8 }}>
+              {LINK_STATES.map((entry) => (
+                <div
+                  key={entry.state}
+                  data-link-state={entry.state}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+                >
+                  <svg viewBox="0 0 145 24" width={72} height={12} aria-hidden>
+                    <line
+                      x1="6"
+                      y1="12"
+                      x2="139"
+                      y2="12"
+                      stroke={entry.color}
+                      strokeWidth="3"
+                      strokeDasharray={entry.dash}
+                    />
+                    <text
+                      x="72"
+                      y="18"
+                      textAnchor="middle"
+                      fontSize="20"
+                      fontWeight="700"
+                      fill={entry.color}
+                    >
+                      {LINK_STATE_GLYPH[entry.state]}
+                    </text>
+                  </svg>
+                  <span
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 10,
+                      color: 'var(--netlab-text-secondary)',
+                    }}
+                  >
+                    {t(entry.labelKey)}
+                  </span>
+                </div>
+              ))}
             </div>
           </section>
           <section style={{ borderTop: '1px solid var(--netlab-border-subtle)', paddingTop: 10 }}>

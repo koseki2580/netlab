@@ -50,7 +50,12 @@ export function buildOspfConvergenceTopology(primaryLinkDown = false): NetworkTo
       sourceHandle: 'lan4',
       type: 'smoothstep' as const,
     },
-  ].filter((edge) => !(primaryLinkDown && edge.id === 'e-r2-r4'));
+  ].map((edge) =>
+    // A failed link stays in the topology, marked down, so the canvas can show
+    // the learner that it failed; routing skips it. Deleting it made the
+    // failure invisible — the line stayed on screen as a healthy link.
+    primaryLinkDown && edge.id === 'e-r2-r4' ? { ...edge, data: { state: 'down' as const } } : edge,
+  );
 
   return {
     nodes: [

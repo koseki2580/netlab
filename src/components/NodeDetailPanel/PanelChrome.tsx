@@ -2,7 +2,17 @@ import { CANVAS_LAYER } from '../canvasLayers';
 import type React from 'react';
 import { useEffect, useRef } from 'react';
 import { useI18n } from '../../i18n/useI18n';
-import { DP_NARROW_BREAKPOINT, type DpMode, type DpTab } from './useNodeDetailDock';
+import './panelChrome.css';
+import {
+  DP_MAX_WIDTH,
+  DP_MIN_WIDTH,
+  DP_NARROW_BREAKPOINT,
+  type DpMode,
+  type DpTab,
+} from './useNodeDetailDock';
+
+/** How far one arrow-key press moves the panel edge. */
+const RESIZE_KEY_STEP = 16;
 
 export type NodeRole = 'router' | 'switch' | 'client' | 'server' | string;
 
@@ -29,7 +39,9 @@ export function getVisibleTabs(target: ResolvedTarget, canEdit: boolean): DpTab[
   }
   if (role === 'router') tabs.push('routes');
   if (role === 'router' || role === 'switch') tabs.push('arp');
-  if (role === 'router') tabs.push('acl');
+  // No ACL tab: it only ever said it was not wired to the simulation yet, and
+  // a tab that holds nothing is one more thing for a learner to open for
+  // nothing. `AclTab` stays, so showing it again is this one line.
   if (
     canEdit &&
     (role === 'router' || role === 'switch' || role === 'client' || role === 'server')
@@ -289,22 +301,37 @@ export function ResizeHandle({ currentWidth, onResize }: ResizeHandleProps): JSX
     document.body.style.userSelect = 'none';
   };
 
+  // The panel grows leftward, so the left arrow widens it.
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'ArrowLeft') onResize(currentWidth + RESIZE_KEY_STEP);
+    else if (event.key === 'ArrowRight') onResize(currentWidth - RESIZE_KEY_STEP);
+    else return;
+    event.preventDefault();
+  };
+
+  // A real separator that could not be seen: the grip (panelChrome.css) shows
+  // on hover and on keyboard focus, which is also when it can be used.
   return (
     <div
       data-netlab-dp-resize-handle
+      className="netlab-dp-resize-handle"
       role="separator"
+      tabIndex={0}
       aria-orientation="vertical"
       aria-label={t('simulation.nodeDetail.resize')}
+      aria-valuenow={currentWidth}
+      aria-valuemin={DP_MIN_WIDTH}
+      aria-valuemax={DP_MAX_WIDTH}
       onMouseDown={handleMouseDown}
+      onKeyDown={handleKeyDown}
       style={{
         position: 'absolute',
-        left: -3,
+        left: -4,
         top: 0,
         bottom: 0,
-        width: 6,
+        width: 8,
         cursor: 'col-resize',
         zIndex: CANVAS_LAYER.devicePanel,
-        background: 'transparent',
       }}
     />
   );

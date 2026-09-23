@@ -66,6 +66,7 @@ export const NodeTabs = memo(function NodeTabs({
         udpBindings={udpBindings}
         joinedGroups={joinedGroups}
         hasSimulation={Boolean(simCtx)}
+        topology={topology}
       />
     );
   }

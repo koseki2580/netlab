@@ -6,6 +6,23 @@
  * (color + shape + letter) so edges stay legible without color (color-vision
  * loss, the `academic` palette). Colors are `--netlab-*` tokens, never hex.
  */
+/**
+ * What a link is doing: carrying traffic, failed (`down`), or working but kept
+ * out of forwarding (`blocked`, as spanning tree does). Kept here rather than
+ * in the engine so the legend can name them without loading the graph library.
+ */
+export type LinkState = 'up' | 'down' | 'blocked';
+
+/**
+ * The mark drawn at the middle of a link that is not carrying traffic. Colour
+ * and dash already differ; the mark is the channel that survives colour-vision
+ * loss, a grey-scale print and the academic palette alike.
+ */
+export const LINK_STATE_GLYPH: Readonly<Record<Exclude<LinkState, 'up'>, string>> = {
+  down: '\u2715',
+  blocked: '\u2298',
+};
+
 export type EdgeKind = 'icmp-request' | 'icmp-reply' | 'arp' | 'drop';
 
 export type EdgeCap = 'dot' | 'diamond' | 'triangle' | 'cross';

@@ -116,6 +116,8 @@ export function buildRouterAdjacency(topology: NetworkTopology): Map<string, Rou
   }
 
   for (const edge of topology.edges) {
+    // A failed link carries no routing adjacency; the protocols route around it.
+    if (edge.data?.state === 'down') continue;
     const sourceNode = nodeById.get(edge.source);
     const targetNode = nodeById.get(edge.target);
     if (!isRouter(sourceNode) || !isRouter(targetNode)) continue;

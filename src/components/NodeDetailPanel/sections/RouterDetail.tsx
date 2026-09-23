@@ -44,7 +44,6 @@ export function RouterDetail({
               >
                 {iface.name}
               </div>
-              <MtuBadge mtu={iface.mtu} />
             </div>
             <div style={ROW_STYLE}>
               <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 36 }}>IP</span>
@@ -125,7 +124,7 @@ export function RouterDetail({
                 </div>
               </div>
             )}
-            <div style={{ ...ROW_STYLE, alignItems: 'center' }}>
+            <div style={{ ...ROW_STYLE, alignItems: 'center', flexWrap: 'wrap' }}>
               <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 36 }}>MTU</span>
               <MtuBadge mtu={iface.mtu} />
               {onInterfaceMtuChange && (
@@ -166,7 +165,6 @@ export function RouterDetail({
                       >
                         {subInterface.id}
                       </div>
-                      <MtuBadge mtu={subInterface.mtu} />
                     </div>
                     <div style={ROW_STYLE}>
                       <span
@@ -209,7 +207,7 @@ export function RouterDetail({
                         {subInterface.vlanId}
                       </span>
                     </div>
-                    <div style={{ ...ROW_STYLE, alignItems: 'center' }}>
+                    <div style={{ ...ROW_STYLE, alignItems: 'center', flexWrap: 'wrap' }}>
                       <span
                         style={{
                           color: 'var(--netlab-text-secondary)',

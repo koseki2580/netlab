@@ -82,6 +82,18 @@ describe('LegendPanel', () => {
     expect(text).toContain('diamond');
   });
 
+  it('names both link states with their own mark, so neither rests on colour', () => {
+    render(<LegendPanel />);
+    click(q('legend-toggle') as HTMLElement);
+    const section = q('legend-link-states');
+    const down = section?.querySelector('[data-link-state="down"]')?.textContent ?? '';
+    const blocked = section?.querySelector('[data-link-state="blocked"]')?.textContent ?? '';
+    expect(down).toContain('\u2715');
+    expect(down).toContain('link down');
+    expect(blocked).toContain('\u2298');
+    expect(blocked).toContain('blocked');
+  });
+
   it('points the toggle arrow down when closed and up when open (P6)', () => {
     render(<LegendPanel />);
     // Closed: ▾ (expandable downward).

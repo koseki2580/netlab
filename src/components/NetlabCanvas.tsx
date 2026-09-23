@@ -217,6 +217,21 @@ export function NetlabCanvas({
     setEdges(topology.edges);
   }, [topology.edges, setEdges, isControlled, followTopology]);
 
+  // An uncontrolled canvas keeps its first snapshot so an in-canvas drag
+  // survives, but it must not keep drawing links the host has changed: the
+  // simulation runs on the host's links. A lesson that fails a link by taking
+  // it out of its topology left it drawn as healthy, and a link a lesson marks
+  // down or blocked never showed as such. Compared by content, so a host that
+  // rebuilds the same links on every render does not wipe links drawn here.
+  const hostEdgesKey = useMemo(() => JSON.stringify(topology.edges), [topology.edges]);
+  const syncedEdgesKeyRef = useRef(hostEdgesKey);
+  useEffect(() => {
+    if (isControlled || followTopology) return;
+    if (syncedEdgesKeyRef.current === hostEdgesKey) return;
+    syncedEdgesKeyRef.current = hostEdgesKey;
+    setEdges(topology.edges);
+  }, [hostEdgesKey, topology.edges, setEdges, isControlled, followTopology]);
+
   const emitTopologyChange = useCallback(
     (nextNodes: NetlabNode[], nextEdges: NetlabEdge[]) => {
       onTopologyChange?.({
@@ -400,16 +415,34 @@ export function NetlabCanvas({
         ? { ...baseValidationEdge, className: mergedClassName }
         : baseValidationEdge;
 
+      // A link that carries nothing is drawn so on three channels — colour,
+      // dash and the mark the engine puts at its middle — and the state is
+      // handed on in `data.state`, whichever source said so.
       if (failureCtx?.isEdgeDown(edge.id) || edge.data?.state === 'down') {
         return {
           ...validationEdge,
           animated: false,
+          data: { ...validationEdge.data, state: 'down' as const },
           style: {
             ...validationEdge.style,
             stroke: 'var(--netlab-accent-red)',
             strokeDasharray: '6 3',
             strokeWidth: 2,
-            opacity: 0.7,
+            opacity: 1,
+          },
+        };
+      }
+
+      if (edge.data?.state === 'blocked') {
+        return {
+          ...validationEdge,
+          animated: false,
+          style: {
+            ...validationEdge.style,
+            stroke: 'var(--netlab-text-muted)',
+            strokeDasharray: '1 3',
+            strokeWidth: 2,
+            opacity: 1,
           },
         };
       }
