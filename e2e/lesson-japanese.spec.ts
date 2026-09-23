@@ -51,9 +51,11 @@ for (const path of LESSONS) {
           (line: string) =>
             !/[ぁ-んァ-ヶ一-龯]/.test(line) &&
             (line.match(/[A-Za-z]{2,}/g) ?? []).length >= 4 &&
-            // Prose has ordinary lower-case words. A line made only of names,
-            // codes and acronyms — "Host B → Switch B → Switch A" — is a readout.
-            (line.match(/\b[a-z]{2,}\b/g) ?? []).length >= 2,
+            // Prose has ordinary lower-case words, and different ones. A line
+            // made only of names, codes and acronyms — "Host B → Switch B →
+            // Switch A" — is a readout, and so is an address that repeats one
+            // token, "ff:ff:ff:ff:ff:ff".
+            new Set(line.match(/\b[a-z]{2,}\b/g) ?? []).size >= 2,
         );
     });
 
