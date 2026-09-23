@@ -561,7 +561,25 @@ export default function SimulatorMaxGraphInner({
       if (target?.closest?.('[data-id]')) return;
       const rect = host.getBoundingClientRect();
       const cell = graph.getCellAt(event.clientX - rect.left, event.clientY - rect.top);
-      if (!cell?.isEdge() || !cell.id) return;
+      if (!cell?.id) return;
+      const anchorElement = (graph.getView().getState(cell)?.shape?.node ??
+        host) as unknown as HTMLElement;
+      if (cell.isVertex()) {
+        // Zoomed far out a device is drawn by the graph rather than by React,
+        // so its own menu handler is not there to catch the press. An embedded
+        // sandbox is small enough to draw every device that way, and right-
+        // clicking a device then did nothing.
+        const node = current.nodes.find((candidate) => candidate.id === String(cell.id));
+        if (!node || node.type === AREA_CLUSTER_NODE_TYPE) return;
+        event.preventDefault();
+        current.selectNode(node.id);
+        current.sandbox.openEditPopover({
+          target: { kind: 'node', nodeId: node.id },
+          anchorElement,
+        });
+        return;
+      }
+      if (!cell.isEdge()) return;
       event.preventDefault();
       const edgeId = String(cell.id);
       current.selectEdge(edgeId);
@@ -571,8 +589,7 @@ export default function SimulatorMaxGraphInner({
         // than at the corner of the canvas. It is an SVG element; the popover
         // only measures it, and the React Flow canvas anchored on the same
         // kind of element.
-        anchorElement: (graph.getView().getState(cell)?.shape?.node ??
-          host) as unknown as HTMLElement,
+        anchorElement,
       });
     };
     host.addEventListener('contextmenu', onContextMenu);

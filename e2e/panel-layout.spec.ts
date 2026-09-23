@@ -189,11 +189,13 @@ for (const size of SIZES) {
       await readInJapanese(page);
       await startLesson(page, '/#/simulation/step');
       const step = page.getByTestId(TID.stepAction).first();
-      for (let i = 0; i < 3; i += 1) {
-        if (await step.isEnabled()) await step.click();
-      }
       const destination = page.getByTestId(TID.stepDestination).first();
-      await expect(destination).toBeVisible();
+      // Step until a router's candidates are on screen, rather than a fixed
+      // number of presses that races the simulation under load.
+      await expect(async () => {
+        if ((await destination.count()) === 0 && (await step.isEnabled())) await step.click();
+        await expect(destination).toBeVisible({ timeout: 1000 });
+      }).toPass({ timeout: 20_000 });
       const destinationBox = await box(destination);
       const nextHopBox = await box(page.getByTestId(TID.stepNextHop).first());
       expect(nextHopBox.x - (destinationBox.x + destinationBox.width)).toBeGreaterThanOrEqual(6);

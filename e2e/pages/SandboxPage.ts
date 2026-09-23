@@ -88,9 +88,12 @@ export class SandboxPage {
     await expect(this.editsTab()).toContainText(`(${n})`);
   }
 
-  /** Currently visible tabpanel content. */
+  /**
+   * The sandbox's currently visible tab panel. Scoped to the sandbox: a lesson
+   * may have tab panels of its own (the OSPF route tables do).
+   */
   tabpanel(): Locator {
-    return this.page.locator('[role="tabpanel"]');
+    return this.page.locator('[role="tabpanel"][id^="sandbox-tabpanel-"]');
   }
 
   // -- edit-list / undo / reset --------------------------------------------
