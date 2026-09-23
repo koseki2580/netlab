@@ -98,7 +98,15 @@ export function getPanelStyle(mode: DpMode, width: number, isNarrow = false): Re
           WebkitBackdropFilter: 'blur(10px)',
         }
       : {
-          position: 'relative',
+          // Pinned is opaque and stays put, but it is still positioned inside
+          // the canvas: its host is a block, so a `relative` panel stacked
+          // below a full-height canvas and left the viewport altogether — and
+          // the mode is remembered, so every later device click did nothing.
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: CANVAS_LAYER.devicePanel,
           flexShrink: 0,
         }),
   };

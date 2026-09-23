@@ -393,19 +393,31 @@ export default function SimulatorMaxGraphInner({
     const host = hostRef.current;
     if (!cell || !geometry || !host) return;
 
-    // An absolute target, not a nudge: nudging drifts a little further every
-    // time a device is selected, and after a few selections the topology has
-    // wandered off the canvas.
+    // Only move the view when the device would otherwise be hidden, and then
+    // by the least that reveals it. Centring on every selection threw the rest
+    // of the topology off the canvas — press the rightmost device and three of
+    // five disappear — and closing the panel did not bring them back.
     const view = graph.getView();
-    const centreX = geometry.x + geometry.width / 2;
-    const centreY = geometry.y + geometry.height / 2;
-    // The detail panel covers the right band, so aim for the middle of what
-    // stays visible rather than the middle of the canvas.
+    const { scale, translate } = view;
+    // The detail panel covers the right band, so the device has to clear it.
     const visibleWidth = Math.max(host.clientWidth - dock.width, host.clientWidth / 2);
-    view.setTranslate(
-      visibleWidth / 2 / view.scale - centreX,
-      host.clientHeight / 2 / view.scale - centreY,
-    );
+    const margin = 24;
+    const left = (geometry.x + translate.x) * scale;
+    const top = (geometry.y + translate.y) * scale;
+    const right = left + geometry.width * scale;
+    const bottom = top + geometry.height * scale;
+
+    let dx = 0;
+    if (left < margin) dx = (margin - left) / scale;
+    else if (right > visibleWidth - margin) dx = (visibleWidth - margin - right) / scale;
+    let dy = 0;
+    if (top < margin) dy = (margin - top) / scale;
+    else if (bottom > host.clientHeight - margin)
+      dy = (host.clientHeight - margin - bottom) / scale;
+
+    if (dx !== 0 || dy !== 0) {
+      view.setTranslate(translate.x + dx, translate.y + dy);
+    }
     lastPannedRef.current = selectedNodeId;
   }, [selectedNodeId, dock.width, ready]);
 

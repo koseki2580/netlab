@@ -3,10 +3,23 @@ import { expect, test } from './fixtures/harness';
 import { excludingCanvasInternals } from './axe';
 import { SEL } from './selectors';
 
+/**
+ * TC-034, and TC-174 — the lesson starts empty, so running it shows something.
+ *
+ * The trace is deterministic and used to be computed at mount, so the lesson's
+ * one button redrew an identical chart: a learner pressed the only control on
+ * the page and nothing changed, which reads as a broken lesson.
+ */
 test('tcp congestion demo renders deterministic phase transitions', async ({ page, demoPage }) => {
   await demoPage.goto('/simulation/tcp-congestion');
 
   await expect(page.getByTestId(SEL.canvas.root).first()).toBeAttached();
+  await expect(
+    page.getByTestId(SEL.demo.tcpCongestionEmpty),
+    'the lesson waits to be run',
+  ).toBeVisible();
+
+  await page.getByTestId(SEL.demo.tcpCongestionRun).click();
   await expect(page.getByTestId(SEL.demo.tcpCongestionChart)).toBeVisible();
   // The element existing IS the assertion: step 9 produced a fast retransmit.
   await expect(page.getByTestId(SEL.demo.tcpCongestionEvent(9, 'fast-retransmit'))).toBeVisible();

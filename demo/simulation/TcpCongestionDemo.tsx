@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { TcpCongestionPanel } from '../../src/components/simulation/TcpCongestionPanel';
@@ -81,8 +81,10 @@ export default function TcpCongestionDemo() {
 
 function TcpCongestionDemoInner() {
   const t = useT();
-  const initialEvents = useMemo(() => runCongestionScenario(), []);
-  const [events, setEvents] = useState<readonly TcpCongestionEvent[]>(initialEvents);
+  // Empty until the learner runs it. The trace is deterministic, so drawing it
+  // at mount made the lesson's one button recompute an identical array — press
+  // it and nothing on the screen changed.
+  const [events, setEvents] = useState<readonly TcpCongestionEvent[]>([]);
 
   return (
     <main
@@ -101,12 +103,14 @@ function TcpCongestionDemoInner() {
           <button
             type="button"
             data-testid="tcp-congestion-run"
+            data-primary-action=""
             onClick={() => setEvents(runCongestionScenario())}
             style={{
-              border: '1px solid var(--netlab-border-strong)',
+              border: '1px solid var(--netlab-accent-green)',
               borderRadius: 6,
-              background: 'var(--netlab-bg-panel)',
+              background: 'color-mix(in srgb, var(--netlab-accent-green) 18%, transparent)',
               color: 'var(--netlab-text-primary)',
+              fontWeight: 700,
               padding: '8px 12px',
               fontFamily: 'monospace',
               cursor: 'pointer',

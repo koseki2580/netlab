@@ -109,6 +109,8 @@ interface TextFieldProps {
   placeholder?: string;
   onCommit: (val: string) => void;
   accentColor?: string;
+  /** Names the field for tests; the label is translated and cannot be one. */
+  testId?: string;
 }
 
 function TextField({
@@ -117,6 +119,7 @@ function TextField({
   placeholder,
   onCommit,
   accentColor = 'var(--netlab-text-primary)',
+  testId,
 }: TextFieldProps) {
   const [local, setLocal] = useState(value);
 
@@ -127,6 +130,7 @@ function TextField({
     <div style={{ marginBottom: 6 }}>
       <div style={LABEL_STYLE}>{label}</div>
       <input
+        {...(testId !== undefined ? { 'data-testid': testId } : {})}
         style={{ ...INPUT_STYLE, color: accentColor }}
         value={local}
         placeholder={placeholder}
@@ -152,6 +156,7 @@ function HostEditor({
   return (
     <div style={SECTION_STYLE}>
       <TextField
+        testId="editor-node-ip"
         label={t('editor.node.ipAddress')}
         value={data.ip ?? ''}
         placeholder={t('editor.node.ipPlaceholder')}
@@ -548,7 +553,10 @@ export function NodeEditorPanel({ docked }: NodeEditorPanelProps = {}) {
           : '#f472b6';
 
   return (
-    <div style={docked ? { ...PANEL_STYLE, ...DOCKED_OVERRIDES } : PANEL_STYLE}>
+    <div
+      data-testid="editor-node-editor"
+      style={docked ? { ...PANEL_STYLE, ...DOCKED_OVERRIDES } : PANEL_STYLE}
+    >
       {/* Header */}
       <div
         style={{

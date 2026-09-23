@@ -39,6 +39,17 @@ export const SEL = {
   nodeDetail: {
     closePanel: 'node-detail-close',
   },
+  /** The one task a small lesson sets: its goal, and what happened. */
+  lessonTask: {
+    goal: 'lesson-task-goal',
+    outcome: 'lesson-task-outcome',
+    path: 'lesson-task-path',
+  },
+  brief: {
+    fullCard: 'preflight-fullcard',
+    strip: 'preflight-strip',
+    start: 'preflight-start',
+  },
   sandbox: {
     surface: 'sandbox-surface',
     panel: 'sandbox-panel',
@@ -217,6 +228,9 @@ export const SEL = {
     sidebar: 'editor-sidebar',
     sidebarTab: (tab: string) => `editor-sidebar-tab-${tab}`,
     sidebarPanel: (tab: string) => `editor-sidebar-panel-${tab}`,
+    nodeEditor: 'editor-node-editor',
+    nodeEditorEmpty: 'editor-node-empty',
+    nodeIp: 'editor-node-ip',
     run: 'editor-run',
     results: 'editor-results',
     resultsDelivered: 'editor-results-delivered',
@@ -249,6 +263,7 @@ export const SEL = {
   shell: {
     title: 'demo-shell-title',
     desc: 'demo-shell-desc',
+    back: 'demo-shell-back',
   },
   /** The route table drawn over a lesson's canvas. */
   routeTable: {

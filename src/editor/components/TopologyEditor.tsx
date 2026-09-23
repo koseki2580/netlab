@@ -150,6 +150,9 @@ function TopologyEditorInner({
                   })
                 }
                 onNodesMoved={(moves) => updateNodePositions([...moves])}
+                // Selecting a device on the canvas is how its editor is opened;
+                // without this the inspector only ever showed its empty state.
+                onSelectNode={setSelectedNodeId}
                 onDeleteNode={deleteNode}
                 onDeleteEdge={deleteEdge}
                 onViewCentre={setViewCentre}
