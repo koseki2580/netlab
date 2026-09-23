@@ -26,6 +26,39 @@ const BUTTON_STYLE: CSSProperties = {
   padding: '5px 8px',
 };
 
+const KIND_LABEL_KEYS: Record<ObservabilityTrace['kind'], string> = {
+  'netflow:flow-update': 'simulation.flowView.kind.netflowUpdate',
+  'netflow:flow-export': 'simulation.flowView.kind.netflowExport',
+  'sflow:sampled': 'simulation.flowView.kind.sflowSampled',
+  'sflow:dropped': 'simulation.flowView.kind.sflowDropped',
+};
+
+// Five columns in a ~400px rail: small type, headers that never break inside
+// a word, and long identifiers allowed to wrap at any character.
+const TABLE_STYLE: CSSProperties = {
+  width: '100%',
+  borderCollapse: 'collapse',
+  fontSize: 11,
+  lineHeight: 1.4,
+};
+
+const HEADER_CELL_STYLE: CSSProperties = {
+  textAlign: 'left',
+  whiteSpace: 'nowrap',
+  padding: '4px 6px 4px 0',
+  fontSize: 10,
+  fontWeight: 700,
+  color: 'var(--netlab-text-secondary)',
+  borderBottom: '1px solid var(--netlab-border-subtle)',
+};
+
+const CELL_STYLE: CSSProperties = {
+  verticalAlign: 'top',
+  padding: '4px 6px 4px 0',
+  overflowWrap: 'anywhere',
+  borderBottom: '1px solid var(--netlab-border-subtle)',
+};
+
 function traceDeviceId(trace: ObservabilityTrace): string {
   return trace.kind === 'netflow:flow-update' || trace.kind === 'netflow:flow-export'
     ? trace.routerId
@@ -103,41 +136,66 @@ export function FlowCollectorPanel({ traces }: FlowCollectorPanelProps) {
           </select>
         </label>
       </div>
-      <table role="grid" aria-rowcount={visibleRows.length}>
-        <thead>
-          <tr>
-            <th>{t('simulation.flow.column.packet')}</th>
-            <th>{t('simulation.flow.column.step')}</th>
-            <th>{t('simulation.flow.device')}</th>
-            <th>{t('simulation.flow.column.action')}</th>
-            <th>{t('simulation.flow.column.details')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {visibleRows.map(({ packetId, hop }, index) => {
-            const obs = hop.observabilityTrace;
-            if (!obs) return null;
-            const device = traceDeviceId(obs);
-            const details =
-              obs.kind === 'netflow:flow-update'
-                ? t('simulation.flow.counts', { packets: obs.packets, bytes: obs.bytes })
-                : obs.kind === 'netflow:flow-export'
-                  ? obs.reason
-                  : obs.kind === 'sflow:sampled'
-                    ? t('simulation.flow.sample', { sequence: obs.sequence, port: obs.portId })
-                    : obs.reason;
-            return (
-              <tr key={`${packetId}-${hop.step}-${index}`}>
-                <td>{packetId}</td>
-                <td>{hop.step}</td>
-                <td>{device}</td>
-                <td>{obs.kind}</td>
-                <td>{details}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      <p
+        data-testid="observability-flow-explainer"
+        style={{
+          margin: '0 0 8px',
+          fontSize: 11,
+          lineHeight: 1.5,
+          color: 'var(--netlab-text-secondary)',
+        }}
+      >
+        {t('simulation.flowView.explainer')}
+      </p>
+      {visibleRows.length === 0 ? (
+        <p
+          data-testid="observability-flow-empty"
+          style={{ margin: 0, fontSize: 11, color: 'var(--netlab-text-muted)' }}
+        >
+          {t('simulation.flowView.empty')}
+        </p>
+      ) : (
+        <table role="grid" aria-rowcount={visibleRows.length} style={TABLE_STYLE}>
+          <thead>
+            <tr>
+              <th style={HEADER_CELL_STYLE}>{t('simulation.flow.column.packet')}</th>
+              <th style={HEADER_CELL_STYLE}>{t('simulation.flow.column.step')}</th>
+              <th style={HEADER_CELL_STYLE}>{t('simulation.flow.device')}</th>
+              <th style={HEADER_CELL_STYLE}>{t('simulation.flow.column.action')}</th>
+              <th style={HEADER_CELL_STYLE}>{t('simulation.flow.column.details')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visibleRows.map(({ packetId, hop }, index) => {
+              const obs = hop.observabilityTrace;
+              if (!obs) return null;
+              const device = traceDeviceId(obs);
+              const details =
+                obs.kind === 'netflow:flow-update'
+                  ? t('simulation.flow.counts', { packets: obs.packets, bytes: obs.bytes })
+                  : obs.kind === 'netflow:flow-export'
+                    ? obs.reason
+                    : obs.kind === 'sflow:sampled'
+                      ? t('simulation.flow.sample', { sequence: obs.sequence, port: obs.portId })
+                      : obs.reason;
+              return (
+                <tr key={`${packetId}-${hop.step}-${index}`}>
+                  <td style={CELL_STYLE}>{packetId}</td>
+                  <td style={CELL_STYLE}>{hop.step}</td>
+                  <td style={CELL_STYLE}>{device}</td>
+                  <td style={CELL_STYLE} data-testid="observability-flow-kind">
+                    <span style={{ display: 'block' }}>{t(KIND_LABEL_KEYS[obs.kind])}</span>
+                    <code style={{ fontSize: 9, color: 'var(--netlab-text-muted)' }}>
+                      {obs.kind}
+                    </code>
+                  </td>
+                  <td style={CELL_STYLE}>{details}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
     </section>
   );
 }

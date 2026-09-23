@@ -66,6 +66,8 @@ export function SaveSnapshotButton() {
           fontFamily: 'monospace',
           fontSize: 12,
           cursor: 'pointer',
+          whiteSpace: 'nowrap',
+          flexShrink: 0,
         }}
       >
         {t('sandbox.snapshots.save.text')}

@@ -29,7 +29,7 @@ export function AclEditorForm({
 
   if (!node) {
     return (
-      <p style={{ color: 'var(--netlab-text-muted)' }}>{t('sandbox.edits.editor.nodeMissing')}</p>
+      <p style={{ color: 'var(--netlab-text-muted)' }}>{t('sandbox.terms.editor.nodeMissing')}</p>
     );
   }
 

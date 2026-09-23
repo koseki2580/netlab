@@ -180,4 +180,54 @@ describe('EditPopover', () => {
 
     expect(document.activeElement).toBe(second);
   });
+
+  // TC-UX-PANEL-02 — a router's editor is taller than the window; every part
+  // of it must stay reachable.
+  describe('stays inside the viewport', () => {
+    function renderWithSize(popoverHeight: number, anchorTop: number) {
+      vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(900);
+      vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(1440);
+      vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(popoverHeight);
+      vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(300);
+      const anchorElement = makeAnchorElement();
+      anchorElement.getBoundingClientRect = () =>
+        ({
+          x: 50,
+          y: anchorTop,
+          top: anchorTop,
+          left: 50,
+          right: 90,
+          bottom: anchorTop + 40,
+          width: 40,
+          height: 40,
+          toJSON: () => ({}),
+        }) as DOMRect;
+      render(
+        <EditPopover
+          anchor={anchor}
+          anchorElement={anchorElement}
+          labelledBy="popover-heading"
+          onDismiss={vi.fn()}
+        >
+          <h2 id="popover-heading">Edit router</h2>
+        </EditPopover>,
+      );
+      const dialog = container?.querySelector<HTMLElement>('[role="dialog"]');
+      if (!dialog) throw new Error('missing popover');
+      return dialog;
+    }
+
+    it('opens upward when the pointer is low and the editor fits above', () => {
+      const dialog = renderWithSize(300, 800);
+      // Above the anchor: 800 - 8 - 300.
+      expect(dialog.style.top).toBe('492px');
+    });
+
+    it('pins a taller-than-window editor to the window and lets it scroll', () => {
+      const dialog = renderWithSize(2000, 400);
+      expect(dialog.style.top).toBe('8px');
+      expect(dialog.style.maxHeight).toBe('calc(100vh - 16px)');
+      expect(dialog.style.overflowY).toBe('auto');
+    });
+  });
 });

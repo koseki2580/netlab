@@ -329,3 +329,29 @@ describe('PacketTimeline', () => {
     );
   });
 });
+
+// TC-UX-PANEL-07 — the hop codes stay, and each one present is explained.
+describe('PacketTimeline code gloss', () => {
+  it('explains the codes that appear, next to the list and on each badge', () => {
+    render(makeSimulationContextValue());
+
+    const gloss = container?.querySelector('[data-testid="trace-event-gloss"]')?.textContent;
+    expect(gloss).toContain('CREATE = the packet is made');
+    expect(gloss).toContain('DELIVER = reached its destination');
+    expect(gloss).not.toContain('FWD');
+
+    const badge = Array.from(container?.querySelectorAll('span') ?? []).find(
+      (span) => span.textContent === 'CREATE',
+    );
+    expect(badge?.getAttribute('title')).toBe('CREATE = the packet is made');
+  });
+
+  it('offers a filter example that is not tied to TCP', () => {
+    render(makeSimulationContextValue());
+    const input = container?.querySelector<HTMLInputElement>(
+      '[data-testid="trace-filter-searchbox"]',
+    );
+    expect(input?.placeholder).not.toContain('tcp');
+    expect(input?.placeholder).toContain('field == value');
+  });
+});

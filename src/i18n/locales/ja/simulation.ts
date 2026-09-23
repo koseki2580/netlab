@@ -22,7 +22,6 @@ export const simulation: Catalog = {
   'simulation.steps.logLoaded': '「次のステップ」を押すと1ホップずつ進みます。',
   'simulation.steps.next': '→ 次のステップ',
   'simulation.steps.reset': '⟳ リセット',
-  'simulation.steps.statusIdle': 'パケットを送ると始まります',
   'simulation.steps.statusLoaded': '準備完了 — 「次のステップ」を押してください',
   'simulation.steps.statusPaused': '{{total}} ホップ中 {{current}} 番目で一時停止',
   'simulation.steps.statusRunning': '実行中 — {{current}} ホップ目',

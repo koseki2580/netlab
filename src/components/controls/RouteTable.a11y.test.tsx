@@ -60,3 +60,18 @@ describe('RouteTable a11y', () => {
     expect(ths.length).toBe(4);
   });
 });
+
+// TC-UX-PANEL-07 — AF and AD keep their names and say what they mean.
+describe('RouteTable code gloss', () => {
+  it('explains AF and AD on the headers and in a caption', () => {
+    const af = container.querySelector('[data-testid="route-table-af-header"]');
+    const ad = container.querySelector('[data-testid="route-table-ad-header"]');
+    expect(af?.textContent).toBe('AF');
+    expect(af?.getAttribute('title')).toContain('address family');
+    expect(ad?.textContent).toBe('AD');
+    expect(ad?.getAttribute('title')).toContain('administrative distance');
+    expect(container.querySelector('[data-testid="route-table-gloss"]')?.textContent).toContain(
+      'AD = administrative distance, lower wins',
+    );
+  });
+});

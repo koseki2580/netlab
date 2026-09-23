@@ -18,6 +18,12 @@ const PANEL_STYLE: React.CSSProperties = {
   fontFamily: 'monospace',
 };
 
+// Five columns that fit a ~480px side panel: the three address:port columns
+// shrink and wrap at the colon rather than pushing the last ones out of view.
+const NAT_GRID_COLUMNS = '52px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 40px';
+
+const NAT_ADDRESS_CELL: React.CSSProperties = { minWidth: 0, overflowWrap: 'anywhere' };
+
 function isNatCapableRouter(
   routerId: string,
   nodes: { id: string; data: { role: string; interfaces?: { nat?: 'inside' | 'outside' }[] } }[],
@@ -94,7 +100,7 @@ export const NatTableViewer = memo(function NatTableViewer() {
         <div style={{ fontSize: 12, color: 'var(--netlab-text-secondary)' }}>
           {routerLabel
             ? t('simulation.nat.router', { router: routerLabel })
-            : t('simulation.nat.empty')}
+            : t('simulation.natView.pickRouter')}
         </div>
       </div>
 
@@ -110,21 +116,28 @@ export const NatTableViewer = memo(function NatTableViewer() {
         </div>
       ) : (
         <div
-          style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8, minHeight: 0 }}
+          data-testid="nat-table-grid"
+          style={{
+            padding: 12,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+            minHeight: 0,
+            overflowY: 'auto',
+          }}
         >
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns:
-                '72px minmax(150px, 1.2fr) minmax(150px, 1.2fr) minmax(150px, 1.2fr) 72px',
-              gap: 8,
+              gridTemplateColumns: NAT_GRID_COLUMNS,
+              gap: 6,
               color: 'var(--netlab-text-secondary)',
               fontSize: 10,
               fontWeight: 'bold',
               letterSpacing: 0.5,
             }}
           >
-            <span>{t('simulation.nat.column.proto')}</span>
+            <span style={{ whiteSpace: 'nowrap' }}>{t('simulation.nat.column.proto')}</span>
             <span>{t('simulation.nat.column.insideLocal')}</span>
             <span>{t('simulation.nat.column.insideGlobal')}</span>
             <span>{t('simulation.nat.column.outsidePeer')}</span>
@@ -136,9 +149,8 @@ export const NatTableViewer = memo(function NatTableViewer() {
               key={entry.id}
               style={{
                 display: 'grid',
-                gridTemplateColumns:
-                  '72px minmax(150px, 1.2fr) minmax(150px, 1.2fr) minmax(150px, 1.2fr) 72px',
-                gap: 8,
+                gridTemplateColumns: NAT_GRID_COLUMNS,
+                gap: 6,
                 padding: '8px 0',
                 borderTop: '1px solid var(--netlab-border-subtle)',
                 fontSize: 11,
@@ -146,14 +158,14 @@ export const NatTableViewer = memo(function NatTableViewer() {
               }}
             >
               <span>{entry.proto.toUpperCase()}</span>
-              <span>
-                {entry.insideLocalIp}:{entry.insideLocalPort}
+              <span style={NAT_ADDRESS_CELL}>
+                {`${entry.insideLocalIp}:${entry.insideLocalPort}`}
               </span>
-              <span>
-                {entry.insideGlobalIp}:{entry.insideGlobalPort}
+              <span style={NAT_ADDRESS_CELL}>
+                {`${entry.insideGlobalIp}:${entry.insideGlobalPort}`}
               </span>
-              <span>
-                {entry.outsidePeerIp}:{entry.outsidePeerPort}
+              <span data-testid="nat-outside-peer" style={NAT_ADDRESS_CELL}>
+                {`${entry.outsidePeerIp}:${entry.outsidePeerPort}`}
               </span>
               <span>{entry.type.toUpperCase()}</span>
             </div>

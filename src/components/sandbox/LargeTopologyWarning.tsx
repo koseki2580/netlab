@@ -59,8 +59,8 @@ export function LargeTopologyWarning({
       </button>
       <div style={{ fontWeight: 700 }}>
         {critical
-          ? t('sandbox.edits.largeTopology.critical', { count: nodeCount })
-          : t('sandbox.edits.largeTopology.warning', { count: nodeCount })}
+          ? t('sandbox.terms.largeTopology.critical', { count: nodeCount })
+          : t('sandbox.terms.largeTopology.warning', { count: nodeCount })}
       </div>
       <div style={{ marginTop: 4 }}>
         {fastMode

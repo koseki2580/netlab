@@ -25,7 +25,7 @@ export function MtuEditorForm({
 
   if (!node || interfaces.length === 0) {
     return (
-      <p style={{ color: 'var(--netlab-text-muted)' }}>{t('sandbox.edits.editor.mtu.empty')}</p>
+      <p style={{ color: 'var(--netlab-text-muted)' }}>{t('sandbox.terms.editor.mtu.empty')}</p>
     );
   }
 
@@ -48,11 +48,11 @@ export function MtuEditorForm({
 
   return (
     <section style={sectionStyle} aria-label={t('sandbox.edits.editor.mtu.label')}>
-      <strong>{t('sandbox.edits.editor.mtu.heading')}</strong>
+      <strong>{t('sandbox.terms.editor.mtu.heading')}</strong>
       <label style={{ display: 'grid', gap: 3 }}>
-        <span>{t('sandbox.edits.editor.mtu.interface')}</span>
+        <span>{t('sandbox.terms.editor.mtu.interface')}</span>
         <select
-          aria-label={t('sandbox.edits.editor.mtu.interface')}
+          aria-label={t('sandbox.terms.editor.mtu.interface')}
           value={selectedInterface}
           onChange={(event) => {
             const nextInterface = interfaces.find((iface) => iface.id === event.target.value);

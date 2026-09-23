@@ -64,7 +64,7 @@ export function RouteEditorForm({
 
   if (!node) {
     return (
-      <p style={{ color: 'var(--netlab-text-muted)' }}>{t('sandbox.edits.editor.nodeMissing')}</p>
+      <p style={{ color: 'var(--netlab-text-muted)' }}>{t('sandbox.terms.editor.nodeMissing')}</p>
     );
   }
 
@@ -119,9 +119,9 @@ export function RouteEditorForm({
         />
       </label>
       <label style={{ display: 'grid', gap: 3 }}>
-        <span>{t('sandbox.edits.editor.route.interface')}</span>
+        <span>{t('sandbox.terms.editor.route.interface')}</span>
         <select
-          aria-label={t('sandbox.edits.editor.route.interfaceLabel')}
+          aria-label={t('sandbox.terms.editor.route.interfaceLabel')}
           data-testid="sandbox-route-interface"
           value={outInterface}
           onChange={(event) => setOutInterface(event.target.value)}

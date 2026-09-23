@@ -5,6 +5,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PacketHop, RoutingDecision, SimulationState } from '../../types/simulation';
+import { I18nProvider } from '../../i18n/I18nProvider';
 import { StepControls } from './StepControls';
 
 const simulationMock = vi.hoisted(() => ({
@@ -315,5 +316,33 @@ describe('StepControls', () => {
 
       expect(container?.textContent).toContain('Matched 203.0.113.0/24 via direct (static, AD=1)');
     });
+  });
+});
+
+// TC-UX-PANEL-06 — the route candidates read as separate columns, AD is
+// explained, and the verdict is in the reader's language.
+describe('StepControls routing table for a learner', () => {
+  it('keeps the destination and next hop apart and glosses AD', () => {
+    render();
+    const header = container?.querySelector('[data-testid="step-route-ad-header"]');
+    expect(header?.textContent).toBe('AD');
+    expect(header?.getAttribute('title')).toContain('administrative distance');
+    expect(container?.querySelector('[data-testid="step-route-ad-caption"]')?.textContent).toBe(
+      'AD = administrative distance, lower wins',
+    );
+    const row = container?.querySelector('[data-testid="step-route-destination"]')
+      ?.parentElement as HTMLElement | null;
+    expect(row?.style.columnGap).toBe('8px');
+  });
+
+  it('gives the verdict in Japanese', () => {
+    render(
+      <I18nProvider locale="ja">
+        <StepControls />
+      </I18nProvider>,
+    );
+    const verdict = container?.querySelector('[data-testid="step-route-verdict"]')?.textContent;
+    expect(verdict).toContain('203.0.113.0/24 に一致したので');
+    expect(verdict).not.toContain('Matched');
   });
 });

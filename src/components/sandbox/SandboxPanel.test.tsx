@@ -12,6 +12,7 @@ import {
   type AssessmentContextValue,
 } from '../../assessments/AssessmentProvider';
 import { HookEngine } from '../../hooks/HookEngine';
+import { I18nProvider } from '../../i18n/I18nProvider';
 import { NetlabContext, type NetlabContextValue } from '../NetlabContext';
 import { EmptySandboxTab } from './EmptySandboxTab';
 import { SandboxPanel } from './SandboxPanel';
@@ -593,6 +594,90 @@ describe('SandboxPanel', () => {
     });
 
     expect(setSession).toHaveBeenCalledWith(new EditSession([{ kind: 'noop' }], 1));
+  });
+
+  describe('header, undo and reset (TC-UX-PANEL-01, TC-UX-PANEL-02)', () => {
+    // A sandbox whose session really changes, so undo and reset are observed
+    // through the edit count the learner sees on the Edits tab.
+    function EditableSandbox({ children }: { readonly children: ReactNode }) {
+      const [session, setSession] = useState(() => new EditSession([{ kind: 'noop' }], 1));
+      const value = makeSandboxValue({
+        session,
+        undo: () => setSession((current) => current.undo()),
+        redo: () => setSession((current) => current.redo()),
+        resetBaseline: () => setSession(EditSession.empty()),
+      });
+      return <SandboxContext.Provider value={value}>{children}</SandboxContext.Provider>;
+    }
+
+    const editsTabText = () =>
+      container?.querySelector('[role="tab"][data-axis="edits"]')?.textContent ?? '';
+
+    it('undoes and redoes the last edit from visible buttons', () => {
+      render(
+        <EditableSandbox>
+          <SandboxPanel />
+        </EditableSandbox>,
+      );
+      const undo = container?.querySelector<HTMLButtonElement>('[data-testid="sandbox-undo"]');
+      const redo = container?.querySelector<HTMLButtonElement>('[data-testid="sandbox-redo"]');
+      expect(undo?.title).toContain('Ctrl+Z');
+      expect(editsTabText()).toContain('(1)');
+      expect(redo?.disabled).toBe(true);
+
+      act(() => undo?.click());
+      expect(editsTabText()).toContain('(0)');
+      expect(undo?.disabled).toBe(true);
+
+      act(() => redo?.click());
+      expect(editsTabText()).toContain('(1)');
+    });
+
+    it('asks before the node tab reset throws edits away', () => {
+      render(
+        <EditableSandbox>
+          <SandboxPanel />
+        </EditableSandbox>,
+      );
+      act(() => {
+        container?.querySelector<HTMLButtonElement>('[role="tab"][data-axis="node"]')?.click();
+      });
+      const reset = () =>
+        container?.querySelector<HTMLButtonElement>('[data-testid="sandbox-node-reset"]');
+
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+      act(() => reset()?.click());
+      expect(confirmSpy).toHaveBeenCalledTimes(1);
+      expect(editsTabText()).toContain('(1)');
+
+      confirmSpy.mockReturnValue(true);
+      act(() => reset()?.click());
+      expect(editsTabText()).toContain('(0)');
+      expect(reset()?.disabled).toBe(true);
+      confirmSpy.mockRestore();
+    });
+
+    it('reads the header and node tab in Japanese with the product terms', () => {
+      render(
+        <I18nProvider locale="ja">
+          <SandboxContext.Provider value={makeSandboxValue()}>
+            <SandboxPanel />
+          </SandboxContext.Provider>
+        </I18nProvider>,
+      );
+      const header = container?.querySelector('[data-testid="sandbox-panel-header"]');
+      expect(header?.textContent).toContain('書き出す');
+      expect(header?.textContent).toContain('元に戻す');
+      expect(header?.textContent).not.toContain('Export');
+
+      act(() => {
+        container?.querySelector<HTMLButtonElement>('[role="tab"][data-axis="node"]')?.click();
+      });
+      const panel = container?.querySelector('[role="tabpanel"]')?.textContent ?? '';
+      expect(panel).toContain('機器');
+      expect(panel).toContain('インタフェース MTU');
+      expect(panel).not.toContain('インターフェイス');
+    });
   });
 });
 

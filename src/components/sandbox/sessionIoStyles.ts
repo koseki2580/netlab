@@ -9,6 +9,8 @@ export const sessionIoButtonStyle: CSSProperties = {
   fontFamily: 'monospace',
   fontSize: 11,
   cursor: 'pointer',
+  whiteSpace: 'nowrap',
+  flexShrink: 0,
 };
 
 export const sessionIoPanelStyle: CSSProperties = {

@@ -12,6 +12,7 @@ import {
 import { useI18n } from '../../i18n/useI18n';
 import { shortcutRegistry } from '../../sandbox/shortcuts/registry';
 import { useSandbox } from '../../sandbox/useSandbox';
+import { useUndoRedo } from '../../sandbox/useUndoRedo';
 import type { SandboxMode } from '../../sandbox/types';
 import { AssessmentContext } from '../../assessments/AssessmentContext';
 import { AssessmentTab } from '../assessments/AssessmentTab';
@@ -27,6 +28,7 @@ import { LargeTopologyWarning } from './LargeTopologyWarning';
 import { SandboxNodeTabBody } from './SandboxNodeTabBody';
 import { SaveSnapshotButton } from './snapshots/SaveSnapshotButton';
 import { ShortcutsHelpModal } from './ShortcutsHelpModal';
+import { sessionIoButtonStyle } from './sessionIoStyles';
 import { TrafficTab } from './TrafficTab';
 import { MONO_FONT_STACK, TEXT } from '../_styles/tokens';
 
@@ -95,6 +97,7 @@ export interface SandboxPanelProps {
 export function SandboxPanel({ layoutMode = 'wide' }: SandboxPanelProps = {}) {
   const { t } = useI18n();
   const sandbox = useSandbox();
+  const undoRedo = useUndoRedo();
   const assessment = useContext(AssessmentContext);
   const netlabContext = useContext(NetlabContext);
   const hookEngine = netlabContext?.hookEngine ?? sharedHookEngine;
@@ -354,111 +357,51 @@ export function SandboxPanel({ layoutMode = 'wide' }: SandboxPanelProps = {}) {
           />
         ) : null}
         <header
+          data-testid="sandbox-panel-header"
           style={{
-            padding: '10px 12px',
+            padding: '8px 12px',
             borderBottom: '1px solid var(--netlab-border)',
             display: 'flex',
-            alignItems: 'center',
-            gap: 8,
+            flexDirection: 'column',
+            gap: 6,
           }}
         >
-          <h2 id="sandbox-panel-heading" style={{ margin: 0, fontSize: 14, flex: 1 }}>
-            {t('sandbox.panel.heading')}
-          </h2>
-          <PcapDownloadButton />
-          <ExportButton />
-          <button
-            type="button"
-            aria-label={t('sandbox.panel.export.scenarioLabel')}
-            data-testid="sandbox-export-scenario-open"
-            onClick={() => setScenarioExportOpen(true)}
-            className="netlab-focus-ring"
-            style={{
-              border: '1px solid var(--netlab-border)',
-              borderRadius: 6,
-              background: 'var(--netlab-bg-surface)',
-              color: TEXT.primary,
-              padding: '3px 7px',
-              fontFamily: MONO_FONT_STACK,
-              fontSize: 11,
-              cursor: 'pointer',
-            }}
-          >
-            {t('sandbox.panel.export.scenarioText')}
-          </button>
-          <ImportDialog />
-          <SaveSnapshotButton />
-          <label
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              border: '1px solid var(--netlab-border)',
-              borderRadius: 999,
-              background: fastMode ? 'rgba(14, 165, 233, 0.16)' : 'var(--netlab-bg-surface)',
-              color: TEXT.primary,
-              padding: '4px 7px',
-              fontSize: 10,
-              cursor: 'pointer',
-            }}
-          >
-            <input
-              type="checkbox"
-              aria-label={t('sandbox.panel.fast.label')}
-              data-testid="sandbox-fast-mode-toggle"
-              checked={fastMode}
-              onChange={(event) => sandbox.setFastMode?.(event.currentTarget.checked)}
-              style={{ margin: 0 }}
-            />
-            {t('sandbox.panel.fast.text')}
-          </label>
-          <button
-            type="button"
-            aria-label={t('sandbox.panel.mode.toggleLabel')}
-            aria-pressed={sandbox.mode === 'beta'}
-            data-testid="sandbox-mode-switch"
-            onClick={() => sandbox.switchMode(nextMode(sandbox.mode))}
-            className="netlab-focus-ring"
-            style={{
-              border: '1px solid var(--netlab-border)',
-              borderRadius: 999,
-              background: 'var(--netlab-bg-surface)',
-              color: TEXT.primary,
-              padding: '4px 9px',
-              fontFamily: MONO_FONT_STACK,
-              fontSize: 11,
-              cursor: 'pointer',
-            }}
-          >
-            {sandbox.mode === 'alpha'
-              ? t('sandbox.panel.mode.alphaText')
-              : t('sandbox.panel.mode.betaText')}
-          </button>
-          <button
-            type="button"
-            aria-label={t('sandbox.panel.shortcuts.helpLabel')}
-            data-testid="sandbox-shortcuts-help-btn"
-            onClick={() => setHelpOpen(true)}
-            className="netlab-focus-ring"
-            style={{
-              border: '1px solid var(--netlab-border)',
-              borderRadius: 6,
-              background: 'var(--netlab-bg-surface)',
-              color: TEXT.muted,
-              padding: '3px 7px',
-              fontFamily: MONO_FONT_STACK,
-              fontSize: 12,
-              cursor: 'pointer',
-            }}
-          >
-            {t('sandbox.panel.shortcuts.helpText')}
-          </button>
-          {!isMinimalEmbed && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h2
+              id="sandbox-panel-heading"
+              style={{ margin: 0, fontSize: 14, flex: 1, minWidth: 0, whiteSpace: 'nowrap' }}
+            >
+              {t('sandbox.panel.heading')}
+            </h2>
             <button
               type="button"
-              aria-label={t('sandbox.panel.collapse.label')}
-              data-testid="sandbox-collapse"
-              onClick={() => setOpen(false)}
+              aria-label={t('sandbox.panel.mode.toggleLabel')}
+              aria-pressed={sandbox.mode === 'beta'}
+              data-testid="sandbox-mode-switch"
+              onClick={() => sandbox.switchMode(nextMode(sandbox.mode))}
+              className="netlab-focus-ring"
+              style={{
+                border: '1px solid var(--netlab-border)',
+                borderRadius: 999,
+                background: 'var(--netlab-bg-surface)',
+                color: TEXT.primary,
+                padding: '4px 9px',
+                fontFamily: MONO_FONT_STACK,
+                fontSize: 11,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+              }}
+            >
+              {sandbox.mode === 'alpha'
+                ? t('sandbox.panel.mode.alphaText')
+                : t('sandbox.panel.mode.betaText')}
+            </button>
+            <button
+              type="button"
+              aria-label={t('sandbox.panel.shortcuts.helpLabel')}
+              data-testid="sandbox-shortcuts-help-btn"
+              onClick={() => setHelpOpen(true)}
               className="netlab-focus-ring"
               style={{
                 border: '1px solid var(--netlab-border)',
@@ -467,12 +410,117 @@ export function SandboxPanel({ layoutMode = 'wide' }: SandboxPanelProps = {}) {
                 color: TEXT.muted,
                 padding: '3px 7px',
                 fontFamily: MONO_FONT_STACK,
+                fontSize: 12,
                 cursor: 'pointer',
+                flexShrink: 0,
               }}
             >
-              {t('sandbox.panel.collapse.text')}
+              {t('sandbox.panel.shortcuts.helpText')}
             </button>
-          )}
+            {!isMinimalEmbed && (
+              <button
+                type="button"
+                aria-label={t('sandbox.panel.collapse.label')}
+                data-testid="sandbox-collapse"
+                onClick={() => setOpen(false)}
+                className="netlab-focus-ring"
+                style={{
+                  border: '1px solid var(--netlab-border)',
+                  borderRadius: 6,
+                  background: 'var(--netlab-bg-surface)',
+                  color: TEXT.muted,
+                  padding: '3px 7px',
+                  fontFamily: MONO_FONT_STACK,
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                }}
+              >
+                {t('sandbox.panel.collapse.text')}
+              </button>
+            )}
+          </div>
+          <div
+            role="group"
+            aria-label={t('sandbox.header.actions.label')}
+            data-testid="sandbox-panel-actions"
+            style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}
+          >
+            <button
+              type="button"
+              aria-label={t('sandbox.header.undo.label')}
+              title={t('sandbox.header.undo.label')}
+              data-testid="sandbox-undo"
+              disabled={!undoRedo.canUndo}
+              onClick={undoRedo.undo}
+              className="netlab-focus-ring"
+              style={{ ...sessionIoButtonStyle, opacity: undoRedo.canUndo ? 1 : 0.5 }}
+            >
+              {t('sandbox.header.undo.text')}
+            </button>
+            <button
+              type="button"
+              aria-label={t('sandbox.header.redo.label')}
+              title={t('sandbox.header.redo.label')}
+              data-testid="sandbox-redo"
+              disabled={!undoRedo.canRedo}
+              onClick={undoRedo.redo}
+              className="netlab-focus-ring"
+              style={{ ...sessionIoButtonStyle, opacity: undoRedo.canRedo ? 1 : 0.5 }}
+            >
+              {t('sandbox.header.redo.text')}
+            </button>
+            <PcapDownloadButton />
+            <ExportButton />
+            <button
+              type="button"
+              aria-label={t('sandbox.panel.export.scenarioLabel')}
+              data-testid="sandbox-export-scenario-open"
+              onClick={() => setScenarioExportOpen(true)}
+              className="netlab-focus-ring"
+              style={{
+                border: '1px solid var(--netlab-border)',
+                borderRadius: 6,
+                background: 'var(--netlab-bg-surface)',
+                color: TEXT.primary,
+                padding: '3px 7px',
+                fontFamily: MONO_FONT_STACK,
+                fontSize: 11,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+              }}
+            >
+              {t('sandbox.panel.export.scenarioText')}
+            </button>
+            <ImportDialog />
+            <SaveSnapshotButton />
+            <label
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                border: '1px solid var(--netlab-border)',
+                borderRadius: 999,
+                background: fastMode ? 'rgba(14, 165, 233, 0.16)' : 'var(--netlab-bg-surface)',
+                color: TEXT.primary,
+                padding: '4px 7px',
+                fontSize: 10,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+              }}
+            >
+              <input
+                type="checkbox"
+                aria-label={t('sandbox.panel.fast.label')}
+                data-testid="sandbox-fast-mode-toggle"
+                checked={fastMode}
+                onChange={(event) => sandbox.setFastMode?.(event.currentTarget.checked)}
+                style={{ margin: 0 }}
+              />
+              {t('sandbox.panel.fast.text')}
+            </label>
+          </div>
         </header>
 
         <LargeTopologyWarning
@@ -486,7 +534,7 @@ export function SandboxPanel({ layoutMode = 'wide' }: SandboxPanelProps = {}) {
         <div
           role="tablist"
           aria-label={t('sandbox.panel.tablist.label')}
-          style={{ display: 'flex' }}
+          style={{ display: 'flex', overflowX: 'auto', flexShrink: 0 }}
         >
           {tabs.map((tab, index) => {
             const selected = tab.axis === activeAxis;
@@ -518,7 +566,8 @@ export function SandboxPanel({ layoutMode = 'wide' }: SandboxPanelProps = {}) {
                 }}
                 className="netlab-focus-ring"
                 style={{
-                  flex: 1,
+                  flex: '1 0 auto',
+                  whiteSpace: 'nowrap',
                   border: 0,
                   borderBottom: selected
                     ? '2px solid var(--netlab-accent-cyan)'

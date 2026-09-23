@@ -28,6 +28,16 @@ const EVENT_LABELS: Record<string, string> = {
   'arp-reply': 'ARP-REP',
 };
 
+// The codes stay as they are (the guide names them); each gets a plain gloss.
+const EVENT_GLOSS_KEYS: Record<string, string> = {
+  create: 'simulation.panelGloss.event.create',
+  forward: 'simulation.panelGloss.event.forward',
+  deliver: 'simulation.panelGloss.event.deliver',
+  drop: 'simulation.panelGloss.event.drop',
+  'arp-request': 'simulation.panelGloss.event.arpRequest',
+  'arp-reply': 'simulation.panelGloss.event.arpReply',
+};
+
 function formatDropReason(reason: string | undefined): string | null {
   if (!reason) return null;
   if (reason === 'acl-deny') return 'ACL Deny';
@@ -156,8 +166,10 @@ function HopRow({
   onClick: () => void;
   onEdit: (anchorElement: HTMLElement) => void;
 }) {
+  const { t } = useI18n();
   const color = EVENT_COLORS[hop.event] ?? 'var(--netlab-text-secondary)';
   const label = EVENT_LABELS[hop.event] ?? hop.event.toUpperCase();
+  const glossKey = EVENT_GLOSS_KEYS[hop.event];
   const dropReason = hop.event === 'drop' ? formatDropReason(hop.reason) : null;
   const annotation = formatHopAnnotation(hop);
 
@@ -223,6 +235,7 @@ function HopRow({
           }}
         />
         <span
+          title={glossKey ? t(glossKey) : undefined}
           style={{
             fontSize: 9,
             fontWeight: 'bold',
@@ -439,6 +452,26 @@ export const PacketTimeline = memo(function PacketTimeline({ filter }: PacketTim
         </button>
       </div>
 
+      {trace && visibleHops.length > 0 ? (
+        <div
+          data-testid="trace-event-gloss"
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '2px 10px',
+            padding: '6px 14px 0',
+            color: 'var(--netlab-text-secondary)',
+            fontSize: 10,
+            flexShrink: 0,
+          }}
+        >
+          {Object.keys(EVENT_GLOSS_KEYS)
+            .filter((event) => visibleHops.some((hop) => hop.event === event))
+            .map((event) => (
+              <span key={event}>{t(EVENT_GLOSS_KEYS[event] ?? '')}</span>
+            ))}
+        </div>
+      ) : null}
       <div
         ref={scrollRef}
         role={trace ? 'listbox' : 'region'}

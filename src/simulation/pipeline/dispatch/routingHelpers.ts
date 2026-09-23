@@ -107,6 +107,51 @@ export function buildRoutingDecision(
   return { dstIp, candidates, winner, explanation };
 }
 
+/**
+ * The routing verdict as a catalogue key and its parameters, so a panel can
+ * show `decision.explanation` in the reader's language. Rendered through the
+ * English catalogue it reads exactly as `explanation` does.
+ */
+export interface RoutingVerdict {
+  readonly key:
+    | 'simulation.verdict.matched'
+    | 'simulation.verdict.fallback'
+    | 'simulation.verdict.noReachable'
+    | 'simulation.verdict.noMatch';
+  readonly params: Readonly<Record<string, string | number>>;
+}
+
+export function routingVerdict(decision: RoutingDecision): RoutingVerdict {
+  const { winner, candidates, dstIp } = decision;
+  if (winner) {
+    const primary = candidates.find((candidate) => candidate.selectedByLpm);
+    if (winner.selectedByFailover && primary) {
+      return {
+        key: 'simulation.verdict.fallback',
+        params: {
+          destination: winner.destination,
+          nextHop: winner.nextHop,
+          primaryDestination: primary.destination,
+          primaryNextHop: primary.nextHop,
+        },
+      };
+    }
+    return {
+      key: 'simulation.verdict.matched',
+      params: {
+        destination: winner.destination,
+        nextHop: winner.nextHop,
+        protocol: winner.protocol,
+        adminDistance: winner.adminDistance,
+      },
+    };
+  }
+  if (candidates.some((candidate) => candidate.matched)) {
+    return { key: 'simulation.verdict.noReachable', params: { dstIp } };
+  }
+  return { key: 'simulation.verdict.noMatch', params: { dstIp } };
+}
+
 export function protocolName(num: number): string {
   if (num === 1) return 'ICMP';
   if (num === 58) return 'ICMPv6';

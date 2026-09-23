@@ -117,6 +117,46 @@ describe('NatTableViewer', () => {
     expect(html).toContain('No active NAT entries');
   });
 
+  // TC-UX-PANEL-05 — the empty message is said once, with a pointer to what to do.
+  it('prints the empty message once, and says how to fill the table', () => {
+    const html = renderNatTableViewer();
+
+    expect(html.split('No active NAT entries').length - 1).toBe(1);
+    expect(html).toContain('Select a NAT router, or send traffic through one');
+  });
+
+  it('lets every column shrink to fit a narrow panel instead of cutting the last ones', () => {
+    const html = renderNatTableViewer(
+      {
+        natTables: [
+          {
+            routerId: 'router-1',
+            entries: [
+              {
+                id: 'nat-1',
+                proto: 'tcp',
+                insideLocalIp: '192.168.1.10',
+                insideLocalPort: 54321,
+                insideGlobalIp: '203.0.113.1',
+                insideGlobalPort: 1024,
+                outsidePeerIp: '198.51.100.10',
+                outsidePeerPort: 80,
+                type: 'snat' as const,
+                createdAt: 0,
+                lastSeenAt: 0,
+              },
+            ],
+          },
+        ],
+      },
+      'router-1',
+    );
+
+    expect(html).toContain('198.51.100.10:80');
+    expect(html).not.toMatch(/minmax\(150px/);
+    expect(html).toContain('minmax(0, 1fr)');
+  });
+
   it('renders NAT entries when present', () => {
     const html = renderNatTableViewer(
       {

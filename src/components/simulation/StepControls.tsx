@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useI18n } from '../../i18n/useI18n';
 import { useSimulation } from '../../simulation/SimulationContext';
+import { routingVerdict } from '../../simulation/pipeline/dispatch/routingHelpers';
 import type { PacketHop, RoutingDecision } from '../../types/simulation';
 import { TraceSelector } from './TraceSelector';
 
@@ -14,6 +15,11 @@ const EVENT_COLORS: Record<string, string> = {
   'arp-request': 'var(--netlab-accent-orange)',
   'arp-reply': 'var(--netlab-accent-orange)',
 };
+
+// A gap and shrinkable columns keep a prefix and its next hop from running
+// together ("203.0.113.0/24192.168.1.2") when the rail is narrow.
+const ROUTE_GRID_COLUMNS = 'minmax(0, 1.3fr) minmax(0, 1.2fr) minmax(0, 0.9fr) 32px 44px 64px';
+const ROUTE_GRID_GAP = 8;
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -63,8 +69,9 @@ interface RoutingTableProps {
 }
 
 function RoutingTable({ decision }: RoutingTableProps) {
-  const { candidates, winner, explanation } = decision;
+  const { candidates, winner } = decision;
   const { t } = useI18n();
+  const verdict = routingVerdict(decision);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -92,7 +99,8 @@ function RoutingTable({ decision }: RoutingTableProps) {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 1fr 80px 40px 60px 70px',
+            gridTemplateColumns: ROUTE_GRID_COLUMNS,
+            columnGap: ROUTE_GRID_GAP,
             padding: '4px 8px',
             background: 'var(--netlab-bg-surface)',
             color: 'var(--netlab-text-secondary)',
@@ -104,7 +112,13 @@ function RoutingTable({ decision }: RoutingTableProps) {
           <span>{t('simulation.steps.column.destination')}</span>
           <span>{t('simulation.steps.column.nextHop')}</span>
           <span>{t('simulation.steps.column.protocol')}</span>
-          <span>AD</span>
+          <span
+            data-testid="step-route-ad-header"
+            title={t('simulation.panelGloss.ad.title')}
+            style={{ cursor: 'help', textDecoration: 'underline dotted' }}
+          >
+            AD
+          </span>
           <span>{t('simulation.steps.column.metric')}</span>
           <span></span>
         </div>
@@ -133,7 +147,8 @@ function RoutingTable({ decision }: RoutingTableProps) {
               key={i}
               style={{
                 display: 'grid',
-                gridTemplateColumns: '1fr 1fr 80px 40px 60px 70px',
+                gridTemplateColumns: ROUTE_GRID_COLUMNS,
+                columnGap: ROUTE_GRID_GAP,
                 padding: '5px 8px',
                 background: rowBg,
                 borderTop: '1px solid var(--netlab-bg-surface)',
@@ -141,9 +156,13 @@ function RoutingTable({ decision }: RoutingTableProps) {
                 alignItems: 'center',
               }}
             >
-              <span>{c.destination}</span>
-              <span>{c.nextHop}</span>
-              <span>{c.protocol}</span>
+              <span data-testid="step-route-destination" style={{ overflowWrap: 'anywhere' }}>
+                {c.destination}
+              </span>
+              <span data-testid="step-route-next-hop" style={{ overflowWrap: 'anywhere' }}>
+                {c.nextHop}
+              </span>
+              <span style={{ overflowWrap: 'anywhere' }}>{c.protocol}</span>
               <span>{c.adminDistance}</span>
               <span>{c.metric}</span>
               <span>
@@ -168,8 +187,16 @@ function RoutingTable({ decision }: RoutingTableProps) {
         })}
       </div>
 
+      <div
+        data-testid="step-route-ad-caption"
+        style={{ fontSize: 10, color: 'var(--netlab-text-secondary)' }}
+      >
+        {t('simulation.panelGloss.adCaption')}
+      </div>
+
       {/* Explanation */}
       <div
+        data-testid="step-route-verdict"
         style={{
           fontSize: 11,
           color: winner ? 'var(--netlab-accent-green)' : 'var(--netlab-accent-yellow)',
@@ -179,7 +206,7 @@ function RoutingTable({ decision }: RoutingTableProps) {
           border: `1px solid ${winner ? 'color-mix(in srgb, var(--netlab-accent-green) 18%, transparent)' : 'color-mix(in srgb, var(--netlab-accent-yellow) 18%, transparent)'}`,
         }}
       >
-        {explanation}
+        {t(verdict.key, verdict.params)}
       </div>
     </div>
   );
@@ -414,7 +441,8 @@ export function StepControls({ primary = true }: StepControlsProps = {}) {
           </button>
         </div>
         <div style={{ fontSize: 11, color: 'var(--netlab-text-secondary)', textAlign: 'center' }}>
-          {status === 'idle' && t('simulation.steps.statusIdle')}
+          {/* Idle says nothing here: the log above already says how to begin,
+              and the same sentence twice read as a glitch. */}
           {status === 'paused' && currentStep === -1 && t('simulation.steps.statusLoaded')}
           {status === 'paused' &&
             currentStep >= 0 &&

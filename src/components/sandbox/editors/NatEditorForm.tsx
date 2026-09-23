@@ -30,7 +30,7 @@ export function NatEditorForm({
 
   if (!node || interfaces.length === 0) {
     return (
-      <p style={{ color: 'var(--netlab-text-muted)' }}>{t('sandbox.edits.editor.nat.empty')}</p>
+      <p style={{ color: 'var(--netlab-text-muted)' }}>{t('sandbox.terms.editor.nat.empty')}</p>
     );
   }
 
@@ -112,9 +112,9 @@ export function NatEditorForm({
         />
       </label>
       <label style={{ display: 'grid', gap: 3 }}>
-        <span>{t('sandbox.edits.editor.nat.outboundInterface')}</span>
+        <span>{t('sandbox.terms.editor.nat.outboundInterface')}</span>
         <select
-          aria-label={t('sandbox.edits.editor.nat.outboundInterface')}
+          aria-label={t('sandbox.terms.editor.nat.outboundInterface')}
           value={outInterface}
           onChange={(event) => setOutInterface(event.target.value)}
           style={fieldStyle}

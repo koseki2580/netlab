@@ -30,6 +30,7 @@ export interface ZeroStateHintProps {
 
 const DEFAULT_STORAGE_KEY = 'nl_seen_select_hint';
 const DEFAULT_FADE_MS = 6000;
+const HINT_BOTTOM_OFFSET = 64;
 
 function readSeen(key: string): boolean {
   if (typeof window === 'undefined') return true;
@@ -96,11 +97,14 @@ export function ZeroStateHint({
   return (
     <div
       data-netlab-zero-state-hint=""
+      data-testid="zero-state-hint"
       role="status"
       aria-live="polite"
       style={{
         position: 'absolute',
-        bottom: 24,
+        // Sits above the lesson brief's collapsed strip (bottom-left, 12px up,
+        // ~40px tall) so the two chips stack instead of overlapping.
+        bottom: HINT_BOTTOM_OFFSET,
         left: '50%',
         transform: 'translateX(-50%)',
         padding: '6px 12px',

@@ -1,5 +1,12 @@
 import { CANVAS_LAYER } from '../canvasLayers';
-import { useEffect, useMemo, useRef, type KeyboardEvent, type ReactNode } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react';
 import type { EdgeRef, InterfaceRef, NodeRef, PacketRef } from '../../sandbox/types';
 
 type PopoverAnchor = PacketRef | NodeRef | InterfaceRef | EdgeRef;
@@ -27,6 +34,60 @@ function getFocusable(container: HTMLElement): HTMLElement[] {
   );
 }
 
+const VIEWPORT_MARGIN = 8;
+const ANCHOR_GAP = 8;
+
+function initialPosition(anchorElement: HTMLElement | null): { left: number; top: number } {
+  const rect = anchorElement?.getBoundingClientRect();
+  if (!rect) return { left: 16, top: 16 };
+  return {
+    left: Math.max(VIEWPORT_MARGIN, rect.left + window.scrollX),
+    top: Math.max(VIEWPORT_MARGIN, rect.bottom + window.scrollY + ANCHOR_GAP),
+  };
+}
+
+/**
+ * Where the popover goes, in its offset parent's coordinates, so that the
+ * whole box lies inside the viewport.
+ */
+function placePopover(
+  anchorElement: HTMLElement | null,
+  popover: HTMLElement,
+): { left: number; top: number } {
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const rect = anchorElement?.getBoundingClientRect();
+  const height = Math.min(popover.offsetHeight, viewportHeight - VIEWPORT_MARGIN * 2);
+  const width = popover.offsetWidth;
+
+  let top: number;
+  let left: number;
+  if (!rect) {
+    top = 16;
+    left = 16;
+  } else {
+    const below = rect.bottom + ANCHOR_GAP;
+    const above = rect.top - ANCHOR_GAP - height;
+    if (below + height <= viewportHeight - VIEWPORT_MARGIN) top = below;
+    else if (above >= VIEWPORT_MARGIN) top = above;
+    else top = viewportHeight - VIEWPORT_MARGIN - height;
+    left = rect.left;
+  }
+  top = Math.max(VIEWPORT_MARGIN, top);
+  left = Math.max(VIEWPORT_MARGIN, Math.min(left, viewportWidth - VIEWPORT_MARGIN - width));
+
+  // `position: absolute` is measured from the offset parent, not the viewport.
+  const parent = popover.offsetParent;
+  if (parent instanceof HTMLElement && parent !== document.body) {
+    const parentRect = parent.getBoundingClientRect();
+    return {
+      left: left - parentRect.left + parent.scrollLeft,
+      top: top - parentRect.top + parent.scrollTop,
+    };
+  }
+  return { left: left + window.scrollX, top: top + window.scrollY };
+}
+
 export function EditPopover({
   anchor,
   anchorElement,
@@ -35,17 +96,19 @@ export function EditPopover({
   children,
 }: EditPopoverProps) {
   const popoverRef = useRef<HTMLDivElement | null>(null);
-  const position = useMemo(() => {
-    const rect = anchorElement?.getBoundingClientRect();
-    if (!rect) {
-      return { left: 16, top: 16 };
-    }
+  const [position, setPosition] = useState(() => initialPosition(anchorElement));
 
-    return {
-      left: Math.max(8, rect.left + window.scrollX),
-      top: Math.max(8, rect.bottom + window.scrollY + 8),
-    };
-  }, [anchorElement]);
+  // The editor for a router is taller than many windows. Keep it inside the
+  // viewport: open below the pointer when it fits, above when that fits
+  // better, and otherwise pin it to the window with its own scroll.
+  useLayoutEffect(() => {
+    const popover = popoverRef.current;
+    if (!popover || typeof window === 'undefined') return;
+    const next = placePopover(anchorElement, popover);
+    setPosition((current) =>
+      current.left === next.left && current.top === next.top ? current : next,
+    );
+  }, [anchorElement, children]);
 
   useEffect(() => {
     const onKeyDown = (event: globalThis.KeyboardEvent) => {
@@ -112,6 +175,10 @@ export function EditPopover({
         zIndex: CANVAS_LAYER.editPopover,
         minWidth: 240,
         maxWidth: 360,
+        maxHeight: `calc(100vh - ${VIEWPORT_MARGIN * 2}px)`,
+        overflowY: 'auto',
+        overscrollBehavior: 'contain',
+        boxSizing: 'border-box',
         padding: 12,
         borderRadius: 10,
         border: '1px solid var(--netlab-border)',

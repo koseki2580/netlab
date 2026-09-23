@@ -139,7 +139,14 @@ export function RouteTablePanel({ floating = false }: RouteTablePanelProps) {
                       >
                         <th
                           scope="col"
-                          style={{ textAlign: 'left', padding: '2px 4px', fontWeight: 600 }}
+                          title={t('simulation.panelGloss.af.title')}
+                          data-testid="route-table-af-header"
+                          style={{
+                            textAlign: 'left',
+                            padding: '2px 4px',
+                            fontWeight: 600,
+                            cursor: 'help',
+                          }}
                         >
                           AF
                         </th>
@@ -157,7 +164,14 @@ export function RouteTablePanel({ floating = false }: RouteTablePanelProps) {
                         </th>
                         <th
                           scope="col"
-                          style={{ textAlign: 'right', padding: '2px 4px', fontWeight: 600 }}
+                          title={t('simulation.panelGloss.ad.title')}
+                          data-testid="route-table-ad-header"
+                          style={{
+                            textAlign: 'right',
+                            padding: '2px 4px',
+                            fontWeight: 600,
+                            cursor: 'help',
+                          }}
                         >
                           AD
                         </th>
@@ -222,6 +236,12 @@ export function RouteTablePanel({ floating = false }: RouteTablePanelProps) {
               </div>
             );
           })}
+          <div
+            data-testid="route-table-gloss"
+            style={{ color: 'var(--netlab-text-secondary)', fontSize: 10, lineHeight: 1.5 }}
+          >
+            {t('simulation.panelGloss.routeTableCaption')}
+          </div>
         </div>
       )}
     </div>

@@ -6,7 +6,11 @@ import {
   buildRoutingDecision,
   isPortBearingPayload,
   protocolName,
+  routingVerdict,
 } from './routingHelpers';
+import { createTranslator } from '../../../i18n/createTranslator';
+import { en } from '../../../i18n/locales/en';
+import { ja } from '../../../i18n/locales/ja';
 
 describe('routingHelpers', () => {
   describe('bestRoute', () => {
@@ -97,6 +101,41 @@ describe('routingHelpers', () => {
         checksum: 0,
       };
       expect(isPortBearingPayload(icmp)).toBe(false);
+    });
+  });
+
+  // TC-UX-PANEL-06 — the routing verdict can be read in Japanese, while the
+  // English reading stays exactly the text the engine has always produced.
+  describe('routingVerdict', () => {
+    const toEn = createTranslator('en', en);
+    const toJa = createTranslator('ja', ja);
+    const primary = makeRouteEntry('r1', '203.0.113.0/24', '192.168.1.2');
+    const backup = makeRouteEntry('r1', '0.0.0.0/0', '192.168.1.9');
+    const cases = [
+      ['a matched route', buildRoutingDecision('203.0.113.5', [primary], primary)],
+      ['a fallback route', buildRoutingDecision('203.0.113.5', [primary, backup], backup)],
+      ['no reachable route', buildRoutingDecision('203.0.113.5', [primary], null)],
+      ['no matching route', buildRoutingDecision('198.51.100.1', [primary])],
+    ] as const;
+
+    it.each(cases)('reads %s in English exactly as the explanation does', (_name, decision) => {
+      const verdict = routingVerdict(decision);
+      expect(toEn(verdict.key, verdict.params)).toBe(decision.explanation);
+    });
+
+    it.each(cases)('reads %s in Japanese', (_name, decision) => {
+      const verdict = routingVerdict(decision);
+      const text = toJa(verdict.key, verdict.params);
+      expect(text).toMatch(/[ぁ-んァ-ヶ一-龯]/);
+      expect(text).not.toContain('{{');
+    });
+
+    it('names the matched route in the English verdict', () => {
+      const decision = buildRoutingDecision('203.0.113.5', [primary], primary);
+      const verdict = routingVerdict(decision);
+      expect(toEn(verdict.key, verdict.params)).toBe(
+        'Matched 203.0.113.0/24 via 192.168.1.2 (static, AD=1)',
+      );
     });
   });
 });

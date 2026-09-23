@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { useI18n } from '../../i18n/useI18n';
+import { routingVerdict } from '../../simulation/pipeline/dispatch/routingHelpers';
 import { useSimulation } from '../../simulation/SimulationContext';
 import type { NatTranslation, PacketHop, RoutingDecision } from '../../types/simulation';
 import { CARD, FIELD_ROW, MONO_FONT_STACK, SECTION_HEADER, TEXT } from '../_styles/tokens';
@@ -299,6 +300,7 @@ function ArpHopDetails({ hop }: { hop: PacketHop }) {
 
 function RoutingSection({ decision }: { decision: RoutingDecision }) {
   const { t } = useI18n();
+  const verdict = routingVerdict(decision);
   return (
     <section style={CARD}>
       <div style={SECTION_HEADER}>{t('simulation.hop.routing')}</div>
@@ -314,7 +316,7 @@ function RoutingSection({ decision }: { decision: RoutingDecision }) {
           marginBottom: 10,
         }}
       >
-        {decision.explanation}
+        {t(verdict.key, verdict.params)}
       </div>
 
       <div
@@ -342,7 +344,9 @@ function RoutingSection({ decision }: { decision: RoutingDecision }) {
           <span>{t('simulation.steps.column.destination')}</span>
           <span>{t('simulation.steps.column.nextHop')}</span>
           <span>{t('simulation.hop.column.protocol')}</span>
-          <span>AD</span>
+          <span title={t('simulation.panelGloss.ad.title')} style={{ cursor: 'help' }}>
+            AD
+          </span>
           <span>{t('simulation.steps.column.metric')}</span>
           <span></span>
         </div>

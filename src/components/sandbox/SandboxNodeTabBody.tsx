@@ -14,15 +14,23 @@ export function SandboxNodeTabBody() {
   const linkCount = kinds.filter((kind) => kind === 'link.state').length;
   const natCount = countByKind('node.nat.', kinds);
   const aclCount = countByKind('node.acl.', kinds);
+  const activeCount = sandbox.session.head;
+
+  // Resetting throws away every edit, so it asks first, like "Reset all" does.
+  const resetBaseline = () => {
+    if (confirm(t('sandbox.edits.resetAll.confirm', { count: activeCount }))) {
+      sandbox.resetBaseline();
+    }
+  };
 
   return (
     <div style={{ display: 'grid', gap: 10, fontFamily: 'monospace' }}>
       <p style={{ margin: 0, color: 'var(--netlab-text-secondary)', fontSize: 12 }}>
-        {t('sandbox.edits.node.description')}
+        {t('sandbox.terms.nodeTab.description')}
       </p>
       {[
         [t('sandbox.edits.node.routes'), routeCount],
-        [t('sandbox.edits.node.mtu'), mtuCount],
+        [t('sandbox.terms.nodeTab.mtu'), mtuCount],
         [t('sandbox.edits.node.linkState'), linkCount],
         [t('sandbox.edits.node.nat'), natCount],
         [t('sandbox.edits.node.acl'), aclCount],
@@ -46,7 +54,9 @@ export function SandboxNodeTabBody() {
       <button
         type="button"
         className="netlab-focus-ring"
-        onClick={sandbox.resetBaseline}
+        data-testid="sandbox-node-reset"
+        disabled={activeCount === 0}
+        onClick={resetBaseline}
         style={{
           border: '1px solid var(--netlab-border)',
           borderRadius: 6,
@@ -54,7 +64,8 @@ export function SandboxNodeTabBody() {
           color: 'var(--netlab-text-primary)',
           padding: '6px 8px',
           fontFamily: 'monospace',
-          cursor: 'pointer',
+          cursor: activeCount === 0 ? 'not-allowed' : 'pointer',
+          opacity: activeCount === 0 ? 0.55 : 1,
         }}
       >
         {t('sandbox.edits.node.reset')}

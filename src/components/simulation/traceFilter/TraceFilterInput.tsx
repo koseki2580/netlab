@@ -55,7 +55,7 @@ export function TraceFilterInput({ onParse }: TraceFilterInputProps) {
         aria-invalid={error ? 'true' : 'false'}
         type="search"
         value={value}
-        placeholder="protocol == tcp && tcp.port == 80"
+        placeholder={t('simulation.panelGloss.filterPlaceholder')}
         onChange={(event) => setValue(event.target.value)}
         onKeyDown={(event) => {
           if (event.key === 'Escape') {
@@ -98,7 +98,7 @@ export function TraceFilterInput({ onParse }: TraceFilterInputProps) {
               column: String(error.context?.column),
               message: error.message,
             })
-          : ' '}
+          : t('simulation.panelGloss.filterHint')}
       </div>
     </div>
   );

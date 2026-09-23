@@ -30,7 +30,6 @@ export const simulation: Catalog = {
   'simulation.steps.logLoaded': 'Press Next Step to start stepping.',
   'simulation.steps.next': '→ Next Step',
   'simulation.steps.reset': '⟳ Reset',
-  'simulation.steps.statusIdle': 'Send a packet to begin',
   'simulation.steps.statusLoaded': 'Loaded — press Next Step',
   'simulation.steps.statusPaused': 'Paused at hop {{current}} of {{total}}',
   'simulation.steps.statusRunning': 'Running — hop {{current}}',

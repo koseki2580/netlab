@@ -1,5 +1,6 @@
 import { useContext } from 'react';
 import { hookEngine as sharedHookEngine } from '../../hooks/HookEngine';
+import { useI18n } from '../../i18n/useI18n';
 import { useSandbox } from '../../sandbox/useSandbox';
 import { NetlabContext } from '../NetlabContext';
 import { currentSandboxScenarioId } from './sessionScenario';
@@ -14,6 +15,7 @@ function timestampForFilename(date = new Date()): string {
 
 export function ExportButton() {
   const sandbox = useSandbox();
+  const { t } = useI18n();
   const netlabContext = useContext(NetlabContext);
   const hookEngine = netlabContext?.hookEngine ?? sharedHookEngine;
 
@@ -45,7 +47,7 @@ export function ExportButton() {
   return (
     <button
       type="button"
-      aria-label="Export sandbox session"
+      aria-label={t('sandbox.header.export.label')}
       data-testid="sandbox-export-session"
       onClick={() => {
         void handleExport();
@@ -53,7 +55,7 @@ export function ExportButton() {
       className="netlab-focus-ring"
       style={sessionIoButtonStyle}
     >
-      Export
+      {t('sandbox.header.export.text')}
     </button>
   );
 }

@@ -4,6 +4,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { PacketTrace } from '../../types/simulation';
+import { I18nProvider } from '../../i18n/I18nProvider';
 import { FlowCollectorPanel } from './FlowCollectorPanel';
 
 let container: HTMLDivElement | null = null;
@@ -93,5 +94,42 @@ describe('FlowCollectorPanel', () => {
 
     expect(el.textContent).toContain('sflow:sampled');
     expect(el.textContent).toContain('seq 0 port p1');
+  });
+
+  // TC-UX-PANEL-04 — the collector reads for a beginner.
+  it('says there are no flows yet instead of an empty table', () => {
+    const el = render(
+      <I18nProvider locale="ja">
+        <FlowCollectorPanel traces={[]} />
+      </I18nProvider>,
+    );
+    expect(el.querySelector('[data-testid="observability-flow-empty"]')?.textContent).toContain(
+      'まだ通信はありません',
+    );
+    expect(el.querySelector('table')).toBeNull();
+  });
+
+  it('names each record in words and keeps the raw kind beside it', () => {
+    const el = render(
+      <I18nProvider locale="ja">
+        <FlowCollectorPanel traces={traces} />
+      </I18nProvider>,
+    );
+    const kind = el.querySelector('[data-testid="observability-flow-kind"]')?.textContent ?? '';
+    expect(kind).toContain('フローの記録を更新');
+    expect(kind).toContain('netflow:flow-update');
+  });
+
+  it('contrasts NetFlow with sFlow in one plain line', () => {
+    const el = render(
+      <I18nProvider locale="ja">
+        <FlowCollectorPanel traces={traces} />
+      </I18nProvider>,
+    );
+    const line = el.querySelector('[data-testid="observability-flow-explainer"]')?.textContent;
+    expect(line).toContain('NetFlow');
+    expect(line).toContain('すべて');
+    expect(line).toContain('sFlow');
+    expect(line).toContain('一部');
   });
 });
