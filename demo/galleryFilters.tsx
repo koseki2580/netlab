@@ -13,8 +13,15 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useT } from './localeContext';
+import './components/gallery.css';
 
-const MONO = 'ui-monospace, monospace';
+/**
+ * Chip text. 10px monospace was the size of a footnote and set Japanese in a
+ * Latin-only face; a sans stack at 12px reads in both scripts.
+ */
+const CHIP_FONT =
+  'system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif';
+const CHIP_FONT_SIZE = 12;
 
 export type Difficulty = 'beginner' | 'intermediate' | 'advanced';
 export const DIFFICULTY_VALUES: readonly Difficulty[] = ['beginner', 'intermediate', 'advanced'];
@@ -204,19 +211,20 @@ export function FilterChip({ label, active, count, onClick }: FilterChipProps) {
       role="switch"
       aria-checked={active}
       onClick={onClick}
+      className="nl-gallery-focusable"
       style={{
         all: 'unset',
         cursor: 'pointer',
-        padding: '4px 10px',
+        padding: '5px 12px',
         borderRadius: 'var(--netlab-radius-pill, 999px)',
         border: `1px solid ${active ? 'var(--netlab-accent-cyan)' : 'var(--netlab-border)'}`,
         background: active
           ? 'color-mix(in srgb, var(--netlab-accent-cyan) 14%, transparent)'
           : 'var(--netlab-bg-surface)',
         color: active ? 'var(--netlab-accent-cyan)' : 'var(--netlab-text-secondary)',
-        fontFamily: MONO,
-        fontSize: 10,
-        letterSpacing: 0.4,
+        fontFamily: CHIP_FONT,
+        fontSize: CHIP_FONT_SIZE,
+        lineHeight: 1.4,
         display: 'inline-flex',
         alignItems: 'center',
         gap: 6,
@@ -290,16 +298,19 @@ export function GalleryFilterControls({
           <button
             type="button"
             onClick={() => setShowAllTags((v) => !v)}
+            className="nl-gallery-focusable"
             style={{
               all: 'unset',
               cursor: 'pointer',
-              fontFamily: MONO,
-              fontSize: 10,
+              fontFamily: CHIP_FONT,
+              fontSize: CHIP_FONT_SIZE,
               color: 'var(--netlab-accent-cyan)',
               padding: '4px 6px',
             }}
           >
-            {showAllTags ? 'less' : `more (${tags.length - TOP_TAGS})`}
+            {showAllTags
+              ? t('less', 'たたむ')
+              : t(`more (${tags.length - TOP_TAGS})`, `ほかのタグ (${tags.length - TOP_TAGS})`)}
           </button>
         )}
       </div>
@@ -307,7 +318,7 @@ export function GalleryFilterControls({
         ·
       </span>
       <FilterChip
-        label="sandbox-ready"
+        label={t('sandbox-ready', 'サンドボックス対応')}
         active={filters.sandboxOnly}
         onClick={() => onSetSandboxOnly(!filters.sandboxOnly)}
       />
@@ -331,48 +342,65 @@ export function ActiveFilters({
   onSetSandboxOnly,
   onClearAll,
 }: ActiveFiltersProps) {
+  const t = useT();
   return (
     <div
       data-testid="gallery-active-filters"
       style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}
     >
-      <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--netlab-text-muted)' }}>
-        active:
+      <span
+        style={{
+          fontFamily: CHIP_FONT,
+          fontSize: CHIP_FONT_SIZE,
+          color: 'var(--netlab-text-muted)',
+        }}
+      >
+        {t('active:', '絞り込み中:')}
       </span>
       {filters.difficulties.map((d) => (
-        <RemovableChip key={`d:${d}`} label={d} onRemove={() => onToggleDifficulty(d)} />
+        <RemovableChip
+          key={`d:${d}`}
+          label={t(d, DIFFICULTY_LABELS[d](t))}
+          onRemove={() => onToggleDifficulty(d)}
+        />
       ))}
       {filters.tags.map((t) => (
         <RemovableChip key={`t:${t}`} label={t} onRemove={() => onToggleTag(t)} />
       ))}
       {filters.sandboxOnly && (
-        <RemovableChip label="sandbox-ready" onRemove={() => onSetSandboxOnly(false)} />
+        <RemovableChip
+          label={t('sandbox-ready', 'サンドボックス対応')}
+          onRemove={() => onSetSandboxOnly(false)}
+        />
       )}
       <button
         type="button"
         onClick={onClearAll}
+        className="nl-gallery-focusable"
         style={{
           all: 'unset',
           marginLeft: 'auto',
           cursor: 'pointer',
-          fontFamily: MONO,
-          fontSize: 10,
+          fontFamily: CHIP_FONT,
+          fontSize: CHIP_FONT_SIZE,
           color: 'var(--netlab-accent-cyan)',
           padding: '4px 6px',
         }}
       >
-        clear all
+        {t('clear all', 'すべて解除')}
       </button>
     </div>
   );
 }
 
 function RemovableChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  const t = useT();
   return (
     <button
       type="button"
       onClick={onRemove}
-      aria-label={`Remove ${label} filter`}
+      aria-label={t(`Remove ${label} filter`, `${label} の絞り込みを外す`)}
+      className="nl-gallery-focusable"
       style={{
         all: 'unset',
         cursor: 'pointer',
@@ -384,8 +412,8 @@ function RemovableChip({ label, onRemove }: { label: string; onRemove: () => voi
         border: '1px solid var(--netlab-accent-cyan)',
         background: 'color-mix(in srgb, var(--netlab-accent-cyan) 14%, transparent)',
         color: 'var(--netlab-accent-cyan)',
-        fontFamily: MONO,
-        fontSize: 10,
+        fontFamily: CHIP_FONT,
+        fontSize: CHIP_FONT_SIZE,
       }}
     >
       {label}
@@ -397,6 +425,7 @@ function RemovableChip({ label, onRemove }: { label: string; onRemove: () => voi
 }
 
 export function GalleryEmptyState({ onClear }: { onClear: () => void }) {
+  const t = useT();
   return (
     <div
       data-testid="gallery-empty-state"
@@ -411,12 +440,16 @@ export function GalleryEmptyState({ onClear }: { onClear: () => void }) {
         background: 'var(--netlab-bg-surface)',
       }}
     >
-      <div style={{ fontFamily: MONO, fontSize: 13, color: 'var(--netlab-text-primary)' }}>
-        no demos match — clear filters
+      <div style={{ fontFamily: CHIP_FONT, fontSize: 14, color: 'var(--netlab-text-primary)' }}>
+        {t(
+          'no demos match — clear filters',
+          '条件に合うデモはありません。絞り込みを解除してください。',
+        )}
       </div>
       <button
         type="button"
         onClick={onClear}
+        className="nl-gallery-focusable"
         style={{
           all: 'unset',
           cursor: 'pointer',
@@ -424,11 +457,11 @@ export function GalleryEmptyState({ onClear }: { onClear: () => void }) {
           borderRadius: 'var(--netlab-radius-pill, 999px)',
           border: '1px solid var(--netlab-accent-cyan)',
           color: 'var(--netlab-accent-cyan)',
-          fontFamily: MONO,
-          fontSize: 11,
+          fontFamily: CHIP_FONT,
+          fontSize: CHIP_FONT_SIZE,
         }}
       >
-        clear all
+        {t('clear all', '絞り込みを解除')}
       </button>
     </div>
   );

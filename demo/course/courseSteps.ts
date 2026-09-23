@@ -311,3 +311,11 @@ export const COURSE_STEPS: readonly CourseStep[] = [
     },
   },
 ];
+
+/**
+ * The id a finished course step is recorded under in learner progress. The
+ * gallery's learning map reads the same ids, so the course counts there.
+ */
+export function courseProgressId(stepId: string): string {
+  return `course:${stepId}`;
+}

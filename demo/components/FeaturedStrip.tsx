@@ -59,7 +59,7 @@ export function FeaturedStrip({ intros }: FeaturedStripProps) {
             color: 'var(--netlab-text-primary)',
           }}
         >
-          {t('Start here', 'ここから始める')}
+          {t('Start here', 'サンドボックスの案内')}
         </span>
         <span
           style={{
@@ -68,7 +68,7 @@ export function FeaturedStrip({ intros }: FeaturedStripProps) {
             color: 'var(--netlab-text-muted)',
           }}
         >
-          {t('— recommended entry points', '— おすすめの入口')}
+          {t('— recommended entry points', '— 手順を追ってから自由に試す')}
         </span>
         <span
           style={{

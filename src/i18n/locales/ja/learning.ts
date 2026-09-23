@@ -27,6 +27,7 @@ export const learning: Catalog = {
   'learning.subnet.placeholder.prefix': '例: /24',
   'learning.subnet.placeholder.count': '例: 254',
   'learning.subnet.placeholder.address': '例: 192.168.1.0',
+  'learning.subnet.placeholder.mask': '例: 255.255.255.0',
   'learning.subnet.kind.networkAddress': 'ネットワークアドレス',
   'learning.subnet.kind.broadcastAddress': 'ブロードキャストアドレス',
   'learning.subnet.kind.subnetMask': 'サブネットマスク',
@@ -98,6 +99,10 @@ export const learning: Catalog = {
     '本物のパケットが netlab の実エンジンでこのネットワークを横断します。各ルータで「次はどこへ?」を予測してください — ネットワーク上のノードをクリックするか、ボタンで回答。エンジンが実際の結果とその理由を明かします。ジャーニーは3つ: 特定経路、デフォルトルート、そして死ぬパケット。',
   'learning.journey.label': 'ジャーニー {{current}} / {{total}} — 宛先 {{dst}}',
   'learning.journey.prompt': 'パケットは {{node}} にいます。次はどこへ転送される？',
+  'learning.journey.confirmPrompt':
+    'パケットは {{node}} にいます。出口は {{next}} への 1 本だけなので、ここで予測することはありません。',
+  'learning.journey.confirm': '{{next}} へ進む →',
+  'learning.journey.confirmed': '出口は 1 本だけ',
   'learning.journey.outcome.delivered': '📬 配送成功 — パケットは {{dst}} に届きました。',
   'learning.journey.outcome.dropped':
     '💀 破棄 — 最後のルータで一致する経路がありませんでした(理由: {{reason}})。',

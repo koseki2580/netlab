@@ -111,7 +111,7 @@ describe('demo chrome', () => {
     expect(html).toContain('?sandbox=1&amp;sandboxTab=traffic#/comprehensive/all-in-one');
   });
 
-  it('Gallery exposes sandbox intros before non-intro sandbox demos', () => {
+  it('Gallery opens the catalogue with the beginner categories, extras after them', () => {
     // The guided-intro strip is learner-only (08 · Q9).
     const html = renderGallery({ initialAudience: 'learner' });
 
@@ -120,12 +120,16 @@ describe('demo chrome', () => {
       '?sandbox=1&amp;sandboxTab=node&amp;intro=sandbox-intro-mtu#/networking/mtu-fragmentation',
     );
 
+    // The first thing in the catalogue is the basic topologies, not an
+    // advanced assessment; the guided intros keep their own order after it.
     const expectedOrder = [
+      'data-gallery-section="basic"',
+      'data-gallery-section="featured"',
       'intro=sandbox-intro-mtu',
       'intro=sandbox-intro-tcp',
       'intro=sandbox-intro-ospf',
       'intro=sandbox-intro-nat',
-      'Sandbox →',
+      'data-gallery-section="assessments"',
     ];
     const positions = expectedOrder.map((fragment) => html.indexOf(fragment));
 

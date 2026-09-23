@@ -6,6 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LearningMap } from './LearningMap';
 import type { LearningMap as LearningMapData } from '../hooks/useLearningMap';
+import { GalleryLocaleProvider } from '../localeContext';
 
 const actEnvironment = globalThis as typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -97,5 +98,35 @@ describe('LearningMap', () => {
     render(<LearningMap map={MAP} compact />);
     expect(container?.querySelector('[data-testid="learning-step-ospf"]')).toBeNull();
     expect(container?.querySelector('[data-testid="learning-resume"]')).not.toBeNull();
+  });
+
+  it('offers no resume before anything is done', () => {
+    render(<LearningMap map={{ ...MAP, doneCount: 0 }} />);
+    expect(container?.querySelector('[data-testid="learning-resume"]')).toBeNull();
+  });
+
+  it('reads as Japanese to a Japanese reader, hours rounded and units distinct', () => {
+    render(
+      <GalleryLocaleProvider locale="ja">
+        <LearningMap
+          map={{ ...MAP, remainingMinutes: 601 }}
+          note="入門コース 6 ステップ ＋ レッスン 52 件"
+        />
+      </GalleryLocaleProvider>,
+    );
+    const text = container?.textContent ?? '';
+    expect(text).toContain('のこり約 10 時間');
+    expect(text).not.toMatch(/\d+h|\d+m/);
+    expect(text).toContain('のこり 2 件 ・ 終わっていない分野 1');
+    expect(text).toContain('入門コース 6 ステップ ＋ レッスン 52 件');
+  });
+
+  it('says minutes when less than an hour is left', () => {
+    render(
+      <GalleryLocaleProvider locale="ja">
+        <LearningMap map={{ ...MAP, remainingMinutes: 25 }} />
+      </GalleryLocaleProvider>,
+    );
+    expect(container?.textContent ?? '').toContain('のこり約 25 分');
   });
 });

@@ -34,6 +34,8 @@ function placeholderKeyFor(problem: SubnetProblem): string {
       return 'learning.subnet.placeholder.prefix';
     case 'usable-host-count':
       return 'learning.subnet.placeholder.count';
+    case 'subnet-mask':
+      return 'learning.subnet.placeholder.mask';
     default:
       return 'learning.subnet.placeholder.address';
   }

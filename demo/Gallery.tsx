@@ -28,6 +28,8 @@ import {
   type DemoLike,
 } from './galleryFilters';
 import { CategoryLanding, type CategoryLandingDemo } from './components/CategoryLanding';
+import { COURSE_STEPS, courseProgressId } from './course/courseSteps';
+import './components/gallery.css';
 import { CATEGORY_LABELS_JA, DEMO_COPY_JA } from './galleryJa';
 import { GalleryLocaleProvider, useT } from './localeContext';
 import { LearningMap } from './components/LearningMap';
@@ -488,16 +490,31 @@ export function progressTargetIdFor(demo: DemoCard): string {
  * a Japanese reader met "Gateway HA And Link Aggregation" in their own gallery.
  */
 function buildLearningTracks(locale: GalleryLocale): LearningTrackInput[] {
-  return CATEGORIES.map((category) => ({
-    id: category.id,
-    name: locale === 'ja' ? (CATEGORY_LABELS_JA[category.id] ?? category.label) : category.label,
-    steps: category.demos.map((demo) => ({
-      id: progressTargetIdFor(demo),
-      label: locale === 'ja' ? (DEMO_COPY_JA[demo.path]?.title ?? demo.title) : demo.title,
-      path: demo.path,
-      ...(demo.meta?.difficulty ? { difficulty: demo.meta.difficulty } : {}),
+  // The course comes first: it is where a beginner starts, and each of its
+  // steps records a completion, so finishing one moves this count.
+  const course: LearningTrackInput = {
+    id: 'course',
+    name: locale === 'ja' ? '入門コース' : 'Getting started',
+    steps: COURSE_STEPS.map((step) => ({
+      id: courseProgressId(step.id),
+      label: step.copy[locale].title,
+      path: '/course',
+      estMinutes: 2,
     })),
-  }));
+  };
+  return [
+    course,
+    ...CATEGORIES.map((category) => ({
+      id: category.id,
+      name: locale === 'ja' ? (CATEGORY_LABELS_JA[category.id] ?? category.label) : category.label,
+      steps: category.demos.map((demo) => ({
+        id: progressTargetIdFor(demo),
+        label: locale === 'ja' ? (DEMO_COPY_JA[demo.path]?.title ?? demo.title) : demo.title,
+        path: demo.path,
+        ...(demo.meta?.difficulty ? { difficulty: demo.meta.difficulty } : {}),
+      })),
+    })),
+  ];
 }
 
 type GalleryThemeMode = 'light' | 'dark';
@@ -618,8 +635,8 @@ const GALLERY_COPY: Record<
   },
   ja: {
     themeEyebrow: {
-      light: 'ライトモードのデモ一覧',
-      dark: 'ダークモードのデモ一覧',
+      light: 'はじめての方は下の入門コースから',
+      dark: 'はじめての方は下の入門コースから',
     },
     title: 'デモギャラリー',
     body: 'パケット単位のイントロ、プロトコル演習、フルスタックのトポロジをカテゴリごとに見渡せます。デモを開く前に、学びたい領域をすばやく絞り込めます。',
@@ -1121,6 +1138,8 @@ export default function Gallery({
   const normalizedQuery = debouncedQ.trim().toLowerCase();
   const activeTheme = themeMode === 'dark' ? NETLAB_DARK_THEME : NETLAB_LIGHT_THEME;
   const copy = GALLERY_COPY[locale];
+  // This component provides the locale context, so it cannot read it.
+  const t = (en: string, ja: string) => (locale === 'ja' ? ja : en);
 
   // Two-way bind theme axes to URL params for shareable links.
   useUrlParamSync('theme', themeMode, { defaultValue: 'light' });
@@ -1202,12 +1221,26 @@ export default function Gallery({
 
   // Q9 — the guided-intro hero strip is learner-only; pro reaches tracks directly.
   const showHeroStrip = audience === 'learner' && filteredIntros.length > 0;
-  const browseItems = useMemo(() => {
+  // The sidebar lists the catalogue's categories as one group, whose counts
+  // add up to the lessons the hero counts. The guided intros are not lessons of
+  // the catalogue and the assessments are lessons already counted there, so
+  // they sit in a group of their own rather than inflating that sum.
+  const browseItems = useMemo(
+    () =>
+      filteredCategories.map((category) => ({
+        id: category.id,
+        label: category.label,
+        color: category.color,
+        count: category.demos.length,
+      })),
+    [filteredCategories],
+  );
+  const extraBrowseItems = useMemo(() => {
     const items: { id: string; label: string; color: string; count: number }[] = [];
     if (showHeroStrip) {
       items.push({
         id: 'featured',
-        label: 'Start here',
+        label: locale === 'ja' ? 'サンドボックスの案内' : 'Start here',
         color: 'var(--netlab-accent-yellow)',
         count: filteredIntros.length,
       });
@@ -1220,18 +1253,11 @@ export default function Gallery({
         count: assessmentDemos.length,
       });
     }
-    filteredCategories.forEach((category) => {
-      items.push({
-        id: category.id,
-        label: category.label,
-        color: category.color,
-        count: category.demos.length,
-      });
-    });
     return items;
-  }, [assessmentDemos.length, filteredCategories, filteredIntros.length, showHeroStrip]);
+  }, [assessmentDemos.length, filteredIntros.length, locale, showHeroStrip]);
 
-  const visibleSectionIds = browseItems.map((item) => item.id);
+  // Page order: the catalogue, beginner categories first, then the extras.
+  const visibleSectionIds = [...browseItems, ...extraBrowseItems].map((item) => item.id);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -1340,8 +1366,21 @@ export default function Gallery({
           gridTemplateColumns: '248px minmax(0, 1fr)',
         }}
       >
+        <button
+          type="button"
+          className="nl-gallery-skip"
+          data-testid="gallery-skip-to-content"
+          onClick={() => {
+            const target = document.getElementById('gallery-catalogue');
+            target?.focus();
+            target?.scrollIntoView({ block: 'start' });
+          }}
+        >
+          {locale === 'ja' ? 'コンテンツへ移動' : 'Skip to content'}
+        </button>
         <Sidebar
           browseItems={browseItems}
+          extraItems={extraBrowseItems}
           activeSectionId={activeSectionId}
           onSelectSection={handleSelectSection}
         />
@@ -1366,8 +1405,8 @@ export default function Gallery({
               marginBottom: 18,
               padding: '14px 18px',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
+              alignItems: 'flex-end',
+              justifyContent: 'space-between',
               gap: 12,
               flexWrap: 'wrap',
               borderRadius: 'var(--netlab-radius-md)',
@@ -1378,6 +1417,35 @@ export default function Gallery({
               boxShadow: 'var(--netlab-learning-shadow)',
             }}
           >
+            {/* The bar carries the page's settings as well as its search, so it
+                is a toolbar rather than a mostly-empty strip, and the hero
+                below is left to say what the page is. */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-end',
+                gap: 12,
+                flexWrap: 'wrap',
+              }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: 0.8,
+                    color: 'var(--netlab-text-muted)',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {locale === 'ja' ? '対象' : 'Audience'}
+                </span>
+                <AudiencePill variant="learning" value={audience} onChange={setAudience} />
+              </div>
+              <ThemeModeToggle themeMode={themeMode} onChange={chooseThemeMode} />
+              <LocaleToggle locale={locale} label={copy.localeLabel} onChange={setLocale} />
+              <SettingsPopover settings={settings} onChange={handleSettingsChange} />
+            </div>
             <SearchBox
               value={query}
               onChange={setQuery}
@@ -1461,33 +1529,6 @@ export default function Gallery({
                 )}
               </div>
             </div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                flexWrap: 'wrap',
-                justifyContent: 'flex-end',
-              }}
-            >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    letterSpacing: 0.8,
-                    color: 'var(--netlab-text-muted)',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {locale === 'ja' ? '対象' : 'Audience'}
-                </span>
-                <AudiencePill variant="learning" value={audience} onChange={setAudience} />
-              </div>
-              <ThemeModeToggle themeMode={themeMode} onChange={chooseThemeMode} />
-              <SettingsPopover settings={settings} onChange={handleSettingsChange} />
-              <LocaleToggle locale={locale} label={copy.localeLabel} onChange={setLocale} />
-            </div>
           </div>
 
           <a
@@ -1543,6 +1584,21 @@ export default function Gallery({
             </span>
           </a>
 
+          <div style={{ marginTop: 20 }}>
+            <LearningMap
+              map={learningMap}
+              // Until something is done the spine is a list of fifty-odd
+              // starting points; the course above is the one to take.
+              compact={audience === 'pro' || learningMap.doneCount === 0}
+              note={t(
+                `${COURSE_STEPS.length} course steps + ${totalDemoCount} lessons`,
+                `入門コース ${COURSE_STEPS.length} ステップ ＋ レッスン ${totalDemoCount} 件`,
+              )}
+              onOpen={(_id, path) => navigate(path)}
+              onResume={(_id, path) => navigate(path)}
+            />
+          </div>
+
           <div
             data-netlab-gallery-filters
             style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}
@@ -1565,67 +1621,17 @@ export default function Gallery({
             )}
           </div>
 
-          <div style={{ padding: '28px 0 0', display: 'flex', flexDirection: 'column', gap: 24 }}>
-            <LearningMap
-              map={learningMap}
-              compact={audience === 'pro'}
-              onOpen={(_id, path) => navigate(path)}
-              onResume={(_id, path) => navigate(path)}
-            />
-            {/* The panel is library code with its own catalogue, so it is
-                given the same language rather than a second copy of it. */}
-            <I18nProvider locale={locale}>
-              <ProgressPanel />
-            </I18nProvider>
-
-            {showHeroStrip && (
-              <div data-gallery-section="featured">
-                <FeaturedStrip intros={filteredIntros} />
-              </div>
-            )}
-
-            {assessmentDemos.length > 0 && (
-              <section
-                id="assessments"
-                data-gallery-section="assessments"
-                style={getSectionSurfaceStyle('var(--netlab-accent-green)')}
-              >
-                <SectionHeader
-                  dot="var(--netlab-accent-green)"
-                  title={
-                    (locale === 'ja' ? CATEGORY_LABELS_JA.assessments : undefined) ?? 'Assessments'
-                  }
-                  blurb={getSectionBlurb('assessments', locale)}
-                  count={assessmentDemos.length}
-                />
-                <div style={CARD_GRID}>
-                  {assessmentDemos.map((demo) => {
-                    const cat = CATEGORIES.find((c) => c.demos.some((d) => d.path === demo.path))!;
-                    const tutorial = demo.scenarioId
-                      ? tutorialRegistry.findByScenarioId(demo.scenarioId)
-                      : undefined;
-                    return (
-                      <DemoCard
-                        key={demo.path}
-                        demo={demo}
-                        category={cat}
-                        audience={audience}
-                        progressTargetId={progressTargetIdFor(demo)}
-                        tutorialHref={
-                          tutorial
-                            ? `?tutorial=${encodeURIComponent(tutorial.id)}#${demo.path}`
-                            : null
-                        }
-                        sandboxHref={getSandboxHref(demo)}
-                        assessmentHref={getAssessmentHref(demo)}
-                        compareHref={getCompareHref(demo)}
-                      />
-                    );
-                  })}
-                </div>
-              </section>
-            )}
-
+          <div
+            id="gallery-catalogue"
+            tabIndex={-1}
+            style={{
+              padding: '28px 0 0',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 24,
+              outline: 'none',
+            }}
+          >
             {filteredCategories.map((cat) => {
               if (TRACK_LANDING_IDS.has(cat.id)) {
                 return (
@@ -1679,7 +1685,61 @@ export default function Gallery({
               );
             })}
 
+            {showHeroStrip && (
+              <div data-gallery-section="featured">
+                <FeaturedStrip intros={filteredIntros} />
+              </div>
+            )}
+
+            {assessmentDemos.length > 0 && (
+              <section
+                id="assessments"
+                data-gallery-section="assessments"
+                style={getSectionSurfaceStyle('var(--netlab-accent-green)')}
+              >
+                <SectionHeader
+                  dot="var(--netlab-accent-green)"
+                  title={
+                    (locale === 'ja' ? CATEGORY_LABELS_JA.assessments : undefined) ?? 'Assessments'
+                  }
+                  blurb={getSectionBlurb('assessments', locale)}
+                  count={assessmentDemos.length}
+                />
+                <div style={CARD_GRID}>
+                  {assessmentDemos.map((demo) => {
+                    const cat = CATEGORIES.find((c) => c.demos.some((d) => d.path === demo.path))!;
+                    const tutorial = demo.scenarioId
+                      ? tutorialRegistry.findByScenarioId(demo.scenarioId)
+                      : undefined;
+                    return (
+                      <DemoCard
+                        key={demo.path}
+                        demo={demo}
+                        category={cat}
+                        audience={audience}
+                        progressTargetId={progressTargetIdFor(demo)}
+                        tutorialHref={
+                          tutorial
+                            ? `?tutorial=${encodeURIComponent(tutorial.id)}#${demo.path}`
+                            : null
+                        }
+                        sandboxHref={getSandboxHref(demo)}
+                        assessmentHref={getAssessmentHref(demo)}
+                        compareHref={getCompareHref(demo)}
+                      />
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
             {noMatches && <GalleryEmptyState onClear={clearAll} />}
+
+            {/* Keeping, exporting and clearing the record is housekeeping, so
+                it comes after the lessons rather than before them. */}
+            <I18nProvider locale={locale}>
+              <ProgressPanel />
+            </I18nProvider>
           </div>
         </main>
       </div>

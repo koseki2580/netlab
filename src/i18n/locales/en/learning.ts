@@ -27,6 +27,7 @@ export const learning: Catalog = {
   'learning.subnet.placeholder.prefix': 'e.g. /24',
   'learning.subnet.placeholder.count': 'e.g. 254',
   'learning.subnet.placeholder.address': 'e.g. 192.168.1.0',
+  'learning.subnet.placeholder.mask': 'e.g. 255.255.255.0',
   'learning.subnet.kind.networkAddress': 'Network address',
   'learning.subnet.kind.broadcastAddress': 'Broadcast address',
   'learning.subnet.kind.subnetMask': 'Subnet mask',
@@ -96,6 +97,10 @@ export const learning: Catalog = {
     'A real packet is about to cross this network, simulated by the actual netlab engine. At every router you predict where it goes next — click the node on the network or use the buttons — and the engine reveals what really happened and why. Three journeys: a specific route, the default route, and a packet that dies.',
   'learning.journey.label': 'Journey {{current}} / {{total}} — to {{dst}}',
   'learning.journey.prompt': 'The packet is at {{node}}. Where does it forward next?',
+  'learning.journey.confirmPrompt':
+    'The packet is at {{node}}, which has only one way out — to {{next}}. There is nothing to predict here.',
+  'learning.journey.confirm': 'Follow it to {{next}} →',
+  'learning.journey.confirmed': 'One way out',
   'learning.journey.outcome.delivered': '📬 Delivered — the packet reached {{dst}}.',
   'learning.journey.outcome.dropped':
     '💀 Dropped — no route matched at the last router (reason: {{reason}}).',

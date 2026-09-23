@@ -10,13 +10,14 @@ import '../src/components/animations.css';
 // P5 — 44px hit-area expanders for CommandBar / NavRail icon buttons.
 import '../src/components/shell-chrome.css';
 
-import { StrictMode } from 'react';
+import { StrictMode, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { ProgressProvider } from '../src/progress';
 import { ToastViewport } from '../src/components/ToastViewport';
 import Gallery from './Gallery';
 import CoursePage from './course/CoursePage';
+import { resolveLearnerId } from './hooks/localLearnerId';
 import DmzDemo from './areas/DmzDemo';
 import MinimalDemo from './basic/MinimalDemo';
 import StarDemo from './basic/StarDemo';
@@ -76,7 +77,11 @@ if (!root) throw new Error('Root element not found');
 
 function DemoRoutes() {
   const location = useLocation();
-  const learnerId = new URLSearchParams(location.search).get('learnerId');
+  const explicitLearnerId = new URLSearchParams(location.search).get('learnerId');
+  // Without `?learnerId=` the app records under an id it keeps for this
+  // browser, so a first-time learner's progress counts; with no storage,
+  // progress stays off exactly as before.
+  const learnerId = useMemo(() => resolveLearnerId(explicitLearnerId), [explicitLearnerId]);
 
   return (
     <ProgressProvider learnerId={learnerId}>

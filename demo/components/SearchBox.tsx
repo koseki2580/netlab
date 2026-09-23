@@ -1,4 +1,5 @@
 import { useT } from '../localeContext';
+import './gallery.css';
 
 const SEARCH_ICON = (
   <svg
@@ -29,6 +30,7 @@ export function SearchBox({ value, onChange, onClear, resultCount, totalCount }:
 
   return (
     <label
+      className="nl-gallery-search"
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -80,8 +82,9 @@ export function SearchBox({ value, onChange, onClear, resultCount, totalCount }:
           </span>
           <button
             type="button"
-            aria-label="Clear search"
+            aria-label={t('Clear search', '検索をクリア')}
             onClick={onClear}
+            className="nl-gallery-focusable"
             style={{
               border: 'none',
               background: 'transparent',
@@ -93,7 +96,7 @@ export function SearchBox({ value, onChange, onClear, resultCount, totalCount }:
               flexShrink: 0,
             }}
           >
-            Clear
+            {t('Clear', 'クリア')}
           </button>
         </>
       ) : (

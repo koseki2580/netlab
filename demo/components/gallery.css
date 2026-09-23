@@ -1,0 +1,44 @@
+/*
+ * Gallery keyboard affordances.
+ *
+ * The filter chips reset every inline style (`all: unset`) and the search
+ * input drops its outline, so a keyboard user could not see where focus was.
+ * These rings come back on :focus-visible only, so a mouse click does not
+ * draw one. `!important` is needed to beat the inline `all: unset`.
+ */
+.nl-gallery-focusable:focus-visible {
+  outline: 2px solid var(--netlab-accent-blue) !important;
+  outline-offset: 2px !important;
+}
+
+.nl-gallery-search:focus-within {
+  outline: 2px solid var(--netlab-accent-blue);
+  outline-offset: 2px;
+}
+
+/* Hidden until focused: the first Tab stop, jumping past the toolbar. */
+.nl-gallery-skip {
+  position: fixed;
+  left: 8px;
+  top: -48px;
+  z-index: 1000;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  background: var(--netlab-accent-blue);
+  color: #ffffff;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.nl-gallery-skip:focus {
+  top: 8px;
+  outline: 2px solid var(--netlab-text-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .nl-gallery-skip {
+    transition: top 120ms ease;
+  }
+}

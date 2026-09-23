@@ -1,6 +1,7 @@
 import type React from 'react';
 import { Link } from 'react-router-dom';
 import { ProgressBadge } from '../../src/components/progress/ProgressBadge';
+import { useOptionalProgress } from '../../src/progress';
 import type { NetlabAudience } from '../../src/theme';
 import { getDemoIcon } from './demoIcons';
 import './DemoCard.css';
@@ -94,6 +95,30 @@ function getActionLinkStyle(color: string) {
   } as const;
 }
 
+/** The one action a learner's card leads with: a filled button. */
+function getPrimaryActionStyle(color: string) {
+  return {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    padding: '7px 14px',
+    borderRadius: 999,
+    background: `color-mix(in srgb, ${color} 50%, var(--netlab-text-primary))`,
+    color: 'var(--netlab-bg-surface)',
+    textDecoration: 'none',
+    fontWeight: 700,
+    fontSize: 13,
+  } as const;
+}
+
+/** Every other way into a lesson, for a learner: there, but quiet. */
+const SECONDARY_ACTION_STYLE = {
+  color: 'var(--netlab-text-secondary)',
+  textDecoration: 'underline',
+  textUnderlineOffset: 2,
+  fontSize: 12,
+} as const;
+
 /**
  * Q10 — audience-aware density. Learner cards are looser with a larger title
  * and tags stacked below; pro cards are denser with the tags beside the title.
@@ -163,6 +188,15 @@ export function DemoCard({
   const difficulty = demo.meta?.difficulty;
   const tags = demo.meta?.tags ?? [];
   const [layerTag, ...protoTags] = tags;
+  const progress = useOptionalProgress();
+  // A badge on every card saying "not done" is fifty-two labels of noise on a
+  // first visit; a card says something only once there is something to say.
+  const showProgressBadge = Boolean(progressTargetId && progress.isCompleted(progressTargetId));
+  const learner = audience === 'learner';
+  // Learner cards lead with one action and keep the rest as quiet links;
+  // pro cards keep every action as an equal chip.
+  const secondaryStyle = (color: string) =>
+    learner ? SECONDARY_ACTION_STYLE : getActionLinkStyle(color);
 
   return (
     <div
@@ -233,7 +267,7 @@ export function DemoCard({
             {protoTags.map((tag) => (
               <Tag key={tag} label={tag} bg={PROTO_TAG_STYLE.bg} fg={PROTO_TAG_STYLE.fg} />
             ))}
-            {progressTargetId && <ProgressBadge targetId={progressTargetId} />}
+            {showProgressBadge && progressTargetId && <ProgressBadge targetId={progressTargetId} />}
           </div>
         )}
       </div>
@@ -257,30 +291,50 @@ export function DemoCard({
           borderTop: `1px solid color-mix(in srgb, ${category.color} 12%, var(--netlab-border))`,
           paddingTop: 12,
           display: 'flex',
+          alignItems: 'center',
           gap: 8,
           fontSize: 11,
           flexWrap: 'wrap',
         }}
       >
-        <Link to={demo.path} style={getActionLinkStyle(category.color)}>
+        <Link
+          to={demo.path}
+          data-testid="gallery-card-open"
+          style={
+            learner ? getPrimaryActionStyle(category.color) : getActionLinkStyle(category.color)
+          }
+        >
           {t('Open →', '開く →')}
         </Link>
+        {learner && (compareHref || sandboxHref || tutorialHref || assessmentHref) && (
+          <span style={{ color: 'var(--netlab-text-muted)', fontSize: 12 }}>
+            {t('or:', 'ほかに:')}
+          </span>
+        )}
         {compareHref && (
           <Link
             to={compareHref}
             data-testid="gallery-compare-link"
-            style={getActionLinkStyle('var(--netlab-accent-blue)')}
+            style={secondaryStyle('var(--netlab-accent-blue)')}
           >
             {t('Compare ⇄', '比べる ⇄')}
           </Link>
         )}
         {sandboxHref && (
-          <a href={sandboxHref} style={getActionLinkStyle('var(--netlab-accent-yellow)')}>
+          <a
+            href={sandboxHref}
+            data-testid="gallery-card-secondary"
+            style={secondaryStyle('var(--netlab-accent-yellow)')}
+          >
             {t('Sandbox →', 'いじる →')}
           </a>
         )}
         {tutorialHref && (
-          <a href={tutorialHref} style={getActionLinkStyle('var(--netlab-accent-cyan)')}>
+          <a
+            href={tutorialHref}
+            data-testid="gallery-card-secondary"
+            style={secondaryStyle('var(--netlab-accent-cyan)')}
+          >
             {t('Tutorial →', '手順つき →')}
           </a>
         )}
@@ -288,7 +342,7 @@ export function DemoCard({
           <a
             href={assessmentHref}
             data-testid="gallery-assessment-link"
-            style={getActionLinkStyle('var(--netlab-accent-green)')}
+            style={secondaryStyle('var(--netlab-accent-green)')}
           >
             {t('Assessment →', '力だめし →')}
           </a>

@@ -61,6 +61,13 @@ function answerCurrent(index: number, mode: 'correct' | 'wrong') {
 }
 
 describe('SubnetDrillPanel session', () => {
+  it('gives a mask as the example when the question asks for a mask', () => {
+    const seed = [...Array(200).keys()].find((n) => generateProblem(n, 0).kind === 'subnet-mask')!;
+    act(() => root?.render(<SubnetDrillPanel seed={seed} />));
+    const input = testid('subnet-drill-input') as HTMLInputElement;
+    expect(input.placeholder).toBe('e.g. 255.255.255.0');
+  });
+
   it('shows the first problem and session progress', () => {
     act(() => root?.render(<SubnetDrillPanel seed={SEED} />));
     expect(testid('subnet-drill-prompt')?.textContent).toBe(generateProblem(SEED, 0).prompt);

@@ -4,9 +4,10 @@ import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { RouteTable } from '../../src/components/controls/RouteTable';
 import { buildUdpPacket } from '../../src/layers/l4-transport/udpPacketBuilder';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
+import { useOptionalProgress } from '../../src/progress';
 import { useViewport } from '../../src/utils/useViewport';
 import DemoShell from '../DemoShell';
-import { COURSE_STEPS, type CourseLocale, type CourseStep } from './courseSteps';
+import { COURSE_STEPS, courseProgressId, type CourseLocale, type CourseStep } from './courseSteps';
 
 const PROGRESS_KEY = 'netlab-course-step';
 const LOCALE_KEY = 'netlab-locale';
@@ -218,7 +219,21 @@ export default function CoursePage() {
     }
   }, [index]);
 
-  const unlock = useCallback(() => setUnlocked(true), []);
+  // A step whose packet has come back is a finished step, and it is recorded
+  // as such, so the gallery's progress counts the course like any lesson.
+  const { recordCompletion } = useOptionalProgress();
+  const stepId = step?.id;
+  const stepTitle = step?.copy.en.title;
+  const unlock = useCallback(() => {
+    setUnlocked(true);
+    if (stepId) {
+      recordCompletion({
+        kind: 'tutorial',
+        id: courseProgressId(stepId),
+        ...(stepTitle ? { label: stepTitle } : {}),
+      });
+    }
+  }, [recordCompletion, stepId, stepTitle]);
 
   const advance = useCallback(() => {
     setUnlocked(false);

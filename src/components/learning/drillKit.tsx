@@ -159,6 +159,11 @@ export interface DrillResult {
   readonly correct: boolean;
   readonly expected: string;
   readonly explanation: string;
+  /**
+   * Replaces the "Correct" / "Incorrect" heading when the step was not a
+   * question at all (a confirmation), so it is not graded as one.
+   */
+  readonly heading?: string;
 }
 
 /** The pass/fail feedback block, announced to assistive tech via `role=status`. */
@@ -204,9 +209,10 @@ export function DrillFeedback({
           }}
         >
           <strong>
-            {result.correct
-              ? t('learning.drill.correct')
-              : t('learning.drill.incorrect', { expected: result.expected })}
+            {result.heading ??
+              (result.correct
+                ? t('learning.drill.correct')
+                : t('learning.drill.incorrect', { expected: result.expected }))}
           </strong>
           {/* Primary (not secondary) text: this explanation is the learning
               payload, and text-secondary drops below 4.5:1 on the accent-tinted

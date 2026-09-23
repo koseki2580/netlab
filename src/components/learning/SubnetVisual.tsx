@@ -84,9 +84,14 @@ export function SubnetVisual({ facts, probeIp }: { facts: SubnetFacts; probeIp?:
       </div>
 
       <div
+        // A gap and wrapping: with long addresses the three labels ran into
+        // one another ("…228ホスト 58.83…") on a single unbroken line.
         style={{
           display: 'flex',
           justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          columnGap: 16,
+          rowGap: 2,
           fontFamily: 'ui-monospace, monospace',
           fontSize: 11,
           color: 'var(--netlab-text-secondary)',

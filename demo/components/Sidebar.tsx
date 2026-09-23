@@ -22,7 +22,10 @@ const GITHUB_ICON = (
 );
 
 interface SidebarProps {
+  /** The catalogue's categories; their counts add up to its lessons. */
   browseItems: Category[];
+  /** Other ways in (guided intros, assessments), listed apart from that sum. */
+  extraItems?: Category[];
   activeSectionId: string;
   onSelectSection: (sectionId: string) => void;
 }
@@ -185,7 +188,12 @@ const REFERENCE_LINKS: ReferenceLink[] = [
   },
 ];
 
-export function Sidebar({ browseItems, activeSectionId, onSelectSection }: SidebarProps) {
+export function Sidebar({
+  browseItems,
+  extraItems = [],
+  activeSectionId,
+  onSelectSection,
+}: SidebarProps) {
   const t = useT();
   return (
     <aside
@@ -245,6 +253,22 @@ export function Sidebar({ browseItems, activeSectionId, onSelectSection }: Sideb
           />
         ))}
       </NavGroup>
+
+      {extraItems.length > 0 ? (
+        <NavGroup label={t('More ways in', 'ほかの入口')}>
+          {extraItems.map((item) => (
+            <NavButtonRow
+              key={item.id}
+              dot={item.color}
+              sectionId={item.id}
+              isActive={item.id === activeSectionId}
+              label={item.label}
+              count={item.count}
+              onSelect={onSelectSection}
+            />
+          ))}
+        </NavGroup>
+      ) : null}
 
       {/* Reference */}
       <NavGroup label={t('Reference', '参考資料')}>

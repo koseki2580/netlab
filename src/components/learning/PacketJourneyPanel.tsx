@@ -91,9 +91,13 @@ export function PacketJourneyPanel() {
       const correct = nodeId === step.correctNodeId;
       const engineLine = step.hop.routingDecision?.explanation;
       const targetLabel = labels.get(step.correctNodeId) ?? step.correctNodeId;
+      // A hop with one way out asks nothing, so it is confirmed, not graded:
+      // it neither says "Correct" nor counts toward the score.
+      const confirmation = step.options.length === 1;
       setResult({
         correct,
         expected: targetLabel,
+        ...(confirmation ? { heading: t('learning.journey.confirmed') } : {}),
         // Forward hops carry the engine's routing decision; the origin hop (the
         // host's single-link send) has none, so explain that instead of leaving
         // the learner's very first feedback empty.
@@ -102,6 +106,7 @@ export function PacketJourneyPanel() {
           : t('learning.journey.originHop', { node: targetLabel }),
       });
       setWrongPick(correct ? null : nodeId);
+      if (confirmation) return;
       setTotalCount((value) => value + 1);
       if (correct) setCorrectCount((value) => value + 1);
     },
@@ -250,7 +255,12 @@ export function PacketJourneyPanel() {
                 outline: 'none',
               }}
             >
-              {t('learning.journey.prompt', { node: labels.get(step.nodeId) ?? step.nodeId })}
+              {step.options.length === 1
+                ? t('learning.journey.confirmPrompt', {
+                    node: labels.get(step.nodeId) ?? step.nodeId,
+                    next: labels.get(step.options[0]!) ?? step.options[0]!,
+                  })
+                : t('learning.journey.prompt', { node: labels.get(step.nodeId) ?? step.nodeId })}
             </p>
 
             <div
@@ -279,7 +289,13 @@ export function PacketJourneyPanel() {
                       opacity: result !== null && !isWinner && !isWrong ? 0.4 : 1,
                     }}
                   >
-                    {isWinner ? `✓ ${label}` : isWrong ? `✗ ${label}` : label}
+                    {step.options.length === 1
+                      ? t('learning.journey.confirm', { next: label })
+                      : isWinner
+                        ? `✓ ${label}`
+                        : isWrong
+                          ? `✗ ${label}`
+                          : label}
                   </button>
                 );
               })}

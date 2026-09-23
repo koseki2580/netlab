@@ -19,6 +19,8 @@ export interface LearningMapProps {
    * is orientation, not a beginner nag — but pros do not need the full spine).
    */
   compact?: boolean;
+  /** One line under the count saying what the count is made of. */
+  note?: string;
 }
 
 const SANS = 'system-ui, -apple-system, "Segoe UI", sans-serif';
@@ -40,6 +42,15 @@ function formatRemaining(minutes: number): string {
   const hrs = Math.floor(minutes / 60);
   const mins = minutes % 60;
   return (hrs ? `${hrs}h ` : '') + `${mins}m`;
+}
+
+/**
+ * The same estimate for a Japanese reader, at the precision an estimate has:
+ * "のこり約10h 1m" mixed two languages and claimed a minute it cannot know.
+ */
+function formatRemainingJa(minutes: number): string {
+  if (minutes >= 60) return `のこり約 ${Math.round(minutes / 60)} 時間`;
+  return `のこり約 ${Math.max(1, Math.round(minutes))} 分`;
 }
 
 function stepStyle(state: LearningStepState): React.CSSProperties {
@@ -118,7 +129,7 @@ function StepNode({
  * concept track, remaining time, and a single resume. Renders host-derived
  * state from {@link useLearningMap}; it owns no state of its own.
  */
-export function LearningMap({ map, onOpen, onResume, compact = false }: LearningMapProps) {
+export function LearningMap({ map, onOpen, onResume, compact = false, note }: LearningMapProps) {
   const t = useT();
   if (map.totalCount === 0) return null;
   const pct = Math.round((map.doneCount / map.totalCount) * 100);
@@ -159,9 +170,21 @@ export function LearningMap({ map, onOpen, onResume, compact = false }: Learning
           >
             {t('your progress', 'これまでの進み具合')}
           </div>
-          <div style={{ fontSize: 20, fontWeight: 700, marginTop: 2 }}>
+          <div
+            data-testid="learning-map-done"
+            data-done={map.doneCount}
+            style={{ fontSize: 20, fontWeight: 700, marginTop: 2 }}
+          >
             {map.doneCount} / {map.totalCount} {t('scenarios', '件')}
           </div>
+          {note ? (
+            <div
+              data-testid="learning-map-note"
+              style={{ fontSize: 12, color: 'var(--netlab-text-secondary)', marginTop: 2 }}
+            >
+              {note}
+            </div>
+          ) : null}
         </div>
         <div
           style={{
@@ -171,13 +194,14 @@ export function LearningMap({ map, onOpen, onResume, compact = false }: Learning
             color: 'var(--netlab-text-secondary)',
           }}
         >
-          {t('~', 'のこり約')}
-          {formatRemaining(map.remainingMinutes)}
-          {t(' left', '')}
+          {t(
+            `~${formatRemaining(map.remainingMinutes)} left`,
+            formatRemainingJa(map.remainingMinutes),
+          )}
           <div style={{ color: 'var(--netlab-text-muted)', marginTop: 2 }}>
             {t(
               `${map.totalCount - map.doneCount} scenarios · ${map.conceptsLeft} concepts left`,
-              `のこり ${map.totalCount - map.doneCount} 件・${map.conceptsLeft} 個の項目`,
+              `のこり ${map.totalCount - map.doneCount} 件 ・ 終わっていない分野 ${map.conceptsLeft}`,
             )}
           </div>
         </div>
@@ -240,7 +264,9 @@ export function LearningMap({ map, onOpen, onResume, compact = false }: Learning
         </div>
       )}
 
-      {map.resume && (
+      {/* "Resume" before anything is done resumes nothing: it only competed
+          with the course as a second place to start. */}
+      {map.resume && map.doneCount > 0 && (
         <Link
           data-testid="learning-resume"
           to={map.resume.path}

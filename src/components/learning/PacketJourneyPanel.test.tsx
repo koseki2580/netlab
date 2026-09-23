@@ -105,10 +105,29 @@ async function render() {
 }
 
 describe('PacketJourneyPanel', () => {
-  it('asks for a prediction at the first hop once the engine resolves', async () => {
+  it('opens at the first hop once the engine resolves', async () => {
     await render();
     expect(testid('packet-journey-prompt')?.textContent).toContain('Client');
     expect(testid('packet-journey-answer-r1')).not.toBeNull();
+  });
+
+  it('presents a hop with one way out as a confirmation, not a prediction', async () => {
+    await render();
+    const journey = await realJourney(0);
+    const first = journey.steps[0]!;
+    expect(first.options).toHaveLength(1);
+
+    const prompt = testid('packet-journey-prompt')?.textContent ?? '';
+    expect(prompt).toContain('only one way out');
+    expect(prompt).not.toContain('Where does it forward next?');
+    expect(testid(`packet-journey-answer-${first.correctNodeId}`)?.textContent).toContain(
+      'Follow it to',
+    );
+
+    click(`packet-journey-answer-${first.correctNodeId}`);
+    const feedback = testid('packet-journey-feedback')?.textContent ?? '';
+    expect(feedback).toContain('One way out');
+    expect(feedback).not.toContain('Correct');
   });
 
   it('grades a correct prediction, reveals the edge on the canvas, and advances', async () => {
@@ -203,8 +222,10 @@ describe('PacketJourneyPanel', () => {
     }
 
     expect(testid('packet-journey-summary')).not.toBeNull();
-    const totalSteps = 3 + 3 + 2; // via-lpm + via-default + dropped
-    expect(testid('packet-journey-score')?.textContent).toContain(`${totalSteps} / ${totalSteps}`);
+    // Only real predictions are scored: each journey's first hop (the host's
+    // single link) is a confirmation. via-lpm 3, via-default 3, dropped 2 hops.
+    const graded = 2 + 2 + 1;
+    expect(testid('packet-journey-score')?.textContent).toContain(`${graded} / ${graded}`);
 
     click('packet-journey-restart');
     await flush();
@@ -221,6 +242,7 @@ describe('PacketJourneyPanel', () => {
     );
     await flush();
     expect(container?.textContent).toContain('パケットジャーニー');
-    expect(testid('packet-journey-prompt')?.textContent).toContain('次はどこへ転送される');
+    // The first hop has one way out, so it is phrased as a confirmation.
+    expect(testid('packet-journey-prompt')?.textContent).toContain('1 本だけ');
   });
 });
