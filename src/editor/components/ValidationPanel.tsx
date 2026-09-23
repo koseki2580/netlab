@@ -8,6 +8,13 @@ import {
   type FixableCode,
   type TopologyPatch,
 } from '../../utils/connectionFixers';
+import { checkDevices, type DeviceCheckCode } from '../deviceChecks';
+
+const DEVICE_CHECK_KEY: Readonly<Record<DeviceCheckCode, string>> = {
+  isolated: 'editor.check.isolated',
+  'host-unlinked': 'editor.check.hostUnlinked',
+  'router-no-address': 'editor.check.routerNoAddress',
+};
 
 export interface ValidationPanelProps {
   nodes: NetlabNode[];
@@ -26,6 +33,14 @@ export interface ValidationPanelProps {
    * is the default so existing embeds are unaffected.
    */
   docked?: boolean;
+  /**
+   * Also check each device, not only each link: a device linked to nothing, or
+   * a router with no addressed interface. Off by default so existing embeds
+   * keep their output; the editor turns it on.
+   */
+  deviceChecks?: boolean;
+  /** A device issue was chosen; the editor selects that device. */
+  onNodeClick?: (nodeId: string) => void;
 }
 
 /** Positioning is the only difference; docked drops the overlay chrome. */
@@ -120,12 +135,19 @@ export function ValidationPanel({
   onApplyFix,
   editable = false,
   docked,
+  deviceChecks = false,
+  onNodeClick,
 }: ValidationPanelProps) {
   const { t } = useI18n();
   const result: TopologyValidationResult = useMemo(
     () => validateTopology(nodes, edges),
     [nodes, edges],
   );
+  const deviceIssues = useMemo(
+    () => (deviceChecks ? checkDevices(nodes, edges) : []),
+    [deviceChecks, nodes, edges],
+  );
+  const errorCount = result.errorCount + deviceIssues.length;
 
   const edgeEntries = useMemo(
     () =>
@@ -160,7 +182,7 @@ export function ValidationPanel({
     [edges, nodes, result.edgeResults],
   );
 
-  if (result.valid && result.warningCount === 0) {
+  if (result.valid && result.warningCount === 0 && deviceIssues.length === 0) {
     return (
       <div
         className="netlab-validation-panel"
@@ -186,7 +208,7 @@ export function ValidationPanel({
         }}
       >
         <strong style={{ fontSize: 12 }}>{t('editor.validation.heading')}</strong>
-        {result.errorCount > 0 ? (
+        {errorCount > 0 ? (
           <span
             className="error-badge"
             style={{
@@ -195,7 +217,7 @@ export function ValidationPanel({
               color: 'var(--netlab-accent-red, #f87171)',
             }}
           >
-            {t('editor.validation.errors', { count: result.errorCount })}
+            {t('editor.validation.errors', { count: errorCount })}
           </span>
         ) : null}
         {result.warningCount > 0 ? (
@@ -211,6 +233,28 @@ export function ValidationPanel({
           </span>
         ) : null}
       </div>
+
+      {deviceIssues.length > 0 ? (
+        <ul style={{ listStyle: 'none', margin: '0 0 10px', padding: 0 }}>
+          {deviceIssues.map((issue) => (
+            <li
+              key={`${issue.nodeId}-${issue.code}`}
+              data-testid="editor-device-issue"
+              data-check={issue.code}
+              className="issue-error"
+              style={{ marginBottom: 6 }}
+            >
+              <button
+                type="button"
+                onClick={() => onNodeClick?.(issue.nodeId)}
+                style={{ ...EDGE_BUTTON_STYLE, color: 'var(--netlab-accent-red, #f87171)' }}
+              >
+                ❌ {t(DEVICE_CHECK_KEY[issue.code], { name: issue.name })}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
 
       <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
         {edgeEntries.map((entry) => (

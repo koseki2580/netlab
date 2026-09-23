@@ -14,12 +14,50 @@ export const editor: Catalog = {
   'editor.toolbar.undo': '↩ 元に戻す',
   'editor.toolbar.redoTitle': 'やり直す',
   'editor.toolbar.redo': '↪ やり直す',
+  'editor.toolbar.shortcuts':
+    'ショートカット: Ctrl/⌘+Z で元に戻す · Ctrl/⌘+Y または ⌘+Shift+Z でやり直す · Delete キーで選んだものを削除',
 
   'editor.run.label': '▶ 実行',
   'editor.run.running': '… 実行中',
   'editor.run.unavailable': 'ここではシミュレーションを使えません',
   'editor.run.needAddresses': 'まず 2 台以上の機器に IP アドレスを設定してください',
   'editor.run.send': '{{src}} → {{dst}} へパケットを送る',
+  'editor.run.outcome.delivered': '{{src}} → {{dst}}：届いた',
+  'editor.run.outcome.dropped':
+    '{{src}} → {{dst}}：届かなかった — {{node}} で捨てられました（{{reason}}：{{explanation}}）',
+  'editor.run.outcome.droppedNoReason':
+    '{{src}} → {{dst}}：届かなかった — {{node}} で捨てられました',
+  'editor.run.outcome.notSent': '{{src}} → {{dst}}：パケットを送れませんでした',
+
+  'editor.dropReason.noRoute':
+    'ルータが宛先への経路を知りません。宛先のサブネットにつながるインタフェースを設定するか、静的ルートを追加してください',
+  'editor.dropReason.ttlExceeded':
+    'TTL が 0 になりました。ルータ同士がパケットを回し合っていないか、ルートを確認してください',
+  'editor.dropReason.ttlExpired':
+    'TTL が 0 になりました。ルータ同士がパケットを回し合っていないか、ルートを確認してください',
+  'editor.dropReason.routingLoop': 'ルートが輪になっていて、パケットが同じ所を回り続けます',
+  'editor.dropReason.nodeDown': '途中の機器が停止しています',
+  'editor.dropReason.linkFailed': '途中のリンクが切れています',
+  'editor.dropReason.interfaceDown': '途中のインタフェースが停止しています',
+  'editor.dropReason.nodeNotFound': '宛先の機器が見つかりません',
+  'editor.dropReason.noEgressInVlan': 'スイッチにそのVLANで送り出せるポートがありません',
+  'editor.dropReason.stpPortBlocked':
+    'ループを防ぐため、スパニングツリーがこのポートを止めています',
+  'editor.dropReason.queueFull': 'キューがいっぱいで、パケットが捨てられました',
+  'editor.dropReason.loss': 'リンクの途中でパケットが失われました',
+  'editor.dropReason.unknown': 'この理由コードの説明はまだありません',
+
+  'editor.connect.hint':
+    '2 台をつなぐには、機器にマウスを乗せて出る ⊕ を、もう 1 台の上までドラッグします。',
+  'editor.connect.refused.endpointToEndpoint':
+    '{{source}} と {{target}} は直接つなげません。クライアントとサーバは、間にスイッチを置いてつなぎます。スイッチを追加して、両方をそのスイッチにつないでください。',
+  'editor.connect.refused.duplicateEdge': '{{source}} と {{target}} はもうつながっています。',
+  'editor.connect.refused.selfLoop':
+    '機器を自分自身にはつなげません。⊕ は別の機器の上で離してください。',
+  'editor.connect.refused.interfaceInUse':
+    'そのインタフェースはもう使われています。別のインタフェースを選んでください。',
+  'editor.connect.refused.other': '{{source}} と {{target}} はつなげません。',
+  'editor.connect.dismiss': '閉じる',
 
   'editor.palette.label': 'レイヤー別の機器',
   'editor.palette.empty': '選んだレイヤーには置ける機器がありません。',
@@ -66,11 +104,18 @@ export const editor: Catalog = {
   'editor.node.nextHopPlaceholder': "ネクストホップ または 'direct'",
   'editor.node.removeRoute': 'ルートを削除',
   'editor.node.delete': '機器を削除',
+  'editor.node.deleteHint': 'Delete キーでも選んだ機器を削除できます。Ctrl/⌘+Z で元に戻せます。',
 
   'editor.validation.none': '✅ 問題は見つかりませんでした',
   'editor.validation.heading': 'トポロジの問題',
   'editor.validation.errors': 'エラー {{count}} 件',
   'editor.validation.warnings': '警告 {{count}} 件',
+  'editor.check.isolated':
+    '{{name}} はどこにもつながっていません。マウスを乗せて出る ⊕ を、別の機器までドラッグしてください。',
+  'editor.check.hostUnlinked':
+    '{{name}} にはケーブルがないので、送ることも受け取ることもできません。スイッチにつないでください。',
+  'editor.check.routerNoAddress':
+    '{{name}} には IP アドレスのついたインタフェースがないので、ルーティングできません。選んで「インタフェースを追加」し、アドレスを入れてください。',
 
   'editor.history.delivered': '届いた',
   'editor.history.dropped': '落ちた',

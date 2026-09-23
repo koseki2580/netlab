@@ -48,3 +48,47 @@ export function historyRows(
 ): { trace: PacketTrace; hop: PacketHop }[] {
   return traces.flatMap((trace) => trace.hops.map((hop) => ({ trace, hop })));
 }
+
+/** What one Run did, in the terms the outcome line states it. */
+export type RunOutcome =
+  | { readonly kind: 'delivered' }
+  | { readonly kind: 'dropped'; readonly nodeLabel: string; readonly reason: string | null }
+  | { readonly kind: 'not-sent' };
+
+/**
+ * The outcome of a run's trace. A trace that never finished counts as not
+ * arriving at the last device it reached — to a learner that is what it is.
+ */
+export function runOutcome(trace: PacketTrace | undefined): RunOutcome {
+  if (!trace || trace.hops.length === 0) return { kind: 'not-sent' };
+  if (trace.status === 'delivered') return { kind: 'delivered' };
+  const drop = [...trace.hops].reverse().find((hop) => hop.event === 'drop');
+  const last = drop ?? trace.hops[trace.hops.length - 1]!;
+  return { kind: 'dropped', nodeLabel: last.nodeLabel, reason: drop?.reason ?? null };
+}
+
+/** Drop reasons the editor explains in words; the rest say so. */
+const EXPLAINED_DROP_REASONS: ReadonlySet<string> = new Set([
+  'no-route',
+  'ttl-exceeded',
+  'ttl-expired',
+  'routing-loop',
+  'node-down',
+  'link-failed',
+  'interface-down',
+  'node-not-found',
+  'no-egress-in-vlan',
+  'stp-port-blocked',
+  'queue-full',
+  'loss',
+]);
+
+/**
+ * Catalogue key for the plain-language explanation shown beside a drop code.
+ * The code itself is hyphenated (`no-route`); a key segment is camelCase.
+ */
+export function dropReasonKey(reason: string): string {
+  return EXPLAINED_DROP_REASONS.has(reason)
+    ? `editor.dropReason.${reason.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase())}`
+    : 'editor.dropReason.unknown';
+}

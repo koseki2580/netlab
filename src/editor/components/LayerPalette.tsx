@@ -3,7 +3,9 @@ import { useI18n } from '../../i18n/useI18n';
 import { useTopologyEditorContext } from '../context/TopologyEditorContext';
 import { paletteByLayer, type PaletteItem } from '../palette';
 import { randomPosition } from '../utils/nodeFactory';
+import { nameNewNode } from '../utils/nodeNaming';
 import type { LayerId } from '../../types/layers';
+import type { NetlabNode } from '../../types/topology';
 
 export interface LayerPaletteProps {
   /** Scope the palette to these layers. Omit for every layer. */
@@ -13,6 +15,8 @@ export interface LayerPaletteProps {
   onToggleLayer: (layerId: LayerId) => void;
   /** Where the canvas is looking, so a new element lands in view. */
   viewCentre?: { x: number; y: number };
+  /** A device was placed (named and selected); the editor opens its editor. */
+  onPlaced?: (node: NetlabNode) => void;
 }
 
 const PANEL_STYLE: React.CSSProperties = {
@@ -41,12 +45,20 @@ export function LayerPalette({
   visibleLayers,
   onToggleLayer,
   viewCentre,
+  onPlaced,
 }: LayerPaletteProps) {
   const { t } = useI18n();
-  const { addNode } = useTopologyEditorContext();
+  const { state, addNode, setSelectedNodeId } = useTopologyEditorContext();
   const groups = paletteByLayer(layers);
 
-  const place = (item: PaletteItem) => addNode(item.create(randomPosition(viewCentre)));
+  // A new device gets a readable name (`Client-2`, not its internal id) and is
+  // selected, so its editor opens straight away.
+  const place = (item: PaletteItem) => {
+    const node = nameNewNode(item.create(randomPosition(viewCentre)), state.topology.nodes);
+    addNode(node);
+    setSelectedNodeId(node.id);
+    onPlaced?.(node);
+  };
 
   return (
     <aside style={PANEL_STYLE} data-testid="editor-palette" aria-label={t('editor.palette.label')}>
@@ -71,7 +83,18 @@ export function LayerPalette({
                   marginBottom: 6,
                 }}
               >
-                <span style={{ color: 'var(--netlab-text-secondary)', letterSpacing: 0.4 }}>
+                {/* keep-all: Japanese breaks only at the spaces around the dash,
+                    never inside a word like アプリケーション. */}
+                <span
+                  data-testid={`editor-layer-label-${group.layerId}`}
+                  style={{
+                    color: 'var(--netlab-text-secondary)',
+                    letterSpacing: 0.4,
+                    minWidth: 0,
+                    wordBreak: 'keep-all',
+                    overflowWrap: 'break-word',
+                  }}
+                >
                   {layerLabel}
                 </span>
                 <button
@@ -92,6 +115,8 @@ export function LayerPalette({
                     cursor: 'pointer',
                     font: 'inherit',
                     padding: '1px 6px',
+                    flexShrink: 0,
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {shown ? t('editor.palette.shown') : t('editor.palette.hidden')}

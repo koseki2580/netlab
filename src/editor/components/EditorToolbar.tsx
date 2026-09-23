@@ -1,4 +1,5 @@
 import { useI18n } from '../../i18n/useI18n';
+import type { NetlabNode } from '../../types/topology';
 import { useTopologyEditorContext } from '../context/TopologyEditorContext';
 import { EditorRunButton } from './EditorRunButton';
 import {
@@ -8,6 +9,7 @@ import {
   createServerNode,
   randomPosition,
 } from '../utils/nodeFactory';
+import { nameNewNode } from '../utils/nodeNaming';
 
 const TOOLBAR_STYLE: React.CSSProperties = {
   height: 44,
@@ -59,9 +61,24 @@ function Btn({ onClick, disabled, children, title }: BtnProps) {
   );
 }
 
-export function EditorToolbar() {
+export interface EditorToolbarProps {
+  /** A device was placed (named and selected); the editor opens its editor. */
+  onPlaced?: (node: NetlabNode) => void;
+  /** Run finished; the editor opens the result. */
+  onRan?: () => void;
+}
+
+export function EditorToolbar({ onPlaced, onRan }: EditorToolbarProps = {}) {
   const { t } = useI18n();
-  const { addNode, undo, redo, canUndo, canRedo } = useTopologyEditorContext();
+  const { state, addNode, setSelectedNodeId, undo, redo, canUndo, canRedo } =
+    useTopologyEditorContext();
+  // A new device gets a readable name and is selected, so its editor opens.
+  const place = (created: NetlabNode) => {
+    const node = nameNewNode(created, state.topology.nodes);
+    addNode(node);
+    setSelectedNodeId(node.id);
+    onPlaced?.(node);
+  };
 
   return (
     <div style={TOOLBAR_STYLE}>
@@ -76,25 +93,25 @@ export function EditorToolbar() {
         {t('editor.toolbar.add')}
       </span>
       <Btn
-        onClick={() => addNode(createRouterNode(randomPosition()))}
+        onClick={() => place(createRouterNode(randomPosition()))}
         title={t('editor.toolbar.addRouter')}
       >
         {t('editor.toolbar.router')}
       </Btn>
       <Btn
-        onClick={() => addNode(createSwitchNode(randomPosition()))}
+        onClick={() => place(createSwitchNode(randomPosition()))}
         title={t('editor.toolbar.addSwitch')}
       >
         {t('editor.toolbar.switch')}
       </Btn>
       <Btn
-        onClick={() => addNode(createClientNode(randomPosition()))}
+        onClick={() => place(createClientNode(randomPosition()))}
         title={t('editor.toolbar.addClient')}
       >
         {t('editor.toolbar.client')}
       </Btn>
       <Btn
-        onClick={() => addNode(createServerNode(randomPosition()))}
+        onClick={() => place(createServerNode(randomPosition()))}
         title={t('editor.toolbar.addServer')}
       >
         {t('editor.toolbar.server')}
@@ -111,7 +128,7 @@ export function EditorToolbar() {
 
       <div style={SEPARATOR_STYLE} />
 
-      <EditorRunButton />
+      <EditorRunButton {...(onRan ? { onRan } : {})} />
     </div>
   );
 }

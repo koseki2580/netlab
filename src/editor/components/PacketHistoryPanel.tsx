@@ -1,6 +1,6 @@
 import { useI18n } from '../../i18n/useI18n';
 import type { PacketHop, PacketTrace } from '../../types/simulation';
-import { historyRows, hopEdgeId, summarizeTraces } from '../simulationSummary';
+import { dropReasonKey, historyRows, hopEdgeId, summarizeTraces } from '../simulationSummary';
 
 export interface PacketHistoryPanelProps {
   traces: readonly PacketTrace[];
@@ -105,6 +105,19 @@ export function PacketHistoryPanel({ traces, selectedStep, onSelectHop }: Packet
                     {hop.srcIp} → {hop.dstIp} · TTL {hop.ttl}
                     {hop.reason ? ` · ${hop.reason}` : ''}
                   </span>
+                  {hop.event === 'drop' && hop.reason ? (
+                    // The code stays visible above; this says what it means.
+                    <span
+                      data-testid="editor-history-drop-explanation"
+                      style={{
+                        display: 'block',
+                        color: 'var(--netlab-text-primary)',
+                        fontSize: 11,
+                      }}
+                    >
+                      {t(dropReasonKey(hop.reason))}
+                    </span>
+                  ) : null}
                 </button>
               </li>
             );

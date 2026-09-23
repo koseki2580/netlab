@@ -24,12 +24,47 @@ export const editor: Catalog = {
   'editor.toolbar.undo': '↩ Undo',
   'editor.toolbar.redoTitle': 'Redo',
   'editor.toolbar.redo': '↪ Redo',
+  'editor.toolbar.shortcuts':
+    'Shortcuts: Ctrl/⌘+Z undo · Ctrl/⌘+Y or ⌘+Shift+Z redo · Delete removes the selection',
 
   'editor.run.label': '▶ Run',
   'editor.run.running': '… running',
   'editor.run.unavailable': 'Simulation is not available here',
   'editor.run.needAddresses': 'Give at least two nodes an IP address first',
   'editor.run.send': 'Send a packet {{src}} → {{dst}}',
+  'editor.run.outcome.delivered': '{{src}} → {{dst}}: delivered',
+  'editor.run.outcome.dropped':
+    '{{src}} → {{dst}}: did not arrive — dropped at {{node}} ({{reason}}: {{explanation}})',
+  'editor.run.outcome.droppedNoReason': '{{src}} → {{dst}}: did not arrive — dropped at {{node}}',
+  'editor.run.outcome.notSent': '{{src}} → {{dst}}: the packet could not be sent',
+
+  'editor.dropReason.noRoute':
+    'the router has no route towards the destination; give it an interface in that subnet or add a static route',
+  'editor.dropReason.ttlExceeded':
+    'the TTL ran out, usually because routers keep passing the packet around; check the routes',
+  'editor.dropReason.ttlExpired':
+    'the TTL ran out, usually because routers keep passing the packet around; check the routes',
+  'editor.dropReason.routingLoop': 'the routes form a loop, so the packet goes round in circles',
+  'editor.dropReason.nodeDown': 'a device on the way is switched off',
+  'editor.dropReason.linkFailed': 'a link on the way is broken',
+  'editor.dropReason.interfaceDown': 'an interface on the way is down',
+  'editor.dropReason.nodeNotFound': 'the destination device does not exist',
+  'editor.dropReason.noEgressInVlan': 'the switch has no port in that VLAN to send it out of',
+  'editor.dropReason.stpPortBlocked': 'spanning tree has blocked this port to prevent a loop',
+  'editor.dropReason.queueFull': 'the queue was full, so the packet was thrown away',
+  'editor.dropReason.loss': 'the link lost the packet',
+  'editor.dropReason.unknown': 'no explanation for this code yet',
+
+  'editor.connect.hint': 'To link two devices, hover one and drag its ⊕ onto the other.',
+  'editor.connect.refused.endpointToEndpoint':
+    '{{source}} and {{target}} cannot be linked directly: clients and servers connect through a switch. Add a switch and link both of them to it.',
+  'editor.connect.refused.duplicateEdge': '{{source}} and {{target}} are already linked.',
+  'editor.connect.refused.selfLoop':
+    'A device cannot be linked to itself. Release the ⊕ over a different device.',
+  'editor.connect.refused.interfaceInUse':
+    'That interface is already in use. Pick a different one.',
+  'editor.connect.refused.other': '{{source}} and {{target}} cannot be linked.',
+  'editor.connect.dismiss': 'Close',
 
   'editor.palette.label': 'Elements by layer',
   'editor.palette.empty': 'No elements available for the selected layers.',
@@ -75,11 +110,19 @@ export const editor: Catalog = {
   'editor.node.nextHopPlaceholder': "next-hop or 'direct'",
   'editor.node.removeRoute': 'Remove route',
   'editor.node.delete': 'Delete Node',
+  'editor.node.deleteHint':
+    'The Delete key also removes the selected device; Ctrl/⌘+Z brings it back.',
 
   'editor.validation.none': '✅ No issues found',
   'editor.validation.heading': 'Topology Issues',
   'editor.validation.errors': '{{count}} errors',
   'editor.validation.warnings': '{{count}} warnings',
+  'editor.check.isolated':
+    '{{name}} is not linked to anything. Hover it and drag its ⊕ onto another device.',
+  'editor.check.hostUnlinked':
+    '{{name}} has no link, so it cannot send or receive. Link it to a switch.',
+  'editor.check.routerNoAddress':
+    '{{name}} has no interface with an IP address, so it cannot route. Select it, add an interface and give it an address.',
 
   'editor.history.delivered': 'delivered',
   'editor.history.dropped': 'dropped',

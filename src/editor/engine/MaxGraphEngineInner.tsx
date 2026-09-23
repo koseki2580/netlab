@@ -24,10 +24,12 @@ export default function MaxGraphEngineInner({
   highlightEdgeId,
   isValidConnection,
   onConnect,
+  onConnectionRefused,
   onNodesMoved,
   onDeleteNode,
   onDeleteEdge,
   onSelectNode,
+  selectedNodeId,
   onViewCentre,
 }: GraphEngineProps) {
   const { t } = useI18n();
@@ -51,6 +53,10 @@ export default function MaxGraphEngineInner({
     const panning = graph.getPlugin<PanningHandler>('PanningHandler');
     if (panning) panning.useLeftButtonForPanning = true;
     graph.setCellsEditable(false);
+    // A device is drawn at one size and a resize is never reported to the
+    // owner. The resize handle on a selected device's right edge also sat on
+    // top of the connection point, so dragging it resized instead of linking.
+    graph.setCellsResizable(false);
     // Vertex labels are markup (glyph + name + health badge), matching what the
     // React node components draw.
     graph.setHtmlLabels(true);
@@ -85,14 +91,33 @@ export default function MaxGraphEngineInner({
   useEffect(() => {
     const graph = graphRef.current;
     if (!graph) return undefined;
-    const handlers = { isValidConnection, onConnect, onDeleteNode, onDeleteEdge };
+    const handlers = {
+      isValidConnection,
+      onConnect,
+      onDeleteNode,
+      onDeleteEdge,
+      ...(onConnectionRefused ? { onConnectionRefused } : {}),
+    };
     const stopConnect = wireConnect(graph, handlers);
     const stopDelete = wireDelete(graph, handlers);
     return () => {
       stopConnect();
       stopDelete();
     };
-  }, [isValidConnection, onConnect, onDeleteNode, onDeleteEdge]);
+  }, [isValidConnection, onConnect, onConnectionRefused, onDeleteNode, onDeleteEdge]);
+
+  // Draw the owner's selection — a device just placed is selected so its editor
+  // opens, and the canvas should agree. A selection the learner made is already
+  // the graph's, so this is a no-op then.
+  useEffect(() => {
+    const graph = graphRef.current;
+    if (!graph || selectedNodeId === undefined) return;
+    const current = graph.getSelectionCell();
+    if ((current?.id ? String(current.id) : null) === selectedNodeId) return;
+    if (selectedNodeId === null) return;
+    const cell = graph.getDataModel().getCell(selectedNodeId);
+    if (cell) graph.setSelectionCell(cell);
+  }, [selectedNodeId, nodes]);
 
   useEffect(() => {
     const graph = graphRef.current;

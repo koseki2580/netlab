@@ -636,6 +636,14 @@ export function NodeEditorPanel({ docked }: NodeEditorPanelProps = {}) {
       >
         {t('editor.node.delete')}
       </button>
+      {/* Delete already removes the selection from the keyboard; say so, and
+          that undo brings it back, so the key is not a silent trap. */}
+      <p
+        data-testid="editor-node-delete-hint"
+        style={{ margin: '6px 0 0', color: 'var(--netlab-text-secondary)', fontSize: 10 }}
+      >
+        {t('editor.node.deleteHint')}
+      </p>
     </div>
   );
 }

@@ -36,10 +36,17 @@ export interface GraphEngineProps {
   /** Rejected connections must not become edges; the engine also draws the refusal. */
   readonly isValidConnection: (connection: GraphConnection) => boolean;
   readonly onConnect: (connection: GraphConnection) => void;
+  /**
+   * The learner let go of a connection `isValidConnection` refused. The engine
+   * reports it so the owner can say why; without this a refusal did nothing.
+   */
+  readonly onConnectionRefused?: (connection: GraphConnection) => void;
   readonly onNodesMoved: (moves: readonly GraphNodeMove[]) => void;
   readonly onDeleteNode: (nodeId: string) => void;
   readonly onDeleteEdge: (edgeId: string) => void;
   readonly onSelectNode?: (nodeId: string | null) => void;
+  /** The node the owner has selected, e.g. one just placed; drawn as selected. */
+  readonly selectedNodeId?: string | null;
   /**
    * Where the learner is looking, in graph coordinates: the point at the centre
    * of the visible canvas. The palette drops new elements there — placing them

@@ -12,6 +12,12 @@ export interface EditorSidebarProps {
   validation: React.ReactNode;
   selectedStep?: number | null;
   onSelectHop?: (hop: PacketHop, edgeId: string | null) => void;
+  /**
+   * Open tab, when the owner steers it — the editor opens the run result after
+   * Run and the device editor after placing a device. Uncontrolled if omitted.
+   */
+  tab?: EditorSidebarTab;
+  onTabChange?: (tab: EditorSidebarTab) => void;
 }
 
 const PANEL_STYLE: React.CSSProperties = {
@@ -37,9 +43,21 @@ const TABS: readonly { id: EditorSidebarTab; labelKey: string }[] = [
  * canvas, hiding the topology underneath; here they are tabs beside it, sharing
  * the rail with the run results and the packet history.
  */
-export function EditorSidebar({ node, validation, selectedStep, onSelectHop }: EditorSidebarProps) {
+export function EditorSidebar({
+  node,
+  validation,
+  selectedStep,
+  onSelectHop,
+  tab: controlledTab,
+  onTabChange,
+}: EditorSidebarProps) {
   const { t } = useI18n();
-  const [tab, setTab] = useState<EditorSidebarTab>('node');
+  const [ownTab, setOwnTab] = useState<EditorSidebarTab>('node');
+  const tab = controlledTab ?? ownTab;
+  const setTab = (next: EditorSidebarTab) => {
+    setOwnTab(next);
+    onTabChange?.(next);
+  };
   // Read the run here rather than being handed it: the editor renders the
   // SimulationProvider, so it cannot subscribe to the context it creates.
   // Optional, so the rail still works when a host mounts it without one.
