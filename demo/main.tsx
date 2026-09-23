@@ -90,6 +90,7 @@ function DemoRoutes() {
         <Route path="/" element={<Gallery />} />
         <Route path="/course" element={<CoursePage />} />
         <Route path="/course/exam" element={<ExamPage />} />
+        <Route path="/course/exam/:level" element={<ExamPage />} />
         <Route path="/learning/subnetting" element={<SubnetDrillDemo />} />
         <Route path="/learning/routing-decision" element={<RoutingDrillDemo />} />
         <Route path="/learning/visual-routing" element={<VisualRoutingDrillDemo />} />

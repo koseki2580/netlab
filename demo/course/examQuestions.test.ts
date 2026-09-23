@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CATEGORIES } from '../Gallery';
+import { EXAM_LEVELS } from './examLevels';
 import {
   EXAM_PASS_MARK,
   EXAM_PATH,
@@ -44,4 +45,28 @@ describe('final test (TC-196)', () => {
       expect(routes.has(stop!.path), `${stop!.path} is a real lesson`).toBe(true);
     }
   });
+});
+
+describe('every test level (TC-202)', () => {
+  const routes = new Set(CATEGORIES.flatMap((c) => c.demos.map((d) => d.path)));
+  routes.add('/course');
+
+  it('numbers its levels 1, 2, 3… in order', () => {
+    expect(EXAM_LEVELS.map((level) => level.level)).toEqual(EXAM_LEVELS.map((_, i) => i + 1));
+  });
+
+  for (const level of EXAM_LEVELS) {
+    it(`level ${level.level} has ten questions, each taught by a real lesson on its path`, () => {
+      expect(level.questions).toHaveLength(10);
+      expect(new Set(level.questions.map((q) => q.id)).size, 'question ids are unique').toBe(10);
+      for (const q of level.questions) {
+        const stop = level.path.find((s) => s.id === q.taughtBy);
+        expect(stop, `${q.id} names a stop on level ${level.level}'s path`).toBeDefined();
+        expect(routes.has(stop!.path), `${stop!.path} is a real lesson`).toBe(true);
+        expect(new Set(q.options.map((o) => o.ja)).size, `${q.id} has four different answers`).toBe(
+          4,
+        );
+      }
+    });
+  }
 });

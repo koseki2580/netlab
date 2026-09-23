@@ -1,16 +1,17 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useOptionalProgress } from '../../src/progress';
 import DemoShell from '../DemoShell';
 import { readLearningLocale } from '../learning/learningLocale';
 import { useGalleryLocale, useT } from '../localeContext';
+import { EXAM_LEVELS, examLevel } from './examLevels';
 import {
+  EXAM_LEVEL_1,
   EXAM_PASS_MARK,
-  EXAM_PATH,
-  EXAM_QUESTIONS,
-  examStop,
-  scoreExam,
+  levelStop,
+  scoreLevel,
   type ExamAnswer,
+  type ExamLevel,
   type ExamResult,
 } from './examQuestions';
 
@@ -38,22 +39,26 @@ const BUTTON: React.CSSProperties = {
   fontSize: 14,
 };
 
-function ExamBody() {
+function ExamBody({ level }: { level: ExamLevel }) {
   const t = useT();
   const locale = useGalleryLocale();
   const { recordCompletion } = useOptionalProgress();
   const [answers, setAnswers] = useState<Record<string, ExamAnswer | undefined>>({});
   const [result, setResult] = useState<ExamResult | null>(null);
   const answered = useMemo(
-    () => EXAM_QUESTIONS.filter((question) => answers[question.id] !== undefined).length,
-    [answers],
+    () => level.questions.filter((question) => answers[question.id] !== undefined).length,
+    [answers, level],
   );
 
   const submit = () => {
-    const marked = scoreExam(answers);
+    const marked = scoreLevel(level, answers);
     setResult(marked);
     if (marked.passed) {
-      recordCompletion({ kind: 'tutorial', id: 'course:exam', label: 'Final test' });
+      recordCompletion({
+        kind: 'tutorial',
+        id: level.level === 1 ? 'course:exam' : `course:exam:${level.level}`,
+        label: level.title.en,
+      });
     }
     window.scrollTo({ top: 0 });
   };
@@ -67,7 +72,35 @@ function ExamBody() {
   return (
     <div style={{ height: '100%', overflow: 'auto' }}>
       <div style={{ maxWidth: 760, margin: '0 auto', padding: 24, display: 'grid', gap: 16 }}>
-        <section style={CARD} data-testid="exam-path">
+        {EXAM_LEVELS.length > 1 ? (
+          <nav
+            aria-label={t('Test levels', 'テストのレベル')}
+            style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}
+          >
+            {EXAM_LEVELS.map((entry) => (
+              <Link
+                key={entry.level}
+                data-testid={`exam-level-${entry.level}`}
+                aria-current={entry.level === level.level ? 'page' : undefined}
+                to={entry.level === 1 ? '/course/exam' : `/course/exam/${entry.level}`}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: 999,
+                  border: `1px solid ${entry.level === level.level ? 'var(--netlab-accent-cyan)' : 'var(--netlab-border)'}`,
+                  color: 'var(--netlab-text-primary)',
+                  textDecoration: 'none',
+                  fontWeight: entry.level === level.level ? 700 : 400,
+                }}
+              >
+                {entry.title[locale]}
+              </Link>
+            ))}
+          </nav>
+        ) : null}
+        <section style={CARD} data-testid="exam-path" data-level={level.level}>
+          <p style={{ margin: '0 0 6px', color: 'var(--netlab-text-secondary)' }}>
+            {level.title[locale]} — {level.summary[locale]}
+          </p>
           <h2 style={{ margin: 0, fontSize: 18 }}>
             {t('What this test covers, in order', 'このテストの範囲と、学ぶ順番')}
           </h2>
@@ -78,7 +111,7 @@ function ExamBody() {
             )}
           </p>
           <ol style={{ margin: 0, paddingLeft: 20, display: 'grid', gap: 6 }}>
-            {EXAM_PATH.map((stop) => (
+            {level.path.map((stop) => (
               <li key={stop.id}>
                 <Link data-testid={`exam-path-${stop.id}`} to={stop.path}>
                   {stop.title[locale]}
@@ -131,10 +164,10 @@ function ExamBody() {
           </section>
         ) : null}
 
-        {EXAM_QUESTIONS.map((question, index) => {
+        {level.questions.map((question, index) => {
           const outcome = result?.perQuestion[index];
           const chosen = answers[question.id];
-          const stop = examStop(question.taughtBy);
+          const stop = levelStop(level, question.taughtBy);
           return (
             <fieldset
               key={question.id}
@@ -217,16 +250,19 @@ function ExamBody() {
 
 export default function ExamPage() {
   const [locale] = useState(readLearningLocale);
+  const params = useParams<{ level?: string }>();
+  const level = examLevel(Number(params.level ?? '1')) ?? EXAM_LEVEL_1;
   return (
     <DemoShell
-      title={locale === 'ja' ? '修了テスト' : 'Final test'}
+      title={locale === 'ja' ? `修了テスト（${level.title.ja}）` : `Final test (${level.title.en})`}
       desc={
         locale === 'ja'
-          ? '入門の学習パスの 10 問。間違えた問題は、教えているレッスンへ案内します。'
-          : 'Ten questions on the beginner path; each miss points to the lesson that teaches it.'
+          ? '10 問。間違えた問題は、教えているレッスンへ案内します。'
+          : 'Ten questions; each miss points to the lesson that teaches it.'
       }
     >
-      <ExamBody />
+      {/* Remount per level so answers never carry over from another level. */}
+      <ExamBody key={level.level} level={level} />
     </DemoShell>
   );
 }

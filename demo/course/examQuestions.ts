@@ -11,7 +11,7 @@
 
 export type ExamLocale = 'en' | 'ja';
 
-interface Localised {
+export interface Localised {
   readonly en: string;
   readonly ja: string;
 }
@@ -375,9 +375,38 @@ export interface ExamResult {
   readonly perQuestion: readonly { readonly id: string; readonly correct: boolean }[];
 }
 
-/** Mark a set of answers; an unanswered or "not learned" question scores nothing. */
-export function scoreExam(answers: Readonly<Record<string, ExamAnswer | undefined>>): ExamResult {
-  const perQuestion = EXAM_QUESTIONS.map((question) => ({
+/**
+ * One level of the final test: its own path, in order, and its own ten
+ * questions. Level 1 is the beginner path; later levels build on it and end
+ * at questions an experienced engineer has to think hard about — every one of
+ * them still answerable from a lesson in this product.
+ */
+export interface ExamLevel {
+  readonly level: number;
+  readonly title: Localised;
+  /** One line on who the level is for, shown before the path. */
+  readonly summary: Localised;
+  readonly path: readonly PathStop[];
+  readonly questions: readonly ExamQuestion[];
+}
+
+export const EXAM_LEVEL_1: ExamLevel = {
+  level: 1,
+  title: { en: 'Level 1 · Beginner', ja: 'レベル 1・入門' },
+  summary: {
+    en: 'The parts of a network, addresses, and the services every device relies on.',
+    ja: 'ネットワークの部品、アドレス、どの機器も頼っているサービス。',
+  },
+  path: EXAM_PATH,
+  questions: EXAM_QUESTIONS,
+};
+
+/** Mark a set of answers for one level; unanswered or "not learned" scores nothing. */
+export function scoreLevel(
+  level: ExamLevel,
+  answers: Readonly<Record<string, ExamAnswer | undefined>>,
+): ExamResult {
+  const perQuestion = level.questions.map((question) => ({
     id: question.id,
     correct: answers[question.id] === question.answer,
   }));
@@ -385,6 +414,15 @@ export function scoreExam(answers: Readonly<Record<string, ExamAnswer | undefine
   return { score, passed: score >= EXAM_PASS_MARK, perQuestion };
 }
 
+/** Mark the level-1 test. */
+export function scoreExam(answers: Readonly<Record<string, ExamAnswer | undefined>>): ExamResult {
+  return scoreLevel(EXAM_LEVEL_1, answers);
+}
+
+export function levelStop(level: ExamLevel, id: string): PathStop | undefined {
+  return level.path.find((stop) => stop.id === id);
+}
+
 export function examStop(id: string): PathStop | undefined {
-  return EXAM_PATH.find((stop) => stop.id === id);
+  return levelStop(EXAM_LEVEL_1, id);
 }
