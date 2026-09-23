@@ -122,14 +122,14 @@ export const COURSE_STEPS: readonly CourseStep[] = [
         goal: 'The smallest network there is: two machines joined by one cable.',
         task: 'Send a packet from PC-A to PC-B.',
         takeaway:
-          'It arrived. 10.0.0.11 and 10.0.0.12 are IP addresses: each is one machine’s address, and a packet is sent to an address the way a letter is. Both are /24 addresses (mask 255.255.255.0), which means the first three numbers name the network — here 10.0.0 — and the last number names the machine. Same first three numbers, same network, so one reaches the other directly.',
+          'It arrived.\n\n10.0.0.11 and 10.0.0.12 are IP addresses: each is one machine’s address, and a packet is sent to an address the way a letter is.\n\n/24 (mask 255.255.255.0) means: the first three numbers are the network (here 10.0.0), the last number is the machine. Same first three numbers, same network — so one reaches the other directly.',
       },
       ja: {
         title: '2台をつなぐ',
         goal: '一番小さいネットワークです。2台のPCをケーブル1本でつないでいます。',
         task: 'PC-A から PC-B へパケットを送ってみましょう。',
         takeaway:
-          '届きました。10.0.0.11 や 10.0.0.12 が IP アドレスです。機器ごとの住所で、パケットは手紙のように、この住所あてに送られます。2台とも /24（マスク 255.255.255.0）のアドレスで、これは「最初の 3 つの数（ここでは 10.0.0）がネットワーク、最後の数が機器」という意味です。最初の 3 つが同じなので同じネットワークにいて、間に何もなくても直接やり取りできます。',
+          '届きました。\n\n10.0.0.11 や 10.0.0.12 が IP アドレスです。機器ごとの住所で、パケットは手紙のように、この住所あてに送られます。\n\n/24（マスク 255.255.255.0）は「最初の 3 つの数（ここでは 10.0.0）がネットワーク、最後の数が機器」という意味です。最初の 3 つが同じなので同じネットワークにいて、間に何もなくても直接やり取りできます。',
       },
     },
   },
@@ -190,14 +190,14 @@ export const COURSE_STEPS: readonly CourseStep[] = [
         goal: 'Now three machines share one switch, and only one of them is the destination.',
         task: 'Send from PC-A to PC-B, and watch where the packet goes.',
         takeaway:
-          'It went to PC-B and not to PC-C. The switch keeps a table of which machine is on which port, so it sends the frame down one cable rather than shouting down all of them.',
+          'It went to PC-B and not to PC-C. On the cable a packet travels inside a frame, which carries the machines’ MAC addresses. The switch learns which machine is on which port from the sender of each frame it receives, so it sends the frame down one cable rather than shouting down all of them.',
       },
       ja: {
         title: '3台目をつなぐ',
         goal: '3台が1台のスイッチにつながっています。宛先はそのうち1台だけです。',
         task: 'PC-A から PC-B へ送って、どこを通るか見てみましょう。',
         takeaway:
-          'PC-B にだけ届き、PC-C には行きませんでした。スイッチは「どのポートの先にどの機器がいるか」を覚えていて、全部に配るのではなく1本のケーブルにだけ流します。',
+          'PC-B にだけ届き、PC-C には行きませんでした。ケーブルの上では、パケットは機器の MAC アドレスを書いた「フレーム」に入って運ばれます。スイッチは、受け取ったフレームの送り主から「どのポートの先にどの機器がいるか」を覚えていき、全部に配るのではなく 1 本のケーブルにだけ流します。',
       },
     },
   },

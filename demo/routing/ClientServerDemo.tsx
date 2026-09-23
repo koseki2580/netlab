@@ -165,8 +165,8 @@ function ClientServerBrief() {
       </div>
       <div style={{ marginTop: 6 }}>
         {t(
-          'R-1 looks the destination up in its route table, finds the row that matches 203.0.113.10, and sends the packet out that side. Each router a packet crosses takes one off its TTL — a lifetime count that stops a lost packet circling forever.',
-          'R-1 は経路表で 203.0.113.10 に合う行を探し、その側へ送り出します。パケットがルータを 1 つ越えるたびに TTL（寿命の数）が 1 減ります。迷ったパケットがいつまでも回り続けないための仕組みです。',
+          'R-1 looks the destination up in its route table, finds the row that matches 203.0.113.10, and sends the packet out that side. As it forwards, a router takes one off the packet’s TTL — a lifetime count that stops a lost packet circling forever: 64 when it reaches R-1, 63 once it leaves.',
+          'R-1 は経路表で 203.0.113.10 に合う行を探し、その側へ送り出します。ルータは転送するときに TTL（寿命の数）を 1 減らします。R-1 に届いたときは 64、R-1 を出たあとは 63 です。迷ったパケットがいつまでも回り続けないための仕組みです。',
         )}
       </div>
     </div>

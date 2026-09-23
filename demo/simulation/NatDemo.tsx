@@ -137,8 +137,8 @@ function NatDemoInner() {
             </div>
             <div style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}>
               {t(
-                'Send from Client A, then from Client B: the table shows both sharing the one global address, told apart by port number.',
-                'Client A と Client B の両方から送ってみましょう。変換表で、2 台が同じグローバルアドレスを共有し、ポート番号で区別されているのが分かります。',
+                'Send from Client A, then from Client B with the buttons below (each sends at once): the table shows both sharing the one global address, told apart by port number — a port number is like a room number at the same street address.',
+                '下のボタンで Client A と Client B の両方から送ってみましょう（押すとすぐ送られます）。変換表で、2 台が同じグローバルアドレスを共有し、ポート番号で区別されているのが分かります。ポート番号は、同じ住所の中の部屋番号のようなものです。',
               )}
             </div>
           </div>

@@ -407,6 +407,12 @@ function TcpHandshakeDemoInner() {
           <div style={{ color: 'var(--netlab-accent-cyan)', fontWeight: 'bold', marginBottom: 6 }}>
             {t('TCP Teaching Flow', 'TCP のしくみ')}
           </div>
+          <div data-testid="tcp-brief-purpose" style={{ marginBottom: 4 }}>
+            {t(
+              'Before sending any data, TCP makes a connection with three messages — like a phone call: "hello?", "yes, I hear you", "right, let us talk". The exchange also sets starting sequence numbers, so later a lost piece is noticed and sent again.',
+              'TCP はデータを送る前に、3 回のやり取りで接続を作ります。電話の「もしもし」「はい、聞こえます」「では話します」のようなものです。このやり取りで番号（シーケンス番号）の数え始めも決めるので、あとで欠けたデータに気づいて送り直せます。',
+            )}
+          </div>
           <div>{t('Handshake', '接続')}: SYN → SYN-ACK → ACK</div>
           <div>{t('Teardown', '切断')}: FIN → ACK → FIN → ACK</div>
           <div style={{ color: 'var(--netlab-text-secondary)', marginTop: 6 }}>

@@ -162,6 +162,12 @@ function ArpDemoInner() {
               '最初の IPv4 パケットは、次に渡す相手の MAC アドレスがわかるまで送り出せません。',
             )}
           </div>
+          <div style={{ marginTop: 6 }} data-testid="arp-brief-mac">
+            {t(
+              'Two addresses are at work. The IP address is where the packet is finally going; the MAC address is the number of the machine that takes it on this one stretch of cable. ARP asks, to everyone on the same network (ff:ff:ff:ff:ff:ff — "all of you"), "who has this IP address?", and the owner answers with its MAC. It never reaches past a router.',
+              'ここでは 2 種類のアドレスが働きます。IP アドレスはパケットの最終的な行き先、MAC アドレスは「このケーブルの区間で受け取る機器」の番号です。ARP は、同じネットワークの全員あて（ff:ff:ff:ff:ff:ff＝「みなさんへ」）に「この IP アドレスの持ち主は？」と尋ね、持ち主が自分の MAC アドレスを答えます。ルータの先までは届きません。',
+            )}
+          </div>
           <div style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}>
             {t(
               'Use the trace on the right to inspect the ARP request and reply before the routed packet continues.',

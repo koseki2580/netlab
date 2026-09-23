@@ -453,6 +453,10 @@ not part of this specification.
   address on two ports.
 - **AC-078:** Given the DHCP/DNS lesson, when DHCP and then DNS are run, then
   the lease and the name-to-address result are stated in words.
+- **AC-079:** Given the course past its first step, when the learner presses
+  "previous step", then the previous step opens again; and given the subnetting
+  page, when it opens, then its "same network or not?" starter is on the first
+  screen.
 - **AC-054:** Given any lesson in either theme, when its text contrast is
   checked, then text whose contrast the accessibility scanner could not decide
   is measured directly and clears WCAG AA — 4.5:1, or 3:1 for large text.
@@ -673,6 +677,8 @@ not part of this specification.
 | TC-197    | AC-076     | E2E           | The final test in Japanese                                                                     | All "not learned", then all right                                                 | 0 with a review link per question (which opens the lesson); 10 and passed                     | `e2e/course-exam.spec.ts`                                                    |
 | TC-198    | AC-077     | E2E           | The NAT lesson                                                                                 | Client A sends, then Client B                                                     | Two machines, one global address, two ports                                                   | `e2e/lesson-nat-sharing.spec.ts`                                             |
 | TC-199    | AC-078     | E2E           | The DHCP/DNS lesson in Japanese                                                                | DHCP is run, then DNS                                                             | The address given and web.example.com → 192.168.1.10 are stated                               | `e2e/lesson-dhcp-dns-result.spec.ts`                                         |
+| TC-200    | AC-079     | E2E           | The course at step 2                                                                           | "Previous step" is pressed                                                        | Step 1 is shown again; step 1 offers no "previous"                                            | `e2e/course-back-and-starter.spec.ts`                                        |
+| TC-201    | AC-079     | E2E           | The subnetting page in Japanese                                                                | It is opened                                                                      | The starter card is visible without scrolling                                                 | `e2e/course-back-and-starter.spec.ts`                                        |
 | TC-038    | AC-031     | E2E           | The gallery's theme setting                                                                    | A theme is chosen, then a lesson opened                                           | The lesson follows the choice, and an unmade choice changes nothing                           | `e2e/settings-carry.spec.ts`                                                 |
 | TC-037    | AC-030     | E2E           | An interactive canvas                                                                          | The learner tabs to a device and presses Enter                                    | The device is focusable, named, and opens                                                     | `e2e/canvas-keyboard.spec.ts`                                                |
 | TC-036    | AC-029     | E2E           | A laptop display, and the sandbox                                                              | The same lesson is worked through, and a device is edited and the edit taken back | Every control is pressable and every result appears                                           | `e2e/user-journey.spec.ts`                                                   |

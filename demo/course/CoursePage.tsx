@@ -21,6 +21,7 @@ interface CourseUiCopy {
   readonly sending: string;
   readonly again: string;
   readonly next: string;
+  readonly back: string;
   readonly finishTitle: string;
   readonly finishBody: string;
   readonly toGallery: string;
@@ -41,6 +42,7 @@ const UI_COPY: Record<CourseLocale, CourseUiCopy> = {
     sending: 'Sending…',
     again: 'Send again',
     next: 'Next step',
+    back: '← Previous step',
     finishTitle: 'That is the whole idea',
     finishBody:
       'You have seen a wire, a switch, why one network cannot reach another, and the router that joins them. Every lesson in the gallery is one of these ideas taken further.',
@@ -60,6 +62,7 @@ const UI_COPY: Record<CourseLocale, CourseUiCopy> = {
     sending: '送信中…',
     again: 'もう一度送る',
     next: '次のステップへ',
+    back: '← 前のステップ',
     finishTitle: '仕組みはこれで一通りです',
     finishBody:
       'ケーブル1本、スイッチ、ネットワークが違うと届かないこと、そしてそれをつなぐルータを見てきました。ギャラリーのレッスンは、どれもこの続きです。',
@@ -196,7 +199,7 @@ function StepRunner({
           }}
         >
           <strong>{arrived ? ui.arrived : ui.notArrived}</strong>
-          <p style={{ margin: '8px 0 0', lineHeight: 1.7 }}>
+          <p style={{ margin: '8px 0 0', lineHeight: 1.7, whiteSpace: 'pre-line' }}>
             {asExpected ? step.copy[locale].takeaway : ui.unexpected}
           </p>
         </div>
@@ -256,6 +259,14 @@ export default function CoursePage() {
       return;
     }
     setIndex(index + 1);
+  }, [index]);
+
+  // A learner who pressed on past a result could not read it again: the course
+  // only went forward, and a reload resumed at the furthest step.
+  const goBack = useCallback(() => {
+    if (index === 0) return;
+    setUnlocked(false);
+    setIndex(index - 1);
   }, [index]);
 
   const restart = useCallback(() => {
@@ -344,6 +355,9 @@ export default function CoursePage() {
                 width: isNarrow ? '100%' : 380,
                 flexShrink: 0,
                 padding: 20,
+                // On a phone the navigation bar sits over the bottom of the
+                // page; leave room so "next step" can scroll clear of it.
+                paddingBottom: isNarrow ? 88 : 20,
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 14,
@@ -362,6 +376,26 @@ export default function CoursePage() {
                 }}
               >
                 {ui.step} {index + 1} {ui.of} {COURSE_STEPS.length}
+                {index > 0 ? (
+                  <button
+                    type="button"
+                    data-testid="course-back"
+                    onClick={goBack}
+                    style={{
+                      marginLeft: 12,
+                      background: 'none',
+                      border: '1px solid var(--netlab-border)',
+                      borderRadius: 6,
+                      padding: '2px 8px',
+                      color: 'var(--netlab-text-secondary)',
+                      cursor: 'pointer',
+                      fontFamily: 'monospace',
+                      fontSize: 12,
+                    }}
+                  >
+                    {ui.back}
+                  </button>
+                ) : null}
               </div>
               <h2 data-testid="course-title" style={{ margin: 0, fontSize: 20 }}>
                 {body.title}
