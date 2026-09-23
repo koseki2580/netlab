@@ -122,14 +122,14 @@ export const COURSE_STEPS: readonly CourseStep[] = [
         goal: 'The smallest network there is: two machines joined by one cable.',
         task: 'Send a packet from PC-A to PC-B.',
         takeaway:
-          'It arrived. Both machines are on the same network — their addresses start 10.0.0 — so one can reach the other directly, with nothing in between.',
+          'It arrived. 10.0.0.11 and 10.0.0.12 are IP addresses: each is one machine’s address, and a packet is sent to an address the way a letter is. Both are /24 addresses (mask 255.255.255.0), which means the first three numbers name the network — here 10.0.0 — and the last number names the machine. Same first three numbers, same network, so one reaches the other directly.',
       },
       ja: {
         title: '2台をつなぐ',
         goal: '一番小さいネットワークです。2台のPCをケーブル1本でつないでいます。',
         task: 'PC-A から PC-B へパケットを送ってみましょう。',
         takeaway:
-          '届きました。2台は同じネットワーク（アドレスがどちらも 10.0.0 で始まる）にいるので、間に何もなくても直接やり取りできます。',
+          '届きました。10.0.0.11 や 10.0.0.12 が IP アドレスです。機器ごとの住所で、パケットは手紙のように、この住所あてに送られます。2台とも /24（マスク 255.255.255.0）のアドレスで、これは「最初の 3 つの数（ここでは 10.0.0）がネットワーク、最後の数が機器」という意味です。最初の 3 つが同じなので同じネットワークにいて、間に何もなくても直接やり取りできます。',
       },
     },
   },
@@ -262,14 +262,14 @@ export const COURSE_STEPS: readonly CourseStep[] = [
         goal: 'The same two networks, with a router between them. It holds an address on each.',
         task: 'Send to PC-D again, now that something joins the two sides.',
         takeaway:
-          'It arrived. The router has a foot in both networks — 10.0.0.1 on one side, 192.168.1.1 on the other — so it can take a packet off one and put it onto the other. That is the job a switch cannot do.',
+          'It arrived. The router has a foot in both networks — 10.0.0.1 on one side, 192.168.1.1 on the other — so it can take a packet off one and put it onto the other. That is the job a switch cannot do. PC-A sees that 192.168.1.11 is not on its own 10.0.0 network, so it hands the packet to the router’s 10.0.0.1: that exit is its default gateway — the address typed as "default gateway" in a PC’s network settings.',
       },
       ja: {
         title: 'ルータが間を埋める',
         goal: 'さきほどと同じ2つのネットワークの間に、ルータを1台置きました。ルータは両方にアドレスを1つずつ持っています。',
         task: 'もう一度 PC-D へ送ってみましょう。今度は両側をつなぐものがあります。',
         takeaway:
-          '届きました。ルータは両方のネットワークに足をかけていて（片側が 10.0.0.1、もう片側が 192.168.1.1）、一方で受け取ったパケットをもう一方へ渡せます。これはスイッチにはできない仕事です。',
+          '届きました。ルータは両方のネットワークに足をかけていて（片側が 10.0.0.1、もう片側が 192.168.1.1）、一方で受け取ったパケットをもう一方へ渡せます。これはスイッチにはできない仕事です。PC-A は、宛先 192.168.1.11 が自分のネットワーク（10.0.0）の外だと分かるので、ルータの 10.0.0.1 に渡します。この「外へ出る出口」がデフォルトゲートウェイで、PC のネットワーク設定の「デフォルト ゲートウェイ」に書くアドレスです。',
       },
     },
   },
@@ -299,14 +299,14 @@ export const COURSE_STEPS: readonly CourseStep[] = [
         goal: 'A router does not guess. It reads a table, and the table is on screen.',
         task: 'Send once more, then read the routing table beside the diagram.',
         takeaway:
-          'Each row says "for this range of addresses, go this way". The router matched 192.168.1.11 against the 192.168.1.0/24 row and sent the packet out that side. That is the whole idea; everything else is more rows.',
+          'Each row says "for this range of addresses, go this way". The router matched 192.168.1.11 against the 192.168.1.0/24 row — /24 again: every address starting 192.168.1 — and sent the packet out that side. "Directly connected" means the router sits on that network itself. That is the whole idea; everything else is more rows.',
       },
       ja: {
         title: 'ルータはどう決めているか',
         goal: 'ルータは当てずっぽうで送っているわけではありません。経路表を見て決めています。画面に出ています。',
         task: 'もう一度送ってから、図の横にある経路表を読んでみましょう。',
         takeaway:
-          '各行は「このアドレスの範囲ならこちらへ」という意味です。ルータは 192.168.1.11 を 192.168.1.0/24 の行に当てはめて、その側へ送りました。仕組みはこれだけで、あとは行が増えていくだけです。',
+          '各行は「このアドレスの範囲ならこちらへ」という意味です。ルータは 192.168.1.11 を 192.168.1.0/24 の行（/24 なので「192.168.1 で始まるアドレス全部」）に当てはめて、その側へ送りました。「直結」は、ルータ自身がそのネットワークにつながっているという意味です。仕組みはこれだけで、あとは行が増えていくだけです。',
       },
     },
   },

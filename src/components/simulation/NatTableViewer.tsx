@@ -158,10 +158,10 @@ export const NatTableViewer = memo(function NatTableViewer() {
               }}
             >
               <span>{entry.proto.toUpperCase()}</span>
-              <span style={NAT_ADDRESS_CELL}>
+              <span data-testid="nat-inside-local" style={NAT_ADDRESS_CELL}>
                 {`${entry.insideLocalIp}:${entry.insideLocalPort}`}
               </span>
-              <span style={NAT_ADDRESS_CELL}>
+              <span data-testid="nat-inside-global" style={NAT_ADDRESS_CELL}>
                 {`${entry.insideGlobalIp}:${entry.insideGlobalPort}`}
               </span>
               <span data-testid="nat-outside-peer" style={NAT_ADDRESS_CELL}>

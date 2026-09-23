@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import type { DhcpLeaseState } from '../../src/types/services';
 import { useT } from '../localeContext';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
@@ -143,15 +145,23 @@ function buildHttpPacket(runtimeIp: string | null): InFlightPacket {
 function DhcpDnsDemoInner() {
   const t = useT();
   const { engine, simulateDhcp, sendPacket } = useSimulation();
+  // What each button did, said in words beside the buttons. The answer used to
+  // be only in a device's details, which a learner had to know to open.
+  const [lease, setLease] = useState<DhcpLeaseState | null>(null);
+  const [resolved, setResolved] = useState<{ name: string; address: string } | null>(null);
 
   const handleRunDhcp = async () => {
     engine.clear();
+    setResolved(null);
     await simulateDhcp('dhcp-client');
+    setLease(engine.getDhcpLeaseState('dhcp-client'));
   };
 
   const handleResolveAndFetch = async () => {
     engine.clearTraces();
     await sendPacket(buildHttpPacket(engine.getRuntimeNodeIp('dhcp-client')));
+    const entry = engine.getDnsCache('dhcp-client')?.['web.example.com'];
+    setResolved(entry ? { name: 'web.example.com', address: entry.address } : null);
   };
 
   return (
@@ -190,6 +200,7 @@ function DhcpDnsDemoInner() {
           </button>
           <button
             type="button"
+            data-testid="dns-run"
             onClick={() => void handleResolveAndFetch()}
             style={{
               padding: '6px 12px',
@@ -216,6 +227,56 @@ function DhcpDnsDemoInner() {
               '機器を押すと、その時点の DHCP/DNS の状態が見られます。',
             )}
           </span>
+          <div
+            data-testid="lesson-brief"
+            style={{
+              flexBasis: '100%',
+              maxWidth: 420,
+              background: 'color-mix(in srgb, var(--netlab-bg-primary) 92%, transparent)',
+              border: '1px solid var(--netlab-border-subtle)',
+              borderRadius: 8,
+              padding: '10px 12px',
+              fontSize: 12,
+              lineHeight: 1.7,
+              color: 'var(--netlab-text-primary)',
+            }}
+          >
+            <strong>{t('How DHCP and DNS work', 'DHCP と DNS のしくみ')}</strong>
+            <div>
+              {t(
+                'DHCP: a machine that has just joined has no address, so it asks the network and a DHCP server lends it one — with the mask, the default gateway and the DNS server to use.',
+                'DHCP：つないだばかりの機器にはアドレスがありません。ネットワークに尋ねると、DHCP サーバがアドレスを貸してくれます。サブネットマスク・デフォルトゲートウェイ・使う DNS サーバも一緒に設定されます。',
+              )}
+            </div>
+            <div>
+              {t(
+                'DNS: people use names like web.example.com, but packets need an IP address. DNS answers "what is the address of this name?".',
+                'DNS：人は web.example.com のような名前を使いますが、パケットには IP アドレスが必要です。DNS は「この名前のアドレスは？」に答えるしくみです。',
+              )}
+            </div>
+            {lease?.assignedIp ? (
+              <div
+                data-testid="dhcp-result"
+                style={{ marginTop: 6, color: 'var(--netlab-accent-green)' }}
+              >
+                {t(
+                  `DHCP gave the client ${lease.assignedIp}${lease.defaultGateway ? `, gateway ${lease.defaultGateway}` : ''}${lease.dnsServerIp ? `, DNS server ${lease.dnsServerIp}` : ''}.`,
+                  `DHCP で、クライアントに ${lease.assignedIp} が割り当てられました${lease.defaultGateway ? `（デフォルトゲートウェイ ${lease.defaultGateway}` : '（'}${lease.dnsServerIp ? `、DNS サーバ ${lease.dnsServerIp}）` : '）'}。`,
+                )}
+              </div>
+            ) : null}
+            {resolved ? (
+              <div
+                data-testid="dns-result"
+                style={{ marginTop: 6, color: 'var(--netlab-accent-green)' }}
+              >
+                {t(
+                  `DNS turned ${resolved.name} into ${resolved.address}, and the page was fetched from there.`,
+                  `DNS で ${resolved.name} が ${resolved.address} に変換され、そのアドレスからページを取得しました。`,
+                )}
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
 

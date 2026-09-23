@@ -11,6 +11,7 @@ import type { NetworkTopology } from '../../src/types/topology';
 import type { NetworkArea } from '../../src/types/areas';
 import { encodeTopology, decodeTopology } from '../../src/utils/topology-url';
 import DemoShell from '../DemoShell';
+import { useT } from '../localeContext';
 
 // ────────────────────────────────────────────────
 // Demo topology: Client → SW-1 → Router → SW-2 → Server
@@ -137,6 +138,41 @@ const INITIAL_TOPOLOGY: NetworkTopology = {
 
 export const CLIENT_SERVER_INITIAL_TOPOLOGY = INITIAL_TOPOLOGY;
 
+/**
+ * What this lesson is showing, in words. The page used to be a timeline and a
+ * route table with no sentence at all, and learners answered the routing
+ * question by piecing together the course and other lessons.
+ */
+function ClientServerBrief() {
+  const t = useT();
+  return (
+    <div
+      data-testid="lesson-brief"
+      style={{
+        padding: '10px 12px',
+        borderBottom: '1px solid var(--netlab-bg-surface)',
+        fontSize: 12,
+        lineHeight: 1.7,
+        color: 'var(--netlab-text-primary)',
+      }}
+    >
+      <strong>{t('Crossing a router', 'ルータを越える通信')}</strong>
+      <div>
+        {t(
+          'The client (10.0.0.10) sends to the server (203.0.113.10) on another network. Because the destination is outside its own network, the client hands the packet to its default gateway, the router R-1 at 10.0.0.1.',
+          'Client（10.0.0.10）が、別のネットワークにいる Server（203.0.113.10）へ送ります。宛先が自分のネットワークの外なので、Client はまずデフォルトゲートウェイであるルータ R-1（10.0.0.1）に渡します。',
+        )}
+      </div>
+      <div style={{ marginTop: 6 }}>
+        {t(
+          'R-1 looks the destination up in its route table, finds the row that matches 203.0.113.10, and sends the packet out that side. Each router a packet crosses takes one off its TTL — a lifetime count that stops a lost packet circling forever.',
+          'R-1 は経路表で 203.0.113.10 に合う行を探し、その側へ送り出します。パケットがルータを 1 つ越えるたびに TTL（寿命の数）が 1 減ります。迷ったパケットがいつまでも回り続けないための仕組みです。',
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ClientServerDemo() {
   const topology = decodeTopology(window.location.search) ?? INITIAL_TOPOLOGY;
   const [copied, setCopied] = useState(false);
@@ -201,7 +237,7 @@ export default function ClientServerDemo() {
 
               {/* Timeline panel */}
               <ResizableSidebar
-                defaultWidth={260}
+                defaultWidth={320}
                 style={{
                   background: 'var(--netlab-bg-primary)',
                   borderLeft: '1px solid var(--netlab-bg-surface)',
@@ -209,6 +245,7 @@ export default function ClientServerDemo() {
                   flexDirection: 'column',
                 }}
               >
+                <ClientServerBrief />
                 <PacketTimeline />
               </ResizableSidebar>
             </div>

@@ -56,9 +56,18 @@ function makePacket(
   };
 }
 
-function ActionButton({ label, onClick }: { label: string; onClick: () => void }) {
+function ActionButton({
+  label,
+  onClick,
+  testId,
+}: {
+  label: string;
+  onClick: () => void;
+  testId?: string;
+}) {
   return (
     <button
+      {...(testId !== undefined ? { 'data-testid': testId } : {})}
       onClick={onClick}
       style={{
         background: 'var(--netlab-bg-panel)',
@@ -107,8 +116,35 @@ function NatDemoInner() {
             padding: 12,
           }}
         >
+          <div
+            data-testid="lesson-brief"
+            style={{
+              background: 'var(--netlab-bg-panel)',
+              border: '1px solid var(--netlab-border-subtle)',
+              borderRadius: 8,
+              padding: '10px 12px',
+              fontSize: 12,
+              lineHeight: 1.7,
+              color: 'var(--netlab-text-primary)',
+            }}
+          >
+            <strong>{t('How NAT works', 'NAT のしくみ')}</strong>
+            <div>
+              {t(
+                'Machines inside a home or office use private addresses such as 192.168.1.10, which the internet cannot deliver to. On the way out, the edge router rewrites the sender to its own global address, 203.0.113.1, and on the way back it puts the private address back.',
+                '家や会社の中の機器は、192.168.1.10 のようなプライベートアドレスを使っています。これはインターネットでは届けられません。出口のルータは、外へ出るパケットの送り主を自分のグローバルアドレス（203.0.113.1）に書き換え、返事が戻ってきたら元のプライベートアドレスに戻します。',
+              )}
+            </div>
+            <div style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}>
+              {t(
+                'Send from Client A, then from Client B: the table shows both sharing the one global address, told apart by port number.',
+                'Client A と Client B の両方から送ってみましょう。変換表で、2 台が同じグローバルアドレスを共有し、ポート番号で区別されているのが分かります。',
+              )}
+            </div>
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <ActionButton
+              testId="nat-send-client-a"
               label={t('Client A -> Internet (SNAT)', 'Client A -> インターネット (SNAT)')}
               onClick={() => {
                 void sendPacket(
@@ -119,6 +155,23 @@ function NatDemoInner() {
                     '192.168.1.10',
                     '198.51.100.10',
                     54321,
+                    80,
+                  ),
+                );
+              }}
+            />
+            <ActionButton
+              testId="nat-send-client-b"
+              label={t('Client B -> Internet (SNAT)', 'Client B -> インターネット (SNAT)')}
+              onClick={() => {
+                void sendPacket(
+                  makePacket(
+                    `nat-snat-b-${Date.now()}`,
+                    'client-2',
+                    'server-1',
+                    '192.168.1.20',
+                    '198.51.100.10',
+                    54322,
                     80,
                   ),
                 );

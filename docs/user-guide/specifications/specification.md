@@ -146,6 +146,14 @@ and the gallery — each already has its own tests and docs.
   answer, passes at eight of ten, and after marking explains every answer and
   links each missed one to the lesson that teaches it. Finishing the course MUST
   lead to it.
+- **REQ-062 (MUST):** Each question in the final test MUST be answerable from
+  the lesson it names, not from the test page: the path lists topics, never
+  answers. The course MUST say in words what an IP address is, what /24 and
+  its mask mean, and what the default gateway is; the subnetting page MUST start
+  from "same network or not?" before any arithmetic; and the NAT, DHCP/DNS,
+  client–server and UDP lessons MUST each explain their mechanism beside the
+  controls and state what a run did. NAT MUST show two machines sharing one
+  global address.
 - **REQ-051 (MUST):** The product MUST ship a user guide that works opened
   straight from disk, with no server and no network, and that can be read in
   Japanese and in English, searched, and read in a light or a dark theme. It
@@ -440,6 +448,11 @@ not part of this specification.
   learned" and marked, then it scores 0 of 10, is not passed, and every question
   links to its lesson; and when every answer is right, then it scores 10 and
   passes, with no review links.
+- **AC-077:** Given the NAT lesson, when Client A and then Client B send, then
+  the table holds two rows from two private addresses sharing one global
+  address on two ports.
+- **AC-078:** Given the DHCP/DNS lesson, when DHCP and then DNS are run, then
+  the lease and the name-to-address result are stated in words.
 - **AC-054:** Given any lesson in either theme, when its text contrast is
   checked, then text whose contrast the accessibility scanner could not decide
   is measured directly and clears WCAG AA — 4.5:1, or 3:1 for large text.
@@ -658,6 +671,8 @@ not part of this specification.
 | TC-195    | AC-074     | E2E           | The trace inspector, ARP, UDP and all-in-one lessons                                           | They are run                                                                      | Hops fill the room, the timeline is on the first screen, labels stay whole, flows are ① … → … | `e2e/lesson-layout-balance.spec.ts`                                          |
 | TC-196    | AC-076     | Unit          | The final test's questions and path                                                            | Answers are marked                                                                | Ten right is 10 and passes; 8 passes, 7 does not; every question's lesson exists              | `demo/course/examQuestions.test.ts`                                          |
 | TC-197    | AC-076     | E2E           | The final test in Japanese                                                                     | All "not learned", then all right                                                 | 0 with a review link per question (which opens the lesson); 10 and passed                     | `e2e/course-exam.spec.ts`                                                    |
+| TC-198    | AC-077     | E2E           | The NAT lesson                                                                                 | Client A sends, then Client B                                                     | Two machines, one global address, two ports                                                   | `e2e/lesson-nat-sharing.spec.ts`                                             |
+| TC-199    | AC-078     | E2E           | The DHCP/DNS lesson in Japanese                                                                | DHCP is run, then DNS                                                             | The address given and web.example.com → 192.168.1.10 are stated                               | `e2e/lesson-dhcp-dns-result.spec.ts`                                         |
 | TC-038    | AC-031     | E2E           | The gallery's theme setting                                                                    | A theme is chosen, then a lesson opened                                           | The lesson follows the choice, and an unmade choice changes nothing                           | `e2e/settings-carry.spec.ts`                                                 |
 | TC-037    | AC-030     | E2E           | An interactive canvas                                                                          | The learner tabs to a device and presses Enter                                    | The device is focusable, named, and opens                                                     | `e2e/canvas-keyboard.spec.ts`                                                |
 | TC-036    | AC-029     | E2E           | A laptop display, and the sandbox                                                              | The same lesson is worked through, and a device is edited and the edit taken back | Every control is pressable and every result appears                                           | `e2e/user-journey.spec.ts`                                                   |
@@ -799,3 +814,4 @@ with no criterion or no test is shown as such rather than given one.
 | REQ-059     | AC-072, AC-073, AC-074         | TC-189, TC-190, TC-191, TC-192, TC-193, TC-194, TC-195                                         | `e2e/device-panel-overview.spec.ts`<br>`e2e/panel-layout.spec.ts`<br>`e2e/lesson-*.spec.ts`                                                                           | Reading a lesson    | Verified |
 | REQ-060     | AC-075                         | TC-184                                                                                         | `e2e/progress-course.spec.ts`                                                                                                                                         | Getting started     | Verified |
 | REQ-061     | AC-076                         | TC-196, TC-197                                                                                 | `demo/course/examQuestions.test.ts`<br>`e2e/course-exam.spec.ts`                                                                                                      | Getting started     | Verified |
+| REQ-062     | AC-077, AC-078                 | TC-198, TC-199                                                                                 | `e2e/lesson-nat-sharing.spec.ts`<br>`e2e/lesson-dhcp-dns-result.spec.ts`                                                                                              | Getting started     | Verified |

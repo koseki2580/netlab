@@ -21,7 +21,10 @@ export interface PathStop {
   readonly id: string;
   readonly path: string;
   readonly title: Localised;
-  /** What this stop teaches, in one line. */
+  /**
+   * The topic, in one line — never the answer. Learners in trials passed
+   * questions from these lines alone, which measured the index, not the lessons.
+   */
   readonly teaches: Localised;
 }
 
@@ -44,8 +47,8 @@ export const EXAM_PATH: readonly PathStop[] = [
     path: '/course',
     title: { en: 'Getting started (6 steps)', ja: '入門コース（6 ステップ）' },
     teaches: {
-      en: 'Cables, switches, networks, and the router that joins them',
-      ja: 'ケーブル・スイッチ・ネットワークの区切りと、それをつなぐルータ',
+      en: 'The pieces of a network and how they connect',
+      ja: 'ネットワークの部品と、そのつながり方',
     },
   },
   {
@@ -53,8 +56,8 @@ export const EXAM_PATH: readonly PathStop[] = [
     path: '/learning/subnetting',
     title: { en: 'Subnetting drill', ja: 'サブネットの練習' },
     teaches: {
-      en: 'Telling whether two addresses are on the same network',
-      ja: '2 つのアドレスが同じネットワークかどうかの見分け方',
+      en: 'Reading an address and its /number',
+      ja: 'アドレスと「/数字」の読み方',
     },
   },
   {
@@ -62,17 +65,17 @@ export const EXAM_PATH: readonly PathStop[] = [
     path: '/networking/arp',
     title: { en: 'ARP basics', ja: 'ARP の基本' },
     teaches: {
-      en: 'How a machine finds the MAC address behind an IP address',
-      ja: 'IP アドレスから、相手の MAC アドレスを調べるしくみ',
+      en: 'What happens before the first packet leaves',
+      ja: '最初のパケットが出ていく前に起きること',
     },
   },
   {
     id: 'routing',
     path: '/routing/client-server',
-    title: { en: 'Client and server through routers', ja: 'ルータを越えるクライアントとサーバ' },
+    title: { en: 'Client and server', ja: 'クライアントとサーバ' },
     teaches: {
-      en: 'How routers choose where to send a packet, using their route table',
-      ja: 'ルータが経路表を見て、パケットの送り先を決めるしくみ',
+      en: 'Crossing from one network to another',
+      ja: 'ネットワークからネットワークへ渡るとき',
     },
   },
   {
@@ -80,8 +83,8 @@ export const EXAM_PATH: readonly PathStop[] = [
     path: '/simulation/tcp-handshake',
     title: { en: 'TCP handshake', ja: 'TCP のハンドシェイク' },
     teaches: {
-      en: 'How TCP sets up a connection before it sends data',
-      ja: 'TCP がデータを送る前に接続を作るしくみ',
+      en: 'How TCP starts a conversation',
+      ja: 'TCP の会話の始め方',
     },
   },
   {
@@ -89,8 +92,8 @@ export const EXAM_PATH: readonly PathStop[] = [
     path: '/networking/udp',
     title: { en: 'UDP datagram', ja: 'UDP のデータグラム' },
     teaches: {
-      en: 'Sending without a connection, and what that gives up',
-      ja: '接続を作らずに送ることと、それで手放すもの',
+      en: 'How UDP differs from TCP',
+      ja: 'UDP と TCP の違い',
     },
   },
   {
@@ -98,17 +101,17 @@ export const EXAM_PATH: readonly PathStop[] = [
     path: '/services/dhcp-dns',
     title: { en: 'DHCP and DNS', ja: 'DHCP と DNS' },
     teaches: {
-      en: 'Getting an address automatically, and turning a name into an address',
-      ja: 'アドレスを自動でもらうことと、名前をアドレスに変えること',
+      en: 'Two services every device relies on',
+      ja: 'どの機器も頼っている 2 つのサービス',
     },
   },
   {
     id: 'nat',
     path: '/simulation/nat',
-    title: { en: 'NAT', ja: 'NAT（アドレス変換）' },
+    title: { en: 'NAT / PAT', ja: 'NAT / PAT' },
     teaches: {
-      en: 'How many private machines share one public address',
-      ja: 'たくさんのプライベートな機器が 1 つのグローバルアドレスを共有するしくみ',
+      en: 'What the edge router does to addresses',
+      ja: '出口のルータがアドレスにすること',
     },
   },
 ];

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { RouteTable } from '../../src/components/controls/RouteTable';
@@ -162,6 +162,19 @@ function StepRunner({
 
   const asExpected = step.expect === (arrived ? 'deliver' : 'drop');
 
+  // On a phone the result lands below the fold, and the explanation under it
+  // is the lesson; a learner who presses and looks at the diagram never sees
+  // it. Bring it into view once it exists.
+  const outcomeRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!finished) return;
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    outcomeRef.current?.scrollIntoView?.({
+      block: 'nearest',
+      behavior: reduced ? 'auto' : 'smooth',
+    });
+  }, [finished]);
+
   return (
     <>
       {step.expect === 'drop' && !sent ? (
@@ -174,6 +187,7 @@ function StepRunner({
       </button>
       {sent && lastHop ? (
         <div
+          ref={outcomeRef}
           data-testid="course-outcome"
           data-arrived={arrived ? 'yes' : 'no'}
           style={{

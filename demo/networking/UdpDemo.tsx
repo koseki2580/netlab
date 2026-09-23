@@ -191,8 +191,8 @@ function UdpDemoInner() {
           </div>
           <div>
             {t(
-              'UDP is stateless — no handshake. The client fires a single datagram toward the server. Compare with TCP (which sets up a 3-way handshake first).',
-              'UDP は状態を持たず、ハンドシェイクもありません。クライアントはデータグラムを1つサーバへ送るだけです。先に3ウェイハンドシェイクで接続を作る TCP と比べてみてください。',
+              'UDP is stateless — no handshake. The client fires a single datagram toward the server. Compare with TCP (which sets up a 3-way handshake first). What UDP gives up for that speed: it never checks that the datagram arrived, and never resends one that is lost.',
+              'UDP は状態を持たず、ハンドシェイクもありません。クライアントはデータグラムを1つサーバへ送るだけです。先に3ウェイハンドシェイクで接続を作る TCP と比べてみてください。その速さと引き換えに手放すもの：UDP は届いたかどうかを確かめず、失われても送り直しません。',
             )}
           </div>
         </div>
