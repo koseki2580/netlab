@@ -221,3 +221,33 @@ test('the device detail panel is Japanese on every tab', async ({ page, demoPage
     expect(prose, 'no English sentence remains on this tab').toEqual([]);
   }
 });
+
+/**
+ * TC-177 — a lesson's navigation speaks the learner's language, and there is a
+ * way back.
+ *
+ * The rail sat outside the language provider, so its names — the only way out
+ * of a lesson — were English tooltips on two icons, and the header had no link
+ * back at all. Every lesson was a cul-de-sac for a Japanese reader.
+ */
+test('the lesson navigation is Japanese and leads back to the lessons', async ({
+  page,
+  demoPage,
+}) => {
+  await openClientServer(page, demoPage, 'ja');
+
+  const rail = page.locator('[data-netlab-nav-rail]');
+  await expect(rail).toHaveAttribute('aria-label', /[ぁ-んァ-ヶ一-龯]/);
+  const railNames = await rail
+    .locator('[data-netlab-rail-item]')
+    .evaluateAll((items) => items.map((item) => item.getAttribute('aria-label') ?? ''));
+  expect(railNames.length, 'the rail offers its destinations').toBeGreaterThan(0);
+  for (const name of railNames) {
+    expect(name, 'each destination is named in Japanese').toMatch(/[ぁ-んァ-ヶ一-龯]/);
+  }
+
+  const back = page.getByTestId(SEL.shell.back);
+  await expect(back).toHaveText(/[ぁ-んァ-ヶ一-龯]/);
+  await back.click();
+  await expect(page.getByTestId(SEL.gallery.heading), 'it leads back to the lessons').toBeVisible();
+});

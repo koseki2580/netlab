@@ -1,6 +1,5 @@
-import { NetlabProvider } from '../../src/components/NetlabProvider';
-import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import type { NetworkTopology } from '../../src/types/topology';
+import { TaskLesson } from '../components/LessonTask';
 import DemoShell from '../DemoShell';
 
 const TOPOLOGY: NetworkTopology = {
@@ -55,9 +54,19 @@ export const THREE_TIER_DEMO_TOPOLOGY = TOPOLOGY;
 export default function ThreeTierDemo() {
   return (
     <DemoShell title="Three-Tier LAN" desc="Client → Switch → Server with L2 port configuration">
-      <NetlabProvider topology={TOPOLOGY}>
-        <NetlabCanvas />
-      </NetlabProvider>
+      <TaskLesson
+        topology={TOPOLOGY}
+        from="client-1"
+        to="server-1"
+        goal={{
+          en: 'Client and Server meet through a switch. Send a packet and watch it pass through the switch.',
+          ja: 'Client と Server はスイッチを通してつながっています。パケットを送り、スイッチを通っていくのを見ましょう。',
+        }}
+        takeaway={{
+          en: 'The switch reads the destination MAC address and sends the frame out of the one port that leads to it.',
+          ja: 'スイッチは宛先の MAC アドレスを見て、その相手につながるポートにだけフレームを送り出します。',
+        }}
+      />
     </DemoShell>
   );
 }

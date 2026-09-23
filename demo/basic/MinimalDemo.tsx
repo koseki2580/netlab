@@ -1,6 +1,5 @@
-import { NetlabProvider } from '../../src/components/NetlabProvider';
-import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import type { NetworkTopology } from '../../src/types/topology';
+import { TaskLesson } from '../components/LessonTask';
 import DemoShell from '../DemoShell';
 
 const TOPOLOGY: NetworkTopology = {
@@ -38,9 +37,19 @@ export const MINIMAL_DEMO_TOPOLOGY = TOPOLOGY;
 export default function MinimalDemo() {
   return (
     <DemoShell title="Minimal" desc="Two nodes directly connected">
-      <NetlabProvider topology={TOPOLOGY}>
-        <NetlabCanvas />
-      </NetlabProvider>
+      <TaskLesson
+        topology={TOPOLOGY}
+        from="client-1"
+        to="server-1"
+        goal={{
+          en: 'Two devices joined by one cable. Send a packet from Client to Server and watch it arrive.',
+          ja: '2 台の機器が 1 本のケーブルでつながっています。Client から Server へパケットを送り、届くのを確かめましょう。',
+        }}
+        takeaway={{
+          en: 'Devices on the same cable talk directly: nothing sits between them, so the packet goes straight across.',
+          ja: '同じケーブルでつながった機器どうしは直接やりとりします。間に何もないので、パケットはそのまま相手に届きます。',
+        }}
+      />
     </DemoShell>
   );
 }

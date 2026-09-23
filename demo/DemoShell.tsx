@@ -205,14 +205,14 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
   const navItems: NavRailItem[] = [
     {
       id: 'gallery',
-      label: 'Browse',
+      label: locale === 'ja' ? 'レッスン一覧' : 'Browse',
       icon: '⊞',
       active: view === 'gallery',
       onClick: () => selectView('gallery'),
     },
     {
       id: 'simulator',
-      label: 'Run',
+      label: locale === 'ja' ? '実行' : 'Run',
       icon: '▶',
       active: view === 'simulator',
       onClick: () => selectView('simulator'),
@@ -319,165 +319,196 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
   );
 
   return (
-    <div
-      data-testid="netlab-root"
-      data-netlab-sim-shell
-      data-narrow={isNarrow ? '' : undefined}
-      className="netlab-sim-shell"
-      style={{
-        // The theme's variables reach the shell chrome, not just the lesson
-        // inside it: this element sits outside NetlabThemeScope, and while its
-        // background was a fixed slate a learner who chose Light got a light
-        // lesson framed in a dark shell.
-        ...themeToVars(shellTheme),
-        display: 'flex',
-        // `100dvh` tracks the visible viewport on iOS Safari where the toolbar
-        // shrinks the usable area — `100vh` would overflow under the chrome.
-        flexDirection: isNarrow ? 'column' : 'row',
-        height: '100dvh',
-        overflow: 'hidden',
-        background: 'var(--netlab-bg-primary)',
-      }}
-    >
-      <button
-        type="button"
-        data-testid="skip-to-content"
-        onFocus={() => setSkipFocused(true)}
-        onBlur={() => setSkipFocused(false)}
-        onClick={() => document.getElementById('netlab-demo-content')?.focus()}
+    // The whole shell follows the learner's language, not only the lesson:
+    // the navigation rail sat outside the provider and stayed English.
+    <I18nProvider locale={locale}>
+      <div
+        data-testid="netlab-root"
+        data-netlab-sim-shell
+        data-narrow={isNarrow ? '' : undefined}
+        className="netlab-sim-shell"
         style={{
-          position: 'absolute',
-          left: 8,
-          top: skipFocused ? 8 : -48,
-          zIndex: 1000,
-          padding: '8px 14px',
-          background: 'var(--netlab-accent-blue)',
-          color: '#ffffff',
-          border: 'none',
-          borderRadius: 6,
-          fontFamily: 'monospace',
-          fontSize: 13,
-          cursor: 'pointer',
-          transition: 'top 120ms ease',
+          // The theme's variables reach the shell chrome, not just the lesson
+          // inside it: this element sits outside NetlabThemeScope, and while its
+          // background was a fixed slate a learner who chose Light got a light
+          // lesson framed in a dark shell.
+          ...themeToVars(shellTheme),
+          display: 'flex',
+          // `100dvh` tracks the visible viewport on iOS Safari where the toolbar
+          // shrinks the usable area — `100vh` would overflow under the chrome.
+          flexDirection: isNarrow ? 'column' : 'row',
+          height: '100dvh',
+          overflow: 'hidden',
+          background: 'var(--netlab-bg-primary)',
         }}
       >
-        {locale === 'ja' ? 'コンテンツへ移動' : 'Skip to content'}
-      </button>
-      {!embedded && !isNarrow && (
-        <NavRail items={navItems} onOpenBrand={() => selectView('gallery')} onOpenHelp={openHelp} />
-      )}
-      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, minHeight: 0 }}>
-        {!embedded && (
-          <header
-            style={{
-              padding: '10px 16px',
-              background: 'var(--netlab-bg-surface)',
-              borderBottom: '1px solid var(--netlab-border)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: isNarrow ? 8 : 16,
-              flexWrap: isNarrow ? 'wrap' : 'nowrap',
-              flexShrink: 0,
-            }}
-          >
-            <span
+        <button
+          type="button"
+          data-testid="skip-to-content"
+          onFocus={() => setSkipFocused(true)}
+          onBlur={() => setSkipFocused(false)}
+          onClick={() => document.getElementById('netlab-demo-content')?.focus()}
+          style={{
+            position: 'absolute',
+            left: 8,
+            top: skipFocused ? 8 : -48,
+            zIndex: 1000,
+            padding: '8px 14px',
+            background: 'var(--netlab-accent-blue)',
+            color: '#ffffff',
+            border: 'none',
+            borderRadius: 6,
+            fontFamily: 'monospace',
+            fontSize: 13,
+            cursor: 'pointer',
+            transition: 'top 120ms ease',
+          }}
+        >
+          {locale === 'ja' ? 'コンテンツへ移動' : 'Skip to content'}
+        </button>
+        {!embedded && !isNarrow && (
+          <NavRail
+            items={navItems}
+            onOpenBrand={() => selectView('gallery')}
+            onOpenHelp={openHelp}
+          />
+        )}
+        <div
+          style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, minHeight: 0 }}
+        >
+          {!embedded && (
+            <header
               style={{
-                color: 'var(--netlab-text-primary)',
-                fontWeight: 'bold',
-                fontFamily: 'monospace',
-                fontSize: 15,
-              }}
-            >
-              📡 netlab
-            </span>
-            <h1
-              data-testid="demo-shell-title"
-              style={{
-                margin: 0,
-                color: 'var(--netlab-text-secondary)',
-                fontFamily: 'monospace',
-                fontSize: 14,
-                fontWeight: 600,
-              }}
-            >
-              {shownTitle}
-            </h1>
-            <span
-              data-testid="demo-shell-desc"
-              style={{
-                color: 'var(--netlab-text-secondary)',
-                fontSize: 12,
-                fontFamily: 'monospace',
-              }}
-            >
-              {shownDesc}
-            </span>
-            <a
-              href="https://github.com/koseki2580/netlab"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                marginLeft: 'auto',
+                padding: '10px 16px',
+                background: 'var(--netlab-bg-surface)',
+                borderBottom: '1px solid var(--netlab-border)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 6,
-                color: 'var(--netlab-text-secondary)',
-                textDecoration: 'none',
-                fontFamily: 'monospace',
-                fontSize: 12,
-              }}
-              onMouseEnter={(event) => {
-                (event.currentTarget as HTMLAnchorElement).style.color =
-                  'var(--netlab-text-secondary)';
-              }}
-              onMouseLeave={(event) => {
-                (event.currentTarget as HTMLAnchorElement).style.color =
-                  'var(--netlab-text-secondary)';
+                gap: isNarrow ? 8 : 16,
+                flexWrap: isNarrow ? 'wrap' : 'nowrap',
+                flexShrink: 0,
               }}
             >
-              {GITHUB_ICON}
-              GitHub
-            </a>
-          </header>
-        )}
-        <NetlabThemeScope {...settings} style={{ flex: 1, overflow: 'hidden' }}>
-          {isE2e && <E2eTraceHook />}
-          <ShellChromeProvider value={shellChrome}>
-            {/* Skip-link target + main landmark. height:100% keeps the drill
+              {/* The way back, in words. The only exits used to be two icons in
+                the rail whose names were English tooltips. */}
+              <button
+                type="button"
+                data-testid="demo-shell-back"
+                onClick={() => void navigate('/')}
+                className="netlab-focus-ring"
+                style={{
+                  background: 'none',
+                  border: '1px solid var(--netlab-border)',
+                  borderRadius: 6,
+                  padding: '4px 8px',
+                  color: 'var(--netlab-text-secondary)',
+                  fontFamily: 'monospace',
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {locale === 'ja' ? '← レッスン一覧へ' : '← All lessons'}
+              </button>
+              <span
+                style={{
+                  color: 'var(--netlab-text-primary)',
+                  fontWeight: 'bold',
+                  fontFamily: 'monospace',
+                  fontSize: 15,
+                }}
+              >
+                📡 netlab
+              </span>
+              <h1
+                data-testid="demo-shell-title"
+                style={{
+                  margin: 0,
+                  color: 'var(--netlab-text-secondary)',
+                  fontFamily: 'monospace',
+                  fontSize: 14,
+                  fontWeight: 600,
+                }}
+              >
+                {shownTitle}
+              </h1>
+              <span
+                data-testid="demo-shell-desc"
+                style={{
+                  color: 'var(--netlab-text-secondary)',
+                  fontSize: 12,
+                  fontFamily: 'monospace',
+                }}
+              >
+                {shownDesc}
+              </span>
+              <a
+                href="https://github.com/koseki2580/netlab"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  marginLeft: 'auto',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  color: 'var(--netlab-text-secondary)',
+                  textDecoration: 'none',
+                  fontFamily: 'monospace',
+                  fontSize: 12,
+                }}
+                onMouseEnter={(event) => {
+                  (event.currentTarget as HTMLAnchorElement).style.color =
+                    'var(--netlab-text-secondary)';
+                }}
+                onMouseLeave={(event) => {
+                  (event.currentTarget as HTMLAnchorElement).style.color =
+                    'var(--netlab-text-secondary)';
+                }}
+              >
+                {GITHUB_ICON}
+                GitHub
+              </a>
+            </header>
+          )}
+          <NetlabThemeScope {...settings} style={{ flex: 1, overflow: 'hidden' }}>
+            {isE2e && <E2eTraceHook />}
+            <ShellChromeProvider value={shellChrome}>
+              {/* Skip-link target + main landmark. height:100% keeps the drill
                 frames' own scroll working (they constrain to this slot and
                 scroll internally). */}
-            <main
-              id="netlab-demo-content"
-              tabIndex={-1}
-              style={{ height: '100%', outline: 'none' }}
-            >
-              {/* Every lesson inside follows the same choice: NetlabProvider
+              <main
+                id="netlab-demo-content"
+                tabIndex={-1}
+                style={{ height: '100%', outline: 'none' }}
+              >
+                {/* Every lesson inside follows the same choice: NetlabProvider
                   inherits it when a lesson does not name a language itself. */}
-              <I18nProvider locale={locale}>
-                <GalleryLocaleProvider locale={locale}>{children}</GalleryLocaleProvider>
-              </I18nProvider>
-            </main>
-          </ShellChromeProvider>
-          {!embedded && (
-            <>
-              <CommandPalette
-                open={paletteOpen}
-                items={commandItems}
-                onClose={() => setPaletteOpen(false)}
-              />
-              <KeyboardHelpOverlay open={helpOpen} onClose={() => setHelpOpen(false)} />
-            </>
-          )}
-        </NetlabThemeScope>
+                <I18nProvider locale={locale}>
+                  <GalleryLocaleProvider locale={locale}>{children}</GalleryLocaleProvider>
+                </I18nProvider>
+              </main>
+            </ShellChromeProvider>
+            {!embedded && (
+              <>
+                <CommandPalette
+                  open={paletteOpen}
+                  items={commandItems}
+                  onClose={() => setPaletteOpen(false)}
+                />
+                <KeyboardHelpOverlay open={helpOpen} onClose={() => setHelpOpen(false)} />
+              </>
+            )}
+          </NetlabThemeScope>
+        </div>
+        {!embedded && isNarrow && (
+          <NavRail
+            variant="bottom"
+            items={navItems}
+            onOpenBrand={() => selectView('gallery')}
+            onOpenHelp={openHelp}
+          />
+        )}
       </div>
-      {!embedded && isNarrow && (
-        <NavRail
-          variant="bottom"
-          items={navItems}
-          onOpenBrand={() => selectView('gallery')}
-          onOpenHelp={openHelp}
-        />
-      )}
-    </div>
+    </I18nProvider>
   );
 }

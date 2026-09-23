@@ -1,6 +1,5 @@
-import { NetlabProvider } from '../../src/components/NetlabProvider';
-import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import type { NetworkTopology } from '../../src/types/topology';
+import { TaskLesson } from '../components/LessonTask';
 import DemoShell from '../DemoShell';
 
 // Central switch with 4 clients and 1 server arranged in a star
@@ -70,9 +69,19 @@ export const STAR_DEMO_TOPOLOGY = TOPOLOGY;
 export default function StarDemo() {
   return (
     <DemoShell title="Star Topology" desc="Central switch connecting four clients and a server">
-      <NetlabProvider topology={TOPOLOGY}>
-        <NetlabCanvas />
-      </NetlabProvider>
+      <TaskLesson
+        topology={TOPOLOGY}
+        from="client-1"
+        to="server-1"
+        goal={{
+          en: 'Four clients and a server hang off one switch. Send a packet from Client-1 to the Server.',
+          ja: '4 台のクライアントとサーバが 1 台のスイッチにつながっています。Client-1 からサーバへパケットを送りましょう。',
+        }}
+        takeaway={{
+          en: 'Every device reaches every other through the centre switch, and this packet only crosses the links it needs.',
+          ja: 'すべての機器は中央のスイッチを通してお互いに届きます。このパケットが通るのは、必要なリンクだけです。',
+        }}
+      />
     </DemoShell>
   );
 }
