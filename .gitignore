@@ -156,3 +156,6 @@ agents/tasks/active/*
 !agents/tasks/active/.gitkeep
 bin/*
 agents/human/*
+
+# Scratch browser scripts written while verifying UX fixes
+.ux-tmp*/
