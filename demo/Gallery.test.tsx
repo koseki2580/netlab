@@ -200,7 +200,9 @@ describe('demo chrome', () => {
 
     expect(html).toContain('OSPF Convergence');
     expect(html).toContain('Dynamic Routing');
-    expect(html).not.toContain('Three-Tier LAN');
+    // The card is gone — the learning map still names the lesson, because the
+    // map is orientation rather than a search result.
+    expect(html).not.toContain('Client → Switch → Server.');
   });
 
   it('Gallery can mark an initial active sidebar section', () => {

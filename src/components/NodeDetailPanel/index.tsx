@@ -67,7 +67,7 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
   const activeTab = resolveDpTab(dock.persistedTab, visibleTabs, defaultTab);
   const { learnerKind, learnerCopy } = resolveLearnerExplainer(
     panelTarget.target.kind === 'node' ? panelTarget.node : undefined,
-    themeScope?.audience ?? 'pro',
+    themeScope?.audience ?? 'learner',
     t,
   );
 

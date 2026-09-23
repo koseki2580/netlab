@@ -19,6 +19,12 @@ export const CANVAS_LAYER = {
   /** The device or link panel itself, and its resize handle. */
   devicePanel: 201,
   /**
+   * A lesson's pre-flight brief. It is modal — the learner reads it and then
+   * starts — so it sits above the reference panels, which otherwise floated
+   * over the card and swallowed the press on its own start button.
+   */
+  lessonBrief: 250,
+  /**
    * The sandbox edit popover. Above the panels because opening it is the more
    * recent, more deliberate act: right-clicking a link both selects the link,
    * which opens its panel, and opens this over it. At 30 against the panel's

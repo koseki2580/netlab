@@ -1154,12 +1154,36 @@ describe('NodeDetailPanel', () => {
       expect(html).toContain('aria-label="Node detail · R1"');
     });
 
-    it('hides the learner explainer block when audience is "pro" (default)', () => {
+    it('hides the learner explainer block when audience is "pro"', () => {
+      uiMock.selectedNodeId = 'router-1';
+      netlabMock.topology = makeTopology([makeRouterNode()]);
+
+      const html = renderToStaticMarkup(
+        <NetlabThemeScopeContext.Provider
+          value={{
+            theme: {} as never,
+            colorMode: 'dark',
+            palette: 'studio',
+            density: 'standard',
+            audience: 'pro',
+            colorBlindSafe: 'off',
+            contrast: 'normal',
+          }}
+        >
+          <SimulationContext.Provider value={makeSimulationValue()}>
+            <NodeDetailPanel />
+          </SimulationContext.Provider>
+        </NetlabThemeScopeContext.Provider>,
+      );
+      expect(html).not.toContain('data-learner-explainer');
+    });
+
+    it('shows the learner explainer block when no audience is named', () => {
       uiMock.selectedNodeId = 'router-1';
       netlabMock.topology = makeTopology([makeRouterNode()]);
 
       const html = renderMarkup();
-      expect(html).not.toContain('data-learner-explainer');
+      expect(html).toContain('data-learner-explainer="router"');
     });
 
     it('shows the learner explainer block when audience is "learner"', () => {
@@ -1234,8 +1258,10 @@ describe('NodeDetailPanel — canvas-first dock (P2)', () => {
       const root = getDpRoot();
       expect(root.getAttribute('data-dp-mode')).toBe('pinned');
       expect(root.getAttribute('data-dp-width')).toBe('500');
-      // Pinned mode pushes the canvas as a flex sibling — relative positioning.
-      expect(root.style.position).toBe('relative');
+      // A mode remembered from an earlier visit still shows a panel: pinned is
+      // positioned inside the canvas rather than laid out after it.
+      expect(root.style.position).toBe('absolute');
+      expect(root.style.right).toBe('0px');
     });
 
     it('clamps a hydrated width below the floor up to 320', () => {
@@ -1274,7 +1300,11 @@ describe('NodeDetailPanel — canvas-first dock (P2)', () => {
 
       const root = getDpRoot();
       expect(root.getAttribute('data-dp-mode')).toBe('pinned');
-      expect(root.style.position).toBe('relative');
+      // TC-172 — pinned stays inside the canvas. It used to be laid out in
+      // flow, which put it below a full-height canvas and off the screen, and
+      // the mode is remembered, so the panel never came back.
+      expect(root.style.position).toBe('absolute');
+      expect(root.style.right).toBe('0px');
       expect(window.localStorage.getItem(DP_MODE_KEY)).toBe('pinned');
 
       act(() => {

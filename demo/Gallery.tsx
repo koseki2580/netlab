@@ -482,16 +482,23 @@ export function progressTargetIdFor(demo: DemoCard): string {
  * categories, not authored by hand. Each category is a track; each demo a step
  * keyed by `progressTargetIdFor` so it lines up with the progress provider.
  */
-const LEARNING_TRACKS: LearningTrackInput[] = CATEGORIES.map((category) => ({
-  id: category.id,
-  name: category.label,
-  steps: category.demos.map((demo) => ({
-    id: progressTargetIdFor(demo),
-    label: demo.title,
-    path: demo.path,
-    ...(demo.meta?.difficulty ? { difficulty: demo.meta.difficulty } : {}),
-  })),
-}));
+/**
+ * The learning map names every lesson, and it is learner-facing, so it follows
+ * the chosen language: it used to be built once from the English catalogue, so
+ * a Japanese reader met "Gateway HA And Link Aggregation" in their own gallery.
+ */
+function buildLearningTracks(locale: GalleryLocale): LearningTrackInput[] {
+  return CATEGORIES.map((category) => ({
+    id: category.id,
+    name: locale === 'ja' ? (CATEGORY_LABELS_JA[category.id] ?? category.label) : category.label,
+    steps: category.demos.map((demo) => ({
+      id: progressTargetIdFor(demo),
+      label: locale === 'ja' ? (DEMO_COPY_JA[demo.path]?.title ?? demo.title) : demo.title,
+      path: demo.path,
+      ...(demo.meta?.difficulty ? { difficulty: demo.meta.difficulty } : {}),
+    })),
+  }));
+}
 
 type GalleryThemeMode = 'light' | 'dark';
 type GalleryLocale = 'en' | 'ja';
@@ -664,6 +671,10 @@ const SANDBOX_INTROS = [
     desc: 'Guided onboarding on the MTU demo: open the Node tab, lower an MTU, launch traffic, compare baseline and what-if, then continue exploring freely.',
     href: '?sandbox=1&sandboxTab=node&intro=sandbox-intro-mtu#/networking/mtu-fragmentation',
     badge: 'Start Here',
+    titleJa: 'はじめに：サンドボックスの案内',
+    descJa:
+      'MTU のレッスンで操作を案内します。機器タブを開き、MTU を下げて通信を流し、元の状態と「もしも」の結果を比べてから、自由に試してください。',
+    badgeJa: 'はじめに',
   },
   {
     id: 'sandbox-intro-tcp',
@@ -671,6 +682,10 @@ const SANDBOX_INTROS = [
     desc: 'Start a TCP handshake, edit the SYN into a reset, and observe why the connection never establishes.',
     href: '?sandbox=1&sandboxTab=packet&intro=sandbox-intro-tcp#/simulation/tcp-handshake',
     badge: 'Packet Edit',
+    titleJa: 'TCP ハンドシェイクの案内',
+    descJa:
+      'TCP ハンドシェイクを始め、SYN をリセットに書き換えて、なぜ接続が確立しないのかを確かめます。',
+    badgeJa: 'パケットの編集',
   },
   {
     id: 'sandbox-intro-ospf',
@@ -678,6 +693,10 @@ const SANDBOX_INTROS = [
     desc: 'Disable a primary routed link, observe the backup path, add a static route, and confirm traffic converges.',
     href: '?sandbox=1&sandboxTab=node&intro=sandbox-intro-ospf#/routing/ospf-convergence',
     badge: 'Routing Edit',
+    titleJa: 'OSPF の収束の案内',
+    descJa:
+      '主経路のリンクを止めて予備の経路を確かめ、静的経路を足して、通信が収束することを確かめます。',
+    badgeJa: '経路の編集',
   },
   {
     id: 'sandbox-intro-nat',
@@ -685,6 +704,10 @@ const SANDBOX_INTROS = [
     desc: 'Add a DNAT rule on the edge router, launch outside traffic, inspect translation, then remove the rule and retry.',
     href: '?sandbox=1&sandboxTab=node&intro=sandbox-intro-nat#/simulation/nat',
     badge: 'NAT Edit',
+    titleJa: 'NAT の案内',
+    descJa:
+      '境界ルータに DNAT のルールを足して外からの通信を流し、変換を確かめてから、ルールを外してもう一度試します。',
+    badgeJa: 'NAT の編集',
   },
 ] as const;
 
@@ -1044,7 +1067,7 @@ export default function Gallery({
   initialThemeMode = 'light',
   initialActiveSectionId = 'featured',
   initialLocale,
-  initialAudience = 'pro',
+  initialAudience = 'learner',
 }: GalleryProps) {
   const {
     filters,
@@ -1058,7 +1081,6 @@ export default function Gallery({
   } = useGalleryFilters(initialQuery);
   const query = filters.q;
   const navigate = useNavigate();
-  const learningMap = useLearningMap(LEARNING_TRACKS);
   const [themeMode, setThemeMode] = useState<GalleryThemeMode>(() => {
     const fromUrl = readUrlParam('theme');
     if (fromUrl === 'dark' || fromUrl === 'light') return fromUrl;
@@ -1093,6 +1115,8 @@ export default function Gallery({
   const [locale, setLocale] = useState<GalleryLocale>(
     () => initialLocale ?? readStoredGalleryLocale(),
   );
+  const learningTracks = useMemo(() => buildLearningTracks(locale), [locale]);
+  const learningMap = useLearningMap(learningTracks);
   const mainRef = useRef<HTMLElement | null>(null);
   const normalizedQuery = debouncedQ.trim().toLowerCase();
   const activeTheme = themeMode === 'dark' ? NETLAB_DARK_THEME : NETLAB_LIGHT_THEME;
@@ -1102,7 +1126,7 @@ export default function Gallery({
   useUrlParamSync('theme', themeMode, { defaultValue: 'light' });
   useUrlParamSync('palette', palette, { defaultValue: 'studio' });
   useUrlParamSync('density', density, { defaultValue: 'standard' });
-  useUrlParamSync('audience', audience, { defaultValue: 'pro' });
+  useUrlParamSync('audience', audience, { defaultValue: 'learner' });
 
   // Persist axes to localStorage so demo visitors keep their prefs.
   usePersistedAxis('netlab-theme-mode', themeMode);
@@ -1120,8 +1144,16 @@ export default function Gallery({
     colorBlindSafe,
     contrast,
   };
+  // Pressing a theme is a choice even when it is the one already showing. The
+  // gallery opens light and a lesson opened with nothing stored is dark, so a
+  // learner who pressed Light — already highlighted — and then opened a lesson
+  // got a dark one: the press changed no state, so nothing was remembered.
+  const chooseThemeMode = (mode: GalleryThemeMode) => {
+    persistAxis('netlab-theme-mode', mode);
+    setThemeMode(mode);
+  };
   const handleSettingsChange = (next: GallerySettings) => {
-    if (next.themeMode !== themeMode) setThemeMode(next.themeMode);
+    if (next.themeMode !== themeMode) chooseThemeMode(next.themeMode);
     if (next.palette !== palette) setPalette(next.palette);
     if (next.density !== density) setDensity(next.density);
     if (next.audience !== audience) setAudience(next.audience);
@@ -1452,7 +1484,7 @@ export default function Gallery({
                 </span>
                 <AudiencePill variant="learning" value={audience} onChange={setAudience} />
               </div>
-              <ThemeModeToggle themeMode={themeMode} onChange={setThemeMode} />
+              <ThemeModeToggle themeMode={themeMode} onChange={chooseThemeMode} />
               <SettingsPopover settings={settings} onChange={handleSettingsChange} />
               <LocaleToggle locale={locale} label={copy.localeLabel} onChange={setLocale} />
             </div>

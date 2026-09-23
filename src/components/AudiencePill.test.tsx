@@ -71,11 +71,12 @@ describe('AudiencePill', () => {
     window.addEventListener('netlab:audience', handler);
 
     render(<AudiencePill />);
-    click(radio('learner'));
+    // `learner` is the default, so `pro` is the choice that changes something.
+    click(radio('pro'));
 
-    expect(window.localStorage.getItem('netlab-audience')).toBe('learner');
-    expect(new URLSearchParams(window.location.search).get('audience')).toBe('learner');
-    expect(received).toContain('learner');
+    expect(window.localStorage.getItem('netlab-audience')).toBe('pro');
+    expect(new URLSearchParams(window.location.search).get('audience')).toBe('pro');
+    expect(received).toContain('pro');
 
     window.removeEventListener('netlab:audience', handler);
   });
@@ -92,8 +93,8 @@ describe('AudiencePill', () => {
         <Probe />
       </>,
     );
-    expect(observed).toBe('pro');
-    click(radio('learner'));
     expect(observed).toBe('learner');
+    click(radio('pro'));
+    expect(observed).toBe('pro');
   });
 });

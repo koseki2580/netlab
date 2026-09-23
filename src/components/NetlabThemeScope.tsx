@@ -19,7 +19,7 @@ export interface NetlabThemeScopeValue {
   palette: NetlabPalette;
   /** Resolved density axis. Defaults to `standard`. */
   density: NetlabDensity;
-  /** Resolved audience axis. Defaults to `pro`. */
+  /** Resolved audience axis. Defaults to `learner`. */
   audience: NetlabAudience;
   /** Resolved color-blind-safe axis. Defaults to `off`. */
   colorBlindSafe: NetlabCbSafe;
@@ -50,7 +50,7 @@ export function NetlabThemeScope({
   theme,
   palette = 'studio',
   density = 'standard',
-  audience = 'pro',
+  audience = 'learner',
   colorBlindSafe = 'off',
   contrast = 'normal',
   style,

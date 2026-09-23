@@ -97,7 +97,13 @@ export function PacketViewerPanel({ floating = false }: PacketViewerPanelProps) 
   return (
     <div
       data-testid="packet-viewer-panel"
-      style={floating ? { ...PANEL, ...FLOATING_PANEL } : PANEL}
+      style={{
+        ...(floating ? { ...PANEL, ...FLOATING_PANEL } : PANEL),
+        // With nothing selected this is a hint, not a control. Left clickable
+        // it covered whatever was behind it — a lesson's brief, its caption —
+        // and swallowed presses meant for them.
+        ...(selectedHop ? {} : { pointerEvents: 'none' as const }),
+      }}
     >
       <div style={LABEL}>{t('simulation.viewer.heading')}</div>
 

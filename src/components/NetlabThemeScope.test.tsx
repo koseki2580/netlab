@@ -63,7 +63,7 @@ describe('NetlabThemeScope', () => {
     expect(scope?.style.background).toBe('var(--netlab-bg-primary)');
   });
 
-  it('defaults theme axis data-attributes to studio / standard / pro', () => {
+  it('defaults theme axis data-attributes to studio / standard / learner', () => {
     render(
       <NetlabThemeScope theme={NETLAB_LIGHT_THEME}>
         <div>content</div>
@@ -74,7 +74,7 @@ describe('NetlabThemeScope', () => {
     expect(scope).not.toBeNull();
     expect(scope?.dataset.netlabPalette).toBe('studio');
     expect(scope?.dataset.netlabDensity).toBe('standard');
-    expect(scope?.dataset.netlabAudience).toBe('pro');
+    expect(scope?.dataset.netlabAudience).toBe('learner');
   });
 
   it('emits data-netlab-* attributes + density tokens when axes are provided', () => {

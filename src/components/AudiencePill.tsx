@@ -31,7 +31,9 @@ function readAudience(): NetlabAudience {
   } catch {
     /* SSR / private mode — fall through to default */
   }
-  return 'pro';
+  // Someone who has said nothing is read as a learner: the brief opens in full
+  // and the device panel explains itself. `pro` is what a reader opts into.
+  return 'learner';
 }
 
 function persistAudience(value: NetlabAudience): void {

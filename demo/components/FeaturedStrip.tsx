@@ -1,9 +1,15 @@
+import { useT } from '../localeContext';
+
 interface SandboxIntro {
   id: string;
   title: string;
   desc: string;
   href: string;
   badge: string;
+  /** The same card in Japanese; the strip is learner-facing, so it follows the language. */
+  titleJa: string;
+  descJa: string;
+  badgeJa: string;
 }
 
 interface FeaturedStripProps {
@@ -11,6 +17,7 @@ interface FeaturedStripProps {
 }
 
 export function FeaturedStrip({ intros }: FeaturedStripProps) {
+  const t = useT();
   const [featured, ...rest] = intros;
   if (!featured) return null;
 
@@ -52,7 +59,7 @@ export function FeaturedStrip({ intros }: FeaturedStripProps) {
             color: 'var(--netlab-text-primary)',
           }}
         >
-          Start here
+          {t('Start here', 'ここから始める')}
         </span>
         <span
           style={{
@@ -61,7 +68,7 @@ export function FeaturedStrip({ intros }: FeaturedStripProps) {
             color: 'var(--netlab-text-muted)',
           }}
         >
-          — recommended entry points
+          {t('— recommended entry points', '— おすすめの入口')}
         </span>
         <span
           style={{
@@ -70,7 +77,7 @@ export function FeaturedStrip({ intros }: FeaturedStripProps) {
             color: 'var(--netlab-text-muted)',
           }}
         >
-          {intros.length} demos
+          {t(`${intros.length} demos`, `${intros.length} 件`)}
         </span>
       </div>
 
@@ -126,7 +133,7 @@ export function FeaturedStrip({ intros }: FeaturedStripProps) {
               marginBottom: 12,
             }}
           >
-            Recommended · 5 min
+            {t('Recommended · 5 min', 'おすすめ · 5 分')}
           </div>
           <div
             style={{
@@ -136,7 +143,7 @@ export function FeaturedStrip({ intros }: FeaturedStripProps) {
               marginBottom: 8,
             }}
           >
-            {featured.title}
+            {t(featured.title, featured.titleJa)}
           </div>
           <p
             style={{
@@ -146,7 +153,7 @@ export function FeaturedStrip({ intros }: FeaturedStripProps) {
               marginBottom: 16,
             }}
           >
-            {featured.desc}
+            {t(featured.desc, featured.descJa)}
           </p>
           <div style={{ display: 'flex', gap: 10, fontSize: 12 }}>
             <span
@@ -161,7 +168,7 @@ export function FeaturedStrip({ intros }: FeaturedStripProps) {
                 fontWeight: 700,
               }}
             >
-              Open intro →
+              {t('Open intro →', '案内を開く →')}
             </span>
           </div>
         </a>
@@ -221,7 +228,7 @@ export function FeaturedStrip({ intros }: FeaturedStripProps) {
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {intro.title}
+                  {t(intro.title, intro.titleJa)}
                 </div>
                 <div
                   style={{
@@ -232,7 +239,7 @@ export function FeaturedStrip({ intros }: FeaturedStripProps) {
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {intro.badge}
+                  {t(intro.badge, intro.badgeJa)}
                 </div>
               </div>
               <span style={{ color: 'var(--netlab-text-muted)', fontSize: 14 }}>›</span>

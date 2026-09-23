@@ -138,6 +138,12 @@ function OspfConvergenceInner({
   // Reactive (Q7): the terminal-surface pill broadcasts netlab:audience, so the
   // PreFlightBrief full/strip mode switches live without a reload.
   const audience = useAudience();
+  // A guided intro or an assessment opened from the gallery brings its own
+  // instructions; the lesson's brief would cover them.
+  const guided = (() => {
+    const search = new URLSearchParams(window.location.search);
+    return search.has('intro') || search.has('assessment');
+  })();
 
   // R5 — acknowledge the mode switch with a toast (skip the initial mount so a
   // page load is silent).
@@ -466,17 +472,22 @@ function OspfConvergenceInner({
                   )}
                 </div>
               </div>
-              <PreFlightBrief
-                scenarioId="ospf-convergence"
-                {...(locale === 'ja' && BRIEF_JA ? { brief: BRIEF_JA } : {})}
-                audience={audience}
-                isLastStep={isLastStep}
-                onAction={(actionId) => {
-                  if (actionId === 'gallery') void navigate('/');
-                  else if (actionId === 'fork') handleFork();
-                }}
-                conclusionExtra={<NextScenarioRail next={nextScenarios} onOpen={openScenario} />}
-              />
+              {/* A guided intro or an assessment is the more specific guidance
+                  the learner asked for; two greetings at once talk over each
+                  other, and the brief is modal. */}
+              {!guided && (
+                <PreFlightBrief
+                  scenarioId="ospf-convergence"
+                  {...(locale === 'ja' && BRIEF_JA ? { brief: BRIEF_JA } : {})}
+                  audience={audience}
+                  isLastStep={isLastStep}
+                  onAction={(actionId) => {
+                    if (actionId === 'gallery') void navigate('/');
+                    else if (actionId === 'fork') handleFork();
+                  }}
+                  conclusionExtra={<NextScenarioRail next={nextScenarios} onOpen={openScenario} />}
+                />
+              )}
             </div>
             <PacketScrubTimeline ownKeyboard={false} />
           </div>

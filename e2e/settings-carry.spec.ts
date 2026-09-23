@@ -56,3 +56,27 @@ test('a lesson follows the theme chosen in the gallery, either way', async ({ pa
   expect(await chooseThenOpen('dark'), 'choosing Dark gives a dark lesson').toBeLessThan(80);
   expect(await chooseThenOpen('light'), 'choosing Light gives a light lesson').toBeGreaterThan(180);
 });
+
+/**
+ * TC-178 — pressing the theme that is already showing still counts as a choice.
+ *
+ * The gallery opens light with Light highlighted. A learner who pressed it to
+ * be sure, then opened a lesson, got a dark lesson: the press changed no state,
+ * and only changes were remembered. The first click into a lesson flipped the
+ * whole app from light to dark, and the control meant to prevent it did nothing.
+ */
+test('pressing the highlighted Light still gives a light lesson', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.goto('/#/');
+  await expect(page.getByTestId(SEL.gallery.heading)).toBeVisible();
+
+  await page.getByTestId(SEL.gallery.themeMode('light')).click();
+  await page.goto('/#/routing/client-server');
+  await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+  await page.waitForTimeout(400);
+
+  expect(
+    brightness(await lessonBackground(page)),
+    'the lesson follows the Light that was pressed',
+  ).toBeGreaterThan(180);
+});

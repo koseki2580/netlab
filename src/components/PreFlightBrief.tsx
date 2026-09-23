@@ -4,6 +4,7 @@ import { useI18n } from '../i18n/useI18n';
 import { getScenarioBrief } from '../scenarios';
 import type { BriefConclusion, BriefWatchPoint, ScenarioBrief } from '../scenarios/types';
 import type { NetlabAudience } from '../theme';
+import { CANVAS_LAYER } from './canvasLayers';
 
 export interface PreFlightBriefProps {
   /** Scenario id — used to resolve the brief (when `brief` is omitted) and to key persistence. */
@@ -185,7 +186,7 @@ export function PreFlightBrief({
 const SCRIM_STYLE: React.CSSProperties = {
   position: 'absolute',
   inset: 0,
-  zIndex: 40,
+  zIndex: CANVAS_LAYER.lessonBrief,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -316,7 +317,9 @@ function BriefFullCard({ brief, onStart }: { brief: ScenarioBrief; onStart: () =
               padding: '7px 16px',
               borderRadius: 8,
               cursor: 'pointer',
-              color: 'var(--netlab-bg-primary)',
+              // White, not the page background: dark text on the accent blue
+              // reads 3.45:1, and this card is the first thing a learner sees.
+              color: '#ffffff',
               background: 'var(--netlab-accent-blue)',
               border: '1px solid var(--netlab-accent-blue)',
             }}
@@ -524,7 +527,7 @@ function BriefConclusionCard({
                 padding: '6px 12px',
                 borderRadius: 8,
                 cursor: 'pointer',
-                color: primary ? 'var(--netlab-bg-primary)' : 'var(--netlab-text-secondary)',
+                color: primary ? '#ffffff' : 'var(--netlab-text-secondary)',
                 background: primary ? 'var(--netlab-accent-blue)' : 'transparent',
                 border: `1px solid ${
                   primary ? 'var(--netlab-accent-blue)' : 'var(--netlab-border)'
