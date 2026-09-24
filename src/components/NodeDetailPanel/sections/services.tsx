@@ -4,6 +4,7 @@ import type { MulticastTableEntry } from '../../../layers/l2-datalink/MulticastT
 import type { DhcpLeaseState, DnsCache } from '../../../types/services';
 import type { UdpBindings } from '../../../types/udp';
 import { vlanColor } from '../_colors';
+import { maskToPrefix } from '../hostSettings';
 import { ROW_STYLE, SECTION_HEADER_STYLE } from '../_styles';
 
 export function DhcpLeaseDetail({ lease }: { lease: DhcpLeaseState }) {
@@ -23,6 +24,19 @@ export function DhcpLeaseDetail({ lease }: { lease: DhcpLeaseState }) {
             {t('simulation.nodeDetail.dhcp.assignedIp')}
           </span>
           <span style={{ color: 'var(--netlab-text-primary)' }}>{lease.assignedIp}</span>
+        </div>
+      )}
+      {lease.subnetMask && (
+        <div data-testid="dp-dhcp-lease-mask" style={ROW_STYLE}>
+          <span style={{ color: 'var(--netlab-text-secondary)', minWidth: 110 }}>
+            {t('simulation.nodeDetail.dhcp.subnetMask')}
+          </span>
+          <span style={{ color: 'var(--netlab-text-primary)' }}>{lease.subnetMask}</span>
+          {maskToPrefix(lease.subnetMask) !== undefined && (
+            <span style={{ color: 'var(--netlab-text-muted)' }}>
+              /{maskToPrefix(lease.subnetMask)}
+            </span>
+          )}
         </div>
       )}
       {lease.serverIp && (

@@ -1697,3 +1697,88 @@ describe('NodeDetailPanel — overview, header and chrome for a learner', () => 
     expect(container?.querySelector('[data-netlab-dp]')?.getAttribute('data-dp-width')).toBe('436');
   });
 });
+
+describe('NodeDetailPanel — a host reads like the IP settings screen a learner knows', () => {
+  function openOverview(simulationValue = makeSimulationValue()) {
+    window.localStorage.setItem('netlab_dp_tab', 'overview');
+    renderDom(simulationValue);
+    const content = container?.querySelector<HTMLElement>('[data-netlab-dp-content]');
+    if (!content) throw new Error('panel content not rendered');
+    return content;
+  }
+  const row = (content: HTMLElement, id: string) =>
+    content.querySelector(`[data-testid="dp-host-setting-${id}"]`)?.textContent ?? null;
+
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  it('shows the mask and default gateway that the router on its LAN gives a static host', () => {
+    uiMock.selectedNodeId = 'client-1';
+    netlabMock.topology = makeTopology([makeClientNode(), makeSwitchNode(), makeRouterNode()], {
+      edges: [
+        { id: 'e1', source: 'client-1', target: 'switch-1' },
+        { id: 'e2', source: 'switch-1', target: 'router-1' },
+      ],
+    });
+
+    const content = openOverview();
+
+    expect(row(content, 'ip')).toContain('10.0.0.10');
+    expect(row(content, 'mask')).toContain('255.255.255.0');
+    expect(row(content, 'mask')).toContain('/24');
+    expect(row(content, 'gateway')).toContain('10.0.0.1');
+  });
+
+  it('says the default gateway is not set, rather than hiding it, when no router serves the host', () => {
+    uiMock.selectedNodeId = 'client-1';
+    netlabMock.topology = makeTopology([makeClientNode(), makeSwitchNode()], {
+      edges: [{ id: 'e1', source: 'client-1', target: 'switch-1' }],
+      areas: [
+        {
+          id: 'lan',
+          name: 'LAN',
+          type: 'private',
+          subnet: '10.0.0.0/16',
+          devices: ['client-1'],
+        } as NetworkTopology['areas'][number],
+      ],
+    });
+
+    const content = openOverview();
+
+    expect(row(content, 'gateway')).toContain('Not set');
+    // The area the host sits in still tells us its mask.
+    expect(row(content, 'mask')).toContain('255.255.0.0');
+    expect(row(content, 'dns')).toBeNull();
+  });
+
+  it('shows what a DHCP lease handed out as the host settings, and the mask in the lease', () => {
+    uiMock.selectedNodeId = 'client-1';
+    netlabMock.topology = makeTopology([makeClientNode()]);
+
+    const content = openOverview(
+      makeSimulationValue({
+        getDhcpLeaseState: () => ({
+          status: 'bound',
+          transactionId: 1,
+          assignedIp: '192.168.1.100',
+          serverIp: '192.168.1.1',
+          subnetMask: '255.255.255.0',
+          defaultGateway: '192.168.1.254',
+          dnsServerIp: '192.168.1.53',
+        }),
+      }),
+    );
+
+    expect(row(content, 'ip')).toContain('192.168.1.100');
+    expect(row(content, 'mask')).toContain('255.255.255.0');
+    expect(row(content, 'mask')).toContain('/24');
+    expect(row(content, 'gateway')).toContain('192.168.1.254');
+    expect(row(content, 'dns')).toContain('192.168.1.53');
+    const leaseMask =
+      content.querySelector('[data-testid="dp-dhcp-lease-mask"]')?.textContent ?? '';
+    expect(leaseMask).toContain('Subnet Mask');
+    expect(leaseMask).toContain('255.255.255.0');
+  });
+});

@@ -2,6 +2,7 @@ import type { Catalog } from '../types';
 import { annotations } from './en/annotations';
 import { assessment } from './en/assessment';
 import { canvasPanel } from './en/canvasPanel';
+import { detailPanel } from './en/detailPanel';
 import { edits } from './en/edits';
 import { editor } from './en/editor';
 import { intro } from './en/intro';
@@ -29,5 +30,6 @@ export const en: Catalog = {
   ...snapshots,
   ...simulation,
   ...canvasPanel,
+  ...detailPanel,
   ...lessonPanels,
 } as const;

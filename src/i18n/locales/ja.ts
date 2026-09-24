@@ -2,6 +2,7 @@ import type { Catalog } from '../types';
 import { annotations } from './ja/annotations';
 import { assessment } from './ja/assessment';
 import { canvasPanel } from './ja/canvasPanel';
+import { detailPanel } from './ja/detailPanel';
 import { edits } from './ja/edits';
 import { editor } from './ja/editor';
 import { intro } from './ja/intro';
@@ -27,5 +28,6 @@ export const ja: Catalog = {
   ...snapshots,
   ...simulation,
   ...canvasPanel,
+  ...detailPanel,
   ...lessonPanels,
 } as const;

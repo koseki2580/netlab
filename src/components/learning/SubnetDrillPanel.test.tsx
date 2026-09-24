@@ -120,6 +120,35 @@ describe('SubnetDrillPanel session', () => {
     expect(document.activeElement).not.toBe(testid('subnet-drill-input'));
   });
 
+  it('opens the primer with the plain /24 rule, then /16, and only then the bit-level detail', () => {
+    act(() =>
+      root?.render(
+        <I18nProvider locale="ja">
+          <SubnetDrillPanel seed={SEED} />
+        </I18nProvider>,
+      ),
+    );
+    const body = testid('subnet-drill-primer-body');
+    const lines = Array.from(body?.children ?? []);
+    expect(lines[0]?.getAttribute('data-testid')).toBe('subnet-drill-primer-rule');
+    expect(lines[0]?.textContent).toContain(
+      '/24（マスク 255.255.255.0）なら最初の 3 つの数がネットワーク',
+    );
+    expect(lines[0]?.textContent).toContain('ネットワークの部分が同じなら同じネットワーク');
+    expect(lines[1]?.textContent).toContain('/16');
+    const bits = testid('subnet-drill-primer-bits');
+    expect(bits?.textContent).toContain('2^(ホストビット数) − 2');
+    expect(lines.indexOf(bits as Element)).toBeGreaterThan(1);
+  });
+
+  it('keeps the same order in English', () => {
+    act(() => root?.render(<SubnetDrillPanel seed={SEED} />));
+    expect(testid('subnet-drill-primer-rule')?.textContent).toContain(
+      'With /24 (mask 255.255.255.0)',
+    );
+    expect(testid('subnet-drill-primer-bits')?.textContent).toContain('2^(host bits) − 2');
+  });
+
   it('still does not steal focus under StrictMode (effects run twice)', () => {
     // The demo mounts in StrictMode, where the mount effect is replayed. A boolean
     // "have we mounted" guard survives that replay and focuses on first render,

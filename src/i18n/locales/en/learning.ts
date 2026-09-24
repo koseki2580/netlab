@@ -18,6 +18,11 @@ export const learning: Catalog = {
   // Subnetting drill
   'learning.subnet.title': 'Subnetting Practice',
   'learning.subnet.primer.title': 'New to subnetting? Start here',
+  'learning.subnet.primer.rule24':
+    'With /24 (mask 255.255.255.0) the first 3 numbers are the network and the last number is the device. If the network part matches, the addresses are on the same network. For example, 192.168.1.10 and 192.168.1.20 are on the same network; 192.168.2.10 is on a different one.',
+  'learning.subnet.primer.rule16':
+    'With /16 (mask 255.255.0.0) the first 2 numbers are the network and the last 2 are the device. For example, 10.1.5.7 and 10.1.200.3 are on the same network.',
+  'learning.subnet.primer.bitsLead': 'Going further (in bits)',
   'learning.subnet.primer.body':
     'A subnet splits an address into a network part (the prefix, e.g. /24) and a host part. The network address has all host bits 0; the broadcast has them all 1. Usable hosts = 2^(host bits) − 2 (network and broadcast are not assignable). The mask marks the network bits with 1s, so /24 = 255.255.255.0.',
   'learning.subnet.answerLabel': 'Your answer',

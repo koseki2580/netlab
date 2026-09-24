@@ -5,6 +5,7 @@ import type { SimulationContextValue } from '../../../simulation/SimulationConte
 import type { NetlabNode, NetworkTopology } from '../../../types/topology';
 import { networkAddress } from '../../../utils/cidr';
 import { ROW_STYLE, SECTION_HEADER_STYLE } from '../_styles';
+import { resolveHostSettings } from '../hostSettings';
 import { HostDetail } from '../sections/HostDetail';
 import {
   DhcpLeaseDetail,
@@ -207,7 +208,10 @@ export const OverviewTab = memo(function OverviewTab({
       )}
       {(role === 'client' || role === 'server') && (
         <>
-          <HostDetail data={data} {...(runtimeIp !== undefined ? { runtimeIp } : {})} />
+          <HostDetail
+            data={data}
+            settings={resolveHostSettings(node, topology, leaseState, runtimeIp)}
+          />
           {leaseState && <DhcpLeaseDetail lease={leaseState} />}
           {dnsCache && <DnsCacheDetail cache={dnsCache} />}
           {udpBindings && <UdpBindingsDetail bindings={udpBindings} />}

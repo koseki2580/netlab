@@ -172,7 +172,20 @@ export function SubnetDrillPanel({ seed = Date.now() }: { seed?: number }) {
         </div>
 
         <ConceptCallout idPrefix="subnet-drill" title={t('learning.subnet.primer.title')}>
-          {t('learning.subnet.primer.body')}
+          {/* The plain rule first — every beginner in the trial skipped a primer
+              that opened with host bits and 2^n − 2. The bit-level view follows. */}
+          <div data-testid="subnet-drill-primer-body" style={{ display: 'grid', gap: 8 }}>
+            <p data-testid="subnet-drill-primer-rule" style={{ margin: 0 }}>
+              {t('learning.subnet.primer.rule24')}
+            </p>
+            <p style={{ margin: 0 }}>{t('learning.subnet.primer.rule16')}</p>
+            <p data-testid="subnet-drill-primer-bits" style={{ margin: 0 }}>
+              <strong style={{ color: 'var(--netlab-text-primary)' }}>
+                {t('learning.subnet.primer.bitsLead')}
+              </strong>{' '}
+              {t('learning.subnet.primer.body')}
+            </p>
+          </div>
         </ConceptCallout>
 
         <label
