@@ -62,6 +62,18 @@ export const lessonPanels: Catalog = {
   'simulation.panelGloss.filterHint':
     '使える項目: protocol, ip.src, ip.dst, ip.addr, tcp.port, udp.port, eth.addr。&&（かつ）や ||（または）でつなげます。',
 
+  // Simulation controls on a lesson that sends with its own buttons.
+  'simulation.controls.statusIdleLessonButtons': 'レッスンのボタンで送ると始まります',
+
+  // Step control walking an exchange recorded as several traces.
+  'simulation.steps.exchangePosition': '{{total}} 通中 {{current}} 通目：{{label}}',
+  'simulation.steps.statusNextTrace':
+    'この通信は終わりました（全 {{total}} ホップ）。「次のステップ」で次の {{label}} へ進みます',
+
+  // Route table: the row the current router hop used, and why.
+  'simulation.routeTable.used': '✓ 使用',
+  'simulation.routeTable.verdictLabel': '{{dstIp}} 宛てのパケット：',
+
   'simulation.verdict.matched':
     '{{destination}} に一致したので {{nextHop}} へ送ります（{{protocol}}、AD={{adminDistance}}）',
   'simulation.verdict.fallback':

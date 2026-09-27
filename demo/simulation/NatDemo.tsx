@@ -220,7 +220,24 @@ function NatDemoInner() {
           </div>
         </div>
 
-        <SimulationControls />
+        <div
+          data-testid="nat-controls-note"
+          style={{
+            padding: '6px 12px',
+            fontSize: 11,
+            lineHeight: 1.5,
+            color: 'var(--netlab-text-secondary)',
+            borderTop: '1px solid var(--netlab-bg-surface)',
+          }}
+        >
+          {t(
+            'The controls below replay the last send hop by hop (▶ play, → one step). ⟳ reset also empties the NAT table, so use it only to start over.',
+            '下の操作で、最後に送ったパケットを1ホップずつ見直せます（▶ 再生、→ 1ステップ）。⟳ リセットは NAT の変換表も空にするので、最初からやり直すときだけ使います。',
+          )}
+        </div>
+        {/* No generic send here: it resets the engine, which empties the NAT
+            table, so the sharing the lesson's own buttons built up vanished. */}
+        <SimulationControls showSend={false} />
       </ResizableSidebar>
     </div>
   );

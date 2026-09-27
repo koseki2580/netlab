@@ -66,6 +66,18 @@ export const lessonPanels: Catalog = {
   'simulation.panelGloss.filterHint':
     'Fields: protocol, ip.src, ip.dst, ip.addr, tcp.port, udp.port, eth.addr. Join with && (and) or || (or).',
 
+  // Simulation controls on a lesson that sends with its own buttons.
+  'simulation.controls.statusIdleLessonButtons': 'Send with the lesson’s buttons to begin',
+
+  // Step control walking an exchange recorded as several traces.
+  'simulation.steps.exchangePosition': 'Message {{current}} of {{total}}: {{label}}',
+  'simulation.steps.statusNextTrace':
+    'This message is done ({{total}} hops). Next step goes on to {{label}}.',
+
+  // Route table: the row the current router hop used, and why.
+  'simulation.routeTable.used': '✓ used',
+  'simulation.routeTable.verdictLabel': 'Packet to {{dstIp}}:',
+
   // Routing verdict shown under the step simulation and the hop inspector.
   'simulation.verdict.matched':
     'Matched {{destination}} via {{nextHop}} ({{protocol}}, AD={{adminDistance}})',

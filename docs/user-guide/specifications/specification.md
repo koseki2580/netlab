@@ -154,6 +154,19 @@ and the gallery — each already has its own tests and docs.
   client–server and UDP lessons MUST each explain their mechanism beside the
   controls and state what a run did. NAT MUST show two machines sharing one
   global address.
+- **REQ-063 (MUST):** The diagram MUST tell the story without the side panels:
+  a marker MUST travel each hop the learner is on (placed, not animated, for
+  reduced-motion viewers); a host MUST show its IP address; an ARP question and
+  answer, a NAT rewrite and a drop MUST appear at the device, in words rather
+  than codes; and the drawing MUST be framed clear of every panel marked as an
+  overlay.
+- **REQ-064 (MUST):** A lesson MUST NOT show a state before it happens or hide
+  the evidence it just produced: TCP's states follow the step being shown; the
+  UDP lesson states the packet size limit honestly; the route row a router used
+  is marked; the NAT lesson keeps both translations; stepping walks every
+  message of an exchange; and a host's panel reads like its network settings —
+  IP address, mask, default gateway (「未設定」 when there is none) and DNS
+  server — with a DHCP lease listing the mask it gave.
 - **REQ-051 (MUST):** The product MUST ship a user guide that works opened
   straight from disk, with no server and no network, and that can be read in
   Japanese and in English, searched, and read in a light or a dark theme. It
@@ -457,6 +470,17 @@ not part of this specification.
   "previous step", then the previous step opens again; and given the subnetting
   page, when it opens, then its "same network or not?" starter is on the first
   screen.
+- **AC-080:** Given a packet on the client–server lesson, when the learner steps
+  through it, then the marker rests on each hop's device in turn; a host shows
+  its IP; the ARP lesson shows the question bubble; the NAT lesson shows the
+  rewrite bubble.
+- **AC-081:** Given the TCP, UDP, client–server, NAT and DHCP/DNS lessons, when
+  their tasks are run and stepped, then states follow the step, the size limit
+  is explained, the used route row is marked, both NAT rows remain, and every
+  DHCP and DNS message is stepped.
+- **AC-082:** Given a host opened on a lesson, when its overview is read, then
+  it lists IP address, mask and default gateway; after DHCP, the lease lists
+  the mask; and the subnetting primer opens with the /24 rule.
 - **AC-054:** Given any lesson in either theme, when its text contrast is
   checked, then text whose contrast the accessibility scanner could not decide
   is measured directly and clears WCAG AA — 4.5:1, or 3:1 for large text.
@@ -679,6 +703,15 @@ not part of this specification.
 | TC-199    | AC-078     | E2E           | The DHCP/DNS lesson in Japanese                                                                | DHCP is run, then DNS                                                             | The address given and web.example.com → 192.168.1.10 are stated                               | `e2e/lesson-dhcp-dns-result.spec.ts`                                         |
 | TC-200    | AC-079     | E2E           | The course at step 2                                                                           | "Previous step" is pressed                                                        | Step 1 is shown again; step 1 offers no "previous"                                            | `e2e/course-back-and-starter.spec.ts`                                        |
 | TC-201    | AC-079     | E2E           | The subnetting page in Japanese                                                                | It is opened                                                                      | The starter card is visible without scrolling                                                 | `e2e/course-back-and-starter.spec.ts`                                        |
+| TC-202    | AC-076     | Unit          | Every level of the final test                                                                  | Its questions and path are checked                                                | Ten questions each, all taught by a real lesson on that level's path                          | `demo/course/examQuestions.test.ts`                                          |
+| TC-203    | AC-080     | E2E           | The client–server, ARP and NAT lessons                                                         | A packet is sent and stepped                                                      | Marker follows hops; host IPs shown; ARP and NAT bubbles in words                             | `e2e/canvas-packet-story.spec.ts`                                            |
+| TC-204    | AC-081     | E2E           | The TCP lesson                                                                                 | The handshake is stepped                                                          | States move SYN_SENT → SYN_RECEIVED → ESTABLISHED with the steps                              | `e2e/lesson-tcp-states.spec.ts`                                              |
+| TC-205    | AC-081     | E2E           | The UDP lesson                                                                                 | 4000 bytes are sent                                                               | The 4028-byte size and the MTU are explained honestly                                         | `e2e/lesson-udp-size.spec.ts`                                                |
+| TC-206    | AC-081     | E2E           | The client–server lesson                                                                       | R-1's forwarding hop is shown                                                     | The used route row is marked and the match stated                                             | `e2e/lesson-route-row.spec.ts`                                               |
+| TC-207    | AC-081     | E2E           | The NAT lesson after both clients send                                                         | The learner steps and replays                                                     | Both translations stay; no generic send resets them                                           | `e2e/lesson-nat-keeps-table.spec.ts`                                         |
+| TC-208    | AC-081     | E2E           | The DHCP/DNS lesson                                                                            | DHCP, then DNS, are stepped                                                       | Every message is walked in order, with its position shown                                     | `e2e/lesson-dhcp-dns-steps.spec.ts`                                          |
+| TC-209    | AC-082     | E2E           | A host on client–server; the DHCP client after DHCP                                            | Their overviews are read                                                          | IP, mask, gateway shown; the lease lists the mask                                             | `e2e/device-panel-settings.spec.ts`                                          |
+| TC-210    | AC-082     | E2E           | The subnetting drill                                                                           | Its primer is opened                                                              | The first line is the /24 rule                                                                | `e2e/subnet-primer.spec.ts`                                                  |
 | TC-038    | AC-031     | E2E           | The gallery's theme setting                                                                    | A theme is chosen, then a lesson opened                                           | The lesson follows the choice, and an unmade choice changes nothing                           | `e2e/settings-carry.spec.ts`                                                 |
 | TC-037    | AC-030     | E2E           | An interactive canvas                                                                          | The learner tabs to a device and presses Enter                                    | The device is focusable, named, and opens                                                     | `e2e/canvas-keyboard.spec.ts`                                                |
 | TC-036    | AC-029     | E2E           | A laptop display, and the sandbox                                                              | The same lesson is worked through, and a device is edited and the edit taken back | Every control is pressable and every result appears                                           | `e2e/user-journey.spec.ts`                                                   |
@@ -821,3 +854,5 @@ with no criterion or no test is shown as such rather than given one.
 | REQ-060     | AC-075                         | TC-184                                                                                         | `e2e/progress-course.spec.ts`                                                                                                                                         | Getting started     | Verified |
 | REQ-061     | AC-076                         | TC-196, TC-197                                                                                 | `demo/course/examQuestions.test.ts`<br>`e2e/course-exam.spec.ts`                                                                                                      | Getting started     | Verified |
 | REQ-062     | AC-077, AC-078                 | TC-198, TC-199                                                                                 | `e2e/lesson-nat-sharing.spec.ts`<br>`e2e/lesson-dhcp-dns-result.spec.ts`                                                                                              | Getting started     | Verified |
+| REQ-063     | AC-080                         | TC-203                                                                                         | `e2e/canvas-packet-story.spec.ts`                                                                                                                                     | Reading a lesson    | Verified |
+| REQ-064     | AC-081, AC-082                 | TC-204, TC-205, TC-206, TC-207, TC-208, TC-209, TC-210                                         | `e2e/lesson-*.spec.ts`<br>`e2e/device-panel-settings.spec.ts`<br>`e2e/subnet-primer.spec.ts`                                                                          | Reading a lesson    | Verified |

@@ -145,7 +145,7 @@ export const DEMO_COPY_JA: Readonly<Record<string, DemoCopyJa>> = {
   },
   '/networking/udp': {
     title: 'UDP のデータグラム',
-    desc: 'ハンドシェイクなしで UDP を1つ送ります。ポートやペイロードを変えたり、大きなデータで分割を起こしたりできます。',
+    desc: 'ハンドシェイクなしで UDP を1つ送ります。ポートやペイロードを変えたり、大きなデータを送ってパケットの大きさの上限（MTU）を確かめたりできます。',
   },
   '/networking/http': {
     title: 'HTTP/1.1',

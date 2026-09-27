@@ -150,11 +150,21 @@ function DhcpDnsDemoInner() {
   const [lease, setLease] = useState<DhcpLeaseState | null>(null);
   const [resolved, setResolved] = useState<{ name: string; address: string } | null>(null);
 
+  // Each run records its exchange as several traces and leaves the last one
+  // selected. Start the step-through at the first message instead, so stepping
+  // walks the whole exchange in order (the step control carries on from one
+  // message to the next).
+  const selectFirstTrace = () => {
+    const first = engine.getState().traces[0];
+    if (first) engine.selectTrace(first.packetId);
+  };
+
   const handleRunDhcp = async () => {
     engine.clear();
     setResolved(null);
     await simulateDhcp('dhcp-client');
     setLease(engine.getDhcpLeaseState('dhcp-client'));
+    selectFirstTrace();
   };
 
   const handleResolveAndFetch = async () => {
@@ -162,6 +172,7 @@ function DhcpDnsDemoInner() {
     await sendPacket(buildHttpPacket(engine.getRuntimeNodeIp('dhcp-client')));
     const entry = engine.getDnsCache('dhcp-client')?.['web.example.com'];
     setResolved(entry ? { name: 'web.example.com', address: entry.address } : null);
+    selectFirstTrace();
   };
 
   return (
@@ -170,6 +181,7 @@ function DhcpDnsDemoInner() {
         <NetlabCanvas />
 
         <div
+          data-canvas-overlay=""
           style={{
             position: 'absolute',
             top: 12,
@@ -288,7 +300,7 @@ function DhcpDnsDemoInner() {
           borderLeft: '1px solid var(--netlab-bg-surface)',
         }}
       >
-        <StepControls />
+        <StepControls continueAcrossTraces />
       </ResizableSidebar>
     </div>
   );

@@ -84,3 +84,18 @@ describe('SimulationControls zones', () => {
     expect(btn).toBeTruthy();
   });
 });
+
+describe('SimulationControls without the generic send', () => {
+  it('TC-LESSON-NAT-KEEP: a lesson that sends with its own buttons gets no generic send, and the idle hint points at those buttons', () => {
+    act(() => {
+      root.render(<SimulationControls showSend={false} />);
+    });
+    expect(container.querySelector('[data-testid="demo-primary-action"]')).toBeNull();
+    expect(container.textContent).toContain('Send with the lesson’s buttons to begin');
+    const titles = Array.from(container.querySelectorAll('button')).map((b) =>
+      b.getAttribute('title'),
+    );
+    expect(titles).toContain('Play');
+    expect(titles).toContain('Reset');
+  });
+});

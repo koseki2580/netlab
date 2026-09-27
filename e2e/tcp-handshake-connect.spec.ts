@@ -20,6 +20,16 @@ test('the TCP lesson reaches ESTABLISHED on both ends', async ({ page, demoPage 
 
   await page.getByTestId(SEL.tcp.connect).click();
 
+  // The state badges follow the step (TC-LESSON-TCP-STATES), so play the whole
+  // handshake through before reading the final states.
+  // Stepping now carries on from one segment into the next, so the whole
+  // exchange is many steps; press until there is nothing left to show.
+  const next = page.getByTestId(SEL.demo.primaryAction);
+  for (let press = 0; press < 100 && (await next.isEnabled()); press += 1) {
+    await next.click();
+  }
+  await expect(next, 'the handshake has been played through').toBeDisabled();
+
   // Both ends reaching ESTABLISHED means all three segments were delivered:
   // the client's SYN, the server's SYN-ACK, and the client's ACK.
   await expect(page.getByTestId(SEL.tcp.clientState)).toContainText('ESTABLISHED');

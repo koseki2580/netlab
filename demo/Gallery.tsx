@@ -285,7 +285,7 @@ const CATEGORIES: Category[] = [
       {
         path: '/networking/udp',
         title: 'UDP Datagram',
-        desc: 'Fire a stateless UDP datagram with no handshake. Adjust the port and payload, or send a large payload to trigger fragmentation.',
+        desc: 'Fire a stateless UDP datagram with no handshake. Adjust the port and payload, or send a large payload to see the packet size limit (MTU).',
         meta: { difficulty: 'beginner', tags: ['L4', 'UDP'] },
       },
       {

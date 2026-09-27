@@ -314,17 +314,39 @@ export interface StepControlsProps {
    * test then clicks whichever happens to come first.
    */
   primary?: boolean;
+  /**
+   * Whether "next step" carries on into the next recorded trace once the
+   * current one has played through. A lesson that records one exchange as
+   * several traces (DHCP's four messages, TCP's three segments) turns it on,
+   * so stepping walks the whole exchange instead of stopping after one message.
+   */
+  continueAcrossTraces?: boolean;
 }
 
-export function StepControls({ primary = true }: StepControlsProps = {}) {
+export function StepControls({
+  primary = true,
+  continueAcrossTraces = false,
+}: StepControlsProps = {}) {
   const { t } = useI18n();
   const { engine, state } = useSimulation();
   const { status, currentStep, traces, currentTraceId } = state;
-  const trace = traces.find((t) => t.packetId === currentTraceId);
+  const traceIndex = traces.findIndex((t) => t.packetId === currentTraceId);
+  const trace = traceIndex >= 0 ? traces[traceIndex] : undefined;
   const totalHops = trace?.hops.length ?? 0;
   const revealedHops = trace ? trace.hops.slice(0, currentStep + 1) : [];
+  const nextTrace = continueAcrossTraces && trace ? traces[traceIndex + 1] : undefined;
+  const continuesToNext = status === 'done' && nextTrace !== undefined;
+  const showExchangePosition = continueAcrossTraces && trace !== undefined && traces.length > 1;
 
-  const stepDisabled = status === 'running' || status === 'done' || status === 'idle';
+  const stepDisabled =
+    status === 'running' || status === 'idle' || (status === 'done' && !continuesToNext);
+
+  const handleStep = () => {
+    if (continuesToNext && nextTrace) {
+      engine.selectTrace(nextTrace.packetId);
+    }
+    engine.step();
+  };
   const resetDisabled = status === 'idle';
 
   // Auto-scroll log to bottom when a new step is revealed
@@ -374,6 +396,23 @@ export function StepControls({ primary = true }: StepControlsProps = {}) {
         <div style={{ marginBottom: 12 }}>
           <TraceSelector />
         </div>
+        {showExchangePosition && trace && (
+          <div
+            data-testid="step-exchange-position"
+            style={{
+              marginBottom: 10,
+              fontSize: 11,
+              fontWeight: 'bold',
+              color: 'var(--netlab-accent-cyan)',
+            }}
+          >
+            {t('simulation.steps.exchangePosition', {
+              current: traceIndex + 1,
+              total: traces.length,
+              label: trace.label ?? '',
+            })}
+          </div>
+        )}
         {revealedHops.length === 0 ? (
           <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 12 }}>
             {status === 'idle' ? t('simulation.steps.logIdle') : t('simulation.steps.logLoaded')}
@@ -404,7 +443,7 @@ export function StepControls({ primary = true }: StepControlsProps = {}) {
       >
         <div style={{ display: 'flex', gap: 8 }}>
           <button
-            onClick={() => engine.step()}
+            onClick={handleStep}
             data-testid={primary ? 'demo-primary-action' : 'demo-step-action'}
             disabled={stepDisabled}
             style={{
@@ -449,7 +488,13 @@ export function StepControls({ primary = true }: StepControlsProps = {}) {
             t('simulation.steps.statusPaused', { current: currentStep + 1, total: totalHops })}
           {status === 'running' &&
             t('simulation.steps.statusRunning', { current: currentStep + 1 })}
-          {status === 'done' && t('simulation.steps.statusDone', { total: totalHops })}
+          {status === 'done' &&
+            (continuesToNext && nextTrace
+              ? t('simulation.steps.statusNextTrace', {
+                  total: totalHops,
+                  label: nextTrace.label ?? '',
+                })
+              : t('simulation.steps.statusDone', { total: totalHops }))}
         </div>
       </div>
     </div>

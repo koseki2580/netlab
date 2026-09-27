@@ -89,7 +89,17 @@ const BTN_DISABLED: React.CSSProperties = {
   cursor: 'not-allowed',
 };
 
-export function SimulationControls() {
+export interface SimulationControlsProps {
+  /**
+   * Whether to offer the generic "send a packet" button. It resets the engine
+   * (NAT translations included) and sends a default client-to-server packet, so
+   * a lesson that sends with its own buttons and builds up state across sends
+   * turns it off rather than have it silently wipe that state.
+   */
+  showSend?: boolean;
+}
+
+export function SimulationControls({ showSend = true }: SimulationControlsProps = {}) {
   const { t } = useI18n();
   const { topology } = useNetlabContext();
   const { engine, state, sendPacket } = useSimulation();
@@ -123,16 +133,18 @@ export function SimulationControls() {
     >
       {/* Zone 1: Transport */}
       <div style={ZONE}>
-        <button
-          onClick={handleSend}
-          style={BTN_PRIMARY}
-          title={t('simulation.controls.sendLabel')}
-          aria-label={t('simulation.controls.sendLabel')}
-          data-testid="demo-primary-action"
-          className="netlab-focus-ring"
-        >
-          {t('simulation.controls.send')}
-        </button>
+        {showSend && (
+          <button
+            onClick={handleSend}
+            style={BTN_PRIMARY}
+            title={t('simulation.controls.sendLabel')}
+            aria-label={t('simulation.controls.sendLabel')}
+            data-testid="demo-primary-action"
+            className="netlab-focus-ring"
+          >
+            {t('simulation.controls.send')}
+          </button>
+        )}
         <button
           onClick={() => engine.play()}
           disabled={playDisabled}
@@ -199,7 +211,10 @@ export function SimulationControls() {
           color: 'var(--netlab-text-muted)',
         }}
       >
-        {status === 'idle' && t('simulation.controls.statusIdle')}
+        {status === 'idle' &&
+          (showSend
+            ? t('simulation.controls.statusIdle')
+            : t('simulation.controls.statusIdleLessonButtons'))}
         {status === 'paused' && state.currentStep === -1 && t('simulation.controls.statusLoaded')}
         {status === 'paused' &&
           state.currentStep >= 0 &&

@@ -8,7 +8,7 @@ import { StepControls } from '../../src/components/simulation/StepControls';
 import { tcpHandshake } from '../../src/scenarios';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import type { TcpSegment } from '../../src/types/packets';
-import type { PacketTrace } from '../../src/types/simulation';
+import type { PacketTrace, SimulationStatus } from '../../src/types/simulation';
 import type { TcpState } from '../../src/types/tcp';
 import { readDemoEmbedParams } from '../embedParams';
 
@@ -16,22 +16,20 @@ const TOPOLOGY = tcpHandshake.topology;
 
 export const TCP_HANDSHAKE_DEMO_TOPOLOGY = TOPOLOGY;
 
-function getCurrentTraceIndex(traces: PacketTrace[], currentTraceId: string | null): number {
-  if (traces.length === 0) {
-    return -1;
-  }
-
-  if (!currentTraceId) {
-    return traces.length - 1;
-  }
-
-  const index = traces.findIndex((trace) => trace.packetId === currentTraceId);
-  return index >= 0 ? index : traces.length - 1;
-}
-
-function deriveNodeStates(
+/**
+ * The client and server states as of the step the learner is on.
+ *
+ * Traces before the current one have fully happened; traces after it have not
+ * happened yet. Within the current trace a segment counts as sent once its
+ * first hop is revealed, and as received only once its DELIVER hop is — so
+ * stepping through the ARP hops of the SYN does not yet change the server.
+ * A trace that has played through (status `done`) counts in full.
+ */
+export function deriveNodeStates(
   traces: PacketTrace[],
   currentTraceId: string | null,
+  currentStep: number,
+  status: SimulationStatus,
   hasActiveConnection: boolean,
 ): { client: TcpState; server: TcpState } {
   if (traces.length === 0) {
@@ -40,47 +38,50 @@ function deriveNodeStates(
       : { client: 'CLOSED', server: 'LISTEN' };
   }
 
-  const states: { client: TcpState; server: TcpState } = {
-    client: 'CLOSED',
-    server: 'LISTEN',
-  };
-  const traceIndex = getCurrentTraceIndex(traces, currentTraceId);
+  // A teardown is recorded on its own (the handshake traces are cleared first),
+  // so it starts from an open connection.
+  const states: { client: TcpState; server: TcpState } =
+    traces[0]?.label === 'TCP FIN'
+      ? { client: 'ESTABLISHED', server: 'ESTABLISHED' }
+      : { client: 'CLOSED', server: 'LISTEN' };
 
-  traces.slice(0, traceIndex + 1).forEach((trace) => {
+  const found = currentTraceId ? traces.findIndex((t) => t.packetId === currentTraceId) : -1;
+  const currentIndex = found >= 0 ? found : traces.length - 1;
+
+  traces.slice(0, currentIndex + 1).forEach((trace, index) => {
+    const revealedUpTo =
+      index < currentIndex || status === 'done' ? Number.POSITIVE_INFINITY : currentStep;
+    if (revealedUpTo < 0) return;
+    const deliverIndex = trace.hops.findIndex((hop) => hop.event === 'deliver');
+    const delivered = deliverIndex >= 0 && revealedUpTo >= deliverIndex;
+
     switch (trace.label) {
       case 'TCP SYN':
         states.client = 'SYN_SENT';
-        states.server = trace.status === 'delivered' ? 'SYN_RECEIVED' : 'LISTEN';
+        if (delivered) states.server = 'SYN_RECEIVED';
         break;
       case 'TCP SYN-ACK':
-        states.server = 'SYN_RECEIVED';
-        if (trace.status === 'delivered') {
-          states.client = 'ESTABLISHED';
-        }
+        // RFC 9293: the client is ESTABLISHED as soon as the SYN-ACK arrives;
+        // the server waits for the final ACK.
+        if (delivered) states.client = 'ESTABLISHED';
         break;
       case 'TCP ACK':
+        if (!delivered) break;
         if (states.server === 'SYN_RECEIVED') {
-          states.client = 'ESTABLISHED';
-          if (trace.status === 'delivered') {
-            states.server = 'ESTABLISHED';
-          }
-        } else if (states.client === 'FIN_WAIT_1' && trace.status === 'delivered') {
+          states.server = 'ESTABLISHED';
+        } else if (states.client === 'FIN_WAIT_1') {
           states.client = 'FIN_WAIT_2';
-        } else if (states.server === 'LAST_ACK' && trace.status === 'delivered') {
+        } else if (states.server === 'LAST_ACK') {
           states.server = 'CLOSED';
         }
         break;
       case 'TCP FIN':
         if (trace.srcNodeId === 'client-1') {
           states.client = 'FIN_WAIT_1';
-          if (trace.status === 'delivered') {
-            states.server = 'CLOSE_WAIT';
-          }
+          if (delivered) states.server = 'CLOSE_WAIT';
         } else {
           states.server = 'LAST_ACK';
-          if (trace.status === 'delivered') {
-            states.client = 'TIME_WAIT';
-          }
+          if (delivered) states.client = 'TIME_WAIT';
         }
         break;
       default:
@@ -128,6 +129,45 @@ function stateAccent(state: TcpState): string {
   return 'var(--netlab-accent-cyan)';
 }
 
+function useStateMeaning(): (state: TcpState) => string {
+  const t = useT();
+  return (state) => {
+    switch (state) {
+      case 'CLOSED':
+        return t('no connection', '接続なし');
+      case 'LISTEN':
+        return t('waiting for a SYN', 'SYN を待っている');
+      case 'SYN_SENT':
+        return t('sent a SYN, waiting for the reply', 'SYN を送り、返事を待っている');
+      case 'SYN_RECEIVED':
+        return t(
+          'got the SYN, waiting for the last ACK',
+          'SYN を受け取り、最後の ACK を待っている',
+        );
+      case 'ESTABLISHED':
+        return t('connected: data can flow', '接続完了：データを送れる');
+      case 'FIN_WAIT_1':
+        return t('sent a FIN, waiting for its ACK', 'FIN を送り、その ACK を待っている');
+      case 'FIN_WAIT_2':
+        return t(
+          'FIN acknowledged, waiting for the other FIN',
+          'FIN が届いた。相手の FIN を待っている',
+        );
+      case 'CLOSE_WAIT':
+        return t('the other side closed; about to close too', '相手が切断した。こちらも切断する');
+      case 'LAST_ACK':
+        return t('sent its FIN, waiting for the last ACK', 'FIN を送り、最後の ACK を待っている');
+      case 'TIME_WAIT':
+        return t(
+          'closed; waits a moment for stray packets',
+          '切断済み。遅れて届くパケットに備えて少し待つ',
+        );
+      default:
+        return '';
+    }
+  };
+}
+
 function StateBadge({
   label,
   state,
@@ -142,6 +182,7 @@ function StateBadge({
   testId: string;
 }) {
   const accent = stateAccent(state);
+  const meaning = useStateMeaning();
 
   return (
     <div
@@ -163,10 +204,14 @@ function StateBadge({
         boxShadow: '0 8px 24px color-mix(in srgb, var(--netlab-bg-primary) 35%, transparent)',
         pointerEvents: 'none',
         minWidth: 124,
+        maxWidth: 220,
       }}
     >
       <div style={{ color: 'var(--netlab-text-secondary)', marginBottom: 4 }}>{label}</div>
-      <div style={{ color: accent, fontWeight: 'bold' }}>{state}</div>
+      <div data-testid={`${testId}-code`} style={{ color: accent, fontWeight: 'bold' }}>
+        {state}
+      </div>
+      <div style={{ color: 'var(--netlab-text-secondary)', marginTop: 2 }}>{meaning(state)}</div>
     </div>
   );
 }
@@ -209,6 +254,17 @@ function SidebarPanel({
         >
           {t('ACTIVE TCP CONNECTIONS', '確立中の TCP 接続')}
         </div>
+        {activeConnections.length > 0 && (
+          <div
+            data-testid="tcp-connection-note"
+            style={{ color: 'var(--netlab-text-secondary)', fontSize: 11, marginBottom: 6 }}
+          >
+            {t(
+              'This is the connection after the whole exchange. The state badges on the canvas follow the step you are on.',
+              'これはやり取りをすべて終えた後の接続です。図の上の状態表示は、いま見ているステップに合わせて変わります。',
+            )}
+          </div>
+        )}
         {activeConnections.length === 0 ? (
           <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 12 }}>
             {t('No active connections.', 'いま確立している接続はありません。')}
@@ -299,12 +355,22 @@ function TcpHandshakeDemoInner() {
   const nodeStates = deriveNodeStates(
     state.traces,
     state.currentTraceId,
+    state.currentStep,
+    state.status,
     activeConnection !== null,
   );
+
+  // Start the step-through at the first segment, so the learner watches the
+  // exchange from its beginning instead of landing on the last one.
+  const selectFirstTrace = () => {
+    const first = engine.getState().traces[0];
+    if (first) engine.selectTrace(first.packetId);
+  };
 
   const handleConnect = async () => {
     engine.clear();
     await engine.tcpConnect('client-1', 'server-1', 12345, 80);
+    selectFirstTrace();
   };
 
   const handleDisconnect = async () => {
@@ -315,6 +381,7 @@ function TcpHandshakeDemoInner() {
 
     engine.clearTraces();
     await engine.tcpDisconnect(connection.id);
+    selectFirstTrace();
   };
 
   return (
@@ -323,6 +390,7 @@ function TcpHandshakeDemoInner() {
         <NetlabCanvas />
 
         <div
+          data-canvas-overlay=""
           style={{
             position: 'absolute',
             top: 12,
@@ -385,6 +453,7 @@ function TcpHandshakeDemoInner() {
 
         <div
           data-testid="tcp-teaching-flow"
+          data-canvas-overlay=""
           style={{
             position: 'absolute',
             // Bottom-left, clear of both state badges. In the top-right it sat
@@ -421,6 +490,12 @@ function TcpHandshakeDemoInner() {
               '状態の表示は記録されたパケットの並びから決めているので、やり取りが終わったあとでも接続と切断の各段階を見返せます。',
             )}
           </div>
+          <div data-testid="tcp-state-follows-step" style={{ marginTop: 6 }}>
+            {t(
+              'The states follow the step you are on: a side changes only when a segment reaches it (its DELIVER hop). The client is ESTABLISHED as soon as the SYN-ACK arrives; the server only after the last ACK.',
+              '状態は、いま見ているステップに合わせて変わります。セグメントが相手に届いた（DELIVER の）ときに、届いた側の状態が変わります。クライアントは SYN-ACK が届いた時点で ESTABLISHED（接続完了）、サーバは最後の ACK が届いてから ESTABLISHED です。',
+            )}
+          </div>
         </div>
 
         <StateBadge
@@ -450,7 +525,7 @@ function TcpHandshakeDemoInner() {
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16 }}>
           <SidebarPanel traces={state.traces} currentTraceId={state.currentTraceId} />
-          <StepControls />
+          <StepControls continueAcrossTraces />
           <div
             style={{
               padding: 16,

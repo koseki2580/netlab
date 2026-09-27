@@ -12,6 +12,7 @@ const simulationMock = vi.hoisted(() => ({
   engine: {
     step: vi.fn(),
     reset: vi.fn(),
+    selectTrace: vi.fn(),
   },
   state: null as SimulationState | null,
 }));
@@ -157,6 +158,7 @@ beforeEach(() => {
   actEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
   simulationMock.engine.step.mockReset();
   simulationMock.engine.reset.mockReset();
+  simulationMock.engine.selectTrace.mockReset();
   simulationMock.state = makeState();
 });
 
@@ -344,5 +346,99 @@ describe('StepControls routing table for a learner', () => {
     const verdict = container?.querySelector('[data-testid="step-route-verdict"]')?.textContent;
     expect(verdict).toContain('203.0.113.0/24 に一致したので');
     expect(verdict).not.toContain('Matched');
+  });
+});
+
+describe('StepControls across the traces of one exchange', () => {
+  // A fake engine that behaves like the real one for these two calls, so the
+  // test asserts what the learner sees after pressing the button.
+  function wireEngine() {
+    simulationMock.engine.selectTrace.mockImplementation((packetId: string) => {
+      simulationMock.state = {
+        ...simulationMock.state!,
+        currentTraceId: packetId,
+        currentStep: -1,
+        status: 'paused',
+      };
+    });
+    simulationMock.engine.step.mockImplementation(() => {
+      const state = simulationMock.state!;
+      const trace = state.traces.find((t) => t.packetId === state.currentTraceId)!;
+      const next = state.currentStep + 1;
+      simulationMock.state = {
+        ...state,
+        currentStep: next,
+        selectedHop: trace.hops[next] ?? null,
+        status: next === trace.hops.length - 1 ? 'done' : 'paused',
+      };
+    });
+  }
+
+  function twoMessageExchange(): SimulationState {
+    const hops = (from: string, to: string) => [
+      makeHop({ step: 0, nodeId: from, nodeLabel: from, event: 'create' }),
+      makeHop({ step: 1, nodeId: to, nodeLabel: to, event: 'deliver' }),
+    ];
+    return makeState({
+      traces: [
+        {
+          packetId: 'discover',
+          label: 'DHCP DISCOVER',
+          srcNodeId: 'client',
+          dstNodeId: 'server',
+          hops: hops('client', 'server'),
+          status: 'delivered',
+        },
+        {
+          packetId: 'offer',
+          label: 'DHCP OFFER',
+          srcNodeId: 'server',
+          dstNodeId: 'client',
+          hops: hops('server', 'client'),
+          status: 'delivered',
+        },
+      ],
+      currentTraceId: 'discover',
+      currentStep: -1,
+      status: 'paused',
+    });
+  }
+
+  function pressNext() {
+    act(() => {
+      findButton('Next Step')?.click();
+    });
+    render(<StepControls continueAcrossTraces />);
+  }
+
+  it('TC-LESSON-DHCP-STEP: next step carries on from the last hop of one message into the next', () => {
+    wireEngine();
+    simulationMock.state = twoMessageExchange();
+    render(<StepControls continueAcrossTraces />);
+    expect(container?.querySelector('[data-testid="step-exchange-position"]')?.textContent).toBe(
+      'Message 1 of 2: DHCP DISCOVER',
+    );
+
+    pressNext();
+    pressNext();
+    expect(container?.textContent).toContain('Next step goes on to DHCP OFFER');
+    expect(findButton('Next Step')?.disabled).toBe(false);
+
+    pressNext();
+    expect(container?.querySelector('[data-testid="step-exchange-position"]')?.textContent).toBe(
+      'Message 2 of 2: DHCP OFFER',
+    );
+    pressNext();
+    // The last hop of the last message: the whole exchange has been walked.
+    expect(findButton('Next Step')?.disabled).toBe(true);
+    expect(container?.textContent).toContain('Complete');
+  });
+
+  it('stops at the end of one trace when the lesson does not ask to carry on', () => {
+    wireEngine();
+    simulationMock.state = { ...twoMessageExchange(), currentStep: 1, status: 'done' };
+    render(<StepControls />);
+    expect(findButton('Next Step')?.disabled).toBe(true);
+    expect(container?.querySelector('[data-testid="step-exchange-position"]')).toBeNull();
   });
 });

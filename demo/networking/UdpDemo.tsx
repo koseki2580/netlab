@@ -9,6 +9,7 @@ import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { TraceSummary } from '../../src/components/simulation/TraceSummary';
 import { buildUdpPacket } from '../../src/layers/l4-transport/udpPacketBuilder';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
+import type { PacketTrace } from '../../src/types/simulation';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
 
@@ -110,6 +111,38 @@ function buildTopology(): NetworkTopology {
 
 const TOPOLOGY = buildTopology();
 
+const IP_HEADER_BYTES = 20;
+const UDP_HEADER_BYTES = 8;
+/** The usual Ethernet MTU: the largest IP packet one link carries in one piece. */
+const ETHERNET_MTU = 1500;
+
+/** What a UDP send of this many payload bytes amounts to, in bytes and pieces. */
+export function describeUdpSize(payloadBytes: number): {
+  udpBytes: number;
+  ipBytes: number;
+  overEthernetMtu: boolean;
+  /** Payload bytes per IPv4 fragment on a 1500-byte link, when it must split. */
+  realFragments: number[];
+} {
+  const udpBytes = payloadBytes + UDP_HEADER_BYTES;
+  const ipBytes = udpBytes + IP_HEADER_BYTES;
+  const overEthernetMtu = ipBytes > ETHERNET_MTU;
+  // A fragment carries a multiple of 8 data bytes, except the last one.
+  const perFragment = Math.floor((ETHERNET_MTU - IP_HEADER_BYTES) / 8) * 8;
+  const realFragments: number[] = [];
+  if (overEthernetMtu) {
+    for (let left = udpBytes; left > 0; left -= perFragment) {
+      realFragments.push(Math.min(left, perFragment));
+    }
+  }
+  return { udpBytes, ipBytes, overEthernetMtu, realFragments };
+}
+
+/** How many pieces the recorded trace actually carried the datagram in. */
+export function recordedPieces(trace: PacketTrace): number {
+  return trace.hops.reduce((max, hop) => Math.max(max, hop.fragmentCount ?? 1), 1);
+}
+
 export default function UdpDemo() {
   return (
     <DemoShell
@@ -131,6 +164,7 @@ function UdpDemoInner() {
   const { engine, sendPacket, state, isRecomputing } = useSimulation();
   const [port, setPort] = useState(DEFAULT_PORT);
   const [payload, setPayload] = useState(DEFAULT_PAYLOAD);
+  const [sentPayloadBytes, setSentPayloadBytes] = useState<number | null>(null);
 
   const activeTrace = state.currentTraceId
     ? (state.traces.find((t) => t.packetId === state.currentTraceId) ?? null)
@@ -157,6 +191,7 @@ function UdpDemoInner() {
       ...(dstMac !== undefined ? { dstMac } : {}),
     });
 
+    setSentPayloadBytes(new TextEncoder().encode(payloadText).length);
     engine.reset();
     await sendPacket(packet);
   };
@@ -170,6 +205,7 @@ function UdpDemoInner() {
         <NetlabCanvas />
         <div
           data-testid="lesson-brief"
+          data-canvas-overlay=""
           style={{
             position: 'absolute',
             top: 12,
@@ -262,8 +298,21 @@ function UdpDemoInner() {
                   {t('Send Large (4000 B)', '大きく送る（4000 バイト）')}
                 </button>
               </div>
+              <div
+                data-testid="udp-large-hint"
+                style={{ color: 'var(--netlab-text-secondary)', fontSize: 11, lineHeight: 1.5 }}
+              >
+                {t(
+                  'A packet has a size limit on each link, the MTU — usually 1500 bytes on Ethernet. The large send is bigger than that; see below what happens to it.',
+                  'パケットの大きさには、リンクごとに上限（MTU）があります。イーサネットではふつう 1500 バイトです。「大きく送る」はそれより大きいデータです。どうなるかは送ったあと下に表示されます。',
+                )}
+              </div>
             </div>
           </div>
+
+          {activeTrace && sentPayloadBytes !== null && (
+            <UdpSizeResult payloadBytes={sentPayloadBytes} pieces={recordedPieces(activeTrace)} />
+          )}
 
           {activeTrace && (
             <>
@@ -284,6 +333,55 @@ function UdpDemoInner() {
           )}
         </div>
       </ResizableSidebar>
+    </div>
+  );
+}
+
+function UdpSizeResult({ payloadBytes, pieces }: { payloadBytes: number; pieces: number }) {
+  const t = useT();
+  const size = describeUdpSize(payloadBytes);
+  const real = size.realFragments;
+
+  return (
+    <div
+      data-testid="udp-size-result"
+      data-pieces={pieces}
+      style={{ ...CARD_STYLE, fontFamily: 'monospace', fontSize: 11, lineHeight: 1.6 }}
+    >
+      <div style={LABEL_STYLE}>{t('WHAT WAS SENT', '送ったもの')}</div>
+      <div data-testid="udp-size-bytes">
+        {t(
+          `Data ${payloadBytes} B + UDP header 8 B + IP header 20 B = one IP packet of ${size.ipBytes} B`,
+          `中身 ${payloadBytes} バイト ＋ UDP ヘッダ 8 バイト ＋ IP ヘッダ 20 バイト ＝ IP パケット ${size.ipBytes} バイト`,
+        )}
+      </div>
+      <div data-testid="udp-size-pieces" style={{ fontWeight: 700, marginTop: 4 }}>
+        {pieces > 1
+          ? t(`Split into ${pieces} pieces on the way.`, `途中で ${pieces} 個に分割されました。`)
+          : t(
+              'Not split: it arrived as one packet (1 piece).',
+              '分割なし：1 個のパケットのまま届きました。',
+            )}
+      </div>
+      <div
+        data-testid="udp-size-explanation"
+        style={{ color: 'var(--netlab-text-secondary)', marginTop: 6 }}
+      >
+        {!size.overEthernetMtu
+          ? t(
+              `${size.ipBytes} B is within the usual 1500-byte MTU, so a real network also sends it in one piece.`,
+              `${size.ipBytes} バイトはふつうの MTU（1500 バイト）以内なので、本物のネットワークでも 1 個のまま送られます。`,
+            )
+          : pieces > 1
+            ? t(
+                `${size.ipBytes} B is over the link's MTU, so the packet was cut into smaller IP fragments; the receiver puts them back together.`,
+                `${size.ipBytes} バイトはリンクの MTU を超えているので、小さな IP フラグメントに切り分けられました。受け取った側で元に戻します。`,
+              )
+            : t(
+                `${size.ipBytes} B is over the usual 1500-byte MTU. A real computer would split the ${size.udpBytes}-byte datagram into ${real.length} IP fragments of ${real.join(' + ')} bytes, and the server would put them back together. This simulation does not split it: here only a router splits packets, and this network has no router and no MTU set on its links. To watch splitting happen, open the "MTU & Fragmentation" lesson.`,
+                `${size.ipBytes} バイトはふつうの MTU（1500 バイト）を超えています。本物のパソコンなら、${size.udpBytes} バイトの UDP データグラムを ${real.join(' ＋ ')} バイトの ${real.length} 個の IP フラグメントに分けて送り、サーバ側で元に戻します。このシミュレーションでは分割されません。ここでパケットを分割するのはルータだけで、この図にはルータがなく、リンクに MTU も設定していないためです。分割が実際に起きる様子は「MTU と分割」のレッスンで見られます。`,
+              )}
+      </div>
     </div>
   );
 }
