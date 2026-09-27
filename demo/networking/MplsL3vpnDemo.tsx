@@ -91,10 +91,27 @@ function MplsL3vpnDemoInner() {
     nextHopPe: '192.0.2.2',
     vpnLabel: 24010,
   });
-  const stack = pushMplsLabel(
-    pushMplsLabel([], { label: 24010, tc: 0, endOfStack: true, ttl: 64 }),
-    { label: php ? 3 : 16001, tc: 0, endOfStack: true, ttl: 63 },
-  );
+  const labelOf = (routerId: string) =>
+    ldp.mappings.find((mapping) => mapping.routerId === routerId)?.label ?? 0;
+  const vpnLabel = { label: 24010, tc: 0, endOfStack: true, ttl: 64 };
+  // Each link carries the label its downstream router advertised: PE1 pushes
+  // P's label; P swaps it for PE2's, or — when PE2 advertised implicit null
+  // (3) for PHP — pops it, so only the VPN label reaches PE2.
+  const intoP = pushMplsLabel(pushMplsLabel([], vpnLabel), {
+    label: labelOf('p1'),
+    tc: 0,
+    endOfStack: false,
+    ttl: 64,
+  });
+  const intoPe2 = php
+    ? pushMplsLabel([], { ...vpnLabel, ttl: 63 })
+    : pushMplsLabel(pushMplsLabel([], vpnLabel), {
+        label: labelOf('pe2'),
+        tc: 0,
+        endOfStack: false,
+        ttl: 63,
+      });
+  const stackText = (stack: typeof intoP) => stack.map((label) => label.label).join(' / ');
 
   return (
     <NetlabProvider topology={topology}>
@@ -110,6 +127,27 @@ function MplsL3vpnDemoInner() {
           <NetlabCanvas style={{ height: 560 }} />
         </section>
         <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div data-testid="lesson-brief" style={{ ...PANEL_STYLE, fontSize: 12, lineHeight: 1.7 }}>
+            <strong>{t('How the two labels work', '2 つのラベルのしくみ')}</strong>
+            <div>
+              {t(
+                'LDP: each router advertises a label for the route to 10.0.2.0/24 — P 16001, PE2 16002. A router always sends a packet with the label its next router asked for, so P swaps 16001 for 16002. This outer transport label only carries the packet across the core to PE2.',
+                'LDP：各ルータは 10.0.2.0/24 への経路にラベルを 1 つ決めて知らせます（P は 16001、PE2 は 16002）。パケットには常に「次のルータが指定したラベル」を付けて送るので、P は 16001 を 16002 に付け替えます。この外側のトランスポートラベルは、コアを越えて PE2 まで運ぶためだけのものです。',
+              )}
+            </div>
+            <div>
+              {t(
+                'VPN: PE2 learned customer blue’s route over BGP (VPNv4) and gave it label 24010. PE1 puts 24010 underneath; it is untouched in the core, and PE2 uses it to pick the VRF (blue) to deliver into.',
+                'VPN：PE2 は顧客 blue の経路を BGP（VPNv4）で知らせ、ラベル 24010 を付けました。PE1 はこの 24010 を内側に付けます。コアでは触られず、PE2 はこれを見て届け先の VRF（blue）を選びます。',
+              )}
+            </div>
+            <div>
+              {t(
+                'PHP (penultimate hop popping): PE2 advertises the reserved label 3, “implicit null”, meaning “pop it before me”. P then removes the transport label, and only 24010 reaches PE2 — one lookup fewer. Label 3 itself never appears on a link.',
+                'PHP（最後から 2 番目のホップでの取り外し）：PE2 は予約ラベル 3「implicit null」（手前で外して、という意味）を知らせます。すると P がトランスポートラベルを外し、PE2 には 24010 だけが届くので、検索が 1 回減ります。3 というラベル自体が回線に流れることはありません。',
+              )}
+            </div>
+          </div>
           <button
             type="button"
             data-testid="mpls-php-disable"
@@ -126,7 +164,13 @@ function MplsL3vpnDemoInner() {
             </div>
             <div data-testid="mpls-mapping">
               {t('Label mapping:', 'ラベルの割り当て:')}{' '}
-              {ldp.mappings.map((m) => `${m.routerId}:${m.label}`).join(' ')}
+              {ldp.mappings
+                .map((m) =>
+                  php && m.routerId === 'pe2'
+                    ? `${m.routerId}:3 (implicit null)`
+                    : `${m.routerId}:${m.label}`,
+                )
+                .join(' ')}
             </div>
           </div>
           <div style={PANEL_STYLE}>
@@ -134,8 +178,11 @@ function MplsL3vpnDemoInner() {
             <div data-testid="vpnv4-route">
               VPNv4: {imported[0]?.routes[0]?.prefix} RT {blue.importRts[0]?.value}
             </div>
+            <div data-testid="mpls-stack-pe1-p">
+              {t('Labels PE1 → P:', 'ラベル PE1 → P:')} {stackText(intoP)}
+            </div>
             <div data-testid="mpls-stack">
-              {t('Label stack:', 'ラベルスタック:')} {stack.map((label) => label.label).join(' / ')}
+              {t('Labels P → PE2:', 'ラベル P → PE2:')} {stackText(intoPe2)}
             </div>
             <div data-testid="mpls-php">
               {php

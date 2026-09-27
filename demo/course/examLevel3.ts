@@ -380,8 +380,8 @@ const QUESTIONS: readonly ExamQuestion[] = [
     ],
     answer: 0,
     explanation: {
-      en: 'With PHP the router before the egress PE pops the transport label, saving PE2 a lookup, but the VPN label must survive to pick the VRF. The lesson reads “PHP active: penultimate hop pops transport label” with stack 3 / 24010 (in real MPLS, 3 is the reserved “implicit null” label that asks for the pop and never appears on the wire; the lesson displays it); with PHP off the stack is 16001 / 24010 and the transport label remains.',
-      ja: 'PHP では出口 PE の 1 つ手前のルータがトランスポートラベルを外し、PE2 の検索を 1 回省きます。一方、VRF を選ぶための VPN ラベルは残らなければなりません。レッスンでは「PHP 有効: 最後から2番目のホップがトランスポートラベルを外します」とスタック 3 / 24010 が表示されます。（実際の MPLS では 3 は取り外しを頼む予約値「implicit null」で、回線上には流れません。レッスンでは表示のために出しています）。PHP を無効にするとスタックは 16001 / 24010 になり、トランスポートラベルが残ります。',
+      en: 'With PHP, PE2 advertises the reserved label 3 (“implicit null”), so P — the router before the egress PE — pops the transport label, saving PE2 a lookup; the VPN label must survive to pick the VRF. The lesson reads “Labels P → PE2: 24010”. With PHP off, P swaps its own label 16001 for PE2’s 16002 and the lesson reads “16002 / 24010”.',
+      ja: 'PHP では PE2 が予約ラベル 3（implicit null）を知らせるので、出口 PE の 1 つ手前の P がトランスポートラベルを外し、PE2 の検索が 1 回減ります。VRF を選ぶための VPN ラベルは残らなければなりません。レッスンでは「ラベル P → PE2: 24010」と表示されます。PHP を無効にすると、P は自分のラベル 16001 を PE2 の 16002 に付け替え、「16002 / 24010」になります。',
     },
     taughtBy: 'mpls',
   },
