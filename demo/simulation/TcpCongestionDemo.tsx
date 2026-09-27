@@ -12,8 +12,14 @@ import { useT } from '../localeContext';
 const CONN_ID = '10.0.0.10:12345-203.0.113.10:443';
 const MSS = 1000;
 
-function runCongestionScenario(): readonly TcpCongestionEvent[] {
-  const control = new TcpCongestionControl({ mss: MSS, initialSsthresh: 4000 });
+export function runCongestionScenario(): readonly TcpCongestionEvent[] {
+  const control = new TcpCongestionControl({
+    mss: MSS,
+    // Two segments, so the window reaches 4000 before the four-segment burst
+    // at steps 5–6; with one it was 3000 and the burst overran it.
+    iwSegments: 2,
+    initialSsthresh: 4000,
+  });
   const loss = new DeterministicLossInjector(new Map([[CONN_ID, [3001, 9001]]]), {
     oneShot: true,
   });
@@ -152,8 +158,8 @@ function TcpCongestionDemoInner() {
         >
           <p style={{ margin: 0 }}>
             {t(
-              'The first ACKs grow `cwnd` from one MSS through slow start until the threshold is reached.',
-              '最初の ACK が届くたびに、`cwnd` は 1 MSS からスロースタートで増えていき、しきい値に達するまで続きます。',
+              'The first ACKs grow `cwnd` from two MSS through slow start until the threshold is reached.',
+              '最初の ACK が届くたびに、`cwnd` は 2 MSS からスロースタートで増えていき、しきい値に達するまで続きます。',
             )}
           </p>
           <p style={{ margin: 0 }}>
