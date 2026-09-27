@@ -203,3 +203,36 @@ describe('a switch choosing where to send an unlearned frame', () => {
     expect(decision.action === 'forward' ? decision.nextNodeId : null).toBe('host-a');
   });
 });
+
+describe('a switch with a link blocked only at the far end', () => {
+  /**
+   * TC-211 — a link spanning tree blocked at either end carries no frames.
+   *
+   * After a root change, a segment has one designated (forwarding) port and
+   * one blocked port. The switch checked only its own end, so when its end was
+   * the forwarding one it sent the frame across, and the far switch dropped it
+   * on arrival: in the spanning-tree lesson, with Switch C made root, A → B
+   * died on the blocked A–B segment instead of detouring through C.
+   */
+  it('detours around a segment blocked at the neighbour’s end', async () => {
+    const topology = triangle();
+    topology.stpStates = new Map([['sw-b:pb-a', blocking('sw-b', 'pb-a')]]);
+    const forwarder = new SwitchForwarder('sw-a', topology);
+    const packet: InFlightPacket = {
+      ...pingToC(),
+      srcNodeId: 'host-a',
+      dstNodeId: 'host-b',
+      ingressPortId: 'pa-host',
+    };
+
+    const decision = await forwarder.receive(packet, 'pa-host', {
+      neighbors: [
+        { nodeId: 'sw-b', edgeId: 'e-ab' },
+        { nodeId: 'sw-c', edgeId: 'e-ac' },
+      ],
+    });
+
+    expect(decision.action).toBe('forward');
+    expect(decision.action === 'forward' ? decision.nextNodeId : null).toBe('sw-c');
+  });
+});

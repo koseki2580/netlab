@@ -71,15 +71,24 @@ export class SwitchForwarder implements Forwarder {
     return state === undefined || state === 'FORWARDING';
   }
 
+  /**
+   * Whether the link to a neighbour may carry this frame. Spanning tree blocks
+   * a segment by putting one of its two ports out of forwarding, and either
+   * end is enough: checking only this switch's end sent frames across a link
+   * whose far end was the blocked one, where they were dropped on arrival.
+   */
+  private isLinkUsable(edgeId: string): boolean {
+    const edge = this.topology.edges.find((candidate) => candidate.id === edgeId);
+    if (!edge) return true;
+    return !this.isEdgeBlocked(edge);
+  }
+
   private selectNeighbor(packet: InFlightPacket, neighbors: ForwardContext['neighbors']) {
     const dstMac = packet.frame.dstMac.toLowerCase();
     const dstIp = packet.frame.payload.dstIp === BROADCAST_IP ? null : packet.frame.payload.dstIp;
 
     for (const neighbor of neighbors) {
-      const egressPortId = this.resolvePortForEdge(neighbor.edgeId);
-      if (egressPortId && !this.isPortForwarding(egressPortId)) {
-        continue;
-      }
+      if (!this.isLinkUsable(neighbor.edgeId)) continue;
       const node = this.topology.nodes.find((candidate) => candidate.id === neighbor.nodeId);
       if (!node) continue;
       const neighborMacs = [
@@ -94,10 +103,7 @@ export class SwitchForwarder implements Forwarder {
     }
 
     for (const neighbor of neighbors) {
-      const egressPortId = this.resolvePortForEdge(neighbor.edgeId);
-      if (egressPortId && !this.isPortForwarding(egressPortId)) {
-        continue;
-      }
+      if (!this.isLinkUsable(neighbor.edgeId)) continue;
       const node = this.topology.nodes.find((candidate) => candidate.id === neighbor.nodeId);
       if (!node) continue;
       if (packet.dstNodeId && node.id === packet.dstNodeId) return neighbor;
@@ -120,17 +126,13 @@ export class SwitchForwarder implements Forwarder {
     const destinationId = packet.dstNodeId;
     if (destinationId) {
       for (const neighbor of neighbors) {
-        const egressPortId = this.resolvePortForEdge(neighbor.edgeId);
-        if (egressPortId && !this.isPortForwarding(egressPortId)) continue;
+        if (!this.isLinkUsable(neighbor.edgeId)) continue;
         if (this.leadsTo(neighbor.nodeId, destinationId)) return neighbor;
       }
     }
 
     for (const neighbor of neighbors) {
-      const egressPortId = this.resolvePortForEdge(neighbor.edgeId);
-      if (!egressPortId || this.isPortForwarding(egressPortId)) {
-        return neighbor;
-      }
+      if (this.isLinkUsable(neighbor.edgeId)) return neighbor;
     }
 
     return null;

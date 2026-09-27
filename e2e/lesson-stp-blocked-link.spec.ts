@@ -33,6 +33,12 @@ test('re-electing the root moves the blocked link', async ({ page, demoPage }) =
 
   await page.getByTestId(STP.priority('switch-c')).fill('0');
   await expect(page.getByTestId(STP.blockedLink)).toHaveText('Blocked link: Switch A – Switch B');
+
+  // TC-211 — and traffic follows the new tree: A → B detours through C rather
+  // than crossing the segment now blocked at Switch B's end and dying there.
+  await page.getByTestId(SEL.stp.ping('ab')).click();
+  await expect(page.getByTestId(SEL.stp.traceStatus)).toHaveText('Trace status: delivered');
+  await expect(page.getByTestId(SEL.stp.blockedSegment)).toHaveText('Blocked segment used: no');
 });
 
 test('a port checkbox is named by the devices it joins', async ({ page, demoPage }) => {
