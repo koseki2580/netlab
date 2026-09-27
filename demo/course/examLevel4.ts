@@ -1,18 +1,22 @@
 import type { ExamLevel } from './examQuestions';
 
 /**
- * Level 4 of the final test: situations where two or three mechanisms meet
- * and the answer given from habit is wrong. Every answer is shown on the
- * screen of the lesson named — by its text, its tables or what it does when
- * run — and where this product's model differs from real equipment, the
- * question says "in this lesson's network" and the explanation says how.
+ * Level 4 of the final test: exact results where two or three mechanisms
+ * meet. Principles narrow each question down, but only carrying the reasoning
+ * through to the number, port or path — or reproducing the scenario in the
+ * lesson named — settles it. The wrong answers are what one plausible slip
+ * gives: a forgotten header, a tie-break skipped, a cost paid in the wrong
+ * direction, a real-world default used in place of the lesson's own
+ * configuration. Where the simulator's model decides the answer, the question
+ * says "in this lesson's network" and the explanation says how a real network
+ * could differ.
  */
 export const EXAM_LEVEL_4: ExamLevel = {
   level: 4,
   title: { en: 'Level 4 · Expert', ja: 'レベル 4・エキスパート' },
   summary: {
-    en: 'Where several mechanisms meet and the habitual answer is wrong: read each lesson’s tables and traces closely.',
-    ja: '複数のしくみが重なり、慣れで答えると間違える場面。各レッスンの表とトレースを細かく読みます。',
+    en: 'Exact results where several mechanisms meet: reproduce each scenario in its lesson and read the numbers it shows.',
+    ja: '複数のしくみが重なった場面の、正確な結果を問います。各レッスンで場面を再現し、表示される数値を読んでください。',
   },
   path: [
     {
@@ -20,8 +24,8 @@ export const EXAM_LEVEL_4: ExamLevel = {
       path: '/networking/stp',
       title: { en: 'Spanning Tree', ja: 'スパニングツリー' },
       teaches: {
-        en: 'How bridge priorities decide the root and each port’s role',
-        ja: 'ブリッジの優先度がルートと各ポートの役割をどう決めるか',
+        en: 'How ties between bridges are settled, for the root and for each link',
+        ja: 'ルートの選出と各リンクで、ブリッジどうしの同点がどう決着するか',
       },
     },
     {
@@ -29,8 +33,17 @@ export const EXAM_LEVEL_4: ExamLevel = {
       path: '/networking/mtu-fragmentation',
       title: { en: 'MTU & Fragmentation', ja: 'MTU と分割' },
       teaches: {
-        en: 'A packet larger than a link’s MTU, with and without DF',
-        ja: 'リンクの MTU より大きいパケット（DF あり・なし）',
+        en: 'How much of a packet each fragment can carry at a given MTU',
+        ja: 'ある MTU のとき、1 つの断片がパケットのどれだけを運べるか',
+      },
+    },
+    {
+      id: 'dhcpv6',
+      path: '/networking/dhcpv6',
+      title: { en: 'DHCPv6 And SLAAC', ja: 'DHCPv6 と SLAAC' },
+      teaches: {
+        en: 'How the M and O flags decide a host’s address and DNS server',
+        ja: 'M フラグと O フラグが、端末のアドレスと DNS サーバをどう決めるか',
       },
     },
     {
@@ -38,17 +51,26 @@ export const EXAM_LEVEL_4: ExamLevel = {
       path: '/routing/dynamic',
       title: { en: 'Dynamic Routing', ja: '動的ルーティング' },
       teaches: {
-        en: 'How RIP, OSPF and BGP each choose a path',
-        ja: 'RIP・OSPF・BGP がそれぞれ経路を選ぶ基準',
+        en: 'How RIP and OSPF measure the same paths',
+        ja: 'RIP と OSPF が同じ経路をどう測るか',
       },
     },
     {
-      id: 'ha',
-      path: '/networking/ha',
-      title: { en: 'Gateway HA And Link Aggregation', ja: 'ゲートウェイの冗長化とリンク束ね' },
+      id: 'ospf-convergence',
+      path: '/routing/ospf-convergence',
+      title: { en: 'OSPF Convergence', ja: 'OSPF の収束' },
       teaches: {
-        en: 'A redundant default gateway through a failure and a recovery',
-        ja: '冗長化したデフォルトゲートウェイの、障害と復旧',
+        en: 'Every router’s table after a link fails, in both directions',
+        ja: 'リンクが落ちたあとの各ルータの経路表を、行きと帰りの両方で',
+      },
+    },
+    {
+      id: 'nat',
+      path: '/simulation/nat',
+      title: { en: 'NAT / PAT', ja: 'NAT / PAT' },
+      teaches: {
+        en: 'How the edge router picks a global port for each conversation',
+        ja: '出口のルータが、通信ごとのグローバル側のポートをどう選ぶか',
       },
     },
     {
@@ -56,17 +78,26 @@ export const EXAM_LEVEL_4: ExamLevel = {
       path: '/simulation/acl',
       title: { en: 'Firewalls & ACLs', ja: 'ファイアウォールと ACL' },
       teaches: {
-        en: 'Interface ACLs and a firewall that tracks connections',
-        ja: 'インタフェースの ACL と、接続を追跡するファイアウォール',
+        en: 'Which packets from outside connection tracking lets in',
+        ja: '外から来るパケットのうち、接続の追跡が通すもの',
       },
     },
     {
-      id: 'enterprise',
-      path: '/simulation/enterprise',
-      title: { en: 'Enterprise Edge', ja: '企業ネットワークの入口' },
+      id: 'link-qos',
+      path: '/networking/link-qos',
+      title: { en: 'Per-Link QoS', ja: 'リンクごとの QoS' },
       teaches: {
-        en: 'NAT and ACLs working on the same router',
-        ja: '同じルータの上で働く NAT と ACL',
+        en: 'The time to cross a link, and what class weights do',
+        ja: 'リンクを渡るのにかかる時間と、クラスの重みの働き',
+      },
+    },
+    {
+      id: 'wireless',
+      path: '/networking/wireless',
+      title: { en: 'Wireless 802.11', ja: '無線 LAN（802.11）' },
+      teaches: {
+        en: 'How distance sets the signal strength and the loss',
+        ja: '距離が電波の強さと損失率をどう決めるか',
       },
     },
     {
@@ -74,348 +105,321 @@ export const EXAM_LEVEL_4: ExamLevel = {
       path: '/simulation/tcp-congestion',
       title: { en: 'TCP Congestion Control', ja: 'TCP の輻輳制御' },
       teaches: {
-        en: 'How the sender’s window reacts to two kinds of loss',
-        ja: '2 種類の損失に対して送信側のウィンドウがどう動くか',
-      },
-    },
-    {
-      id: 'http3',
-      path: '/networking/http3',
-      title: { en: 'HTTP/3 over QUIC', ja: 'HTTP/3（QUIC）' },
-      teaches: {
-        en: 'Several requests on one QUIC connection when a packet is lost',
-        ja: '1 本の QUIC 接続に複数の要求が流れているときの損失',
-      },
-    },
-    {
-      id: 'mpls',
-      path: '/networking/tunneling/mpls-l3vpn',
-      title: { en: 'MPLS L3VPN', ja: 'MPLS L3VPN' },
-      teaches: {
-        en: 'The two-label stack and penultimate-hop popping',
-        ja: '2 段のラベルと、最後から 2 番目のホップでのラベル除去（PHP）',
-      },
-    },
-    {
-      id: 'vxlan',
-      path: '/networking/tunneling/vxlan-evpn',
-      title: { en: 'VXLAN EVPN', ja: 'VXLAN EVPN' },
-      teaches: {
-        en: 'EVPN routes and ARP suppression on a VXLAN fabric',
-        ja: 'VXLAN のファブリックでの EVPN 経路と ARP 抑止',
+        en: 'The window and the threshold through fast recovery',
+        ja: '高速リカバリの間のウィンドウとしきい値',
       },
     },
   ],
   questions: [
     {
-      id: 'stp-designated-port',
+      id: 'stp-priority-tie',
       prompt: {
-        en: 'In the Spanning Tree lesson’s defaults, Switch A (priority 4096) is the root, Switch B and Switch C are at 32768, and Switch C’s port toward Switch B is blocked. You change only Switch C’s priority, to 8192. What does the lesson show?',
-        ja: 'スパニングツリーのレッスンの初期状態では、Switch A（優先度 4096）がルートで、Switch B と Switch C は 32768、Switch C の Switch B 向きのポートが遮断されています。Switch C の優先度だけを 8192 に変えると、レッスンの表示はどうなりますか？',
+        en: 'In the Spanning Tree lesson’s network, Switch A (priority 4096) is the root and Switch B and Switch C are at 32768. You type 4096 into Switch C’s priority, so it ties with Switch A. What do the lesson’s root line and port tables show?',
+        ja: 'スパニングツリーのレッスンのネットワークでは、Switch A（優先度 4096）がルートで、Switch B と Switch C は 32768 です。Switch C の優先度に 4096 を入力し、Switch A と同点にします。レッスンのルートブリッジの行と各ポートの表示はどうなりますか？',
       },
       options: [
         {
-          en: 'Nothing changes: Switch A is still the root, and only the root’s priority affects which port is blocked',
-          ja: '何も変わらない。Switch A がルートのままで、どのポートを遮断するかに効くのはルートの優先度だけだから',
+          en: 'Switch C becomes the root — on a tie the switch changed most recently wins — and the Switch A – Switch B link is blocked',
+          ja: 'Switch C がルートになる（同点なら最後に設定を変えたスイッチが勝つ）。遮断されるのは Switch A – Switch B のリンク',
         },
         {
-          en: 'Switch C becomes the root, because its priority was lowered',
-          ja: '優先度を下げたので、Switch C がルートになる',
+          en: 'Switch A stays the root and nothing else moves: Switch C’s port toward Switch B is still BLOCKED',
+          ja: 'Switch A がルートのままで、ほかも変わらない。Switch C の Switch B 向きのポートが BLOCKED のまま',
         },
         {
-          en: 'Switch A stays root and the B–C link is still the blocked one — but now Switch B’s port toward C blocks, and Switch C’s becomes designated',
-          ja: 'Switch A はルートのままで、遮断されるのも B–C 間のリンクのまま。ただし遮断されるのは Switch B の C 向きのポートに変わり、Switch C 側は指定ポートになる',
+          en: 'Switch A stays the root, but the blocked end moves: Switch B’s port toward Switch C shows BLOCKED and Switch C’s shows DESIGNATED',
+          ja: 'Switch A がルートのままだが、遮断される端が変わる。Switch B の Switch C 向きのポートが BLOCKED に、Switch C 側が DESIGNATED になる',
         },
         {
-          en: 'Switch A stays root, but the A–C link is now blocked, because Switch C prefers to reach the root through B',
-          ja: 'Switch A はルートのままだが、Switch C が B 経由でルートへ向かうようになり、A–C 間のリンクが遮断される',
+          en: 'Both switches claim the root, so the link between them, Switch A – Switch C, is blocked',
+          ja: '両方がルートを名乗るので、その 2 台の間の Switch A – Switch C のリンクが遮断される',
         },
       ],
       answer: 2,
       explanation: {
-        en: 'The lowest bridge ID is root, and 4096 still beats 8192. On the B–C link both switches are the same cost from the root, so the designated port goes to the lower bridge ID — now Switch C’s — and the other end blocks: Switch B’s card now shows its port toward Switch C as BLOCKED and Switch C’s card shows its port toward B as DESIGNATED. Real 802.1D/RSTP decides it the same way.',
-        ja: 'ルートはブリッジ ID が最も小さいスイッチで、4096 は 8192 より小さいままです。B–C 間のリンクでは両端ともルートまでのコストが同じなので、指定ポートはブリッジ ID の小さい側、つまり今度は Switch C が取り、反対側が遮断されます。レッスンでも、Switch B のカードでは Switch C 向きのポートが BLOCKED に、Switch C のカードでは Switch B 向きのポートが DESIGNATED に変わります。実機の 802.1D/RSTP でも同じ決まり方です。',
+        en: 'A tie on priority is broken by MAC address: the root line reads 4096/02:00:00:0a:00:01, Switch A’s lowest port MAC, which is lower than Switch C’s 02:00:00:0c:…, so A stays root. On the B–C link both ends are one link (cost 19) from the root, so the designated port goes to the lower bridge ID — now Switch C’s 4096 beats Switch B’s 32768 — and Switch B’s end blocks; B → C still runs Switch B → Switch A → Switch C. On real switches the bridge MAC is the switch’s base address and the priority must be a multiple of 4096 (plus the VLAN number when the extended system ID is on), so which switch wins such a tie depends on the hardware.',
+        ja: '優先度が同点のときは MAC アドレスで決まります。ルートブリッジの行は 4096/02:00:00:0a:00:01 で、これは Switch A のポートの最も小さい MAC です。Switch C の 02:00:00:0c:… より小さいので、A がルートのままです。B–C 間のリンクでは、両端ともルートまで 1 リンク（コスト 19）で同じなので、指定ポートはブリッジ ID の小さい側が取ります。今は Switch C の 4096 が Switch B の 32768 より小さいので、Switch B 側が遮断されます。B → C の通信は引き続き Switch B → Switch A → Switch C を通ります。実機では、ブリッジの MAC はスイッチ本体のアドレスで、優先度は 4096 の倍数（拡張システム ID が有効なら VLAN 番号を足した値）に限られるので、このような同点でどちらが勝つかは機器によって決まります。',
       },
       taughtBy: 'stp',
     },
     {
-      id: 'mtu-reassembly',
+      id: 'mtu-fragment-thresholds',
       prompt: {
-        en: 'In the MTU lesson, Host A pings Host B with a 1200-byte payload, DF clear, across the 600-byte tunnel between R1 and R2. R1 splits the packet. Where are the pieces put back together, and what does R2 do with them?',
-        ja: 'MTU のレッスンで、Host A から Host B へペイロード 1200 バイトの ping を DF なしで送ります。R1–R2 間のトンネルの MTU は 600 バイトで、R1 がパケットを分割します。断片はどこで元に戻され、R2 は断片をどう扱いますか？',
+        en: 'In the MTU lesson the ping carries 1200 bytes of ICMP data with DF clear, and the tunnel-MTU slider moves in 8-byte steps (…, 604, 612, 620, 628, … 1220, 1228, 1236, 1244 …). At 600 the trace notes show 3 fragments. Raising the MTU, at which slider values does the count first drop to 2 fragments, and then to no fragmentation at all?',
+        ja: 'MTU のレッスンの ping は、DF なしで ICMP のデータ部を 1200 バイト運びます。トンネル MTU のスライダーは 8 バイト刻みです（…、604、612、620、628、… 1220、1228、1236、1244 …）。600 のとき、トレースのメモは断片 3 個です。MTU を上げていくと、断片が初めて 2 個になるのは、そして初めて分割されなくなるのは、スライダーがいくつのときですか？',
       },
       options: [
         {
-          en: 'R2, at the far end of the small link, reassembles them and sends one whole packet on to Host B',
-          ja: '小さいリンクの反対側にいる R2 が組み立て直し、1 つのパケットにして Host B へ送る',
+          en: '2 fragments from 620; no fragmentation from 1220',
+          ja: '620 から断片 2 個、1220 から分割なし',
         },
         {
-          en: 'Host B reassembles them; R2 forwards each fragment on its own as it arrives',
-          ja: 'Host B が組み立て直す。R2 は断片を届いた順に 1 つずつそのまま転送する',
+          en: '2 fragments from 628; no fragmentation from 1228',
+          ja: '628 から断片 2 個、1228 から分割なし',
         },
         {
-          en: 'Nobody reassembles them: Host B answers each fragment with its own echo reply',
-          ja: 'どこでも組み立て直さない。Host B は断片ごとにエコー応答を返す',
+          en: '2 fragments from 604; no fragmentation from 1228',
+          ja: '604 から断片 2 個、1228 から分割なし',
         },
         {
-          en: 'Host B reassembles them, but only after R2 has held every fragment, because a router may not forward part of a packet',
-          ja: 'Host B が組み立て直すが、その前に R2 がすべての断片がそろうまで保持する。ルータはパケットの一部だけを転送できないから',
+          en: '2 fragments from 644; no fragmentation from 1244',
+          ja: '644 から断片 2 個、1244 から分割なし',
         },
       ],
       answer: 1,
       explanation: {
-        en: 'The timeline shows each fragment going R1 → R2 → Host B on its own, Host B marked “reassembly pending” until the last one arrives and then “reassembled (3 frags)”. Routers forward IPv4 fragments like any packet; only the destination reassembles. (A real GRE or IPsec tunnel that fragments its outer packet is reassembled at the tunnel’s far end — here the inner IPv4 packet itself is fragmented.)',
-        ja: 'タイムラインでは、断片が 1 つずつ R1 → R2 → Host B と進み、Host B は最後の断片が届くまで「reassembly pending」、届くと「reassembled (3 frags)」になります。ルータは IPv4 の断片を普通のパケットと同じように転送し、組み立て直すのは宛先だけです。（実機の GRE や IPsec のトンネルが外側のパケットを分割した場合は、トンネルの反対側の端で組み立て直します。ここで分割されているのは内側の IPv4 パケットそのものです。）',
+        en: 'The IP payload is 1208 bytes (1200 of data plus the 8-byte ICMP header) and the whole packet 1228, so it passes whole only from MTU 1228. Split, every fragment repeats the 20-byte IP header and all but the last carry a multiple of 8 bytes, so two fragments need 608 bytes of payload each (604 rounded up to 8) — MTU 628. The lesson’s notes read 断片 3 個 at 620, 断片 2 個 at 628 and still at 1220, and 分割が起きたホップ: 0 at 1228. Forgetting the ICMP header gives 620/1220, forgetting the per-fragment IP header gives 604, and counting a 14-byte Ethernet header inside the MTU gives 644/1244. Real IPv4 splits the same way; a real tunnel also spends some of the link’s MTU on its own outer header.',
+        ja: 'IP のペイロードは 1208 バイト（データ 1200 と ICMP ヘッダ 8 バイト）、パケット全体は 1228 バイトなので、分割せずに通るのは MTU 1228 からです。分割すると、どの断片にも 20 バイトの IP ヘッダが付き、最後以外の断片が運ぶ量は 8 の倍数に限られます。2 個に収めるには 1 個あたり 604 を 8 の倍数に切り上げた 608 バイトが必要で、MTU は 628 です。レッスンのメモは 620 で「断片 3 個」、628 と 1220 で「断片 2 個」、1228 で「分割が起きたホップ: 0」です。ICMP ヘッダを忘れると 620/1220、断片ごとの IP ヘッダを忘れると 604、14 バイトの Ethernet ヘッダを MTU に数えると 644/1244 になります。実際の IPv4 も同じ計算で分割します。実際のトンネルでは、さらに外側のヘッダの分だけリンクの MTU が使われます。',
       },
       taughtBy: 'mtu',
     },
     {
-      id: 'ospf-asymmetric-cost',
+      id: 'slaac-eui64-dns',
       prompt: {
-        en: 'In the Dynamic Routing lesson with OSPF selected, the R1 → R3 link has cost 3 and every other link cost 1. How does R3 reach R1’s LAN, 10.1.0.0/24?',
-        ja: '動的ルーティングのレッスンで OSPF を選ぶと、R1 → R3 のリンクはコスト 3、ほかのリンクはすべてコスト 1 です。R3 は R1 の LAN（10.1.0.0/24）へどう届けますか？',
+        en: 'In the DHCPv6 and SLAAC lesson the host’s MAC is 02:00:00:00:00:0a and the router advertises 2001:db8:30::/64. The host starts in M=1 mode with 2001:db8:30::102 and DNS 2001:db8::53. You press “M=0 O=1 SLAAC + DNS”, then “M=0 O=0 Pure SLAAC”. In this lesson’s network, what address and DNS server does the host end with?',
+        ja: 'DHCPv6 と SLAAC のレッスンでは、端末の MAC は 02:00:00:00:00:0a で、ルータは 2001:db8:30::/64 を広告しています。端末は M=1 のモードで 2001:db8:30::102 と DNS 2001:db8::53 を持って始まります。「M=0 O=1 SLAAC + DNS」を押し、続いて「M=0 O=0 SLAAC のみ」を押します。このレッスンのネットワークでは、端末に最後に残るアドレスと DNS サーバは何ですか？',
       },
       options: [
         {
-          en: 'Directly to R1: R3 counts only the cost of its own outgoing interface (1); the 3 applies to traffic leaving R1',
-          ja: 'R1 へ直接送る。R3 が数えるのは自分の出口インタフェースのコスト（1）で、3 は R1 から出る通信にだけかかる',
+          en: '2001:db8:30::200:ff:fe00:a, and no DNS server',
+          ja: '2001:db8:30::200:ff:fe00:a で、DNS サーバはなし',
         },
         {
-          en: 'It splits traffic over both ways: direct costs 3 and R4–R2–R1 costs 3, an equal-cost tie',
-          ja: '2 つの経路に分けて送る。直接だとコスト 3、R4–R2–R1 経由もコスト 3 で同点だから',
+          en: '2001:db8:30::ff:fe00:a, still with DNS 2001:db8::53, because the router keeps announcing it',
+          ja: '2001:db8:30::ff:fe00:a で、DNS は 2001:db8::53 のまま。ルータが広告し続けるから',
         },
         {
-          en: 'Through R4 and R2, avoiding the link whose cost was raised',
-          ja: 'コストを上げたリンクを避けて、R4 と R2 を経由する',
+          en: '2001:db8:30::102, kept from DHCPv6, and no DNS server',
+          ja: 'DHCPv6 でもらった 2001:db8:30::102 のままで、DNS サーバはなし',
         },
         {
-          en: 'Directly to R1, but the route’s cost is 3, because a link’s cost counts the same in both directions',
-          ja: 'R1 へ直接送るが、経路のコストは 3 になる。リンクのコストは両方向に同じだけかかるから',
+          en: '2001:db8:30::ff:fe00:a, and no DNS server',
+          ja: '2001:db8:30::ff:fe00:a で、DNS サーバはなし',
+        },
+      ],
+      answer: 3,
+      explanation: {
+        en: 'With M=0 the host makes its own address. EUI-64 puts ff:fe into the middle of the MAC and flips the universal/local bit of the first byte, so 02 becomes 00 and the interface ID is 0000:00ff:fe00:000a — 2001:db8:30::ff:fe00:a (not flipping the bit gives ::200:ff:fe00:a). O=1 only means “ask DHCPv6 for other settings such as DNS”; with O=0 that stops, and the lesson shows DNS: なし. Real hosts differ in two ways: most now use random or stable-private interface IDs (RFC 7217, RFC 8981) instead of EUI-64, and a router can put DNS servers in the advertisement itself (RDNSS, RFC 8106), which this lesson’s router does not do.',
+        ja: 'M=0 のとき、端末はアドレスを自分で作ります。EUI-64 は MAC の真ん中に ff:fe を入れ、先頭のバイトのユニバーサル／ローカルのビットを反転するので、02 が 00 になり、インタフェース ID は 0000:00ff:fe00:000a、アドレスは 2001:db8:30::ff:fe00:a です（ビットを反転し忘れると ::200:ff:fe00:a になります）。O=1 が意味するのは「DNS などのほかの設定を DHCPv6 に尋ねる」ことだけで、O=0 にするとそれもなくなり、レッスンの表示は「DNS: なし」です。実際の端末は 2 つの点で違います。今の多くの OS は EUI-64 ではなく、ランダムまたは安定した非公開のインタフェース ID（RFC 7217、RFC 8981）を使います。また、ルータが広告そのものに DNS サーバを入れることもでき（RDNSS、RFC 8106）、このレッスンのルータはそれをしていません。',
+      },
+      taughtBy: 'dhcpv6',
+    },
+    {
+      id: 'rip-ospf-neighbour-link',
+      prompt: {
+        en: 'In the Dynamic Routing lesson, R1 connects to R2 and R3, and the link between R3 and R4 is 10.0.34.0/30. Under OSPF, R1’s interface toward R3 has cost 3 and every other interface cost 1. What does R1’s table show for 10.0.34.0/30 with RIP selected, and with OSPF selected?',
+        ja: '動的ルーティングのレッスンでは、R1 は R2 と R3 につながり、R3 と R4 の間のリンクは 10.0.34.0/30 です。OSPF では、R1 の R3 向きのインタフェースのコストが 3、ほかのインタフェースはすべて 1 です。RIP を選んだとき、そして OSPF を選んだとき、R1 の経路表の 10.0.34.0/30 はどう表示されますか？',
+      },
+      options: [
+        {
+          en: 'RIP: next hop 10.0.13.2 (R3), metric 1. OSPF: next hop 10.0.12.2 (R2), metric 2',
+          ja: 'RIP は次ホップ 10.0.13.2（R3）、メトリック 1。OSPF は次ホップ 10.0.12.2（R2）、メトリック 2',
+        },
+        {
+          en: 'RIP: next hop 10.0.13.2, metric 1. OSPF: next hop 10.0.13.2, metric 3 — the link is on R3, so R1 reaches it through R3',
+          ja: 'RIP は次ホップ 10.0.13.2、メトリック 1。OSPF は次ホップ 10.0.13.2、メトリック 3。そのリンクは R3 につながっているので、R1 は R3 経由で届ける',
+        },
+        {
+          en: 'RIP: next hop 10.0.13.2, metric 1. OSPF: next hop 10.0.12.2, metric 3, counting R4’s interface on that link as well',
+          ja: 'RIP は次ホップ 10.0.13.2、メトリック 1。OSPF は次ホップ 10.0.12.2、メトリック 3。そのリンク上の R4 のインタフェースのコストも数えるから',
+        },
+        {
+          en: 'Both: next hop 10.0.12.2 (R2), metric 2 — R1 sends everything beyond its neighbours through R2',
+          ja: 'どちらも次ホップ 10.0.12.2（R2）、メトリック 2。R1 は隣より先へ行くものをすべて R2 経由で送るから',
         },
       ],
       answer: 0,
       explanation: {
-        en: 'An OSPF cost belongs to the interface a packet leaves by. The lesson’s table for R3 lists 10.1.0.0/24 via 10.0.13.1 (R1) with metric 1, while R1’s own route to R4’s LAN goes via R2: the two directions take different paths. A real router would also add the LAN’s own interface cost, so its number would be higher, but the path is the same.',
-        ja: 'OSPF のコストは、パケットが出ていくインタフェースに付く値です。レッスンの R3 の経路表では 10.1.0.0/24 の次ホップが 10.0.13.1（R1）、メトリック 1 です。一方、R1 から R4 の LAN への経路は R2 経由で、行きと帰りで通り道が違います。実機では宛先 LAN のインタフェースのコストも足すので数値はもっと大きくなりますが、経路は同じです。',
+        en: 'RIP counts routers: the link is one hop away, through R3. OSPF adds the cost of every interface the packet leaves by: through R3 that is 3 at once; through R2 it is R1→R2 (1) + R2→R4 (1) = 2. So under OSPF R1 reaches a link on its own neighbour R3 by going round the other side, and the table reads 10.0.12.2, metric 2. A real OSPF router also adds the cost of the interface on the destination network (here R4’s end, 1), so it would show 3 via R2 — the same path, one higher.',
+        ja: 'RIP は通るルータの数を数えます。このリンクは R3 経由で 1 ホップ先です。OSPF はパケットが出ていく各インタフェースのコストを足します。R3 経由ではいきなり 3、R2 経由では R1→R2（1）＋ R2→R4（1）＝ 2 です。つまり OSPF では、R1 は隣の R3 につながったリンクへ、反対側を回って届けます。経路表は 10.0.12.2、メトリック 2 です。実際の OSPF ルータは宛先のネットワーク上のインタフェース（ここでは R4 側の 1）のコストも足すので、R2 経由のメトリック 3 と表示します。経路は同じで、数値が 1 大きくなります。',
       },
       taughtBy: 'dynamic',
     },
     {
-      id: 'vrrp-failback',
+      id: 'ospf-reconverged-metrics',
       prompt: {
-        en: 'In the Gateway HA lesson, R1 (VRRP priority 150) is master for the virtual gateway 10.10.0.1 and R2 has priority 110. You fail R1, then restore it. Once R1 is back, which router answers for 10.10.0.1, and with which MAC address?',
-        ja: 'ゲートウェイの冗長化のレッスンで、仮想ゲートウェイ 10.10.0.1 のマスタは R1（VRRP 優先度 150）、R2 は優先度 110 です。R1 を落としてから戻しました。R1 が戻ったあと、10.10.0.1 に応答するのはどちらのルータで、MAC アドレスは何ですか？',
+        en: 'In the OSPF Convergence lesson, R1’s interface toward R3 has cost 3 and every other interface cost 1. You fail the primary link between R2 and R4. In this lesson’s network, what do R2’s table (for C2’s LAN, 10.4.0.0/24) and R4’s table (for C1’s LAN, 10.1.0.0/24) show?',
+        ja: 'OSPF の収束のレッスンでは、R1 の R3 向きのインタフェースのコストが 3、ほかのインタフェースはすべて 1 です。R2 と R4 の間の主経路のリンクを落とします。このレッスンのネットワークでは、R2 の経路表（C2 の LAN、10.4.0.0/24）と R4 の経路表（C1 の LAN、10.1.0.0/24）はどう表示されますか？',
       },
       options: [
         {
-          en: 'R2 stays master — a router that comes back does not take over from a working master — using 00:00:5e:00:01:0a',
-          ja: 'R2 がマスタのまま。戻ってきたルータは、動いているマスタから役割を取り返さないから。MAC は 00:00:5e:00:01:0a',
+          en: 'R2: via 10.0.12.1 (R1), metric 3. R4: via 10.0.34.1 (R3), metric 2',
+          ja: 'R2 は 10.0.12.1（R1）経由でメトリック 3。R4 は 10.0.34.1（R3）経由でメトリック 2',
         },
         {
-          en: 'R1 again, answering with its own interface MAC, 02:00:00:00:01:01',
-          ja: 'R1 に戻り、自分のインタフェースの MAC（02:00:00:00:01:01）で応答する',
+          en: 'R2: via 10.0.12.1, metric 5. R4: via 10.0.34.1, metric 5 — both cross the same three links',
+          ja: 'R2 は 10.0.12.1 経由でメトリック 5。R4 は 10.0.34.1 経由でメトリック 5。どちらも同じ 3 本のリンクを通るから',
         },
         {
-          en: 'R1 again; while it was down R2 answered with its own MAC, 02:00:00:00:02:01, so hosts had to ARP again',
-          ja: 'R1 に戻る。R1 が落ちていた間は R2 が自分の MAC（02:00:00:00:02:01）で応答していたので、端末は ARP をやり直す必要がある',
+          en: 'R2: via 10.0.12.1, metric 5. R4: via 10.0.34.1, metric 2',
+          ja: 'R2 は 10.0.12.1 経由でメトリック 5。R4 は 10.0.34.1 経由でメトリック 2',
         },
         {
-          en: 'R1 again, with the same virtual MAC, 00:00:5e:00:01:0a, that answered throughout',
-          ja: 'R1 に戻る。MAC は最初から最後まで同じ仮想 MAC（00:00:5e:00:01:0a）',
-        },
-      ],
-      answer: 3,
-      explanation: {
-        en: 'The lesson’s panel goes Master: R1 → R2 → R1, while “Virtual MAC: 00:00:5e:00:01:0a” (VRID 10) never changes, so hosts keep the same ARP entry. VRRP pre-empts by default, so the higher-priority R1 takes the role back; the answer that R2 stays is the habit from HSRP, where pre-emption is off unless configured.',
-        ja: 'レッスンのパネルでは、マスタが R1 → R2 → R1 と変わる一方、「仮想 MAC: 00:00:5e:00:01:0a」（VRID 10）は一度も変わらないので、端末は ARP の記録をそのまま使えます。VRRP は既定でプリエンプトするので、優先度の高い R1 が役割を取り戻します。R2 のままと考えるのは、プリエンプトが既定で無効な HSRP の感覚です。',
-      },
-      taughtBy: 'ha',
-    },
-    {
-      id: 'acl-empty-stateful',
-      prompt: {
-        en: 'In the Firewalls & ACLs lesson, R-FW’s outside interface eth1 has an inbound ACL with no rules at all. Before sending anything else, you press “Return Traffic” (Server port 80 → Client port 40000). Then you send HTTP from the Client and press “Return Traffic” again. In this lesson’s network, what happens to the two return packets?',
-        ja: 'ファイアウォールと ACL のレッスンで、R-FW の外側のインタフェース eth1 の入口 ACL にはルールが 1 つもありません。ほかに何も送る前に「戻りの通信」（Server のポート 80 → Client のポート 40000）を押し、次に Client から HTTP を送ってから、もう一度「戻りの通信」を押します。このレッスンのネットワークでは、2 回の戻りの通信はどうなりますか？',
-      },
-      options: [
-        {
-          en: 'Both are delivered: an ACL with no rules filters nothing',
-          ja: '2 回とも届く。ルールのない ACL は何も止めないから',
-        },
-        {
-          en: 'Both are dropped: no rule permits anything in from outside',
-          ja: '2 回とも捨てられる。外から入るものを許可するルールがないから',
-        },
-        {
-          en: 'The first is delivered, being a reply from a web port; the second is dropped as a duplicate',
-          ja: '1 回目は Web のポートからの応答なので届き、2 回目は重複として捨てられる',
-        },
-        {
-          en: 'The first is dropped by the default policy; the second is delivered as return traffic of the Client’s connection',
-          ja: '1 回目は既定のポリシーで捨てられ、2 回目は Client の接続の戻りの通信として届く',
-        },
-      ],
-      answer: 3,
-      explanation: {
-        en: 'The first packet’s hop detail at R-FW reads INBOUND eth1, rule “(default policy)”, DENY; after the Client’s HTTP the same packet reads rule “conn-track” (tracked return traffic), PERMIT. R-FW is a stateful firewall, so what no rule permits is denied unless it belongs to a connection started inside. On a plain Cisco IOS router, by contrast, applying an ACL with no entries permits everything.',
-        ja: '1 回目の R-FW のホップの詳細は、INBOUND・eth1・ルール「（既定のポリシー）」・DENY です。Client の HTTP のあとは、同じパケットがルール「状態を追跡した戻りの通信 (conn-track)」で PERMIT になります。R-FW は状態を追跡するファイアウォールなので、どのルールにも許可されないものは、内側から始めた接続の戻りでない限り拒否されます。これに対して、普通の Cisco IOS ルータでは、エントリが 1 つもない ACL を適用するとすべて許可されます。',
-      },
-      taughtBy: 'acl',
-    },
-    {
-      id: 'nat-acl-return',
-      prompt: {
-        en: 'In the Enterprise Edge lesson, after DHCP, DNS and browsing: GW-Router’s lan0 has an inbound ACL that permits only TCP from 10.0.1.0/24 to port 80, and wan0’s inbound ACL is empty. The web server’s reply (source port 80) arrives on wan0 addressed to 10.0.2.1:1024 — the router’s own address. What happens to it?',
-        ja: '企業ネットワークの入口のレッスンで、DHCP・DNS・アクセスまで進めます。GW-Router の lan0 の入口 ACL は 10.0.1.0/24 から宛先ポート 80 への TCP だけを許可し、wan0 の入口 ACL は空です。Web サーバの応答（送信元ポート 80）が、ルータ自身のアドレス 10.0.2.1:1024 あてに wan0 に届きます。この応答はどうなりますか？',
-      },
-      options: [
-        {
-          en: 'wan0 permits it as return traffic of the client’s connection, NAT rewrites the destination to Client A’s address and port 49152, and it reaches Client A',
-          ja: 'wan0 でクライアントの接続の戻りとして許可され、NAT が宛先を Client A のアドレスとポート 49152 に書き換え、Client A に届く',
-        },
-        {
-          en: 'It is dropped at wan0: a packet addressed to the router itself is not forwarded anywhere',
-          ja: 'wan0 で捨てられる。ルータ自身あてのパケットは、どこにも転送されないから',
-        },
-        {
-          en: 'NAT rewrites it for Client A, and it is then dropped leaving lan0, since the lan0 ACL permits only destination port 80',
-          ja: 'NAT で Client A あてに書き換えられたあと、lan0 から出るところで捨てられる。lan0 の ACL は宛先ポート 80 しか許可しないから',
-        },
-        {
-          en: 'It reaches Client A still addressed to port 1024; the client matches it to its request by the server’s address',
-          ja: 'ポート 1024 あてのまま Client A に届き、Client A はサーバのアドレスで自分の要求の応答だと判断する',
-        },
-      ],
-      answer: 0,
-      explanation: {
-        en: 'The response’s hop at GW-Router shows NAT “Pre Dst 10.0.2.1:1024 → Post Dst …:49152” and ACL “INBOUND wan0, conn-track, PERMIT”, then delivery to Client A. It can be mapped back because the request created the NAT table row 49152 ↔ 1024 on the way out. The lan0 ACL is inbound: it filters what enters from the LAN, not what leaves toward it — ACLs have a direction on real routers too.',
-        ja: 'GW-Router での応答のホップには、NAT「Pre Dst 10.0.2.1:1024 → Post Dst …:49152」と、ACL「INBOUND・wan0・conn-track・PERMIT」が表示され、そのあと Client A に届きます。元に戻せるのは、行きに作られた 49152 → 1024 の NAT テーブルの行があるからです。lan0 の ACL は入口向きなので、LAN から入るものを調べ、LAN へ出ていくものは調べません。実機の ACL も向きを持っています。',
-      },
-      taughtBy: 'enterprise',
-    },
-    {
-      id: 'tcp-fast-recovery',
-      prompt: {
-        en: 'In the TCP Congestion Control lesson (MSS 1000 bytes), segment 3001 is lost and three duplicate ACKs trigger fast retransmit at step 9; later segment 9001 is lost and the retransmission timer fires at step 12. In this lesson’s trace, what does cwnd do?',
-        ja: 'TCP の輻輳制御のレッスン（MSS 1000 バイト）では、シーケンス番号 3001 が失われ、3 つの重複 ACK でステップ 9 に高速再送が起きます。そのあと 9001 が失われ、ステップ 12 で再送タイマ（RTO）が切れます。このレッスンのトレースでは、cwnd はどう動きますか？',
-      },
-      options: [
-        {
-          en: 'At fast retransmit it halves at once and stays there; at the timeout it halves again',
-          ja: '高速再送ですぐ半分になってそのまま。RTO でさらに半分になる',
-        },
-        {
-          en: 'At fast retransmit it first rises above its previous value, falls back when the new ACK arrives at step 10, and at the timeout drops to one MSS (1000 bytes)',
-          ja: '高速再送ではいったん直前の値より大きくなり、ステップ 10 で新しい ACK が届くと下がる。RTO では 1 MSS（1000 バイト）まで下がる',
-        },
-        {
-          en: 'Both losses reset it to one MSS and start slow start again',
-          ja: 'どちらの損失でも 1 MSS に戻り、スロースタートからやり直す',
-        },
-        {
-          en: 'At fast retransmit it drops to one MSS; at the timeout it only halves',
-          ja: '高速再送で 1 MSS に下がり、RTO では半分になるだけ',
-        },
-      ],
-      answer: 1,
-      explanation: {
-        en: 'The chart’s cwnd line jumps up at step 9, drops at step 10 and ends at “cwnd 1000 B” after the RTO. This is Reno fast recovery (RFC 5681): ssthresh becomes half the data in flight, cwnd is set to ssthresh + 3 MSS for the three segments the duplicate ACKs show have left, and it deflates to ssthresh on the new ACK; only a timeout goes back to one MSS. Modern stacks (Linux with PRR and CUBIC) do not inflate the window like this.',
-        ja: 'グラフの cwnd の線は、ステップ 9 で上がり、ステップ 10 で下がり、RTO のあと「cwnd 1000 B」で終わります。これは Reno の高速回復（RFC 5681）です。ssthresh を送信中のデータ量の半分にし、重複 ACK が「3 つのセグメントが抜けた」と示す分だけ cwnd を ssthresh + 3 MSS に広げ、新しい ACK が届くと ssthresh まで縮めます。1 MSS まで戻るのはタイムアウトのときだけです。今の実装（PRR と CUBIC を使う Linux など）は、このようにウィンドウを膨らませません。',
-      },
-      taughtBy: 'tcp-congestion',
-    },
-    {
-      id: 'quic-stream-loss',
-      prompt: {
-        en: 'In the HTTP/3 lesson, four requests — /a, /b, /c and /d, in that order — share one QUIC connection. You make loss hit QUIC stream 4. Which requests stall?',
-        ja: 'HTTP/3 のレッスンでは、4 つの要求（/a、/b、/c、/d の順）が 1 本の QUIC 接続を共有しています。QUIC のストリーム 4 に損失を起こすと、止まるのはどの要求ですか？',
-      },
-      options: [
-        {
-          en: 'All four: they share one connection, which delivers in order',
-          ja: '4 つすべて。1 本の接続を共有していて、接続は順番どおりに届けるから',
-        },
-        {
-          en: 'Only /d: stream 4 is the fourth request',
-          ja: '/d だけ。ストリーム 4 は 4 番目の要求だから',
-        },
-        {
-          en: 'Only /b: the client’s request streams are numbered 0, 4, 8, 12, and QUIC recovers each stream on its own',
-          ja: '/b だけ。クライアントの要求のストリームは 0、4、8、12 と番号が付き、QUIC はストリームごとに回復するから',
-        },
-        {
-          en: '/b and every request after it (/c and /d), since their data waits behind the gap',
-          ja: '/b と、そのあとの要求（/c と /d）。後ろのデータは欠けた部分のあとで待たされるから',
+          en: 'R2: via 10.0.12.1, metric 6. R4: via 10.0.34.1, metric 3',
+          ja: 'R2 は 10.0.12.1 経由でメトリック 6。R4 は 10.0.34.1 経由でメトリック 3',
         },
       ],
       answer: 2,
       explanation: {
-        en: 'The lesson lists “Stream 0 /a, Stream 4 /b, Stream 8 /c, Stream 12 /d”, and with loss on, only Stream 4 /b shows stalled. Client-initiated bidirectional QUIC streams are numbered in steps of four, and QUIC orders data per stream, so one loss holds back only its own stream. Over HTTP/2 the streams share one TCP byte stream, and a lost segment stalls every one of them.',
-        ja: 'レッスンの一覧は「ストリーム 0 /a、ストリーム 4 /b、ストリーム 8 /c、ストリーム 12 /d」で、損失を起こすと停止中になるのはストリーム 4 /b だけです。クライアントが開く双方向の QUIC ストリームは 4 ずつ番号が進み、QUIC は順番をストリームごとにそろえるので、1 つの損失が止めるのはそのストリームだけです。HTTP/2 では全ストリームが 1 本の TCP のバイト列を共有するため、1 つのセグメントが失われるとすべてが止まります。',
+        en: 'With R2–R4 gone, R2’s only way to C2 is back through R1 and on through R3: 1 (R2→R1) + 3 (R1→R3) + 1 (R3→R4) = 5. R4’s way to C1 uses the same links backwards, leaving by R4→R3 (1) and R3→R1 (1): the 3 belongs to R1’s interface and is never paid in that direction, so 2. The lesson’s R2 tab reads 10.4.0.0/24 10.0.12.1 5 and its R4 tab 10.1.0.0/24 10.0.34.1 2. A real router would also add the cost of the destination LAN’s interface, giving 6 and 3, but the paths and the difference between the directions are the same.',
+        ja: 'R2–R4 のリンクがなくなると、R2 から C2 へは R1 まで戻って R3 を通るしかありません。1（R2→R1）＋ 3（R1→R3）＋ 1（R3→R4）＝ 5 です。R4 から C1 へは同じリンクを逆向きにたどり、R4→R3（1）と R3→R1（1）から出ていきます。3 は R1 のインタフェースのコストなので、この向きでは一度も払わず、2 です。レッスンの R2 のタブは 10.4.0.0/24・10.0.12.1・5、R4 のタブは 10.1.0.0/24・10.0.34.1・2 です。実際のルータは宛先 LAN のインタフェースのコストも足すので 6 と 3 になりますが、経路と行き帰りの差は同じです。',
       },
-      taughtBy: 'http3',
+      taughtBy: 'ospf-convergence',
     },
     {
-      id: 'mpls-php-label',
+      id: 'nat-port-order',
       prompt: {
-        en: 'In the MPLS L3VPN lesson with PHP enabled, a packet from CE1 to 10.0.2.0/24 in VRF blue crosses PE1 → P → PE2. What labels does it carry on the last link, P → PE2?',
-        ja: 'MPLS L3VPN のレッスンで PHP を有効にしたまま、CE1 から VRF blue の 10.0.2.0/24 あてのパケットが PE1 → P → PE2 と進みます。最後のリンク（P → PE2）で、パケットにはどのラベルが付いていますか？',
+        en: 'In the NAT / PAT lesson, starting from an empty table, you press in order: “Client B -> Internet (SNAT)”, “Internet -> Client A (DNAT 8080)”, “Client A -> Internet (SNAT)”, “Client A -> Internet (SNAT)” again, and “Client B -> Internet (SNAT)” again. In this lesson’s network, what global address and port does the NAT table give Client A (192.168.1.10:54321)?',
+        ja: 'NAT / PAT のレッスンで、空の変換表から次の順にボタンを押します。「Client B -> インターネット (SNAT)」、「インターネット -> Client A (DNAT 8080)」、「Client A -> インターネット (SNAT)」、もう一度「Client A -> インターネット (SNAT)」、もう一度「Client B -> インターネット (SNAT)」。このレッスンのネットワークでは、変換表で Client A（192.168.1.10:54321）に割り当てられるグローバル側のアドレスとポートは何ですか？',
       },
       options: [
         {
-          en: 'None: PHP pops the whole stack, and PE2 looks the plain IP packet up in its global table',
-          ja: '何も付いていない。PHP でラベルがすべて外され、PE2 は普通の IP パケットとして全体の経路表を引く',
+          en: '203.0.113.1:54321 — the router keeps the client’s own port while nobody else uses it; the table has three rows',
+          ja: '203.0.113.1:54321。ほかが使っていなければ、ルータはクライアントのポートをそのまま使う。表は 3 行',
         },
         {
-          en: 'Only the transport label: the VPN label is taken off at P',
-          ja: 'トランスポートラベルだけ。VPN ラベルは P で外される',
+          en: '203.0.113.1:1025 — one row per conversation; the table has three rows',
+          ja: '203.0.113.1:1025。通信ごとに 1 行で、表は 3 行',
         },
         {
-          en: 'Both, 16001 over 24010: PHP changes only which router lowers the TTL',
-          ja: '16001 と 24010 の両方。PHP が変えるのは、どのルータが TTL を減らすかだけ',
+          en: '203.0.113.1:1026 — the port-forward row took 1025; the table has three rows',
+          ja: '203.0.113.1:1026。ポートフォワードの行が 1025 を使ったから。表は 3 行',
         },
         {
-          en: 'Only the VPN label, 24010: P has popped the transport label, and PE2 needs 24010 to know which VRF the packet belongs to',
-          ja: 'VPN ラベル 24010 だけ。P がトランスポートラベルを外しており、PE2 はパケットがどの VRF のものかを 24010 で知る',
+          en: '203.0.113.1:1025 for the first press and 1026 for the second; the table has five rows',
+          ja: '1 回目は 203.0.113.1:1025、2 回目は 1026。表は 5 行',
+        },
+      ],
+      answer: 1,
+      explanation: {
+        en: 'This router hands out global ports in order from 1024 and keys each row on the whole conversation — inside address and port, outside address and port. Client B’s first send takes 1024; the DNAT row uses the fixed port-forward port 8080 and takes nothing from the counter; Client A then gets 1025, and the second presses from Client A and Client B match their existing rows. The table ends with three rows: 54322 ↔ 1024, 80 ↔ 8080 (DNAT) and 54321 ↔ 1025. Real NAT differs here: Linux and many home routers keep the client’s source port when it is free (port preservation), so there Client A would probably appear as :54321.',
+        ja: 'このルータは、グローバル側のポートを 1024 から順に割り当て、各行を通信全体（内側のアドレスとポート、外側のアドレスとポート）で見分けます。Client B の 1 回目が 1024 を取ります。DNAT の行はポートフォワードで決まった 8080 を使い、順番の番号は消費しません。そのあと Client A が 1025 を取り、Client A と Client B の 2 回目はそれぞれ既存の行に一致します。表は最後に 54322 ↔ 1024、80 ↔ 8080（DNAT）、54321 ↔ 1025 の 3 行です。実際の NAT はここが違います。Linux や多くの家庭用ルータは、空いていればクライアントの送信元ポートをそのまま使う（ポート保存）ので、Client A はたいてい :54321 のまま見えます。',
+      },
+      taughtBy: 'nat',
+    },
+    {
+      id: 'acl-return-count',
+      prompt: {
+        en: 'In the Firewalls & ACLs lesson, R-FW’s LAN side (eth0) permits inbound TCP to ports 80 and 443, and its Internet side (eth1) has no rules. You press, in order: “Return Traffic”, “SSH (blocked)”, “Return Traffic”, “HTTP (permitted)”, “Return Traffic”, “SSH (blocked)”, “Return Traffic”. Every Return Traffic packet is Server port 80 → Client port 40000; HTTP is Client port 40000 → Server port 80. In this lesson’s network, how many of the four return packets reach the Client?',
+        ja: 'ファイアウォールと ACL のレッスンでは、R-FW の LAN 側（eth0）は入ってくるポート 80 と 443 あての TCP を許可し、インターネット側（eth1）にはルールがありません。次の順に押します。「戻りの通信」、「SSH (拒否)」、「戻りの通信」、「HTTP (許可)」、「戻りの通信」、「SSH (拒否)」、「戻りの通信」。戻りの通信はどれも Server のポート 80 → Client のポート 40000、HTTP は Client のポート 40000 → Server のポート 80 です。このレッスンのネットワークでは、4 回の戻りの通信のうち、Client に届くのはいくつですか？',
+      },
+      options: [
+        {
+          en: 'All four: eth1 has no rules, and an ACL with no rules filters nothing',
+          ja: '4 回とも。eth1 にはルールがなく、ルールのない ACL は何も止めないから',
+        },
+        {
+          en: 'Three: once the Client has tried to open any connection outward, replies from the Server are let in',
+          ja: '3 回。Client が外へ何かの接続を始めようとしたあとは、Server からの返事が通されるから',
+        },
+        {
+          en: 'One, the one right after HTTP: connection tracking lets one reply in per request sent',
+          ja: '1 回。HTTP の直後の 1 回だけ。接続の追跡は、送った要求 1 つにつき返事を 1 つだけ通すから',
+        },
+        {
+          en: 'Two, the last two: only HTTP opened a tracked connection that port 80 → port 40000 belongs to, and it stays open',
+          ja: '2 回。最後の 2 回。ポート 80 → ポート 40000 が属する追跡中の接続を作ったのは HTTP だけで、その接続は開いたままだから',
         },
       ],
       answer: 3,
       explanation: {
-        en: 'The lesson’s stack reads “3 / 24010” with PHP and “16001 / 24010” without, under “PHP active: penultimate hop pops transport label”. Label 3 is implicit null — the “pop me” signal PE2 advertises — so it is never sent; 24010, the label imported with the VPNv4 route, is there either way. Without it PE2 would not know which VRF’s table to use.',
-        ja: 'レッスンのラベルスタックは、PHP 有効で「3 / 24010」、無効で「16001 / 24010」と表示され、「PHP 有効: 最後から2番目のホップがトランスポートラベルを外します」と書かれています。3 は implicit null、つまり PE2 が「外して送って」と伝える値で、実際に送られることはありません。VPNv4 経路とともに取り込んだ 24010 はどちらの場合も残ります。これがないと、PE2 はどの VRF の経路表を使うか分かりません。',
+        en: 'R-FW denies what no rule permits unless it belongs to a connection started from inside. The SSH attempts (41000 → 22) are themselves dropped at eth0 by the default policy, so they open nothing — and a reply from port 80 to port 40000 would not belong to them anyway. The HTTP packet is permitted and recorded, and from then on every return packet of that connection is let in: the first two returns’ hop details read INBOUND eth1, (既定のポリシー), DENY; the last two read conn-track, PERMIT. On a plain Cisco IOS router an applied ACL with no entries permits everything; real stateful firewalls also expire idle entries and check that a reply fits the TCP exchange so far.',
+        ja: 'R-FW は、内側から始めた接続に属するもの以外、どのルールにも許可されないものを拒否します。SSH の試み（41000 → 22）は eth0 で既定のポリシーによって破棄されるので、何も開きません。そもそもポート 80 からポート 40000 への返事は SSH の接続には属しません。HTTP は許可されて記録され、それ以降、その接続の戻りのパケットはすべて通されます。最初の 2 回の戻りのホップの詳細は INBOUND・eth1・（既定のポリシー）・DENY、最後の 2 回は「状態を追跡した戻りの通信 (conn-track)」・PERMIT です。普通の Cisco IOS ルータでは、エントリが 1 つもない ACL を適用するとすべて許可されます。実際の状態追跡型のファイアウォールは、使われなくなった記録を時間で消し、返事がそれまでの TCP のやり取りに合っているかも確かめます。',
       },
-      taughtBy: 'mpls',
+      taughtBy: 'acl',
     },
     {
-      id: 'evpn-arp-suppression',
+      id: 'qos-lone-packet-weight',
       prompt: {
-        en: 'In the VXLAN EVPN lesson with ARP suppression on, Host A (behind Leaf1) sends an ARP request for 10.10.0.20, Host B behind Leaf2. What happens?',
-        ja: 'VXLAN EVPN のレッスンで ARP 抑止が有効なとき、Leaf1 の配下の Host A が、Leaf2 の配下にいる Host B（10.10.0.20）あてに ARP 要求を出します。何が起きますか？',
+        en: 'In the Per-Link QoS lesson you set the R2 → R3 link to 80000 bps, 30 ms of delay and 0% loss, and apply it. The QoS burst is one 1500-byte IP packet with DSCP 0, so it goes to the default class, be. You then give the classes weights ef 95 and be 5, apply them, and send the burst. What does the lesson report?',
+        ja: 'リンクごとの QoS のレッスンで、R2 → R3 のリンクを帯域 80000 bps・伝搬遅延 30 ms・損失率 0% にして適用します。「QoS を試すパケットを送る」は DSCP 0 の 1500 バイトの IP パケット 1 つなので、既定のクラス be に入ります。続いてクラスの重みを ef 95・be 5 にして適用し、パケットを送ります。レッスンの表示はどうなりますか？',
       },
       options: [
         {
-          en: 'Leaf1 answers it itself with Host B’s MAC, 02:00:00:00:00:0b, learned from the EVPN Type-2 route; the request is not flooded across the fabric',
-          ja: 'Leaf1 が EVPN の Type-2 経路で知った Host B の MAC（02:00:00:00:00:0b）を使って自分で応答し、要求はファブリックに流されない',
+          en: '180 ms: 150 ms to clock 1500 bytes out at 80 kbit/s plus 30 ms of delay — with nothing else queued, be may use the whole link',
+          ja: '180 ms。1500 バイトを 80 kbit/s で送り出すのに 150 ms、それに遅延 30 ms。ほかに待っているものがなければ、be もリンク全体を使える',
         },
         {
-          en: 'Leaf1 answers it from the Type-5 route for 10.10.0.0/24',
-          ja: 'Leaf1 が 10.10.0.0/24 の Type-5 経路をもとに応答する',
+          en: '3030 ms: be may use only 5% of the link, 4000 bit/s',
+          ja: '3030 ms。be が使えるのはリンクの 5%、4000 bit/s だけだから',
         },
         {
-          en: 'It is encapsulated (UDP 4789, VNI 10000) and flooded to every VTEP, and Host B answers; suppression only shortens the reply’s path',
-          ja: 'UDP 4789・VNI 10000 でカプセル化されてすべての VTEP へ流され、Host B が応答する。抑止が短くするのは応答の経路だけ',
+          en: '177.2 ms: only the 1472-byte payload is clocked onto the link',
+          ja: '177.2 ms。リンクに送り出されるのは 1472 バイトのペイロードだけだから',
         },
         {
-          en: 'Leaf2 answers on Host B’s behalf after receiving the request through the tunnel',
-          ja: 'トンネル経由で要求を受け取った Leaf2 が、Host B の代わりに応答する',
+          en: '30 ms: a single packet waits only for the delay, not for the bandwidth',
+          ja: '30 ms。パケット 1 つなら、待つのは遅延の分だけで、帯域の分は待たないから',
         },
       ],
       answer: 0,
       explanation: {
-        en: 'The lesson shows “Type-2: 02:00:00:00:00:0b / 10.10.0.20” and “ARP suppression hit: 02:00:00:00:00:0b”; turn suppression off and it reads “miss: flood”. A Type-2 route carries a host’s MAC and IP, so the local VTEP can answer; a Type-5 route carries only a prefix, with no MAC to answer with.',
-        ja: 'レッスンには「Type-2: 02:00:00:00:00:0b / 10.10.0.20」と「ARP 抑止でヒット: 02:00:00:00:00:0b」が表示され、抑止を無効にすると「ミス: フラッディングします」に変わります。Type-2 経路は端末の MAC と IP を運ぶので、手前の VTEP が代わりに答えられます。Type-5 経路が運ぶのはプレフィックスだけで、答えに使える MAC を持っていません。',
+        en: 'Serialisation takes 1500 × 8 ÷ 80 000 = 150 ms and propagation adds 30 ms; the lesson reads 届きました — リンクの通過に 180 ms かかりました both before and after the classes are applied, and the timeline shows the packet classified into be. The weights are the shares a deficit-round-robin scheduler gives classes that are competing; a packet alone in its queue is sent at the full rate. A real shaper or policer that limits a class to a rate (a token bucket) would slow it even on an idle link — these classes are not that. This lesson also counts the IP packet only; real Ethernet adds its own header, preamble and gap.',
+        ja: '送り出し（シリアライズ）に 1500 × 8 ÷ 80 000 ＝ 150 ms、伝搬に 30 ms かかります。レッスンの表示はクラスの適用の前もあとも「届きました — リンクの通過に 180 ms かかりました。」で、タイムラインではパケットが be に分類されています。重みは、競合しているクラスどうしに deficit round robin のスケジューラが配る割合です。キューにパケットが 1 つしかなければ、全速で送られます。クラスの速度そのものを制限する実際のシェーパーやポリサー（トークンバケット）なら、空いているリンクでも遅くなりますが、このクラスはそれとは違います。また、このレッスンは IP パケットの大きさだけを数えます。実際の Ethernet では、ヘッダ・プリアンブル・フレーム間の隙間が加わります。',
       },
-      taughtBy: 'vxlan',
+      taughtBy: 'link-qos',
+    },
+    {
+      id: 'wifi-distance-loss',
+      prompt: {
+        en: 'In the Wireless 802.11 lesson, the station at 20 m shows RSSI −46.2 dBm and 0% loss. You slide it out to 200 m. In this lesson’s network, what do the RSSI and loss read?',
+        ja: '無線 LAN（802.11）のレッスンでは、20 m の位置の端末は RSSI −46.2 dBm、損失率 0% です。スライダーで 200 m まで離します。このレッスンのネットワークでは、RSSI と損失率はどう表示されますか？',
+      },
+      options: [
+        {
+          en: '−76.2 dBm and 45%: about 30 dB weaker, as indoor signal falls with the cube of distance',
+          ja: '−76.2 dBm で 45%。屋内の電波は距離の 3 乗で弱まるので、約 30 dB 下がる',
+        },
+        {
+          en: '−66.2 dBm and 5%',
+          ja: '−66.2 dBm で 5%',
+        },
+        {
+          en: '−66.2 dBm and 0%: still a usable signal, so nothing is lost yet',
+          ja: '−66.2 dBm で 0%。まだ十分使える強さなので、損失は出ない',
+        },
+        {
+          en: '−56.2 dBm and 0%: ten times the distance costs 10 dB',
+          ja: '−56.2 dBm で 0%。距離が 10 倍になると 10 dB 下がる',
+        },
+      ],
+      answer: 1,
+      explanation: {
+        en: 'The lesson uses free-space path loss, which grows by 20 dB for every tenfold distance: −46.2 − 20 = −66.2 dBm. Its loss is 0% down to −65 dBm and rises in a straight line to 100% at −90 dBm, so 1.2 dB past the start gives 1.2 ÷ 25 ≈ 5%. On the way, 160 m still reads −64.3 dBm and 0%, and 300 m reads −69.7 dBm and 19%. Indoors, walls and people make the signal fall faster (a path-loss exponent of about 3 to 4), and real loss depends on the noise and on the data rate the radio chooses, not on RSSI alone.',
+        ja: 'このレッスンは自由空間の伝搬損失を使っており、距離が 10 倍になるごとに 20 dB 増えます。−46.2 − 20 ＝ −66.2 dBm です。損失率は −65 dBm までは 0% で、そこから −90 dBm の 100% まで直線的に増えるので、1.2 dB 超えた分は 1.2 ÷ 25 ≈ 5% です。途中では、160 m で −64.3 dBm・0%、300 m で −69.7 dBm・19% です。屋内では壁や人のために電波がもっと速く弱まり（伝搬損失の指数はおよそ 3〜4）、実際の損失は RSSI だけでなく、雑音や無線機が選ぶ通信速度によって決まります。',
+      },
+      taughtBy: 'wireless',
+    },
+    {
+      id: 'tcp-recovery-levels',
+      prompt: {
+        en: 'In the TCP Congestion Control lesson (MSS 1000 bytes, initial ssthresh 4000 bytes), cwnd has grown to 4000 bytes and four segments — 3001, 4001, 5001 and 6001 — are out when 3001 is lost. The third duplicate ACK arrives at step 9. What does the cwnd line do at step 9, and at step 10 when the new ACK arrives?',
+        ja: 'TCP の輻輳制御のレッスン（MSS 1000 バイト、ssthresh の初期値 4000 バイト）では、cwnd が 4000 バイトまで増え、3001・4001・5001・6001 の 4 セグメントを送った状態で 3001 が失われます。ステップ 9 で 3 つ目の重複 ACK が届きます。cwnd の線はステップ 9 で、そして新しい ACK が届くステップ 10 でどう動きますか？',
+      },
+      options: [
+        {
+          en: 'Step 9: drops to 2000, half of 4000, and stays there at step 10',
+          ja: 'ステップ 9 で 4000 の半分の 2000 に下がり、ステップ 10 もそのまま',
+        },
+        {
+          en: 'Step 9: drops to 1000, one segment; step 10: grows back to 2000',
+          ja: 'ステップ 9 で 1 セグメントの 1000 に下がり、ステップ 10 で 2000 に戻る',
+        },
+        {
+          en: 'Step 9: rises to 5000, its highest point; step 10: falls to 2000 — the same height the line started at',
+          ja: 'ステップ 9 で最も高い 5000 に上がり、ステップ 10 で 2000 に下がる。線が始まったときと同じ高さ',
+        },
+        {
+          en: 'Step 9: rises to 7000 (4000 plus three segments); step 10: falls back to 4000, the level just before the loss',
+          ja: 'ステップ 9 で 7000（4000 に 3 セグメントを足す）に上がり、ステップ 10 で損失の直前と同じ 4000 に戻る',
+        },
+      ],
+      answer: 2,
+      explanation: {
+        en: 'RFC 5681 sets ssthresh to half the data in flight: 4000 ÷ 2 = 2000. Fast retransmit then sets cwnd to ssthresh + 3 MSS = 5000 — one MSS for each segment the duplicate ACKs show has left the network — and the new ACK deflates it to ssthresh, 2000. Halving to 2000 at once is what Reno without window inflation, or a modern stack with PRR, would show; dropping to one segment is the RTO response, which this lesson shows later at step 12. On the chart the step-9 peak is 2.5 times the step-10 level, which equals the starting level and is twice the final “cwnd 1000 B”.',
+        ja: 'RFC 5681 では、ssthresh は送信中のデータ量の半分、4000 ÷ 2 ＝ 2000 です。高速再送では cwnd を ssthresh ＋ 3 MSS ＝ 5000 にし（重複 ACK が「ネットワークから抜けた」と示す 3 セグメント分）、新しい ACK が届くと ssthresh の 2000 まで縮めます。すぐ 2000 に半減するのはウィンドウを膨らませない実装や PRR を使う今の実装の見え方で、1 セグメントへ下がるのは RTO のときの動きです（このレッスンではステップ 12 で起きます）。グラフでは、ステップ 9 の山はステップ 10 の高さの 2.5 倍で、ステップ 10 の高さは最初の高さと同じ、最後の「cwnd 1000 B」の 2 倍です。',
+      },
+      taughtBy: 'tcp-congestion',
     },
   ],
 };
