@@ -295,7 +295,7 @@ function VlanDemoInner() {
       )
     : t(
         'Trunk is up. Router-on-a-stick can move traffic between VLAN 10 and VLAN 20.',
-        'トランクはつながっています。ルータオンアスティックで VLAN 10 と VLAN 20 の間を通信できます。',
+        'トランクはつながっています。ルータオンアスティック（1 本のトランクでルータにつなぎ、ルータが VLAN の間を中継するしくみ）で、VLAN 10 と VLAN 20 の間を通信できます。',
       );
 
   return (
@@ -431,14 +431,14 @@ function VlanDemoInner() {
                 onClick={() => void sendBetween('host-a1', 'host-a2')}
                 style={BTN_PRIMARY}
               >
-                Send a1→a2
+                {t('Send a1→a2', 'a1→a2 へ送る（同じ VLAN）')}
               </button>
               <button
                 type="button"
                 onClick={() => void sendBetween('host-a1', 'host-b1')}
                 style={BTN_PRIMARY}
               >
-                Send a1→b1
+                {t('Send a1→b1', 'a1→b1 へ送る（別の VLAN）')}
               </button>
               <button
                 type="button"

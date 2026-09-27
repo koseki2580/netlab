@@ -21,8 +21,11 @@ export const TraceSummary = memo(function TraceSummary() {
 
   const dstNode = topology.nodes.find((node) => node.id === trace.dstNodeId);
   const dstLabel = dstNode?.data.label ?? trace.dstNodeId;
+  // The address the packet actually went to, as the last hop saw it (after any
+  // translation). Preferring the node's configured IPv4 summarised the IPv6
+  // lesson's echo to a dual-stack server as an IPv4 packet.
   const dstIp =
-    dstNode?.data.ip ?? trace.hops[trace.hops.length - 1]?.dstIp ?? t('simulation.summary.unknown');
+    trace.hops[trace.hops.length - 1]?.dstIp ?? dstNode?.data.ip ?? t('simulation.summary.unknown');
   const status = STATUS_META[trace.status] ?? STATUS_META['in-flight'];
 
   return (

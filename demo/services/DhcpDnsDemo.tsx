@@ -260,6 +260,12 @@ function DhcpDnsDemoInner() {
                 'DHCP：つないだばかりの機器にはアドレスがありません。ネットワークに尋ねると、DHCP サーバがアドレスを貸してくれます。サブネットマスク・デフォルトゲートウェイ・使う DNS サーバも一緒に設定されます。',
               )}
             </div>
+            <div data-testid="dhcp-message-gloss" style={{ color: 'var(--netlab-text-secondary)' }}>
+              {t(
+                'DISCOVER = "is there a DHCP server?" → OFFER = "you can have this address" → REQUEST = "I will take it" → ACK = "it is yours to use".',
+                'DISCOVER＝「DHCP サーバはいますか？」 → OFFER＝「このアドレスをどうぞ」 → REQUEST＝「それをください」 → ACK＝「どうぞ使ってください」。',
+              )}
+            </div>
             <div>
               {t(
                 'DNS: people use names like web.example.com, but packets need an IP address. DNS answers "what is the address of this name?".',

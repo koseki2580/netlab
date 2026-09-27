@@ -112,6 +112,40 @@ describe('TraceSummary', () => {
     expect(html).toContain('203.0.113.10');
   });
 
+  /**
+   * TC-212 — the destination shown is the address the packet was sent to.
+   *
+   * A dual-stack server has an IPv4 address in its data and an IPv6 one on its
+   * interface; the IPv6 lesson's echo was summarised as going to the IPv4
+   * address, which told a learner the packet had switched to IPv4.
+   */
+  it('shows the address the packet went to, not the node’s configured IPv4', () => {
+    const trace: PacketTrace = {
+      packetId: 'pkt-6',
+      srcNodeId: 'client-1',
+      dstNodeId: 'server-1',
+      hops: [
+        {
+          step: 0,
+          nodeId: 'client-1',
+          nodeLabel: 'Client',
+          event: 'forward',
+          srcIp: '2001:db8:1::10',
+          dstIp: '2001:db8:2::20',
+          ttl: 64,
+          protocol: 'ICMPv6',
+          timestamp: 0,
+        },
+      ],
+      status: 'delivered',
+    };
+
+    const html = renderTraceSummary(trace);
+
+    expect(html).toContain('2001:db8:2::20');
+    expect(html).not.toContain('203.0.113.10');
+  });
+
   it('perf: is wrapped in React.memo', () => {
     expect((TraceSummary as unknown as { $$typeof: symbol }).$$typeof).toBe(
       Symbol.for('react.memo'),

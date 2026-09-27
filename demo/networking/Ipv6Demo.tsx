@@ -139,6 +139,31 @@ function DemoInner() {
         <NetlabCanvas style={{ height: 560 }} />
       </section>
       <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div
+          data-testid="lesson-brief"
+          style={{
+            border: '1px solid var(--netlab-border-subtle)',
+            borderRadius: 8,
+            padding: '10px 12px',
+            fontSize: 12,
+            lineHeight: 1.7,
+            color: 'var(--netlab-text-primary)',
+          }}
+        >
+          <strong>{t('Dual stack', 'デュアルスタックのしくみ')}</strong>
+          <div>
+            {t(
+              'Dual stack means one interface holds both an IPv4 and an IPv6 address, so the same network carries both kinds of traffic side by side. Open R1 to see each interface with both.',
+              'デュアルスタックとは、1 つのインタフェースが IPv4 と IPv6 の両方のアドレスを持つことです。同じネットワークで 2 種類の通信を並べて運べます。R1 を開くと、各インタフェースに両方のアドレスが付いているのが分かります。',
+            )}
+          </div>
+          <div style={{ marginTop: 6 }}>
+            {t(
+              'An IPv6 address such as 2001:db8:2::20 is written in hexadecimal groups; "::" stands for a run of zeros. The echo below goes to that address and stays IPv6 all the way — R1 forwards it between 2001:db8:1:: and 2001:db8:2:: without turning it into IPv4.',
+              '2001:db8:2::20 のような IPv6 アドレスは 16 進数の区切りで書き、「::」は 0 の続きを省略した印です。下の Echo はこのアドレスへ送られ、最後まで IPv6 のままです。R1 は IPv4 に変えずに、2001:db8:1:: と 2001:db8:2:: の間で転送します。',
+            )}
+          </div>
+        </div>
         <button
           type="button"
           data-testid="ipv6-send-echo"
