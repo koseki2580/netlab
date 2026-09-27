@@ -42,6 +42,25 @@ function Http2DemoInner() {
   return (
     <main style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: 16 }}>
       <section style={PANEL_STYLE} aria-label={t('HTTP/2 streams', 'HTTP/2 のストリーム')}>
+        <div
+          data-testid="lesson-brief"
+          style={{
+            border: '1px solid var(--netlab-border-subtle)',
+            borderRadius: 8,
+            padding: '10px 12px',
+            marginBottom: 12,
+            fontSize: 12,
+            lineHeight: 1.7,
+          }}
+        >
+          <strong>{t('Why one loss stalls every stream', '1 つのロスで全部が止まる理由')}</strong>
+          <div>
+            {t(
+              'HTTP/2 sends four requests as four streams over one TCP connection. TCP hands data to the application strictly in order, so when one packet is lost, everything behind it waits for the resend — every stream stalls, even those whose own data arrived. This is head-of-line blocking. Compare with HTTP/3, next.',
+              'HTTP/2 は 4 つのリクエストを、1 本の TCP 接続の上の 4 つのストリームとして送ります。TCP はデータを必ず順番どおりにしか渡さないので、1 つのパケットが失われると、その後ろにあるものは再送を待つことになります。自分のデータが届いているストリームも含めて、全部が止まります。これが先頭ブロッキング（HOL ブロッキング）です。次の HTTP/3 と比べてください。',
+            )}
+          </div>
+        </div>
         <button
           type="button"
           data-testid="h2-tcp-loss-toggle"

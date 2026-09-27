@@ -60,6 +60,31 @@ function HttpsDemoInner() {
       }}
     >
       <section style={PANEL_STYLE} aria-label={t('HTTPS flow', 'HTTPS の流れ')}>
+        <div
+          data-testid="lesson-brief"
+          style={{
+            border: '1px solid var(--netlab-border-subtle)',
+            borderRadius: 8,
+            padding: '10px 12px',
+            marginBottom: 12,
+            fontSize: 12,
+            lineHeight: 1.7,
+          }}
+        >
+          <strong>{t('How TLS starts', 'TLS の始まり方')}</strong>
+          <div>
+            {t(
+              'The client opens with a ClientHello: the key it offers, and through ALPN the application protocols it can speak (for example h2 or http/1.1). The server answers with its choice and its certificate, proves it owns the key, and only then does encrypted data flow.',
+              'クライアントは ClientHello から始めます。使う鍵の材料と、ALPN（使えるアプリケーションの種類の一覧。例：h2、http/1.1）を伝えます。サーバは選んだものと証明書を返して鍵の持ち主であることを示し、そのあとで暗号化したデータが流れます。',
+            )}
+          </div>
+          <div>
+            {t(
+              'This server accepts only h2. If none of the client’s ALPN choices is acceptable, the server ends the handshake at once with a no_application_protocol alert — before any certificate is sent.',
+              'このサーバが受け付けるのは h2 だけです。クライアントの ALPN の中に受け付けられるものがなければ、サーバは証明書を送る前に、no_application_protocol の警告でハンドシェイクを打ち切ります。',
+            )}
+          </div>
+        </div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
           <button
             type="button"

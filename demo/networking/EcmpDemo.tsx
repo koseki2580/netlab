@@ -270,6 +270,32 @@ function DemoInner() {
           padding: 14,
         }}
       >
+        <div
+          data-testid="lesson-brief"
+          style={{
+            border: '1px solid var(--netlab-border-subtle)',
+            borderRadius: 8,
+            padding: '10px 12px',
+            marginBottom: 12,
+            fontSize: 12,
+            lineHeight: 1.7,
+          }}
+        >
+          <strong>{t('How ECMP spreads traffic', 'ECMP の振り分け方')}</strong>
+          <div>
+            {t(
+              'R1 has two equally good routes to 10.0.4.0/24: next hop 10.0.12.2 is Spine 1, next hop 10.0.13.2 is Spine 2. It does not alternate packet by packet: it hashes each flow’s addresses and ports and sends the whole flow along the path the hash picks — so a flow’s packets stay in order.',
+              'R1 には 10.0.4.0/24 への同じくらい良い経路が 2 本あります。次ホップ 10.0.12.2 が Spine 1、10.0.13.2 が Spine 2 です。R1 はパケットごとに交互に振るのではなく、フローのアドレスとポートからハッシュ値を計算し、その値が選んだ経路へフロー全体を送ります。だから 1 つのフローのパケットは順番が崩れません。',
+            )}
+          </div>
+          <div>
+            {t(
+              'Press send twice: the same flows land on the same spines both times. The split need not be even — with a handful of flows, one spine can carry more.',
+              '2 回送ってみてください。同じフローは 2 回とも同じ Spine を通ります。振り分けは均等とは限らず、フローの数が少なければ片方に偏ることもあります。',
+            )}
+          </div>
+        </div>
+
         <button type="button" data-testid="ecmp-send" onClick={sendFlows} style={BUTTON_STYLE}>
           {t('Send ECMP flows', 'ECMP のフローを送る')}
         </button>
