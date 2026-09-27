@@ -159,9 +159,18 @@ function makePacket(
   };
 }
 
-function ActionButton({ label, onClick }: { label: string; onClick: () => void }) {
+function ActionButton({
+  label,
+  onClick,
+  testId,
+}: {
+  label: string;
+  onClick: () => void;
+  testId?: string;
+}) {
   return (
     <button
+      {...(testId !== undefined ? { 'data-testid': testId } : {})}
       onClick={onClick}
       style={{
         background: 'var(--netlab-bg-panel)',
@@ -213,8 +222,58 @@ function AclDemoInner() {
             padding: 12,
           }}
         >
+          <div
+            data-testid="lesson-brief"
+            style={{
+              background: 'var(--netlab-bg-panel)',
+              border: '1px solid var(--netlab-border-subtle)',
+              borderRadius: 8,
+              padding: '10px 12px',
+              fontSize: 12,
+              lineHeight: 1.7,
+              color: 'var(--netlab-text-primary)',
+            }}
+          >
+            <strong>{t('How this firewall decides', 'このファイアウォールの決め方')}</strong>
+            <div>
+              {t(
+                'R-FW checks packets coming in on each interface against that interface’s rules, top to bottom, and the first rule that matches decides. A packet that matches none is denied by the default policy.',
+                'R-FW は、各インタフェースに入ってくるパケットを、そのインタフェースのルールと上から順に照らし合わせ、最初に一致したルールで決めます。どのルールにも一致しなければ、既定のポリシーで拒否します。',
+              )}
+            </div>
+            <ol data-testid="acl-rules" style={{ margin: '6px 0', paddingLeft: 20 }}>
+              <li>
+                {t(
+                  'LAN side (eth0) in: TCP to port 80 — permit',
+                  'LAN 側（eth0）の入口：TCP のポート 80 あて — 許可',
+                )}
+              </li>
+              <li>
+                {t(
+                  'LAN side (eth0) in: TCP to port 443 — permit',
+                  'LAN 側（eth0）の入口：TCP のポート 443 あて — 許可',
+                )}
+              </li>
+              <li>
+                {t('Anything else — deny (default policy)', 'それ以外 — 拒否（既定のポリシー）')}
+              </li>
+              <li>
+                {t(
+                  'Internet side (eth1) in: no rules — deny, except replies',
+                  'インターネット側（eth1）の入口：ルールなし — 拒否。ただし戻りの通信は除く',
+                )}
+              </li>
+            </ol>
+            <div>
+              {t(
+                'The firewall is stateful: it remembers a connection the client opened, and lets that connection’s replies back in although eth1 has no rule for them. Use the buttons below — each sends at once.',
+                'このファイアウォールは状態を追跡します。クライアントが始めた接続を覚えていて、eth1 にルールがなくても、その接続の返事は通します。下のボタンで送ってください（押すとすぐ送られます）。',
+              )}
+            </div>
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
             <ActionButton
+              testId="acl-send-http"
               label={t('HTTP (permitted)', 'HTTP (許可)')}
               onClick={() => {
                 void sendPacket(
@@ -231,6 +290,7 @@ function AclDemoInner() {
               }}
             />
             <ActionButton
+              testId="acl-send-ssh"
               label={t('SSH (blocked)', 'SSH (拒否)')}
               onClick={() => {
                 void sendPacket(
@@ -247,6 +307,7 @@ function AclDemoInner() {
               }}
             />
             <ActionButton
+              testId="acl-send-return"
               label={t('Return Traffic', '戻りの通信')}
               onClick={() => {
                 void sendPacket(
@@ -281,7 +342,9 @@ function AclDemoInner() {
             <HopInspector />
           </div>
 
-          <SimulationControls />
+          {/* No generic send: it started a flow the tracker had never seen, so a
+              learner who used it saw the return dropped. */}
+          <SimulationControls showSend={false} />
         </div>
       </ResizableSidebar>
     </div>

@@ -177,6 +177,7 @@ function HopRow({
     <div
       role="option"
       data-testid="trace-hop"
+      data-event={hop.event}
       aria-selected={isActive}
       tabIndex={0}
       onClick={onClick}
