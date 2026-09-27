@@ -23,14 +23,16 @@ interface SimulationOverlayDockProps {
 }
 
 export function SimulationOverlayDock({ showRouteTable }: SimulationOverlayDockProps) {
+  // Each panel is marked so the canvas frames its drawing clear of it; they
+  // covered the destination device and the bubble on it.
   return (
     <div style={STACK_STYLE}>
       {showRouteTable && (
-        <div style={ITEM_STYLE}>
+        <div style={ITEM_STYLE} data-canvas-overlay="">
           <RouteTablePanel />
         </div>
       )}
-      <div style={ITEM_STYLE}>
+      <div style={ITEM_STYLE} data-canvas-overlay="">
         <PacketViewerPanel />
       </div>
     </div>

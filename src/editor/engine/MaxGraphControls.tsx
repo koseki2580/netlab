@@ -60,6 +60,7 @@ export function MaxGraphControls({
   return (
     <div
       data-testid="maxgraph-controls"
+      data-canvas-overlay=""
       style={{
         position: 'absolute',
         ...(placement === 'bottom-right' ? { right: 8 } : { left: 8 }),

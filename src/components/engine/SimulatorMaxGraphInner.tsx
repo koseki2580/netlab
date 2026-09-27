@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type ComponentType,
@@ -35,6 +36,9 @@ import {
   type LinkState,
 } from './simulatorGraphModel';
 import { offersGridSnap } from './canvasOffers';
+import { PacketMarker } from './PacketMarker';
+import { canvasPacketFrom } from './packetStory';
+import { clearRegion, fitScale, overlaps, type Box } from './canvasFraming';
 
 /**
  * The simulator canvas drawn by maxGraph.
@@ -79,62 +83,103 @@ const LINK_STATE_KEYS: Record<Exclude<LinkState, 'up'>, { label: string; hint: s
 };
 
 /**
+ * Every element marked `data-canvas-overlay` that sits over this canvas, in the
+ * canvas's own coordinates.
+ *
+ * Looked for across the whole page, not only among the canvas's children: a
+ * lesson lays its own panels and cards over the canvas as siblings of it, and
+ * any of them that marks itself is kept clear of the same way.
+ */
+function overlaysOver(host: HTMLElement): Box[] {
+  const hostBox = host.getBoundingClientRect();
+  const canvas: Box = {
+    left: hostBox.left,
+    top: hostBox.top,
+    right: hostBox.right,
+    bottom: hostBox.bottom,
+  };
+  return Array.from(document.querySelectorAll<HTMLElement>('[data-canvas-overlay]'))
+    .map((element) => element.getBoundingClientRect())
+    .filter((box) => box.width > 0 && box.height > 0 && overlaps(box, canvas))
+    .map((box) => ({
+      left: box.left - hostBox.left,
+      top: box.top - hostBox.top,
+      right: box.right - hostBox.left,
+      bottom: box.bottom - hostBox.top,
+    }));
+}
+
+/**
  * Frame the drawing, keeping it clear of what sits over the canvas.
  *
- * The zoom strip, the overview and the link-state key sit in the bottom-right
- * corner. Framed as if they were not there, a short canvas put a device under
- * them. The drawing is framed once over the whole canvas; only when that lands
- * it under one of them is it framed again in the band above them.
+ * The zoom overview and link-state key sit in the bottom-right corner, a
+ * lesson's panels in the top-right, its explanation card perhaps top-left.
+ * Framed as if they were not there, a device ended up under one of them. The
+ * drawing is framed once over the whole canvas; only when that lands it under
+ * one of them is it framed again, in the clear rectangle where it is drawn
+ * largest.
  */
 function frameDrawing(graph: Graph, host: HTMLElement, padding: number): void {
   const view = graph.getView();
-  const place = (bottomReserve: number): boolean => {
+  const margin = fitMargin(host, padding);
+  const place = (region: Box): boolean => {
     const bounds = graph.getGraphBounds();
     const scale = view.scale;
     if (!(bounds.width > 0 && bounds.height > 0) || !(scale > 0)) return false;
-    const width = host.clientWidth;
-    const height = host.clientHeight - bottomReserve;
-    const margin = fitMargin(host, padding);
-    const drawingW = bounds.width / scale;
-    const drawingH = bounds.height / scale;
-    const next = Math.min(
-      MAX_FIT_SCALE,
-      (width - 2 * margin) / drawingW,
-      (height - 2 * margin) / drawingH,
-    );
+    const drawing = { width: bounds.width / scale, height: bounds.height / scale };
+    const next = Math.min(MAX_FIT_SCALE, fitScale(region, drawing, margin));
     if (!(next > 0) || !Number.isFinite(next)) return false;
     const originX = bounds.x / scale - view.translate.x;
     const originY = bounds.y / scale - view.translate.y;
     view.scaleAndTranslate(
       next,
-      (width - drawingW * next) / 2 / next - originX,
-      (height - drawingH * next) / 2 / next - originY,
+      (region.left + (region.right - region.left - drawing.width * next) / 2) / next - originX,
+      (region.top + (region.bottom - region.top - drawing.height * next) / 2) / next - originY,
     );
     return true;
   };
 
-  if (!place(0)) return;
-  const hostBox = host.getBoundingClientRect();
-  const overlays = Array.from(
-    host.parentElement?.querySelectorAll<HTMLElement>('[data-canvas-overlay]') ?? [],
-  ).map((element) => element.getBoundingClientRect());
-  const drawing = graph.getGraphBounds();
-  const left = hostBox.left + drawing.x;
-  const top = hostBox.top + drawing.y;
-  const covered = overlays.some(
-    (box) =>
-      box.width > 0 &&
-      left < box.right &&
-      left + drawing.width > box.left &&
-      top < box.bottom &&
-      top + drawing.height > box.top,
+  const canvas = { width: host.clientWidth, height: host.clientHeight };
+  if (!place({ left: 0, top: 0, right: canvas.width, bottom: canvas.height })) return;
+  const overlays = overlaysOver(host);
+  const drawn = graph.getGraphBounds();
+  const drawing: Box = {
+    left: drawn.x,
+    top: drawn.y,
+    right: drawn.x + drawn.width,
+    bottom: drawn.y + drawn.height,
+  };
+  if (!overlays.some((box) => overlaps(drawing, box))) return;
+  const scale = view.scale;
+  const region = clearRegion(
+    canvas,
+    overlays,
+    { width: drawn.width / scale, height: drawn.height / scale },
+    margin,
+    MAX_FIT_SCALE,
   );
-  if (!covered) return;
-  const overlayTop = Math.min(...overlays.map((box) => box.top));
-  const reserve = Math.max(0, hostBox.bottom - overlayTop + 8);
-  // A reserve that leaves no room would only shrink the drawing to nothing.
-  if (host.clientHeight - reserve < host.clientHeight / 3) return;
-  place(reserve);
+  if (region) place(region);
+}
+
+/** Area backdrops sit under devices; an overlay on one covers nothing a learner needs. */
+const AREA_BACKDROP_TYPES = new Set(['netlab-area', AREA_CLUSTER_NODE_TYPE]);
+
+/** Whether a marked overlay sits on any of the drawn devices. */
+function devicesCovered(graph: Graph, host: HTMLElement, ids: readonly string[]): boolean {
+  const overlays = overlaysOver(host);
+  if (overlays.length === 0) return false;
+  return ids.some((id) => {
+    const cell = graph.getDataModel().getCell(id);
+    const state = cell ? graph.getView().getState(cell) : null;
+    if (!state) return false;
+    const device: Box = {
+      left: state.x,
+      top: state.y,
+      right: state.x + state.width,
+      bottom: state.y + state.height,
+    };
+    return overlays.some((box) => overlaps(device, box));
+  });
 }
 
 export default function SimulatorMaxGraphInner({
@@ -159,8 +204,16 @@ export default function SimulatorMaxGraphInner({
   handleNodeClick,
   onZoom,
   sandbox,
+  packet: packetSource,
 }: SimulatorCanvasProps) {
   const { t } = useI18n();
+  const packet = useMemo(
+    () =>
+      packetSource
+        ? (canvasPacketFrom(packetSource, new Set(nodes.map((node) => node.id))) ?? undefined)
+        : undefined,
+    [packetSource, nodes],
+  );
   const hostRef = useRef<HTMLDivElement>(null);
   const outlineHostRef = useRef<HTMLDivElement>(null);
   // The overview draws from the graph, so it has to go before the graph does.
@@ -375,6 +428,45 @@ export default function SimulatorMaxGraphInner({
     frameDrawing(graph, host, fitViewPadding);
     fittedRef.current = true;
   }, [nodes, edges, drawnFor, ready, fitViewPadding, viewport, hostHeight]);
+
+  // The packet is drawn over the graph in the graph's own coordinates, so it is
+  // placed again whenever the view moves or the cells are redrawn.
+  const [viewRevision, setViewRevision] = useState(0);
+  const hasPacket = packet !== undefined;
+  useEffect(() => {
+    const graph = graphRef.current;
+    if (!graph || !hasPacket) return undefined;
+    const view = graph.getView();
+    const model = graph.getDataModel();
+    const bump = () => setViewRevision((value) => value + 1);
+    view.addListener(InternalEvent.SCALE, bump);
+    view.addListener(InternalEvent.TRANSLATE, bump);
+    view.addListener(InternalEvent.SCALE_AND_TRANSLATE, bump);
+    model.addListener(InternalEvent.CHANGE, bump);
+    bump();
+    return () => {
+      view.removeListener(bump);
+      model.removeListener(bump);
+    };
+  }, [ready, hasPacket]);
+
+  // A panel a lesson shows over the canvas can grow onto a device as the packet
+  // moves — the packet viewer fills in once a hop is chosen, and covered the
+  // Server the packet was heading for. When a device ends up under a marked
+  // overlay, the drawing is framed again clear of it, unless the host drives
+  // the viewport itself.
+  useEffect(() => {
+    const graph = graphRef.current;
+    const host = hostRef.current;
+    if (!graph || !host || !packet || viewport) return;
+    const devices = handlers.current.nodes
+      .filter((node) => !AREA_BACKDROP_TYPES.has(node.type ?? ''))
+      .map((node) => node.id);
+    if (devicesCovered(graph, host, devices)) frameDrawing(graph, host, fitViewPadding);
+    // Checked when the packet moves on, not on every pan: a learner who moves
+    // the view away on purpose is left where they put it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [packet?.id, ready]);
 
   // Report the live zoom so the canvas can collapse areas when zoomed out, and
   // the whole viewport so a host can mirror it — the sandbox's compare view
@@ -703,6 +795,16 @@ export default function SimulatorMaxGraphInner({
           node.id,
         );
       })}
+      {packet && graphRef.current ? (
+        <PacketMarker
+          graph={graphRef.current}
+          edges={edges}
+          packet={packet}
+          revision={viewRevision}
+          label={t('simulation.packetStory.marker')}
+          bubbleText={packet.bubble ? t(packet.bubble.key, packet.bubble.params) : null}
+        />
+      ) : null}
       {showMinimap ? (
         <div
           ref={outlineHostRef}

@@ -5,6 +5,7 @@ import { NodeGlyph } from '../../components/NodeGlyph';
 import { useNetlabUI } from '../../components/NetlabUIContext';
 
 const CLIENT_STYLE: React.CSSProperties = {
+  position: 'relative',
   background: 'var(--netlab-node-client-bg)',
   border: '2px solid var(--netlab-accent-cyan)',
   borderRadius: 10,
@@ -24,6 +25,33 @@ const HANDLE_STYLE: React.CSSProperties = {
   border: '1px solid var(--netlab-accent-cyan)',
 };
 
+/**
+ * A host's IP address, under its name. The lessons talk about addresses all the
+ * time, and a learner reading the diagram had to open a panel to find one.
+ * Drawn just under the box rather than inside it: a taller host box moved its
+ * link anchor down and put a step in every link to a switch or router.
+ */
+export function HostAddress({ ip }: { ip: string | undefined }) {
+  if (!ip) return null;
+  return (
+    <div
+      data-testid="topology-node-ip"
+      style={{
+        position: 'absolute',
+        top: '100%',
+        left: 0,
+        right: 0,
+        marginTop: 3,
+        fontSize: 10,
+        whiteSpace: 'nowrap',
+        color: 'var(--netlab-text-secondary)',
+      }}
+    >
+      {ip}
+    </div>
+  );
+}
+
 export function ClientNode({ id, data }: NodeProps) {
   const { setSelectedNodeId } = useNetlabUI();
   const d = data as NetlabNodeData;
@@ -42,6 +70,7 @@ export function ClientNode({ id, data }: NodeProps) {
       <div style={{ fontWeight: 'bold', fontSize: 11, color: 'var(--netlab-text-primary)' }}>
         {d.label}
       </div>
+      <HostAddress ip={d.ip} />
     </div>
   );
 }

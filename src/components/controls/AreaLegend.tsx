@@ -36,7 +36,7 @@ export function AreaLegend() {
   if (areas.length === 0) return null;
 
   return (
-    <div data-testid="area-legend" style={LEGEND_STYLE}>
+    <div data-testid="area-legend" data-canvas-overlay="" style={LEGEND_STYLE}>
       <div
         style={{
           padding: '8px 12px 6px',

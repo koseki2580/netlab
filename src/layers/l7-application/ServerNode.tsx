@@ -3,8 +3,10 @@ import { NodePorts } from '../../components/NodePorts';
 import type { NetlabNodeData } from '../../types/topology';
 import { NodeGlyph } from '../../components/NodeGlyph';
 import { useNetlabUI } from '../../components/NetlabUIContext';
+import { HostAddress } from './ClientNode';
 
 const SERVER_STYLE: React.CSSProperties = {
+  position: 'relative',
   background: 'var(--netlab-node-server-bg)',
   border: '2px solid var(--netlab-accent-purple)',
   borderRadius: 10,
@@ -42,6 +44,7 @@ export function ServerNode({ id, data }: NodeProps) {
       <div style={{ fontWeight: 'bold', fontSize: 11, color: 'var(--netlab-text-primary)' }}>
         {d.label}
       </div>
+      <HostAddress ip={d.ip} />
     </div>
   );
 }

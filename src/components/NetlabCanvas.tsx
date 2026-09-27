@@ -22,6 +22,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 import { AreaBackground } from '../areas/AreaBackground';
 import { interactionProfile } from '../editor/engine/types';
 import { SimulatorMaxGraph as SimulatorCanvas } from './engine/SimulatorMaxGraph';
+import type { CanvasPacketSource } from './engine/canvasEngine';
 import { areasToNodes } from '../areas/AreaRegistry';
 import { applyAreaLod, AREA_CLUSTER_NODE_TYPE, type AreaClusterNodeData } from '../areas/areaLod';
 import { AreaClusterNode } from './AreaClusterNode';
@@ -558,6 +559,23 @@ export function NetlabCanvas({
     return { nodes, edges: lod.edges };
   }, [topology.areas, styledNodes, styledEdges, lodZoom, expandedAreaIds, expandArea]);
 
+  // What the canvas needs to draw the packet of the hop being shown. The story
+  // itself is worked out inside the engine's lazily loaded chunk, so pages that
+  // never show a canvas do not carry it.
+  const simState = simCtx?.state;
+  const packetSource = useMemo<CanvasPacketSource | null>(
+    () =>
+      simState?.currentTraceId
+        ? {
+            state: simState,
+            areas: topology.areas ?? [],
+            color: currentTraceColor,
+            animate: !reducedMotion,
+          }
+        : null,
+    [simState, topology.areas, currentTraceColor, reducedMotion],
+  );
+
   const handleNodeClick = useCallback(
     (node: NetlabNode) => {
       if (node.type === AREA_CLUSTER_NODE_TYPE) {
@@ -626,6 +644,7 @@ export function NetlabCanvas({
           selectEdge={selectEdge}
           handleNodeClick={handleNodeClick}
           onZoom={setLodZoom}
+          {...(packetSource ? { packet: packetSource } : {})}
           {...(sandbox ? { sandbox } : {})}
         />
         <NodeDetailPanel

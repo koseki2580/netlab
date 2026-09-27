@@ -1,25 +1,25 @@
 [
   {
     "path": "dist/netlab.es.js",
-    "limit": "415 kB",
+    "limit": "435 kB",
     "gzip": true
   },
   {
     "name": "ui:concept-check",
     "path": "dist/ConceptCheckPanelInner-*.mjs",
-    "limit": "108 kB",
+    "limit": "110 kB",
     "gzip": true
   },
   {
     "name": "ui:graph-maxgraph",
     "path": "dist/MaxGraphEngineInner-*.mjs",
-    "limit": "136 kB",
+    "limit": "138 kB",
     "gzip": true
   },
   {
     "name": "ui:drill-kit",
     "path": "dist/drillKit-*.mjs",
-    "limit": "26 kB",
+    "limit": "28 kB",
     "gzip": true
   },
   {
@@ -76,7 +76,7 @@
   {
     "name": "ui:simulation-context",
     "path": "dist/SimulationContext-*.mjs",
-    "limit": "245 kB",
+    "limit": "250 kB",
     "gzip": true
   },
   {
