@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { RouteEntry } from '../../types/routing';
 import type { SimulationState } from '../../types/simulation';
+import { ospfProtocol } from '../../routing/ospf/OspfProtocol';
+import { buildOspfConvergenceTopology } from '../../scenarios/ospf-convergence';
 import { ospfReconverge } from './ospf-reconverge';
 
 function makeState(
@@ -33,6 +35,22 @@ function makeState(
 }
 
 describe('ospfReconverge tutorial predicates', () => {
+  // TC-217: the steps must recognise the metrics the lesson's OSPF really
+  // computes, which include the cost of R4's interface on C2's LAN.
+  it('recognises the preferred and backup routes OSPF computes for the lesson', () => {
+    const r1Routes = (primaryLinkDown: boolean) =>
+      ospfProtocol
+        .computeRoutes(buildOspfConvergenceTopology(primaryLinkDown))
+        .filter((route) => route.nodeId === 'r1');
+
+    expect(
+      ospfReconverge.steps[0]?.predicate({ state: makeState(r1Routes(false)), events: [] }),
+    ).toBe(true);
+    expect(
+      ospfReconverge.steps[1]?.predicate({ state: makeState(r1Routes(true)), events: [] }),
+    ).toBe(true);
+  });
+
   it('detects the preferred and backup routes from the tutorial route table snapshot', () => {
     expect(
       ospfReconverge.steps[0]?.predicate({
@@ -41,7 +59,7 @@ describe('ospfReconverge tutorial predicates', () => {
             nodeId: 'r1',
             destination: '10.4.0.0/24',
             nextHop: '10.0.12.2',
-            metric: 2,
+            metric: 3,
             protocol: 'ospf',
             adminDistance: 110,
           },
@@ -57,7 +75,7 @@ describe('ospfReconverge tutorial predicates', () => {
             nodeId: 'r1',
             destination: '10.4.0.0/24',
             nextHop: '10.0.13.2',
-            metric: 4,
+            metric: 5,
             protocol: 'ospf',
             adminDistance: 110,
           },

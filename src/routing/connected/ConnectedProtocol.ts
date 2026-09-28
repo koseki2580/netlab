@@ -2,6 +2,7 @@ import { type RouteEntry, type RoutingProtocol } from '../../types/routing';
 import type { NetworkTopology } from '../../types/topology';
 import { networkAddress } from '../../utils/cidr';
 import { isIpv6Address } from '../../utils/ipv6';
+import { isInterfaceOnDownLink } from '../graphBuilder';
 
 /**
  * The routes a router has simply because of the addresses on its own
@@ -29,6 +30,9 @@ export class ConnectedProtocol implements RoutingProtocol {
       if (node.data.role !== 'router') continue;
 
       for (const iface of node.data.interfaces ?? []) {
+        // An interface on a failed link is down, and a down interface installs
+        // no connected route.
+        if (isInterfaceOnDownLink(topology, node.id, iface)) continue;
         // A sub-interface carries its own address, and on real hardware that
         // address installs its own connected route — which is what makes
         // router-on-a-stick reach each VLAN it terminates.

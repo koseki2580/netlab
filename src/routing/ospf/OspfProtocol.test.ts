@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ADMIN_DISTANCES, type OspfAreaConfig, type RouterInterface } from '../../types/routing';
 import type { NetlabEdge, NetlabNode, NetworkTopology } from '../../types/topology';
+import { buildOspfConvergenceTopology } from '../../scenarios/ospf-convergence';
 import { OspfProtocol, ospfProtocol } from './OspfProtocol';
 
 function makeTopology(overrides: Partial<NetworkTopology> = {}): NetworkTopology {
@@ -163,7 +164,7 @@ describe('OspfProtocol', () => {
         findRoute(new OspfProtocol().computeRoutes(topology), 'r1', '10.2.0.0/24'),
       ).toMatchObject({
         nextHop: '10.0.12.2',
-        metric: 1,
+        metric: 2,
       });
     });
 
@@ -189,7 +190,7 @@ describe('OspfProtocol', () => {
         findRoute(new OspfProtocol().computeRoutes(topology), 'r1', '10.3.0.0/24'),
       ).toMatchObject({
         nextHop: '10.0.12.2',
-        metric: 2,
+        metric: 3,
       });
     });
 
@@ -227,7 +228,7 @@ describe('OspfProtocol', () => {
         findRoute(new OspfProtocol().computeRoutes(topology), 'r1', '10.3.0.0/24'),
       ).toMatchObject({
         nextHop: '10.0.13.2',
-        metric: 1,
+        metric: 2,
       });
     });
 
@@ -247,7 +248,7 @@ describe('OspfProtocol', () => {
       expect(
         findRoute(new OspfProtocol().computeRoutes(topology), 'r1', '10.2.0.0/24'),
       ).toMatchObject({
-        metric: 1,
+        metric: 2,
       });
     });
 
@@ -272,7 +273,7 @@ describe('OspfProtocol', () => {
       expect(
         findRoute(new OspfProtocol().computeRoutes(topology), 'r1', '10.3.0.0/24'),
       ).toMatchObject({
-        metric: 5,
+        metric: 6,
       });
     });
 
@@ -390,6 +391,47 @@ describe('OspfProtocol', () => {
 
       expect(findRoute(routes, 'r1', '10.3.0.0/24')).toBeUndefined();
       expect(findRoute(routes, 'r3', '10.1.0.0/24')).toBeUndefined();
+    });
+  });
+
+  // TC-217: RFC 2328 16.1 adds the cost of the advertising router's interface
+  // onto a stub network, so the metric is the cost to the prefix, not to the
+  // router that owns it.
+  describe('TC-217 stub network cost', () => {
+    const routesOf = (primaryLinkDown: boolean) =>
+      new OspfProtocol().computeRoutes(buildOspfConvergenceTopology(primaryLinkDown));
+    const summary = (
+      routes: ReturnType<OspfProtocol['computeRoutes']>,
+      nodeId: string,
+      destination: string,
+    ) => {
+      const route = findRoute(routes, nodeId, destination);
+      return route && { nextHop: route.nextHop, metric: route.metric };
+    };
+
+    it('adds the owning interface cost on the healthy diamond', () => {
+      const routes = routesOf(false);
+      expect(summary(routes, 'r1', '10.4.0.0/24')).toEqual({ nextHop: '10.0.12.2', metric: 3 });
+      expect(summary(routes, 'r1', '10.0.34.0/30')).toEqual({ nextHop: '10.0.12.2', metric: 3 });
+      expect(summary(routes, 'r1', '10.0.24.0/30')).toEqual({ nextHop: '10.0.12.2', metric: 2 });
+      expect(summary(routes, 'r3', '10.1.0.0/24')).toEqual({ nextHop: '10.0.13.1', metric: 2 });
+    });
+
+    it('adds the owning interface cost after the R2-R4 link fails', () => {
+      const routes = routesOf(true);
+      expect(summary(routes, 'r2', '10.4.0.0/24')).toEqual({ nextHop: '10.0.12.1', metric: 6 });
+      expect(summary(routes, 'r4', '10.1.0.0/24')).toEqual({ nextHop: '10.0.34.1', metric: 3 });
+      expect(summary(routes, 'r1', '10.4.0.0/24')).toEqual({ nextHop: '10.0.13.2', metric: 5 });
+    });
+  });
+
+  // TC-218: a down interface's network is neither connected nor advertised.
+  describe('TC-218 down link is not advertised', () => {
+    it('drops the failed /30 from both ends and from every other router', () => {
+      const routes = new OspfProtocol().computeRoutes(buildOspfConvergenceTopology(true));
+      for (const nodeId of ['r1', 'r2', 'r3', 'r4']) {
+        expect(findRoute(routes, nodeId, '10.0.24.0/30')).toBeUndefined();
+      }
     });
   });
 });

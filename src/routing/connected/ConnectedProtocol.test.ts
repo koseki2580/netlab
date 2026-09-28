@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { NetworkTopology } from '../../types/topology';
+import { buildOspfConvergenceTopology } from '../../scenarios/ospf-convergence';
 import { connectedProtocol } from './ConnectedProtocol';
 
 /**
@@ -90,5 +91,20 @@ describe('routes a router has by virtue of its own interfaces', () => {
     if (router) router.data.interfaces = [];
 
     expect(connectedProtocol.computeRoutes(topology)).toEqual([]);
+  });
+
+  // TC-218: a failed link takes its interface down, and a down interface
+  // installs no connected route.
+  it('TC-218: installs no connected route for an interface on a down link', () => {
+    const topology = buildOspfConvergenceTopology(true);
+    const destinationsOf = (nodeId: string) =>
+      connectedProtocol
+        .computeRoutes(topology)
+        .filter((route) => route.nodeId === nodeId)
+        .map((route) => route.destination)
+        .sort();
+
+    expect(destinationsOf('r2')).toEqual(['10.0.12.0/30']);
+    expect(destinationsOf('r4')).toEqual(['10.0.34.0/30', '10.4.0.0/24']);
   });
 });

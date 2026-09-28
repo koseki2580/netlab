@@ -149,8 +149,8 @@ const QUESTIONS: readonly ExamQuestion[] = [
         ja: '何も変わらない。R1 自身のリンクはすべて生きているので R2 へ送り続け、R2 で捨てられる',
       },
       {
-        en: 'R1 recomputes on its own: the next hop moves from R2 to R3 and the metric rises from 2 to 4',
-        ja: 'R1 が自分で計算し直す。次ホップが R2 から R3 に変わり、メトリックは 2 から 4 に上がる',
+        en: 'R1 recomputes on its own: the next hop moves from R2 to R3 and the metric rises from 3 to 5',
+        ja: 'R1 が自分で計算し直す。次ホップが R2 から R3 に変わり、メトリックは 3 から 5 に上がる',
       },
       {
         en: 'R1 starts sharing traffic equally between R2 and R3',
@@ -163,8 +163,8 @@ const QUESTIONS: readonly ExamQuestion[] = [
     ],
     answer: 1,
     explanation: {
-      en: 'In a link-state protocol every router learns of a failure anywhere in the area and reruns its shortest-path calculation. The lesson’s R1 preferred route changed from next hop 10.0.12.2, metric 2, to 10.0.13.2, metric 4, and the next probe went C1 → R1 → R3 → R4 → C2.',
-      ja: 'リンクステート型では、エリア内のどこで起きた障害もすべてのルータに伝わり、それぞれが最短経路を計算し直します。レッスンの「R1 の優先経路」は、次ホップ 10.0.12.2・メトリック 2 から、10.0.13.2・メトリック 4 に変わり、次のプローブは C1 → R1 → R3 → R4 → C2 を通りました。',
+      en: 'In a link-state protocol every router learns of a failure anywhere in the area and reruns its shortest-path calculation. The lesson’s R1 preferred route changed from next hop 10.0.12.2, metric 3, to 10.0.13.2, metric 5, and the next probe went C1 → R1 → R3 → R4 → C2.',
+      ja: 'リンクステート型では、エリア内のどこで起きた障害もすべてのルータに伝わり、それぞれが最短経路を計算し直します。レッスンの「R1 の優先経路」は、次ホップ 10.0.12.2・メトリック 3 から、10.0.13.2・メトリック 5 に変わり、次のプローブは C1 → R1 → R3 → R4 → C2 を通りました。',
     },
     taughtBy: 'ospf-convergence',
   },

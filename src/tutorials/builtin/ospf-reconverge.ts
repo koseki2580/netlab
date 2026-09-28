@@ -6,7 +6,7 @@ function hasPreferredRoute(state: Parameters<Tutorial['steps'][number]['predicat
     (entry) =>
       entry.destination === '10.4.0.0/24' &&
       entry.nextHop === '10.0.12.2' &&
-      entry.metric === 2 &&
+      entry.metric === 3 &&
       entry.protocol === 'ospf',
   );
 }
@@ -16,7 +16,7 @@ function hasBackupRoute(state: Parameters<Tutorial['steps'][number]['predicate']
     (entry) =>
       entry.destination === '10.4.0.0/24' &&
       entry.nextHop === '10.0.13.2' &&
-      entry.metric === 4 &&
+      entry.metric === 5 &&
       entry.protocol === 'ospf',
   );
 }

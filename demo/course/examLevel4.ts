@@ -212,16 +212,16 @@ export const EXAM_LEVEL_4: ExamLevel = {
       },
       options: [
         {
-          en: 'RIP: next hop 10.0.13.2 (R3), metric 1. OSPF: next hop 10.0.12.2 (R2), metric 2',
-          ja: 'RIP は次ホップ 10.0.13.2（R3）、メトリック 1。OSPF は次ホップ 10.0.12.2（R2）、メトリック 2',
+          en: 'RIP: next hop 10.0.13.2 (R3), metric 1. OSPF: next hop 10.0.12.2 (R2), metric 3',
+          ja: 'RIP は次ホップ 10.0.13.2（R3）、メトリック 1。OSPF は次ホップ 10.0.12.2（R2）、メトリック 3',
+        },
+        {
+          en: 'RIP: next hop 10.0.13.2, metric 1. OSPF: next hop 10.0.12.2, metric 2 — the cost of reaching R4, which owns that link',
+          ja: 'RIP は次ホップ 10.0.13.2、メトリック 1。OSPF は次ホップ 10.0.12.2、メトリック 2。そのリンクを持つ R4 までのコストだから',
         },
         {
           en: 'RIP: next hop 10.0.13.2, metric 1. OSPF: next hop 10.0.13.2, metric 3 — the link is on R3, so R1 reaches it through R3',
           ja: 'RIP は次ホップ 10.0.13.2、メトリック 1。OSPF は次ホップ 10.0.13.2、メトリック 3。そのリンクは R3 につながっているので、R1 は R3 経由で届ける',
-        },
-        {
-          en: 'RIP: next hop 10.0.13.2, metric 1. OSPF: next hop 10.0.12.2, metric 3, counting R4’s interface on that link as well',
-          ja: 'RIP は次ホップ 10.0.13.2、メトリック 1。OSPF は次ホップ 10.0.12.2、メトリック 3。そのリンク上の R4 のインタフェースのコストも数えるから',
         },
         {
           en: 'Both: next hop 10.0.12.2 (R2), metric 2 — R1 sends everything beyond its neighbours through R2',
@@ -230,8 +230,8 @@ export const EXAM_LEVEL_4: ExamLevel = {
       ],
       answer: 0,
       explanation: {
-        en: 'RIP counts routers: the link is one hop away, through R3. OSPF adds the cost of every interface the packet leaves by: through R3 that is 3 at once; through R2 it is R1→R2 (1) + R2→R4 (1) = 2. So under OSPF R1 reaches a link on its own neighbour R3 by going round the other side, and the table reads 10.0.12.2, metric 2. A real OSPF router also adds the cost of the interface on the destination network (here R4’s end, 1), so it would show 3 via R2 — the same path, one higher.',
-        ja: 'RIP は通るルータの数を数えます。このリンクは R3 経由で 1 ホップ先です。OSPF はパケットが出ていく各インタフェースのコストを足します。R3 経由ではいきなり 3、R2 経由では R1→R2（1）＋ R2→R4（1）＝ 2 です。つまり OSPF では、R1 は隣の R3 につながったリンクへ、反対側を回って届けます。経路表は 10.0.12.2、メトリック 2 です。実際の OSPF ルータは宛先のネットワーク上のインタフェース（ここでは R4 側の 1）のコストも足すので、R2 経由のメトリック 3 と表示します。経路は同じで、数値が 1 大きくなります。',
+        en: 'RIP counts routers: the link is one hop away, through R3. OSPF adds the cost of every interface on the way, including the interface of the router that owns the destination network (RFC 2328, section 16.1). Through R3 that is R1→R3 (3) + R3’s interface on the link (1) = 4; through R2 it is R1→R2 (1) + R2→R4 (1) + R4’s interface on the link (1) = 3. So under OSPF R1 reaches a link on its own neighbour R3 by going round the other side, and the table reads 10.0.12.2, metric 3. Stopping at R4 and leaving out its interface gives 2, which is the cost to the router, not to the network.',
+        ja: 'RIP は通るルータの数を数えます。このリンクは R3 経由で 1 ホップ先です。OSPF は途中のインタフェースのコストを足し、宛先のネットワークを持つルータのそのネットワーク上のインタフェースのコストも足します（RFC 2328 の 16.1 節）。R3 経由では R1→R3（3）＋ そのリンク上の R3 のインタフェース（1）＝ 4、R2 経由では R1→R2（1）＋ R2→R4（1）＋ そのリンク上の R4 のインタフェース（1）＝ 3 です。つまり OSPF では、R1 は隣の R3 につながったリンクへ、反対側を回って届けます。経路表は 10.0.12.2、メトリック 3 です。R4 で止めてそのインタフェースを足し忘れると 2 になりますが、それはルータまでのコストで、ネットワークまでのコストではありません。',
       },
       taughtBy: 'dynamic',
     },
@@ -243,26 +243,26 @@ export const EXAM_LEVEL_4: ExamLevel = {
       },
       options: [
         {
-          en: 'R2: via 10.0.12.1 (R1), metric 3. R4: via 10.0.34.1 (R3), metric 2',
-          ja: 'R2 は 10.0.12.1（R1）経由でメトリック 3。R4 は 10.0.34.1（R3）経由でメトリック 2',
+          en: 'R2: via 10.0.12.1 (R1), metric 5. R4: via 10.0.34.1 (R3), metric 2',
+          ja: 'R2 は 10.0.12.1（R1）経由でメトリック 5。R4 は 10.0.34.1（R3）経由でメトリック 2',
         },
         {
-          en: 'R2: via 10.0.12.1, metric 5. R4: via 10.0.34.1, metric 5 — both cross the same three links',
-          ja: 'R2 は 10.0.12.1 経由でメトリック 5。R4 は 10.0.34.1 経由でメトリック 5。どちらも同じ 3 本のリンクを通るから',
-        },
-        {
-          en: 'R2: via 10.0.12.1, metric 5. R4: via 10.0.34.1, metric 2',
-          ja: 'R2 は 10.0.12.1 経由でメトリック 5。R4 は 10.0.34.1 経由でメトリック 2',
+          en: 'R2: via 10.0.12.1, metric 6. R4: via 10.0.34.1, metric 6 — both cross the same three links',
+          ja: 'R2 は 10.0.12.1 経由でメトリック 6。R4 は 10.0.34.1 経由でメトリック 6。どちらも同じ 3 本のリンクを通るから',
         },
         {
           en: 'R2: via 10.0.12.1, metric 6. R4: via 10.0.34.1, metric 3',
           ja: 'R2 は 10.0.12.1 経由でメトリック 6。R4 は 10.0.34.1 経由でメトリック 3',
         },
+        {
+          en: 'R2: via 10.0.12.1, metric 4. R4: via 10.0.34.1, metric 3 — every interface has the default cost 1',
+          ja: 'R2 は 10.0.12.1 経由でメトリック 4。R4 は 10.0.34.1 経由でメトリック 3。どのインタフェースもデフォルトのコスト 1 だから',
+        },
       ],
       answer: 2,
       explanation: {
-        en: 'With R2–R4 gone, R2’s only way to C2 is back through R1 and on through R3: 1 (R2→R1) + 3 (R1→R3) + 1 (R3→R4) = 5. R4’s way to C1 uses the same links backwards, leaving by R4→R3 (1) and R3→R1 (1): the 3 belongs to R1’s interface and is never paid in that direction, so 2. The lesson’s R2 tab reads 10.4.0.0/24 10.0.12.1 5 and its R4 tab 10.1.0.0/24 10.0.34.1 2. A real router would also add the cost of the destination LAN’s interface, giving 6 and 3, but the paths and the difference between the directions are the same.',
-        ja: 'R2–R4 のリンクがなくなると、R2 から C2 へは R1 まで戻って R3 を通るしかありません。1（R2→R1）＋ 3（R1→R3）＋ 1（R3→R4）＝ 5 です。R4 から C1 へは同じリンクを逆向きにたどり、R4→R3（1）と R3→R1（1）から出ていきます。3 は R1 のインタフェースのコストなので、この向きでは一度も払わず、2 です。レッスンの R2 のタブは 10.4.0.0/24・10.0.12.1・5、R4 のタブは 10.1.0.0/24・10.0.34.1・2 です。実際のルータは宛先 LAN のインタフェースのコストも足すので 6 と 3 になりますが、経路と行き帰りの差は同じです。',
+        en: 'With R2–R4 gone, R2’s only way to C2 is back through R1 and on through R3: 1 (R2→R1) + 3 (R1→R3) + 1 (R3→R4) + 1 (R4’s interface on C2’s LAN) = 6. R4’s way to C1 uses the same links backwards, leaving by R4→R3 (1) and R3→R1 (1), then R1’s interface on C1’s LAN (1): the 3 belongs to R1’s interface toward R3 and is never paid in that direction, so 3. The lesson’s R2 tab reads 10.4.0.0/24 10.0.12.1 6 and its R4 tab 10.1.0.0/24 10.0.34.1 3. Leaving out the destination LAN’s interface gives 5 and 2 — the cost to the router that owns the LAN, not to the LAN itself.',
+        ja: 'R2–R4 のリンクがなくなると、R2 から C2 へは R1 まで戻って R3 を通るしかありません。1（R2→R1）＋ 3（R1→R3）＋ 1（R3→R4）＋ 1（C2 の LAN 上の R4 のインタフェース）＝ 6 です。R4 から C1 へは同じリンクを逆向きにたどり、R4→R3（1）と R3→R1（1）から出て、最後に C1 の LAN 上の R1 のインタフェース（1）を足します。3 は R1 の R3 向きのインタフェースのコストなので、この向きでは一度も払わず、3 です。レッスンの R2 のタブは 10.4.0.0/24・10.0.12.1・6、R4 のタブは 10.1.0.0/24・10.0.34.1・3 です。宛先 LAN のインタフェースを足し忘れると 5 と 2 になりますが、それは LAN を持つルータまでのコストで、LAN そのものまでのコストではありません。',
       },
       taughtBy: 'ospf-convergence',
     },

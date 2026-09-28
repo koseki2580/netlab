@@ -246,8 +246,8 @@ export const EXAM_LEVEL_2: ExamLevel = {
           ja: 'どちらもリンクのコストを足すので、どちらも R3 経由を避ける',
         },
         {
-          en: 'RIP counts hops, so the paths tie; OSPF adds link costs, so the R2 path (2) beats the R3 path (4)',
-          ja: 'RIP はホップ数を数えるので同点。OSPF はリンクのコストを足すので、R2 経由（2）が R3 経由（4）に勝つ',
+          en: 'RIP counts hops, so the paths tie; OSPF adds link costs, so the R2 path (3) beats the R3 path (5)',
+          ja: 'RIP はホップ数を数えるので同点。OSPF はリンクのコストを足すので、R2 経由（3）が R3 経由（5）に勝つ',
         },
         {
           en: 'RIP adds link costs; OSPF counts hops',
@@ -256,8 +256,8 @@ export const EXAM_LEVEL_2: ExamLevel = {
       ],
       answer: 2,
       explanation: {
-        en: 'RIP’s only measure is hop count, so it cannot see the cost 3 and just keeps the first 2-hop path it learned; OSPF’s SPF adds interface costs and prefers the cheaper R2 side. The lesson’s RIP and OSPF route tables both show metric 2 for C2’s network, but for different reasons.',
-        ja: 'RIP が測るのはホップ数だけなのでコスト 3 は見えず、先に覚えた 2 ホップの経路を使います。OSPF の SPF はインタフェースのコストを足し、安い R2 側を選びます。レッスンの RIP と OSPF の経路表は、どちらも C2 のネットワークにメトリック 2 を示しますが、その意味は違います。',
+        en: 'RIP’s only measure is hop count, so it cannot see the cost 3 and just keeps the first 2-hop path it learned; OSPF’s SPF adds interface costs and prefers the cheaper R2 side. For C2’s network the lesson’s RIP table shows metric 2 (two routers away) and its OSPF table shows metric 3 (R1→R2, R2→R4 and R4’s interface on C2’s LAN, cost 1 each).',
+        ja: 'RIP が測るのはホップ数だけなのでコスト 3 は見えず、先に覚えた 2 ホップの経路を使います。OSPF の SPF はインタフェースのコストを足し、安い R2 側を選びます。C2 のネットワークについて、レッスンの RIP の経路表はメトリック 2（ルータ 2 台先）、OSPF の経路表はメトリック 3（R1→R2、R2→R4、C2 の LAN 上の R4 のインタフェースが各 1）を示します。',
       },
       taughtBy: 'dynamic',
     },
@@ -287,8 +287,8 @@ export const EXAM_LEVEL_2: ExamLevel = {
       ],
       answer: 2,
       explanation: {
-        en: 'A routing protocol notices the lost link and recomputes the best path on its own — something a static route cannot do. In the lesson, R1’s preferred route changes from next hop 10.0.12.2 (metric 2) to 10.0.13.2 (metric 4), and the probe goes C1 → R1 → R3 → R4 → C2.',
-        ja: 'ルーティングプロトコルはリンクが消えたことに気づき、自分で最良の経路を計算し直します。静的経路にはできないことです。レッスンでは R1 の優先経路が次ホップ 10.0.12.2（メトリック 2）から 10.0.13.2（メトリック 4）に変わり、プローブは C1 → R1 → R3 → R4 → C2 と進みました。',
+        en: 'A routing protocol notices the lost link and recomputes the best path on its own — something a static route cannot do. In the lesson, R1’s preferred route changes from next hop 10.0.12.2 (metric 3) to 10.0.13.2 (metric 5), and the probe goes C1 → R1 → R3 → R4 → C2.',
+        ja: 'ルーティングプロトコルはリンクが消えたことに気づき、自分で最良の経路を計算し直します。静的経路にはできないことです。レッスンでは R1 の優先経路が次ホップ 10.0.12.2（メトリック 3）から 10.0.13.2（メトリック 5）に変わり、プローブは C1 → R1 → R3 → R4 → C2 と進みました。',
       },
       taughtBy: 'ospf',
     },

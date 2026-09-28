@@ -155,6 +155,25 @@ export function buildRouterAdjacency(topology: NetworkTopology): Map<string, Rou
   return adjacency;
 }
 
+/**
+ * Whether `iface` sits on a link that has failed. A down link takes the
+ * interface on each end down with it, and a down interface's network is
+ * neither connected nor advertised — as on real hardware.
+ */
+export function isInterfaceOnDownLink(
+  topology: NetworkTopology,
+  nodeId: string,
+  iface: RouterInterface,
+): boolean {
+  return topology.edges.some(
+    (edge) =>
+      edge.data?.state === 'down' &&
+      (edge.id === iface.connectedEdgeId ||
+        (edge.source === nodeId && edge.sourceHandle === iface.id) ||
+        (edge.target === nodeId && edge.targetHandle === iface.id)),
+  );
+}
+
 export function getConnectedNetworks(node: NetlabNode): ConnectedNetwork[] {
   if (node.data.role !== 'router') return [];
 

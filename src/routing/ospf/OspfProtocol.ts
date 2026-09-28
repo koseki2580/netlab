@@ -2,7 +2,7 @@ import { ADMIN_DISTANCES, type RoutingProtocol, type RouteEntry } from '../../ty
 import type { RouterInterface } from '../../types/routing';
 import type { NetlabNode, NetworkTopology } from '../../types/topology';
 import { withEqualCostNextHops } from '../ecmp';
-import { buildRouterAdjacency, getConnectedNetworks } from '../graphBuilder';
+import { buildRouterAdjacency, isInterfaceOnDownLink } from '../graphBuilder';
 
 interface SpfState {
   distance: number;
@@ -19,7 +19,7 @@ function intToIp(value: number): string {
   );
 }
 
-function toNetworkCidr(iface: RouterInterface): string {
+function toNetworkCidr(iface: Pick<RouterInterface, 'ipAddress' | 'prefixLength'>): string {
   if (iface.prefixLength === 0) return '0.0.0.0/0';
   const mask = (~0 << (32 - iface.prefixLength)) >>> 0;
   return `${intToIp(ipToInt(iface.ipAddress) & mask)}/${iface.prefixLength}`;
@@ -44,7 +44,7 @@ export class OspfProtocol implements RoutingProtocol {
 
     for (const router of ospfRouters) {
       const bestRoutes = new Map<string, RouteEntry>();
-      const advertisedNetworks = getAdvertisedNetworks(router);
+      const advertisedNetworks = getAdvertisedNetworks(topology, router).keys();
       const spf = runSpf(router, adjacency, routerById, participatingRouterIds);
 
       for (const network of advertisedNetworks) {
@@ -64,25 +64,36 @@ export class OspfProtocol implements RoutingProtocol {
         const targetRouter = routerById.get(targetId);
         if (!targetRouter) continue;
 
-        for (const network of getAdvertisedNetworks(targetRouter)) {
+        // RFC 2328 16.1: a stub network's cost is the cost to the router that
+        // owns it plus that router's interface cost onto the network.
+        for (const [network, stubCost] of getAdvertisedNetworks(topology, targetRouter)) {
+          const metric = state.distance + stubCost;
           const existing = bestRoutes.get(network);
-          if (!existing || state.distance < existing.metric) {
-            const route: RouteEntry = {
-              destination: network,
-              nextHop: state.nextHops[0] ?? 'direct',
-              metric: state.distance,
-              protocol: 'ospf',
-              adminDistance: this.adminDistance,
-              nodeId: router.id,
-            };
-            bestRoutes.set(
-              network,
-              withEqualCostNextHops(
-                route,
-                state.nextHops.map((nextHop) => ({ nextHop })),
-              ),
-            );
-          }
+          if (existing && metric > existing.metric) continue;
+          if (existing?.nextHop === 'direct') continue;
+
+          const nextHops =
+            existing && metric === existing.metric
+              ? [
+                  ...(existing.equalCostNextHops?.map((hop) => hop.nextHop) ?? [existing.nextHop]),
+                  ...state.nextHops,
+                ]
+              : state.nextHops;
+          const route: RouteEntry = {
+            destination: network,
+            nextHop: nextHops[0] ?? 'direct',
+            metric,
+            protocol: 'ospf',
+            adminDistance: this.adminDistance,
+            nodeId: router.id,
+          };
+          bestRoutes.set(
+            network,
+            withEqualCostNextHops(
+              route,
+              nextHops.map((nextHop) => ({ nextHop })),
+            ),
+          );
         }
       }
 
@@ -99,18 +110,34 @@ export class OspfProtocol implements RoutingProtocol {
 
 export const ospfProtocol = new OspfProtocol();
 
-function getAdvertisedNetworks(node: NetlabNode): string[] {
+/**
+ * The networks `node` advertises, each with the cost of its interface onto it.
+ * An interface on a failed link is down, so its network is not advertised.
+ */
+function getAdvertisedNetworks(topology: NetworkTopology, node: NetlabNode): Map<string, number> {
   const configuredNetworks = new Set(
     node.data.ospfConfig?.areas.flatMap((area) => area.networks) ?? [],
   );
-  return getConnectedNetworks(node)
-    .map((network) => network.cidr)
-    .filter((network) => configuredNetworks.has(network));
+  const advertised = new Map<string, number>();
+
+  for (const iface of node.data.interfaces ?? []) {
+    if (isInterfaceOnDownLink(topology, node.id, iface)) continue;
+    for (const addressed of [iface, ...(iface.subInterfaces ?? [])]) {
+      const network = toNetworkCidr(addressed);
+      if (configuredNetworks.has(network) && !advertised.has(network)) {
+        advertised.set(network, resolveNetworkCost(node, network));
+      }
+    }
+  }
+
+  return advertised;
 }
 
 function resolveLinkCost(node: NetlabNode, iface: RouterInterface): number {
-  const network = toNetworkCidr(iface);
+  return resolveNetworkCost(node, toNetworkCidr(iface));
+}
 
+function resolveNetworkCost(node: NetlabNode, network: string): number {
   for (const area of node.data.ospfConfig?.areas ?? []) {
     if (area.networks.includes(network)) {
       return area.cost ?? 1;
