@@ -153,6 +153,27 @@ function VxlanEvpnDemoInner() {
           <NetlabCanvas style={{ height: 560 }} />
         </section>
         <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div data-testid="lesson-brief" style={{ ...PANEL_STYLE, fontSize: 12, lineHeight: 1.7 }}>
+            <strong>{t('What you are looking at', 'この画面の見方')}</strong>
+            <div>
+              {t(
+                'Host A and Host B are on one layer-2 network (10.10.0.0/24) although a routed fabric sits between their leaves. Each leaf is a VTEP (VXLAN tunnel endpoint): Leaf1 (192.0.2.1) wraps Host A’s Ethernet frame in UDP to port 4789 and sends it to Leaf2 (192.0.2.2), which unwraps it. The VNI, 10000, says which layer-2 network the frame belongs to — like a VLAN number, but 24 bits.',
+                'Host A と Host B は、リーフの間にルーティングされたファブリックがあっても、同じレイヤ 2 のネットワーク（10.10.0.0/24）にいます。各リーフは VTEP（VXLAN トンネルの端点）です。Leaf1（192.0.2.1）は Host A の Ethernet フレームを UDP のポート 4789 あてに包んで Leaf2（192.0.2.2）へ送り、Leaf2 が包みを外します。VNI の 10000 は、そのフレームがどのレイヤ 2 ネットワークのものかを示す番号です（VLAN 番号に似ていますが 24 ビット）。',
+              )}
+            </div>
+            <div>
+              {t(
+                'EVPN is BGP telling every leaf where hosts are. A Type-2 route says “this MAC and IP sit behind this VTEP”: Leaf2 advertises Host B. A Type-5 route advertises a whole IP prefix (10.10.0.0/24) for routing between networks.',
+                'EVPN は、ホストがどこにいるかを BGP で全リーフへ知らせるしくみです。Type-2 経路は「この MAC と IP はこの VTEP の先にいる」という知らせで、Leaf2 が Host B について出しています。Type-5 経路は、ネットワーク間のルーティング用に IP のプレフィックス全体（10.10.0.0/24）を知らせます。',
+              )}
+            </div>
+            <div>
+              {t(
+                'ARP suppression: when Host A asks “who has 10.10.0.20?”, Leaf1 already knows Host B’s MAC from the Type-2 route and answers locally, so no ARP broadcast crosses the fabric. Turn it off and the request is flooded to every VTEP in the VNI.',
+                'ARP 抑止：Host A が「10.10.0.20 は誰？」と尋ねると、Leaf1 は Type-2 経路で Host B の MAC を知っているので自分で答え、ARP のブロードキャストはファブリックを渡りません。無効にすると、要求は同じ VNI のすべての VTEP へフラッディングされます。',
+              )}
+            </div>
+          </div>
           <button
             type="button"
             data-testid="arp-suppression-toggle"

@@ -177,6 +177,23 @@ function HaControls({
 
   return (
     <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div data-testid="lesson-brief" style={{ ...PANEL_STYLE, fontSize: 12, lineHeight: 1.7 }}>
+        <strong>
+          {t('How the gateway survives a failure', 'ゲートウェイが障害を乗り越えるしくみ')}
+        </strong>
+        <div>
+          {t(
+            'VRRP: R1 (10.10.0.2, priority 150) and R2 (10.10.0.3, priority 110) share one virtual gateway, 10.10.0.1, with the virtual MAC below. Hosts only ever use 10.10.0.1. The higher priority is master and answers for it; when R1 fails, R2 stops hearing its advertisements and takes over the same IP and MAC, so no host has to change anything. When R1 returns, its higher priority takes the gateway back (preemption, on by default).',
+            'VRRP：R1（10.10.0.2、優先度 150）と R2（10.10.0.3、優先度 110）は、1 つの仮想ゲートウェイ 10.10.0.1 と下の仮想 MAC を共有します。ホストが使うのは常に 10.10.0.1 だけです。優先度の高い方がマスタとして応答し、R1 が落ちると R2 は R1 からの広告が届かなくなったことで気づき、同じ IP と MAC を引き継ぎます。ホスト側は何も変えずに済みます。R1 が戻ると、優先度の高い R1 がゲートウェイを取り戻します（プリエンプション。既定で有効）。',
+          )}
+        </div>
+        <div>
+          {t(
+            'LACP: two links between the switch and the server are bundled into one logical link, po1. Each flow is hashed onto one member so its packets stay in order; if a member fails, its flows move to the ones left, and the bundle stays up.',
+            'LACP：スイッチとサーバの間の 2 本のリンクを、1 本の論理リンク po1 に束ねます。1 つの通信はハッシュで 1 本のメンバに割り当てられるので、順番が入れ替わりません。メンバが 1 本落ちると、その通信は残ったメンバへ移り、束ねたリンクは動き続けます。',
+          )}
+        </div>
+      </div>
       <button
         type="button"
         data-testid="ha-fail-gateway"

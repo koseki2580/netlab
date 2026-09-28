@@ -40,6 +40,33 @@ function Http3DemoInner() {
   return (
     <main style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: 16 }}>
       <section style={PANEL_STYLE} aria-label={t('HTTP/3 streams', 'HTTP/3 のストリーム')}>
+        <div
+          data-testid="lesson-brief"
+          style={{
+            border: '1px solid var(--netlab-border-subtle)',
+            borderRadius: 8,
+            padding: '10px 12px',
+            marginBottom: 12,
+            fontSize: 12,
+            lineHeight: 1.7,
+          }}
+        >
+          <strong>
+            {t('Why a loss here stalls only one stream', 'ここではロスが 1 本だけを止める理由')}
+          </strong>
+          <div>
+            {t(
+              'HTTP/3 runs over QUIC, which runs over UDP instead of TCP. QUIC numbers and recovers each stream on its own, so a lost packet holds up only the stream whose data it carried; the others are delivered at once. Compare the HTTP/2 lesson, where one TCP connection stalls every stream.',
+              'HTTP/3 は TCP ではなく、UDP の上の QUIC で動きます。QUIC はストリームごとに番号を付けて別々に回復するので、失われたパケットが止めるのは、そのデータを運んでいたストリームだけです。ほかのストリームはすぐ届きます。1 本の TCP 接続で全ストリームが止まる HTTP/2 のレッスンと比べてみてください。',
+            )}
+          </div>
+          <div>
+            {t(
+              'The four requests use stream IDs 0, 4, 8 and 12: streams the client opens for a request and its response take IDs whose last two bits are 00, so they count up in fours. The loss here hits stream 4; it waits for the lost data to be sent again while 0, 8 and 12 complete.',
+              '4 つのリクエストのストリーム ID は 0・4・8・12 です。クライアントが開く「リクエストと応答用」のストリームは ID の下位 2 ビットが 00 と決まっているため、4 ずつ増えます。ここでのロスはストリーム 4 に当たり、4 は失われたデータの再送を待ちますが、0・8・12 は完了します。',
+            )}
+          </div>
+        </div>
         <button
           type="button"
           data-testid="h3-quic-loss-toggle"
