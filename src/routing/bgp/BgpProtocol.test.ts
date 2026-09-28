@@ -316,6 +316,47 @@ describe('BgpProtocol', () => {
       });
     });
 
+    // TC-216 — LOCAL_PREF is local to an AS: R1 raising it for routes from
+    // R2 must not make R3, in another AS, prefer the longer path through R1.
+    it('does not carry LOCAL_PREF across an eBGP session', () => {
+      const topology = makeTopology({
+        nodes: [
+          makeRouter(
+            'r1',
+            65001,
+            '1.1.1.1',
+            [makeIface('to-r2', '10.0.12.1'), makeIface('to-r3', '10.0.13.1')],
+            [
+              makeNeighbor('10.0.12.2', 65002, { localPref: 200 }),
+              makeNeighbor('10.0.13.2', 65003),
+            ],
+          ),
+          makeRouter(
+            'r2',
+            65002,
+            '2.2.2.2',
+            [makeIface('to-r1', '10.0.12.2'), makeIface('to-r3', '10.0.23.1')],
+            [makeNeighbor('10.0.12.1', 65001), makeNeighbor('10.0.23.2', 65003)],
+            ['203.0.113.0/24'],
+          ),
+          makeRouter(
+            'r3',
+            65003,
+            '3.3.3.3',
+            [makeIface('to-r1', '10.0.13.2'), makeIface('to-r2', '10.0.23.2')],
+            [makeNeighbor('10.0.13.1', 65001), makeNeighbor('10.0.23.1', 65002)],
+          ),
+        ],
+      });
+
+      const routes = new BgpProtocol().computeRoutes(topology);
+      expect(findRoute(routes, 'r1', '203.0.113.0/24')).toMatchObject({ nextHop: '10.0.12.2' });
+      expect(findRoute(routes, 'r3', '203.0.113.0/24')).toMatchObject({
+        nextHop: '10.0.23.1',
+        metric: 1,
+      });
+    });
+
     it('prefers eBGP over iBGP when other attributes equal', () => {
       const topology = makeTopology({
         nodes: [

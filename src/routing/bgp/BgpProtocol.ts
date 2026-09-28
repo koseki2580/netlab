@@ -147,7 +147,11 @@ export class BgpProtocol implements RoutingProtocol {
               nextHops: [session.neighborAddress],
               attributes: {
                 asPath: exportedAsPath,
-                localPref: session.neighborConfig.localPref ?? route.attributes.localPref,
+                // LOCAL_PREF never leaves its AS: over eBGP the receiver starts
+                // from the default unless its own policy for this neighbour sets one.
+                localPref:
+                  session.neighborConfig.localPref ??
+                  (session.sessionType === 'ebgp' ? 100 : route.attributes.localPref),
                 med: session.neighborConfig.med ?? route.attributes.med,
                 origin: route.attributes.origin,
               },
