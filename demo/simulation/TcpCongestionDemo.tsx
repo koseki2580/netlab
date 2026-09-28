@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
-import { TcpCongestionPanel } from '../../src/components/simulation/TcpCongestionPanel';
+import {
+  TcpCongestionPanel,
+  type TcpSsthreshSample,
+} from '../../src/components/simulation/TcpCongestionPanel';
 import { TcpCongestionControl } from '../../src/layers/l4-transport/TcpCongestionControl';
 import { DeterministicLossInjector } from '../../src/layers/l4-transport/TcpLossInjector';
 import { tcpHandshake } from '../../src/scenarios';
@@ -9,10 +12,21 @@ import type { TcpCongestionEvent } from '../../src/types/tcp-congestion';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 
+const NO_EVENTS: readonly TcpCongestionEvent[] = [];
 const CONN_ID = '10.0.0.10:12345-203.0.113.10:443';
 const MSS = 1000;
 
+export interface CongestionRun {
+  readonly events: readonly TcpCongestionEvent[];
+  /** ssthresh after each step that could change it; the events do not carry it. */
+  readonly ssthreshByStep: readonly TcpSsthreshSample[];
+}
+
 export function runCongestionScenario(): readonly TcpCongestionEvent[] {
+  return runCongestionTrace().events;
+}
+
+export function runCongestionTrace(): CongestionRun {
   const control = new TcpCongestionControl({
     mss: MSS,
     // Two segments, so the window reaches 4000 before the four-segment burst
@@ -20,6 +34,9 @@ export function runCongestionScenario(): readonly TcpCongestionEvent[] {
     iwSegments: 2,
     initialSsthresh: 4000,
   });
+  const ssthreshByStep: TcpSsthreshSample[] = [{ stepIndex: 0, ssthresh: control.state.ssthresh }];
+  const recordSsthresh = (stepIndex: number) =>
+    ssthreshByStep.push({ stepIndex, ssthresh: control.state.ssthresh });
   const loss = new DeterministicLossInjector(new Map([[CONN_ID, [3001, 9001]]]), {
     oneShot: true,
   });
@@ -34,17 +51,43 @@ export function runCongestionScenario(): readonly TcpCongestionEvent[] {
     if (loss.shouldDropSegment(CONN_ID, seq)) {
       continue;
     }
-    control.onDupAck(3001, seq === 4001 ? 7 : seq === 5001 ? 8 : 9);
+    const dupAckStep = seq === 4001 ? 7 : seq === 5001 ? 8 : 9;
+    control.onDupAck(3001, dupAckStep);
+    recordSsthresh(dupAckStep);
   }
 
   control.onAckReceived(7001, 120, 10);
   control.onSegmentSent(9001, MSS * 2, 11);
   if (loss.shouldDropSegment(CONN_ID, 9001)) {
     control.onRto(9001, 12);
+    recordSsthresh(12);
   }
 
-  return [...control.events];
+  return { events: [...control.events], ssthreshByStep };
 }
+
+const GLOSSARY: readonly (readonly [string, string, string])[] = [
+  [
+    'cwnd',
+    'The congestion window: how many bytes the sender may have sent and not yet had acknowledged.',
+    '輻輳ウィンドウ (congestion window)。送信側が、まだ ACK を受け取っていないまま送ってよいバイト数です。',
+  ],
+  [
+    'ssthresh',
+    'The slow-start threshold: while cwnd is below it, each ACK adds one MSS (slow start); once cwnd reaches it, growth slows to about one MSS per round trip (congestion avoidance).',
+    'スロースタートしきい値 (slow-start threshold)。cwnd がこれより小さい間は ACK ごとに 1 MSS ずつ増え (スロースタート)、これに達すると往復ごとに約 1 MSS の緩やかな増え方になります (輻輳回避)。',
+  ],
+  [
+    'MSS',
+    'The maximum segment size: the most data one TCP segment carries — 1000 bytes in this lesson.',
+    '最大セグメントサイズ (maximum segment size)。1 つの TCP セグメントが運ぶデータの上限で、このレッスンでは 1000 バイトです。',
+  ],
+  [
+    'RTO',
+    'The retransmission timeout: when no ACK arrives before this timer fires, the sender resends and drops cwnd to one MSS.',
+    '再送タイムアウト (retransmission timeout)。このタイマーが切れるまで ACK が届かないと、送信側は再送し、cwnd を 1 MSS に下げます。',
+  ],
+];
 
 function TopologyPanel() {
   const t = useT();
@@ -90,7 +133,7 @@ function TcpCongestionDemoInner() {
   // Empty until the learner runs it. The trace is deterministic, so drawing it
   // at mount made the lesson's one button recompute an identical array — press
   // it and nothing on the screen changed.
-  const [events, setEvents] = useState<readonly TcpCongestionEvent[]>([]);
+  const [run, setRun] = useState<CongestionRun | null>(null);
 
   return (
     <main
@@ -110,7 +153,7 @@ function TcpCongestionDemoInner() {
             type="button"
             data-testid="tcp-congestion-run"
             data-primary-action=""
-            onClick={() => setEvents(runCongestionScenario())}
+            onClick={() => setRun(runCongestionTrace())}
             style={{
               border: '1px solid var(--netlab-accent-green)',
               borderRadius: 6,
@@ -127,7 +170,7 @@ function TcpCongestionDemoInner() {
           <button
             type="button"
             data-testid="tcp-congestion-reset"
-            onClick={() => setEvents([])}
+            onClick={() => setRun(null)}
             style={{
               border: '1px solid var(--netlab-border-subtle)',
               borderRadius: 6,
@@ -142,7 +185,32 @@ function TcpCongestionDemoInner() {
           </button>
         </div>
 
-        <TcpCongestionPanel events={events} />
+        <TcpCongestionPanel
+          events={run?.events ?? NO_EVENTS}
+          {...(run ? { ssthreshByStep: run.ssthreshByStep } : {})}
+        />
+
+        <dl
+          aria-label={t('Terms used on the chart', 'グラフで使う用語')}
+          style={{
+            margin: '12px 0 0',
+            display: 'grid',
+            gridTemplateColumns: 'max-content 1fr',
+            gap: '4px 10px',
+            fontSize: 13,
+            lineHeight: 1.5,
+            color: 'var(--netlab-text-secondary)',
+          }}
+        >
+          {GLOSSARY.map(([term, en, ja]) => (
+            <Fragment key={term}>
+              <dt style={{ fontFamily: 'monospace', color: 'var(--netlab-text-primary)' }}>
+                {term}
+              </dt>
+              <dd style={{ margin: 0 }}>{t(en, ja)}</dd>
+            </Fragment>
+          ))}
+        </dl>
 
         <section
           aria-label={t('TCP congestion walkthrough', 'TCP 輻輳制御の流れ')}
@@ -158,8 +226,8 @@ function TcpCongestionDemoInner() {
         >
           <p style={{ margin: 0 }}>
             {t(
-              'The first ACKs grow `cwnd` from two MSS through slow start until the threshold is reached.',
-              '最初の ACK が届くたびに、`cwnd` は 2 MSS からスロースタートで増えていき、しきい値に達するまで続きます。',
+              'The first ACKs grow cwnd from two MSS (2000 bytes) through slow start until it reaches ssthresh, 4000 bytes.',
+              '最初の ACK が届くたびに、cwnd は 2 MSS (2000 バイト) からスロースタートで増えていき、ssthresh の 4000 バイトに達するまで続きます。',
             )}
           </p>
           <p style={{ margin: 0 }}>

@@ -8,7 +8,11 @@ import { WirelessLinkController } from '../../src/layers/l1-physical/wireless/Wi
 import { transitionWirelessState } from '../../src/layers/l1-physical/wireless/WirelessStateMachine';
 import { WpaFourWayHandshake } from '../../src/layers/l1-physical/wireless/WpaFourWayHandshake';
 import type { WpaFourWayHandshakeResult } from '../../src/layers/l1-physical/wireless/WpaFourWayHandshake';
-import type { WirelessAssociationState, WirelessLinkConfig } from '../../src/types/wireless';
+import type {
+  WirelessAssociationPhase,
+  WirelessAssociationState,
+  WirelessLinkConfig,
+} from '../../src/types/wireless';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -28,6 +32,18 @@ const BUTTON_STYLE: CSSProperties = {
   fontFamily: 'monospace',
   fontWeight: 700,
   padding: '8px 12px',
+};
+
+const DISTANCE_MIN_M = 5;
+const DISTANCE_MAX_M = 300;
+
+const PHASE_LABELS: Record<WirelessAssociationPhase, readonly [string, string]> = {
+  unassociated: ['not associated', '未接続'],
+  probing: ['probing', 'AP を探索中'],
+  authenticated: ['authenticated', '認証済み'],
+  associated: ['associated', 'アソシエーション済み'],
+  '4way': ['WPA2 4-way handshake', 'WPA2 4 ウェイハンドシェイク中'],
+  connected: ['connected', '接続済み'],
 };
 
 const WIRELESS: WirelessLinkConfig = {
@@ -138,6 +154,7 @@ function WirelessControls({
 }) {
   const t = useT();
   const { topology: shown } = useNetlabContext();
+  const [draftDistance, setDraftDistance] = useState<string | null>(null);
   // Name stations the way the canvas does — Station A, not sta-a.
   const collided = collidedStationIds.map(
     (id) => shown.nodes.find((node) => node.id === id)?.data.label ?? id,
@@ -147,18 +164,62 @@ function WirelessControls({
     <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={PANEL_STYLE}>
         <h3 style={{ marginTop: 0 }}>{t('Radio model', '電波のモデル')}</h3>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {t('Station distance', 'AP から端末までの距離')}
-          <input
-            aria-label={t('Station distance', 'AP から端末までの距離')}
-            data-testid="wireless-station-distance"
-            type="range"
-            min={5}
-            max={300}
-            value={distance}
-            onChange={(event) => onDistanceChange(Number(event.currentTarget.value))}
-          />
-        </label>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+            <span>{t('Station distance', 'AP から端末までの距離')}</span>
+            <span data-testid="wireless-distance-value" style={{ fontFamily: 'monospace' }}>
+              {t(`Distance: ${distance} m`, `距離: ${distance} m`)}
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input
+              aria-label={t('Station distance', 'AP から端末までの距離')}
+              aria-valuetext={`${distance} m`}
+              data-testid="wireless-station-distance"
+              type="range"
+              min={DISTANCE_MIN_M}
+              max={DISTANCE_MAX_M}
+              step={1}
+              value={distance}
+              onChange={(event) => onDistanceChange(Number(event.currentTarget.value))}
+              style={{ flex: 1, minWidth: 0 }}
+            />
+            <input
+              data-testid="wireless-distance-input"
+              aria-label={t('Station distance (m)', 'AP から端末までの距離 (m)')}
+              type="number"
+              min={DISTANCE_MIN_M}
+              max={DISTANCE_MAX_M}
+              step={1}
+              // The typed text is kept while it is being edited, so a half-typed
+              // "2" on the way to "200" is not snapped back to the old distance.
+              value={draftDistance ?? String(distance)}
+              onChange={(event) => {
+                const text = event.currentTarget.value;
+                setDraftDistance(text);
+                const next = Number(text);
+                if (Number.isInteger(next) && next >= DISTANCE_MIN_M && next <= DISTANCE_MAX_M) {
+                  onDistanceChange(next);
+                }
+              }}
+              onBlur={() => setDraftDistance(null)}
+              style={{ width: 64, fontFamily: 'monospace' }}
+            />
+            <span aria-hidden="true">m</span>
+          </div>
+          <div
+            aria-hidden="true"
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontSize: 11,
+              color: 'var(--netlab-text-secondary)',
+            }}
+          >
+            <span>{DISTANCE_MIN_M} m</span>
+            <span>{DISTANCE_MAX_M} m</span>
+          </div>
+        </div>
         <div data-testid="wireless-rssi">RSSI: {rssi.toFixed(1)} dBm</div>
         <div data-testid="wireless-loss">
           {t('Loss: ', '損失率: ')}
@@ -169,7 +230,7 @@ function WirelessControls({
         <h3 style={{ marginTop: 0 }}>{t('Association', 'アソシエーション (AP への接続)')}</h3>
         <div data-testid="wireless-association">
           {t('State: ', '状態: ')}
-          {associationPhase}
+          {t(...PHASE_LABELS[associationPhase])}
         </div>
         <div data-testid="wpa-messages">
           WPA2:{' '}

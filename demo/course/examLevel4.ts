@@ -145,8 +145,8 @@ export const EXAM_LEVEL_4: ExamLevel = {
     {
       id: 'mtu-fragment-thresholds',
       prompt: {
-        en: 'In the MTU lesson the ping carries 1200 bytes of ICMP data with DF clear, and the tunnel-MTU slider moves in 8-byte steps (…, 604, 612, 620, 628, … 1220, 1228, 1236, 1244 …). At 600 the trace notes show 3 fragments. Raising the MTU, at which slider values does the count first drop to 2 fragments, and then to no fragmentation at all?',
-        ja: 'MTU のレッスンの ping は、DF なしで ICMP のデータ部を 1200 バイト運びます。トンネル MTU のスライダーは 8 バイト刻みです（…、604、612、620、628、… 1220、1228、1236、1244 …）。600 のとき、トレースのメモは断片 3 個です。MTU を上げていくと、断片が初めて 2 個になるのは、そして初めて分割されなくなるのは、スライダーがいくつのときですか？',
+        en: 'In the MTU lesson the ping carries 1200 bytes of ICMP data with DF clear, and the tunnel-MTU slider moves in 8-byte steps (…, 604, 612, 620, 628, … 1220, 1228, 1236, 1244 …). At the default 604 the trace notes show 3 fragments. Raising the MTU, at which slider values does the count first drop to 2 fragments, and then to no fragmentation at all?',
+        ja: 'MTU のレッスンの ping は、DF なしで ICMP のデータ部を 1200 バイト運びます。トンネル MTU のスライダーは 8 バイト刻みです（…、604、612、620、628、… 1220、1228、1236、1244 …）。既定の 604 のとき、トレースのメモは断片 3 個です。MTU を上げていくと、断片が初めて 2 個になるのは、そして初めて分割されなくなるのは、スライダーがいくつのときですか？',
       },
       options: [
         {
@@ -168,8 +168,8 @@ export const EXAM_LEVEL_4: ExamLevel = {
       ],
       answer: 1,
       explanation: {
-        en: 'The IP payload is 1208 bytes (1200 of data plus the 8-byte ICMP header) and the whole packet 1228, so it passes whole only from MTU 1228. Split, every fragment repeats the 20-byte IP header and all but the last carry a multiple of 8 bytes, so two fragments need 608 bytes of payload each (604 rounded up to 8) — MTU 628. The lesson’s notes read 断片 3 個 at 620, 断片 2 個 at 628 and still at 1220, and 分割が起きたホップ: 0 at 1228. Forgetting the ICMP header gives 620/1220, forgetting the per-fragment IP header gives 604, and counting a 14-byte Ethernet header inside the MTU gives 644/1244. Real IPv4 splits the same way; a real tunnel also spends some of the link’s MTU on its own outer header.',
-        ja: 'IP のペイロードは 1208 バイト（データ 1200 と ICMP ヘッダ 8 バイト）、パケット全体は 1228 バイトなので、分割せずに通るのは MTU 1228 からです。分割すると、どの断片にも 20 バイトの IP ヘッダが付き、最後以外の断片が運ぶ量は 8 の倍数に限られます。2 個に収めるには 1 個あたり 604 を 8 の倍数に切り上げた 608 バイトが必要で、MTU は 628 です。レッスンのメモは 620 で「断片 3 個」、628 と 1220 で「断片 2 個」、1228 で「分割が起きたホップ: 0」です。ICMP ヘッダを忘れると 620/1220、断片ごとの IP ヘッダを忘れると 604、14 バイトの Ethernet ヘッダを MTU に数えると 644/1244 になります。実際の IPv4 も同じ計算で分割します。実際のトンネルでは、さらに外側のヘッダの分だけリンクの MTU が使われます。',
+        en: 'The IP payload is 1208 bytes (1200 of data plus the 8-byte ICMP header) and the whole packet 1228, so it passes whole only from MTU 1228. Split, every fragment repeats the 20-byte IP header and all but the last carry a multiple of 8 bytes, so two fragments need 608 bytes of payload each (604 rounded up to 8) — MTU 628. The lesson’s notes read 断片 3 個 at 620, 断片 2 個 at 628 and still at 1220, and 断片の数: 0 at 1228. Forgetting the ICMP header gives 620/1220, forgetting the per-fragment IP header gives 604, and counting a 14-byte Ethernet header inside the MTU gives 644/1244. Real IPv4 splits the same way; a real tunnel also spends some of the link’s MTU on its own outer header.',
+        ja: 'IP のペイロードは 1208 バイト（データ 1200 と ICMP ヘッダ 8 バイト）、パケット全体は 1228 バイトなので、分割せずに通るのは MTU 1228 からです。分割すると、どの断片にも 20 バイトの IP ヘッダが付き、最後以外の断片が運ぶ量は 8 の倍数に限られます。2 個に収めるには 1 個あたり 604 を 8 の倍数に切り上げた 608 バイトが必要で、MTU は 628 です。レッスンのメモは 620 で「断片 3 個」、628 と 1220 で「断片 2 個」、1228 で「断片の数: 0」です。ICMP ヘッダを忘れると 620/1220、断片ごとの IP ヘッダを忘れると 604、14 バイトの Ethernet ヘッダを MTU に数えると 644/1244 になります。実際の IPv4 も同じ計算で分割します。実際のトンネルでは、さらに外側のヘッダの分だけリンクの MTU が使われます。',
       },
       taughtBy: 'mtu',
     },

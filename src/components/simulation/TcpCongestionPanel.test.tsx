@@ -48,7 +48,7 @@ describe('TcpCongestionPanel', () => {
     ]);
 
     expect(html).toContain('Fast Recovery');
-    expect(html).toContain('fast-retransmit');
+    expect(html).toContain('Fast retransmit of 1001');
   });
 
   it('renders RTO reset markers', () => {
@@ -59,7 +59,7 @@ describe('TcpCongestionPanel', () => {
     ]);
 
     expect(html).toContain('RTO');
-    expect(html).toContain('rto-fire');
+    expect(html).toContain('Retransmission timeout (RTO) fires');
   });
 
   it('adds accessible SVG labels', () => {

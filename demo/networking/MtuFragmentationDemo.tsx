@@ -6,10 +6,7 @@ import { useNetlabContext } from '../../src/components/NetlabContext';
 import { HopInspector } from '../../src/components/simulation/HopInspector';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { TraceSummary } from '../../src/components/simulation/TraceSummary';
-import {
-  buildFragmentedEchoTopology,
-  DEFAULT_FRAGMENTED_ECHO_TUNNEL_MTU,
-} from '../../src/scenarios/fragmented-echo';
+import { buildFragmentedEchoTopology } from '../../src/scenarios/fragmented-echo';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import type { InFlightPacket } from '../../src/types/packets';
 import type { NetworkTopology } from '../../src/types/topology';
@@ -18,6 +15,12 @@ import { readDemoEmbedParams } from '../embedParams';
 import { useT } from '../localeContext';
 
 const PING_PAYLOAD_BYTES = 1200;
+
+// The slider runs from 300 in 8-byte steps, so it can hold 604 but not the
+// scenario's 600: opening at 600 put the thumb on 604 while the label said 600.
+const TUNNEL_MTU_MIN = 300;
+const TUNNEL_MTU_STEP = 8;
+const LESSON_DEFAULT_TUNNEL_MTU = 604;
 
 const CARD_STYLE: CSSProperties = {
   background: 'var(--netlab-bg-primary)',
@@ -100,7 +103,7 @@ function buildPingPacket(topology: NetworkTopology, df: boolean): InFlightPacket
 }
 
 export default function MtuFragmentationDemo() {
-  const [tunnelMtu, setTunnelMtu] = useState(DEFAULT_FRAGMENTED_ECHO_TUNNEL_MTU);
+  const [tunnelMtu, setTunnelMtu] = useState(LESSON_DEFAULT_TUNNEL_MTU);
   const topology = useMemo(() => buildFragmentedEchoTopology(tunnelMtu), [tunnelMtu]);
   const params = new URLSearchParams(window.location.search);
   const sandboxIntroId = params.get('intro') ?? null;
@@ -191,8 +194,8 @@ function FragmentationDemoInner({
           </div>
           <div style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}>
             {t(
-              'With the default `600`-byte tunnel MTU and a `1200`-byte ICMP data field, Netlab shows three IPv4 fragments because the ICMP header is part of the fragmented payload.',
-              'トンネル MTU が既定の `600` バイトで ICMP のデータ部が `1200` バイトのとき、ICMP ヘッダも分割されるペイロードに含まれるため、Netlab では IPv4 の断片が 3 つになります。',
+              `With the default ${LESSON_DEFAULT_TUNNEL_MTU}-byte tunnel MTU and a ${PING_PAYLOAD_BYTES}-byte ICMP data field, Netlab shows three IPv4 fragments because the ICMP header is part of the fragmented payload.`,
+              `トンネル MTU が既定の ${LESSON_DEFAULT_TUNNEL_MTU} バイトで ICMP のデータ部が ${PING_PAYLOAD_BYTES} バイトのとき、ICMP ヘッダも分割されるペイロードに含まれるため、Netlab では IPv4 の断片が 3 つになります。`,
             )}
           </div>
         </div>
@@ -227,14 +230,15 @@ function FragmentationDemoInner({
                 fontSize: 12,
               }}
             >
-              <span>
+              <span data-testid="mtu-tunnel-value">
                 {t(`Tunnel MTU: ${tunnelMtu} bytes`, `トンネル MTU: ${tunnelMtu} バイト`)}
               </span>
               <input
+                data-testid="mtu-tunnel-slider"
                 type="range"
-                min={300}
+                min={TUNNEL_MTU_MIN}
                 max={1500}
-                step={8}
+                step={TUNNEL_MTU_STEP}
                 value={tunnelMtu}
                 onChange={(event) => onTunnelMtuChange(Number.parseInt(event.target.value, 10))}
               />
@@ -271,6 +275,7 @@ function FragmentationDemoInner({
           <div style={CARD_STYLE}>
             <div style={LABEL_STYLE}>{t('Trace Notes', 'トレースのメモ')}</div>
             <div
+              data-testid="mtu-trace-notes"
               style={{
                 color: 'var(--netlab-text-primary)',
                 fontFamily: 'monospace',
@@ -279,11 +284,9 @@ function FragmentationDemoInner({
                 gap: 6,
               }}
             >
+              {/* One `fragment` hop per fragment R1 emits, so this is the count of fragments. */}
               <div>
-                {t(
-                  `Fragment hops: ${fragmentHops.length}`,
-                  `分割が起きたホップ: ${fragmentHops.length}`,
-                )}
+                {t(`Fragments: ${fragmentHops.length}`, `断片の数: ${fragmentHops.length}`)}
               </div>
               <div>
                 {t('Reassembly:', '再組み立て:')}{' '}
@@ -292,7 +295,9 @@ function FragmentationDemoInner({
                       `complete (${reassemblyHop.fragmentCount ?? fragmentHops.length} fragments)`,
                       `完了 (断片 ${reassemblyHop.fragmentCount ?? fragmentHops.length} 個)`,
                     )
-                  : t('not completed', '未完了')}
+                  : fragmentHops.length === 0
+                    ? t('not needed', '不要')
+                    : t('not completed', '未完了')}
               </div>
               <div>
                 {t('Frag-Needed ICMP:', 'Frag-Needed の ICMP:')}{' '}

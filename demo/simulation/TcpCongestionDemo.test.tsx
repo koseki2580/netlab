@@ -20,6 +20,22 @@ describe('TcpCongestionDemo', () => {
     expect(html).not.toContain('rto-fire');
   });
 
+  // TC-221 — the terms the chart uses are explained in words, and no raw
+  // markdown backticks reach the learner.
+  it('glosses cwnd, ssthresh, MSS and RTO in plain words', () => {
+    const html = renderToStaticMarkup(
+      <MemoryRouter>
+        <TcpCongestionDemo />
+      </MemoryRouter>,
+    );
+
+    expect(html).toContain('congestion window');
+    expect(html).toContain('slow-start threshold');
+    expect(html).toContain('maximum segment size');
+    expect(html).toContain('retransmission timeout');
+    expect(html).not.toContain('`');
+  });
+
   // TC-214 — the trace sent a fourth segment while cwnd was 3000, so a
   // learner who read the window off the chart was taught a sender no real
   // stack would be.

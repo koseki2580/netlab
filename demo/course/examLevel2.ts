@@ -318,8 +318,8 @@ export const EXAM_LEVEL_2: ExamLevel = {
       ],
       answer: 2,
       explanation: {
-        en: 'DF forbids splitting, so a packet too big for the next link cannot go on; the router drops it and tells the sender the MTU so it can send smaller. In the lesson, with DF set the trace shows a DROP at R1 (“fragmentation-needed”) and an ICMP back to Host A with next-hop MTU 600; without DF, three fragments arrive and Host B reassembles them.',
-        ja: 'DF は分割を禁じるので、次のリンクに大きすぎるパケットは先へ進めません。ルータは捨てて、小さくして送り直せるよう送り手に MTU を知らせます。レッスンでは DF ありで R1 に DROP（fragmentation-needed）が出て、次ホップの MTU 600 を載せた ICMP が Host A に戻りました。DF なしでは 3 つの断片が届き、Host B が組み立て直しました。',
+        en: 'DF forbids splitting, so a packet too big for the next link cannot go on; the router drops it and tells the sender the MTU so it can send smaller. In the lesson, with DF set the trace shows a DROP at R1 (“fragmentation-needed”) and an ICMP back to Host A with next-hop MTU 604 (the tunnel MTU the lesson opens with); without DF, three fragments arrive and Host B reassembles them.',
+        ja: 'DF は分割を禁じるので、次のリンクに大きすぎるパケットは先へ進めません。ルータは捨てて、小さくして送り直せるよう送り手に MTU を知らせます。レッスンでは DF ありで R1 に DROP（fragmentation-needed）が出て、次ホップの MTU 604（レッスンが最初に設定しているトンネル MTU）を載せた ICMP が Host A に戻りました。DF なしでは 3 つの断片が届き、Host B が組み立て直しました。',
       },
       taughtBy: 'mtu',
     },
