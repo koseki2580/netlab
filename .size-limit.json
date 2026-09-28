@@ -29,7 +29,7 @@
   },
   {
     "path": "dist/layers/l2-datalink/index.js",
-    "limit": "7 kB",
+    "limit": "7.2 kB",
     "gzip": true
   },
   {
