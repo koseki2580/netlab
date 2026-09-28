@@ -141,6 +141,15 @@ function NatDemoInner() {
                 '下のボタンで Client A と Client B の両方から送ってみましょう（押すとすぐ送られます）。変換表で、2 台が同じグローバルアドレスを共有し、ポート番号で区別されているのが分かります。ポート番号は、同じ住所の中の部屋番号のようなものです。',
               )}
             </div>
+            <div
+              data-testid="nat-port-allocation-note"
+              style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}
+            >
+              {t(
+                "This NAT allocates public ports in order starting at 1024; many real NATs, such as Linux MASQUERADE or Cisco PAT, keep the client's own port when it is free.",
+                'この NAT は外側のポート番号を 1024 から順に割り当てます。実際の NAT の多く（Linux の MASQUERADE や Cisco の PAT など）は、空いていればクライアントのポート番号をそのまま使います。',
+              )}
+            </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <ActionButton

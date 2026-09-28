@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import type { TranslatorFn } from '../../i18n/types';
 import { useI18n } from '../../i18n/useI18n';
 import { traceEventId } from '../../sandbox/annotations/anchors';
 import { useSandboxOrNull } from '../../sandbox/useSandbox';
@@ -44,7 +45,35 @@ function formatDropReason(reason: string | undefined): string | null {
   return reason;
 }
 
-function formatHopAnnotation(hop: PacketHop): string | null {
+const LINK_REASON_KEYS: Record<string, string> = {
+  loss: 'simulation.panelGloss.link.reason.loss',
+  'queue-full': 'simulation.panelGloss.link.reason.queueFull',
+  'class-queue-full': 'simulation.panelGloss.link.reason.classQueueFull',
+  'link-failed': 'simulation.panelGloss.link.reason.linkFailed',
+};
+
+/** A shaped-link hop in words; null for a link action with nothing to say in words. */
+function formatLinkHop(hop: PacketHop, t: TranslatorFn): string | null {
+  const qos = hop.linkQos;
+  if (hop.action === 'link:arrived' && qos?.totalLatencySteps !== undefined) {
+    return t('simulation.panelGloss.link.arrived', { ms: qos.totalLatencySteps });
+  }
+  if (hop.action === 'link:dropped') {
+    const reasonKey = qos?.reason !== undefined ? LINK_REASON_KEYS[qos.reason] : undefined;
+    return reasonKey
+      ? t('simulation.panelGloss.link.droppedReason', { reason: t(reasonKey) })
+      : t('simulation.panelGloss.link.dropped');
+  }
+  if (hop.action === 'link:enqueued' && qos?.queueDepth !== undefined) {
+    return t('simulation.panelGloss.link.enqueued', { depth: qos.queueDepth });
+  }
+  if (hop.action === 'link:dequeued' && qos?.queueDepth !== undefined) {
+    return t('simulation.panelGloss.link.dequeued', { depth: qos.queueDepth });
+  }
+  return null;
+}
+
+function formatHopAnnotation(hop: PacketHop, t: TranslatorFn): string | null {
   const parts: string[] = [];
 
   if (hop.action === 'fragment') {
@@ -71,7 +100,10 @@ function formatHopAnnotation(hop: PacketHop): string | null {
     parts.push(`mtu ${hop.nextHopMtu}`);
   }
 
-  if (hop.action?.startsWith('link:')) {
+  const linkText = hop.action?.startsWith('link:') ? formatLinkHop(hop, t) : null;
+  if (linkText !== null) {
+    parts.push(linkText);
+  } else if (hop.action?.startsWith('link:')) {
     const label = hop.action.slice('link:'.length);
     const qos = hop.linkQos;
     if (qos?.totalLatencySteps !== undefined) {
@@ -171,7 +203,7 @@ function HopRow({
   const label = EVENT_LABELS[hop.event] ?? hop.event.toUpperCase();
   const glossKey = EVENT_GLOSS_KEYS[hop.event];
   const dropReason = hop.event === 'drop' ? formatDropReason(hop.reason) : null;
-  const annotation = formatHopAnnotation(hop);
+  const annotation = formatHopAnnotation(hop, t);
 
   return (
     <div

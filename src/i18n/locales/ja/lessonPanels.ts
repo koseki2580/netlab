@@ -58,6 +58,16 @@ export const lessonPanels: Catalog = {
   'simulation.panelGloss.event.drop': 'DROP＝破棄',
   'simulation.panelGloss.event.arpRequest': 'ARP-REQ＝ARP 要求（この IP アドレスの持ち主は？）',
   'simulation.panelGloss.event.arpReply': 'ARP-REP＝ARP 応答（持ち主が MAC アドレスを返す）',
+  'simulation.panelGloss.link.enqueued': 'リンクの送信待ちに入った（待ち {{depth}} 個）',
+  'simulation.panelGloss.link.dequeued': 'リンクへ送り出した（待ち {{depth}} 個）',
+  'simulation.panelGloss.link.arrived':
+    'リンクを {{ms}} ms かけて通過し到着 — ステップ番号もその分進みます（1 ステップ = 1 ms）',
+  'simulation.panelGloss.link.dropped': 'リンクで破棄',
+  'simulation.panelGloss.link.droppedReason': 'リンクで破棄: {{reason}}',
+  'simulation.panelGloss.link.reason.loss': 'ランダムな損失',
+  'simulation.panelGloss.link.reason.queueFull': 'キューがいっぱい',
+  'simulation.panelGloss.link.reason.classQueueFull': 'クラスのキューがいっぱい',
+  'simulation.panelGloss.link.reason.linkFailed': 'リンクが切れている',
   'simulation.panelGloss.filterPlaceholder': '項目 == 値（例: ip.addr == 10.0.0.1）',
   'simulation.panelGloss.filterHint':
     '使える項目: protocol, ip.src, ip.dst, ip.addr, tcp.port, udp.port, eth.addr。&&（かつ）や ||（または）でつなげます。',

@@ -62,6 +62,18 @@ export const lessonPanels: Catalog = {
   'simulation.panelGloss.event.drop': 'DROP = thrown away',
   'simulation.panelGloss.event.arpRequest': 'ARP-REQ = ARP request: who has this IP address?',
   'simulation.panelGloss.event.arpReply': 'ARP-REP = ARP reply: the owner answers with its MAC',
+  // What a hop on a shaped link did. Link time is counted in steps of 1 ms, so
+  // the step number jumps by the time the packet spent on the link.
+  'simulation.panelGloss.link.enqueued': 'queued for the link ({{depth}} waiting)',
+  'simulation.panelGloss.link.dequeued': 'sent onto the link ({{depth}} waiting)',
+  'simulation.panelGloss.link.arrived':
+    'arrived after {{ms}} ms on the link — the step number jumps ahead with it (1 step = 1 ms)',
+  'simulation.panelGloss.link.dropped': 'dropped on the link',
+  'simulation.panelGloss.link.droppedReason': 'dropped on the link: {{reason}}',
+  'simulation.panelGloss.link.reason.loss': 'random loss',
+  'simulation.panelGloss.link.reason.queueFull': 'the queue was full',
+  'simulation.panelGloss.link.reason.classQueueFull': 'its class queue was full',
+  'simulation.panelGloss.link.reason.linkFailed': 'the link is down',
   'simulation.panelGloss.filterPlaceholder': 'field == value, e.g. ip.addr == 10.0.0.1',
   'simulation.panelGloss.filterHint':
     'Fields: protocol, ip.src, ip.dst, ip.addr, tcp.port, udp.port, eth.addr. Join with && (and) or || (or).',

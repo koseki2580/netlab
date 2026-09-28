@@ -10,6 +10,7 @@ import type { PacketTrace, SimulationState } from '../../types/simulation';
 import type { NetworkTopology } from '../../types/topology';
 import { assertDefined } from '../../utils';
 import { NetlabContext } from '../NetlabContext';
+import { I18nProvider } from '../../i18n/I18nProvider';
 import { PacketTimeline } from './PacketTimeline';
 
 const TOPOLOGY: NetworkTopology = {
@@ -353,5 +354,79 @@ describe('PacketTimeline code gloss', () => {
     );
     expect(input?.placeholder).not.toContain('tcp');
     expect(input?.placeholder).toContain('field == value');
+  });
+});
+
+// TC-231 — a link-time hop says what happened in the reader's language, and
+// why the step number jumps: on a shaped link, one step is one millisecond.
+describe('PacketTimeline link annotations', () => {
+  const LINK_TRACE: PacketTrace = {
+    ...TRACE,
+    hops: [
+      {
+        ...TRACE_CREATE_HOP,
+        step: 2,
+        action: 'link:enqueued',
+        linkQos: { edgeId: 'e1', segSeq: 0, queueDepth: 1 },
+      },
+      {
+        ...TRACE_CREATE_HOP,
+        step: 3,
+        action: 'link:dequeued',
+        linkQos: { edgeId: 'e1', segSeq: 0, queueDepth: 0 },
+      },
+      {
+        ...TRACE_CREATE_HOP,
+        step: 183,
+        action: 'link:arrived',
+        linkQos: { edgeId: 'e1', segSeq: 0, queueDepth: 0, totalLatencySteps: 180 },
+      },
+      { ...TRACE_DELIVER_HOP, step: 184 },
+    ],
+  };
+
+  function renderIn(locale: 'en' | 'ja') {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+    act(() => {
+      root?.render(
+        <I18nProvider locale={locale}>
+          <NetlabContext.Provider
+            value={{
+              topology: TOPOLOGY,
+              routeTable: TOPOLOGY.routeTables,
+              areas: TOPOLOGY.areas,
+              hookEngine: new HookEngine(),
+            }}
+          >
+            <SimulationContext.Provider
+              value={makeSimulationContextValue({ state: makeState({ traces: [LINK_TRACE] }) })}
+            >
+              <PacketTimeline />
+            </SimulationContext.Provider>
+          </NetlabContext.Provider>
+        </I18nProvider>,
+      );
+    });
+    return container.textContent ?? '';
+  }
+
+  it('explains the arrival and the step jump in English', () => {
+    const text = renderIn('en');
+    expect(text).toContain('queued for the link (1 waiting)');
+    expect(text).toContain('sent onto the link (0 waiting)');
+    expect(text).toContain('arrived after 180 ms on the link');
+    expect(text).toContain('1 step = 1 ms');
+    expect(text).not.toContain('arrived 180ms');
+  });
+
+  it('explains the arrival and the step jump in Japanese', () => {
+    const text = renderIn('ja');
+    expect(text).toContain('リンクを 180 ms かけて通過し到着');
+    expect(text).toContain('1 ステップ = 1 ms');
+    expect(text).toContain('リンクの送信待ちに入った（待ち 1 個）');
+    expect(text).not.toContain('arrived');
+    expect(text).not.toContain('enqueued');
   });
 });

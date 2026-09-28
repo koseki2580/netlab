@@ -9,9 +9,9 @@ test('link QoS demo records deterministic link annotations', async ({ page, demo
   await page.getByTestId(SEL.demo.linkQosBurst).click();
 
   const traceLog = page.getByTestId(SEL.demo.traceLog).first();
-  await expect(traceLog).toContainText('enqueued q=1');
-  await expect(traceLog).toContainText('dequeued q=0');
-  await expect(traceLog).toContainText('arrived 32ms');
+  await expect(traceLog).toContainText('queued for the link (1 waiting)');
+  await expect(traceLog).toContainText('sent onto the link (0 waiting)');
+  await expect(traceLog).toContainText('arrived after 32 ms on the link');
 
   // The text-form editor is the lesson's advanced option, folded by default.
   await page.getByTestId('link-qos-advanced-toggle').click();

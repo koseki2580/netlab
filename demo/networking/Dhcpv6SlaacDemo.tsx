@@ -1,7 +1,11 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
-import { applyRouterAdvertisement, buildRouterAdvertisement } from '../../src/simulation/icmpv6';
+import {
+  applyRouterAdvertisement,
+  buildRouterAdvertisement,
+  type RouterAdvertisementResult,
+} from '../../src/simulation/icmpv6';
 import { Dhcpv6Client } from '../../src/services/dhcpv6/Dhcpv6Client';
 import { Dhcpv6Server } from '../../src/services/dhcpv6/Dhcpv6Server';
 import type { NetworkTopology } from '../../src/types/topology';
@@ -84,14 +88,29 @@ function resolveMode(mode: Mode) {
     const client = new Dhcpv6Client({ macAddress: '02:00:00:00:00:0a', seed: 30 });
     const reply = server.handle(client.handleAdvertise(server.handle(client.buildSolicit())));
     const lease = client.handleReply(reply);
-    return { address: lease.address, dns: lease.dnsServers.join(', '), modeText: 'DHCPv6 address' };
+    return { address: lease.address, dns: lease.dnsServers.join(', '), mode: raResult.mode };
   }
 
   return {
     address: raResult.slaacAddress ?? 'unassigned',
     dns: raResult.needsDhcpv6OtherConfig ? '2001:db8::53' : 'none',
-    modeText: raResult.mode,
+    mode: raResult.mode,
   };
+}
+
+/** The mode in words, not the identifier the simulator uses for it. */
+function modeName(
+  mode: RouterAdvertisementResult['mode'],
+  t: (en: string, ja: string) => string,
+): string {
+  switch (mode) {
+    case 'dhcpv6-address':
+      return t('DHCPv6 address', 'DHCPv6 でアドレス取得');
+    case 'slaac-with-dhcpv6-other':
+      return t('SLAAC + stateless DHCPv6 (DNS only)', 'SLAAC ＋ DHCPv6（DNS などだけ）');
+    case 'slaac-only':
+      return t('SLAAC only', 'SLAAC のみ');
+  }
 }
 
 // Rendered inside DemoShell so it reads the learner's language; the page
@@ -137,9 +156,7 @@ function ModeControls({
       >
         <div data-testid="slaac-mode">
           {t('Mode: ', 'モード: ')}
-          {resolved.modeText === 'DHCPv6 address'
-            ? t('DHCPv6 address', 'DHCPv6 アドレス')
-            : resolved.modeText}
+          {modeName(resolved.mode, t)}
         </div>
         <div data-testid="host-ipv6">
           {t('Host IPv6: ', 'ホストの IPv6: ')}
@@ -149,6 +166,15 @@ function ModeControls({
           DNS: {resolved.dns === 'none' ? t('none', 'なし') : resolved.dns}
         </div>
       </div>
+      <p
+        data-testid="dhcpv6-lease-note"
+        style={{ margin: 0, fontSize: 12, lineHeight: 1.6, color: 'var(--netlab-text-secondary)' }}
+      >
+        {t(
+          'When M goes from 1 to 0, this lesson drops the DHCPv6 address at once for clarity; real hosts keep it until its lease lifetime expires.',
+          'M が 1 から 0 に変わると、このレッスンでは分かりやすさのため DHCPv6 のアドレスをすぐ外します。実際のホストはリース期間が切れるまでそのアドレスを使い続けます。',
+        )}
+      </p>
     </aside>
   );
 }

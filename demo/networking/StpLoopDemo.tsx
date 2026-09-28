@@ -404,9 +404,10 @@ function StpStatusCard({ switchId }: { switchId: SwitchId }) {
             {node.data.label}
           </div>
           <div
+            data-testid={`stp-bridge-id-${switchId}`}
             style={{ color: 'var(--netlab-text-secondary)', fontFamily: 'monospace', fontSize: 12 }}
           >
-            {t('priority', '優先度')} {node.data.stpConfig?.priority ?? DEFAULT_BRIDGE_PRIORITY}
+            {t('Bridge ID', 'ブリッジ ID')} {bridgeId ? formatBridgeId(bridgeId) : '—'}
           </div>
         </div>
         <div
@@ -501,6 +502,7 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
         {hopLabels}
       </div>
       <div
+        data-testid="stp-root-bridge"
         style={{
           marginTop: 10,
           color: 'var(--netlab-text-secondary)',
@@ -522,6 +524,20 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
         {t('Blocked link', '遮断しているリンク')}:{' '}
         {blockedLinks.length > 0 ? blockedLinks.join(', ') : t('none', 'なし')}
       </div>
+      <p
+        data-testid="stp-loop-danger"
+        style={{
+          margin: '6px 0 0',
+          color: 'var(--netlab-text-secondary)',
+          fontSize: 12,
+          lineHeight: 1.6,
+        }}
+      >
+        {t(
+          'Why block a link at all? The triangle is a loop: a broadcast frame would circle and multiply forever (a broadcast storm), and each switch would see the same source MAC arrive on different ports, so its MAC table would keep flapping.',
+          'なぜリンクを遮断するのか: 三角形はループなので、遮断しないとブロードキャストのフレームが回り続けて増え続け（ブロードキャストストーム）、同じ送信元 MAC が別々のポートから届くため、各スイッチの MAC テーブルが書き換わり続けます（フラッピング）。',
+        )}
+      </p>
       {activeTrace && (
         <div
           data-testid="stp-blocked-segment"
@@ -697,6 +713,20 @@ function StpLoopDemoInner({
 
           <div style={CARD_STYLE}>
             <div style={SECTION_TITLE_STYLE}>{t('Priorities', '優先度')}</div>
+            <p
+              data-testid="stp-election-rule"
+              style={{
+                margin: '0 0 10px',
+                color: 'var(--netlab-text-secondary)',
+                fontSize: 12,
+                lineHeight: 1.6,
+              }}
+            >
+              {t(
+                'The lower bridge ID wins — priority first, then MAC. A bridge ID is priority/MAC, so on equal priorities the switch with the lower MAC becomes root: a tie with Switch A goes to Switch A.',
+                'ブリッジ ID が小さいほうが勝ち — まず優先度で比べ、同じなら MAC アドレスで比べます。ブリッジ ID は「優先度/MAC」なので、優先度が同じなら MAC の小さいスイッチがルートになり、Switch A と同じ優先度なら Switch A が勝ちます。',
+              )}
+            </p>
             {(['switch-a', 'switch-b', 'switch-c'] as SwitchId[]).map((switchId) => (
               <label
                 key={switchId}
