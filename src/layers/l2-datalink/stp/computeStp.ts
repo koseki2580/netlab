@@ -104,10 +104,9 @@ export function computeStp(topology: NetworkTopology): StpResult {
           rightNodeId: edge.target,
           rightPortId: edge.targetHandle,
         });
-      } else if (!sourceDisabled) {
-        leafPortKeys.add(sourceKey);
-      } else if (!targetDisabled) {
-        leafPortKeys.add(targetKey);
+      } else {
+        // A shut port takes the link down at both ends.
+        disabledPortKeys.add(sourceKey).add(targetKey);
       }
 
       continue;

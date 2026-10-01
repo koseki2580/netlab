@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { NetlabEdge, NetlabNode, NetworkTopology, SwitchPort } from '../../../types/topology';
+import { SwitchForwarder } from '../SwitchForwarder';
 import { computeStp } from './computeStp';
 
 function makeSwitch(
@@ -355,6 +356,45 @@ describe('computeStp', () => {
 
       expect(getPort(result, 'switch-b', 'bc').role).toBe('ROOT');
       expect(getPort(result, 'switch-b', 'bc').rootPathCost).toBe(38);
+    });
+  });
+
+  // TC-257 — shutting one end of a link takes the link down at both ends. The
+  // far end was left DESIGNATED / FORWARDING toward a dead port.
+  describe('the far end of a link whose other port is disabled', () => {
+    it('is DISABLED too, never a root or designated port', () => {
+      for (const [switchId, portId, farSwitchId, farPortId] of [
+        ['switch-a', 'ab', 'switch-b', 'ba'],
+        ['switch-b', 'ba', 'switch-a', 'ab'],
+      ] as const) {
+        const result = computeStp(
+          makeTriangleTopology({
+            priorities: { 'switch-a': 4096 },
+            disabledPortIds: { [switchId]: [portId] },
+          }),
+        );
+
+        const far = getPort(result, farSwitchId, farPortId);
+        expect(far.role, `${farSwitchId}:${farPortId}`).toBe('DISABLED');
+        expect(far.state, `${farSwitchId}:${farPortId}`).toBe('DISABLED');
+        // Switch B still reaches the root, through Switch C.
+        expect(getPort(result, 'switch-b', 'bc').role).toBe('ROOT');
+        expect(countPortsByRole(result, 'BLOCKED')).toBe(0);
+      }
+    });
+
+    it('is not flooded to: no frame crosses the dead link', () => {
+      const topology = makeTriangleTopology({
+        priorities: { 'switch-a': 4096 },
+        disabledPortIds: { 'switch-a': ['ab'] },
+      });
+      const stpStates = computeStp(topology).ports;
+      const switchB = topology.nodes.find((node) => node.id === 'switch-b');
+      const forwarder = new SwitchForwarder('switch-b', { ...topology, stpStates });
+
+      expect(forwarder.forward('ff:ff:ff:ff:ff:ff', 'bh', switchB?.data.ports ?? [], 1)).toEqual([
+        'bc',
+      ]);
     });
   });
 

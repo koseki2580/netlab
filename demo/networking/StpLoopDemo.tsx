@@ -427,9 +427,14 @@ function StpStatusCard({ switchId }: { switchId: SwitchId }) {
       </div>
       {ports.map((port) => {
         const runtime = topology.stpStates?.get(`${switchId}:${port.id}`);
+        // DISABLED without being shut here: the port at the far end was.
+        const linkDown =
+          runtime?.role === 'DISABLED' &&
+          !(node.data.stpConfig?.disabledPortIds ?? []).includes(port.id);
         return (
           <div
             key={port.id}
+            data-testid={`stp-port-${port.id}`}
             style={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -446,7 +451,11 @@ function StpStatusCard({ switchId }: { switchId: SwitchId }) {
             <span
               style={{ color: runtime ? roleColor(runtime.role) : 'var(--netlab-text-primary)' }}
             >
-              {runtime ? `${runtime.role} (${runtime.state})` : 'FORWARDING'}
+              {linkDown
+                ? `DISABLED (${t('link down', 'リンクダウン')})`
+                : runtime
+                  ? `${runtime.role} (${runtime.state})`
+                  : 'FORWARDING'}
             </span>
           </div>
         );
