@@ -118,13 +118,11 @@ function baseTopology(linkFailed: boolean): NetworkTopology {
 }
 
 function withRoutes(topology: NetworkTopology): NetworkTopology {
-  const routable = {
-    ...topology,
-    edges: topology.edges.filter((edge) => edge.data?.state !== 'down'),
-  };
+  // The protocols see the failed link too: they route around it and drop the
+  // sessions and prefixes that sat on it.
   const routes = [
-    ...new OspfV3Protocol().computeRoutes(routable),
-    ...new BgpProtocol().computeRoutes(routable),
+    ...new OspfV3Protocol().computeRoutes(topology),
+    ...new BgpProtocol().computeRoutes(topology),
   ];
   const routeTables = new Map<string, RouteEntry[]>();
   for (const route of routes) {
@@ -133,10 +131,15 @@ function withRoutes(topology: NetworkTopology): NetworkTopology {
   return { ...topology, routeTables };
 }
 
+/** The lesson's network with its routes, before or after the R1–R2 link fails. */
+export function ipv6RoutingTopology(linkFailed: boolean): NetworkTopology {
+  return withRoutes(baseTopology(linkFailed));
+}
+
 function RouteRows({ routes }: { routes: readonly RouteEntry[] }) {
   const t = useT();
   return (
-    <div style={{ fontFamily: 'monospace', fontSize: 12 }}>
+    <div data-testid="r1-ipv6-routes" style={{ fontFamily: 'monospace', fontSize: 12 }}>
       {routes.map((route) => (
         <div
           key={`${route.protocol}-${route.destination}-${route.nextHop}`}
@@ -170,7 +173,7 @@ export default function Ipv6RoutingDemo() {
 function Ipv6RoutingDemoInner() {
   const t = useT();
   const [linkFailed, setLinkFailed] = useState(false);
-  const topology = useMemo(() => withRoutes(baseTopology(linkFailed)), [linkFailed]);
+  const topology = useMemo(() => ipv6RoutingTopology(linkFailed), [linkFailed]);
   const r1Routes = topology.routeTables.get('r1') ?? [];
   const bgpRoute = r1Routes.find(
     (route) =>

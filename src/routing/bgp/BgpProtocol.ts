@@ -8,6 +8,7 @@ import {
 import type { NetworkTopology } from '../../types/topology';
 import { inferRouteAddressFamily, type AddressFamily } from '../AddressFamily';
 import { withEqualCostNextHops } from '../ecmp';
+import { isInterfaceOnDownLink } from '../graphBuilder';
 
 type SessionType = 'local' | 'ebgp' | 'ibgp';
 
@@ -44,12 +45,16 @@ export class BgpProtocol implements RoutingProtocol {
       return [];
     }
 
+    // An address on a failed link is unreachable, so the session to it is
+    // down and nothing is learned through it.
     const interfaceOwnerByIp = new Map(
       bgpRouters.flatMap((node) =>
-        (node.data.interfaces ?? []).flatMap((iface) => [
-          [iface.ipAddress, node] as const,
-          ...(iface.ipv6Address !== undefined ? [[iface.ipv6Address, node] as const] : []),
-        ]),
+        (node.data.interfaces ?? [])
+          .filter((iface) => !isInterfaceOnDownLink(topology, node.id, iface))
+          .flatMap((iface) => [
+            [iface.ipAddress, node] as const,
+            ...(iface.ipv6Address !== undefined ? [[iface.ipv6Address, node] as const] : []),
+          ]),
       ),
     );
     const sessionsByRouter = new Map<string, BgpSession[]>();

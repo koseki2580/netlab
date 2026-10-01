@@ -8,6 +8,7 @@ import type { NetlabNode, NetworkTopology } from '../../types/topology';
 import { isInSubnet } from '../../utils/cidr';
 import { prefixLength6 } from '../../utils/ipv6';
 import { withEqualCostNextHops } from '../ecmp';
+import { isInterfaceOnDownLink } from '../graphBuilder';
 
 interface SpfState {
   distance: number;
@@ -101,7 +102,7 @@ export class OspfV3Protocol implements RoutingProtocol {
 
     for (const router of routers) {
       const bestRoutes = new Map<string, RouteEntry>();
-      const advertisedNetworks = getAdvertisedNetworks(router);
+      const advertisedNetworks = getAdvertisedNetworks(topology, router);
       const spf = runSpf(router, adjacency, routerById, participatingRouterIds);
 
       for (const network of advertisedNetworks) {
@@ -121,7 +122,7 @@ export class OspfV3Protocol implements RoutingProtocol {
         const targetRouter = routerById.get(targetId);
         if (!targetRouter) continue;
 
-        for (const network of getAdvertisedNetworks(targetRouter)) {
+        for (const network of getAdvertisedNetworks(topology, targetRouter)) {
           const existing = bestRoutes.get(network);
           if (existing && existing.metric < state.distance) continue;
 
@@ -176,6 +177,8 @@ function buildIpv6Adjacency(
   for (const router of routers) adjacency.set(router.id, []);
 
   for (const edge of topology.edges) {
+    // A failed link carries no adjacency.
+    if (edge.data?.state === 'down') continue;
     const source = nodeById.get(edge.source);
     const target = nodeById.get(edge.target);
     if (!source || !target) continue;
@@ -225,7 +228,7 @@ function interfacesShareIpv6Subnet(left: RouterInterface, right: RouterInterface
   );
 }
 
-function getAdvertisedNetworks(node: NetlabNode): string[] {
+function getAdvertisedNetworks(topology: NetworkTopology, node: NetlabNode): string[] {
   const configuredNetworks = new Set(
     node.data.ospfv3Config?.areas.flatMap((area) => area.networks) ?? [],
   );
@@ -234,6 +237,8 @@ function getAdvertisedNetworks(node: NetlabNode): string[] {
 
   for (const iface of node.data.interfaces ?? []) {
     if (!iface.ipv6Address || iface.prefixLength6 === undefined) continue;
+    // An interface on a failed link is down, so its prefix is not advertised.
+    if (isInterfaceOnDownLink(topology, node.id, iface)) continue;
     const network = `${iface.ipv6Address}/${iface.prefixLength6}`;
     const cidr = configuredNetworks.has(network)
       ? network

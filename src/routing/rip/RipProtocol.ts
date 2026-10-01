@@ -29,7 +29,8 @@ export class RipProtocol implements RoutingProtocol {
       const configuredNetworks = new Set(router.data.ripConfig?.networks ?? []);
       const routeTable = new Map<string, RipRouteState>();
 
-      for (const network of getConnectedNetworks(router).map((connected) => connected.cidr)) {
+      // An interface on a failed link is down, and its network is not advertised.
+      for (const { cidr: network } of getConnectedNetworks(router, topology)) {
         if (!configuredNetworks.has(network)) continue;
         routeTable.set(network, {
           destination: network,

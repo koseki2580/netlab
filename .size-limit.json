@@ -34,7 +34,7 @@
   },
   {
     "path": "dist/layers/l3-network/index.js",
-    "limit": "15 kB",
+    "limit": "15.2 kB",
     "gzip": true
   },
   {

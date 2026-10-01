@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { RouterInterface } from '../../types/routing';
 import type { NetlabEdge, NetlabNode, NetworkTopology } from '../../types/topology';
 import { ADMIN_DISTANCES } from '../../types/routing';
+import { buildRipConvergenceTopology } from '../../scenarios/rip-convergence';
 import { RipProtocol, ripProtocol } from './RipProtocol';
 
 function makeTopology(overrides: Partial<NetworkTopology> = {}): NetworkTopology {
@@ -414,6 +415,18 @@ describe('RipProtocol', () => {
       const routes = new RipProtocol().computeRoutes(topology);
       expect(routes).not.toHaveLength(0);
       expect(routes.every((route) => route.adminDistance === 120)).toBe(true);
+    });
+  });
+
+  // TC-241: a failed link takes its interface down, and RIP does not
+  // advertise a down interface's network.
+  describe('TC-241 down link is not advertised', () => {
+    it('drops the failed /30 from both ends and from every other router', () => {
+      const routes = new RipProtocol().computeRoutes(buildRipConvergenceTopology(true));
+      for (const nodeId of ['r1', 'r2', 'r3', 'r4']) {
+        expect(findRoute(routes, nodeId, '10.0.24.0/30')).toBeUndefined();
+      }
+      expect(findRoute(routes, 'r1', '10.4.0.0/24')).toMatchObject({ nextHop: '10.0.13.2' });
     });
   });
 });

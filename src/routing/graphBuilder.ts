@@ -165,16 +165,37 @@ export function isInterfaceOnDownLink(
   nodeId: string,
   iface: RouterInterface,
 ): boolean {
-  return topology.edges.some(
-    (edge) =>
-      edge.data?.state === 'down' &&
-      (edge.id === iface.connectedEdgeId ||
-        (edge.source === nodeId && edge.sourceHandle === iface.id) ||
-        (edge.target === nodeId && edge.targetHandle === iface.id)),
-  );
+  return topology.edges.some((edge) => {
+    if (edge.data?.state !== 'down') return false;
+    if (edge.id === iface.connectedEdgeId) return true;
+
+    const atSource = edge.source === nodeId;
+    if (!atSource && edge.target !== nodeId) return false;
+    const handle = atSource ? edge.sourceHandle : edge.targetHandle;
+    if (handle) return handle === iface.id;
+
+    // The edge names no interface at this end: between two routers it is the
+    // pair of interfaces that face each other across it.
+    const find = (id: string) => topology.nodes.find((node) => node.id === id);
+    const node = find(nodeId);
+    const peer = find(atSource ? edge.target : edge.source);
+    return (
+      isRouter(node) &&
+      isRouter(peer) &&
+      resolveInterfaces(node, peer, null, atSource ? edge.targetHandle : edge.sourceHandle)
+        ?.localIface.id === iface.id
+    );
+  });
 }
 
-export function getConnectedNetworks(node: NetlabNode): ConnectedNetwork[] {
+/**
+ * The networks on `node`'s interfaces. Given the topology, the interfaces on a
+ * failed link are left out.
+ */
+export function getConnectedNetworks(
+  node: NetlabNode,
+  topology?: NetworkTopology,
+): ConnectedNetwork[] {
   if (node.data.role !== 'router') return [];
 
   const networks: ConnectedNetwork[] = [];
@@ -189,6 +210,7 @@ export function getConnectedNetworks(node: NetlabNode): ConnectedNetwork[] {
   };
 
   for (const iface of node.data.interfaces ?? []) {
+    if (topology && isInterfaceOnDownLink(topology, node.id, iface)) continue;
     pushNetwork(iface);
     for (const subInterface of iface.subInterfaces ?? []) {
       pushNetwork(subInterface, subInterface.vlanId);

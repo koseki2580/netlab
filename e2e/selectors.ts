@@ -181,6 +181,7 @@ export const SEL = {
     stationDistance: 'wireless-station-distance',
     ospfv3Ecmp: 'ospfv3-ecmp',
     mpBgpRoute: 'mp-bgp-route',
+    r1Ipv6Routes: 'r1-ipv6-routes',
     ospfv3LinkFail: 'ospfv3-link-fail',
     ospfFailLink: 'ospf-fail-link',
     slaacMode: 'slaac-mode',

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { RouterInterface } from '../types/routing';
 import type { NetlabEdge, NetlabNode, NetworkTopology } from '../types/topology';
 import { assertDefined } from '../utils';
-import { buildRouterAdjacency, getConnectedNetworks } from './graphBuilder';
+import { buildRouterAdjacency, getConnectedNetworks, isInterfaceOnDownLink } from './graphBuilder';
 
 function makeTopology(overrides: Partial<NetworkTopology> = {}): NetworkTopology {
   return {
@@ -317,5 +317,31 @@ describe('getConnectedNetworks', () => {
         { cidr: '172.16.0.0/30' },
       ]);
     });
+  });
+});
+
+describe('isInterfaceOnDownLink', () => {
+  // TC-240: a lesson may draw a router-to-router link without naming its
+  // interfaces; the failed link still takes the interfaces that face each
+  // other across it down.
+  it('TC-240: finds the interfaces of a down link that names no handles', () => {
+    const r1 = makeRouter('r1', [
+      { ipAddress: '10.0.12.1', prefixLength: 30 },
+      { ipAddress: '10.0.13.1', prefixLength: 30 },
+    ]);
+    const r2 = makeRouter('r2', [{ ipAddress: '10.0.12.2', prefixLength: 30 }]);
+    const topology = makeTopology({
+      nodes: [r1, r2],
+      edges: [{ ...makeEdge('e1', 'r1', 'r2'), data: { state: 'down' } }],
+    });
+    const [r1ToR2, r1Other] = r1.data.interfaces ?? [];
+    const [r2ToR1] = r2.data.interfaces ?? [];
+    assertDefined(r1ToR2, 'r1ToR2');
+    assertDefined(r1Other, 'r1Other');
+    assertDefined(r2ToR1, 'r2ToR1');
+
+    expect(isInterfaceOnDownLink(topology, 'r1', r1ToR2)).toBe(true);
+    expect(isInterfaceOnDownLink(topology, 'r2', r2ToR1)).toBe(true);
+    expect(isInterfaceOnDownLink(topology, 'r1', r1Other)).toBe(false);
   });
 });

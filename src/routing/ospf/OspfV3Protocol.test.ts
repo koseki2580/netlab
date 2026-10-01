@@ -14,7 +14,7 @@ function iface(id: string, ip: string, ipv6: string) {
   };
 }
 
-function topology(): NetworkTopology {
+function topology(r1r2Down = false): NetworkTopology {
   return {
     nodes: [
       {
@@ -73,7 +73,7 @@ function topology(): NetworkTopology {
       },
     ],
     edges: [
-      { id: 'e12', source: 'r1', target: 'r2' },
+      { id: 'e12', source: 'r1', target: 'r2', data: { state: r1r2Down ? 'down' : 'up' } },
       { id: 'e13', source: 'r1', target: 'r3' },
       { id: 'e23', source: 'r2', target: 'r3' },
     ],
@@ -112,5 +112,16 @@ describe('OspfV3Protocol', () => {
       destination: '2001:db8:23::/64',
       equalCostNextHops: [{ nextHop: '2001:db8:12::2' }, { nextHop: '2001:db8:13::2' }],
     });
+  });
+
+  // TC-240: a failed link carries no adjacency and its prefix is not advertised.
+  it('TC-240: routes around a down link and drops its prefix', () => {
+    const routes = new OspfV3Protocol().computeRoutes(topology(true));
+
+    expect(routes.filter((route) => route.nextHop.startsWith('2001:db8:12:'))).toEqual([]);
+    expect(routes.filter((route) => route.destination === '2001:db8:12::/64')).toEqual([]);
+    expect(
+      routes.find((route) => route.nodeId === 'r1' && route.destination === '2001:db8:23::/64'),
+    ).toMatchObject({ nextHop: '2001:db8:13::2' });
   });
 });
