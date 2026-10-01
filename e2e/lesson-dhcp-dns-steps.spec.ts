@@ -20,7 +20,13 @@ async function walkToEnd(page: import('@playwright/test').Page): Promise<string[
   const position = page.getByTestId(TID.position);
   const seen: string[] = [];
   for (let i = 0; i < 60 && (await next.isEnabled()); i += 1) {
-    await next.click();
+    // The last press disables the button a render later, so it can still read
+    // as enabled here; a click that finds it disabled means the walk is over.
+    try {
+      await next.click({ timeout: 2_000 });
+    } catch {
+      break;
+    }
     const text = (await position.textContent()) ?? '';
     if (seen[seen.length - 1] !== text) seen.push(text);
   }
