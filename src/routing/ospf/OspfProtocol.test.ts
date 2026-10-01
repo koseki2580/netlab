@@ -434,4 +434,77 @@ describe('OspfProtocol', () => {
       }
     });
   });
+
+  // TC-250: every equal-cost next hop is installed, including for a network
+  // behind a router that is itself reached by two equal-cost paths.
+  describe('TC-250 equal-cost next hops', () => {
+    const hopsOf = (
+      routes: ReturnType<OspfProtocol['computeRoutes']>,
+      nodeId: string,
+      destination: string,
+    ) => {
+      const route = findRoute(routes, nodeId, destination);
+      return route && (route.equalCostNextHops?.map((hop) => hop.nextHop) ?? [route.nextHop]);
+    };
+
+    it('gives R4 both next hops to 10.1.0.0/24 on the lesson diamond', () => {
+      const routes = new OspfProtocol().computeRoutes(buildOspfConvergenceTopology(false));
+      expect(hopsOf(routes, 'r4', '10.1.0.0/24')).toEqual(['10.0.24.1', '10.0.34.1']);
+      expect(findRoute(routes, 'r4', '10.1.0.0/24')?.metric).toBe(3);
+    });
+
+    it('leaves R4 one next hop once the R2-R4 link fails', () => {
+      const routes = new OspfProtocol().computeRoutes(buildOspfConvergenceTopology(true));
+      expect(hopsOf(routes, 'r4', '10.1.0.0/24')).toEqual(['10.0.34.1']);
+    });
+
+    it('keeps both next hops for a network behind the router reached by two paths', () => {
+      // R4 reaches R1 through R2 and through R3 at the same cost; R5 hangs off R1.
+      const routes = new OspfProtocol().computeRoutes(
+        makeTopology({
+          nodes: [
+            makeRouter(
+              'r1',
+              [
+                makeIface('to-r2', '10.0.12.1', 30),
+                makeIface('to-r3', '10.0.13.1', 30),
+                makeIface('to-r5', '10.0.15.1', 30),
+              ],
+              [makeArea(['10.0.12.0/30', '10.0.13.0/30', '10.0.15.0/30'])],
+            ),
+            makeRouter(
+              'r2',
+              [makeIface('to-r1', '10.0.12.2', 30), makeIface('to-r4', '10.0.24.1', 30)],
+              [makeArea(['10.0.12.0/30', '10.0.24.0/30'])],
+            ),
+            makeRouter(
+              'r3',
+              [makeIface('to-r1', '10.0.13.2', 30), makeIface('to-r4', '10.0.34.1', 30)],
+              [makeArea(['10.0.13.0/30', '10.0.34.0/30'])],
+            ),
+            makeRouter(
+              'r4',
+              [makeIface('to-r2', '10.0.24.2', 30), makeIface('to-r3', '10.0.34.2', 30)],
+              [makeArea(['10.0.24.0/30', '10.0.34.0/30'])],
+            ),
+            makeRouter(
+              'r5',
+              [makeIface('to-r1', '10.0.15.2', 30), makeIface('lan5', '10.5.0.1', 24)],
+              [makeArea(['10.0.15.0/30', '10.5.0.0/24'])],
+            ),
+          ],
+          edges: [
+            makeEdge('e-r1-r2', 'r1', 'r2', 'to-r2', 'to-r1'),
+            makeEdge('e-r1-r3', 'r1', 'r3', 'to-r3', 'to-r1'),
+            makeEdge('e-r2-r4', 'r2', 'r4', 'to-r4', 'to-r2'),
+            makeEdge('e-r3-r4', 'r3', 'r4', 'to-r4', 'to-r3'),
+            makeEdge('e-r1-r5', 'r1', 'r5', 'to-r5', 'to-r1'),
+          ],
+        }),
+      );
+
+      expect(hopsOf(routes, 'r4', '10.5.0.0/24')).toEqual(['10.0.24.1', '10.0.34.1']);
+      expect(findRoute(routes, 'r4', '10.5.0.0/24')?.metric).toBe(4);
+    });
+  });
 });

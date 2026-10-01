@@ -133,7 +133,8 @@ function getAdvertisedNetworks(topology: NetworkTopology, node: NetlabNode): Map
   return advertised;
 }
 
-function resolveLinkCost(node: NetlabNode, iface: RouterInterface): number {
+/** The OSPF cost `node` charges for sending out of `iface` (default 1). */
+export function ospfInterfaceCost(node: NetlabNode, iface: RouterInterface): number {
   return resolveNetworkCost(node, toNetworkCidr(iface));
 }
 
@@ -172,25 +173,29 @@ function runSpf(
     for (const neighbor of adjacency.get(current.nodeId) ?? []) {
       if (!participatingRouterIds.has(neighbor.neighborId)) continue;
 
-      const newDistance = currentState.distance + resolveLinkCost(currentNode, neighbor.localIface);
-      const nextHop =
-        current.nodeId === source.id ? neighbor.neighborIface.ipAddress : currentState.nextHops[0];
+      const newDistance =
+        currentState.distance + ospfInterfaceCost(currentNode, neighbor.localIface);
+      // Every first hop that reaches `current` also reaches its neighbor, so a
+      // router behind an equal-cost split inherits all of them, not the first.
+      const candidateHops =
+        current.nodeId === source.id ? [neighbor.neighborIface.ipAddress] : currentState.nextHops;
       const existing = states.get(neighbor.neighborId);
-      if (!nextHop) continue;
+      if (candidateHops.length === 0) continue;
 
       if (!existing || newDistance < existing.distance) {
         states.set(neighbor.neighborId, {
           distance: newDistance,
-          nextHops: [nextHop],
+          nextHops: [...candidateHops],
         });
         queue.push({ nodeId: neighbor.neighborId, distance: newDistance });
         continue;
       }
 
-      if (newDistance === existing.distance && !existing.nextHops.includes(nextHop)) {
+      const added = candidateHops.filter((hop) => !existing.nextHops.includes(hop));
+      if (newDistance === existing.distance && added.length > 0) {
         states.set(neighbor.neighborId, {
           distance: existing.distance,
-          nextHops: [...existing.nextHops, nextHop].sort(),
+          nextHops: [...existing.nextHops, ...added].sort(),
         });
         queue.push({ nodeId: neighbor.neighborId, distance: newDistance });
       }

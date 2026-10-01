@@ -6,6 +6,7 @@ import { NetlabProvider } from '../../src/components/NetlabProvider';
 import type { BgpNeighborConfig, OspfAreaConfig, RouterInterface } from '../../src/types/routing';
 import type { NetlabNode, NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
+import { routeNextHops } from './routeDisplay';
 
 type DynamicProtocol = 'rip' | 'ospf' | 'bgp';
 
@@ -21,9 +22,9 @@ const PROTOCOL_META: Record<DynamicProtocol, ProtocolMeta> = {
     label: 'RIP',
     accent: 'var(--netlab-accent-green)',
     summary:
-      'Hop count only. The diamond looks equal-cost, so RIP prefers the first 2-hop path it learns.',
+      'Hop count only. Both paths across the diamond are 2 hops, so RIP cannot tell them apart and installs both.',
     summaryJa:
-      'ホップ数だけで決めます。ひし形の2経路は同じ数に見えるので、RIP は先に覚えた2ホップの経路を選びます。',
+      'ホップ数だけで決めます。ひし形の2経路はどちらも2ホップなので、RIP には区別がつかず、両方を経路表に入れます。',
   },
   ospf: {
     label: 'OSPF',
@@ -284,7 +285,7 @@ export function buildDynamicRoutingTopology(protocol: DynamicProtocol): NetworkT
   return buildTopology(protocol);
 }
 
-function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
+export function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
   const t = useT();
   const { topology, routeTable } = useNetlabContext();
   const routers = topology.nodes.filter((node) => node.data.role === 'router');
@@ -338,6 +339,7 @@ function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
                 {routes.map((route) => (
                   <div
                     key={`${router.id}-${route.destination}`}
+                    data-testid={`dynamic-route-${router.id}-${route.destination}`}
                     style={{
                       border: '1px solid var(--netlab-bg-surface)',
                       borderRadius: 8,
@@ -351,11 +353,18 @@ function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
                     </div>
                     <div style={{ color: 'var(--netlab-text-primary)', marginTop: 4 }}>
                       {t('next-hop:', '次ホップ:')}{' '}
-                      <span style={{ color: 'var(--netlab-accent-yellow)' }}>{route.nextHop}</span>
+                      <span style={{ color: 'var(--netlab-accent-yellow)' }}>
+                        {routeNextHops(route).join(', ')}
+                      </span>
+                      {routeNextHops(route).length > 1 && t(' (equal cost)', '（等コスト）')}
                     </div>
                     <div style={{ color: 'var(--netlab-text-secondary)', marginTop: 4 }}>
-                      {t('metric', 'メトリック')} {route.metric} • {route.protocol}/
-                      {route.adminDistance}
+                      {/* BGP has no metric here: the number it ranks on is the
+                          length of the AS path, and MED is not modelled. */}
+                      {route.protocol === 'bgp'
+                        ? t('AS path length', 'AS パス長')
+                        : t('metric', 'メトリック')}{' '}
+                      {route.metric} • {route.protocol}/{route.adminDistance}
                     </div>
                   </div>
                 ))}
@@ -393,6 +402,7 @@ export default function DynamicRoutingDemo() {
               <button
                 key={option}
                 type="button"
+                data-testid={`dynamic-protocol-${option}`}
                 aria-pressed={active}
                 onClick={() => setProtocol(option)}
                 style={{

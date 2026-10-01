@@ -256,8 +256,8 @@ export const EXAM_LEVEL_2: ExamLevel = {
       ],
       answer: 2,
       explanation: {
-        en: 'RIP’s only measure is hop count, so it cannot see the cost 3 and just keeps the first 2-hop path it learned; OSPF’s SPF adds interface costs and prefers the cheaper R2 side. For C2’s network the lesson’s RIP table shows metric 2 (two routers away) and its OSPF table shows metric 3 (R1→R2, R2→R4 and R4’s interface on C2’s LAN, cost 1 each).',
-        ja: 'RIP が測るのはホップ数だけなのでコスト 3 は見えず、先に覚えた 2 ホップの経路を使います。OSPF の SPF はインタフェースのコストを足し、安い R2 側を選びます。C2 のネットワークについて、レッスンの RIP の経路表はメトリック 2（ルータ 2 台先）、OSPF の経路表はメトリック 3（R1→R2、R2→R4、C2 の LAN 上の R4 のインタフェースが各 1）を示します。',
+        en: 'RIP’s only measure is hop count, so it cannot see the cost 3: the two 2-hop paths tie, and the lesson’s RIP table lists both next hops; OSPF’s SPF adds interface costs and prefers the cheaper R2 side. For C2’s network the lesson’s RIP table shows metric 2 (two routers away) and its OSPF table shows metric 3 (R1→R2, R2→R4 and R4’s interface on C2’s LAN, cost 1 each).',
+        ja: 'RIP が測るのはホップ数だけなのでコスト 3 は見えません。2 ホップの経路どうしが同点になり、レッスンの RIP の経路表には次ホップが 2 つ並びます。OSPF の SPF はインタフェースのコストを足し、安い R2 側を選びます。C2 のネットワークについて、レッスンの RIP の経路表はメトリック 2（ルータ 2 台先）、OSPF の経路表はメトリック 3（R1→R2、R2→R4、C2 の LAN 上の R4 のインタフェースが各 1）を示します。',
       },
       taughtBy: 'dynamic',
     },

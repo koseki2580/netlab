@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { PacketHop, PacketTrace } from '../../src/types/simulation';
-import { probePath } from './OspfConvergenceDemo';
+import { buildOspfConvergenceTopology } from '../../src/scenarios/ospf-convergence';
+import { ospfLinkCosts, probePath } from './OspfConvergenceDemo';
 
 function hop(step: number, nodeLabel: string, event: PacketHop['event']): PacketHop {
   return {
@@ -42,5 +43,23 @@ describe('the OSPF lesson names the route a probe took', () => {
     expect(
       probePath(trace([hop(0, 'C1', 'create'), hop(1, 'R1', 'drop'), hop(2, 'R2', 'forward')])),
     ).toBe('C1 → R1');
+  });
+});
+
+// TC-253: the lesson lists each inter-router link's OSPF cost, per direction.
+describe('the OSPF lesson lists its link costs', () => {
+  it('reads each end of every inter-router link, and leaves host links out', () => {
+    expect(ospfLinkCosts(buildOspfConvergenceTopology(false))).toEqual([
+      { id: 'e-r1-r2', from: 'R1', to: 'R2', forward: 1, reverse: 1, down: false },
+      { id: 'e-r1-r3', from: 'R1', to: 'R3', forward: 3, reverse: 1, down: false },
+      { id: 'e-r2-r4', from: 'R2', to: 'R4', forward: 1, reverse: 1, down: false },
+      { id: 'e-r3-r4', from: 'R3', to: 'R4', forward: 1, reverse: 1, down: false },
+    ]);
+  });
+
+  it('marks the failed link down', () => {
+    const failed = ospfLinkCosts(buildOspfConvergenceTopology(true));
+    expect(failed.find((link) => link.id === 'e-r2-r4')?.down).toBe(true);
+    expect(failed.filter((link) => link.down)).toHaveLength(1);
   });
 });
