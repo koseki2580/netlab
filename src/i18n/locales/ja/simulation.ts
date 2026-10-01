@@ -340,7 +340,8 @@ export const simulation: Catalog = {
   'simulation.tcp.marker': 'ステップ {{step}}: {{event}}',
   'simulation.tcp.event.phaseChange': 'フェーズが「{{phase}}」に変わる',
   'simulation.tcp.event.fastRetransmit': '重複 ACK が 3 つ届き、{{seq}} を高速再送',
-  'simulation.tcp.event.rtoFire': '再送タイムアウト (RTO) が発生し、{{seq}} を再送',
+  'simulation.tcp.event.rtoFire':
+    '再送タイムアウト (RTO) が発生し、ACK されていない最も古いセグメント {{seq}} を再送',
   'simulation.flow.aria': 'フローの収集',
   'simulation.flow.device': '機器',
   'simulation.flow.deviceFilter': '機器でフローを絞り込む',

@@ -1,7 +1,8 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
-import TcpCongestionDemo, { runCongestionScenario } from './TcpCongestionDemo';
+import { TcpCongestionPanel } from '../../src/components/simulation/TcpCongestionPanel';
+import TcpCongestionDemo, { runCongestionScenario, runCongestionTrace } from './TcpCongestionDemo';
 
 describe('TcpCongestionDemo', () => {
   it('opens waiting to be run, rather than with the trace already drawn', () => {
@@ -58,5 +59,37 @@ describe('TcpCongestionDemo', () => {
         ).toBeLessThanOrEqual(cwnd);
       }
     }
+  });
+
+  // TC-255 — step 11 sent one 2000-byte "segment" on a connection whose MSS
+  // is 1000 bytes. A segment carries at most one MSS.
+  it('never sends a segment larger than the 1000-byte MSS', () => {
+    const sent = runCongestionScenario().filter((event) => event.type === 'segment-sent');
+    for (const event of sent) {
+      expect(event.bytes, `segment ${event.seq} at step ${event.stepIndex}`).toBeLessThanOrEqual(
+        1000,
+      );
+    }
+    expect(sent.filter((event) => event.stepIndex === 11)).toEqual([
+      { type: 'segment-sent', seq: 9001, bytes: 1000, stepIndex: 11 },
+      { type: 'segment-sent', seq: 10001, bytes: 1000, stepIndex: 11 },
+    ]);
+  });
+
+  // TC-256 — the readout said "in flight 0 B" when the timer fired, although
+  // the 2000 bytes sent at step 11 were still unacknowledged. A new trace
+  // opens on its last step, the timeout.
+  it('still counts the unacknowledged bytes as in flight when the RTO fires', () => {
+    const run = runCongestionTrace();
+    const text = renderToStaticMarkup(
+      <TcpCongestionPanel events={run.events} ssthreshByStep={run.ssthreshByStep} />,
+    ).replace(/<[^>]+>/g, '');
+
+    expect(text).toContain('Step 12 of 12RTOcwnd 1000 Bssthresh 2000 Bin flight 2000 B');
+    expect(text).toContain(
+      'Step 11 · Congestion Avoidance · cwnd 2000 B · ssthresh 2000 B · in flight 2000 B',
+    );
+    // RFC 5681: what is resent is the oldest segment not yet acknowledged.
+    expect(text).toContain('oldest unacknowledged segment, 9001');
   });
 });

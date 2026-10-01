@@ -343,7 +343,8 @@ export const simulation: Catalog = {
   'simulation.tcp.marker': 'Step {{step}}: {{event}}',
   'simulation.tcp.event.phaseChange': 'phase changes to {{phase}}',
   'simulation.tcp.event.fastRetransmit': 'Fast retransmit of {{seq}} after three duplicate ACKs',
-  'simulation.tcp.event.rtoFire': 'Retransmission timeout (RTO) fires; {{seq}} is resent',
+  'simulation.tcp.event.rtoFire':
+    'Retransmission timeout (RTO) fires; the oldest unacknowledged segment, {{seq}}, is resent',
   'simulation.flow.aria': 'Flow collector',
   'simulation.flow.device': 'Device',
   'simulation.flow.deviceFilter': 'Flow device filter',

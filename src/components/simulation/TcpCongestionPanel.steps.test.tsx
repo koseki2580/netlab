@@ -33,7 +33,8 @@ const TRACE: readonly TcpCongestionEvent[] = [
   { type: 'ack-received', ackNo: 7001, rttMs: 120, stepIndex: 10 },
   { type: 'phase-change', from: 'fast-recovery', to: 'congestion-avoidance', stepIndex: 10 },
   { type: 'cwnd-update', prev: 5000, next: 2000, reason: 'fast-recovery-deflate', stepIndex: 10 },
-  { type: 'segment-sent', seq: 9001, bytes: 2000, stepIndex: 11 },
+  { type: 'segment-sent', seq: 9001, bytes: 1000, stepIndex: 11 },
+  { type: 'segment-sent', seq: 10001, bytes: 1000, stepIndex: 11 },
   { type: 'phase-change', from: 'congestion-avoidance', to: 'rto', stepIndex: 12 },
   { type: 'cwnd-update', prev: 2000, next: 1000, reason: 'rto-reset', stepIndex: 12 },
   { type: 'rto-fire', seq: 9001, stepIndex: 12 },
@@ -153,6 +154,9 @@ describe('TcpCongestionPanel on the lesson trace', () => {
 
     expect(readout()).toContain('RTO');
     expect(readout()).toContain('1000 B');
+    // TC-256 — the timer firing acknowledges nothing: both step-11 segments
+    // are still out.
+    expect(readout()).toContain('in flight 2000 B');
 
     selectStep(0);
     expect(readout()).toContain('Step 0');

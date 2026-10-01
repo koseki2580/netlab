@@ -37,7 +37,7 @@ export function runCongestionTrace(): CongestionRun {
   const ssthreshByStep: TcpSsthreshSample[] = [{ stepIndex: 0, ssthresh: control.state.ssthresh }];
   const recordSsthresh = (stepIndex: number) =>
     ssthreshByStep.push({ stepIndex, ssthresh: control.state.ssthresh });
-  const loss = new DeterministicLossInjector(new Map([[CONN_ID, [3001, 9001]]]), {
+  const loss = new DeterministicLossInjector(new Map([[CONN_ID, [3001, 9001, 10001]]]), {
     oneShot: true,
   });
 
@@ -57,8 +57,13 @@ export function runCongestionTrace(): CongestionRun {
   }
 
   control.onAckReceived(7001, 120, 10);
-  control.onSegmentSent(9001, MSS * 2, 11);
-  if (loss.shouldDropSegment(CONN_ID, 9001)) {
+  // cwnd is 2000, so two segments go out: one segment never carries more than
+  // the MSS. Both are lost, so no ACK — not even a duplicate — comes back.
+  const tail = [9001, 10001];
+  for (const seq of tail) {
+    control.onSegmentSent(seq, MSS, 11);
+  }
+  if (tail.every((seq) => loss.shouldDropSegment(CONN_ID, seq))) {
     control.onRto(9001, 12);
     recordSsthresh(12);
   }
@@ -238,8 +243,8 @@ function TcpCongestionDemoInner() {
           </p>
           <p style={{ margin: 0 }}>
             {t(
-              'The later drop at sequence 9001 has no recovery ACKs, so the sender falls back to RTO and resets the window.',
-              '後で起きるシーケンス番号 9001 の破棄では回復のための ACK が返らないため、送信側は RTO による再送に頼り、ウィンドウをリセットします。',
+              'The later drops at sequences 9001 and 10001 have no recovery ACKs, so the sender falls back to RTO and resets the window. Both segments are still unacknowledged, so 2000 bytes stay in flight; the sender resends the oldest of them, 9001.',
+              '後で起きるシーケンス番号 9001 と 10001 の破棄では回復のための ACK が返らないため、送信側は RTO による再送に頼り、ウィンドウをリセットします。2 つのセグメントはどちらもまだ ACK されていないので、送信中は 2000 バイトのままです。送信側はそのうち最も古い 9001 を再送します。',
             )}
           </p>
         </section>

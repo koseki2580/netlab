@@ -104,8 +104,8 @@ function buildSamples(
     if (event.type === 'ack-received') {
       outstanding = outstanding.filter((segment) => segment.seq + segment.bytes > event.ackNo);
     }
-    // The timer fired: nothing sent before it is still counted as out.
-    if (event.type === 'rto-fire') outstanding = [];
+    // An `rto-fire` acknowledges nothing: what was out before the timer fired
+    // is still unacknowledged, so it stays counted as in flight.
 
     if (ordered[index + 1]?.stepIndex !== event.stepIndex) samples.push(snapshot(event.stepIndex));
   }
