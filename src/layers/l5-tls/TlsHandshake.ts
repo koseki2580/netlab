@@ -4,8 +4,9 @@ import { appendTranscriptHash } from './TlsKeySchedule';
 
 export type TlsEvent =
   | { readonly type: 'start'; readonly bytes?: Uint8Array }
+  | { readonly type: 'recvServerHello'; readonly bytes?: Uint8Array }
   | {
-      readonly type: 'recvServerHello';
+      readonly type: 'recvEncryptedExtensions';
       readonly selectedAlpn?: string;
       readonly bytes?: Uint8Array;
     }
@@ -48,13 +49,15 @@ export function transitionTls(ctx: TlsConnectionContext, event: TlsEvent): TlsCo
       return { ...ctx, state: 'wait_sh', transcriptHash: append(ctx, event.bytes) };
     case 'wait_sh':
       if (event.type !== 'recvServerHello') return closeUnexpected(ctx);
-      return {
-        ...ctx,
-        state: 'wait_ee_etc',
-        ...(event.selectedAlpn !== undefined ? { negotiatedAlpn: event.selectedAlpn } : {}),
-        transcriptHash: append(ctx, event.bytes),
-      };
+      return { ...ctx, state: 'wait_ee_etc', transcriptHash: append(ctx, event.bytes) };
     case 'wait_ee_etc':
+      if (event.type === 'recvEncryptedExtensions') {
+        return {
+          ...ctx,
+          ...(event.selectedAlpn !== undefined ? { negotiatedAlpn: event.selectedAlpn } : {}),
+          transcriptHash: append(ctx, event.bytes),
+        };
+      }
       if (event.type === 'recvCertificate' || event.type === 'recvCertificateVerify') {
         return { ...ctx, transcriptHash: append(ctx, event.bytes) };
       }

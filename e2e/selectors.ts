@@ -200,6 +200,8 @@ export const SEL = {
     h3Stream: (id: number) => `h3-stream-${id}`,
     /** The negotiated protocol, or the alert when the negotiation failed. */
     tlsAlpn: 'tls-alpn',
+    /** The handshake messages in order, each with what it carries. */
+    tlsHandshakeMessages: 'tls-handshake-messages',
     tcpCongestionReset: 'tcp-congestion-reset',
     tcpCongestionRun: 'tcp-congestion-run',
     tcpCongestionChart: 'tcp-congestion-chart',

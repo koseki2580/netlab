@@ -17,6 +17,7 @@ describe('TlsOrchestrator', () => {
     expect(result.annotations.map((annotation) => annotation.kind)).toEqual([
       'tls:client-hello',
       'tls:server-hello',
+      'tls:encrypted-extensions',
       'tls:certificate',
       'tls:certificate-verify',
       'tls:finished',
@@ -38,9 +39,36 @@ describe('TlsOrchestrator', () => {
     });
 
     expect(result.context.state).toBe('closed');
+    // TC-243: the alert answers the ClientHello — nothing else is sent.
+    expect(result.annotations.map((annotation) => annotation.kind)).toEqual([
+      'tls:client-hello',
+      'tls:alert',
+    ]);
     expect(result.annotations[result.annotations.length - 1]).toMatchObject({
       kind: 'tls:alert',
       description: 'no_application_protocol',
     });
+  });
+
+  it('carries the ALPN choice in EncryptedExtensions, not in the ServerHello (TC-243)', async () => {
+    const result = await new TlsOrchestrator().runHandshake({
+      clientNodeId: 'client-1',
+      serverNodeId: 'server-1',
+      clientIp: '10.0.0.10',
+      serverIp: '203.0.113.10',
+      clientAlpn: ['http/1.1'],
+      server: { enabled: true, alpnProtocols: ['http/1.1'] },
+    });
+
+    expect(result.annotations[0]).toMatchObject({
+      kind: 'tls:client-hello',
+      alpnList: ['http/1.1'],
+    });
+    expect(result.annotations[1]).toEqual({ kind: 'tls:server-hello', keyShareLen: 32 });
+    expect(result.annotations[2]).toEqual({
+      kind: 'tls:encrypted-extensions',
+      selectedAlpn: 'http/1.1',
+    });
+    expect(result.context.negotiatedAlpn).toBe('http/1.1');
   });
 });

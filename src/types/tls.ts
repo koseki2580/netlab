@@ -38,7 +38,6 @@ export interface TlsServerHello {
   readonly cipherSuite: typeof TLS_AES_128_GCM_SHA256;
   readonly keyShare: { readonly group: typeof TLS_GROUP_X25519; readonly pub: Uint8Array };
   readonly supportedVersion: typeof TLS_VERSION_1_3;
-  readonly selectedAlpn?: string;
 }
 
 export type TlsHandshakeState = 'init' | 'wait_sh' | 'wait_ee_etc' | 'connected' | 'closed';
@@ -77,7 +76,9 @@ export type TlsAnnotation =
       readonly keyShareLen: number;
       readonly alpnList: readonly string[];
     }
-  | { readonly kind: 'tls:server-hello'; readonly selectedAlpn?: string }
+  | { readonly kind: 'tls:server-hello'; readonly keyShareLen: number }
+  /** RFC 8446 §4.3.1: the server's ALPN choice travels here, not in the ServerHello. */
+  | { readonly kind: 'tls:encrypted-extensions'; readonly selectedAlpn?: string }
   | { readonly kind: 'tls:certificate'; readonly certBytes: number }
   | { readonly kind: 'tls:certificate-verify'; readonly sigBytes: number }
   | { readonly kind: 'tls:finished'; readonly who: 'client' | 'server' }

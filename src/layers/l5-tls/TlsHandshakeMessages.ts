@@ -114,7 +114,6 @@ export function serializeServerHello(sh: TlsServerHello): Uint8Array {
   const out: number[] = [];
   out.push(...sh.random);
   out.push(...sh.keyShare.pub);
-  pushOpaque(out, encoder.encode(sh.selectedAlpn ?? ''), 1);
   return serializeHandshakeMessage(TLS_HANDSHAKE_TYPES.server_hello, Uint8Array.from(out));
 }
 
@@ -124,14 +123,19 @@ export function parseServerHello(bytes: Uint8Array): TlsServerHello {
     throw new Error('Invalid ServerHello');
   }
   const body = parsed.body;
-  const selectedAlpn = decoder.decode(readOpaque(body, 64, 1).value);
   return {
     random: body.slice(0, 32),
     cipherSuite: TLS_AES_128_GCM_SHA256,
     keyShare: { group: TLS_GROUP_X25519, pub: body.slice(32, 64) },
     supportedVersion: TLS_VERSION_1_3,
-    ...(selectedAlpn ? { selectedAlpn } : {}),
   };
+}
+
+export function serializeEncryptedExtensions(selectedAlpn: string): Uint8Array {
+  return serializeOpaqueHandshake(
+    TLS_HANDSHAKE_TYPES.encrypted_extensions,
+    encoder.encode(selectedAlpn),
+  );
 }
 
 export function serializeOpaqueHandshake(type: TlsHandshakeType, bytes: Uint8Array): Uint8Array {

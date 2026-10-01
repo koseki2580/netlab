@@ -159,7 +159,9 @@ function formatHopAnnotation(hop: PacketHop, t: TranslatorFn): string | null {
     if (hop.tlsTrace.kind === 'tls:client-hello') {
       parts.push(`tls client hello alpn=${hop.tlsTrace.alpnList.join(',')}`);
     } else if (hop.tlsTrace.kind === 'tls:server-hello') {
-      parts.push(`tls server hello alpn=${hop.tlsTrace.selectedAlpn ?? '-'}`);
+      parts.push(`tls server hello key_share=${hop.tlsTrace.keyShareLen}`);
+    } else if (hop.tlsTrace.kind === 'tls:encrypted-extensions') {
+      parts.push(`tls encrypted extensions alpn=${hop.tlsTrace.selectedAlpn ?? '-'}`);
     } else if (hop.tlsTrace.kind === 'tls:certificate') {
       parts.push(`tls certificate ${hop.tlsTrace.certBytes} bytes`);
     } else if (hop.tlsTrace.kind === 'tls:certificate-verify') {

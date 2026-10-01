@@ -318,8 +318,8 @@ const QUESTIONS: readonly ExamQuestion[] = [
     ],
     answer: 2,
     explanation: {
-      en: 'ALPN is chosen in the ServerHello, so when there is no common protocol the server stops right after the ClientHello. The lesson’s forced mismatch showed only tls:client-hello followed by “Alert fatal no_application_protocol” — no ServerHello, certificate or application data.',
-      ja: 'ALPN は ServerHello で決まるので、共通のプロトコルがなければ、サーバは ClientHello の直後に打ち切ります。レッスンで食い違わせると、tls:client-hello のあとに「Alert fatal no_application_protocol」が出ただけで、ServerHello も証明書もアプリケーションデータもありませんでした。',
+      en: 'In TLS 1.3 the server names its ALPN choice in EncryptedExtensions, the message after the ServerHello. With no common protocol it has nothing to choose, so it stops right after reading the ClientHello. The lesson’s forced mismatch showed only tls:client-hello followed by “Alert fatal no_application_protocol” — no ServerHello, certificate or application data.',
+      ja: 'TLS 1.3 では、サーバは選んだ ALPN を ServerHello の次の EncryptedExtensions で伝えます。共通のプロトコルがなければ選べるものがないので、サーバは ClientHello を読んだ直後に打ち切ります。レッスンで食い違わせると、tls:client-hello のあとに「Alert fatal no_application_protocol」が出ただけで、ServerHello も証明書もアプリケーションデータもありませんでした。',
     },
     taughtBy: 'https',
   },

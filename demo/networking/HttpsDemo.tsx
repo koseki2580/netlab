@@ -74,8 +74,8 @@ function HttpsDemoInner() {
           <strong>{t('How TLS starts', 'TLS の始まり方')}</strong>
           <div>
             {t(
-              'The client opens with a ClientHello: the key it offers, and through ALPN the application protocols it can speak (for example h2 or http/1.1). The server answers with its choice and its certificate, proves it owns the key, and only then does encrypted data flow.',
-              'クライアントは ClientHello から始めます。使う鍵の材料と、ALPN（使えるアプリケーションの種類の一覧。例：h2、http/1.1）を伝えます。サーバは選んだものと証明書を返して鍵の持ち主であることを示し、そのあとで暗号化したデータが流れます。',
+              'The client opens with a ClientHello: the key it offers, and through ALPN the application protocols it can speak (for example h2 or http/1.1). The server answers with a ServerHello carrying only its key, the TLS version and the cipher. Everything after that is encrypted: EncryptedExtensions names the ALPN protocol the server chose, then come its certificate and the proof that it owns the key. Only then does application data flow.',
+              'クライアントは ClientHello から始めます。使う鍵の材料と、ALPN（使えるアプリケーションの種類の一覧。例：h2、http/1.1）を伝えます。サーバは ServerHello で答えます。入っているのは鍵の材料、TLS のバージョン、暗号の方式だけです。ここから先は暗号化されます。サーバが選んだ ALPN は EncryptedExtensions で伝えられ、続いて証明書と、鍵の持ち主であることの証明が届きます。アプリケーションのデータが流れるのはそのあとです。',
             )}
           </div>
           <div>

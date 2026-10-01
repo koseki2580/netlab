@@ -12,6 +12,7 @@ import { negotiateAlpn } from './TlsAlpn';
 import { INITIAL_TLS_CONTEXT, transitionTls } from './TlsHandshake';
 import {
   serializeClientHello,
+  serializeEncryptedExtensions,
   serializeOpaqueHandshake,
   serializeServerHello,
   TLS_HANDSHAKE_TYPES,
@@ -139,18 +140,13 @@ export class TlsOrchestrator {
       cipherSuite: TLS_AES_128_GCM_SHA256,
       keyShare: { group: TLS_GROUP_X25519, pub: serverKey.pub },
       supportedVersion: TLS_VERSION_1_3,
-      selectedAlpn: selected.selected,
     } as const;
     const shBytes = serializeServerHello(sh);
     records.push(
       serializeTlsRecord({ contentType: 'handshake', version: 0x0303, payload: shBytes }),
     );
-    annotations.push({ kind: 'tls:server-hello', selectedAlpn: selected.selected });
-    context = transitionTls(context, {
-      type: 'recvServerHello',
-      selectedAlpn: selected.selected,
-      bytes: shBytes,
-    });
+    annotations.push({ kind: 'tls:server-hello', keyShareLen: serverKey.pub.length });
+    context = transitionTls(context, { type: 'recvServerHello', bytes: shBytes });
 
     const { earlySecret } = await deriveEarlySecret(provider, null);
     const dheSecret = await provider.deriveSharedSecret(clientKey.priv, serverKey.pub);
@@ -160,6 +156,18 @@ export class TlsOrchestrator {
       dheSecret,
       context.transcriptHash,
     );
+    // RFC 8446 §4.3.1 / RFC 7301: the ALPN choice is the first encrypted message.
+    const eeMessage = serializeEncryptedExtensions(selected.selected);
+    records.push(
+      serializeTlsRecord({ contentType: 'application_data', version: 0x0303, payload: eeMessage }),
+    );
+    annotations.push({ kind: 'tls:encrypted-extensions', selectedAlpn: selected.selected });
+    context = transitionTls(context, {
+      type: 'recvEncryptedExtensions',
+      selectedAlpn: selected.selected,
+      bytes: eeMessage,
+    });
+
     const certBytes = provider.randomBytes(256, 0x81f3);
     const certMessage = serializeOpaqueHandshake(TLS_HANDSHAKE_TYPES.certificate, certBytes);
     records.push(

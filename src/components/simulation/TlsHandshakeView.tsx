@@ -19,7 +19,9 @@ function annotationLabel(annotation: TlsAnnotation): string {
     case 'tls:client-hello':
       return `ClientHello key_share=${annotation.keyShareLen} alpn=${annotation.alpnList.join(',')}`;
     case 'tls:server-hello':
-      return `ServerHello selected=${annotation.selectedAlpn ?? '-'}`;
+      return `ServerHello key_share=${annotation.keyShareLen} version=TLS 1.3 cipher=TLS_AES_128_GCM_SHA256`;
+    case 'tls:encrypted-extensions':
+      return `EncryptedExtensions selected=${annotation.selectedAlpn ?? '-'}`;
     case 'tls:certificate':
       return `Certificate ${annotation.certBytes} bytes`;
     case 'tls:certificate-verify':
@@ -40,8 +42,8 @@ export function TlsHandshakeView({
 }: TlsHandshakeViewProps) {
   const { t } = useI18n();
   const selectedAlpn = annotations.find(
-    (annotation): annotation is Extract<TlsAnnotation, { kind: 'tls:server-hello' }> =>
-      annotation.kind === 'tls:server-hello',
+    (annotation): annotation is Extract<TlsAnnotation, { kind: 'tls:encrypted-extensions' }> =>
+      annotation.kind === 'tls:encrypted-extensions',
   )?.selectedAlpn;
   const alert = annotations.find(
     (annotation): annotation is Extract<TlsAnnotation, { kind: 'tls:alert' }> =>
@@ -69,7 +71,10 @@ export function TlsHandshakeView({
           {alert ? `ALPN: ${alert.description}` : `ALPN: ${selectedAlpn ?? '-'}`}
         </span>
       </div>
-      <ol style={{ display: 'grid', gap: 6, margin: 0, paddingLeft: 20 }}>
+      <ol
+        data-testid="tls-handshake-messages"
+        style={{ display: 'grid', gap: 6, margin: 0, paddingLeft: 20 }}
+      >
         {annotations.map((annotation, index) => (
           <li key={`${annotation.kind}-${index}`}>
             <code>{annotation.kind}</code> {annotationLabel(annotation)}

@@ -8,7 +8,8 @@ import { INITIAL_TLS_CONTEXT, transitionTls, type TlsEvent } from './TlsHandshak
 
 const events = fc.constantFrom<TlsEvent>(
   { type: 'start', bytes: new Uint8Array([1]) },
-  { type: 'recvServerHello', selectedAlpn: 'http/1.1', bytes: new Uint8Array([2]) },
+  { type: 'recvServerHello', bytes: new Uint8Array([2]) },
+  { type: 'recvEncryptedExtensions', selectedAlpn: 'http/1.1', bytes: new Uint8Array([8]) },
   { type: 'recvCertificate', bytes: new Uint8Array([3]) },
   { type: 'recvCertificateVerify', bytes: new Uint8Array([4]) },
   { type: 'recvFinished', who: 'server', bytes: new Uint8Array([5]) },
