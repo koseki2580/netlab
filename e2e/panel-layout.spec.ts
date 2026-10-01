@@ -193,7 +193,8 @@ for (const size of SIZES) {
       // Step until a router's candidates are on screen, rather than a fixed
       // number of presses that races the simulation under load.
       await expect(async () => {
-        if ((await destination.count()) === 0 && (await step.isEnabled())) await step.click();
+        if ((await destination.count()) === 0 && (await step.isEnabled()))
+          await step.click({ timeout: 1_000 });
         await expect(destination).toBeVisible({ timeout: 1000 });
       }).toPass({ timeout: 20_000 });
       const destinationBox = await box(destination);

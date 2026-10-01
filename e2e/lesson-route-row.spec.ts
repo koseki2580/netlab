@@ -24,7 +24,8 @@ test('stepping onto R-1 marks the 203.0.113.0/24 row and says why', async ({ pag
   // The step button is the transport button whose aria-label is the step label.
   const step = page.locator('button[title="Step Forward"], button[title="1ステップ進む"]').first();
   await expect(async () => {
-    if ((await used.count()) === 0 && (await step.isEnabled())) await step.click();
+    if ((await used.count()) === 0 && (await step.isEnabled()))
+      await step.click({ timeout: 1_000 });
     await expect(used).toHaveCount(1, { timeout: 500 });
   }).toPass({ timeout: 20_000 });
 

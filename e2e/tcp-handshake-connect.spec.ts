@@ -26,7 +26,13 @@ test('the TCP lesson reaches ESTABLISHED on both ends', async ({ page, demoPage 
   // exchange is many steps; press until there is nothing left to show.
   const next = page.getByTestId(SEL.demo.primaryAction);
   for (let press = 0; press < 100 && (await next.isEnabled()); press += 1) {
-    await next.click();
+    // The last press disables the button a render later, so it can still read
+    // as enabled here; a click that finds it disabled means the walk is over.
+    try {
+      await next.click({ timeout: 2_000 });
+    } catch {
+      break;
+    }
   }
   await expect(next, 'the handshake has been played through').toBeDisabled();
 

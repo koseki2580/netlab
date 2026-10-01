@@ -45,7 +45,7 @@ test('stepping the handshake changes each side only when a segment reaches it', 
 
   // Play the rest through; both ends end ESTABLISHED.
   await expect(async () => {
-    if (await next.isEnabled()) await next.click();
+    if (await next.isEnabled()) await next.click({ timeout: 1_000 });
     await expect(next).toBeDisabled({ timeout: 500 });
   }).toPass({ timeout: 20_000 });
   await expect(page.getByTestId(TID.position)).toContainText('TCP ACK');
