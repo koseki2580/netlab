@@ -136,8 +136,8 @@ export const EXAM_LEVEL_4: ExamLevel = {
           ja: '10.0.12.2 経由が 5 つ、10.0.13.2 経由が 3 つ（3・5・8 番目のフロー）。2 回目もまったく同じ並びで、16 行のうち 10 行と 6 行になる',
         },
         {
-          en: 'Five and three on the first press, but a different split on the second, because every packet is hashed afresh',
-          ja: '1 回目は 5 つと 3 つだが、2 回目は別の分かれ方になる。パケットごとにハッシュを計算し直すから',
+          en: 'Five via 10.0.12.2 and three via 10.0.13.2 — the 2nd, 4th and 7th flows; the second press repeats the pattern exactly, 10 and 6 of 16 lines',
+          ja: '10.0.12.2 経由が 5 つ、10.0.13.2 経由が 3 つ（2・4・7 番目のフロー）。2 回目もまったく同じ並びで、16 行のうち 10 行と 6 行になる',
         },
       ],
       answer: 2,
@@ -198,8 +198,8 @@ export const EXAM_LEVEL_4: ExamLevel = {
           ja: 'マスタ: R1。仮想 MAC は 00:00:5e:00:01:01。稼働中のメンバは 1 本、選ばれたメンバは fa0/2',
         },
         {
-          en: 'Master: R1. Virtual MAC 00:00:5e:00:01:0a. 1 active member, selected member fa0/1 — the flow stays on the member it was hashed to',
-          ja: 'マスタ: R1。仮想 MAC は 00:00:5e:00:01:0a。稼働中のメンバは 1 本、選ばれたメンバは fa0/1。通信は、ハッシュで割り当てられたメンバに残るから',
+          en: 'Master: R1. Virtual MAC 00:00:5e:00:01:01. 1 active member, selected member fa0/1 — the flow stays on the member it was hashed to',
+          ja: 'マスタ: R1。仮想 MAC は 00:00:5e:00:01:01。稼働中のメンバは 1 本、選ばれたメンバは fa0/1。通信は、ハッシュで割り当てられたメンバに残るから',
         },
       ],
       answer: 0,
