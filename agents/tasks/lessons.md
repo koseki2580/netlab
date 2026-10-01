@@ -207,3 +207,16 @@ A running record of corrections and feedback received during sessions. Use this 
 **Why**: The size budget is the only check that sees a dependency edge; tests and typecheck pass happily while a 60 kB catalogue rides into a bundle that exists to be small.
 
 **Apply-when**: Adding i18n, theming, or any shared registry to a component that leaf-level or library-entry code imports.
+
+## L015 — Exam answers inherit every simulator quirk they are read from
+
+**What happened**: Level-4 questions were verified by reproducing each answer in the lessons, yet two marked real-OSPF metrics wrong (the simulator left out the stub cost) and one relied on a TCP trace sending past cwnd. Only an expert calibration run, answering from experience first, exposed them.
+
+**Rule**:
+
+- Before trusting a "reproduced in the lesson" answer, check it against the standard (RFC or vendor behaviour); where they differ, fix the simulator, not the question.
+- Brief subagents that write e2e to run `npx eslint` on their specs — `netlab/no-raw-locators-in-e2e` rejects `getByRole({name})` and `getByText`.
+
+**Why**: A question that rewards a quirk teaches the quirk; the pre-commit hook only catches the locator rule at commit time, after the agent is gone.
+
+**Apply-when**: Authoring or calibrating exam questions; delegating e2e authoring.
