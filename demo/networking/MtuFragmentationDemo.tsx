@@ -15,6 +15,36 @@ import { readDemoEmbedParams } from '../embedParams';
 import { useT } from '../localeContext';
 
 const PING_PAYLOAD_BYTES = 1200;
+const ICMP_HEADER_BYTES = 8;
+const IP_HEADER_BYTES = 20;
+
+/**
+ * The sum behind the fragment count: what has to be carried, how much one
+ * fragment holds at this MTU, and how many that makes. `mtu` and `fragments`
+ * come from the trace; when the sum does not reproduce the trace's count —
+ * or nothing was fragmented — there is nothing honest to show, so it is null.
+ */
+export function fragmentWorking(
+  dataBytes: number,
+  mtu: number | undefined,
+  fragments: number,
+  t: (en: string, ja: string) => string,
+): string | null {
+  if (mtu === undefined || fragments === 0) return null;
+  const total = dataBytes + ICMP_HEADER_BYTES;
+  // Fragment offsets count in 8-byte units, so every fragment but the last
+  // carries a multiple of 8 bytes.
+  const perFragment = Math.floor((mtu - IP_HEADER_BYTES) / 8) * 8;
+  if (perFragment <= 0) return null;
+  const full = Math.floor(total / perFragment);
+  const rest = total - full * perFragment;
+  if (full + (rest > 0 ? 1 : 0) !== fragments) return null;
+  const sum = `${total} = ${full} × ${perFragment}${rest > 0 ? ` + ${rest}` : ''}`;
+  return t(
+    `${total} bytes to carry (${dataBytes} data + ${ICMP_HEADER_BYTES} ICMP header); each fragment carries ${perFragment} (MTU ${mtu} − ${IP_HEADER_BYTES} IP header, rounded down to a multiple of 8); ${sum}, so ${fragments} fragments`,
+    `運ぶのは ${total} バイト (データ ${dataBytes} + ICMP ヘッダ ${ICMP_HEADER_BYTES})。断片 1 つが運べるのは ${perFragment} バイト (MTU ${mtu} − IP ヘッダ ${IP_HEADER_BYTES} を 8 の倍数に切り捨て)。${sum} なので、断片は ${fragments} 個`,
+  );
+}
 
 // The slider runs from 300 in 8-byte steps, so it can hold 604 but not the
 // scenario's 600: opening at 600 put the thumb on 604 while the label said 600.
@@ -154,6 +184,14 @@ function FragmentationDemoInner({
   const fragNeededHop =
     activeTrace?.hops.find((hop) => hop.reason === 'fragmentation-needed') ?? null;
   const [dfEnabled, setDfEnabled] = useState(false);
+  // The MTU is the one R1 fragmented to, read off the trace rather than the
+  // slider: the slider can move after the ping was sent.
+  const working = fragmentWorking(
+    PING_PAYLOAD_BYTES,
+    fragmentHops[0]?.nextHopMtu,
+    fragmentHops.length,
+    t,
+  );
 
   const sendPing = async () => {
     const packet = buildPingPacket(topology, dfEnabled);
@@ -308,6 +346,14 @@ function FragmentationDemoInner({
                     )
                   : t('no', 'なし')}
               </div>
+              {working ? (
+                <div
+                  data-testid="mtu-fragment-working"
+                  style={{ color: 'var(--netlab-text-secondary)', lineHeight: 1.6 }}
+                >
+                  {working}
+                </div>
+              ) : null}
             </div>
           </div>
           <div style={CARD_STYLE}>

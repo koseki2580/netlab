@@ -2,7 +2,11 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { TcpCongestionPanel } from '../../src/components/simulation/TcpCongestionPanel';
-import TcpCongestionDemo, { runCongestionScenario, runCongestionTrace } from './TcpCongestionDemo';
+import TcpCongestionDemo, {
+  congestionWorkingText,
+  runCongestionScenario,
+  runCongestionTrace,
+} from './TcpCongestionDemo';
 
 describe('TcpCongestionDemo', () => {
   it('opens waiting to be run, rather than with the trace already drawn', () => {
@@ -91,5 +95,49 @@ describe('TcpCongestionDemo', () => {
     );
     // RFC 5681: what is resent is the oldest segment not yet acknowledged.
     expect(text).toContain('oldest unacknowledged segment, 9001');
+  });
+
+  // TC-280, TC-281, TC-282 — each loss event's new threshold is worked out on
+  // the page with the trace's own numbers. The engine halves the larger of the
+  // bytes in flight and cwnd, so the working names both.
+  describe('the working behind each change of threshold', () => {
+    const en = (english: string) => english;
+    const ja = (_english: string, japanese: string) => japanese;
+    const at = (step: number) => {
+      const working = runCongestionTrace().working.find((entry) => entry.stepIndex === step);
+      if (!working) throw new Error(`no working at step ${step}`);
+      return working;
+    };
+
+    it('has working at steps 9, 10 and 12 only', () => {
+      expect(runCongestionTrace().working.map((entry) => entry.stepIndex)).toEqual([9, 10, 12]);
+    });
+
+    it('works out ssthresh and cwnd at the fast retransmit, step 9', () => {
+      expect(congestionWorkingText(at(9), en)).toBe(
+        'ssthresh = max(max(in flight, cwnd) ÷ 2, 2 × MSS) = max(max(4000, 4000) ÷ 2, 2 × 1000) = max(2000, 2000) = 2000 B. cwnd = ssthresh + 3 × MSS = 2000 + 3 × 1000 = 5000 B.',
+      );
+      expect(congestionWorkingText(at(9), ja)).toBe(
+        'ssthresh = max(max(送信中, cwnd) ÷ 2, 2 × MSS) = max(max(4000, 4000) ÷ 2, 2 × 1000) = max(2000, 2000) = 2000 B。cwnd = ssthresh + 3 × MSS = 2000 + 3 × 1000 = 5000 B。',
+      );
+    });
+
+    it('says cwnd deflates to ssthresh at the new ACK, step 10', () => {
+      expect(congestionWorkingText(at(10), en)).toBe(
+        'The new ACK ends fast recovery: cwnd deflates to ssthresh = 2000 B.',
+      );
+      expect(congestionWorkingText(at(10), ja)).toBe(
+        '新しい ACK で高速リカバリが終わり、cwnd は ssthresh と同じ 2000 B に戻ります。',
+      );
+    });
+
+    it('works out the unchanged ssthresh and the one-MSS cwnd at the RTO, step 12', () => {
+      expect(congestionWorkingText(at(12), en)).toBe(
+        'ssthresh = max(max(in flight, cwnd) ÷ 2, 2 × MSS) = max(max(2000, 2000) ÷ 2, 2 × 1000) = max(1000, 2000) = 2000 B, so it does not change. cwnd = 1 × MSS = 1000 B.',
+      );
+      expect(congestionWorkingText(at(12), ja)).toBe(
+        'ssthresh = max(max(送信中, cwnd) ÷ 2, 2 × MSS) = max(max(2000, 2000) ÷ 2, 2 × 1000) = max(1000, 2000) = 2000 B で、変わりません。cwnd = 1 × MSS = 1000 B。',
+      );
+    });
   });
 });

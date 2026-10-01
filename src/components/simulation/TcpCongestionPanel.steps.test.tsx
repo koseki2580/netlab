@@ -189,4 +189,29 @@ describe('TcpCongestionPanel on the lesson trace', () => {
       expect(visible, raw).not.toContain(raw);
     }
   });
+
+  // TC-280, TC-281 — a step with working shows it under that step's readout,
+  // and a step without one shows none.
+  it('shows the working of the step chosen, and none on a step that has none', () => {
+    const notes = [
+      { stepIndex: 9, text: 'ssthresh = 2000 B' },
+      { stepIndex: 10, text: 'cwnd = ssthresh' },
+    ];
+    act(() => {
+      root.render(
+        <TcpCongestionPanel events={TRACE} ssthreshByStep={SSTHRESH} notesByStep={notes} />,
+      );
+    });
+    const working = () =>
+      container.querySelector('[data-testid="tcp-congestion-working"]')?.textContent ?? null;
+
+    expect(working()).toBeNull();
+    selectStep(9);
+    expect(working()).toBe('ssthresh = 2000 B');
+    expect(readout()).toContain('ssthresh = 2000 B');
+    selectStep(10);
+    expect(working()).toBe('cwnd = ssthresh');
+    selectStep(11);
+    expect(working()).toBeNull();
+  });
 });

@@ -8,6 +8,12 @@ export interface TcpSsthreshSample {
   readonly ssthresh: number;
 }
 
+/** How the sender arrived at its numbers at `stepIndex`, in the caller's words. */
+export interface TcpStepNote {
+  readonly stepIndex: number;
+  readonly text: string;
+}
+
 interface TcpCongestionPanelProps {
   readonly events: readonly TcpCongestionEvent[];
   /**
@@ -15,6 +21,8 @@ interface TcpCongestionPanelProps {
    * chart only draws and reads it out when the caller supplies it.
    */
   readonly ssthreshByStep?: readonly TcpSsthreshSample[];
+  /** Shown under the readout while its step is the one selected. */
+  readonly notesByStep?: readonly TcpStepNote[];
 }
 
 /** The sender's state once every event of one step has happened. */
@@ -138,6 +146,7 @@ function eventLabel(event: TcpCongestionEvent, t: ReturnType<typeof useI18n>['t'
 export const TcpCongestionPanel = memo(function TcpCongestionPanel({
   events,
   ssthreshByStep = NO_SSTHRESH,
+  notesByStep,
 }: TcpCongestionPanelProps) {
   const { t } = useI18n();
   const samples = useMemo(() => buildSamples(events, ssthreshByStep), [events, ssthreshByStep]);
@@ -150,6 +159,7 @@ export const TcpCongestionPanel = memo(function TcpCongestionPanel({
   const selectedIndex =
     selection && selection.events === events ? Math.min(selection.index, lastIndex) : lastIndex;
   const selected = samples[selectedIndex] ?? null;
+  const selectedNote = notesByStep?.find((note) => note.stepIndex === selected?.stepIndex);
   const markerEvents = events.filter(
     (event) =>
       event.type === 'phase-change' ||
@@ -264,6 +274,14 @@ export const TcpCongestionPanel = memo(function TcpCongestionPanel({
               {t('simulation.tcp.inflight')}{' '}
               <strong style={{ color: 'var(--netlab-text-primary)' }}>{selected.inflight} B</strong>
             </span>
+            {selectedNote ? (
+              <span
+                data-testid="tcp-congestion-working"
+                style={{ flexBasis: '100%', lineHeight: 1.6, overflowWrap: 'anywhere' }}
+              >
+                {selectedNote.text}
+              </span>
+            ) : null}
           </div>
 
           <input
