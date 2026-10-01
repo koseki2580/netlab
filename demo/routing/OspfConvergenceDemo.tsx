@@ -39,8 +39,7 @@ import { readDemoEmbedParams } from '../embedParams';
 import { useShellChrome } from '../ShellChromeContext';
 import { useSandboxOrNull } from '../../src/sandbox/useSandbox';
 import { useGalleryLocale, useT } from '../localeContext';
-import { ospfInterfaceCost } from '../../src/routing/ospf/OspfProtocol';
-import type { NetworkTopology } from '../../src/types/topology';
+import { LinkCostsPanel } from './OspfLinkCosts';
 import { routeNextHops } from './routeDisplay';
 
 /** The inter-router link this lesson fails; the assessment names the same id. */
@@ -93,119 +92,6 @@ export function probePath(trace: PacketTrace): string {
   return labels.join(' → ');
 }
 
-/** One inter-router link's OSPF cost, as each end charges it. */
-export interface OspfLinkCost {
-  readonly id: string;
-  readonly from: string;
-  readonly to: string;
-  /** The cost `from` charges to send toward `to`. */
-  readonly forward: number;
-  /** The cost `to` charges to send toward `from`. */
-  readonly reverse: number;
-  readonly down: boolean;
-}
-
-/**
- * The OSPF cost of every link between two OSPF routers. A cost belongs to the
- * interface a packet leaves by, so one link has two, and they may differ.
- */
-export function ospfLinkCosts(topology: NetworkTopology): OspfLinkCost[] {
-  const costs: OspfLinkCost[] = [];
-  for (const edge of topology.edges) {
-    const source = topology.nodes.find((node) => node.id === edge.source);
-    const target = topology.nodes.find((node) => node.id === edge.target);
-    if (!source?.data.ospfConfig || !target?.data.ospfConfig) continue;
-    const sourceIface = source.data.interfaces?.find((iface) => iface.id === edge.sourceHandle);
-    const targetIface = target.data.interfaces?.find((iface) => iface.id === edge.targetHandle);
-    if (!sourceIface || !targetIface) continue;
-    costs.push({
-      id: edge.id,
-      from: source.data.label,
-      to: target.data.label,
-      forward: ospfInterfaceCost(source, sourceIface),
-      reverse: ospfInterfaceCost(target, targetIface),
-      down: edge.data?.state === 'down',
-    });
-  }
-  return costs;
-}
-
-/**
- * Each link's cost, so the metrics in the tables can be added up on this page.
- * The cost 3 on R1's interface toward R3 used to be stated only in another lesson.
- */
-function LinkCostsPanel() {
-  const t = useT();
-  const { topology } = useNetlabContext();
-  const links = ospfLinkCosts(topology);
-
-  return (
-    <div
-      data-testid="ospf-link-costs"
-      style={{
-        background: 'var(--netlab-bg-primary)',
-        border: '1px solid var(--netlab-bg-surface)',
-        borderRadius: 10,
-        padding: 12,
-        color: 'var(--netlab-text-primary)',
-        fontFamily: 'monospace',
-        fontSize: 11,
-      }}
-    >
-      <div
-        style={{
-          color: 'var(--netlab-text-secondary)',
-          fontWeight: 700,
-          letterSpacing: 1,
-          marginBottom: 8,
-        }}
-      >
-        {t('LINK COSTS', 'リンクのコスト')}
-      </div>
-      <ul
-        style={{
-          listStyle: 'none',
-          margin: 0,
-          padding: 0,
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gridAutoFlow: 'dense',
-          gap: '2px 12px',
-        }}
-      >
-        {links.map((link) => (
-          <li
-            key={link.id}
-            data-testid={`ospf-link-cost-${link.id}`}
-            style={{
-              // A link whose two ends differ needs the whole row to say both.
-              ...(link.forward !== link.reverse ? { gridColumn: '1 / -1' } : {}),
-              ...(link.down ? { color: 'var(--netlab-text-muted)' } : {}),
-            }}
-          >
-            {link.forward === link.reverse
-              ? t(
-                  `${link.from} ↔ ${link.to}: cost ${link.forward}`,
-                  `${link.from} ↔ ${link.to}: コスト ${link.forward}`,
-                )
-              : t(
-                  `${link.from} → ${link.to}: cost ${link.forward} · ${link.to} → ${link.from}: cost ${link.reverse}`,
-                  `${link.from} → ${link.to}: コスト ${link.forward} · ${link.to} → ${link.from}: コスト ${link.reverse}`,
-                )}
-            {link.down && t(' (link down)', '（リンク断）')}
-          </li>
-        ))}
-      </ul>
-      <div style={{ marginTop: 6, color: 'var(--netlab-text-secondary)', lineHeight: 1.4 }}>
-        {t(
-          'A metric adds the cost of each interface the packet leaves by, plus the cost of the last router’s interface onto the destination network.',
-          'メトリックは、パケットが出ていく各インタフェースのコストに、最後のルータが宛先ネットワークへつながるインタフェースのコストを足した値です。',
-        )}
-      </div>
-    </div>
-  );
-}
-
 function RouteComparison({ runs }: { runs: readonly ProbeRun[] }) {
   const t = useT();
   const current = runs[runs.length - 1] ?? null;
@@ -234,13 +120,23 @@ function RouteComparison({ runs }: { runs: readonly ProbeRun[] }) {
  * Every router's table, one at a time, in the side rail. Floating over the
  * canvas they covered R4 and C2, and more than half of their own rows.
  */
-function RouterTablesPanel() {
+export function RouterTablesPanel() {
   const t = useT();
   const { topology, routeTable } = useNetlabContext();
   const routers = topology.nodes.filter((node) => node.data.role === 'router');
   const [selected, setSelected] = useState<string | null>(null);
   const activeId = selected && routers.some((r) => r.id === selected) ? selected : routers[0]?.id;
   const routes = activeId ? (routeTable.get(activeId) ?? []) : [];
+  const tabId = (routerId: string) => `ospf-route-tab-${routerId}`;
+  // Arrow keys move between tabs, as in any tablist; Tab leaves it.
+  const selectByKey = (event: React.KeyboardEvent, index: number) => {
+    const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+    const next = routers[(index + step + routers.length) % routers.length];
+    if (step === 0 || !next) return;
+    event.preventDefault();
+    setSelected(next.id);
+    document.getElementById(tabId(next.id))?.focus();
+  };
 
   return (
     <div
@@ -265,17 +161,28 @@ function RouterTablesPanel() {
       >
         {t('ROUTE TABLES', '経路表')}
       </div>
-      <div role="tablist" style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
-        {routers.map((router) => {
+      <div
+        role="tablist"
+        aria-label={t('Route tables', '経路表')}
+        style={{ display: 'flex', gap: 4, marginBottom: 8 }}
+      >
+        {routers.map((router, index) => {
           const active = router.id === activeId;
           return (
             <button
               key={router.id}
               type="button"
               role="tab"
+              id={tabId(router.id)}
+              // The topology nodes are buttons named "R1" to "R4" too; the
+              // name says which of the two this one is.
+              aria-label={t(`${router.data.label} route table`, `${router.data.label} の経路表`)}
               aria-selected={active}
+              aria-controls="ospf-route-tabpanel"
+              tabIndex={active ? 0 : -1}
               data-testid={`ospf-route-tab-${router.id}`}
               onClick={() => setSelected(router.id)}
+              onKeyDown={(event) => selectByKey(event, index)}
               style={{
                 padding: '3px 10px',
                 borderRadius: 6,
@@ -292,38 +199,43 @@ function RouterTablesPanel() {
           );
         })}
       </div>
-      <table
+      <div
         role="tabpanel"
-        data-testid="ospf-route-table-rows"
-        style={{ width: '100%', borderCollapse: 'collapse' }}
+        id="ospf-route-tabpanel"
+        {...(activeId ? { 'aria-labelledby': tabId(activeId) } : {})}
       >
-        <thead>
-          <tr style={{ color: 'var(--netlab-text-muted)', textAlign: 'left' }}>
-            <th style={{ padding: '2px 4px', fontWeight: 600 }}>{t('Destination', '宛先')}</th>
-            <th style={{ padding: '2px 4px', fontWeight: 600 }}>{t('Next hop', '次ホップ')}</th>
-            <th style={{ padding: '2px 4px', fontWeight: 600, textAlign: 'right' }}>
-              {t('Metric', 'メトリック')}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {routes.map((route) => (
-            <tr
-              key={`${route.destination}-${route.nextHop}`}
-              data-testid={`ospf-route-row-${route.destination}`}
-              style={{ verticalAlign: 'top' }}
-            >
-              <td style={{ padding: '2px 4px' }}>{route.destination}</td>
-              <td style={{ padding: '2px 4px', color: 'var(--netlab-text-secondary)' }}>
-                {routeNextHops(route).map((hop) => (
-                  <div key={hop}>{hop === 'direct' ? t('direct', '直結') : hop}</div>
-                ))}
-              </td>
-              <td style={{ padding: '2px 4px', textAlign: 'right' }}>{route.metric}</td>
+        <table
+          data-testid="ospf-route-table-rows"
+          style={{ width: '100%', borderCollapse: 'collapse' }}
+        >
+          <thead>
+            <tr style={{ color: 'var(--netlab-text-muted)', textAlign: 'left' }}>
+              <th style={{ padding: '2px 4px', fontWeight: 600 }}>{t('Destination', '宛先')}</th>
+              <th style={{ padding: '2px 4px', fontWeight: 600 }}>{t('Next hop', '次ホップ')}</th>
+              <th style={{ padding: '2px 4px', fontWeight: 600, textAlign: 'right' }}>
+                {t('Metric', 'メトリック')}
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {routes.map((route) => (
+              <tr
+                key={`${route.destination}-${route.nextHop}`}
+                data-testid={`ospf-route-row-${route.destination}`}
+                style={{ verticalAlign: 'top' }}
+              >
+                <td style={{ padding: '2px 4px' }}>{route.destination}</td>
+                <td style={{ padding: '2px 4px', color: 'var(--netlab-text-secondary)' }}>
+                  {routeNextHops(route).map((hop) => (
+                    <div key={hop}>{hop === 'direct' ? t('direct', '直結') : hop}</div>
+                  ))}
+                </td>
+                <td style={{ padding: '2px 4px', textAlign: 'right' }}>{route.metric}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       {routes.some((route) => routeNextHops(route).length > 1) && (
         <div
           data-testid="ospf-ecmp-note"

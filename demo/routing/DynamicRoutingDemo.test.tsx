@@ -77,4 +77,62 @@ describe('the Dynamic Routing lesson route tables', () => {
     expect(rowText('bgp', 'en', 'r2', '10.0.13.0/30')).toBeNull();
     expect(rowText('bgp', 'en', 'r2', '10.4.0.0/24')).not.toBeNull();
   });
+
+  // TC-270: the OSPF view lists each link's cost, so metric 3 can be added up.
+  it('TC-270: lists each OSPF link cost, per direction where the ends differ', () => {
+    const cost = (locale: GalleryLocale, edge: string) =>
+      table('ospf', locale).querySelector(`[data-testid="ospf-link-cost-${edge}"]`)?.textContent;
+    expect(cost('en', 'e-r1-r3')).toBe('R1 → R3: cost 3 · R3 → R1: cost 1');
+    expect(cost('en', 'e-r1-r2')).toBe('R1 ↔ R2: cost 1');
+    expect(cost('en', 'e-r2-r4')).toBe('R2 ↔ R4: cost 1');
+    expect(cost('en', 'e-r3-r4')).toBe('R3 ↔ R4: cost 1');
+    expect(cost('ja', 'e-r1-r3')).toBe('R1 → R3: コスト 3 · R3 → R1: コスト 1');
+  });
+
+  it('TC-270: shows no OSPF cost list in the RIP and BGP views', () => {
+    for (const protocol of ['rip', 'bgp'] as const) {
+      expect(table(protocol, 'en').querySelector('[data-testid="ospf-link-costs"]')).toBeNull();
+    }
+  });
+
+  // TC-271: the BGP view says what is advertised, read from the configuration.
+  it('TC-271: names the networks each router originates in BGP, and that links are not', () => {
+    const note = (locale: GalleryLocale) =>
+      table('bgp', locale).querySelector('[data-testid="dynamic-bgp-originated"]')?.textContent;
+    expect(note('en')).toContain('R1: 10.1.0.0/24 · R2: none · R3: none · R4: 10.4.0.0/24');
+    expect(note('en')).toContain('a link between two other routers does not appear');
+    expect(note('ja')).toContain('R1: 10.1.0.0/24 · R2: なし · R3: なし · R4: 10.4.0.0/24');
+    expect(note('ja')).toContain('ほかの 2 台の間のリンクは経路表に現れません');
+  });
+
+  it('TC-271: the note matches the configuration and the tables it sits above', () => {
+    const routers = buildDynamicRoutingTopology('bgp').nodes.filter((node) => node.data.bgpConfig);
+    const originated = routers.flatMap((node) => node.data.bgpConfig?.networks ?? []);
+    expect(originated).toEqual(['10.1.0.0/24', '10.4.0.0/24']);
+    // No inter-router /30 is originated, and no BGP-learned row is to one.
+    expect(originated.filter((network) => network.endsWith('/30'))).toEqual([]);
+    const rows = [...table('bgp', 'en').querySelectorAll('[data-testid^="dynamic-route-"]')];
+    const learned = rows.filter((row) => row.textContent?.includes('bgp/'));
+    expect(learned.length).toBeGreaterThan(0);
+    for (const row of learned) {
+      expect(originated.some((network) => row.textContent?.startsWith(network))).toBe(true);
+    }
+  });
+
+  it('TC-271: shows no origination note in the RIP and OSPF views', () => {
+    for (const protocol of ['rip', 'ospf'] as const) {
+      expect(
+        table(protocol, 'en').querySelector('[data-testid="dynamic-bgp-originated"]'),
+      ).toBeNull();
+    }
+  });
+
+  // TC-272: a connected route's next hop is a word, so it is translated.
+  it('TC-272: reads a connected route as 直結 in Japanese, in every protocol view', () => {
+    for (const protocol of ['rip', 'ospf', 'bgp'] as const) {
+      expect(rowText(protocol, 'ja', 'r1', '10.1.0.0/24')).toContain('次ホップ: 直結');
+      expect(table(protocol, 'ja').textContent).not.toContain('direct');
+      expect(rowText(protocol, 'en', 'r1', '10.1.0.0/24')).toContain('next-hop: direct');
+    }
+  });
 });

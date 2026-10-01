@@ -6,6 +6,7 @@ import { NetlabProvider } from '../../src/components/NetlabProvider';
 import type { BgpNeighborConfig, OspfAreaConfig, RouterInterface } from '../../src/types/routing';
 import type { NetlabNode, NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
+import { LinkCostsPanel } from './OspfLinkCosts';
 import { routeNextHops } from './routeDisplay';
 
 type DynamicProtocol = 'rip' | 'ospf' | 'bgp';
@@ -285,6 +286,38 @@ export function buildDynamicRoutingTopology(protocol: DynamicProtocol): NetworkT
   return buildTopology(protocol);
 }
 
+/**
+ * What BGP advertises here, read from each router's own configuration. A
+ * learner otherwise has to notice by absence that the transit links are missing.
+ */
+function BgpOriginatedNote({ routers }: { routers: NetlabNode[] }) {
+  const t = useT();
+  const originated = routers
+    .filter((router) => router.data.bgpConfig)
+    .map((router) => {
+      const networks = router.data.bgpConfig?.networks ?? [];
+      return `${router.data.label}: ${networks.length > 0 ? networks.join(', ') : t('none', 'なし')}`;
+    })
+    .join(' · ');
+
+  return (
+    <p
+      data-testid="dynamic-bgp-originated"
+      style={{
+        color: 'var(--netlab-text-secondary)',
+        fontSize: 12,
+        lineHeight: 1.5,
+        margin: '0 0 16px',
+      }}
+    >
+      {t(
+        `BGP advertises only the networks each router is configured to originate — ${originated}. The links between routers are not among them, so a link between two other routers does not appear in a router’s table.`,
+        `BGP が広告するのは、各ルータに「自分から広告する」と設定したネットワークだけです — ${originated}。ルータ間のリンクはそこに含まれないので、ほかの 2 台の間のリンクは経路表に現れません。`,
+      )}
+    </p>
+  );
+}
+
 export function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
   const t = useT();
   const { topology, routeTable } = useNetlabContext();
@@ -320,6 +353,12 @@ export function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
       >
         {t(PROTOCOL_META[protocol].summary, PROTOCOL_META[protocol].summaryJa)}
       </p>
+      {protocol === 'ospf' && (
+        <div style={{ marginBottom: 16 }}>
+          <LinkCostsPanel />
+        </div>
+      )}
+      {protocol === 'bgp' && <BgpOriginatedNote routers={routers} />}
       {routers.map((router) => {
         const routes = [...(routeTable.get(router.id) ?? [])].sort((left, right) =>
           left.destination.localeCompare(right.destination),
@@ -354,7 +393,9 @@ export function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
                     <div style={{ color: 'var(--netlab-text-primary)', marginTop: 4 }}>
                       {t('next-hop:', '次ホップ:')}{' '}
                       <span style={{ color: 'var(--netlab-accent-yellow)' }}>
-                        {routeNextHops(route).join(', ')}
+                        {routeNextHops(route)
+                          .map((hop) => (hop === 'direct' ? t('direct', '直結') : hop))
+                          .join(', ')}
                       </span>
                       {routeNextHops(route).length > 1 && t(' (equal cost)', '（等コスト）')}
                     </div>
