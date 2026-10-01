@@ -40,6 +40,12 @@ export class ForwardingPipeline {
   private readonly macResolver: MacResolver;
   private readonly icmpBuilder: IcmpBuilder;
   private readonly forwardingLoop: ForwardingLoop;
+  /**
+   * Each router's NetFlow cache. It outlives a single trace: a flow's packets
+   * and bytes add up send after send, as they do on a real exporter, until the
+   * traces are cleared.
+   */
+  private readonly netflowExporters = new Map<string, NetflowExporter>();
 
   constructor(
     private readonly topology: NetworkTopology,
@@ -132,6 +138,11 @@ export class ForwardingPipeline {
     };
   }
 
+  /** Empty every router's NetFlow cache, as when the traces are cleared. */
+  clearFlowCaches(): void {
+    this.netflowExporters.clear();
+  }
+
   // ── Core precomputation ────────────────────────────────────────────────────
 
   private async precomputeDetailed(
@@ -146,7 +157,9 @@ export class ForwardingPipeline {
     const reassemblers = new Map<string, import('./Reassembler').Reassembler>();
     const linkQueues = new LinkQueueRegistry();
     const flowCollector = new FlowCollector();
-    const netflowExporters = new Map<string, NetflowExporter>();
+    const netflowExporters = options.probe
+      ? new Map<string, NetflowExporter>()
+      : this.netflowExporters;
     const sflowSamplers = new Map<string, SflowSampler>();
     this.forwardingLoop.seedArpCache(arpCache);
     const baseTs = Date.now();
@@ -203,6 +216,7 @@ export class ForwardingPipeline {
     for (const generatedIcmpPacket of generatedIcmpPackets) {
       const generatedResult = await this.precomputeDetailed(generatedIcmpPacket, failureState, {
         suppressGeneratedIcmp: true,
+        ...(options.probe ? { probe: true } : {}),
       });
       result = this.traceRecorder.mergeResults(result, generatedResult, {
         preservePrimaryStatus: true,

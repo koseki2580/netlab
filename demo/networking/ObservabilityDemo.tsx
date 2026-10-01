@@ -1,4 +1,4 @@
-import { useMemo, type CSSProperties } from 'react';
+import { useMemo, useRef, type CSSProperties } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { FlowCollectorPanel } from '../../src/components/observability/FlowCollectorPanel';
@@ -129,8 +129,12 @@ function buildTopology(): NetworkTopology {
 function DemoInner() {
   const t = useT();
   const { sendPacket, state } = useSimulation();
+  // Each send is another packet of the same flow, so it needs its own id: the
+  // timeline follows the newest trace, and the flow record counts them all.
+  const sentCount = useRef(0);
 
   const sendObservedFlow = async () => {
+    sentCount.current += 1;
     await sendPacket(
       buildUdpPacket({
         srcNodeId: 'client-1',
@@ -141,7 +145,7 @@ function DemoInner() {
         dstPort: 53,
         srcMac: '02:00:00:00:00:10',
         dstMac: '02:00:00:00:00:20',
-        packetId: 'observability-udp',
+        packetId: `observability-udp-${sentCount.current}`,
         timestamp: 3_000,
         payload: { layer: 'raw', data: 'dns query' },
       }),

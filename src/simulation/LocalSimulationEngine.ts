@@ -104,7 +104,8 @@ export class LocalSimulationEngine {
     packet: InFlightPacket,
     failureState: FailureState = EMPTY_FAILURE_STATE,
   ): Promise<PacketTrace> {
-    const { trace } = await this.pipeline.precompute(packet, failureState);
+    // A probe: its trace is returned, not committed, so it is not counted as traffic.
+    const { trace } = await this.pipeline.precompute(packet, failureState, { probe: true });
     return trace;
   }
 
@@ -372,6 +373,7 @@ export class LocalSimulationEngine {
     this.transferController?.clear();
     this.transferController = null;
     this.traceCoordinator.dropAllCaches();
+    this.pipeline.clearFlowCaches();
     this.lastPacket = null;
     this.lastFailureState = EMPTY_FAILURE_STATE;
     this.state = { ...INITIAL_STATE };
@@ -382,6 +384,7 @@ export class LocalSimulationEngine {
     this.clearPlay();
     this.traceRecorder.clearSnapshots();
     this.services.resetProcessors();
+    this.pipeline.clearFlowCaches();
     this.lastPacket = null;
     this.lastFailureState = EMPTY_FAILURE_STATE;
     this.state = {
