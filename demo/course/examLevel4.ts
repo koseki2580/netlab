@@ -334,33 +334,33 @@ export const EXAM_LEVEL_4: ExamLevel = {
       taughtBy: 'stp',
     },
     {
-      id: 'qos-tenth-bandwidth',
+      id: 'qos-bandwidth-for-target',
       prompt: {
-        en: 'In the Per-Link QoS lesson, with the bandwidth and delay the lesson starts with, “Send QoS burst” — one 1500-byte IP packet — reports 32 ms to cross the R2 → R3 link. You change only the bandwidth, to one tenth of its starting value, apply it, and send again. What does the lesson report?',
-        ja: 'リンクごとの QoS のレッスンで、帯域と伝搬遅延が最初の値のまま「QoS を試すパケットを送る」（1500 バイトの IP パケット 1 つ）を押すと、R2 → R3 のリンクの通過に 32 ms と表示されます。帯域だけを最初の値の 10 分の 1 に変えて適用し、もう一度送ります。レッスンの表示はどうなりますか？',
+        en: 'In the Per-Link QoS lesson, “Send QoS burst” sends one packet across the R2 → R3 link, and the line under the result splits the crossing time into sending and propagation. You want that packet to take exactly 50 ms to cross. You leave the propagation delay and the packet as the lesson has them, set the loss to 0%, and change only the bandwidth. Which bandwidth makes the lesson report 50 ms?',
+        ja: 'リンクごとの QoS のレッスンで「QoS を試すパケットを送る」を押すと、パケットが 1 つ R2 → R3 のリンクを渡り、結果の下の行に、通過にかかった時間が「送り出し」と「伝搬」に分けて表示されます。このパケットの通過時間を、ちょうど 50 ms にしたいとします。伝搬遅延とパケットはレッスンのままにし、損失率を 0% にして、帯域だけを変えます。表示が 50 ms になる帯域はどれですか？',
       },
       options: [
         {
-          en: '320 ms: a tenth of the bandwidth makes the crossing ten times as long',
-          ja: '320 ms。帯域が 10 分の 1 なら、通過にかかる時間は 10 倍になる',
+          en: '240 000 bps: all 50 ms goes on sending the packet, because this link adds no delay of its own',
+          ja: '240 000 bps。このリンクには遅延がなく、50 ms はすべてパケットの送り出しにかかる',
         },
         {
-          en: '32 ms: a packet alone on the link never waits for bandwidth',
-          ja: '32 ms。リンクにパケットが 1 つだけなら、帯域のせいで待つことはない',
+          en: '300 000 bps: 40 ms to send the packet, plus the link’s 10 ms of delay',
+          ja: '300 000 bps。送り出しに 40 ms、リンクの遅延が 10 ms',
         },
         {
-          en: '212 ms: the 20 ms spent sending becomes 200 ms, and the 12 ms of delay stays',
-          ja: '212 ms。送り出しの 20 ms が 200 ms になり、遅延の 12 ms はそのまま',
+          en: '600 000 bps: 20 ms to send the packet, plus the link’s 30 ms of delay',
+          ja: '600 000 bps。送り出しに 20 ms、リンクの遅延が 30 ms',
         },
         {
-          en: '140 ms: the 12 ms spent sending becomes 120 ms, and the 20 ms of delay stays',
-          ja: '140 ms。送り出しの 12 ms が 120 ms になり、遅延の 20 ms はそのまま',
+          en: '400 000 bps: 30 ms to send the packet, plus the link’s 20 ms of delay',
+          ja: '400 000 bps。送り出しに 30 ms、リンクの遅延が 20 ms',
         },
       ],
       answer: 3,
       explanation: {
-        en: 'The link starts at 1 000 000 bps with 20 ms of propagation delay. Putting 1500 bytes onto it takes 1500 × 8 ÷ 1 000 000 = 12 ms, and the delay adds 20 ms: 32 ms. Only the first part depends on the bandwidth. At 100 000 bps it becomes 120 ms, the delay is still 20 ms, and the lesson reads “Delivered — 140 ms to cross the link.” Even a packet with the link to itself has to be clocked out bit by bit, so 32 ms cannot stay. Real links behave the same way; this lesson counts the IP packet only, and real Ethernet adds its header, preamble and inter-frame gap to the bits sent.',
-        ja: 'リンクの最初の設定は、帯域 1 000 000 bps、伝搬遅延 20 ms です。1500 バイトを送り出すのに 1500 × 8 ÷ 1 000 000 ＝ 12 ms かかり、遅延の 20 ms を足して 32 ms です。帯域で変わるのは前半だけです。100 000 bps では送り出しが 120 ms になり、遅延は 20 ms のままなので、表示は「届きました — リンクの通過に 140 ms かかりました。」です。リンクを 1 つのパケットだけが使っていても、1 ビットずつ送り出す時間は必要なので、32 ms のままにはなりません。実際のリンクも同じです。このレッスンは IP パケットの大きさだけを数えますが、実際の Ethernet ではヘッダ・プリアンブル・フレーム間の隙間も送るビットに加わります。',
+        en: 'Send once before changing anything: the lesson reads “sending 12 ms + propagation 20 ms = 32 ms”, with the bandwidth field at 1 000 000 bps and the delay field at 20 ms. So the packet is 12 ms × 1 000 000 bps = 12 000 bits, a 1500-byte IP packet. The bandwidth changes only the sending part, so sending has to take 50 − 20 = 30 ms: 12 000 bits ÷ 0.030 s = 400 000 bps, and the lesson then reads “sending 30 ms + propagation 20 ms = 50 ms”. The other three are each right for a link with a different delay, which is why the question cannot be settled without reading this one: here 240 000 bps gives 50 + 20 = 70 ms, 300 000 bps gives 40 + 20 = 60 ms, and 600 000 bps gives 20 + 20 = 40 ms. Real links behave the same way — the time to clock the bits out, plus the time the signal takes to travel. This lesson counts the IP packet only; real Ethernet adds its header, preamble and inter-frame gap to the bits sent.',
+        ja: 'まず、何も変えずに 1 回送ります。表示は「送り出し 12 ms ＋ 伝搬 20 ms ＝ 32 ms」で、帯域の欄は 1 000 000 bps、伝搬遅延の欄は 20 ms です。つまりパケットは 12 ms × 1 000 000 bps ＝ 12 000 ビットで、1500 バイトの IP パケットです。帯域で変わるのは送り出しの時間だけなので、送り出しを 50 − 20 ＝ 30 ms にする必要があります。12 000 ビット ÷ 0.030 秒 ＝ 400 000 bps で、このとき表示は「送り出し 30 ms ＋ 伝搬 20 ms ＝ 50 ms」になります。ほかの 3 つは、遅延が違うリンクならそれぞれ正解になる値です。だから、このリンクの値を読まないと決められません。このリンクでは、240 000 bps は 50 ＋ 20 ＝ 70 ms、300 000 bps は 40 ＋ 20 ＝ 60 ms、600 000 bps は 20 ＋ 20 ＝ 40 ms になります。実際のリンクも同じで、ビットを送り出す時間に、信号が伝わる時間が加わります。このレッスンは IP パケットの大きさだけを数えますが、実際の Ethernet ではヘッダ・プリアンブル・フレーム間の隙間も送るビットに加わります。',
       },
       taughtBy: 'link-qos',
     },
@@ -396,33 +396,33 @@ export const EXAM_LEVEL_4: ExamLevel = {
       taughtBy: 'wireless',
     },
     {
-      id: 'tcp-rto-threshold',
+      id: 'tcp-third-dupack-state',
       prompt: {
-        en: 'In the TCP Congestion Control lesson (MSS 1000 bytes), run the trace and move the step slider to the end. Fast recovery finishes at step 10, more data is sent at step 11, and at step 12 the retransmission timeout fires. What do cwnd and ssthresh read at step 12?',
-        ja: 'TCP の輻輳制御のレッスン（MSS 1000 バイト）でトレースを実行し、ステップのスライダーを最後まで動かします。ステップ 10 で高速リカバリが終わり、ステップ 11 で新しいデータを送り、ステップ 12 で再送タイムアウトが起きます。ステップ 12 の cwnd と ssthresh はいくつですか？',
+        en: 'In the TCP Congestion Control lesson (MSS 1000 bytes), press “Run trace” and move the step slider to step 9, the step at which the third duplicate ACK arrives and the sender makes its fast retransmit. What does the readout above the chart show at step 9?',
+        ja: 'TCP の輻輳制御のレッスン（MSS 1000 バイト）で「トレースを実行」を押し、ステップのスライダーをステップ 9 に動かします。ステップ 9 は、3 つ目の重複 ACK が届き、送信側が高速再送をするステップです。このとき、グラフの上の表示はどうなっていますか？',
       },
       options: [
         {
-          en: 'cwnd 1000 B, ssthresh 1000 B: the threshold is halved again, to half of what was in flight',
-          ja: 'cwnd 1000 B、ssthresh 1000 B。しきい値はもう一度、送信中だった量の半分に下がる',
+          en: 'cwnd 7000 B, ssthresh 4000 B, in flight 8000 B: slow start had doubled the window twice, and eight segments were out',
+          ja: 'cwnd 7000 B、ssthresh 4000 B、送信中 8000 B。スロースタートでウィンドウが 2 回倍になり、8 セグメントを送っていた',
         },
         {
-          en: 'cwnd 2000 B, ssthresh 1000 B: the window restarts from the initial two segments',
-          ja: 'cwnd 2000 B、ssthresh 1000 B。ウィンドウは最初と同じ 2 セグメントからやり直す',
+          en: 'cwnd 6000 B, ssthresh 3000 B, in flight 6000 B: the window had grown by one segment for each ACK, and six segments were out',
+          ja: 'cwnd 6000 B、ssthresh 3000 B、送信中 6000 B。ウィンドウが ACK ごとに 1 セグメントずつ増え、6 セグメントを送っていた',
         },
         {
-          en: 'cwnd 1000 B, ssthresh 2000 B: the threshold is the same as at step 11',
-          ja: 'cwnd 1000 B、ssthresh 2000 B。しきい値はステップ 11 と同じ',
+          en: 'cwnd 5000 B, ssthresh 2000 B, in flight 4000 B: the window had stopped at the threshold, and four segments were out',
+          ja: 'cwnd 5000 B、ssthresh 2000 B、送信中 4000 B。ウィンドウがしきい値で止まり、4 セグメントを送っていた',
         },
         {
-          en: 'cwnd 1000 B, ssthresh 2500 B: half of the 5000 B the window reached during fast recovery',
-          ja: 'cwnd 1000 B、ssthresh 2500 B。高速リカバリの間にウィンドウが達した 5000 B の半分',
+          en: 'cwnd 8000 B, ssthresh 5000 B, in flight 10000 B: the loss came in a ten-segment initial window',
+          ja: 'cwnd 8000 B、ssthresh 5000 B、送信中 10000 B。10 セグメントの初期ウィンドウの中で損失が起きた',
         },
       ],
       answer: 2,
       explanation: {
-        en: 'Fast recovery left cwnd and ssthresh both at 2000 bytes at step 10, and step 11 puts 2000 bytes in flight. On a timeout RFC 5681 sets ssthresh to the larger of half the data in flight and two segments: max(2000 ÷ 2, 2 × 1000) = 2000. Half would be 1000, but the two-segment floor holds it at 2000, so the dashed ssthresh line stays flat. cwnd falls to one segment, 1000 bytes — the loss window, not the two-segment initial window the connection opened with — and slow start begins again from there. The 5000 bytes at step 9 was the temporary inflation of fast recovery and is never used for a threshold. Real stacks that follow RFC 5681 apply the same floor; CUBIC and others reduce by a different factor.',
-        ja: '高速リカバリが終わったステップ 10 では、cwnd と ssthresh はどちらも 2000 バイトで、ステップ 11 で 2000 バイトを送信中になります。タイムアウトのとき、RFC 5681 は ssthresh を「送信中のデータ量の半分」と「2 セグメント」の大きい方にします。max(2000 ÷ 2, 2 × 1000) ＝ 2000 です。半分なら 1000 ですが、2 セグメントという下限があるので 2000 のままで、グラフの ssthresh の破線は横ばいです。cwnd は 1 セグメントの 1000 バイトに下がります。これは損失後のウィンドウで、接続の最初に使った 2 セグメントの初期ウィンドウではありません。ここからスロースタートがやり直しになります。ステップ 9 の 5000 バイトは高速リカバリの間の一時的な膨らみで、しきい値の計算には使われません。RFC 5681 に従う実際の実装にも同じ下限があります。CUBIC などは別の割合で減らします。',
+        en: 'What the fast retransmit does to the window is fixed by RFC 5681; how much data was out when it happened is this trace’s own, and only the slider shows it. This connection starts with cwnd 2000 bytes and ssthresh 4000 bytes, so two ACKs take cwnd to 4000 at step 4 and slow start ends there. Steps 5 and 6 send four segments — in flight 4000 bytes — and the first of them is lost. The other three each bring back a duplicate ACK, at steps 7, 8 and 9, and through steps 7 and 8 nothing changes. At the third, ssthresh becomes the larger of half the data in flight and two segments, max(4000 ÷ 2, 2 × 1000) = 2000, and cwnd becomes ssthresh plus three segments, 2000 + 3 × 1000 = 5000: one segment for each duplicate ACK, since each means a segment has left the network. In flight stays 4000, because a duplicate ACK acknowledges nothing new. Every option applies those two rules correctly; the other three start from 8000, 6000 and 10000 bytes in flight, which this trace never reaches. Real stacks that follow RFC 5681 do the same. Stacks with SACK count what is in flight differently, and CUBIC reduces by a different factor.',
+        ja: '高速再送でウィンドウがどう変わるかは RFC 5681 で決まっています。一方、そのとき送信中だったデータ量はこのトレースに固有のもので、スライダーを動かさないとわかりません。この接続は cwnd 2000 バイト、ssthresh 4000 バイトで始まるので、ACK が 2 つ届いたステップ 4 で cwnd が 4000 になり、スロースタートはそこで終わります。ステップ 5 と 6 で 4 セグメントを送り（送信中 4000 バイト）、その最初の 1 つが失われます。残りの 3 つに対して、ステップ 7・8・9 で重複 ACK が 1 つずつ返ります。ステップ 7 と 8 では何も変わりません。3 つ目が届くと、ssthresh は「送信中のデータ量の半分」と「2 セグメント」の大きい方、max(4000 ÷ 2, 2 × 1000) ＝ 2000 になります。cwnd は ssthresh に 3 セグメントを足した 2000 ＋ 3 × 1000 ＝ 5000 です。重複 ACK 1 つは、セグメントが 1 つネットワークから出たことを意味するので、その分を足します。重複 ACK は新しいデータを何も確認しないので、送信中は 4000 のままです。どの選択肢も、この 2 つの規則を正しく当てはめています。ほかの 3 つは送信中が 8000・6000・10000 バイトだった場合の値ですが、このトレースではそこまで増えません。RFC 5681 に従う実際の実装も同じ動きをします。SACK を使う実装は送信中の数え方が違い、CUBIC などは別の割合で減らします。',
       },
       taughtBy: 'tcp-congestion',
     },
