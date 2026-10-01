@@ -124,4 +124,109 @@ describe('OspfV3Protocol', () => {
       routes.find((route) => route.nodeId === 'r1' && route.destination === '2001:db8:23::/64'),
     ).toMatchObject({ nextHop: '2001:db8:13::2' });
   });
+
+  // TC-275: a network behind a router that is itself reached by two equal-cost
+  // paths keeps both first hops, as OSPFv2 does (TC-250).
+  describe('TC-275 equal-cost next hops beyond the split', () => {
+    const FAR_LAN = '2001:db8:5::/64';
+
+    const hopsFromR4 = (r4ToR3Cost?: number) => {
+      const route = new OspfV3Protocol()
+        .computeRoutes(diamondTopology(r4ToR3Cost))
+        .find((candidate) => candidate.nodeId === 'r4' && candidate.destination === FAR_LAN);
+      return route && (route.equalCostNextHops?.map((hop) => hop.nextHop) ?? [route.nextHop]);
+    };
+
+    it('keeps both next hops for a network behind the router reached by two paths', () => {
+      expect(hopsFromR4()).toEqual(['2001:db8:24::1', '2001:db8:34::1']);
+    });
+
+    it('keeps one next hop when one branch costs more', () => {
+      expect(hopsFromR4(5)).toEqual(['2001:db8:24::1']);
+    });
+  });
 });
+
+/**
+ * R4 reaches R1 through R2 and through R3; R5 hangs off R1 and owns a LAN.
+ * `r4ToR3Cost` raises the cost of R4's link toward R3 (default 1, like the rest).
+ */
+function diamondTopology(r4ToR3Cost?: number): NetworkTopology {
+  const router = (
+    id: string,
+    interfaces: ReturnType<typeof iface>[],
+    areas: { networks: string[]; cost?: number }[],
+  ) => ({
+    id,
+    type: 'router',
+    position: { x: 0, y: 0 },
+    data: {
+      label: id.toUpperCase(),
+      role: 'router' as const,
+      layerId: 'l3' as const,
+      interfaces,
+      ospfv3Config: {
+        routerId: `${id.slice(1)}.${id.slice(1)}.${id.slice(1)}.${id.slice(1)}`,
+        areas: areas.map((area) => ({ areaId: '0.0.0.0', ...area })),
+      },
+    },
+  });
+
+  return {
+    nodes: [
+      router(
+        'r1',
+        [
+          iface('r1-2', '10.0.12.1', '2001:db8:12::1'),
+          iface('r1-3', '10.0.13.1', '2001:db8:13::1'),
+          iface('r1-5', '10.0.15.1', '2001:db8:15::1'),
+        ],
+        [{ networks: ['2001:db8:12::/64', '2001:db8:13::/64', '2001:db8:15::/64'] }],
+      ),
+      router(
+        'r2',
+        [
+          iface('r2-1', '10.0.12.2', '2001:db8:12::2'),
+          iface('r2-4', '10.0.24.1', '2001:db8:24::1'),
+        ],
+        [{ networks: ['2001:db8:12::/64', '2001:db8:24::/64'] }],
+      ),
+      router(
+        'r3',
+        [
+          iface('r3-1', '10.0.13.2', '2001:db8:13::2'),
+          iface('r3-4', '10.0.34.1', '2001:db8:34::1'),
+        ],
+        [{ networks: ['2001:db8:13::/64', '2001:db8:34::/64'] }],
+      ),
+      router(
+        'r4',
+        [
+          iface('r4-2', '10.0.24.2', '2001:db8:24::2'),
+          iface('r4-3', '10.0.34.2', '2001:db8:34::2'),
+        ],
+        [
+          { networks: ['2001:db8:24::/64'] },
+          {
+            networks: ['2001:db8:34::/64'],
+            ...(r4ToR3Cost !== undefined ? { cost: r4ToR3Cost } : {}),
+          },
+        ],
+      ),
+      router(
+        'r5',
+        [iface('r5-1', '10.0.15.2', '2001:db8:15::2'), iface('r5-0', '10.5.0.1', '2001:db8:5::1')],
+        [{ networks: ['2001:db8:15::/64', '2001:db8:5::/64'] }],
+      ),
+    ],
+    edges: [
+      { id: 'e12', source: 'r1', target: 'r2' },
+      { id: 'e13', source: 'r1', target: 'r3' },
+      { id: 'e24', source: 'r2', target: 'r4' },
+      { id: 'e34', source: 'r3', target: 'r4' },
+      { id: 'e15', source: 'r1', target: 'r5' },
+    ],
+    areas: [],
+    routeTables: new Map(),
+  };
+}
