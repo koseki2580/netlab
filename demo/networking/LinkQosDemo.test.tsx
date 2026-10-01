@@ -1,7 +1,7 @@
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import LinkQosDemo, { burstOutcome, shaperFromDrafts } from './LinkQosDemo';
+import LinkQosDemo, { burstBreakdown, burstOutcome, shaperFromDrafts } from './LinkQosDemo';
 
 describe('LinkQosDemo', () => {
   it('renders the QoS demo shell and controls', () => {
@@ -80,5 +80,51 @@ describe('LinkQosDemo burst result', () => {
         en,
       ),
     ).toBe('Dropped on the link by random loss.');
+  });
+});
+
+describe('LinkQosDemo latency breakdown (TC-261)', () => {
+  const base = { packetId: 'p', srcNodeId: 'client-1', dstNodeId: 'server-1' };
+  const hop = (action: string, linkQos: Record<string, unknown>) =>
+    ({
+      step: 0,
+      nodeId: 'r2',
+      nodeLabel: 'R2',
+      srcIp: '10.0.0.10',
+      dstIp: '10.0.4.10',
+      ttl: 64,
+      protocol: 'UDP',
+      event: 'forward',
+      action,
+      linkQos: { edgeId: 'e-r2-r3', segSeq: 1, queueDepth: 0, ...linkQos },
+      timestamp: 0,
+    }) as never;
+  const delivered = {
+    ...base,
+    status: 'delivered' as const,
+    hops: [
+      hop('link:dequeued', { txStartAtStep: 3, txEndAtStep: 15 }),
+      hop('link:arrived', { totalLatencySteps: 32 }),
+    ],
+  };
+  const ja = (_english: string, japanese: string) => japanese;
+
+  it('splits the total into sending and propagation time', () => {
+    expect(burstBreakdown(delivered, en)).toBe('sending 12 ms + propagation 20 ms = 32 ms');
+    expect(burstBreakdown(delivered, ja)).toBe('送り出し 12 ms ＋ 伝搬 20 ms ＝ 32 ms');
+  });
+
+  it('leaves the total line as it was', () => {
+    expect(burstOutcome(delivered, en)).toBe('Delivered — 32 ms to cross the link.');
+  });
+
+  it('gives no breakdown for a packet that never crossed the link', () => {
+    expect(burstBreakdown(null, en)).toBeNull();
+    expect(
+      burstBreakdown(
+        { ...base, status: 'dropped', hops: [hop('link:dropped', { reason: 'loss' })] },
+        en,
+      ),
+    ).toBeNull();
   });
 });

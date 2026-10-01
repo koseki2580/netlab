@@ -228,6 +228,9 @@ function buildTopology(): NetworkTopology {
   };
 }
 
+const FLOWS_PER_BURST = 8;
+const FIRST_SOURCE_PORT = 49152;
+
 function DemoInner() {
   const t = useT();
   const { sendPacket, state } = useSimulation();
@@ -237,13 +240,13 @@ function DemoInner() {
   );
 
   const sendFlows = async () => {
-    for (let index = 0; index < 8; index += 1) {
+    for (let index = 0; index < FLOWS_PER_BURST; index += 1) {
       const packet = buildUdpPacket({
         srcNodeId: 'client-1',
         dstNodeId: 'server-1',
         srcIp: '10.0.0.10',
         dstIp: '10.0.4.10',
-        srcPort: 49152 + index,
+        srcPort: FIRST_SOURCE_PORT + index,
         dstPort: 443,
         srcMac: '02:00:00:00:00:10',
         dstMac: '02:00:00:00:00:20',
@@ -284,8 +287,8 @@ function DemoInner() {
           <strong>{t('How ECMP spreads traffic', 'ECMP の振り分け方')}</strong>
           <div>
             {t(
-              'R1 has two equally good routes to 10.0.4.0/24: next hop 10.0.12.2 is Spine 1, next hop 10.0.13.2 is Spine 2. It does not alternate packet by packet: it hashes each flow’s addresses and ports and sends the whole flow along the path the hash picks — so a flow’s packets stay in order.',
-              'R1 には 10.0.4.0/24 への同じくらい良い経路が 2 本あります。次ホップ 10.0.12.2 が Spine 1、10.0.13.2 が Spine 2 です。R1 はパケットごとに交互に振るのではなく、フローのアドレスとポートからハッシュ値を計算し、その値が選んだ経路へフロー全体を送ります。だから 1 つのフローのパケットは順番が崩れません。',
+              'Leaf A has two equally good routes to 10.0.4.0/24: next hop 10.0.12.2 is Spine 1, next hop 10.0.13.2 is Spine 2. It does not alternate packet by packet: it hashes each flow’s addresses and ports and sends the whole flow along the path the hash picks — so a flow’s packets stay in order.',
+              'Leaf A には 10.0.4.0/24 への同じくらい良い経路が 2 本あります。次ホップ 10.0.12.2 が Spine 1、10.0.13.2 が Spine 2 です。Leaf A はパケットごとに交互に振るのではなく、フローのアドレスとポートからハッシュ値を計算し、その値が選んだ経路へフロー全体を送ります。だから 1 つのフローのパケットは順番が崩れません。',
             )}
           </div>
           <div>
@@ -321,7 +324,11 @@ function DemoInner() {
           ) : (
             <ul style={{ display: 'grid', gap: 6, listStyle: 'none', margin: 0, padding: 0 }}>
               {ecmpHops.map((hop, index) => (
-                <li key={`${hop.step}-${index}`}>
+                <li key={`${hop.step}-${index}`} data-testid={`ecmp-decision-${index + 1}`}>
+                  {/* One decision per flow, in sending order, so the row's
+                      place in its burst is the flow's number. */}
+                  {t('flow', 'フロー')} {(index % FLOWS_PER_BURST) + 1} ·{' '}
+                  {t('source port', '送信元ポート')} {hop.srcPort ?? '—'} ·{' '}
                   {t('bucket', 'バケット')} {(hop.ecmpTrace?.bucket ?? 0) + 1}/
                   {hop.ecmpTrace?.candidateCount} {t('via', '→ 次ホップ')}{' '}
                   {hop.ecmpTrace?.chosen.nextHop}

@@ -51,6 +51,9 @@ const MEMBERS: readonly VrrpMember[] = [
   },
 ];
 
+const VRRP_GROUP = MEMBERS[0]!.config.vrid;
+const VRRP_GROUP_HEX = VRRP_GROUP.toString(16).padStart(2, '0');
+
 function topology(masterDown: boolean, memberDown: boolean): NetworkTopology {
   return {
     nodes: [
@@ -183,8 +186,8 @@ function HaControls({
         </strong>
         <div>
           {t(
-            'VRRP: R1 (10.10.0.2, priority 150) and R2 (10.10.0.3, priority 110) share one virtual gateway, 10.10.0.1, with the virtual MAC below. Hosts only ever use 10.10.0.1. The higher priority is master and answers for it; when R1 fails, R2 stops hearing its advertisements and takes over the same IP and MAC, so no host has to change anything. When R1 returns, its higher priority takes the gateway back (preemption, on by default).',
-            'VRRP：R1（10.10.0.2、優先度 150）と R2（10.10.0.3、優先度 110）は、1 つの仮想ゲートウェイ 10.10.0.1 と下の仮想 MAC を共有します。ホストが使うのは常に 10.10.0.1 だけです。優先度の高い方がマスタとして応答し、R1 が落ちると R2 は R1 からの広告が届かなくなったことで気づき、同じ IP と MAC を引き継ぎます。ホスト側は何も変えずに済みます。R1 が戻ると、優先度の高い R1 がゲートウェイを取り戻します（プリエンプション。既定で有効）。',
+            'VRRP: R1 (10.10.0.2, priority 150) and R2 (10.10.0.3, priority 110) form VRRP group 10 and share one virtual gateway, 10.10.0.1, with the virtual MAC below. Hosts only ever use 10.10.0.1. The higher priority is master and answers for it; when R1 fails, R2 stops hearing its advertisements and takes over the same IP and MAC, so no host has to change anything. When R1 returns, its higher priority takes the gateway back (preemption, on by default).',
+            'VRRP：R1（10.10.0.2、優先度 150）と R2（10.10.0.3、優先度 110）は VRRP グループ 10 を組み、1 つの仮想ゲートウェイ 10.10.0.1 と下の仮想 MAC を共有します。ホストが使うのは常に 10.10.0.1 だけです。優先度の高い方がマスタとして応答し、R1 が落ちると R2 は R1 からの広告が届かなくなったことで気づき、同じ IP と MAC を引き継ぎます。ホスト側は何も変えずに済みます。R1 が戻ると、優先度の高い R1 がゲートウェイを取り戻します（プリエンプション。既定で有効）。',
           )}
         </div>
         <div>
@@ -225,6 +228,12 @@ function HaControls({
         <div data-testid="virtual-mac">
           {t('Virtual MAC: ', '仮想 MAC: ')}
           {virtualRouterMac(MEMBERS[0]!.config)}
+        </div>
+        <div data-testid="virtual-mac-note" style={{ marginTop: 6, fontSize: 12, lineHeight: 1.7 }}>
+          {t(
+            `A VRRP virtual MAC is 00:00:5e:00:01 followed by the group number in hexadecimal. This is VRRP group ${VRRP_GROUP}, and group ${VRRP_GROUP} is ${VRRP_GROUP_HEX} in hexadecimal.`,
+            `VRRP の仮想 MAC は、00:00:5e:00:01 の後ろにグループ番号を 16 進数で付けたものです。ここは VRRP グループ ${VRRP_GROUP} で、16 進数ではグループ ${VRRP_GROUP} は ${VRRP_GROUP_HEX} です。`,
+          )}
         </div>
       </div>
       <div style={PANEL_STYLE}>

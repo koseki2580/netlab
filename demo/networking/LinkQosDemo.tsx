@@ -388,6 +388,31 @@ export function burstOutcome(
   return t('Dropped before reaching the server.', 'サーバに届く前に落ちました。');
 }
 
+/**
+ * The two parts of the time on the link, read from the same trace the total
+ * comes from: sending is the time the transmitter was busy with the packet,
+ * propagation is the rest.
+ */
+export function burstBreakdown(
+  trace: PacketTrace | null,
+  t: (en: string, ja: string) => string,
+): string | null {
+  if (!trace || trace.status !== 'delivered') return null;
+  const sent = trace.hops.find(
+    (hop) => hop.linkQos?.txStartAtStep !== undefined && hop.linkQos.txEndAtStep !== undefined,
+  )?.linkQos;
+  const total = trace.hops.find((hop) => hop.action === 'link:arrived')?.linkQos?.totalLatencySteps;
+  if (sent?.txStartAtStep === undefined || sent.txEndAtStep === undefined || total === undefined) {
+    return null;
+  }
+  const sending = sent.txEndAtStep - sent.txStartAtStep;
+  const propagation = total - sending;
+  return t(
+    `sending ${sending} ms + propagation ${propagation} ms = ${total} ms`,
+    `送り出し ${sending} ms ＋ 伝搬 ${propagation} ms ＝ ${total} ms`,
+  );
+}
+
 function QosFields({
   link,
   onQosChange,
@@ -644,6 +669,7 @@ function DemoInner({
   const t = useT();
   const { sendPacket, state, engine } = useSimulation();
   const [burstResult, setBurstResult] = useState<string | null>(null);
+  const [burstParts, setBurstParts] = useState<string | null>(null);
   const edge = useMemo(
     () => topology.edges.find((candidate) => candidate.id === 'e-r2-r3') ?? topology.edges[0],
     [topology.edges],
@@ -675,6 +701,7 @@ function DemoInner({
     });
     const trace = engine.getState().traces.find((candidate) => candidate.packetId === id) ?? null;
     setBurstResult(burstOutcome(trace, t));
+    setBurstParts(burstBreakdown(trace, t));
   };
 
   return (
@@ -702,6 +729,14 @@ function DemoInner({
             style={{ marginTop: 8, fontSize: 12, lineHeight: 1.5 }}
           >
             {burstResult}
+          </div>
+        )}
+        {burstResult && burstParts && (
+          <div
+            data-testid="link-qos-burst-breakdown"
+            style={{ marginTop: 2, fontSize: 12, lineHeight: 1.5, fontFamily: 'monospace' }}
+          >
+            {burstParts}
           </div>
         )}
         {edge && (

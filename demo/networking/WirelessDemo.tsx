@@ -225,6 +225,29 @@ function WirelessControls({
           {t('Loss: ', '損失率: ')}
           {loss}%
         </div>
+        <div
+          data-testid="wireless-radio-model-note"
+          style={{
+            marginTop: 10,
+            paddingTop: 8,
+            borderTop: '1px solid var(--netlab-border-subtle)',
+            fontSize: 12,
+            lineHeight: 1.7,
+          }}
+        >
+          <div>
+            {t(
+              `How this lesson works it out: RSSI = transmit power (${WIRELESS.txPowerDbm} dBm) − free-space path loss at ${WIRELESS.bandMhz} MHz. The signal gets 20 dB weaker for every tenfold distance (about 6 dB for every doubling). Loss is 0% down to −65 dBm, then rises in a straight line, 4 points per dB, to 100% at −90 dBm.`,
+              `このレッスンの計算方法：RSSI ＝ 送信電力（${WIRELESS.txPowerDbm} dBm）− ${WIRELESS.bandMhz} MHz での自由空間伝搬損失。電波は距離が 10 倍になるごとに 20 dB 弱くなります（2 倍ごとに約 6 dB）。損失率は −65 dBm までは 0% で、そこから 1 dB につき 4 ポイントずつ直線的に増え、−90 dBm で 100% になります。`,
+            )}
+          </div>
+          <div>
+            {t(
+              'That loss line is this lesson’s simplification, not a rule of Wi-Fi. On real Wi-Fi, −66 dBm is a healthy signal, and loss depends on noise, interference and the data rate in use.',
+              'この損失率の直線は、このレッスンだけの単純化で、Wi-Fi の決まりではありません。実際の Wi-Fi では −66 dBm は十分に強い電波で、損失率はノイズ、干渉、使っているデータレートで決まります。',
+            )}
+          </div>
+        </div>
       </div>
       <div style={PANEL_STYLE}>
         <h3 style={{ marginTop: 0 }}>{t('Association', 'アソシエーション (AP への接続)')}</h3>
