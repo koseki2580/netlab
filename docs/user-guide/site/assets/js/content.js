@@ -163,7 +163,15 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>等コストの経路</strong> — 同じくらい良い経路が 2 本あるときは、1 行に次ホップが 2 つ並びます。「動的ルーティング」では「（等コスト）」と付きます。</li>
                  <li><strong>BGP の数値</strong> — BGP を選んでいるときの数値は「メトリック」ではなく「AS パス長」と表示されます。</li>
                  <li><strong>リンクのコスト</strong> — 「OSPF の収束」には各リンクのコストの一覧があります。向きによってコストが違うリンクは、両方向が書かれます。</li>
-                 <li><strong>落ちたリンク</strong> — リンクを落とすと、そのリンクのネットワークは経路表から消え、コストの一覧では「（リンク断）」と表示されます。</li>
+                 <li><strong>落ちたリンク</strong> — リンクを落とすと、そのリンクのネットワークは<strong>すべてのルータ</strong>の経路表から消え、落ちたリンクの先を次ホップにした経路は 1 本も残りません。コストの一覧では「（リンク断）」と表示されます。</li>
+                 <li><strong>IPv6 でも同じ</strong> — 「IPv6 のルーティング」で R1-R2 間のリンクを落とすと、R1 の経路表からそのリンクのネットワークが消えます。OSPFv3 の経路は R3 経由になり、そのリンクで受け取っていた MP-BGP の経路はなくなります。</li>
+               </ul>
+               <h3>リンクを落としたあとの経路表を見比べる</h3>
+               <p>「OSPF の収束」で「リンクを落とす」を押すと、経路表のタブの上に案内が出ます。R1 だけでなくすべてのルータが経路を計算し直したことを伝え、R2 と R4 のタブを開いて見比べるよう促します。</p>
+               <ul>
+                 <li><strong>タブの点</strong> — リンクを落とす前と経路表が変わったルータのタブに、点が付きます。読み上げでは「変化あり」と伝わります。</li>
+                 <li><strong>4 つとも点が付きます</strong> — どのルータも、落ちたリンクのネットワーク 10.0.24.0/30 への経路を持っていたからです。</li>
+                 <li><strong>リンクを戻すと</strong> — 案内も点も消えます。</li>
                </ul>`
       },
       {
@@ -369,7 +377,15 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>Equal-cost routes</strong> — when two paths are equally good, one row lists both next hops. “Dynamic Routing” marks it “(equal cost)”.</li>
                  <li><strong>The BGP number</strong> — with BGP selected, the number is labelled “AS path length”, not “metric”.</li>
                  <li><strong>Link costs</strong> — “OSPF Convergence” lists the cost of every link. A link whose two directions differ shows both.</li>
-                 <li><strong>A failed link</strong> — take a link down and its network disappears from the route tables; the cost list marks it “(link down)”.</li>
+                 <li><strong>A failed link</strong> — take a link down and its network disappears from <strong>every router's</strong> table, and no route keeps a next hop on the failed link. The cost list marks it “(link down)”.</li>
+                 <li><strong>The same in IPv6</strong> — in “IPv6 Routing Ecosystem”, fail the R1-R2 link and that link's network leaves R1's table. The OSPFv3 routes go through R3, and the MP-BGP route learned over that link is gone.</li>
+               </ul>
+               <h3>Comparing the tables after a link fails</h3>
+               <p>In “OSPF Convergence”, pressing “Fail link” puts a note above the route-table tabs. It says that every router recomputed its routes, not only R1, and invites you to open the R2 and R4 tabs to compare.</p>
+               <ul>
+                 <li><strong>The dot on a tab</strong> — a tab gets a dot when that router's table differs from before the failure. A screen reader announces it as “changed”.</li>
+                 <li><strong>All four get a dot</strong> — every router had a route to the failed link's network, 10.0.24.0/30.</li>
+                 <li><strong>Restore the link</strong> — the note and the dots go away.</li>
                </ul>`
       },
       {

@@ -12,6 +12,9 @@ import { getRecommendedNext, NextScenarioRail } from '../../src/components/NextS
 import { scenarioRegistry } from '../../src/scenarios';
 import type { Scenario, ScenarioBrief } from '../../src/scenarios/types';
 import type { PacketTrace } from '../../src/types/simulation';
+import type { RouteEntry } from '../../src/types/routing';
+import type { NetworkTopology } from '../../src/types/topology';
+import { protocolRegistry } from '../../src/registry/ProtocolRegistry';
 import {
   forkScenario,
   getSandbox,
@@ -116,14 +119,35 @@ function RouteComparison({ runs }: { runs: readonly ProbeRun[] }) {
   );
 }
 
+/** A table as the learner reads it: each destination, its next hops and metric. */
+function tableSignature(routes: readonly RouteEntry[]): string {
+  return routes
+    .map((route) => `${route.destination} ${routeNextHops(route).join(',')} ${route.metric}`)
+    .sort()
+    .join('\n');
+}
+
 /**
  * Every router's table, one at a time, in the side rail. Floating over the
  * canvas they covered R4 and C2, and more than half of their own rows.
+ *
+ * `beforeFailure` is the network as it was before the link failed. Given it,
+ * the panel says the routers recomputed and marks each tab whose table differs.
  */
-export function RouterTablesPanel() {
+export function RouterTablesPanel({ beforeFailure }: { beforeFailure?: NetworkTopology } = {}) {
   const t = useT();
   const { topology, routeTable } = useNetlabContext();
   const routers = topology.nodes.filter((node) => node.data.role === 'router');
+  const changed = useMemo(() => {
+    if (!beforeFailure) return new Set<string>();
+    const before = protocolRegistry.resolveRouteTable(beforeFailure);
+    return new Set(
+      [...new Set([...before.keys(), ...routeTable.keys()])].filter(
+        (id) => tableSignature(before.get(id) ?? []) !== tableSignature(routeTable.get(id) ?? []),
+      ),
+    );
+  }, [beforeFailure, routeTable]);
+  const markId = (routerId: string) => `ospf-route-tab-changed-${routerId}`;
   const [selected, setSelected] = useState<string | null>(null);
   const activeId = selected && routers.some((r) => r.id === selected) ? selected : routers[0]?.id;
   const routes = activeId ? (routeTable.get(activeId) ?? []) : [];
@@ -161,6 +185,25 @@ export function RouterTablesPanel() {
       >
         {t('ROUTE TABLES', '経路表')}
       </div>
+      {beforeFailure && (
+        <div
+          data-testid="ospf-recompute-cue"
+          role="status"
+          style={{
+            marginBottom: 8,
+            padding: '6px 8px',
+            borderRadius: 6,
+            borderLeft: '3px solid var(--netlab-accent-yellow)',
+            background: 'color-mix(in srgb, var(--netlab-accent-yellow) 10%, transparent)',
+            lineHeight: 1.5,
+          }}
+        >
+          {t(
+            'The link failed, and every router recomputed its routes, not only R1. Open the R2 and R4 tabs to compare. A dot on a tab means that table changed.',
+            'リンクが落ち、R1 だけでなく、すべてのルータが経路を計算し直しました。R2 と R4 のタブを開いて見比べてください。タブの点は、その経路表が変わったしるしです。',
+          )}
+        </div>
+      )}
       <div
         role="tablist"
         aria-label={t('Route tables', '経路表')}
@@ -179,11 +222,15 @@ export function RouterTablesPanel() {
               aria-label={t(`${router.data.label} route table`, `${router.data.label} の経路表`)}
               aria-selected={active}
               aria-controls="ospf-route-tabpanel"
+              {...(changed.has(router.id) ? { 'aria-describedby': markId(router.id) } : {})}
               tabIndex={active ? 0 : -1}
               data-testid={`ospf-route-tab-${router.id}`}
               onClick={() => setSelected(router.id)}
               onKeyDown={(event) => selectByKey(event, index)}
               style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
                 padding: '3px 10px',
                 borderRadius: 6,
                 border: `1px solid ${active ? 'var(--netlab-accent-blue)' : 'var(--netlab-border-subtle)'}`,
@@ -195,6 +242,21 @@ export function RouterTablesPanel() {
               }}
             >
               {router.data.label}
+              {changed.has(router.id) && (
+                <span
+                  id={markId(router.id)}
+                  data-testid={markId(router.id)}
+                  role="img"
+                  aria-label={t('changed', '変化あり')}
+                  title={t('changed', '変化あり')}
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    background: 'var(--netlab-accent-yellow)',
+                  }}
+                />
+              )}
             </button>
           );
         })}
@@ -321,6 +383,11 @@ function OspfConvergenceInner({
 }) {
   const t = useT();
   const locale = useGalleryLocale();
+  // The network before the failure, for the route tables to compare against.
+  const beforeFailure = useMemo(
+    () => (primaryLinkDown ? buildOspfConvergenceTopology(false) : undefined),
+    [primaryLinkDown],
+  );
   const { engine, state, exportPcap } = useSimulation();
   const shellChrome = useShellChrome();
   const navigate = useNavigate();
@@ -714,7 +781,7 @@ function OspfConvergenceInner({
               }}
             >
               <RouteSummaryPanel runs={runs} />
-              <RouterTablesPanel />
+              <RouterTablesPanel {...(beforeFailure ? { beforeFailure } : {})} />
               <LinkCostsPanel />
             </div>
 

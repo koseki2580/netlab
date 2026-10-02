@@ -5,21 +5,36 @@ import { describe, expect, it } from 'vitest';
 // panel on its own has to do the same.
 import '../../src/layers/l3-network/index';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { protocolRegistry } from '../../src/registry/ProtocolRegistry';
 import { buildOspfConvergenceTopology } from '../../src/scenarios/ospf-convergence';
 import { GalleryLocaleProvider, type GalleryLocale } from '../localeContext';
 import { RouterTablesPanel } from './OspfConvergenceDemo';
 
-function panel(locale: GalleryLocale): HTMLElement {
+/**
+ * The panel as the lesson shows it: with the link up, or with it failed and
+ * the tables from before the failure (`before`) to compare against.
+ */
+function panel(
+  locale: GalleryLocale,
+  linkDown = false,
+  before = buildOspfConvergenceTopology(false),
+): HTMLElement {
   const container = document.createElement('div');
   container.innerHTML = renderToString(
     <GalleryLocaleProvider locale={locale}>
-      <NetlabProvider topology={buildOspfConvergenceTopology(false)}>
-        <RouterTablesPanel />
+      <NetlabProvider topology={buildOspfConvergenceTopology(linkDown)}>
+        <RouterTablesPanel {...(linkDown ? { beforeFailure: before } : {})} />
       </NetlabProvider>
     </GalleryLocaleProvider>,
   );
   return container;
 }
+
+const CUE = '[data-testid="ospf-recompute-cue"]';
+const marks = (root: HTMLElement) =>
+  [...root.querySelectorAll('[data-testid^="ospf-route-tab-changed-"]')].map((mark) =>
+    mark.getAttribute('data-testid')?.replace('ospf-route-tab-changed-', ''),
+  );
 
 // TC-273: the route-table tabs are a tablist whose names differ from the
 // topology nodes, which are buttons named "R1" to "R4" too.
@@ -63,5 +78,63 @@ describe('the OSPF Convergence route-table tabs', () => {
     const table = tabpanel.querySelector('[data-testid="ospf-route-table-rows"]');
     expect(table?.tagName).toBe('TABLE');
     expect(table?.getAttribute('role')).toBeNull();
+  });
+});
+
+// TC-299: once the link has failed, the panel says every router recomputed and
+// marks the tabs whose tables differ from before.
+describe('the OSPF Convergence route tables after the link fails', () => {
+  it('TC-299: shows no cue and no marks while the link is up', () => {
+    const root = panel('en');
+    expect(root.querySelector(CUE)).toBeNull();
+    expect(marks(root)).toEqual([]);
+  });
+
+  it('TC-299: invites the learner to the R2 and R4 tabs, in both languages', () => {
+    const en = panel('en', true).querySelector(CUE)?.textContent ?? '';
+    expect(en).toContain('every router recomputed its routes');
+    expect(en).toContain('R2 and R4 tabs');
+    const ja = panel('ja', true).querySelector(CUE)?.textContent ?? '';
+    expect(ja).toContain('すべてのルータが経路を計算し直しました');
+    expect(ja).toContain('R2 と R4 のタブ');
+    expect(ja).not.toMatch(/recomputed|tabs|changed/);
+  });
+
+  it('TC-299: marks the tabs whose tables differ from before the failure', () => {
+    const root = panel('en', true);
+    // Every router had a route to the failed link's own network, 10.0.24.0/30.
+    expect(marks(root)).toEqual(['r1', 'r2', 'r3', 'r4']);
+    const mark = root.querySelector('[data-testid="ospf-route-tab-changed-r2"]')!;
+    expect(mark.getAttribute('aria-label')).toBe('changed');
+    expect(
+      panel('ja', true)
+        .querySelector('[data-testid="ospf-route-tab-changed-r2"]')
+        ?.getAttribute('aria-label'),
+    ).toBe('変化あり');
+    // The mark describes the tab; the tab's name and visible text stay as they were.
+    const tab = root.querySelector('[data-testid="ospf-route-tab-r2"]')!;
+    expect(tab.getAttribute('aria-label')).toBe('R2 route table');
+    expect(tab.textContent).toBe('R2');
+    expect(tab.getAttribute('aria-describedby')).toBe(mark.id);
+  });
+
+  it('TC-299: marks nothing when the tables are the same as before', () => {
+    // Compared with themselves, the failed tables have not changed: the marks
+    // come from the comparison, not from the link being down.
+    const root = panel('en', true, buildOspfConvergenceTopology(true));
+    expect(root.querySelector(CUE)).not.toBeNull();
+    expect(marks(root)).toEqual([]);
+  });
+
+  it('TC-299: leaves the recomputed routes of R2 and R4 as they were', () => {
+    const tables = protocolRegistry.resolveRouteTable(buildOspfConvergenceTopology(true));
+    expect(tables.get('r2')?.find((route) => route.destination === '10.4.0.0/24')).toMatchObject({
+      nextHop: '10.0.12.1',
+      metric: 6,
+    });
+    expect(tables.get('r4')?.find((route) => route.destination === '10.1.0.0/24')).toMatchObject({
+      nextHop: '10.0.34.1',
+      metric: 3,
+    });
   });
 });
