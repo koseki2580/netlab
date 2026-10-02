@@ -58,6 +58,9 @@ export function ResizableSidebar({
       style={{
         ...style,
         width,
+        // A viewport narrower than the panel's width would otherwise cut the
+        // panel off at the right edge, with no way to scroll to the rest.
+        maxWidth: '100%',
         display: 'flex',
         flexDirection: 'row',
         flexShrink: 0,

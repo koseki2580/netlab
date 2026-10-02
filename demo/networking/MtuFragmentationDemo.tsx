@@ -10,6 +10,7 @@ import { buildFragmentedEchoTopology } from '../../src/scenarios/fragmented-echo
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import type { InFlightPacket } from '../../src/types/packets';
 import type { NetworkTopology } from '../../src/types/topology';
+import { useViewport } from '../../src/utils/useViewport';
 import DemoShell from '../DemoShell';
 import { readDemoEmbedParams } from '../embedParams';
 import { useT } from '../localeContext';
@@ -52,6 +53,11 @@ const TUNNEL_MTU_MIN = 300;
 const TUNNEL_MTU_STEP = 8;
 const LESSON_DEFAULT_TUNNEL_MTU = 604;
 
+// On a narrow screen the canvas sits above the panel at this height: tall
+// enough to show the four devices, short enough to leave the ping button on
+// the first screen.
+const NARROW_CANVAS_HEIGHT = 280;
+
 const CARD_STYLE: CSSProperties = {
   background: 'var(--netlab-bg-primary)',
   border: '1px solid #1f2937',
@@ -80,6 +86,26 @@ const BUTTON_STYLE: CSSProperties = {
   fontSize: 12,
   fontWeight: 700,
 };
+
+const PANEL_STYLE: React.CSSProperties = {
+  background: 'var(--netlab-bg-primary)',
+  borderLeft: '1px solid var(--netlab-bg-surface)',
+  display: 'flex',
+  flexDirection: 'column',
+};
+
+/**
+ * The lesson's side panel. Beside the canvas it can be dragged wider; stacked
+ * under the canvas on a narrow viewport it simply takes the full width.
+ */
+function LessonPanel({ stacked, children }: { stacked: boolean; children: React.ReactNode }) {
+  if (stacked) return <div style={{ ...PANEL_STYLE, width: '100%' }}>{children}</div>;
+  return (
+    <ResizableSidebar defaultWidth={460} maxWidth={760} style={PANEL_STYLE}>
+      {children}
+    </ResizableSidebar>
+  );
+}
 
 function buildPingPacket(topology: NetworkTopology, df: boolean): InFlightPacket | null {
   const srcNode = topology.nodes.find((node) => node.id === 'host-a');
@@ -173,6 +199,7 @@ function FragmentationDemoInner({
   onTunnelMtuChange: (value: number) => void;
 }) {
   const t = useT();
+  const { isNarrow } = useViewport();
   const { topology } = useNetlabContext();
   const { engine, sendPacket, state, isRecomputing } = useSimulation();
   const activeTrace = state.currentTraceId
@@ -201,19 +228,44 @@ function FragmentationDemoInner({
   };
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-        <NetlabCanvas />
+    // Side by side on a wide screen. On a narrow one the panel alone is wider
+    // than the screen, so the lesson becomes one scrolling column: what the
+    // lesson is about, the canvas, then the panel.
+    <div
+      style={{
+        display: 'flex',
+        height: '100%',
+        ...(isNarrow ? { flexDirection: 'column', overflowY: 'auto' } : {}),
+      }}
+    >
+      <div
+        style={
+          isNarrow
+            ? { display: 'flex', flexDirection: 'column-reverse', flexShrink: 0 }
+            : { flex: 1, position: 'relative', minWidth: 0 }
+        }
+      >
+        {isNarrow ? (
+          <div style={{ height: NARROW_CANVAS_HEIGHT, position: 'relative' }}>
+            <NetlabCanvas />
+          </div>
+        ) : (
+          <NetlabCanvas />
+        )}
         <div
           style={{
-            position: 'absolute',
-            top: 12,
-            left: 12,
-            maxWidth: 360,
+            ...(isNarrow
+              ? { borderBottom: '1px solid rgba(148, 163, 184, 0.2)' }
+              : {
+                  position: 'absolute',
+                  top: 12,
+                  left: 12,
+                  maxWidth: 360,
+                  borderRadius: 10,
+                  border: '1px solid rgba(148, 163, 184, 0.2)',
+                }),
             padding: '10px 12px',
-            borderRadius: 10,
             background: 'color-mix(in srgb, var(--netlab-bg-primary) 90%, transparent)',
-            border: '1px solid rgba(148, 163, 184, 0.2)',
             color: 'var(--netlab-text-primary)',
             fontFamily: 'monospace',
             fontSize: 11,
@@ -239,16 +291,7 @@ function FragmentationDemoInner({
         </div>
       </div>
 
-      <ResizableSidebar
-        defaultWidth={460}
-        maxWidth={760}
-        style={{
-          background: 'var(--netlab-bg-primary)',
-          borderLeft: '1px solid var(--netlab-bg-surface)',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
+      <LessonPanel stacked={isNarrow}>
         <div
           style={{
             padding: 12,
@@ -394,7 +437,7 @@ function FragmentationDemoInner({
             <HopInspector />
           </div>
         </div>
-      </ResizableSidebar>
+      </LessonPanel>
     </div>
   );
 }
