@@ -136,8 +136,8 @@ export const EXAM_LEVEL_4: ExamLevel = {
           ja: '10.0.12.2 経由が 5 つ、10.0.13.2 経由が 3 つ（3・5・8 番目のフロー）。2 回目もまったく同じ並びで、16 行のうち 10 行と 6 行になる',
         },
         {
-          en: 'Five via 10.0.12.2 and three via 10.0.13.2 — the 2nd, 4th and 7th flows; the second press repeats the pattern exactly, 10 and 6 of 16 lines',
-          ja: '10.0.12.2 経由が 5 つ、10.0.13.2 経由が 3 つ（2・4・7 番目のフロー）。2 回目もまったく同じ並びで、16 行のうち 10 行と 6 行になる',
+          en: 'An uneven split on the first press, and a different split on the second, because Leaf A takes a new hash for each burst',
+          ja: '1 回目は均等でない分かれ方になり、2 回目はそれとは別の分かれ方になる。Leaf A は送るたびにハッシュ値を計算し直すから',
         },
       ],
       answer: 2,

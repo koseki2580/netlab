@@ -5,6 +5,7 @@ import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { TraceSummary } from '../../src/components/simulation/TraceSummary';
 import { buildUdpPacket } from '../../src/layers/l4-transport/udpPacketBuilder';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
+import type { PacketHop } from '../../src/types/simulation';
 import type { RouteEntry } from '../../src/types/routing';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
@@ -231,6 +232,105 @@ function buildTopology(): NetworkTopology {
 const FLOWS_PER_BURST = 8;
 const FIRST_SOURCE_PORT = 49152;
 
+/** The path a decision took, as one comparable value. */
+function decisionKey(hop: PacketHop): string {
+  return `${hop.srcPort ?? ''}>${hop.ecmpTrace?.chosen.nextHop ?? ''}`;
+}
+
+/**
+ * The decisions, one run per press of the button: a heading, how many flows
+ * each next hop got, and — when a full run matches the one before it — a line
+ * saying so, so the repeat is read rather than found by comparing rows.
+ */
+export function EcmpDecisions({ hops }: { hops: readonly PacketHop[] }) {
+  const t = useT();
+
+  if (hops.length === 0) {
+    return (
+      <p style={{ color: 'var(--netlab-text-secondary)', margin: 0 }}>
+        {t('No ECMP flow sent yet.', 'まだ ECMP のフローを送っていません。')}
+      </p>
+    );
+  }
+
+  const runs: PacketHop[][] = [];
+  for (let start = 0; start < hops.length; start += FLOWS_PER_BURST) {
+    runs.push(hops.slice(start, start + FLOWS_PER_BURST));
+  }
+
+  return (
+    <div style={{ display: 'grid', gap: 12 }}>
+      {runs.map((run, runIndex) => {
+        const runNumber = runIndex + 1;
+        const counts = new Map<string, number>();
+        for (const hop of run) {
+          const nextHop = hop.ecmpTrace?.chosen.nextHop ?? '—';
+          counts.set(nextHop, (counts.get(nextHop) ?? 0) + 1);
+        }
+        const tally = [...counts.entries()]
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([nextHop, count]) => t(`via ${nextHop}: ${count}`, `${nextHop} 経由: ${count}`))
+          .join(' · ');
+        const previous = runs[runIndex - 1];
+        const repeats =
+          previous !== undefined &&
+          run.length === FLOWS_PER_BURST &&
+          run.every((hop, index) => decisionKey(hop) === decisionKey(previous[index]!));
+
+        return (
+          <section
+            key={runNumber}
+            data-testid={`ecmp-run-${runNumber}`}
+            style={{
+              borderTop: runIndex === 0 ? undefined : '1px solid var(--netlab-border-subtle)',
+              paddingTop: runIndex === 0 ? 0 : 10,
+            }}
+          >
+            <h3
+              data-testid={`ecmp-run-${runNumber}-heading`}
+              style={{ fontSize: 13, margin: '0 0 2px' }}
+            >
+              {t(`Run ${runNumber}`, `${runNumber} 回目`)}
+            </h3>
+            <p
+              data-testid={`ecmp-run-${runNumber}-tally`}
+              style={{ fontFamily: 'monospace', fontSize: 12, margin: '0 0 6px' }}
+            >
+              {tally}
+            </p>
+            {repeats && (
+              <p
+                data-testid={`ecmp-run-${runNumber}-repeat`}
+                style={{ fontSize: 12, lineHeight: 1.6, margin: '0 0 6px' }}
+              >
+                {t(
+                  `Identical to run ${runIndex}: the same flow always hashes to the same path.`,
+                  `${runIndex} 回目とまったく同じです。同じフローは、ハッシュ値が変わらないので必ず同じ経路を通ります。`,
+                )}
+              </p>
+            )}
+            <ul style={{ display: 'grid', gap: 6, listStyle: 'none', margin: 0, padding: 0 }}>
+              {run.map((hop, flowIndex) => {
+                const index = runIndex * FLOWS_PER_BURST + flowIndex;
+                return (
+                  <li key={`${hop.step}-${index}`} data-testid={`ecmp-decision-${index + 1}`}>
+                    {/* One decision per flow, in sending order, so the row's
+                        place in its run is the flow's number. */}
+                    {t('flow', 'フロー')} {flowIndex + 1} · {t('source port', '送信元ポート')}{' '}
+                    {hop.srcPort ?? '—'} · {t('bucket', 'バケット')}{' '}
+                    {(hop.ecmpTrace?.bucket ?? 0) + 1}/{hop.ecmpTrace?.candidateCount}{' '}
+                    {t('via', '→ 次ホップ')} {hop.ecmpTrace?.chosen.nextHop}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
 function DemoInner() {
   const t = useT();
   const { sendPacket, state } = useSimulation();
@@ -317,25 +417,7 @@ function DemoInner() {
           >
             {t('ECMP Decisions', 'ECMP の振り分け結果')}
           </h2>
-          {ecmpHops.length === 0 ? (
-            <p style={{ color: 'var(--netlab-text-secondary)', margin: 0 }}>
-              {t('No ECMP flow sent yet.', 'まだ ECMP のフローを送っていません。')}
-            </p>
-          ) : (
-            <ul style={{ display: 'grid', gap: 6, listStyle: 'none', margin: 0, padding: 0 }}>
-              {ecmpHops.map((hop, index) => (
-                <li key={`${hop.step}-${index}`} data-testid={`ecmp-decision-${index + 1}`}>
-                  {/* One decision per flow, in sending order, so the row's
-                      place in its burst is the flow's number. */}
-                  {t('flow', 'フロー')} {(index % FLOWS_PER_BURST) + 1} ·{' '}
-                  {t('source port', '送信元ポート')} {hop.srcPort ?? '—'} ·{' '}
-                  {t('bucket', 'バケット')} {(hop.ecmpTrace?.bucket ?? 0) + 1}/
-                  {hop.ecmpTrace?.candidateCount} {t('via', '→ 次ホップ')}{' '}
-                  {hop.ecmpTrace?.chosen.nextHop}
-                </li>
-              ))}
-            </ul>
-          )}
+          <EcmpDecisions hops={ecmpHops} />
         </section>
         <div style={{ marginTop: 14 }}>
           <TraceSummary />
