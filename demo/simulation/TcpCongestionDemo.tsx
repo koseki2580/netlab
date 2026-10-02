@@ -30,7 +30,6 @@ export interface CongestionWorking {
   readonly kind: 'fast-retransmit' | 'deflate' | 'rto';
   readonly mss: number;
   readonly inflightBefore: number;
-  readonly cwndBefore: number;
   readonly ssthreshBefore: number;
   readonly ssthresh: number;
   readonly cwnd: number;
@@ -38,14 +37,15 @@ export interface CongestionWorking {
 
 /**
  * The arithmetic of one step, in the numbers the engine held. The rule is the
- * engine's own (`lossWindowThreshold`): half the larger of the bytes in flight
- * and cwnd, but never less than two segments.
+ * engine's own (`lossWindowThreshold`), RFC 5681 equation (4): half the flight
+ * size, the bytes sent and not yet acknowledged, but never less than two
+ * segments. cwnd is not part of it.
  */
 export function congestionWorkingText(
   working: CongestionWorking,
   t: (en: string, ja: string) => string,
 ): string {
-  const { mss, inflightBefore, cwndBefore, ssthresh, cwnd } = working;
+  const { mss, inflightBefore, ssthresh, cwnd } = working;
   if (working.kind === 'deflate') {
     return t(
       `The new ACK ends fast recovery: cwnd deflates to ssthresh = ${cwnd} B.`,
@@ -53,21 +53,21 @@ export function congestionWorkingText(
     );
   }
 
-  const half = Math.floor(Math.max(inflightBefore, cwndBefore) / 2);
-  const numbers = `max(max(${inflightBefore}, ${cwndBefore}) ÷ 2, 2 × ${mss}) = max(${half}, ${2 * mss}) = ${ssthresh} B`;
+  const half = Math.floor(inflightBefore / 2);
+  const numbers = `max(${inflightBefore} ÷ 2, 2 × ${mss}) = max(${half}, ${2 * mss}) = ${ssthresh} B`;
   if (working.kind === 'fast-retransmit') {
     const window = `cwnd = ssthresh + 3 × MSS = ${ssthresh} + 3 × ${mss} = ${cwnd} B`;
     return t(
-      `ssthresh = max(max(in flight, cwnd) ÷ 2, 2 × MSS) = ${numbers}. ${window}.`,
-      `ssthresh = max(max(送信中, cwnd) ÷ 2, 2 × MSS) = ${numbers}。${window}。`,
+      `ssthresh = max(in flight ÷ 2, 2 × MSS) = ${numbers}. ${window}.`,
+      `ssthresh = max(送信中 ÷ 2, 2 × MSS) = ${numbers}。${window}。`,
     );
   }
 
   const unchanged = working.ssthreshBefore === ssthresh;
   const window = `cwnd = 1 × MSS = ${cwnd} B`;
   return t(
-    `ssthresh = max(max(in flight, cwnd) ÷ 2, 2 × MSS) = ${numbers}${unchanged ? ', so it does not change' : ''}. ${window}.`,
-    `ssthresh = max(max(送信中, cwnd) ÷ 2, 2 × MSS) = ${numbers}${unchanged ? ' で、変わりません' : ''}。${window}。`,
+    `ssthresh = max(in flight ÷ 2, 2 × MSS) = ${numbers}${unchanged ? ', so it does not change' : ''}. ${window}.`,
+    `ssthresh = max(送信中 ÷ 2, 2 × MSS) = ${numbers}${unchanged ? ' で、変わりません' : ''}。${window}。`,
   );
 }
 
@@ -103,7 +103,6 @@ export function runCongestionTrace(): CongestionRun {
       kind,
       mss: after.mss,
       inflightBefore: before.inflight,
-      cwndBefore: before.cwnd,
       ssthreshBefore: before.ssthresh,
       ssthresh: after.ssthresh,
       cwnd: after.cwnd,
@@ -220,7 +219,7 @@ export default function TcpCongestionDemo() {
   );
 }
 
-function TcpCongestionDemoInner() {
+export function TcpCongestionDemoInner() {
   const t = useT();
   // Empty until the learner runs it. The trace is deterministic, so drawing it
   // at mount made the lesson's one button recompute an identical array — press
@@ -327,8 +326,8 @@ function TcpCongestionDemoInner() {
         >
           <p style={{ margin: 0 }}>
             {t(
-              'The first ACKs grow cwnd from two MSS (2000 bytes) through slow start until it reaches ssthresh, 4000 bytes.',
-              '最初の ACK が届くたびに、cwnd は 2 MSS (2000 バイト) からスロースタートで増えていき、ssthresh の 4000 バイトに達するまで続きます。',
+              'The first ACKs grow cwnd from two MSS (2000 bytes) through slow start until it reaches ssthresh, 4000 bytes. These two starting values are chosen small here so that the whole trace fits on the chart: real stacks start with ssthresh effectively unbounded (RFC 5681 says to set it arbitrarily high) and, since RFC 6928, an initial window of up to 10 segments.',
+              '最初の ACK が届くたびに、cwnd は 2 MSS (2000 バイト) からスロースタートで増えていき、ssthresh の 4000 バイトに達するまで続きます。この 2 つの初期値は、トレース全体がグラフに収まるように、ここではあえて小さくしてあります。実際の TCP 実装では、ssthresh の初期値は事実上無制限で (RFC 5681 は任意に大きな値にするよう定めています)、初期ウィンドウは RFC 6928 以降、最大 10 セグメントです。',
             )}
           </p>
           <p style={{ margin: 0 }}>

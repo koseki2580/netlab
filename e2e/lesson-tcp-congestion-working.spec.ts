@@ -3,7 +3,8 @@ import { SEL } from './selectors';
 
 /**
  * TC-280, TC-281, TC-282 — the congestion lesson shows how each loss event's
- * numbers were worked out.
+ * numbers were worked out. TC-312 — by RFC 5681's rule, which halves the
+ * flight size and does not involve cwnd.
  *
  * The readout gave ssthresh 2000 B at step 9 and again at step 12 without the
  * rule that produced it, so a reader could not tell why a second loss left the
@@ -23,7 +24,7 @@ test('the congestion lesson works out ssthresh and cwnd at each loss event', asy
   // TC-282: the trace opens on the timeout.
   await expect(readout).toContainText('Step 12 of 12');
   await expect(working).toHaveText(
-    'ssthresh = max(max(in flight, cwnd) ÷ 2, 2 × MSS) = max(max(2000, 2000) ÷ 2, 2 × 1000) = max(1000, 2000) = 2000 B, so it does not change. cwnd = 1 × MSS = 1000 B.',
+    'ssthresh = max(in flight ÷ 2, 2 × MSS) = max(2000 ÷ 2, 2 × 1000) = max(1000, 2000) = 2000 B, so it does not change. cwnd = 1 × MSS = 1000 B.',
   );
 
   // A step that changes neither has no working.
@@ -40,7 +41,7 @@ test('the congestion lesson works out ssthresh and cwnd at each loss event', asy
   // TC-280
   await step.fill('9');
   await expect(working).toHaveText(
-    'ssthresh = max(max(in flight, cwnd) ÷ 2, 2 × MSS) = max(max(4000, 4000) ÷ 2, 2 × 1000) = max(2000, 2000) = 2000 B. cwnd = ssthresh + 3 × MSS = 2000 + 3 × 1000 = 5000 B.',
+    'ssthresh = max(in flight ÷ 2, 2 × MSS) = max(4000 ÷ 2, 2 × 1000) = max(2000, 2000) = 2000 B. cwnd = ssthresh + 3 × MSS = 2000 + 3 × 1000 = 5000 B.',
   );
   await expect(readout).toContainText('cwnd 5000 B');
   await expect(readout).toContainText('ssthresh 2000 B');

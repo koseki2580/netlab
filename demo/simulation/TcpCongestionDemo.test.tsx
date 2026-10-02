@@ -2,7 +2,9 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { TcpCongestionPanel } from '../../src/components/simulation/TcpCongestionPanel';
+import { GalleryLocaleProvider, type GalleryLocale } from '../localeContext';
 import TcpCongestionDemo, {
+  TcpCongestionDemoInner,
   congestionWorkingText,
   runCongestionScenario,
   runCongestionTrace,
@@ -98,8 +100,10 @@ describe('TcpCongestionDemo', () => {
   });
 
   // TC-280, TC-281, TC-282 — each loss event's new threshold is worked out on
-  // the page with the trace's own numbers. The engine halves the larger of the
-  // bytes in flight and cwnd, so the working names both.
+  // the page with the trace's own numbers.
+  // TC-312 — the rule is RFC 5681 equation (4): half the flight size, never
+  // less than two segments. cwnd is not part of it, so the working does not
+  // name it.
   describe('the working behind each change of threshold', () => {
     const en = (english: string) => english;
     const ja = (_english: string, japanese: string) => japanese;
@@ -115,10 +119,10 @@ describe('TcpCongestionDemo', () => {
 
     it('works out ssthresh and cwnd at the fast retransmit, step 9', () => {
       expect(congestionWorkingText(at(9), en)).toBe(
-        'ssthresh = max(max(in flight, cwnd) ÷ 2, 2 × MSS) = max(max(4000, 4000) ÷ 2, 2 × 1000) = max(2000, 2000) = 2000 B. cwnd = ssthresh + 3 × MSS = 2000 + 3 × 1000 = 5000 B.',
+        'ssthresh = max(in flight ÷ 2, 2 × MSS) = max(4000 ÷ 2, 2 × 1000) = max(2000, 2000) = 2000 B. cwnd = ssthresh + 3 × MSS = 2000 + 3 × 1000 = 5000 B.',
       );
       expect(congestionWorkingText(at(9), ja)).toBe(
-        'ssthresh = max(max(送信中, cwnd) ÷ 2, 2 × MSS) = max(max(4000, 4000) ÷ 2, 2 × 1000) = max(2000, 2000) = 2000 B。cwnd = ssthresh + 3 × MSS = 2000 + 3 × 1000 = 5000 B。',
+        'ssthresh = max(送信中 ÷ 2, 2 × MSS) = max(4000 ÷ 2, 2 × 1000) = max(2000, 2000) = 2000 B。cwnd = ssthresh + 3 × MSS = 2000 + 3 × 1000 = 5000 B。',
       );
     });
 
@@ -133,10 +137,58 @@ describe('TcpCongestionDemo', () => {
 
     it('works out the unchanged ssthresh and the one-MSS cwnd at the RTO, step 12', () => {
       expect(congestionWorkingText(at(12), en)).toBe(
-        'ssthresh = max(max(in flight, cwnd) ÷ 2, 2 × MSS) = max(max(2000, 2000) ÷ 2, 2 × 1000) = max(1000, 2000) = 2000 B, so it does not change. cwnd = 1 × MSS = 1000 B.',
+        'ssthresh = max(in flight ÷ 2, 2 × MSS) = max(2000 ÷ 2, 2 × 1000) = max(1000, 2000) = 2000 B, so it does not change. cwnd = 1 × MSS = 1000 B.',
       );
       expect(congestionWorkingText(at(12), ja)).toBe(
-        'ssthresh = max(max(送信中, cwnd) ÷ 2, 2 × MSS) = max(max(2000, 2000) ÷ 2, 2 × 1000) = max(1000, 2000) = 2000 B で、変わりません。cwnd = 1 × MSS = 1000 B。',
+        'ssthresh = max(送信中 ÷ 2, 2 × MSS) = max(2000 ÷ 2, 2 × 1000) = max(1000, 2000) = 2000 B で、変わりません。cwnd = 1 × MSS = 1000 B。',
+      );
+    });
+    // TC-312 — the numbers are the trace's: a sender with a wide window and
+    // little outstanding halves what is outstanding, not the window.
+    it('halves the bytes in flight, not cwnd, when the two differ', () => {
+      expect(
+        congestionWorkingText(
+          {
+            stepIndex: 4,
+            kind: 'fast-retransmit',
+            mss: 1000,
+            inflightBefore: 6000,
+            ssthreshBefore: 64000,
+            ssthresh: 3000,
+            cwnd: 6000,
+          },
+          en,
+        ),
+      ).toBe(
+        'ssthresh = max(in flight ÷ 2, 2 × MSS) = max(6000 ÷ 2, 2 × 1000) = max(3000, 2000) = 3000 B. cwnd = ssthresh + 3 × MSS = 3000 + 3 × 1000 = 6000 B.',
+      );
+    });
+
+    it('takes the flight size at both loss events from the trace, where it equals cwnd', () => {
+      expect(at(9)).toMatchObject({ inflightBefore: 4000, ssthresh: 2000, cwnd: 5000 });
+      expect(at(12)).toMatchObject({ inflightBefore: 2000, ssthresh: 2000, cwnd: 1000 });
+    });
+  });
+
+  // TC-313 — the trace starts from ssthresh 4000 B and a two-segment window.
+  // Neither is what a real stack starts from, and the lesson says so.
+  describe('the starting values', () => {
+    const textIn = (locale: GalleryLocale) =>
+      renderToStaticMarkup(
+        <GalleryLocaleProvider locale={locale}>
+          <TcpCongestionDemoInner />
+        </GalleryLocaleProvider>,
+      ).replace(/<[^>]+>/g, '');
+
+    it('are labelled as the lesson’s choice, beside what real stacks use', () => {
+      expect(textIn('en')).toContain(
+        'These two starting values are chosen small here so that the whole trace fits on the chart: real stacks start with ssthresh effectively unbounded (RFC 5681 says to set it arbitrarily high) and, since RFC 6928, an initial window of up to 10 segments.',
+      );
+    });
+
+    it('are labelled the same way in Japanese', () => {
+      expect(textIn('ja')).toContain(
+        'この 2 つの初期値は、トレース全体がグラフに収まるように、ここではあえて小さくしてあります。実際の TCP 実装では、ssthresh の初期値は事実上無制限で (RFC 5681 は任意に大きな値にするよう定めています)、初期ウィンドウは RFC 6928 以降、最大 10 セグメントです。',
       );
     });
   });

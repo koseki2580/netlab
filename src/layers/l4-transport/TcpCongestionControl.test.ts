@@ -127,4 +127,52 @@ describe('TcpCongestionControl', () => {
       seq: 1001,
     });
   });
+
+  // TC-312 — RFC 5681 equation (4): ssthresh = max(FlightSize / 2, 2 * SMSS).
+  // FlightSize is the data outstanding; cwnd is not part of it, so a sender
+  // that has not filled its window gets the lower threshold.
+  describe('the threshold a loss sets, for a sender whose flight size is below cwnd', () => {
+    const senderWith = (outstandingBytes: number) => {
+      const control = new TcpCongestionControl({ mss: 1000, iwSegments: 8 });
+      for (let sent = 0; sent < outstandingBytes; sent += 1000) {
+        control.onSegmentSent(1001 + sent, 1000, 1);
+      }
+      expect(control.state.cwnd).toBe(8000);
+      expect(control.state.inflight).toBe(outstandingBytes);
+      return control;
+    };
+    const thirdDupAck = (control: TcpCongestionControl) => {
+      control.onDupAck(1001, 2);
+      control.onDupAck(1001, 3);
+      control.onDupAck(1001, 4);
+    };
+
+    it.each([
+      [3000, 2000],
+      [6000, 3000],
+      [0, 2000],
+    ])('on three duplicate ACKs with %i B outstanding sets ssthresh %i B', (outstanding, want) => {
+      const control = senderWith(outstanding);
+
+      thirdDupAck(control);
+
+      expect(control.state.phase).toBe('fast-recovery');
+      expect(control.state.ssthresh).toBe(want);
+      expect(control.state.cwnd).toBe(want + 3000);
+    });
+
+    it.each([
+      [3000, 2000],
+      [6000, 3000],
+      [0, 2000],
+    ])('on a timeout with %i B outstanding sets ssthresh %i B', (outstanding, want) => {
+      const control = senderWith(outstanding);
+
+      control.onRto(1001, 2);
+
+      expect(control.state.phase).toBe('rto');
+      expect(control.state.ssthresh).toBe(want);
+      expect(control.state.cwnd).toBe(1000);
+    });
+  });
 });

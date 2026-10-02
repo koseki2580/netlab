@@ -160,8 +160,13 @@ export class TcpCongestionControl {
     this.eventLog.push({ type: 'fast-retransmit', seq: ackNo, stepIndex });
   }
 
+  /**
+   * RFC 5681 equation (4): ssthresh = max(FlightSize / 2, 2 * SMSS). FlightSize
+   * is the data sent and not yet acknowledged; cwnd is not part of it. With
+   * nothing outstanding the floor of two segments applies.
+   */
   private lossWindowThreshold(): number {
-    const flightSize = Math.max(this.currentState.inflight, this.currentState.cwnd);
+    const flightSize = this.currentState.inflight;
     return Math.max(MIN_SSTHRESH_SEGMENTS * this.currentState.mss, Math.floor(flightSize / 2));
   }
 
