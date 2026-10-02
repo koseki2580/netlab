@@ -2,7 +2,7 @@ import { useT } from '../localeContext';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
-import { ResizableSidebar } from '../../src/components/ResizableSidebar';
+import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import { HopInspector } from '../../src/components/simulation/HopInspector';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { TraceSummary } from '../../src/components/simulation/TraceSummary';
@@ -291,10 +291,9 @@ function MulticastDemoInner() {
   const lastHop = activeTrace?.hops[activeTrace.hops.length - 1];
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-        <NetlabCanvas />
-        <div
+    <LessonSplit>
+      <LessonCanvas canvas={<NetlabCanvas />}>
+        <LessonNote
           style={{
             position: 'absolute',
             top: 12,
@@ -322,10 +321,10 @@ function MulticastDemoInner() {
               ' を押すと、詳細パネルでマルチキャストのスヌーピング表が見られます。',
             )}
           </div>
-        </div>
-      </div>
+        </LessonNote>
+      </LessonCanvas>
 
-      <ResizableSidebar
+      <LessonPanel
         defaultWidth={420}
         maxWidth={680}
         style={{
@@ -542,8 +541,8 @@ function MulticastDemoInner() {
             </div>
           </div>
         </div>
-      </ResizableSidebar>
-    </div>
+      </LessonPanel>
+    </LessonSplit>
   );
 }
 

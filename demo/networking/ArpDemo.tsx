@@ -4,7 +4,7 @@ import DemoShell from '../DemoShell';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
-import { ResizableSidebar } from '../../src/components/ResizableSidebar';
+import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import { HopInspector } from '../../src/components/simulation/HopInspector';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationOverlayDock } from '../../src/components/simulation/SimulationOverlayDock';
@@ -132,11 +132,16 @@ function ArpDemoInner() {
   };
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-        <NetlabCanvas />
-        <SimulationOverlayDock showRouteTable={false} />
-        <div
+    <LessonSplit>
+      <LessonCanvas
+        canvas={
+          <>
+            <NetlabCanvas />
+            <SimulationOverlayDock showRouteTable={false} />
+          </>
+        }
+      >
+        <LessonNote
           data-testid="lesson-brief"
           style={{
             position: 'absolute',
@@ -174,10 +179,10 @@ function ArpDemoInner() {
               '右のタイムラインで、パケットが先へ進む前に行われる ARP の要求と応答を確かめてください。',
             )}
           </div>
-        </div>
-      </div>
+        </LessonNote>
+      </LessonCanvas>
 
-      <ResizableSidebar
+      <LessonPanel
         defaultWidth={460}
         maxWidth={760}
         style={{
@@ -239,8 +244,8 @@ function ArpDemoInner() {
             </div>
           )}
         </div>
-      </ResizableSidebar>
-    </div>
+      </LessonPanel>
+    </LessonSplit>
   );
 }
 

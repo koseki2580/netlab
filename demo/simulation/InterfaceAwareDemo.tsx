@@ -2,7 +2,7 @@ import { useT } from '../localeContext';
 import { useEffect, useRef, type CSSProperties } from 'react';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
-import { ResizableSidebar } from '../../src/components/ResizableSidebar';
+import { LessonCanvas, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import { useNetlabContext } from '../../src/components/NetlabContext';
 import { HopInspector } from '../../src/components/simulation/HopInspector';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
@@ -267,12 +267,10 @@ function InterfaceAwareDemoControls() {
 
 function InterfaceAwareDemoInner() {
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-        <NetlabCanvas />
-      </div>
+    <LessonSplit>
+      <LessonCanvas canvas={<NetlabCanvas />} />
 
-      <ResizableSidebar
+      <LessonPanel
         defaultWidth={420}
         maxWidth={700}
         style={{
@@ -313,8 +311,8 @@ function InterfaceAwareDemoInner() {
 
           <InterfaceAwareDemoControls />
         </div>
-      </ResizableSidebar>
-    </div>
+      </LessonPanel>
+    </LessonSplit>
   );
 }
 

@@ -25,7 +25,6 @@ import {
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
-import { ResizableSidebar } from '../../src/components/ResizableSidebar';
 import { PacketScrubTimeline } from '../../src/components/simulation/PacketScrubTimeline';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationOverlayDock } from '../../src/components/simulation/SimulationOverlayDock';
@@ -42,6 +41,8 @@ import { readDemoEmbedParams } from '../embedParams';
 import { useShellChrome } from '../ShellChromeContext';
 import { useSandboxOrNull } from '../../src/sandbox/useSandbox';
 import { useGalleryLocale, useT } from '../localeContext';
+import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../components/LessonPanel';
+import { useViewport } from '../../src/utils/useViewport';
 import { LinkCostsPanel } from './OspfLinkCosts';
 import { routeNextHops } from './routeDisplay';
 
@@ -382,6 +383,7 @@ function OspfConvergenceInner({
   onProbeFinished: (run: ProbeRun) => void;
 }) {
   const t = useT();
+  const { isNarrow } = useViewport();
   const locale = useGalleryLocale();
   // The network before the failure, for the route tables to compare against.
   const beforeFailure = useMemo(
@@ -632,6 +634,22 @@ function OspfConvergenceInner({
     }
   };
 
+  // A guided intro or an assessment is the more specific guidance the learner
+  // asked for; two greetings at once talk over each other, and the brief is modal.
+  const preFlightBrief = !guided && (
+    <PreFlightBrief
+      scenarioId="ospf-convergence"
+      {...(locale === 'ja' && BRIEF_JA ? { brief: BRIEF_JA } : {})}
+      audience={audience}
+      isLastStep={isLastStep}
+      onAction={(actionId) => {
+        if (actionId === 'gallery') void navigate('/');
+        else if (actionId === 'fork') handleFork();
+      }}
+      conclusionExtra={<NextScenarioRail next={nextScenarios} onOpen={openScenario} />}
+    />
+  );
+
   return (
     <NetlabAppShellV2
       scenarioId="ospf-convergence"
@@ -699,16 +717,29 @@ function OspfConvergenceInner({
             onClose={handleCloseFork}
           />
         )}
-        <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
-              <NetlabCanvas>
-                <DropEventOverlay />
-              </NetlabCanvas>
-              {/* The route tables live in the side rail; over the canvas they hid R4. */}
-              <SimulationOverlayDock showRouteTable={false} />
-              <ZeroStateHint />
-              <div
+        <LessonSplit style={{ flex: 1, minHeight: 0 }}>
+          <div
+            style={
+              isNarrow
+                ? { flexShrink: 0, position: 'relative' }
+                : { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }
+            }
+          >
+            <LessonCanvas
+              style={{ flex: 1, position: 'relative', minHeight: 0 }}
+              canvas={
+                <>
+                  <NetlabCanvas>
+                    <DropEventOverlay />
+                  </NetlabCanvas>
+                  {/* The route tables live in the side rail; over the canvas they hid R4. */}
+                  <SimulationOverlayDock showRouteTable={false} />
+                  <ZeroStateHint />
+                  {!isNarrow && preFlightBrief}
+                </>
+              }
+            >
+              <LessonNote
                 style={{
                   position: 'absolute',
                   top: 12,
@@ -741,28 +772,15 @@ function OspfConvergenceInner({
                     '主経路のリンクを切り替えてからプローブを送り直し、計算し直した経路が R3 経由になったことを確かめてください。',
                   )}
                 </div>
-              </div>
-              {/* A guided intro or an assessment is the more specific guidance
-                  the learner asked for; two greetings at once talk over each
-                  other, and the brief is modal. */}
-              {!guided && (
-                <PreFlightBrief
-                  scenarioId="ospf-convergence"
-                  {...(locale === 'ja' && BRIEF_JA ? { brief: BRIEF_JA } : {})}
-                  audience={audience}
-                  isLastStep={isLastStep}
-                  onAction={(actionId) => {
-                    if (actionId === 'gallery') void navigate('/');
-                    else if (actionId === 'fork') handleFork();
-                  }}
-                  conclusionExtra={<NextScenarioRail next={nextScenarios} onOpen={openScenario} />}
-                />
-              )}
-            </div>
+              </LessonNote>
+            </LessonCanvas>
             <PacketScrubTimeline ownKeyboard={false} />
+            {/* The narrow canvas is too short for the brief's card, so there
+                it covers the note, the canvas and the scrubber together. */}
+            {isNarrow && preFlightBrief}
           </div>
 
-          <ResizableSidebar
+          <LessonPanel
             defaultWidth={460}
             maxWidth={760}
             style={{
@@ -803,8 +821,8 @@ function OspfConvergenceInner({
                 <StepControls />
               </div>
             </div>
-          </ResizableSidebar>
-        </div>
+          </LessonPanel>
+        </LessonSplit>
       </div>
     </NetlabAppShellV2>
   );

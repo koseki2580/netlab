@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { AreaLegend } from '../../src/components/controls/AreaLegend';
+import { RouteTablePanel } from '../../src/components/controls/RouteTable';
+import { PacketViewerPanel } from '../../src/components/simulation/PacketViewer';
+import { useViewport } from '../../src/utils/useViewport';
 import { SimulationProvider } from '../../src/simulation/SimulationContext';
 import { SimulationControls } from '../../src/components/simulation/SimulationControls';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationOverlayDock } from '../../src/components/simulation/SimulationOverlayDock';
-import { ResizableSidebar } from '../../src/components/ResizableSidebar';
+import { LessonCanvas, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import type { NetworkTopology } from '../../src/types/topology';
 import type { NetworkArea } from '../../src/types/areas';
 import { encodeTopology, decodeTopology } from '../../src/utils/topology-url';
@@ -176,6 +179,7 @@ function ClientServerBrief() {
 export default function ClientServerDemo() {
   const topology = decodeTopology(window.location.search) ?? INITIAL_TOPOLOGY;
   const [copied, setCopied] = useState(false);
+  const { isNarrow } = useViewport();
 
   const handleCopyLink = () => {
     const qs = encodeTopology(topology);
@@ -201,6 +205,9 @@ export default function ClientServerDemo() {
                 alignItems: 'center',
                 gap: 12,
                 flexShrink: 0,
+                // The controls are wider than a phone; without this the ones
+                // past the right edge could not be reached.
+                ...(isNarrow ? { overflowX: 'auto' } : {}),
               }}
             >
               {/* SimulationControls owns Send Packet + Play/Pause/Step/Reset */}
@@ -227,16 +234,21 @@ export default function ClientServerDemo() {
             </div>
 
             {/* Main content */}
-            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+            <LessonSplit style={{ flex: 1, overflow: 'hidden' }}>
               {/* Canvas */}
-              <div style={{ flex: 1, position: 'relative' }}>
-                <NetlabCanvas />
-                <SimulationOverlayDock showRouteTable />
-                <AreaLegend />
-              </div>
+              <LessonCanvas
+                style={{ flex: 1, position: 'relative' }}
+                canvas={
+                  <>
+                    <NetlabCanvas />
+                    {!isNarrow && <SimulationOverlayDock showRouteTable />}
+                    {!isNarrow && <AreaLegend />}
+                  </>
+                }
+              />
 
               {/* Timeline panel */}
-              <ResizableSidebar
+              <LessonPanel
                 defaultWidth={320}
                 style={{
                   background: 'var(--netlab-bg-primary)',
@@ -246,9 +258,22 @@ export default function ClientServerDemo() {
                 }}
               >
                 <ClientServerBrief />
+                {/* Over a phone-width canvas the route table and the legend
+                    hid every device, so there they are read in the panel
+                    instead. The legend places itself against the bottom of
+                    its box, which is given the height of its two rows. */}
+                {isNarrow && (
+                  <div style={{ display: 'grid', gap: 12, padding: 12 }}>
+                    <div style={{ position: 'relative', height: 96 }}>
+                      <AreaLegend />
+                    </div>
+                    <RouteTablePanel />
+                    <PacketViewerPanel />
+                  </div>
+                )}
                 <PacketTimeline />
-              </ResizableSidebar>
-            </div>
+              </LessonPanel>
+            </LessonSplit>
           </div>
         </SimulationProvider>
       </NetlabProvider>

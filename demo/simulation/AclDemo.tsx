@@ -3,7 +3,7 @@ import DemoShell from '../DemoShell';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { LegendPanel } from '../../src/components/LegendPanel';
-import { ResizableSidebar } from '../../src/components/ResizableSidebar';
+import { LessonCanvas, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import { DropEventOverlay } from '../../src/components/simulation/DropEventOverlay';
 import { HopInspector } from '../../src/components/simulation/HopInspector';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
@@ -11,6 +11,7 @@ import { SimulationControls } from '../../src/components/simulation/SimulationCo
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import type { InFlightPacket } from '../../src/types/packets';
 import type { NetworkTopology } from '../../src/types/topology';
+import { useViewport } from '../../src/utils/useViewport';
 
 export const ACL_DEMO_TOPOLOGY: NetworkTopology = {
   nodes: [
@@ -192,17 +193,23 @@ function ActionButton({
 function AclDemoInner() {
   const t = useT();
   const { sendPacket } = useSimulation();
+  const { isNarrow } = useViewport();
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-        <NetlabCanvas>
-          <DropEventOverlay />
-        </NetlabCanvas>
-        <LegendPanel />
-      </div>
+    <LessonSplit>
+      <LessonCanvas
+        canvas={
+          <>
+            <NetlabCanvas>
+              <DropEventOverlay />
+            </NetlabCanvas>
+            {/* A narrow canvas has its zoom buttons where the legend sits. */}
+            <LegendPanel {...(isNarrow ? { style: { right: 'auto', left: 12 } } : {})} />
+          </>
+        }
+      />
 
-      <ResizableSidebar
+      <LessonPanel
         defaultWidth={500}
         maxWidth={760}
         style={{
@@ -346,8 +353,8 @@ function AclDemoInner() {
               learner who used it saw the return dropped. */}
           <SimulationControls showSend={false} />
         </div>
-      </ResizableSidebar>
-    </div>
+      </LessonPanel>
+    </LessonSplit>
   );
 }
 

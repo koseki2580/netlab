@@ -3,7 +3,7 @@ import { useMemo, useState, type CSSProperties } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
-import { ResizableSidebar } from '../../src/components/ResizableSidebar';
+import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import { FailureTogglePanel } from '../../src/components/simulation/FailureTogglePanel';
 import { SessionDetail } from '../../src/components/simulation/SessionDetail';
 import { SessionList } from '../../src/components/simulation/SessionList';
@@ -330,11 +330,9 @@ function SessionDemoInner() {
   };
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-        <NetlabCanvas />
-
-        <div
+    <LessonSplit>
+      <LessonCanvas canvas={<NetlabCanvas />}>
+        <LessonNote
           style={{
             position: 'absolute',
             top: 12,
@@ -371,10 +369,10 @@ function SessionDemoInner() {
                 )
               : ''}
           </span>
-        </div>
-      </div>
+        </LessonNote>
+      </LessonCanvas>
 
-      <ResizableSidebar
+      <LessonPanel
         defaultWidth={460}
         maxWidth={760}
         style={{
@@ -402,8 +400,8 @@ function SessionDemoInner() {
             <FailureTogglePanel />
           </div>
         </div>
-      </ResizableSidebar>
-    </div>
+      </LessonPanel>
+    </LessonSplit>
   );
 }
 

@@ -3,7 +3,7 @@ import { useMemo, useState, type CSSProperties } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
-import { ResizableSidebar } from '../../src/components/ResizableSidebar';
+import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import { SessionDetail } from '../../src/components/simulation/SessionDetail';
 import { SessionList } from '../../src/components/simulation/SessionList';
 import { SessionProvider, useSession } from '../../src/simulation/SessionContext';
@@ -364,11 +364,9 @@ function HttpDemoInner() {
   };
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-        <NetlabCanvas />
-
-        <div
+    <LessonSplit>
+      <LessonCanvas canvas={<NetlabCanvas />}>
+        <LessonNote
           style={{
             position: 'absolute',
             top: 12,
@@ -416,10 +414,10 @@ function HttpDemoInner() {
             <span data-testid="http-session-count">{sessionCount}</span>
             {t(sessionCount === 1 ? ' session' : ' sessions', ' 件のセッション')}
           </span>
-        </div>
+        </LessonNote>
 
         {lastResponseBody != null && (
-          <div
+          <LessonNote
             style={{
               position: 'absolute',
               bottom: 12,
@@ -441,11 +439,11 @@ function HttpDemoInner() {
             {lastResponseBody.length > 200
               ? `${lastResponseBody.slice(0, 200)}…`
               : lastResponseBody}
-          </div>
+          </LessonNote>
         )}
-      </div>
+      </LessonCanvas>
 
-      <ResizableSidebar defaultWidth={340} minWidth={280} maxWidth={600}>
+      <LessonPanel defaultWidth={340} minWidth={280} maxWidth={600}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%' }}>
           <div tabIndex={0} style={{ flex: '0 0 auto', maxHeight: '40%', overflow: 'auto' }}>
             <SessionList />
@@ -454,8 +452,8 @@ function HttpDemoInner() {
             <SessionDetail />
           </div>
         </div>
-      </ResizableSidebar>
-    </div>
+      </LessonPanel>
+    </LessonSplit>
   );
 }
 

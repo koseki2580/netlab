@@ -3,7 +3,7 @@ import type { DhcpLeaseState } from '../../src/types/services';
 import { useT } from '../localeContext';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
-import { ResizableSidebar } from '../../src/components/ResizableSidebar';
+import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import { StepControls } from '../../src/components/simulation/StepControls';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import type { InFlightPacket } from '../../src/types/packets';
@@ -176,11 +176,9 @@ function DhcpDnsDemoInner() {
   };
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-        <NetlabCanvas />
-
-        <div
+    <LessonSplit>
+      <LessonCanvas canvas={<NetlabCanvas />}>
+        <LessonNote
           data-canvas-overlay=""
           style={{
             position: 'absolute',
@@ -295,10 +293,10 @@ function DhcpDnsDemoInner() {
               </div>
             ) : null}
           </div>
-        </div>
-      </div>
+        </LessonNote>
+      </LessonCanvas>
 
-      <ResizableSidebar
+      <LessonPanel
         defaultWidth={420}
         maxWidth={700}
         style={{
@@ -307,8 +305,8 @@ function DhcpDnsDemoInner() {
         }}
       >
         <StepControls continueAcrossTraces />
-      </ResizableSidebar>
-    </div>
+      </LessonPanel>
+    </LessonSplit>
   );
 }
 

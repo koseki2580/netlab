@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState, type CSSProperties } from 'react';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { useNetlabContext } from '../../src/components/NetlabContext';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
-import { ResizableSidebar } from '../../src/components/ResizableSidebar';
+import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import {
   compareBridgeId,
   DEFAULT_BRIDGE_PRIORITY,
@@ -649,10 +649,9 @@ function StpLoopDemoInner({
   };
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ flex: 1, position: 'relative' }}>
-        <NetlabCanvas />
-        <div
+    <LessonSplit>
+      <LessonCanvas style={{ flex: 1, position: 'relative' }} canvas={<NetlabCanvas />}>
+        <LessonNote
           style={{
             position: 'absolute',
             left: 16,
@@ -672,10 +671,10 @@ function StpLoopDemoInner({
             'Default root is Switch A, and spanning tree blocks the Switch B – Switch C link. Press B → C: the blocked segment is not used; traffic detours through Switch A. Lower Switch B or C priority to re-elect the root.',
             '最初のルートは Switch A で、スパニングツリーは Switch B – Switch C のリンクを遮断しています。B → C を押すと、遮断された区間は使われず、Switch A を経由して迂回します。Switch B か C の優先度を下げると、ルートを選び直します。',
           )}
-        </div>
-      </div>
+        </LessonNote>
+      </LessonCanvas>
 
-      <ResizableSidebar defaultWidth={420} minWidth={320} maxWidth={560}>
+      <LessonPanel defaultWidth={420} minWidth={320} maxWidth={560}>
         <div
           style={{
             height: '100%',
@@ -830,8 +829,8 @@ function StpLoopDemoInner({
             <StpStatusCard switchId="switch-c" />
           </div>
         </div>
-      </ResizableSidebar>
-    </div>
+      </LessonPanel>
+    </LessonSplit>
   );
 }
 

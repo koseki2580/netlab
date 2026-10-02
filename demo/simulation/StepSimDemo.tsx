@@ -4,7 +4,7 @@ import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import { StepControls } from '../../src/components/simulation/StepControls';
 import { PacketStructureViewer } from '../../src/components/simulation/PacketStructureViewer';
-import { ResizableSidebar } from '../../src/components/ResizableSidebar';
+import { LessonCanvas, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import { useNetlabContext } from '../../src/components/NetlabContext';
 import DemoShell from '../DemoShell';
 import { STEP_SIM_TOPOLOGY, buildStepSimPacket } from './stepSimShared';
@@ -23,13 +23,14 @@ function StepSimDemoInner() {
   }, []); // run once on mount
 
   return (
-    <div style={{ display: 'flex', height: '100%', minHeight: 0 }}>
+    <LessonSplit style={{ height: '100%', minHeight: 0 }}>
       {/* Canvas area */}
-      <div style={{ flex: 1, minWidth: 0, minHeight: 0, position: 'relative' }}>
-        <NetlabCanvas />
-      </div>
+      <LessonCanvas
+        style={{ flex: 1, minWidth: 0, minHeight: 0, position: 'relative' }}
+        canvas={<NetlabCanvas />}
+      />
       {/* Step controls side panel */}
-      <ResizableSidebar
+      <LessonPanel
         defaultWidth={480}
         maxWidth={700}
         style={{
@@ -52,8 +53,8 @@ function StepSimDemoInner() {
           </div>
           <PacketStructureViewer />
         </div>
-      </ResizableSidebar>
-    </div>
+      </LessonPanel>
+    </LessonSplit>
   );
 }
 

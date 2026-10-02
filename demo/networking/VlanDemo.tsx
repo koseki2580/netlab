@@ -2,7 +2,7 @@ import { useT } from '../localeContext';
 import { useEffect, useRef, type CSSProperties } from 'react';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
-import { ResizableSidebar } from '../../src/components/ResizableSidebar';
+import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import { useNetlabContext } from '../../src/components/NetlabContext';
 import { HopInspector } from '../../src/components/simulation/HopInspector';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
@@ -299,10 +299,9 @@ function VlanDemoInner() {
       );
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-        <NetlabCanvas />
-        <div
+    <LessonSplit>
+      <LessonCanvas canvas={<NetlabCanvas />}>
+        <LessonNote
           style={{
             position: 'absolute',
             top: 12,
@@ -332,10 +331,10 @@ function VlanDemoInner() {
             <strong>R1</strong>
             {t(' to inspect sub-interfaces.', ' を押すとサブインタフェースが見られます。')}
           </div>
-        </div>
-      </div>
+        </LessonNote>
+      </LessonCanvas>
 
-      <ResizableSidebar
+      <LessonPanel
         defaultWidth={420}
         maxWidth={680}
         style={{
@@ -512,8 +511,8 @@ function VlanDemoInner() {
             </div>
           </div>
         </div>
-      </ResizableSidebar>
-    </div>
+      </LessonPanel>
+    </LessonSplit>
   );
 }
 

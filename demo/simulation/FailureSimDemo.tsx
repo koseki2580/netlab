@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
-import { ResizableSidebar } from '../../src/components/ResizableSidebar';
+import { LessonCanvas, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import { FailureTogglePanel } from '../../src/components/simulation/FailureTogglePanel';
 import { StepControls } from '../../src/components/simulation/StepControls';
 import { FailureProvider, useFailure } from '../../src/simulation/FailureContext';
@@ -232,24 +232,33 @@ function FailureSimDemoInner() {
     failureState.downInterfaceIds.size;
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ flex: 1, position: 'relative' }}>
-        <NetlabCanvas />
-        {downCount > 0 && (
-          <div style={{ position: 'absolute', top: 12, left: 12 }}>
-            <span
-              style={{ fontSize: 11, color: 'var(--netlab-accent-red)', fontFamily: 'monospace' }}
-            >
-              {t(
-                `${downCount} failure${downCount > 1 ? 's' : ''} active`,
-                `障害が ${downCount} 件起きています`,
-              )}
-            </span>
-          </div>
-        )}
-      </div>
+    <LessonSplit>
+      <LessonCanvas
+        style={{ flex: 1, position: 'relative' }}
+        canvas={
+          <>
+            <NetlabCanvas />
+            {downCount > 0 && (
+              <div style={{ position: 'absolute', top: 12, left: 12 }}>
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: 'var(--netlab-accent-red)',
+                    fontFamily: 'monospace',
+                  }}
+                >
+                  {t(
+                    `${downCount} failure${downCount > 1 ? 's' : ''} active`,
+                    `障害が ${downCount} 件起きています`,
+                  )}
+                </span>
+              </div>
+            )}
+          </>
+        }
+      />
 
-      <ResizableSidebar
+      <LessonPanel
         defaultWidth={300}
         style={{
           background: 'var(--netlab-bg-primary)',
@@ -289,8 +298,8 @@ function FailureSimDemoInner() {
         <div style={{ flex: 1, overflow: 'hidden' }}>
           <StepControls />
         </div>
-      </ResizableSidebar>
-    </div>
+      </LessonPanel>
+    </LessonSplit>
   );
 }
 

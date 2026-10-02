@@ -2,7 +2,7 @@ import { useT } from '../localeContext';
 import DemoShell from '../DemoShell';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
-import { ResizableSidebar } from '../../src/components/ResizableSidebar';
+import { LessonCanvas, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import { HopInspector } from '../../src/components/simulation/HopInspector';
 import { NatTableViewer } from '../../src/components/simulation/NatTableViewer';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
@@ -91,12 +91,10 @@ function NatDemoInner() {
   const { sendPacket } = useSimulation();
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-        <NetlabCanvas />
-      </div>
+    <LessonSplit>
+      <LessonCanvas canvas={<NetlabCanvas />} />
 
-      <ResizableSidebar
+      <LessonPanel
         defaultWidth={500}
         maxWidth={760}
         style={{
@@ -247,8 +245,8 @@ function NatDemoInner() {
         {/* No generic send here: it resets the engine, which empties the NAT
             table, so the sharing the lesson's own buttons built up vanished. */}
         <SimulationControls showSend={false} />
-      </ResizableSidebar>
-    </div>
+      </LessonPanel>
+    </LessonSplit>
   );
 }
 

@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
-import { ResizableSidebar } from '../../src/components/ResizableSidebar';
+import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import { HopInspector } from '../../src/components/simulation/HopInspector';
 import { NatTableViewer } from '../../src/components/simulation/NatTableViewer';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
@@ -1016,11 +1016,11 @@ function EnterpriseDemoInner({
   const t = useT();
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-        <NetlabCanvas nodeDetailsEditable onTopologyChange={onTopologyChange} />
-
-        <div
+    <LessonSplit>
+      <LessonCanvas
+        canvas={<NetlabCanvas nodeDetailsEditable onTopologyChange={onTopologyChange} />}
+      >
+        <LessonNote
           style={{
             position: 'absolute',
             top: 12,
@@ -1057,10 +1057,10 @@ function EnterpriseDemoInner({
               '機器を押すと、アドレス・経路・DHCP の配布範囲・DNS のゾーン・スイッチのポートをその場で編集できます。経路のハイライトが最初から有効なので、行きと帰りの通り道を見比べやすくなっています。',
             )}
           </div>
-        </div>
-      </div>
+        </LessonNote>
+      </LessonCanvas>
 
-      <ResizableSidebar
+      <LessonPanel
         defaultWidth={520}
         maxWidth={760}
         style={{
@@ -1104,8 +1104,8 @@ function EnterpriseDemoInner({
         </div>
 
         <SimulationControls />
-      </ResizableSidebar>
-    </div>
+      </LessonPanel>
+    </LessonSplit>
   );
 }
 

@@ -2,7 +2,7 @@ import { useT } from '../localeContext';
 import DemoShell from '../DemoShell';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
-import { ResizableSidebar } from '../../src/components/ResizableSidebar';
+import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import { PacketStructureViewer } from '../../src/components/simulation/PacketStructureViewer';
 import { StepControls } from '../../src/components/simulation/StepControls';
 import { tcpHandshake } from '../../src/scenarios';
@@ -185,7 +185,7 @@ function StateBadge({
   const meaning = useStateMeaning();
 
   return (
-    <div
+    <LessonNote
       data-testid={testId}
       style={{
         position: 'absolute',
@@ -212,7 +212,7 @@ function StateBadge({
         {state}
       </div>
       <div style={{ color: 'var(--netlab-text-secondary)', marginTop: 2 }}>{meaning(state)}</div>
-    </div>
+    </LessonNote>
   );
 }
 
@@ -385,11 +385,9 @@ function TcpHandshakeDemoInner() {
   };
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-        <NetlabCanvas />
-
-        <div
+    <LessonSplit>
+      <LessonCanvas canvas={<NetlabCanvas />}>
+        <LessonNote
           data-canvas-overlay=""
           style={{
             position: 'absolute',
@@ -449,9 +447,9 @@ function TcpHandshakeDemoInner() {
               '右の通信一覧から、SYN・SYN-ACK・ACK・FIN のやり取りを1つずつ追えます。',
             )}
           </span>
-        </div>
+        </LessonNote>
 
-        <div
+        <LessonNote
           data-testid="tcp-teaching-flow"
           data-canvas-overlay=""
           style={{
@@ -496,7 +494,7 @@ function TcpHandshakeDemoInner() {
               '状態は、いま見ているステップに合わせて変わります。セグメントが相手に届いた（DELIVER の）ときに、届いた側の状態が変わります。クライアントは SYN-ACK が届いた時点で ESTABLISHED（接続完了）、サーバは最後の ACK が届いてから ESTABLISHED です。',
             )}
           </div>
-        </div>
+        </LessonNote>
 
         <StateBadge
           label={t('Client State', 'クライアントの状態')}
@@ -512,9 +510,9 @@ function TcpHandshakeDemoInner() {
           top={100}
           testId="tcp-server-state"
         />
-      </div>
+      </LessonCanvas>
 
-      <ResizableSidebar
+      <LessonPanel
         defaultWidth={520}
         maxWidth={760}
         style={{
@@ -537,8 +535,8 @@ function TcpHandshakeDemoInner() {
             <PacketStructureViewer />
           </div>
         </div>
-      </ResizableSidebar>
-    </div>
+      </LessonPanel>
+    </LessonSplit>
   );
 }
 

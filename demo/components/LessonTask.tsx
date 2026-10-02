@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
-import { ResizableSidebar } from '../../src/components/ResizableSidebar';
+import { LessonCanvas, LessonPanel, LessonSplit } from './LessonPanel';
 import { buildUdpPacket } from '../../src/layers/l4-transport/udpPacketBuilder';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import type { NetworkTopology } from '../../src/types/topology';
@@ -150,16 +150,14 @@ export function TaskLesson({ topology, ...task }: LessonTaskProps & { topology: 
   return (
     <NetlabProvider topology={topology}>
       <SimulationProvider>
-        <div style={{ display: 'flex', height: '100%' }}>
-          <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-            <NetlabCanvas />
-          </div>
-          <ResizableSidebar defaultWidth={340}>
+        <LessonSplit>
+          <LessonCanvas canvas={<NetlabCanvas />} />
+          <LessonPanel defaultWidth={340}>
             <div style={{ padding: 12 }}>
               <LessonTask {...task} />
             </div>
-          </ResizableSidebar>
-        </div>
+          </LessonPanel>
+        </LessonSplit>
       </SimulationProvider>
     </NetlabProvider>
   );

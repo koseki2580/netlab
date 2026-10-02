@@ -3,7 +3,7 @@ import { useState, type CSSProperties } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
-import { ResizableSidebar } from '../../src/components/ResizableSidebar';
+import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import { HopInspector } from '../../src/components/simulation/HopInspector';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { TraceSummary } from '../../src/components/simulation/TraceSummary';
@@ -200,10 +200,9 @@ function UdpDemoInner() {
   const sendSmallPayload = () => sendUdp(payload);
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-        <NetlabCanvas />
-        <div
+    <LessonSplit>
+      <LessonCanvas canvas={<NetlabCanvas />}>
+        <LessonNote
           data-testid="lesson-brief"
           data-canvas-overlay=""
           style={{
@@ -231,10 +230,10 @@ function UdpDemoInner() {
               'UDP は状態を持たず、ハンドシェイクもありません。クライアントはデータグラムを1つサーバへ送るだけです。先に3ウェイハンドシェイクで接続を作る TCP と比べてみてください。その速さと引き換えに手放すもの：UDP は届いたかどうかを確かめず、失われても送り直しません。',
             )}
           </div>
-        </div>
-      </div>
+        </LessonNote>
+      </LessonCanvas>
 
-      <ResizableSidebar defaultWidth={360}>
+      <LessonPanel defaultWidth={360}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={CARD_STYLE}>
             <div style={LABEL_STYLE}>{t('UDP CONTROLS', 'UDP の操作')}</div>
@@ -332,8 +331,8 @@ function UdpDemoInner() {
             </>
           )}
         </div>
-      </ResizableSidebar>
-    </div>
+      </LessonPanel>
+    </LessonSplit>
   );
 }
 

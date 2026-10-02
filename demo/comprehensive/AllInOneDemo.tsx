@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import DemoShell from '../DemoShell';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
-import { ResizableSidebar } from '../../src/components/ResizableSidebar';
+import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import { StepControls } from '../../src/components/simulation/StepControls';
 import { FailureTogglePanel } from '../../src/components/simulation/FailureTogglePanel';
 import { SimulationControls } from '../../src/components/simulation/SimulationControls';
@@ -301,11 +301,9 @@ function SimulationTabInner() {
   }, [sendPacket, state.status, topology]);
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-        <NetlabCanvas />
-      </div>
-      <ResizableSidebar
+    <LessonSplit>
+      <LessonCanvas canvas={<NetlabCanvas />} />
+      <LessonPanel
         defaultWidth={380}
         style={{
           background: 'var(--netlab-bg-primary)',
@@ -315,8 +313,8 @@ function SimulationTabInner() {
         <div style={{ flex: 1, overflow: 'hidden' }}>
           <StepControls />
         </div>
-      </ResizableSidebar>
-    </div>
+      </LessonPanel>
+    </LessonSplit>
   );
 }
 
@@ -363,10 +361,9 @@ function FailureTabInner() {
     failureState.downInterfaceIds.size;
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-        <NetlabCanvas />
-        <div
+    <LessonSplit>
+      <LessonCanvas canvas={<NetlabCanvas />}>
+        <LessonNote
           style={{
             position: 'absolute',
             top: 12,
@@ -402,9 +399,9 @@ function FailureTabInner() {
               )}
             </span>
           )}
-        </div>
-      </div>
-      <ResizableSidebar
+        </LessonNote>
+      </LessonCanvas>
+      <LessonPanel
         defaultWidth={300}
         style={{
           background: 'var(--netlab-bg-primary)',
@@ -420,8 +417,8 @@ function FailureTabInner() {
         <div style={{ flex: 1, overflowY: 'auto' }}>
           <StepControls />
         </div>
-      </ResizableSidebar>
-    </div>
+      </LessonPanel>
+    </LessonSplit>
   );
 }
 
@@ -464,11 +461,9 @@ function TraceTabInner() {
   }, [sendPacket, state.status, topology]);
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-        <NetlabCanvas />
-      </div>
-      <ResizableSidebar
+    <LessonSplit>
+      <LessonCanvas canvas={<NetlabCanvas />} />
+      <LessonPanel
         defaultWidth={420}
         maxWidth={700}
         style={{
@@ -480,8 +475,8 @@ function TraceTabInner() {
           <TraceInspectorColumn />
           <SimulationControls />
         </div>
-      </ResizableSidebar>
-    </div>
+      </LessonPanel>
+    </LessonSplit>
   );
 }
 
