@@ -247,6 +247,12 @@ function WirelessControls({
               'この損失率の直線は、このレッスンだけの単純化で、Wi-Fi の決まりではありません。実際の Wi-Fi では −66 dBm は十分に強い電波で、損失率はノイズ、干渉、使っているデータレートで決まります。',
             )}
           </div>
+          <div>
+            {t(
+              'The values shown are rounded: RSSI to one decimal place and loss to a whole percent. At 200 m the RSSI is −66.2 dBm, 1.2 dB below −65 dBm, so the rule gives 1.2 × 4 = 4.8%, shown as 5%.',
+              '画面の値は丸めて表示しています。RSSI は小数第 1 位まで、損失率は整数のパーセントです。200 m では RSSI が −66.2 dBm で、−65 dBm より 1.2 dB 低いので、規則どおりなら 1.2 × 4 ＝ 4.8% になり、表示は 5% です。',
+            )}
+          </div>
         </div>
       </div>
       <div style={PANEL_STYLE}>

@@ -23,6 +23,12 @@ const BUTTON_STYLE: CSSProperties = {
   padding: '8px 12px',
 };
 
+/** The IP packet the burst sends, and the bandwidth the link starts with. */
+export const BURST_PACKET_BYTES = 1500;
+const DEFAULT_BANDWIDTH_BPS = 1_000_000;
+/** IP (20) and UDP (8) headers around the burst's payload. */
+const BURST_HEADER_BYTES = 28;
+
 function route(nodeId: string, destination: string, nextHop: string, metric = 0) {
   return {
     nodeId,
@@ -165,7 +171,7 @@ function buildTopology(): NetworkTopology {
         target: 'r3',
         data: {
           link: {
-            bandwidthBps: 1_000_000,
+            bandwidthBps: DEFAULT_BANDWIDTH_BPS,
             propagationDelayMs: 20,
             lossPct: 5,
             queueDepthSegments: 100,
@@ -411,6 +417,38 @@ export function burstBreakdown(
     `sending ${sending} ms + propagation ${propagation} ms = ${total} ms`,
     `送り出し ${sending} ms ＋ 伝搬 ${propagation} ms ＝ ${total} ms`,
   );
+}
+
+/**
+ * The lesson's brief, one paragraph per entry. The worked example is computed
+ * from the packet the burst sends and the bandwidth the link starts with.
+ */
+export function linkQosBrief(t: (en: string, ja: string) => string): string[] {
+  const bits = (BURST_PACKET_BYTES * 8).toLocaleString('en-US');
+  const bps = DEFAULT_BANDWIDTH_BPS.toLocaleString('en-US');
+  const ms = (BURST_PACKET_BYTES * 8 * 1000) / DEFAULT_BANDWIDTH_BPS;
+  return [
+    t(
+      'The time a packet takes to cross one link is the time to send its bits onto the wire (serialisation) plus the link’s propagation delay. The button below sends one packet across the R2 → R3 link and shows both parts.',
+      'パケットが 1 本のリンクを渡る時間は、そのビットを回線に送り出す時間（シリアル化）に、リンクの伝搬遅延を足したものです。下のボタンで R2 → R3 のリンクにパケットを 1 個送ると、その 2 つが表示されます。',
+    ),
+    t(
+      `Sending time = packet size × 8 ÷ bandwidth. The packet here is ${BURST_PACKET_BYTES} bytes: ${BURST_PACKET_BYTES} × 8 = ${bits} bits, and ${bits} bits ÷ ${bps} bps = ${ms} ms. The lesson rounds the result up to a whole millisecond.`,
+      `送り出し時間 ＝ パケットサイズ × 8 ÷ 帯域。ここで送るパケットは ${BURST_PACKET_BYTES} バイトです。${BURST_PACKET_BYTES} × 8 ＝ ${bits} ビット、${bits} ビット ÷ ${bps} bps ＝ ${ms} ms。このレッスンでは結果を 1 ms 単位に切り上げます。`,
+    ),
+    t(
+      'Changes to bandwidth, propagation delay and loss take effect only after you press “Apply to the link”; then send the packet again.',
+      '帯域、伝搬遅延、損失率の変更は、「リンクに適用」を押して初めて反映されます。押したあとで、もう一度パケットを送ってください。',
+    ),
+    t(
+      `The ${BURST_PACKET_BYTES} bytes are the IP packet only. Real Ethernet also sends its header and checksum, a preamble and an inter-frame gap (38 more bytes), so a real link takes slightly longer.`,
+      `この ${BURST_PACKET_BYTES} バイトは IP パケットだけの大きさです。実際のイーサネットでは、ヘッダとチェックサム、プリアンブル、フレーム間ギャップ（合わせて 38 バイト）も送るので、実際のリンクではもう少し長くかかります。`,
+    ),
+    t(
+      'A class’s weight is its share of the link when several classes have packets waiting at the same time. A packet with no competition is not slowed by a low weight, and this lesson sends one packet at a time, so changing the weights does not change the time shown.',
+      'クラスの重みは、複数のクラスのパケットが同時に待っているときに、リンクを分け合う割合です。競合する相手がいないパケットは、重みが小さくても遅くなりません。このレッスンではパケットを 1 個ずつ送るので、重みを変えても表示される時間は変わりません。',
+    ),
+  ];
 }
 
 function QosFields({
@@ -685,7 +723,7 @@ function DemoInner({
       dstPort: 7777,
       srcMac: '02:00:00:00:00:10',
       dstMac: '02:00:00:00:00:20',
-      payload: { layer: 'raw', data: 'x'.repeat(1472) },
+      payload: { layer: 'raw', data: 'x'.repeat(BURST_PACKET_BYTES - BURST_HEADER_BYTES) },
     });
     const id = `link-qos-${state.traces.length + 1}`;
     await sendPacket({
@@ -695,7 +733,7 @@ function DemoInner({
         ...packet.frame,
         payload: {
           ...packet.frame.payload,
-          totalLength: 1500,
+          totalLength: BURST_PACKET_BYTES,
         },
       },
     });
@@ -719,6 +757,22 @@ function DemoInner({
           padding: 14,
         }}
       >
+        <div
+          data-testid="lesson-brief"
+          style={{
+            border: '1px solid var(--netlab-border-subtle)',
+            borderRadius: 8,
+            padding: '10px 12px',
+            marginBottom: 12,
+            fontSize: 12,
+            lineHeight: 1.7,
+          }}
+        >
+          <strong>{t('What the time to cross a link is made of', 'リンクを渡る時間の内訳')}</strong>
+          {linkQosBrief(t).map((paragraph) => (
+            <div key={paragraph}>{paragraph}</div>
+          ))}
+        </div>
         <button type="button" data-testid="link-qos-burst" onClick={sendBurst} style={BUTTON_STYLE}>
           {t('Send QoS burst', 'QoS を試すパケットを送る')}
         </button>

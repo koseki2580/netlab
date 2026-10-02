@@ -75,3 +75,27 @@ describe('WirelessDemo radio model note (TC-260)', () => {
     expect(lossPctFromRssi(-90)).toBe(100);
   });
 });
+
+describe('WirelessDemo rounding note (TC-291)', () => {
+  it('says the values shown are rounded, with the 200 m reading worked through', () => {
+    const html = renderIn('en');
+
+    expect(html).toContain('RSSI to one decimal place and loss to a whole percent');
+    expect(html).toContain('1.2 × 4 = 4.8%, shown as 5%');
+  });
+
+  it('says the same in Japanese', () => {
+    const html = renderIn('ja');
+
+    expect(html).toContain('RSSI は小数第 1 位まで、損失率は整数のパーセント');
+    expect(html).toContain('1.2 × 4 ＝ 4.8% になり、表示は 5% です');
+  });
+
+  it('works the example from what the model gives at 200 m', () => {
+    const rssi = rssiDbm({ distanceMeters: 200, frequencyMhz: 2437, txPowerDbm: 20 });
+
+    expect(rssi.toFixed(1)).toBe('-66.2');
+    expect(((-65 - rssi) * 4).toFixed(1)).toBe('4.8');
+    expect(lossPctFromRssi(rssi)).toBe(5);
+  });
+});

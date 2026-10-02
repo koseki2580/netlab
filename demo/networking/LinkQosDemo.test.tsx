@@ -1,7 +1,14 @@
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import LinkQosDemo, { burstBreakdown, burstOutcome, shaperFromDrafts } from './LinkQosDemo';
+import { stepsToTransmit } from '../../src/simulation/LinkQueue';
+import LinkQosDemo, {
+  BURST_PACKET_BYTES,
+  burstBreakdown,
+  burstOutcome,
+  linkQosBrief,
+  shaperFromDrafts,
+} from './LinkQosDemo';
 
 describe('LinkQosDemo', () => {
   it('renders the QoS demo shell and controls', () => {
@@ -126,5 +133,54 @@ describe('LinkQosDemo latency breakdown (TC-261)', () => {
         en,
       ),
     ).toBeNull();
+  });
+});
+
+describe('LinkQosDemo brief (TC-290)', () => {
+  const ja = (_english: string, japanese: string) => japanese;
+
+  it('shows the brief on the page', () => {
+    const html = renderToStaticMarkup(
+      <MemoryRouter>
+        <LinkQosDemo />
+      </MemoryRouter>,
+    );
+
+    expect(html).toContain('data-testid="lesson-brief"');
+    expect(html).toContain('Sending time = packet size × 8 ÷ bandwidth');
+  });
+
+  it('says what the time on a link is made of, with the packet the lesson sends', () => {
+    const brief = linkQosBrief(en).join(' ');
+
+    expect(brief).toContain('the time to send its bits onto the wire (serialisation)');
+    expect(brief).toContain('plus the link’s propagation delay');
+    expect(brief).toContain('Sending time = packet size × 8 ÷ bandwidth');
+    expect(brief).toContain('1500 × 8 = 12,000 bits');
+    expect(brief).toContain('12,000 bits ÷ 1,000,000 bps = 12 ms');
+    expect(brief).toContain('only after you press “Apply to the link”');
+    expect(brief).toContain('IP packet only');
+    expect(brief).toContain('preamble and an inter-frame gap');
+    expect(brief).toContain('A packet with no competition is not slowed by a low weight');
+  });
+
+  it('says the same in Japanese', () => {
+    const brief = linkQosBrief(ja).join(' ');
+
+    expect(brief).toContain('送り出す時間（シリアル化）');
+    expect(brief).toContain('伝搬遅延を足したもの');
+    expect(brief).toContain('送り出し時間 ＝ パケットサイズ × 8 ÷ 帯域');
+    expect(brief).toContain('1500 × 8 ＝ 12,000 ビット');
+    expect(brief).toContain('12,000 ビット ÷ 1,000,000 bps ＝ 12 ms');
+    expect(brief).toContain('「リンクに適用」を押して初めて');
+    expect(brief).toContain('IP パケットだけ');
+    expect(brief).toContain('プリアンブル、フレーム間ギャップ');
+    expect(brief).toContain('重みが小さくても遅くなりません');
+  });
+
+  it('quotes the packet size and time the engine uses', () => {
+    expect(BURST_PACKET_BYTES).toBe(1500);
+    expect(stepsToTransmit(BURST_PACKET_BYTES, 1_000_000)).toBe(12);
+    expect(stepsToTransmit(BURST_PACKET_BYTES, 400_000)).toBe(30);
   });
 });
