@@ -144,10 +144,15 @@ function ExamBody({ level }: { level: ExamLevel }) {
             </h2>
             <p style={{ margin: '6px 0 0' }}>
               {result.passed
-                ? t(
-                    'You have the basics. Read the explanations below for anything you missed.',
-                    '基本は身についています。間違えた問題があれば、下の解説を読んでください。',
-                  )
+                ? level.level === 1
+                  ? t(
+                      'You have the basics. Read the explanations below for anything you missed.',
+                      '基本は身についています。間違えた問題があれば、下の解説を読んでください。',
+                    )
+                  : t(
+                      'You passed this level. Read the explanations below for anything you missed.',
+                      'このレベルは合格です。間違えた問題があれば、下の解説を読んでください。',
+                    )
                 : t(
                     'Each missed question below names the lesson that teaches it. Go back to those, then try again.',
                     '間違えた問題には、それを教えるレッスンが書いてあります。そこへ戻ってから、もう一度挑戦してください。',

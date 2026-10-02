@@ -124,8 +124,8 @@ export const EXAM_LEVEL_4: ExamLevel = {
       },
       options: [
         {
-          en: 'Four via each spine, alternating flow by flow; the second press adds the same eight lines',
-          ja: 'Spine ごとに 4 つずつで、フローごとに交互。2 回目は同じ 8 行が追加される',
+          en: 'Six via 10.0.12.2 and two via 10.0.13.2 — the 4th and 7th flows; the second press repeats the pattern exactly, 12 and 4 of 16 lines',
+          ja: '10.0.12.2 経由が 6 つ、10.0.13.2 経由が 2 つ（4・7 番目のフロー）。2 回目もまったく同じ並びで、16 行のうち 12 行と 4 行になる',
         },
         {
           en: 'All eight via 10.0.12.2, because every flow has the same source and destination address; the second press adds eight more the same',
@@ -186,8 +186,8 @@ export const EXAM_LEVEL_4: ExamLevel = {
       },
       options: [
         {
-          en: 'Master: R1. Virtual MAC 00:00:5e:00:01:0a, the same at every step. 1 active member, selected member fa0/2',
-          ja: 'マスタ: R1。仮想 MAC は 00:00:5e:00:01:0a で、どの段階でも同じ。稼働中のメンバは 1 本、選ばれたメンバは fa0/2',
+          en: 'Master: R1. Virtual MAC 00:00:5e:00:01:0a. 1 active member, selected member fa0/2',
+          ja: 'マスタ: R1。仮想 MAC は 00:00:5e:00:01:0a。稼働中のメンバは 1 本、選ばれたメンバは fa0/2',
         },
         {
           en: 'Master: R2 — a backup that took over keeps the gateway until it fails itself. Virtual MAC 00:00:5e:00:01:0a. 1 active member, selected member fa0/2',
@@ -367,31 +367,31 @@ export const EXAM_LEVEL_4: ExamLevel = {
     {
       id: 'wifi-distance-loss',
       prompt: {
-        en: 'In the Wireless 802.11 lesson, the station at 20 m shows RSSI −46.2 dBm and 0% loss. You slide it out to 200 m. In this lesson’s network, what do the RSSI and loss read?',
-        ja: '無線 LAN（802.11）のレッスンでは、20 m の位置の端末は RSSI −46.2 dBm、損失率 0% です。スライダーで 200 m まで離します。このレッスンのネットワークでは、RSSI と損失率はどう表示されますか？',
+        en: 'In the Wireless 802.11 lesson, the station at 20 m shows RSSI −46.2 dBm and 0% loss. You move it out to 250 m. In this lesson’s network, what do the RSSI and loss read?',
+        ja: '無線 LAN（802.11）のレッスンでは、20 m の位置の端末は RSSI −46.2 dBm、損失率 0% です。これを 250 m まで離します。このレッスンのネットワークでは、RSSI と損失率はどう表示されますか？',
       },
       options: [
         {
-          en: '−76.2 dBm and 45%: about 30 dB weaker, as indoor signal falls with the cube of distance',
-          ja: '−76.2 dBm で 45%。屋内の電波は距離の 3 乗で弱まるので、約 30 dB 下がる',
+          en: '−79.1 dBm and 56%: about 33 dB weaker, as indoor signal falls with the cube of distance',
+          ja: '−79.1 dBm で 56%。屋内の電波は距離の 3 乗で弱まるので、約 33 dB 下がる',
         },
         {
-          en: '−66.2 dBm and 5%',
-          ja: '−66.2 dBm で 5%',
+          en: '−68.1 dBm and 13%',
+          ja: '−68.1 dBm で 13%',
         },
         {
-          en: '−66.2 dBm and 0%: still a usable signal, so nothing is lost yet',
-          ja: '−66.2 dBm で 0%。まだ十分使える強さなので、損失は出ない',
+          en: '−68.1 dBm and 0%: still a usable signal, so nothing is lost yet',
+          ja: '−68.1 dBm で 0%。まだ十分使える強さなので、損失は出ない',
         },
         {
-          en: '−56.2 dBm and 0%: ten times the distance costs 10 dB',
-          ja: '−56.2 dBm で 0%。距離が 10 倍になると 10 dB 下がる',
+          en: '−68.1 dBm and 3%: one point of loss for each dB below −65 dBm',
+          ja: '−68.1 dBm で 3%。−65 dBm を 1 dB 下回るごとに 1 ポイントずつ失われる',
         },
       ],
       answer: 1,
       explanation: {
-        en: 'The lesson uses free-space path loss, which grows by 20 dB for every tenfold distance: −46.2 − 20 = −66.2 dBm. Its loss is 0% down to −65 dBm and rises in a straight line to 100% at −90 dBm, so 1.2 dB past the start gives 1.2 ÷ 25 ≈ 5%. On the way, 160 m still reads −64.3 dBm and 0%, and 300 m reads −69.7 dBm and 19%. Indoors, walls and people make the signal fall faster (a path-loss exponent of about 3 to 4), and real loss depends on the noise and on the data rate the radio chooses, not on RSSI alone.',
-        ja: 'このレッスンは自由空間の伝搬損失を使っており、距離が 10 倍になるごとに 20 dB 増えます。−46.2 − 20 ＝ −66.2 dBm です。損失率は −65 dBm までは 0% で、そこから −90 dBm の 100% まで直線的に増えるので、1.2 dB 超えた分は 1.2 ÷ 25 ≈ 5% です。途中では、160 m で −64.3 dBm・0%、300 m で −69.7 dBm・19% です。屋内では壁や人のために電波がもっと速く弱まり（伝搬損失の指数はおよそ 3〜4）、実際の損失は RSSI だけでなく、雑音や無線機が選ぶ通信速度によって決まります。',
+        en: 'The lesson uses free-space path loss, which grows by 20 dB for every tenfold distance: 250 m is 12.5 times 20 m, about 21.9 dB more, so −46.2 − 21.9 = −68.1 dBm. Its loss is 0% down to −65 dBm and then rises 4 points per dB to 100% at −90 dBm, so 3.1 dB past the start gives about 13%. The lesson’s own note works the same sum for 200 m: −66.2 dBm and 5%. That loss line is this lesson’s simplification: on real Wi-Fi −68 dBm is still a good signal, and loss depends on the noise and on the data rate the radio chooses, not on RSSI alone. Indoors, walls and people make the signal fall faster (a path-loss exponent of about 3 to 4).',
+        ja: 'このレッスンは自由空間の伝搬損失を使っており、距離が 10 倍になるごとに 20 dB 増えます。250 m は 20 m の 12.5 倍で、約 21.9 dB の増加なので、−46.2 − 21.9 ＝ −68.1 dBm です。損失率は −65 dBm までは 0% で、そこから 1 dB につき 4 ポイントずつ増えて −90 dBm で 100% になるので、3.1 dB 超えた分で約 13% です。レッスンの説明には、同じ計算が 200 m の例（−66.2 dBm、5%）で載っています。この損失率の直線は、このレッスンだけの単純化です。実際の Wi-Fi では −68 dBm はまだ十分な強さで、損失は RSSI だけでなく、雑音や無線機が選ぶ通信速度によって決まります。屋内では壁や人のために電波がもっと速く弱まります（伝搬損失の指数はおよそ 3〜4）。',
       },
       taughtBy: 'wireless',
     },
