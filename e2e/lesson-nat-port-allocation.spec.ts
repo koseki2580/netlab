@@ -19,6 +19,10 @@ test('the NAT brief says ports are allocated from 1024 and that many NATs keep t
   await expect(brief).toContainText('Linux MASQUERADE');
   await expect(brief).toContainText('Cisco PAT');
   await expect(brief).toContainText("keep the client's own port when it is free");
+  // TC-306 — why 1024, and that real allocators start in different places.
+  await expect(brief).toContainText('ports 0 to 1023 are the well-known range');
+  await expect(brief).toContainText('Linux picks from 1024 to 65535 by default');
+  await expect(brief).toContainText('many devices use a higher configured range');
 
   // And what it says is what the table shows: Client A's 54321 becomes 1024.
   await page.getByTestId('nat-send-client-a').click();
@@ -39,4 +43,6 @@ test('the NAT brief says the same in Japanese', async ({ page, demoPage }) => {
   const brief = page.getByTestId(SEL.lesson.brief);
   await expect(brief).toContainText('1024 から順に');
   await expect(brief).toContainText('Linux の MASQUERADE');
+  await expect(brief).toContainText('0〜1023 が標準的なサービス用に予約されたウェルノウンポート');
+  await expect(brief).toContainText('既定で 1024〜65535 から選び');
 });

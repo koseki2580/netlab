@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { NetworkTopology } from '../../src/types/topology';
-import { buildStpDemoTopology, markSpanningTreeLinks } from './StpLoopDemo';
+import { blockedLinks, buildStpDemoTopology, markSpanningTreeLinks } from './StpLoopDemo';
 
 function linkStates(topology: NetworkTopology): Record<string, string | undefined> {
   return Object.fromEntries(topology.edges.map((edge) => [edge.id, edge.data?.state]));
@@ -53,5 +53,43 @@ describe('spanning-tree lesson tells the canvas which link is blocked', () => {
     expect(states['e-ab']).toBe('down');
     expect(states['e-bc']).toBe('up');
     expect(Object.values(states).filter((state) => state === 'blocked')).toEqual([]);
+  });
+});
+
+// TC-305
+describe('spanning-tree lesson names the end of the blocked link that blocks', () => {
+  it('names Switch C on the Switch B – Switch C link with Switch A as root', () => {
+    expect(blockedLinks(buildStpDemoTopology())).toEqual([
+      { label: 'Switch B – Switch C', blockedAt: ['Switch C'] },
+    ]);
+  });
+
+  it('names Switch B on the Switch A – Switch B link with C priority 0 and B priority 4096', () => {
+    const reelected = markSpanningTreeLinks(
+      withStp(withStp(buildStpDemoTopology(), 'switch-c', { priority: 0 }), 'switch-b', {
+        priority: 4096,
+      }),
+    );
+    expect(blockedLinks(reelected)).toEqual([
+      { label: 'Switch A – Switch B', blockedAt: ['Switch B'] },
+    ]);
+  });
+
+  it('names Switch A instead when Switch A has the worse bridge ID', () => {
+    const reelected = markSpanningTreeLinks(
+      withStp(withStp(buildStpDemoTopology(), 'switch-c', { priority: 0 }), 'switch-a', {
+        priority: 61440,
+      }),
+    );
+    expect(blockedLinks(reelected)).toEqual([
+      { label: 'Switch A – Switch B', blockedAt: ['Switch A'] },
+    ]);
+  });
+
+  it('reports nothing once a disabled port has taken the loop away', () => {
+    const disabled = markSpanningTreeLinks(
+      withStp(buildStpDemoTopology(), 'switch-a', { disabledPortIds: ['ab'] }),
+    );
+    expect(blockedLinks(disabled)).toEqual([]);
   });
 });

@@ -309,14 +309,27 @@ function portNeighbourLabel(topology: NetworkTopology, switchId: string, portId:
   return NODE_LABELS[neighbourId] ?? neighbourId;
 }
 
-/** The links spanning tree keeps out of forwarding, named by their two ends. */
-function blockedLinkLabels(topology: NetworkTopology): string[] {
+/**
+ * The links spanning tree keeps out of forwarding, named by their two ends,
+ * with the switch (or switches) whose port on that link is not forwarding.
+ */
+export function blockedLinks(topology: NetworkTopology): { label: string; blockedAt: string[] }[] {
+  const ports = computeStp(topology).ports;
+  const notForwarding = (nodeId: string, portId: string | null | undefined) => {
+    const role = portId ? ports.get(`${nodeId}:${portId}`)?.role : undefined;
+    return role === 'BLOCKED' || role === 'DISABLED';
+  };
+  const name = (nodeId: string) => NODE_LABELS[nodeId] ?? nodeId;
+
   return topology.edges
     .filter((edge) => edge.data?.state === 'blocked')
-    .map(
-      (edge) =>
-        `${NODE_LABELS[edge.source] ?? edge.source} – ${NODE_LABELS[edge.target] ?? edge.target}`,
-    );
+    .map((edge) => ({
+      label: `${name(edge.source)} – ${name(edge.target)}`,
+      blockedAt: [
+        ...(notForwarding(edge.source, edge.sourceHandle) ? [name(edge.source)] : []),
+        ...(notForwarding(edge.target, edge.targetHandle) ? [name(edge.target)] : []),
+      ],
+    }));
 }
 
 function buildPingPacket(
@@ -484,7 +497,15 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
       (hop) => hop.activeEdgeId !== undefined && blockedEdgeIds.has(hop.activeEdgeId),
     ) ?? false;
   const rootLabel = topology.stpRoot ? formatBridgeId(topology.stpRoot) : t('none', 'なし');
-  const blockedLinks = blockedLinkLabels(topology);
+  const blocked = blockedLinks(topology);
+  const blockedEnds = blocked
+    .filter((link) => link.blockedAt.length > 0)
+    .map((link) =>
+      link.blockedAt.length > 1
+        ? t('blocked at both ends', '両端で遮断')
+        : t(`blocked at ${link.blockedAt[0]}'s end`, `${link.blockedAt[0]} 側で遮断`),
+    )
+    .join(', ');
 
   return (
     <div style={CARD_STYLE}>
@@ -522,7 +543,6 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
         {t('Root bridge', 'ルートブリッジ')}: {rootLabel}
       </div>
       <div
-        data-testid="stp-blocked-link"
         style={{
           marginTop: 6,
           color: 'var(--netlab-text-primary)',
@@ -530,8 +550,13 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
           fontSize: 12,
         }}
       >
-        {t('Blocked link', '遮断しているリンク')}:{' '}
-        {blockedLinks.length > 0 ? blockedLinks.join(', ') : t('none', 'なし')}
+        <span data-testid="stp-blocked-link">
+          {t('Blocked link', '遮断しているリンク')}:{' '}
+          {blocked.length > 0 ? blocked.map((link) => link.label).join(', ') : t('none', 'なし')}
+        </span>
+        {blockedEnds && (
+          <span data-testid="stp-blocked-end">{t(` (${blockedEnds})`, `（${blockedEnds}）`)}</span>
+        )}
       </div>
       <p
         data-testid="stp-loop-danger"

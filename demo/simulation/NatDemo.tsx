@@ -144,8 +144,8 @@ function NatDemoInner() {
               style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}
             >
               {t(
-                "This NAT allocates public ports in order starting at 1024; many real NATs, such as Linux MASQUERADE or Cisco PAT, keep the client's own port when it is free.",
-                'この NAT は外側のポート番号を 1024 から順に割り当てます。実際の NAT の多く（Linux の MASQUERADE や Cisco の PAT など）は、空いていればクライアントのポート番号をそのまま使います。',
+                "This NAT allocates public ports in order starting at 1024; many real NATs, such as Linux MASQUERADE or Cisco PAT, keep the client's own port when it is free. It starts at 1024 because ports 0 to 1023 are the well-known range reserved for standard services; where real NATs start differs: Linux picks from 1024 to 65535 by default when it cannot keep the client's port, and many devices use a higher configured range.",
+                'この NAT は外側のポート番号を 1024 から順に割り当てます。実際の NAT の多く（Linux の MASQUERADE や Cisco の PAT など）は、空いていればクライアントのポート番号をそのまま使います。1024 から始めるのは、0〜1023 が標準的なサービス用に予約されたウェルノウンポートだからです。実際の NAT がどこから割り当て始めるかは実装によって異なり、Linux はクライアントのポート番号をそのまま使えないとき既定で 1024〜65535 から選び、多くの機器はもっと大きい番号の範囲を設定して使います。',
               )}
             </div>
           </div>
