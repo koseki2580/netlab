@@ -87,6 +87,16 @@ window.USER_GUIDE_CONTENT = {
                <div class="callout">赤いケーブルは、そのリンクが落ちていることを表します。障害を扱うレッスンでは、これがそのレッスンの主題です。</div>`
       },
       {
+        id: "narrow-screens",
+        title: "スマートフォンなど幅の狭い画面で",
+        html: `<p>図の横にパネルが付くレッスンの多くは、画面の幅に合わせて並び方が変わります。境目は<strong>幅 900px</strong> です。</p>
+               <ul>
+                 <li><strong>幅の狭い画面（900px 未満）</strong> — レッスン全体が<strong>縦 1 列</strong>になり、上から下へスクロールして読みます。図に重なっていた説明は図の外に出て、その次に図が決まった高さで表示され、最後にパネルが画面の幅いっぱいに並びます。</li>
+                 <li><strong>幅の広い画面</strong> — パネルは図の横に並びます。図とパネルの境目をドラッグすると、パネルの幅を広げられます。</li>
+               </ul>
+               <div class="callout">幅の狭い画面では、説明が図や操作ボタンを隠すことはありません。操作ボタンが見えないときは、図の下までスクロールしてください。</div>`
+      },
+      {
         id: "lesson-briefs",
         title: "しくみを説明するレッスン",
         html: `<p>次のレッスンには、操作ボタンのそばに<strong>しくみの説明カード</strong>があります。数値が変わるのを眺めるだけでなく、その数値が何を意味するのかを先に読めます。</p>
@@ -98,7 +108,7 @@ window.USER_GUIDE_CONTENT = {
                </ul>
                <h3>複数経路と冗長化</h3>
                <ul>
-                 <li><strong>ECMP（等コスト複数経路）</strong> — 「ECMP の振り分け方」。Leaf A がフローごとに Spine 1 か Spine 2 を選びます。結果の各行には<strong>フロー番号と送信元ポート</strong>が付くので、2 回送って同じフローが同じ Spine を通ることを確かめられます。</li>
+                 <li><strong>ECMP（等コスト複数経路）</strong> — 「ECMP の振り分け方」。Leaf A がフローごとに Spine 1 か Spine 2 を選びます。結果の各行には<strong>フロー番号と送信元ポート</strong>が付くので、2 回送って同じフローが同じ Spine を通ることを確かめられます。「ECMP のフローを送る」を押すたびに、結果は「1 回目」「2 回目」と<strong>回ごとに</strong>まとまり、見出しの下に「10.0.12.2 経由: 5 · 10.0.13.2 経由: 3」のような<strong>次ホップごとの本数</strong>が出ます。前の回と振り分けが同じなら、「1 回目とまったく同じです」と表示されます。</li>
                  <li><strong>ゲートウェイの冗長化とリンク束ね</strong> — 「ゲートウェイが障害を乗り越えるしくみ」。R1 と R2 が <strong>VRRP グループ 10</strong> を組み、仮想ゲートウェイ 10.10.0.1 を共有します。仮想 MAC が <code>00:00:5e:00:01</code> とグループ番号の 16 進数（10 は <code>0a</code>）でできていることも書いてあります。LACP の説明もここにあります。</li>
                </ul>
                <h3>トンネルとオーバーレイ</h3>
@@ -131,6 +141,13 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>出来事</strong> — 「重複 ACK が 3 つ届き、… を高速再送」「再送タイムアウト (RTO) が発生し、… を再送」のように文章で並びます。</li>
                  <li><strong>用語</strong> — cwnd、ssthresh、MSS、RTO の意味がグラフのそばにまとめてあります。</li>
                </ul>
+               <h3>値が変わる理由を読む</h3>
+               <p>「トレースを実行」を押したあと、ステップ <strong>9・10・12</strong> を選ぶと、そのステップの<strong>計算の過程</strong>が表示されます。ssthresh と cwnd がなぜその値になったのかを、送信側がその時点で持っていた実際の数値でたどれます。</p>
+               <ul>
+                 <li><strong>ステップ 9</strong> — 重複 ACK が 3 つ届いて高速再送に入るときの、ssthresh と cwnd の決まり方。</li>
+                 <li><strong>ステップ 10</strong> — 新しい ACK で高速リカバリが終わり、cwnd が ssthresh と同じ値に戻ること。</li>
+                 <li><strong>ステップ 12</strong> — 再送タイムアウトのときの ssthresh の決まり方と、cwnd が 1 MSS になること。</li>
+               </ul>
                <div class="callout">cwnd は 2000 バイト（2 MSS）から始まり、ssthresh の 4000 バイトまでスロースタートで増えます。タイムアウトの時点でも、ACK されていない 2000 バイトは「送信中」のまま表示されます。</div>`
       },
       {
@@ -141,15 +158,24 @@ window.USER_GUIDE_CONTENT = {
                  <li>スライダーは<strong>トンネル MTU 604 バイト</strong>で開きます。</li>
                  <li>「トレースのメモ」の「断片の数」（英語表示では <code>Fragments</code>）に、いくつに分かれたかが出ます。</li>
                  <li>分割が起きなかったときは、再組み立てが「不要」（英語表示では <code>not needed</code>）と表示されます。</li>
+                 <li>分割された ping のあとは、同じメモの下に<strong>断片の数の計算</strong>が出ます。運ぶバイト数（データ ＋ ICMP ヘッダ）、断片 1 つが運べるバイト数（MTU − IP ヘッダを 8 の倍数に切り捨て）、その割り算の順で、「…なので、断片は 3 個」のように読めます。</li>
                </ul>
                <h3>無線 LAN（802.11）</h3>
                <ul>
                  <li>AP から端末までの距離が「距離: 20 m」のように表示されます。スライダーで動かすほか、<strong>数値を直接入力</strong>することもできます。</li>
                  <li>距離を変えると RSSI と損失率が変わります。</li>
-                 <li>その下の注記に、計算の前提（送信電力、周波数、距離が 10 倍になるごとに 20 dB 弱くなること）が書いてあります。</li>
+                 <li>「電波のモデル」の欄の下にある注記に、計算の前提（送信電力、周波数、距離が 10 倍になるごとに 20 dB 弱くなること）と、損失率の決まり（−65 dBm までは 0%、そこから 1 dB につき 4 ポイントずつ増えて −90 dBm で 100%）が書いてあります。</li>
+                 <li><strong>画面の値は丸めて表示</strong>されます。RSSI は小数第 1 位まで、損失率は整数のパーセントです。たとえば 200 m では RSSI が −66.2 dBm で、計算上の損失率 4.8% は 5% と表示されます。手で計算した値と少しずれるのはこのためです。</li>
                </ul>
-               <div class="callout">損失率の直線は、このレッスンだけの単純化です。実際の Wi-Fi の決まりではないことが、画面にも明記されています。</div>
+               <div class="callout">損失率の直線は、このレッスンだけの単純化です。実際の Wi-Fi の決まりではないことが、画面にも明記されています。実際の Wi-Fi では −66 dBm は十分に強い電波で、損失率はノイズ、干渉、使っているデータレートで決まります。</div>
                <h3>リンクごとの QoS</h3>
+               <p>操作のそばの説明に、リンクを渡る時間が何でできているかが書いてあります。</p>
+               <ul>
+                 <li><strong>送り出し時間 ＝ パケットサイズ × 8 ÷ 帯域</strong>です。このレッスンで送るパケットは <strong>1500 バイト</strong>なので、1500 × 8 ＝ 12,000 ビット。帯域が 1,000,000 bps なら 12 ms です。結果は 1 ms 単位に切り上げられます。</li>
+                 <li>リンクを渡る時間は、この送り出し時間に<strong>伝搬遅延</strong>を足したものです。</li>
+                 <li>帯域、伝搬遅延、損失率を変えても、<strong>「リンクに適用」を押すまでは反映されません</strong>。押したあとで、もう一度「QoS を試すパケットを送る」を押してください。</li>
+                 <li>クラスの重みは、複数のクラスが同時に待っているときの分け合い方です。このレッスンはパケットを 1 個ずつ送るので、重みを変えても表示される時間は変わりません。</li>
+               </ul>
                <p>パケットが届くと、リンクの通過にかかった時間に加えて、その内訳が、たとえば「送り出し 12 ms ＋ 伝搬 20 ms ＝ 32 ms」のように表示されます。</p>
                <h3>フローの可視化</h3>
                <p>「観測されるフローを送る」を押すたびに、NetFlow のパケット数とバイト数が<strong>積み上がります</strong>。同じフローを 2 回送れば 2 回分になります。</p>`
@@ -162,7 +188,8 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>OSPF のメトリック</strong> — パケットが出ていく各インタフェースのコストに、最後のルータが宛先ネットワークへつながるインタフェースのコストを足した値です。</li>
                  <li><strong>等コストの経路</strong> — 同じくらい良い経路が 2 本あるときは、1 行に次ホップが 2 つ並びます。「動的ルーティング」では「（等コスト）」と付きます。</li>
                  <li><strong>BGP の数値</strong> — BGP を選んでいるときの数値は「メトリック」ではなく「AS パス長」と表示されます。</li>
-                 <li><strong>リンクのコスト</strong> — 「OSPF の収束」には各リンクのコストの一覧があります。向きによってコストが違うリンクは、両方向が書かれます。</li>
+                 <li><strong>リンクのコスト</strong> — 「OSPF の収束」と、「動的ルーティング」で OSPF を選んだときには、「リンクのコスト」の一覧があります。向きによってコストが違うリンクは、両方向が書かれます。メトリックを自分で足し算して確かめられます。</li>
+                 <li><strong>BGP が広告するネットワーク</strong> — 「動的ルーティング」で BGP を選ぶと、各ルータが自分から広告するネットワークが 1 行で示されます。ルータ間のリンクはそこに含まれないので、ほかの 2 台の間のリンクが経路表に現れないのは正しい動きです。</li>
                  <li><strong>落ちたリンク</strong> — リンクを落とすと、そのリンクのネットワークは<strong>すべてのルータ</strong>の経路表から消え、落ちたリンクの先を次ホップにした経路は 1 本も残りません。コストの一覧では「（リンク断）」と表示されます。</li>
                  <li><strong>IPv6 でも同じ</strong> — 「IPv6 のルーティング」で R1-R2 間のリンクを落とすと、R1 の経路表からそのリンクのネットワークが消えます。OSPFv3 の経路は R3 経由になり、そのリンクで受け取っていた MP-BGP の経路はなくなります。</li>
                </ul>
@@ -301,6 +328,16 @@ window.USER_GUIDE_CONTENT = {
                <div class="callout">A red cable means that link is down. On the lessons about failure, that is the subject.</div>`
       },
       {
+        id: "narrow-screens",
+        title: "On a phone or a narrow screen",
+        html: `<p>Many lessons with a panel beside the diagram arrange themselves to fit the screen. The dividing line is a width of <strong>900px</strong>.</p>
+               <ul>
+                 <li><strong>Narrow screen (under 900px)</strong> — the lesson becomes <strong>one scrolling column</strong>, read from top to bottom. The notes that sat over the diagram move out of it, then comes the diagram at a fixed height, and last the panel at the full width of the screen.</li>
+                 <li><strong>Wide screen</strong> — the panel sits beside the diagram. Drag the edge between them to make the panel wider.</li>
+               </ul>
+               <div class="callout">On a narrow screen no note covers the diagram or the controls. If you cannot see the controls, scroll down past the diagram.</div>`
+      },
+      {
         id: "lesson-briefs",
         title: "Lessons that explain their mechanism",
         html: `<p>These lessons carry a <strong>brief card</strong> beside their controls. Instead of only watching a number change, you can first read what that number means.</p>
@@ -312,7 +349,7 @@ window.USER_GUIDE_CONTENT = {
                </ul>
                <h3>Multipath and redundancy</h3>
                <ul>
-                 <li><strong>ECMP Multipath</strong> — “How ECMP spreads traffic”. Leaf A picks Spine 1 or Spine 2 for each flow. Every result row names its <strong>flow number and source port</strong>, so you can send twice and confirm the same flow takes the same spine.</li>
+                 <li><strong>ECMP Multipath</strong> — “How ECMP spreads traffic”. Leaf A picks Spine 1 or Spine 2 for each flow. Every result row names its <strong>flow number and source port</strong>, so you can send twice and confirm the same flow takes the same spine. Each press of “Send ECMP flows” is a <strong>numbered run</strong> (“Run 1”, “Run 2”), headed by a <strong>tally per next hop</strong> such as “via 10.0.12.2: 5 · via 10.0.13.2: 3”. When a run splits exactly as the one before, it says “Identical to run 1”.</li>
                  <li><strong>Gateway HA And Link Aggregation</strong> — “How the gateway survives a failure”. R1 and R2 form <strong>VRRP group 10</strong> and share the virtual gateway 10.10.0.1. A note shows how the virtual MAC is built: <code>00:00:5e:00:01</code> followed by the group number in hexadecimal (10 is <code>0a</code>). LACP is explained here too.</li>
                </ul>
                <h3>Tunnels and overlays</h3>
@@ -345,6 +382,13 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>Events</strong> — listed in words, such as “Fast retransmit of … after three duplicate ACKs” and “Retransmission timeout (RTO) fires; the oldest unacknowledged segment, …, is resent”.</li>
                  <li><strong>Glossary</strong> — cwnd, ssthresh, MSS and RTO are defined next to the chart.</li>
                </ul>
+               <h3>Reading why a value changed</h3>
+               <p>After pressing “Run trace”, select step <strong>9, 10 or 12</strong> and the lesson <strong>shows its working</strong> for that step: why ssthresh and cwnd came out as they did, in the numbers the sender actually held at that moment.</p>
+               <ul>
+                 <li><strong>Step 9</strong> — how ssthresh and cwnd are set when three duplicate ACKs trigger a fast retransmit.</li>
+                 <li><strong>Step 10</strong> — a new ACK ends fast recovery and cwnd comes back down to ssthresh.</li>
+                 <li><strong>Step 12</strong> — how ssthresh is set at the retransmission timeout, and that cwnd drops to one MSS.</li>
+               </ul>
                <div class="callout">cwnd starts at 2000 bytes (two MSS) and grows through slow start to ssthresh, 4000 bytes. At the timeout, the 2000 unacknowledged bytes are still shown as in flight.</div>`
       },
       {
@@ -355,15 +399,24 @@ window.USER_GUIDE_CONTENT = {
                  <li>The slider opens at <strong>Tunnel MTU: 604 bytes</strong>.</li>
                  <li>Under “Trace Notes”, <code>Fragments</code> (「断片の数」 in Japanese) says how many pieces the packet was split into.</li>
                  <li>When nothing was split, reassembly reads <code>not needed</code> (「不要」 in Japanese).</li>
+                 <li>After a fragmented ping, the same notes show the <strong>sum behind the fragment count</strong>: the bytes to carry (data plus the ICMP header), how much each fragment carries (the MTU minus the IP header, rounded down to a multiple of 8), and the division, ending in “so 3 fragments”.</li>
                </ul>
                <h3>Wireless 802.11</h3>
                <ul>
                  <li>The station's distance is shown, as in “Distance: 20 m”. Drag the slider or <strong>type a number</strong>.</li>
                  <li>RSSI and loss change with the distance.</li>
-                 <li>A note underneath states what the figures rest on: the transmit power, the frequency, and that the signal gets 20 dB weaker for every tenfold distance.</li>
+                 <li>A note under “Radio model” states what the figures rest on: the transmit power, the frequency, that the signal gets 20 dB weaker for every tenfold distance, and the loss rule (0% down to −65 dBm, then 4 points per dB up to 100% at −90 dBm).</li>
+                 <li><strong>The values shown are rounded</strong>: RSSI to one decimal place and loss to a whole percent. At 200 m, for example, the RSSI is −66.2 dBm and the worked-out loss of 4.8% is shown as 5%. That is why your own sum can differ slightly from the screen.</li>
                </ul>
-               <div class="callout">The loss line is this lesson's simplification, not a rule of Wi-Fi. The page says so itself.</div>
+               <div class="callout">The loss line is this lesson's simplification, not a rule of Wi-Fi. The page says so itself. On real Wi-Fi, −66 dBm is a healthy signal, and loss depends on noise, interference and the data rate in use.</div>
                <h3>Per-Link QoS</h3>
+               <p>The brief beside the controls says what the time to cross a link is made of.</p>
+               <ul>
+                 <li><strong>Sending time = packet size × 8 ÷ bandwidth.</strong> The packet this lesson sends is <strong>1500 bytes</strong>, so 1500 × 8 = 12,000 bits; at 1,000,000 bps that is 12 ms. The result is rounded up to a whole millisecond.</li>
+                 <li>The time to cross the link is that sending time plus the link's <strong>propagation delay</strong>.</li>
+                 <li>Changes to bandwidth, propagation delay and loss <strong>take effect only after you press “Apply to the link”</strong>. Then press “Send QoS burst” again.</li>
+                 <li>A class's weight is its share when several classes are waiting at once. This lesson sends one packet at a time, so changing the weights does not change the time shown.</li>
+               </ul>
                <p>When a packet is delivered, the time to cross the link is followed by its parts, for example “sending 12 ms + propagation 20 ms = 32 ms”.</p>
                <h3>Flow Observability</h3>
                <p>Each press of “Send observed flow” <strong>adds to</strong> the NetFlow packet and byte counts. Send the same flow twice and it counts twice.</p>`
@@ -376,7 +429,8 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>OSPF metric</strong> — the cost of each interface the packet leaves by, plus the cost of the last router's interface onto the destination network.</li>
                  <li><strong>Equal-cost routes</strong> — when two paths are equally good, one row lists both next hops. “Dynamic Routing” marks it “(equal cost)”.</li>
                  <li><strong>The BGP number</strong> — with BGP selected, the number is labelled “AS path length”, not “metric”.</li>
-                 <li><strong>Link costs</strong> — “OSPF Convergence” lists the cost of every link. A link whose two directions differ shows both.</li>
+                 <li><strong>Link costs</strong> — “OSPF Convergence”, and “Dynamic Routing” with OSPF selected, show a “LINK COSTS” list. A link whose two directions differ shows both. You can add a metric up yourself and check it.</li>
+                 <li><strong>What BGP originates</strong> — with BGP selected, “Dynamic Routing” states in one line which networks each router is configured to originate. The links between routers are not among them, so it is correct that a link between two other routers is missing from a router's table.</li>
                  <li><strong>A failed link</strong> — take a link down and its network disappears from <strong>every router's</strong> table, and no route keeps a next hop on the failed link. The cost list marks it “(link down)”.</li>
                  <li><strong>The same in IPv6</strong> — in “IPv6 Routing Ecosystem”, fail the R1-R2 link and that link's network leaves R1's table. The OSPFv3 routes go through R3, and the MP-BGP route learned over that link is gone.</li>
                </ul>
