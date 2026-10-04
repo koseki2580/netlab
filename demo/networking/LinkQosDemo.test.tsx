@@ -1,9 +1,16 @@
+/* @vitest-environment jsdom */
+import { act, useState } from 'react';
+import { createRoot } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { stepsToTransmit } from '../../src/simulation/LinkQueue';
+import type { LinkQosConfig } from '../../src/types/link';
+import { GalleryLocaleProvider, type GalleryLocale } from '../localeContext';
 import LinkQosDemo, {
   BURST_PACKET_BYTES,
+  QosFields,
+  burstSettings,
   burstBreakdown,
   burstOutcome,
   linkQosBrief,
@@ -182,5 +189,116 @@ describe('LinkQosDemo brief (TC-290)', () => {
     expect(BURST_PACKET_BYTES).toBe(1500);
     expect(stepsToTransmit(BURST_PACKET_BYTES, 1_000_000)).toBe(12);
     expect(stepsToTransmit(BURST_PACKET_BYTES, 400_000)).toBe(30);
+  });
+});
+
+const LINK: LinkQosConfig = {
+  bandwidthBps: 1_000_000,
+  propagationDelayMs: 20,
+  lossPct: 5,
+  queueDepthSegments: 100,
+  lossSeed: 42,
+};
+
+/** The fields as the lesson mounts them: re-read whenever the link changes. */
+function Fields({ locale }: { locale: GalleryLocale }) {
+  const [link, setLink] = useState(LINK);
+  return (
+    <GalleryLocaleProvider locale={locale}>
+      <QosFields key={JSON.stringify(link)} link={link} onQosChange={setLink} />
+    </GalleryLocaleProvider>
+  );
+}
+
+function mountFields(locale: GalleryLocale = 'en') {
+  (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  const container = document.createElement('div');
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  act(() => root.render(<Fields locale={locale} />));
+  const find = (id: string) => container.querySelector<HTMLElement>(`[data-testid="${id}"]`);
+  const type = (id: string, value: string) => {
+    const input = find(id) as HTMLInputElement;
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
+    act(() => {
+      setter.call(input, value);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  };
+  const press = (id: string) => act(() => find(id)!.click());
+  return { find, type, press };
+}
+
+describe('LinkQosDemo unapplied settings (TC-309, TC-311)', () => {
+  it('TC-309: shows no marker while the fields match the link', () => {
+    const { find } = mountFields();
+    expect(find('link-qos-unapplied')).toBeNull();
+    expect(find('link-qos-classes-unapplied')).toBeNull();
+  });
+
+  it('TC-309: marks an edited link field as not applied until it is applied', () => {
+    const { find, type, press } = mountFields();
+    type('link-qos-bandwidth', '400000');
+    const marker = find('link-qos-unapplied')!;
+    expect(marker.textContent).toBe('Not applied yet: the link still has the earlier settings.');
+    expect(marker.getAttribute('role')).toBe('status');
+    expect(find('link-qos-classes-unapplied')).toBeNull();
+
+    press('link-qos-apply');
+    expect(find('link-qos-unapplied')).toBeNull();
+    expect((find('link-qos-bandwidth') as HTMLInputElement).value).toBe('400000');
+  });
+
+  it('TC-309: marks a change to the delay or the loss, and clears when it is put back', () => {
+    const { find, type } = mountFields();
+    type('link-qos-delay', '35');
+    expect(find('link-qos-unapplied')).not.toBeNull();
+    type('link-qos-delay', '20');
+    expect(find('link-qos-unapplied')).toBeNull();
+    type('link-qos-loss', '0');
+    expect(find('link-qos-unapplied')).not.toBeNull();
+  });
+
+  it('TC-311: marks edited classes as not applied until they are applied', () => {
+    const { find, type, press } = mountFields();
+    type('link-qos-class-0-weight', '70');
+    type('link-qos-class-1-weight', '30');
+    const marker = find('link-qos-classes-unapplied')!;
+    expect(marker.textContent).toBe('Not applied yet: the link still has the earlier classes.');
+    expect(marker.getAttribute('role')).toBe('status');
+    expect(find('link-qos-unapplied')).toBeNull();
+
+    press('link-qos-apply-classes');
+    expect(find('link-qos-classes-unapplied')).toBeNull();
+    expect((find('link-qos-class-0-weight') as HTMLInputElement).value).toBe('70');
+  });
+
+  it('TC-309, TC-311: the markers are in Japanese for a Japanese learner', () => {
+    const { find, type } = mountFields('ja');
+    type('link-qos-bandwidth', '400000');
+    type('link-qos-class-0-queue', '4');
+    expect(find('link-qos-unapplied')!.textContent).toBe(
+      '未適用: リンクはまだ前の設定のままです。',
+    );
+    expect(find('link-qos-classes-unapplied')!.textContent).toBe(
+      '未適用: リンクはまだ前のクラスのままです。',
+    );
+  });
+});
+
+describe('LinkQosDemo settings a result was measured with (TC-310)', () => {
+  const ja = (_english: string, japanese: string) => japanese;
+
+  it('names the bandwidth, delay and loss on the link when the packet was sent', () => {
+    expect(burstSettings(LINK, en)).toBe('Measured at 1,000,000 bps, 20 ms delay, 5% loss.');
+    expect(burstSettings({ ...LINK, bandwidthBps: 400_000, lossPct: 0 }, en)).toBe(
+      'Measured at 400,000 bps, 20 ms delay, 0% loss.',
+    );
+  });
+
+  it('says the same in Japanese', () => {
+    expect(burstSettings(LINK, ja)).toBe(
+      '測定時の設定: 帯域 1,000,000 bps、伝搬遅延 20 ms、損失率 5%',
+    );
   });
 });

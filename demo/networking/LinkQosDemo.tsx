@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { LinkDetailPanel } from '../../src/components/LinkDetailPanel';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
@@ -420,6 +420,20 @@ export function burstBreakdown(
 }
 
 /**
+ * The settings on the link when the packet was sent, to read beside its
+ * result: fields edited since but not applied are not among them.
+ */
+export function burstSettings(link: LinkQosConfig, t: (en: string, ja: string) => string): string {
+  const bps = link.bandwidthBps?.toLocaleString('en-US') ?? '—';
+  const delay = link.propagationDelayMs ?? 0;
+  const loss = link.lossPct ?? 0;
+  return t(
+    `Measured at ${bps} bps, ${delay} ms delay, ${loss}% loss.`,
+    `測定時の設定: 帯域 ${bps} bps、伝搬遅延 ${delay} ms、損失率 ${loss}%`,
+  );
+}
+
+/**
  * The lesson's brief, one paragraph per entry. The worked example is computed
  * from the packet the burst sends and the bandwidth the link starts with.
  */
@@ -451,7 +465,20 @@ export function linkQosBrief(t: (en: string, ja: string) => string): string[] {
   ];
 }
 
-function QosFields({
+const UNAPPLIED: CSSProperties = {
+  fontSize: 12,
+  fontWeight: 700,
+  color: 'var(--netlab-accent-yellow)',
+};
+
+const APPLY_ROW: CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  alignItems: 'center',
+  gap: 8,
+};
+
+export function QosFields({
   link,
   onQosChange,
 }: {
@@ -462,9 +489,11 @@ function QosFields({
   const [bandwidth, setBandwidth] = useState(String(link.bandwidthBps ?? ''));
   const [delay, setDelay] = useState(String(link.propagationDelayMs ?? ''));
   const [loss, setLoss] = useState(link.lossPct ?? 0);
-  const [drafts, setDrafts] = useState<ClassDraft[]>(() =>
+  // What the class fields showed when they were last read from the link.
+  const [appliedDrafts] = useState<ClassDraft[]>(() =>
     (link.shaper?.classes ?? DEFAULT_CLASSES).map(toDraft),
   );
+  const [drafts, setDrafts] = useState(appliedDrafts);
   const [shaperNote, setShaperNote] = useState<string | null>(null);
 
   const bandwidthValue = Number(bandwidth);
@@ -476,6 +505,13 @@ function QosFields({
         ? t('Delay must be 0–1000 ms.', '伝搬遅延は 0〜1000 ms にしてください。')
         : null;
   const shaperResult = shaperFromDrafts(drafts, t);
+  // A field takes effect only once applied; until then the link, and any
+  // packet sent across it, still has the earlier value.
+  const linkUnapplied =
+    bandwidth !== String(link.bandwidthBps ?? '') ||
+    delay !== String(link.propagationDelayMs ?? '') ||
+    loss !== (link.lossPct ?? 0);
+  const classesUnapplied = JSON.stringify(drafts) !== JSON.stringify(appliedDrafts);
 
   const updateDraft = (index: number, patch: Partial<ClassDraft>) =>
     setDrafts((current) =>
@@ -559,15 +595,25 @@ function QosFields({
             {linkError}
           </div>
         )}
-        <button
-          type="button"
-          data-testid="link-qos-apply"
-          disabled={linkError !== null}
-          onClick={applyLink}
-          style={{ ...BUTTON_STYLE, justifySelf: 'start' }}
-        >
-          {t('Apply to the link', 'リンクに適用')}
-        </button>
+        <div style={APPLY_ROW}>
+          <button
+            type="button"
+            data-testid="link-qos-apply"
+            disabled={linkError !== null}
+            onClick={applyLink}
+            style={BUTTON_STYLE}
+          >
+            {t('Apply to the link', 'リンクに適用')}
+          </button>
+          {linkUnapplied && (
+            <span role="status" data-testid="link-qos-unapplied" style={UNAPPLIED}>
+              {t(
+                'Not applied yet: the link still has the earlier settings.',
+                '未適用: リンクはまだ前の設定のままです。',
+              )}
+            </span>
+          )}
+        </div>
       </section>
 
       <section data-testid="link-qos-classes" style={CARD}>
@@ -678,15 +724,25 @@ function QosFields({
             {shaperResult.error}
           </div>
         )}
-        <button
-          type="button"
-          data-testid="link-qos-apply-classes"
-          disabled={'error' in shaperResult}
-          onClick={applyShaper}
-          style={{ ...BUTTON_STYLE, justifySelf: 'start' }}
-        >
-          {t('Apply classes', 'クラスを適用')}
-        </button>
+        <div style={APPLY_ROW}>
+          <button
+            type="button"
+            data-testid="link-qos-apply-classes"
+            disabled={'error' in shaperResult}
+            onClick={applyShaper}
+            style={BUTTON_STYLE}
+          >
+            {t('Apply classes', 'クラスを適用')}
+          </button>
+          {classesUnapplied && (
+            <span role="status" data-testid="link-qos-classes-unapplied" style={UNAPPLIED}>
+              {t(
+                'Not applied yet: the link still has the earlier classes.',
+                '未適用: リンクはまだ前のクラスのままです。',
+              )}
+            </span>
+          )}
+        </div>
         {shaperNote && (
           <div role="status" style={{ fontSize: 12 }}>
             {shaperNote}
@@ -708,6 +764,24 @@ function DemoInner({
   const { sendPacket, state, engine } = useSimulation();
   const [burstResult, setBurstResult] = useState<string | null>(null);
   const [burstParts, setBurstParts] = useState<string | null>(null);
+  const [burstMeasuredWith, setBurstMeasuredWith] = useState<string | null>(null);
+  // Applying settings rebuilds the simulation engine a render or two later. A
+  // packet sent in between went to the engine being replaced and showed no
+  // result, so sending waits until the new engine is in place.
+  const [applying, setApplying] = useState(false);
+  useEffect(() => {
+    setApplying(false);
+  }, [engine]);
+  useEffect(() => {
+    if (!applying) return undefined;
+    // Settings equal to the ones already on the link rebuild nothing.
+    const timer = window.setTimeout(() => setApplying(false), 1500);
+    return () => window.clearTimeout(timer);
+  }, [applying]);
+  const applyQos = (link: LinkQosConfig) => {
+    setApplying(true);
+    onQosChange(link);
+  };
   const edge = useMemo(
     () => topology.edges.find((candidate) => candidate.id === 'e-r2-r3') ?? topology.edges[0],
     [topology.edges],
@@ -740,6 +814,8 @@ function DemoInner({
     const trace = engine.getState().traces.find((candidate) => candidate.packetId === id) ?? null;
     setBurstResult(burstOutcome(trace, t));
     setBurstParts(burstBreakdown(trace, t));
+    // The link as this send saw it, not as the fields read now.
+    setBurstMeasuredWith(trace ? burstSettings(edge?.data?.link ?? {}, t) : null);
   };
 
   return (
@@ -773,7 +849,13 @@ function DemoInner({
             <div key={paragraph}>{paragraph}</div>
           ))}
         </div>
-        <button type="button" data-testid="link-qos-burst" onClick={sendBurst} style={BUTTON_STYLE}>
+        <button
+          type="button"
+          data-testid="link-qos-burst"
+          onClick={sendBurst}
+          disabled={applying}
+          style={BUTTON_STYLE}
+        >
           {t('Send QoS burst', 'QoS を試すパケットを送る')}
         </button>
         {burstResult && (
@@ -793,13 +875,26 @@ function DemoInner({
             {burstParts}
           </div>
         )}
+        {burstResult && burstMeasuredWith && (
+          <div
+            data-testid="link-qos-burst-settings"
+            style={{
+              marginTop: 2,
+              fontSize: 12,
+              lineHeight: 1.5,
+              color: 'var(--netlab-text-secondary)',
+            }}
+          >
+            {burstMeasuredWith}
+          </div>
+        )}
         {edge && (
           // Re-read the fields whenever the link changes, including from the
           // advanced editor below.
           <QosFields
             key={JSON.stringify(edge.data?.link ?? {})}
             link={edge.data?.link ?? {}}
-            onQosChange={onQosChange}
+            onQosChange={applyQos}
           />
         )}
         {/* The text form for the whole configuration stays, for a reader who
@@ -811,7 +906,7 @@ function DemoInner({
           >
             {t('Advanced: every setting as text', '詳細設定 (上級者向け・テキストで編集)')}
           </summary>
-          {edge && <LinkDetailPanel edge={edge} onQosChange={onQosChange} />}
+          {edge && <LinkDetailPanel edge={edge} onQosChange={applyQos} />}
         </details>
         <div style={{ marginTop: 14 }}>
           <TraceSummary />

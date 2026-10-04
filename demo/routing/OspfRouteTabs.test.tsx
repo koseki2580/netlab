@@ -8,7 +8,7 @@ import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { protocolRegistry } from '../../src/registry/ProtocolRegistry';
 import { buildOspfConvergenceTopology } from '../../src/scenarios/ospf-convergence';
 import { GalleryLocaleProvider, type GalleryLocale } from '../localeContext';
-import { RouterTablesPanel } from './OspfConvergenceDemo';
+import { RouteSummaryPanel, RouterTablesPanel } from './OspfConvergenceDemo';
 
 /**
  * The panel as the lesson shows it: with the link up, or with it failed and
@@ -136,5 +136,64 @@ describe('the OSPF Convergence route tables after the link fails', () => {
       nextHop: '10.0.34.1',
       metric: 3,
     });
+  });
+});
+
+// TC-308: the card above the tabs is always R1's route to C2's network, and
+// its heading says so, so it is not read as the heading of the open tab.
+describe("the OSPF Convergence summary of R1's route", () => {
+  const summary = (locale: GalleryLocale, linkDown = false): HTMLElement => {
+    const container = document.createElement('div');
+    container.innerHTML = renderToString(
+      <GalleryLocaleProvider locale={locale}>
+        <NetlabProvider topology={buildOspfConvergenceTopology(linkDown)}>
+          <RouteSummaryPanel runs={[]} />
+          <RouterTablesPanel />
+        </NetlabProvider>
+      </GalleryLocaleProvider>,
+    );
+    return container;
+  };
+  const HEADING = '[data-testid="ospf-r1-route-heading"]';
+  const NOTE = '[data-testid="ospf-r1-route-note"]';
+
+  it('TC-308: names the router and the destination in its heading, in both languages', () => {
+    const en = summary('en');
+    expect(en.querySelector(HEADING)?.textContent).toBe('R1’s route to C2’s network (10.4.0.0/24)');
+    expect(en.textContent).not.toMatch(/R1 PREFERRED ROUTE/i);
+    const ja = summary('ja');
+    expect(ja.querySelector(HEADING)?.textContent).toBe(
+      'R1 から C2 のネットワーク（10.4.0.0/24）への経路',
+    );
+    expect(ja.textContent).not.toContain('R1 の優先経路');
+  });
+
+  it('TC-308: says the card stays on R1 whichever tab is open', () => {
+    expect(summary('en').querySelector(NOTE)?.textContent).toBe(
+      'Always R1, whichever tab is open below.',
+    );
+    const ja = summary('ja').querySelector(NOTE)?.textContent ?? '';
+    expect(ja).toBe('下でどのタブを開いても、ここは R1 の経路です。');
+  });
+
+  it('TC-308: is a card of its own, outside the route-table tabs', () => {
+    const root = summary('en');
+    const card = root.querySelector('[data-testid="ospf-r1-route"]')!;
+    expect(card.contains(root.querySelector(HEADING))).toBe(true);
+    expect(card.querySelector('[role="tablist"]')).toBeNull();
+    expect(
+      root.querySelector('[data-testid="ospf-route-tables"]')?.querySelector(HEADING),
+    ).toBeNull();
+  });
+
+  it('TC-308: shows R1’s next hop and metric before and after the link fails', () => {
+    const tables = (down: boolean) =>
+      protocolRegistry.resolveRouteTable(buildOspfConvergenceTopology(down)).get('r1')!;
+    for (const down of [false, true]) {
+      const route = tables(down).find((entry) => entry.destination === '10.4.0.0/24')!;
+      const text = summary('en', down).querySelector('[data-testid="ospf-r1-route"]')!.textContent;
+      expect(text).toContain(`next-hop: ${route.nextHop}`);
+      expect(text).toContain(`metric ${route.metric}`);
+    }
   });
 });

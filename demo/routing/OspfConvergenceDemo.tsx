@@ -314,16 +314,24 @@ export function RouterTablesPanel({ beforeFailure }: { beforeFailure?: NetworkTo
   );
 }
 
-function RouteSummaryPanel({ runs }: { runs: readonly ProbeRun[] }) {
+/** C2's network: the destination the summary card reports R1's route to. */
+const C2_NETWORK = '10.4.0.0/24';
+
+/**
+ * R1's OSPF route to C2's network, whichever route-table tab is open below.
+ * The heading names both, so it is not read as the heading of that tab's table.
+ */
+export function RouteSummaryPanel({ runs }: { runs: readonly ProbeRun[] }) {
   const t = useT();
   const { routeTable } = useNetlabContext();
   const preferredRoute =
     routeTable
       .get('r1')
-      ?.find((entry) => entry.destination === '10.4.0.0/24' && entry.protocol === 'ospf') ?? null;
+      ?.find((entry) => entry.destination === C2_NETWORK && entry.protocol === 'ospf') ?? null;
 
   return (
     <div
+      data-testid="ospf-r1-route"
       style={{
         background: 'var(--netlab-bg-primary)',
         border: '1px solid var(--netlab-bg-surface)',
@@ -335,15 +343,27 @@ function RouteSummaryPanel({ runs }: { runs: readonly ProbeRun[] }) {
       }}
     >
       <div
+        data-testid="ospf-r1-route-heading"
         style={{
           color: 'var(--netlab-text-secondary)',
           fontSize: 11,
           fontWeight: 700,
-          letterSpacing: 1,
-          marginBottom: 8,
+          marginBottom: 2,
         }}
       >
-        {t('R1 PREFERRED ROUTE', 'R1 の優先経路')}
+        {t(
+          `R1’s route to C2’s network (${C2_NETWORK})`,
+          `R1 から C2 のネットワーク（${C2_NETWORK}）への経路`,
+        )}
+      </div>
+      <div
+        data-testid="ospf-r1-route-note"
+        style={{ color: 'var(--netlab-text-muted)', fontSize: 11, marginBottom: 8 }}
+      >
+        {t(
+          'Always R1, whichever tab is open below.',
+          '下でどのタブを開いても、ここは R1 の経路です。',
+        )}
       </div>
       {preferredRoute ? (
         <div style={{ display: 'grid', gap: 6 }}>
