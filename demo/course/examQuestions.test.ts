@@ -70,3 +70,40 @@ describe('every test level (TC-202)', () => {
     });
   }
 });
+
+describe('level 1 questions do not give their answers away (TC-322)', () => {
+  for (const locale of ['en', 'ja'] as const) {
+    it(`never makes the right option the single longest (${locale})`, () => {
+      for (const q of EXAM_QUESTIONS) {
+        const lengths = q.options.map((option) => option[locale].length);
+        const others = lengths.filter((_, index) => index !== q.answer);
+        expect(lengths[q.answer], `${q.id}: the right option stands out by length`).toBeLessThan(
+          Math.max(...others) + 1,
+        );
+      }
+    });
+
+    it(`keeps the four options of similar length (${locale})`, () => {
+      for (const q of EXAM_QUESTIONS) {
+        const lengths = q.options.map((option) => option[locale].length);
+        expect(
+          Math.max(...lengths),
+          `${q.id}: one option is more than twice the shortest`,
+        ).toBeLessThanOrEqual(2 * Math.min(...lengths));
+      }
+    });
+  }
+
+  it('explains without the terms the beginner lessons do not teach', () => {
+    for (const q of EXAM_QUESTIONS) {
+      for (const term of ['ビット', '次ホップ', 'ESTABLISHED', 'フレームに書く']) {
+        expect(q.explanation.ja, `${q.id} uses ${term}`).not.toContain(term);
+        expect(q.explanation.en, `${q.id} uses ${term}`).not.toContain(term);
+      }
+    }
+  });
+
+  it('does not put the right answer in the same written position throughout', () => {
+    expect(new Set(EXAM_QUESTIONS.map((q) => q.answer)).size).toBe(4);
+  });
+});

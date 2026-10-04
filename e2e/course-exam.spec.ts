@@ -22,6 +22,9 @@ async function openExam(page: import('@playwright/test').Page) {
   await page.goto('/#/course/exam');
   await expect(page.getByTestId(SEL.app.root)).toBeVisible();
   await expect(page.getByTestId('exam-path')).toBeVisible();
+  // The questions stay hidden until the learner starts the test (TC-323).
+  await page.getByTestId('exam-start').click();
+  await expect(page.getByTestId('exam-question-1')).toBeVisible();
 }
 
 test('answering "not learned" throughout scores 0 and points to every lesson', async ({ page }) => {

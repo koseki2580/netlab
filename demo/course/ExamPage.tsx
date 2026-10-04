@@ -1,9 +1,22 @@
-import { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { useOptionalProgress } from '../../src/progress';
 import DemoShell from '../DemoShell';
 import { readLearningLocale } from '../learning/learningLocale';
 import { useGalleryLocale, useT } from '../localeContext';
+import {
+  NEW_ATTEMPT,
+  clearAttempt,
+  examReturnSearch,
+  examRoute,
+  loadAttempt,
+  nextSeed,
+  optionOrder,
+  saveAttempt,
+  seedFromSearch,
+  sessionStore,
+  type ExamAttempt,
+} from './examAttempt';
 import { EXAM_LEVELS, examLevel } from './examLevels';
 import {
   EXAM_LEVEL_1,
@@ -12,12 +25,15 @@ import {
   scoreLevel,
   type ExamAnswer,
   type ExamLevel,
-  type ExamResult,
 } from './examQuestions';
 
 /**
- * The beginner path's final test: the path in order, then ten questions, then
- * the mark with, for every miss, why and where it is taught.
+ * The beginner path's final test: the path in order, then — once the learner
+ * presses start — ten questions, then the mark with, for every miss, the right
+ * answer, why, and where it is taught.
+ *
+ * The attempt (answers, the order of the options, whether it is marked) is kept
+ * for the tab, so going to a lesson and coming back does not lose it.
  */
 const CARD: React.CSSProperties = {
   background: 'var(--netlab-bg-panel)',
@@ -39,20 +55,82 @@ const BUTTON: React.CSSProperties = {
   fontSize: 14,
 };
 
+/** Links on the cards: the browser's default blue is unreadable on the dark panel. */
+const LINK: React.CSSProperties = {
+  color: 'var(--netlab-accent-cyan)',
+  textDecoration: 'underline',
+  fontWeight: 600,
+};
+
+/** The words that mark an option after marking, so it is not told by colour alone. */
+const BADGE: React.CSSProperties = {
+  display: 'inline-block',
+  marginLeft: 8,
+  padding: '0 8px',
+  borderRadius: 999,
+  border: '1px solid currentColor',
+  fontSize: 12,
+  fontWeight: 700,
+  whiteSpace: 'nowrap',
+};
+
 function ExamBody({ level }: { level: ExamLevel }) {
   const t = useT();
   const locale = useGalleryLocale();
   const { recordCompletion } = useOptionalProgress();
-  const [answers, setAnswers] = useState<Record<string, ExamAnswer | undefined>>({});
-  const [result, setResult] = useState<ExamResult | null>(null);
+  const location = useLocation();
+  const [attempt, setAttempt] = useState<ExamAttempt>(
+    () => loadAttempt(sessionStore(), level.level) ?? NEW_ATTEMPT,
+  );
+  const { answers } = attempt;
+  const result = useMemo(
+    () => (attempt.marked ? scoreLevel(level, answers) : null),
+    [attempt.marked, answers, level],
+  );
   const answered = useMemo(
     () => level.questions.filter((question) => answers[question.id] !== undefined).length,
     [answers, level],
   );
+  const scoreRef = useRef<HTMLElement>(null);
+  const questionsRef = useRef<HTMLDivElement>(null);
+  // Set by "start" and "try again" only: an attempt restored from storage must
+  // not pull the page down to its questions.
+  const goToQuestions = useRef(false);
+
+  useEffect(() => {
+    if (attempt.started) saveAttempt(sessionStore(), level.level, attempt);
+    else clearAttempt(sessionStore(), level.level);
+  }, [attempt, level.level]);
+
+  // The result is what the learner pressed the button for: bring it into view
+  // and give it the focus, both after marking and when coming back to it.
+  useEffect(() => {
+    const target = attempt.marked
+      ? scoreRef.current
+      : goToQuestions.current
+        ? questionsRef.current
+        : null;
+    goToQuestions.current = false;
+    if (!target) return;
+    target.scrollIntoView({ block: 'start' });
+    target.focus({ preventScroll: true });
+  }, [attempt.marked, attempt.seed, attempt.started]);
+
+  /** A seed named in the address fixes the order; tests use it. */
+  const begin = (previousSeed: number | undefined) => {
+    const named = seedFromSearch(location.search, window.location.search);
+    goToQuestions.current = true;
+    setAttempt({
+      seed: nextSeed(named, previousSeed, Math.random),
+      started: true,
+      answers: {},
+      marked: false,
+    });
+  };
 
   const submit = () => {
     const marked = scoreLevel(level, answers);
-    setResult(marked);
+    setAttempt((current) => ({ ...current, marked: true }));
     if (marked.passed) {
       recordCompletion({
         kind: 'tutorial',
@@ -60,13 +138,6 @@ function ExamBody({ level }: { level: ExamLevel }) {
         label: level.title.en,
       });
     }
-    window.scrollTo({ top: 0 });
-  };
-
-  const retry = () => {
-    setAnswers({});
-    setResult(null);
-    window.scrollTo({ top: 0 });
   };
 
   return (
@@ -82,7 +153,7 @@ function ExamBody({ level }: { level: ExamLevel }) {
                 key={entry.level}
                 data-testid={`exam-level-${entry.level}`}
                 aria-current={entry.level === level.level ? 'page' : undefined}
-                to={entry.level === 1 ? '/course/exam' : `/course/exam/${entry.level}`}
+                to={examRoute(entry.level)}
                 style={{
                   padding: '6px 12px',
                   borderRadius: 999,
@@ -113,7 +184,11 @@ function ExamBody({ level }: { level: ExamLevel }) {
           <ol style={{ margin: 0, paddingLeft: 20, display: 'grid', gap: 6 }}>
             {level.path.map((stop) => (
               <li key={stop.id}>
-                <Link data-testid={`exam-path-${stop.id}`} to={stop.path}>
+                <Link
+                  data-testid={`exam-path-${stop.id}`}
+                  to={`${stop.path}${examReturnSearch(level.level)}`}
+                  style={{ ...LINK, display: 'inline-block', padding: '6px 0' }}
+                >
                   {stop.title[locale]}
                 </Link>
                 <span style={{ color: 'var(--netlab-text-secondary)' }}>
@@ -123,10 +198,30 @@ function ExamBody({ level }: { level: ExamLevel }) {
               </li>
             ))}
           </ol>
+          {attempt.started ? null : (
+            <div style={{ marginTop: 16 }}>
+              <p data-testid="exam-start-note" style={{ margin: '0 0 10px' }}>
+                {t(
+                  'The ten questions appear after you press “Start the test”. Study the lessons above first.',
+                  '10 問の問題は、「テストを始める」を押すと表示されます。先に上のレッスンを学んでください。',
+                )}
+              </p>
+              <button
+                type="button"
+                data-testid="exam-start"
+                onClick={() => begin(undefined)}
+                style={{ ...BUTTON, minHeight: 44 }}
+              >
+                {t('Start the test', 'テストを始める')}
+              </button>
+            </div>
+          )}
         </section>
 
         {result ? (
           <section
+            ref={scoreRef}
+            tabIndex={-1}
             style={{
               ...CARD,
               borderColor: result.passed
@@ -161,93 +256,164 @@ function ExamBody({ level }: { level: ExamLevel }) {
             <button
               type="button"
               data-testid="exam-retry"
-              onClick={retry}
-              style={{ ...BUTTON, marginTop: 12 }}
+              onClick={() => begin(attempt.seed)}
+              style={{ ...BUTTON, marginTop: 12, minHeight: 44 }}
             >
               {t('Try again', 'もう一度受ける')}
             </button>
           </section>
         ) : null}
 
-        {level.questions.map((question, index) => {
-          const outcome = result?.perQuestion[index];
-          const chosen = answers[question.id];
-          const stop = levelStop(level, question.taughtBy);
-          return (
-            <fieldset
-              key={question.id}
-              data-testid={`exam-question-${index + 1}`}
-              {...(outcome ? { 'data-correct': outcome.correct ? 'yes' : 'no' } : {})}
-              style={{ ...CARD, margin: 0 }}
-            >
-              <legend style={{ fontWeight: 700, padding: '0 6px' }}>
-                {t(`Question ${index + 1}`, `問 ${index + 1}`)}
-              </legend>
-              <p style={{ margin: '0 0 10px' }}>{question.prompt[locale]}</p>
-              <div style={{ display: 'grid', gap: 6 }}>
-                {[
-                  ...question.options.map((option, k) => ({
-                    key: k as ExamAnswer,
-                    text: option[locale],
-                  })),
-                  {
-                    key: 'not-learned' as ExamAnswer,
-                    text: t('I have not learned this', 'わからない（まだ習っていない）'),
-                  },
-                ].map(({ key, text }) => (
-                  <label
-                    key={String(key)}
-                    style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}
-                  >
-                    <input
-                      type="radio"
-                      name={`exam-${question.id}`}
-                      data-testid={`exam-option-${index + 1}-${key === 'not-learned' ? 'x' : Number(key) + 1}`}
-                      checked={chosen === key}
-                      disabled={result !== null}
-                      onChange={() => setAnswers((current) => ({ ...current, [question.id]: key }))}
-                    />
-                    <span>{text}</span>
-                  </label>
-                ))}
-              </div>
-              {outcome ? (
-                <div
-                  data-testid={`exam-feedback-${index + 1}`}
-                  style={{
-                    marginTop: 10,
-                    paddingTop: 10,
-                    borderTop: '1px solid var(--netlab-border)',
-                    color: outcome.correct
-                      ? 'var(--netlab-accent-green)'
-                      : 'var(--netlab-text-primary)',
-                  }}
+        {attempt.started ? (
+          <div
+            ref={questionsRef}
+            tabIndex={-1}
+            data-testid="exam-questions"
+            style={{ display: 'grid', gap: 16, outline: 'none' }}
+          >
+            {level.questions.map((question, index) => {
+              const outcome = result?.perQuestion[index];
+              const chosen = answers[question.id];
+              const stop = levelStop(level, question.taughtBy);
+              const number = index + 1;
+              return (
+                <fieldset
+                  key={question.id}
+                  data-testid={`exam-question-${number}`}
+                  {...(outcome ? { 'data-correct': outcome.correct ? 'yes' : 'no' } : {})}
+                  style={{ ...CARD, margin: 0, minWidth: 0 }}
                 >
-                  <strong>
-                    {outcome.correct ? t('Correct', '正解') : t('Not quite', '不正解')}
-                  </strong>
-                  <p style={{ margin: '4px 0' }}>{question.explanation[locale]}</p>
-                  {!outcome.correct && stop ? (
-                    <Link data-testid={`exam-review-${index + 1}`} to={stop.path}>
-                      {t(`Review: ${stop.title.en} →`, `復習する：${stop.title.ja} →`)}
-                    </Link>
+                  <legend style={{ fontWeight: 700, padding: '0 6px' }}>
+                    {t(`Question ${number}`, `問 ${number}`)}
+                  </legend>
+                  <p style={{ margin: '0 0 10px' }}>{question.prompt[locale]}</p>
+                  <div style={{ display: 'grid', gap: 6 }}>
+                    {[
+                      // A new order for every attempt; "not learned" stays last.
+                      ...optionOrder(attempt.seed, index).map((k) => ({
+                        key: k as ExamAnswer,
+                        text: question.options[k][locale],
+                      })),
+                      {
+                        key: 'not-learned' as ExamAnswer,
+                        text: t('I have not learned this', 'わからない（まだ習っていない）'),
+                      },
+                    ].map(({ key, text }) => {
+                      const suffix = key === 'not-learned' ? 'x' : Number(key) + 1;
+                      const isChosen = outcome !== undefined && chosen === key;
+                      const isMissedAnswer =
+                        outcome !== undefined && !outcome.correct && key === question.answer;
+                      return (
+                        <label
+                          key={String(key)}
+                          data-testid={`exam-option-row-${number}-${suffix}`}
+                          style={{
+                            display: 'flex',
+                            gap: 8,
+                            alignItems: 'center',
+                            minHeight: 44,
+                            padding: '4px 10px',
+                            borderRadius: 8,
+                            border: isChosen
+                              ? `2px solid ${outcome.correct ? 'var(--netlab-accent-green)' : 'var(--netlab-accent-orange)'}`
+                              : isMissedAnswer
+                                ? '2px dashed var(--netlab-accent-green)'
+                                : '2px solid transparent',
+                          }}
+                        >
+                          <input
+                            type="radio"
+                            name={`exam-${question.id}`}
+                            data-testid={`exam-option-${number}-${suffix}`}
+                            checked={chosen === key}
+                            disabled={result !== null}
+                            onChange={() =>
+                              setAttempt((current) => ({
+                                ...current,
+                                answers: { ...current.answers, [question.id]: key },
+                              }))
+                            }
+                          />
+                          <span>
+                            {text}
+                            {isChosen ? (
+                              <span data-testid={`exam-your-answer-${number}`} style={BADGE}>
+                                {outcome.correct ? '✓ ' : '✗ '}
+                                {t('Your answer', 'あなたの答え')}
+                              </span>
+                            ) : null}
+                            {isMissedAnswer ? (
+                              <span data-testid={`exam-correct-answer-${number}`} style={BADGE}>
+                                {'✓ '}
+                                {t('Correct answer', '正解')}
+                              </span>
+                            ) : null}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {outcome ? (
+                    <div
+                      data-testid={`exam-feedback-${number}`}
+                      style={{
+                        marginTop: 10,
+                        paddingTop: 10,
+                        borderTop: '1px solid var(--netlab-border)',
+                      }}
+                    >
+                      <strong
+                        style={{
+                          color: outcome.correct
+                            ? 'var(--netlab-accent-green)'
+                            : 'var(--netlab-text-primary)',
+                        }}
+                      >
+                        {outcome.correct ? t('✓ Correct', '✓ 正解') : t('✗ Not quite', '✗ 不正解')}
+                      </strong>
+                      <p style={{ margin: '4px 0' }}>{question.explanation[locale]}</p>
+                      {!outcome.correct && stop ? (
+                        <Link
+                          data-testid={`exam-review-${number}`}
+                          to={`${stop.path}${examReturnSearch(level.level)}`}
+                          style={{
+                            ...LINK,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            minHeight: 44,
+                            padding: '0 12px',
+                            marginTop: 4,
+                            border: '1px solid var(--netlab-accent-cyan)',
+                            borderRadius: 8,
+                            textDecoration: 'none',
+                          }}
+                        >
+                          {t(`Review: ${stop.title.en} →`, `復習する：${stop.title.ja} →`)}
+                        </Link>
+                      ) : null}
+                    </div>
                   ) : null}
-                </div>
-              ) : null}
-            </fieldset>
-          );
-        })}
+                </fieldset>
+              );
+            })}
 
-        {result ? null : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button type="button" data-testid="exam-submit" onClick={submit} style={BUTTON}>
-              {t('Mark my answers', '採点する')}
-            </button>
-            <span style={{ color: 'var(--netlab-text-secondary)' }}>
-              {t(`${answered} of 10 answered`, `10 問中 ${answered} 問に回答済み`)}
-            </span>
+            {result ? null : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  data-testid="exam-submit"
+                  onClick={submit}
+                  style={{ ...BUTTON, minHeight: 44 }}
+                >
+                  {t('Mark my answers', '採点する')}
+                </button>
+                <span style={{ color: 'var(--netlab-text-secondary)' }}>
+                  {t(`${answered} of 10 answered`, `10 問中 ${answered} 問に回答済み`)}
+                </span>
+              </div>
+            )}
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

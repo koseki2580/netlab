@@ -25,6 +25,7 @@ import { I18nProvider } from '../src/i18n/I18nProvider';
 import { readLearningLocale } from './learning/learningLocale';
 import { DEMO_COPY_JA } from './galleryJa';
 import { GalleryLocaleProvider } from './localeContext';
+import { examLevelFromSearch, examRoute } from './course/examAttempt';
 
 const GITHUB_ICON = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -134,6 +135,9 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
   const translatedCopy = locale === 'ja' ? DEMO_COPY_JA[location.pathname] : undefined;
   const shownTitle = translatedCopy?.title ?? title;
   const shownDesc = translatedCopy?.desc ?? desc;
+  // A lesson opened from the final test names that test's level in its address,
+  // so the learner has a way back to their answers and not only to the gallery.
+  const examToReturnTo = examLevelFromSearch(location.search);
 
   // Keep <html lang> in step with the chosen locale so screen readers use the
   // right pronunciation for Japanese content.
@@ -389,6 +393,29 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
                 flexShrink: 0,
               }}
             >
+              {examToReturnTo !== undefined && (
+                <button
+                  type="button"
+                  data-testid="demo-shell-back-to-exam"
+                  onClick={() => void navigate(examRoute(examToReturnTo))}
+                  className="netlab-focus-ring"
+                  style={{
+                    background: 'none',
+                    border: '1px solid var(--netlab-accent-cyan)',
+                    borderRadius: 6,
+                    padding: '4px 8px',
+                    minHeight: isNarrow ? 44 : undefined,
+                    color: 'var(--netlab-text-primary)',
+                    fontFamily: 'monospace',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {locale === 'ja' ? '← テストに戻る' : '← Back to the test'}
+                </button>
+              )}
               {/* The way back, in words. The only exits used to be two icons in
                 the rail whose names were English tooltips. */}
               <button
