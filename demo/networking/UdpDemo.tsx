@@ -47,6 +47,35 @@ const BUTTON_STYLE: CSSProperties = {
   fontWeight: 700,
 };
 
+// The plain first line of the lesson: larger than everything around it, and
+// in the reading face rather than the monospace the readouts use.
+const LEAD_STYLE: CSSProperties = {
+  fontFamily: 'system-ui, sans-serif',
+  fontSize: 16,
+  fontWeight: 700,
+  lineHeight: 1.6,
+  margin: '2px 0 6px',
+};
+
+const DETAIL_STYLE: CSSProperties = {
+  fontFamily: 'system-ui, sans-serif',
+  fontSize: 13,
+  lineHeight: 1.7,
+};
+
+// The second send is a harmless experiment. Painted red it read as "danger"
+// and a learner did not dare press it.
+const SECONDARY_BUTTON_STYLE: CSSProperties = {
+  whiteSpace: 'nowrap',
+  padding: '8px 12px',
+  borderRadius: 8,
+  border: '1px solid var(--netlab-border)',
+  background: 'var(--netlab-bg-surface)',
+  color: 'var(--netlab-text-primary)',
+  cursor: 'pointer',
+  fontSize: 13,
+};
+
 const INPUT_STYLE: CSSProperties = {
   background: 'var(--netlab-bg-surface)',
   border: '1px solid var(--netlab-border)',
@@ -147,7 +176,7 @@ export default function UdpDemo() {
   return (
     <DemoShell
       title="UDP Datagram"
-      desc="Send a stateless UDP datagram — no handshake. Compare with TCP (which sets up a 3-way handshake first)."
+      desc="Send one UDP message: it goes at once, with no greeting and no check that it arrived. Compare with TCP."
     >
       <NetlabProvider topology={TOPOLOGY}>
         <SimulationProvider>
@@ -209,7 +238,7 @@ function UdpDemoInner() {
             position: 'absolute',
             top: 12,
             left: 12,
-            maxWidth: 360,
+            maxWidth: 420,
             padding: '10px 12px',
             borderRadius: 10,
             background: 'color-mix(in srgb, var(--netlab-bg-primary) 90%, transparent)',
@@ -221,20 +250,65 @@ function UdpDemoInner() {
             backdropFilter: 'blur(8px)',
           }}
         >
-          <div style={{ color: 'var(--netlab-text-primary)', fontWeight: 700, marginBottom: 4 }}>
-            {t('UDP — Stateless Datagrams', 'UDP — 状態を持たないデータグラム')}
+          <div style={{ color: 'var(--netlab-text-secondary)', fontWeight: 700 }}>
+            {t('How UDP works', 'UDP のしくみ')}
           </div>
-          <div>
+          <div data-testid="lesson-lead" style={LEAD_STYLE}>
             {t(
-              'UDP is stateless — no handshake. The client fires a single datagram toward the server. Compare with TCP (which sets up a 3-way handshake first). What UDP gives up for that speed: it never checks that the datagram arrived, and never resends one that is lost.',
-              'UDP は状態を持たず、ハンドシェイクもありません。クライアントはデータグラムを1つサーバへ送るだけです。先に3ウェイハンドシェイクで接続を作る TCP と比べてみてください。その速さと引き換えに手放すもの：UDP は届いたかどうかを確かめず、失われても送り直しません。',
+              'TCP is a phone call; UDP is a postcard. Nobody checks that a postcard arrived.',
+              'TCP は電話、UDP ははがき。はがきは、届いたかどうかを確かめません。',
             )}
+          </div>
+          <div style={DETAIL_STYLE}>
+            {t(
+              'UDP sends one message straight away, with no greeting first (TCP\'s "hello?"). It does not check that the message arrived, and does not send it again if it is lost. That is less work, so it is quick.',
+              'UDP は、送る前のあいさつ（TCP の「もしもし」）をしません。いきなり 1 通送ります。届いたかも確かめず、なくなっても送り直しません。そのぶん手間が少なく、速く送れます。',
+            )}
+          </div>
+          {/* The contrast with TCP as a picture of its own: learners who read
+              "no handshake" in a sentence kept "handshake" and lost the "no". */}
+          <div
+            data-testid="udp-compare"
+            style={{
+              ...DETAIL_STYLE,
+              display: 'grid',
+              gridTemplateColumns: 'auto 1fr 1fr',
+              gap: '2px 10px',
+              marginTop: 8,
+            }}
+          >
+            <span />
+            <strong>{t('TCP (phone call)', 'TCP（電話）')}</strong>
+            <strong>{t('UDP (postcard)', 'UDP（はがき）')}</strong>
+            <span>{t('Greeting first', '送る前のあいさつ')}</span>
+            <span>{t('Yes, 3 messages', 'する（3 回）')}</span>
+            <strong>{t('None', 'しない')}</strong>
+            <span>{t('Checks arrival', '届いたかの確認')}</span>
+            <span>{t('Yes', 'する')}</span>
+            <strong>{t('None', 'しない')}</strong>
           </div>
         </LessonNote>
       </LessonCanvas>
 
-      <LessonPanel defaultWidth={360}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <LessonPanel
+        defaultWidth={400}
+        style={{
+          background: 'var(--netlab-bg-primary)',
+          borderLeft: '1px solid var(--netlab-bg-surface)',
+        }}
+      >
+        {/* Padded, and each card may shrink: without either, the cards ran
+            under the right edge of the screen and their borders were cut. */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+            padding: 12,
+            minWidth: 0,
+            boxSizing: 'border-box',
+          }}
+        >
           <div style={CARD_STYLE}>
             <div style={LABEL_STYLE}>{t('UDP CONTROLS', 'UDP の操作')}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -244,11 +318,10 @@ function UdpDemoInner() {
                   alignItems: 'center',
                   gap: 8,
                   color: 'var(--netlab-text-secondary)',
-                  fontSize: 11,
-                  fontFamily: 'monospace',
+                  fontSize: 12,
                 }}
               >
-                {t('Port:', 'ポート:')}
+                {t('Port (which door at the server):', 'ポート（相手の窓口の番号）:')}
                 <input
                   type="number"
                   min={1}
@@ -264,11 +337,10 @@ function UdpDemoInner() {
                   alignItems: 'center',
                   gap: 8,
                   color: 'var(--netlab-text-secondary)',
-                  fontSize: 11,
-                  fontFamily: 'monospace',
+                  fontSize: 12,
                 }}
               >
-                {t('Payload:', '中身:')}
+                {t('Payload (what to send):', '中身（送る文字）:')}
                 <input
                   type="text"
                   value={payload}
@@ -288,26 +360,43 @@ function UdpDemoInner() {
                 <button
                   onClick={sendLargePayload}
                   disabled={isRecomputing}
-                  style={{
-                    ...BUTTON_STYLE,
-                    background: '#7c2d12',
-                    borderColor: '#9a3412',
-                  }}
+                  data-testid="udp-send-large"
+                  style={SECONDARY_BUTTON_STYLE}
                 >
                   {t('Send Large (4000 B)', '大きく送る（4000 バイト）')}
                 </button>
               </div>
               <div
                 data-testid="udp-large-hint"
-                style={{ color: 'var(--netlab-text-secondary)', fontSize: 11, lineHeight: 1.5 }}
+                style={{ ...DETAIL_STYLE, color: 'var(--netlab-text-secondary)' }}
               >
                 {t(
-                  'A packet has a size limit on each link, the MTU — usually 1500 bytes on Ethernet. The large send is bigger than that; see below what happens to it.',
-                  'パケットの大きさには、リンクごとに上限（MTU）があります。イーサネットではふつう 1500 バイトです。「大きく送る」はそれより大きいデータです。どうなるかは送ったあと下に表示されます。',
+                  '"Send Large" is safe to press: nothing breaks. A packet has a size limit on each link, the MTU (usually 1500 bytes). The large send is bigger than that; what happens to it is shown below after you send.',
+                  '「大きく送る」は、試しに押して大丈夫です。何も壊れません。パケットの大きさには上限（MTU。ふつう 1500 バイト）があります。それより大きいデータを送るとどうなるかを、送ったあと下に表示します。',
                 )}
               </div>
             </div>
           </div>
+
+          {/* The main idea first — it went without a greeting and without a
+              check — and the byte sum after it. */}
+          {activeTrace && (
+            <div
+              data-testid="udp-sent-result"
+              style={{
+                ...CARD_STYLE,
+                ...DETAIL_STYLE,
+                fontSize: 14,
+                fontWeight: 700,
+                color: 'var(--netlab-accent-green)',
+              }}
+            >
+              {t(
+                'Sent straight away, with no greeting: this one message is the whole exchange. UDP did not check that it arrived, and if it had been lost UDP would do nothing: no resend.',
+                'あいさつなしで、いきなり送りました。通信はこの 1 通だけです。UDP は、届いたかどうかを確かめていません。もし途中でなくなっても、何もしません（送り直しません）。',
+              )}
+            </div>
+          )}
 
           {activeTrace && sentPayloadBytes !== null && (
             <UdpSizeResult payloadBytes={sentPayloadBytes} pieces={recordedPieces(activeTrace)} />
@@ -345,9 +434,9 @@ function UdpSizeResult({ payloadBytes, pieces }: { payloadBytes: number; pieces:
     <div
       data-testid="udp-size-result"
       data-pieces={pieces}
-      style={{ ...CARD_STYLE, fontFamily: 'monospace', fontSize: 11, lineHeight: 1.6 }}
+      style={{ ...CARD_STYLE, ...DETAIL_STYLE, fontSize: 12 }}
     >
-      <div style={LABEL_STYLE}>{t('WHAT WAS SENT', '送ったもの')}</div>
+      <div style={LABEL_STYLE}>{t('HOW BIG IT WAS', '送ったものの大きさ')}</div>
       <div data-testid="udp-size-bytes">
         {t(
           `Data ${payloadBytes} B + UDP header 8 B + IP header 20 B = one IP packet of ${size.ipBytes} B`,

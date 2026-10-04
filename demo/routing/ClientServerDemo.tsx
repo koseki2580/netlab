@@ -5,7 +5,7 @@ import { AreaLegend } from '../../src/components/controls/AreaLegend';
 import { RouteTablePanel } from '../../src/components/controls/RouteTable';
 import { PacketViewerPanel } from '../../src/components/simulation/PacketViewer';
 import { useViewport } from '../../src/utils/useViewport';
-import { SimulationProvider } from '../../src/simulation/SimulationContext';
+import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import { SimulationControls } from '../../src/components/simulation/SimulationControls';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationOverlayDock } from '../../src/components/simulation/SimulationOverlayDock';
@@ -148,28 +148,68 @@ export const CLIENT_SERVER_INITIAL_TOPOLOGY = INITIAL_TOPOLOGY;
  */
 function ClientServerBrief() {
   const t = useT();
+  const { state } = useSimulation();
+  const trace = state.traces[state.traces.length - 1];
+  // The devices the packet passed, each once and in order; the router's own
+  // address lookup (ARP) happens beside the path, not along it.
+  const route: string[] = [];
+  for (const hop of trace?.hops ?? []) {
+    if (hop.event === 'arp-request' || hop.event === 'arp-reply') continue;
+    if (route[route.length - 1] !== hop.nodeLabel) route.push(hop.nodeLabel);
+  }
   return (
     <div
       data-testid="lesson-brief"
       style={{
         padding: '10px 12px',
         borderBottom: '1px solid var(--netlab-bg-surface)',
-        fontSize: 12,
+        fontSize: 13,
         lineHeight: 1.7,
         color: 'var(--netlab-text-primary)',
       }}
     >
-      <strong>{t('Crossing a router', 'ルータを越える通信')}</strong>
+      <div style={{ color: 'var(--netlab-text-secondary)', fontWeight: 700 }}>
+        {t('Crossing a router', 'ルータを越える通信')}
+      </div>
+      <div
+        data-testid="lesson-lead"
+        style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.6, margin: '2px 0 6px' }}
+      >
+        {t(
+          'To reach another network, a packet first goes to the router: the way out.',
+          '別のネットワークへ送るときは、まず出口のルータに渡します。',
+        )}
+      </div>
       <div>
         {t(
-          'The client (10.0.0.10) sends to the server (203.0.113.10) on another network. Because the destination is outside its own network, the client hands the packet to its default gateway, the router R-1 at 10.0.0.1.',
-          'Client（10.0.0.10）が、別のネットワークにいる Server（203.0.113.10）へ送ります。宛先が自分のネットワークの外なので、Client はまずデフォルトゲートウェイであるルータ R-1（10.0.0.1）に渡します。',
+          'The Client and the Server are on different networks. The Client cannot deliver directly, so it hands the packet to the router R-1 (10.0.0.1). That way out is called the default gateway.',
+          'Client と Server は、別々のネットワークにいます。直接は届けられないので、出口のルータ R-1（10.0.0.1）に渡します。この出口を「デフォルトゲートウェイ」と呼びます。',
         )}
       </div>
       <div style={{ marginTop: 6 }}>
         {t(
-          'R-1 looks the destination up in its route table, finds the row that matches 203.0.113.10, and sends the packet out that side. As it forwards, a router takes one off the packet’s TTL — a lifetime count that stops a lost packet circling forever: 64 when it reaches R-1, 63 once it leaves.',
-          'R-1 は経路表で 203.0.113.10 に合う行を探し、その側へ送り出します。ルータは転送するときに TTL（寿命の数）を 1 減らします。R-1 に届いたときは 64、R-1 を出たあとは 63 です。迷ったパケットがいつまでも回り続けないための仕組みです。',
+          'R-1 picks the row of its route table (its list of destinations) that matches 203.0.113.10, and sends the packet out on that side.',
+          'R-1 は経路表（行き先の一覧）から 203.0.113.10 に合う行を選び、その側へ送り出します。',
+        )}
+      </div>
+      {trace?.status === 'delivered' ? (
+        <div
+          data-testid="client-server-result"
+          style={{ marginTop: 8, fontWeight: 700, color: 'var(--netlab-accent-green)' }}
+        >
+          {t(
+            `Delivered: ${route.join(' → ')}. The packet crossed the router R-1 and reached the Server on the other network.`,
+            `届きました：${route.join(' → ')}。ルータ R-1 を越えて、別のネットワークの Server に着きました。`,
+          )}
+        </div>
+      ) : null}
+      {/* What the trace records: 64 on every row up to and including R-1's
+          FWD row, 63 from the SW-2 row on. The text used to say "64 when it
+          reaches R-1, 63 once it leaves", and R-1's own row shows 64. */}
+      <div data-testid="client-server-ttl" style={{ marginTop: 6 }}>
+        {t(
+          'A packet carries a TTL, a lifetime count. Each router it passes takes one off, so a lost packet cannot circle forever. Press a row in the timeline to read it: still 64 on the R-1 row (FWD R-1), and 63 from the next row, SW-2, onward.',
+          'パケットには TTL（寿命の数）があり、ルータを通るたびに 1 減ります。迷ったパケットが回り続けないためです。タイムラインの行を押すと読めます。R-1 の行（FWD R-1）ではまだ 64、次の SW-2 の行から 63 です。',
         )}
       </div>
     </div>
@@ -191,7 +231,10 @@ export default function ClientServerDemo() {
   };
 
   return (
-    <DemoShell title="Client–Server" desc="Packet flow visualization with step-by-step tracing">
+    <DemoShell
+      title="Client–Server"
+      desc="Send one packet from a client to a server on another network, and watch the router pass it on."
+    >
       <NetlabProvider topology={topology}>
         <SimulationProvider>
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -249,7 +292,7 @@ export default function ClientServerDemo() {
 
               {/* Timeline panel */}
               <LessonPanel
-                defaultWidth={320}
+                defaultWidth={380}
                 style={{
                   background: 'var(--netlab-bg-primary)',
                   borderLeft: '1px solid var(--netlab-bg-surface)',

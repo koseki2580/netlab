@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { useT } from '../localeContext';
 import DemoShell from '../DemoShell';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
@@ -92,6 +93,33 @@ export function deriveNodeStates(
   return states;
 }
 
+/** The three handshake segments, in the order they are sent. */
+export type HandshakeSegment = 'syn' | 'syn-ack' | 'ack';
+
+const HANDSHAKE_LABELS: Readonly<Record<string, HandshakeSegment>> = {
+  'TCP SYN': 'syn',
+  'TCP SYN-ACK': 'syn-ack',
+  'TCP ACK': 'ack',
+};
+
+/**
+ * Which handshake segment is being shown, and so which telephone phrase is
+ * being "said" on the diagram — or null when nothing has been sent yet, or
+ * the recorded exchange is a teardown (whose ACKs are not "right, let us talk").
+ */
+export function shownHandshakeSegment(
+  traces: PacketTrace[],
+  currentTraceId: string | null,
+  currentStep: number,
+  status: SimulationStatus,
+): HandshakeSegment | null {
+  if (traces[0]?.label !== 'TCP SYN') return null;
+  const trace = traces.find((candidate) => candidate.packetId === currentTraceId);
+  if (!trace) return null;
+  if (currentStep < 0 && status !== 'done') return null;
+  return HANDSHAKE_LABELS[trace.label ?? ''] ?? null;
+}
+
 function formatFlags(segment: TcpSegment): string {
   return (
     Object.entries(segment.flags)
@@ -136,13 +164,16 @@ function useStateMeaning(): (state: TcpState) => string {
       case 'CLOSED':
         return t('no connection', '接続なし');
       case 'LISTEN':
-        return t('waiting for a SYN', 'SYN を待っている');
+        return t('waiting for a "hello" (SYN)', '相手の「もしもし」（SYN）を待っている');
       case 'SYN_SENT':
-        return t('sent a SYN, waiting for the reply', 'SYN を送り、返事を待っている');
+        return t(
+          'said "hello" (SYN), waiting for the reply',
+          '「もしもし」（SYN）を送り、返事を待っている',
+        );
       case 'SYN_RECEIVED':
         return t(
-          'got the SYN, waiting for the last ACK',
-          'SYN を受け取り、最後の ACK を待っている',
+          'heard the "hello", waiting for the last reply (ACK)',
+          '「もしもし」を受け取り、最後の返事（ACK）を待っている',
         );
       case 'ESTABLISHED':
         return t('connected: data can flow', '接続完了：データを送れる');
@@ -168,17 +199,46 @@ function useStateMeaning(): (state: TcpState) => string {
   };
 }
 
+/** The telephone phrase each handshake segment stands for. */
+function useHandshakePhrase(): (segment: HandshakeSegment) => string {
+  const t = useT();
+  return (segment) => {
+    switch (segment) {
+      case 'syn':
+        return t('"Hello?"', '「もしもし」');
+      case 'syn-ack':
+        return t('"Yes, I hear you"', '「はい、聞こえます」');
+      default:
+        return t('"Right, let us talk"', '「では話します」');
+    }
+  };
+}
+
+const SEGMENT_NAME: Readonly<Record<HandshakeSegment, string>> = {
+  syn: 'SYN',
+  'syn-ack': 'SYN-ACK',
+  ack: 'ACK',
+};
+
+/** Who says each handshake segment. */
+const SEGMENT_SPEAKER: Readonly<Record<HandshakeSegment, 'client' | 'server'>> = {
+  syn: 'client',
+  'syn-ack': 'server',
+  ack: 'client',
+};
+
+const HANDSHAKE_ORDER: readonly HandshakeSegment[] = ['syn', 'syn-ack', 'ack'];
+const CIRCLED = ['①', '②', '③'];
+
 function StateBadge({
   label,
   state,
-  left,
-  top,
+  place,
   testId,
 }: {
   label: string;
   state: TcpState;
-  left: number;
-  top: number;
+  place: CSSProperties;
   testId: string;
 }) {
   const accent = stateAccent(state);
@@ -189,8 +249,7 @@ function StateBadge({
       data-testid={testId}
       style={{
         position: 'absolute',
-        left,
-        top,
+        ...place,
         padding: '8px 10px',
         borderRadius: 10,
         border: `1px solid ${accent}55`,
@@ -198,8 +257,7 @@ function StateBadge({
         // it is themed, so a dark box left it unreadable on a light page.
         background: 'color-mix(in srgb, var(--netlab-bg-panel) 92%, transparent)',
         color: 'var(--netlab-text-primary)',
-        fontFamily: 'monospace',
-        fontSize: 11,
+        fontSize: 12,
         lineHeight: 1.4,
         boxShadow: '0 8px 24px color-mix(in srgb, var(--netlab-bg-primary) 35%, transparent)',
         pointerEvents: 'none',
@@ -208,7 +266,10 @@ function StateBadge({
       }}
     >
       <div style={{ color: 'var(--netlab-text-secondary)', marginBottom: 4 }}>{label}</div>
-      <div data-testid={`${testId}-code`} style={{ color: accent, fontWeight: 'bold' }}>
+      <div
+        data-testid={`${testId}-code`}
+        style={{ color: accent, fontWeight: 'bold', fontFamily: 'monospace' }}
+      >
         {state}
       </div>
       <div style={{ color: 'var(--netlab-text-secondary)', marginTop: 2 }}>{meaning(state)}</div>
@@ -216,141 +277,141 @@ function StateBadge({
   );
 }
 
-function SidebarPanel({
-  traces,
-  currentTraceId,
+const PANEL_CARD: CSSProperties = {
+  padding: 16,
+  border: '1px solid var(--netlab-bg-surface)',
+  borderRadius: 10,
+  background: 'var(--netlab-bg-primary)',
+};
+
+const PANEL_LABEL: CSSProperties = {
+  fontSize: 12,
+  fontWeight: 700,
+  color: 'var(--netlab-text-secondary)',
+  marginBottom: 6,
+};
+
+/**
+ * The connection as of the step being shown — the same two states the badges
+ * on the diagram carry.
+ *
+ * This card used to show the engine's finished connection, so pressing
+ * "connect" read ESTABLISHED here while the diagram still read CLOSED: the
+ * handshake looked over before the learner had watched any of it.
+ */
+function ConnectionStateCard({
+  nodeStates,
+  started,
 }: {
-  traces: PacketTrace[];
-  currentTraceId: string | null;
+  nodeStates: { client: TcpState; server: TcpState };
+  started: boolean;
 }) {
   const t = useT();
-  const { engine, state } = useSimulation();
-  const activeConnections = engine.getTcpConnections();
-  const selected = readSelectedSegment(state.selectedPacket);
-  const activeTrace = currentTraceId
-    ? (traces.find((trace) => trace.packetId === currentTraceId) ?? null)
-    : (traces[traces.length - 1] ?? null);
+  const meaning = useStateMeaning();
+  const rows: [string, string, TcpState][] = [
+    ['tcp-panel-client-state', 'Client', nodeStates.client],
+    ['tcp-panel-server-state', 'Server', nodeStates.server],
+  ];
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 16,
-        padding: 16,
-        border: '1px solid var(--netlab-bg-surface)',
-        borderRadius: 10,
-        background: 'var(--netlab-bg-primary)',
-      }}
-    >
-      <div>
-        <div
-          style={{
-            fontSize: 11,
-            color: 'var(--netlab-text-secondary)',
-            letterSpacing: 1,
-            marginBottom: 6,
-          }}
-        >
-          {t('ACTIVE TCP CONNECTIONS', '確立中の TCP 接続')}
-        </div>
-        {activeConnections.length > 0 && (
-          <div
-            data-testid="tcp-connection-note"
-            style={{ color: 'var(--netlab-text-secondary)', fontSize: 11, marginBottom: 6 }}
-          >
-            {t(
-              'This is the connection after the whole exchange. The state badges on the canvas follow the step you are on.',
-              'これはやり取りをすべて終えた後の接続です。図の上の状態表示は、いま見ているステップに合わせて変わります。',
-            )}
-          </div>
-        )}
-        {activeConnections.length === 0 ? (
-          <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 12 }}>
-            {t('No active connections.', 'いま確立している接続はありません。')}
-          </div>
-        ) : (
-          activeConnections.map((connection) => (
-            <div
-              key={connection.id}
-              style={{
-                padding: '10px 12px',
-                borderRadius: 8,
-                background: 'var(--netlab-bg-primary)',
-                border: '1px solid var(--netlab-bg-surface)',
-                color: 'var(--netlab-text-primary)',
-                fontSize: 12,
-                fontFamily: 'monospace',
-              }}
+    <div data-testid="tcp-connection-state" style={PANEL_CARD}>
+      <div style={PANEL_LABEL}>{t('The connection right now', 'いまの接続の状態')}</div>
+      <div style={{ display: 'grid', gap: 6, fontSize: 13, lineHeight: 1.5 }}>
+        {rows.map(([testId, name, state]) => (
+          <div key={testId}>
+            {name}:{' '}
+            <strong
+              data-testid={testId}
+              style={{ color: stateAccent(state), fontFamily: 'monospace' }}
             >
-              <div
-                style={{ color: 'var(--netlab-accent-green)', fontWeight: 'bold', marginBottom: 4 }}
-              >
-                {connection.state}
-              </div>
-              <div>
-                {connection.srcIp}:{connection.srcPort} → {connection.dstIp}:{connection.dstPort}
-              </div>
-              <div style={{ color: 'var(--netlab-text-secondary)', marginTop: 4 }}>
-                localSeq={connection.localSeq} localAck={connection.localAck} remoteSeq=
-                {connection.remoteSeq}
-              </div>
-            </div>
-          ))
-        )}
+              {state}
+            </strong>
+            <span style={{ color: 'var(--netlab-text-secondary)' }}> — {meaning(state)}</span>
+          </div>
+        ))}
       </div>
-
-      <div>
-        <div
-          style={{
-            fontSize: 11,
-            color: 'var(--netlab-text-secondary)',
-            letterSpacing: 1,
-            marginBottom: 6,
-          }}
-        >
-          {t('SELECTED SEGMENT', '選択中のセグメント')}
-        </div>
-        {selected ? (
-          <div
-            style={{
-              padding: '10px 12px',
-              borderRadius: 8,
-              background: 'var(--netlab-bg-primary)',
-              border: '1px solid var(--netlab-bg-surface)',
-              color: 'var(--netlab-text-primary)',
-              fontSize: 12,
-              fontFamily: 'monospace',
-              display: 'grid',
-              gap: 4,
-            }}
-          >
-            <div style={{ color: 'var(--netlab-accent-cyan)', fontWeight: 'bold' }}>
-              {activeTrace?.label ?? 'TCP'}
-            </div>
-            <div>
-              {selected.src} → {selected.dst}
-            </div>
-            <div>Flags: {selected.flags}</div>
-            <div>SEQ: {selected.seq}</div>
-            <div>ACK: {selected.ack}</div>
-          </div>
-        ) : (
-          <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 12 }}>
-            {t(
-              'Select a trace and step into a hop to inspect TCP header fields.',
-              '通信を選んでホップを進めると、TCP ヘッダの値が見られます。',
+      <div
+        data-testid="tcp-connection-note"
+        style={{ color: 'var(--netlab-text-secondary)', fontSize: 12, marginTop: 8 }}
+      >
+        {started
+          ? t(
+              'The same as the badges on the diagram: the state up to the step you are looking at.',
+              '図の上の表示と同じです。いま見ているところまでの状態を示します。',
+            )
+          : t(
+              'Nothing has been sent yet. Press "Start a connection".',
+              'まだ何も送っていません。「接続を始める」を押してください。',
             )}
-          </div>
-        )}
       </div>
     </div>
+  );
+}
+
+/** Sequence numbers, header fields and the bytes: for a second look, closed at first. */
+function MoreDetail() {
+  const t = useT();
+  const { engine, state } = useSimulation();
+  const connections = engine.getTcpConnections();
+  const selected = readSelectedSegment(state.selectedPacket);
+  const activeTrace = state.traces.find((trace) => trace.packetId === state.currentTraceId);
+
+  return (
+    <details data-testid="tcp-more-detail" style={PANEL_CARD}>
+      <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
+        {t('A little more detail (numbers and bytes)', 'もう少し詳しく（番号とバイト列）')}
+      </summary>
+      <div style={{ display: 'grid', gap: 12, marginTop: 10, fontSize: 12, lineHeight: 1.6 }}>
+        <div>
+          {t(
+            'A sequence number is the running number TCP puts on the data it sends. The handshake also fixes where each side starts counting, so a lost piece is noticed later and sent again. The starting number is different for every connection.',
+            'シーケンス番号は、TCP が送るデータに付ける通し番号です。接続のやり取りで、数え始めの番号も決めます。だから、あとで欠けたデータに気づいて送り直せます。数え始めの番号は接続のたびに変わります。',
+          )}
+        </div>
+        {connections.map((connection) => (
+          <div key={connection.id} style={{ fontFamily: 'monospace' }}>
+            <div>
+              {connection.srcIp}:{connection.srcPort} → {connection.dstIp}:{connection.dstPort}
+            </div>
+            <div style={{ color: 'var(--netlab-text-secondary)' }}>
+              localSeq={connection.localSeq} localAck={connection.localAck} remoteSeq=
+              {connection.remoteSeq}
+            </div>
+          </div>
+        ))}
+        <div>
+          <div style={PANEL_LABEL}>{t('Selected segment', '選択中のセグメント')}</div>
+          {selected ? (
+            <div style={{ fontFamily: 'monospace', display: 'grid', gap: 4 }}>
+              <div style={{ color: 'var(--netlab-accent-cyan)', fontWeight: 'bold' }}>
+                {activeTrace?.label ?? 'TCP'}
+              </div>
+              <div>
+                {selected.src} → {selected.dst}
+              </div>
+              <div>Flags: {selected.flags}</div>
+              <div>SEQ: {selected.seq}</div>
+              <div>ACK: {selected.ack}</div>
+            </div>
+          ) : (
+            <div style={{ color: 'var(--netlab-text-secondary)' }}>
+              {t(
+                'Step into an exchange to read its TCP header fields here.',
+                '通信のステップを進めると、TCP ヘッダの値がここに出ます。',
+              )}
+            </div>
+          )}
+        </div>
+        <PacketStructureViewer />
+      </div>
+    </details>
   );
 }
 
 function TcpHandshakeDemoInner() {
   const t = useT();
   const { engine, state } = useSimulation();
+  const phrase = useHandshakePhrase();
   const activeConnection = engine.getTcpConnections()[0] ?? null;
   const nodeStates = deriveNodeStates(
     state.traces,
@@ -359,6 +420,13 @@ function TcpHandshakeDemoInner() {
     state.status,
     activeConnection !== null,
   );
+  const shown = shownHandshakeSegment(
+    state.traces,
+    state.currentTraceId,
+    state.currentStep,
+    state.status,
+  );
+  const handshakeRecorded = state.traces[0]?.label === 'TCP SYN';
 
   // Start the step-through at the first segment, so the learner watches the
   // exchange from its beginning instead of landing on the last one.
@@ -384,6 +452,17 @@ function TcpHandshakeDemoInner() {
     selectFirstTrace();
   };
 
+  // One press shows one whole segment travel. Stepping it by hand takes five
+  // presses a segment, most of them the router's address lookup, and learners
+  // gave up before the SYN-ACK ever moved.
+  const playSegment = (index: number) => {
+    const trace = engine.getState().traces[index];
+    if (!trace) return;
+    engine.selectTrace(trace.packetId);
+    engine.step();
+    engine.play(450);
+  };
+
   return (
     <LessonSplit>
       <LessonCanvas canvas={<NetlabCanvas />}>
@@ -406,24 +485,24 @@ function TcpHandshakeDemoInner() {
             disabled={activeConnection !== null}
             onClick={() => void handleConnect()}
             style={{
-              padding: '6px 12px',
+              padding: '8px 14px',
               borderRadius: 6,
               border: 'none',
               background: activeConnection ? 'var(--netlab-border)' : '#0f766e',
               color: '#fff',
-              fontFamily: 'monospace',
-              fontSize: 12,
+              fontSize: 14,
+              fontWeight: 700,
               cursor: activeConnection ? 'not-allowed' : 'pointer',
             }}
           >
-            {t('Connect (TCP)', 'TCP で接続')}
+            {t('▶ Start a connection (TCP)', '▶ 接続を始める（TCP）')}
           </button>
           <button
             type="button"
             disabled={activeConnection === null}
             onClick={() => void handleDisconnect()}
             style={{
-              padding: '6px 12px',
+              padding: '8px 14px',
               borderRadius: 6,
               border: '1px solid var(--netlab-border)',
               background: activeConnection
@@ -432,20 +511,24 @@ function TcpHandshakeDemoInner() {
               color: activeConnection
                 ? 'var(--netlab-text-primary)'
                 : 'var(--netlab-text-secondary)',
-              fontFamily: 'monospace',
-              fontSize: 12,
+              fontSize: 14,
               cursor: activeConnection ? 'pointer' : 'not-allowed',
             }}
           >
-            {t('Disconnect', '切断')}
+            {t('Disconnect', '切断する')}
           </button>
           <span
-            style={{ color: 'var(--netlab-text-secondary)', fontFamily: 'monospace', fontSize: 11 }}
+            data-testid="tcp-next-hint"
+            style={{ color: 'var(--netlab-text-secondary)', fontSize: 13 }}
           >
-            {t(
-              'Use the trace selector on the right to step through SYN, SYN-ACK, ACK, and FIN exchanges.',
-              '右の通信一覧から、SYN・SYN-ACK・ACK・FIN のやり取りを1つずつ追えます。',
-            )}
+            {!handshakeRecorded && state.traces.length > 0
+              ? t(
+                  '"Next Step" walks the closing exchange.',
+                  '「次のステップ」で、切断のやり取りを 1 つずつ見られます。',
+                )
+              : handshakeRecorded
+                ? t('Now press ①, ②, ③ below, in order.', '次に、下の ①②③ を順に押します。')
+                : t('Press this first.', 'まずこれを押します。')}
           </span>
         </LessonNote>
 
@@ -459,55 +542,133 @@ function TcpHandshakeDemoInner() {
             // lesson whose whole subject is what those two states do.
             left: 16,
             bottom: 16,
-            width: 320,
+            width: 360,
             padding: '12px 14px',
             borderRadius: 10,
             border: '1px solid var(--netlab-bg-surface)',
             background: 'color-mix(in srgb, var(--netlab-bg-panel) 94%, transparent)',
             color: 'var(--netlab-text-primary)',
-            fontFamily: 'monospace',
-            fontSize: 11,
-            lineHeight: 1.5,
+            fontSize: 13,
+            lineHeight: 1.6,
             zIndex: 20,
           }}
         >
-          <div style={{ color: 'var(--netlab-accent-cyan)', fontWeight: 'bold', marginBottom: 6 }}>
-            {t('TCP Teaching Flow', 'TCP のしくみ')}
+          <div style={{ color: 'var(--netlab-accent-cyan)', fontWeight: 'bold' }}>
+            {t('How TCP works', 'TCP のしくみ')}
           </div>
-          <div data-testid="tcp-brief-purpose" style={{ marginBottom: 4 }}>
+          <div
+            data-testid="lesson-lead"
+            style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.6, margin: '2px 0 6px' }}
+          >
             {t(
-              'Before sending any data, TCP makes a connection with three messages — like a phone call: "hello?", "yes, I hear you", "right, let us talk". The exchange also sets starting sequence numbers, so later a lost piece is noticed and sent again.',
-              'TCP はデータを送る前に、3 回のやり取りで接続を作ります。電話の「もしもし」「はい、聞こえます」「では話します」のようなものです。このやり取りで番号（シーケンス番号）の数え始めも決めるので、あとで欠けたデータに気づいて送り直せます。',
+              'TCP checks "hello, can you hear me?" before it sends anything.',
+              'TCP は、話す前に「もしもし」と確かめ合ってから送ります。',
             )}
           </div>
-          <div>{t('Handshake', '接続')}: SYN → SYN-ACK → ACK</div>
-          <div>{t('Teardown', '切断')}: FIN → ACK → FIN → ACK</div>
-          <div style={{ color: 'var(--netlab-text-secondary)', marginTop: 6 }}>
+          <div data-testid="tcp-brief-purpose">
             {t(
-              'State badges are derived from the recorded packet sequence so you can inspect historical handshake and teardown phases even after the engine finishes the exchange.',
-              '状態の表示は記録されたパケットの並びから決めているので、やり取りが終わったあとでも接続と切断の各段階を見返せます。',
+              'The check takes three messages, like starting a phone call. Press one to watch it travel.',
+              '確かめ合いは 3 回です。電話のかけ始めと同じです。押すと、その通信が動きます。',
             )}
           </div>
-          <div data-testid="tcp-state-follows-step" style={{ marginTop: 6 }}>
+          {/* The three segments tied to the telephone phrases, in place — and
+              each is the button that plays that segment. */}
+          <div
+            data-testid="tcp-handshake-gloss"
+            style={{ display: 'grid', gap: 4, margin: '6px 0' }}
+          >
+            {HANDSHAKE_ORDER.map((segment, index) => {
+              const active = shown === segment;
+              return (
+                <button
+                  key={segment}
+                  type="button"
+                  data-testid={`tcp-jump-${index + 1}`}
+                  aria-pressed={active}
+                  disabled={!handshakeRecorded}
+                  onClick={() => playSegment(index)}
+                  style={{
+                    textAlign: 'left',
+                    padding: '6px 10px',
+                    borderRadius: 6,
+                    border: `2px solid ${active ? 'var(--netlab-accent-cyan)' : 'var(--netlab-border)'}`,
+                    background: 'var(--netlab-bg-surface)',
+                    color: 'var(--netlab-text-primary)',
+                    fontSize: 14,
+                    fontWeight: active ? 700 : 400,
+                    cursor: handshakeRecorded ? 'pointer' : 'not-allowed',
+                  }}
+                >
+                  {CIRCLED[index]} {SEGMENT_NAME[segment]}＝{phrase(segment)}
+                  <span style={{ color: 'var(--netlab-text-secondary)', fontSize: 12 }}>
+                    {' '}
+                    {SEGMENT_SPEAKER[segment] === 'client' ? 'Client → Server' : 'Server → Client'}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <div
+            data-testid="tcp-state-follows-step"
+            style={{ color: 'var(--netlab-text-secondary)' }}
+          >
             {t(
-              'The states follow the step you are on: a side changes only when a segment reaches it (its DELIVER hop). The client is ESTABLISHED as soon as the SYN-ACK arrives; the server only after the last ACK.',
-              '状態は、いま見ているステップに合わせて変わります。セグメントが相手に届いた（DELIVER の）ときに、届いた側の状態が変わります。クライアントは SYN-ACK が届いた時点で ESTABLISHED（接続完了）、サーバは最後の ACK が届いてから ESTABLISHED です。',
+              'The state shown at each end is the state up to the step you are looking at. An end changes only when a message reaches it.',
+              '両端の「状態」は、いま見ているところまでの結果です。通信が届いた側だけが変わります。',
             )}
           </div>
+          <details data-testid="lesson-more" style={{ marginTop: 6 }}>
+            <summary style={{ cursor: 'pointer' }}>
+              {t('A little more detail', 'もう少し詳しく')}
+            </summary>
+            <div style={{ marginTop: 4, color: 'var(--netlab-text-secondary)' }}>
+              {t(
+                'The Client is ESTABLISHED (connected) as soon as the SYN-ACK reaches it; the Server only once the last ACK arrives. Closing takes four messages: FIN → ACK → FIN → ACK. "Next Step" walks one hop at a time, including the router\'s address lookup (ARP) before each message.',
+                'Client は SYN-ACK が届いた時点で ESTABLISHED（接続完了）になります。Server は最後の ACK が届いてからです。切断は 4 回のやり取りです：FIN → ACK → FIN → ACK。「次のステップ」は 1 ホップずつ進みます。各通信の前に、ルータが相手を探す ARP も入ります。',
+              )}
+            </div>
+          </details>
         </LessonNote>
+
+        {/* The telephone phrase, said on the diagram between the two ends
+            while that segment is the one being shown. */}
+        {shown ? (
+          <LessonNote
+            data-testid="tcp-speech"
+            data-segment={shown}
+            data-speaker={SEGMENT_SPEAKER[shown]}
+            style={{
+              position: 'absolute',
+              top: 60,
+              left: 256,
+              right: 256,
+              padding: '6px 10px',
+              borderRadius: 10,
+              border: '1px solid var(--netlab-accent-cyan)',
+              background: 'color-mix(in srgb, var(--netlab-bg-panel) 92%, transparent)',
+              color: 'var(--netlab-text-primary)',
+              textAlign: 'center',
+              pointerEvents: 'none',
+            }}
+          >
+            <div style={{ fontSize: 16, fontWeight: 700 }}>{phrase(shown)}</div>
+            <div style={{ fontSize: 12, color: 'var(--netlab-text-secondary)' }}>
+              {SEGMENT_NAME[shown]}:{' '}
+              {SEGMENT_SPEAKER[shown] === 'client' ? 'Client → Server' : 'Server → Client'}
+            </div>
+          </LessonNote>
+        ) : null}
 
         <StateBadge
           label={t('Client State', 'クライアントの状態')}
           state={nodeStates.client}
-          left={24}
-          top={100}
+          place={{ left: 24, top: 60 }}
           testId="tcp-client-state"
         />
         <StateBadge
           label={t('Server State', 'サーバの状態')}
           state={nodeStates.server}
-          left={602}
-          top={100}
+          place={{ right: 24, top: 60 }}
           testId="tcp-server-state"
         />
       </LessonCanvas>
@@ -522,18 +683,9 @@ function TcpHandshakeDemoInner() {
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16 }}>
-          <SidebarPanel traces={state.traces} currentTraceId={state.currentTraceId} />
+          <ConnectionStateCard nodeStates={nodeStates} started={state.traces.length > 0} />
           <StepControls continueAcrossTraces />
-          <div
-            style={{
-              padding: 16,
-              border: '1px solid var(--netlab-bg-surface)',
-              borderRadius: 10,
-              background: 'var(--netlab-bg-primary)',
-            }}
-          >
-            <PacketStructureViewer />
-          </div>
+          <MoreDetail />
         </div>
       </LessonPanel>
     </LessonSplit>

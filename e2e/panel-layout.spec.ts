@@ -175,7 +175,7 @@ for (const size of SIZES) {
     test('the NAT table shows its outside-peer column inside the panel', async ({ page }) => {
       await readInJapanese(page);
       await startLesson(page, '/#/simulation/nat');
-      await page.locator('button').filter({ hasText: 'SNAT' }).first().click();
+      await page.getByTestId('nat-send-client-a').click();
       const grid = page.getByTestId(TID.natGrid);
       await expect(grid).toBeVisible();
       const gridBox = await box(grid);

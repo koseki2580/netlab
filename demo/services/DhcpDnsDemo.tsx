@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import type { DhcpLeaseState } from '../../src/types/services';
 import { useT } from '../localeContext';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import { StepControls } from '../../src/components/simulation/StepControls';
+import { useViewport } from '../../src/utils/useViewport';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import type { InFlightPacket } from '../../src/types/packets';
 import type { NetworkTopology } from '../../src/types/topology';
@@ -142,13 +143,43 @@ function buildHttpPacket(runtimeIp: string | null): InFlightPacket {
   };
 }
 
+const CARD_STYLE: CSSProperties = {
+  background: 'color-mix(in srgb, var(--netlab-bg-primary) 92%, transparent)',
+  border: '1px solid var(--netlab-border-subtle)',
+  borderRadius: 8,
+  padding: '10px 12px',
+  fontSize: 13,
+  lineHeight: 1.7,
+  color: 'var(--netlab-text-primary)',
+};
+
+const ROLE_STYLE: CSSProperties = { fontSize: 15, fontWeight: 700, marginBottom: 6 };
+
+/** The step to press now is filled; the other one is an outline. */
+function stepButtonStyle(emphasised: boolean, disabled: boolean): CSSProperties {
+  return {
+    padding: '8px 14px',
+    borderRadius: 6,
+    border: emphasised ? '1px solid transparent' : '1px solid var(--netlab-border)',
+    background: emphasised ? 'var(--netlab-accent-blue)' : 'var(--netlab-bg-surface)',
+    color: emphasised ? '#fff' : 'var(--netlab-text-primary)',
+    fontSize: 14,
+    fontWeight: 700,
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? 0.6 : 1,
+    marginBottom: 6,
+  };
+}
+
 function DhcpDnsDemoInner() {
   const t = useT();
+  const { isNarrow } = useViewport();
   const { engine, simulateDhcp, sendPacket } = useSimulation();
   // What each button did, said in words beside the buttons. The answer used to
   // be only in a device's details, which a learner had to know to open.
   const [lease, setLease] = useState<DhcpLeaseState | null>(null);
   const [resolved, setResolved] = useState<{ name: string; address: string } | null>(null);
+  const hasAddress = Boolean(lease?.assignedIp);
 
   // Each run records its exchange as several traces and leaves the last one
   // selected. Start the step-through at the first message instead, so stepping
@@ -175,129 +206,186 @@ function DhcpDnsDemoInner() {
     selectFirstTrace();
   };
 
+  const leaseExtras = [
+    lease?.defaultGateway
+      ? t(
+          `default gateway (the way out) ${lease.defaultGateway}`,
+          `デフォルトゲートウェイ（外への出口）${lease.defaultGateway}`,
+        )
+      : null,
+    lease?.dnsServerIp
+      ? t(`DNS server ${lease.dnsServerIp}`, `DNS サーバ ${lease.dnsServerIp}`)
+      : null,
+  ].filter((part): part is string => part !== null);
+
   return (
     <LessonSplit>
       <LessonCanvas canvas={<NetlabCanvas />}>
+        {/* Two services, two cards, in the order they are used. Sharing one
+            heading and one box, learners filed "hands out addresses" under
+            both names. */}
         <LessonNote
           data-canvas-overlay=""
           style={{
             position: 'absolute',
             top: 12,
             left: 12,
-            display: 'flex',
-            gap: 8,
-            alignItems: 'center',
-            flexWrap: 'wrap',
+            width: 'calc(50% - 18px)',
+            maxWidth: 440,
             zIndex: 20,
           }}
         >
-          <button
-            type="button"
-            data-testid="dhcp-run"
-            onClick={() => void handleRunDhcp()}
-            style={{
-              padding: '6px 12px',
-              borderRadius: 6,
-              border: 'none',
-              background: 'var(--netlab-accent-blue)',
-              color: '#fff',
-              fontFamily: 'monospace',
-              fontSize: 12,
-              cursor: 'pointer',
-            }}
-          >
-            {t('Run DHCP', 'DHCP を実行')}
-          </button>
-          <button
-            type="button"
-            data-testid="dns-run"
-            onClick={() => void handleResolveAndFetch()}
-            style={{
-              padding: '6px 12px',
-              borderRadius: 6,
-              border: '1px solid var(--netlab-border-subtle)',
-              background: 'var(--netlab-bg-panel)',
-              color: 'var(--netlab-text-primary)',
-              fontFamily: 'monospace',
-              fontSize: 12,
-              cursor: 'pointer',
-            }}
-          >
-            {t('Resolve DNS + Fetch', 'DNS で名前を引いて取得')}
-          </button>
-          <span
-            style={{
-              color: 'var(--netlab-text-muted)',
-              fontFamily: 'monospace',
-              fontSize: 11,
-            }}
-          >
-            {t(
-              'Click a node to inspect runtime DHCP/DNS state.',
-              '機器を押すと、その時点の DHCP/DNS の状態が見られます。',
-            )}
-          </span>
-          <div
-            data-testid="lesson-brief"
-            style={{
-              flexBasis: '100%',
-              maxWidth: 420,
-              background: 'color-mix(in srgb, var(--netlab-bg-primary) 92%, transparent)',
-              border: '1px solid var(--netlab-border-subtle)',
-              borderRadius: 8,
-              padding: '10px 12px',
-              fontSize: 12,
-              lineHeight: 1.7,
-              color: 'var(--netlab-text-primary)',
-            }}
-          >
-            <strong>{t('How DHCP and DNS work', 'DHCP と DNS のしくみ')}</strong>
-            <div>
+          <div data-testid="lesson-brief" style={{ display: 'grid', gap: 8 }}>
+            <div
+              data-testid="lesson-lead"
+              style={{
+                fontSize: 16,
+                fontWeight: 700,
+                lineHeight: 1.6,
+                color: 'var(--netlab-text-primary)',
+              }}
+            >
               {t(
-                'DHCP: a machine that has just joined has no address, so it asks the network and a DHCP server lends it one — with the mask, the default gateway and the DNS server to use.',
-                'DHCP：つないだばかりの機器にはアドレスがありません。ネットワークに尋ねると、DHCP サーバがアドレスを貸してくれます。サブネットマスク・デフォルトゲートウェイ・使う DNS サーバも一緒に設定されます。',
+                "First get an address (DHCP). Then find the other side's address from its name (DNS).",
+                'まず住所をもらう（DHCP）。次に、名前から相手の住所を調べる（DNS）。',
               )}
             </div>
-            <div data-testid="dhcp-message-gloss" style={{ color: 'var(--netlab-text-secondary)' }}>
-              {t(
-                'DISCOVER = "is there a DHCP server?" → OFFER = "you can have this address" → REQUEST = "I will take it" → ACK = "it is yours to use".',
-                'DISCOVER＝「DHCP サーバはいますか？」 → OFFER＝「このアドレスをどうぞ」 → REQUEST＝「それをください」 → ACK＝「どうぞ使ってください」。',
-              )}
-            </div>
-            <div>
-              {t(
-                'DNS: people use names like web.example.com, but packets need an IP address. DNS answers "what is the address of this name?".',
-                'DNS：人は web.example.com のような名前を使いますが、パケットには IP アドレスが必要です。DNS は「この名前のアドレスは？」に答えるしくみです。',
-              )}
-            </div>
-            {lease?.assignedIp ? (
+            <div data-testid="dhcp-card" style={CARD_STYLE}>
+              <div style={ROLE_STYLE}>
+                {t('① DHCP = the desk that hands out addresses', '① DHCP＝住所をくれる係')}
+              </div>
+              <button
+                type="button"
+                data-testid="dhcp-run"
+                data-emphasised={hasAddress ? 'no' : 'yes'}
+                onClick={() => void handleRunDhcp()}
+                style={stepButtonStyle(!hasAddress, false)}
+              >
+                {t('▶ ① Get an address', '▶ ① 住所をもらう')}
+              </button>
+              <div>
+                {t(
+                  'A machine that has just been plugged in has no address (IP address) yet. It asks the network, and the DHCP server lends it one.',
+                  'つないだばかりの機器には、まだ住所（IP アドレス）がありません。ネットワークに尋ねると、DHCP サーバが住所を貸してくれます。',
+                )}
+              </div>
               <div
-                data-testid="dhcp-result"
-                style={{ marginTop: 6, color: 'var(--netlab-accent-green)' }}
+                data-testid="dhcp-message-gloss"
+                style={{ color: 'var(--netlab-text-secondary)' }}
               >
                 {t(
-                  `DHCP gave the client ${lease.assignedIp}${lease.defaultGateway ? `, gateway ${lease.defaultGateway}` : ''}${lease.dnsServerIp ? `, DNS server ${lease.dnsServerIp}` : ''}.`,
-                  `DHCP で、クライアントに ${lease.assignedIp} が割り当てられました${lease.defaultGateway ? `（デフォルトゲートウェイ ${lease.defaultGateway}` : '（'}${lease.dnsServerIp ? `、DNS サーバ ${lease.dnsServerIp}）` : '）'}。`,
+                  'DISCOVER = "is there a DHCP server?" → OFFER = "you can have this address" → REQUEST = "I will take it" → ACK = "it is yours to use".',
+                  'DISCOVER＝「DHCP サーバはいますか？」 → OFFER＝「このアドレスをどうぞ」 → REQUEST＝「それをください」 → ACK＝「どうぞ使ってください」。',
+                )}
+              </div>
+              <div data-testid="dhcp-extras">
+                {t(
+                  'It also tells the machine its subnet mask (how far its own network reaches), its default gateway (the way out) and the DNS server to use.',
+                  'サブネットマスク（どこまでが同じネットワークか）、デフォルトゲートウェイ（外への出口）、使う DNS サーバも一緒に教えてくれます。',
+                )}
+              </div>
+              {hasAddress && lease ? (
+                <div
+                  data-testid="dhcp-result"
+                  style={{ marginTop: 6, fontWeight: 700, color: 'var(--netlab-accent-green)' }}
+                >
+                  {t(
+                    `The client was given the address ${lease.assignedIp}${leaseExtras.length > 0 ? ` (${leaseExtras.join('; ')})` : ''}.`,
+                    `Client は住所 ${lease.assignedIp} をもらいました${leaseExtras.length > 0 ? `（${leaseExtras.join('、')}）` : ''}。`,
+                  )}
+                </div>
+              ) : (
+                // The canvas marks the client's link with ⚠ because the client
+                // has no address yet ("Missing IP configuration"); the mark
+                // goes once DHCP has run. Unexplained, it read as a fault.
+                <div
+                  data-testid="dhcp-warning-caption"
+                  style={{ marginTop: 6, color: 'var(--netlab-accent-yellow)' }}
+                >
+                  {t(
+                    'The ⚠ on the diagram means "DHCP Client has no address yet". Nothing is broken. It goes away when you press ①.',
+                    '図の ⚠ は「DHCP Client にまだ住所がない」という印です。故障ではありません。① を押すと消えます。',
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </LessonNote>
+
+        <LessonNote
+          data-canvas-overlay=""
+          // Beside the first card on a wide screen; on a narrow one, under the
+          // diagram, so the diagram is on screen while step ① runs.
+          style={
+            isNarrow
+              ? { bottom: 0 }
+              : {
+                  position: 'absolute',
+                  top: 12,
+                  left: 'calc(50% + 6px)',
+                  width: 'calc(50% - 18px)',
+                  maxWidth: 440,
+                  zIndex: 20,
+                }
+          }
+        >
+          <div data-testid="dns-card" style={CARD_STYLE}>
+            <div style={ROLE_STYLE}>
+              {t(
+                '② DNS = the phone book that turns a name into an address',
+                '② DNS＝名前から住所を調べる電話帳',
+              )}
+            </div>
+            <button
+              type="button"
+              data-testid="dns-run"
+              data-emphasised={hasAddress ? 'yes' : 'no'}
+              disabled={!hasAddress}
+              onClick={() => void handleResolveAndFetch()}
+              style={stepButtonStyle(hasAddress, !hasAddress)}
+            >
+              {t(
+                '▶ ② Look up the name, then fetch the page',
+                '▶ ② 名前で調べて、ページを取りに行く',
+              )}
+            </button>
+            {!hasAddress ? (
+              <div data-testid="dns-wait-hint" style={{ color: 'var(--netlab-text-secondary)' }}>
+                {t(
+                  'Press ① first: without an address the client cannot send.',
+                  '先に ① を押してください。住所がないと送れません。',
                 )}
               </div>
             ) : null}
+            <div>
+              {t(
+                'People use names like web.example.com. A packet needs an address (IP address). DNS answers the question "what is the address of this name?". If DNS stops, a page still opens by its address but not by its name.',
+                '人は web.example.com のような名前を使います。でも、パケットを送るには住所（IP アドレス）が要ります。DNS は「この名前の住所は？」に答えます。DNS が止まると、住所を直接入れれば開けますが、名前では開けません。',
+              )}
+            </div>
             {resolved ? (
               <div
                 data-testid="dns-result"
-                style={{ marginTop: 6, color: 'var(--netlab-accent-green)' }}
+                style={{ marginTop: 6, fontWeight: 700, color: 'var(--netlab-accent-green)' }}
               >
                 {t(
-                  `DNS turned ${resolved.name} into ${resolved.address}, and the page was fetched from there.`,
-                  `DNS で ${resolved.name} が ${resolved.address} に変換され、そのアドレスからページを取得しました。`,
+                  `DNS answered: the address of ${resolved.name} is ${resolved.address}. The page was then fetched from that address.`,
+                  `DNS が「${resolved.name} の住所は ${resolved.address}」と答えました。その住所からページを取得しました。`,
                 )}
               </div>
             ) : null}
+            <div style={{ marginTop: 6, fontSize: 12, color: 'var(--netlab-text-muted)' }}>
+              {t(
+                'Pressing a device on the diagram shows what it has been given so far.',
+                '図の機器を押すと、その時点でもらっている設定が見られます。',
+              )}
+            </div>
           </div>
         </LessonNote>
       </LessonCanvas>
 
       <LessonPanel
-        defaultWidth={420}
+        defaultWidth={360}
         maxWidth={700}
         style={{
           background: 'var(--netlab-bg-primary)',
@@ -314,7 +402,7 @@ export default function DhcpDnsDemo() {
   return (
     <DemoShell
       title="DHCP & DNS"
-      desc="Lease an IP with DHCP, resolve a hostname with DNS, then inspect each service trace."
+      desc="Get an address with DHCP, then turn a name into an address with DNS, one message at a time."
     >
       <NetlabProvider topology={TOPOLOGY}>
         <SimulationProvider>

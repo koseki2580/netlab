@@ -1,13 +1,17 @@
-import { useT } from '../localeContext';
+import { Fragment, useMemo, type CSSProperties, type ReactNode } from 'react';
+import { useGalleryLocale, useT } from '../localeContext';
 import DemoShell from '../DemoShell';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { LessonCanvas, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import { HopInspector } from '../../src/components/simulation/HopInspector';
-import { NatTableViewer } from '../../src/components/simulation/NatTableViewer';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationControls } from '../../src/components/simulation/SimulationControls';
+import { I18nProvider } from '../../src/i18n/I18nProvider';
+import { en } from '../../src/i18n/locales/en';
+import { ja } from '../../src/i18n/locales/ja';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
+import { useViewport } from '../../src/utils/useViewport';
 import type { InFlightPacket } from '../../src/types/packets';
 import { NAT_DEMO_TOPOLOGY } from './natDemoTopology';
 import { readDemoEmbedParams } from '../embedParams';
@@ -56,6 +60,37 @@ function makePacket(
   };
 }
 
+/**
+ * The address rewrite is said on the diagram, but only as "sender A → B":
+ * what happened, not what it is for. A learner who had watched it answered
+ * "NAT makes it faster". This lesson's bubbles lead with the purpose.
+ */
+const BUBBLE_WORDS = {
+  en: {
+    'simulation.packetStory.natSource':
+      'Everyone at home shares one address: sender {{from}} → {{to}}',
+    'simulation.packetStory.natDestination':
+      'Passed on to the machine inside: destination {{from}} → {{to}}',
+  },
+  ja: {
+    'simulation.packetStory.natSource': '家のみんなで 1 つの住所を共有：送り主 {{from}} → {{to}}',
+    'simulation.packetStory.natDestination': '中の機器へ渡すために書き換え：宛先 {{from}} → {{to}}',
+  },
+} as const;
+
+function NatBubbleWords({ children }: { children: ReactNode }) {
+  const locale = useGalleryLocale();
+  const catalog = useMemo(
+    () => (locale === 'ja' ? { ...ja, ...BUBBLE_WORDS.ja } : { ...en, ...BUBBLE_WORDS.en }),
+    [locale],
+  );
+  return (
+    <I18nProvider locale={locale} catalog={catalog}>
+      {children}
+    </I18nProvider>
+  );
+}
+
 function ActionButton({
   label,
   onClick,
@@ -63,26 +98,184 @@ function ActionButton({
 }: {
   label: string;
   onClick: () => void;
-  testId?: string;
+  testId: string;
 }) {
   return (
     <button
-      {...(testId !== undefined ? { 'data-testid': testId } : {})}
+      type="button"
+      data-testid={testId}
       onClick={onClick}
+      // Filled, like every other lesson's send button: as an outline these
+      // did not look like something to press.
       style={{
-        background: 'var(--netlab-bg-panel)',
-        border: '1px solid var(--netlab-border-subtle)',
+        background: '#115e59',
+        border: '1px solid #0f766e',
         borderRadius: 8,
-        color: 'var(--netlab-text-primary)',
+        color: '#ecfeff',
         cursor: 'pointer',
-        fontFamily: 'monospace',
-        fontSize: 12,
-        padding: '8px 10px',
+        fontSize: 14,
+        fontWeight: 700,
+        padding: '10px 12px',
         textAlign: 'left',
       }}
     >
       {label}
     </button>
+  );
+}
+
+// An address and its port are one thing to read: 「203.0.113.1:1 / 024」 broke
+// in the middle of the number on a phone.
+const ADDRESS: CSSProperties = { whiteSpace: 'nowrap', fontFamily: 'monospace' };
+
+/**
+ * The router's translation table, in the words the lesson's text uses
+ * (private / global), with the formal names in brackets. On a narrow screen
+ * each translation is a short list instead of a row, so no address is cut.
+ */
+function NatSharingTable() {
+  const t = useT();
+  const { isNarrow } = useViewport();
+  const { state } = useSimulation();
+  const entries = state.natTables.flatMap((table) => table.entries);
+
+  const columns = [
+    {
+      head: t('Private (inside local)', 'プライベート（内部ローカル）'),
+      hint: t('address inside the home', '家の中での住所'),
+    },
+    {
+      head: t('Global (inside global)', 'グローバル（内部グローバル）'),
+      hint: t('address seen from outside', '外から見える住所'),
+    },
+    { head: t('Other side', '相手'), hint: t('who it talks to', '通信の相手') },
+    { head: t('Direction', '向き'), hint: '' },
+  ];
+  const direction = (type: string) =>
+    type === 'snat' ? t('out (SNAT)', '中→外（SNAT）') : t('in (DNAT)', '外→中（DNAT）');
+  const grid: CSSProperties = {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, minmax(0, auto)) auto',
+    gap: '4px 12px',
+    alignItems: 'start',
+  };
+
+  return (
+    <div
+      style={{
+        background: 'var(--netlab-bg-panel)',
+        border: '1px solid var(--netlab-border-subtle)',
+        borderRadius: 8,
+        padding: 12,
+        color: 'var(--netlab-text-primary)',
+        fontSize: 12,
+        lineHeight: 1.6,
+      }}
+    >
+      <div style={{ fontWeight: 700, color: 'var(--netlab-text-secondary)', marginBottom: 6 }}>
+        {t(
+          'Translation table (what the router R-Edge remembers)',
+          '変換表（ルータ R-Edge が覚えている対応）',
+        )}
+      </div>
+      {entries.length === 0 ? (
+        <div data-testid="nat-table-empty" style={{ color: 'var(--netlab-text-secondary)' }}>
+          {t(
+            'Nothing yet. Press a button above and a line appears here.',
+            'まだ空です。上のボタンを押すと、ここに 1 行増えます。',
+          )}
+        </div>
+      ) : isNarrow ? (
+        <div data-testid="nat-table-grid" style={{ display: 'grid', gap: 8 }}>
+          {entries.map((entry) => (
+            <div
+              key={entry.id}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'auto 1fr',
+                gap: '2px 10px',
+                paddingTop: 8,
+                borderTop: '1px solid var(--netlab-border-subtle)',
+              }}
+            >
+              <span style={{ color: 'var(--netlab-text-secondary)' }}>{columns[0]!.head}</span>
+              <span data-testid="nat-inside-local" style={ADDRESS}>
+                {`${entry.insideLocalIp}:${entry.insideLocalPort}`}
+              </span>
+              <span style={{ color: 'var(--netlab-text-secondary)' }}>{columns[1]!.head}</span>
+              <span data-testid="nat-inside-global" style={{ ...ADDRESS, fontWeight: 700 }}>
+                {`${entry.insideGlobalIp}:${entry.insideGlobalPort}`}
+              </span>
+              <span style={{ color: 'var(--netlab-text-secondary)' }}>{columns[2]!.head}</span>
+              <span data-testid="nat-outside-peer" style={ADDRESS}>
+                {`${entry.outsidePeerIp}:${entry.outsidePeerPort}`}
+              </span>
+              <span style={{ color: 'var(--netlab-text-secondary)' }}>{columns[3]!.head}</span>
+              <span>{direction(entry.type)}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div data-testid="nat-table-grid" style={grid}>
+          {columns.map((column) => (
+            <span key={column.head} style={{ color: 'var(--netlab-text-secondary)' }}>
+              <strong>{column.head}</strong>
+              {column.hint ? <div style={{ fontSize: 11 }}>{column.hint}</div> : null}
+            </span>
+          ))}
+          {entries.map((entry) => (
+            <Fragment key={entry.id}>
+              <span data-testid="nat-inside-local" style={ADDRESS}>
+                {`${entry.insideLocalIp}:${entry.insideLocalPort}`}
+              </span>
+              <span data-testid="nat-inside-global" style={{ ...ADDRESS, fontWeight: 700 }}>
+                {`${entry.insideGlobalIp}:${entry.insideGlobalPort}`}
+              </span>
+              <span data-testid="nat-outside-peer" style={ADDRESS}>
+                {`${entry.outsidePeerIp}:${entry.outsidePeerPort}`}
+              </span>
+              <span style={{ whiteSpace: 'nowrap' }}>{direction(entry.type)}</span>
+            </Fragment>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** What the table now shows, said in one line with the purpose first. */
+function NatResult() {
+  const t = useT();
+  const { state } = useSimulation();
+  const outbound = state.natTables
+    .flatMap((table) => table.entries)
+    .filter((entry) => entry.type === 'snat');
+  const first = outbound[0];
+  if (!first) return null;
+  const machines = new Set(outbound.map((entry) => entry.insideLocalIp)).size;
+  const ports = outbound.map((entry) => entry.insideGlobalPort).join(t(' and ', ' と '));
+
+  return (
+    <div
+      data-testid="nat-result"
+      data-machines={machines}
+      style={{
+        fontSize: 14,
+        fontWeight: 700,
+        lineHeight: 1.6,
+        color: 'var(--netlab-accent-green)',
+      }}
+    >
+      {machines > 1
+        ? t(
+            `${machines} machines at home are sharing one address, ${first.insideGlobalIp}. The server outside sees both as coming from ${first.insideGlobalIp}; the router tells them apart by port number (${ports}).`,
+            `家の ${machines} 台が、1 つの住所 ${first.insideGlobalIp} を共有しています。外のサーバには、どちらも ${first.insideGlobalIp} から来たように見えます。ルータはポート番号（${ports}）で見分けます。`,
+          )
+        : t(
+            `Everyone at home shares one address: from outside, ${first.insideLocalIp} is seen as ${first.insideGlobalIp}. Send from the other client too: it gets the same address.`,
+            `家のみんなで 1 つの住所を共有します。${first.insideLocalIp} は、外からは ${first.insideGlobalIp} に見えます。もう 1 台からも送ると、同じ住所になります。`,
+          )}
+    </div>
   );
 }
 
@@ -121,22 +314,33 @@ function NatDemoInner() {
               border: '1px solid var(--netlab-border-subtle)',
               borderRadius: 8,
               padding: '10px 12px',
-              fontSize: 12,
+              fontSize: 13,
               lineHeight: 1.7,
               color: 'var(--netlab-text-primary)',
             }}
           >
-            <strong>{t('How NAT works', 'NAT のしくみ')}</strong>
-            <div>
+            <div style={{ color: 'var(--netlab-text-secondary)', fontWeight: 700 }}>
+              {t('How NAT works', 'NAT のしくみ')}
+            </div>
+            <div
+              data-testid="lesson-lead"
+              style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.6, margin: '2px 0 6px' }}
+            >
               {t(
-                'Machines inside a home or office use private addresses such as 192.168.1.10, which the internet cannot deliver to. On the way out, the edge router rewrites the sender to its own global address, 203.0.113.1, and on the way back it puts the private address back.',
-                '家や会社の中の機器は、192.168.1.10 のようなプライベートアドレスを使っています。これはインターネットでは届けられません。出口のルータは、外へ出るパケットの送り主を自分のグローバルアドレス（203.0.113.1）に書き換え、返事が戻ってきたら元のプライベートアドレスに戻します。',
+                'NAT lets everyone at home share one address.',
+                'NAT は、家のみんなで 1 つの住所を共有するしくみです。',
               )}
             </div>
-            <div style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}>
+            <div>
               {t(
-                'Send from Client A, then from Client B with the buttons below (each sends at once): the table shows both sharing the one global address, told apart by port number — a port number is like a room number at the same street address.',
-                '下のボタンで Client A と Client B の両方から送ってみましょう（押すとすぐ送られます）。変換表で、2 台が同じグローバルアドレスを共有し、ポート番号で区別されているのが分かります。ポート番号は、同じ住所の中の部屋番号のようなものです。',
+                'Machines at home use addresses that only work inside (private addresses, such as 192.168.1.10). On the way out, the router at the exit rewrites the sender to its own address (the global address, 203.0.113.1). When the reply comes back, it puts the private address back.',
+                '家の中の機器は、中だけで通じる住所（プライベートアドレス。例：192.168.1.10）を使います。外へ出るとき、出口のルータが送り主を自分の住所（グローバルアドレス 203.0.113.1）に書き換えます。返事が戻ったら、元の住所に戻します。',
+              )}
+            </div>
+            <div style={{ marginTop: 6 }}>
+              {t(
+                'Send from Client A, then from Client B, with the buttons below (each sends at once). Both get the same address and are told apart by port number: a port number is like a room number at one street address.',
+                '下のボタンで、Client A と Client B から送ってみましょう（押すとすぐ送られます）。2 台とも同じ住所になり、ポート番号で区別されます。ポート番号は、同じ住所の中の部屋番号のようなものです。',
               )}
             </div>
             <div
@@ -144,15 +348,26 @@ function NatDemoInner() {
               style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}
             >
               {t(
-                "This NAT allocates public ports in order starting at 1024; many real NATs, such as Linux MASQUERADE or Cisco PAT, keep the client's own port when it is free. It starts at 1024 because ports 0 to 1023 are the well-known range reserved for standard services; where real NATs start differs: Linux picks from 1024 to 65535 by default when it cannot keep the client's port, and many devices use a higher configured range.",
-                'この NAT は外側のポート番号を 1024 から順に割り当てます。実際の NAT の多く（Linux の MASQUERADE や Cisco の PAT など）は、空いていればクライアントのポート番号をそのまま使います。1024 から始めるのは、0〜1023 が標準的なサービス用に予約されたウェルノウンポートだからです。実際の NAT がどこから割り当て始めるかは実装によって異なり、Linux はクライアントのポート番号をそのまま使えないとき既定で 1024〜65535 から選び、多くの機器はもっと大きい番号の範囲を設定して使います。',
+                'This NAT allocates public ports in order starting at 1024.',
+                'この画面の NAT は、外側のポート番号を 1024 から順に割り当てます。',
               )}
+              <details data-testid="lesson-more" style={{ marginTop: 4 }}>
+                <summary style={{ cursor: 'pointer' }}>
+                  {t('More detail (on real devices)', 'もっと詳しく（実際の機器では）')}
+                </summary>
+                <div style={{ marginTop: 4 }}>
+                  {t(
+                    "Many real NATs, such as Linux MASQUERADE or Cisco PAT, keep the client's own port when it is free. It starts at 1024 because ports 0 to 1023 are the well-known range reserved for standard services; where real NATs start differs: Linux picks from 1024 to 65535 by default when it cannot keep the client's port, and many devices use a higher configured range.",
+                    '実際の NAT の多く（Linux の MASQUERADE や Cisco の PAT など）は、空いていればクライアントのポート番号をそのまま使います。1024 から始めるのは、0〜1023 が標準的なサービス用に予約されたウェルノウンポートだからです。実際の NAT がどこから割り当て始めるかは実装によって異なり、Linux はクライアントのポート番号をそのまま使えないとき既定で 1024〜65535 から選び、多くの機器はもっと大きい番号の範囲を設定して使います。',
+                  )}
+                </div>
+              </details>
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <ActionButton
               testId="nat-send-client-a"
-              label={t('Client A -> Internet (SNAT)', 'Client A -> インターネット (SNAT)')}
+              label={t('▶ Send out from Client A', '▶ Client A から外へ送る')}
               onClick={() => {
                 void sendPacket(
                   makePacket(
@@ -169,7 +384,7 @@ function NatDemoInner() {
             />
             <ActionButton
               testId="nat-send-client-b"
-              label={t('Client B -> Internet (SNAT)', 'Client B -> インターネット (SNAT)')}
+              label={t('▶ Send out from Client B', '▶ Client B から外へ送る')}
               onClick={() => {
                 void sendPacket(
                   makePacket(
@@ -185,9 +400,10 @@ function NatDemoInner() {
               }}
             />
             <ActionButton
+              testId="nat-send-inbound"
               label={t(
-                'Internet -> Client A (DNAT 8080)',
-                'インターネット -> Client A (DNAT 8080)',
+                '▶ Send in from outside to Client A (port 8080)',
+                '▶ 外から Client A へ送る（ポート 8080）',
               )}
               onClick={() => {
                 void sendPacket(
@@ -205,9 +421,9 @@ function NatDemoInner() {
             />
           </div>
 
-          <div style={{ flex: 1, minHeight: 170 }}>
-            <NatTableViewer />
-          </div>
+          <NatResult />
+
+          <NatSharingTable />
 
           <div
             style={{
@@ -261,7 +477,7 @@ export default function NatDemo() {
   return (
     <DemoShell
       title="NAT / PAT"
-      desc="Inspect SNAT, DNAT port forwarding, and the live NAT table on an edge router"
+      desc="Two machines at home share one outside address: watch the router rewrite the sender and keep a table."
       embedded={embedded}
     >
       <NetlabProvider
@@ -273,9 +489,11 @@ export default function NatDemo() {
         {...(sandboxEnabled && sandboxIntroId ? { sandboxIntroId } : {})}
         {...tutorialProps}
       >
-        <SimulationProvider>
-          <NatDemoInner />
-        </SimulationProvider>
+        <NatBubbleWords>
+          <SimulationProvider>
+            <NatDemoInner />
+          </SimulationProvider>
+        </NatBubbleWords>
       </NetlabProvider>
     </DemoShell>
   );

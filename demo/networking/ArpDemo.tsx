@@ -1,5 +1,5 @@
-import { useT } from '../localeContext';
-import { useMemo, type CSSProperties } from 'react';
+import { useGalleryLocale, useT } from '../localeContext';
+import { useMemo, type CSSProperties, type ReactNode } from 'react';
 import DemoShell from '../DemoShell';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
@@ -10,6 +10,9 @@ import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationOverlayDock } from '../../src/components/simulation/SimulationOverlayDock';
 import { StateDiffTable } from '../../src/components/simulation/StateDiffTable';
 import { StepControls } from '../../src/components/simulation/StepControls';
+import { I18nProvider } from '../../src/i18n/I18nProvider';
+import { en } from '../../src/i18n/locales/en';
+import { ja } from '../../src/i18n/locales/ja';
 import { basicArp } from '../../src/scenarios';
 import { buildStepSnapshots } from '../../src/simulation/snapshots';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
@@ -32,25 +35,88 @@ const LABEL_STYLE: CSSProperties = {
   textTransform: 'uppercase',
 };
 
+// The plain first line of the lesson: larger than everything around it, and
+// in the reading face rather than the monospace the readouts use.
+const LEAD_STYLE: CSSProperties = {
+  fontFamily: 'system-ui, sans-serif',
+  fontSize: 16,
+  fontWeight: 700,
+  lineHeight: 1.6,
+  margin: '2px 0 6px',
+};
+
+const DETAIL_STYLE: CSSProperties = {
+  fontFamily: 'system-ui, sans-serif',
+  fontSize: 13,
+  lineHeight: 1.7,
+};
+
+/**
+ * The speech bubbles on the diagram carried the question and the answer but
+ * never the name of what was happening, so learners kept the picture and not
+ * the word "ARP". This lesson names it in its own bubbles.
+ */
+const BUBBLE_WORDS = {
+  en: {
+    'simulation.packetStory.arpRequest': 'ARP question: who has this IP address? ({{ip}})',
+    'simulation.packetStory.arpReply': "ARP answer: it's me (MAC {{mac}})",
+  },
+  ja: {
+    'simulation.packetStory.arpRequest': 'ARP の質問：この IP アドレスの持ち主は？（{{ip}}）',
+    'simulation.packetStory.arpReply': 'ARP の答え：わたしです（MAC {{mac}}）',
+  },
+} as const;
+
+function ArpBubbleWords({ children }: { children: ReactNode }) {
+  const locale = useGalleryLocale();
+  const catalog = useMemo(
+    () => (locale === 'ja' ? { ...ja, ...BUBBLE_WORDS.ja } : { ...en, ...BUBBLE_WORDS.en }),
+    [locale],
+  );
+  return (
+    <I18nProvider locale={locale} catalog={catalog}>
+      {children}
+    </I18nProvider>
+  );
+}
+
 function ArpTablePanel() {
   const t = useT();
   const { state } = useSimulation();
+  const { topology } = useNetlabContext();
   const entries = Object.entries(state.nodeArpTables ?? {});
+  const labelOf = (nodeId: string) =>
+    topology.nodes.find((node) => node.id === nodeId)?.data.label ?? nodeId;
 
   return (
     <div style={CARD_STYLE}>
-      <div style={LABEL_STYLE}>{t('ARP Tables', 'ARP テーブル')}</div>
+      <div style={LABEL_STYLE}>
+        {t('ARP tables (what each device learned)', 'ARP テーブル（各機器が覚えた対応）')}
+      </div>
       {entries.length === 0 ? (
         <div
-          style={{ color: 'var(--netlab-text-secondary)', fontFamily: 'monospace', fontSize: 12 }}
+          data-testid="arp-table-empty"
+          style={{ ...DETAIL_STYLE, color: 'var(--netlab-text-secondary)' }}
         >
           {t(
-            'Send the first packet to populate the sender cache.',
-            '最初のパケットを送ると、送信側のキャッシュに対応が記録されます。',
+            'Press the button above. The pairs "IP address → MAC address" each device learned appear here.',
+            '上のボタンを押すと、各機器が覚えた「IP アドレス → MAC アドレス」の対応がここに出ます。',
           )}
         </div>
       ) : (
         <div style={{ display: 'grid', gap: 10 }}>
+          {/* The engine runs the whole exchange when the button is pressed, so
+              the table is already complete before the learner steps. Saying it
+              fills up as they step would not match the screen. */}
+          <div
+            data-testid="arp-table-note"
+            style={{ ...DETAIL_STYLE, color: 'var(--netlab-text-secondary)' }}
+          >
+            {t(
+              'The whole exchange has already run, so this table shows the final result. To see at which step a line was learned, step through and read "ARP over time" below.',
+              '通信は一度に最後まで行われるので、この表はもう結果を表示しています。どのステップで覚えたかは、ステップを進めながら下の「ARP の変化」で確かめられます。',
+            )}
+          </div>
           {entries.map(([nodeId, table]) => (
             <div
               key={nodeId}
@@ -65,7 +131,7 @@ function ArpTablePanel() {
               }}
             >
               <div style={{ color: 'var(--netlab-accent-cyan)', fontWeight: 700, marginBottom: 6 }}>
-                {nodeId}
+                {labelOf(nodeId)}
               </div>
               {Object.entries(table).length === 0 ? (
                 <div style={{ color: 'var(--netlab-text-secondary)' }}>
@@ -147,7 +213,7 @@ function ArpDemoInner() {
             position: 'absolute',
             top: 12,
             left: 12,
-            maxWidth: 360,
+            maxWidth: 420,
             padding: '10px 12px',
             borderRadius: 10,
             background: 'color-mix(in srgb, var(--netlab-bg-primary) 90%, transparent)',
@@ -158,27 +224,40 @@ function ArpDemoInner() {
             lineHeight: 1.5,
           }}
         >
-          <div style={{ color: 'var(--netlab-text-primary)', fontWeight: 700, marginBottom: 4 }}>
-            {t('ARP Teaching Flow', 'ARP のしくみ')}
+          <div style={{ color: 'var(--netlab-text-secondary)', fontWeight: 700 }}>
+            {t('How ARP works', 'ARP のしくみ')}
           </div>
-          <div>
+          <div data-testid="lesson-lead" style={LEAD_STYLE}>
             {t(
-              'The first IPv4 packet cannot leave the sender until it learns a first-hop MAC address.',
-              '最初の IPv4 パケットは、次に渡す相手の MAC アドレスがわかるまで送り出せません。',
+              'ARP finds the number (MAC address) of the machine to hand a packet to, by asking: "who has this address?"',
+              'ARP（アープ）は、渡す相手の番号（MAC アドレス）を「この住所の持ち主は？」と聞いて調べるしくみです。',
             )}
           </div>
-          <div style={{ marginTop: 6 }} data-testid="arp-brief-mac">
+          <div data-testid="arp-brief-mac" style={DETAIL_STYLE}>
             {t(
-              'Two addresses are at work. The IP address is where the packet is finally going; the MAC address is the number of the machine that takes it on this one stretch of cable. ARP asks, to everyone on the same network (ff:ff:ff:ff:ff:ff — "all of you"), "who has this IP address?", and the owner answers with its MAC. It never reaches past a router.',
-              'ここでは 2 種類のアドレスが働きます。IP アドレスはパケットの最終的な行き先、MAC アドレスは「このケーブルの区間で受け取る機器」の番号です。ARP は、同じネットワークの全員あて（ff:ff:ff:ff:ff:ff＝「みなさんへ」）に「この IP アドレスの持ち主は？」と尋ね、持ち主が自分の MAC アドレスを答えます。ルータの先までは届きません。',
+              'The address (the IP address) is not enough to hand a packet over: before the first packet, the sender does not yet know the other machine\'s own number, its MAC address. So it asks everyone, and only the owner answers "it\'s me" with its number.',
+              '住所（IP アドレス）だけでは渡せません。最初のパケットを送る前は、相手の番号（MAC アドレス）をまだ知らないからです。だから全員に聞き、持ち主だけが「わたしです」と番号を答えます。',
             )}
           </div>
-          <div style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}>
+          {/* What this lesson's trace shows: the Client never asks. The Router
+              asks for the Server, and on the reply's way back for the Client. */}
+          <div data-testid="arp-who-asks" style={{ ...DETAIL_STYLE, marginTop: 6 }}>
             {t(
-              'Use the trace on the right to inspect the ARP request and reply before the routed packet continues.',
-              '右のタイムラインで、パケットが先へ進む前に行われる ARP の要求と応答を確かめてください。',
+              'In this lesson the one that asks is the Router: for the Server on the way out, and for the Client on the way back.',
+              'このレッスンで聞くのは Router（ルータ）です。行きは Server を、帰りは Client を探して聞きます。',
             )}
           </div>
+          <details data-testid="lesson-more" style={{ ...DETAIL_STYLE, marginTop: 6 }}>
+            <summary style={{ cursor: 'pointer' }}>
+              {t('A little more detail', 'もう少し詳しく')}
+            </summary>
+            <div style={{ marginTop: 4 }}>
+              {t(
+                'The question to everyone is sent to a special destination, ff:ff:ff:ff:ff:ff, which means "all of you". It never travels past a router. An answer is kept in a table (the ARP table), so the same question need not be asked again.',
+                '全員あての質問は、ff:ff:ff:ff:ff:ff という特別な宛先（＝「みなさんへ」）に送ります。この質問はルータの先までは届きません。一度わかった番号は、次に聞かなくて済むように表（ARP テーブル）に覚えておきます。',
+              )}
+            </div>
+          </details>
         </LessonNote>
       </LessonCanvas>
 
@@ -203,19 +282,27 @@ function ArpDemoInner() {
               data-testid="demo-primary-action"
               onClick={() => void sendPing()}
               style={{
-                padding: '8px 12px',
+                padding: '10px 16px',
                 borderRadius: 8,
                 border: '1px solid #0f766e',
                 background: '#115e59',
                 color: '#ecfeff',
                 cursor: 'pointer',
-                fontFamily: 'monospace',
-                fontSize: 12,
+                fontSize: 15,
                 fontWeight: 700,
               }}
             >
-              {t('ping client → server', 'client から server へ ping')}
+              {t('▶ Send from Client to Server', '▶ Client から Server へ送ってみる')}
             </button>
+            <div
+              data-testid="arp-send-hint"
+              style={{ ...DETAIL_STYLE, marginTop: 6, color: 'var(--netlab-text-secondary)' }}
+            >
+              {t(
+                'It sends a ping: a short "are you there?" message, and the reply to it. Then press the ARP-REQ (question) and ARP-REP (answer) rows in the timeline: a speech bubble appears on the diagram.',
+                '「届きますか？」と確かめる短い通信（ping）と、その返事を送ります。押したら、タイムラインの ARP-REQ（質問）と ARP-REP（答え）の行を押してみましょう。図に吹き出しが出ます。',
+              )}
+            </div>
           </div>
           {hasTrace && (
             <div
@@ -270,9 +357,11 @@ export default function ArpDemo() {
         {...(parentOrigin !== undefined ? { parentOrigin } : {})}
         {...tutorialProps}
       >
-        <SimulationProvider>
-          <ArpDemoInner />
-        </SimulationProvider>
+        <ArpBubbleWords>
+          <SimulationProvider>
+            <ArpDemoInner />
+          </SimulationProvider>
+        </ArpBubbleWords>
       </NetlabProvider>
     </DemoShell>
   );

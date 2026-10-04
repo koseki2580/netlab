@@ -123,7 +123,9 @@ test('the ARP lesson teaches in the chosen language', async ({ page, demoPage })
   const brief = page.getByTestId(SEL.lesson.brief);
   await expect(brief).toContainText('ARP のしくみ');
   await expect(brief).not.toContainText('ARP Teaching Flow');
-  await expect(page.getByTestId(SEL.demo.primaryAction)).toHaveText('client から server へ ping');
+  await expect(page.getByTestId(SEL.demo.primaryAction)).toHaveText(
+    '▶ Client から Server へ送ってみる',
+  );
 });
 
 /**

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PacketHop, PacketTrace } from '../../src/types/simulation';
-import { deriveNodeStates } from './TcpHandshakeDemo';
+import { deriveNodeStates, shownHandshakeSegment } from './TcpHandshakeDemo';
 
 // Each segment is recorded like the lesson's: create, two ARP hops, a router
 // forward, then the delivery (hop index 4).
@@ -72,5 +72,26 @@ describe('TC-LESSON-TCP-STATES: the TCP states follow the step the learner is on
       client: 'FIN_WAIT_1',
       server: 'CLOSE_WAIT',
     });
+  });
+});
+
+describe('TC-356: the diagram says the telephone phrase of the segment being shown', () => {
+  it('says nothing before the first step', () => {
+    expect(shownHandshakeSegment(HANDSHAKE, 'syn', -1, 'paused')).toBeNull();
+    expect(shownHandshakeSegment([], null, -1, 'idle')).toBeNull();
+  });
+
+  it('names SYN, SYN-ACK and ACK as each is stepped into or played through', () => {
+    expect(shownHandshakeSegment(HANDSHAKE, 'syn', 0, 'paused')).toBe('syn');
+    expect(shownHandshakeSegment(HANDSHAKE, 'synack', 2, 'running')).toBe('syn-ack');
+    expect(shownHandshakeSegment(HANDSHAKE, 'ack', 4, 'done')).toBe('ack');
+  });
+
+  it('does not call a teardown ACK "let us talk"', () => {
+    const teardown = [
+      segment('fin', 'TCP FIN', 'client-1', 'server-1'),
+      segment('finack', 'TCP ACK', 'server-1', 'client-1'),
+    ];
+    expect(shownHandshakeSegment(teardown, 'finack', 4, 'done')).toBeNull();
   });
 });
