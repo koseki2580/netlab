@@ -11,7 +11,10 @@ describe('the getting-started course', () => {
       for (const locale of LOCALES) {
         const copy = step.copy[locale];
         for (const [field, value] of Object.entries(copy)) {
-          if (value.trim().length === 0) missing.push(`${step.id}.${locale}.${field}`);
+          const lines: readonly string[] = typeof value === 'string' ? [value] : value;
+          if (lines.length === 0 || lines.some((line) => line.trim().length === 0)) {
+            missing.push(`${step.id}.${locale}.${field}`);
+          }
         }
       }
       // Japanese that is only English with the punctuation changed is not a
