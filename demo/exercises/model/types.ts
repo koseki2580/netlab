@@ -246,6 +246,8 @@ export type CheckResultCode =
   | 'ok'
   | 'not-delivered'
   | 'delivered-but-forbidden'
+  /** A must-not-reach probe was stopped, but not by what the exercise asks for. */
+  | 'wrong-cause'
   | 'wrong-path'
   | 'route-missing'
   | 'wrong-root'
@@ -260,9 +262,13 @@ export type CheckResultCode =
 /** Where and why a probe stopped; what the learner needs to see to fix it. */
 export interface CheckEvidence {
   readonly nodeId?: string;
+  /** The label of `nodeId`, for messages and for the page. */
+  readonly nodeLabel?: string;
   readonly edgeId?: string;
   /** The engine's drop reason, verbatim (`no-route`, `acl-deny`, `vlan-ingress-violation`, ...). */
   readonly dropReason?: string;
+  /** `request` = stopped on the way there, `reply` = the answer did not come back. */
+  readonly dropLeg?: 'request' | 'reply';
   /** Node ids the request visited, in order. */
   readonly path?: readonly string[];
 }
