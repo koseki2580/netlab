@@ -109,7 +109,7 @@ export function PacketViewerPanel({ floating = false }: PacketViewerPanelProps) 
 
       {!selectedHop ? (
         <div style={{ color: 'var(--netlab-text-muted)', fontSize: 11 }}>
-          {t('simulation.viewer.empty')}
+          {t(trace ? 'simulation.viewer.pick' : 'simulation.viewer.empty')}
         </div>
       ) : (
         <>

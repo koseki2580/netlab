@@ -74,6 +74,45 @@ describe('WorkerEngine', () => {
     expect(engine.getState().currentStep).toBe(0);
   });
 
+  // TC-340 — play after a send walks the trace; it used to stay at the start.
+  it('plays a sent trace through to its last hop, and pause holds it', async () => {
+    vi.useFakeTimers();
+    try {
+      const fakeWorker = new RuntimeBackedWorker();
+      const engine = new WorkerEngine(directTopology(), new HookEngine(), {
+        createWorker: () => fakeWorker,
+        timeoutMs: 100_000,
+      });
+      await fakeWorker.flush();
+      await engine.ready();
+      await engine.send(makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
+      await fakeWorker.flush();
+      const hops = engine.getState().traces[0]?.hops.length ?? 0;
+      expect(hops).toBeGreaterThan(1);
+
+      engine.play(100);
+      await fakeWorker.flush();
+      expect(engine.getState().status).toBe('running');
+      await vi.advanceTimersByTimeAsync(100);
+      expect(engine.getState().currentStep).toBe(0);
+
+      engine.pause();
+      await fakeWorker.flush();
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(engine.getState().currentStep).toBe(0);
+      expect(engine.getState().status).toBe('paused');
+
+      engine.play(100);
+      await fakeWorker.flush();
+      await vi.advanceTimersByTimeAsync(100 * hops);
+      expect(engine.getState().currentStep).toBe(hops - 1);
+      expect(engine.getState().status).toBe('done');
+      engine.dispose();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('rejects requests that time out', async () => {
     const engine = new WorkerEngine(directTopology(), new HookEngine(), {
       createWorker: () => new SilentWorker(),

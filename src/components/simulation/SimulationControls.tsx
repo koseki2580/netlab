@@ -4,6 +4,7 @@ import { useSimulation } from '../../simulation/SimulationContext';
 import type { InFlightPacket } from '../../types/packets';
 import type { NetworkTopology } from '../../types/topology';
 import { useNetlabContext } from '../NetlabContext';
+import { NARROW_CSS, hopReadout, traceOutcome } from './traceWords';
 
 function buildDefaultPacket(topology: NetworkTopology): InFlightPacket | null {
   const client = topology.nodes.find((n) => n.data.role === 'client');
@@ -112,25 +113,36 @@ export function SimulationControls({ showSend = true }: SimulationControlsProps 
     await sendPacket(packet);
   };
 
-  const playDisabled = status === 'running' || status === 'done';
+  const trace = state.traces.find((item) => item.packetId === state.currentTraceId);
+  // A finished trace can be played again: play starts it over from the first
+  // device, where a dead button left nothing to press but reset.
+  const playDisabled = status === 'running' || status === 'idle';
+  const handlePlay = () => {
+    if (status === 'done') engine.reset();
+    engine.play();
+  };
   const pauseDisabled = status !== 'running';
   const stepDisabled = status === 'running' || status === 'done';
   const resetDisabled = status === 'idle';
 
   return (
     <div
+      className="netlab-bar"
       style={{
         display: 'flex',
         alignItems: 'center',
         gap: 8,
         padding: '4px 12px',
-        height: 40,
+        minHeight: 40,
+        minWidth: 0,
+        boxSizing: 'border-box',
         background: 'var(--netlab-bg-surface)',
         borderBottom: '1px solid var(--netlab-border)',
         flexShrink: 0,
         flexWrap: 'wrap',
       }}
     >
+      <style>{NARROW_CSS}</style>
       {/* Zone 1: Transport */}
       <div style={ZONE}>
         {showSend && (
@@ -146,14 +158,15 @@ export function SimulationControls({ showSend = true }: SimulationControlsProps 
           </button>
         )}
         <button
-          onClick={() => engine.play()}
+          onClick={handlePlay}
           disabled={playDisabled}
           style={playDisabled ? BTN_DISABLED : BTN_SECONDARY}
           title={t('simulation.controls.play')}
           aria-label={t('simulation.controls.play')}
-          className="netlab-focus-ring"
+          className="netlab-focus-ring netlab-tap"
+          data-testid="sim-play"
         >
-          ▶
+          ▶<span className="netlab-wide"> {t('simulation.controls.play')}</span>
         </button>
         <button
           onClick={() => engine.pause()}
@@ -161,9 +174,10 @@ export function SimulationControls({ showSend = true }: SimulationControlsProps 
           style={pauseDisabled ? BTN_DISABLED : BTN_SECONDARY}
           title={t('simulation.controls.pause')}
           aria-label={t('simulation.controls.pause')}
-          className="netlab-focus-ring"
+          className="netlab-focus-ring netlab-tap"
+          data-testid="sim-pause"
         >
-          ⏸
+          ⏸<span className="netlab-wide"> {t('simulation.controls.pause')}</span>
         </button>
         <button
           onClick={() => engine.step()}
@@ -171,9 +185,10 @@ export function SimulationControls({ showSend = true }: SimulationControlsProps 
           style={stepDisabled ? BTN_DISABLED : BTN_SECONDARY}
           title={t('simulation.controls.step')}
           aria-label={t('simulation.controls.step')}
-          className="netlab-focus-ring"
+          className="netlab-focus-ring netlab-tap"
+          data-testid="sim-step"
         >
-          →
+          →<span className="netlab-wide"> {t('simulation.controls.step')}</span>
         </button>
         <button
           onClick={() => engine.reset()}
@@ -181,9 +196,10 @@ export function SimulationControls({ showSend = true }: SimulationControlsProps 
           style={resetDisabled ? BTN_DISABLED : BTN_SECONDARY}
           title={t('simulation.controls.reset')}
           aria-label={t('simulation.controls.reset')}
-          className="netlab-focus-ring"
+          className="netlab-focus-ring netlab-tap"
+          data-testid="sim-reset"
         >
-          ⟳
+          ⟳<span className="netlab-wide"> {t('simulation.controls.reset')}</span>
         </button>
       </div>
 
@@ -197,31 +213,32 @@ export function SimulationControls({ showSend = true }: SimulationControlsProps 
           title={t('simulation.controls.highlightTitle')}
           aria-label={t('simulation.controls.highlightLabel')}
           aria-pressed={highlightMode === 'path'}
-          className="netlab-focus-ring"
+          className="netlab-focus-ring netlab-tap"
         >
           {highlightMode === 'path' ? t('simulation.controls.path') : t('simulation.controls.hop')}
         </button>
       </div>
 
       <div
+        data-testid="sim-status"
+        aria-live="polite"
         style={{
-          marginLeft: 'auto',
+          flex: '1 1 180px',
+          textAlign: 'right',
           fontFamily: 'monospace',
           fontSize: 11,
-          color: 'var(--netlab-text-muted)',
+          color: trace ? 'var(--netlab-text-primary)' : 'var(--netlab-text-muted)',
         }}
       >
-        {status === 'idle' &&
-          (showSend
+        {!trace
+          ? showSend
             ? t('simulation.controls.statusIdle')
-            : t('simulation.controls.statusIdleLessonButtons'))}
-        {status === 'paused' && state.currentStep === -1 && t('simulation.controls.statusLoaded')}
-        {status === 'paused' &&
-          state.currentStep >= 0 &&
-          t('simulation.controls.statusPaused', { current: state.currentStep + 1 })}
-        {status === 'running' &&
-          t('simulation.controls.statusRunning', { current: state.currentStep + 1 })}
-        {status === 'done' && t('simulation.controls.statusDone')}
+            : t('simulation.controls.statusIdleLessonButtons')
+          : state.currentStep < 0
+            ? `${traceOutcome(trace, t)} ${t('simulation.controls.statusLoaded')}`.trim()
+            : status === 'done'
+              ? traceOutcome(trace, t) || hopReadout(trace, state.currentStep, t)
+              : hopReadout(trace, state.currentStep, t)}
       </div>
     </div>
   );

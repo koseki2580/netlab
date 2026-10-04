@@ -127,6 +127,8 @@ export type SimulationWorkerCommand =
   | { readonly type: 'selectTrace'; readonly id: string; readonly packetId: string }
   | { readonly type: 'selectHop'; readonly id: string; readonly step: number }
   | { readonly type: 'setPlayInterval'; readonly id: string; readonly ms: number }
+  | { readonly type: 'play'; readonly id: string; readonly ms?: number }
+  | { readonly type: 'pause'; readonly id: string }
   | { readonly type: 'setHighlightMode'; readonly id: string; readonly mode: HighlightMode }
   | { readonly type: 'exportPcapRecords'; readonly id: string; readonly traceId?: string }
   | { readonly type: 'dispose'; readonly id: string };
@@ -229,6 +231,7 @@ export function isSimulationWorkerCommand(value: unknown): value is SimulationWo
       );
     case 'getState':
     case 'step':
+    case 'pause':
     case 'reset':
     case 'clear':
     case 'clearPathMtuCaches':
@@ -285,6 +288,8 @@ export function isSimulationWorkerCommand(value: unknown): value is SimulationWo
       return hasFiniteNumber(value, 'step');
     case 'setPlayInterval':
       return hasPositiveNumber(value, 'ms');
+    case 'play':
+      return value.ms === undefined || hasPositiveNumber(value, 'ms');
     case 'setHighlightMode':
       return isHighlightMode(value.mode);
     case 'exportPcapRecords':

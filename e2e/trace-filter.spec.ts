@@ -16,6 +16,9 @@ test('trace display filter narrows hops, persists through refresh, and clears wi
   const initialCount = await rows.count();
   expect(initialCount).toBeGreaterThan(0);
 
+  // The filter is an expert's tool and waits behind a disclosure.
+  await expect(searchbox).toBeHidden();
+  await page.getByTestId('trace-advanced-toggle').click();
   await searchbox.fill('protocol == tcp');
   await expect(page.getByTestId(SEL.traceFilter.statusLabel)).toContainText(
     `0 of ${initialCount} hops shown`,

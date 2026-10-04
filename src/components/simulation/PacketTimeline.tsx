@@ -8,8 +8,9 @@ import type { PacketHop, PacketTrace } from '../../types/simulation';
 import { TraceAnnotationAnchor } from '../sandbox/annotations/TraceAnnotationAnchor';
 import { useNetlabContext } from '../NetlabContext';
 import { TraceSelector } from './TraceSelector';
-import { TraceFilterInput } from './traceFilter/TraceFilterInput';
+import { TRACE_FILTER_PARAM, TraceFilterInput } from './traceFilter/TraceFilterInput';
 import type { TraceFilterPredicate, TraceFilterResult } from './traceFilter/parser';
+import { NARROW_CSS, eventWord } from './traceWords';
 
 const EVENT_COLORS: Record<string, string> = {
   create: 'var(--netlab-accent-cyan)',
@@ -284,6 +285,9 @@ function HopRow({
         >
           {label}
         </span>
+        <span style={{ color: 'var(--netlab-text-secondary)', fontSize: 10, flexShrink: 0 }}>
+          {eventWord(hop.event, t)}
+        </span>
         <TraceAnnotationAnchor traceEventId={traceEventId(trace, hop)} />
         <span
           style={{
@@ -314,8 +318,8 @@ function HopRow({
           }}
         >
           {hop.event === 'arp-request'
-            ? `who has ${hop.dstIp}?`
-            : `${hop.srcIp} is at ${hop.arpFrame.srcMac}`}
+            ? t('simulation.timeline.arpWho', { ip: hop.dstIp })
+            : t('simulation.timeline.arpIs', { ip: hop.srcIp, mac: hop.arpFrame.srcMac })}
         </span>
       )}
       {annotation && (
@@ -341,6 +345,13 @@ export const PacketTimeline = memo(function PacketTimeline({ filter }: PacketTim
   const { traces, currentTraceId, currentStep, selectedHop } = state;
   const trace = traces.find((t) => t.packetId === currentTraceId);
   const [inputFilter, setInputFilter] = useState<TraceFilterPredicate>(() => identityFilter);
+  // The filter and the capture download are tools for someone who already
+  // reads traces; they wait behind a disclosure unless a filter is in force.
+  const [advancedOpen, setAdvancedOpen] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).has(TRACE_FILTER_PARAM),
+  );
   const activeFilter = filter ?? inputFilter;
   const visibleHops = trace ? trace.hops.filter(activeFilter) : [];
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -355,7 +366,16 @@ export const PacketTimeline = memo(function PacketTimeline({ filter }: PacketTim
   useEffect(() => {
     if (!scrollRef.current || activeStep < 0) return;
     const activeRow = scrollRef.current.querySelector<HTMLElement>(`[data-step="${activeStep}"]`);
-    activeRow?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    if (!activeRow) return;
+    // Only the timeline's own boxes move. scrollIntoView also scrolled the
+    // page, which slid the step button out from under the press that caused it.
+    const row = activeRow.getBoundingClientRect();
+    for (const box of [scrollRef.current, scrollRef.current.parentElement]) {
+      if (!box || box.scrollHeight <= box.clientHeight) continue;
+      const view = box.getBoundingClientRect();
+      if (row.top < view.top) box.scrollTop -= view.top - row.top;
+      else if (row.bottom > view.bottom) box.scrollTop += row.bottom - view.bottom;
+    }
   }, [activeStep]);
 
   function handleDownloadPcap() {
@@ -374,6 +394,7 @@ export const PacketTimeline = memo(function PacketTimeline({ filter }: PacketTim
   return (
     <div
       data-testid="demo-trace-log"
+      className="netlab-grow-box"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -381,6 +402,7 @@ export const PacketTimeline = memo(function PacketTimeline({ filter }: PacketTim
         fontFamily: 'monospace',
       }}
     >
+      <style>{NARROW_CSS}</style>
       {/* Section header */}
       <div
         style={{
@@ -437,54 +459,69 @@ export const PacketTimeline = memo(function PacketTimeline({ filter }: PacketTim
         </button>
       </div>
 
-      {filter === undefined && <TraceFilterInput onParse={handleParseFilter} />}
-      {trace && (
-        <div
-          aria-live="polite"
-          data-testid="trace-filter-status"
-          style={{
-            padding: '2px 10px 0',
-            fontSize: 10,
-            color: 'var(--netlab-text-muted)',
-            fontFamily: 'monospace',
-          }}
-        >
-          {t('simulation.timeline.hopsShown', {
-            shown: visibleHops.length,
-            total: trace.hops.length,
-          })}
-        </div>
-      )}
-
-      <div
-        style={{
-          padding: '8px 10px 0',
-          flexShrink: 0,
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
-          gap: 8,
-        }}
-      >
+      <div style={{ padding: '6px 10px 0', flexShrink: 0 }}>
         <TraceSelector />
         <button
           type="button"
-          onClick={handleDownloadPcap}
-          disabled={!currentTraceId}
+          data-testid="trace-advanced-toggle"
+          aria-expanded={advancedOpen}
+          onClick={() => setAdvancedOpen((open) => !open)}
+          className="netlab-focus-ring netlab-tap"
           style={{
-            padding: '2px 8px',
-            fontSize: 11,
-            borderRadius: 4,
-            border: '1px solid var(--netlab-border)',
-            background: 'var(--netlab-bg-surface)',
-            color: currentTraceId ? 'var(--netlab-text-primary)' : 'var(--netlab-text-muted)',
-            cursor: currentTraceId ? 'pointer' : 'default',
-            flexShrink: 0,
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer',
+            color: 'var(--netlab-text-muted)',
             fontFamily: 'monospace',
+            fontSize: 10,
+            textAlign: 'left',
           }}
         >
-          {t('simulation.timeline.downloadPcap')}
+          {advancedOpen ? '▾' : '▸'} {t('simulation.timeline.advanced')}
         </button>
+      </div>
+      <div data-testid="trace-advanced" hidden={!advancedOpen} style={{ flexShrink: 0 }}>
+        {filter === undefined && <TraceFilterInput onParse={handleParseFilter} />}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+            padding: '2px 10px 0',
+          }}
+        >
+          <div
+            aria-live="polite"
+            data-testid="trace-filter-status"
+            style={{ fontSize: 10, color: 'var(--netlab-text-muted)', fontFamily: 'monospace' }}
+          >
+            {trace &&
+              t('simulation.timeline.hopsShown', {
+                shown: visibleHops.length,
+                total: trace.hops.length,
+              })}
+          </div>
+          <button
+            type="button"
+            onClick={handleDownloadPcap}
+            disabled={!currentTraceId}
+            style={{
+              padding: '2px 8px',
+              fontSize: 11,
+              borderRadius: 4,
+              border: '1px solid var(--netlab-border)',
+              background: 'var(--netlab-bg-surface)',
+              color: currentTraceId ? 'var(--netlab-text-primary)' : 'var(--netlab-text-muted)',
+              cursor: currentTraceId ? 'pointer' : 'default',
+              flexShrink: 0,
+              fontFamily: 'monospace',
+            }}
+          >
+            {t('simulation.timeline.downloadPcap')}
+          </button>
+        </div>
       </div>
 
       {trace && visibleHops.length > 0 ? (
@@ -512,6 +549,7 @@ export const PacketTimeline = memo(function PacketTimeline({ filter }: PacketTim
         role={trace ? 'listbox' : 'region'}
         aria-label={t('simulation.timeline.hops')}
         tabIndex={0}
+        className="netlab-grow"
         style={{ flex: 1, overflowY: 'auto', padding: '6px 4px' }}
       >
         {!trace ? (

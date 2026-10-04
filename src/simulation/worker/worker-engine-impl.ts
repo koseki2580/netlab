@@ -240,6 +240,12 @@ export class SimulationWorkerRuntime {
       case 'setPlayInterval':
         engine.setPlayInterval(command.ms);
         return null;
+      case 'play':
+        engine.play(command.ms);
+        return null;
+      case 'pause':
+        engine.pause();
+        return null;
       case 'setHighlightMode':
         engine.setHighlightMode(command.mode);
         return null;

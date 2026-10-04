@@ -318,17 +318,14 @@ export class WorkerEngine {
     this.fireAndForget({ type: 'setHighlightMode', mode });
   }
 
+  // The timer lives with the engine in the worker. Marking the mirror
+  // "running" without telling the worker left the trace at its first hop.
   play(ms?: number): void {
-    this.setPlayInterval(ms ?? this.playIntervalMs);
-    this.state = { ...this.state, status: 'running' };
-    this.notify();
+    this.fireAndForget(ms === undefined ? { type: 'play' } : { type: 'play', ms });
   }
 
   pause(): void {
-    if (this.state.status === 'running') {
-      this.state = { ...this.state, status: 'paused' };
-      this.notify();
-    }
+    this.fireAndForget({ type: 'pause' });
   }
 
   reset(): void {

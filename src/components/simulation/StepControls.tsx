@@ -4,6 +4,7 @@ import { useSimulation } from '../../simulation/SimulationContext';
 import { routingVerdict } from '../../simulation/pipeline/dispatch/routingHelpers';
 import type { PacketHop, RoutingDecision } from '../../types/simulation';
 import { TraceSelector } from './TraceSelector';
+import { NARROW_CSS, hopReadout, traceOutcome } from './traceWords';
 
 // ── Style constants (dark theme, monospace) ───────────────────────────────────
 
@@ -348,6 +349,7 @@ export function StepControls({
     engine.step();
   };
   const resetDisabled = status === 'idle';
+  const idle = trace === undefined;
 
   // Auto-scroll log to bottom when a new step is revealed
   const logRef = useRef<HTMLDivElement>(null);
@@ -358,6 +360,7 @@ export function StepControls({
 
   return (
     <div
+      data-testid="step-controls"
       style={{
         fontFamily: 'monospace',
         color: 'var(--netlab-text-primary)',
@@ -383,10 +386,113 @@ export function StepControls({
         {t('simulation.steps.heading')}
       </div>
 
+      <style>{NARROW_CSS}</style>
+      {/* Controls first: the history grows below them, so the step button
+          stays where it was pressed, and it holds to the top of whatever
+          scrolls it once the history is longer than the panel. */}
+      <div
+        style={{
+          padding: '12px 16px',
+          borderBottom: '1px solid var(--netlab-bg-surface)',
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+          position: 'sticky',
+          top: 0,
+          zIndex: 1,
+          background: 'var(--netlab-bg-primary)',
+        }}
+      >
+        {idle && (
+          <div
+            data-testid="step-idle-hint"
+            style={{ color: 'var(--netlab-text-primary)', fontSize: 12, lineHeight: 1.6 }}
+          >
+            {t('simulation.steps.logIdle')}
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={handleStep}
+            data-testid={primary ? 'demo-primary-action' : 'demo-step-action'}
+            disabled={stepDisabled}
+            className="netlab-tap"
+            style={{
+              flex: 1,
+              padding: idle ? '7px 11px' : '8px 12px',
+              // With nothing to step through, this is not the button to press:
+              // it stands back so the lesson's own start button leads.
+              border: idle ? '1px dashed var(--netlab-border)' : 'none',
+              borderRadius: 6,
+              cursor: stepDisabled ? 'not-allowed' : 'pointer',
+              fontSize: 13,
+              fontWeight: idle ? 'normal' : 'bold',
+              fontFamily: 'monospace',
+              background: idle
+                ? 'transparent'
+                : stepDisabled
+                  ? 'var(--netlab-bg-surface)'
+                  : 'var(--netlab-accent-blue)',
+              color: stepDisabled ? 'var(--netlab-text-muted)' : '#fff',
+            }}
+          >
+            {t('simulation.steps.next')}
+          </button>
+          <button
+            onClick={() => engine.reset()}
+            disabled={resetDisabled}
+            className="netlab-tap"
+            style={{
+              padding: idle ? '7px 11px' : '8px 12px',
+              border: idle ? '1px dashed var(--netlab-border)' : 'none',
+              borderRadius: 6,
+              cursor: resetDisabled ? 'not-allowed' : 'pointer',
+              fontSize: 13,
+              fontWeight: idle ? 'normal' : 'bold',
+              fontFamily: 'monospace',
+              background: idle
+                ? 'transparent'
+                : resetDisabled
+                  ? 'var(--netlab-bg-surface)'
+                  : 'var(--netlab-border)',
+              color: resetDisabled ? 'var(--netlab-text-muted)' : 'var(--netlab-text-primary)',
+            }}
+          >
+            {t('simulation.steps.reset')}
+          </button>
+        </div>
+        {trace && (
+          <>
+            <div
+              data-testid="step-readout"
+              aria-live="polite"
+              style={{ fontSize: 12, fontWeight: 'bold', color: 'var(--netlab-text-primary)' }}
+            >
+              {currentStep >= 0 ? hopReadout(trace, currentStep, t) : traceOutcome(trace, t)}
+            </div>
+            <div
+              data-testid="step-hint"
+              style={{ fontSize: 11, color: 'var(--netlab-text-secondary)', lineHeight: 1.5 }}
+            >
+              {status !== 'done'
+                ? t('simulation.steps.logLoaded', { total: totalHops })
+                : continuesToNext && nextTrace
+                  ? t('simulation.steps.statusNextTrace', {
+                      total: totalHops,
+                      label: nextTrace.label ?? '',
+                    })
+                  : t('simulation.steps.statusDone')}
+            </div>
+          </>
+        )}
+      </div>
+
       {/* Scrollable accumulated log */}
       <div
         ref={logRef}
         tabIndex={0}
+        data-testid="step-history"
         style={{
           flex: 1,
           overflowY: 'auto',
@@ -413,89 +519,15 @@ export function StepControls({
             })}
           </div>
         )}
-        {revealedHops.length === 0 ? (
-          <div style={{ color: 'var(--netlab-text-secondary)', fontSize: 12 }}>
-            {status === 'idle' ? t('simulation.steps.logIdle') : t('simulation.steps.logLoaded')}
-          </div>
-        ) : (
-          revealedHops.map((hop, idx) => (
-            <StepEntry
-              key={hop.step}
-              hop={hop}
-              isCurrent={hop.step === currentStep}
-              isLast={idx === revealedHops.length - 1}
-              totalHops={totalHops}
-            />
-          ))
-        )}
-      </div>
-
-      {/* Sticky footer: controls */}
-      <div
-        style={{
-          padding: '12px 16px',
-          borderTop: '1px solid var(--netlab-bg-surface)',
-          flexShrink: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 8,
-        }}
-      >
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            onClick={handleStep}
-            data-testid={primary ? 'demo-primary-action' : 'demo-step-action'}
-            disabled={stepDisabled}
-            style={{
-              flex: 1,
-              padding: '8px 12px',
-              border: 'none',
-              borderRadius: 6,
-              cursor: stepDisabled ? 'not-allowed' : 'pointer',
-              fontSize: 13,
-              fontWeight: 'bold',
-              fontFamily: 'monospace',
-              background: stepDisabled ? 'var(--netlab-bg-surface)' : 'var(--netlab-accent-blue)',
-              color: stepDisabled ? 'var(--netlab-text-muted)' : '#fff',
-            }}
-          >
-            {t('simulation.steps.next')}
-          </button>
-          <button
-            onClick={() => engine.reset()}
-            disabled={resetDisabled}
-            style={{
-              padding: '8px 12px',
-              border: 'none',
-              borderRadius: 6,
-              cursor: resetDisabled ? 'not-allowed' : 'pointer',
-              fontSize: 13,
-              fontWeight: 'bold',
-              fontFamily: 'monospace',
-              background: resetDisabled ? 'var(--netlab-bg-surface)' : 'var(--netlab-border)',
-              color: resetDisabled ? 'var(--netlab-text-muted)' : 'var(--netlab-text-primary)',
-            }}
-          >
-            {t('simulation.steps.reset')}
-          </button>
-        </div>
-        <div style={{ fontSize: 11, color: 'var(--netlab-text-secondary)', textAlign: 'center' }}>
-          {/* Idle says nothing here: the log above already says how to begin,
-              and the same sentence twice read as a glitch. */}
-          {status === 'paused' && currentStep === -1 && t('simulation.steps.statusLoaded')}
-          {status === 'paused' &&
-            currentStep >= 0 &&
-            t('simulation.steps.statusPaused', { current: currentStep + 1, total: totalHops })}
-          {status === 'running' &&
-            t('simulation.steps.statusRunning', { current: currentStep + 1 })}
-          {status === 'done' &&
-            (continuesToNext && nextTrace
-              ? t('simulation.steps.statusNextTrace', {
-                  total: totalHops,
-                  label: nextTrace.label ?? '',
-                })
-              : t('simulation.steps.statusDone', { total: totalHops }))}
-        </div>
+        {revealedHops.map((hop, idx) => (
+          <StepEntry
+            key={hop.step}
+            hop={hop}
+            isCurrent={hop.step === currentStep}
+            isLast={idx === revealedHops.length - 1}
+            totalHops={totalHops}
+          />
+        ))}
       </div>
     </div>
   );

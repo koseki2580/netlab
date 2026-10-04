@@ -430,3 +430,140 @@ describe('PacketTimeline link annotations', () => {
     expect(text).not.toContain('enqueued');
   });
 });
+
+describe('PacketTimeline for a beginner', () => {
+  const ARP_TRACE: PacketTrace = {
+    ...TRACE,
+    hops: [
+      { ...TRACE_CREATE_HOP },
+      {
+        ...TRACE_CREATE_HOP,
+        step: 1,
+        event: 'arp-request',
+        arpFrame: {
+          operation: 'request',
+          srcMac: '02:00:00:00:00:01',
+          srcIp: '10.0.0.10',
+          dstMac: 'ff:ff:ff:ff:ff:ff',
+          dstIp: '203.0.113.10',
+        } as never,
+      },
+      {
+        ...TRACE_DELIVER_HOP,
+        step: 2,
+        event: 'arp-reply',
+        srcIp: '203.0.113.10',
+        dstIp: '10.0.0.10',
+        arpFrame: {
+          operation: 'reply',
+          srcMac: '02:e1:2e:d8:d4:08',
+          srcIp: '203.0.113.10',
+          dstMac: '02:00:00:00:00:01',
+          dstIp: '10.0.0.10',
+        } as never,
+      },
+      { ...TRACE_DELIVER_HOP, step: 3 },
+    ],
+  };
+  let host: HTMLDivElement;
+  let hostRoot: Root;
+
+  function renderIn(locale: string, trace: PacketTrace | null = ARP_TRACE) {
+    host = document.createElement('div');
+    document.body.appendChild(host);
+    hostRoot = createRoot(host);
+    act(() => {
+      hostRoot.render(
+        <I18nProvider locale={locale}>
+          <NetlabContext.Provider
+            value={{
+              topology: TOPOLOGY,
+              routeTable: TOPOLOGY.routeTables,
+              areas: TOPOLOGY.areas,
+              hookEngine: new HookEngine(),
+            }}
+          >
+            <SimulationContext.Provider
+              value={makeSimulationContextValue({
+                state: trace
+                  ? makeState({ traces: [trace] })
+                  : makeState({ traces: [], currentTraceId: null, status: 'idle' }),
+              })}
+            >
+              <PacketTimeline />
+            </SimulationContext.Provider>
+          </NetlabContext.Provider>
+        </I18nProvider>,
+      );
+    });
+  }
+  const byId = (id: string) => host.querySelector<HTMLElement>(`[data-testid="${id}"]`);
+
+  beforeEach(() => {
+    window.history.replaceState(null, '', window.location.pathname);
+  });
+
+  afterEach(() => {
+    act(() => hostRoot.unmount());
+    host.remove();
+    window.history.replaceState(null, '', window.location.pathname);
+  });
+
+  it('TC-346: the filter, its help and the PCAP button wait behind a closed disclosure and stay usable', () => {
+    renderIn('ja');
+    const toggle = byId('trace-advanced-toggle');
+    const section = byId('trace-advanced');
+    expect(toggle?.textContent).toContain('くわしい表示（上級者向け）');
+    expect(toggle?.getAttribute('aria-expanded')).toBe('false');
+    expect(section?.hidden).toBe(true);
+    expect(section?.contains(byId('trace-filter-searchbox'))).toBe(true);
+    expect(section?.contains(byId('trace-filter-status'))).toBe(true);
+    expect(section?.textContent).toContain('PCAP を保存');
+
+    act(() => toggle?.click());
+    expect(toggle?.getAttribute('aria-expanded')).toBe('true');
+    expect(section?.hidden).toBe(false);
+  });
+
+  it('TC-346: a filter carried in the address opens the disclosure, so a narrowed list explains itself', () => {
+    window.history.replaceState(null, '', '?trace_filter=protocol%20%3D%3D%20tcp');
+    renderIn('en');
+    expect(byId('trace-advanced-toggle')?.getAttribute('aria-expanded')).toBe('true');
+    expect(byId('trace-advanced')?.hidden).toBe(false);
+  });
+
+  it('TC-347: ARP rows and event names read in the chosen language, with the codes kept', () => {
+    renderIn('ja');
+    const rows = Array.from(host.querySelectorAll<HTMLElement>('[data-testid="trace-hop"]'));
+    expect(rows.map((row) => row.dataset.event)).toEqual([
+      'create',
+      'arp-request',
+      'arp-reply',
+      'deliver',
+    ]);
+    expect(rows[1]?.textContent).toContain('203.0.113.10 の持ち主は？');
+    expect(rows[2]?.textContent).toContain('203.0.113.10 は 02:e1:2e:d8:d4:08 です');
+    expect(host.textContent).not.toContain('who has');
+    expect(host.textContent).not.toContain('is at');
+    expect(rows[0]?.textContent).toContain('CREATE');
+    expect(rows[0]?.textContent).toContain('作成');
+    expect(rows[1]?.textContent).toContain('ARP 要求');
+    expect(rows[3]?.textContent).toContain('到着');
+  });
+
+  it('TC-347: the same rows in English keep their wording', () => {
+    renderIn('en');
+    expect(host.textContent).toContain('who has 203.0.113.10?');
+    expect(host.textContent).toContain('203.0.113.10 is at 02:e1:2e:d8:d4:08');
+  });
+
+  it('TC-348: an empty timeline says nothing was sent, without naming a button', () => {
+    renderIn('ja', null);
+    expect(host.textContent).toContain(
+      'まだ何も送っていません。送ると、通った道がここに並びます。',
+    );
+    renderIn('en', null);
+    expect(host.textContent).toContain('Nothing sent yet.');
+    expect(host.textContent).not.toContain('Send Packet');
+  });
+});

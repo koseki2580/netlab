@@ -189,7 +189,7 @@ describe('StepControls', () => {
       });
       render();
 
-      expect(container?.textContent).toContain('Send a packet to begin.');
+      expect(container?.textContent).toContain('Nothing sent yet.');
     });
 
     it('renders Next Step and Reset buttons', () => {
@@ -431,7 +431,7 @@ describe('StepControls across the traces of one exchange', () => {
     pressNext();
     // The last hop of the last message: the whole exchange has been walked.
     expect(findButton('Next Step')?.disabled).toBe(true);
-    expect(container?.textContent).toContain('Complete');
+    expect(container?.textContent).toContain('Reached the end');
   });
 
   it('stops at the end of one trace when the lesson does not ask to carry on', () => {
@@ -440,5 +440,78 @@ describe('StepControls across the traces of one exchange', () => {
     render(<StepControls />);
     expect(findButton('Next Step')?.disabled).toBe(true);
     expect(container?.querySelector('[data-testid="step-exchange-position"]')).toBeNull();
+  });
+});
+
+describe('StepControls for a beginner', () => {
+  const ja = (ui: React.ReactElement) => <I18nProvider locale="ja">{ui}</I18nProvider>;
+  const byId = (id: string) => container?.querySelector(`[data-testid="${id}"]`) ?? null;
+
+  it('TC-341: the step button and the readout come before the history, so history grows below them', () => {
+    simulationMock.state = makeState({ currentStep: 1 });
+    render();
+
+    const button = byId('demo-primary-action');
+    const readout = byId('step-readout');
+    const history = byId('step-history');
+    expect(button && readout && history).toBeTruthy();
+    const FOLLOWING = Node.DOCUMENT_POSITION_FOLLOWING;
+    expect((button as Element).compareDocumentPosition(history as Element) & FOLLOWING).toBe(
+      FOLLOWING,
+    );
+    expect((readout as Element).compareDocumentPosition(history as Element) & FOLLOWING).toBe(
+      FOLLOWING,
+    );
+    expect(history?.textContent).toContain('Router');
+  });
+
+  it('TC-342: the readout says where the packet is, and the hint what a press does and how many there are', () => {
+    simulationMock.state = makeState({ currentStep: 1 });
+    render();
+    expect(byId('step-readout')?.textContent).toBe('Step 2 of 3: Router (forwarded)');
+    expect(byId('step-hint')?.textContent).toContain('3 presses in all');
+
+    render(ja(<StepControls />));
+    expect(byId('step-readout')?.textContent).toBe('3 個のうち 2 番目：Router（転送）');
+    expect(byId('step-hint')?.textContent).toBe(
+      '押すたびに、パケットが次の機器へ 1 回受け渡されます（＝1 ホップ）。全部で 3 回。',
+    );
+  });
+
+  it('TC-343: with nothing sent, the hint names no button that is not there and the step button stands back', () => {
+    simulationMock.state = makeState({
+      status: 'idle',
+      traces: [],
+      currentTraceId: null,
+      currentStep: -1,
+    });
+    render(ja(<StepControls />));
+
+    expect(byId('step-idle-hint')?.textContent).toBe(
+      'まだ何も送っていません。この画面のボタンで通信を始めると、ここから 1 つずつ進められます。',
+    );
+    expect(container?.textContent).not.toContain('パケットを送ると始まります');
+    const button = byId('demo-primary-action') as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    expect(button.style.background).toBe('transparent');
+    expect(byId('step-readout')).toBeNull();
+  });
+
+  it('TC-344: once a trace exists, the readout says how it ended before any step is taken', () => {
+    simulationMock.state = makeState({ currentStep: -1 });
+    render();
+    expect(byId('step-readout')?.textContent).toBe('Delivered: it ended at Server.');
+
+    const state = makeState({ currentStep: -1 });
+    const hops = [
+      makeHop({ step: 0 }),
+      makeHop({ step: 1, nodeLabel: 'Router', event: 'drop', reason: 'no-route' }),
+    ];
+    simulationMock.state = {
+      ...state,
+      traces: [{ ...state.traces[0]!, hops, status: 'dropped' }],
+    };
+    render(ja(<StepControls />));
+    expect(byId('step-readout')?.textContent).toBe('Router で破棄されました（no-route）。');
   });
 });

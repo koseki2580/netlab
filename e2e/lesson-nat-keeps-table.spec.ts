@@ -27,7 +27,7 @@ test('both translations survive replaying the last send', async ({ page, demoPag
   await page.getByTestId(TID.sendB).click();
   await expect(page.getByTestId(TID.insideGlobal)).toHaveCount(2);
 
-  const step = page.locator('button[title="Step Forward"], button[title="1ステップ進む"]').first();
+  const step = page.locator('button[title="Step Forward"], button[title="1 つ進む"]').first();
   for (let i = 0; i < 3; i += 1) {
     await step.click();
   }
