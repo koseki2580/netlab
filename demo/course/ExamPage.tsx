@@ -261,6 +261,13 @@ function ExamBody({ level }: { level: ExamLevel }) {
             >
               {t('Try again', 'もう一度受ける')}
             </button>
+            <Link
+              data-testid="exam-to-exercises"
+              to={`/exercises/level/${level.level}`}
+              style={{ ...LINK, display: 'inline-block', marginLeft: 16, padding: '12px 0' }}
+            >
+              {t('Practise this level hands-on →', 'このレベルを実習問題で練習する →')}
+            </Link>
           </section>
         ) : null}
 

@@ -38,6 +38,7 @@ interface CourseUiCopy {
   readonly finishTitle: string;
   readonly finishBody: string;
   readonly toExam: string;
+  readonly toExercises: string;
   readonly toGallery: string;
   readonly restart: string;
   readonly expectFail: string;
@@ -59,6 +60,7 @@ const UI_COPY: Record<CourseLocale, CourseUiCopy> = {
     finishBody:
       'You have seen a wire, a switch, why one network cannot reach another, and the router that joins them. Every lesson in the gallery is one of these ideas taken further.',
     toExam: 'What to learn next, and the final test →',
+    toExercises: 'Try hands-on exercises',
     toGallery: 'Open the gallery',
     restart: 'Start over',
     expectFail: 'This packet is meant to fail.',
@@ -78,6 +80,7 @@ const UI_COPY: Record<CourseLocale, CourseUiCopy> = {
     finishBody:
       'ケーブル1本、スイッチ、ネットワークが違うと届かないこと、そしてそれをつなぐルータを見てきました。ギャラリーのレッスンは、どれもこの続きです。',
     toExam: '次に学ぶことと修了テストへ →',
+    toExercises: '実習問題をやってみる',
     toGallery: 'ギャラリーを開く',
     restart: 'もう一度はじめから',
     expectFail: 'このパケットは失敗する例です。',
@@ -518,6 +521,18 @@ export default function CoursePage() {
                 style={{ ...BUTTON, textDecoration: 'none', display: 'inline-block' }}
               >
                 {ui.toExam}
+              </a>
+              <a
+                href="#/exercises"
+                data-testid="course-to-exercises"
+                style={{
+                  ...BUTTON,
+                  textDecoration: 'none',
+                  display: 'inline-block',
+                  background: 'var(--netlab-bg-surface)',
+                }}
+              >
+                {ui.toExercises}
               </a>
               <a
                 href="#/"

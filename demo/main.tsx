@@ -18,6 +18,11 @@ import { ToastViewport } from '../src/components/ToastViewport';
 import Gallery from './Gallery';
 import CoursePage from './course/CoursePage';
 import ExamPage from './course/ExamPage';
+import ExerciseHub from './exercises/ExerciseHub';
+import ExercisePage from './exercises/ExercisePage';
+import LevelPage from './exercises/LevelPage';
+import PlacementPage from './exercises/PlacementPage';
+import ReportPage from './exercises/ReportPage';
 import { resolveLearnerId } from './hooks/localLearnerId';
 import DmzDemo from './areas/DmzDemo';
 import MinimalDemo from './basic/MinimalDemo';
@@ -91,6 +96,11 @@ function DemoRoutes() {
         <Route path="/course" element={<CoursePage />} />
         <Route path="/course/exam" element={<ExamPage />} />
         <Route path="/course/exam/:level" element={<ExamPage />} />
+        <Route path="/exercises" element={<ExerciseHub />} />
+        <Route path="/exercises/level/:level" element={<LevelPage />} />
+        <Route path="/exercises/do/:exerciseId" element={<ExercisePage />} />
+        <Route path="/exercises/placement" element={<PlacementPage />} />
+        <Route path="/exercises/report" element={<ReportPage />} />
         <Route path="/learning/subnetting" element={<SubnetDrillDemo />} />
         <Route path="/learning/routing-decision" element={<RoutingDrillDemo />} />
         <Route path="/learning/visual-routing" element={<VisualRoutingDrillDemo />} />

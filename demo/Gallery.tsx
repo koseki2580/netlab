@@ -1706,6 +1706,32 @@ export default function Gallery({
                   count={assessmentDemos.length}
                 />
                 <div style={CARD_GRID}>
+                  {/* Not a lesson with a rubric but a set of its own: exercises
+                      graded by running the learner's network. */}
+                  <Link
+                    to="/exercises"
+                    data-testid="gallery-exercises-card"
+                    className="nl-demo-card"
+                    style={{
+                      ['--demo-card-bg' as string]: 'var(--netlab-bg-surface)',
+                      ['--demo-card-border' as string]: 'var(--netlab-accent-green)',
+                      ['--demo-card-border-hover' as string]: 'var(--netlab-accent-green)',
+                      display: 'grid',
+                      gap: 6,
+                      alignContent: 'start',
+                      textDecoration: 'none',
+                      color: 'var(--netlab-text-primary)',
+                    }}
+                  >
+                    <strong style={{ fontSize: 15 }}>
+                      {locale === 'ja' ? '実習問題' : 'Hands-on exercises'}
+                    </strong>
+                    <span style={{ fontSize: 13, color: 'var(--netlab-text-secondary)' }}>
+                      {locale === 'ja'
+                        ? '設定を変えて、小さなネットワークを直します。4 つのレベルがあり、動くかどうかはシミュレータが確かめます。'
+                        : 'Fix a small network by changing its settings. Four levels; the simulator checks whether it works.'}
+                    </span>
+                  </Link>
                   {assessmentDemos.map((demo) => {
                     const cat = CATEGORIES.find((c) => c.demos.some((d) => d.path === demo.path))!;
                     const tutorial = demo.scenarioId

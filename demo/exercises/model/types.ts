@@ -204,6 +204,16 @@ export interface DesignOption {
   readonly id: string;
   readonly label: Localised;
   readonly changes: readonly SettingChange[];
+  /**
+   * Why this option works or does not, for showing AFTER the option was run.
+   * The grader's result decides; this only explains it.
+   */
+  readonly explain?: Localised;
+  /**
+   * A start topology of its own, for an option no `SettingChange` can express
+   * (e.g. another routing protocol). Absent: the option runs over `Exercise.start`.
+   */
+  readonly start?: TopologySnapshot;
 }
 
 export interface Exercise {
@@ -229,6 +239,18 @@ export interface Exercise {
   readonly reference: readonly SettingChange[];
   /** Identifies the task apart from its wording; two instances with one fingerprint are the same task. */
   readonly fingerprint: string;
+  /** What each check means as a goal the learner reads, by check id. */
+  readonly checkLabels?: Readonly<Record<string, Localised>>;
+  /**
+   * The name of each device in both languages, by node id. `start` carries the
+   * Japanese one; `localiseExercise` (templates/index.ts) swaps them.
+   */
+  readonly nodeLabels?: Readonly<Record<string, Localised>>;
+  /**
+   * Natural wrong answers, each of which must fail the grade. For the
+   * verification harness only: never show these to a learner.
+   */
+  readonly wrongAnswers?: readonly (readonly SettingChange[])[];
 }
 
 export interface ExerciseTemplate {
@@ -236,6 +258,8 @@ export interface ExerciseTemplate {
   readonly level: ExerciseLevel;
   readonly kind: ExerciseKind;
   readonly generatorVersion: number;
+  /** The kind of task, for lists: "Fix an address". */
+  readonly title: Localised;
   /** Deterministic: the same seed always gives the same exercise. */
   readonly generate: (seed: number) => Exercise;
 }
