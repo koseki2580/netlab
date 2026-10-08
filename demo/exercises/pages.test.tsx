@@ -37,6 +37,7 @@ function storeWith(attempts: ReturnType<typeof attempt>[], options: { storage?: 
 
 const level1 = levelTemplates(1).map((template) => template.id);
 
+// TC-501
 describe('the exercise source', () => {
   it('finds a level 2 dev fixture by id while the templates have no level 2, for any seed', () => {
     expect(exerciseById(`${DEV_VLAN_ID}~0`, 'ja')?.level).toBe(2);
@@ -56,6 +57,7 @@ describe('the exercise source', () => {
 });
 
 describe('the hub', () => {
+  // TC-502
   it('shows each level with the store\'s own sentence and a start button; "continue" once begun', () => {
     const attempts = [solved(level1[0] ?? 't', 0, 1), failed(level1[0] ?? 't', 1, 1)];
     screen = render(<ExerciseHubBody store={storeWith(attempts)} />);
@@ -72,11 +74,25 @@ describe('the hub', () => {
     expect(screen.find('exercises-storage-notice')).toBeNull();
   });
 
+  // TC-536
+  it('the level button does not open the kind of task just done while another kind has one left', () => {
+    if (level1.length < 2) return;
+    // The learner's last exercise was of the kind the pool begins with, but not
+    // its first instance: the first unseen one is of that same kind.
+    const kind = level1[0] ?? '';
+    expect(templateIdOf(nextExerciseId(1, { seenIds: [`${kind}~1`] }) ?? '')).toBe(kind);
+    screen = render(<ExerciseHubBody store={storeWith([solved(kind, 1, 1)])} />);
+    const href = decodeURIComponent(screen.get('exercises-start-1').getAttribute('href') ?? '');
+    expect(templateIdOf(href.replace('/exercises/do/', ''))).not.toBe(kind);
+  });
+
+  // TC-503
   it('says so when the record cannot be saved', () => {
     screen = render(<ExerciseHubBody store={testStore({ storage: false })} />);
     expect(screen.get('exercises-storage-notice').textContent).toContain('保存できません');
   });
 
+  // TC-504
   it('is in one language at a time', () => {
     screen = render(<ExerciseHubBody store={testStore()} />);
     for (const block of screen.container.querySelectorAll('p, h2, h3, a, span')) {
@@ -100,6 +116,7 @@ describe('a level page', () => {
     return { screen, store };
   };
 
+  // TC-505
   it('lists the kinds of task with how many of each are solved, and the weakest with its lesson', () => {
     const [first = 't', second = first] = level1;
     const { screen } = open(
@@ -113,6 +130,7 @@ describe('a level page', () => {
     expect(screen.get('exercises-recent').querySelectorAll('li')).toHaveLength(3);
   });
 
+  // TC-506
   it('"next exercise" is unseen and not from the template done last', () => {
     const [first = 't'] = level1;
     const { screen } = open(storeWith([solved(first, 0, 1)]));
@@ -124,6 +142,7 @@ describe('a level page', () => {
     if (level1.length > 1) expect(templateIdOf(next)).not.toBe(first);
   });
 
+  // TC-507
   it('"measure before studying" starts a cycle and opens its first "before" exercise', async () => {
     const { screen, store } = open();
     await screen.click('exercises-cycle-start');
@@ -133,6 +152,7 @@ describe('a level page', () => {
     expect(screen.find('elsewhere')).not.toBeNull();
   });
 
+  // TC-508
   it('after the "before" set it lists lessons for what was not solved, then offers to measure again', async () => {
     const store = testStore();
     const { screen } = open(store);
@@ -160,6 +180,7 @@ describe('a level page', () => {
 });
 
 describe('the exercise page', () => {
+  // TC-509
   it('opens the exercise named in the address, in the set the address names', () => {
     const store = testStore();
     store.saveCycle({
@@ -180,6 +201,7 @@ describe('the exercise page', () => {
     expect(screen.find('exercise-skip')).not.toBeNull();
   });
 
+  // TC-510
   it('says so, with a way out, when there is no such exercise', () => {
     screen = render(<ExercisePageBody store={testStore()} />, {
       path: '/exercises/do/nothing~0',
@@ -191,6 +213,7 @@ describe('the exercise page', () => {
   });
 });
 
+// TC-511
 describe('placement', () => {
   it('asks one question, runs exercises through the exercise component, and ends with where to start', async () => {
     const store = testStore();
@@ -216,6 +239,7 @@ describe('placement', () => {
   });
 });
 
+// TC-512
 describe('the report', () => {
   it('shows each level, a cycle as before → after per kind of task, and clears only after a yes', async () => {
     const store = testStore();

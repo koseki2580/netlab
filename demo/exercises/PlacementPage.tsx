@@ -209,7 +209,7 @@ export function PlacementPageBody({
           type="button"
           data-testid="placement-stop"
           onClick={() => end(placement)}
-          style={{ ...SECONDARY, minHeight: 36, padding: '4px 10px' }}
+          style={{ ...SECONDARY, padding: '4px 10px' }}
         >
           {t('Stop here', 'ここでやめる')}
         </button>

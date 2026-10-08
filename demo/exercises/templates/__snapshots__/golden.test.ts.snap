@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`exercise templates, generator version 1 > l1-cable-off: seeds 0, 1 and 2 1`] = `
+exports[`exercise templates, generator version 2 > l1-cable-off: seeds 0, 1 and 2 1`] = `
 [
   {
     "brief": "授業のあとで、机を並べ替えました。どの機器からも、教材サーバーにつながりません。どこかでケーブルが抜けたようです。図の中から抜けているケーブルを見つけて、つなぎ直してください。変えたら「たしかめる」を押してください。",
@@ -23,7 +23,7 @@ exports[`exercise templates, generator version 1 > l1-cable-off: seeds 0, 1 and 
 ]
 `;
 
-exports[`exercise templates, generator version 1 > l1-choose-address: seeds 0, 1 and 2 1`] = `
+exports[`exercise templates, generator version 2 > l1-choose-address: seeds 0, 1 and 2 1`] = `
 [
   {
     "brief": "ほかの学校で使っていたポスター用のプリンタをゆずり受けて、教室の近くにつなぎました。ところが、どの機器からも印刷できません。アドレスは前の場所で使っていた「192.168.150.110」のままです。ここでは、アドレスは「192.168.1.」で始まります。ポスター用のプリンタのアドレスを、どれに変えますか。1 つ選んで、どうなるかを予想してから「たしかめる」を押してください。",
@@ -46,7 +46,7 @@ exports[`exercise templates, generator version 1 > l1-choose-address: seeds 0, 1
 ]
 `;
 
-exports[`exercise templates, generator version 1 > l1-host-address: seeds 0, 1 and 2 1`] = `
+exports[`exercise templates, generator version 2 > l1-host-address: seeds 0, 1 and 2 1`] = `
 [
   {
     "brief": "授業の前に、先生のパソコンから教材サーバーの教材が開けなくなっていました。アドレスは、だれかが手で入れたものです。先生のパソコンのある側のアドレスは、どれも「192.168.1.」で始まります。先生のパソコンのアドレスを直してください。変えたら「たしかめる」を押してください。",
@@ -69,7 +69,7 @@ exports[`exercise templates, generator version 1 > l1-host-address: seeds 0, 1 a
 ]
 `;
 
-exports[`exercise templates, generator version 1 > l1-host-blank: seeds 0, 1 and 2 1`] = `
+exports[`exercise templates, generator version 2 > l1-host-blank: seeds 0, 1 and 2 1`] = `
 [
   {
     "brief": "教室の新しいタブレットが配られました。ケーブルはつなぎましたが、まだ教材サーバーが開けません。この機器には、まだアドレスが入っていません。こちら側のアドレスは、どれも「192.168.1.」で始まります。教室の新しいタブレットに、ほかの機器と重ならないアドレスを入れてください。変えたら「たしかめる」を押してください。",
@@ -92,7 +92,7 @@ exports[`exercise templates, generator version 1 > l1-host-blank: seeds 0, 1 and
 ]
 `;
 
-exports[`exercise templates, generator version 1 > l1-prefix-fit: seeds 0, 1 and 2 1`] = `
+exports[`exercise templates, generator version 2 > l1-prefix-fit: seeds 0, 1 and 2 1`] = `
 [
   {
     "brief": "古い一覧表のアドレスを先生のパソコンに入れましたが、教材サーバーが開けません。学校のルータの、パソコンのある側のアドレスは「10.5.0.1/16」です。「/16」は、はじめの 2 つの数字（10.5）が同じ機器どうしが、同じネットワークの仲間だという意味です。先生のパソコンのアドレスを、仲間に入るように直してください。変えたら「たしかめる」を押してください。",
@@ -115,7 +115,7 @@ exports[`exercise templates, generator version 1 > l1-prefix-fit: seeds 0, 1 and
 ]
 `;
 
-exports[`exercise templates, generator version 1 > l1-router-address: seeds 0, 1 and 2 1`] = `
+exports[`exercise templates, generator version 2 > l1-router-address: seeds 0, 1 and 2 1`] = `
 [
   {
     "brief": "休みのあいだに学校のルータを取り替えて、設定を入れ直しました。それから、どの機器からも教材サーバーにつながりません。パソコンと教材サーバーは、さわっていません。ルータは 2 つのネットワークをつなぐ機械で、それぞれの側に 1 つずつアドレスを持ちます。どちらも、その側の機器と同じ始まりでなければなりません。学校のルータの、まちがっているほうのアドレスを直してください。変えたら「たしかめる」を押してください。",
@@ -138,7 +138,7 @@ exports[`exercise templates, generator version 1 > l1-router-address: seeds 0, 1
 ]
 `;
 
-exports[`exercise templates, generator version 1 > l1-which-pc: seeds 0, 1 and 2 1`] = `
+exports[`exercise templates, generator version 2 > l1-which-pc: seeds 0, 1 and 2 1`] = `
 [
   {
     "brief": "新学期にそなえて、3 台のパソコンを設定しました。ところが、教材サーバーが開けないパソコンがあります。3 台のうち 1 台は、アドレスの入れまちがいです。どの 1 台かを見つけて、その 1 台だけを直してください。変えたら「たしかめる」を押してください。",
@@ -161,7 +161,7 @@ exports[`exercise templates, generator version 1 > l1-which-pc: seeds 0, 1 and 2
 ]
 `;
 
-exports[`exercise templates, generator version 1 > l2-acl-permit: seeds 0, 1 and 2 1`] = `
+exports[`exercise templates, generator version 2 > l2-acl-permit: seeds 0, 1 and 2 1`] = `
 [
   {
     "brief": "教材サーバーを開いてよいのは、先生のパソコンだけです。生徒用のパソコンからは開けないようにしてあります。学校のルータは、これを ACL（通してよい通信の一覧）で行っています。一覧のどの行にも当てはまらない通信は、通しません。担任の先生のパソコンは新しく入った機器で、まだ教材サーバーに届きません。一覧を直して、担任の先生のパソコンが通るようにしてください。赤組のパソコンは、これまでどおり通してはいけません。変えたら「たしかめる」を押してください。",
@@ -184,7 +184,7 @@ exports[`exercise templates, generator version 1 > l2-acl-permit: seeds 0, 1 and
 ]
 `;
 
-exports[`exercise templates, generator version 1 > l2-choose-root: seeds 0, 1 and 2 1`] = `
+exports[`exercise templates, generator version 2 > l2-choose-root: seeds 0, 1 and 2 1`] = `
 [
   {
     "brief": "学校の 3 台のスイッチを、輪になるようにつないであります。輪になった配線では、スパニングツリー（STP）が線を 1 本止めて、通信が回り続けないようにします。どの線が止まるかは、中心になるスイッチ（ルートブリッジ。優先度の数字がいちばん小さいスイッチ）で決まります。パソコン教室のスイッチの機器も図書室のスイッチの機器も、一日中教材サーバーを使います。いまはパソコン教室のスイッチが中心で、片方は遠回りをして教材サーバーに届いています。どちらも直接の線を通るようにするには、どの設定にしますか。1 つ選んで、どうなるかを予想してから「たしかめる」を押してください。",
@@ -207,7 +207,7 @@ exports[`exercise templates, generator version 1 > l2-choose-root: seeds 0, 1 an
 ]
 `;
 
-exports[`exercise templates, generator version 1 > l2-choose-static-default: seeds 0, 1 and 2 1`] = `
+exports[`exercise templates, generator version 2 > l2-choose-static-default: seeds 0, 1 and 2 1`] = `
 [
   {
     "brief": "新校舎から外へ出る線は 1 本だけで、その先は本校舎のルータです。本校舎のルータの向こうには教材サーバー・体育館のカメラ・図書サーバーがあり、それぞれ別のネットワークにあります。ネットワークは、これからもふえる予定です。新校舎のパソコンから、その全部に届かなければなりません。ルータは、自分に直接つながっていないネットワークへは、経路（「このネットワークあては、となりのこのルータへ渡す」という行）がなければ送れません。新校舎のルータには、まだ経路が 1 つもありません。どう書きますか。1 つ選んで、どうなるかを予想してから「たしかめる」を押してください。",
@@ -230,7 +230,7 @@ exports[`exercise templates, generator version 1 > l2-choose-static-default: see
 ]
 `;
 
-exports[`exercise templates, generator version 1 > l2-static-missing: seeds 0, 1 and 2 1`] = `
+exports[`exercise templates, generator version 2 > l2-static-missing: seeds 0, 1 and 2 1`] = `
 [
   {
     "brief": "教材サーバーを、本校舎の新しいネットワークに置きました。ところが、新校舎のパソコンから届きません。送ったものは、途中のルータで止まります。ルータが知っているのは、自分に直接つながっているネットワークだけです。それ以外のネットワークへは、経路（「このネットワークあては、となりのこのルータへ渡す」という行）がなければ送れません。教材サーバーのネットワーク（10.20.0.0/24）への経路を持っていないルータを見つけて、経路を足してください。変えたら「たしかめる」を押してください。",
@@ -253,7 +253,7 @@ exports[`exercise templates, generator version 1 > l2-static-missing: seeds 0, 1
 ]
 `;
 
-exports[`exercise templates, generator version 1 > l2-static-nexthop: seeds 0, 1 and 2 1`] = `
+exports[`exercise templates, generator version 2 > l2-static-nexthop: seeds 0, 1 and 2 1`] = `
 [
   {
     "brief": "新校舎と本校舎は、ルータでつながっています。新校舎のパソコンから、本校舎の教材サーバーを使います。経路はだれかが入れてくれたのですが、それでも届きません。ルータが知っているのは、自分に直接つながっているネットワークだけです。それ以外のネットワークへは、経路（「このネットワークあては、となりのこのルータへ渡す」という行）がなければ送れません。教材サーバーのネットワーク（10.20.0.0/24）への経路のうち 1 つは、「次のルータ」がまちがっています。見つけて直してください。変えたら「たしかめる」を押してください。",
@@ -276,7 +276,7 @@ exports[`exercise templates, generator version 1 > l2-static-nexthop: seeds 0, 1
 ]
 `;
 
-exports[`exercise templates, generator version 1 > l2-static-return: seeds 0, 1 and 2 1`] = `
+exports[`exercise templates, generator version 2 > l2-static-return: seeds 0, 1 and 2 1`] = `
 [
   {
     "brief": "新校舎と本校舎は、ルータでつながっています。新校舎のパソコンから、本校舎の教材サーバーを使います。教材がいつまでも開きません。でも、新校舎のパソコンが送ったものは、教材サーバーに届いています。返事のほうが、帰り道でなくなっています。ルータが知っているのは、自分に直接つながっているネットワークだけです。それ以外のネットワークへは、経路（「このネットワークあては、となりのこのルータへ渡す」という行）がなければ送れません。新校舎のパソコンのネットワーク（192.168.1.0/24）への帰り道を知らないルータを見つけて、経路を足してください。変えたら「たしかめる」を押してください。",
@@ -299,7 +299,7 @@ exports[`exercise templates, generator version 1 > l2-static-return: seeds 0, 1 
 ]
 `;
 
-exports[`exercise templates, generator version 1 > l2-stp-root: seeds 0, 1 and 2 1`] = `
+exports[`exercise templates, generator version 2 > l2-stp-root: seeds 0, 1 and 2 1`] = `
 [
   {
     "brief": "ケーブルが 1 本切れても教室が切り離されないように、学校のスイッチを輪につないであります。輪になった配線では、スパニングツリー（STP）が線を 1 本止めて、通信が回り続けないようにします。そのとき中心になるスイッチをルートブリッジといい、優先度の数字がいちばん小さいスイッチが選ばれます。教材サーバーは職員室のスイッチにつながっているので、職員室のスイッチを中心にしたいところです。ところが、いまは別のスイッチが中心になっています。優先度の数字を変えて、職員室のスイッチがルートブリッジになるようにしてください。変えたら「たしかめる」を押してください。",
@@ -322,7 +322,7 @@ exports[`exercise templates, generator version 1 > l2-stp-root: seeds 0, 1 and 2
 ]
 `;
 
-exports[`exercise templates, generator version 1 > l2-trunk-allowed: seeds 0, 1 and 2 1`] = `
+exports[`exercise templates, generator version 2 > l2-trunk-allowed: seeds 0, 1 and 2 1`] = `
 [
   {
     "brief": "学校では、部屋ごとのスイッチを 1 本のケーブルでつないでいます。先生の機器と生徒の機器は同じスイッチを使い、VLAN（スイッチの中を分ける仕切り）で分けてあります。先生が VLAN 10、生徒が VLAN 20 です。スイッチ同士をつなぐ線はトランクといい、複数の VLAN をまとめて運びますが、運ぶのは一覧にある VLAN だけです。校長先生のパソコンから、別のスイッチにある担任の先生のパソコンに届きません。どちらも先生の機器です。トランクの設定を直して、両方の VLAN が通るようにしてください。2 つのグループは分けたままにします。変えたら「たしかめる」を押してください。",
@@ -345,7 +345,7 @@ exports[`exercise templates, generator version 1 > l2-trunk-allowed: seeds 0, 1 
 ]
 `;
 
-exports[`exercise templates, generator version 1 > l2-vlan-access: seeds 0, 1 and 2 1`] = `
+exports[`exercise templates, generator version 2 > l2-vlan-access: seeds 0, 1 and 2 1`] = `
 [
   {
     "brief": "先生の機器と生徒の機器は同じスイッチを使い、VLAN（スイッチの中を分ける仕切り）で分けてあります。先生が VLAN 10、生徒が VLAN 20 です。新学期の席替えで担任の先生のパソコンを移して、スイッチの別の差し込み口につなぎました。それから、同じグループの校長先生のパソコンに届きません。差し込み口の VLAN を直して、担任の先生のパソコンを先生のグループに戻してください。2 つのグループは分けたままにします。変えたら「たしかめる」を押してください。",
@@ -368,7 +368,7 @@ exports[`exercise templates, generator version 1 > l2-vlan-access: seeds 0, 1 an
 ]
 `;
 
-exports[`exercise templates, generator version 1 > l2-vlan-separate: seeds 0, 1 and 2 1`] = `
+exports[`exercise templates, generator version 2 > l2-vlan-separate: seeds 0, 1 and 2 1`] = `
 [
   {
     "brief": "生徒用のパソコンから先生のパソコンの中が見えていました。生徒用のパソコンから先生のパソコンに届いてはいけません。いまは、どの差し込み口も VLAN 10 です（VLAN は、スイッチの中を分ける仕切りです）。そのため、どの機器からもどの機器にも届きます。先生の機器（校長先生のパソコンと担任の先生のパソコン）を VLAN 10、生徒の機器（赤組のパソコンと白組のパソコン）を VLAN 20 に分けてください。同じグループの中では、これまでどおり届くようにします。変えたら「たしかめる」を押してください。",

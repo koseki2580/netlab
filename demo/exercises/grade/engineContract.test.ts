@@ -7,6 +7,9 @@
  * engine behaves today. A test named "(engine quirk)" records behaviour that
  * looks wrong but that exercises must live with; do not "fix" the expectation
  * without re-reading the templates that depend on it.
+ *
+ * One TC per pinned fact, in the test's name: TC-365 to TC-417 in the
+ * specification (REQ-083).
  */
 
 import { describe, expect, it } from 'vitest';
@@ -68,7 +71,7 @@ function staticDiamond(r1Routes: StaticRouteConfig[]): TopologySnapshot {
 }
 
 describe('baseline: the shared shapes work before anything is broken', () => {
-  it('a PC reaches a server across a switch and a router, and its LAN neighbour', async () => {
+  it('a PC reaches a server across a switch and a router, and its LAN neighbour (TC-365)', async () => {
     const far = await ping(lanBehindRouter(), 'pc1', 'srv');
     expect(far.status).toBe('delivered');
     expect(far.forwardNodeIds).toEqual(['pc1', 'sw1', 'r1', 'srv']);
@@ -80,7 +83,7 @@ describe('baseline: the shared shapes work before anything is broken', () => {
     expect(near.forwardNodeIds).toEqual(['pc1', 'sw1', 'pc2']);
   });
 
-  it('prepare adds connected routes for every router interface', () => {
+  it('prepare adds connected routes for every router interface (TC-366)', () => {
     expect(routesOf(prepare(routerChain()), 'r1')).toEqual([
       expect.objectContaining({
         destination: '10.0.1.0/24',
@@ -102,7 +105,7 @@ describe('fact 1: ping reports the reply; the forward leg ends at the first deli
       staticRoutes: [{ destination: '10.0.2.0/24', nextHop: '10.0.12.2' }],
     });
 
-  it('a ping whose request arrives but whose reply has no route is "dropped"', async () => {
+  it('a ping whose request arrives but whose reply has no route is "dropped" (TC-367)', async () => {
     const facts = await ping(forwardOnly(), 'pc', 'srv');
     expect(facts.trace?.status).toBe('dropped');
     expect(facts.status).toBe('dropped');
@@ -110,7 +113,7 @@ describe('fact 1: ping reports the reply; the forward leg ends at the first deli
     expect(facts.drop).toEqual({ nodeId: 'r2', reason: 'no-route', leg: 'reply' });
   });
 
-  it('one merged trace holds both legs; cutting at the first deliver gives the request path', async () => {
+  it('one merged trace holds both legs; cutting at the first deliver gives the request path (TC-368)', async () => {
     const facts = await ping(forwardOnly(), 'pc', 'srv');
     expect(facts.traces).toHaveLength(1);
     expect(facts.trace?.hops.map((hop) => `${hop.event}@${hop.nodeId}`)).toEqual([
@@ -125,7 +128,7 @@ describe('fact 1: ping reports the reply; the forward leg ends at the first deli
     expect(facts.forwardEdgeIds).toEqual(['e-pc', 'e-12', 'e-srv']);
   });
 
-  it('a request that never arrives drops on the request leg, at the router without a route', async () => {
+  it('a request that never arrives drops on the request leg, at the router without a route (TC-369)', async () => {
     const facts = await ping(routerChain(), 'pc', 'srv');
     expect(facts.requestDelivered).toBe(false);
     expect(facts.drop).toEqual({ nodeId: 'r1', reason: 'no-route', leg: 'request' });
@@ -134,13 +137,13 @@ describe('fact 1: ping reports the reply; the forward leg ends at the first deli
 });
 
 describe('fact 2: NAT is observable only with transport ports', () => {
-  it('a ping through inside/outside interfaces is delivered and carries no natTranslation', async () => {
+  it('a ping through inside/outside interfaces is delivered and carries no natTranslation (TC-370)', async () => {
     const facts = await ping(natLan(), 'pc1', 'srv');
     expect(facts.status).toBe('delivered');
     expect(facts.natTranslations).toEqual([]);
   });
 
-  it('the SYN of a TCP connect is translated at the NAT router: the exact natTranslation shape', async () => {
+  it('the SYN of a TCP connect is translated at the NAT router: the exact natTranslation shape (TC-371)', async () => {
     const facts = await tcp(natLan(), 'pc1', 'srv');
     expect(facts.natTranslations).toEqual([
       {
@@ -160,7 +163,7 @@ describe('fact 2: NAT is observable only with transport ports', () => {
     expect(facts.trace?.status).toBe('delivered');
   });
 
-  it('a TCP handshake through NAT fails at the SYN-ACK with no-nat-entry (engine quirk)', async () => {
+  it('a TCP handshake through NAT fails at the SYN-ACK with no-nat-entry (engine quirk) (TC-372)', async () => {
     // The server answers to the client's inside address, not the translated
     // one, so the NAT router finds no entry for the reply. "Translated" must
     // therefore be judged on the SYN alone, never on handshake success.
@@ -177,7 +180,7 @@ describe('fact 2: NAT is observable only with transport ports', () => {
     expect(facts.drop).toEqual({ nodeId: 'r1', reason: 'no-nat-entry', leg: 'reply' });
   });
 
-  it('without NAT a TCP connect succeeds with three traces: SYN, SYN-ACK, ACK', async () => {
+  it('without NAT a TCP connect succeeds with three traces: SYN, SYN-ACK, ACK (TC-373)', async () => {
     const facts = await tcp(lanBehindRouter(), 'pc1', 'srv');
     expect(facts.status).toBe('delivered');
     expect(facts.traces.map((trace) => trace.status)).toEqual([
@@ -200,7 +203,7 @@ describe('fact 3: an ACL denies whatever no rule permits', () => {
   const withLanAcl = (inboundAcl: AclRule[]) =>
     withInterface(lanBehindRouter(), 'r1', 'lan', { inboundAcl });
 
-  it('no matching rule: dropped at the router with acl-deny and matchedRule null', async () => {
+  it('no matching rule: dropped at the router with acl-deny and matchedRule null (TC-374)', async () => {
     const facts = await ping(withLanAcl([webOnly]), 'pc1', 'srv');
     expect(facts.drop).toEqual({ nodeId: 'r1', reason: 'acl-deny', leg: 'request' });
     expect(facts.aclMatches).toEqual([
@@ -216,7 +219,7 @@ describe('fact 3: an ACL denies whatever no rule permits', () => {
     ]);
   });
 
-  it('a matching permit lets the port through and names the rule; another port is denied', async () => {
+  it('a matching permit lets the port through and names the rule; another port is denied (TC-375)', async () => {
     const allowed = await tcp(withLanAcl([webOnly]), 'pc1', 'srv', 80);
     expect(allowed.status).toBe('delivered');
     expect(allowed.aclMatches[0]).toMatchObject({ action: 'permit', matchedRule: { id: 'web' } });
@@ -225,7 +228,7 @@ describe('fact 3: an ACL denies whatever no rule permits', () => {
     expect(refused.drop).toEqual({ nodeId: 'r1', reason: 'acl-deny', leg: 'request' });
   });
 
-  it('an explicit deny names its rule', async () => {
+  it('an explicit deny names its rule (TC-376)', async () => {
     const facts = await ping(
       withLanAcl([
         { id: 'no-ping', priority: 5, action: 'deny', protocol: 'icmp' },
@@ -238,7 +241,7 @@ describe('fact 3: an ACL denies whatever no rule permits', () => {
     expect(facts.aclMatches[0]).toMatchObject({ action: 'deny', matchedRule: { id: 'no-ping' } });
   });
 
-  it('an EMPTY inboundAcl denies everything; only an absent one filters nothing', async () => {
+  it('an EMPTY inboundAcl denies everything; only an absent one filters nothing (TC-377)', async () => {
     const empty = await ping(withLanAcl([]), 'pc1', 'srv');
     expect(empty.drop).toEqual({ nodeId: 'r1', reason: 'acl-deny', leg: 'request' });
     expect(empty.aclMatches[0]).toMatchObject({ matchedRule: null, action: 'deny' });
@@ -248,7 +251,7 @@ describe('fact 3: an ACL denies whatever no rule permits', () => {
     expect(absent.aclMatches).toEqual([]);
   });
 
-  it('an outboundAcl drops at the same router, reported with direction outbound', async () => {
+  it('an outboundAcl drops at the same router, reported with direction outbound (TC-378)', async () => {
     const facts = await ping(
       withInterface(lanBehindRouter(), 'r1', 'wan', {
         outboundAcl: [{ id: 'no-ping', priority: 5, action: 'deny', protocol: 'icmp' }],
@@ -260,7 +263,7 @@ describe('fact 3: an ACL denies whatever no rule permits', () => {
     expect(facts.aclMatches[0]).toMatchObject({ direction: 'outbound', interfaceId: 'wan' });
   });
 
-  it('an ACL filters replies too, and statefulFirewall does not let them back in', async () => {
+  it('an ACL filters replies too, and statefulFirewall does not let them back in (TC-379)', async () => {
     const denyWanIn = withInterface(lanBehindRouter(), 'r1', 'wan', {
       inboundAcl: [{ id: 'deny-all', priority: 1, action: 'deny', protocol: 'any' }],
     });
@@ -274,7 +277,7 @@ describe('fact 3: an ACL denies whatever no rule permits', () => {
 });
 
 describe('fact 4: spanning tree and a link that is down', () => {
-  it('healthy triangle: one port blocks and frames go round the other way', async () => {
+  it('healthy triangle: one port blocks and frames go round the other way (TC-380)', async () => {
     expect(stpRootNodeId(prepare(switchTriangle()))).toBe('swa');
     expect(roles(switchTriangle())['swc:to-swb']).toBe('BLOCKED');
     const facts = await ping(switchTriangle(), 'hb', 'hc');
@@ -282,11 +285,11 @@ describe('fact 4: spanning tree and a link that is down', () => {
     expect(facts.forwardNodeIds).toEqual(['hb', 'swb', 'swa', 'swc', 'hc']);
   });
 
-  it('computeStp ignores edge.state "down": the roles do not change', () => {
+  it('computeStp ignores edge.state "down": the roles do not change (TC-381)', () => {
     expect(roles(withLinkState(switchTriangle(), 'e-ab', 'down'))).toEqual(roles(switchTriangle()));
   });
 
-  it('with a down link in the loop the still-blocked port strands a switch', async () => {
+  it('with a down link in the loop the still-blocked port strands a switch (TC-382)', async () => {
     const down = withLinkState(switchTriangle(), 'e-ab', 'down');
     const facts = await ping(down, 'ha', 'hb');
     expect(facts.status).toBe('dropped');
@@ -295,7 +298,7 @@ describe('fact 4: spanning tree and a link that is down', () => {
     expect(facts.drop).toEqual({ nodeId: 'hc', reason: 'no-route', leg: 'request' });
   });
 
-  it('a frame still crosses the down switch link from its target end (engine quirk)', async () => {
+  it('a frame still crosses the down switch link from its target end (engine quirk) (TC-383)', async () => {
     // e-ab is swa -> swb. swa will not send over it, but swb does.
     const down = withLinkState(switchTriangle(), 'e-ab', 'down');
     const facts = await ping(down, 'hb', 'ha');
@@ -305,7 +308,7 @@ describe('fact 4: spanning tree and a link that is down', () => {
     expect(facts.drop).toEqual({ nodeId: 'hc', reason: 'no-route', leg: 'reply' });
   });
 
-  it('stpConfig.disabledPortIds is the working way to take a switch link out: STP re-converges', async () => {
+  it('stpConfig.disabledPortIds is the working way to take a switch link out: STP re-converges (TC-384)', async () => {
     const shut = withNodeData(switchTriangle(), 'swa', {
       stpConfig: { priority: 4096, disabledPortIds: ['to-swb'] },
     });
@@ -320,13 +323,13 @@ describe('fact 4: spanning tree and a link that is down', () => {
     expect(facts.forwardNodeIds).toEqual(['ha', 'swa', 'swc', 'swb', 'hb']);
   });
 
-  it('a down host cable drops at the host itself with no-route', async () => {
+  it('a down host cable drops at the host itself with no-route (TC-385)', async () => {
     const facts = await ping(withLinkState(lanBehindRouter(), 'e-pc1', 'down'), 'pc1', 'srv');
     expect(facts.drop).toEqual({ nodeId: 'pc1', reason: 'no-route', leg: 'request' });
     expect(facts.forwardNodeIds).toEqual(['pc1']);
   });
 
-  it('a down switch uplink is reported by a bystander host, not by the switch', async () => {
+  it('a down switch uplink is reported by a bystander host, not by the switch (TC-386)', async () => {
     const facts = await ping(withLinkState(lanBehindRouter(), 'e-up', 'down'), 'pc1', 'srv');
     expect(facts.drop).toEqual({ nodeId: 'pc2', reason: 'no-route', leg: 'request' });
   });
@@ -335,19 +338,19 @@ describe('fact 4: spanning tree and a link that is down', () => {
 describe('fact 5: hosts with a bad address', () => {
   const wrongSubnet = () => withNodeData(lanBehindRouter(), 'pc1', { ip: '172.16.5.5' });
 
-  it('wrong-subnet host to a same-LAN peer: the request arrives, the reply does not', async () => {
+  it('wrong-subnet host to a same-LAN peer: the request arrives, the reply does not (TC-387)', async () => {
     const facts = await ping(wrongSubnet(), 'pc1', 'pc2');
     expect(facts.requestDelivered).toBe(true);
     expect(facts.status).toBe('dropped');
     expect(facts.drop).toEqual({ nodeId: 'r1', reason: 'no-route', leg: 'reply' });
   });
 
-  it('a same-LAN peer cannot reach the wrong-subnet host: no-route at the router', async () => {
+  it('a same-LAN peer cannot reach the wrong-subnet host: no-route at the router (TC-388)', async () => {
     const facts = await ping(wrongSubnet(), 'pc2', 'pc1');
     expect(facts.drop).toEqual({ nodeId: 'r1', reason: 'no-route', leg: 'request' });
   });
 
-  it('wrong-subnet host across a router: not delivered, and the drop is at a bystander', async () => {
+  it('wrong-subnet host across a router: not delivered, and the drop is at a bystander (TC-389)', async () => {
     const out = await ping(wrongSubnet(), 'pc1', 'srv');
     expect(out.requestDelivered).toBe(false);
     expect(out.drop).toEqual({ nodeId: 'pc2', reason: 'no-route', leg: 'request' });
@@ -356,7 +359,7 @@ describe('fact 5: hosts with a bad address', () => {
     expect(back.drop).toEqual({ nodeId: 'r1', reason: 'no-route', leg: 'request' });
   });
 
-  it('a router interface on the wrong network strands its LAN the same way', async () => {
+  it('a router interface on the wrong network strands its LAN the same way (TC-390)', async () => {
     const facts = await ping(
       withInterface(lanBehindRouter(), 'r1', 'lan', { ipAddress: '192.168.9.1' }),
       'pc1',
@@ -365,7 +368,7 @@ describe('fact 5: hosts with a bad address', () => {
     expect(facts.drop).toEqual({ nodeId: 'pc2', reason: 'no-route', leg: 'request' });
   });
 
-  it('a host with no address: the engine throws invariant/no-ip; runProbe reports no-address', async () => {
+  it('a host with no address: the engine throws invariant/no-ip; runProbe reports no-address (TC-391)', async () => {
     const blank = lanBehindRouter();
     blank.nodes[0] = host('pc1', null);
     const prepared = prepare(blank);
@@ -400,7 +403,7 @@ describe('fact 5: hosts with a bad address', () => {
     );
   });
 
-  it('two hosts with one address: the second host loses its replies and takes the first one’s', async () => {
+  it('two hosts with one address: the second host loses its replies and takes the first one’s (TC-392)', async () => {
     const duplicate = withNodeData(lanBehindRouter(), 'pc2', { ip: '192.168.1.10' });
     // Traffic to the shared address is dropped at pc2, whichever host was meant.
     for (const to of ['pc1', 'pc2']) {
@@ -413,7 +416,7 @@ describe('fact 5: hosts with a bad address', () => {
     expect(first.drop).toEqual({ nodeId: 'pc2', reason: 'no-route', leg: 'reply' });
   });
 
-  it('a host that takes the gateway address breaks only itself (routing-loop on its reply)', async () => {
+  it('a host that takes the gateway address breaks only itself (routing-loop on its reply) (TC-393)', async () => {
     const thief = withNodeData(lanBehindRouter(), 'pc2', { ip: '192.168.1.1' });
     expect((await ping(thief, 'pc1', 'srv')).status).toBe('delivered');
     const facts = await ping(thief, 'pc2', 'srv');
@@ -425,7 +428,7 @@ describe('fact 6: OSPF cost', () => {
   const routeTo = (topology: TopologySnapshot, destination: string) =>
     routesOf(prepare(topology), 'r1').find((route) => route.destination === destination);
 
-  it('several areas entries with one areaId are tolerated; equal costs give one route with two next hops', async () => {
+  it('several areas entries with one areaId are tolerated; equal costs give one route with two next hops (TC-394)', async () => {
     expect(routeTo(ospfDiamond(), DIAMOND_NETS.right)).toMatchObject({
       nextHop: '10.0.12.2',
       protocol: 'ospf',
@@ -438,7 +441,7 @@ describe('fact 6: OSPF cost', () => {
     expect(facts.forwardNodeIds).toEqual(['pc', 'r1', 'r2', 'r4', 'srv']);
   });
 
-  it('the cost of a link is the cost of the areas entry whose networks holds that network', async () => {
+  it('the cost of a link is the cost of the areas entry whose networks holds that network (TC-395)', async () => {
     const raised = withOspfCost(ospfDiamond(), 'r1', DIAMOND_NETS.top1, 50);
     const route = routeTo(raised, DIAMOND_NETS.right);
     expect(route).toMatchObject({ nextHop: '10.0.13.2', metric: 3 });
@@ -450,14 +453,14 @@ describe('fact 6: OSPF cost', () => {
     expect(facts.forwardEdgeIds).toEqual(['e-pc', 'e-13', 'e-34', 'e-srv']);
   });
 
-  it('a cost is outbound only: the reply still comes back over the cheap side of r4', async () => {
+  it('a cost is outbound only: the reply still comes back over the cheap side of r4 (TC-396)', async () => {
     const raised = withOspfCost(ospfDiamond(), 'r1', DIAMOND_NETS.top1, 50);
     const facts = await ping(raised, 'pc', 'srv');
     const reply = facts.trace?.hops.slice(facts.forwardNodeIds.length).map((hop) => hop.nodeId);
     expect(reply).toEqual(['srv', 'r4', 'r2', 'r1', 'pc']);
   });
 
-  it('raising the other side keeps the path on r2', async () => {
+  it('raising the other side keeps the path on r2 (TC-397)', async () => {
     const raised = withOspfCost(ospfDiamond(), 'r1', DIAMOND_NETS.bottom1, 50);
     expect((await ping(raised, 'pc', 'srv')).forwardNodeIds).toEqual([
       'pc',
@@ -468,7 +471,7 @@ describe('fact 6: OSPF cost', () => {
     ]);
   });
 
-  it('one entry listing several networks gives all of them its cost', () => {
+  it('one entry listing several networks gives all of them its cost (TC-398)', () => {
     const single = withNodeData(ospfDiamond(), 'r1', {
       ospfConfig: {
         routerId: '1.1.1.1',
@@ -484,7 +487,7 @@ describe('fact 6: OSPF cost', () => {
     expect(routeTo(single, DIAMOND_NETS.right)).toMatchObject({ metric: 52 });
   });
 
-  it('OSPF routes around a down link', async () => {
+  it('OSPF routes around a down link (TC-399)', async () => {
     const down = withLinkState(ospfDiamond(), 'e-12', 'down');
     const facts = await ping(down, 'pc', 'srv');
     expect(facts.status).toBe('delivered');
@@ -495,7 +498,7 @@ describe('fact 6: OSPF cost', () => {
 describe('fact 7: an engine keeps state between probes; a fresh engine per probe does not', () => {
   const natPort = (facts: ProbeFacts) => facts.natTranslations[0]?.postSrcPort;
 
-  it('one engine: the second connection gets the next NAT port and the table grows', async () => {
+  it('one engine: the second connection gets the next NAT port and the table grows (TC-400)', async () => {
     const engine = new MainThreadEngine(prepare(natLan()), new HookEngine());
     const first = await engine.tcpConnect('pc1', 'srv', 49152, 80);
     const second = await engine.tcpConnect('pc2', 'srv', 49152, 80);
@@ -508,7 +511,7 @@ describe('fact 7: an engine keeps state between probes; a fresh engine per probe
     expect(engine.getState().traces).toEqual([]);
   });
 
-  it('fresh engines: each probe sees port 1024, in either order', async () => {
+  it('fresh engines: each probe sees port 1024, in either order (TC-401)', async () => {
     const prepared = prepare(natLan());
     const a = { via: 'tcp', from: 'pc1', to: 'srv', dstPort: 80 } as const;
     const b = { via: 'tcp', from: 'pc2', to: 'srv', dstPort: 80 } as const;
@@ -521,7 +524,7 @@ describe('fact 7: an engine keeps state between probes; a fresh engine per probe
     );
   });
 
-  it('probing does not change the prepared topology', async () => {
+  it('probing does not change the prepared topology (TC-402)', async () => {
     const prepared = prepare(natLan());
     const before = JSON.stringify([prepared.nodes, prepared.edges, [...prepared.routeTables]]);
     await runProbe(prepared, { via: 'tcp', from: 'pc1', to: 'srv', dstPort: 80 });
@@ -538,7 +541,7 @@ describe('fact 8: static routes', () => {
   const viaR2 = { destination: DIAMOND_NETS.right, nextHop: '10.0.12.2' };
   const viaR3 = { destination: DIAMOND_NETS.right, nextHop: '10.0.13.2' };
 
-  it('of two static routes to one prefix only the lower metric is installed', async () => {
+  it('of two static routes to one prefix only the lower metric is installed (TC-403)', async () => {
     const topology = staticDiamond([
       { ...viaR3, metric: 10 },
       { ...viaR2, metric: 1 },
@@ -567,7 +570,7 @@ describe('fact 8: static routes', () => {
     ]);
   });
 
-  it('equal metrics become one route with equalCostNextHops', () => {
+  it('equal metrics become one route with equalCostNextHops (TC-404)', () => {
     expect(statics(staticDiamond([viaR3, viaR2]))).toEqual([
       expect.objectContaining({
         nextHop: '10.0.12.2',
@@ -577,7 +580,7 @@ describe('fact 8: static routes', () => {
     ]);
   });
 
-  it('a floating static does NOT take over when the preferred link is down: no-route', async () => {
+  it('a floating static does NOT take over when the preferred link is down: no-route (TC-405)', async () => {
     const down = withLinkState(
       staticDiamond([
         { ...viaR3, metric: 10 },
@@ -592,7 +595,7 @@ describe('fact 8: static routes', () => {
     expect(facts.drop).toEqual({ nodeId: 'r1', reason: 'no-route', leg: 'request' });
   });
 
-  it('a backup through a LESS SPECIFIC prefix does take over when the preferred link is down', async () => {
+  it('a backup through a LESS SPECIFIC prefix does take over when the preferred link is down (TC-406)', async () => {
     const topology = staticDiamond([viaR2, { destination: '0.0.0.0/0', nextHop: '10.0.13.2' }]);
     expect((await ping(topology, 'pc', 'srv')).forwardNodeIds).toEqual([
       'pc',
@@ -609,7 +612,7 @@ describe('fact 8: static routes', () => {
     expect(decision?.winner).toMatchObject({ destination: '0.0.0.0/0', selectedByFailover: true });
   });
 
-  it('a router does not fail over for a link that is down further along', async () => {
+  it('a router does not fail over for a link that is down further along (TC-407)', async () => {
     const facts = await ping(
       withLinkState(
         staticDiamond([viaR2, { destination: '0.0.0.0/0', nextHop: '10.0.13.2' }]),
@@ -622,7 +625,7 @@ describe('fact 8: static routes', () => {
     expect(facts.drop).toEqual({ nodeId: 'r2', reason: 'no-route', leg: 'request' });
   });
 
-  it('a default route 0.0.0.0/0 works as a static route', async () => {
+  it('a default route 0.0.0.0/0 works as a static route (TC-408)', async () => {
     const facts = await ping(
       staticDiamond([{ destination: '0.0.0.0/0', nextHop: '10.0.12.2' }]),
       'pc',
@@ -632,7 +635,7 @@ describe('fact 8: static routes', () => {
     expect(facts.forwardNodeIds).toEqual(['pc', 'r1', 'r2', 'r4', 'srv']);
   });
 
-  it('a static route beats OSPF for the same prefix: only the static one is in the table', async () => {
+  it('a static route beats OSPF for the same prefix: only the static one is in the table (TC-409)', async () => {
     const ospfPrefersR3 = withOspfCost(ospfDiamond(), 'r1', DIAMOND_NETS.top1, 50);
     const mixed = withNodeData(ospfPrefersR3, 'r1', { staticRoutes: [viaR2] });
     expect(
@@ -649,7 +652,7 @@ describe('fact 8: static routes', () => {
     ]);
   });
 
-  it('a next hop that is on no connected network is no-route at that router', async () => {
+  it('a next hop that is on no connected network is no-route at that router (TC-410)', async () => {
     const facts = await ping(
       staticDiamond([{ destination: DIAMOND_NETS.right, nextHop: '10.9.9.9' }]),
       'pc',
@@ -660,14 +663,14 @@ describe('fact 8: static routes', () => {
 });
 
 describe('extra pins: VLANs', () => {
-  it('same VLAN on one switch is delivered; another VLAN drops at the switch with no-egress-in-vlan', async () => {
+  it('same VLAN on one switch is delivered; another VLAN drops at the switch with no-egress-in-vlan (TC-411)', async () => {
     expect((await ping(vlanSwitch(), 'a1', 'a2')).status).toBe('delivered');
     const facts = await ping(vlanSwitch(), 'a1', 'b1');
     expect(facts.drop).toEqual({ nodeId: 'sw1', reason: 'no-egress-in-vlan', leg: 'request' });
     expect(facts.forwardNodeIds).toEqual(['a1', 'sw1']);
   });
 
-  it('a trunk carries the VLANs it allows, and the far switch keeps them apart', async () => {
+  it('a trunk carries the VLANs it allows, and the far switch keeps them apart (TC-412)', async () => {
     expect((await ping(trunkedSwitches(), 'a1', 'a2')).forwardNodeIds).toEqual([
       'a1',
       'sw1',
@@ -682,7 +685,7 @@ describe('extra pins: VLANs', () => {
     });
   });
 
-  it('a trunk that omits a VLAN drops that VLAN at the near switch and still carries the other', async () => {
+  it('a trunk that omits a VLAN drops that VLAN at the near switch and still carries the other (TC-413)', async () => {
     const onlyTen = trunkedSwitches([10]);
     expect((await ping(onlyTen, 'b1', 'b2')).drop).toEqual({
       nodeId: 'sw1',
@@ -694,7 +697,7 @@ describe('extra pins: VLANs', () => {
 });
 
 describe('extra pins: a down trunk with no loop', () => {
-  it('drops in both directions at the near switch, reported as no-egress-in-vlan', async () => {
+  it('drops in both directions at the near switch, reported as no-egress-in-vlan (TC-414)', async () => {
     const down = withLinkState(trunkedSwitches(), 'e-trunk', 'down');
     expect((await ping(down, 'a1', 'a2')).drop).toEqual({
       nodeId: 'sw1',
@@ -710,7 +713,7 @@ describe('extra pins: a down trunk with no loop', () => {
 });
 
 describe('extra pins: reading spanning tree from the prepared topology', () => {
-  it('stpRoot is a bridge id; the root node id and a port role are read through prepare.ts', () => {
+  it('stpRoot is a bridge id; the root node id and a port role are read through prepare.ts (TC-415)', () => {
     const prepared = prepare(switchTriangle());
     expect(prepared.stpRoot).toMatchObject({ priority: 4096 });
     expect(stpRootNodeId(prepared)).toBe('swa');
@@ -726,11 +729,11 @@ describe('extra pins: reading spanning tree from the prepared topology', () => {
     expect(stpPort(prepared, 'swa', 'missing')).toBeNull();
   });
 
-  it('lowering a priority moves the root', () => {
+  it('lowering a priority moves the root (TC-416)', () => {
     expect(stpRootNodeId(prepare(switchTriangle({ swc: 0 })))).toBe('swc');
   });
 
-  it('a topology with no switches has no root and no port states', () => {
+  it('a topology with no switches has no root and no port states (TC-417)', () => {
     const prepared = prepare(routerChain());
     expect(prepared.stpRoot).toBeNull();
     expect(stpRootNodeId(prepared)).toBeNull();

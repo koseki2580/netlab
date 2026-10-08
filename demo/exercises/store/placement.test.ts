@@ -30,6 +30,7 @@ function run(hasSetAnAddress: boolean, results: readonly boolean[]) {
   return { state, levels };
 }
 
+// TC-460
 describe('startPlacement', () => {
   it('starts at level 1 for a learner who has never set an address', () => {
     expect(nextStep(startPlacement(false), pool)?.level).toBe(1);
@@ -40,6 +41,7 @@ describe('startPlacement', () => {
   });
 });
 
+// TC-461
 describe('nextStep', () => {
   it('offers the pool entries of the level', () => {
     const step = nextStep(startPlacement(false), pool);
@@ -66,6 +68,7 @@ describe('nextStep', () => {
   });
 });
 
+// TC-462
 describe('recordPlacementResult', () => {
   it('moves up after both exercises of a level are solved', () => {
     expect(run(false, [true, true, true]).levels).toEqual([1, 1, 2]);
@@ -117,6 +120,7 @@ describe('recordPlacementResult', () => {
   });
 });
 
+// TC-463
 describe('every sequence of results', () => {
   /** The result by the rule as stated, worked out without the state machine. */
   function expected(state: PlacementState): number {

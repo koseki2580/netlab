@@ -47,18 +47,28 @@ function GoalMark({ mark }: { mark: Mark }) {
 export function ExerciseBrief({
   exercise,
   results,
+  compact = false,
 }: {
   exercise: Exercise;
   /** The latest results that still describe the settings on screen; null before the first Check. */
   results: readonly CheckResult[] | null;
+  /** A phone: tighter lines, so the diagram still fits under the brief. */
+  compact?: boolean;
 }) {
   const locale = useGalleryLocale();
   const t = useT();
   return (
-    <section data-testid="exercise-brief" style={{ display: 'grid', gap: 8 }}>
-      <h2 style={{ margin: 0, fontSize: 20, lineHeight: 1.4 }}>{exercise.title[locale]}</h2>
-      <p style={{ margin: 0, fontSize: 16, lineHeight: 1.8 }}>{exercise.brief[locale]}</p>
-      <ul aria-label={t('Goals', '目標')} style={LIST}>
+    <section data-testid="exercise-brief" style={{ display: 'grid', gap: compact ? 6 : 8 }}>
+      <h2 style={{ margin: 0, fontSize: compact ? 18 : 20, lineHeight: 1.4 }}>
+        {exercise.title[locale]}
+      </h2>
+      <p style={{ margin: 0, fontSize: compact ? 15 : 16, lineHeight: compact ? 1.6 : 1.8 }}>
+        {exercise.brief[locale]}
+      </p>
+      <ul
+        aria-label={t('Goals', '目標')}
+        style={compact ? { ...LIST, gap: 4, fontSize: 15, lineHeight: 1.5 } : LIST}
+      >
         {exercise.checks.map((check) => {
           const result = results?.find((entry) => entry.checkId === check.id);
           const mark: Mark = !result ? 'neutral' : result.passed ? 'done' : 'not-yet';

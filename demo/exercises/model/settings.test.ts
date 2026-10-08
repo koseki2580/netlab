@@ -155,6 +155,7 @@ const CASES: readonly {
   },
 ];
 
+// TC-436
 describe.each(CASES)('$name', ({ start, change, undo }) => {
   const allowed: SettingRef[] = [change];
 
@@ -188,6 +189,7 @@ describe.each(CASES)('$name', ({ start, change, undo }) => {
   });
 });
 
+// TC-437
 describe('what applyChanges writes', () => {
   it('an empty ACL rule list deletes the property (an empty array would deny everything)', () => {
     const filtered = withInterface(lanBehindRouter(), 'r1', 'lan', { inboundAcl: [denyPing] });
@@ -293,6 +295,7 @@ describe('what applyChanges writes', () => {
   });
 });
 
+// TC-438
 describe('targets that do not exist', () => {
   const MISSING: readonly SettingChange[] = [
     { kind: 'host-ip', nodeId: 'nobody', ip: '10.0.0.1' },
@@ -327,6 +330,7 @@ describe('targets that do not exist', () => {
   });
 });
 
+// TC-439
 describe('diffSettings compares values, not representations', () => {
   it('the order of allowed VLANs and of static routes has no meaning', () => {
     const trunk: SettingRef = { kind: 'port-vlan', nodeId: 'sw1', portId: 't' };
@@ -384,6 +388,7 @@ describe('diffSettings compares values, not representations', () => {
   });
 });
 
+// TC-440
 describe('differsOutside: states a SettingChange cannot express are never hidden', () => {
   const acl: SettingRef = { kind: 'iface-acl', nodeId: 'r1', ifaceId: 'lan', direction: 'inbound' };
   const edge: SettingRef = { kind: 'link-state', edgeId: 'e-up' };

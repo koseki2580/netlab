@@ -16,6 +16,7 @@ export interface DiagramReplay {
 const REPLAY_STEP_MS = 700;
 
 const SCOPE = '[data-exercise-diagram]';
+const NODE = '[data-testid="topology-node"]';
 
 /**
  * Plays the grader's own trace on the canvas. Nothing is sent again: the trace
@@ -67,9 +68,15 @@ export function ExerciseDiagram({
   const css = [
     // The library's 14px dot is hard to follow on a phone.
     `${SCOPE} [data-testid="canvas-packet"]{width:20px !important;height:20px !important;margin:-3px 0 0 -3px;}`,
+    // The library draws a device's name on one 60px line, and a name such as
+    // 「教室のパソコン」 ran out of its box. Here a name gets 70px and a second
+    // line; the box gives up the same height in padding, so no device grows and
+    // the cables stay where the layout put them (`templates/shared/labelFit.ts`).
+    `${SCOPE} ${NODE}{padding-top:5px !important;padding-bottom:5px !important;}`,
+    `${SCOPE} ${NODE} > div[style*="font-weight: bold"]{white-space:normal;overflow-wrap:anywhere;line-height:1.25;min-height:2.5em;margin:0 -5px;display:flex;align-items:center;justify-content:center;}`,
     highlightNodeId === null
       ? ''
-      : `${SCOPE} [data-id=${JSON.stringify(highlightNodeId)}] [data-testid="topology-node"]{outline:3px solid var(--netlab-accent-cyan);outline-offset:0;border-radius:8px;}`,
+      : `${SCOPE} [data-id=${JSON.stringify(highlightNodeId)}] ${NODE}{outline:3px solid var(--netlab-accent-cyan);outline-offset:0;border-radius:8px;}`,
   ].join('\n');
   return (
     <div
@@ -84,7 +91,14 @@ export function ExerciseDiagram({
         {/* The main-thread engine: only a replay runs here, and a worker per keystroke would be waste. */}
         <SimulationProvider useMainThread>
           <ReplayDriver replay={replay} />
-          <NetlabCanvas followTopology minimap={false} fitViewPadding={0.2} />
+          {/* A picture, not an editor: devices stay where the exercise put them, and
+              a wheel or a finger over the diagram scrolls the page instead of zooming. */}
+          <NetlabCanvas
+            followTopology
+            minimap={false}
+            fitViewPadding={0.2}
+            interactiveGraph={false}
+          />
         </SimulationProvider>
       </NetlabProvider>
     </div>

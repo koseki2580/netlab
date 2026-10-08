@@ -61,7 +61,12 @@ export function ExerciseHubBody({ store: injected }: { store?: AttemptStore }) {
 
         {EXERCISE_LEVELS.map((level) => {
           const mine = state.attempts.filter((attempt) => attempt.level === level);
-          const nextId = nextExerciseId(level, { seenIds });
+          const last = mine[mine.length - 1];
+          const nextId = nextExerciseId(level, {
+            // Never the kind of task just done, twice in a row (as on the level's own page).
+            ...(last ? { avoidTemplateIds: [last.templateId] } : {}),
+            seenIds,
+          });
           return (
             <section
               key={level}

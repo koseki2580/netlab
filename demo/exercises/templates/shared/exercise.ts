@@ -16,6 +16,7 @@ import type {
   SettingChange,
   SettingRef,
 } from '../../model/types';
+import { portWords, sideWords } from '../../model/names';
 import { drawer, type Draw } from './draw';
 import { L, labelOf, The, type Named } from './text';
 import { GENERATOR_VERSION } from './version';
@@ -89,6 +90,28 @@ export function defineTemplate(
     };
   };
   return { ...meta, generatorVersion: GENERATOR_VERSION, generate };
+}
+
+/**
+ * A switch port and a router side as the settings form names them, in both
+ * languages, for hints: 「差し込み口 p1（レジ につながる）」, never a bare `p1`.
+ */
+export function formNames(topology: TopologySnapshot, names: Readonly<Record<string, Named>>) {
+  const peer = (nodeId: string, handleId: string): Localised | null => {
+    const edge = topology.edges.find(
+      (candidate) =>
+        (candidate.source === nodeId && candidate.sourceHandle === handleId) ||
+        (candidate.target === nodeId && candidate.targetHandle === handleId),
+    );
+    if (!edge) return null;
+    const otherId = edge.source === nodeId ? edge.target : edge.source;
+    const name = names[otherId];
+    return name ? labelOf(name) : L(otherId, otherId);
+  };
+  return {
+    port: (nodeId: string, portId: string) => portWords(portId, peer(nodeId, portId)),
+    side: (nodeId: string, ifaceId: string) => sideWords(ifaceId, peer(nodeId, ifaceId)),
+  };
 }
 
 /** The setting a change writes. */

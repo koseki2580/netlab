@@ -8,6 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import { GENERATOR_VERSION, TEMPLATES } from './index';
 
+// TC-478
 describe(`exercise templates, generator version ${GENERATOR_VERSION}`, () => {
   it.each(TEMPLATES.map((template) => [template.id, template] as const))(
     '%s: seeds 0, 1 and 2',

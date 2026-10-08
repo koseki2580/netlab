@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useViewport } from '../../../src/utils/useViewport';
-import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../../components/LessonPanel';
+import { LessonCanvas, LessonPanel, LessonSplit } from '../../components/LessonPanel';
 import { useGalleryLocale, useT } from '../../localeContext';
 import { gradeExercise } from '../grade/gradeExercise';
 import { applyChanges, diffSettings, readSetting } from '../model/settings';
@@ -41,6 +41,9 @@ export interface ExerciseRunnerProps {
 }
 
 const NO_CHANGES: readonly SettingChange[] = [];
+
+/** The least height the diagram keeps on a phone: below this its devices cannot be told apart. */
+const NARROW_DIAGRAM_MIN_HEIGHT = 150;
 
 const STICKY: CSSProperties = {
   position: 'sticky',
@@ -102,8 +105,11 @@ export function ExerciseRunner({
   const [predicted, setPredicted] = useState<Predicted | null>(null);
   const [designRun, setDesignRun] = useState<DesignRun | null>(null);
   const [needsChoice, setNeedsChoice] = useState(false);
+  /** Counts the presses of Check that could not run, so each one brings the reason into view. */
+  const [refusals, setRefusals] = useState(0);
 
   const resultRef = useRef<HTMLDivElement>(null);
+  const needsChoiceRef = useRef<HTMLParagraphElement>(null);
   const diagramRef = useRef<HTMLDivElement>(null);
   // A ref, not an effect's local: StrictMode runs the effect twice, and one
   // visit to an exercise must be one attempt.
@@ -136,9 +142,16 @@ export function ExerciseRunner({
     resultRef.current?.focus({ preventScroll: true });
   }, [graded]);
 
+  // Check was pressed with nothing to run: on a phone the reason is below the
+  // first screen, and a button that seems to do nothing is the worst answer.
+  useEffect(() => {
+    if (refusals > 0) needsChoiceRef.current?.scrollIntoView?.({ block: 'nearest' });
+  }, [refusals]);
+
   const check = async () => {
     if (isDesign && (!option || !predicted)) {
       setNeedsChoice(true);
+      setRefusals((count) => count + 1);
       return;
     }
     setNeedsChoice(false);
@@ -206,7 +219,19 @@ export function ExerciseRunner({
       })();
 
   const brief = (
-    <ExerciseBrief exercise={exercise} results={graded && !stale ? graded.grade.results : null} />
+    <ExerciseBrief
+      exercise={exercise}
+      results={graded && !stale ? graded.grade.results : null}
+      compact={isNarrow}
+    />
+  );
+  const diagram = (
+    <ExerciseDiagram
+      topology={topology}
+      replay={replay}
+      highlightNodeId={focused ? settingNodeId(focused) : null}
+      label={t('The network of this exercise', 'この問題のネットワーク')}
+    />
   );
   const showCheck = !passed;
   const showSkip = onNext !== undefined && context !== 'practice' && !passed && !revealed;
@@ -261,20 +286,38 @@ export function ExerciseRunner({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <LessonSplit style={{ flex: 1, minHeight: 0 }}>
-        <LessonCanvas
-          canvas={
-            <div ref={diagramRef} style={{ position: 'absolute', inset: 0, scrollMarginTop: 8 }}>
-              <ExerciseDiagram
-                topology={topology}
-                replay={replay}
-                highlightNodeId={focused ? settingNodeId(focused) : null}
-                label={t('The network of this exercise', 'この問題のネットワーク')}
-              />
+        {isNarrow ? (
+          // On a phone the brief and the diagram share the first screen: the
+          // diagram takes what the brief leaves above the Check bar, so a
+          // learner sees the task, the network and the button without
+          // scrolling. A brief too long for that pushes the diagram just
+          // below itself, at its smallest height.
+          <div
+            data-testid="exercise-first-screen"
+            style={{ display: 'flex', flexDirection: 'column', flexShrink: 0, minHeight: '100%' }}
+          >
+            <div style={{ padding: '12px 16px', color: 'var(--netlab-text-primary)' }}>{brief}</div>
+            <div
+              ref={diagramRef}
+              style={{
+                flex: 1,
+                minHeight: NARROW_DIAGRAM_MIN_HEIGHT,
+                position: 'relative',
+                scrollMarginTop: 8,
+              }}
+            >
+              {diagram}
             </div>
-          }
-        >
-          {isNarrow ? <LessonNote style={{ padding: 16 }}>{brief}</LessonNote> : null}
-        </LessonCanvas>
+          </div>
+        ) : (
+          <LessonCanvas
+            canvas={
+              <div ref={diagramRef} style={{ position: 'absolute', inset: 0, scrollMarginTop: 8 }}>
+                {diagram}
+              </div>
+            }
+          />
+        )}
         <LessonPanel
           defaultWidth={460}
           minWidth={340}
@@ -304,9 +347,10 @@ export function ExerciseRunner({
             <div style={{ display: 'grid', gap: 10 }}>
               {needsChoice ? (
                 <p
+                  ref={needsChoiceRef}
                   data-testid="exercise-design-needed"
                   role="alert"
-                  style={{ ...CARD, margin: 0, padding: 12 }}
+                  style={{ ...CARD, margin: 0, padding: 12, scrollMarginBottom: 80 }}
                 >
                   <span aria-hidden="true">☞ </span>
                   {option

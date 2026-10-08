@@ -2,8 +2,8 @@
 /**
  * The grader, on real topologies and the real engine. Each check kind has a
  * topology where it passes and one for every way it can fail; the three
- * worked examples of the plan run end to end at the bottom. TC ids are
- * allocated by the spec lane (see the plan); none exist yet.
+ * worked examples of the plan run end to end at the bottom. TC-418 to TC-432
+ * in the specification.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -68,6 +68,7 @@ const natLan = () =>
     nat: 'outside',
   });
 
+// TC-418
 describe('reach', () => {
   const check = (probe: Probe): ExerciseCheck => ({ id: 'c', kind: 'reach', probe });
 
@@ -115,6 +116,7 @@ describe('reach', () => {
   });
 });
 
+// TC-419
 describe('must-not-reach', () => {
   const check = (probe: Probe, because: 'vlan' | 'acl' | 'any'): ExerciseCheck => ({
     id: 'c',
@@ -174,6 +176,7 @@ describe('must-not-reach', () => {
   );
 });
 
+// TC-420
 describe('path-via and path-avoids', () => {
   const via = (target: { nodeId?: string; edgeId?: string }): ExerciseCheck => ({
     id: 'c',
@@ -226,6 +229,7 @@ describe('path-via and path-avoids', () => {
   });
 });
 
+// TC-421
 describe('route-present', () => {
   const check = (
     nodeId: string,
@@ -277,6 +281,7 @@ describe('route-present', () => {
   });
 });
 
+// TC-422
 describe('stp-root and stp-port-role', () => {
   it('stp-root passes for the root and names the real root otherwise', async () => {
     const labelled = withNodeData(switchTriangle(), 'swa', { label: '受付スイッチ' });
@@ -318,6 +323,7 @@ describe('stp-root and stp-port-role', () => {
   });
 });
 
+// TC-423
 describe('acl-drop', () => {
   const check = (nodeId: string, probe: Probe = ping('pc1', 'srv')): ExerciseCheck => ({
     id: 'c',
@@ -351,6 +357,7 @@ describe('acl-drop', () => {
   });
 });
 
+// TC-424
 describe('nat-translated', () => {
   const check = (nodeId: string, probe: Probe = tcp('pc1', 'srv')): ExerciseCheck => ({
     id: 'c',
@@ -403,6 +410,7 @@ describe('max-changes and the allow-list', () => {
   const codes = async (current: TopologySnapshot, list = allowed) =>
     (await gradeExercise({ start, allowed: list, checks }, current)).results.map((r) => r.code);
 
+  // TC-425
   it('counts the allowed settings that differ from the start; undoing one does not count', async () => {
     expect(await codes(start)).toEqual(['ok', 'ok']);
     expect(await codes(applyChanges(start, [move('pc1', '192.168.1.50')]))).toEqual(['ok', 'ok']);
@@ -414,6 +422,7 @@ describe('max-changes and the allow-list', () => {
     expect(await codes(undone)).toEqual(['ok', 'ok']);
   });
 
+  // TC-425
   it('fails with too-many-changes above the limit, and says how many', async () => {
     const two = applyChanges(start, [move('pc1', '192.168.1.50'), move('pc2', '192.168.1.51')]);
     const grade = await gradeExercise({ start, allowed, checks }, two);
@@ -422,6 +431,7 @@ describe('max-changes and the allow-list', () => {
     expect(grade.results[1]?.message.en).toMatch(/2 settings.*allows 1/);
   });
 
+  // TC-426
   it('a change outside the allow-list fails every check with config-invalid', async () => {
     const outside = applyChanges(start, [move('pc2', '192.168.1.51')]);
     const grade = await gradeExercise(
@@ -445,6 +455,7 @@ describe('max-changes and the allow-list', () => {
     ]);
   });
 
+  // TC-426
   it('so are a pulled cable, a removed device and a hand-written deny-all ACL', async () => {
     const invalid = ['config-invalid', 'config-invalid'];
     expect(await codes(withLinkState(start, 'e-pc2', 'down'))).toEqual(invalid);
@@ -455,6 +466,7 @@ describe('max-changes and the allow-list', () => {
   });
 });
 
+// TC-427
 describe('never rejects', () => {
   const everyKind: ExerciseCheck[] = [
     { id: 'reach', kind: 'reach', probe: ping('ghost', 'nobody') },
@@ -517,6 +529,7 @@ describe('never rejects', () => {
     expect(new Set(grade.results.map((r) => r.code))).toEqual(new Set(['config-invalid']));
   });
 
+  // TC-428
   it('an exercise with no checks is not a pass', async () => {
     const topology = lanBehindRouter();
     expect(await gradeExercise({ start: topology, allowed: [], checks: [] }, topology)).toEqual({
@@ -525,6 +538,7 @@ describe('never rejects', () => {
     });
   });
 
+  // TC-429
   it('grading does not change the topologies it is given', async () => {
     const start = natLan();
     const before = JSON.stringify(start);
@@ -535,6 +549,7 @@ describe('never rejects', () => {
 
 // --- The three worked examples of the plan ----------------------------------
 
+// TC-430
 describe('worked example 1: the till with the wrong address (l1-host-address)', () => {
   // レジ (192.168.2.50) — SW — router (192.168.1.1 | 203.0.113.1) — 在庫サーバ; a second PC shares the LAN.
   const start = withNodeData(
@@ -603,6 +618,7 @@ describe('worked example 1: the till with the wrong address (l1-host-address)', 
   });
 });
 
+// TC-431
 describe('worked example 2: splitting one switch into two VLANs (l2-vlan-separate)', () => {
   // Sales a1, a2 and accounting b1, b2 on one switch, all in VLAN 10 at the start.
   const start = withPort(withPort(vlanSwitch(), 'sw1', 'p3', { accessVlan: 10 }), 'sw1', 'p4', {
@@ -685,6 +701,7 @@ describe('worked example 2: splitting one switch into two VLANs (l2-vlan-separat
   });
 });
 
+// TC-432
 describe('worked example 3: which design takes the fast path (l3-choose-rip-ospf)', () => {
   // Head office pc — r1 ══ r2 — srv branch: one slow direct link (e-slow), or
   // two fast links over r3. The fast path is the one through r3.
@@ -798,6 +815,7 @@ describe('worked example 3: which design takes the fast path (l3-choose-rip-ospf
   });
 });
 
+// TC-427
 it('a switch with no ports does not stop a grade', async () => {
   const topology = snapshot(
     [host('a', '10.0.0.1'), host('b', '10.0.0.2'), switchNode('sw', [])],

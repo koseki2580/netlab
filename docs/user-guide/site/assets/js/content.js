@@ -18,7 +18,8 @@ window.USER_GUIDE_CONTENT = {
         title: "はじめに",
         html: `<p>netlab は、パケットが実際にどう流れるかを目で見て学ぶための道具です。機器を並べた図の上でパケットを送り、どの機器を通り、どこで届き、どこで落ちたかを1ホップずつ追えます。</p>
                <div class="callout">はじめての方は、まず<strong>入門コース</strong>から始めてください。ギャラリー最上部の「入門コースを始める」から開けます。何を押せばよいか迷わずに進める一本道です。</div>
-               <p>52 本のレッスンは、その続きです。コースを終えてから、気になった話題を選んでください。</p>`
+               <p>52 本のレッスンは、その続きです。コースを終えてから、気になった話題を選んでください。</p>
+               <p>読むだけでなく手を動かして確かめたくなったら、<a href="#hands-on-exercises">実習問題</a>へ進んでください。設定を変えてネットワークを直す問題です。</p>`
       },
       {
         id: "course",
@@ -59,9 +60,46 @@ window.USER_GUIDE_CONTENT = {
                  <li>すべての問題に解説が付きます。</li>
                  <li>間違えた問題には「復習する：…」のリンクが出て、それを教えているレッスンへ直接行けます。</li>
                  <li>「もう一度受ける」で、回答を消してやり直せます。</li>
+                 <li>「このレベルを実習問題で練習する →」で、同じレベルの<a href="#hands-on-exercises">実習問題</a>へ行けます。</li>
                </ul>
                <div class="callout">合格すると、ギャラリーの進み具合に記録されます。レベルを切り替えると、回答は引き継がれず最初からになります。</div>
                <p>アドレスで直接開くこともできます。レベル 1 は <code>#/course/exam</code>、レベル 2〜4 は <code>#/course/exam/2</code> のように末尾へ番号を付けます。</p>`
+      },
+      {
+        id: "hands-on-exercises",
+        title: "実習問題",
+        html: `<p>実習問題は、うまく動いていない小さなネットワークを、自分で設定を変えて直す練習です。ギャラリーの「実習問題」のカード、または入門コースの最後から開けます。アドレスは <code>#/exercises</code> です。</p>
+               <div class="callout"><a href="#final-test">修了テスト</a>は、選択肢から答えを選びます。実習問題には選択肢の正解がありません。「たしかめる」を押すと、あなたが設定したネットワークをシミュレータが実際に動かし、目標どおりに動けば正解です。解き方の一例と違う設定でも、動けば正解になります。</div>
+               <h3>1 問の進め方</h3>
+               <ol>
+                 <li><strong>問題文を読む</strong> — 何が起きているかと、「目標」（たとえば「レジから在庫サーバーに届く」）が並んでいます。図には、その問題のネットワークが出ています。</li>
+                 <li><strong>設定を変える</strong> — 「変えられるところ」に出ているカードだけが変えられます。図は見るためのもので、機器や線を動かすことはできません。入力の途中で形が正しくないときは、欄の下に書き方が出て、直すまでは前の値のままになります。</li>
+                 <li><strong>「たしかめる」を押す</strong> — 目標ごとに「✓ できた」か「△ まだ」が付きます。「まだ」の目標には、なぜまだなのかが、ことばで出ます。行きで止まったのか、返事が戻らなかったのか、原因によってはどの機器で止まったのかがわかります。</li>
+                 <li><strong>図で見る</strong> — 「▶ 図で見てみる」を押すと、判定に使ったパケットそのものが図の上を動きます。</li>
+                 <li>設定を変えると、前の結果には「この結果のあとで設定を変えました」と出ます。もう一度「たしかめる」を押してください。「最初の状態に戻す」で、はじめからやり直せます。</li>
+               </ol>
+               <p>「どれを選ぶか」を問う問題もあります。そのときは、1 つ選び、どうなるか（届く・届かない・遠回りになる）を予想してから「たしかめる」を押します。選んだものが実際に動き、予想が合っていたかと、その理由が出ます。</p>
+               <h3>困ったとき</h3>
+               <ul>
+                 <li><strong>ヒントを見る</strong> — ヒントは 3 つあり、1 つずつ開きます。1 つでも開くと、その問題は「ヒントを使って解けた」として記録され、「解けた」数には入りません。開く前に、そのことが表示されます。</li>
+                 <li><strong>答えを見る</strong> — 確認のあと、「解き方の一例」が文章で出ます。「この設定を入れる（そのあと「たしかめる」を押す）」で設定に反映できますが、答えを見た問題は「解けた」には数えません。</li>
+               </ul>
+               <h3>レベルと「達成」</h3>
+               <p>レベルは 4 つです。レベル 1 は「アドレスと線」、レベル 2 は「スイッチと、かんたんな経路」を扱い、どちらも 100 問以上あります。同じ種類の問題でも、場所・アドレス・こわれている機器が毎回変わります。</p>
+               <p><strong>レベルは、直近 10 問のうち 7 問を、3 種類以上にわたってヒントなしで解けると達成です。</strong>取り組んだ問題が 5 問より少ないあいだは、まだ判定しません。各レベルの下に、いまの数と、あと何が必要かが 1 文で出ます。</p>
+               <div class="callout">レベル 3 とレベル 4 は、まだ用意できていません。レベル 4 には「このレベルの問題は、まだありません。」と出ます。レベル 3 には見本の問題が 1 種類あるだけで、達成にはなりません。</div>
+               <h3>どのレベルから始めるか</h3>
+               <p>迷ったら「レベル判定をする」を押してください。質問が 1 つあり、そのあと多くても 8 問を解きます。テストではなく、始める場所を見つけるためのものです。わからない問題は「わからないので次へ」で飛ばせます。</p>
+               <h3>学ぶ前と、学んだあとを比べる</h3>
+               <p>レベルのページ（「このレベルの内容を見る」）で「学ぶ前に測る」を押すと、4 問を解きます。解けなかった問題を教えているレッスンが並ぶので、読んでから「もう一度測る」を押すと、同じ種類の別の 4 問が出ます。結果は、問題の種類ごとに「学ぶ前 → 学んだあと」で見られます。問題数が少ないので、目安として見てください。</p>
+               <h3>記録について</h3>
+               <ul>
+                 <li>開いただけの問題、うまくいかなかった「たしかめる」、ヒント、答えを見たことも、すべて記録されます。</li>
+                 <li>記録は、<strong>いま使っているブラウザの中だけ</strong>に保存されます。どこにも送られません。</li>
+                 <li>「自分の記録を見る・保存する」から、「ファイルに保存する」「コピーする」で持ち出せます。「記録を消す…」は、確認のあとですべて消します。</li>
+                 <li>ブラウザに保存できないときは、その旨が表示されます。問題はすべて解けますが、記録はページを閉じるまでしか残りません。</li>
+               </ul>
+               <p>スマートフォンでも使えます。「たしかめる」のボタンは、いつも画面の下に出ています。</p>`
       },
       {
         id: "gallery",
@@ -259,7 +297,8 @@ window.USER_GUIDE_CONTENT = {
         title: "Getting started",
         html: `<p>netlab is for seeing how a packet actually travels. You send one across a diagram of machines and follow it hop by hop: which devices it passed through, where it arrived, and where it stopped.</p>
                <div class="callout">If this is your first visit, start with the <strong>six-step course</strong>, offered at the top of the gallery. It is a single path with one thing to do at each step, so there is nothing to choose before you begin.</div>
-               <p>The fifty-two lessons are what comes after. Finish the course, then pick whatever you were curious about.</p>`
+               <p>The fifty-two lessons are what comes after. Finish the course, then pick whatever you were curious about.</p>
+               <p>When you want to try things with your own hands rather than read, go on to the <a href="#hands-on-exercises">hands-on exercises</a>, where you fix a network by changing its settings.</p>`
       },
       {
         id: "course",
@@ -300,9 +339,46 @@ window.USER_GUIDE_CONTENT = {
                  <li>Every question shows its explanation.</li>
                  <li>Each question you missed shows a “Review: …” link that takes you straight to the lesson that teaches it.</li>
                  <li>“Try again” clears your answers so you can start over.</li>
+                 <li>“Practise this level hands-on →” takes you to the <a href="#hands-on-exercises">hands-on exercises</a> of the same level.</li>
                </ul>
                <div class="callout">A pass is recorded in your progress in the gallery. Switching level starts that level fresh; answers do not carry over.</div>
                <p>You can also open a level by address: level 1 is <code>#/course/exam</code>, and levels 2 to 4 add the number, as in <code>#/course/exam/2</code>.</p>`
+      },
+      {
+        id: "hands-on-exercises",
+        title: "Hands-on exercises",
+        html: `<p>A hands-on exercise gives you a small network that does not work yet, and you fix it by changing its settings. Open them from the “Hands-on exercises” card in the gallery, or from the end of the six-step course. The address is <code>#/exercises</code>.</p>
+               <div class="callout">In <a href="#final-test">the final test</a> you pick an answer from a list. An exercise has no listed answer: when you press “Check”, the simulator runs the network as you have set it, and if it does what the goals ask, you have solved it. Settings that differ from the example solution are right too, as long as they work.</div>
+               <h3>Doing one exercise</h3>
+               <ol>
+                 <li><strong>Read the brief</strong> — it says what is going on, and lists the goals (for example “The till reaches the stock server”). The diagram shows the network of this exercise.</li>
+                 <li><strong>Change a setting</strong> — only the cards under “What you can change” can be changed. Devices and cables on the diagram cannot be moved. While what you type is not complete, a note under the field says how to write it, and the previous value stays until you do.</li>
+                 <li><strong>Press “Check”</strong> — each goal is marked “✓ Done” or “△ Not yet”. A goal that is not met says why in words: whether the packet stopped on the way there or the answer did not come back, and for most causes at which device.</li>
+                 <li><strong>See it on the diagram</strong> — “▶ Watch it on the diagram” replays, on the diagram, the very packet the result was judged on.</li>
+                 <li>After you change a setting, the old result says “You have changed a setting since this result”. Press “Check” again. “Back to how it started” undoes everything.</li>
+               </ol>
+               <p>Some exercises ask you to choose a design instead. Pick one, say what you expect to happen (it arrives, it does not arrive, or it arrives the long way round), then press “Check”. Your choice is run, and you are told whether you expected right, and why.</p>
+               <h3>If you are stuck</h3>
+               <ul>
+                 <li><strong>Show a hint</strong> — there are three hints, opened one at a time. Once you open one, the exercise is recorded as “solved with help” and is not counted among those you solved. You are told this before you open it.</li>
+                 <li><strong>Show me the answer</strong> — after you confirm, “One way to solve it” is written out in sentences. “Put these settings in, then press Check” fills them in for you, but an exercise whose answer you have seen is not counted as solved.</li>
+               </ul>
+               <h3>Levels, and what “cleared” means</h3>
+               <p>There are four levels. Level 1 is about addresses and cables, level 2 about switches and simple routes; each has more than 100 exercises. Exercises of the same kind differ every time in the place, the addresses and the device at fault.</p>
+               <p><strong>A level is cleared when you solved 7 of your last 10 exercises without a hint, across at least 3 kinds of exercise.</strong> Until you have tried 5, the level is not judged. One sentence under each level says where you stand and what is still needed.</p>
+               <div class="callout">Levels 3 and 4 are not available yet. Level 4 says “No exercises at this level yet.” Level 3 has a single sample kind of exercise and cannot be cleared.</div>
+               <h3>Where to start</h3>
+               <p>If you are not sure, press “Find my level”. It asks one question and then gives you at most 8 exercises. It is not a test; it only finds where to start. “I cannot do this one: next” skips an exercise.</p>
+               <h3>Before and after studying</h3>
+               <p>On a level’s page (“What this level covers”), “Measure before studying” gives you 4 exercises. The lessons that teach what you did not solve are then listed; read them, press “Measure again”, and you get 4 other exercises of the same kinds. The result is shown per kind of exercise as before → after. The sets are small, so read it as a rough comparison.</p>
+               <h3>Your record</h3>
+               <ul>
+                 <li>Everything is recorded: an exercise you only opened, a Check that did not pass, hints, and answers you looked at.</li>
+                 <li>The record is kept <strong>only in the browser you are using</strong>. It is not sent anywhere.</li>
+                 <li>“My record, and saving it” lets you take it away with “Download as a file” or “Copy”. “Clear the record…” removes everything, after asking.</li>
+                 <li>If the browser cannot save, the page says so. You can still do every exercise, but the record lasts only until you close the page.</li>
+               </ul>
+               <p>The exercises work on a phone too: the “Check” button is always at the bottom of the screen.</p>`
       },
       {
         id: "gallery",

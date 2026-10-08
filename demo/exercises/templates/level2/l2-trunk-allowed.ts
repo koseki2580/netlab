@@ -7,7 +7,7 @@
  */
 
 import { buildVlan, withPort } from '../shared/build';
-import { defineTemplate, goals } from '../shared/exercise';
+import { defineTemplate, formNames, goals } from '../shared/exercise';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
 import { L, PRESS_CHECK, say, the, The } from '../shared/text';
@@ -55,6 +55,7 @@ export const l2TrunkAllowed = defineTemplate(
     if (!near || !far || !keptNear || !keptFar) throw new Error('a trunk shape lacks a pair');
     const group = place.groups[cut];
     const [swLeft, swRight] = [name(left.switchId), name(right.switchId)];
+    const form = formNames(topology, net.names);
 
     // --- The brief ---
     const opening = scene(place, {
@@ -119,8 +120,8 @@ export const l2TrunkAllowed = defineTemplate(
           `VLAN は、トランクの両はしの一覧にあるときだけ通ります。${swLeft.ja}と${swRight.ja}のあいだで、VLAN ${vlans[cut]} が抜けています。`,
         ),
         L(
-          `Set the list to ${vlans[0]} and ${vlans[1]} on ${faulty.map((port) => `port ${port.portId} of ${the(name(port.switchId))}`).join(' and ')}.`,
-          `${faulty.map((port) => `${name(port.switchId).ja}の差し込み口 ${port.portId}`).join('と、')}の一覧を「${vlans[0]} と ${vlans[1]}」にします。`,
+          `Set the list to ${vlans[0]} and ${vlans[1]} on ${faulty.map((port) => `${form.port(port.switchId, port.portId).en} of ${the(name(port.switchId))}`).join(' and ')}.`,
+          `${faulty.map((port) => `${name(port.switchId).ja}の「${form.port(port.switchId, port.portId).ja}」`).join('と、')}の一覧を「${vlans[0]} と ${vlans[1]}」にします。`,
         ),
       ],
       lessons: ['/networking/vlan'],

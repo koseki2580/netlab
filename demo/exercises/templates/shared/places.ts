@@ -62,9 +62,9 @@ const HOME: Place = {
   id: 'home',
   name: L('house', '家'),
   pcs: [
-    L('living-room PC', 'リビングのパソコン'),
+    L('lounge PC', 'リビングのパソコン'),
     L('study laptop', '書斎のノートパソコン'),
-    L("children's-room PC", '子ども部屋のパソコン'),
+    L("kids'-room PC", '子ども部屋のパソコン'),
   ],
   newPc: L('new tablet', '新しいタブレット'),
   server: L('photo server', '写真用のサーバー'),
@@ -72,7 +72,7 @@ const HOME: Place = {
   server3: L('TV recorder', 'テレビの録画機'),
   printer: L('colour printer', 'カラープリンタ'),
   router: L('home router', '家のルータ'),
-  lanSwitch: L('living-room switch', 'リビングのスイッチ'),
+  lanSwitch: L('lounge switch', 'リビングのスイッチ'),
   backSwitch: L('upstairs switch', '2 階のスイッチ'),
   farSwitch: L('cupboard switch', '物置のスイッチ'),
   spareSwitch: L('old switch', '古いスイッチ'),
@@ -80,9 +80,9 @@ const HOME: Place = {
     {
       name: L('family', '家族'),
       members: [
-        L('living-room PC', 'リビングのパソコン'),
+        L('lounge PC', 'リビングのパソコン'),
         L('study laptop', '書斎のノートパソコン'),
-        L("children's-room PC", '子ども部屋のパソコン'),
+        L("kids'-room PC", '子ども部屋のパソコン'),
       ],
     },
     {
@@ -95,7 +95,7 @@ const HOME: Place = {
     },
   ],
   switches: [
-    L('living-room switch', 'リビングのスイッチ'),
+    L('lounge switch', 'リビングのスイッチ'),
     L('upstairs switch', '2 階のスイッチ'),
     L('study switch', '書斎のスイッチ'),
     L('garage switch', 'ガレージのスイッチ'),
@@ -104,7 +104,7 @@ const HOME: Place = {
     near: {
       name: L('main house', '母屋'),
       router: L('main-house router', '母屋のルータ'),
-      device: L('living-room PC', 'リビングのパソコン'),
+      device: L('lounge PC', 'リビングのパソコン'),
     },
     mid: { router: L('garden router', '庭のルータ') },
     far: {
@@ -186,7 +186,7 @@ const SHOP: Place = {
     },
     far3: {
       name: L('head office', '本部'),
-      router: L('head-office router', '本部のルータ'),
+      router: L('HQ router', '本部のルータ'),
       device: L('sales server', '売上サーバー'),
     },
   },
@@ -197,64 +197,64 @@ const CLINIC: Place = {
   name: L('clinic', '診療所'),
   pcs: [
     L('reception PC', '受付のパソコン'),
-    L('consulting-room PC', '診察室のパソコン'),
+    L('exam-room PC', '診察室のパソコン'),
     L('billing PC', '会計のパソコン'),
   ],
   newPc: L('new nurse PC', '看護師用の新しいパソコン'),
   server: L('records server', 'カルテサーバー'),
   server2: L('scan image server', 'レントゲン画像のサーバー'),
   server3: L('booking server', '予約サーバー'),
-  printer: L('prescription printer', '処方せんプリンタ'),
+  printer: L('script printer', '処方せんプリンタ'),
   router: L('clinic router', '診療所のルータ'),
   lanSwitch: L('reception switch', '受付のスイッチ'),
-  backSwitch: L('consulting-room switch', '診察室のスイッチ'),
-  farSwitch: L('server-shelf switch', 'サーバー棚のスイッチ'),
+  backSwitch: L('exam-room switch', '診察室のスイッチ'),
+  farSwitch: L('rack switch', 'サーバー棚のスイッチ'),
   spareSwitch: L('spare switch', '予備のスイッチ'),
   groups: [
     {
       name: L('medical staff', '診療'),
       members: [
-        L('consulting room 1 PC', '診察室 1 のパソコン'),
-        L('consulting room 2 PC', '診察室 2 のパソコン'),
+        L('exam room 1 PC', '診察室 1 のパソコン'),
+        L('exam room 2 PC', '診察室 2 のパソコン'),
         L("nurses' PC", '看護師のパソコン'),
       ],
     },
     {
       name: L('waiting room', '待合室'),
       members: [
-        L('waiting-room tablet', '待合室のタブレット'),
+        L("patients' tablet", '待合室のタブレット'),
         L('check-in machine', '自動受付機'),
-        L('waiting-room screen', '待合室の案内画面'),
+        L("patients' screen", '待合室の案内画面'),
       ],
     },
   ],
   switches: [
     L('reception switch', '受付のスイッチ'),
-    L('consulting-room switch', '診察室のスイッチ'),
+    L('exam-room switch', '診察室のスイッチ'),
     L('test-room switch', '検査室のスイッチ'),
     L('upstairs switch', '2 階のスイッチ'),
   ],
   sites: {
     near: {
       name: L('branch clinic', '分院'),
-      router: L('branch-clinic router', '分院のルータ'),
-      device: L('branch reception PC', '分院の受付パソコン'),
+      router: L('branch router', '分院のルータ'),
+      device: L('branch PC', '分院の受付パソコン'),
     },
     mid: { router: L('relay router', '中継のルータ') },
     far: {
       name: L('main clinic', '本院'),
-      router: L('main-clinic router', '本院のルータ'),
+      router: L('main-site router', '本院のルータ'),
       device: L('records server', 'カルテサーバー'),
     },
     far2: {
-      name: L('test centre', '検査センター'),
-      router: L('test-centre router', '検査センターのルータ'),
-      device: L('test-results server', '検査結果のサーバー'),
+      name: L('lab', '検査センター'),
+      router: L('lab router', '検査センターのルータ'),
+      device: L('lab server', '検査結果のサーバー'),
     },
     far3: {
       name: L('pharmacy', '薬局'),
       router: L('pharmacy router', '薬局のルータ'),
-      device: L('prescription server', '処方せんのサーバー'),
+      device: L('pharmacy server', '処方せんのサーバー'),
     },
   },
 };
@@ -267,8 +267,8 @@ const SCHOOL: Place = {
     L('library PC', '図書室のパソコン'),
     L('classroom PC', '教室のパソコン'),
   ],
-  newPc: L('new classroom tablet', '教室の新しいタブレット'),
-  server: L('teaching-materials server', '教材サーバー'),
+  newPc: L('new tablet', '教室の新しいタブレット'),
+  server: L('materials server', '教材サーバー'),
   server2: L('staff-room printer', '職員室のプリンタ'),
   server3: L('library server', '図書サーバー'),
   printer: L('poster printer', 'ポスター用のプリンタ'),
@@ -281,8 +281,8 @@ const SCHOOL: Place = {
     {
       name: L('teachers', '先生'),
       members: [
-        L("head teacher's PC", '校長先生のパソコン'),
-        L("class teacher's PC", '担任の先生のパソコン'),
+        L("head's PC", '校長先生のパソコン'),
+        L("form tutor's PC", '担任の先生のパソコン'),
         L('school-office PC', '事務室のパソコン'),
       ],
     },
@@ -297,21 +297,21 @@ const SCHOOL: Place = {
   ],
   switches: [
     L('staff-room switch', '職員室のスイッチ'),
-    L('computer-room switch', 'パソコン教室のスイッチ'),
+    L('IT-room switch', 'パソコン教室のスイッチ'),
     L('library switch', '図書室のスイッチ'),
     L('gym switch', '体育館のスイッチ'),
   ],
   sites: {
     near: {
-      name: L('new building', '新校舎'),
-      router: L('new-building router', '新校舎のルータ'),
-      device: L('new-building PC', '新校舎のパソコン'),
+      name: L('new block', '新校舎'),
+      router: L('new-block router', '新校舎のルータ'),
+      device: L('new-block PC', '新校舎のパソコン'),
     },
     mid: { router: L('corridor router', '渡り廊下のルータ') },
     far: {
-      name: L('main building', '本校舎'),
-      router: L('main-building router', '本校舎のルータ'),
-      device: L('teaching-materials server', '教材サーバー'),
+      name: L('main block', '本校舎'),
+      router: L('main-block router', '本校舎のルータ'),
+      device: L('materials server', '教材サーバー'),
     },
     far2: {
       name: L('gym', '体育館'),
@@ -334,7 +334,7 @@ const OFFICE: Place = {
     L('general-affairs PC', '総務のパソコン'),
     L('meeting-room PC', '会議室のパソコン'),
   ],
-  newPc: L("new starter's PC", '新入社員のパソコン'),
+  newPc: L("newcomer's PC", '新入社員のパソコン'),
   server: L('file server', 'ファイルサーバー'),
   server2: L('office printer', '複合機'),
   server3: L('timesheet server', '勤怠サーバー'),
@@ -342,7 +342,7 @@ const OFFICE: Place = {
   router: L('office router', '会社のルータ'),
   lanSwitch: L('3rd-floor switch', '3 階のスイッチ'),
   backSwitch: L('4th-floor switch', '4 階のスイッチ'),
-  farSwitch: L('server-room switch', 'サーバー室のスイッチ'),
+  farSwitch: L('comms-room switch', 'サーバー室のスイッチ'),
   spareSwitch: L('spare switch', '予備のスイッチ'),
   groups: [
     {
@@ -356,7 +356,7 @@ const OFFICE: Place = {
     {
       name: L('accounts', '経理'),
       members: [
-        L("accounts manager's PC", '経理課長のパソコン'),
+        L("accounts head's PC", '経理課長のパソコン'),
         L("accounts clerk's PC", '経理担当のパソコン'),
         L('payroll PC', '給与計算のパソコン'),
       ],
@@ -365,24 +365,24 @@ const OFFICE: Place = {
   switches: [
     L('3rd-floor switch', '3 階のスイッチ'),
     L('4th-floor switch', '4 階のスイッチ'),
-    L('server-room switch', 'サーバー室のスイッチ'),
+    L('comms-room switch', 'サーバー室のスイッチ'),
     L('reception switch', '受付のスイッチ'),
   ],
   sites: {
     near: {
       name: L('branch office', '支社'),
-      router: L('branch-office router', '支社のルータ'),
+      router: L('branch router', '支社のルータ'),
       device: L('branch-office PC', '支社のパソコン'),
     },
     mid: { router: L('relay router', '中継のルータ') },
     far: {
       name: L('head office', '本社'),
-      router: L('head-office router', '本社のルータ'),
+      router: L('HQ router', '本社のルータ'),
       device: L('file server', 'ファイルサーバー'),
     },
     far2: {
-      name: L('data centre', 'データセンター'),
-      router: L('data-centre router', 'データセンターのルータ'),
+      name: L('datacentre', 'データセンター'),
+      router: L('datacentre router', 'データセンターのルータ'),
       device: L('mail server', 'メールサーバー'),
     },
     far3: {

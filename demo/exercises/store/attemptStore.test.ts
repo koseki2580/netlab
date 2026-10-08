@@ -62,12 +62,14 @@ const only = (state: ExerciseStoreState) => {
 const fail = { passed: false, failedCheckIds: ['reach-1'], changedSettings: 1 };
 const pass = { passed: true, failedCheckIds: [], changedSettings: 2 };
 
+// TC-441
 describe('key', () => {
   it('is per learner under the v1 prefix', () => {
     expect(KEY).toBe('netlab-exercises:v1:local-abc123');
   });
 });
 
+// TC-441
 describe('open', () => {
   it('writes an abandoned record at once, so leaving without checking still counts', () => {
     const { store, data } = newStore();
@@ -109,6 +111,7 @@ describe('open', () => {
   });
 });
 
+// TC-442
 describe('recordCheck', () => {
   it('counts failed presses and leaves the attempt abandoned', () => {
     const { store } = newStore();
@@ -181,6 +184,7 @@ describe('recordCheck', () => {
   });
 });
 
+// TC-443
 describe('recordReveal', () => {
   it('marks the attempt as given up', () => {
     const { store } = newStore();
@@ -204,6 +208,7 @@ describe('recordReveal', () => {
   });
 });
 
+// TC-444
 describe('recordHint', () => {
   it('keeps the highest tier opened', () => {
     const { store } = newStore();
@@ -216,6 +221,7 @@ describe('recordHint', () => {
   });
 });
 
+// TC-445
 describe('recordPrediction', () => {
   it('keeps what the learner predicted', () => {
     const { store } = newStore();
@@ -229,6 +235,7 @@ describe('recordPrediction', () => {
   });
 });
 
+// TC-446
 describe('persistence', () => {
   it('round-trips through storage exactly', () => {
     const memory = memoryStorage();
@@ -327,6 +334,7 @@ describe('persistence', () => {
     expect(store.getState()).not.toHaveProperty('extra');
   });
 
+  // TC-447
   it('leaves data from a newer version untouched and runs in memory', () => {
     const raw = JSON.stringify({ version: 2, attempts: [{ shape: 'unknown' }] });
     const { store, data } = newStore(memoryStorage({ [KEY]: raw }));
@@ -348,6 +356,7 @@ describe('persistence', () => {
     ['no learner id', null],
     ['an empty learner id', ''],
     ['a learner id that cannot be a key', 'a b/c'],
+    // TC-448
   ])('runs in memory with %s', (_name, learnerId) => {
     const memory = memoryStorage();
     const store = createAttemptStore({ learnerId, storage: memory.storage, now: clock() });
@@ -359,6 +368,7 @@ describe('persistence', () => {
     expect(memory.data.size).toBe(0);
   });
 
+  // TC-448
   it('runs in memory when there is no storage', () => {
     const store = createAttemptStore({ learnerId: LEARNER, storage: null, now: clock() });
     expect(store.status()).toEqual({ persistence: 'memory', reason: 'unavailable' });
@@ -366,11 +376,13 @@ describe('persistence', () => {
     expect(store.getState().attempts).toHaveLength(1);
   });
 
+  // TC-448
   it('runs in memory without a browser when no storage is given', () => {
     const store = createAttemptStore({ learnerId: LEARNER });
     expect(store.status()).toEqual({ persistence: 'memory', reason: 'unavailable' });
   });
 
+  // TC-448
   it('runs in memory when reading throws, and does not write over what it could not read', () => {
     const memory = memoryStorage({ [KEY]: 'unreadable' });
     memory.faults.read = true;
@@ -382,6 +394,7 @@ describe('persistence', () => {
     expect(memory.data.get(KEY)).toBe('unreadable');
   });
 
+  // TC-448
   it('keeps working when a write throws, and says so', () => {
     const { store, data, faults } = newStore();
     const first = store.open(meta('a', 0), 'practice');
@@ -397,6 +410,7 @@ describe('persistence', () => {
     expect(data.get(KEY)).toBe(stored);
   });
 
+  // TC-448
   it('writes everything once storage accepts writes again', () => {
     const { store, data, faults } = newStore();
     faults.write = true;
@@ -410,6 +424,7 @@ describe('persistence', () => {
   });
 });
 
+// TC-449
 describe('cap', () => {
   it(`keeps the newest ${MAX_ATTEMPTS} attempts`, () => {
     const attempts = Array.from({ length: MAX_ATTEMPTS }, (_, i) =>
@@ -445,6 +460,7 @@ describe('cap', () => {
   });
 });
 
+// TC-450
 describe('subscribe', () => {
   it('tells listeners about every change, with a new state object each time', () => {
     const { store } = newStore();
@@ -487,6 +503,7 @@ describe('subscribe', () => {
   });
 });
 
+// TC-451
 describe('cycles and placement', () => {
   it('adds a cycle and replaces it by id', () => {
     const { store } = newStore();
@@ -507,6 +524,7 @@ describe('cycles and placement', () => {
   });
 });
 
+// TC-452
 describe('export and import', () => {
   function filled() {
     const made = newStore();
@@ -558,6 +576,7 @@ describe('export and import', () => {
   });
 });
 
+// TC-453
 describe('clear', () => {
   it('forgets everything, in memory and in storage', () => {
     const { store, data } = newStore();

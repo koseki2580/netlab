@@ -7,7 +7,7 @@
  */
 
 import { buildLan, LAN_SHAPES } from '../shared/build';
-import { defineTemplate, goals } from '../shared/exercise';
+import { defineTemplate, formNames, goals } from '../shared/exercise';
 import { addressOf, broken, everyoneReaches, starts, startsJa } from '../shared/lan';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan, net24 } from '../shared/plans';
@@ -92,6 +92,7 @@ export const l1RouterAddress = defineTemplate(
     const { reach } = goals(lan.names);
     const right = net.at(plan.gateway);
     const neighbour = side === 'lan' ? 'pc1' : 'srv';
+    const sideForm = formNames(topology, lan.names).side('r1', side);
     return {
       title: L(`Nothing gets past ${the(router)}`, `${router.ja}の先へ届かない`),
       brief,
@@ -116,8 +117,8 @@ export const l1RouterAddress = defineTemplate(
           `${sideWords.ja}のアドレスは、${startsJa(net)}で始まります。ルータのその側のアドレスも同じ始まりにして、ほかの機器が使っているものは避けます。`,
         ),
         L(
-          `Change the router's address on ${sideWords.en} (${side}) to ${right}.`,
-          `${router.ja}の${sideWords.ja}（${side}）のアドレスを「${right}」に変えます。`,
+          `Change the address of ${the(router)} on ${sideForm.en}, which is ${sideWords.en}, to ${right}.`,
+          `${sideWords.ja}にあたる、${router.ja}の「${sideForm.ja}」のアドレスを「${right}」に変えます。`,
         ),
       ],
       lessons: ['/routing/client-server', '/course'],

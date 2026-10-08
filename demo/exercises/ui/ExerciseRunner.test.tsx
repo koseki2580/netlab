@@ -63,6 +63,7 @@ async function check(target: Screen) {
 }
 
 describe('a configure exercise (the till)', () => {
+  // TC-479
   it('opens one attempt and shows the brief with its goals unmarked', () => {
     const { screen, only } = run(DEV_TILL_ID);
     expect(only()).toMatchObject({
@@ -77,6 +78,7 @@ describe('a configure exercise (the till)', () => {
     expect(screen.find('exercise-next')).toBeNull();
   });
 
+  // TC-480
   it('Check at the start names the goal not met, with the reason, and it is not worded as an error', async () => {
     const { screen, only } = run(DEV_TILL_ID);
     await check(screen);
@@ -101,6 +103,7 @@ describe('a configure exercise (the till)', () => {
     });
   });
 
+  // TC-481
   it('a valid address then Check passes: success, what was done, next; recorded as solved', async () => {
     let went = 0;
     const { screen, only } = run(DEV_TILL_ID, { onNext: () => (went += 1) });
@@ -126,6 +129,7 @@ describe('a configure exercise (the till)', () => {
     expect(went).toBe(1);
   });
 
+  // TC-482
   it('reset puts the exercise back to its start', async () => {
     const { screen } = run(DEV_TILL_ID);
     expect(screen.find('exercise-reset')).toBeNull();
@@ -135,6 +139,7 @@ describe('a configure exercise (the till)', () => {
     expect((screen.get(TILL_INPUT) as HTMLInputElement).value).toBe('192.168.2.50');
   });
 
+  // TC-483
   it('hints open one at a time, say what they cost first, and a pass after one is "solved with help"', async () => {
     const { screen, only } = run(DEV_TILL_ID);
     expect(screen.get('exercise-hint-cost').textContent).toContain('ヒントを使って解けた');
@@ -155,6 +160,7 @@ describe('a configure exercise (the till)', () => {
     expect(isSolved(only())).toBe(false);
   });
 
+  // TC-484
   it('give up asks first, shows the answer as sentences, and a pass after it is not counted', async () => {
     const { screen, only } = run(DEV_TILL_ID);
     await screen.click('exercise-giveup');
@@ -175,6 +181,7 @@ describe('a configure exercise (the till)', () => {
     expect(only()).toMatchObject({ revealed: true, outcome: 'gave-up', checkPresses: 0 });
   });
 
+  // TC-485
   it('a result with a trace can be watched on the diagram, until a setting changes', async () => {
     const { screen } = run(DEV_TILL_ID);
     await check(screen);
@@ -184,6 +191,7 @@ describe('a configure exercise (the till)', () => {
     expect(screen.get('diagram-stub').getAttribute('data-replaying')).toBe('no');
   });
 
+  // TC-486
   it('is in one language at a time', async () => {
     const japanese = run(DEV_TILL_ID).screen;
     await check(japanese);
@@ -220,6 +228,7 @@ describe('a configure exercise (the till)', () => {
 });
 
 describe('a choose-a-design exercise', () => {
+  // TC-487
   it('does not run until a design is picked and a prediction made, and says so', async () => {
     const { screen, only } = run(DEV_DESIGN_ID);
     expect(screen.find('exercise-settings')).toBeNull();
@@ -234,6 +243,7 @@ describe('a choose-a-design exercise', () => {
     expect(only().prediction).toBeUndefined();
   });
 
+  // TC-488
   it('records the prediction against what the design did, then passes on the right design', async () => {
     const { screen, only } = run(DEV_DESIGN_ID);
     await screen.click('exercise-option-equal');
@@ -261,6 +271,7 @@ describe('a choose-a-design exercise', () => {
     });
   });
 
+  // TC-489
   it('a detour is told apart from not arriving', async () => {
     const { screen, only } = run(DEV_DESIGN_ID);
     await screen.click('exercise-option-fast-high');

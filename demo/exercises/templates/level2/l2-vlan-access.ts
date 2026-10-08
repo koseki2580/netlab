@@ -8,7 +8,7 @@
  */
 
 import { buildVlan, withPort } from '../shared/build';
-import { defineTemplate, goals } from '../shared/exercise';
+import { defineTemplate, formNames, goals } from '../shared/exercise';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
 import { L, PRESS_CHECK, say, the, The } from '../shared/text';
@@ -49,6 +49,7 @@ export const l2VlanAccess = defineTemplate(
     const dev = name(victim.id);
     const group = place.groups[victim.group];
     const sw = name(victim.switchId);
+    const port = formNames(topology, net.names).port(victim.switchId, victim.portId);
 
     // --- The brief ---
     const opening = scene(place, {
@@ -102,16 +103,16 @@ export const l2VlanAccess = defineTemplate(
       ],
       hints: [
         L(
-          `Look at the VLAN number of each socket on ${the(sw)}, and find the one ${the(dev)} is plugged into (${victim.portId}).`,
-          `${sw.ja}の差し込み口ごとの VLAN 番号を見て、${dev.ja}がつながっている差し込み口（${victim.portId}）を探してください。`,
+          `Look at the VLAN number of each socket on ${the(sw)}, and find the one ${the(dev)} is plugged into: ${port.en}.`,
+          `${sw.ja}の差し込み口ごとの VLAN 番号を見て、${dev.ja}がつながっている「${port.ja}」を探してください。`,
         ),
         L(
           `A switch only passes traffic between sockets with the same VLAN number. The ${group.name.en} devices are in VLAN ${ownVlan}; this socket is in VLAN ${wrongVlan}.`,
           `スイッチは、VLAN 番号が同じ差し込み口どうしでしか通信を運びません。${group.name.ja}は VLAN ${ownVlan} ですが、この差し込み口は VLAN ${wrongVlan} になっています。`,
         ),
         L(
-          `Set socket ${victim.portId} of ${the(sw)} to VLAN ${ownVlan}.`,
-          `${sw.ja}の差し込み口 ${victim.portId} を VLAN ${ownVlan} にします。`,
+          `Set ${port.en} of ${the(sw)} to VLAN ${ownVlan}.`,
+          `${sw.ja}の「${port.ja}」を VLAN ${ownVlan} にします。`,
         ),
       ],
       lessons: ['/networking/vlan'],

@@ -6,7 +6,7 @@
  *
  * Seeds 0 to N-1 (N = `EXERCISE_VERIFY_SEEDS`, 12 by default; 100 verifies every
  * instance a pool can hold), plus seed block B of the study cycle (1000 to 1003).
- * No TC ids yet: the spec lane allocates them (see the plan).
+ * TC-467 to TC-477 in the specification; each part below names its own.
  */
 
 import { readFileSync } from 'node:fs';
@@ -24,7 +24,10 @@ import {
   templateById,
   TEMPLATES,
 } from './index';
+import { portName, sideName } from '../ui/describe';
 import { refOf } from './shared/exercise';
+import { labelFits, labelLines } from './shared/labelFit';
+import { PLACES } from './shared/places';
 
 const SEED_COUNT = Number(process.env.EXERCISE_VERIFY_SEEDS ?? 12);
 const SEEDS = [...Array.from({ length: SEED_COUNT }, (_, seed) => seed), 1000, 1001, 1002, 1003];
@@ -105,7 +108,7 @@ async function problemsOf(exercise: Exercise): Promise<string[]> {
     };
   };
 
-  // --- The simulator decides ---
+  // --- TC-467: the simulator decides ---
   const atStart = await gradeExercise(exercise, start);
   no(!atStart.passed, 'the start state passes');
   no(
@@ -141,7 +144,7 @@ async function problemsOf(exercise: Exercise): Promise<string[]> {
     );
   }
 
-  // --- Options or wrong answers ---
+  // --- TC-468: options (choose-a-design), TC-467: wrong answers ---
   if (exercise.kind === 'choose-design') {
     const options = exercise.options ?? [];
     no(options.length >= 2, 'fewer than two options');
@@ -177,7 +180,7 @@ async function problemsOf(exercise: Exercise): Promise<string[]> {
     }
   }
 
-  // --- Text ---
+  // --- TC-469: text ---
   const texts: [string, Localised | undefined][] = [
     ['title', exercise.title],
     ['brief', exercise.brief],
@@ -233,8 +236,41 @@ async function problemsOf(exercise: Exercise): Promise<string[]> {
       exercise.start.nodes.length,
     'two devices have one name',
   );
+  no(
+    new Set(labels.map((label) => label.en)).size === labels.length,
+    'two devices have one English name',
+  );
+  // TC-476: a name that does not fit its box on the diagram is cut off there.
+  for (const label of labels) {
+    no(labelFits(label.ja), `「${label.ja}」 does not fit a device box on the diagram`);
+    no(labelFits(label.en), `"${label.en}" does not fit a device box on the diagram`);
+  }
 
-  // --- Lessons ---
+  // TC-477: a hint never names a port or a router side by its bare id (`p1`,
+  // `lan`): it uses the words the settings form puts on that setting.
+  for (const locale of ['en', 'ja'] as const) {
+    const named = localiseExercise(exercise, locale).start;
+    const ids: [string, string][] = named.nodes.flatMap((node) => [
+      ...(node.data.ports ?? []).map((port): [string, string] => [
+        port.id,
+        portName(named, node.id, port.id)[locale],
+      ]),
+      ...(node.data.interfaces ?? []).map((side): [string, string] => [
+        side.id,
+        sideName(named, node.id, side.id)[locale],
+      ]),
+    ]);
+    for (const hint of exercise.hints) {
+      // What is left of the hint once every form name is taken out of it.
+      const rest = ids.reduce((text, [, name]) => text.split(name).join(' '), hint.text[locale]);
+      for (const id of new Set(ids.map(([id]) => id))) {
+        const bare = new RegExp(`(^|[^A-Za-z0-9'’-])${id}([^A-Za-z0-9'’-]|$)`);
+        no(!bare.test(rest), `hint ${hint.tier} (${locale}) names "${id}" by its bare id`);
+      }
+    }
+  }
+
+  // --- TC-469: lessons ---
   no(exercise.lessons.length > 0, 'no lesson');
   for (const lesson of exercise.lessons) {
     no(ROUTES.includes(`path="${lesson}"`), `lesson ${lesson} is not a route in demo/main.tsx`);
@@ -252,7 +288,7 @@ describe(`every template, seeds 0 to ${SEED_COUNT - 1} and 1000 to 1003`, () => 
         const exercise = template.generate(seed);
         instances.push(exercise);
 
-        // Determinism and identity.
+        // TC-470: determinism and identity.
         if (JSON.stringify(template.generate(seed)) !== JSON.stringify(exercise)) {
           problems.push(`${exercise.id}: generating twice gives two different exercises`);
         }
@@ -269,7 +305,7 @@ describe(`every template, seeds 0 to ${SEED_COUNT - 1} and 1000 to 1003`, () => 
         problems.push(...(await problemsOf(exercise)));
       }
 
-      // Distinctness: the seed must change the task, not only the numbers.
+      // TC-471: distinctness. The seed must change the task, not only the numbers.
       if (new Set(instances.map((exercise) => exercise.fingerprint)).size < 2) {
         problems.push(`${template.id}: every instance has the same fingerprint`);
       }
@@ -295,7 +331,57 @@ describe(`every template, seeds 0 to ${SEED_COUNT - 1} and 1000 to 1003`, () => 
   );
 });
 
+/** TC-476 — every device name a template can draw, not only the ones these seeds drew. */
+describe('device names', () => {
+  it('a label takes one or two lines of a device box: six kana or ten letters to a line', () => {
+    expect(labelLines('レジ')).toBe(1);
+    expect(labelLines('教室のパソコン')).toBe(2);
+    expect(labelLines('看護師用の新しいパソコン')).toBe(2);
+    expect(labelLines('ポスター印刷用の大きなプリンタ')).toBe(3);
+    // A line does not start with a long-vowel mark: 「ター」 moves down together.
+    expect(labelLines('データセンターのルータ')).toBe(2);
+    expect(labelLines('Till')).toBe(1);
+    expect(labelLines('Living-room PC')).toBe(2);
+    expect(labelLines('Teaching-materials server')).toBe(3);
+    // A word longer than a line cannot be broken anywhere a reader expects.
+    expect(labelFits('Consulting-room PC')).toBe(false);
+    expect(labelFits('Exam-room PC')).toBe(true);
+  });
+
+  it('every device name of every place fits a device box, in both languages', () => {
+    const tooLong: string[] = [];
+    for (const place of PLACES) {
+      const names = [
+        ...place.pcs,
+        place.newPc,
+        place.server,
+        place.server2,
+        place.server3,
+        place.printer,
+        place.router,
+        place.lanSwitch,
+        place.backSwitch,
+        place.farSwitch,
+        place.spareSwitch,
+        ...place.groups.flatMap((group) => group.members),
+        ...place.switches,
+        place.sites.mid.router,
+        ...[place.sites.near, place.sites.far, place.sites.far2, place.sites.far3].flatMap(
+          (site) => [site.router, site.device],
+        ),
+      ];
+      for (const name of names) {
+        const en = `${name.en.charAt(0).toUpperCase()}${name.en.slice(1)}`;
+        if (!labelFits(name.ja)) tooLong.push(`${place.id}: ${name.ja}`);
+        if (!labelFits(en)) tooLong.push(`${place.id}: ${en}`);
+      }
+    }
+    expect([...new Set(tooLong)]).toEqual([]);
+  });
+});
+
 describe('pools', () => {
+  // TC-472
   it.each([1, 2] as const)('level %i: at least 100 ids, unique, all of them generate', (level) => {
     const pool = buildPool(level);
     expect(pool.length).toBeGreaterThanOrEqual(100);
@@ -329,6 +415,7 @@ describe('pools', () => {
     );
   });
 
+  // TC-473
   it.each([3, 4] as const)(
     'level %i has no templates yet: an empty pool, not an error',
     (level) => {
@@ -337,6 +424,7 @@ describe('pools', () => {
     },
   );
 
+  // TC-474
   it('looks an exercise up by id, and refuses ids that are not one', () => {
     expect(exerciseById('l1-host-address~7')).toEqual(generateExercise('l1-host-address', 7));
     expect(exerciseById('l1-host-address~7')?.id).toBe('l1-host-address~7');
@@ -357,6 +445,7 @@ describe('pools', () => {
     expect(templateById('nothing')).toBeUndefined();
   });
 
+  // TC-475
   it('the next exercise is unseen, and not of the template just done while another has one left', () => {
     const pool = buildPool(1);
     const first = nextExerciseId(1, {});

@@ -4,7 +4,7 @@ import type { StaticRouteConfig } from '../../../src/types/routing';
 import { useT } from '../../localeContext';
 import { isAddress, isNetwork, wholeNumber } from './addresses';
 import type { FieldProps } from './fields';
-import { INPUT, MUTED, SECONDARY } from './styles';
+import { INPUT, MUTED, SECONDARY, SELECT } from './styles';
 
 /**
  * The two settings that are lists: a router's hand-written routes and an
@@ -13,7 +13,13 @@ import { INPUT, MUTED, SECONDARY } from './styles';
  * many are not counted yet.
  */
 
-/** `SettingRef` carries no limit for routes; six is more than any exercise needs. */
+/**
+ * How many rows the form takes. This is a limit of the form, not of an
+ * exercise: no exercise needs this many, and the grader accepts any correct
+ * configuration however many rows it has, so `SettingRef` carries no `max`.
+ * A full list says so (`-full`), because a button that just stops working
+ * tells the learner nothing.
+ */
 export const MAX_ROUTES = 6;
 export const MAX_ACL_RULES = 8;
 
@@ -134,6 +140,14 @@ export function StaticRoutesField({ value, onChange, testId, plain }: FieldProps
           {t('+ Add a route', '＋ 経路を足す')}
         </button>
       </div>
+      {rows.length >= MAX_ROUTES ? (
+        <p data-testid={`${testId}-full`} style={{ ...MUTED, margin: 0, fontSize: 14 }}>
+          {t(
+            `This form takes ${MAX_ROUTES} routes at most. Remove one to add another.`,
+            `ここに書ける経路は ${MAX_ROUTES} 行までです。足すには、どれかを消してください。`,
+          )}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -246,7 +260,7 @@ export function AclField({ value, onChange, testId, plain }: FieldProps<'iface-a
                 onChange={(event) =>
                   edit(index, { action: event.target.value === 'deny' ? 'deny' : 'permit' })
                 }
-                style={INPUT}
+                style={SELECT}
               >
                 <option value="permit">{t('Allow', '通す')}</option>
                 <option value="deny">{t('Refuse', '止める')}</option>
@@ -260,7 +274,7 @@ export function AclField({ value, onChange, testId, plain }: FieldProps<'iface-a
                 onChange={(event) =>
                   edit(index, { protocol: event.target.value as AclRule['protocol'] })
                 }
-                style={INPUT}
+                style={SELECT}
               >
                 <option value="any">{t('Anything', 'すべて')}</option>
                 <option value="icmp">{plain ? t('ping (icmp)', 'ping（icmp）') : 'icmp'}</option>
@@ -376,6 +390,14 @@ export function AclField({ value, onChange, testId, plain }: FieldProps<'iface-a
           {t('+ Add a line', '＋ 行を足す')}
         </button>
       </div>
+      {rows.length >= MAX_ACL_RULES ? (
+        <p data-testid={`${testId}-full`} style={{ ...MUTED, margin: 0, fontSize: 14 }}>
+          {t(
+            `This list takes ${MAX_ACL_RULES} lines at most. Remove one to add another.`,
+            `この一覧に書けるのは ${MAX_ACL_RULES} 行までです。足すには、どれかを消してください。`,
+          )}
+        </p>
+      ) : null}
     </div>
   );
 }

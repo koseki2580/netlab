@@ -11,6 +11,7 @@ const passesWith = async (ip: string) =>
   (await gradeExercise(till, applyChanges(till.start, [{ kind: 'host-ip', nodeId: 'pc1', ip }])))
     .passed;
 
+// TC-500
 describe('address chips for a host', () => {
   it('offers four addresses of which at least one works and at least one does not', async () => {
     const chips = addressCandidates(till.start, 'pc1', 0);

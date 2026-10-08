@@ -1,6 +1,9 @@
 /* @vitest-environment jsdom */
 import { afterEach, describe, expect, it } from 'vitest';
 import type { TopologySnapshot } from '../../../src/types/topology';
+import { exerciseById } from '../exerciseSource';
+import { gradeExercise } from '../grade/gradeExercise';
+import { applyChanges } from '../model/settings';
 import type { SettingChange, SettingRef } from '../model/types';
 import { lanBehindRouter, withInterface, withNodeData } from '../templates/shared/build';
 import { SettingsForm } from './SettingsForm';
@@ -59,6 +62,7 @@ function form(allowed: SettingRef[], level: 1 | 3 = 1, locale: 'en' | 'ja' = 'ja
 }
 
 describe('the settings form', () => {
+  // TC-490
   it('shows a card for each allowed setting and for nothing else', () => {
     const allowed = [EVERY[0]!, EVERY[3]!];
     const { screen } = form(allowed);
@@ -68,6 +72,7 @@ describe('the settings form', () => {
     expect(cards).toEqual(['exercise-setting-host-ip-pc1', 'exercise-setting-port-vlan-sw1-p1']);
   });
 
+  // TC-491
   it('names every kind of setting with the device as drawn, and every control has a label', () => {
     const { screen } = form(EVERY, 3);
     expect([...screen.get('exercise-settings').children]).toHaveLength(EVERY.length);
@@ -81,6 +86,7 @@ describe('the settings form', () => {
     }
   });
 
+  // TC-492
   it('host-ip: a chip and typed text both write the address; text that is not an address writes nothing', async () => {
     const { screen, changes, last } = form([EVERY[0]!]);
     const id = settingTestId(EVERY[0]!);
@@ -103,11 +109,13 @@ describe('the settings form', () => {
     expect(last()).toEqual({ kind: 'host-ip', nodeId: 'pc1', ip: null });
   });
 
+  // TC-493
   it('offers no chips above level 2', () => {
     const { screen } = form([EVERY[0]!], 3);
     expect(screen.find('exercise-chip-0')).toBeNull();
   });
 
+  // TC-494
   it('each other field writes the change of its kind', async () => {
     const { screen, last } = form(EVERY, 3);
     const id = (index: number) => settingTestId(EVERY[index]!);
@@ -164,6 +172,7 @@ describe('the settings form', () => {
     expect(last()).toEqual({ kind: 'iface-nat', nodeId: 'r1', ifaceId: 'wan', nat: 'outside' });
   });
 
+  // TC-495
   it('static-routes: rows are added and removed, and only complete rows are written', async () => {
     const { screen, last } = form([EVERY[6]!], 3);
     const id = settingTestId(EVERY[6]!);
@@ -191,6 +200,7 @@ describe('the settings form', () => {
     expect((screen.get(`${id}-add`) as HTMLButtonElement).disabled).toBe(true);
   });
 
+  // TC-496
   it('iface-acl: rules are added, edited, reordered and removed, in the order the engine reads them', async () => {
     const { screen, last } = form([EVERY[8]!], 3);
     const id = settingTestId(EVERY[8]!);
@@ -218,6 +228,111 @@ describe('the settings form', () => {
     expect(last()).toMatchObject({ kind: 'iface-acl', rules: [] });
   });
 
+  /** TC-497 — a list that is full says so, instead of a button that silently stops working. */
+  it('static-routes and iface-acl: a full list says how many it takes and how to make room', async () => {
+    const routes = form([EVERY[6]!], 3, 'en');
+    const routesId = settingTestId(EVERY[6]!);
+    expect(routes.screen.find(`${routesId}-full`)).toBeNull();
+    for (let more = 0; more < 5; more += 1) await routes.screen.click(`${routesId}-add`);
+    expect((routes.screen.get(`${routesId}-add`) as HTMLButtonElement).disabled).toBe(true);
+    expect(routes.screen.get(`${routesId}-full`).textContent).toContain('6 routes');
+    await routes.screen.click(`${routesId}-row-5-remove`);
+    expect(routes.screen.find(`${routesId}-full`)).toBeNull();
+    routes.screen.unmount();
+
+    const acl = form([EVERY[8]!], 3, 'ja');
+    const aclId = settingTestId(EVERY[8]!);
+    for (let more = 0; more < 7; more += 1) await acl.screen.click(`${aclId}-add`);
+    expect((acl.screen.get(`${aclId}-add`) as HTMLButtonElement).disabled).toBe(true);
+    expect(acl.screen.get(`${aclId}-full`).textContent).toContain('8 行');
+  });
+
+  /**
+   * TC-498 — nothing a learner can type into a route or an ACL line reaches the
+   * grader in a form it cannot run: every keystroke is graded here, and no
+   * check ever answers `engine-error` or `config-invalid`.
+   */
+  it.each([
+    [
+      'l2-acl-permit~0',
+      'src',
+      ['192.168.1.10', '192.168.1.0/24', '192.168.1.10/', '192.168.1', 'abc', '999.1.1.1/40'],
+    ],
+    ['l2-acl-permit~0', 'dst', ['10.20.0.100', '10.20.0.0/24', '10.20.0.100 /32', '0.0.0.0/0']],
+    [
+      'l2-static-missing~0',
+      'destination',
+      ['10.20.0.0/24', '10.20.0.0', '10.20.0.0/', '10.20.0.5/24', 'abc', '0.0.0.0/0'],
+    ],
+    ['l2-static-missing~0', 'nexthop', ['10.255.0.2', '10.255.0', '10.255.0.2/30', 'next']],
+  ] as const)(
+    '%s: typing %s one key at a time never gives a grade that cannot be run',
+    async (exerciseId, column, typed) => {
+      const exercise = exerciseById(exerciseId, 'ja');
+      if (!exercise) throw new Error(`no exercise ${exerciseId}`);
+      const ref = exercise.allowed.find(
+        (allowed) => allowed.kind === 'iface-acl' || allowed.kind === 'static-routes',
+      );
+      if (!ref) throw new Error('no list to edit');
+      let changes: SettingChange[] = [];
+      screen = render(
+        <SettingsForm
+          exercise={exercise}
+          topology={exercise.start}
+          onChange={(change) => {
+            changes = [change];
+          }}
+        />,
+      );
+      const id = settingTestId(ref);
+      await screen.click(`${id}-add`);
+      // The row just added to this card (another card may hold the same kind of list).
+      const fields = screen.container.querySelectorAll(
+        `[data-testid^="${id}-row-"][data-testid$="-${column}"]`,
+      );
+      const testId = fields[fields.length - 1]?.getAttribute('data-testid') ?? '';
+      // The other column of a route row is filled, so the row is used whenever this one is usable.
+      if (column === 'destination')
+        await screen.enter(testId.replace('destination', 'nexthop'), '10.255.0.2');
+      if (column === 'nexthop')
+        await screen.enter(testId.replace('nexthop', 'destination'), '10.20.0.0/24');
+
+      const codes = new Set<string>();
+      for (const text of typed) {
+        for (let length = 0; length <= text.length; length += 1) {
+          await screen.enter(testId, text.slice(0, length));
+          const grade = await gradeExercise(exercise, applyChanges(exercise.start, changes));
+          grade.results.forEach((result) => codes.add(result.code));
+        }
+      }
+      // Both a row that is used and a row that is held back were graded.
+      expect(codes.size).toBeGreaterThan(0);
+      expect([...codes]).not.toContain('engine-error');
+      expect([...codes]).not.toContain('config-invalid');
+    },
+    60_000,
+  );
+
+  /** TC-498 — a bare address in an ACL line is that one device; a bare address as a route's destination is not used, and the form says why. */
+  it('a bare address is one device in an ACL line, and an unfinished row in a route, with a note', async () => {
+    const acl = form([EVERY[8]!], 3, 'en');
+    const aclId = settingTestId(EVERY[8]!);
+    await acl.screen.enter(`${aclId}-row-0-dst`, '203.0.113.10');
+    expect(acl.last()).toMatchObject({ rules: [{ dstIp: '203.0.113.10/32' }] });
+    expect(acl.screen.find(`${aclId}-note`)).toBeNull();
+    await acl.screen.enter(`${aclId}-row-0-dst`, '203.0.113');
+    expect(acl.last()).toMatchObject({ rules: [] });
+    expect(acl.screen.get(`${aclId}-note`).textContent).toContain('192.168.1.0/24');
+    acl.screen.unmount();
+
+    const routes = form([EVERY[6]!], 3, 'en');
+    const routesId = settingTestId(EVERY[6]!);
+    await routes.screen.enter(`${routesId}-row-0-destination`, '10.9.0.0');
+    expect(routes.last()).toMatchObject({ routes: [] });
+    expect(routes.screen.get(`${routesId}-note`).textContent).toContain('10.0.2.0/24');
+  });
+
+  // TC-499
   it('is in one language at a time', () => {
     const japanese = form(EVERY, 1, 'ja').screen;
     expect(

@@ -67,7 +67,7 @@ export const l2StpRoot = defineTemplate(
         `ケーブルが 1 本切れてもレジが止まらないように、お店のスイッチを輪につないであります。`,
       ),
       clinic: L(
-        `The clinic's switches are cabled in a ring, so that one broken cable does not stop the consulting rooms.`,
+        `The clinic's switches are cabled in a ring, so that one broken cable does not stop the exam rooms.`,
         `ケーブルが 1 本切れても診察が止まらないように、診療所のスイッチを輪につないであります。`,
       ),
       school: L(

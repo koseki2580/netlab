@@ -2,7 +2,7 @@ import { useState, type CSSProperties, type ReactNode } from 'react';
 import { useT } from '../../localeContext';
 import type { SettingChange } from '../model/types';
 import { isAddress, wholeNumber } from './addresses';
-import { INPUT, MUTED, SECONDARY } from './styles';
+import { INPUT, MUTED, SECONDARY, SELECT } from './styles';
 
 /**
  * One field per kind of setting. Each is given the setting's current value as
@@ -243,7 +243,7 @@ export function IfaceAddressField({ value, onChange, testId, plain }: FieldProps
           data-testid={`${testId}-prefix`}
           value={value.prefixLength}
           onChange={(event) => onChange({ ...value, prefixLength: Number(event.target.value) })}
-          style={INPUT}
+          style={SELECT}
         >
           {lengths.map((length) => (
             <option key={length} value={length}>
@@ -314,7 +314,7 @@ export function PortVlanField({ value, onChange, testId, plain }: FieldProps<'po
                   : { ...base, vlanMode: 'access', accessVlan: allowed[0] ?? 1 },
               )
             }
-            style={INPUT}
+            style={SELECT}
           >
             <option value="access">
               {plain ? t('For one group (access)', '1 つのグループ専用（アクセス）') : 'access'}
@@ -395,7 +395,7 @@ export function StpPriorityField({ value, onChange, testId }: FieldProps<'stp-pr
         data-testid={`${testId}-select`}
         value={value.priority}
         onChange={(event) => onChange({ ...value, priority: Number(event.target.value) })}
-        style={{ ...INPUT, width: 160 }}
+        style={{ ...SELECT, width: 160 }}
       >
         {priorities.map((priority) => (
           <option key={priority} value={priority}>
@@ -445,7 +445,7 @@ export function IfaceNatField({ value, onChange, testId }: FieldProps<'iface-nat
           const next = event.target.value;
           onChange({ ...value, nat: next === 'inside' || next === 'outside' ? next : null });
         }}
-        style={INPUT}
+        style={SELECT}
       >
         <option value="none">{t('Neither', 'どちらでもない')}</option>
         <option value="inside">

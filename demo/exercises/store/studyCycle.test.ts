@@ -5,6 +5,7 @@ import type { AttemptRecord } from './types';
 
 const four = ['l2-vlan-access', 'l2-stp-root', 'l2-static-missing', 'l2-acl-permit'];
 
+// TC-464
 describe('startCycle', () => {
   it('fixes four "before" instances from seed block A, one per template', () => {
     const cycle = startCycle(2, four, 5000);
@@ -49,6 +50,7 @@ describe('startCycle', () => {
   });
 });
 
+// TC-464
 describe('postSet', () => {
   it('uses the same templates with seed block B', () => {
     expect(postSet(startCycle(2, four, 5000))).toEqual([
@@ -71,6 +73,7 @@ describe('postSet', () => {
   });
 });
 
+// TC-465
 describe('recordLessonOpened', () => {
   it('lists each lesson once, in the order first opened', () => {
     let cycle = startCycle(2, four, 1);
@@ -87,6 +90,7 @@ describe('recordLessonOpened', () => {
   });
 });
 
+// TC-466
 describe('cycleReport', () => {
   const cycle = recordLessonOpened(startCycle(2, ['vlan', 'stp'], 1), '/networking/vlan');
   // before: vlan~0, stp~1, vlan~2, stp~3 — after: vlan~1000, stp~1001, vlan~1002, stp~1003

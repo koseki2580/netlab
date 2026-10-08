@@ -45,6 +45,7 @@ const ENGINE_REASONS = [
 ];
 
 describe('learner-facing reasons', () => {
+  // TC-433
   it.each(CODES)('code %s has text in both languages', (code) => {
     for (const text of [CODE_TEXT[code], explain(code)]) {
       expect(text.en.trim()).not.toBe('');
@@ -52,10 +53,12 @@ describe('learner-facing reasons', () => {
     }
   });
 
+  // TC-433
   it('the code table has no code the type does not know', () => {
     expect(Object.keys(CODE_TEXT).sort()).toEqual([...CODES].sort());
   });
 
+  // TC-433
   it.each(ENGINE_REASONS)('drop reason %s has its own text for both legs', (reason) => {
     expect(DROP_REASONS).toContain(reason);
     const unknown = dropMessage('something-new', 'request', 'R1');
@@ -68,6 +71,7 @@ describe('learner-facing reasons', () => {
     expect(unknown.ja).toMatch(JAPANESE);
   });
 
+  // TC-433
   it('a reason the engine adds later still gets a sentence, in both languages', () => {
     for (const reason of ['something-new', '']) {
       const text = dropMessage(reason, 'request', 'R1');
@@ -76,6 +80,7 @@ describe('learner-facing reasons', () => {
     }
   });
 
+  // TC-434
   it('no-route never names the device that reported it (it is often a bystander)', () => {
     for (const leg of ['request', 'reply'] as const) {
       const text = dropMessage('no-route', leg, 'BYSTANDER-PC');
@@ -84,6 +89,7 @@ describe('learner-facing reasons', () => {
     }
   });
 
+  // TC-434
   it.each(['acl-deny', 'no-egress-in-vlan', 'vlan-ingress-violation', 'stp-port-blocked'])(
     '%s names the device, by its label',
     (reason) => {
@@ -93,6 +99,7 @@ describe('learner-facing reasons', () => {
     },
   );
 
+  // TC-434
   it('says whether the request never arrived or the reply did not come back', () => {
     const request = dropMessage('acl-deny', 'request', 'R1');
     const reply = dropMessage('acl-deny', 'reply', 'R1');
@@ -102,6 +109,7 @@ describe('learner-facing reasons', () => {
     expect(reply.ja).toContain('返事');
   });
 
+  // TC-434
   it('explain uses the drop for not-delivered and wrong-cause, and details where given', () => {
     const drop = { reason: 'acl-deny', leg: 'request', device: 'R1' } as const;
     expect(explain('not-delivered', { drop })).toEqual(dropMessage('acl-deny', 'request', 'R1'));

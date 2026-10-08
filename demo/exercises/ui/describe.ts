@@ -10,6 +10,7 @@
 import type { AclRule } from '../../../src/types/acl';
 import type { TopologySnapshot } from '../../../src/types/topology';
 import { labelOf } from '../grade/traceFacts';
+import { portWords, sideWords } from '../model/names';
 import { isAllowed } from '../model/settings';
 import type {
   Exercise,
@@ -35,18 +36,16 @@ function peerOf(topology: TopologySnapshot, nodeId: string, handleId: string): s
   return null;
 }
 
-function portName(topology: TopologySnapshot, nodeId: string, portId: string): Localised {
+/** A port as the form names it: 「差し込み口 p1（レジ につながる）」. */
+export function portName(topology: TopologySnapshot, nodeId: string, portId: string): Localised {
   const peer = peerOf(topology, nodeId, portId);
-  return peer === null
-    ? { en: `port ${portId}`, ja: `差し込み口 ${portId}` }
-    : { en: `port ${portId} (to ${peer})`, ja: `差し込み口 ${portId}（${peer} につながる）` };
+  return portWords(portId, peer === null ? null : both(peer));
 }
 
-function sideName(topology: TopologySnapshot, nodeId: string, ifaceId: string): Localised {
+/** A router side as the form names it: 「lan 側（売り場のスイッチ につながる）」. */
+export function sideName(topology: TopologySnapshot, nodeId: string, ifaceId: string): Localised {
   const peer = peerOf(topology, nodeId, ifaceId);
-  return peer === null
-    ? { en: `side ${ifaceId}`, ja: `${ifaceId} 側` }
-    : { en: `side ${ifaceId} (to ${peer})`, ja: `${ifaceId} 側（${peer} につながる）` };
+  return sideWords(ifaceId, peer === null ? null : both(peer));
 }
 
 function cableName(topology: TopologySnapshot, edgeId: string): Localised {

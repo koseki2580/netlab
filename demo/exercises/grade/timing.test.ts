@@ -23,6 +23,7 @@ const PROBES: readonly Probe[] = [
 const RUNS = 50;
 const CEILING_MS = 250;
 
+// TC-435
 it(`a grade (prepare + six probes, ten devices) stays under ${CEILING_MS} ms`, async () => {
   const topology = tenNodeCampus();
   expect(topology.nodes).toHaveLength(10);

@@ -14,6 +14,7 @@ import type { PlacementResult } from './types';
 
 const JAPANESE = /[぀-ヿ一-龯]/;
 
+// TC-454
 describe('thresholds', () => {
   it('are the ones the plan names', () => {
     expect([WINDOW_SIZE, MIN_ATTEMPTED, CLEAR_MIN_SOLVED, CLEAR_MIN_TEMPLATES]).toEqual([
@@ -22,6 +23,7 @@ describe('thresholds', () => {
   });
 });
 
+// TC-454
 describe('isSolved', () => {
   it('is true for a pass with no hint and no reveal', () => {
     expect(isSolved(solved('t', 0, 1))).toBe(true);
@@ -41,6 +43,7 @@ describe('isSolved', () => {
   });
 });
 
+// TC-455
 describe('levelSummary', () => {
   it('reports not-enough with nothing attempted', () => {
     expect(levelSummary([], 2)).toEqual({
@@ -113,6 +116,7 @@ describe('levelSummary', () => {
     });
   });
 
+  // TC-456
   it('counts one exercise once, by its latest attempt', () => {
     const retried = [failed('a', 0, 1), failed('a', 0, 1), solved('a', 0, 1)];
     expect(levelSummary(retried, 1)).toMatchObject({ counted: 1, solved: 1, notSolved: 0 });
@@ -121,17 +125,20 @@ describe('levelSummary', () => {
     expect(levelSummary(lostAgain, 1)).toMatchObject({ counted: 1, solved: 0, notSolved: 1 });
   });
 
+  // TC-456
   it('does not let ten retries of one exercise clear a level', () => {
     const attempts = Array.from({ length: 10 }, () => solved('a', 0, 1));
     expect(levelSummary(attempts, 1)).toMatchObject({ counted: 1, status: 'not-enough' });
   });
 
+  // TC-456
   it('looks at the last ten distinct exercises only', () => {
     const old = Array.from({ length: 6 }, (_, i) => failed('l3-old', i, 3));
     const summary = levelSummary([...old, ...solvedRun(3, 10, 3, 100)], 3);
     expect(summary).toMatchObject({ counted: 10, solved: 10, notSolved: 0, status: 'cleared' });
   });
 
+  // TC-456
   it('orders by start time, not by position in the list', () => {
     const recent = solvedRun(3, 10, 3, 100);
     const old = Array.from({ length: 6 }, (_, i) =>
@@ -140,10 +147,12 @@ describe('levelSummary', () => {
     expect(levelSummary([...recent, ...old], 3)).toMatchObject({ solved: 10, notSolved: 0 });
   });
 
+  // TC-456
   it('ignores other levels', () => {
     expect(levelSummary(solvedRun(1, 10, 4), 2).counted).toBe(0);
   });
 
+  // TC-456
   it('counts practice, placement and post attempts', () => {
     const attempts = [
       attempt('a', 0, 1, { context: 'practice' }),
@@ -153,6 +162,7 @@ describe('levelSummary', () => {
     expect(levelSummary(attempts, 1)).toMatchObject({ counted: 3, solved: 3 });
   });
 
+  // TC-456
   it('excludes pre attempts, so a diagnostic before studying does not hold the learner back', () => {
     const pre = [0, 1, 2, 3].map((i) =>
       attempt('l2-pre', i, 2, { context: 'pre', outcome: 'abandoned' }),
@@ -161,6 +171,7 @@ describe('levelSummary', () => {
     expect(summary).toMatchObject({ counted: 7, solved: 7, notSolved: 0, status: 'cleared' });
   });
 
+  // TC-456
   it('does not let a later pre attempt replace a counted attempt at the same exercise', () => {
     const attempts = [
       solved('a', 0, 1),
@@ -169,6 +180,7 @@ describe('levelSummary', () => {
     expect(levelSummary(attempts, 1)).toMatchObject({ counted: 1, solved: 1 });
   });
 
+  // TC-457
   it('names the template with the most unsolved exercises as the weakest', () => {
     const attempts = [
       failed('l2-vlan', 0, 2),
@@ -179,17 +191,20 @@ describe('levelSummary', () => {
     expect(levelSummary(attempts, 2).weakestTemplateId).toBe('l2-stp');
   });
 
+  // TC-457
   it('breaks a tie for the weakest template by the most recent failure', () => {
     const attempts = [failed('l2-stp', 0, 2), failed('l2-vlan', 1, 2), solved('l2-acl', 2, 2)];
     expect(levelSummary(attempts, 2).weakestTemplateId).toBe('l2-vlan');
   });
 
+  // TC-457
   it('has no weakest template when nothing is unsolved', () => {
     const attempts = [solved('a', 0, 2), helped('b', 1, 2)];
     expect(levelSummary(attempts, 2).weakestTemplateId).toBeNull();
   });
 });
 
+// TC-458
 describe('estimatedLevel', () => {
   const placement = (level: PlacementResult['level']): PlacementResult => ({
     level,
@@ -231,6 +246,7 @@ describe('estimatedLevel', () => {
   });
 });
 
+// TC-459
 describe('explain', () => {
   const cleared = levelSummary(
     [...solvedRun(2, 7, 3), ...[0, 1, 2].map((i) => failed('x', i, 2))],

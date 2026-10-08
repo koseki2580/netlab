@@ -52,7 +52,7 @@ export const l1ChooseAddress = defineTemplate(
     const dev = place.printer;
     const opening = scene(place, {
       home: L(
-        `A ${dev.en} came from the grandparents' house and was plugged in in the living room.`,
+        `A ${dev.en} came from the grandparents' house and was plugged in in the lounge.`,
         `おじいちゃんの家で使っていた${dev.ja}をもらって、リビングにつなぎました。`,
       ),
       shop: L(
