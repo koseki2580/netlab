@@ -4,11 +4,16 @@
  *
  * The far side carries the fault only where a switch sits there: on a direct
  * cable a router that takes the server's address answers in its place.
+ *
+ * The two sides are named by what is plugged into them, as the settings form
+ * names them (`model/names.ts`), never `lan` or `far`. The "/number" is not
+ * the fault here (l1-prefix-fit is the exercise about it), so both settings
+ * are `addressOnly`: the form shows the address alone.
  */
 
 import { buildLan, LAN_SHAPES } from '../shared/build';
 import { defineTemplate, formNames, goals } from '../shared/exercise';
-import { addressOf, broken, everyoneReaches, starts, startsJa } from '../shared/lan';
+import { addressOf, broken, everyoneReaches, freeAddressOn, starts, startsJa } from '../shared/lan';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan, net24 } from '../shared/plans';
 import { L, PRESS_CHECK, say, the, The } from '../shared/text';
@@ -49,10 +54,9 @@ export const l1RouterAddress = defineTemplate(
 
     // --- The brief ---
     const { router, server } = place;
-    const sideWords =
-      side === 'lan'
-        ? L('the side the PCs are on', 'パソコンのある側')
-        : L(`the side ${the(server)} is on`, `${server.ja}のある側`);
+    const sides = formNames(topology, lan.names);
+    const [lanSide, farSide] = [sides.side('r1', 'lan'), sides.side('r1', 'far')];
+    const sideForm = side === 'lan' ? lanSide : farSide;
     const opening = scene(place, {
       home: L(
         `The old ${router.en} broke, and a new one was set up by hand.`,
@@ -82,8 +86,8 @@ export const l1RouterAddress = defineTemplate(
         `それから、どの機器からも${server.ja}につながりません。パソコンと${server.ja}は、さわっていません。`,
       ),
       L(
-        `A router joins two networks, and has one address on each side; each must start like the devices on that side. Fix the address of ${the(router)} that is wrong.`,
-        `ルータは 2 つのネットワークをつなぐ機械で、それぞれの側に 1 つずつアドレスを持ちます。どちらも、その側の機器と同じ始まりでなければなりません。${router.ja}の、まちがっているほうのアドレスを直してください。`,
+        `A router joins two networks, and has one address on each side: here the ${lanSide.en} and the ${farSide.en}. Each must have the same first three numbers as the devices on that side. Fix the one that is wrong.`,
+        `ルータは 2 つのネットワークをつなぐ機械で、それぞれの側に 1 つずつアドレスを持ちます。ここでは「${lanSide.ja}」と「${farSide.ja}」です。どちらのアドレスも、その側にある機器と、はじめの 3 つの数字が同じでなければなりません。まちがっているほうを直してください。`,
       ),
       PRESS_CHECK,
     );
@@ -92,15 +96,14 @@ export const l1RouterAddress = defineTemplate(
     const { reach } = goals(lan.names);
     const right = net.at(plan.gateway);
     const neighbour = side === 'lan' ? 'pc1' : 'srv';
-    const sideForm = formNames(topology, lan.names).side('r1', side);
     return {
       title: L(`Nothing gets past ${the(router)}`, `${router.ja}の先へ届かない`),
       brief,
       topology,
       names: lan.names,
       allowed: [
-        { kind: 'iface-address', nodeId: 'r1', ifaceId: 'lan' },
-        { kind: 'iface-address', nodeId: 'r1', ifaceId: 'far' },
+        { kind: 'iface-address', nodeId: 'r1', ifaceId: 'lan', addressOnly: true },
+        { kind: 'iface-address', nodeId: 'r1', ifaceId: 'far', addressOnly: true },
       ],
       checks: [
         ...everyoneReaches(lan, lan.names),
@@ -110,15 +113,15 @@ export const l1RouterAddress = defineTemplate(
       hints: [
         L(
           `${The(router)} has two addresses. Compare each with the addresses of the devices on that side.`,
-          `${router.ja}にはアドレスが 2 つあります。それぞれを、その側にある機器のアドレスと見比べてください。`,
+          `${router.ja}にはアドレスが 2 つあります。それぞれを、その側にある機器のアドレスと見くらべてください。`,
         ),
         L(
-          `On ${sideWords.en}, addresses start with ${starts(net)}. The router's address on that side must start the same way, and must not be one a device already uses.`,
-          `${sideWords.ja}のアドレスは、${startsJa(net)}で始まります。ルータのその側のアドレスも同じ始まりにして、ほかの機器が使っているものは避けます。`,
+          `The devices on the ${sideForm.en} have addresses that start with ${starts(net)}. The router's address on that side starts differently.`,
+          `「${sideForm.ja}」にある機器のアドレスは、${startsJa(net)}で始まります。ルータのその側のアドレスだけ、始まりがちがいます。`,
         ),
         L(
-          `Change the address of ${the(router)} on ${sideForm.en}, which is ${sideWords.en}, to ${right}.`,
-          `${sideWords.ja}にあたる、${router.ja}の「${sideForm.ja}」のアドレスを「${right}」に変えます。`,
+          `Change the address of ${the(router)} on the ${sideForm.en} to ${freeAddressOn(net).en}.`,
+          `${router.ja}の「${sideForm.ja}」のアドレスを、${freeAddressOn(net).ja}に変えます。`,
         ),
       ],
       lessons: ['/routing/client-server', '/course'],

@@ -8,6 +8,7 @@
  */
 
 import { buildLoop } from '../shared/build';
+import { placedEvenly } from '../shared/draw';
 import { defineTemplate, goals, type LabelledCheck } from '../shared/exercise';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
@@ -27,7 +28,7 @@ export const l2ChooseRoot = defineTemplate(
     kind: 'choose-design',
     title: L('Choose the root bridge', 'ルートブリッジを選ぶ'),
   },
-  (draw) => {
+  (draw, seed) => {
     // --- Drawn from the seed ---
     const place = drawPlace(draw);
     const plan = drawPlan(draw);
@@ -37,7 +38,6 @@ export const l2ChooseRoot = defineTemplate(
     const hub = shape === 'tail' ? 'swc' : draw.pick(ring);
     const spokes = ring.filter((id) => id !== hub);
     const startRoot = draw.pick([0, 1]) === 0 ? spokes[0] : spokes[1];
-    const flip = draw.pick([false, true]);
     if (!startRoot) throw new Error('a ring has two spokes');
 
     // --- The network: the wrong switch is the root ---
@@ -130,7 +130,13 @@ export const l2ChooseRoot = defineTemplate(
       ),
     };
     const byRoot = ids.map(rootOption);
-    const options = flip ? [bigNumber, ...byRoot.reverse()] : [...byRoot, bigNumber];
+    const best = byRoot.find((option) => option.id === `root-${hub}`);
+    if (!best) throw new Error('the hub is one of the switches');
+    // The setting this exercise is after stands in each place equally often.
+    const options = placedEvenly(draw, seed, 1, best, [
+      ...byRoot.filter((option) => option !== best),
+      bigNumber,
+    ]);
 
     // --- The goals: both rooms reach the server over their direct link ---
     const { reach } = goals(net.names);
@@ -144,7 +150,7 @@ export const l2ChooseRoot = defineTemplate(
         `${name(spoke).ja}からの通信が、${name(hub).ja}への直接の線を通る`,
       ),
     });
-    const reference = byRoot.find((option) => option.id === `root-${hub}`)?.changes ?? [];
+    const reference = best.changes;
     return {
       title: L(`Both rooms use ${the(server)}`, `2 つの部屋が${server.ja}を使う`),
       brief,

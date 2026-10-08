@@ -3,4 +3,4 @@
  * golden test shows the drift). Stored attempts carry it, so instances made by
  * different versions can be told apart.
  */
-export const GENERATOR_VERSION = 2;
+export const GENERATOR_VERSION = 3;

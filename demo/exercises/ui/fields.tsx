@@ -1,8 +1,9 @@
 import { useState, type CSSProperties, type ReactNode } from 'react';
-import { useT } from '../../localeContext';
+import { useGalleryLocale, useT } from '../../localeContext';
 import type { SettingChange } from '../model/types';
 import { isAddress, wholeNumber } from './addresses';
 import { INPUT, MUTED, SECONDARY, SELECT } from './styles';
+import { ACCESS_PORT_HELP, CABLE_WORDS, PORT_USE_WORDS, TRUNK_PORT_HELP } from './words';
 
 /**
  * One field per kind of setting. Each is given the setting's current value as
@@ -89,38 +90,62 @@ function DraftInput<T>({
   );
 }
 
-/** A switch with its two states said in words, so it is not told by colour or position alone. */
+interface ToggleWords {
+  readonly symbol: string;
+  readonly state: { readonly en: string; readonly ja: string };
+  readonly action: { readonly en: string; readonly ja: string };
+}
+
+/**
+ * A switch that says how things are now and, apart from that, what a press
+ * will do: 「✕ ぬけています → 押すと、つなぎます」. One phrase for both read as
+ * a statement, and a learner did not take it for a button.
+ */
 function Toggle({
   on,
-  onLabel,
-  offLabel,
+  onWords,
+  offWords,
   label,
   onToggle,
   testId,
 }: {
   on: boolean;
-  onLabel: string;
-  offLabel: string;
+  onWords: ToggleWords;
+  offWords: ToggleWords;
   label: string;
   onToggle: (next: boolean) => void;
   testId: string;
 }) {
+  const locale = useGalleryLocale();
+  const words = on ? onWords : offWords;
   return (
     <button
       type="button"
       role="switch"
       aria-checked={on}
-      aria-label={label}
+      aria-label={`${label}: ${words.state[locale]} → ${words.action[locale]}`}
       data-testid={`${testId}-toggle`}
+      data-state={on ? 'on' : 'off'}
       onClick={() => onToggle(!on)}
       style={{
         ...SECONDARY,
-        gap: 10,
+        gap: 8,
+        flexWrap: 'wrap',
+        justifyContent: 'flex-start',
+        textAlign: 'left',
+        fontSize: 16,
+        borderWidth: 2,
         borderColor: on ? 'var(--netlab-accent-green)' : 'var(--netlab-accent-orange)',
       }}
     >
-      <span aria-hidden="true">{on ? '●' : '○'}</span>
-      <span>{on ? onLabel : offLabel}</span>
+      <span>
+        <span aria-hidden="true">{words.symbol} </span>
+        <strong data-testid={`${testId}-state`}>{words.state[locale]}</strong>
+      </span>{' '}
+      <span data-testid={`${testId}-action`} style={{ fontWeight: 400 }}>
+        <span aria-hidden="true">→ </span>
+        {words.action[locale]}
+      </span>
     </button>
   );
 }
@@ -263,9 +288,9 @@ export function LinkStateField({ value, onChange, testId }: FieldProps<'link-sta
   return (
     <Toggle
       on={value.state === 'up'}
-      onLabel={t('Plugged in (press to unplug)', 'つないでいる（押すと、はずす）')}
-      offLabel={t('Unplugged (press to plug in)', 'はずしている（押すと、つなぐ）')}
-      label={t('Cable plugged in', '線をつなぐ')}
+      onWords={CABLE_WORDS.up}
+      offWords={CABLE_WORDS.down}
+      label={t('Cable', '線')}
       onToggle={(up) => onChange({ ...value, state: up ? 'up' : 'down' })}
       testId={testId}
     />
@@ -277,9 +302,9 @@ export function StpPortField({ value, onChange, testId }: FieldProps<'stp-port'>
   return (
     <Toggle
       on={value.enabled}
-      onLabel={t('In use (press to stop using it)', '使っている（押すと、使わない）')}
-      offLabel={t('Not in use (press to use it)', '使っていない（押すと、使う）')}
-      label={t('Use this port', 'この差し込み口を使う')}
+      onWords={PORT_USE_WORDS.on}
+      offWords={PORT_USE_WORDS.off}
+      label={t('This port', 'この差し込み口')}
       onToggle={(enabled) => onChange({ ...value, enabled })}
       testId={testId}
     />
@@ -363,11 +388,14 @@ export function PortVlanField({ value, onChange, testId, plain }: FieldProps<'po
         )}
       </div>
       {plain ? (
-        <p style={{ ...MUTED, margin: 0, fontSize: 14 }}>
-          {t(
-            'Ports with the same number are one group. Different numbers cannot reach each other.',
-            '同じ番号の差し込み口どうしが、1 つのグループです。番号がちがうと届きません。',
-          )}
+        <p
+          data-testid={`${testId}-help`}
+          data-mode={value.vlanMode}
+          style={{ ...MUTED, margin: 0, fontSize: 14 }}
+        >
+          {value.vlanMode === 'trunk'
+            ? t(TRUNK_PORT_HELP.en, TRUNK_PORT_HELP.ja)
+            : t(ACCESS_PORT_HELP.en, ACCESS_PORT_HELP.ja)}
         </p>
       ) : null}
     </div>

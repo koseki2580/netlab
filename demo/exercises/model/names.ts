@@ -17,8 +17,13 @@ export function portWords(portId: string, peer: Localised | null): Localised {
       };
 }
 
+/**
+ * A side of a router is named by what is on it: 「売り場のスイッチのある側」.
+ * That is a name the learner can check against the diagram; the id of the
+ * interface (`lan`, `far`) is used only when nothing is plugged in there.
+ */
 export function sideWords(ifaceId: string, peer: Localised | null): Localised {
   return peer === null
     ? { en: `side ${ifaceId}`, ja: `${ifaceId} 側` }
-    : { en: `side ${ifaceId} (to ${peer.en})`, ja: `${ifaceId} 側（${peer.ja} につながる）` };
+    : { en: `side facing ${peer.en}`, ja: `${peer.ja}のある側` };
 }

@@ -18,6 +18,7 @@ import {
   type ExamAttempt,
 } from './examAttempt';
 import { EXAM_LEVELS, examLevel } from './examLevels';
+import { examVerdict, missedSentence } from './examVerdict';
 import {
   EXAM_LEVEL_1,
   EXAM_PASS_MARK,
@@ -126,6 +127,28 @@ function ExamBody({ level }: { level: ExamLevel }) {
       answers: {},
       marked: false,
     });
+  };
+
+  /** The numbers of the questions answered wrongly (or not at all), once marked. */
+  const missed = useMemo(
+    () =>
+      result
+        ? result.perQuestion.flatMap((outcome, index) => (outcome.correct ? [] : [index + 1]))
+        : [],
+    [result],
+  );
+  const verdict = result
+    ? examVerdict({ score: result.score, passMark: EXAM_PASS_MARK, level: level.level })
+    : null;
+
+  /** Bring a question into view and put the focus on it. */
+  const goToQuestion = (number: number) => {
+    const target = questionsRef.current?.querySelector<HTMLElement>(
+      `[data-testid="exam-question-${number}"]`,
+    );
+    if (!target) return;
+    target.scrollIntoView({ block: 'start' });
+    target.focus({ preventScroll: true });
   };
 
   const submit = () => {
@@ -237,22 +260,69 @@ function ExamBody({ level }: { level: ExamLevel }) {
               {' · '}
               {result.passed ? t('Passed', '合格') : t('Not yet', 'もう少し')}
             </h2>
-            <p style={{ margin: '6px 0 0' }}>
-              {result.passed
-                ? level.level === 1
-                  ? t(
-                      'You have the basics. Read the explanations below for anything you missed.',
-                      '基本は身についています。間違えた問題があれば、下の解説を読んでください。',
-                    )
-                  : t(
-                      'You passed this level. Read the explanations below for anything you missed.',
-                      'このレベルは合格です。間違えた問題があれば、下の解説を読んでください。',
-                    )
-                : t(
-                    'Each missed question below names the lesson that teaches it. Go back to those, then try again.',
-                    '間違えた問題には、それを教えるレッスンが書いてあります。そこへ戻ってから、もう一度挑戦してください。',
-                  )}
+            <p data-testid="exam-verdict" style={{ margin: '6px 0 0' }}>
+              {verdict ? t(verdict.en, verdict.ja) : null}
             </p>
+            {missed.length > 0 ? (
+              // Which questions, at the top: a learner with one miss should not
+              // have to scroll past nine right answers to find it.
+              <div data-testid="exam-missed" style={{ marginTop: 10 }}>
+                <strong data-testid="exam-missed-summary">
+                  {t(missedSentence(missed).en, missedSentence(missed).ja)}
+                </strong>
+                <ul
+                  style={{
+                    margin: '4px 0 0',
+                    padding: 0,
+                    listStyle: 'none',
+                    display: 'grid',
+                    gap: 2,
+                  }}
+                >
+                  {missed.map((number) => {
+                    const question = level.questions[number - 1];
+                    const stop = question ? levelStop(level, question.taughtBy) : undefined;
+                    return (
+                      <li
+                        key={number}
+                        style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}
+                      >
+                        <button
+                          type="button"
+                          data-testid={`exam-missed-${number}`}
+                          onClick={() => goToQuestion(number)}
+                          style={{
+                            ...LINK,
+                            background: 'none',
+                            border: 'none',
+                            padding: '0 4px 0 0',
+                            minHeight: 44,
+                            cursor: 'pointer',
+                            fontSize: 'inherit',
+                          }}
+                        >
+                          {t(`See question ${number} ↓`, `問 ${number} を見る ↓`)}
+                        </button>
+                        {stop ? (
+                          <Link
+                            data-testid={`exam-missed-review-${number}`}
+                            to={`${stop.path}${examReturnSearch(level.level)}`}
+                            style={{
+                              ...LINK,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              minHeight: 44,
+                            }}
+                          >
+                            {t(`Review: ${stop.title.en} →`, `復習する：${stop.title.ja} →`)}
+                          </Link>
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ) : null}
             <button
               type="button"
               data-testid="exam-retry"
@@ -287,8 +357,9 @@ function ExamBody({ level }: { level: ExamLevel }) {
                 <fieldset
                   key={question.id}
                   data-testid={`exam-question-${number}`}
+                  tabIndex={-1}
                   {...(outcome ? { 'data-correct': outcome.correct ? 'yes' : 'no' } : {})}
-                  style={{ ...CARD, margin: 0, minWidth: 0 }}
+                  style={{ ...CARD, margin: 0, minWidth: 0, scrollMarginTop: 8 }}
                 >
                   <legend style={{ fontWeight: 700, padding: '0 6px' }}>
                     {t(`Question ${number}`, `問 ${number}`)}

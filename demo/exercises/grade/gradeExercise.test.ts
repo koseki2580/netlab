@@ -18,6 +18,7 @@ import {
   lanBehindRouter,
   link,
   ospfDiamond,
+  port,
   router,
   routerChain,
   routerDiamond,
@@ -32,7 +33,7 @@ import {
   withPort,
 } from '../templates/shared/build';
 import { gradeExercise } from './gradeExercise';
-import { CODE_TEXT, dropMessage } from './reasons';
+import { CODE_TEXT, diagnosisMessage, dropMessage } from './reasons';
 
 const ping = (from: string, to: string): Probe => ({ via: 'ping', from, to });
 const tcp = (from: string, to: string, dstPort = 80): Probe => ({ via: 'tcp', from, to, dstPort });
@@ -547,6 +548,270 @@ describe('never rejects', () => {
   });
 });
 
+// --- Causes the grader reads off the topology ---------------------------------
+
+/**
+ * pc1, pc2, pc3 — sw1 — r1 — sw2 — srv, srv2, and a lone `box` cabled straight
+ * to the router's third side.   192.168.1.0/24 | 10.20.0.0/24 | 172.16.9.0/24
+ */
+const office = (): TopologySnapshot =>
+  snapshot(
+    [
+      host('pc1', '192.168.1.10', { label: 'レジ' }),
+      host('pc2', '192.168.1.11', { label: '事務室のパソコン' }),
+      host('pc3', '192.168.1.12', { label: '売り場のタブレット' }),
+      switchNode(
+        'sw1',
+        [port('p1'), port('p2'), port('p3'), port('up')],
+        {},
+        { label: '売り場のスイッチ' },
+      ),
+      router(
+        'r1',
+        [
+          iface('lan', '192.168.1.1/24'),
+          iface('far', '10.20.0.1/24'),
+          iface('dmz', '172.16.9.1/24'),
+        ],
+        {},
+        { label: 'お店のルータ' },
+      ),
+      switchNode('sw2', [port('p1'), port('p2'), port('up')], {}, { label: '倉庫のスイッチ' }),
+      host('srv', '10.20.0.10', { role: 'server', label: '在庫サーバー' }),
+      host('srv2', '10.20.0.20', { role: 'server', label: '伝票プリンタ' }),
+      host('box', '172.16.9.10', { role: 'server', label: '録画機' }),
+    ],
+    [
+      link('e-pc1', 'pc1', 'sw1:p1'),
+      link('e-pc2', 'pc2', 'sw1:p2'),
+      link('e-pc3', 'pc3', 'sw1:p3'),
+      link('e-up', 'sw1:up', 'r1:lan'),
+      link('e-far', 'r1:far', 'sw2:up'),
+      link('e-srv', 'sw2:p1', 'srv'),
+      link('e-srv2', 'sw2:p2', 'srv2'),
+      link('e-box', 'r1:dmz', 'box'),
+    ],
+  );
+
+const OFFICE_ALLOWED: SettingRef[] = [
+  ...['pc1', 'pc2', 'pc3', 'srv', 'box'].map((nodeId) => ({ kind: 'host-ip', nodeId }) as const),
+  ...['lan', 'far', 'dmz'].map(
+    (ifaceId) => ({ kind: 'iface-address', nodeId: 'r1', ifaceId }) as const,
+  ),
+  ...['e-pc1', 'e-pc2', 'e-up', 'e-srv'].map((edgeId) => ({ kind: 'link-state', edgeId }) as const),
+];
+const reachSrv = (from: string): ExerciseCheck => ({
+  id: from,
+  kind: 'reach',
+  probe: ping(from, 'srv'),
+});
+
+/** Grade "every PC reaches the server" after the learner's changes, over `start`. */
+async function gradeOffice(
+  changes: readonly SettingChange[],
+  start: TopologySnapshot = office(),
+  checks: readonly ExerciseCheck[] = ['pc1', 'pc2', 'pc3'].map(reachSrv),
+): Promise<Record<string, CheckResult>> {
+  const grade = await gradeExercise(
+    { start, allowed: OFFICE_ALLOWED, checks },
+    applyChanges(start, changes),
+  );
+  return Object.fromEntries(grade.results.map((entry) => [entry.checkId, entry]));
+}
+const setIp = (nodeId: string, ip: string): SettingChange => ({ kind: 'host-ip', nodeId, ip });
+const cable = (edgeId: string, state: 'up' | 'down'): SettingChange => ({
+  kind: 'link-state',
+  edgeId,
+  state,
+});
+const side = (ifaceId: string, ipAddress: string): SettingChange => ({
+  kind: 'iface-address',
+  nodeId: 'r1',
+  ifaceId,
+  ipAddress,
+  prefixLength: 24,
+});
+
+// TC-557
+describe('an unplugged cable is said first, whatever reason the simulator gives', () => {
+  const CABLE = diagnosisMessage({ kind: 'cable-down' });
+
+  it("a PC's own cable: that PC is told, and the cable is the evidence; the others pass", async () => {
+    const results = await gradeOffice([cable('e-pc1', 'down')]);
+    expect(results.pc1).toMatchObject({ code: 'not-delivered', message: CABLE });
+    expect(results.pc1?.evidence).toMatchObject({ diagnosis: 'cable-down', edgeId: 'e-pc1' });
+    expect(results.pc2?.code).toBe('ok');
+    expect(results.pc3?.code).toBe('ok');
+  });
+
+  it('a cable everyone shares, and the cable of the device they want: every check says so', async () => {
+    for (const edgeId of ['e-up', 'e-srv']) {
+      const results = await gradeOffice([cable(edgeId, 'down')]);
+      for (const id of ['pc1', 'pc2', 'pc3']) {
+        expect(results[id]).toMatchObject({ code: 'not-delivered', message: CABLE });
+        expect(results[id]?.evidence).toMatchObject({ diagnosis: 'cable-down', edgeId });
+      }
+    }
+  });
+
+  it('a cable that is out somewhere else is not blamed for a failure it does not cause', async () => {
+    // pc2's cable is out; pc1 fails because of its own address.
+    const results = await gradeOffice([cable('e-pc2', 'down'), setIp('pc1', '192.168.7.10')]);
+    expect(results.pc1?.code).toBe('not-delivered');
+    expect(results.pc1?.message).not.toEqual(CABLE);
+    expect(results.pc1?.evidence?.diagnosis).not.toBe('cable-down');
+    expect(results.pc1?.evidence).not.toHaveProperty('edgeId');
+    expect(results.pc2).toMatchObject({ message: CABLE });
+    expect(results.pc3?.code).toBe('ok');
+  });
+
+  it('with every cable in, nothing is said about cables', async () => {
+    const results = await gradeOffice([setIp('pc1', '192.168.7.10')]);
+    expect(results.pc1?.message.ja).not.toContain('ケーブル');
+    expect(results.pc2?.evidence).toEqual({ path: ['pc2', 'sw1', 'r1', 'sw2', 'srv'] });
+  });
+});
+
+// TC-558
+describe('an address two devices hold is said first, naming the other holder', () => {
+  it("the router's address, chosen by the learner: the router is named and pointed at", async () => {
+    const results = await gradeOffice([setIp('pc1', '192.168.1.1')]);
+    expect(results.pc1?.code).toBe('not-delivered');
+    expect(results.pc1?.message.ja).toBe(
+      'このアドレス（192.168.1.1）は、お店のルータがもう使っています。べつの数字をえらんでください。',
+    );
+    expect(results.pc1?.evidence).toMatchObject({
+      diagnosis: 'duplicate-address',
+      address: '192.168.1.1',
+      relatedNodeIds: ['pc1', 'r1'],
+    });
+  });
+
+  it("a neighbour's address, chosen by the learner: whichever of the two fails is told about the other", async () => {
+    const results = await gradeOffice([setIp('pc1', '192.168.1.11')]);
+    const failed = ['pc1', 'pc2'].filter((id) => results[id]?.code === 'not-delivered');
+    expect(failed.length).toBeGreaterThan(0);
+    for (const id of failed) {
+      expect(results[id]?.message.ja).toBe(
+        'このアドレス（192.168.1.11）は、事務室のパソコンがもう使っています。べつの数字をえらんでください。',
+      );
+      expect(results[id]?.evidence).toMatchObject({ diagnosis: 'duplicate-address' });
+      expect([...(results[id]?.evidence?.relatedNodeIds ?? [])].sort()).toEqual(['pc1', 'pc2']);
+    }
+    expect(results.pc3?.code).toBe('ok');
+  });
+
+  it('a duplicate the exercise started with: both are named and neither is blamed', async () => {
+    const start = applyChanges(office(), [setIp('pc1', '192.168.1.11')]);
+    const results = await gradeOffice([], start);
+    const failed = ['pc1', 'pc2'].filter((id) => results[id]?.code === 'not-delivered');
+    expect(failed.length).toBeGreaterThan(0);
+    for (const id of failed) {
+      expect(results[id]?.message.ja).toContain('同じアドレス（192.168.1.11）を使っています');
+      expect(results[id]?.message.ja).toContain('レジ');
+      expect(results[id]?.message.ja).toContain('事務室のパソコン');
+    }
+  });
+
+  it('a duplicate between two OTHER devices is not blamed for a failure it does not cause', async () => {
+    // pc2 and pc3 share an address; pc1 fails because of its own.
+    const results = await gradeOffice([setIp('pc3', '192.168.1.11'), setIp('pc1', '192.168.7.10')]);
+    expect(results.pc1?.code).toBe('not-delivered');
+    expect(results.pc1?.evidence?.diagnosis).not.toBe('duplicate-address');
+    expect(results.pc1?.message.ja).not.toContain('192.168.1.11');
+  });
+
+  it('a check that passes says nothing of a duplicate elsewhere', async () => {
+    const results = await gradeOffice([setIp('pc1', '192.168.1.1')]);
+    for (const id of ['pc2', 'pc3']) {
+      if (results[id]?.code !== 'ok') continue;
+      expect(results[id]?.message).toEqual(CODE_TEXT.ok);
+      expect(results[id]?.evidence).not.toHaveProperty('diagnosis');
+    }
+    expect(results.pc3?.code).toBe('ok');
+  });
+});
+
+// TC-559
+describe('an address outside the network of its neighbours is said first, where that can be told', () => {
+  it('one PC of three: its first numbers are off, and it is the one pointed at', async () => {
+    const results = await gradeOffice([setIp('pc1', '192.168.7.10')]);
+    expect(results.pc1?.code).toBe('not-delivered');
+    expect(results.pc1?.message).toEqual(
+      diagnosisMessage({ kind: 'wrong-network', address: '192.168.7.10', device: 'レジ' }),
+    );
+    expect(results.pc1?.evidence).toMatchObject({
+      diagnosis: 'wrong-network',
+      address: '192.168.7.10',
+      relatedNodeIds: ['pc1'],
+    });
+    expect(results.pc2?.code).toBe('ok');
+  });
+
+  it("the router's side: every PC behind it is told to look at the router, by the name of that side", async () => {
+    const results = await gradeOffice([side('lan', '192.168.2.1')]);
+    for (const id of ['pc1', 'pc2', 'pc3']) {
+      expect(results[id]?.code).toBe('not-delivered');
+      expect(results[id]?.message.ja).toBe(
+        'はじめの数字が、まわりの機器とちがいます。お店のルータの「売り場のスイッチのある側」のアドレス（192.168.2.1）を見てください。',
+      );
+      expect(results[id]?.evidence).toMatchObject({
+        diagnosis: 'wrong-network',
+        relatedNodeIds: ['r1'],
+      });
+    }
+  });
+
+  it('the device at the other end: a server among two, off its network', async () => {
+    const results = await gradeOffice([setIp('srv', '10.21.0.10')]);
+    expect(results.pc1?.code).toBe('not-delivered');
+    expect(results.pc1?.evidence).toMatchObject({
+      diagnosis: 'wrong-network',
+      relatedNodeIds: ['srv'],
+    });
+    expect(results.pc1?.message.ja).toContain('在庫サーバーのアドレス（10.21.0.10）');
+  });
+
+  it('two devices alone on a cable: which of them is off cannot be told, so the reason is kept', async () => {
+    const check: ExerciseCheck = { id: 'box', kind: 'reach', probe: ping('pc1', 'box') };
+    for (const change of [setIp('box', '172.16.8.10'), side('dmz', '172.16.8.1')]) {
+      const results = await gradeOffice([change], office(), [check]);
+      expect(results.box?.code).toBe('not-delivered');
+      expect(results.box?.evidence).not.toHaveProperty('diagnosis');
+      expect(results.box?.message.ja).not.toContain('はじめの数字が、まわりの機器とちがいます');
+    }
+  });
+
+  it('two PCs off in different ways: no odd one out, so nobody is singled out', async () => {
+    const results = await gradeOffice([setIp('pc1', '192.168.7.10'), setIp('pc2', '192.168.8.11')]);
+    expect(results.pc1?.code).toBe('not-delivered');
+    expect(results.pc1?.evidence).not.toHaveProperty('diagnosis');
+  });
+
+  it('a wide network: addresses that differ in the middle numbers are still neighbours', async () => {
+    // 10.5.0.1/16 with PCs at 10.5.0.x, 10.5.2.x and 10.5.7.x.
+    const wide = applyChanges(office(), [
+      {
+        kind: 'iface-address',
+        nodeId: 'r1',
+        ifaceId: 'lan',
+        ipAddress: '10.5.0.1',
+        prefixLength: 16,
+      },
+      setIp('pc1', '10.5.0.10'),
+      setIp('pc2', '10.5.2.11'),
+      setIp('pc3', '10.5.7.12'),
+    ]);
+    const healthy = await gradeOffice([], wide);
+    expect(Object.values(healthy).every((entry) => entry.code === 'ok')).toBe(true);
+    const results = await gradeOffice([setIp('pc2', '10.6.2.11')], wide);
+    expect(results.pc2?.evidence).toMatchObject({
+      diagnosis: 'wrong-network',
+      relatedNodeIds: ['pc2'],
+    });
+  });
+});
+
 // --- The three worked examples of the plan ----------------------------------
 
 // TC-430
@@ -576,7 +841,7 @@ describe('worked example 1: the till with the wrong address (l1-host-address)', 
     // The engine reports this drop at pc2, a bystander (engineContract fact 5).
     expect(till?.evidence).toMatchObject({ nodeId: 'pc2', dropReason: 'no-route' });
     expect(till?.message.ja).not.toContain('pc2');
-    expect(till?.message.ja).toContain('アドレスの最初の部分');
+    expect(till?.message.ja).toContain('はじめの数字');
     expect(grade.results[1]?.code).toBe('ok');
   });
 

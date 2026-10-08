@@ -40,11 +40,15 @@ export const VLAN_PAIRS = [
 export const groupOf = (net: VlanNet, group: 0 | 1): VlanMember[] =>
   net.members.filter((member) => member.group === group);
 
-/** One sentence that says what a VLAN is and which group has which number. */
-export function vlanIntro(place: Place, vlans: readonly [number, number]): Localised {
+/**
+ * What a VLAN is and who is kept apart. The numbers are NOT said: they are on
+ * the diagram and in the form, and a brief that states them is solved by
+ * copying.
+ */
+export function vlanIntro(place: Place): Localised {
   const [a, b] = place.groups;
   return L(
-    `The ${a.name.en} devices and the ${b.name.en} devices share the switches, kept apart by VLANs (a VLAN is a separate network inside a switch): VLAN ${vlans[0]} for ${a.name.en}, VLAN ${vlans[1]} for ${b.name.en}.`,
-    `${a.name.ja}の機器と${b.name.ja}の機器は同じスイッチを使い、VLAN（スイッチの中を分ける仕切り）で分けてあります。${a.name.ja}が VLAN ${vlans[0]}、${b.name.ja}が VLAN ${vlans[1]} です。`,
+    `The ${a.name.en} devices and the ${b.name.en} devices share the switches, kept apart by VLANs (a VLAN is a separate network inside a switch). Every socket has a VLAN number, and only sockets with the same number can reach each other.`,
+    `${a.name.ja}の機器と${b.name.ja}の機器は同じスイッチを使い、VLAN（スイッチの中を分ける仕切り）で分けてあります。差し込み口ごとに VLAN 番号があり、同じ番号の差し込み口どうしだけが届きます。`,
   );
 }

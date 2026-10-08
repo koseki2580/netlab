@@ -64,6 +64,22 @@ export const SAME_START_RULE = (net: Net24): Localised =>
     `同じネットワークの機器は、アドレスのはじめの 3 つの数字が同じです。ここでは${startsJa(net)}です。最後の数字だけが機器ごとにちがい、同じ数字を 2 台で使うことはできません。`,
   );
 
+/**
+ * The same rule for a brief: without the numbers, so the learner reads them
+ * off the diagram instead of copying them out of the text.
+ */
+export const SAME_START_BRIEF = L(
+  'Devices on the same side have addresses with the same first three numbers. Only the last number differs from device to device.',
+  '同じ側にある機器のアドレスは、はじめの 3 つの数字が同じです。最後の数字だけが、1 台ごとにちがいます。',
+);
+
+/** What to change an address to, without naming one: any free address will do, and the form offers its own. */
+export const freeAddressOn = (net: Net24): Localised =>
+  L(
+    `one that starts with ${starts(net)} and whose last number no other device uses`,
+    `${startsJa(net)}で始まり、最後の数字がどの機器とも重ならないもの`,
+  );
+
 /** The two ends of a cable, by name. */
 export function endsOf(
   lan: LanNet,

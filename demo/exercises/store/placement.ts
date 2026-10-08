@@ -6,7 +6,7 @@
  * two exercises at each, so eight exercises at most.
  */
 
-import type { ExerciseLevel } from '../model/types';
+import type { ExerciseKind, ExerciseLevel } from '../model/types';
 
 /** Exercises per level; both must be solved to move up. */
 export const PLACEMENT_PER_LEVEL = 2;
@@ -16,7 +16,9 @@ export interface PlacementAnswer {
   readonly level: ExerciseLevel;
   /** Absent when the page did not say which template the exercise came from. */
   readonly templateId?: string;
-  /** Passed with no hint and no reveal. */
+  /** The kind of task it was; absent when the page did not say. */
+  readonly kind?: ExerciseKind;
+  /** Solved in the sense the level estimate counts (`estimate.isSolved`). */
   readonly solved: boolean;
 }
 
@@ -32,12 +34,16 @@ export interface PlacementPoolEntry {
   readonly id: string;
   readonly templateId: string;
   readonly level: ExerciseLevel;
+  /** Configure, switch, choose a design, or find and repair. */
+  readonly kind?: ExerciseKind;
 }
 
 export interface PlacementStep<T extends PlacementPoolEntry = PlacementPoolEntry> {
   readonly level: ExerciseLevel;
   /** Templates already used at this level: the second exercise must differ from the first. */
   readonly avoidTemplateIds: readonly string[];
+  /** Kinds of task already used at this level: the second exercise is of another kind where there is one. */
+  readonly avoidKinds: readonly ExerciseKind[];
   /** The pool entries that fit, in pool order. Empty when the pool has none; the page then stops. */
   readonly candidates: readonly T[];
 }
@@ -56,15 +62,24 @@ export function nextStep<T extends PlacementPoolEntry>(
   pool: readonly T[],
 ): PlacementStep<T> | null {
   if (state.done) return null;
-  const avoidTemplateIds = state.answers
-    .filter((answer) => answer.level === state.level)
-    .flatMap((answer) => (answer.templateId === undefined ? [] : [answer.templateId]));
+  const here = state.answers.filter((answer) => answer.level === state.level);
+  const avoidTemplateIds = here.flatMap((answer) =>
+    answer.templateId === undefined ? [] : [answer.templateId],
+  );
+  const avoidKinds = [...new Set(here.flatMap((answer) => answer.kind ?? []))];
+  const otherTemplate = pool.filter(
+    (entry) => entry.level === state.level && !avoidTemplateIds.includes(entry.templateId),
+  );
+  // Two templates of one family (two "set an address" tasks) measure one thing
+  // twice; another kind of task is asked wherever the level has one.
+  const otherKind = otherTemplate.filter(
+    (entry) => entry.kind !== undefined && !avoidKinds.includes(entry.kind),
+  );
   return {
     level: state.level,
     avoidTemplateIds,
-    candidates: pool.filter(
-      (entry) => entry.level === state.level && !avoidTemplateIds.includes(entry.templateId),
-    ),
+    avoidKinds,
+    candidates: avoidKinds.length > 0 && otherKind.length > 0 ? otherKind : otherTemplate,
   };
 }
 
@@ -77,12 +92,15 @@ export function recordPlacementResult(
   state: PlacementState,
   solved: boolean,
   templateId?: string,
+  kind?: ExerciseKind,
 ): PlacementState {
   if (state.done) return state;
-  const answer: PlacementAnswer =
-    templateId === undefined
-      ? { level: state.level, solved }
-      : { level: state.level, templateId, solved };
+  const answer: PlacementAnswer = {
+    level: state.level,
+    ...(templateId === undefined ? {} : { templateId }),
+    ...(kind === undefined ? {} : { kind }),
+    solved,
+  };
   const answers = [...state.answers, answer];
   const here = answers.filter((entry) => entry.level === state.level);
   if (here.length < PLACEMENT_PER_LEVEL) return { ...state, answers };

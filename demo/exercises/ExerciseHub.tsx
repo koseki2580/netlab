@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useGalleryLocale, useT } from '../localeContext';
 import { nextExerciseId } from './exerciseSource';
 import type { AttemptStore } from './store/attemptStore';
-import { EXERCISE_LEVELS, explain, levelSummary } from './store/estimate';
+import { EXERCISE_LEVELS, explain, headline, levelSummary } from './store/estimate';
 import { ExerciseShell, LEVEL_NAMES, exercisePath } from './ui/pageParts';
 import { CARD, COLUMN, LINK, MUTED, PAGE, PRIMARY, SECONDARY } from './ui/styles';
 import { StorageNotice, useExerciseStore } from './ui/useExerciseStore';
@@ -36,15 +36,10 @@ export function ExerciseHubBody({ store: injected }: { store?: AttemptStore }) {
         <section style={{ ...CARD, display: 'grid', gap: 8 }}>
           <p style={{ margin: 0 }}>
             {placed
-              ? placed.level === 0
-                ? t(
-                    'Your level check suggested starting at level 1.',
-                    'レベル判定の結果は「レベル 1 から」でした。',
-                  )
-                : t(
-                    `Your level check: you can solve level ${placed.level}.`,
-                    `レベル判定の結果は「レベル ${placed.level} まで解ける」でした。`,
-                  )
+              ? t(
+                  `Your level check suggested starting at level ${Math.max(1, placed.level)}.`,
+                  `レベル判定の結果は「レベル ${Math.max(1, placed.level)} から」でした。`,
+                )
               : t(
                   'Not sure where to start? A short check of a few exercises finds your level.',
                   'どこから始めるか迷ったら、数問のレベル判定で、合うレベルがわかります。',
@@ -62,6 +57,7 @@ export function ExerciseHubBody({ store: injected }: { store?: AttemptStore }) {
         {EXERCISE_LEVELS.map((level) => {
           const mine = state.attempts.filter((attempt) => attempt.level === level);
           const last = mine[mine.length - 1];
+          const summary = levelSummary(state.attempts, level);
           const nextId = nextExerciseId(level, {
             // Never the kind of task just done, twice in a row (as on the level's own page).
             ...(last ? { avoidTemplateIds: [last.templateId] } : {}),
@@ -78,8 +74,19 @@ export function ExerciseHubBody({ store: injected }: { store?: AttemptStore }) {
                 {t(`Level ${level}`, `レベル ${level}`)}
                 <span style={{ fontWeight: 400 }}> — {LEVEL_NAMES[level][locale]}</span>
               </h3>
-              <p data-testid={`exercises-level-status-${level}`} style={{ margin: 0 }}>
-                {explain(levelSummary(state.attempts, level), locale)}
+              {/* One short line first; the whole rule after it, smaller. */}
+              <p
+                data-testid={`exercises-level-headline-${level}`}
+                data-status={summary.status}
+                style={{ margin: 0, fontSize: 18, fontWeight: 700, lineHeight: 1.5 }}
+              >
+                {headline(summary, locale)}
+              </p>
+              <p
+                data-testid={`exercises-level-status-${level}`}
+                style={{ ...MUTED, margin: 0, fontSize: 14 }}
+              >
+                {explain(summary, locale)}
               </p>
               <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
                 {nextId ? (

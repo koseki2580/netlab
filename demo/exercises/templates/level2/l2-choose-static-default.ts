@@ -5,6 +5,7 @@
  */
 
 import { host, iface, link, router, snapshot, withNodeData } from '../shared/build';
+import { placedEvenly } from '../shared/draw';
 import { defineTemplate, goals } from '../shared/exercise';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
@@ -19,18 +20,18 @@ export const l2ChooseStaticDefault = defineTemplate(
     kind: 'choose-design',
     title: L('Choose the routes for a site with one exit', '出口が 1 つの拠点の経路を選ぶ'),
   },
-  (draw) => {
+  (draw, seed) => {
     // --- Drawn from the seed ---
     const place = drawPlace(draw);
     const plan = drawPlan(draw);
     // Three networks on the next router itself, or two of them one router further on.
     const shape = draw.pick(['star', 'two-deep']);
-    const order = draw.pick([
-      ['default', 'one-net', 'two-nets', 'default-self'],
-      ['one-net', 'default-self', 'default', 'two-nets'],
-      ['two-nets', 'default', 'default-self', 'one-net'],
-      ['default-self', 'two-nets', 'one-net', 'default'],
-    ]);
+    // The line that works stands in each of the four places equally often.
+    const order = placedEvenly(draw, seed, 6, 'default', [
+      'one-net',
+      'two-nets',
+      'default-self',
+    ] as const);
 
     // --- The network: r1 has no routes at all; everything behind it knows the way back ---
     //   star:      pc — r1 — r2 — srv, srv2, srv3
@@ -158,14 +159,14 @@ export const l2ChooseStaticDefault = defineTemplate(
         `${r2Name.ja}の向こうには${listOf(targets).ja}があり、それぞれ別のネットワークにあります。ネットワークは、これからもふえる予定です。${sites.near.device.ja}から、その全部に届かなければなりません。`,
       ),
       L(
-        `A router needs a route (a line saying "for that network, hand it to this neighbouring router") for every network that is not plugged into it. ${The(r1Name)} has none yet. How should its routes be written?`,
-        `ルータは、自分に直接つながっていないネットワークへは、経路（「このネットワークあては、となりのこのルータへ渡す」という行）がなければ送れません。${r1Name.ja}には、まだ経路が 1 つもありません。どう書きますか。`,
+        `A router needs a route (a line saying "for that network, hand it to this neighbouring router", the next router) for every network that is not plugged into it. ${The(r1Name)} has none yet. How should its routes be written?`,
+        `ルータは、自分に直接つながっていないネットワークへは、経路（「このネットワークあては、となりのこのルータに渡す」という行。渡す相手を「次のルータ」といいます）がなければ送れません。${r1Name.ja}には、まだ経路が 1 つもありません。どう書きますか。`,
       ),
       PRESS_CHECK_CHOICE,
     );
 
     // --- The options ---
-    const optionOf: Record<(typeof order)[number], DesignOption> = {
+    const optionOf: Record<'default' | 'one-net' | 'two-nets' | 'default-self', DesignOption> = {
       default: {
         id: 'default',
         label: L(
@@ -175,7 +176,7 @@ export const l2ChooseStaticDefault = defineTemplate(
         changes: [routes('r1', [{ destination: '0.0.0.0/0', nextHop: l1.b }])],
         explain: L(
           `With one exit, every unknown destination lies the same way. 0.0.0.0/0 matches every address, so this one line (a default route) covers the three networks and any added later.`,
-          `出口が 1 つなら、知らないあて先はどれも同じ方向にあります。0.0.0.0/0 はどのアドレスにも当てはまるので、この 1 行（デフォルトルート）で 3 つのネットワークにも、あとからふえる分にも届きます。`,
+          `出口が 1 つなら、知らない行き先はどれも同じ方向にあります。0.0.0.0/0 はどのアドレスにも当てはまるので、この 1 行（デフォルトルート）で 3 つのネットワークにも、あとからふえる分にも届きます。`,
         ),
       },
       'one-net': {
@@ -238,7 +239,7 @@ export const l2ChooseStaticDefault = defineTemplate(
         ),
         L(
           `A route to 0.0.0.0/0 matches every destination no other line matches. Its next router must still be the neighbour at the other end of the cable, not the router's own address.`,
-          `あて先 0.0.0.0/0 の経路は、ほかの行に当てはまらないあて先すべてに当てはまります。ただし「次のルータ」は、自分のアドレスではなく、ケーブルの向こう側のルータにします。`,
+          `行き先 0.0.0.0/0 の経路は、ほかの行に当てはまらない行き先すべてに当てはまります。ただし「次のルータ」は、自分のアドレスではなく、ケーブルの向こう側のルータにします。`,
         ),
         L(
           `Choose the single line that sends 0.0.0.0/0 to ${l1.b}, the address of ${the(r2Name)}.`,

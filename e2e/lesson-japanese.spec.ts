@@ -81,23 +81,23 @@ for (const path of EXERCISE_PAGES) {
     if (path.startsWith('/exercises/do/')) {
       const X = SEL.exercises;
       await expect(page.getByTestId(X.check)).toBeVisible();
+      if ((await page.getByTestId(X.settings).count()) === 0) {
+        // A design is run, so that its explanation and the prediction's outcome are read.
+        await page.getByTestId(X.check).click();
+        await expect(page.getByTestId(X.designNeeded)).toBeVisible();
+        expect(await englishProse(page), 'no English sentence remains').toEqual([]);
+        await page.getByTestId(X.option('duplicate')).click();
+        await page.getByTestId(X.predict('reach')).click();
+      }
+      // Hints are offered only after a Check that did not pass.
+      await page.getByTestId(X.check).click();
+      await expect(page.getByTestId(X.result)).toHaveAttribute('data-passed', 'false');
       // Every hint, the offer of the answer, and then the answer itself.
       while ((await page.getByTestId(X.hint).count()) > 0) await page.getByTestId(X.hint).click();
       await expect(page.getByTestId(X.hintText(3))).toBeVisible();
       await page.getByTestId(X.giveUp).click();
       await page.getByTestId(X.giveUpYes).click();
       await expect(page.getByTestId(X.reference)).toBeVisible();
-      if ((await page.getByTestId(X.settings).count()) === 0) {
-        // A design is run, so that its explanation and the prediction's outcome are read.
-        await page.getByTestId(X.check).click();
-        await expect(page.getByTestId(X.designNeeded)).toBeVisible();
-        expect(await englishProse(page), 'no English sentence remains').toEqual([]);
-        await demoPage.goto(path);
-        await page.getByTestId(X.option('duplicate')).click();
-        await page.getByTestId(X.predict('reach')).click();
-      }
-      await page.getByTestId(X.check).click();
-      await expect(page.getByTestId(X.result)).toHaveAttribute('data-passed', 'false');
     } else {
       // The words that prove the page is the one meant, and is in Japanese.
       await expect(page.getByTestId(SEL.app.root)).toContainText(/レベル|記録/);

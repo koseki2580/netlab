@@ -13,9 +13,9 @@ import { DEV_VLAN_ID } from './devFixtures';
 import { LevelPageBody } from './LevelPage';
 import { PlacementPageBody } from './PlacementPage';
 import { ReportPageBody } from './ReportPage';
-import { EXERCISE_LEVELS, explain, levelSummary } from './store/estimate';
+import { EXERCISE_LEVELS, explain, headline, levelSummary } from './store/estimate';
 import { postSet } from './store/studyCycle';
-import { attempt, failed, solved } from './store/testSupport';
+import { attempt, failed, solved, solvedRun } from './store/testSupport';
 import { englishProse, hasJapanese, render, testStore, type Screen } from './ui/testSupport';
 
 vi.mock('./ui/ExerciseDiagram', () => ({
@@ -231,6 +231,10 @@ describe('placement', () => {
     if (level1.length > 1) expect(templateIdOf(seen[0]!)).not.toBe(templateIdOf(seen[1]!));
     expect(screen.get('placement-result').getAttribute('data-level')).toBe('0');
     expect(screen.get('placement-start').getAttribute('href')).toBe('/exercises/level/1');
+    // TC-554: the result is where to start, not a claim about what the learner can do.
+    expect(screen.get('placement-result').querySelector('h2')?.textContent).toBe(
+      'レベル 1 の問題から始めましょう',
+    );
     expect(store.getState().placement).toEqual({ level: 0, exercises: 2, completedAt: 9000 });
     expect(store.getState().attempts.map((entry) => entry.context)).toEqual([
       'placement',
@@ -288,5 +292,96 @@ describe('the report', () => {
     await screen.click('report-clear-yes');
     expect(store.getState()).toMatchObject({ attempts: [], cycles: [] });
     expect(screen.find('report-cycle-total-c1')).toBeNull();
+  });
+});
+
+// TC-551
+describe('the short line a level leads with', () => {
+  it('says in one line what is still needed, before the whole rule', () => {
+    const six = solvedRun(1, 6, 3);
+    screen = render(<ExerciseHubBody store={storeWith(six)} />);
+    const lead = screen.get('exercises-level-headline-1');
+    expect(lead.textContent).toBe('あと 1 問 とけたら、レベル 1 達成です（いま 6 問）');
+    expect(lead.textContent).toBe(headline(levelSummary(six, 1), 'ja'));
+    // The short line comes first; the rule follows it.
+    expect(
+      lead.compareDocumentPosition(screen.get('exercises-level-status-1')) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.get('exercises-level-headline-2').textContent).toBe(
+      'あと 5 問やると、判定できます',
+    );
+    screen.unmount();
+
+    screen = render(<ExerciseHubBody store={storeWith(solvedRun(1, 7, 3))} />);
+    expect(screen.get('exercises-level-headline-1').textContent).toBe('レベル 1 達成です');
+    expect(screen.get('exercises-level-headline-1').getAttribute('data-status')).toBe('cleared');
+  });
+
+  it('does not count an exercise that was only opened', () => {
+    const opened = attempt(level1[0] ?? 't', 90, 1, {
+      outcome: 'abandoned',
+      checkPresses: 0,
+      firstCheckPassed: false,
+    });
+    screen = render(<ExerciseHubBody store={storeWith([...solvedRun(1, 4, 3), opened])} />);
+    expect(screen.get('exercises-level-headline-1').textContent).toBe(
+      'あと 1 問やると、判定できます',
+    );
+  });
+});
+
+// TC-550
+describe('the words of the before/after comparison', () => {
+  const cycle = {
+    id: 'c9',
+    level: 1 as const,
+    templateIds: [level1[0] ?? 't'],
+    startedAt: 1,
+    preExerciseIds: [0, 1, 2, 3].map((seed) => `${level1[0] ?? 't'}~${seed}`),
+    lessonsOpened: [],
+  };
+  const pre = cycle.preExerciseIds.map((id) =>
+    attempt(level1[0] ?? 't', Number(id.split('~')[1]), 1, { context: 'pre', cycleId: 'c9' }),
+  );
+  const post = postSet(cycle).map((id) =>
+    attempt(level1[0] ?? 't', Number(id.split('~')[1]), 1, { context: 'post', cycleId: 'c9' }),
+  );
+  const stored = (attempts: ReturnType<typeof attempt>[]) => {
+    const store = testStore();
+    store.importJson(JSON.stringify({ version: 1, cycles: [cycle], attempts }));
+    return store;
+  };
+
+  it('after a full "before" set: the next step is the "after" set, and it is called that', () => {
+    screen = render(<LevelPageBody store={stored(pre)} />, {
+      path: '/exercises/level/1',
+      route: '/exercises/level/:level',
+    });
+    expect(screen.get('exercises-cycle-before').textContent).toBe(
+      '学ぶ前は 4 問とも解けました。レッスンのあとに、似た 4 問で確かめましょう。',
+    );
+    expect(screen.get('exercises-cycle-again').textContent).toBe('学んだあとに測る');
+  });
+
+  it('the report does not show an "after" set that has not begun as 0 of 4', () => {
+    screen = render(<ReportPageBody store={stored(pre)} />);
+    const total = screen.get('report-cycle-total-c9').textContent ?? '';
+    expect(total).toContain('学んだあと：まだ測っていません');
+    expect(total).not.toContain('4 問中 0 問');
+    expect(total).not.toContain('途中');
+  });
+
+  it('both sets solved in full: says the level may be too easy and links to the next', () => {
+    screen = render(<ReportPageBody store={stored([...pre, ...post])} />);
+    const note = screen.get('exercises-cycle-ceiling-c9');
+    expect(note.textContent).toContain('やさしすぎるかもしれません');
+    expect(note.querySelector('a')?.getAttribute('href')).toBe('/exercises/level/2');
+    screen.unmount();
+    screen = render(<LevelPageBody store={stored([...pre, ...post])} />, {
+      path: '/exercises/level/1',
+      route: '/exercises/level/:level',
+    });
+    expect(screen.find('exercises-cycle-ceiling-c9')).not.toBeNull();
   });
 });

@@ -12,6 +12,7 @@
 import { buildLan, withNodeData } from '../shared/build';
 import { defineTemplate, goals } from '../shared/exercise';
 import { addressOf, setIp, starts, startsJa } from '../shared/lan';
+import { placedEvenly } from '../shared/draw';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
 import { L, PRESS_CHECK_CHOICE, say, the, The } from '../shared/text';
@@ -24,7 +25,7 @@ export const l1ChooseAddress = defineTemplate(
     kind: 'choose-design',
     title: L('Choose an address for a device', '機器のアドレスを選ぶ'),
   },
-  (draw) => {
+  (draw, seed) => {
     // --- Drawn from the seed ---
     const place = drawPlace(draw);
     const plan = drawPlan(draw);
@@ -32,12 +33,12 @@ export const l1ChooseAddress = defineTemplate(
     const lan = buildLan(place, plan, shape);
     // The moved device takes the seat of one of the PCs.
     const moved = draw.pick(lan.faultable);
-    const order = draw.pick([
-      ['fits', 'last-number', 'duplicate', 'router'],
-      ['duplicate', 'fits', 'router', 'last-number'],
-      ['last-number', 'router', 'fits', 'duplicate'],
-      ['router', 'duplicate', 'last-number', 'fits'],
-    ]);
+    // The address that works stands in each of the four places equally often.
+    const order = placedEvenly(draw, seed, 2, 'fits', [
+      'last-number',
+      'duplicate',
+      'router',
+    ] as const);
 
     // --- The fault: the device still has the address it had where it came from ---
     // (Not "from the servers' side": a device carrying an address of the far
@@ -75,16 +76,19 @@ export const l1ChooseAddress = defineTemplate(
     const brief = say(
       opening,
       L(
-        `No device can print on it. Its address is still the one it had before, ${oldAddress}; here, addresses start with ${starts(plan.near)}.`,
-        `ところが、どの機器からも印刷できません。アドレスは前の場所で使っていた「${oldAddress}」のままです。ここでは、アドレスは${startsJa(plan.near)}で始まります。`,
+        `No device can print on it. Its address is still the one it had before, ${oldAddress}.`,
+        `ところが、どの機器からも印刷できません。アドレスは、前の場所で使っていた「${oldAddress}」のままです。`,
       ),
-      L(`Which address should ${the(dev)} get?`, `${dev.ja}のアドレスを、どれに変えますか。`),
+      L(
+        `Compare it with the addresses of the devices around it. Which address should ${the(dev)} get?`,
+        `まわりの機器のアドレスと見くらべてください。${dev.ja}のアドレスを、どれに変えますか。`,
+      ),
       PRESS_CHECK_CHOICE,
     );
 
     // --- The options ---
     const neighbourName = names[neighbour] ?? place.pcs[0];
-    const optionOf: Record<(typeof order)[number], DesignOption> = {
+    const optionOf: Record<'fits' | 'last-number' | 'duplicate' | 'router', DesignOption> = {
       fits: {
         id: 'fits',
         label: L(plan.near.at(plan.free), `「${plan.near.at(plan.free)}」にする`),

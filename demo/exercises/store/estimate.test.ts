@@ -5,7 +5,10 @@ import {
   MIN_ATTEMPTED,
   WINDOW_SIZE,
   estimatedLevel,
+  MAX_CHECKS_TO_COUNT,
   explain,
+  headline,
+  isAttempted,
   isSolved,
   levelSummary,
 } from './estimate';
@@ -43,6 +46,86 @@ describe('isSolved', () => {
   });
 });
 
+// TC-538
+describe('a solve that took more than two Checks', () => {
+  const tries = (seed: number, checkPresses: number) =>
+    attempt('t', seed, 1, { checkPresses, firstCheckPassed: checkPresses === 1 });
+
+  it('counts at one or two Checks, and not from the third on', () => {
+    expect(MAX_CHECKS_TO_COUNT).toBe(2);
+    expect(isSolved(tries(0, 1))).toBe(true);
+    expect(isSolved(tries(1, 2))).toBe(true);
+    expect(isSolved(tries(2, 3))).toBe(false);
+    expect(isSolved(tries(3, 4))).toBe(false);
+  });
+
+  it('is counted apart from solved and from solved with a hint, and never as not solved', () => {
+    const summary = levelSummary([tries(0, 1), tries(1, 4), helped('t', 2, 1)], 1);
+    expect(summary).toMatchObject({
+      counted: 3,
+      solved: 1,
+      solvedWithHelp: 1,
+      solvedAfterTries: 1,
+      notSolved: 0,
+    });
+    expect(summary.weakestTemplateId).toBeNull();
+  });
+
+  it('does not clear a level: ten exercises each solved on the fourth Check', () => {
+    const attempts = Array.from({ length: 10 }, (_, i) =>
+      attempt(`l1-t${i % 4}`, i, 1, { checkPresses: 4, firstCheckPassed: false }),
+    );
+    expect(levelSummary(attempts, 1)).toMatchObject({
+      solved: 0,
+      solvedAfterTries: 10,
+      status: 'in-progress',
+    });
+  });
+});
+
+// TC-539
+describe('an exercise that was only opened', () => {
+  const opened = (templateId: string, seed: number) =>
+    attempt(templateId, seed, 1, {
+      outcome: 'abandoned',
+      checkPresses: 0,
+      firstCheckPassed: false,
+    });
+
+  it('is an attempt once Check was pressed or the answer was shown, not before', () => {
+    expect(isAttempted(opened('a', 0))).toBe(false);
+    expect(isAttempted(failed('a', 0, 1))).toBe(true);
+    expect(
+      isAttempted(attempt('a', 0, 1, { outcome: 'gave-up', revealed: true, checkPresses: 0 })),
+    ).toBe(true);
+  });
+
+  it('is not counted in the window and is not the weakest kind', () => {
+    const attempts = [...solvedRun(1, 6, 3), opened('l1-seen', 50), opened('l1-seen', 51)];
+    expect(levelSummary(attempts, 1)).toMatchObject({
+      counted: 6,
+      solved: 6,
+      notSolved: 0,
+      weakestTemplateId: null,
+    });
+  });
+
+  it('does not hide an earlier solve of the same exercise', () => {
+    expect(levelSummary([solved('a', 0, 1), opened('a', 0)], 1)).toMatchObject({
+      counted: 1,
+      solved: 1,
+    });
+  });
+
+  it('does not push a counted exercise out of the last ten', () => {
+    const later = Array.from({ length: 10 }, (_, i) => opened('l1-seen', 100 + i));
+    expect(levelSummary([...solvedRun(1, 7, 3), ...later], 1)).toMatchObject({
+      counted: 7,
+      status: 'cleared',
+    });
+  });
+});
+
 // TC-455
 describe('levelSummary', () => {
   it('reports not-enough with nothing attempted', () => {
@@ -51,6 +134,7 @@ describe('levelSummary', () => {
       counted: 0,
       solved: 0,
       solvedWithHelp: 0,
+      solvedAfterTries: 0,
       notSolved: 0,
       solvedTemplates: 0,
       status: 'not-enough',
@@ -261,19 +345,19 @@ describe('explain', () => {
 
   it('says a level is cleared, with the numbers', () => {
     expect(explain(cleared, 'ja')).toBe(
-      '直近 10 問のうち 7 問を、ヒントなしで解けました（3 種類）。レベル 2 は達成です。',
+      '直近 10 問のうち 7 問を、ヒントなし・「たしかめる」2 回までで解けました（3 種類）。レベル 2 は達成です。',
     );
     expect(explain(cleared, 'en')).toBe(
-      'You solved 7 of your last 10 exercises without a hint, across 3 kinds of exercise. Level 2 is cleared.',
+      'You solved 7 of your last 10 exercises without a hint and within 2 Checks, across 3 kinds of exercise. Level 2 is cleared.',
     );
   });
 
   it('says how many more are needed before a level can be judged', () => {
     expect(explain(notEnough, 'ja')).toBe(
-      'レベル 2 で取り組んだのは、まだ 3 問です。あと 2 問取り組むと、判定できます。',
+      'レベル 2 で「たしかめる」まで進んだのは、まだ 3 問です。あと 2 問取り組むと、判定できます。',
     );
     expect(explain(notEnough, 'en')).toBe(
-      'You have tried 3 exercises at level 2 so far. Try 2 more and this level can be judged.',
+      'You have pressed Check on 3 exercises at level 2 so far. Try 2 more and this level can be judged.',
     );
     expect(explain(none, 'ja')).toContain('あと 5 問');
     expect(explain(none, 'en')).toContain('Try 5 more');
@@ -281,17 +365,17 @@ describe('explain', () => {
 
   it('says what an unfinished level still needs', () => {
     expect(explain(inProgress, 'ja')).toBe(
-      '直近 6 問のうち、ヒントなしで解けたのは 4 問（2 種類）です。ヒントを使って解けた 1 問は数えていません。レベル 2 は、直近 10 問のうち 7 問を、3 種類以上にわたってヒントなしで解けると達成です。',
+      '直近 6 問のうち、ヒントなし・「たしかめる」2 回までで解けたのは 4 問（2 種類）です。ヒントを使って解けた 1 問は数えていません。レベル 2 は、直近 10 問のうち 7 問を、3 種類以上にわたって、ヒントなし・「たしかめる」2 回までで解けると達成です。',
     );
     expect(explain(inProgress, 'en')).toBe(
-      'You solved 4 of your last 6 exercises without a hint, across 2 kinds of exercise. The 1 you solved with a hint is not counted. Level 2 is cleared at 7 of the last 10, across at least 3 kinds.',
+      'You solved 4 of your last 6 exercises without a hint and within 2 Checks, across 2 kinds of exercise. The 1 you solved with a hint is not counted. Level 2 is cleared at 7 of the last 10 solved that way, across at least 3 kinds.',
     );
   });
 
   it('uses the singular in English for one', () => {
     const one = levelSummary([solved('a', 0, 1)], 1);
     expect(explain(one, 'en')).toBe(
-      'You have tried 1 exercise at level 1 so far. Try 4 more and this level can be judged.',
+      'You have pressed Check on 1 exercise at level 1 so far. Try 4 more and this level can be judged.',
     );
   });
 
@@ -301,5 +385,58 @@ describe('explain', () => {
       expect(explain(summary, 'en')).not.toMatch(JAPANESE);
       expect(explain(summary, 'ja')).toMatch(JAPANESE);
     }
+  });
+});
+
+// TC-540
+describe('the sentences for a solve after several tries, and the short line', () => {
+  const tried = levelSummary(
+    [
+      ...solvedRun(2, 4, 2),
+      attempt('h', 40, 2, { checkPresses: 4, firstCheckPassed: false }),
+      attempt('h', 41, 2, { checkPresses: 3, firstCheckPassed: false }),
+      helped('h', 42, 2),
+    ],
+    2,
+  );
+
+  it('says the solves after several tries are not counted', () => {
+    expect(explain(tried, 'ja')).toContain(
+      'ヒントを使って解けた 1 問と、何度かためして解けた 2 問は数えていません。',
+    );
+    expect(explain(tried, 'en')).toContain(
+      'The 1 you solved with a hint and the 2 you solved after several tries are not counted.',
+    );
+  });
+
+  it('leads with how many more are needed to clear', () => {
+    expect(headline(tried, 'ja')).toBe('あと 3 問 とけたら、レベル 2 達成です（いま 4 問）');
+    expect(headline(tried, 'en')).toBe('Solve 3 more to clear level 2 (4 so far)');
+  });
+
+  it('says a cleared level in one short line', () => {
+    const cleared = levelSummary(solvedRun(1, 7, 3), 1);
+    expect(headline(cleared, 'ja')).toBe('レベル 1 達成です');
+    expect(headline(cleared, 'en')).toBe('Level 1 cleared');
+  });
+
+  it('says how many more to try before there is a verdict', () => {
+    expect(headline(levelSummary(solvedRun(1, 2, 2), 1), 'ja')).toBe(
+      'あと 3 問やると、判定できます',
+    );
+    expect(headline(levelSummary([], 1), 'en')).toBe('Do 5 more and this level can be judged');
+    expect(headline(levelSummary(solvedRun(1, 4, 2), 1), 'en')).toBe(
+      'Do 1 more and this level can be judged',
+    );
+  });
+
+  it('asks for other kinds when seven are solved from too few kinds', () => {
+    const narrow = levelSummary(solvedRun(2, 8, 2), 2);
+    expect(headline(narrow, 'ja')).toBe(
+      'ちがう種類の問題が あと 1 種類 とけたら、レベル 2 達成です（いま 2 種類）',
+    );
+    expect(headline(narrow, 'en')).toBe(
+      'Solve 1 more kind of exercise to clear level 2 (2 kinds so far)',
+    );
   });
 });

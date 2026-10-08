@@ -1,10 +1,11 @@
-import { useState, type CSSProperties, type RefObject } from 'react';
+import { Fragment, useState, type CSSProperties, type RefObject } from 'react';
 import { Link } from 'react-router-dom';
 import { useGalleryLocale, useT } from '../../localeContext';
 import type { CheckResult, DesignOption, Exercise, GradeResult } from '../model/types';
 import type { AttemptPrediction } from '../store/types';
 import { changeSentence, goalLabel } from './describe';
 import { lessonTitle } from './lessonTitle';
+import { MAX_CHECKS_TO_COUNT } from '../store/estimate';
 import { CARD, LINK, MUTED, SECONDARY } from './styles';
 
 /** The small pieces of the exercise page. `ExerciseRunner` holds the state and puts them together. */
@@ -86,12 +87,21 @@ export function ExerciseBrief({
 
 // --- Results -----------------------------------------------------------------
 
+/** How a pass is recorded: without help, with a hint, after several tries, or not at all (the answer was shown). */
+export type Counted = 'solved' | 'helped' | 'tries' | 'not-counted';
+
+/**
+ * What Check found. After a miss it is kept short on purpose: one line, the
+ * first goal not met with the grader's reason, and nothing else, so the
+ * settings stay on screen under it. The other goals are one press away.
+ */
 export function ResultPanel({
   exercise,
   grade,
   stale,
   busy,
   counted,
+  failedChecks,
   doneSentence,
   onReplay,
   panelRef,
@@ -101,8 +111,9 @@ export function ResultPanel({
   /** The settings changed since this grade. */
   stale: boolean;
   busy: boolean;
-  /** How the pass is recorded: without help, with a hint, or not at all (the answer was shown). */
-  counted: 'solved' | 'helped' | 'not-counted';
+  counted: Counted;
+  /** Checks so far that did not pass. */
+  failedChecks: number;
   /** What the learner did, said back to them on a pass. */
   doneSentence: string;
   onReplay: (result: CheckResult) => void;
@@ -110,11 +121,15 @@ export function ResultPanel({
 }) {
   const locale = useGalleryLocale();
   const t = useT();
+  const [showAll, setShowAll] = useState(false);
   // Failed goals first: they are what the learner has to read.
   const ordered = grade
     ? [...grade.results].sort((a, b) => Number(a.passed) - Number(b.passed))
     : [];
   const notYet = ordered.filter((result) => !result.passed).length;
+  // After a miss: the first goal not met. The rest wait behind one button.
+  const shown = grade && !grade.passed && !showAll ? ordered.slice(0, 1) : ordered;
+  const hidden = ordered.length - shown.length;
   return (
     <div
       ref={panelRef}
@@ -124,15 +139,16 @@ export function ResultPanel({
       data-testid="exercise-result"
       data-passed={grade ? String(grade.passed) : undefined}
       data-stale={stale ? '' : undefined}
-      style={{ outline: 'none', scrollMarginBottom: 80, scrollMarginTop: 12 }}
+      style={{ outline: 'none', scrollMarginBottom: 80, scrollMarginTop: 8 }}
     >
       {busy ? <p style={{ margin: 0 }}>{t('Checking…', 'たしかめています…')}</p> : null}
       {grade && !busy ? (
         <div
           style={{
             ...CARD,
+            padding: 12,
             display: 'grid',
-            gap: 10,
+            gap: 8,
             borderWidth: 2,
             borderColor: grade.passed
               ? 'var(--netlab-accent-green)'
@@ -140,12 +156,15 @@ export function ResultPanel({
             opacity: stale ? 0.75 : 1,
           }}
         >
-          <h3 data-testid="exercise-result-summary" style={{ margin: 0, fontSize: 18 }}>
+          <h3
+            data-testid="exercise-result-summary"
+            style={{ margin: 0, fontSize: 17, lineHeight: 1.4 }}
+          >
             {grade.passed
               ? t('✓ It works!', '✓ できました！')
               : t(
                   `Not there yet: ${notYet} of ${ordered.length} ${ordered.length === 1 ? 'goal' : 'goals'} to go.`,
-                  `もう少しです。目標 ${ordered.length} 個のうち、あと ${notYet} 個です。`,
+                  `もう少しです。目標 ${ordered.length} 個のうち、あと ${notYet} 個。`,
                 )}
           </h3>
           {stale ? (
@@ -157,23 +176,28 @@ export function ResultPanel({
             </p>
           ) : null}
           {grade.passed ? (
-            <p data-testid="exercise-result-done" style={{ margin: 0 }}>
+            <p data-testid="exercise-result-done" data-counted={counted} style={{ margin: 0 }}>
               {doneSentence}{' '}
               {counted === 'helped'
                 ? t(
                     'Recorded as “solved with help”, because you opened a hint.',
                     'ヒントを見たので、「ヒントを使って解けた」として記録しました。',
                   )
-                : counted === 'not-counted'
+                : counted === 'tries'
                   ? t(
-                      'This one is not counted as solved, because the answer was shown.',
-                      '答えを見たあとなので、この問題は「解けた」には数えません。',
+                      `Recorded as “solved after several tries”, because it took more than ${MAX_CHECKS_TO_COUNT} Checks.`,
+                      `「たしかめる」を ${MAX_CHECKS_TO_COUNT + 1} 回以上押したので、「何度かためして解けた」として記録しました。`,
                     )
-                  : ''}
+                  : counted === 'not-counted'
+                    ? t(
+                        'This one is not counted as solved, because the answer was shown.',
+                        '答えを見たあとなので、この問題は「解けた」には数えません。',
+                      )
+                    : ''}
             </p>
           ) : null}
           <ul style={LIST}>
-            {ordered.map((result) => {
+            {shown.map((result) => {
               const check = exercise.checks.find((entry) => entry.id === result.checkId);
               return (
                 <li
@@ -207,6 +231,37 @@ export function ResultPanel({
               );
             })}
           </ul>
+          {hidden > 0 ? (
+            <div>
+              <button
+                type="button"
+                data-testid="exercise-result-more"
+                onClick={() => setShowAll(true)}
+                style={{
+                  ...LINK,
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  minHeight: 44,
+                  cursor: 'pointer',
+                  fontSize: 14,
+                }}
+              >
+                {t(
+                  `Show the other ${hidden} ${hidden === 1 ? 'goal' : 'goals'}`,
+                  `ほかの目標 ${hidden} 個も見る`,
+                )}
+              </button>
+            </div>
+          ) : null}
+          {!grade.passed && failedChecks >= MAX_CHECKS_TO_COUNT ? (
+            <p data-testid="exercise-tries-note" style={{ ...MUTED, margin: 0, fontSize: 14 }}>
+              {t(
+                `From the next Check on, a pass is recorded as “solved after several tries”.`,
+                `次の「たしかめる」からは、解けても「何度かためして解けた」として記録されます。`,
+              )}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -215,60 +270,85 @@ export function ResultPanel({
 
 // --- Hints -------------------------------------------------------------------
 
-export function HintBox({
+/** The hints opened so far. The button that opens the next one sits beside Check (`HintButton`). */
+export function HintTexts({
   exercise,
   shownTier,
-  onReveal,
 }: {
   exercise: Exercise;
   /** The highest tier opened so far; 0 when none. */
   shownTier: 0 | 1 | 2 | 3;
-  onReveal: (tier: 1 | 2 | 3) => void;
 }) {
   const locale = useGalleryLocale();
   const t = useT();
-  const hints = [...exercise.hints].sort((a, b) => a.tier - b.tier);
-  const next = hints.find((hint) => hint.tier > shownTier);
-  if (hints.length === 0) return null;
+  const shown = [...exercise.hints]
+    .sort((a, b) => a.tier - b.tier)
+    .filter((hint) => hint.tier <= shownTier);
+  if (shown.length === 0) return null;
   return (
-    <section style={{ display: 'grid', gap: 8 }}>
-      {hints
-        .filter((hint) => hint.tier <= shownTier)
-        .map((hint) => (
-          <p
-            key={hint.tier}
-            data-testid={`exercise-hint-${hint.tier}`}
-            style={{ ...CARD, margin: 0, padding: 12 }}
-          >
-            <strong>{t(`Hint ${hint.tier}: `, `ヒント ${hint.tier}：`)}</strong>
-            {hint.text[locale]}
-          </p>
-        ))}
-      {next ? (
-        <div style={{ display: 'grid', gap: 4 }}>
-          <div>
-            <button
-              type="button"
-              data-testid="exercise-hint"
-              onClick={() => onReveal(next.tier)}
-              style={SECONDARY}
-            >
-              {shownTier === 0
-                ? t('Show a hint', 'ヒントを見る')
-                : t('Show the next hint', '次のヒントを見る')}
-            </button>
-          </div>
-          {shownTier === 0 ? (
-            <p data-testid="exercise-hint-cost" style={{ ...MUTED, margin: 0, fontSize: 14 }}>
-              {t(
-                'If you open a hint, this exercise is recorded as “solved with help”.',
-                'ヒントを見ると、この問題は「ヒントを使って解けた」として記録されます。',
-              )}
-            </p>
-          ) : null}
-        </div>
-      ) : null}
+    <section data-testid="exercise-hints" style={{ display: 'grid', gap: 8 }}>
+      {shown.map((hint) => (
+        <p
+          key={hint.tier}
+          data-testid={`exercise-hint-${hint.tier}`}
+          style={{ ...CARD, margin: 0, padding: 12, scrollMarginBottom: 96, scrollMarginTop: 8 }}
+        >
+          <strong>{t(`Hint ${hint.tier}: `, `ヒント ${hint.tier}：`)}</strong>
+          {hint.text[locale]}
+        </p>
+      ))}
     </section>
+  );
+}
+
+/** The next hint of the exercise after `shownTier`, or undefined when all are open. */
+export function nextHintTier(exercise: Exercise, shownTier: 0 | 1 | 2 | 3): 1 | 2 | 3 | undefined {
+  return [...exercise.hints].sort((a, b) => a.tier - b.tier).find((hint) => hint.tier > shownTier)
+    ?.tier;
+}
+
+/**
+ * Opens the next hint. It stands beside Check, and only once a Check has
+ * missed: under the fold nobody found it, and before a first try a hint is not
+ * what the page should offer.
+ */
+export function HintButton({
+  shownTier,
+  onReveal,
+  next,
+}: {
+  shownTier: 0 | 1 | 2 | 3;
+  next: 1 | 2 | 3;
+  onReveal: (tier: 1 | 2 | 3) => void;
+}) {
+  const t = useT();
+  return (
+    <button
+      type="button"
+      data-testid="exercise-hint"
+      aria-describedby={shownTier === 0 ? 'exercise-hint-cost' : undefined}
+      onClick={() => onReveal(next)}
+      style={{ ...SECONDARY, minHeight: 48, fontSize: 16 }}
+    >
+      {shownTier === 0 ? t('Show a hint', 'ヒントを見る') : t('Next hint', '次のヒント')}
+    </button>
+  );
+}
+
+/** Said before the first hint is opened: what opening one costs. */
+export function HintCost() {
+  const t = useT();
+  return (
+    <p
+      id="exercise-hint-cost"
+      data-testid="exercise-hint-cost"
+      style={{ ...MUTED, margin: 0, fontSize: 13, lineHeight: 1.4, flexBasis: '100%' }}
+    >
+      {t(
+        'If you open a hint, this exercise is recorded as “solved with help”.',
+        'ヒントを見ると、この問題は「ヒントを使って解けた」として記録されます。',
+      )}
+    </p>
   );
 }
 
@@ -397,14 +477,17 @@ const BIG_CHOICE: CSSProperties = {
 };
 
 /**
- * The designs to choose from, then the prediction. Nothing runs here: the
- * learner picks, says what they expect, and presses Check.
+ * The designs to choose from, with the prediction asked directly under the one
+ * chosen. Nothing runs here: the learner picks, says what they expect, and
+ * presses Check. The prediction stays when another design is picked.
  */
 export function DesignChooser({
   options,
   chosenId,
   predicted,
   disabled,
+  needs,
+  needsRef,
   onChoose,
   onPredict,
 }: {
@@ -412,6 +495,9 @@ export function DesignChooser({
   chosenId: string | null;
   predicted: Predicted | null;
   disabled: boolean;
+  /** Check was pressed too early: what is still missing, said where it is asked. */
+  needs: 'choice' | 'prediction' | null;
+  needsRef: RefObject<HTMLParagraphElement>;
   onChoose: (option: DesignOption) => void;
   onPredict: (predicted: Predicted) => void;
 }) {
@@ -423,64 +509,105 @@ export function DesignChooser({
     ['detour', t('It arrives, but the long way round', '届くが、遠回りになる')],
   ];
   const mark = (on: boolean) => (on ? <span aria-hidden="true">✓ </span> : null);
+  const needed = (text: string) => (
+    <p
+      ref={needsRef}
+      data-testid="exercise-design-needed"
+      data-needs={needs ?? undefined}
+      role="alert"
+      style={{
+        margin: 0,
+        fontWeight: 700,
+        color: 'var(--netlab-accent-orange)',
+        scrollMarginBottom: 200,
+        scrollMarginTop: 60,
+      }}
+    >
+      <span aria-hidden="true">☞ </span>
+      {text}
+    </p>
+  );
   return (
     <section style={{ display: 'grid', gap: 10 }}>
       <h3 style={{ margin: 0, fontSize: 16 }}>{t('1. Pick one', '1. 1 つ選ぶ')}</h3>
+      {needs === 'choice'
+        ? needed(t('First pick one of these.', 'まず、この中から 1 つ選んでください。'))
+        : null}
       <div role="group" aria-label={t('Choices', '選べるもの')} style={{ display: 'grid', gap: 8 }}>
         {options.map((option) => {
           const chosen = option.id === chosenId;
           return (
-            <button
-              key={option.id}
-              type="button"
-              data-testid={`exercise-option-${option.id}`}
-              aria-pressed={chosen}
-              disabled={disabled}
-              onClick={() => onChoose(option)}
-              style={{
-                ...BIG_CHOICE,
-                borderColor: chosen ? 'var(--netlab-accent-cyan)' : 'var(--netlab-border)',
-              }}
-            >
-              {mark(chosen)}
-              {option.label[locale]}
-            </button>
+            <Fragment key={option.id}>
+              <button
+                type="button"
+                data-testid={`exercise-option-${option.id}`}
+                aria-pressed={chosen}
+                disabled={disabled}
+                onClick={() => onChoose(option)}
+                style={{
+                  ...BIG_CHOICE,
+                  borderColor: chosen ? 'var(--netlab-accent-cyan)' : 'var(--netlab-border)',
+                }}
+              >
+                {mark(chosen)}
+                {option.label[locale]}
+              </button>
+              {chosen ? (
+                <div
+                  data-testid="exercise-predict"
+                  style={{
+                    display: 'grid',
+                    gap: 8,
+                    marginLeft: 12,
+                    paddingLeft: 12,
+                    borderLeft: '3px solid var(--netlab-accent-cyan)',
+                  }}
+                >
+                  <h3 style={{ margin: 0, fontSize: 16 }}>
+                    {t('2. What do you expect to happen?', '2. どうなると思いますか？')}
+                  </h3>
+                  {needs === 'prediction'
+                    ? needed(
+                        t(
+                          'One more thing first: choose what you expect here, then press Check.',
+                          'その前に、ここで予想を 1 つ選んでから「たしかめる」を押してください。',
+                        ),
+                      )
+                    : null}
+                  <div
+                    role="group"
+                    aria-label={t('Your prediction', 'あなたの予想')}
+                    style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}
+                  >
+                    {predictions.map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        data-testid={`exercise-predict-${value}`}
+                        aria-pressed={predicted === value}
+                        disabled={disabled}
+                        onClick={() => onPredict(value)}
+                        style={{
+                          ...SECONDARY,
+                          borderWidth: 2,
+                          fontSize: 16,
+                          borderColor:
+                            predicted === value
+                              ? 'var(--netlab-accent-cyan)'
+                              : 'var(--netlab-border)',
+                        }}
+                      >
+                        {mark(predicted === value)}
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </Fragment>
           );
         })}
       </div>
-      {chosenId !== null ? (
-        <div data-testid="exercise-predict" style={{ display: 'grid', gap: 8 }}>
-          <h3 style={{ margin: 0, fontSize: 16 }}>
-            {t('2. What do you expect to happen?', '2. どうなると思いますか？')}
-          </h3>
-          <div
-            role="group"
-            aria-label={t('Your prediction', 'あなたの予想')}
-            style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}
-          >
-            {predictions.map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                data-testid={`exercise-predict-${value}`}
-                aria-pressed={predicted === value}
-                disabled={disabled}
-                onClick={() => onPredict(value)}
-                style={{
-                  ...SECONDARY,
-                  borderWidth: 2,
-                  fontSize: 16,
-                  borderColor:
-                    predicted === value ? 'var(--netlab-accent-cyan)' : 'var(--netlab-border)',
-                }}
-              >
-                {mark(predicted === value)}
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
     </section>
   );
 }

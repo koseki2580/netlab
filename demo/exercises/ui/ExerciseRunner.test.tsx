@@ -90,7 +90,11 @@ describe('a configure exercise (the till)', () => {
     const till = screen.get('exercise-result-till');
     expect(till.getAttribute('data-passed')).toBe('false');
     expect(till.textContent).toContain('まだ');
-    expect(till.textContent).toContain('アドレスの最初の部分');
+    // The grader's reason follows the goal's name.
+    expect(till.querySelector('p')?.textContent ?? '').toMatch(/[぀-ヿ一-龯]/);
+    // After a miss only the first goal not met is listed; the rest are one press away.
+    expect(screen.find('exercise-result-other-pc')).toBeNull();
+    await screen.click('exercise-result-more');
     expect(screen.get('exercise-result-other-pc').getAttribute('data-passed')).toBe('true');
     // The goal not met is read first.
     expect(result.querySelector('li')?.getAttribute('data-testid')).toBe('exercise-result-till');
@@ -142,6 +146,11 @@ describe('a configure exercise (the till)', () => {
   // TC-483
   it('hints open one at a time, say what they cost first, and a pass after one is "solved with help"', async () => {
     const { screen, only } = run(DEV_TILL_ID);
+    // TC-545: no hint is offered before a first try; a Check that misses puts the button beside Check.
+    expect(screen.find('exercise-hint')).toBeNull();
+    expect(screen.find('exercise-hint-cost')).toBeNull();
+    await check(screen);
+    expect(screen.get('exercise-actions').contains(screen.get('exercise-hint'))).toBe(true);
     expect(screen.get('exercise-hint-cost').textContent).toContain('ヒントを使って解けた');
     expect(screen.find('exercise-hint-1')).toBeNull();
     await screen.click('exercise-hint');
@@ -234,11 +243,16 @@ describe('a choose-a-design exercise', () => {
     expect(screen.find('exercise-settings')).toBeNull();
     expect(screen.find('exercise-predict')).toBeNull();
     await screen.click('exercise-check');
-    expect(screen.get('exercise-design-needed').textContent).toContain('1 つ選び');
+    expect(screen.get('exercise-design-needed').getAttribute('data-needs')).toBe('choice');
+    expect(screen.get('exercise-design-needed').textContent).toContain('1 つ選んで');
     await screen.click('exercise-option-equal');
     expect(screen.find('exercise-predict')).not.toBeNull();
     await screen.click('exercise-check');
-    expect(screen.get('exercise-design-needed').textContent).toContain('2 番');
+    // TC-548: what is missing is said where it is asked, inside the prediction block.
+    expect(screen.get('exercise-design-needed').getAttribute('data-needs')).toBe('prediction');
+    expect(screen.get('exercise-predict').contains(screen.get('exercise-design-needed'))).toBe(
+      true,
+    );
     expect(only()).toMatchObject({ checkPresses: 0 });
     expect(only().prediction).toBeUndefined();
   });
@@ -282,5 +296,53 @@ describe('a choose-a-design exercise', () => {
       predicted: 'detour',
       correct: true,
     });
+  });
+});
+
+// TC-538
+describe('how a pass is counted by the number of Checks', () => {
+  it('the second Check still counts; from the third on it is "solved after several tries"', async () => {
+    const two = run(DEV_TILL_ID);
+    await check(two.screen);
+    expect(two.screen.find('exercise-tries-note')).toBeNull();
+    await two.screen.enter(TILL_INPUT, '192.168.1.50');
+    await check(two.screen);
+    expect(two.screen.get('exercise-result-done').getAttribute('data-counted')).toBe('solved');
+    expect(isSolved(two.only())).toBe(true);
+    two.screen.unmount();
+
+    const three = run(DEV_TILL_ID);
+    await check(three.screen);
+    await three.screen.enter(TILL_INPUT, '192.168.9.9');
+    await check(three.screen);
+    // Said before the press that will not count, not after.
+    expect(three.screen.get('exercise-tries-note').textContent).toContain('何度かためして解けた');
+    await three.screen.enter(TILL_INPUT, '192.168.1.50');
+    await check(three.screen);
+    const done = three.screen.get('exercise-result-done');
+    expect(done.getAttribute('data-counted')).toBe('tries');
+    expect(done.textContent).toContain('何度かためして解けた');
+    expect(three.only()).toMatchObject({ outcome: 'passed', checkPresses: 3, hintsUsed: 0 });
+    expect(isSolved(three.only())).toBe(false);
+  });
+});
+
+// TC-548
+describe('the prediction of a choose-a-design exercise', () => {
+  it('is asked directly under the design chosen, and stays when another is chosen', async () => {
+    const { screen } = run(DEV_DESIGN_ID);
+    await screen.click('exercise-option-equal');
+    const chosen = screen.get('exercise-option-equal');
+    expect(chosen.nextElementSibling).toBe(screen.get('exercise-predict'));
+    await screen.click('exercise-predict-detour');
+    const other = [
+      ...screen.container.querySelectorAll<HTMLElement>('[data-testid^="exercise-option-"]'),
+    ]
+      .map((element) => element.getAttribute('data-testid') ?? '')
+      .find((id) => id !== 'exercise-option-equal' && id !== 'exercise-option-explain');
+    if (!other) throw new Error('the design fixture has one option only');
+    await screen.click(other);
+    expect(screen.get(other).nextElementSibling).toBe(screen.get('exercise-predict'));
+    expect(screen.get('exercise-predict-detour').getAttribute('aria-pressed')).toBe('true');
   });
 });

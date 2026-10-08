@@ -11,7 +11,7 @@ import type { DemoPage } from './pages/DemoPage';
 import { SEL } from './selectors';
 
 /**
- * TC-513 to TC-524, TC-532 to TC-535 and TC-537 — hands-on exercises, as a learner meets them: from the
+ * TC-513 to TC-524, TC-532 to TC-535, TC-537 to TC-539, TC-543, TC-545 and TC-546 — hands-on exercises, as a learner meets them: from the
  * gallery to a level, one exercise from brief to pass, the ways out (hints,
  * the answer), a switch exercise and a choose-a-design exercise, the record
  * surviving a reload, both languages, placement and export.
@@ -173,8 +173,17 @@ test.describe('in Japanese', () => {
       await expect(page.getByTestId(X.goal(goal.id))).toHaveAttribute('data-mark', 'neutral');
     }
 
+    // No hint is offered before a first try (TC-545).
+    await expect(page.getByTestId(X.hint)).toHaveCount(0);
+
     // The network as it was handed over does not work, and the page says which goal and why.
     await check(page, false);
+    // TC-545 — without scrolling: the one-line summary, the goal not met, the
+    // setting to change, and the hint button beside Check.
+    await expect(page.getByTestId(X.resultSummary)).toBeInViewport({ ratio: 1 });
+    await expect(page.getByTestId(X.resultGoal(failing))).toBeInViewport({ ratio: 1 });
+    await expect(page.getByTestId(X.chip(0))).toBeInViewport({ ratio: 1 });
+    await expect(page.getByTestId(X.actions).getByTestId(X.hint)).toBeInViewport({ ratio: 1 });
     await expect(page.getByTestId(X.goal(failing))).toHaveAttribute('data-mark', 'not-yet');
     const missed = page.getByTestId(X.resultGoal(failing));
     await expect(missed).toHaveAttribute('data-passed', 'false');
@@ -191,12 +200,15 @@ test.describe('in Japanese', () => {
     await expect(page.getByTestId(X.resultStale)).toBeVisible();
     await check(page, false);
     await expect(page.getByTestId(X.next)).toHaveCount(0);
+    // Two Checks have missed: the page says, before the press, that the next one counts differently.
+    await expect(page.getByTestId(X.triesNote)).toContainText('何度かためして解けた');
 
     await page.getByTestId(X.chip(right)).click();
     await check(page, true);
     await expect(page.getByTestId(X.resultSummary)).toContainText('できました');
-    // What the learner did is said back, with no note about help.
-    await expect(page.getByTestId(X.resultDone)).not.toContainText('ヒント');
+    // TC-538 — the third Check passes, and it is recorded as a pass after several tries.
+    await expect(page.getByTestId(X.resultDone)).toHaveAttribute('data-counted', 'tries');
+    await expect(page.getByTestId(X.resultDone)).toContainText('何度かためして解けた');
     await expect(page.getByTestId(X.resultDone)).not.toContainText('答え');
     for (const goal of checks) {
       await expect(page.getByTestId(X.goal(goal.id))).toHaveAttribute('data-mark', 'done');
@@ -207,9 +219,57 @@ test.describe('in Japanese', () => {
     // The hub counts it, in the sentence it shows under the level.
     await demoPage.goto('/exercises');
     await expect(page.getByTestId(X.levelStatus(1))).toContainText('まだ 1 問');
+    await expect(page.getByTestId(X.levelHeadline(1))).toHaveText('あと 4 問やると、判定できます');
     await demoPage.goto('/exercises/level/1');
-    await expect(page.getByTestId(X.kind('l1-host-address'))).toHaveAttribute('data-solved', '1');
-    await expect(page.getByTestId(X.recent)).toContainText('解けた');
+    // Tried, and not among the exercises that count towards the level.
+    await expect(page.getByTestId(X.kind('l1-host-address'))).toHaveAttribute('data-solved', '0');
+    await expect(page.getByTestId(X.recent)).toContainText('何度かためして解けた');
+  });
+
+  /**
+   * TC-546 — the diagram does not open the simulator's expert panels: a press
+   * on a device shows nothing new, and a press on the unplugged cable plugs it
+   * in, with the cable's card marked.
+   */
+  test('pressing the diagram opens no detail panel, and pressing the cable switches it', async ({
+    page,
+    demoPage,
+  }) => {
+    const CABLE = 'l1-cable-off~0';
+    const { reference, start, nodeLabels } = exercise(CABLE);
+    const [fix] = reference;
+    if (fix?.kind !== 'link-state') throw new Error('the pinned cable exercise changed');
+    const edge = start.edges.find((candidate) => candidate.id === fix.edgeId);
+    if (!edge) throw new Error('the cable is not in the network');
+    await open(page, demoPage, CABLE);
+
+    const nodes = page.getByTestId(X.diagram).getByTestId(SEL.canvas.node);
+    await expect(nodes.last()).toBeVisible();
+    const names = (await nodes.allInnerTexts()).map((name) => name.replace(/\s+/g, ''));
+    const centre = async (nodeId: string) => {
+      const label = (nodeLabels?.[nodeId]?.ja ?? '').replace(/\s+/g, '');
+      const index = names.findIndex((name) => name.includes(label));
+      const shape = await nodes.nth(index).boundingBox();
+      if (index === -1 || !shape) throw new Error(`device ${nodeId} is not drawn`);
+      return { x: shape.x + shape.width / 2, y: shape.y + shape.height / 2 };
+    };
+    const from = await centre(edge.source);
+    const to = await centre(edge.target);
+
+    await page.mouse.click(from.x, from.y);
+    await page.waitForTimeout(300);
+    await expect(page.getByTestId(SEL.nodeDetail.closePanel)).toHaveCount(0);
+
+    const toggle = page.getByTestId(`${settingTestId(refOf(fix))}-toggle`);
+    await expect(toggle).toHaveAttribute('aria-checked', 'false');
+    await expect(toggle).toContainText('ぬけています');
+    await expect(toggle).toContainText('押すと、つなぎます');
+    await page.mouse.click((from.x + to.x) / 2, (from.y + to.y) / 2);
+    await expect(toggle).toHaveAttribute('aria-checked', 'true');
+    await expect(toggle).toContainText('つながっています');
+    await expect(page.getByTestId(settingTestId(refOf(fix)))).toHaveAttribute('data-pointed', '');
+    await expect(page.getByTestId(SEL.nodeDetail.closePanel)).toHaveCount(0);
+    await check(page, true);
   });
 
   /**
@@ -258,6 +318,7 @@ test.describe('in Japanese', () => {
   /** TC-515 — a hint says what it costs before it is opened, and the pass is recorded as helped. */
   test('opening a hint makes the pass "solved with help"', async ({ page, demoPage }) => {
     await open(page, demoPage, HOST);
+    await check(page, false);
     await expect(page.getByTestId(X.hintCost)).toContainText('ヒントを使って解けた');
     await page.getByTestId(X.hint).click();
     await expect(page.getByTestId(X.hintText(1))).toContainText(
@@ -308,6 +369,8 @@ test.describe('in Japanese', () => {
 
     await check(page, false);
     const apart = checks.filter((goal) => goal.kind === 'must-not-reach');
+    // Only the first goal not met is listed until the learner asks for the rest.
+    await page.getByTestId(X.resultMore).click();
     for (const goal of apart) {
       await expect(page.getByTestId(X.resultGoal(goal.id))).toHaveAttribute('data-passed', 'false');
     }
@@ -357,12 +420,13 @@ test.describe('in Japanese', () => {
   test('a reload keeps the recorded attempts', async ({ page, demoPage }) => {
     await open(page, demoPage, HOST);
     await solveHost(page);
-    // A second exercise, opened and left: that is recorded too.
+    // A second exercise, opened and left: that is recorded too, but it is not
+    // an attempt for the level until Check is pressed (TC-539).
     await open(page, demoPage, 'l1-host-blank~0');
 
     await demoPage.goto('/exercises');
     const status = page.getByTestId(X.levelStatus(1));
-    await expect(status).toContainText('まだ 2 問');
+    await expect(status).toContainText('まだ 1 問');
     const before = await status.innerText();
 
     await page.reload();
@@ -392,6 +456,7 @@ test('an exercise is in one language at a time, and English names its devices in
   }
   await expect(page.getByTestId(X.panel)).not.toContainText(/[ぁ-んァ-ヶ]/);
 
+  await check(page, false);
   await page.getByTestId(X.hint).click();
   await expect(page.getByTestId(X.hintText(1))).toContainText(hints[0]?.text.en ?? '-');
   await solveHost(page);
@@ -399,7 +464,9 @@ test('an exercise is in one language at a time, and English names its devices in
   await expect(page.getByTestId(X.resultDone)).toContainText('solved with help');
 
   await demoPage.goto('/exercises');
-  await expect(page.getByTestId(X.levelStatus(1))).toContainText('You have tried 1 exercise');
+  await expect(page.getByTestId(X.levelStatus(1))).toContainText(
+    'You have pressed Check on 1 exercise',
+  );
 });
 
 test.describe('placement and the record', () => {
@@ -466,8 +533,9 @@ test.describe('placement and the record', () => {
       await page.getByTestId(X.next).click();
       await expect(page.getByTestId(X.panel)).not.toHaveAttribute('data-exercise-id', current.id);
     }
-    // Two different kinds of task, so one trick does not place a learner.
+    // Two different kinds of task, so one trick does not place a learner (TC-543).
     expect(new Set(asked.map((entry) => entry.templateId)).size).toBe(2);
+    expect(new Set(asked.map((entry) => entry.kind)).size).toBe(2);
 
     // Now level 2: left unsolved, placement stops and reports the level that was solved.
     for (let turn = 0; turn < 2; turn += 1) {
@@ -479,7 +547,11 @@ test.describe('placement and the record', () => {
       await expect(page.getByTestId(X.panel)).not.toHaveAttribute('data-exercise-id', id);
     }
     await expect(page.getByTestId(X.placementResult)).toHaveAttribute('data-level', '1');
-    await expect(page.getByTestId(X.placementStart)).toHaveText('Go to level 2');
+    // Two exercises are a first look: the learner starts at the level they managed, not past it.
+    await expect(page.getByTestId(X.placementResult)).toContainText(
+      'Start with the level 1 exercises',
+    );
+    await expect(page.getByTestId(X.placementStart)).toHaveText('Go to level 1');
   });
 
   /**
@@ -589,9 +661,12 @@ test.describe('placement and the record', () => {
     expect(new Set([...sets.before, ...sets.after]).size, 'eight different exercises').toBe(8);
     expect(kinds(sets.after)).toEqual(kinds(sets.before));
 
-    // Only the four "after" exercises count towards the level.
+    // The "before" set never counts towards the level, and the four "after"
+    // exercises were passed over without a Check, so nothing counts yet.
     await demoPage.goto('/exercises');
-    await expect(page.getByTestId(X.levelStatus(1))).toContainText('You have tried 4 exercises');
+    await expect(page.getByTestId(X.levelStatus(1))).toContainText(
+      'You have pressed Check on 0 exercises',
+    );
     await demoPage.goto('/exercises/report');
     await expect(page.getByTestId(X.reportExport)).toContainText('8 attempts');
   });
@@ -626,10 +701,14 @@ test.describe('placement and the record', () => {
     }
     // Kept for as long as the page is open…
     await demoPage.goto('/exercises');
-    await expect(page.getByTestId(X.levelStatus(1))).toContainText('You have tried 1 exercise');
+    await expect(page.getByTestId(X.levelStatus(1))).toContainText(
+      'You have pressed Check on 1 exercise',
+    );
     // …and gone with it.
     await page.reload();
-    await expect(page.getByTestId(X.levelStatus(1))).toContainText('You have tried 0 exercises');
+    await expect(page.getByTestId(X.levelStatus(1))).toContainText(
+      'You have pressed Check on 0 exercises',
+    );
   });
 
   /** TC-523 — clearing asks first, and then the record is gone. */

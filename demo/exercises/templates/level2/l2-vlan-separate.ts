@@ -1,6 +1,11 @@
 /**
  * l2-vlan-separate — two groups share the switches and every port is in one
  * VLAN, so each group sees the other. The learner splits them in two.
+ *
+ * The brief does not say which numbers to use. On one switch any two numbers
+ * work. Across two switches the numbers must be ones the link between them
+ * carries, so there the two ends of that link are in the form too: the learner
+ * reads its list (and may change it; any configuration that works passes).
  */
 
 import { buildVlan, withPort } from '../shared/build';
@@ -68,13 +73,19 @@ export const l2VlanSeparate = defineTemplate(
     const brief = say(
       opening,
       L(
-        `Right now every socket is in VLAN ${shared} (a VLAN is a separate network inside a switch), so everything reaches everything.`,
-        `いまは、どの差し込み口も VLAN ${shared} です（VLAN は、スイッチの中を分ける仕切りです）。そのため、どの機器からもどの機器にも届きます。`,
+        `A switch can be divided with VLANs (a VLAN is a separate network inside a switch): every socket has a VLAN number, and only sockets with the same number can reach each other. Right now every socket has the same number, so everything reaches everything.`,
+        `スイッチの中は、VLAN（スイッチの中を分ける仕切り）で分けられます。差し込み口ごとに VLAN 番号があり、同じ番号の差し込み口どうしだけが届きます。いまは、どの差し込み口も同じ番号なので、どの機器からもどの機器にも届きます。`,
       ),
       L(
-        `Put the ${groupA.name.en} devices (${membersA.en}) in VLAN ${vlans[0]} and the ${groupB.name.en} devices (${membersB.en}) in VLAN ${vlans[1]}. Inside a group everything must still work.`,
-        `${groupA.name.ja}の機器（${membersA.ja}）を VLAN ${vlans[0]}、${groupB.name.ja}の機器（${membersB.ja}）を VLAN ${vlans[1]} に分けてください。同じグループの中では、これまでどおり届くようにします。`,
+        `Give the ${groupA.name.en} devices (${membersA.en}) one VLAN number and the ${groupB.name.en} devices (${membersB.en}) another. Inside a group everything must still work.`,
+        `${groupA.name.ja}の機器（${membersA.ja}）と、${groupB.name.ja}の機器（${membersB.ja}）が、別々の VLAN 番号になるように分けてください。同じグループの中では、これまでどおり届くようにします。`,
       ),
+      net.trunks.length > 0
+        ? L(
+            `The cable between the two switches carries only the VLAN numbers on its list, so use numbers that are on it.`,
+            `スイッチ同士をつなぐ線は、一覧にある VLAN 番号だけを通します。その一覧にある番号を使ってください。`,
+          )
+        : null,
       PRESS_CHECK,
     );
 
@@ -89,7 +100,7 @@ export const l2VlanSeparate = defineTemplate(
       brief,
       topology,
       names: net.names,
-      allowed: net.members.map(portRef),
+      allowed: [...net.members, ...net.trunks].map(portRef),
       checks: [
         reach(a1.id, a2.id),
         reach(b1.id, b2.id),

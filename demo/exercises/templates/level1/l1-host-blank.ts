@@ -11,11 +11,11 @@ import {
   everyoneReaches,
   isFarSide,
   neighboursOf,
+  freeAddressOn,
   netOf,
+  SAME_START_BRIEF,
   SAME_START_RULE,
   setIp,
-  starts,
-  startsJa,
 } from '../shared/lan';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
@@ -97,13 +97,11 @@ export const l1HostBlank = defineTemplate(
         });
     const brief = say(
       opening,
+      L('It has no address yet.', 'この機器には、まだアドレスが入っていません。'),
+      SAME_START_BRIEF,
       L(
-        `It has no address. Addresses on its side of the network all start with ${starts(net)}.`,
-        `この機器には、まだアドレスが入っていません。こちら側のアドレスは、どれも${startsJa(net)}で始まります。`,
-      ),
-      L(
-        `Give the ${dev.en} an address that no other device is using.`,
-        `${dev.ja}に、ほかの機器と重ならないアドレスを入れてください。`,
+        `Look at the addresses of the devices next to it, and give the ${dev.en} one that no other device is using.`,
+        `となりの機器のアドレスを見て、${dev.ja}に、ほかの機器と重ならないアドレスを入れてください。`,
       ),
       PRESS_CHECK,
     );
@@ -128,8 +126,8 @@ export const l1HostBlank = defineTemplate(
         ),
         SAME_START_RULE(net),
         L(
-          `Give the ${dev.en} an address such as ${right}: it starts with ${starts(net)} and nothing else uses it.`,
-          `${dev.ja}に「${right}」のように、${startsJa(net)}で始まり、ほかの機器が使っていないアドレスを入れます。`,
+          `Give the ${dev.en} an address: ${freeAddressOn(net).en}.`,
+          `${dev.ja}のアドレスを、${freeAddressOn(net).ja}にします。`,
         ),
       ],
       lessons: ['/course', '/routing/client-server'],

@@ -12,7 +12,13 @@
  */
 
 import { FIXTURE_TEMPLATES } from './devFixtures';
-import type { Exercise, ExerciseLevel, ExerciseTemplate, Localised } from './model/types';
+import type {
+  Exercise,
+  ExerciseKind,
+  ExerciseLevel,
+  ExerciseTemplate,
+  Localised,
+} from './model/types';
 
 interface NextOptions {
   readonly avoidTemplateIds?: readonly string[];
@@ -69,6 +75,8 @@ function templatesAt(level: ExerciseLevel): readonly ExerciseTemplate[] {
 export interface TemplateInfo {
   readonly id: string;
   readonly title: Localised;
+  /** Configure, switch, choose a design, or find and repair. */
+  readonly kind: ExerciseKind;
   /** The lessons of the template's first instance: a template itself lists none. */
   readonly lessons: readonly string[];
 }
@@ -78,7 +86,12 @@ const infoCache = new Map<string, TemplateInfo>();
 function infoOf(template: ExerciseTemplate): TemplateInfo {
   const cached = infoCache.get(template.id);
   if (cached) return cached;
-  const info = { id: template.id, title: template.title, lessons: template.generate(0).lessons };
+  const info = {
+    id: template.id,
+    title: template.title,
+    kind: template.kind,
+    lessons: template.generate(0).lessons,
+  };
   infoCache.set(template.id, info);
   return info;
 }

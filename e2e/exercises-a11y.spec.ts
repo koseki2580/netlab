@@ -44,9 +44,10 @@ async function sweep(page: Page) {
   expect(await violations(page), 'an exercise before Check').toEqual(CLEAN);
 
   // A failed Check with a hint open: the result, the "not yet" marks and the hint card.
-  await page.getByTestId(X.hint).click();
   await page.getByTestId(X.check).click();
   await expect(page.getByTestId(X.result)).toHaveAttribute('data-passed', 'false');
+  await page.getByTestId(X.hint).click();
+  await expect(page.getByTestId(X.hintText(1))).toBeVisible();
   expect(await violations(page), 'an exercise after a failed Check').toEqual(CLEAN);
 
   // The level page again, now that it lists what was done and what to look at.
@@ -105,7 +106,10 @@ test('after Check, focus is on the result and the result is announced', async ({
   ).toContainText('Not there yet: 1 of 3 goals to go.');
   // Each goal says its state in a word, not by colour alone.
   await expect(page.getByTestId(X.resultGoal('reach-pc1-srv'))).toContainText('Not yet');
+  // The goals already met are one press away, so the settings stay on screen.
+  await page.getByTestId(X.resultMore).click();
   await expect(page.getByTestId(X.resultGoal('reach-pc2-srv'))).toContainText('Done');
+  await page.getByTestId(X.result).focus();
 
   // The keyboard goes on from the result, not from the top of the page: the
   // next stop is "watch it on the diagram" for the goal that was missed.

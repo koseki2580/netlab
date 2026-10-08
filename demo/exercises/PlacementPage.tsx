@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useGalleryLocale, useT } from '../localeContext';
-import { exerciseById, exercisePool, templateIdOf } from './exerciseSource';
+import { exerciseById, exercisePool, levelTemplates, templateIdOf } from './exerciseSource';
 import type { Exercise, ExerciseLevel } from './model/types';
 import type { AttemptStore } from './store/attemptStore';
 import { EXERCISE_LEVELS, isSolved } from './store/estimate';
@@ -43,9 +43,14 @@ export function PlacementPageBody({
   const [running, setRunning] = useState<Running | null>(null);
   const pool = useMemo<readonly PlacementPoolEntry[]>(
     () =>
-      EXERCISE_LEVELS.flatMap((level) =>
-        exercisePool(level).map((id) => ({ id, templateId: templateIdOf(id), level })),
-      ),
+      EXERCISE_LEVELS.flatMap((level) => {
+        const kinds = new Map(levelTemplates(level).map((info) => [info.id, info.kind]));
+        return exercisePool(level).map((id) => {
+          const templateId = templateIdOf(id);
+          const kind = kinds.get(templateId);
+          return { id, templateId, level, ...(kind ? { kind } : {}) };
+        });
+      }),
     [],
   );
 
@@ -116,8 +121,9 @@ export function PlacementPageBody({
 
   if (exercise === null) {
     const result = placementResult(placement);
-    const startAt: ExerciseLevel =
-      result === 0 ? 1 : result === 4 ? 4 : ((result + 1) as ExerciseLevel);
+    // Two exercises are thin evidence: the learner starts AT the level they
+    // managed, not past it, and the level's own exercises decide the rest.
+    const startAt: ExerciseLevel = result === 0 ? 1 : result;
     return (
       <div style={PAGE}>
         <div style={COLUMN}>
@@ -127,9 +133,10 @@ export function PlacementPageBody({
             style={{ ...CARD, display: 'grid', gap: 12 }}
           >
             <h2 style={{ margin: 0, fontSize: 20 }}>
-              {result === 0
-                ? t('Start at level 1', 'レベル 1 から始めましょう')
-                : t(`You can solve level ${result}`, `レベル ${result} まで解けます`)}
+              {t(
+                `Start with the level ${startAt} exercises`,
+                `レベル ${startAt} の問題から始めましょう`,
+              )}
             </h2>
             <p style={{ margin: 0 }}>
               {placement.answers.length === 0
@@ -143,8 +150,8 @@ export function PlacementPageBody({
                       `${placement.answers.length} 問に取り組みました。2 問ともヒントなしで解けたレベルは、まだありません。それで大丈夫です。レベル 1 は、いちばん最初から始まります。`,
                     )
                   : t(
-                      `You tried ${placement.answers.length} exercises and solved both level ${result} exercises without help.${result < 4 ? ` Level ${startAt} is the next step.` : ' That is the top level.'}`,
-                      `${placement.answers.length} 問に取り組み、レベル ${result} の 2 問を、どちらもヒントなしで解けました。${result < 4 ? `次はレベル ${startAt} です。` : 'いちばん上のレベルです。'}`,
+                      `You tried ${placement.answers.length} exercises and solved both level ${result} exercises without help. Two exercises are only a first look, so level ${result} is a good place to start.`,
+                      `${placement.answers.length} 問に取り組み、レベル ${result} の 2 問を、どちらもヒントなしで解けました。2 問だけの目安なので、まずはレベル ${result} の問題で確かめましょう。`,
                     )}
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -179,6 +186,7 @@ export function PlacementPageBody({
         placement,
         record !== undefined && isSolved(record),
         exercise.templateId,
+        exercise.kind,
       ),
     );
   };

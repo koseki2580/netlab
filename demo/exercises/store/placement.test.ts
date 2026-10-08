@@ -181,3 +181,31 @@ describe('every sequence of results', () => {
     expect([...new Set(finished.map(placementResult))].sort()).toEqual([0, 1, 2, 3, 4]);
   });
 });
+
+// TC-543
+describe('the two exercises of a level', () => {
+  const kinds: PlacementPoolEntry[] = [
+    { id: 'l1-addr~0', templateId: 'l1-addr', level: 1, kind: 'configure' },
+    { id: 'l1-blank~0', templateId: 'l1-blank', level: 1, kind: 'configure' },
+    { id: 'l1-which~0', templateId: 'l1-which', level: 1, kind: 'diagnose-repair' },
+    { id: 'l1-choose~0', templateId: 'l1-choose', level: 1, kind: 'choose-design' },
+    { id: 'l2-a~0', templateId: 'l2-a', level: 2, kind: 'switch' },
+    { id: 'l2-b~0', templateId: 'l2-b', level: 2, kind: 'switch' },
+  ];
+
+  it('are of two different kinds of task where the level has them', () => {
+    const state = recordPlacementResult(startPlacement(false), true, 'l1-addr', 'configure');
+    const step = nextStep(state, kinds);
+    expect(step?.avoidKinds).toEqual(['configure']);
+    expect(step?.candidates.map((entry) => entry.templateId)).toEqual(['l1-which', 'l1-choose']);
+  });
+
+  it('fall back to another template of the same kind where the level has one kind only', () => {
+    const state = recordPlacementResult(startPlacement(true), true, 'l2-a', 'switch');
+    expect(nextStep(state, kinds)?.candidates.map((entry) => entry.templateId)).toEqual(['l2-b']);
+  });
+
+  it('are any kind for the first one', () => {
+    expect(nextStep(startPlacement(false), kinds)?.candidates).toHaveLength(4);
+  });
+});

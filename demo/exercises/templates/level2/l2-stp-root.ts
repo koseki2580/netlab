@@ -128,7 +128,7 @@ export const l2StpRoot = defineTemplate(
       hints: [
         L(
           `Compare the priority numbers of all the switches. Which one is lowest now?`,
-          `全部のスイッチの優先度の数字を見比べてください。いま、いちばん小さいのはどれですか。`,
+          `全部のスイッチの優先度の数字を見くらべてください。いま、いちばん小さいのはどれですか。`,
         ),
         L(
           `The switch with the LOWEST number becomes the root bridge, not the highest. ${The(sw)} has to end up lower than every other switch.`,

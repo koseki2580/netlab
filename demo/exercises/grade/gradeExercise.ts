@@ -19,6 +19,7 @@ import type {
 } from '../model/types';
 import type { PacketTrace } from '../../../src/types/simulation';
 import type { TopologySnapshot } from '../../../src/types/topology';
+import { diagnose } from './diagnose';
 import { prepare, routesOf, stpPort, stpRootNodeId, type PreparedTopology } from './prepare';
 import { runProbe, type ProbeFacts } from './probe';
 import { explain, type ExplainDetail } from './reasons';
@@ -140,11 +141,25 @@ async function gradeCheck(
       const drop = facts.drop
         ? { ...facts.drop, device: labelOf(prepared, facts.drop.nodeId) }
         : undefined;
-      return result(check, code, drop ? { drop } : {}, {
-        evidence: evidenceOf(facts, prepared),
-        // A NAT check is about the SYN, so that is the packet to replay.
-        trace: check.kind === 'nat-translated' ? facts.trace : stoppingTrace(facts),
-      });
+      // A probe that did not arrive: what the topology says comes before the
+      // simulator's reason, which often cannot tell (see `diagnose.ts`).
+      const found =
+        code === 'not-delivered' ? diagnose(exercise.start, current, check.probe) : null;
+      const routesEditable = exercise.allowed.some((ref) => ref.kind === 'static-routes');
+      return result(
+        check,
+        code,
+        {
+          ...(drop ? { drop } : {}),
+          ...(found ? { diagnosis: found.detail } : {}),
+          ...(routesEditable ? { routesEditable } : {}),
+        },
+        {
+          evidence: { ...evidenceOf(facts, prepared), ...found?.evidence },
+          // A NAT check is about the SYN, so that is the packet to replay.
+          trace: check.kind === 'nat-translated' ? facts.trace : stoppingTrace(facts),
+        },
+      );
     }
   }
 }

@@ -9,7 +9,7 @@
  */
 
 import { buildLan, LAN_SHAPES, withInterface, withNodeData } from '../shared/build';
-import { defineTemplate } from '../shared/exercise';
+import { defineTemplate, formNames } from '../shared/exercise';
 import { everyoneReaches, setIp } from '../shared/lan';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan, net24 } from '../shared/plans';
@@ -82,6 +82,8 @@ export const l1PrefixFit = defineTemplate(
     // --- The brief ---
     const dev = lan.names[device] ?? place.pcs[0];
     const { router, server } = place;
+    // The side of the router the PCs are on, named as the settings form and the diagram name it.
+    const side = formNames(topology, lan.names).side('r1', 'lan');
     const opening = scene(place, {
       home: L(
         `${The(dev)} was given an address by hand, and it cannot show the photos on ${the(server)}.`,
@@ -107,12 +109,12 @@ export const l1PrefixFit = defineTemplate(
     const brief = say(
       opening,
       L(
-        `On the PCs' side, the address of ${the(router)} is ${routerAddress}/${length}. The "/${length}" means: devices whose ${fit.count.en} match (${base.fixed}) are on the same network.`,
-        `${router.ja}の、パソコンのある側のアドレスは「${routerAddress}/${length}」です。「/${length}」は、${fit.count.ja}（${base.fixed}）が同じ機器どうしが、同じネットワークの仲間だという意味です。`,
+        `The address of ${the(router)} on the ${side.en} is ${routerAddress}/${length}. The "/${length}" means: devices whose ${fit.count.en} match are on the same network.`,
+        `${router.ja}の「${side.ja}」のアドレスは「${routerAddress}/${length}」です。「/${length}」は、${fit.count.ja}が同じ機器どうしが、同じネットワークの仲間だという意味です。`,
       ),
       L(
-        `Change the address of ${the(dev)} so that it belongs.`,
-        `${dev.ja}のアドレスを、仲間に入るように直してください。`,
+        `Compare the numbers, and change the address of ${the(dev)} so that it belongs.`,
+        `数字を見くらべて、${dev.ja}のアドレスを、仲間に入るように直してください。`,
       ),
       PRESS_CHECK,
     );
@@ -132,15 +134,15 @@ export const l1PrefixFit = defineTemplate(
       hints: [
         L(
           `Put the address of ${the(dev)} next to the router's ${routerAddress} and compare them number by number, from the left.`,
-          `${dev.ja}のアドレスを、ルータの「${routerAddress}」と並べて、左から 1 つずつ数字を見比べてください。`,
+          `${dev.ja}のアドレスを、ルータの「${routerAddress}」と並べて、左から 1 つずつ数字を見くらべてください。`,
         ),
         L(
           `With /${length}, the ${fit.count.en} must be ${base.fixed}. The numbers after that are free, as long as no other device has the same address.`,
           `「/${length}」では、${fit.count.ja}が「${base.fixed}」でなければなりません。そのあとの数字は自由ですが、ほかの機器と同じアドレスにはできません。`,
         ),
         L(
-          `Change the address of ${the(dev)} to one that starts with ${base.fixed}, such as ${right}.`,
-          `${dev.ja}のアドレスを「${right}」のように、「${base.fixed}」で始まるものに変えます。`,
+          `Change the start of the address of ${the(dev)} to ${base.fixed}, and keep the whole address different from every other device's.`,
+          `${dev.ja}のアドレスの始まりを「${base.fixed}」に変えます。アドレス全体は、ほかのどの機器とも重ならないようにします。`,
         ),
       ],
       lessons: ['/learning/subnetting', '/routing/client-server'],

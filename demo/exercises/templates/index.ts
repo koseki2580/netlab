@@ -27,7 +27,15 @@ import { l2VlanSeparate } from './level2/l2-vlan-separate';
 
 export { GENERATOR_VERSION } from './shared/version';
 
-/** In the order a level introduces them. */
+/**
+ * In the order a level introduces them.
+ *
+ * Level 3 and 4 templates are not written yet. When they are: the first time a
+ * brief or a hint says コスト / "cost", gloss it —
+ * 「コスト（回線ごとの点数。合計が小さい道が選ばれます）」 /
+ * "cost (a score per link; the path with the lowest total is chosen)". The
+ * placement fixture used the bare word and a learner could not read it.
+ */
 export const TEMPLATES: readonly ExerciseTemplate[] = [
   l1HostAddress,
   l1HostBlank,

@@ -47,6 +47,34 @@ test('answering "not learned" throughout scores 0 and points to every lesson', a
   await expect(page).toHaveURL(/#\/networking\/arp/);
 });
 
+/**
+ * TC-552, TC-553 — one miss out of ten: the score card says it is a pass with
+ * something to check, names the question, and takes the learner to it.
+ */
+test('nine right answers pass, and the score card names the one missed and leads to it', async ({
+  page,
+}) => {
+  await openExam(page);
+  for (const [index, question] of EXAM_QUESTIONS.entries()) {
+    const suffix = index === 4 ? 'x' : question.answer + 1;
+    await page.getByTestId(`exam-option-${index + 1}-${suffix}`).check();
+  }
+  await page.getByTestId('exam-submit').click();
+  await expect(page.getByTestId('exam-score')).toHaveAttribute('data-score', '9');
+  await expect(page.getByTestId('exam-score')).toHaveAttribute('data-passed', 'yes');
+  await expect(page.getByTestId('exam-verdict')).toHaveText(
+    '合格です。まちがえた 1 問は、下で確かめましょう。',
+  );
+  await expect(page.getByTestId('exam-missed-summary')).toHaveText('まちがえたのは 問 5 です');
+  await expect(page.getByTestId('exam-missed-review-5')).toBeVisible();
+  await expect(page.getByTestId('exam-missed-4')).toHaveCount(0);
+
+  await expect(page.getByTestId('exam-feedback-5')).not.toBeInViewport();
+  await page.getByTestId('exam-missed-5').click();
+  await expect(page.getByTestId('exam-question-5')).toBeInViewport();
+  await expect(page.getByTestId('exam-question-5')).toBeFocused();
+});
+
 test('ten right answers pass', async ({ page }) => {
   await openExam(page);
   for (const [index, question] of EXAM_QUESTIONS.entries()) {
@@ -55,5 +83,7 @@ test('ten right answers pass', async ({ page }) => {
   await page.getByTestId('exam-submit').click();
   await expect(page.getByTestId('exam-score')).toHaveAttribute('data-score', '10');
   await expect(page.getByTestId('exam-score')).toHaveAttribute('data-passed', 'yes');
+  await expect(page.getByTestId('exam-verdict')).toContainText('満点です');
+  await expect(page.getByTestId('exam-missed')).toHaveCount(0);
   await expect(page.getByTestId('exam-review-1')).toHaveCount(0);
 });

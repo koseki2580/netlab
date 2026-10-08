@@ -7,7 +7,14 @@ import { buildRouted, ROUTED_SHAPES, withNodeData } from '../shared/build';
 import { defineTemplate } from '../shared/exercise';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
-import { fullRoutes, ROUTE_GLOSS, routedGoals, routes } from '../shared/routed';
+import {
+  fullRoutes,
+  ROUTE_GLOSS,
+  ROUTE_RULE,
+  routedGoals,
+  routes,
+  WATCH_WHERE_IT_STOPS,
+} from '../shared/routed';
 import { L, PRESS_CHECK, say, the, The } from '../shared/text';
 
 export const l2StaticMissing = defineTemplate(
@@ -72,6 +79,7 @@ export const l2StaticMissing = defineTemplate(
 
     // --- What may be changed, the goals, the answers ---
     const nextHop = net.towardsSrv[faulty] ?? '';
+    const nextRouter = name(net.path[net.path.indexOf(faulty) + 1] ?? 'r2');
     return {
       title: L(`No way to ${the(far.name)}`, `${far.name.ja}への道がない`),
       brief,
@@ -80,17 +88,17 @@ export const l2StaticMissing = defineTemplate(
       allowed: net.path.map((nodeId) => ({ kind: 'static-routes', nodeId })),
       checks: routedGoals(net),
       hints: [
-        L(
-          `Send from ${the(near.device)} and watch where it stops. Then open the route table of that router.`,
-          `${near.device.ja}から送って、どのルータで止まるかを見てください。それから、そのルータの経路の表を開きます。`,
+        WATCH_WHERE_IT_STOPS,
+        say(
+          ROUTE_RULE,
+          L(
+            `${The(name(faulty))} has no route for ${net.srvNet.cidr}.`,
+            `${name(faulty).ja}には、${net.srvNet.cidr} あての経路がありません。`,
+          ),
         ),
         L(
-          `${The(name(faulty))} has no line for ${net.srvNet.cidr}. A route needs the destination network and the address of the NEXT router towards it, one that is directly cabled to this router.`,
-          `${name(faulty).ja}には、${net.srvNet.cidr} あての行がありません。経路には、あて先のネットワークと、そこへ向かう「次のルータ」のアドレスを書きます。次のルータは、このルータとケーブルで直接つながっているものです。`,
-        ),
-        L(
-          `On ${the(name(faulty))}, add a route: destination ${net.srvNet.cidr}, next router ${nextHop}. Keep the lines that are already there.`,
-          `${name(faulty).ja}に、あて先「${net.srvNet.cidr}」、次のルータ「${nextHop}」の経路を足します。すでにある行は残します。`,
+          `On ${the(name(faulty))}, add a route: destination ${net.srvNet.cidr}, handed to ${nextHop}, the address of ${the(nextRouter)}. Keep the lines that are already there.`,
+          `${name(faulty).ja}に、行き先「${net.srvNet.cidr}」を、${nextRouter.ja}のアドレス「${nextHop}」に渡す経路を足します。すでにある行は残します。`,
         ),
       ],
       lessons: ['/routing/multi-hop', '/routing/client-server'],

@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import type { CheckResultCode } from '../model/types';
-import { CODE_TEXT, DROP_REASONS, dropMessage, explain } from './reasons';
+import { CODE_TEXT, DROP_REASONS, diagnosisMessage, dropMessage, explain } from './reasons';
 
 const JAPANESE = /[぀-ヿ一-龯]/;
 
@@ -100,13 +100,14 @@ describe('learner-facing reasons', () => {
   );
 
   // TC-434
-  it('says whether the request never arrived or the reply did not come back', () => {
+  it('says when the request arrived and only the reply was lost', () => {
     const request = dropMessage('acl-deny', 'request', 'R1');
     const reply = dropMessage('acl-deny', 'reply', 'R1');
     expect(request).not.toEqual(reply);
-    expect(request.en).toMatch(/never arrived/);
     expect(reply.en).toMatch(/reply did not come back/);
-    expect(reply.ja).toContain('返事');
+    expect(reply.ja).toContain('返事が戻りません');
+    expect(request.en).not.toMatch(/reply did not come back/);
+    expect(request.ja).not.toContain('返事が戻りません');
   });
 
   // TC-434
@@ -118,5 +119,123 @@ describe('learner-facing reasons', () => {
     expect(explain('wrong-root', { device: 'SW-B' }).ja).toContain('SW-B');
     expect(explain('too-many-changes', { count: 3, max: 1 }).en).toMatch(/3.*1/);
     expect(explain('too-many-changes', { count: 3, max: 1 }).ja).toMatch(/3.*1/);
+  });
+
+  // TC-560
+  it('a missing route points at addresses, and at routes only where the learner can write routes', () => {
+    for (const leg of ['request', 'reply'] as const) {
+      const plain = dropMessage('no-route', leg, 'R1');
+      const routed = dropMessage('no-route', leg, 'R1', { routesEditable: true });
+      expect(plain.ja).toContain('アドレス');
+      expect(plain.ja).not.toContain('経路');
+      expect(routed.ja).toContain('経路');
+      expect(routed.ja).not.toContain('R1');
+      expect(routed.en).not.toContain('R1');
+      const drop = { reason: 'no-route', leg, device: 'R1' } as const;
+      expect(explain('not-delivered', { drop })).toEqual(plain);
+      expect(explain('not-delivered', { drop, routesEditable: true })).toEqual(routed);
+    }
+  });
+
+  // TC-560
+  it('an unplugged cable is said in one short sentence, then where to look', () => {
+    const text = diagnosisMessage({ kind: 'cable-down' });
+    expect(text.ja).toBe('ケーブルがぬけています。赤い点線をさがしてください。');
+    expect(text.en).toBe('A cable is unplugged. Look for the red dotted line.');
+    // The engine's own reason for a dead link reads the same.
+    expect(dropMessage('link-failed', 'request', 'R1')).toEqual(text);
+  });
+
+  // TC-560
+  it('a duplicate address names the device that already has it, by its label', () => {
+    const chosen = diagnosisMessage({
+      kind: 'duplicate-address',
+      address: '192.168.10.1',
+      holder: 'レジ',
+      other: 'お店のルータ',
+      chosen: true,
+    });
+    expect(chosen.ja).toBe(
+      'このアドレス（192.168.10.1）は、お店のルータがもう使っています。べつの数字をえらんでください。',
+    );
+    expect(chosen.en).toBe(
+      'This address (192.168.10.1) is already used by お店のルータ. Choose another number.',
+    );
+    // Nobody chose it (the exercise started that way): both are named, neither is blamed.
+    const found = diagnosisMessage({
+      kind: 'duplicate-address',
+      address: '192.168.10.11',
+      holder: 'レジ',
+      other: '事務室のパソコン',
+      chosen: false,
+    });
+    expect(found.ja).toBe(
+      'レジと事務室のパソコンが、同じアドレス（192.168.10.11）を使っています。どちらかを、べつの数字にしてください。',
+    );
+    expect(found.en).toContain('レジ and 事務室のパソコン use the same address (192.168.10.11)');
+  });
+
+  // TC-560
+  it('an address on the wrong network leads with the first numbers, and says whose', () => {
+    const host = diagnosisMessage({
+      kind: 'wrong-network',
+      address: '192.168.7.10',
+      device: 'レジ',
+    });
+    expect(host.ja).toBe(
+      'はじめの数字が、まわりの機器とちがいます。レジのアドレス（192.168.7.10）を、となりの機器と見くらべてください。',
+    );
+    const side = { en: 'side facing Switch', ja: 'スイッチのある側' };
+    const router = diagnosisMessage({
+      kind: 'wrong-network',
+      address: '192.168.2.1',
+      device: 'お店のルータ',
+      side,
+    });
+    expect(router.ja).toBe(
+      'はじめの数字が、まわりの機器とちがいます。お店のルータの「スイッチのある側」のアドレス（192.168.2.1）を見てください。',
+    );
+    expect(router.en).toContain('side facing Switch');
+  });
+
+  // TC-560
+  it('a cause read off the topology replaces the sentence of the drop reason', () => {
+    const drop = { reason: 'no-route', leg: 'request', device: 'R1' } as const;
+    const diagnosis = { kind: 'cable-down' } as const;
+    expect(explain('not-delivered', { drop, diagnosis })).toEqual(diagnosisMessage(diagnosis));
+    // Only for a probe that did not arrive: other codes keep their own sentence.
+    expect(explain('wrong-path', { diagnosis })).toEqual(CODE_TEXT['wrong-path']);
+  });
+
+  // TC-560
+  it('every sentence of a Japanese message is short enough to take in at once', () => {
+    const drop = (reason: string, leg: 'request' | 'reply') =>
+      dropMessage(reason, leg, 'お店のルータ');
+    const messages = [
+      ...CODES.map((code) => CODE_TEXT[code].ja),
+      ...ENGINE_REASONS.flatMap((reason) => [drop(reason, 'request').ja, drop(reason, 'reply').ja]),
+      dropMessage('no-route', 'request', '', { routesEditable: true }).ja,
+      dropMessage('no-route', 'reply', '', { routesEditable: true }).ja,
+      diagnosisMessage({ kind: 'cable-down' }).ja,
+    ];
+    for (const message of messages) {
+      const sentences = message.split('。').filter((sentence) => sentence !== '');
+      // Observation, then what to look at; a lost reply and an ACL reply add one each.
+      expect(sentences.length, message).toBeLessThanOrEqual(4);
+      for (const sentence of sentences) expect(sentence.length, sentence).toBeLessThanOrEqual(60);
+    }
+    // Level 1 messages: at most about 35 characters a sentence.
+    for (const message of [
+      diagnosisMessage({ kind: 'cable-down' }).ja,
+      CODE_TEXT['no-address'].ja,
+      CODE_TEXT['not-delivered'].ja,
+      CODE_TEXT['too-many-changes'].ja,
+      drop('no-route', 'request').ja,
+      drop('no-route', 'reply').ja,
+    ]) {
+      for (const sentence of message.split('。')) {
+        expect(sentence.length, sentence).toBeLessThanOrEqual(35);
+      }
+    }
   });
 });

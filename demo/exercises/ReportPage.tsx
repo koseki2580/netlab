@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import { useGalleryLocale, useT } from '../localeContext';
 import { levelTemplates } from './exerciseSource';
 import type { AttemptStore } from './store/attemptStore';
-import { EXERCISE_LEVELS, estimatedLevel, explain, levelSummary } from './store/estimate';
+import { EXERCISE_LEVELS, estimatedLevel, explain, headline, levelSummary } from './store/estimate';
 import { cycleReport, type CycleSetCount } from './store/studyCycle';
+import { CeilingNote } from './ui/CeilingNote';
 import { lessonTitle } from './ui/lessonTitle';
 import { ExerciseShell, LEVEL_NAMES } from './ui/pageParts';
 import { CARD, COLUMN, LINK, MUTED, PAGE, SECONDARY } from './ui/styles';
@@ -70,7 +71,10 @@ export function ReportPageBody({ store: injected }: { store?: AttemptStore }) {
               <strong>
                 {t(`Level ${level}`, `レベル ${level}`)} — {LEVEL_NAMES[level][locale]}
               </strong>
-              <p style={{ margin: '2px 0 0' }}>
+              <p style={{ margin: '2px 0 0', fontWeight: 700 }}>
+                {headline(levelSummary(state.attempts, level), locale)}
+              </p>
+              <p style={{ ...MUTED, margin: '2px 0 0', fontSize: 14 }}>
                 {explain(levelSummary(state.attempts, level), locale)}
               </p>
             </div>
@@ -110,26 +114,38 @@ export function ReportPageBody({ store: injected }: { store?: AttemptStore }) {
                   {new Date(cycle.startedAt).toLocaleDateString(locale)}
                 </strong>
                 <p data-testid={`report-cycle-total-${cycle.id}`} style={{ margin: 0 }}>
-                  {t(
-                    `Before: ${count(report.before)} → after: ${count(report.after)}.`,
-                    `学ぶ前：${count(report.before)} → 学んだあと：${count(report.after)}。`,
-                  )}
-                  {report.afterComplete
+                  {report.after.attempted === 0
+                    ? // Nothing done yet is not "0 of 4": that reads as getting worse.
+                      t(
+                        `Before: ${count(report.before)} → after: not measured yet.`,
+                        `学ぶ前：${count(report.before)} → 学んだあと：まだ測っていません。`,
+                      )
+                    : t(
+                        `Before: ${count(report.before)} → after: ${count(report.after)}.`,
+                        `学ぶ前：${count(report.before)} → 学んだあと：${count(report.after)}。`,
+                      )}
+                  {report.afterComplete || report.after.attempted === 0
                     ? ''
                     : t(
                         ' (The “after” set is not finished.)',
                         '（学んだあとの確認は、まだ途中です。）',
                       )}
                 </p>
+                <CeilingNote report={report} />
                 <ul style={{ margin: 0, paddingLeft: 20, display: 'grid', gap: 2 }}>
                   {report.templates.map((entry) => (
                     <li key={entry.templateId} data-testid={`report-cycle-row-${entry.templateId}`}>
                       {titles.find((template) => template.id === entry.templateId)?.title[locale] ??
                         entry.templateId}
-                      {t(
-                        `: before ${entry.before.solved}/${entry.before.total} → after ${entry.after.solved}/${entry.after.total} (hints opened: ${entry.before.hintsUsed} before, ${entry.after.hintsUsed} after)`,
-                        `：学ぶ前 ${entry.before.solved}/${entry.before.total} → 学んだあと ${entry.after.solved}/${entry.after.total}（開いたヒント：前 ${entry.before.hintsUsed}、あと ${entry.after.hintsUsed}）`,
-                      )}
+                      {entry.after.attempted === 0
+                        ? t(
+                            `: before ${entry.before.solved}/${entry.before.total} → after: not measured yet (hints opened before: ${entry.before.hintsUsed})`,
+                            `：学ぶ前 ${entry.before.solved}/${entry.before.total} → 学んだあと：まだ（開いたヒント：前 ${entry.before.hintsUsed}）`,
+                          )
+                        : t(
+                            `: before ${entry.before.solved}/${entry.before.total} → after ${entry.after.solved}/${entry.after.total} (hints opened: ${entry.before.hintsUsed} before, ${entry.after.hintsUsed} after)`,
+                            `：学ぶ前 ${entry.before.solved}/${entry.before.total} → 学んだあと ${entry.after.solved}/${entry.after.total}（開いたヒント：前 ${entry.before.hintsUsed}、あと ${entry.after.hintsUsed}）`,
+                          )}
                     </li>
                   ))}
                 </ul>

@@ -6,13 +6,14 @@
  *
  * Seeds 0 to N-1 (N = `EXERCISE_VERIFY_SEEDS`, 12 by default; 100 verifies every
  * instance a pool can hold), plus seed block B of the study cycle (1000 to 1003).
- * TC-467 to TC-477 in the specification; each part below names its own.
+ * TC-467 to TC-477, TC-561 and TC-562 in the specification; each part below
+ * names its own.
  */
 
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { gradeExercise } from '../grade/gradeExercise';
-import { applyChangesReporting, differsOutside, isAllowed } from '../model/settings';
+import { applyChangesReporting, differsOutside, isAllowed, readSetting } from '../model/settings';
 import type { Exercise, ExerciseLevel, Localised, SettingChange } from '../model/types';
 import {
   buildPool,
@@ -83,6 +84,59 @@ const PASSING_OPTIONS: Readonly<Record<string, (id: string, exercise: Exercise) 
 };
 
 const ROUTES = readFileSync(new URL('../../main.tsx', import.meta.url), 'utf8');
+
+/** `value` as a whole number or address in `text`: 10 is not found in 10.5.0.1, nor in 110. */
+function says(text: string, value: string | number): boolean {
+  const escaped = String(value).replace(/[.\\/]/g, '\\$&');
+  return new RegExp(`(^|[^0-9.])${escaped}(?![0-9]|\\.[0-9])`).test(text);
+}
+
+/**
+ * TC-562 — the values in the reference that a learner could copy out of the
+ * brief instead of finding them: for each change that sets an address, a VLAN
+ * or a route, the value that is by itself the whole answer to that setting.
+ * A route is two values (where to, and whom to hand it to); it counts as given
+ * only when the brief states both.
+ */
+function answersIn(brief: string, exercise: Exercise): string[] {
+  const found: string[] = [];
+  for (const change of exercise.reference) {
+    const before = readSetting(exercise.start, refOf(change));
+    switch (change.kind) {
+      case 'host-ip':
+        if (change.ip !== null && says(brief, change.ip)) found.push(change.ip);
+        break;
+      case 'iface-address':
+        if (says(brief, change.ipAddress)) found.push(change.ipAddress);
+        break;
+      case 'port-vlan': {
+        const vlans =
+          change.vlanMode === 'access'
+            ? [change.accessVlan ?? 1]
+            : (change.trunkAllowedVlans ?? []);
+        if (vlans.length > 0 && vlans.every((vlan) => says(brief, vlan))) {
+          found.push(`VLAN ${vlans.join(', ')}`);
+        }
+        break;
+      }
+      case 'static-routes': {
+        const had = before?.kind === 'static-routes' ? before.routes : [];
+        for (const route of change.routes) {
+          const isNew = !had.some(
+            (old) => old.destination === route.destination && old.nextHop === route.nextHop,
+          );
+          if (isNew && says(brief, route.destination) && says(brief, route.nextHop)) {
+            found.push(`${route.destination} via ${route.nextHop}`);
+          }
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
+  return found;
+}
 
 /** Everything wrong with one instance, as sentences. Empty when it is sound. */
 async function problemsOf(exercise: Exercise): Promise<string[]> {
@@ -270,6 +324,39 @@ async function problemsOf(exercise: Exercise): Promise<string[]> {
     }
   }
 
+  // --- TC-562: the brief does not hand over the answer ---
+  if (exercise.kind !== 'choose-design') {
+    for (const locale of ['en', 'ja'] as const) {
+      const given = answersIn(exercise.brief[locale], exercise);
+      if (exercise.answerInBrief === undefined) {
+        no(
+          given.length === 0,
+          `the brief (${locale}) states the answer: ${given.join('; ')}. Say the goal and the symptom, or set answerInBrief with the reason`,
+        );
+      }
+    }
+    if (exercise.answerInBrief !== undefined) {
+      no(exercise.answerInBrief.trim().length >= 20, 'answerInBrief gives no reason');
+      no(
+        answersIn(exercise.brief.ja, exercise).length > 0,
+        'answerInBrief is set, but the brief does not state the answer: remove it',
+      );
+    }
+  }
+
+  // --- TC-557: an unplugged cable is what the learner is told ---
+  if (exercise.templateId === 'l1-cable-off') {
+    const [fix] = exercise.reference;
+    for (const result of atStart.results.filter((entry) => !entry.passed)) {
+      no(
+        result.evidence?.diagnosis === 'cable-down' &&
+          fix?.kind === 'link-state' &&
+          result.evidence.edgeId === fix.edgeId,
+        `check ${result.checkId} fails at the start without pointing at the unplugged cable`,
+      );
+    }
+  }
+
   // --- TC-469: lessons ---
   no(exercise.lessons.length > 0, 'no lesson');
   for (const lesson of exercise.lessons) {
@@ -329,6 +416,71 @@ describe(`every template, seeds 0 to ${SEED_COUNT - 1} and 1000 to 1003`, () => 
     },
     600_000,
   );
+});
+
+// TC-562
+describe('the rule against a brief that hands over the answer', () => {
+  it('finds a value only as a whole number or address', () => {
+    expect(says('先生が VLAN 10、生徒が VLAN 20 です', 10)).toBe(true);
+    expect(says('put them in VLAN 10. Then press Check', 10)).toBe(true);
+    expect(says('アドレスは「10.5.0.1/16」です', 10)).toBe(false);
+    expect(says('VLAN 110 です', 10)).toBe(false);
+    expect(says('「192.168.1.50」にします', '192.168.1.50')).toBe(true);
+    expect(says('192.168.1.50/24', '192.168.1.50')).toBe(true);
+    expect(says('「192.168.1.5」', '192.168.1.50')).toBe(false);
+    expect(says('「192.168.1.」で始まります', '192.168.1.50')).toBe(false);
+  });
+
+  it('catches a brief that states the address, the VLAN or the whole route of the reference', () => {
+    const withBrief = (exercise: Exercise, more: string): Exercise => ({
+      ...exercise,
+      brief: { en: `${exercise.brief.en} ${more}`, ja: `${exercise.brief.ja}${more}` },
+    });
+    const cases: [string, (exercise: Exercise) => string][] = [
+      [
+        'l1-host-address',
+        (e) => (e.reference[0]?.kind === 'host-ip' ? `${e.reference[0].ip}` : ''),
+      ],
+      [
+        'l1-router-address',
+        (e) => (e.reference[0]?.kind === 'iface-address' ? e.reference[0].ipAddress : ''),
+      ],
+      [
+        'l2-vlan-access',
+        (e) => (e.reference[0]?.kind === 'port-vlan' ? `VLAN ${e.reference[0].accessVlan}` : ''),
+      ],
+      [
+        'l2-trunk-allowed',
+        (e) =>
+          e.reference[0]?.kind === 'port-vlan'
+            ? (e.reference[0].trunkAllowedVlans ?? []).join(' と ')
+            : '',
+      ],
+    ];
+    for (const [templateId, answer] of cases) {
+      const exercise = generateExercise(templateId, 3);
+      if (!exercise) throw new Error(`no ${templateId}`);
+      expect(answer(exercise)).not.toBe('');
+      expect(answersIn(exercise.brief.ja, exercise)).toEqual([]);
+      expect(answersIn(withBrief(exercise, answer(exercise)).brief.ja, exercise)).toHaveLength(1);
+    }
+
+    // A route: the destination alone is half an answer, the next router completes it.
+    const routed = generateExercise('l2-static-missing', 3);
+    if (!routed) throw new Error('no l2-static-missing');
+    const [fix] = routed.reference;
+    if (fix?.kind !== 'static-routes') throw new Error('the fix is not a route');
+    const before = readSetting(routed.start, refOf(fix));
+    const added = fix.routes.find(
+      (route) =>
+        before?.kind !== 'static-routes' ||
+        !before.routes.some((old) => old.destination === route.destination),
+    );
+    if (!added) throw new Error('no added route');
+    expect(says(routed.brief.ja, added.destination)).toBe(true);
+    expect(answersIn(routed.brief.ja, routed)).toEqual([]);
+    expect(answersIn(`${routed.brief.ja}${added.nextHop}`, routed)).toHaveLength(1);
+  });
 });
 
 /** TC-476 — every device name a template can draw, not only the ones these seeds drew. */
@@ -414,6 +566,81 @@ describe('pools', () => {
           .join(', '),
     );
   });
+
+  // TC-561
+  it.each(TEMPLATES.filter((template) => template.kind === 'choose-design'))(
+    '$id: over the pool, the option that works is in no place more than 40% of the time',
+    (template) => {
+      const own = buildPool(template.level)
+        .map((id) => exerciseById(id))
+        .filter((exercise) => exercise?.templateId === template.id);
+      expect(own.length).toBeGreaterThanOrEqual(8);
+      const places = new Map<number, number>();
+      for (const exercise of own) {
+        const place = (exercise?.options ?? []).findIndex(
+          (option) => JSON.stringify(option.changes) === JSON.stringify(exercise?.reference),
+        );
+        expect(place).not.toBe(-1);
+        places.set(place, (places.get(place) ?? 0) + 1);
+      }
+      const shares = [...places.entries()].map(
+        ([place, count]) => [place, count / own.length] as const,
+      );
+      console.log(
+        `${template.id}: the option that works, by place: ` +
+          shares.map(([place, share]) => `${place + 1}: ${Math.round(share * 100)}%`).join(', '),
+      );
+      for (const [, share] of shares) expect(share).toBeLessThanOrEqual(0.4);
+    },
+  );
+
+  // TC-561
+  it('l1-which-pc: over the pool, the PC with the bad address is the first PC no more than 40% of the time', () => {
+    const own = buildPool(1)
+      .map((id) => exerciseById(id))
+      .filter((exercise) => exercise?.templateId === 'l1-which-pc');
+    expect(own.length).toBeGreaterThanOrEqual(8);
+    const first = own.filter((exercise) => {
+      const [fix] = exercise?.reference ?? [];
+      const firstPc = exercise?.start.nodes.find((node) => node.data.role === 'client');
+      return fix?.kind === 'host-ip' && fix.nodeId === firstPc?.id;
+    });
+    expect(first.length / own.length).toBeLessThanOrEqual(0.4);
+    // And it is not always the same one of the other two either.
+    const byDevice = new Set(
+      own.map((exercise) => {
+        const [fix] = exercise?.reference ?? [];
+        return fix?.kind === 'host-ip' ? fix.nodeId : '';
+      }),
+    );
+    expect(byDevice.size).toBe(3);
+  });
+
+  // TC-561
+  it.each(TEMPLATES.filter((template) => template.kind !== 'choose-design'))(
+    '$id: where several devices may be changed, the one to fix is not always the first of them',
+    (template) => {
+      const own = buildPool(template.level)
+        .map((id) => exerciseById(id))
+        .filter((exercise) => exercise?.templateId === template.id);
+      // Instances with one device to fix among several that may be changed.
+      const places: number[] = [];
+      for (const exercise of own) {
+        if (!exercise) continue;
+        const nodeOf = (ref: { readonly kind: string }): string | undefined =>
+          'nodeId' in ref && typeof ref.nodeId === 'string' ? ref.nodeId : undefined;
+        const fixed = new Set(exercise.reference.map(nodeOf));
+        const candidates = exercise.start.nodes
+          .map((node) => node.id)
+          .filter((id) => exercise.allowed.some((ref) => nodeOf(ref) === id));
+        const [only] = [...fixed];
+        if (fixed.size !== 1 || only === undefined || candidates.length < 2) continue;
+        places.push(candidates.indexOf(only));
+      }
+      if (places.length === 0) return;
+      expect(places.every((place) => place === 0)).toBe(false);
+    },
+  );
 
   // TC-473
   it.each([3, 4] as const)(

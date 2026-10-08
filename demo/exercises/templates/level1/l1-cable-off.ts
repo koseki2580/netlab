@@ -20,7 +20,7 @@ export const l1CableOff = defineTemplate(
     id: 'l1-cable-off',
     level: 1,
     kind: 'diagnose-repair',
-    title: L('Find the unplugged cable', '抜けたケーブルを見つける'),
+    title: L('Find the unplugged cable', 'ぬけたケーブルを見つける'),
   },
   (draw) => {
     // --- Drawn from the seed ---
@@ -77,7 +77,7 @@ export const l1CableOff = defineTemplate(
       symptom,
       L(
         'A cable seems to have been pulled out somewhere. Find it on the picture and plug it back in.',
-        'どこかでケーブルが抜けたようです。図の中から抜けているケーブルを見つけて、つなぎ直してください。',
+        'どこかでケーブルがぬけたようです。図の中からぬけているケーブルを見つけて、つなぎ直してください。',
       ),
       PRESS_CHECK,
     );
@@ -100,16 +100,16 @@ export const l1CableOff = defineTemplate(
       checks: everyoneReaches(lan, lan.names),
       hints: [
         L(
-          'Look at the lines on the picture one by one. A cable that is out is drawn differently from the others.',
-          '図の線を 1 本ずつ見てください。抜けているケーブルは、ほかの線とちがう見た目になっています。',
+          'Look at the cables on the picture one by one. A cable that is out is drawn differently from the others.',
+          '図のケーブルを 1 本ずつ見てください。ぬけているケーブルは、ほかのケーブルとちがう見た目になっています。',
         ),
         L(
           'If only one device is cut off, suspect the cable only that device uses. If several are, suspect a cable they all share.',
-          'つながらないのが 1 台だけなら、その 1 台だけが使う線があやしいです。何台もつながらないなら、みんなが通る線があやしいです。',
+          'つながらないのが 1 台だけなら、その 1 台だけが使うケーブルがあやしいです。何台もつながらないなら、みんなが通るケーブルがあやしいです。',
         ),
         L(
-          `Set the cable between ${the(endA)} and ${the(endB)} to connected.`,
-          `${endA.ja}と${endB.ja}をつなぐケーブルを「つながっている」に変えます。`,
+          `The cable between ${the(endA)} and ${the(endB)} is out. Plug that one back in.`,
+          `${endA.ja}と${endB.ja}のあいだのケーブルがぬけています。そのケーブルをつなぎます。`,
         ),
       ],
       lessons: ['/course'],

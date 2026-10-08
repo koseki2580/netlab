@@ -3,9 +3,10 @@ import { useGalleryLocale, useT } from '../localeContext';
 import { exerciseById, levelTemplates, nextExerciseId, type TemplateInfo } from './exerciseSource';
 import type { ExerciseLevel } from './model/types';
 import type { AttemptStore } from './store/attemptStore';
-import { explain, isSolved, levelSummary } from './store/estimate';
+import { explain, headline, isSolved, levelSummary } from './store/estimate';
 import { CYCLE_SET_SIZE, cycleReport, recordLessonOpened, startCycle } from './store/studyCycle';
 import type { AttemptRecord, StudyCycle } from './store/types';
+import { CeilingNote } from './ui/CeilingNote';
 import { cycleStage, latestCycle } from './ui/cycleFlow';
 import { LessonLinks } from './ui/ExerciseParts';
 import { ExerciseShell, LEVEL_NAMES, exercisePath, outcomeWords, parseLevel } from './ui/pageParts';
@@ -90,6 +91,7 @@ function CycleCard({
     }
     if (stage.stage === 'study') {
       const report = cycleReport(cycle, attempts);
+      const allSolved = report.before.total > 0 && report.before.solved === report.before.total;
       const lessons = [
         ...new Set(
           report.templates
@@ -103,18 +105,14 @@ function CycleCard({
       return (
         <>
           <p data-testid="exercises-cycle-before" style={{ margin: 0 }}>
-            {t(
-              `Before studying you solved ${report.before.solved} of ${report.before.total} without help.`,
-              `学ぶ前は、${report.before.total} 問中 ${report.before.solved} 問をヒントなしで解けました。`,
-            )}{' '}
-            {lessons.length > 0
+            {allSolved
               ? t(
-                  'These lessons teach what you did not solve. Read them, then measure again.',
-                  '解けなかった問題の内容は、下のレッスンで学べます。読んでから、もう一度測ってください。',
+                  `Before studying you solved all ${report.before.total}. After the lessons, check with ${report.before.total} similar ones.`,
+                  `学ぶ前は ${report.before.total} 問とも解けました。レッスンのあとに、似た ${report.before.total} 問で確かめましょう。`,
                 )
               : t(
-                  'You solved them all. You can still measure again.',
-                  'すべて解けました。もう一度測ることもできます。',
+                  `Before studying you solved ${report.before.solved} of ${report.before.total} without help.${lessons.length > 0 ? ' These lessons teach what you did not solve.' : ''} After studying, check with ${report.before.total} similar ones.`,
+                  `学ぶ前は、${report.before.total} 問中 ${report.before.solved} 問をヒントなしで解けました。${lessons.length > 0 ? '解けなかった問題の内容は、下のレッスンで学べます。' : ''}学んだあとに、似た ${report.before.total} 問で確かめましょう。`,
                 )}
           </p>
           <LessonLinks
@@ -128,7 +126,7 @@ function CycleCard({
                 data-testid="exercises-cycle-again"
                 style={PRIMARY}
               >
-                {t('Measure again', 'もう一度測る')}
+                {t('Measure after studying', '学んだあとに測る')}
               </Link>
             </div>
           ) : null}
@@ -168,6 +166,7 @@ function CycleCard({
             {t('See it per kind of task', '問題の種類ごとに見る')}
           </Link>
         </p>
+        <CeilingNote report={report} />
         {startButton(t('Measure again from the start', 'はじめからもう一度測る'))}
       </>
     );
@@ -233,7 +232,17 @@ export function LevelPageBody({
             {t(`Level ${level}`, `レベル ${level}`)}
             <span style={{ fontWeight: 400 }}> — {LEVEL_NAMES[level][locale]}</span>
           </h2>
-          <p data-testid={`exercises-level-status-${level}`} style={{ margin: 0 }}>
+          <p
+            data-testid={`exercises-level-headline-${level}`}
+            data-status={summary.status}
+            style={{ margin: 0, fontSize: 18, fontWeight: 700, lineHeight: 1.5 }}
+          >
+            {headline(summary, locale)}
+          </p>
+          <p
+            data-testid={`exercises-level-status-${level}`}
+            style={{ ...MUTED, margin: 0, fontSize: 14 }}
+          >
             {explain(summary, locale)}
           </p>
           {nextId ? (

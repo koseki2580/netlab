@@ -75,15 +75,15 @@ export const l2VlanAccess = defineTemplate(
       ),
     });
     const brief = say(
-      vlanIntro(place, vlans),
+      vlanIntro(place),
       opening,
       L(
-        `Since then it cannot reach ${the(name(mate.id))}, which is in its own group.`,
-        `それから、同じグループの${name(mate.id).ja}に届きません。`,
+        `Since then ${the(dev)} alone cannot reach ${the(name(mate.id))}, which is in its own group (${group.name.en}).`,
+        `それから、${dev.ja}だけ、同じグループ（${group.name.ja}）の${name(mate.id).ja}に届きません。`,
       ),
       L(
-        `Fix the VLAN of the socket so that ${the(dev)} is back with the ${group.name.en} devices. Keep the two groups apart.`,
-        `差し込み口の VLAN を直して、${dev.ja}を${group.name.ja}のグループに戻してください。2 つのグループは分けたままにします。`,
+        `Compare the VLAN numbers of the sockets and fix the one that is different. Keep the two groups apart.`,
+        `差し込み口の VLAN 番号を見くらべて、ちがっている 1 つを直してください。2 つのグループは分けたままにします。`,
       ),
       PRESS_CHECK,
     );
@@ -107,8 +107,8 @@ export const l2VlanAccess = defineTemplate(
           `${sw.ja}の差し込み口ごとの VLAN 番号を見て、${dev.ja}がつながっている「${port.ja}」を探してください。`,
         ),
         L(
-          `A switch only passes traffic between sockets with the same VLAN number. The ${group.name.en} devices are in VLAN ${ownVlan}; this socket is in VLAN ${wrongVlan}.`,
-          `スイッチは、VLAN 番号が同じ差し込み口どうしでしか通信を運びません。${group.name.ja}は VLAN ${ownVlan} ですが、この差し込み口は VLAN ${wrongVlan} になっています。`,
+          `A switch only passes traffic between sockets with the same VLAN number. The socket of ${the(name(mate.id))} is in VLAN ${ownVlan}; the socket of ${the(dev)} is in VLAN ${wrongVlan}.`,
+          `スイッチは、VLAN 番号が同じ差し込み口どうしでしか通信を運びません。${name(mate.id).ja}の差し込み口は VLAN ${ownVlan} ですが、${dev.ja}の差し込み口は VLAN ${wrongVlan} になっています。`,
         ),
         L(
           `Set ${port.en} of ${the(sw)} to VLAN ${ownVlan}.`,

@@ -13,16 +13,27 @@ import type {
   SettingRef,
 } from '../model/types';
 import type { AttemptStore } from '../store/attemptStore';
+import { MAX_CHECKS_TO_COUNT } from '../store/estimate';
 import type { AttemptContext } from '../store/types';
-import { changeSentence, sameSetting, settingNodeId, withNodeLabels } from './describe';
-import { ExerciseDiagram, type DiagramReplay } from './ExerciseDiagram';
+import {
+  changeSentence,
+  sameSetting,
+  settingNodeId,
+  settingTestId,
+  withNodeLabels,
+} from './describe';
+import { ExerciseDiagram, type DiagramPick, type DiagramReplay } from './ExerciseDiagram';
 import {
   DesignChooser,
   ExerciseBrief,
   GiveUp,
-  HintBox,
+  HintButton,
+  HintCost,
+  HintTexts,
   LessonLinks,
   ResultPanel,
+  nextHintTier,
+  type Counted,
   type Predicted,
 } from './ExerciseParts';
 import { SettingsForm } from './SettingsForm';
@@ -97,20 +108,27 @@ export function ExerciseRunner({
   const [hintTier, setHintTier] = useState<0 | 1 | 2 | 3>(0);
   const [revealed, setRevealed] = useState(false);
   /** How the first pass was recorded; null until there is one. */
-  const [passedAs, setPassedAs] = useState<'solved' | 'helped' | 'not-counted' | null>(null);
+  const [passedAs, setPassedAs] = useState<Counted | null>(null);
+  /** Checks that ran, and how many of them missed: the third counts differently, and a miss brings the hint button. */
+  const [presses, setPresses] = useState(0);
+  const [misses, setMisses] = useState(0);
+  /** The setting whose card a press on the diagram pointed at; it is outlined for a moment. */
+  const [pointed, setPointed] = useState<SettingRef | null>(null);
   const [focused, setFocused] = useState<SettingRef | null>(null);
   const [replay, setReplay] = useState<DiagramReplay | null>(null);
   // Choose-a-design exercises: the option picked, the prediction, and the last run.
   const [option, setOption] = useState<DesignOption | null>(null);
   const [predicted, setPredicted] = useState<Predicted | null>(null);
   const [designRun, setDesignRun] = useState<DesignRun | null>(null);
-  const [needsChoice, setNeedsChoice] = useState(false);
+  const [needs, setNeeds] = useState<'choice' | 'prediction' | null>(null);
   /** Counts the presses of Check that could not run, so each one brings the reason into view. */
   const [refusals, setRefusals] = useState(0);
 
   const resultRef = useRef<HTMLDivElement>(null);
   const needsChoiceRef = useRef<HTMLParagraphElement>(null);
   const diagramRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const hintsRef = useRef<HTMLDivElement>(null);
   // A ref, not an effect's local: StrictMode runs the effect twice, and one
   // visit to an exercise must be one attempt.
   const attempt = useRef<{ key: string; id: string } | null>(null);
@@ -135,12 +153,26 @@ export function ExerciseRunner({
   const stale = graded !== null && graded.changes !== changes;
   const passed = passedAs !== null;
 
-  // The result is what Check was pressed for: bring it into view and move focus to it.
+  // The result is what Check was pressed for: put it at the top of the panel,
+  // so what to change next is on screen right under it, and move focus to it.
   useEffect(() => {
     if (!graded) return;
-    resultRef.current?.scrollIntoView?.({ block: 'nearest' });
+    (resultRef.current?.parentElement ?? resultRef.current)?.scrollIntoView?.({ block: 'start' });
     resultRef.current?.focus({ preventScroll: true });
   }, [graded]);
+
+  // A hint just opened is what the learner asked for: bring it into view.
+  useEffect(() => {
+    if (hintTier === 0) return;
+    hintsRef.current?.lastElementChild?.lastElementChild?.scrollIntoView?.({ block: 'nearest' });
+  }, [hintTier]);
+
+  // The outline a press on the diagram put on a card fades by itself.
+  useEffect(() => {
+    if (!pointed) return undefined;
+    const timer = setTimeout(() => setPointed(null), 2500);
+    return () => clearTimeout(timer);
+  }, [pointed]);
 
   // Check was pressed with nothing to run: on a phone the reason is below the
   // first screen, and a button that seems to do nothing is the worst answer.
@@ -150,11 +182,11 @@ export function ExerciseRunner({
 
   const check = async () => {
     if (isDesign && (!option || !predicted)) {
-      setNeedsChoice(true);
+      setNeeds(option ? 'prediction' : 'choice');
       setRefusals((count) => count + 1);
       return;
     }
-    setNeedsChoice(false);
+    setNeeds(null);
     setBusy(true);
     setReplay(null);
     // Let "Checking…" be painted: a grade is tens of milliseconds of solid work.
@@ -179,10 +211,22 @@ export function ExerciseRunner({
     }
     if (option && predicted) setDesignRun({ option, predicted, actual });
     setGraded({ grade, changes });
+    const pressed = presses + 1;
+    setPresses(pressed);
     if (grade.passed) {
       setPassedAs(
-        (already) => already ?? (revealed ? 'not-counted' : hintTier > 0 ? 'helped' : 'solved'),
+        (already) =>
+          already ??
+          (revealed
+            ? 'not-counted'
+            : hintTier > 0
+              ? 'helped'
+              : pressed > MAX_CHECKS_TO_COUNT
+                ? 'tries'
+                : 'solved'),
       );
+    } else {
+      setMisses((count) => count + 1);
     }
     setBusy(false);
   };
@@ -195,6 +239,26 @@ export function ExerciseRunner({
     setChanges(next);
     setFormKey((key) => key + 1);
     setReplay(null);
+  };
+
+  /** A press on the diagram: no panel opens; the card of what was pressed is shown, and a cable is switched. */
+  const pick = (picked: DiagramPick) => {
+    if (isDesign) return;
+    const ref = exercise.allowed.find((candidate) =>
+      picked.kind === 'link'
+        ? candidate.kind === 'link-state' && candidate.edgeId === picked.id
+        : candidate.kind !== 'link-state' && candidate.nodeId === picked.id,
+    );
+    if (!ref) return;
+    if (ref.kind === 'link-state' && !passed && !busy) {
+      const now = readSetting(topology, ref);
+      if (now?.kind === 'link-state') change({ ...now, state: now.state === 'up' ? 'down' : 'up' });
+    }
+    setPointed(ref);
+    setFocused(ref);
+    panelRef.current
+      ?.querySelector(`[data-testid="${settingTestId(ref)}"]`)
+      ?.scrollIntoView?.({ block: 'nearest' });
   };
 
   const showReplay = (result: CheckResult) => {
@@ -231,11 +295,20 @@ export function ExerciseRunner({
       replay={replay}
       highlightNodeId={focused ? settingNodeId(focused) : null}
       label={t('The network of this exercise', 'この問題のネットワーク')}
+      locale={locale}
+      legend={isNarrow}
+      onPick={pick}
     />
   );
   const showCheck = !passed;
   const showSkip = onNext !== undefined && context !== 'practice' && !passed && !revealed;
   const showNext = onNext !== undefined && (passed || revealed);
+  // The hint button joins Check once a Check has missed, and not before.
+  const nextHint = passed || misses === 0 ? undefined : nextHintTier(exercise, hintTier);
+  const revealHint = (tier: 1 | 2 | 3) => {
+    setHintTier(tier);
+    if (attempt.current) store.recordHint(attempt.current.id, tier);
+  };
 
   const actions =
     showCheck || showSkip || showNext ? (
@@ -247,8 +320,9 @@ export function ExerciseRunner({
           ...(isNarrow ? { flexShrink: 0 } : STICKY),
           display: 'flex',
           gap: 8,
+          rowGap: 4,
           flexWrap: 'wrap',
-          padding: '12px 16px',
+          padding: '10px 16px',
           background: 'var(--netlab-bg-panel)',
           borderTop: '1px solid var(--netlab-border)',
         }}
@@ -275,11 +349,15 @@ export function ExerciseRunner({
             {nextLabel ?? t('Next exercise →', '次の問題へ →')}
           </button>
         ) : null}
+        {nextHint !== undefined ? (
+          <HintButton shownTier={hintTier} next={nextHint} onReveal={revealHint} />
+        ) : null}
         {showSkip ? (
           <button type="button" data-testid="exercise-skip" onClick={onNext} style={SECONDARY}>
             {t('I cannot do this one: next', 'わからないので次へ')}
           </button>
         ) : null}
+        {nextHint !== undefined && hintTier === 0 ? <HintCost /> : null}
       </div>
     ) : null;
 
@@ -329,6 +407,7 @@ export function ExerciseRunner({
           }}
         >
           <div
+            ref={panelRef}
             data-testid="exercise-panel"
             data-exercise-id={exercise.id}
             style={{
@@ -344,26 +423,7 @@ export function ExerciseRunner({
             {isNarrow ? null : brief}
 
             {/* Above the form: after Check the learner reads the result, and what to change is right under it. */}
-            <div style={{ display: 'grid', gap: 10 }}>
-              {needsChoice ? (
-                <p
-                  ref={needsChoiceRef}
-                  data-testid="exercise-design-needed"
-                  role="alert"
-                  style={{ ...CARD, margin: 0, padding: 12, scrollMarginBottom: 80 }}
-                >
-                  <span aria-hidden="true">☞ </span>
-                  {option
-                    ? t(
-                        'One more thing first: say what you expect to happen (step 2), then press Check.',
-                        'その前に、どうなると思うか（2 番）を選んでから「たしかめる」を押してください。',
-                      )
-                    : t(
-                        'First pick one (step 1) and say what you expect (step 2), then press Check.',
-                        'まず 1 つ選び（1 番）、どうなると思うか（2 番）を選んでから「たしかめる」を押してください。',
-                      )}
-                </p>
-              ) : null}
+            <div style={{ display: 'grid', gap: 10, scrollMarginTop: 8 }}>
               {designRun && !stale && !busy ? (
                 <div
                   data-testid="exercise-prediction-outcome"
@@ -399,10 +459,14 @@ export function ExerciseRunner({
                 stale={stale}
                 busy={busy}
                 counted={passedAs ?? 'solved'}
+                failedChecks={misses}
                 doneSentence={doneSentence}
                 onReplay={showReplay}
                 panelRef={resultRef}
               />
+              <div ref={hintsRef}>
+                <HintTexts exercise={exercise} shownTier={hintTier} />
+              </div>
             </div>
 
             {exercise.options ? (
@@ -411,15 +475,18 @@ export function ExerciseRunner({
                 chosenId={option?.id ?? null}
                 predicted={predicted}
                 disabled={busy || passed}
+                needs={needs}
+                needsRef={needsChoiceRef}
                 onChoose={(chosen) => {
                   setOption(chosen);
-                  setPredicted(null);
+                  // The prediction stays: picking again is not a reason to ask it again.
+                  setNeeds((now) => (now === 'choice' ? (predicted ? null : 'prediction') : now));
                   // The design is drawn at once, so the learner predicts from the picture.
                   replaceChanges(chosen.changes);
                 }}
                 onPredict={(value) => {
                   setPredicted(value);
-                  setNeedsChoice(false);
+                  setNeeds(null);
                 }}
               />
             ) : (
@@ -446,12 +513,22 @@ export function ExerciseRunner({
                     </button>
                   ) : null}
                 </div>
+                {exercise.allowed.some((ref) => ref.kind === 'link-state') ? (
+                  <p data-testid="exercise-diagram-tip" style={{ margin: 0, fontSize: 14 }}>
+                    <span aria-hidden="true">☞ </span>
+                    {t(
+                      'You can also press a cable on the diagram to plug it in or unplug it.',
+                      '図の線を押しても、その線をつないだり、はずしたりできます。',
+                    )}
+                  </p>
+                ) : null}
                 <SettingsForm
                   key={formKey}
                   exercise={exercise}
                   topology={topology}
                   onChange={change}
                   onFocusSetting={setFocused}
+                  pointed={pointed}
                 />
               </section>
             )}
@@ -465,14 +542,6 @@ export function ExerciseRunner({
                 aria-label={t('If you are stuck', '困ったとき')}
                 style={{ display: 'grid', gap: 10 }}
               >
-                <HintBox
-                  exercise={exercise}
-                  shownTier={hintTier}
-                  onReveal={(tier) => {
-                    setHintTier(tier);
-                    if (attempt.current) store.recordHint(attempt.current.id, tier);
-                  }}
-                />
                 <GiveUp
                   exercise={exercise}
                   revealed={revealed}

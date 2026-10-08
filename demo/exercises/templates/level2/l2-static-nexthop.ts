@@ -8,7 +8,14 @@ import { buildRouted, ROUTED_SHAPES, withNodeData } from '../shared/build';
 import { defineTemplate } from '../shared/exercise';
 import { drawPlace } from '../shared/places';
 import { drawPlan } from '../shared/plans';
-import { fullRoutes, ROUTE_GLOSS, routedGoals, routes, sitesOpening } from '../shared/routed';
+import {
+  fullRoutes,
+  ROUTE_GLOSS,
+  ROUTE_RULE,
+  routedGoals,
+  routes,
+  sitesOpening,
+} from '../shared/routed';
 import { L, PRESS_CHECK, say, the } from '../shared/text';
 
 export const l2StaticNexthop = defineTemplate(
@@ -48,7 +55,7 @@ export const l2StaticNexthop = defineTemplate(
 
     // --- The brief ---
     const name = (id: string) => net.names[id] ?? place.router;
-    const { near, far } = place.sites;
+    const { far } = place.sites;
     const brief = say(
       sitesOpening(place),
       L(
@@ -65,20 +72,21 @@ export const l2StaticNexthop = defineTemplate(
 
     // --- What may be changed, the goals, the answers ---
     const rightHop = net.towardsSrv[faulty] ?? '';
+    const nextRouter = name(net.path[net.path.indexOf(faulty) + 1] ?? 'r2');
     const why =
       fault === 'own'
         ? L(
             `it is an address of ${the(name(faulty))} itself`,
-            `${name(faulty).ja}自身のアドレスになっています`,
+            `${name(faulty).ja}自身のアドレスです`,
           )
         : fault === 'other-way'
           ? L(
               `it is a neighbour, but one that leads away from ${the(far.name)}`,
-              `となりのルータではありますが、${far.name.ja}とは別の方向のルータです`,
+              `となりのルータですが、${far.name.ja}とは別の方向にあります`,
             )
           : L(
               `it is the address of ${the(far.device)}, which is not cabled to this router`,
-              `${far.device.ja}のアドレスで、このルータと直接つながっていません`,
+              `${far.device.ja}のアドレスで、このルータと直接はつながっていません`,
             );
     return {
       title: L('A route that points the wrong way', '行き先のおかしい経路'),
@@ -89,16 +97,19 @@ export const l2StaticNexthop = defineTemplate(
       checks: routedGoals(net),
       hints: [
         L(
-          `Send from ${the(near.device)} and watch where it stops or turns back. Open the route table of that router.`,
-          `${near.device.ja}から送って、どこで止まるか、どこで引き返すかを見てください。そのルータの経路の表を開きます。`,
+          'Press Check, then watch it on the diagram: at which router does it stop or turn back?',
+          '「たしかめる」を押してから、図で通り道を見てください。どのルータで止まりますか。または、引き返しますか。',
+        ),
+        say(
+          ROUTE_RULE,
+          L(
+            `It must be the neighbour towards the destination. On ${the(name(faulty))} the route is handed to ${wrongHop}: ${why.en}.`,
+            `渡す相手は、行き先に近いほうのとなりのルータです。${name(faulty).ja}の経路は「${wrongHop}」に渡していて、これは${why.ja}。`,
+          ),
         ),
         L(
-          `The next router of a route must be the address of a router that is directly cabled to this one, on the side towards the destination. On ${the(name(faulty))} it is ${wrongHop}: ${why.en}.`,
-          `経路の「次のルータ」は、このルータとケーブルで直接つながっていて、あて先の側にあるルータのアドレスでなければなりません。${name(faulty).ja}では「${wrongHop}」で、${why.ja}。`,
-        ),
-        L(
-          `On ${the(name(faulty))}, change the next router of the route to ${net.srvNet.cidr} to ${rightHop}.`,
-          `${name(faulty).ja}の、あて先「${net.srvNet.cidr}」の経路の次のルータを「${rightHop}」に変えます。`,
+          `On ${the(name(faulty))}, in the route for ${net.srvNet.cidr}, change who it is handed to: ${rightHop}, the address of ${the(nextRouter)}.`,
+          `${name(faulty).ja}の、行き先「${net.srvNet.cidr}」の経路の渡し先を、${nextRouter.ja}のアドレス「${rightHop}」に変えます。`,
         ),
       ],
       lessons: ['/routing/multi-hop'],

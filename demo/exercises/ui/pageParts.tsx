@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import DemoShell from '../../DemoShell';
 import { readLearningLocale } from '../../learning/learningLocale';
 import type { ExerciseLevel, Localised } from '../model/types';
-import { isSolved } from '../store/estimate';
+import { isSolved, isSolvedAfterTries } from '../store/estimate';
 import type { AttemptRecord } from '../store/types';
 
 /** What the exercise pages share besides the exercise itself. */
@@ -29,6 +29,9 @@ export function exercisePath(
 /** How an attempt ended, in the words the learner is shown everywhere. */
 export function outcomeWords(attempt: AttemptRecord): Localised {
   if (isSolved(attempt)) return { en: 'Solved', ja: '解けた' };
+  if (isSolvedAfterTries(attempt)) {
+    return { en: 'Solved after several tries', ja: '何度かためして解けた' };
+  }
   if (attempt.outcome === 'passed' && !attempt.revealed) {
     return { en: 'Solved with help', ja: 'ヒントを使って解けた' };
   }

@@ -6,13 +6,13 @@
  * address on the host's network, the others are the mistakes a beginner makes
  * (another network, an address somebody already has). The address the host
  * has now is never offered. The order comes from the exercise seed, so the
- * right one is not always in the same place and the same exercise always
- * shows the same chips.
+ * same exercise always shows the same chips; and the usable address takes each
+ * place equally often (every run of four seeds puts it in each place once), so
+ * "press the first one" is right one time in four and no more.
  */
 
 import { intToIp, ipToInt } from '../../../src/utils/cidr';
 import type { TopologySnapshot } from '../../../src/types/topology';
-import { optionOrder } from '../../course/examAttempt';
 
 interface Segment {
   /** Network address and prefix length of the LAN the host is on. */
@@ -69,14 +69,58 @@ function segmentOf(topology: TopologySnapshot, hostId: string): Segment | null {
   };
 }
 
-/** Up to four addresses, at least one of them usable. Empty when the host's network cannot be told. */
-export function addressCandidates(
+/** A small seeded generator (mulberry32): the same seed, the same numbers. */
+function generator(seed: number): () => number {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let mixed = Math.imul(state ^ (state >>> 15), state | 1);
+    mixed ^= mixed + Math.imul(mixed ^ (mixed >>> 7), mixed | 61);
+    return ((mixed ^ (mixed >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffled<T>(items: readonly T[], random: () => number): T[] {
+  const order = [...items];
+  for (let last = order.length - 1; last > 0; last -= 1) {
+    const pick = Math.floor(random() * (last + 1));
+    const held = order[last] as T;
+    order[last] = order[pick] as T;
+    order[pick] = held;
+  }
+  return order;
+}
+
+/**
+ * The place of the usable address among `count` chips. Seeds are taken `count`
+ * at a time, and within each such run the places are a shuffle of all of them:
+ * no place is favoured, and the place does not simply step along with the seed.
+ */
+export function rightPlace(seed: number, count: number): number {
+  if (count <= 1) return 0;
+  const run = Math.floor(seed / count);
+  const places = shuffled(
+    Array.from({ length: count }, (_, place) => place),
+    generator(Math.imul(run + 1, 0x9e3779b1)),
+  );
+  return places[seed % count] ?? 0;
+}
+
+export interface CandidateParts {
+  /** The one address that is free on the host's own network. */
+  readonly right: string;
+  /** The mistakes: other networks, addresses already taken. At most three. */
+  readonly wrong: readonly string[];
+}
+
+/** What the chips are made of, before they are put in order. Null when the host's network cannot be told. */
+export function candidateParts(
   topology: TopologySnapshot,
   hostId: string,
   seed: number,
-): string[] {
+): CandidateParts | null {
   const segment = segmentOf(topology, hostId);
-  if (segment === null) return [];
+  if (segment === null) return null;
   const current = topology.nodes.find((node) => node.id === hostId)?.data.ip;
   const size = 2 ** (32 - segment.prefixLength);
   const taken = new Set([...segment.inUse, ...(typeof current === 'string' ? [current] : [])]);
@@ -88,8 +132,9 @@ export function addressCandidates(
     const candidate = intToIp(segment.network + hostNumber);
     if (!taken.has(candidate)) free = candidate;
   }
-  if (free === undefined) return [];
-  const hostNumber = ipToInt(free) - segment.network;
+  if (free === undefined) return null;
+  const right = free;
+  const hostNumber = ipToInt(right) - segment.network;
 
   // The same host number on the networks next door (never the address the host has now).
   const elsewhere = [1, 2, 3]
@@ -102,15 +147,27 @@ export function addressCandidates(
   ];
   // The network's own address is NOT offered as a wrong answer: this simulator
   // accepts it for a host, so the chip would "work" and teach something false.
-  const candidates = [free, elsewhere[0], taken2[0], taken2[1], elsewhere[1]]
+  const wrong = [elsewhere[0], taken2[0], taken2[1], elsewhere[1]]
     .filter(
       (candidate, index, all): candidate is string =>
-        candidate !== undefined && candidate !== current && all.indexOf(candidate) === index,
+        candidate !== undefined &&
+        candidate !== current &&
+        candidate !== right &&
+        all.indexOf(candidate) === index,
     )
-    .slice(0, 4);
+    .slice(0, 3);
+  return { right, wrong };
+}
 
-  return optionOrder(seed, 0).flatMap((index) => {
-    const candidate = candidates[index];
-    return candidate === undefined ? [] : [candidate];
-  });
+/** Up to four addresses, exactly one of them usable. Empty when the host's network cannot be told. */
+export function addressCandidates(
+  topology: TopologySnapshot,
+  hostId: string,
+  seed: number,
+): string[] {
+  const parts = candidateParts(topology, hostId, seed);
+  if (parts === null) return [];
+  const chips = shuffled(parts.wrong, generator(Math.imul(seed + 1, 0x85ebca6b)));
+  chips.splice(rightPlace(seed, parts.wrong.length + 1), 0, parts.right);
+  return chips;
 }

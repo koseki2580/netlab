@@ -21,7 +21,17 @@ export type ExerciseKind = 'configure' | 'switch' | 'choose-design' | 'diagnose-
 /** One thing a learner may change. The allow-list of an exercise is a list of these. */
 export type SettingRef =
   | { readonly kind: 'host-ip'; readonly nodeId: string }
-  | { readonly kind: 'iface-address'; readonly nodeId: string; readonly ifaceId: string }
+  | {
+      readonly kind: 'iface-address';
+      readonly nodeId: string;
+      readonly ifaceId: string;
+      /**
+       * The "/number" is not what this exercise is about: the form shows the
+       * address alone and writes back the prefix length the side already has.
+       * A hint to the page; the grader does not look at it.
+       */
+      readonly addressOnly?: boolean;
+    }
   | { readonly kind: 'static-routes'; readonly nodeId: string }
   | { readonly kind: 'port-vlan'; readonly nodeId: string; readonly portId: string }
   | { readonly kind: 'stp-priority'; readonly nodeId: string }
@@ -251,6 +261,12 @@ export interface Exercise {
    * verification harness only: never show these to a learner.
    */
   readonly wrongAnswers?: readonly (readonly SettingChange[])[];
+  /**
+   * Set when the brief states a value that is the answer, on purpose: the
+   * reason, for a reviewer. Without it the verification harness refuses a
+   * brief a learner could pass by copying from. Never shown to a learner.
+   */
+  readonly answerInBrief?: string;
 }
 
 export interface ExerciseTemplate {
@@ -295,6 +311,21 @@ export interface CheckEvidence {
   readonly dropLeg?: 'request' | 'reply';
   /** Node ids the request visited, in order. */
   readonly path?: readonly string[];
+  /**
+   * What the grader found by reading the topology, when that explains the
+   * failure better than the drop reason does (see `grade/diagnose.ts`). The
+   * message leads with it. `cable-down` comes with `edgeId` (the cable to
+   * plug in); the other two with `address` and `relatedNodeIds`.
+   */
+  readonly diagnosis?: 'cable-down' | 'duplicate-address' | 'wrong-network';
+  /** `duplicate-address`: the address two devices hold. `wrong-network`: the address that is off. */
+  readonly address?: string;
+  /**
+   * Devices to point at on the diagram. `duplicate-address`: every device
+   * holding `address` (the one the check is about first). `wrong-network`:
+   * the one device whose address does not match its neighbours'.
+   */
+  readonly relatedNodeIds?: readonly string[];
 }
 
 export interface CheckResult {

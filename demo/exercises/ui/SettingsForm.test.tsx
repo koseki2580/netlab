@@ -9,6 +9,7 @@ import { lanBehindRouter, withInterface, withNodeData } from '../templates/share
 import { SettingsForm } from './SettingsForm';
 import { settingTestId } from './describe';
 import { englishProse, hasJapanese, render, type Screen } from './testSupport';
+import { ACCESS_PORT_HELP, TRUNK_PORT_HELP, cableLabel } from './words';
 
 /** One network that has something of every kind to set. */
 const START: TopologySnapshot = withNodeData(
@@ -346,5 +347,82 @@ describe('the settings form', () => {
     for (const text of english.container.querySelectorAll('h3, label > span, p, button')) {
       expect(hasJapanese(text.textContent ?? ''), text.textContent ?? '').toBe(false);
     }
+  });
+});
+
+// TC-547
+describe('the words on a switch and under a port', () => {
+  const shownWith = (changes: SettingChange[], allowed: SettingRef[], locale: 'en' | 'ja') => {
+    screen?.unmount();
+    screen = render(
+      <SettingsForm
+        exercise={{ allowed, start: START, level: 1, seed: 3 }}
+        topology={applyChanges(START, changes)}
+        onChange={() => undefined}
+      />,
+      { locale },
+    );
+    return screen;
+  };
+
+  it('a cable says how it is now and, apart from that, what a press does', () => {
+    const cable = EVERY[2]!;
+    const id = settingTestId(cable);
+    const up = shownWith([], [cable], 'ja');
+    expect(up.get(`${id}-state`).textContent).toBe('つながっています');
+    expect(up.get(`${id}-action`).textContent).toBe('→ 押すと、はずします');
+    expect(up.get(`${id}-toggle`).getAttribute('aria-checked')).toBe('true');
+
+    const down = shownWith([{ kind: 'link-state', edgeId: 'e-pc1', state: 'down' }], [cable], 'ja');
+    expect(down.get(`${id}-toggle`).textContent).toBe(cableLabel('down').ja);
+    expect(cableLabel('down').ja).toBe('✕ ぬけています → 押すと、つなぎます');
+    expect(cableLabel('up').ja).toBe('● つながっています → 押すと、はずします');
+
+    const english = shownWith([], [cable], 'en');
+    expect(english.get(`${id}-toggle`).textContent).toBe(cableLabel('up').en);
+  });
+
+  it('a trunk is explained as a trunk, not as an access port', () => {
+    const port = EVERY[3]!;
+    const id = settingTestId(port);
+    const access = shownWith([], [port], 'ja');
+    expect(access.get(`${id}-help`).textContent).toBe(ACCESS_PORT_HELP.ja);
+    const trunk = shownWith(
+      [
+        {
+          kind: 'port-vlan',
+          nodeId: 'sw1',
+          portId: 'p1',
+          vlanMode: 'trunk',
+          trunkAllowedVlans: [10],
+        },
+      ],
+      [port],
+      'ja',
+    );
+    expect(trunk.get(`${id}-help`).getAttribute('data-mode')).toBe('trunk');
+    expect(trunk.get(`${id}-help`).textContent).toBe(TRUNK_PORT_HELP.ja);
+    expect(TRUNK_PORT_HELP.ja).toContain('書いた VLAN の番号だけ');
+  });
+});
+
+// TC-542
+describe('the order of the cards', () => {
+  it('is the diagram’s, whatever order the exercise lists the settings in', () => {
+    const ids = (allowed: SettingRef[]) => {
+      screen?.unmount();
+      screen = render(
+        <SettingsForm
+          exercise={{ allowed, start: START, level: 1, seed: 3 }}
+          topology={START}
+          onChange={() => undefined}
+        />,
+      );
+      return [...screen.get('exercise-settings').children].map((card) =>
+        card.getAttribute('data-testid'),
+      );
+    };
+    const some = [EVERY[0]!, EVERY[1]!, EVERY[2]!, EVERY[4]!];
+    expect(ids([...some].reverse())).toEqual(ids(some));
   });
 });

@@ -326,6 +326,8 @@ export const SEL = {
     /** Hub and level page. */
     level: (level: number) => `exercises-level-${level}`,
     levelStatus: (level: number) => `exercises-level-status-${level}`,
+    /** The one short line a level leads with. */
+    levelHeadline: (level: number) => `exercises-level-headline-${level}`,
     start: (level: number) => `exercises-start-${level}`,
     empty: (level: number) => `exercises-empty-${level}`,
     levelLink: (level: number) => `exercises-level-link-${level}`,
@@ -341,6 +343,7 @@ export const SEL = {
     cycleBefore: 'exercises-cycle-before',
     cycleAgain: 'exercises-cycle-again',
     cycleResult: 'exercises-cycle-result',
+    cycleCeiling: (cycleId: string) => `exercises-cycle-ceiling-${cycleId}`,
     cycleProgress: 'exercise-cycle-progress',
     /** One exercise. */
     panel: 'exercise-panel',
@@ -359,6 +362,10 @@ export const SEL = {
     resultDone: 'exercise-result-done',
     resultStale: 'exercise-result-stale',
     resultGoal: (checkId: string) => `exercise-result-${checkId}`,
+    /** After a miss only the first goal not met is listed; this shows the rest. */
+    resultMore: 'exercise-result-more',
+    triesNote: 'exercise-tries-note',
+    diagramNotes: 'exercise-diagram-notes',
     replay: (checkId: string) => `exercise-replay-${checkId}`,
     /** The n-th address offered for a host (levels 1 and 2). */
     chip: (index: number) => `exercise-chip-${index}`,

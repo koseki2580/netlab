@@ -172,15 +172,15 @@ export const l2AclPermit = defineTemplate(
         fault === 'mistyped'
           ? L(
               `A line lets through traffic whose sender has exactly that address. The line meant for ${the(dev)} says ${mistyped}, but its address is ${address[leftOut]}.`,
-              `行は、送り元のアドレスがその行とぴったり同じ通信だけを通します。${dev.ja}のための行には「${mistyped}」とありますが、${dev.ja}のアドレスは「${address[leftOut]}」です。`,
+              `行は、送り主のアドレスがその行とぴったり同じ通信だけを通します。${dev.ja}のための行には「${mistyped}」とありますが、${dev.ja}のアドレスは「${address[leftOut]}」です。`,
             )
           : L(
               `A line lets through traffic whose sender has exactly that address. There is no line with the address of ${the(dev)} (${address[leftOut]}).`,
-              `行は、送り元のアドレスがその行とぴったり同じ通信だけを通します。${dev.ja}のアドレス（${address[leftOut]}）が書かれた行がありません。`,
+              `行は、送り主のアドレスがその行とぴったり同じ通信だけを通します。${dev.ja}のアドレス（${address[leftOut]}）が書かれた行がありません。`,
             ),
         L(
           `The list needs a line "permit, sender ${address[leftOut]}/32". Do not add a line that permits every sender.`,
-          `一覧に「通す・送り元 ${address[leftOut]}/32」の行が必要です。「どの送り元も通す」という行は足しません。`,
+          `一覧に「通す・送り主 ${address[leftOut]}/32」の行が必要です。「どの送り主も通す」という行は足しません。`,
         ),
       ],
       lessons: ['/simulation/acl'],

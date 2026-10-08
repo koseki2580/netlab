@@ -40,6 +40,8 @@ export interface Draft {
   readonly wrongAnswers?: readonly (readonly SettingChange[])[];
   /** What makes this instance a different task: place, shape, fault, device. No raw numbers. */
   readonly fingerprint: readonly string[];
+  /** See `Exercise.answerInBrief`: why this brief states a value that is the answer. */
+  readonly answerInBrief?: string;
 }
 
 export interface TemplateMeta {
@@ -87,6 +89,7 @@ export function defineTemplate(
       checkLabels: Object.fromEntries(draft.checks.map((check) => [check.id, check.label])),
       nodeLabels,
       ...(draft.wrongAnswers ? { wrongAnswers: draft.wrongAnswers } : {}),
+      ...(draft.answerInBrief !== undefined ? { answerInBrief: draft.answerInBrief } : {}),
     };
   };
   return { ...meta, generatorVersion: GENERATOR_VERSION, generate };

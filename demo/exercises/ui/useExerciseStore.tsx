@@ -3,6 +3,7 @@ import { useOptionalProgress } from '../../../src/progress';
 import { useT } from '../../localeContext';
 import { createAttemptStore, type AttemptStore } from '../store/attemptStore';
 import type { ExerciseStoreState } from '../store/types';
+import { addressLearnerId } from './learnerId';
 import { CARD } from './styles';
 
 /**
@@ -24,6 +25,7 @@ function storeFor(learnerId: string | null): AttemptStore {
 
 /**
  * The learner's attempt store and its current state. The learner id is the
+ * one named in the address, before or after the `#` (`learnerId.ts`), else the
  * one the app resolved for progress (`demo/main.tsx`); tests pass a store.
  */
 export function useExerciseStore(injected?: AttemptStore): {
@@ -31,7 +33,7 @@ export function useExerciseStore(injected?: AttemptStore): {
   state: ExerciseStoreState;
 } {
   const { learnerId } = useOptionalProgress();
-  const store = injected ?? storeFor(learnerId);
+  const store = injected ?? storeFor(addressLearnerId() ?? learnerId);
   const state = useSyncExternalStore(store.subscribe, store.getState);
   return { store, state };
 }

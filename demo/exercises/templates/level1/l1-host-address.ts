@@ -15,8 +15,9 @@ import {
   everyoneReaches,
   isFarSide,
   neighboursOf,
+  freeAddressOn,
   netOf,
-  SAME_START_RULE,
+  SAME_START_BRIEF,
   setIp,
   starts,
   startsJa,
@@ -109,11 +110,12 @@ export const l1HostAddress = defineTemplate(
         });
     const brief = say(
       opening,
+      L('Someone typed its address by hand.', 'アドレスは、だれかが手で入れたものです。'),
+      SAME_START_BRIEF,
       L(
-        `Someone typed its address by hand. Addresses on its side of the network all start with ${starts(net)}.`,
-        `アドレスは、だれかが手で入れたものです。${dev.ja}のある側のアドレスは、どれも${startsJa(net)}で始まります。`,
+        `Compare it with the devices next to it, and fix the address of ${the(dev)}.`,
+        `となりの機器のアドレスと見くらべて、${dev.ja}のアドレスを直してください。`,
       ),
-      L(`Fix the address of ${the(dev)}.`, `${dev.ja}のアドレスを直してください。`),
       PRESS_CHECK,
     );
 
@@ -151,17 +153,20 @@ export const l1HostAddress = defineTemplate(
       hints: [
         L(
           `Compare the address of ${the(dev)} with the addresses of the devices next to it.`,
-          `${dev.ja}のアドレスを、となりの機器のアドレスと見比べてください。`,
+          `${dev.ja}のアドレスを、となりの機器のアドレスと見くらべてください。`,
         ),
         fault === 'router'
           ? L(
               `One address belongs to one device. Look at the address of ${the(place.router)}: is ${the(dev)} using the same one?`,
               `アドレスは 1 台に 1 つです。${place.router.ja}のアドレスを見てください。${dev.ja}が同じものを使っていませんか。`,
             )
-          : SAME_START_RULE(net),
+          : L(
+              `The address of ${the(dev)} is ${wrongAddress}. The devices next to it start with ${starts(net)}; this one starts differently.`,
+              `${dev.ja}のアドレスは「${wrongAddress}」です。となりの機器は${startsJa(net)}で始まりますが、これだけ始まりがちがいます。`,
+            ),
         L(
-          `Give ${the(dev)} an address such as ${right}: it starts with ${starts(net)} and no other device uses it.`,
-          `${dev.ja}のアドレスを「${right}」のように、${startsJa(net)}で始まり、ほかの機器が使っていないものにします。`,
+          `Change the address of ${the(dev)} to ${freeAddressOn(net).en}.`,
+          `${dev.ja}のアドレスを、${freeAddressOn(net).ja}に変えます。`,
         ),
       ],
       lessons: ['/course', '/routing/client-server'],

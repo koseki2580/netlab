@@ -82,14 +82,14 @@ export const l2TrunkAllowed = defineTemplate(
     });
     const brief = say(
       opening,
-      vlanIntro(place, vlans),
+      vlanIntro(place),
       L(
-        `A cable between switches is a trunk: it carries several VLANs at once, but only the ones on its list. ${The(name(near.id))} cannot reach ${the(name(far.id))} on the other switch, although both are ${group.name.en} devices.`,
-        `スイッチ同士をつなぐ線はトランクといい、複数の VLAN をまとめて運びますが、運ぶのは一覧にある VLAN だけです。${name(near.id).ja}から、別のスイッチにある${name(far.id).ja}に届きません。どちらも${group.name.ja}の機器です。`,
+        `A cable between switches is a trunk: it carries several VLANs at once, but only the numbers on its list, at both ends. ${The(name(near.id))} cannot reach ${the(name(far.id))} on the other switch, although both are ${group.name.en} devices.`,
+        `スイッチ同士をつなぐ線はトランクといい、複数の VLAN をまとめて運びます。ただし運ぶのは、両はしの一覧にある番号だけです。${name(near.id).ja}から、別のスイッチにある${name(far.id).ja}に届きません。どちらも${group.name.ja}の機器です。`,
       ),
       L(
-        `Change the trunk so that both VLANs get across. Keep the two groups apart.`,
-        `トランクの設定を直して、両方の VLAN が通るようにしてください。2 つのグループは分けたままにします。`,
+        `Compare the VLAN numbers of the devices on the diagram with the lists of the trunk, and add the number that is missing. Keep the two groups apart.`,
+        `図にある機器の VLAN 番号と、トランクの一覧を見くらべて、足りない番号を足してください。2 つのグループは分けたままにします。`,
       ),
       PRESS_CHECK,
     );
@@ -117,11 +117,11 @@ export const l2TrunkAllowed = defineTemplate(
         ),
         L(
           `A VLAN crosses a trunk only if BOTH ends list it. VLAN ${vlans[cut]} is missing between ${the(swLeft)} and ${the(swRight)}.`,
-          `VLAN は、トランクの両はしの一覧にあるときだけ通ります。${swLeft.ja}と${swRight.ja}のあいだで、VLAN ${vlans[cut]} が抜けています。`,
+          `VLAN は、トランクの両はしの一覧にあるときだけ通ります。${swLeft.ja}と${swRight.ja}のあいだで、VLAN ${vlans[cut]} が足りません。`,
         ),
         L(
-          `Set the list to ${vlans[0]} and ${vlans[1]} on ${faulty.map((port) => `${form.port(port.switchId, port.portId).en} of ${the(name(port.switchId))}`).join(' and ')}.`,
-          `${faulty.map((port) => `${name(port.switchId).ja}の「${form.port(port.switchId, port.portId).ja}」`).join('と、')}の一覧を「${vlans[0]} と ${vlans[1]}」にします。`,
+          `Add VLAN ${vlans[cut]} to the list on ${faulty.map((port) => `${form.port(port.switchId, port.portId).en} of ${the(name(port.switchId))}`).join(' and ')}. Leave VLAN ${kept} on it.`,
+          `${faulty.map((port) => `${name(port.switchId).ja}の「${form.port(port.switchId, port.portId).ja}」`).join('と、')}の一覧に、VLAN ${vlans[cut]} を足します。VLAN ${kept} は残します。`,
         ),
       ],
       lessons: ['/networking/vlan'],

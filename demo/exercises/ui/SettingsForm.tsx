@@ -5,6 +5,7 @@ import { readSetting } from '../model/settings';
 import type { Exercise, SettingChange, SettingRef } from '../model/types';
 import { addressCandidates } from './candidates';
 import { settingTestId, settingTitle } from './describe';
+import { settingOrder } from './settingOrder';
 import {
   HostIpField,
   IfaceAddressField,
@@ -27,6 +28,8 @@ interface SettingsFormProps {
   readonly onChange: (change: SettingChange) => void;
   /** The learner turned to this setting: the page marks its device on the diagram. */
   readonly onFocusSetting?: (ref: SettingRef) => void;
+  /** The setting a press on the diagram pointed at: its card is outlined. */
+  readonly pointed?: SettingRef | null;
 }
 
 function Field({
@@ -73,11 +76,22 @@ function Field({
 }
 
 /** One card per setting the exercise allows, and nothing else. */
-export function SettingsForm({ exercise, topology, onChange, onFocusSetting }: SettingsFormProps) {
+export function SettingsForm({
+  exercise,
+  topology,
+  onChange,
+  onFocusSetting,
+  pointed = null,
+}: SettingsFormProps) {
   const locale = useGalleryLocale();
+  // The start state decides the order, so a card never moves while the learner works.
+  const ordered = useMemo(
+    () => settingOrder(exercise.allowed, exercise.start),
+    [exercise.allowed, exercise.start],
+  );
   return (
     <div data-testid="exercise-settings" style={{ display: 'grid', gap: 12 }}>
-      {exercise.allowed.map((ref) => {
+      {ordered.map((ref) => {
         // A setting whose target is missing, or whose state no change can
         // express, has nothing to edit; an ACL that reads as null is edited
         // from an empty list.
@@ -85,15 +99,27 @@ export function SettingsForm({ exercise, topology, onChange, onFocusSetting }: S
           readSetting(topology, ref) ?? (ref.kind === 'iface-acl' ? { ...ref, rules: [] } : null);
         if (value === null) return null;
         const testId = settingTestId(ref);
+        const isPointed = pointed !== null && settingTestId(pointed) === testId;
         const title = settingTitle(ref, exercise.start);
         return (
           <section
             key={testId}
             data-testid={testId}
+            data-pointed={isPointed ? '' : undefined}
             aria-label={`${title.device[locale]} — ${title.name[locale]}`}
             onFocusCapture={() => onFocusSetting?.(ref)}
             onPointerDown={() => onFocusSetting?.(ref)}
-            style={{ ...CARD, padding: 12, display: 'grid', gap: 8 }}
+            style={{
+              ...CARD,
+              padding: 12,
+              display: 'grid',
+              gap: 8,
+              scrollMarginBottom: 96,
+              scrollMarginTop: 8,
+              ...(isPointed
+                ? { outline: '3px solid var(--netlab-accent-cyan)', outlineOffset: 0 }
+                : {}),
+            }}
           >
             <h3 style={{ margin: 0, fontSize: 16, lineHeight: 1.5 }}>
               <span>{title.device[locale]}</span>

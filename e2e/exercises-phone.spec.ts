@@ -124,8 +124,14 @@ for (const id of ['l1-host-address~0', 'l1-choose-address~0', ...firstOf(2)]) {
     } else {
       await expect(page.getByTestId(X.result)).toHaveAttribute('data-passed', 'false');
       await expect(page.getByTestId(X.resultSummary)).toBeInViewport({ ratio: 1 });
+      // The bar is taller now: the hint button and what a hint costs have joined Check.
+      const barNow = await box(page.getByTestId(X.actions));
       const summary = await box(page.getByTestId(X.resultSummary));
-      expect(summary.bottom, 'the result is not under the Check bar').toBeLessThanOrEqual(bar.top);
+      expect(summary.bottom, 'the result is not under the Check bar').toBeLessThanOrEqual(
+        barNow.top,
+      );
+      // TC-545 — on a phone too: the hint is beside Check, on screen, after the first miss.
+      await expect(page.getByTestId(X.actions).getByTestId(X.hint)).toBeInViewport({ ratio: 1 });
     }
     const after = await box(page.getByTestId(X.check));
     expect(after.top).toBeGreaterThanOrEqual(0);
@@ -162,10 +168,10 @@ test('every control of an exercise is at least 44px high', async ({ page }) => {
   ]) {
     await openExercise(page, id);
     // With a hint open and the way out asked for, so those controls are measured too.
-    await page.getByTestId(X.hint).tap();
-    await page.getByTestId(X.giveUp).tap();
     await page.getByTestId(X.check).tap();
     await expect(page.getByTestId(X.result)).toHaveAttribute('data-passed', 'false');
+    await page.getByTestId(X.hint).tap();
+    await page.getByTestId(X.giveUp).tap();
     const controls = [
       ...(await controlHeights(page.getByTestId(X.panel))),
       ...(await controlHeights(page.getByTestId(X.actions))),
