@@ -3,7 +3,16 @@ import type { DhcpLeaseState } from '../../src/types/services';
 import { useT } from '../localeContext';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
-import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../components/LessonPanel';
+import {
+  LessonCanvas,
+  LessonNote,
+  LessonPanel,
+  LessonPinned,
+  LessonSplit,
+  LessonStepBar,
+  usePhoneTopology,
+  type PhonePositions,
+} from '../components/LessonPanel';
 import { StepControls } from '../../src/components/simulation/StepControls';
 import { useViewport } from '../../src/utils/useViewport';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
@@ -219,8 +228,9 @@ function DhcpDnsDemoInner() {
   ].filter((part): part is string => part !== null);
 
   return (
-    <LessonSplit>
+    <LessonSplit pinned>
       <LessonCanvas canvas={<NetlabCanvas />}>
+        <LessonStepBar continueAcrossTraces />
         {/* Two services, two cards, in the order they are used. Sharing one
             heading and one box, learners filed "hands out addresses" under
             both names. */}
@@ -250,19 +260,37 @@ function DhcpDnsDemoInner() {
                 'まず住所をもらう（DHCP）。次に、名前から相手の住所を調べる（DNS）。',
               )}
             </div>
+            {/* Three rows of devices leave the addresses on a phone-sized
+                diagram about 6px high, so they are written out here. */}
+            {isNarrow ? (
+              <div
+                data-testid="dhcp-dns-addresses"
+                style={{ fontFamily: 'monospace', fontSize: 12, lineHeight: 1.6 }}
+              >
+                {TOPOLOGY.nodes
+                  .filter((node) => node.data.ip)
+                  .map((node) => (
+                    <div key={node.id}>
+                      {node.data.label}: {node.data.ip}
+                    </div>
+                  ))}
+              </div>
+            ) : null}
             <div data-testid="dhcp-card" style={CARD_STYLE}>
               <div style={ROLE_STYLE}>
                 {t('① DHCP = the desk that hands out addresses', '① DHCP＝住所をくれる係')}
               </div>
-              <button
-                type="button"
-                data-testid="dhcp-run"
-                data-emphasised={hasAddress ? 'no' : 'yes'}
-                onClick={() => void handleRunDhcp()}
-                style={stepButtonStyle(!hasAddress, false)}
-              >
-                {t('▶ ① Get an address', '▶ ① 住所をもらう')}
-              </button>
+              <LessonPinned half>
+                <button
+                  type="button"
+                  data-testid="dhcp-run"
+                  data-emphasised={hasAddress ? 'no' : 'yes'}
+                  onClick={() => void handleRunDhcp()}
+                  style={stepButtonStyle(!hasAddress, false)}
+                >
+                  {t('▶ ① Get an address', '▶ ① 住所をもらう')}
+                </button>
+              </LessonPinned>
               <div>
                 {t(
                   'A machine that has just been plugged in has no address (IP address) yet. It asks the network, and the DHCP server lends it one.',
@@ -336,19 +364,21 @@ function DhcpDnsDemoInner() {
                 '② DNS＝名前から住所を調べる電話帳',
               )}
             </div>
-            <button
-              type="button"
-              data-testid="dns-run"
-              data-emphasised={hasAddress ? 'yes' : 'no'}
-              disabled={!hasAddress}
-              onClick={() => void handleResolveAndFetch()}
-              style={stepButtonStyle(hasAddress, !hasAddress)}
-            >
-              {t(
-                '▶ ② Look up the name, then fetch the page',
-                '▶ ② 名前で調べて、ページを取りに行く',
-              )}
-            </button>
+            <LessonPinned half order={1}>
+              <button
+                type="button"
+                data-testid="dns-run"
+                data-emphasised={hasAddress ? 'yes' : 'no'}
+                disabled={!hasAddress}
+                onClick={() => void handleResolveAndFetch()}
+                style={stepButtonStyle(hasAddress, !hasAddress)}
+              >
+                {t(
+                  '▶ ② Look up the name, then fetch the page',
+                  '▶ ② 名前で調べて、ページを取りに行く',
+                )}
+              </button>
+            </LessonPinned>
             {!hasAddress ? (
               <div data-testid="dns-wait-hint" style={{ color: 'var(--netlab-text-secondary)' }}>
                 {t(
@@ -398,13 +428,23 @@ function DhcpDnsDemoInner() {
   );
 }
 
+/** The devices closer together on a phone, so the fit draws them (and their addresses) larger. */
+const PHONE_POSITIONS: PhonePositions = {
+  'dhcp-client': { x: 0, y: 104 },
+  'switch-1': { x: 120, y: 104 },
+  'dhcp-server': { x: 245, y: 0 },
+  'dns-server': { x: 245, y: 104 },
+  'web-server': { x: 245, y: 208 },
+};
+
 export default function DhcpDnsDemo() {
+  const phone = usePhoneTopology(TOPOLOGY, PHONE_POSITIONS);
   return (
     <DemoShell
       title="DHCP & DNS"
       desc="Get an address with DHCP, then turn a name into an address with DNS, one message at a time."
     >
-      <NetlabProvider topology={TOPOLOGY}>
+      <NetlabProvider key={phone.layout} topology={phone.topology}>
         <SimulationProvider>
           <DhcpDnsDemoInner />
         </SimulationProvider>

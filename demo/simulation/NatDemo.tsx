@@ -3,7 +3,15 @@ import { useGalleryLocale, useT } from '../localeContext';
 import DemoShell from '../DemoShell';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
-import { LessonCanvas, LessonPanel, LessonSplit } from '../components/LessonPanel';
+import {
+  LessonCanvas,
+  LessonPanel,
+  LessonPinned,
+  LessonSplit,
+  LessonStepBar,
+  usePhoneTopology,
+  type PhonePositions,
+} from '../components/LessonPanel';
 import { HopInspector } from '../../src/components/simulation/HopInspector';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationControls } from '../../src/components/simulation/SimulationControls';
@@ -284,8 +292,9 @@ function NatDemoInner() {
   const { sendPacket } = useSimulation();
 
   return (
-    <LessonSplit>
+    <LessonSplit pinned>
       <LessonCanvas canvas={<NetlabCanvas />} />
+      <LessonStepBar step={false} />
 
       <LessonPanel
         defaultWidth={500}
@@ -364,62 +373,64 @@ function NatDemoInner() {
               </details>
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            <ActionButton
-              testId="nat-send-client-a"
-              label={t('▶ Send out from Client A', '▶ Client A から外へ送る')}
-              onClick={() => {
-                void sendPacket(
-                  makePacket(
-                    `nat-snat-${Date.now()}`,
-                    'client-1',
-                    'server-1',
-                    '192.168.1.10',
-                    '198.51.100.10',
-                    54321,
-                    80,
-                  ),
-                );
-              }}
-            />
-            <ActionButton
-              testId="nat-send-client-b"
-              label={t('▶ Send out from Client B', '▶ Client B から外へ送る')}
-              onClick={() => {
-                void sendPacket(
-                  makePacket(
-                    `nat-snat-b-${Date.now()}`,
-                    'client-2',
-                    'server-1',
-                    '192.168.1.20',
-                    '198.51.100.10',
-                    54322,
-                    80,
-                  ),
-                );
-              }}
-            />
-            <ActionButton
-              testId="nat-send-inbound"
-              label={t(
-                '▶ Send in from outside to Client A (port 8080)',
-                '▶ 外から Client A へ送る（ポート 8080）',
-              )}
-              onClick={() => {
-                void sendPacket(
-                  makePacket(
-                    `nat-dnat-${Date.now()}`,
-                    'server-1',
-                    'client-1',
-                    '198.51.100.10',
-                    '203.0.113.1',
-                    55000,
-                    8080,
-                  ),
-                );
-              }}
-            />
-          </div>
+          <LessonPinned>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <ActionButton
+                testId="nat-send-client-a"
+                label={t('▶ Send out from Client A', '▶ Client A から外へ送る')}
+                onClick={() => {
+                  void sendPacket(
+                    makePacket(
+                      `nat-snat-${Date.now()}`,
+                      'client-1',
+                      'server-1',
+                      '192.168.1.10',
+                      '198.51.100.10',
+                      54321,
+                      80,
+                    ),
+                  );
+                }}
+              />
+              <ActionButton
+                testId="nat-send-client-b"
+                label={t('▶ Send out from Client B', '▶ Client B から外へ送る')}
+                onClick={() => {
+                  void sendPacket(
+                    makePacket(
+                      `nat-snat-b-${Date.now()}`,
+                      'client-2',
+                      'server-1',
+                      '192.168.1.20',
+                      '198.51.100.10',
+                      54322,
+                      80,
+                    ),
+                  );
+                }}
+              />
+              <ActionButton
+                testId="nat-send-inbound"
+                label={t(
+                  '▶ Send in from outside to Client A (port 8080)',
+                  '▶ 外から Client A へ送る（ポート 8080）',
+                )}
+                onClick={() => {
+                  void sendPacket(
+                    makePacket(
+                      `nat-dnat-${Date.now()}`,
+                      'server-1',
+                      'client-1',
+                      '198.51.100.10',
+                      '203.0.113.1',
+                      55000,
+                      8080,
+                    ),
+                  );
+                }}
+              />
+            </div>
+          </LessonPinned>
 
           <NatResult />
 
@@ -466,6 +477,16 @@ function NatDemoInner() {
   );
 }
 
+/** The devices closer together on a phone, so the fit draws them (and their addresses) larger. */
+const PHONE_POSITIONS: PhonePositions = {
+  'client-1': { x: 0, y: 0 },
+  'client-2': { x: 0, y: 108 },
+  'switch-1': { x: 95, y: 54 },
+  'nat-router': { x: 190, y: 54 },
+  'isp-router': { x: 285, y: 54 },
+  'server-1': { x: 380, y: 54 },
+};
+
 export default function NatDemo() {
   const params = new URLSearchParams(window.location.search);
   const sandboxIntroId = params.get('intro') ?? null;
@@ -474,6 +495,7 @@ export default function NatDemo() {
   const { embedded, embedMode, parentOrigin } = readDemoEmbedParams();
   const tutorialProps = tutorialId ? { tutorialId } : {};
 
+  const phone = usePhoneTopology(NAT_DEMO_TOPOLOGY, PHONE_POSITIONS);
   return (
     <DemoShell
       title="NAT / PAT"
@@ -481,7 +503,8 @@ export default function NatDemo() {
       embedded={embedded}
     >
       <NetlabProvider
-        topology={NAT_DEMO_TOPOLOGY}
+        key={phone.layout}
+        topology={phone.topology}
         sandboxEnabled={sandboxEnabled}
         {...(sandboxEnabled ? { sandboxControlMode: 'sandbox-owns' as const } : {})}
         {...(embedMode !== undefined ? { embedMode } : {})}

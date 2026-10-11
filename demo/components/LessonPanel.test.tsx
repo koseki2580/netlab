@@ -3,7 +3,14 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from './LessonPanel';
+import {
+  LessonCanvas,
+  LessonNote,
+  LessonPanel,
+  LessonPinned,
+  LessonSplit,
+  usePhoneTopology,
+} from './LessonPanel';
 
 const actEnvironment = globalThis as typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -126,5 +133,117 @@ describe('a lesson laid out with LessonSplit', () => {
     // A note pinned to the canvas's bottom is read after it, the rest before.
     expect(brief.style.order).toBe('');
     expect(footnote.style.order).toBe('1');
+  });
+});
+
+function renderPinned(width: number) {
+  window.innerWidth = width;
+  act(() => {
+    root?.render(
+      <LessonSplit pinned>
+        <LessonCanvas canvas={<div data-testid="canvas">canvas</div>}>
+          <LessonNote data-testid="brief" style={{ position: 'absolute', top: 12 }}>
+            brief
+            <LessonPinned order={1}>
+              <button type="button" data-testid="second">
+                two
+              </button>
+            </LessonPinned>
+          </LessonNote>
+        </LessonCanvas>
+        <LessonPanel defaultWidth={460} maxWidth={760}>
+          <div data-testid="card">
+            <LessonPinned>
+              <button type="button" data-testid="send">
+                send
+              </button>
+            </LessonPinned>
+            hint
+          </div>
+        </LessonPanel>
+      </LessonSplit>,
+    );
+  });
+}
+
+// TC-564
+describe('a pinned lesson', () => {
+  it('on a narrow screen keeps the canvas fixed, its actions under it, and scrolls only the panel', () => {
+    renderPinned(NARROW);
+
+    const split = container?.firstElementChild as HTMLElement;
+    expect(split.style.overflow).toBe('hidden');
+    expect(split.style.flexDirection).toBe('column');
+
+    const diagram = byTestId('lesson-diagram') as HTMLElement;
+    expect(diagram.contains(byTestId('canvas'))).toBe(true);
+    expect(diagram.style.minHeight).toBe('240px');
+
+    // The actions are in the bar directly under the diagram, in the order
+    // asked for, whichever part of the lesson they were written in.
+    const actions = byTestId('lesson-actions') as HTMLElement;
+    expect(diagram.nextElementSibling).toBe(actions);
+    const send = byTestId('send') as HTMLElement;
+    const second = byTestId('second') as HTMLElement;
+    expect(actions.contains(send)).toBe(true);
+    expect(actions.contains(second)).toBe(true);
+    expect(Number(send.parentElement?.style.order)).toBeLessThan(
+      Number(second.parentElement?.style.order),
+    );
+
+    // The panel is what scrolls, and the notes are read at its top.
+    const panel = byTestId('lesson-panel') as HTMLElement;
+    expect(panel.style.overflowY).toBe('auto');
+    expect(panel.contains(byTestId('brief'))).toBe(true);
+    expect(byTestId('card')?.textContent).toBe('hint');
+    expect(
+      byTestId('brief')!.compareDocumentPosition(byTestId('card')!) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('on a wide screen leaves every action where it was written', () => {
+    renderPinned(WIDE);
+
+    expect(byTestId('lesson-actions')).toBeNull();
+    expect(byTestId('lesson-diagram')).toBeNull();
+    expect(byTestId('send')?.parentElement).toBe(byTestId('card'));
+    expect(byTestId('second')?.parentElement).toBe(byTestId('brief'));
+  });
+});
+
+// TC-572
+describe('a lesson network arranged for the screen', () => {
+  const topology = {
+    nodes: [
+      { id: 'a', position: { x: 80, y: 180 } },
+      { id: 'b', position: { x: 640, y: 180 } },
+    ],
+  };
+  const places = { b: { x: 125, y: 0 } };
+
+  function Probe() {
+    const arranged = usePhoneTopology(topology, places);
+    return (
+      <output data-testid="probe" data-layout={arranged.layout}>
+        {JSON.stringify(arranged.topology.nodes.map((node) => node.position))}
+      </output>
+    );
+  }
+
+  function positionsAt(width: number): string {
+    window.innerWidth = width;
+    act(() => {
+      root?.render(<Probe />);
+    });
+    return `${byTestId('probe')?.dataset.layout}:${byTestId('probe')?.textContent}`;
+  }
+
+  it('moves the devices it has a place for on a narrow screen, and none on a wide one', () => {
+    expect(positionsAt(NARROW)).toBe('narrow:[{"x":80,"y":180},{"x":125,"y":0}]');
+  });
+
+  it("is the lesson's own arrangement on a wide screen", () => {
+    expect(positionsAt(WIDE)).toBe('wide:[{"x":80,"y":180},{"x":640,"y":180}]');
   });
 });

@@ -100,6 +100,38 @@ function readPersistedAxes(): {
   };
 }
 
+/**
+ * A thumb's worth of target (44 by 44 CSS px) for the small controls every
+ * lesson shares: the canvas's zoom buttons were 28 by 24, the way back 22 high,
+ * a lesson's text fields 26. Applied where the pointer is coarse and on the
+ * narrow layout, so the mouse layout keeps its compact controls.
+ */
+const TOUCH_TARGETS: readonly (readonly [selectors: readonly string[], css: string])[] = [
+  [['[data-testid="maxgraph-controls"] button'], 'min-width:44px !important;min-height:44px'],
+  [
+    [
+      '[data-testid="demo-shell-back"]',
+      '[data-testid="course-send"]',
+      '[data-testid="course-next"]',
+    ],
+    'min-width:44px;min-height:44px',
+  ],
+  // Taller without making its line taller: the extra height lies in the
+  // panel's padding above and the gap below, so "send" stays on the first screen.
+  [['[data-testid="course-back"]'], 'min-height:44px;margin-block:-13px'],
+  [
+    ['main input:not([type="checkbox"]):not([type="radio"]):not([type="range"])', 'main select'],
+    'min-height:44px',
+  ],
+];
+const TOUCH_RULES = TOUCH_TARGETS.map(
+  ([selectors, css]) =>
+    `${selectors.map((selector) => `[data-netlab-sim-shell] ${selector}`).join(',')}{${css}}`,
+).join('');
+/** Always on the narrow layout; on the wide one only where the pointer is coarse. */
+const touchCss = (narrow: boolean) =>
+  narrow ? TOUCH_RULES : `@media (pointer:coarse){${TOUCH_RULES}}`;
+
 interface DemoShellProps {
   title: string;
   desc: string;
@@ -346,6 +378,7 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
           background: 'var(--netlab-bg-primary)',
         }}
       >
+        <style>{touchCss(isNarrow)}</style>
         <button
           type="button"
           data-testid="skip-to-content"
@@ -383,7 +416,9 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
           {!embedded && (
             <header
               style={{
-                padding: '10px 16px',
+                // Less air on a narrow screen: the way back is a full 44px
+                // target there, and the lesson needs the height more.
+                padding: isNarrow ? '4px 12px' : '10px 16px',
                 background: 'var(--netlab-bg-surface)',
                 borderBottom: '1px solid var(--netlab-border)',
                 display: 'flex',
@@ -528,12 +563,16 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
           </NetlabThemeScope>
         </div>
         {!embedded && isNarrow && (
-          <NavRail
-            variant="bottom"
-            items={navItems}
-            onOpenBrand={() => selectView('gallery')}
-            onOpenHelp={openHelp}
-          />
+          // In the column, not over it: the lesson above ends where this bar
+          // begins, so nothing of a lesson can lie under it.
+          <div data-testid="demo-shell-bottom-bar" style={{ flexShrink: 0 }}>
+            <NavRail
+              variant="bottom"
+              items={navItems}
+              onOpenBrand={() => selectView('gallery')}
+              onOpenHelp={openHelp}
+            />
+          </div>
         )}
       </div>
     </I18nProvider>

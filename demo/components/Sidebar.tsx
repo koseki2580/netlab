@@ -199,6 +199,7 @@ export function Sidebar({
     <aside
       aria-label={t('Demo navigation', 'デモの案内')}
       data-netlab-sidebar
+      data-testid="gallery-sidebar"
       style={{
         width: 248,
         flexShrink: 0,

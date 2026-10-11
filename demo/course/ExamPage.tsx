@@ -18,7 +18,7 @@ import {
   type ExamAttempt,
 } from './examAttempt';
 import { EXAM_LEVELS, examLevel } from './examLevels';
-import { examVerdict, missedSentence } from './examVerdict';
+import { examVerdict, firstUnanswered, missedSentence, notLearnedSentence } from './examVerdict';
 import {
   EXAM_LEVEL_1,
   EXAM_PASS_MARK,
@@ -129,17 +129,35 @@ function ExamBody({ level }: { level: ExamLevel }) {
     });
   };
 
-  /** The numbers of the questions answered wrongly (or not at all), once marked. */
-  const missed = useMemo(
-    () =>
-      result
-        ? result.perQuestion.flatMap((outcome, index) => (outcome.correct ? [] : [index + 1]))
-        : [],
-    [result],
-  );
+  /**
+   * Once marked: the numbers of the questions answered wrongly (or not at
+   * all), and apart from them the ones answered "not learned yet".
+   */
+  const { missed, notLearned } = useMemo(() => {
+    const wrong: number[] = [];
+    const unlearned: number[] = [];
+    result?.perQuestion.forEach((outcome, index) => {
+      if (outcome.correct) return;
+      (answers[outcome.id] === 'not-learned' ? unlearned : wrong).push(index + 1);
+    });
+    return { missed: wrong, notLearned: unlearned };
+  }, [answers, result]);
   const verdict = result
-    ? examVerdict({ score: result.score, passMark: EXAM_PASS_MARK, level: level.level })
+    ? examVerdict({
+        score: result.score,
+        passMark: EXAM_PASS_MARK,
+        level: level.level,
+        notLearned: notLearned.length,
+      })
     : null;
+  // Coming back to an unfinished test landed at the top of a page six screens
+  // long, with the next question to answer far below.
+  const resumeAt = attempt.marked
+    ? null
+    : firstUnanswered(
+        level.questions.map((question) => question.id),
+        answers,
+      );
 
   /** Bring a question into view and put the focus on it. */
   const goToQuestion = (number: number) => {
@@ -162,6 +180,61 @@ function ExamBody({ level }: { level: ExamLevel }) {
       });
     }
   };
+
+  /** For each of these questions: a way down to it, and the lesson that teaches it. */
+  const questionLinks = (numbers: readonly number[]) => (
+    <ul
+      style={{
+        margin: '4px 0 0',
+        padding: 0,
+        listStyle: 'none',
+        display: 'grid',
+        gap: 2,
+      }}
+    >
+      {numbers.map((number) => {
+        const question = level.questions[number - 1];
+        const stop = question ? levelStop(level, question.taughtBy) : undefined;
+        return (
+          <li
+            key={number}
+            style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}
+          >
+            <button
+              type="button"
+              data-testid={`exam-missed-${number}`}
+              onClick={() => goToQuestion(number)}
+              style={{
+                ...LINK,
+                background: 'none',
+                border: 'none',
+                padding: '0 4px 0 0',
+                minHeight: 44,
+                cursor: 'pointer',
+                fontSize: 'inherit',
+              }}
+            >
+              {t(`See question ${number} ↓`, `問 ${number} を見る ↓`)}
+            </button>
+            {stop ? (
+              <Link
+                data-testid={`exam-missed-review-${number}`}
+                to={`${stop.path}${examReturnSearch(level.level)}`}
+                style={{
+                  ...LINK,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  minHeight: 44,
+                }}
+              >
+                {t(`Review: ${stop.title.en} →`, `復習する：${stop.title.ja} →`)}
+              </Link>
+            ) : null}
+          </li>
+        );
+      })}
+    </ul>
+  );
 
   return (
     <div style={{ height: '100%', overflow: 'auto' }}>
@@ -190,6 +263,17 @@ function ExamBody({ level }: { level: ExamLevel }) {
               </Link>
             ))}
           </nav>
+        ) : null}
+        {resumeAt !== null ? (
+          <button
+            type="button"
+            data-testid="exam-continue"
+            data-question={resumeAt}
+            onClick={() => goToQuestion(resumeAt)}
+            style={{ ...BUTTON, minHeight: 44, justifySelf: 'start' }}
+          >
+            {t(`Continue from question ${resumeAt} ↓`, `問 ${resumeAt} から続ける ↓`)}
+          </button>
         ) : null}
         <section style={CARD} data-testid="exam-path" data-level={level.level}>
           <p style={{ margin: '0 0 6px', color: 'var(--netlab-text-secondary)' }}>
@@ -270,57 +354,15 @@ function ExamBody({ level }: { level: ExamLevel }) {
                 <strong data-testid="exam-missed-summary">
                   {t(missedSentence(missed).en, missedSentence(missed).ja)}
                 </strong>
-                <ul
-                  style={{
-                    margin: '4px 0 0',
-                    padding: 0,
-                    listStyle: 'none',
-                    display: 'grid',
-                    gap: 2,
-                  }}
-                >
-                  {missed.map((number) => {
-                    const question = level.questions[number - 1];
-                    const stop = question ? levelStop(level, question.taughtBy) : undefined;
-                    return (
-                      <li
-                        key={number}
-                        style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}
-                      >
-                        <button
-                          type="button"
-                          data-testid={`exam-missed-${number}`}
-                          onClick={() => goToQuestion(number)}
-                          style={{
-                            ...LINK,
-                            background: 'none',
-                            border: 'none',
-                            padding: '0 4px 0 0',
-                            minHeight: 44,
-                            cursor: 'pointer',
-                            fontSize: 'inherit',
-                          }}
-                        >
-                          {t(`See question ${number} ↓`, `問 ${number} を見る ↓`)}
-                        </button>
-                        {stop ? (
-                          <Link
-                            data-testid={`exam-missed-review-${number}`}
-                            to={`${stop.path}${examReturnSearch(level.level)}`}
-                            style={{
-                              ...LINK,
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              minHeight: 44,
-                            }}
-                          >
-                            {t(`Review: ${stop.title.en} →`, `復習する：${stop.title.ja} →`)}
-                          </Link>
-                        ) : null}
-                      </li>
-                    );
-                  })}
-                </ul>
+                {questionLinks(missed)}
+              </div>
+            ) : null}
+            {notLearned.length > 0 ? (
+              <div data-testid="exam-not-learned" style={{ marginTop: 10 }}>
+                <strong data-testid="exam-not-learned-summary">
+                  {t(notLearnedSentence(notLearned).en, notLearnedSentence(notLearned).ja)}
+                </strong>
+                {questionLinks(notLearned)}
               </div>
             ) : null}
             <button
@@ -447,7 +489,11 @@ function ExamBody({ level }: { level: ExamLevel }) {
                             : 'var(--netlab-text-primary)',
                         }}
                       >
-                        {outcome.correct ? t('✓ Correct', '✓ 正解') : t('✗ Not quite', '✗ 不正解')}
+                        {outcome.correct
+                          ? t('✓ Correct', '✓ 正解')
+                          : chosen === 'not-learned'
+                            ? t('– Not learned yet', '– まだ習っていない')
+                            : t('✗ Not quite', '✗ 不正解')}
                       </strong>
                       <p style={{ margin: '4px 0' }}>{question.explanation[locale]}</p>
                       {!outcome.correct && stop ? (

@@ -282,6 +282,13 @@ function StepStage({
         }}
       >
         <style>{diagramCss(step)}</style>
+        {/* On a phone the zoom buttons lay over the address of the machine the
+            text points at, and this diagram is already fitted to its box. */}
+        {isNarrow ? (
+          <style>
+            {'[data-course-diagram] [data-testid="maxgraph-controls"]{display:none !important}'}
+          </style>
+        ) : null}
         <CourseCaption
           phase={phase}
           delivered={arrived}
@@ -379,6 +386,18 @@ function StepStage({
         </button>
         {finished && lastHop ? (
           <div ref={outcomeRef} style={{ flexShrink: 0 }}>
+            {/* The table the result speaks of has scrolled above the fold by
+                now on a phone, so the row it used is named here as well. */}
+            {step.id === 'how-it-decides' && usedDestination ? (
+              <p
+                data-testid="course-used-row"
+                style={{ margin: '0 0 8px', fontWeight: 700, color: 'var(--netlab-accent-green)' }}
+              >
+                {locale === 'ja'
+                  ? `● 経路表で使われた行：宛先 ${usedDestination}`
+                  : `● Row of the route table that was used: destination ${usedDestination}`}
+              </p>
+            ) : null}
             <StepResult
               copy={body}
               locale={locale}

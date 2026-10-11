@@ -142,6 +142,87 @@ const INITIAL_TOPOLOGY: NetworkTopology = {
 export const CLIENT_SERVER_INITIAL_TOPOLOGY = INITIAL_TOPOLOGY;
 
 /**
+ * The same network arranged for a phone. Five devices in one row fitted to
+ * 390px are drawn at a third of their size, and below 55% the canvas folds
+ * each area into a chip: the lesson opened with no Client, switch or Server
+ * to look at. In two staggered rows the drawing is half as wide, so it is
+ * fitted large enough to stay open and to be read.
+ */
+const NARROW_POSITIONS: Readonly<Record<string, { x: number; y: number }>> = {
+  'client-1': { x: 0, y: 0 },
+  'switch-1': { x: 100, y: 130 },
+  'router-1': { x: 200, y: 0 },
+  'switch-2': { x: 300, y: 130 },
+  'server-1': { x: 400, y: 0 },
+};
+const NARROW_AREA_X: Readonly<Record<string, number>> = { private: -12, public: 288 };
+
+/** Below this window width the row of five no longer fits beside the panel. */
+const COMPACT_BELOW = 1500;
+
+const NARROW_TOPOLOGY: NetworkTopology = {
+  ...INITIAL_TOPOLOGY,
+  nodes: INITIAL_TOPOLOGY.nodes.map((node) => ({
+    ...node,
+    position: NARROW_POSITIONS[node.id] ?? node.position,
+  })),
+  areas: AREAS.map((area) => ({
+    ...area,
+    visualConfig: { x: NARROW_AREA_X[area.id] ?? 0, y: -36, width: 204, height: 268 },
+  })),
+};
+
+/**
+ * Inside the shell, so it is said in the learner's language: written in the
+ * page component it sat outside the shell's locale and stayed English.
+ */
+function CopyLinkButton({ topology }: { topology: NetworkTopology }) {
+  const t = useT();
+  const [copied, setCopied] = useState(false);
+  const { isNarrow } = useViewport();
+
+  const handleCopyLink = () => {
+    const qs = encodeTopology(topology);
+    const url = `${location.origin}${location.pathname}${qs}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <button
+      data-testid="client-server-copy-link"
+      aria-label={t('Copy a link to this network', 'このネットワークへのリンクをコピー')}
+      onClick={handleCopyLink}
+      style={{
+        padding: '5px 14px',
+        background: copied ? '#16a34a' : 'var(--netlab-bg-elevated)',
+        color: copied ? '#fff' : 'var(--netlab-text-primary)',
+        border: 'none',
+        borderRadius: 6,
+        cursor: 'pointer',
+        fontSize: 13,
+        fontFamily: 'monospace',
+        transition: 'background 0.2s',
+        whiteSpace: 'nowrap',
+        ...(isNarrow ? { minHeight: 44, minWidth: 44, padding: '5px 8px' } : {}),
+      }}
+    >
+      {/* The toolbar has one row on a phone, so only the mark goes there; the
+          button's name says the rest. */}
+      {copied
+        ? isNarrow
+          ? '✓'
+          : t('✓ Copied!', '✓ コピーしました')
+        : isNarrow
+          ? '🔗'
+          : t('🔗 Copy Link', '🔗 リンクをコピー')}
+    </button>
+  );
+}
+
+/**
  * What this lesson is showing, in words. The page used to be a timeline and a
  * route table with no sentence at all, and learners answered the routing
  * question by piecing together the course and other lessons.
@@ -217,25 +298,22 @@ function ClientServerBrief() {
 }
 
 export default function ClientServerDemo() {
-  const topology = decodeTopology(window.location.search) ?? INITIAL_TOPOLOGY;
-  const [copied, setCopied] = useState(false);
-  const { isNarrow } = useViewport();
-
-  const handleCopyLink = () => {
-    const qs = encodeTopology(topology);
-    const url = `${location.origin}${location.pathname}${qs}`;
-    navigator.clipboard.writeText(url).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
+  const shared = decodeTopology(window.location.search);
+  const { isNarrow, width } = useViewport();
+  // Five devices in a row need a wide canvas: beside the panel and the route
+  // table, a laptop-width canvas zoomed out past the point where the canvas
+  // folds an area, and the lesson opened with Client and Server hidden. The
+  // two-row arrangement fits there.
+  const compact = isNarrow || width < COMPACT_BELOW;
+  // A network that came in the link keeps the arrangement it was shared with.
+  const topology = shared ?? (compact ? NARROW_TOPOLOGY : INITIAL_TOPOLOGY);
 
   return (
     <DemoShell
       title="Client–Server"
       desc="Send one packet from a client to a server on another network, and watch the router pass it on."
     >
-      <NetlabProvider topology={topology}>
+      <NetlabProvider key={compact ? 'compact' : 'wide'} topology={topology}>
         <SimulationProvider>
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             {/* Toolbar */}
@@ -257,22 +335,8 @@ export default function ClientServerDemo() {
               <SimulationControls />
 
               <div style={{ marginLeft: 'auto' }}>
-                <button
-                  onClick={handleCopyLink}
-                  style={{
-                    padding: '5px 14px',
-                    background: copied ? '#16a34a' : 'var(--netlab-bg-elevated)',
-                    color: copied ? '#fff' : 'var(--netlab-text-primary)',
-                    border: 'none',
-                    borderRadius: 6,
-                    cursor: 'pointer',
-                    fontSize: 13,
-                    fontFamily: 'monospace',
-                    transition: 'background 0.2s',
-                  }}
-                >
-                  {copied ? '✓ Copied!' : '🔗 Copy Link'}
-                </button>
+                {/* The link carries the network as it is taught, not the phone arrangement. */}
+                <CopyLinkButton topology={shared ?? INITIAL_TOPOLOGY} />
               </div>
             </div>
 

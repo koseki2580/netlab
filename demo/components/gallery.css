@@ -42,3 +42,73 @@
     transition: top 120ms ease;
   }
 }
+
+/*
+ * Phone width. Beside the catalogue the navigation took 248 of 390 pixels, so
+ * the cards had a 94px column and the page grew to 29,000px. Here the
+ * navigation is a drawer the menu button opens, and the catalogue has the
+ * whole width. `!important` beats the inline layout the wide page is built from.
+ */
+.nl-gallery-menu {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  [data-netlab-gallery] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  [data-netlab-gallery] > [data-netlab-sidebar] {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    z-index: 60;
+    height: 100dvh !important;
+    max-width: 84vw;
+    visibility: hidden;
+    transform: translateX(-100%);
+  }
+
+  [data-netlab-gallery][data-menu-open] > [data-netlab-sidebar] {
+    visibility: visible;
+    transform: none;
+  }
+
+  .nl-gallery-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    background: rgba(15, 23, 42, 0.55);
+  }
+
+  .nl-gallery-menu {
+    display: inline-flex;
+    align-items: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--netlab-border);
+    border-radius: 10px;
+    background: var(--netlab-bg-surface);
+    color: var(--netlab-text-primary);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  [data-netlab-gallery-main] {
+    padding: 12px !important;
+  }
+
+  /* The settings bar would otherwise stay over a third of a phone screen. */
+  [data-netlab-search-bar] {
+    position: static !important;
+  }
+}
+
+@media (max-width: 700px) and (prefers-reduced-motion: no-preference) {
+  [data-netlab-gallery] > [data-netlab-sidebar] {
+    transition: transform 160ms ease;
+  }
+}

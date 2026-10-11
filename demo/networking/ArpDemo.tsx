@@ -4,9 +4,19 @@ import DemoShell from '../DemoShell';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
-import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../components/LessonPanel';
+import {
+  LessonCanvas,
+  LessonNote,
+  LessonPanel,
+  LessonPinned,
+  LessonSplit,
+  LessonStepBar,
+  usePhoneTopology,
+  type PhonePositions,
+} from '../components/LessonPanel';
 import { HopInspector } from '../../src/components/simulation/HopInspector';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
+import { PacketViewerPanel } from '../../src/components/simulation/PacketViewer';
 import { SimulationOverlayDock } from '../../src/components/simulation/SimulationOverlayDock';
 import { StateDiffTable } from '../../src/components/simulation/StateDiffTable';
 import { StepControls } from '../../src/components/simulation/StepControls';
@@ -16,6 +26,7 @@ import { ja } from '../../src/i18n/locales/ja';
 import { basicArp } from '../../src/scenarios';
 import { buildStepSnapshots } from '../../src/simulation/snapshots';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
+import { useViewport } from '../../src/utils/useViewport';
 import { readDemoEmbedParams } from '../embedParams';
 
 const CARD_STYLE: CSSProperties = {
@@ -191,6 +202,7 @@ function ArpDemoInner() {
   const { engine, state } = useSimulation();
   const hasTrace = state.traces.length > 0;
   const hopChosen = state.selectedHop !== null;
+  const { isNarrow } = useViewport();
 
   const sendPing = async () => {
     engine.clear();
@@ -198,12 +210,15 @@ function ArpDemoInner() {
   };
 
   return (
-    <LessonSplit>
+    <LessonSplit pinned>
       <LessonCanvas
         canvas={
           <>
             <NetlabCanvas />
-            <SimulationOverlayDock showRouteTable={false} />
+            {/* Over a phone-width canvas the packet-contents box took the room
+                the diagram is fitted into, and the devices shrank to a
+                thumbnail in what was left. There it is read in the panel. */}
+            {!isNarrow && <SimulationOverlayDock showRouteTable={false} />}
           </>
         }
       >
@@ -274,26 +289,39 @@ function ArpDemoInner() {
         {/* The timeline comes first once a packet has run: it is what the lesson
             asks the learner to read. Panels with nothing to show yet stay out
             of the way instead of taking the top of the rail. */}
-        <div style={{ padding: 12, display: 'grid', gap: 12 }}>
+        {/* One column that may be narrower than its widest content: left to
+            size itself, the column grew to the timeline's longest unbroken
+            row and took every card past the edge of the screen. */}
+        <div
+          style={{
+            padding: 12,
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr)',
+            gap: 12,
+          }}
+        >
+          <LessonStepBar />
           <div style={CARD_STYLE}>
             <div style={LABEL_STYLE}>{t('Controls', '操作')}</div>
-            <button
-              type="button"
-              data-testid="demo-primary-action"
-              onClick={() => void sendPing()}
-              style={{
-                padding: '10px 16px',
-                borderRadius: 8,
-                border: '1px solid #0f766e',
-                background: '#115e59',
-                color: '#ecfeff',
-                cursor: 'pointer',
-                fontSize: 15,
-                fontWeight: 700,
-              }}
-            >
-              {t('▶ Send from Client to Server', '▶ Client から Server へ送ってみる')}
-            </button>
+            <LessonPinned>
+              <button
+                type="button"
+                data-testid="demo-primary-action"
+                onClick={() => void sendPing()}
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: 8,
+                  border: '1px solid #0f766e',
+                  background: '#115e59',
+                  color: '#ecfeff',
+                  cursor: 'pointer',
+                  fontSize: 15,
+                  fontWeight: 700,
+                }}
+              >
+                {t('▶ Send from Client to Server', '▶ Client から Server へ送ってみる')}
+              </button>
+            </LessonPinned>
             <div
               data-testid="arp-send-hint"
               style={{ ...DETAIL_STYLE, marginTop: 6, color: 'var(--netlab-text-secondary)' }}
@@ -323,10 +351,16 @@ function ArpDemoInner() {
               <StepControls primary={false} />
             </div>
           )}
+          {isNarrow && hasTrace && <PacketViewerPanel />}
           <ArpTablePanel />
           <ArpDiffCard />
           {hasTrace && (
-            <div data-testid="lesson-hop-details" style={hopChosen ? { height: 360 } : undefined}>
+            <div
+              data-testid="lesson-hop-details"
+              // The routing rows have fixed columns wider than a phone: they
+              // scroll here, inside their own card, instead of widening the page.
+              style={{ overflowX: 'auto', ...(hopChosen ? { height: 360 } : {}) }}
+            >
               <HopInspector />
             </div>
           )}
@@ -336,6 +370,13 @@ function ArpDemoInner() {
   );
 }
 
+/** The devices closer together on a phone, so the fit draws them (and their addresses) larger. */
+const PHONE_POSITIONS: PhonePositions = {
+  'client-1': { x: 0, y: 0 },
+  'router-1': { x: 125, y: 0 },
+  'server-1': { x: 250, y: 0 },
+};
+
 export default function ArpDemo() {
   const params = new URLSearchParams(window.location.search);
   const tutorialId = params.get('tutorial') ?? null;
@@ -343,6 +384,7 @@ export default function ArpDemo() {
   const { embedded, embedMode, parentOrigin } = readDemoEmbedParams();
   const tutorialProps = tutorialId ? { tutorialId } : {};
 
+  const phone = usePhoneTopology(basicArp.topology, PHONE_POSITIONS);
   return (
     <DemoShell
       title="ARP Basics"
@@ -350,7 +392,8 @@ export default function ArpDemo() {
       embedded={embedded}
     >
       <NetlabProvider
-        topology={basicArp.topology}
+        key={phone.layout}
+        topology={phone.topology}
         sandboxEnabled={sandboxEnabled}
         {...(sandboxEnabled ? { sandboxControlMode: 'sandbox-owns' as const } : {})}
         {...(embedMode !== undefined ? { embedMode } : {})}

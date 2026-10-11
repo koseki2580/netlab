@@ -3,7 +3,17 @@ import { useT } from '../localeContext';
 import DemoShell from '../DemoShell';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
-import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../components/LessonPanel';
+import {
+  LessonCanvas,
+  LessonNote,
+  LessonPanel,
+  LessonPinned,
+  LessonSplit,
+  LessonStepBar,
+  usePhoneTopology,
+  type PhonePositions,
+} from '../components/LessonPanel';
+import { useViewport } from '../../src/utils/useViewport';
 import { PacketStructureViewer } from '../../src/components/simulation/PacketStructureViewer';
 import { StepControls } from '../../src/components/simulation/StepControls';
 import { tcpHandshake } from '../../src/scenarios';
@@ -243,9 +253,14 @@ function StateBadge({
 }) {
   const accent = stateAccent(state);
   const meaning = useStateMeaning();
+  // On a narrow screen the badge stays on the diagram, over the end it speaks
+  // for, as on a wide one: read in the text below, both were off screen while
+  // the buttons that change them were being pressed.
+  const { isNarrow } = useViewport();
+  const Box = isNarrow ? 'div' : LessonNote;
 
   return (
-    <LessonNote
+    <Box
       data-testid={testId}
       style={{
         position: 'absolute',
@@ -262,7 +277,8 @@ function StateBadge({
         boxShadow: '0 8px 24px color-mix(in srgb, var(--netlab-bg-primary) 35%, transparent)',
         pointerEvents: 'none',
         minWidth: 124,
-        maxWidth: 220,
+        maxWidth: isNarrow ? '46%' : 220,
+        ...(isNarrow ? { zIndex: 20, padding: '6px 8px', lineHeight: 1.3 } : {}),
       }}
     >
       <div style={{ color: 'var(--netlab-text-secondary)', marginBottom: 4 }}>{label}</div>
@@ -272,8 +288,12 @@ function StateBadge({
       >
         {state}
       </div>
-      <div style={{ color: 'var(--netlab-text-secondary)', marginTop: 2 }}>{meaning(state)}</div>
-    </LessonNote>
+      {/* Two lines on a phone, so the badge stays clear of the device under
+          it; what the state means is in the panel's state card. */}
+      {isNarrow ? null : (
+        <div style={{ color: 'var(--netlab-text-secondary)', marginTop: 2 }}>{meaning(state)}</div>
+      )}
+    </Box>
   );
 }
 
@@ -427,6 +447,23 @@ function TcpHandshakeDemoInner() {
     state.status,
   );
   const handshakeRecorded = state.traces[0]?.label === 'TCP SYN';
+  const { isNarrow } = useViewport();
+  const badges = (
+    <>
+      <StateBadge
+        label={t('Client State', 'クライアントの状態')}
+        state={nodeStates.client}
+        place={isNarrow ? { left: 8, top: 8 } : { left: 24, top: 60 }}
+        testId="tcp-client-state"
+      />
+      <StateBadge
+        label={t('Server State', 'サーバの状態')}
+        state={nodeStates.server}
+        place={isNarrow ? { right: 8, top: 8 } : { right: 24, top: 60 }}
+        testId="tcp-server-state"
+      />
+    </>
+  );
 
   // Start the step-through at the first segment, so the learner watches the
   // exchange from its beginning instead of landing on the last one.
@@ -464,73 +501,84 @@ function TcpHandshakeDemoInner() {
   };
 
   return (
-    <LessonSplit>
-      <LessonCanvas canvas={<NetlabCanvas />}>
-        <LessonNote
-          data-canvas-overlay=""
-          style={{
-            position: 'absolute',
-            top: 12,
-            left: 12,
-            display: 'flex',
-            gap: 8,
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            zIndex: 20,
-          }}
-        >
-          <button
-            type="button"
-            data-testid="tcp-connect"
-            disabled={activeConnection !== null}
-            onClick={() => void handleConnect()}
+    <LessonSplit pinned>
+      <LessonCanvas
+        canvas={
+          <>
+            <NetlabCanvas />
+            {isNarrow ? badges : null}
+          </>
+        }
+      >
+        <LessonStepBar continueAcrossTraces />
+        <LessonPinned>
+          <LessonNote
+            data-canvas-overlay=""
             style={{
-              padding: '8px 14px',
-              borderRadius: 6,
-              border: 'none',
-              background: activeConnection ? 'var(--netlab-border)' : '#0f766e',
-              color: '#fff',
-              fontSize: 14,
-              fontWeight: 700,
-              cursor: activeConnection ? 'not-allowed' : 'pointer',
+              position: 'absolute',
+              top: 12,
+              left: 12,
+              display: 'flex',
+              gap: 8,
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              zIndex: 20,
+              ...(isNarrow ? { padding: 0 } : {}),
             }}
           >
-            {t('▶ Start a connection (TCP)', '▶ 接続を始める（TCP）')}
-          </button>
-          <button
-            type="button"
-            disabled={activeConnection === null}
-            onClick={() => void handleDisconnect()}
-            style={{
-              padding: '8px 14px',
-              borderRadius: 6,
-              border: '1px solid var(--netlab-border)',
-              background: activeConnection
-                ? 'var(--netlab-bg-elevated)'
-                : 'var(--netlab-bg-primary)',
-              color: activeConnection
-                ? 'var(--netlab-text-primary)'
-                : 'var(--netlab-text-secondary)',
-              fontSize: 14,
-              cursor: activeConnection ? 'pointer' : 'not-allowed',
-            }}
-          >
-            {t('Disconnect', '切断する')}
-          </button>
-          <span
-            data-testid="tcp-next-hint"
-            style={{ color: 'var(--netlab-text-secondary)', fontSize: 13 }}
-          >
-            {!handshakeRecorded && state.traces.length > 0
-              ? t(
-                  '"Next Step" walks the closing exchange.',
-                  '「次のステップ」で、切断のやり取りを 1 つずつ見られます。',
-                )
-              : handshakeRecorded
-                ? t('Now press ①, ②, ③ below, in order.', '次に、下の ①②③ を順に押します。')
-                : t('Press this first.', 'まずこれを押します。')}
-          </span>
-        </LessonNote>
+            <button
+              type="button"
+              data-testid="tcp-connect"
+              disabled={activeConnection !== null}
+              onClick={() => void handleConnect()}
+              style={{
+                padding: '8px 14px',
+                borderRadius: 6,
+                border: 'none',
+                background: activeConnection ? 'var(--netlab-border)' : '#0f766e',
+                color: '#fff',
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: activeConnection ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {t('▶ Start a connection (TCP)', '▶ 接続を始める（TCP）')}
+            </button>
+            <button
+              type="button"
+              disabled={activeConnection === null}
+              onClick={() => void handleDisconnect()}
+              style={{
+                padding: '8px 14px',
+                borderRadius: 6,
+                border: '1px solid var(--netlab-border)',
+                background: activeConnection
+                  ? 'var(--netlab-bg-elevated)'
+                  : 'var(--netlab-bg-primary)',
+                color: activeConnection
+                  ? 'var(--netlab-text-primary)'
+                  : 'var(--netlab-text-secondary)',
+                fontSize: 14,
+                cursor: activeConnection ? 'pointer' : 'not-allowed',
+              }}
+            >
+              {t('Disconnect', '切断する')}
+            </button>
+            <span
+              data-testid="tcp-next-hint"
+              style={{ color: 'var(--netlab-text-secondary)', fontSize: 13 }}
+            >
+              {!handshakeRecorded && state.traces.length > 0
+                ? t(
+                    '"Next Step" walks the closing exchange.',
+                    '「次のステップ」で、切断のやり取りを 1 つずつ見られます。',
+                  )
+                : handshakeRecorded
+                  ? t('Now press ①, ②, ③ below, in order.', '次に、下の ①②③ を順に押します。')
+                  : t('Press this first.', 'まずこれを押します。')}
+            </span>
+          </LessonNote>
+        </LessonPinned>
 
         <LessonNote
           data-testid="tcp-teaching-flow"
@@ -573,41 +621,72 @@ function TcpHandshakeDemoInner() {
           </div>
           {/* The three segments tied to the telephone phrases, in place — and
               each is the button that plays that segment. */}
-          <div
-            data-testid="tcp-handshake-gloss"
-            style={{ display: 'grid', gap: 4, margin: '6px 0' }}
-          >
-            {HANDSHAKE_ORDER.map((segment, index) => {
-              const active = shown === segment;
-              return (
-                <button
-                  key={segment}
-                  type="button"
-                  data-testid={`tcp-jump-${index + 1}`}
-                  aria-pressed={active}
-                  disabled={!handshakeRecorded}
-                  onClick={() => playSegment(index)}
-                  style={{
-                    textAlign: 'left',
-                    padding: '6px 10px',
-                    borderRadius: 6,
-                    border: `2px solid ${active ? 'var(--netlab-accent-cyan)' : 'var(--netlab-border)'}`,
-                    background: 'var(--netlab-bg-surface)',
-                    color: 'var(--netlab-text-primary)',
-                    fontSize: 14,
-                    fontWeight: active ? 700 : 400,
-                    cursor: handshakeRecorded ? 'pointer' : 'not-allowed',
-                  }}
-                >
+          {/* Beside the diagram on a narrow screen, as three short buttons
+              in one row; what each one says is read in the list below. */}
+          <LessonPinned order={1}>
+            <div
+              data-testid="tcp-handshake-gloss"
+              style={
+                isNarrow
+                  ? { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 6 }
+                  : { display: 'grid', gap: 4, margin: '6px 0' }
+              }
+            >
+              {HANDSHAKE_ORDER.map((segment, index) => {
+                const active = shown === segment;
+                return (
+                  <button
+                    key={segment}
+                    type="button"
+                    data-testid={`tcp-jump-${index + 1}`}
+                    aria-pressed={active}
+                    disabled={!handshakeRecorded}
+                    onClick={() => playSegment(index)}
+                    style={{
+                      textAlign: 'left',
+                      padding: '6px 10px',
+                      borderRadius: 6,
+                      border: `2px solid ${active ? 'var(--netlab-accent-cyan)' : 'var(--netlab-border)'}`,
+                      background: 'var(--netlab-bg-surface)',
+                      color: 'var(--netlab-text-primary)',
+                      fontSize: 14,
+                      fontWeight: active ? 700 : 400,
+                      cursor: handshakeRecorded ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    {CIRCLED[index]} {SEGMENT_NAME[segment]}
+                    {isNarrow ? null : (
+                      <>
+                        ＝{phrase(segment)}
+                        <span style={{ color: 'var(--netlab-text-secondary)', fontSize: 12 }}>
+                          {' '}
+                          {SEGMENT_SPEAKER[segment] === 'client'
+                            ? 'Client → Server'
+                            : 'Server → Client'}
+                        </span>
+                      </>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </LessonPinned>
+          {isNarrow ? (
+            <div
+              data-testid="tcp-handshake-phrases"
+              style={{ display: 'grid', gap: 2, margin: '6px 0' }}
+            >
+              {HANDSHAKE_ORDER.map((segment, index) => (
+                <div key={segment}>
                   {CIRCLED[index]} {SEGMENT_NAME[segment]}＝{phrase(segment)}
                   <span style={{ color: 'var(--netlab-text-secondary)', fontSize: 12 }}>
                     {' '}
                     {SEGMENT_SPEAKER[segment] === 'client' ? 'Client → Server' : 'Server → Client'}
                   </span>
-                </button>
-              );
-            })}
-          </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
           <div
             data-testid="tcp-state-follows-step"
             style={{ color: 'var(--netlab-text-secondary)' }}
@@ -633,44 +712,35 @@ function TcpHandshakeDemoInner() {
         {/* The telephone phrase, said on the diagram between the two ends
             while that segment is the one being shown. */}
         {shown ? (
-          <LessonNote
-            data-testid="tcp-speech"
-            data-segment={shown}
-            data-speaker={SEGMENT_SPEAKER[shown]}
-            style={{
-              position: 'absolute',
-              top: 60,
-              left: 256,
-              right: 256,
-              padding: '6px 10px',
-              borderRadius: 10,
-              border: '1px solid var(--netlab-accent-cyan)',
-              background: 'color-mix(in srgb, var(--netlab-bg-panel) 92%, transparent)',
-              color: 'var(--netlab-text-primary)',
-              textAlign: 'center',
-              pointerEvents: 'none',
-            }}
-          >
-            <div style={{ fontSize: 16, fontWeight: 700 }}>{phrase(shown)}</div>
-            <div style={{ fontSize: 12, color: 'var(--netlab-text-secondary)' }}>
-              {SEGMENT_NAME[shown]}:{' '}
-              {SEGMENT_SPEAKER[shown] === 'client' ? 'Client → Server' : 'Server → Client'}
-            </div>
-          </LessonNote>
+          <LessonPinned order={11}>
+            <LessonNote
+              data-testid="tcp-speech"
+              data-segment={shown}
+              data-speaker={SEGMENT_SPEAKER[shown]}
+              style={{
+                position: 'absolute',
+                top: 60,
+                left: 256,
+                right: 256,
+                padding: '6px 10px',
+                borderRadius: 10,
+                border: '1px solid var(--netlab-accent-cyan)',
+                background: 'color-mix(in srgb, var(--netlab-bg-panel) 92%, transparent)',
+                color: 'var(--netlab-text-primary)',
+                textAlign: 'center',
+                pointerEvents: 'none',
+              }}
+            >
+              <div style={{ fontSize: 16, fontWeight: 700 }}>{phrase(shown)}</div>
+              <div style={{ fontSize: 12, color: 'var(--netlab-text-secondary)' }}>
+                {SEGMENT_NAME[shown]}:{' '}
+                {SEGMENT_SPEAKER[shown] === 'client' ? 'Client → Server' : 'Server → Client'}
+              </div>
+            </LessonNote>
+          </LessonPinned>
         ) : null}
 
-        <StateBadge
-          label={t('Client State', 'クライアントの状態')}
-          state={nodeStates.client}
-          place={{ left: 24, top: 60 }}
-          testId="tcp-client-state"
-        />
-        <StateBadge
-          label={t('Server State', 'サーバの状態')}
-          state={nodeStates.server}
-          place={{ right: 24, top: 60 }}
-          testId="tcp-server-state"
-        />
+        {isNarrow ? null : badges}
       </LessonCanvas>
 
       <LessonPanel
@@ -692,6 +762,13 @@ function TcpHandshakeDemoInner() {
   );
 }
 
+/** The devices closer together on a phone, so the fit draws them (and their addresses) larger. */
+const PHONE_POSITIONS: PhonePositions = {
+  'client-1': { x: 0, y: 0 },
+  'router-1': { x: 125, y: 0 },
+  'server-1': { x: 250, y: 0 },
+};
+
 export default function TcpHandshakeDemo() {
   const params = new URLSearchParams(window.location.search);
   const sandboxIntroId = params.get('intro') ?? null;
@@ -700,6 +777,7 @@ export default function TcpHandshakeDemo() {
   const { embedded, embedMode, parentOrigin } = readDemoEmbedParams();
   const tutorialProps = tutorialId ? { tutorialId } : {};
 
+  const phone = usePhoneTopology(TOPOLOGY, PHONE_POSITIONS);
   return (
     <DemoShell
       title="TCP Handshake"
@@ -707,7 +785,8 @@ export default function TcpHandshakeDemo() {
       embedded={embedded}
     >
       <NetlabProvider
-        topology={TOPOLOGY}
+        key={phone.layout}
+        topology={phone.topology}
         sandboxEnabled={sandboxEnabled}
         {...(sandboxEnabled ? { sandboxControlMode: 'sandbox-owns' as const } : {})}
         {...(embedMode !== undefined ? { embedMode } : {})}

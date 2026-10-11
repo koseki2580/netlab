@@ -201,6 +201,7 @@ export function DemoCard({
   return (
     <div
       className="nl-demo-card"
+      data-testid="gallery-card"
       style={{
         ...cardDensityVars(audience),
         // Learning-surface card: bg/border/hover-border feed the CSS class so

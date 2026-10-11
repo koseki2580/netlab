@@ -285,3 +285,56 @@ test('TC-329: each level keeps its own attempt behind its own start button', asy
   await expect(page.getByTestId('exam-path')).toHaveAttribute('data-level', '1');
   await expect(page.getByTestId('exam-option-1-x')).toBeChecked();
 });
+
+/**
+ * TC-568 — coming back to an unfinished test, the learner is offered the first
+ * question still to answer: the page is six screens long on a phone and opened
+ * at its top.
+ */
+test.describe('an unfinished test on a phone', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+
+  test('offers to continue from the first unanswered question', async ({ page, demoPage }) => {
+    await useJapanese(page);
+    await startExam(page, demoPage);
+    await expect(page.getByTestId('exam-continue')).toHaveCount(0);
+    for (let n = 1; n <= 5; n += 1) await page.getByTestId(`exam-option-${n}-x`).check();
+
+    await page.reload();
+    const resume = page.getByTestId('exam-continue');
+    await expect(resume).toBeInViewport({ ratio: 1 });
+    await expect(resume).toContainText('問 6 から続ける');
+    await expect(page.getByTestId('exam-question-6')).not.toBeInViewport();
+    await resume.tap();
+    await expect(page.getByTestId('exam-question-6')).toBeInViewport();
+    await expect(page.getByTestId('exam-question-6')).toBeFocused();
+
+    for (let n = 6; n <= 10; n += 1) await page.getByTestId(`exam-option-${n}-x`).check();
+    await expect(resume).toHaveCount(0);
+  });
+});
+
+/** TC-569 — "not learned yet" is reported as that, apart from wrong answers. */
+test('answers of "not learned yet" are not called mistakes', async ({ page, demoPage }) => {
+  await useJapanese(page);
+  await startExam(page, demoPage);
+  for (const [index, question] of EXAM_QUESTIONS.entries()) {
+    // Two "not learned yet", one wrong, seven right.
+    const suffix =
+      index < 2 ? 'x' : index === 2 ? ((question.answer + 1) % 4) + 1 : question.answer + 1;
+    await page.getByTestId(`exam-option-${index + 1}-${suffix}`).check();
+  }
+  await page.getByTestId('exam-submit').click();
+  await expect(page.getByTestId('exam-score')).toHaveAttribute('data-score', '7');
+  await expect(page.getByTestId('exam-verdict')).toContainText('まだ習っていない問題');
+  await expect(page.getByTestId('exam-missed-summary')).toHaveText('まちがえたのは 問 3 です');
+  await expect(page.getByTestId('exam-not-learned-summary')).toHaveText(
+    'まだ習っていない 2 問（問 1・問 2）',
+  );
+  // Each still points at the lesson that teaches it.
+  await expect(page.getByTestId('exam-missed-review-1')).toBeVisible();
+  await expect(page.getByTestId('exam-missed-review-3')).toBeVisible();
+  await expect(page.getByTestId('exam-question-1')).toContainText('まだ習っていない');
+  await expect(page.getByTestId('exam-question-1')).not.toContainText('不正解');
+  await expect(page.getByTestId('exam-question-3')).toContainText('不正解');
+});

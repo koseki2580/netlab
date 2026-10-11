@@ -323,6 +323,7 @@ function UdpDemoInner() {
               >
                 {t('Port (which door at the server):', 'ポート（相手の窓口の番号）:')}
                 <input
+                  data-testid="udp-port"
                   type="number"
                   min={1}
                   max={65535}
@@ -342,6 +343,7 @@ function UdpDemoInner() {
               >
                 {t('Payload (what to send):', '中身（送る文字）:')}
                 <input
+                  data-testid="udp-payload"
                   type="text"
                   value={payload}
                   onChange={(e) => setPayload(e.target.value)}

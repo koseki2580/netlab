@@ -86,7 +86,7 @@ window.USER_GUIDE_CONTENT = {
                </ul>
                <h3>レベルと「達成」</h3>
                <p>レベルは 4 つです。レベル 1 は「アドレスと線」、レベル 2 は「スイッチと、かんたんな経路」を扱い、どちらも 100 問以上あります。同じ種類の問題でも、場所・アドレス・こわれている機器が毎回変わります。</p>
-               <p><strong>レベルは、直近 10 問のうち 7 問を、3 種類以上にわたってヒントなしで解けると達成です。</strong>取り組んだ問題が 5 問より少ないあいだは、まだ判定しません。各レベルの下に、いまの数と、あと何が必要かが 1 文で出ます。</p>
+               <p><strong>レベルは、直近 10 問のうち 7 問を、3 種類以上にわたってヒントなしで解けると達成です。</strong>数えるのは、選ぶだけの問題は 1 回目の「たしかめる」で、自分で入力する問題は 2 回目までに解けたときです（問題ごとに、はじめに 1 行で出ます）。そのレベルにある課題の種類（設定を入れる・おかしい所をさがす・どれにするか選ぶ など）を、それぞれ 1 問は解く必要があります。取り組んだ問題が 5 問より少ないあいだは、まだ判定しません。各レベルの下に、いまの数と、あと何が必要かが 1 文で出ます。</p>
                <div class="callout">レベル 3 とレベル 4 は、まだ用意できていません。レベル 4 には「このレベルの問題は、まだありません。」と出ます。レベル 3 には見本の問題が 1 種類あるだけで、達成にはなりません。</div>
                <h3>どのレベルから始めるか</h3>
                <p>迷ったら「レベル判定をする」を押してください。質問が 1 つあり、そのあと多くても 8 問を解きます。テストではなく、始める場所を見つけるためのものです。わからない問題は「わからないので次へ」で飛ばせます。</p>
@@ -132,7 +132,13 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>幅の狭い画面（900px 未満）</strong> — レッスン全体が<strong>縦 1 列</strong>になり、上から下へスクロールして読みます。図に重なっていた説明は図の外に出て、その次に図が決まった高さで表示され、最後にパネルが画面の幅いっぱいに並びます。</li>
                  <li><strong>幅の広い画面</strong> — パネルは図の横に並びます。図とパネルの境目をドラッグすると、パネルの幅を広げられます。</li>
                </ul>
-               <div class="callout">幅の狭い画面では、説明が図や操作ボタンを隠すことはありません。操作ボタンが見えないときは、図の下までスクロールしてください。</div>`
+               <p><strong>ARP・TCP のハンドシェイク・DHCP と DNS・NAT</strong> の 4 つのレッスンは、幅の狭い画面では並び方が少し違います。<strong>図は上に固定</strong>され、そのすぐ下に<strong>操作ボタン</strong>（送る、①②③、「次のステップ」）と、いまパケットがどこにいるかを示す <strong>1 行の状況</strong>が並びます。スクロールするのは、その下の説明とパネルだけです。機器は幅の広い画面より近づけて並べてあるので、大きく表示されます。</p>
+               <ul>
+                 <li><strong>図の機器をタップ</strong>すると、その機器の詳細（アドレスなどの設定）が開きます。たたまれたエリアはタップで開きます。</li>
+                 <li><strong>レッスン一覧</strong>では、左の案内は「☰ メニュー」ボタンで開く引き出しになり、カードが画面の幅いっぱいに並びます。</li>
+                 <li><strong>修了テスト</strong>を途中でやめて戻ると、いちばん上に「問 N から続ける」が出ます。「まだ習っていない」と答えた問題は、まちがえた問題とは分けて数えます。</li>
+               </ul>
+               <div class="callout">幅の狭い画面では、説明が図や操作ボタンを隠すことはありません。上の 4 つ以外のレッスンで操作ボタンが見えないときは、図の下までスクロールしてください。</div>`
       },
       {
         id: "lesson-briefs",
@@ -365,7 +371,7 @@ window.USER_GUIDE_CONTENT = {
                </ul>
                <h3>Levels, and what “cleared” means</h3>
                <p>There are four levels. Level 1 is about addresses and cables, level 2 about switches and simple routes; each has more than 100 exercises. Exercises of the same kind differ every time in the place, the addresses and the device at fault.</p>
-               <p><strong>A level is cleared when you solved 7 of your last 10 exercises without a hint, across at least 3 kinds of exercise.</strong> Until you have tried 5, the level is not judged. One sentence under each level says where you stand and what is still needed.</p>
+               <p><strong>A level is cleared when you solved 7 of your last 10 exercises without a hint, across at least 3 kinds of exercise.</strong> A solve counts on the first Check where the answer is one of a few things to press, and within two Checks where you type it (each exercise says which, in one line, before you start). Every kind of task the level has (set it up, find the fault, choose one, and so on) needs at least one solve. Until you have tried 5, the level is not judged. One sentence under each level says where you stand and what is still needed.</p>
                <div class="callout">Levels 3 and 4 are not available yet. Level 4 says “No exercises at this level yet.” Level 3 has a single sample kind of exercise and cannot be cleared.</div>
                <h3>Where to start</h3>
                <p>If you are not sure, press “Find my level”. It asks one question and then gives you at most 8 exercises. It is not a test; it only finds where to start. “I cannot do this one: next” skips an exercise.</p>
@@ -411,7 +417,13 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>Narrow screen (under 900px)</strong> — the lesson becomes <strong>one scrolling column</strong>, read from top to bottom. The notes that sat over the diagram move out of it, then comes the diagram at a fixed height, and last the panel at the full width of the screen.</li>
                  <li><strong>Wide screen</strong> — the panel sits beside the diagram. Drag the edge between them to make the panel wider.</li>
                </ul>
-               <div class="callout">On a narrow screen no note covers the diagram or the controls. If you cannot see the controls, scroll down past the diagram.</div>`
+               <p>Four lessons — <strong>ARP, the TCP handshake, DHCP and DNS, and NAT</strong> — are arranged a little differently on a narrow screen. The <strong>diagram stays fixed at the top</strong>; directly under it are the <strong>buttons that drive it</strong> (send, ①②③, “Next step”) and <strong>one line saying where the packet is</strong>. Only the notes and the panel below scroll. Their devices stand closer together than on a wide screen, so they are drawn larger.</p>
+               <ul>
+                 <li><strong>Tap a device</strong> on a diagram to open its details (its addresses and other settings). Tap a folded area to open it.</li>
+                 <li>On the <strong>lesson list</strong> the navigation on the left becomes a drawer opened by the “☰ Menu” button, and the cards take the full width.</li>
+                 <li>When you come back to an unfinished <strong>final test</strong>, “Continue from question N” is at the top. Questions answered “not learned yet” are counted apart from wrong answers.</li>
+               </ul>
+               <div class="callout">On a narrow screen no note covers the diagram or the controls. On a lesson other than those four, if you cannot see the controls, scroll down past the diagram.</div>`
       },
       {
         id: "lesson-briefs",

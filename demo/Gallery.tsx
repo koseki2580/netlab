@@ -1129,6 +1129,9 @@ export default function Gallery({
     readStoredAxis(GALLERY_CONTRAST_KEY, isContrast, 'normal'),
   );
   const [activeSectionId, setActiveSectionId] = useState(initialActiveSectionId);
+  // On a phone the navigation is a drawer (see gallery.css): beside the
+  // catalogue it took 248 of 390 pixels and left the cards a 94px column.
+  const [menuOpen, setMenuOpen] = useState(false);
   const [locale, setLocale] = useState<GalleryLocale>(
     () => initialLocale ?? readStoredGalleryLocale(),
   );
@@ -1356,6 +1359,11 @@ export default function Gallery({
         data-netlab-audience={audience}
         data-cbsafe={colorBlindSafe}
         data-contrast={contrast}
+        data-netlab-gallery
+        data-menu-open={menuOpen ? '' : undefined}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') setMenuOpen(false);
+        }}
         style={{
           ...themeToVars(activeTheme, { palette, density, colorBlindSafe, contrast }),
           minHeight: '100vh',
@@ -1382,8 +1390,18 @@ export default function Gallery({
           browseItems={browseItems}
           extraItems={extraBrowseItems}
           activeSectionId={activeSectionId}
-          onSelectSection={handleSelectSection}
+          onSelectSection={(sectionId) => {
+            setMenuOpen(false);
+            handleSelectSection(sectionId);
+          }}
         />
+        {menuOpen ? (
+          <div
+            className="nl-gallery-scrim"
+            data-testid="gallery-menu-scrim"
+            onClick={() => setMenuOpen(false)}
+          />
+        ) : null}
 
         <main
           ref={mainRef}
@@ -1428,6 +1446,15 @@ export default function Gallery({
                 flexWrap: 'wrap',
               }}
             >
+              <button
+                type="button"
+                className="nl-gallery-menu nl-gallery-focusable"
+                data-testid="gallery-menu"
+                aria-expanded={menuOpen}
+                onClick={() => setMenuOpen((open) => !open)}
+              >
+                ☰ {locale === 'ja' ? 'メニュー' : 'Menu'}
+              </button>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
                 <span
                   style={{

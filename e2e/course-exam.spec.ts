@@ -56,7 +56,8 @@ test('nine right answers pass, and the score card names the one missed and leads
 }) => {
   await openExam(page);
   for (const [index, question] of EXAM_QUESTIONS.entries()) {
-    const suffix = index === 4 ? 'x' : question.answer + 1;
+    // A wrong option, not "not learned yet": that one is worded apart (TC-569).
+    const suffix = index === 4 ? ((question.answer + 1) % 4) + 1 : question.answer + 1;
     await page.getByTestId(`exam-option-${index + 1}-${suffix}`).check();
   }
   await page.getByTestId('exam-submit').click();

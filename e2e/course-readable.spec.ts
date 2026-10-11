@@ -227,4 +227,35 @@ test.describe('on a phone', () => {
     expect(exam!.width).toBe(restart!.width);
     await expect(page.getByTestId(IDS.finishActions)).toBeInViewport({ ratio: 1 });
   });
+
+  /**
+   * TC-570 — nothing covers the address the text points at, and the result of
+   * the last step names the row it used, which has scrolled out of sight.
+   */
+  test('the diagram has no buttons over it and the last result names the row used', async ({
+    page,
+    demoPage,
+  }) => {
+    await inJapanese(page, 0);
+    await demoPage.goto('/course');
+    await expect(page.getByTestId(SEL.canvas.root)).toBeVisible();
+    await expect(page.getByTestId('maxgraph-controls')).toBeHidden();
+    const diagram = await page.getByTestId(IDS.diagram).boundingBox();
+    for (const address of await page.getByTestId('topology-node-ip').all()) {
+      const box = await address.boundingBox();
+      expect(box!.height, 'an address tall enough to read').toBeGreaterThanOrEqual(12);
+      expect(box!.y + box!.height).toBeLessThanOrEqual(diagram!.y + diagram!.height);
+    }
+
+    await openStep(page, COURSE_STEPS.length - 1);
+    await page.getByTestId(SEL.course.send).tap();
+    const used = page.getByTestId('course-used-row');
+    await expect(used).toContainText('192.168.1.0/24');
+    await expect(used).toBeInViewport({ ratio: 1 });
+    for (const id of ['course-back', SEL.course.send, SEL.course.next]) {
+      expect((await page.getByTestId(id).boundingBox())?.height ?? 0, id).toBeGreaterThanOrEqual(
+        44,
+      );
+    }
+  });
 });
