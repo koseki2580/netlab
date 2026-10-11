@@ -525,7 +525,10 @@ export default function SimulatorMaxGraphInner({
       // Only the primary button selects. maxGraph reports a right-click as a
       // click too, and treating it as one cleared the selection the context
       // menu had just made — the device's own panel never opened.
-      if (mouse && mouse.button !== 0) return;
+      // A tap arrives as a touch event, which has no button at all: read as
+      // "not the primary button" it was dropped, so on a phone a tap never
+      // selected a device or opened a collapsed area.
+      if (mouse && typeof mouse.button === 'number' && mouse.button !== 0) return;
       const current = handlers.current;
       // A device is an HTML label, so the click often lands on markup maxGraph
       // does not recognise as a cell. Ask the DOM which device was hit before
