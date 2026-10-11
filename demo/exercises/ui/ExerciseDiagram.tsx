@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, type RefObject } from 'react';
 import { NetlabCanvas } from '../../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../../../src/components/NetlabProvider';
 import { useNetlabUI } from '../../../src/components/NetlabUIContext';
@@ -6,7 +6,7 @@ import { extractPathEdgeIds } from '../../../src/simulation/extractPathEdgeIds';
 import { SimulationProvider, useSimulation } from '../../../src/simulation/SimulationContext';
 import type { PacketTrace } from '../../../src/types/simulation';
 import type { NetworkTopology, TopologySnapshot } from '../../../src/types/topology';
-import { diagramNotesCss, diagramNotesLines } from './diagramNotes';
+import { diagramLegendLines, diagramNotesCss, diagramNotesLines } from './diagramNotes';
 
 /** A trace the grader produced, to be shown on the diagram. `run` tells two presses apart. */
 export interface DiagramReplay {
@@ -77,6 +77,118 @@ function SelectionGuard({ onPick }: { onPick: ((pick: DiagramPick) => void) | un
   return null;
 }
 
+/** Half the width of the band around a cable in which a press counts as a press on it. */
+const CABLE_REACH_PX = 14;
+/** A finger that moved further than this was scrolling, not pressing. */
+const TAP_SLOP_PX = 10;
+
+/** The cable nearest to a point on the screen, within reach; null when none is. */
+function cableNear(root: HTMLElement, x: number, y: number): string | null {
+  let best: { id: string; distance: number } | null = null;
+  for (const group of root.querySelectorAll<SVGGElement>('g.netlab-edge[data-edge-id]')) {
+    const id = group.getAttribute('data-edge-id');
+    const path = group.querySelector('path');
+    const matrix = path?.getScreenCTM?.();
+    if (!id || !path || !matrix || typeof path.getTotalLength !== 'function') continue;
+    const length = path.getTotalLength();
+    const steps = Math.max(1, Math.ceil(length / 3));
+    for (let step = 0; step <= steps; step += 1) {
+      const point = path.getPointAtLength((length * step) / steps);
+      const px = point.x * matrix.a + point.y * matrix.c + matrix.e;
+      const py = point.x * matrix.b + point.y * matrix.d + matrix.f;
+      const distance = Math.hypot(px - x, py - y);
+      if (distance <= CABLE_REACH_PX && (best === null || distance < best.distance)) {
+        best = { id, distance };
+      }
+    }
+  }
+  return best?.id ?? null;
+}
+
+/**
+ * Presses on cables, taken before the canvas sees them.
+ *
+ * The canvas draws a cable with a 9px line to press, measured in the picture's
+ * own units: on a phone that is a few pixels. And a finger on it did not
+ * select the cable (a mouse did): the canvas showed its editor's handles on it
+ * instead and the red dashes were gone. So a press that lands within reach of
+ * a cable, and not on a device, is answered here and never reaches the
+ * canvas: `onPick` is told, with a mouse and with a finger alike.
+ */
+function useCablePresses(
+  root: RefObject<HTMLDivElement>,
+  onPick: ((pick: DiagramPick) => void) | undefined,
+) {
+  const report = useRef(onPick);
+  report.current = onPick;
+  useEffect(() => {
+    const element = root.current;
+    if (!element) return undefined;
+    let pressed: { id: string; x: number; y: number } | null = null;
+
+    const pointOf = (event: Event): { x: number; y: number } | null => {
+      const touch = (event as TouchEvent).changedTouches?.[0];
+      if (touch) return { x: touch.clientX, y: touch.clientY };
+      const { clientX, clientY } = event as MouseEvent;
+      return typeof clientX === 'number' ? { x: clientX, y: clientY } : null;
+    };
+    const down = (event: Event) => {
+      const point = pointOf(event);
+      const target = event.target as Element | null;
+      // The first event of a press decides; the ones that follow it (a touch
+      // is followed by pointer and mouse events) only ask whether to pass.
+      if (event.type === 'pointerdown' || pressed === null) {
+        // "On a device" means inside its box. The notes drawn under a box belong
+        // to it too, and they hang over the cables beside it.
+        const box = target?.closest?.(NODE)?.getBoundingClientRect();
+        const onDevice =
+          box !== undefined &&
+          point !== null &&
+          point.x >= box.left &&
+          point.x <= box.right &&
+          point.y >= box.top &&
+          point.y <= box.bottom;
+        const id = point && !onDevice ? cableNear(element, point.x, point.y) : null;
+        pressed = id !== null && point ? { id, ...point } : null;
+      }
+      if (pressed) event.stopPropagation();
+    };
+    const up = (event: Event) => {
+      if (pressed) event.stopPropagation();
+    };
+    // Told on the click, the last event of a press: telling it earlier moves
+    // the page (the cable's card is scrolled into view), and the events still
+    // to come would land on whatever is under the finger by then.
+    const click = (event: Event) => {
+      if (!pressed) return;
+      event.stopPropagation();
+      const point = pointOf(event);
+      const { id, x, y } = pressed;
+      pressed = null;
+      if (point && Math.hypot(point.x - x, point.y - y) <= TAP_SLOP_PX) {
+        report.current?.({ kind: 'link', id });
+      }
+    };
+    const cancel = () => {
+      pressed = null;
+    };
+    const downs = ['pointerdown', 'mousedown', 'touchstart'];
+    const ups = ['pointerup', 'mouseup', 'touchend'];
+    for (const type of downs) {
+      element.addEventListener(type, down, { capture: true, passive: true });
+    }
+    for (const type of ups) element.addEventListener(type, up, { capture: true, passive: true });
+    element.addEventListener('click', click, true);
+    element.addEventListener('pointercancel', cancel, true);
+    return () => {
+      for (const type of downs) element.removeEventListener(type, down, true);
+      for (const type of ups) element.removeEventListener(type, up, true);
+      element.removeEventListener('click', click, true);
+      element.removeEventListener('pointercancel', cancel, true);
+    };
+  }, [root]);
+}
+
 /**
  * The exercise's network as it stands now. It cannot be edited here: the form
  * is the only way to change a setting, so nothing outside the allow-list moves.
@@ -96,7 +208,7 @@ export function ExerciseDiagram({
   highlightNodeId: string | null;
   label: string;
   locale: 'en' | 'ja';
-  /** A phone: the boxes are too small to carry the notes, so they are listed over the picture. */
+  /** A phone: the page shows `DiagramLegend` under the picture, so the notes are not said twice. */
   legend?: boolean;
   /** A device or a cable was pressed. No panel opens; the page decides what a press means. */
   onPick?: (pick: DiagramPick) => void;
@@ -107,6 +219,8 @@ export function ExerciseDiagram({
     [topology],
   );
   const notes = useMemo(() => diagramNotesLines(topology, locale), [topology, locale]);
+  const rootRef = useRef<HTMLDivElement>(null);
+  useCablePresses(rootRef, onPick);
   const css = [
     // The library's 14px dot is hard to follow on a phone.
     `${SCOPE} [data-testid="canvas-packet"]{width:20px !important;height:20px !important;margin:-3px 0 0 -3px;}`,
@@ -124,6 +238,7 @@ export function ExerciseDiagram({
   ].join('\n');
   return (
     <div
+      ref={rootRef}
       data-testid="exercise-diagram"
       data-exercise-diagram=""
       role="group"
@@ -134,39 +249,21 @@ export function ExerciseDiagram({
       {/* The notes are generated content, which a screen reader and a test cannot
           read, and on a phone the boxes are drawn too small to read them on:
           there they are a legend over the picture; elsewhere they are said, unseen. */}
-      {notes.length > 0 ? (
+      {/* Said, unseen: beside the picture the notes are on the boxes; on a phone
+          they are the legend under the picture (`DiagramLegend`). */}
+      {notes.length > 0 && !legend ? (
         <ul
           data-testid="exercise-diagram-notes"
-          data-legend={legend ? '' : undefined}
-          style={
-            legend
-              ? {
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  zIndex: 1,
-                  margin: 0,
-                  padding: '4px 16px',
-                  listStyle: 'none',
-                  pointerEvents: 'none',
-                  fontFamily: 'ui-monospace, monospace',
-                  fontSize: 12,
-                  lineHeight: 1.5,
-                  color: 'var(--netlab-text-primary)',
-                  background: 'color-mix(in srgb, var(--netlab-bg-primary) 85%, transparent)',
-                }
-              : {
-                  position: 'absolute',
-                  width: 1,
-                  height: 1,
-                  margin: -1,
-                  padding: 0,
-                  overflow: 'hidden',
-                  clip: 'rect(0 0 0 0)',
-                  whiteSpace: 'nowrap',
-                }
-          }
+          style={{
+            position: 'absolute',
+            width: 1,
+            height: 1,
+            margin: -1,
+            padding: 0,
+            overflow: 'hidden',
+            clip: 'rect(0 0 0 0)',
+            whiteSpace: 'nowrap',
+          }}
         >
           {notes.map((line) => (
             <li key={line}>{line}</li>
@@ -190,5 +287,47 @@ export function ExerciseDiagram({
         </SimulationProvider>
       </NetlabProvider>
     </div>
+  );
+}
+
+/**
+ * The picture in words, for a phone: every device with its address, in text a
+ * person can read (the names and addresses on the picture are 3 to 5 pixels
+ * high there). It stands under the picture, in the flow of the page, so it
+ * covers no device.
+ */
+export function DiagramLegend({
+  topology,
+  locale,
+}: {
+  topology: TopologySnapshot;
+  locale: 'en' | 'ja';
+}) {
+  const lines = useMemo(() => diagramLegendLines(topology, locale), [topology, locale]);
+  if (lines.length === 0) return null;
+  return (
+    <ul
+      data-testid="exercise-diagram-notes"
+      data-legend=""
+      aria-label={
+        locale === 'ja' ? '図の機器とアドレス' : 'The devices on the diagram and their addresses'
+      }
+      style={{
+        margin: 0,
+        padding: '6px 16px 8px',
+        listStyle: 'none',
+        fontFamily: 'ui-monospace, monospace',
+        fontSize: 12,
+        lineHeight: 1.6,
+        color: 'var(--netlab-text-primary)',
+        background: 'var(--netlab-bg-primary)',
+        borderTop: '1px solid var(--netlab-border)',
+        overflowWrap: 'anywhere',
+      }}
+    >
+      {lines.map((line) => (
+        <li key={line}>{line}</li>
+      ))}
+    </ul>
   );
 }

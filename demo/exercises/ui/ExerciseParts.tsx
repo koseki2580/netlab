@@ -5,8 +5,10 @@ import type { CheckResult, DesignOption, Exercise, GradeResult } from '../model/
 import type { AttemptPrediction } from '../store/types';
 import { changeSentence, goalLabel } from './describe';
 import { lessonTitle } from './lessonTitle';
-import { MAX_CHECKS_TO_COUNT } from '../store/estimate';
 import { CARD, LINK, MUTED, SECONDARY } from './styles';
+import { WATCH_WORDS } from './words';
+import { hintText } from '../model/hints';
+import type { TopologySnapshot } from '../../../src/types/topology';
 
 /** The small pieces of the exercise page. `ExerciseRunner` holds the state and puts them together. */
 
@@ -49,8 +51,14 @@ export function ExerciseBrief({
   exercise,
   results,
   compact = false,
+  countRule = null,
+  pickFirst = false,
 }: {
   exercise: Exercise;
+  /** Before the first Check: within how many Checks a solve counts. Null once one was pressed. */
+  countRule?: 1 | 2 | null;
+  /** The exercise asks for the faulty device to be pointed at first: that choice counts too. */
+  pickFirst?: boolean;
   /** The latest results that still describe the settings on screen; null before the first Check. */
   results: readonly CheckResult[] | null;
   /** A phone: tighter lines, so the diagram still fits under the brief. */
@@ -63,9 +71,40 @@ export function ExerciseBrief({
       <h2 style={{ margin: 0, fontSize: compact ? 18 : 20, lineHeight: 1.4 }}>
         {exercise.title[locale]}
       </h2>
-      <p style={{ margin: 0, fontSize: compact ? 15 : 16, lineHeight: compact ? 1.6 : 1.8 }}>
-        {exercise.brief[locale]}
-      </p>
+      {exercise.task ? (
+        <>
+          <p
+            data-testid="exercise-task"
+            style={{ margin: 0, fontSize: compact ? 16 : 17, lineHeight: 1.6, fontWeight: 700 }}
+          >
+            {exercise.task[locale]}
+          </p>
+          {exercise.rule ? (
+            <p
+              data-testid="exercise-rule"
+              style={{ margin: 0, fontSize: compact ? 15 : 16, lineHeight: 1.6 }}
+            >
+              {exercise.rule[locale]}
+            </p>
+          ) : null}
+          {/* The story and the glosses: for a reader who wants them, shut for one who does not. */}
+          <details data-testid="exercise-more">
+            <summary style={{ cursor: 'pointer', minHeight: 32, fontSize: 15 }}>
+              {t('What happened, and what the words mean', 'なにが起きたか・ことばの説明を読む')}
+            </summary>
+            <p
+              data-testid="exercise-story"
+              style={{ margin: '4px 0 0', fontSize: 15, lineHeight: compact ? 1.6 : 1.8 }}
+            >
+              {exercise.brief[locale]}
+            </p>
+          </details>
+        </>
+      ) : (
+        <p style={{ margin: 0, fontSize: compact ? 15 : 16, lineHeight: compact ? 1.6 : 1.8 }}>
+          {exercise.brief[locale]}
+        </p>
+      )}
       <ul
         aria-label={t('Goals', '目標')}
         style={compact ? { ...LIST, gap: 4, fontSize: 15, lineHeight: 1.5 } : LIST}
@@ -81,6 +120,28 @@ export function ExerciseBrief({
           );
         })}
       </ul>
+      {countRule === null ? null : (
+        <p
+          data-testid="exercise-count-rule"
+          data-checks={countRule}
+          style={{ ...MUTED, margin: 0, fontSize: 14 }}
+        >
+          {pickFirst
+            ? t(
+                'This one counts only if you point at the right device first and the first Check solves it.',
+                'この問題は、1 回目で正しい機器をえらび、1 回目の「たしかめる」で解けたときだけ数えます。',
+              )
+            : countRule === 1
+              ? t(
+                  'This one counts only if the first Check solves it.',
+                  'この問題は、1 回目の「たしかめる」で解けたときだけ数えます。',
+                )
+              : t(
+                  'This one counts if you solve it within two Checks.',
+                  'この問題は、2 回目までの「たしかめる」で解けたときに数えます。',
+                )}
+        </p>
+      )}
     </section>
   );
 }
@@ -101,9 +162,11 @@ export function ResultPanel({
   stale,
   busy,
   counted,
+  checksToCount,
   failedChecks,
   doneSentence,
   onReplay,
+  onShowSetting,
   panelRef,
 }: {
   exercise: Exercise;
@@ -112,11 +175,15 @@ export function ResultPanel({
   stale: boolean;
   busy: boolean;
   counted: Counted;
+  /** A solve counts within this many Checks. */
+  checksToCount: 1 | 2;
   /** Checks so far that did not pass. */
   failedChecks: number;
   /** What the learner did, said back to them on a pass. */
   doneSentence: string;
   onReplay: (result: CheckResult) => void;
+  /** Bring the card of the setting the first unmet goal is about into view. Absent when there is none to name. */
+  onShowSetting?: () => void;
   panelRef: RefObject<HTMLDivElement>;
 }) {
   const locale = useGalleryLocale();
@@ -185,8 +252,12 @@ export function ResultPanel({
                   )
                 : counted === 'tries'
                   ? t(
-                      `Recorded as “solved after several tries”, because it took more than ${MAX_CHECKS_TO_COUNT} Checks.`,
-                      `「たしかめる」を ${MAX_CHECKS_TO_COUNT + 1} 回以上押したので、「何度かためして解けた」として記録しました。`,
+                      checksToCount === 1
+                        ? 'Recorded as “solved after several tries”, because the first Check did not solve it.'
+                        : 'Recorded as “solved after several tries”, because it took more than 2 Checks.',
+                      checksToCount === 1
+                        ? '1 回目の「たしかめる」では解けなかったので、「何度かためして解けた」として記録しました。'
+                        : '「たしかめる」を 3 回以上押したので、「何度かためして解けた」として記録しました。',
                     )
                   : counted === 'not-counted'
                     ? t(
@@ -224,13 +295,25 @@ export function ResultPanel({
                       onClick={() => onReplay(result)}
                       style={{ ...SECONDARY, marginTop: 6 }}
                     >
-                      {t('▶ Watch it on the diagram', '▶ 図で見てみる')}
+                      {WATCH_WORDS[locale]}
                     </button>
                   ) : null}
                 </li>
               );
             })}
           </ul>
+          {!grade.passed && !stale && onShowSetting ? (
+            <div>
+              <button
+                type="button"
+                data-testid="exercise-result-setting"
+                onClick={onShowSetting}
+                style={SECONDARY}
+              >
+                {t('↓ Show the setting this is about', '↓ この目標にかかわる設定を見る')}
+              </button>
+            </div>
+          ) : null}
           {hidden > 0 ? (
             <div>
               <button
@@ -247,14 +330,11 @@ export function ResultPanel({
                   fontSize: 14,
                 }}
               >
-                {t(
-                  `Show the other ${hidden} ${hidden === 1 ? 'goal' : 'goals'}`,
-                  `ほかの目標 ${hidden} 個も見る`,
-                )}
+                {t(`Show all ${ordered.length} goals`, `目標 ${ordered.length} 個をぜんぶ見る`)}
               </button>
             </div>
           ) : null}
-          {!grade.passed && failedChecks >= MAX_CHECKS_TO_COUNT ? (
+          {!grade.passed && failedChecks >= checksToCount ? (
             <p data-testid="exercise-tries-note" style={{ ...MUTED, margin: 0, fontSize: 14 }}>
               {t(
                 `From the next Check on, a pass is recorded as “solved after several tries”.`,
@@ -274,8 +354,11 @@ export function ResultPanel({
 export function HintTexts({
   exercise,
   shownTier,
+  topology,
 }: {
   exercise: Exercise;
+  /** The network as the learner has it now: a hint follows it (`model/hints.ts`). */
+  topology: TopologySnapshot;
   /** The highest tier opened so far; 0 when none. */
   shownTier: 0 | 1 | 2 | 3;
 }) {
@@ -294,7 +377,7 @@ export function HintTexts({
           style={{ ...CARD, margin: 0, padding: 12, scrollMarginBottom: 96, scrollMarginTop: 8 }}
         >
           <strong>{t(`Hint ${hint.tier}: `, `ヒント ${hint.tier}：`)}</strong>
-          {hint.text[locale]}
+          {hintText(hint, topology)[locale]}
         </p>
       ))}
     </section>

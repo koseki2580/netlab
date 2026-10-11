@@ -1,6 +1,6 @@
 /**
  * l1-choose-address — a shared device was brought from somewhere else and still
- * has the address it had there. Four addresses are offered; the
+ * has the address it had there. Six addresses are offered; the
  * learner chooses one, says what they expect, and the simulator runs it.
  *
  * Replaces the plan's l1-choose-cable. That needed candidate cables, and in
@@ -14,8 +14,8 @@ import { defineTemplate, goals } from '../shared/exercise';
 import { addressOf, setIp, starts, startsJa } from '../shared/lan';
 import { placedEvenly } from '../shared/draw';
 import { drawPlace, scene } from '../shared/places';
-import { drawPlan } from '../shared/plans';
-import { L, PRESS_CHECK_CHOICE, say, the, The } from '../shared/text';
+import { drawPlan, net24 } from '../shared/plans';
+import { L, say, the, The } from '../shared/text';
 import type { DesignOption } from '../../model/types';
 
 export const l1ChooseAddress = defineTemplate(
@@ -33,11 +33,13 @@ export const l1ChooseAddress = defineTemplate(
     const lan = buildLan(place, plan, shape);
     // The moved device takes the seat of one of the PCs.
     const moved = draw.pick(lan.faultable);
-    // The address that works stands in each of the four places equally often.
+    // The address that works stands in each of the six places equally often.
     const order = placedEvenly(draw, seed, 2, 'fits', [
       'last-number',
       'duplicate',
       'router',
+      'next-door',
+      'duplicate-2',
     ] as const);
 
     // --- The fault: the device still has the address it had where it came from ---
@@ -83,12 +85,33 @@ export const l1ChooseAddress = defineTemplate(
         `Compare it with the addresses of the devices around it. Which address should ${the(dev)} get?`,
         `まわりの機器のアドレスと見くらべてください。${dev.ja}のアドレスを、どれに変えますか。`,
       ),
-      PRESS_CHECK_CHOICE,
     );
 
     // --- The options ---
     const neighbourName = names[neighbour] ?? place.pcs[0];
-    const optionOf: Record<'fits' | 'last-number' | 'duplicate' | 'router', DesignOption> = {
+    const neighbour2 = others[1] ?? neighbour;
+    const neighbour2Name = names[neighbour2] ?? place.pcs[1];
+    const [first, second, third] = plan.near.starts.split('.');
+    const nextDoor = net24(`${first}.${second}.${Number(third) + 1}`).at(plan.free);
+    const optionOf: Record<(typeof order)[number], DesignOption> = {
+      'next-door': {
+        id: 'next-door',
+        label: L(nextDoor, `「${nextDoor}」にする`),
+        changes: [setIp(moved, nextDoor)],
+        explain: L(
+          `It looks close, but the third number differs from the devices here (${starts(plan.near)}). All of the first three numbers have to match.`,
+          `よく似ていますが、3 つ目の数字がここの機器（${startsJa(plan.near)}）とちがいます。はじめの 3 つの数字は、全部同じでなければなりません。`,
+        ),
+      },
+      'duplicate-2': {
+        id: 'duplicate-2',
+        label: L(addressOf(lan, neighbour2), `「${addressOf(lan, neighbour2)}」にする`),
+        changes: [setIp(moved, addressOf(lan, neighbour2))],
+        explain: L(
+          `${The(neighbour2Name)} already uses this address. Two devices with one address take each other's traffic.`,
+          `このアドレスは、${neighbour2Name.ja}がすでに使っています。同じアドレスの機器が 2 台あると、お互いあての通信を取り合ってしまいます。`,
+        ),
+      },
       fits: {
         id: 'fits',
         label: L(plan.near.at(plan.free), `「${plan.near.at(plan.free)}」にする`),
@@ -131,6 +154,14 @@ export const l1ChooseAddress = defineTemplate(
     const { reach } = goals(names);
     return {
       title: L(`A ${dev.en} from somewhere else`, `よそから来た${dev.ja}`),
+      task: L(
+        `Choose the address ${the(dev)} should get.`,
+        `${dev.ja}のアドレスを、どれにするか選んでください。`,
+      ),
+      rule: L(
+        'Rule: the same first three numbers as the devices next to it; a last number nobody else has, the router included.',
+        'ルール：となりの機器と、はじめの 3 つの数字を同じに。最後の数字は、ルータもふくめて、だれともかぶらない。',
+      ),
       brief,
       topology,
       names,
@@ -147,8 +178,8 @@ export const l1ChooseAddress = defineTemplate(
           `機器のアドレスは、となりの機器と同じ始まり（${startsJa(plan.near)}）で、ルータもふくめて、ほかのどの機器も使っていないものにします。`,
         ),
         L(
-          `Three of the four fail: one still starts the old way, one belongs to ${the(neighbourName)}, one belongs to the router.`,
-          `4 つのうち 3 つはうまくいきません。1 つは始まりが前のまま、1 つは${neighbourName.ja}のもの、1 つはルータのものです。`,
+          `Five of the six fail: two start differently from the devices here, two belong to other devices, one belongs to the router.`,
+          `6 つのうち 5 つはうまくいきません。2 つは始まりがここの機器とちがい、2 つはほかの機器のもの、1 つはルータのものです。`,
         ),
       ],
       lessons: ['/course', '/learning/subnetting'],

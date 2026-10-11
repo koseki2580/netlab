@@ -11,11 +11,13 @@ import {
   fullRoutes,
   ROUTE_GLOSS,
   ROUTE_RULE,
+  routeIsThereNow,
   routedGoals,
   routes,
   WATCH_WHERE_IT_STOPS,
+  RULE_ROUTE,
 } from '../shared/routed';
-import { L, PRESS_CHECK, say, the, The } from '../shared/text';
+import { L, say, the, The } from '../shared/text';
 
 export const l2StaticMissing = defineTemplate(
   {
@@ -74,7 +76,6 @@ export const l2StaticMissing = defineTemplate(
         `Find the router that has no route to the network of ${the(far.device)} (${net.srvNet.cidr}) and add one.`,
         `${far.device.ja}のネットワーク（${net.srvNet.cidr}）への経路を持っていないルータを見つけて、経路を足してください。`,
       ),
-      PRESS_CHECK,
     );
 
     // --- What may be changed, the goals, the answers ---
@@ -82,6 +83,11 @@ export const l2StaticMissing = defineTemplate(
     const nextRouter = name(net.path[net.path.indexOf(faulty) + 1] ?? 'r2');
     return {
       title: L(`No way to ${the(far.name)}`, `${far.name.ja}への道がない`),
+      task: L(
+        `Find the router that has no route to the network of ${the(far.device)} (${net.srvNet.cidr}), and add one.`,
+        `${far.device.ja}のネットワーク（${net.srvNet.cidr}）への経路がないルータを見つけて、経路を足してください。`,
+      ),
+      rule: RULE_ROUTE,
       brief,
       topology,
       names: net.names,
@@ -89,13 +95,17 @@ export const l2StaticMissing = defineTemplate(
       checks: routedGoals(net),
       hints: [
         WATCH_WHERE_IT_STOPS,
-        say(
-          ROUTE_RULE,
-          L(
-            `${The(name(faulty))} has no route for ${net.srvNet.cidr}.`,
-            `${name(faulty).ja}には、${net.srvNet.cidr} あての経路がありません。`,
+        {
+          text: say(
+            ROUTE_RULE,
+            L(
+              `${The(name(faulty))} has no route for ${net.srvNet.cidr}.`,
+              `${name(faulty).ja}には、${net.srvNet.cidr} あての経路がありません。`,
+            ),
           ),
-        ),
+          holdsWhile: { kind: 'no-route', nodeId: faulty, destination: net.srvNet.cidr },
+          instead: routeIsThereNow(L(the(name(faulty)), name(faulty).ja), net.srvNet.cidr),
+        },
         L(
           `On ${the(name(faulty))}, add a route: destination ${net.srvNet.cidr}, handed to ${nextHop}, the address of ${the(nextRouter)}. Keep the lines that are already there.`,
           `${name(faulty).ja}に、行き先「${net.srvNet.cidr}」を、${nextRouter.ja}のアドレス「${nextHop}」に渡す経路を足します。すでにある行は残します。`,

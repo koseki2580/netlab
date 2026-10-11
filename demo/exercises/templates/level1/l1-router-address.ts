@@ -16,7 +16,7 @@ import { defineTemplate, formNames, goals } from '../shared/exercise';
 import { addressOf, broken, everyoneReaches, freeAddressOn, starts, startsJa } from '../shared/lan';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan, net24 } from '../shared/plans';
-import { L, PRESS_CHECK, say, the, The } from '../shared/text';
+import { L, say, the, The } from '../shared/text';
 import type { SettingChange } from '../../model/types';
 
 export const l1RouterAddress = defineTemplate(
@@ -50,6 +50,14 @@ export const l1RouterAddress = defineTemplate(
       ipAddress,
       prefixLength: 24,
     });
+    /** Not the address but the "/number": a network made big enough to hold everyone. */
+    const bigger = (prefixLength: number): SettingChange => ({
+      kind: 'iface-address',
+      nodeId: 'r1',
+      ifaceId: side,
+      ipAddress: wrongNet.at(plan.gateway),
+      prefixLength,
+    });
     const topology = broken(lan.topology, address(wrongNet.at(plan.gateway)));
 
     // --- The brief ---
@@ -60,7 +68,7 @@ export const l1RouterAddress = defineTemplate(
     const opening = scene(place, {
       home: L(
         `The old ${router.en} broke, and a new one was set up by hand.`,
-        `古い${router.ja}がこわれたので、新しいものを手で設定しました。`,
+        `${router.ja}がこわれたので、新しいものに取り替えて、手で設定しました。`,
       ),
       shop: L(
         `${The(router)} was replaced before opening time, and its settings were typed in by hand.`,
@@ -89,7 +97,6 @@ export const l1RouterAddress = defineTemplate(
         `A router joins two networks, and has one address on each side: here the ${lanSide.en} and the ${farSide.en}. Each must have the same first three numbers as the devices on that side. Fix the one that is wrong.`,
         `ルータは 2 つのネットワークをつなぐ機械で、それぞれの側に 1 つずつアドレスを持ちます。ここでは「${lanSide.ja}」と「${farSide.ja}」です。どちらのアドレスも、その側にある機器と、はじめの 3 つの数字が同じでなければなりません。まちがっているほうを直してください。`,
       ),
-      PRESS_CHECK,
     );
 
     // --- What may be changed, the goals, the answers ---
@@ -98,6 +105,14 @@ export const l1RouterAddress = defineTemplate(
     const neighbour = side === 'lan' ? 'pc1' : 'srv';
     return {
       title: L(`Nothing gets past ${the(router)}`, `${router.ja}の先へ届かない`),
+      task: L(
+        `${The(router)} has two addresses. Fix the one that is wrong.`,
+        `${router.ja}の 2 つのアドレスのうち、まちがっているほうを直してください。`,
+      ),
+      rule: L(
+        'Rule: on each side, the same first three numbers as the devices on that side; a last number nobody else has.',
+        'ルール：ルータのアドレスは、その側の機器と、はじめの 3 つの数字を同じに。最後の数字は、だれともかぶらない。',
+      ),
       brief,
       topology,
       names: lan.names,
@@ -132,6 +147,7 @@ export const l1RouterAddress = defineTemplate(
         // Another address on the same wrong network.
         [address(wrongNet.at(plan.free))],
       ],
+      unsoundPasses: [[bigger(16)], [bigger(8)]],
       fingerprint: [place.id, shape, side, fault],
     };
   },

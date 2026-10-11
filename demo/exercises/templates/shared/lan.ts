@@ -73,6 +73,12 @@ export const SAME_START_BRIEF = L(
   '同じ側にある機器のアドレスは、はじめの 3 つの数字が同じです。最後の数字だけが、1 台ごとにちがいます。',
 );
 
+/** The rule line of an address exercise: the rule, never the numbers. */
+export const RULE_SAME_THREE = L(
+  'Rule: the same first three numbers as the devices next to it; a last number nobody else has.',
+  'ルール：となりの機器と、はじめの 3 つの数字を同じに。最後の数字は、だれともかぶらない。',
+);
+
 /** What to change an address to, without naming one: any free address will do, and the form offers its own. */
 export const freeAddressOn = (net: Net24): Localised =>
   L(

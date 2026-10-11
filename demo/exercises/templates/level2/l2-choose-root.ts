@@ -12,7 +12,7 @@ import { placedEvenly } from '../shared/draw';
 import { defineTemplate, goals, type LabelledCheck } from '../shared/exercise';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
-import { L, PRESS_CHECK_CHOICE, say, the, The } from '../shared/text';
+import { L, say, the, The } from '../shared/text';
 import type { DesignOption, SettingChange } from '../../model/types';
 
 const priority = (nodeId: string, value: number): SettingChange => ({
@@ -85,7 +85,7 @@ export const l2ChooseRoot = defineTemplate(
       opening,
       L(
         `Spanning tree (STP) closes one link of a ring so that traffic cannot circle forever. Which link depends on the root bridge, the switch the tree is built around: the one with the lowest priority number.`,
-        `輪になった配線では、スパニングツリー（STP）が線を 1 本止めて、通信が回り続けないようにします。どの線が止まるかは、中心になるスイッチ（ルートブリッジ。優先度の数字がいちばん小さいスイッチ）で決まります。`,
+        `輪になった配線では、スパニングツリー（STP）がケーブルを 1 本止めて、通信が回り続けないようにします。どのケーブルが止まるかは、中心になるスイッチ（ルートブリッジ。優先度の数字がいちばん小さいスイッチ）で決まります。`,
       ),
       L(
         `The devices on ${the(name(spokeA))} and on ${the(name(spokeB))} both use ${the(server)} all day. Right now ${the(name(startRoot))} is the root bridge, and one of them reaches ${the(server)} the long way round.`,
@@ -93,9 +93,8 @@ export const l2ChooseRoot = defineTemplate(
       ),
       L(
         `Which setting lets both take the direct link?`,
-        `どちらも直接の線を通るようにするには、どの設定にしますか。`,
+        `どちらも直接のケーブルを通るようにするには、どの設定にしますか。`,
       ),
-      PRESS_CHECK_CHOICE,
     );
 
     // --- The options: one priority setting each ---
@@ -110,11 +109,11 @@ export const l2ChooseRoot = defineTemplate(
         id === hub || id === serverSwitch
           ? L(
               `Every switch keeps its shortest way to the root open. With the root where the server's traffic goes, both rooms' direct links stay open and the link between the two rooms is the one that closes.`,
-              `どのスイッチも、中心へのいちばん近い道は開けたままにします。${server.ja}への通信が集まる場所を中心にすれば、2 つの部屋の直接の線はどちらも開いたままで、止まるのは部屋どうしをつなぐ線になります。`,
+              `どのスイッチも、中心へのいちばん近い道は開けたままにします。${server.ja}への通信が集まる場所を中心にすれば、2 つの部屋の直接のケーブルはどちらも開いたままで、止まるのは部屋どうしをつなぐケーブルになります。`,
             )
           : L(
               `With ${the(name(id))} as root, the other two switches each keep their link to it open, and the link between those two closes. That is the direct link of the other room, which now goes round through ${the(name(id))}.`,
-              `${name(id).ja}を中心にすると、ほかの 2 台はそれぞれ${name(id).ja}への線を開けたままにして、その 2 台のあいだの線が止まります。それはもう片方の部屋の直接の線なので、そちらは${name(id).ja}を回る遠回りになります。`,
+              `${name(id).ja}を中心にすると、ほかの 2 台はそれぞれ${name(id).ja}へのケーブルを開けたままにして、その 2 台のあいだのケーブルが止まります。それはもう片方の部屋の直接のケーブルなので、そちらは${name(id).ja}を回る遠回りになります。`,
             ),
     });
     const bigNumber: DesignOption = {
@@ -147,12 +146,20 @@ export const l2ChooseRoot = defineTemplate(
       edgeId: net.cable(spoke, hub) ?? '',
       label: L(
         `Traffic from ${the(name(spoke))} takes the direct link to ${the(name(hub))}`,
-        `${name(spoke).ja}からの通信が、${name(hub).ja}への直接の線を通る`,
+        `${name(spoke).ja}からの通信が、${name(hub).ja}への直接のケーブルを通る`,
       ),
     });
     const reference = best.changes;
     return {
       title: L(`Both rooms use ${the(server)}`, `2 つの部屋が${server.ja}を使う`),
+      task: L(
+        `Choose the setting that lets both rooms reach ${the(server)} by their direct cable.`,
+        `どちらの部屋からも${server.ja}へ近道で届くように、設定を 1 つ選んでください。`,
+      ),
+      rule: L(
+        'Rule: the switch with the lowest priority number becomes the root bridge. Every switch keeps its shortest way to the root bridge open.',
+        'ルール：優先度の数字がいちばん小さいスイッチが、ルートブリッジ（中心）になる。中心へのいちばん近い道は、止まらない。',
+      ),
       brief,
       topology: net.topology,
       names: net.names,
@@ -167,15 +174,15 @@ export const l2ChooseRoot = defineTemplate(
       hints: [
         L(
           `Find the link that is closed now, and see whose way to ${the(server)} it was.`,
-          `いま止まっている線を探して、それがだれの${server.ja}への道だったかを見てください。`,
+          `いま止まっているケーブルを探して、それがだれの${server.ja}への道だったかを見てください。`,
         ),
         L(
           `The links that touch the root bridge are never closed. The link that closes is one between two switches that are NOT the root.`,
-          `ルートブリッジにつながる線は、止まりません。止まるのは、ルートブリッジではない 2 台のあいだの線です。`,
+          `ルートブリッジにつながるケーブルは、止まりません。止まるのは、ルートブリッジではない 2 台のあいだのケーブルです。`,
         ),
         L(
           `Both direct links end at ${the(name(hub))}. Make that switch the root bridge.`,
-          `2 本の直接の線は、どちらも${name(hub).ja}につながっています。そのスイッチをルートブリッジにします。`,
+          `2 本の直接のケーブルは、どちらも${name(hub).ja}につながっています。そのスイッチをルートブリッジにします。`,
         ),
       ],
       lessons: ['/networking/stp'],

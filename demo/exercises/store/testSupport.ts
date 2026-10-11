@@ -1,6 +1,6 @@
 /** Builders shared by the store tests. Not used by the app. */
 
-import type { ExerciseLevel } from '../model/types';
+import type { ExerciseKind, ExerciseLevel } from '../model/types';
 import type { AttemptRecord } from './types';
 
 let clock = 0;
@@ -49,9 +49,14 @@ export const failed = (templateId: string, seed: number, level: ExerciseLevel) =
     failedCheckIds: ['c1'],
   });
 
-/** `count` solved attempts at distinct exercises, spread over `templates` templates. */
+/** The kinds of task a run takes turns at: every kind a level can ask for. */
+const KINDS: readonly ExerciseKind[] = ['configure', 'diagnose-repair', 'choose-design', 'switch'];
+
+/** `count` solved attempts at distinct exercises, spread over `templates` templates and every kind of task. */
 export function solvedRun(level: ExerciseLevel, count: number, templates: number, seedBase = 0) {
   return Array.from({ length: count }, (_, i) =>
-    solved(`l${level}-t${i % templates}`, seedBase + i, level),
+    attempt(`l${level}-t${i % templates}`, seedBase + i, level, {
+      kind: KINDS[i % KINDS.length] ?? 'configure',
+    }),
   );
 }

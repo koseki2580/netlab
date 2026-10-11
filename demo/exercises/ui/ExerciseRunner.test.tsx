@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DEV_DESIGN_ID, DEV_TILL_ID } from '../devFixtures';
+import { DEV_DESIGN_ID, DEV_TILL_ID, DEV_VLAN_ID } from '../devFixtures';
 import type { AttemptStore } from '../store/attemptStore';
 import { isSolved } from '../store/estimate';
 import { withNodeLabels } from './describe';
@@ -128,7 +128,8 @@ describe('a configure exercise (the till)', () => {
       firstCheckPassed: false,
       changedSettings: 1,
     });
-    expect(isSolved(only())).toBe(true);
+    // TC-587: the till is answered by pressing a chip, so only the first Check counts.
+    expect(isSolved(only())).toBe(false);
     await screen.click('exercise-next');
     expect(went).toBe(1);
   });
@@ -301,29 +302,104 @@ describe('a choose-a-design exercise', () => {
 
 // TC-538
 describe('how a pass is counted by the number of Checks', () => {
-  it('the second Check still counts; from the third on it is "solved after several tries"', async () => {
-    const two = run(DEV_TILL_ID);
+  const VLAN_INPUT = (port: string) => `exercise-setting-port-vlan-sw1-${port}-vlan-input`;
+  const splitGroups = async (screen: Screen) => {
+    await screen.enter(VLAN_INPUT('p3'), '20');
+    await screen.enter(VLAN_INPUT('p4'), '20');
+  };
+
+  it('where the answer is typed, the second Check still counts; from the third on it is "solved after several tries"', async () => {
+    const two = run(DEV_VLAN_ID);
+    // Said before the first Check, in one line.
+    expect(two.screen.get('exercise-count-rule').textContent).toContain('2 回目まで');
     await check(two.screen);
+    expect(two.screen.find('exercise-count-rule')).toBeNull();
     expect(two.screen.find('exercise-tries-note')).toBeNull();
-    await two.screen.enter(TILL_INPUT, '192.168.1.50');
+    await splitGroups(two.screen);
     await check(two.screen);
     expect(two.screen.get('exercise-result-done').getAttribute('data-counted')).toBe('solved');
+    expect(two.only().checksToCount).toBeUndefined();
     expect(isSolved(two.only())).toBe(true);
     two.screen.unmount();
 
-    const three = run(DEV_TILL_ID);
+    const three = run(DEV_VLAN_ID);
     await check(three.screen);
-    await three.screen.enter(TILL_INPUT, '192.168.9.9');
+    await three.screen.enter(VLAN_INPUT('p3'), '20');
     await check(three.screen);
     // Said before the press that will not count, not after.
     expect(three.screen.get('exercise-tries-note').textContent).toContain('何度かためして解けた');
-    await three.screen.enter(TILL_INPUT, '192.168.1.50');
+    await splitGroups(three.screen);
     await check(three.screen);
     const done = three.screen.get('exercise-result-done');
     expect(done.getAttribute('data-counted')).toBe('tries');
-    expect(done.textContent).toContain('何度かためして解けた');
+    expect(done.textContent).toContain('3 回以上');
     expect(three.only()).toMatchObject({ outcome: 'passed', checkPresses: 3, hintsUsed: 0 });
     expect(isSolved(three.only())).toBe(false);
+  });
+
+  // TC-587
+  it('where the answer is one of a few things to press, only the first Check counts', async () => {
+    const first = run(DEV_TILL_ID);
+    expect(first.screen.get('exercise-count-rule').textContent).toBe(
+      'この問題は、1 回目の「たしかめる」で解けたときだけ数えます。',
+    );
+    await first.screen.enter(TILL_INPUT, '192.168.1.50');
+    await check(first.screen);
+    expect(first.screen.get('exercise-result-done').getAttribute('data-counted')).toBe('solved');
+    expect(first.only()).toMatchObject({ outcome: 'passed', checkPresses: 1, checksToCount: 1 });
+    expect(isSolved(first.only())).toBe(true);
+    first.screen.unmount();
+
+    const second = run(DEV_TILL_ID);
+    await check(second.screen);
+    // One miss, and the next pass no longer counts: said now.
+    expect(second.screen.get('exercise-tries-note').textContent).toContain('何度かためして解けた');
+    await second.screen.enter(TILL_INPUT, '192.168.1.50');
+    await check(second.screen);
+    const done = second.screen.get('exercise-result-done');
+    expect(done.getAttribute('data-counted')).toBe('tries');
+    expect(done.textContent).toContain('1 回目の「たしかめる」では解けなかった');
+    expect(isSolved(second.only())).toBe(false);
+  });
+
+  // TC-597
+  it('after a miss the result offers the way to the setting the unmet goal is about, and marks its card', async () => {
+    const { screen } = run(DEV_TILL_ID);
+    expect(screen.find('exercise-result-setting')).toBeNull();
+    await check(screen);
+    const card = screen.get('exercise-setting-host-ip-pc1');
+    expect(card.hasAttribute('data-pointed')).toBe(false);
+    await screen.click('exercise-result-setting');
+    expect(card.hasAttribute('data-pointed')).toBe(true);
+  });
+
+  // TC-579
+  it('the chips stand in a new order in every attempt, and again after "start over"', async () => {
+    const chipsOf = (screen: Screen) =>
+      [...screen.container.querySelectorAll('[data-testid^="exercise-chip-"]')].map(
+        (chip) => chip.textContent ?? '',
+      );
+    const store = testStore();
+    const orders: string[][] = [];
+    for (let visit = 0; visit < 6; visit += 1) {
+      const { screen } = run(DEV_TILL_ID, { store });
+      const chips = chipsOf(screen);
+      expect(chips.length).toBeGreaterThanOrEqual(4);
+      orders.push(chips);
+      if (visit === 5) {
+        await screen.click('exercise-chip-0');
+        await screen.click('exercise-reset');
+        const again = chipsOf(screen);
+        expect([...again].sort()).toEqual([...chips].sort());
+        expect(again).not.toEqual(chips);
+      }
+      screen.unmount();
+    }
+    // The same addresses every time, never in the order of the visit before.
+    for (const [index, chips] of orders.entries()) {
+      expect([...chips].sort()).toEqual([...(orders[0] ?? [])].sort());
+      if (index > 0) expect(chips).not.toEqual(orders[index - 1]);
+    }
   });
 });
 

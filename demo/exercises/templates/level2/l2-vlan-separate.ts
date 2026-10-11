@@ -12,8 +12,12 @@ import { buildVlan, withPort } from '../shared/build';
 import { defineTemplate, goals } from '../shared/exercise';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
-import { L, listOf, PRESS_CHECK, say } from '../shared/text';
-import { access, groupOf, portRef, VLAN_PAIRS } from '../shared/vlan';
+import { L, listOf, say } from '../shared/text';
+import { access, groupOf, portRef, trunk, VLAN_PAIRS, RULE_VLAN } from '../shared/vlan';
+
+/** Each member with the next: [a1, a2], [a2, a3]. */
+const inTurn = <T>(members: readonly T[]): [T, T][] =>
+  members.slice(1).map((member, index) => [members[index] as T, member]);
 
 export const l2VlanSeparate = defineTemplate(
   {
@@ -83,29 +87,43 @@ export const l2VlanSeparate = defineTemplate(
       net.trunks.length > 0
         ? L(
             `The cable between the two switches carries only the VLAN numbers on its list, so use numbers that are on it.`,
-            `スイッチ同士をつなぐ線は、一覧にある VLAN 番号だけを通します。その一覧にある番号を使ってください。`,
+            `スイッチ同士をつなぐケーブルは、一覧にある VLAN 番号だけを通します。その一覧にある番号を使ってください。`,
           )
         : null,
-      PRESS_CHECK,
     );
 
     // --- What may be changed, the goals, the answers ---
     const { reach, apart } = goals(net.names);
     const firstB = groupOf(net, 1)[0];
+    const groupA0 = groupOf(net, 0);
+    const aLast = groupA0[groupA0.length - 1] ?? a2;
     return {
       title: L(
         `Keep ${groupA.name.en} and ${groupB.name.en} apart`,
         `${groupA.name.ja}と${groupB.name.ja}を分ける`,
       ),
+      task: L(
+        `Give the ${groupA.name.en} devices and the ${groupB.name.en} devices different VLAN numbers.`,
+        `${groupA.name.ja}の機器と${groupB.name.ja}の機器を、別々の VLAN 番号に分けてください。`,
+      ),
+      rule:
+        net.trunks.length > 0
+          ? L(
+              `${RULE_VLAN.en} Use numbers that are on the list of the cable between the switches.`,
+              `${RULE_VLAN.ja}番号は、スイッチ同士をつなぐケーブルの一覧にあるものを使う。`,
+            )
+          : RULE_VLAN,
       brief,
       topology,
       names: net.names,
       allowed: [...net.members, ...net.trunks].map(portRef),
+      // Every device is in a goal: one left behind in the old number is cut
+      // off from its group, and that must not pass.
       checks: [
-        reach(a1.id, a2.id),
-        reach(b1.id, b2.id),
+        ...inTurn(groupOf(net, 0)).map(([left, right]) => reach(left.id, right.id)),
+        ...inTurn(groupOf(net, 1)).map(([left, right]) => reach(left.id, right.id)),
         apart(a1.id, b1.id, 'vlan'),
-        apart(b2.id, a2.id, 'vlan'),
+        apart(b2.id, aLast.id, 'vlan'),
       ],
       hints: [
         L(
@@ -128,6 +146,13 @@ export const l2VlanSeparate = defineTemplate(
         net.members.map((member) => access(member, vlans[1])),
         // Moving only one device of the second group: it is cut off from its own group.
         firstB ? [access(firstB, vlans[1])] : [],
+      ],
+      unsoundPasses: [
+        // Two of the first group moved and the third left behind, cut off from them.
+        ...(groupA0.length > 2 ? [[a1, a2].map((member) => access(member, vlans[1]))] : []),
+        // The second group "split off" by turning its sockets into trunks.
+        groupOf(net, 1).map((member) => trunk(member, [vlans[1]])),
+        [trunk(a1, [vlans[0]]), trunk(a2, [vlans[0]])],
       ],
       fingerprint: [place.id, shape, startIn],
     };

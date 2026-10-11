@@ -380,6 +380,20 @@ export function differsOutside(
   current: TopologySnapshot,
   allowed: readonly SettingRef[],
 ): boolean {
+  // What a ref pins: the "/number" of an `addressOnly` side, the kind of a `fixedMode` port.
+  for (const ref of allowed) {
+    const pinned =
+      (ref.kind === 'iface-address' && ref.addressOnly === true) ||
+      (ref.kind === 'port-vlan' && ref.fixedMode === true);
+    if (!pinned) continue;
+    const [before, after] = [readSetting(start, ref), readSetting(current, ref)];
+    if (before?.kind === 'iface-address' && after?.kind === 'iface-address') {
+      if (before.prefixLength !== after.prefixLength) return true;
+    }
+    if (before?.kind === 'port-vlan' && after?.kind === 'port-vlan') {
+      if (before.vlanMode !== after.vlanMode) return true;
+    }
+  }
   const values = allowed.flatMap((ref) => readSetting(current, ref) ?? []);
   return stable(applyChanges(start, values)) !== stable(applyChanges(current, values));
 }

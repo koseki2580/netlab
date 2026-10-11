@@ -74,6 +74,19 @@ describe('the hub', () => {
     expect(screen.find('exercises-storage-notice')).toBeNull();
   });
 
+  // TC-594
+  it('a level that was only opened still says "start", and the level the learner is at offers the before/after measurement', () => {
+    const opened = attempt(level1[0] ?? 't', 0, 1, { outcome: 'abandoned', checkPresses: 0 });
+    screen = render(<ExerciseHubBody store={storeWith([opened])} />);
+    expect(screen.get('exercises-start-1').textContent).toContain('はじめる');
+    expect(screen.get('exercises-level-1').contains(screen.get('exercises-hub-cycle'))).toBe(true);
+    expect(screen.get('exercises-hub-cycle').textContent).toContain('勉強の前と後でくらべて');
+    expect(screen.get('exercises-hub-cycle-link').getAttribute('href')).toBe('/exercises/level/1');
+    expect(screen.container.querySelectorAll('[data-testid="exercises-hub-cycle"]')).toHaveLength(
+      1,
+    );
+  });
+
   // TC-536
   it('the level button does not open the kind of task just done while another kind has one left', () => {
     if (level1.length < 2) return;

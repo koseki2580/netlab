@@ -53,7 +53,7 @@ function form(allowed: SettingRef[], level: 1 | 3 = 1, locale: 'en' | 'ja' = 'ja
   const changes: SettingChange[] = [];
   screen = render(
     <SettingsForm
-      exercise={{ allowed, start: START, level, seed: 3 }}
+      exercise={{ allowed, start: START, level, id: 'form-test~3' }}
       topology={START}
       onChange={(change) => changes.push(change)}
     />,
@@ -330,7 +330,9 @@ describe('the settings form', () => {
     const routesId = settingTestId(EVERY[6]!);
     await routes.screen.enter(`${routesId}-row-0-destination`, '10.9.0.0');
     expect(routes.last()).toMatchObject({ routes: [] });
-    expect(routes.screen.get(`${routesId}-note`).textContent).toContain('10.0.2.0/24');
+    // TC-592: the note says the shape, never an address that could be taken for the answer.
+    expect(routes.screen.get(`${routesId}-note`).textContent).toContain('next router');
+    expect(routes.screen.get(`${routesId}-note`).textContent).not.toMatch(/\d+\.\d+\.\d+\.\d+/);
   });
 
   // TC-499
@@ -356,7 +358,7 @@ describe('the words on a switch and under a port', () => {
     screen?.unmount();
     screen = render(
       <SettingsForm
-        exercise={{ allowed, start: START, level: 1, seed: 3 }}
+        exercise={{ allowed, start: START, level: 1, id: 'form-test~3' }}
         topology={applyChanges(START, changes)}
         onChange={() => undefined}
       />,
@@ -413,7 +415,7 @@ describe('the order of the cards', () => {
       screen?.unmount();
       screen = render(
         <SettingsForm
-          exercise={{ allowed, start: START, level: 1, seed: 3 }}
+          exercise={{ allowed, start: START, level: 1, id: 'form-test~3' }}
           topology={START}
           onChange={() => undefined}
         />,

@@ -11,6 +11,8 @@ import {
   isAttempted,
   isSolved,
   levelSummary,
+  REQUIRED_KINDS,
+  isSolvedAfterTries,
 } from './estimate';
 import { attempt, failed, helped, solved, solvedRun } from './testSupport';
 import type { PlacementResult } from './types';
@@ -46,6 +48,39 @@ describe('isSolved', () => {
   });
 });
 
+// TC-584
+describe('one clean solve of every kind of task', () => {
+  const of = (kind: 'configure' | 'diagnose-repair' | 'choose-design', seed: number) =>
+    attempt(`l1-${kind}-${seed % 3}`, seed, 1, { kind });
+  const eightWithoutAFault = Array.from({ length: 8 }, (_, i) =>
+    of(i % 2 === 0 ? 'configure' : 'choose-design', i),
+  );
+
+  it('a level is not cleared while a kind it has was never solved, however many of the others were', () => {
+    const summary = levelSummary(eightWithoutAFault, 1);
+    expect(summary).toMatchObject({ solved: 8, status: 'in-progress' });
+    expect(summary.missingKinds).toEqual(['diagnose-repair']);
+    expect(headline(summary, 'ja')).toBe(
+      '「おかしい所をさがす」問題が 1 問 とけたら、レベル 1 達成です',
+    );
+    expect(headline(summary, 'en')).toBe('Solve one "find the fault" exercise to clear level 1');
+    expect(explain(summary, 'ja')).toContain(
+      '「おかしい所をさがす」問題は、まだ 1 問も数えられていません。',
+    );
+  });
+
+  it('is cleared once that kind is solved, and a failed one of that kind does not count for it', () => {
+    const failedFault = attempt('l1-fault', 90, 1, {
+      kind: 'diagnose-repair',
+      outcome: 'abandoned',
+    });
+    expect(levelSummary([...eightWithoutAFault, failedFault], 1).status).toBe('in-progress');
+    expect(levelSummary([...eightWithoutAFault, of('diagnose-repair', 91)], 1).status).toBe(
+      'cleared',
+    );
+  });
+});
+
 // TC-538
 describe('a solve that took more than two Checks', () => {
   const tries = (seed: number, checkPresses: number) =>
@@ -57,6 +92,17 @@ describe('a solve that took more than two Checks', () => {
     expect(isSolved(tries(1, 2))).toBe(true);
     expect(isSolved(tries(2, 3))).toBe(false);
     expect(isSolved(tries(3, 4))).toBe(false);
+  });
+
+  // TC-587
+  it('counts on the first Check only where the answer is one of a few things to press', () => {
+    const pressed = (seed: number, checkPresses: number) =>
+      attempt('t', seed, 1, { checkPresses, checksToCount: 1 });
+    expect(isSolved(pressed(0, 1))).toBe(true);
+    expect(isSolved(pressed(1, 2))).toBe(false);
+    expect(isSolvedAfterTries(pressed(1, 2))).toBe(true);
+    // A record written before the rule existed has no such field: two Checks, as it was told then.
+    expect(isSolved(tries(1, 2))).toBe(true);
   });
 
   it('is counted apart from solved and from solved with a hint, and never as not solved', () => {
@@ -137,6 +183,7 @@ describe('levelSummary', () => {
       solvedAfterTries: 0,
       notSolved: 0,
       solvedTemplates: 0,
+      missingKinds: REQUIRED_KINDS[2],
       status: 'not-enough',
       weakestTemplateId: null,
     });
@@ -345,10 +392,10 @@ describe('explain', () => {
 
   it('says a level is cleared, with the numbers', () => {
     expect(explain(cleared, 'ja')).toBe(
-      '直近 10 問のうち 7 問を、ヒントなし・「たしかめる」2 回までで解けました（3 種類）。レベル 2 は達成です。',
+      '直近 10 問のうち 7 問を、ヒントなしで、1 回目の「たしかめる」（自分で入力する問題は 2 回目まで）で解けました（3 種類）。レベル 2 は達成です。',
     );
     expect(explain(cleared, 'en')).toBe(
-      'You solved 7 of your last 10 exercises without a hint and within 2 Checks, across 3 kinds of exercise. Level 2 is cleared.',
+      'You solved 7 of your last 10 exercises without a hint, on the first Check (within 2 Checks where you type the answer), across 3 kinds of exercise. Level 2 is cleared.',
     );
   });
 
@@ -365,10 +412,10 @@ describe('explain', () => {
 
   it('says what an unfinished level still needs', () => {
     expect(explain(inProgress, 'ja')).toBe(
-      '直近 6 問のうち、ヒントなし・「たしかめる」2 回までで解けたのは 4 問（2 種類）です。ヒントを使って解けた 1 問は数えていません。レベル 2 は、直近 10 問のうち 7 問を、3 種類以上にわたって、ヒントなし・「たしかめる」2 回までで解けると達成です。',
+      '直近 6 問のうち、ヒントなしで、1 回目の「たしかめる」（自分で入力する問題は 2 回目まで）で解けたのは 4 問（2 種類）です。ヒントを使って解けた 1 問は数えていません。レベル 2 は、直近 10 問のうち 7 問を、3 種類以上にわたって、「スイッチを設定する」「設定を入れる」「おかしい所をさがす」「どれにするか選ぶ」の問題をそれぞれ 1 問以上、そのように解けると達成です。',
     );
     expect(explain(inProgress, 'en')).toBe(
-      'You solved 4 of your last 6 exercises without a hint and within 2 Checks, across 2 kinds of exercise. The 1 you solved with a hint is not counted. Level 2 is cleared at 7 of the last 10 solved that way, across at least 3 kinds.',
+      'You solved 4 of your last 6 exercises without a hint, on the first Check (within 2 Checks where you type the answer), across 2 kinds of exercise. The 1 you solved with a hint is not counted. Level 2 is cleared at 7 of the last 10 solved that way, across at least 3 kinds, with at least one of each task ("set up a switch", "set it up", "find the fault", "choose one").',
     );
   });
 

@@ -10,15 +10,15 @@ import { buildVlan, withPort } from '../shared/build';
 import { defineTemplate, formNames, goals } from '../shared/exercise';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
-import { L, PRESS_CHECK, say, the, The } from '../shared/text';
-import { groupOf, portRef, trunk, VLAN_PAIRS, vlanIntro } from '../shared/vlan';
+import { L, say, the, The } from '../shared/text';
+import { access, groupOf, portRef, trunk, VLAN_PAIRS, vlanIntro } from '../shared/vlan';
 
 export const l2TrunkAllowed = defineTemplate(
   {
     id: 'l2-trunk-allowed',
     level: 2,
     kind: 'switch',
-    title: L('Let a VLAN across the link between switches', 'スイッチ間の線に VLAN を通す'),
+    title: L('Let a VLAN across the link between switches', 'スイッチ間のケーブルに VLAN を通す'),
   },
   (draw) => {
     // --- Drawn from the seed ---
@@ -85,13 +85,12 @@ export const l2TrunkAllowed = defineTemplate(
       vlanIntro(place),
       L(
         `A cable between switches is a trunk: it carries several VLANs at once, but only the numbers on its list, at both ends. ${The(name(near.id))} cannot reach ${the(name(far.id))} on the other switch, although both are ${group.name.en} devices.`,
-        `スイッチ同士をつなぐ線はトランクといい、複数の VLAN をまとめて運びます。ただし運ぶのは、両はしの一覧にある番号だけです。${name(near.id).ja}から、別のスイッチにある${name(far.id).ja}に届きません。どちらも${group.name.ja}の機器です。`,
+        `スイッチ同士をつなぐケーブルはトランクといい、複数の VLAN をまとめて運びます。ただし運ぶのは、両はしの一覧にある番号だけです。${name(near.id).ja}から、別のスイッチにある${name(far.id).ja}に届きません。どちらも${group.name.ja}の機器です。`,
       ),
       L(
         `Compare the VLAN numbers of the devices on the diagram with the lists of the trunk, and add the number that is missing. Keep the two groups apart.`,
         `図にある機器の VLAN 番号と、トランクの一覧を見くらべて、足りない番号を足してください。2 つのグループは分けたままにします。`,
       ),
-      PRESS_CHECK,
     );
 
     // --- What may be changed, the goals, the answers ---
@@ -100,6 +99,14 @@ export const l2TrunkAllowed = defineTemplate(
       title: L(
         `The ${group.name.en} VLAN stops at a switch`,
         `${group.name.ja}の VLAN がスイッチで止まる`,
+      ),
+      task: L(
+        'Add the missing VLAN number to the list of the cable between the switches (the trunk).',
+        'スイッチ同士をつなぐケーブル（トランク）の一覧に、足りない VLAN 番号を足してください。',
+      ),
+      rule: L(
+        'Rule: a trunk carries only the VLAN numbers that are on the list at BOTH of its ends.',
+        'ルール：トランクは、両はしの一覧にある VLAN 番号だけを通す。',
       ),
       brief,
       topology,
@@ -113,7 +120,7 @@ export const l2TrunkAllowed = defineTemplate(
       hints: [
         L(
           `Look at the list of allowed VLANs at both ends of each cable between switches.`,
-          `スイッチ同士をつなぐ線の両はしで、通してよい VLAN の一覧を見てください。`,
+          `スイッチ同士をつなぐケーブルの両はしで、通してよい VLAN の一覧を見てください。`,
         ),
         L(
           `A VLAN crosses a trunk only if BOTH ends list it. VLAN ${vlans[cut]} is missing between ${the(swLeft)} and ${the(swRight)}.`,
@@ -129,6 +136,12 @@ export const l2TrunkAllowed = defineTemplate(
       wrongAnswers: [
         // Swapping one VLAN for the other: now the other group is cut.
         [left, right].map((port) => trunk(port, [vlans[cut]])),
+      ],
+      unsoundPasses: [
+        // The link made a socket for the cut group alone, at both ends or at one.
+        [left, right].map((port) => access(port, vlans[cut])),
+        faulty.map((port) => access(port, vlans[cut])),
+        [left, right].map((port) => access(port, 1)),
       ],
       fingerprint: [place.id, shape, `group${cut}`, `link${linkIndex}`, ends],
     };

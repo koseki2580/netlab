@@ -248,8 +248,8 @@ const FAST_PATH: Task = {
   kind: 'choose-design',
   title: { en: 'Send traffic over the fast line', ja: '速い回線を通す設計を選ぶ' },
   brief: {
-    en: 'Head office and the branch are joined twice: directly by an old slow line, and through the fibre router by two fast lines. Choose the design that sends head-office traffic to the branch server over the fibre router.',
-    ja: '本社と支店は 2 通りにつながっています。古くて遅い直通の回線と、光回線ルータを通る速い回線です。本社PCから支店サーバへの通信が、光回線ルータを通るようになる設計を選んでください。',
+    en: 'Head office and the branch are joined twice: directly by an old slow line, and through the fibre router by two fast lines. The routers choose a path by the "cost" of each line (a score given to a line; the path with the lowest total is chosen). Choose the design that sends head-office traffic to the branch server over the fibre router.',
+    ja: '本社と支店は 2 通りにつながっています。古くて遅い直通の回線と、光回線ルータを通る速い回線です。ルータは、回線ごとの「コスト」（回線につける点数。合計が小さい道が選ばれます）を見て道を決めます。本社PCから支店サーバへの通信が、光回線ルータを通るようになる設計を選んでください。',
   },
   start: FAST_PATH_START,
   allowed: [

@@ -134,3 +134,55 @@ export function diagramNotesLines(topology: TopologySnapshot, locale: 'en' | 'ja
     (note) => `${label(note.nodeId)}: ${note.lines.join(locale === 'ja' ? '、' : ', ')}`,
   );
 }
+
+/**
+ * Every device with what a learner reads off it, one device per line, for a
+ * screen on which the picture is too small to read: a name and an address are
+ * a few pixels high on a phone. Hosts with their address (and VLAN number),
+ * routers with the address of each side, switches with what the exercise is
+ * about: the list of a trunk, the priority where spanning tree is set.
+ * In the order of the picture, left to right and then top to bottom.
+ */
+export function diagramLegendLines(topology: TopologySnapshot, locale: 'en' | 'ja'): string[] {
+  const notes = new Map(diagramNotes(topology).map((note) => [note.nodeId, note.lines]));
+  const comma = locale === 'ja' ? '、' : ', ';
+  const usesStp = topology.nodes.some((node) => node.data.stpConfig !== undefined);
+  const lines: string[] = [];
+  const ordered = [...topology.nodes].sort(
+    (a, b) => a.position.x - b.position.x || a.position.y - b.position.y,
+  );
+  for (const node of ordered) {
+    const facts: string[] = [];
+    if (node.data.role === 'switch') {
+      for (const port of node.data.ports ?? []) {
+        if (port.vlanMode !== 'trunk') continue;
+        const peer = peerOf(topology, node.id, port.id);
+        const list = (port.trunkAllowedVlans ?? []).join(', ');
+        facts.push(
+          locale === 'ja'
+            ? `トランク${arrow(node, peer)}（通す VLAN: ${list === '' ? 'なし' : list}）`
+            : `trunk ${arrow(node, peer)} (carries VLAN: ${list === '' ? 'none' : list})`,
+        );
+      }
+      if (usesStp) {
+        const priority = node.data.stpConfig?.priority ?? 32768;
+        facts.push(locale === 'ja' ? `優先度 ${priority}` : `priority ${priority}`);
+      }
+    } else if (node.data.role === 'router') {
+      facts.push(...(notes.get(node.id) ?? []));
+    } else {
+      const ip = typeof node.data.ip === 'string' && node.data.ip !== '' ? node.data.ip : null;
+      facts.push(
+        ip ?? (locale === 'ja' ? 'アドレスなし' : 'no address'),
+        ...(notes.get(node.id) ?? []),
+      );
+    }
+    if (facts.length > 0) lines.push(`${node.data.label}: ${facts.join(comma)}`);
+  }
+  if (topology.edges.some((edge) => edge.data?.state === 'down')) {
+    lines.push(
+      locale === 'ja' ? '赤い点線: ぬけているケーブル' : 'Red dotted line: an unplugged cable',
+    );
+  }
+  return lines;
+}

@@ -11,8 +11,8 @@ import { buildVlan, withPort } from '../shared/build';
 import { defineTemplate, formNames, goals } from '../shared/exercise';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
-import { L, PRESS_CHECK, say, the, The } from '../shared/text';
-import { access, groupOf, portRef, VLAN_PAIRS, vlanIntro } from '../shared/vlan';
+import { L, say, the, The } from '../shared/text';
+import { access, groupOf, portRef, trunk, VLAN_PAIRS, vlanIntro, RULE_VLAN } from '../shared/vlan';
 
 export const l2VlanAccess = defineTemplate(
   {
@@ -85,13 +85,17 @@ export const l2VlanAccess = defineTemplate(
         `Compare the VLAN numbers of the sockets and fix the one that is different. Keep the two groups apart.`,
         `差し込み口の VLAN 番号を見くらべて、ちがっている 1 つを直してください。2 つのグループは分けたままにします。`,
       ),
-      PRESS_CHECK,
     );
 
     // --- What may be changed, the goals, the answers ---
     const { reach, apart } = goals(net.names);
     return {
       title: L(`${The(dev)} is in the wrong VLAN`, `${dev.ja}の VLAN がちがう`),
+      task: L(
+        `Fix the VLAN number of the socket ${the(dev)} is plugged into, so that it is with its own group again.`,
+        `${dev.ja}がつながっている差し込み口の VLAN 番号を、同じグループに合うように直してください。`,
+      ),
+      rule: RULE_VLAN,
       brief,
       topology,
       names: net.names,
@@ -100,6 +104,16 @@ export const l2VlanAccess = defineTemplate(
         reach(victim.id, mate.id),
         reach(outsider.id, outsider2.id),
         apart(victim.id, outsider.id, 'vlan'),
+        // Last, so that it is what the learner reads only when everything arrives.
+        {
+          id: 'fixed-there',
+          kind: 'changed-only',
+          refs: [portRef(victim)],
+          label: L(
+            'Only the socket that was wrong is changed',
+            '変えたのは、ちがっていた差し込み口だけ',
+          ),
+        },
       ],
       hints: [
         L(
@@ -122,6 +136,17 @@ export const l2VlanAccess = defineTemplate(
         net.members.map((member) => access(member, ownVlan)),
         // Moving the colleague into the wrong VLAN as well.
         [access(victim, vlans[otherGroup]), access(mate, vlans[otherGroup])],
+      ],
+      unsoundPasses: [
+        // The colleague moved to where the device is, instead of the device back.
+        [access(mate, wrongVlan)],
+        groupOf(net, victim.group)
+          .filter((member) => member.id !== victim.id)
+          .map((member) => access(member, wrongVlan)),
+        // A socket turned into one that carries several groups.
+        [trunk(mate, [ownVlan, wrongVlan])],
+        [trunk(victim, [ownVlan])],
+        [trunk(outsider, [vlans[otherGroup]])],
       ],
       fingerprint: [place.id, shape, victim.id, fault],
     };

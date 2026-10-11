@@ -5,6 +5,7 @@ import type { Localised, SettingChange } from '../../model/types';
 import type { RoutedNet } from './build';
 import { goals, type LabelledCheck } from './exercise';
 import type { Place } from './places';
+import { WATCH_WORDS } from '../../ui/words';
 import { L, the, The } from './text';
 
 export const routes = (nodeId: string, list: readonly StaticRouteConfig[]): SettingChange => ({
@@ -26,14 +27,27 @@ export function routedGoals(net: RoutedNet): LabelledCheck[] {
 /** What a route and its next router are, said once per brief. */
 export const ROUTE_GLOSS = L(
   'A router only knows the networks plugged into it. For any other network it needs a route: a line that says "for that network, hand it to this neighbouring router". That neighbour is called the next router, and the line names it by its address.',
-  'ルータが知っているのは、自分に直接つながっているネットワークだけです。それ以外のネットワークへ送るには、経路がいります。経路とは「このネットワークあては、となりのこのルータに渡す」という 1 行のことです。渡す相手を「次のルータ」といい、そのアドレスを書きます。',
+  'ルータが知っているのは、自分に直接つながっているネットワークだけです。それ以外のネットワークへ送るには、経路がいります。経路とは「このネットワークあては、となりのこのルータに渡す」という 1 行のことです。そのとなりのルータを「次のルータ」といい、そのアドレスを書きます。',
+);
+
+/** The rule line of a route exercise. */
+export const RULE_ROUTE = L(
+  'Rule: a route names the destination network and the next router: the neighbouring router, by its address on the side facing this one.',
+  'ルール：経路には「行き先のネットワーク」と「次のルータ」のアドレスを書く。次のルータは、ケーブルでじかにつながった、となりのルータ。',
 );
 
 /** Hint 1 of a route exercise: what the page offers for finding where it stops. */
 export const WATCH_WHERE_IT_STOPS = L(
-  'Press Check, then watch it on the diagram: at which router does it stop?',
-  '「たしかめる」を押してから、図で通り道を見てください。どのルータで止まりますか。',
+  `Under the result, press "${WATCH_WORDS.en}" and follow it: at which router does it stop?`,
+  `結果の下にある「${WATCH_WORDS.ja}」を押して、通り道を見てください。どのルータで止まりますか。`,
 );
+
+/** In place of "this router has no route for …", once the learner has written one that does not work. */
+export const routeIsThereNow = (routerName: Localised, destination: string): Localised =>
+  L(
+    `${routerName.en.charAt(0).toUpperCase()}${routerName.en.slice(1)} has a route for ${destination} now. If it still does not arrive, look at its next router: it must be the address of the neighbouring router, on the side facing this one. Compare it with the diagram.`,
+    `${routerName.ja}には、${destination} あての経路が入りました。それでも届かないなら、その経路の「次のルータ」を見てください。となりのルータの、こちらを向いた側のアドレスになっていますか。図と見くらべてください。`,
+  );
 
 /** The rule of a route and where the next router's address is found, for hint 2. */
 export const ROUTE_RULE = L(

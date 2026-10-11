@@ -65,6 +65,15 @@ export function StaticRoutesField({ value, onChange, testId, plain }: FieldProps
 
   return (
     <div style={{ display: 'grid', gap: 8 }}>
+      {plain ? (
+        // Directly above the fields: on a phone the keyboard hides the brief and the diagram.
+        <p data-testid={`${testId}-needs`} style={{ margin: 0, fontSize: 14, lineHeight: 1.5 }}>
+          {t(
+            'Destination: the network to reach (in the task above). Next router: the address of the neighbouring router, on the side facing this router. It is different for every router: a line of another router cannot be copied.',
+            '行き先：届けたいネットワーク（上の問題文にあります）。次のルータ：となりのルータの、こちらを向いた側のアドレス。ルータごとにちがうので、ほかのルータの行は、そのままは写せません。',
+          )}
+        </p>
+      ) : null}
       {rows.length === 0 ? (
         <p style={{ ...MUTED, margin: 0 }}>{t('No routes yet.', 'まだ経路はありません。')}</p>
       ) : null}
@@ -84,9 +93,12 @@ export function StaticRoutesField({ value, onChange, testId, plain }: FieldProps
             <input
               data-testid={`${testId}-row-${index}-destination`}
               type="text"
-              inputMode="decimal"
+              // Not "decimal": on a phone that keyboard has no "/".
+              inputMode="text"
               autoComplete="off"
-              placeholder="10.0.2.0/24"
+              autoCapitalize="off"
+              spellCheck={false}
+              placeholder={plain ? t('e.g. network/24', '例：ネットワーク/24') : ''}
               value={row.destination}
               onChange={(event) => edit(index, { destination: event.target.value.trim() })}
               style={{ ...INPUT, width: 170 }}
@@ -95,7 +107,7 @@ export function StaticRoutesField({ value, onChange, testId, plain }: FieldProps
           <label style={CELL}>
             <span>
               {plain
-                ? t('Hand it to (next device)', '次に渡す機器のアドレス')
+                ? t('Next router (its address)', '次のルータのアドレス')
                 : t('Next hop', 'ネクストホップ')}
             </span>
             <input
@@ -103,7 +115,7 @@ export function StaticRoutesField({ value, onChange, testId, plain }: FieldProps
               type="text"
               inputMode="decimal"
               autoComplete="off"
-              placeholder="10.0.12.2"
+              placeholder=""
               value={row.nextHop}
               onChange={(event) => edit(index, { nextHop: event.target.value.trim() })}
               style={{ ...INPUT, width: 150 }}
@@ -124,8 +136,8 @@ export function StaticRoutesField({ value, onChange, testId, plain }: FieldProps
         <p data-testid={`${testId}-note`} style={{ margin: 0, fontSize: 14 }}>
           <span aria-hidden="true">✎ </span>
           {t(
-            `${waiting} ${waiting === 1 ? 'row is' : 'rows are'} not complete and not used yet. A destination looks like 10.0.2.0/24; the next device is an address like 10.0.12.2.`,
-            `${waiting} 行は、まだ書きかけなので使われません。行き先は「10.0.2.0/24」、次に渡す機器は「10.0.12.2」のように書きます。`,
+            `${waiting} ${waiting === 1 ? 'row is' : 'rows are'} not complete and not used yet. A destination is a network with its "/number" (four numbers with dots, then /24); the next router is an address (four numbers with dots).`,
+            `${waiting} 行は、まだ書きかけなので使われません。行き先は「点で区切った 4 つの数/24」のようなネットワーク、次のルータは「点で区切った 4 つの数」のアドレスを書きます。`,
           )}
         </p>
       ) : null}
@@ -287,9 +299,12 @@ export function AclField({ value, onChange, testId, plain }: FieldProps<'iface-a
               <input
                 data-testid={`${testId}-row-${index}-src`}
                 type="text"
-                inputMode="decimal"
+                // An address may be followed by "/number", which the decimal keyboard of a phone lacks.
+                inputMode="text"
                 autoComplete="off"
-                placeholder="192.168.1.0/24"
+                autoCapitalize="off"
+                spellCheck={false}
+                placeholder=""
                 value={row.srcIp}
                 onChange={(event) => edit(index, { srcIp: event.target.value.trim() })}
                 style={{ ...INPUT, width: 170 }}
@@ -300,9 +315,11 @@ export function AclField({ value, onChange, testId, plain }: FieldProps<'iface-a
               <input
                 data-testid={`${testId}-row-${index}-dst`}
                 type="text"
-                inputMode="decimal"
+                inputMode="text"
                 autoComplete="off"
-                placeholder="203.0.113.10"
+                autoCapitalize="off"
+                spellCheck={false}
+                placeholder=""
                 value={row.dstIp}
                 onChange={(event) => edit(index, { dstIp: event.target.value.trim() })}
                 style={{ ...INPUT, width: 170 }}

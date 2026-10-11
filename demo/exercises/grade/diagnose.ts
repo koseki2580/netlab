@@ -227,8 +227,8 @@ function duplicate(
 
 // --- 3. An address off the network of its neighbours ------------------------------
 
-/** The one member of a LAN outside the network all the others share, or null. */
-function oddOneOut(lan: readonly Holder[]): Holder | null {
+/** The one member of a LAN outside the network all the others share (with one of the others), or null. */
+function oddOneOut(lan: readonly Holder[]): { odd: Holder; neighbour: Holder } | null {
   const lengths = new Set(lan.flatMap((member) => member.prefixLength ?? []));
   const [length] = lengths;
   // No router side on this LAN, or two that disagree: the size of the network is unknown.
@@ -242,7 +242,22 @@ function oddOneOut(lan: readonly Holder[]): Holder | null {
   if (networks.size !== 2) return null;
   const [small, large] = [...networks.values()].sort((left, right) => left.length - right.length);
   if (!small || !large || small.length !== 1 || large.length < 2) return null;
-  return small[0] ?? null;
+  const [odd] = small;
+  const [neighbour] = large;
+  return odd && neighbour ? { odd, neighbour } : null;
+}
+
+/** The first of the four numbers in which two addresses differ, with both values. */
+function firstDifference(
+  own: string,
+  other: string,
+): { position: 1 | 2 | 3 | 4; own: number; others: number } | null {
+  const [mine, theirs] = [own.split('.').map(Number), other.split('.').map(Number)];
+  for (const position of [1, 2, 3, 4] as const) {
+    const [a, b] = [mine[position - 1], theirs[position - 1]];
+    if (a !== undefined && b !== undefined && a !== b) return { position, own: a, others: b };
+  }
+  return null;
 }
 
 function peerLabel(topology: Topology, nodeId: string, handleId: string): string | null {
@@ -263,8 +278,10 @@ function wrongNetwork(
   ends: readonly string[],
 ): Diagnosis | null {
   for (const lan of lans) {
-    const odd = oddOneOut(lan);
-    if (!odd || (odd.ifaceId === undefined && !ends.includes(odd.nodeId))) continue;
+    const found = oddOneOut(lan);
+    if (!found) continue;
+    const { odd, neighbour } = found;
+    if (odd.ifaceId === undefined && !ends.includes(odd.nodeId)) continue;
     const peer = odd.ifaceId === undefined ? null : peerLabel(current, odd.nodeId, odd.ifaceId);
     return {
       detail: {
@@ -274,6 +291,7 @@ function wrongNetwork(
         ...(odd.ifaceId !== undefined
           ? { side: sideWords(odd.ifaceId, peer === null ? null : { en: peer, ja: peer }) }
           : {}),
+        ...firstDifference(odd.address, neighbour.address),
       },
       evidence: { diagnosis: 'wrong-network', address: odd.address, relatedNodeIds: [odd.nodeId] },
     };
@@ -289,6 +307,46 @@ function wrongNetwork(
  * address the learner chose from one that was there. Never throws.
  */
 export function diagnose(
+  start: Topology,
+  current: Topology,
+  probe: { readonly from: string; readonly to: string },
+  options: { readonly unnamed?: boolean } = {},
+): Diagnosis | null {
+  const found = diagnoseNamed(start, current, probe);
+  return found && options.unnamed === true ? unnamed(found) : found;
+}
+
+/**
+ * THE RULE for find-the-fault exercises (`kind: 'diagnose-repair'`): no
+ * cause-first message may identify the device. Which device is at fault is
+ * what the learner is asked to find, and a message that named it after one
+ * miss gave the task away. The cause is still said (an address that does not
+ * match, two devices with one address), and nothing points at the device: the
+ * evidence carries neither its id nor its address. A cable that is out names
+ * no cable in its message, and keeps its evidence.
+ */
+function unnamed(found: Diagnosis): Diagnosis {
+  const { detail } = found;
+  if (detail.kind === 'duplicate-address') {
+    return {
+      detail: { kind: 'unnamed', cause: 'duplicate-address' },
+      evidence: { diagnosis: 'duplicate-address' },
+    };
+  }
+  if (detail.kind === 'wrong-network') {
+    return {
+      detail: {
+        kind: 'unnamed',
+        cause: 'wrong-network',
+        ...(detail.position !== undefined ? { position: detail.position } : {}),
+      },
+      evidence: { diagnosis: 'wrong-network' },
+    };
+  }
+  return found;
+}
+
+function diagnoseNamed(
   start: Topology,
   current: Topology,
   probe: { readonly from: string; readonly to: string },

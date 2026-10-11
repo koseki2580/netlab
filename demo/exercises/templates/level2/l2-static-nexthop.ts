@@ -16,7 +16,8 @@ import {
   routes,
   sitesOpening,
 } from '../shared/routed';
-import { L, PRESS_CHECK, say, the } from '../shared/text';
+import { WATCH_WORDS } from '../../ui/words';
+import { L, say, the } from '../shared/text';
 
 export const l2StaticNexthop = defineTemplate(
   {
@@ -67,7 +68,6 @@ export const l2StaticNexthop = defineTemplate(
         `One route to the network of ${the(far.device)} (${net.srvNet.cidr}) names the wrong next router. Find it and correct it.`,
         `${far.device.ja}のネットワーク（${net.srvNet.cidr}）への経路のうち 1 つは、「次のルータ」がまちがっています。見つけて直してください。`,
       ),
-      PRESS_CHECK,
     );
 
     // --- What may be changed, the goals, the answers ---
@@ -90,6 +90,14 @@ export const l2StaticNexthop = defineTemplate(
             );
     return {
       title: L('A route that points the wrong way', '行き先のおかしい経路'),
+      task: L(
+        `One route to the network of ${the(far.device)} (${net.srvNet.cidr}) names the wrong next router. Find it and correct it.`,
+        `${far.device.ja}のネットワーク（${net.srvNet.cidr}）への経路のうち、「次のルータ」がまちがっている 1 行を直してください。`,
+      ),
+      rule: L(
+        'Rule: the next router is a neighbour, cabled directly to this router, on the side towards the destination.',
+        'ルール：「次のルータ」は、ケーブルでじかにつながった、行き先に近いほうのとなりのルータ。',
+      ),
       brief,
       topology,
       names: net.names,
@@ -97,19 +105,31 @@ export const l2StaticNexthop = defineTemplate(
       checks: routedGoals(net),
       hints: [
         L(
-          'Press Check, then watch it on the diagram: at which router does it stop or turn back?',
-          '「たしかめる」を押してから、図で通り道を見てください。どのルータで止まりますか。または、引き返しますか。',
+          `Under the result, press "${WATCH_WORDS.en}" and follow it: at which router does it stop or turn back?`,
+          `結果の下にある「${WATCH_WORDS.ja}」を押して、通り道を見てください。どのルータで止まりますか。または、引き返しますか。`,
         ),
-        say(
-          ROUTE_RULE,
-          L(
-            `It must be the neighbour towards the destination. On ${the(name(faulty))} the route is handed to ${wrongHop}: ${why.en}.`,
-            `渡す相手は、行き先に近いほうのとなりのルータです。${name(faulty).ja}の経路は「${wrongHop}」に渡していて、これは${why.ja}。`,
+        {
+          holdsWhile: {
+            kind: 'route-via',
+            nodeId: faulty,
+            destination: net.srvNet.cidr,
+            nextHop: wrongHop,
+          },
+          instead: L(
+            `The route on ${the(name(faulty))} no longer names ${wrongHop}. If it still does not arrive, check what it names now: the next router must be the address of the neighbouring router towards the destination, on the side facing this one.`,
+            `${name(faulty).ja}の経路の「次のルータ」は、もう「${wrongHop}」ではありません。それでも届かないなら、いまの「次のルータ」を図と見くらべてください。行き先に近いほうのとなりのルータの、こちらを向いた側のアドレスになっていますか。`,
           ),
-        ),
+          text: say(
+            ROUTE_RULE,
+            L(
+              `It must be the neighbour towards the destination. On ${the(name(faulty))} the route is handed to ${wrongHop}: ${why.en}.`,
+              `「次のルータ」は、行き先に近いほうのとなりのルータです。${name(faulty).ja}の経路は、次のルータが「${wrongHop}」になっていて、これは${why.ja}。`,
+            ),
+          ),
+        },
         L(
-          `On ${the(name(faulty))}, in the route for ${net.srvNet.cidr}, change who it is handed to: ${rightHop}, the address of ${the(nextRouter)}.`,
-          `${name(faulty).ja}の、行き先「${net.srvNet.cidr}」の経路の渡し先を、${nextRouter.ja}のアドレス「${rightHop}」に変えます。`,
+          `On ${the(name(faulty))}, in the route for ${net.srvNet.cidr}, change the next router to ${rightHop}, the address of ${the(nextRouter)}.`,
+          `${name(faulty).ja}の、行き先「${net.srvNet.cidr}」の経路の「次のルータ」を、${nextRouter.ja}のアドレス「${rightHop}」に変えます。`,
         ),
       ],
       lessons: ['/routing/multi-hop'],

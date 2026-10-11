@@ -218,3 +218,79 @@ test('every control of the hub, a level, placement and the record is at least 44
   const stop = await box(page.getByTestId(X.placementStop));
   expect(stop.bottom - stop.top).toBeGreaterThanOrEqual(44);
 });
+
+/**
+ * TC-595 — a finger on a cable switches it, as a mouse does, anywhere in a
+ * band at least 24px wide around the line; the cable stays drawn as a cable
+ * (red dashes while it is out), with no editor handles on it.
+ */
+test('a tap on a cable of the diagram, or just beside it, plugs it in and unplugs it', async ({
+  page,
+}) => {
+  const id = 'l1-cable-off~0';
+  const [fix] = TEMPLATES.find((entry) => entry.id === 'l1-cable-off')?.generate(0).reference ?? [];
+  if (fix?.kind !== 'link-state') throw new Error('the pinned cable exercise changed');
+  await openExercise(page, id);
+  const cable = page.locator(`g.netlab-edge[data-edge-id="${fix.edgeId}"]`);
+  await expect(cable).toHaveAttribute('data-edge-state', 'down');
+  const line = await cable
+    .locator('path')
+    .first()
+    .evaluate((path) => {
+      const drawn = path.getBoundingClientRect();
+      return { x: drawn.x + drawn.width / 2, y: drawn.y + drawn.height / 2 };
+    });
+  const toggle = page.getByTestId(`exercise-setting-link-state-${fix.edgeId}-toggle`);
+
+  // 10px off the line: outside the line the canvas draws, inside the band.
+  await page.touchscreen.tap(line.x, line.y + 10);
+  await expect(cable).toHaveAttribute('data-edge-state', 'up');
+  await expect(toggle).toHaveAttribute('aria-checked', 'true');
+
+  await page.getByTestId(X.diagram).scrollIntoViewIfNeeded();
+  const again = await cable
+    .locator('path')
+    .first()
+    .evaluate((path) => {
+      const drawn = path.getBoundingClientRect();
+      return { x: drawn.x + drawn.width / 2, y: drawn.y + drawn.height / 2 };
+    });
+  await page.touchscreen.tap(again.x, again.y);
+  await expect(cable).toHaveAttribute('data-edge-state', 'down');
+  await expect(toggle).toHaveAttribute('aria-checked', 'false');
+  // Still drawn as a cable that is out.
+  await expect(cable.locator('path[stroke-dasharray]')).not.toHaveCount(0);
+});
+
+/**
+ * TC-596 — what cannot be read on the picture is read under it: every device
+ * with its address, in text of at least 12px, covering no device.
+ */
+for (const id of ['l1-which-pc~0', 'l2-vlan-access~0', 'l2-stp-root~0']) {
+  test(`${id}: every device and what the exercise is about is listed under the diagram`, async ({
+    page,
+  }) => {
+    await openExercise(page, id);
+    const exercise = TEMPLATES.find((entry) => id.startsWith(`${entry.id}~`))?.generate(0);
+    if (!exercise) throw new Error(`no ${id}`);
+    const legend = page.getByTestId(X.diagramNotes);
+    await expect(legend).toHaveAttribute('data-legend', '');
+    for (const node of exercise.start.nodes) {
+      // A switch is listed where the exercise is about it (a trunk's list, a priority).
+      if (node.data.role === 'switch' && !id.startsWith('l2-stp')) continue;
+      await expect(legend).toContainText(node.data.label);
+      if (typeof node.data.ip === 'string') await expect(legend).toContainText(node.data.ip);
+    }
+    if (id.startsWith('l2-vlan')) await expect(legend).toContainText('VLAN');
+    if (id.startsWith('l2-stp')) await expect(legend).toContainText('優先度');
+    expect(
+      await legend.evaluate((list) => parseFloat(getComputedStyle(list).fontSize)),
+    ).toBeGreaterThanOrEqual(12);
+    const listed = await box(legend);
+    for (const device of await page.getByTestId(X.diagram).getByTestId(SEL.canvas.node).all()) {
+      expect((await box(device)).bottom, 'the legend covers no device').toBeLessThanOrEqual(
+        listed.top + 1,
+      );
+    }
+  });
+}

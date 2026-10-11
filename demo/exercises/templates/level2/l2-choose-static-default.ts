@@ -9,8 +9,8 @@ import { placedEvenly } from '../shared/draw';
 import { defineTemplate, goals } from '../shared/exercise';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
-import { routes } from '../shared/routed';
-import { L, listOf, PRESS_CHECK_CHOICE, say, the, The, type Named } from '../shared/text';
+import { routes, RULE_ROUTE } from '../shared/routed';
+import { L, listOf, say, the, The, type Named } from '../shared/text';
 import type { DesignOption } from '../../model/types';
 
 export const l2ChooseStaticDefault = defineTemplate(
@@ -133,7 +133,7 @@ export const l2ChooseStaticDefault = defineTemplate(
     const opening = scene(place, {
       home: L(
         `${The(sites.near.name)} has one cable to the rest of the property, and it ends at ${the(r2Name)}.`,
-        `${sites.near.name.ja}から外へ出る線は 1 本だけで、その先は${r2Name.ja}です。`,
+        `${sites.near.name.ja}から外へ出るケーブルは 1 本だけで、その先は${r2Name.ja}です。`,
       ),
       shop: L(
         `${The(sites.near.name)} has one line out, and it ends at ${the(r2Name)}.`,
@@ -145,7 +145,7 @@ export const l2ChooseStaticDefault = defineTemplate(
       ),
       school: L(
         `${The(sites.near.name)} has one cable out, and it ends at ${the(r2Name)}.`,
-        `${sites.near.name.ja}から外へ出る線は 1 本だけで、その先は${r2Name.ja}です。`,
+        `${sites.near.name.ja}から外へ出るケーブルは 1 本だけで、その先は${r2Name.ja}です。`,
       ),
       office: L(
         `${The(sites.near.name)} has one line out, and it ends at ${the(r2Name)}.`,
@@ -160,9 +160,8 @@ export const l2ChooseStaticDefault = defineTemplate(
       ),
       L(
         `A router needs a route (a line saying "for that network, hand it to this neighbouring router", the next router) for every network that is not plugged into it. ${The(r1Name)} has none yet. How should its routes be written?`,
-        `ルータは、自分に直接つながっていないネットワークへは、経路（「このネットワークあては、となりのこのルータに渡す」という行。渡す相手を「次のルータ」といいます）がなければ送れません。${r1Name.ja}には、まだ経路が 1 つもありません。どう書きますか。`,
+        `ルータは、自分に直接つながっていないネットワークへは、経路（「このネットワークあては、となりのこのルータに渡す」という行。そのとなりのルータを「次のルータ」といいます）がなければ送れません。${r1Name.ja}には、まだ経路が 1 つもありません。どう書きますか。`,
       ),
-      PRESS_CHECK_CHOICE,
     );
 
     // --- The options ---
@@ -217,7 +216,7 @@ export const l2ChooseStaticDefault = defineTemplate(
         changes: [routes('r1', [{ destination: '0.0.0.0/0', nextHop: l1.a }])],
         explain: L(
           `${l1.a} is the address of ${the(r1Name)} itself on the line out. The next router of a route must be the router at the OTHER end of the cable.`,
-          `${l1.a} は、${r1Name.ja}自身の、外へ出る線の側のアドレスです。経路の「次のルータ」には、ケーブルの「向こう側」のルータのアドレスを書きます。`,
+          `${l1.a} は、${r1Name.ja}自身の、外へ出るケーブルの側のアドレスです。経路の「次のルータ」には、ケーブルの「向こう側」のルータのアドレスを書きます。`,
         ),
       },
     };
@@ -226,6 +225,11 @@ export const l2ChooseStaticDefault = defineTemplate(
     const { reach } = goals(names);
     return {
       title: L(`One way out of ${the(sites.near.name)}`, `${sites.near.name.ja}の出口は 1 つ`),
+      task: L(
+        `Choose how to write the routes of ${the(r1Name)}, so that ${the(sites.near.device)} reaches every network behind the next router.`,
+        `${sites.near.device.ja}から向こうの全部のネットワークに届くように、${r1Name.ja}の経路の書き方を 1 つ選んでください。`,
+      ),
+      rule: RULE_ROUTE,
       brief,
       topology,
       names,
@@ -235,7 +239,7 @@ export const l2ChooseStaticDefault = defineTemplate(
       hints: [
         L(
           `Count the networks behind ${the(r2Name)}, and look at how many cables leave ${the(r1Name)} towards them.`,
-          `${r2Name.ja}の先にあるネットワークを数えてください。そして、${r1Name.ja}からそちらへ出る線が何本あるかを見てください。`,
+          `${r2Name.ja}の先にあるネットワークを数えてください。そして、${r1Name.ja}からそちらへ出るケーブルが何本あるかを見てください。`,
         ),
         L(
           `A route to 0.0.0.0/0 matches every destination no other line matches. Its next router must still be the neighbour at the other end of the cable, not the router's own address.`,

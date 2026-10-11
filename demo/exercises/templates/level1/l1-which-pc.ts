@@ -16,7 +16,7 @@ import {
 } from '../shared/lan';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan, net24 } from '../shared/plans';
-import { L, PRESS_CHECK, say, the } from '../shared/text';
+import { L, say, the } from '../shared/text';
 
 export const l1WhichPc = defineTemplate(
   {
@@ -79,10 +79,9 @@ export const l1WhichPc = defineTemplate(
     const brief = say(
       opening,
       L(
-        'One of the three has an address that was typed wrongly. Find which one, and fix only that one.',
-        '3 台のうち 1 台は、アドレスの入れまちがいです。どの 1 台かを見つけて、その 1 台だけを直してください。',
+        'One of the three has an address that was typed wrongly.',
+        '3 台のうち 1 台は、アドレスの入れまちがいです。',
       ),
-      PRESS_CHECK,
     );
 
     // --- What may be changed, the goals, the answers ---
@@ -90,6 +89,14 @@ export const l1WhichPc = defineTemplate(
     const healthy = lan.pcs[(index + 2) % 3] ?? 'pc3';
     return {
       title: L('One of three is wrong', '3 台のうち 1 台がおかしい'),
+      task: L(
+        'One of the three has a wrong address. Find which one, and fix only that one.',
+        '3 台のうち、アドレスがおかしい 1 台を見つけて、その 1 台だけを直してください。',
+      ),
+      rule: L(
+        'Rule: devices on the same side share their first three numbers; the last number is different for each.',
+        'ルール：同じ側の機器は、はじめの 3 つの数字が同じ。最後の数字は、1 台ずつちがう。',
+      ),
       brief,
       topology,
       names: lan.names,
@@ -122,6 +129,8 @@ export const l1WhichPc = defineTemplate(
         // Changing the right PC, but to the address of another one.
         [setIp(device, addressOf(lan, healthy))],
       ],
+      // Two devices with one address: either of the two is right to point at.
+      pickFirst: { faulty: fault === 'duplicate' ? [device, twin] : [device] },
       fingerprint: [place.id, shape, device, fault],
     };
   },

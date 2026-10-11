@@ -25,6 +25,9 @@ import {
   templateById,
   TEMPLATES,
 } from './index';
+import { factHolds, hintText } from '../model/hints';
+import { FIRST_ORDER } from '../ui/attemptOrder';
+import { pressCards } from '../ui/choices';
 import { portName, sideName } from '../ui/describe';
 import { refOf } from './shared/exercise';
 import { labelFits, labelLines } from './shared/labelFit';
@@ -234,9 +237,53 @@ async function problemsOf(exercise: Exercise): Promise<string[]> {
     }
   }
 
+  // --- TC-582: changes that make traffic flow without fixing the fault must fail ---
+  for (const [index, changes] of (exercise.unsoundPasses ?? []).entries()) {
+    const grade = await gradeExercise(exercise, applyChangesReporting(start, changes).topology);
+    no(!grade.passed, `unsound pass ${index + 1} passes: ${JSON.stringify(changes)}`);
+  }
+
+  // --- TC-583: pressing at random cannot beat the odds ---
+  // Every single press the form offers (a chip, a cable switch, a dropdown
+  // value) is tried alone. One that passes must be a press the control is
+  // built around; a planted mistake, a "/number" or a kind of port never is.
+  if (exercise.kind !== 'choose-design') {
+    const rootCheck = exercise.checks.find((check) => check.kind === 'stp-root');
+    for (const card of pressCards(exercise, FIRST_ORDER)) {
+      for (const press of card.presses) {
+        const applied = applyChangesReporting(start, [press.change]).topology;
+        const grade = await gradeExercise(exercise, applied);
+        if (!grade.passed) continue;
+        // A priority is sound when it makes the wanted switch the lowest outright, not by a tie.
+        const sound =
+          press.sound ??
+          (rootCheck?.kind === 'stp-root' &&
+            applied.nodes
+              .filter((node) => node.data.role === 'switch' && node.id !== rootCheck.nodeId)
+              .every(
+                (node) =>
+                  (node.data.stpConfig?.priority ?? 32768) >
+                  (applied.nodes.find((other) => other.id === rootCheck.nodeId)?.data.stpConfig
+                    ?.priority ?? 32768),
+              ));
+        no(sound, `a press that is not a sound fix passes: ${JSON.stringify(press.change)}`);
+      }
+      const usable = card.presses.filter((press) => press.sound === true);
+      if (card.chips.length > 0) {
+        no(usable.length === 1, `${card.chips.length} chips, ${usable.length} of them usable`);
+        no(new Set(card.chips).size === card.chips.length, 'two chips are the same');
+        if (exercise.level <= 2) {
+          no(card.chips.length >= 4, `only ${card.chips.length} chips: ${card.chips.join(' ')}`);
+        }
+      }
+    }
+  }
+
   // --- TC-469: text ---
   const texts: [string, Localised | undefined][] = [
     ['title', exercise.title],
+    ['task', exercise.task],
+    ...(exercise.rule ? ([['rule', exercise.rule]] as [string, Localised][]) : []),
     ['brief', exercise.brief],
     ...exercise.hints.map((hint): [string, Localised] => [`hint ${hint.tier}`, hint.text]),
     ...exercise.checks.map((check): [string, Localised | undefined] => [
@@ -272,6 +319,40 @@ async function problemsOf(exercise: Exercise): Promise<string[]> {
     'the hints are not tiers 1, 2 and 3',
   );
   no(new Set(exercise.hints.map((hint) => hint.text.ja)).size === 3, 'two hints say the same');
+  // TC-593: a hint that rests on a fact has that fact at the start, loses it with the
+  // reference solution or with a natural wrong answer, and then says something else.
+  for (const hint of exercise.hints) {
+    no(
+      (hint.holdsWhile === undefined) === (hint.instead === undefined),
+      `hint ${hint.tier}: a fact without a line for when it no longer holds, or the reverse`,
+    );
+    if (!hint.holdsWhile || !hint.instead) continue;
+    no(
+      factHolds(hint.holdsWhile, start),
+      `hint ${hint.tier} rests on something that is not so at the start`,
+    );
+    no(
+      hintText(hint, start) === hint.text,
+      `hint ${hint.tier} does not show its own text at the start`,
+    );
+    const states = [exercise.reference, ...(exercise.wrongAnswers ?? [])].map(
+      (changes) => applyChangesReporting(start, changes).topology,
+    );
+    no(
+      states.some((state) => hintText(hint, state) === hint.instead),
+      `hint ${hint.tier}: no answer, right or wrong, makes it say its other line`,
+    );
+    no(
+      hint.instead.en.trim() !== '' && JAPANESE.test(hint.instead.ja),
+      `hint ${hint.tier}: its other line is missing in a language`,
+    );
+  }
+  // A hint is opened after a Check that missed: it must not send the learner to press Check first.
+  no(
+    !/^(「たしかめる」を押して|Press Check)/.test(`${exercise.hints[0]?.text.ja}`) &&
+      !/^Press Check/.test(`${exercise.hints[0]?.text.en}`),
+    'hint 1 tells the learner to press Check, which they have just done',
+  );
   const labels = Object.values(exercise.nodeLabels ?? {});
   no(
     labels.some((label) => exercise.brief.ja.includes(label.ja)),
@@ -280,6 +361,25 @@ async function problemsOf(exercise: Exercise): Promise<string[]> {
   no(
     labels.some((label) => exercise.brief.en.toLowerCase().includes(label.en.toLowerCase())),
     'the English brief names no device of the topology',
+  );
+  // TC-591: what a learner who reads one line reads. One instruction, one rule, each one line.
+  const sentences = (text: string) =>
+    text.split(/[。.!?](?=\s|$|[^0-9/])/).filter((part) => part.trim() !== '').length;
+  no(
+    (exercise.task?.ja.length ?? 0) <= 70,
+    `the task is ${exercise.task?.ja.length} characters long`,
+  );
+  no(sentences(exercise.task?.ja ?? '') <= 2, 'the task is more than two sentences');
+  if (exercise.rule) {
+    no(
+      /^ルール：/.test(exercise.rule.ja) && /^Rule: /.test(exercise.rule.en),
+      'the rule line does not start with "Rule:"',
+    );
+    no(exercise.rule.ja.length <= 90, `the rule is ${exercise.rule.ja.length} characters long`);
+  }
+  no(
+    !/たしかめる|Check/.test(exercise.brief.ja + exercise.brief.en),
+    'the story still tells the learner to press Check',
   );
   no(
     exercise.start.nodes.every((node) => node.data.label === exercise.nodeLabels?.[node.id]?.ja),
@@ -327,7 +427,11 @@ async function problemsOf(exercise: Exercise): Promise<string[]> {
   // --- TC-562: the brief does not hand over the answer ---
   if (exercise.kind !== 'choose-design') {
     for (const locale of ['en', 'ja'] as const) {
-      const given = answersIn(exercise.brief[locale], exercise);
+      // The task and the rule count as the brief: the rule gives the rule, never the values.
+      const given = answersIn(
+        [exercise.task?.[locale], exercise.rule?.[locale], exercise.brief[locale]].join(' '),
+        exercise,
+      );
       if (exercise.answerInBrief === undefined) {
         no(
           given.length === 0,

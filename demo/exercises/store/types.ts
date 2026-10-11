@@ -40,6 +40,13 @@ export interface AttemptRecord {
   readonly outcome: AttemptOutcome;
   /** Check presses up to and including the one that passed. */
   readonly checkPresses: number;
+  /**
+   * 1 when the exercise is answered by pressing one of a few things, so that a
+   * solve counts on the first Check only (`model/closedSet.ts`). Absent means
+   * 2: every record written before the rule existed, and every exercise whose
+   * answer is typed or built.
+   */
+  readonly checksToCount?: 1;
   readonly firstCheckPassed: boolean;
   /** Every check id that failed at some press, in the order first seen. */
   readonly failedCheckIds: readonly string[];

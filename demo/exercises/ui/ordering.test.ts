@@ -2,7 +2,8 @@
 import { describe, expect, it } from 'vitest';
 import { exerciseById, exercisePool, templateIdOf } from '../exerciseSource';
 import type { Exercise } from '../model/types';
-import { addressCandidates, candidateParts } from './candidates';
+import { attemptOrder, FIRST_ORDER, placeIn } from './attemptOrder';
+import { orderedOptions, pressCards } from './choices';
 import { sameSetting } from './describe';
 import { settingOrder } from './settingOrder';
 
@@ -30,43 +31,102 @@ function largestShare(values: readonly number[]): number {
   return Math.max(...counts.values()) / values.length;
 }
 
-// TC-541
+// TC-541, TC-579
 describe('where the address that works sits among the chips', () => {
-  /** The place of the usable address among the chips of the host the reference solution changes. */
-  const places = byTemplate((exercise) => {
-    const fix = exercise.reference.find((change) => change.kind === 'host-ip');
-    if (!fix || fix.kind !== 'host-ip' || exercise.options) return null;
-    const parts = candidateParts(exercise.start, fix.nodeId, exercise.seed);
-    if (!parts) return null;
-    const place = addressCandidates(exercise.start, fix.nodeId, exercise.seed).indexOf(parts.right);
-    return place === -1 ? null : place;
-  });
-
-  it('covers the templates whose answer is a host address', () => {
-    expect([...places.keys()]).toEqual(
-      expect.arrayContaining(['l1-host-address', 'l1-prefix-fit', 'l1-which-pc']),
+  const idsOf = (count: number) =>
+    Array.from(
+      { length: count },
+      (_, index) => `some-exercise~${index % 7}@${1000 + index * 1000}`,
     );
-  });
 
-  it('is in no one place for more than about 40% of a template’s instances', () => {
-    for (const [templateId, found] of places) {
-      expect(found.length, templateId).toBeGreaterThanOrEqual(8);
-      expect(largestShare(found), `${templateId}: ${found.join('')}`).toBeLessThanOrEqual(
-        MAX_SHARE,
-      );
+  it('is a new place in every attempt: never the place it had in the attempt before', () => {
+    const ids = idsOf(300);
+    for (const count of [2, 3, 4, 5, 6]) {
+      let before = -1;
+      for (const id of ids) {
+        const place = placeIn(attemptOrder(ids, id), count);
+        expect(place, `${count} chips, ${id}`).not.toBe(before);
+        before = place;
+      }
     }
   });
 
-  it('is not first in the first instance of the templates a learner meets first', () => {
-    for (const id of ['l1-host-address~0', 'l1-prefix-fit~0']) {
-      const exercise = exerciseById(id, 'ja');
-      const fix = exercise?.reference.find((change) => change.kind === 'host-ip');
-      if (!exercise || !fix || fix.kind !== 'host-ip') throw new Error(`no ${id}`);
-      const parts = candidateParts(exercise.start, fix.nodeId, exercise.seed);
-      expect(addressCandidates(exercise.start, fix.nodeId, exercise.seed)[0], id).not.toBe(
-        parts?.right,
-      );
+  it('is a new place after "start over" too', () => {
+    const ids = idsOf(40);
+    for (const id of ids) {
+      for (const count of [3, 4, 6]) {
+        expect(placeIn(attemptOrder(ids, id, 1), count)).not.toBe(
+          placeIn(attemptOrder(ids, id, 0), count),
+        );
+      }
     }
+  });
+
+  it('is in no one place for more than about 40% of the attempts, whatever is offered', () => {
+    const ids = idsOf(600);
+    for (const count of [3, 4, 6]) {
+      expect(
+        largestShare(ids.map((id) => placeIn(attemptOrder(ids, id), count))),
+      ).toBeLessThanOrEqual(MAX_SHARE);
+    }
+  });
+
+  it('is fixed by the attempt: the same attempts give the same order', () => {
+    const ids = idsOf(12);
+    const last = ids[11] ?? '';
+    expect(attemptOrder(ids, last)).toEqual(attemptOrder([...ids], last));
+    expect(attemptOrder(ids, last)).not.toEqual(attemptOrder(ids, ids[10] ?? ''));
+  });
+
+  it('puts the usable chip of every card, and the design that works, at the place of the attempt', () => {
+    const ids = idsOf(9);
+    for (const exercise of pool) {
+      const order = attemptOrder(ids, `${exercise.id}@77`);
+      for (const card of pressCards(exercise, order)) {
+        if (card.chips.length === 0) continue;
+        const usable = card.presses.findIndex((press) => press.sound === true);
+        expect(usable, exercise.id).toBe(placeIn(order, card.chips.length));
+      }
+      if (exercise.options) {
+        const shown = orderedOptions(exercise, order);
+        expect(shown.map((option) => option.id).sort()).toEqual(
+          exercise.options.map((option) => option.id).sort(),
+        );
+        expect(
+          shown.findIndex(
+            (option) => JSON.stringify(option.changes) === JSON.stringify(exercise.reference),
+          ),
+          exercise.id,
+        ).toBe(placeIn(order, shown.length));
+      }
+    }
+  });
+
+  // TC-580
+  it('two templates set in the same place do not offer the same chips', () => {
+    const lists = ['l1-host-address~0', 'l1-prefix-fit~0', 'l1-which-pc~0', 'l1-host-blank~0'].map(
+      (id) => {
+        const exercise = exerciseById(id, 'ja');
+        if (!exercise) throw new Error(`no ${id}`);
+        return pressCards(exercise, FIRST_ORDER)
+          .map((card) => [...card.chips].sort().join(' '))
+          .filter((chips) => chips !== '');
+      },
+    );
+    const all = lists.flat();
+    expect(all.length).toBeGreaterThanOrEqual(6);
+    expect(new Set(all).size).toBe(all.length);
+  });
+
+  it('offers six chips for a host and for a router side at levels 1 and 2 wherever the network allows', () => {
+    const counts = pool.flatMap((exercise) =>
+      pressCards(exercise, FIRST_ORDER).flatMap((card) =>
+        card.chips.length > 0 ? [card.chips.length] : [],
+      ),
+    );
+    expect(counts.length).toBeGreaterThan(100);
+    expect(Math.min(...counts)).toBeGreaterThanOrEqual(4);
+    expect(counts.filter((count) => count === 6).length / counts.length).toBeGreaterThan(0.9);
   });
 });
 

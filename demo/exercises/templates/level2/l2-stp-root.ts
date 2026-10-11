@@ -7,11 +7,11 @@
  * (engine fact 4).
  */
 
-import { buildLoop } from '../shared/build';
+import { buildLoop, withNodeData } from '../shared/build';
 import { defineTemplate, goals } from '../shared/exercise';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
-import { L, PRESS_CHECK, say, the, The } from '../shared/text';
+import { L, say, the, The } from '../shared/text';
 import type { SettingChange } from '../../model/types';
 
 const priority = (nodeId: string, value: number): SettingChange => ({
@@ -40,18 +40,40 @@ export const l2StpRoot = defineTemplate(
     const fault = draw.pick(['rival-low', 'rival-zero', 'target-high']);
 
     // --- The fault ---
+    // The switches that are neither the target nor the rival sit just below
+    // the usual number. So raising the rival alone never makes the target the
+    // root by a tie (which the switches' hardware addresses would decide):
+    // the target has to be given the lowest number itself.
+    const BELOW_USUAL = 28672;
+    const bystanders = Object.fromEntries(
+      ids.filter((id) => id !== target && id !== rival).map((id) => [id, BELOW_USUAL]),
+    );
     const priorities: Record<string, number> =
       fault === 'rival-low'
-        ? { [rival]: 4096 }
+        ? { ...bystanders, [rival]: 4096 }
         : fault === 'rival-zero'
-          ? { [rival]: 0 }
-          : { [target]: 61440 };
+          ? { ...bystanders, [rival]: 0 }
+          : { [target]: 61440, [rival]: BELOW_USUAL };
     // The server hangs on the switch that should be the root; PCs on the others.
     const devices = ids.map((id, index) =>
       id === target ? place.server : (place.pcs[index % 3] ?? place.pcs[0]),
     );
     if (ids.length === 4 && targetIndex !== 3) devices[targetIndex === 0 ? 3 : 0] = place.newPc;
-    const net = buildLoop(place, plan, shape, priorities, devices);
+    const built = buildLoop(place, plan, shape, priorities, devices);
+    // Equal numbers are settled by the switches' hardware addresses. The
+    // target gets the highest, so it never becomes the root by a tie: its
+    // number has to be the lowest outright.
+    const net = {
+      ...built,
+      topology: withNodeData(built.topology, target, {
+        ports: (built.topology.nodes.find((node) => node.id === target)?.data.ports ?? []).map(
+          (entry, index) => ({
+            ...entry,
+            macAddress: `02:ff:ff:ff:ff:${(index + 1).toString(16).padStart(2, '0')}`,
+          }),
+        ),
+      }),
+    };
 
     // --- The brief ---
     const name = (id: string) => net.names[id] ?? place.switches[0];
@@ -83,13 +105,12 @@ export const l2StpRoot = defineTemplate(
       opening,
       L(
         `In a ring, spanning tree (STP) closes one link so that traffic cannot circle forever. It builds its tree around one switch, the root bridge: the switch with the lowest priority number.`,
-        `輪になった配線では、スパニングツリー（STP）が線を 1 本止めて、通信が回り続けないようにします。そのとき中心になるスイッチをルートブリッジといい、優先度の数字がいちばん小さいスイッチが選ばれます。`,
+        `輪になった配線では、スパニングツリー（STP）がケーブルを 1 本止めて、通信が回り続けないようにします。そのとき中心になるスイッチをルートブリッジといい、優先度の数字がいちばん小さいスイッチが選ばれます。`,
       ),
       L(
         `${The(server)} is on ${the(sw)}, so that switch should be the root bridge. Right now another switch is. Change the priority numbers so that ${the(sw)} becomes the root bridge.`,
         `${server.ja}は${sw.ja}につながっているので、${sw.ja}を中心にしたいところです。ところが、いまは別のスイッチが中心になっています。優先度の数字を変えて、${sw.ja}がルートブリッジになるようにしてください。`,
       ),
-      PRESS_CHECK,
     );
 
     // --- What may be changed, the goals, the answers ---
@@ -112,6 +133,14 @@ export const l2StpRoot = defineTemplate(
             [[priority(target, 65535)], [priority(target, 49152)]];
     return {
       title: L(`${The(sw)} should be the root bridge`, `${sw.ja}を中心にする`),
+      task: L(
+        `Change the priority numbers so that ${the(sw)} becomes the root bridge (the centre).`,
+        `優先度の数字を変えて、${sw.ja}をルートブリッジ（中心のスイッチ）にしてください。`,
+      ),
+      rule: L(
+        'Rule: the switch with the lowest priority number becomes the root bridge.',
+        'ルール：優先度の数字がいちばん小さいスイッチが、ルートブリッジになる。',
+      ),
       brief,
       topology: net.topology,
       names: net.names,
@@ -147,6 +176,11 @@ export const l2StpRoot = defineTemplate(
       lessons: ['/networking/stp'],
       reference,
       wrongAnswers,
+      unsoundPasses: [
+        // The rival put back to the usual number, the target left as it was.
+        [priority(rival, 32768)],
+        [priority(rival, 61440)],
+      ],
       fingerprint: [place.id, shape, target, fault],
     };
   },

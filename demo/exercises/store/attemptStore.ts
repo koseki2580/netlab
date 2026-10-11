@@ -43,6 +43,8 @@ export interface AttemptMeta {
   readonly kind: ExerciseKind;
   readonly generatorVersion: number;
   readonly locale: AttemptLocale;
+  /** See `AttemptRecord.checksToCount`; 2 or absent is not recorded. */
+  readonly checksToCount?: 1 | 2;
 }
 
 export interface CheckOutcome {
@@ -125,6 +127,7 @@ function parseAttempt(value: unknown): AttemptRecord | null {
     (value.endedAt === undefined || isCount(value.endedAt)) &&
     OUTCOMES.includes(value.outcome) &&
     isCount(value.checkPresses) &&
+    (value.checksToCount === undefined || value.checksToCount === 1) &&
     typeof value.firstCheckPassed === 'boolean' &&
     isTextList(value.failedCheckIds) &&
     [0, 1, 2, 3].includes(value.hintsUsed as number) &&
@@ -147,6 +150,7 @@ function parseAttempt(value: unknown): AttemptRecord | null {
     ...(record.endedAt === undefined ? {} : { endedAt: record.endedAt }),
     outcome: record.outcome,
     checkPresses: record.checkPresses,
+    ...(record.checksToCount === 1 ? { checksToCount: 1 as const } : {}),
     firstCheckPassed: record.firstCheckPassed,
     failedCheckIds: [...record.failedCheckIds],
     hintsUsed: record.hintsUsed,
@@ -359,6 +363,7 @@ export function createAttemptStore(options: AttemptStoreOptions) {
         startedAt,
         outcome: 'abandoned',
         checkPresses: 0,
+        ...(meta.checksToCount === 1 ? { checksToCount: 1 as const } : {}),
         firstCheckPassed: false,
         failedCheckIds: [],
         hintsUsed: 0,

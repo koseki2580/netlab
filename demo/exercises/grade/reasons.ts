@@ -23,6 +23,16 @@ const join = (first: Localised, second: Localised): Localised => ({
 
 export type DiagnosisDetail =
   | { readonly kind: 'cable-down' }
+  /**
+   * The cause is said, the device is not: in a find-the-fault exercise, which
+   * device it is IS the question (`diagnose.ts`).
+   */
+  | {
+      readonly kind: 'unnamed';
+      readonly cause: 'duplicate-address' | 'wrong-network';
+      /** `wrong-network`: which of the four numbers is off. */
+      readonly position?: 1 | 2 | 3 | 4;
+    }
   | {
       readonly kind: 'duplicate-address';
       readonly address: string;
@@ -39,7 +49,33 @@ export type DiagnosisDetail =
       readonly device: string;
       /** For a router: which of its sides, as the settings form names it. */
       readonly side?: Localised;
+      /** Which of the four numbers is the first to differ from the neighbours'. */
+      readonly position?: 1 | 2 | 3 | 4;
+      /** That number here, and at the neighbours. */
+      readonly own?: number;
+      readonly others?: number;
     };
+
+const ORDINAL_EN = ['first', 'second', 'third', 'last'] as const;
+
+/**
+ * 「3 つ目の数字がちがいます（150 と 1）」: which number, and the two values.
+ * "The first numbers differ" was read as "the first number", which matched.
+ */
+function whichNumber(
+  position: 1 | 2 | 3 | 4 | undefined,
+  own?: number,
+  others?: number,
+): Localised {
+  if (position === undefined) {
+    return { en: 'The first numbers differ', ja: 'はじめのほうの数字がちがいます' };
+  }
+  const values = own !== undefined && others !== undefined;
+  return {
+    en: `The ${ORDINAL_EN[position - 1]} number differs${values ? ` (${own} and ${others})` : ''}`,
+    ja: `${position} つ目の数字がちがいます${values ? `（${own} と ${others}）` : ''}`,
+  };
+}
 
 const CABLE_DOWN: Localised = {
   en: 'A cable is unplugged. Look for the red dotted line.',
@@ -61,16 +97,28 @@ export function diagnosisMessage(detail: DiagnosisDetail): Localised {
             en: `${detail.holder} and ${detail.other} use the same address (${detail.address}). Give one of them another number.`,
             ja: `${detail.holder}と${detail.other}が、同じアドレス（${detail.address}）を使っています。どちらかを、べつの数字にしてください。`,
           };
-    case 'wrong-network':
-      return detail.side
+    case 'unnamed':
+      return detail.cause === 'duplicate-address'
         ? {
-            en: `The first numbers do not match the devices around it. Look at the address of ${detail.device} on the ${detail.side.en} (${detail.address}).`,
-            ja: `はじめの数字が、まわりの機器とちがいます。${detail.device}の「${detail.side.ja}」のアドレス（${detail.address}）を見てください。`,
+            en: 'Two devices use the same address. Compare the addresses one by one and find the two.',
+            ja: '同じアドレスを使っている機器が 2 台あります。アドレスを 1 台ずつ見くらべて、その 2 台をさがしてください。',
           }
         : {
-            en: `The first numbers do not match the devices around it. Compare the address of ${detail.device} (${detail.address}) with its neighbours.`,
-            ja: `はじめの数字が、まわりの機器とちがいます。${detail.device}のアドレス（${detail.address}）を、となりの機器と見くらべてください。`,
+            en: `One device has an address that does not match the devices around it: ${whichNumber(detail.position).en.replace(/^The/, 'the')}. Compare the addresses one by one.`,
+            ja: `まわりの機器とアドレスが合っていない機器があります。${whichNumber(detail.position).ja}。アドレスを 1 台ずつ見くらべてください。`,
           };
+    case 'wrong-network': {
+      const which = whichNumber(detail.position, detail.own, detail.others);
+      return detail.side
+        ? {
+            en: `${which.en} from the devices on that side. Look at the address of ${detail.device} on the ${detail.side.en} (${detail.address}).`,
+            ja: `${which.ja}。${detail.device}の「${detail.side.ja}」のアドレス（${detail.address}）を、その側の機器と見くらべてください。`,
+          }
+        : {
+            en: `${which.en} from the devices around it. Compare the address of ${detail.device} (${detail.address}) with its neighbours.`,
+            ja: `${which.ja}。${detail.device}のアドレス（${detail.address}）を、となりの機器と見くらべてください。`,
+          };
+    }
   }
 }
 
@@ -79,7 +127,7 @@ export function diagnosisMessage(detail: DiagnosisDetail): Localised {
 /** Said first when the request arrived and the answer got lost. A lost request needs no sentence: the goal says so. */
 const REPLY_LOST: Localised = {
   en: 'The request arrived, but the reply did not come back.',
-  ja: '相手には届きましたが、返事が戻りませんでした。',
+  ja: '行き先には届きましたが、返事が戻りませんでした。',
 };
 
 /** What a `no-route` message may say, beyond the reason itself. */
@@ -90,6 +138,8 @@ export interface DropContext {
    * routes to look at).
    */
   readonly routesEditable?: boolean;
+  /** The network has a cable between switches that carries several VLANs. */
+  readonly hasTrunk?: boolean;
 }
 
 /**
@@ -106,12 +156,12 @@ const DROP_TEXT = {
     context.routesEditable === true
       ? leg === 'request'
         ? {
-            en: "A router on the way did not know a path to the destination. In its routes, look at the destination's network and at the router it is handed to.",
-            ja: 'とちゅうのルータが、行き先への道を知りませんでした。ルータの経路で、行き先のネットワークと渡す相手を見てください。',
+            en: "A router on the way did not know a path to the destination. In its routes, look at the destination's network and at the next router.",
+            ja: 'とちゅうのルータが、行き先への道を知りませんでした。ルータの経路で、行き先のネットワークと「次のルータ」を見てください。',
           }
         : {
-            en: "A router on the way back did not know a path to the sender. In the routes of the routers on the far side, look at the sender's network and at the router it is handed to.",
-            ja: '帰り道のルータが、送り主への道を知りませんでした。相手側のルータの経路で、送り主のネットワークと渡す相手を見てください。',
+            en: "A router on the way back did not know a path to the sender. In the routes of the routers on the far side, look at the sender's network and at the next router.",
+            ja: '帰り道のルータが、送り主への道を知りませんでした。行き先側のルータの経路で、送り主のネットワークと「次のルータ」を見てください。',
           }
       : leg === 'request'
         ? {
@@ -130,9 +180,19 @@ const DROP_TEXT = {
       `${device} が通しませんでした。${device} の「通してよい通信の一覧（ACL）」に、これを通す行があるか見てください。` +
       (leg === 'reply' ? '返事も、この一覧で調べられます。' : ''),
   }),
-  'no-egress-in-vlan': (device) => ({
-    en: `${device} had no port with the same VLAN number to send it out of. Compare the VLAN numbers of the two ports, and the list on the link between switches.`,
-    ja: `${device} には、同じ VLAN 番号の出口がありませんでした。2 台の差し込み口の VLAN 番号と、スイッチ同士をつなぐ線の一覧を見くらべてください。`,
+  // The list of a cable between switches is mentioned only where there is one:
+  // on a single switch it sent a learner looking for something that is not there.
+  'no-egress-in-vlan': (device, _leg, context) => ({
+    en:
+      `${device} had no other socket with the same VLAN number to send it out of. Compare the VLAN numbers of the two devices' sockets.` +
+      (context.hasTrunk === true
+        ? ' Look at the list of the cable between the switches (the trunk) too.'
+        : ''),
+    ja:
+      `${device} には、同じ VLAN 番号の差し込み口が、ほかにありませんでした。2 台の差し込み口の VLAN 番号を見くらべてください。` +
+      (context.hasTrunk === true
+        ? 'スイッチ同士をつなぐケーブル（トランク）の一覧も見てください。'
+        : ''),
   }),
   'vlan-ingress-violation': (device) => ({
     en: `${device} did not accept it on the port it came in on. Look at the VLAN setting of that port.`,
@@ -169,7 +229,7 @@ const DROP_TEXT = {
   }),
   'fragmentation-needed': () => ({
     en: 'It was too big for a link on the way and was not allowed to be split. Check the size limit (MTU) of the links.',
-    ja: 'とちゅうの線には大きすぎて、分けることも許されていませんでした。線ごとの大きさの上限（MTU）を見てください。',
+    ja: 'とちゅうのケーブルには大きすぎて、分けることも許されていませんでした。ケーブルごとの大きさの上限（MTU）を見てください。',
   }),
   'no-sub-interface-for-vlan': (device) => ({
     en: `${device} has no interface for this VLAN. Check that the router has a sub-interface with that VLAN number.`,
@@ -185,11 +245,11 @@ const DROP_TEXT = {
   }),
   'queue-full': (device) => ({
     en: `${device} was too busy: its waiting line was full. Check the speed limit set on that link.`,
-    ja: `${device} が混んでいて、順番待ちの列がいっぱいでした。その線に設定された速さの上限を見てください。`,
+    ja: `${device} が混んでいて、順番待ちの列がいっぱいでした。そのケーブルに設定された速さの上限を見てください。`,
   }),
   'class-queue-full': (device) => ({
     en: `${device} was too busy: the waiting line for this kind of traffic was full. Check the speed limit set on that link.`,
-    ja: `${device} が混んでいて、この種類の通信の順番待ちの列がいっぱいでした。その線に設定された速さの上限を見てください。`,
+    ja: `${device} が混んでいて、この種類の通信の順番待ちの列がいっぱいでした。そのケーブルに設定された速さの上限を見てください。`,
   }),
 } satisfies Record<string, (device: string, leg: Leg, context: DropContext) => Localised>;
 
@@ -234,19 +294,19 @@ export const CODE_TEXT: Record<CheckResultCode, Localised> = {
   },
   'delivered-but-forbidden': {
     en: 'It arrived where it must not. Look at the setting that is supposed to keep these two apart.',
-    ja: '届いてはいけない相手に、届いてしまいました。この 2 台を分けるはずの設定を見てください。',
+    ja: '届いてはいけない機器に、届いてしまいました。この 2 台を分けるはずの設定を見てください。',
   },
   'wrong-cause': {
     en: 'It did not arrive, but not in the way this exercise asks for. Keep the addresses and cables, and let the settings of the network keep the two apart.',
-    ja: '届きませんでしたが、この課題が求める止め方ではありません。アドレスや線はそのままにして、ネットワークの設定で 2 台を分けてください。',
+    ja: '届きませんでしたが、この課題が求める止め方ではありません。アドレスやケーブルはそのままにして、ネットワークの設定で 2 台を分けてください。',
   },
   'wrong-path': {
     en: 'It arrived, but not by the path this exercise asks for. Look on the diagram at which devices it passes through.',
     ja: '届きましたが、この課題が求める道を通っていません。図で、どの機器を通ったかを見てください。',
   },
   'route-missing': {
-    en: 'The router does not have the route this exercise asks for. Look at the destination of its routes, and at the router each is handed to.',
-    ja: 'ルータに、この課題が求める経路がありません。経路の行き先と、次に渡すルータを見てください。',
+    en: 'The router does not have the route this exercise asks for. Look at the destination of its routes, and at the next router of each.',
+    ja: 'ルータに、この課題が求める経路がありません。経路の行き先と、「次のルータ」を見てください。',
   },
   'wrong-root': {
     en: 'A different switch is the centre of the spanning tree (the root bridge). The switch with the lowest priority number becomes the centre.',
@@ -268,6 +328,10 @@ export const CODE_TEXT: Record<CheckResultCode, Localised> = {
     en: 'You changed more settings than this exercise allows. Put back the ones that were not needed.',
     ja: '変えてよい数より多くの設定を変えました。必要のなかった設定を、元に戻してください。',
   },
+  'changed-elsewhere': {
+    en: 'What you changed was not what was wrong. Put it back, and compare the others.',
+    ja: '変えたところは、おかしい場所ではありません。元に戻して、ほかを見くらべてください。',
+  },
   'no-address': {
     en: 'A device has no address, so nothing could be sent. Give it an address first.',
     ja: 'アドレスが入っていない機器があります。まず、アドレスを入れてください。',
@@ -282,6 +346,15 @@ export const CODE_TEXT: Record<CheckResultCode, Localised> = {
   },
 };
 
+/**
+ * `changed-elsewhere` when every other goal is met: the learner made traffic
+ * flow by changing something that was fine. It does not say what was at fault.
+ */
+export const CHANGED_ELSEWHERE_BUT_WORKS: Localised = {
+  en: 'It arrives, but what you fixed is somewhere else. Put back what you changed, and look for the one setting that does not match the others.',
+  ja: '届きましたが、直したのは別の場所です。変えたところを元に戻して、ほかとちがっている 1 か所をさがしてください。',
+};
+
 export interface ExplainDetail {
   /** What stopped the probe, for `not-delivered` and `wrong-cause`. */
   readonly drop?: { readonly reason: string; readonly leg: Leg; readonly device: string };
@@ -289,6 +362,7 @@ export interface ExplainDetail {
   readonly diagnosis?: DiagnosisDetail;
   /** See `DropContext`. */
   readonly routesEditable?: boolean;
+  readonly hasTrunk?: boolean;
   /** `wrong-root`: the label of the switch that is the root now. */
   readonly device?: string;
   /** `too-many-changes`: how many settings differ, and how many may. */
@@ -299,7 +373,10 @@ export interface ExplainDetail {
 /** The message of one check result: the code's sentence, made specific where the detail allows. */
 export function explain(code: CheckResultCode, detail: ExplainDetail = {}): Localised {
   const { drop, diagnosis, device, count, max } = detail;
-  const context: DropContext = detail.routesEditable === true ? { routesEditable: true } : {};
+  const context: DropContext = {
+    ...(detail.routesEditable === true ? { routesEditable: true } : {}),
+    ...(detail.hasTrunk === true ? { hasTrunk: true } : {}),
+  };
   if (code === 'not-delivered' && diagnosis) return diagnosisMessage(diagnosis);
   if (code === 'not-delivered' && drop) {
     return dropMessage(drop.reason, drop.leg, drop.device, context);

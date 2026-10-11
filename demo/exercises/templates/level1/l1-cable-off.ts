@@ -13,7 +13,7 @@ import { defineTemplate } from '../shared/exercise';
 import { endsOf, everyoneReaches, setIp } from '../shared/lan';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
-import { L, listOf, PRESS_CHECK, say, the } from '../shared/text';
+import { L, listOf, say, the } from '../shared/text';
 
 export const l1CableOff = defineTemplate(
   {
@@ -75,11 +75,7 @@ export const l1CableOff = defineTemplate(
     const brief = say(
       opening,
       symptom,
-      L(
-        'A cable seems to have been pulled out somewhere. Find it on the picture and plug it back in.',
-        'どこかでケーブルがぬけたようです。図の中からぬけているケーブルを見つけて、つなぎ直してください。',
-      ),
-      PRESS_CHECK,
+      L('A cable seems to have been pulled out somewhere.', 'どこかでケーブルがぬけたようです。'),
     );
 
     // --- What may be changed, the goals, the answers ---
@@ -89,6 +85,14 @@ export const l1CableOff = defineTemplate(
       title: L(
         stillFine.length === 0 ? 'Nobody can reach the server' : 'One cable is out',
         stillFine.length === 0 ? 'だれもつながらない' : 'つながらない機器がある',
+      ),
+      task: L(
+        'Find the unplugged cable on the diagram and plug it back in.',
+        'ぬけているケーブルを図で見つけて、つなぎ直してください。',
+      ),
+      rule: L(
+        'Rule: a cable that is out is drawn as a red dotted line. Press it to plug it in.',
+        'ルール：ぬけているケーブルは、図では赤い点線。押すと、つながります。',
       ),
       brief,
       topology,

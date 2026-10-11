@@ -4,7 +4,7 @@ import type { Exercise, SettingChange } from '../demo/exercises/model/types';
 import { explain, levelSummary } from '../demo/exercises/store/estimate';
 import { buildPool, exerciseById } from '../demo/exercises/templates';
 import { refOf } from '../demo/exercises/templates/shared/exercise';
-import { addressCandidates } from '../demo/exercises/ui/candidates';
+import { hostCandidates } from '../demo/exercises/ui/candidates';
 import { settingTestId } from '../demo/exercises/ui/describe';
 import { expect, test } from './fixtures/harness';
 import type { DemoPage } from './pages/DemoPage';
@@ -56,31 +56,30 @@ async function check(page: Page, passed: boolean) {
   await expect(page.getByTestId(X.result)).not.toHaveAttribute('data-stale', '');
 }
 
-/** The host exercise's chips: the index of the one that works, and of one that does not. */
-function hostChips(): { right: number; wrong: number; hostId: string } {
-  const { start, seed, reference, allowed } = exercise(HOST);
-  const [ref] = allowed;
-  const [answer] = reference;
-  if (ref?.kind !== 'host-ip' || answer?.kind !== 'host-ip' || answer.ip === null) {
+/**
+ * The host exercise's chips: the address that works and one that does not.
+ * By their text, not their place: the order of the chips belongs to the
+ * attempt (TC-579), so no place can be known beforehand.
+ */
+function hostChips(): { right: string; wrong: string; hostId: string } {
+  const found = exercise(HOST);
+  const [ref] = found.allowed;
+  if (ref?.kind !== 'host-ip') {
     throw new Error('the pinned exercise is not a host-address exercise any more');
   }
-  const network = answer.ip.split('.').slice(0, 3).join('.');
-  const taken = new Set(
-    start.nodes.flatMap((node) => [
-      ...(typeof node.data.ip === 'string' ? [node.data.ip] : []),
-      ...(node.data.interfaces ?? []).map((side) => side.ipAddress),
-    ]),
-  );
-  const works = (ip: string) => ip.startsWith(`${network}.`) && !taken.has(ip);
-  const chips = addressCandidates(start, ref.nodeId, seed);
-  const right = chips.findIndex(works);
-  const wrong = chips.findIndex((ip) => !works(ip));
-  if (right === -1 || wrong === -1) throw new Error('the chips offer no right or no wrong address');
-  return { right, wrong, hostId: ref.nodeId };
+  const parts = hostCandidates(found.start, ref.nodeId, `${found.id}|${settingTestId(ref)}`);
+  const [wrong] = parts?.wrong ?? [];
+  if (!parts || wrong === undefined)
+    throw new Error('the chips offer no right or no wrong address');
+  return { right: parts.right, wrong, hostId: ref.nodeId };
 }
 
+/** The chip that shows this address. */
+const chipOf = (page: Page, address: string) =>
+  page.getByTestId(X.settings).locator(`[data-address="${address}"]`);
+
 async function solveHost(page: Page) {
-  await page.getByTestId(X.chip(hostChips().right)).click();
+  await chipOf(page, hostChips().right).click();
   await check(page, true);
 }
 
@@ -94,7 +93,6 @@ async function typeReference(page: Page, changes: readonly SettingChange[]) {
         break;
       case 'iface-address':
         await page.getByTestId(`${id}-input`).fill(change.ipAddress);
-        await page.getByTestId(`${id}-prefix`).selectOption(String(change.prefixLength));
         break;
       case 'link-state': {
         const toggle = page.getByTestId(`${id}-toggle`);
@@ -161,13 +159,23 @@ test.describe('in Japanese', () => {
     page,
     demoPage,
   }) => {
-    const { checks, title, brief } = exercise(HOST);
+    const { checks, title, brief, task, rule } = exercise(HOST);
     const { right, wrong, hostId } = hostChips();
     const failing = `reach-${hostId}-srv`;
     await open(page, demoPage, HOST);
 
     await expect(page.getByTestId(X.brief)).toContainText(title.ja);
-    await expect(page.getByTestId(X.brief)).toContainText(brief.ja);
+    // TC-591 — one instruction line and one rule line; the story is behind a closed toggle.
+    await expect(page.getByTestId('exercise-task')).toHaveText(task?.ja ?? '');
+    await expect(page.getByTestId('exercise-rule')).toHaveText(rule?.ja ?? '');
+    await expect(page.getByTestId('exercise-story')).toBeHidden();
+    await page.getByTestId('exercise-more').locator('summary').click();
+    await expect(page.getByTestId('exercise-story')).toHaveText(brief.ja);
+    await page.getByTestId('exercise-more').locator('summary').click();
+    // TC-587 — said before the first Check: this one counts on the first Check only.
+    await expect(page.getByTestId('exercise-count-rule')).toHaveText(
+      'この問題は、1 回目の「たしかめる」で解けたときだけ数えます。',
+    );
     // Before any Check a goal is neither met nor missed.
     for (const goal of checks) {
       await expect(page.getByTestId(X.goal(goal.id))).toHaveAttribute('data-mark', 'neutral');
@@ -184,6 +192,8 @@ test.describe('in Japanese', () => {
     await expect(page.getByTestId(X.resultGoal(failing))).toBeInViewport({ ratio: 1 });
     await expect(page.getByTestId(X.chip(0))).toBeInViewport({ ratio: 1 });
     await expect(page.getByTestId(X.actions).getByTestId(X.hint)).toBeInViewport({ ratio: 1 });
+    // TC-587 — one Check has missed: the page says, before the next press, that a pass no longer counts.
+    await expect(page.getByTestId(X.triesNote)).toContainText('何度かためして解けた');
     await expect(page.getByTestId(X.goal(failing))).toHaveAttribute('data-mark', 'not-yet');
     const missed = page.getByTestId(X.resultGoal(failing));
     await expect(missed).toHaveAttribute('data-passed', 'false');
@@ -196,17 +206,19 @@ test.describe('in Japanese', () => {
     await expect(page.getByTestId(X.next)).toHaveCount(0);
 
     // A wrong address is still wrong: nothing but the simulator decides.
-    await page.getByTestId(X.chip(wrong)).click();
+    await chipOf(page, wrong).click();
     await expect(page.getByTestId(X.resultStale)).toBeVisible();
     await check(page, false);
     await expect(page.getByTestId(X.next)).toHaveCount(0);
-    // Two Checks have missed: the page says, before the press, that the next one counts differently.
-    await expect(page.getByTestId(X.triesNote)).toContainText('何度かためして解けた');
+    // TC-590 — the setting that was changed has its own way back, and the whole exercise has one beside Check.
+    await expect(page.getByTestId(X.actions).getByTestId(X.reset)).toBeVisible();
+    await page.getByTestId(`${settingTestId({ kind: 'host-ip', nodeId: hostId })}-undo`).click();
+    await expect(page.getByTestId(X.reset)).toHaveCount(0);
 
-    await page.getByTestId(X.chip(right)).click();
+    await chipOf(page, right).click();
     await check(page, true);
     await expect(page.getByTestId(X.resultSummary)).toContainText('できました');
-    // TC-538 — the third Check passes, and it is recorded as a pass after several tries.
+    // TC-587 — it passes after the first Check missed, so it is recorded as a pass after several tries.
     await expect(page.getByTestId(X.resultDone)).toHaveAttribute('data-counted', 'tries');
     await expect(page.getByTestId(X.resultDone)).toContainText('何度かためして解けた');
     await expect(page.getByTestId(X.resultDone)).not.toContainText('答え');
@@ -280,7 +292,7 @@ test.describe('in Japanese', () => {
     page,
     demoPage,
   }) => {
-    const { hostId, wrong } = hostChips();
+    const { hostId } = hostChips();
     const failing = `reach-${hostId}-srv`;
     await open(page, demoPage, HOST);
     const packet = page.getByTestId(X.diagram).getByTestId(SEL.canvas.packet);
@@ -291,7 +303,7 @@ test.describe('in Japanese', () => {
     await expect(packet).toBeVisible();
 
     // Another setting: the old packet no longer describes the network, and is not offered.
-    await page.getByTestId(X.chip(wrong)).click();
+    await chipOf(page, hostChips().wrong).click();
     await expect(page.getByTestId(X.replay(failing))).toHaveCount(0);
     await expect(packet).toHaveCount(0);
   });
@@ -444,10 +456,12 @@ test('an exercise is in one language at a time, and English names its devices in
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await useLocale(page, 'en');
-  const { title, brief, nodeLabels, hints } = exercise(HOST);
+  const { title, brief, task, nodeLabels, hints } = exercise(HOST);
   await open(page, demoPage, HOST);
 
   await expect(page.getByTestId(X.brief)).toContainText(title.en);
+  await expect(page.getByTestId(X.brief)).toContainText(task?.en ?? '');
+  await page.getByTestId('exercise-more').locator('summary').click();
   await expect(page.getByTestId(X.brief)).toContainText(brief.en);
   await expect(page.getByTestId(X.check)).toHaveText('Check');
   const names = await page.getByTestId(X.diagram).getByTestId(SEL.canvas.node).allInnerTexts();

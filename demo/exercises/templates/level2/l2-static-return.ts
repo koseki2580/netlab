@@ -12,11 +12,13 @@ import {
   fullRoutes,
   ROUTE_GLOSS,
   ROUTE_RULE,
+  routeIsThereNow,
   routedGoals,
   routes,
   sitesOpening,
 } from '../shared/routed';
-import { L, PRESS_CHECK, say, the, The } from '../shared/text';
+import { WATCH_WORDS } from '../../ui/words';
+import { L, say, the, The } from '../shared/text';
 
 export const l2StaticReturn = defineTemplate(
   {
@@ -76,7 +78,6 @@ export const l2StaticReturn = defineTemplate(
         `Find the router that does not know the way back to the network of ${the(near.device)} (${net.pcNet.cidr}) and add the route.`,
         `${near.device.ja}のネットワーク（${net.pcNet.cidr}）への帰り道を知らないルータを見つけて、経路を足してください。`,
       ),
-      PRESS_CHECK,
     );
 
     // --- What may be changed, the goals, the answers ---
@@ -84,6 +85,14 @@ export const l2StaticReturn = defineTemplate(
     const nextRouter = name(net.path[net.path.indexOf(faulty) - 1] ?? 'r1');
     return {
       title: L('It arrives, but no answer comes back', '届くのに、返事が戻らない'),
+      task: L(
+        `Find the router that has no route back to the network of ${the(near.device)} (${net.pcNet.cidr}), and add one.`,
+        `${near.device.ja}のネットワーク（${net.pcNet.cidr}）への帰り道がないルータを見つけて、経路を足してください。`,
+      ),
+      rule: L(
+        'Rule: the answer needs a way back: the routers on the far side need a route to the sender’s network, naming the next router.',
+        'ルール：返事が帰る道のルータにも、送り主のネットワークへの経路がいる。経路には、行き先と「次のルータ」のアドレスを書く。',
+      ),
       brief,
       topology,
       names: net.names,
@@ -91,20 +100,24 @@ export const l2StaticReturn = defineTemplate(
       checks: routedGoals(net),
       hints: [
         L(
-          'Press Check, then watch it on the diagram. It gets there; at which router does the answer stop on the way back?',
-          '「たしかめる」を押してから、図で通り道を見てください。行きは届きます。返事は、帰り道のどのルータで止まりますか。',
+          `Under the result, press "${WATCH_WORDS.en}" and follow it. It gets there; at which router does the answer stop on the way back?`,
+          `結果の下にある「${WATCH_WORDS.ja}」を押して、通り道を見てください。行きは届きます。返事は、帰り道のどのルータで止まりますか。`,
         ),
-        say(
-          L(
-            "Every router on the way back needs a route to the sender's network.",
-            '帰り道のルータにも、送り主のネットワークへの経路がいります。',
+        {
+          text: say(
+            L(
+              "Every router on the way back needs a route to the sender's network.",
+              '帰り道のルータにも、送り主のネットワークへの経路がいります。',
+            ),
+            ROUTE_RULE,
+            L(
+              `${The(name(faulty))} has no route for ${net.pcNet.cidr}.`,
+              `${name(faulty).ja}には、${net.pcNet.cidr} あての経路がありません。`,
+            ),
           ),
-          ROUTE_RULE,
-          L(
-            `${The(name(faulty))} has no route for ${net.pcNet.cidr}.`,
-            `${name(faulty).ja}には、${net.pcNet.cidr} あての経路がありません。`,
-          ),
-        ),
+          holdsWhile: { kind: 'no-route', nodeId: faulty, destination: net.pcNet.cidr },
+          instead: routeIsThereNow(L(the(name(faulty)), name(faulty).ja), net.pcNet.cidr),
+        },
         L(
           `On ${the(name(faulty))}, add a route: destination ${net.pcNet.cidr}, handed to ${nextHop}, the address of ${the(nextRouter)}. Keep the lines that are already there.`,
           `${name(faulty).ja}に、行き先「${net.pcNet.cidr}」を、${nextRouter.ja}のアドレス「${nextHop}」に渡す経路を足します。すでにある行は残します。`,

@@ -9,6 +9,7 @@ import type {
   DesignOption,
   Exercise,
   ExerciseCheck,
+  ExerciseHint,
   ExerciseKind,
   ExerciseLevel,
   ExerciseTemplate,
@@ -25,6 +26,11 @@ export type LabelledCheck = ExerciseCheck & { readonly label: Localised };
 
 export interface Draft {
   readonly title: Localised;
+  /** One line: what to do. */
+  readonly task: Localised;
+  /** One line: the rule that applies, without the values. */
+  readonly rule?: Localised;
+  /** The story and the glosses, read on request. */
   readonly brief: Localised;
   /** The start state, fault planted. */
   readonly topology: TopologySnapshot;
@@ -34,15 +40,22 @@ export interface Draft {
   readonly options?: readonly DesignOption[];
   readonly checks: readonly LabelledCheck[];
   /** Where to look; what rule applies; almost the answer. */
-  readonly hints: readonly [Localised, Localised, Localised];
+  readonly hints: readonly [DraftHint, DraftHint, DraftHint];
   readonly lessons: readonly string[];
   readonly reference: readonly SettingChange[];
   readonly wrongAnswers?: readonly (readonly SettingChange[])[];
+  /** See `Exercise.pickFirst`. */
+  readonly pickFirst?: { readonly faulty: readonly string[] };
+  /** See `Exercise.unsoundPasses`. */
+  readonly unsoundPasses?: readonly (readonly SettingChange[])[];
   /** What makes this instance a different task: place, shape, fault, device. No raw numbers. */
   readonly fingerprint: readonly string[];
   /** See `Exercise.answerInBrief`: why this brief states a value that is the answer. */
   readonly answerInBrief?: string;
 }
+
+/** A hint: its text, or its text with the fact it rests on and the line for when that is no longer so. */
+export type DraftHint = Localised | Omit<ExerciseHint, 'tier'>;
 
 export interface TemplateMeta {
   readonly id: string;
@@ -71,6 +84,8 @@ export function defineTemplate(
       level: meta.level,
       kind: meta.kind,
       title: draft.title,
+      task: draft.task,
+      ...(draft.rule ? { rule: draft.rule } : {}),
       brief: draft.brief,
       start: {
         ...draft.topology,
@@ -82,13 +97,18 @@ export function defineTemplate(
       allowed: draft.allowed,
       ...(draft.options ? { options: draft.options } : {}),
       checks: draft.checks.map(({ label: _label, ...check }) => check as ExerciseCheck),
-      hints: draft.hints.map((text, index) => ({ tier: (index + 1) as 1 | 2 | 3, text })),
+      hints: draft.hints.map((hint, index) => ({
+        tier: (index + 1) as 1 | 2 | 3,
+        ...('text' in hint ? hint : { text: hint }),
+      })),
       lessons: draft.lessons,
       reference: draft.reference,
       fingerprint: [meta.id, ...draft.fingerprint].join('|'),
       checkLabels: Object.fromEntries(draft.checks.map((check) => [check.id, check.label])),
       nodeLabels,
       ...(draft.wrongAnswers ? { wrongAnswers: draft.wrongAnswers } : {}),
+      ...(draft.unsoundPasses ? { unsoundPasses: draft.unsoundPasses } : {}),
+      ...(draft.pickFirst ? { pickFirst: draft.pickFirst } : {}),
       ...(draft.answerInBrief !== undefined ? { answerInBrief: draft.answerInBrief } : {}),
     };
   };

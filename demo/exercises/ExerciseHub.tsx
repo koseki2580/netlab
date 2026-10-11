@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useGalleryLocale, useT } from '../localeContext';
 import { nextExerciseId } from './exerciseSource';
 import type { AttemptStore } from './store/attemptStore';
-import { EXERCISE_LEVELS, explain, headline, levelSummary } from './store/estimate';
+import { EXERCISE_LEVELS, explain, headline, isAttempted, levelSummary } from './store/estimate';
 import { ExerciseShell, LEVEL_NAMES, exercisePath } from './ui/pageParts';
 import { CARD, COLUMN, LINK, MUTED, PAGE, PRIMARY, SECONDARY } from './ui/styles';
 import { StorageNotice, useExerciseStore } from './ui/useExerciseStore';
@@ -18,6 +18,9 @@ export function ExerciseHubBody({ store: injected }: { store?: AttemptStore }) {
   const seenIds = state.attempts.map((attempt) => attempt.exerciseId);
   const placed = state.placement;
 
+  // The level the learner is at: the first one not cleared yet.
+  const atLevel =
+    EXERCISE_LEVELS.find((level) => levelSummary(state.attempts, level).status !== 'cleared') ?? 4;
   return (
     <div style={PAGE}>
       <div style={COLUMN}>
@@ -56,6 +59,8 @@ export function ExerciseHubBody({ store: injected }: { store?: AttemptStore }) {
 
         {EXERCISE_LEVELS.map((level) => {
           const mine = state.attempts.filter((attempt) => attempt.level === level);
+          // "Continue" is for a level the learner has worked at, not one they only opened.
+          const begun = mine.some(isAttempted);
           const last = mine[mine.length - 1];
           const summary = levelSummary(state.attempts, level);
           const nextId = nextExerciseId(level, {
@@ -95,7 +100,7 @@ export function ExerciseHubBody({ store: injected }: { store?: AttemptStore }) {
                     data-testid={`exercises-start-${level}`}
                     style={PRIMARY}
                   >
-                    {mine.length > 0
+                    {begun
                       ? t(`Continue level ${level}`, `レベル ${level} をつづける`)
                       : t(`Start level ${level}`, `レベル ${level} をはじめる`)}
                   </Link>
@@ -112,6 +117,22 @@ export function ExerciseHubBody({ store: injected }: { store?: AttemptStore }) {
                   {t('What this level covers', 'このレベルの内容を見る')}
                 </Link>
               </div>
+              {/* The before/after comparison lived on the level's page alone, and a newcomer never met it. */}
+              {level === atLevel && nextId ? (
+                <p data-testid="exercises-hub-cycle" style={{ margin: 0, fontSize: 15 }}>
+                  {t(
+                    'Going to study first? Measure before and after, and see what the lessons changed: ',
+                    'これから勉強するなら、勉強の前と後でくらべて、どれだけ解けるようになったかを見られます：',
+                  )}
+                  <Link
+                    to={`/exercises/level/${level}`}
+                    data-testid="exercises-hub-cycle-link"
+                    style={{ ...LINK, display: 'inline-flex', alignItems: 'center', minHeight: 44 }}
+                  >
+                    {t('measure before studying', '勉強の前にはかる')}
+                  </Link>
+                </p>
+              ) : null}
             </section>
           );
         })}

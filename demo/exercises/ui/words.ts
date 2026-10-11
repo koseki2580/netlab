@@ -31,6 +31,12 @@ export function cableLabel(state: 'up' | 'down'): Localised {
   };
 }
 
+/** The button under a result that replays the grader's packet on the diagram. Hints point at it. */
+export const WATCH_WORDS: Localised = {
+  en: '▶ Watch it on the diagram',
+  ja: '▶ 図で見てみる',
+};
+
 /** A switch port taken out of use (spanning tree exercises): same shape as the cable switch. */
 export const PORT_USE_WORDS = {
   on: {

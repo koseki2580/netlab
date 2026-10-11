@@ -23,11 +23,23 @@ export const trunk = (port: Port, vlans: readonly number[]): SettingChange => ({
   trunkAllowedVlans: vlans,
 });
 
+/**
+ * A port the learner may renumber. Whether it is for one group or carries
+ * several is fixed: a device on a port turned into a trunk is delivered to
+ * through the trunk's untagged VLAN, which "solved" these exercises by accident.
+ */
 export const portRef = (port: Port): SettingRef => ({
   kind: 'port-vlan',
   nodeId: port.switchId,
   portId: port.portId,
+  fixedMode: true,
 });
+
+/** The rule line of a VLAN exercise. */
+export const RULE_VLAN = L(
+  'Rule: only sockets with the same VLAN number reach each other. One group, one number; another group, another number.',
+  'ルール：VLAN 番号が同じ差し込み口どうしだけが届く。同じグループは同じ番号、ちがうグループはちがう番号。',
+);
 
 export const VLAN_PAIRS = [
   [10, 20],

@@ -152,6 +152,49 @@ function Toggle({
 
 // --- host-ip -----------------------------------------------------------------
 
+/** The addresses to choose from, as buttons. The one that is set now is marked. */
+function AddressChips({
+  candidates,
+  chosen,
+  onChoose,
+}: {
+  candidates: readonly string[];
+  chosen: string | null;
+  onChoose: (address: string) => void;
+}) {
+  const t = useT();
+  if (candidates.length === 0) return null;
+  return (
+    <div
+      role="group"
+      aria-label={t('Addresses to choose from', 'えらべるアドレス')}
+      style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}
+    >
+      {candidates.map((candidate, index) => (
+        <button
+          key={candidate}
+          type="button"
+          data-testid={`exercise-chip-${index}`}
+          data-address={candidate}
+          aria-pressed={chosen === candidate}
+          onClick={() => onChoose(candidate)}
+          style={{
+            ...SECONDARY,
+            fontFamily: 'ui-monospace, monospace',
+            fontSize: 16,
+            borderWidth: 2,
+            borderColor:
+              chosen === candidate ? 'var(--netlab-accent-cyan)' : 'var(--netlab-border)',
+          }}
+        >
+          {chosen === candidate ? <span aria-hidden="true">✓&nbsp;</span> : null}
+          {candidate}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function HostIpField({
   value,
   onChange,
@@ -168,37 +211,14 @@ export function HostIpField({
         {t('Address now: ', 'いまのアドレス：')}
         <strong style={{ fontFamily: 'ui-monospace, monospace' }}>{current}</strong>
       </p>
-      {candidates.length > 0 ? (
-        <div
-          role="group"
-          aria-label={t('Addresses to choose from', 'えらべるアドレス')}
-          style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}
-        >
-          {candidates.map((candidate, index) => (
-            <button
-              key={candidate}
-              type="button"
-              data-testid={`exercise-chip-${index}`}
-              aria-pressed={value.ip === candidate}
-              onClick={() => {
-                setChipPresses((count) => count + 1);
-                onChange({ ...value, ip: candidate });
-              }}
-              style={{
-                ...SECONDARY,
-                fontFamily: 'ui-monospace, monospace',
-                fontSize: 16,
-                borderWidth: 2,
-                borderColor:
-                  value.ip === candidate ? 'var(--netlab-accent-cyan)' : 'var(--netlab-border)',
-              }}
-            >
-              {value.ip === candidate ? <span aria-hidden="true">✓&nbsp;</span> : null}
-              {candidate}
-            </button>
-          ))}
-        </div>
-      ) : null}
+      <AddressChips
+        candidates={candidates}
+        chosen={value.ip}
+        onChoose={(ip) => {
+          setChipPresses((count) => count + 1);
+          onChange({ ...value, ip });
+        }}
+      />
       <DraftInput
         key={chipPresses}
         label={
@@ -243,11 +263,78 @@ function prefixGloss(length: number, t: (en: string, ja: string) => string): str
   );
 }
 
-export function IfaceAddressField({ value, onChange, testId, plain }: FieldProps<'iface-address'>) {
+export function IfaceAddressField({
+  value,
+  onChange,
+  testId,
+  plain,
+  candidates,
+  addressOnly,
+}: FieldProps<'iface-address'> & {
+  readonly candidates: readonly string[];
+  /** The "/number" is not the question: it is shown as text, and there is nothing to choose. */
+  readonly addressOnly: boolean;
+}) {
   const t = useT();
+  const [chipPresses, setChipPresses] = useState(0);
   const lengths = PREFIX_LENGTHS.includes(value.prefixLength)
     ? PREFIX_LENGTHS
     : [...PREFIX_LENGTHS, value.prefixLength].sort((a, b) => a - b);
+  const typed = (
+    <DraftInput
+      key={chipPresses}
+      label={
+        candidates.length > 0
+          ? t('Or type an address', 'または、自分で入力する')
+          : t('Address', 'アドレス')
+      }
+      shown={value.ipAddress}
+      parse={(text) => (isAddress(text) ? text : null)}
+      onValid={(ipAddress) => onChange({ ...value, ipAddress })}
+      note={t(
+        `That is not a whole address yet (four numbers with dots). Until it is, the address stays ${value.ipAddress}.`,
+        `まだアドレスの形になっていません（点で区切った 4 つの数）。直すまでは ${value.ipAddress} のままです。`,
+      )}
+      testId={testId}
+      inputMode="decimal"
+    />
+  );
+  if (candidates.length > 0 || addressOnly) {
+    return (
+      <div style={{ display: 'grid', gap: 10 }}>
+        <p data-testid={`${testId}-current`} style={{ margin: 0 }}>
+          {t('Address now: ', 'いまのアドレス：')}
+          <strong style={{ fontFamily: 'ui-monospace, monospace' }}>{value.ipAddress}</strong>
+        </p>
+        <AddressChips
+          candidates={candidates}
+          chosen={value.ipAddress}
+          onChoose={(ipAddress) => {
+            setChipPresses((count) => count + 1);
+            onChange({ ...value, ipAddress });
+          }}
+        />
+        {typed}
+        {addressOnly ? null : (
+          <label style={FIELD_LABEL}>
+            <span>{t('Size of the network', 'ネットワークの大きさ')}</span>
+            <select
+              data-testid={`${testId}-prefix`}
+              value={value.prefixLength}
+              onChange={(event) => onChange({ ...value, prefixLength: Number(event.target.value) })}
+              style={SELECT}
+            >
+              {lengths.map((length) => (
+                <option key={length} value={length}>
+                  {plain ? prefixGloss(length, t) : `/${length}`}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+      </div>
+    );
+  }
   return (
     <div style={ROW}>
       <DraftInput
@@ -290,7 +377,7 @@ export function LinkStateField({ value, onChange, testId }: FieldProps<'link-sta
       on={value.state === 'up'}
       onWords={CABLE_WORDS.up}
       offWords={CABLE_WORDS.down}
-      label={t('Cable', '線')}
+      label={t('Cable', 'ケーブル')}
       onToggle={(up) => onChange({ ...value, state: up ? 'up' : 'down' })}
       testId={testId}
     />
@@ -319,7 +406,16 @@ function parseVlanList(text: string): number[] | null {
   return numbers.every((entry): entry is number => entry !== null) ? numbers : null;
 }
 
-export function PortVlanField({ value, onChange, testId, plain }: FieldProps<'port-vlan'>) {
+export function PortVlanField({
+  value,
+  onChange,
+  testId,
+  plain,
+  fixedMode = false,
+}: FieldProps<'port-vlan'> & {
+  /** The kind of port is not the question: it is said in words, and there is nothing to choose. */
+  readonly fixedMode?: boolean;
+}) {
   const t = useT();
   const { kind, nodeId, portId } = value;
   const base = { kind, nodeId, portId };
@@ -327,30 +423,32 @@ export function PortVlanField({ value, onChange, testId, plain }: FieldProps<'po
   return (
     <div style={{ display: 'grid', gap: 6 }}>
       <div style={ROW}>
-        <label style={FIELD_LABEL}>
-          <span>{t('Kind of port', '差し込み口の種類')}</span>
-          <select
-            data-testid={`${testId}-mode`}
-            value={value.vlanMode}
-            onChange={(event) =>
-              onChange(
-                event.target.value === 'trunk'
-                  ? { ...base, vlanMode: 'trunk', trunkAllowedVlans: [value.accessVlan ?? 1] }
-                  : { ...base, vlanMode: 'access', accessVlan: allowed[0] ?? 1 },
-              )
-            }
-            style={SELECT}
-          >
-            <option value="access">
-              {plain ? t('For one group (access)', '1 つのグループ専用（アクセス）') : 'access'}
-            </option>
-            <option value="trunk">
-              {plain
-                ? t('Carries several groups (trunk)', '複数のグループを通す（トランク）')
-                : 'trunk'}
-            </option>
-          </select>
-        </label>
+        {fixedMode ? null : (
+          <label style={FIELD_LABEL}>
+            <span>{t('Kind of port', '差し込み口の種類')}</span>
+            <select
+              data-testid={`${testId}-mode`}
+              value={value.vlanMode}
+              onChange={(event) =>
+                onChange(
+                  event.target.value === 'trunk'
+                    ? { ...base, vlanMode: 'trunk', trunkAllowedVlans: [value.accessVlan ?? 1] }
+                    : { ...base, vlanMode: 'access', accessVlan: allowed[0] ?? 1 },
+                )
+              }
+              style={SELECT}
+            >
+              <option value="access">
+                {plain ? t('For one group (access)', '1 つのグループ専用（アクセス）') : 'access'}
+              </option>
+              <option value="trunk">
+                {plain
+                  ? t('Carries several groups (trunk)', '複数のグループを通す（トランク）')
+                  : 'trunk'}
+              </option>
+            </select>
+          </label>
+        )}
         {value.vlanMode === 'access' ? (
           <DraftInput
             key="access"

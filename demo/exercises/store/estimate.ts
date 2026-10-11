@@ -3,13 +3,14 @@
  * simple enough to say back to the learner in one sentence.
  */
 
-import type { ExerciseLevel } from '../model/types';
+import type { ExerciseKind, ExerciseLevel } from '../model/types';
 import type { AttemptLocale, AttemptRecord, PlacementResult } from './types';
 
 /**
  * The rule, as the learner is told it: a level is cleared when, of the last 10
- * exercises you pressed Check on, you solved 7 from at least 3 kinds, each
- * without a hint and within two Checks.
+ * exercises you pressed Check on, you solved 7 from at least 3 templates, at
+ * least one of every kind of task the level has, each without a hint and on
+ * the first Check (within two Checks where the answer is typed).
  */
 
 /** A level is judged on the last this-many distinct exercises. */
@@ -22,11 +23,38 @@ export const CLEAR_MIN_SOLVED = 7;
 export const CLEAR_MIN_TEMPLATES = 3;
 
 /**
- * A solve counts toward a level only up to this many Checks. Trying every
- * candidate in turn reaches the answer on the third or fourth press, and that
- * is not the same as knowing it.
+ * A solve counts toward a level only up to this many Checks where the answer
+ * is typed or built. Where it is one of a few things to press, it counts on
+ * the first Check only (`AttemptRecord.checksToCount`, `model/closedSet.ts`):
+ * trying the candidates in turn is not the same as knowing the answer.
  */
 export const MAX_CHECKS_TO_COUNT = 2;
+
+/**
+ * The kinds of task a level has. Each needs one clean solve in the window: a
+ * learner who can set an address but cannot find a fault has not cleared the
+ * level, however many of the first kind they solve. (`levelRule.test.ts`
+ * checks this against the templates. Levels 3 and 4 have no templates yet.)
+ */
+export const REQUIRED_KINDS: Readonly<Record<ExerciseLevel, readonly ExerciseKind[]>> = {
+  1: ['configure', 'diagnose-repair', 'choose-design'],
+  2: ['switch', 'configure', 'diagnose-repair', 'choose-design'],
+  3: [],
+  4: [],
+};
+
+/** A kind of task as the learner is told it: "a 'find the fault' exercise". */
+export const KIND_WORDS: Readonly<Record<ExerciseKind, { en: string; ja: string }>> = {
+  configure: { en: 'set it up', ja: '設定を入れる' },
+  switch: { en: 'set up a switch', ja: 'スイッチを設定する' },
+  'choose-design': { en: 'choose one', ja: 'どれにするか選ぶ' },
+  'diagnose-repair': { en: 'find the fault', ja: 'おかしい所をさがす' },
+};
+
+/** How many Checks a solve of this attempt may take and still count. */
+export function checksCounted(attempt: AttemptRecord): number {
+  return attempt.checksToCount ?? MAX_CHECKS_TO_COUNT;
+}
 
 export const EXERCISE_LEVELS: readonly ExerciseLevel[] = [1, 2, 3, 4];
 
@@ -36,16 +64,18 @@ export interface LevelSummary {
   readonly level: ExerciseLevel;
   /** Distinct attempted exercises in the window (at most `WINDOW_SIZE`). */
   readonly counted: number;
-  /** Passed with no hint, no reveal, and at most `MAX_CHECKS_TO_COUNT` Checks. */
+  /** Passed with no hint, no reveal, and within the Checks that count for the exercise. */
   readonly solved: number;
   /** Passed after opening a hint. */
   readonly solvedWithHelp: number;
-  /** Passed with no hint, but only after more than `MAX_CHECKS_TO_COUNT` Checks. */
+  /** Passed with no hint, but only after more Checks than count for the exercise. */
   readonly solvedAfterTries: number;
   /** Everything else: left unsolved, given up, or passed only after the answer was shown. */
   readonly notSolved: number;
   /** Distinct templates among the solved. */
   readonly solvedTemplates: number;
+  /** The kinds of task the level requires that have no clean solve in the window. */
+  readonly missingKinds: readonly ExerciseKind[];
   readonly status: LevelStatus;
   /** The template with the most unsolved exercises in the window; `null` when none is unsolved. */
   readonly weakestTemplateId: string | null;
@@ -65,12 +95,12 @@ function isPassedUnaided(attempt: AttemptRecord): boolean {
 }
 
 export function isSolved(attempt: AttemptRecord): boolean {
-  return isPassedUnaided(attempt) && attempt.checkPresses <= MAX_CHECKS_TO_COUNT;
+  return isPassedUnaided(attempt) && attempt.checkPresses <= checksCounted(attempt);
 }
 
 /** Passed with no hint, but by more Checks than count. */
 export function isSolvedAfterTries(attempt: AttemptRecord): boolean {
-  return isPassedUnaided(attempt) && attempt.checkPresses > MAX_CHECKS_TO_COUNT;
+  return isPassedUnaided(attempt) && attempt.checkPresses > checksCounted(attempt);
 }
 
 function isSolvedWithHelp(attempt: AttemptRecord): boolean {
@@ -127,9 +157,16 @@ export function levelSummary(
     }
   }
 
+  const solvedKinds = new Set(solved.map((attempt) => attempt.kind));
+  const missingKinds = REQUIRED_KINDS[level].filter((kind) => !solvedKinds.has(kind));
+
   let status: LevelStatus = 'in-progress';
   if (window.length < MIN_ATTEMPTED) status = 'not-enough';
-  else if (solved.length >= CLEAR_MIN_SOLVED && solvedTemplates >= CLEAR_MIN_TEMPLATES) {
+  else if (
+    solved.length >= CLEAR_MIN_SOLVED &&
+    solvedTemplates >= CLEAR_MIN_TEMPLATES &&
+    missingKinds.length === 0
+  ) {
     status = 'cleared';
   }
 
@@ -141,6 +178,7 @@ export function levelSummary(
     solvedAfterTries,
     notSolved: window.length - solved.length - solvedWithHelp - solvedAfterTries,
     solvedTemplates,
+    missingKinds,
     status,
     weakestTemplateId,
   };
@@ -186,12 +224,31 @@ export function headline(summary: LevelSummary, locale: AttemptLocale): string {
       ? `あと ${more} 問 とけたら、レベル ${level} 達成です（いま ${solved} 問）`
       : `Solve ${more} more to clear level ${level} (${solved} so far)`;
   }
-  // Enough solved, from too few kinds of task.
+  // Enough solved, from too few templates.
   const kinds = CLEAR_MIN_TEMPLATES - solvedTemplates;
+  if (kinds > 0) {
+    return ja
+      ? `ちがう種類の問題が あと ${kinds} 種類 とけたら、レベル ${level} 達成です（いま ${solvedTemplates} 種類）`
+      : `Solve ${kinds} more ${kinds === 1 ? 'kind' : 'kinds'} of exercise to clear level ${level} (${solvedTemplates} ${solvedTemplates === 1 ? 'kind' : 'kinds'} so far)`;
+  }
+  // Enough solved, but a kind of task the level has is not among them.
   return ja
-    ? `ちがう種類の問題が あと ${kinds} 種類 とけたら、レベル ${level} 達成です（いま ${solvedTemplates} 種類）`
-    : `Solve ${kinds} more ${kinds === 1 ? 'kind' : 'kinds'} of exercise to clear level ${level} (${solvedTemplates} ${solvedTemplates === 1 ? 'kind' : 'kinds'} so far)`;
+    ? `${missingKindsText(summary, true)}問題が 1 問 とけたら、レベル ${level} 達成です`
+    : `Solve one ${missingKindsText(summary, false)} exercise to clear level ${level}`;
 }
+
+/** 「「おかしい所をさがす」」 / '"find the fault"': the first kind still missing. */
+function missingKindsText(summary: LevelSummary, ja: boolean): string {
+  const [kind] = summary.missingKinds;
+  if (kind === undefined) return '';
+  return ja ? `「${KIND_WORDS[kind].ja}」` : `"${KIND_WORDS[kind].en}"`;
+}
+
+/** How a solve is counted, as the learner is told it everywhere. */
+export const COUNTED_HOW = {
+  en: 'without a hint, on the first Check (within 2 Checks where you type the answer),',
+  ja: 'ヒントなしで、1 回目の「たしかめる」（自分で入力する問題は 2 回目まで）で',
+} as const;
 
 /** What was passed but is not counted, as one sentence; empty when there is nothing to say. */
 function notCounted(summary: LevelSummary, ja: boolean): string {
@@ -216,7 +273,6 @@ function notCounted(summary: LevelSummary, ja: boolean): string {
 export function explain(summary: LevelSummary, locale: AttemptLocale): string {
   const { level, counted, solved, solvedTemplates, status } = summary;
   const ja = locale === 'ja';
-  const max = MAX_CHECKS_TO_COUNT;
 
   if (status === 'not-enough') {
     const more = MIN_ATTEMPTED - counted;
@@ -227,12 +283,24 @@ export function explain(summary: LevelSummary, locale: AttemptLocale): string {
 
   if (status === 'cleared') {
     return ja
-      ? `直近 ${counted} 問のうち ${solved} 問を、ヒントなし・「たしかめる」${max} 回までで解けました（${solvedTemplates} 種類）。レベル ${level} は達成です。`
-      : `You solved ${solved} of your last ${counted} exercises without a hint and within ${max} Checks, across ${solvedTemplates} kinds of exercise. Level ${level} is cleared.`;
+      ? `直近 ${counted} 問のうち ${solved} 問を、${COUNTED_HOW.ja}解けました（${solvedTemplates} 種類）。レベル ${level} は達成です。`
+      : `You solved ${solved} of your last ${counted} exercises ${COUNTED_HOW.en} across ${solvedTemplates} kinds of exercise. Level ${level} is cleared.`;
   }
 
+  const required = REQUIRED_KINDS[level];
+  const missing = missingKindsText(summary, ja);
   if (ja) {
-    return `直近 ${counted} 問のうち、ヒントなし・「たしかめる」${max} 回までで解けたのは ${solved} 問（${solvedTemplates} 種類）です。${notCounted(summary, true)}レベル ${level} は、直近 ${WINDOW_SIZE} 問のうち ${CLEAR_MIN_SOLVED} 問を、${CLEAR_MIN_TEMPLATES} 種類以上にわたって、ヒントなし・「たしかめる」${max} 回までで解けると達成です。`;
+    const every =
+      required.length > 0
+        ? `、${required.map((kind) => `「${KIND_WORDS[kind].ja}」`).join('')}の問題をそれぞれ 1 問以上`
+        : '';
+    const still = missing === '' ? '' : `${missing}問題は、まだ 1 問も数えられていません。`;
+    return `直近 ${counted} 問のうち、${COUNTED_HOW.ja}解けたのは ${solved} 問（${solvedTemplates} 種類）です。${notCounted(summary, true)}${still}レベル ${level} は、直近 ${WINDOW_SIZE} 問のうち ${CLEAR_MIN_SOLVED} 問を、${CLEAR_MIN_TEMPLATES} 種類以上にわたって${every}、そのように解けると達成です。`;
   }
-  return `You solved ${solved} of your last ${counted} exercises without a hint and within ${max} Checks, across ${solvedTemplates} ${solvedTemplates === 1 ? 'kind' : 'kinds'} of exercise.${notCounted(summary, false)} Level ${level} is cleared at ${CLEAR_MIN_SOLVED} of the last ${WINDOW_SIZE} solved that way, across at least ${CLEAR_MIN_TEMPLATES} kinds.`;
+  const every =
+    required.length > 0
+      ? `, with at least one of each task (${required.map((kind) => `"${KIND_WORDS[kind].en}"`).join(', ')})`
+      : '';
+  const still = missing === '' ? '' : ` No ${missing} exercise is counted yet.`;
+  return `You solved ${solved} of your last ${counted} exercises ${COUNTED_HOW.en} across ${solvedTemplates} ${solvedTemplates === 1 ? 'kind' : 'kinds'} of exercise.${notCounted(summary, false)}${still} Level ${level} is cleared at ${CLEAR_MIN_SOLVED} of the last ${WINDOW_SIZE} solved that way, across at least ${CLEAR_MIN_TEMPLATES} kinds${every}.`;
 }

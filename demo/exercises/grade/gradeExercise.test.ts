@@ -738,8 +738,17 @@ describe('an address outside the network of its neighbours is said first, where 
     const results = await gradeOffice([setIp('pc1', '192.168.7.10')]);
     expect(results.pc1?.code).toBe('not-delivered');
     expect(results.pc1?.message).toEqual(
-      diagnosisMessage({ kind: 'wrong-network', address: '192.168.7.10', device: 'レジ' }),
+      diagnosisMessage({
+        kind: 'wrong-network',
+        address: '192.168.7.10',
+        device: 'レジ',
+        position: 3,
+        own: 7,
+        others: 1,
+      }),
     );
+    // Which number, and the two values: "the first numbers" was read as "the first number".
+    expect(results.pc1?.message.ja).toContain('3 つ目の数字がちがいます（7 と 1）。');
     expect(results.pc1?.evidence).toMatchObject({
       diagnosis: 'wrong-network',
       address: '192.168.7.10',
@@ -753,7 +762,7 @@ describe('an address outside the network of its neighbours is said first, where 
     for (const id of ['pc1', 'pc2', 'pc3']) {
       expect(results[id]?.code).toBe('not-delivered');
       expect(results[id]?.message.ja).toBe(
-        'はじめの数字が、まわりの機器とちがいます。お店のルータの「売り場のスイッチのある側」のアドレス（192.168.2.1）を見てください。',
+        '3 つ目の数字がちがいます（2 と 1）。お店のルータの「売り場のスイッチのある側」のアドレス（192.168.2.1）を、その側の機器と見くらべてください。',
       );
       expect(results[id]?.evidence).toMatchObject({
         diagnosis: 'wrong-network',
@@ -841,7 +850,7 @@ describe('worked example 1: the till with the wrong address (l1-host-address)', 
     // The engine reports this drop at pc2, a bystander (engineContract fact 5).
     expect(till?.evidence).toMatchObject({ nodeId: 'pc2', dropReason: 'no-route' });
     expect(till?.message.ja).not.toContain('pc2');
-    expect(till?.message.ja).toContain('はじめの数字');
+    expect(till?.message.ja).toContain('3 つ目の数字がちがいます（2 と 1）');
     expect(grade.results[1]?.code).toBe('ok');
   });
 

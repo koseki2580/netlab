@@ -27,13 +27,24 @@ export type SettingRef =
       readonly ifaceId: string;
       /**
        * The "/number" is not what this exercise is about: the form shows the
-       * address alone and writes back the prefix length the side already has.
-       * A hint to the page; the grader does not look at it.
+       * address alone and writes back the prefix length the side already has,
+       * and the grader refuses a topology in which the prefix length changed
+       * (a learner passed by making the network bigger until it held everyone).
        */
       readonly addressOnly?: boolean;
     }
   | { readonly kind: 'static-routes'; readonly nodeId: string }
-  | { readonly kind: 'port-vlan'; readonly nodeId: string; readonly portId: string }
+  | {
+      readonly kind: 'port-vlan';
+      readonly nodeId: string;
+      readonly portId: string;
+      /**
+       * Whether the port is for one group or carries several is not what this
+       * exercise is about: the form shows the number (or the list) alone, and
+       * the grader refuses a topology in which the kind of port has changed.
+       */
+      readonly fixedMode?: boolean;
+    }
   | { readonly kind: 'stp-priority'; readonly nodeId: string }
   | { readonly kind: 'stp-port'; readonly nodeId: string; readonly portId: string }
   | { readonly kind: 'link-state'; readonly edgeId: string }
@@ -197,16 +208,38 @@ export type ExerciseCheck =
       readonly nodeId: string;
     }
   /** No more than `max` settings differ from the start state. */
-  | { readonly id: string; readonly kind: 'max-changes'; readonly max: number };
+  | { readonly id: string; readonly kind: 'max-changes'; readonly max: number }
+  /**
+   * Of the allowed settings, only `refs` differ from the start state: the fix
+   * was made where the fault is, not by disturbing something that was fine.
+   * Its label must not name `refs` (that would point at the fault).
+   */
+  | { readonly id: string; readonly kind: 'changed-only'; readonly refs: readonly SettingRef[] };
 
 export type ExerciseCheckKind = ExerciseCheck['kind'];
 
 // --- Exercises ---------------------------------------------------------------
 
+/** Something a hint says about the network, that the learner's changes can make untrue. */
+export type HintFact =
+  /** The router has no static route for `destination`. */
+  | { readonly kind: 'no-route'; readonly nodeId: string; readonly destination: string }
+  /** The router has a static route for `destination` whose next router is `nextHop`. */
+  | {
+      readonly kind: 'route-via';
+      readonly nodeId: string;
+      readonly destination: string;
+      readonly nextHop: string;
+    };
+
 export interface ExerciseHint {
   /** 1 = where to look, 2 = what is wrong, 3 = what to change. */
   readonly tier: 1 | 2 | 3;
   readonly text: Localised;
+  /** What `text` rests on. True at the start of the exercise. */
+  readonly holdsWhile?: HintFact;
+  /** Shown in place of `text` once `holdsWhile` is no longer so (`model/hints.ts`). */
+  readonly instead?: Localised;
 }
 
 /** One answer of a `choose-design` exercise: a set of changes over the start topology. */
@@ -236,6 +269,18 @@ export interface Exercise {
   readonly level: ExerciseLevel;
   readonly kind: ExerciseKind;
   readonly title: Localised;
+  /**
+   * What to do, in one line: the first thing under the title. A learner who
+   * reads one sentence reads this one. Absent on exercises written before
+   * briefs were split (then `brief` is shown whole).
+   */
+  readonly task?: Localised;
+  /**
+   * The rule that applies, in one line, where there is one. It gives the rule
+   * and never the values: those are read off the diagram.
+   */
+  readonly rule?: Localised;
+  /** The story, the symptom and the glosses. With a `task`, shown behind "read more". */
   readonly brief: Localised;
   readonly start: TopologySnapshot;
   readonly allowed: readonly SettingRef[];
@@ -257,10 +302,25 @@ export interface Exercise {
    */
   readonly nodeLabels?: Readonly<Record<string, Localised>>;
   /**
+   * A find-the-fault exercise in two steps: the learner first points at the
+   * device they think is at fault (on the diagram or on its card), and only
+   * then can change it. `faulty` are the node ids that are right to point at
+   * (two, where two devices hold one address). The devices to choose among are
+   * those of the allowed settings.
+   */
+  readonly pickFirst?: { readonly faulty: readonly string[] };
+  /**
    * Natural wrong answers, each of which must fail the grade. For the
    * verification harness only: never show these to a learner.
    */
   readonly wrongAnswers?: readonly (readonly SettingChange[])[];
+  /**
+   * Changes that make traffic flow without being a sound fix (a bigger network
+   * instead of the right address, a healthy port moved instead of the faulty
+   * one). Each must fail the grade. They need not be reachable through the
+   * form. For the verification harness only.
+   */
+  readonly unsoundPasses?: readonly (readonly SettingChange[])[];
   /**
    * Set when the brief states a value that is the answer, on purpose: the
    * reason, for a reviewer. Without it the verification harness refuses a
@@ -295,6 +355,8 @@ export type CheckResultCode =
   | 'no-acl-drop'
   | 'no-translation'
   | 'too-many-changes'
+  /** A setting that was fine at the start was changed (`changed-only`). */
+  | 'changed-elsewhere'
   | 'no-address'
   | 'config-invalid'
   | 'engine-error';

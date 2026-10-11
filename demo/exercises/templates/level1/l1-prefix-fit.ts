@@ -13,7 +13,7 @@ import { defineTemplate, formNames } from '../shared/exercise';
 import { everyoneReaches, setIp } from '../shared/lan';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan, net24 } from '../shared/plans';
-import { L, PRESS_CHECK, say, the, The } from '../shared/text';
+import { L, say, the, The } from '../shared/text';
 
 /** A network per "/number": its fixed first numbers, and middle numbers for variety. */
 const FITS = {
@@ -116,7 +116,6 @@ export const l1PrefixFit = defineTemplate(
         `Compare the numbers, and change the address of ${the(dev)} so that it belongs.`,
         `数字を見くらべて、${dev.ja}のアドレスを、仲間に入るように直してください。`,
       ),
-      PRESS_CHECK,
     );
 
     // --- What may be changed, the goals, the answers ---
@@ -125,6 +124,14 @@ export const l1PrefixFit = defineTemplate(
       title: L(
         `Make ${the(dev)} fit a /${length} network`,
         `${dev.ja}を「/${length}」のネットワークに入れる`,
+      ),
+      task: L(
+        `Fix the address of ${the(dev)} so that it belongs to the network of the devices around it.`,
+        `${dev.ja}のアドレスを、まわりの機器の仲間に入るように直してください。`,
+      ),
+      rule: L(
+        'Rule: read the "/number" after the router’s address. /8: the first number must match; /16: the first two; /24: the first three.',
+        'ルール：ルータのアドレスのうしろの「/数字」を見る。/8 ははじめの 1 つ、/16 は 2 つ、/24 は 3 つの数字が同じなら仲間。',
       ),
       brief,
       topology,

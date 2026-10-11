@@ -8,7 +8,7 @@
  * concurrently would buy nothing and would rest on engines sharing no state.
  */
 
-import { differsOutside, diffSettings } from '../model/settings';
+import { differsOutside, diffSettings, isAllowed } from '../model/settings';
 import type {
   CheckEvidence,
   CheckResult,
@@ -22,10 +22,11 @@ import type { TopologySnapshot } from '../../../src/types/topology';
 import { diagnose } from './diagnose';
 import { prepare, routesOf, stpPort, stpRootNodeId, type PreparedTopology } from './prepare';
 import { runProbe, type ProbeFacts } from './probe';
-import { explain, type ExplainDetail } from './reasons';
+import { CHANGED_ELSEWHERE_BUT_WORKS, explain, type ExplainDetail } from './reasons';
 import { evidenceOf, labelOf, sourceNatOnSyn, stoppingTrace } from './traceFacts';
 
-type GradedExercise = Pick<Exercise, 'start' | 'allowed' | 'checks'>;
+type GradedExercise = Pick<Exercise, 'start' | 'allowed' | 'checks'> &
+  Partial<Pick<Exercise, 'kind'>>;
 type ProbeCheck = Extract<ExerciseCheck, { readonly probe: unknown }>;
 
 const VLAN_REASONS: readonly string[] = ['no-egress-in-vlan', 'vlan-ingress-violation'];
@@ -135,6 +136,13 @@ async function gradeCheck(
       });
     }
 
+    case 'changed-only': {
+      const elsewhere = diffSettings(exercise.start, current, exercise.allowed).filter(
+        (ref) => !isAllowed(ref, check.refs),
+      );
+      return result(check, elsewhere.length === 0 ? 'ok' : 'changed-elsewhere');
+    }
+
     default: {
       const facts = await runProbe(prepared, check.probe);
       const code = probeCode(check, facts);
@@ -144,8 +152,15 @@ async function gradeCheck(
       // A probe that did not arrive: what the topology says comes before the
       // simulator's reason, which often cannot tell (see `diagnose.ts`).
       const found =
-        code === 'not-delivered' ? diagnose(exercise.start, current, check.probe) : null;
+        code === 'not-delivered'
+          ? diagnose(exercise.start, current, check.probe, {
+              unnamed: exercise.kind === 'diagnose-repair',
+            })
+          : null;
       const routesEditable = exercise.allowed.some((ref) => ref.kind === 'static-routes');
+      const hasTrunk = current.nodes.some((node) =>
+        (node.data.ports ?? []).some((port) => port.vlanMode === 'trunk'),
+      );
       return result(
         check,
         code,
@@ -153,6 +168,7 @@ async function gradeCheck(
           ...(drop ? { drop } : {}),
           ...(found ? { diagnosis: found.detail } : {}),
           ...(routesEditable ? { routesEditable } : {}),
+          ...(hasTrunk ? { hasTrunk } : {}),
         },
         {
           evidence: { ...evidenceOf(facts, prepared), ...found?.evidence },
@@ -190,6 +206,15 @@ export async function gradeExercise(
       results.push(await gradeCheck(check, prepared, exercise, current));
     } catch {
       results.push(result(check, 'engine-error'));
+    }
+  }
+  // "It arrives, but..." is only true when everything else is met.
+  const others = results.filter((entry) => entry.code !== 'changed-elsewhere');
+  if (others.length < results.length && others.every((entry) => entry.passed)) {
+    for (const [index, entry] of results.entries()) {
+      if (entry.code === 'changed-elsewhere') {
+        results[index] = { ...entry, message: CHANGED_ELSEWHERE_BUT_WORKS };
+      }
     }
   }
   // An exercise with no checks has verified nothing, so it is not a pass.

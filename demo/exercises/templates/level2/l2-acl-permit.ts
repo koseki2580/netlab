@@ -22,7 +22,7 @@ import {
 import { defineTemplate, goals } from '../shared/exercise';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
-import { L, PRESS_CHECK, say, the, The, type Named } from '../shared/text';
+import { L, say, the, The, type Named } from '../shared/text';
 import type { SettingChange } from '../../model/types';
 
 const permit = (id: string, priority: number, address: string): AclRule => ({
@@ -151,7 +151,6 @@ export const l2AclPermit = defineTemplate(
         `Change the list so that ${the(dev)} gets through. ${The(guest)} must still be refused.`,
         `一覧を直して、${dev.ja}が通るようにしてください。${guest.ja}は、これまでどおり通してはいけません。`,
       ),
-      PRESS_CHECK,
     );
 
     // --- What may be changed, the goals, the answers ---
@@ -159,6 +158,14 @@ export const l2AclPermit = defineTemplate(
     const added = permit('r20', 20, address[leftOut]);
     return {
       title: L(`${The(dev)} is refused`, `${dev.ja}が通してもらえない`),
+      task: L(
+        `Change the list (ACL) so that ${the(dev)} gets through. ${The(guest)} must still be refused.`,
+        `一覧（ACL）を直して、${dev.ja}が通るようにしてください。${guest.ja}は、通してはいけません。`,
+      ),
+      rule: L(
+        'Rule: a line lets through the sender with exactly that address. Whatever no line allows is refused.',
+        'ルール：行は、送り主のアドレスがぴったり同じ通信だけを通す。どの行にも当てはまらない通信は、通らない。',
+      ),
       brief,
       topology,
       names,

@@ -13,6 +13,7 @@ import { labelOf } from '../grade/traceFacts';
 import { portWords, sideWords } from '../model/names';
 import { isAllowed } from '../model/settings';
 import type {
+  CheckResult,
   Exercise,
   ExerciseCheck,
   Localised,
@@ -53,7 +54,7 @@ function cableName(topology: TopologySnapshot, edgeId: string): Localised {
   if (!edge) return both(edgeId);
   const a = labelOf(topology, edge.source);
   const b = labelOf(topology, edge.target);
-  return { en: `Cable between ${a} and ${b}`, ja: `${a} と ${b} をつなぐ線` };
+  return { en: `Cable between ${a} and ${b}`, ja: `${a} と ${b} をつなぐケーブル` };
 }
 
 /** Whether two refs (or changes) name the same setting. */
@@ -64,6 +65,48 @@ export function sameSetting(a: SettingRef, b: SettingRef): boolean {
 /** The node a setting belongs to; null for a cable. */
 export function settingNodeId(ref: SettingRef): string | null {
   return ref.kind === 'link-state' ? null : ref.nodeId;
+}
+
+/**
+ * The setting a goal that was not met is about: the cable the grader found
+ * unplugged; else the setting of the device the goal starts from (its own, or
+ * the socket or router side it is plugged into); else of the device it ends
+ * at; else of the device where the packet stopped. Null when none of them is
+ * something this exercise lets the learner change.
+ */
+export function settingForResult(
+  exercise: Pick<Exercise, 'allowed' | 'checks' | 'start'>,
+  result: CheckResult,
+): SettingRef | null {
+  const { allowed, start } = exercise;
+  const edgeId = result.evidence?.edgeId;
+  const cable = allowed.find((ref) => ref.kind === 'link-state' && ref.edgeId === edgeId);
+  if (cable) return cable;
+  const check = exercise.checks.find((entry) => entry.id === result.checkId);
+  const ends = check && 'probe' in check ? [check.probe.from, check.probe.to] : [];
+  const nodes = [...ends, ...(result.evidence?.nodeId ? [result.evidence.nodeId] : [])];
+  for (const nodeId of nodes) {
+    const own = allowed.find((ref) => ref.kind !== 'link-state' && ref.nodeId === nodeId);
+    if (own) return own;
+    // What the device is plugged into: a switch socket or a router side.
+    for (const edge of start.edges) {
+      const [otherId, handle] =
+        edge.source === nodeId
+          ? [edge.target, edge.targetHandle]
+          : edge.target === nodeId
+            ? [edge.source, edge.sourceHandle]
+            : [undefined, undefined];
+      const socket = allowed.find(
+        (ref) =>
+          ref.kind !== 'link-state' &&
+          ref.nodeId === otherId &&
+          (('portId' in ref && ref.portId === handle) ||
+            ('ifaceId' in ref && ref.ifaceId === handle)),
+      );
+      if (socket) return socket;
+    }
+  }
+  return null;
 }
 
 /** `exercise-setting-<kind>-<nodeOrEdgeId>[-<sub>]`. */
@@ -113,7 +156,7 @@ export function settingTitle(ref: SettingRef, topology: TopologySnapshot): Setti
     case 'static-routes':
       return {
         device,
-        name: { en: 'Routes added by hand', ja: '手で書く経路（行き先と、次に渡す機器）' },
+        name: { en: 'Routes added by hand', ja: '手で書く経路（行き先と、次のルータ）' },
       };
     case 'port-vlan': {
       const port = portName(topology, ref.nodeId, ref.portId);
@@ -136,7 +179,7 @@ export function settingTitle(ref: SettingRef, topology: TopologySnapshot): Setti
         device,
         name: {
           en: `Cost of the link ${ref.network} (OSPF)`,
-          ja: `${ref.network} の線のコスト（OSPF）`,
+          ja: `${ref.network} のケーブルのコスト（OSPF）`,
         },
       };
     case 'iface-acl': {
@@ -287,6 +330,11 @@ export function checkLabel(check: ExerciseCheck, topology: TopologySnapshot): Lo
       return {
         en: `Change no more than ${check.max} ${check.max === 1 ? 'setting' : 'settings'}`,
         ja: `変える設定は ${check.max} か所まで`,
+      };
+    case 'changed-only':
+      return {
+        en: 'Only what was wrong is changed',
+        ja: '変えたのは、おかしかったところだけ',
       };
   }
 }

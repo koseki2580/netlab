@@ -21,10 +21,11 @@ import {
   setIp,
   starts,
   startsJa,
+  RULE_SAME_THREE,
 } from '../shared/lan';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
-import { L, PRESS_CHECK, say, the, The } from '../shared/text';
+import { L, say, the, The } from '../shared/text';
 
 export const l1HostAddress = defineTemplate(
   {
@@ -116,7 +117,6 @@ export const l1HostAddress = defineTemplate(
         `Compare it with the devices next to it, and fix the address of ${the(dev)}.`,
         `となりの機器のアドレスと見くらべて、${dev.ja}のアドレスを直してください。`,
       ),
-      PRESS_CHECK,
     );
 
     // --- What may be changed, and the goals ---
@@ -145,6 +145,11 @@ export const l1HostAddress = defineTemplate(
 
     return {
       title: L(`Fix the address of ${the(dev)}`, `${dev.ja}のアドレスを直す`),
+      task: L(
+        `Fix the address of ${the(dev)} so that it matches the devices around it.`,
+        `${dev.ja}のアドレスを、まわりの機器に合うように直してください。`,
+      ),
+      rule: RULE_SAME_THREE,
       brief,
       topology,
       names: lan.names,

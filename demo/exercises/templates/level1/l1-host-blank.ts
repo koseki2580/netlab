@@ -16,10 +16,11 @@ import {
   SAME_START_BRIEF,
   SAME_START_RULE,
   setIp,
+  RULE_SAME_THREE,
 } from '../shared/lan';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
-import { L, listOf, PRESS_CHECK, say, the } from '../shared/text';
+import { L, listOf, say, the } from '../shared/text';
 
 export const l1HostBlank = defineTemplate(
   {
@@ -103,13 +104,14 @@ export const l1HostBlank = defineTemplate(
         `Look at the addresses of the devices next to it, and give the ${dev.en} one that no other device is using.`,
         `となりの機器のアドレスを見て、${dev.ja}に、ほかの機器と重ならないアドレスを入れてください。`,
       ),
-      PRESS_CHECK,
     );
 
     // --- What may be changed, the goals, the answers ---
     const right = net.at(plan.free);
     return {
       title: L(`Give the ${dev.en} an address`, `${dev.ja}にアドレスを入れる`),
+      task: L(`Give the ${dev.en} an address.`, `${dev.ja}に、アドレスを入れてください。`),
+      rule: RULE_SAME_THREE,
       brief,
       topology,
       names,

@@ -17,6 +17,7 @@ const CODES: readonly CheckResultCode[] = [
   'no-acl-drop',
   'no-translation',
   'too-many-changes',
+  'changed-elsewhere',
   'no-address',
   'config-invalid',
   'engine-error',
@@ -176,14 +177,20 @@ describe('learner-facing reasons', () => {
   });
 
   // TC-560
-  it('an address on the wrong network leads with the first numbers, and says whose', () => {
+  it('an address on the wrong network says which number is off, with both values, and whose it is', () => {
     const host = diagnosisMessage({
       kind: 'wrong-network',
       address: '192.168.7.10',
       device: 'レジ',
+      position: 3,
+      own: 7,
+      others: 1,
     });
     expect(host.ja).toBe(
-      'はじめの数字が、まわりの機器とちがいます。レジのアドレス（192.168.7.10）を、となりの機器と見くらべてください。',
+      '3 つ目の数字がちがいます（7 と 1）。レジのアドレス（192.168.7.10）を、となりの機器と見くらべてください。',
+    );
+    expect(host.en).toBe(
+      'The third number differs (7 and 1) from the devices around it. Compare the address of レジ (192.168.7.10) with its neighbours.',
     );
     const side = { en: 'side facing Switch', ja: 'スイッチのある側' };
     const router = diagnosisMessage({
@@ -191,11 +198,28 @@ describe('learner-facing reasons', () => {
       address: '192.168.2.1',
       device: 'お店のルータ',
       side,
+      position: 3,
+      own: 2,
+      others: 1,
     });
     expect(router.ja).toBe(
-      'はじめの数字が、まわりの機器とちがいます。お店のルータの「スイッチのある側」のアドレス（192.168.2.1）を見てください。',
+      '3 つ目の数字がちがいます（2 と 1）。お店のルータの「スイッチのある側」のアドレス（192.168.2.1）を、その側の機器と見くらべてください。',
     );
     expect(router.en).toContain('side facing Switch');
+  });
+
+  // TC-588
+  it('in a find-the-fault exercise the cause is said and the device is not', () => {
+    const off = diagnosisMessage({ kind: 'unnamed', cause: 'wrong-network', position: 3 });
+    expect(off.ja).toBe(
+      'まわりの機器とアドレスが合っていない機器があります。3 つ目の数字がちがいます。アドレスを 1 台ずつ見くらべてください。',
+    );
+    const twice = diagnosisMessage({ kind: 'unnamed', cause: 'duplicate-address' });
+    expect(twice.ja).toContain('同じアドレスを使っている機器が 2 台あります');
+    for (const text of [off, twice]) {
+      expect(text.ja).not.toMatch(/レジ|\d+\.\d+\.\d+\.\d+/);
+      expect(text.en).not.toMatch(/\d+\.\d+\.\d+\.\d+/);
+    }
   });
 
   // TC-560

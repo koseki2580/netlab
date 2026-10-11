@@ -696,6 +696,8 @@ export function buildVlan(
   const edges: NetlabEdge[] = [];
   const perSwitch: Record<string, SwitchPort[]> = {};
   const lastOf = (id: string): number => (id.startsWith('a') ? 10 : 20) + Number(id.slice(1));
+  /** How many of each group are seated: on a lone switch a group is drawn top to bottom on its side. */
+  const seated: [number, number] = [0, 0];
 
   for (const [id, group, switchId] of seats[shape]) {
     const ports = (perSwitch[switchId] ??= []);
@@ -706,13 +708,15 @@ export function buildVlan(
       place.groups[group].members[Number(id.slice(1)) - 1] ?? place.groups[group].members[0];
     const column = switchIds.indexOf(switchId) * 2;
     const row = ports.length - 1;
+    const inGroup = seated[group];
+    seated[group] += 1;
     // A lone switch has its devices on both sides; several switches each have theirs below.
     nodes.push(
       host(
         id,
         plan.near.at(lastOf(id)),
         switchIds.length === 1
-          ? at(group === 0 ? 0 : 2, row % 3)
+          ? at(group === 0 ? 0 : 2, inGroup)
           : at(column + (row === 0 ? -0.45 : 0.45), 2),
       ),
     );
