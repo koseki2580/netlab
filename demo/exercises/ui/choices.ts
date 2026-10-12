@@ -164,3 +164,23 @@ export function orderedOptions(
     'options',
   );
 }
+
+/**
+ * The reference solution as this attempt can press it: where a setting of the
+ * solution has address chips, the usable chip stands in for the address the
+ * template wrote down. Both work; only one of them is on the learner's screen.
+ */
+export function referenceAsOffered(
+  exercise: ChoiceExercise & Pick<Exercise, 'reference'>,
+  order: AttemptOrder,
+): readonly SettingChange[] {
+  const cards = pressCards(exercise, order);
+  return exercise.reference.map((change) => {
+    if (change.kind !== 'host-ip' && change.kind !== 'iface-address') return change;
+    const key = settingTestId(change);
+    const usable = cards
+      .find((card) => settingTestId(card.ref) === key)
+      ?.presses.find((press) => press.sound === true)?.change;
+    return usable?.kind === change.kind ? usable : change;
+  });
+}

@@ -15,6 +15,7 @@ import {
   routedGoals,
   routes,
   sitesOpening,
+  farSideOf,
 } from '../shared/routed';
 import { WATCH_WORDS } from '../../ui/words';
 import { L, say, the } from '../shared/text';
@@ -142,6 +143,15 @@ export const l2StaticNexthop = defineTemplate(
           routes(
             faulty,
             healthy.filter((route) => route.destination !== net.srvNet.cidr),
+          ),
+        ],
+      ],
+      // The neighbour's address on its far side: the simulator forwards to it, a router would not.
+      unsoundPasses: [
+        [
+          routes(
+            faulty,
+            withHop(farSideOf(net.topology, faulty, net.towardsSrv[faulty] ?? '') ?? ''),
           ),
         ],
       ],

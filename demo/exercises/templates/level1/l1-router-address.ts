@@ -3,7 +3,9 @@
  * so nothing crosses it. The learner finds which side and fixes it.
  *
  * The far side carries the fault only where a switch sits there: on a direct
- * cable a router that takes the server's address answers in its place.
+ * cable a router that takes the server's address answers in its place. Half
+ * of the instances have the fault on each side, and the learner points at the
+ * side before changing it (`pickFirst`).
  *
  * The two sides are named by what is plugged into them, as the settings form
  * names them (`model/names.ts`), never `lan` or `far`. The "/number" is not
@@ -12,12 +14,16 @@
  */
 
 import { buildLan, LAN_SHAPES } from '../shared/build';
+import { evenPlace } from '../shared/draw';
 import { defineTemplate, formNames, goals } from '../shared/exercise';
 import { addressOf, broken, everyoneReaches, freeAddressOn, starts, startsJa } from '../shared/lan';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan, net24 } from '../shared/plans';
 import { L, say, the, The } from '../shared/text';
 import type { SettingChange } from '../../model/types';
+
+/** Keeps this template's order of sides its own (`evenPlace`). */
+const SIDE_SALT = 7;
 
 export const l1RouterAddress = defineTemplate(
   {
@@ -26,13 +32,17 @@ export const l1RouterAddress = defineTemplate(
     kind: 'configure',
     title: L('Fix the address of the router', 'ルータのアドレスを直す'),
   },
-  (draw) => {
+  (draw, seed) => {
     // --- Drawn from the seed ---
     const place = drawPlace(draw);
     const plan = drawPlan(draw);
-    const shape = draw.pick(LAN_SHAPES);
+    // Each side carries the fault equally often (`evenPlace`): "it is always
+    // the first block" was true three times out of three. The far side needs
+    // its switch (see the top of the file), so it decides the shape.
+    const side = evenPlace(seed, 2, SIDE_SALT) === 0 ? 'lan' : 'far';
+    const drawnShape = draw.pick(LAN_SHAPES);
+    const shape = side === 'far' ? 'server-switch' : drawnShape;
     const lan = buildLan(place, plan, shape);
-    const side = shape === 'server-switch' ? draw.pick(['lan', 'far']) : 'lan';
     const fault = draw.pick(['stranger', 'near-miss']);
 
     // --- The fault ---
@@ -147,6 +157,8 @@ export const l1RouterAddress = defineTemplate(
         // Another address on the same wrong network.
         [address(wrongNet.at(plan.free))],
       ],
+      // Which side it is, is the first half of the question.
+      pickFirst: { faulty: [`r1:${side}`], by: 'side' },
       unsoundPasses: [[bigger(16)], [bigger(8)]],
       fingerprint: [place.id, shape, side, fault],
     };

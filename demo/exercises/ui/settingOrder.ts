@@ -35,7 +35,7 @@ function placeOf(ref: SettingRef, topology: TopologySnapshot): Place | null {
 
 /**
  * The settings in the order their cards are shown: as the diagram reads, left
- * to right and then top to bottom. An exercise lists what may be changed in
+ * to right and then top to bottom, the cables before everything else. An exercise lists what may be changed in
  * whatever order suited its author, and "the faulty one first" would answer
  * the question for a learner who presses the first card. The order here does
  * not depend on the order the exercise gives.
@@ -51,7 +51,11 @@ export function settingOrder(
       const bx = b.place?.x ?? Infinity;
       const ay = a.place?.y ?? Infinity;
       const by = b.place?.y ?? Infinity;
+      // Cables first: where an exercise is about a cable, an address offered
+      // beside it (a distractor) came first and pushed the cables off the screen.
+      const cables = Number(b.ref.kind === 'link-state') - Number(a.ref.kind === 'link-state');
       return (
+        cables ||
         (ax === bx ? 0 : ax < bx ? -1 : 1) ||
         (ay === by ? 0 : ay < by ? -1 : 1) ||
         (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)

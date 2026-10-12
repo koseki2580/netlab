@@ -2,7 +2,8 @@
 import { describe, expect, it } from 'vitest';
 import { exerciseById } from '../exerciseSource';
 import { applyChanges } from '../model/settings';
-import { diagramNotes, diagramNotesCss, diagramNotesLines } from './diagramNotes';
+import { cablePressed } from './cablePress';
+import { diagramNotes, diagramNotesCss, diagramNotesLines, noAddressNote } from './diagramNotes';
 
 function exercise(id: string) {
   const found = exerciseById(id, 'ja');
@@ -59,5 +60,48 @@ describe('what the diagram shows besides names', () => {
       `[data-x] [data-id="${router?.id}"] [data-testid="topology-node"]::after`,
     );
     expect(diagramNotesLines(start, 'ja').join(' ')).toContain(String(router?.data.label));
+  });
+});
+
+// TC-612
+describe('a press where two cables are within reach', () => {
+  it('is taken for the unplugged one, however near the other is', () => {
+    expect(
+      cablePressed([
+        { id: 'healthy', distance: 0, down: false },
+        { id: 'broken', distance: 12, down: true },
+      ]),
+    ).toBe('broken');
+  });
+
+  it('is taken for the nearest among equals, and for nothing when none is within reach', () => {
+    expect(
+      cablePressed([
+        { id: 'a', distance: 9, down: false },
+        { id: 'b', distance: 4, down: false },
+      ]),
+    ).toBe('b');
+    expect(
+      cablePressed([
+        { id: 'a', distance: 9, down: true },
+        { id: 'b', distance: 4, down: true },
+      ]),
+    ).toBe('b');
+    expect(cablePressed([])).toBeNull();
+  });
+});
+
+// TC-615
+describe('the mark on a device without an address', () => {
+  it('is explained where a device has none, and only there', () => {
+    const blank = exercise('l1-host-blank~0');
+    expect(noAddressNote(blank.start, 'ja')).toBe(
+      '⚠ は「この機器にまだアドレスがない」という印です。故障ではありません。',
+    );
+    expect(noAddressNote(blank.start, 'en')).toBe(
+      '⚠ means "this device has no address yet". It is not a fault.',
+    );
+    expect(noAddressNote(applyChanges(blank.start, blank.reference), 'ja')).toBeNull();
+    expect(noAddressNote(exercise('l1-host-address~0').start, 'ja')).toBeNull();
   });
 });

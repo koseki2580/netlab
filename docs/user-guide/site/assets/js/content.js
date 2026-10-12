@@ -76,9 +76,23 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>設定を変える</strong> — 「変えられるところ」に出ているカードだけが変えられます。図は見るためのもので、機器や線を動かすことはできません。入力の途中で形が正しくないときは、欄の下に書き方が出て、直すまでは前の値のままになります。</li>
                  <li><strong>「たしかめる」を押す</strong> — 目標ごとに「✓ できた」か「△ まだ」が付きます。「まだ」の目標には、なぜまだなのかが、ことばで出ます。行きで止まったのか、返事が戻らなかったのか、原因によってはどの機器で止まったのかがわかります。</li>
                  <li><strong>図で見る</strong> — 「▶ 図で見てみる」を押すと、判定に使ったパケットそのものが図の上を動きます。</li>
-                 <li>設定を変えると、前の結果には「この結果のあとで設定を変えました」と出ます。もう一度「たしかめる」を押してください。「最初の状態に戻す」で、はじめからやり直せます。</li>
+                 <li>設定を変えると、前の結果には「この結果のあとで設定を変えました」と出ます。もう一度「たしかめる」を押してください。「最初に戻す」で、はじめからやり直せます。前の結果も画面から消えます。</li>
                </ol>
-               <p>「どれを選ぶか」を問う問題もあります。そのときは、1 つ選び、どうなるか（届く・届かない・遠回りになる）を予想してから「たしかめる」を押します。選んだものが実際に動き、予想が合っていたかと、その理由が出ます。</p>
+               <p>「どれを選ぶか」を問う問題もあります。そのときは、1 つ選び、どうなるか（届く・届かない・遠回りになる）を予想してから「たしかめる」を押します。予想をえらぶまでは、ボタンに「先に予想をえらぶ」と出ます。選んだものが実際に動き、予想が合っていたかと、その理由が出ます。</p>
+               <h3>先に「どれがおかしいか」をえらぶ問題</h3>
+               <p>3 台のうちどれか 1 台、またはルータの 2 つの側のどちらかがおかしい問題では、先に「この機器がおかしい」「こちらがまちがっている」を押してえらびます。えらんだものだけが変えられます。</p>
+               <ul>
+                 <li>えらぶだけでは、何も記録されません。「たしかめる」を押すまでは、何度でもえらび直せます。えらび直すと、変えたところは元に戻ります。</li>
+                 <li>おかしくないものをえらんで「たしかめる」を押すと、「これは合っています」と出て、1 回分のまちがいになります。</li>
+               </ul>
+               <h3>入力と図について</h3>
+               <ul>
+                 <li><strong>全角でも入力できます</strong> — 「１０、２０」や「１９２．１６８．１．５」は、半角として読み取られます。</li>
+                 <li><strong>赤い点線</strong>は、ぬけているケーブルです。図で押すと、つながります。ほかのケーブルと重なって見える所を押しても、ぬけているほうがつながります。押したあとに「〜のケーブルをつなぎました。」と出ます。</li>
+                 <li><strong>⚠</strong> は「この機器にまだアドレスがない」という印です。故障ではありません。</li>
+                 <li>アドレスの候補は 6 つ出ます。候補だけを見くらべても、正しいものはわかりません。図の機器のアドレスと見くらべてください。</li>
+                 <li>経路の「次のルータ」に書けるのは、となりのルータの「こちら側」のアドレスだけです。向こう側のアドレスを書くと、正解になりません。</li>
+               </ul>
                <h3>困ったとき</h3>
                <ul>
                  <li><strong>ヒントを見る</strong> — ヒントは 3 つあり、1 つずつ開きます。1 つでも開くと、その問題は「ヒントを使って解けた」として記録され、「解けた」数には入りません。開く前に、そのことが表示されます。</li>
@@ -86,12 +100,21 @@ window.USER_GUIDE_CONTENT = {
                </ul>
                <h3>レベルと「達成」</h3>
                <p>レベルは 4 つです。レベル 1 は「アドレスと線」、レベル 2 は「スイッチと、かんたんな経路」を扱い、どちらも 100 問以上あります。同じ種類の問題でも、場所・アドレス・こわれている機器が毎回変わります。</p>
-               <p><strong>レベルは、直近 10 問のうち 7 問を、3 種類以上にわたってヒントなしで解けると達成です。</strong>数えるのは、選ぶだけの問題は 1 回目の「たしかめる」で、自分で入力する問題は 2 回目までに解けたときです（問題ごとに、はじめに 1 行で出ます）。そのレベルにある課題の種類（設定を入れる・おかしい所をさがす・どれにするか選ぶ など）を、それぞれ 1 問は解く必要があります。取り組んだ問題が 5 問より少ないあいだは、まだ判定しません。各レベルの下に、いまの数と、あと何が必要かが 1 文で出ます。</p>
+               <p><strong>レベルは、直近 10 問のうち 7 問をヒントなしで解き、そのレベルのどの種類の問題も、いちばん最近の 1 問が解けていると達成です。</strong>レベル 1 には 7 種類、レベル 2 には 10 種類の問題があります。</p>
+               <ul>
+                 <li><strong>数え方</strong> — 選ぶだけの問題は 1 回目の「たしかめる」で、自分で入力する問題は 2 回目までに解けたときに数えます（問題ごとに、はじめに 1 行で出ます）。</li>
+                 <li><strong>1 問は 1 回だけ数えます</strong> — はじめに「たしかめる」を押したとき（または答えを見たとき）の結果が、その問題の結果です。同じ問題をやり直しても変わりません。</li>
+                 <li><strong>解けなかった種類は、次で取り返せます</strong> — 一度取り組んだ問題をもう一度開くと、同じ種類の別の問題（数字がちがうもの）が出ます。それを解けば、その種類は「解けた」になります。</li>
+                 <li>取り組んだ問題が 5 問より少ないあいだは、まだ判定しません。</li>
+                 <li>問題の種類は、毎回ちがう順番で出ます。同じ種類が 2 問つづくことはありません。</li>
+               </ul>
+               <p>各レベルには、短い 2 行が出ます。1 行目は、いま何問解けていて、あと何問か。2 行目は「まだ解けていない種類：…」です。達成すると、2 行目は「つぎは修了テスト（10 問）か、レベル 2 へ。」に変わります。くわしい数え方は「くわしい判定のしかたを見る」を押すと読めます。</p>
                <div class="callout">レベル 3 とレベル 4 は、まだ用意できていません。レベル 4 には「このレベルの問題は、まだありません。」と出ます。レベル 3 には見本の問題が 1 種類あるだけで、達成にはなりません。</div>
                <h3>どのレベルから始めるか</h3>
                <p>迷ったら「レベル判定をする」を押してください。質問が 1 つあり、そのあと多くても 8 問を解きます。テストではなく、始める場所を見つけるためのものです。わからない問題は「わからないので次へ」で飛ばせます。</p>
                <h3>学ぶ前と、学んだあとを比べる</h3>
-               <p>レベルのページ（「このレベルの内容を見る」）で「学ぶ前に測る」を押すと、4 問を解きます。解けなかった問題を教えているレッスンが並ぶので、読んでから「もう一度測る」を押すと、同じ種類の別の 4 問が出ます。結果は、問題の種類ごとに「学ぶ前 → 学んだあと」で見られます。問題数が少ないので、目安として見てください。</p>
+               <p>レベルのページ（「このレベルの内容を見る」、または一覧の「勉強の前にはかる」）のいちばん上に「勉強の前と後でくらべる」があります。「勉強の前にはかる」を押すと、4 問を解きます。解けなかった問題を教えているレッスンが並ぶので、読んでから「学んだあとに測る」を押すと、同じ種類の別の 4 問が出ます。結果は、問題の種類ごとに「学ぶ前 → 学んだあと」で見られます。問題数が少ないので、目安として見てください。</p>
+               <div class="callout">勉強の前の 4 問は、レベルの判定には入れていません。4 問とも解けても、レベルの「解けた数」は増えません。</div>
                <h3>記録について</h3>
                <ul>
                  <li>開いただけの問題、うまくいかなかった「たしかめる」、ヒント、答えを見たことも、すべて記録されます。</li>
@@ -361,9 +384,23 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>Change a setting</strong> — only the cards under “What you can change” can be changed. Devices and cables on the diagram cannot be moved. While what you type is not complete, a note under the field says how to write it, and the previous value stays until you do.</li>
                  <li><strong>Press “Check”</strong> — each goal is marked “✓ Done” or “△ Not yet”. A goal that is not met says why in words: whether the packet stopped on the way there or the answer did not come back, and for most causes at which device.</li>
                  <li><strong>See it on the diagram</strong> — “▶ Watch it on the diagram” replays, on the diagram, the very packet the result was judged on.</li>
-                 <li>After you change a setting, the old result says “You have changed a setting since this result”. Press “Check” again. “Back to how it started” undoes everything.</li>
+                 <li>After you change a setting, the old result says “You have changed a setting since this result”. Press “Check” again. “Start over” undoes everything, and takes the old result off the screen.</li>
                </ol>
-               <p>Some exercises ask you to choose a design instead. Pick one, say what you expect to happen (it arrives, it does not arrive, or it arrives the long way round), then press “Check”. Your choice is run, and you are told whether you expected right, and why.</p>
+               <p>Some exercises ask you to choose a design instead. Pick one, say what you expect to happen (it arrives, it does not arrive, or it arrives the long way round), then press “Check”. Until you have chosen a prediction, the button reads “Choose your prediction first”. Your choice is run, and you are told whether you expected right, and why.</p>
+               <h3>Exercises where you first choose what is wrong</h3>
+               <p>Where one of three devices is wrong, or one of the two sides of a router, you first press “This is the one that is wrong” or “This side is wrong”. Only what you chose can be changed.</p>
+               <ul>
+                 <li>Choosing alone records nothing. Until you press “Check” you can choose again as often as you like; what you had changed is put back.</li>
+                 <li>If you press “Check” with one chosen that is fine, the page says so, and that counts as one miss.</li>
+               </ul>
+               <h3>Typing, and the diagram</h3>
+               <ul>
+                 <li><strong>Full-width characters are accepted</strong> — 「１０、２０」 and 「１９２．１６８．１．５」 are read as their half-width forms.</li>
+                 <li><strong>A red dotted line</strong> is an unplugged cable. Press it on the diagram to plug it in. Where it seems to run along another cable, a press there still plugs in the unplugged one. A line then says which cable was plugged in.</li>
+                 <li><strong>⚠</strong> means “this device has no address yet”. It is not a fault.</li>
+                 <li>Six addresses are offered. Comparing them with each other does not tell you which one fits; compare them with the addresses on the diagram.</li>
+                 <li>The “next router” of a route can only be the neighbouring router’s address on the side facing this one. An address on its far side is not accepted as solved.</li>
+               </ul>
                <h3>If you are stuck</h3>
                <ul>
                  <li><strong>Show a hint</strong> — there are three hints, opened one at a time. Once you open one, the exercise is recorded as “solved with help” and is not counted among those you solved. You are told this before you open it.</li>
@@ -371,12 +408,21 @@ window.USER_GUIDE_CONTENT = {
                </ul>
                <h3>Levels, and what “cleared” means</h3>
                <p>There are four levels. Level 1 is about addresses and cables, level 2 about switches and simple routes; each has more than 100 exercises. Exercises of the same kind differ every time in the place, the addresses and the device at fault.</p>
-               <p><strong>A level is cleared when you solved 7 of your last 10 exercises without a hint, across at least 3 kinds of exercise.</strong> A solve counts on the first Check where the answer is one of a few things to press, and within two Checks where you type it (each exercise says which, in one line, before you start). Every kind of task the level has (set it up, find the fault, choose one, and so on) needs at least one solve. Until you have tried 5, the level is not judged. One sentence under each level says where you stand and what is still needed.</p>
+               <p><strong>A level is cleared when you solved 7 of your last 10 exercises without a hint, and of every kind of task the level has, the latest one you did is solved.</strong> Level 1 has 7 kinds of task, level 2 has 10.</p>
+               <ul>
+                 <li><strong>How a solve counts</strong> — on the first Check where the answer is one of a few things to press, and within two Checks where you type it (each exercise says which, in one line, before you start).</li>
+                 <li><strong>An exercise counts once</strong> — as it went the first time you pressed “Check” on it (or looked at its answer). Doing the same exercise again does not change it.</li>
+                 <li><strong>A kind you missed can be made good</strong> — when you open an exercise you have already tried, you get another exercise of the same kind, with other numbers. Solve that one, and the kind counts as solved.</li>
+                 <li>Until you have tried 5, the level is not judged.</li>
+                 <li>The kinds of task come in a different order each time. The same kind never comes twice in a row.</li>
+               </ul>
+               <p>Each level shows two short lines. The first says how many you have solved and how many more it takes. The second says “Kinds of task not solved yet: …”. Once the level is cleared, the second line becomes “Next: the final test (10 questions), or level 2.” The details are behind “See the full rule”.</p>
                <div class="callout">Levels 3 and 4 are not available yet. Level 4 says “No exercises at this level yet.” Level 3 has a single sample kind of exercise and cannot be cleared.</div>
                <h3>Where to start</h3>
                <p>If you are not sure, press “Find my level”. It asks one question and then gives you at most 8 exercises. It is not a test; it only finds where to start. “I cannot do this one: next” skips an exercise.</p>
                <h3>Before and after studying</h3>
-               <p>On a level’s page (“What this level covers”), “Measure before studying” gives you 4 exercises. The lessons that teach what you did not solve are then listed; read them, press “Measure again”, and you get 4 other exercises of the same kinds. The result is shown per kind of exercise as before → after. The sets are small, so read it as a rough comparison.</p>
+               <p>At the top of a level’s page (“What this level covers”, or “Measure before studying” on the list of levels) is “Compare before and after studying”. “Measure before studying” gives you 4 exercises. The lessons that teach what you did not solve are then listed; read them, press “Measure after studying”, and you get 4 other exercises of the same kinds. The result is shown per kind of exercise as before → after. The sets are small, so read it as a rough comparison.</p>
+               <div class="callout">The 4 exercises before studying are not counted toward the level. Solving all 4 does not raise the level’s count of solved exercises.</div>
                <h3>Your record</h3>
                <ul>
                  <li>Everything is recorded: an exercise you only opened, a Check that did not pass, hints, and answers you looked at.</li>

@@ -1,6 +1,8 @@
 /** What the static-route templates share. */
 
 import type { StaticRouteConfig } from '../../../../src/types/routing';
+import type { TopologySnapshot } from '../../../../src/types/topology';
+import { isInSubnet } from '../../../../src/utils/cidr';
 import type { Localised, SettingChange } from '../../model/types';
 import type { RoutedNet } from './build';
 import { goals, type LabelledCheck } from './exercise';
@@ -62,4 +64,26 @@ export function sitesOpening(place: Place): Localised {
     `${The(near.name)} and ${the(far.name)} are joined by routers. ${The(near.device)} needs ${the(far.device)} at ${the(far.name)}.`,
     `${near.name.ja}と${far.name.ja}は、ルータでつながっています。${near.device.ja}から、${far.name.ja}の${far.device.ja}を使います。`,
   );
+}
+
+/**
+ * The address a learner is most likely to write instead of `nextHop`: one the
+ * SAME neighbouring router has on a network `routerId` is not connected to
+ * (its far side). The simulator forwards to it all the same, so the grader
+ * has to refuse it. Undefined when that router has no such address.
+ */
+export function farSideOf(
+  topology: TopologySnapshot,
+  routerId: string,
+  nextHop: string,
+): string | undefined {
+  const sides = (id: string) =>
+    topology.nodes.find((node) => node.id === id)?.data.interfaces ?? [];
+  const own = sides(routerId).map((side) => `${side.ipAddress}/${side.prefixLength}`);
+  const neighbour = topology.nodes.find((node) =>
+    (node.data.interfaces ?? []).some((side) => side.ipAddress === nextHop),
+  );
+  return (neighbour?.data.interfaces ?? []).find(
+    (side) => !own.some((cidr) => isInSubnet(side.ipAddress, cidr)),
+  )?.ipAddress;
 }

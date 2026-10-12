@@ -8,6 +8,7 @@ import { defineTemplate } from '../shared/exercise';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
 import {
+  farSideOf,
   fullRoutes,
   ROUTE_GLOSS,
   ROUTE_RULE,
@@ -126,6 +127,18 @@ export const l2StaticMissing = defineTemplate(
           routes(faulty, [
             ...remaining,
             { destination: net.srvNet.cidr, nextHop: plan.far.at(plan.servers[0]) },
+          ]),
+        ],
+      ],
+      // The neighbour's address on its far side: the simulator forwards to it, a router would not.
+      unsoundPasses: [
+        [
+          routes(faulty, [
+            ...remaining,
+            {
+              destination: net.srvNet.cidr,
+              nextHop: farSideOf(net.topology, faulty, nextHop) ?? '',
+            },
           ]),
         ],
       ],

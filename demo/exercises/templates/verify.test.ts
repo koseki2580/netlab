@@ -786,7 +786,11 @@ describe('pools', () => {
     const seen: string[] = [];
     const recent: string[] = [];
     for (;;) {
-      const next = nextExerciseId(1, { seenIds: seen, avoidTemplateIds: recent.slice(-1) });
+      const next = nextExerciseId(1, {
+        seenIds: seen,
+        avoidTemplateIds: recent.slice(-1),
+        salt: 'a learner',
+      });
       if (next === undefined) break;
       expect(seen).not.toContain(next);
       const templateId = exerciseById(next)?.templateId ?? '';
@@ -803,5 +807,53 @@ describe('pools', () => {
     const avoid = ['l1-host-address', 'l1-host-blank', 'l1-cable-off'];
     const picked = exerciseById(nextExerciseId(1, { avoidTemplateIds: avoid }) ?? '');
     expect(avoid).not.toContain(picked?.templateId);
+  });
+
+  // TC-606
+  describe.each([1, 2] as const)('level %i: the order the kinds of task come in', (level) => {
+    const count = TEMPLATES.filter((template) => template.level === level).length;
+    const walk = (salt: string, length: number): string[] => {
+      const seen: string[] = [];
+      const order: string[] = [];
+      while (order.length < length) {
+        const next = nextExerciseId(level, {
+          seenIds: seen,
+          avoidTemplateIds: order.slice(-1),
+          salt,
+        });
+        if (next === undefined) break;
+        seen.push(next);
+        order.push(exerciseById(next)?.templateId ?? '');
+      }
+      return order;
+    };
+    const learners = Array.from({ length: 20 }, (_, index) => `learner-${index}`);
+
+    it('is not a fixed cycle: the second round differs from the first, and learners differ from each other', () => {
+      const walks = learners.map((salt) => walk(salt, count * 3));
+      const repeats = walks.filter(
+        (order) => order.slice(0, count).join() === order.slice(count, count * 2).join(),
+      );
+      expect(repeats.length).toBeLessThanOrEqual(1);
+      expect(new Set(walks.map((order) => order.join())).size).toBeGreaterThan(15);
+      // What comes second is not always the same kind of task.
+      expect(new Set(walks.map((order) => order[1])).size).toBeGreaterThan(2);
+    });
+
+    it('never the same kind twice in a row, and every kind once in each round', () => {
+      for (const salt of learners) {
+        const order = walk(salt, count * 4);
+        for (const [index, templateId] of order.entries()) {
+          if (index > 0) expect(templateId, `${salt} at ${index}`).not.toBe(order[index - 1]);
+        }
+        for (let round = 0; round < 4; round += 1) {
+          expect(new Set(order.slice(round * count, (round + 1) * count)).size).toBe(count);
+        }
+      }
+    });
+
+    it('is the same for the same learner and the same record', () => {
+      expect(walk('learner-3', count * 2)).toEqual(walk('learner-3', count * 2));
+    });
   });
 });

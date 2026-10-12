@@ -15,7 +15,7 @@ import { PlacementPageBody } from './PlacementPage';
 import { ReportPageBody } from './ReportPage';
 import { EXERCISE_LEVELS, explain, headline, levelSummary } from './store/estimate';
 import { postSet } from './store/studyCycle';
-import { attempt, failed, solved, solvedRun } from './store/testSupport';
+import { attempt, clearingRun, failed, solved, solvedRun } from './store/testSupport';
 import { englishProse, hasJapanese, render, testStore, type Screen } from './ui/testSupport';
 
 vi.mock('./ui/ExerciseDiagram', () => ({
@@ -90,10 +90,7 @@ describe('the hub', () => {
   // TC-536
   it('the level button does not open the kind of task just done while another kind has one left', () => {
     if (level1.length < 2) return;
-    // The learner's last exercise was of the kind the pool begins with, but not
-    // its first instance: the first unseen one is of that same kind.
     const kind = level1[0] ?? '';
-    expect(templateIdOf(nextExerciseId(1, { seenIds: [`${kind}~1`] }) ?? '')).toBe(kind);
     screen = render(<ExerciseHubBody store={storeWith([solved(kind, 1, 1)])} />);
     const href = decodeURIComponent(screen.get('exercises-start-1').getAttribute('href') ?? '');
     expect(templateIdOf(href.replace('/exercises/do/', ''))).not.toBe(kind);
@@ -192,6 +189,64 @@ describe('a level page', () => {
   });
 });
 
+// TC-610
+describe('where the learner stands at a level, in two short lines', () => {
+  const openLevel = (attempts: ReturnType<typeof attempt>[]) => {
+    screen = render(<LevelPageBody store={storeWith(attempts)} now={() => 5000} />, {
+      path: '/exercises/level/1',
+      route: '/exercises/level/:level',
+    });
+    return screen;
+  };
+
+  it('names the kinds of task still open under the short line, and keeps the full rule behind a toggle', () => {
+    const view = openLevel(solvedRun(1, 6, 2));
+    expect(view.get('exercises-level-headline-1').textContent).toBe(
+      'あと 1 問 とけたら、レベル 1 達成です（いま 6 問）',
+    );
+    const missing = view.get('exercises-level-missing-1').textContent ?? '';
+    expect(missing.startsWith('まだ解けていない種類：「')).toBe(true);
+    expect(missing).toContain(levelTemplates(1)[2]?.title.ja ?? 'x');
+    expect(missing).toContain('ほか 3 種類');
+    const rule = view.get('exercises-level-rule-1') as HTMLDetailsElement;
+    expect(rule.open).toBe(false);
+    expect(rule.querySelector('summary')?.textContent).toBe('くわしい判定のしかたを見る');
+    expect(rule.contains(view.get('exercises-level-status-1'))).toBe(true);
+    expect(view.find('exercises-level-next-1')).toBeNull();
+  });
+
+  it('says what is next once the level is cleared, with the way to the final test', () => {
+    const view = openLevel(clearingRun(1));
+    expect(view.get('exercises-level-headline-1').textContent).toBe('レベル 1 達成です');
+    expect(view.get('exercises-level-next-1').textContent).toContain(
+      'つぎは修了テスト（10 問）か、レベル 2 へ。',
+    );
+    expect(view.get('exercises-level-exam-1').getAttribute('href')).toBe('/course/exam');
+    expect(view.find('exercises-level-missing-1')).toBeNull();
+  });
+
+  // TC-611
+  it('the before/after measurement comes first for a learner who has not begun, under the words of the hub’s link', () => {
+    const view = openLevel([]);
+    const cycle = view.get('exercises-cycle');
+    const level = view.get('exercises-level-1');
+    expect(cycle.compareDocumentPosition(level) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(cycle.querySelector('h3')?.textContent).toBe('勉強の前と後でくらべる');
+    expect(view.get('exercises-cycle-start').textContent).toBe('勉強の前にはかる');
+    view.unmount();
+    screen = render(<ExerciseHubBody store={testStore()} />);
+    expect(screen.get('exercises-hub-cycle-link').textContent).toBe('勉強の前にはかる');
+  });
+
+  // TC-611
+  it('and after the level’s own card once the learner is working at the level', () => {
+    const view = openLevel(solvedRun(1, 3, 3));
+    const cycle = view.get('exercises-cycle');
+    const level = view.get('exercises-level-1');
+    expect(level.compareDocumentPosition(cycle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+});
+
 describe('the exercise page', () => {
   // TC-509
   it('opens the exercise named in the address, in the set the address names', () => {
@@ -212,6 +267,53 @@ describe('the exercise page', () => {
     expect(screen.get('exercise-cycle-progress').textContent).toContain('2 問中 1 問目');
     expect(store.getState().attempts[0]).toMatchObject({ context: 'pre', cycleId: 'c1' });
     expect(screen.find('exercise-skip')).not.toBeNull();
+  });
+
+  // TC-600
+  it('opens another instance of the same kind of task once the learner has been judged on the one asked for', async () => {
+    const kind = level1[0] ?? '';
+    const store = storeWith([failed(kind, 0, 1)]);
+    screen = render(<ExercisePageBody store={store} />, {
+      path: `/exercises/do/${kind}~0`,
+      route: '/exercises/do/:exerciseId',
+    });
+    const view = screen;
+    await view.until(() => view.find('exercise-panel') !== null);
+    const shown = view.get('exercise-panel').getAttribute('data-exercise-id') ?? '';
+    expect(shown).not.toBe(`${kind}~0`);
+    expect(templateIdOf(shown)).toBe(kind);
+    // One visit, one record, and it is of the instance shown.
+    expect(store.getState().attempts.map((entry) => entry.exerciseId)).toEqual([
+      `${kind}~0`,
+      shown,
+    ]);
+  });
+
+  // TC-600
+  it('opens the exercise asked for when it was only opened before, and in a before/after set whatever was done', async () => {
+    const kind = level1[0] ?? '';
+    const opened = attempt(kind, 0, 1, { outcome: 'abandoned', checkPresses: 0 });
+    screen = render(<ExercisePageBody store={storeWith([opened])} />, {
+      path: `/exercises/do/${kind}~0`,
+      route: '/exercises/do/:exerciseId',
+    });
+    expect(screen.get('exercise-panel').getAttribute('data-exercise-id')).toBe(`${kind}~0`);
+    screen.unmount();
+
+    const store = storeWith([failed(kind, 0, 1)]);
+    store.saveCycle({
+      id: 'c1',
+      level: 1,
+      templateIds: [kind],
+      startedAt: 1,
+      preExerciseIds: [`${kind}~0`],
+      lessonsOpened: [],
+    });
+    screen = render(<ExercisePageBody store={store} />, {
+      path: `/exercises/do/${kind}~0?context=pre&cycle=c1`,
+      route: '/exercises/do/:exerciseId',
+    });
+    expect(screen.get('exercise-panel').getAttribute('data-exercise-id')).toBe(`${kind}~0`);
   });
 
   // TC-510
@@ -326,7 +428,7 @@ describe('the short line a level leads with', () => {
     );
     screen.unmount();
 
-    screen = render(<ExerciseHubBody store={storeWith(solvedRun(1, 7, 3))} />);
+    screen = render(<ExerciseHubBody store={storeWith(clearingRun(1))} />);
     expect(screen.get('exercises-level-headline-1').textContent).toBe('レベル 1 達成です');
     expect(screen.get('exercises-level-headline-1').getAttribute('data-status')).toBe('cleared');
   });
@@ -373,6 +475,13 @@ describe('the words of the before/after comparison', () => {
     });
     expect(screen.get('exercises-cycle-before').textContent).toBe(
       '学ぶ前は 4 問とも解けました。レッスンのあとに、似た 4 問で確かめましょう。',
+    );
+    // TC-609: beside "all 4 solved" the level does not say "0 so far" without saying why.
+    expect(screen.get('exercises-cycle-not-counted').textContent).toBe(
+      '学ぶ前の 4 問は、レベルの判定には入れていません。',
+    );
+    expect(screen.get('exercises-level-headline-1').textContent).toBe(
+      'あと 5 問やると、判定できます',
     );
     expect(screen.get('exercises-cycle-again').textContent).toBe('学んだあとに測る');
   });

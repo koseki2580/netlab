@@ -57,6 +57,33 @@ function cableName(topology: TopologySnapshot, edgeId: string): Localised {
   return { en: `Cable between ${a} and ${b}`, ja: `${a} と ${b} をつなぐケーブル` };
 }
 
+/**
+ * What a press on a cable just did, in one line: 「教材サーバーのケーブルをつなぎました。」
+ * The cable is named by the device at its end (a PC or a server, where it has
+ * one): that is what the learner sees it hang on.
+ */
+export function cableSentence(
+  topology: TopologySnapshot,
+  edgeId: string,
+  state: 'up' | 'down',
+): Localised {
+  const edge = topology.edges.find((candidate) => candidate.id === edgeId);
+  const role = (id: string) => topology.nodes.find((node) => node.id === id)?.data.role;
+  const device = edge
+    ? [edge.source, edge.target].find((id) => role(id) !== 'switch' && role(id) !== 'router')
+    : undefined;
+  if (!edge || device === undefined) {
+    const cable = cableName(topology, edgeId);
+    return state === 'up'
+      ? { en: `Plugged in: ${cable.en}.`, ja: `${cable.ja}を、つなぎました。` }
+      : { en: `Unplugged: ${cable.en}.`, ja: `${cable.ja}を、はずしました。` };
+  }
+  const name = labelOf(topology, device);
+  return state === 'up'
+    ? { en: `You plugged in the cable of ${name}.`, ja: `${name}のケーブルをつなぎました。` }
+    : { en: `You unplugged the cable of ${name}.`, ja: `${name}のケーブルをはずしました。` };
+}
+
 /** Whether two refs (or changes) name the same setting. */
 export function sameSetting(a: SettingRef, b: SettingRef): boolean {
   return isAllowed(a, [b]);

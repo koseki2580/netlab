@@ -144,6 +144,18 @@ describe('a configure exercise (the till)', () => {
     expect((screen.get(TILL_INPUT) as HTMLInputElement).value).toBe('192.168.2.50');
   });
 
+  // TC-618
+  it('reset takes the result of the Check before it off the screen', async () => {
+    const { screen } = run(DEV_TILL_ID);
+    await screen.enter(TILL_INPUT, '192.168.9.50');
+    await check(screen);
+    expect(screen.get('exercise-result').getAttribute('data-passed')).toBe('false');
+    await screen.click('exercise-reset');
+    expect(screen.get('exercise-result').hasAttribute('data-passed')).toBe(false);
+    expect(screen.find('exercise-result-stale')).toBeNull();
+    expect(screen.find('exercise-result-summary')).toBeNull();
+  });
+
   // TC-483
   it('hints open one at a time, say what they cost first, and a pass after one is "solved with help"', async () => {
     const { screen, only } = run(DEV_TILL_ID);
@@ -179,12 +191,17 @@ describe('a configure exercise (the till)', () => {
     expect(only().revealed).toBe(false);
     await screen.click('exercise-giveup');
     await screen.click('exercise-giveup-yes');
-    expect(screen.get('exercise-reference').textContent).toContain(
-      'レジ のアドレスを「192.168.1.20」に変える',
+    // TC-616: the answer names an address that is among the chips on screen, not another one that would also work.
+    const chips = [...screen.container.querySelectorAll('[data-testid^="exercise-chip-"]')].map(
+      (chip) => chip.textContent?.trim() ?? '',
     );
+    const shown = /レジ のアドレスを「([\d.]+)」に変える/.exec(
+      screen.get('exercise-reference').textContent ?? '',
+    )?.[1];
+    expect(chips).toContain(shown);
     expect(only()).toMatchObject({ revealed: true, outcome: 'gave-up' });
     await screen.click('exercise-reference-apply');
-    expect(screen.get('diagram-stub').getAttribute('data-till-ip')).toBe('192.168.1.20');
+    expect(screen.get('diagram-stub').getAttribute('data-till-ip')).toBe(shown);
     await check(screen);
     expect(screen.get('exercise-result').getAttribute('data-passed')).toBe('true');
     expect(screen.get('exercise-result-done').textContent).toContain('数えません');
@@ -246,8 +263,12 @@ describe('a choose-a-design exercise', () => {
     await screen.click('exercise-check');
     expect(screen.get('exercise-design-needed').getAttribute('data-needs')).toBe('choice');
     expect(screen.get('exercise-design-needed').textContent).toContain('1 つ選んで');
+    expect(screen.get('exercise-check').textContent).toBe('たしかめる');
     await screen.click('exercise-option-equal');
     expect(screen.find('exercise-predict')).not.toBeNull();
+    // TC-617: until a prediction is made the button says what a press will bring.
+    expect(screen.get('exercise-check').textContent).toBe('先に予想をえらぶ');
+    expect(screen.get('exercise-check').getAttribute('data-waits')).toBe('prediction');
     await screen.click('exercise-check');
     // TC-548: what is missing is said where it is asked, inside the prediction block.
     expect(screen.get('exercise-design-needed').getAttribute('data-needs')).toBe('prediction');
@@ -256,6 +277,9 @@ describe('a choose-a-design exercise', () => {
     );
     expect(only()).toMatchObject({ checkPresses: 0 });
     expect(only().prediction).toBeUndefined();
+    await screen.click('exercise-predict-reach');
+    expect(screen.get('exercise-check').textContent).toBe('たしかめる');
+    expect(screen.get('exercise-check').hasAttribute('data-waits')).toBe(false);
   });
 
   // TC-488

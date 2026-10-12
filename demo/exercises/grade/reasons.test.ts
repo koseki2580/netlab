@@ -18,6 +18,7 @@ const CODES: readonly CheckResultCode[] = [
   'no-translation',
   'too-many-changes',
   'changed-elsewhere',
+  'next-hop-not-neighbour',
   'no-address',
   'config-invalid',
   'engine-error',

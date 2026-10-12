@@ -4,6 +4,7 @@ import { LessonCanvas, LessonPanel, LessonSplit } from '../../components/LessonP
 import { useGalleryLocale, useT } from '../../localeContext';
 import { gradeExercise } from '../grade/gradeExercise';
 import { checksToCount } from '../model/closedSet';
+import { pickKey } from '../model/pick';
 import { applyChanges, diffSettings, readSetting } from '../model/settings';
 import type {
   CheckResult,
@@ -16,8 +17,9 @@ import type {
 import type { AttemptStore } from '../store/attemptStore';
 import type { AttemptContext } from '../store/types';
 import { attemptOrder, type AttemptOrder } from './attemptOrder';
-import { orderedOptions } from './choices';
+import { orderedOptions, referenceAsOffered } from './choices';
 import {
+  cableSentence,
   changeSentence,
   settingForResult,
   sameSetting,
@@ -35,6 +37,7 @@ import {
   DesignChooser,
   ExerciseBrief,
   GiveUp,
+  GoalList,
   HintButton,
   HintCost,
   HintTexts,
@@ -116,11 +119,18 @@ export function ExerciseRunner({
   const [pointed, setPointed] = useState<SettingRef | null>(null);
   const [focused, setFocused] = useState<SettingRef | null>(null);
   const [replay, setReplay] = useState<DiagramReplay | null>(null);
+  /** The last cable a press on the diagram switched, and to what. */
+  const [cableSaid, setCableSaid] = useState<{
+    edgeId: string;
+    state: 'up' | 'down';
+    count: number;
+  } | null>(null);
   /** Where this attempt puts what it offers; null until the attempt is open. */
   const [order, setOrder] = useState<AttemptOrder | null>(null);
   const resets = useRef(0);
-  // Find-the-fault in two steps: the device pointed at and found, and those pointed at wrongly.
-  const [found, setFound] = useState<string | null>(null);
+  // Point first, then fix (`Exercise.pickFirst`): what is pointed at now (it can
+  // be changed until Check), and what Check found to be fine.
+  const [picked, setPicked] = useState<string | null>(null);
   const [cleared, setCleared] = useState<readonly string[]>([]);
   /** Check was pressed before a device was pointed at. */
   const [needsPick, setNeedsPick] = useState(false);
@@ -185,6 +195,12 @@ export function ExerciseRunner({
     hintsRef.current?.lastElementChild?.lastElementChild?.scrollIntoView?.({ block: 'nearest' });
   }, [hintTier]);
 
+  // What was just pointed at opens with its chips: bring all of it into view.
+  useEffect(() => {
+    if (picked === null) return;
+    panelRef.current?.querySelector('[data-picked]')?.scrollIntoView?.({ block: 'nearest' });
+  }, [picked]);
+
   // The outline a press on the diagram put on a card fades by itself.
   useEffect(() => {
     if (!pointed) return undefined;
@@ -206,8 +222,28 @@ export function ExerciseRunner({
     // Find-the-fault in two steps: nothing can be changed, so nothing is
     // checked, until a device has been pointed at. (A Check here would also
     // say which device cannot reach the server, which is the question.)
-    if (exercise.pickFirst && found === null) {
+    if (exercise.pickFirst && picked === null) {
       setNeedsPick(true);
+      setRefusals((count) => count + 1);
+      return;
+    }
+    // Check commits the pick. A wrong one is a miss: nothing is graded (a
+    // grade would say which device cannot reach the server), the device is
+    // marked as fine, and whatever was changed on it is put back.
+    if (exercise.pickFirst && picked !== null && !exercise.pickFirst.faulty.includes(picked)) {
+      setCleared((now) => [...now, picked]);
+      setPicked(null);
+      replaceChanges(NO_CHANGES);
+      setGraded(null);
+      setPresses((count) => count + 1);
+      setMisses((count) => count + 1);
+      if (attempt.current) {
+        store.recordCheck(attempt.current.id, {
+          passed: false,
+          failedCheckIds: ['suspect'],
+          changedSettings: 0,
+        });
+      }
       setRefusals((count) => count + 1);
       return;
     }
@@ -270,9 +306,10 @@ export function ExerciseRunner({
     setFormKey((key) => key + 1);
     setReplay(null);
   };
-  /** Back to the start: the same exercise, offered in a new order. */
+  /** Back to the start: the same exercise, offered in a new order, and no result of before left on screen. */
   const reset = () => {
     replaceChanges(NO_CHANGES);
+    setGraded(null);
     const id = attempt.current?.id;
     if (id === undefined) return;
     resets.current += 1;
@@ -284,27 +321,30 @@ export function ExerciseRunner({
       ),
     );
   };
+  /** The answer goes into the form. Where the learner points first, it points too. */
+  const applyReference = () => {
+    const [faulty] = exercise.pickFirst?.faulty ?? [];
+    if (faulty !== undefined) setPicked(faulty);
+    replaceChanges(reference);
+  };
   const options = useMemo(() => (order ? orderedOptions(exercise, order) : []), [exercise, order]);
+  /** The answer as shown and as put in: with the address that is among the chips on screen. */
+  const reference = useMemo(
+    () => (order && !isDesign ? referenceAsOffered(exercise, order) : exercise.reference),
+    [exercise, isDesign, order],
+  );
 
-  /** The learner points at a device as the one at fault. A wrong one costs the clean solve, as a Check would. */
-  const pickSuspect = (nodeId: string) => {
-    const faulty = exercise.pickFirst?.faulty;
-    if (!faulty || found !== null || cleared.includes(nodeId) || passed || busy) return;
+  /**
+   * The learner points at what they think is at fault. It is a selection, not
+   * an answer: it can be changed until Check, and changing it puts back what
+   * was changed on the one pointed at before.
+   */
+  const pickSuspect = (key: string) => {
+    if (!exercise.pickFirst || cleared.includes(key) || passed || busy) return;
     setNeedsPick(false);
-    if (faulty.includes(nodeId)) {
-      setFound(nodeId);
-      return;
-    }
-    setCleared((now) => [...now, nodeId]);
-    setPresses((count) => count + 1);
-    setMisses((count) => count + 1);
-    if (attempt.current) {
-      store.recordCheck(attempt.current.id, {
-        passed: false,
-        failedCheckIds: ['suspect'],
-        changedSettings: 0,
-      });
-    }
+    if (key === picked) return;
+    setPicked(key);
+    if (changes.length > 0) replaceChanges(NO_CHANGES);
   };
 
   /** A press on the diagram: no panel opens; the card of what was pressed is shown, and a cable is switched. */
@@ -318,9 +358,19 @@ export function ExerciseRunner({
     if (!ref) return;
     if (ref.kind === 'link-state' && !passed && !busy) {
       const now = readSetting(topology, ref);
-      if (now?.kind === 'link-state') change({ ...now, state: now.state === 'up' ? 'down' : 'up' });
+      if (now?.kind === 'link-state') {
+        const state = now.state === 'up' ? 'down' : 'up';
+        change({ ...now, state });
+        // A press on a line is easy to get wrong and hard to see the effect of: say what it did.
+        setCableSaid({ edgeId: ref.edgeId, state, count: (cableSaid?.count ?? 0) + 1 });
+      }
     }
-    if (ref.kind !== 'link-state' && exercise.pickFirst) pickSuspect(ref.nodeId);
+    // A press on a device points at it. Where the choice is between two sides of
+    // one device, the press cannot say which: the cards are brought into view.
+    if (ref.kind !== 'link-state' && exercise.pickFirst && exercise.pickFirst.by !== 'side') {
+      const key = pickKey(ref, 'device');
+      if (key !== null) pickSuspect(key);
+    }
     setPointed(ref);
     setFocused(ref);
     panelRef.current
@@ -374,6 +424,7 @@ export function ExerciseRunner({
       compact={isNarrow}
       countRule={presses === 0 && !revealed ? maxChecks : null}
       pickFirst={exercise.pickFirst !== undefined}
+      goals={isNarrow}
     />
   );
   const diagram = (
@@ -388,6 +439,8 @@ export function ExerciseRunner({
     />
   );
   const showCheck = !passed;
+  // A design is chosen and no prediction is: the button says what a press will do (bring the question).
+  const awaitsPrediction = isDesign && option !== null && predicted === null;
   const showReset =
     !isDesign && !passed && diffSettings(base, topology, exercise.allowed).length > 0;
   const showSkip = onNext !== undefined && context !== 'practice' && !passed && !revealed;
@@ -420,13 +473,18 @@ export function ExerciseRunner({
           <button
             type="button"
             data-testid="exercise-check"
+            data-waits={awaitsPrediction ? 'prediction' : undefined}
             disabled={busy}
             aria-busy={busy}
             onClick={() => void check()}
             // On a phone Check has a row to itself: beside two more buttons its word broke in two.
             style={{ ...PRIMARY, flex: isNarrow ? '1 1 100%' : 1, opacity: busy ? 0.7 : 1 }}
           >
-            {busy ? t('Checking…', 'たしかめています…') : t('Check', 'たしかめる')}
+            {busy
+              ? t('Checking…', 'たしかめています…')
+              : awaitsPrediction
+                ? t('Choose your prediction first', '先に予想をえらぶ')
+                : t('Check', 'たしかめる')}
           </button>
         ) : null}
         {showNext ? (
@@ -593,9 +651,12 @@ export function ExerciseRunner({
                 />
               ) : (
                 <section style={{ display: 'grid', gap: 8 }}>
-                  <h3 style={{ margin: 0, fontSize: 16 }}>
-                    {t('What you can change', '変えられるところ')}
-                  </h3>
+                  {/* Where the learner points first, the step line is the heading. */}
+                  {exercise.pickFirst ? null : (
+                    <h3 style={{ margin: 0, fontSize: 16 }}>
+                      {t('What you can change', '変えられるところ')}
+                    </h3>
+                  )}
                   {exercise.allowed.some((ref) => ref.kind === 'link-state') ? (
                     <p data-testid="exercise-diagram-tip" style={{ margin: 0, fontSize: 14 }}>
                       <span aria-hidden="true">☞ </span>
@@ -605,6 +666,17 @@ export function ExerciseRunner({
                       )}
                     </p>
                   ) : null}
+                  {cableSaid ? (
+                    <p
+                      key={cableSaid.count}
+                      role="status"
+                      data-testid="exercise-cable-said"
+                      data-state={cableSaid.state}
+                      style={{ margin: 0, fontWeight: 700 }}
+                    >
+                      {cableSentence(base, cableSaid.edgeId, cableSaid.state)[locale]}
+                    </p>
+                  ) : null}
                   {order ? (
                     <SettingsForm
                       key={formKey}
@@ -612,13 +684,33 @@ export function ExerciseRunner({
                       topology={topology}
                       order={order}
                       {...(exercise.pickFirst
-                        ? { suspect: { found, cleared, needed: needsPick, onPick: pickSuspect } }
+                        ? {
+                            suspect: {
+                              picked,
+                              cleared,
+                              needed: needsPick,
+                              by: exercise.pickFirst.by ?? 'device',
+                              onPick: pickSuspect,
+                            },
+                          }
                         : {})}
                       onChange={change}
                       onFocusSetting={setFocused}
                       pointed={pointed}
                     />
                   ) : null}
+                </section>
+              )}
+
+              {/* Beside the diagram the goals stand here, under what there is to press:
+                  above it they pushed the third row of chips under the Check bar. */}
+              {isNarrow ? null : (
+                <section style={{ display: 'grid', gap: 6 }}>
+                  <h3 style={{ margin: 0, fontSize: 16 }}>{t('Goals', '目標')}</h3>
+                  <GoalList
+                    exercise={exercise}
+                    results={graded && !stale ? graded.grade.results : null}
+                  />
                 </section>
               )}
 
@@ -638,7 +730,8 @@ export function ExerciseRunner({
                       setRevealed(true);
                       if (attempt.current) store.recordReveal(attempt.current.id);
                     }}
-                    {...(isDesign ? {} : { onApply: () => replaceChanges(exercise.reference) })}
+                    reference={reference}
+                    {...(isDesign ? {} : { onApply: applyReference })}
                   />
                 </section>
               )}

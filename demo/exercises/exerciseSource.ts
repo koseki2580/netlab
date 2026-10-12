@@ -23,6 +23,8 @@ import type {
 interface NextOptions {
   readonly avoidTemplateIds?: readonly string[];
   readonly seenIds?: readonly string[];
+  /** Something of the learner's own, so the order of the kinds of task is theirs (`learnerSalt`). */
+  readonly salt?: string;
 }
 
 interface TemplatesModule {
@@ -31,6 +33,11 @@ interface TemplatesModule {
   readonly localiseExercise: (exercise: Exercise, locale: 'en' | 'ja') => Exercise;
   readonly buildPool: (level: ExerciseLevel) => readonly string[];
   readonly nextExerciseId: (level: ExerciseLevel, opts: NextOptions) => string | undefined;
+  readonly reopenedExerciseId: (
+    exerciseId: string,
+    judgedIds: readonly string[],
+    seenIds: readonly string[],
+  ) => string;
 }
 
 type GlobMeta = ImportMeta & {
@@ -125,4 +132,36 @@ export function nextExerciseId(level: ExerciseLevel, opts: NextOptions = {}): st
   return (
     pool.find((id) => fresh(id) && other(id)) ?? pool.find(other) ?? pool.find(fresh) ?? pool[0]
   );
+}
+
+/**
+ * What opens when the learner asks for `exerciseId` in practice: the exercise
+ * itself, or, once they have been judged on it, another instance of the same
+ * kind of task that they have not met. (The estimate counts an exercise by its
+ * first judged visit, so the same one again would prove nothing either way.)
+ */
+export function reopenedExerciseId(
+  exerciseId: string,
+  judgedIds: readonly string[],
+  seenIds: readonly string[],
+): string {
+  if (!judgedIds.includes(exerciseId)) return exerciseId;
+  if (templates.exerciseById?.(exerciseId)) {
+    return templates.reopenedExerciseId?.(exerciseId, judgedIds, seenIds) ?? exerciseId;
+  }
+  const templateId = templateIdOf(exerciseId);
+  if (!FIXTURE_TEMPLATES.some((template) => template.id === templateId)) return exerciseId;
+  for (let seed = 0; seed < FIXTURE_SEEDS; seed += 1) {
+    const id = `${templateId}~${seed}`;
+    if (!judgedIds.includes(id) && !seenIds.includes(id)) return id;
+  }
+  return exerciseId;
+}
+
+/**
+ * What makes the order of the kinds of task a learner's own: the id of their
+ * first attempt, which carries the moment it began. Empty before any attempt.
+ */
+export function learnerSalt(attempts: readonly { readonly id: string }[]): string {
+  return attempts[0]?.id ?? '';
 }

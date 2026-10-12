@@ -6,7 +6,13 @@ import { extractPathEdgeIds } from '../../../src/simulation/extractPathEdgeIds';
 import { SimulationProvider, useSimulation } from '../../../src/simulation/SimulationContext';
 import type { PacketTrace } from '../../../src/types/simulation';
 import type { NetworkTopology, TopologySnapshot } from '../../../src/types/topology';
-import { diagramLegendLines, diagramNotesCss, diagramNotesLines } from './diagramNotes';
+import { cablePressed, type CableInReach } from './cablePress';
+import {
+  diagramLegendLines,
+  diagramNotesCss,
+  diagramNotesLines,
+  noAddressNote,
+} from './diagramNotes';
 
 /** A trace the grader produced, to be shown on the diagram. `run` tells two presses apart. */
 export interface DiagramReplay {
@@ -82,9 +88,14 @@ const CABLE_REACH_PX = 14;
 /** A finger that moved further than this was scrolling, not pressing. */
 const TAP_SLOP_PX = 10;
 
-/** The cable nearest to a point on the screen, within reach; null when none is. */
-function cableNear(root: HTMLElement, x: number, y: number): string | null {
-  let best: { id: string; distance: number } | null = null;
+/** The cable a press at a point on the screen is taken for; null when none is within reach. */
+function cableNear(
+  root: HTMLElement,
+  x: number,
+  y: number,
+  down: ReadonlySet<string>,
+): string | null {
+  const inReach: CableInReach[] = [];
   for (const group of root.querySelectorAll<SVGGElement>('g.netlab-edge[data-edge-id]')) {
     const id = group.getAttribute('data-edge-id');
     const path = group.querySelector('path');
@@ -92,17 +103,16 @@ function cableNear(root: HTMLElement, x: number, y: number): string | null {
     if (!id || !path || !matrix || typeof path.getTotalLength !== 'function') continue;
     const length = path.getTotalLength();
     const steps = Math.max(1, Math.ceil(length / 3));
+    let nearest = Infinity;
     for (let step = 0; step <= steps; step += 1) {
       const point = path.getPointAtLength((length * step) / steps);
       const px = point.x * matrix.a + point.y * matrix.c + matrix.e;
       const py = point.x * matrix.b + point.y * matrix.d + matrix.f;
-      const distance = Math.hypot(px - x, py - y);
-      if (distance <= CABLE_REACH_PX && (best === null || distance < best.distance)) {
-        best = { id, distance };
-      }
+      nearest = Math.min(nearest, Math.hypot(px - x, py - y));
     }
+    if (nearest <= CABLE_REACH_PX) inReach.push({ id, distance: nearest, down: down.has(id) });
   }
-  return best?.id ?? null;
+  return cablePressed(inReach);
 }
 
 /**
@@ -118,9 +128,13 @@ function cableNear(root: HTMLElement, x: number, y: number): string | null {
 function useCablePresses(
   root: RefObject<HTMLDivElement>,
   onPick: ((pick: DiagramPick) => void) | undefined,
+  /** The cables that are unplugged now: they win a press (`cablePressed`). */
+  downIds: ReadonlySet<string>,
 ) {
   const report = useRef(onPick);
   report.current = onPick;
+  const unplugged = useRef(downIds);
+  unplugged.current = downIds;
   useEffect(() => {
     const element = root.current;
     if (!element) return undefined;
@@ -148,7 +162,8 @@ function useCablePresses(
           point.x <= box.right &&
           point.y >= box.top &&
           point.y <= box.bottom;
-        const id = point && !onDevice ? cableNear(element, point.x, point.y) : null;
+        const id =
+          point && !onDevice ? cableNear(element, point.x, point.y, unplugged.current) : null;
         pressed = id !== null && point ? { id, ...point } : null;
       }
       if (pressed) event.stopPropagation();
@@ -219,8 +234,14 @@ export function ExerciseDiagram({
     [topology],
   );
   const notes = useMemo(() => diagramNotesLines(topology, locale), [topology, locale]);
+  const warning = useMemo(() => noAddressNote(topology, locale), [topology, locale]);
   const rootRef = useRef<HTMLDivElement>(null);
-  useCablePresses(rootRef, onPick);
+  const downIds = useMemo(
+    () =>
+      new Set(topology.edges.filter((edge) => edge.data?.state === 'down').map((edge) => edge.id)),
+    [topology],
+  );
+  useCablePresses(rootRef, onPick, downIds);
   const css = [
     // The library's 14px dot is hard to follow on a phone.
     `${SCOPE} [data-testid="canvas-packet"]{width:20px !important;height:20px !important;margin:-3px 0 0 -3px;}`,
@@ -270,6 +291,30 @@ export function ExerciseDiagram({
           ))}
         </ul>
       ) : null}
+      {/* Beside the picture: what the ⚠ on a device means. On a phone the legend says it. */}
+      {warning !== null && !legend ? (
+        <p
+          data-testid="exercise-diagram-warning-note"
+          style={{
+            position: 'absolute',
+            left: 8,
+            bottom: 8,
+            zIndex: 5,
+            margin: 0,
+            maxWidth: 'calc(100% - 16px)',
+            padding: '4px 8px',
+            borderRadius: 6,
+            fontSize: 13,
+            lineHeight: 1.5,
+            color: 'var(--netlab-text-primary)',
+            background: 'var(--netlab-bg-panel)',
+            border: '1px solid var(--netlab-border)',
+            pointerEvents: 'none',
+          }}
+        >
+          {warning}
+        </p>
+      ) : null}
       <NetlabProvider topology={runnable}>
         {/* The main-thread engine: only a replay runs here, and a worker per keystroke would be waste. */}
         <SimulationProvider useMainThread>
@@ -303,7 +348,10 @@ export function DiagramLegend({
   topology: TopologySnapshot;
   locale: 'en' | 'ja';
 }) {
-  const lines = useMemo(() => diagramLegendLines(topology, locale), [topology, locale]);
+  const lines = useMemo(() => {
+    const warning = noAddressNote(topology, locale);
+    return [...diagramLegendLines(topology, locale), ...(warning === null ? [] : [warning])];
+  }, [topology, locale]);
   if (lines.length === 0) return null;
   return (
     <ul

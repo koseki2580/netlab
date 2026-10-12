@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useGalleryLocale, useT } from '../localeContext';
-import { nextExerciseId } from './exerciseSource';
+import { learnerSalt, nextExerciseId } from './exerciseSource';
 import type { AttemptStore } from './store/attemptStore';
-import { EXERCISE_LEVELS, explain, headline, isAttempted, levelSummary } from './store/estimate';
-import { ExerciseShell, LEVEL_NAMES, exercisePath } from './ui/pageParts';
+import { EXERCISE_LEVELS, isAttempted, levelSummary } from './store/estimate';
+import { LevelLines } from './ui/LevelLines';
+import { ExerciseShell, LEVEL_NAMES, MEASURE_FIRST, exercisePath } from './ui/pageParts';
 import { CARD, COLUMN, LINK, MUTED, PAGE, PRIMARY, SECONDARY } from './ui/styles';
 import { StorageNotice, useExerciseStore } from './ui/useExerciseStore';
 
@@ -67,6 +68,7 @@ export function ExerciseHubBody({ store: injected }: { store?: AttemptStore }) {
             // Never the kind of task just done, twice in a row (as on the level's own page).
             ...(last ? { avoidTemplateIds: [last.templateId] } : {}),
             seenIds,
+            salt: learnerSalt(state.attempts),
           });
           return (
             <section
@@ -79,20 +81,7 @@ export function ExerciseHubBody({ store: injected }: { store?: AttemptStore }) {
                 {t(`Level ${level}`, `レベル ${level}`)}
                 <span style={{ fontWeight: 400 }}> — {LEVEL_NAMES[level][locale]}</span>
               </h3>
-              {/* One short line first; the whole rule after it, smaller. */}
-              <p
-                data-testid={`exercises-level-headline-${level}`}
-                data-status={summary.status}
-                style={{ margin: 0, fontSize: 18, fontWeight: 700, lineHeight: 1.5 }}
-              >
-                {headline(summary, locale)}
-              </p>
-              <p
-                data-testid={`exercises-level-status-${level}`}
-                style={{ ...MUTED, margin: 0, fontSize: 14 }}
-              >
-                {explain(summary, locale)}
-              </p>
+              <LevelLines summary={summary} />
               <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
                 {nextId ? (
                   <Link
@@ -129,7 +118,7 @@ export function ExerciseHubBody({ store: injected }: { store?: AttemptStore }) {
                     data-testid="exercises-hub-cycle-link"
                     style={{ ...LINK, display: 'inline-flex', alignItems: 'center', minHeight: 44 }}
                   >
-                    {t('measure before studying', '勉強の前にはかる')}
+                    {MEASURE_FIRST[locale]}
                   </Link>
                 </p>
               ) : null}

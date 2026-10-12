@@ -1,7 +1,13 @@
-import { Fragment, useState, type CSSProperties, type RefObject } from 'react';
+import { Fragment, useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import { Link } from 'react-router-dom';
 import { useGalleryLocale, useT } from '../../localeContext';
-import type { CheckResult, DesignOption, Exercise, GradeResult } from '../model/types';
+import type {
+  CheckResult,
+  DesignOption,
+  Exercise,
+  GradeResult,
+  SettingChange,
+} from '../model/types';
 import type { AttemptPrediction } from '../store/types';
 import { changeSentence, goalLabel } from './describe';
 import { lessonTitle } from './lessonTitle';
@@ -47,13 +53,52 @@ function GoalMark({ mark }: { mark: Mark }) {
 
 // --- Brief -------------------------------------------------------------------
 
+/**
+ * The goals of an exercise, each with its mark once Check has run. On a phone
+ * they are part of the brief; beside the diagram they stand under the
+ * settings, so that what there is to press is on screen without scrolling.
+ */
+export function GoalList({
+  exercise,
+  results,
+  compact = false,
+}: {
+  exercise: Exercise;
+  results: readonly CheckResult[] | null;
+  compact?: boolean;
+}) {
+  const locale = useGalleryLocale();
+  const t = useT();
+  return (
+    <ul
+      data-testid="exercise-goals"
+      aria-label={t('Goals', '目標')}
+      style={compact ? { ...LIST, gap: 4, fontSize: 15, lineHeight: 1.5 } : LIST}
+    >
+      {exercise.checks.map((check) => {
+        const result = results?.find((entry) => entry.checkId === check.id);
+        const mark: Mark = !result ? 'neutral' : result.passed ? 'done' : 'not-yet';
+        return (
+          <li key={check.id} data-testid={`exercise-goal-${check.id}`} data-mark={mark}>
+            <GoalMark mark={mark} />
+            {goalLabel(exercise, check)[locale]}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export function ExerciseBrief({
   exercise,
   results,
   compact = false,
   countRule = null,
   pickFirst = false,
+  goals = true,
 }: {
+  /** Whether the goals are listed here (a phone) or elsewhere on the page. */
+  goals?: boolean;
   exercise: Exercise;
   /** Before the first Check: within how many Checks a solve counts. Null once one was pressed. */
   countRule?: 1 | 2 | null;
@@ -105,21 +150,7 @@ export function ExerciseBrief({
           {exercise.brief[locale]}
         </p>
       )}
-      <ul
-        aria-label={t('Goals', '目標')}
-        style={compact ? { ...LIST, gap: 4, fontSize: 15, lineHeight: 1.5 } : LIST}
-      >
-        {exercise.checks.map((check) => {
-          const result = results?.find((entry) => entry.checkId === check.id);
-          const mark: Mark = !result ? 'neutral' : result.passed ? 'done' : 'not-yet';
-          return (
-            <li key={check.id} data-testid={`exercise-goal-${check.id}`} data-mark={mark}>
-              <GoalMark mark={mark} />
-              {goalLabel(exercise, check)[locale]}
-            </li>
-          );
-        })}
-      </ul>
+      {goals ? <GoalList exercise={exercise} results={results} compact={compact} /> : null}
       {countRule === null ? null : (
         <p
           data-testid="exercise-count-rule"
@@ -128,8 +159,8 @@ export function ExerciseBrief({
         >
           {pickFirst
             ? t(
-                'This one counts only if you point at the right device first and the first Check solves it.',
-                'この問題は、1 回目で正しい機器をえらび、1 回目の「たしかめる」で解けたときだけ数えます。',
+                'Counts only if your first choice and your first Check are right.',
+                'えらぶのも「たしかめる」も 1 回目だけ数えます。',
               )
             : countRule === 1
               ? t(
@@ -337,8 +368,8 @@ export function ResultPanel({
           {!grade.passed && failedChecks >= checksToCount ? (
             <p data-testid="exercise-tries-note" style={{ ...MUTED, margin: 0, fontSize: 14 }}>
               {t(
-                `From the next Check on, a pass is recorded as “solved after several tries”.`,
-                `次の「たしかめる」からは、解けても「何度かためして解けた」として記録されます。`,
+                'Starting again does not change this one: it stays “solved after several tries”. You can make it up on the next exercise.',
+                'やり直しても、この問題は「何度かためして解けた」のままです。次の問題でとり返せます。',
               )}
             </p>
           ) : null}
@@ -442,12 +473,18 @@ export function GiveUp({
   revealed,
   onReveal,
   onApply,
+  reference = exercise.reference,
 }: {
   exercise: Exercise;
   revealed: boolean;
   onReveal: () => void;
   /** Put the reference solution into the form. Absent where there is no form (design exercises). */
   onApply?: () => void;
+  /**
+   * The solution as this attempt can press it (`referenceAsOffered`): the
+   * answer named an address that was not among the chips on screen.
+   */
+  reference?: readonly SettingChange[];
 }) {
   const locale = useGalleryLocale();
   const t = useT();
@@ -466,7 +503,7 @@ export function GiveUp({
           </p>
         ) : (
           <ol style={{ margin: 0, paddingLeft: 22, display: 'grid', gap: 4 }}>
-            {exercise.reference.map((change, index) => (
+            {reference.map((change, index) => (
               <li key={index}>{changeSentence(change, exercise.start)[locale]}</li>
             ))}
           </ol>
@@ -592,6 +629,12 @@ export function DesignChooser({
     ['detour', t('It arrives, but the long way round', '届くが、遠回りになる')],
   ];
   const mark = (on: boolean) => (on ? <span aria-hidden="true">✓ </span> : null);
+  // The question appears under the design just chosen, which on most screens is
+  // below what is visible: a learner pressed Check without ever seeing it.
+  const predictRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (chosenId !== null) predictRef.current?.scrollIntoView?.({ block: 'nearest' });
+  }, [chosenId]);
   const needed = (text: string) => (
     <p
       ref={needsRef}
@@ -637,8 +680,11 @@ export function DesignChooser({
               </button>
               {chosen ? (
                 <div
+                  ref={predictRef}
                   data-testid="exercise-predict"
                   style={{
+                    scrollMarginBottom: 16,
+                    scrollMarginTop: 60,
                     display: 'grid',
                     gap: 8,
                     marginLeft: 12,

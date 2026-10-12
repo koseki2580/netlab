@@ -285,6 +285,81 @@ test.describe('in Japanese', () => {
   });
 
   /**
+   * TC-612 — where the unplugged cable shares a stretch of its drawn line with
+   * a healthy one, a press there plugs in the unplugged one (it used to unplug
+   * the other), and the page says what the press did.
+   */
+  test('a press where the red dotted cable runs along another cable plugs the dotted one in', async ({
+    page,
+    demoPage,
+  }) => {
+    const CABLE = 'l1-cable-off~6';
+    const { reference } = exercise(CABLE);
+    const [fix] = reference;
+    if (fix?.kind !== 'link-state') throw new Error('the pinned cable exercise changed');
+    await open(page, demoPage, CABLE);
+    await expect(
+      page.getByTestId(X.diagram).locator(`[data-edge-id="${fix.edgeId}"]`),
+    ).toHaveAttribute('data-edge-state', 'down');
+
+    // Where the lines are drawn is the canvas's business: read off the picture
+    // the point of another cable that lies closest to the unplugged one.
+    const shared = await page.getByTestId(X.diagram).evaluate((diagram, downId) => {
+      const boxes = [...diagram.querySelectorAll('[data-testid="topology-node"]')].map((node) =>
+        node.getBoundingClientRect(),
+      );
+      const clear = (x: number, y: number) =>
+        !boxes.some(
+          (box) =>
+            x >= box.left - 6 && x <= box.right + 6 && y >= box.top - 6 && y <= box.bottom + 26,
+        );
+      const lines = [...diagram.querySelectorAll<SVGGElement>('g.netlab-edge[data-edge-id]')].map(
+        (group) => {
+          const path = group.querySelector('path');
+          const matrix = path?.getScreenCTM();
+          const points: { x: number; y: number }[] = [];
+          if (path && matrix) {
+            const length = path.getTotalLength();
+            for (let at = 0; at <= length; at += 3) {
+              const point = path.getPointAtLength(at);
+              points.push({
+                x: point.x * matrix.a + point.y * matrix.c + matrix.e,
+                y: point.x * matrix.b + point.y * matrix.d + matrix.f,
+              });
+            }
+          }
+          return { id: group.getAttribute('data-edge-id'), points };
+        },
+      );
+      const down = lines.find((line) => line.id === downId);
+      let best: { x: number; y: number; distance: number } | null = null;
+      for (const point of (down?.points ?? []).filter((one) => clear(one.x, one.y))) {
+        for (const line of lines) {
+          if (line.id === downId) continue;
+          for (const other of line.points) {
+            const distance = Math.hypot(point.x - other.x, point.y - other.y);
+            // The point ON THE OTHER cable: nearest to the healthy line, the dotted one beside it.
+            if (best === null || distance < best.distance) best = { ...other, distance };
+          }
+        }
+      }
+      return best;
+    }, fix.edgeId);
+    if (!shared) throw new Error('the unplugged cable is not drawn');
+    // The two lines really do run together there: well inside the band a press is taken in.
+    expect(shared.distance).toBeLessThan(6);
+
+    await page.mouse.click(shared.x, shared.y);
+    await expect(page.getByTestId(X.cableSaid)).toHaveAttribute('data-state', 'up');
+    await expect(page.getByTestId(X.cableSaid)).toContainText('つなぎました');
+    const toggles = page.getByTestId(X.settings).getByRole('switch');
+    for (const toggle of await toggles.all()) {
+      await expect(toggle).toHaveAttribute('aria-checked', 'true');
+    }
+    await check(page, true);
+  });
+
+  /**
    * TC-533 — the result can be watched: the packet the judgement was made on
    * is replayed on the diagram, until a setting changes.
    */
@@ -352,15 +427,13 @@ test.describe('in Japanese', () => {
     page,
     demoPage,
   }) => {
-    const [answer] = exercise(HOST).reference;
     await open(page, demoPage, HOST);
     await page.getByTestId(X.giveUp).click();
     // Asked first: the answer is not shown by one stray press.
     await expect(page.getByTestId(X.reference)).toHaveCount(0);
     await page.getByTestId(X.giveUpYes).click();
-    await expect(page.getByTestId(X.reference)).toContainText(
-      answer?.kind === 'host-ip' ? (answer.ip ?? '-') : '-',
-    );
+    // TC-616: the answer names the address that is among the chips on screen.
+    await expect(page.getByTestId(X.reference)).toContainText(hostChips().right);
     await expect(page.getByTestId(X.reference)).toContainText('数えません');
 
     await page.getByTestId(X.referenceApply).click();
@@ -411,8 +484,11 @@ test.describe('in Japanese', () => {
     await expect(page.getByTestId(X.designNeeded)).toBeVisible();
     await expect(page.getByTestId(X.result)).not.toHaveAttribute('data-passed');
 
-    // Chosen but not predicted: still not run.
+    // Chosen but not predicted: still not run. TC-617: the question is on screen
+    // and the button says what a press will bring.
     await page.getByTestId(X.option(wrong.id)).click();
+    await expect(page.getByTestId(X.predict('reach'))).toBeInViewport({ ratio: 1 });
+    await expect(page.getByTestId(X.check)).toHaveText('先に予想をえらぶ');
     await page.getByTestId(X.check).click();
     await expect(page.getByTestId(X.designNeeded)).toBeVisible();
     await expect(page.getByTestId(X.result)).not.toHaveAttribute('data-passed');
@@ -428,6 +504,89 @@ test.describe('in Japanese', () => {
     await expect(page.getByTestId(X.predictionOutcome)).toHaveAttribute('data-correct', 'true');
   });
 
+  /** TC-598, TC-600 — an exercise missed and opened again is another instance, and the miss stays a miss. */
+  test('opening an exercise again after a miss gives other values, and the miss still counts', async ({
+    page,
+    demoPage,
+  }) => {
+    await open(page, demoPage, HOST);
+    await chipOf(page, hostChips().wrong).click();
+    await check(page, false);
+    await expect(page.getByTestId(X.triesNote)).toContainText(
+      'やり直しても、この問題は「何度かためして解けた」のままです。次の問題でとり返せます。',
+    );
+
+    await page.reload();
+    const panel = page.getByTestId(X.panel);
+    await expect(panel).not.toHaveAttribute('data-exercise-id', HOST);
+    await expect(panel).toHaveAttribute('data-exercise-id', /^l1-host-address~\d+$/);
+    // The answer that would have worked there is not offered here.
+    await expect(chipOf(page, hostChips().right)).toHaveCount(0);
+
+    await demoPage.goto('/exercises/level/1');
+    await expect(page.getByTestId(X.kind('l1-host-address'))).toHaveAttribute('data-solved', '0');
+    await expect(page.getByTestId(X.recent)).toContainText('まだ解けていない');
+  });
+
+  /** TC-605 — the router exercise: choose the side, change your mind, fix it, one Check. */
+  test('the side of a router is chosen before it can be changed, and can be changed until Check', async ({
+    page,
+    demoPage,
+  }) => {
+    const id = 'l1-router-address~0';
+    const [wrong] = exercise(id).pickFirst?.faulty ?? [];
+    if (wrong === undefined) throw new Error('the pinned exercise has no side to choose');
+    const other = ['r1:lan', 'r1:far'].find((key) => key !== wrong) ?? '';
+    await open(page, demoPage, id);
+    await expect(page.getByTestId(X.suspectStep)).toContainText('側を えらんでください');
+    await expect(page.getByTestId(X.chip(0))).toHaveCount(0);
+
+    await page.getByTestId(X.suspect(other)).click();
+    await expect(page.getByTestId(X.chip(0))).toBeVisible();
+    await page.getByTestId(X.suspect(wrong)).click();
+    await expect(page.getByTestId(X.suspect(other))).toBeVisible();
+    const [fix] = exercise(id).reference;
+    if (fix?.kind !== 'iface-address') throw new Error('the fix is not a router address');
+    await page.getByTestId(`${settingTestId(refOf(fix))}-input`).fill(fix.ipAddress);
+    await check(page, true);
+    await expect(page.getByTestId(X.resultDone)).toHaveAttribute('data-counted', 'solved');
+  });
+
+  /** TC-601 — a route whose next router is on the far side of the neighbour is not a pass. */
+  test('a route to the far side of the neighbouring router is refused, with the rule and without the value', async ({
+    page,
+    demoPage,
+  }) => {
+    const id = 'l2-static-missing~0';
+    const found = exercise(id);
+    const [unsound] = found.unsoundPasses?.[0] ?? [];
+    if (unsound?.kind !== 'static-routes') throw new Error('no far-side route to try');
+    const route = unsound.routes[unsound.routes.length - 1];
+    if (!route) throw new Error('the far-side route is empty');
+    await open(page, demoPage, id);
+    const card = settingTestId(refOf(unsound));
+    const row = unsound.routes.length - 1;
+    await page.getByTestId(`${card}-add`).click();
+    // Typed with a keyboard left in full-width mode (TC-614).
+    const wide = (text: string) =>
+      text
+        .replace(/[0-9]/g, (digit) => String.fromCharCode(digit.charCodeAt(0) + 0xfee0))
+        .replace(/\./g, '．')
+        .replace(/\//g, '／');
+    await page.getByTestId(`${card}-row-${row}-destination`).fill(wide(route.destination));
+    await page.getByTestId(`${card}-row-${row}-nexthop`).fill(wide(route.nextHop));
+    await expect(page.getByTestId(`${card}-row-${row}-nexthop`)).toHaveValue(route.nextHop);
+    await check(page, false);
+    const result = page.getByTestId(X.result);
+    await expect(result).toContainText(
+      '次のルータは、となりのルータの「こちら側」のアドレスです。向こう側のアドレスは書けません。',
+    );
+    // TC-618: "start over" takes the result off the screen.
+    await page.getByTestId(X.reset).click();
+    await expect(result).not.toHaveAttribute('data-passed');
+    await expect(page.getByTestId(X.resultSummary)).toHaveCount(0);
+  });
+
   /** TC-519 — the record is kept on the device: a reload does not lose it. */
   test('a reload keeps the recorded attempts', async ({ page, demoPage }) => {
     await open(page, demoPage, HOST);
@@ -439,7 +598,8 @@ test.describe('in Japanese', () => {
     await demoPage.goto('/exercises');
     const status = page.getByTestId(X.levelStatus(1));
     await expect(status).toContainText('まだ 1 問');
-    const before = await status.innerText();
+    // The full rule is behind a toggle (TC-610): read, not seen.
+    const before = (await status.textContent()) ?? '';
 
     await page.reload();
     await expect(page.getByTestId(X.levelStatus(1))).toHaveText(before);
@@ -448,6 +608,78 @@ test.describe('in Japanese', () => {
     await expect(page.getByTestId(X.recent)).toContainText('開いただけ');
   });
 });
+
+/**
+ * TC-620, TC-621 — on the screens learners sit at, what there is to press is on
+ * screen when the exercise opens: every address offered, every "this one is
+ * wrong" button, above the bar that holds Check; and a note under a device at
+ * the edge of the picture is not cut off.
+ */
+for (const size of [
+  { width: 1366, height: 768 },
+  { width: 1280, height: 720 },
+]) {
+  test.describe(`at ${size.width}×${size.height}`, () => {
+    test.beforeEach(async ({ page }) => {
+      await page.setViewportSize(size);
+      await useLocale(page, 'ja');
+    });
+
+    /** Every one of `controls` is wholly on screen and above the Check bar. */
+    async function allInView(page: Page, controls: ReturnType<Page['locator']>) {
+      const bar = await page.getByTestId(X.actions).boundingBox();
+      if (!bar) throw new Error('no Check bar');
+      const count = await controls.count();
+      expect(count).toBeGreaterThan(1);
+      for (let index = 0; index < count; index += 1) {
+        const box = await controls.nth(index).boundingBox();
+        if (!box) throw new Error(`control ${index} is not drawn`);
+        expect(box.y, `control ${index}: top`).toBeGreaterThanOrEqual(0);
+        expect(box.y + box.height, `control ${index}: bottom`).toBeLessThanOrEqual(bar.y + 0.5);
+      }
+    }
+
+    test('every address offered is on screen with the Check bar', async ({ page, demoPage }) => {
+      await open(page, demoPage, 'l1-prefix-fit~1');
+      await expect(page.getByTestId(X.chip(5))).toBeVisible();
+      await allInView(page, page.getByTestId(X.settings).locator('[data-address]'));
+    });
+
+    test('every "this one is wrong" button is on screen with the Check bar', async ({
+      page,
+      demoPage,
+    }) => {
+      await open(page, demoPage, 'l1-which-pc~0');
+      await allInView(page, page.getByTestId(X.settings).getByRole('button'));
+      await open(page, demoPage, 'l1-router-address~0');
+      await allInView(page, page.getByTestId(X.settings).getByRole('button'));
+    });
+
+    test('the VLAN number under a device at the right edge is not cut off', async ({
+      page,
+      demoPage,
+    }) => {
+      await open(page, demoPage, 'l2-vlan-access~0');
+      const diagram = await page.getByTestId(X.diagram).boundingBox();
+      if (!diagram) throw new Error('no diagram');
+      const lines = page.getByTestId(X.diagram).getByTestId('topology-node-ip');
+      await expect(lines.first()).toBeVisible();
+      // The line holds the address and, as generated content, the VLAN number: how far it reaches.
+      const reach = await lines.evaluateAll((elements) =>
+        elements.map((element) => {
+          const box = element.getBoundingClientRect();
+          const over = element.scrollWidth - element.clientWidth;
+          return { left: box.left - over, right: box.right + over };
+        }),
+      );
+      expect(reach.length).toBeGreaterThan(2);
+      for (const line of reach) {
+        expect(line.right).toBeLessThanOrEqual(diagram.x + diagram.width);
+        expect(line.left).toBeGreaterThanOrEqual(diagram.x);
+      }
+    });
+  });
+}
 
 /** TC-520 — the same exercise in English: its text, its goals and its device names. */
 test('an exercise is in one language at a time, and English names its devices in English', async ({

@@ -14,6 +14,16 @@ export const LEVEL_NAMES: Readonly<Record<ExerciseLevel, Localised>> = {
   4: { en: 'Finding and fixing several faults', ja: 'いくつもの原因を見つけて直す' },
 };
 
+/**
+ * The before/after measurement, by the one name it has on every page: the
+ * hub's link and the level page's heading and button said it three ways.
+ */
+export const MEASURE_FIRST: Localised = { en: 'Measure before studying', ja: '勉強の前にはかる' };
+export const BEFORE_AND_AFTER: Localised = {
+  en: 'Compare before and after studying',
+  ja: '勉強の前と後でくらべる',
+};
+
 export function parseLevel(text: string | undefined): ExerciseLevel | undefined {
   return ([1, 2, 3, 4] as const).find((level) => String(level) === text);
 }

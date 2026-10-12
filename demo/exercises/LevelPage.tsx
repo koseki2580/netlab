@@ -1,15 +1,30 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useGalleryLocale, useT } from '../localeContext';
-import { exerciseById, levelTemplates, nextExerciseId, type TemplateInfo } from './exerciseSource';
+import {
+  exerciseById,
+  learnerSalt,
+  levelTemplates,
+  nextExerciseId,
+  type TemplateInfo,
+} from './exerciseSource';
 import type { ExerciseLevel } from './model/types';
 import type { AttemptStore } from './store/attemptStore';
-import { explain, headline, isSolved, levelSummary } from './store/estimate';
+import { isAttempted, isSolved, levelSummary } from './store/estimate';
 import { CYCLE_SET_SIZE, cycleReport, recordLessonOpened, startCycle } from './store/studyCycle';
 import type { AttemptRecord, StudyCycle } from './store/types';
 import { CeilingNote } from './ui/CeilingNote';
 import { cycleStage, latestCycle } from './ui/cycleFlow';
 import { LessonLinks } from './ui/ExerciseParts';
-import { ExerciseShell, LEVEL_NAMES, exercisePath, outcomeWords, parseLevel } from './ui/pageParts';
+import { LevelLines } from './ui/LevelLines';
+import {
+  BEFORE_AND_AFTER,
+  ExerciseShell,
+  LEVEL_NAMES,
+  MEASURE_FIRST,
+  exercisePath,
+  outcomeWords,
+  parseLevel,
+} from './ui/pageParts';
 import { CARD, COLUMN, LINK, MUTED, PAGE, PRIMARY, SECONDARY } from './ui/styles';
 import { StorageNotice, useExerciseStore } from './ui/useExerciseStore';
 
@@ -32,6 +47,7 @@ function CycleCard({
   now: () => number;
 }) {
   const t = useT();
+  const locale = useGalleryLocale();
   const navigate = useNavigate();
   const stage = cycle ? cycleStage(cycle, attempts) : null;
 
@@ -60,11 +76,11 @@ function CycleCard({
         <>
           <p style={{ margin: 0 }}>
             {t(
-              `Want to see whether studying helps? Do ${CYCLE_SET_SIZE} exercises now, study the lessons, then do ${CYCLE_SET_SIZE} similar ones and compare.`,
-              `学ぶ前と学んだあとを比べられます。いま ${CYCLE_SET_SIZE} 問解き、レッスンで学び、そのあと似た ${CYCLE_SET_SIZE} 問を解いて比べます。`,
+              `Going to study first? Do ${CYCLE_SET_SIZE} exercises now, study the lessons, then do ${CYCLE_SET_SIZE} similar ones and see what changed. The ${CYCLE_SET_SIZE} you do before studying are not counted toward the level.`,
+              `これから勉強するなら、いま ${CYCLE_SET_SIZE} 問解き、レッスンで学び、そのあと似た ${CYCLE_SET_SIZE} 問を解いて、どれだけ解けるようになったかを見られます。勉強の前の ${CYCLE_SET_SIZE} 問は、レベルの判定には入れていません。`,
             )}
           </p>
-          {startButton(t('Measure before studying', '学ぶ前に測る'))}
+          {startButton(MEASURE_FIRST[locale])}
         </>
       );
     }
@@ -114,6 +130,16 @@ function CycleCard({
                   `Before studying you solved ${report.before.solved} of ${report.before.total} without help.${lessons.length > 0 ? ' These lessons teach what you did not solve.' : ''} After studying, check with ${report.before.total} similar ones.`,
                   `学ぶ前は、${report.before.total} 問中 ${report.before.solved} 問をヒントなしで解けました。${lessons.length > 0 ? '解けなかった問題の内容は、下のレッスンで学べます。' : ''}学んだあとに、似た ${report.before.total} 問で確かめましょう。`,
                 )}
+          </p>
+          {/* Beside "you solved all 4" the level said "0 exercises so far": the two count different things. */}
+          <p
+            data-testid="exercises-cycle-not-counted"
+            style={{ ...MUTED, margin: 0, fontSize: 14 }}
+          >
+            {t(
+              `The ${report.before.total} exercises before studying are not counted toward the level.`,
+              `学ぶ前の ${report.before.total} 問は、レベルの判定には入れていません。`,
+            )}
           </p>
           <LessonLinks
             lessons={lessons}
@@ -174,9 +200,7 @@ function CycleCard({
 
   return (
     <section data-testid="exercises-cycle" style={{ ...CARD, display: 'grid', gap: 10 }}>
-      <h3 style={{ margin: 0, fontSize: 16 }}>
-        {t('Before and after studying', '学ぶ前と、学んだあと')}
-      </h3>
+      <h3 style={{ margin: 0, fontSize: 16 }}>{BEFORE_AND_AFTER[locale]}</h3>
       {body}
     </section>
   );
@@ -203,6 +227,7 @@ export function LevelPageBody({
     // Never the template just done, twice in a row.
     ...(last ? { avoidTemplateIds: [last.templateId] } : {}),
     seenIds: state.attempts.map((attempt) => attempt.exerciseId),
+    salt: learnerSalt(state.attempts),
   });
   /** Distinct exercises of a template solved without help. */
   const solvedOf = (templateId: string) =>
@@ -211,6 +236,24 @@ export function LevelPageBody({
         .filter((attempt) => attempt.templateId === templateId && isSolved(attempt))
         .map((a) => a.exerciseId),
     ).size;
+
+  // The before/after measurement is for a learner who has not begun the level,
+  // or is in the middle of one: for them it comes first. It used to be at the
+  // very bottom, under other words than the hub's link to it.
+  const cycle = latestCycle(state.cycles, level);
+  const cycleOpen = cycle !== undefined && cycleStage(cycle, state.attempts).stage !== 'done';
+  const cycleFirst = cycleOpen || !mine.some(isAttempted);
+  const cycleCard =
+    templates.length > 0 ? (
+      <CycleCard
+        level={level}
+        templates={templates}
+        cycle={cycle}
+        attempts={state.attempts}
+        store={store}
+        now={now}
+      />
+    ) : null;
 
   return (
     <div style={PAGE}>
@@ -224,6 +267,8 @@ export function LevelPageBody({
 
         <StorageNotice store={store} />
 
+        {cycleFirst ? cycleCard : null}
+
         <section
           data-testid={`exercises-level-${level}`}
           style={{ ...CARD, display: 'grid', gap: 10 }}
@@ -232,19 +277,7 @@ export function LevelPageBody({
             {t(`Level ${level}`, `レベル ${level}`)}
             <span style={{ fontWeight: 400 }}> — {LEVEL_NAMES[level][locale]}</span>
           </h2>
-          <p
-            data-testid={`exercises-level-headline-${level}`}
-            data-status={summary.status}
-            style={{ margin: 0, fontSize: 18, fontWeight: 700, lineHeight: 1.5 }}
-          >
-            {headline(summary, locale)}
-          </p>
-          <p
-            data-testid={`exercises-level-status-${level}`}
-            style={{ ...MUTED, margin: 0, fontSize: 14 }}
-          >
-            {explain(summary, locale)}
-          </p>
+          <LevelLines summary={summary} />
           {nextId ? (
             <div>
               <Link
@@ -261,6 +294,8 @@ export function LevelPageBody({
             </p>
           )}
         </section>
+
+        {cycleFirst ? null : cycleCard}
 
         {weakest ? (
           <section data-testid="exercises-weakest" style={{ ...CARD, display: 'grid', gap: 6 }}>
@@ -298,17 +333,6 @@ export function LevelPageBody({
               })}
             </ul>
           </section>
-        ) : null}
-
-        {templates.length > 0 ? (
-          <CycleCard
-            level={level}
-            templates={templates}
-            cycle={latestCycle(state.cycles, level)}
-            attempts={state.attempts}
-            store={store}
-            now={now}
-          />
         ) : null}
 
         {mine.length > 0 ? (

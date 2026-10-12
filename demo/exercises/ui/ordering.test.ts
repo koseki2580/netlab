@@ -4,7 +4,7 @@ import { exerciseById, exercisePool, templateIdOf } from '../exerciseSource';
 import type { Exercise } from '../model/types';
 import { attemptOrder, FIRST_ORDER, placeIn } from './attemptOrder';
 import { orderedOptions, pressCards } from './choices';
-import { sameSetting } from './describe';
+import { cableSentence, sameSetting } from './describe';
 import { settingOrder } from './settingOrder';
 
 /** No place may hold the right answer in more than this share of a template's instances. */
@@ -171,5 +171,31 @@ describe('the order of the setting cards', () => {
       const first = found.filter((place) => place === 0).length / found.length;
       expect(first, `${templateId}: ${found.join('')}`).toBeLessThanOrEqual(0.5);
     }
+  });
+});
+
+// TC-613
+describe('the cable exercise: the cables come first, and a press on one is said back', () => {
+  const exercise = exerciseById('l1-cable-off~0', 'ja');
+  if (!exercise) throw new Error('no l1-cable-off~0');
+
+  it('lists every cable before the address that is only there as a distractor', () => {
+    const kinds = settingOrder(exercise.allowed, exercise.start).map((ref) => ref.kind);
+    const firstOther = kinds.findIndex((kind) => kind !== 'link-state');
+    expect(firstOther).toBeGreaterThan(0);
+    expect(kinds.slice(firstOther)).not.toContain('link-state');
+  });
+
+  it('says which device’s cable was plugged in or unplugged', () => {
+    const down = exercise.start.edges.find((edge) => edge.data?.state === 'down');
+    if (!down) throw new Error('no cable is out');
+    const role = (id: string) => exercise.start.nodes.find((node) => node.id === id)?.data.role;
+    const end = [down.source, down.target].find(
+      (id) => role(id) !== 'switch' && role(id) !== 'router',
+    );
+    const label = exercise.start.nodes.find((node) => node.id === end)?.data.label;
+    const said = cableSentence(exercise.start, down.id, 'up');
+    if (label !== undefined) expect(said.ja).toBe(`${label}のケーブルをつなぎました。`);
+    expect(cableSentence(exercise.start, down.id, 'down').ja).toMatch(/はずしました。$/);
   });
 });

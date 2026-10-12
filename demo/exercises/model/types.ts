@@ -302,13 +302,19 @@ export interface Exercise {
    */
   readonly nodeLabels?: Readonly<Record<string, Localised>>;
   /**
-   * A find-the-fault exercise in two steps: the learner first points at the
-   * device they think is at fault (on the diagram or on its card), and only
-   * then can change it. `faulty` are the node ids that are right to point at
-   * (two, where two devices hold one address). The devices to choose among are
-   * those of the allowed settings.
+   * An exercise in two steps: the learner first points at what they think is
+   * at fault (on the diagram or on its card), and only that can be changed.
+   * The pick can be changed until Check is pressed; Check commits it, and a
+   * wrong pick is a missed Check. `faulty` are the keys that are right to
+   * point at (`model/pick.ts`): node ids (two, where two devices hold one
+   * address), or `node:side` keys with `by: 'side'`, where the choice is
+   * between the two sides of one router. What there is to choose among are
+   * the allowed settings.
    */
-  readonly pickFirst?: { readonly faulty: readonly string[] };
+  readonly pickFirst?: {
+    readonly faulty: readonly string[];
+    readonly by?: 'device' | 'side';
+  };
   /**
    * Natural wrong answers, each of which must fail the grade. For the
    * verification harness only: never show these to a learner.
@@ -357,6 +363,12 @@ export type CheckResultCode =
   | 'too-many-changes'
   /** A setting that was fine at the start was changed (`changed-only`). */
   | 'changed-elsewhere'
+  /**
+   * A route the learner wrote names a next router that is not on a network
+   * its router is connected to. The simulator forwards to it; a real router
+   * would not accept the line.
+   */
+  | 'next-hop-not-neighbour'
   | 'no-address'
   | 'config-invalid'
   | 'engine-error';

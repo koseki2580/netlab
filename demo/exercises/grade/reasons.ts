@@ -332,6 +332,10 @@ export const CODE_TEXT: Record<CheckResultCode, Localised> = {
     en: 'What you changed was not what was wrong. Put it back, and compare the others.',
     ja: '変えたところは、おかしい場所ではありません。元に戻して、ほかを見くらべてください。',
   },
+  'next-hop-not-neighbour': {
+    en: 'The next router is the neighbouring router’s address on the side facing this one. An address on its far side cannot be written here.',
+    ja: '次のルータは、となりのルータの「こちら側」のアドレスです。向こう側のアドレスは書けません。',
+  },
   'no-address': {
     en: 'A device has no address, so nothing could be sent. Give it an address first.',
     ja: 'アドレスが入っていない機器があります。まず、アドレスを入れてください。',

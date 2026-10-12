@@ -9,16 +9,27 @@
  */
 
 import { buildLan, LAN_SHAPES, withInterface, withNodeData } from '../shared/build';
+import { evenPlace } from '../shared/draw';
 import { defineTemplate, formNames } from '../shared/exercise';
 import { everyoneReaches, setIp } from '../shared/lan';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan, net24 } from '../shared/plans';
 import { L, say, the, The } from '../shared/text';
 
+/**
+ * The "/number" of each run of four seeds: a /24 once, where copying a
+ * neighbour's first three numbers IS the rule, and a /16 or a /8 three times,
+ * where it is not.
+ */
+const LENGTHS = [16, 8, 24, 16] as const;
+/** Keeps this template's order of "/number"s its own (`evenPlace`). */
+const LENGTH_SALT = 5;
+
 /** A network per "/number": its fixed first numbers, and middle numbers for variety. */
 const FITS = {
   8: {
     count: L('first number', 'はじめの 1 つの数字'),
+    free: L('The second and the third may differ.', '2 つ目と 3 つ目はちがってよい。'),
     bases: [
       { fixed: '10', inside: ['0.0', '3.2', '20.0'], outside: '11' },
       { fixed: '10', inside: ['1.1', '1.2', '40.7'], outside: '12' },
@@ -26,6 +37,7 @@ const FITS = {
   },
   16: {
     count: L('first two numbers', 'はじめの 2 つの数字'),
+    free: L('The third may differ.', '3 つ目はちがってよい。'),
     bases: [
       { fixed: '172.16', inside: ['0', '4', '9'], outside: '172.17' },
       { fixed: '10.5', inside: ['0', '2', '7'], outside: '10.6' },
@@ -33,6 +45,7 @@ const FITS = {
   },
   24: {
     count: L('first three numbers', 'はじめの 3 つの数字'),
+    free: L('Only the last one differs.', 'ちがうのは最後の数字だけ。'),
     bases: [
       { fixed: '192.168.3', inside: ['', '', ''], outside: '192.168.4' },
       { fixed: '10.1.2', inside: ['', '', ''], outside: '10.1.3' },
@@ -47,7 +60,7 @@ export const l1PrefixFit = defineTemplate(
     kind: 'configure',
     title: L('Read the "/number" and pick an address', '「/数字」を読んでアドレスを決める'),
   },
-  (draw) => {
+  (draw, seed) => {
     // --- Drawn from the seed ---
     const place = drawPlace(draw);
     // The servers' side gets a network that overlaps none of the networks below.
@@ -56,7 +69,7 @@ export const l1PrefixFit = defineTemplate(
       far: net24(draw.pick(['192.168.200', '172.20.8', '192.168.50'])),
     };
     const shape = draw.pick(LAN_SHAPES);
-    const length = draw.pick([8, 16, 24]);
+    const length = LENGTHS[evenPlace(seed, LENGTHS.length, LENGTH_SALT)] ?? 16;
     const fit = FITS[length];
     const base = draw.pick(fit.bases);
 
@@ -129,9 +142,10 @@ export const l1PrefixFit = defineTemplate(
         `Fix the address of ${the(dev)} so that it belongs to the network of the devices around it.`,
         `${dev.ja}のアドレスを、まわりの機器の仲間に入るように直してください。`,
       ),
+      // The rule of THIS network alone: three "/number"s in one line were not read.
       rule: L(
-        'Rule: read the "/number" after the router’s address. /8: the first number must match; /16: the first two; /24: the first three.',
-        'ルール：ルータのアドレスのうしろの「/数字」を見る。/8 ははじめの 1 つ、/16 は 2 つ、/24 は 3 つの数字が同じなら仲間。',
+        `Rule: the router says /${length}. Devices whose ${fit.count.en} match belong together. ${fit.free.en}`,
+        `ルール：ルータは /${length}。${fit.count.ja}が同じなら仲間。${fit.free.ja}`,
       ),
       brief,
       topology,

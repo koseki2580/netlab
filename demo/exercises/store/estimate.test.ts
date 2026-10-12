@@ -11,10 +11,12 @@ import {
   isAttempted,
   isSolved,
   levelSummary,
-  REQUIRED_KINDS,
+  LEVEL_KINDS,
+  stillMissing,
+  whatNext,
   isSolvedAfterTries,
 } from './estimate';
-import { attempt, failed, helped, solved, solvedRun } from './testSupport';
+import { attempt, clearingRun, failed, helped, solved, solvedRun } from './testSupport';
 import type { PlacementResult } from './types';
 
 const JAPANESE = /[぀-ヿ一-龯]/;
@@ -48,36 +50,68 @@ describe('isSolved', () => {
   });
 });
 
-// TC-584
-describe('one clean solve of every kind of task', () => {
-  const of = (kind: 'configure' | 'diagnose-repair' | 'choose-design', seed: number) =>
-    attempt(`l1-${kind}-${seed % 3}`, seed, 1, { kind });
-  const eightWithoutAFault = Array.from({ length: 8 }, (_, i) =>
-    of(i % 2 === 0 ? 'configure' : 'choose-design', i),
-  );
+// TC-584, TC-608
+describe('of every kind of task the level has, the latest one must be solved', () => {
+  const kinds = LEVEL_KINDS[1];
+  const [first = '', second = ''] = kinds;
+  const titleOf = (id: string) => ({ en: `T ${id}`, ja: `題 ${id}` });
 
-  it('a level is not cleared while a kind it has was never solved, however many of the others were', () => {
-    const summary = levelSummary(eightWithoutAFault, 1);
-    expect(summary).toMatchObject({ solved: 8, status: 'in-progress' });
-    expect(summary.missingKinds).toEqual(['diagnose-repair']);
+  it('a level is not cleared while a kind it has was never tried, however many of the others were solved', () => {
+    const attempts = solvedRun(1, 10, kinds.length - 1);
+    const summary = levelSummary(attempts, 1);
+    expect(summary).toMatchObject({ solved: 10, status: 'in-progress' });
+    expect(summary.missingKinds).toEqual([kinds[kinds.length - 1]]);
     expect(headline(summary, 'ja')).toBe(
-      '「おかしい所をさがす」問題が 1 問 とけたら、レベル 1 達成です',
+      'あとは、まだ解けていない種類が解ければ、レベル 1 達成です（いま 10 問）',
     );
-    expect(headline(summary, 'en')).toBe('Solve one "find the fault" exercise to clear level 1');
-    expect(explain(summary, 'ja')).toContain(
-      '「おかしい所をさがす」問題は、まだ 1 問も数えられていません。',
+    expect(stillMissing(summary, 'ja', titleOf)).toBe(
+      `まだ解けていない種類：「題 ${kinds[kinds.length - 1]}」`,
+    );
+    expect(stillMissing(summary, 'en', titleOf)).toBe(
+      `Kinds of task not solved yet: "T ${kinds[kinds.length - 1]}"`,
     );
   });
 
-  it('is cleared once that kind is solved, and a failed one of that kind does not count for it', () => {
-    const failedFault = attempt('l1-fault', 90, 1, {
-      kind: 'diagnose-repair',
-      outcome: 'abandoned',
-    });
-    expect(levelSummary([...eightWithoutAFault, failedFault], 1).status).toBe('in-progress');
-    expect(levelSummary([...eightWithoutAFault, of('diagnose-repair', 91)], 1).status).toBe(
-      'cleared',
+  it('a kind that went wrong the last time keeps the level open, though eight others were solved', () => {
+    const attempts = [...clearingRun(1), solved(second, 50, 1), failed(first, 51, 1)];
+    const summary = levelSummary(attempts, 1);
+    expect(summary).toMatchObject({ counted: 9, solved: 8, status: 'in-progress' });
+    expect(summary.missingKinds).toEqual([first]);
+  });
+
+  it('and is made good by solving the next exercise of that kind', () => {
+    const attempts = [...clearingRun(1), failed(first, 51, 1), solved(first, 52, 1)];
+    expect(levelSummary(attempts, 1)).toMatchObject({ status: 'cleared', missingKinds: [] });
+  });
+
+  it('solving the same exercise again does not make it good', () => {
+    const attempts = [...clearingRun(1), failed(first, 51, 1), solved(first, 51, 1)];
+    expect(levelSummary(attempts, 1).missingKinds).toEqual([first]);
+  });
+
+  it('a kind solved before the last ten still stands, as long as nothing of that kind went wrong since', () => {
+    const others = Array.from({ length: 10 }, (_, i) => solved(second, 200 + i, 1));
+    expect(levelSummary([...clearingRun(1), ...others], 1).missingKinds).toEqual([]);
+  });
+
+  it('names two kinds and counts the rest', () => {
+    const summary = levelSummary(solvedRun(1, 6, 2), 1);
+    expect(summary.missingKinds).toHaveLength(kinds.length - 2);
+    expect(stillMissing(summary, 'ja', titleOf)).toBe(
+      `まだ解けていない種類：「題 ${kinds[2]}」「題 ${kinds[3]}」 ほか ${kinds.length - 4} 種類`,
     );
+    expect(stillMissing(summary, 'en', titleOf)).toBe(
+      `Kinds of task not solved yet: "T ${kinds[2]}", "T ${kinds[3]}" and ${kinds.length - 4} more`,
+    );
+  });
+
+  it('says nothing of kinds before there is a verdict, or once the level is cleared; then it says what is next', () => {
+    expect(stillMissing(levelSummary(solvedRun(1, 2, 2), 1), 'ja', titleOf)).toBeNull();
+    const cleared = levelSummary(clearingRun(1), 1);
+    expect(stillMissing(cleared, 'ja', titleOf)).toBeNull();
+    expect(whatNext(cleared, 'ja')).toBe('つぎは修了テスト（10 問）か、レベル 2 へ。');
+    expect(whatNext(cleared, 'en')).toBe('Next: the final test (10 questions), or level 2.');
+    expect(whatNext(levelSummary(solvedRun(1, 6, 2), 1), 'ja')).toBeNull();
   });
 });
 
@@ -165,7 +199,7 @@ describe('an exercise that was only opened', () => {
 
   it('does not push a counted exercise out of the last ten', () => {
     const later = Array.from({ length: 10 }, (_, i) => opened('l1-seen', 100 + i));
-    expect(levelSummary([...solvedRun(1, 7, 3), ...later], 1)).toMatchObject({
+    expect(levelSummary([...clearingRun(1), ...later], 1)).toMatchObject({
       counted: 7,
       status: 'cleared',
     });
@@ -183,7 +217,7 @@ describe('levelSummary', () => {
       solvedAfterTries: 0,
       notSolved: 0,
       solvedTemplates: 0,
-      missingKinds: REQUIRED_KINDS[2],
+      missingKinds: LEVEL_KINDS[2],
       status: 'not-enough',
       weakestTemplateId: null,
     });
@@ -200,14 +234,14 @@ describe('levelSummary', () => {
     expect(levelSummary(solvedRun(1, 5, 3), 1).status).toBe('in-progress');
   });
 
-  it('clears a level at seven solved across three templates', () => {
-    const attempts = [...solvedRun(2, 7, 3), failed('l2-x', 50, 2), failed('l2-x', 51, 2)];
-    const summary = levelSummary(attempts, 2);
+  it('clears a level at seven solved of the last ten, every kind of task among them', () => {
+    const attempts = [failed('l1-x', 50, 1), failed('l1-x', 51, 1), ...clearingRun(1)];
+    const summary = levelSummary(attempts, 1);
     expect(summary).toMatchObject({
       counted: 9,
       solved: 7,
       notSolved: 2,
-      solvedTemplates: 3,
+      solvedTemplates: 7,
       status: 'cleared',
     });
   });
@@ -247,13 +281,63 @@ describe('levelSummary', () => {
     });
   });
 
-  // TC-456
-  it('counts one exercise once, by its latest attempt', () => {
+  // TC-456, TC-598
+  it('counts one exercise once, by the FIRST attempt the learner was judged on', () => {
     const retried = [failed('a', 0, 1), failed('a', 0, 1), solved('a', 0, 1)];
-    expect(levelSummary(retried, 1)).toMatchObject({ counted: 1, solved: 1, notSolved: 0 });
+    expect(levelSummary(retried, 1)).toMatchObject({ counted: 1, solved: 0, notSolved: 1 });
 
     const lostAgain = [solved('a', 0, 1), failed('a', 0, 1)];
-    expect(levelSummary(lostAgain, 1)).toMatchObject({ counted: 1, solved: 0, notSolved: 1 });
+    expect(levelSummary(lostAgain, 1)).toMatchObject({ counted: 1, solved: 1, notSolved: 0 });
+  });
+
+  // TC-598
+  it('does not let a reopened exercise hide the answer that was shown the first time', () => {
+    const shown = attempt('a', 0, 1, { outcome: 'gave-up', revealed: true, checkPresses: 0 });
+    expect(levelSummary([shown, solved('a', 0, 1)], 1)).toMatchObject({
+      counted: 1,
+      solved: 0,
+      notSolved: 1,
+    });
+  });
+
+  // TC-598
+  it('an exercise that was only opened the first time is judged on the visit that pressed Check', () => {
+    const opened = attempt('a', 0, 1, { outcome: 'abandoned', checkPresses: 0 });
+    expect(levelSummary([opened, solved('a', 0, 1)], 1)).toMatchObject({ counted: 1, solved: 1 });
+  });
+
+  // TC-598
+  it('seven misses, each followed by a clean solve of the same exercise, clear nothing', () => {
+    const attempts = solvedRun(1, 8, 4).flatMap((clean) => [
+      {
+        ...clean,
+        id: `${clean.id}-miss`,
+        startedAt: clean.startedAt - 1,
+        outcome: 'abandoned' as const,
+        firstCheckPassed: false,
+      },
+      clean,
+    ]);
+    expect(levelSummary(attempts, 1)).toMatchObject({
+      counted: 8,
+      solved: 0,
+      status: 'in-progress',
+    });
+  });
+
+  // TC-598
+  it('places an exercise in the last ten by when it was first judged, not by when it was reopened', () => {
+    const old = failed('l1-old', 0, 1);
+    const ten = solvedRun(1, 10, 3, 100);
+    // Reopened and solved at the very end: it is still the eleventh from the end, and still a miss.
+    const summary = levelSummary([old, ...ten, solved('l1-old', 0, 1)], 1);
+    expect(summary).toMatchObject({ counted: 10, solved: 10, notSolved: 0 });
+  });
+
+  // TC-598
+  it('an exercise first met in the set before studying is never counted, whatever happens later', () => {
+    const pre = attempt('a', 0, 1, { context: 'pre', outcome: 'abandoned' });
+    expect(levelSummary([pre, solved('a', 0, 1)], 1)).toMatchObject({ counted: 0 });
   });
 
   // TC-456
@@ -298,8 +382,8 @@ describe('levelSummary', () => {
     const pre = [0, 1, 2, 3].map((i) =>
       attempt('l2-pre', i, 2, { context: 'pre', outcome: 'abandoned' }),
     );
-    const summary = levelSummary([...solvedRun(2, 7, 3, 100), ...pre], 2);
-    expect(summary).toMatchObject({ counted: 7, solved: 7, notSolved: 0, status: 'cleared' });
+    const summary = levelSummary([...clearingRun(2, 100), ...pre], 2);
+    expect(summary).toMatchObject({ counted: 10, solved: 10, notSolved: 0, status: 'cleared' });
   });
 
   // TC-456
@@ -348,28 +432,28 @@ describe('estimatedLevel', () => {
   });
 
   it('is the highest level of an unbroken run of cleared levels', () => {
-    expect(estimatedLevel(solvedRun(1, 7, 3))).toBe(1);
-    expect(estimatedLevel([...solvedRun(1, 7, 3), ...solvedRun(2, 7, 3)])).toBe(2);
+    expect(estimatedLevel(clearingRun(1))).toBe(1);
+    expect(estimatedLevel([...clearingRun(1), ...clearingRun(2)])).toBe(2);
   });
 
   it('stops at a gap: level 3 cleared but level 2 not', () => {
-    const attempts = [...solvedRun(1, 7, 3), ...solvedRun(2, 5, 3), ...solvedRun(3, 7, 3)];
+    const attempts = [...clearingRun(1), ...solvedRun(2, 5, 3), ...clearingRun(3)];
     expect(estimatedLevel(attempts)).toBe(1);
   });
 
   it('is 0 when a level is cleared but level 1 is not', () => {
-    expect(estimatedLevel(solvedRun(2, 7, 3))).toBe(0);
+    expect(estimatedLevel(clearingRun(2))).toBe(0);
   });
 
   it('lets placement stand in for the lower levels', () => {
-    const attempts = [...solvedRun(1, 7, 3), ...solvedRun(3, 7, 3)];
+    const attempts = [...clearingRun(1), ...clearingRun(3)];
     expect(estimatedLevel(attempts, placement(2))).toBe(3);
-    expect(estimatedLevel(solvedRun(3, 7, 3), placement(2))).toBe(3);
+    expect(estimatedLevel(clearingRun(3), placement(2))).toBe(3);
   });
 
   it('does not let placement stand in for a level above its result', () => {
-    expect(estimatedLevel(solvedRun(3, 7, 3), placement(1))).toBe(0);
-    expect(estimatedLevel(solvedRun(3, 7, 3), placement(0))).toBe(0);
+    expect(estimatedLevel(clearingRun(3), placement(1))).toBe(0);
+    expect(estimatedLevel(clearingRun(3), placement(0))).toBe(0);
   });
 
   it('needs the level itself cleared by attempts: placement alone gives 0', () => {
@@ -379,10 +463,7 @@ describe('estimatedLevel', () => {
 
 // TC-459
 describe('explain', () => {
-  const cleared = levelSummary(
-    [...solvedRun(2, 7, 3), ...[0, 1, 2].map((i) => failed('x', i, 2))],
-    2,
-  );
+  const cleared = levelSummary([...[0, 1, 2].map((i) => failed('x', i, 1)), ...clearingRun(1)], 1);
   const notEnough = levelSummary(solvedRun(2, 3, 3), 2);
   const none = levelSummary([], 2);
   const inProgress = levelSummary(
@@ -392,10 +473,10 @@ describe('explain', () => {
 
   it('says a level is cleared, with the numbers', () => {
     expect(explain(cleared, 'ja')).toBe(
-      '直近 10 問のうち 7 問を、ヒントなしで、1 回目の「たしかめる」（自分で入力する問題は 2 回目まで）で解けました（3 種類）。レベル 2 は達成です。',
+      '直近 10 問のうち 7 問を、ヒントなしで、1 回目の「たしかめる」（自分で入力する問題は 2 回目まで）で解けました（7 種類）。レベル 1 は達成です。',
     );
     expect(explain(cleared, 'en')).toBe(
-      'You solved 7 of your last 10 exercises without a hint, on the first Check (within 2 Checks where you type the answer), across 3 kinds of exercise. Level 2 is cleared.',
+      'You solved 7 of your last 10 exercises without a hint, on the first Check (within 2 Checks where you type the answer), across 7 kinds of exercise. Level 1 is cleared.',
     );
   });
 
@@ -412,10 +493,10 @@ describe('explain', () => {
 
   it('says what an unfinished level still needs', () => {
     expect(explain(inProgress, 'ja')).toBe(
-      '直近 6 問のうち、ヒントなしで、1 回目の「たしかめる」（自分で入力する問題は 2 回目まで）で解けたのは 4 問（2 種類）です。ヒントを使って解けた 1 問は数えていません。レベル 2 は、直近 10 問のうち 7 問を、3 種類以上にわたって、「スイッチを設定する」「設定を入れる」「おかしい所をさがす」「どれにするか選ぶ」の問題をそれぞれ 1 問以上、そのように解けると達成です。',
+      '直近 6 問のうち、ヒントなしで、1 回目の「たしかめる」（自分で入力する問題は 2 回目まで）で解けたのは 4 問（2 種類）です。ヒントを使って解けた 1 問は数えていません。レベル 2 は、直近 10 問のうち 7 問をそのように解き、このレベルの 10 種類の問題のどれも、いちばん最近の 1 問が解けていると達成です。解けなかった種類は、次にその種類が出たときに解けば大丈夫です。同じ問題をやり直しても、数え方は変わりません。',
     );
     expect(explain(inProgress, 'en')).toBe(
-      'You solved 4 of your last 6 exercises without a hint, on the first Check (within 2 Checks where you type the answer), across 2 kinds of exercise. The 1 you solved with a hint is not counted. Level 2 is cleared at 7 of the last 10 solved that way, across at least 3 kinds, with at least one of each task ("set up a switch", "set it up", "find the fault", "choose one").',
+      'You solved 4 of your last 6 exercises without a hint, on the first Check (within 2 Checks where you type the answer), across 2 kinds of exercise. The 1 you solved with a hint is not counted. Level 2 is cleared at 7 of the last 10 solved that way, with the latest exercise of each of its 10 kinds of task among the solved. A kind you missed is made good the next time it comes up. Doing the same exercise again does not change how it counts.',
     );
   });
 
@@ -462,7 +543,7 @@ describe('the sentences for a solve after several tries, and the short line', ()
   });
 
   it('says a cleared level in one short line', () => {
-    const cleared = levelSummary(solvedRun(1, 7, 3), 1);
+    const cleared = levelSummary(clearingRun(1), 1);
     expect(headline(cleared, 'ja')).toBe('レベル 1 達成です');
     expect(headline(cleared, 'en')).toBe('Level 1 cleared');
   });

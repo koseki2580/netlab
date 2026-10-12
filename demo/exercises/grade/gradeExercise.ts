@@ -19,6 +19,7 @@ import type {
 } from '../model/types';
 import type { PacketTrace } from '../../../src/types/simulation';
 import type { TopologySnapshot } from '../../../src/types/topology';
+import { isInSubnet } from '../../../src/utils/cidr';
 import { diagnose } from './diagnose';
 import { prepare, routesOf, stpPort, stpRootNodeId, type PreparedTopology } from './prepare';
 import { runProbe, type ProbeFacts } from './probe';
@@ -91,11 +92,64 @@ function probeCode(check: ProbeCheck, facts: ProbeFacts): CheckResultCode {
   }
 }
 
+/** A route the learner wrote whose next router is on no network of its router. */
+interface OffLinkRoute {
+  readonly nodeId: string;
+  readonly destination: string;
+}
+
+/**
+ * The routes that differ from the start and name a next router outside every
+ * network their router is connected to: typically the neighbouring router's
+ * address on its FAR side. The simulator looks the address up and forwards;
+ * a real router refuses the line, so such a route must not be a pass.
+ * Routes that were there from the start are the exercise's business.
+ */
+function offLinkRoutes(start: TopologySnapshot, current: TopologySnapshot): OffLinkRoute[] {
+  const found: OffLinkRoute[] = [];
+  for (const node of current.nodes) {
+    const routes = node.data.staticRoutes ?? [];
+    if (routes.length === 0) continue;
+    const before = start.nodes.find((entry) => entry.id === node.id)?.data.staticRoutes ?? [];
+    const connected = (node.data.interfaces ?? []).map(
+      (side) => `${side.ipAddress}/${side.prefixLength}`,
+    );
+    for (const route of routes) {
+      const kept = before.some(
+        (old) => old.destination === route.destination && old.nextHop === route.nextHop,
+      );
+      if (kept || connected.some((cidr) => isInSubnet(route.nextHop, cidr))) continue;
+      found.push({ nodeId: node.id, destination: route.destination });
+    }
+  }
+  return found;
+}
+
+/** The first such route a probe depends on: one that covers either end of it. */
+function offLinkFor(
+  probe: ProbeCheck['probe'],
+  current: TopologySnapshot,
+  offLink: readonly OffLinkRoute[],
+): OffLinkRoute | undefined {
+  const ends = [probe.from, probe.to].flatMap((id) => {
+    const ip = current.nodes.find((node) => node.id === id)?.data.ip;
+    return typeof ip === 'string' && ip !== '' ? [ip] : [];
+  });
+  return offLink.find((route) => {
+    try {
+      return ends.some((ip) => isInSubnet(ip, route.destination));
+    } catch {
+      return false;
+    }
+  });
+}
+
 async function gradeCheck(
   check: ExerciseCheck,
   prepared: PreparedTopology,
   exercise: GradedExercise,
   current: TopologySnapshot,
+  offLink: readonly OffLinkRoute[],
 ): Promise<CheckResult> {
   const at = (nodeId: string): { evidence: CheckEvidence } => ({
     evidence: { nodeId, nodeLabel: labelOf(prepared, nodeId) },
@@ -144,6 +198,11 @@ async function gradeCheck(
     }
 
     default: {
+      // A goal that hangs on a route no router would accept is not met, whatever the simulator does with it.
+      const refused = offLinkFor(check.probe, current, offLink);
+      if (refused && check.kind !== 'must-not-reach') {
+        return result(check, 'next-hop-not-neighbour', {}, at(refused.nodeId));
+      }
       const facts = await runProbe(prepared, check.probe);
       const code = probeCode(check, facts);
       const drop = facts.drop
@@ -200,10 +259,11 @@ export async function gradeExercise(
     return invalid();
   }
 
+  const offLink = offLinkRoutes(exercise.start, current);
   const results: CheckResult[] = [];
   for (const check of exercise.checks) {
     try {
-      results.push(await gradeCheck(check, prepared, exercise, current));
+      results.push(await gradeCheck(check, prepared, exercise, current, offLink));
     } catch {
       results.push(result(check, 'engine-error'));
     }

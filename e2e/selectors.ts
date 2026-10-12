@@ -377,6 +377,16 @@ export const SEL = {
     reference: 'exercise-reference',
     referenceApply: 'exercise-reference-apply',
     lessons: 'exercise-lessons',
+    /** Point first, then fix: the button that points at a device (`pc2`) or a side of a router (`r1:lan`). */
+    suspect: (key: string) => `exercise-suspect-${key}`,
+    suspectStep: 'exercise-suspect-step',
+    suspectNote: (key: string) => `exercise-suspect-note-${key}`,
+    /** What a press on a cable of the diagram just did, in one line. */
+    cableSaid: 'exercise-cable-said',
+    /** A level's second short line (the kinds of task still open, or what is next) and its full rule. */
+    levelMissing: (level: number) => `exercises-level-missing-${level}`,
+    levelNext: (level: number) => `exercises-level-next-${level}`,
+    levelRule: (level: number) => `exercises-level-rule-${level}`,
     /** Choose-a-design exercises. */
     option: (optionId: string) => `exercise-option-${optionId}`,
     predict: (outcome: 'reach' | 'no-reach' | 'detour') => `exercise-predict-${outcome}`,

@@ -45,7 +45,7 @@ export interface Draft {
   readonly reference: readonly SettingChange[];
   readonly wrongAnswers?: readonly (readonly SettingChange[])[];
   /** See `Exercise.pickFirst`. */
-  readonly pickFirst?: { readonly faulty: readonly string[] };
+  readonly pickFirst?: Exercise['pickFirst'];
   /** See `Exercise.unsoundPasses`. */
   readonly unsoundPasses?: readonly (readonly SettingChange[])[];
   /** What makes this instance a different task: place, shape, fault, device. No raw numbers. */

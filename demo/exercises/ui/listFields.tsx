@@ -2,7 +2,7 @@ import { useState, type CSSProperties } from 'react';
 import type { AclRule } from '../../../src/types/acl';
 import type { StaticRouteConfig } from '../../../src/types/routing';
 import { useT } from '../../localeContext';
-import { isAddress, isNetwork, wholeNumber } from './addresses';
+import { isAddress, isNetwork, typed, wholeNumber } from './addresses';
 import type { FieldProps } from './fields';
 import { INPUT, MUTED, SECONDARY, SELECT } from './styles';
 
@@ -100,7 +100,7 @@ export function StaticRoutesField({ value, onChange, testId, plain }: FieldProps
               spellCheck={false}
               placeholder={plain ? t('e.g. network/24', '例：ネットワーク/24') : ''}
               value={row.destination}
-              onChange={(event) => edit(index, { destination: event.target.value.trim() })}
+              onChange={(event) => edit(index, { destination: typed(event.target.value) })}
               style={{ ...INPUT, width: 170 }}
             />
           </label>
@@ -117,7 +117,7 @@ export function StaticRoutesField({ value, onChange, testId, plain }: FieldProps
               autoComplete="off"
               placeholder=""
               value={row.nextHop}
-              onChange={(event) => edit(index, { nextHop: event.target.value.trim() })}
+              onChange={(event) => edit(index, { nextHop: typed(event.target.value) })}
               style={{ ...INPUT, width: 150 }}
             />
           </label>
@@ -306,7 +306,7 @@ export function AclField({ value, onChange, testId, plain }: FieldProps<'iface-a
                 spellCheck={false}
                 placeholder=""
                 value={row.srcIp}
-                onChange={(event) => edit(index, { srcIp: event.target.value.trim() })}
+                onChange={(event) => edit(index, { srcIp: typed(event.target.value) })}
                 style={{ ...INPUT, width: 170 }}
               />
             </label>
@@ -321,7 +321,7 @@ export function AclField({ value, onChange, testId, plain }: FieldProps<'iface-a
                 spellCheck={false}
                 placeholder=""
                 value={row.dstIp}
-                onChange={(event) => edit(index, { dstIp: event.target.value.trim() })}
+                onChange={(event) => edit(index, { dstIp: typed(event.target.value) })}
                 style={{ ...INPUT, width: 170 }}
               />
             </label>
@@ -335,7 +335,7 @@ export function AclField({ value, onChange, testId, plain }: FieldProps<'iface-a
                   autoComplete="off"
                   placeholder="80"
                   value={row.dstPort}
-                  onChange={(event) => edit(index, { dstPort: event.target.value.trim() })}
+                  onChange={(event) => edit(index, { dstPort: typed(event.target.value) })}
                   style={{ ...INPUT, width: 90 }}
                 />
               </label>

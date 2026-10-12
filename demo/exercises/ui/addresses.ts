@@ -23,3 +23,14 @@ export function wholeNumber(text: string, min: number, max: number): number | nu
   const value = Number(text);
   return value >= min && value <= max ? value : null;
 }
+
+/**
+ * What a learner typed, as the form reads it. A Japanese keyboard left in
+ * full-width mode types 「１０、２０」 and 「１９２．１６８．１．５」; a learner was
+ * told "numbers and commas" and could not see what was wrong. Full-width
+ * digits, letters, dots, slashes, commas and spaces become the half-width
+ * ones, and so do 「、」 and 「。」.
+ */
+export function typed(text: string): string {
+  return text.normalize('NFKC').replace(/、/g, ',').replace(/。/g, '.').trim();
+}

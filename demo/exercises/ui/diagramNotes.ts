@@ -119,7 +119,11 @@ export function diagramNotesCss(topology: TopologySnapshot, scope: string): stri
       // Beside the address the library draws under a host, on the same line:
       // a second line there ran into the device drawn below.
       if (note.underAddress) {
-        return `${scope} [data-id=${JSON.stringify(note.nodeId)}] [data-testid="topology-node-ip"]::after{content:${cssString([` · ${note.lines.join(' · ')}`])};font-weight:700;color:var(--netlab-text-primary);}`;
+        const ip = `${scope} [data-id=${JSON.stringify(note.nodeId)}] [data-testid="topology-node-ip"]`;
+        // The line is wider than the box now. Centred on it, it sticks out a little on both
+        // sides; left as it was, all of it stuck out to the right, and at the right edge of
+        // the picture "VLAN 20" was cut to "VLAN 2".
+        return `${ip}{display:flex;justify-content:center;white-space:nowrap;}\n${ip}::after{content:${cssString([` · ${note.lines.join(' · ')}`])};white-space:pre;font-weight:700;color:var(--netlab-text-primary);}`;
       }
       return `${box}::after{content:${cssString(note.lines)};${NOTE_BASE}top:calc(100% + 4px);}`;
     })
@@ -185,4 +189,22 @@ export function diagramLegendLines(topology: TopologySnapshot, locale: 'en' | 'j
     );
   }
   return lines;
+}
+
+/**
+ * The ⚠ the library draws on a device that has no address, said in words. The
+ * DHCP lesson explains the mark; an exercise did not, and a careful learner
+ * took it for "this device is broken". Null when every device has an address.
+ */
+export function noAddressNote(topology: TopologySnapshot, locale: 'en' | 'ja'): string | null {
+  const blank = topology.nodes.some(
+    (node) =>
+      node.data.role !== 'switch' &&
+      node.data.role !== 'router' &&
+      !(typeof node.data.ip === 'string' && node.data.ip !== ''),
+  );
+  if (!blank) return null;
+  return locale === 'ja'
+    ? '⚠ は「この機器にまだアドレスがない」という印です。故障ではありません。'
+    : '⚠ means "this device has no address yet". It is not a fault.';
 }

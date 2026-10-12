@@ -1,7 +1,7 @@
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import { useGalleryLocale, useT } from '../../localeContext';
 import type { SettingChange } from '../model/types';
-import { isAddress, wholeNumber } from './addresses';
+import { isAddress, typed, wholeNumber } from './addresses';
 import { INPUT, MUTED, SECONDARY, SELECT } from './styles';
 import { ACCESS_PORT_HELP, CABLE_WORDS, PORT_USE_WORDS, TRUNK_PORT_HELP } from './words';
 
@@ -73,7 +73,7 @@ function DraftInput<T>({
           value={draft ?? shown}
           aria-invalid={draft !== null}
           onChange={(event) => {
-            const text = event.target.value.trim();
+            const text = typed(event.target.value);
             const parsed = parse(text);
             if (parsed === null) {
               setDraft(text);

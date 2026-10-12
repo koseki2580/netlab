@@ -16,6 +16,7 @@ import {
   routedGoals,
   routes,
   sitesOpening,
+  farSideOf,
 } from '../shared/routed';
 import { WATCH_WORDS } from '../../ui/words';
 import { L, say, the, The } from '../shared/text';
@@ -138,6 +139,18 @@ export const l2StaticReturn = defineTemplate(
           routes(faulty, [
             ...remaining,
             { destination: net.pcNet.cidr, nextHop: net.ownAddressOn[faulty] ?? '' },
+          ]),
+        ],
+      ],
+      // The neighbour's address on its far side: the simulator forwards to it, a router would not.
+      unsoundPasses: [
+        [
+          routes(faulty, [
+            ...remaining,
+            {
+              destination: net.pcNet.cidr,
+              nextHop: farSideOf(net.topology, faulty, net.towardsPc[faulty] ?? '') ?? '',
+            },
           ]),
         ],
       ],

@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useGalleryLocale, useT } from '../localeContext';
-import { exerciseById, nextExerciseId } from './exerciseSource';
+import { exerciseById, learnerSalt, nextExerciseId, reopenedExerciseId } from './exerciseSource';
+import { isAttempted } from './store/estimate';
 import type { AttemptStore } from './store/attemptStore';
 import { cycleSet } from './ui/cycleFlow';
 import { ExerciseRunner } from './ui/ExerciseRunner';
@@ -30,6 +31,25 @@ export function ExercisePageBody({ store: injected }: { store?: AttemptStore }) 
     cycle && (contextParam === 'pre' || contextParam === 'post')
       ? { context: contextParam, cycleId: cycle.id }
       : undefined;
+
+  // Practice only: an exercise the learner was already judged on opens as
+  // another instance of the same kind of task. Decided when the address
+  // changes, from the record as it stood then: the attempt made on THIS visit
+  // must not send the learner away from the exercise they are doing.
+  const opens = useMemo(() => {
+    if (run) return exerciseId;
+    const { attempts } = store.getState();
+    return reopenedExerciseId(
+      exerciseId,
+      attempts.filter(isAttempted).map((attempt) => attempt.exerciseId),
+      attempts.map((attempt) => attempt.exerciseId),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exerciseId, store, run === undefined]);
+  useEffect(() => {
+    if (opens !== exerciseId) void navigate(exercisePath(opens), { replace: true });
+  }, [opens, exerciseId, navigate]);
+  if (opens !== exerciseId) return null;
 
   if (!exercise) {
     return (
@@ -67,6 +87,7 @@ export function ExercisePageBody({ store: injected }: { store?: AttemptStore }) 
     const nextId = nextExerciseId(exercise.level, {
       avoidTemplateIds: [exercise.templateId],
       seenIds: state.attempts.map((attempt) => attempt.exerciseId),
+      salt: learnerSalt(state.attempts),
     });
     void navigate(nextId ? exercisePath(nextId) : `/exercises/level/${exercise.level}`);
   };

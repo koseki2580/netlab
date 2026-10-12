@@ -173,6 +173,57 @@ describe('the settings form', () => {
     expect(last()).toEqual({ kind: 'iface-nat', nodeId: 'r1', ifaceId: 'wan', nat: 'outside' });
   });
 
+  // TC-614
+  it('full-width digits, dots, slashes and commas are read as the half-width ones, and the field shows what was read', async () => {
+    const host = form([EVERY[0]!]);
+    const hostId = settingTestId(EVERY[0]!);
+    await host.screen.enter(`${hostId}-input`, '１９２．１６８．１．７７');
+    expect(host.last()).toEqual({ kind: 'host-ip', nodeId: 'pc1', ip: '192.168.1.77' });
+    expect(host.screen.find(`${hostId}-note`)).toBeNull();
+    host.screen.unmount();
+
+    const port = form([EVERY[3]!]);
+    const portId = settingTestId(EVERY[3]!);
+    await port.screen.enter(`${portId}-vlan-input`, '２０');
+    expect(port.last()).toMatchObject({ vlanMode: 'access', accessVlan: 20 });
+    port.screen.unmount();
+
+    // A port that carries several groups: the list a learner typed as 「２０、１０」.
+    const written: SettingChange[] = [];
+    const trunk = render(
+      <SettingsForm
+        exercise={{ allowed: [EVERY[3]!], start: START, level: 2, id: 'form-test~3' }}
+        topology={applyChanges(START, [
+          {
+            kind: 'port-vlan',
+            nodeId: 'sw1',
+            portId: 'p1',
+            vlanMode: 'trunk',
+            trunkAllowedVlans: [1],
+          },
+        ])}
+        onChange={(change) => written.push(change)}
+      />,
+      { locale: 'ja' },
+    );
+    await trunk.enter(`${portId}-allowed-input`, '２０、１０');
+    expect(written[written.length - 1]).toMatchObject({ trunkAllowedVlans: [20, 10] });
+    expect(trunk.find(`${portId}-allowed-note`)).toBeNull();
+    await trunk.enter(`${portId}-allowed-input`, '１０，２０，３０');
+    expect(written[written.length - 1]).toMatchObject({ trunkAllowedVlans: [10, 20, 30] });
+    trunk.unmount();
+
+    const routes = form([EVERY[6]!], 3);
+    const routesId = settingTestId(EVERY[6]!);
+    await routes.screen.click(`${routesId}-add`);
+    await routes.screen.enter(`${routesId}-row-1-destination`, '１０．０．２．０／２４');
+    await routes.screen.enter(`${routesId}-row-1-nexthop`, '２０３。０。１１３。１０');
+    expect(routes.last()).toMatchObject({
+      routes: [{}, { destination: '10.0.2.0/24', nextHop: '203.0.113.10' }],
+    });
+    screen = routes.screen;
+  });
+
   // TC-495
   it('static-routes: rows are added and removed, and only complete rows are written', async () => {
     const { screen, last } = form([EVERY[6]!], 3);

@@ -11,6 +11,7 @@ import { applyChanges, differsOutside, readSetting } from '../model/settings';
 import type { Exercise, SettingChange } from '../model/types';
 import { generateExercise } from '../templates';
 import { gradeExercise } from './gradeExercise';
+import { farSideOf } from '../templates/shared/routed';
 
 function firstWith(templateId: string, part: string): Exercise {
   for (let seed = 0; seed < 60; seed += 1) {
@@ -131,4 +132,58 @@ describe('a find-the-fault exercise never names the faulty device in what it say
       }
     },
   );
+});
+
+// TC-601
+describe('a route whose next router is an address on the far side of the neighbour', () => {
+  const cases = ['l2-static-missing', 'l2-static-return', 'l2-static-nexthop'].flatMap((id) =>
+    [0, 1, 2, 3, 4, 5, 6, 7].map((seed) => [id, seed] as const),
+  );
+
+  it.each(cases)(
+    '%s, seed %i: is not a pass, and the reason names the rule, not the value',
+    async (id, seed) => {
+      const exercise = generateExercise(id, seed);
+      const [fix] = exercise?.reference ?? [];
+      if (!exercise || fix?.kind !== 'static-routes') throw new Error('the fix is not a route');
+      const before = readSetting(exercise.start, fix);
+      const had = before?.kind === 'static-routes' ? before.routes : [];
+      const fixed = fix.routes.find(
+        (route) =>
+          !had.some(
+            (old) => old.destination === route.destination && old.nextHop === route.nextHop,
+          ),
+      );
+      if (!fixed) throw new Error('the reference changes no route');
+      const far = farSideOf(exercise.start, fix.nodeId, fixed.nextHop);
+      if (far === undefined) throw new Error('the neighbour has no far side');
+      expect((await grade(exercise, exercise.reference)).passed).toBe(true);
+
+      const result = await grade(exercise, [
+        {
+          ...fix,
+          routes: fix.routes.map((route) => (route === fixed ? { ...route, nextHop: far } : route)),
+        },
+      ]);
+      expect(result.passed).toBe(false);
+      const failed = result.results.filter((entry) => !entry.passed);
+      expect(failed.map((entry) => entry.code)).toContain('next-hop-not-neighbour');
+      for (const entry of failed.filter((one) => one.code === 'next-hop-not-neighbour')) {
+        expect(entry.message.ja).toBe(
+          '次のルータは、となりのルータの「こちら側」のアドレスです。向こう側のアドレスは書けません。',
+        );
+        expect(entry.message.ja).not.toContain(far);
+        expect(entry.message.en).not.toContain(far);
+        expect(entry.message.en).not.toContain(fixed.nextHop);
+        expect(entry.evidence?.nodeId).toBe(fix.nodeId);
+      }
+    },
+  );
+
+  it('a route that was there from the start is not judged by this rule', async () => {
+    const exercise = generateExercise('l2-static-nexthop', 0);
+    if (!exercise) throw new Error('no exercise');
+    const result = await gradeExercise(exercise, exercise.start);
+    expect(result.results.map((entry) => entry.code)).not.toContain('next-hop-not-neighbour');
+  });
 });
