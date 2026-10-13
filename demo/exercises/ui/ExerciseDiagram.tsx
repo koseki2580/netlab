@@ -138,7 +138,7 @@ function useCablePresses(
   useEffect(() => {
     const element = root.current;
     if (!element) return undefined;
-    let pressed: { id: string; x: number; y: number } | null = null;
+    let pressed: { id: string; x: number; y: number; lifted?: boolean } | null = null;
 
     const pointOf = (event: Event): { x: number; y: number } | null => {
       const touch = (event as TouchEvent).changedTouches?.[0];
@@ -169,7 +169,16 @@ function useCablePresses(
       if (pressed) event.stopPropagation();
     };
     const up = (event: Event) => {
-      if (pressed) event.stopPropagation();
+      if (!pressed) return;
+      event.stopPropagation();
+      // Whether the finger stayed put is read here, where it was lifted. The
+      // click that follows a tap carries the place of whatever the browser
+      // took the tap for: WebKit reports the cable's own line, some 13px from
+      // a finger beside it, and the tap was then thrown away as a drag.
+      const point = pointOf(event);
+      if (point && pressed.lifted === undefined) {
+        pressed.lifted = Math.hypot(point.x - pressed.x, point.y - pressed.y) <= TAP_SLOP_PX;
+      }
     };
     // Told on the click, the last event of a press: telling it earlier moves
     // the page (the cable's card is scrolled into view), and the events still
@@ -178,11 +187,11 @@ function useCablePresses(
       if (!pressed) return;
       event.stopPropagation();
       const point = pointOf(event);
-      const { id, x, y } = pressed;
+      const { id, x, y, lifted } = pressed;
       pressed = null;
-      if (point && Math.hypot(point.x - x, point.y - y) <= TAP_SLOP_PX) {
-        report.current?.({ kind: 'link', id });
-      }
+      const stayed =
+        lifted ?? (point !== null && Math.hypot(point.x - x, point.y - y) <= TAP_SLOP_PX);
+      if (stayed) report.current?.({ kind: 'link', id });
     };
     const cancel = () => {
       pressed = null;
