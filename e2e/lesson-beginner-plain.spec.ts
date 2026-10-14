@@ -227,7 +227,10 @@ test('TC-358: sequence numbers and the byte dump wait behind a closed disclosure
   await page.getByTestId('tcp-connect').click();
   const more = page.getByTestId('tcp-more-detail');
   await expect(more).toHaveJSProperty('open', false);
-  await expect(more).toContainText('localSeq=');
+  // The numbers themselves wait for the third message (TC-629); what they are
+  // is explained here from the start.
+  await expect(more).toContainText('シーケンス番号');
+  await expect(more).not.toContainText('localSeq=');
   await expect(page.getByTestId('tcp-connection-state')).not.toContainText('localSeq');
   await expect(page.getByTestId('tcp-connection-state')).toContainText(
     '相手の「もしもし」（SYN）を待っている',

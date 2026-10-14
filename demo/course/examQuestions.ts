@@ -355,8 +355,8 @@ export const EXAM_QUESTIONS: readonly ExamQuestion[] = [
     ],
     answer: 2,
     explanation: {
-      en: 'The website sees 203.0.113.1 for both. Private addresses such as 192.168.1.10 cannot be reached from the internet, so the router rewrites the sender to its own global address on the way out and puts the private one back on the reply. It tells the two devices apart by port number, like room numbers at one street address. See NAT / PAT.',
-      ja: 'Web サイトから見えるのは、2 台とも 203.0.113.1 です。192.168.1.10 のようなプライベートアドレスはインターネットでは届けられないので、ルータは外へ出るときに送り主を自分のグローバルアドレスに書き換え、返事が来たら元に戻します。2 台の区別はポート番号（同じ住所の中の部屋番号のようなもの）でつけます。レッスン「NAT / PAT」で見られます。',
+      en: 'The website sees 203.0.113.1 for both. Private addresses such as 192.168.1.10 are reused in every home and office, so the internet has no single place to deliver them to. That is why the router rewrites the sender to its own global address on the way out, and puts the private one back on the reply. It tells the two devices apart by port number, the number of a window inside a machine. See NAT / PAT.',
+      ja: 'Web サイトから見えるのは、2 台とも 203.0.113.1 です。192.168.1.10 のようなプライベートアドレスは、どの家や会社でも同じものを使い回しています。だからインターネットには、その住所の届け先が 1 つに決まりません。そこでルータは、外へ出るときに送り主を自分のグローバルアドレスに書き換え、返事が来たら元に戻します。2 台の区別はポート番号（機器の中の窓口の番号）でつけます。レッスン「NAT / PAT」で見られます。',
     },
     taughtBy: 'nat',
   },

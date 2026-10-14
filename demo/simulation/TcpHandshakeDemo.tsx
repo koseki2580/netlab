@@ -369,7 +369,7 @@ function ConnectionStateCard({
 }
 
 /** Sequence numbers, header fields and the bytes: for a second look, closed at first. */
-function MoreDetail() {
+function MoreDetail({ connected }: { connected: boolean }) {
   const t = useT();
   const { engine, state } = useSimulation();
   const connections = engine.getTcpConnections();
@@ -388,8 +388,24 @@ function MoreDetail() {
             'シーケンス番号は、TCP が送るデータに付ける通し番号です。接続のやり取りで、数え始めの番号も決めます。だから、あとで欠けたデータに気づいて送り直せます。数え始めの番号は接続のたびに変わります。',
           )}
         </div>
-        {connections.map((connection) => (
-          <div key={connection.id} style={{ fontFamily: 'monospace' }}>
+        {/* The engine has run the whole handshake by the time the button
+            returns, so its numbers were on screen before the first message had
+            been watched. They are what the three messages agree on, and are
+            shown once the learner has stepped to that point. */}
+        {connections.length > 0 && !connected ? (
+          <div data-testid="tcp-numbers-pending" style={{ color: 'var(--netlab-text-secondary)' }}>
+            {t(
+              'The numbers of this connection are settled by the three messages. They appear here once you have stepped through all three.',
+              'この接続の番号は、3 回のやり取りで決まります。3 回目まで進めると、ここに出ます。',
+            )}
+          </div>
+        ) : null}
+        {(connected ? connections : []).map((connection) => (
+          <div
+            key={connection.id}
+            data-testid="tcp-connection-numbers"
+            style={{ fontFamily: 'monospace' }}
+          >
             <div>
               {connection.srcIp}:{connection.srcPort} → {connection.dstIp}:{connection.dstPort}
             </div>
@@ -400,7 +416,12 @@ function MoreDetail() {
           </div>
         ))}
         <div>
-          <div style={PANEL_LABEL}>{t('Selected segment', '選択中のセグメント')}</div>
+          <div style={PANEL_LABEL}>
+            {t(
+              'Selected segment (a segment is one message TCP sends)',
+              '選択中のセグメント（セグメント＝TCP が送る 1 通）',
+            )}
+          </div>
           {selected ? (
             <div style={{ fontFamily: 'monospace', display: 'grid', gap: 4 }}>
               <div style={{ color: 'var(--netlab-accent-cyan)', fontWeight: 'bold' }}>
@@ -447,6 +468,8 @@ function TcpHandshakeDemoInner() {
     state.status,
   );
   const handshakeRecorded = state.traces[0]?.label === 'TCP SYN';
+  // Both ends connected as of the step being shown, not as of the engine.
+  const connected = nodeStates.client === 'ESTABLISHED' && nodeStates.server === 'ESTABLISHED';
   const { isNarrow } = useViewport();
   const badges = (
     <>
@@ -702,8 +725,8 @@ function TcpHandshakeDemoInner() {
             </summary>
             <div style={{ marginTop: 4, color: 'var(--netlab-text-secondary)' }}>
               {t(
-                'The Client is ESTABLISHED (connected) as soon as the SYN-ACK reaches it; the Server only once the last ACK arrives. Closing takes four messages: FIN → ACK → FIN → ACK. "Next Step" walks one hop at a time, including the router\'s address lookup (ARP) before each message.',
-                'Client は SYN-ACK が届いた時点で ESTABLISHED（接続完了）になります。Server は最後の ACK が届いてからです。切断は 4 回のやり取りです：FIN → ACK → FIN → ACK。「次のステップ」は 1 ホップずつ進みます。各通信の前に、ルータが相手を探す ARP も入ります。',
+                'The Client is ESTABLISHED (connected) as soon as the SYN-ACK reaches it; the Server only once the last ACK arrives. Closing takes four messages: FIN → ACK → FIN → ACK. "Next Step" walks one event of a message at a time. The router\'s address lookup (ARP), its question and its answer, are events too.',
+                'Client は SYN-ACK が届いた時点で ESTABLISHED（接続完了）になります。Server は最後の ACK が届いてからです。切断は 4 回のやり取りです：FIN → ACK → FIN → ACK。「次のステップ」は、通信の中の出来事を 1 つずつ進めます。ルータが相手の番号を調べる ARP の質問と答えも、その 1 つです。',
               )}
             </div>
           </details>
@@ -755,7 +778,20 @@ function TcpHandshakeDemoInner() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16 }}>
           <ConnectionStateCard nodeStates={nodeStates} started={state.traces.length > 0} />
           <StepControls continueAcrossTraces />
-          <MoreDetail />
+          {/* The same ARP question and answer come up in all three messages,
+              on the lesson after the one that says an answer is remembered. */}
+          {state.traces.length > 0 ? (
+            <div
+              data-testid="tcp-arp-note"
+              style={{ color: 'var(--netlab-text-secondary)', fontSize: 12, lineHeight: 1.6 }}
+            >
+              {t(
+                'The ARP rows are the Router finding the number (MAC address) of the machine to hand to. A real device remembers the answer for a few minutes and does not ask again. This screen asks again for every message.',
+                '途中の ARP の行は、Router が渡す相手の番号（MAC アドレス）を調べているところです。本物の機器は答えを数分のあいだ覚えていて、聞き直しません。この画面は、通信のたびに聞き直します。',
+              )}
+            </div>
+          ) : null}
+          <MoreDetail connected={connected} />
         </div>
       </LessonPanel>
     </LessonSplit>

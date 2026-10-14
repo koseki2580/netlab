@@ -128,6 +128,15 @@ function ArpTablePanel() {
               '通信は一度に最後まで行われるので、この表はもう結果を表示しています。どのステップで覚えたかは、ステップを進めながら下の「ARP の変化」で確かめられます。',
             )}
           </div>
+          <div
+            data-testid="arp-table-kept"
+            style={{ ...DETAIL_STYLE, color: 'var(--netlab-text-primary)' }}
+          >
+            {t(
+              "This table is what a real device keeps. The Router's lines are what it learned by asking just now. The lines of the Client and the Server were there from the start.",
+              'この表が、本物の機器が覚えておく内容です。Router の行は、いま聞いて覚えたものです。Client と Server の行は、最初から入っていたものです。',
+            )}
+          </div>
           {entries.map(([nodeId, table]) => (
             <div
               key={nodeId}
@@ -250,8 +259,8 @@ function ArpDemoInner() {
           </div>
           <div data-testid="arp-brief-mac" style={DETAIL_STYLE}>
             {t(
-              'The address (the IP address) is not enough to hand a packet over: before the first packet, the sender does not yet know the other machine\'s own number, its MAC address. So it asks everyone, and only the owner answers "it\'s me" with its number.',
-              '住所（IP アドレス）だけでは渡せません。最初のパケットを送る前は、相手の番号（MAC アドレス）をまだ知らないからです。だから全員に聞き、持ち主だけが「わたしです」と番号を答えます。',
+              'The address (the IP address) is not enough to hand a packet over. A device that has never sent to a machine does not yet know that machine\'s own number, its MAC address. So it asks everyone, and only the owner answers "it\'s me" with its number.',
+              '住所（IP アドレス）だけでは渡せません。初めて渡す相手は、その番号（MAC アドレス）をまだ知らないからです。だから全員に聞き、持ち主だけが「わたしです」と番号を答えます。',
             )}
           </div>
           {/* What this lesson's trace shows: the Client never asks. The Router
@@ -260,6 +269,14 @@ function ArpDemoInner() {
             {t(
               'In this lesson the one that asks is the Router: for the Server on the way out, and for the Client on the way back.',
               'このレッスンで聞くのは Router（ルータ）です。行きは Server を、帰りは Client を探して聞きます。',
+            )}
+          </div>
+          {/* The Client's table holds the Router's number from the start, beside
+              a sentence saying a device asks before it first sends. */}
+          <div data-testid="arp-already-known" style={{ ...DETAIL_STYLE, marginTop: 6 }}>
+            {t(
+              'The Client and the Server do not ask. In this lesson each already knows the number of its own way out, the Router, as a device that has been running for a while would.',
+              'Client と Server は聞きません。このレッスンでは、どちらも自分の出口である Router の番号をもう知っています。しばらく動いている機器と同じ状態です。',
             )}
           </div>
           <details data-testid="lesson-more" style={{ ...DETAIL_STYLE, marginTop: 6 }}>
@@ -331,6 +348,20 @@ function ArpDemoInner() {
                 '「届きますか？」と確かめる短い通信（ping）と、その返事を送ります。押したら、タイムラインの ARP-REQ（質問）と ARP-REP（答え）の行を押してみましょう。図に吹き出しが出ます。',
               )}
             </div>
+            {/* Sending again shows the same question and answer, beside a
+                sentence saying an answer is remembered. Said once, under the
+                button that is pressed again. */}
+            {hasTrace ? (
+              <div
+                data-testid="arp-remember-note"
+                style={{ ...DETAIL_STYLE, marginTop: 6, color: 'var(--netlab-text-primary)' }}
+              >
+                {t(
+                  'A real device remembers an ARP answer for a few minutes and does not ask again in that time. This lesson asks again on every send, so the question can be watched each time. What was learned is in "ARP tables" below.',
+                  '本物の機器は、ARP の答えを数分のあいだ覚えていて、そのあいだは聞き直しません。このレッスンは、質問を毎回見られるように、送るたびに聞き直します。覚えた内容は、下の「ARP テーブル」に出ています。',
+                )}
+              </div>
+            ) : null}
           </div>
           {hasTrace && (
             <div

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { AreaLegend } from '../../src/components/controls/AreaLegend';
@@ -14,19 +14,43 @@ import type { NetworkTopology } from '../../src/types/topology';
 import type { NetworkArea } from '../../src/types/areas';
 import { encodeTopology, decodeTopology } from '../../src/utils/topology-url';
 import DemoShell from '../DemoShell';
+import { readLearningLocale } from '../learning/learningLocale';
 import { useT } from '../localeContext';
 
 // ────────────────────────────────────────────────
 // Demo topology: Client → SW-1 → Router → SW-2 → Server
-//   Private area: 10.0.0.0/24  (Client, SW-1)
-//   Public area:  203.0.113.0/24 (SW-2, Server)
+//   Client's network: 10.0.0.0/24  (Client, SW-1)
+//   Server's network: 203.0.113.0/24 (SW-2, Server)
 //   Router straddles both areas
 // ────────────────────────────────────────────────
+
+/**
+ * What the two areas are called. They were "Private Network" and "Public
+ * Network", and the packet's sender, 10.0.0.10, reached the "public" side
+ * unchanged, on the lesson before the one that says a private address is
+ * rewritten on its way out. This lesson is about routing between two networks,
+ * so the areas are named for whose network each is. The area ids and types
+ * are kept: a shared link and the area colours depend on them.
+ */
+export const AREA_NAMES: Readonly<Record<'en' | 'ja', Readonly<Record<string, string>>>> = {
+  en: { private: "Client's network", public: "Server's network" },
+  ja: { private: 'Client のネットワーク', public: 'Server のネットワーク' },
+};
+
+function namedAreas(topology: NetworkTopology, locale: 'en' | 'ja'): NetworkTopology {
+  return {
+    ...topology,
+    areas: topology.areas.map((area) => ({
+      ...area,
+      name: AREA_NAMES[locale][area.id] ?? area.name,
+    })),
+  };
+}
 
 const AREAS: NetworkArea[] = [
   {
     id: 'private',
-    name: 'Private Network',
+    name: "Client's network",
     type: 'private',
     subnet: '10.0.0.0/24',
     devices: ['client-1', 'switch-1'],
@@ -34,7 +58,7 @@ const AREAS: NetworkArea[] = [
   },
   {
     id: 'public',
-    name: 'Public Network',
+    name: "Server's network",
     type: 'public',
     subnet: '203.0.113.0/24',
     devices: ['switch-2', 'server-1'],
@@ -284,6 +308,17 @@ function ClientServerBrief() {
           )}
         </div>
       ) : null}
+      {/* What this lesson leaves to later ones, so that what it shows is not
+          taken for the whole of a real exchange. */}
+      <div
+        data-testid="client-server-scope"
+        style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}
+      >
+        {t(
+          "This lesson shows one thing: a packet crossing a router. It sends only the first message of an exchange, and no reply. It does not rewrite the sender's address either; that is NAT, which has its own lesson.",
+          'このレッスンで見るのは、パケットがルータを越えるところだけです。送るのは通信の最初の 1 通だけで、返事は出てきません。送り主の住所の書き換え（NAT）もしません。それは NAT のレッスンで見ます。',
+        )}
+      </div>
       {/* What the trace records: 64 on every row up to and including R-1's
           FWD row, 63 from the SW-2 row on. The text used to say "64 when it
           reaches R-1, 63 once it leaves", and R-1's own row shows 64. */}
@@ -306,7 +341,13 @@ export default function ClientServerDemo() {
   // two-row arrangement fits there.
   const compact = isNarrow || width < COMPACT_BELOW;
   // A network that came in the link keeps the arrangement it was shared with.
-  const topology = shared ?? (compact ? NARROW_TOPOLOGY : INITIAL_TOPOLOGY);
+  const [locale] = useState(readLearningLocale);
+  const topology = useMemo(
+    () => shared ?? namedAreas(compact ? NARROW_TOPOLOGY : INITIAL_TOPOLOGY, locale),
+    // `shared` is decoded from the address once per visit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [compact, locale],
+  );
 
   return (
     <DemoShell

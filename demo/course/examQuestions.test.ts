@@ -103,6 +103,22 @@ describe('level 1 questions do not give their answers away (TC-322)', () => {
     }
   });
 
+  /**
+   * TC-630 — the NAT lesson says a private address "works only inside"; the
+   * explanation gives the reason (the same addresses are used everywhere, so
+   * the internet has no one place to deliver them) instead of "cannot be
+   * delivered", which the client–server lesson's picture then seemed to break.
+   */
+  it('explains why a private address is rewritten without saying it cannot be delivered', () => {
+    const nat = EXAM_QUESTIONS.find((q) => q.id === 'nat-sender');
+    expect(nat).toBeDefined();
+    expect(nat!.explanation.ja).not.toMatch(/届けられない|部屋番号/);
+    expect(nat!.explanation.en).not.toMatch(/cannot be reached|room number/);
+    expect(nat!.explanation.ja).toMatch(/使い回し.*届け先が 1 つに決まりません/);
+    expect(nat!.explanation.en).toMatch(/reused.*no single place to deliver/);
+    expect(nat!.explanation.ja).toContain('機器の中の窓口の番号');
+  });
+
   it('does not put the right answer in the same written position throughout', () => {
     expect(new Set(EXAM_QUESTIONS.map((q) => q.answer)).size).toBe(4);
   });

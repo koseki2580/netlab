@@ -147,7 +147,7 @@ const CATEGORIES: Category[] = [
       {
         path: '/routing/client-server',
         title: 'Client–Server',
-        desc: 'Full stack: private/public areas, router with static routes, live packet log.',
+        desc: 'Full stack: two networks, a router with static routes between them, live packet log.',
         meta: { difficulty: 'beginner', tags: ['L3', 'Static'] },
       },
       {

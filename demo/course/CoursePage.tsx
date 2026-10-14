@@ -2,6 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { I18nProvider } from '../../src/i18n/I18nProvider';
+import { en } from '../../src/i18n/locales/en';
+import { ja } from '../../src/i18n/locales/ja';
 import { buildUdpPacket } from '../../src/layers/l4-transport/udpPacketBuilder';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import { useOptionalProgress } from '../../src/progress';
@@ -85,6 +88,26 @@ const UI_COPY: Record<CourseLocale, CourseUiCopy> = {
     restart: 'もう一度はじめから',
     expectFail: 'このパケットは失敗する例です。',
   },
+};
+
+/**
+ * The mark the diagram puts where a packet ends. The library's words are "the
+ * packet was dropped here", which on step 4 read as the switch's own failing;
+ * the step's cause is that nothing leads out of the network, so the mark says
+ * that, like the text beside it.
+ */
+export const COURSE_MARK_WORDS = {
+  en: {
+    'simulation.packetStory.dropOther': 'It ends here: nothing leads on to the other network',
+  },
+  ja: {
+    'simulation.packetStory.dropOther': 'ここで終わり：別のネットワークへ出る道がありません',
+  },
+} as const;
+
+const COURSE_CATALOG = {
+  en: { ...en, ...COURSE_MARK_WORDS.en },
+  ja: { ...ja, ...COURSE_MARK_WORDS.ja },
 };
 
 function readLocale(): CourseLocale {
@@ -598,17 +621,19 @@ export default function CoursePage() {
           key={`${step.id}:${locale}:${isNarrow ? 'narrow' : 'wide'}`}
           topology={topology}
         >
-          <SimulationProvider>
-            <StepStage
-              step={step}
-              index={index}
-              locale={locale}
-              isNarrow={isNarrow}
-              onArrived={record}
-              onAdvance={advance}
-              onBack={goBack}
-            />
-          </SimulationProvider>
+          <I18nProvider locale={locale} catalog={COURSE_CATALOG[locale]}>
+            <SimulationProvider>
+              <StepStage
+                step={step}
+                index={index}
+                locale={locale}
+                isNarrow={isNarrow}
+                onArrived={record}
+                onAdvance={advance}
+                onBack={goBack}
+              />
+            </SimulationProvider>
+          </I18nProvider>
         </NetlabProvider>
       </div>
     </DemoShell>

@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { CourseCaption, CourseRouteTable, StepResult, type CourseRouteRow } from './CourseParts';
 import { diagramCss, diagramText, localizedTopology } from './courseDiagram';
+import { COURSE_MARK_WORDS } from './CoursePage';
 import { COURSE_STEPS, type CourseLocale, type CourseStep } from './courseSteps';
 import { journeyMs } from './usePacketTravel';
 
@@ -140,6 +141,55 @@ describe('what a course step says once its packet has run', () => {
     }
     expect(localizedTopology(step('add-a-switch'), 'ja').nodes[1]?.data.label).toBe('スイッチ');
     expect(localizedTopology(step('add-a-switch'), 'en').nodes[1]?.data.label).toBe('Switch');
+  });
+});
+
+describe('what the course says against what its picture shows', () => {
+  /**
+   * TC-622 — the first packet of step 3 goes to one PC only, so the text says
+   * this switch has already learned, and keeps "sends to every port" for a
+   * switch that has just been turned on.
+   */
+  it('says the switch of step 3 has already learned where each PC is', () => {
+    const { ja, en } = step('three-machines').copy;
+    expect(ja.points.join('')).toMatch(/しばらく動いていて.*もう覚えています/);
+    expect(en.points.join('')).toMatch(/running for a while.*already remembers/);
+    expect(visibleText(step('three-machines'), 'ja')).not.toMatch(/全部の差し込み口/);
+    const flood = ja.more.find((line) => line.includes('全部の差し込み口'));
+    expect(flood).toMatch(/電源を入れたばかり/);
+    expect(ja.more.join('')).toMatch(/覚え終わったあと/);
+    expect(en.more.join('')).toMatch(/just been turned on.*every port.*after it has learned/s);
+  });
+
+  /**
+   * TC-623 — step 4 fails for want of a router, as step 5 then says: the PC
+   * sees the destination is outside, and nothing here leads out. The switch is
+   * not blamed, and the text says what the picture simplifies.
+   */
+  it('gives the missing way out as the cause of step 4, and says what is drawn', () => {
+    const { ja, en } = step('another-network').copy;
+    const said = [...ja.points, ...ja.more].join('\n');
+    expect(said).not.toMatch(/しか知りません|行き方も分かりません/);
+    expect([...en.points, ...en.more].join('\n')).not.toMatch(/only knows|has no idea/);
+    expect(ja.points.join('')).toMatch(/PC-A は.*外だと分かります/);
+    expect(ja.points.join('')).toMatch(/つなぐ機器.*ありません/);
+    expect(ja.points.join('')).toMatch(/図では.*本物の PC-A は.*送り出しません/);
+    expect(en.points.join('')).toMatch(/real PC-A.*would not send/);
+    // The same reason step 5 gives for handing the packet to the router.
+    expect(step('add-a-router').copy.ja.points[0]).toMatch(/PC-A は.*外だと分かる/);
+    // The mark on the diagram gives that cause too, in both languages.
+    for (const locale of LOCALES) {
+      const mark = COURSE_MARK_WORDS[locale]['simulation.packetStory.dropOther'];
+      expect(mark).toMatch(
+        locale === 'ja' ? /別のネットワークへ出る道がありません/ : /nothing leads/,
+      );
+    }
+  });
+
+  /** TC-624 — "preferred" is said together with what it is preferred over. */
+  it('says between what the administrative distance chooses', () => {
+    expect(step('how-it-decides').copy.ja.more.join('')).toMatch(/2つの情報源.*AD が小さいほう/);
+    expect(step('how-it-decides').copy.en.more.join('')).toMatch(/two sources.*smaller AD/);
   });
 });
 

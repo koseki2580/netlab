@@ -5,7 +5,8 @@ import { expect, test } from './fixtures/harness';
  *
  * After 「DHCP を実行」 the step control replayed only the DHCP ACK (the last of
  * four traces), and after the DNS run only the HTTP GET. It now starts at the
- * first message and carries on from each message into the next.
+ * first message and carries on from each message into the next. The fetch is
+ * a TCP connection followed by the GET and its answer (TC-625).
  */
 const TID = {
   dhcpRun: 'dhcp-run',
@@ -33,7 +34,7 @@ async function walkToEnd(page: import('@playwright/test').Page): Promise<string[
   return seen;
 }
 
-test('DHCP steps through DISCOVER, OFFER, REQUEST, ACK; DNS through query, answer, fetch', async ({
+test('DHCP steps through DISCOVER, OFFER, REQUEST, ACK; DNS through query, answer, connect, fetch', async ({
   page,
   demoPage,
 }) => {
@@ -58,9 +59,14 @@ test('DHCP steps through DISCOVER, OFFER, REQUEST, ACK; DNS through query, answe
   await page.getByTestId(TID.dnsRun).click();
   await expect(page.getByTestId(TID.position)).toContainText('DNS QUERY');
   const dns = await walkToEnd(page);
+  // TC-625 — the GET waits for TCP's three messages, and its answer is shown.
   expect(dns.map((line) => line.replace(/^.*[:：]\s*/, ''))).toEqual([
     'DNS QUERY',
     'DNS RESPONSE',
+    'TCP SYN',
+    'TCP SYN-ACK',
+    'TCP ACK',
     'HTTP GET',
+    'HTTP 200',
   ]);
 });

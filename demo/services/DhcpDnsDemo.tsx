@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import { useRef, useState, type CSSProperties } from 'react';
 import type { DhcpLeaseState } from '../../src/types/services';
 import { useT } from '../localeContext';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
@@ -16,8 +16,14 @@ import {
 import { StepControls } from '../../src/components/simulation/StepControls';
 import { useViewport } from '../../src/utils/useViewport';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
-import type { InFlightPacket } from '../../src/types/packets';
+import type { HttpMessage, InFlightPacket } from '../../src/types/packets';
 import type { NetworkTopology } from '../../src/types/topology';
+import {
+  buildAckPacket,
+  buildSynAckPacket,
+  buildSynPacket,
+  generateISN,
+} from '../../src/layers/l4-transport/tcpPacketBuilder';
 import DemoShell from '../DemoShell';
 
 const TOPOLOGY: NetworkTopology = {
@@ -105,11 +111,26 @@ const TOPOLOGY: NetworkTopology = {
 
 export const DHCP_DNS_DEMO_TOPOLOGY = TOPOLOGY;
 
-function buildHttpPacket(runtimeIp: string | null): InFlightPacket {
+const WEB_NAME = 'web.example.com';
+const WEB_ADDRESS = '192.168.1.10';
+
+interface HttpStep {
+  readonly from: 'dhcp-client' | 'web-server';
+  readonly clientIp: string;
+  readonly clientPort: number;
+  /** The numbers the handshake before it agreed on, so they read as its continuation. */
+  readonly seq: number;
+  readonly ack: number;
+  readonly message: HttpMessage;
+}
+
+/** One HTTP message on the connection the handshake opened: the GET, or the answer to it. */
+function buildHttpPacket(step: HttpStep): InFlightPacket {
+  const outward = step.from === 'dhcp-client';
   return {
-    id: `http-web-fetch-${Date.now()}`,
-    srcNodeId: 'dhcp-client',
-    dstNodeId: 'web-server',
+    id: `http-web-${outward ? 'fetch' : 'answer'}-${Date.now()}`,
+    srcNodeId: step.from,
+    dstNodeId: outward ? 'web-server' : 'dhcp-client',
     frame: {
       layer: 'L2',
       srcMac: '00:00:00:00:00:01',
@@ -117,39 +138,74 @@ function buildHttpPacket(runtimeIp: string | null): InFlightPacket {
       etherType: 0x0800,
       payload: {
         layer: 'L3',
-        srcIp: runtimeIp ?? '0.0.0.0',
-        dstIp: '192.168.1.10',
+        srcIp: outward ? step.clientIp : WEB_ADDRESS,
+        dstIp: outward ? WEB_ADDRESS : step.clientIp,
         ttl: 64,
         protocol: 6,
         payload: {
           layer: 'L4',
-          srcPort: 49152,
-          dstPort: 80,
-          seq: 0,
-          ack: 0,
+          srcPort: outward ? step.clientPort : 80,
+          dstPort: outward ? 80 : step.clientPort,
+          seq: step.seq,
+          ack: step.ack,
           flags: {
             syn: false,
-            ack: false,
+            // Every segment after the handshake carries ACK.
+            ack: true,
             fin: false,
             rst: false,
             psh: true,
             urg: false,
           },
-          payload: {
-            layer: 'L7',
-            httpVersion: 'HTTP/1.1',
-            method: 'GET',
-            url: 'http://web.example.com/api',
-            headers: { host: 'web.example.com' },
-          },
+          payload: step.message,
         },
       },
     },
-    currentDeviceId: 'dhcp-client',
+    currentDeviceId: step.from,
     ingressPortId: '',
     path: [],
     timestamp: Date.now(),
   };
+}
+
+/**
+ * What one press of ② ran, as the lesson tells it: look the name up, open a
+ * connection, fetch the page. Worked out from the labels of the recorded
+ * messages, so the summary can only say what the step control will show.
+ */
+export interface FetchStory {
+  readonly lookedUp: boolean;
+  readonly handshake: readonly string[];
+  readonly asked: boolean;
+  readonly answered: boolean;
+}
+
+export function fetchStory(labels: readonly (string | undefined)[]): FetchStory {
+  const has = (label: string) => labels.includes(label);
+  return {
+    lookedUp: has('DNS QUERY') && has('DNS RESPONSE'),
+    handshake: labels.filter(
+      (label): label is string =>
+        label === 'TCP SYN' || label === 'TCP SYN-ACK' || label === 'TCP ACK',
+    ),
+    asked: has('HTTP GET'),
+    answered: has('HTTP 200'),
+  };
+}
+
+/**
+ * The address DHCP lent, drawn under the client where every other host shows
+ * its own. The library draws a host's configured address, and this client has
+ * none, so after ① the text said "it received 192.168.1.101" beside a box that
+ * still showed nothing.
+ */
+export function leasedAddressCss(address: string): string {
+  return (
+    '[data-id="dhcp-client"] [data-testid="topology-node"]::after{' +
+    `content:"${address.replace(/[^0-9.]/g, '')}";` +
+    'position:absolute;top:100%;left:0;right:0;margin-top:3px;font-size:10px;' +
+    'white-space:nowrap;color:var(--netlab-accent-green);}'
+  );
 }
 
 const CARD_STYLE: CSSProperties = {
@@ -183,7 +239,8 @@ function stepButtonStyle(emphasised: boolean, disabled: boolean): CSSProperties 
 function DhcpDnsDemoInner() {
   const t = useT();
   const { isNarrow } = useViewport();
-  const { engine, simulateDhcp, sendPacket } = useSimulation();
+  const { engine, state, simulateDhcp, simulateDns, sendPacket } = useSimulation();
+  const story = fetchStory(state.traces.map((trace) => trace.label));
   // What each button did, said in words beside the buttons. The answer used to
   // be only in a device's details, which a learner had to know to open.
   const [lease, setLease] = useState<DhcpLeaseState | null>(null);
@@ -207,11 +264,81 @@ function DhcpDnsDemoInner() {
     selectFirstTrace();
   };
 
+  // A client takes a fresh port for each connection it opens.
+  const nextPort = useRef(49152);
+
+  // The story in the order a real client lives it: look the name up, open a
+  // connection (TCP's three messages), and only then ask for the page. The GET
+  // used to follow the DNS answer directly, on the lesson after the one that
+  // teaches that TCP data waits for the handshake.
   const handleResolveAndFetch = async () => {
     engine.clearTraces();
-    await sendPacket(buildHttpPacket(engine.getRuntimeNodeIp('dhcp-client')));
-    const entry = engine.getDnsCache('dhcp-client')?.['web.example.com'];
-    setResolved(entry ? { name: 'web.example.com', address: entry.address } : null);
+    const clientIp = engine.getRuntimeNodeIp('dhcp-client');
+    if (!clientIp) return;
+    const address = await simulateDns('dhcp-client', WEB_NAME);
+    const entry = engine.getDnsCache('dhcp-client')?.[WEB_NAME];
+    setResolved(entry ? { name: WEB_NAME, address: entry.address } : null);
+    if (address) {
+      const clientPort = nextPort.current;
+      nextPort.current += 1;
+      // The engine's own connect reads a device's configured address, and this
+      // client's address came from DHCP, so the three messages are built and
+      // sent here: the same packets, through the same network.
+      const clientIsn = generateISN('dhcp-client', clientPort);
+      const serverIsn = generateISN('web-server', 80);
+      const outward = {
+        srcNodeId: 'dhcp-client',
+        dstNodeId: 'web-server',
+        srcIp: clientIp,
+        dstIp: address,
+        srcPort: clientPort,
+        dstPort: 80,
+      };
+      const back = {
+        srcNodeId: 'web-server',
+        dstNodeId: 'dhcp-client',
+        srcIp: address,
+        dstIp: clientIp,
+        srcPort: 80,
+        dstPort: clientPort,
+      };
+      await sendPacket(buildSynPacket({ ...outward, seq: clientIsn, ack: 0 }));
+      await sendPacket(buildSynAckPacket({ ...back, seq: serverIsn, ack: clientIsn + 1 }));
+      await sendPacket(buildAckPacket({ ...outward, seq: clientIsn + 1, ack: serverIsn + 1 }));
+      await sendPacket(
+        buildHttpPacket({
+          from: 'dhcp-client',
+          clientIp,
+          clientPort,
+          seq: clientIsn + 1,
+          ack: serverIsn + 1,
+          message: {
+            layer: 'L7',
+            httpVersion: 'HTTP/1.1',
+            method: 'GET',
+            url: `http://${WEB_NAME}/api`,
+            headers: { host: WEB_NAME },
+          },
+        }),
+      );
+      await sendPacket(
+        buildHttpPacket({
+          from: 'web-server',
+          clientIp,
+          clientPort,
+          seq: serverIsn + 1,
+          ack: clientIsn + 1,
+          message: {
+            layer: 'L7',
+            httpVersion: 'HTTP/1.1',
+            statusCode: 200,
+            reasonPhrase: 'OK',
+            headers: { 'content-type': 'text/html' },
+            body: '<h1>web.example.com</h1>',
+          },
+        }),
+      );
+    }
     selectFirstTrace();
   };
 
@@ -229,7 +356,14 @@ function DhcpDnsDemoInner() {
 
   return (
     <LessonSplit pinned>
-      <LessonCanvas canvas={<NetlabCanvas />}>
+      <LessonCanvas
+        canvas={
+          <>
+            {lease?.assignedIp ? <style>{leasedAddressCss(lease.assignedIp)}</style> : null}
+            <NetlabCanvas />
+          </>
+        }
+      >
         <LessonStepBar continueAcrossTraces />
         {/* Two services, two cards, in the order they are used. Sharing one
             heading and one box, learners filed "hands out addresses" under
@@ -274,6 +408,11 @@ function DhcpDnsDemoInner() {
                       {node.data.label}: {node.data.ip}
                     </div>
                   ))}
+                {lease?.assignedIp ? (
+                  <div style={{ color: 'var(--netlab-accent-green)' }}>
+                    DHCP Client: {lease.assignedIp}
+                  </div>
+                ) : null}
               </div>
             ) : null}
             <div data-testid="dhcp-card" style={CARD_STYLE}>
@@ -306,6 +445,13 @@ function DhcpDnsDemoInner() {
                   'DISCOVER＝「DHCP サーバはいますか？」 → OFFER＝「このアドレスをどうぞ」 → REQUEST＝「それをください」 → ACK＝「どうぞ使ってください」。',
                 )}
               </div>
+              {/* The TCP lesson has just taught "ACK" as its third message. */}
+              <div data-testid="dhcp-ack-note" style={{ color: 'var(--netlab-text-secondary)' }}>
+                {t(
+                  'This ACK is DHCP\'s own message, not the ACK of TCP. Both are a reply that means "understood".',
+                  'DHCP の ACK は、TCP の ACK とは別のものです。どちらも「了解」という意味の返事です。',
+                )}
+              </div>
               <div data-testid="dhcp-extras">
                 {t(
                   'It also tells the machine its subnet mask (how far its own network reaches), its default gateway (the way out) and the DNS server to use.',
@@ -321,6 +467,12 @@ function DhcpDnsDemoInner() {
                     `The client was given the address ${lease.assignedIp}${leaseExtras.length > 0 ? ` (${leaseExtras.join('; ')})` : ''}.`,
                     `Client は住所 ${lease.assignedIp} をもらいました${leaseExtras.length > 0 ? `（${leaseExtras.join('、')}）` : ''}。`,
                   )}
+                  <div data-testid="dhcp-result-where" style={{ fontWeight: 400 }}>
+                    {t(
+                      'The diagram now shows it under DHCP Client, in green.',
+                      '図の DHCP Client の下にも、緑の字で出ました。',
+                    )}
+                  </div>
                 </div>
               ) : (
                 // The canvas marks the client's link with ⚠ because the client
@@ -398,9 +550,73 @@ function DhcpDnsDemoInner() {
                 data-testid="dns-result"
                 style={{ marginTop: 6, fontWeight: 700, color: 'var(--netlab-accent-green)' }}
               >
+                {story.lookedUp
+                  ? t(
+                      `DNS answered: the address of ${resolved.name} is ${resolved.address}.`,
+                      `DNS が「${resolved.name} の住所は ${resolved.address}」と答えました。`,
+                    )
+                  : t(
+                      `The client still remembers that ${resolved.name} is ${resolved.address}, so this time it did not ask DNS.`,
+                      `${resolved.name} の住所 ${resolved.address} は、さっき調べて覚えています。だから今回は DNS に聞きませんでした。`,
+                    )}
+              </div>
+            ) : null}
+            {/* What the press ran, in the order it ran: the name, the
+                connection, the page. The handshake is the TCP lesson's, so it
+                is one line here that opens. */}
+            {resolved && story.asked ? (
+              <ol
+                data-testid="fetch-story"
+                style={{ margin: '6px 0 0', paddingLeft: 20, display: 'grid', gap: 4 }}
+              >
+                <li data-testid="fetch-story-lookup">
+                  {story.lookedUp
+                    ? t(
+                        'Look up the name (DNS): the question (DNS QUERY) and its answer (DNS RESPONSE).',
+                        '名前を調べる（DNS）：質問（DNS QUERY）と、その答え（DNS RESPONSE）。',
+                      )
+                    : t(
+                        'Look up the name (DNS): not needed this time. The answer is remembered.',
+                        '名前を調べる（DNS）：今回は不要です。答えを覚えています。',
+                      )}
+                </li>
+                <li>
+                  <details data-testid="fetch-handshake">
+                    <summary data-testid="fetch-handshake-summary" style={{ cursor: 'pointer' }}>
+                      {t(
+                        `Open a TCP connection (${story.handshake.length} messages)`,
+                        `TCP の接続（${story.handshake.length} 回のやり取り）`,
+                      )}
+                    </summary>
+                    <div
+                      data-testid="fetch-handshake-detail"
+                      style={{ color: 'var(--netlab-text-secondary)' }}
+                    >
+                      {t(
+                        'SYN = "Hello?" (Client → Web Server) → SYN-ACK = "Yes, I hear you" (Web Server → Client) → ACK = "Right, let us talk" (Client → Web Server). The same three messages as in the TCP lesson. Only after them does the client ask for the page.',
+                        'SYN＝「もしもし」（Client → Web Server） → SYN-ACK＝「はい、聞こえます」（Web Server → Client） → ACK＝「では話します」（Client → Web Server）。TCP のレッスンと同じ 3 回です。ページを頼むのは、このあとです。',
+                      )}
+                    </div>
+                  </details>
+                </li>
+                <li data-testid="fetch-story-page">
+                  {story.answered
+                    ? t(
+                        'Fetch the page (HTTP): GET = "please send me this page" → 200 = "here it is", with the page inside.',
+                        'ページを取りに行く（HTTP）：GET＝「このページをください」 → 200＝「どうぞ」。この返事にページが入っています。',
+                      )
+                    : t(
+                        'Ask for the page (HTTP): GET = "please send me this page".',
+                        'ページを頼む（HTTP）：GET＝「このページをください」。',
+                      )}
+                </li>
+              </ol>
+            ) : null}
+            {resolved && story.asked ? (
+              <div data-testid="fetch-story-steps" style={{ marginTop: 4 }}>
                 {t(
-                  `DNS answered: the address of ${resolved.name} is ${resolved.address}. The page was then fetched from that address.`,
-                  `DNS が「${resolved.name} の住所は ${resolved.address}」と答えました。その住所からページを取得しました。`,
+                  `"Next step" walks these ${state.traces.length} messages one at a time.`,
+                  `「次のステップ」で、この ${state.traces.length} 通を 1 通ずつ見られます。`,
                 )}
               </div>
             ) : null}

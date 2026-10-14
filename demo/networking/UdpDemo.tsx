@@ -350,6 +350,16 @@ function UdpDemoInner() {
                   style={{ ...INPUT_STYLE, width: 180 }}
                 />
               </label>
+              {/* The course called a switch's socket a port; this is the other sense. */}
+              <div
+                data-testid="udp-port-gloss"
+                style={{ ...DETAIL_STYLE, color: 'var(--netlab-text-secondary)' }}
+              >
+                {t(
+                  'A port here is not a socket for a cable: it is the number of a window inside a machine. The address picks the machine; the port picks which program on it gets the data.',
+                  'ここでいうポートは、ケーブルの差し込み口ではなく、機器の中の窓口の番号です。住所で機器を選び、ポートでその中のどのプログラムに渡すかを選びます。',
+                )}
+              </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 <button
                   data-testid="demo-primary-action"
@@ -373,8 +383,8 @@ function UdpDemoInner() {
                 style={{ ...DETAIL_STYLE, color: 'var(--netlab-text-secondary)' }}
               >
                 {t(
-                  '"Send Large" is safe to press: nothing breaks. A packet has a size limit on each link, the MTU (usually 1500 bytes). The large send is bigger than that; what happens to it is shown below after you send.',
-                  '「大きく送る」は、試しに押して大丈夫です。何も壊れません。パケットの大きさには上限（MTU。ふつう 1500 バイト）があります。それより大きいデータを送るとどうなるかを、送ったあと下に表示します。',
+                  '"Send Large" is safe to press: nothing breaks. A packet has a size limit on each link, the MTU (usually 1500 bytes). A real network cuts anything bigger into smaller pieces. This screen does not cut it; after you send, the box below says how a real network would.',
+                  '「大きく送る」は、試しに押して大丈夫です。何も壊れません。パケットの大きさには上限（MTU。ふつう 1500 バイト）があります。本物のネットワークは、それより大きいデータを小さく分けて送ります。この画面では分けません。本物ならどう分けるかは、送ったあと下に出ます。',
                 )}
               </div>
             </div>
@@ -448,10 +458,17 @@ function UdpSizeResult({ payloadBytes, pieces }: { payloadBytes: number; pieces:
       <div data-testid="udp-size-pieces" style={{ fontWeight: 700, marginTop: 4 }}>
         {pieces > 1
           ? t(`Split into ${pieces} pieces on the way.`, `途中で ${pieces} 個に分割されました。`)
-          : t(
-              'Not split: it arrived as one packet (1 piece).',
-              '分割なし：1 個のパケットのまま届きました。',
-            )}
+          : size.overEthernetMtu
+            ? // What a real network does comes first; "not split" alone, above
+              // a paragraph about three fragments, read as a contradiction.
+              t(
+                `A real network would send this in ${real.length} pieces. This screen did not split it: it arrived as one packet.`,
+                `本物のネットワークなら、${real.length} 個に分けて送る大きさです。この画面では分けずに、1 個のまま届きました。`,
+              )
+            : t(
+                'Not split: it arrived as one packet (1 piece).',
+                '分割なし：1 個のパケットのまま届きました。',
+              )}
       </div>
       <div
         data-testid="udp-size-explanation"
@@ -468,8 +485,8 @@ function UdpSizeResult({ payloadBytes, pieces }: { payloadBytes: number; pieces:
                 `${size.ipBytes} バイトはリンクの MTU を超えているので、小さな IP フラグメントに切り分けられました。受け取った側で元に戻します。`,
               )
             : t(
-                `${size.ipBytes} B is over the usual 1500-byte MTU. A real computer would split the ${size.udpBytes}-byte datagram into ${real.length} IP fragments of ${real.join(' + ')} bytes, and the server would put them back together. This simulation does not split it: here only a router splits packets, and this network has no router and no MTU set on its links. To watch splitting happen, open the "MTU & Fragmentation" lesson.`,
-                `${size.ipBytes} バイトはふつうの MTU（1500 バイト）を超えています。本物のパソコンなら、${size.udpBytes} バイトの UDP データグラムを ${real.join(' ＋ ')} バイトの ${real.length} 個の IP フラグメントに分けて送り、サーバ側で元に戻します。このシミュレーションでは分割されません。ここでパケットを分割するのはルータだけで、この図にはルータがなく、リンクに MTU も設定していないためです。分割が実際に起きる様子は「MTU と分割」のレッスンで見られます。`,
+                `${size.ipBytes} B is over the usual 1500-byte MTU. A real computer would split the ${size.udpBytes}-byte datagram into ${real.length} IP fragments of ${real.join(' + ')} bytes, and the server would put them back together. This screen does not split it because here only a router splits packets, and this network has no router and no MTU set on its links. To watch splitting happen, open the "MTU & Fragmentation" lesson.`,
+                `${size.ipBytes} バイトはふつうの MTU（1500 バイト）を超えています。本物のパソコンなら、${size.udpBytes} バイトの UDP データグラムを ${real.join(' ＋ ')} バイトの ${real.length} 個の IP フラグメントに分けて送り、サーバ側で元に戻します。この画面で分けないのは、ここでパケットを分割するのがルータだけだからです。この図にはルータがなく、リンクに MTU も設定していません。分割が実際に起きる様子は「MTU と分割」のレッスンで見られます。`,
               )}
       </div>
     </div>

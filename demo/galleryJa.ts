@@ -65,7 +65,7 @@ export const DEMO_COPY_JA: Readonly<Record<string, DemoCopyJa>> = {
   },
   '/routing/client-server': {
     title: 'クライアントとサーバ',
-    desc: 'プライベート／パブリックの区画、静的経路を持つルータ、パケットの記録まで一通り揃った構成です。',
+    desc: '2 つのネットワーク、その間のルータ、パケットの記録まで一通り揃った構成です。',
   },
   '/routing/multi-hop': {
     title: '複数ホップ',

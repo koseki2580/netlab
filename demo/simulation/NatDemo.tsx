@@ -21,6 +21,7 @@ import { ja } from '../../src/i18n/locales/ja';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import { useViewport } from '../../src/utils/useViewport';
 import type { InFlightPacket } from '../../src/types/packets';
+import type { PacketHop, PacketTrace } from '../../src/types/simulation';
 import { NAT_DEMO_TOPOLOGY } from './natDemoTopology';
 import { readDemoEmbedParams } from '../embedParams';
 
@@ -34,6 +35,8 @@ function makePacket(
   dstIp: string,
   srcPort: number,
   dstPort: number,
+  /** The reply to a SYN is a SYN-ACK; everything else here opens a connection. */
+  reply = false,
 ): InFlightPacket {
   return {
     id,
@@ -60,8 +63,8 @@ function makePacket(
           dstPort,
           seq: 0,
           ack: 0,
-          flags: { syn: true, ack: false, fin: false, rst: false, psh: false, urg: false },
-          payload: { layer: 'raw', data: 'GET / HTTP/1.1' },
+          flags: { syn: true, ack: reply, fin: false, rst: false, psh: false, urg: false },
+          payload: { layer: 'raw', data: reply ? '' : 'GET / HTTP/1.1' },
         },
       },
     },
@@ -103,16 +106,19 @@ function ActionButton({
   label,
   onClick,
   testId,
+  disabled = false,
 }: {
   label: string;
   onClick: () => void;
   testId: string;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       data-testid={testId}
       onClick={onClick}
+      disabled={disabled}
       // Filled, like every other lesson's send button: as an outline these
       // did not look like something to press.
       style={{
@@ -120,7 +126,8 @@ function ActionButton({
         border: '1px solid #0f766e',
         borderRadius: 8,
         color: '#ecfeff',
-        cursor: 'pointer',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.55 : 1,
         fontSize: 14,
         fontWeight: 700,
         padding: '10px 12px',
@@ -287,9 +294,59 @@ function NatResult() {
   );
 }
 
+/** Which machine at home has each private address. */
+const HOME_NODE: Readonly<Record<string, { id: string; label: string }>> = {
+  '192.168.1.10': { id: 'client-1', label: 'Client A' },
+  '192.168.1.20': { id: 'client-2', label: 'Client B' },
+};
+
+/**
+ * The rows of a send the lesson is about. The router's address lookup (ARP)
+ * is the ARP lesson's subject and comes up again on every send here, where it
+ * buried the two rows that rewrite an address.
+ */
+export function isNatLessonRow(item: PacketHop | PacketTrace): boolean {
+  return !('event' in item) || (item.event !== 'arp-request' && item.event !== 'arp-reply');
+}
+
+/** The way back, said in words once a reply has been sent. */
+function NatReplyResult() {
+  const t = useT();
+  const { state } = useSimulation();
+  const trace = state.traces[state.traces.length - 1];
+  if (!trace?.packetId.startsWith('nat-reply') || trace.status !== 'delivered') return null;
+  const back = trace.hops.find((hop) => hop.natTranslation)?.natTranslation;
+  if (!back) return null;
+  const home = HOME_NODE[back.postDstIp]?.label ?? back.postDstIp;
+
+  return (
+    <div
+      data-testid="nat-reply-result"
+      style={{
+        fontSize: 14,
+        fontWeight: 700,
+        lineHeight: 1.6,
+        color: 'var(--netlab-accent-green)',
+      }}
+    >
+      {t(
+        `The reply came back addressed to ${back.preDstIp}:${back.preDstPort}. The router looked in its table, put the destination back to ${back.postDstIp}:${back.postDstPort}, and handed it to ${home}.`,
+        `返事は ${back.preDstIp}:${back.preDstPort} あてに戻ってきました。ルータは変換表を見て、宛先を ${back.postDstIp}:${back.postDstPort} に戻し、${home} に渡しました。`,
+      )}
+    </div>
+  );
+}
+
 function NatDemoInner() {
   const t = useT();
-  const { sendPacket } = useSimulation();
+  const { sendPacket, state } = useSimulation();
+  // The reply answers the send made last, the way a server answers whoever just spoke to it.
+  const outbound = state.natTables
+    .flatMap((table) => table.entries)
+    .filter((entry) => entry.type === 'snat')
+    .sort((a, b) => a.lastSeenAt - b.lastSeenAt);
+  const lastOut = outbound[outbound.length - 1];
+  const replyTo = lastOut ? HOME_NODE[lastOut.insideLocalIp] : undefined;
 
   return (
     <LessonSplit pinned>
@@ -342,14 +399,21 @@ function NatDemoInner() {
             </div>
             <div>
               {t(
-                'Machines at home use addresses that only work inside (private addresses, such as 192.168.1.10). On the way out, the router at the exit rewrites the sender to its own address (the global address, 203.0.113.1). When the reply comes back, it puts the private address back.',
-                '家の中の機器は、中だけで通じる住所（プライベートアドレス。例：192.168.1.10）を使います。外へ出るとき、出口のルータが送り主を自分の住所（グローバルアドレス 203.0.113.1）に書き換えます。返事が戻ったら、元の住所に戻します。',
+                'Machines at home use addresses that only work inside (private addresses, such as 192.168.1.10). On the way out, the router at the exit rewrites the sender to its own address (the global address, 203.0.113.1). When the reply comes back, it puts the private address back. After a send, "Send the reply from Internet Host" shows that.',
+                '家の中の機器は、中だけで通じる住所（プライベートアドレス。例：192.168.1.10）を使います。外へ出るとき、出口のルータが送り主を自分の住所（グローバルアドレス 203.0.113.1）に書き換えます。返事が戻ったら、元の住所に戻します。送ったあとに「Internet Host から返事を送る」を押すと、それが見られます。',
               )}
             </div>
             <div style={{ marginTop: 6 }}>
               {t(
-                'Send from Client A, then from Client B, with the buttons below (each sends at once). Both get the same address and are told apart by port number: a port number is like a room number at one street address.',
-                '下のボタンで、Client A と Client B から送ってみましょう（押すとすぐ送られます）。2 台とも同じ住所になり、ポート番号で区別されます。ポート番号は、同じ住所の中の部屋番号のようなものです。',
+                'Send from Client A, then from Client B, with the buttons below (each sends at once). Both get the same address and are told apart by port number.',
+                '下のボタンで、Client A と Client B から送ってみましょう（押すとすぐ送られます）。2 台とも同じ住所になり、ポート番号で区別されます。',
+              )}
+            </div>
+            {/* The course called a switch's socket a port; this is the other sense. */}
+            <div data-testid="nat-port-gloss" style={{ marginTop: 6 }}>
+              {t(
+                'A port here is not a socket for a cable: it is the number of a window inside a machine.',
+                'ここでいうポートは、ケーブルの差し込み口ではなく、機器の中の窓口の番号です。',
               )}
             </div>
             <div
@@ -410,6 +474,35 @@ function NatDemoInner() {
                 }}
               />
               <ActionButton
+                testId="nat-send-reply"
+                disabled={!lastOut || !replyTo}
+                label={
+                  replyTo
+                    ? t(
+                        `▶ Send the reply from Internet Host (to ${replyTo.label})`,
+                        `▶ Internet Host から返事を送る（${replyTo.label} あて）`,
+                      )
+                    : t('▶ Send the reply from Internet Host', '▶ Internet Host から返事を送る')
+                }
+                onClick={() => {
+                  if (!lastOut || !replyTo) return;
+                  // Addressed to what the server saw: the shared address and
+                  // the port the router chose, never the address at home.
+                  void sendPacket(
+                    makePacket(
+                      `nat-reply-${Date.now()}`,
+                      'server-1',
+                      replyTo.id,
+                      lastOut.outsidePeerIp,
+                      lastOut.insideGlobalIp,
+                      lastOut.outsidePeerPort,
+                      lastOut.insideGlobalPort,
+                      true,
+                    ),
+                  );
+                }}
+              />
+              <ActionButton
                 testId="nat-send-inbound"
                 label={t(
                   '▶ Send in from outside to Client A (port 8080)',
@@ -431,8 +524,20 @@ function NatDemoInner() {
               />
             </div>
           </LessonPinned>
+          {/* A packet from outside reaching an address that "only works
+              inside" needs its reason said. */}
+          <div
+            data-testid="nat-inbound-note"
+            style={{ fontSize: 12, lineHeight: 1.6, color: 'var(--netlab-text-secondary)' }}
+          >
+            {t(
+              '"From outside to Client A" arrives because this router was told in advance: "what comes to port 8080 goes to port 80 of Client A". Without that rule it would be thrown away.',
+              '「外から Client A へ送る」が届くのは、このルータに前もって「ポート 8080 に来たものは Client A のポート 80 へ渡す」と決めてあるからです。この決まりがなければ捨てられます。',
+            )}
+          </div>
 
           <NatResult />
+          <NatReplyResult />
 
           <NatSharingTable />
 
@@ -446,7 +551,16 @@ function NatDemoInner() {
               overflow: 'hidden',
             }}
           >
-            <PacketTimeline />
+            <PacketTimeline filter={isNatLessonRow} />
+          </div>
+          <div
+            data-testid="nat-arp-note"
+            style={{ fontSize: 12, lineHeight: 1.6, color: 'var(--netlab-text-secondary)' }}
+          >
+            {t(
+              'This list leaves out the ARP rows, so its numbers skip. A real device remembers an ARP answer for a few minutes and does not ask on every send.',
+              'この一覧では ARP の行を省いています。だから番号が飛びます。本物の機器は ARP の答えを数分のあいだ覚えていて、送るたびには聞きません。',
+            )}
           </div>
 
           <div style={{ flex: 2, minHeight: 0 }}>
@@ -465,8 +579,8 @@ function NatDemoInner() {
           }}
         >
           {t(
-            'The controls below replay the last send hop by hop (▶ play, → one step). ⟳ reset also empties the NAT table, so use it only to start over.',
-            '下の操作で、最後に送ったパケットを1ホップずつ見直せます（▶ 再生、→ 1ステップ）。⟳ リセットは NAT の変換表も空にするので、最初からやり直すときだけ使います。',
+            'The controls below replay the last send one step at a time (▶ play, → one step). ⟳ reset also empties the NAT table, so use it only to start over.',
+            '下の操作で、最後に送ったパケットを 1 ステップずつ見直せます（▶ 再生、→ 1 ステップ）。⟳ リセットは NAT の変換表も空にするので、最初からやり直すときだけ使います。',
           )}
         </div>
         {/* No generic send here: it resets the engine, which empties the NAT
