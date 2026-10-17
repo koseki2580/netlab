@@ -62,7 +62,8 @@ carry their own `label` (no separate `checkLabels`).
 - **A capture list**: `packets` as they left the sender (one; two for "which arrives", named A and
   B). Show every header field, as the build view does, none editable.
 - `questions`: each a `prompt` and `candidates` (devices with their labels, fields with their form
-  labels, or A / B / both / neither). One pick per question, ordered per attempt.
+  labels, A / B / both / neither, MAC addresses or TTLs). `frame-src-mac`, `frame-dst-mac` and
+  `ttl-on-link` are about one cable, `edgeId`: highlight it on the diagram. One pick per question, ordered per attempt.
 - `fix` (levels 3 and 4): a `BuildPart` over `packets[0]`, shown as the build view after the
   questions. `p4-capture` offers four editable fields with a one-change limit, so the form does not
   say which field is at fault.
@@ -117,11 +118,14 @@ run the device presser simulation on these pools (`levelRule.test.ts` style); it
 
 ## Pools and repeats (seeds 0–99)
 
-Different tasks (fingerprints) per template: p1-send-to 15, p1-where 28, p1-which 48,
-p2-smallest-ttl 47, p2-first-mac 15, p2-port 53, p2-ttl-where 51, p3-df 65, p3-fragment 87,
-p3-df-read 32, p4-fragment 95, p4-capture 67, p4-two-faults 56. Every template gives 100
-different-looking instances (addresses, place, MACs), but only the fingerprints are different
-reasoning. Pools: 120 ids at each level.
+Different tasks (fingerprints) per template: p1-send-to 55, p1-where 28, p1-which 48,
+p2-smallest-ttl 29, p2-first-mac 51, p2-port 53, p2-ttl-where 51, p2-die-at 34, p3-df 65,
+p3-fragment 87, p3-df-read 32, p3-which-cuts 51, p3-frame-after 40, p4-fragment 95,
+p4-capture 67, p4-two-faults 56. Every template gives 100 different-looking instances (addresses,
+place, MACs), but only the fingerprints are different reasoning. Pools: 120 ids at each level.
+
+The blind-strategy check (`verify.test.ts`, over 400 seeds) also fails when any fixed value is right
+more than 10 points above chance among the instances that offer it at least 30 times.
 
 ## Open decisions
 
@@ -135,10 +139,10 @@ reasoning. Pools: 120 ids at each level.
 5. **Pick first, then fix** for read exercises with a `fix`: one Check for both, or the questions
    judged first (a wrong pick then costs the attempt, as `pickFirst` does)? The judge supports both
    (it judges everything it is given).
-6. **The "favourite value" of `p2-smallest-ttl`**: the value right most often (3) is right in 43% of
-   the instances that offer it (chance 25%). No position or ordering strategy beats chance, but a
-   learner who remembers "3" does better than chance. Drawing the router count to flatten this
-   would make the rank of the answer among the four uneven; left as is and measured by the harness.
+6. **Wrong picks with words of their own**: a wrong pick whose candidate `why` has an entry in
+   `PICK_MESSAGES` (`reasons.ts`) is told that mistake ("that is the sender's MAC; it is on the
+   frame only on the first cable"); others get the question's general line. The page shows
+   `result.message` either way.
 7. **A ping that comes back**: the simulator gives no reply to a delivered packet (README question
    3). The page must not promise one ("the server answers").
 8. **Pieces after the first carry no port**, so a port list after the narrow cable refuses them.
@@ -147,7 +151,6 @@ reasoning. Pools: 120 ids at each level.
 
 ## Not built, and why
 
-- "Same network or another?" (README level 1) is covered by `p1-which` and `p2-first-mac`;
-  "make it die at the second router", "read: the frame after the router", "split with a twist:
-  which router cuts it?" were not built for time. All are sound by the README.
+- "Same network or another?" (README level 1) is covered by `p1-which` and `p2-first-mac`.
+- `p2-die-at` never asks for the first router: its TTL, 1, is the number the rule line states.
 - Everything in the README's "should wait for an engine change" table.

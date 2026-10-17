@@ -55,7 +55,8 @@ export interface PacketNet {
  */
 function salted(topology: TopologySnapshot, salt: number) {
   const mac: Record<string, string> = {};
-  const of = (key: string) => (mac[key] = macFor(`${key}~${salt}`));
+  // Hashed twice: one pass of FNV leaves the first bytes tied to how the key begins.
+  const of = (key: string) => (mac[key] = macFor(macFor(`${key}~${salt}`)));
   return {
     mac,
     topology: {
@@ -87,37 +88,72 @@ function salted(topology: TopologySnapshot, salt: number) {
   };
 }
 
-export function lanNet(place: Place, plan: AddressPlan, salt: number): PacketNet {
-  const { near, far, gateway, pcs, servers } = plan;
-  const ip = {
+export type LanShape = 'one-router' | 'two-routers';
+
+/**
+ * one-router:   pc1, pc2 — sw1 — r1 — sw2 — srv, srv2
+ * two-routers:  pc1, pc2 — sw1 — r1 — r2 — sw2 — srv, srv2
+ */
+export function lanNet(
+  place: Place,
+  plan: AddressPlan,
+  salt: number,
+  shape: LanShape = 'one-router',
+): PacketNet {
+  const { near, far, gateway, pcs, servers, links } = plan;
+  const two = shape === 'two-routers';
+  const ip: Record<string, string> = {
     pc1: near.at(pcs[0]),
     pc2: near.at(pcs[1]),
     'r1:lan': near.at(gateway),
-    'r1:far': far.at(gateway),
     srv: far.at(servers[0]),
     srv2: far.at(servers[1]),
+    ...(two
+      ? { 'r1:to-r2': links[0].a, 'r2:to-r1': links[0].b, 'r2:far': far.at(gateway) }
+      : { 'r1:far': far.at(gateway) }),
   };
-  const { topology, mac } = salted(
-    snapshot(
-      [
-        host('pc1', ip.pc1, at(0, 0)),
-        host('pc2', ip.pc2, at(0, 2)),
-        switchNode('sw1', [port('p1'), port('p2'), port('up')], {}, at(1, 1)),
+  const routers = two
+    ? [
         router(
           'r1',
-          [iface('lan', `${ip['r1:lan']}/24`), iface('far', `${ip['r1:far']}/24`)],
+          [iface('lan', `${ip['r1:lan']}/24`), iface('to-r2', `${links[0].a}/30`)],
+          { staticRoutes: [{ destination: far.cidr, nextHop: links[0].b }] },
+          at(2, 1),
+        ),
+        router(
+          'r2',
+          [iface('to-r1', `${links[0].b}/30`), iface('far', `${far.at(gateway)}/24`)],
+          { staticRoutes: [{ destination: near.cidr, nextHop: links[0].a }] },
+          at(3, 1),
+        ),
+      ]
+    : [
+        router(
+          'r1',
+          [iface('lan', `${ip['r1:lan']}/24`), iface('far', `${far.at(gateway)}/24`)],
           {},
           at(2, 1),
         ),
-        switchNode('sw2', [port('up'), port('p1'), port('p2')], {}, at(3, 1)),
-        host('srv', ip.srv, { role: 'server', ...at(4, 0) }),
-        host('srv2', ip.srv2, { role: 'server', ...at(4, 2) }),
+      ];
+  const last = two ? 'r2' : 'r1';
+  const col = two ? 4 : 3;
+  const { topology, mac } = salted(
+    snapshot(
+      [
+        host('pc1', ip.pc1 ?? '', at(0, 0)),
+        host('pc2', ip.pc2 ?? '', at(0, 2)),
+        switchNode('sw1', [port('p1'), port('p2'), port('up')], {}, at(1, 1)),
+        ...routers,
+        switchNode('sw2', [port('up'), port('p1'), port('p2')], {}, at(col, 1)),
+        host('srv', ip.srv ?? '', { role: 'server', ...at(col + 1, 0) }),
+        host('srv2', ip.srv2 ?? '', { role: 'server', ...at(col + 1, 2) }),
       ],
       [
         link('e-pc1', 'pc1', 'sw1:p1'),
         link('e-pc2', 'pc2', 'sw1:p2'),
         link('e-up', 'sw1:up', 'r1:lan'),
-        link('e-far', 'r1:far', 'sw2:up'),
+        ...(two ? [link('e-12', 'r1:to-r2', 'r2:to-r1')] : []),
+        link('e-far', `${last}:far`, 'sw2:up'),
         link('e-srv', 'sw2:p1', 'srv'),
         link('e-srv2', 'sw2:p2', 'srv2'),
       ],
@@ -131,15 +167,15 @@ export function lanNet(place: Place, plan: AddressPlan, salt: number): PacketNet
       pc1: place.pcs[0],
       pc2: place.pcs[1],
       sw1: place.lanSwitch,
-      r1: place.router,
+      ...(two ? { r1: place.sites.near.router, r2: place.sites.far.router } : { r1: place.router }),
       sw2: place.farSwitch,
       srv: place.server,
       srv2: place.server2,
     },
     ip,
-    routers: ['r1'],
-    edgeAfter: { r1: 'e-far' },
-    inSide: { r1: 'lan' },
+    routers: two ? ['r1', 'r2'] : ['r1'],
+    edgeAfter: two ? { r1: 'e-12', r2: 'e-far' } : { r1: 'e-far' },
+    inSide: two ? { r1: 'lan', r2: 'to-r1' } : { r1: 'lan' },
   };
 }
 

@@ -211,13 +211,21 @@ export type QuestionAsk =
   /** At which device the packet stops: the router that drops it, or the destination. */
   | 'stops-at'
   /** Which field made the device drop it. */
-  | 'cause';
+  | 'cause'
+  /** Which router cut the packet into pieces (`none`: nobody). */
+  | 'cut-by'
+  /** On the cable `edgeId`: the frame's source MAC, its destination MAC, the packet's TTL. */
+  | 'frame-src-mac'
+  | 'frame-dst-mac'
+  | 'ttl-on-link';
 
 export interface ReadQuestion {
   readonly id: string;
   readonly ask: QuestionAsk;
   readonly prompt: Localised;
   readonly candidates: readonly Candidate[];
+  /** The cable a `frame-*` or `ttl-on-link` question is about. */
+  readonly edgeId?: string;
   /** The `value` of the right candidate. The judge reads it off the simulator; this is the key it must agree with. */
   readonly answer: string;
 }
@@ -330,6 +338,7 @@ export interface PacketEvidence {
     | 'sender'
     | 'gateway'
     | 'router-far-side'
+    | 'other-router'
     | 'switch'
     | 'nobody';
   /** Fragment statements: the rows the message is about, counted from 1. */

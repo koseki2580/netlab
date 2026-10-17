@@ -49,6 +49,7 @@ import {
   join,
   macMessage,
   MESSAGES,
+  PICK_MESSAGES,
   REASSEMBLES_ANYWAY,
   type FragmentMistake,
 } from './reasons';
@@ -415,12 +416,16 @@ async function judgeGoal(
         if (holder.node.id === want) owner = 'destination';
         else if (holder.node.id === packet.from) owner = 'sender';
         else if (role === 'switch') owner = 'switch';
-        else if (role === 'router')
+        else if (role === 'router') {
+          const onSenderSide = (entry: { ipAddress: string; prefixLength: number }) =>
+            isInSubnet(packet.srcIp, `${entry.ipAddress}/${entry.prefixLength}`);
           owner =
-            side && isInSubnet(packet.srcIp, `${side.ipAddress}/${side.prefixLength}`)
+            side && onSenderSide(side)
               ? 'gateway'
-              : 'router-far-side';
-        else owner = 'neighbour';
+              : (holder.node.data.interfaces ?? []).some(onSenderSide)
+                ? 'router-far-side'
+                : 'other-router';
+        } else owner = 'neighbour';
       }
       return result(
         goal.id,
@@ -703,6 +708,19 @@ export async function truthOf(exercise: ReadExercise, question: ReadQuestion): P
       return facts.drop?.nodeId ?? facts.deliveredTo ?? '';
     case 'cause':
       return causeOf(exercise.topology, first, facts);
+    case 'cut-by':
+      return facts.fragments[0]?.nodeId ?? 'none';
+    case 'frame-src-mac':
+    case 'frame-dst-mac':
+    case 'ttl-on-link': {
+      const hop = facts.hops.find((entry) => entry.hop.activeEdgeId === question.edgeId);
+      if (!hop) return '';
+      return question.ask === 'ttl-on-link'
+        ? String(hop.ttl)
+        : question.ask === 'frame-src-mac'
+          ? hop.srcMac.toLowerCase()
+          : hop.dstMac.toLowerCase();
+    }
     case 'which-arrive': {
       const other = second ? await send(exercise.topology, second) : null;
       const a = facts.delivered && facts.deliveredTo === ownerOf(exercise.topology, first.dstIp);
@@ -715,6 +733,22 @@ export async function truthOf(exercise: ReadExercise, question: ReadQuestion): P
 }
 
 const READ_WRONG: Record<ReadQuestion['ask'], Localised> = {
+  'cut-by': {
+    en: 'It is not cut there. At each router, compare the size of the packet with the MTU of the cable ahead.',
+    ja: 'そこでは分割されません。ルータごとに、パケットの大きさと、その先の回線の MTU を比べてください。',
+  },
+  'frame-src-mac': {
+    en: "That is not the frame's sender on this cable. It is the device that sent the frame onto this cable, by the side facing it.",
+    ja: 'この回線でのフレームの送り主ではありません。送り主 MAC は、この回線へフレームを送り出した機器の、この回線側の MAC です。',
+  },
+  'frame-dst-mac': {
+    en: 'That is not who takes the frame on this cable. It is the next device that takes it: a router or the destination; a switch does not count.',
+    ja: 'この回線でフレームを受け取るのは、その機器ではありません。あて先 MAC は、次に受け取る機器（ルータかあて先）の MAC です。スイッチは数えません。',
+  },
+  'ttl-on-link': {
+    en: 'That is not its TTL on this cable. Count the routers it has crossed to get here.',
+    ja: 'この回線での TTL はちがいます。ここまでに越えたルータの数を数えてください。',
+  },
   'arrives-at': {
     en: 'Not there. Compare its destination address with the address of each device on the diagram.',
     ja: 'そこではありません。あて先アドレスを、図の機器のアドレスと 1 つずつ見比べてください。',
@@ -745,7 +779,17 @@ export async function judgeRead(exercise: ReadExercise, answer: ReadAnswer): Pro
       const truth = await truthOf(exercise, question);
       if (pick === undefined) out.push(result(question.id, 'no-pick', MESSAGES.noPick));
       else if (pick === truth) out.push(result(question.id, 'ok', MESSAGES.ok));
-      else out.push(result(question.id, 'wrong-pick', READ_WRONG[question.ask]));
+      else {
+        // The mistake the chosen candidate is, where there are words for it; else the question's.
+        const why = question.candidates.find((candidate) => String(candidate.value) === pick)?.why;
+        out.push(
+          result(
+            question.id,
+            'wrong-pick',
+            (why && PICK_MESSAGES[why]) || READ_WRONG[question.ask],
+          ),
+        );
+      }
     }
     const [first] = exercise.packets;
     if (!first) return failedAll(ids);

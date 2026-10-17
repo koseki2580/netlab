@@ -6,7 +6,7 @@
 
 import { drawPlace } from '../../../exercises/templates/shared/places';
 import { drawPlan } from '../../../exercises/templates/shared/plans';
-import { L, the, The } from '../../../exercises/templates/shared/text';
+import { L, the } from '../../../exercises/templates/shared/text';
 import { field } from '../../fields';
 import { definePacketTemplate } from '../shared/define';
 import { lanNet, packetFrom } from '../shared/nets';
@@ -21,11 +21,20 @@ export const p1SendTo = definePacketTemplate(
   (draw, seed) => {
     const place = drawPlace(draw);
     const plan = drawPlan(draw);
-    const target = draw.pick(['srv', 'srv2', 'pc2'] as const);
-    const net = lanNet(place, plan, seed);
-    const from = net.names.pc1 ?? place.pcs[0];
+    const shape = draw.pick(['one-router', 'two-routers'] as const);
+    const sender = draw.pick(['pc1', 'pc2'] as const);
+    const neighbour = sender === 'pc1' ? 'pc2' : 'pc1';
+    // Two routers add one more device to address: the router next to the servers.
+    const target = draw.pick(
+      shape === 'two-routers'
+        ? (['srv', 'srv2', neighbour, 'r2'] as const)
+        : (['srv', 'srv2', neighbour] as const),
+    );
+    const net = lanNet(place, plan, seed, shape);
+    const from = net.names[sender] ?? place.pcs[0];
     const to = net.names[target] ?? place.server;
     const other = target === 'srv' ? 'srv2' : 'srv';
+    const targetIp = target === 'r2' ? net.ip['r2:far'] : net.ip[target];
     return {
       kind: 'build-packet',
       title: L(`A packet for ${the(to)}`, `${to.ja}へのパケット`),
@@ -43,7 +52,7 @@ export const p1SendTo = definePacketTemplate(
       ),
       topology: net.topology,
       names: net.names,
-      packet: packetFrom(net, 'pc1'),
+      packet: packetFrom(net, sender),
       fields: [field('dstIp')],
       goals: [
         {
@@ -53,7 +62,7 @@ export const p1SendTo = definePacketTemplate(
           label: L(`It reaches ${the(to)}`, `${to.ja}に届く`),
         },
       ],
-      reference: { dstIp: net.ip[target] ?? '' },
+      reference: { dstIp: targetIp ?? '' },
       wrongAnswers: [
         {
           values: { dstIp: net.ip[other] ?? '' },
@@ -70,16 +79,16 @@ export const p1SendTo = definePacketTemplate(
           code: 'no-route',
           note: 'another network',
         },
-        { values: { dstIp: net.ip.pc1 ?? '' }, code: 'own-address', note: 'the sender itself' },
+        { values: { dstIp: net.ip[sender] ?? '' }, code: 'own-address', note: 'the sender itself' },
       ],
       hints: [
         L(
-          `Find ${the(to)} on the diagram: the numbers written by it are its address.`,
-          `図で${to.ja}を探してください。そばに書かれた数字が、その機器のアドレスです。`,
+          `Find ${the(to)} on the diagram: the numbers written by it are its address (a router has one on each side).`,
+          `図で${to.ja}を探してください。そばに書かれた数字が、その機器のアドレスです（ルータはつながる側ごとに持っています）。`,
         ),
         L(
-          `Not the sender's address and not the router's: those are other devices. ${The(to)} has an address of its own.`,
-          `送り主のアドレスでも、ルータのアドレスでもありません。${to.ja}には、自分だけのアドレスがあります。`,
+          `Not the sender's address, and not that of a device on the way: ${the(to)} has an address of its own.`,
+          `送り主のアドレスでも、途中の機器のアドレスでもありません。${to.ja}には、自分だけのアドレスがあります。`,
         ),
         L(
           `Copy the address shown by ${the(to)}, all four numbers, into the destination address.`,
@@ -87,7 +96,7 @@ export const p1SendTo = definePacketTemplate(
         ),
       ],
       lessons: ['/basic/minimal', '/routing/client-server'],
-      fingerprint: [place.id, target],
+      fingerprint: [place.id, shape, sender, target === neighbour ? 'neighbour' : target],
     };
   },
 );

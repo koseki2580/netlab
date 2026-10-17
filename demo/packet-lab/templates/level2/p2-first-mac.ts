@@ -27,29 +27,35 @@ export const p2FirstMac = definePacketTemplate(
   (draw, seed) => {
     const place = drawPlace(draw);
     const plan = drawPlan(draw);
-    const target = draw.pick(['srv', 'srv2', 'pc2'] as const);
-    const net = lanNet(place, plan, seed);
+    const shape = draw.pick(['one-router', 'two-routers'] as const);
+    const sender = draw.pick(['pc1', 'pc2'] as const);
+    const neighbour = sender === 'pc1' ? 'pc2' : 'pc1';
+    const target = draw.pick(['srv', 'srv2', neighbour] as const);
+    const net = lanNet(place, plan, seed, shape);
     const macFor = (key: string) => net.mac[key] ?? '';
     const gateway = macFor('r1:lan');
-    const farSide = macFor('r1:far');
+    const farSide = macFor(shape === 'two-routers' ? 'r1:to-r2' : 'r1:far');
     const switchPort = macFor('sw1:up');
-    const sameLan = target === 'pc2';
-    const right: Candidate = { value: sameLan ? macFor('pc2') : gateway, why: 'right' };
+    const sameLan = target === neighbour;
+    const right: Candidate = { value: sameLan ? macFor(neighbour) : gateway, why: 'right' };
     const decoys: Candidate[] = sameLan
       ? [
           { value: gateway, why: 'gateway-for-a-neighbour' },
           { value: farSide, why: 'router-far-side' },
           { value: switchPort, why: 'switch' },
-          { value: macFor('pc1'), why: 'sender' },
+          { value: macFor(sender), why: 'sender' },
         ]
       : [
           { value: macFor(target), why: 'destination' },
-          { value: macFor('pc2'), why: 'neighbour' },
+          { value: macFor(neighbour), why: 'neighbour' },
           { value: farSide, why: 'router-far-side' },
-          { value: switchPort, why: 'switch' },
+          // With a second router, the router next to the servers: not on the sender's cable run.
+          shape === 'two-routers'
+            ? { value: macFor('r2:to-r1'), why: 'other-router' }
+            : { value: switchPort, why: 'switch' },
         ];
     const candidates = placedEvenly(draw, seed, 31, right, decoys);
-    const pc = net.names.pc1 ?? place.pcs[0];
+    const pc = net.names[sender] ?? place.pcs[0];
     const to = net.names[target] ?? place.server;
     return {
       kind: 'build-packet',
@@ -68,7 +74,7 @@ export const p2FirstMac = definePacketTemplate(
       ),
       topology: net.topology,
       names: net.names,
-      packet: packetFrom(net, 'pc1', { dstIp: net.ip[target] ?? '' }),
+      packet: packetFrom(net, sender, { dstIp: net.ip[target] ?? '' }),
       fields: [field('dstMac', candidates)],
       goals: [
         {
@@ -109,7 +115,7 @@ export const p2FirstMac = definePacketTemplate(
             ),
       ],
       lessons: ['/networking/arp', '/simulation/step'],
-      fingerprint: [place.id, target],
+      fingerprint: [place.id, shape, sender, sameLan ? 'neighbour' : target],
     };
   },
 );

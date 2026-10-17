@@ -11,6 +11,9 @@ import { p2TtlWhere } from './level2/p2-ttl-where';
 import { p3DfRead } from './level3/p3-df-read';
 import { p4Capture } from './level4/p4-capture';
 import { p4TwoFaults } from './level4/p4-two-faults';
+import { p2DieAt } from './level2/p2-die-at';
+import { p3FrameAfter } from './level3/p3-frame-after';
+import { p3WhichCuts } from './level3/p3-which-cuts';
 import { p2FirstMac } from './level2/p2-first-mac';
 import { p2Port } from './level2/p2-port';
 import { p2SmallestTtl } from './level2/p2-smallest-ttl';
@@ -29,9 +32,12 @@ export const TEMPLATES: readonly PacketTemplate[] = [
   p2FirstMac,
   p2Port,
   p2TtlWhere,
+  p2DieAt,
   p3Df,
   p3Fragment,
   p3DfRead,
+  p3WhichCuts,
+  p3FrameAfter,
   p4Fragment,
   p4Capture,
   p4TwoFaults,

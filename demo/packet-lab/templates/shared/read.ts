@@ -24,6 +24,19 @@ const PROMPTS: Readonly<Record<QuestionAsk, Localised>> = {
     'パケットはどこで止まりますか。（届くなら、届く機器を選びます。）',
   ),
   cause: L('Which field made it stop there?', '止まった原因は、どの欄ですか。'),
+  'cut-by': L('Which router cuts it into pieces?', 'どのルータがパケットを分割しますか。'),
+  'frame-src-mac': L(
+    "On that cable, what is the frame's source MAC address?",
+    'その回線で、フレームの送り主 MAC アドレスはどれですか。',
+  ),
+  'frame-dst-mac': L(
+    "On that cable, what is the frame's destination MAC address?",
+    'その回線で、フレームのあて先 MAC アドレスはどれですか。',
+  ),
+  'ttl-on-link': L(
+    "On that cable, what is the packet's TTL?",
+    'その回線で、パケットの TTL はいくつですか。',
+  ),
 };
 
 /** The right one first, then the others, each with the mistake it is; the order comes from the seed. */

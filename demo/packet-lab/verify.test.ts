@@ -57,7 +57,10 @@ function answerValues(exercise: PacketExercise): string[] {
         ]),
       ];
     case 'read-packet':
-      return Object.values(exercise.fix?.reference ?? {}).map(String);
+      return [
+        ...Object.values(exercise.fix?.reference ?? {}).map(String),
+        ...exercise.questions.map((question) => question.answer),
+      ];
   }
 }
 
@@ -96,7 +99,9 @@ function textProblems(exercise: PacketExercise): string[] {
   }
   if (exercise.kind === 'read-packet') {
     for (const question of exercise.questions) {
-      const right = question.candidates.find((candidate) => candidate.value === question.answer);
+      const right = question.candidates.find(
+        (candidate) => String(candidate.value) === question.answer,
+      );
       no(right !== undefined, `question ${question.id}: the answer is not a candidate`);
       if (right?.label && question.ask !== 'cause') {
         no(
@@ -264,7 +269,7 @@ async function readProblems(exercise: ReadExercise): Promise<string[]> {
       problems.push(`question ${question.id}: two candidates are one`);
     }
     for (const candidate of question.candidates) {
-      if ((candidate.value === question.answer) !== (candidate.why === 'right')) {
+      if ((String(candidate.value) === question.answer) !== (candidate.why === 'right')) {
         problems.push(
           `question ${question.id}: candidate ${String(candidate.value)} is marked ${candidate.why}`,
         );
@@ -444,9 +449,11 @@ function choose(
 }
 
 describe('learners who pick without reading', () => {
+  // More seeds than the pool holds: a rate over 100 instances moves a few points by chance alone.
+  const BLIND_SEEDS = 400;
   const offers = new Map<string, Offer[]>();
   for (const template of TEMPLATES) {
-    for (let seed = 0; seed < POOL_SEEDS; seed += 1) {
+    for (let seed = 0; seed < BLIND_SEEDS; seed += 1) {
       for (const offer of offersOf(template.generate(seed))) {
         offers.set(offer.key, [...(offers.get(offer.key) ?? []), offer]);
       }
@@ -454,7 +461,7 @@ describe('learners who pick without reading', () => {
   }
 
   it.each([...offers.keys()])(
-    '%s: no blind strategy beats chance by more than 10 points',
+    '%s: no blind strategy, and no fixed value, beats chance by more than 10 points',
     (key) => {
       const list = offers.get(key) ?? [];
       const chance =
@@ -470,22 +477,41 @@ describe('learners who pick without reading', () => {
         ).length;
         return [strategy, hits / list.length] as const;
       });
-      // "Always the value that was right most often": the best a learner can do by remembering answers across instances.
-      const tally = new Map<string, number>();
+      // "Always this value", for every value offered: what a learner gets by
+      // remembering an answer across instances. Measured where the value is
+      // offered at least 30 times (fewer is noise: one value right 7 times in
+      // 12 happens by chance), against the chance of those offers. A value
+      // offered more rarely is not one a learner can come to remember.
+      const byValue = new Map<string, { offered: number; right: number; chance: number }>();
       for (const offer of list) {
-        const right = offer.candidates.find((candidate) => candidate.why === 'right');
-        if (right) tally.set(String(right.value), (tally.get(String(right.value)) ?? 0) + 1);
+        for (const candidate of offer.candidates) {
+          const entry = byValue.get(String(candidate.value)) ?? { offered: 0, right: 0, chance: 0 };
+          entry.offered += 1;
+          entry.right += candidate.why === 'right' ? 1 : 0;
+          entry.chance += 1 / offer.candidates.length;
+          byValue.set(String(candidate.value), entry);
+        }
       }
-      const favourite = [...tally.entries()].sort((a, b) => b[1] - a[1])[0];
-      const sameValue = list.filter((offer) =>
-        offer.candidates.some((candidate) => String(candidate.value) === favourite?.[0]),
-      );
-      const favouriteRate = sameValue.length === 0 ? 0 : (favourite?.[1] ?? 0) / sameValue.length;
+      const fixed = [...byValue.entries()]
+        .filter(([, entry]) => entry.offered >= 30)
+        .map(([value, entry]) => ({
+          value,
+          rate: entry.right / entry.offered,
+          chance: entry.chance / entry.offered,
+          offered: entry.offered,
+        }))
+        .sort((a, b) => b.rate - b.chance - (a.rate - a.chance));
+      const worst = fixed[0];
       console.log(
         `${key}: chance ${(chance * 100).toFixed(0)}%, ` +
           rates.map(([strategy, rate]) => `${strategy} ${(rate * 100).toFixed(0)}%`).join(', ') +
-          `, same value as most often right ${(favouriteRate * 100).toFixed(0)}% of ${sameValue.length}`,
+          (worst
+            ? `, always "${worst.value.length > 12 ? 'that value' : worst.value}" ${(worst.rate * 100).toFixed(0)}% of ${worst.offered}`
+            : ''),
       );
+      for (const entry of fixed) {
+        expect(entry.rate, `always "${entry.value}"`).toBeLessThanOrEqual(entry.chance + 0.1);
+      }
       for (const [, rate] of rates) expect(rate).toBeLessThanOrEqual(chance + 0.1);
     },
   );

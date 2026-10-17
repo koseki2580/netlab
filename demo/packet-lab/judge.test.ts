@@ -8,8 +8,12 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { judgeBuild, judgeFragment } from './judge';
-import type { BuildExercise, FragmentExercise, PacketGrade } from './model';
+import { judgeBuild, judgeFragment, judgeRead } from './judge';
+import type { BuildExercise, FragmentExercise, PacketGrade, ReadExercise } from './model';
+import { PICK_MESSAGES } from './reasons';
+import { p2DieAt } from './templates/level2/p2-die-at';
+import { p3FrameAfter } from './templates/level3/p3-frame-after';
+import { p3WhichCuts } from './templates/level3/p3-which-cuts';
 import { p2FirstMac } from './templates/level2/p2-first-mac';
 import { p2SmallestTtl } from './templates/level2/p2-smallest-ttl';
 import { p3Df } from './templates/level3/p3-df';
@@ -105,5 +109,60 @@ describe('fragment feedback', () => {
       ].sort(),
     );
     expect(new Set(seen.values()).size).toBe(seen.size);
+  });
+});
+
+describe('the new kinds of feedback', () => {
+  it('one TTL too few: stopped, but at the router before the one asked for', async () => {
+    const exercise = p2DieAt.generate(0) as BuildExercise;
+    const ttl = Number(exercise.reference.ttl);
+    const [result] = failing(await judgeBuild(exercise, { ttl: ttl - 1 }));
+    expect(result?.code).toBe('dropped-elsewhere');
+    expect(result?.message.ja).toContain('止まりましたが、課題の場所と理由ではありません。');
+    expect(result?.message.ja).toContain(`TTL が足りず、${ttl - 1} 台目のルータ`);
+  });
+
+  it("a router next to the servers is not on the sender's cable run", async () => {
+    for (let seed = 0; seed < 60; seed += 1) {
+      const exercise = p2FirstMac.generate(seed) as BuildExercise;
+      const other = exercise.fields[0]?.candidates?.find((entry) => entry.why === 'other-router');
+      if (!other) continue;
+      const [result] = failing(await judgeBuild(exercise, { dstMac: String(other.value) }));
+      expect(result?.evidence?.macOwner).toBe('other-router');
+      expect(result?.message.ja).toContain('送り主と同じ回線にいないので');
+      return;
+    }
+    throw new Error('no two-router instance');
+  });
+
+  it('a wrong pick is told by the mistake it is, where it has words', async () => {
+    const told = new Set<string>();
+    const templates = [p3FrameAfter, p3WhichCuts];
+    for (const template of templates) {
+      for (let seed = 0; seed < 24; seed += 1) {
+        const exercise = template.generate(seed) as ReadExercise;
+        const picks = Object.fromEntries(exercise.questions.map((q) => [q.id, q.answer]));
+        for (const question of exercise.questions) {
+          for (const candidate of question.candidates) {
+            const words = PICK_MESSAGES[candidate.why];
+            if (!words) continue;
+            const grade = await judgeRead(exercise, {
+              picks: { ...picks, [question.id]: String(candidate.value) },
+            });
+            const result = grade.results.find((entry) => entry.goalId === question.id);
+            expect(result?.code).toBe('wrong-pick');
+            expect(result?.message).toEqual(words);
+            told.add(candidate.why);
+          }
+        }
+      }
+    }
+    console.log(
+      [...told]
+        .sort()
+        .map((why) => `${why}: ${PICK_MESSAGES[why]?.ja}`)
+        .join('\n'),
+    );
+    expect(told.size).toBeGreaterThanOrEqual(12);
   });
 });

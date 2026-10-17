@@ -153,6 +153,10 @@ export function macMessage(
       `That is the MAC address of ${theEn(name)}.`,
       `それは${name.ja}の MAC アドレスです。`,
     ),
+    'other-router': L(
+      `That is the MAC address of ${theEn(name)}, which is not on the sender's cable run: a frame cannot be sent to it directly.`,
+      `それは${name.ja}の MAC アドレスです。${name.ja}は送り主と同じ回線にいないので、フレームを直接送ることはできません。`,
+    ),
     'router-far-side': L(
       `That is the MAC address of the far side of ${theEn(name)}. A frame can only be sent to a side on the sender's own cable run.`,
       `それは${name.ja}の向こう側（送り主とつながっていない側）の MAC アドレスです。フレームを送れるのは、送り主と同じ回線につながっている側だけです。`,
@@ -255,3 +259,74 @@ export const REASSEMBLES_ANYWAY = L(
   'These pieces would fit back together, but a router does not cut like this.',
   'この分け方でも元には戻せますが、ルータはこう分けません。',
 );
+
+/**
+ * What a wrong pick is, by the candidate's `why`, where the mistake has words
+ * of its own. None of these names the right answer.
+ */
+export const PICK_MESSAGES: Readonly<Record<string, Localised>> = {
+  // The frame on a cable after a router: its source MAC.
+  'src-sender': L(
+    "That is the sender's MAC. It is on the frame only on the first cable; every router writes the frame anew.",
+    'それは送り主の MAC アドレスです。送り主の MAC が入っているのは最初の区間だけで、ルータを越えるたびにフレームは書き直されます。',
+  ),
+  'src-router-in': L(
+    'That is the side of the router the packet came in on. Sending it on, the router puts the MAC of the side it goes out of.',
+    'それはルータの、パケットが入ってきた側の MAC です。送り出すときは、出ていく側の MAC が送り主になります。',
+  ),
+  'src-next': L(
+    'That is the device that takes the frame on this cable: it belongs in the destination, not the source.',
+    'それはこの回線でフレームを受け取る機器の MAC で、あて先の欄に入るものです。',
+  ),
+  'src-destination': L(
+    "That is the final destination's MAC; it is never the frame's source.",
+    'それは最後のあて先の MAC です。送り主の欄には入りません。',
+  ),
+  // ... its destination MAC.
+  'dst-destination-early': L(
+    "That is the final destination's MAC. On this cable the frame goes to the next router; its MAC is the destination here.",
+    'それは最後のあて先の MAC です。この区間で受け取るのは次のルータなので、あて先 MAC はそのルータのものです。',
+  ),
+  'dst-router-out': L(
+    'That is the router that sent the frame onto this cable: it belongs in the source.',
+    'それはこの回線へフレームを送り出したルータ自身の MAC で、送り主の欄に入るものです。',
+  ),
+  'dst-gateway': L(
+    'That was the destination on the first cable. At every router the destination MAC is written anew for the next cable.',
+    'それは最初の区間のあて先です。ルータを越えるたびに、あて先 MAC は次の区間のものに書き直されます。',
+  ),
+  'dst-switch': L(
+    'A switch carries frames on without rewriting their MACs, and it is never their destination.',
+    'スイッチはフレームを運ぶだけで、MAC アドレスを書き直しません。あて先にもなりません。',
+  ),
+  // ... the TTL on that cable.
+  'ttl-unchanged': L(
+    'That is the TTL it left with. Every router it crosses takes 1 off.',
+    'それは送り出したときの TTL のままです。ルータを 1 台越えるたびに 1 減ります。',
+  ),
+  'ttl-off-by-one': L(
+    'The count is off by one. Count the routers before this cable, including the one that sent the packet onto it.',
+    '数え方が 1 つずれています。この回線より手前のルータを、この回線へ送り出したルータも含めて数えてください。',
+  ),
+  'ttl-switches-counted': L(
+    'A switch does not take anything off the TTL; only routers do.',
+    'スイッチは TTL を減らしません。減らすのはルータだけです。',
+  ),
+  // Which router cuts the packet.
+  'cut-equal-mtu': L(
+    'The cable after that router has an MTU exactly the size of the packet. A packet no bigger than the MTU is not cut.',
+    'そのルータの先の回線の MTU は、パケットとちょうど同じ大きさです。MTU 以下なら分割されません。',
+  ),
+  'cut-wide': L(
+    'The cable after that router is wide enough (its MTU is bigger than the packet), so it is not cut there.',
+    'そのルータの先の回線は、このパケットより MTU が大きいので、そこでは分割されません。',
+  ),
+  'cut-after': L(
+    'By the time it reaches that router it has already been cut. The router that cuts is the one sending onto the narrow cable.',
+    'パケットはそこに着く前に、もう分割されています。分割するのは、細い回線へ送り出すルータです。',
+  ),
+  'cut-none-but-narrow': L(
+    'A cable on the way has an MTU smaller than the packet, so some router must cut it.',
+    '途中に、パケットより MTU が小さい回線があります。どこかのルータが分割します。',
+  ),
+};

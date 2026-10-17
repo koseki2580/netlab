@@ -2,10 +2,13 @@
  * p2-smallest-ttl — choose the smallest TTL with which the packet crosses
  * every router and arrives. Through N routers that is N + 1 (it arrives as 1).
  *
- * The four values offered are consecutive and the right one stands at a rank
- * among them that every rank gets equally often (`evenPlace`), so neither "the
- * smallest", "the largest" nor "the third" picks it. Below it each value dies
- * at a router of its own; above it each arrives with TTL to spare.
+ * The values offered are always 1 to 5, and the router count (1 to 4) is
+ * drawn so that each of 2, 3, 4 and 5 is the answer equally often: no value
+ * is right more often than another, and no rank among them either, beyond
+ * "1 is never right" (a TTL of 1 never crosses a router). Below the answer
+ * each value dies at a router of its own; above it each arrives with TTL to
+ * spare. Networks with switches add the mistake of counting the switches
+ * (they take nothing off).
  */
 
 import { evenPlace, placedEvenly } from '../../../exercises/templates/shared/draw';
@@ -15,7 +18,7 @@ import { L, the } from '../../../exercises/templates/shared/text';
 import { field } from '../../fields';
 import type { Candidate } from '../../model';
 import { definePacketTemplate } from '../shared/define';
-import { chainNet, packetFrom, type RouterCount } from '../shared/nets';
+import { chainNet, lanNet, packetFrom, type RouterCount } from '../shared/nets';
 
 export const p2SmallestTtl = definePacketTemplate(
   {
@@ -25,22 +28,29 @@ export const p2SmallestTtl = definePacketTemplate(
     title: L('Just enough TTL', 'ちょうど足りる TTL'),
   },
   (draw, seed) => {
-    const rank = evenPlace(seed, 4, 21);
-    const lowest = Math.max(rank, 1);
-    const count = (lowest + draw.int(5 - lowest)) as RouterCount;
+    const count = (1 + evenPlace(seed, 4, 21)) as RouterCount;
+    const withSwitches = count <= 2 && draw.pick([true, false]);
     const place = drawPlace(draw);
     const plan = drawPlan(draw);
-    const net = chainNet(place, plan, count, seed);
+    const net = withSwitches
+      ? lanNet(place, plan, seed, count === 2 ? 'two-routers' : 'one-router')
+      : chainNet(place, plan, count, seed);
+    const sender = withSwitches ? 'pc1' : 'pc';
     const right = count + 1;
-    const first = right - rank;
-    const values = [0, 1, 2, 3].map((step) => first + step);
+    const values = [1, 2, 3, 4, 5];
     const why = (value: number) =>
-      value === right ? 'right' : value < right ? `dies-at-r${value}` : `spare-${value - right}`;
+      value === right
+        ? 'right'
+        : value < right
+          ? `dies-at-r${value}`
+          : withSwitches && value === right + 2
+            ? 'switches-counted'
+            : `spare-${value - right}`;
     const [own, ...rest] = [right, ...values.filter((value) => value !== right)].map(
       (value): Candidate => ({ value, why: why(value) }),
     );
     const candidates = placedEvenly(draw, seed, 22, own as Candidate, rest);
-    const pc = net.names.pc ?? place.pcs[0];
+    const pc = net.names[sender] ?? place.pcs[0];
     const srv = net.names.srv ?? place.server;
     return {
       kind: 'build-packet',
@@ -59,7 +69,7 @@ export const p2SmallestTtl = definePacketTemplate(
       ),
       topology: net.topology,
       names: net.names,
-      packet: packetFrom(net, 'pc', { dstIp: net.ip.srv ?? '', ttl: null }),
+      packet: packetFrom(net, sender, { dstIp: net.ip.srv ?? '', ttl: null }),
       fields: [field('ttl', candidates)],
       goals: [
         {
@@ -86,8 +96,8 @@ export const p2SmallestTtl = definePacketTemplate(
       }[],
       hints: [
         L(
-          `Count the routers between ${the(pc)} and ${the(srv)} on the diagram.`,
-          `図で、${pc.ja}と${srv.ja}のあいだにあるルータを数えてください。`,
+          `Count the routers between ${the(pc)} and ${the(srv)} on the diagram (switches take nothing off).`,
+          `図で、${pc.ja}と${srv.ja}のあいだにあるルータを数えてください（スイッチは TTL を減らしません）。`,
         ),
         L(
           'Each router takes 1 off, and the last router must still find more than 1 left when the packet comes in.',
@@ -99,7 +109,7 @@ export const p2SmallestTtl = definePacketTemplate(
         ),
       ],
       lessons: ['/routing/multi-hop', '/simulation/trace-inspector'],
-      fingerprint: [place.id, count, rank],
+      fingerprint: [place.id, count, withSwitches ? 'switches' : 'chain'],
     };
   },
 );
