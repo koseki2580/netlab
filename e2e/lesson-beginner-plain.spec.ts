@@ -128,7 +128,8 @@ test('TC-353: the ARP lesson says who asks whom here, and its bubble carries the
   // Before a send the table promises nothing about filling up step by step.
   await expect(page.getByTestId('arp-table-empty')).toBeVisible();
   await page.getByTestId(T.primary).click();
-  await expect(page.getByTestId('arp-table-note')).toContainText('結果');
+  // TC-700: the table follows the step rather than showing the end result.
+  await expect(page.getByTestId('arp-table-note')).toContainText('ステップに合わせて');
 
   const firstHops = page.getByTestId(T.hop);
   // Row 1 of this lesson's trace is the Router's question (ARP-REQ).

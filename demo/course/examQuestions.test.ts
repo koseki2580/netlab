@@ -123,3 +123,18 @@ describe('level 1 questions do not give their answers away (TC-322)', () => {
     expect(new Set(EXAM_QUESTIONS.map((q) => q.answer)).size).toBe(4);
   });
 });
+
+// TC-713: the level-2 MTU question uses the MTU the lesson opens with.
+describe('the level-2 MTU question agrees with the MTU lesson (TC-713)', () => {
+  it('says 604, never 600, in its prompt, options and explanation', () => {
+    const question = EXAM_LEVELS.find((level) => level.level === 2)?.questions.find(
+      (q) => q.id === 'mtu-df',
+    );
+    expect(question).toBeDefined();
+    const texts = [question!.prompt, ...question!.options, question!.explanation].flatMap(
+      (text) => [text.en, text.ja],
+    );
+    expect(question!.prompt.en).toContain('MTU of 604');
+    expect(texts.filter((text) => /\b600\b/.test(text))).toEqual([]);
+  });
+});

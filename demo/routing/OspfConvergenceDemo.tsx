@@ -96,10 +96,23 @@ export function probePath(trace: PacketTrace): string {
   return labels.join(' → ');
 }
 
-function RouteComparison({ runs }: { runs: readonly ProbeRun[] }) {
+/**
+ * The probe route to call current, and the one before it. A probe sent while
+ * the link was in another state is no longer the route: after "Fail link" the
+ * up-link run sat under "this route" until a new probe was sent.
+ */
+export function routeComparison(
+  runs: readonly ProbeRun[],
+  linkDown: boolean,
+): { current: ProbeRun | null; previous: ProbeRun | null } {
+  const last = runs[runs.length - 1] ?? null;
+  if (last && last.linkDown !== linkDown) return { current: null, previous: last };
+  return { current: last, previous: runs[runs.length - 2] ?? null };
+}
+
+function RouteComparison({ runs, linkDown }: { runs: readonly ProbeRun[]; linkDown: boolean }) {
   const t = useT();
-  const current = runs[runs.length - 1] ?? null;
-  const previous = runs[runs.length - 2] ?? null;
+  const { current, previous } = routeComparison(runs, linkDown);
   const linkWord = (run: ProbeRun) =>
     run.linkDown ? t('link down', 'リンク断') : t('link up', 'リンクあり');
 
@@ -321,7 +334,14 @@ const C2_NETWORK = '10.4.0.0/24';
  * R1's OSPF route to C2's network, whichever route-table tab is open below.
  * The heading names both, so it is not read as the heading of that tab's table.
  */
-export function RouteSummaryPanel({ runs }: { runs: readonly ProbeRun[] }) {
+export function RouteSummaryPanel({
+  runs,
+  linkDown = false,
+}: {
+  runs: readonly ProbeRun[];
+  /** Whether the primary link is failed now. */
+  linkDown?: boolean;
+}) {
   const t = useT();
   const { routeTable } = useNetlabContext();
   const preferredRoute =
@@ -386,7 +406,7 @@ export function RouteSummaryPanel({ runs }: { runs: readonly ProbeRun[] }) {
           )}
         </div>
       )}
-      <RouteComparison runs={runs} />
+      <RouteComparison runs={runs} linkDown={linkDown} />
     </div>
   );
 }
@@ -687,6 +707,7 @@ function OspfConvergenceInner({
         <>
           <button
             type="button"
+            data-testid="ospf-send-probe"
             onClick={() => void sendProbe()}
             title={t('Send probe C1 -> C2', 'C1 -> C2 へプローブを送る')}
             style={commandActionStyle('var(--netlab-accent-green)')}
@@ -818,7 +839,7 @@ function OspfConvergenceInner({
                 borderBottom: '1px solid var(--netlab-bg-surface)',
               }}
             >
-              <RouteSummaryPanel runs={runs} />
+              <RouteSummaryPanel runs={runs} linkDown={primaryLinkDown} />
               <RouterTablesPanel {...(beforeFailure ? { beforeFailure } : {})} />
               <LinkCostsPanel />
             </div>

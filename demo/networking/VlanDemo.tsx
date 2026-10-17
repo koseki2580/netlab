@@ -1,5 +1,5 @@
 import { useT } from '../localeContext';
-import { useEffect, useRef, type CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../components/LessonPanel';
@@ -215,6 +215,24 @@ const BTN_DISABLED: CSSProperties = {
   cursor: 'not-allowed',
 };
 
+/**
+ * Why the last packet was dropped, in words. The panel printed the engine's
+ * code (`no-egress-in-vlan`) to a learner the lesson had not yet told what a
+ * VLAN is.
+ */
+export function vlanDropWords(reason: string | undefined): { en: string; ja: string } {
+  if (reason === 'no-egress-in-vlan') {
+    return {
+      en: 'SW1 had no port in the packet’s VLAN to send it out of: the way to the router, the trunk, is down, so the packet could not leave its VLAN.',
+      ja: 'SW1 には、このパケットの VLAN で送り出せるポートがありませんでした。ルータへの道であるトランクが切れているので、パケットは自分の VLAN から出られませんでした。',
+    };
+  }
+  return {
+    en: `The packet was dropped (code: ${reason ?? 'unknown'}).`,
+    ja: `パケットは落ちました（コード: ${reason ?? '不明'}）。`,
+  };
+}
+
 function buildPacket(
   topology: NetworkTopology,
   srcNodeId: string,
@@ -267,7 +285,6 @@ function VlanDemoInner() {
   const t = useT();
   const { engine, sendPacket, state, isRecomputing } = useSimulation();
   const { isEdgeDown, toggleEdge } = useFailure();
-  const didAutoSend = useRef(false);
   const trunkDown = isEdgeDown(TRUNK_EDGE_ID);
 
   const sendBetween = async (srcNodeId: string, dstNodeId: string) => {
@@ -277,11 +294,8 @@ function VlanDemoInner() {
     await sendPacket(packet);
   };
 
-  useEffect(() => {
-    if (didAutoSend.current || state.status !== 'idle') return;
-    didAutoSend.current = true;
-    void sendBetween('host-a1', 'host-b1');
-  }, [state.status]);
+  // Nothing is sent until the learner presses a button: a result already on
+  // screen when the lesson opened answered a question nobody had asked.
 
   const activeTrace = state.currentTraceId
     ? (state.traces.find((trace) => trace.packetId === state.currentTraceId) ?? null)
@@ -319,6 +333,29 @@ function VlanDemoInner() {
         >
           <div style={{ color: 'var(--netlab-text-primary)', fontWeight: 700, marginBottom: 4 }}>
             {t('VLAN Demo', 'VLAN のしくみ')}
+          </div>
+          <div
+            data-testid="vlan-definitions"
+            style={{ display: 'grid', gap: 4, marginBottom: 6, lineHeight: 1.5 }}
+          >
+            <div data-testid="vlan-define-vlan">
+              {t(
+                'VLAN (virtual LAN): one switch split into separate networks. A1 and A2 are in VLAN 10, B1 and B2 in VLAN 20; a frame stays inside its own VLAN.',
+                'VLAN（仮想 LAN）：1 台のスイッチを、別々のネットワークに分けたもの。A1 と A2 は VLAN 10、B1 と B2 は VLAN 20 です。フレームは自分の VLAN の中だけを流れます。',
+              )}
+            </div>
+            <div data-testid="vlan-define-access">
+              {t(
+                'An access port belongs to one VLAN and joins one device (fa0/1 to fa0/4 here). The device itself knows nothing of VLANs.',
+                'アクセスポート（access port）：1 つの VLAN に属し、1 台の機器をつなぐポート（ここでは fa0/1〜fa0/4）。機器のほうは VLAN を知りません。',
+              )}
+            </div>
+            <div data-testid="vlan-define-trunk">
+              {t(
+                'A trunk carries several VLANs over one cable, each frame tagged with its VLAN number (802.1Q). Here fa0/24 is the trunk to R1, carrying VLAN 10 and 20.',
+                'トランク（trunk）：1 本のケーブルで複数の VLAN を運ぶポート。フレームごとに VLAN 番号の札（802.1Q タグ）を付けます。ここでは fa0/24 が R1 へのトランクで、VLAN 10 と 20 を運びます。',
+              )}
+            </div>
           </div>
           <div>{headline}</div>
           <div style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}>
@@ -405,6 +442,7 @@ function VlanDemoInner() {
                   {t('LATEST RESULT', '直近の結果')}
                 </div>
                 <div
+                  data-testid="vlan-latest-result"
                   style={{
                     marginTop: 4,
                     color:
@@ -419,7 +457,8 @@ function VlanDemoInner() {
                     ? t('DELIVERED', '届いた')
                     : activeTrace?.status === 'dropped'
                       ? t('DROPPED', '落ちた')
-                      : (activeTrace?.status?.toUpperCase() ?? t('IDLE', '待機中'))}
+                      : (activeTrace?.status?.toUpperCase() ??
+                        t('nothing sent yet', 'まだ送っていません'))}
                 </div>
               </div>
             </div>
@@ -427,6 +466,7 @@ function VlanDemoInner() {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               <button
                 type="button"
+                data-testid="vlan-send-a1-a2"
                 onClick={() => void sendBetween('host-a1', 'host-a2')}
                 style={BTN_PRIMARY}
               >
@@ -434,6 +474,7 @@ function VlanDemoInner() {
               </button>
               <button
                 type="button"
+                data-testid="vlan-send-a1-b1"
                 onClick={() => void sendBetween('host-a1', 'host-b1')}
                 style={BTN_PRIMARY}
               >
@@ -441,6 +482,7 @@ function VlanDemoInner() {
               </button>
               <button
                 type="button"
+                data-testid="vlan-break-trunk"
                 onClick={() => toggleEdge(TRUNK_EDGE_ID)}
                 disabled={trunkDown}
                 style={trunkDown ? BTN_DISABLED : BTN_DANGER}
@@ -469,9 +511,11 @@ function VlanDemoInner() {
                   'Recomputing last packet after topology failure change...',
                   '構成の変化を受けて、直前のパケットを計算し直しています…',
                 )}
-              {!isRecomputing &&
-                lastHop?.event === 'drop' &&
-                t(`Last drop reason: ${lastHop.reason}`, `直前の破棄の理由: ${lastHop.reason}`)}
+              {!isRecomputing && lastHop?.event === 'drop' && (
+                <span data-testid="vlan-drop-words">
+                  {t(vlanDropWords(lastHop.reason).en, vlanDropWords(lastHop.reason).ja)}
+                </span>
+              )}
               {!isRecomputing &&
                 lastHop?.event !== 'drop' &&
                 t(

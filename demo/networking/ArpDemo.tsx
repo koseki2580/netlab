@@ -18,16 +18,15 @@ import { HopInspector } from '../../src/components/simulation/HopInspector';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { PacketViewerPanel } from '../../src/components/simulation/PacketViewer';
 import { SimulationOverlayDock } from '../../src/components/simulation/SimulationOverlayDock';
-import { StateDiffTable } from '../../src/components/simulation/StateDiffTable';
 import { StepControls } from '../../src/components/simulation/StepControls';
 import { I18nProvider } from '../../src/i18n/I18nProvider';
 import { en } from '../../src/i18n/locales/en';
 import { ja } from '../../src/i18n/locales/ja';
 import { basicArp } from '../../src/scenarios';
-import { buildStepSnapshots } from '../../src/simulation/snapshots';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import { useViewport } from '../../src/utils/useViewport';
 import { readDemoEmbedParams } from '../embedParams';
+import { arpLearnedAt, arpTablesAtStep } from './arpAtStep';
 
 const CARD_STYLE: CSSProperties = {
   background: 'var(--netlab-bg-primary)',
@@ -91,11 +90,22 @@ function ArpBubbleWords({ children }: { children: ReactNode }) {
   );
 }
 
+/** The trace on screen, and the step it is at (-1: before the first, or after Reset). */
+function useArpStep() {
+  const { state } = useSimulation();
+  const trace =
+    state.traces.find((candidate) => candidate.packetId === state.currentTraceId) ??
+    state.traces[state.traces.length - 1] ??
+    null;
+  return { trace, step: state.currentStep, finalTables: state.nodeArpTables ?? {} };
+}
+
 function ArpTablePanel() {
   const t = useT();
-  const { state } = useSimulation();
   const { topology } = useNetlabContext();
-  const entries = Object.entries(state.nodeArpTables ?? {});
+  const { trace, step, finalTables } = useArpStep();
+  const tables = trace ? arpTablesAtStep(trace, finalTables, step) : {};
+  const entries = Object.entries(tables);
   const labelOf = (nodeId: string) =>
     topology.nodes.find((node) => node.id === nodeId)?.data.label ?? nodeId;
 
@@ -116,16 +126,15 @@ function ArpTablePanel() {
         </div>
       ) : (
         <div style={{ display: 'grid', gap: 10 }}>
-          {/* The engine runs the whole exchange when the button is pressed, so
-              the table is already complete before the learner steps. Saying it
-              fills up as they step would not match the screen. */}
+          {/* The engine runs the whole exchange at once; the table is rebuilt
+              for the step on screen, so it fills up as the learner steps. */}
           <div
             data-testid="arp-table-note"
             style={{ ...DETAIL_STYLE, color: 'var(--netlab-text-secondary)' }}
           >
             {t(
-              'The whole exchange has already run, so this table shows the final result. To see at which step a line was learned, step through and read "ARP over time" below.',
-              '通信は一度に最後まで行われるので、この表はもう結果を表示しています。どのステップで覚えたかは、ステップを進めながら下の「ARP の変化」で確かめられます。',
+              'This table follows the step on screen: it shows what each device knew at that step. Before the first step, and after Reset, only the lines that were there from the start are shown.',
+              'この表は、いま表示しているステップに合わせて変わります。そのステップで各機器が知っていた対応だけを表示します。最初のステップの前とリセットのあとは、最初から入っていた行だけです。',
             )}
           </div>
           <div
@@ -140,6 +149,7 @@ function ArpTablePanel() {
           {entries.map(([nodeId, table]) => (
             <div
               key={nodeId}
+              data-testid={`arp-table-${nodeId}`}
               style={{
                 border: '1px solid var(--netlab-bg-surface)',
                 borderRadius: 8,
@@ -176,32 +186,46 @@ function ArpTablePanel() {
   );
 }
 
+/**
+ * What the Router's table gained at the step on screen. The library's diff
+ * table files an ARP frame's sender under the device the hop is recorded at,
+ * so it showed the Router's own address and "+0" after the answer.
+ */
 function ArpDiffCard() {
   const t = useT();
-  const { state } = useSimulation();
-  const { topology, routeTable } = useNetlabContext();
-  const trace =
-    state.traces.find((t) => t.packetId === state.currentTraceId) ??
-    state.traces[state.traces.length - 1] ??
-    null;
+  const { topology } = useNetlabContext();
+  const { trace, step, finalTables } = useArpStep();
   const router = topology.nodes.find((n) => n.data.role === 'router');
-  const snapshots = useMemo(
-    () => (trace ? buildStepSnapshots(trace, routeTable) : null),
-    [trace, routeTable],
-  );
-  if (!trace || !router || !snapshots) return null;
-  const stepIndex = state.currentStep >= 0 ? state.currentStep : 0;
+  if (!trace || !router) return null;
+  const table = arpTablesAtStep(trace, finalTables, step)[router.id] ?? {};
+  const learned = arpLearnedAt(trace, step).filter((line) => line.nodeId === router.id);
+  const name = router.data.label ?? router.id;
   return (
-    <div style={CARD_STYLE}>
+    <div data-testid="arp-change" style={CARD_STYLE}>
       <div style={LABEL_STYLE}>
-        {t('ARP over time', 'ARP の変化')} · {router.data.label ?? router.id}
+        {t('ARP over time', 'ARP の変化')} · {name}
       </div>
-      <StateDiffTable
-        snapshots={snapshots}
-        nodeId={router.id}
-        stepIndex={stepIndex}
-        tableKind="arp"
-      />
+      <div style={{ ...DETAIL_STYLE, fontFamily: 'monospace' }}>
+        {step < 0
+          ? t('Before the first step.', '最初のステップの前です。')
+          : t(`At step ${step + 1}:`, `ステップ ${step + 1}：`)}{' '}
+        {learned.length > 0
+          ? learned.map((line) => (
+              <span key={line.ip} style={{ color: 'var(--netlab-accent-green)' }}>
+                {t(
+                  `+${learned.length} — learned ${line.ip} → ${line.mac}`,
+                  `+${learned.length} — ${line.ip} → ${line.mac} を覚えました`,
+                )}
+              </span>
+            ))
+          : t('nothing new.', '新しく覚えたものはありません。')}
+      </div>
+      <div style={{ ...DETAIL_STYLE, color: 'var(--netlab-text-secondary)' }}>
+        {t(
+          `${name} knows ${Object.keys(table).length} address(es) at this step.`,
+          `このステップで ${name} が知っているアドレスは ${Object.keys(table).length} 個です。`,
+        )}
+      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { PacketHop, PacketTrace } from '../../src/types/simulation';
 import { buildOspfConvergenceTopology } from '../../src/scenarios/ospf-convergence';
-import { probePath } from './OspfConvergenceDemo';
+import { probePath, routeComparison } from './OspfConvergenceDemo';
 import { ospfLinkCosts } from './OspfLinkCosts';
 
 function hop(step: number, nodeLabel: string, event: PacketHop['event']): PacketHop {
@@ -62,5 +62,23 @@ describe('the OSPF lesson lists its link costs', () => {
     const failed = ospfLinkCosts(buildOspfConvergenceTopology(true));
     expect(failed.find((link) => link.id === 'e-r2-r4')?.down).toBe(true);
     expect(failed.filter((link) => link.down)).toHaveLength(1);
+  });
+});
+
+// TC-708: a route found with the link in another state is never shown as the current one.
+describe('which probe route the OSPF lesson calls current (TC-708)', () => {
+  const up = { packetId: 'a', linkDown: false, path: 'C1 → R1 → R2 → R4 → C2' };
+  const down = { packetId: 'b', linkDown: true, path: 'C1 → R1 → R3 → R4 → C2' };
+
+  it('keeps the last probe as current while the link is as it was', () => {
+    expect(routeComparison([up], false)).toEqual({ current: up, previous: null });
+  });
+
+  it('retires the up-link probe to "previous" once the link has failed', () => {
+    expect(routeComparison([up], true)).toEqual({ current: null, previous: up });
+  });
+
+  it('shows the down-link probe as current and the up-link one as previous', () => {
+    expect(routeComparison([up, down], true)).toEqual({ current: down, previous: up });
   });
 });

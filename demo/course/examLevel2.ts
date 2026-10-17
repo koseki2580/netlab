@@ -295,8 +295,8 @@ export const EXAM_LEVEL_2: ExamLevel = {
     {
       id: 'mtu-df',
       prompt: {
-        en: 'Host A pings Host B with a 1200-byte payload and the DF (Don’t Fragment) bit set. R1’s next link has an MTU of 600 bytes. What happens?',
-        ja: 'Host A が、DF（分割禁止）ビットを立てて、ペイロード 1200 バイトの ping を Host B へ送ります。R1 の先のリンクの MTU は 600 バイトです。どうなりますか？',
+        en: 'Host A pings Host B with a 1200-byte payload and the DF (Don’t Fragment) bit set. R1’s next link has an MTU of 604 bytes. What happens?',
+        ja: 'Host A が、DF（分割禁止）ビットを立てて、ペイロード 1200 バイトの ping を Host B へ送ります。R1 の先のリンクの MTU は 604 バイトです。どうなりますか？',
       },
       options: [
         {
@@ -304,8 +304,8 @@ export const EXAM_LEVEL_2: ExamLevel = {
           ja: 'R1 はそれでも断片に分け、Host B が組み立て直す',
         },
         {
-          en: 'R1 cuts the packet down to 600 bytes and throws the rest away',
-          ja: 'R1 はパケットを 600 バイトに切り詰め、残りは捨てる',
+          en: 'R1 cuts the packet down to 604 bytes and throws the rest away',
+          ja: 'R1 はパケットを 604 バイトに切り詰め、残りは捨てる',
         },
         {
           en: 'R1 drops it and sends Host A an ICMP “Fragmentation Needed” message giving the MTU',

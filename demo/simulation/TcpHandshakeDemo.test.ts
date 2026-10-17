@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PacketHop, PacketTrace } from '../../src/types/simulation';
-import { deriveNodeStates, shownHandshakeSegment } from './TcpHandshakeDemo';
+import { deriveNodeStates, handshakeNumbers, shownHandshakeSegment } from './TcpHandshakeDemo';
 
 // Each segment is recorded like the lesson's: create, two ARP hops, a router
 // forward, then the delivery (hop index 4).
@@ -93,5 +93,17 @@ describe('TC-356: the diagram says the telephone phrase of the segment being sho
       segment('finack', 'TCP ACK', 'server-1', 'client-1'),
     ];
     expect(shownHandshakeSegment(teardown, 'finack', 4, 'done')).toBeNull();
+  });
+});
+
+// TC-706: localSeq is one more than the SYN's SEQ, and the lesson says why.
+describe('the handshake numbers the lesson explains (TC-706)', () => {
+  it('reads the SYN and SYN-ACK sequence numbers back from the connection', () => {
+    expect(handshakeNumbers({ localSeq: 1001, remoteSeq: 5001 })).toEqual({
+      synSeq: 1000,
+      localSeq: 1001,
+      synAckSeq: 5000,
+      remoteSeq: 5001,
+    });
   });
 });

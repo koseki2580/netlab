@@ -511,6 +511,7 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
     <div style={CARD_STYLE}>
       <div style={SECTION_TITLE_STYLE}>{t('Trace', '通信')}</div>
       <div
+        data-testid="stp-last-flow"
         style={{
           color: 'var(--netlab-text-primary)',
           fontFamily: 'monospace',
@@ -518,7 +519,10 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
           marginBottom: 6,
         }}
       >
-        {t('Last flow', '直前の通信')}: {lastScenario ?? t('none', 'なし')}
+        {/* A change to the switches clears the trace; the flow it came from
+            goes with it, or "B → C" sat above "No trace yet". */}
+        {t('Last flow', '直前の通信')}:{' '}
+        {activeTrace ? (lastScenario ?? t('none', 'なし')) : t('none', 'なし')}
       </div>
       <div
         data-testid="stp-trace-path"

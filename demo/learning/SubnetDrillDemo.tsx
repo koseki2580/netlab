@@ -27,9 +27,16 @@ export default function SubnetDrillDemo() {
       >
         {/* The plain rule and four tries come first; the arithmetic drill after. */}
         <SubnetStarter />
-        <I18nProvider locale={readLearningLocale()}>
-          <SubnetDrillPanel />
-        </I18nProvider>
+        {/* The drill's frame takes `height: 100%` and scrolls inside it. As a
+            grid item here that height was the grid row's, and the card became
+            a 64px window over 400px or more of drill. Inside a block of its own
+            the percentage has nothing to resolve against, so the card is as
+            tall as its content and the page scrolls instead. */}
+        <div data-testid="subnet-drill-slot">
+          <I18nProvider locale={readLearningLocale()}>
+            <SubnetDrillPanel />
+          </I18nProvider>
+        </div>
       </div>
     </DemoShell>
   );

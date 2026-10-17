@@ -278,7 +278,9 @@ export default function HighAvailabilityDemo() {
       title="Gateway HA And Link Aggregation"
       desc="Fail a first-hop gateway and a LACP member while keeping the virtual gateway and port-channel deterministic."
     >
-      <NetlabProvider topology={currentTopology}>
+      {/* The provider reads its topology once; keyed by the failure state, the
+          canvas is drawn again so its labels and link states follow a failover. */}
+      <NetlabProvider key={`${masterDown}-${memberDown}`} topology={currentTopology}>
         <div
           style={{
             display: 'grid',

@@ -129,11 +129,18 @@ function MplsL3vpnDemoInner() {
         <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div data-testid="lesson-brief" style={{ ...PANEL_STYLE, fontSize: 12, lineHeight: 1.7 }}>
             <strong>{t('How the two labels work', '2 つのラベルのしくみ')}</strong>
-            <div>
-              {t(
-                'LDP: each router advertises a label for the route to 10.0.2.0/24 — P 16001, PE2 16002. A router always sends a packet with the label its next router asked for, so P swaps 16001 for 16002. This outer transport label only carries the packet across the core to PE2.',
-                'LDP：各ルータは 10.0.2.0/24 への経路にラベルを 1 つ決めて知らせます（P は 16001、PE2 は 16002）。パケットには常に「次のルータが指定したラベル」を付けて送るので、P は 16001 を 16002 に付け替えます。この外側のトランスポートラベルは、コアを越えて PE2 まで運ぶためだけのものです。',
-              )}
+            {/* The default screen has PHP on, where P pops; "P always swaps"
+                contradicted the stack shown below it. */}
+            <div data-testid="mpls-ldp-brief">
+              {php
+                ? t(
+                    'LDP: each router advertises a label for the route to 10.0.2.0/24. P advertises 16001; PE2, with PHP on as now, advertises label 3 (implicit null). A router sends a packet with the label its next router asked for, so PE1 sends 16001 to P, and P pops the transport label instead of swapping it. This outer transport label only carries the packet across the core to PE2.',
+                    'LDP：各ルータは 10.0.2.0/24 への経路にラベルを 1 つ決めて知らせます。P は 16001 です。いまは PHP が有効なので、PE2 はラベル 3（implicit null）を知らせます。パケットには「次のルータが指定したラベル」を付けて送るので、PE1 は P へ 16001 を付けて送り、P はトランスポートラベルを付け替えずに外します。この外側のトランスポートラベルは、コアを越えて PE2 まで運ぶためだけのものです。',
+                  )
+                : t(
+                    'LDP: each router advertises a label for the route to 10.0.2.0/24 — P 16001, PE2 16002. A router sends a packet with the label its next router asked for, so with PHP off P swaps 16001 for 16002. This outer transport label only carries the packet across the core to PE2.',
+                    'LDP：各ルータは 10.0.2.0/24 への経路にラベルを 1 つ決めて知らせます（P は 16001、PE2 は 16002）。パケットには「次のルータが指定したラベル」を付けて送るので、PHP が無効なら P は 16001 を 16002 に付け替えます。この外側のトランスポートラベルは、コアを越えて PE2 まで運ぶためだけのものです。',
+                  )}
             </div>
             <div>
               {t(

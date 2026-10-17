@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fetchStory, leasedAddressCss } from './DhcpDnsDemo';
+import { dhcpClientNow, fetchStory, leasedAddressCss } from './DhcpDnsDemo';
 
 describe('what the DHCP/DNS lesson says its second button ran', () => {
   /** TC-625 — look the name up, open a connection, then fetch: the handshake is counted from what was sent. */
@@ -52,5 +52,32 @@ describe('the address DHCP lent, on the diagram', () => {
     const css = leasedAddressCss('1.2.3.4";}body{display:none');
     expect(css).toContain('content:"1.2.3.4";');
     expect(css.match(/\{/g)).toHaveLength(1);
+  });
+});
+
+// TC-702: the client's state follows the message on screen, not the end of the exchange.
+describe('the DHCP client at the message on screen (TC-702)', () => {
+  const lease = '192.168.1.101';
+
+  it('has no address while DISCOVER, OFFER or REQUEST is on screen', () => {
+    for (const label of ['DHCP DISCOVER', 'DHCP OFFER', 'DHCP REQUEST']) {
+      const now = dhcpClientNow(label, true, lease);
+      expect(now.state).not.toBe('BOUND');
+      expect(now.address).toBeNull();
+    }
+  });
+
+  it('is still waiting while the ACK is on its way', () => {
+    expect(dhcpClientNow('DHCP ACK', false, lease)).toMatchObject({
+      state: 'REQUESTING',
+      address: null,
+    });
+  });
+
+  it('is BOUND with the leased address once the ACK has arrived', () => {
+    expect(dhcpClientNow('DHCP ACK', true, lease)).toMatchObject({
+      state: 'BOUND',
+      address: lease,
+    });
   });
 });

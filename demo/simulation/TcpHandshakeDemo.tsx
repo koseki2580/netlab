@@ -130,6 +130,22 @@ export function shownHandshakeSegment(
   return HANDSHAKE_LABELS[trace.label ?? ''] ?? null;
 }
 
+/**
+ * The numbers the three messages agreed on, as the lesson explains them. A SYN
+ * uses up one sequence number, so the next number each side sends is its
+ * SYN's (or SYN-ACK's) SEQ plus 1 — which is what the connection keeps as
+ * localSeq and remoteSeq. Shown side by side unexplained, the SYN's SEQ and
+ * localSeq looked off by one.
+ */
+export function handshakeNumbers(connection: { localSeq: number; remoteSeq: number }) {
+  return {
+    synSeq: connection.localSeq - 1,
+    localSeq: connection.localSeq,
+    synAckSeq: connection.remoteSeq - 1,
+    remoteSeq: connection.remoteSeq,
+  };
+}
+
 function formatFlags(segment: TcpSegment): string {
   return (
     Object.entries(segment.flags)
@@ -368,6 +384,42 @@ function ConnectionStateCard({
   );
 }
 
+function SeqNote({ numbers }: { numbers: ReturnType<typeof handshakeNumbers> }) {
+  const t = useT();
+  const { synSeq, localSeq, synAckSeq, remoteSeq } = numbers;
+  return (
+    <div
+      data-testid="tcp-seq-note"
+      style={{ fontFamily: 'system-ui, sans-serif', marginTop: 4, lineHeight: 1.6 }}
+    >
+      {t(
+        `localSeq is the number of the client's next byte. The SYN carried SEQ ${synSeq}, and a SYN uses up one sequence number, so localSeq = ${synSeq} + 1 = ${localSeq}. In the same way remoteSeq = the SYN-ACK's SEQ ${synAckSeq} + 1 = ${remoteSeq}.`,
+        `localSeq は、Client が次に送るバイトの番号です。SYN の SEQ は ${synSeq} で、SYN は番号を 1 つ使うので、localSeq = ${synSeq} + 1 = ${localSeq} です。同じように remoteSeq = SYN-ACK の SEQ ${synAckSeq} + 1 = ${remoteSeq} です。`,
+      )}
+    </div>
+  );
+}
+
+/**
+ * At a router's hop the step list and the packet structure show two TTLs, one
+ * apart: the first as the packet reached the router, the second as it leaves.
+ */
+function TtlNote() {
+  const t = useT();
+  const { state } = useSimulation();
+  const hop = state.selectedHop;
+  const leaving = state.selectedPacket?.frame.payload.ttl;
+  if (!hop || hop.event !== 'forward' || leaving === undefined || leaving === hop.ttl) return null;
+  return (
+    <div data-testid="tcp-ttl-note" style={{ lineHeight: 1.6 }}>
+      {t(
+        `Two TTLs at ${hop.nodeLabel}: the step list shows TTL ${hop.ttl}, the value as the packet reached ${hop.nodeLabel}. The packet structure below shows TTL ${leaving}, the value as it leaves, after ${hop.nodeLabel} took 1 off.`,
+        `${hop.nodeLabel} では TTL が 2 つ出ます。ステップの一覧の TTL ${hop.ttl} は、パケットが ${hop.nodeLabel} に着いたときの値です。下のパケット構造の TTL ${leaving} は、${hop.nodeLabel} が 1 減らしたあと、出ていくときの値です。`,
+      )}
+    </div>
+  );
+}
+
 /** Sequence numbers, header fields and the bytes: for a second look, closed at first. */
 function MoreDetail({ connected }: { connected: boolean }) {
   const t = useT();
@@ -413,6 +465,7 @@ function MoreDetail({ connected }: { connected: boolean }) {
               localSeq={connection.localSeq} localAck={connection.localAck} remoteSeq=
               {connection.remoteSeq}
             </div>
+            <SeqNote numbers={handshakeNumbers(connection)} />
           </div>
         ))}
         <div>
@@ -443,6 +496,7 @@ function MoreDetail({ connected }: { connected: boolean }) {
             </div>
           )}
         </div>
+        <TtlNote />
         <PacketStructureViewer />
       </div>
     </details>

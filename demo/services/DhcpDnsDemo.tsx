@@ -193,6 +193,35 @@ export function fetchStory(labels: readonly (string | undefined)[]): FetchStory 
   };
 }
 
+/** The DHCP client as it stands at one message of the exchange (RFC 2131 states). */
+export interface DhcpClientNow {
+  readonly state: 'INIT' | 'SELECTING' | 'REQUESTING' | 'BOUND';
+  /** The address it may use: only once the ACK has arrived. */
+  readonly address: string | null;
+}
+
+/**
+ * The client at the message on screen. The engine runs all four messages when
+ * ① is pressed, so the device's own details already read BOUND while the step
+ * is at DISCOVER; this is the state the step itself has reached.
+ */
+export function dhcpClientNow(
+  label: string | undefined,
+  arrived: boolean,
+  lease: string | null,
+): DhcpClientNow {
+  if (label === 'DHCP DISCOVER' || label === 'DHCP OFFER') {
+    return { state: 'SELECTING', address: null };
+  }
+  if (label === 'DHCP REQUEST') return { state: 'REQUESTING', address: null };
+  if (label === 'DHCP ACK') {
+    return arrived && lease
+      ? { state: 'BOUND', address: lease }
+      : { state: 'REQUESTING', address: null };
+  }
+  return { state: 'INIT', address: null };
+}
+
 /**
  * The address DHCP lent, drawn under the client where every other host shows
  * its own. The library draws a host's configured address, and this client has
@@ -246,6 +275,15 @@ function DhcpDnsDemoInner() {
   const [lease, setLease] = useState<DhcpLeaseState | null>(null);
   const [resolved, setResolved] = useState<{ name: string; address: string } | null>(null);
   const hasAddress = Boolean(lease?.assignedIp);
+  const shownTrace = state.traces.find((trace) => trace.packetId === state.currentTraceId);
+  const shownLabel = shownTrace?.label;
+  const clientNow = shownLabel?.startsWith('DHCP')
+    ? dhcpClientNow(
+        shownLabel,
+        shownTrace !== undefined && state.currentStep === shownTrace.hops.length - 1,
+        lease?.assignedIp ?? null,
+      )
+    : null;
 
   // Each run records its exchange as several traces and leaves the last one
   // selected. Start the step-through at the first message instead, so stepping
@@ -458,14 +496,41 @@ function DhcpDnsDemoInner() {
                   'サブネットマスク（どこまでが同じネットワークか）、デフォルトゲートウェイ（外への出口）、使う DNS サーバも一緒に教えてくれます。',
                 )}
               </div>
+              {clientNow && shownLabel ? (
+                <div
+                  data-testid="dhcp-client-now"
+                  data-state={clientNow.state}
+                  style={{ marginTop: 6, fontFamily: 'monospace' }}
+                >
+                  {t(
+                    `On screen: ${shownLabel}. DHCP Client now: `,
+                    `表示中：${shownLabel}。いまの DHCP Client：`,
+                  )}
+                  <strong>{clientNow.state}</strong>
+                  {' — '}
+                  {clientNow.state === 'BOUND' && clientNow.address
+                    ? t(`it may use ${clientNow.address}.`, `${clientNow.address} を使えます。`)
+                    : clientNow.state === 'REQUESTING'
+                      ? t(
+                          'it has asked for the offered address, but may not use it until the ACK arrives.',
+                          '申し出られた住所を「ください」と頼みました。ACK が届くまでは使えません。',
+                        )
+                      : clientNow.state === 'SELECTING'
+                        ? t(
+                            'no address yet: it is looking for a DHCP server and its offer.',
+                            'まだ住所はありません。DHCP サーバと、その申し出を探しています。',
+                          )
+                        : t('no address.', '住所はありません。')}
+                </div>
+              ) : null}
               {hasAddress && lease ? (
                 <div
                   data-testid="dhcp-result"
                   style={{ marginTop: 6, fontWeight: 700, color: 'var(--netlab-accent-green)' }}
                 >
                   {t(
-                    `The client was given the address ${lease.assignedIp}${leaseExtras.length > 0 ? ` (${leaseExtras.join('; ')})` : ''}.`,
-                    `Client は住所 ${lease.assignedIp} をもらいました${leaseExtras.length > 0 ? `（${leaseExtras.join('、')}）` : ''}。`,
+                    `At the end of the four messages the client has the address ${lease.assignedIp}${leaseExtras.length > 0 ? ` (${leaseExtras.join('; ')})` : ''}.`,
+                    `4 通のやり取りが終わると、Client は住所 ${lease.assignedIp} をもらっています${leaseExtras.length > 0 ? `（${leaseExtras.join('、')}）` : ''}。`,
                   )}
                   <div data-testid="dhcp-result-where" style={{ fontWeight: 400 }}>
                     {t(
@@ -620,10 +685,13 @@ function DhcpDnsDemoInner() {
                 )}
               </div>
             ) : null}
-            <div style={{ marginTop: 6, fontSize: 12, color: 'var(--netlab-text-muted)' }}>
+            <div
+              data-testid="dhcp-details-hint"
+              style={{ marginTop: 6, fontSize: 12, color: 'var(--netlab-text-muted)' }}
+            >
               {t(
-                'Pressing a device on the diagram shows what it has been given so far.',
-                '図の機器を押すと、その時点でもらっている設定が見られます。',
+                'Pressing a device on the diagram shows its settings at the end of the whole exchange, not at the step on screen. The "DHCP Client now" line follows the step.',
+                '図の機器を押すと、やり取りがすべて終わったあとの設定が見られます。いま表示中のステップの設定ではありません。ステップに合わせて変わるのは「いまの DHCP Client」の行です。',
               )}
             </div>
           </div>
