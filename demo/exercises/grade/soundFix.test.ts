@@ -170,7 +170,7 @@ describe('a route whose next router is an address on the far side of the neighbo
       expect(failed.map((entry) => entry.code)).toContain('next-hop-not-neighbour');
       for (const entry of failed.filter((one) => one.code === 'next-hop-not-neighbour')) {
         expect(entry.message.ja).toBe(
-          '次のルータは、となりのルータの「こちら側」のアドレスです。向こう側のアドレスは書けません。',
+          '「次のルータ」は、となりのルータの「こちら側」のアドレスです。向こう側のアドレスでは届きません。',
         );
         expect(entry.message.ja).not.toContain(far);
         expect(entry.message.en).not.toContain(far);

@@ -1,12 +1,6 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useGalleryLocale, useT } from '../localeContext';
-import {
-  exerciseById,
-  learnerSalt,
-  levelTemplates,
-  nextExerciseId,
-  type TemplateInfo,
-} from './exerciseSource';
+import { exerciseById, levelTemplates, nextForLearner, type TemplateInfo } from './exerciseSource';
 import type { ExerciseLevel } from './model/types';
 import type { AttemptStore } from './store/attemptStore';
 import { isAttempted, isSolved, levelSummary } from './store/estimate';
@@ -222,13 +216,7 @@ export function LevelPageBody({
   const mine = state.attempts.filter((attempt) => attempt.level === level);
   const summary = levelSummary(state.attempts, level);
   const weakest = templates.find((template) => template.id === summary.weakestTemplateId);
-  const last = mine[mine.length - 1];
-  const nextId = nextExerciseId(level, {
-    // Never the template just done, twice in a row.
-    ...(last ? { avoidTemplateIds: [last.templateId] } : {}),
-    seenIds: state.attempts.map((attempt) => attempt.exerciseId),
-    salt: learnerSalt(state.attempts),
-  });
+  const nextId = nextForLearner(level, state.attempts);
   /** Distinct exercises of a template solved without help. */
   const solvedOf = (templateId: string) =>
     new Set(
@@ -277,7 +265,7 @@ export function LevelPageBody({
             {t(`Level ${level}`, `レベル ${level}`)}
             <span style={{ fontWeight: 400 }}> — {LEVEL_NAMES[level][locale]}</span>
           </h2>
-          <LevelLines summary={summary} />
+          <LevelLines summary={summary} attempts={state.attempts} />
           {nextId ? (
             <div>
               <Link
@@ -320,14 +308,26 @@ export function LevelPageBody({
             <ul style={{ margin: 0, paddingLeft: 20, display: 'grid', gap: 4 }}>
               {templates.map((template) => {
                 const solved = solvedOf(template.id);
+                // What the level rule says of this kind, first; the other number is named for what it is.
+                const settled = !summary.missingKinds.includes(template.id);
                 return (
                   <li
                     key={template.id}
                     data-testid={`exercises-kind-${template.id}`}
                     data-solved={solved}
+                    data-settled={String(settled)}
                   >
                     {template.title[locale]}
-                    <span style={MUTED}> — {t(`${solved} solved`, `${solved} 問 解けた`)}</span>
+                    <span>
+                      {' — '}
+                      {settled ? t('✓ this kind is done', '✓ この種類は OK') : t('not yet', 'まだ')}
+                    </span>
+                    <span style={MUTED}>
+                      {t(
+                        ` (solved so far, in all: ${solved})`,
+                        `（これまでに解いた数：${solved} 問）`,
+                      )}
+                    </span>
                   </li>
                 );
               })}

@@ -17,6 +17,7 @@ import {
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan, net24 } from '../shared/plans';
 import { L, say, the } from '../shared/text';
+import { WHY_UNIQUE } from '../shared/why';
 
 export const l1WhichPc = defineTemplate(
   {
@@ -94,10 +95,10 @@ export const l1WhichPc = defineTemplate(
         '3 台のうち、アドレスがおかしい 1 台を見つけて、その 1 台だけを直してください。',
       ),
       rule: L(
-        'Rule: devices on the same side share their first three numbers; the last number is different for each.',
-        'ルール：同じ側の機器は、はじめの 3 つの数字が同じ。最後の数字は、1 台ずつちがう。',
+        'Rule: the router says /24. Devices on the same side share their first three numbers. A whole address is different for each device, the router included.',
+        'ルール：ルータは /24。同じ側は、はじめの 3 つの数字が同じ。アドレスは、ルータもふくめて 1 台ずつちがう。',
       ),
-      brief,
+      brief: say(brief, WHY_UNIQUE),
       topology,
       names: lan.names,
       allowed: lan.pcs.map((nodeId) => ({ kind: 'host-ip', nodeId })),

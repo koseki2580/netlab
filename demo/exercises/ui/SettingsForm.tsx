@@ -29,6 +29,8 @@ export interface SuspectState {
   readonly picked: string | null;
   /** What was pointed at when Check was pressed, and was fine. */
   readonly cleared: readonly string[];
+  /** Of `cleared`: those the learner had changed. The change was put back, and the note says so. */
+  readonly putBack?: readonly string[];
   /** Check was pressed before anything was pointed at: the step is said as what is missing. */
   readonly needed?: boolean;
   /** Devices, or the sides of one device. */
@@ -205,11 +207,29 @@ export function SettingsForm({
               gap: 8,
               scrollMarginBottom: 96,
               scrollMarginTop: 8,
-              ...(isPointed
+              ...(isPointed || isPicked
                 ? { outline: '3px solid var(--netlab-accent-cyan)', outlineOffset: 0 }
                 : {}),
             }}
           >
+            {isPicked ? (
+              <p
+                role="status"
+                data-testid="exercise-suspect-picked"
+                style={{ margin: 0, fontWeight: 700, color: 'var(--netlab-accent-cyan)' }}
+              >
+                <span aria-hidden="true">✓ </span>
+                {by === 'side'
+                  ? t(
+                      'You chose this side. It is marked on the diagram.',
+                      'こちらの側をえらびました。図にも印をつけました。',
+                    )
+                  : t(
+                      'You chose this device. It is marked on the diagram.',
+                      'この機器をえらびました。図にも印をつけました。',
+                    )}
+              </p>
+            ) : null}
             {shut ? null : (
               <h3 style={{ margin: 0, fontSize: 16, lineHeight: 1.5 }}>
                 <span>{title.device[locale]}</span>
@@ -242,6 +262,12 @@ export function SettingsForm({
                     style={{ margin: 0, flex: '1 1 100%' }}
                   >
                     <span aria-hidden="true">○ </span>
+                    {suspect.putBack?.includes(key) === true
+                      ? t(
+                          'What you changed here was put back: it was right from the start. ',
+                          '変えたところは、元に戻しました。ここは、はじめから合っていたからです。',
+                        )
+                      : null}
                     {by === 'side'
                       ? t(
                           'This side’s address matches the devices on it. Compare the other side with its devices. (From here on, a pass is recorded as “solved after several tries”.)',
@@ -249,7 +275,7 @@ export function SettingsForm({
                         )
                       : t(
                           `This device’s address matches the devices around it. Compare the other ${left === 1 ? 'one' : left} with ${left === 1 ? 'its' : 'their'} neighbours. (From here on, a pass is recorded as “solved after several tries”.)`,
-                          `この機器のアドレスは、まわりと合っています。ほかの ${left} 台を、となりの機器と見くらべてください。（ここからは、解けても「何度かためして解けた」として記録されます。）`,
+                          `この機器のアドレスは、まわりと合っています。ほかの ${left} 台を、同じ側の機器と見くらべてください。（ここからは、解けても「何度かためして解けた」として記録されます。）`,
                         )}
                   </p>
                 ) : (

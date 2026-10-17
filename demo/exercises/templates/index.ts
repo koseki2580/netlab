@@ -106,6 +106,9 @@ const POOL_SIZE = 120;
  * fingerprint (a different task), then the rest that still differ in what the
  * learner reads or sees.
  */
+/** The instances that are practice for their kind and do not settle it (`Exercise.practiceOnly`). */
+const practiceIds = new Set<string>();
+
 function instancesOf(template: ExerciseTemplate): string[] {
   const fingerprints = new Set<string>();
   const seen = new Set<string>();
@@ -116,6 +119,7 @@ function instancesOf(template: ExerciseTemplate): string[] {
     const look = `${exercise.brief.ja}\n${JSON.stringify(exercise.start)}`;
     if (seen.has(look)) continue;
     seen.add(look);
+    if (exercise.practiceOnly === true) practiceIds.add(exercise.id);
     if (fingerprints.has(exercise.fingerprint)) repeats.push(exercise.id);
     else {
       fingerprints.add(exercise.fingerprint);
@@ -175,6 +179,12 @@ function hashOf(text: string): number {
  * - never a kind in `avoidTemplateIds` (the ones done lately, most recent
  *   last) while another has an unseen instance, and never the most recent one.
  *
+ * - `needKinds` (the kinds of task the level rule still waits for,
+ *   `LevelSummary.missingKinds`): while one of them has an unseen instance, the
+ *   next exercise is of one of them, and an instance that can settle the kind
+ *   (not `practiceOnly`). A learner with one kind left waited nine exercises
+ *   for it to come round.
+ *
  * The same record and the same salt give the same answer, so the hub, the
  * level page and "next" agree.
  */
@@ -184,6 +194,7 @@ export function nextExerciseId(
     avoidTemplateIds?: readonly string[];
     seenIds?: readonly string[];
     salt?: string;
+    needKinds?: readonly string[];
   },
 ): string | undefined {
   const seenIds = opts.seenIds ?? [];
@@ -203,11 +214,25 @@ export function nextExerciseId(
   }
   if (done.size === 0 && avoid.length === 0) return first;
 
+  const need = new Set(opts.needKinds ?? []);
   const next = new Map<string, string>();
-  for (const id of unseen) if (!next.has(templateIdOf(id))) next.set(templateIdOf(id), id);
+  for (const id of unseen) {
+    const templateId = templateIdOf(id);
+    const held = next.get(templateId);
+    // Of a kind still to be solved, an instance that can settle it comes before one that cannot.
+    if (
+      held === undefined ||
+      (need.has(templateId) && practiceIds.has(held) && !practiceIds.has(id))
+    ) {
+      next.set(templateId, id);
+    }
+  }
   const open = [...next.keys()];
+  const needed = open.filter((templateId) => need.has(templateId));
   const allowed =
     [
+      needed.filter((templateId) => !avoid.includes(templateId)),
+      needed.filter((templateId) => templateId !== last),
       open.filter((templateId) => !avoid.includes(templateId)),
       open.filter((templateId) => templateId !== last),
       open,

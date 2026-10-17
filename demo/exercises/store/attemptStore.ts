@@ -45,6 +45,8 @@ export interface AttemptMeta {
   readonly locale: AttemptLocale;
   /** See `AttemptRecord.checksToCount`; 2 or absent is not recorded. */
   readonly checksToCount?: 1 | 2;
+  /** See `AttemptRecord.practiceOnly`. */
+  readonly practiceOnly?: boolean;
 }
 
 export interface CheckOutcome {
@@ -128,6 +130,8 @@ function parseAttempt(value: unknown): AttemptRecord | null {
     OUTCOMES.includes(value.outcome) &&
     isCount(value.checkPresses) &&
     (value.checksToCount === undefined || value.checksToCount === 1) &&
+    (value.practiceOnly === undefined || value.practiceOnly === true) &&
+    (value.skipped === undefined || value.skipped === true) &&
     typeof value.firstCheckPassed === 'boolean' &&
     isTextList(value.failedCheckIds) &&
     [0, 1, 2, 3].includes(value.hintsUsed as number) &&
@@ -151,6 +155,8 @@ function parseAttempt(value: unknown): AttemptRecord | null {
     outcome: record.outcome,
     checkPresses: record.checkPresses,
     ...(record.checksToCount === 1 ? { checksToCount: 1 as const } : {}),
+    ...(record.practiceOnly === true ? { practiceOnly: true as const } : {}),
+    ...(record.skipped === true ? { skipped: true as const } : {}),
     firstCheckPassed: record.firstCheckPassed,
     failedCheckIds: [...record.failedCheckIds],
     hintsUsed: record.hintsUsed,
@@ -364,6 +370,7 @@ export function createAttemptStore(options: AttemptStoreOptions) {
         outcome: 'abandoned',
         checkPresses: 0,
         ...(meta.checksToCount === 1 ? { checksToCount: 1 as const } : {}),
+        ...(meta.practiceOnly === true ? { practiceOnly: true as const } : {}),
         firstCheckPassed: false,
         failedCheckIds: [],
         hintsUsed: 0,
@@ -409,6 +416,18 @@ export function createAttemptStore(options: AttemptStoreOptions) {
         isSettled(attempt)
           ? null
           : { ...attempt, revealed: true, outcome: 'gave-up', endedAt: now() },
+      );
+    },
+
+    /**
+     * The learner left the exercise on purpose, before any Check. Ignored once
+     * the attempt was judged in another way (a Check, a pass, the answer shown).
+     */
+    recordSkip(id: string): void {
+      update(id, (attempt) =>
+        isSettled(attempt) || attempt.checkPresses > 0
+          ? null
+          : { ...attempt, skipped: true, endedAt: now() },
       );
     },
 

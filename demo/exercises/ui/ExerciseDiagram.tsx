@@ -6,7 +6,9 @@ import { extractPathEdgeIds } from '../../../src/simulation/extractPathEdgeIds';
 import { SimulationProvider, useSimulation } from '../../../src/simulation/SimulationContext';
 import type { PacketTrace } from '../../../src/types/simulation';
 import type { NetworkTopology, TopologySnapshot } from '../../../src/types/topology';
+import { I18nProvider } from '../../../src/i18n/I18nProvider';
 import { cablePressed, type CableInReach } from './cablePress';
+import { diagramWords, shownTrace } from './replayShown';
 import {
   diagramLegendLines,
   diagramNotesCss,
@@ -221,6 +223,7 @@ export function ExerciseDiagram({
   topology,
   replay,
   highlightNodeId,
+  highlightEdgeId = null,
   label,
   locale,
   legend = false,
@@ -230,6 +233,8 @@ export function ExerciseDiagram({
   replay: DiagramReplay | null;
   /** The device of the setting the learner is working on. */
   highlightNodeId: string | null;
+  /** The cable on the side of a router the learner pointed at. */
+  highlightEdgeId?: string | null;
   label: string;
   locale: 'en' | 'ja';
   /** A phone: the page shows `DiagramLegend` under the picture, so the notes are not said twice. */
@@ -244,6 +249,12 @@ export function ExerciseDiagram({
   );
   const notes = useMemo(() => diagramNotesLines(topology, locale), [topology, locale]);
   const warning = useMemo(() => noAddressNote(topology, locale), [topology, locale]);
+  // Read when the replay is asked for: the settings of that moment are the ones it was graded on.
+  const shownReplay = useMemo(
+    () => (replay ? { ...replay, trace: shownTrace(replay.trace, topology) } : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [replay],
+  );
   const rootRef = useRef<HTMLDivElement>(null);
   const downIds = useMemo(
     () =>
@@ -263,6 +274,9 @@ export function ExerciseDiagram({
     highlightNodeId === null
       ? ''
       : `${SCOPE} [data-id=${JSON.stringify(highlightNodeId)}] ${NODE}{outline:3px solid var(--netlab-accent-cyan);outline-offset:0;border-radius:8px;}`,
+    highlightEdgeId === null
+      ? ''
+      : `${SCOPE} g.netlab-edge[data-edge-id=${JSON.stringify(highlightEdgeId)}] path{stroke:var(--netlab-accent-cyan) !important;stroke-width:5px !important;}`,
     // What the texts point at: each router side's address, each access port's VLAN.
     diagramNotesCss(topology, SCOPE),
   ].join('\n');
@@ -325,20 +339,25 @@ export function ExerciseDiagram({
         </p>
       ) : null}
       <NetlabProvider topology={runnable}>
-        {/* The main-thread engine: only a replay runs here, and a worker per keystroke would be waste. */}
-        <SimulationProvider useMainThread>
-          <ReplayDriver replay={replay} />
-          {/* A picture, not an editor: devices stay where the exercise put them, and
+        {/* Inside the library's provider, which sets its own catalogue: the words
+            for a cable that is out and for a replay that stops are the page's
+            (`replayShown.ts`). */}
+        <I18nProvider locale={locale} catalog={diagramWords(locale)}>
+          {/* The main-thread engine: only a replay runs here, and a worker per keystroke would be waste. */}
+          <SimulationProvider useMainThread>
+            <ReplayDriver replay={shownReplay} />
+            {/* A picture, not an editor: devices stay where the exercise put them, and
               a wheel or a finger over the diagram scrolls the page instead of zooming. */}
-          <NetlabCanvas
-            followTopology
-            minimap={false}
-            fitViewPadding={0.2}
-            interactiveGraph={false}
-          >
-            <SelectionGuard onPick={onPick} />
-          </NetlabCanvas>
-        </SimulationProvider>
+            <NetlabCanvas
+              followTopology
+              minimap={false}
+              fitViewPadding={0.2}
+              interactiveGraph={false}
+            >
+              <SelectionGuard onPick={onPick} />
+            </NetlabCanvas>
+          </SimulationProvider>
+        </I18nProvider>
       </NetlabProvider>
     </div>
   );

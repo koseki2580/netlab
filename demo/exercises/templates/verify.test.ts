@@ -32,6 +32,7 @@ import { portName, sideName } from '../ui/describe';
 import { refOf } from './shared/exercise';
 import { labelFits, labelLines } from './shared/labelFit';
 import { PLACES } from './shared/places';
+import { intToIp, ipToInt } from '../../../src/utils/cidr';
 
 const SEED_COUNT = Number(process.env.EXERCISE_VERIFY_SEEDS ?? 12);
 const SEEDS = [...Array.from({ length: SEED_COUNT }, (_, seed) => seed), 1000, 1001, 1002, 1003];
@@ -243,6 +244,54 @@ async function problemsOf(exercise: Exercise): Promise<string[]> {
     no(!grade.passed, `unsound pass ${index + 1} passes: ${JSON.stringify(changes)}`);
   }
 
+  // --- TC-653: an address somebody has, or nobody may have, is never an answer ---
+  // For every address the learner may set: each address already held in the
+  // start (the destination's own, the router's, a neighbour's) and the first
+  // and last address of every network a router side is on. The simulator
+  // delivers several of these (a device answers a ping to its own address; a
+  // router side answers for a server); the grader must not.
+  {
+    const held = start.nodes.flatMap((node) => [
+      ...(typeof node.data.ip === 'string' && node.data.ip !== '' ? [node.data.ip] : []),
+      ...(node.data.interfaces ?? []).map((side) => side.ipAddress),
+    ]);
+    const special = start.nodes.flatMap((node) =>
+      (node.data.interfaces ?? []).flatMap((side) => {
+        const size = 2 ** (32 - side.prefixLength);
+        const base = Math.floor(ipToInt(side.ipAddress) / size) * size;
+        return [intToIp(base), intToIp(base + size - 1)];
+      }),
+    );
+    for (const ref of allowed) {
+      if (ref.kind !== 'host-ip' && ref.kind !== 'iface-address') continue;
+      const before = readSetting(start, ref);
+      const own =
+        before?.kind === 'host-ip'
+          ? before.ip
+          : before?.kind === 'iface-address'
+            ? before.ipAddress
+            : null;
+      for (const address of new Set([...held, ...special])) {
+        if (address === own) continue;
+        const change: SettingChange | null =
+          ref.kind === 'host-ip'
+            ? { kind: 'host-ip', nodeId: ref.nodeId, ip: address }
+            : before?.kind === 'iface-address'
+              ? { ...before, ipAddress: address }
+              : null;
+        if (!change) continue;
+        const grade = await gradeExercise(
+          exercise,
+          applyChangesReporting(start, [change]).topology,
+        );
+        no(
+          !grade.passed,
+          `${address} on ${ref.nodeId} passes: it is ${held.includes(address) ? 'held by another device' : 'the first or last address of a network'}`,
+        );
+      }
+    }
+  }
+
   // --- TC-583: pressing at random cannot beat the odds ---
   // Every single press the form offers (a chip, a cable switch, a dropdown
   // value) is tried alone. One that passes must be a press the control is
@@ -272,6 +321,11 @@ async function problemsOf(exercise: Exercise): Promise<string[]> {
       if (card.chips.length > 0) {
         no(usable.length === 1, `${card.chips.length} chips, ${usable.length} of them usable`);
         no(new Set(card.chips).size === card.chips.length, 'two chips are the same');
+        // TC-654: nothing offered is an address no device may have.
+        no(
+          card.chips.every((chip) => !/^\d+\.\d+\.\d+\.(0|255)$/.test(chip)),
+          `a chip is the first or last address of a network: ${card.chips.join(' ')}`,
+        );
         if (exercise.level <= 2) {
           no(card.chips.length >= 4, `only ${card.chips.length} chips: ${card.chips.join(' ')}`);
         }
@@ -376,6 +430,16 @@ async function problemsOf(exercise: Exercise): Promise<string[]> {
       'the rule line does not start with "Rule:"',
     );
     no(exercise.rule.ja.length <= 90, `the rule is ${exercise.rule.ja.length} characters long`);
+    // TC-673: a rule line that names the router's "/number" names the one on the diagram.
+    const said = /ルータは \/(\d+)/.exec(exercise.rule.ja)?.[1];
+    if (said !== undefined) {
+      no(
+        exercise.start.nodes.some((node) =>
+          (node.data.interfaces ?? []).some((side) => String(side.prefixLength) === said),
+        ),
+        `the rule says /${said}, and no router side on the diagram has it`,
+      );
+    }
   }
   no(
     !/たしかめる|Check/.test(exercise.brief.ja + exercise.brief.en),

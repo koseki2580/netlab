@@ -1,4 +1,11 @@
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
 import { useGalleryLocale, useT } from '../../localeContext';
 import type { SettingChange } from '../model/types';
 import { isAddress, typed, wholeNumber } from './addresses';
@@ -36,6 +43,24 @@ function Note({ testId, children }: { testId: string; children: ReactNode }) {
   );
 }
 
+/**
+ * Told which fields hold text that is not a value yet (`id`, and whether it
+ * does). The page provides it, so that Check does not judge the old value
+ * behind a half-typed one.
+ */
+export const DraftReportContext = createContext<((id: string, pending: boolean) => void) | null>(
+  null,
+);
+
+/** Report a field's draft to the page for as long as the field is mounted. */
+export function useDraftReport(id: string, pending: boolean): void {
+  const report = useContext(DraftReportContext);
+  useEffect(() => {
+    report?.(id, pending);
+    return () => report?.(id, false);
+  }, [id, pending, report]);
+}
+
 /** A text field that only reports text `parse` accepts; anything else stays a draft. */
 function DraftInput<T>({
   label,
@@ -59,6 +84,7 @@ function DraftInput<T>({
   width?: number;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
+  useDraftReport(`${testId}-input`, draft !== null);
   return (
     <div style={{ display: 'grid', gap: 4 }}>
       <label style={FIELD_LABEL}>

@@ -13,7 +13,7 @@ import { defineTemplate, goals } from '../shared/exercise';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
 import { L, listOf, say } from '../shared/text';
-import { access, groupOf, portRef, trunk, VLAN_PAIRS, RULE_VLAN } from '../shared/vlan';
+import { access, groupOf, portRef, trunk, VLAN_PAIRS, VLAN_WHY, RULE_VLAN } from '../shared/vlan';
 
 /** Each member with the next: [a1, a2], [a2, a3]. */
 const inTurn = <T>(members: readonly T[]): [T, T][] =>
@@ -78,7 +78,7 @@ export const l2VlanSeparate = defineTemplate(
       opening,
       L(
         `A switch can be divided with VLANs (a VLAN is a separate network inside a switch): every socket has a VLAN number, and only sockets with the same number can reach each other. Right now every socket has the same number, so everything reaches everything.`,
-        `スイッチの中は、VLAN（スイッチの中を分ける仕切り）で分けられます。差し込み口ごとに VLAN 番号があり、同じ番号の差し込み口どうしだけが届きます。いまは、どの差し込み口も同じ番号なので、どの機器からもどの機器にも届きます。`,
+        `スイッチの中は、VLAN（スイッチの中を分ける仕切り）で分けられます。機器をつなぐ差し込み口には VLAN 番号が 1 つずつあり、同じ番号の差し込み口どうしだけが届きます。いまは、どの差し込み口も同じ番号なので、どの機器からもどの機器にも届きます。`,
       ),
       L(
         `Give the ${groupA.name.en} devices (${membersA.en}) one VLAN number and the ${groupB.name.en} devices (${membersB.en}) another. Inside a group everything must still work.`,
@@ -113,7 +113,7 @@ export const l2VlanSeparate = defineTemplate(
               `${RULE_VLAN.ja}番号は、スイッチ同士をつなぐケーブルの一覧にあるものを使う。`,
             )
           : RULE_VLAN,
-      brief,
+      brief: say(brief, VLAN_WHY),
       topology,
       names: net.names,
       allowed: [...net.members, ...net.trunks].map(portRef),

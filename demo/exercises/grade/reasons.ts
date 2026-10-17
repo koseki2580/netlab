@@ -116,7 +116,7 @@ export function diagnosisMessage(detail: DiagnosisDetail): Localised {
           }
         : {
             en: `${which.en} from the devices around it. Compare the address of ${detail.device} (${detail.address}) with its neighbours.`,
-            ja: `${which.ja}。${detail.device}のアドレス（${detail.address}）を、となりの機器と見くらべてください。`,
+            ja: `${which.ja}。${detail.device}のアドレス（${detail.address}）を、同じ側の機器と見くらべてください。`,
           };
     }
   }
@@ -140,6 +140,25 @@ export interface DropContext {
   readonly routesEditable?: boolean;
   /** The network has a cable between switches that carries several VLANs. */
   readonly hasTrunk?: boolean;
+  /** The only settings the learner has are the lists of trunks: then the list is said first. */
+  readonly trunkOnly?: boolean;
+  /** What was sent: an ACL message says which kind of traffic a line has to let through. */
+  readonly sent?: SentKind;
+}
+
+/** The kind of traffic a probe sends, as an ACL line would have to name it. */
+export type SentKind = { readonly via: 'ping' } | { readonly via: 'tcp'; readonly dstPort: number };
+
+/** 「この通信（種類 tcp、ポート番号 80）」: what "this" is, when a list refused it. */
+function sentWords(sent: SentKind | undefined): Localised {
+  if (sent?.via === 'ping') return { en: 'this ping (kind icmp)', ja: 'この ping（種類 icmp）' };
+  if (sent?.via === 'tcp') {
+    return {
+      en: `this traffic (kind tcp, port number ${sent.dstPort})`,
+      ja: `この通信（種類 tcp、ポート番号 ${sent.dstPort}）`,
+    };
+  }
+  return { en: 'this traffic', ja: 'この通信' };
 }
 
 /**
@@ -166,34 +185,40 @@ const DROP_TEXT = {
       : leg === 'request'
         ? {
             en: 'A device on the way could not find the destination. Compare the first numbers of each address with the devices next to it.',
-            ja: 'とちゅうの機器が、行き先を見つけられませんでした。アドレスのはじめの数字を、となりの機器と見くらべてください。',
+            ja: 'とちゅうの機器が、行き先を見つけられませんでした。アドレスのはじめの数字を、同じ側の機器と見くらべてください。',
           }
         : {
             en: "A device on the way back could not find the sender. Compare the sender's address with the devices next to it.",
-            ja: '帰り道の機器が、送り主を見つけられませんでした。送り主のアドレスを、となりの機器と見くらべてください。',
+            ja: '帰り道の機器が、送り主を見つけられませんでした。送り主のアドレスを、同じ側の機器と見くらべてください。',
           },
-  'acl-deny': (device, leg) => ({
+  'acl-deny': (device, leg, context) => ({
     en:
-      `${device} refused it. Check that its list of allowed traffic (ACL) has a line that lets this through.` +
+      `${device} refused it. Check that its list of allowed traffic (ACL) has a line that lets ${sentWords(context.sent).en} through.` +
       (leg === 'reply' ? ' Replies are checked against the list too.' : ''),
     ja:
-      `${device} が通しませんでした。${device} の「通してよい通信の一覧（ACL）」に、これを通す行があるか見てください。` +
+      `${device} が通しませんでした。${device} の「通してよい通信の一覧（ACL）」に、${sentWords(context.sent).ja}を通す行があるか見てください。` +
       (leg === 'reply' ? '返事も、この一覧で調べられます。' : ''),
   }),
   // The list of a cable between switches is mentioned only where there is one:
   // on a single switch it sent a learner looking for something that is not there.
-  'no-egress-in-vlan': (device, _leg, context) => ({
-    en:
-      `${device} had no other socket with the same VLAN number to send it out of. Compare the VLAN numbers of the two devices' sockets.` +
-      (context.hasTrunk === true
-        ? ' Look at the list of the cable between the switches (the trunk) too.'
-        : ''),
-    ja:
-      `${device} には、同じ VLAN 番号の差し込み口が、ほかにありませんでした。2 台の差し込み口の VLAN 番号を見くらべてください。` +
-      (context.hasTrunk === true
-        ? 'スイッチ同士をつなぐケーブル（トランク）の一覧も見てください。'
-        : ''),
-  }),
+  'no-egress-in-vlan': (device, _leg, context) =>
+    context.hasTrunk === true && context.trunkOnly === true
+      ? {
+          en: `${device} had no cable to another switch (trunk) that carries this VLAN number. Look at the list at BOTH ends of the trunk: is the number of these two devices on each?`,
+          ja: `${device} には、この VLAN 番号を運ぶトランク（スイッチ同士をつなぐケーブル）がありませんでした。トランクの両はしの一覧に、この 2 台の VLAN 番号があるか見てください。`,
+        }
+      : {
+          en:
+            `${device} had no other socket with the same VLAN number to send it out of. Compare the VLAN numbers of the two devices' sockets.` +
+            (context.hasTrunk === true
+              ? ' Look at the list of the cable between the switches (the trunk) too.'
+              : ''),
+          ja:
+            `${device} には、同じ VLAN 番号の差し込み口が、ほかにありませんでした。2 台の差し込み口の VLAN 番号を見くらべてください。` +
+            (context.hasTrunk === true
+              ? 'スイッチ同士をつなぐケーブル（トランク）の一覧も見てください。'
+              : ''),
+        },
   'vlan-ingress-violation': (device) => ({
     en: `${device} did not accept it on the port it came in on. Look at the VLAN setting of that port.`,
     ja: `${device} は、入ってきた差し込み口でこれを受け取りませんでした。その差し込み口の VLAN の設定を見てください。`,
@@ -281,6 +306,54 @@ export function dropMessage(
   return leg === 'reply' ? join(REPLY_LOST, body) : body;
 }
 
+// --- A route with a next router that cannot work ---------------------------------
+
+/**
+ * What is wrong with the next router of a route (read off the topology,
+ * `gradeExercise.ts`). A route that exists and leads nowhere is not "no route":
+ * - `self`: the router's own address.
+ * - `far-side`: the neighbouring router's address on the side facing away.
+ * - `far-away`: a device on no network of this router (the server itself, say).
+ * - `not-a-router`: an address on one of its networks that no router holds.
+ */
+export type NextHopFault = 'self' | 'far-side' | 'far-away' | 'not-a-router';
+
+const NEXT_HOP_TEXT: Record<NextHopFault, (leg: Leg) => Localised> = {
+  self: (leg) => ({
+    en: `On a router on the way${leg === 'reply' ? ' back' : ''}, the next router of a route is that router's own address. The next router must be the address of the neighbouring router.`,
+    ja: `${leg === 'reply' ? '帰り道' : 'とちゅう'}のルータの経路で、「次のルータ」が、そのルータ自身のアドレスになっています。「次のルータ」は、となりのルータのアドレスにします。`,
+  }),
+  'far-side': () => ({
+    en: 'The next router is the neighbouring router’s address on the side facing this one. With its address on the far side, nothing arrives.',
+    ja: '「次のルータ」は、となりのルータの「こちら側」のアドレスです。向こう側のアドレスでは届きません。',
+  }),
+  'far-away': () => ({
+    en: 'The next router can only be a neighbouring router, on one of this router’s own networks. The address of a device far away cannot be used.',
+    ja: '「次のルータ」にできるのは、このルータと同じネットワークにいる、となりのルータだけです。はなれた場所にある機器のアドレスは使えません。',
+  }),
+  'not-a-router': () => ({
+    en: 'The address written as the next router is not a neighbouring router’s. On the diagram, look at the neighbouring router’s address on the side facing this one.',
+    ja: '「次のルータ」に書かれたアドレスは、となりのルータのものではありません。図で、となりのルータの、こちらを向いた側のアドレスを見てください。',
+  }),
+};
+
+// --- Addresses no device may use ---------------------------------------------------
+
+const shown = (address: string, open: string, close: string): string =>
+  address === '' ? '' : `${open}${address}${close}`;
+
+/** The first and the last address of a network. The simulator accepts both; the grader does not. */
+const RESERVED_TEXT = {
+  network: (address: string): Localised => ({
+    en: `This address${shown(address, ' (', ')')} is a special number that stands for the whole network. A device cannot use it.`,
+    ja: `このアドレス${shown(address, '（', '）')}は、ネットワーク全体を表す特別な数字です。機器には使えません。`,
+  }),
+  broadcast: (address: string): Localised => ({
+    en: `This address${shown(address, ' (', ')')} is a special number that means "to everyone". A device cannot use it.`,
+    ja: `このアドレス${shown(address, '（', '）')}は、全員あての特別な数字です。機器には使えません。`,
+  }),
+};
+
 // --- Result codes --------------------------------------------------------------
 
 export const CODE_TEXT: Record<CheckResultCode, Localised> = {
@@ -332,10 +405,12 @@ export const CODE_TEXT: Record<CheckResultCode, Localised> = {
     en: 'What you changed was not what was wrong. Put it back, and compare the others.',
     ja: '変えたところは、おかしい場所ではありません。元に戻して、ほかを見くらべてください。',
   },
-  'next-hop-not-neighbour': {
-    en: 'The next router is the neighbouring router’s address on the side facing this one. An address on its far side cannot be written here.',
-    ja: '次のルータは、となりのルータの「こちら側」のアドレスです。向こう側のアドレスは書けません。',
+  'next-hop-not-neighbour': NEXT_HOP_TEXT['far-side']('request'),
+  'address-conflict': {
+    en: 'Two devices use the same address, so it cannot be told which of them is reached. Compare the addresses one by one.',
+    ja: '同じアドレスを 2 台が使っているので、どちらに届いたのか決められません。アドレスを 1 台ずつ見くらべてください。',
   },
+  'address-reserved': RESERVED_TEXT.network(''),
   'no-address': {
     en: 'A device has no address, so nothing could be sent. Give it an address first.',
     ja: 'アドレスが入っていない機器があります。まず、アドレスを入れてください。',
@@ -364,11 +439,19 @@ export interface ExplainDetail {
   readonly drop?: { readonly reason: string; readonly leg: Leg; readonly device: string };
   /** `not-delivered`: a cause read off the topology. It replaces the drop's sentence. */
   readonly diagnosis?: DiagnosisDetail;
+  /** `not-delivered`, `next-hop-not-neighbour`: a route on the way whose next router cannot work. */
+  readonly nextHop?: NextHopFault;
+  /** `address-reserved`: the address, and which of the two special ones it is. */
+  readonly reserved?: { readonly address: string; readonly which: 'network' | 'broadcast' };
   /** See `DropContext`. */
   readonly routesEditable?: boolean;
   readonly hasTrunk?: boolean;
+  readonly trunkOnly?: boolean;
+  readonly sent?: SentKind;
   /** `wrong-root`: the label of the switch that is the root now. */
   readonly device?: string;
+  /** `wrong-root`: the wanted switch (`other`) has the same, lowest priority as the root and lost on the device number. */
+  readonly tie?: { readonly other: string; readonly priority: number };
   /** `too-many-changes`: how many settings differ, and how many may. */
   readonly count?: number;
   readonly max?: number;
@@ -380,13 +463,34 @@ export function explain(code: CheckResultCode, detail: ExplainDetail = {}): Loca
   const context: DropContext = {
     ...(detail.routesEditable === true ? { routesEditable: true } : {}),
     ...(detail.hasTrunk === true ? { hasTrunk: true } : {}),
+    ...(detail.trunkOnly === true ? { trunkOnly: true } : {}),
+    ...(detail.sent ? { sent: detail.sent } : {}),
   };
-  if (code === 'not-delivered' && diagnosis) return diagnosisMessage(diagnosis);
+  if ((code === 'not-delivered' || code === 'address-conflict') && diagnosis) {
+    return diagnosisMessage(diagnosis);
+  }
+  if (code === 'address-reserved' && detail.reserved) {
+    return RESERVED_TEXT[detail.reserved.which](detail.reserved.address);
+  }
+  if (code === 'next-hop-not-neighbour' && detail.nextHop) {
+    return NEXT_HOP_TEXT[detail.nextHop]('request');
+  }
+  if (code === 'not-delivered' && detail.nextHop) {
+    const body = NEXT_HOP_TEXT[detail.nextHop](drop?.leg ?? 'request');
+    return drop?.leg === 'reply' ? join(REPLY_LOST, body) : body;
+  }
   if (code === 'not-delivered' && drop) {
     return dropMessage(drop.reason, drop.leg, drop.device, context);
   }
   if (code === 'wrong-cause' && drop) {
     return join(CODE_TEXT[code], dropBody(drop.reason, drop.leg, drop.device, context));
+  }
+  if (code === 'wrong-root' && device !== undefined && detail.tie) {
+    const { other, priority } = detail.tie;
+    return {
+      en: `${other} and ${device} have the same priority number (${priority}). When the numbers are the same, the switch with the lower device number (MAC address) becomes the centre. Right now that is ${device}.`,
+      ja: `${other} と ${device} は、優先度の数字が同じ（${priority}）です。数字が同じときは、機器の番号（MAC アドレス）が小さいほうが中心になります。いまは ${device} が中心（ルートブリッジ）です。`,
+    };
   }
   if (code === 'wrong-root' && device !== undefined) {
     return {

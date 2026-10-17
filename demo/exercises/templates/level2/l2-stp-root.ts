@@ -12,6 +12,7 @@ import { defineTemplate, goals } from '../shared/exercise';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
 import { L, say, the, The } from '../shared/text';
+import { WHY_ROOT } from '../shared/why';
 import type { SettingChange } from '../../model/types';
 
 const priority = (nodeId: string, value: number): SettingChange => ({
@@ -141,7 +142,7 @@ export const l2StpRoot = defineTemplate(
         'Rule: the switch with the lowest priority number becomes the root bridge.',
         'ルール：優先度の数字がいちばん小さいスイッチが、ルートブリッジになる。',
       ),
-      brief,
+      brief: say(brief, WHY_ROOT),
       topology: net.topology,
       names: net.names,
       allowed: ids.map((nodeId) => ({ kind: 'stp-priority', nodeId })),

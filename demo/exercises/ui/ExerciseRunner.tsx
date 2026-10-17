@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useViewport } from '../../../src/utils/useViewport';
 import { LessonCanvas, LessonPanel, LessonSplit } from '../../components/LessonPanel';
 import { useGalleryLocale, useT } from '../../localeContext';
@@ -15,12 +15,14 @@ import type {
   SettingRef,
 } from '../model/types';
 import type { AttemptStore } from '../store/attemptStore';
+import { isSolved } from '../store/estimate';
 import type { AttemptContext } from '../store/types';
 import { attemptOrder, type AttemptOrder } from './attemptOrder';
 import { orderedOptions, referenceAsOffered } from './choices';
 import {
   cableSentence,
   changeSentence,
+  goalLabel,
   settingForResult,
   sameSetting,
   settingNodeId,
@@ -47,6 +49,7 @@ import {
   type Counted,
   type Predicted,
 } from './ExerciseParts';
+import { DraftReportContext } from './fields';
 import { SettingsForm } from './SettingsForm';
 import { CARD, PRIMARY, SECONDARY } from './styles';
 
@@ -64,16 +67,35 @@ export interface ExerciseRunnerProps {
 
 const NO_CHANGES: readonly SettingChange[] = [];
 
+/** From this many columns of devices, the legend is shown beside the panel too. */
+const LEGEND_COLUMNS = 5;
+
 /** The least height the diagram keeps on a phone: below this its devices cannot be told apart. */
 const NARROW_DIAGRAM_MIN_HEIGHT = 150;
 
-/** What a design did, in the words the learner predicted with. */
-function outcomeOf(grade: GradeResult): Predicted {
-  if (grade.passed) return 'reach';
-  const stopped = grade.results.some(
-    (result) => result.code === 'not-delivered' || result.code === 'no-address',
-  );
-  return stopped ? 'no-reach' : 'detour';
+/** The goal a prediction is about: the first "reaches" goal of the exercise. */
+function predictedCheck(exercise: Exercise) {
+  return exercise.checks.find((check) => check.kind === 'reach');
+}
+
+/** Whether "it arrives, but the long way round" can happen here: only where a goal is about the way taken. */
+function canDetour(exercise: Exercise): boolean {
+  return exercise.checks.some((check) => check.kind === 'path-via' || check.kind === 'path-avoids');
+}
+
+/**
+ * What a design did, as an answer to the question the learner predicted on:
+ * does the device of the first goal reach its destination? (It used to be
+ * read off all the goals at once, and "it does not arrive" was called right
+ * with three of four goals met.)
+ */
+function outcomeOf(exercise: Exercise, grade: GradeResult): Predicted {
+  const asked = predictedCheck(exercise);
+  const result = grade.results.find((entry) => entry.checkId === asked?.id);
+  if (asked && result && !result.passed) return 'no-reach';
+  if (!asked && !grade.passed) return 'no-reach';
+  const offPath = grade.results.some((entry) => entry.code === 'wrong-path');
+  return canDetour(exercise) && offPath ? 'detour' : 'reach';
 }
 
 interface DesignRun {
@@ -132,6 +154,12 @@ export function ExerciseRunner({
   // be changed until Check), and what Check found to be fine.
   const [picked, setPicked] = useState<string | null>(null);
   const [cleared, setCleared] = useState<readonly string[]>([]);
+  /** What was changed on each thing pointed at, kept while the learner points elsewhere and comes back. */
+  const stash = useRef<Record<string, readonly SettingChange[]>>({});
+  /** What Check found to be fine although the learner had changed it: the change was put back, and that is said. */
+  const [putBack, setPutBack] = useState<readonly string[]>([]);
+  /** Check was pressed with nothing changed: not judged, and the hints are offered all the same. */
+  const [stuck, setStuck] = useState(false);
   /** Check was pressed before a device was pointed at. */
   const [needsPick, setNeedsPick] = useState(false);
   /** A solve counts within this many Checks: 1 where the answer is pressed, 2 where it is typed. */
@@ -143,6 +171,15 @@ export function ExerciseRunner({
   const [needs, setNeeds] = useState<'choice' | 'prediction' | null>(null);
   /** Counts the presses of Check that could not run, so each one brings the reason into view. */
   const [refusals, setRefusals] = useState(0);
+
+  /** Fields holding text that is not a value yet (`fields.tsx`), and why the last Check did not run. */
+  const drafts = useRef(new Set<string>());
+  const [refused, setRefused] = useState<'draft' | 'unchanged' | null>(null);
+  const reportDraft = useCallback((id: string, pending: boolean) => {
+    if (pending) drafts.current.add(id);
+    else drafts.current.delete(id);
+    if (drafts.current.size === 0) setRefused((now) => (now === 'draft' ? null : now));
+  }, []);
 
   const resultRef = useRef<HTMLDivElement>(null);
   const needsChoiceRef = useRef<HTMLParagraphElement>(null);
@@ -169,6 +206,20 @@ export function ExerciseRunner({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exercise, context, cycleId, store]);
 
+  // TC-672: once this kind has been solved cleanly on an instance that settles
+  // it, the rule line is the bare key. Read when the exercise opens.
+  const [keyOnly] = useState(
+    () =>
+      exercise.ruleKey !== undefined &&
+      store
+        .getState()
+        .attempts.some(
+          (entry) =>
+            entry.templateId === exercise.templateId &&
+            entry.practiceOnly !== true &&
+            isSolved(entry),
+        ),
+  );
   const isDesign = exercise.options !== undefined;
   // An option may bring a start of its own (another routing protocol, say):
   // then that is what is drawn and what the grade compares against.
@@ -232,6 +283,10 @@ export function ExerciseRunner({
     // marked as fine, and whatever was changed on it is put back.
     if (exercise.pickFirst && picked !== null && !exercise.pickFirst.faulty.includes(picked)) {
       setCleared((now) => [...now, picked]);
+      if (changes.length > 0) setPutBack((now) => [...now, picked]);
+      stash.current = Object.fromEntries(
+        Object.entries(stash.current).filter(([key]) => key !== picked),
+      );
       setPicked(null);
       replaceChanges(NO_CHANGES);
       setGraded(null);
@@ -247,6 +302,29 @@ export function ExerciseRunner({
       setRefusals((count) => count + 1);
       return;
     }
+    // A field holds text that is not a value: the topology still has the value
+    // of before, and judging that would spend a Check on something the learner
+    // did not mean. The field is pointed at; nothing is recorded.
+    const [draftId] = drafts.current;
+    if (draftId !== undefined) {
+      setRefused('draft');
+      setRefusals((count) => count + 1);
+      const field =
+        panelRef.current?.querySelector<HTMLElement>(`input[data-testid="${draftId}"]`) ??
+        panelRef.current?.querySelector<HTMLElement>(`input[data-testid^="${draftId}-row"]`);
+      field?.scrollIntoView?.({ block: 'nearest' });
+      field?.focus({ preventScroll: true });
+      return;
+    }
+    // Nothing differs from the start: there is nothing to judge, and the first
+    // Check is not spent on finding that out.
+    if (!isDesign && diffSettings(base, topology, exercise.allowed).length === 0) {
+      setRefused('unchanged');
+      setStuck(true);
+      setRefusals((count) => count + 1);
+      return;
+    }
+    setRefused(null);
     if (isDesign && (!option || !predicted)) {
       setNeeds(option ? 'prediction' : 'choice');
       setRefusals((count) => count + 1);
@@ -259,7 +337,7 @@ export function ExerciseRunner({
     await new Promise((resolve) => setTimeout(resolve, 0));
     const grade = await gradeExercise({ ...exercise, start: base }, topology);
     const id = attempt.current?.id;
-    const actual = outcomeOf(grade);
+    const actual = outcomeOf(exercise, grade);
     if (id !== undefined) {
       // The prediction goes first: a pass settles the attempt, and nothing is recorded after that.
       if (option && predicted) {
@@ -300,14 +378,17 @@ export function ExerciseRunner({
   const change = (next: SettingChange) => {
     setChanges((current) => [...current.filter((entry) => !sameSetting(entry, next)), next]);
     setReplay(null);
+    setRefused((now) => (now === 'unchanged' ? null : now));
   };
   const replaceChanges = (next: readonly SettingChange[]) => {
     setChanges(next);
+    setRefused(null);
     setFormKey((key) => key + 1);
     setReplay(null);
   };
   /** Back to the start: the same exercise, offered in a new order, and no result of before left on screen. */
   const reset = () => {
+    stash.current = {};
     replaceChanges(NO_CHANGES);
     setGraded(null);
     const id = attempt.current?.id;
@@ -343,8 +424,12 @@ export function ExerciseRunner({
     if (!exercise.pickFirst || cleared.includes(key) || passed || busy) return;
     setNeedsPick(false);
     if (key === picked) return;
+    // What was chosen on the one pointed at before is kept for when the learner
+    // comes back to it; only what is pointed at now is part of the network.
+    if (picked !== null) stash.current = { ...stash.current, [picked]: changes };
+    const kept = stash.current[key] ?? NO_CHANGES;
     setPicked(key);
-    if (changes.length > 0) replaceChanges(NO_CHANGES);
+    if (changes.length > 0 || kept.length > 0) replaceChanges(kept);
   };
 
   /** A press on the diagram: no panel opens; the card of what was pressed is shown, and a cable is switched. */
@@ -403,6 +488,9 @@ export function ExerciseRunner({
     diagramRef.current?.scrollIntoView?.({ block: 'nearest' });
   };
 
+  const askedCheck = predictedCheck(exercise);
+  const predictionGoal = askedCheck ? goalLabel(exercise, askedCheck) : null;
+
   const doneSentence = designRun
     ? t(`You chose: ${designRun.option.label.en}.`, `選んだもの：${designRun.option.label.ja}`)
     : (() => {
@@ -417,6 +505,29 @@ export function ExerciseRunner({
         );
       })();
 
+  // What is pointed at is marked on the diagram at once: the device, and for a
+  // side of a router the cable on that side.
+  const [pickedNodeId, pickedSide] = picked === null ? [null, undefined] : picked.split(':');
+  const pickedEdgeId =
+    pickedNodeId == null || pickedSide === undefined
+      ? null
+      : (topology.edges.find(
+          (edge) =>
+            (edge.source === pickedNodeId && edge.sourceHandle === pickedSide) ||
+            (edge.target === pickedNodeId && edge.targetHandle === pickedSide),
+        )?.id ?? null);
+
+  // D28 / TC-676: with five columns of devices the names and addresses on the
+  // picture are drawn a few pixels high beside the panel too; the legend that
+  // says them in text stands under the picture there as well.
+  const wideDiagram = useMemo(
+    () =>
+      new Set(base.nodes.map((node) => Math.round(node.position.x))).size >= LEGEND_COLUMNS ||
+      // The priorities (and, on a tie, the device numbers) are read off the legend.
+      base.nodes.some((node) => node.data.stpConfig !== undefined),
+    [base],
+  );
+
   const brief = (
     <ExerciseBrief
       exercise={exercise}
@@ -424,6 +535,8 @@ export function ExerciseRunner({
       compact={isNarrow}
       countRule={presses === 0 && !revealed ? maxChecks : null}
       pickFirst={exercise.pickFirst !== undefined}
+      keyOnly={keyOnly}
+      reopens={context === 'practice'}
       goals={isNarrow}
     />
   );
@@ -431,10 +544,11 @@ export function ExerciseRunner({
     <ExerciseDiagram
       topology={topology}
       replay={replay}
-      highlightNodeId={focused ? settingNodeId(focused) : null}
+      highlightNodeId={pickedNodeId ?? (focused ? settingNodeId(focused) : null)}
+      highlightEdgeId={pickedEdgeId}
       label={t('The network of this exercise', 'この問題のネットワーク')}
       locale={locale}
-      legend={isNarrow}
+      legend={isNarrow || wideDiagram}
       onPick={pick}
     />
   );
@@ -443,10 +557,21 @@ export function ExerciseRunner({
   const awaitsPrediction = isDesign && option !== null && predicted === null;
   const showReset =
     !isDesign && !passed && diffSettings(base, topology, exercise.allowed).length > 0;
-  const showSkip = onNext !== undefined && context !== 'practice' && !passed && !revealed;
+  const showSkip = onNext !== undefined && !passed && !revealed;
+  // In practice, leaving without a Check is a choice with a cost, and it is said
+  // on the button: an exercise that was only opened is offered again, so the
+  // way past it is to be counted as not having solved it. After a Check the
+  // exercise has been judged already.
+  const skip = () => {
+    if (context === 'practice' && presses === 0 && attempt.current) {
+      store.recordSkip(attempt.current.id);
+    }
+    onNext?.();
+  };
   const showNext = onNext !== undefined && (passed || revealed);
   // The hint button joins Check once a Check has missed, and not before.
-  const nextHint = passed || misses === 0 ? undefined : nextHintTier(exercise, hintTier);
+  const nextHint =
+    passed || (misses === 0 && !stuck) ? undefined : nextHintTier(exercise, hintTier);
   const revealHint = (tier: 1 | 2 | 3) => {
     setHintTier(tier);
     if (attempt.current) store.recordHint(attempt.current.id, tier);
@@ -506,8 +631,8 @@ export function ExerciseRunner({
             {t('Start over', '最初に戻す')}
           </button>
         ) : null}
-        {showSkip ? (
-          <button type="button" data-testid="exercise-skip" onClick={onNext} style={SECONDARY}>
+        {showSkip && context !== 'practice' ? (
+          <button type="button" data-testid="exercise-skip" onClick={skip} style={SECONDARY}>
             {t('I cannot do this one: next', 'わからないので次へ')}
           </button>
         ) : null}
@@ -545,8 +670,18 @@ export function ExerciseRunner({
         ) : (
           <LessonCanvas
             canvas={
-              <div ref={diagramRef} style={{ position: 'absolute', inset: 0, scrollMarginTop: 8 }}>
-                {diagram}
+              <div
+                ref={diagramRef}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  scrollMarginTop: 8,
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                <div style={{ position: 'relative', flex: 1, minHeight: 0 }}>{diagram}</div>
+                {wideDiagram ? <DiagramLegend topology={topology} locale={locale} /> : null}
               </div>
             }
           />
@@ -594,7 +729,23 @@ export function ExerciseRunner({
                         : t(
                             'It went differently from what you expected.',
                             '予想とはちがう結果でした。',
-                          )}
+                          )}{' '}
+                      {predictionGoal
+                        ? designRun.actual === 'no-reach'
+                          ? t(
+                              `"${predictionGoal.en}": it did not arrive.`,
+                              `「${predictionGoal.ja}」は、届きませんでした。`,
+                            )
+                          : designRun.actual === 'detour'
+                            ? t(
+                                `"${predictionGoal.en}": it arrived, but the long way round.`,
+                                `「${predictionGoal.ja}」は、届きましたが、遠回りでした。`,
+                              )
+                            : t(
+                                `"${predictionGoal.en}": it arrived.`,
+                                `「${predictionGoal.ja}」は、届きました。`,
+                              )
+                        : null}
                     </p>
                     {designRun.option.explain ? (
                       <p data-testid="exercise-option-explain" style={{ margin: '4px 0 0' }}>
@@ -611,6 +762,25 @@ export function ExerciseRunner({
                     )}
                   </div>
                 ) : null}
+                {refused ? (
+                  <p
+                    data-testid="exercise-check-refused"
+                    data-reason={refused}
+                    role="alert"
+                    style={{ margin: 0, fontWeight: 700, color: 'var(--netlab-accent-orange)' }}
+                  >
+                    <span aria-hidden="true">☞ </span>
+                    {refused === 'draft'
+                      ? t(
+                          'One field is not finished, so nothing was checked. Finish it, then press Check. This press has not been counted.',
+                          '書きかけの欄があるので、たしかめていません。その欄を直してから「たしかめる」を押してください。この 1 回は、まだ数えていません。',
+                        )
+                      : t(
+                          'You have not changed anything yet. This press has not been counted.',
+                          'まだ何も変えていません。この 1 回は、まだ数えていません。',
+                        )}
+                  </p>
+                ) : null}
                 <ResultPanel
                   exercise={exercise}
                   grade={graded?.grade ?? null}
@@ -619,6 +789,8 @@ export function ExerciseRunner({
                   counted={passedAs ?? 'solved'}
                   checksToCount={maxChecks}
                   failedChecks={misses}
+                  // A design that did not work: the line about the prediction is the one summary.
+                  summary={!(designRun && !passed)}
                   doneSentence={doneSentence}
                   onReplay={showReplay}
                   {...(missedSetting ? { onShowSetting: showSetting } : {})}
@@ -637,6 +809,8 @@ export function ExerciseRunner({
                   disabled={busy || passed}
                   needs={needs}
                   needsRef={needsChoiceRef}
+                  canDetour={canDetour(exercise)}
+                  {...(predictionGoal ? { question: predictionGoal } : {})}
                   onChoose={(chosen) => {
                     setOption(chosen);
                     // The prediction stays: picking again is not a reason to ask it again.
@@ -678,26 +852,29 @@ export function ExerciseRunner({
                     </p>
                   ) : null}
                   {order ? (
-                    <SettingsForm
-                      key={formKey}
-                      exercise={exercise}
-                      topology={topology}
-                      order={order}
-                      {...(exercise.pickFirst
-                        ? {
-                            suspect: {
-                              picked,
-                              cleared,
-                              needed: needsPick,
-                              by: exercise.pickFirst.by ?? 'device',
-                              onPick: pickSuspect,
-                            },
-                          }
-                        : {})}
-                      onChange={change}
-                      onFocusSetting={setFocused}
-                      pointed={pointed}
-                    />
+                    <DraftReportContext.Provider value={reportDraft}>
+                      <SettingsForm
+                        key={formKey}
+                        exercise={exercise}
+                        topology={topology}
+                        order={order}
+                        {...(exercise.pickFirst
+                          ? {
+                              suspect: {
+                                picked,
+                                cleared,
+                                putBack,
+                                needed: needsPick,
+                                by: exercise.pickFirst.by ?? 'device',
+                                onPick: pickSuspect,
+                              },
+                            }
+                          : {})}
+                        onChange={change}
+                        onFocusSetting={setFocused}
+                        pointed={pointed}
+                      />
+                    </DraftReportContext.Provider>
                   ) : null}
                 </section>
               )}
@@ -723,6 +900,19 @@ export function ExerciseRunner({
                   aria-label={t('If you are stuck', '困ったとき')}
                   style={{ display: 'grid', gap: 10 }}
                 >
+                  {showSkip && context === 'practice' ? (
+                    <button
+                      type="button"
+                      data-testid="exercise-skip"
+                      data-counts={presses === 0 ? 'not-solved' : undefined}
+                      onClick={skip}
+                      style={SECONDARY}
+                    >
+                      {presses === 0
+                        ? t('Skip (counts as not solved)', 'とばす（「解けなかった」と数えます）')
+                        : t('Leave it: next exercise', 'ここまでにして次の問題へ')}
+                    </button>
+                  ) : null}
                   <GiveUp
                     exercise={exercise}
                     revealed={revealed}

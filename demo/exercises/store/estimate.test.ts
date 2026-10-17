@@ -62,7 +62,7 @@ describe('of every kind of task the level has, the latest one must be solved', (
     expect(summary).toMatchObject({ solved: 10, status: 'in-progress' });
     expect(summary.missingKinds).toEqual([kinds[kinds.length - 1]]);
     expect(headline(summary, 'ja')).toBe(
-      'あとは、まだ解けていない種類が解ければ、レベル 1 達成です（いま 10 問）',
+      'あとは、まだ解けていない種類が解ければ、レベル 1 達成です（直近 10 問のうち、いま 10 問）',
     );
     expect(stillMissing(summary, 'ja', titleOf)).toBe(
       `まだ解けていない種類：「題 ${kinds[kinds.length - 1]}」`,
@@ -79,9 +79,12 @@ describe('of every kind of task the level has, the latest one must be solved', (
     expect(summary.missingKinds).toEqual([first]);
   });
 
-  it('and is made good by solving the next exercise of that kind', () => {
-    const attempts = [...clearingRun(1), failed(first, 51, 1), solved(first, 52, 1)];
-    expect(levelSummary(attempts, 1)).toMatchObject({ status: 'cleared', missingKinds: [] });
+  // TC-657
+  it('and is made good by solving the next two exercises of that kind, not by one', () => {
+    const once = [...clearingRun(1), failed(first, 51, 1), solved(first, 52, 1)];
+    expect(levelSummary(once, 1)).toMatchObject({ status: 'in-progress', missingKinds: [first] });
+    const twice = [...once, solved(first, 53, 1)];
+    expect(levelSummary(twice, 1)).toMatchObject({ status: 'cleared', missingKinds: [] });
   });
 
   it('solving the same exercise again does not make it good', () => {
@@ -92,6 +95,28 @@ describe('of every kind of task the level has, the latest one must be solved', (
   it('a kind solved before the last ten still stands, as long as nothing of that kind went wrong since', () => {
     const others = Array.from({ length: 10 }, (_, i) => solved(second, 200 + i, 1));
     expect(levelSummary([...clearingRun(1), ...others], 1).missingKinds).toEqual([]);
+  });
+
+  // TC-656
+  it('an instance marked as practice only (a /24 of the "/number" kind) is counted among the solved, and does not settle its kind', () => {
+    const others = clearingRun(1).filter((entry) => entry.templateId !== 'l1-prefix-fit');
+    const easy = attempt('l1-prefix-fit', 500, 1, { practiceOnly: true });
+    const withEasy = levelSummary([...others, easy], 1);
+    expect(withEasy.solved).toBe(others.length + 1);
+    expect(withEasy.missingKinds).toEqual(['l1-prefix-fit']);
+    expect(withEasy.status).toBe('in-progress');
+    // A /16 or a /8 settles it, and a practice instance done afterwards does not unsettle it.
+    const real = attempt('l1-prefix-fit', 501, 1);
+    expect(levelSummary([...others, easy, real], 1)).toMatchObject({
+      status: 'cleared',
+      missingKinds: [],
+    });
+    const missedEasy = attempt('l1-prefix-fit', 502, 1, {
+      practiceOnly: true,
+      outcome: 'abandoned',
+      firstCheckPassed: false,
+    });
+    expect(levelSummary([...others, real, missedEasy], 1).missingKinds).toEqual([]);
   });
 
   it('names two kinds and counts the rest', () => {
@@ -493,10 +518,10 @@ describe('explain', () => {
 
   it('says what an unfinished level still needs', () => {
     expect(explain(inProgress, 'ja')).toBe(
-      '直近 6 問のうち、ヒントなしで、1 回目の「たしかめる」（自分で入力する問題は 2 回目まで）で解けたのは 4 問（2 種類）です。ヒントを使って解けた 1 問は数えていません。レベル 2 は、直近 10 問のうち 7 問をそのように解き、このレベルの 10 種類の問題のどれも、いちばん最近の 1 問が解けていると達成です。解けなかった種類は、次にその種類が出たときに解けば大丈夫です。同じ問題をやり直しても、数え方は変わりません。',
+      '直近 6 問のうち、ヒントなしで、1 回目の「たしかめる」（自分で入力する問題は 2 回目まで）で解けたのは 4 問（2 種類）です。ヒントを使って解けた 1 問は数えていません。レベル 2 は、直近 10 問のうち 7 問をそのように解き、このレベルの 10 種類の問題のどれも、いちばん最近の 1 問が解けていると達成です。解けなかった種類は、その種類を 2 問つづけて解けば大丈夫です。同じ問題をやり直しても、数え方は変わりません。',
     );
     expect(explain(inProgress, 'en')).toBe(
-      'You solved 4 of your last 6 exercises without a hint, on the first Check (within 2 Checks where you type the answer), across 2 kinds of exercise. The 1 you solved with a hint is not counted. Level 2 is cleared at 7 of the last 10 solved that way, with the latest exercise of each of its 10 kinds of task among the solved. A kind you missed is made good the next time it comes up. Doing the same exercise again does not change how it counts.',
+      'You solved 4 of your last 6 exercises without a hint, on the first Check (within 2 Checks where you type the answer), across 2 kinds of exercise. The 1 you solved with a hint is not counted. Level 2 is cleared at 7 of the last 10 solved that way, with the latest exercise of each of its 10 kinds of task among the solved. A kind you missed is made good by solving it twice in a row. Doing the same exercise again does not change how it counts.',
     );
   });
 
@@ -538,8 +563,10 @@ describe('the sentences for a solve after several tries, and the short line', ()
   });
 
   it('leads with how many more are needed to clear', () => {
-    expect(headline(tried, 'ja')).toBe('あと 3 問 とけたら、レベル 2 達成です（いま 4 問）');
-    expect(headline(tried, 'en')).toBe('Solve 3 more to clear level 2 (4 so far)');
+    expect(headline(tried, 'ja')).toBe(
+      'あと 3 問 とけたら、レベル 2 達成です（直近 10 問のうち、いま 4 問）',
+    );
+    expect(headline(tried, 'en')).toBe('Solve 3 more to clear level 2 (4 of your last 10 so far)');
   });
 
   it('says a cleared level in one short line', () => {

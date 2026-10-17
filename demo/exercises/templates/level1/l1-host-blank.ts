@@ -21,6 +21,7 @@ import {
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
 import { L, listOf, say, the } from '../shared/text';
+import { WHY_UNIQUE } from '../shared/why';
 
 export const l1HostBlank = defineTemplate(
   {
@@ -102,7 +103,7 @@ export const l1HostBlank = defineTemplate(
       SAME_START_BRIEF,
       L(
         `Look at the addresses of the devices next to it, and give the ${dev.en} one that no other device is using.`,
-        `となりの機器のアドレスを見て、${dev.ja}に、ほかの機器と重ならないアドレスを入れてください。`,
+        `同じ側の機器のアドレスを見て、${dev.ja}に、ほかの機器と重ならないアドレスを入れてください。`,
       ),
     );
 
@@ -112,7 +113,7 @@ export const l1HostBlank = defineTemplate(
       title: L(`Give the ${dev.en} an address`, `${dev.ja}にアドレスを入れる`),
       task: L(`Give the ${dev.en} an address.`, `${dev.ja}に、アドレスを入れてください。`),
       rule: RULE_SAME_THREE,
-      brief,
+      brief: say(brief, WHY_UNIQUE),
       topology,
       names,
       allowed: [{ kind: 'host-ip', nodeId: device }],

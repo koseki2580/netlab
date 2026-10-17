@@ -11,6 +11,7 @@ import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
 import { routes, RULE_ROUTE } from '../shared/routed';
 import { L, listOf, say, the, The, type Named } from '../shared/text';
+import { WHY_DEFAULT } from '../shared/why';
 import type { DesignOption } from '../../model/types';
 
 export const l2ChooseStaticDefault = defineTemplate(
@@ -230,7 +231,7 @@ export const l2ChooseStaticDefault = defineTemplate(
         `${sites.near.device.ja}から向こうの全部のネットワークに届くように、${r1Name.ja}の経路の書き方を 1 つ選んでください。`,
       ),
       rule: RULE_ROUTE,
-      brief,
+      brief: say(brief, WHY_DEFAULT),
       topology,
       names,
       allowed: [{ kind: 'static-routes', nodeId: 'r1' }],

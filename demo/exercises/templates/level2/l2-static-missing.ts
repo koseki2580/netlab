@@ -19,6 +19,7 @@ import {
   RULE_ROUTE,
 } from '../shared/routed';
 import { L, say, the, The } from '../shared/text';
+import { WHY_FACING } from '../shared/why';
 
 export const l2StaticMissing = defineTemplate(
   {
@@ -89,7 +90,7 @@ export const l2StaticMissing = defineTemplate(
         `${far.device.ja}のネットワーク（${net.srvNet.cidr}）への経路がないルータを見つけて、経路を足してください。`,
       ),
       rule: RULE_ROUTE,
-      brief,
+      brief: say(brief, WHY_FACING),
       topology,
       names: net.names,
       allowed: net.path.map((nodeId) => ({ kind: 'static-routes', nodeId })),

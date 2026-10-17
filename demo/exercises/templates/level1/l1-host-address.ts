@@ -26,6 +26,7 @@ import {
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
 import { L, say, the, The } from '../shared/text';
+import { WHY_UNIQUE } from '../shared/why';
 
 export const l1HostAddress = defineTemplate(
   {
@@ -115,7 +116,7 @@ export const l1HostAddress = defineTemplate(
       SAME_START_BRIEF,
       L(
         `Compare it with the devices next to it, and fix the address of ${the(dev)}.`,
-        `となりの機器のアドレスと見くらべて、${dev.ja}のアドレスを直してください。`,
+        `同じ側の機器のアドレスと見くらべて、${dev.ja}のアドレスを直してください。`,
       ),
     );
 
@@ -150,7 +151,7 @@ export const l1HostAddress = defineTemplate(
         `${dev.ja}のアドレスを、まわりの機器に合うように直してください。`,
       ),
       rule: RULE_SAME_THREE,
-      brief,
+      brief: say(brief, WHY_UNIQUE),
       topology,
       names: lan.names,
       allowed,
@@ -158,16 +159,16 @@ export const l1HostAddress = defineTemplate(
       hints: [
         L(
           `Compare the address of ${the(dev)} with the addresses of the devices next to it.`,
-          `${dev.ja}のアドレスを、となりの機器のアドレスと見くらべてください。`,
+          `${dev.ja}のアドレスを、同じ側の機器のアドレスと見くらべてください。`,
         ),
         fault === 'router'
           ? L(
-              `One address belongs to one device. Look at the address of ${the(place.router)}: is ${the(dev)} using the same one?`,
-              `アドレスは 1 台に 1 つです。${place.router.ja}のアドレスを見てください。${dev.ja}が同じものを使っていませんか。`,
+              `Two devices cannot use the same address. Look at the address of ${the(place.router)}: is ${the(dev)} using the same one?`,
+              `同じアドレスを 2 台が使うことはできません。${place.router.ja}のアドレスを見てください。${dev.ja}が同じものを使っていませんか。`,
             )
           : L(
               `The address of ${the(dev)} is ${wrongAddress}. The devices next to it start with ${starts(net)}; this one starts differently.`,
-              `${dev.ja}のアドレスは「${wrongAddress}」です。となりの機器は${startsJa(net)}で始まりますが、これだけ始まりがちがいます。`,
+              `${dev.ja}のアドレスは「${wrongAddress}」です。同じ側の機器は${startsJa(net)}で始まりますが、これだけ始まりがちがいます。`,
             ),
         L(
           `Change the address of ${the(dev)} to ${freeAddressOn(net).en}.`,

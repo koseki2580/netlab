@@ -179,11 +179,11 @@ describe('the cable exercise: the cables come first, and a press on one is said 
   const exercise = exerciseById('l1-cable-off~0', 'ja');
   if (!exercise) throw new Error('no l1-cable-off~0');
 
-  it('lists every cable before the address that is only there as a distractor', () => {
+  // TC-659: the address that stood here as a distractor is gone.
+  it('lists the cables, and nothing else', () => {
     const kinds = settingOrder(exercise.allowed, exercise.start).map((ref) => ref.kind);
-    const firstOther = kinds.findIndex((kind) => kind !== 'link-state');
-    expect(firstOther).toBeGreaterThan(0);
-    expect(kinds.slice(firstOther)).not.toContain('link-state');
+    expect(kinds.length).toBeGreaterThan(2);
+    expect(new Set(kinds)).toEqual(new Set(['link-state']));
   });
 
   it('says which device’s cable was plugged in or unplugged', () => {

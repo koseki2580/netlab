@@ -11,7 +11,15 @@ import { defineTemplate, formNames, goals } from '../shared/exercise';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
 import { L, say, the, The } from '../shared/text';
-import { access, groupOf, portRef, trunk, VLAN_PAIRS, vlanIntro } from '../shared/vlan';
+import {
+  access,
+  groupOf,
+  portRef,
+  trunk,
+  TRUNK_GLOSS,
+  VLAN_PAIRS,
+  vlanIntro,
+} from '../shared/vlan';
 
 export const l2TrunkAllowed = defineTemplate(
   {
@@ -83,9 +91,10 @@ export const l2TrunkAllowed = defineTemplate(
     const brief = say(
       opening,
       vlanIntro(place),
+      TRUNK_GLOSS,
       L(
-        `A cable between switches is a trunk: it carries several VLANs at once, but only the numbers on its list, at both ends. ${The(name(near.id))} cannot reach ${the(name(far.id))} on the other switch, although both are ${group.name.en} devices.`,
-        `スイッチ同士をつなぐケーブルはトランクといい、複数の VLAN をまとめて運びます。ただし運ぶのは、両はしの一覧にある番号だけです。${name(near.id).ja}から、別のスイッチにある${name(far.id).ja}に届きません。どちらも${group.name.ja}の機器です。`,
+        `${The(name(near.id))} cannot reach ${the(name(far.id))} on the other switch, although both are ${group.name.en} devices.`,
+        `${name(near.id).ja}から、別のスイッチにある${name(far.id).ja}に届きません。どちらも${group.name.ja}の機器です。`,
       ),
       L(
         `Compare the VLAN numbers of the devices on the diagram with the lists of the trunk, and add the number that is missing. Keep the two groups apart.`,

@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import { excludingCanvasInternals, undecidedContrastFailures } from './axe';
 import { expect, test } from './fixtures/harness';
+import { changeSomethingWrong } from './exerciseMoves';
 import { SEL } from './selectors';
 
 /**
@@ -44,6 +45,7 @@ async function sweep(page: Page) {
   expect(await violations(page), 'an exercise before Check').toEqual(CLEAN);
 
   // A failed Check with a hint open: the result, the "not yet" marks and the hint card.
+  await changeSomethingWrong(page);
   await page.getByTestId(X.check).click();
   await expect(page.getByTestId(X.result)).toHaveAttribute('data-passed', 'false');
   await page.getByTestId(X.hint).click();
@@ -97,13 +99,14 @@ test('after Check, focus is on the result and the result is announced', async ({
   await expect(result).toHaveAttribute('aria-live', 'polite');
   await expect(result).toBeEmpty();
 
+  await changeSomethingWrong(page);
   await check.focus();
   await page.keyboard.press('Enter');
   await expect(result).toHaveAttribute('data-passed', 'false');
   await expect(result).toBeFocused();
   await expect(
     page.getByRole('status').filter({ has: page.getByTestId(X.resultSummary) }),
-  ).toContainText('Not there yet: 1 of 3 goals to go.');
+  ).toContainText('Nearly there: 1 of 3 goals to go.');
   // Each goal says its state in a word, not by colour alone.
   await expect(page.getByTestId(X.resultGoal('reach-pc1-srv'))).toContainText('Not yet');
   // The goals already met are one press away, so the settings stay on screen.

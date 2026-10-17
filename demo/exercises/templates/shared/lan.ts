@@ -75,8 +75,8 @@ export const SAME_START_BRIEF = L(
 
 /** The rule line of an address exercise: the rule, never the numbers. */
 export const RULE_SAME_THREE = L(
-  'Rule: the same first three numbers as the devices next to it; a last number nobody else has.',
-  'ルール：となりの機器と、はじめの 3 つの数字を同じに。最後の数字は、だれともかぶらない。',
+  'Rule: the router says /24. Devices whose first three numbers match belong together. A whole address is nobody else’s, the router included.',
+  'ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。',
 );
 
 /** What to change an address to, without naming one: any free address will do, and the form offers its own. */

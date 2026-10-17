@@ -9,6 +9,7 @@ import { englishProse, fixture, hasJapanese, render, testStore, type Screen } fr
 
 // The canvas needs a real layout engine; what it is given is asserted instead.
 vi.mock('./ExerciseDiagram', () => ({
+  DiagramLegend: () => null,
   ExerciseDiagram: ({
     topology,
     replay,
@@ -62,6 +63,12 @@ async function check(target: Screen) {
   );
 }
 
+/** A first Check that misses: an address on a network nobody is on. (A Check with nothing changed is not judged.) */
+async function missOnce(target: Screen) {
+  await target.enter(TILL_INPUT, '192.168.9.50');
+  await check(target);
+}
+
 describe('a configure exercise (the till)', () => {
   // TC-479
   it('opens one attempt and shows the brief with its goals unmarked', () => {
@@ -78,10 +85,31 @@ describe('a configure exercise (the till)', () => {
     expect(screen.find('exercise-next')).toBeNull();
   });
 
-  // TC-480
-  it('Check at the start names the goal not met, with the reason, and it is not worded as an error', async () => {
+  // TC-663
+  it('Check with nothing changed is not judged: it says so, spends no attempt, and offers the hints', async () => {
     const { screen, only } = run(DEV_TILL_ID);
+    expect(screen.find('exercise-hint')).toBeNull();
+    await screen.click('exercise-check');
+    const refused = screen.get('exercise-check-refused');
+    expect(refused.getAttribute('data-reason')).toBe('unchanged');
+    expect(refused.textContent).toContain('まだ何も変えていません。');
+    expect(screen.get('exercise-result').hasAttribute('data-passed')).toBe(false);
+    expect(screen.find('exercise-result-summary')).toBeNull();
+    expect(only()).toMatchObject({ outcome: 'abandoned', checkPresses: 0 });
+    // The count rule still stands, and a learner who is stuck is not left without a hint.
+    expect(screen.find('exercise-count-rule')).not.toBeNull();
+    expect(screen.find('exercise-hint')).not.toBeNull();
+    // Changing something takes the line away, and the next Check is the first.
+    await screen.enter(TILL_INPUT, '192.168.1.50');
+    expect(screen.find('exercise-check-refused')).toBeNull();
     await check(screen);
+    expect(only()).toMatchObject({ outcome: 'passed', checkPresses: 1 });
+  });
+
+  // TC-480
+  it('a Check that misses names the goal not met, with the reason, and it is not worded as an error', async () => {
+    const { screen, only } = run(DEV_TILL_ID);
+    await missOnce(screen);
     const result = screen.get('exercise-result');
     expect(result.getAttribute('role')).toBe('status');
     expect(result.getAttribute('data-passed')).toBe('false');
@@ -103,7 +131,7 @@ describe('a configure exercise (the till)', () => {
       outcome: 'abandoned',
       checkPresses: 1,
       failedCheckIds: ['till'],
-      changedSettings: 0,
+      changedSettings: 1,
     });
   });
 
@@ -111,7 +139,7 @@ describe('a configure exercise (the till)', () => {
   it('a valid address then Check passes: success, what was done, next; recorded as solved', async () => {
     let went = 0;
     const { screen, only } = run(DEV_TILL_ID, { onNext: () => (went += 1) });
-    await check(screen);
+    await missOnce(screen);
     await screen.enter(TILL_INPUT, '192.168.1.50');
     expect(screen.get('diagram-stub').getAttribute('data-till-ip')).toBe('192.168.1.50');
     expect(screen.find('exercise-result-stale')).not.toBeNull();
@@ -132,6 +160,26 @@ describe('a configure exercise (the till)', () => {
     expect(isSolved(only())).toBe(false);
     await screen.click('exercise-next');
     expect(went).toBe(1);
+  });
+
+  // TC-655
+  it('Check does not judge while a field holds text that is not a value: it points at the field, and no attempt is used', async () => {
+    const { screen, only } = run(DEV_TILL_ID);
+    await screen.enter(TILL_INPUT, '192.168.1.300');
+    expect(screen.get('diagram-stub').getAttribute('data-till-ip')).toBe('192.168.2.50');
+    await screen.click('exercise-check');
+    const refused = screen.get('exercise-check-refused');
+    expect(refused.getAttribute('data-reason')).toBe('draft');
+    expect(refused.getAttribute('role')).toBe('alert');
+    expect(refused.textContent).toContain('まだ数えていません');
+    expect(document.activeElement).toBe(screen.get(TILL_INPUT));
+    expect(screen.get('exercise-result').hasAttribute('data-passed')).toBe(false);
+    expect(only()).toMatchObject({ outcome: 'abandoned', checkPresses: 0 });
+    // Once the field holds a value, Check judges, and it is the first Check.
+    await screen.enter(TILL_INPUT, '192.168.1.50');
+    expect(screen.find('exercise-check-refused')).toBeNull();
+    await check(screen);
+    expect(only()).toMatchObject({ outcome: 'passed', checkPresses: 1, firstCheckPassed: true });
   });
 
   // TC-482
@@ -162,7 +210,7 @@ describe('a configure exercise (the till)', () => {
     // TC-545: no hint is offered before a first try; a Check that misses puts the button beside Check.
     expect(screen.find('exercise-hint')).toBeNull();
     expect(screen.find('exercise-hint-cost')).toBeNull();
-    await check(screen);
+    await missOnce(screen);
     expect(screen.get('exercise-actions').contains(screen.get('exercise-hint'))).toBe(true);
     expect(screen.get('exercise-hint-cost').textContent).toContain('ヒントを使って解けた');
     expect(screen.find('exercise-hint-1')).toBeNull();
@@ -211,7 +259,7 @@ describe('a configure exercise (the till)', () => {
   // TC-485
   it('a result with a trace can be watched on the diagram, until a setting changes', async () => {
     const { screen } = run(DEV_TILL_ID);
-    await check(screen);
+    await missOnce(screen);
     await screen.click('exercise-replay-till');
     expect(screen.get('diagram-stub').getAttribute('data-replaying')).toBe('yes');
     await screen.enter(TILL_INPUT, '192.168.1.50');
@@ -221,7 +269,7 @@ describe('a configure exercise (the till)', () => {
   // TC-486
   it('is in one language at a time', async () => {
     const japanese = run(DEV_TILL_ID).screen;
-    await check(japanese);
+    await missOnce(japanese);
     await japanese.click('exercise-hint');
     for (const block of japanese.container.querySelectorAll(
       'p, li, h2, h3, button, label > span',
@@ -247,7 +295,7 @@ describe('a configure exercise (the till)', () => {
       ),
     };
     screen = render(<ExerciseRunner exercise={english} store={testStore()} />, { locale: 'en' });
-    await check(screen);
+    await missOnce(screen);
     await screen.click('exercise-hint');
     expect(hasJapanese(screen.container.textContent ?? '')).toBe(false);
     expect(screen.get('exercise-check').textContent).toBe('Check');
@@ -336,6 +384,7 @@ describe('how a pass is counted by the number of Checks', () => {
     const two = run(DEV_VLAN_ID);
     // Said before the first Check, in one line.
     expect(two.screen.get('exercise-count-rule').textContent).toContain('2 回目まで');
+    await two.screen.enter(VLAN_INPUT('p3'), '30');
     await check(two.screen);
     expect(two.screen.find('exercise-count-rule')).toBeNull();
     expect(two.screen.find('exercise-tries-note')).toBeNull();
@@ -347,6 +396,7 @@ describe('how a pass is counted by the number of Checks', () => {
     two.screen.unmount();
 
     const three = run(DEV_VLAN_ID);
+    await three.screen.enter(VLAN_INPUT('p3'), '30');
     await check(three.screen);
     await three.screen.enter(VLAN_INPUT('p3'), '20');
     await check(three.screen);
@@ -364,8 +414,9 @@ describe('how a pass is counted by the number of Checks', () => {
   // TC-587
   it('where the answer is one of a few things to press, only the first Check counts', async () => {
     const first = run(DEV_TILL_ID);
+    // TC-671: beside it, once: what opening the exercise again gives.
     expect(first.screen.get('exercise-count-rule').textContent).toBe(
-      'この問題は、1 回目の「たしかめる」で解けたときだけ数えます。',
+      '1 回目の「たしかめる」で解けたときだけ数えます。 やり直すと、べつの問題が出ます。',
     );
     await first.screen.enter(TILL_INPUT, '192.168.1.50');
     await check(first.screen);
@@ -375,7 +426,7 @@ describe('how a pass is counted by the number of Checks', () => {
     first.screen.unmount();
 
     const second = run(DEV_TILL_ID);
-    await check(second.screen);
+    await missOnce(second.screen);
     // One miss, and the next pass no longer counts: said now.
     expect(second.screen.get('exercise-tries-note').textContent).toContain('何度かためして解けた');
     await second.screen.enter(TILL_INPUT, '192.168.1.50');
@@ -390,7 +441,7 @@ describe('how a pass is counted by the number of Checks', () => {
   it('after a miss the result offers the way to the setting the unmet goal is about, and marks its card', async () => {
     const { screen } = run(DEV_TILL_ID);
     expect(screen.find('exercise-result-setting')).toBeNull();
-    await check(screen);
+    await missOnce(screen);
     const card = screen.get('exercise-setting-host-ip-pc1');
     expect(card.hasAttribute('data-pointed')).toBe(false);
     await screen.click('exercise-result-setting');
@@ -444,5 +495,40 @@ describe('the prediction of a choose-a-design exercise', () => {
     await screen.click(other);
     expect(screen.get(other).nextElementSibling).toBe(screen.get('exercise-predict'));
     expect(screen.get('exercise-predict-detour').getAttribute('aria-pressed')).toBe('true');
+  });
+});
+
+// TC-668
+describe('leaving a practice exercise', () => {
+  it('before a Check, "skip" says what it costs and records the exercise as skipped', async () => {
+    let went = 0;
+    const { screen, only } = run(DEV_TILL_ID, { onNext: () => (went += 1) });
+    const skip = screen.get('exercise-skip');
+    expect(skip.textContent).toBe('とばす（「解けなかった」と数えます）');
+    await screen.click('exercise-skip');
+    expect(went).toBe(1);
+    expect(only()).toMatchObject({ skipped: true, checkPresses: 0 });
+  });
+});
+
+// TC-672
+describe('the rule line of the "/number" exercise', () => {
+  it('is the worked rule until one has been solved cleanly, then the bare key', async () => {
+    const { exerciseById } = await import('../exerciseSource');
+    const prefix = exerciseById('l1-prefix-fit~0', 'ja');
+    if (!prefix) throw new Error('no l1-prefix-fit~0');
+    const first = render(<ExerciseRunner exercise={prefix} store={testStore()} />, {
+      locale: 'ja',
+    });
+    expect(first.get('exercise-rule').textContent).toMatch(/^ルール：ルータは \/\d+。/);
+    first.unmount();
+
+    const store = testStore();
+    const id = store.open({ ...prefix, id: 'l1-prefix-fit~1', locale: 'ja' }, 'practice');
+    store.recordCheck(id, { passed: true, failedCheckIds: [], changedSettings: 1 });
+    screen = render(<ExerciseRunner exercise={prefix} store={store} />, { locale: 'ja' });
+    expect(screen.get('exercise-rule').textContent).toBe(
+      'ルール：/8 → はじめの 1 つ　/16 → はじめの 2 つ　/24 → はじめの 3 つ',
+    );
   });
 });

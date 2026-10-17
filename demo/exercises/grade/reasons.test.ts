@@ -19,6 +19,8 @@ const CODES: readonly CheckResultCode[] = [
   'too-many-changes',
   'changed-elsewhere',
   'next-hop-not-neighbour',
+  'address-conflict',
+  'address-reserved',
   'no-address',
   'config-invalid',
   'engine-error',
@@ -188,7 +190,7 @@ describe('learner-facing reasons', () => {
       others: 1,
     });
     expect(host.ja).toBe(
-      '3 つ目の数字がちがいます（7 と 1）。レジのアドレス（192.168.7.10）を、となりの機器と見くらべてください。',
+      '3 つ目の数字がちがいます（7 と 1）。レジのアドレス（192.168.7.10）を、同じ側の機器と見くらべてください。',
     );
     expect(host.en).toBe(
       'The third number differs (7 and 1) from the devices around it. Compare the address of レジ (192.168.7.10) with its neighbours.',

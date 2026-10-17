@@ -8,6 +8,7 @@ import { hostCandidates } from '../demo/exercises/ui/candidates';
 import { settingTestId } from '../demo/exercises/ui/describe';
 import { expect, test } from './fixtures/harness';
 import type { DemoPage } from './pages/DemoPage';
+import { changeSomethingWrong } from './exerciseMoves';
 import { SEL } from './selectors';
 
 /**
@@ -173,8 +174,12 @@ test.describe('in Japanese', () => {
     await expect(page.getByTestId('exercise-story')).toHaveText(brief.ja);
     await page.getByTestId('exercise-more').locator('summary').click();
     // TC-587 — said before the first Check: this one counts on the first Check only.
-    await expect(page.getByTestId('exercise-count-rule')).toHaveText(
-      'この問題は、1 回目の「たしかめる」で解けたときだけ数えます。',
+    await expect(page.getByTestId('exercise-count-rule')).toContainText(
+      '1 回目の「たしかめる」で解けたときだけ数えます。',
+    );
+    // TC-671 — and beside it, that opening it again gives another exercise.
+    await expect(page.getByTestId('exercise-count-rule')).toContainText(
+      'やり直すと、べつの問題が出ます。',
     );
     // Before any Check a goal is neither met nor missed.
     for (const goal of checks) {
@@ -184,7 +189,15 @@ test.describe('in Japanese', () => {
     // No hint is offered before a first try (TC-545).
     await expect(page.getByTestId(X.hint)).toHaveCount(0);
 
-    // The network as it was handed over does not work, and the page says which goal and why.
+    // TC-663 — Check with nothing changed judges nothing and spends nothing.
+    await page.getByTestId(X.check).click();
+    await expect(page.getByTestId('exercise-check-refused')).toContainText(
+      'まだ何も変えていません。',
+    );
+    await expect(page.getByTestId(X.result)).not.toHaveAttribute('data-passed');
+
+    // An address on a network nobody is on: the page says which goal and why.
+    await changeSomethingWrong(page);
     await check(page, false);
     // TC-545 — without scrolling: the one-line summary, the goal not met, the
     // setting to change, and the hint button beside Check.
@@ -371,6 +384,7 @@ test.describe('in Japanese', () => {
     const failing = `reach-${hostId}-srv`;
     await open(page, demoPage, HOST);
     const packet = page.getByTestId(X.diagram).getByTestId(SEL.canvas.packet);
+    await changeSomethingWrong(page);
     await check(page, false);
     await expect(packet).toHaveCount(0);
 
@@ -405,6 +419,7 @@ test.describe('in Japanese', () => {
   /** TC-515 — a hint says what it costs before it is opened, and the pass is recorded as helped. */
   test('opening a hint makes the pass "solved with help"', async ({ page, demoPage }) => {
     await open(page, demoPage, HOST);
+    await changeSomethingWrong(page);
     await check(page, false);
     await expect(page.getByTestId(X.hintCost)).toContainText('ヒントを使って解けた');
     await page.getByTestId(X.hint).click();
@@ -452,13 +467,16 @@ test.describe('in Japanese', () => {
     // One card per setting the exercise allows.
     for (const ref of allowed) await expect(page.getByTestId(settingTestId(ref))).toBeVisible();
 
+    await changeSomethingWrong(page);
     await check(page, false);
     const apart = checks.filter((goal) => goal.kind === 'must-not-reach');
     // Only the first goal not met is listed until the learner asks for the rest.
     await page.getByTestId(X.resultMore).click();
-    for (const goal of apart) {
-      await expect(page.getByTestId(X.resultGoal(goal.id))).toHaveAttribute('data-passed', 'false');
-    }
+    // One port moved to a number of its own keeps that device apart, not the groups.
+    const stillTogether = await Promise.all(
+      apart.map((goal) => page.getByTestId(X.resultGoal(goal.id)).getAttribute('data-passed')),
+    );
+    expect(stillTogether).toContain('false');
 
     await typeReference(page, reference);
     await check(page, true);
@@ -579,7 +597,7 @@ test.describe('in Japanese', () => {
     await check(page, false);
     const result = page.getByTestId(X.result);
     await expect(result).toContainText(
-      '次のルータは、となりのルータの「こちら側」のアドレスです。向こう側のアドレスは書けません。',
+      '「次のルータ」は、となりのルータの「こちら側」のアドレスです。向こう側のアドレスでは届きません。',
     );
     // TC-618: "start over" takes the result off the screen.
     await page.getByTestId(X.reset).click();
@@ -702,6 +720,7 @@ test('an exercise is in one language at a time, and English names its devices in
   }
   await expect(page.getByTestId(X.panel)).not.toContainText(/[ぁ-んァ-ヶ]/);
 
+  await changeSomethingWrong(page);
   await check(page, false);
   await page.getByTestId(X.hint).click();
   await expect(page.getByTestId(X.hintText(1))).toContainText(hints[0]?.text.en ?? '-');

@@ -10,7 +10,7 @@
 
 import { buildLan, LAN_SHAPES, withLinkState } from '../shared/build';
 import { defineTemplate } from '../shared/exercise';
-import { endsOf, everyoneReaches, setIp } from '../shared/lan';
+import { endsOf, everyoneReaches } from '../shared/lan';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
 import { L, listOf, say, the } from '../shared/text';
@@ -80,7 +80,6 @@ export const l1CableOff = defineTemplate(
 
     // --- What may be changed, the goals, the answers ---
     const [endA, endB] = endsOf(lan, lan.names, cable);
-    const asked = cutOff[0] ?? pc;
     return {
       title: L(
         stillFine.length === 0 ? 'Nobody can reach the server' : 'One cable is out',
@@ -97,10 +96,10 @@ export const l1CableOff = defineTemplate(
       brief,
       topology,
       names: lan.names,
-      allowed: [
-        ...lan.cables.map((edgeId) => ({ kind: 'link-state', edgeId }) as const),
-        { kind: 'host-ip', nodeId: asked },
-      ],
+      // Cables and nothing else. An address setting stood here as a distractor;
+      // with one Check to count it was only noise, and a learner who plugged the
+      // cable in and also changed the address was told it was solved.
+      allowed: lan.cables.map((edgeId) => ({ kind: 'link-state', edgeId }) as const),
       checks: everyoneReaches(lan, lan.names),
       hints: [
         L(
@@ -119,8 +118,14 @@ export const l1CableOff = defineTemplate(
       lessons: ['/course'],
       reference: [{ kind: 'link-state', edgeId: cable, state: 'up' }],
       wrongAnswers: [
-        // Blaming the address instead of the cable.
-        [setIp(asked, plan.near.at(plan.free))],
+        // Pulling out another cable instead of plugging this one in.
+        [
+          {
+            kind: 'link-state',
+            edgeId: lan.cables.find((id) => id !== cable) ?? cable,
+            state: 'down',
+          },
+        ],
       ],
       fingerprint: [place.id, shape, where === 'own' ? pc : cable],
     };

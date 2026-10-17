@@ -11,11 +11,12 @@
 
 import { buildLan, withNodeData } from '../shared/build';
 import { defineTemplate, goals } from '../shared/exercise';
-import { addressOf, setIp, starts, startsJa } from '../shared/lan';
+import { addressOf, RULE_SAME_THREE, setIp, starts, startsJa } from '../shared/lan';
 import { placedEvenly } from '../shared/draw';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan, net24 } from '../shared/plans';
 import { L, say, the, The } from '../shared/text';
+import { WHY_UNIQUE } from '../shared/why';
 import type { DesignOption } from '../../model/types';
 
 export const l1ChooseAddress = defineTemplate(
@@ -158,11 +159,8 @@ export const l1ChooseAddress = defineTemplate(
         `Choose the address ${the(dev)} should get.`,
         `${dev.ja}のアドレスを、どれにするか選んでください。`,
       ),
-      rule: L(
-        'Rule: the same first three numbers as the devices next to it; a last number nobody else has, the router included.',
-        'ルール：となりの機器と、はじめの 3 つの数字を同じに。最後の数字は、ルータもふくめて、だれともかぶらない。',
-      ),
-      brief,
+      rule: RULE_SAME_THREE,
+      brief: say(brief, WHY_UNIQUE),
       topology,
       names,
       allowed: [{ kind: 'host-ip', nodeId: moved }],
@@ -175,7 +173,7 @@ export const l1ChooseAddress = defineTemplate(
         ),
         L(
           `A device needs an address that starts like its neighbours' (${starts(plan.near)}), and that no other device, the router included, already has.`,
-          `機器のアドレスは、となりの機器と同じ始まり（${startsJa(plan.near)}）で、ルータもふくめて、ほかのどの機器も使っていないものにします。`,
+          `機器のアドレスは、同じ側の機器と同じ始まり（${startsJa(plan.near)}）で、ルータもふくめて、ほかのどの機器も使っていないものにします。`,
         ),
         L(
           `Five of the six fail: two start differently from the devices here, two belong to other devices, one belongs to the router.`,

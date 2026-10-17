@@ -113,6 +113,25 @@ export function servedOrder(level: ExerciseLevel, salt = ''): string[] {
   }
 }
 
+/**
+ * What the level page offers next to a learner with this record: the page's
+ * own rule (`nextExerciseId`), with the kinds of task the level still waits for.
+ */
+export function servedNext(
+  level: ExerciseLevel,
+  salt: string,
+  seen: readonly string[],
+  records: readonly AttemptRecord[],
+  lastKind: string | undefined,
+): string | undefined {
+  return nextExerciseId(level, {
+    seenIds: seen,
+    avoidTemplateIds: lastKind === undefined ? [] : [lastKind],
+    salt,
+    needKinds: levelSummary(records, level).missingKinds,
+  });
+}
+
 interface Memory {
   index: number | null;
   value: string | null;
@@ -217,6 +236,7 @@ export async function runOf(
   strategy: Strategy,
   run: number,
   served: readonly string[],
+  salt = '',
 ): Promise<AttemptRecord[]> {
   const random = generator(run * 7919 + ALL_STRATEGIES.indexOf(strategy) * 104729 + level);
   const offset = run === 0 ? 0 : Math.floor(random() * Math.max(1, served.length - 10));
@@ -251,9 +271,16 @@ export async function runOf(
   });
   const ids = (): string[] => records.map((entry) => entry.id);
 
-  for (const [turn, exerciseId] of served.slice(offset, offset + 10).entries()) {
-    const exercise = exerciseById(exerciseId);
-    if (!exercise) continue;
+  // What came before this stretch was met and is not in the record; from here
+  // on the page serves from the record, the kinds still open first.
+  const seen = served.slice(0, offset);
+  let lastKind: string | undefined;
+  for (let turn = 0; turn < 10; turn += 1) {
+    const exerciseId = servedNext(level, salt, seen, records, lastKind);
+    const exercise = exerciseId === undefined ? undefined : exerciseById(exerciseId);
+    if (exerciseId === undefined || !exercise) break;
+    seen.push(exerciseId);
+    lastKind = exercise.templateId;
     const startedAt = run * 100_000 + turn * 1000 + 1;
     let known: Known | null = null;
     if (strategy === 'giveup-reopen') {
@@ -282,6 +309,7 @@ export async function runOf(
       records.map((entry) => entry.exerciseId),
       [...served, ...records.map((entry) => entry.exerciseId)],
     );
+    seen.push(againId);
     const again = exerciseById(againId);
     if (!again) continue;
     const againAt = startedAt + 500;
@@ -302,7 +330,10 @@ export async function runOf(
 
 /** What `store.open` adds to a record from the exercise itself. */
 export function recordExtras(exercise: Exercise): Partial<AttemptRecord> {
-  return checksToCount(exercise) === 1 ? { checksToCount: 1 } : {};
+  return {
+    ...(checksToCount(exercise) === 1 ? { checksToCount: 1 as const } : {}),
+    ...(exercise.practiceOnly === true ? { practiceOnly: true as const } : {}),
+  };
 }
 
 /** The share of `runs` runs after which the level reads "cleared". */
@@ -314,7 +345,8 @@ export async function clearRate(
   let cleared = 0;
   for (let run = 0; run < runs; run += 1) {
     // Every run is another learner: the kinds of task come in an order of their own.
-    const records = await runOf(level, strategy, run, servedOrder(level, `run-${run}`));
+    const salt = `run-${run}`;
+    const records = await runOf(level, strategy, run, servedOrder(level, salt), salt);
     if (levelSummary(records, level).status === 'cleared') cleared += 1;
   }
   return cleared / runs;
@@ -487,14 +519,19 @@ export async function learnerRun(
   readonly solvedBy: Readonly<Record<string, readonly [number, number]>>;
 }> {
   const random = generator(run * 6007 + (learner === 'knows-level-1' ? 17 : 5) + level * 131);
-  const served = servedOrder(level, `learner-${run}`);
+  const salt = `learner-${run}`;
+  const seen: string[] = [];
+  let lastKind: string | undefined;
   const records: AttemptRecord[] = [];
   const solvedBy: Record<string, [number, number]> = {};
   let clearedAt: number | null = null;
   let clearedAtEnd = false;
-  for (const [turn, exerciseId] of served.slice(0, count).entries()) {
-    const exercise = exerciseById(exerciseId);
-    if (!exercise) continue;
+  for (let turn = 0; turn < count; turn += 1) {
+    const exerciseId = servedNext(level, salt, seen, records, lastKind);
+    const exercise = exerciseId === undefined ? undefined : exerciseById(exerciseId);
+    if (exerciseId === undefined || !exercise) break;
+    seen.push(exerciseId);
+    lastKind = exercise.templateId;
     const startedAt = run * 100_000 + turn * 1000 + 1;
     const id = `${exerciseId}@${startedAt}`;
     const order = attemptOrder(

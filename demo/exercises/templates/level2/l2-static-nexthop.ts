@@ -19,6 +19,7 @@ import {
 } from '../shared/routed';
 import { WATCH_WORDS } from '../../ui/words';
 import { L, say, the } from '../shared/text';
+import { WHY_FACING } from '../shared/why';
 
 export const l2StaticNexthop = defineTemplate(
   {
@@ -99,7 +100,7 @@ export const l2StaticNexthop = defineTemplate(
         'Rule: the next router is a neighbour, cabled directly to this router, on the side towards the destination.',
         'ルール：「次のルータ」は、ケーブルでじかにつながった、行き先に近いほうのとなりのルータ。',
       ),
-      brief,
+      brief: say(brief, WHY_FACING),
       topology,
       names: net.names,
       allowed: net.path.map((nodeId) => ({ kind: 'static-routes', nodeId })),

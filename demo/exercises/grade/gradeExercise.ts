@@ -20,10 +20,28 @@ import type {
 import type { PacketTrace } from '../../../src/types/simulation';
 import type { TopologySnapshot } from '../../../src/types/topology';
 import { isInSubnet } from '../../../src/utils/cidr';
-import { diagnose } from './diagnose';
-import { prepare, routesOf, stpPort, stpRootNodeId, type PreparedTopology } from './prepare';
-import { runProbe, type ProbeFacts } from './probe';
-import { CHANGED_ELSEWHERE_BUT_WORKS, explain, type ExplainDetail } from './reasons';
+import {
+  addressConflict,
+  diagnose,
+  reservedAddresses,
+  type DiagnoseOptions,
+  type ReservedAddress,
+} from './diagnose';
+import {
+  prepare,
+  routesOf,
+  stpBridges,
+  stpPort,
+  stpRootNodeId,
+  type PreparedTopology,
+} from './prepare';
+import { addressOf, runProbe, type ProbeFacts } from './probe';
+import {
+  CHANGED_ELSEWHERE_BUT_WORKS,
+  explain,
+  type ExplainDetail,
+  type NextHopFault,
+} from './reasons';
 import { evidenceOf, labelOf, sourceNatOnSyn, stoppingTrace } from './traceFacts';
 
 type GradedExercise = Pick<Exercise, 'start' | 'allowed' | 'checks'> &
@@ -96,6 +114,56 @@ function probeCode(check: ProbeCheck, facts: ProbeFacts): CheckResultCode {
 interface OffLinkRoute {
   readonly nodeId: string;
   readonly destination: string;
+  /** What the address written as the next router belongs to. */
+  readonly fault: NextHopFault;
+}
+
+/**
+ * What is wrong with `nextHop` as the next router of a route on `routerId`,
+ * or null when a neighbouring router holds it on a network both are on.
+ */
+function nextHopFault(
+  topology: TopologySnapshot,
+  routerId: string,
+  nextHop: string,
+): NextHopFault | null {
+  if (nextHop === 'direct') return null;
+  const own = topology.nodes.find((node) => node.id === routerId)?.data.interfaces ?? [];
+  if (own.some((side) => side.ipAddress === nextHop)) return 'self';
+  const connected = own.map((side) => `${side.ipAddress}/${side.prefixLength}`);
+  const onLink = (address: string) => connected.some((cidr) => isInSubnet(address, cidr));
+  const holder = topology.nodes.find(
+    (node) =>
+      node.id !== routerId &&
+      node.data.role === 'router' &&
+      (node.data.interfaces ?? []).some((side) => side.ipAddress === nextHop),
+  );
+  if (onLink(nextHop)) return holder ? null : 'not-a-router';
+  // A router that IS a neighbour, named by its address on another network.
+  return holder && (holder.data.interfaces ?? []).some((side) => onLink(side.ipAddress))
+    ? 'far-side'
+    : 'far-away';
+}
+
+/**
+ * The fault of the route `routerId` uses for `address`: its static route with
+ * the longest "/number" that covers it. Null when there is none, or it is sound.
+ */
+function routeFaultFor(
+  topology: TopologySnapshot,
+  routerId: string,
+  address: string | null,
+): NextHopFault | null {
+  if (address === null) return null;
+  const node = topology.nodes.find((entry) => entry.id === routerId);
+  if (node?.data.role !== 'router') return null;
+  let best: { readonly length: number; readonly nextHop: string } | null = null;
+  for (const route of node.data.staticRoutes ?? []) {
+    const length = Number(route.destination.split('/')[1]);
+    if (!Number.isInteger(length) || !isInSubnet(address, route.destination)) continue;
+    if (best === null || length > best.length) best = { length, nextHop: route.nextHop };
+  }
+  return best ? nextHopFault(topology, routerId, best.nextHop) : null;
 }
 
 /**
@@ -119,7 +187,11 @@ function offLinkRoutes(start: TopologySnapshot, current: TopologySnapshot): OffL
         (old) => old.destination === route.destination && old.nextHop === route.nextHop,
       );
       if (kept || connected.some((cidr) => isInSubnet(route.nextHop, cidr))) continue;
-      found.push({ nodeId: node.id, destination: route.destination });
+      found.push({
+        nodeId: node.id,
+        destination: route.destination,
+        fault: nextHopFault(current, node.id, route.nextHop) ?? 'far-away',
+      });
     }
   }
   return found;
@@ -150,7 +222,16 @@ async function gradeCheck(
   exercise: GradedExercise,
   current: TopologySnapshot,
   offLink: readonly OffLinkRoute[],
+  reserved: readonly ReservedAddress[],
 ): Promise<CheckResult> {
+  const options: DiagnoseOptions = {
+    unnamed: exercise.kind === 'diagnose-repair',
+    // A device whose address is on the allow-list; a side of a router counts as its router.
+    editable: (nodeId) =>
+      exercise.allowed.some(
+        (ref) => (ref.kind === 'host-ip' || ref.kind === 'iface-address') && ref.nodeId === nodeId,
+      ),
+  };
   const at = (nodeId: string): { evidence: CheckEvidence } => ({
     evidence: { nodeId, nodeLabel: labelOf(prepared, nodeId) },
   });
@@ -169,12 +250,24 @@ async function gradeCheck(
     }
 
     case 'stp-root': {
+      const bridges = stpBridges(prepared);
       const root = stpRootNodeId(prepared);
       if (root === check.nodeId) return result(check, 'ok', {}, at(root));
+      if (root === null) return result(check, 'wrong-root');
       // The evidence points at the switch that IS the root, which is what the learner must see.
-      return root === null
-        ? result(check, 'wrong-root')
-        : result(check, 'wrong-root', { device: labelOf(prepared, root) }, at(root));
+      const lowest = bridges.find((bridge) => bridge.nodeId === root)?.priority;
+      const wanted = bridges.find((bridge) => bridge.nodeId === check.nodeId);
+      // The wanted switch has the lowest number too, and lost on the device number.
+      const tie =
+        wanted !== undefined && lowest !== undefined && wanted.priority === lowest
+          ? { other: labelOf(prepared, check.nodeId), priority: lowest }
+          : undefined;
+      return result(
+        check,
+        'wrong-root',
+        { device: labelOf(prepared, root), ...(tie ? { tie } : {}) },
+        at(root),
+      );
     }
 
     case 'stp-port-role': {
@@ -201,7 +294,39 @@ async function gradeCheck(
       // A goal that hangs on a route no router would accept is not met, whatever the simulator does with it.
       const refused = offLinkFor(check.probe, current, offLink);
       if (refused && check.kind !== 'must-not-reach') {
-        return result(check, 'next-hop-not-neighbour', {}, at(refused.nodeId));
+        return result(
+          check,
+          'next-hop-not-neighbour',
+          { nextHop: refused.fault },
+          at(refused.nodeId),
+        );
+      }
+      if (check.kind !== 'must-not-reach') {
+        // An address no device may have, on an end of this probe or on a side of a router.
+        const special = reserved.find(
+          (entry) =>
+            entry.ifaceId !== undefined ||
+            entry.nodeId === check.probe.from ||
+            entry.nodeId === check.probe.to,
+        );
+        if (special) {
+          return result(
+            check,
+            'address-reserved',
+            { reserved: special },
+            { evidence: { address: special.address, relatedNodeIds: [special.nodeId] } },
+          );
+        }
+        // Two holders of one address: whatever "arrives" has not reached the device asked for.
+        const conflict = addressConflict(exercise.start, current, check.probe, options);
+        if (conflict) {
+          return result(
+            check,
+            'address-conflict',
+            { diagnosis: conflict.detail },
+            { evidence: conflict.evidence },
+          );
+        }
       }
       const facts = await runProbe(prepared, check.probe);
       const code = probeCode(check, facts);
@@ -211,10 +336,30 @@ async function gradeCheck(
       // A probe that did not arrive: what the topology says comes before the
       // simulator's reason, which often cannot tell (see `diagnose.ts`).
       const found =
-        code === 'not-delivered'
-          ? diagnose(exercise.start, current, check.probe, {
-              unnamed: exercise.kind === 'diagnose-repair',
-            })
+        code === 'not-delivered' ? diagnose(exercise.start, current, check.probe, options) : null;
+      // A router that had no way on: its route for where this was going may be
+      // there and name a next router that cannot work, which is not "no route".
+      // Every setting the learner has is the list of a trunk: the message starts there.
+      const trunkOnly =
+        exercise.allowed.length > 0 &&
+        exercise.allowed.every(
+          (ref) =>
+            ref.kind === 'port-vlan' &&
+            exercise.start.nodes
+              .find((node) => node.id === ref.nodeId)
+              ?.data.ports?.find((port) => port.id === ref.portId)?.vlanMode === 'trunk',
+        );
+      const wrongHop =
+        code === 'not-delivered' && !found && facts.drop
+          ? routeFaultFor(
+              current,
+              facts.drop.nodeId,
+              facts.drop.leg === 'reply'
+                ? addressOf(prepared, check.probe.from)
+                : check.probe.via === 'ping' && check.probe.toIp !== undefined
+                  ? check.probe.toIp
+                  : addressOf(prepared, check.probe.to),
+            )
           : null;
       const routesEditable = exercise.allowed.some((ref) => ref.kind === 'static-routes');
       const hasTrunk = current.nodes.some((node) =>
@@ -226,8 +371,14 @@ async function gradeCheck(
         {
           ...(drop ? { drop } : {}),
           ...(found ? { diagnosis: found.detail } : {}),
+          ...(wrongHop ? { nextHop: wrongHop } : {}),
           ...(routesEditable ? { routesEditable } : {}),
           ...(hasTrunk ? { hasTrunk } : {}),
+          ...(trunkOnly ? { trunkOnly } : {}),
+          sent:
+            check.probe.via === 'tcp'
+              ? { via: 'tcp', dstPort: check.probe.dstPort }
+              : { via: 'ping' },
         },
         {
           evidence: { ...evidenceOf(facts, prepared), ...found?.evidence },
@@ -260,10 +411,11 @@ export async function gradeExercise(
   }
 
   const offLink = offLinkRoutes(exercise.start, current);
+  const reserved = reservedAddresses(exercise.start, current);
   const results: CheckResult[] = [];
   for (const check of exercise.checks) {
     try {
-      results.push(await gradeCheck(check, prepared, exercise, current, offLink));
+      results.push(await gradeCheck(check, prepared, exercise, current, offLink, reserved));
     } catch {
       results.push(result(check, 'engine-error'));
     }

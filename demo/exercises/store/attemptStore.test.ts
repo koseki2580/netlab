@@ -7,6 +7,7 @@ import {
   parseExerciseState,
   type AttemptMeta,
 } from './attemptStore';
+import { isAttempted, isSolved } from './estimate';
 import { startCycle } from './studyCycle';
 import { attempt } from './testSupport';
 import type { ExerciseStoreState } from './types';
@@ -587,5 +588,29 @@ describe('clear', () => {
     expect(data.has(KEY)).toBe(false);
     const reopened = createAttemptStore({ learnerId: LEARNER, storage: newStore().storage });
     expect(reopened.getState().attempts).toEqual([]);
+  });
+});
+
+// TC-670
+describe('skipping an exercise', () => {
+  it('is recorded on an attempt that was not judged, survives a reload, and makes the attempt count as not solved', () => {
+    const { store, storage } = newStore();
+    const id = store.open(meta('l1-host-address', 3), 'practice');
+    expect(isAttempted(only(store.getState()))).toBe(false);
+    store.recordSkip(id);
+    const skipped = only(store.getState());
+    expect(skipped).toMatchObject({ skipped: true, outcome: 'abandoned', checkPresses: 0 });
+    expect(isAttempted(skipped)).toBe(true);
+    expect(isSolved(skipped)).toBe(false);
+    const again = createAttemptStore({ learnerId: LEARNER, storage, now: clock() });
+    expect(only(again.getState())).toMatchObject({ skipped: true });
+  });
+
+  it('does nothing once a Check was pressed', () => {
+    const { store } = newStore();
+    const id = store.open(meta('l1-host-address', 3), 'practice');
+    store.recordCheck(id, fail);
+    store.recordSkip(id);
+    expect(only(store.getState()).skipped).toBeUndefined();
   });
 });

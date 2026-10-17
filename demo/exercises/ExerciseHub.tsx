@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useGalleryLocale, useT } from '../localeContext';
-import { learnerSalt, nextExerciseId } from './exerciseSource';
+import { nextForLearner } from './exerciseSource';
 import type { AttemptStore } from './store/attemptStore';
 import { EXERCISE_LEVELS, isAttempted, levelSummary } from './store/estimate';
 import { LevelLines } from './ui/LevelLines';
@@ -16,7 +16,6 @@ export function ExerciseHubBody({ store: injected }: { store?: AttemptStore }) {
   const t = useT();
   const locale = useGalleryLocale();
   const { store, state } = useExerciseStore(injected);
-  const seenIds = state.attempts.map((attempt) => attempt.exerciseId);
   const placed = state.placement;
 
   // The level the learner is at: the first one not cleared yet.
@@ -62,14 +61,9 @@ export function ExerciseHubBody({ store: injected }: { store?: AttemptStore }) {
           const mine = state.attempts.filter((attempt) => attempt.level === level);
           // "Continue" is for a level the learner has worked at, not one they only opened.
           const begun = mine.some(isAttempted);
-          const last = mine[mine.length - 1];
           const summary = levelSummary(state.attempts, level);
-          const nextId = nextExerciseId(level, {
-            // Never the kind of task just done, twice in a row (as on the level's own page).
-            ...(last ? { avoidTemplateIds: [last.templateId] } : {}),
-            seenIds,
-            salt: learnerSalt(state.attempts),
-          });
+          // The same answer as on the level's own page and on "next" (`nextForLearner`).
+          const nextId = nextForLearner(level, state.attempts);
           return (
             <section
               key={level}
@@ -81,7 +75,7 @@ export function ExerciseHubBody({ store: injected }: { store?: AttemptStore }) {
                 {t(`Level ${level}`, `レベル ${level}`)}
                 <span style={{ fontWeight: 400 }}> — {LEVEL_NAMES[level][locale]}</span>
               </h3>
-              <LevelLines summary={summary} />
+              <LevelLines summary={summary} attempts={state.attempts} />
               <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
                 {nextId ? (
                   <Link

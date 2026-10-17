@@ -17,7 +17,7 @@ import {
   learnerRun,
   recordExtras,
   REOPEN_STRATEGIES,
-  servedOrder,
+  servedNext,
   STRATEGIES,
   type Learner,
 } from './pressers';
@@ -25,38 +25,44 @@ import {
 const RUNS = Number(process.env.EXERCISE_PRESSER_RUNS ?? 200);
 const LIMIT = 0.02;
 
-/** A learner who knows the material, through the first `count` exercises served: `miss` (a turn, or none) is the one not solved. */
+/**
+ * A learner who knows the material, through `count` exercises as the page
+ * serves them to that learner's record: `miss` (a turn, or none) is the one not solved.
+ */
 function carefulRun(level: ExerciseLevel, count: number, miss: number | null): AttemptRecord[] {
-  return servedOrder(level)
-    .slice(0, count)
-    .flatMap((exerciseId, turn) => {
-      const exercise = exerciseById(exerciseId);
-      if (!exercise) return [];
-      const startedAt = turn * 1000 + 1;
-      const solved = turn !== miss;
-      return [
-        {
-          id: `${exerciseId}@${startedAt}`,
-          exerciseId,
-          templateId: exercise.templateId,
-          level,
-          kind: exercise.kind,
-          context: 'practice' as const,
-          startedAt,
-          endedAt: startedAt + 500,
-          outcome: solved ? ('passed' as const) : ('abandoned' as const),
-          checkPresses: solved ? 1 : 3,
-          firstCheckPassed: solved,
-          failedCheckIds: [],
-          hintsUsed: 0 as const,
-          revealed: false,
-          changedSettings: 1,
-          locale: 'ja' as const,
-          generatorVersion: exercise.generatorVersion,
-          ...recordExtras(exercise),
-        },
-      ];
+  const records: AttemptRecord[] = [];
+  const seen: string[] = [];
+  let lastKind: string | undefined;
+  for (let turn = 0; turn < count; turn += 1) {
+    const exerciseId = servedNext(level, '', seen, records, lastKind);
+    const exercise = exerciseId === undefined ? undefined : exerciseById(exerciseId);
+    if (exerciseId === undefined || !exercise) break;
+    seen.push(exerciseId);
+    lastKind = exercise.templateId;
+    const startedAt = turn * 1000 + 1;
+    const solved = turn !== miss;
+    records.push({
+      id: `${exerciseId}@${startedAt}`,
+      exerciseId,
+      templateId: exercise.templateId,
+      level,
+      kind: exercise.kind,
+      context: 'practice' as const,
+      startedAt,
+      endedAt: startedAt + 500,
+      outcome: solved ? ('passed' as const) : ('abandoned' as const),
+      checkPresses: solved ? 1 : 3,
+      firstCheckPassed: solved,
+      failedCheckIds: [],
+      hintsUsed: 0 as const,
+      revealed: false,
+      changedSettings: 1,
+      locale: 'ja' as const,
+      generatorVersion: exercise.generatorVersion,
+      ...recordExtras(exercise),
     });
+  }
+  return records;
 }
 
 // TC-585
@@ -164,23 +170,27 @@ describe.each([1, 2] as const)('level %i: a learner who knows the material', (le
     expect(levelSummary(carefulRun(level, 40, null), level).status).toBe('cleared');
   });
 
-  it('after a miss, clears it by solving the next exercise of that kind, and not before', () => {
-    const served = servedOrder(level);
-    const templateAt = (turn: number) => exerciseById(served[turn] ?? '')?.templateId;
+  it('after a miss, clears it by solving the next two exercises of that kind, and not before', () => {
     for (const miss of [0, 2, kinds - 1]) {
-      const again = served.findIndex(
-        (_, turn) => turn > miss && templateAt(turn) === templateAt(miss),
+      const whole = carefulRun(level, 3 * kinds, miss);
+      const missed = whole[miss]?.templateId;
+      const turns = whole.flatMap((entry, turn) =>
+        turn > miss && entry.templateId === missed ? [turn] : [],
       );
+      const [again = -1, second = -1] = turns;
       expect(again).toBeGreaterThan(miss);
-      expect(again).toBeLessThan(miss + 2 * kinds);
+      // TC-658: the kind that was missed comes back as soon as the round is over, not a round later.
+      expect(again).toBeLessThanOrEqual(Math.max(miss + 2, kinds + 1));
+      expect(second).toBeLessThanOrEqual(again + 2);
+      // One solve of that kind does not make the miss good; the second does.
       expect(
-        levelSummary(carefulRun(level, again, miss), level).status,
+        levelSummary(carefulRun(level, second, miss), level).status,
         `miss at ${miss}`,
       ).not.toBe('cleared');
       expect(
-        levelSummary(carefulRun(level, again + 1, miss), level).status,
+        levelSummary(carefulRun(level, second + 1, miss), level).status,
         `miss at ${miss}`,
-      ).toBe(again + 1 >= 7 ? 'cleared' : 'in-progress');
+      ).toBe('cleared');
     }
   });
 });

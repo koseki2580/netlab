@@ -15,6 +15,7 @@ import { everyoneReaches, setIp } from '../shared/lan';
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan, net24 } from '../shared/plans';
 import { L, say, the, The } from '../shared/text';
+import { WHY_SLASH } from '../shared/why';
 
 /**
  * The "/number" of each run of four seeds: a /24 once, where copying a
@@ -147,7 +148,12 @@ export const l1PrefixFit = defineTemplate(
         `Rule: the router says /${length}. Devices whose ${fit.count.en} match belong together. ${fit.free.en}`,
         `ルール：ルータは /${length}。${fit.count.ja}が同じなら仲間。${fit.free.ja}`,
       ),
-      brief,
+      // After a first clean solve: the key alone, so the reading is the learner's.
+      ruleKey: L(
+        'Rule: /8 → the first number   /16 → the first two   /24 → the first three',
+        'ルール：/8 → はじめの 1 つ　/16 → はじめの 2 つ　/24 → はじめの 3 つ',
+      ),
+      brief: say(brief, WHY_SLASH),
       topology,
       names: lan.names,
       allowed: [{ kind: 'host-ip', nodeId: device }],
@@ -174,6 +180,9 @@ export const l1PrefixFit = defineTemplate(
         // An address from the server's side.
         [setIp(device, plan.far.at(plan.free))],
       ],
+      // A /24 is read by the habit of the other exercises ("the first three
+      // numbers"): good practice, but not proof that the "/number" was read.
+      practiceOnly: length === 24,
       fingerprint: [place.id, shape, `/${length}`, device],
     };
   },

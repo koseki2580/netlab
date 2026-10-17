@@ -36,6 +36,17 @@ export function stpRootNodeId(prepared: PreparedTopology): string | null {
   return electRoot(collectSwitchBridges(prepared))?.nodeId ?? null;
 }
 
+/** Every switch with what decides the root: its priority, then its device number (the lowest MAC of its ports). */
+export function stpBridges(
+  topology: NetworkTopology,
+): { readonly nodeId: string; readonly priority: number; readonly mac: string }[] {
+  return collectSwitchBridges(topology).map((bridge) => ({
+    nodeId: bridge.nodeId,
+    priority: bridge.bridgeId.priority,
+    mac: bridge.bridgeId.mac,
+  }));
+}
+
 /** Spanning-tree state of one switch port (`role`: ROOT, DESIGNATED, BLOCKED, DISABLED). */
 export function stpPort(
   prepared: PreparedTopology,

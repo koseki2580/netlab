@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useGalleryLocale, useT } from '../localeContext';
-import { exerciseById, learnerSalt, nextExerciseId, reopenedExerciseId } from './exerciseSource';
+import { exerciseById, nextForLearner, reopenedExerciseId } from './exerciseSource';
 import { isAttempted } from './store/estimate';
 import type { AttemptStore } from './store/attemptStore';
 import { cycleSet } from './ui/cycleFlow';
@@ -84,11 +84,8 @@ export function ExercisePageBody({ store: injected }: { store?: AttemptStore }) 
       );
       return;
     }
-    const nextId = nextExerciseId(exercise.level, {
-      avoidTemplateIds: [exercise.templateId],
-      seenIds: state.attempts.map((attempt) => attempt.exerciseId),
-      salt: learnerSalt(state.attempts),
-    });
+    // From the record as it stands now, this visit included (`nextForLearner`).
+    const nextId = nextForLearner(exercise.level, store.getState().attempts);
     void navigate(nextId ? exercisePath(nextId) : `/exercises/level/${exercise.level}`);
   };
 

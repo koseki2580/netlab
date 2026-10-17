@@ -37,11 +37,11 @@ export const MAX_CHECKS_TO_COUNT = 2;
  * Levels 3 and 4 have none yet.)
  *
  * Of each kind, the latest exercise the learner was judged on must be a clean
- * solve. Seven of ten alone let a learner clear a level who solved five kinds
+ * solve, and the one before it too where there is one (so a miss takes two in
+ * a row to make good). Seven of ten alone let a learner clear a level who solved five kinds
  * every time and two never (the "/number" and the two sides of a router, by
  * the one rule they knew): the level is "every kind of task here", so a kind
- * that still goes wrong keeps it open, and so does a kind never tried. A miss
- * is made good the next time that kind comes up.
+ * that still goes wrong keeps it open, and so does a kind never tried.
  */
 export const LEVEL_KINDS: Readonly<Record<ExerciseLevel, readonly string[]>> = {
   1: [
@@ -103,12 +103,17 @@ export interface LevelSummary {
 }
 
 /**
- * Whether the learner did anything to be judged on: pressed Check, or asked
- * for the answer. An exercise opened and left stays in the record, and is not
+ * Whether the learner did anything to be judged on: pressed Check, asked for
+ * the answer, or skipped the exercise on purpose. An exercise opened and left stays in the record, and is not
  * an attempt.
  */
 export function isAttempted(attempt: AttemptRecord): boolean {
-  return attempt.checkPresses > 0 || attempt.revealed || attempt.outcome !== 'abandoned';
+  return (
+    attempt.checkPresses > 0 ||
+    attempt.revealed ||
+    attempt.skipped === true ||
+    attempt.outcome !== 'abandoned'
+  );
 }
 
 function isPassedUnaided(attempt: AttemptRecord): boolean {
@@ -180,14 +185,22 @@ export function levelSummary(
     }
   }
 
-  // Of each kind of task, the latest exercise judged (in the window or before it).
-  const latest = new Map<string, AttemptRecord>();
+  // Of each kind of task, the latest two exercises judged (in the window or
+  // before it). An instance that is practice for its kind (`practiceOnly`) is
+  // looked past: it neither settles the kind nor unsettles it.
+  const latest = new Map<string, AttemptRecord[]>();
   for (const attempt of judged) {
-    if (!latest.has(attempt.templateId)) latest.set(attempt.templateId, attempt);
+    if (attempt.practiceOnly === true) continue;
+    const own = latest.get(attempt.templateId) ?? [];
+    if (own.length < 2) latest.set(attempt.templateId, [...own, attempt]);
   }
+  // Settled: the latest one is a clean solve, and so is the one before it where
+  // there is one. So a kind solved the first time is settled at once, and a
+  // kind that was missed takes two in a row: the missed kinds are served again
+  // soon (`nextExerciseId`), and one lucky press must not be enough then.
   const missingKinds = LEVEL_KINDS[level].filter((kind) => {
-    const attempt = latest.get(kind);
-    return attempt === undefined || !isSolved(attempt);
+    const [last, before] = latest.get(kind) ?? [];
+    return last === undefined || !isSolved(last) || (before !== undefined && !isSolved(before));
   });
 
   let status: LevelStatus = 'in-progress';
@@ -251,8 +264,8 @@ export function headline(summary: LevelSummary, locale: AttemptLocale): string {
   const more = CLEAR_MIN_SOLVED - solved;
   if (more > 0) {
     return ja
-      ? `あと ${more} 問 とけたら、レベル ${level} 達成です（いま ${solved} 問）`
-      : `Solve ${more} more to clear level ${level} (${solved} so far)`;
+      ? `あと ${more} 問 とけたら、レベル ${level} 達成です（${SO_FAR.ja(solved)}）`
+      : `Solve ${more} more to clear level ${level} (${SO_FAR.en(solved)})`;
   }
   // Enough solved, from too few templates.
   const kinds = CLEAR_MIN_TEMPLATES - solvedTemplates;
@@ -263,8 +276,25 @@ export function headline(summary: LevelSummary, locale: AttemptLocale): string {
   }
   // Enough solved, but of some kind of task the latest one is not: `stillMissing` names them.
   return ja
-    ? `あとは、まだ解けていない種類が解ければ、レベル ${level} 達成です（いま ${solved} 問）`
-    : `Solve the kinds of task still open to clear level ${level} (${solved} solved so far)`;
+    ? `あとは、まだ解けていない種類が解ければ、レベル ${level} 達成です（${SO_FAR.ja(solved)}）`
+    : `Solve the kinds of task still open to clear level ${level} (${SO_FAR.en(solved)})`;
+}
+
+/**
+ * The one number a level counts with, said for what it is: how many of the
+ * last ten exercises are solved. (The level page showed three numbers counted
+ * three ways, and none of them said which it was.)
+ */
+const SO_FAR = {
+  ja: (solved: number) => `直近 ${WINDOW_SIZE} 問のうち、いま ${solved} 問`,
+  en: (solved: number) => `${solved} of your last ${WINDOW_SIZE} so far`,
+} as const;
+
+/** A title inside quotation marks: its own marks become inner ones, so no 「「…」」. */
+export function quotedTitle(title: string, locale: AttemptLocale): string {
+  return locale === 'ja'
+    ? `「${title.replace(/「/g, '『').replace(/」/g, '』')}」`
+    : `"${title.replace(/"/g, "'")}"`;
 }
 
 /** How many kinds of task `stillMissing` names before it says "and N more". */
@@ -286,8 +316,8 @@ export function stillMissing(
     .map((kind) => titleOf(kind)?.[locale] ?? kind);
   const more = summary.missingKinds.length - names.length;
   return locale === 'ja'
-    ? `まだ解けていない種類：${names.map((name) => `「${name}」`).join('')}${more > 0 ? ` ほか ${more} 種類` : ''}`
-    : `Kinds of task not solved yet: ${names.map((name) => `"${name}"`).join(', ')}${more > 0 ? ` and ${more} more` : ''}`;
+    ? `まだ解けていない種類：${names.map((name) => quotedTitle(name, 'ja')).join('')}${more > 0 ? ` ほか ${more} 種類` : ''}`
+    : `Kinds of task not solved yet: ${names.map((name) => quotedTitle(name, 'en')).join(', ')}${more > 0 ? ` and ${more} more` : ''}`;
 }
 
 /** What comes after a cleared level, in one line. Null while the level is not cleared. */
@@ -351,13 +381,13 @@ export function explain(summary: LevelSummary, locale: AttemptLocale): string {
   if (ja) {
     const every =
       kinds > 0
-        ? `解き、このレベルの ${kinds} 種類の問題のどれも、いちばん最近の 1 問が解けていると達成です。解けなかった種類は、次にその種類が出たときに解けば大丈夫です。同じ問題をやり直しても、数え方は変わりません。`
+        ? `解き、このレベルの ${kinds} 種類の問題のどれも、いちばん最近の 1 問が解けていると達成です。解けなかった種類は、その種類を 2 問つづけて解けば大丈夫です。同じ問題をやり直しても、数え方は変わりません。`
         : `、${CLEAR_MIN_TEMPLATES} 種類以上にわたって解けると達成です。`;
     return `直近 ${counted} 問のうち、${COUNTED_HOW.ja}解けたのは ${solved} 問（${solvedTemplates} 種類）です。${notCounted(summary, true)}レベル ${level} は、直近 ${WINDOW_SIZE} 問のうち ${CLEAR_MIN_SOLVED} 問をそのように${every}`;
   }
   const every =
     kinds > 0
-      ? `, with the latest exercise of each of its ${kinds} kinds of task among the solved. A kind you missed is made good the next time it comes up. Doing the same exercise again does not change how it counts.`
+      ? `, with the latest exercise of each of its ${kinds} kinds of task among the solved. A kind you missed is made good by solving it twice in a row. Doing the same exercise again does not change how it counts.`
       : `, across at least ${CLEAR_MIN_TEMPLATES} kinds.`;
   return `You solved ${solved} of your last ${counted} exercises ${COUNTED_HOW.en} across ${solvedTemplates} ${solvedTemplates === 1 ? 'kind' : 'kinds'} of exercise.${notCounted(summary, false)} Level ${level} is cleared at ${CLEAR_MIN_SOLVED} of the last ${WINDOW_SIZE} solved that way${every}`;
 }

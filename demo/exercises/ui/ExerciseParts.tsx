@@ -96,7 +96,13 @@ export function ExerciseBrief({
   countRule = null,
   pickFirst = false,
   goals = true,
+  reopens = false,
+  keyOnly = false,
 }: {
+  /** Show `exercise.ruleKey` in place of the rule (`Exercise.ruleKey`). */
+  keyOnly?: boolean;
+  /** Practice: an exercise opened again is another one of its kind, and that is said beside the count rule. */
+  reopens?: boolean;
   /** Whether the goals are listed here (a phone) or elsewhere on the page. */
   goals?: boolean;
   exercise: Exercise;
@@ -127,9 +133,9 @@ export function ExerciseBrief({
           {exercise.rule ? (
             <p
               data-testid="exercise-rule"
-              style={{ margin: 0, fontSize: compact ? 15 : 16, lineHeight: 1.6 }}
+              style={{ margin: 0, fontSize: compact ? 15 : 16, lineHeight: compact ? 1.45 : 1.6 }}
             >
-              {exercise.rule[locale]}
+              {(keyOnly && exercise.ruleKey ? exercise.ruleKey : exercise.rule)[locale]}
             </p>
           ) : null}
           {/* The story and the glosses: for a reader who wants them, shut for one who does not. */}
@@ -155,7 +161,7 @@ export function ExerciseBrief({
         <p
           data-testid="exercise-count-rule"
           data-checks={countRule}
-          style={{ ...MUTED, margin: 0, fontSize: 14 }}
+          style={{ ...MUTED, margin: 0, fontSize: 14, lineHeight: 1.4 }}
         >
           {pickFirst
             ? t(
@@ -165,12 +171,21 @@ export function ExerciseBrief({
             : countRule === 1
               ? t(
                   'This one counts only if the first Check solves it.',
-                  'この問題は、1 回目の「たしかめる」で解けたときだけ数えます。',
+                  '1 回目の「たしかめる」で解けたときだけ数えます。',
                 )
               : t(
                   'This one counts if you solve it within two Checks.',
-                  'この問題は、2 回目までの「たしかめる」で解けたときに数えます。',
+                  '2 回目までの「たしかめる」で解けたときに数えます。',
                 )}
+          {reopens ? (
+            <span data-testid="exercise-reopen-rule">
+              {' '}
+              {t(
+                'If you start it again, you get a different exercise.',
+                'やり直すと、べつの問題が出ます。',
+              )}
+            </span>
+          ) : null}
         </p>
       )}
     </section>
@@ -199,7 +214,10 @@ export function ResultPanel({
   onReplay,
   onShowSetting,
   panelRef,
+  summary = true,
 }: {
+  /** False where another line on the page already sums the result up (a design and its prediction). */
+  summary?: boolean;
   exercise: Exercise;
   grade: GradeResult | null;
   /** The settings changed since this grade. */
@@ -254,17 +272,28 @@ export function ResultPanel({
             opacity: stale ? 0.75 : 1,
           }}
         >
-          <h3
-            data-testid="exercise-result-summary"
-            style={{ margin: 0, fontSize: 17, lineHeight: 1.4 }}
-          >
-            {grade.passed
-              ? t('✓ It works!', '✓ できました！')
-              : t(
-                  `Not there yet: ${notYet} of ${ordered.length} ${ordered.length === 1 ? 'goal' : 'goals'} to go.`,
-                  `もう少しです。目標 ${ordered.length} 個のうち、あと ${notYet} 個。`,
-                )}
-          </h3>
+          {summary || grade.passed ? (
+            <h3
+              data-testid="exercise-result-summary"
+              data-met={ordered.length - notYet}
+              style={{ margin: 0, fontSize: 17, lineHeight: 1.4 }}
+            >
+              {grade.passed
+                ? t('✓ It works!', '✓ できました！')
+                : notYet < ordered.length
+                  ? // "Nearly there" is kept for when something is there.
+                    t(
+                      `Nearly there: ${notYet} of ${ordered.length} goals to go.`,
+                      `もう少しです。目標 ${ordered.length} 個のうち、あと ${notYet} 個。`,
+                    )
+                  : ordered.length === 1
+                    ? t('The goal is not met yet.', 'まだ、目標に届いていません。')
+                    : t(
+                        `None of the ${ordered.length} goals is met yet.`,
+                        `まだ、目標 ${ordered.length} 個のどれにも届いていません。`,
+                      )}
+            </h3>
+          ) : null}
           {stale ? (
             <p data-testid="exercise-result-stale" style={{ margin: 0 }}>
               {t(
@@ -610,7 +639,13 @@ export function DesignChooser({
   needsRef,
   onChoose,
   onPredict,
+  question,
+  canDetour = false,
 }: {
+  /** The goal the prediction is about, as the goals list words it. */
+  question?: { readonly en: string; readonly ja: string };
+  /** Whether "the long way round" can happen in this exercise; it is offered only then. */
+  canDetour?: boolean;
   options: readonly DesignOption[];
   chosenId: string | null;
   predicted: Predicted | null;
@@ -626,7 +661,9 @@ export function DesignChooser({
   const predictions: readonly (readonly [Predicted, string])[] = [
     ['reach', t('It arrives', '届く')],
     ['no-reach', t('It does not arrive', '届かない')],
-    ['detour', t('It arrives, but the long way round', '届くが、遠回りになる')],
+    ...(canDetour
+      ? ([['detour', t('It arrives, but the long way round', '届くが、遠回りになる')]] as const)
+      : []),
   ];
   const mark = (on: boolean) => (on ? <span aria-hidden="true">✓ </span> : null);
   // The question appears under the design just chosen, which on most screens is
@@ -693,7 +730,12 @@ export function DesignChooser({
                   }}
                 >
                   <h3 style={{ margin: 0, fontSize: 16 }}>
-                    {t('2. What do you expect to happen?', '2. どうなると思いますか？')}
+                    {question
+                      ? t(
+                          `2. With this choice: "${question.en}". What do you expect?`,
+                          `2. これを選ぶと、「${question.ja}」は、どうなると思いますか？`,
+                        )
+                      : t('2. What do you expect to happen?', '2. どうなると思いますか？')}
                   </h3>
                   {needs === 'prediction'
                     ? needed(

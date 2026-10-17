@@ -190,6 +190,7 @@ function duplicate(
   current: Topology,
   holders: readonly Holder[],
   concerns: (holder: Holder) => boolean,
+  editable?: (nodeId: string) => boolean,
 ): Diagnosis | null {
   for (const first of holders) {
     if (!concerns(first)) continue;
@@ -206,14 +207,26 @@ function duplicate(
         : chose(second) && !chose(first)
           ? [second, first]
           : [undefined, undefined];
-    const [holder, other] = newcomer && owner ? [newcomer, owner] : [first, second];
+    // Neither was chosen (the exercise started so), but only one of them can be
+    // changed: then that one is told, and nobody is asked to change the other.
+    const can = (entry: Holder): boolean => editable?.(entry.nodeId) ?? true;
+    const [onlyOne, fixed] =
+      newcomer || !editable
+        ? [undefined, undefined]
+        : can(first) && !can(second)
+          ? [first, second]
+          : can(second) && !can(first)
+            ? [second, first]
+            : [undefined, undefined];
+    const [holder, other] =
+      newcomer && owner ? [newcomer, owner] : onlyOne && fixed ? [onlyOne, fixed] : [first, second];
     return {
       detail: {
         kind: 'duplicate-address',
         address: first.address,
         holder: labelOf(current, holder.nodeId),
         other: labelOf(current, other.nodeId),
-        chosen: newcomer !== undefined,
+        chosen: newcomer !== undefined || onlyOne !== undefined,
       },
       evidence: {
         diagnosis: 'duplicate-address',
@@ -299,7 +312,99 @@ function wrongNetwork(
   return null;
 }
 
+// --- Addresses no probe may be trusted with ---------------------------------------
+
+/**
+ * Two devices hold one address, and one of them is an end of the probe (or the
+ * address the probe is sent to). The simulator "delivers" such a probe: a
+ * device pinging an address it holds itself answers at once, and a router side
+ * holding a server's address answers in the server's place. Neither is the
+ * destination being reached, so the grader asks this BEFORE running the probe.
+ */
+export function addressConflict(
+  start: Topology,
+  current: Topology,
+  probe: { readonly from: string; readonly to: string; readonly toIp?: string },
+  options: DiagnoseOptions = {},
+): Diagnosis | null {
+  try {
+    const ends = [probe.from, probe.to];
+    const found = duplicate(
+      start,
+      current,
+      holdersOf(current),
+      (holder) =>
+        ends.includes(holder.nodeId) || (probe.toIp !== undefined && holder.address === probe.toIp),
+      options.editable,
+    );
+    return found && options.unnamed === true ? unnamed(found) : found;
+  } catch {
+    return null;
+  }
+}
+
+/** An address the learner set that stands for a whole network, or for everyone on it. */
+export interface ReservedAddress {
+  readonly nodeId: string;
+  /** Set for a side of a router: then every probe depends on it. */
+  readonly ifaceId?: string;
+  readonly address: string;
+  /** `network`: the part after the network's own numbers is all zeros. `broadcast`: all ones. */
+  readonly which: 'network' | 'broadcast';
+}
+
+/**
+ * The addresses that differ from the start and are the first or the last of
+ * the network they sit on: for a router side its own "/number", for a host
+ * the "/number" of the router side on its LAN. The simulator accepts both
+ * (pinned in `engineContract.test.ts`); a real device does not.
+ */
+export function reservedAddresses(start: Topology, current: Topology): ReservedAddress[] {
+  try {
+    const holders = holdersOf(current);
+    return holders.flatMap((holder): ReservedAddress[] => {
+      if (addressIn(start, holder) === holder.address) return [];
+      const lengths =
+        holder.prefixLength !== undefined
+          ? [holder.prefixLength]
+          : [
+              ...new Set(
+                (lanOf(current, holder.nodeId, holders) ?? []).flatMap(
+                  (member) => member.prefixLength ?? [],
+                ),
+              ),
+            ];
+      const [length] = lengths;
+      if (lengths.length !== 1 || length === undefined || length < 1 || length > 30) return [];
+      const size = 2 ** (32 - length);
+      const rest = ipToInt(holder.address) % size;
+      const which = rest === 0 ? 'network' : rest === size - 1 ? 'broadcast' : null;
+      if (which === null) return [];
+      return [
+        {
+          nodeId: holder.nodeId,
+          ...(holder.ifaceId !== undefined ? { ifaceId: holder.ifaceId } : {}),
+          address: holder.address,
+          which,
+        },
+      ];
+    });
+  } catch {
+    return [];
+  }
+}
+
 // --- All of them ----------------------------------------------------------------
+
+export interface DiagnoseOptions {
+  /** A find-the-fault exercise: say the cause, not the device. */
+  readonly unnamed?: boolean;
+  /**
+   * Whether the learner can change the address of a device (a side of a
+   * router counts as its router). Absent: every device can be changed.
+   */
+  readonly editable?: (nodeId: string) => boolean;
+}
 
 /**
  * What the topology says about a probe from `from` to `to` that did not
@@ -310,9 +415,9 @@ export function diagnose(
   start: Topology,
   current: Topology,
   probe: { readonly from: string; readonly to: string },
-  options: { readonly unnamed?: boolean } = {},
+  options: DiagnoseOptions = {},
 ): Diagnosis | null {
-  const found = diagnoseNamed(start, current, probe);
+  const found = diagnoseNamed(start, current, probe, options.editable);
   return found && options.unnamed === true ? unnamed(found) : found;
 }
 
@@ -350,6 +455,7 @@ function diagnoseNamed(
   start: Topology,
   current: Topology,
   probe: { readonly from: string; readonly to: string },
+  editable?: (nodeId: string) => boolean,
 ): Diagnosis | null {
   try {
     const ends = [probe.from, probe.to];
@@ -357,7 +463,13 @@ function diagnoseNamed(
     if (cable) return cable;
 
     const holders = holdersOf(current);
-    const own = duplicate(start, current, holders, (holder) => ends.includes(holder.nodeId));
+    const own = duplicate(
+      start,
+      current,
+      holders,
+      (holder) => ends.includes(holder.nodeId),
+      editable,
+    );
     if (own) return own;
 
     const lans = ends.flatMap((nodeId) => {
@@ -368,10 +480,15 @@ function diagnoseNamed(
     if (off) return off;
 
     // The router's side on a LAN of the probe: everyone on that LAN depends on it.
-    return duplicate(start, current, holders, (holder) =>
-      lans.some((lan) =>
-        lan.some((member) => member.ifaceId !== undefined && sameHolder(member, holder)),
-      ),
+    return duplicate(
+      start,
+      current,
+      holders,
+      (holder) =>
+        lans.some((lan) =>
+          lan.some((member) => member.ifaceId !== undefined && sameHolder(member, holder)),
+        ),
+      editable,
     );
   } catch {
     return null;

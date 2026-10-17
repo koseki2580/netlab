@@ -7,6 +7,7 @@ import { render, testStore, type Screen } from './testSupport';
 
 // The canvas needs a real layout engine; the form is what is tested here.
 vi.mock('./ExerciseDiagram', () => ({
+  DiagramLegend: () => null,
   ExerciseDiagram: ({ onPick }: { onPick?: (pick: { kind: 'node'; id: string }) => void }) => (
     <div data-testid="diagram-stub">
       {['pc1', 'pc2', 'pc3'].map((id) => (
@@ -135,7 +136,7 @@ describe('find the device with the wrong address: point at it first', () => {
     await screen.click('exercise-check');
     const note = screen.get(`exercise-suspect-note-${healthy[0]}`).textContent ?? '';
     expect(note).toContain(
-      'この機器のアドレスは、まわりと合っています。ほかの 2 台を、となりの機器と見くらべてください。',
+      'この機器のアドレスは、まわりと合っています。ほかの 2 台を、同じ側の機器と見くらべてください。',
     );
     expect(note).toContain('何度かためして解けた');
     // It does not say which of the other two it is; the device is shut and as it was.
@@ -226,5 +227,61 @@ describe('the router with a wrong address on one side: choose the side first', (
     expect(screen.get(sideCard(wrongSide ?? '')).hasAttribute('data-picked')).toBe(true);
     expect(screen.find(`exercise-suspect-${otherSide}`)).not.toBeNull();
     expect(only()).toMatchObject({ checkPresses: 0 });
+  });
+});
+
+// TC-674, TC-675
+describe('what pointing does at once, and what a wrong pick does to the changes', () => {
+  const router = exerciseById('l1-router-address~0', 'ja');
+  if (!router?.pickFirst) throw new Error('l1-router-address~0 has no pickFirst');
+  const [wrongSide = ''] = router.pickFirst.faulty;
+  const otherSide = ['r1:lan', 'r1:far'].find((key) => key !== wrongSide) ?? '';
+  const sideCard = (key: string) => `exercise-setting-iface-address-${key.replace(':', '-')}`;
+  const valueOf = (view: Screen, key: string) =>
+    (view.get(`${sideCard(key)}-input`) as HTMLInputElement).value;
+
+  function openRouter() {
+    const store = testStore();
+    screen = render(<ExerciseRunner exercise={router!} store={store} />, { locale: 'ja' });
+    return { screen, only: () => store.getState().attempts[0]! };
+  }
+
+  // TC-674
+  it('a side chosen is acknowledged on its card at once, and a chip chosen there is kept while the other side is looked at', async () => {
+    const { screen } = openRouter();
+    await screen.click(`exercise-suspect-${otherSide}`);
+    expect(screen.get(sideCard(otherSide)).contains(screen.get('exercise-suspect-picked'))).toBe(
+      true,
+    );
+    expect(screen.get('exercise-suspect-picked').textContent).toContain('こちらの側をえらびました');
+    const atStart = valueOf(screen, otherSide);
+    await screen.click('exercise-chip-0');
+    const chosen = valueOf(screen, otherSide);
+    expect(chosen).not.toBe(atStart);
+    await screen.click(`exercise-suspect-${wrongSide}`);
+    await screen.click(`exercise-suspect-${otherSide}`);
+    expect(valueOf(screen, otherSide)).toBe(chosen);
+  });
+
+  // TC-675
+  it('a change on a side that was fine is put back at Check, and the note says so and why', async () => {
+    const { screen } = openRouter();
+    await screen.click(`exercise-suspect-${otherSide}`);
+    await screen.click('exercise-chip-0');
+    await screen.click('exercise-check');
+    const note = screen.get(`exercise-suspect-note-${otherSide}`).textContent ?? '';
+    expect(note).toContain(
+      '変えたところは、元に戻しました。ここは、はじめから合っていたからです。',
+    );
+  });
+
+  it('without a change there is nothing to say was put back', async () => {
+    const which = exerciseById('l1-which-pc~0', 'ja');
+    const fine = ['pc1', 'pc2', 'pc3'].find((id) => !which?.pickFirst?.faulty.includes(id)) ?? '';
+    const store = testStore();
+    screen = render(<ExerciseRunner exercise={which!} store={store} />, { locale: 'ja' });
+    await screen.click(`exercise-suspect-${fine}`);
+    await screen.click('exercise-check');
+    expect(screen.get(`exercise-suspect-note-${fine}`).textContent).not.toContain('元に戻しました');
   });
 });

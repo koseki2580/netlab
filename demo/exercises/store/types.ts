@@ -47,6 +47,18 @@ export interface AttemptRecord {
    * answer is typed or built.
    */
   readonly checksToCount?: 1;
+  /**
+   * The exercise is practice for its kind of task and does not settle it
+   * (`Exercise.practiceOnly`): it counts among the solved like any other, but
+   * "the latest one of every kind is solved" looks past it.
+   */
+  readonly practiceOnly?: true;
+  /**
+   * The learner chose to leave the exercise without a Check ("skip"). It then
+   * counts as an exercise they were judged on and did not solve; an exercise
+   * merely opened and left does not count, and is offered again.
+   */
+  readonly skipped?: true;
   readonly firstCheckPassed: boolean;
   /** Every check id that failed at some press, in the order first seen. */
   readonly failedCheckIds: readonly string[];

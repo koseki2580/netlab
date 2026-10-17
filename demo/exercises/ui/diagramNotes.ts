@@ -135,7 +135,8 @@ export function diagramNotesLines(topology: TopologySnapshot, locale: 'en' | 'ja
   const label = (nodeId: string) =>
     topology.nodes.find((node) => node.id === nodeId)?.data.label ?? nodeId;
   return diagramNotes(topology).map(
-    (note) => `${label(note.nodeId)}: ${note.lines.join(locale === 'ja' ? '、' : ', ')}`,
+    (note) =>
+      `${label(note.nodeId)}: ${note.lines.map((line) => portWord(line, locale)).join(locale === 'ja' ? '、' : ', ')}`,
   );
 }
 
@@ -152,6 +153,10 @@ export function diagramLegendLines(topology: TopologySnapshot, locale: 'en' | 'j
   const comma = locale === 'ja' ? '、' : ', ';
   const usesStp = topology.nodes.some((node) => node.data.stpConfig !== undefined);
   const lines: string[] = [];
+  const switches = topology.nodes.filter((node) => node.data.role === 'switch');
+  const lowest = Math.min(...switches.map((node) => node.data.stpConfig?.priority ?? 32768));
+  const atLowest = switches.filter((node) => (node.data.stpConfig?.priority ?? 32768) === lowest);
+  const tiedLowest = new Set(atLowest.length > 1 ? atLowest.map((node) => node.id) : []);
   const ordered = [...topology.nodes].sort(
     (a, b) => a.position.x - b.position.x || a.position.y - b.position.y,
   );
@@ -171,6 +176,11 @@ export function diagramLegendLines(topology: TopologySnapshot, locale: 'en' | 'j
       if (usesStp) {
         const priority = node.data.stpConfig?.priority ?? 32768;
         facts.push(locale === 'ja' ? `優先度 ${priority}` : `priority ${priority}`);
+        // Tied on the lowest number: the device number decides, so it is shown.
+        if (tiedLowest.has(node.id)) {
+          const mac = deviceNumber(node);
+          facts.push(locale === 'ja' ? `機器の番号 ${mac}` : `device number ${mac}`);
+        }
       }
     } else if (node.data.role === 'router') {
       facts.push(...(notes.get(node.id) ?? []));
@@ -178,7 +188,7 @@ export function diagramLegendLines(topology: TopologySnapshot, locale: 'en' | 'j
       const ip = typeof node.data.ip === 'string' && node.data.ip !== '' ? node.data.ip : null;
       facts.push(
         ip ?? (locale === 'ja' ? 'アドレスなし' : 'no address'),
-        ...(notes.get(node.id) ?? []),
+        ...(notes.get(node.id) ?? []).map((line) => portWord(line, locale)),
       );
     }
     if (facts.length > 0) lines.push(`${node.data.label}: ${facts.join(comma)}`);
@@ -207,4 +217,22 @@ export function noAddressNote(topology: TopologySnapshot, locale: 'en' | 'ja'): 
   return locale === 'ja'
     ? '⚠ は「この機器にまだアドレスがない」という印です。故障ではありません。'
     : '⚠ means "this device has no address yet". It is not a fault.';
+}
+
+/** A switch's device number as spanning tree compares it: the lowest MAC of its ports. */
+function deviceNumber(node: Node): string {
+  const macs = (node.data.ports ?? [])
+    .map((port) => port.macAddress.replace(/[^0-9a-f]/gi, '').toLowerCase())
+    .filter((hex) => hex.length === 12)
+    .sort();
+  return macs[0]?.match(/.{2}/g)?.join(':') ?? '';
+}
+
+/**
+ * A VLAN number drawn beside a device belongs to the switch socket it is
+ * plugged into, which is where the texts put it: said so in words.
+ */
+function portWord(line: string, locale: 'en' | 'ja'): string {
+  if (!line.startsWith('VLAN ')) return line;
+  return locale === 'ja' ? `つないだ差し込み口は ${line}` : `its socket is in ${line}`;
 }

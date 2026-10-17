@@ -12,6 +12,8 @@
  */
 
 import { FIXTURE_TEMPLATES } from './devFixtures';
+import { isAttempted, levelSummary } from './store/estimate';
+import type { AttemptRecord } from './store/types';
 import type {
   Exercise,
   ExerciseKind,
@@ -25,6 +27,8 @@ interface NextOptions {
   readonly seenIds?: readonly string[];
   /** Something of the learner's own, so the order of the kinds of task is theirs (`learnerSalt`). */
   readonly salt?: string;
+  /** The kinds of task the level still waits for (`LevelSummary.missingKinds`): served before the others. */
+  readonly needKinds?: readonly string[];
 }
 
 interface TemplatesModule {
@@ -156,6 +160,65 @@ export function reopenedExerciseId(
     if (!judgedIds.includes(id) && !seenIds.includes(id)) return id;
   }
   return exerciseId;
+}
+
+/**
+ * An exercise of this level the learner opened in practice and left without
+ * being judged on it (no Check, no answer shown, not skipped): the one to
+ * offer again. Leaving used to give another exercise for free, so a kind of
+ * task could be dodged by walking away from it. The latest such one, or
+ * undefined.
+ */
+export function pendingExerciseId(
+  level: ExerciseLevel,
+  attempts: readonly AttemptRecord[],
+): string | undefined {
+  const judged = new Set(attempts.filter(isAttempted).map((attempt) => attempt.exerciseId));
+  for (let index = attempts.length - 1; index >= 0; index -= 1) {
+    const attempt = attempts[index];
+    if (!attempt || attempt.level !== level || attempt.context !== 'practice') continue;
+    if (judged.has(attempt.exerciseId)) continue;
+    return attempt.exerciseId;
+  }
+  return undefined;
+}
+
+/**
+ * What "next exercise" opens for this learner at this level, wherever it is
+ * pressed (the hub, the level page, the exercise page): the exercise they left
+ * unjudged, else one of a kind the level still waits for, else the next unseen
+ * one. Never the kind just done twice in a row while another is open.
+ */
+export function nextForLearner(
+  level: ExerciseLevel,
+  attempts: readonly AttemptRecord[],
+): string | undefined {
+  const pending = pendingExerciseId(level, attempts);
+  if (pending !== undefined) return pending;
+  const mine = attempts.filter((attempt) => attempt.level === level);
+  const last = mine[mine.length - 1];
+  return nextExerciseId(level, {
+    ...(last ? { avoidTemplateIds: [last.templateId] } : {}),
+    seenIds: attempts.map((attempt) => attempt.exerciseId),
+    salt: learnerSalt(attempts),
+    needKinds: levelSummary(attempts, level).missingKinds,
+  });
+}
+
+/** An unseen exercise of one kind of task, for "do this kind": one that can settle the kind. */
+export function nextOfKind(
+  level: ExerciseLevel,
+  templateId: string,
+  attempts: readonly AttemptRecord[],
+): string | undefined {
+  const pending = pendingExerciseId(level, attempts);
+  if (pending !== undefined && templateIdOf(pending) === templateId) return pending;
+  const next = nextExerciseId(level, {
+    seenIds: attempts.map((attempt) => attempt.exerciseId),
+    salt: learnerSalt(attempts),
+    needKinds: [templateId],
+  });
+  return next !== undefined && templateIdOf(next) === templateId ? next : undefined;
 }
 
 /**

@@ -3,7 +3,7 @@ import type { AclRule } from '../../../src/types/acl';
 import type { StaticRouteConfig } from '../../../src/types/routing';
 import { useT } from '../../localeContext';
 import { isAddress, isNetwork, typed, wholeNumber } from './addresses';
-import type { FieldProps } from './fields';
+import { useDraftReport, type FieldProps } from './fields';
 import { INPUT, MUTED, SECONDARY, SELECT } from './styles';
 
 /**
@@ -50,6 +50,11 @@ export function StaticRoutesField({ value, onChange, testId, plain }: FieldProps
   const t = useT();
   const [rows, setRows] = useState<readonly RouteRow[]>(value.routes);
   const waiting = rows.filter((row) => !routeUsable(row)).length;
+  // A row with something written in it that is not a route yet. (An empty row holds nothing to lose.)
+  useDraftReport(
+    testId,
+    rows.some((row) => !routeUsable(row) && `${row.destination}${row.nextHop}` !== ''),
+  );
 
   const update = (next: readonly RouteRow[]) => {
     setRows(next);
@@ -224,6 +229,7 @@ export function AclField({ value, onChange, testId, plain }: FieldProps<'iface-a
   const [rows, setRows] = useState<readonly AclRow[]>(() => start.map(toRow));
   const [added, setAdded] = useState(0);
   const waiting = rows.filter((row) => !aclUsable(row)).length;
+  useDraftReport(testId, waiting > 0);
 
   const update = (next: readonly AclRow[]) => {
     setRows(next);
@@ -251,14 +257,22 @@ export function AclField({ value, onChange, testId, plain }: FieldProps<'iface-a
       <p style={{ ...MUTED, margin: 0, fontSize: 14 }}>
         {rows.length === 0
           ? t(
-              'No list: everything passes. Once there is a line, whatever no line allows is refused.',
-              '一覧がないので、すべて通します。1 行でも書くと、どの行にも当てはまらない通信は通らなくなります。',
+              'No lines: everything passes. Once there is a line, whatever no line allows is refused.',
+              '行が 1 つもないので、すべて通します。1 行でも書くと、どの行にも当てはまらない通信は通らなくなります。',
             )
           : t(
-              'Read from the top; the first line that fits decides. Whatever no line fits is refused.',
-              '上から順に調べ、最初に当てはまった行で決まります。どの行にも当てはまらない通信は通りません。',
+              'Read from the top; the first line that fits decides. Whatever fits no line is refused. (With no lines at all, everything passes.)',
+              '上から順に調べ、最初に当てはまった行で決まります。どの行にも当てはまらない通信は通りません。（行を 1 つもなくすと、すべて通ります。）',
             )}
       </p>
+      {plain ? (
+        <p data-testid={`${testId}-gloss`} style={{ ...MUTED, margin: 0, fontSize: 14 }}>
+          {t(
+            'Kind: icmp is what ping uses; tcp and udp are what programs use to talk. A sender ending in "/32" means that one device only. A port number says which service inside the device is meant; it is not a socket of a switch.',
+            '種類：icmp は ping が使う種類、tcp と udp はアプリのやり取りに使う種類です。送り主の最後の「/32」は「その 1 台だけ」という意味です。ポート番号は、機器の中の「どの窓口あてか」を表す数字で、スイッチの差し込み口（ポート）とは別のものです。',
+          )}
+        </p>
+      ) : null}
       {rows.map((row, index) => {
         const name = t(`Line ${index + 1}`, `${index + 1} 行目`);
         return (
@@ -327,7 +341,12 @@ export function AclField({ value, onChange, testId, plain }: FieldProps<'iface-a
             </label>
             {hasPort(row) ? (
               <label style={CELL}>
-                <span>{t('Port (empty = any)', 'ポート番号（空ならすべて）')}</span>
+                <span>
+                  {t(
+                    'Port number at the destination (empty = any)',
+                    'あて先のポート番号（空ならすべて）',
+                  )}
+                </span>
                 <input
                   data-testid={`${testId}-row-${index}-port`}
                   type="text"

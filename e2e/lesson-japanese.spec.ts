@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import { CATEGORIES, expect, test } from './fixtures/harness';
+import { changeSomethingWrong } from './exerciseMoves';
 import { SEL } from './selectors';
 
 /**
@@ -88,6 +89,13 @@ for (const path of EXERCISE_PAGES) {
         expect(await englishProse(page), 'no English sentence remains').toEqual([]);
         await page.getByTestId(X.option('duplicate')).click();
         await page.getByTestId(X.predict('reach')).click();
+      }
+      if ((await page.getByTestId(X.settings).count()) > 0) {
+        // A Check with nothing changed is not judged (TC-663): its line is read too.
+        await page.getByTestId(X.check).click();
+        await expect(page.getByTestId('exercise-check-refused')).toBeVisible();
+        expect(await englishProse(page), 'no English sentence remains').toEqual([]);
+        await changeSomethingWrong(page);
       }
       // Hints are offered only after a Check that did not pass.
       await page.getByTestId(X.check).click();

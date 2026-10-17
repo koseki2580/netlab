@@ -280,6 +280,12 @@ export interface Exercise {
    * and never the values: those are read off the diagram.
    */
   readonly rule?: Localised;
+  /**
+   * The rule as a bare key, shown in place of `rule` once the learner has
+   * cleanly solved an instance of this kind that settles it: from then on the
+   * reading is theirs to do. Absent: `rule` is always shown.
+   */
+  readonly ruleKey?: Localised;
   /** The story, the symptom and the glosses. With a `task`, shown behind "read more". */
   readonly brief: Localised;
   readonly start: TopologySnapshot;
@@ -315,6 +321,13 @@ export interface Exercise {
     readonly faulty: readonly string[];
     readonly by?: 'device' | 'side';
   };
+  /**
+   * An easier instance of its kind of task, kept for practice: it counts among
+   * the solved exercises of a level, but the level's "every kind of task"
+   * condition is met only by an instance without this mark. (A "/24" among the
+   * "/number" exercises: it is solved by the habit the kind is there to break.)
+   */
+  readonly practiceOnly?: true;
   /**
    * Natural wrong answers, each of which must fail the grade. For the
    * verification harness only: never show these to a learner.
@@ -369,6 +382,14 @@ export type CheckResultCode =
    * would not accept the line.
    */
   | 'next-hop-not-neighbour'
+  /**
+   * An end of the probe shares its address with another device. The simulator
+   * answers such a probe from whichever holder is nearer (a device pinging its
+   * own address "arrives" at once), so the probe is not run.
+   */
+  | 'address-conflict'
+  /** An address the learner set is the first or the last of its network, which no device may use. */
+  | 'address-reserved'
   | 'no-address'
   | 'config-invalid'
   | 'engine-error';

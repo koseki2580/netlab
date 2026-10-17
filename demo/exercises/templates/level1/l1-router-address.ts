@@ -20,6 +20,7 @@ import { addressOf, broken, everyoneReaches, freeAddressOn, starts, startsJa } f
 import { drawPlace, scene } from '../shared/places';
 import { drawPlan, net24 } from '../shared/plans';
 import { L, say, the, The } from '../shared/text';
+import { WHY_TWO_SIDES } from '../shared/why';
 import type { SettingChange } from '../../model/types';
 
 /** Keeps this template's order of sides its own (`evenPlace`). */
@@ -120,10 +121,10 @@ export const l1RouterAddress = defineTemplate(
         `${router.ja}の 2 つのアドレスのうち、まちがっているほうを直してください。`,
       ),
       rule: L(
-        'Rule: on each side, the same first three numbers as the devices on that side; a last number nobody else has.',
-        'ルール：ルータのアドレスは、その側の機器と、はじめの 3 つの数字を同じに。最後の数字は、だれともかぶらない。',
+        'Rule: the router says /24. On each side, the same first three numbers as the devices on that side. A whole address is nobody else’s.',
+        'ルール：ルータは /24。その側の機器と、はじめの 3 つの数字をそろえる。アドレスは、だれともかぶらない。',
       ),
-      brief,
+      brief: say(brief, WHY_TWO_SIDES),
       topology,
       names: lan.names,
       allowed: [

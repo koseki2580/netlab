@@ -3,7 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { exerciseById } from '../exerciseSource';
 import { applyChanges } from '../model/settings';
 import { cablePressed } from './cablePress';
-import { diagramNotes, diagramNotesCss, diagramNotesLines, noAddressNote } from './diagramNotes';
+import {
+  diagramLegendLines,
+  diagramNotes,
+  diagramNotesCss,
+  diagramNotesLines,
+  noAddressNote,
+} from './diagramNotes';
 
 function exercise(id: string) {
   const found = exerciseById(id, 'ja');
@@ -103,5 +109,27 @@ describe('the mark on a device without an address', () => {
     );
     expect(noAddressNote(applyChanges(blank.start, blank.reference), 'ja')).toBeNull();
     expect(noAddressNote(exercise('l1-host-address~0').start, 'ja')).toBeNull();
+  });
+});
+
+// TC-664
+describe('the legend of a ring of switches tied on the lowest priority', () => {
+  it('shows each priority, and the device number of the tied ones', async () => {
+    const ring = exerciseById('l2-stp-root~0', 'ja');
+    if (!ring) throw new Error('no l2-stp-root~0');
+    const tied = {
+      ...ring.start,
+      nodes: ring.start.nodes.map((node) =>
+        node.data.role === 'switch'
+          ? {
+              ...node,
+              data: { ...node.data, stpConfig: { ...node.data.stpConfig, priority: 4096 } },
+            }
+          : node,
+      ),
+    };
+    const lines = diagramLegendLines(tied, 'ja').filter((line) => line.includes('優先度'));
+    expect(lines.length).toBeGreaterThan(1);
+    for (const line of lines) expect(line).toMatch(/優先度 4096、機器の番号 [0-9a-f:]{17}/);
   });
 });

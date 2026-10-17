@@ -1,6 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 import { TEMPLATES } from '../demo/exercises/templates';
 import { expect, test } from './fixtures/harness';
+import { changeSomethingWrong } from './exerciseMoves';
 import { SEL } from './selectors';
 
 /**
@@ -117,6 +118,7 @@ for (const id of ['l1-host-address~0', 'l1-choose-address~0', ...firstOf(2)]) {
     await noSidewaysScroll(page);
 
     const isDesign = (await page.getByTestId(X.settings).count()) === 0;
+    if (!isDesign) await changeSomethingWrong(page);
     await page.getByTestId(X.check).tap();
     if (isDesign) {
       // Nothing is run before a design is chosen; the page says so where the learner is looking.
@@ -168,6 +170,7 @@ test('every control of an exercise is at least 44px high', async ({ page }) => {
   ]) {
     await openExercise(page, id);
     // With a hint open and the way out asked for, so those controls are measured too.
+    await changeSomethingWrong(page);
     await page.getByTestId(X.check).tap();
     await expect(page.getByTestId(X.result)).toHaveAttribute('data-passed', 'false');
     await page.getByTestId(X.hint).tap();

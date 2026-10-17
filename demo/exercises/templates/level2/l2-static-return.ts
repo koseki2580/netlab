@@ -20,6 +20,7 @@ import {
 } from '../shared/routed';
 import { WATCH_WORDS } from '../../ui/words';
 import { L, say, the, The } from '../shared/text';
+import { WHY_FACING } from '../shared/why';
 
 export const l2StaticReturn = defineTemplate(
   {
@@ -94,7 +95,7 @@ export const l2StaticReturn = defineTemplate(
         'Rule: the answer needs a way back: the routers on the far side need a route to the sender’s network, naming the next router.',
         'ルール：返事が帰る道のルータにも、送り主のネットワークへの経路がいる。経路には、行き先と「次のルータ」のアドレスを書く。',
       ),
-      brief,
+      brief: say(brief, WHY_FACING),
       topology,
       names: net.names,
       allowed: net.path.map((nodeId) => ({ kind: 'static-routes', nodeId })),

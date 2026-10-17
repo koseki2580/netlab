@@ -30,6 +30,8 @@ export interface Draft {
   readonly task: Localised;
   /** One line: the rule that applies, without the values. */
   readonly rule?: Localised;
+  /** See `Exercise.ruleKey`. */
+  readonly ruleKey?: Localised;
   /** The story and the glosses, read on request. */
   readonly brief: Localised;
   /** The start state, fault planted. */
@@ -48,6 +50,8 @@ export interface Draft {
   readonly pickFirst?: Exercise['pickFirst'];
   /** See `Exercise.unsoundPasses`. */
   readonly unsoundPasses?: readonly (readonly SettingChange[])[];
+  /** See `Exercise.practiceOnly`. */
+  readonly practiceOnly?: boolean;
   /** What makes this instance a different task: place, shape, fault, device. No raw numbers. */
   readonly fingerprint: readonly string[];
   /** See `Exercise.answerInBrief`: why this brief states a value that is the answer. */
@@ -86,6 +90,7 @@ export function defineTemplate(
       title: draft.title,
       task: draft.task,
       ...(draft.rule ? { rule: draft.rule } : {}),
+      ...(draft.ruleKey ? { ruleKey: draft.ruleKey } : {}),
       brief: draft.brief,
       start: {
         ...draft.topology,
@@ -109,6 +114,7 @@ export function defineTemplate(
       ...(draft.wrongAnswers ? { wrongAnswers: draft.wrongAnswers } : {}),
       ...(draft.unsoundPasses ? { unsoundPasses: draft.unsoundPasses } : {}),
       ...(draft.pickFirst ? { pickFirst: draft.pickFirst } : {}),
+      ...(draft.practiceOnly === true ? { practiceOnly: true as const } : {}),
       ...(draft.answerInBrief !== undefined ? { answerInBrief: draft.answerInBrief } : {}),
     };
   };

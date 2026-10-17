@@ -19,6 +19,7 @@ import { attempt, clearingRun, failed, solved, solvedRun } from './store/testSup
 import { englishProse, hasJapanese, render, testStore, type Screen } from './ui/testSupport';
 
 vi.mock('./ui/ExerciseDiagram', () => ({
+  DiagramLegend: () => null,
   ExerciseDiagram: () => <div data-testid="diagram-stub" />,
 }));
 
@@ -202,7 +203,7 @@ describe('where the learner stands at a level, in two short lines', () => {
   it('names the kinds of task still open under the short line, and keeps the full rule behind a toggle', () => {
     const view = openLevel(solvedRun(1, 6, 2));
     expect(view.get('exercises-level-headline-1').textContent).toBe(
-      'あと 1 問 とけたら、レベル 1 達成です（いま 6 問）',
+      'あと 1 問 とけたら、レベル 1 達成です（直近 10 問のうち、いま 6 問）',
     );
     const missing = view.get('exercises-level-missing-1').textContent ?? '';
     expect(missing.startsWith('まだ解けていない種類：「')).toBe(true);
@@ -416,7 +417,9 @@ describe('the short line a level leads with', () => {
     const six = solvedRun(1, 6, 3);
     screen = render(<ExerciseHubBody store={storeWith(six)} />);
     const lead = screen.get('exercises-level-headline-1');
-    expect(lead.textContent).toBe('あと 1 問 とけたら、レベル 1 達成です（いま 6 問）');
+    expect(lead.textContent).toBe(
+      'あと 1 問 とけたら、レベル 1 達成です（直近 10 問のうち、いま 6 問）',
+    );
     expect(lead.textContent).toBe(headline(levelSummary(six, 1), 'ja'));
     // The short line comes first; the rule follows it.
     expect(
@@ -505,5 +508,76 @@ describe('the words of the before/after comparison', () => {
       route: '/exercises/level/:level',
     });
     expect(screen.find('exercises-cycle-ceiling-c9')).not.toBeNull();
+  });
+});
+
+// TC-666 to TC-670
+describe('what "next" opens, and what the level page counts', () => {
+  const openLevel = (attempts: ReturnType<typeof attempt>[]) => {
+    screen = render(<LevelPageBody store={storeWith(attempts)} now={() => 5000} />, {
+      path: '/exercises/level/1',
+      route: '/exercises/level/:level',
+    });
+    return screen;
+  };
+  const hrefId = (view: Screen, testId: string) =>
+    decodeURIComponent(view.get(testId).getAttribute('href') ?? '').replace('/exercises/do/', '');
+  const PREFIX = 'l1-prefix-fit';
+
+  // TC-666
+  it('with one kind left, that kind is named with the way straight to it, and "next" opens it too', () => {
+    const attempts = clearingRun(1).filter((entry) => entry.templateId !== PREFIX);
+    const view = openLevel(attempts);
+    const line = view.get('exercises-level-missing-1').textContent ?? '';
+    // TC-667: a title with marks of its own is not wrapped in the same marks again.
+    expect(line).toContain('あと 1 種類：「『/数字』を読んでアドレスを決める」');
+    expect(line).not.toContain('「「');
+    expect(line).toContain('→ この種類をやる');
+    const direct = hrefId(view, `exercises-do-kind-${PREFIX}`);
+    expect(templateIdOf(direct)).toBe(PREFIX);
+    // An instance that can settle the kind: not a /24.
+    expect(exerciseById(direct, 'ja')?.practiceOnly).toBeUndefined();
+    expect(templateIdOf(hrefId(view, 'exercises-start-1'))).toBe(PREFIX);
+  });
+
+  // TC-668
+  it('an exercise opened and left without a Check is the one offered again; a skipped one is not', () => {
+    const others = solvedRun(1, 2, 2);
+    const left = attempt(PREFIX, 0, 1, {
+      outcome: 'abandoned',
+      checkPresses: 0,
+      firstCheckPassed: false,
+    });
+    const view = openLevel([...others, left]);
+    expect(hrefId(view, 'exercises-start-1')).toBe(`${PREFIX}~0`);
+    view.unmount();
+
+    const skipped = { ...left, skipped: true as const };
+    const after = openLevel([...others, skipped]);
+    expect(hrefId(after, 'exercises-start-1')).not.toBe(`${PREFIX}~0`);
+    // And the skip counts against its kind.
+    expect(levelSummary([...clearingRun(1), skipped], 1).missingKinds).toEqual([PREFIX]);
+  });
+
+  // TC-669
+  it('the kinds are listed by what the level rule says of them, and the other number is named for what it is', () => {
+    const [first = 't', second = first] = level1;
+    const view = openLevel([
+      solved(first, 0, 1),
+      solved(first, 1, 1),
+      failed(second, 0, 1),
+      solved(first, 2, 1),
+      solved(first, 3, 1),
+    ]);
+    const done = view.get(`exercises-kind-${first}`);
+    expect(done.getAttribute('data-settled')).toBe('true');
+    expect(done.textContent).toContain('✓ この種類は OK');
+    expect(done.textContent).toContain('（これまでに解いた数：4 問）');
+    const open = view.get(`exercises-kind-${second}`);
+    expect(open.getAttribute('data-settled')).toBe('false');
+    expect(open.textContent).toContain('まだ');
+    expect(view.get('exercises-level-headline-1').textContent).toContain(
+      '直近 10 問のうち、いま 4 問',
+    );
   });
 });

@@ -676,7 +676,8 @@ describe('an unplugged cable is said first, whatever reason the simulator gives'
 describe('an address two devices hold is said first, naming the other holder', () => {
   it("the router's address, chosen by the learner: the router is named and pointed at", async () => {
     const results = await gradeOffice([setIp('pc1', '192.168.1.1')]);
-    expect(results.pc1?.code).toBe('not-delivered');
+    expect(results.pc1?.code).toBe('address-conflict');
+    expect(results.pc1?.trace).toBeUndefined();
     expect(results.pc1?.message.ja).toBe(
       'このアドレス（192.168.1.1）は、お店のルータがもう使っています。べつの数字をえらんでください。',
     );
@@ -689,8 +690,9 @@ describe('an address two devices hold is said first, naming the other holder', (
 
   it("a neighbour's address, chosen by the learner: whichever of the two fails is told about the other", async () => {
     const results = await gradeOffice([setIp('pc1', '192.168.1.11')]);
-    const failed = ['pc1', 'pc2'].filter((id) => results[id]?.code === 'not-delivered');
-    expect(failed.length).toBeGreaterThan(0);
+    // Both: the one that took the address, and the one it was taken from.
+    const failed = ['pc1', 'pc2'].filter((id) => results[id]?.code === 'address-conflict');
+    expect(failed).toEqual(['pc1', 'pc2']);
     for (const id of failed) {
       expect(results[id]?.message.ja).toBe(
         'このアドレス（192.168.1.11）は、事務室のパソコンがもう使っています。べつの数字をえらんでください。',
@@ -704,8 +706,8 @@ describe('an address two devices hold is said first, naming the other holder', (
   it('a duplicate the exercise started with: both are named and neither is blamed', async () => {
     const start = applyChanges(office(), [setIp('pc1', '192.168.1.11')]);
     const results = await gradeOffice([], start);
-    const failed = ['pc1', 'pc2'].filter((id) => results[id]?.code === 'not-delivered');
-    expect(failed.length).toBeGreaterThan(0);
+    const failed = ['pc1', 'pc2'].filter((id) => results[id]?.code === 'address-conflict');
+    expect(failed).toEqual(['pc1', 'pc2']);
     for (const id of failed) {
       expect(results[id]?.message.ja).toContain('同じアドレス（192.168.1.11）を使っています');
       expect(results[id]?.message.ja).toContain('レジ');
@@ -870,20 +872,20 @@ describe('worked example 1: the till with the wrong address (l1-host-address)', 
     },
   );
 
-  it('the address of the other PC fails: the till loses its replies', async () => {
+  it('the address of the other PC fails: two devices hold it, so nothing is sent to find out', async () => {
     const grade = await withTillAt('192.168.1.11');
     expect(grade.passed).toBe(false);
-    expect(grade.results[0]).toMatchObject({ code: 'not-delivered' });
-    expect(grade.results[0]?.evidence).toMatchObject({ dropLeg: 'reply' });
+    expect(grade.results[0]).toMatchObject({ code: 'address-conflict' });
+    expect(grade.results[0]?.evidence).toMatchObject({ diagnosis: 'duplicate-address' });
   });
 
   it('the address of the router fails: the till breaks only itself', async () => {
     const grade = await withTillAt('192.168.1.1');
     expect(grade.passed).toBe(false);
-    expect(grade.results.map((r) => r.code)).toEqual(['not-delivered', 'ok']);
+    expect(grade.results.map((r) => r.code)).toEqual(['address-conflict', 'ok']);
     expect(grade.results[0]?.evidence).toMatchObject({
-      dropReason: 'routing-loop',
-      dropLeg: 'reply',
+      diagnosis: 'duplicate-address',
+      address: '192.168.1.1',
     });
   });
 
