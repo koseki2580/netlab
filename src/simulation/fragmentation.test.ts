@@ -24,6 +24,7 @@ import {
   type ReassemblyBufferEntry,
 } from './fragmentation';
 import { makePacket } from './__fixtures__/helpers';
+import { AddressPlane } from './AddressPlane';
 
 function makeTcpPacket(totalLength = 60, overrides: Partial<IpPacket> = {}): IpPacket {
   const payloadBytes = Math.max(totalLength - 40, 0);
@@ -144,7 +145,12 @@ function fixturePackets(): IpPacket[] {
   const offer = handleDiscover(discover, topology, allocator)!;
   const request = handleOffer(offer, 'client-1', topology);
   const ack = handleRequest(request, topology, allocator)!;
-  const dnsQuery = buildDnsQuery('client-1', 'web.example.com', topology, new Map())!;
+  const dnsQuery = buildDnsQuery(
+    'client-1',
+    'web.example.com',
+    topology,
+    new AddressPlane(topology),
+  )!;
   const dnsResponse = handleDnsQuery(dnsQuery, topology)!;
 
   return [

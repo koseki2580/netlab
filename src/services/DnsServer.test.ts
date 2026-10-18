@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { InFlightPacket } from '../types/packets';
 import { isDnsMessage, isUdpDatagram } from '../types/packets';
 import type { NetworkTopology } from '../types/topology';
+import { AddressPlane } from '../simulation/AddressPlane';
 import { buildDnsQuery } from './DnsClient';
 import { handleDnsQuery } from './DnsServer';
 
@@ -43,7 +44,12 @@ const TOPOLOGY: NetworkTopology = {
 
 describe('DnsServer', () => {
   it('returns a response when the A record exists', () => {
-    const query = buildDnsQuery('client-1', 'web.example.com', TOPOLOGY, new Map())!;
+    const query = buildDnsQuery(
+      'client-1',
+      'web.example.com',
+      TOPOLOGY,
+      new AddressPlane(TOPOLOGY),
+    )!;
     const response = handleDnsQuery(query, TOPOLOGY);
     const payload = extractDns(response ?? null);
 
@@ -52,7 +58,12 @@ describe('DnsServer', () => {
   });
 
   it('returns null for an unknown hostname', () => {
-    const query = buildDnsQuery('client-1', 'unknown.example.com', TOPOLOGY, new Map())!;
+    const query = buildDnsQuery(
+      'client-1',
+      'unknown.example.com',
+      TOPOLOGY,
+      new AddressPlane(TOPOLOGY),
+    )!;
     expect(handleDnsQuery(query, TOPOLOGY)).toBeNull();
   });
 });

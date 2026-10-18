@@ -4,7 +4,8 @@ import type { RouteEntry } from '../../../types/routing';
 import type { NetlabNode, NetworkTopology } from '../../../types/topology';
 import { isInSubnet, prefixLength } from '../../../utils/cidr';
 import { deriveDeterministicMac } from '../../../utils/network';
-import { canonicalizeIpv6, isIpv6Address } from '../../../utils/ipv6';
+import { isIpv6Address } from '../../../utils/ipv6';
+import type { AddressPlane } from '../../AddressPlane';
 import type { InterfaceResolver } from './InterfaceResolver';
 import type { LogicalRouterInterface } from './InterfaceResolver';
 
@@ -32,17 +33,8 @@ export class MacResolver {
   constructor(
     private readonly topology: NetworkTopology,
     private readonly ifaceResolver: InterfaceResolver,
-    private readonly getEffectiveNodeIp: (node: NetlabNode | null) => string | undefined,
+    private readonly addresses: AddressPlane,
   ) {}
-
-  isPlaceholderMac(mac: string): boolean {
-    const normalized = mac.trim().toLowerCase();
-    return (
-      normalized === '00:00:00:00:00:00' ||
-      normalized === '00:00:00:00:00:01' ||
-      normalized === '00:00:00:00:00:02'
-    );
-  }
 
   resolveEndpointMac(nodeId: string): string | null {
     const node = this.ifaceResolver.findNode(nodeId);
@@ -50,27 +42,7 @@ export class MacResolver {
       return null;
     }
 
-    return typeof node.data.mac === 'string' &&
-      node.data.mac.length > 0 &&
-      !this.isPlaceholderMac(node.data.mac)
-      ? node.data.mac
-      : deriveDeterministicMac(nodeId);
-  }
-
-  nodeOwnsIp(node: NetlabNode, ip: string): boolean {
-    if (this.getEffectiveNodeIp(node) === ip) return true;
-    if (isIpv6Address(ip) && typeof node.data.ipv6 === 'string') {
-      if (canonicalizeIpv6(node.data.ipv6) === canonicalizeIpv6(ip)) return true;
-    }
-    return this.ifaceResolver
-      .getLogical(node)
-      .some(
-        (iface) =>
-          iface.ipAddress === ip ||
-          (isIpv6Address(ip) &&
-            iface.ipv6Address !== undefined &&
-            canonicalizeIpv6(iface.ipv6Address) === canonicalizeIpv6(ip)),
-      );
+    return this.addresses.endpointMac(node);
   }
 
   findMatchingNodeThroughSwitches(
@@ -96,14 +68,9 @@ export class MacResolver {
         continue;
       }
 
-      const interfaces = node.data.interfaces ?? [];
       const matchesTarget =
         (targetNodeId !== undefined && node.id === targetNodeId) ||
-        (targetIp !== null &&
-          (this.getEffectiveNodeIp(node) === targetIp ||
-            interfaces.some(
-              (iface) => iface.ipAddress === targetIp || iface.ipv6Address === targetIp,
-            )));
+        (targetIp !== null && this.addresses.ownsIp(node, targetIp));
 
       if (matchesTarget) {
         return node;
@@ -174,7 +141,7 @@ export class MacResolver {
     let targetNodeId: string | undefined = packet.dstNodeId;
 
     if (currentNode.data.role === 'client' || currentNode.data.role === 'server') {
-      const senderIp = this.getEffectiveNodeIp(currentNode);
+      const senderIp = this.addresses.nodeIp(currentNode);
       if (senderIp && targetIp) {
         const gateway = this.ifaceResolver.findGatewayThroughSwitches(
           nextNodeId,
@@ -301,9 +268,5 @@ export class MacResolver {
     }
 
     return null;
-  }
-
-  findNodeByIp(ip: string): NetlabNode | null {
-    return this.topology.nodes.find((node) => this.nodeOwnsIp(node, ip)) ?? null;
   }
 }

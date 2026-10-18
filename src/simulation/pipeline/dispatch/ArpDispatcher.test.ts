@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EMPTY_FAILURE_STATE } from '../../../types/failure';
+import { AddressPlane } from '../../AddressPlane';
 import { TraceRecorder } from '../../TraceRecorder';
 import { makePacket } from '../../__fixtures__/helpers';
 import { singleRouterTopology } from '../../__fixtures__/topologies';
@@ -13,7 +14,8 @@ import { ArpDispatcher } from './ArpDispatcher';
 function makeArpDispatcher() {
   const topology = singleRouterTopology();
   const ifaceResolver = new InterfaceResolver(topology);
-  const macResolver = new MacResolver(topology, ifaceResolver, (node) => node?.data.ip);
+  const addresses = new AddressPlane(topology);
+  const macResolver = new MacResolver(topology, ifaceResolver, addresses);
   const portResolver = new PortResolver(topology);
   const arpBuilder = new ArpBuilder();
   const frameMaterializer = new FrameMaterializer();
@@ -26,7 +28,7 @@ function makeArpDispatcher() {
     portResolver,
     arpBuilder,
     frameMaterializer,
-    (node) => node?.data.ip,
+    addresses,
   );
 }
 

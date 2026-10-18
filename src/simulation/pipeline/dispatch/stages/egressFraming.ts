@@ -1,5 +1,6 @@
 import type { InFlightPacket } from '../../../../types/packets';
 import type { PacketHop } from '../../../../types/simulation';
+import { isPlaceholderMac } from '../../../AddressPlane';
 import { effectiveMtu, fragment, packetSizeBytes } from '../../../fragmentation';
 import {
   appendDropHop,
@@ -36,7 +37,7 @@ export async function runEgressFramingAndFragmentationStage(
       const extras: Partial<Omit<PacketHop, 'step' | 'event' | 'reason'>> = { nextHopMtu: mtu };
       const routerIp = hopBase.ingressInterfaceId
         ? ctx.deps.ifaceResolver.findLogicalById(ctx.current, hopBase.ingressInterfaceId)?.ipAddress
-        : ctx.deps.getEffectiveNodeIp(node);
+        : ctx.deps.addresses.nodeIp(node);
       if (
         routerIp &&
         !ctx.shared.options.suppressGeneratedIcmp &&
@@ -149,19 +150,18 @@ export async function runEgressFramingAndFragmentationStage(
       },
     });
   } else if (node.data.role === 'client' || node.data.role === 'server') {
-    ctx.senderIp = ctx.deps.getEffectiveNodeIp(node) ?? null;
+    ctx.senderIp = ctx.deps.addresses.nodeIp(node) ?? null;
     const resolvedSrcMac = ctx.deps.macResolver.resolveEndpointMac(ctx.current);
     ctx.workingPacket = ctx.deps.frameMaterializer.withFrameFcs({
       ...ctx.workingPacket,
       frame: {
         ...ctx.workingPacket.frame,
         srcMac:
-          resolvedSrcMac && ctx.deps.macResolver.isPlaceholderMac(ctx.workingPacket.frame.srcMac)
+          resolvedSrcMac && isPlaceholderMac(ctx.workingPacket.frame.srcMac)
             ? resolvedSrcMac
             : ctx.workingPacket.frame.srcMac,
         dstMac:
-          ctx.resolvedDstMac &&
-          ctx.deps.macResolver.isPlaceholderMac(ctx.workingPacket.frame.dstMac)
+          ctx.resolvedDstMac && isPlaceholderMac(ctx.workingPacket.frame.dstMac)
             ? ctx.resolvedDstMac
             : ctx.workingPacket.frame.dstMac,
       },

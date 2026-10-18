@@ -13,6 +13,7 @@ import type {
 } from '../types/transfer';
 import { isInSubnet, prefixLength } from '../utils/cidr';
 import { sha256Hex } from '../utils/hash';
+import { isPlaceholderMac, nodeOwnsIp } from './AddressPlane';
 import { deriveDeterministicMac } from './ForwardingPipeline';
 import type { SessionTracker } from './SessionTracker';
 
@@ -526,7 +527,7 @@ export class DataTransferController {
         const egressInterface = node.data.interfaces?.find(
           (iface) => iface.id === egressInterfaceId,
         );
-        if (egressInterface?.macAddress && !this.isPlaceholderMac(egressInterface.macAddress)) {
+        if (egressInterface?.macAddress && !isPlaceholderMac(egressInterface.macAddress)) {
           return egressInterface.macAddress;
         }
       }
@@ -615,7 +616,7 @@ export class DataTransferController {
 
       if (node.data.role !== 'switch') {
         fallback ??= node;
-        if (this.nodeOwnsIp(node, targetIp)) {
+        if (nodeOwnsIp(node, targetIp, this.deps.pipeline.getEffectiveNodeIp(node))) {
           return node;
         }
         continue;
@@ -632,20 +633,11 @@ export class DataTransferController {
     return fallback;
   }
 
-  private nodeOwnsIp(node: NetlabNode, ip: string): boolean {
-    const effectiveIp = this.deps.pipeline.getEffectiveNodeIp(node) ?? node.data.ip;
-    if (effectiveIp === ip) {
-      return true;
-    }
-
-    return (node.data.interfaces ?? []).some((iface) => iface.ipAddress === ip);
-  }
-
   private resolveNodeMac(nodeId: string, preferredIp?: string): string {
     const node = this.deps.pipeline.findNode(nodeId);
     const mac = node ? this.extractNodeMac(node, preferredIp) : null;
 
-    if (mac && !this.isPlaceholderMac(mac)) {
+    if (mac && !isPlaceholderMac(mac)) {
       return mac;
     }
 
@@ -656,7 +648,7 @@ export class DataTransferController {
     if (
       typeof node.data.mac === 'string' &&
       node.data.mac.length > 0 &&
-      !this.isPlaceholderMac(node.data.mac)
+      !isPlaceholderMac(node.data.mac)
     ) {
       return node.data.mac;
     }
@@ -693,10 +685,5 @@ export class DataTransferController {
     }
 
     return null;
-  }
-
-  private isPlaceholderMac(mac: string): boolean {
-    const normalized = mac.trim().toLowerCase();
-    return normalized === '00:00:00:00:00:01' || normalized === '00:00:00:00:00:02';
   }
 }

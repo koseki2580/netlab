@@ -11,6 +11,7 @@ import { computeIpv4Checksum } from '../../utils/checksum';
 import { bucketFlow, flowKeyFromPacket, hashFlow, hashString32 } from '../../utils/hashFlow';
 import { isIpv6Address } from '../../utils/ipv6';
 import { buildIpv4HeaderBytes } from '../../utils/packetLayout';
+import { addressViewOf, type AddressView } from '../../simulation/addressView';
 
 interface LogicalRouterInterface {
   id: string;
@@ -38,10 +39,12 @@ export class RouterForwarder implements Forwarder {
   private readonly topology: NetworkTopology;
   private readonly arpTable = new Map<string, string>();
   private readonly routerSeed: number;
+  private readonly addresses: AddressView;
 
   constructor(nodeId: string, topology: NetworkTopology) {
     this.nodeId = nodeId;
     this.topology = topology;
+    this.addresses = addressViewOf(topology);
     this.routerSeed = hashString32(nodeId, 0x81e);
     this.seedArpTable();
   }
@@ -161,13 +164,7 @@ export class RouterForwarder implements Forwarder {
   private ownerOfIpIsBehind(neighborNodeId: string, dstIp: string): boolean {
     return reachesFrom(this.topology, this.nodeId, neighborNodeId, (nodeId) => {
       const node = this.topology.nodes.find((candidate) => candidate.id === nodeId);
-      if (!node) return false;
-      if (node.data.ip === dstIp || node.data.runtimeIp === dstIp || node.data.ipv6 === dstIp) {
-        return true;
-      }
-      return (node.data.interfaces ?? []).some(
-        (iface) => iface.ipAddress === dstIp || iface.ipv6Address === dstIp,
-      );
+      return node !== undefined && this.addresses.ownsIp(node, dstIp);
     });
   }
 
@@ -187,15 +184,9 @@ export class RouterForwarder implements Forwarder {
               ...(iface.ipv6Address !== undefined ? [iface.ipv6Address] : []),
             ])
           : (neighborNode.data.interfaces ?? []).map((iface) => iface.ipAddress);
-      const neighborNodeIp = isIpv6Address(dstIp)
-        ? neighborNode.data.ipv6
-        : (neighborNode.data.runtimeIp ?? neighborNode.data.ip);
 
       if (nextHop === 'direct') {
-        if (neighborNodeIp === dstIp) return neighbor;
-        if (neighborInterfaceIps.includes(dstIp)) {
-          return neighbor;
-        }
+        if (this.addresses.ownsIp(neighborNode, dstIp)) return neighbor;
         if (neighborNode.data.role === 'switch' && this.ownerOfIpIsBehind(neighbor.nodeId, dstIp)) {
           return neighbor;
         }

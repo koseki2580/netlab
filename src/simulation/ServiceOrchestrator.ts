@@ -22,6 +22,7 @@ import type { DhcpLeaseState, DnsCache } from '../types/services';
 import type { Neighbor, PacketTrace } from '../types/simulation';
 import type { TcpConnection } from '../types/tcp';
 import type { NetlabNode, NetworkTopology } from '../types/topology';
+import { AddressPlane } from './AddressPlane';
 import type { PrecomputeOptions, PrecomputeResult } from './types';
 
 function isUdpDatagram(
@@ -64,11 +65,15 @@ export class ServiceOrchestrator {
   private readonly multicastTables = new Map<string, MulticastTable>();
   private readonly joinedGroups = new Map<string, Set<string>>();
   private readonly tcpConnections = new TcpConnectionTracker();
+  /** Every node's addresses, its DHCP leases included. */
+  readonly addresses: AddressPlane;
 
   constructor(
     private readonly topology: NetworkTopology,
     _hookEngine: HookEngine,
-  ) {}
+  ) {
+    this.addresses = new AddressPlane(topology, this);
+  }
 
   setPacketSender(packetSender: PacketSender): void {
     this.packetSender = packetSender;
@@ -275,7 +280,7 @@ export class ServiceOrchestrator {
       clientNodeId,
       hostname,
       this.topology,
-      this.runtimeNodeIps,
+      this.addresses,
       this.dhcpLeaseStates.get(clientNodeId)?.dnsServerIp,
     );
     if (!queryPacket) return null;
@@ -317,15 +322,11 @@ export class ServiceOrchestrator {
     failureState: FailureState = EMPTY_FAILURE_STATE,
     sessionId: string = crypto.randomUUID(),
   ): Promise<TcpHandshakeResult> {
-    const result = await new TcpOrchestrator(this.topology, this.requirePacketSender()).handshake(
-      clientNodeId,
-      serverNodeId,
-      srcPort,
-      dstPort,
-      sink,
-      failureState,
-      sessionId,
-    );
+    const result = await new TcpOrchestrator(
+      this.topology,
+      this.requirePacketSender(),
+      this.addresses,
+    ).handshake(clientNodeId, serverNodeId, srcPort, dstPort, sink, failureState, sessionId);
 
     if (result.success && result.connection) {
       this.tcpConnections.addConnection(result.connection);
@@ -351,11 +352,11 @@ export class ServiceOrchestrator {
       };
     }
 
-    const result = await new TcpOrchestrator(this.topology, this.requirePacketSender()).teardown(
-      connection,
-      sink,
-      failureState,
-    );
+    const result = await new TcpOrchestrator(
+      this.topology,
+      this.requirePacketSender(),
+      this.addresses,
+    ).teardown(connection, sink, failureState);
 
     if (result.success) {
       this.tcpConnections.removeConnection(connectionId);

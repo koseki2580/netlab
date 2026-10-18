@@ -8,6 +8,7 @@ import type { NetlabNode, NetworkTopology } from '../types/topology';
 import { ArpBuilder, FrameMaterializer, IcmpBuilder } from './pipeline/builders';
 import { ArpDispatcher, ForwardingLoop } from './pipeline/dispatch';
 import { InterfaceResolver, MacResolver, PortResolver } from './pipeline/resolvers';
+import type { AddressPlane } from './AddressPlane';
 import { ServiceOrchestrator } from './ServiceOrchestrator';
 import { LinkQueueRegistry } from './LinkQueueRegistry';
 import { TraceRecorder } from './TraceRecorder';
@@ -40,6 +41,8 @@ export class ForwardingPipeline {
   private readonly macResolver: MacResolver;
   private readonly icmpBuilder: IcmpBuilder;
   private readonly forwardingLoop: ForwardingLoop;
+  /** Every node's addresses, leases included; forwarders see the same plane. */
+  readonly addresses: AddressPlane;
   /**
    * Each router's NetFlow cache. It outlives a single trace: a flow's packets
    * and bytes add up send after send, as they do on a real exporter, until the
@@ -53,11 +56,10 @@ export class ForwardingPipeline {
     private readonly traceRecorder: TraceRecorder,
     private readonly services: ServiceOrchestrator,
   ) {
+    this.addresses = services.addresses;
     this.ifaceResolver = new InterfaceResolver(topology);
     const portResolver = new PortResolver(topology);
-    this.macResolver = new MacResolver(topology, this.ifaceResolver, (node) =>
-      this.getEffectiveNodeIp(node),
-    );
+    this.macResolver = new MacResolver(topology, this.ifaceResolver, this.addresses);
     this.icmpBuilder = new IcmpBuilder();
     const arpBuilder = new ArpBuilder();
     const frameMaterializer = new FrameMaterializer();
@@ -69,7 +71,7 @@ export class ForwardingPipeline {
       portResolver,
       arpBuilder,
       frameMaterializer,
-      (node) => this.getEffectiveNodeIp(node),
+      this.addresses,
     );
     this.forwardingLoop = new ForwardingLoop(
       topology,
@@ -81,7 +83,7 @@ export class ForwardingPipeline {
       this.icmpBuilder,
       frameMaterializer,
       arpDispatcher,
-      (node) => this.getEffectiveNodeIp(node),
+      this.addresses,
       (nodeId, excludeNodeId, failureState) =>
         this.getNeighbors(nodeId, excludeNodeId, failureState),
     );
@@ -102,8 +104,7 @@ export class ForwardingPipeline {
   }
 
   getEffectiveNodeIp(node: NetlabNode | null): string | undefined {
-    if (!node) return undefined;
-    return this.services.getRuntimeNodeIp(node.id) ?? node.data.ip;
+    return this.addresses.nodeIp(node);
   }
 
   getRouteTable(nodeId: string): readonly RouteEntry[] {
@@ -262,7 +263,7 @@ export class ForwardingPipeline {
       });
     }
 
-    const dstNode = this.macResolver.findNodeByIp(dstIp);
+    const dstNode = this.addresses.findOwner(dstIp);
     const requestPacket = this.icmpBuilder.buildEchoRequest(
       srcNodeId,
       dstNode?.id ?? dstIp,
@@ -313,7 +314,7 @@ export class ForwardingPipeline {
     }
 
     const canonicalDst = canonicalizeIpv6(dstIp);
-    const dstNode = this.macResolver.findNodeByIp(canonicalDst);
+    const dstNode = this.addresses.findOwner(canonicalDst);
     const requestPacket = this.icmpBuilder.buildIpv6EchoRequest(
       srcNodeId,
       dstNode?.id ?? canonicalDst,
@@ -342,7 +343,7 @@ export class ForwardingPipeline {
 
   async traceroute(srcNodeId: string, dstIp: string, maxHops = 30): Promise<PrecomputeResult[]> {
     const traces: PrecomputeResult[] = [];
-    const dstNode = this.macResolver.findNodeByIp(dstIp);
+    const dstNode = this.addresses.findOwner(dstIp);
 
     for (let ttl = 1; ttl <= maxHops; ttl++) {
       const traceResult = await this.ping(srcNodeId, dstIp, { ttl });

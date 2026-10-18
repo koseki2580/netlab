@@ -29,7 +29,7 @@ export function runDeliverToSelfStage(ctx: LoopContext): StageResult {
   if (
     ctx.workingPacket.dstNodeId === ctx.current &&
     node.data.role !== 'switch' &&
-    ctx.deps.macResolver.nodeOwnsIp(node, ipPacket.dstIp)
+    ctx.deps.addresses.ownsIp(node, ipPacket.dstIp)
   ) {
     const isFragmentedPacket =
       ipPacket.identification !== undefined &&
@@ -76,7 +76,7 @@ export function runDeliverToSelfStage(ctx: LoopContext): StageResult {
     return breakWith(ctx);
   }
 
-  // A group address belongs to no single host, so `nodeOwnsIp` above can never
+  // A group address belongs to no single host, so `ownsIp` above can never
   // match one. What decides a multicast datagram's fate at a host is whether
   // that host joined the group: a member accepts it, and everyone else on the
   // segment discards it. Without this the packet fell through to forwarding,

@@ -4,6 +4,7 @@ import { RouterForwarder } from '../layers/l3-network/RouterForwarder';
 import { SwitchForwarder } from '../layers/l2-datalink/SwitchForwarder';
 import { layerRegistry } from '../registry/LayerRegistry';
 import type { FailureState } from '../types/failure';
+import type { InFlightPacket } from '../types/packets';
 import type { DataTransferState } from '../types/transfer';
 import { assertDefined, getRequired } from '../utils/typedAccess';
 import { makeEngine } from './__fixtures__/helpers';
@@ -426,6 +427,38 @@ describe('DataTransferController', () => {
     const createPacket = packetSnapshotAtTraceStep(engine, chunkTraceId(chunk), 0);
 
     expect(createPacket.frame.srcMac).toBe(deriveDeterministicMac('client-1'));
+  });
+
+  // TC-822: an all-zero MAC means "not configured", as it does everywhere else
+  // in the engine, so the frame the controller hands to the engine already
+  // carries the sender's derived MAC.
+  it('TC-822: treats an all-zero sender MAC as unconfigured', async () => {
+    const topology = singleRouterTopology();
+    const engine = makeEngine({
+      ...topology,
+      nodes: topology.nodes.map((node) =>
+        node.id === 'client-1'
+          ? { ...node, data: { ...node.data, mac: '00:00:00:00:00:00' } }
+          : node,
+      ),
+    });
+    const handedToEngine: InFlightPacket[] = [];
+    const deps = dataTransferDeps(engine);
+    const controller = new DataTransferController({
+      ...deps,
+      engine: {
+        getRuntimeNodeIp: (nodeId) => engine.getRuntimeNodeIp(nodeId),
+        getState: () => engine.getState(),
+        send: (packet, failureState) => {
+          handedToEngine.push(packet);
+          return engine.send(packet, failureState);
+        },
+      },
+    });
+
+    await controller.startTransfer('client-1', 'server-1', 'zero-mac', { chunkDelay: 0 });
+
+    expect(handedToEngine[0]?.frame.srcMac).toBe(deriveDeterministicMac('client-1'));
   });
 
   it('reassembly remains incomplete when a dropped chunk prevents checksum verification', async () => {

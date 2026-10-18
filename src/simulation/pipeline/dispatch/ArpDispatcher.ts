@@ -1,12 +1,13 @@
 import type { FailureState } from '../../../types/failure';
 import type { InFlightPacket } from '../../../types/packets';
 import type { PacketHop } from '../../../types/simulation';
-import type { NetlabNode, NetworkTopology } from '../../../types/topology';
+import type { NetworkTopology } from '../../../types/topology';
 import { isInSubnet } from '../../../utils/cidr';
 import { deriveDeterministicMac } from '../../../utils/network';
 import type { TraceRecorder } from '../../TraceRecorder';
 import type { ArpBuilder, FrameMaterializer } from '../builders';
 import type { InterfaceResolver, MacResolver, PortResolver } from '../resolvers';
+import type { AddressPlane } from '../../AddressPlane';
 import { bestRoute } from './routingHelpers';
 
 const BROADCAST_IP = '255.255.255.255';
@@ -27,7 +28,7 @@ export class ArpDispatcher {
     private readonly portResolver: PortResolver,
     private readonly arpBuilder: ArpBuilder,
     private readonly frameMaterializer: FrameMaterializer,
-    private readonly getEffectiveNodeIp: (node: NetlabNode | null) => string | undefined,
+    private readonly addresses: AddressPlane,
   ) {}
 
   resolveTargetInfo(
@@ -63,7 +64,7 @@ export class ArpDispatcher {
         failureState,
         overrideNextHop,
       );
-      if (!targetNode || !this.macResolver.nodeOwnsIp(targetNode, targetIp)) return null;
+      if (!targetNode || !this.addresses.ownsIp(targetNode, targetIp)) return null;
 
       const egressInterface =
         this.ifaceResolver.findLogicalById(currentNodeId, egressInterfaceId) ??
@@ -97,7 +98,7 @@ export class ArpDispatcher {
     );
     if (!targetNode) return null;
 
-    const senderIp = this.getEffectiveNodeIp(currentNode) ?? '';
+    const senderIp = this.addresses.nodeIp(currentNode) ?? '';
     let targetIp = '';
 
     if (targetNode.data.role === 'router') {
@@ -109,10 +110,10 @@ export class ArpDispatcher {
         );
       targetIp = gatewayInterface?.ipAddress ?? '';
     } else if (targetNode.data.role === 'client' || targetNode.data.role === 'server') {
-      targetIp = this.getEffectiveNodeIp(targetNode) ?? '';
+      targetIp = this.addresses.nodeIp(targetNode) ?? '';
     }
 
-    if (!targetIp || !this.macResolver.nodeOwnsIp(targetNode, targetIp)) return null;
+    if (!targetIp || !this.addresses.ownsIp(targetNode, targetIp)) return null;
 
     return {
       targetIp,

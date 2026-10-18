@@ -13,6 +13,7 @@ import { FlowCollector } from '../../../../observability/FlowCollector';
 import type { NetflowExporter } from '../../../../observability/NetflowExporter';
 import type { SflowSampler } from '../../../../observability/SflowSampler';
 import type { LinkQueueRegistry } from '../../../LinkQueueRegistry';
+import type { AddressPlane } from '../../../AddressPlane';
 import type { ServiceOrchestrator } from '../../../ServiceOrchestrator';
 import type { TraceRecorder } from '../../../TraceRecorder';
 import type { FrameMaterializer, IcmpBuilder } from '../../builders';
@@ -55,7 +56,7 @@ export interface ForwardingStageDependencies {
   icmpBuilder: IcmpBuilder;
   frameMaterializer: FrameMaterializer;
   arpDispatcher: ArpDispatcher;
-  getEffectiveNodeIp: (node: NetlabNode | null) => string | undefined;
+  addresses: AddressPlane;
   getNeighborsFn: (
     currentNodeId: string,
     excludeNodeId: string | null,

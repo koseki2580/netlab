@@ -1,5 +1,6 @@
 import { layerRegistry } from '../../../../registry/LayerRegistry';
 import type { PacketHop } from '../../../../types/simulation';
+import { topologyWithAddressView } from '../../../addressView';
 import { buildRoutingDecision } from '../routingHelpers';
 import {
   appendDropHop,
@@ -20,7 +21,10 @@ export async function runForwarderDispatchStage(ctx: LoopContext): Promise<Stage
   if (node.data.role === 'router' || node.data.role === 'switch') {
     const forwarderFactory = layerRegistry.getForwarder(node.data.layerId);
     if (forwarderFactory) {
-      const forwarder = forwarderFactory(ctx.current, ctx.deps.topology);
+      const forwarder = forwarderFactory(
+        ctx.current,
+        topologyWithAddressView(ctx.deps.topology, ctx.deps.addresses),
+      );
       const decision = await forwarder.receive(
         ctx.workingPacket,
         ctx.workingPacket.ingressPortId ?? '',
@@ -45,7 +49,7 @@ export async function runForwarderDispatchStage(ctx: LoopContext): Promise<Stage
             ? ctx.deps.ifaceResolver.findLogicalById(ctx.current, hopBase.ingressInterfaceId)
                 ?.ipAddress
             : undefined;
-          const responseSourceIp = routerIp ?? ctx.deps.getEffectiveNodeIp(node);
+          const responseSourceIp = routerIp ?? ctx.deps.addresses.nodeIp(node);
           if (
             responseSourceIp &&
             ctx.deps.icmpBuilder.shouldEmitGeneratedIcmp(ctx.workingPacket.frame.payload.srcIp)

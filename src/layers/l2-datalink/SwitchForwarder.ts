@@ -3,6 +3,7 @@ import { IGMP_PROTOCOL, isLinkLocalMulticast } from '../../types/multicast';
 import type { IgmpMessage, InFlightPacket } from '../../types/packets';
 import type { NetlabEdge, NetworkTopology, SwitchPort } from '../../types/topology';
 import { getRequired } from '../../utils';
+import { addressViewOf } from '../../simulation/addressView';
 import { reachesFrom } from '../reachability';
 import { ipToMulticastMac, isMulticastMac } from '../../utils/multicastMac';
 import { MulticastTable } from './MulticastTable';
@@ -102,18 +103,13 @@ export class SwitchForwarder implements Forwarder {
       }
     }
 
+    const addresses = addressViewOf(this.topology);
     for (const neighbor of neighbors) {
       if (!this.isLinkUsable(neighbor.edgeId)) continue;
       const node = this.topology.nodes.find((candidate) => candidate.id === neighbor.nodeId);
       if (!node) continue;
       if (packet.dstNodeId && node.id === packet.dstNodeId) return neighbor;
-      if (
-        dstIp &&
-        (node.data.ip === dstIp ||
-          (node.data.interfaces ?? []).some((iface) => iface.ipAddress === dstIp))
-      ) {
-        return neighbor;
-      }
+      if (dstIp && addresses.ownsIp(node, dstIp)) return neighbor;
     }
 
     // Nothing here is the destination, so the frame has to be sent on. A real

@@ -11,6 +11,7 @@ import {
   generateISN,
 } from './tcpPacketBuilder';
 import { TcpCongestionControl } from './TcpCongestionControl';
+import { addressViewOf, primaryNodeIp, type AddressView } from '../../simulation/addressView';
 
 const DEFAULT_TCP_MSS_BYTES = 1460;
 
@@ -55,6 +56,7 @@ export class TcpOrchestrator {
   constructor(
     private readonly topology: NetworkTopology,
     private readonly sender: TcpPacketSender,
+    private readonly addresses: AddressView = addressViewOf(topology),
   ) {}
 
   async handshake(
@@ -280,18 +282,11 @@ export class TcpOrchestrator {
   }
 
   private resolveNodeIp(nodeId: string): string | null {
-    const node =
+    return primaryNodeIp(
+      this.addresses,
       this.sender.findNode(nodeId) ??
-      this.topology.nodes.find((candidate) => candidate.id === nodeId) ??
-      null;
-    if (!node) {
-      return null;
-    }
-
-    if (typeof node.data.ip === 'string' && node.data.ip.length > 0) {
-      return node.data.ip;
-    }
-
-    return node.data.interfaces?.[0]?.ipAddress ?? null;
+        this.topology.nodes.find((candidate) => candidate.id === nodeId) ??
+        null,
+    );
   }
 }

@@ -1,7 +1,7 @@
 import type { FailureState } from '../../../types/failure';
 import { isIpv6Packet, type InFlightPacket } from '../../../types/packets';
 import type { Neighbor, ObservabilityTrace, PacketHop } from '../../../types/simulation';
-import type { NetlabNode, NetworkTopology } from '../../../types/topology';
+import type { NetworkTopology } from '../../../types/topology';
 import { FlowCollector } from '../../../observability/FlowCollector';
 import { NetflowExporter } from '../../../observability/NetflowExporter';
 import { SflowSampler } from '../../../observability/SflowSampler';
@@ -14,6 +14,7 @@ import type { TraceRecorder } from '../../TraceRecorder';
 import type { PrecomputeOptions } from '../../types';
 import type { FrameMaterializer, IcmpBuilder } from '../builders';
 import type { InterfaceResolver, MacResolver, PortResolver } from '../resolvers';
+import { isPlaceholderMac, type AddressPlane } from '../../AddressPlane';
 import type { ArpDispatcher } from './ArpDispatcher';
 import {
   MAX_HOPS,
@@ -68,7 +69,7 @@ export class ForwardingLoop {
     private readonly icmpBuilder: IcmpBuilder,
     private readonly frameMaterializer: FrameMaterializer,
     private readonly arpDispatcher: ArpDispatcher,
-    private readonly getEffectiveNodeIp: (node: NetlabNode | null) => string | undefined,
+    private readonly addresses: AddressPlane,
     private readonly getNeighborsFn: (
       currentNodeId: string,
       excludeNodeId: string | null,
@@ -79,22 +80,18 @@ export class ForwardingLoop {
   seedArpCache(cache: Map<string, string>): void {
     for (const node of this.topology.nodes) {
       for (const iface of this.ifaceResolver.getLogical(node)) {
-        if (
-          iface.ipAddress &&
-          iface.macAddress &&
-          !this.macResolver.isPlaceholderMac(iface.macAddress)
-        ) {
+        if (iface.ipAddress && iface.macAddress && !isPlaceholderMac(iface.macAddress)) {
           cache.set(iface.ipAddress, iface.macAddress);
         }
       }
 
-      const effectiveIp = this.getEffectiveNodeIp(node);
+      const effectiveIp = this.addresses.nodeIp(node);
       if (
         typeof effectiveIp === 'string' &&
         effectiveIp &&
         typeof node.data.mac === 'string' &&
         node.data.mac &&
-        !this.macResolver.isPlaceholderMac(node.data.mac)
+        !isPlaceholderMac(node.data.mac)
       ) {
         cache.set(effectiveIp, node.data.mac);
       }
@@ -192,11 +189,11 @@ export class ForwardingLoop {
         frame: {
           ...workingPacket.frame,
           srcMac:
-            resolvedSrcMac && this.macResolver.isPlaceholderMac(workingPacket.frame.srcMac)
+            resolvedSrcMac && isPlaceholderMac(workingPacket.frame.srcMac)
               ? resolvedSrcMac
               : workingPacket.frame.srcMac,
           dstMac:
-            resolvedDstMac && this.macResolver.isPlaceholderMac(workingPacket.frame.dstMac)
+            resolvedDstMac && isPlaceholderMac(workingPacket.frame.dstMac)
               ? resolvedDstMac
               : workingPacket.frame.dstMac,
         },
@@ -486,7 +483,7 @@ export class ForwardingLoop {
       icmpBuilder: this.icmpBuilder,
       frameMaterializer: this.frameMaterializer,
       arpDispatcher: this.arpDispatcher,
-      getEffectiveNodeIp: this.getEffectiveNodeIp,
+      addresses: this.addresses,
       getNeighborsFn: this.getNeighborsFn,
       appendLinkQosTrace: (
         hopBase,

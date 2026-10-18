@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { AddressPlane } from '../simulation/AddressPlane';
 import { buildDnsQuery, handleDnsResponse } from './DnsClient';
 import type { InFlightPacket } from '../types/packets';
 import type { NetworkTopology } from '../types/topology';
@@ -74,7 +75,9 @@ describe('DnsClient', () => {
       'client-1',
       'web.example.com',
       TOPOLOGY,
-      new Map([['client-1', '192.168.1.150']]),
+      new AddressPlane(TOPOLOGY, {
+        getRuntimeNodeIp: (nodeId) => (nodeId === 'client-1' ? '192.168.1.150' : null),
+      }),
     );
 
     expect(query?.frame.payload.srcIp).toBe('192.168.1.150');

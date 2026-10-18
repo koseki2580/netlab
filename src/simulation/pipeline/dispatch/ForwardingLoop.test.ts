@@ -5,6 +5,7 @@ import type { InFlightPacket } from '../../../types/packets';
 import type { PacketHop } from '../../../types/simulation';
 import type { NetworkTopology } from '../../../types/topology';
 import { ServiceOrchestrator } from '../../ServiceOrchestrator';
+import { AddressPlane } from '../../AddressPlane';
 import { TraceRecorder } from '../../TraceRecorder';
 import { LinkQueueRegistry } from '../../LinkQueueRegistry';
 import { makePacket } from '../../__fixtures__/helpers';
@@ -20,7 +21,8 @@ import { ForwardingLoop } from './ForwardingLoop';
 
 function makeForwardingLoop(topology: NetworkTopology) {
   const ifaceResolver = new InterfaceResolver(topology);
-  const macResolver = new MacResolver(topology, ifaceResolver, (node) => node?.data.ip);
+  const addresses = new AddressPlane(topology);
+  const macResolver = new MacResolver(topology, ifaceResolver, addresses);
   const portResolver = new PortResolver(topology);
   const icmpBuilder = new IcmpBuilder();
   const frameMaterializer = new FrameMaterializer();
@@ -35,7 +37,7 @@ function makeForwardingLoop(topology: NetworkTopology) {
     portResolver,
     arpBuilder,
     frameMaterializer,
-    (node) => node?.data.ip,
+    addresses,
   );
 
   return new ForwardingLoop(
@@ -48,7 +50,7 @@ function makeForwardingLoop(topology: NetworkTopology) {
     icmpBuilder,
     frameMaterializer,
     arpDispatcher,
-    (node) => node?.data.ip,
+    addresses,
     (nodeId, excludeNodeId, failureState) =>
       ifaceResolver.getNeighbors(nodeId, excludeNodeId ?? null, failureState),
   );

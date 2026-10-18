@@ -194,3 +194,173 @@ describe('SimulationEngine DHCP/DNS services', () => {
     expect(engine.getState().traces.map((trace) => trace.label)).toEqual(['HTTP GET']);
   });
 });
+
+describe('SimulationEngine TCP from a DHCP-addressed client', () => {
+  // TC-820: a client that took its address from DHCP opens a connection from
+  // the address it was leased, not from whatever its static fields hold.
+  it('TC-820: the handshake uses the leased address on every segment', async () => {
+    const engine = makeEngine();
+    await expect(engine.simulateDhcp('dhcp-client')).resolves.toBe(true);
+    const leased = engine.getRuntimeNodeIp('dhcp-client');
+    expect(leased).toBe('192.168.1.101');
+
+    const result = await engine.tcpConnect('dhcp-client', 'web-server', 49152, 80);
+
+    expect(result.success).toBe(true);
+    expect(result.connection?.srcIp).toBe(leased);
+    expect(result.traces).toHaveLength(3);
+    for (const trace of result.traces) {
+      expect(trace.status).toBe('delivered');
+    }
+    const segmentIps = engine
+      .getState()
+      .traces.slice(-3)
+      .map((trace) => trace.hops[0]?.srcIp);
+    expect(segmentIps).toEqual([leased, '192.168.1.10', leased]);
+  });
+});
+
+// A router between two LANs. The server-side switch is cabled first, so a
+// router that cannot see the leased address falls back to it and sends the
+// reply back the wrong way.
+function routedDhcpTopology(): NetworkTopology {
+  const node = (id: string, role: string, data: Record<string, unknown> = {}) => ({
+    id,
+    type: role,
+    position: { x: 0, y: 0 },
+    data: {
+      label: id,
+      role,
+      layerId: role === 'router' ? 'l3' : role === 'switch' ? 'l2' : 'l7',
+      ...data,
+    },
+  });
+  const ports = (prefix: string) =>
+    [0, 1, 2].map((index) => ({
+      id: `${prefix}-p${index}`,
+      name: `fa0/${index}`,
+      macAddress: `00:00:00:20:0${prefix === 'lan' ? 1 : 2}:0${index}`,
+    }));
+  return {
+    nodes: [
+      node('pc', 'client', { dhcpClient: { enabled: true } }),
+      node('sw-lan', 'switch', { ports: ports('lan') }),
+      node('dhcp', 'server', {
+        ip: '192.168.1.2',
+        dhcpServer: {
+          leasePool: '192.168.1.100/30',
+          subnetMask: '255.255.255.0',
+          defaultGateway: '192.168.1.1',
+          leaseTime: 86400,
+        },
+      }),
+      node('r1', 'router', {
+        interfaces: [
+          {
+            id: 'r1-lan',
+            name: 'g0/0',
+            ipAddress: '192.168.1.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:01',
+          },
+          {
+            id: 'r1-wan',
+            name: 'g0/1',
+            ipAddress: '10.0.0.1',
+            prefixLength: 24,
+            macAddress: '00:00:00:01:00:02',
+          },
+        ],
+      }),
+      node('sw-srv', 'switch', { ports: ports('srv') }),
+      node('web', 'server', {
+        ip: '10.0.0.10',
+        staticRoutes: [{ destination: '0.0.0.0/0', nextHop: '10.0.0.1' }],
+      }),
+    ] as NetworkTopology['nodes'],
+    edges: [
+      {
+        id: 'e-srv',
+        source: 'r1',
+        target: 'sw-srv',
+        sourceHandle: 'r1-wan',
+        targetHandle: 'srv-p0',
+      },
+      {
+        id: 'e-lan',
+        source: 'r1',
+        target: 'sw-lan',
+        sourceHandle: 'r1-lan',
+        targetHandle: 'lan-p0',
+      },
+      { id: 'e-pc', source: 'pc', target: 'sw-lan', targetHandle: 'lan-p1' },
+      { id: 'e-dhcp', source: 'sw-lan', target: 'dhcp', sourceHandle: 'lan-p2' },
+      { id: 'e-web', source: 'sw-srv', target: 'web', sourceHandle: 'srv-p1' },
+    ],
+    areas: [],
+    routeTables: new Map([
+      [
+        'r1',
+        [
+          {
+            destination: '192.168.1.0/24',
+            nextHop: 'direct',
+            metric: 0,
+            protocol: 'static',
+            adminDistance: 0,
+            nodeId: 'r1',
+          },
+          {
+            destination: '10.0.0.0/24',
+            nextHop: 'direct',
+            metric: 0,
+            protocol: 'static',
+            adminDistance: 0,
+            nodeId: 'r1',
+          },
+        ],
+      ],
+    ]) as NetworkTopology['routeTables'],
+  };
+}
+
+describe('SimulationEngine routing to a DHCP-addressed client', () => {
+  // TC-821: a router sends a reply toward the LAN where the leased address
+  // lives, not toward whichever switch happens to be cabled first.
+  it('TC-821: the server reply crosses the router back to the leased address', async () => {
+    const engine = new SimulationEngine(routedDhcpTopology(), new HookEngine());
+    await expect(engine.simulateDhcp('pc')).resolves.toBe(true);
+    const leased = engine.getRuntimeNodeIp('pc');
+
+    const result = await engine.tcpConnect('pc', 'web', 49152, 80);
+
+    expect(result.traces.map((trace) => trace.status)).toEqual([
+      'delivered',
+      'delivered',
+      'delivered',
+    ]);
+    expect(result.connection?.srcIp).toBe(leased);
+    const reply = result.traces[1];
+    const replyHops = reply?.hops ?? [];
+    expect(replyHops[replyHops.length - 1]?.nodeId).toBe('pc');
+  });
+});
+
+describe('Leases stay inside the engine that granted them', () => {
+  // TC-823: two engines built from one topology object each route by their own
+  // leases; one engine's DHCP lease is invisible to the other's routers.
+  it('TC-823: a router in another engine on the same topology does not see the lease', async () => {
+    const shared = routedDhcpTopology();
+    const withoutLease = new SimulationEngine(shared, new HookEngine());
+    const withLease = new SimulationEngine(shared, new HookEngine());
+    await expect(withLease.simulateDhcp('pc')).resolves.toBe(true);
+    const leased = withLease.getRuntimeNodeIp('pc') ?? '';
+    expect(withoutLease.getRuntimeNodeIp('pc')).toBeNull();
+
+    const reached = await withLease.ping('web', leased);
+    const notReached = await withoutLease.ping('web', leased);
+
+    expect(reached.hops.some((hop) => hop.nodeId === 'pc')).toBe(true);
+    expect(notReached.hops.some((hop) => hop.nodeId === 'pc')).toBe(false);
+  });
+});

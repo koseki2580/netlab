@@ -1,5 +1,6 @@
 import type { DnsMessage, InFlightPacket } from '../types/packets';
 import type { NetworkTopology } from '../types/topology';
+import type { AddressPlane } from '../simulation/AddressPlane';
 import { buildUdpPacket } from '../layers/l4-transport/udpPacketBuilder';
 import { deriveDeterministicMac } from '../utils/network';
 
@@ -18,7 +19,7 @@ export function buildDnsQuery(
   clientNodeId: string,
   hostname: string,
   topology: NetworkTopology,
-  runtimeNodeIps: Map<string, string>,
+  addresses: Pick<AddressPlane, 'nodeIp'>,
   preferredDnsServerIp?: string,
 ): InFlightPacket | null {
   const client = findNode(topology, clientNodeId);
@@ -34,7 +35,7 @@ export function buildDnsQuery(
     topology.nodes.find((node) => node.data.dnsServer != null && typeof node.data.ip === 'string');
   if (!dnsServer || typeof dnsServer.data.ip !== 'string') return null;
 
-  const srcIp = runtimeNodeIps.get(clientNodeId) ?? client.data.ip;
+  const srcIp = addresses.nodeIp(client);
   if (!srcIp) return null;
 
   const transactionId = Math.floor(Math.random() * 0xffff);
