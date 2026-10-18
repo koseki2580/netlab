@@ -482,6 +482,10 @@ export const simulation: Catalog = {
   'simulation.canvasLoad.body':
     '図を描くためのプログラムをダウンロードできませんでした。接続を確かめて、もう一度試してください。',
   'simulation.canvasLoad.retry': '再試行',
+  'simulation.learningSurfaceLoad.heading': '学習ツールを読み込めませんでした',
+  'simulation.learningSurfaceLoad.body':
+    'サンドボックスとチュートリアルのプログラムをダウンロードできませんでした。接続を確かめて、もう一度試してください。',
+  'simulation.learningSurfaceLoad.retry': '再試行',
   'simulation.brief.eyebrow': '説明 · シナリオ',
   'simulation.brief.prereq': '前提',
   'simulation.brief.watchFor': '注目点',

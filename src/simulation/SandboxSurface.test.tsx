@@ -2,7 +2,7 @@
 
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HookEngine } from '../hooks/HookEngine';
 import { NetlabContext } from '../components/NetlabContext';
 import { SimulationProvider } from './SimulationContext';
@@ -57,7 +57,7 @@ function setMatchMedia(narrow: boolean) {
   return mql as MediaQueryList & { __setMatches: (matches: boolean) => void };
 }
 
-function renderSurface(options: RenderOptions = {}) {
+async function renderSurface(options: RenderOptions = {}) {
   if (!container) {
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -73,7 +73,8 @@ function renderSurface(options: RenderOptions = {}) {
     });
   }
 
-  act(() => {
+  // The sandbox surface is a lazily loaded chunk: let it resolve inside act.
+  await act(async () => {
     root?.render(
       <NetlabContext.Provider
         value={{
@@ -91,6 +92,10 @@ function renderSurface(options: RenderOptions = {}) {
     );
   });
 }
+
+beforeAll(async () => {
+  await import('../components/sandbox/LearningSurfacesInner');
+});
 
 beforeEach(() => {
   actEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
@@ -110,9 +115,9 @@ afterEach(() => {
 });
 
 describe('SandboxSurface layout', () => {
-  it('mounts as a flex row with a canvas-slot and sandbox-panel sibling in wide mode', () => {
+  it('mounts as a flex row with a canvas-slot and sandbox-panel sibling in wide mode', async () => {
     setMatchMedia(false);
-    renderSurface({ viewportWidth: 1280 });
+    await renderSurface({ viewportWidth: 1280 });
 
     const surface = container?.querySelector<HTMLElement>('[data-testid="sandbox-surface"]');
     expect(surface).not.toBeNull();
@@ -132,9 +137,9 @@ describe('SandboxSurface layout', () => {
     expect(panel?.previousElementSibling).toBe(slot ?? null);
   });
 
-  it('mounts as a flex column with a bottom drawer panel when matchMedia matches narrow', () => {
+  it('mounts as a flex column with a bottom drawer panel when matchMedia matches narrow', async () => {
     setMatchMedia(true);
-    renderSurface({ viewportWidth: 800 });
+    await renderSurface({ viewportWidth: 800 });
 
     const surface = container?.querySelector<HTMLElement>('[data-testid="sandbox-surface"]');
     expect(surface?.getAttribute('data-layout-mode')).toBe('drawer');
@@ -146,9 +151,9 @@ describe('SandboxSurface layout', () => {
     expect(panel?.style.width).toBe('100%');
   });
 
-  it('flips layout-mode when the media query change fires', () => {
+  it('flips layout-mode when the media query change fires', async () => {
     const mql = setMatchMedia(false);
-    renderSurface({ viewportWidth: 1280 });
+    await renderSurface({ viewportWidth: 1280 });
 
     const surface = () => container?.querySelector<HTMLElement>('[data-testid="sandbox-surface"]');
     expect(surface()?.getAttribute('data-layout-mode')).toBe('wide');

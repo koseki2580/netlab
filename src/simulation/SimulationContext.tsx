@@ -9,26 +9,11 @@ import {
   type ReactNode,
 } from 'react';
 import { useNetlabContext } from '../components/NetlabContext';
-import { TutorialOverlay } from '../components/tutorial/TutorialOverlay';
-import {
-  BeforeAfterView,
-  DiffTimeline,
-  SandboxActiveEditor,
-  SandboxErrorBoundary,
-  SandboxIntroOverlay,
-  SandboxPanel,
-} from '../components/sandbox';
+import { LearningSurfaces } from '../components/sandbox/LearningSurfaces';
 import { NetlabError } from '../errors';
 import type { InFlightPacket } from '../types/packets';
 import type { DhcpLeaseState, DnsCache } from '../types/services';
 import type { SimulationState } from '../types/simulation';
-import { SandboxIntroProvider } from '../sandbox/intro/SandboxIntroProvider';
-import type { SandboxIntroId } from '../sandbox/intro/introRegistry';
-import { TutorialProvider } from '../tutorials/TutorialContext';
-import { SandboxProvider, useSandbox } from '../sandbox/SandboxContext';
-import { AssessmentProvider } from '../assessments/AssessmentProvider';
-import { EmbedBridge } from '../embed/EmbedBridge';
-import { scenarioRegistry } from '../scenarios/ScenarioRegistry';
 import { useOptionalFailure } from './FailureContext';
 import { SimulationEngine } from './SimulationEngine';
 
@@ -60,91 +45,14 @@ export interface SimulationProviderProps {
   useMainThread?: boolean;
 }
 
-const NARROW_VIEWPORT_QUERY = '(max-width: 900px)';
-
-function useSandboxLayoutMode(): 'wide' | 'drawer' {
-  const [mode, setMode] = useState<'wide' | 'drawer'>(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-      return 'wide';
-    }
-    return window.matchMedia(NARROW_VIEWPORT_QUERY).matches ? 'drawer' : 'wide';
-  });
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
-    const mql = window.matchMedia(NARROW_VIEWPORT_QUERY);
-    const onChange = (event: MediaQueryListEvent) => {
-      setMode(event.matches ? 'drawer' : 'wide');
-    };
-    if (typeof mql.addEventListener === 'function') {
-      mql.addEventListener('change', onChange);
-      return () => mql.removeEventListener('change', onChange);
-    }
-    mql.addListener(onChange);
-    return () => mql.removeListener(onChange);
-  }, []);
-
-  return mode;
-}
-
-function SandboxSurface({
-  children,
-  introOverlay,
-}: {
-  readonly children: ReactNode;
-  readonly introOverlay?: ReactNode;
-}) {
-  const sandbox = useSandbox();
-  const layoutMode = useSandboxLayoutMode();
-  const isDrawer = layoutMode === 'drawer';
-
-  return (
-    <div
-      data-testid="sandbox-surface"
-      data-layout-mode={layoutMode}
-      style={{
-        position: 'relative',
-        height: '100%',
-        minHeight: 0,
-        display: 'flex',
-        flexDirection: isDrawer ? 'column' : 'row',
-      }}
-    >
-      <div
-        data-testid="sandbox-canvas-slot"
-        style={{
-          flex: 1,
-          position: 'relative',
-          minWidth: 0,
-          minHeight: 0,
-        }}
-      >
-        {sandbox.mode === 'beta' ? <BeforeAfterView /> : children}
-        {introOverlay}
-        <SandboxActiveEditor />
-        <DiffTimeline />
-      </div>
-      <SandboxPanel layoutMode={layoutMode} />
-      <EmbedBridge />
-    </div>
-  );
-}
-
 export function SimulationProvider({
   children,
   autoRecompute = false,
   animationSpeed,
   useMainThread = false,
 }: SimulationProviderProps) {
-  const {
-    topology,
-    hookEngine,
-    routeTable,
-    tutorialId,
-    sandboxEnabled,
-    sandboxIntroId,
-    assessmentScenarioId,
-  } = useNetlabContext();
+  const { topology, hookEngine, tutorialId, sandboxEnabled, assessmentScenarioId } =
+    useNetlabContext();
   const failureCtx = useOptionalFailure();
 
   const engine = useMemo(
@@ -274,52 +182,14 @@ export function SimulationProvider({
     ],
   );
 
-  const effectiveSandboxEnabled = sandboxEnabled || assessmentScenarioId !== undefined;
-  const sandboxSurface = sandboxIntroId ? (
-    <SandboxIntroProvider introId={sandboxIntroId as SandboxIntroId}>
-      <SandboxSurface introOverlay={<SandboxIntroOverlay />}>{children}</SandboxSurface>
-    </SandboxIntroProvider>
-  ) : (
-    <SandboxSurface>{children}</SandboxSurface>
-  );
-
-  const assessmentSurface = assessmentScenarioId ? (
-    <AssessmentProvider assessmentScenarioId={assessmentScenarioId}>
-      {sandboxSurface}
-    </AssessmentProvider>
-  ) : (
-    sandboxSurface
-  );
-  const assessmentRubric = assessmentScenarioId
-    ? scenarioRegistry.get(assessmentScenarioId)?.assessmentRubric
-    : undefined;
-
-  const content = effectiveSandboxEnabled ? (
-    <SandboxErrorBoundary>
-      <SandboxProvider {...(assessmentRubric ? { assessmentRubric } : {})}>
-        {assessmentSurface}
-      </SandboxProvider>
-    </SandboxErrorBoundary>
-  ) : (
-    children
-  );
+  // The learning surfaces (sandbox, intro, assessment, tutorial, embed) are a
+  // lazily loaded module: only consumers that turn one on pay for its UI.
+  const hasLearningSurface =
+    Boolean(tutorialId || sandboxEnabled) || assessmentScenarioId !== undefined;
 
   return (
     <SimulationContext.Provider value={value}>
-      {tutorialId ? (
-        <TutorialProvider
-          tutorialId={tutorialId}
-          engine={engine}
-          simulationState={state}
-          routeTable={routeTable}
-          hookEngine={hookEngine}
-        >
-          <TutorialOverlay />
-          {content}
-        </TutorialProvider>
-      ) : (
-        content
-      )}
+      {hasLearningSurface ? <LearningSurfaces>{children}</LearningSurfaces> : children}
     </SimulationContext.Provider>
   );
 }

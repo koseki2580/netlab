@@ -484,6 +484,10 @@ export const simulation: Catalog = {
   'simulation.canvasLoad.body':
     'The code for the diagram engine failed to download. Check your connection and try again.',
   'simulation.canvasLoad.retry': 'Retry',
+  'simulation.learningSurfaceLoad.heading': 'Learning tools could not be loaded',
+  'simulation.learningSurfaceLoad.body':
+    'The code for the sandbox and tutorial tools failed to download. Check your connection and try again.',
+  'simulation.learningSurfaceLoad.retry': 'Retry',
   'simulation.brief.eyebrow': 'brief · scenario',
   'simulation.brief.prereq': 'Prereq',
   'simulation.brief.watchFor': 'Watch for',

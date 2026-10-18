@@ -75,7 +75,7 @@
   },
   {
     "name": "ui:simulation-context",
-    "path": "dist/SimulationContext-*.mjs",
+    "path": "dist/sandbox-mode-*.mjs",
     "limit": "250 kB",
     "gzip": true
   },
