@@ -106,11 +106,18 @@ jobs:
           node-version: '24'
           cache: 'npm'
       - run: npm ci
+      # PRs run chromium only; firefox and webkit run in the nightly workflow.
       - run: npx playwright install --with-deps chromium
-      - run: MODE=test npm run e2e
-      - if: failure()
+      - name: E2E (chromium)
+        run: npm run e2e -- --project=chromium
+      - name: E2E summary
+        if: always()
+        run: node scripts/e2e-summary.mjs test-results/junit.xml "E2E (chromium)"
+      - if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: playwright-report/
+          path: |
+            playwright-report/
+            test-results/junit.xml
           retention-days: 7

@@ -95,6 +95,7 @@
     "size:delta": "node scripts/size-limit-delta.mjs",
     "size:comment": "node scripts/post-pr-comment.mjs",
     "i18n:check": "node scripts/i18n-check.mjs",
+    "tc:check": "node scripts/tc-check.mjs",
     "soak:test": "node scripts/soak-test.mjs",
     "changelog:gen": "node scripts/changelog-gen.mjs",
     "bench:forwarding": "node scripts/bench-forwarding.mjs",

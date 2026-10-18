@@ -25,6 +25,7 @@ Developer-facing tooling that does not ship in the published library bundle.
 - [i18n](dev/i18n.md) - Translator hook, catalog conventions, locale switching, and the ESLint regression gate
 - [Local ESLint Rules](dev/eslint-rules.md) - Project-specific lint rules, fix recipes, and escape hatches
 - [E2E Locator Policy](dev/e2e-locators.md) - testid-only locator convention for Playwright specs, POM layout, and the `no-raw-locators-in-e2e` lint rule
+- [TC Traceability Check](dev/tc-check.md) - `npm run tc:check`: duplicate, missing, mis-levelled and malformed `TC-*` rows between the spec and the tests
 
 ### 🧠 Core Architecture & APIs (`core/`)
 

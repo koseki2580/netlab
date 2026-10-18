@@ -13,7 +13,11 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   fullyParallel: true,
   retries: 0,
-  reporter: process.env.CI ? [['github'], ['html']] : 'list',
+  // CI keeps an HTML report and a JUnit file for every run (see the e2e jobs in
+  // .github/workflows). Sharded nightly runs override this with --reporter=blob.
+  reporter: process.env.CI
+    ? [['github'], ['html', { open: 'never' }], ['junit', { outputFile: 'test-results/junit.xml' }]]
+    : 'list',
   use: {
     baseURL: 'http://localhost:5173',
     trace: 'retain-on-failure',

@@ -18,28 +18,65 @@ jobs:
       - name: Long-running soak invariants
         run: npm run soak:test
 
-  browser-matrix:
-    runs-on: ${{ matrix.os }}
+  # The full e2e suite on the engines PRs do not run (PRs run chromium only).
+  e2e:
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        node-version: ['22', '24']
-        browser: [chromium, firefox, webkit]
+        browser: [firefox, webkit]
+        shard: [1, 2, 3, 4]
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: '24'
           cache: npm
       - run: npm ci
-      - name: Install browser
-        if: runner.os == 'Linux'
-        run: npx playwright install --with-deps ${{ matrix.browser }}
-      - name: Install browser
-        if: runner.os != 'Linux'
-        run: npx playwright install ${{ matrix.browser }}
-      - name: Browser smoke
-        run: MODE=test npm run e2e -- e2e/i18n-ja.spec.ts --project=${{ matrix.browser }}
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: E2E (${{ matrix.browser }} ${{ matrix.shard }}/4)
+        run: npm run e2e -- --project=${{ matrix.browser }} --shard=${{ matrix.shard }}/4 --reporter=blob
+        env:
+          PLAYWRIGHT_BLOB_OUTPUT_NAME: report-${{ matrix.browser }}-${{ matrix.shard }}.zip
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blob-report-${{ matrix.browser }}-${{ matrix.shard }}
+          path: blob-report/
+          retention-days: 1
+
+  e2e-report:
+    if: always()
+    needs: e2e
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: blob-report-*
+          path: all-blob-reports
+          merge-multiple: true
+      - name: Merge shard reports
+        run: npx playwright merge-reports --reporter=html,junit all-blob-reports
+        env:
+          PLAYWRIGHT_JUNIT_OUTPUT_FILE: test-results/junit.xml
+      - name: E2E summary
+        if: always()
+        run: node scripts/e2e-summary.mjs test-results/junit.xml "Nightly E2E (firefox, webkit)"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-nightly
+          path: |
+            playwright-report/
+            test-results/junit.xml
+          retention-days: 14
