@@ -65,9 +65,39 @@ export const LEVEL_KINDS: Readonly<Record<ExerciseLevel, readonly string[]>> = {
     'l2-choose-root',
     'l2-choose-static-default',
   ],
-  3: [],
+  3: [
+    'l3-ospf-prefer',
+    'l3-ospf-both-ways',
+    'l3-static-both-ways',
+    'l3-acl-order',
+    'l3-acl-port',
+    'l3-acl-replies',
+    'l3-two-faults',
+    'l3-choose-longest',
+  ],
   4: [],
 };
+
+/**
+ * The packet track (`demo/exercises/packet/`) keeps its attempts in the same
+ * store, its ids and template ids prefixed with this. The device levels never
+ * count them, and the packet levels count nothing else (`LevelScope`).
+ */
+export const PACKET_TRACK_PREFIX = 'packet:';
+
+export const isPacketAttempt = (attempt: AttemptRecord): boolean =>
+  attempt.templateId.startsWith(PACKET_TRACK_PREFIX);
+
+/** Which attempts a level is judged on, and its kinds of task. Absent: the device exercises. */
+export interface LevelScope {
+  readonly track: 'device' | 'packet';
+  readonly kinds: Readonly<Record<ExerciseLevel, readonly string[]>>;
+}
+
+export const DEVICE_SCOPE: LevelScope = { track: 'device', kinds: LEVEL_KINDS };
+
+const inScope = (attempt: AttemptRecord, scope: LevelScope): boolean =>
+  isPacketAttempt(attempt) === (scope.track === 'packet');
 
 /** How many Checks a solve of this attempt may take and still count. */
 export function checksCounted(attempt: AttemptRecord): number {
@@ -144,10 +174,16 @@ function isSolvedWithHelp(attempt: AttemptRecord): boolean {
  * An exercise that was only opened is judged on the visit that pressed Check.
  * `pre` attempts never count, and neither does an exercise first met there.
  */
-function judgedFor(attempts: readonly AttemptRecord[], level: ExerciseLevel): AttemptRecord[] {
+function judgedFor(
+  attempts: readonly AttemptRecord[],
+  level: ExerciseLevel,
+  scope: LevelScope,
+): AttemptRecord[] {
   const oldestFirst = attempts
     .map((attempt, index) => ({ attempt, index }))
-    .filter(({ attempt }) => attempt.level === level && isAttempted(attempt))
+    .filter(
+      ({ attempt }) => attempt.level === level && isAttempted(attempt) && inScope(attempt, scope),
+    )
     .sort((a, b) => a.attempt.startedAt - b.attempt.startedAt || a.index - b.index);
 
   const first = new Map<string, AttemptRecord>();
@@ -161,8 +197,9 @@ function judgedFor(attempts: readonly AttemptRecord[], level: ExerciseLevel): At
 export function levelSummary(
   attempts: readonly AttemptRecord[],
   level: ExerciseLevel,
+  scope: LevelScope = DEVICE_SCOPE,
 ): LevelSummary {
-  const judged = judgedFor(attempts, level);
+  const judged = judgedFor(attempts, level, scope);
   const window = judged.slice(0, WINDOW_SIZE);
   const solved = window.filter(isSolved);
   const solvedWithHelp = window.filter(isSolvedWithHelp).length;
@@ -198,7 +235,7 @@ export function levelSummary(
   // there is one. So a kind solved the first time is settled at once, and a
   // kind that was missed takes two in a row: the missed kinds are served again
   // soon (`nextExerciseId`), and one lucky press must not be enough then.
-  const missingKinds = LEVEL_KINDS[level].filter((kind) => {
+  const missingKinds = scope.kinds[level].filter((kind) => {
     const [last, before] = latest.get(kind) ?? [];
     return last === undefined || !isSolved(last) || (before !== undefined && !isSolved(before));
   });
@@ -360,7 +397,11 @@ function notCounted(summary: LevelSummary, ja: boolean): string {
 }
 
 /** The sentence shown to the learner under a level: where they stand and what is still needed. */
-export function explain(summary: LevelSummary, locale: AttemptLocale): string {
+export function explain(
+  summary: LevelSummary,
+  locale: AttemptLocale,
+  scope: LevelScope = DEVICE_SCOPE,
+): string {
   const { level, counted, solved, solvedTemplates, status } = summary;
   const ja = locale === 'ja';
 
@@ -377,7 +418,7 @@ export function explain(summary: LevelSummary, locale: AttemptLocale): string {
       : `You solved ${solved} of your last ${counted} exercises ${COUNTED_HOW.en} across ${solvedTemplates} kinds of exercise. Level ${level} is cleared.`;
   }
 
-  const kinds = LEVEL_KINDS[level].length;
+  const kinds = scope.kinds[level].length;
   if (ja) {
     const every =
       kinds > 0

@@ -66,7 +66,8 @@ function carefulRun(level: ExerciseLevel, count: number, miss: number | null): A
 }
 
 // TC-585
-describe.each([1, 2] as const)('level %i: learners who only press', (level) => {
+// TC-791 (level 3)
+describe.each([1, 2, 3] as const)('level %i: learners who only press', (level) => {
   it.each(STRATEGIES)(
     `"%s" clears the level in under ${LIMIT * 100}% of ${RUNS} runs of ten exercises`,
     async (strategy) => {
@@ -81,7 +82,8 @@ describe.each([1, 2] as const)('level %i: learners who only press', (level) => {
 });
 
 // TC-599
-describe.each([1, 2] as const)('level %i: learners who open an exercise again', (level) => {
+// TC-792 (level 3)
+describe.each([1, 2, 3] as const)('level %i: learners who open an exercise again', (level) => {
   it.each(REOPEN_STRATEGIES)(
     `"%s" clears the level in under ${LIMIT * 100}% of ${RUNS} runs of ten exercises`,
     async (strategy) => {
@@ -142,6 +144,24 @@ describe('learners who know something', () => {
     expect(rates.within).toBeGreaterThan(0.95);
   }, 900_000);
 
+  // TC-813
+  it('a learner who knows level 3 (writes what the task needs) clears it within twelve in over 95% of runs', async () => {
+    const rates = await learnerRates(3, 'knows-level-3', 12);
+    console.log(
+      `level 3, knows-level-3: cleared within twelve in ${(rates.within * 100).toFixed(1)}% of ${RUNS} runs [${rates.perKind}]`,
+    );
+    expect(rates.within).toBeGreaterThan(0.95);
+  }, 900_000);
+
+  // TC-814
+  it('a learner who knows only level 1 and 2 habits never clears level 3', async () => {
+    const rates = await learnerRates(3, 'neighbour-habit', 10);
+    console.log(
+      `level 3, neighbour-habit: cleared at any point in ${(rates.within * 100).toFixed(1)}% of ${RUNS} runs [${rates.perKind}]`,
+    );
+    expect(rates.within).toBeLessThan(LIMIT);
+  }, 900_000);
+
   it('and still clears it within twenty when one exercise in ten goes wrong, in most runs', async () => {
     const rates = await learnerRates(1, 'knows-level-1', 20, 0.1);
     console.log(
@@ -153,7 +173,8 @@ describe('learners who know something', () => {
 
 // TC-584
 describe('the kinds of task a level requires', () => {
-  it.each([1, 2] as const)('level %i: exactly its templates, in their order', (level) => {
+  // TC-794 (level 3)
+  it.each([1, 2, 3] as const)('level %i: exactly its templates, in their order', (level) => {
     expect(LEVEL_KINDS[level]).toEqual(
       TEMPLATES.filter((template) => template.level === level).map((template) => template.id),
     );
@@ -161,7 +182,8 @@ describe('the kinds of task a level requires', () => {
 });
 
 // TC-586
-describe.each([1, 2] as const)('level %i: a learner who knows the material', (level) => {
+// TC-793 (level 3)
+describe.each([1, 2, 3] as const)('level %i: a learner who knows the material', (level) => {
   const kinds = LEVEL_KINDS[level].length;
 
   it('clears it by solving one round: one exercise of every kind of task', () => {

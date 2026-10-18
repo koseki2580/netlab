@@ -105,6 +105,9 @@ async function typeReference(page: Page, changes: readonly SettingChange[]) {
         if (change.accessVlan === undefined) throw new Error('a trunk is not typed here');
         await page.getByTestId(`${id}-vlan-input`).fill(String(change.accessVlan));
         break;
+      case 'ospf-cost':
+        await page.getByTestId(`${id}-input`).fill(String(change.cost));
+        break;
       default:
         throw new Error(`this helper does not type a ${change.kind}`);
     }
@@ -458,6 +461,24 @@ test.describe('in Japanese', () => {
     await demoPage.goto('/exercises/level/1');
     await expect(page.getByTestId(X.recent)).toContainText('答えを見た');
     await expect(page.getByTestId(X.kind('l1-host-address'))).toHaveAttribute('data-solved', '0');
+  });
+
+  /** TC-815 — a level 3 exercise: the given network misses its goals, the costs typed from the reference pass. */
+  test('a level 3 cost exercise is solved by typing the costs', async ({ page, demoPage }) => {
+    const id = 'l3-ospf-both-ways~0';
+    const { reference, checks } = exercise(id);
+    await open(page, demoPage, id);
+    await expect(page.getByTestId('exercise-rule')).toContainText(
+      'コストは、設定したルータから出る通信にだけ効く',
+    );
+    await changeSomethingWrong(page);
+    await check(page, false);
+    await page.getByTestId(X.reset).click();
+    await typeReference(page, reference);
+    await check(page, true);
+    for (const goal of checks) {
+      await expect(page.getByTestId(X.goal(goal.id))).toHaveAttribute('data-mark', 'done');
+    }
   });
 
   /** TC-517 — a level 2 exercise of another kind, solved by typing into its form. */

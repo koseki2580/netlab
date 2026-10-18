@@ -14,6 +14,7 @@ import {
   isValidLearnerId,
   type SafeProgressStorage,
 } from '../../../src/progress/storage';
+import type { PacketKind } from '../../packet-lab/model';
 import type { ExerciseKind, ExerciseLevel } from '../model/types';
 import type {
   AttemptContext,
@@ -40,7 +41,7 @@ export interface AttemptMeta {
   readonly id: string;
   readonly templateId: string;
   readonly level: ExerciseLevel;
-  readonly kind: ExerciseKind;
+  readonly kind: ExerciseKind | PacketKind;
   readonly generatorVersion: number;
   readonly locale: AttemptLocale;
   /** See `AttemptRecord.checksToCount`; 2 or absent is not recorded. */
@@ -90,7 +91,16 @@ export interface AttemptStoreOptions {
 const EMPTY_STATE: ExerciseStoreState = { version: 1, attempts: [], cycles: [] };
 
 const LEVELS: readonly unknown[] = [1, 2, 3, 4];
-const KINDS: readonly unknown[] = ['configure', 'switch', 'choose-design', 'diagnose-repair'];
+const KINDS: readonly unknown[] = [
+  'configure',
+  'switch',
+  'choose-design',
+  'diagnose-repair',
+  // The packet track (`demo/exercises/packet/`).
+  'build-packet',
+  'fragment',
+  'read-packet',
+];
 const CONTEXTS: readonly unknown[] = ['practice', 'placement', 'pre', 'post'];
 const OUTCOMES: readonly unknown[] = ['passed', 'gave-up', 'abandoned'];
 const PREDICTIONS: readonly unknown[] = ['reach', 'no-reach', 'detour'];

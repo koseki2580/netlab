@@ -120,6 +120,25 @@ export function ExerciseHubBody({ store: injected }: { store?: AttemptStore }) {
           );
         })}
 
+        <section
+          data-testid="exercises-packet-track"
+          aria-label={t('Packet exercises', 'パケットの実習')}
+          style={{ ...CARD, display: 'grid', gap: 8 }}
+        >
+          <h3 style={{ margin: 0, fontSize: 18 }}>{t('Packet exercises', 'パケットの実習')}</h3>
+          <p style={{ margin: 0 }}>
+            {t(
+              'A track of its own, with its own levels: build a packet, say how it is split, read where it stopped.',
+              '別の 4 レベルの実習です。パケットを組み立て、分割のしかたを答え、どこで止まったかを読みます。',
+            )}
+          </p>
+          <div>
+            <Link to="/exercises/packet" data-testid="exercises-packet-link" style={SECONDARY}>
+              {t('Go to the packet exercises', 'パケットの実習へ')}
+            </Link>
+          </div>
+        </section>
+
         <div>
           <Link to="/exercises/report" data-testid="exercises-report" style={SECONDARY}>
             {t('My record, and saving it', '自分の記録を見る・保存する')}

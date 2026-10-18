@@ -20,7 +20,7 @@ import type {
 import type { Names } from './nets';
 
 /** Bumped when a template's output changes. */
-export const PACKET_GENERATOR_VERSION = 1;
+export const PACKET_GENERATOR_VERSION = 2;
 
 type Base =
   | 'id'

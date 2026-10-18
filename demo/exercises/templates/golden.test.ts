@@ -21,7 +21,7 @@ function onePerPlace(generate: (seed: number) => Exercise): Exercise[] {
   });
 }
 
-// TC-478
+// TC-478, TC-795 (level 3)
 describe(`exercise templates, generator version ${GENERATOR_VERSION}`, () => {
   it.each(TEMPLATES.map((template) => [template.id, template] as const))(
     '%s: one instance set in each place (home, shop, clinic, school, office)',

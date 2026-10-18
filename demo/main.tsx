@@ -23,6 +23,7 @@ import ExercisePage from './exercises/ExercisePage';
 import LevelPage from './exercises/LevelPage';
 import PlacementPage from './exercises/PlacementPage';
 import ReportPage from './exercises/ReportPage';
+import { PacketExercisePage, PacketHub, PacketLevelPage } from './exercises/packet/PacketPages';
 import { resolveLearnerId } from './hooks/localLearnerId';
 import DmzDemo from './areas/DmzDemo';
 import MinimalDemo from './basic/MinimalDemo';
@@ -101,6 +102,9 @@ function DemoRoutes() {
         <Route path="/exercises/do/:exerciseId" element={<ExercisePage />} />
         <Route path="/exercises/placement" element={<PlacementPage />} />
         <Route path="/exercises/report" element={<ReportPage />} />
+        <Route path="/exercises/packet" element={<PacketHub />} />
+        <Route path="/exercises/packet/level/:level" element={<PacketLevelPage />} />
+        <Route path="/exercises/packet/do/:exerciseId" element={<PacketExercisePage />} />
         <Route path="/learning/subnetting" element={<SubnetDrillDemo />} />
         <Route path="/learning/routing-decision" element={<RoutingDrillDemo />} />
         <Route path="/learning/visual-routing" element={<VisualRoutingDrillDemo />} />

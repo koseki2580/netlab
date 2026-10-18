@@ -3,6 +3,7 @@
  * stored state round-trips exactly through `JSON.stringify` / `JSON.parse`.
  */
 
+import type { PacketKind } from '../../packet-lab/model';
 import type { ExerciseKind, ExerciseLevel } from '../model/types';
 
 export type AttemptContext = 'practice' | 'placement' | 'pre' | 'post';
@@ -29,7 +30,8 @@ export interface AttemptRecord {
   readonly exerciseId: string;
   readonly templateId: string;
   readonly level: ExerciseLevel;
-  readonly kind: ExerciseKind;
+  /** A packet exercise (`demo/packet-lab`) has a packet kind; its ids carry the track prefix `packet:`. */
+  readonly kind: ExerciseKind | PacketKind;
   readonly context: AttemptContext;
   /** The study cycle this attempt belongs to (`pre` and `post` attempts). */
   readonly cycleId?: string;

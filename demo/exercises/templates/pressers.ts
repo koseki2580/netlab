@@ -366,8 +366,11 @@ export async function clearRate(
  * `knows-level-1`: applies every rule of level 1: reads the "/number", takes
  * each side of a router for a network of its own, finds the device that does
  * not fit. `slip` is how often it gets one wrong all the same.
+ *
+ * `knows-level-3`: writes what each task needs (costs, routes, list lines,
+ * both repairs): the reference answer, on the first Check.
  */
-export type Learner = 'neighbour-habit' | 'knows-level-1';
+export type Learner = 'neighbour-habit' | 'knows-level-1' | 'knows-level-3';
 
 const three = (address: string): string => address.split('.').slice(0, 3).join('.');
 
@@ -543,7 +546,10 @@ export async function learnerRun(
         ? habitOffer(exercise, order, random)
         : random() < slip
           ? null
-          : knowingOffer(exercise, order);
+          : learner === 'knows-level-3'
+            ? // Writes what the task needs: the reference, as typed into the form.
+              shownAnswer(exercise)
+            : knowingOffer(exercise, order);
     const passed = await passesWith(exercise, offer);
     const tally = (solvedBy[exercise.templateId] ??= [0, 0]);
     tally[0] += passed ? 1 : 0;

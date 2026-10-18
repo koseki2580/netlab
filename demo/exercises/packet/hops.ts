@@ -1,0 +1,60 @@
+/**
+ * The replay of a Check, hop by hop, in words: where the packet was, what
+ * happened there, and the TTL it ARRIVED with (a hop's `ttl` is the TTL on
+ * arrival; README "Corrections"). An error message a router sent back (time
+ * exceeded, too big) is listed after the packet's own hops as such. No line
+ * promises a reply: the simulator sends none to a delivered packet.
+ */
+
+import type { PacketTrace } from '../../../src/types/simulation';
+import type { Localised } from '../../packet-lab/model';
+
+export interface HopLine {
+  readonly step: number;
+  readonly nodeId: string;
+  /** Hops of a message a router sent back, not of the learner's packet. */
+  readonly note: boolean;
+  /** The hop where the packet (or the note) set off: its TTL is the one it left with. */
+  readonly start: boolean;
+  readonly ttl: number;
+  readonly what: Localised;
+}
+
+function what(event: string, action: string | undefined, note: boolean): Localised {
+  if (note && event === 'create') return { en: 'sends a note back', ja: '知らせを送り返す' };
+  if (action === 'fragment')
+    return { en: 'cuts it and sends a piece on', ja: '分割して、断片を送り出す' };
+  if (action === 'reassembly-pending')
+    return { en: 'receives a piece and waits for the rest', ja: '断片を受け取り、残りを待つ' };
+  if (action === 'reassembly-complete')
+    return { en: 'puts the pieces together', ja: '断片をまとめ直す' };
+  switch (event) {
+    case 'create':
+      return { en: 'sends it', ja: '送り出す' };
+    case 'forward':
+      return { en: 'passes it on', ja: '次へ送る' };
+    case 'deliver':
+      return { en: 'receives it', ja: '受け取る' };
+    case 'drop':
+      return { en: 'throws it away', ja: '捨てる' };
+    default:
+      return { en: event, ja: event };
+  }
+}
+
+/** The packet's own hops first, ARP left out; then the hops of any note sent back. */
+export function hopLines(trace: PacketTrace, srcIp: string): HopLine[] {
+  return trace.hops
+    .filter((hop) => hop.event !== 'arp-request' && hop.event !== 'arp-reply')
+    .map((hop) => {
+      const note = hop.srcIp !== srcIp;
+      return {
+        step: hop.step,
+        nodeId: hop.nodeId,
+        note,
+        start: hop.event === 'create',
+        ttl: hop.ttl,
+        what: what(hop.event, hop.action, note),
+      };
+    });
+}

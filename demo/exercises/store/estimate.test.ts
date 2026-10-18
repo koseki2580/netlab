@@ -373,8 +373,9 @@ describe('levelSummary', () => {
 
   // TC-456
   it('looks at the last ten distinct exercises only', () => {
-    const old = Array.from({ length: 6 }, (_, i) => failed('l3-old', i, 3));
-    const summary = levelSummary([...old, ...solvedRun(3, 10, 3, 100)], 3);
+    // Level 4: a level with no kinds of task yet, so only the count is judged.
+    const old = Array.from({ length: 6 }, (_, i) => failed('l4-old', i, 4));
+    const summary = levelSummary([...old, ...solvedRun(4, 10, 3, 100)], 4);
     expect(summary).toMatchObject({ counted: 10, solved: 10, notSolved: 0, status: 'cleared' });
   });
 

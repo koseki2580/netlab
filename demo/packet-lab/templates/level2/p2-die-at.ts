@@ -40,7 +40,7 @@ export const p2DieAt = definePacketTemplate(
     const oneMore: PacketResultCode = nth === count ? 'not-dropped' : 'dropped-elsewhere';
     return {
       kind: 'build-packet',
-      title: L(`An answer from ${the(rtr)}`, `${rtr.ja}からの返事`),
+      title: L(`A note from ${the(rtr)}`, `${rtr.ja}からの知らせ`),
       task: L(
         `Set the TTL so that ${the(rtr)} throws the packet away and says "time exceeded".`,
         `${rtr.ja}がパケットを捨てて「時間切れ」を知らせてくるように、TTL を決めてください。`,

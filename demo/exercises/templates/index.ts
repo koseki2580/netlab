@@ -24,6 +24,14 @@ import { l2StpRoot } from './level2/l2-stp-root';
 import { l2TrunkAllowed } from './level2/l2-trunk-allowed';
 import { l2VlanAccess } from './level2/l2-vlan-access';
 import { l2VlanSeparate } from './level2/l2-vlan-separate';
+import { l3AclOrder } from './level3/l3-acl-order';
+import { l3AclPort } from './level3/l3-acl-port';
+import { l3AclReplies } from './level3/l3-acl-replies';
+import { l3ChooseLongest } from './level3/l3-choose-longest';
+import { l3OspfBothWays } from './level3/l3-ospf-both-ways';
+import { l3OspfPrefer } from './level3/l3-ospf-prefer';
+import { l3StaticBothWays } from './level3/l3-static-both-ways';
+import { l3TwoFaults } from './level3/l3-two-faults';
 
 export { GENERATOR_VERSION } from './shared/version';
 
@@ -54,6 +62,14 @@ export const TEMPLATES: readonly ExerciseTemplate[] = [
   l2AclPermit,
   l2ChooseRoot,
   l2ChooseStaticDefault,
+  l3OspfPrefer,
+  l3OspfBothWays,
+  l3StaticBothWays,
+  l3AclOrder,
+  l3AclPort,
+  l3AclReplies,
+  l3TwoFaults,
+  l3ChooseLongest,
 ];
 
 export function templateById(id: string): ExerciseTemplate | undefined {

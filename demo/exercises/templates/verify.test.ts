@@ -6,7 +6,8 @@
  *
  * Seeds 0 to N-1 (N = `EXERCISE_VERIFY_SEEDS`, 12 by default; 100 verifies every
  * instance a pool can hold), plus seed block B of the study cycle (1000 to 1003).
- * TC-467 to TC-477, TC-561 and TC-562 in the specification; each part below
+ * TC-467 to TC-477, TC-561 and TC-562 in the specification (level 3:
+ * TC-780 to TC-789); each part below
  * names its own.
  */
 
@@ -85,6 +86,8 @@ const PASSING_OPTIONS: Readonly<Record<string, (id: string, exercise: Exercise) 
     id === 'root-swd' ||
     exercise.reference.some((change) => id === `root-${'nodeId' in change ? change.nodeId : ''}`),
   'l2-choose-static-default': (id) => id === 'default',
+  // TC-787
+  'l3-choose-longest': (id) => id === 'longest',
 };
 
 const ROUTES = readFileSync(new URL('../../main.tsx', import.meta.url), 'utf8');
@@ -702,38 +705,42 @@ describe('device names', () => {
 
 describe('pools', () => {
   // TC-472
-  it.each([1, 2] as const)('level %i: at least 100 ids, unique, all of them generate', (level) => {
-    const pool = buildPool(level);
-    expect(pool.length).toBeGreaterThanOrEqual(100);
-    expect(new Set(pool).size).toBe(pool.length);
-    expect(buildPool(level)).toEqual(pool);
+  // TC-788 (level 3)
+  it.each([1, 2, 3] as const)(
+    'level %i: at least 100 ids, unique, all of them generate',
+    (level) => {
+      const pool = buildPool(level);
+      expect(pool.length).toBeGreaterThanOrEqual(100);
+      expect(new Set(pool).size).toBe(pool.length);
+      expect(buildPool(level)).toEqual(pool);
 
-    const exercises = pool.map((id) => exerciseById(id));
-    expect(exercises.every((exercise) => exercise?.level === level)).toBe(true);
-    // Every pool instance is one the 100-seed run verifies.
-    expect(exercises.every((exercise) => (exercise?.seed ?? POOL_SEEDS) < POOL_SEEDS)).toBe(true);
-    // No two pool instances read the same and look the same.
-    const looks = exercises.map(
-      (exercise) => `${exercise?.brief.ja}\n${JSON.stringify(exercise?.start)}`,
-    );
-    expect(new Set(looks).size).toBe(pool.length);
+      const exercises = pool.map((id) => exerciseById(id));
+      expect(exercises.every((exercise) => exercise?.level === level)).toBe(true);
+      // Every pool instance is one the 100-seed run verifies.
+      expect(exercises.every((exercise) => (exercise?.seed ?? POOL_SEEDS) < POOL_SEEDS)).toBe(true);
+      // No two pool instances read the same and look the same.
+      const looks = exercises.map(
+        (exercise) => `${exercise?.brief.ja}\n${JSON.stringify(exercise?.start)}`,
+      );
+      expect(new Set(looks).size).toBe(pool.length);
 
-    // The templates take turns, and different tasks come before repeats.
-    const templates = TEMPLATES.filter((template) => template.level === level);
-    expect(pool.slice(0, templates.length).map((id) => exerciseById(id)?.templateId)).toEqual(
-      templates.map((template) => template.id),
-    );
-    const fingerprints = new Set(exercises.map((exercise) => exercise?.fingerprint));
-    console.log(
-      `level ${level}: pool ${pool.length}, distinct fingerprints ${fingerprints.size}, per template ` +
-        templates
-          .map((template) => {
-            const own = exercises.filter((exercise) => exercise?.templateId === template.id);
-            return `${template.id} ${own.length}/${new Set(own.map((e) => e?.fingerprint)).size}`;
-          })
-          .join(', '),
-    );
-  });
+      // The templates take turns, and different tasks come before repeats.
+      const templates = TEMPLATES.filter((template) => template.level === level);
+      expect(pool.slice(0, templates.length).map((id) => exerciseById(id)?.templateId)).toEqual(
+        templates.map((template) => template.id),
+      );
+      const fingerprints = new Set(exercises.map((exercise) => exercise?.fingerprint));
+      console.log(
+        `level ${level}: pool ${pool.length}, distinct fingerprints ${fingerprints.size}, per template ` +
+          templates
+            .map((template) => {
+              const own = exercises.filter((exercise) => exercise?.templateId === template.id);
+              return `${template.id} ${own.length}/${new Set(own.map((e) => e?.fingerprint)).size}`;
+            })
+            .join(', '),
+      );
+    },
+  );
 
   // TC-561
   it.each(TEMPLATES.filter((template) => template.kind === 'choose-design'))(
@@ -811,13 +818,10 @@ describe('pools', () => {
   );
 
   // TC-473
-  it.each([3, 4] as const)(
-    'level %i has no templates yet: an empty pool, not an error',
-    (level) => {
-      expect(buildPool(level as ExerciseLevel)).toEqual([]);
-      expect(nextExerciseId(level, {})).toBeUndefined();
-    },
-  );
+  it.each([4] as const)('level %i has no templates yet: an empty pool, not an error', (level) => {
+    expect(buildPool(level as ExerciseLevel)).toEqual([]);
+    expect(nextExerciseId(level, {})).toBeUndefined();
+  });
 
   // TC-474
   it('looks an exercise up by id, and refuses ids that are not one', () => {
@@ -874,7 +878,8 @@ describe('pools', () => {
   });
 
   // TC-606
-  describe.each([1, 2] as const)('level %i: the order the kinds of task come in', (level) => {
+  // TC-790 (level 3)
+  describe.each([1, 2, 3] as const)('level %i: the order the kinds of task come in', (level) => {
     const count = TEMPLATES.filter((template) => template.level === level).length;
     const walk = (salt: string, length: number): string[] => {
       const seen: string[] = [];
