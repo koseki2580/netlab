@@ -7,6 +7,7 @@
 
 import type { TopologySnapshot } from '../../../src/types/topology';
 import type { Localised, PacketExercise } from '../../packet-lab/model';
+import { labelIn } from '../model/text';
 
 export interface DiagramFact {
   readonly id: string;
@@ -30,8 +31,7 @@ export function needsMacs(exercise: PacketExercise): boolean {
   return false;
 }
 
-const name = (exercise: PacketExercise, id: string): Localised =>
-  exercise.nodeLabels[id] ?? { en: id, ja: id };
+const name = (exercise: PacketExercise, id: string): Localised => labelIn(exercise.nodeLabels, id);
 
 function cableName(
   exercise: PacketExercise,

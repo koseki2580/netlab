@@ -32,6 +32,7 @@ import { l3OspfBothWays } from './level3/l3-ospf-both-ways';
 import { l3OspfPrefer } from './level3/l3-ospf-prefer';
 import { l3StaticBothWays } from './level3/l3-static-both-ways';
 import { l3TwoFaults } from './level3/l3-two-faults';
+import { localiseTopology } from '../model/text';
 
 export { GENERATOR_VERSION } from './shared/version';
 
@@ -98,16 +99,7 @@ export function exerciseById(id: string): Exercise | undefined {
 export function localiseExercise(exercise: Exercise, locale: 'en' | 'ja'): Exercise {
   const labels = exercise.nodeLabels;
   if (!labels) return exercise;
-  return {
-    ...exercise,
-    start: {
-      ...exercise.start,
-      nodes: exercise.start.nodes.map((node) => ({
-        ...node,
-        data: { ...node.data, label: labels[node.id]?.[locale] ?? node.data.label },
-      })),
-    },
-  };
+  return { ...exercise, start: localiseTopology(exercise.start, labels, locale) };
 }
 
 // --- Pools -------------------------------------------------------------------

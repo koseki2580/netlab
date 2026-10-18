@@ -29,6 +29,7 @@ import { sideWords } from '../model/names';
 import type { CheckEvidence } from '../model/types';
 import type { DiagnosisDetail } from './reasons';
 import { labelOf } from './traceFacts';
+import { isDottedQuad } from '../model/text';
 
 export interface Diagnosis {
   /** For the message. */
@@ -39,11 +40,7 @@ export interface Diagnosis {
 
 type Topology = Pick<TopologySnapshot, 'nodes' | 'edges'>;
 
-const IPV4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
-const isAddress = (text: string): boolean =>
-  IPV4.exec(text)
-    ?.slice(1)
-    .every((part) => Number(part) <= 255) ?? false;
+const isAddress = isDottedQuad;
 
 const isDown = (edge: NetlabEdge): boolean => edge.data?.state === 'down';
 

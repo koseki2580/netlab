@@ -5,8 +5,7 @@
  */
 
 import type { Candidate, Carries, FieldId, FieldInput, Localised, PacketField } from './model';
-
-const L = (en: string, ja: string): Localised => ({ en, ja });
+import { L } from '../exercises/model/text';
 
 export const FIELD_LABELS: Readonly<Record<FieldId, Localised>> = {
   dstIp: L('Destination address', 'あて先アドレス'),

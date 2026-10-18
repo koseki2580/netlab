@@ -1,17 +1,15 @@
 /**
- * Where the pages get their exercises: the templates module, and the three dev
- * fixtures wherever that module has nothing.
+ * Where the pages get their exercises: the templates module.
  *
- * The templates are being written in parallel with these pages, so the module
- * is looked up with a glob: a file that is not there yet is an empty result,
- * not a failed import.
- *
- * To remove the fallback once the templates have landed: replace the glob with
- * `import * as templates from './templates'`, delete `FIXTURE_TEMPLATES` from
- * the four functions below, and delete `devFixtures.ts`.
+ * The three development fixtures (`devFixtures.ts`) can still be opened by
+ * id, as the tests do; no page links to them. Everything a level offers comes
+ * from the templates.
  */
 
 import { FIXTURE_TEMPLATES } from './devFixtures';
+import * as templates from './templates';
+import { checksToCount } from './model/closedSet';
+import type { AttemptMeta } from './store/attemptStore';
 import { isAttempted, levelSummary } from './store/estimate';
 import type { AttemptRecord } from './store/types';
 import type {
@@ -31,30 +29,26 @@ interface NextOptions {
   readonly needKinds?: readonly string[];
 }
 
-interface TemplatesModule {
-  readonly TEMPLATES: readonly ExerciseTemplate[];
-  readonly exerciseById: (id: string) => Exercise | undefined;
-  readonly localiseExercise: (exercise: Exercise, locale: 'en' | 'ja') => Exercise;
-  readonly buildPool: (level: ExerciseLevel) => readonly string[];
-  readonly nextExerciseId: (level: ExerciseLevel, opts: NextOptions) => string | undefined;
-  readonly reopenedExerciseId: (
-    exerciseId: string,
-    judgedIds: readonly string[],
-    seenIds: readonly string[],
-  ) => string;
-}
-
-type GlobMeta = ImportMeta & {
-  readonly glob: <T>(pattern: string, options: { readonly eager: true }) => Record<string, T>;
-};
-
-const templates: Partial<TemplatesModule> =
-  (import.meta as GlobMeta).glob<Partial<TemplatesModule>>('./templates/index.ts', {
-    eager: true,
-  })['./templates/index.ts'] ?? {};
-
 /** How many seeds of each fixture stand in for a pool. */
 const FIXTURE_SEEDS = 10;
+
+/**
+ * What the store needs to open an attempt at this exercise. How many Checks a
+ * solve may take and still count comes from the shape of its answer
+ * (`model/closedSet.ts`), as the packet track's does (`packetMeta`).
+ */
+export function exerciseMeta(exercise: Exercise, locale: 'en' | 'ja'): AttemptMeta {
+  return {
+    id: exercise.id,
+    templateId: exercise.templateId,
+    level: exercise.level,
+    kind: exercise.kind,
+    generatorVersion: exercise.generatorVersion,
+    locale,
+    ...(checksToCount(exercise) === 1 ? { checksToCount: 1 as const } : {}),
+    ...(exercise.practiceOnly === true ? { practiceOnly: true } : {}),
+  };
+}
 
 /** `l1-host-address~12` → `l1-host-address`. */
 export function templateIdOf(exerciseId: string): string {
@@ -74,13 +68,12 @@ function fixtureById(id: string): Exercise | undefined {
  * learner's topology with `start`, labels included.
  */
 export function exerciseById(id: string, locale: 'en' | 'ja'): Exercise | undefined {
-  const exercise = templates.exerciseById?.(id) ?? fixtureById(id);
-  return exercise && (templates.localiseExercise?.(exercise, locale) ?? exercise);
+  const exercise = templates.exerciseById(id) ?? fixtureById(id);
+  return exercise && templates.localiseExercise(exercise, locale);
 }
 
 function templatesAt(level: ExerciseLevel): readonly ExerciseTemplate[] {
-  const real = (templates.TEMPLATES ?? []).filter((template) => template.level === level);
-  return real.length > 0 ? real : FIXTURE_TEMPLATES.filter((template) => template.level === level);
+  return templates.TEMPLATES.filter((template) => template.level === level);
 }
 
 export interface TemplateInfo {
@@ -114,11 +107,7 @@ export function levelTemplates(level: ExerciseLevel): readonly TemplateInfo[] {
 
 /** Every exercise id of a level. */
 export function exercisePool(level: ExerciseLevel): readonly string[] {
-  const real = templates.buildPool?.(level) ?? [];
-  if (real.length > 0) return real;
-  return FIXTURE_TEMPLATES.filter((template) => template.level === level).flatMap((template) =>
-    Array.from({ length: FIXTURE_SEEDS }, (_, seed) => `${template.id}~${seed}`),
-  );
+  return templates.buildPool(level);
 }
 
 /**
@@ -126,7 +115,7 @@ export function exercisePool(level: ExerciseLevel): readonly string[] {
  * just done), and not one already seen, as far as the pool allows.
  */
 export function nextExerciseId(level: ExerciseLevel, opts: NextOptions = {}): string | undefined {
-  const real = templates.nextExerciseId?.(level, opts);
+  const real = templates.nextExerciseId(level, opts);
   if (real !== undefined) return real;
   const pool = exercisePool(level);
   const avoid = opts.avoidTemplateIds ?? [];
@@ -150,8 +139,8 @@ export function reopenedExerciseId(
   seenIds: readonly string[],
 ): string {
   if (!judgedIds.includes(exerciseId)) return exerciseId;
-  if (templates.exerciseById?.(exerciseId)) {
-    return templates.reopenedExerciseId?.(exerciseId, judgedIds, seenIds) ?? exerciseId;
+  if (templates.exerciseById(exerciseId)) {
+    return templates.reopenedExerciseId(exerciseId, judgedIds, seenIds);
   }
   const templateId = templateIdOf(exerciseId);
   if (!FIXTURE_TEMPLATES.some((template) => template.id === templateId)) return exerciseId;

@@ -12,6 +12,7 @@ import type {
   ReadQuestion,
 } from '../../model';
 import type { Names } from './nets';
+import { labelIn } from '../../../exercises/model/text';
 
 const PROMPTS: Readonly<Record<QuestionAsk, Localised>> = {
   'arrives-at': L('Which device does this packet reach?', 'このパケットは、どの機器に届きますか。'),
@@ -52,7 +53,7 @@ export function question(
 
 export const device = (names: Names, id: string, why: string): Candidate => ({
   value: id,
-  label: labelOf(names[id] ?? L(id, id)),
+  label: labelOf(labelIn(names, id)),
   why,
 });
 

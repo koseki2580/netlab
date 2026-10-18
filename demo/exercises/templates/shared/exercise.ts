@@ -18,9 +18,11 @@ import type {
   SettingRef,
 } from '../../model/types';
 import { portWords, sideWords } from '../../model/names';
-import { drawer, type Draw } from './draw';
+import type { Draw } from './draw';
+import { defineSeeded, tierAt } from './frame';
 import { L, labelOf, The, type Named } from './text';
 import { GENERATOR_VERSION } from './version';
+import { labelIn } from '../../model/text';
 
 export type LabelledCheck = ExerciseCheck & { readonly label: Localised };
 
@@ -72,53 +74,36 @@ export function defineTemplate(
   meta: TemplateMeta,
   build: (draw: Draw, seed: number) => Draft,
 ): ExerciseTemplate {
-  const generate = (seed: number): Exercise => {
-    const draft = build(drawer(seed), seed);
-    const nodeLabels = Object.fromEntries(
-      draft.topology.nodes.map((node) => {
-        const name = draft.names[node.id];
-        return [node.id, name ? labelOf(name) : L(node.data.label, node.data.label)];
-      }),
-    );
+  return defineSeeded(meta, GENERATOR_VERSION, build, (draft, frameOf): Exercise => {
+    const frame = frameOf(draft);
     return {
-      id: `${meta.id}~${seed}`,
-      templateId: meta.id,
-      seed,
-      generatorVersion: GENERATOR_VERSION,
-      level: meta.level,
+      ...frame.identity,
       kind: meta.kind,
       title: draft.title,
       task: draft.task,
       ...(draft.rule ? { rule: draft.rule } : {}),
       ...(draft.ruleKey ? { ruleKey: draft.ruleKey } : {}),
       brief: draft.brief,
-      start: {
-        ...draft.topology,
-        nodes: draft.topology.nodes.map((node) => ({
-          ...node,
-          data: { ...node.data, label: nodeLabels[node.id]?.ja ?? node.data.label },
-        })),
-      },
+      start: frame.topology,
       allowed: draft.allowed,
       ...(draft.options ? { options: draft.options } : {}),
       checks: draft.checks.map(({ label: _label, ...check }) => check as ExerciseCheck),
       hints: draft.hints.map((hint, index) => ({
-        tier: (index + 1) as 1 | 2 | 3,
+        tier: tierAt(index),
         ...('text' in hint ? hint : { text: hint }),
       })),
       lessons: draft.lessons,
       reference: draft.reference,
-      fingerprint: [meta.id, ...draft.fingerprint].join('|'),
+      fingerprint: frame.fingerprint,
       checkLabels: Object.fromEntries(draft.checks.map((check) => [check.id, check.label])),
-      nodeLabels,
+      nodeLabels: frame.nodeLabels,
       ...(draft.wrongAnswers ? { wrongAnswers: draft.wrongAnswers } : {}),
       ...(draft.unsoundPasses ? { unsoundPasses: draft.unsoundPasses } : {}),
       ...(draft.pickFirst ? { pickFirst: draft.pickFirst } : {}),
       ...(draft.practiceOnly === true ? { practiceOnly: true as const } : {}),
       ...(draft.answerInBrief !== undefined ? { answerInBrief: draft.answerInBrief } : {}),
     };
-  };
-  return { ...meta, generatorVersion: GENERATOR_VERSION, generate };
+  });
 }
 
 /**
@@ -172,7 +157,7 @@ export function refOf(change: SettingChange): SettingRef {
 
 /** Checks written as goals: "The till reaches the stock server". */
 export function goals(names: Readonly<Record<string, Named>>) {
-  const name = (id: string): Named => names[id] ?? L(id, id);
+  const name = (id: string): Named => labelIn(names, id);
   return {
     reach: (from: string, to: string): LabelledCheck => ({
       id: `reach-${from}-${to}`,

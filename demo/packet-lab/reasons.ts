@@ -8,13 +8,9 @@
 
 import { FIELD_LABELS } from './fields';
 import type { Carries, FieldId, Localised, PacketEvidence } from './model';
+import { join, L, ordinalEn } from '../exercises/model/text';
 
-const L = (en: string, ja: string): Localised => ({ en, ja });
-
-export const join = (...parts: readonly Localised[]): Localised => ({
-  en: parts.map((part) => part.en).join(' '),
-  ja: parts.map((part) => part.ja).join(''),
-});
+export { join };
 
 /** "the branch router", "the HQ router": the label with a lower-case first letter unless it is an abbreviation. */
 export function theEn(label: Localised): string {
@@ -27,8 +23,6 @@ export function theEn(label: Localised): string {
 }
 
 const f = (id: FieldId): Localised => FIELD_LABELS[id];
-const ORDINAL_EN = ['first', 'second', 'third', 'fourth', 'fifth'];
-const ordinalEn = (n: number): string => ORDINAL_EN[n - 1] ?? `${n}th`;
 
 export const MESSAGES = {
   ok: L('Done.', 'できています。'),

@@ -6,12 +6,13 @@
  * grade must not depend on the order of its checks.
  */
 
-import { HookEngine } from '../../../src/hooks/HookEngine';
-import { MainThreadEngine } from '../../../src/simulation/worker/MainThreadEngine';
 import type { AclMatchInfo } from '../../../src/types/acl';
 import type { NatTranslation, PacketHop, PacketTrace } from '../../../src/types/simulation';
 import type { NetworkTopology } from '../../../src/types/topology';
 import type { Probe } from '../model/types';
+import { addressOf, errorText, isArpHop, withEngine } from './engineRun';
+
+export { addressOf };
 
 export interface ProbeDrop {
   readonly nodeId: string;
@@ -48,15 +49,6 @@ export interface ProbeFacts {
 
 const DEFAULT_SRC_PORT = 49152;
 
-/** The address a probe uses for a node: a host's `ip`, else a router's first interface. */
-export function addressOf(topology: NetworkTopology, nodeId: string): string | null {
-  const node = topology.nodes.find((candidate) => candidate.id === nodeId);
-  if (!node) return null;
-  if (typeof node.data.ip === 'string' && node.data.ip.length > 0) return node.data.ip;
-  const first = node.data.interfaces?.[0]?.ipAddress;
-  return first !== undefined && first.length > 0 ? first : null;
-}
-
 function nothingSent(status: 'no-address' | 'engine-error', error?: string): ProbeFacts {
   return {
     status,
@@ -81,7 +73,7 @@ export function readFacts(traces: readonly PacketTrace[], delivered: boolean): P
   const requestDelivered = firstDeliver !== -1 && (firstDrop === -1 || firstDeliver < firstDrop);
   const forward = hops
     .slice(0, requestDelivered ? firstDeliver + 1 : firstDrop === -1 ? hops.length : firstDrop + 1)
-    .filter((hop) => hop.event !== 'arp-request' && hop.event !== 'arp-reply');
+    .filter((hop) => !isArpHop(hop));
 
   const forwardNodeIds: string[] = [];
   const forwardEdgeIds: string[] = [];
@@ -127,27 +119,21 @@ export async function runProbe(prepared: NetworkTopology, probe: Probe): Promise
     probe.via === 'ping' && probe.toIp !== undefined ? probe.toIp : addressOf(prepared, probe.to);
   if (srcIp === null || dstIp === null) return nothingSent('no-address');
 
-  let engine: MainThreadEngine | null = null;
   try {
-    engine = new MainThreadEngine(prepared, new HookEngine());
-    if (probe.via === 'ping') {
-      const trace = await engine.ping(probe.from, dstIp);
-      return readFacts([trace], trace.status === 'delivered');
-    }
-    const result = await engine.tcpConnect(
-      probe.from,
-      probe.to,
-      probe.srcPort ?? DEFAULT_SRC_PORT,
-      probe.dstPort,
-    );
-    return readFacts(result.traces, result.success);
+    return await withEngine(prepared, async (engine) => {
+      if (probe.via === 'ping') {
+        const trace = await engine.ping(probe.from, dstIp);
+        return readFacts([trace], trace.status === 'delivered');
+      }
+      const result = await engine.tcpConnect(
+        probe.from,
+        probe.to,
+        probe.srcPort ?? DEFAULT_SRC_PORT,
+        probe.dstPort,
+      );
+      return readFacts(result.traces, result.success);
+    });
   } catch (error) {
-    return nothingSent('engine-error', error instanceof Error ? error.message : String(error));
-  } finally {
-    try {
-      engine?.dispose();
-    } catch {
-      // Disposal must not turn a finished probe into a failure.
-    }
+    return nothingSent('engine-error', errorText(error));
   }
 }

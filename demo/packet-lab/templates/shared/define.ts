@@ -5,8 +5,8 @@
  */
 
 import type { TopologySnapshot } from '../../../../src/types/topology';
-import { drawer, type Draw } from '../../../exercises/templates/shared/draw';
-import { L, labelOf } from '../../../exercises/templates/shared/text';
+import type { Draw } from '../../../exercises/templates/shared/draw';
+import { defineSeeded, tierAt } from '../../../exercises/templates/shared/frame';
 import type {
   BuildExercise,
   ExerciseLevel,
@@ -58,32 +58,20 @@ export function definePacketTemplate(
   meta: Meta,
   build: (draw: Draw, seed: number) => Draft,
 ): PacketTemplate {
-  const generate = (seed: number): PacketExercise => {
-    const { names, hints, fingerprint, topology, ...draft } = build(drawer(seed), seed);
-    const nodeLabels = Object.fromEntries(
-      topology.nodes.map((node) => {
-        const name = names[node.id];
-        return [node.id, name ? labelOf(name) : L(node.data.label, node.data.label)];
-      }),
-    );
-    return {
-      ...draft,
-      id: `${meta.id}~${seed}`,
-      templateId: meta.id,
-      seed,
-      generatorVersion: PACKET_GENERATOR_VERSION,
-      level: meta.level,
-      topology: {
-        ...topology,
-        nodes: topology.nodes.map((node) => ({
-          ...node,
-          data: { ...node.data, label: nodeLabels[node.id]?.ja ?? node.data.label },
-        })),
-      },
-      nodeLabels,
-      hints: hints.map((text, index) => ({ tier: (index + 1) as 1 | 2 | 3, text })),
-      fingerprint: [meta.id, ...fingerprint].join('|'),
-    } as PacketExercise;
-  };
-  return { ...meta, generatorVersion: PACKET_GENERATOR_VERSION, generate };
+  return defineSeeded(
+    meta,
+    PACKET_GENERATOR_VERSION,
+    build,
+    ({ names, hints, fingerprint, topology, ...draft }, frameOf): PacketExercise => {
+      const frame = frameOf({ topology, names, fingerprint });
+      return {
+        ...draft,
+        ...frame.identity,
+        topology: frame.topology,
+        nodeLabels: frame.nodeLabels,
+        hints: hints.map((text, index) => ({ tier: tierAt(index), text })),
+        fingerprint: frame.fingerprint,
+      } as PacketExercise;
+    },
+  );
 }

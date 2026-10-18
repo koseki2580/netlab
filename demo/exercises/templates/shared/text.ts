@@ -5,16 +5,13 @@
  */
 
 import type { Localised } from '../../model/types';
+import { join, L } from '../../model/text';
 
-export const L = (en: string, ja: string): Localised => ({ en, ja });
+export { L };
 
 /** Sentences one after another: a space between English ones, nothing between Japanese ones. */
 export function say(...parts: readonly (Localised | null | undefined)[]): Localised {
-  const present = parts.filter((part): part is Localised => part != null);
-  return {
-    en: present.map((part) => part.en).join(' '),
-    ja: present.map((part) => part.ja).join(''),
-  };
+  return join(...parts.filter((part): part is Localised => part != null));
 }
 
 const capitalise = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);

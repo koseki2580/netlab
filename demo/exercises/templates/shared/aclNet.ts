@@ -19,6 +19,7 @@ import type { LabelledCheck } from './exercise';
 import type { Place } from './places';
 import type { AddressPlan } from './plans';
 import { L, type Named } from './text';
+import { labelIn } from '../../model/text';
 
 export interface AclNet {
   readonly topology: TopologySnapshot;
@@ -128,8 +129,8 @@ export function opens(
   dstPort: 80 | 22,
   allowed: boolean,
 ): LabelledCheck {
-  const a = names[from] ?? L(from, from);
-  const b = names[to] ?? L(to, to);
+  const a = labelIn(names, from);
+  const b = labelIn(names, to);
   const what = dstPort === 80 ? L('open', '開ける') : L('log in to', 'ログインできる');
   const whatNot =
     dstPort === 80 ? L('cannot open', '開けない') : L('cannot log in to', 'ログインできない');

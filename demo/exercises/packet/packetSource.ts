@@ -28,6 +28,7 @@ import {
   nextExerciseId,
   TEMPLATES,
 } from '../../packet-lab/templates';
+import { localiseTopology } from '../model/text';
 
 export const PACKET_LEVELS: readonly ExerciseLevel[] = [1, 2, 3, 4];
 
@@ -46,12 +47,7 @@ export function packetTemplates(level: ExerciseLevel): readonly PacketTemplate[]
 /** The kinds of task of each packet level, as the store knows them (prefixed template ids). */
 export const PACKET_SCOPE: LevelScope = {
   track: 'packet',
-  kinds: {
-    1: packetTemplates(1).map((template) => tracked(template.id)),
-    2: packetTemplates(2).map((template) => tracked(template.id)),
-    3: packetTemplates(3).map((template) => tracked(template.id)),
-    4: packetTemplates(4).map((template) => tracked(template.id)),
-  },
+  templates: TEMPLATES.map((template) => ({ id: tracked(template.id), level: template.level })),
 };
 
 export function packetSummary(
@@ -75,16 +71,7 @@ export function packetExercise(id: string, locale: AttemptLocale): PacketExercis
   if (!exercise) return undefined;
   return {
     ...exercise,
-    topology: {
-      ...exercise.topology,
-      nodes: exercise.topology.nodes.map((node) => ({
-        ...node,
-        data: {
-          ...node.data,
-          label: exercise.nodeLabels[node.id]?.[locale] ?? node.data.label,
-        },
-      })),
-    },
+    topology: localiseTopology(exercise.topology, exercise.nodeLabels, locale),
   } as PacketExercise;
 }
 

@@ -52,6 +52,7 @@ import {
 import { DraftReportContext } from './fields';
 import { SettingsForm } from './SettingsForm';
 import { CARD, PRIMARY, SECONDARY } from './styles';
+import { exerciseMeta } from '../exerciseSource';
 
 export interface ExerciseRunnerProps {
   /** With its devices named in the learner's language (`exerciseSource.exerciseById`). */
@@ -193,7 +194,7 @@ export function ExerciseRunner({
   useEffect(() => {
     const key = `${exercise.id}|${context}|${cycleId ?? ''}`;
     if (attempt.current?.key === key) return;
-    const id = store.open({ ...exercise, locale, checksToCount: maxChecks }, context, cycleId);
+    const id = store.open(exerciseMeta(exercise, locale), context, cycleId);
     attempt.current = { key, id };
     resets.current = 0;
     setOrder(

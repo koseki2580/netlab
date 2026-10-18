@@ -7,10 +7,8 @@
  * in `contract.test.ts` and explained in `README.md`.
  */
 
-import { HookEngine } from '../../src/hooks/HookEngine';
 import { packetSizeBytes } from '../../src/simulation/fragmentation';
 import { Reassembler } from '../../src/simulation/Reassembler';
-import { MainThreadEngine } from '../../src/simulation/worker/MainThreadEngine';
 import type { AclMatchInfo } from '../../src/types/acl';
 import {
   isIcmpMessage,
@@ -20,6 +18,7 @@ import {
 } from '../../src/types/packets';
 import type { PacketHop, PacketTrace } from '../../src/types/simulation';
 import type { NetworkTopology } from '../../src/types/topology';
+import { errorText, isArpHop, withEngine } from '../exercises/grade/engineRun';
 import { readFacts } from '../exercises/grade/probe';
 
 /** A MAC the engine treats as "not filled in": it resolves the real one itself. */
@@ -275,8 +274,6 @@ function view(hop: PacketHop, packet: InFlightPacket, generated: boolean): HopVi
   };
 }
 
-const isArp = (hop: PacketHop): boolean => hop.event === 'arp-request' || hop.event === 'arp-reply';
-
 function readIcmp(generated: readonly HopView[]): IcmpView[] {
   const byPacket = new Map<string, HopView[]>();
   for (const entry of generated) {
@@ -313,7 +310,7 @@ export function readPacketFacts(
 ): PacketFacts {
   const all = trace.hops.flatMap((hop, index) => {
     const packet = snapshots[index];
-    return packet && !isArp(hop) ? [view(hop, packet, packet.id !== packetId)] : [];
+    return packet && !isArpHop(hop) ? [view(hop, packet, packet.id !== packetId)] : [];
   });
   const own = all.filter((entry) => !entry.generated);
   const probe = readFacts([{ ...trace, hops: own.map((entry) => entry.hop) }], false);
@@ -381,22 +378,8 @@ function failed(error: unknown): PacketFacts {
     icmp: [],
     aclMatches: [],
     trace: null,
-    error: error instanceof Error ? error.message : String(error),
+    error: errorText(error),
   };
-}
-
-function withEngine<T>(
-  prepared: NetworkTopology,
-  run: (engine: MainThreadEngine) => Promise<T>,
-): Promise<T> {
-  const engine = new MainThreadEngine(prepared, new HookEngine());
-  return run(engine).finally(() => {
-    try {
-      engine.dispose();
-    } catch {
-      // Disposal must not turn a finished send into a failure.
-    }
-  });
 }
 
 /**

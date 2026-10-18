@@ -53,6 +53,8 @@ import {
   REASSEMBLES_ANYWAY,
   type FragmentMistake,
 } from './reasons';
+import { isCanonicalIpv4, labelIn } from '../exercises/model/text';
+import { ownerOf } from '../exercises/grade/engineRun';
 
 type Topology = TopologySnapshot;
 
@@ -61,8 +63,7 @@ interface Context {
   readonly nodeLabels: Readonly<Record<string, Localised>>;
 }
 
-const label = (ctx: Context, nodeId: string): Localised =>
-  ctx.nodeLabels[nodeId] ?? { en: nodeId, ja: nodeId };
+const label = (ctx: Context, nodeId: string): Localised => labelIn(ctx.nodeLabels, nodeId);
 
 const result = (
   goalId: string,
@@ -79,15 +80,8 @@ const result = (
 
 // --- The topology ----------------------------------------------------------------
 
-/** The node that owns `ip`: a host with that address or a router with a side on it. */
-export function ownerOf(topology: Topology, ip: string): string | null {
-  const node = topology.nodes.find(
-    (candidate) =>
-      candidate.data.ip === ip ||
-      (candidate.data.interfaces ?? []).some((side) => side.ipAddress === ip),
-  );
-  return node?.id ?? null;
-}
+/** The node that owns `ip` (`grade/engineRun.ts`), kept here for the judge's callers. */
+export { ownerOf };
 
 /** Whether `ip` is on a network some router is connected to (where an unused address bounces: README quirk 2). */
 function onConnectedNetwork(topology: Topology, ip: string): boolean {
@@ -121,7 +115,6 @@ function macHolder(topology: Topology, mac: string): { node: NetlabNode; side?: 
 
 // --- Values onto the packet ---------------------------------------------------------
 
-const IPV4 = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
 const MAC = /^[0-9a-f]{2}(:[0-9a-f]{2}){5}$/i;
 
 export const sizeOf = (packet: PacketGiven): number =>
@@ -164,7 +157,8 @@ export function applyValues(part: BuildPart, given: PacketGiven, values: PacketV
     const bad = { packet, problem: { code: 'invalid-value' as const, field: entry.id }, changed };
     if (entry.candidates && !entry.candidates.some((option) => option.value === value)) return bad;
     const input = entry.input;
-    if (input.kind === 'address' && !(typeof value === 'string' && IPV4.test(value))) return bad;
+    if (input.kind === 'address' && !(typeof value === 'string' && isCanonicalIpv4(value)))
+      return bad;
     if (input.kind === 'mac' && !(typeof value === 'string' && MAC.test(value))) return bad;
     if (input.kind === 'flag' && typeof value !== 'boolean') return bad;
     if (

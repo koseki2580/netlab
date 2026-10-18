@@ -4,6 +4,7 @@
  */
 
 import type { ExerciseLevel, Localised } from '../model/types';
+import { TEMPLATES } from '../templates';
 import type { AttemptLocale, AttemptRecord, PlacementResult } from './types';
 
 /**
@@ -13,6 +14,15 @@ import type { AttemptLocale, AttemptRecord, PlacementResult } from './types';
  * first Check (within two Checks where the answer is typed). An exercise
  * counts once, as it went the first time: doing it again does not change it.
  */
+
+/** Template ids by level. */
+function kindsByLevel(
+  templates: readonly { readonly id: string; readonly level: ExerciseLevel }[],
+): Readonly<Record<ExerciseLevel, readonly string[]>> {
+  const of = (level: ExerciseLevel) =>
+    templates.filter((template) => template.level === level).map((template) => template.id);
+  return { 1: of(1), 2: of(2), 3: of(3), 4: of(4) };
+}
 
 /** A level is judged on the last this-many distinct exercises. */
 export const WINDOW_SIZE = 10;
@@ -43,40 +53,8 @@ export const MAX_CHECKS_TO_COUNT = 2;
  * the one rule they knew): the level is "every kind of task here", so a kind
  * that still goes wrong keeps it open, and so does a kind never tried.
  */
-export const LEVEL_KINDS: Readonly<Record<ExerciseLevel, readonly string[]>> = {
-  1: [
-    'l1-host-address',
-    'l1-host-blank',
-    'l1-cable-off',
-    'l1-router-address',
-    'l1-prefix-fit',
-    'l1-choose-address',
-    'l1-which-pc',
-  ],
-  2: [
-    'l2-vlan-access',
-    'l2-vlan-separate',
-    'l2-trunk-allowed',
-    'l2-stp-root',
-    'l2-static-missing',
-    'l2-static-return',
-    'l2-static-nexthop',
-    'l2-acl-permit',
-    'l2-choose-root',
-    'l2-choose-static-default',
-  ],
-  3: [
-    'l3-ospf-prefer',
-    'l3-ospf-both-ways',
-    'l3-static-both-ways',
-    'l3-acl-order',
-    'l3-acl-port',
-    'l3-acl-replies',
-    'l3-two-faults',
-    'l3-choose-longest',
-  ],
-  4: [],
-};
+export const LEVEL_KINDS: Readonly<Record<ExerciseLevel, readonly string[]>> =
+  kindsByLevel(TEMPLATES);
 
 /**
  * The packet track (`demo/exercises/packet/`) keeps its attempts in the same
@@ -88,13 +66,22 @@ export const PACKET_TRACK_PREFIX = 'packet:';
 export const isPacketAttempt = (attempt: AttemptRecord): boolean =>
   attempt.templateId.startsWith(PACKET_TRACK_PREFIX);
 
-/** Which attempts a level is judged on, and its kinds of task. Absent: the device exercises. */
+/**
+ * A track: which attempts a level is judged on (device or packet), and its
+ * templates, from which the kinds of task of each level are derived.
+ * Absent: the device exercises.
+ */
 export interface LevelScope {
   readonly track: 'device' | 'packet';
-  readonly kinds: Readonly<Record<ExerciseLevel, readonly string[]>>;
+  /** Every template of the track, by the id the store keeps, in the order the levels introduce them. */
+  readonly templates: readonly { readonly id: string; readonly level: ExerciseLevel }[];
 }
 
-export const DEVICE_SCOPE: LevelScope = { track: 'device', kinds: LEVEL_KINDS };
+export const DEVICE_SCOPE: LevelScope = { track: 'device', templates: TEMPLATES };
+
+/** The kinds of task of a level of a track: its templates' ids. */
+export const scopeKinds = (scope: LevelScope, level: ExerciseLevel): readonly string[] =>
+  scope.templates.filter((template) => template.level === level).map((template) => template.id);
 
 const inScope = (attempt: AttemptRecord, scope: LevelScope): boolean =>
   isPacketAttempt(attempt) === (scope.track === 'packet');
@@ -235,7 +222,7 @@ export function levelSummary(
   // there is one. So a kind solved the first time is settled at once, and a
   // kind that was missed takes two in a row: the missed kinds are served again
   // soon (`nextExerciseId`), and one lucky press must not be enough then.
-  const missingKinds = scope.kinds[level].filter((kind) => {
+  const missingKinds = scopeKinds(scope, level).filter((kind) => {
     const [last, before] = latest.get(kind) ?? [];
     return last === undefined || !isSolved(last) || (before !== undefined && !isSolved(before));
   });
@@ -418,7 +405,7 @@ export function explain(
       : `You solved ${solved} of your last ${counted} exercises ${COUNTED_HOW.en} across ${solvedTemplates} kinds of exercise. Level ${level} is cleared.`;
   }
 
-  const kinds = scope.kinds[level].length;
+  const kinds = scopeKinds(scope, level).length;
   if (ja) {
     const every =
       kinds > 0

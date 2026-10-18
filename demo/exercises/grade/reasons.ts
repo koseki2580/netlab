@@ -11,13 +11,9 @@
  */
 
 import type { CheckResultCode, Localised } from '../model/types';
+import { join, ordinalEn } from '../model/text';
 
 type Leg = 'request' | 'reply';
-
-const join = (first: Localised, second: Localised): Localised => ({
-  en: `${first.en} ${second.en}`,
-  ja: `${first.ja}${second.ja}`,
-});
 
 // --- Causes read off the topology ------------------------------------------------
 
@@ -56,8 +52,6 @@ export type DiagnosisDetail =
       readonly others?: number;
     };
 
-const ORDINAL_EN = ['first', 'second', 'third', 'last'] as const;
-
 /**
  * 「3 つ目の数字がちがいます（150 と 1）」: which number, and the two values.
  * "The first numbers differ" was read as "the first number", which matched.
@@ -72,7 +66,7 @@ function whichNumber(
   }
   const values = own !== undefined && others !== undefined;
   return {
-    en: `The ${ORDINAL_EN[position - 1]} number differs${values ? ` (${own} and ${others})` : ''}`,
+    en: `The ${position === 4 ? 'last' : ordinalEn(position)} number differs${values ? ` (${own} and ${others})` : ''}`,
     ja: `${position} つ目の数字がちがいます${values ? `（${own} と ${others}）` : ''}`,
   };
 }
