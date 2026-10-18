@@ -1,6 +1,6 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
-import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { PortChannel } from '../../src/layers/l2-datalink/PortChannel';
 import { VrrpOrchestrator } from '../../src/layers/l3-network/VrrpOrchestrator';
 import { virtualRouterMac } from '../../src/layers/l3-network/VrrpStateMachine';
@@ -282,6 +282,7 @@ export default function HighAvailabilityDemo() {
           canvas is drawn again so its labels and link states follow a failover. */}
       <NetlabProvider key={`${masterDown}-${memberDown}`} topology={currentTopology}>
         <div
+          data-lesson-grid=""
           style={{
             display: 'grid',
             gridTemplateColumns: 'minmax(0, 1fr) 360px',

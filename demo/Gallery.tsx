@@ -1360,6 +1360,7 @@ export default function Gallery({
         data-cbsafe={colorBlindSafe}
         data-contrast={contrast}
         data-netlab-gallery
+        data-testid="gallery-root"
         data-menu-open={menuOpen ? '' : undefined}
         onKeyDown={(event) => {
           if (event.key === 'Escape') setMenuOpen(false);

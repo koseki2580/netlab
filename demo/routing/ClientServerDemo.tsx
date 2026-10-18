@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { AreaLegend } from '../../src/components/controls/AreaLegend';
 import { RouteTablePanel } from '../../src/components/controls/RouteTable';
@@ -386,6 +386,9 @@ export default function ClientServerDemo() {
               {/* Canvas */}
               <LessonCanvas
                 style={{ flex: 1, position: 'relative' }}
+                // Two areas in two rows on a phone: taller than the usual canvas,
+                // so the devices are drawn at a size their names can be read.
+                narrowHeight={380}
                 canvas={
                   <>
                     <NetlabCanvas />

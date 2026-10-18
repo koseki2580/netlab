@@ -1,4 +1,4 @@
-import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { RouteTable } from '../../src/components/controls/RouteTable';
 import type { NetworkTopology } from '../../src/types/topology';

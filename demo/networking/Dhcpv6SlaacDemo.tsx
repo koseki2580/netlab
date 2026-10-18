@@ -1,6 +1,6 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
-import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import {
   applyRouterAdvertisement,
   buildRouterAdvertisement,
@@ -191,6 +191,7 @@ export default function Dhcpv6SlaacDemo() {
     >
       <NetlabProvider topology={topology}>
         <div
+          data-lesson-grid=""
           style={{
             display: 'grid',
             gridTemplateColumns: 'minmax(0, 1fr) 360px',

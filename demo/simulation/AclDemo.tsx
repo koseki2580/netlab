@@ -1,6 +1,6 @@
 import { useT } from '../localeContext';
 import DemoShell from '../DemoShell';
-import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { LegendPanel } from '../../src/components/LegendPanel';
 import { LessonCanvas, LessonPanel, LessonSplit } from '../components/LessonPanel';

@@ -16,6 +16,7 @@ import { hopReadout, traceOutcome } from '../../src/components/simulation/traceW
 import { useI18n } from '../../src/i18n/useI18n';
 import { useSimulation } from '../../src/simulation/SimulationContext';
 import { useViewport } from '../../src/utils/useViewport';
+import { arrangeForPhone } from './phoneLayout';
 
 /**
  * The layout a lesson with a canvas and a side panel shares.
@@ -121,10 +122,13 @@ export function LessonSplit({
 export function LessonCanvas({
   canvas,
   style = CANVAS_STYLE,
+  narrowHeight = NARROW_CANVAS_HEIGHT,
   children,
 }: {
   canvas: ReactNode;
   style?: CSSProperties;
+  /** The canvas's height in the scrolling narrow column, for a drawing taller than most. */
+  narrowHeight?: number;
   children?: ReactNode;
 }) {
   const { isNarrow } = useViewport();
@@ -168,9 +172,7 @@ export function LessonCanvas({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
       {children}
-      <div style={{ height: NARROW_CANVAS_HEIGHT, position: 'relative', flexShrink: 0 }}>
-        {canvas}
-      </div>
+      <div style={{ height: narrowHeight, position: 'relative', flexShrink: 0 }}>{canvas}</div>
     </div>
   );
 }
@@ -346,26 +348,29 @@ export type PhonePositions = Readonly<Record<string, { readonly x: number; reado
  * A row of devices laid out for a wide canvas is fitted to a phone at about a
  * third of its size, with addresses 4 to 6px high. On a narrow screen the
  * devices take the places given here instead (closer together, fewer to a
- * row), so the same fit draws them larger. `layout` changes when the
- * arrangement does: used as the provider's `key`, the lesson starts afresh on
- * the new arrangement.
+ * row), so the same fit draws them larger; with no places given they stand
+ * three to a row (`arrangeForPhone`). `layout` changes when the arrangement
+ * does: used as the provider's `key`, the lesson starts afresh on the new
+ * arrangement.
  */
 export function usePhoneTopology<
   Topology extends {
     readonly nodes: readonly { readonly id: string; readonly position: { x: number; y: number } }[];
   },
->(topology: Topology, positions: PhonePositions): { topology: Topology; layout: string } {
+>(topology: Topology, positions?: PhonePositions): { topology: Topology; layout: string } {
   const { isNarrow } = useViewport();
   const arranged = useMemo(
     () =>
       isNarrow
-        ? {
-            ...topology,
-            nodes: topology.nodes.map((node) => {
-              const place = positions[node.id];
-              return place ? { ...node, position: { x: place.x, y: place.y } } : node;
-            }),
-          }
+        ? positions
+          ? {
+              ...topology,
+              nodes: topology.nodes.map((node) => {
+                const place = positions[node.id];
+                return place ? { ...node, position: { x: place.x, y: place.y } } : node;
+              }),
+            }
+          : arrangeForPhone(topology)
         : topology,
     [isNarrow, positions, topology],
   );

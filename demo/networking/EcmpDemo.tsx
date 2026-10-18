@@ -1,6 +1,6 @@
 import { useMemo, type CSSProperties } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
-import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { TraceSummary } from '../../src/components/simulation/TraceSummary';
 import { buildUdpPacket } from '../../src/layers/l4-transport/udpPacketBuilder';
@@ -359,7 +359,10 @@ function DemoInner() {
   };
 
   return (
-    <main style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 380px', height: '100%' }}>
+    <main
+      data-lesson-grid=""
+      style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 380px', height: '100%' }}
+    >
       <div style={{ position: 'relative', minWidth: 0 }}>
         <NetlabCanvas />
       </div>

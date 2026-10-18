@@ -40,7 +40,10 @@ function Http2DemoInner() {
   });
 
   return (
-    <main style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: 16 }}>
+    <main
+      data-lesson-grid=""
+      style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: 16 }}
+    >
       <section style={PANEL_STYLE} aria-label={t('HTTP/2 streams', 'HTTP/2 のストリーム')}>
         <div
           data-testid="lesson-brief"

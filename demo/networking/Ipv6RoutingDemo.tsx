@@ -1,6 +1,6 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
-import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { BgpProtocol } from '../../src/routing/bgp/BgpProtocol';
 import { OspfV3Protocol } from '../../src/routing/ospf/OspfV3Protocol';
 import type { RouteEntry } from '../../src/types/routing';
@@ -187,6 +187,7 @@ function Ipv6RoutingDemoInner() {
   return (
     <NetlabProvider topology={topology}>
       <div
+        data-lesson-grid=""
         style={{
           display: 'grid',
           gridTemplateColumns: 'minmax(0, 1fr) 360px',

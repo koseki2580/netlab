@@ -1,6 +1,6 @@
 import { Fragment, useMemo, useState } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
-import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import {
   TcpCongestionPanel,
   type TcpSsthreshSample,

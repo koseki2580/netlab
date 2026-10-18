@@ -38,7 +38,10 @@ function Http3DemoInner() {
   const run = orchestrator.runRequests(['/a', '/b', '/c', '/d'], loss ? { lostStreamId: 4n } : {});
 
   return (
-    <main style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: 16 }}>
+    <main
+      data-lesson-grid=""
+      style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: 16 }}
+    >
       <section style={PANEL_STYLE} aria-label={t('HTTP/3 streams', 'HTTP/3 のストリーム')}>
         <div
           data-testid="lesson-brief"

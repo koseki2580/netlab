@@ -11,7 +11,6 @@ import {
   LessonSplit,
   LessonStepBar,
   usePhoneTopology,
-  type PhonePositions,
 } from '../components/LessonPanel';
 import { StepControls } from '../../src/components/simulation/StepControls';
 import { useViewport } from '../../src/utils/useViewport';
@@ -712,17 +711,8 @@ function DhcpDnsDemoInner() {
   );
 }
 
-/** The devices closer together on a phone, so the fit draws them (and their addresses) larger. */
-const PHONE_POSITIONS: PhonePositions = {
-  'dhcp-client': { x: 0, y: 104 },
-  'switch-1': { x: 120, y: 104 },
-  'dhcp-server': { x: 245, y: 0 },
-  'dns-server': { x: 245, y: 104 },
-  'web-server': { x: 245, y: 208 },
-};
-
 export default function DhcpDnsDemo() {
-  const phone = usePhoneTopology(TOPOLOGY, PHONE_POSITIONS);
+  const phone = usePhoneTopology(TOPOLOGY);
   return (
     <DemoShell
       title="DHCP & DNS"

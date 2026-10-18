@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import { StepControls } from '../../src/components/simulation/StepControls';

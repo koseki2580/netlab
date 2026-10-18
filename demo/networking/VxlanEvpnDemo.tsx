@@ -1,6 +1,6 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
-import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { answerArpFromEvpnCache } from '../../src/layers/l3-network/tunneling/ArpSuppression';
 import {
   advertiseType2,
@@ -142,6 +142,7 @@ function VxlanEvpnDemoInner() {
   return (
     <NetlabProvider topology={topology}>
       <div
+        data-lesson-grid=""
         style={{
           display: 'grid',
           gridTemplateColumns: 'minmax(0, 1fr) 360px',

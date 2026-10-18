@@ -2,7 +2,7 @@ import { useT } from '../localeContext';
 import { useMemo, useState, type CSSProperties } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
-import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import { FailureTogglePanel } from '../../src/components/simulation/FailureTogglePanel';
 import { SessionDetail } from '../../src/components/simulation/SessionDetail';

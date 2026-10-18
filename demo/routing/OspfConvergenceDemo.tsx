@@ -22,12 +22,13 @@ import {
   resetSandbox,
   type Sandbox,
 } from '../../src/sandbox/fork';
-import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
 import { PacketScrubTimeline } from '../../src/components/simulation/PacketScrubTimeline';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationOverlayDock } from '../../src/components/simulation/SimulationOverlayDock';
+import { PacketViewerPanel } from '../../src/components/simulation/PacketViewer';
 import { DropEventOverlay } from '../../src/components/simulation/DropEventOverlay';
 import { StepControls } from '../../src/components/simulation/StepControls';
 import { StatusLine } from '../../src/components/StatusLine';
@@ -773,8 +774,10 @@ function OspfConvergenceInner({
                   <NetlabCanvas>
                     <DropEventOverlay />
                   </NetlabCanvas>
-                  {/* The route tables live in the side rail; over the canvas they hid R4. */}
-                  <SimulationOverlayDock showRouteTable={false} />
+                  {/* The route tables live in the side rail; over the canvas they hid R4.
+                      Over a phone-width canvas the packet box took the room the
+                      diagram is fitted into: there it is read in the panel. */}
+                  {!isNarrow && <SimulationOverlayDock showRouteTable={false} />}
                   <ZeroStateHint />
                   {!isNarrow && preFlightBrief}
                 </>
@@ -847,6 +850,11 @@ function OspfConvergenceInner({
             <div style={{ minHeight: 0 }}>
               <PacketTimeline />
             </div>
+            {isNarrow && (
+              <div style={{ padding: 12 }}>
+                <PacketViewerPanel />
+              </div>
+            )}
 
             {/* The command bar and the scrubber below the canvas step too; this
                 fuller control comes after the results rather than before them. */}

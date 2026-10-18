@@ -1,6 +1,6 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
-import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { decapGre, encapGre } from '../../src/layers/l3-network/tunneling/GreEncap';
 import type { IpPacket } from '../../src/types/packets';
 import type { NetworkTopology } from '../../src/types/topology';
@@ -100,6 +100,7 @@ function GreDemoInner() {
   return (
     <NetlabProvider topology={topology}>
       <div
+        data-lesson-grid=""
         style={{
           display: 'grid',
           gridTemplateColumns: 'minmax(0, 1fr) 360px',

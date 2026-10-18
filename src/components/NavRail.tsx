@@ -109,6 +109,7 @@ function RailButton({ item }: { item: NavRailItem }) {
     <button
       type="button"
       data-netlab-rail-item=""
+      data-testid={`nav-rail-${item.id}`}
       aria-label={item.label}
       aria-current={item.active ? 'page' : undefined}
       disabled={item.disabled}

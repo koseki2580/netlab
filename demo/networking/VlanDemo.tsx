@@ -1,6 +1,6 @@
 import { useT } from '../localeContext';
 import type { CSSProperties } from 'react';
-import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import { useNetlabContext } from '../../src/components/NetlabContext';

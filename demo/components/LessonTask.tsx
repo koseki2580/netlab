@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
-import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { NetlabProvider } from './PhoneNetlabProvider';
 import { LessonCanvas, LessonPanel, LessonSplit } from './LessonPanel';
 import { buildUdpPacket } from '../../src/layers/l4-transport/udpPacketBuilder';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';

@@ -1,6 +1,6 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
-import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { convergeLdp } from '../../src/layers/l3-network/tunneling/MplsLdp';
 import { installVpnv4Route } from '../../src/layers/l3-network/tunneling/MplsVrf';
 import { pushMplsLabel } from '../../src/layers/l3-network/tunneling/MplsLabelStack';
@@ -116,6 +116,7 @@ function MplsL3vpnDemoInner() {
   return (
     <NetlabProvider topology={topology}>
       <div
+        data-lesson-grid=""
         style={{
           display: 'grid',
           gridTemplateColumns: 'minmax(0, 1fr) 360px',

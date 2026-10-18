@@ -112,3 +112,29 @@
     transition: transform 160ms ease;
   }
 }
+
+/*
+ * A fingertip's worth (44 by 44 CSS px) for everything pressed on the page
+ * where it is pressed with a finger: on a phone the filter chips, the audience
+ * and theme toggles and each card's "open" were 21 to 31px high, and a card's
+ * second link 14. `!important` beats the inline sizes the wide page sets.
+ */
+@media (max-width: 700px), (pointer: coarse) {
+  [data-netlab-gallery]
+    :is(
+      button,
+      select,
+      [role='tab'],
+      input:not([type='checkbox']):not([type='radio']):not([type='range'])
+    ) {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+
+  [data-netlab-gallery] a[href] {
+    display: inline-flex;
+    align-items: center;
+    min-width: 44px;
+    min-height: 44px;
+  }
+}

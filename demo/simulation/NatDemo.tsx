@@ -10,7 +10,6 @@ import {
   LessonSplit,
   LessonStepBar,
   usePhoneTopology,
-  type PhonePositions,
 } from '../components/LessonPanel';
 import { HopInspector } from '../../src/components/simulation/HopInspector';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
@@ -591,16 +590,6 @@ function NatDemoInner() {
   );
 }
 
-/** The devices closer together on a phone, so the fit draws them (and their addresses) larger. */
-const PHONE_POSITIONS: PhonePositions = {
-  'client-1': { x: 0, y: 0 },
-  'client-2': { x: 0, y: 108 },
-  'switch-1': { x: 95, y: 54 },
-  'nat-router': { x: 190, y: 54 },
-  'isp-router': { x: 285, y: 54 },
-  'server-1': { x: 380, y: 54 },
-};
-
 export default function NatDemo() {
   const params = new URLSearchParams(window.location.search);
   const sandboxIntroId = params.get('intro') ?? null;
@@ -609,7 +598,7 @@ export default function NatDemo() {
   const { embedded, embedMode, parentOrigin } = readDemoEmbedParams();
   const tutorialProps = tutorialId ? { tutorialId } : {};
 
-  const phone = usePhoneTopology(NAT_DEMO_TOPOLOGY, PHONE_POSITIONS);
+  const phone = usePhoneTopology(NAT_DEMO_TOPOLOGY);
   return (
     <DemoShell
       title="NAT / PAT"

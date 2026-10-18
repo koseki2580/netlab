@@ -1,6 +1,6 @@
 import { useMemo, type CSSProperties } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
-import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { TraceSummary } from '../../src/components/simulation/TraceSummary';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
@@ -128,6 +128,7 @@ function DemoInner() {
 
   return (
     <div
+      data-lesson-grid=""
       style={{
         display: 'grid',
         gridTemplateColumns: 'minmax(0, 1fr) 360px',

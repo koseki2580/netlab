@@ -2,10 +2,11 @@ import { useT } from '../localeContext';
 import { useState } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
-import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import type { BgpNeighborConfig, OspfAreaConfig, RouterInterface } from '../../src/types/routing';
 import type { NetlabNode, NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
+import { useViewport } from '../../src/utils/useViewport';
 import { LinkCostsPanel } from './OspfLinkCosts';
 import { routeNextHops } from './routeDisplay';
 
@@ -421,6 +422,9 @@ export function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
 export default function DynamicRoutingDemo() {
   const [protocol, setProtocol] = useState<DynamicProtocol>('rip');
   const topology = buildTopology(protocol);
+  // Beside the route table a phone left the canvas 30px wide: there the two
+  // stack, and the column scrolls.
+  const { isNarrow } = useViewport();
 
   return (
     <DemoShell
@@ -465,11 +469,23 @@ export default function DynamicRoutingDemo() {
             );
           })}
         </div>
-        <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+        <div
+          style={{
+            display: 'flex',
+            flex: 1,
+            minHeight: 0,
+            ...(isNarrow ? { overflowY: 'auto' } : {}),
+          }}
+        >
           <div style={{ flex: 1, minWidth: 0 }}>
             <NetlabProvider topology={topology}>
-              <div style={{ display: 'flex', height: '100%' }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  ...(isNarrow ? { flexDirection: 'column' } : { height: '100%' }),
+                }}
+              >
+                <div style={isNarrow ? { height: 300, flexShrink: 0 } : { flex: 1, minWidth: 0 }}>
                   <NetlabCanvas />
                 </div>
                 <DynamicRouteTable protocol={protocol} />

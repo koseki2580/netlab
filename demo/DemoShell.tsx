@@ -21,6 +21,7 @@ import { installKeymap, type KeymapActions } from '../src/utils/keymap';
 import { useViewport } from '../src/utils/useViewport';
 import { E2eTraceHook } from './__e2e_hook';
 import { ShellChromeProvider } from './ShellChromeContext';
+import { TouchHelpOverlay } from './components/TouchHelpOverlay';
 import { I18nProvider } from '../src/i18n/I18nProvider';
 import { readLearningLocale } from './learning/learningLocale';
 import { DEMO_COPY_JA } from './galleryJa';
@@ -123,14 +124,42 @@ const TOUCH_TARGETS: readonly (readonly [selectors: readonly string[], css: stri
     ['main input:not([type="checkbox"]):not([type="radio"]):not([type="range"])', 'main select'],
     'min-height:44px',
   ],
+  // Everything else a finger presses: the bottom bar's icons (32px), a
+  // lesson's small toggles, close and clear marks (15px), its step and play
+  // buttons, tabs and "more detail" lines. The devices drawn on the diagram
+  // are sized by its zoom, so they are left to it.
+  [
+    [
+      'button:not([data-testid="topology-node"] *)',
+      '[role="tab"]',
+      'header a[href]',
+      '[data-testid="demo-shell-bottom-bar"] a[href]',
+    ],
+    // Important: the rail and command-bar buttons reset every property inline
+    // (`all: unset`) and drew 32 and 10–28px boxes, with only an invisible
+    // overlay that overlapped the next button.
+    'min-width:44px !important;min-height:44px !important',
+  ],
+  [['summary'], 'min-height:44px;display:flex;align-items:center;gap:6px'],
 ];
 const TOUCH_RULES = TOUCH_TARGETS.map(
   ([selectors, css]) =>
     `${selectors.map((selector) => `[data-netlab-sim-shell] ${selector}`).join(',')}{${css}}`,
 ).join('');
+/**
+ * The lessons laid out as a canvas beside a 360px column (`data-lesson-grid`)
+ * stack on a phone: beside the column the canvas was 14px wide. The canvas
+ * takes a phone's height of its own instead of the 560px it has beside it.
+ */
+const NARROW_RULES =
+  '[data-lesson-grid]{grid-template-columns:minmax(0,1fr) !important;min-height:0 !important;' +
+  'height:100% !important;overflow-y:auto;align-content:start}' +
+  '[data-lesson-grid]>section{min-height:0 !important}' +
+  '[data-lesson-grid] [data-testid="netlab-canvas"]{height:300px !important}';
+
 /** Always on the narrow layout; on the wide one only where the pointer is coarse. */
 const touchCss = (narrow: boolean) =>
-  narrow ? TOUCH_RULES : `@media (pointer:coarse){${TOUCH_RULES}}`;
+  narrow ? TOUCH_RULES + NARROW_RULES : `@media (pointer:coarse){${TOUCH_RULES}}`;
 
 interface DemoShellProps {
   title: string;
@@ -185,6 +214,9 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
   // S1 — below 900px the rail becomes a bottom bar and the shell switches to a
   // single vertical column so iframe/phone embeds don't horizontally scroll.
   const { isNarrow } = useViewport();
+  const touchHelp =
+    isNarrow ||
+    (typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true);
 
   const openPalette = useCallback(() => {
     setHelpOpen(false);
@@ -504,32 +536,36 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
               >
                 {shownDesc}
               </span>
-              <a
-                href="https://github.com/koseki2580/netlab"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  marginLeft: 'auto',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  color: 'var(--netlab-text-secondary)',
-                  textDecoration: 'none',
-                  fontFamily: 'monospace',
-                  fontSize: 12,
-                }}
-                onMouseEnter={(event) => {
-                  (event.currentTarget as HTMLAnchorElement).style.color =
-                    'var(--netlab-text-secondary)';
-                }}
-                onMouseLeave={(event) => {
-                  (event.currentTarget as HTMLAnchorElement).style.color =
-                    'var(--netlab-text-secondary)';
-                }}
-              >
-                {GITHUB_ICON}
-                GitHub
-              </a>
+              {/* Not on a phone: there it took a 44px row of its own above a
+                  diagram that needs the height, and the gallery links to it. */}
+              {!isNarrow && (
+                <a
+                  href="https://github.com/koseki2580/netlab"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    marginLeft: 'auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    color: 'var(--netlab-text-secondary)',
+                    textDecoration: 'none',
+                    fontFamily: 'monospace',
+                    fontSize: 12,
+                  }}
+                  onMouseEnter={(event) => {
+                    (event.currentTarget as HTMLAnchorElement).style.color =
+                      'var(--netlab-text-secondary)';
+                  }}
+                  onMouseLeave={(event) => {
+                    (event.currentTarget as HTMLAnchorElement).style.color =
+                      'var(--netlab-text-secondary)';
+                  }}
+                >
+                  {GITHUB_ICON}
+                  GitHub
+                </a>
+              )}
             </header>
           )}
           <NetlabThemeScope {...settings} style={{ flex: 1, overflow: 'hidden' }}>
@@ -557,7 +593,17 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
                   items={commandItems}
                   onClose={() => setPaletteOpen(false)}
                 />
-                <KeyboardHelpOverlay open={helpOpen} onClose={() => setHelpOpen(false)} />
+                {/* On a touch screen help says what to tap; the keyboard list is
+                    for a page used with keys. */}
+                {touchHelp ? (
+                  <TouchHelpOverlay
+                    open={helpOpen}
+                    onClose={() => setHelpOpen(false)}
+                    locale={locale === 'ja' ? 'ja' : 'en'}
+                  />
+                ) : (
+                  <KeyboardHelpOverlay open={helpOpen} onClose={() => setHelpOpen(false)} />
+                )}
               </>
             )}
           </NetlabThemeScope>

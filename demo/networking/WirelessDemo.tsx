@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { FakeDeterministicProvider } from '../../src/crypto/FakeDeterministicProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
-import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { detectHiddenNodeCollision } from '../../src/layers/l1-physical/wireless/CsmaCa';
 import { WirelessLinkController } from '../../src/layers/l1-physical/wireless/WirelessLinkController';
 import { transitionWirelessState } from '../../src/layers/l1-physical/wireless/WirelessStateMachine';
@@ -329,6 +329,7 @@ export default function WirelessDemo() {
     >
       <NetlabProvider topology={currentTopology}>
         <div
+          data-lesson-grid=""
           style={{
             display: 'grid',
             gridTemplateColumns: 'minmax(0, 1fr) 360px',

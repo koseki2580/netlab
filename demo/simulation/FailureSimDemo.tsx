@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
-import { NetlabProvider } from '../../src/components/NetlabProvider';
+import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { LessonCanvas, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import { FailureTogglePanel } from '../../src/components/simulation/FailureTogglePanel';
 import { StepControls } from '../../src/components/simulation/StepControls';
