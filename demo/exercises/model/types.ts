@@ -107,8 +107,8 @@ export type SettingChange =
       readonly ifaceId: string;
       readonly direction: 'inbound' | 'outbound';
       /**
-       * An empty list means "no ACL": `applyChanges` must delete the property.
-       * The engine treats `inboundAcl: []` as deny-everything (see engineContract fact 3).
+       * An empty list means "no ACL": `applyChanges` deletes the property, so
+       * the topology never holds `[]` (which the engine also reads as no ACL).
        */
       readonly rules: readonly AclRule[];
     }

@@ -353,8 +353,11 @@ export interface ReservedAddress {
 /**
  * The addresses that differ from the start and are the first or the last of
  * the network they sit on: for a router side its own "/number", for a host
- * the "/number" of the router side on its LAN. The simulator accepts both
- * (pinned in `engineContract.test.ts`); a real device does not.
+ * the "/number" of the router side on its LAN. This mirrors the simulator's
+ * own rule (it drops such traffic as `reserved-address`) and stays because the
+ * grader needs more than the drop: it refuses before any probe is run, for
+ * every goal when the address is on a side of a router, and names the address
+ * and which of the two it is, none of which the drop carries.
  */
 export function reservedAddresses(start: Topology, current: Topology): ReservedAddress[] {
   try {

@@ -23,8 +23,6 @@ import { SEL } from './selectors';
  */
 const X = SEL.exercises;
 
-type Locale = 'ja' | 'en';
-
 const HOST = 'l1-host-address~0';
 const VLAN = 'l2-vlan-separate~0';
 const DESIGN = 'l1-choose-address~0';
@@ -33,16 +31,6 @@ function exercise(id: string): Exercise {
   const found = exerciseById(id);
   if (!found) throw new Error(`no exercise ${id}`);
   return found;
-}
-
-async function useLocale(page: Page, locale: Locale) {
-  await page.addInitScript((chosen) => {
-    try {
-      window.localStorage.setItem('netlab-locale', chosen);
-    } catch {
-      /* without storage the page is in English, and the test says so by failing */
-    }
-  }, locale);
 }
 
 async function open(page: Page, demoPage: DemoPage, id: string) {
@@ -115,10 +103,7 @@ async function typeReference(page: Page, changes: readonly SettingChange[]) {
 }
 
 test.describe('in Japanese', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await useLocale(page, 'ja');
-  });
+  test.use({ appLocale: 'ja', viewportPreset: 'desktop' });
 
   /** TC-513 — the gallery leads to the hub, and a level's button to its first exercise. */
   test('the gallery card opens the hub, and "start level 1" opens an exercise', async ({
@@ -285,6 +270,7 @@ test.describe('in Japanese', () => {
     const to = await centre(edge.target);
 
     await page.mouse.click(from.x, from.y);
+    // eslint-disable-next-line netlab/no-fixed-waits-in-e2e -- asserts no detail panel opens within this window
     await page.waitForTimeout(300);
     await expect(page.getByTestId(SEL.nodeDetail.closePanel)).toHaveCount(0);
 
@@ -598,7 +584,8 @@ test.describe('in Japanese', () => {
   }) => {
     const id = 'l2-static-missing~0';
     const found = exercise(id);
-    const [unsound] = found.unsoundPasses?.[0] ?? [];
+    // The template lists the far-side route last among its wrong answers.
+    const [unsound] = found.wrongAnswers?.at(-1) ?? [];
     if (unsound?.kind !== 'static-routes') throw new Error('no far-side route to try');
     const route = unsound.routes[unsound.routes.length - 1];
     if (!route) throw new Error('the far-side route is empty');
@@ -659,10 +646,7 @@ for (const size of [
   { width: 1280, height: 720 },
 ]) {
   test.describe(`at ${size.width}×${size.height}`, () => {
-    test.beforeEach(async ({ page }) => {
-      await page.setViewportSize(size);
-      await useLocale(page, 'ja');
-    });
+    test.use({ viewport: size, appLocale: 'ja' });
 
     /** Every one of `controls` is wholly on screen and above the Check bar. */
     async function allInView(page: Page, controls: ReturnType<Page['locator']>) {
@@ -720,46 +704,45 @@ for (const size of [
   });
 }
 
-/** TC-520 — the same exercise in English: its text, its goals and its device names. */
-test('an exercise is in one language at a time, and English names its devices in English', async ({
-  page,
-  demoPage,
-}) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await useLocale(page, 'en');
-  const { title, brief, task, nodeLabels, hints } = exercise(HOST);
-  await open(page, demoPage, HOST);
+test.describe(() => {
+  test.use({ appLocale: 'en', viewportPreset: 'desktop' });
 
-  await expect(page.getByTestId(X.brief)).toContainText(title.en);
-  await expect(page.getByTestId(X.brief)).toContainText(task?.en ?? '');
-  await page.getByTestId('exercise-more').locator('summary').click();
-  await expect(page.getByTestId(X.brief)).toContainText(brief.en);
-  await expect(page.getByTestId(X.check)).toHaveText('Check');
-  const names = await page.getByTestId(X.diagram).getByTestId(SEL.canvas.node).allInnerTexts();
-  for (const label of Object.values(nodeLabels ?? {})) {
-    expect(names.some((name) => name.replace(/\s+/g, ' ').includes(label.en))).toBe(true);
-  }
-  await expect(page.getByTestId(X.panel)).not.toContainText(/[ぁ-んァ-ヶ]/);
+  /** TC-520 — the same exercise in English: its text, its goals and its device names. */
+  test('an exercise is in one language at a time, and English names its devices in English', async ({
+    page,
+    demoPage,
+  }) => {
+    const { title, brief, task, nodeLabels, hints } = exercise(HOST);
+    await open(page, demoPage, HOST);
 
-  await changeSomethingWrong(page);
-  await check(page, false);
-  await page.getByTestId(X.hint).click();
-  await expect(page.getByTestId(X.hintText(1))).toContainText(hints[0]?.text.en ?? '-');
-  await solveHost(page);
-  await expect(page.getByTestId(X.resultSummary)).toContainText('It works');
-  await expect(page.getByTestId(X.resultDone)).toContainText('solved with help');
+    await expect(page.getByTestId(X.brief)).toContainText(title.en);
+    await expect(page.getByTestId(X.brief)).toContainText(task?.en ?? '');
+    await page.getByTestId('exercise-more').locator('summary').click();
+    await expect(page.getByTestId(X.brief)).toContainText(brief.en);
+    await expect(page.getByTestId(X.check)).toHaveText('Check');
+    const names = await page.getByTestId(X.diagram).getByTestId(SEL.canvas.node).allInnerTexts();
+    for (const label of Object.values(nodeLabels ?? {})) {
+      expect(names.some((name) => name.replace(/\s+/g, ' ').includes(label.en))).toBe(true);
+    }
+    await expect(page.getByTestId(X.panel)).not.toContainText(/[ぁ-んァ-ヶ]/);
 
-  await demoPage.goto('/exercises');
-  await expect(page.getByTestId(X.levelStatus(1))).toContainText(
-    'You have pressed Check on 1 exercise',
-  );
+    await changeSomethingWrong(page);
+    await check(page, false);
+    await page.getByTestId(X.hint).click();
+    await expect(page.getByTestId(X.hintText(1))).toContainText(hints[0]?.text.en ?? '-');
+    await solveHost(page);
+    await expect(page.getByTestId(X.resultSummary)).toContainText('It works');
+    await expect(page.getByTestId(X.resultDone)).toContainText('solved with help');
+
+    await demoPage.goto('/exercises');
+    await expect(page.getByTestId(X.levelStatus(1))).toContainText(
+      'You have pressed Check on 1 exercise',
+    );
+  });
 });
 
 test.describe('placement and the record', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await useLocale(page, 'en');
-  });
+  test.use({ appLocale: 'en', viewportPreset: 'desktop' });
 
   /**
    * TC-522 — placement ends, whatever the first answer, within its eight
@@ -1021,55 +1004,60 @@ for (const [id, locale] of [
   [VLAN, 'en'],
   ['l2-static-missing~2', 'en'],
 ] as const) {
-  test(`on ${id} in ${locale} every device name is inside its box`, async ({ page, demoPage }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await useLocale(page, locale);
-    await open(page, demoPage, id);
-    const nodes = page.getByTestId(X.diagram).getByTestId(SEL.canvas.node);
-    await expect(nodes).toHaveCount(exercise(id).start.nodes.length);
-    // The canvas keeps a device hidden until it has measured and placed it.
-    await expect(nodes.last()).toBeVisible();
-    const names = await nodes.evaluateAll((boxes) =>
-      boxes.flatMap((box) => {
-        const frame = box.getBoundingClientRect();
-        const walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
-        const found: { name: string; inside: boolean }[] = [];
-        for (let text = walker.nextNode(); text; text = walker.nextNode()) {
-          // The address under a host is drawn below the box on purpose, and
-          // the letter in the device's symbol is not its name.
-          if (text.parentElement?.closest('[data-testid="topology-node-ip"]')) continue;
-          const symbol = text.parentElement?.closest('svg');
-          if (symbol && box.contains(symbol)) continue;
-          const range = document.createRange();
-          range.selectNodeContents(text);
-          found.push({
-            name: text.textContent ?? '',
-            inside: [...range.getClientRects()].every(
-              (rect) =>
-                rect.left >= frame.left - 0.5 &&
-                rect.right <= frame.right + 0.5 &&
-                rect.top >= frame.top - 0.5 &&
-                rect.bottom <= frame.bottom + 0.5,
-            ),
-          });
-        }
-        return found;
-      }),
-    );
-    // Every device's name was measured: the list below is not empty by accident.
-    expect(names.map((entry) => entry.name).sort()).toEqual(
-      Object.values(exercise(id).nodeLabels ?? {})
-        .map((label) => label[locale])
-        .sort(),
-    );
-    expect(
-      names.filter((entry) => !entry.inside).map((entry) => entry.name),
-      'names drawn outside their device box',
-    ).toEqual([]);
-    // Two lines of name do not make one device taller than another.
-    const heights = await nodes.evaluateAll((boxes) =>
-      boxes.map((box) => Math.round((box as HTMLElement).offsetHeight)),
-    );
-    expect(new Set(heights).size, `device box heights ${heights.join(', ')}`).toBe(1);
+  test.describe(() => {
+    test.use({ appLocale: locale, viewportPreset: 'desktop' });
+
+    test(`on ${id} in ${locale} every device name is inside its box`, async ({
+      page,
+      demoPage,
+    }) => {
+      await open(page, demoPage, id);
+      const nodes = page.getByTestId(X.diagram).getByTestId(SEL.canvas.node);
+      await expect(nodes).toHaveCount(exercise(id).start.nodes.length);
+      // The canvas keeps a device hidden until it has measured and placed it.
+      await expect(nodes.last()).toBeVisible();
+      const names = await nodes.evaluateAll((boxes) =>
+        boxes.flatMap((box) => {
+          const frame = box.getBoundingClientRect();
+          const walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
+          const found: { name: string; inside: boolean }[] = [];
+          for (let text = walker.nextNode(); text; text = walker.nextNode()) {
+            // The address under a host is drawn below the box on purpose, and
+            // the letter in the device's symbol is not its name.
+            if (text.parentElement?.closest('[data-testid="topology-node-ip"]')) continue;
+            const symbol = text.parentElement?.closest('svg');
+            if (symbol && box.contains(symbol)) continue;
+            const range = document.createRange();
+            range.selectNodeContents(text);
+            found.push({
+              name: text.textContent ?? '',
+              inside: [...range.getClientRects()].every(
+                (rect) =>
+                  rect.left >= frame.left - 0.5 &&
+                  rect.right <= frame.right + 0.5 &&
+                  rect.top >= frame.top - 0.5 &&
+                  rect.bottom <= frame.bottom + 0.5,
+              ),
+            });
+          }
+          return found;
+        }),
+      );
+      // Every device's name was measured: the list below is not empty by accident.
+      expect(names.map((entry) => entry.name).sort()).toEqual(
+        Object.values(exercise(id).nodeLabels ?? {})
+          .map((label) => label[locale])
+          .sort(),
+      );
+      expect(
+        names.filter((entry) => !entry.inside).map((entry) => entry.name),
+        'names drawn outside their device box',
+      ).toEqual([]);
+      // Two lines of name do not make one device taller than another.
+      const heights = await nodes.evaluateAll((boxes) =>
+        boxes.map((box) => Math.round((box as HTMLElement).offsetHeight)),
+      );
+      expect(new Set(heights).size, `device box heights ${heights.join(', ')}`).toBe(1);
+    });
   });
 }

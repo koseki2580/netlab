@@ -457,7 +457,7 @@ describe('max-changes and the allow-list', () => {
   });
 
   // TC-426
-  it('so are a pulled cable, a removed device and a hand-written deny-all ACL', async () => {
+  it('so are a pulled cable, a removed device and a hand-written empty ACL', async () => {
     const invalid = ['config-invalid', 'config-invalid'];
     expect(await codes(withLinkState(start, 'e-pc2', 'down'))).toEqual(invalid);
     expect(

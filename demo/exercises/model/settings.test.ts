@@ -395,10 +395,12 @@ describe('differsOutside: states a SettingChange cannot express are never hidden
 
   it('an empty ACL array written by hand is a change, even with the ACL on the allow-list', () => {
     const start = lanBehindRouter();
-    const denyAll = withInterface(start, 'r1', 'lan', { inboundAcl: [] });
-    expect(readSetting(denyAll, acl)).toBeNull();
-    expect(diffSettings(start, denyAll, [acl])).toEqual([acl]);
-    expect(differsOutside(start, denyAll, [acl])).toBe(true);
+    // The engine reads `[]` as no ACL, but the settings never write it, so a
+    // topology holding it was not made through the page.
+    const emptyList = withInterface(start, 'r1', 'lan', { inboundAcl: [] });
+    expect(readSetting(emptyList, acl)).toBeNull();
+    expect(diffSettings(start, emptyList, [acl])).toEqual([acl]);
+    expect(differsOutside(start, emptyList, [acl])).toBe(true);
   });
 
   it('a "blocked" link is not "up"', () => {

@@ -130,9 +130,7 @@ export const l2StaticMissing = defineTemplate(
             { destination: net.srvNet.cidr, nextHop: plan.far.at(plan.servers[0]) },
           ]),
         ],
-      ],
-      // The neighbour's address on its far side: the simulator forwards to it, a router would not.
-      unsoundPasses: [
+        // The neighbour's address on its far side: no router takes it as a next router.
         [
           routes(faulty, [
             ...remaining,

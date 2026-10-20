@@ -116,8 +116,7 @@ export const l3StaticBothWays = defineTemplate(
             { destination: net.pcNet.cidr, nextHop: net.ownAddressOn[fault.back] ?? '' },
           ]),
         ],
-      ],
-      unsoundPasses: [
+        // The neighbour's address on its far side: no router takes it as a next router.
         [
           routes(fault.there, healthyThere),
           routes(fault.back, [

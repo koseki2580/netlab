@@ -303,8 +303,9 @@ export function dropMessage(
 // --- A route with a next router that cannot work ---------------------------------
 
 /**
- * What is wrong with the next router of a route (read off the topology,
- * `gradeExercise.ts`). A route that exists and leads nowhere is not "no route":
+ * What is wrong with the next router of a route (read off the topology, or
+ * told by the simulator as `next-hop-off-link`; see `gradeExercise.ts`). A
+ * route that exists and leads nowhere is not "no route":
  * - `self`: the router's own address.
  * - `far-side`: the neighbouring router's address on the side facing away.
  * - `far-away`: a device on no network of this router (the server itself, say).
@@ -336,7 +337,7 @@ const NEXT_HOP_TEXT: Record<NextHopFault, (leg: Leg) => Localised> = {
 const shown = (address: string, open: string, close: string): string =>
   address === '' ? '' : `${open}${address}${close}`;
 
-/** The first and the last address of a network. The simulator accepts both; the grader does not. */
+/** The first and the last address of a network: no device may hold either (the simulator agrees). */
 const RESERVED_TEXT = {
   network: (address: string): Localised => ({
     en: `This address${shown(address, ' (', ')')} is a special number that stands for the whole network. A device cannot use it.`,

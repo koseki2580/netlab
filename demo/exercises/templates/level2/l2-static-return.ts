@@ -142,9 +142,7 @@ export const l2StaticReturn = defineTemplate(
             { destination: net.pcNet.cidr, nextHop: net.ownAddressOn[faulty] ?? '' },
           ]),
         ],
-      ],
-      // The neighbour's address on its far side: the simulator forwards to it, a router would not.
-      unsoundPasses: [
+        // The neighbour's address on its far side: no router takes it as a next router.
         [
           routes(faulty, [
             ...remaining,

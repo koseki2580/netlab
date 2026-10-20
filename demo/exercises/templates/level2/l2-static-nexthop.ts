@@ -146,9 +146,7 @@ export const l2StaticNexthop = defineTemplate(
             healthy.filter((route) => route.destination !== net.srvNet.cidr),
           ),
         ],
-      ],
-      // The neighbour's address on its far side: the simulator forwards to it, a router would not.
-      unsoundPasses: [
+        // The neighbour's address on its far side: no router takes it as a next router.
         [
           routes(
             faulty,
