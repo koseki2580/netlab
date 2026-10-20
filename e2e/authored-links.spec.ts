@@ -52,16 +52,17 @@ for (const path of DIRECT_LINK_LESSONS) {
  * the overlay appeared, which is why it failed once and then passed three times
  * — so this reads the colour directly rather than relying on that race.
  */
-test('the TCP lesson paints its overlays in the theme it was given', async ({ page }) => {
+test('the TCP lesson paints its overlays in the theme it was given', async ({
+  page,
+  galleryPage,
+}) => {
   await page.setViewportSize({ width: 1400, height: 900 });
   await page.goto('/#/');
   await expect(page.getByTestId(SEL.gallery.heading)).toBeVisible();
   // Dark first: the gallery opens light, and a setting is only remembered once
   // it changes, so choosing Light alone would leave nothing stored.
-  await page.getByTestId(SEL.gallery.themeMode('dark')).click();
-  await page.waitForTimeout(120);
-  await page.getByTestId(SEL.gallery.themeMode('light')).click();
-  await page.waitForTimeout(220);
+  await galleryPage.chooseTheme('dark');
+  await galleryPage.chooseTheme('light');
 
   await page.goto('/#/simulation/tcp-handshake');
   await expect(page.getByTestId(SEL.app.root)).toBeVisible();

@@ -1,5 +1,8 @@
 import { expect, test } from './fixtures/harness';
+import { settled } from './fixtures/settle';
 import { SEL } from './selectors';
+
+test.use({ viewportPreset: 'wide' });
 
 /**
  * TC-038 — the Settings panel means what it says.
@@ -28,7 +31,6 @@ function brightness(colour: string): number {
 }
 
 test('a lesson opened without choosing a theme stays dark', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
   await demoPage.goto('/routing/client-server');
   await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
 
@@ -37,18 +39,17 @@ test('a lesson opened without choosing a theme stays dark', async ({ page, demoP
   );
 });
 
-test('a lesson follows the theme chosen in the gallery, either way', async ({ page }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
-
+test('a lesson follows the theme chosen in the gallery, either way', async ({
+  page,
+  galleryPage,
+}) => {
   const chooseThenOpen = async (choice: 'light' | 'dark') => {
     await page.goto('/#/');
     await expect(page.getByTestId(SEL.gallery.heading)).toBeVisible();
-    await page.getByTestId(SEL.gallery.themeMode(choice)).click();
-    await page.waitForTimeout(300);
+    await galleryPage.chooseTheme(choice);
     await page.goto('/#/routing/client-server');
     await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
-    await page.waitForTimeout(400);
-    return brightness(await lessonBackground(page));
+    return brightness(await settled(() => lessonBackground(page), { what: 'the background' }));
   };
 
   // Dark first: the gallery opens light, so this is the choice that proves the
@@ -66,17 +67,15 @@ test('a lesson follows the theme chosen in the gallery, either way', async ({ pa
  * whole app from light to dark, and the control meant to prevent it did nothing.
  */
 test('pressing the highlighted Light still gives a light lesson', async ({ page }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
   await page.goto('/#/');
   await expect(page.getByTestId(SEL.gallery.heading)).toBeVisible();
 
   await page.getByTestId(SEL.gallery.themeMode('light')).click();
   await page.goto('/#/routing/client-server');
   await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
-  await page.waitForTimeout(400);
 
   expect(
-    brightness(await lessonBackground(page)),
+    brightness(await settled(() => lessonBackground(page), { what: 'the background' })),
     'the lesson follows the Light that was pressed',
   ).toBeGreaterThan(180);
 });

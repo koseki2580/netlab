@@ -1,6 +1,8 @@
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
+test.use({ viewportPreset: 'wide' });
+
 /**
  * TC-129 — the HTTP lesson survives its own request.
  *
@@ -15,7 +17,6 @@ import { SEL } from './selectors';
  * distinguishes the two: whether the page is still there afterwards.
  */
 test('the HTTP lesson answers a request without killing the page', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
   await demoPage.goto('/networking/http');
   await expect(page.getByTestId(SEL.app.root)).toBeVisible();
   await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
@@ -39,7 +40,6 @@ test('the session lesson answers a request without killing the page', async ({
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
   await demoPage.goto('/simulation/session');
   await expect(page.getByTestId(SEL.app.root)).toBeVisible();
   await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();

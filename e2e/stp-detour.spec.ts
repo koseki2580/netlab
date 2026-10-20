@@ -1,6 +1,8 @@
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
+test.use({ viewportPreset: 'wide' });
+
 /**
  * TC-113 — the spanning-tree lesson delivers the packet it describes.
  *
@@ -18,7 +20,6 @@ test('the spanning-tree lesson delivers B to C around the blocked segment', asyn
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
   await demoPage.goto('/networking/stp');
   await expect(page.getByTestId(SEL.app.root)).toBeVisible();
   await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
@@ -48,7 +49,6 @@ const PAIRS = [
 ];
 
 test('every ping the spanning-tree lesson offers arrives', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
   await demoPage.goto('/networking/stp');
   await expect(page.getByTestId(SEL.app.root)).toBeVisible();
   await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();

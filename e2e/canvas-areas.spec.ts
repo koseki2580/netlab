@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures/harness';
+import { boxesOf, settled } from './fixtures/settle';
 import { SEL } from './selectors';
 
 /**
@@ -30,7 +31,7 @@ test('collapses an area into a cluster when zoomed out, and restores it on expan
   await devices.first().hover();
   for (let i = 0; i < 6; i += 1) {
     await page.mouse.wheel(0, 400);
-    await page.waitForTimeout(250);
+    await settled(() => boxesOf(devices.or(clusters)), { what: 'the zoom' });
   }
 
   await expect(clusters.first()).toBeVisible();

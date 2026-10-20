@@ -34,6 +34,7 @@ test.describe('reduced motion', () => {
     await expect(page.getByTestId(SEL.traceFilter.hop).first()).toBeVisible();
     // A link is marked in motion within tens of milliseconds of the send, so a
     // short settle after the trace exists is ample for one to appear if it would.
+    // eslint-disable-next-line netlab/no-fixed-waits-in-e2e -- asserts no link starts animating within this window
     await page.waitForTimeout(500);
 
     await expect(page.locator(ANIMATED_LINK), 'no link animates under reduced motion').toHaveCount(

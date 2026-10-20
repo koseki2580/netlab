@@ -9,16 +9,10 @@ import { SEL } from './selectors';
  * result. A beginner opening the simplest-sounding lesson met a dead end. Each
  * now says what to try, has one button, and explains what happened.
  */
+test.use({ appLocale: 'ja', viewportPreset: 'desktop' });
+
 for (const path of ['/basic/minimal', '/basic/three-tier', '/basic/star']) {
   test(`${path} sets a task, runs it, and explains the result`, async ({ page, demoPage }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.addInitScript(() => {
-      try {
-        window.localStorage.setItem('netlab-locale', 'ja');
-      } catch {
-        /* no storage — the page is still usable, only in English */
-      }
-    });
     await demoPage.goto(path);
 
     await expect(page.getByTestId(SEL.lessonTask.goal), 'the lesson says what to try').toHaveText(

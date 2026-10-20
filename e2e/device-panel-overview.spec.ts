@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures/harness';
+import { expect, test, VIEWPORTS } from './fixtures/harness';
 
 /**
  * The device panel for a router: an overview that says what the device is,
@@ -16,7 +16,7 @@ async function openRouter(
   page: import('@playwright/test').Page,
   demoPage: { goto: (p: string) => Promise<void>; dismissBrief: () => Promise<void> },
 ) {
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.setViewportSize(VIEWPORTS.desktop);
   await demoPage.goto('/routing/client-server');
   await demoPage.dismissBrief();
   await page.locator('[data-id="router-1"]').click();

@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures/harness';
+import { boxesOf, settled } from './fixtures/settle';
 import { SEL } from './selectors';
 
 /**
@@ -28,7 +29,7 @@ test('dragging an empty part of the canvas pans the topology', async ({ page, de
   await page.mouse.down();
   await page.mouse.move(startX - 180, startY - 140, { steps: 14 });
   await page.mouse.up();
-  await page.waitForTimeout(400);
+  await settled(() => boxesOf(device), { what: 'the pan' });
 
   const after = (await device.boundingBox())!;
   expect(

@@ -20,16 +20,6 @@ function packet<T>(id: string): T {
   return found as T;
 }
 
-async function inJapanese(page: Page) {
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* without storage the page is in English, and the text checks fail and say so */
-    }
-  });
-}
-
 async function open(page: Page, demoPage: DemoPage, id: string) {
   await demoPage.goto(`/exercises/packet/do/${id}`);
   await expect(page.getByTestId('packet-exercise')).toHaveAttribute('data-exercise-id', id);
@@ -47,9 +37,7 @@ async function stateSplit(page: Page, exercise: FragmentExercise) {
   }
 }
 
-test.beforeEach(async ({ page }) => {
-  await inJapanese(page);
-});
+test.use({ appLocale: 'ja' });
 
 test('TC-770: the packet exercises are reached from the exercises hub', async ({
   page,
@@ -102,7 +90,7 @@ test('TC-773: a split is stated in the fragment table and solved at a desk', asy
 });
 
 test.describe('on a phone', () => {
-  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  test.use({ viewportPreset: 'phone' });
 
   test('TC-774: each piece is a card of its own, and the split is solved', async ({
     page,

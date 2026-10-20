@@ -79,31 +79,33 @@ test('the link QoS lesson marks unapplied settings and names the ones it measure
   );
 });
 
-test('the link QoS markers are in Japanese for a Japanese learner', async ({ page, demoPage }) => {
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* the lesson still renders; the Japanese text below would then fail */
-    }
+test.describe(() => {
+  test.use({ appLocale: 'ja' });
+
+  test('the link QoS markers are in Japanese for a Japanese learner', async ({
+    page,
+    demoPage,
+  }) => {
+    await demoPage.goto('/networking/link-qos');
+
+    await page.getByTestId(QOS.loss).fill('0');
+    await page.getByTestId(QOS.bandwidth).fill('400000');
+    await expect(page.getByTestId(QOS.unapplied)).toHaveText(
+      '未適用: リンクはまだ前の設定のままです。',
+    );
+    await page.getByTestId(QOS.apply).click();
+    await expect(page.getByTestId(QOS.unapplied)).toHaveCount(0);
+    await page.getByTestId(QOS.burst).click();
+    await expect(page.getByTestId(QOS.breakdown)).toHaveText(
+      '送り出し 30 ms ＋ 伝搬 20 ms ＝ 50 ms',
+    );
+    await expect(page.getByTestId(QOS.settings)).toHaveText(
+      '測定時の設定: 帯域 400,000 bps、伝搬遅延 20 ms、損失率 0%',
+    );
+
+    await page.getByTestId(QOS.classWeight(0)).fill('70');
+    await expect(page.getByTestId(QOS.classesUnapplied)).toHaveText(
+      '未適用: リンクはまだ前のクラスのままです。',
+    );
   });
-  await demoPage.goto('/networking/link-qos');
-
-  await page.getByTestId(QOS.loss).fill('0');
-  await page.getByTestId(QOS.bandwidth).fill('400000');
-  await expect(page.getByTestId(QOS.unapplied)).toHaveText(
-    '未適用: リンクはまだ前の設定のままです。',
-  );
-  await page.getByTestId(QOS.apply).click();
-  await expect(page.getByTestId(QOS.unapplied)).toHaveCount(0);
-  await page.getByTestId(QOS.burst).click();
-  await expect(page.getByTestId(QOS.breakdown)).toHaveText('送り出し 30 ms ＋ 伝搬 20 ms ＝ 50 ms');
-  await expect(page.getByTestId(QOS.settings)).toHaveText(
-    '測定時の設定: 帯域 400,000 bps、伝搬遅延 20 ms、損失率 0%',
-  );
-
-  await page.getByTestId(QOS.classWeight(0)).fill('70');
-  await expect(page.getByTestId(QOS.classesUnapplied)).toHaveText(
-    '未適用: リンクはまだ前のクラスのままです。',
-  );
 });

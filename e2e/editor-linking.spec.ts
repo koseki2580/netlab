@@ -15,15 +15,10 @@ const IDS = {
   deviceIssue: 'editor-device-issue',
 } as const;
 
+test.use({ appLocale: 'ja' });
+
 async function openEditor(page: Page, demoPage: { goto(path: string): Promise<void> }) {
   await page.setViewportSize({ width: 1400, height: 900 });
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* no storage — the editor still works, in English */
-    }
-  });
   await demoPage.goto('/editor');
   await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
 }

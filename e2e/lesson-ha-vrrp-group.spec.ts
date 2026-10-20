@@ -26,19 +26,16 @@ test('the gateway HA lesson names VRRP group 10 and explains the virtual MAC', a
   await expect(page.getByTestId(HA.virtualMacNote)).toContainText('group 10 is 0a');
 });
 
-test('the VRRP group is named in Japanese for a Japanese learner', async ({ page, demoPage }) => {
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* the lesson still renders; the Japanese text below would then fail */
-    }
-  });
-  await demoPage.goto('/networking/ha');
+test.describe(() => {
+  test.use({ appLocale: 'ja' });
 
-  await expect(page.getByTestId(HA.brief)).toContainText('VRRP グループ 10');
-  await expect(page.getByTestId(HA.virtualMacNote)).toContainText(
-    '00:00:5e:00:01 の後ろにグループ番号を 16 進数で',
-  );
-  await expect(page.getByTestId(HA.virtualMacNote)).toContainText('グループ 10 は 0a');
+  test('the VRRP group is named in Japanese for a Japanese learner', async ({ page, demoPage }) => {
+    await demoPage.goto('/networking/ha');
+
+    await expect(page.getByTestId(HA.brief)).toContainText('VRRP グループ 10');
+    await expect(page.getByTestId(HA.virtualMacNote)).toContainText(
+      '00:00:5e:00:01 の後ろにグループ番号を 16 進数で',
+    );
+    await expect(page.getByTestId(HA.virtualMacNote)).toContainText('グループ 10 は 0a');
+  });
 });

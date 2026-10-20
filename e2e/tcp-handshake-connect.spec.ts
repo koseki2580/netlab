@@ -10,9 +10,10 @@ import { SEL } from './selectors';
  * a router has by virtue of its own interfaces, so it had no route to either of
  * the two subnets it was sitting on.
  */
-test('the TCP lesson reaches ESTABLISHED on both ends', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
-  await demoPage.goto('/simulation/tcp-handshake');
+test.use({ viewportPreset: 'wide' });
+
+test('the TCP lesson reaches ESTABLISHED on both ends', async ({ page, lessonPage }) => {
+  await lessonPage.open('/simulation/tcp-handshake');
   await expect(page.getByTestId(SEL.app.root)).toBeVisible();
   await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
 
@@ -24,17 +25,8 @@ test('the TCP lesson reaches ESTABLISHED on both ends', async ({ page, demoPage 
   // handshake through before reading the final states.
   // Stepping now carries on from one segment into the next, so the whole
   // exchange is many steps; press until there is nothing left to show.
-  const next = page.getByTestId(SEL.demo.primaryAction);
-  for (let press = 0; press < 100 && (await next.isEnabled()); press += 1) {
-    // The last press disables the button a render later, so it can still read
-    // as enabled here; a click that finds it disabled means the walk is over.
-    try {
-      await next.click({ timeout: 2_000 });
-    } catch {
-      break;
-    }
-  }
-  await expect(next, 'the handshake has been played through').toBeDisabled();
+  await lessonPage.stepToEnd();
+  await expect(lessonPage.next, 'the handshake has been played through').toBeDisabled();
 
   // Both ends reaching ESTABLISHED means all three segments were delivered:
   // the client's SYN, the server's SYN-ACK, and the client's ACK.

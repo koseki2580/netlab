@@ -1,5 +1,7 @@
 import { expect, test } from './fixtures/harness';
 
+test.use({ viewportPreset: 'desktop' });
+
 /** Lesson-local test ids for the Dynamic Routing lesson. */
 const DYNAMIC = {
   protocol: (name: 'rip' | 'ospf' | 'bgp') => `dynamic-protocol-${name}`,
@@ -19,7 +21,6 @@ test('the Dynamic Routing OSPF view lists each link’s cost per direction', asy
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
   await demoPage.goto('/routing/dynamic');
   await expect(page.getByTestId(DYNAMIC.linkCosts)).toHaveCount(0);
 
@@ -47,7 +48,6 @@ test('the Dynamic Routing OSPF view lists each link’s cost per direction', asy
  * R2 has no route to 10.0.13.0/30, and nothing on the page said why.
  */
 test('the BGP view names the networks each router originates', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
   await demoPage.goto('/routing/dynamic');
   await expect(page.getByTestId(DYNAMIC.bgpOriginated)).toHaveCount(0);
 
@@ -73,7 +73,6 @@ test('a connected route’s next hop is translated in every protocol view', asyn
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
   await demoPage.goto('/routing/dynamic');
   const connected = page.getByTestId(DYNAMIC.route('r1', '10.1.0.0/24'));
   await expect(connected).toContainText('next-hop: direct');

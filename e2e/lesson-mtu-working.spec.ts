@@ -1,5 +1,7 @@
 import { expect, test } from './fixtures/harness';
 
+test.use({ viewportPreset: 'desktop' });
+
 /**
  * TC-283, TC-284 — the MTU lesson shows the sum behind its fragment count.
  *
@@ -10,7 +12,6 @@ test('the MTU notes work out the fragment count, and show no sum when nothing wa
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
   await demoPage.goto('/networking/mtu-fragmentation');
 
   const slider = page.getByTestId('mtu-tunnel-slider');

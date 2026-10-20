@@ -1,5 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 import { expect, test } from './fixtures/harness';
+import { boxesOf, settled } from './fixtures/settle';
 
 /**
  * TC-721..TC-727 — a phone held in the hand (390×844, touch).
@@ -8,14 +9,14 @@ import { expect, test } from './fixtures/harness';
  * high, canvases squeezed to a sliver beside a fixed column, targets smaller
  * than a fingertip, and a help card that listed keyboard shortcuts.
  */
-test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+test.use({ viewportPreset: 'phone', isMobile: true });
 
 /** The smallest text drawn on any device of the diagram, in CSS pixels on screen. */
 async function smallestDeviceText(page: Page): Promise<number> {
   const nodes = page.getByTestId('topology-node');
   await expect(nodes.first()).toBeVisible();
   // Let the canvas settle on its final fit.
-  await page.waitForTimeout(600);
+  await settled(() => boxesOf(nodes), { what: 'the fit' });
   const sizes = await nodes.evaluateAll((elements) =>
     elements.flatMap((node) =>
       [...node.querySelectorAll<HTMLElement>('*')]

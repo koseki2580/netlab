@@ -30,18 +30,15 @@ test('ECMP decision rows are numbered per burst and show the source port', async
   }
 });
 
-test('ECMP decision rows are in Japanese for a Japanese learner', async ({ page, demoPage }) => {
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* the lesson still renders; the Japanese text below would then fail */
-    }
-  });
-  await demoPage.goto('/networking/ecmp');
+test.describe(() => {
+  test.use({ appLocale: 'ja' });
 
-  await page.getByTestId(SEND).click();
-  await expect(page.getByTestId(row(3))).toHaveText(
-    'フロー 3 · 送信元ポート 49154 · バケット 2/2 → 次ホップ 10.0.13.2',
-  );
+  test('ECMP decision rows are in Japanese for a Japanese learner', async ({ page, demoPage }) => {
+    await demoPage.goto('/networking/ecmp');
+
+    await page.getByTestId(SEND).click();
+    await expect(page.getByTestId(row(3))).toHaveText(
+      'フロー 3 · 送信元ポート 49154 · バケット 2/2 → 次ホップ 10.0.13.2',
+    );
+  });
 });

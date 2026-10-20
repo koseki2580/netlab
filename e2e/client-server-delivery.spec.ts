@@ -1,6 +1,8 @@
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
+test.use({ viewportPreset: 'wide' });
+
 /**
  * TC-117 — the gallery's first lesson delivers its packet.
  *
@@ -15,7 +17,6 @@ import { SEL } from './selectors';
  * router resolving the server's address, and the packet arriving.
  */
 test('the client-server lesson delivers the packet to the server', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
   await demoPage.goto('/routing/client-server');
   await expect(page.getByTestId(SEL.app.root)).toBeVisible();
   await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();

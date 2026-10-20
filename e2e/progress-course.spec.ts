@@ -1,6 +1,8 @@
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
+test.use({ viewportPreset: 'desktop' });
+
 /**
  * TC-184 — a learner's progress is kept, from the first visit.
  *
@@ -20,8 +22,6 @@ const IDS = {
 test('finishing a course step shows up in the gallery, and nothing is offered to resume before', async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-
   await page.goto('/#/');
   await expect(page.getByTestId(SEL.gallery.heading)).toBeVisible();
   await expect(page.getByTestId(IDS.done)).toHaveAttribute('data-done', '0');

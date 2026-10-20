@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures/harness';
+import { boxesOf, settled } from './fixtures/settle';
 import { SEL } from './selectors';
 
 /**
@@ -20,7 +21,8 @@ test('opening the same device repeatedly does not drift the canvas', async ({ pa
   const openAndMeasure = async () => {
     await device.click();
     await expect(page.getByTestId(SEL.nodeDetail.closePanel)).toBeVisible();
-    await page.waitForTimeout(400);
+    // Opening pans the canvas; measure once the pan has come to rest.
+    await settled(() => boxesOf(device), { what: 'the canvas pan' });
     const box = (await device.boundingBox())!;
     // Clicking empty canvas clears the selection, which is how a learner
     // dismisses the panel without reaching for its close button.

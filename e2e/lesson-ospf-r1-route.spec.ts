@@ -1,6 +1,8 @@
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
+test.use({ viewportPreset: 'desktop' });
+
 /** Lesson-local test ids. */
 const OSPF = {
   failLink: 'ospf-fail-link',
@@ -20,7 +22,6 @@ const OSPF = {
  * R4 tab open, so it read as the heading of the table below it.
  */
 test('the OSPF summary card stays about R1 whichever tab is open', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
   await demoPage.goto('/routing/ospf-convergence');
   await demoPage.dismissBrief();
   await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
@@ -57,21 +58,22 @@ test('the OSPF summary card stays about R1 whichever tab is open', async ({ page
   await expect(r4.locator('td').last()).toHaveText('3');
 });
 
-test('the OSPF summary card is headed in Japanese for a Japanese learner', async ({
-  page,
-  demoPage,
-}) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await demoPage.goto('/routing/ospf-convergence');
-  await page.evaluate(() => window.localStorage.setItem('netlab-locale', 'ja'));
-  await page.reload();
-  await demoPage.dismissBrief();
+test.describe(() => {
+  test.use({ appLocale: 'ja' });
 
-  await page.getByTestId(OSPF.routeTab('r3')).click();
-  await expect(page.getByTestId(OSPF.r1RouteHeading)).toHaveText(
-    'R1 から C2 のネットワーク（10.4.0.0/24）への経路',
-  );
-  await expect(page.getByTestId(OSPF.r1RouteNote)).toHaveText(
-    '下でどのタブを開いても、ここは R1 の経路です。',
-  );
+  test('the OSPF summary card is headed in Japanese for a Japanese learner', async ({
+    page,
+    demoPage,
+  }) => {
+    await demoPage.goto('/routing/ospf-convergence');
+    await demoPage.dismissBrief();
+
+    await page.getByTestId(OSPF.routeTab('r3')).click();
+    await expect(page.getByTestId(OSPF.r1RouteHeading)).toHaveText(
+      'R1 から C2 のネットワーク（10.4.0.0/24）への経路',
+    );
+    await expect(page.getByTestId(OSPF.r1RouteNote)).toHaveText(
+      '下でどのタブを開いても、ここは R1 の経路です。',
+    );
+  });
 });

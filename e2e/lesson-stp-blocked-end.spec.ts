@@ -1,6 +1,8 @@
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
+test.use({ viewportPreset: 'wide' });
+
 /** Lesson-local test ids; the shared selector file belongs to another change. */
 const STP = {
   blockedLink: 'stp-blocked-link',
@@ -19,7 +21,6 @@ test('the blocked-link summary names the end that blocks, and follows a re-elect
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
   await demoPage.goto('/networking/stp');
   await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
 
@@ -37,20 +38,19 @@ test('the blocked-link summary names the end that blocks, and follows a re-elect
   await expect(page.getByTestId(STP.blockedEnd)).toHaveCount(0);
 });
 
-test('the blocked-link summary names the blocking end in Japanese', async ({ page, demoPage }) => {
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* no storage means no choice, which this test would then catch */
-    }
-  });
-  await page.setViewportSize({ width: 1600, height: 1000 });
-  await demoPage.goto('/networking/stp');
-  await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+test.describe(() => {
+  test.use({ appLocale: 'ja' });
 
-  await expect(page.getByTestId(STP.blockedLink)).toHaveText(
-    '遮断しているリンク: Switch B – Switch C',
-  );
-  await expect(page.getByTestId(STP.blockedEnd)).toHaveText('（Switch C 側で遮断）');
+  test('the blocked-link summary names the blocking end in Japanese', async ({
+    page,
+    demoPage,
+  }) => {
+    await demoPage.goto('/networking/stp');
+    await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+
+    await expect(page.getByTestId(STP.blockedLink)).toHaveText(
+      '遮断しているリンク: Switch B – Switch C',
+    );
+    await expect(page.getByTestId(STP.blockedEnd)).toHaveText('（Switch C 側で遮断）');
+  });
 });

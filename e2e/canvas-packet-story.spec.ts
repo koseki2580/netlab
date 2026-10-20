@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures/harness';
+import { expect, test, VIEWPORTS } from './fixtures/harness';
 
 /**
  * The diagram tells the packet's story on its own: a marker that travels to
@@ -22,7 +22,7 @@ test('the packet marker follows the hops of the client-server lesson', async ({
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.setViewportSize(VIEWPORTS.wide);
   await demoPage.goto('/routing/client-server');
   await demoPage.dismissBrief();
   await page.getByTestId(IDS.primaryAction).first().click();

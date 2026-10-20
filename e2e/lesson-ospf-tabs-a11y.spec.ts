@@ -1,6 +1,8 @@
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
+test.use({ viewportPreset: 'wide' });
+
 /**
  * TC-273 — the OSPF Convergence route-table tabs are a tablist with names of
  * their own.
@@ -9,7 +11,6 @@ import { SEL } from './selectors';
  * reader's list of controls offered two of each with nothing to tell them apart.
  */
 test('the route-table tabs are named apart from the topology nodes', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
   await demoPage.goto('/routing/ospf-convergence');
   await demoPage.dismissBrief();
   await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
@@ -49,14 +50,15 @@ test('the route-table tabs are named apart from the topology nodes', async ({ pa
   await expect(page.getByRole('tabpanel', { name: 'R3 route table' })).toHaveCount(1);
 });
 
-test('the route-table tabs are named in Japanese', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
-  await demoPage.goto('/routing/ospf-convergence');
-  await page.evaluate(() => window.localStorage.setItem('netlab-locale', 'ja'));
-  await page.reload();
-  await demoPage.dismissBrief();
+test.describe(() => {
+  test.use({ appLocale: 'ja' });
 
-  await expect(page.getByRole('tab', { name: 'R2 の経路表', exact: true })).toHaveText('R2');
-  await page.getByRole('tab', { name: 'R2 の経路表', exact: true }).click();
-  await expect(page.getByRole('tabpanel', { name: 'R2 の経路表' })).toHaveCount(1);
+  test('the route-table tabs are named in Japanese', async ({ page, demoPage }) => {
+    await demoPage.goto('/routing/ospf-convergence');
+    await demoPage.dismissBrief();
+
+    await expect(page.getByRole('tab', { name: 'R2 の経路表', exact: true })).toHaveText('R2');
+    await page.getByRole('tab', { name: 'R2 の経路表', exact: true }).click();
+    await expect(page.getByRole('tabpanel', { name: 'R2 の経路表' })).toHaveCount(1);
+  });
 });

@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures/harness';
+import { boxesOf, settled } from './fixtures/settle';
 import { SEL } from './selectors';
 
 /**
@@ -30,7 +31,7 @@ test('zooming one compare canvas zooms the other', async ({ page, sandboxPage })
   await deviceIn(0).hover();
   for (let i = 0; i < 3; i += 1) {
     await page.mouse.wheel(0, 400);
-    await page.waitForTimeout(200);
+    await settled(() => boxesOf(page.getByTestId(SEL.canvas.node)), { what: 'the zoom' });
   }
 
   const afterLeft = await widthOf(0);

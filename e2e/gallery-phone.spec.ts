@@ -8,7 +8,7 @@ import { expect, test } from './fixtures/harness';
  * was set one character to a line.
  */
 test.describe('the lesson list at 390px wide', () => {
-  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  test.use({ viewportPreset: 'phone' });
 
   test('gives the cards the width of the screen and keeps the navigation in a drawer', async ({
     page,

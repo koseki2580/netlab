@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { expect, test } from './fixtures/harness';
+import { expect, test, VIEWPORTS } from './fixtures/harness';
 
 /**
  * The shared lesson panels, read in Japanese at laptop sizes.
@@ -37,20 +37,7 @@ const TID = {
   briefStart: 'preflight-start',
 } as const;
 
-const SIZES = [
-  { width: 1440, height: 900 },
-  { width: 1280, height: 800 },
-] as const;
-
-async function readInJapanese(page: Page) {
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* without storage the page stays English and the text checks fail loudly */
-    }
-  });
-}
+const SIZES = [VIEWPORTS.desktop, { width: 1280, height: 800 }] as const;
 
 async function startLesson(page: Page, hash: string) {
   await page.goto(hash);
@@ -79,11 +66,10 @@ async function isReachable(locator: Locator): Promise<boolean> {
 
 for (const size of SIZES) {
   test.describe(`at ${size.width}×${size.height}`, () => {
-    test.use({ viewport: size });
+    test.use({ viewport: size, appLocale: 'ja' });
 
     // TC-UX-PANEL-01
     test('the sandbox header keeps every label on one line inside the panel', async ({ page }) => {
-      await readInJapanese(page);
       await page.goto('/?sandbox=1#/networking/arp');
       const panel = page.getByTestId(TID.sandboxPanel);
       await expect(panel).toBeVisible();
@@ -112,7 +98,6 @@ for (const size of SIZES) {
     test('the router editor fits the window and its last section is reachable', async ({
       page,
     }) => {
-      await readInJapanese(page);
       await page.goto('/?sandbox=1#/networking/arp');
       await expect(page.getByTestId(TID.sandboxPanel)).toBeVisible();
       await page
@@ -133,7 +118,6 @@ for (const size of SIZES) {
 
     // TC-UX-PANEL-03
     test('every failure switch can be reached', async ({ page }) => {
-      await readInJapanese(page);
       await startLesson(page, '/#/simulation/data-transfer');
       const panel = page.getByTestId(TID.failurePanel);
       await expect(panel).toBeVisible();
@@ -155,7 +139,6 @@ for (const size of SIZES) {
 
     // TC-UX-PANEL-04
     test('the flow collector reads in its rail', async ({ page }) => {
-      await readInJapanese(page);
       await startLesson(page, '/#/networking/observability');
       await expect(page.getByTestId(TID.flowEmpty)).toContainText('まだ通信はありません');
       await expect(page.getByTestId(TID.flowExplainer)).toContainText('sFlow');
@@ -173,7 +156,6 @@ for (const size of SIZES) {
 
     // TC-UX-PANEL-05
     test('the NAT table shows its outside-peer column inside the panel', async ({ page }) => {
-      await readInJapanese(page);
       await startLesson(page, '/#/simulation/nat');
       await page.getByTestId('nat-send-client-a').click();
       const grid = page.getByTestId(TID.natGrid);
@@ -185,18 +167,18 @@ for (const size of SIZES) {
     });
 
     // TC-UX-PANEL-06
-    test('route candidates keep a visible gap and the verdict is Japanese', async ({ page }) => {
-      await readInJapanese(page);
+    test('route candidates keep a visible gap and the verdict is Japanese', async ({
+      page,
+      lessonPage,
+    }) => {
       await startLesson(page, '/#/simulation/step');
-      const step = page.getByTestId(TID.stepAction).first();
       const destination = page.getByTestId(TID.stepDestination).first();
       // Step until a router's candidates are on screen, rather than a fixed
-      // number of presses that races the simulation under load.
-      await expect(async () => {
-        if ((await destination.count()) === 0 && (await step.isEnabled()))
-          await step.click({ timeout: 1_000 });
-        await expect(destination).toBeVisible({ timeout: 1000 });
-      }).toPass({ timeout: 20_000 });
+      // number of presses.
+      await lessonPage
+        .using({ next: page.getByTestId(TID.stepAction).first() })
+        .stepUntil(async () => (await destination.count()) > 0);
+      await expect(destination).toBeVisible();
       const destinationBox = await box(destination);
       const nextHopBox = await box(page.getByTestId(TID.stepNextHop).first());
       expect(nextHopBox.x - (destinationBox.x + destinationBox.width)).toBeGreaterThanOrEqual(6);
@@ -205,7 +187,6 @@ for (const size of SIZES) {
 
     // TC-UX-PANEL-08
     test('the OSPF hint and the brief strip do not overlap', async ({ page }) => {
-      await readInJapanese(page);
       await startLesson(page, '/#/routing/ospf-convergence');
       const hint = page.getByTestId(TID.zeroStateHint);
       const strip = page.getByTestId(TID.briefStrip);

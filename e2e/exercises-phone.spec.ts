@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 import { TEMPLATES } from '../demo/exercises/templates';
-import { expect, test } from './fixtures/harness';
+import { expect, test, VIEWPORTS } from './fixtures/harness';
 import { changeSomethingWrong } from './exerciseMoves';
 import { SEL } from './selectors';
 
@@ -13,28 +13,20 @@ import { SEL } from './selectors';
  * takes whatever the brief leaves above the bar.
  */
 const X = SEL.exercises;
-const WIDTH = 390;
-const HEIGHT = 844;
+const { width: WIDTH, height: HEIGHT } = VIEWPORTS.phone;
 
-test.use({ viewport: { width: WIDTH, height: HEIGHT }, hasTouch: true });
+test.use({ viewportPreset: 'phone', appLocale: 'ja' });
 
 const firstOf = (level: number) =>
   TEMPLATES.filter((template) => template.level === level).map((template) => `${template.id}~0`);
 
-async function openInJapanese(page: Page, path: string) {
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* English is laid out the same way */
-    }
-  });
+async function openAt(page: Page, path: string) {
   await page.goto(`/#${path}`);
   await page.getByTestId(SEL.app.root).waitFor();
 }
 
 async function openExercise(page: Page, id: string) {
-  await openInJapanese(page, `/exercises/do/${id}`);
+  await openAt(page, `/exercises/do/${id}`);
   await expect(page.getByTestId(X.panel)).toHaveAttribute('data-exercise-id', id);
   await expect(page.getByTestId(X.check)).toBeVisible();
   // The canvas keeps a device hidden until it has measured and placed it.
@@ -197,7 +189,7 @@ test('every control of the hub, a level, placement and the record is at least 44
     '/exercises/placement',
     '/exercises/report',
   ]) {
-    await openInJapanese(page, path);
+    await openAt(page, path);
     const main = page.getByTestId(
       path === '/exercises/placement'
         ? X.placementQuestion
@@ -216,7 +208,7 @@ test('every control of the hub, a level, placement and the record is at least 44
     await noSidewaysScroll(page);
   }
   // In the middle of placement there is one more control: the way out.
-  await openInJapanese(page, '/exercises/placement');
+  await openAt(page, '/exercises/placement');
   await page.getByTestId(X.placementAnswer('no')).tap();
   const stop = await box(page.getByTestId(X.placementStop));
   expect(stop.bottom - stop.top).toBeGreaterThanOrEqual(44);

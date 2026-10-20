@@ -18,16 +18,6 @@ const T = {
   dhcpResult: 'dhcp-result',
 } as const;
 
-async function inJapanese(page: Page) {
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* English is fine too */
-    }
-  });
-}
-
 async function openNode(page: Page, nodeId: string) {
   await page.locator(`[data-id="${nodeId}"]`).click();
   const panel = page.locator(T.panel);
@@ -36,9 +26,9 @@ async function openNode(page: Page, nodeId: string) {
   return panel;
 }
 
+test.use({ appLocale: 'ja', viewportPreset: 'desktop' });
+
 test('a static host shows its subnet mask and default gateway', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await inJapanese(page);
   await demoPage.goto('/routing/client-server');
   await demoPage.dismissBrief();
 
@@ -54,8 +44,6 @@ test('after DHCP runs, the client shows the mask the lease handed out', async ({
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await inJapanese(page);
   await demoPage.goto('/services/dhcp-dns');
   await demoPage.dismissBrief();
 

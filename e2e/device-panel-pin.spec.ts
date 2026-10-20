@@ -1,6 +1,8 @@
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
+test.use({ viewportPreset: 'desktop' });
+
 /**
  * TC-172 — pinning the device panel keeps it on screen, and it comes back.
  *
@@ -13,7 +15,6 @@ test('a pinned device panel stays visible, and stays so on the next visit', asyn
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
   await demoPage.goto('/routing/client-server');
 
   await page.getByTestId(SEL.canvas.node).first().click();

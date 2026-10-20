@@ -4,14 +4,9 @@ import { expect, test } from './fixtures/harness';
  * The subnetting drill's primer opens on the one rule a beginner needs — which
  * numbers are the network at /24 — before any bit-level arithmetic.
  */
+test.use({ appLocale: 'ja' });
+
 test('the primer opens with the plain /24 rule', async ({ page }) => {
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* English is fine too */
-    }
-  });
   await page.goto('/#/learning/subnetting');
 
   const primer = page.getByTestId('subnet-drill-concept');

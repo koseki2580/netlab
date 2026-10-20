@@ -1,6 +1,8 @@
 import { CATEGORIES, expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
+test.use({ viewportPreset: 'wide' });
+
 /**
  * TC-039 — the controls a lesson is about can be pressed.
  *
@@ -11,7 +13,6 @@ import { SEL } from './selectors';
  * about the layout looked wrong and the bounding boxes did not overlap.
  */
 test('the OSPF lesson can fail and restore its link', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
   await demoPage.goto('/routing/ospf-convergence');
   await expect(page.getByTestId(SEL.app.root)).toBeVisible();
   await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
@@ -44,7 +45,6 @@ test('the OSPF lesson can fail and restore its link', async ({ page, demoPage })
  * asks the only question that catches it directly.
  */
 test('every command-bar button anchors its own hit area', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
   await demoPage.goto('/routing/ospf-convergence');
   await expect(page.getByTestId(SEL.app.root)).toBeVisible();
   await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
@@ -80,7 +80,6 @@ test('every command-bar button anchors its own hit area', async ({ page, demoPag
 for (const category of CATEGORIES) {
   test(`every control stays reachable across ${category.id}`, async ({ page, demoPage }) => {
     test.setTimeout(240_000);
-    await page.setViewportSize({ width: 1600, height: 1000 });
 
     const blocked: string[] = [];
     for (const demo of category.demos) {
@@ -104,6 +103,7 @@ for (const category of CATEGORIES) {
           .trim()
           .slice(0, 30);
         try {
+          // eslint-disable-next-line netlab/no-fixed-waits-in-e2e -- the timed-out trial is the finding: a control that cannot be reached
           await button.click({ trial: true, timeout: 2_000 });
         } catch {
           blocked.push(`${demo.path} — ${label}`);

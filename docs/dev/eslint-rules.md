@@ -11,6 +11,7 @@ local `netlab/*` rule namespace.
 | `netlab/deprecation-annotations`     | [`eslint-rules/deprecation-annotations.cjs`](../../eslint-rules/deprecation-annotations.cjs)         | `src/**/*.ts`, `src/**/*.tsx`                                     | Requires every `@deprecated` JSDoc block to name both `@removeAt v<minor>` and `@migrate <replacement>`. |
 | `netlab/no-hardcoded-sandbox-string` | [`eslint-rules/no-hardcoded-sandbox-string.mjs`](../../eslint-rules/no-hardcoded-sandbox-string.mjs) | Files listed in `I18N_ENFORCED_FILES`                             | Keeps swept sandbox and assessment UI text behind `useI18n().t()`.                                       |
 | `netlab/property-test-seeds`         | [`eslint-rules/property-test-seeds.cjs`](../../eslint-rules/property-test-seeds.cjs)                 | `src/**/__properties__/**/*.test.ts`, `src/**/*.property.test.ts` | Keeps property-test seeds and run counts reproducible through the shared defaults.                       |
+| `netlab/no-fixed-waits-in-e2e`       | [`eslint-rules/no-fixed-waits-in-e2e.cjs`](../../eslint-rules/no-fixed-waits-in-e2e.cjs)             | `e2e/**/*.ts`                                                     | Bans `waitForTimeout` and `click({ timeout })`; e2e waits on page state, not on the clock.               |
 
 ## Deprecation Annotations
 
@@ -99,4 +100,30 @@ Escape hatch:
 ```ts
 // @property-seed fixed regression seed from issue 123
 fc.assert(property, { seed: 8675309 });
+```
+
+## No Fixed Waits In E2E
+
+A fixed sleep is too long on a fast machine and too short on a loaded one, and
+a shortened click timeout is how a test races a button that disables itself a
+render later. The rule flags both in `e2e/**/*.ts`, a11y specs included:
+
+- `page.waitForTimeout(...)` (any receiver)
+- `locator.click({ timeout })`
+
+Fix recipe:
+
+1. Wait for the state the test needs: `expect(...)`, `expect.poll(...)`.
+2. To step a lesson, use [`LessonPage`](../../e2e/pages/LessonPage.ts)
+   (`stepOnce`, `stepUntil`, `stepToEnd`), which waits for each press to render.
+3. For motion with no "done" state (a canvas easing to its fit, a pan coming to
+   rest), use `settled()` from [`e2e/fixtures/settle.ts`](../../e2e/fixtures/settle.ts).
+
+Escape hatch, only when the wait is the point of the test (asserting that
+something does NOT happen within a window). The reason is required: a disable
+comment for this rule without `-- <reason>` is itself reported.
+
+```ts
+// eslint-disable-next-line netlab/no-fixed-waits-in-e2e -- nothing may animate in this window
+await page.waitForTimeout(500);
 ```

@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures/harness';
+import { expect, test, VIEWPORTS } from './fixtures/harness';
 import { SEL } from './selectors';
 
 /**
@@ -13,7 +13,7 @@ async function openClientServer(
   demoPage: import('./pages/DemoPage').DemoPage,
   locale: 'ja' | null,
 ) {
-  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.setViewportSize(VIEWPORTS.wide);
   await page.addInitScript((chosen) => {
     try {
       if (chosen) window.localStorage.setItem('netlab-locale', chosen);
@@ -63,21 +63,18 @@ test('a lesson with no language chosen stays in English', async ({ page, demoPag
  * "Spanning Tree" at the top of the page. The header now reads from the same
  * translations the gallery card does, so the two cannot drift apart.
  */
-test('a lesson is named in the language chosen in the gallery', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* no storage means no choice, which this test would then catch */
-    }
-  });
-  await demoPage.goto('/networking/stp');
-  await expect(page.getByTestId(SEL.app.root)).toBeVisible();
+test.describe(() => {
+  test.use({ appLocale: 'ja' });
 
-  await expect(page.getByTestId(SEL.shell.title)).toHaveText('スパニングツリー');
-  await expect(page.getByTestId(SEL.shell.desc)).toHaveText(/[ぁ-んァ-ヶ一-龯]/);
-  await expect(page).toHaveTitle(/スパニングツリー/);
+  test('a lesson is named in the language chosen in the gallery', async ({ page, demoPage }) => {
+    await page.setViewportSize(VIEWPORTS.wide);
+    await demoPage.goto('/networking/stp');
+    await expect(page.getByTestId(SEL.app.root)).toBeVisible();
+
+    await expect(page.getByTestId(SEL.shell.title)).toHaveText('スパニングツリー');
+    await expect(page.getByTestId(SEL.shell.desc)).toHaveText(/[ぁ-んァ-ヶ一-龯]/);
+    await expect(page).toHaveTitle(/スパニングツリー/);
+  });
 });
 
 /**
@@ -86,20 +83,17 @@ test('a lesson is named in the language chosen in the gallery', async ({ page, d
  * "▶ Send Packet" is the first thing a learner presses on the client-server
  * lesson, and it stayed English on a Japanese page.
  */
-test('the command bar and area legend follow the chosen language', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* no storage means no choice, which this test would then catch */
-    }
-  });
-  await demoPage.goto('/routing/client-server');
-  await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+test.describe(() => {
+  test.use({ appLocale: 'ja' });
 
-  await expect(page.getByTestId(SEL.demo.primaryAction).first()).toHaveText('▶ パケットを送る');
-  await expect(page.getByTestId(SEL.canvas.areaLegend)).toContainText('ネットワークの区画');
+  test('the command bar and area legend follow the chosen language', async ({ page, demoPage }) => {
+    await page.setViewportSize(VIEWPORTS.wide);
+    await demoPage.goto('/routing/client-server');
+    await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+
+    await expect(page.getByTestId(SEL.demo.primaryAction).first()).toHaveText('▶ パケットを送る');
+    await expect(page.getByTestId(SEL.canvas.areaLegend)).toContainText('ネットワークの区画');
+  });
 });
 
 /**
@@ -108,50 +102,44 @@ test('the command bar and area legend follow the chosen language', async ({ page
  * The shared panels reach every lesson at once; a lesson's teaching copy does
  * not, so it is translated lesson by lesson, beginner lessons first.
  */
-test('the ARP lesson teaches in the chosen language', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* no storage means no choice, which this test would then catch */
-    }
-  });
-  await demoPage.goto('/networking/arp');
-  await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+test.describe(() => {
+  test.use({ appLocale: 'ja' });
 
-  const brief = page.getByTestId(SEL.lesson.brief);
-  await expect(brief).toContainText('ARP のしくみ');
-  await expect(brief).not.toContainText('ARP Teaching Flow');
-  await expect(page.getByTestId(SEL.demo.primaryAction)).toHaveText(
-    '▶ Client から Server へ送ってみる',
-  );
+  test('the ARP lesson teaches in the chosen language', async ({ page, demoPage }) => {
+    await page.setViewportSize(VIEWPORTS.wide);
+    await demoPage.goto('/networking/arp');
+    await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+
+    const brief = page.getByTestId(SEL.lesson.brief);
+    await expect(brief).toContainText('ARP のしくみ');
+    await expect(brief).not.toContainText('ARP Teaching Flow');
+    await expect(page.getByTestId(SEL.demo.primaryAction)).toHaveText(
+      '▶ Client から Server へ送ってみる',
+    );
+  });
 });
 
 /**
  * TC-165 — the result panels read in the chosen language: the packet viewer
  * over the canvas, and the trace summary a lesson shows once a packet has run.
  */
-test('the result panels follow the chosen language', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* no storage means no choice, which this test would then catch */
-    }
+test.describe(() => {
+  test.use({ appLocale: 'ja' });
+
+  test('the result panels follow the chosen language', async ({ page, demoPage }) => {
+    await page.setViewportSize(VIEWPORTS.wide);
+
+    await demoPage.goto('/networking/arp');
+    await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+    await expect(page.getByTestId(SEL.results.packetViewer)).toContainText('パケットの中身');
+
+    await demoPage.goto('/networking/udp');
+    await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+    await page.getByTestId(SEL.demo.primaryAction).click();
+    const summary = page.getByTestId(SEL.results.traceSummary);
+    await expect(summary).toContainText('通信のまとめ');
+    await expect(summary).toContainText('届いた');
   });
-
-  await demoPage.goto('/networking/arp');
-  await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
-  await expect(page.getByTestId(SEL.results.packetViewer)).toContainText('パケットの中身');
-
-  await demoPage.goto('/networking/udp');
-  await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
-  await page.getByTestId(SEL.demo.primaryAction).click();
-  const summary = page.getByTestId(SEL.results.traceSummary);
-  await expect(summary).toContainText('通信のまとめ');
-  await expect(summary).toContainText('届いた');
 });
 
 /**
@@ -161,30 +149,27 @@ test('the result panels follow the chosen language', async ({ page, demoPage }) 
  * "Toggle", "Reset All", "now / diff / history" — which is exactly what it
  * would let through.
  */
-test('the failure panel and state-diff table follow the chosen language', async ({
-  page,
-  demoPage,
-}) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* no storage means no choice, which this test would then catch */
-    }
+test.describe(() => {
+  test.use({ appLocale: 'ja' });
+
+  test('the failure panel and state-diff table follow the chosen language', async ({
+    page,
+    demoPage,
+  }) => {
+    await page.setViewportSize(VIEWPORTS.wide);
+
+    await demoPage.goto('/simulation/session');
+    await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+    const failures = page.getByTestId(SEL.results.failurePanel);
+    await expect(failures).toContainText('障害を起こす');
+    await expect(failures).toContainText('すべて戻す');
+    await expect(failures).not.toContainText('Toggle');
+
+    await demoPage.goto('/networking/arp');
+    await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+    await page.getByTestId(SEL.demo.primaryAction).click();
+    await expect(page.getByTestId(SEL.results.diffMode('diff'))).toHaveText('差分');
   });
-
-  await demoPage.goto('/simulation/session');
-  await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
-  const failures = page.getByTestId(SEL.results.failurePanel);
-  await expect(failures).toContainText('障害を起こす');
-  await expect(failures).toContainText('すべて戻す');
-  await expect(failures).not.toContainText('Toggle');
-
-  await demoPage.goto('/networking/arp');
-  await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
-  await page.getByTestId(SEL.demo.primaryAction).click();
-  await expect(page.getByTestId(SEL.results.diffMode('diff'))).toHaveText('差分');
 });
 
 /**

@@ -1,6 +1,8 @@
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
+test.use({ viewportPreset: 'wide' });
+
 /** Lesson-local test ids; the shared selector file belongs to another change. */
 const STP = {
   blockedLink: 'stp-blocked-link',
@@ -21,7 +23,6 @@ for (const [shut, far] of [
   ['ba', 'ab'],
 ] as const) {
   test(`disabling port ${shut} takes port ${far} down with it`, async ({ page, demoPage }) => {
-    await page.setViewportSize({ width: 1600, height: 1000 });
     await demoPage.goto('/networking/stp');
     await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
 

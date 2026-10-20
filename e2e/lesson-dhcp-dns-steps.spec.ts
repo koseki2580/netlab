@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures/harness';
+import type { LessonPage } from './pages/LessonPage';
 
 /**
  * TC-LESSON-DHCP-STEP — stepping walks the whole exchange the lesson just ran.
@@ -11,35 +12,30 @@ import { expect, test } from './fixtures/harness';
 const TID = {
   dhcpRun: 'dhcp-run',
   dnsRun: 'dns-run',
-  next: 'demo-primary-action',
   position: 'step-exchange-position',
   brief: 'lesson-brief',
 };
 
-async function walkToEnd(page: import('@playwright/test').Page): Promise<string[]> {
-  const next = page.getByTestId(TID.next);
-  const position = page.getByTestId(TID.position);
+/** Every exchange position the step control passes through, in order. */
+async function walkToEnd(lesson: LessonPage): Promise<string[]> {
   const seen: string[] = [];
-  for (let i = 0; i < 60 && (await next.isEnabled()); i += 1) {
-    // The last press disables the button a render later, so it can still read
-    // as enabled here; a click that finds it disabled means the walk is over.
-    try {
-      await next.click({ timeout: 2_000 });
-    } catch {
-      break;
-    }
-    const text = (await position.textContent()) ?? '';
-    if (seen[seen.length - 1] !== text) seen.push(text);
-  }
+  await lesson.stepToEnd({
+    onStep: async () => {
+      const text = await lesson.readPosition();
+      if (seen[seen.length - 1] !== text) seen.push(text);
+    },
+  });
   return seen;
 }
 
+test.use({ viewportPreset: 'desktop' });
+
 test('DHCP steps through DISCOVER, OFFER, REQUEST, ACK; DNS through query, answer, connect, fetch', async ({
   page,
-  demoPage,
+  lessonPage,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await demoPage.goto('/services/dhcp-dns');
+  const lesson = lessonPage.using({ position: page.getByTestId(TID.position) });
+  await lesson.open('/services/dhcp-dns');
 
   // The explanation card floats over the canvas and says so.
   await expect(
@@ -48,7 +44,7 @@ test('DHCP steps through DISCOVER, OFFER, REQUEST, ACK; DNS through query, answe
 
   await page.getByTestId(TID.dhcpRun).click();
   await expect(page.getByTestId(TID.position)).toContainText('DHCP DISCOVER');
-  const dhcp = await walkToEnd(page);
+  const dhcp = await walkToEnd(lesson);
   expect(dhcp.map((line) => line.replace(/^.*[:：]\s*/, ''))).toEqual([
     'DHCP DISCOVER',
     'DHCP OFFER',
@@ -58,7 +54,7 @@ test('DHCP steps through DISCOVER, OFFER, REQUEST, ACK; DNS through query, answe
 
   await page.getByTestId(TID.dnsRun).click();
   await expect(page.getByTestId(TID.position)).toContainText('DNS QUERY');
-  const dns = await walkToEnd(page);
+  const dns = await walkToEnd(lesson);
   // TC-625 — the GET waits for TCP's three messages, and its answer is shown.
   expect(dns.map((line) => line.replace(/^.*[:：]\s*/, ''))).toEqual([
     'DNS QUERY',

@@ -42,20 +42,17 @@ test('the link QoS brief gives the formula the readings follow', async ({ page, 
   );
 });
 
-test('the link QoS brief is in Japanese for a Japanese learner', async ({ page, demoPage }) => {
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* the lesson still renders; the Japanese text below would then fail */
-    }
-  });
-  await demoPage.goto('/networking/link-qos');
+test.describe(() => {
+  test.use({ appLocale: 'ja' });
 
-  const brief = page.getByTestId(QOS.brief);
-  await expect(brief).toContainText('送り出し時間 ＝ パケットサイズ × 8 ÷ 帯域');
-  await expect(brief).toContainText('12,000 ビット ÷ 1,000,000 bps ＝ 12 ms');
-  await expect(brief).toContainText('「リンクに適用」を押して初めて');
-  await expect(brief).toContainText('IP パケットだけ');
-  await expect(brief).toContainText('重みが小さくても遅くなりません');
+  test('the link QoS brief is in Japanese for a Japanese learner', async ({ page, demoPage }) => {
+    await demoPage.goto('/networking/link-qos');
+
+    const brief = page.getByTestId(QOS.brief);
+    await expect(brief).toContainText('送り出し時間 ＝ パケットサイズ × 8 ÷ 帯域');
+    await expect(brief).toContainText('12,000 ビット ÷ 1,000,000 bps ＝ 12 ms');
+    await expect(brief).toContainText('「リンクに適用」を押して初めて');
+    await expect(brief).toContainText('IP パケットだけ');
+    await expect(brief).toContainText('重みが小さくても遅くなりません');
+  });
 });

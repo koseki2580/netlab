@@ -2,6 +2,8 @@ import { EXAM_QUESTIONS } from '../demo/course/examQuestions';
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
+test.use({ appLocale: 'ja', viewportPreset: 'desktop' });
+
 /**
  * TC-197 — the final test marks honestly and sends each miss back to its lesson.
  *
@@ -11,14 +13,6 @@ import { SEL } from './selectors';
  * teaches it, so "not yet" comes with where to go.
  */
 async function openExam(page: import('@playwright/test').Page) {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* the test is still usable in English */
-    }
-  });
   await page.goto('/#/course/exam');
   await expect(page.getByTestId(SEL.app.root)).toBeVisible();
   await expect(page.getByTestId('exam-path')).toBeVisible();

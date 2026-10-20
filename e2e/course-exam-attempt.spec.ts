@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 import { optionOrder } from '../demo/course/examAttempt';
 import { EXAM_LEVELS } from '../demo/course/examLevels';
 import { EXAM_QUESTIONS } from '../demo/course/examQuestions';
-import { expect, test } from './fixtures/harness';
+import { expect, test, VIEWPORTS } from './fixtures/harness';
 import type { DemoPage } from './pages/DemoPage';
 
 /**
@@ -15,16 +15,7 @@ import type { DemoPage } from './pages/DemoPage';
  * never moved, and after marking the result was off-screen, the chosen option
  * unmarked, and a lesson opened from the test had no way back to it.
  */
-async function useJapanese(page: Page, theme?: 'light' | 'dark') {
-  await page.addInitScript((mode) => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-      if (mode) window.localStorage.setItem('netlab-theme-mode', mode);
-    } catch {
-      /* the test is still usable in English, in the dark theme */
-    }
-  }, theme);
-}
+test.use({ appLocale: 'ja' });
 
 async function startExam(page: Page, demoPage: DemoPage, route = '/course/exam') {
   await demoPage.goto(route);
@@ -84,7 +75,6 @@ async function contrastOf(link: Locator): Promise<number> {
 }
 
 test('TC-323: the questions are hidden until the test is started', async ({ page, demoPage }) => {
-  await useJapanese(page);
   await demoPage.goto('/course/exam');
 
   await expect(page.getByTestId('exam-path')).toBeVisible();
@@ -102,7 +92,6 @@ test('TC-324: each attempt shows the options in a new order, "not learned" last'
   page,
   demoPage,
 }) => {
-  await useJapanese(page);
   await startExam(page, demoPage, '/course/exam?examSeed=1');
 
   const expected = (seed: number, n: number) => [
@@ -142,7 +131,6 @@ test('TC-325: after marking, the score is in view and each answer is named in wo
   page,
   demoPage,
 }) => {
-  await useJapanese(page);
   await startExam(page, demoPage);
 
   const [one, two, three] = EXAM_QUESTIONS;
@@ -184,7 +172,6 @@ test('TC-326: the attempt survives a reload and a visit to a lesson, until "try 
   page,
   demoPage,
 }) => {
-  await useJapanese(page);
   await startExam(page, demoPage);
   await answerAllNotLearnedAndMark(page);
 
@@ -214,7 +201,6 @@ test('TC-327: a lesson opened from the test offers the way back to it', async ({
   page,
   demoPage,
 }) => {
-  await useJapanese(page);
   await demoPage.goto('/course/exam');
   await page.getByTestId('exam-path-arp').click();
   await expect(page).toHaveURL(/#\/networking\/arp/);
@@ -238,25 +224,27 @@ test('TC-327: a lesson opened from the test offers the way back to it', async ({
 });
 
 for (const theme of ['dark', 'light'] as const) {
-  test(`TC-328: links on the test are readable in the ${theme} theme`, async ({
-    page,
-    demoPage,
-  }) => {
-    await useJapanese(page, theme);
-    await startExam(page, demoPage);
-    await answerAllNotLearnedAndMark(page);
+  test.describe(() => {
+    test.use({ appTheme: theme });
 
-    for (const id of ['exam-path-course', 'exam-path-arp', 'exam-review-1', 'exam-review-10']) {
-      expect(await contrastOf(page.getByTestId(id)), `${id} in ${theme}`).toBeGreaterThanOrEqual(
-        4.5,
-      );
-    }
+    test(`TC-328: links on the test are readable in the ${theme} theme`, async ({
+      page,
+      demoPage,
+    }) => {
+      await startExam(page, demoPage);
+      await answerAllNotLearnedAndMark(page);
+
+      for (const id of ['exam-path-course', 'exam-path-arp', 'exam-review-1', 'exam-review-10']) {
+        expect(await contrastOf(page.getByTestId(id)), `${id} in ${theme}`).toBeGreaterThanOrEqual(
+          4.5,
+        );
+      }
+    });
   });
 }
 
 test('TC-328: a review link is a comfortable tap target on a phone', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await useJapanese(page);
+  await page.setViewportSize(VIEWPORTS.phone);
   await startExam(page, demoPage);
   await answerAllNotLearnedAndMark(page);
 
@@ -270,7 +258,6 @@ test('TC-329: each level keeps its own attempt behind its own start button', asy
   page,
   demoPage,
 }) => {
-  await useJapanese(page);
   await startExam(page, demoPage);
   await page.getByTestId('exam-option-1-x').check();
 
@@ -292,10 +279,9 @@ test('TC-329: each level keeps its own attempt behind its own start button', asy
  * at its top.
  */
 test.describe('an unfinished test on a phone', () => {
-  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  test.use({ viewportPreset: 'phone' });
 
   test('offers to continue from the first unanswered question', async ({ page, demoPage }) => {
-    await useJapanese(page);
     await startExam(page, demoPage);
     await expect(page.getByTestId('exam-continue')).toHaveCount(0);
     for (let n = 1; n <= 5; n += 1) await page.getByTestId(`exam-option-${n}-x`).check();
@@ -316,7 +302,6 @@ test.describe('an unfinished test on a phone', () => {
 
 /** TC-569 — "not learned yet" is reported as that, apart from wrong answers. */
 test('answers of "not learned yet" are not called mistakes', async ({ page, demoPage }) => {
-  await useJapanese(page);
   await startExam(page, demoPage);
   for (const [index, question] of EXAM_QUESTIONS.entries()) {
     // Two "not learned yet", one wrong, seven right.

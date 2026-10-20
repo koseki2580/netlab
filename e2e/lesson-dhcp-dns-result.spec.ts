@@ -8,18 +8,12 @@ import { SEL } from './selectors';
  * details and finding its cache; the lesson had no explanation and no result
  * beside its buttons. It now explains both services and states each outcome.
  */
+test.use({ appLocale: 'ja', viewportPreset: 'desktop' });
+
 test('running DHCP and then DNS states the address given and the name resolved', async ({
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* English is fine too */
-    }
-  });
   await demoPage.goto('/services/dhcp-dns');
   await expect(page.getByTestId(SEL.lesson.brief)).toBeVisible();
 

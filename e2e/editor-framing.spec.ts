@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures/harness';
+import { boxesOf, settled } from './fixtures/settle';
 import { SEL } from './selectors';
 
 /**
@@ -18,7 +19,7 @@ test('opening the editor centres the topology in the canvas', async ({ page, dem
   await expect(canvas).toBeVisible();
   const devices = page.getByTestId(SEL.canvas.node);
   await expect(devices.first()).toBeVisible();
-  await page.waitForTimeout(800);
+  await settled(() => boxesOf(devices), { what: 'the framing' });
 
   const frame = (await canvas.boundingBox())!;
   let left = Infinity;

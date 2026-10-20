@@ -1,6 +1,8 @@
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
+test.use({ viewportPreset: 'wide' });
+
 /**
  * TC-170 — a reader who has said nothing is read as a learner.
  *
@@ -13,7 +15,6 @@ test('a first visit opens the brief in full, and pro still folds it', async ({
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
   await page.addInitScript(() => {
     try {
       window.localStorage.removeItem('netlab-audience');

@@ -15,9 +15,10 @@ const TID = {
   controlsNote: 'nat-controls-note',
 };
 
-test('both translations survive replaying the last send', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await demoPage.goto('/simulation/nat');
+test.use({ viewportPreset: 'desktop' });
+
+test('both translations survive replaying the last send', async ({ page, lessonPage }) => {
+  await lessonPage.open('/simulation/nat');
 
   await expect(page.getByTestId(TID.genericSend)).toHaveCount(0);
   await expect(page.getByTestId(TID.controlsNote)).toBeVisible();
@@ -27,9 +28,9 @@ test('both translations survive replaying the last send', async ({ page, demoPag
   await page.getByTestId(TID.sendB).click();
   await expect(page.getByTestId(TID.insideGlobal)).toHaveCount(2);
 
-  const step = page.locator('button[title="Step Forward"], button[title="1 つ進む"]').first();
+  const lesson = lessonPage.transport();
   for (let i = 0; i < 3; i += 1) {
-    await step.click();
+    await lesson.stepOnce();
   }
   await expect(page.getByTestId(TID.insideGlobal)).toHaveCount(2);
 });

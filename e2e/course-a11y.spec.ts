@@ -3,6 +3,8 @@ import { excludingCanvasInternals } from './axe';
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
+test.use({ viewportPreset: 'wide' });
+
 /**
  * The accessibility sweeps walk the gallery's categories, and the course is
  * not one of them — it is reached from a banner. So the page a beginner is now
@@ -20,7 +22,6 @@ async function scan(page: import('@playwright/test').Page) {
 
 /** TC-136 — the course is usable in the dark theme it opens in. */
 test('the course has no accessibility violations', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
   await page.addInitScript(() => {
     try {
       window.localStorage.removeItem('netlab-course-step');
@@ -42,16 +43,13 @@ test('the course has no accessibility violations', async ({ page, demoPage }) =>
 });
 
 /** TC-137 — and in the light theme, where the contrast failures live. */
-test('the course has no accessibility violations in light', async ({ page }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
+test('the course has no accessibility violations in light', async ({ page, galleryPage }) => {
   await page.goto('/#/');
   await expect(page.getByTestId(SEL.gallery.heading)).toBeVisible();
   // Dark first: the gallery opens light, and a setting is only remembered once
   // it changes, so choosing Light alone would leave nothing stored.
-  await page.getByTestId(SEL.gallery.themeMode('dark')).click();
-  await page.waitForTimeout(120);
-  await page.getByTestId(SEL.gallery.themeMode('light')).click();
-  await page.waitForTimeout(220);
+  await galleryPage.chooseTheme('dark');
+  await galleryPage.chooseTheme('light');
 
   await page.goto('/#/course');
   await expect(page.getByTestId(SEL.course.title)).toBeVisible();
@@ -65,7 +63,6 @@ test('the course has no accessibility violations in light', async ({ page }) => 
  */
 test('the finished course has no accessibility violations', async ({ page, demoPage }) => {
   test.setTimeout(180_000);
-  await page.setViewportSize({ width: 1600, height: 1000 });
   await page.addInitScript(() => {
     try {
       window.localStorage.removeItem('netlab-course-step');

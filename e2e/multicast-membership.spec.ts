@@ -1,6 +1,8 @@
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
+test.use({ viewportPreset: 'wide' });
+
 /**
  * TC-110 — the IGMP lesson's subject actually happens.
  *
@@ -13,7 +15,6 @@ import { SEL } from './selectors';
  * the lesson silent, so this asks the question through the whole chain.
  */
 test('a receiver that joins the group receives the multicast', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
   await demoPage.goto('/networking/multicast');
   await expect(page.getByTestId(SEL.app.root)).toBeVisible();
   await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();

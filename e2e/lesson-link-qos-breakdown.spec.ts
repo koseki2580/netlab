@@ -28,16 +28,18 @@ test('the link QoS result splits its total into sending and propagation', async 
   );
 });
 
-test('the link QoS breakdown is in Japanese for a Japanese learner', async ({ page, demoPage }) => {
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* the lesson still renders; the Japanese text below would then fail */
-    }
-  });
-  await demoPage.goto('/networking/link-qos');
+test.describe(() => {
+  test.use({ appLocale: 'ja' });
 
-  await page.getByTestId(QOS.burst).click();
-  await expect(page.getByTestId(QOS.breakdown)).toHaveText('送り出し 12 ms ＋ 伝搬 20 ms ＝ 32 ms');
+  test('the link QoS breakdown is in Japanese for a Japanese learner', async ({
+    page,
+    demoPage,
+  }) => {
+    await demoPage.goto('/networking/link-qos');
+
+    await page.getByTestId(QOS.burst).click();
+    await expect(page.getByTestId(QOS.breakdown)).toHaveText(
+      '送り出し 12 ms ＋ 伝搬 20 ms ＝ 32 ms',
+    );
+  });
 });

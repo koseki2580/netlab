@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures/harness';
+import { expect, test, VIEWPORTS } from './fixtures/harness';
 import { SEL } from './selectors';
 
 /**
@@ -12,7 +12,7 @@ import { SEL } from './selectors';
 test('going from lesson to lesson and back never blanks the page', async ({ page, demoPage }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.setViewportSize(VIEWPORTS.desktop);
 
   for (const path of ['/routing/client-server', '/networking/arp', '/basic/star']) {
     await demoPage.goto(path);

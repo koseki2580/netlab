@@ -25,23 +25,20 @@ test('the wireless note explains the rounded reading at 200 m', async ({ page, d
   await expect(page.getByTestId(WIFI.loss)).toHaveText('Loss: 5%');
 });
 
-test('the wireless rounding note is in Japanese for a Japanese learner', async ({
-  page,
-  demoPage,
-}) => {
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* the lesson still renders; the Japanese text below would then fail */
-    }
+test.describe(() => {
+  test.use({ appLocale: 'ja' });
+
+  test('the wireless rounding note is in Japanese for a Japanese learner', async ({
+    page,
+    demoPage,
+  }) => {
+    await demoPage.goto('/networking/wireless');
+
+    const note = page.getByTestId(WIFI.note);
+    await expect(note).toContainText('RSSI は小数第 1 位まで、損失率は整数のパーセント');
+    await expect(note).toContainText('1.2 × 4 ＝ 4.8% になり、表示は 5% です');
+
+    await page.getByTestId(WIFI.distance).fill('200');
+    await expect(page.getByTestId(WIFI.loss)).toHaveText('損失率: 5%');
   });
-  await demoPage.goto('/networking/wireless');
-
-  const note = page.getByTestId(WIFI.note);
-  await expect(note).toContainText('RSSI は小数第 1 位まで、損失率は整数のパーセント');
-  await expect(note).toContainText('1.2 × 4 ＝ 4.8% になり、表示は 5% です');
-
-  await page.getByTestId(WIFI.distance).fill('200');
-  await expect(page.getByTestId(WIFI.loss)).toHaveText('損失率: 5%');
 });

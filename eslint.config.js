@@ -6,6 +6,7 @@ import noHardcodedSandboxString from './eslint-rules/no-hardcoded-sandbox-string
 import deprecationAnnotations from './eslint-rules/deprecation-annotations.cjs';
 import propertyTestSeeds from './eslint-rules/property-test-seeds.cjs';
 import noRawLocatorsInE2e from './eslint-rules/no-raw-locators-in-e2e.cjs';
+import noFixedWaitsInE2e from './eslint-rules/no-fixed-waits-in-e2e.cjs';
 
 const netlabPlugin = {
   rules: {
@@ -13,6 +14,7 @@ const netlabPlugin = {
     'no-hardcoded-sandbox-string': noHardcodedSandboxString,
     'property-test-seeds': propertyTestSeeds,
     'no-raw-locators-in-e2e': noRawLocatorsInE2e,
+    'no-fixed-waits-in-e2e': noFixedWaitsInE2e,
   },
 };
 
@@ -144,6 +146,15 @@ export default tseslint.config(
     plugins: { netlab: netlabPlugin },
     rules: {
       'netlab/no-raw-locators-in-e2e': 'error',
+    },
+  },
+  {
+    // Wait on page state, not on the clock — every e2e file, a11y specs
+    // included. See docs/dev/eslint-rules.md.
+    files: ['e2e/**/*.ts'],
+    plugins: { netlab: netlabPlugin },
+    rules: {
+      'netlab/no-fixed-waits-in-e2e': 'error',
     },
   },
   {

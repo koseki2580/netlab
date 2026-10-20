@@ -1,6 +1,8 @@
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
+test.use({ viewportPreset: 'wide' });
+
 /**
  * TC-044 — an assessment sub-goal responds to the learner's edit.
  *
@@ -21,7 +23,6 @@ test('an assessment sub-goal passes when the learner makes the edit it asks for'
   page,
   sandboxPage,
 }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
   await page.goto(
     '/?learnerId=e2e-assessment&assessment=ospf-convergence&sandbox=1&sandboxTab=assessment#/routing/ospf-convergence',
   );
@@ -54,7 +55,6 @@ test('an assessment sub-goal passes when the learner makes the edit it asks for'
  * pushed their edits; this one now does too.
  */
 test("the lesson's own control satisfies the goal it describes", async ({ page, sandboxPage }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
   await page.goto(
     '/?learnerId=e2e-fail&assessment=ospf-convergence&sandbox=1&sandboxTab=assessment#/routing/ospf-convergence',
   );
@@ -63,8 +63,10 @@ test("the lesson's own control satisfies the goal it describes", async ({ page, 
   const panel = sandboxPage.tabpanel();
   await expect(panel).toContainText('1 / 4 sub-goals');
 
-  await page.getByTestId('ospf-fail-link').click();
-  await page.waitForTimeout(1200);
+  const failLink = page.getByTestId('ospf-fail-link');
+  await failLink.click();
+  // The lesson says the link is down once the press has been taken.
+  await expect(failLink).toHaveText('Restore link');
   await sandboxPage.clickTab('assessment');
   await expect(panel, "the lesson's own control satisfies the goal it describes").toContainText(
     '2 / 4 sub-goals',

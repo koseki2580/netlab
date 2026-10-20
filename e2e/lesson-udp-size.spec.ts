@@ -17,18 +17,12 @@ const TID = {
   explanation: 'udp-size-explanation',
 };
 
+test.use({ appLocale: 'ja', viewportPreset: 'desktop' });
+
 test('a normal and a large UDP send are told apart by size and pieces', async ({
   page,
   demoPage,
 }) => {
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* the numbers below are checked either way */
-    }
-  });
-  await page.setViewportSize({ width: 1440, height: 900 });
   await demoPage.goto('/networking/udp');
   await expect(page.getByTestId(TID.hint)).toContainText('MTU');
 

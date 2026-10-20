@@ -1,5 +1,7 @@
 import { expect, test } from './fixtures/harness';
 
+test.use({ viewportPreset: 'wide' });
+
 /** Lesson-local test ids. */
 const STP = {
   bridgeId: (switchId: string) => `stp-bridge-id-${switchId}`,
@@ -20,7 +22,6 @@ test('each switch shows its bridge ID, and a priority tie goes to the lower MAC'
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
   await demoPage.goto('/networking/stp');
 
   await expect(page.getByTestId(STP.bridgeId('switch-a'))).toHaveText(
@@ -47,20 +48,18 @@ test('each switch shows its bridge ID, and a priority tie goes to the lower MAC'
   await expect(page.getByTestId(STP.loopDanger)).toContainText('MAC table');
 });
 
-test('the bridge IDs and the election rule are in Japanese too', async ({ page, demoPage }) => {
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* no storage means no choice, which this test would then catch */
-    }
-  });
-  await page.setViewportSize({ width: 1600, height: 1000 });
-  await demoPage.goto('/networking/stp');
+test.describe(() => {
+  test.use({ appLocale: 'ja' });
 
-  await expect(page.getByTestId(STP.bridgeId('switch-a'))).toHaveText(
-    'ブリッジ ID 4096/02:00:00:0a:00:01',
-  );
-  await expect(page.getByTestId(STP.electionRule)).toContainText('ブリッジ ID が小さいほうが勝ち');
-  await expect(page.getByTestId(STP.loopDanger)).toContainText('ブロードキャストストーム');
+  test('the bridge IDs and the election rule are in Japanese too', async ({ page, demoPage }) => {
+    await demoPage.goto('/networking/stp');
+
+    await expect(page.getByTestId(STP.bridgeId('switch-a'))).toHaveText(
+      'ブリッジ ID 4096/02:00:00:0a:00:01',
+    );
+    await expect(page.getByTestId(STP.electionRule)).toContainText(
+      'ブリッジ ID が小さいほうが勝ち',
+    );
+    await expect(page.getByTestId(STP.loopDanger)).toContainText('ブロードキャストストーム');
+  });
 });

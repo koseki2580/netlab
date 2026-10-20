@@ -1,4 +1,4 @@
-import type { Locator, Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import { SEL } from '../selectors';
 
 /**
@@ -15,6 +15,14 @@ export class GalleryPage {
 
   async toggleJapaneseLocale() {
     await this.page.getByTestId(SEL.gallery.localeToggleJa).click();
+  }
+
+  /** Press a theme under Settings, and wait until the choice is remembered. */
+  async chooseTheme(mode: 'light' | 'dark') {
+    await this.page.getByTestId(SEL.gallery.themeMode(mode)).click();
+    await expect
+      .poll(() => this.page.evaluate(() => window.localStorage.getItem('netlab-theme-mode')))
+      .toBe(mode);
   }
 
   // -- learner progress -----------------------------------------------------

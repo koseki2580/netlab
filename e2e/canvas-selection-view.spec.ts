@@ -1,6 +1,8 @@
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
+test.use({ viewportPreset: 'desktop' });
+
 /**
  * TC-173 — opening a device keeps the rest of the network in view.
  *
@@ -14,7 +16,6 @@ test('opening a device does not push the other devices off the canvas', async ({
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
   await demoPage.goto('/routing/client-server');
 
   const devices = page.getByTestId(SEL.canvas.node);

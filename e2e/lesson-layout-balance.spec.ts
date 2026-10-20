@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures/harness';
+import { expect, test, VIEWPORTS } from './fixtures/harness';
 import { SEL } from './selectors';
 
 /** Lesson-local test ids; the shared selector file belongs to another change. */
@@ -16,7 +16,7 @@ test('the trace inspector shows every hop and keeps the empty details small', as
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.setViewportSize(VIEWPORTS.desktop);
   await demoPage.goto('/simulation/trace-inspector');
   const timeline = page.getByTestId(LAYOUT.timeline);
   await expect(timeline.locator('[data-step]').last()).toBeVisible();
@@ -39,7 +39,7 @@ test('the ARP lesson puts the timeline at the top once a packet has run', async 
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.setViewportSize(VIEWPORTS.desktop);
   await demoPage.goto('/networking/arp');
   await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
 
@@ -52,32 +52,29 @@ test('the ARP lesson puts the timeline at the top once a packet has run', async 
   expect(box.y + box.height).toBeLessThanOrEqual(900);
 });
 
-test('the UDP send buttons keep their labels on one line in Japanese', async ({
-  page,
-  demoPage,
-}) => {
-  await page.setViewportSize({ width: 1280, height: 800 });
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* the page falls back to English, which this test would then catch */
-    }
+test.describe(() => {
+  test.use({ appLocale: 'ja' });
+
+  test('the UDP send buttons keep their labels on one line in Japanese', async ({
+    page,
+    demoPage,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await demoPage.goto('/networking/udp');
+    const send = page.getByTestId(SEL.demo.primaryAction).first();
+    await expect(send).toHaveText('UDP を送る → ポート 7777');
+    const box = await send.boundingBox();
+    if (!box) throw new Error('button was not measurable');
+    // One line of 12px text plus padding; a wrapped label is twice that.
+    expect(box.height).toBeLessThan(40);
   });
-  await demoPage.goto('/networking/udp');
-  const send = page.getByTestId(SEL.demo.primaryAction).first();
-  await expect(send).toHaveText('UDP を送る → ポート 7777');
-  const box = await send.boundingBox();
-  if (!box) throw new Error('button was not measurable');
-  // One line of 12px text plus padding; a wrapped label is twice that.
-  expect(box.height).toBeLessThan(40);
 });
 
 test('all-in-one names flows by their order and endpoints, not a random hash', async ({
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.setViewportSize(VIEWPORTS.desktop);
   await demoPage.goto('/comprehensive/all-in-one');
 
   await page.getByTestId('all-in-one-tab-failure').click();

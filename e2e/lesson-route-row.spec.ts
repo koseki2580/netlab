@@ -13,21 +13,22 @@ const TID = {
   verdict: 'route-table-verdict',
 };
 
-test('stepping onto R-1 marks the 203.0.113.0/24 row and says why', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await demoPage.goto('/routing/client-server');
+test.use({ viewportPreset: 'desktop' });
+
+test('stepping onto R-1 marks the 203.0.113.0/24 row and says why', async ({
+  page,
+  lessonPage,
+}) => {
+  await lessonPage.open('/routing/client-server');
   await page.getByTestId(TID.send).first().click();
 
   const used = page.locator(`[data-testid="${TID.row}"][data-used="true"]`);
   await expect(used).toHaveCount(0);
 
-  // The step button is the transport button whose aria-label is the step label.
-  const step = page.locator('button[title="Step Forward"], button[title="1 つ進む"]').first();
-  await expect(async () => {
-    if ((await used.count()) === 0 && (await step.isEnabled()))
-      await step.click({ timeout: 1_000 });
-    await expect(used).toHaveCount(1, { timeout: 500 });
-  }).toPass({ timeout: 20_000 });
+  // The step button is the transport bar's step-forward button.
+  const lesson = lessonPage.transport();
+  await lesson.stepUntil(async () => (await used.count()) > 0);
+  await expect(used).toHaveCount(1);
 
   await expect(used).toContainText('203.0.113.0/24');
   await expect(page.getByTestId(TID.verdict)).toContainText('203.0.113.10');

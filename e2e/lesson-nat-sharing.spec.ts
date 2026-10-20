@@ -1,6 +1,8 @@
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
+test.use({ viewportPreset: 'desktop' });
+
 /**
  * TC-198 — the NAT lesson shows many machines sharing one address.
  *
@@ -13,7 +15,6 @@ test('two clients leave through the same global address, told apart by port', as
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
   await demoPage.goto('/simulation/nat');
   await expect(page.getByTestId(SEL.lesson.brief)).toBeVisible();
 

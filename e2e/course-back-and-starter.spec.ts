@@ -1,11 +1,11 @@
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
-async function inJapanese(page: import('@playwright/test').Page) {
-  await page.setViewportSize({ width: 1440, height: 900 });
+test.use({ appLocale: 'ja', viewportPreset: 'desktop' });
+
+async function fromTheFirstStep(page: import('@playwright/test').Page) {
   await page.addInitScript(() => {
     try {
-      window.localStorage.setItem('netlab-locale', 'ja');
       window.localStorage.removeItem('netlab-course-step');
     } catch {
       /* the pages still work */
@@ -20,7 +20,7 @@ async function inJapanese(page: import('@playwright/test').Page) {
  * a result a learner clicked past could not be read again.
  */
 test('the course steps back to the previous step', async ({ page }) => {
-  await inJapanese(page);
+  await fromTheFirstStep(page);
   await page.goto('/#/course');
   await expect(page.getByTestId(SEL.app.root)).toBeVisible();
   const firstTitle = await page.getByTestId('course-title').textContent();
@@ -41,7 +41,7 @@ test('the course steps back to the previous step', async ({ page }) => {
  * card; it has to be what the page shows before anything is scrolled.
  */
 test('the subnetting page shows its starter card on the first screen', async ({ page }) => {
-  await inJapanese(page);
+  await fromTheFirstStep(page);
   await page.goto('/#/learning/subnetting');
   const starter = page.getByTestId('subnet-starter');
   await expect(starter).toBeVisible();

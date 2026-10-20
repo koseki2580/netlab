@@ -1,6 +1,8 @@
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
+test.use({ viewportPreset: 'desktop' });
+
 /**
  * TC-213 — the firewall lesson's return traffic matches the flow it returns for.
  *
@@ -14,7 +16,6 @@ test('the firewall lesson returns traffic for its own HTTP flow and offers no ot
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
   await demoPage.goto('/simulation/acl');
   await expect(page.getByTestId('acl-send-http')).toBeVisible();
   await expect(

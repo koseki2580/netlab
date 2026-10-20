@@ -25,10 +25,11 @@ const IDS = {
   toGallery: 'course-to-gallery',
 } as const;
 
-async function inJapanese(page: Page, step = 0) {
+test.use({ appLocale: 'ja' });
+
+async function atStep(page: Page, step = 0) {
   await page.addInitScript((at) => {
     try {
-      window.localStorage.setItem('netlab-locale', 'ja');
       // Only on the first load: a later reload keeps the step the test set.
       if (window.sessionStorage.getItem('course-test-seeded') === null) {
         window.sessionStorage.setItem('course-test-seeded', '1');
@@ -59,7 +60,7 @@ test('each step says its one idea first and keeps the detail closed', async ({
 }) => {
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 1366, height: 768 });
-  await inJapanese(page);
+  await atStep(page);
   await demoPage.goto('/course');
 
   for (const [index, step] of COURSE_STEPS.entries()) {
@@ -110,7 +111,7 @@ test('each step says its one idea first and keeps the detail closed', async ({
 });
 
 test.describe('on a phone', () => {
-  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  test.use({ viewportPreset: 'phone' });
 
   /**
    * TC-338 — pressing send leaves the diagram where it is, and the verdict
@@ -121,7 +122,7 @@ test.describe('on a phone', () => {
     demoPage,
   }) => {
     test.setTimeout(180_000);
-    await inJapanese(page);
+    await atStep(page);
     await demoPage.goto('/course');
 
     for (const index of [0, 2, 4, 5]) {
@@ -151,6 +152,7 @@ test.describe('on a phone', () => {
       await expect(page.getByTestId(IDS.caption)).toContainText('PC-A');
 
       for (const wait of [300, 700]) {
+        // eslint-disable-next-line netlab/no-fixed-waits-in-e2e -- asserts the diagram does not move during the packet's travel
         await page.waitForTimeout(wait);
         const now = await diagram.boundingBox();
         expect(now, `step ${index + 1}: the diagram is still drawn`).not.toBeNull();
@@ -187,7 +189,7 @@ test.describe('on a phone', () => {
     demoPage,
   }) => {
     test.setTimeout(120_000);
-    await inJapanese(page, COURSE_STEPS.length - 1);
+    await atStep(page, COURSE_STEPS.length - 1);
     await demoPage.goto('/course');
 
     const table = page.getByTestId(IDS.routeTable);
@@ -236,7 +238,7 @@ test.describe('on a phone', () => {
     page,
     demoPage,
   }) => {
-    await inJapanese(page, 0);
+    await atStep(page, 0);
     await demoPage.goto('/course');
     await expect(page.getByTestId(SEL.canvas.root)).toBeVisible();
     await expect(page.getByTestId('maxgraph-controls')).toBeHidden();

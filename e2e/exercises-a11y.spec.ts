@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import { excludingCanvasInternals, undecidedContrastFailures } from './axe';
-import { expect, test } from './fixtures/harness';
+import { expect, test, VIEWPORTS } from './fixtures/harness';
 import { changeSomethingWrong } from './exerciseMoves';
 import { SEL } from './selectors';
 
@@ -61,22 +61,23 @@ async function sweep(page: Page) {
 /** TC-528 — in the dark theme the pages open in. */
 test('the exercise pages have no accessibility violations', async ({ page }) => {
   test.setTimeout(120_000);
-  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.setViewportSize(VIEWPORTS.wide);
   await sweep(page);
 });
 
 /** TC-529 — and in the light theme, where the contrast failures live. */
-test('the exercise pages have no accessibility violations in light', async ({ page }) => {
+test('the exercise pages have no accessibility violations in light', async ({
+  page,
+  galleryPage,
+}) => {
   test.setTimeout(120_000);
-  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.setViewportSize(VIEWPORTS.wide);
   await page.goto('/#/');
   await expect(page.getByTestId(SEL.gallery.heading)).toBeVisible();
   // Dark first: the gallery opens light, and a setting is only remembered once
   // it changes, so choosing Light alone would leave nothing stored.
-  await page.getByTestId(SEL.gallery.themeMode('dark')).click();
-  await page.waitForTimeout(120);
-  await page.getByTestId(SEL.gallery.themeMode('light')).click();
-  await page.waitForTimeout(220);
+  await galleryPage.chooseTheme('dark');
+  await galleryPage.chooseTheme('light');
   await sweep(page);
 });
 

@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures/harness';
+import { expect, test, VIEWPORTS } from './fixtures/harness';
 import { SEL } from './selectors';
 
 /** Lesson-local test ids; the shared selector file belongs to another change. */
@@ -9,12 +9,11 @@ const OSPF = {
   routeTables: 'ospf-route-tables',
   routeTab: (routerId: string) => `ospf-route-tab-${routerId}`,
   routeRows: 'ospf-route-table-rows',
+  sendProbe: 'ospf-send-probe',
 } as const;
 
 async function sendProbe(page: import('@playwright/test').Page) {
-  // The command bar's probe button has no id of its own; it is the one whose
-  // title names the probe, which is an attribute, not visible text.
-  await page.locator('button[title="Send probe C1 -> C2"]').click();
+  await page.getByTestId(OSPF.sendProbe).click();
 }
 
 /**
@@ -22,7 +21,7 @@ async function sendProbe(page: import('@playwright/test').Page) {
  * before the failure stays on screen beside the recomputed one.
  */
 test('the OSPF lesson keeps the route from before the link failed', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.setViewportSize(VIEWPORTS.wide);
   await demoPage.goto('/routing/ospf-convergence');
   await demoPage.dismissBrief();
   await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
@@ -50,7 +49,7 @@ test('every OSPF route table opens in the side rail, off the canvas', async ({
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.setViewportSize(VIEWPORTS.desktop);
   await demoPage.goto('/routing/ospf-convergence');
   await demoPage.dismissBrief();
   await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();

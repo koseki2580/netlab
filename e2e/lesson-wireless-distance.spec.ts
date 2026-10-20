@@ -8,18 +8,12 @@ import { SEL } from './selectors';
  * The distance slider had no value, tick or unit, so 200 m could not be set
  * on purpose; the state read 「状態: connected」.
  */
+test.use({ appLocale: 'ja', viewportPreset: 'desktop' });
+
 test('the wireless distance can be set to 200 m exactly and the state is localized', async ({
   page,
   demoPage,
 }) => {
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* the lesson still renders; the Japanese text below would then fail */
-    }
-  });
-  await page.setViewportSize({ width: 1440, height: 900 });
   await demoPage.goto('/networking/wireless');
 
   // TC-224

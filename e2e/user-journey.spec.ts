@@ -1,5 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 import { expect, test } from './fixtures/harness';
+import { boxesOf, settled } from './fixtures/settle';
 import { SEL } from './selectors';
 
 /**
@@ -101,7 +102,7 @@ test('a learner zooms out to see the shape of a network with areas', async ({ pa
   await devices.first().hover();
   for (let step = 0; step < 6; step += 1) {
     await page.mouse.wheel(0, 400);
-    await page.waitForTimeout(220);
+    await settled(() => boxesOf(devices.or(clusters)), { what: 'the zoom' });
   }
 
   // Zoomed out, the areas stand in for their devices — the shape before the

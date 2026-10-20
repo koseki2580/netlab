@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import { CATEGORIES, expect, test } from './fixtures/harness';
+import { settled } from './fixtures/settle';
 import { changeSomethingWrong } from './exerciseMoves';
 import { SEL } from './selectors';
 
@@ -40,16 +41,7 @@ const EXERCISE_PAGES = [
   '/exercises/do/l1-choose-address~0',
 ];
 
-async function chooseJapanese(page: Page) {
-  await page.setViewportSize({ width: 1600, height: 1000 });
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* no storage means no choice, which this test would then catch */
-    }
-  });
-}
+test.use({ appLocale: 'ja', viewportPreset: 'wide' });
 
 /** The lines of the page a Japanese learner would read as an untranslated sentence. */
 async function englishProse(page: Page): Promise<string[]> {
@@ -75,7 +67,6 @@ async function englishProse(page: Page): Promise<string[]> {
 
 for (const path of EXERCISE_PAGES) {
   test(`no English prose on ${path} in Japanese`, async ({ page, demoPage }) => {
-    await chooseJapanese(page);
     await demoPage.goto(path);
     await expect(page.getByTestId(SEL.app.root)).toBeVisible();
 
@@ -119,7 +110,6 @@ for (const path of EXERCISE_PAGES) {
 
 for (const path of LESSONS) {
   test(`no English prose on ${path} in Japanese`, async ({ page, demoPage }) => {
-    await chooseJapanese(page);
     await demoPage.goto(path);
     await expect(page.getByTestId(SEL.app.root)).toBeVisible();
 
@@ -128,7 +118,8 @@ for (const path of LESSONS) {
     // waiting for their own button; pressing it would only wait out the timeout.
     if ((await primary.count()) > 0 && (await primary.isEnabled())) {
       await primary.click();
-      await page.waitForTimeout(800);
+      // Read once what the press brought on screen has finished arriving.
+      await settled(() => page.getByTestId(SEL.app.root).innerText(), { what: 'the lesson text' });
     }
 
     expect(await englishProse(page), 'no English sentence remains').toEqual([]);

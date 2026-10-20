@@ -26,16 +26,6 @@ const TID = {
 
 type Page = import('@playwright/test').Page;
 
-async function inJapanese(page: Page) {
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* no storage means English, which the assertions below would then catch */
-    }
-  });
-}
-
 async function pressesKeepTheirPlace(page: Page) {
   await page.getByTestId(SEL.demo.primaryAction).first().click();
   const step = page.getByTestId(TID.step);
@@ -60,12 +50,13 @@ async function pressesKeepTheirPlace(page: Page) {
 }
 
 /** TC-341 — five presses on the ARP lesson land on the same spot. */
+test.use({ appLocale: 'ja' });
+
 test('the step button stays where it was pressed as the history grows', async ({
   page,
   demoPage,
 }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
-  await inJapanese(page);
   await demoPage.goto('/networking/arp');
   await pressesKeepTheirPlace(page);
   /** TC-342 — and the line under it says what a press does, and how many there are. */
@@ -73,7 +64,7 @@ test('the step button stays where it was pressed as the history grows', async ({
 });
 
 test.describe('on a phone', () => {
-  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  test.use({ viewportPreset: 'phone' });
 
   /**
    * TC-341 — at phone width the button keeps its place inside the control and
@@ -84,7 +75,6 @@ test.describe('on a phone', () => {
     page,
     demoPage,
   }) => {
-    await inJapanese(page);
     await demoPage.goto('/networking/arp');
     await page.getByTestId(SEL.demo.primaryAction).first().click();
     const step = page.getByTestId(TID.step);
@@ -112,7 +102,6 @@ test.describe('on a phone', () => {
     page,
     demoPage,
   }) => {
-    await inJapanese(page);
     await demoPage.goto('/routing/client-server');
     await page.getByTestId(SEL.demo.primaryAction).first().click();
     await expect(page.getByTestId(TID.status)).toContainText('届きました');
@@ -133,7 +122,6 @@ test('the idle step control points at the lesson, not at a missing button', asyn
   demoPage,
 }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
-  await inJapanese(page);
   await demoPage.goto('/simulation/tcp-handshake');
 
   await expect(page.getByTestId(TID.idleHint)).toHaveText(
@@ -149,7 +137,6 @@ test('after a send the bar says it arrived, names its buttons, and play replays'
   demoPage,
 }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
-  await inJapanese(page);
   await demoPage.goto('/routing/client-server');
 
   /** TC-348 — the empty packet panel is not an error message. */
@@ -195,7 +182,6 @@ test('the timeline keeps its expert tools folded and its rows in Japanese', asyn
   demoPage,
 }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
-  await inJapanese(page);
   await demoPage.goto('/networking/arp');
   await page.getByTestId(SEL.demo.primaryAction).first().click();
 

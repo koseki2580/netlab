@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures/harness';
+import { expect, test, VIEWPORTS } from './fixtures/harness';
 import { SEL } from './selectors';
 
 /** Lesson-local test ids for the two OSPF lessons. */
@@ -26,7 +26,7 @@ test('the Dynamic Routing OSPF view shows both of R4’s equal-cost next hops', 
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.setViewportSize(VIEWPORTS.desktop);
   await demoPage.goto('/routing/dynamic');
   await page.getByTestId(DYNAMIC.protocol('ospf')).click();
 
@@ -44,7 +44,7 @@ test('the OSPF Convergence lesson shows both next hops until the link fails', as
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.setViewportSize(VIEWPORTS.wide);
   await demoPage.goto('/routing/ospf-convergence');
   await demoPage.dismissBrief();
   await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
@@ -72,7 +72,7 @@ test('the BGP view names its number the AS path length, in both languages', asyn
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.setViewportSize(VIEWPORTS.desktop);
   await demoPage.goto('/routing/dynamic');
   await page.getByTestId(DYNAMIC.protocol('bgp')).click();
 
@@ -101,7 +101,7 @@ test('the OSPF Convergence lesson lists each link’s cost per direction', async
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.setViewportSize(VIEWPORTS.wide);
   await demoPage.goto('/routing/ospf-convergence');
   await demoPage.dismissBrief();
 

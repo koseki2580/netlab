@@ -20,15 +20,10 @@ const T = {
   packetViewer: 'packet-viewer-panel',
 } as const;
 
-async function inJapanese(page: Page, width = 1366, height = 768) {
+test.use({ appLocale: 'ja' });
+
+async function atSize(page: Page, width = 1366, height = 768) {
   await page.setViewportSize({ width, height });
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* the text checks below then fail loudly */
-    }
-  });
 }
 
 const LEADS: [string, string][] = [
@@ -50,7 +45,7 @@ for (const [width, height] of [
       page,
       demoPage,
     }) => {
-      await inJapanese(page, width, height);
+      await atSize(page, width, height);
       await demoPage.goto(path);
       const lead = page.getByTestId(T.lead);
       await expect(lead).toHaveCount(1);
@@ -64,7 +59,7 @@ for (const [width, height] of [
 test('TC-351: the subnet warm-up prints each pair large, network part bold and underlined', async ({
   page,
 }) => {
-  await inJapanese(page);
+  await atSize(page);
   await page.goto('/#/learning/subnetting');
   const network = page.getByTestId('subnet-starter-q1-a').locator('[data-part="network"]');
   await expect(network).toHaveText('10.1.5');
@@ -88,7 +83,7 @@ test('TC-351: the subnet warm-up prints each pair large, network part bold and u
 });
 
 test('TC-352: the choice a learner pressed stays marked', async ({ page }) => {
-  await inJapanese(page);
+  await atSize(page);
   await page.goto('/#/learning/subnetting');
   const same = page.getByTestId('subnet-starter-q2-same');
   const different = page.getByTestId('subnet-starter-q2-different');
@@ -116,7 +111,7 @@ test('TC-353: the ARP lesson says who asks whom here, and its bubble carries the
   page,
   demoPage,
 }) => {
-  await inJapanese(page);
+  await atSize(page);
   await demoPage.goto('/networking/arp');
   await expect(page.getByTestId('arp-who-asks')).toContainText('Router');
   await expect(page.getByTestId(T.primary)).toHaveText('▶ Client から Server へ送ってみる');
@@ -144,7 +139,7 @@ test('TC-354: the client-server lesson says the packet arrived, and its TTL sent
   page,
   demoPage,
 }) => {
-  await inJapanese(page);
+  await atSize(page);
   await demoPage.goto('/routing/client-server');
   await expect(page.getByTestId('client-server-result')).toHaveCount(0);
   await page.getByTestId(T.primary).first().click();
@@ -175,7 +170,7 @@ test('TC-355, TC-356, TC-357: the three handshake messages are tied to the telep
   page,
   demoPage,
 }) => {
-  await inJapanese(page);
+  await atSize(page);
   await demoPage.goto('/simulation/tcp-handshake');
   const gloss = page.getByTestId('tcp-handshake-gloss');
   await expect(gloss).toContainText('SYN＝「もしもし」');
@@ -223,7 +218,7 @@ test('TC-358: sequence numbers and the byte dump wait behind a closed disclosure
   page,
   demoPage,
 }) => {
-  await inJapanese(page);
+  await atSize(page);
   await demoPage.goto('/simulation/tcp-handshake');
   await page.getByTestId('tcp-connect').click();
   const more = page.getByTestId('tcp-more-detail');
@@ -242,7 +237,7 @@ test('TC-359, TC-360: UDP is contrasted with TCP, says first that it went with n
   page,
   demoPage,
 }) => {
-  await inJapanese(page);
+  await atSize(page);
   await demoPage.goto('/networking/udp');
   const compare = page.getByTestId('udp-compare');
   await expect(compare).toContainText('TCP（電話）');
@@ -275,7 +270,7 @@ test('TC-361, TC-362: DHCP and DNS are two cards with their own ordered actions,
   page,
   demoPage,
 }) => {
-  await inJapanese(page);
+  await atSize(page);
   await demoPage.goto('/services/dhcp-dns');
   const dhcpCard = page.getByTestId('dhcp-card');
   const dnsCard = page.getByTestId('dns-card');
@@ -305,7 +300,7 @@ test('TC-363: the NAT lesson is short, with the real-device detail folded away, 
   page,
   demoPage,
 }) => {
-  await inJapanese(page);
+  await atSize(page);
   await demoPage.goto('/simulation/nat');
   const note = page.getByTestId('nat-port-allocation-note');
   await expect(note).toContainText('1024 から順に');
@@ -334,7 +329,7 @@ test('TC-364: on a phone no NAT address breaks mid-number, and B, inbound, A, A,
   page,
   demoPage,
 }) => {
-  await inJapanese(page, 390, 844);
+  await atSize(page, 390, 844);
   await demoPage.goto('/simulation/nat');
   const globals = page.getByTestId('nat-inside-global');
   const order = [

@@ -1,6 +1,8 @@
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
+test.use({ viewportPreset: 'desktop' });
+
 /** Lesson-local test ids. */
 const OSPF = {
   failLink: 'ospf-fail-link',
@@ -23,7 +25,6 @@ test('failing the OSPF link points the learner at the other routers’ tables', 
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
   await demoPage.goto('/routing/ospf-convergence');
   await demoPage.dismissBrief();
   await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
@@ -56,15 +57,21 @@ test('failing the OSPF link points the learner at the other routers’ tables', 
   for (const router of ROUTERS) await expect(page.getByTestId(OSPF.changed(router))).toHaveCount(0);
 });
 
-test('the cue and the marks are in Japanese for a Japanese learner', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await demoPage.goto('/routing/ospf-convergence');
-  await page.evaluate(() => window.localStorage.setItem('netlab-locale', 'ja'));
-  await page.reload();
-  await demoPage.dismissBrief();
+test.describe(() => {
+  test.use({ appLocale: 'ja' });
 
-  await page.getByTestId(OSPF.failLink).click();
-  await expect(page.getByTestId(OSPF.cue)).toContainText('すべてのルータが経路を計算し直しました');
-  await expect(page.getByTestId(OSPF.cue)).toContainText('R2 と R4 のタブ');
-  await expect(page.getByTestId(OSPF.changed('r2'))).toHaveAttribute('aria-label', '変化あり');
+  test('the cue and the marks are in Japanese for a Japanese learner', async ({
+    page,
+    demoPage,
+  }) => {
+    await demoPage.goto('/routing/ospf-convergence');
+    await demoPage.dismissBrief();
+
+    await page.getByTestId(OSPF.failLink).click();
+    await expect(page.getByTestId(OSPF.cue)).toContainText(
+      'すべてのルータが経路を計算し直しました',
+    );
+    await expect(page.getByTestId(OSPF.cue)).toContainText('R2 と R4 のタブ');
+    await expect(page.getByTestId(OSPF.changed('r2'))).toHaveAttribute('aria-label', '変化あり');
+  });
 });

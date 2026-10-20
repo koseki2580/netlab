@@ -1,6 +1,8 @@
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
+test.use({ viewportPreset: 'wide' });
+
 /** Lesson-local test ids; the shared selector file belongs to another change. */
 const QOS = {
   burst: 'link-qos-burst',
@@ -21,7 +23,6 @@ test('the link QoS lesson answers its button and labels its settings', async ({
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
   await demoPage.goto('/networking/link-qos');
   await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
 

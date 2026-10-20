@@ -1,6 +1,8 @@
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
+test.use({ viewportPreset: 'wide' });
+
 /** Lesson-local test ids; the shared selector file belongs to another change. */
 const ENT = {
   step: (id: string) => `enterprise-step-${id}`,
@@ -13,7 +15,6 @@ const ENT = {
  * from step 3 is still there after the ACL probe of step 4.
  */
 test('the enterprise steps advance and keep their results', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
   await demoPage.goto('/simulation/enterprise');
   await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
 

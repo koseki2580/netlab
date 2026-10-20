@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { CATEGORIES, expect, test } from './fixtures/harness';
 import { excludingCanvasInternals, undecidedContrastFailures } from './axe';
+import type { GalleryPage } from './pages/GalleryPage';
 import { SEL } from './selectors';
 
 /**
@@ -14,24 +15,27 @@ import { SEL } from './selectors';
  *
  * Dark has always been scanned by `a11y.spec.ts`. This is the other half.
  */
-async function chooseLightThenOpen(page: import('@playwright/test').Page, path: string) {
+async function chooseLightThenOpen(
+  page: import('@playwright/test').Page,
+  galleryPage: GalleryPage,
+  path: string,
+) {
   await page.goto('/#/');
   await expect(page.getByTestId(SEL.gallery.heading)).toBeVisible();
   // Dark first: the gallery opens light, and a setting is only remembered once
   // it changes, so choosing Light alone would leave nothing stored.
-  await page.getByTestId(SEL.gallery.themeMode('dark')).click();
-  await page.waitForTimeout(120);
-  await page.getByTestId(SEL.gallery.themeMode('light')).click();
-  await page.waitForTimeout(220);
+  await galleryPage.chooseTheme('dark');
+  await galleryPage.chooseTheme('light');
   await page.goto(`/#${path}`);
   await expect(page.getByTestId(SEL.app.root)).toBeVisible();
 }
 
+test.use({ viewportPreset: 'wide' });
+
 for (const category of CATEGORIES) {
   for (const demo of category.demos) {
-    test(`light a11y: ${category.id}/${demo.title}`, async ({ page }) => {
-      await page.setViewportSize({ width: 1600, height: 1000 });
-      await chooseLightThenOpen(page, demo.path);
+    test(`light a11y: ${category.id}/${demo.title}`, async ({ page, galleryPage }) => {
+      await chooseLightThenOpen(page, galleryPage, demo.path);
 
       const results = await excludingCanvasInternals(
         new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']),

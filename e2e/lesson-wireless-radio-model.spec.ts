@@ -27,23 +27,20 @@ test('the wireless lesson states its radio model and its limits', async ({ page,
   await expect(page.getByTestId('wireless-loss')).toHaveText('Loss: 0%');
 });
 
-test('the wireless radio-model note is in Japanese for a Japanese learner', async ({
-  page,
-  demoPage,
-}) => {
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* the lesson still renders; the Japanese text below would then fail */
-    }
-  });
-  await demoPage.goto('/networking/wireless');
+test.describe(() => {
+  test.use({ appLocale: 'ja' });
 
-  const note = page.getByTestId(NOTE);
-  await expect(note).toContainText('距離が 10 倍になるごとに 20 dB 弱く');
-  await expect(note).toContainText('−65 dBm までは 0%');
-  await expect(note).toContainText('−90 dBm で 100%');
-  await expect(note).toContainText('このレッスンだけの単純化');
-  await expect(note).toContainText('−66 dBm は十分に強い電波');
+  test('the wireless radio-model note is in Japanese for a Japanese learner', async ({
+    page,
+    demoPage,
+  }) => {
+    await demoPage.goto('/networking/wireless');
+
+    const note = page.getByTestId(NOTE);
+    await expect(note).toContainText('距離が 10 倍になるごとに 20 dB 弱く');
+    await expect(note).toContainText('−65 dBm までは 0%');
+    await expect(note).toContainText('−90 dBm で 100%');
+    await expect(note).toContainText('このレッスンだけの単純化');
+    await expect(note).toContainText('−66 dBm は十分に強い電波');
+  });
 });

@@ -1,6 +1,8 @@
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
+test.use({ viewportPreset: 'desktop' });
+
 /**
  * TC-232 — the NAT lesson says how its own NAT picks public ports.
  *
@@ -11,7 +13,6 @@ test('the NAT brief says ports are allocated from 1024 and that many NATs keep t
   page,
   demoPage,
 }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
   await demoPage.goto('/simulation/nat');
 
   const brief = page.getByTestId(SEL.lesson.brief);
@@ -29,20 +30,16 @@ test('the NAT brief says ports are allocated from 1024 and that many NATs keep t
   await expect(page.getByTestId('nat-inside-global')).toHaveText('203.0.113.1:1024');
 });
 
-test('the NAT brief says the same in Japanese', async ({ page, demoPage }) => {
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* no storage means no choice, which this test would then catch */
-    }
-  });
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await demoPage.goto('/simulation/nat');
+test.describe(() => {
+  test.use({ appLocale: 'ja' });
 
-  const brief = page.getByTestId(SEL.lesson.brief);
-  await expect(brief).toContainText('1024 から順に');
-  await expect(brief).toContainText('Linux の MASQUERADE');
-  await expect(brief).toContainText('0〜1023 が標準的なサービス用に予約されたウェルノウンポート');
-  await expect(brief).toContainText('既定で 1024〜65535 から選び');
+  test('the NAT brief says the same in Japanese', async ({ page, demoPage }) => {
+    await demoPage.goto('/simulation/nat');
+
+    const brief = page.getByTestId(SEL.lesson.brief);
+    await expect(brief).toContainText('1024 から順に');
+    await expect(brief).toContainText('Linux の MASQUERADE');
+    await expect(brief).toContainText('0〜1023 が標準的なサービス用に予約されたウェルノウンポート');
+    await expect(brief).toContainText('既定で 1024〜65535 から選び');
+  });
 });

@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures/harness';
+import { boxesOf, settled } from './fixtures/settle';
 import { SEL } from './selectors';
 
 /**
@@ -49,12 +50,12 @@ test('a device added after panning is drawn where the learner is looking', async
   await page.mouse.down();
   await page.mouse.move(startX + 900, startY - 400, { steps: 20 });
   await page.mouse.up();
-  await page.waitForTimeout(400);
+  await settled(() => boxesOf(page.getByTestId(SEL.canvas.node)), { what: 'the pan' });
 
   const before = await visibleDevices(page, frame);
   await page.getByTestId(SEL.editor.paletteItem('router')).click();
   await expect(page.getByTestId(SEL.canvas.node)).toHaveCount(5);
-  await page.waitForTimeout(400);
+  await settled(() => boxesOf(page.getByTestId(SEL.canvas.node)), { what: 'the new device' });
   const after = await visibleDevices(page, frame);
 
   expect(after, 'the new device is on screen, not back at the origin').toBe(before + 1);

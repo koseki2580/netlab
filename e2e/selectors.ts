@@ -264,6 +264,20 @@ export const SEL = {
   lesson: {
     brief: 'lesson-brief',
   },
+  /** The step-through panel a lesson shows beside its canvas. */
+  steps: {
+    controls: 'step-controls',
+    readout: 'step-readout',
+    exchangePosition: 'step-exchange-position',
+    /** The panel's next-step button when stepping is not the lesson's primary action. */
+    action: 'demo-step-action',
+  },
+  /** The simulator's transport bar above the canvas. */
+  transport: {
+    step: 'sim-step',
+    /** "Step N of M: …" — changes on every step. */
+    status: 'sim-status',
+  },
   /** The header every lesson page shares. */
   shell: {
     title: 'demo-shell-title',

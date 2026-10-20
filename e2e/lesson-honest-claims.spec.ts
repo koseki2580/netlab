@@ -12,15 +12,10 @@ import { expect, test } from './fixtures/harness';
  * Where the screen can show the real behaviour it now does; where it cannot,
  * the lesson says once what a real network does and what this screen does.
  */
-async function inJapanese(page: Page, width = 1440, height = 900) {
+test.use({ appLocale: 'ja' });
+
+async function atSize(page: Page, width = 1440, height = 900) {
   await page.setViewportSize({ width, height });
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* the text checks below then fail loudly */
-    }
-  });
 }
 
 test('TC-623: the mark on the failing course step gives the missing way out as the cause', async ({
@@ -28,7 +23,7 @@ test('TC-623: the mark on the failing course step gives the missing way out as t
   demoPage,
 }) => {
   test.setTimeout(120_000);
-  await inJapanese(page, 1500, 950);
+  await atSize(page, 1500, 950);
   await page.addInitScript(() => {
     try {
       window.localStorage.setItem('netlab-course-step', '3');
@@ -54,7 +49,7 @@ test('TC-625, TC-626: the page is fetched over a connection opened after the nam
   page,
   demoPage,
 }) => {
-  await inJapanese(page);
+  await atSize(page);
   await demoPage.goto('/services/dhcp-dns');
   await expect(page.getByTestId('dhcp-ack-note')).toContainText('TCP の ACK とは別');
 
@@ -98,7 +93,7 @@ test('TC-627: the ARP lesson says what a real device remembers and what this scr
   page,
   demoPage,
 }) => {
-  await inJapanese(page);
+  await atSize(page);
   await demoPage.goto('/networking/arp');
   await expect(page.getByTestId('arp-brief-mac')).not.toContainText('最初のパケットを送る前');
   await expect(page.getByTestId('arp-already-known')).toContainText(
@@ -123,7 +118,7 @@ test('TC-628: the NAT lesson shows the reply, says where the inbound rule came f
   page,
   demoPage,
 }) => {
-  await inJapanese(page);
+  await atSize(page);
   await demoPage.goto('/simulation/nat');
   await expect(page.getByTestId('nat-port-gloss')).toContainText(
     'ケーブルの差し込み口ではなく、機器の中の窓口の番号',
@@ -157,7 +152,7 @@ test('TC-629: the TCP lesson shows a connection’s numbers once its three messa
   demoPage,
 }) => {
   test.setTimeout(120_000);
-  await inJapanese(page);
+  await atSize(page);
   await demoPage.goto('/simulation/tcp-handshake');
   await expect(page.getByTestId('tcp-arp-note')).toHaveCount(0);
   await page.getByTestId('tcp-connect').click();
@@ -190,7 +185,7 @@ test('TC-630: the client–server areas are named for whose network each is', as
   page,
   demoPage,
 }) => {
-  await inJapanese(page, 1600, 950);
+  await atSize(page, 1600, 950);
   await demoPage.goto('/routing/client-server');
   const legend = page.getByTestId('area-legend');
   await expect(legend).toContainText('Client のネットワーク');
@@ -205,7 +200,7 @@ test('TC-631: the UDP lesson bridges "port" and says what a real network does wi
   page,
   demoPage,
 }) => {
-  await inJapanese(page);
+  await atSize(page);
   await demoPage.goto('/networking/udp');
   await expect(page.getByTestId('udp-port-gloss')).toContainText(
     'ケーブルの差し込み口ではなく、機器の中の窓口の番号',

@@ -8,18 +8,12 @@ import { expect, test } from './fixtures/harness';
  * the fragment count 「分割が起きたホップ」, and said 「再組み立て: 未完了」 — a
  * failure — when there was nothing to reassemble.
  */
+test.use({ appLocale: 'ja', viewportPreset: 'desktop' });
+
 test('the MTU slider opens at the value its label shows, and the notes count fragments', async ({
   page,
   demoPage,
 }) => {
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem('netlab-locale', 'ja');
-    } catch {
-      /* the lesson still renders; the Japanese text below would then fail */
-    }
-  });
-  await page.setViewportSize({ width: 1440, height: 900 });
   await demoPage.goto('/networking/mtu-fragmentation');
 
   const slider = page.getByTestId('mtu-tunnel-slider');
