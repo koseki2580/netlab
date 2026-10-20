@@ -9,30 +9,13 @@ import { stripTag, tagFrame } from '../l2-datalink/vlan';
 import { isInSubnet, prefixLength } from '../../utils/cidr';
 import { computeIpv4Checksum } from '../../utils/checksum';
 import { bucketFlow, flowKeyFromPacket, hashFlow, hashString32 } from '../../utils/hashFlow';
-import { isIpv6Address } from '../../utils/ipv6';
 import { buildIpv4HeaderBytes } from '../../utils/packetLayout';
 import { addressViewOf, type AddressView } from '../../simulation/addressView';
-
-interface LogicalRouterInterface {
-  id: string;
-  name: string;
-  ipAddress: string;
-  prefixLength: number;
-  ipv6Address?: string;
-  prefixLength6?: number;
-  macAddress: string;
-  parentInterfaceId?: string;
-  vlanId?: number;
-}
-
-function interfaceMatchesTarget(iface: LogicalRouterInterface, targetIp: string): boolean {
-  if (isIpv6Address(targetIp)) {
-    return iface.ipv6Address !== undefined && iface.prefixLength6 !== undefined
-      ? isInSubnet(targetIp, `${iface.ipv6Address}/${iface.prefixLength6}`)
-      : false;
-  }
-  return isInSubnet(targetIp, `${iface.ipAddress}/${iface.prefixLength}`);
-}
+import {
+  interfaceMatchesTarget,
+  logicalInterfaces,
+  type LogicalRouterInterface,
+} from './logicalInterfaces';
 
 export class RouterForwarder implements Forwarder {
   private readonly nodeId: string;
@@ -68,46 +51,12 @@ export class RouterForwarder implements Forwarder {
     return node?.data.role === 'router' ? node : null;
   }
 
-  private getLogicalInterfacesForNode(nodeId: string): LogicalRouterInterface[] {
-    const node = this.topology.nodes.find((candidate) => candidate.id === nodeId);
-    if (node?.data.role !== 'router') {
-      return [];
-    }
-
-    return (node.data.interfaces ?? []).flatMap((iface) => {
-      const parent: LogicalRouterInterface = {
-        id: iface.id,
-        name: iface.name,
-        ipAddress: iface.ipAddress,
-        prefixLength: iface.prefixLength,
-        ...(iface.ipv6Address !== undefined ? { ipv6Address: iface.ipv6Address } : {}),
-        ...(iface.prefixLength6 !== undefined ? { prefixLength6: iface.prefixLength6 } : {}),
-        macAddress: iface.macAddress,
-      };
-      const subInterfaces = (iface.subInterfaces ?? []).map((subInterface) => ({
-        id: subInterface.id,
-        name: subInterface.id,
-        ipAddress: subInterface.ipAddress,
-        prefixLength: subInterface.prefixLength,
-        ...(subInterface.ipv6Address !== undefined
-          ? { ipv6Address: subInterface.ipv6Address }
-          : {}),
-        ...(subInterface.prefixLength6 !== undefined
-          ? { prefixLength6: subInterface.prefixLength6 }
-          : {}),
-        macAddress: iface.macAddress,
-        parentInterfaceId: iface.id,
-        vlanId: subInterface.vlanId,
-      }));
-      return [parent, ...subInterfaces];
-    });
+  private ownInterfaces(): LogicalRouterInterface[] {
+    return logicalInterfaces(this.getRouterNode());
   }
 
   private findLogicalInterfaceById(interfaceId: string): LogicalRouterInterface | null {
-    return (
-      this.getLogicalInterfacesForNode(this.nodeId).find((iface) => iface.id === interfaceId) ??
-      null
-    );
+    return this.ownInterfaces().find((iface) => iface.id === interfaceId) ?? null;
   }
 
   private seedArpTable(): void {
@@ -173,36 +122,20 @@ export class RouterForwarder implements Forwarder {
     nextHop: string,
     neighbors: Neighbor[],
   ): Neighbor | null {
+    const target = nextHop === 'direct' ? dstIp : nextHop;
     for (const neighbor of neighbors) {
       const neighborNode = this.topology.nodes.find((node) => node.id === neighbor.nodeId);
       if (!neighborNode) continue;
-
-      const neighborInterfaceIps =
-        neighborNode.data.role === 'router'
-          ? this.getLogicalInterfacesForNode(neighborNode.id).flatMap((iface) => [
-              iface.ipAddress,
-              ...(iface.ipv6Address !== undefined ? [iface.ipv6Address] : []),
-            ])
-          : (neighborNode.data.interfaces ?? []).map((iface) => iface.ipAddress);
-
-      if (nextHop === 'direct') {
-        if (this.addresses.ownsIp(neighborNode, dstIp)) return neighbor;
-        if (neighborNode.data.role === 'switch' && this.ownerOfIpIsBehind(neighbor.nodeId, dstIp)) {
-          return neighbor;
-        }
-        continue;
-      }
-
-      if (neighborInterfaceIps.includes(nextHop)) {
-        return neighbor;
-      }
-      if (neighborNode.data.role === 'switch' && this.ownerOfIpIsBehind(neighbor.nodeId, nextHop)) {
+      if (this.addresses.ownsIp(neighborNode, target)) return neighbor;
+      if (neighborNode.data.role === 'switch' && this.ownerOfIpIsBehind(neighbor.nodeId, target)) {
         return neighbor;
       }
     }
 
     // Nothing named the destination, which is the ordinary case for a subnet
-    // whose hosts are not in the topology. Any switch will do then, as before.
+    // whose hosts are not in the topology, or for a next hop on a connected
+    // network that is not drawn. Any switch will do then, as before. An
+    // off-link next hop never gets here: `lookupReachable` refuses it first.
     for (const neighbor of neighbors) {
       const neighborNode = this.topology.nodes.find((node) => node.id === neighbor.nodeId);
       if (neighborNode?.data.role === 'switch') return neighbor;
@@ -215,14 +148,30 @@ export class RouterForwarder implements Forwarder {
     dstIp: string,
     packet: InFlightPacket,
     neighbors: Neighbor[],
-  ): { route: RouteEntry; neighbor: Neighbor; ecmpTrace?: EcmpTrace } | null {
+  ): { route: RouteEntry; neighbor: Neighbor; ecmpTrace?: EcmpTrace } | string {
     const routes = this.topology.routeTables.get(this.nodeId) ?? [];
+    const own = this.ownInterfaces();
     const candidates = [...routes]
       .filter((route) => isInSubnet(dstIp, route.destination))
       .sort((a, b) => prefixLength(b.destination) - prefixLength(a.destination));
 
     for (const route of candidates) {
-      const nextHops = this.expandNextHops(route);
+      // A next hop has to be on a network this router is connected to (through
+      // the route's own interface, when it names one). A real router refuses
+      // any other, so the packet is dropped here rather than handed to whichever
+      // neighbour happens to hold that address on its far side.
+      const nextHops = this.expandNextHops(route).filter(
+        (hop) =>
+          hop.nextHop === 'direct' ||
+          own.some(
+            (iface) =>
+              (!hop.outIfId || iface.id === hop.outIfId) &&
+              interfaceMatchesTarget(iface, hop.nextHop),
+          ),
+      );
+      if (nextHops.length === 0) {
+        return 'next-hop-off-link';
+      }
       const reachable = nextHops
         .map((nextHop) => ({
           nextHop,
@@ -271,7 +220,7 @@ export class RouterForwarder implements Forwarder {
       };
     }
 
-    return null;
+    return 'no-route';
   }
 
   private expandNextHops(route: RouteEntry): EqualCostNextHop[] {
@@ -299,7 +248,7 @@ export class RouterForwarder implements Forwarder {
       return route.outIfId;
     }
 
-    const logicalInterfaces = this.getLogicalInterfacesForNode(this.nodeId);
+    const logical = this.ownInterfaces();
     const edge = this.topology.edges.find((candidate) => candidate.id === edgeId);
     const edgeHandle =
       edge?.source === this.nodeId
@@ -309,7 +258,7 @@ export class RouterForwarder implements Forwarder {
           : undefined;
     const targetIp = route.nextHop === 'direct' ? dstIp : route.nextHop;
 
-    const matchedInterface = logicalInterfaces.find((iface) => {
+    const matchedInterface = logical.find((iface) => {
       if (!interfaceMatchesTarget(iface, targetIp)) {
         return false;
       }
@@ -327,7 +276,7 @@ export class RouterForwarder implements Forwarder {
       return edgeHandle;
     }
 
-    return logicalInterfaces.find((iface) => interfaceMatchesTarget(iface, targetIp))?.id;
+    return logical.find((iface) => interfaceMatchesTarget(iface, targetIp))?.id;
   }
 
   async receive(
@@ -346,8 +295,8 @@ export class RouterForwarder implements Forwarder {
     }
 
     const result = this.lookupReachable(ipPacket.dstIp, packet, ctx.neighbors);
-    if (!result) {
-      return { action: 'drop', reason: 'no-route' };
+    if (typeof result === 'string') {
+      return { action: 'drop', reason: result };
     }
     const { route, neighbor, ecmpTrace } = result;
 
@@ -363,6 +312,7 @@ export class RouterForwarder implements Forwarder {
           ),
         };
 
+    const nextHopIp = route.nextHop === 'direct' ? ipPacket.dstIp : route.nextHop;
     const egressInterfaceId = this.resolveEgressInterface(route, ipPacket.dstIp, neighbor.edgeId);
     const egressInterface = egressInterfaceId
       ? this.findLogicalInterfaceById(egressInterfaceId)
@@ -389,7 +339,8 @@ export class RouterForwarder implements Forwarder {
       action: 'forward',
       nextNodeId: neighbor.nodeId,
       edgeId: neighbor.edgeId,
-      egressPort: route.nextHop === 'direct' ? ipPacket.dstIp : route.nextHop,
+      egressPort: nextHopIp,
+      nextHopIp,
       packet: updatedPacket,
       ...(ingressResolution.iface?.id !== undefined
         ? { ingressInterfaceId: ingressResolution.iface.id }

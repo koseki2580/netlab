@@ -241,10 +241,12 @@ describe('fact 3: an ACL denies whatever no rule permits', () => {
     expect(facts.aclMatches[0]).toMatchObject({ action: 'deny', matchedRule: { id: 'no-ping' } });
   });
 
-  it('an EMPTY inboundAcl denies everything; only an absent one filters nothing (TC-377)', async () => {
+  // Flipped by the engine fix "an empty access list is no access list" (TC-828):
+  // an empty inboundAcl used to deny everything.
+  it('an EMPTY inboundAcl filters nothing, as an absent one does (TC-377)', async () => {
     const empty = await ping(withLanAcl([]), 'pc1', 'srv');
-    expect(empty.drop).toEqual({ nodeId: 'r1', reason: 'acl-deny', leg: 'request' });
-    expect(empty.aclMatches[0]).toMatchObject({ matchedRule: null, action: 'deny' });
+    expect(empty.status).toBe('delivered');
+    expect(empty.aclMatches).toEqual([]);
 
     const absent = await ping(lanBehindRouter(), 'pc1', 'srv');
     expect(absent.status).toBe('delivered');
@@ -652,13 +654,15 @@ describe('fact 8: static routes', () => {
     ]);
   });
 
-  it('a next hop that is on no connected network is no-route at that router (TC-410)', async () => {
+  // Flipped by the engine fix "a next hop must be on a connected network"
+  // (TC-824, TC-825): this drop used to be reported as no-route.
+  it('a next hop that is on no connected network is next-hop-off-link at that router (TC-410)', async () => {
     const facts = await ping(
       staticDiamond([{ destination: DIAMOND_NETS.right, nextHop: '10.9.9.9' }]),
       'pc',
       'srv',
     );
-    expect(facts.drop).toEqual({ nodeId: 'r1', reason: 'no-route', leg: 'request' });
+    expect(facts.drop).toEqual({ nodeId: 'r1', reason: 'next-hop-off-link', leg: 'request' });
   });
 });
 

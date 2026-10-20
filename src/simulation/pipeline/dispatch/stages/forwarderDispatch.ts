@@ -1,7 +1,7 @@
 import { layerRegistry } from '../../../../registry/LayerRegistry';
 import type { PacketHop } from '../../../../types/simulation';
 import { topologyWithAddressView } from '../../../addressView';
-import { buildRoutingDecision } from '../routingHelpers';
+import { bestRoute, buildRoutingDecision } from '../routingHelpers';
 import {
   appendDropHop,
   appendHop,
@@ -95,6 +95,15 @@ export async function runForwarderDispatchStage(ctx: LoopContext): Promise<Stage
 
       if (node.data.role === 'router') {
         ctx.selectedRoute = decision.selectedRoute ?? null;
+        // A plugin forwarder may name no next hop: then the route it says it
+        // used, or failing that the route table's longest match, decides it,
+        // as it did before the decision carried one.
+        const dstIp = ctx.workingPacket.frame.payload.dstIp;
+        const route =
+          ctx.selectedRoute ??
+          bestRoute(dstIp, ctx.deps.topology.routeTables.get(ctx.current) ?? []);
+        ctx.nextHopIp =
+          decision.nextHopIp ?? (route && route.nextHop !== 'direct' ? route.nextHop : dstIp);
         if (decision.ecmpTrace) {
           hopBase.action = 'ecmp:bucketed';
           hopBase.ecmpTrace = decision.ecmpTrace;

@@ -81,6 +81,8 @@ const EXPLAINED_DROP_REASONS: ReadonlySet<string> = new Set([
   'stp-port-blocked',
   'queue-full',
   'loss',
+  'next-hop-off-link',
+  'reserved-address',
 ]);
 
 /**

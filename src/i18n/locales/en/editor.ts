@@ -53,6 +53,9 @@ export const editor: Catalog = {
   'editor.dropReason.stpPortBlocked': 'spanning tree has blocked this port to prevent a loop',
   'editor.dropReason.queueFull': 'the queue was full, so the packet was thrown away',
   'editor.dropReason.loss': 'the link lost the packet',
+  'editor.dropReason.nextHopOffLink':
+    'the next router in the route is not on this router’s networks',
+  'editor.dropReason.reservedAddress': 'a device has its subnet’s network or broadcast address',
   'editor.dropReason.unknown': 'no explanation for this code yet',
 
   'editor.connect.hint': 'To link two devices, hover one and drag its ⊕ onto the other.',

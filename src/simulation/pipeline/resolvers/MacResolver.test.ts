@@ -8,7 +8,7 @@ import { MacResolver } from './MacResolver';
 
 function makeMacResolver(topology = directTopology()) {
   const ifaceResolver = new InterfaceResolver(topology);
-  return new MacResolver(topology, ifaceResolver, new AddressPlane(topology));
+  return new MacResolver(ifaceResolver, new AddressPlane(topology));
 }
 
 describe('MacResolver', () => {

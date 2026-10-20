@@ -53,6 +53,8 @@ const DROP_REASON_KEYS: Readonly<Record<string, string>> = {
   'queue-full': 'simulation.packetStory.dropQueueFull',
   'class-queue-full': 'simulation.packetStory.dropQueueFull',
   loss: 'simulation.packetStory.dropLoss',
+  'next-hop-off-link': 'simulation.packetStory.dropNextHopOffLink',
+  'reserved-address': 'simulation.packetStory.dropReservedAddress',
 };
 
 const DROP_FALLBACK_KEY = 'simulation.packetStory.dropOther';

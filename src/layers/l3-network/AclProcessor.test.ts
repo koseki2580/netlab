@@ -284,17 +284,17 @@ describe('AclProcessor', () => {
     expect(result.match).toBeNull();
   });
 
-  it('treats an empty ACL list as implicit deny-only', () => {
-    const processor = new AclProcessor('router-1', makeAclTopology({ inboundAcl: [] }));
-
-    const result = processor.applyIngress(
-      makeTcpPacket('10.0.0.10', '203.0.113.10', 54321, 80),
-      'eth0',
-      3,
+  // TC-828: an empty list is no list. It used to deny everything, while an
+  // absent list let everything through.
+  it('treats an empty ACL list as no ACL: nothing is filtered', () => {
+    const processor = new AclProcessor(
+      'router-1',
+      makeAclTopology({ inboundAcl: [], outboundAcl: [] }),
     );
+    const packet = makeTcpPacket('10.0.0.10', '203.0.113.10', 54321, 80);
 
-    expect(result.dropReason).toBe('acl-deny');
-    expect(result.match?.matchedRule).toBeNull();
+    expect(processor.applyIngress(packet, 'eth0', 3)).toEqual({ packet, match: null });
+    expect(processor.applyEgress(packet, 'eth0', 3)).toEqual({ packet, match: null });
   });
 
   it('matches protocol any against TCP and UDP packets', () => {
@@ -419,7 +419,10 @@ describe('AclProcessor', () => {
             dstPort: 80,
           },
         ],
-        wanInboundAcl: [],
+        wanInboundAcl: [
+          // Refuses everything, so only conn-track lets the reply in.
+          { id: 'deny-all', priority: 100, action: 'deny', protocol: 'any' },
+        ],
       }),
     );
 

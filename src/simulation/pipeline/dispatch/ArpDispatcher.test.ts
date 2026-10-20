@@ -15,13 +15,12 @@ function makeArpDispatcher() {
   const topology = singleRouterTopology();
   const ifaceResolver = new InterfaceResolver(topology);
   const addresses = new AddressPlane(topology);
-  const macResolver = new MacResolver(topology, ifaceResolver, addresses);
+  const macResolver = new MacResolver(ifaceResolver, addresses);
   const portResolver = new PortResolver(topology);
   const arpBuilder = new ArpBuilder();
   const frameMaterializer = new FrameMaterializer();
   const traceRecorder = new TraceRecorder();
   return new ArpDispatcher(
-    topology,
     traceRecorder,
     ifaceResolver,
     macResolver,

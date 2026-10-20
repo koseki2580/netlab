@@ -232,6 +232,16 @@ describe('bubbleForHop', () => {
     );
   });
 
+  // TC-835: the two drops the engine added in Phase 3a have their own words.
+  it('TC-835: says an off-link next hop and a reserved address in words', () => {
+    expect(bubbleForHop(hop(1, 'r', { event: 'drop', reason: 'next-hop-off-link' }))?.key).toBe(
+      'simulation.packetStory.dropNextHopOffLink',
+    );
+    expect(bubbleForHop(hop(1, 'r', { event: 'drop', reason: 'reserved-address' }))?.key).toBe(
+      'simulation.packetStory.dropReservedAddress',
+    );
+  });
+
   it('says nothing on a plain forward', () => {
     expect(bubbleForHop(HOPS[1]!)).toBeNull();
   });

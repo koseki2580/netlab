@@ -112,6 +112,8 @@ export interface LoopContext {
   forwardCtx: ForwardContext | null;
   next: Neighbor | null;
   selectedRoute: RouteEntry | null;
+  /** The next hop the router's forwarding decision named; null off a router. */
+  nextHopIp: string | null;
   routerEgressInterface: ResolvedInterface | null;
   arpTarget: ArpTarget | null;
   forwardEvent: PacketHop['event'] | null;
@@ -153,6 +155,7 @@ export function createLoopContext(
     forwardCtx: null,
     next: null,
     selectedRoute: null,
+    nextHopIp: null,
     routerEgressInterface: null,
     arpTarget: null,
     forwardEvent: null,

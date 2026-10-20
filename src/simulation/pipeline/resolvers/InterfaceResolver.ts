@@ -1,40 +1,18 @@
 import { type FailureState, EMPTY_FAILURE_STATE } from '../../../types/failure';
-import type { RouteEntry } from '../../../types/routing';
 import type { Neighbor } from '../../../types/simulation';
 import type { NetlabNode, NetworkTopology } from '../../../types/topology';
-import { isInSubnet, prefixLength } from '../../../utils/cidr';
-import { isIpv6Address } from '../../../utils/ipv6';
+import {
+  bestRoute,
+  interfaceMatchesTarget,
+  logicalInterfaces,
+  type LogicalRouterInterface,
+} from '../../../layers/l3-network/logicalInterfaces';
+
+export type { LogicalRouterInterface };
 
 export interface ResolvedInterface {
   id: string;
   name: string;
-}
-
-export interface LogicalRouterInterface extends ResolvedInterface {
-  ipAddress: string;
-  prefixLength: number;
-  ipv6Address?: string;
-  prefixLength6?: number;
-  macAddress: string;
-  mtu?: number;
-  parentInterfaceId?: string;
-  vlanId?: number;
-}
-
-function bestRoute(dstIp: string, routes: RouteEntry[]): RouteEntry | null {
-  const sorted = [...routes].sort(
-    (a, b) => prefixLength(b.destination) - prefixLength(a.destination),
-  );
-  return sorted.find((r) => isInSubnet(dstIp, r.destination)) ?? null;
-}
-
-function interfaceMatchesTarget(iface: LogicalRouterInterface, targetIp: string): boolean {
-  if (isIpv6Address(targetIp)) {
-    return iface.ipv6Address !== undefined && iface.prefixLength6 !== undefined
-      ? isInSubnet(targetIp, `${iface.ipv6Address}/${iface.prefixLength6}`)
-      : false;
-  }
-  return isInSubnet(targetIp, `${iface.ipAddress}/${iface.prefixLength}`);
 }
 
 export class InterfaceResolver {
@@ -91,41 +69,7 @@ export class InterfaceResolver {
   }
 
   getLogical(node: NetlabNode | null): LogicalRouterInterface[] {
-    if (node?.data.role !== 'router') {
-      return [];
-    }
-
-    return (node.data.interfaces ?? []).flatMap((iface) => {
-      const parent: LogicalRouterInterface = {
-        id: iface.id,
-        name: iface.name,
-        ipAddress: iface.ipAddress,
-        prefixLength: iface.prefixLength,
-        ...(iface.ipv6Address !== undefined ? { ipv6Address: iface.ipv6Address } : {}),
-        ...(iface.prefixLength6 !== undefined ? { prefixLength6: iface.prefixLength6 } : {}),
-        macAddress: iface.macAddress,
-        ...(iface.mtu !== undefined ? { mtu: iface.mtu } : {}),
-      };
-      const subInterfaces = (iface.subInterfaces ?? []).map((subInterface) => ({
-        id: subInterface.id,
-        name: subInterface.id,
-        ipAddress: subInterface.ipAddress,
-        prefixLength: subInterface.prefixLength,
-        ...(subInterface.ipv6Address !== undefined
-          ? { ipv6Address: subInterface.ipv6Address }
-          : {}),
-        ...(subInterface.prefixLength6 !== undefined
-          ? { prefixLength6: subInterface.prefixLength6 }
-          : {}),
-        macAddress: iface.macAddress,
-        ...((subInterface.mtu ?? iface.mtu) !== undefined
-          ? { mtu: subInterface.mtu ?? iface.mtu }
-          : {}),
-        parentInterfaceId: iface.id,
-        vlanId: subInterface.vlanId,
-      }));
-      return [parent, ...subInterfaces];
-    });
+    return logicalInterfaces(node);
   }
 
   findLogicalById(nodeId: string, interfaceId: string | undefined): LogicalRouterInterface | null {

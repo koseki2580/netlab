@@ -78,7 +78,16 @@ export const ACL_DEMO_TOPOLOGY: NetworkTopology = {
             ipAddress: '203.0.113.1',
             prefixLength: 24,
             macAddress: '00:00:00:11:00:01',
-            inboundAcl: [],
+            // One rule that refuses everything: an empty list would filter nothing.
+            inboundAcl: [
+              {
+                id: 'deny-all',
+                priority: 100,
+                action: 'deny',
+                protocol: 'any',
+                description: 'Deny everything from the Internet',
+              },
+            ],
           },
         ],
         staticRoutes: [
@@ -266,15 +275,15 @@ function AclDemoInner() {
               </li>
               <li>
                 {t(
-                  'Internet side (eth1) in: no rules — deny, except replies',
-                  'インターネット側（eth1）の入口：ルールなし — 拒否。ただし戻りの通信は除く',
+                  'Internet side (eth1) in: everything — deny, except replies',
+                  'インターネット側（eth1）の入口：すべて — 拒否。ただし戻りの通信は除く',
                 )}
               </li>
             </ol>
             <div>
               {t(
-                'The firewall is stateful: it remembers a connection the client opened, and lets that connection’s replies back in although eth1 has no rule for them. Use the buttons below — each sends at once.',
-                'このファイアウォールは状態を追跡します。クライアントが始めた接続を覚えていて、eth1 にルールがなくても、その接続の返事は通します。下のボタンで送ってください（押すとすぐ送られます）。',
+                'The firewall is stateful: it remembers a connection the client opened, and lets that connection’s replies back in although eth1 refuses everything. Use the buttons below — each sends at once.',
+                'このファイアウォールは状態を追跡します。クライアントが始めた接続を覚えていて、eth1 がすべてを拒否していても、その接続の返事は通します。下のボタンで送ってください（押すとすぐ送られます）。',
               )}
             </div>
           </div>

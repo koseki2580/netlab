@@ -45,5 +45,9 @@ export const canvasPanel: Catalog = {
   'simulation.packetStory.dropAcl': 'Dropped here: an ACL rule refused it',
   'simulation.packetStory.dropQueueFull': 'Dropped here: the waiting line was full',
   'simulation.packetStory.dropLoss': 'Lost here: it vanished on the link',
+  'simulation.packetStory.dropNextHopOffLink':
+    'Dropped here: the next router is not on this router’s networks',
+  'simulation.packetStory.dropReservedAddress':
+    'Dropped here: a device has its network’s first or last address',
   'simulation.packetStory.dropOther': 'The packet was dropped here',
 } as const;

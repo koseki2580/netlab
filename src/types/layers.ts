@@ -21,6 +21,12 @@ export type ForwardDecision =
       egressPort: string;
       ingressInterfaceId?: string;
       egressInterfaceId?: string;
+      /**
+       * The address the frame goes to next: the route's next hop, or the
+       * destination itself on a connected network. The rest of the hop (ARP,
+       * the frame's MACs) uses this rather than looking the route up again.
+       */
+      nextHopIp?: string;
       packet: InFlightPacket;
       selectedRoute?: RouteEntry;
       ecmpTrace?: import('./simulation').EcmpTrace;

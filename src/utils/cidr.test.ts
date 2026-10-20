@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { isInSubnet, isInSameSubnet, parseCidr, prefixLength } from './cidr';
+import {
+  isInSameSubnet,
+  isInSubnet,
+  parseCidr,
+  prefixLength,
+  reservedAddressKind,
+  subnetFacts,
+} from './cidr';
 
 describe('isInSubnet', () => {
   it('matches IP within /24 subnet', () => {
@@ -83,5 +90,29 @@ describe('isInSameSubnet', () => {
 
   it('returns true for an exact /32 match', () => {
     expect(isInSameSubnet('203.0.113.10/32', '203.0.113.10/32')).toBe(true);
+  });
+});
+
+describe('subnet facts', () => {
+  // TC-830: the network and broadcast address of a prefix, as the simulator
+  // reads them to refuse a device address.
+  it('TC-830: names the network and broadcast address of the prefix, and nothing else', () => {
+    expect(reservedAddressKind('192.168.1.0', 24)).toBe('network');
+    expect(reservedAddressKind('192.168.1.255', 24)).toBe('broadcast');
+    expect(reservedAddressKind('192.168.1.10', 24)).toBeNull();
+    expect(reservedAddressKind('10.0.1.0', 23)).toBeNull();
+    expect(reservedAddressKind('10.0.1.255', 23)).toBe('broadcast');
+    expect(reservedAddressKind('10.0.12.0', 31)).toBeNull();
+    expect(reservedAddressKind('10.0.12.1', 32)).toBeNull();
+  });
+
+  it('gives every fact about a subnet', () => {
+    expect(subnetFacts('192.168.1.37', 24)).toMatchObject({
+      networkAddress: '192.168.1.0',
+      broadcastAddress: '192.168.1.255',
+      firstUsableHost: '192.168.1.1',
+      lastUsableHost: '192.168.1.254',
+      usableHostCount: 254,
+    });
   });
 });

@@ -22,7 +22,7 @@ import { ForwardingLoop } from './ForwardingLoop';
 function makeForwardingLoop(topology: NetworkTopology) {
   const ifaceResolver = new InterfaceResolver(topology);
   const addresses = new AddressPlane(topology);
-  const macResolver = new MacResolver(topology, ifaceResolver, addresses);
+  const macResolver = new MacResolver(ifaceResolver, addresses);
   const portResolver = new PortResolver(topology);
   const icmpBuilder = new IcmpBuilder();
   const frameMaterializer = new FrameMaterializer();
@@ -30,7 +30,6 @@ function makeForwardingLoop(topology: NetworkTopology) {
   const traceRecorder = new TraceRecorder();
   const services = new ServiceOrchestrator(topology, new HookEngine());
   const arpDispatcher = new ArpDispatcher(
-    topology,
     traceRecorder,
     ifaceResolver,
     macResolver,

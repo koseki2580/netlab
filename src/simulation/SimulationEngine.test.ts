@@ -391,7 +391,8 @@ describe('SimulationEngine.precompute', () => {
     const routeTables = new Map<string, RouteEntry[]>([
       ['router-1', [makeRouteEntry('router-1', '203.0.113.0/24', '172.16.0.2')]],
       ['router-2', [makeRouteEntry('router-2', '203.0.113.0/24', '192.168.1.2')]],
-      ['router-3', [makeRouteEntry('router-3', '203.0.113.0/24', '10.0.0.1')]],
+      // R1's address on the R3–R1 link: a next hop must be on a network R3 is on.
+      ['router-3', [makeRouteEntry('router-3', '203.0.113.0/24', '192.168.0.1')]],
     ]);
     const topology: NetworkTopology = {
       nodes: [
@@ -1237,7 +1238,10 @@ describe('SimulationEngine ACL', () => {
             dstPort: 80,
           },
         ],
-        wanInboundAcl: [],
+        wanInboundAcl: [
+          // Refuses everything, so only conn-track lets the reply in.
+          { id: 'deny-all', priority: 100, action: 'deny', protocol: 'any' },
+        ],
       }),
     );
 
@@ -1295,7 +1299,10 @@ describe('SimulationEngine ACL', () => {
             dstPort: 80,
           },
         ],
-        wanInboundAcl: [],
+        wanInboundAcl: [
+          // Refuses everything, so only conn-track lets the reply in.
+          { id: 'deny-all', priority: 100, action: 'deny', protocol: 'any' },
+        ],
       }),
     );
 

@@ -101,5 +101,16 @@ export function runPreflightStage(ctx: LoopContext): StageResult {
     timestamp: ctx.baseTs,
   };
 
+  // A host holding its LAN's network or broadcast address neither sends nor
+  // receives: the engine refuses the address, as a real host refuses to take it.
+  if (ctx.deps.addresses.hasReservedAddress(node)) {
+    appendHop(
+      ctx,
+      { ...ctx.hopBase, event: 'drop', reason: 'reserved-address' },
+      ctx.workingPacket,
+    );
+    return breakWith(ctx);
+  }
+
   return continueWith(ctx);
 }

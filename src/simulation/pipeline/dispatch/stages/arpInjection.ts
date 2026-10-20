@@ -29,7 +29,7 @@ export function runArpInjectionStage(ctx: LoopContext): StageResult {
           ctx.shared.failureState,
           ctx.routerEgressInterface?.id,
           next.edgeId,
-          ctx.selectedRoute?.nextHop,
+          ctx.nextHopIp ?? undefined,
         )
       : null;
   const shouldInjectArp =
@@ -63,7 +63,7 @@ export function runArpInjectionStage(ctx: LoopContext): StageResult {
       ctx.workingPacket,
       ctx.shared.failureState,
       hopBase.egressInterfaceId,
-      ctx.selectedRoute?.nextHop,
+      ctx.nextHopIp ?? undefined,
     );
 
     ctx.stepCounter = ctx.deps.arpDispatcher.injectExchange(
@@ -104,7 +104,7 @@ export function runArpInjectionStage(ctx: LoopContext): StageResult {
         ctx.workingPacket,
         ctx.shared.failureState,
         hopBase.egressInterfaceId,
-        ctx.selectedRoute?.nextHop,
+        ctx.nextHopIp ?? undefined,
       ))
     : ctx.deps.macResolver.resolveDstMac(
         ctx.current,
@@ -112,7 +112,7 @@ export function runArpInjectionStage(ctx: LoopContext): StageResult {
         hopBase.egressInterfaceId,
         ctx.workingPacket,
         ctx.shared.failureState,
-        ctx.selectedRoute?.nextHop,
+        ctx.nextHopIp ?? undefined,
       );
 
   return continueWith(ctx);

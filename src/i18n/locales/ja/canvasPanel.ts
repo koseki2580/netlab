@@ -45,5 +45,9 @@ export const canvasPanel: Catalog = {
   'simulation.packetStory.dropAcl': 'ここで捨てられました：ACL のルールで拒否されました',
   'simulation.packetStory.dropQueueFull': 'ここで捨てられました：送信待ちの列があふれました',
   'simulation.packetStory.dropLoss': 'ここで失われました：リンクの途中で消えました',
+  'simulation.packetStory.dropNextHopOffLink':
+    'ここで捨てられました：次のルータが、このルータのネットワークにいません',
+  'simulation.packetStory.dropReservedAddress':
+    'ここで捨てられました：機器にネットワークの最初か最後のアドレスが付いています',
   'simulation.packetStory.dropOther': 'ここでパケットが捨てられました',
 } as const;

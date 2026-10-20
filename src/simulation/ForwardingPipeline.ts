@@ -59,12 +59,11 @@ export class ForwardingPipeline {
     this.addresses = services.addresses;
     this.ifaceResolver = new InterfaceResolver(topology);
     const portResolver = new PortResolver(topology);
-    this.macResolver = new MacResolver(topology, this.ifaceResolver, this.addresses);
+    this.macResolver = new MacResolver(this.ifaceResolver, this.addresses);
     this.icmpBuilder = new IcmpBuilder();
     const arpBuilder = new ArpBuilder();
     const frameMaterializer = new FrameMaterializer();
     const arpDispatcher = new ArpDispatcher(
-      topology,
       this.traceRecorder,
       this.ifaceResolver,
       this.macResolver,

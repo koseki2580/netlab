@@ -24,6 +24,7 @@ export function runRouterPreRoutingStage(ctx: LoopContext): StageResult {
   ctx.egressAclMatch = null;
   ctx.next = null;
   ctx.selectedRoute = null;
+  ctx.nextHopIp = null;
   ctx.routerEgressInterface = null;
   ctx.arpTarget = null;
   ctx.forwardEvent = null;

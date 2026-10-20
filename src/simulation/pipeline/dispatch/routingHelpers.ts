@@ -5,12 +5,7 @@ import type { RoutingCandidate, RoutingDecision } from '../../../types/simulatio
 import { isInSubnet, prefixLength } from '../../../utils/cidr';
 import { getRequired } from '../../../utils/typedAccess';
 
-export function bestRoute(dstIp: string, routes: RouteEntry[]): RouteEntry | null {
-  const sorted = [...routes].sort(
-    (a, b) => prefixLength(b.destination) - prefixLength(a.destination),
-  );
-  return sorted.find((r) => isInSubnet(dstIp, r.destination)) ?? null;
-}
+export { bestRoute } from '../../../layers/l3-network/logicalInterfaces';
 
 function sameRoute(
   left: RouteEntry | null | undefined,

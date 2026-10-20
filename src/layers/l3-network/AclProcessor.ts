@@ -80,7 +80,8 @@ export class AclProcessor {
     step: number,
   ): AclResult {
     const iface = this.getInterface(ingressIfaceId);
-    if (iface?.inboundAcl === undefined) {
+    // An empty list is no list: it filters nothing, as an absent one does.
+    if (!iface?.inboundAcl?.length) {
       return { packet, match: null };
     }
 
@@ -89,7 +90,7 @@ export class AclProcessor {
 
   applyEgress(packet: InFlightPacket, egressIfaceId: string | undefined, step: number): AclResult {
     const iface = this.getInterface(egressIfaceId);
-    if (iface?.outboundAcl === undefined) {
+    if (!iface?.outboundAcl?.length) {
       return { packet, match: null };
     }
 

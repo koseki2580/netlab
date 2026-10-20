@@ -1,14 +1,12 @@
 import type { FailureState } from '../../../types/failure';
 import type { InFlightPacket } from '../../../types/packets';
 import type { PacketHop } from '../../../types/simulation';
-import type { NetworkTopology } from '../../../types/topology';
 import { isInSubnet } from '../../../utils/cidr';
 import { deriveDeterministicMac } from '../../../utils/network';
 import type { TraceRecorder } from '../../TraceRecorder';
 import type { ArpBuilder, FrameMaterializer } from '../builders';
 import type { InterfaceResolver, MacResolver, PortResolver } from '../resolvers';
 import type { AddressPlane } from '../../AddressPlane';
-import { bestRoute } from './routingHelpers';
 
 const BROADCAST_IP = '255.255.255.255';
 
@@ -21,7 +19,6 @@ export interface ArpTargetInfo {
 
 export class ArpDispatcher {
   constructor(
-    private readonly topology: NetworkTopology,
     private readonly traceRecorder: TraceRecorder,
     private readonly ifaceResolver: InterfaceResolver,
     private readonly macResolver: MacResolver,
@@ -38,31 +35,22 @@ export class ArpDispatcher {
     failureState: FailureState,
     egressInterfaceId?: string,
     edgeId?: string,
-    overrideNextHop?: string,
+    nextHopIp?: string,
   ): ArpTargetInfo | null {
     const currentNode = this.ifaceResolver.findNode(currentNodeId);
     if (!currentNode) return null;
     if (packet.frame.payload.dstIp === BROADCAST_IP) return null;
 
     if (currentNode.data.role === 'router') {
-      let targetIp: string | null;
-      if (overrideNextHop !== undefined) {
-        targetIp = overrideNextHop === 'direct' ? packet.frame.payload.dstIp : overrideNextHop;
-      } else {
-        const routes = this.topology.routeTables.get(currentNodeId) ?? [];
-        const route = bestRoute(packet.frame.payload.dstIp, routes);
-        if (!route) return null;
-        targetIp = route.nextHop === 'direct' ? packet.frame.payload.dstIp : route.nextHop;
-      }
-
-      if (!targetIp) return null;
+      // Whom to ask for: the next hop the router's decision named.
+      const targetIp = nextHopIp ?? packet.frame.payload.dstIp;
 
       const targetNode = this.macResolver.resolveEffectiveLayer2Destination(
         currentNodeId,
         nextNodeId,
         packet,
         failureState,
-        overrideNextHop,
+        nextHopIp,
       );
       if (!targetNode || !this.addresses.ownsIp(targetNode, targetIp)) return null;
 
@@ -94,7 +82,7 @@ export class ArpDispatcher {
       nextNodeId,
       packet,
       failureState,
-      overrideNextHop,
+      nextHopIp,
     );
     if (!targetNode) return null;
 
@@ -131,7 +119,7 @@ export class ArpDispatcher {
     packet: InFlightPacket,
     failureState: FailureState,
     egressInterfaceId?: string,
-    overrideNextHop?: string,
+    nextHopIp?: string,
   ): string {
     const resolvedMac = this.macResolver.resolveDstMac(
       currentNodeId,
@@ -139,7 +127,7 @@ export class ArpDispatcher {
       egressInterfaceId,
       packet,
       failureState,
-      overrideNextHop,
+      nextHopIp,
     );
     if (resolvedMac) return resolvedMac;
 
@@ -151,7 +139,7 @@ export class ArpDispatcher {
           targetNodeId,
           packet,
           egressInterfaceId,
-          overrideNextHop,
+          nextHopIp,
         ) ?? deriveDeterministicMac(targetNodeId)
       );
     }

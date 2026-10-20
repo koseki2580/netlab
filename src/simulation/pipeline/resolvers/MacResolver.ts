@@ -1,29 +1,14 @@
 import type { FailureState } from '../../../types/failure';
 import type { InFlightPacket } from '../../../types/packets';
-import type { RouteEntry } from '../../../types/routing';
-import type { NetlabNode, NetworkTopology } from '../../../types/topology';
-import { isInSubnet, prefixLength } from '../../../utils/cidr';
+import type { NetlabNode } from '../../../types/topology';
 import { deriveDeterministicMac } from '../../../utils/network';
 import { isIpv6Address } from '../../../utils/ipv6';
 import type { AddressPlane } from '../../AddressPlane';
 import type { InterfaceResolver } from './InterfaceResolver';
-import type { LogicalRouterInterface } from './InterfaceResolver';
-
-function bestRoute(dstIp: string, routes: RouteEntry[]): RouteEntry | null {
-  const sorted = [...routes].sort(
-    (a, b) => prefixLength(b.destination) - prefixLength(a.destination),
-  );
-  return sorted.find((r) => isInSubnet(dstIp, r.destination)) ?? null;
-}
-
-function interfaceMatchesTarget(iface: LogicalRouterInterface, targetIp: string): boolean {
-  if (isIpv6Address(targetIp)) {
-    return iface.ipv6Address !== undefined && iface.prefixLength6 !== undefined
-      ? isInSubnet(targetIp, `${iface.ipv6Address}/${iface.prefixLength6}`)
-      : false;
-  }
-  return isInSubnet(targetIp, `${iface.ipAddress}/${iface.prefixLength}`);
-}
+import {
+  interfaceMatchesTarget,
+  type LogicalRouterInterface,
+} from '../../../layers/l3-network/logicalInterfaces';
 
 function interfaceAddress(iface: LogicalRouterInterface, targetIp: string): string {
   return isIpv6Address(targetIp) && iface.ipv6Address ? iface.ipv6Address : iface.ipAddress;
@@ -31,7 +16,6 @@ function interfaceAddress(iface: LogicalRouterInterface, targetIp: string): stri
 
 export class MacResolver {
   constructor(
-    private readonly topology: NetworkTopology,
     private readonly ifaceResolver: InterfaceResolver,
     private readonly addresses: AddressPlane,
   ) {}
@@ -126,7 +110,7 @@ export class MacResolver {
     nextNodeId: string,
     packet: InFlightPacket,
     failureState: FailureState,
-    overrideNextHop?: string,
+    nextHopIp?: string,
   ): NetlabNode | null {
     const nextNode = this.ifaceResolver.findNode(nextNodeId);
     if (!nextNode) return null;
@@ -156,20 +140,11 @@ export class MacResolver {
     }
 
     if (currentNode.data.role === 'router') {
-      if (overrideNextHop !== undefined) {
-        if (overrideNextHop !== 'direct') {
-          targetIp = overrideNextHop;
-          targetNodeId = undefined;
-        }
-      } else {
-        const route = bestRoute(
-          packet.frame.payload.dstIp,
-          this.topology.routeTables.get(currentNodeId) ?? [],
-        );
-        if (route?.nextHop && route.nextHop !== 'direct') {
-          targetIp = route.nextHop;
-          targetNodeId = undefined;
-        }
+      // The router's own decision names the next hop; the destination itself
+      // when it is on a connected network.
+      if (nextHopIp !== undefined && nextHopIp !== packet.frame.payload.dstIp) {
+        targetIp = nextHopIp;
+        targetNodeId = undefined;
       }
     }
 
@@ -189,7 +164,7 @@ export class MacResolver {
     routerNodeId: string,
     packet: InFlightPacket,
     egressInterfaceId?: string,
-    overrideNextHop?: string,
+    nextHopIp?: string,
   ): string | null {
     const routerNode = this.ifaceResolver.findNode(routerNodeId);
     if (routerNode?.data.role !== 'router') return null;
@@ -198,17 +173,9 @@ export class MacResolver {
     const currentNode = this.ifaceResolver.findNode(currentNodeId);
 
     if (currentNode?.data.role === 'router') {
-      const nextHop =
-        overrideNextHop !== undefined
-          ? overrideNextHop
-          : bestRoute(
-              packet.frame.payload.dstIp,
-              this.topology.routeTables.get(currentNodeId) ?? [],
-            )?.nextHop;
-
-      if (nextHop && nextHop !== 'direct') {
+      if (nextHopIp !== undefined && nextHopIp !== packet.frame.payload.dstIp) {
         const nextHopInterface = routerInterfaces.find(
-          (iface) => iface.ipAddress === nextHop || iface.ipv6Address === nextHop,
+          (iface) => iface.ipAddress === nextHopIp || iface.ipv6Address === nextHopIp,
         );
         if (nextHopInterface) return nextHopInterface.macAddress;
       }
@@ -239,14 +206,14 @@ export class MacResolver {
     egressInterfaceId: string | undefined,
     packet: InFlightPacket,
     failureState: FailureState,
-    overrideNextHop?: string,
+    nextHopIp?: string,
   ): string | null {
     const destinationNode = this.resolveEffectiveLayer2Destination(
       currentNodeId,
       nextNodeId,
       packet,
       failureState,
-      overrideNextHop,
+      nextHopIp,
     );
 
     if (!destinationNode) return null;
@@ -258,7 +225,7 @@ export class MacResolver {
           destinationNode.id,
           packet,
           egressInterfaceId,
-          overrideNextHop,
+          nextHopIp,
         ) ?? deriveDeterministicMac(destinationNode.id)
       );
     }

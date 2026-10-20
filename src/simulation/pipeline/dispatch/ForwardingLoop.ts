@@ -122,43 +122,9 @@ export class ForwardingLoop {
         ? (this.getNeighborsFn(packet.currentDeviceId, null, failureState)[0] ?? null)
         : null;
 
-    if (currentNode?.data.role === 'router' && next) {
-      const egressInterface =
-        this.ifaceResolver.resolveEgress(packet.currentDeviceId, packet.frame.payload.dstIp) ??
-        this.portResolver.resolvePortFromEdge(packet.currentDeviceId, next.edgeId, 'egress');
-      const srcMac = this.ifaceResolver.findLogicalById(
-        currentNode.id,
-        egressInterface?.id,
-      )?.macAddress;
-      const arpTarget = isIpv6Packet(workingPacket.frame.payload)
-        ? null
-        : this.arpDispatcher.resolveTargetInfo(
-            packet.currentDeviceId,
-            next.nodeId,
-            workingPacket,
-            failureState,
-            egressInterface?.id,
-            next.edgeId,
-          );
-      const dstMac = arpTarget
-        ? (arpCache.get(arpTarget.targetIp) ?? null)
-        : this.macResolver.resolveDstMac(
-            packet.currentDeviceId,
-            next.nodeId,
-            egressInterface?.id,
-            workingPacket,
-            failureState,
-          );
-
-      workingPacket = {
-        ...workingPacket,
-        frame: {
-          ...workingPacket.frame,
-          srcMac: srcMac ?? workingPacket.frame.srcMac,
-          dstMac: dstMac ?? workingPacket.frame.dstMac,
-        },
-      };
-    } else if (currentNode?.data.role === 'client' || currentNode?.data.role === 'server') {
+    // A router frames what it sends once its own forwarding decision is made,
+    // in the loop; only a host's first frame is filled in here.
+    if (currentNode?.data.role === 'client' || currentNode?.data.role === 'server') {
       const resolvedSrcMac = this.macResolver.resolveEndpointMac(currentNode.id);
       const arpTarget =
         next && !isIpv6Packet(workingPacket.frame.payload)

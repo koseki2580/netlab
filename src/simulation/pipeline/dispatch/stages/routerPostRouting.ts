@@ -1,4 +1,5 @@
 import { makeInterfaceFailureId } from '../../../../types/failure';
+import { isReservedInterface } from '../../../AddressPlane';
 import {
   appendDropHop,
   breakWith,
@@ -29,6 +30,25 @@ export function runRouterPostRoutingStage(ctx: LoopContext): StageResult {
     )
   ) {
     appendDropHop(ctx, 'interface-down', ctx.workingPacket, {}, { aclMatch: ctx.ingressAclMatch });
+    return breakWith(ctx);
+  }
+
+  // A side given its network's network or broadcast address carries nothing.
+  if (
+    [hopBase.ingressInterfaceId, hopBase.egressInterfaceId].some((id) => {
+      const iface = ctx.deps.ifaceResolver.findLogicalById(ctx.current, id);
+      return iface !== null && isReservedInterface(iface);
+    })
+  ) {
+    appendDropHop(
+      ctx,
+      'reserved-address',
+      ctx.workingPacket,
+      {},
+      {
+        aclMatch: ctx.ingressAclMatch,
+      },
+    );
     return breakWith(ctx);
   }
 

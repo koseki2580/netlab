@@ -159,7 +159,17 @@ export const ENTERPRISE_DEMO_TOPOLOGY: NetworkTopology = {
             prefixLength: 24,
             macAddress: '00:00:00:01:00:01',
             nat: 'outside',
-            inboundAcl: [],
+            // Refuses anything that arrives unasked; the stateful firewall still
+            // lets replies in. An empty list would filter nothing.
+            inboundAcl: [
+              {
+                id: 'deny-all',
+                priority: 100,
+                action: 'deny',
+                protocol: 'any',
+                description: 'Deny unsolicited traffic from the ISP',
+              },
+            ],
           },
         ],
         staticRoutes: [
