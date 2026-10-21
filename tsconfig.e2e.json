@@ -2,6 +2,9 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "types": ["node"],
+    // Specs run in Node 22 and current Playwright browsers, not in the app's
+    // ES2020 targets; src/ and demo/ are still held to ES2020 by tsconfig.json.
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "noEmit": true
   },
   "include": ["e2e"]

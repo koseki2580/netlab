@@ -143,19 +143,18 @@ test.describe(() => {
 });
 
 /**
- * TC-167 — the short labels too: the failure panel and the state-diff table.
+ * TC-167 — the short labels too: the failure panel.
  *
  * The prose guard (TC-166) reads sentences, and these are one or two words —
- * "Toggle", "Reset All", "now / diff / history" — which is exactly what it
- * would let through.
+ * "Toggle", "Reset All" — which is exactly what it would let through. The
+ * state-diff table's "now / diff / history" are read in its component test:
+ * the ARP lesson that drew it shows tables that follow the step instead
+ * (TC-700), and no lesson draws it now.
  */
 test.describe(() => {
   test.use({ appLocale: 'ja' });
 
-  test('the failure panel and state-diff table follow the chosen language', async ({
-    page,
-    demoPage,
-  }) => {
+  test('the failure panel follows the chosen language', async ({ page, demoPage }) => {
     await page.setViewportSize(VIEWPORTS.wide);
 
     await demoPage.goto('/simulation/session');
@@ -164,11 +163,6 @@ test.describe(() => {
     await expect(failures).toContainText('障害を起こす');
     await expect(failures).toContainText('すべて戻す');
     await expect(failures).not.toContainText('Toggle');
-
-    await demoPage.goto('/networking/arp');
-    await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
-    await page.getByTestId(SEL.demo.primaryAction).click();
-    await expect(page.getByTestId(SEL.results.diffMode('diff'))).toHaveText('差分');
   });
 });
 

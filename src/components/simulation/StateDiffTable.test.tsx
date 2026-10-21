@@ -3,6 +3,7 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { I18nProvider } from '../../i18n/I18nProvider';
 import type { StepSnapshots } from '../../simulation/snapshots';
 import { StateDiffTable } from './StateDiffTable';
 
@@ -132,6 +133,20 @@ describe('StateDiffTable', () => {
     const changed = container?.querySelector('tr[data-status="changed"]');
     expect(changed).not.toBeNull();
     expect(changed?.textContent ?? '').toContain('p1 → p2');
+  });
+
+  // TC-167 — the mode buttons are short labels, which the prose guard lets
+  // through. No lesson draws this table any more (the ARP lesson's tables
+  // follow the step instead, TC-700), so it is read here rather than in a page.
+  it('names its modes in Japanese for a Japanese reader', () => {
+    render(
+      <I18nProvider locale="ja">
+        <StateDiffTable snapshots={ARP_SNAPSHOTS} nodeId="r1" stepIndex={1} tableKind="arp" />
+      </I18nProvider>,
+    );
+    expect(q('mode-now')?.textContent).toBe('現在');
+    expect(q('mode-diff')?.textContent).toBe('差分');
+    expect(q('mode-history')?.textContent).toBe('履歴');
   });
 
   it('renders an empty state when the node has no rows', () => {
