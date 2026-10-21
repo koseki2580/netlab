@@ -2,17 +2,11 @@ import type { FailureState } from '../../../../types/failure';
 import type { ForwardContext } from '../../../../types/layers';
 import { type IgmpMessage, type InFlightPacket, type IpPacket } from '../../../../types/packets';
 import type { RouteEntry } from '../../../../types/routing';
-import type {
-  NatTranslation,
-  Neighbor,
-  ObservabilityTrace,
-  PacketHop,
-} from '../../../../types/simulation';
+import type { NatTranslation, Neighbor, PacketHop } from '../../../../types/simulation';
 import type { NetlabNode, NetworkTopology } from '../../../../types/topology';
 import { FlowCollector } from '../../../../observability/FlowCollector';
 import type { NetflowExporter } from '../../../../observability/NetflowExporter';
 import type { SflowSampler } from '../../../../observability/SflowSampler';
-import type { LinkQueueRegistry } from '../../../LinkQueueRegistry';
 import type { AddressPlane } from '../../../AddressPlane';
 import type { ServiceOrchestrator } from '../../../ServiceOrchestrator';
 import type { TraceRecorder } from '../../../TraceRecorder';
@@ -62,27 +56,10 @@ export interface ForwardingStageDependencies {
     excludeNodeId: string | null,
     failureState: FailureState,
   ) => Neighbor[];
-  appendLinkQosTrace: (
-    hopBase: Omit<PacketHop, 'step'>,
-    workingPacket: InFlightPacket,
-    edgeId: string,
-    stepCounter: number,
-    hops: PacketHop[],
-    snapshots: InFlightPacket[],
-    failureState: FailureState,
-    linkQueues: LinkQueueRegistry,
-  ) => { stepCounter: number; dropped: boolean };
-  appendObservabilityTrace: (
-    hopBase: Omit<PacketHop, 'step'>,
-    trace: ObservabilityTrace,
-    workingPacket: InFlightPacket,
-    stepCounter: number,
-    hops: PacketHop[],
-    snapshots: InFlightPacket[],
-  ) => number;
   runFragment: (params: ForwardLoopParams, shared: ForwardLoopShared) => Promise<LoopReturn>;
 }
 
+/** What lives for one traversal: where the packet is, and the trace so far. */
 export interface LoopContext {
   deps: ForwardingStageDependencies;
   shared: ForwardLoopShared;
@@ -98,27 +75,78 @@ export interface LoopContext {
   ingressEdgeId: string | null;
   senderIp: string | null;
   stepCounter: number;
-  node: NetlabNode | null;
-  ipPacket: IpPacket | null;
-  transport: IpPacket['payload'] | null;
-  hopBase: Omit<PacketHop, 'step'> | null;
-  packetBeforeHop: InFlightPacket | null;
+  /** This hop's facts; made afresh by the preflight stage. */
+  hop: HopFacts | null;
+  /**
+   * This hop's routing; made afresh by the pre-routing stage. Before that
+   * stage runs it is still the previous hop's record, which a drop at the
+   * delivery stage reads (as it always has).
+   */
+  routing: HopRouting | null;
+}
+
+/** The device and packet at this hop, and the hop entry every later one starts from. */
+export interface HopFacts {
+  node: NetlabNode;
+  ipPacket: IpPacket;
+  transport: IpPacket['payload'];
+  base: Omit<PacketHop, 'step'>;
+}
+
+/** What the routing stages decide at this hop, from pre-routing to the forward. */
+export interface HopRouting {
+  /** The packet as it reached pre-routing. */
+  packetBeforeHop: InFlightPacket;
+  /** The packet before ARP was injected, when it was. */
   packetBeforeForward: InFlightPacket | null;
   natTranslation: NatTranslation | null;
   outsideToInsideMatched: boolean;
   ingressAclMatch: AclMatchInfo | null;
   egressAclMatch: AclMatchInfo | null;
   neighbors: Neighbor[];
-  forwardCtx: ForwardContext | null;
+  forwardCtx: ForwardContext;
+  /** Set by the forwarder dispatch. */
   next: Neighbor | null;
   selectedRoute: RouteEntry | null;
   /** The next hop the router's forwarding decision named; null off a router. */
   nextHopIp: string | null;
   routerEgressInterface: ResolvedInterface | null;
+  /** Set by ARP injection. */
   arpTarget: ArpTarget | null;
   forwardEvent: PacketHop['event'] | null;
   resolvedDstMac: string | null;
+  /** Set by the observability stage. */
   forwardHop: Omit<PacketHop, 'step'> | null;
+}
+
+/** A stage after preflight: the hop's facts are known. */
+export type HopContext = LoopContext & { hop: HopFacts };
+/** A stage after pre-routing: the hop's routing record is this hop's. */
+export type RoutedContext = HopContext & { routing: HopRouting };
+
+export function freshRouting(
+  packetBeforeHop: InFlightPacket,
+  neighbors: Neighbor[],
+  forwardCtx: ForwardContext,
+): HopRouting {
+  return {
+    packetBeforeHop,
+    packetBeforeForward: null,
+    natTranslation: null,
+    outsideToInsideMatched: false,
+    ingressAclMatch: null,
+    egressAclMatch: null,
+    neighbors,
+    forwardCtx,
+    next: null,
+    selectedRoute: null,
+    nextHopIp: null,
+    routerEgressInterface: null,
+    arpTarget: null,
+    forwardEvent: null,
+    resolvedDstMac: null,
+    forwardHop: null,
+  };
 }
 
 export function createLoopContext(
@@ -141,26 +169,8 @@ export function createLoopContext(
     ingressEdgeId: params.ingressEdgeId,
     senderIp: params.senderIp,
     stepCounter: params.stepCounter,
-    node: null,
-    ipPacket: null,
-    transport: null,
-    hopBase: null,
-    packetBeforeHop: null,
-    packetBeforeForward: null,
-    natTranslation: null,
-    outsideToInsideMatched: false,
-    ingressAclMatch: null,
-    egressAclMatch: null,
-    neighbors: [],
-    forwardCtx: null,
-    next: null,
-    selectedRoute: null,
-    nextHopIp: null,
-    routerEgressInterface: null,
-    arpTarget: null,
-    forwardEvent: null,
-    resolvedDstMac: null,
-    forwardHop: null,
+    hop: null,
+    routing: null,
   };
 }
 
@@ -186,27 +196,6 @@ export function appendHop(
   );
 }
 
-export function requireNode(ctx: LoopContext): NetlabNode {
-  if (!ctx.node) {
-    throw new Error('ForwardingLoop stage requires node context');
-  }
-  return ctx.node;
-}
-
-export function requireHopBase(ctx: LoopContext): Omit<PacketHop, 'step'> {
-  if (!ctx.hopBase) {
-    throw new Error('ForwardingLoop stage requires hop base');
-  }
-  return ctx.hopBase;
-}
-
-export function requirePacketBeforeHop(ctx: LoopContext): InFlightPacket {
-  if (!ctx.packetBeforeHop) {
-    throw new Error('ForwardingLoop stage requires packetBeforeHop');
-  }
-  return ctx.packetBeforeHop;
-}
-
 export function buildLoopGuardKey(
   ctx: LoopContext,
   node: NetlabNode,
@@ -222,7 +211,7 @@ export function buildLoopGuardKey(
 }
 
 export function appendDropHop(
-  ctx: LoopContext,
+  ctx: HopContext,
   reason: string,
   packet: InFlightPacket,
   extras: Partial<Omit<PacketHop, 'step' | 'event' | 'reason'>> = {},
@@ -233,7 +222,7 @@ export function appendDropHop(
   } = {},
 ): number {
   const dropHop: Omit<PacketHop, 'step'> = {
-    ...requireHopBase(ctx),
+    ...ctx.hop.base,
     ...extras,
     event: 'drop',
     reason,
@@ -247,14 +236,17 @@ export function appendDropHop(
       ? options.natTranslation
       : options.includeContextNat === false
         ? null
-        : ctx.natTranslation;
+        : (ctx.routing?.natTranslation ?? null);
   if (natTranslation) {
     dropHop.natTranslation = natTranslation;
   }
-  const changedFields = ctx.deps.frameMaterializer.diffPacketFields(
-    requirePacketBeforeHop(ctx),
-    packet,
-  );
+  // Before pre-routing the record is the previous hop's (see `LoopContext.routing`),
+  // and on the first hop there is none: then, as always, this throws.
+  const before = ctx.routing?.packetBeforeHop;
+  if (!before) {
+    throw new Error('ForwardingLoop stage requires packetBeforeHop');
+  }
+  const changedFields = ctx.deps.frameMaterializer.diffPacketFields(before, packet);
   if (changedFields.length > 0) {
     dropHop.changedFields = changedFields;
   }

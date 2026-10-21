@@ -1,12 +1,12 @@
-import { appendHop, continueWith, type LoopContext, type StageResult } from './_shared';
+import { appendHop, continueWith, type RoutedContext, type StageResult } from './_shared';
 
-export function runForwardCommitStage(ctx: LoopContext): StageResult {
-  const next = ctx.next;
-  if (!next || !ctx.forwardHop) {
+export function runForwardCommitStage(ctx: RoutedContext): StageResult {
+  const next = ctx.routing.next;
+  if (!next || !ctx.routing.forwardHop) {
     return continueWith(ctx);
   }
 
-  appendHop(ctx, ctx.forwardHop, ctx.workingPacket);
+  appendHop(ctx, ctx.routing.forwardHop, ctx.workingPacket);
 
   ctx.ingressFrom = ctx.current;
   ctx.ingressEdgeId = next.edgeId;

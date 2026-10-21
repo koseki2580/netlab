@@ -3,23 +3,20 @@ import type { PacketHop } from '../../../../types/simulation';
 import {
   appendHop,
   continueWith,
-  type LoopContext,
+  type RoutedContext,
   recordArpEntry,
-  requireHopBase,
-  requireNode,
-  requirePacketBeforeHop,
   type StageResult,
 } from './_shared';
 
-export function runArpInjectionStage(ctx: LoopContext): StageResult {
-  const node = requireNode(ctx);
-  const hopBase = requireHopBase(ctx);
-  const next = ctx.next;
+export function runArpInjectionStage(ctx: RoutedContext): StageResult {
+  const node = ctx.hop.node;
+  const hopBase = ctx.hop.base;
+  const next = ctx.routing.next;
   if (!next) {
     return continueWith(ctx);
   }
 
-  ctx.arpTarget =
+  ctx.routing.arpTarget =
     !isIpv6Packet(ctx.workingPacket.frame.payload) &&
     (node.data.role === 'router' || node.data.role === 'client' || node.data.role === 'server')
       ? ctx.deps.arpDispatcher.resolveTargetInfo(
@@ -27,13 +24,13 @@ export function runArpInjectionStage(ctx: LoopContext): StageResult {
           next.nodeId,
           ctx.workingPacket,
           ctx.shared.failureState,
-          ctx.routerEgressInterface?.id,
+          ctx.routing.routerEgressInterface?.id,
           next.edgeId,
-          ctx.nextHopIp ?? undefined,
+          ctx.routing.nextHopIp ?? undefined,
         )
       : null;
   const shouldInjectArp =
-    ctx.arpTarget !== null && !ctx.shared.arpCache.has(ctx.arpTarget.targetIp);
+    ctx.routing.arpTarget !== null && !ctx.shared.arpCache.has(ctx.routing.arpTarget.targetIp);
 
   if (shouldInjectArp && ctx.ingressFrom === null) {
     const createHop: Omit<PacketHop, 'step'> = {
@@ -43,7 +40,7 @@ export function runArpInjectionStage(ctx: LoopContext): StageResult {
       activeEdgeId: next.edgeId,
     };
     const changedFields = ctx.deps.frameMaterializer.diffPacketFields(
-      requirePacketBeforeHop(ctx),
+      ctx.routing.packetBeforeHop,
       ctx.workingPacket,
     );
     if (changedFields.length > 0) {
@@ -52,26 +49,26 @@ export function runArpInjectionStage(ctx: LoopContext): StageResult {
     appendHop(ctx, createHop, ctx.workingPacket);
   }
 
-  ctx.packetBeforeForward =
-    shouldInjectArp && ctx.ingressFrom === null ? ctx.workingPacket : requirePacketBeforeHop(ctx);
+  ctx.routing.packetBeforeForward =
+    shouldInjectArp && ctx.ingressFrom === null ? ctx.workingPacket : ctx.routing.packetBeforeHop;
 
-  if (shouldInjectArp && ctx.arpTarget) {
+  if (shouldInjectArp && ctx.routing.arpTarget) {
     const targetMac = ctx.deps.arpDispatcher.resolveTargetMac(
       ctx.current,
       next.nodeId,
-      ctx.arpTarget.targetNodeId,
+      ctx.routing.arpTarget.targetNodeId,
       ctx.workingPacket,
       ctx.shared.failureState,
       hopBase.egressInterfaceId,
-      ctx.nextHopIp ?? undefined,
+      ctx.routing.nextHopIp ?? undefined,
     );
 
     ctx.stepCounter = ctx.deps.arpDispatcher.injectExchange(
       ctx.current,
-      ctx.arpTarget.targetNodeId,
-      ctx.arpTarget.senderIp,
-      ctx.arpTarget.targetIp,
-      ctx.arpTarget.senderMac,
+      ctx.routing.arpTarget.targetNodeId,
+      ctx.routing.arpTarget.senderIp,
+      ctx.routing.arpTarget.targetIp,
+      ctx.routing.arpTarget.senderMac,
       targetMac,
       next.edgeId,
       ctx.workingPacket,
@@ -81,30 +78,30 @@ export function runArpInjectionStage(ctx: LoopContext): StageResult {
       ctx.baseTs,
     );
 
-    ctx.shared.arpCache.set(ctx.arpTarget.targetIp, targetMac);
-    if (ctx.arpTarget.senderIp.trim()) {
-      ctx.shared.arpCache.set(ctx.arpTarget.senderIp, ctx.arpTarget.senderMac);
+    ctx.shared.arpCache.set(ctx.routing.arpTarget.targetIp, targetMac);
+    if (ctx.routing.arpTarget.senderIp.trim()) {
+      ctx.shared.arpCache.set(ctx.routing.arpTarget.senderIp, ctx.routing.arpTarget.senderMac);
     }
-    recordArpEntry(ctx, ctx.current, ctx.arpTarget.targetIp, targetMac);
+    recordArpEntry(ctx, ctx.current, ctx.routing.arpTarget.targetIp, targetMac);
     recordArpEntry(
       ctx,
-      ctx.arpTarget.targetNodeId,
-      ctx.arpTarget.senderIp,
-      ctx.arpTarget.senderMac,
+      ctx.routing.arpTarget.targetNodeId,
+      ctx.routing.arpTarget.senderIp,
+      ctx.routing.arpTarget.senderMac,
     );
   }
 
-  ctx.forwardEvent = ctx.ingressFrom === null && !shouldInjectArp ? 'create' : 'forward';
-  ctx.resolvedDstMac = ctx.arpTarget
-    ? (ctx.shared.arpCache.get(ctx.arpTarget.targetIp) ??
+  ctx.routing.forwardEvent = ctx.ingressFrom === null && !shouldInjectArp ? 'create' : 'forward';
+  ctx.routing.resolvedDstMac = ctx.routing.arpTarget
+    ? (ctx.shared.arpCache.get(ctx.routing.arpTarget.targetIp) ??
       ctx.deps.arpDispatcher.resolveTargetMac(
         ctx.current,
         next.nodeId,
-        ctx.arpTarget.targetNodeId,
+        ctx.routing.arpTarget.targetNodeId,
         ctx.workingPacket,
         ctx.shared.failureState,
         hopBase.egressInterfaceId,
-        ctx.nextHopIp ?? undefined,
+        ctx.routing.nextHopIp ?? undefined,
       ))
     : ctx.deps.macResolver.resolveDstMac(
         ctx.current,
@@ -112,7 +109,7 @@ export function runArpInjectionStage(ctx: LoopContext): StageResult {
         hopBase.egressInterfaceId,
         ctx.workingPacket,
         ctx.shared.failureState,
-        ctx.nextHopIp ?? undefined,
+        ctx.routing.nextHopIp ?? undefined,
       );
 
   return continueWith(ctx);

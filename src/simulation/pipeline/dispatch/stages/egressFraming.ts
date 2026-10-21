@@ -7,19 +7,16 @@ import {
   appendHop,
   breakWith,
   continueWith,
-  type LoopContext,
-  requireHopBase,
-  requireNode,
-  requirePacketBeforeHop,
+  type RoutedContext,
   type StageResult,
 } from './_shared';
 
 export async function runEgressFramingAndFragmentationStage(
-  ctx: LoopContext,
+  ctx: RoutedContext,
 ): Promise<StageResult> {
-  const node = requireNode(ctx);
-  const hopBase = requireHopBase(ctx);
-  const next = ctx.next;
+  const node = ctx.hop.node;
+  const hopBase = ctx.hop.base;
+  const next = ctx.routing.next;
   if (!next) {
     return continueWith(ctx);
   }
@@ -54,7 +51,7 @@ export async function runEgressFramingAndFragmentationStage(
         );
       }
       appendDropHop(ctx, 'fragmentation-needed', ctx.workingPacket, extras, {
-        aclMatch: ctx.egressAclMatch ?? ctx.ingressAclMatch,
+        aclMatch: ctx.routing.egressAclMatch ?? ctx.routing.ingressAclMatch,
       });
       return breakWith(ctx);
     }
@@ -69,7 +66,8 @@ export async function runEgressFramingAndFragmentationStage(
         next.edgeId,
         'ingress',
       );
-      const fragmentAclMatch = ctx.egressAclMatch ?? ctx.ingressAclMatch ?? undefined;
+      const fragmentAclMatch =
+        ctx.routing.egressAclMatch ?? ctx.routing.ingressAclMatch ?? undefined;
       ctx.senderIp = egressIface?.ipAddress ?? null;
 
       for (const [fragmentIndex, fragmentPayload] of fragments.entries()) {
@@ -79,7 +77,7 @@ export async function runEgressFramingAndFragmentationStage(
             ...ctx.workingPacket.frame,
             payload: fragmentPayload,
             srcMac: egressIface?.macAddress ?? ctx.workingPacket.frame.srcMac,
-            dstMac: ctx.resolvedDstMac ?? ctx.workingPacket.frame.dstMac,
+            dstMac: ctx.routing.resolvedDstMac ?? ctx.workingPacket.frame.dstMac,
           },
         };
         fragmentPacket = ctx.deps.frameMaterializer.withFrameFcs(
@@ -88,7 +86,7 @@ export async function runEgressFramingAndFragmentationStage(
 
         const fragmentHop: Omit<PacketHop, 'step'> = {
           ...hopBase,
-          event: ctx.forwardEvent ?? 'forward',
+          event: ctx.routing.forwardEvent ?? 'forward',
           toNodeId: next.nodeId,
           activeEdgeId: next.edgeId,
           action: 'fragment',
@@ -97,14 +95,14 @@ export async function runEgressFramingAndFragmentationStage(
           identification,
           nextHopMtu: mtu,
         };
-        if (ctx.natTranslation) {
-          fragmentHop.natTranslation = ctx.natTranslation;
+        if (ctx.routing.natTranslation) {
+          fragmentHop.natTranslation = ctx.routing.natTranslation;
         }
         if (fragmentAclMatch) {
           fragmentHop.aclMatch = fragmentAclMatch;
         }
         const changedFields = ctx.deps.frameMaterializer.diffPacketFields(
-          ctx.packetBeforeForward ?? requirePacketBeforeHop(ctx),
+          ctx.routing.packetBeforeForward ?? ctx.routing.packetBeforeHop,
           fragmentPacket,
         );
         if (changedFields.length > 0) {
@@ -146,7 +144,7 @@ export async function runEgressFramingAndFragmentationStage(
       frame: {
         ...ctx.workingPacket.frame,
         srcMac: egressIface?.macAddress ?? ctx.workingPacket.frame.srcMac,
-        dstMac: ctx.resolvedDstMac ?? ctx.workingPacket.frame.dstMac,
+        dstMac: ctx.routing.resolvedDstMac ?? ctx.workingPacket.frame.dstMac,
       },
     });
   } else if (node.data.role === 'client' || node.data.role === 'server') {
@@ -161,8 +159,8 @@ export async function runEgressFramingAndFragmentationStage(
             ? resolvedSrcMac
             : ctx.workingPacket.frame.srcMac,
         dstMac:
-          ctx.resolvedDstMac && isPlaceholderMac(ctx.workingPacket.frame.dstMac)
-            ? ctx.resolvedDstMac
+          ctx.routing.resolvedDstMac && isPlaceholderMac(ctx.workingPacket.frame.dstMac)
+            ? ctx.routing.resolvedDstMac
             : ctx.workingPacket.frame.dstMac,
       },
     });

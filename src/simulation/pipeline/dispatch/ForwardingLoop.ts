@@ -1,12 +1,10 @@
 import type { FailureState } from '../../../types/failure';
 import { isIpv6Packet, type InFlightPacket } from '../../../types/packets';
-import type { Neighbor, ObservabilityTrace, PacketHop } from '../../../types/simulation';
+import type { Neighbor, PacketHop } from '../../../types/simulation';
 import type { NetworkTopology } from '../../../types/topology';
 import { FlowCollector } from '../../../observability/FlowCollector';
 import { NetflowExporter } from '../../../observability/NetflowExporter';
 import { SflowSampler } from '../../../observability/SflowSampler';
-import { packetSizeBytes } from '../../fragmentation';
-import { stepsToPropagate, stepsToTransmit } from '../../LinkQueue';
 import type { LinkQueueRegistry } from '../../LinkQueueRegistry';
 import { Reassembler } from '../../Reassembler';
 import type { ServiceOrchestrator } from '../../ServiceOrchestrator';
@@ -16,22 +14,7 @@ import type { FrameMaterializer, IcmpBuilder } from '../builders';
 import type { InterfaceResolver, MacResolver, PortResolver } from '../resolvers';
 import { isPlaceholderMac, type AddressPlane } from '../../AddressPlane';
 import type { ArpDispatcher } from './ArpDispatcher';
-import {
-  MAX_HOPS,
-  createLoopContext,
-  runArpInjectionStage,
-  runDeliverToSelfStage,
-  runEgressFramingAndFragmentationStage,
-  runForwardCommitStage,
-  runForwarderDispatchStage,
-  runIngressInterfaceStage,
-  runLinkQosStage,
-  runObservabilityStage,
-  runPreflightStage,
-  runRouterPostRoutingStage,
-  runRouterPreRoutingStage,
-  type StageResult,
-} from './forwardingStages';
+import { FORWARDING_STAGES, MAX_HOPS, createLoopContext, runStage } from './forwardingStages';
 
 export interface ForwardLoopParams {
   packet: InFlightPacket;
@@ -171,270 +154,6 @@ export class ForwardingLoop {
     );
   }
 
-  private edgeById(edgeId: string) {
-    return this.topology.edges.find((candidate) => candidate.id === edgeId) ?? null;
-  }
-
-  private appendLinkQosTrace(
-    hopBase: Omit<PacketHop, 'step'>,
-    workingPacket: InFlightPacket,
-    edgeId: string,
-    stepCounter: number,
-    hops: PacketHop[],
-    snapshots: InFlightPacket[],
-    failureState: FailureState,
-    linkQueues: LinkQueueRegistry,
-  ): { stepCounter: number; dropped: boolean } {
-    const edge = this.edgeById(edgeId);
-    const queue = linkQueues.getOrCreate(edgeId, edge?.data?.link);
-    if (!queue) {
-      return { stepCounter, dropped: false };
-    }
-
-    const byteLength = packetSizeBytes(workingPacket.frame.payload);
-    const enqueueStep = stepCounter;
-    const packetDscp = workingPacket.frame.payload.dscp ?? 0;
-    const queueDepth = () => {
-      const state = queue.getState();
-      if (state.shaper) {
-        return state.shaper.classes.reduce((total, klass) => total + klass.queue.length, 0);
-      }
-      return state.queue.length;
-    };
-
-    if (failureState.downEdgeIds.has(edgeId) || edge?.data?.state === 'down') {
-      stepCounter = this.traceRecorder.appendHop(
-        hops,
-        snapshots,
-        this.frameMaterializer.withPacketMacs(
-          {
-            ...hopBase,
-            event: 'drop',
-            action: 'link:dropped',
-            activeEdgeId: edgeId,
-            reason: 'link-failed',
-            linkQos: { edgeId, segSeq: 0, queueDepth: 0, reason: 'link-failed' },
-          },
-          workingPacket,
-        ),
-        workingPacket,
-        stepCounter,
-      );
-      return { stepCounter, dropped: true };
-    }
-
-    const enqueue = queue.enqueue({ id: workingPacket.id, byteLength }, enqueueStep, packetDscp);
-    if (enqueue.status === 'dropped') {
-      stepCounter = this.traceRecorder.appendHop(
-        hops,
-        snapshots,
-        this.frameMaterializer.withPacketMacs(
-          {
-            ...hopBase,
-            event: 'drop',
-            action: enqueue.reason === 'class-queue-full' ? 'shaper:dropped' : 'link:dropped',
-            activeEdgeId: edgeId,
-            reason: enqueue.reason,
-            ...(enqueue.classId
-              ? {
-                  shaperTrace: {
-                    edgeId,
-                    classId: enqueue.classId,
-                    dscp: packetDscp,
-                    segSeq: enqueue.segSeq,
-                    queueDepth: enqueue.queueDepth,
-                    reason: enqueue.reason,
-                  },
-                }
-              : {}),
-            linkQos: {
-              edgeId,
-              segSeq: enqueue.segSeq,
-              queueDepth: enqueue.queueDepth,
-              reason: enqueue.reason,
-            },
-          },
-          workingPacket,
-        ),
-        workingPacket,
-        stepCounter,
-      );
-      return { stepCounter, dropped: true };
-    }
-
-    if (enqueue.classId) {
-      stepCounter = this.traceRecorder.appendHop(
-        hops,
-        snapshots,
-        this.frameMaterializer.withPacketMacs(
-          {
-            ...hopBase,
-            event: 'forward',
-            action: 'shaper:classified',
-            activeEdgeId: edgeId,
-            shaperTrace: {
-              edgeId,
-              classId: enqueue.classId,
-              dscp: packetDscp,
-              segSeq: enqueue.segSeq,
-              queueDepth: enqueue.queueDepth,
-            },
-          },
-          workingPacket,
-        ),
-        workingPacket,
-        stepCounter,
-      );
-    }
-
-    stepCounter = this.traceRecorder.appendHop(
-      hops,
-      snapshots,
-      this.frameMaterializer.withPacketMacs(
-        {
-          ...hopBase,
-          event: 'forward',
-          action: 'link:enqueued',
-          activeEdgeId: edgeId,
-          linkQos: {
-            edgeId,
-            segSeq: enqueue.segSeq,
-            queueDepth: enqueue.queueDepth,
-          },
-        },
-        workingPacket,
-      ),
-      workingPacket,
-      stepCounter,
-    );
-
-    const txStartAtStep = stepCounter;
-    const firstTick = queue.tickStep(txStartAtStep);
-    const loss = firstTick.dropped[0];
-    if (loss) {
-      stepCounter = this.traceRecorder.appendHop(
-        hops,
-        snapshots,
-        this.frameMaterializer.withPacketMacs(
-          {
-            ...hopBase,
-            event: 'drop',
-            action: 'link:dropped',
-            activeEdgeId: edgeId,
-            reason: loss.reason,
-            linkQos: {
-              edgeId,
-              segSeq: loss.queued.seq,
-              queueDepth: queueDepth(),
-              reason: loss.reason,
-            },
-          },
-          workingPacket,
-        ),
-        workingPacket,
-        stepCounter,
-      );
-      return { stepCounter, dropped: true };
-    }
-
-    const dequeued = firstTick.dequeued[0];
-    if (!dequeued) {
-      return { stepCounter, dropped: false };
-    }
-
-    stepCounter = this.traceRecorder.appendHop(
-      hops,
-      snapshots,
-      this.frameMaterializer.withPacketMacs(
-        {
-          ...hopBase,
-          event: 'forward',
-          action: dequeued.classId ? 'shaper:dequeued' : 'link:dequeued',
-          activeEdgeId: edgeId,
-          ...(dequeued.classId
-            ? {
-                shaperTrace: {
-                  edgeId,
-                  classId: dequeued.classId,
-                  dscp: packetDscp,
-                  segSeq: dequeued.queued.seq,
-                  queueDepth: queueDepth(),
-                  ...(dequeued.deficit !== undefined ? { deficit: dequeued.deficit } : {}),
-                },
-              }
-            : {}),
-          linkQos: {
-            edgeId,
-            segSeq: dequeued.queued.seq,
-            queueDepth: queueDepth(),
-            txStartAtStep: dequeued.txStartAtStep,
-            txEndAtStep: dequeued.txEndAtStep,
-          },
-        },
-        workingPacket,
-      ),
-      workingPacket,
-      stepCounter,
-    );
-
-    const cfg = edge?.data?.link ?? {};
-    const arrivalStep =
-      dequeued.txStartAtStep +
-      stepsToTransmit(byteLength, cfg.bandwidthBps) +
-      stepsToPropagate(cfg.propagationDelayMs);
-    queue.tickStep(dequeued.txEndAtStep);
-    queue.tickStep(arrivalStep);
-
-    stepCounter = this.traceRecorder.appendHop(
-      hops,
-      snapshots,
-      this.frameMaterializer.withPacketMacs(
-        {
-          ...hopBase,
-          event: 'forward',
-          action: 'link:arrived',
-          activeEdgeId: edgeId,
-          linkQos: {
-            edgeId,
-            segSeq: dequeued.queued.seq,
-            queueDepth: queueDepth(),
-            totalLatencySteps: arrivalStep - dequeued.txStartAtStep,
-          },
-        },
-        workingPacket,
-      ),
-      workingPacket,
-      arrivalStep,
-    );
-
-    return { stepCounter, dropped: false };
-  }
-
-  private appendObservabilityTrace(
-    hopBase: Omit<PacketHop, 'step'>,
-    trace: ObservabilityTrace,
-    workingPacket: InFlightPacket,
-    stepCounter: number,
-    hops: PacketHop[],
-    snapshots: InFlightPacket[],
-  ): number {
-    return this.traceRecorder.appendHop(
-      hops,
-      snapshots,
-      this.frameMaterializer.withPacketMacs(
-        {
-          ...hopBase,
-          event: 'forward',
-          action: trace.kind,
-          observabilityTrace: trace,
-        },
-        workingPacket,
-      ),
-      workingPacket,
-      stepCounter,
-    );
-  }
-
   async run(
     params: ForwardLoopParams,
     shared: ForwardLoopShared,
@@ -451,75 +170,22 @@ export class ForwardingLoop {
       arpDispatcher: this.arpDispatcher,
       addresses: this.addresses,
       getNeighborsFn: this.getNeighborsFn,
-      appendLinkQosTrace: (
-        hopBase,
-        workingPacket,
-        edgeId,
-        stepCounter,
-        hops,
-        snapshots,
-        failureState,
-        linkQueues,
-      ) =>
-        this.appendLinkQosTrace(
-          hopBase,
-          workingPacket,
-          edgeId,
-          stepCounter,
-          hops,
-          snapshots,
-          failureState,
-          linkQueues,
-        ),
-      appendObservabilityTrace: (hopBase, trace, workingPacket, stepCounter, hops, snapshots) =>
-        this.appendObservabilityTrace(hopBase, trace, workingPacket, stepCounter, hops, snapshots),
       runFragment: (fragmentParams, fragmentShared) => this.run(fragmentParams, fragmentShared),
     });
 
-    for (let iter = 0; iter < MAX_HOPS; iter += 1) {
-      let result: StageResult = runPreflightStage(ctx);
-      if (result.kind === 'break') break;
-      if (result.kind === 'return') return result.value;
-
-      result = runDeliverToSelfStage(result.ctx);
-      if (result.kind === 'break') break;
-      if (result.kind === 'return') return result.value;
-
-      result = runIngressInterfaceStage(result.ctx);
-      if (result.kind === 'break') break;
-      if (result.kind === 'return') return result.value;
-
-      result = runRouterPreRoutingStage(result.ctx);
-      if (result.kind === 'break') break;
-      if (result.kind === 'return') return result.value;
-
-      result = await runForwarderDispatchStage(result.ctx);
-      if (result.kind === 'break') break;
-      if (result.kind === 'return') return result.value;
-
-      result = runRouterPostRoutingStage(result.ctx);
-      if (result.kind === 'break') break;
-      if (result.kind === 'return') return result.value;
-
-      result = runArpInjectionStage(result.ctx);
-      if (result.kind === 'break') break;
-      if (result.kind === 'return') return result.value;
-
-      result = await runEgressFramingAndFragmentationStage(result.ctx);
-      if (result.kind === 'break') break;
-      if (result.kind === 'return') return result.value;
-
-      result = runObservabilityStage(result.ctx);
-      if (result.kind === 'break') break;
-      if (result.kind === 'return') return result.value;
-
-      result = runLinkQosStage(result.ctx);
-      if (result.kind === 'break') break;
-      if (result.kind === 'return') return result.value;
-
-      result = runForwardCommitStage(result.ctx);
-      if (result.kind === 'break') break;
-      if (result.kind === 'return') return result.value;
+    hops: for (let iter = 0; iter < MAX_HOPS; iter += 1) {
+      // The routing record a hop starts with is the previous hop's; the routed
+      // stages run only on the one pre-routing makes for this hop.
+      const previousRouting = ctx.routing;
+      for (const stage of FORWARDING_STAGES) {
+        const routedAt = ctx.routing !== previousRouting ? ctx.routing : null;
+        // Only an asynchronous stage is awaited, so the loop yields exactly
+        // where it always has.
+        const pending = runStage(stage, ctx, routedAt);
+        const result = pending instanceof Promise ? await pending : pending;
+        if (result.kind === 'break') break hops;
+        if (result.kind === 'return') return result.value;
+      }
     }
 
     return { stepCounter: ctx.stepCounter, generatedIcmpPackets: ctx.generatedIcmpPackets };

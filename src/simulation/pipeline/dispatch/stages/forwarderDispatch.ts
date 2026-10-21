@@ -7,16 +7,13 @@ import {
   appendHop,
   breakWith,
   continueWith,
-  type LoopContext,
-  requireHopBase,
-  requireNode,
-  requirePacketBeforeHop,
+  type RoutedContext,
   type StageResult,
 } from './_shared';
 
-export async function runForwarderDispatchStage(ctx: LoopContext): Promise<StageResult> {
-  const node = requireNode(ctx);
-  const hopBase = requireHopBase(ctx);
+export async function runForwarderDispatchStage(ctx: RoutedContext): Promise<StageResult> {
+  const node = ctx.hop.node;
+  const hopBase = ctx.hop.base;
 
   if (node.data.role === 'router' || node.data.role === 'switch') {
     const forwarderFactory = layerRegistry.getForwarder(node.data.layerId);
@@ -28,7 +25,7 @@ export async function runForwarderDispatchStage(ctx: LoopContext): Promise<Stage
       const decision = await forwarder.receive(
         ctx.workingPacket,
         ctx.workingPacket.ingressPortId ?? '',
-        ctx.forwardCtx ?? { neighbors: ctx.neighbors },
+        ctx.routing.forwardCtx ?? { neighbors: ctx.routing.neighbors },
       );
       if (decision.action === 'drop') {
         const extras: Partial<Omit<PacketHop, 'step' | 'event' | 'reason'>> = {};
@@ -65,7 +62,7 @@ export async function runForwarderDispatchStage(ctx: LoopContext): Promise<Stage
           }
         }
         appendDropHop(ctx, decision.reason, ctx.workingPacket, extras, {
-          aclMatch: ctx.ingressAclMatch,
+          aclMatch: ctx.routing.ingressAclMatch,
         });
         return breakWith(ctx);
       }
@@ -74,13 +71,13 @@ export async function runForwarderDispatchStage(ctx: LoopContext): Promise<Stage
         const deliverHop: Omit<PacketHop, 'step'> = {
           ...hopBase,
           event: 'deliver',
-          ...(ctx.ingressAclMatch != null ? { aclMatch: ctx.ingressAclMatch } : {}),
+          ...(ctx.routing.ingressAclMatch != null ? { aclMatch: ctx.routing.ingressAclMatch } : {}),
         };
-        if (ctx.natTranslation) {
-          deliverHop.natTranslation = ctx.natTranslation;
+        if (ctx.routing.natTranslation) {
+          deliverHop.natTranslation = ctx.routing.natTranslation;
         }
         const changedFields = ctx.deps.frameMaterializer.diffPacketFields(
-          requirePacketBeforeHop(ctx),
+          ctx.routing.packetBeforeHop,
           decision.packet,
         );
         if (changedFields.length > 0) {
@@ -91,18 +88,18 @@ export async function runForwarderDispatchStage(ctx: LoopContext): Promise<Stage
       }
 
       ctx.workingPacket = decision.packet;
-      ctx.next = { nodeId: decision.nextNodeId, edgeId: decision.edgeId };
+      ctx.routing.next = { nodeId: decision.nextNodeId, edgeId: decision.edgeId };
 
       if (node.data.role === 'router') {
-        ctx.selectedRoute = decision.selectedRoute ?? null;
+        ctx.routing.selectedRoute = decision.selectedRoute ?? null;
         // A plugin forwarder may name no next hop: then the route it says it
         // used, or failing that the route table's longest match, decides it,
         // as it did before the decision carried one.
         const dstIp = ctx.workingPacket.frame.payload.dstIp;
         const route =
-          ctx.selectedRoute ??
+          ctx.routing.selectedRoute ??
           bestRoute(dstIp, ctx.deps.topology.routeTables.get(ctx.current) ?? []);
-        ctx.nextHopIp =
+        ctx.routing.nextHopIp =
           decision.nextHopIp ?? (route && route.nextHop !== 'direct' ? route.nextHop : dstIp);
         if (decision.ecmpTrace) {
           hopBase.action = 'ecmp:bucketed';
@@ -121,13 +118,17 @@ export async function runForwarderDispatchStage(ctx: LoopContext): Promise<Stage
           ctx.current,
           egressInterfaceId,
         );
-        ctx.routerEgressInterface = interfaceMatch
+        ctx.routing.routerEgressInterface = interfaceMatch
           ? { id: interfaceMatch.id, name: interfaceMatch.name }
-          : ctx.deps.portResolver.resolvePortFromEdge(ctx.current, ctx.next.edgeId, 'egress');
+          : ctx.deps.portResolver.resolvePortFromEdge(
+              ctx.current,
+              ctx.routing.next.edgeId,
+              'egress',
+            );
       }
     }
   } else if (ctx.ingressFrom === null) {
-    ctx.next = ctx.neighbors[0] ?? null;
+    ctx.routing.next = ctx.routing.neighbors[0] ?? null;
   }
 
   if (node.data.role === 'router') {
@@ -135,12 +136,18 @@ export async function runForwarderDispatchStage(ctx: LoopContext): Promise<Stage
     hopBase.routingDecision = buildRoutingDecision(
       ctx.workingPacket.frame.payload.dstIp,
       routes,
-      ctx.selectedRoute,
+      ctx.routing.selectedRoute,
     );
   }
 
-  if (!ctx.next) {
-    appendDropHop(ctx, 'no-route', ctx.workingPacket, {}, { aclMatch: ctx.ingressAclMatch });
+  if (!ctx.routing.next) {
+    appendDropHop(
+      ctx,
+      'no-route',
+      ctx.workingPacket,
+      {},
+      { aclMatch: ctx.routing.ingressAclMatch },
+    );
     return breakWith(ctx);
   }
 

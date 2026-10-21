@@ -4,32 +4,36 @@ import {
   appendDropHop,
   breakWith,
   continueWith,
-  type LoopContext,
-  requireHopBase,
-  requireNode,
+  type RoutedContext,
   type StageResult,
 } from './_shared';
 
-export function runRouterPostRoutingStage(ctx: LoopContext): StageResult {
-  const node = requireNode(ctx);
-  const hopBase = requireHopBase(ctx);
+export function runRouterPostRoutingStage(ctx: RoutedContext): StageResult {
+  const node = ctx.hop.node;
+  const hopBase = ctx.hop.base;
 
   if (node.data.role !== 'router') {
     return continueWith(ctx);
   }
 
-  if (ctx.routerEgressInterface) {
-    hopBase.egressInterfaceId = ctx.routerEgressInterface.id;
-    hopBase.egressInterfaceName = ctx.routerEgressInterface.name;
+  if (ctx.routing.routerEgressInterface) {
+    hopBase.egressInterfaceId = ctx.routing.routerEgressInterface.id;
+    hopBase.egressInterfaceName = ctx.routing.routerEgressInterface.name;
   }
 
   if (
-    ctx.routerEgressInterface &&
+    ctx.routing.routerEgressInterface &&
     ctx.shared.failureState.downInterfaceIds.has(
-      makeInterfaceFailureId(ctx.current, ctx.routerEgressInterface.id),
+      makeInterfaceFailureId(ctx.current, ctx.routing.routerEgressInterface.id),
     )
   ) {
-    appendDropHop(ctx, 'interface-down', ctx.workingPacket, {}, { aclMatch: ctx.ingressAclMatch });
+    appendDropHop(
+      ctx,
+      'interface-down',
+      ctx.workingPacket,
+      {},
+      { aclMatch: ctx.routing.ingressAclMatch },
+    );
     return breakWith(ctx);
   }
 
@@ -46,7 +50,7 @@ export function runRouterPostRoutingStage(ctx: LoopContext): StageResult {
       ctx.workingPacket,
       {},
       {
-        aclMatch: ctx.ingressAclMatch,
+        aclMatch: ctx.routing.ingressAclMatch,
       },
     );
     return breakWith(ctx);
@@ -59,7 +63,7 @@ export function runRouterPostRoutingStage(ctx: LoopContext): StageResult {
       hopBase.egressInterfaceId,
       ctx.stepCounter,
     );
-    ctx.egressAclMatch = egressResult.match;
+    ctx.routing.egressAclMatch = egressResult.match;
     if (egressResult.dropReason) {
       appendDropHop(
         ctx,
@@ -83,7 +87,7 @@ export function runRouterPostRoutingStage(ctx: LoopContext): StageResult {
       hopBase.ingressInterfaceId,
       hopBase.egressInterfaceId,
       ctx.stepCounter,
-      ctx.outsideToInsideMatched,
+      ctx.routing.outsideToInsideMatched,
     );
     if (postRoutingResult.dropReason) {
       appendDropHop(
@@ -92,15 +96,15 @@ export function runRouterPostRoutingStage(ctx: LoopContext): StageResult {
         postRoutingResult.packet,
         {},
         {
-          aclMatch: ctx.egressAclMatch ?? ctx.ingressAclMatch,
-          natTranslation: postRoutingResult.translation ?? ctx.natTranslation,
+          aclMatch: ctx.routing.egressAclMatch ?? ctx.routing.ingressAclMatch,
+          natTranslation: postRoutingResult.translation ?? ctx.routing.natTranslation,
         },
       );
       return breakWith(ctx);
     }
 
     ctx.workingPacket = postRoutingResult.packet;
-    ctx.natTranslation = postRoutingResult.translation ?? ctx.natTranslation;
+    ctx.routing.natTranslation = postRoutingResult.translation ?? ctx.routing.natTranslation;
   }
 
   return continueWith(ctx);

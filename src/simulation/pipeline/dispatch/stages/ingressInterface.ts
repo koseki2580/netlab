@@ -1,7 +1,7 @@
-import { continueWith, type LoopContext, requireHopBase, type StageResult } from './_shared';
+import { continueWith, type HopContext, type StageResult } from './_shared';
 
-export function runIngressInterfaceStage(ctx: LoopContext): StageResult {
-  const hopBase = requireHopBase(ctx);
+export function runIngressInterfaceStage(ctx: HopContext): StageResult {
+  const hopBase = ctx.hop.base;
   if (ctx.ingressFrom !== null) {
     const ingressInterface =
       (ctx.senderIp ? ctx.deps.ifaceResolver.resolveIngress(ctx.current, ctx.senderIp) : null) ??

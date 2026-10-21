@@ -5,80 +5,55 @@ import {
   buildLoopGuardKey,
   continueWith,
   isIgmpMessage,
+  type HopFacts,
   type LoopContext,
   type StageResult,
 } from './_shared';
 
+/**
+ * A drop before the hop has begun (no device, a loop, a device that is down):
+ * the hop is written from the packet alone.
+ */
+function dropBeforeHop(ctx: LoopContext, nodeLabel: string, reason: string): StageResult {
+  const ipPacket = ctx.workingPacket.frame.payload;
+  appendHop(
+    ctx,
+    {
+      nodeId: ctx.current,
+      nodeLabel,
+      srcIp: ipPacket.srcIp,
+      dstIp: ipPacket.dstIp,
+      ttl: ipPacket.ttl,
+      protocol: protocolName(ipPacket.protocol),
+      event: 'drop',
+      ...(ctx.ingressFrom !== null ? { fromNodeId: ctx.ingressFrom } : {}),
+      reason,
+      timestamp: ctx.baseTs,
+    },
+    ctx.workingPacket,
+  );
+  return breakWith(ctx);
+}
+
 export function runPreflightStage(ctx: LoopContext): StageResult {
   const node = ctx.deps.ifaceResolver.findNode(ctx.current);
   if (!node) {
-    appendHop(
-      ctx,
-      {
-        nodeId: ctx.current,
-        nodeLabel: ctx.current,
-        srcIp: ctx.workingPacket.frame.payload.srcIp,
-        dstIp: ctx.workingPacket.frame.payload.dstIp,
-        ttl: ctx.workingPacket.frame.payload.ttl,
-        protocol: protocolName(ctx.workingPacket.frame.payload.protocol),
-        event: 'drop',
-        ...(ctx.ingressFrom !== null ? { fromNodeId: ctx.ingressFrom } : {}),
-        reason: 'node-not-found',
-        timestamp: ctx.baseTs,
-      },
-      ctx.workingPacket,
-    );
-    return breakWith(ctx);
+    return dropBeforeHop(ctx, ctx.current, 'node-not-found');
   }
 
   const loopGuardKey = buildLoopGuardKey(ctx, node, ctx.workingPacket, ctx.ingressEdgeId);
   if (ctx.visitedStates.has(loopGuardKey)) {
-    appendHop(
-      ctx,
-      {
-        nodeId: ctx.current,
-        nodeLabel: node.data.label,
-        srcIp: ctx.workingPacket.frame.payload.srcIp,
-        dstIp: ctx.workingPacket.frame.payload.dstIp,
-        ttl: ctx.workingPacket.frame.payload.ttl,
-        protocol: protocolName(ctx.workingPacket.frame.payload.protocol),
-        event: 'drop',
-        ...(ctx.ingressFrom !== null ? { fromNodeId: ctx.ingressFrom } : {}),
-        reason: 'routing-loop',
-        timestamp: ctx.baseTs,
-      },
-      ctx.workingPacket,
-    );
-    return breakWith(ctx);
+    return dropBeforeHop(ctx, node.data.label, 'routing-loop');
   }
   ctx.visitedStates.add(loopGuardKey);
 
   if (ctx.shared.failureState.downNodeIds.has(ctx.current)) {
-    appendHop(
-      ctx,
-      {
-        nodeId: ctx.current,
-        nodeLabel: node.data.label,
-        srcIp: ctx.workingPacket.frame.payload.srcIp,
-        dstIp: ctx.workingPacket.frame.payload.dstIp,
-        ttl: ctx.workingPacket.frame.payload.ttl,
-        protocol: protocolName(ctx.workingPacket.frame.payload.protocol),
-        event: 'drop',
-        ...(ctx.ingressFrom !== null ? { fromNodeId: ctx.ingressFrom } : {}),
-        reason: 'node-down',
-        timestamp: ctx.baseTs,
-      },
-      ctx.workingPacket,
-    );
-    return breakWith(ctx);
+    return dropBeforeHop(ctx, node.data.label, 'node-down');
   }
 
   const ipPacket = ctx.workingPacket.frame.payload;
   const transport = ipPacket.payload;
-  ctx.node = node;
-  ctx.ipPacket = ipPacket;
-  ctx.transport = transport;
-  ctx.hopBase = {
+  const base: HopFacts['base'] = {
     nodeId: ctx.current,
     nodeLabel: node.data.label,
     srcIp: ipPacket.srcIp,
@@ -100,15 +75,12 @@ export function runPreflightStage(ctx: LoopContext): StageResult {
     ...(ctx.ingressFrom !== null ? { fromNodeId: ctx.ingressFrom } : {}),
     timestamp: ctx.baseTs,
   };
+  ctx.hop = { node, ipPacket, transport, base };
 
   // A host holding its LAN's network or broadcast address neither sends nor
   // receives: the engine refuses the address, as a real host refuses to take it.
   if (ctx.deps.addresses.hasReservedAddress(node)) {
-    appendHop(
-      ctx,
-      { ...ctx.hopBase, event: 'drop', reason: 'reserved-address' },
-      ctx.workingPacket,
-    );
+    appendHop(ctx, { ...base, event: 'drop', reason: 'reserved-address' }, ctx.workingPacket);
     return breakWith(ctx);
   }
 

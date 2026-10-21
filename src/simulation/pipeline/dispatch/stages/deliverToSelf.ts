@@ -6,16 +6,14 @@ import {
   breakWith,
   BROADCAST_IP,
   continueWith,
-  type LoopContext,
-  requireHopBase,
-  requireNode,
+  type HopContext,
   type StageResult,
 } from './_shared';
 
-export function runDeliverToSelfStage(ctx: LoopContext): StageResult {
-  const node = requireNode(ctx);
-  const hopBase = requireHopBase(ctx);
-  const ipPacket = ctx.ipPacket ?? ctx.workingPacket.frame.payload;
+export function runDeliverToSelfStage(ctx: HopContext): StageResult {
+  const node = ctx.hop.node;
+  const hopBase = ctx.hop.base;
+  const ipPacket = ctx.hop.ipPacket ?? ctx.workingPacket.frame.payload;
 
   if (
     ipPacket.dstIp === BROADCAST_IP &&

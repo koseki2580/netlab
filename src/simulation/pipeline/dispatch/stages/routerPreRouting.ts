@@ -4,58 +4,46 @@ import {
   breakWith,
   continueWith,
   isIgmpMessage,
-  type LoopContext,
-  requireHopBase,
-  requireNode,
+  freshRouting,
+  type HopContext,
+  type RoutedContext,
   type StageResult,
 } from './_shared';
 
-export function runRouterPreRoutingStage(ctx: LoopContext): StageResult {
-  const node = requireNode(ctx);
-  const hopBase = requireHopBase(ctx);
-  const ipPacket = ctx.ipPacket ?? ctx.workingPacket.frame.payload;
-  const transport = ctx.transport ?? ipPacket.payload;
+export function runRouterPreRoutingStage(ctx: HopContext): StageResult {
+  const node = ctx.hop.node;
+  const hopBase = ctx.hop.base;
+  const { ipPacket, transport } = ctx.hop;
 
-  ctx.packetBeforeHop = ctx.workingPacket;
-  ctx.packetBeforeForward = null;
-  ctx.natTranslation = null;
-  ctx.outsideToInsideMatched = false;
-  ctx.ingressAclMatch = null;
-  ctx.egressAclMatch = null;
-  ctx.next = null;
-  ctx.selectedRoute = null;
-  ctx.nextHopIp = null;
-  ctx.routerEgressInterface = null;
-  ctx.arpTarget = null;
-  ctx.forwardEvent = null;
-  ctx.resolvedDstMac = null;
-  ctx.forwardHop = null;
-  ctx.neighbors = ctx.deps.getNeighborsFn(
+  // A fresh record for what routing decides at this hop.
+  const neighbors = ctx.deps.getNeighborsFn(
     ctx.current,
     node.data.role === 'router' ? null : ctx.ingressFrom,
     ctx.shared.failureState,
   );
   const multicastTable =
     node.data.role === 'switch' ? ctx.deps.services.getMulticastTable(ctx.current) : null;
-  ctx.forwardCtx = {
-    neighbors: ctx.neighbors,
-    ...(multicastTable != null ? { multicastTable } : {}),
-  };
+  const routed: RoutedContext = Object.assign(ctx, {
+    routing: freshRouting(ctx.workingPacket, neighbors, {
+      neighbors,
+      ...(multicastTable != null ? { multicastTable } : {}),
+    }),
+  });
 
   if (node.data.role !== 'router') {
-    return continueWith(ctx);
+    return continueWith(routed);
   }
 
-  const natProcessor = ctx.deps.services.getNatProcessor(ctx.current);
+  const natProcessor = routed.deps.services.getNatProcessor(routed.current);
   if (natProcessor) {
     const preRoutingResult = natProcessor.applyPreRouting(
-      ctx.workingPacket,
+      routed.workingPacket,
       hopBase.ingressInterfaceId,
-      ctx.stepCounter,
+      routed.stepCounter,
     );
     if (preRoutingResult.dropReason) {
       appendDropHop(
-        ctx,
+        routed,
         preRoutingResult.dropReason,
         preRoutingResult.packet,
         {},
@@ -63,25 +51,25 @@ export function runRouterPreRoutingStage(ctx: LoopContext): StageResult {
           natTranslation: preRoutingResult.translation,
         },
       );
-      return breakWith(ctx);
+      return breakWith(routed);
     }
 
-    ctx.workingPacket = preRoutingResult.packet;
-    ctx.natTranslation = preRoutingResult.translation;
-    ctx.outsideToInsideMatched = preRoutingResult.matched;
+    routed.workingPacket = preRoutingResult.packet;
+    routed.routing.natTranslation = preRoutingResult.translation;
+    routed.routing.outsideToInsideMatched = preRoutingResult.matched;
   }
 
-  const aclProcessor = ctx.deps.services.getAclProcessor(ctx.current);
+  const aclProcessor = routed.deps.services.getAclProcessor(routed.current);
   if (aclProcessor) {
     const ingressResult = aclProcessor.applyIngress(
-      ctx.workingPacket,
+      routed.workingPacket,
       hopBase.ingressInterfaceId,
-      ctx.stepCounter,
+      routed.stepCounter,
     );
-    ctx.ingressAclMatch = ingressResult.match;
+    routed.routing.ingressAclMatch = ingressResult.match;
     if (ingressResult.dropReason) {
       appendDropHop(
-        ctx,
+        routed,
         ingressResult.dropReason,
         ingressResult.packet,
         {},
@@ -89,16 +77,16 @@ export function runRouterPreRoutingStage(ctx: LoopContext): StageResult {
           aclMatch: ingressResult.match,
         },
       );
-      return breakWith(ctx);
+      return breakWith(routed);
     }
 
-    ctx.workingPacket = ingressResult.packet;
+    routed.workingPacket = ingressResult.packet;
   }
 
   if (ipPacket.protocol === IGMP_PROTOCOL && isIgmpMessage(transport)) {
-    const igmpProcessor = ctx.deps.services.getIgmpProcessor(ctx.current);
+    const igmpProcessor = routed.deps.services.getIgmpProcessor(routed.current);
     if (igmpProcessor) {
-      const ifaceId = hopBase.ingressInterfaceId ?? ctx.current;
+      const ifaceId = hopBase.ingressInterfaceId ?? routed.current;
       if (transport.igmpType === 'v2-membership-report') {
         igmpProcessor.recordReport(ifaceId, transport.groupAddress);
       } else if (transport.igmpType === 'v2-leave-group') {
@@ -107,5 +95,5 @@ export function runRouterPreRoutingStage(ctx: LoopContext): StageResult {
     }
   }
 
-  return continueWith(ctx);
+  return continueWith(routed);
 }

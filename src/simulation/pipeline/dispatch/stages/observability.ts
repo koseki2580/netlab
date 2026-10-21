@@ -1,44 +1,56 @@
-import type { PacketHop } from '../../../../types/simulation';
+import type { ObservabilityTrace, PacketHop } from '../../../../types/simulation';
 import { NetflowExporter } from '../../../../observability/NetflowExporter';
 import { SflowSampler } from '../../../../observability/SflowSampler';
 import {
+  appendHop,
   continueWith,
   type LoopContext,
-  requireHopBase,
-  requireNode,
-  requirePacketBeforeHop,
+  type RoutedContext,
   type StageResult,
 } from './_shared';
 
-export function runObservabilityStage(ctx: LoopContext): StageResult {
-  const node = requireNode(ctx);
-  const hopBase = requireHopBase(ctx);
-  const next = ctx.next;
+/** A flow-export event, written as a hop of its own beside the forward. */
+function appendObservabilityHop(
+  ctx: LoopContext,
+  forwardHop: Omit<PacketHop, 'step'>,
+  trace: ObservabilityTrace,
+): void {
+  appendHop(
+    ctx,
+    { ...forwardHop, event: 'forward', action: trace.kind, observabilityTrace: trace },
+    ctx.workingPacket,
+  );
+}
+
+export function runObservabilityStage(ctx: RoutedContext): StageResult {
+  const node = ctx.hop.node;
+  const hopBase = ctx.hop.base;
+  const next = ctx.routing.next;
   if (!next) {
     return continueWith(ctx);
   }
 
   const forwardHop: Omit<PacketHop, 'step'> = {
     ...hopBase,
-    event: ctx.forwardEvent ?? 'forward',
+    event: ctx.routing.forwardEvent ?? 'forward',
     toNodeId: next.nodeId,
     activeEdgeId: next.edgeId,
   };
-  if (ctx.natTranslation) {
-    forwardHop.natTranslation = ctx.natTranslation;
+  if (ctx.routing.natTranslation) {
+    forwardHop.natTranslation = ctx.routing.natTranslation;
   }
-  const forwardAclMatch = ctx.egressAclMatch ?? ctx.ingressAclMatch;
+  const forwardAclMatch = ctx.routing.egressAclMatch ?? ctx.routing.ingressAclMatch;
   if (forwardAclMatch != null) {
     forwardHop.aclMatch = forwardAclMatch;
   }
   const changedFields = ctx.deps.frameMaterializer.diffPacketFields(
-    ctx.packetBeforeForward ?? requirePacketBeforeHop(ctx),
+    ctx.routing.packetBeforeForward ?? ctx.routing.packetBeforeHop,
     ctx.workingPacket,
   );
   if (changedFields.length > 0) {
     forwardHop.changedFields = changedFields;
   }
-  ctx.forwardHop = forwardHop;
+  ctx.routing.forwardHop = forwardHop;
 
   if (node.data.role === 'router' && node.data.netflow?.enabled) {
     const exporter =
@@ -52,20 +64,13 @@ export function runObservabilityStage(ctx: LoopContext): StageResult {
       ctx.stepCounter,
     );
     if (update) {
-      ctx.stepCounter = ctx.deps.appendObservabilityTrace(
-        forwardHop,
-        {
-          kind: 'netflow:flow-update',
-          routerId: update.routerId,
-          flowKey: update.flowKey,
-          packets: update.packets ?? 0,
-          bytes: update.bytes ?? 0,
-        },
-        ctx.workingPacket,
-        ctx.stepCounter,
-        ctx.shared.hops,
-        ctx.shared.snapshots,
-      );
+      appendObservabilityHop(ctx, forwardHop, {
+        kind: 'netflow:flow-update',
+        routerId: update.routerId,
+        flowKey: update.flowKey,
+        packets: update.packets ?? 0,
+        bytes: update.bytes ?? 0,
+      });
     }
   }
 
@@ -84,7 +89,8 @@ export function runObservabilityStage(ctx: LoopContext): StageResult {
         ctx.stepCounter,
       );
       if (update) {
-        ctx.stepCounter = ctx.deps.appendObservabilityTrace(
+        appendObservabilityHop(
+          ctx,
           forwardHop,
           update.action === 'sflow:sampled'
             ? {
@@ -99,10 +105,6 @@ export function runObservabilityStage(ctx: LoopContext): StageResult {
                 portId: update.portId,
                 reason: update.reason,
               },
-          ctx.workingPacket,
-          ctx.stepCounter,
-          ctx.shared.hops,
-          ctx.shared.snapshots,
         );
       }
     }
