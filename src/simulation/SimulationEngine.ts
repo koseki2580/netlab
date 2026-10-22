@@ -15,6 +15,7 @@ import type {
   DataTransferOptions,
   DataTransferPipeline,
 } from './DataTransferController';
+import type { SimulationEnginePort } from './enginePort';
 import type { PathMtuCache } from './PathMtuCache';
 import type { TraceDetailLevel } from './TraceRecorder';
 import { MainThreadEngine } from './worker/MainThreadEngine';
@@ -25,8 +26,6 @@ export interface SimulationEngineOptions extends WorkerEngineOptions {
   readonly traceDetailLevel?: TraceDetailLevel;
 }
 
-type SimulationEngineImpl = MainThreadEngine | WorkerEngine;
-
 function shouldUseWorker(opts: SimulationEngineOptions): boolean {
   return !opts.useMainThread && (opts.createWorker !== undefined || typeof Worker !== 'undefined');
 }
@@ -34,7 +33,7 @@ function shouldUseWorker(opts: SimulationEngineOptions): boolean {
 export class SimulationEngine {
   readonly hookEngine: HookEngine;
   readonly pipeline: DataTransferPipeline | undefined;
-  private readonly impl: SimulationEngineImpl;
+  private readonly impl: SimulationEnginePort;
 
   constructor(
     topology: NetworkTopology,
@@ -42,10 +41,11 @@ export class SimulationEngine {
     opts: SimulationEngineOptions = {},
   ) {
     this.hookEngine = hookEngine;
-    this.impl = shouldUseWorker(opts)
+    const impl = shouldUseWorker(opts)
       ? new WorkerEngine(topology, hookEngine, opts)
       : new MainThreadEngine(topology, hookEngine, opts);
-    this.pipeline = this.impl instanceof MainThreadEngine ? this.impl.pipeline : undefined;
+    this.impl = impl;
+    this.pipeline = impl instanceof MainThreadEngine ? impl.pipeline : undefined;
   }
 
   getState(): SimulationState {

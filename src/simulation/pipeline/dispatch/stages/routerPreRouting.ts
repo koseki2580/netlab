@@ -22,7 +22,9 @@ export function runRouterPreRoutingStage(ctx: HopContext): StageResult {
     ctx.shared.failureState,
   );
   const multicastTable =
-    node.data.role === 'switch' ? ctx.deps.services.getMulticastTable(ctx.current) : null;
+    node.data.role === 'switch'
+      ? ctx.deps.services.processors.getMulticastTable(ctx.current)
+      : null;
   const routed: RoutedContext = Object.assign(ctx, {
     routing: freshRouting(ctx.workingPacket, neighbors, {
       neighbors,
@@ -34,7 +36,7 @@ export function runRouterPreRoutingStage(ctx: HopContext): StageResult {
     return continueWith(routed);
   }
 
-  const natProcessor = routed.deps.services.getNatProcessor(routed.current);
+  const natProcessor = routed.deps.services.processors.getNatProcessor(routed.current);
   if (natProcessor) {
     const preRoutingResult = natProcessor.applyPreRouting(
       routed.workingPacket,
@@ -59,7 +61,7 @@ export function runRouterPreRoutingStage(ctx: HopContext): StageResult {
     routed.routing.outsideToInsideMatched = preRoutingResult.matched;
   }
 
-  const aclProcessor = routed.deps.services.getAclProcessor(routed.current);
+  const aclProcessor = routed.deps.services.processors.getAclProcessor(routed.current);
   if (aclProcessor) {
     const ingressResult = aclProcessor.applyIngress(
       routed.workingPacket,
@@ -84,7 +86,7 @@ export function runRouterPreRoutingStage(ctx: HopContext): StageResult {
   }
 
   if (ipPacket.protocol === IGMP_PROTOCOL && isIgmpMessage(transport)) {
-    const igmpProcessor = routed.deps.services.getIgmpProcessor(routed.current);
+    const igmpProcessor = routed.deps.services.processors.getIgmpProcessor(routed.current);
     if (igmpProcessor) {
       const ifaceId = hopBase.ingressInterfaceId ?? routed.current;
       if (transport.igmpType === 'v2-membership-report') {

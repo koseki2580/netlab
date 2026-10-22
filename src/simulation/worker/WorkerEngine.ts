@@ -1,3 +1,4 @@
+import type { SimulationEnginePort } from '../enginePort';
 import { HookEngine } from '../../hooks/HookEngine';
 import type { MulticastTableEntry } from '../../layers/l2-datalink/MulticastTable';
 import type {
@@ -91,7 +92,7 @@ function formatWorkerErrorDetail(detail: unknown): string {
   return String(detail);
 }
 
-export class WorkerEngine {
+export class WorkerEngine implements SimulationEnginePort {
   private worker: WorkerLike;
   private state: SimulationState;
   private runtime: SimulationRuntimeSnapshot = EMPTY_RUNTIME;

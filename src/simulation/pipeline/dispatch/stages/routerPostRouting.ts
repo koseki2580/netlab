@@ -56,7 +56,7 @@ export function runRouterPostRoutingStage(ctx: RoutedContext): StageResult {
     return breakWith(ctx);
   }
 
-  const aclProcessor = ctx.deps.services.getAclProcessor(ctx.current);
+  const aclProcessor = ctx.deps.services.processors.getAclProcessor(ctx.current);
   if (aclProcessor) {
     const egressResult = aclProcessor.applyEgress(
       ctx.workingPacket,
@@ -80,7 +80,7 @@ export function runRouterPostRoutingStage(ctx: RoutedContext): StageResult {
     ctx.workingPacket = egressResult.packet;
   }
 
-  const natProcessor = ctx.deps.services.getNatProcessor(ctx.current);
+  const natProcessor = ctx.deps.services.processors.getNatProcessor(ctx.current);
   if (natProcessor) {
     const postRoutingResult = natProcessor.applyPostRouting(
       ctx.workingPacket,

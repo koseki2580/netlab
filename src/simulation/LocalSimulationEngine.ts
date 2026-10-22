@@ -354,7 +354,7 @@ export class LocalSimulationEngine {
 
   reset(): void {
     this.clearPlay();
-    this.services.resetProcessors();
+    this.services.processors.reset();
     this.state = {
       ...this.state,
       status: this.state.currentTraceId ? 'paused' : 'idle',
@@ -383,7 +383,7 @@ export class LocalSimulationEngine {
   clearTraces(): void {
     this.clearPlay();
     this.traceRecorder.clearSnapshots();
-    this.services.resetProcessors();
+    this.services.processors.reset();
     this.pipeline.clearFlowCaches();
     this.lastPacket = null;
     this.lastFailureState = EMPTY_FAILURE_STATE;
@@ -485,11 +485,11 @@ export class LocalSimulationEngine {
   }
 
   getMulticastTableSnapshot(switchId: string) {
-    return this.services.getMulticastTableSnapshot(switchId);
+    return this.services.processors.getMulticastTableSnapshot(switchId);
   }
 
   getIgmpMembershipSnapshot(routerId: string) {
-    return this.services.getIgmpMembershipSnapshot(routerId);
+    return this.services.processors.getIgmpMembershipSnapshot(routerId);
   }
 
   getJoinedGroups(nodeId: string) {
@@ -502,7 +502,9 @@ export class LocalSimulationEngine {
     multicastMac: string,
     portId: string,
   ): void {
-    this.services.getMulticastTable(switchId)?.addMembership(vlanId, multicastMac, portId);
+    this.services.processors
+      .getMulticastTable(switchId)
+      ?.addMembership(vlanId, multicastMac, portId);
   }
 
   removeMulticastMembership(
@@ -511,7 +513,9 @@ export class LocalSimulationEngine {
     multicastMac: string,
     portId: string,
   ): void {
-    this.services.getMulticastTable(switchId)?.removeMembership(vlanId, multicastMac, portId);
+    this.services.processors
+      .getMulticastTable(switchId)
+      ?.removeMembership(vlanId, multicastMac, portId);
   }
 
   addJoinedGroup(nodeId: string, group: string): void {
@@ -530,8 +534,8 @@ export class LocalSimulationEngine {
   private serializeState(): SimulationState {
     return {
       ...this.state,
-      natTables: this.services.serializeNatTables(),
-      connTrackTables: this.services.serializeConnTrackTables(),
+      natTables: this.services.processors.serializeNatTables(),
+      connTrackTables: this.services.processors.serializeConnTrackTables(),
     };
   }
 

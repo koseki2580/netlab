@@ -178,11 +178,11 @@ describe('ServiceOrchestrator', () => {
   it('creates and reuses a NAT processor only for routers with inside and outside interfaces', () => {
     const services = new ServiceOrchestrator(natTopology(), new HookEngine());
 
-    const natProcessor = services.getNatProcessor('nat-router');
+    const natProcessor = services.processors.getNatProcessor('nat-router');
 
     expect(natProcessor).not.toBeNull();
-    expect(services.getNatProcessor('nat-router')).toBe(natProcessor);
-    expect(services.getNatProcessor('isp-router')).toBeNull();
+    expect(services.processors.getNatProcessor('nat-router')).toBe(natProcessor);
+    expect(services.processors.getNatProcessor('isp-router')).toBeNull();
   });
 
   it('creates and reuses an ACL processor only for routers with ACL-configured interfaces', () => {
@@ -201,11 +201,11 @@ describe('ServiceOrchestrator', () => {
       new HookEngine(),
     );
 
-    const aclProcessor = services.getAclProcessor('router-1');
+    const aclProcessor = services.processors.getAclProcessor('router-1');
 
     expect(aclProcessor).not.toBeNull();
-    expect(services.getAclProcessor('router-1')).toBe(aclProcessor);
-    expect(services.getAclProcessor('server-1')).toBeNull();
+    expect(services.processors.getAclProcessor('router-1')).toBe(aclProcessor);
+    expect(services.processors.getAclProcessor('server-1')).toBeNull();
   });
 
   it('updates runtime DHCP state and emits four packet traces during a successful lease flow', async () => {
@@ -256,8 +256,8 @@ describe('ServiceOrchestrator', () => {
 
     expect(services.getRuntimeNodeIp('dhcp-client')).toBeNull();
     expect(services.getDhcpLeaseState('dhcp-client')).toBeNull();
-    expect(services.serializeNatTables()).toEqual([]);
-    expect(services.serializeConnTrackTables()).toEqual([]);
+    expect(services.processors.serializeNatTables()).toEqual([]);
+    expect(services.processors.serializeConnTrackTables()).toEqual([]);
   });
 
   it('registers a TCP connection after a successful handshake', async () => {

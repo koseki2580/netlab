@@ -192,7 +192,7 @@ describe('ForwardingPipeline — IGMP trace annotation', () => {
     const topology = igmpTopology();
     const { pipeline, services } = makePipeline(topology);
 
-    const igmpProcessor = services.getIgmpProcessor('router-1');
+    const igmpProcessor = services.processors.getIgmpProcessor('router-1');
     expect(igmpProcessor).not.toBeNull();
 
     const queryPacket = igmpProcessor!.buildGeneralQuery({
@@ -227,7 +227,7 @@ describe('ForwardingPipeline — IGMP router processing', () => {
 
     await pipeline.precompute(reportPacket, EMPTY_FAILURE_STATE);
 
-    const igmpProcessor = services.getIgmpProcessor('router-1');
+    const igmpProcessor = services.processors.getIgmpProcessor('router-1');
     expect(igmpProcessor).not.toBeNull();
     const snapshot = igmpProcessor!.snapshot();
     expect(snapshot.some((s) => s.group === '224.1.2.3')).toBe(true);
@@ -257,7 +257,7 @@ describe('ForwardingPipeline — IGMP router processing', () => {
     leavePacket.dstNodeId = 'router-1';
     await pipeline.precompute(leavePacket, EMPTY_FAILURE_STATE);
 
-    const igmpProcessor = services.getIgmpProcessor('router-1');
+    const igmpProcessor = services.processors.getIgmpProcessor('router-1');
     expect(igmpProcessor).not.toBeNull();
     const snapshot = igmpProcessor!.snapshot();
     expect(snapshot.some((s) => s.group === '224.1.2.3')).toBe(false);

@@ -1,9 +1,10 @@
 import type { HookEngine } from '../../hooks/HookEngine';
 import type { SimulationState } from '../../types/simulation';
 import type { NetworkTopology } from '../../types/topology';
+import type { SimulationEnginePort } from '../enginePort';
 import { LocalSimulationEngine, type LocalSimulationEngineOptions } from '../LocalSimulationEngine';
 
-export class MainThreadEngine extends LocalSimulationEngine {
+export class MainThreadEngine extends LocalSimulationEngine implements SimulationEnginePort {
   private readonly unsubscribers = new Set<() => void>();
   private disposed = false;
 

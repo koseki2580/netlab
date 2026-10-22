@@ -1,9 +1,5 @@
 import { NetlabError } from '../errors';
 import type { HookEngine } from '../hooks/HookEngine';
-import { MulticastTable, type MulticastTableEntry } from '../layers/l2-datalink/MulticastTable';
-import { AclProcessor } from '../layers/l3-network/AclProcessor';
-import { IgmpProcessor } from '../layers/l3-network/IgmpProcessor';
-import { NatProcessor } from '../layers/l3-network/NatProcessor';
 import { TcpConnectionTracker } from '../layers/l4-transport/TcpConnectionTracker';
 import {
   TcpOrchestrator,
@@ -14,15 +10,14 @@ import { buildDiscover, handleAck, handleOffer } from '../services/DhcpClient';
 import { handleDiscover, handleRequest, LeaseAllocator } from '../services/DhcpServer';
 import { buildDnsQuery, handleDnsResponse } from '../services/DnsClient';
 import { handleDnsQuery } from '../services/DnsServer';
-import type { ConnTrackTable } from '../types/acl';
 import { EMPTY_FAILURE_STATE, type FailureState } from '../types/failure';
-import type { NatTable } from '../types/nat';
 import type { DhcpMessage, InFlightPacket, UdpDatagram } from '../types/packets';
 import type { DhcpLeaseState, DnsCache } from '../types/services';
 import type { Neighbor, PacketTrace } from '../types/simulation';
 import type { TcpConnection } from '../types/tcp';
 import type { NetlabNode, NetworkTopology } from '../types/topology';
 import { AddressPlane } from './AddressPlane';
+import { DeviceProcessors } from './DeviceProcessors';
 import type { PrecomputeOptions, PrecomputeResult } from './types';
 
 function isUdpDatagram(
@@ -59,100 +54,31 @@ export class ServiceOrchestrator {
   private readonly runtimeNodeIps = new Map<string, string>();
   private readonly dhcpLeaseStates = new Map<string, DhcpLeaseState>();
   private readonly dnsCaches = new Map<string, DnsCache>();
-  private readonly natProcessors = new Map<string, NatProcessor>();
-  private readonly aclProcessors = new Map<string, AclProcessor>();
-  private readonly igmpProcessors = new Map<string, IgmpProcessor>();
-  private readonly multicastTables = new Map<string, MulticastTable>();
   private readonly joinedGroups = new Map<string, Set<string>>();
   private readonly tcpConnections = new TcpConnectionTracker();
-  /** Every node's addresses, its DHCP leases included. */
+  /** Every node's addresses, its DHCP leases included. This is its one owner. */
   readonly addresses: AddressPlane;
+  /** The per-router and per-switch processors (NAT, ACL, IGMP, multicast tables). */
+  readonly processors: DeviceProcessors;
+  /** Holds no state of its own, so one serves every connection while the sender is the same. */
+  private tcp: TcpOrchestrator | null = null;
 
   constructor(
     private readonly topology: NetworkTopology,
     _hookEngine: HookEngine,
   ) {
     this.addresses = new AddressPlane(topology, this);
+    this.processors = new DeviceProcessors(topology);
   }
 
   setPacketSender(packetSender: PacketSender): void {
     this.packetSender = packetSender;
+    this.tcp = null;
   }
 
-  serializeNatTables(): NatTable[] {
-    return Array.from(this.natProcessors.values()).map((processor) => processor.getTable());
-  }
-
-  serializeConnTrackTables(): ConnTrackTable[] {
-    return Array.from(this.aclProcessors.entries()).flatMap(([routerId, processor]) => {
-      const node = this.findNode(routerId);
-      if (!node || node.data.role !== 'router' || node.data.statefulFirewall !== true) {
-        return [];
-      }
-      return [processor.getConnTrackTable()];
-    });
-  }
-
-  getNatProcessor(routerId: string): NatProcessor | null {
-    const node = this.findNode(routerId);
-    if (!node || node.data.role !== 'router') return null;
-
-    const interfaces = node.data.interfaces ?? [];
-    const hasInside = interfaces.some((iface) => iface.nat === 'inside');
-    const hasOutside = interfaces.some((iface) => iface.nat === 'outside');
-    if (!hasInside || !hasOutside) return null;
-
-    if (!this.natProcessors.has(routerId)) {
-      this.natProcessors.set(routerId, new NatProcessor(routerId, this.topology));
-    }
-
-    return this.natProcessors.get(routerId) ?? null;
-  }
-
-  getAclProcessor(routerId: string): AclProcessor | null {
-    const node = this.findNode(routerId);
-    if (!node || node.data.role !== 'router') return null;
-
-    const interfaces = node.data.interfaces ?? [];
-    const hasAcl = interfaces.some(
-      (iface) => iface.inboundAcl !== undefined || iface.outboundAcl !== undefined,
-    );
-    if (!hasAcl) return null;
-
-    if (!this.aclProcessors.has(routerId)) {
-      this.aclProcessors.set(routerId, new AclProcessor(routerId, this.topology));
-    }
-
-    return this.aclProcessors.get(routerId) ?? null;
-  }
-
-  getIgmpProcessor(routerId: string): IgmpProcessor | null {
-    const node = this.findNode(routerId);
-    if (!node || node.data.role !== 'router') return null;
-
-    if (!this.igmpProcessors.has(routerId)) {
-      this.igmpProcessors.set(routerId, new IgmpProcessor());
-    }
-
-    return this.igmpProcessors.get(routerId) ?? null;
-  }
-
-  getMulticastTable(switchId: string): MulticastTable | null {
-    const node = this.findNode(switchId);
-    if (!node || node.data.role !== 'switch') return null;
-
-    if (!this.multicastTables.has(switchId)) {
-      this.multicastTables.set(switchId, new MulticastTable());
-    }
-    return this.multicastTables.get(switchId) ?? null;
-  }
-
-  getMulticastTableSnapshot(switchId: string): MulticastTableEntry[] {
-    return this.getMulticastTable(switchId)?.snapshot() ?? [];
-  }
-
-  getIgmpMembershipSnapshot(routerId: string): { interfaceId: string; group: string }[] {
-    return this.getIgmpProcessor(routerId)?.snapshot() ?? [];
+  private tcpOrchestrator(): TcpOrchestrator {
+    this.tcp ??= new TcpOrchestrator(this.topology, this.requirePacketSender(), this.addresses);
+    return this.tcp;
   }
 
   getJoinedGroups(nodeId: string): string[] {
@@ -322,11 +248,15 @@ export class ServiceOrchestrator {
     failureState: FailureState = EMPTY_FAILURE_STATE,
     sessionId: string = crypto.randomUUID(),
   ): Promise<TcpHandshakeResult> {
-    const result = await new TcpOrchestrator(
-      this.topology,
-      this.requirePacketSender(),
-      this.addresses,
-    ).handshake(clientNodeId, serverNodeId, srcPort, dstPort, sink, failureState, sessionId);
+    const result = await this.tcpOrchestrator().handshake(
+      clientNodeId,
+      serverNodeId,
+      srcPort,
+      dstPort,
+      sink,
+      failureState,
+      sessionId,
+    );
 
     if (result.success && result.connection) {
       this.tcpConnections.addConnection(result.connection);
@@ -352,11 +282,7 @@ export class ServiceOrchestrator {
       };
     }
 
-    const result = await new TcpOrchestrator(
-      this.topology,
-      this.requirePacketSender(),
-      this.addresses,
-    ).teardown(connection, sink, failureState);
+    const result = await this.tcpOrchestrator().teardown(connection, sink, failureState);
 
     if (result.success) {
       this.tcpConnections.removeConnection(connectionId);
@@ -386,19 +312,12 @@ export class ServiceOrchestrator {
     return this.tcpConnections.getConnectionsForNode(nodeId);
   }
 
-  resetProcessors(): void {
-    this.natProcessors.forEach((processor) => processor.clear());
-    this.natProcessors.clear();
-    this.aclProcessors.forEach((processor) => processor.clear());
-    this.aclProcessors.clear();
-  }
-
   clearAll(): void {
     this.runtimeNodeIps.clear();
     this.dhcpLeaseStates.clear();
     this.dnsCaches.clear();
     this.tcpConnections.clear();
-    this.resetProcessors();
+    this.processors.reset();
   }
 
   private requirePacketSender(): PacketSender {
