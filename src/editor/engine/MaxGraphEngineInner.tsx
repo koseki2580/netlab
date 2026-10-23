@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Cell, Graph, InternalEvent, Outline } from '@maxgraph/core';
 import type { FitPlugin, PanningHandler } from '@maxgraph/core';
 import { useI18n } from '../../i18n/useI18n';
-import { MaxGraphControls } from './MaxGraphControls';
-import { wireConnect, wireDelete } from './maxGraphInteraction';
-import { markDrawnLinks } from './maxGraphLinkMarks';
+import { MaxGraphControls } from '../../maxgraph/MaxGraphControls';
+import { wireConnect, wireDelete } from '../../maxgraph/maxGraphInteraction';
+import { markDrawnLinks } from '../../maxgraph/maxGraphLinkMarks';
+import { useGridToggle, useMaxGraph } from '../../maxgraph/useMaxGraph';
 import { applyVisibility, createLayers, syncCells } from './maxGraphModel';
 import type { GraphEngineProps } from './types';
 
@@ -34,19 +35,11 @@ export default function MaxGraphEngineInner({
 }: GraphEngineProps) {
   const { t } = useI18n();
   const hostRef = useRef<HTMLDivElement>(null);
-  const graphRef = useRef<Graph | null>(null);
   const layersRef = useRef<Cell[]>([]);
   const outlineHostRef = useRef<HTMLDivElement>(null);
-  const [gridEnabled, setGridEnabled] = useState(true);
   const fittedRef = useRef(false);
 
-  // Mount once: rebuilding the Graph every render would drop selection, the
-  // viewport and any gesture in progress.
-  useEffect(() => {
-    const host = hostRef.current;
-    if (!host) return undefined;
-    InternalEvent.disableContextMenu(host);
-    const graph = new Graph(host);
+  const { graph: mounted, graphRef } = useMaxGraph(hostRef, (graph) => {
     graph.setPanning(true);
     // Enabling panning is not enough: maxGraph's handler waits for the right
     // button or ctrl-shift by default, so dragging the canvas did nothing.
@@ -61,19 +54,17 @@ export default function MaxGraphEngineInner({
     // React node components draw.
     graph.setHtmlLabels(true);
     graph.setGridEnabled(true);
-    graphRef.current = graph;
     layersRef.current = createLayers(graph);
     // Overview of the whole diagram — the counterpart to React Flow's MiniMap.
     const outline = outlineHostRef.current ? new Outline(graph, outlineHostRef.current) : null;
 
     return () => {
       outline?.destroy();
-      graph.destroy();
-      graphRef.current = null;
       layersRef.current = [];
       fittedRef.current = false;
     };
-  }, []);
+  });
+  const [gridEnabled, toggleGrid] = useGridToggle(mounted, true);
 
   useEffect(() => {
     const graph = graphRef.current;
@@ -84,7 +75,7 @@ export default function MaxGraphEngineInner({
     // The same mark the simulator canvas puts on its links, so one locator
     // answers "is this link drawn?" on either canvas.
     markDrawnLinks(graph, edges);
-  }, [nodes, edges, highlightEdgeId, visibleLayers, t]);
+  }, [nodes, edges, highlightEdgeId, visibleLayers, t, graphRef]);
 
   // Drawing and deleting go through the seam: the owner holds the topology and
   // the undo history, so the engine reports rather than decides.
@@ -104,7 +95,7 @@ export default function MaxGraphEngineInner({
       stopConnect();
       stopDelete();
     };
-  }, [isValidConnection, onConnect, onConnectionRefused, onDeleteNode, onDeleteEdge]);
+  }, [isValidConnection, onConnect, onConnectionRefused, onDeleteNode, onDeleteEdge, graphRef]);
 
   // Draw the owner's selection — a device just placed is selected so its editor
   // opens, and the canvas should agree. A selection the learner made is already
@@ -117,7 +108,7 @@ export default function MaxGraphEngineInner({
     if (selectedNodeId === null) return;
     const cell = graph.getDataModel().getCell(selectedNodeId);
     if (cell) graph.setSelectionCell(cell);
-  }, [selectedNodeId, nodes]);
+  }, [selectedNodeId, nodes, graphRef]);
 
   useEffect(() => {
     const graph = graphRef.current;
@@ -142,7 +133,7 @@ export default function MaxGraphEngineInner({
       graph.removeListener(onMoved);
       graph.getSelectionModel().removeListener(onSelect);
     };
-  }, [onNodesMoved, onSelectNode]);
+  }, [onNodesMoved, onSelectNode, graphRef]);
 
   // Frame the topology once, after the cells are drawn. The simulator canvas
   // does the same; the editor did not, because framing moved the canvas away
@@ -162,7 +153,7 @@ export default function MaxGraphEngineInner({
     fit.maxFitScale = 1;
     fit.fitCenter({ margin: Math.round(Math.min(host.clientWidth, host.clientHeight) / 8) });
     fittedRef.current = true;
-  }, [nodes, edges]);
+  }, [nodes, edges, graphRef]);
 
   // Report the centre of the visible canvas so new elements land in view.
   useEffect(() => {
@@ -183,20 +174,15 @@ export default function MaxGraphEngineInner({
     view.addListener(InternalEvent.SCALE_AND_TRANSLATE, report);
     report();
     return () => view.removeListener(report);
-  }, [onViewCentre]);
+  }, [onViewCentre, graphRef]);
 
-  const withGraph = useCallback((fn: (graph: Graph) => void) => {
-    const graph = graphRef.current;
-    if (graph) fn(graph);
-  }, []);
-
-  const toggleGrid = useCallback(() => {
-    setGridEnabled((on) => {
-      const next = !on;
-      withGraph((graph) => graph.setGridEnabled(next));
-      return next;
-    });
-  }, [withGraph]);
+  const withGraph = useCallback(
+    (fn: (graph: Graph) => void) => {
+      const graph = graphRef.current;
+      if (graph) fn(graph);
+    },
+    [graphRef],
+  );
 
   return (
     // `editor-canvas` is the name both engines answer to, so a test addresses

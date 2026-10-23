@@ -1,5 +1,5 @@
 import { Cell, type CellStyle, type Graph } from '@maxgraph/core';
-import { markDrawnLinks } from '../../editor/engine/maxGraphLinkMarks';
+import { markDrawnLinks } from '../../maxgraph/maxGraphLinkMarks';
 import { getValidationMessages, type ValidationEdgeData } from '../ValidationEdgeLabel';
 import type { NetlabEdge, NetlabNode } from '../../types/topology';
 import { LINK_STATE_GLYPH, type LinkState } from '../edgeEncoding';

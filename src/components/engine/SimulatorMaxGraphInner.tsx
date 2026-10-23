@@ -1,44 +1,42 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ComponentType,
-} from 'react';
+import { useCallback, useMemo, useRef, type ComponentType } from 'react';
 import { createPortal } from 'react-dom';
-import {
-  Cell,
-  Graph,
-  InternalEvent,
-  Outline,
-  type PanningHandler,
-  type TooltipHandler,
-} from '@maxgraph/core';
+import { Cell, Graph, Outline, type PanningHandler, type TooltipHandler } from '@maxgraph/core';
 import { AREA_CLUSTER_NODE_TYPE } from '../../areas/areaLod';
 import { useI18n } from '../../i18n/useI18n';
 import { DefaultNode } from '../DefaultNode';
-import { MaxGraphControls } from '../../editor/engine/MaxGraphControls';
-import { wireConnect } from '../../editor/engine/maxGraphInteraction';
+import { MaxGraphControls } from '../../maxgraph/MaxGraphControls';
+import { useGridToggle, useMaxGraph } from '../../maxgraph/useMaxGraph';
 import type { GraphNodeProps } from '../../types/graph';
 import type { NetlabNode } from '../../types/topology';
 import type { SimulatorCanvasProps } from './canvasEngine';
 import {
   DEFAULT_NODE_H,
   DEFAULT_NODE_W,
-  decorateEdges,
   edgeVerdictMessages,
   LINK_STATE_GLYPH,
   linkStateOf,
-  syncSimulatorCells,
   type DrawnNode,
   type LinkState,
 } from './simulatorGraphModel';
+import {
+  type CanvasHandlers,
+  useCanvasSelection,
+  useDeviceDrag,
+  useHostHeight,
+  useLinkContextMenu,
+  useLinkDrawing,
+  useMinimapOutline,
+  usePacketRevision,
+  useReframeForPacket,
+  useRevealSelected,
+  useSimulatorDrawing,
+  useViewportSync,
+  useWheelZoom,
+} from './simulatorBehaviours';
 import { offersGridSnap } from './canvasOffers';
 import { PacketMarker } from './PacketMarker';
 import { canvasPacketFrom } from './packetStory';
-import { clearRegion, fitScale, overlaps, type Box } from './canvasFraming';
+import { frameDrawing } from './simulatorFraming';
 
 /**
  * The simulator canvas drawn by maxGraph.
@@ -49,138 +47,17 @@ import { clearRegion, fitScale, overlaps, type Box } from './canvasFraming';
  * links, selection and the viewport, and nothing else.
  */
 /**
- * How much room to leave around the drawing when framing it.
- *
- * `fitViewPadding` is a fraction of the canvas, the way React Flow read it —
- * passing it as pixels padded a 1350px canvas by ten of them and left the last
- * device of a wide topology clipped. Capped, because on a tall canvas the
- * fraction zooms out far enough to drop a readable topology below the level of
- * detail threshold, and a lesson that opens fully collapsed is a different
- * lesson.
- */
-function fitMargin(host: HTMLElement, padding: number): number {
-  const smaller = Math.min(host.clientWidth, host.clientHeight);
-  // Never a large share of the container: maxGraph subtracts twice the margin
-  // from the container before dividing by it, and a margin that eats the canvas
-  // takes the arithmetic negative and then to NaN, which it throws on.
-  return Math.round(Math.max(0, Math.min(padding * smaller, 48, smaller / 6)));
-}
-
-/**
  * Below this canvas height the overview is not drawn. On a short canvas it
  * covered a device at every width — the third device of a 240px lesson, the
  * last server of a 375px one — and a handful of devices needs no overview.
  */
 export const MINIMAP_MIN_CANVAS_HEIGHT = 400;
 
-/** maxGraph blows a small topology up eight times over; React Flow stopped at 2. */
-const MAX_FIT_SCALE = 2;
-
 /** What a link state is called and what it means, for the key and the hover. */
 const LINK_STATE_KEYS: Record<Exclude<LinkState, 'up'>, { label: string; hint: string }> = {
   down: { label: 'simulation.linkState.down', hint: 'simulation.linkState.downHint' },
   blocked: { label: 'simulation.linkState.blocked', hint: 'simulation.linkState.blockedHint' },
 };
-
-/**
- * Every element marked `data-canvas-overlay` that sits over this canvas, in the
- * canvas's own coordinates.
- *
- * Looked for across the whole page, not only among the canvas's children: a
- * lesson lays its own panels and cards over the canvas as siblings of it, and
- * any of them that marks itself is kept clear of the same way.
- */
-function overlaysOver(host: HTMLElement): Box[] {
-  const hostBox = host.getBoundingClientRect();
-  const canvas: Box = {
-    left: hostBox.left,
-    top: hostBox.top,
-    right: hostBox.right,
-    bottom: hostBox.bottom,
-  };
-  return Array.from(document.querySelectorAll<HTMLElement>('[data-canvas-overlay]'))
-    .map((element) => element.getBoundingClientRect())
-    .filter((box) => box.width > 0 && box.height > 0 && overlaps(box, canvas))
-    .map((box) => ({
-      left: box.left - hostBox.left,
-      top: box.top - hostBox.top,
-      right: box.right - hostBox.left,
-      bottom: box.bottom - hostBox.top,
-    }));
-}
-
-/**
- * Frame the drawing, keeping it clear of what sits over the canvas.
- *
- * The zoom overview and link-state key sit in the bottom-right corner, a
- * lesson's panels in the top-right, its explanation card perhaps top-left.
- * Framed as if they were not there, a device ended up under one of them. The
- * drawing is framed once over the whole canvas; only when that lands it under
- * one of them is it framed again, in the clear rectangle where it is drawn
- * largest.
- */
-function frameDrawing(graph: Graph, host: HTMLElement, padding: number): void {
-  const view = graph.getView();
-  const margin = fitMargin(host, padding);
-  const place = (region: Box): boolean => {
-    const bounds = graph.getGraphBounds();
-    const scale = view.scale;
-    if (!(bounds.width > 0 && bounds.height > 0) || !(scale > 0)) return false;
-    const drawing = { width: bounds.width / scale, height: bounds.height / scale };
-    const next = Math.min(MAX_FIT_SCALE, fitScale(region, drawing, margin));
-    if (!(next > 0) || !Number.isFinite(next)) return false;
-    const originX = bounds.x / scale - view.translate.x;
-    const originY = bounds.y / scale - view.translate.y;
-    view.scaleAndTranslate(
-      next,
-      (region.left + (region.right - region.left - drawing.width * next) / 2) / next - originX,
-      (region.top + (region.bottom - region.top - drawing.height * next) / 2) / next - originY,
-    );
-    return true;
-  };
-
-  const canvas = { width: host.clientWidth, height: host.clientHeight };
-  if (!place({ left: 0, top: 0, right: canvas.width, bottom: canvas.height })) return;
-  const overlays = overlaysOver(host);
-  const drawn = graph.getGraphBounds();
-  const drawing: Box = {
-    left: drawn.x,
-    top: drawn.y,
-    right: drawn.x + drawn.width,
-    bottom: drawn.y + drawn.height,
-  };
-  if (!overlays.some((box) => overlaps(drawing, box))) return;
-  const scale = view.scale;
-  const region = clearRegion(
-    canvas,
-    overlays,
-    { width: drawn.width / scale, height: drawn.height / scale },
-    margin,
-    MAX_FIT_SCALE,
-  );
-  if (region) place(region);
-}
-
-/** Area backdrops sit under devices; an overlay on one covers nothing a learner needs. */
-const AREA_BACKDROP_TYPES = new Set(['netlab-area', AREA_CLUSTER_NODE_TYPE]);
-
-/** Whether a marked overlay sits on any of the drawn devices. */
-function devicesCovered(graph: Graph, host: HTMLElement, ids: readonly string[]): boolean {
-  const overlays = overlaysOver(host);
-  if (overlays.length === 0) return false;
-  return ids.some((id) => {
-    const cell = graph.getDataModel().getCell(id);
-    const state = cell ? graph.getView().getState(cell) : null;
-    if (!state) return false;
-    const device: Box = {
-      left: state.x,
-      top: state.y,
-      right: state.x + state.width,
-      bottom: state.y + state.height,
-    };
-    return overlays.some((box) => overlaps(device, box));
-  });
-}
 
 export default function SimulatorMaxGraphInner({
   nodes,
@@ -218,21 +95,18 @@ export default function SimulatorMaxGraphInner({
   const outlineHostRef = useRef<HTMLDivElement>(null);
   // The overview draws from the graph, so it has to go before the graph does.
   const outlineRef = useRef<Outline | null>(null);
-  const [hostHeight, setHostHeight] = useState<number | null>(null);
+  const hostHeight = useHostHeight(hostRef);
   const showMinimap = minimap && hostHeight !== null && hostHeight >= MINIMAP_MIN_CANVAS_HEIGHT;
   const shownLinkStates = (['down', 'blocked'] as const).filter((state) =>
     edges.some((edge) => linkStateOf(edge) === state),
   );
-  const graphRef = useRef<Graph | null>(null);
   const containersRef = useRef(new Map<string, HTMLDivElement>());
   const sizesRef = useRef(new Map<string, { width: number; height: number }>());
-  const [ready, setReady] = useState(false);
   const fittedRef = useRef(false);
-  const applyingViewportRef = useRef(false);
 
   // Callbacks change identity every render; reading them from a ref keeps the
   // graph's listeners installed once instead of being torn down each time.
-  const handlers = useRef({
+  const handlers = useRef<CanvasHandlers>({
     onNodesChange,
     onNodeDragStop,
     selectNode,
@@ -282,11 +156,8 @@ export default function SimulatorMaxGraphInner({
   );
 
   // Mount once: rebuilding the Graph would drop selection and the viewport.
-  useEffect(() => {
-    const host = hostRef.current;
-    if (!host) return undefined;
-    InternalEvent.disableContextMenu(host);
-    const graph = new Graph(host);
+  // The interaction profile is fixed for the life of a canvas.
+  const { graph: mounted, graphRef } = useMaxGraph(hostRef, (graph) => {
     graph.setHtmlLabels(true);
     // A cell's value here is the element its device is rendered into, and
     // maxGraph's default turns any DOM value into its tag name -- every device
@@ -326,8 +197,6 @@ export default function SimulatorMaxGraphInner({
       panning.ignoreCell = false;
     }
     graph.setCellsMovable(profile.nodesDraggable);
-    graphRef.current = graph;
-    setReady(true);
 
     return () => {
       // Unmount runs this cleanup before the overview's own, so the overview
@@ -336,393 +205,56 @@ export default function SimulatorMaxGraphInner({
       // the page.
       outlineRef.current?.destroy();
       outlineRef.current = null;
-      graph.destroy();
-      graphRef.current = null;
-      setReady(false);
       fittedRef.current = false;
     };
-    // The interaction profile is fixed for the life of a canvas.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  });
+  const ready = mounted !== null;
 
-  // How tall the canvas is decides whether the overview fits on it. Measured
-  // before the drawing is framed, so framing sees the overlays that will stay.
-  useLayoutEffect(() => {
-    const host = hostRef.current;
-    if (!host) return undefined;
-    setHostHeight(host.clientHeight);
-    if (typeof ResizeObserver === 'undefined') return undefined;
-    const observer = new ResizeObserver(() => setHostHeight(host.clientHeight));
-    observer.observe(host);
-    return () => observer.disconnect();
-  }, []);
-
-  // The overview comes and goes with the canvas height, so it is built for the
-  // element it draws into rather than once with the graph.
-  useEffect(() => {
-    const graph = graphRef.current;
-    const outlineHost = outlineHostRef.current;
-    if (!graph || !showMinimap || !outlineHost) return undefined;
-    const outline = new Outline(graph, outlineHost);
-    outlineRef.current = outline;
-    return () => {
-      // Already gone if the graph was torn down first.
-      if (outlineRef.current !== outline) return;
-      outline.destroy();
-      outlineRef.current = null;
-    };
-  }, [ready, showMinimap]);
-
-  // Draw after React has put the devices in their containers, so what maxGraph
-  // measures and positions is the real device rather than an empty box.
-  useLayoutEffect(() => {
-    const graph = graphRef.current;
-    if (!graph) return;
-    syncSimulatorCells(graph, graph.getDefaultParent(), nodes, edges, drawnFor);
-    decorateEdges(graph, edges);
-  }, [nodes, edges, drawnFor, ready]);
-
-  // A device's size is whatever its component drew; feed it back so links meet
-  // the shape rather than a guessed box. Cached per id, so this settles.
-  useLayoutEffect(() => {
-    const graph = graphRef.current;
-    if (!graph) return;
-    let changed = false;
-    for (const node of nodes) {
-      // Measure the device itself, not the container maxGraph owns: the
-      // container carries whatever size the engine last gave it.
-      const device = containersRef.current.get(node.id)?.firstElementChild as HTMLElement | null;
-      if (!device) continue;
-      const width = device.offsetWidth;
-      const height = device.offsetHeight;
-      if (width <= 0 || height <= 0) continue;
-      const known = sizesRef.current.get(node.id);
-      if (known && known.width === width && known.height === height) continue;
-      sizesRef.current.set(node.id, { width, height });
-      changed = true;
-    }
-    if (changed) {
-      syncSimulatorCells(graph, graph.getDefaultParent(), nodes, edges, drawnFor);
-      decorateEdges(graph, edges);
-    }
-    // Frame the topology once, and only once the devices have been measured:
-    // fitting around guessed boxes puts the drawing somewhere the real one
-    // never occupies, which showed up as devices sitting behind the panels
-    // beside the canvas.
-    if (viewport || fittedRef.current || nodes.length === 0 || sizesRef.current.size === 0) return;
-    // Not before the canvas height is known: it decides whether the overview
-    // is on screen, and framing has to keep clear of it.
-    if (hostHeight === null) return;
-    const host = hostRef.current;
-    if (!host) return;
-    // Nothing to frame, or nowhere to frame it in. Leaving `fitted` unset means
-    // this is tried again once the canvas has been laid out — a canvas that is
-    // measured as zero-sized on its first pass is common enough inside a
-    // collapsed panel or an embed.
-    const bounds = graph.getGraphBounds();
-    if (host.clientWidth < 2 || host.clientHeight < 2) return;
-    if (!(bounds.width > 0 && bounds.height > 0) || !(graph.getView().scale > 0)) return;
-    // `fitViewPadding` is a fraction of the canvas, the way React Flow read it.
-    // Passing it as pixels padded a 1350px canvas by ten of them, so the
-    // topology sat flush against both edges with its last device clipped.
-    frameDrawing(graph, host, fitViewPadding);
-    fittedRef.current = true;
-  }, [nodes, edges, drawnFor, ready, fitViewPadding, viewport, hostHeight]);
-
-  // The packet is drawn over the graph in the graph's own coordinates, so it is
-  // placed again whenever the view moves or the cells are redrawn.
-  const [viewRevision, setViewRevision] = useState(0);
-  const hasPacket = packet !== undefined;
-  useEffect(() => {
-    const graph = graphRef.current;
-    if (!graph || !hasPacket) return undefined;
-    const view = graph.getView();
-    const model = graph.getDataModel();
-    const bump = () => setViewRevision((value) => value + 1);
-    view.addListener(InternalEvent.SCALE, bump);
-    view.addListener(InternalEvent.TRANSLATE, bump);
-    view.addListener(InternalEvent.SCALE_AND_TRANSLATE, bump);
-    model.addListener(InternalEvent.CHANGE, bump);
-    bump();
-    return () => {
-      view.removeListener(bump);
-      model.removeListener(bump);
-    };
-  }, [ready, hasPacket]);
-
-  // A panel a lesson shows over the canvas can grow onto a device as the packet
-  // moves — the packet viewer fills in once a hop is chosen, and covered the
-  // Server the packet was heading for. When a device ends up under a marked
-  // overlay, the drawing is framed again clear of it, unless the host drives
-  // the viewport itself.
-  useEffect(() => {
-    const graph = graphRef.current;
-    const host = hostRef.current;
-    if (!graph || !host || !packet || viewport) return;
-    const devices = handlers.current.nodes
-      .filter((node) => !AREA_BACKDROP_TYPES.has(node.type ?? ''))
-      .map((node) => node.id);
-    if (devicesCovered(graph, host, devices)) frameDrawing(graph, host, fitViewPadding);
-    // Checked when the packet moves on, not on every pan: a learner who moves
-    // the view away on purpose is left where they put it.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [packet?.id, ready]);
-
-  // Report the live zoom so the canvas can collapse areas when zoomed out, and
-  // the whole viewport so a host can mirror it — the sandbox's compare view
-  // keeps two canvases locked together that way.
-  useEffect(() => {
-    const graph = graphRef.current;
-    if (!graph) return undefined;
-    const view = graph.getView();
-    const report = () => {
-      handlers.current.onZoom(view.scale);
-      if (applyingViewportRef.current) return;
-      handlers.current.onViewportChange?.({
-        x: view.translate.x * view.scale,
-        y: view.translate.y * view.scale,
-        zoom: view.scale,
-      });
-    };
-    view.addListener(InternalEvent.SCALE, report);
-    view.addListener(InternalEvent.TRANSLATE, report);
-    view.addListener(InternalEvent.SCALE_AND_TRANSLATE, report);
-    report();
-    return () => {
-      view.removeListener(report);
-    };
-  }, [ready]);
-
-  // Follow a viewport the host is driving. Guarded so applying it does not read
-  // back out as a fresh change and bounce between two mirrored canvases.
-  useEffect(() => {
-    const graph = graphRef.current;
-    if (!graph || !viewport) return;
-    const view = graph.getView();
-    const dx = viewport.x / viewport.zoom;
-    const dy = viewport.y / viewport.zoom;
-    if (
-      Math.abs(view.scale - viewport.zoom) < 1e-6 &&
-      Math.abs(view.translate.x - dx) < 1e-6 &&
-      Math.abs(view.translate.y - dy) < 1e-6
-    ) {
-      return;
-    }
-    applyingViewportRef.current = true;
-    try {
-      view.scaleAndTranslate(viewport.zoom, dx, dy);
-    } finally {
-      applyingViewportRef.current = false;
-    }
-  }, [viewport, ready]);
-
-  // Clicking a device selects it; clicking empty canvas clears the selection.
-  useEffect(() => {
-    const graph = graphRef.current;
-    if (!graph) return undefined;
-    const onClick = (_sender: unknown, event: { getProperty: (key: string) => unknown }) => {
-      const mouse = event.getProperty('event') as MouseEvent | undefined;
-      // Only the primary button selects. maxGraph reports a right-click as a
-      // click too, and treating it as one cleared the selection the context
-      // menu had just made — the device's own panel never opened.
-      // A tap arrives as a touch event, which has no button at all: read as
-      // "not the primary button" it was dropped, so on a phone a tap never
-      // selected a device or opened a collapsed area.
-      if (mouse && typeof mouse.button === 'number' && mouse.button !== 0) return;
-      const current = handlers.current;
-      // A device is an HTML label, so the click often lands on markup maxGraph
-      // does not recognise as a cell. Ask the DOM which device was hit before
-      // concluding that empty canvas was.
-      const target = mouse?.target as HTMLElement | null;
-      const hitId = target?.closest?.('[data-id]')?.getAttribute('data-id') ?? null;
-      const cell = event.getProperty('cell') as Cell | null;
-      const node = current.nodes.find(
-        (candidate) => candidate.id === (hitId ?? (cell?.isVertex() ? String(cell.id) : null)),
-      );
-      // An area background is drawn but is not the learner's to pick; React
-      // Flow enforced that through `selectable`, so the engine does now.
-      if (node && node.selectable !== false) {
-        current.handleNodeClick(node);
-        return;
-      }
-      if (node) return;
-      if (cell?.isEdge()) {
-        current.selectEdge(String(cell.id));
-        return;
-      }
-      current.selectNode(null);
-      current.selectEdge(null);
-    };
-    graph.addListener(InternalEvent.CLICK, onClick);
-    return () => graph.removeListener(onClick);
-  }, [ready]);
-
-  // Dragging a device reports its new position the same way React Flow does,
-  // so the canvas above does not need to know which engine moved it.
-  useEffect(() => {
-    const graph = graphRef.current;
-    if (!graph) return undefined;
-    const onMoved = () => {
-      const current = handlers.current;
-      const moved = graph
-        .getSelectionCells()
-        .filter((cell) => cell.isVertex() && cell.id)
-        .map((cell) => ({
-          id: String(cell.id),
-          position: { x: cell.geometry?.x ?? 0, y: cell.geometry?.y ?? 0 },
-        }));
-      if (moved.length === 0) return;
-      current.onNodesChange(
-        moved.map((move) => ({ type: 'position' as const, id: move.id, position: move.position })),
-      );
-      const node = current.nodes.find((candidate) => candidate.id === moved[0]!.id);
-      if (node) {
-        current.onNodeDragStop({ ...node, position: moved[0]!.position }, [node]);
-      }
-    };
-    graph.addListener(InternalEvent.CELLS_MOVED, onMoved);
-    return () => graph.removeListener(onMoved);
-  }, [ready]);
-
-  // Drawing a new link goes through the same wiring the editor uses: maxGraph
-  // inserts a provisional edge, the adapter removes it and reports the
-  // connection, and the owner pushes the real topology back down.
-  useEffect(() => {
-    const graph = graphRef.current;
-    if (!graph || !profile.nodesDraggable) return undefined;
-    return wireConnect(graph, {
-      isValidConnection: ({ source, target }) =>
-        isValidConnection({ source, target, sourceHandle: null, targetHandle: null }),
-      onConnect: ({ source, target }) =>
-        onConnect({ source, target, sourceHandle: null, targetHandle: null }),
-    });
-  }, [ready, profile.nodesDraggable, isValidConnection, onConnect]);
-
-  // Bring a newly selected device into view, clear of the detail panel that
-  // covers the right band of the canvas.
-  const lastPannedRef = useRef<string | null>(null);
-  useEffect(() => {
-    const graph = graphRef.current;
-    if (!graph) return;
-    if (!selectedNodeId) {
-      lastPannedRef.current = null;
-      return;
-    }
-    if (lastPannedRef.current === selectedNodeId) return;
-    const cell = graph.getDataModel().getCell(selectedNodeId);
-    const geometry = cell?.geometry;
-    const host = hostRef.current;
-    if (!cell || !geometry || !host) return;
-
-    // Only move the view when the device would otherwise be hidden, and then
-    // by the least that reveals it. Centring on every selection threw the rest
-    // of the topology off the canvas — press the rightmost device and three of
-    // five disappear — and closing the panel did not bring them back.
-    const view = graph.getView();
-    const { scale, translate } = view;
-    // The detail panel covers the right band, so the device has to clear it.
-    const visibleWidth = Math.max(host.clientWidth - dock.width, host.clientWidth / 2);
-    const margin = 24;
-    const left = (geometry.x + translate.x) * scale;
-    const top = (geometry.y + translate.y) * scale;
-    const right = left + geometry.width * scale;
-    const bottom = top + geometry.height * scale;
-
-    let dx = 0;
-    if (left < margin) dx = (margin - left) / scale;
-    else if (right > visibleWidth - margin) dx = (visibleWidth - margin - right) / scale;
-    let dy = 0;
-    if (top < margin) dy = (margin - top) / scale;
-    else if (bottom > host.clientHeight - margin)
-      dy = (host.clientHeight - margin - bottom) / scale;
-
-    if (dx !== 0 || dy !== 0) {
-      view.setTranslate(translate.x + dx, translate.y + dy);
-    }
-    lastPannedRef.current = selectedNodeId;
-  }, [selectedNodeId, dock.width, ready]);
-
-  // Right-clicking a link opens its editor. Devices handle their own context
-  // menu in React, because a device is HTML; a link is an SVG shape maxGraph
-  // owns, so it is asked which link is under the pointer.
-  useEffect(() => {
-    const host = hostRef.current;
-    const graph = graphRef.current;
-    if (!host || !graph) return undefined;
-    const onContextMenu = (event: MouseEvent) => {
-      const current = handlers.current;
-      if (!current.sandbox) return;
-      const target = event.target as HTMLElement | null;
-      if (target?.closest?.('[data-id]')) return;
-      const rect = host.getBoundingClientRect();
-      const cell = graph.getCellAt(event.clientX - rect.left, event.clientY - rect.top);
-      if (!cell?.id) return;
-      const anchorElement = (graph.getView().getState(cell)?.shape?.node ??
-        host) as unknown as HTMLElement;
-      if (cell.isVertex()) {
-        // Zoomed far out a device is drawn by the graph rather than by React,
-        // so its own menu handler is not there to catch the press. An embedded
-        // sandbox is small enough to draw every device that way, and right-
-        // clicking a device then did nothing.
-        const node = current.nodes.find((candidate) => candidate.id === String(cell.id));
-        if (!node || node.type === AREA_CLUSTER_NODE_TYPE) return;
-        event.preventDefault();
-        current.selectNode(node.id);
-        current.sandbox.openEditPopover({
-          target: { kind: 'node', nodeId: node.id },
-          anchorElement,
-        });
-        return;
-      }
-      if (!cell.isEdge()) return;
-      event.preventDefault();
-      const edgeId = String(cell.id);
-      current.selectEdge(edgeId);
-      current.sandbox.openEditPopover({
-        target: { kind: 'edge', edgeId },
-        // The link's own shape, so the popover opens beside the link rather
-        // than at the corner of the canvas. It is an SVG element; the popover
-        // only measures it, and the React Flow canvas anchored on the same
-        // kind of element.
-        anchorElement,
-      });
-    };
-    host.addEventListener('contextmenu', onContextMenu);
-    return () => host.removeEventListener('contextmenu', onContextMenu);
-  }, [ready]);
-
-  // Zooming by wheel is ours to add: maxGraph installs no wheel handler, which
-  // is right for a mid-page illustration (the page keeps its scroll) and wrong
-  // for an interactive canvas, where zooming out is how a learner asks for the
-  // shape of a topology instead of its detail.
-  useEffect(() => {
-    const host = hostRef.current;
-    const graph = graphRef.current;
-    if (!host || !graph || !profile.zoomOnScroll) return undefined;
-    const onWheel = (event: WheelEvent) => {
-      if (profile.preventPageScroll) event.preventDefault();
-      if (event.deltaY < 0) graph.zoomIn();
-      else graph.zoomOut();
-    };
-    host.addEventListener('wheel', onWheel, { passive: !profile.preventPageScroll });
-    return () => host.removeEventListener('wheel', onWheel);
-  }, [ready, profile.zoomOnScroll, profile.preventPageScroll]);
+  useMinimapOutline(graphRef, ready, outlineHostRef, outlineRef, showMinimap);
+  useSimulatorDrawing({
+    graphRef,
+    ready,
+    hostRef,
+    nodes,
+    edges,
+    drawnFor,
+    containersRef,
+    sizesRef,
+    fittedRef,
+    viewport,
+    fitViewPadding,
+    hostHeight,
+  });
+  const viewRevision = usePacketRevision(graphRef, ready, packet !== undefined);
+  useReframeForPacket(
+    graphRef,
+    ready,
+    hostRef,
+    handlers,
+    packet?.id,
+    packet !== undefined,
+    viewport,
+    fitViewPadding,
+  );
+  useViewportSync(graphRef, ready, handlers, viewport);
+  useCanvasSelection(graphRef, ready, handlers);
+  useDeviceDrag(graphRef, ready, handlers);
+  useLinkDrawing(graphRef, ready, profile.nodesDraggable, isValidConnection, onConnect);
+  useRevealSelected(graphRef, ready, hostRef, selectedNodeId, dock.width);
+  useLinkContextMenu(graphRef, ready, hostRef, handlers);
+  useWheelZoom(graphRef, ready, hostRef, profile.zoomOnScroll, profile.preventPageScroll);
 
   // A grid to line devices up against, the same affordance the editor offers.
   // It was a button that did nothing here until it was wired.
-  const [gridEnabled, setGridEnabled] = useState(false);
-  const toggleGrid = useCallback(() => {
-    setGridEnabled((on) => {
-      const next = !on;
-      graphRef.current?.setGridEnabled(next);
-      return next;
-    });
-  }, []);
+  const [gridEnabled, toggleGrid] = useGridToggle(mounted, false);
 
-  const withGraph = useCallback((fn: (graph: Graph) => void) => {
-    const graph = graphRef.current;
-    if (graph) fn(graph);
-  }, []);
+  const withGraph = useCallback(
+    (fn: (graph: Graph) => void) => {
+      const graph = graphRef.current;
+      if (graph) fn(graph);
+    },
+    [graphRef],
+  );
 
   const openNodeMenu = useCallback(
     (node: NetlabNode) => (event: React.MouseEvent<HTMLDivElement>) => {

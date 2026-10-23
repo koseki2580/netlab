@@ -4,7 +4,7 @@ import { Graph, InternalEvent, type Cell } from '@maxgraph/core';
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import type { LayerId } from '../../types/layers';
 import type { NetlabNode } from '../../types/topology';
-import { wireConnect, wireDelete } from './maxGraphInteraction';
+import { wireConnect, wireDelete } from '../../maxgraph/maxGraphInteraction';
 import type { GraphConnection } from './types';
 import { createLayers, syncCells } from './maxGraphModel';
 

@@ -1,7 +1,7 @@
 import type { Cell, CellState, Graph, ImageShape } from '@maxgraph/core';
 import { ImageBox, InternalEvent, Point } from '@maxgraph/core';
 import type { ConnectionHandler } from '@maxgraph/core';
-import type { GraphConnection, GraphEngineProps } from './types';
+import type { GraphConnection, GraphEngineProps } from '../editor/engine/types';
 
 type ConnectHandlers = Pick<
   GraphEngineProps,
