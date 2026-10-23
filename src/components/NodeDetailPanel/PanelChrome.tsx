@@ -21,42 +21,6 @@ export interface ResolvedTarget {
   role?: NodeRole;
 }
 
-export const TAB_LABEL_KEYS: Record<DpTab, string> = {
-  overview: 'simulation.nodeDetail.tab.overview',
-  ifaces: 'simulation.nodeDetail.tab.interfaces',
-  routes: 'simulation.nodeDetail.tab.routes',
-  arp: 'simulation.nodeDetail.tab.arpServices',
-  acl: 'simulation.nodeDetail.tab.acl',
-  sandbox: 'simulation.nodeDetail.tab.sandbox',
-};
-
-export function getVisibleTabs(target: ResolvedTarget, canEdit: boolean): DpTab[] {
-  if (target.kind === 'edge') return ['overview'];
-  const role = target.role;
-  const tabs: DpTab[] = ['overview'];
-  if (role === 'router' || role === 'switch' || role === 'client' || role === 'server') {
-    if (role === 'router' || role === 'switch') tabs.push('ifaces');
-  }
-  if (role === 'router') tabs.push('routes');
-  if (role === 'router' || role === 'switch') tabs.push('arp');
-  // No ACL tab: it only ever said it was not wired to the simulation yet, and
-  // a tab that holds nothing is one more thing for a learner to open for
-  // nothing. `AclTab` stays, so showing it again is this one line.
-  if (
-    canEdit &&
-    (role === 'router' || role === 'switch' || role === 'client' || role === 'server')
-  ) {
-    tabs.push('sandbox');
-  }
-  return tabs;
-}
-
-export function getDefaultTab(target: ResolvedTarget): DpTab {
-  if (target.kind === 'edge') return 'overview';
-  if (target.role === 'router' || target.role === 'switch') return 'ifaces';
-  return 'overview';
-}
-
 export function getTabOrientation(width: number): 'row' | 'column' {
   return width < DP_NARROW_BREAKPOINT ? 'row' : 'column';
 }
@@ -338,7 +302,7 @@ export function ResizeHandle({ currentWidth, onResize }: ResizeHandleProps): JSX
 }
 
 interface TabNavProps {
-  tabs: readonly DpTab[];
+  tabs: readonly { id: DpTab; labelKey: string }[];
   activeTab: DpTab;
   orientation: 'row' | 'column';
   onSelect: (tab: DpTab) => void;
@@ -371,7 +335,7 @@ export function TabNav({ tabs, activeTab, orientation, onSelect }: TabNavProps):
         background: 'color-mix(in srgb, var(--netlab-bg-surface) 65%, var(--netlab-bg-panel))',
       }}
     >
-      {tabs.map((tab) => {
+      {tabs.map(({ id: tab, labelKey }) => {
         const isActive = tab === activeTab;
         return (
           <button
@@ -401,7 +365,7 @@ export function TabNav({ tabs, activeTab, orientation, onSelect }: TabNavProps):
               letterSpacing: 0.3,
             }}
           >
-            {t(TAB_LABEL_KEYS[tab])}
+            {t(labelKey)}
           </button>
         );
       })}

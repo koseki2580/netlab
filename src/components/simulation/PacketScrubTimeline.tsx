@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useI18n } from '../../i18n/useI18n';
-import { useSimulation } from '../../simulation/SimulationContext';
+import { dispatchShortcut } from '../../keyboard/shortcuts';
 import type { PacketHop } from '../../types/simulation';
 import { Marker } from './Marker';
 import { hopEventMarker } from './hopMarkers';
+import { usePlayback } from './playback';
 import { StepHoverCard, resolveStepPreview, useStepHover } from './StepHoverCard';
 
 /**
@@ -36,19 +37,14 @@ export function PacketScrubTimeline({
   ownKeyboard = true,
 }: PacketScrubTimelineProps = {}) {
   const { t } = useI18n();
-  const { engine, state } = useSimulation();
+  const playback = usePlayback();
   const rootRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<{ step: number; x: number } | null>(null);
   const stepHover = useStepHover();
 
-  const trace = useMemo(
-    () => state.traces.find((t) => t.packetId === state.currentTraceId) ?? null,
-    [state.traces, state.currentTraceId],
-  );
-  const totalSteps = trace?.hops.length ?? 0;
-  const stepIdx = state.currentStep >= 0 ? state.currentStep : 0;
-  const playing = state.status === 'running';
+  const { trace, totalHops: totalSteps, scrubIndex: stepIdx, jump: jumpTo } = playback;
+  const playing = playback.status === 'running';
 
   const stepFromX = useCallback(
     (clientX: number): number => {
@@ -60,62 +56,19 @@ export function PacketScrubTimeline({
     [totalSteps],
   );
 
-  const jumpTo = useCallback(
-    (step: number) => {
-      if (totalSteps === 0) return;
-      const clamped = Math.max(0, Math.min(totalSteps - 1, step));
-      engine.selectHop(clamped);
-    },
-    [engine, totalSteps],
-  );
-
-  const togglePlay = useCallback(() => {
-    if (totalSteps === 0) return;
-    if (playing) {
-      engine.pause();
-    } else {
-      engine.play();
-    }
-  }, [engine, playing, totalSteps]);
-
-  // Global keyboard shortcuts (suppressed when an input is focused).
+  // The playback keys (suppressed when an input is focused), read from the
+  // shortcut table. The latest handlers are kept in a ref so the listener is
+  // installed once rather than on every step.
+  const keysRef = useRef(playback.keys);
+  keysRef.current = playback.keys;
   useEffect(() => {
-    if (!ownKeyboard) return undefined;
-    if (typeof window === 'undefined') return undefined;
-
-    function isTypingTarget(target: EventTarget | null): boolean {
-      if (!(target instanceof HTMLElement)) return false;
-      const tag = target.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
-      if (target.isContentEditable) return true;
-      return false;
-    }
-
-    function handler(e: KeyboardEvent) {
-      if (isTypingTarget(e.target)) return;
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
-
-      if (e.key === ' ') {
-        e.preventDefault();
-        togglePlay();
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        jumpTo(stepIdx - (e.shiftKey ? 5 : 1));
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        jumpTo(stepIdx + (e.shiftKey ? 5 : 1));
-      } else if (e.key === 'Home') {
-        e.preventDefault();
-        jumpTo(0);
-      } else if (e.key === 'End') {
-        e.preventDefault();
-        jumpTo(totalSteps - 1);
-      }
-    }
-
+    if (!ownKeyboard || typeof window === 'undefined') return undefined;
+    const handler = (event: KeyboardEvent) => {
+      dispatchShortcut(event, keysRef.current);
+    };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [ownKeyboard, togglePlay, jumpTo, stepIdx, totalSteps]);
+  }, [ownKeyboard]);
 
   // Drag scrubbing — bind once per drag session.
   const onTrackPointerDown = useCallback(
@@ -124,9 +77,9 @@ export function PacketScrubTimeline({
       const target = e.currentTarget;
       target.setPointerCapture(e.pointerId);
       jumpTo(stepFromX(e.clientX));
-      engine.pause();
+      playback.pause();
     },
-    [engine, jumpTo, stepFromX, totalSteps],
+    [playback, jumpTo, stepFromX, totalSteps],
   );
 
   const onTrackPointerMove = useCallback(
@@ -276,7 +229,7 @@ export function PacketScrubTimeline({
               onClick={(e) => {
                 e.stopPropagation();
                 jumpTo(hop.step);
-                engine.pause();
+                playback.pause();
               }}
               onMouseEnter={(e) => stepHover.onEnter(i, e.currentTarget)}
               onMouseLeave={stepHover.onLeave}

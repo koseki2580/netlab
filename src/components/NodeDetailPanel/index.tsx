@@ -8,10 +8,8 @@ import { NetlabThemeScopeContext } from '../NetlabThemeScope';
 import { useNetlabUI } from '../NetlabUIContext';
 import { useViewport } from '../../utils/useViewport';
 import {
-  getDefaultTab,
   getPanelStyle,
   getTabOrientation,
-  getVisibleTabs,
   LearnerExplainerCallout,
   PanelHeader,
   ResizeHandle,
@@ -19,8 +17,8 @@ import {
 } from './PanelChrome';
 import { resolveLearnerExplainer, resolvePanelTarget } from './targetResolution';
 import { vlanColor } from './_colors';
-import { EdgeTab } from './tabs/EdgeTab';
 import { NodeTabs } from './tabs/NodeTabs';
+import { defaultTab, visibleTabs } from './tabs/registry';
 import { resolveDpTab, useNodeDetailDock, type DpMode } from './useNodeDetailDock';
 
 export { vlanColor };
@@ -61,10 +59,14 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
   const panelTarget = resolvePanelTarget(topology, selectedNodeId, selectedEdgeId, t);
   if (!panelTarget) return null;
 
-  const visibleTabs = getVisibleTabs(panelTarget.target, canEdit);
-  const defaultTab =
-    canEdit && visibleTabs.includes('sandbox') ? 'sandbox' : getDefaultTab(panelTarget.target);
-  const activeTab = resolveDpTab(dock.persistedTab, visibleTabs, defaultTab);
+  const tabContext = { target: panelTarget.target, sandbox: canEdit };
+  const tabs = visibleTabs(tabContext);
+  const activeTab = resolveDpTab(
+    dock.persistedTab,
+    tabs.map((tab) => tab.id),
+    defaultTab(tabContext),
+  );
+  const activeEntry = tabs.find((tab) => tab.id === activeTab);
   const { learnerKind, learnerCopy } = resolveLearnerExplainer(
     panelTarget.target.kind === 'node' ? panelTarget.node : undefined,
     themeScope?.audience ?? 'learner',
@@ -133,7 +135,7 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
           }}
         >
           <TabNav
-            tabs={visibleTabs}
+            tabs={tabs}
             activeTab={activeTab}
             orientation={orientation}
             onSelect={dock.setTab}
@@ -148,16 +150,16 @@ export const NodeDetailPanel = memo(function NodeDetailPanel({
               padding: '10px 14px',
             }}
           >
-            {panelTarget.edge ? (
-              <EdgeTab
+            {activeEntry?.target === 'edge' && panelTarget.edge ? (
+              <activeEntry.Component
                 edge={panelTarget.edge}
                 topology={topology}
                 onTopologyChange={onTopologyChange}
                 updateSnapshot={updateSnapshot}
               />
-            ) : panelTarget.node && selectedNodeId ? (
+            ) : activeEntry?.target === 'node' && panelTarget.node && selectedNodeId ? (
               <NodeTabs
-                activeTab={activeTab}
+                Tab={activeEntry.Component}
                 node={panelTarget.node}
                 nodeId={selectedNodeId}
                 canEdit={canEdit}

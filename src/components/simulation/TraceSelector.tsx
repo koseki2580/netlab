@@ -1,5 +1,6 @@
 import { useI18n } from '../../i18n/useI18n';
 import { useSimulation } from '../../simulation/SimulationContext';
+import { usePlayback } from './playback';
 import type { PacketTrace } from '../../types/simulation';
 
 function shortId(value: string): string {
@@ -23,7 +24,8 @@ function traceName(trace: PacketTrace, index: number): string {
 
 export function TraceSelector() {
   const { t } = useI18n();
-  const { engine, state } = useSimulation();
+  const { state } = useSimulation();
+  const playback = usePlayback();
   const { traces, currentTraceId } = state;
 
   if (traces.length < 2) {
@@ -50,7 +52,7 @@ export function TraceSelector() {
             <button
               key={trace.packetId}
               type="button"
-              onClick={() => engine.selectTrace(trace.packetId)}
+              onClick={() => playback.selectTrace(trace.packetId)}
               style={{
                 padding: '4px 8px',
                 borderRadius: 6,

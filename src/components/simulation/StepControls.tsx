@@ -3,6 +3,7 @@ import { useI18n } from '../../i18n/useI18n';
 import { useSimulation } from '../../simulation/SimulationContext';
 import { routingVerdict } from '../../simulation/pipeline/dispatch/routingHelpers';
 import type { PacketHop, RoutingDecision } from '../../types/simulation';
+import { usePlayback } from './playback';
 import { TraceSelector } from './TraceSelector';
 import { NARROW_CSS, hopReadout, traceOutcome } from './traceWords';
 
@@ -329,25 +330,15 @@ export function StepControls({
   continueAcrossTraces = false,
 }: StepControlsProps = {}) {
   const { t } = useI18n();
-  const { engine, state } = useSimulation();
-  const { status, currentStep, traces, currentTraceId } = state;
-  const traceIndex = traces.findIndex((t) => t.packetId === currentTraceId);
-  const trace = traceIndex >= 0 ? traces[traceIndex] : undefined;
-  const totalHops = trace?.hops.length ?? 0;
+  const { state } = useSimulation();
+  const playback = usePlayback({ continueAcrossTraces });
+  const { status, currentStep, traces } = state;
+  const { trace, traceIndex, totalHops, nextTrace, continuesToNext } = playback;
   const revealedHops = trace ? trace.hops.slice(0, currentStep + 1) : [];
-  const nextTrace = continueAcrossTraces && trace ? traces[traceIndex + 1] : undefined;
-  const continuesToNext = status === 'done' && nextTrace !== undefined;
   const showExchangePosition = continueAcrossTraces && trace !== undefined && traces.length > 1;
 
   const stepDisabled =
     status === 'running' || status === 'idle' || (status === 'done' && !continuesToNext);
-
-  const handleStep = () => {
-    if (continuesToNext && nextTrace) {
-      engine.selectTrace(nextTrace.packetId);
-    }
-    engine.step();
-  };
   const resetDisabled = status === 'idle';
   const idle = trace === undefined;
 
@@ -414,7 +405,7 @@ export function StepControls({
         )}
         <div style={{ display: 'flex', gap: 8 }}>
           <button
-            onClick={handleStep}
+            onClick={playback.step}
             data-testid={primary ? 'demo-primary-action' : 'demo-step-action'}
             disabled={stepDisabled}
             className="netlab-tap"
@@ -440,7 +431,7 @@ export function StepControls({
             {t('simulation.steps.next')}
           </button>
           <button
-            onClick={() => engine.reset()}
+            onClick={playback.reset}
             disabled={resetDisabled}
             className="netlab-tap"
             style={{

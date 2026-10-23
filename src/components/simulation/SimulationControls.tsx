@@ -4,6 +4,7 @@ import { useSimulation } from '../../simulation/SimulationContext';
 import type { InFlightPacket } from '../../types/packets';
 import type { NetworkTopology } from '../../types/topology';
 import { useNetlabContext } from '../NetlabContext';
+import { usePlayback } from './playback';
 import { NARROW_CSS, hopReadout, traceOutcome } from './traceWords';
 
 function buildDefaultPacket(topology: NetworkTopology): InFlightPacket | null {
@@ -104,23 +105,20 @@ export function SimulationControls({ showSend = true }: SimulationControlsProps 
   const { t } = useI18n();
   const { topology } = useNetlabContext();
   const { engine, state, sendPacket } = useSimulation();
+  const playback = usePlayback();
   const { status, highlightMode } = state;
 
   const handleSend = async () => {
     const packet = buildDefaultPacket(topology);
     if (!packet) return;
-    engine.reset();
+    playback.reset();
     await sendPacket(packet);
   };
 
-  const trace = state.traces.find((item) => item.packetId === state.currentTraceId);
+  const { trace } = playback;
   // A finished trace can be played again: play starts it over from the first
   // device, where a dead button left nothing to press but reset.
   const playDisabled = status === 'running' || status === 'idle';
-  const handlePlay = () => {
-    if (status === 'done') engine.reset();
-    engine.play();
-  };
   const pauseDisabled = status !== 'running';
   const stepDisabled = status === 'running' || status === 'done';
   const resetDisabled = status === 'idle';
@@ -158,7 +156,7 @@ export function SimulationControls({ showSend = true }: SimulationControlsProps 
           </button>
         )}
         <button
-          onClick={handlePlay}
+          onClick={playback.replay}
           disabled={playDisabled}
           style={playDisabled ? BTN_DISABLED : BTN_SECONDARY}
           title={t('simulation.controls.play')}
@@ -169,7 +167,7 @@ export function SimulationControls({ showSend = true }: SimulationControlsProps 
           ▶<span className="netlab-wide"> {t('simulation.controls.play')}</span>
         </button>
         <button
-          onClick={() => engine.pause()}
+          onClick={playback.pause}
           disabled={pauseDisabled}
           style={pauseDisabled ? BTN_DISABLED : BTN_SECONDARY}
           title={t('simulation.controls.pause')}
@@ -180,7 +178,7 @@ export function SimulationControls({ showSend = true }: SimulationControlsProps 
           ⏸<span className="netlab-wide"> {t('simulation.controls.pause')}</span>
         </button>
         <button
-          onClick={() => engine.step()}
+          onClick={playback.step}
           disabled={stepDisabled}
           style={stepDisabled ? BTN_DISABLED : BTN_SECONDARY}
           title={t('simulation.controls.step')}
@@ -191,7 +189,7 @@ export function SimulationControls({ showSend = true }: SimulationControlsProps 
           →<span className="netlab-wide"> {t('simulation.controls.step')}</span>
         </button>
         <button
-          onClick={() => engine.reset()}
+          onClick={playback.reset}
           disabled={resetDisabled}
           style={resetDisabled ? BTN_DISABLED : BTN_SECONDARY}
           title={t('simulation.controls.reset')}

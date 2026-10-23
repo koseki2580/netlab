@@ -7,6 +7,7 @@ import { useSimulation } from '../../simulation/SimulationContext';
 import type { PacketHop, PacketTrace } from '../../types/simulation';
 import { TraceAnnotationAnchor } from '../sandbox/annotations/TraceAnnotationAnchor';
 import { useNetlabContext } from '../NetlabContext';
+import { usePlayback } from './playback';
 import { TraceSelector } from './TraceSelector';
 import { TRACE_FILTER_PARAM, TraceFilterInput } from './traceFilter/TraceFilterInput';
 import type { TraceFilterPredicate, TraceFilterResult } from './traceFilter/parser';
@@ -340,10 +341,11 @@ export interface PacketTimelineProps {
 export const PacketTimeline = memo(function PacketTimeline({ filter }: PacketTimelineProps = {}) {
   const { t } = useI18n();
   const { topology } = useNetlabContext();
-  const { engine, state, exportPcap } = useSimulation();
+  const { state, exportPcap } = useSimulation();
+  const playback = usePlayback();
   const sandbox = useSandboxOrNull();
-  const { traces, currentTraceId, currentStep, selectedHop } = state;
-  const trace = traces.find((t) => t.packetId === currentTraceId);
+  const { currentTraceId, currentStep, selectedHop } = state;
+  const { trace } = playback;
   const [inputFilter, setInputFilter] = useState<TraceFilterPredicate>(() => identityFilter);
   // The filter and the capture download are tools for someone who already
   // reads traces; they wait behind a disclosure unless a filter is in force.
@@ -442,7 +444,7 @@ export const PacketTimeline = memo(function PacketTimeline({ filter }: PacketTim
         <button
           type="button"
           aria-label={t('simulation.timeline.clear')}
-          onClick={() => engine.reset()}
+          onClick={playback.reset}
           style={{
             marginLeft: 'auto',
             background: 'none',
@@ -569,7 +571,7 @@ export const PacketTimeline = memo(function PacketTimeline({ filter }: PacketTim
                     : null
                 }
                 isActive={hop.step === activeStep}
-                onClick={() => engine.selectHop(hop.step)}
+                onClick={() => playback.jump(hop.step)}
                 onEdit={(anchorElement) => {
                   sandbox?.openEditPopover({
                     target: { kind: 'packet', traceId: trace.packetId, hopIndex: hop.step },
