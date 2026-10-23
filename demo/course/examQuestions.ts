@@ -1,3 +1,5 @@
+import { COURSE_PATH, lessonPath } from '../lessonManifest';
+
 /**
  * The final test of the beginner path: ten questions, one concept each, and
  * the lessons that teach them in the order a beginner should take them.
@@ -44,7 +46,7 @@ export interface ExamQuestion {
 export const EXAM_PATH: readonly PathStop[] = [
   {
     id: 'course',
-    path: '/course',
+    path: COURSE_PATH,
     title: { en: 'Getting started (6 steps)', ja: '入門コース（6 ステップ）' },
     teaches: {
       en: 'The pieces of a network and how they connect',
@@ -53,7 +55,7 @@ export const EXAM_PATH: readonly PathStop[] = [
   },
   {
     id: 'subnetting',
-    path: '/learning/subnetting',
+    path: lessonPath('/learning/subnetting'),
     title: { en: 'Subnetting drill', ja: 'サブネットの練習' },
     teaches: {
       en: 'Reading an address and its /number',
@@ -62,7 +64,7 @@ export const EXAM_PATH: readonly PathStop[] = [
   },
   {
     id: 'arp',
-    path: '/networking/arp',
+    path: lessonPath('/networking/arp'),
     title: { en: 'ARP basics', ja: 'ARP の基本' },
     teaches: {
       en: 'What happens before the first packet leaves',
@@ -71,7 +73,7 @@ export const EXAM_PATH: readonly PathStop[] = [
   },
   {
     id: 'routing',
-    path: '/routing/client-server',
+    path: lessonPath('/routing/client-server'),
     title: { en: 'Client and server', ja: 'クライアントとサーバ' },
     teaches: {
       en: 'Crossing from one network to another',
@@ -80,7 +82,7 @@ export const EXAM_PATH: readonly PathStop[] = [
   },
   {
     id: 'tcp',
-    path: '/simulation/tcp-handshake',
+    path: lessonPath('/simulation/tcp-handshake'),
     title: { en: 'TCP handshake', ja: 'TCP のハンドシェイク' },
     teaches: {
       en: 'How TCP starts a conversation',
@@ -89,7 +91,7 @@ export const EXAM_PATH: readonly PathStop[] = [
   },
   {
     id: 'udp',
-    path: '/networking/udp',
+    path: lessonPath('/networking/udp'),
     title: { en: 'UDP datagram', ja: 'UDP のデータグラム' },
     teaches: {
       en: 'How UDP differs from TCP',
@@ -98,7 +100,7 @@ export const EXAM_PATH: readonly PathStop[] = [
   },
   {
     id: 'dns',
-    path: '/services/dhcp-dns',
+    path: lessonPath('/services/dhcp-dns'),
     title: { en: 'DHCP and DNS', ja: 'DHCP と DNS' },
     teaches: {
       en: 'Two services every device relies on',
@@ -107,7 +109,7 @@ export const EXAM_PATH: readonly PathStop[] = [
   },
   {
     id: 'nat',
-    path: '/simulation/nat',
+    path: lessonPath('/simulation/nat'),
     title: { en: 'NAT / PAT', ja: 'NAT / PAT' },
     teaches: {
       en: 'What the edge router does to addresses',

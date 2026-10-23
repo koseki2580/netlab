@@ -1,24 +1,8 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, useState } from 'react';
 import { Http2Orchestrator } from '../../src/layers/l7-application/h2/Http2Orchestrator';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
-
-const PANEL_STYLE: CSSProperties = {
-  border: '1px solid var(--netlab-border-subtle)',
-  borderRadius: 8,
-  padding: 12,
-};
-
-const BUTTON_STYLE: CSSProperties = {
-  border: '1px solid var(--netlab-border-strong)',
-  borderRadius: 6,
-  background: 'var(--netlab-accent-cyan)',
-  color: 'var(--netlab-bg-primary)',
-  cursor: 'pointer',
-  fontFamily: 'monospace',
-  fontWeight: 700,
-  padding: '8px 12px',
-};
+import { LESSON_BUTTON, LESSON_PANEL } from '../components/lessonStyles';
 
 export default function Http2Demo() {
   return (
@@ -44,7 +28,7 @@ function Http2DemoInner() {
       data-lesson-grid=""
       style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: 16 }}
     >
-      <section style={PANEL_STYLE} aria-label={t('HTTP/2 streams', 'HTTP/2 のストリーム')}>
+      <section style={LESSON_PANEL} aria-label={t('HTTP/2 streams', 'HTTP/2 のストリーム')}>
         <div
           data-testid="lesson-brief"
           style={{
@@ -67,7 +51,7 @@ function Http2DemoInner() {
         <button
           type="button"
           data-testid="h2-tcp-loss-toggle"
-          style={BUTTON_STYLE}
+          style={LESSON_BUTTON}
           onClick={() => setLoss((value) => !value)}
         >
           {loss
@@ -83,7 +67,7 @@ function Http2DemoInner() {
           ))}
         </div>
       </section>
-      <aside style={PANEL_STYLE} aria-label={t('HTTP/2 frame order', 'HTTP/2 のフレームの順序')}>
+      <aside style={LESSON_PANEL} aria-label={t('HTTP/2 frame order', 'HTTP/2 のフレームの順序')}>
         <h3 style={{ marginTop: 0 }}>{t('Frame Order', 'フレームの順序')}</h3>
         {run.frames
           .filter((frame) => frame.kind === 'DATA')

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PacketHop, PacketTrace } from '../../src/types/simulation';
-import { arpLearnedAt, arpTablesAtStep } from './arpAtStep';
+import { arpLearnedAt, arpTablesAtStep } from '../components/stateAtStep';
 
 function hop(
   step: number,

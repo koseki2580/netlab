@@ -1,6 +1,7 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties, HTMLAttributes } from 'react';
 import { useT } from '../localeContext';
 import DemoShell from '../DemoShell';
+import { handshakeNumbers } from '../components/stateAtStep';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import {
@@ -130,22 +131,6 @@ export function shownHandshakeSegment(
   return HANDSHAKE_LABELS[trace.label ?? ''] ?? null;
 }
 
-/**
- * The numbers the three messages agreed on, as the lesson explains them. A SYN
- * uses up one sequence number, so the next number each side sends is its
- * SYN's (or SYN-ACK's) SEQ plus 1 — which is what the connection keeps as
- * localSeq and remoteSeq. Shown side by side unexplained, the SYN's SEQ and
- * localSeq looked off by one.
- */
-export function handshakeNumbers(connection: { localSeq: number; remoteSeq: number }) {
-  return {
-    synSeq: connection.localSeq - 1,
-    localSeq: connection.localSeq,
-    synAckSeq: connection.remoteSeq - 1,
-    remoteSeq: connection.remoteSeq,
-  };
-}
-
 function formatFlags(segment: TcpSegment): string {
   return (
     Object.entries(segment.flags)
@@ -174,6 +159,11 @@ function readSelectedSegment(
     ack: transport.ack,
     flags: formatFlags(transport),
   };
+}
+
+/** A badge over the end it speaks for: the diagram is framed as if it were not there. */
+function DeviceLabelNote(props: HTMLAttributes<HTMLDivElement>) {
+  return <LessonNote labelsDevice {...props} />;
 }
 
 function stateAccent(state: TcpState): string {
@@ -273,7 +263,7 @@ function StateBadge({
   // for, as on a wide one: read in the text below, both were off screen while
   // the buttons that change them were being pressed.
   const { isNarrow } = useViewport();
-  const Box = isNarrow ? 'div' : LessonNote;
+  const Box = isNarrow ? 'div' : DeviceLabelNote;
 
   return (
     <Box
@@ -791,6 +781,7 @@ function TcpHandshakeDemoInner() {
         {shown ? (
           <LessonPinned order={11}>
             <LessonNote
+              labelsDevice
               data-testid="tcp-speech"
               data-segment={shown}
               data-speaker={SEGMENT_SPEAKER[shown]}

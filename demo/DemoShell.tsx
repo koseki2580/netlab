@@ -25,6 +25,7 @@ import { TouchHelpOverlay } from './components/TouchHelpOverlay';
 import { I18nProvider } from '../src/i18n/I18nProvider';
 import { readLearningLocale } from './learning/learningLocale';
 import { DEMO_COPY_JA } from './galleryJa';
+import { SCENARIO_ROUTES } from './lessonManifest';
 import { GalleryLocaleProvider } from './localeContext';
 import { examLevelFromSearch, examRoute } from './course/examAttempt';
 
@@ -37,15 +38,6 @@ const GITHUB_ICON = (
 const isE2e =
   (import.meta as ImportMeta & { readonly env?: { readonly VITE_E2E?: string } }).env?.VITE_E2E ===
   'true';
-
-const SCENARIO_ROUTES: Record<string, string> = {
-  'basic-arp': '/networking/arp',
-  'fragmented-echo': '/networking/mtu-fragmentation',
-  'tcp-handshake': '/simulation/tcp-handshake',
-  'ospf-convergence': '/routing/ospf-convergence',
-  'stp-loop': '/networking/stp',
-  'nat-basics': '/simulation/nat',
-};
 
 /**
  * Read the persisted settings so a lesson honours the gallery's Settings panel.

@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, useState } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { decapGre, encapGre } from '../../src/layers/l3-network/tunneling/GreEncap';
@@ -6,12 +6,7 @@ import type { IpPacket } from '../../src/types/packets';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
-
-const PANEL_STYLE: CSSProperties = {
-  border: '1px solid var(--netlab-border-subtle)',
-  borderRadius: 8,
-  padding: 12,
-};
+import { LESSON_PANEL } from '../components/lessonStyles';
 
 const innerPacket: IpPacket = {
   layer: 'L3',
@@ -121,14 +116,14 @@ function GreDemoInner() {
               ? t('Change Tunnel Key', 'トンネルキーを変える')
               : t('Restore Tunnel Key', 'トンネルキーを元に戻す')}
           </button>
-          <div style={PANEL_STYLE}>
+          <div style={LESSON_PANEL}>
             <h3 style={{ marginTop: 0 }}>{t('Outer header', '外側のヘッダ')}</h3>
             <div data-testid="gre-outer">
               {t('Outer IP:', '外側 IP:')} {outer.srcIp} → {outer.dstIp} / proto {outer.protocol}
             </div>
             <div data-testid="gre-shim">GRE key: {decapped.key}</div>
           </div>
-          <div style={PANEL_STYLE}>
+          <div style={LESSON_PANEL}>
             <h3 style={{ marginTop: 0 }}>{t('Inner packet', '内側のパケット')}</h3>
             <div data-testid="gre-inner">
               {t('Inner IP:', '内側 IP:')} {decapped.inner.srcIp} → {decapped.inner.dstIp}

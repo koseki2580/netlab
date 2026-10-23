@@ -2,6 +2,7 @@ import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DemoShell from '../DemoShell';
+import { routeComparison } from '../components/stateAtStep';
 import type { CommandPaletteItem } from '../../src/components/CommandPalette';
 import { AudiencePill, useAudience } from '../../src/components/AudiencePill';
 import { NetlabAppShellV2 } from '../../src/components/NetlabAppShellV2';
@@ -95,20 +96,6 @@ export function probePath(trace: PacketTrace): string {
     if (hop.event === 'deliver' || hop.event === 'drop') break;
   }
   return labels.join(' → ');
-}
-
-/**
- * The probe route to call current, and the one before it. A probe sent while
- * the link was in another state is no longer the route: after "Fail link" the
- * up-link run sat under "this route" until a new probe was sent.
- */
-export function routeComparison(
-  runs: readonly ProbeRun[],
-  linkDown: boolean,
-): { current: ProbeRun | null; previous: ProbeRun | null } {
-  const last = runs[runs.length - 1] ?? null;
-  if (last && last.linkDown !== linkDown) return { current: null, previous: last };
-  return { current: last, previous: runs[runs.length - 2] ?? null };
 }
 
 function RouteComparison({ runs, linkDown }: { runs: readonly ProbeRun[]; linkDown: boolean }) {

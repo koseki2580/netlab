@@ -26,24 +26,10 @@ import { basicArp } from '../../src/scenarios';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import { useViewport } from '../../src/utils/useViewport';
 import { readDemoEmbedParams } from '../embedParams';
-import { arpLearnedAt, arpTablesAtStep } from './arpAtStep';
+import { arpLearnedAt, arpTablesAtStep, shownStep } from '../components/stateAtStep';
+import { LESSON_CARD, LESSON_LABEL } from '../components/lessonStyles';
 
-const CARD_STYLE: CSSProperties = {
-  background: 'var(--netlab-bg-primary)',
-  border: '1px solid var(--netlab-bg-surface)',
-  borderRadius: 10,
-  padding: 12,
-};
-
-const LABEL_STYLE: CSSProperties = {
-  color: 'var(--netlab-text-secondary)',
-  fontFamily: 'monospace',
-  fontSize: 11,
-  fontWeight: 700,
-  letterSpacing: 1,
-  marginBottom: 8,
-  textTransform: 'uppercase',
-};
+const CARD_STYLE: CSSProperties = { ...LESSON_CARD, border: '1px solid var(--netlab-bg-surface)' };
 
 // The plain first line of the lesson: larger than everything around it, and
 // in the reading face rather than the monospace the readouts use.
@@ -93,11 +79,8 @@ function ArpBubbleWords({ children }: { children: ReactNode }) {
 /** The trace on screen, and the step it is at (-1: before the first, or after Reset). */
 function useArpStep() {
   const { state } = useSimulation();
-  const trace =
-    state.traces.find((candidate) => candidate.packetId === state.currentTraceId) ??
-    state.traces[state.traces.length - 1] ??
-    null;
-  return { trace, step: state.currentStep, finalTables: state.nodeArpTables ?? {} };
+  const { trace, step } = shownStep(state, { fallBackToLast: true });
+  return { trace, step, finalTables: state.nodeArpTables ?? {} };
 }
 
 function ArpTablePanel() {
@@ -111,7 +94,7 @@ function ArpTablePanel() {
 
   return (
     <div style={CARD_STYLE}>
-      <div style={LABEL_STYLE}>
+      <div style={LESSON_LABEL}>
         {t('ARP tables (what each device learned)', 'ARP テーブル（各機器が覚えた対応）')}
       </div>
       {entries.length === 0 ? (
@@ -202,7 +185,7 @@ function ArpDiffCard() {
   const name = router.data.label ?? router.id;
   return (
     <div data-testid="arp-change" style={CARD_STYLE}>
-      <div style={LABEL_STYLE}>
+      <div style={LESSON_LABEL}>
         {t('ARP over time', 'ARP の変化')} · {name}
       </div>
       <div style={{ ...DETAIL_STYLE, fontFamily: 'monospace' }}>
@@ -343,7 +326,7 @@ function ArpDemoInner() {
         >
           <LessonStepBar />
           <div style={CARD_STYLE}>
-            <div style={LABEL_STYLE}>{t('Controls', '操作')}</div>
+            <div style={LESSON_LABEL}>{t('Controls', '操作')}</div>
             <LessonPinned>
               <button
                 type="button"

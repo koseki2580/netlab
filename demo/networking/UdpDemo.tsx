@@ -12,39 +12,15 @@ import { SimulationProvider, useSimulation } from '../../src/simulation/Simulati
 import type { PacketTrace } from '../../src/types/simulation';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
+import { LESSON_CARD, LESSON_LABEL, LESSON_TEAL_BUTTON } from '../components/lessonStyles';
 
 const DEFAULT_PORT = 7777;
 const DEFAULT_PAYLOAD = 'hello';
 
-const CARD_STYLE: CSSProperties = {
-  background: 'var(--netlab-bg-primary)',
-  border: '1px solid #1f2937',
-  borderRadius: 10,
-  padding: 12,
-};
-
-const LABEL_STYLE: CSSProperties = {
-  color: 'var(--netlab-text-secondary)',
-  fontFamily: 'monospace',
-  fontSize: 11,
-  fontWeight: 700,
-  letterSpacing: 1,
-  marginBottom: 8,
-  textTransform: 'uppercase',
-};
-
 const BUTTON_STYLE: CSSProperties = {
   // A label is one unit: 「UDP を送る → ポート 7777」 broke after 「ポ」.
   whiteSpace: 'nowrap',
-  padding: '8px 12px',
-  borderRadius: 8,
-  border: '1px solid #0f766e',
-  background: '#115e59',
-  color: '#ecfeff',
-  cursor: 'pointer',
-  fontFamily: 'monospace',
-  fontSize: 12,
-  fontWeight: 700,
+  ...LESSON_TEAL_BUTTON,
 };
 
 // The plain first line of the lesson: larger than everything around it, and
@@ -309,8 +285,8 @@ function UdpDemoInner() {
             boxSizing: 'border-box',
           }}
         >
-          <div style={CARD_STYLE}>
-            <div style={LABEL_STYLE}>{t('UDP CONTROLS', 'UDP の操作')}</div>
+          <div style={LESSON_CARD}>
+            <div style={LESSON_LABEL}>{t('UDP CONTROLS', 'UDP の操作')}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <label
                 style={{
@@ -396,7 +372,7 @@ function UdpDemoInner() {
             <div
               data-testid="udp-sent-result"
               style={{
-                ...CARD_STYLE,
+                ...LESSON_CARD,
                 ...DETAIL_STYLE,
                 fontSize: 14,
                 fontWeight: 700,
@@ -446,9 +422,9 @@ function UdpSizeResult({ payloadBytes, pieces }: { payloadBytes: number; pieces:
     <div
       data-testid="udp-size-result"
       data-pieces={pieces}
-      style={{ ...CARD_STYLE, ...DETAIL_STYLE, fontSize: 12 }}
+      style={{ ...LESSON_CARD, ...DETAIL_STYLE, fontSize: 12 }}
     >
-      <div style={LABEL_STYLE}>{t('HOW BIG IT WAS', '送ったものの大きさ')}</div>
+      <div style={LESSON_LABEL}>{t('HOW BIG IT WAS', '送ったものの大きさ')}</div>
       <div data-testid="udp-size-bytes">
         {t(
           `Data ${payloadBytes} B + UDP header 8 B + IP header 20 B = one IP packet of ${size.ipBytes} B`,

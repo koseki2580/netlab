@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, useState } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { answerArpFromEvpnCache } from '../../src/layers/l3-network/tunneling/ArpSuppression';
@@ -12,12 +12,7 @@ import type { EthernetFrame } from '../../src/types/packets';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
-
-const PANEL_STYLE: CSSProperties = {
-  border: '1px solid var(--netlab-border-subtle)',
-  borderRadius: 8,
-  padding: 12,
-};
+import { LESSON_PANEL } from '../components/lessonStyles';
 
 const frame: EthernetFrame = {
   layer: 'L2',
@@ -154,7 +149,10 @@ function VxlanEvpnDemoInner() {
           <NetlabCanvas style={{ height: 560 }} />
         </section>
         <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div data-testid="lesson-brief" style={{ ...PANEL_STYLE, fontSize: 12, lineHeight: 1.7 }}>
+          <div
+            data-testid="lesson-brief"
+            style={{ ...LESSON_PANEL, fontSize: 12, lineHeight: 1.7 }}
+          >
             <strong>{t('What you are looking at', 'この画面の見方')}</strong>
             <div>
               {t(
@@ -184,7 +182,7 @@ function VxlanEvpnDemoInner() {
               ? t('Disable ARP Suppression', 'ARP 抑止を無効にする')
               : t('Enable ARP Suppression', 'ARP 抑止を有効にする')}
           </button>
-          <div style={PANEL_STYLE}>
+          <div style={LESSON_PANEL}>
             <h3 style={{ marginTop: 0 }}>VXLAN</h3>
             <div data-testid="vxlan-outer">
               {t('Outer UDP/', '外側 UDP/')}
@@ -197,7 +195,7 @@ function VxlanEvpnDemoInner() {
               {t('Inner Ethernet:', '内側 Ethernet:')} {frame.srcMac} → {frame.dstMac}
             </div>
           </div>
-          <div style={PANEL_STYLE}>
+          <div style={LESSON_PANEL}>
             <h3 style={{ marginTop: 0 }}>EVPN</h3>
             <div data-testid="evpn-type2">
               Type-2: {type2.mac} / {type2.ip}

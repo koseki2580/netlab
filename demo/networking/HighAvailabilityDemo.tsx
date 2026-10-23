@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, useState } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { PortChannel } from '../../src/layers/l2-datalink/PortChannel';
@@ -8,23 +8,7 @@ import type { VrrpMember } from '../../src/types/vrrp';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
-
-const PANEL_STYLE: CSSProperties = {
-  border: '1px solid var(--netlab-border-subtle)',
-  borderRadius: 8,
-  padding: 12,
-};
-
-const BUTTON_STYLE: CSSProperties = {
-  border: '1px solid var(--netlab-border-strong)',
-  borderRadius: 6,
-  background: 'var(--netlab-accent-cyan)',
-  color: 'var(--netlab-bg-primary)',
-  cursor: 'pointer',
-  fontFamily: 'monospace',
-  fontWeight: 700,
-  padding: '8px 12px',
-};
+import { LESSON_BUTTON, LESSON_PANEL } from '../components/lessonStyles';
 
 const MEMBERS: readonly VrrpMember[] = [
   {
@@ -180,7 +164,7 @@ function HaControls({
 
   return (
     <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div data-testid="lesson-brief" style={{ ...PANEL_STYLE, fontSize: 12, lineHeight: 1.7 }}>
+      <div data-testid="lesson-brief" style={{ ...LESSON_PANEL, fontSize: 12, lineHeight: 1.7 }}>
         <strong>
           {t('How the gateway survives a failure', 'ゲートウェイが障害を乗り越えるしくみ')}
         </strong>
@@ -200,7 +184,7 @@ function HaControls({
       <button
         type="button"
         data-testid="ha-fail-gateway"
-        style={BUTTON_STYLE}
+        style={LESSON_BUTTON}
         onClick={onToggleMaster}
       >
         {masterDown
@@ -210,14 +194,14 @@ function HaControls({
       <button
         type="button"
         data-testid="ha-fail-lacp"
-        style={BUTTON_STYLE}
+        style={LESSON_BUTTON}
         onClick={onToggleMember}
       >
         {memberDown
           ? t('Restore LACP Member', 'LACP のメンバを戻す')
           : t('Fail LACP Member', 'LACP のメンバを落とす')}
       </button>
-      <div style={PANEL_STYLE}>
+      <div style={LESSON_PANEL}>
         <h3 style={{ marginTop: 0 }}>
           {t('VRRP first-hop gateway', 'VRRP によるゲートウェイの冗長化')}
         </h3>
@@ -236,7 +220,7 @@ function HaControls({
           )}
         </div>
       </div>
-      <div style={PANEL_STYLE}>
+      <div style={LESSON_PANEL}>
         <h3 style={{ marginTop: 0 }}>
           {t('LACP port-channel', 'LACP によるリンク束ね（ポートチャネル）')}
         </h3>

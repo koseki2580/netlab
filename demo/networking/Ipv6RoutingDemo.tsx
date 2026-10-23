@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, useState } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { BgpProtocol } from '../../src/routing/bgp/BgpProtocol';
@@ -7,23 +7,7 @@ import type { RouteEntry } from '../../src/types/routing';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
-
-const PANEL_STYLE: CSSProperties = {
-  border: '1px solid var(--netlab-border-subtle)',
-  borderRadius: 8,
-  padding: 12,
-};
-
-const BUTTON_STYLE: CSSProperties = {
-  border: '1px solid var(--netlab-border-strong)',
-  borderRadius: 6,
-  background: 'var(--netlab-accent-cyan)',
-  color: 'var(--netlab-bg-primary)',
-  cursor: 'pointer',
-  fontFamily: 'monospace',
-  fontWeight: 700,
-  padding: '8px 12px',
-};
+import { LESSON_BUTTON, LESSON_PANEL } from '../components/lessonStyles';
 
 function iface(id: string, ip: string, ipv6: string, mac: string) {
   return {
@@ -202,18 +186,18 @@ function Ipv6RoutingDemoInner() {
           <button
             type="button"
             data-testid="ospfv3-link-fail"
-            style={BUTTON_STYLE}
+            style={LESSON_BUTTON}
             onClick={() => setLinkFailed((value) => !value)}
           >
             {linkFailed
               ? t('Restore R1-R2 OSPFv3 Link', 'R1-R2 間の OSPFv3 リンクを戻す')
               : t('Fail R1-R2 OSPFv3 Link', 'R1-R2 間の OSPFv3 リンクを落とす')}
           </button>
-          <div style={PANEL_STYLE}>
+          <div style={LESSON_PANEL}>
             <h3 style={{ marginTop: 0 }}>{t('R1 IPv6 routes', 'R1 の IPv6 経路')}</h3>
             <RouteRows routes={r1Routes} />
           </div>
-          <div style={PANEL_STYLE}>
+          <div style={LESSON_PANEL}>
             <h3 style={{ marginTop: 0 }}>OSPFv3 ECMP</h3>
             <div data-testid="ospfv3-ecmp">
               {t(
@@ -222,7 +206,7 @@ function Ipv6RoutingDemoInner() {
               )}
             </div>
           </div>
-          <div style={PANEL_STYLE}>
+          <div style={LESSON_PANEL}>
             <h3 style={{ marginTop: 0 }}>MP-BGP IPv6</h3>
             <div data-testid="mp-bgp-route">
               {bgpRoute

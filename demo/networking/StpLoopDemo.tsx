@@ -15,6 +15,7 @@ import { SimulationProvider, useSimulation } from '../../src/simulation/Simulati
 import type { InFlightPacket } from '../../src/types/packets';
 import type { NetworkTopology, SwitchPort } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
+import { LESSON_CARD } from '../components/lessonStyles';
 
 type SwitchId = 'switch-a' | 'switch-b' | 'switch-c';
 type HostId = 'host-a' | 'host-b' | 'host-c';
@@ -78,12 +79,7 @@ const HOST_META: Record<
   },
 };
 
-const CARD_STYLE: CSSProperties = {
-  background: 'var(--netlab-bg-primary)',
-  border: '1px solid #1f2937',
-  borderRadius: 10,
-  padding: '12px 14px',
-};
+const CARD_STYLE: CSSProperties = { ...LESSON_CARD, padding: '12px 14px' };
 
 const SECTION_TITLE_STYLE: CSSProperties = {
   color: 'var(--netlab-text-secondary)',

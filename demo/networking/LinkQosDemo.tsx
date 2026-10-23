@@ -11,17 +11,7 @@ import type { PacketTrace } from '../../src/types/simulation';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
-
-const BUTTON_STYLE: CSSProperties = {
-  border: '1px solid var(--netlab-border-strong)',
-  borderRadius: 6,
-  background: 'var(--netlab-accent-cyan)',
-  color: 'var(--netlab-bg-primary)',
-  cursor: 'pointer',
-  fontFamily: 'monospace',
-  fontWeight: 700,
-  padding: '8px 12px',
-};
+import { LESSON_BUTTON } from '../components/lessonStyles';
 
 /** The IP packet the burst sends, and the bandwidth the link starts with. */
 export const BURST_PACKET_BYTES = 1500;
@@ -247,7 +237,7 @@ const INPUT: CSSProperties = {
 };
 
 const SECONDARY_BUTTON: CSSProperties = {
-  ...BUTTON_STYLE,
+  ...LESSON_BUTTON,
   background: 'var(--netlab-bg-primary)',
   color: 'var(--netlab-text-primary)',
   border: '1px solid var(--netlab-border)',
@@ -601,7 +591,7 @@ export function QosFields({
             data-testid="link-qos-apply"
             disabled={linkError !== null}
             onClick={applyLink}
-            style={BUTTON_STYLE}
+            style={LESSON_BUTTON}
           >
             {t('Apply to the link', 'リンクに適用')}
           </button>
@@ -730,7 +720,7 @@ export function QosFields({
             data-testid="link-qos-apply-classes"
             disabled={'error' in shaperResult}
             onClick={applyShaper}
-            style={BUTTON_STYLE}
+            style={LESSON_BUTTON}
           >
             {t('Apply classes', 'クラスを適用')}
           </button>
@@ -857,7 +847,7 @@ function DemoInner({
           data-testid="link-qos-burst"
           onClick={sendBurst}
           disabled={applying}
-          style={BUTTON_STYLE}
+          style={LESSON_BUTTON}
         >
           {t('Send QoS burst', 'QoS を試すパケットを送る')}
         </button>

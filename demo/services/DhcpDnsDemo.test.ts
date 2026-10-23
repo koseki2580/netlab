@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { dhcpClientNow, fetchStory, leasedAddressCss } from './DhcpDnsDemo';
+import { dhcpClientNow } from '../components/stateAtStep';
+import { fetchStory, leasedAddressCss } from './DhcpDnsDemo';
 
 describe('what the DHCP/DNS lesson says its second button ran', () => {
   /** TC-625 — look the name up, open a connection, then fetch: the handshake is counted from what was sent. */

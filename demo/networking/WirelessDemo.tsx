@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FakeDeterministicProvider } from '../../src/crypto/FakeDeterministicProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
@@ -16,23 +16,7 @@ import type {
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
-
-const PANEL_STYLE: CSSProperties = {
-  border: '1px solid var(--netlab-border-subtle)',
-  borderRadius: 8,
-  padding: 12,
-};
-
-const BUTTON_STYLE: CSSProperties = {
-  border: '1px solid var(--netlab-border-strong)',
-  borderRadius: 6,
-  background: 'var(--netlab-accent-cyan)',
-  color: 'var(--netlab-bg-primary)',
-  cursor: 'pointer',
-  fontFamily: 'monospace',
-  fontWeight: 700,
-  padding: '8px 12px',
-};
+import { LESSON_BUTTON, LESSON_PANEL } from '../components/lessonStyles';
 
 const DISTANCE_MIN_M = 5;
 const DISTANCE_MAX_M = 300;
@@ -162,7 +146,7 @@ function WirelessControls({
 
   return (
     <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={PANEL_STYLE}>
+      <div style={LESSON_PANEL}>
         <h3 style={{ marginTop: 0 }}>{t('Radio model', '電波のモデル')}</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
@@ -255,7 +239,7 @@ function WirelessControls({
           </div>
         </div>
       </div>
-      <div style={PANEL_STYLE}>
+      <div style={LESSON_PANEL}>
         <h3 style={{ marginTop: 0 }}>{t('Association', 'アソシエーション (AP への接続)')}</h3>
         <div data-testid="wireless-association">
           {t('State: ', '状態: ')}
@@ -271,14 +255,14 @@ function WirelessControls({
       <button
         type="button"
         data-testid="hidden-node-toggle"
-        style={BUTTON_STYLE}
+        style={LESSON_BUTTON}
         onClick={onToggleHiddenNode}
       >
         {hiddenNode
           ? t('Disable Hidden Node', '隠れ端末問題を解消する')
           : t('Enable Hidden Node', '隠れ端末問題を起こす')}
       </button>
-      <div style={PANEL_STYLE}>
+      <div style={LESSON_PANEL}>
         <h3 style={{ marginTop: 0 }}>CSMA/CA</h3>
         <div data-testid="hidden-node">
           {collided.length > 0

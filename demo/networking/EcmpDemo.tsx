@@ -1,4 +1,4 @@
-import { useMemo, type CSSProperties } from 'react';
+import { useMemo } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
@@ -10,17 +10,7 @@ import type { RouteEntry } from '../../src/types/routing';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
-
-const BUTTON_STYLE: CSSProperties = {
-  border: '1px solid var(--netlab-border-strong)',
-  borderRadius: 6,
-  background: 'var(--netlab-accent-cyan)',
-  color: 'var(--netlab-bg-primary)',
-  cursor: 'pointer',
-  fontFamily: 'monospace',
-  fontWeight: 700,
-  padding: '8px 12px',
-};
+import { LESSON_BUTTON } from '../components/lessonStyles';
 
 function route(nodeId: string, destination: string, nextHop: string, metric = 0): RouteEntry {
   return {
@@ -402,7 +392,7 @@ function DemoInner() {
           </div>
         </div>
 
-        <button type="button" data-testid="ecmp-send" onClick={sendFlows} style={BUTTON_STYLE}>
+        <button type="button" data-testid="ecmp-send" onClick={sendFlows} style={LESSON_BUTTON}>
           {t('Send ECMP flows', 'ECMP のフローを送る')}
         </button>
         <section

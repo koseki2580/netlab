@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { PacketHop, PacketTrace } from '../../src/types/simulation';
 import { buildOspfConvergenceTopology } from '../../src/scenarios/ospf-convergence';
-import { probePath, routeComparison } from './OspfConvergenceDemo';
+import { routeComparison } from '../components/stateAtStep';
+import { probePath } from './OspfConvergenceDemo';
 import { ospfLinkCosts } from './OspfLinkCosts';
 
 function hop(step: number, nodeLabel: string, event: PacketHop['event']): PacketHop {

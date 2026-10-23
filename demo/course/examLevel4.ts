@@ -1,4 +1,5 @@
 import type { ExamLevel } from './examQuestions';
+import { lessonPath } from '../lessonManifest';
 
 /**
  * Level 4 of the final test: exact results where two or three mechanisms
@@ -23,7 +24,7 @@ export const EXAM_LEVEL_4: ExamLevel = {
   path: [
     {
       id: 'ecmp',
-      path: '/networking/ecmp',
+      path: lessonPath('/networking/ecmp'),
       title: { en: 'ECMP Multipath', ja: 'ECMP（等コスト複数経路）' },
       teaches: {
         en: 'Which of two equal paths each flow takes, and whether it takes it again',
@@ -32,7 +33,7 @@ export const EXAM_LEVEL_4: ExamLevel = {
     },
     {
       id: 'mtu',
-      path: '/networking/mtu-fragmentation',
+      path: lessonPath('/networking/mtu-fragmentation'),
       title: { en: 'MTU & Fragmentation', ja: 'MTU と分割' },
       teaches: {
         en: 'What a small MTU does to one packet, with the DF bit clear and set',
@@ -41,7 +42,7 @@ export const EXAM_LEVEL_4: ExamLevel = {
     },
     {
       id: 'ha',
-      path: '/networking/ha',
+      path: lessonPath('/networking/ha'),
       title: {
         en: 'Gateway HA And Link Aggregation',
         ja: 'ゲートウェイの冗長化とリンク束ね',
@@ -53,7 +54,7 @@ export const EXAM_LEVEL_4: ExamLevel = {
     },
     {
       id: 'dynamic',
-      path: '/routing/dynamic',
+      path: lessonPath('/routing/dynamic'),
       title: { en: 'Dynamic Routing', ja: '動的ルーティング' },
       teaches: {
         en: 'What OSPF and BGP each put in a router’s table on the same network',
@@ -62,7 +63,7 @@ export const EXAM_LEVEL_4: ExamLevel = {
     },
     {
       id: 'ospf-convergence',
-      path: '/routing/ospf-convergence',
+      path: lessonPath('/routing/ospf-convergence'),
       title: { en: 'OSPF Convergence', ja: 'OSPF の収束' },
       teaches: {
         en: 'Every router’s table after a link fails, in both directions',
@@ -71,7 +72,7 @@ export const EXAM_LEVEL_4: ExamLevel = {
     },
     {
       id: 'nat',
-      path: '/simulation/nat',
+      path: lessonPath('/simulation/nat'),
       title: { en: 'NAT / PAT', ja: 'NAT / PAT' },
       teaches: {
         en: 'How the edge router picks a global port for each conversation',
@@ -80,7 +81,7 @@ export const EXAM_LEVEL_4: ExamLevel = {
     },
     {
       id: 'stp',
-      path: '/networking/stp',
+      path: lessonPath('/networking/stp'),
       title: { en: 'Spanning Tree', ja: 'スパニングツリー' },
       teaches: {
         en: 'How priorities move the root, the blocked port and the path of a frame',
@@ -89,7 +90,7 @@ export const EXAM_LEVEL_4: ExamLevel = {
     },
     {
       id: 'link-qos',
-      path: '/networking/link-qos',
+      path: lessonPath('/networking/link-qos'),
       title: { en: 'Per-Link QoS', ja: 'リンクごとの QoS' },
       teaches: {
         en: 'The two parts of the time a packet takes to cross a link',
@@ -98,7 +99,7 @@ export const EXAM_LEVEL_4: ExamLevel = {
     },
     {
       id: 'wireless',
-      path: '/networking/wireless',
+      path: lessonPath('/networking/wireless'),
       title: { en: 'Wireless 802.11', ja: '無線 LAN（802.11）' },
       teaches: {
         en: 'How distance sets the signal strength and the loss',
@@ -107,7 +108,7 @@ export const EXAM_LEVEL_4: ExamLevel = {
     },
     {
       id: 'tcp-congestion',
-      path: '/simulation/tcp-congestion',
+      path: lessonPath('/simulation/tcp-congestion'),
       title: { en: 'TCP Congestion Control', ja: 'TCP の輻輳制御' },
       teaches: {
         en: 'The window and the threshold at every step, through both kinds of loss',

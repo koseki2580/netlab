@@ -1,4 +1,5 @@
 import type { ExamLevel } from './examQuestions';
+import { lessonPath } from '../lessonManifest';
 
 /**
  * Level 2 of the final test: how networks behave once the parts are known —
@@ -16,7 +17,7 @@ export const EXAM_LEVEL_2: ExamLevel = {
   path: [
     {
       id: 'vlan',
-      path: '/networking/vlan',
+      path: lessonPath('/networking/vlan'),
       title: { en: 'VLAN Segmentation', ja: 'VLAN による分離' },
       teaches: {
         en: 'Splitting one switch into separate networks',
@@ -25,7 +26,7 @@ export const EXAM_LEVEL_2: ExamLevel = {
     },
     {
       id: 'stp',
-      path: '/networking/stp',
+      path: lessonPath('/networking/stp'),
       title: { en: 'Spanning Tree', ja: 'スパニングツリー' },
       teaches: {
         en: 'Redundant links between switches',
@@ -34,7 +35,7 @@ export const EXAM_LEVEL_2: ExamLevel = {
     },
     {
       id: 'step',
-      path: '/simulation/step',
+      path: lessonPath('/simulation/step'),
       title: { en: 'Step-by-Step', ja: '1ホップずつ進める' },
       teaches: {
         en: 'How a router picks a row of its route table',
@@ -43,7 +44,7 @@ export const EXAM_LEVEL_2: ExamLevel = {
     },
     {
       id: 'trace',
-      path: '/simulation/trace-inspector',
+      path: lessonPath('/simulation/trace-inspector'),
       title: { en: 'Trace Inspector', ja: '通信の詳細を見る' },
       teaches: {
         en: 'What changes in a packet from hop to hop',
@@ -52,7 +53,7 @@ export const EXAM_LEVEL_2: ExamLevel = {
     },
     {
       id: 'dynamic',
-      path: '/routing/dynamic',
+      path: lessonPath('/routing/dynamic'),
       title: { en: 'Dynamic Routing', ja: '動的ルーティング' },
       teaches: {
         en: 'Routing protocols and how they measure a path',
@@ -61,7 +62,7 @@ export const EXAM_LEVEL_2: ExamLevel = {
     },
     {
       id: 'ospf',
-      path: '/routing/ospf-convergence',
+      path: lessonPath('/routing/ospf-convergence'),
       title: { en: 'OSPF Convergence', ja: 'OSPF の収束' },
       teaches: {
         en: 'When a link on the path fails',
@@ -70,7 +71,7 @@ export const EXAM_LEVEL_2: ExamLevel = {
     },
     {
       id: 'mtu',
-      path: '/networking/mtu-fragmentation',
+      path: lessonPath('/networking/mtu-fragmentation'),
       title: { en: 'MTU & Fragmentation', ja: 'MTU と分割' },
       teaches: {
         en: 'Packets larger than a link allows',
@@ -79,7 +80,7 @@ export const EXAM_LEVEL_2: ExamLevel = {
     },
     {
       id: 'acl',
-      path: '/simulation/acl',
+      path: lessonPath('/simulation/acl'),
       title: { en: 'Firewalls & ACLs', ja: 'ファイアウォールと ACL' },
       teaches: {
         en: 'Filtering traffic on a router',
@@ -88,7 +89,7 @@ export const EXAM_LEVEL_2: ExamLevel = {
     },
     {
       id: 'dhcp',
-      path: '/services/dhcp-dns',
+      path: lessonPath('/services/dhcp-dns'),
       title: { en: 'DHCP & DNS', ja: 'DHCP と DNS' },
       teaches: {
         en: 'The messages that give a new device its address',
@@ -97,7 +98,7 @@ export const EXAM_LEVEL_2: ExamLevel = {
     },
     {
       id: 'ipv6',
-      path: '/networking/ipv6',
+      path: lessonPath('/networking/ipv6'),
       title: { en: 'IPv6 Dual-Stack', ja: 'IPv6 デュアルスタック' },
       teaches: {
         en: 'IPv6 addresses alongside IPv4',

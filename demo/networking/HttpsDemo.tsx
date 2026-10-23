@@ -3,15 +3,7 @@ import { TlsHandshakeView } from '../../src/components/simulation/TlsHandshakeVi
 import { TlsOrchestrator, type TlsHandshakeRun } from '../../src/layers/l5-tls/TlsOrchestrator';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
-
-const BUTTON_STYLE: CSSProperties = {
-  border: '1px solid var(--netlab-border-strong)',
-  borderRadius: 6,
-  cursor: 'pointer',
-  fontFamily: 'monospace',
-  fontWeight: 700,
-  padding: '8px 12px',
-};
+import { LESSON_BUTTON_PLAIN } from '../components/lessonStyles';
 
 const PANEL_STYLE: CSSProperties = {
   background: 'var(--netlab-bg-panel)',
@@ -91,7 +83,7 @@ function HttpsDemoInner() {
             data-testid="tls-run-handshake"
             onClick={() => void execute(['http/1.1'])}
             style={{
-              ...BUTTON_STYLE,
+              ...LESSON_BUTTON_PLAIN,
               background: 'var(--netlab-accent-cyan)',
               color: 'var(--netlab-bg-primary)',
             }}
@@ -103,7 +95,7 @@ function HttpsDemoInner() {
             data-testid="tls-force-alpn-mismatch"
             onClick={() => void execute(['h2'])}
             style={{
-              ...BUTTON_STYLE,
+              ...LESSON_BUTTON_PLAIN,
               background: 'var(--netlab-bg-elevated)',
               color: 'var(--netlab-text-primary)',
             }}

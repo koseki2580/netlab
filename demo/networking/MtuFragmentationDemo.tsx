@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, useState } from 'react';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
@@ -13,6 +13,7 @@ import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../component
 import DemoShell from '../DemoShell';
 import { readDemoEmbedParams } from '../embedParams';
 import { useT } from '../localeContext';
+import { LESSON_CARD, LESSON_LABEL, LESSON_TEAL_BUTTON } from '../components/lessonStyles';
 
 const PING_PAYLOAD_BYTES = 1200;
 const ICMP_HEADER_BYTES = 8;
@@ -51,35 +52,6 @@ export function fragmentWorking(
 const TUNNEL_MTU_MIN = 300;
 const TUNNEL_MTU_STEP = 8;
 const LESSON_DEFAULT_TUNNEL_MTU = 604;
-
-const CARD_STYLE: CSSProperties = {
-  background: 'var(--netlab-bg-primary)',
-  border: '1px solid #1f2937',
-  borderRadius: 10,
-  padding: 12,
-};
-
-const LABEL_STYLE: CSSProperties = {
-  color: 'var(--netlab-text-secondary)',
-  fontFamily: 'monospace',
-  fontSize: 11,
-  fontWeight: 700,
-  letterSpacing: 1,
-  marginBottom: 8,
-  textTransform: 'uppercase',
-};
-
-const BUTTON_STYLE: CSSProperties = {
-  padding: '8px 12px',
-  borderRadius: 8,
-  border: '1px solid #0f766e',
-  background: '#115e59',
-  color: '#ecfeff',
-  cursor: 'pointer',
-  fontFamily: 'monospace',
-  fontSize: 12,
-  fontWeight: 700,
-};
 
 const PANEL_STYLE: React.CSSProperties = {
   background: 'var(--netlab-bg-primary)',
@@ -257,8 +229,8 @@ function FragmentationDemoInner({
             borderBottom: '1px solid var(--netlab-bg-surface)',
           }}
         >
-          <div style={CARD_STYLE}>
-            <div style={LABEL_STYLE}>{t('Controls', '操作')}</div>
+          <div style={LESSON_CARD}>
+            <div style={LESSON_LABEL}>{t('Controls', '操作')}</div>
             <label
               style={{
                 display: 'grid',
@@ -303,15 +275,15 @@ function FragmentationDemoInner({
             <button
               type="button"
               data-testid="demo-primary-action"
-              style={BUTTON_STYLE}
+              style={LESSON_TEAL_BUTTON}
               disabled={isRecomputing}
               onClick={() => void sendPing()}
             >
               {t('ping A → B (1200-byte payload)', 'A から B へ ping (ペイロード 1200 バイト)')}
             </button>
           </div>
-          <div style={CARD_STYLE}>
-            <div style={LABEL_STYLE}>{t('Trace Notes', 'トレースのメモ')}</div>
+          <div style={LESSON_CARD}>
+            <div style={LESSON_LABEL}>{t('Trace Notes', 'トレースのメモ')}</div>
             <div
               data-testid="mtu-trace-notes"
               style={{
@@ -356,8 +328,8 @@ function FragmentationDemoInner({
               ) : null}
             </div>
           </div>
-          <div style={CARD_STYLE}>
-            <div style={LABEL_STYLE}>
+          <div style={LESSON_CARD}>
+            <div style={LESSON_LABEL}>
               {t('Why You See Multiple Packets', 'パケットが複数に見える理由')}
             </div>
             <div

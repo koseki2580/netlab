@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { PacketHop, PacketTrace } from '../../src/types/simulation';
-import { deriveNodeStates, handshakeNumbers, shownHandshakeSegment } from './TcpHandshakeDemo';
+import { handshakeNumbers } from '../components/stateAtStep';
+import { deriveNodeStates, shownHandshakeSegment } from './TcpHandshakeDemo';
 
 // Each segment is recorded like the lesson's: create, two ARP hops, a router
 // forward, then the delivery (hop index 4).

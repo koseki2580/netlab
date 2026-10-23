@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, useState } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import {
@@ -11,19 +11,9 @@ import { Dhcpv6Server } from '../../src/services/dhcpv6/Dhcpv6Server';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
+import { LESSON_BUTTON } from '../components/lessonStyles';
 
 type Mode = 'managed' | 'other' | 'slaac';
-
-const BUTTON_STYLE: CSSProperties = {
-  border: '1px solid var(--netlab-border-strong)',
-  borderRadius: 6,
-  background: 'var(--netlab-accent-cyan)',
-  color: 'var(--netlab-bg-primary)',
-  cursor: 'pointer',
-  fontFamily: 'monospace',
-  fontWeight: 700,
-  padding: '8px 12px',
-};
 
 function buildTopology(hostAddress: string): NetworkTopology {
   return {
@@ -126,13 +116,13 @@ function ModeControls({
 
   return (
     <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <button type="button" style={BUTTON_STYLE} onClick={() => setMode('managed')}>
+      <button type="button" style={LESSON_BUTTON} onClick={() => setMode('managed')}>
         {t('M=1 DHCPv6 Address', 'M=1 DHCPv6 でアドレス取得')}
       </button>
       <button
         type="button"
         data-testid="dhcpv6-flag-m0-o1"
-        style={BUTTON_STYLE}
+        style={LESSON_BUTTON}
         onClick={() => setMode('other')}
       >
         M=0 O=1 SLAAC + DNS
@@ -140,7 +130,7 @@ function ModeControls({
       <button
         type="button"
         data-testid="dhcpv6-flag-m0-o0"
-        style={BUTTON_STYLE}
+        style={LESSON_BUTTON}
         onClick={() => setMode('slaac')}
       >
         {t('M=0 O=0 Pure SLAAC', 'M=0 O=0 SLAAC のみ')}

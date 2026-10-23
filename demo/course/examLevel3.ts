@@ -1,4 +1,5 @@
 import type { ExamLevel, ExamQuestion, PathStop } from './examQuestions';
+import { lessonPath } from '../lessonManifest';
 
 /**
  * Level 3 of the final test: how production networks and protocols behave —
@@ -12,7 +13,7 @@ import type { ExamLevel, ExamQuestion, PathStop } from './examQuestions';
 const PATH: readonly PathStop[] = [
   {
     id: 'ospf-convergence',
-    path: '/routing/ospf-convergence',
+    path: lessonPath('/routing/ospf-convergence'),
     title: { en: 'OSPF Convergence', ja: 'OSPF の収束' },
     teaches: {
       en: 'What a link-state protocol does when a link fails',
@@ -21,7 +22,7 @@ const PATH: readonly PathStop[] = [
   },
   {
     id: 'ecmp',
-    path: '/networking/ecmp',
+    path: lessonPath('/networking/ecmp'),
     title: { en: 'ECMP Multipath', ja: 'ECMP（等コスト複数経路）' },
     teaches: {
       en: 'Using two equal-cost paths at once',
@@ -30,7 +31,7 @@ const PATH: readonly PathStop[] = [
   },
   {
     id: 'ha',
-    path: '/networking/ha',
+    path: lessonPath('/networking/ha'),
     title: {
       en: 'Gateway HA And Link Aggregation',
       ja: 'ゲートウェイの冗長化とリンク束ね',
@@ -42,7 +43,7 @@ const PATH: readonly PathStop[] = [
   },
   {
     id: 'nat',
-    path: '/simulation/nat',
+    path: lessonPath('/simulation/nat'),
     title: { en: 'NAT / PAT', ja: 'NAT / PAT' },
     teaches: {
       en: 'Letting the internet reach a server behind NAT',
@@ -51,7 +52,7 @@ const PATH: readonly PathStop[] = [
   },
   {
     id: 'tcp-congestion',
-    path: '/simulation/tcp-congestion',
+    path: lessonPath('/simulation/tcp-congestion'),
     title: { en: 'TCP Congestion Control', ja: 'TCP の輻輳制御' },
     teaches: {
       en: 'How a TCP sender sizes its window and reacts to loss',
@@ -60,7 +61,7 @@ const PATH: readonly PathStop[] = [
   },
   {
     id: 'https',
-    path: '/networking/https',
+    path: lessonPath('/networking/https'),
     title: { en: 'HTTPS TLS 1.3', ja: 'HTTPS（TLS 1.3）' },
     teaches: {
       en: 'What is agreed before the first encrypted byte',
@@ -69,7 +70,7 @@ const PATH: readonly PathStop[] = [
   },
   {
     id: 'http2',
-    path: '/networking/http2',
+    path: lessonPath('/networking/http2'),
     title: { en: 'HTTP/2 Multiplexing', ja: 'HTTP/2 の多重化' },
     teaches: {
       en: 'Many requests over one TCP connection',
@@ -78,7 +79,7 @@ const PATH: readonly PathStop[] = [
   },
   {
     id: 'http3',
-    path: '/networking/http3',
+    path: lessonPath('/networking/http3'),
     title: { en: 'HTTP/3 over QUIC', ja: 'HTTP/3（QUIC）' },
     teaches: {
       en: 'Many requests over QUIC instead of TCP',
@@ -87,7 +88,7 @@ const PATH: readonly PathStop[] = [
   },
   {
     id: 'mpls',
-    path: '/networking/tunneling/mpls-l3vpn',
+    path: lessonPath('/networking/tunneling/mpls-l3vpn'),
     title: { en: 'MPLS L3VPN', ja: 'MPLS L3VPN' },
     teaches: {
       en: 'Carrying a customer’s routes across a provider with labels',
@@ -96,7 +97,7 @@ const PATH: readonly PathStop[] = [
   },
   {
     id: 'vxlan',
-    path: '/networking/tunneling/vxlan-evpn',
+    path: lessonPath('/networking/tunneling/vxlan-evpn'),
     title: { en: 'VXLAN EVPN', ja: 'VXLAN EVPN' },
     teaches: {
       en: 'Stretching a layer-2 segment across a routed fabric',

@@ -1,4 +1,4 @@
-import { useMemo, type CSSProperties } from 'react';
+import { useMemo } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
@@ -8,17 +8,7 @@ import type { RouteEntry } from '../../src/types/routing';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
-
-const BUTTON_STYLE: CSSProperties = {
-  border: '1px solid var(--netlab-border-strong)',
-  borderRadius: 6,
-  background: 'var(--netlab-accent-cyan)',
-  color: 'var(--netlab-bg-primary)',
-  cursor: 'pointer',
-  fontFamily: 'monospace',
-  fontWeight: 700,
-  padding: '8px 12px',
-};
+import { LESSON_BUTTON } from '../components/lessonStyles';
 
 function route(nodeId: string, destination: string, nextHop: string): RouteEntry {
   return {
@@ -168,7 +158,7 @@ function DemoInner() {
         <button
           type="button"
           data-testid="ipv6-send-echo"
-          style={BUTTON_STYLE}
+          style={LESSON_BUTTON}
           onClick={() => void engine.ping('client-1', '2001:db8:2::20')}
         >
           {t('Send IPv6 Echo', 'IPv6 の Echo を送る')}

@@ -24,6 +24,7 @@ import {
   generateISN,
 } from '../../src/layers/l4-transport/tcpPacketBuilder';
 import DemoShell from '../DemoShell';
+import { atLastHop, dhcpClientNow, shownStep } from '../components/stateAtStep';
 
 const TOPOLOGY: NetworkTopology = {
   nodes: [
@@ -192,35 +193,6 @@ export function fetchStory(labels: readonly (string | undefined)[]): FetchStory 
   };
 }
 
-/** The DHCP client as it stands at one message of the exchange (RFC 2131 states). */
-export interface DhcpClientNow {
-  readonly state: 'INIT' | 'SELECTING' | 'REQUESTING' | 'BOUND';
-  /** The address it may use: only once the ACK has arrived. */
-  readonly address: string | null;
-}
-
-/**
- * The client at the message on screen. The engine runs all four messages when
- * ① is pressed, so the device's own details already read BOUND while the step
- * is at DISCOVER; this is the state the step itself has reached.
- */
-export function dhcpClientNow(
-  label: string | undefined,
-  arrived: boolean,
-  lease: string | null,
-): DhcpClientNow {
-  if (label === 'DHCP DISCOVER' || label === 'DHCP OFFER') {
-    return { state: 'SELECTING', address: null };
-  }
-  if (label === 'DHCP REQUEST') return { state: 'REQUESTING', address: null };
-  if (label === 'DHCP ACK') {
-    return arrived && lease
-      ? { state: 'BOUND', address: lease }
-      : { state: 'REQUESTING', address: null };
-  }
-  return { state: 'INIT', address: null };
-}
-
 /**
  * The address DHCP lent, drawn under the client where every other host shows
  * its own. The library draws a host's configured address, and this client has
@@ -274,14 +246,10 @@ function DhcpDnsDemoInner() {
   const [lease, setLease] = useState<DhcpLeaseState | null>(null);
   const [resolved, setResolved] = useState<{ name: string; address: string } | null>(null);
   const hasAddress = Boolean(lease?.assignedIp);
-  const shownTrace = state.traces.find((trace) => trace.packetId === state.currentTraceId);
-  const shownLabel = shownTrace?.label;
+  const shown = shownStep(state);
+  const shownLabel = shown.trace?.label;
   const clientNow = shownLabel?.startsWith('DHCP')
-    ? dhcpClientNow(
-        shownLabel,
-        shownTrace !== undefined && state.currentStep === shownTrace.hops.length - 1,
-        lease?.assignedIp ?? null,
-      )
+    ? dhcpClientNow(shownLabel, atLastHop(shown), lease?.assignedIp ?? null)
     : null;
 
   // Each run records its exchange as several traces and leaves the last one

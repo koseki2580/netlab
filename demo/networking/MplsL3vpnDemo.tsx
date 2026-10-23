@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, useState } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { convergeLdp } from '../../src/layers/l3-network/tunneling/MplsLdp';
@@ -8,12 +8,7 @@ import type { NetworkTopology } from '../../src/types/topology';
 import type { VrfConfig } from '../../src/types/tunneling';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
-
-const PANEL_STYLE: CSSProperties = {
-  border: '1px solid var(--netlab-border-subtle)',
-  borderRadius: 8,
-  padding: 12,
-};
+import { LESSON_PANEL } from '../components/lessonStyles';
 
 const blue: VrfConfig = {
   name: 'blue',
@@ -128,7 +123,10 @@ function MplsL3vpnDemoInner() {
           <NetlabCanvas style={{ height: 560 }} />
         </section>
         <aside style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div data-testid="lesson-brief" style={{ ...PANEL_STYLE, fontSize: 12, lineHeight: 1.7 }}>
+          <div
+            data-testid="lesson-brief"
+            style={{ ...LESSON_PANEL, fontSize: 12, lineHeight: 1.7 }}
+          >
             <strong>{t('How the two labels work', '2 つのラベルのしくみ')}</strong>
             {/* The default screen has PHP on, where P pops; "P always swaps"
                 contradicted the stack shown below it. */}
@@ -163,7 +161,7 @@ function MplsL3vpnDemoInner() {
           >
             {php ? t('Disable PHP', 'PHP を無効にする') : t('Enable PHP', 'PHP を有効にする')}
           </button>
-          <div style={PANEL_STYLE}>
+          <div style={LESSON_PANEL}>
             <h3 style={{ marginTop: 0 }}>LDP</h3>
             <div data-testid="mpls-ldp">
               {ldp.converged
@@ -181,7 +179,7 @@ function MplsL3vpnDemoInner() {
                 .join(' ')}
             </div>
           </div>
-          <div style={PANEL_STYLE}>
+          <div style={LESSON_PANEL}>
             <h3 style={{ marginTop: 0 }}>L3VPN</h3>
             <div data-testid="vpnv4-route">
               VPNv4: {imported[0]?.routes[0]?.prefix} RT {blue.importRts[0]?.value}

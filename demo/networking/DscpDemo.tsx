@@ -1,4 +1,4 @@
-import { useMemo, type CSSProperties } from 'react';
+import { useMemo } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
@@ -8,17 +8,7 @@ import { SimulationProvider, useSimulation } from '../../src/simulation/Simulati
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
-
-const BUTTON_STYLE: CSSProperties = {
-  border: '1px solid var(--netlab-border-strong)',
-  borderRadius: 6,
-  background: 'var(--netlab-accent-cyan)',
-  color: 'var(--netlab-bg-primary)',
-  cursor: 'pointer',
-  fontFamily: 'monospace',
-  fontWeight: 700,
-  padding: '8px 12px',
-};
+import { LESSON_BUTTON } from '../components/lessonStyles';
 
 function buildTopology(): NetworkTopology {
   return {
@@ -195,7 +185,7 @@ function DemoInner() {
           type="button"
           data-testid="dscp-send"
           onClick={sendShapedPackets}
-          style={BUTTON_STYLE}
+          style={LESSON_BUTTON}
         >
           {t('Send shaped packets', 'シェーパーを通るパケットを送る')}
         </button>

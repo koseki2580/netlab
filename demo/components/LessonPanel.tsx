@@ -182,9 +182,31 @@ export function LessonCanvas({
  * where it floats; on a narrow screen it is laid out in normal flow instead,
  * so it cannot cover the canvas or the panel's controls.
  */
-export function LessonNote({ style, ...rest }: HTMLAttributes<HTMLDivElement>) {
+export function LessonNote({
+  style,
+  labelsDevice = false,
+  ...rest
+}: HTMLAttributes<HTMLDivElement> & {
+  /**
+   * The note is a label placed beside a device on purpose (a state badge, a
+   * speech bubble), so the diagram is not moved away from it.
+   */
+  labelsDevice?: boolean;
+}) {
   const { isNarrow } = useViewport();
-  if (!isNarrow) return <div {...rest} {...(style ? { style } : {})} />;
+  if (!isNarrow) {
+    // A note placed over the canvas is marked as covering it, so the canvas
+    // frames its devices clear of it. Unmarked, the ARP brief lay over the
+    // Client and the Router and they could not be pressed.
+    const floats = style?.position === 'absolute' && !labelsDevice;
+    return (
+      <div
+        {...(floats ? { 'data-canvas-overlay': '' } : {})}
+        {...rest}
+        {...(style ? { style } : {})}
+      />
+    );
+  }
   const inFlow = Object.fromEntries(
     Object.entries(style ?? {}).filter(([property]) => !FLOATING.has(property)),
   );
