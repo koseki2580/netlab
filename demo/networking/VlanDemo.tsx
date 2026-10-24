@@ -12,6 +12,7 @@ import { SimulationProvider, useSimulation } from '../../src/simulation/Simulati
 import type { InFlightPacket } from '../../src/types/packets';
 import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
+import { useViewport } from '../../src/utils/useViewport';
 
 const TRUNK_EDGE_ID = 'e-trunk';
 
@@ -285,6 +286,7 @@ function VlanDemoInner() {
   const t = useT();
   const { engine, sendPacket, state, isRecomputing } = useSimulation();
   const { isEdgeDown, toggleEdge } = useFailure();
+  const { isNarrow } = useViewport();
   const trunkDown = isEdgeDown(TRUNK_EDGE_ID);
 
   const sendBetween = async (srcNodeId: string, dstNodeId: string) => {
@@ -312,63 +314,75 @@ function VlanDemoInner() {
         'トランクはつながっています。ルータオンアスティック（1 本のトランクでルータにつなぎ、ルータが VLAN の間を中継するしくみ）で、VLAN 10 と VLAN 20 の間を通信できます。',
       );
 
+  // The brief: over the canvas on a phone, where it is read before the
+  // diagram; beside it in the panel on a wider screen. Floating over the
+  // canvas there, it covered A1 and A2, and kept clear of them the diagram
+  // was drawn below the size names and addresses can be read.
+  const brief = (
+    <>
+      <div style={{ color: 'var(--netlab-text-primary)', fontWeight: 700, marginBottom: 4 }}>
+        {t('VLAN Demo', 'VLAN のしくみ')}
+      </div>
+      <div
+        data-testid="vlan-definitions"
+        style={{ display: 'grid', gap: 4, marginBottom: 6, lineHeight: 1.5 }}
+      >
+        <div data-testid="vlan-define-vlan">
+          {t(
+            'VLAN (virtual LAN): one switch split into separate networks. A1 and A2 are in VLAN 10, B1 and B2 in VLAN 20; a frame stays inside its own VLAN.',
+            'VLAN（仮想 LAN）：1 台のスイッチを、別々のネットワークに分けたもの。A1 と A2 は VLAN 10、B1 と B2 は VLAN 20 です。フレームは自分の VLAN の中だけを流れます。',
+          )}
+        </div>
+        <div data-testid="vlan-define-access">
+          {t(
+            'An access port belongs to one VLAN and joins one device (fa0/1 to fa0/4 here). The device itself knows nothing of VLANs.',
+            'アクセスポート（access port）：1 つの VLAN に属し、1 台の機器をつなぐポート（ここでは fa0/1〜fa0/4）。機器のほうは VLAN を知りません。',
+          )}
+        </div>
+        <div data-testid="vlan-define-trunk">
+          {t(
+            'A trunk carries several VLANs over one cable, each frame tagged with its VLAN number (802.1Q). Here fa0/24 is the trunk to R1, carrying VLAN 10 and 20.',
+            'トランク（trunk）：1 本のケーブルで複数の VLAN を運ぶポート。フレームごとに VLAN 番号の札（802.1Q タグ）を付けます。ここでは fa0/24 が R1 へのトランクで、VLAN 10 と 20 を運びます。',
+          )}
+        </div>
+      </div>
+      <div>{headline}</div>
+      <div style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}>
+        {t('Click', '')}
+        <strong>SW1</strong>
+        {t(
+          ' to inspect access/trunk port VLANs and ',
+          ' を押すとアクセス/トランクの各ポートの VLAN が、',
+        )}
+        <strong>R1</strong>
+        {t(' to inspect sub-interfaces.', ' を押すとサブインタフェースが見られます。')}
+      </div>
+    </>
+  );
+
   return (
     <LessonSplit>
       <LessonCanvas canvas={<NetlabCanvas />}>
-        <LessonNote
-          style={{
-            position: 'absolute',
-            top: 12,
-            left: 12,
-            padding: '10px 12px',
-            borderRadius: 8,
-            background: 'color-mix(in srgb, var(--netlab-bg-primary) 88%, transparent)',
-            border: '1px solid rgba(148, 163, 184, 0.2)',
-            color: 'var(--netlab-text-primary)',
-            fontFamily: 'monospace',
-            fontSize: 11,
-            maxWidth: 320,
-            backdropFilter: 'blur(8px)',
-          }}
-        >
-          <div style={{ color: 'var(--netlab-text-primary)', fontWeight: 700, marginBottom: 4 }}>
-            {t('VLAN Demo', 'VLAN のしくみ')}
-          </div>
-          <div
-            data-testid="vlan-definitions"
-            style={{ display: 'grid', gap: 4, marginBottom: 6, lineHeight: 1.5 }}
+        {isNarrow ? (
+          <LessonNote
+            style={{
+              position: 'absolute',
+              top: 12,
+              left: 12,
+              padding: '10px 12px',
+              borderRadius: 8,
+              background: 'color-mix(in srgb, var(--netlab-bg-primary) 88%, transparent)',
+              border: '1px solid rgba(148, 163, 184, 0.2)',
+              color: 'var(--netlab-text-primary)',
+              fontFamily: 'monospace',
+              fontSize: 11,
+              maxWidth: 320,
+              backdropFilter: 'blur(8px)',
+            }}
           >
-            <div data-testid="vlan-define-vlan">
-              {t(
-                'VLAN (virtual LAN): one switch split into separate networks. A1 and A2 are in VLAN 10, B1 and B2 in VLAN 20; a frame stays inside its own VLAN.',
-                'VLAN（仮想 LAN）：1 台のスイッチを、別々のネットワークに分けたもの。A1 と A2 は VLAN 10、B1 と B2 は VLAN 20 です。フレームは自分の VLAN の中だけを流れます。',
-              )}
-            </div>
-            <div data-testid="vlan-define-access">
-              {t(
-                'An access port belongs to one VLAN and joins one device (fa0/1 to fa0/4 here). The device itself knows nothing of VLANs.',
-                'アクセスポート（access port）：1 つの VLAN に属し、1 台の機器をつなぐポート（ここでは fa0/1〜fa0/4）。機器のほうは VLAN を知りません。',
-              )}
-            </div>
-            <div data-testid="vlan-define-trunk">
-              {t(
-                'A trunk carries several VLANs over one cable, each frame tagged with its VLAN number (802.1Q). Here fa0/24 is the trunk to R1, carrying VLAN 10 and 20.',
-                'トランク（trunk）：1 本のケーブルで複数の VLAN を運ぶポート。フレームごとに VLAN 番号の札（802.1Q タグ）を付けます。ここでは fa0/24 が R1 へのトランクで、VLAN 10 と 20 を運びます。',
-              )}
-            </div>
-          </div>
-          <div>{headline}</div>
-          <div style={{ marginTop: 6, color: 'var(--netlab-text-secondary)' }}>
-            {t('Click', '')}
-            <strong>SW1</strong>
-            {t(
-              ' to inspect access/trunk port VLANs and ',
-              ' を押すとアクセス/トランクの各ポートの VLAN が、',
-            )}
-            <strong>R1</strong>
-            {t(' to inspect sub-interfaces.', ' を押すとサブインタフェースが見られます。')}
-          </div>
-        </LessonNote>
+            {brief}
+          </LessonNote>
+        ) : null}
       </LessonCanvas>
 
       <LessonPanel
@@ -388,6 +402,21 @@ function VlanDemoInner() {
               gap: 10,
             }}
           >
+            {isNarrow ? null : (
+              <div
+                data-testid="vlan-brief"
+                style={{
+                  padding: '10px 12px',
+                  borderRadius: 8,
+                  border: '1px solid rgba(148, 163, 184, 0.2)',
+                  color: 'var(--netlab-text-primary)',
+                  fontFamily: 'monospace',
+                  fontSize: 11,
+                }}
+              >
+                {brief}
+              </div>
+            )}
             <div
               style={{
                 display: 'grid',

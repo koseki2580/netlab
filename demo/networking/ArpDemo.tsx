@@ -241,10 +241,15 @@ function ArpDemoInner() {
         <LessonNote
           data-testid="lesson-brief"
           style={{
+            // Along the bottom, left of the zoom controls: the row of devices
+            // keeps the upper part of the canvas and is drawn full size. At the
+            // top-left it covered the Client and the Router. `top: 'auto'`
+            // keeps it read before the canvas on a phone.
             position: 'absolute',
-            top: 12,
+            top: 'auto',
+            bottom: 12,
             left: 12,
-            maxWidth: 420,
+            right: 244,
             padding: '10px 12px',
             borderRadius: 10,
             background: 'color-mix(in srgb, var(--netlab-bg-primary) 90%, transparent)',

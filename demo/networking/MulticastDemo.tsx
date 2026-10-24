@@ -295,8 +295,12 @@ function MulticastDemoInner() {
       <LessonCanvas canvas={<NetlabCanvas />}>
         <LessonNote
           style={{
+            // Bottom-left, in the corner the diagram leaves empty: at the top it
+            // overlapped the diagram's frame and the devices were drawn smaller.
+            // `top: 'auto'` keeps it read before the canvas on a phone.
             position: 'absolute',
-            top: 12,
+            top: 'auto',
+            bottom: 12,
             left: 12,
             padding: '10px 12px',
             borderRadius: 8,
