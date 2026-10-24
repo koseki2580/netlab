@@ -14,18 +14,19 @@ const STP = {
  * The spanning-tree lesson names the link it blocks, opens without a ping the
  * learner did not send, and follows a re-election when a priority changes.
  */
-test('the spanning-tree lesson opens idle and names the blocked link', async ({
-  page,
-  demoPage,
-}) => {
-  await demoPage.goto('/networking/stp');
-  await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+test(
+  'the spanning-tree lesson opens idle and names the blocked link',
+  { tag: '@smoke' },
+  async ({ page, demoPage }) => {
+    await demoPage.goto('/networking/stp');
+    await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
 
-  await expect(page.getByTestId(STP.blockedLink)).toHaveText('Blocked link: Switch B – Switch C');
-  // Nothing has been sent yet, so there is no trace status to report.
-  await expect(page.getByTestId(SEL.stp.traceStatus)).toHaveCount(0);
-  await expect(page.getByTestId(SEL.stp.tracePath)).toHaveText('No trace yet');
-});
+    await expect(page.getByTestId(STP.blockedLink)).toHaveText('Blocked link: Switch B – Switch C');
+    // Nothing has been sent yet, so there is no trace status to report.
+    await expect(page.getByTestId(SEL.stp.traceStatus)).toHaveCount(0);
+    await expect(page.getByTestId(SEL.stp.tracePath)).toHaveText('No trace yet');
+  },
+);
 
 test('re-electing the root moves the blocked link', async ({ page, demoPage }) => {
   await demoPage.goto('/networking/stp');

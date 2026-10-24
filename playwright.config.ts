@@ -1,16 +1,29 @@
 import { defineConfig } from '@playwright/test';
 
+/**
+ * The suite runs against a prebuilt demo by default: `npm run build:e2e` bundles
+ * it once with the test hooks compiled in (`VITE_E2E=true`), and `vite preview`
+ * serves the files. Every page then loads finished chunks, so no test waits on
+ * a module being transformed on first touch, which was the source of every
+ * timeout seen against the dev server.
+ *
+ * `E2E_DEV=1` runs against the dev server instead, for debugging a change
+ * without rebuilding. `E2E_PORT` picks the port (default 5173), so a second
+ * checkout or a second run can have its own.
+ */
+const port = Number(process.env.E2E_PORT ?? 5173);
+const devServer = process.env.E2E_DEV === '1';
+const baseURL = `http://localhost:${port}`;
+
 export default defineConfig({
   testDir: './e2e',
-  // Room for a test that waits on more than one first-touch chunk; see the
-  // expect timeout below for why those waits can be slow here.
-  timeout: 60_000,
-  // The suite runs against the dev server, which transforms modules on demand.
-  // The first test to touch a lazily-imported chunk pays for that transform, and
-  // under a parallel run it repeatedly exceeded the 5s default -- every timeout
-  // failure observed was module latency, never a product delay a user would see.
-  // Raised rather than retried, so a genuinely broken assertion still fails.
-  expect: { timeout: 15_000 },
+  // Against the dev server the first test to touch a lazily imported chunk
+  // paid for its transform, and under a parallel run that repeatedly exceeded
+  // Playwright's defaults; the generous limits are kept for that mode. The
+  // prebuilt bundle has no such cost, so it runs closer to the defaults, still
+  // with room for firefox and webkit on a busy machine.
+  timeout: devServer ? 60_000 : 30_000,
+  expect: { timeout: devServer ? 15_000 : 10_000 },
   fullyParallel: true,
   retries: 0,
   // CI keeps an HTML report and a JUnit file for every run (see the e2e jobs in
@@ -19,17 +32,19 @@ export default defineConfig({
     ? [['github'], ['html', { open: 'never' }], ['junit', { outputFile: 'test-results/junit.xml' }]]
     : 'list',
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
   webServer: {
-    command: 'VITE_E2E=true npm run dev',
-    url: 'http://localhost:5173',
-    // Always boot an E2E server with VITE_E2E=true to avoid accidentally
-    // reusing a regular dev server without test hooks.
+    // Always boot a server with the test hooks (VITE_E2E=true) on a port of its
+    // own, rather than reusing whatever is listening there.
+    command: devServer
+      ? `VITE_E2E=true npx vite --port ${port} --strictPort`
+      : `npm run build:e2e && npx vite preview --config vite.demo.config.ts --base / --outDir dist-e2e --port ${port} --strictPort`,
+    url: baseURL,
     reuseExistingServer: false,
-    timeout: 60_000,
+    timeout: devServer ? 60_000 : 180_000,
   },
   projects: [
     { name: 'chromium', use: { browserName: 'chromium' } },

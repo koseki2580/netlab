@@ -11,7 +11,7 @@ import { SEL } from './selectors';
 const GUIDE_URL = pathToFileURL(resolve('docs/user-guide/site/index.html')).href;
 
 /** TC-147 — the guide opens from a file and asks the network for nothing. */
-test('the guide opens offline from a file', async ({ page }) => {
+test('the guide opens offline from a file', { tag: '@smoke' }, async ({ page }) => {
   const requested: string[] = [];
   await page.route(/^https?:\/\//, async (route) => {
     requested.push(route.request().url());

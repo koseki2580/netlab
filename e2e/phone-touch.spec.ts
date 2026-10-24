@@ -94,17 +94,18 @@ for (const path of LESSONS) {
   });
 }
 
-test('TC-722: a lesson laid out beside a fixed column gives its canvas the phone’s width', async ({
-  page,
-  demoPage,
-}) => {
-  for (const path of ['/networking/ha', '/networking/ecmp', '/networking/observability']) {
-    await demoPage.goto(path);
-    const canvas = await page.getByTestId('netlab-canvas').boundingBox();
-    expect(canvas?.width, path).toBeGreaterThanOrEqual(370);
-    expect(canvas?.height, path).toBeGreaterThanOrEqual(240);
-  }
-});
+test(
+  'TC-722: a lesson laid out beside a fixed column gives its canvas the phone’s width',
+  { tag: '@smoke' },
+  async ({ page, demoPage }) => {
+    for (const path of ['/networking/ha', '/networking/ecmp', '/networking/observability']) {
+      await demoPage.goto(path);
+      const canvas = await page.getByTestId('netlab-canvas').boundingBox();
+      expect(canvas?.width, path).toBeGreaterThanOrEqual(370);
+      expect(canvas?.height, path).toBeGreaterThanOrEqual(240);
+    }
+  },
+);
 
 test('TC-723: the client–server lesson keeps its devices open and the page still as it steps', async ({
   page,

@@ -18,29 +18,30 @@ const IDS = {
   natSendClientA: 'nat-send-client-a',
 } as const;
 
-test('the packet marker follows the hops of the client-server lesson', async ({
-  page,
-  demoPage,
-}) => {
-  await page.setViewportSize(VIEWPORTS.wide);
-  await demoPage.goto('/routing/client-server');
-  await demoPage.dismissBrief();
-  await page.getByTestId(IDS.primaryAction).first().click();
+test(
+  'the packet marker follows the hops of the client-server lesson',
+  { tag: '@smoke' },
+  async ({ page, demoPage }) => {
+    await page.setViewportSize(VIEWPORTS.wide);
+    await demoPage.goto('/routing/client-server');
+    await demoPage.dismissBrief();
+    await page.getByTestId(IDS.primaryAction).first().click();
 
-  const marker = page.getByTestId(IDS.packet);
-  // Sent and not stepped: the packet makes the whole journey and rests where it arrived.
-  await expect(marker).toHaveAttribute('data-at', 'server-1');
+    const marker = page.getByTestId(IDS.packet);
+    // Sent and not stepped: the packet makes the whole journey and rests where it arrived.
+    await expect(marker).toHaveAttribute('data-at', 'server-1');
 
-  await demoPage.waitForTraceCount(1);
-  const [trace] = await demoPage.traces();
-  const hops = page.getByTestId(IDS.traceHop);
-  await expect(hops).toHaveCount(trace!.hops.length);
-  for (const [index, hop] of trace!.hops.entries()) {
-    await hops.nth(index).click();
-    await expect(marker, `hop ${index}`).toHaveAttribute('data-at', hop.nodeId);
-  }
-  await expect(marker).toHaveAttribute('data-moving', 'false');
-});
+    await demoPage.waitForTraceCount(1);
+    const [trace] = await demoPage.traces();
+    const hops = page.getByTestId(IDS.traceHop);
+    await expect(hops).toHaveCount(trace!.hops.length);
+    for (const [index, hop] of trace!.hops.entries()) {
+      await hops.nth(index).click();
+      await expect(marker, `hop ${index}`).toHaveAttribute('data-at', hop.nodeId);
+    }
+    await expect(marker).toHaveAttribute('data-moving', 'false');
+  },
+);
 
 test('a host shows its IP address on the diagram', async ({ page, demoPage }) => {
   await demoPage.goto('/routing/client-server');

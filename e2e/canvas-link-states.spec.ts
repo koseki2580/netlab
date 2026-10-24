@@ -21,25 +21,28 @@ const T = {
 const drawnLink = (state: 'up' | 'down' | 'blocked') =>
   `[data-edge-id][data-edge-state="${state}"]`;
 
-test('a link failed from the failure panel is drawn down, and the key names it', async ({
-  page,
-  demoPage,
-}) => {
-  await demoPage.goto('/simulation/failure');
-  await demoPage.dismissBrief();
-  await expect(page.locator(drawnLink('up')).first()).toBeAttached();
-  await expect(page.locator(drawnLink('down'))).toHaveCount(0);
-  await expect(page.getByTestId(T.linkStateKey)).toHaveCount(0);
+test(
+  'a link failed from the failure panel is drawn down, and the key names it',
+  { tag: '@smoke' },
+  async ({ page, demoPage }) => {
+    await demoPage.goto('/simulation/failure');
+    await demoPage.dismissBrief();
+    await expect(page.locator(drawnLink('up')).first()).toBeAttached();
+    await expect(page.locator(drawnLink('down'))).toHaveCount(0);
+    await expect(page.getByTestId(T.linkStateKey)).toHaveCount(0);
 
-  const panel = page.getByTestId(T.failurePanel);
-  const linksGroup = panel.getByTestId(T.failureLinksGroup);
-  if (await linksGroup.isVisible().catch(() => false)) await linksGroup.click();
-  // A link's toggle is named after both of its ends.
-  await panel.locator('[role="switch"][aria-label*="↔"]').first().click();
+    const panel = page.getByTestId(T.failurePanel);
+    const linksGroup = panel.getByTestId(T.failureLinksGroup);
+    if (await linksGroup.isVisible().catch(() => false)) await linksGroup.click();
+    // A link's toggle is named after both of its ends.
+    await panel.locator('[role="switch"][aria-label*="↔"]').first().click();
 
-  await expect(page.locator(drawnLink('down'))).toHaveCount(1);
-  await expect(page.getByTestId(T.linkStateKey).locator('[data-link-state="down"]')).toBeVisible();
-});
+    await expect(page.locator(drawnLink('down'))).toHaveCount(1);
+    await expect(
+      page.getByTestId(T.linkStateKey).locator('[data-link-state="down"]'),
+    ).toBeVisible();
+  },
+);
 
 test('the link spanning tree blocks is drawn blocked, not as a healthy link', async ({
   page,

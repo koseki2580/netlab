@@ -25,7 +25,7 @@ async function walk(page: import('@playwright/test').Page) {
 }
 
 /** TC-125 — every step does what it predicted, and the course finishes. */
-test('a beginner can walk the whole course', async ({ page, demoPage }) => {
+test('a beginner can walk the whole course', { tag: '@smoke' }, async ({ page, demoPage }) => {
   test.setTimeout(180_000);
   const complaints: string[] = [];
   page.on('pageerror', (error) => complaints.push(error.message));

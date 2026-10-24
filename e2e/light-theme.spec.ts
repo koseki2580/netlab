@@ -34,15 +34,20 @@ test.use({ viewportPreset: 'wide' });
 
 for (const category of CATEGORIES) {
   for (const demo of category.demos) {
-    test(`light a11y: ${category.id}/${demo.title}`, async ({ page, galleryPage }) => {
-      await chooseLightThenOpen(page, galleryPage, demo.path);
+    test(
+      `light a11y: ${category.id}/${demo.title}`,
+      // One demo of the loop is enough for the smoke run.
+      { tag: demo === CATEGORIES[0]?.demos[0] ? '@smoke' : [] },
+      async ({ page, galleryPage }) => {
+        await chooseLightThenOpen(page, galleryPage, demo.path);
 
-      const results = await excludingCanvasInternals(
-        new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']),
-      ).analyze();
-      expect(results.violations).toEqual([]);
-      // TC-161 — and nothing axe could not decide falls short either.
-      expect(await undecidedContrastFailures(page, results)).toEqual([]);
-    });
+        const results = await excludingCanvasInternals(
+          new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']),
+        ).analyze();
+        expect(results.violations).toEqual([]);
+        // TC-161 — and nothing axe could not decide falls short either.
+        expect(await undecidedContrastFailures(page, results)).toEqual([]);
+      },
+    );
   }
 }

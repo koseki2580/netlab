@@ -21,25 +21,29 @@ async function openExam(page: import('@playwright/test').Page) {
   await expect(page.getByTestId('exam-question-1')).toBeVisible();
 }
 
-test('answering "not learned" throughout scores 0 and points to every lesson', async ({ page }) => {
-  await openExam(page);
-  for (let n = 1; n <= 10; n += 1) await page.getByTestId(`exam-option-${n}-x`).check();
-  await page.getByTestId('exam-submit').click();
+test(
+  'answering "not learned" throughout scores 0 and points to every lesson',
+  { tag: '@smoke' },
+  async ({ page }) => {
+    await openExam(page);
+    for (let n = 1; n <= 10; n += 1) await page.getByTestId(`exam-option-${n}-x`).check();
+    await page.getByTestId('exam-submit').click();
 
-  await expect(page.getByTestId('exam-score')).toHaveAttribute('data-score', '0');
-  await expect(page.getByTestId('exam-score')).toHaveAttribute('data-passed', 'no');
-  for (let n = 1; n <= 10; n += 1) {
-    await expect(
-      page.getByTestId(`exam-review-${n}`),
-      `question ${n} points to its lesson`,
-    ).toBeVisible();
-  }
+    await expect(page.getByTestId('exam-score')).toHaveAttribute('data-score', '0');
+    await expect(page.getByTestId('exam-score')).toHaveAttribute('data-passed', 'no');
+    for (let n = 1; n <= 10; n += 1) {
+      await expect(
+        page.getByTestId(`exam-review-${n}`),
+        `question ${n} points to its lesson`,
+      ).toBeVisible();
+    }
 
-  // A review link leads to the lesson.
-  await page.getByTestId('exam-review-5').click();
-  await expect(page.getByTestId(SEL.app.root)).toBeVisible();
-  await expect(page).toHaveURL(/#\/networking\/arp/);
-});
+    // A review link leads to the lesson.
+    await page.getByTestId('exam-review-5').click();
+    await expect(page.getByTestId(SEL.app.root)).toBeVisible();
+    await expect(page).toHaveURL(/#\/networking\/arp/);
+  },
+);
 
 /**
  * TC-552, TC-553 — one miss out of ten: the score card says it is a pass with

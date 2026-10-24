@@ -39,18 +39,19 @@ async function stateSplit(page: Page, exercise: FragmentExercise) {
 
 test.use({ appLocale: 'ja' });
 
-test('TC-770: the packet exercises are reached from the exercises hub', async ({
-  page,
-  demoPage,
-}) => {
-  await demoPage.goto('/exercises');
-  await page.getByTestId('exercises-packet-link').click();
-  for (const level of [1, 2, 3, 4]) {
-    await expect(page.getByTestId(`packet-level-${level}`)).toBeVisible();
-  }
-  await page.getByTestId('packet-start-1').click();
-  await expect(page.getByTestId('packet-check')).toBeVisible();
-});
+test(
+  'TC-770: the packet exercises are reached from the exercises hub',
+  { tag: '@smoke' },
+  async ({ page, demoPage }) => {
+    await demoPage.goto('/exercises');
+    await page.getByTestId('exercises-packet-link').click();
+    for (const level of [1, 2, 3, 4]) {
+      await expect(page.getByTestId(`packet-level-${level}`)).toBeVisible();
+    }
+    await page.getByTestId('packet-start-1').click();
+    await expect(page.getByTestId('packet-check')).toBeVisible();
+  },
+);
 
 test('TC-771: a build exercise is solved by writing the address read off the diagram', async ({
   page,

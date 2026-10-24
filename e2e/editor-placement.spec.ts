@@ -31,32 +31,33 @@ async function visibleDevices(
   return visible;
 }
 
-test('a device added after panning is drawn where the learner is looking', async ({
-  page,
-  demoPage,
-}) => {
-  await page.setViewportSize({ width: 1400, height: 900 });
-  await demoPage.goto('/editor');
+test(
+  'a device added after panning is drawn where the learner is looking',
+  { tag: '@smoke' },
+  async ({ page, demoPage }) => {
+    await page.setViewportSize({ width: 1400, height: 900 });
+    await demoPage.goto('/editor');
 
-  const canvas = page.getByTestId(SEL.editor.canvas);
-  await expect(canvas).toBeVisible();
-  await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
-  const frame = (await canvas.boundingBox())!;
+    const canvas = page.getByTestId(SEL.editor.canvas);
+    await expect(canvas).toBeVisible();
+    await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+    const frame = (await canvas.boundingBox())!;
 
-  // Pan well away from where the palette used to drop things.
-  const startX = frame.x + frame.width / 2;
-  const startY = frame.y + frame.height - 120;
-  await page.mouse.move(startX, startY);
-  await page.mouse.down();
-  await page.mouse.move(startX + 900, startY - 400, { steps: 20 });
-  await page.mouse.up();
-  await settled(() => boxesOf(page.getByTestId(SEL.canvas.node)), { what: 'the pan' });
+    // Pan well away from where the palette used to drop things.
+    const startX = frame.x + frame.width / 2;
+    const startY = frame.y + frame.height - 120;
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX + 900, startY - 400, { steps: 20 });
+    await page.mouse.up();
+    await settled(() => boxesOf(page.getByTestId(SEL.canvas.node)), { what: 'the pan' });
 
-  const before = await visibleDevices(page, frame);
-  await page.getByTestId(SEL.editor.paletteItem('router')).click();
-  await expect(page.getByTestId(SEL.canvas.node)).toHaveCount(5);
-  await settled(() => boxesOf(page.getByTestId(SEL.canvas.node)), { what: 'the new device' });
-  const after = await visibleDevices(page, frame);
+    const before = await visibleDevices(page, frame);
+    await page.getByTestId(SEL.editor.paletteItem('router')).click();
+    await expect(page.getByTestId(SEL.canvas.node)).toHaveCount(5);
+    await settled(() => boxesOf(page.getByTestId(SEL.canvas.node)), { what: 'the new device' });
+    const after = await visibleDevices(page, frame);
 
-  expect(after, 'the new device is on screen, not back at the origin').toBe(before + 1);
-});
+    expect(after, 'the new device is on screen, not back at the origin').toBe(before + 1);
+  },
+);

@@ -106,23 +106,28 @@ test.describe('in Japanese', () => {
   test.use({ appLocale: 'ja', viewportPreset: 'desktop' });
 
   /** TC-513 — the gallery leads to the hub, and a level's button to its first exercise. */
-  test('the gallery card opens the hub, and "start level 1" opens an exercise', async ({
-    page,
-  }) => {
-    await page.goto('/#/');
-    await page.getByTestId(X.galleryCard).click();
-    for (const level of [1, 2, 3, 4]) await expect(page.getByTestId(X.level(level))).toBeVisible();
-    // Nothing done yet: the sentence says so instead of showing an empty score.
-    await expect(page.getByTestId(X.levelStatus(1))).toHaveText(explain(levelSummary([], 1), 'ja'));
+  test(
+    'the gallery card opens the hub, and "start level 1" opens an exercise',
+    { tag: '@smoke' },
+    async ({ page }) => {
+      await page.goto('/#/');
+      await page.getByTestId(X.galleryCard).click();
+      for (const level of [1, 2, 3, 4])
+        await expect(page.getByTestId(X.level(level))).toBeVisible();
+      // Nothing done yet: the sentence says so instead of showing an empty score.
+      await expect(page.getByTestId(X.levelStatus(1))).toHaveText(
+        explain(levelSummary([], 1), 'ja'),
+      );
 
-    await page.getByTestId(X.start(1)).click();
-    await expect(page.getByTestId(X.panel)).toHaveAttribute(
-      'data-exercise-id',
-      buildPool(1)[0] ?? '',
-    );
-    await expect(page.getByTestId(X.diagram)).toBeVisible();
-    await expect(page.getByTestId(X.check)).toBeVisible();
-  });
+      await page.getByTestId(X.start(1)).click();
+      await expect(page.getByTestId(X.panel)).toHaveAttribute(
+        'data-exercise-id',
+        buildPool(1)[0] ?? '',
+      );
+      await expect(page.getByTestId(X.diagram)).toBeVisible();
+      await expect(page.getByTestId(X.check)).toBeVisible();
+    },
+  );
 
   /** TC-524 — levels without a verified pool say what they are, and cannot be mistaken for cleared. */
   test('level 4 says it has no exercises yet, and level 3 is not shown as cleared', async ({

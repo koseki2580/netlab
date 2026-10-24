@@ -10,28 +10,34 @@ import { SEL } from './selectors';
  * focusable and the interaction profile still asks for it, so the loss was
  * silent — nothing in the DOM says "this used to be reachable".
  */
-test('a device can be reached and opened with the keyboard alone', async ({ page, demoPage }) => {
-  await page.setViewportSize({ width: 1920, height: 1080 });
-  await demoPage.goto('/routing/client-server');
-  await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+test(
+  'a device can be reached and opened with the keyboard alone',
+  { tag: '@smoke' },
+  async ({ page, demoPage }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await demoPage.goto('/routing/client-server');
+    await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
 
-  // Tab until a device takes focus, the way a keyboard user arrives at one.
-  let reached = false;
-  for (let stop = 0; stop < 30 && !reached; stop += 1) {
-    await page.keyboard.press('Tab');
-    reached = await page.evaluate(
-      (testid) => !!document.activeElement?.closest(`[data-testid="${testid}"], [data-id]`),
-      SEL.canvas.node,
+    // Tab until a device takes focus, the way a keyboard user arrives at one.
+    let reached = false;
+    for (let stop = 0; stop < 30 && !reached; stop += 1) {
+      await page.keyboard.press('Tab');
+      reached = await page.evaluate(
+        (testid) => !!document.activeElement?.closest(`[data-testid="${testid}"], [data-id]`),
+        SEL.canvas.node,
+      );
+    }
+    expect(reached, 'a device is in the tab order').toBe(true);
+
+    const name = await page.evaluate(
+      () => document.activeElement?.getAttribute('aria-label') ?? '',
     );
-  }
-  expect(reached, 'a device is in the tab order').toBe(true);
+    expect(name, 'the focused device says which one it is').not.toBe('');
 
-  const name = await page.evaluate(() => document.activeElement?.getAttribute('aria-label') ?? '');
-  expect(name, 'the focused device says which one it is').not.toBe('');
-
-  await page.keyboard.press('Enter');
-  await expect(
-    page.getByTestId(SEL.nodeDetail.closePanel),
-    'pressing Enter opens the device',
-  ).toBeVisible();
-});
+    await page.keyboard.press('Enter');
+    await expect(
+      page.getByTestId(SEL.nodeDetail.closePanel),
+      'pressing Enter opens the device',
+    ).toBeVisible();
+  },
+);

@@ -25,19 +25,22 @@ async function openRouter(
   return panel;
 }
 
-test('a router overview names its role, its interfaces, its subnets and its neighbours', async ({
-  page,
-  demoPage,
-}) => {
-  const panel = await openRouter(page, demoPage);
-  await panel.locator(T.tab('overview')).click();
+test(
+  'a router overview names its role, its interfaces, its subnets and its neighbours',
+  { tag: '@smoke' },
+  async ({ page, demoPage }) => {
+    const panel = await openRouter(page, demoPage);
+    await panel.locator(T.tab('overview')).click();
 
-  for (const row of ['role', 'interfaces', 'subnets', 'linkedTo']) {
-    await expect(panel.locator(`[data-overview-row="${row}"]`)).toBeVisible();
-  }
-  await expect(panel.locator('[data-overview-row="subnets"]')).toContainText('10.0.0.0/24');
-  await expect(panel.locator('[data-overview-row="linkedTo"] [data-linked-state]')).toHaveCount(2);
-});
+    for (const row of ['role', 'interfaces', 'subnets', 'linkedTo']) {
+      await expect(panel.locator(`[data-overview-row="${row}"]`)).toBeVisible();
+    }
+    await expect(panel.locator('[data-overview-row="subnets"]')).toContainText('10.0.0.0/24');
+    await expect(panel.locator('[data-overview-row="linkedTo"] [data-linked-state]')).toHaveCount(
+      2,
+    );
+  },
+);
 
 test('the header names the kind and the layer, and there is no placeholder ACL tab', async ({
   page,

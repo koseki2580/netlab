@@ -10,35 +10,37 @@ import { expect, test } from './fixtures/harness';
 test.describe('the lesson list at 390px wide', () => {
   test.use({ viewportPreset: 'phone' });
 
-  test('gives the cards the width of the screen and keeps the navigation in a drawer', async ({
-    page,
-  }) => {
-    await page.goto('/#/');
-    const card = page.getByTestId('gallery-card').first();
-    await expect(card).toBeVisible();
-    expect((await card.boundingBox())?.width ?? 0).toBeGreaterThanOrEqual(300);
-    expect((await page.getByTestId('gallery-heading').boundingBox())?.width ?? 0).toBeGreaterThan(
-      200,
-    );
+  test(
+    'gives the cards the width of the screen and keeps the navigation in a drawer',
+    { tag: '@smoke' },
+    async ({ page }) => {
+      await page.goto('/#/');
+      const card = page.getByTestId('gallery-card').first();
+      await expect(card).toBeVisible();
+      expect((await card.boundingBox())?.width ?? 0).toBeGreaterThanOrEqual(300);
+      expect((await page.getByTestId('gallery-heading').boundingBox())?.width ?? 0).toBeGreaterThan(
+        200,
+      );
 
-    const scroll = await page.getByTestId('gallery-heading').evaluate(() => {
-      const root = document.scrollingElement ?? document.documentElement;
-      return { scrollWidth: root.scrollWidth, clientWidth: root.clientWidth };
-    });
-    expect(scroll.scrollWidth).toBeLessThanOrEqual(scroll.clientWidth);
+      const scroll = await page.getByTestId('gallery-heading').evaluate(() => {
+        const root = document.scrollingElement ?? document.documentElement;
+        return { scrollWidth: root.scrollWidth, clientWidth: root.clientWidth };
+      });
+      expect(scroll.scrollWidth).toBeLessThanOrEqual(scroll.clientWidth);
 
-    const sidebar = page.getByTestId('gallery-sidebar');
-    await expect(sidebar).toBeHidden();
-    const menu = page.getByTestId('gallery-menu');
-    expect((await menu.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
-    await menu.tap();
-    await expect(menu).toHaveAttribute('aria-expanded', 'true');
-    await expect(sidebar).toBeInViewport({ ratio: 1 });
+      const sidebar = page.getByTestId('gallery-sidebar');
+      await expect(sidebar).toBeHidden();
+      const menu = page.getByTestId('gallery-menu');
+      expect((await menu.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
+      await menu.tap();
+      await expect(menu).toHaveAttribute('aria-expanded', 'true');
+      await expect(sidebar).toBeInViewport({ ratio: 1 });
 
-    // Choosing somewhere to go puts the drawer away again.
-    await page.getByTestId('gallery-menu-scrim').tap({ position: { x: 370, y: 400 } });
-    await expect(sidebar).toBeHidden();
-  });
+      // Choosing somewhere to go puts the drawer away again.
+      await page.getByTestId('gallery-menu-scrim').tap({ position: { x: 370, y: 400 } });
+      await expect(sidebar).toBeHidden();
+    },
+  );
 
   test('keeps the navigation beside the catalogue on a wide screen', async ({ page }) => {
     await page.setViewportSize({ width: 1366, height: 768 });

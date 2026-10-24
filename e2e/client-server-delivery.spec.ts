@@ -16,17 +16,21 @@ test.use({ viewportPreset: 'wide' });
  * The trace is what the lesson teaches, so this reads the whole of it: the
  * router resolving the server's address, and the packet arriving.
  */
-test('the client-server lesson delivers the packet to the server', async ({ page, demoPage }) => {
-  await demoPage.goto('/routing/client-server');
-  await expect(page.getByTestId(SEL.app.root)).toBeVisible();
-  await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+test(
+  'the client-server lesson delivers the packet to the server',
+  { tag: '@smoke' },
+  async ({ page, demoPage }) => {
+    await demoPage.goto('/routing/client-server');
+    await expect(page.getByTestId(SEL.app.root)).toBeVisible();
+    await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
 
-  await page.getByTestId(SEL.demo.primaryAction).first().click();
+    await page.getByTestId(SEL.demo.primaryAction).first().click();
 
-  const hops = page.getByTestId(SEL.traceFilter.hop);
-  await expect(hops.filter({ hasText: 'DELIVER' })).toHaveCount(1);
-  await expect(hops.filter({ hasText: 'DROP' })).toHaveCount(0);
-  // The router has to learn where the server is before it can send anything
-  // there, and that exchange is half of what this lesson shows.
-  await expect(hops.filter({ hasText: 'ARP' }).first()).toBeVisible();
-});
+    const hops = page.getByTestId(SEL.traceFilter.hop);
+    await expect(hops.filter({ hasText: 'DELIVER' })).toHaveCount(1);
+    await expect(hops.filter({ hasText: 'DROP' })).toHaveCount(0);
+    // The router has to learn where the server is before it can send anything
+    // there, and that exchange is half of what this lesson shows.
+    await expect(hops.filter({ hasText: 'ARP' }).first()).toBeVisible();
+  },
+);

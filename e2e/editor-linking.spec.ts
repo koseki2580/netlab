@@ -48,20 +48,21 @@ async function drawLink(page: Page, from: string, to: string) {
 }
 
 /** TC-179 — a learner can link two devices, starting from a point they can see. */
-test('a new device is named, opens its editor, and links to a switch', async ({
-  page,
-  demoPage,
-}) => {
-  await openEditor(page, demoPage);
+test(
+  'a new device is named, opens its editor, and links to a switch',
+  { tag: '@smoke' },
+  async ({ page, demoPage }) => {
+    await openEditor(page, demoPage);
 
-  await page.getByTestId(SEL.editor.paletteItem('client')).click();
-  await expect(device(page, 'Client-2'), 'named per kind, not by its internal id').toHaveCount(1);
-  await expect(page.getByTestId(SEL.editor.nodeEditor), 'and its editor opens').toBeVisible();
+    await page.getByTestId(SEL.editor.paletteItem('client')).click();
+    await expect(device(page, 'Client-2'), 'named per kind, not by its internal id').toHaveCount(1);
+    await expect(page.getByTestId(SEL.editor.nodeEditor), 'and its editor opens').toBeVisible();
 
-  const before = await links(page).count();
-  await drawLink(page, 'Client-2', 'SW-1');
-  await expect(links(page), 'the drag drew a link').toHaveCount(before + 1);
-});
+    const before = await links(page).count();
+    await drawLink(page, 'Client-2', 'SW-1');
+    await expect(links(page), 'the drag drew a link').toHaveCount(before + 1);
+  },
+);
 
 /** TC-180 — a refused link says why, in words, and adds nothing. */
 test('linking a client straight to a server is refused with a reason', async ({

@@ -12,49 +12,50 @@ import { SEL } from './selectors';
  */
 
 /** TC-013 / TC-014 — areas collapse when zoomed out and expand again. */
-test('collapses an area into a cluster when zoomed out, and restores it on expand', async ({
-  page,
-  demoPage,
-}) => {
-  await demoPage.goto('/areas/dmz');
+test(
+  'collapses an area into a cluster when zoomed out, and restores it on expand',
+  { tag: '@smoke' },
+  async ({ page, demoPage }) => {
+    await demoPage.goto('/areas/dmz');
 
-  const devices = page.locator('[data-node-kind]');
-  const clusters = page.getByTestId(SEL.canvas.areaCluster);
-  await expect(devices.first()).toBeVisible();
-  const detailed = await devices.count();
-  expect(detailed, 'the demo starts showing individual devices').toBeGreaterThan(0);
-  await expect(clusters).toHaveCount(0);
+    const devices = page.locator('[data-node-kind]');
+    const clusters = page.getByTestId(SEL.canvas.areaCluster);
+    await expect(devices.first()).toBeVisible();
+    const detailed = await devices.count();
+    expect(detailed, 'the demo starts showing individual devices').toBeGreaterThan(0);
+    await expect(clusters).toHaveCount(0);
 
-  // Zoom out by scrolling over the canvas — the gesture a learner actually
-  // uses, and the one the Zoom Out button cannot stand in for here: the second
-  // press lands mid zoom-transition and never settles.
-  await devices.first().hover();
-  for (let i = 0; i < 6; i += 1) {
-    await page.mouse.wheel(0, 400);
-    await settled(() => boxesOf(devices.or(clusters)), { what: 'the zoom' });
-  }
-
-  await expect(clusters.first()).toBeVisible();
-  // Collapsing is the point: the cluster stands in for its members.
-  expect(await devices.count()).toBeLessThan(detailed);
-
-  // Zooming out can push some clusters off-screen; expand one the learner can
-  // actually reach.
-  const count = await clusters.count();
-  let expanded = false;
-  for (let i = 0; i < count; i += 1) {
-    const cluster = clusters.nth(i);
-    if (await cluster.isVisible()) {
-      await cluster.click();
-      expanded = true;
-      break;
+    // Zoom out by scrolling over the canvas — the gesture a learner actually
+    // uses, and the one the Zoom Out button cannot stand in for here: the second
+    // press lands mid zoom-transition and never settles.
+    await devices.first().hover();
+    for (let i = 0; i < 6; i += 1) {
+      await page.mouse.wheel(0, 400);
+      await settled(() => boxesOf(devices.or(clusters)), { what: 'the zoom' });
     }
-  }
-  expect(expanded, 'at least one cluster is on screen to expand').toBe(true);
-  // Expanding restores the devices this cluster stood in for.
-  await expect(devices.first()).toBeVisible();
-  expect(await devices.count()).toBeGreaterThan(1);
-});
+
+    await expect(clusters.first()).toBeVisible();
+    // Collapsing is the point: the cluster stands in for its members.
+    expect(await devices.count()).toBeLessThan(detailed);
+
+    // Zooming out can push some clusters off-screen; expand one the learner can
+    // actually reach.
+    const count = await clusters.count();
+    let expanded = false;
+    for (let i = 0; i < count; i += 1) {
+      const cluster = clusters.nth(i);
+      if (await cluster.isVisible()) {
+        await cluster.click();
+        expanded = true;
+        break;
+      }
+    }
+    expect(expanded, 'at least one cluster is on screen to expand').toBe(true);
+    // Expanding restores the devices this cluster stood in for.
+    await expect(devices.first()).toBeVisible();
+    expect(await devices.count()).toBeGreaterThan(1);
+  },
+);
 
 /** TC-015 — an illustration canvas leaves the page's scroll alone. */
 test('a mid-page illustration canvas lets the page scroll under the pointer', async ({

@@ -12,19 +12,20 @@ test.use({ viewportPreset: 'desktop' });
  * the return dropped and concluded the firewall blocks replies. The lesson now
  * offers only its own buttons, and a return after its HTTP arrives.
  */
-test('the firewall lesson returns traffic for its own HTTP flow and offers no other send', async ({
-  page,
-  demoPage,
-}) => {
-  await demoPage.goto('/simulation/acl');
-  await expect(page.getByTestId('acl-send-http')).toBeVisible();
-  await expect(
-    page.getByTestId(SEL.demo.primaryAction),
-    'no generic send that starts an untracked flow',
-  ).toHaveCount(0);
+test(
+  'the firewall lesson returns traffic for its own HTTP flow and offers no other send',
+  { tag: '@smoke' },
+  async ({ page, demoPage }) => {
+    await demoPage.goto('/simulation/acl');
+    await expect(page.getByTestId('acl-send-http')).toBeVisible();
+    await expect(
+      page.getByTestId(SEL.demo.primaryAction),
+      'no generic send that starts an untracked flow',
+    ).toHaveCount(0);
 
-  await page.getByTestId('acl-send-http').click();
-  await page.getByTestId('acl-send-return').click();
-  const hops = page.getByTestId(SEL.traceFilter.hop);
-  await expect(hops.last(), 'the return is delivered').toHaveAttribute('data-event', 'deliver');
-});
+    await page.getByTestId('acl-send-http').click();
+    await page.getByTestId('acl-send-return').click();
+    const hops = page.getByTestId(SEL.traceFilter.hop);
+    await expect(hops.last(), 'the return is delivered').toHaveAttribute('data-event', 'deliver');
+  },
+);

@@ -3,26 +3,30 @@ import { expect, test } from './fixtures/harness';
 import { excludingCanvasInternals } from './axe';
 import { SEL } from './selectors';
 
-test('link QoS demo records deterministic link annotations', async ({ page, demoPage }) => {
-  await demoPage.goto('/networking/link-qos');
+test(
+  'link QoS demo records deterministic link annotations',
+  { tag: '@smoke' },
+  async ({ page, demoPage }) => {
+    await demoPage.goto('/networking/link-qos');
 
-  await page.getByTestId(SEL.demo.linkQosBurst).click();
+    await page.getByTestId(SEL.demo.linkQosBurst).click();
 
-  const traceLog = page.getByTestId(SEL.demo.traceLog).first();
-  await expect(traceLog).toContainText('queued for the link (1 waiting)');
-  await expect(traceLog).toContainText('sent onto the link (0 waiting)');
-  await expect(traceLog).toContainText('arrived after 32 ms on the link');
+    const traceLog = page.getByTestId(SEL.demo.traceLog).first();
+    await expect(traceLog).toContainText('queued for the link (1 waiting)');
+    await expect(traceLog).toContainText('sent onto the link (0 waiting)');
+    await expect(traceLog).toContainText('arrived after 32 ms on the link');
 
-  // The text-form editor is the lesson's advanced option, folded by default.
-  await page.getByTestId('link-qos-advanced-toggle').click();
-  await page.getByTestId(SEL.sandbox.editPopover.lossPercent).fill('50');
-  await page.getByTestId(SEL.sandbox.editPopover.linkApply).click();
-  await page.getByTestId(SEL.demo.linkQosBurst).click();
+    // The text-form editor is the lesson's advanced option, folded by default.
+    await page.getByTestId('link-qos-advanced-toggle').click();
+    await page.getByTestId(SEL.sandbox.editPopover.lossPercent).fill('50');
+    await page.getByTestId(SEL.sandbox.editPopover.linkApply).click();
+    await page.getByTestId(SEL.demo.linkQosBurst).click();
 
-  await expect(page.getByTestId(SEL.demo.linkQosSection)).toContainText('LINK QOS');
+    await expect(page.getByTestId(SEL.demo.linkQosSection)).toContainText('LINK QOS');
 
-  const results = await excludingCanvasInternals(new AxeBuilder({ page }))
-    .withTags(['wcag2a', 'wcag2aa'])
-    .analyze();
-  expect(results.violations).toEqual([]);
-});
+    const results = await excludingCanvasInternals(new AxeBuilder({ page }))
+      .withTags(['wcag2a', 'wcag2aa'])
+      .analyze();
+    expect(results.violations).toEqual([]);
+  },
+);

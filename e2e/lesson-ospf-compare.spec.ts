@@ -20,26 +20,30 @@ async function sendProbe(page: import('@playwright/test').Page) {
  * Failing the link keeps the run the learner compares against: the route
  * before the failure stays on screen beside the recomputed one.
  */
-test('the OSPF lesson keeps the route from before the link failed', async ({ page, demoPage }) => {
-  await page.setViewportSize(VIEWPORTS.wide);
-  await demoPage.goto('/routing/ospf-convergence');
-  await demoPage.dismissBrief();
-  await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
+test(
+  'the OSPF lesson keeps the route from before the link failed',
+  { tag: '@smoke' },
+  async ({ page, demoPage }) => {
+    await page.setViewportSize(VIEWPORTS.wide);
+    await demoPage.goto('/routing/ospf-convergence');
+    await demoPage.dismissBrief();
+    await expect(page.getByTestId(SEL.canvas.node).first()).toBeVisible();
 
-  await sendProbe(page);
-  await expect(page.getByTestId(OSPF.routeCurrent)).toHaveText(
-    'Probe route: C1 → R1 → R2 → R4 → C2 (link up)',
-  );
+    await sendProbe(page);
+    await expect(page.getByTestId(OSPF.routeCurrent)).toHaveText(
+      'Probe route: C1 → R1 → R2 → R4 → C2 (link up)',
+    );
 
-  await page.getByTestId(OSPF.failLink).click();
-  await sendProbe(page);
-  await expect(page.getByTestId(OSPF.routeCurrent)).toHaveText(
-    'Probe route: C1 → R1 → R3 → R4 → C2 (link down)',
-  );
-  await expect(page.getByTestId(OSPF.routePrevious)).toHaveText(
-    'Previous route: C1 → R1 → R2 → R4 → C2 (link up)',
-  );
-});
+    await page.getByTestId(OSPF.failLink).click();
+    await sendProbe(page);
+    await expect(page.getByTestId(OSPF.routeCurrent)).toHaveText(
+      'Probe route: C1 → R1 → R3 → R4 → C2 (link down)',
+    );
+    await expect(page.getByTestId(OSPF.routePrevious)).toHaveText(
+      'Previous route: C1 → R1 → R2 → R4 → C2 (link up)',
+    );
+  },
+);
 
 /**
  * Every router's table is reachable from the side rail, and none of them

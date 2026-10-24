@@ -13,14 +13,18 @@ function anyHop(traces: PacketTrace[], pred: (h: PacketTrace['hops'][number]) =>
 }
 
 test.describe('golden traces', () => {
-  test('routing/client-server — packet traverses router', async ({ demoPage }) => {
-    await demoPage.goto('/routing/client-server');
-    await demoPage.pressStart(); // ▶ Send Packet
-    await demoPage.waitForTraceCount(1);
-    const traces = await demoPage.traces();
-    expect(traces.length).toBeGreaterThanOrEqual(1);
-    expect(anyHop(traces, (h) => h.nodeId === 'router-1')).toBe(true);
-  });
+  test(
+    'routing/client-server — packet traverses router',
+    { tag: '@smoke' },
+    async ({ demoPage }) => {
+      await demoPage.goto('/routing/client-server');
+      await demoPage.pressStart(); // ▶ Send Packet
+      await demoPage.waitForTraceCount(1);
+      const traces = await demoPage.traces();
+      expect(traces.length).toBeGreaterThanOrEqual(1);
+      expect(anyHop(traces, (h) => h.nodeId === 'router-1')).toBe(true);
+    },
+  );
 
   test('networking/mtu-fragmentation — oversized ICMP is fragmented', async ({ demoPage }) => {
     await demoPage.goto('/networking/mtu-fragmentation');
