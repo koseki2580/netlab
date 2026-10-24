@@ -1,21 +1,7 @@
-// What is left of the graph library here is state plumbing and types; every
-// rendering call lives in the engine component, which is the only file that
-// mounts a graph library. That is what makes replacing the engine a contained
-// change.
-import {
-  addEdge,
-  applyEdgeChanges,
-  applyNodeChanges,
-  useEdgesState,
-  useNodesState,
-} from './graphState';
-import type {
-  GraphConnection as Connection,
-  GraphEdge as Edge,
-  GraphEdgeChange as EdgeChange,
-  GraphNodeChange as NodeChange,
-  GraphNodeTypes as NodeTypes,
-} from '../types/graph';
+// The graph library's rendering lives in the engine component, the only file
+// that mounts one. This component keeps the canvas's state (`useCanvasTopology`)
+// and works out what to draw (`canvasViewModel`).
+import type { GraphNodeTypes as NodeTypes } from '../types/graph';
 import './edges.css';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -24,32 +10,25 @@ import { interactionProfile } from '../editor/engine/types';
 import { SimulatorMaxGraph as SimulatorCanvas } from './engine/SimulatorMaxGraph';
 import type { CanvasPacketSource } from './engine/canvasEngine';
 import { areasToNodes } from '../areas/AreaRegistry';
-import { applyAreaLod, AREA_CLUSTER_NODE_TYPE, type AreaClusterNodeData } from '../areas/areaLod';
+import { AREA_CLUSTER_NODE_TYPE, type AreaClusterNodeData } from '../areas/areaLod';
 import { AreaClusterNode } from './AreaClusterNode';
 import { layerRegistry } from '../registry/LayerRegistry';
 import { useSandboxOrNull } from '../sandbox/useSandbox';
 import { useOptionalFailure } from '../simulation/FailureContext';
 import { SimulationContext } from '../simulation/SimulationContext';
 import type { NetlabEdge, NetlabNode, TopologySnapshot } from '../types/topology';
-import {
-  validateAuthoredConnection as validateAuthoredLink,
-  validateConnection as validateCanvasConnection,
-} from '../utils/connectionValidator';
 import type { NetlabColorMode } from '../utils/themeUtils';
+import { lodView, neighboursOf, styleEdges, styleNodes } from './canvasViewModel';
 import { useNetlabContext } from './NetlabContext';
 import { NetlabThemeScopeContext } from './NetlabThemeScope';
 import { NetlabUIContext } from './NetlabUIContext';
 import { NodeDetailPanel } from './NodeDetailPanel';
 import { useNodeDetailDock } from './NodeDetailPanel/useNodeDetailDock';
+import { useCanvasTopology } from './useCanvasTopology';
 
 const AREA_NODE_TYPE: NodeTypes = {
   'netlab-area': AreaBackground as NodeTypes[string],
 };
-const AREA_NODE_PREFIX = '__area__';
-
-function excludeAreaNodes(nodes: { id: string }[]): NetlabNode[] {
-  return nodes.filter((node) => !node.id.startsWith(AREA_NODE_PREFIX)) as NetlabNode[];
-}
 
 /** Tracks `prefers-reduced-motion: reduce`, updating live if the OS setting changes (M6). */
 function usePrefersReducedMotion(): boolean {
@@ -66,14 +45,6 @@ function usePrefersReducedMotion(): boolean {
     return () => mq.removeEventListener('change', onChange);
   }, [supported]);
   return reduced;
-}
-
-function withValidationEdgeType(edge: NetlabEdge): NetlabEdge {
-  if (edge.type && edge.type !== 'smoothstep') {
-    return edge;
-  }
-
-  return { ...edge, type: 'validation-smoothstep' };
 }
 
 export interface NetlabCanvasProps {
@@ -102,20 +73,21 @@ export interface NetlabCanvasProps {
    */
   followTopology?: boolean;
   /**
-   * Render the React Flow minimap. Default `true`. Small, focused canvases (the
+   * Render the canvas overview (minimap). Default `true`. Small, focused canvases (the
    * learning panels) set this `false`: on a handful of nodes the minimap adds no
    * navigation value and its fixed bottom-right overlay sits on top of the
    * graph, hiding nodes.
    */
   minimap?: boolean;
   /**
-   * Padding passed to React Flow's initial `fitView` (fraction of the viewport).
+   * Padding kept around the drawing when the canvas first frames it (a fraction
+   * of the canvas).
    * Defaults to `0.1`. Small canvases use a larger value so wide node labels at
    * the extremes aren't clipped against the canvas edges.
    */
   fitViewPadding?: number;
   /**
-   * Render the React Flow zoom/fit/lock controls. Default `true`. Presentational
+   * Render the canvas's zoom, fit and grid controls. Default `true`. Presentational
    * canvases (the learning panels) hide them: the graph auto-fits, so they add
    * only chrome and extra keyboard tab stops.
    */
@@ -187,8 +159,8 @@ export function NetlabCanvas({
   );
 
   // C4 LOD: collapse crowded / zoomed-out areas into a single cluster. Live zoom
-  // comes from a ViewportWatcher child of <ReactFlow>; clicking a cluster pins
-  // its area open regardless of zoom.
+  // is reported by the canvas engine (`onZoom`); clicking a cluster pins its
+  // area open regardless of zoom.
   const [lodZoom, setLodZoom] = useState(1);
   const [expandedAreaIds, setExpandedAreaIds] = useState<ReadonlySet<string>>(() => new Set());
 
@@ -200,99 +172,23 @@ export function NetlabCanvas({
   );
   const areaNodes = useMemo(() => areasToNodes(areas), [areas]);
 
-  const initialNodes = useMemo(
-    () => [...areaNodes, ...topology.nodes],
-    [areaNodes, topology.nodes],
-  );
-
-  const [nodes, setNodes, rfOnNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, rfOnEdgesChange] = useEdgesState(topology.edges);
-
-  useEffect(() => {
-    if (!isControlled && !followTopology) return;
-    setNodes([...areaNodes, ...topology.nodes]);
-  }, [topology.nodes, areaNodes, setNodes, isControlled, followTopology]);
-
-  useEffect(() => {
-    if (!isControlled && !followTopology) return;
-    setEdges(topology.edges);
-  }, [topology.edges, setEdges, isControlled, followTopology]);
-
-  // An uncontrolled canvas keeps its first snapshot so an in-canvas drag
-  // survives, but it must not keep drawing links the host has changed: the
-  // simulation runs on the host's links. A lesson that fails a link by taking
-  // it out of its topology left it drawn as healthy, and a link a lesson marks
-  // down or blocked never showed as such. Compared by content, so a host that
-  // rebuilds the same links on every render does not wipe links drawn here.
-  const hostEdgesKey = useMemo(() => JSON.stringify(topology.edges), [topology.edges]);
-  const syncedEdgesKeyRef = useRef(hostEdgesKey);
-  useEffect(() => {
-    if (isControlled || followTopology) return;
-    if (syncedEdgesKeyRef.current === hostEdgesKey) return;
-    syncedEdgesKeyRef.current = hostEdgesKey;
-    setEdges(topology.edges);
-  }, [hostEdgesKey, topology.edges, setEdges, isControlled, followTopology]);
-
-  const emitTopologyChange = useCallback(
-    (nextNodes: NetlabNode[], nextEdges: NetlabEdge[]) => {
-      onTopologyChange?.({
-        nodes: nextNodes,
-        edges: nextEdges,
-        areas: topology.areas,
-      });
-    },
-    [onTopologyChange, topology.areas],
-  );
-
-  const onNodesChange = useCallback(
-    (changes: NodeChange<NetlabNode>[]) => {
-      rfOnNodesChange(changes);
-
-      if (!isControlled || !changes.some((change) => change.type === 'remove')) return;
-
-      const nextNodes = excludeAreaNodes(applyNodeChanges(changes, nodes));
-      onNodesChangeProp?.(nextNodes);
-      emitTopologyChange(nextNodes, edges);
-    },
-    [rfOnNodesChange, isControlled, nodes, onNodesChangeProp, emitTopologyChange, edges],
-  );
-
-  const onEdgesChange = useCallback(
-    (changes: EdgeChange<NetlabEdge>[]) => {
-      rfOnEdgesChange(changes);
-
-      if (!isControlled || !changes.some((change) => change.type === 'remove')) return;
-
-      const nextEdges = applyEdgeChanges(changes, edges);
-      onEdgesChangeProp?.(nextEdges);
-      emitTopologyChange(excludeAreaNodes(nodes), nextEdges);
-    },
-    [rfOnEdgesChange, isControlled, edges, onEdgesChangeProp, emitTopologyChange, nodes],
-  );
-
-  const onConnect = useCallback(
-    (connection: Connection) => {
-      const nextEdges = addEdge({ ...connection, type: 'smoothstep' }, edges);
-      setEdges(nextEdges);
-
-      if (!isControlled) return;
-
-      onEdgesChangeProp?.(nextEdges);
-      emitTopologyChange(excludeAreaNodes(nodes), nextEdges);
-    },
-    [edges, setEdges, isControlled, onEdgesChangeProp, emitTopologyChange, nodes],
-  );
-
-  const onNodeDragStop = useCallback(
-    (_node: NetlabNode, allNodes: NetlabNode[]) => {
-      if (!isControlled) return;
-
-      const nextNodes = excludeAreaNodes(allNodes);
-      onNodesChangeProp?.(nextNodes);
-      emitTopologyChange(nextNodes, edges);
-    },
-    [isControlled, onNodesChangeProp, emitTopologyChange, edges],
-  );
+  const {
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    onNodeDragStop,
+    isConnectionValid,
+  } = useCanvasTopology({
+    topology,
+    areaNodes,
+    isControlled,
+    followTopology,
+    onNodesChange: onNodesChangeProp,
+    onEdgesChange: onEdgesChangeProp,
+    onTopologyChange,
+  });
 
   // Dedupe the passive observation hook: notify only when the selected node
   // actually changes (pane click clears via both selectNode and selectEdge).
@@ -326,238 +222,52 @@ export function NetlabCanvas({
     [notifyNodeSelect],
   );
 
-  const isConnectionValid = useCallback(
-    (connection: Connection | Edge) =>
-      validateCanvasConnection(
-        nodes,
-        edges,
-        connection.source ?? '',
-        connection.target ?? '',
-        connection.sourceHandle,
-        connection.targetHandle,
-      ).valid,
-    [nodes, edges],
+  const { neighborNodeIds, neighborEdgeIds } = useMemo(
+    () => neighboursOf(selectedNodeId, edges),
+    [selectedNodeId, edges],
   );
 
-  /**
-   * Selection choreography (N2) — derive the 1-hop neighbor set from the
-   * current selection. Edges where either endpoint is the selected node
-   * become "neighbor" edges; their other endpoint becomes a neighbor node.
-   */
-  const { neighborNodeIds, neighborEdgeIds } = useMemo(() => {
-    if (!selectedNodeId) {
-      return {
-        neighborNodeIds: new Set<string>(),
-        neighborEdgeIds: new Set<string>(),
-      };
-    }
-    const nodeIds = new Set<string>();
-    const edgeIds = new Set<string>();
-    for (const edge of edges) {
-      if (edge.source === selectedNodeId) {
-        nodeIds.add(edge.target);
-        edgeIds.add(edge.id);
-      } else if (edge.target === selectedNodeId) {
-        nodeIds.add(edge.source);
-        edgeIds.add(edge.id);
-      }
-    }
-    return { neighborNodeIds: nodeIds, neighborEdgeIds: edgeIds };
-  }, [selectedNodeId, edges]);
-
   const styledNodes = useMemo(
-    () =>
-      nodes.map((node) => {
-        const downInterfaceCount = (node.data.interfaces ?? []).filter((iface) =>
-          failureCtx?.isInterfaceDown(node.id, iface.id),
-        ).length;
-        const isAreaNode = node.id.startsWith(AREA_NODE_PREFIX);
-        const selectionClass = isAreaNode
-          ? undefined
-          : node.id === selectedNodeId
-            ? 'netlab-node-selected'
-            : neighborNodeIds.has(node.id)
-              ? 'netlab-node-neighbor'
-              : undefined;
-        const mergedClassName = [node.className, selectionClass].filter(Boolean).join(' ');
-        const classNameChanged = (mergedClassName || undefined) !== node.className;
-
-        if (!failureCtx?.isNodeDown(node.id) && downInterfaceCount === 0) {
-          if (!classNameChanged) return node;
-          return mergedClassName ? { ...node, className: mergedClassName } : node;
-        }
-
-        const nodeStyle = failureCtx?.isNodeDown(node.id)
-          ? { ...node.style, opacity: 0.4, filter: 'grayscale(80%)' }
-          : node.style;
-        const { style: _style, ...restNode } = node;
-
-        return {
-          ...restNode,
-          ...(nodeStyle !== undefined ? { style: nodeStyle } : {}),
-          ...(mergedClassName ? { className: mergedClassName } : {}),
-          data:
-            downInterfaceCount > 0
-              ? { ...node.data, _downInterfaceCount: downInterfaceCount }
-              : node.data,
-        };
-      }),
+    () => styleNodes(nodes, failureCtx, selectedNodeId, neighborNodeIds),
     [nodes, failureCtx, selectedNodeId, neighborNodeIds],
   );
 
-  const styledEdges = useMemo(() => {
-    const decorated = edges.map((edge) => {
-      const baseValidationEdge = withValidationEdgeType(edge);
-      const selectionClass = neighborEdgeIds.has(edge.id) ? 'netlab-edge-neighbor' : undefined;
-      const mergedClassName = [baseValidationEdge.className, selectionClass]
-        .filter(Boolean)
-        .join(' ');
-      const validationEdge: NetlabEdge = mergedClassName
-        ? { ...baseValidationEdge, className: mergedClassName }
-        : baseValidationEdge;
-
-      // A link that carries nothing is drawn so on three channels — colour,
-      // dash and the mark the engine puts at its middle — and the state is
-      // handed on in `data.state`, whichever source said so.
-      if (failureCtx?.isEdgeDown(edge.id) || edge.data?.state === 'down') {
-        return {
-          ...validationEdge,
-          animated: false,
-          data: { ...validationEdge.data, state: 'down' as const },
-          style: {
-            ...validationEdge.style,
-            stroke: 'var(--netlab-accent-red)',
-            strokeDasharray: '6 3',
-            strokeWidth: 2,
-            opacity: 1,
-          },
-        };
-      }
-
-      if (edge.data?.state === 'blocked') {
-        return {
-          ...validationEdge,
-          animated: false,
-          style: {
-            ...validationEdge.style,
-            stroke: 'var(--netlab-text-muted)',
-            strokeDasharray: '1 3',
-            strokeWidth: 2,
-            opacity: 1,
-          },
-        };
-      }
-
-      const isCurrentHopEdge = activeEdgeIds.includes(edge.id);
-      const isPathEdge = highlightMode === 'path' && activePathEdgeIds.includes(edge.id);
-
-      if (isCurrentHopEdge) {
-        return {
-          ...validationEdge,
-          animated: !reducedMotion,
-          style: {
-            ...validationEdge.style,
-            stroke: currentTraceColor,
-            strokeWidth: isPathEdge ? 3 : 2,
-            opacity: 1,
-          },
-        };
-      }
-
-      if (isPathEdge) {
-        return {
-          ...validationEdge,
-          animated: !reducedMotion,
-          style: {
-            ...validationEdge.style,
-            stroke: currentTraceColor,
-            strokeWidth: 2,
-            opacity: 0.45,
-          },
-        };
-      }
-
-      // The authored variant: this grades a link that already exists, not one a
-      // learner is drawing, so the editor's "put a switch between those two"
-      // guidance is not a fault to paint on it.
-      const validationResult = validateAuthoredLink(
+  const styledEdges = useMemo(
+    () =>
+      styleEdges(
+        edges,
         nodes,
-        edges.filter((candidate) => candidate.id !== edge.id),
-        edge.source,
-        edge.target,
-        edge.sourceHandle,
-        edge.targetHandle,
-      );
-
-      if (!validationResult.valid) {
-        return {
-          ...validationEdge,
-          style: {
-            ...validationEdge.style,
-            stroke: 'var(--netlab-accent-red)',
-          },
-          data: { ...validationEdge.data, validationResult },
-        };
-      }
-
-      if (validationResult.warnings.length > 0) {
-        return {
-          ...validationEdge,
-          style: {
-            ...validationEdge.style,
-            stroke: 'var(--netlab-accent-orange, orange)',
-          },
-          data: { ...validationEdge.data, validationResult },
-        };
-      }
-
-      return validationEdge;
-    });
-    // Honor prefers-reduced-motion globally: nothing should march, whether the
-    // animation came from the sim path or directly from the topology (the
-    // learning reveal sets `animated` on its edges, bypassing the sim branches).
-    return reducedMotion
-      ? decorated.map((edge) => (edge.animated ? { ...edge, animated: false } : edge))
-      : decorated;
-  }, [
-    edges,
-    nodes,
-    activeEdgeIds,
-    activePathEdgeIds,
-    highlightMode,
-    currentTraceColor,
-    failureCtx,
-    neighborEdgeIds,
-    reducedMotion,
-  ]);
+        {
+          activeEdgeIds,
+          activePathEdgeIds,
+          mode: highlightMode,
+          color: currentTraceColor,
+        },
+        failureCtx,
+        neighborEdgeIds,
+        reducedMotion,
+      ),
+    [
+      edges,
+      nodes,
+      activeEdgeIds,
+      activePathEdgeIds,
+      highlightMode,
+      currentTraceColor,
+      failureCtx,
+      neighborEdgeIds,
+      reducedMotion,
+    ],
+  );
 
   const expandArea = useCallback((areaId: string) => {
     setExpandedAreaIds((prev) => new Set(prev).add(areaId));
   }, []);
 
-  const { nodes: displayNodes, edges: displayEdges } = useMemo(() => {
-    const lod = applyAreaLod({
-      areas: topology.areas,
-      nodes: styledNodes,
-      edges: styledEdges,
-      zoom: lodZoom,
-      expandedAreaIds,
-    });
-    // Inject the expand callback into cluster nodes (the pure transform stays
-    // callback-free); the cluster button pins its area open when clicked.
-    const nodes = lod.nodes.map((node) =>
-      node.type === AREA_CLUSTER_NODE_TYPE
-        ? {
-            ...node,
-            data: {
-              ...node.data,
-              onExpand: () => expandArea((node.data as unknown as AreaClusterNodeData).areaId),
-            },
-          }
-        : node,
-    );
-    return { nodes, edges: lod.edges };
-  }, [topology.areas, styledNodes, styledEdges, lodZoom, expandedAreaIds, expandArea]);
+  const { nodes: displayNodes, edges: displayEdges } = useMemo(
+    () => lodView(topology.areas, styledNodes, styledEdges, lodZoom, expandedAreaIds, expandArea),
+    [topology.areas, styledNodes, styledEdges, lodZoom, expandedAreaIds, expandArea],
+  );
 
   // What the canvas needs to draw the packet of the hop being shown. The story
   // itself is worked out inside the engine's lazily loaded chunk, so pages that

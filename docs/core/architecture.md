@@ -25,7 +25,7 @@
 └────────────────────┬────────────────────────────────┘
                      │
 ┌────────────────────▼────────────────────────────────┐
-│  NetlabCanvas  (React Flow wrapper)                 │
+│  NetlabCanvas  (maxGraph canvas, lazily loaded)     │
 │  ├─ LayerRegistry.getAllNodeTypes()                  │
 │  ├─ AreaBackground nodes (zIndex: -1)               │
 │  ├─ NetlabUIContext  (selection + area highlight)    │
@@ -129,8 +129,8 @@ See [hooks.md](./hooks.md).
 ### Layer nodeTypes Isolation
 
 Each layer plugin contributes its own `NodeTypes` object. These are merged once via
-`LayerRegistry.getAllNodeTypes()` and passed to React Flow. This avoids per-render object creation
-that would cause React Flow to remount all nodes.
+`LayerRegistry.getAllNodeTypes()` and passed to the canvas engine. This avoids per-render object
+creation that would make the engine redraw every device.
 
 ### Separation of Simulation and UI Contexts
 
