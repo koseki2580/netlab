@@ -29,7 +29,7 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>2台をつなぐ</strong> — 同じネットワークなら間に何もなくても届きます。</li>
                  <li><strong>スイッチを挟む</strong> — スイッチは中身を書き換えず転送するだけです。</li>
                  <li><strong>3台目をつなぐ</strong> — スイッチは宛先のポートにだけ流します。</li>
-                 <li><strong>2つのネットワーク、つながっていない</strong> — <em>わざと失敗する例です。</em>スイッチは別のネットワークへの行き方を知りません。</li>
+                 <li><strong>2つのネットワーク、つながっていない</strong> — <em>わざと失敗する例です。</em>別のネットワークへ出る道（ルータ）がないので、スイッチを 2 台並べても届きません。</li>
                  <li><strong>ルータが間を埋める</strong> — 両方にアドレスを持つ機器が橋渡しをします。</li>
                  <li><strong>ルータはどう決めているか</strong> — 経路表の行に宛先を当てはめて決めています。</li>
                </ul>
@@ -78,11 +78,12 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>図で見る</strong> — 「▶ 図で見てみる」を押すと、判定に使ったパケットそのものが図の上を動きます。</li>
                  <li>設定を変えると、前の結果には「この結果のあとで設定を変えました」と出ます。もう一度「たしかめる」を押してください。「最初に戻す」で、はじめからやり直せます。前の結果も画面から消えます。</li>
                </ol>
-               <p>「どれを選ぶか」を問う問題もあります。そのときは、1 つ選び、どうなるか（届く・届かない・遠回りになる）を予想してから「たしかめる」を押します。予想をえらぶまでは、ボタンに「先に予想をえらぶ」と出ます。選んだものが実際に動き、予想が合っていたかと、その理由が出ます。</p>
+               <p>「どれを選ぶか」を問う問題もあります。そのときは、1 つ選び、1 つ目の目標（たとえば「レジから在庫サーバーに届く」）がどうなるか（届く・届かない。道が問われる問題では「届くが、遠回りになる」も）を予想してから「たしかめる」を押します。予想をえらぶまでは、ボタンに「先に予想をえらぶ」と出ます。選んだものが実際に動き、予想が合っていたかと、その理由が出ます。</p>
                <h3>先に「どれがおかしいか」をえらぶ問題</h3>
                <p>3 台のうちどれか 1 台、またはルータの 2 つの側のどちらかがおかしい問題では、先に「この機器がおかしい」「こちらがまちがっている」を押してえらびます。えらんだものだけが変えられます。</p>
                <ul>
-                 <li>えらぶだけでは、何も記録されません。「たしかめる」を押すまでは、何度でもえらび直せます。えらび直すと、変えたところは元に戻ります。</li>
+                 <li>えらぶだけでは、何も記録されません。「たしかめる」を押すまでは、何度でもえらび直せます。えらぶと、カードと図に印が付きます。ほかをえらんでから戻ると、そこで選んだものは残っています。</li>
+                 <li>合っているものをえらんで変えたまま「たしかめる」を押すと、変えたところは元に戻り、そのことと理由が 1 行で出ます。</li>
                  <li>おかしくないものをえらんで「たしかめる」を押すと、「これは合っています」と出て、1 回分のまちがいになります。</li>
                </ul>
                <h3>入力と図について</h3>
@@ -91,7 +92,15 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>赤い点線</strong>は、ぬけているケーブルです。図で押すと、つながります。ほかのケーブルと重なって見える所を押しても、ぬけているほうがつながります。押したあとに「〜のケーブルをつなぎました。」と出ます。</li>
                  <li><strong>⚠</strong> は「この機器にまだアドレスがない」という印です。故障ではありません。</li>
                  <li>アドレスの候補は 6 つ出ます。候補だけを見くらべても、正しいものはわかりません。図の機器のアドレスと見くらべてください。</li>
-                 <li>経路の「次のルータ」に書けるのは、となりのルータの「こちら側」のアドレスだけです。向こう側のアドレスを書くと、正解になりません。</li>
+                 <li>経路の「次のルータ」に書けるのは、となりのルータの「こちら側」のアドレスだけです。向こう側のアドレス、ルータ自身のアドレス、はなれた機器のアドレスでは届かず、それぞれ何がちがうかが出ます。</li>
+               </ul>
+               <h3>判定のきまり</h3>
+               <ul>
+                 <li><strong>同じアドレスの機器があると「届く」になりません</strong> — 行き先や送り主と同じアドレスを、ほかの機器（ルータの側もふくむ）が持っていると、その目標は「まだ」です。シミュレータは自分あての送りものをすぐに「届いた」としてしまうので、判定では送らずに、どの機器と同じかを伝えます。</li>
+                 <li><strong>ネットワークの最初と最後のアドレスは使えません</strong> — たとえば /24 で最後の数字が 0 のもの（ネットワーク全体を表す数字）と 255 のもの（全員あての数字）です。入力すると、その理由が出ます。候補には出ません。</li>
+                 <li><strong>ACL の問題の「開ける」は、tcp の 80 番で調べます</strong> — ping だけを通す行では、目標は「まだ」です。</li>
+                 <li><strong>何も変えずに「たしかめる」</strong>を押すと「まだ何も変えていません。」と出て、1 回目には数えません。書きかけの欄があるときも同じで、その欄に移ります。</li>
+                 <li>図の「▶ 図で見てみる」は、止まった所に「ここで止まりました」と出します。理由は、結果の文に書かれています。</li>
                </ul>
                <h3>困ったとき</h3>
                <ul>
@@ -100,16 +109,19 @@ window.USER_GUIDE_CONTENT = {
                </ul>
                <h3>レベルと「達成」</h3>
                <p>レベルは 4 つです。レベル 1 は「アドレスと線」、レベル 2 は「スイッチと、かんたんな経路」を扱い、どちらも 100 問以上あります。同じ種類の問題でも、場所・アドレス・こわれている機器が毎回変わります。</p>
-               <p><strong>レベルは、直近 10 問のうち 7 問をヒントなしで解き、そのレベルのどの種類の問題も、いちばん最近の 1 問が解けていると達成です。</strong>レベル 1 には 7 種類、レベル 2 には 10 種類の問題があります。</p>
+               <p><strong>レベルは、直近 10 問のうち 7 問をヒントなしで解き、そのレベルのどの種類の問題も、いちばん最近の 1 問が解けていると達成です。</strong>「/数字」の問題では、/16 か /8 の問題を解いたときだけ、その種類が「解けた」になります（/24 の問題は練習として数に入ります）。レベル 1 には 7 種類、レベル 2 には 10 種類の問題があります。</p>
                <ul>
                  <li><strong>数え方</strong> — 選ぶだけの問題は 1 回目の「たしかめる」で、自分で入力する問題は 2 回目までに解けたときに数えます（問題ごとに、はじめに 1 行で出ます）。</li>
                  <li><strong>1 問は 1 回だけ数えます</strong> — はじめに「たしかめる」を押したとき（または答えを見たとき）の結果が、その問題の結果です。同じ問題をやり直しても変わりません。</li>
-                 <li><strong>解けなかった種類は、次で取り返せます</strong> — 一度取り組んだ問題をもう一度開くと、同じ種類の別の問題（数字がちがうもの）が出ます。それを解けば、その種類は「解けた」になります。</li>
+                 <li><strong>解けなかった種類は、2 問つづけて解くと取り返せます</strong> — 一度取り組んだ問題をもう一度開くと、同じ種類の別の問題（数字がちがうもの）が出ます（問題のページにも「やり直すと、べつの問題が出ます。」と出ます）。のこりが 1〜2 種類になると、レベルの表示に「あと 1 種類：… → この種類をやる」が出て、「次の問題へ」もその種類を出します。</li>
+                 <li><strong>開いただけで離れた問題</strong>は、「次の問題へ」でもう一度出ます。「とばす（「解けなかった」と数えます）」を押すと、次へ進み、その問題は解けなかったと数えます。</li>
+                 <li>レベルのページの種類ごとの行は、判定のきまりで見た状態（「✓ この種類は OK」か「まだ」）と、「これまでに解いた数」です。</li>
                  <li>取り組んだ問題が 5 問より少ないあいだは、まだ判定しません。</li>
                  <li>問題の種類は、毎回ちがう順番で出ます。同じ種類が 2 問つづくことはありません。</li>
                </ul>
                <p>各レベルには、短い 2 行が出ます。1 行目は、いま何問解けていて、あと何問か。2 行目は「まだ解けていない種類：…」です。達成すると、2 行目は「つぎは修了テスト（10 問）か、レベル 2 へ。」に変わります。くわしい数え方は「くわしい判定のしかたを見る」を押すと読めます。</p>
-               <div class="callout">レベル 3 とレベル 4 は、まだ用意できていません。レベル 4 には「このレベルの問題は、まだありません。」と出ます。レベル 3 には見本の問題が 1 種類あるだけで、達成にはなりません。</div>
+               <p>レベル 3 は「経路とフィルタ」で、8 種類・100 問以上あります。OSPF のコストで道を選ばせる問題（行きだけ／行きも帰りも。コストは、設定したルータから出ていく通信にだけ効きます）、3 台のルータで行きと帰りの経路を足す問題、ACL の問題が 3 つ（行の順番、ポート番号つきの行、返事まで止めてしまう一覧）、故障が 2 つ同時にある問題、「/数字」がいちばん長い行が勝つことを使って 2 行を選ぶ問題です。ACL の問題の「開ける」「ログインできる」は、tcp の 80 番・22 番で調べます。経路やコストや一覧は、選ぶのではなく自分で書きます。</p>
+               <div class="callout">レベル 4 は、まだ用意できていません。「このレベルの問題は、まだありません。」と出ます。</div>
                <h3>どのレベルから始めるか</h3>
                <p>迷ったら「レベル判定をする」を押してください。質問が 1 つあり、そのあと多くても 8 問を解きます。テストではなく、始める場所を見つけるためのものです。わからない問題は「わからないので次へ」で飛ばせます。</p>
                <h3>学ぶ前と、学んだあとを比べる</h3>
@@ -123,6 +135,19 @@ window.USER_GUIDE_CONTENT = {
                  <li>ブラウザに保存できないときは、その旨が表示されます。問題はすべて解けますが、記録はページを閉じるまでしか残りません。</li>
                </ul>
                <p>スマートフォンでも使えます。「たしかめる」のボタンは、いつも画面の下に出ています。</p>`
+      },
+      {
+        id: "packet-exercises",
+        title: "パケットの実習",
+        html: `<p>パケットの実習は、設定ではなくパケットそのものを扱う、実習問題とは別の 4 レベルの練習です。実習問題の一覧の「パケットの実習へ」から開けます。アドレスは <code>#/exercises/packet</code> です。</p>
+               <ul>
+                 <li><strong>パケットを組み立てる</strong> — パケットがフレーム・IP パケット・中身の層で描かれ、変えてよい欄だけが枠付きの入力欄になっています。あて先アドレス、TTL、あて先 MAC アドレス、ポート番号、「分割しない」の印（DF）、大きさなどを埋めます。</li>
+                 <li><strong>分割のしかたを答える</strong> — 「＋ 断片を足す」で断片を 1 つずつ足し、大きさ（IP ヘッダ込み）と、レベル 4 では位置と「続きあり」の印を書きます。スマートフォンでは断片 1 つが 1 枚のカードになります。</li>
+                 <li><strong>パケットを読む</strong> — 送り主から出たときのパケットを読み、届く先・止まる場所・原因の欄などを選びます。直す問題では、選んだ答えと直したパケットを 1 回の「たしかめる」でまとめて判定し、結果は「読み取り」と「直したパケット」に分けて表示します。</li>
+               </ul>
+               <p>「たしかめる」を押すと、答えたパケットをシミュレータで実際に送ります。結果には目標ごとの ✓・✗ と、できていない目標の理由（例：「TTL が足りず、2 台目のルータ（…）で捨てられました。」）、パケットの通った道が出ます。通った道には、各機器に<strong>着いたときの TTL</strong>（送り主は送り出したときの TTL）が書かれ、ルータが返した知らせ（時間切れ・大きすぎる）はそれとわかるように並びます。届いたパケットに返事が返ってくることはありません。</p>
+               <p>MAC アドレス・回線の上限（MTU）・ルータの一覧（ACL）は、その問題に必要なときだけ図の横に書かれます。何も入れずに、または整数でない値のまま「たしかめる」を押しても判定せず、理由を表示します。</p>
+               <div class="callout">レベルの判定は実習問題と同じ決まりで、パケットの実習の記録だけで数えます。実習問題のレベルには数えません。選ぶだけで答える問題は 1 回目の「たしかめる」で解けたときだけ数えます。</div>`
       },
       {
         id: "gallery",
@@ -156,6 +181,7 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>幅の広い画面</strong> — パネルは図の横に並びます。図とパネルの境目をドラッグすると、パネルの幅を広げられます。</li>
                </ul>
                <p><strong>ARP・TCP のハンドシェイク・DHCP と DNS・NAT</strong> の 4 つのレッスンは、幅の狭い画面では並び方が少し違います。<strong>図は上に固定</strong>され、そのすぐ下に<strong>操作ボタン</strong>（送る、①②③、「次のステップ」）と、いまパケットがどこにいるかを示す <strong>1 行の状況</strong>が並びます。スクロールするのは、その下の説明とパネルだけです。機器は幅の広い画面より近づけて並べてあるので、大きく表示されます。</p>
+               <p>スマートフォンでは、どのレッスンも図の機器を<strong>1 行に 3 台まで</strong>並べ直すので、機器の名前とアドレスが読める大きさで表示されます。横に説明の列があるレッスンは、図が上、説明が下に並びます。ボタンやタブは指で押しやすい<strong>44px 以上</strong>の大きさになります。下のバーの <strong>?</strong> は、タッチ画面では<strong>タップのしかた</strong>（機器、ボタン、タイムラインの行、拡大・縮小、下のバー）を説明します。</p>
                <ul>
                  <li><strong>図の機器をタップ</strong>すると、その機器の詳細（アドレスなどの設定）が開きます。たたまれたエリアはタップで開きます。</li>
                  <li><strong>レッスン一覧</strong>では、左の案内は「☰ メニュー」ボタンで開く引き出しになり、カードが画面の幅いっぱいに並びます。</li>
@@ -185,9 +211,17 @@ window.USER_GUIDE_CONTENT = {
                </ul>
                <h3>アドレスとフィルタ</h3>
                <ul>
-                 <li><strong>NAT / PAT</strong> — 「NAT のしくみ」。Client A と Client B から送ると、変換表で 2 台が同じグローバルアドレスをポート番号で分け合うのが分かります。この NAT は外側のポートを <strong>1024 から順に</strong>割り当てます。</li>
-                 <li><strong>ファイアウォールと ACL</strong> — 「このファイアウォールの決め方」。ルールの一覧が表示され、上から順に照らし合わせて最初に一致したもので決まること、どれにも一致しなければ拒否されることが書いてあります。「戻りの通信」ボタンで、クライアントが始めた接続の返事は通ることを確かめられます。</li>
+                 <li><strong>NAT / PAT</strong> — 「NAT のしくみ」。Client A と Client B から送ると、変換表で 2 台が同じグローバルアドレスをポート番号で分け合うのが分かります。この NAT は外側のポートを <strong>1024 から順に</strong>割り当てます。送ったあとは「Internet Host から返事を送る」で、返事の宛先が元の住所に戻されるところも見られます。一覧には ARP の行を出していません。</li>
+                 <li><strong>ファイアウォールと ACL</strong> — 「このファイアウォールの決め方」。ルールの一覧が表示され、上から順に照らし合わせて最初に一致したもので決まること、どれにも一致しなければ拒否されることが書いてあります。「戻りの通信」ボタンで、クライアントが始めた接続の返事は通ることを確かめられます。ルールが 1 つもない一覧は、一覧がないのと同じで何も止めません。そのためインターネット側には、すべてを拒否するルールが 1 つ置いてあります。</li>
                  <li><strong>DHCPv6 と SLAAC</strong> — モードが「DHCPv6 でアドレス取得」「SLAAC ＋ DHCPv6（DNS などだけ）」「SLAAC のみ」と言葉で表示されます。</li>
+               </ul>
+               <h3>ステップに合わせて変わる表示</h3>
+               <ul>
+                 <li><strong>ARP の基本</strong> — 「ARP テーブル」と「ARP の変化」は、いま表示しているステップの時点の内容です。Router の行は、Server や Client の答えが届いたステップで増えます。リセットすると、最初から入っていた行だけに戻ります。</li>
+                 <li><strong>DHCP と DNS</strong> — 「いまの DHCP Client」の行が、DISCOVER・OFFER・REQUEST の間は住所なし、ACK が届くと BOUND と住所を表示します。図の機器を押して見る設定は、やり取りがすべて終わったあとのものです。</li>
+                 <li><strong>TCP のハンドシェイク</strong> — 「もう少し詳しく」で、ルータのホップの 2 つの TTL（着いたときと出ていくとき）と、localSeq が SYN の SEQ + 1 になる理由が説明されます。</li>
+                 <li><strong>VLAN による分離</strong> — VLAN、アクセスポート、トランクの意味が最初に書かれています。開いた時点では何も送りません。破棄の理由は言葉で表示されます。</li>
+                 <li><strong>1ホップずつ進める</strong>と<strong>通信の詳細を見る</strong> — それぞれ、何を見るレッスンかの説明があります（R-1 の最長一致と、ホップごとの TTL と MAC）。</li>
                </ul>
                <h3>スパニングツリー</h3>
                <ul>
@@ -300,7 +334,7 @@ window.USER_GUIDE_CONTENT = {
       {
         id: "troubleshooting",
         title: "こまったとき",
-        html: `<p><strong>パケットが届かない</strong> — タイムラインの最後の行にある理由を見てください。<code>no-route</code> は経路がない、<code>not-group-member</code> はそのグループに参加していない、<code>acl-deny</code> はフィルタで止められた、という意味です。レッスンによっては、それを見せることが目的です。</p>
+        html: `<p><strong>パケットが届かない</strong> — タイムラインの最後の行にある理由を見てください。<code>no-route</code> は経路がない、<code>not-group-member</code> はそのグループに参加していない、<code>acl-deny</code> はフィルタで止められた、<code>next-hop-off-link</code> はルートの次のルータがそのルータのどのネットワークにもいない、<code>reserved-address</code> は機器にネットワークアドレスかブロードキャストアドレスが付いている、という意味です。レッスンによっては、それを見せることが目的です。</p>
                <p><strong>図が画面に収まらない</strong> — 右下の「全体」（英語表示では <code>fit</code>）を押すと全体が入ります。</p>
                <p><strong>言語が英語のまま</strong> — ギャラリー右上で「日本語」を選んでください。プロトコル名やアドレス、<code>DROP</code> などの記号は、そのまま英語で表示されます。</p>
                <p><strong>進み具合が保存されない</strong> — ブラウザのプライベートモードや、サイトデータを保存しない設定では記録できません。</p>`
@@ -337,7 +371,7 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>Two machines on a wire</strong> — on the same network they reach each other directly.</li>
                  <li><strong>Put a switch in the middle</strong> — a switch passes frames along without changing them.</li>
                  <li><strong>A third machine</strong> — the switch sends down one cable, not all of them.</li>
-                 <li><strong>Two networks, not joined</strong> — <em>this one is meant to fail.</em> A switch has no idea another network exists.</li>
+                 <li><strong>Two networks, not joined</strong> — <em>this one is meant to fail.</em> Nothing leads out to the other network (there is no router), so two switches side by side do not deliver it.</li>
                  <li><strong>A router fills the gap</strong> — a machine with a foot in both networks carries packets across.</li>
                  <li><strong>How the router decides</strong> — it matches the destination against a row in its table.</li>
                </ul>
@@ -386,11 +420,12 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>See it on the diagram</strong> — “▶ Watch it on the diagram” replays, on the diagram, the very packet the result was judged on.</li>
                  <li>After you change a setting, the old result says “You have changed a setting since this result”. Press “Check” again. “Start over” undoes everything, and takes the old result off the screen.</li>
                </ol>
-               <p>Some exercises ask you to choose a design instead. Pick one, say what you expect to happen (it arrives, it does not arrive, or it arrives the long way round), then press “Check”. Until you have chosen a prediction, the button reads “Choose your prediction first”. Your choice is run, and you are told whether you expected right, and why.</p>
+               <p>Some exercises ask you to choose a design instead. Pick one, say what you expect for the first goal (it arrives or it does not; where a goal is about the path, also “it arrives, but the long way round”), then press “Check”. Until you have chosen a prediction, the button reads “Choose your prediction first”. Your choice is run, and you are told whether you expected right, and why.</p>
                <h3>Exercises where you first choose what is wrong</h3>
                <p>Where one of three devices is wrong, or one of the two sides of a router, you first press “This is the one that is wrong” or “This side is wrong”. Only what you chose can be changed.</p>
                <ul>
-                 <li>Choosing alone records nothing. Until you press “Check” you can choose again as often as you like; what you had changed is put back.</li>
+                 <li>Choosing alone records nothing. Until you press “Check” you can choose again as often as you like. What you choose is marked on its card and on the diagram; come back to one, and what you had chosen there is still there.</li>
+                 <li>Check with a healthy one chosen and changed puts the change back, and one line says so and why.</li>
                  <li>If you press “Check” with one chosen that is fine, the page says so, and that counts as one miss.</li>
                </ul>
                <h3>Typing, and the diagram</h3>
@@ -399,7 +434,15 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>A red dotted line</strong> is an unplugged cable. Press it on the diagram to plug it in. Where it seems to run along another cable, a press there still plugs in the unplugged one. A line then says which cable was plugged in.</li>
                  <li><strong>⚠</strong> means “this device has no address yet”. It is not a fault.</li>
                  <li>Six addresses are offered. Comparing them with each other does not tell you which one fits; compare them with the addresses on the diagram.</li>
-                 <li>The “next router” of a route can only be the neighbouring router’s address on the side facing this one. An address on its far side is not accepted as solved.</li>
+                 <li>The “next router” of a route can only be the neighbouring router’s address on the side facing this one. An address on its far side, the router’s own address or a device far away does not work, and you are told which it is.</li>
+               </ul>
+               <h3>How Check judges</h3>
+               <ul>
+                 <li><strong>Two devices with one address never “arrive”</strong> — when another device (a side of a router included) holds the address of the sender or the destination, the goal is not met. The simulator calls a packet to a device’s own address delivered at once, so the probe is not sent; you are told who else holds the address.</li>
+                 <li><strong>The first and last address of a network cannot be used</strong> — for example, under /24, a last number of 0 (the whole network) or 255 (everyone). Typed in, they are refused with the reason; they are never offered.</li>
+                 <li><strong>In the ACL exercise, “can open” is a tcp connection to port 80</strong> — a line that lets only ping through does not meet it.</li>
+                 <li><strong>Check with nothing changed</strong> says “You have not changed anything yet.” and is not counted; so is Check while a field holds unfinished text, and that field is focused.</li>
+                 <li>“Watch it on the diagram” marks where it stopped with “It stopped here”; the reason is in the result.</li>
                </ul>
                <h3>If you are stuck</h3>
                <ul>
@@ -412,12 +455,15 @@ window.USER_GUIDE_CONTENT = {
                <ul>
                  <li><strong>How a solve counts</strong> — on the first Check where the answer is one of a few things to press, and within two Checks where you type it (each exercise says which, in one line, before you start).</li>
                  <li><strong>An exercise counts once</strong> — as it went the first time you pressed “Check” on it (or looked at its answer). Doing the same exercise again does not change it.</li>
-                 <li><strong>A kind you missed can be made good</strong> — when you open an exercise you have already tried, you get another exercise of the same kind, with other numbers. Solve that one, and the kind counts as solved.</li>
+                 <li><strong>A kind you missed is made good by solving two of it in a row</strong> — opening an exercise you have tried gives another of the same kind, with other numbers (the page says so). With one or two kinds left, the level shows “1 kind to go: … → Do this kind”, and “Next exercise” brings that kind too.</li>
+                 <li><strong>An exercise opened and left</strong> is offered again by “Next exercise”. “Skip (counts as not solved)” moves on and counts it as not solved.</li>
+                 <li>On the level page, each kind shows what the rule says of it (“this kind is done” or “not yet”) and, labelled, how many you have solved in all. For the “/number” kind only a /16 or /8 exercise settles it; a /24 one counts as practice.</li>
                  <li>Until you have tried 5, the level is not judged.</li>
                  <li>The kinds of task come in a different order each time. The same kind never comes twice in a row.</li>
                </ul>
                <p>Each level shows two short lines. The first says how many you have solved and how many more it takes. The second says “Kinds of task not solved yet: …”. Once the level is cleared, the second line becomes “Next: the final test (10 questions), or level 2.” The details are behind “See the full rule”.</p>
-               <div class="callout">Levels 3 and 4 are not available yet. Level 4 says “No exercises at this level yet.” Level 3 has a single sample kind of exercise and cannot be cleared.</div>
+               <p>Level 3, “routes and filters”, has eight kinds of task and over 100 exercises: steering traffic with an OSPF cost (one way, or there and back; a cost counts only for traffic leaving the router it is set on), adding the missing routes there and back across three routers, three ACL tasks (the order of the lines, a line with a port number, a list that also stops the answers), two faults at once, and choosing two route lines by the rule that the longest “/number” wins. In the ACL tasks “can open” and “can log in” are tcp connections to ports 80 and 22. Routes, costs and list lines are written, not picked.</p>
+               <div class="callout">Level 4 is not available yet. It says “No exercises at this level yet.”</div>
                <h3>Where to start</h3>
                <p>If you are not sure, press “Find my level”. It asks one question and then gives you at most 8 exercises. It is not a test; it only finds where to start. “I cannot do this one: next” skips an exercise.</p>
                <h3>Before and after studying</h3>
@@ -431,6 +477,19 @@ window.USER_GUIDE_CONTENT = {
                  <li>If the browser cannot save, the page says so. You can still do every exercise, but the record lasts only until you close the page.</li>
                </ul>
                <p>The exercises work on a phone too: the “Check” button is always at the bottom of the screen.</p>`
+      },
+      {
+        id: "packet-exercises",
+        title: "Packet exercises",
+        html: `<p>The packet exercises work on the packet itself rather than on settings: a track of its own, with four levels. Open them with “Go to the packet exercises” on the list of hands-on exercises. The address is <code>#/exercises/packet</code>.</p>
+               <ul>
+                 <li><strong>Build a packet</strong> — the packet is drawn in layers (frame, IP packet, what it carries), and only the fields you may change are outlined boxes: the destination address, the TTL, the destination MAC address, the port, the “do not split” mark (DF), the size.</li>
+                 <li><strong>Say how it is split</strong> — add the pieces one by one with “+ Add a piece” and write each one’s size (IP header included) and, at level 4, its position and its “more pieces follow” mark. On a phone each piece is a card of its own.</li>
+                 <li><strong>Read a packet</strong> — read the packet as it left the sender and choose where it arrives, where it stops, or which field is why. Where you also correct it, one “Check” judges your choices and your correction together, and the result shows “Your reading” and “Your correction” apart.</li>
+               </ul>
+               <p>“Check” sends your packet on the simulator. The result marks each goal ✓ or ✗ with the reason for each one not met (for example “The TTL ran out, and the second router (…) threw the packet away.”) and lists where the packet went, with the <strong>TTL each device received it with</strong> (the sender: the TTL it left with); a note a router sent back (time exceeded, too big) is listed as such. A delivered packet gets no reply.</p>
+               <p>MAC addresses, cable limits (MTU) and router lists (ACL) are written beside the diagram only on the exercises that need them. “Check” with nothing entered, or with a box that is not a whole number, judges nothing and says why.</p>
+               <div class="callout">A packet level is cleared by the same rule as the other exercises, counted over packet exercises alone; they do not count toward the other levels. An exercise answered by choosing counts only when solved on the first Check.</div>`
       },
       {
         id: "gallery",
@@ -464,6 +523,7 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>Wide screen</strong> — the panel sits beside the diagram. Drag the edge between them to make the panel wider.</li>
                </ul>
                <p>Four lessons — <strong>ARP, the TCP handshake, DHCP and DNS, and NAT</strong> — are arranged a little differently on a narrow screen. The <strong>diagram stays fixed at the top</strong>; directly under it are the <strong>buttons that drive it</strong> (send, ①②③, “Next step”) and <strong>one line saying where the packet is</strong>. Only the notes and the panel below scroll. Their devices stand closer together than on a wide screen, so they are drawn larger.</p>
+               <p>On a phone every lesson stands its devices <strong>at most three to a row</strong>, so their names and addresses are drawn at a size you can read. A lesson with a column beside its diagram puts the diagram on top and the column below it. Buttons and tabs are at least <strong>44px</strong> each way, a fingertip’s size. On a touch screen, <strong>?</strong> in the bottom bar explains <strong>what to tap</strong> (devices, buttons, timeline rows, zoom, the bottom bar) instead of listing keyboard shortcuts.</p>
                <ul>
                  <li><strong>Tap a device</strong> on a diagram to open its details (its addresses and other settings). Tap a folded area to open it.</li>
                  <li>On the <strong>lesson list</strong> the navigation on the left becomes a drawer opened by the “☰ Menu” button, and the cards take the full width.</li>
@@ -493,9 +553,17 @@ window.USER_GUIDE_CONTENT = {
                </ul>
                <h3>Addresses and filtering</h3>
                <ul>
-                 <li><strong>NAT / PAT</strong> — “How NAT works”. Send from Client A and Client B and the table shows both sharing one global address, told apart by port. This NAT allocates public ports <strong>in order starting at 1024</strong>.</li>
-                 <li><strong>Firewalls &amp; ACLs</strong> — “How this firewall decides”. The rules are listed, with how they are read: top to bottom, first match wins, and anything unmatched is denied. Press “Return Traffic” to see that replies to a connection the client opened are let back in.</li>
+                 <li><strong>NAT / PAT</strong> — “How NAT works”. Send from Client A and Client B and the table shows both sharing one global address, told apart by port. This NAT allocates public ports <strong>in order starting at 1024</strong>. After a send, “Send the reply from Internet Host” shows the reply's destination being put back to the address at home. Its list leaves the ARP rows out.</li>
+                 <li><strong>Firewalls &amp; ACLs</strong> — “How this firewall decides”. The rules are listed, with how they are read: top to bottom, first match wins, and anything unmatched is denied. Press “Return Traffic” to see that replies to a connection the client opened are let back in. A list with no rules filters nothing, as if there were no list, so the Internet side has one rule that denies everything.</li>
                  <li><strong>DHCPv6 And SLAAC</strong> — the mode reads in words: “DHCPv6 address”, “SLAAC + stateless DHCPv6 (DNS only)” or “SLAAC only”.</li>
+               </ul>
+               <h3>Panels that follow the step</h3>
+               <ul>
+                 <li><strong>ARP Basics</strong> — “ARP tables” and “ARP over time” show what each device knew at the step on screen. The Router’s lines appear at the step where the Server’s or the Client’s answer arrives. Reset goes back to the lines that were there from the start.</li>
+                 <li><strong>DHCP &amp; DNS</strong> — the “DHCP Client now” line says it has no address during DISCOVER, OFFER and REQUEST, and BOUND with its address once the ACK has arrived. A device’s details, opened from the diagram, show the end of the whole exchange.</li>
+                 <li><strong>TCP Handshake</strong> — “A little more detail” names the two TTLs at a router’s hop (as the packet arrived, and as it leaves) and explains why localSeq is the SYN’s SEQ + 1.</li>
+                 <li><strong>VLAN (802.1Q)</strong> — VLAN, access port and trunk are defined first. Nothing is sent until you press a button, and a drop is explained in words.</li>
+                 <li><strong>Step-by-Step</strong> and <strong>Trace Inspector</strong> — each says what to look at: R-1’s longest-prefix match, and the TTL and MAC changes from hop to hop.</li>
                </ul>
                <h3>Spanning Tree</h3>
                <ul>
@@ -608,7 +676,7 @@ window.USER_GUIDE_CONTENT = {
       {
         id: "troubleshooting",
         title: "Troubleshooting",
-        html: `<p><strong>The packet did not arrive.</strong> Read the reason on the last row of the timeline. <code>no-route</code> means there was no route to it, <code>not-group-member</code> means the host had not joined that multicast group, <code>acl-deny</code> means a filter stopped it. On some lessons, showing you that is the point.</p>
+        html: `<p><strong>The packet did not arrive.</strong> Read the reason on the last row of the timeline. <code>no-route</code> means there was no route to it, <code>not-group-member</code> means the host had not joined that multicast group, <code>acl-deny</code> means a filter stopped it, <code>next-hop-off-link</code> means a route names a next router on none of that router’s networks, <code>reserved-address</code> means a device has its subnet’s network or broadcast address. On some lessons, showing you that is the point.</p>
                <p><strong>The diagram does not fit.</strong> Press <code>fit</code> at the bottom right.</p>
                <p><strong>Still in English.</strong> Choose 日本語 at the top right of the gallery. Protocol names, addresses and codes such as <code>DROP</code> stay in English either way.</p>
                <p><strong>Progress is not remembered.</strong> A private window, or a browser set not to keep site data, has nowhere to store it.</p>`
