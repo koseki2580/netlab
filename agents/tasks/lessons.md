@@ -220,3 +220,16 @@ A running record of corrections and feedback received during sessions. Use this 
 **Why**: A question that rewards a quirk teaches the quirk; the pre-commit hook only catches the locator rule at commit time, after the agent is gone.
 
 **Apply-when**: Authoring or calibrating exam questions; delegating e2e authoring.
+
+## L016 — The shared index carries other agents' staged renames
+
+**What happened**: Committing one agent's listed files also committed four `git mv` renames another agent had staged in the same checkout, leaving a commit whose importers pointed at files that had moved.
+
+**Rule**:
+
+- Before every commit in a shared checkout, read `git diff --cached --stat` and match it to the intended file list; unstage strays with `git restore --staged <path>`.
+- Tell agents never to stage (`git add`, `git mv`, `git stash`) — only edit files; the lead stages.
+
+**Why**: Agents share one index; `git add <paths>` adds to whatever is already staged.
+
+**Apply-when**: Committing while subagents are working in the same checkout.
