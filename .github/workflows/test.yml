@@ -39,6 +39,9 @@ jobs:
       - name: i18n parity check
         run: npm run i18n:check
 
+      - name: TC traceability check
+        run: npm run tc:check -- --strict
+
       - name: Run unit tests
         run: npm run test
 
