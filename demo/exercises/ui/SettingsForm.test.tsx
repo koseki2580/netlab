@@ -173,7 +173,7 @@ describe('the settings form', () => {
     expect(last()).toEqual({ kind: 'iface-nat', nodeId: 'r1', ifaceId: 'wan', nat: 'outside' });
   });
 
-  // TC-614
+  // TC-614, TC-915
   it('full-width digits, dots, slashes and commas are read as the half-width ones, and the field shows what was read', async () => {
     const host = form([EVERY[0]!]);
     const hostId = settingTestId(EVERY[0]!);
@@ -280,7 +280,7 @@ describe('the settings form', () => {
     expect(last()).toMatchObject({ kind: 'iface-acl', rules: [] });
   });
 
-  /** TC-497 — a list that is full says so, instead of a button that silently stops working. */
+  /** TC-497, TC-902 — a list that is full says so, instead of a button that silently stops working. */
   it('static-routes and iface-acl: a full list says how many it takes and how to make room', async () => {
     const routes = form([EVERY[6]!], 3, 'en');
     const routesId = settingTestId(EVERY[6]!);

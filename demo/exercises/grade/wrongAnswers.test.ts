@@ -224,11 +224,22 @@ describe('a route whose next router is wrong is not called a missing route', () 
     expect(failed?.message.ja).toContain(NO_ROUTE);
   });
 
-  it('the design whose one line hands everything to the router itself is told so', async () => {
+  it('a route whose one line hands everything to the router itself is told so', async () => {
     const of = exercise('l2-choose-static-default~0');
-    const option = of.options?.find((entry) => entry.id === 'default-self');
-    if (!option) throw new Error('no such option');
-    const failed = (await grade(of, option.changes)).results.find((entry) => !entry.passed);
+    // The router's own address on the line out, as the next router.
+    const own = of.start.nodes
+      .find((node) => node.id === 'r1')
+      ?.data.interfaces?.find((side) => side.id === 'out')?.ipAddress;
+    if (!own) throw new Error('no line out');
+    const failed = (
+      await grade(of, [
+        {
+          kind: 'static-routes',
+          nodeId: 'r1',
+          routes: [{ destination: '0.0.0.0/0', nextHop: own }],
+        },
+      ])
+    ).results.find((entry) => !entry.passed);
     expect(failed?.message.ja).toContain('そのルータ自身のアドレス');
     expect(failed?.message.ja).not.toContain(NO_ROUTE);
   });

@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { exerciseById, exercisePool, templateIdOf } from '../exerciseSource';
 import type { Exercise } from '../model/types';
-import { attemptOrder, FIRST_ORDER, placeIn } from './attemptOrder';
+import { attemptOrder, FIRST_ORDER, followingOrder, placeIn } from './attemptOrder';
 import { orderedOptions, pressCards } from './choices';
 import { cableSentence, sameSetting } from './describe';
 import { settingOrder } from './settingOrder';
@@ -197,5 +197,20 @@ describe('the cable exercise: the cables come first, and a press on one is said 
     const said = cableSentence(exercise.start, down.id, 'up');
     if (label !== undefined) expect(said.ja).toBe(`${label}のケーブルをつなぎました。`);
     expect(cableSentence(exercise.start, down.id, 'down').ja).toMatch(/はずしました。$/);
+  });
+});
+
+describe('one attempt at a time', () => {
+  it('gives the order the whole history gives, attempt after attempt', () => {
+    const ids = Array.from(
+      { length: 40 },
+      (_, index) => `l1-host-address~${index}@${index * 1000}`,
+    );
+    let previous: ReturnType<typeof followingOrder> | null = null;
+    for (const [index, id] of ids.entries()) {
+      const next = followingOrder(previous, id);
+      expect(next, id).toEqual(attemptOrder(ids.slice(0, index), id));
+      previous = next;
+    }
   });
 });

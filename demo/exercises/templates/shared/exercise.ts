@@ -168,7 +168,7 @@ export function goals(names: Readonly<Record<string, Named>>) {
         `${name(from).ja}から${name(to).ja}に届く`,
       ),
     }),
-    apart: (from: string, to: string, because: 'vlan' | 'acl'): LabelledCheck => ({
+    apart: (from: string, to: string, because: 'vlan' | 'acl' | 'any'): LabelledCheck => ({
       id: `apart-${from}-${to}`,
       kind: 'must-not-reach',
       probe: { via: 'ping', from, to },

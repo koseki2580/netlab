@@ -69,7 +69,7 @@ describe('what the diagram shows besides names', () => {
   });
 });
 
-// TC-612
+// TC-612, TC-914
 describe('a press where two cables are within reach', () => {
   it('is taken for the unplugged one, however near the other is', () => {
     expect(

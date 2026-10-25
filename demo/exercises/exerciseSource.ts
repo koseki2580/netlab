@@ -1,12 +1,7 @@
 /**
  * Where the pages get their exercises: the templates module.
- *
- * The three development fixtures (`devFixtures.ts`) can still be opened by
- * id, as the tests do; no page links to them. Everything a level offers comes
- * from the templates.
  */
 
-import { FIXTURE_TEMPLATES } from './devFixtures';
 import * as templates from './templates';
 import { checksToCount } from './model/closedSet';
 import type { AttemptMeta } from './store/attemptStore';
@@ -28,9 +23,6 @@ interface NextOptions {
   /** The kinds of task the level still waits for (`LevelSummary.missingKinds`): served before the others. */
   readonly needKinds?: readonly string[];
 }
-
-/** How many seeds of each fixture stand in for a pool. */
-const FIXTURE_SEEDS = 10;
 
 /**
  * What the store needs to open an attempt at this exercise. How many Checks a
@@ -56,19 +48,13 @@ export function templateIdOf(exerciseId: string): string {
   return cut === -1 ? exerciseId : exerciseId.slice(0, cut);
 }
 
-function fixtureById(id: string): Exercise | undefined {
-  const seed = Number(id.slice(id.lastIndexOf('~') + 1));
-  if (!id.includes('~') || !Number.isInteger(seed) || seed < 0) return undefined;
-  return FIXTURE_TEMPLATES.find((template) => template.id === templateIdOf(id))?.generate(seed);
-}
-
 /**
  * The exercise with this id, its devices named in `locale`. The returned
  * exercise is the one to draw AND to grade against: the grader compares the
  * learner's topology with `start`, labels included.
  */
 export function exerciseById(id: string, locale: 'en' | 'ja'): Exercise | undefined {
-  const exercise = templates.exerciseById(id) ?? fixtureById(id);
+  const exercise = templates.exerciseById(id);
   return exercise && templates.localiseExercise(exercise, locale);
 }
 
@@ -141,12 +127,6 @@ export function reopenedExerciseId(
   if (!judgedIds.includes(exerciseId)) return exerciseId;
   if (templates.exerciseById(exerciseId)) {
     return templates.reopenedExerciseId(exerciseId, judgedIds, seenIds);
-  }
-  const templateId = templateIdOf(exerciseId);
-  if (!FIXTURE_TEMPLATES.some((template) => template.id === templateId)) return exerciseId;
-  for (let seed = 0; seed < FIXTURE_SEEDS; seed += 1) {
-    const id = `${templateId}~${seed}`;
-    if (!judgedIds.includes(id) && !seenIds.includes(id)) return id;
   }
   return exerciseId;
 }

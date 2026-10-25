@@ -292,7 +292,7 @@ test.describe('in Japanese', () => {
   });
 
   /**
-   * TC-612 — where the unplugged cable shares a stretch of its drawn line with
+   * TC-612, TC-914 — where the unplugged cable shares a stretch of its drawn line with
    * a healthy one, a press there plugs in the unplugged one (it used to unplug
    * the other), and the page says what the press did.
    */
@@ -392,7 +392,7 @@ test.describe('in Japanese', () => {
   });
 
   /**
-   * TC-534 — the diagram is a picture of the network, not a second way to
+   * TC-534, TC-906 — the diagram is a picture of the network, not a second way to
    * change it: a device cannot be dragged somewhere else.
    */
   test('a device on the diagram cannot be dragged', async ({ page, demoPage }) => {
@@ -534,7 +534,7 @@ test.describe('in Japanese', () => {
     await expect(page.getByTestId(X.predictionOutcome)).toHaveAttribute('data-correct', 'true');
   });
 
-  /** TC-598, TC-600 — an exercise missed and opened again is another instance, and the miss stays a miss. */
+  /** TC-598, TC-600, TC-909 — an exercise missed and opened again is another instance, and the miss stays a miss. */
   test('opening an exercise again after a miss gives other values, and the miss still counts', async ({
     page,
     demoPage,
@@ -582,7 +582,7 @@ test.describe('in Japanese', () => {
     await expect(page.getByTestId(X.resultDone)).toHaveAttribute('data-counted', 'solved');
   });
 
-  /** TC-601 — a route whose next router is on the far side of the neighbour is not a pass. */
+  /** TC-601, TC-910 — a route whose next router is on the far side of the neighbour is not a pass. */
   test('a route to the far side of the neighbouring router is refused, with the rule and without the value', async ({
     page,
     demoPage,
@@ -598,7 +598,7 @@ test.describe('in Japanese', () => {
     const card = settingTestId(refOf(unsound));
     const row = unsound.routes.length - 1;
     await page.getByTestId(`${card}-add`).click();
-    // Typed with a keyboard left in full-width mode (TC-614).
+    // Typed with a keyboard left in full-width mode (TC-614, TC-915).
     const wide = (text: string) =>
       text
         .replace(/[0-9]/g, (digit) => String.fromCharCode(digit.charCodeAt(0) + 0xfee0))
@@ -641,7 +641,7 @@ test.describe('in Japanese', () => {
 });
 
 /**
- * TC-620, TC-621 — on the screens learners sit at, what there is to press is on
+ * TC-620, TC-621, TC-916, TC-917 — on the screens learners sit at, what there is to press is on
  * screen when the exercise opens: every address offered, every "this one is
  * wrong" button, above the bar that holds Check; and a note under a device at
  * the edge of the picture is not cut off.
@@ -1000,7 +1000,7 @@ test.describe('placement and the record', () => {
 });
 
 /**
- * TC-521 — a device's name stays inside its box on the diagram. The library
+ * TC-521, TC-900 — a device's name stays inside its box on the diagram. The library
  * draws a name on one line, and 「教室のパソコン」 ran out of the box.
  */
 for (const [id, locale] of [

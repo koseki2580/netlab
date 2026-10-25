@@ -118,7 +118,7 @@ async function learnerRates(level: ExerciseLevel, learner: Learner, count: numbe
   return { atEnd: atEnd / RUNS, within: within / RUNS, perKind };
 }
 
-// TC-607
+// TC-607, TC-913
 describe('learners who know something', () => {
   it('a learner who only copies a neighbour’s first three numbers clears level 1 in under 10% of runs of ten exercises', async () => {
     const rates = await learnerRates(1, 'neighbour-habit', 10);

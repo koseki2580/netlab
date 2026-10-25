@@ -134,7 +134,7 @@ describe('a find-the-fault exercise never names the faulty device in what it say
   );
 });
 
-// TC-601
+// TC-601, TC-910
 describe('a route whose next router is an address on the far side of the neighbour', () => {
   const cases = ['l2-static-missing', 'l2-static-return', 'l2-static-nexthop'].flatMap((id) =>
     [0, 1, 2, 3, 4, 5, 6, 7].map((seed) => [id, seed] as const),

@@ -5,12 +5,19 @@
  * round, and the simulator shows the path.
  *
  * Where l2-stp-root says which switch and asks how, this asks which.
+ *
+ * Nothing but the network says which choice works. The place's switch names
+ * are dealt to the switches in an order drawn here, so no name goes with the
+ * hub. And the choices that are not "make X the root" — pushing the current
+ * root out, with the highest number or back to the default — work exactly
+ * when the switch that then takes over (the one that already has the
+ * next-lowest number) is one that works, as often as any root choice does.
  */
 
 import { buildLoop } from '../shared/build';
-import { placedEvenly } from '../shared/draw';
+import { evenPlace, placedEvenly } from '../shared/draw';
 import { defineTemplate, goals, type LabelledCheck } from '../shared/exercise';
-import { drawPlace, scene } from '../shared/places';
+import { drawPlace, placeVisit, scene } from '../shared/places';
 import { drawPlan } from '../shared/plans';
 import { L, say, the, The } from '../shared/text';
 import { WHY_ROOT } from '../shared/why';
@@ -21,6 +28,18 @@ const priority = (nodeId: string, value: number): SettingChange => ({
   nodeId,
   priority: value,
 });
+
+const NEXT_SALT = 31;
+const NAME_SALT = 37;
+
+/** Every order of four things. */
+const ORDERS_OF_FOUR: readonly (readonly number[])[] = [0, 1, 2, 3].flatMap((a) =>
+  [0, 1, 2, 3]
+    .filter((b) => b !== a)
+    .flatMap((b) =>
+      [0, 1, 2, 3].filter((c) => c !== a && c !== b).map((c) => [a, b, c, 6 - a - b - c]),
+    ),
+);
 
 export const l2ChooseRoot = defineTemplate(
   {
@@ -40,9 +59,20 @@ export const l2ChooseRoot = defineTemplate(
     const spokes = ring.filter((id) => id !== hub);
     const startRoot = draw.pick([0, 1]) === 0 ? spokes[0] : spokes[1];
     if (!startRoot) throw new Error('a ring has two spokes');
+    // The switches that work as root: where the server's traffic meets, and, on
+    // a tail, the server's own switch at its end.
+    const serverSwitchId = shape === 'tail' ? 'swd' : hub;
+    const working = new Set([hub, serverSwitchId]);
+    // The switch with the next-lowest number, which takes over when the root is
+    // pushed out: any of the others, each as often. So pushing the root out
+    // works as often as making one of them the root does.
+    const others = (shape === 'tail' ? ['swa', 'swb', 'swc', 'swd'] : [...ring]).filter(
+      (id) => id !== startRoot,
+    );
+    const takesOver = others[evenPlace(placeVisit(seed), others.length, NEXT_SALT)] ?? hub;
 
     // --- The network: the wrong switch is the root ---
-    const serverSwitch = shape === 'tail' ? 'swd' : hub;
+    const serverSwitch = serverSwitchId;
     const ids = shape === 'tail' ? [...ring, 'swd'] : [...ring];
     const devices = ids.map((id, index) =>
       id === serverSwitch
@@ -51,7 +81,24 @@ export const l2ChooseRoot = defineTemplate(
           ? place.newPc
           : (place.pcs[index % 3] ?? place.pcs[0]),
     );
-    const net = buildLoop(place, plan, shape, { [startRoot]: 4096 }, devices);
+    // Names follow no role: by role (the hub, the root now, the other spoke,
+    // the tail's switch), the place's names in one of the 24 orders, each
+    // order as often as any other among the place's instances. So every name plays every role
+    // equally often, and neither a name nor its place in the alphabet says which.
+    const otherSpoke = spokes.find((id) => id !== startRoot) ?? hub;
+    const roleOf: readonly string[] = [hub, startRoot, otherSpoke, 'swd'];
+    // Counted within the place, where the same names come round again.
+    const visit = placeVisit(seed);
+    const order = ORDERS_OF_FOUR[evenPlace(visit, ORDERS_OF_FOUR.length, NAME_SALT)] ?? [
+      0, 1, 2, 3,
+    ];
+    const nameOf = (slot: string) =>
+      place.switches[order[roleOf.indexOf(slot)] ?? 0] ?? place.switches[0];
+    const named = {
+      ...place,
+      switches: [nameOf('swa'), nameOf('swb'), nameOf('swc'), nameOf('swd')] as const,
+    };
+    const net = buildLoop(named, plan, shape, { [startRoot]: 4096, [takesOver]: 8192 }, devices);
     const name = (id: string) => net.names[id] ?? place.switches[0];
     const hostOf = (id: string) => `h${id.slice(2)}`;
     const srv = hostOf(serverSwitch);
@@ -106,36 +153,58 @@ export const l2ChooseRoot = defineTemplate(
         `${name(id).ja}を中心にする（優先度 0）`,
       ),
       changes: [priority(id, 0)],
-      explain:
-        id === hub || id === serverSwitch
-          ? L(
-              `Every switch keeps its shortest way to the root open. With the root where the server's traffic goes, both rooms' direct links stay open and the link between the two rooms is the one that closes.`,
-              `どのスイッチも、中心へのいちばん近い道は開けたままにします。${server.ja}への通信が集まる場所を中心にすれば、2 つの部屋の直接のケーブルはどちらも開いたままで、止まるのは部屋どうしをつなぐケーブルになります。`,
-            )
-          : L(
-              `With ${the(name(id))} as root, the other two switches each keep their link to it open, and the link between those two closes. That is the direct link of the other room, which now goes round through ${the(name(id))}.`,
-              `${name(id).ja}を中心にすると、ほかの 2 台はそれぞれ${name(id).ja}へのケーブルを開けたままにして、その 2 台のあいだのケーブルが止まります。それはもう片方の部屋の直接のケーブルなので、そちらは${name(id).ja}を回る遠回りになります。`,
-            ),
+      explain: working.has(id)
+        ? L(
+            `Every switch keeps its shortest way to the root open. With the root where the server's traffic goes, both rooms' direct links stay open and the link between the two rooms is the one that closes.`,
+            `どのスイッチも、中心へのいちばん近い道は開けたままにします。${server.ja}への通信が集まる場所を中心にすれば、2 つの部屋の直接のケーブルはどちらも開いたままで、止まるのは部屋どうしをつなぐケーブルになります。`,
+          )
+        : L(
+            `With ${the(name(id))} as root, the other two switches each keep their link to it open, and the link between those two closes. That is the direct link of the other room, which now goes round through ${the(name(id))}.`,
+            `${name(id).ja}を中心にすると、ほかの 2 台はそれぞれ${name(id).ja}へのケーブルを開けたままにして、その 2 台のあいだのケーブルが止まります。それはもう片方の部屋の直接のケーブルなので、そちらは${name(id).ja}を回る遠回りになります。`,
+          ),
     });
-    const bigNumber: DesignOption = {
-      id: 'hub-high',
-      label: L(
-        `Give ${the(name(hub))} the highest priority number (61440)`,
-        `${name(hub).ja}の優先度を、いちばん大きい数字（61440）にする`,
+    // Two ways to push the current root out: the highest number, or the
+    // default every switch starts with. Either way the switch with the next-
+    // lowest number (8192) takes over, so both work exactly when it does.
+    const takeover = say(
+      L(
+        `${The(name(startRoot))} stops being the root, and the switch with the next-lowest number (8192), ${the(name(takesOver))}, takes over.`,
+        `${name(startRoot).ja}は中心ではなくなり、次に数字が小さい（8192）${name(takesOver).ja}が中心になります。`,
       ),
-      changes: [priority(hub, 61440)],
-      explain: L(
-        `The LOWEST number wins, not the highest. ${The(name(startRoot))} still has the lowest number and stays the root, so nothing changes.`,
-        `選ばれるのは、数字がいちばん「小さい」スイッチです。${name(startRoot).ja}の数字がいちばん小さいままなので、中心は変わらず、何も変わりません。`,
+      rootOption(takesOver).explain,
+    );
+    const pushOut = (id: string, value: number, how: ReturnType<typeof L>): DesignOption => ({
+      id,
+      label: how,
+      changes: [priority(startRoot, value)],
+      explain: takeover,
+    });
+    const pushOuts = [
+      pushOut(
+        'start-high',
+        61440,
+        L(
+          `Give ${the(name(startRoot))} the highest priority number (61440)`,
+          `${name(startRoot).ja}の優先度を、いちばん大きい数字（61440）にする`,
+        ),
       ),
-    };
-    const byRoot = ids.map(rootOption);
+      pushOut(
+        'start-default',
+        32768,
+        L(
+          `Put ${the(name(startRoot))} back on the default priority number (32768)`,
+          `${name(startRoot).ja}の優先度を、はじめの数字（32768）にもどす`,
+        ),
+      ),
+    ];
+    // Not the switch that is the root already: priority 0 there changes nothing.
+    const byRoot = ids.filter((id) => id !== startRoot).map(rootOption);
     const best = byRoot.find((option) => option.id === `root-${hub}`);
     if (!best) throw new Error('the hub is one of the switches');
     // The setting this exercise is after stands in each place equally often.
     const options = placedEvenly(draw, seed, 1, best, [
       ...byRoot.filter((option) => option !== best),
-      bigNumber,
+      ...pushOuts,
     ]);
 
     // --- The goals: both rooms reach the server over their direct link ---
@@ -188,7 +257,7 @@ export const l2ChooseRoot = defineTemplate(
       ],
       lessons: ['/networking/stp'],
       reference,
-      fingerprint: [place.id, shape, hub, startRoot],
+      fingerprint: [place.id, shape, hub, startRoot, takesOver],
     };
   },
 );

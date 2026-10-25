@@ -9,19 +9,19 @@
  * - a value copied from the task or rule line does not pass, and fields outside
  *   the form change nothing;
  * - the text: one-line task and rule without the answer, both languages filled;
- * - determinism, fingerprints, pools;
- * - blind strategies over the candidates do no better than chance.
+ * - and the checks every template family passes (determinism, fingerprints,
+ *   pools, blind picks), from the shared harness
+ *   (`demo/exercises/verify/harness.ts`).
  *
  * TC ids are not allocated yet: the specification is outside this folder.
  */
 
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { isLessonRoute, SEED_COUNT, SEEDS, verifyFamily } from '../exercises/verify/harness';
 import { judgeBuild, judgeFragment, judgeRead, engineSplit, truthOf } from './judge';
 import type {
   BuildExercise,
   BuildPart,
-  Candidate,
   FieldId,
   FieldValue,
   FragmentExercise,
@@ -30,13 +30,11 @@ import type {
   ReadExercise,
 } from './model';
 import { classicMistakes } from './mistakes';
-import { buildPool, exerciseById, instancesOf, POOL_SEEDS, TEMPLATES } from './templates';
+import { TEMPLATES } from './templates';
+import { PACKET_FAMILY } from './templates/family';
 
-const SEED_COUNT = Number(process.env.EXERCISE_VERIFY_SEEDS ?? 12);
-const SEEDS = Array.from({ length: SEED_COUNT }, (_, seed) => seed);
 const JAPANESE = /[぀-ヿ一-鿿]/;
 const PLACEHOLDER = /undefined|null|NaN|\[object|\$\{|\?\?/;
-const ROUTES = readFileSync(new URL('../main.tsx', import.meta.url), 'utf8');
 
 // --- Helpers ---------------------------------------------------------------------
 
@@ -119,7 +117,7 @@ function textProblems(exercise: PacketExercise): string[] {
   );
   no(exercise.lessons.length > 0, 'no lesson');
   for (const lesson of exercise.lessons) {
-    no(ROUTES.includes(`path="${lesson}"`), `lesson ${lesson} is not a route in demo/main.tsx`);
+    no(isLessonRoute(lesson), `lesson ${lesson} is not a route of the app`);
   }
   return problems;
 }
@@ -311,9 +309,6 @@ describe(`every packet template, seeds 0 to ${SEED_COUNT - 1}`, () => {
       const found: string[] = [];
       for (const seed of SEEDS) {
         const exercise = template.generate(seed);
-        expect(exercise.id).toBe(`${template.id}~${seed}`);
-        expect(exercise.level).toBe(template.level);
-        expect(exercise.kind).toBe(template.kind);
         for (const problem of await exerciseProblems(exercise))
           found.push(`seed ${seed}: ${problem}`);
       }
@@ -321,198 +316,6 @@ describe(`every packet template, seeds 0 to ${SEED_COUNT - 1}`, () => {
     },
     600_000,
   );
-
-  it.each(TEMPLATES.map((template) => [template.id, template] as const))(
-    '%s: the same seed gives the same exercise',
-    (_id, template) => {
-      for (const seed of SEEDS) {
-        expect(JSON.stringify(template.generate(seed))).toBe(
-          JSON.stringify(template.generate(seed)),
-        );
-      }
-    },
-  );
 });
 
-describe('pools', () => {
-  it('every template has more than one task (fingerprint) and states how many', () => {
-    for (const template of TEMPLATES) {
-      const fingerprints = new Set(
-        Array.from({ length: POOL_SEEDS }, (_, seed) => template.generate(seed).fingerprint),
-      );
-      const looks = instancesOf(template).length;
-      console.log(
-        `${template.id}: ${fingerprints.size} different tasks, ${looks} different-looking instances in seeds 0-${POOL_SEEDS - 1}`,
-      );
-      expect(fingerprints.size).toBeGreaterThan(4);
-    }
-  });
-
-  it.each([1, 2, 3, 4] as const)(
-    'level %i: at least 40 ids where the level has templates, unique, all generate',
-    (level) => {
-      const pool = buildPool(level);
-      const has = TEMPLATES.some((template) => template.level === level);
-      console.log(`level ${level}: pool of ${pool.length}`);
-      if (!has) {
-        expect(pool).toEqual([]);
-        return;
-      }
-      expect(pool.length).toBeGreaterThanOrEqual(40);
-      expect(new Set(pool).size).toBe(pool.length);
-      for (const id of pool) expect(exerciseById(id)?.level).toBe(level);
-    },
-  );
-});
-
-// --- Blind strategies -------------------------------------------------------------------
-
-type Strategy = 'random' | 'first' | 'last' | 'lowest' | 'highest' | 'most-common';
-const STRATEGIES: readonly Strategy[] = [
-  'random',
-  'first',
-  'last',
-  'lowest',
-  'highest',
-  'most-common',
-];
-
-/** A candidate list of an exercise, with which candidate is right. */
-interface Offer {
-  readonly key: string;
-  readonly candidates: readonly Candidate[];
-}
-
-function offersOf(exercise: PacketExercise): Offer[] {
-  const fromFields = (part: BuildPart | undefined) =>
-    (part?.fields ?? []).flatMap((entry) =>
-      entry.candidates
-        ? [{ key: `${exercise.templateId}:${entry.id}`, candidates: entry.candidates }]
-        : [],
-    );
-  if (exercise.kind === 'build-packet') return fromFields(exercise);
-  if (exercise.kind === 'read-packet') {
-    return [
-      ...exercise.questions.map((question) => ({
-        key: `${exercise.templateId}:${question.id}`,
-        candidates: question.candidates,
-      })),
-      ...fromFields(exercise.fix),
-    ];
-  }
-  return [];
-}
-
-const compare = (a: FieldValue, b: FieldValue) =>
-  typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b));
-
-/** The candidate that shares its first three numbers (an address) or its first half (anything else) with the most others. */
-function mostCommon(candidates: readonly Candidate[]): Candidate | undefined {
-  const head = (value: FieldValue) => {
-    const text = String(value);
-    return text.includes('.')
-      ? text.split('.').slice(0, 3).join('.')
-      : text.slice(0, Math.ceil(text.length / 2));
-  };
-  let best: Candidate | undefined;
-  let bestCount = -1;
-  for (const candidate of candidates) {
-    const count = candidates.filter((other) => head(other.value) === head(candidate.value)).length;
-    if (count > bestCount) {
-      best = candidate;
-      bestCount = count;
-    }
-  }
-  return best;
-}
-
-function choose(
-  strategy: Strategy,
-  candidates: readonly Candidate[],
-  roll: number,
-): Candidate | undefined {
-  const sorted = [...candidates].sort((a, b) => compare(a.value, b.value));
-  switch (strategy) {
-    case 'random':
-      return candidates[Math.floor(roll * candidates.length)];
-    case 'first':
-      return candidates[0];
-    case 'last':
-      return candidates[candidates.length - 1];
-    case 'lowest':
-      return sorted[0];
-    case 'highest':
-      return sorted[sorted.length - 1];
-    case 'most-common':
-      return mostCommon(candidates);
-  }
-}
-
-describe('learners who pick without reading', () => {
-  // More seeds than the pool holds: a rate over 100 instances moves a few points by chance alone.
-  const BLIND_SEEDS = 400;
-  const offers = new Map<string, Offer[]>();
-  for (const template of TEMPLATES) {
-    for (let seed = 0; seed < BLIND_SEEDS; seed += 1) {
-      for (const offer of offersOf(template.generate(seed))) {
-        offers.set(offer.key, [...(offers.get(offer.key) ?? []), offer]);
-      }
-    }
-  }
-
-  it.each([...offers.keys()])(
-    '%s: no blind strategy, and no fixed value, beats chance by more than 10 points',
-    (key) => {
-      const list = offers.get(key) ?? [];
-      const chance =
-        list.reduce((sum, offer) => sum + 1 / offer.candidates.length, 0) / list.length;
-      let state = 12345;
-      const roll = () => {
-        state = (Math.imul(state, 1103515245) + 12345) >>> 0;
-        return state / 2 ** 32;
-      };
-      const rates = STRATEGIES.map((strategy) => {
-        const hits = list.filter(
-          (offer) => choose(strategy, offer.candidates, roll())?.why === 'right',
-        ).length;
-        return [strategy, hits / list.length] as const;
-      });
-      // "Always this value", for every value offered: what a learner gets by
-      // remembering an answer across instances. Measured where the value is
-      // offered at least 30 times (fewer is noise: one value right 7 times in
-      // 12 happens by chance), against the chance of those offers. A value
-      // offered more rarely is not one a learner can come to remember.
-      const byValue = new Map<string, { offered: number; right: number; chance: number }>();
-      for (const offer of list) {
-        for (const candidate of offer.candidates) {
-          const entry = byValue.get(String(candidate.value)) ?? { offered: 0, right: 0, chance: 0 };
-          entry.offered += 1;
-          entry.right += candidate.why === 'right' ? 1 : 0;
-          entry.chance += 1 / offer.candidates.length;
-          byValue.set(String(candidate.value), entry);
-        }
-      }
-      const fixed = [...byValue.entries()]
-        .filter(([, entry]) => entry.offered >= 30)
-        .map(([value, entry]) => ({
-          value,
-          rate: entry.right / entry.offered,
-          chance: entry.chance / entry.offered,
-          offered: entry.offered,
-        }))
-        .sort((a, b) => b.rate - b.chance - (a.rate - a.chance));
-      const worst = fixed[0];
-      console.log(
-        `${key}: chance ${(chance * 100).toFixed(0)}%, ` +
-          rates.map(([strategy, rate]) => `${strategy} ${(rate * 100).toFixed(0)}%`).join(', ') +
-          (worst
-            ? `, always "${worst.value.length > 12 ? 'that value' : worst.value}" ${(worst.rate * 100).toFixed(0)}% of ${worst.offered}`
-            : ''),
-      );
-      for (const entry of fixed) {
-        expect(entry.rate, `always "${entry.value}"`).toBeLessThanOrEqual(entry.chance + 0.1);
-      }
-      for (const [, rate] of rates) expect(rate).toBeLessThanOrEqual(chance + 0.1);
-    },
-  );
-});
+verifyFamily(PACKET_FAMILY);

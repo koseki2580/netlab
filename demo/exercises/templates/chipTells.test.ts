@@ -102,7 +102,7 @@ const withChips = TEMPLATES.filter(
     chipCards(template.id, template.level).length > 0,
 ).map((template) => [template.id, template.level] as const);
 
-// TC-602
+// TC-602, TC-911
 describe('the chips alone do not say which one is usable', () => {
   it('some templates offer chips', () => {
     expect(withChips.length).toBeGreaterThanOrEqual(4);
@@ -184,7 +184,7 @@ function habitPicks(fit: Fit): string[] {
   return classes.find((picked) => picked.length > 0) ?? [...fit.chips];
 }
 
-// TC-603
+// TC-603, TC-912
 describe('l1-prefix-fit needs the "/number"', () => {
   const all = fits();
   const share24 = all.filter((fit) => fit.length === 24).length / all.length;

@@ -5,7 +5,7 @@
  * `text.ts`); Japanese names are what a person there would call the device.
  */
 
-import type { Draw } from './draw';
+import { drawer, type Draw } from './draw';
 import { L, type Named } from './text';
 
 export type PlaceId = 'home' | 'shop' | 'clinic' | 'school' | 'office';
@@ -402,6 +402,27 @@ export const PLACES: readonly [Place, Place, Place, Place, Place] = [
 ];
 
 export const drawPlace = (draw: Draw): Place => draw.pick(PLACES);
+
+/** Where each seed is set, worked out once per seed: the first thing every template draws. */
+const placeOfSeed: string[] = [];
+const placeAt = (seed: number): string => {
+  for (let next = placeOfSeed.length; next <= seed; next += 1) {
+    placeOfSeed.push(drawPlace(drawer(next)).id);
+  }
+  return placeOfSeed[seed] ?? '';
+};
+
+/**
+ * How many lower seeds are set in the same place as `seed`: its count among
+ * that place's instances. Balancing something over this, rather than over the
+ * seed, balances it within each place, where names repeat.
+ */
+export function placeVisit(seed: number): number {
+  const here = placeAt(seed);
+  let visit = 0;
+  for (let lower = 0; lower < seed; lower += 1) if (placeAt(lower) === here) visit += 1;
+  return visit;
+}
 
 /** One whole sentence per place: `scene(place, { home: ..., shop: ..., ... })`. */
 export function scene<T>(place: Place, byPlace: Readonly<Record<PlaceId, T>>): T {

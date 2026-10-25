@@ -5,7 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { createSafeProgressStorage } from '../../../src/progress/storage';
 import { GalleryLocaleProvider, type GalleryLocale } from '../../localeContext';
-import { FIXTURE_TEMPLATES } from '../devFixtures';
+import { exerciseById } from '../exerciseSource';
 import type { Exercise } from '../model/types';
 import { createAttemptStore, type AttemptStore } from '../store/attemptStore';
 
@@ -29,10 +29,11 @@ export function testStore(options: { storage?: boolean } = {}): AttemptStore {
   });
 }
 
-export function fixture(templateId: string, seed = 0): Exercise {
-  const template = FIXTURE_TEMPLATES.find((candidate) => candidate.id === templateId);
-  if (!template) throw new Error(`no fixture ${templateId}`);
-  return template.generate(seed);
+/** An instance of a real template, its devices named in `locale`, as the page opens it. */
+export function fixture(templateId: string, seed = 0, locale: 'en' | 'ja' = 'ja'): Exercise {
+  const exercise = exerciseById(`${templateId}~${seed}`, locale);
+  if (!exercise) throw new Error(`no exercise ${templateId}~${seed}`);
+  return exercise;
 }
 
 export interface Screen {

@@ -39,6 +39,9 @@ export function hashText(text: string): number {
 
 const stepOf = (id: string): number => STEPS[hashText(id) % STEPS.length] ?? 1;
 
+/** The slot after one more attempt (or reset) named `id`. */
+const advance = (slot: number, id: string): number => (slot + stepOf(id)) % CYCLE;
+
 /**
  * The order for the attempt `attemptId`, given the ids of every attempt so far
  * (oldest first, `attemptId` among them or not). `resets` is how often the
@@ -53,11 +56,20 @@ export function attemptOrder(
   const upTo = attemptIds.indexOf(attemptId);
   const before = upTo === -1 ? attemptIds : attemptIds.slice(0, upTo);
   let slot = 0;
-  for (const id of [...before, attemptId]) slot = (slot + stepOf(id)) % CYCLE;
+  for (const id of [...before, attemptId]) slot = advance(slot, id);
   for (let reset = 1; reset <= resets; reset += 1) {
-    slot = (slot + stepOf(`${attemptId}#reset${reset}`)) % CYCLE;
+    slot = advance(slot, `${attemptId}#reset${reset}`);
   }
   return { seed: hashText(`${attemptId}#${resets}`), slot };
+}
+
+/**
+ * The order of the attempt that follows `previous` (none: the learner's first),
+ * without reset: `attemptOrder` one attempt at a time, for walking a long run
+ * of attempts without folding the whole history each time.
+ */
+export function followingOrder(previous: AttemptOrder | null, attemptId: string): AttemptOrder {
+  return { seed: hashText(`${attemptId}#0`), slot: advance(previous?.slot ?? 0, attemptId) };
 }
 
 /** An order for where there is no attempt (a preview, a test): fixed. */

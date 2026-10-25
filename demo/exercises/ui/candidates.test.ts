@@ -2,12 +2,22 @@
 import { describe, expect, it } from 'vitest';
 import { gradeExercise } from '../grade/gradeExercise';
 import { applyChanges } from '../model/settings';
-import { DEV_TILL_ID } from '../devFixtures';
 import { exerciseById } from '../exerciseSource';
 import { CHIP_COUNT, hostCandidates, ifaceCandidates } from './candidates';
 import { fixture } from './testSupport';
 
-const till = fixture(DEV_TILL_ID);
+/**
+ * A PC (`pc1`) whose address is on the wrong network, on a LAN shared with
+ * other PCs and a router side: a real instance of the address exercise.
+ */
+const till = fixture('l1-host-address');
+const nodeIp = (id: string) => till.start.nodes.find((node) => node.id === id)?.data.ip ?? '';
+/** The LAN's first three numbers, read off a neighbour. */
+const lan = nodeIp('pc2').split('.').slice(0, 3).join('.');
+const routerSide =
+  till.start.nodes
+    .find((node) => node.id === 'r1')
+    ?.data.interfaces?.find((side) => side.ipAddress.startsWith(`${lan}.`))?.ipAddress ?? '';
 const passesWith = async (ip: string) =>
   (await gradeExercise(till, applyChanges(till.start, [{ kind: 'host-ip', nodeId: 'pc1', ip }])))
     .passed;
@@ -28,14 +38,21 @@ describe('address chips for a host', () => {
   it('includes the mistakes a rule of thumb makes: an address in use, the router’s own, a network one number off', () => {
     const parts = hostCandidates(till.start, 'pc1', 'salt');
     const wrong = parts?.wrong ?? [];
+    expect(routerSide).not.toBe('');
     // The simulator accepts the network's own address for a host, so it is not offered as wrong.
-    expect(wrong).not.toContain('192.168.1.0');
-    expect(wrong).toContain('192.168.1.1');
-    expect(wrong).toContain('192.168.1.11');
+    expect(wrong).not.toContain(`${lan}.0`);
+    expect(wrong).toContain(routerSide);
+    expect(wrong.some((chip) => chip === nodeIp('pc2') || chip === nodeIp('pc3'))).toBe(true);
     // The same first two numbers, a different third.
-    expect(wrong.some((chip) => /^192\.168\.(?!1\.)\d+\./.test(chip))).toBe(true);
+    const [first, second, third] = lan.split('.');
+    expect(
+      wrong.some((chip) => {
+        const [a, b, c] = chip.split('.');
+        return a === first && b === second && c !== third;
+      }),
+    ).toBe(true);
     // Never the address the host has now: that is the one known not to work.
-    expect([parts?.right, ...wrong]).not.toContain('192.168.2.50');
+    expect([parts?.right, ...wrong]).not.toContain(nodeIp('pc1'));
   });
 
   // TC-580

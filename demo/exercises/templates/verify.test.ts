@@ -8,14 +8,14 @@
  * instance a pool can hold), plus seed block B of the study cycle (1000 to 1003).
  * TC-467 to TC-477, TC-561 and TC-562 in the specification (level 3:
  * TC-780 to TC-789); each part below
- * names its own.
+ * names its own. Determinism, fingerprints, the pools' basics and blind picks
+ * are the shared harness's (`../verify/harness.ts`), run on this family below.
  */
 
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { gradeExercise } from '../grade/gradeExercise';
 import { applyChangesReporting, differsOutside, isAllowed, readSetting } from '../model/settings';
-import type { Exercise, ExerciseLevel, Localised, SettingChange } from '../model/types';
+import type { Exercise, Localised, SettingChange } from '../model/types';
 import {
   buildPool,
   exerciseById,
@@ -34,9 +34,10 @@ import { refOf } from './shared/exercise';
 import { labelFits, labelLines } from './shared/labelFit';
 import { PLACES } from './shared/places';
 import { intToIp, ipToInt } from '../../../src/utils/cidr';
+import { isLessonRoute, SEED_COUNT, SEEDS as BASE_SEEDS, verifyFamily } from '../verify/harness';
+import { DEVICE_FAMILY, PASSING_OPTIONS } from './family';
 
-const SEED_COUNT = Number(process.env.EXERCISE_VERIFY_SEEDS ?? 12);
-const SEEDS = [...Array.from({ length: SEED_COUNT }, (_, seed) => seed), 1000, 1001, 1002, 1003];
+const SEEDS = [...BASE_SEEDS, ...(DEVICE_FAMILY.extraSeeds ?? [])];
 
 const JAPANESE = /[぀-ヿ一-龯]/;
 const LEFTOVER = /\{|\}|undefined|NaN|\[object|null/;
@@ -75,22 +76,6 @@ const LEVEL_1_BANNED = {
     'next hop',
   ],
 } as const;
-
-/**
- * The options that pass, by template (an id, or its start). The explanation of
- * each option is written knowing this, so it is pinned.
- */
-const PASSING_OPTIONS: Readonly<Record<string, (id: string, exercise: Exercise) => boolean>> = {
-  'l1-choose-address': (id) => id === 'fits',
-  'l2-choose-root': (id, exercise) =>
-    id === 'root-swd' ||
-    exercise.reference.some((change) => id === `root-${'nodeId' in change ? change.nodeId : ''}`),
-  'l2-choose-static-default': (id) => id === 'default',
-  // TC-787
-  'l3-choose-longest': (id) => id === 'longest',
-};
-
-const ROUTES = readFileSync(new URL('../../main.tsx', import.meta.url), 'utf8');
 
 /** `value` as a whole number or address in `text`: 10 is not found in 10.5.0.1, nor in 110. */
 function says(text: string, value: string | number): boolean {
@@ -467,7 +452,7 @@ async function problemsOf(exercise: Exercise): Promise<string[]> {
     no(labelFits(label.en), `"${label.en}" does not fit a device box on the diagram`);
   }
 
-  // TC-477: a hint never names a port or a router side by its bare id (`p1`,
+  // TC-477, TC-901: a hint never names a port or a router side by its bare id (`p1`,
   // `lan`): it uses the words the settings form puts on that setting.
   for (const locale of ['en', 'ja'] as const) {
     const named = localiseExercise(exercise, locale).start;
@@ -531,7 +516,7 @@ async function problemsOf(exercise: Exercise): Promise<string[]> {
   // --- TC-469: lessons ---
   no(exercise.lessons.length > 0, 'no lesson');
   for (const lesson of exercise.lessons) {
-    no(ROUTES.includes(`path="${lesson}"`), `lesson ${lesson} is not a route in demo/main.tsx`);
+    no(isLessonRoute(lesson), `lesson ${lesson} is not a route of the app`);
   }
   return problems;
 }
@@ -545,28 +530,11 @@ describe(`every template, seeds 0 to ${SEED_COUNT - 1} and 1000 to 1003`, () => 
       for (const seed of SEEDS) {
         const exercise = template.generate(seed);
         instances.push(exercise);
-
-        // TC-470: determinism and identity.
-        if (JSON.stringify(template.generate(seed)) !== JSON.stringify(exercise)) {
-          problems.push(`${exercise.id}: generating twice gives two different exercises`);
-        }
-        if (
-          exercise.id !== `${template.id}~${seed}` ||
-          exercise.templateId !== template.id ||
-          exercise.seed !== seed ||
-          exercise.level !== template.level ||
-          exercise.kind !== template.kind ||
-          exercise.generatorVersion !== template.generatorVersion
-        ) {
-          problems.push(`${exercise.id}: id, seed, level or kind do not match the template`);
-        }
         problems.push(...(await problemsOf(exercise)));
       }
 
-      // TC-471: distinctness. The seed must change the task, not only the numbers.
-      if (new Set(instances.map((exercise) => exercise.fingerprint)).size < 2) {
-        problems.push(`${template.id}: every instance has the same fingerprint`);
-      }
+      // TC-471: the seed changes the task (fingerprints: the harness), and
+      // seeds do not mostly repeat what the learner sees.
       const looks = new Map<string, string>();
       const twins: string[] = [];
       for (const exercise of instances) {
@@ -706,16 +674,12 @@ describe('device names', () => {
 describe('pools', () => {
   // TC-472
   // TC-788 (level 3)
+  // (At least 100 ids, unique, stable, all of the level: the harness.)
   it.each([1, 2, 3] as const)(
-    'level %i: at least 100 ids, unique, all of them generate',
+    'level %i: every id from the verified seeds, no two alike, the templates taking turns',
     (level) => {
       const pool = buildPool(level);
-      expect(pool.length).toBeGreaterThanOrEqual(100);
-      expect(new Set(pool).size).toBe(pool.length);
-      expect(buildPool(level)).toEqual(pool);
-
       const exercises = pool.map((id) => exerciseById(id));
-      expect(exercises.every((exercise) => exercise?.level === level)).toBe(true);
       // Every pool instance is one the 100-seed run verifies.
       expect(exercises.every((exercise) => (exercise?.seed ?? POOL_SEEDS) < POOL_SEEDS)).toBe(true);
       // No two pool instances read the same and look the same.
@@ -818,10 +782,13 @@ describe('pools', () => {
   );
 
   // TC-473
-  it.each([4] as const)('level %i has no templates yet: an empty pool, not an error', (level) => {
-    expect(buildPool(level as ExerciseLevel)).toEqual([]);
-    expect(nextExerciseId(level, {})).toBeUndefined();
-  });
+  // (The empty pool itself: the harness.)
+  it.each([4] as const)(
+    'level %i has no templates yet: no next exercise, not an error',
+    (level) => {
+      expect(nextExerciseId(level, {})).toBeUndefined();
+    },
+  );
 
   // TC-474
   it('looks an exercise up by id, and refuses ids that are not one', () => {
@@ -926,3 +893,5 @@ describe('pools', () => {
     });
   });
 });
+
+verifyFamily(DEVICE_FAMILY);

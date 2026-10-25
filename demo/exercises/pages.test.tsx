@@ -9,7 +9,6 @@ import {
   nextExerciseId,
   templateIdOf,
 } from './exerciseSource';
-import { DEV_VLAN_ID } from './devFixtures';
 import { LevelPageBody } from './LevelPage';
 import { PlacementPageBody } from './PlacementPage';
 import { ReportPageBody } from './ReportPage';
@@ -37,16 +36,11 @@ function storeWith(attempts: ReturnType<typeof attempt>[], options: { storage?: 
 }
 
 const level1 = levelTemplates(1).map((template) => template.id);
+/** A level 2 kind of task whose answer is typed (VLAN numbers). */
+const VLAN_ID = 'l2-vlan-separate';
 
 // TC-501
 describe('the exercise source', () => {
-  it('finds a level 2 dev fixture by id while the templates have no level 2, for any seed', () => {
-    expect(exerciseById(`${DEV_VLAN_ID}~0`, 'ja')?.level).toBe(2);
-    expect(exerciseById(`${DEV_VLAN_ID}~1003`, 'ja')?.id).toBe(`${DEV_VLAN_ID}~1003`);
-    expect(exerciseById('no-such-template~0', 'ja')).toBeUndefined();
-    expect(exerciseById(DEV_VLAN_ID, 'ja')).toBeUndefined();
-  });
-
   it('never gives the template just done twice in a row while another has something unseen', () => {
     const first = nextExerciseId(1, {});
     expect(first).toBeDefined();
@@ -88,7 +82,7 @@ describe('the hub', () => {
     );
   });
 
-  // TC-536
+  // TC-536, TC-907
   it('the level button does not open the kind of task just done while another kind has one left', () => {
     if (level1.length < 2) return;
     const kind = level1[0] ?? '';
@@ -255,16 +249,18 @@ describe('the exercise page', () => {
     store.saveCycle({
       id: 'c1',
       level: 2,
-      templateIds: [DEV_VLAN_ID],
+      templateIds: [VLAN_ID],
       startedAt: 1,
-      preExerciseIds: [`${DEV_VLAN_ID}~0`, `${DEV_VLAN_ID}~1`],
+      preExerciseIds: [`${VLAN_ID}~0`, `${VLAN_ID}~1`],
       lessonsOpened: [],
     });
     screen = render(<ExercisePageBody store={store} />, {
-      path: `/exercises/do/${DEV_VLAN_ID}~0?context=pre&cycle=c1`,
+      path: `/exercises/do/${VLAN_ID}~0?context=pre&cycle=c1`,
       route: '/exercises/do/:exerciseId',
     });
-    expect(screen.get('exercise-brief').textContent).toContain('営業と経理を分ける');
+    expect(screen.get('exercise-brief').textContent).toContain(
+      exerciseById(`${VLAN_ID}~0`, 'ja')?.brief.ja.split('。')[0] ?? '-',
+    );
     expect(screen.get('exercise-cycle-progress').textContent).toContain('2 問中 1 問目');
     expect(store.getState().attempts[0]).toMatchObject({ context: 'pre', cycleId: 'c1' });
     expect(screen.find('exercise-skip')).not.toBeNull();
@@ -366,9 +362,9 @@ describe('the report', () => {
     const cycle = {
       id: 'c1',
       level: 2 as const,
-      templateIds: [DEV_VLAN_ID],
+      templateIds: [VLAN_ID],
       startedAt: 1,
-      preExerciseIds: [`${DEV_VLAN_ID}~0`],
+      preExerciseIds: [`${VLAN_ID}~0`],
       lessonsOpened: ['/networking/vlan'],
     };
     store.importJson(
@@ -376,14 +372,14 @@ describe('the report', () => {
         version: 1,
         cycles: [cycle],
         attempts: [
-          attempt(DEV_VLAN_ID, 0, 2, {
+          attempt(VLAN_ID, 0, 2, {
             context: 'pre',
             cycleId: 'c1',
             outcome: 'abandoned',
             hintsUsed: 2,
           }),
           ...postSet(cycle).map((id) =>
-            attempt(DEV_VLAN_ID, Number(id.split('~')[1]), 2, { context: 'post', cycleId: 'c1' }),
+            attempt(VLAN_ID, Number(id.split('~')[1]), 2, { context: 'post', cycleId: 'c1' }),
           ),
         ],
       }),
@@ -395,7 +391,7 @@ describe('the report', () => {
     expect(screen.get('report-cycle-total-c1').textContent).toContain(
       '学ぶ前：1 問中 0 問 → 学んだあと：4 問中 4 問',
     );
-    expect(screen.get(`report-cycle-row-${DEV_VLAN_ID}`).textContent).toContain(
+    expect(screen.get(`report-cycle-row-${VLAN_ID}`).textContent).toContain(
       '学ぶ前 0/1 → 学んだあと 4/4（開いたヒント：前 2、あと 0）',
     );
     expect(screen.get('report-cycles').textContent).toContain('証明ではなく');

@@ -55,7 +55,7 @@ async function noSidewaysScroll(page: Page) {
 }
 
 /**
- * TC-525 — level 1 is where a learner with a phone and no background starts:
+ * TC-525, TC-903 — level 1 is where a learner with a phone and no background starts:
  * the task, its goals, every device of the network and the button are on the
  * first screen, with nothing to scroll for. Six exercises of each kind,
  * because a longer brief leaves the diagram less room.
@@ -97,7 +97,7 @@ for (const template of TEMPLATES.filter((entry) => entry.level === 1)) {
 }
 
 /**
- * TC-526 — at every level: Check never leaves the screen, nothing scrolls
+ * TC-526, TC-904 — at every level: Check never leaves the screen, nothing scrolls
  * sideways, the diagram at least begins on the first screen and can be
  * scrolled to, and the result is brought into view when Check is pressed.
  */
@@ -152,7 +152,7 @@ async function controlHeights(scope: Locator): Promise<{ name: string; height: n
   );
 }
 
-/** TC-527 — nothing a finger has to hit is smaller than 44px. */
+/** TC-527, TC-908 — nothing a finger has to hit is smaller than 44px. */
 test('every control of an exercise is at least 44px high', async ({ page }) => {
   for (const id of [
     'l1-host-address~0',
@@ -207,7 +207,7 @@ test('every control of the hub, a level, placement and the record is at least 44
     ).toEqual([]);
     await noSidewaysScroll(page);
   }
-  // In the middle of placement there is one more control: the way out.
+  // TC-905 — in the middle of placement there is one more control: the way out.
   await openAt(page, '/exercises/placement');
   await page.getByTestId(X.placementAnswer('no')).tap();
   const stop = await box(page.getByTestId(X.placementStop));

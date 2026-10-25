@@ -62,29 +62,38 @@ export const l3ChooseLongest = defineTemplate(
       destination,
       nextHop: hop(way),
     });
+    // Each line names the router it hands to first: which way is open varies,
+    // so no choice reads, or sorts, like the right one.
     const said = (route: StaticRouteConfig, way: Way) =>
       L(
-        `${route.destination} to ${route.nextHop} (${name(net.via[way]).en})`,
-        `${route.destination} は ${route.nextHop}（${name(net.via[way]).ja}）へ`,
+        `to ${name(net.via[way]).en} (${route.nextHop}): ${route.destination}`,
+        `${name(net.via[way]).ja}（${route.nextHop}）へ：${route.destination}`,
       );
+    // The order of the lines does not count (the rule says so), so each choice
+    // shows its two in an order drawn here. Written in one fixed order, the
+    // right pair and its mirror began with the same line, and "pick the one
+    // that starts like another" found the answer half the time.
     const option = (
       id: OptionId,
-      lines: readonly [StaticRouteConfig, Way][],
+      written: readonly [StaticRouteConfig, Way][],
       explain: ReturnType<typeof L>,
-    ): DesignOption => ({
-      id,
-      label: L(
-        `Two lines: ${lines.map(([route, way]) => said(route, way).en).join('; ')}`,
-        `2 行：${lines.map(([route, way]) => `「${said(route, way).ja}」`).join('')}`,
-      ),
-      changes: [
-        routes(
-          'r1',
-          lines.map(([route]) => route),
+    ): DesignOption => {
+      const lines = draw.int(2) === 0 ? written : [...written].reverse();
+      return {
+        id,
+        label: L(
+          `Two lines: ${lines.map(([route, way]) => said(route, way).en).join('; ')}`,
+          `2 行：${lines.map(([route, way]) => `「${said(route, way).ja}」`).join('')}`,
         ),
-      ],
-      explain,
-    });
+        changes: [
+          routes(
+            'r1',
+            lines.map(([route]) => route),
+          ),
+        ],
+        explain,
+      };
+    };
     const optionOf: Record<OptionId, DesignOption> = {
       longest: option(
         'longest',

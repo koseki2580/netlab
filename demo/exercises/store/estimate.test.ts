@@ -306,7 +306,7 @@ describe('levelSummary', () => {
     });
   });
 
-  // TC-456, TC-598
+  // TC-456, TC-598, TC-909
   it('counts one exercise once, by the FIRST attempt the learner was judged on', () => {
     const retried = [failed('a', 0, 1), failed('a', 0, 1), solved('a', 0, 1)];
     expect(levelSummary(retried, 1)).toMatchObject({ counted: 1, solved: 0, notSolved: 1 });
@@ -315,7 +315,7 @@ describe('levelSummary', () => {
     expect(levelSummary(lostAgain, 1)).toMatchObject({ counted: 1, solved: 1, notSolved: 0 });
   });
 
-  // TC-598
+  // TC-598, TC-909
   it('does not let a reopened exercise hide the answer that was shown the first time', () => {
     const shown = attempt('a', 0, 1, { outcome: 'gave-up', revealed: true, checkPresses: 0 });
     expect(levelSummary([shown, solved('a', 0, 1)], 1)).toMatchObject({
@@ -331,7 +331,7 @@ describe('levelSummary', () => {
     expect(levelSummary([opened, solved('a', 0, 1)], 1)).toMatchObject({ counted: 1, solved: 1 });
   });
 
-  // TC-598
+  // TC-598, TC-909
   it('seven misses, each followed by a clean solve of the same exercise, clear nothing', () => {
     const attempts = solvedRun(1, 8, 4).flatMap((clean) => [
       {
