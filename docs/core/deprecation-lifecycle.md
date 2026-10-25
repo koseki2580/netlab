@@ -51,3 +51,25 @@ remain available from `netlab`.
 `NetlabApp` also follows this boundary: it remains exported from `netlab`, but it no longer imports
 all built-in layers at module load time. Applications that render `NetlabApp` should import the
 needed `netlab/layers/<id>` side-effect entries once at startup.
+
+## Behaviour migrations
+
+A change of behaviour that keeps every signature is recorded here, with how to keep the earlier
+behaviour. The release that makes it is a breaking entry in the changelog (`feat!:`), which
+`npm run changelog:gen` lists under **Breaking**.
+
+### ARP answers are remembered for the life of the engine
+
+**What changed.** A `SimulationEngine` now keeps what devices learn by ARP between sends
+(`arpCache: 'persist'`, the default). A host that pinged an address once shows no ARP exchange the
+second time, and a TCP handshake asks only before its first segment. `reset()` keeps what was
+learned; `clearTraces()` and `clear()` empty it; a new topology is a new engine and starts empty.
+
+**How to keep the earlier behaviour.** Create the engine with `arpCache: 'per-send'`; every send
+then starts with nothing learned, exactly as before:
+
+```ts
+const engine = new SimulationEngine(topology, hookEngine, { arpCache: 'per-send' });
+```
+
+Nothing stored changes, so there is nothing to migrate in saved topologies or progress records.

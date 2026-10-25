@@ -15,6 +15,7 @@ import type { UdpBindings } from '../../types/udp';
 import type { TcpConnection } from '../../types/tcp';
 import type { MulticastTableEntry } from '../../layers/l2-datalink/MulticastTable';
 import type { TraceDetailLevel } from '../TraceRecorder';
+import type { ArpCacheMode } from '../types';
 
 export interface SimulationRuntimeSnapshot {
   readonly runtimeNodeIps: Readonly<Record<string, string | null>>;
@@ -35,6 +36,7 @@ export type SimulationWorkerCommand =
       readonly state: SimulationState;
       readonly playIntervalMs: number;
       readonly traceDetailLevel?: TraceDetailLevel;
+      readonly arpCache?: ArpCacheMode;
     }
   | { readonly type: 'getState'; readonly id: string }
   | { readonly type: 'setState'; readonly id: string; readonly state: SimulationState }
@@ -227,7 +229,10 @@ export function isSimulationWorkerCommand(value: unknown): value is SimulationWo
         hasTopologyShape(value.topology) &&
         hasStateShape(value.state) &&
         hasPositiveNumber(value, 'playIntervalMs') &&
-        (value.traceDetailLevel === undefined || isTraceDetailLevel(value.traceDetailLevel))
+        (value.traceDetailLevel === undefined || isTraceDetailLevel(value.traceDetailLevel)) &&
+        (value.arpCache === undefined ||
+          value.arpCache === 'persist' ||
+          value.arpCache === 'per-send')
       );
     case 'getState':
     case 'step':

@@ -29,6 +29,8 @@ new SimulationEngine(topology, hookEngine, opts?)
 
 `opts.useMainThread` forces fallback. Without that option, the facade selects `WorkerEngine` only when a browser module worker can be constructed.
 
+`opts.arpCache` sets how long what devices learn by ARP is kept: `'persist'` (the default) keeps it for the life of the engine, so a device asks for an address only before its first send to it; `'per-send'` starts every send with nothing learned, as before the option existed. `reset()` keeps what was learned, `clearTraces()` and `clear()` empty it, a probe (`precompute`) reads it without adding to it, and an entry is dropped when its address moves to another device. Both implementations honour it: `WorkerEngine` passes it to the worker in `seed`.
+
 The synchronous state API returns the last known state mirror:
 
 - `WorkerEngine.getState()` returns the most recent worker-confirmed state.
@@ -41,7 +43,7 @@ All messages are runtime-validated before dispatch.
 
 Commands:
 
-- `seed`: initialize a worker engine from topology, state, and play interval.
+- `seed`: initialize a worker engine from topology, state, play interval, trace detail level and ARP cache mode.
 - `getState`: request a state snapshot.
 - `setState`: replace engine state.
 - `step`: advance the selected trace by one hop.

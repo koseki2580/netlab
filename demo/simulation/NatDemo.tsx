@@ -301,8 +301,8 @@ const HOME_NODE: Readonly<Record<string, { id: string; label: string }>> = {
 
 /**
  * The rows of a send the lesson is about. The router's address lookup (ARP)
- * is the ARP lesson's subject and comes up again on every send here, where it
- * buried the two rows that rewrite an address.
+ * is the ARP lesson's subject; on the first send here it buried the two rows
+ * that rewrite an address. Later sends ask nothing: the answers are remembered.
  */
 export function isNatLessonRow(item: PacketHop | PacketTrace): boolean {
   return !('event' in item) || (item.event !== 'arp-request' && item.event !== 'arp-reply');
@@ -557,8 +557,8 @@ function NatDemoInner() {
             style={{ fontSize: 12, lineHeight: 1.6, color: 'var(--netlab-text-secondary)' }}
           >
             {t(
-              'This list leaves out the ARP rows, so its numbers skip. A real device remembers an ARP answer for a few minutes and does not ask on every send.',
-              'この一覧では ARP の行を省いています。だから番号が飛びます。本物の機器は ARP の答えを数分のあいだ覚えていて、送るたびには聞きません。',
+              'This list leaves out the ARP rows, so its numbers can skip. Each device remembers an ARP answer, as a real one does, so only the first send to an address asks for it.',
+              'この一覧では ARP の行を省いています。だから番号が飛ぶことがあります。どの機器も本物と同じように ARP の答えを覚えているので、ある宛先へ聞くのは最初に送るときだけです。',
             )}
           </div>
 

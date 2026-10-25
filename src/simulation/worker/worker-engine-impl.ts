@@ -137,7 +137,12 @@ export class SimulationWorkerRuntime {
     this.engine = new LocalSimulationEngine(
       structuredClone(command.topology),
       new WorkerHookEngine(this.post),
-      command.traceDetailLevel === undefined ? {} : { traceDetailLevel: command.traceDetailLevel },
+      {
+        ...(command.traceDetailLevel !== undefined
+          ? { traceDetailLevel: command.traceDetailLevel }
+          : {}),
+        ...(command.arpCache !== undefined ? { arpCache: command.arpCache } : {}),
+      },
     );
     this.engine.setState(structuredClone(command.state));
     this.engine.setPlayInterval(command.playIntervalMs);

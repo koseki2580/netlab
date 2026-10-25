@@ -15,3 +15,10 @@ export interface PrecomputeResult {
   nodeArpTables: Record<string, Record<string, string>>;
   snapshots: InFlightPacket[];
 }
+
+/**
+ * How long what devices learn by ARP is kept: for the life of the engine
+ * (`'persist'`, the default), or only for the send that learned it
+ * (`'per-send'`, the behaviour before the option existed).
+ */
+export type ArpCacheMode = 'persist' | 'per-send';

@@ -15,7 +15,7 @@ import { TraceRecorder } from './TraceRecorder';
 import { FlowCollector } from '../observability/FlowCollector';
 import { NetflowExporter } from '../observability/NetflowExporter';
 import { SflowSampler } from '../observability/SflowSampler';
-import type { PrecomputeOptions, PrecomputeResult } from './types';
+import type { ArpCacheMode, PrecomputeOptions, PrecomputeResult } from './types';
 import { canonicalizeIpv6, isIpv6Address } from '../utils/ipv6';
 
 export { deriveDeterministicMac } from '../utils/network';
@@ -49,13 +49,21 @@ export class ForwardingPipeline {
    * traces are cleared.
    */
   private readonly netflowExporters = new Map<string, NetflowExporter>();
+  /**
+   * What devices have learned by ARP, address to MAC, kept for the life of this
+   * engine under `arpCache: 'persist'`. Null under `'per-send'`, where every
+   * send starts with nothing learned.
+   */
+  private readonly learnedArp: Map<string, string> | null;
 
   constructor(
     private readonly topology: NetworkTopology,
     _hookEngine: HookEngine,
     private readonly traceRecorder: TraceRecorder,
     private readonly services: ServiceOrchestrator,
+    options: { readonly arpCache?: ArpCacheMode } = {},
   ) {
+    this.learnedArp = (options.arpCache ?? 'persist') === 'persist' ? new Map() : null;
     this.addresses = services.addresses;
     this.ifaceResolver = new InterfaceResolver(topology);
     const portResolver = new PortResolver(topology);
@@ -138,6 +146,34 @@ export class ForwardingPipeline {
     };
   }
 
+  /** Forget what devices have learned by ARP, as when the traces are cleared. */
+  clearArpCache(): void {
+    this.learnedArp?.clear();
+  }
+
+  /**
+   * The cache a send works with. Per send, a new one. Persisted, the engine's
+   * own, after dropping any entry whose address no longer belongs to the device
+   * whose MAC it records; a probe gets a copy, so it learns nothing for later.
+   */
+  private arpCacheForSend(options: PrecomputeOptions): Map<string, string> {
+    const learned = this.learnedArp;
+    if (!learned) return new Map();
+    for (const [ip, mac] of learned) {
+      const owner = this.addresses.findOwner(ip);
+      if (!owner || !this.macsOf(owner).includes(mac)) learned.delete(ip);
+    }
+    return options.probe ? new Map(learned) : learned;
+  }
+
+  private macsOf(node: NetlabNode): string[] {
+    return [
+      this.addresses.endpointMac(node),
+      ...(typeof node.data.mac === 'string' ? [node.data.mac] : []),
+      ...(node.data.interfaces ?? []).map((iface) => iface.macAddress),
+    ];
+  }
+
   /** Empty every router's NetFlow cache, as when the traces are cleared. */
   clearFlowCaches(): void {
     this.netflowExporters.clear();
@@ -153,7 +189,7 @@ export class ForwardingPipeline {
     const hops: PacketHop[] = [];
     const snapshots: InFlightPacket[] = [];
     const nodeArpTables: Record<string, Record<string, string>> = {};
-    const arpCache = new Map<string, string>();
+    const arpCache = this.arpCacheForSend(options);
     const reassemblers = new Map<string, import('./Reassembler').Reassembler>();
     const linkQueues = new LinkQueueRegistry();
     const flowCollector = new FlowCollector();

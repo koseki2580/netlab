@@ -211,13 +211,13 @@ window.USER_GUIDE_CONTENT = {
                </ul>
                <h3>アドレスとフィルタ</h3>
                <ul>
-                 <li><strong>NAT / PAT</strong> — 「NAT のしくみ」。Client A と Client B から送ると、変換表で 2 台が同じグローバルアドレスをポート番号で分け合うのが分かります。この NAT は外側のポートを <strong>1024 から順に</strong>割り当てます。送ったあとは「Internet Host から返事を送る」で、返事の宛先が元の住所に戻されるところも見られます。一覧には ARP の行を出していません。</li>
+                 <li><strong>NAT / PAT</strong> — 「NAT のしくみ」。Client A と Client B から送ると、変換表で 2 台が同じグローバルアドレスをポート番号で分け合うのが分かります。この NAT は外側のポートを <strong>1024 から順に</strong>割り当てます。送ったあとは「Internet Host から返事を送る」で、返事の宛先が元の住所に戻されるところも見られます。一覧には ARP の行を出していません。ARP の答えは覚えられるので、聞くのは最初に送るときだけです。</li>
                  <li><strong>ファイアウォールと ACL</strong> — 「このファイアウォールの決め方」。ルールの一覧が表示され、上から順に照らし合わせて最初に一致したもので決まること、どれにも一致しなければ拒否されることが書いてあります。「戻りの通信」ボタンで、クライアントが始めた接続の返事は通ることを確かめられます。ルールが 1 つもない一覧は、一覧がないのと同じで何も止めません。そのためインターネット側には、すべてを拒否するルールが 1 つ置いてあります。</li>
                  <li><strong>DHCPv6 と SLAAC</strong> — モードが「DHCPv6 でアドレス取得」「SLAAC ＋ DHCPv6（DNS などだけ）」「SLAAC のみ」と言葉で表示されます。</li>
                </ul>
                <h3>ステップに合わせて変わる表示</h3>
                <ul>
-                 <li><strong>ARP の基本</strong> — 「ARP テーブル」と「ARP の変化」は、いま表示しているステップの時点の内容です。Router の行は、Server や Client の答えが届いたステップで増えます。リセットすると、最初から入っていた行だけに戻ります。</li>
+                 <li><strong>ARP の基本</strong> — 「ARP テーブル」と「ARP の変化」は、いま表示しているステップの時点の内容です。Router の行は、Server や Client の答えが届いたステップで増えます。リセットすると、最初から入っていた行だけに戻ります。このレッスンは押すたびに覚えた内容を消してから送るので、毎回 ARP の質問が見られます。ほかのレッスンでは、機器は答えを覚えていて、ある宛先へ聞くのは最初に送るときだけです（トレースを消去すると忘れます）。</li>
                  <li><strong>DHCP と DNS</strong> — 「いまの DHCP Client」の行が、DISCOVER・OFFER・REQUEST の間は住所なし、ACK が届くと BOUND と住所を表示します。図の機器を押して見る設定は、やり取りがすべて終わったあとのものです。</li>
                  <li><strong>TCP のハンドシェイク</strong> — 「もう少し詳しく」で、ルータのホップの 2 つの TTL（着いたときと出ていくとき）と、localSeq が SYN の SEQ + 1 になる理由が説明されます。</li>
                  <li><strong>VLAN による分離</strong> — VLAN、アクセスポート、トランクの意味が最初に書かれています。開いた時点では何も送りません。破棄の理由は言葉で表示されます。</li>
@@ -553,13 +553,13 @@ window.USER_GUIDE_CONTENT = {
                </ul>
                <h3>Addresses and filtering</h3>
                <ul>
-                 <li><strong>NAT / PAT</strong> — “How NAT works”. Send from Client A and Client B and the table shows both sharing one global address, told apart by port. This NAT allocates public ports <strong>in order starting at 1024</strong>. After a send, “Send the reply from Internet Host” shows the reply's destination being put back to the address at home. Its list leaves the ARP rows out.</li>
+                 <li><strong>NAT / PAT</strong> — “How NAT works”. Send from Client A and Client B and the table shows both sharing one global address, told apart by port. This NAT allocates public ports <strong>in order starting at 1024</strong>. After a send, “Send the reply from Internet Host” shows the reply's destination being put back to the address at home. Its list leaves the ARP rows out. ARP answers are remembered, so only the first send asks.</li>
                  <li><strong>Firewalls &amp; ACLs</strong> — “How this firewall decides”. The rules are listed, with how they are read: top to bottom, first match wins, and anything unmatched is denied. Press “Return Traffic” to see that replies to a connection the client opened are let back in. A list with no rules filters nothing, as if there were no list, so the Internet side has one rule that denies everything.</li>
                  <li><strong>DHCPv6 And SLAAC</strong> — the mode reads in words: “DHCPv6 address”, “SLAAC + stateless DHCPv6 (DNS only)” or “SLAAC only”.</li>
                </ul>
                <h3>Panels that follow the step</h3>
                <ul>
-                 <li><strong>ARP Basics</strong> — “ARP tables” and “ARP over time” show what each device knew at the step on screen. The Router’s lines appear at the step where the Server’s or the Client’s answer arrives. Reset goes back to the lines that were there from the start.</li>
+                 <li><strong>ARP Basics</strong> — “ARP tables” and “ARP over time” show what each device knew at the step on screen. The Router’s lines appear at the step where the Server’s or the Client’s answer arrives. Reset goes back to the lines that were there from the start. This lesson forgets what was learned before each send, so the ARP question is asked every time. In other lessons a device remembers the answer and asks only before its first send to an address (clearing the traces makes it forget).</li>
                  <li><strong>DHCP &amp; DNS</strong> — the “DHCP Client now” line says it has no address during DISCOVER, OFFER and REQUEST, and BOUND with its address once the ACK has arrived. A device’s details, opened from the diagram, show the end of the whole exchange.</li>
                  <li><strong>TCP Handshake</strong> — “A little more detail” names the two TTLs at a router’s hop (as the packet arrived, and as it leaves) and explains why localSeq is the SYN’s SEQ + 1.</li>
                  <li><strong>VLAN (802.1Q)</strong> — VLAN, access port and trunk are defined first. Nothing is sent until you press a button, and a drop is explained in words.</li>

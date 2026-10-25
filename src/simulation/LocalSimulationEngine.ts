@@ -19,6 +19,7 @@ import { extractPathEdgeIds } from './extractPathEdgeIds';
 import { ServiceOrchestrator } from './ServiceOrchestrator';
 import { TraceRecorder } from './TraceRecorder';
 import type { TraceDetailLevel } from './TraceRecorder';
+import type { ArpCacheMode } from './types';
 
 const DEFAULT_PLAY_INTERVAL_MS = 500;
 const INITIAL_STATE: SimulationState = {
@@ -39,6 +40,8 @@ const INITIAL_STATE: SimulationState = {
 
 export interface LocalSimulationEngineOptions {
   readonly traceDetailLevel?: TraceDetailLevel;
+  /** How long what devices learn by ARP is kept. Default `'persist'`. */
+  readonly arpCache?: ArpCacheMode;
 }
 
 export class LocalSimulationEngine {
@@ -64,7 +67,13 @@ export class LocalSimulationEngine {
       opts.traceDetailLevel === undefined ? {} : { detailLevel: opts.traceDetailLevel },
     );
     this.services = new ServiceOrchestrator(topology, hookEngine);
-    this.pipeline = new ForwardingPipeline(topology, hookEngine, this.traceRecorder, this.services);
+    this.pipeline = new ForwardingPipeline(
+      topology,
+      hookEngine,
+      this.traceRecorder,
+      this.services,
+      opts.arpCache === undefined ? {} : { arpCache: opts.arpCache },
+    );
     this.services.setPacketSender({
       precompute: (packet, failureState, options) =>
         this.pipeline.precompute(packet, failureState, options),
@@ -374,6 +383,7 @@ export class LocalSimulationEngine {
     this.transferController = null;
     this.traceCoordinator.dropAllCaches();
     this.pipeline.clearFlowCaches();
+    this.pipeline.clearArpCache();
     this.lastPacket = null;
     this.lastFailureState = EMPTY_FAILURE_STATE;
     this.state = { ...INITIAL_STATE };
@@ -385,6 +395,7 @@ export class LocalSimulationEngine {
     this.traceRecorder.clearSnapshots();
     this.services.processors.reset();
     this.pipeline.clearFlowCaches();
+    this.pipeline.clearArpCache();
     this.lastPacket = null;
     this.lastFailureState = EMPTY_FAILURE_STATE;
     this.state = {

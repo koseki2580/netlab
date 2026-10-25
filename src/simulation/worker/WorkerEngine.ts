@@ -1,3 +1,4 @@
+import type { ArpCacheMode } from '../types';
 import type { SimulationEnginePort } from '../enginePort';
 import { HookEngine } from '../../hooks/HookEngine';
 import type { MulticastTableEntry } from '../../layers/l2-datalink/MulticastTable';
@@ -38,6 +39,8 @@ export interface WorkerEngineOptions {
   readonly initialState?: SimulationState;
   readonly playIntervalMs?: number;
   readonly traceDetailLevel?: TraceDetailLevel;
+  /** How long what devices learn by ARP is kept. Default `'persist'`. */
+  readonly arpCache?: ArpCacheMode;
   readonly timeoutMs?: number;
   readonly createWorker?: () => WorkerLike;
 }
@@ -104,6 +107,7 @@ export class WorkerEngine implements SimulationEnginePort {
   private playIntervalMs: number;
   private pcapRecords: PcapRecord[] = [];
   private readonly traceDetailLevel: TraceDetailLevel;
+  private readonly arpCache: ArpCacheMode | undefined;
   private disposed = false;
   private readyPromise: Promise<void>;
 
@@ -116,6 +120,7 @@ export class WorkerEngine implements SimulationEnginePort {
     this.state = clone(opts.initialState ?? INITIAL_SIMULATION_STATE);
     this.playIntervalMs = opts.playIntervalMs ?? 500;
     this.traceDetailLevel = opts.traceDetailLevel ?? 'full';
+    this.arpCache = opts.arpCache;
     this.timeoutMs = opts.timeoutMs ?? 5000;
     this.createWorker = opts.createWorker ?? createDefaultWorker;
     this.worker = this.createAndWireWorker();
@@ -463,6 +468,7 @@ export class WorkerEngine implements SimulationEnginePort {
         state: this.state,
         playIntervalMs: this.playIntervalMs,
         traceDetailLevel: this.traceDetailLevel,
+        ...(this.arpCache !== undefined ? { arpCache: this.arpCache } : {}),
       },
       'ready',
     ).then(() => undefined);
