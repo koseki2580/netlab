@@ -165,8 +165,8 @@ describe('a switch choosing where to send an unlearned frame', () => {
       ],
     });
 
-    expect(decision.action).toBe('forward');
-    expect(decision.action === 'forward' ? decision.nextNodeId : null).toBe('sw-c');
+    // It copies the frame it has not learned; the copy toward C goes on.
+    expect(decision.action === 'flood' ? decision.forward?.nextNodeId : null).toBe('sw-c');
   });
 
   /**
@@ -186,12 +186,15 @@ describe('a switch choosing where to send an unlearned frame', () => {
       ],
     });
 
-    expect(decision.action).toBe('forward');
-    expect(decision.action === 'forward' ? decision.nextNodeId : null).toBe('sw-c');
+    expect(decision.action === 'flood' ? decision.forward?.nextNodeId : null).toBe('sw-c');
   });
 
-  /** TC-112 — and it still forwards when no neighbour leads anywhere. */
-  it('still forwards when the destination is behind none of the neighbours', async () => {
+  /**
+   * TC-112 — when no neighbour leads to the destination, the frame is copied
+   * out of every port and goes on toward none: the host that receives the copy
+   * is not the destination, so the trace does not end in a drop at it.
+   */
+  it('copies it out of every port, and sends none on, when the destination is behind none of the neighbours', async () => {
     const forwarder = new SwitchForwarder('sw-a', triangle());
     const packet = { ...pingToC(), dstNodeId: 'nobody' };
 
@@ -199,8 +202,11 @@ describe('a switch choosing where to send an unlearned frame', () => {
       neighbors: [{ nodeId: 'host-a', edgeId: 'e-a-host' }],
     });
 
-    expect(decision.action).toBe('forward');
-    expect(decision.action === 'forward' ? decision.nextNodeId : null).toBe('host-a');
+    expect(decision.action).toBe('flood');
+    expect(decision.action === 'flood' ? decision.forward : 'not a flood').toBeUndefined();
+    expect(
+      decision.action === 'flood' ? decision.copies.map((copy) => copy.nextNodeId) : [],
+    ).toEqual(['host-a']);
   });
 });
 

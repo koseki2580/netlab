@@ -117,15 +117,6 @@ function makeStpRuntime(
   };
 }
 
-function expectForward(result: Awaited<ReturnType<SwitchForwarder['receive']>>) {
-  expect(result.action).toBe('forward');
-  if (result.action !== 'forward') {
-    throw new Error(`expected forward decision, got ${result.action}`);
-  }
-
-  return result;
-}
-
 function expectDrop(result: Awaited<ReturnType<SwitchForwarder['receive']>>) {
   expect(result.action).toBe('drop');
   if (result.action !== 'drop') {
@@ -174,18 +165,20 @@ describe('SwitchForwarder — STP', () => {
 
     const packet = makePacket();
     packet.frame.dstMac = '02:00:00:00:00:22';
-    const result = expectForward(
-      await forwarder.receive(packet, 'p1', {
-        neighbors: [
-          { nodeId: 'switch-2', edgeId: 'e2' },
-          { nodeId: 'switch-3', edgeId: 'e3' },
-        ],
-      }),
-    );
+    const result = await forwarder.receive(packet, 'p1', {
+      neighbors: [
+        { nodeId: 'switch-2', edgeId: 'e2' },
+        { nodeId: 'switch-3', edgeId: 'e3' },
+      ],
+    });
 
-    expect(result.egressPort).toBe('p3');
-    expect(result.edgeId).toBe('e3');
-    expect(result.nextNodeId).toBe('switch-3');
+    // The learned port is blocked, so the frame is copied out of the one
+    // forwarding port left.
+    expect(result.action).toBe('flood');
+    const copies = result.action === 'flood' ? result.copies : [];
+    expect(copies.map((copy) => [copy.egressPort, copy.edgeId, copy.nextNodeId])).toEqual([
+      ['p3', 'e3', 'switch-3'],
+    ]);
   });
 
   it('port missing from stpStates map falls through to existing behavior (no-op default)', async () => {
@@ -194,9 +187,11 @@ describe('SwitchForwarder — STP', () => {
       makeTopology(new Map([['switch-1:p2', makeStpRuntime('p2', 'BLOCKED', 'BLOCKING')]])),
     );
 
-    const result = expectForward(await forwarder.receive(makePacket(), 'p1', { neighbors: [] }));
+    const result = await forwarder.receive(makePacket(), 'p1', { neighbors: [] });
 
-    expect(result.egressPort).toBe('p3');
+    expect(result.action).toBe('flood');
+    const copies = result.action === 'flood' ? result.copies : [];
+    expect(copies.map((copy) => copy.egressPort)).toEqual(['p3']);
   });
 
   it('DISABLED port is treated the same as BLOCKING for ingress drop and egress exclusion', async () => {

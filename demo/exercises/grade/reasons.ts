@@ -159,10 +159,11 @@ function sentWords(sent: SentKind | undefined): Localised {
  * One entry per drop reason the engine reports. `device` is the label of the
  * node that reported the drop.
  *
- * `no-route` must NOT use it: a frame nobody can deliver is flooded, and the
- * drop is then often reported by a bystander host (engineContract facts 4, 5).
- * For an ACL, a VLAN or a spanning-tree drop the reporting device is the one
- * that stopped the packet, so naming it is accurate.
+ * `no-route` must NOT use it: where a switch's cables name no port, a frame
+ * nobody can deliver still goes on to a bystander host, which reports the drop
+ * (engineContract facts 4, 5). Where they do, the switch copies the frame and
+ * the trace ends at it as `no-receiver`, so naming that switch is accurate, as
+ * it is for an ACL, a VLAN or a spanning-tree drop.
  */
 const DROP_TEXT = {
   'no-route': (_device, leg, context) =>
@@ -185,6 +186,16 @@ const DROP_TEXT = {
             en: "A device on the way back could not find the sender. Compare the sender's address with the devices next to it.",
             ja: '帰り道の機器が、送り主を見つけられませんでした。送り主のアドレスを、同じ側の機器と見くらべてください。',
           },
+  'no-receiver': (device, leg) =>
+    leg === 'request'
+      ? {
+          en: `${device} sent it out of every port, and no device there took it. Compare the destination's address with the devices on that side.`,
+          ja: `${device} はすべてのポートに流しましたが、受け取る機器がありませんでした。行き先のアドレスを、同じ側の機器と見くらべてください。`,
+        }
+      : {
+          en: `${device} sent the answer out of every port, and no device there took it. Compare the sender's address with the devices on that side.`,
+          ja: `${device} は返事をすべてのポートに流しましたが、受け取る機器がありませんでした。送り主のアドレスを、同じ側の機器と見くらべてください。`,
+        },
   'acl-deny': (device, leg, context) => ({
     en:
       `${device} refused it. Check that its list of allowed traffic (ACL) has a line that lets ${sentWords(context.sent).en} through.` +

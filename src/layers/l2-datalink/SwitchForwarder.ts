@@ -1,4 +1,4 @@
-import type { ForwardContext, ForwardDecision, Forwarder } from '../../types/layers';
+import type { FloodTarget, ForwardContext, ForwardDecision, Forwarder } from '../../types/layers';
 import { IGMP_PROTOCOL, isLinkLocalMulticast } from '../../types/multicast';
 import type { IgmpMessage, InFlightPacket } from '../../types/packets';
 import type { NetlabEdge, NetworkTopology, SwitchPort } from '../../types/topology';
@@ -84,7 +84,11 @@ export class SwitchForwarder implements Forwarder {
     return !this.isEdgeBlocked(edge);
   }
 
-  private selectNeighbor(packet: InFlightPacket, neighbors: ForwardContext['neighbors']) {
+  private selectNeighbor(
+    packet: InFlightPacket,
+    neighbors: ForwardContext['neighbors'],
+    anyway: boolean,
+  ) {
     const dstMac = packet.frame.dstMac.toLowerCase();
     const dstIp = packet.frame.payload.dstIp === BROADCAST_IP ? null : packet.frame.payload.dstIp;
 
@@ -127,8 +131,12 @@ export class SwitchForwarder implements Forwarder {
       }
     }
 
-    for (const neighbor of neighbors) {
-      if (this.isLinkUsable(neighbor.edgeId)) return neighbor;
+    // Only multicast still goes on to any neighbour when none is the way; a
+    // broadcast or an unlearned MAC is copied out of every port instead.
+    if (anyway) {
+      for (const neighbor of neighbors) {
+        if (this.isLinkUsable(neighbor.edgeId)) return neighbor;
+      }
     }
 
     return null;
@@ -230,6 +238,17 @@ export class SwitchForwarder implements Forwarder {
       return { action: 'drop', reason: 'vlan-ingress-violation' };
     }
 
+    // The engine's table, so what is learned outlives this hop.
+    if (ctx.macTable) this.macTable = ctx.macTable;
+    // A link the frame may leave by: up (the neighbours the engine gives leave
+    // out failed links; none given means every link) and not blocked.
+    // The link the frame came in on is up too, though not among the neighbours.
+    const ingressEdge = this.resolveConnectedEdgeForPort(ingressPortId)?.id;
+    const open = (edgeId: string) =>
+      (ctx.neighbors.length === 0 ||
+        edgeId === ingressEdge ||
+        ctx.neighbors.some((n) => n.edgeId === edgeId)) &&
+      this.isLinkUsable(edgeId);
     this.learn(frame.srcMac, ingressPortId, vlanId);
 
     // IGMP snooping: learn from transit IGMP Reports and Leaves
@@ -253,7 +272,8 @@ export class SwitchForwarder implements Forwarder {
     const learnedPort = this.macTable.get(this.macKey(vlanId, frame.dstMac));
     if (learnedPort && this.isPortForwarding(learnedPort)) {
       const learnedEdge = this.resolveConnectedEdgeForPort(learnedPort);
-      if (learnedEdge) {
+      // Not over a link that has since gone down or been blocked.
+      if (learnedEdge && open(learnedEdge.id)) {
         const nextNodeId =
           learnedEdge.source === this.nodeId ? learnedEdge.target : learnedEdge.source;
         const egressPort = this.resolvePortConfig(ports, learnedPort);
@@ -272,7 +292,68 @@ export class SwitchForwarder implements Forwarder {
       }
     }
 
-    const selectedNeighbor = this.selectNeighbor(packet, ctx.neighbors);
+    // Multicast, IGMP snooping included, keeps its own rules.
+    const multicast =
+      isIgmpControl || (frame.dstMac !== BROADCAST_MAC && isMulticastMac(frame.dstMac));
+    // With no neighbours given, every link but the one the frame came in on.
+    const neighbors =
+      ctx.neighbors.length > 0
+        ? ctx.neighbors
+        : this.topology.edges.flatMap((edge) =>
+            edge.id === ingressEdge || (edge.source !== this.nodeId && edge.target !== this.nodeId)
+              ? []
+              : [
+                  {
+                    nodeId: edge.source === this.nodeId ? edge.target : edge.source,
+                    edgeId: edge.id,
+                  },
+                ],
+          );
+    const selectedNeighbor = this.selectNeighbor(packet, neighbors, multicast);
+    // A link that names no port here cannot be told apart from the others, so
+    // such a frame goes on as one, as it always has.
+    const unnamed =
+      selectedNeighbor !== null && this.resolvePortForEdge(selectedNeighbor.edgeId) === undefined;
+    // A broadcast, or a MAC this switch has not learned: a copy goes out of
+    // every port that may carry it. The one toward the destination goes on.
+    // With no port to copy out of, nothing is copied and it goes as it always has.
+    const targets =
+      multicast || unnamed
+        ? []
+        : egressPorts.flatMap((portId): FloodTarget[] => {
+            const edge = this.resolveConnectedEdgeForPort(portId);
+            if (!edge || !open(edge.id)) return [];
+            const egressPort = this.resolvePortConfig(ports, portId);
+            return [
+              {
+                nextNodeId: edge.source === this.nodeId ? edge.target : edge.source,
+                edgeId: edge.id,
+                egressPort: portId,
+                packet: {
+                  ...packet,
+                  egressPortId: portId,
+                  vlanId,
+                  frame: prepareEgressFrame(frame, egressPort, vlanId),
+                },
+              },
+            ];
+          });
+    if (targets.length > 0) {
+      const forward = targets.find((target) => target.edgeId === selectedNeighbor?.edgeId);
+      if (selectedNeighbor && !forward) {
+        return { action: 'drop', reason: 'no-egress-in-vlan' };
+      }
+      const copies = targets.filter((target) => target !== forward);
+      if (forward && copies.length === 0) {
+        return { action: 'forward', ...forward };
+      }
+      return {
+        action: 'flood',
+        ...(forward ? { forward } : {}),
+        copies,
+        packet: forward?.packet ?? packet,
+      };
+    }
     if (selectedNeighbor) {
       const resolvedEgressPortId = this.resolvePortForEdge(selectedNeighbor.edgeId);
       const egressPortId = resolvedEgressPortId ?? egressPorts[0];

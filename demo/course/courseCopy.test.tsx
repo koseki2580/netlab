@@ -146,19 +146,24 @@ describe('what a course step says once its packet has run', () => {
 
 describe('what the course says against what its picture shows', () => {
   /**
-   * TC-622 — the first packet of step 3 goes to one PC only, so the text says
-   * this switch has already learned, and keeps "sends to every port" for a
-   * switch that has just been turned on.
+   * TC-622 — the switch of step 3 has just started and PC-B only receives, so
+   * every send here is also copied to PC-C, which throws it away; the text says
+   * so, says what would teach the switch, and what a real network does.
    */
-  it('says the switch of step 3 has already learned where each PC is', () => {
+  it('says the switch of step 3 copies the packet to PC-C, and why it keeps doing so here', () => {
     const { ja, en } = step('three-machines').copy;
-    expect(ja.points.join('')).toMatch(/しばらく動いていて.*もう覚えています/);
-    expect(en.points.join('')).toMatch(/running for a while.*already remembers/);
-    expect(visibleText(step('three-machines'), 'ja')).not.toMatch(/全部の差し込み口/);
-    const flood = ja.more.find((line) => line.includes('全部の差し込み口'));
-    expect(flood).toMatch(/電源を入れたばかり/);
-    expect(ja.more.join('')).toMatch(/覚え終わったあと/);
-    expect(en.more.join('')).toMatch(/just been turned on.*every port.*after it has learned/s);
+    expect(en.points.join('')).toMatch(/copy to PC-C.*not for it/);
+    expect(ja.points.join('')).toMatch(/PC-C にも写し.*自分宛てではない/);
+    expect(en.points.join('')).toMatch(/just started.*every port/);
+    expect(ja.points.join('')).toMatch(/動き始めたばかり.*全部の差し込み口/);
+    expect(en.points.join('')).not.toMatch(/already remembers|running for a while/);
+    expect(ja.points.join('')).not.toMatch(/しばらく動いていて/);
+    expect(en.more.join('')).toMatch(/Once PC-B sends.*one cable/s);
+    expect(en.more.join('')).toMatch(/real network.*answer.*taught the switch/s);
+    expect(en.more.join('')).toMatch(/send again.*PC-C again/s);
+    expect(ja.more.join('')).toMatch(/PC-B が何かを送れば.*1本にだけ/s);
+    expect(ja.more.join('')).toMatch(/本物のネットワークでは.*返事でスイッチは覚えます/s);
+    expect(ja.more.join('')).toMatch(/もう一度送っても.*PC-C に写し/s);
   });
 
   /**

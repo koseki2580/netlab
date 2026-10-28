@@ -102,7 +102,14 @@ function makePacket(options: {
   };
 }
 
+/**
+ * The copy that goes on: a plain forward, or the copy toward the destination
+ * of a flood (a switch copies a frame it has not learned out of every port).
+ */
 function expectForward(result: Awaited<ReturnType<SwitchForwarder['receive']>>) {
+  if (result.action === 'flood' && result.forward) {
+    return { action: 'forward' as const, ...result.forward };
+  }
   expect(result.action).toBe('forward');
   if (result.action !== 'forward') {
     throw new Error(`expected forward decision, got ${result.action}`);

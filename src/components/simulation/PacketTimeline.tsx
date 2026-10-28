@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { floodNote } from './floodWords';
 import type { TranslatorFn } from '../../i18n/types';
 import { useI18n } from '../../i18n/useI18n';
 import { traceEventId } from '../../sandbox/annotations/anchors';
@@ -184,6 +185,9 @@ function formatHopAnnotation(hop: PacketHop, t: TranslatorFn): string | null {
     }
   }
 
+  const flood = floodNote(hop, t);
+  if (flood) parts.push(flood);
+
   return parts.length > 0 ? parts.join(' · ') : null;
 }
 
@@ -214,6 +218,7 @@ function HopRow({
       role="option"
       data-testid="trace-hop"
       data-event={hop.event}
+      {...(hop.flood ? { 'data-flooded': hop.flood.copies.length } : {})}
       aria-selected={isActive}
       tabIndex={0}
       onClick={onClick}

@@ -11,6 +11,21 @@ export type LayerId = 'l1' | 'l2' | 'l3' | 'l4' | 'l7';
 export interface ForwardContext {
   neighbors: Neighbor[];
   multicastTable?: MulticastTable;
+  /**
+   * What this switch has learned: the port each source MAC was last seen on,
+   * keyed by `${vlanId}:${mac}`. It lives as long as the engine keeps what
+   * devices learn (see the `arpCache` option), so a forwarder writes to it.
+   */
+  macTable?: Map<string, string>;
+}
+
+/** One copy of a frame a forwarder sends out of a port. */
+export interface FloodTarget {
+  nextNodeId: string;
+  edgeId: string;
+  egressPort: string;
+  /** The frame as it leaves that port (a trunk may tag it). */
+  packet: InFlightPacket;
 }
 
 export type ForwardDecision =
@@ -30,6 +45,18 @@ export type ForwardDecision =
       packet: InFlightPacket;
       selectedRoute?: RouteEntry;
       ecmpTrace?: import('./simulation').EcmpTrace;
+    }
+  | {
+      /**
+       * The frame is copied out of several ports, as a switch does with a
+       * broadcast or a MAC it has not learned. `forward` is the copy that goes
+       * on toward the destination, when one port leads there; the trace
+       * follows it and lists the others. Without it, the frame ends here.
+       */
+      action: 'flood';
+      forward?: FloodTarget;
+      copies: readonly FloodTarget[];
+      packet: InFlightPacket;
     }
   | { action: 'deliver'; packet: InFlightPacket }
   | { action: 'drop'; reason: string };

@@ -242,6 +242,13 @@ describe('bubbleForHop', () => {
     );
   });
 
+  // TC-869: a frame no device took has its own words on the canvas.
+  it('TC-869: says a frame copied to every port and taken by none in words', () => {
+    expect(bubbleForHop(hop(1, 'sw', { event: 'drop', reason: 'no-receiver' }))?.key).toBe(
+      'simulation.packetStory.dropNoReceiver',
+    );
+  });
+
   it('says nothing on a plain forward', () => {
     expect(bubbleForHop(HOPS[1]!)).toBeNull();
   });

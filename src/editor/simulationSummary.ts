@@ -83,6 +83,7 @@ const EXPLAINED_DROP_REASONS: ReadonlySet<string> = new Set([
   'loss',
   'next-hop-off-link',
   'reserved-address',
+  'no-receiver',
 ]);
 
 /**

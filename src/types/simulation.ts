@@ -86,10 +86,36 @@ export interface NatTranslation {
   postDstPort: number;
 }
 
+/** What became of one copy of a frame a switch sent out of a port. */
+export interface FloodCopy {
+  /** The device that sent the copy. */
+  fromNodeId: string;
+  /** The device the copy reached. */
+  toNodeId: string;
+  edgeId: string;
+  /** The port it left by. */
+  egressPort: string;
+  /**
+   * `discarded`: a host or router took it and threw it away (`reason`
+   * `not-for-me`). `flooded`: a switch copied it on; its copies follow in the
+   * list. `forwarded`: a switch sent it on by a port it had learned.
+   * `dropped`: a switch could not send it on (`reason` says why).
+   */
+  outcome: 'discarded' | 'flooded' | 'forwarded' | 'dropped';
+  reason?: string;
+}
+
+/** The copies of a frame a switch made at this hop, besides the one the trace follows. */
+export interface HopFlood {
+  copies: FloodCopy[];
+}
+
 export interface PacketHop {
   traceEventId?: string;
   step: number;
   nodeId: string;
+  /** Set on the hop of a switch that copied the frame out of other ports too. */
+  flood?: HopFlood;
   nodeLabel: string;
   srcIp: string;
   dstIp: string;

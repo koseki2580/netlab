@@ -55,6 +55,11 @@ export class ForwardingPipeline {
    * send starts with nothing learned.
    */
   private readonly learnedArp: Map<string, string> | null;
+  /**
+   * What each switch has learned (MAC with VLAN to port), by switch id, kept
+   * exactly as long as `learnedArp`.
+   */
+  private readonly learnedMacs: Map<string, Map<string, string>> | null;
 
   constructor(
     private readonly topology: NetworkTopology,
@@ -63,7 +68,9 @@ export class ForwardingPipeline {
     private readonly services: ServiceOrchestrator,
     options: { readonly arpCache?: ArpCacheMode } = {},
   ) {
-    this.learnedArp = (options.arpCache ?? 'persist') === 'persist' ? new Map() : null;
+    const persist = (options.arpCache ?? 'persist') === 'persist';
+    this.learnedArp = persist ? new Map() : null;
+    this.learnedMacs = persist ? new Map() : null;
     this.addresses = services.addresses;
     this.ifaceResolver = new InterfaceResolver(topology);
     const portResolver = new PortResolver(topology);
@@ -149,6 +156,7 @@ export class ForwardingPipeline {
   /** Forget what devices have learned by ARP, as when the traces are cleared. */
   clearArpCache(): void {
     this.learnedArp?.clear();
+    this.learnedMacs?.clear();
   }
 
   /**
@@ -190,6 +198,12 @@ export class ForwardingPipeline {
     const snapshots: InFlightPacket[] = [];
     const nodeArpTables: Record<string, Record<string, string>> = {};
     const arpCache = this.arpCacheForSend(options);
+    // A probe works on a copy of what the switches know, so it leaves nothing learned.
+    const macTables = !this.learnedMacs
+      ? new Map<string, Map<string, string>>()
+      : options.probe
+        ? new Map([...this.learnedMacs].map(([id, table]) => [id, new Map(table)]))
+        : this.learnedMacs;
     const reassemblers = new Map<string, import('./Reassembler').Reassembler>();
     const linkQueues = new LinkQueueRegistry();
     const flowCollector = new FlowCollector();
@@ -222,6 +236,7 @@ export class ForwardingPipeline {
         snapshots,
         nodeArpTables,
         arpCache,
+        macTables,
         reassemblers,
         linkQueues,
         flowCollector,

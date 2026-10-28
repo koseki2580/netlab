@@ -296,8 +296,11 @@ describe('fact 4: spanning tree and a link that is down', () => {
     const facts = await ping(down, 'ha', 'hb');
     expect(facts.status).toBe('dropped');
     expect(facts.forwardEdgeIds).not.toContain('e-ab');
-    // The frame is flooded to a bystander, which reports the drop.
-    expect(facts.drop).toEqual({ nodeId: 'hc', reason: 'no-route', leg: 'request' });
+    // Flipped by switch flooding (REQ-097/098): the stranded switch copies the
+    // frame to its bystander, which discards it as not for it, and the trace
+    // ends at that switch as no-receiver. It used to be sent to the bystander,
+    // which reported the drop as no-route.
+    expect(facts.drop).toEqual({ nodeId: 'swa', reason: 'no-receiver', leg: 'request' });
   });
 
   it('a frame still crosses the down switch link from its target end (engine quirk) (TC-383)', async () => {
@@ -306,8 +309,11 @@ describe('fact 4: spanning tree and a link that is down', () => {
     const facts = await ping(down, 'hb', 'ha');
     expect(facts.requestDelivered).toBe(true);
     expect(facts.forwardEdgeIds).toEqual(['e-hb', 'e-ab', 'e-ha']);
-    expect(facts.status).toBe('dropped');
-    expect(facts.drop).toEqual({ nodeId: 'hc', reason: 'no-route', leg: 'reply' });
+    // Flipped by MAC learning (REQ-096): swa learned hb behind e-ab from the
+    // request, so the reply goes back the same way and arrives. It used to be
+    // sent to the bystander hc, which reported the drop as no-route.
+    expect(facts.status).toBe('delivered');
+    expect(facts.drop).toBeNull();
   });
 
   it('stpConfig.disabledPortIds is the working way to take a switch link out: STP re-converges (TC-384)', async () => {

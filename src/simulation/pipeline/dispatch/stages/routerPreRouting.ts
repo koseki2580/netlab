@@ -1,3 +1,4 @@
+import { macTableFor } from './floodCopies';
 import { IGMP_PROTOCOL } from '../../../../types/multicast';
 import {
   appendDropHop,
@@ -29,6 +30,7 @@ export function runRouterPreRoutingStage(ctx: HopContext): StageResult {
     routing: freshRouting(ctx.workingPacket, neighbors, {
       neighbors,
       ...(multicastTable != null ? { multicastTable } : {}),
+      ...(node.data.role === 'switch' ? { macTable: macTableFor(ctx.shared, ctx.current) } : {}),
     }),
   });
 

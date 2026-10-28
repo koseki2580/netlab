@@ -63,3 +63,50 @@ describe('the getting-started course', () => {
     }
   });
 });
+
+describe('what step 3 says, on the real simulator', () => {
+  /**
+   * TC-871 — the switch of step 3 has just started and PC-B only receives:
+   * each send is also copied to PC-C, which throws it away, until PC-B has
+   * sent something, as TC-622's text says.
+   */
+  it('copies each packet to PC-C until PC-B has sent something', async () => {
+    await import('../../src/layers/l2-datalink');
+    await import('../../src/layers/l3-network');
+    await import('../../src/layers/l7-application');
+    const { HookEngine } = await import('../../src/hooks/HookEngine');
+    const { SimulationEngine } = await import('../../src/simulation/SimulationEngine');
+    const { buildUdpPacket } = await import('../../src/layers/l4-transport/udpPacketBuilder');
+    const step = COURSE_STEPS.find((candidate) => candidate.id === 'three-machines')!;
+    const ip = (id: string) => step.topology.nodes.find((node) => node.id === id)!.data.ip!;
+    const engine = new SimulationEngine(step.topology, new HookEngine());
+    // What the course's send button sends.
+    const send = async () => {
+      await engine.send(
+        buildUdpPacket({
+          srcNodeId: step.from,
+          dstNodeId: step.to,
+          srcIp: ip(step.from),
+          dstIp: ip(step.to),
+          srcPort: 40000,
+          dstPort: 7,
+          payload: { layer: 'raw', data: 'course' },
+        }),
+      );
+      const traces = engine.getState().traces;
+      return traces[traces.length - 1]!;
+    };
+    const copies = (trace: Awaited<ReturnType<typeof send>>) =>
+      trace.hops.flatMap((hop) =>
+        (hop.flood?.copies ?? []).map((copy) => [copy.toNodeId, copy.outcome, copy.reason]),
+      );
+    const first = await send();
+    expect(first.status).toBe('delivered');
+    expect(copies(first)).toEqual([['pc-c', 'discarded', 'not-for-me']]);
+    // PC-B has sent nothing, so the switch still does not know its port.
+    expect(copies(await send())).toEqual([['pc-c', 'discarded', 'not-for-me']]);
+    // Once PC-B has sent something, the switch knows where it is.
+    await engine.ping('pc-b', ip(step.from));
+    expect(copies(await send())).toEqual([]);
+  });
+});

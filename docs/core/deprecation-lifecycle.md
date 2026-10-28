@@ -73,3 +73,38 @@ const engine = new SimulationEngine(topology, hookEngine, { arpCache: 'per-send'
 ```
 
 Nothing stored changes, so there is nothing to migrate in saved topologies or progress records.
+
+### Switches learn MAC addresses and copy frames they cannot place
+
+**What changed.** The built-in switch now learns the source MAC address of every frame against the
+port it came in on, and keeps what it learned for as long as the ARP cache is kept (the same
+`arpCache` option, `reset()` keeps it, `clearTraces()` and `clear()` empty it). A frame to a MAC it
+has not learned, or a broadcast, is copied out of every usable port in the frame's VLAN except the
+one it came in on; blocked spanning-tree ports and failed links are left out. Multicast and IGMP
+frames are handled as before.
+
+What a consumer sees:
+
+- `ForwardDecision` has a fourth variant,
+  `{ action: 'flood'; forward?: FloodTarget; copies: readonly FloodTarget[]; packet }`. A layer
+  plugin may return it. A `switch` over `decision.action` that was exhaustive needs a `'flood'`
+  case; `forward`, when present, has the same fields as a `forward` decision.
+- `ForwardContext` may carry `macTable`, the switch's learned table for this engine.
+- The trace still follows one path, and a trace with no copies is unchanged byte for byte. A hop
+  where a switch copied the frame carries `flood: { copies: FloodCopy[] }`, one entry per copy
+  with the device it reached and what became of it (`discarded` with reason `not-for-me`,
+  `flooded`, `forwarded` or `dropped`). Copies add no hops.
+- A frame no device takes now ends at the switch as a `drop` with reason `no-receiver`, with the
+  copies on that hop. Before, the drop was reported by whichever bystander host the frame reached,
+  as `no-route`. Code that looked for `no-route` at a host to recognise this case should look for
+  `no-receiver`.
+- Copying needs the switch's links to name its ports (`sourceHandle`/`targetHandle` at the switch).
+  A frame whose way on is a link that names no port, or a switch with no other cable, is forwarded
+  exactly as before, so there a bystander may still report `no-route`.
+
+**How to keep the earlier behaviour.** There is no option that turns copying off. A switch that
+should forward as before can be registered as its own layer forwarder that never returns `flood`.
+With `arpCache: 'per-send'`, every send starts with the switch knowing nothing, so every first
+frame is copied.
+
+Nothing stored changes, so there is nothing to migrate in saved topologies or progress records.

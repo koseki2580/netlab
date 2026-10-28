@@ -45,6 +45,7 @@ Forwarders receive topology context through `ForwardContext`:
 ```ts
 interface ForwardContext {
   neighbors: Neighbor[];
+  macTable?: Map<string, string>; // a switch's learned `${vlanId}:${mac}` → port id
 }
 ```
 
@@ -64,6 +65,12 @@ type ForwardDecision =
       egressInterfaceId?: string;
       packet: InFlightPacket;
       selectedRoute?: RouteEntry;
+    }
+  | {
+      action: 'flood';
+      forward?: FloodTarget; // the copy the trace follows
+      copies: readonly FloodTarget[]; // the others, listed on the hop as `PacketHop.flood`
+      packet: InFlightPacket;
     }
   | { action: 'deliver'; packet: InFlightPacket }
   | { action: 'drop'; reason: string };

@@ -48,6 +48,7 @@ export const editor: Catalog = {
   'editor.dropReason.nextHopOffLink': 'ルートの次のルータが、このルータのネットワークにいません',
   'editor.dropReason.reservedAddress':
     '機器に、サブネットのネットワークアドレスかブロードキャストアドレスが付いています',
+  'editor.dropReason.noReceiver': 'スイッチが全ポートへコピーしたが、受け取る機器がなかった',
   'editor.dropReason.unknown': 'この理由コードの説明はまだありません',
 
   'editor.connect.hint':

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PacketHop, PacketTrace } from '../types/simulation';
-import { historyRows, hopEdgeId, summarizeTraces } from './simulationSummary';
+import { dropReasonKey, historyRows, hopEdgeId, summarizeTraces } from './simulationSummary';
 
 function hop(step: number, over?: string): PacketHop {
   return {
@@ -72,5 +72,12 @@ describe('simulation summary', () => {
       'p1:1',
       'p2:0',
     ]);
+  });
+});
+
+// TC-869: the editor explains a frame no device took.
+describe('TC-869: the editor names the no-receiver drop', () => {
+  it('has its own explanation', () => {
+    expect(dropReasonKey('no-receiver')).toBe('editor.dropReason.noReceiver');
   });
 });

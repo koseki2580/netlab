@@ -49,5 +49,7 @@ export const canvasPanel: Catalog = {
     'ここで捨てられました：次のルータが、このルータのネットワークにいません',
   'simulation.packetStory.dropReservedAddress':
     'ここで捨てられました：機器にネットワークの最初か最後のアドレスが付いています',
+  'simulation.packetStory.dropNoReceiver':
+    'ここで止まりました：全ポートへコピーしたが、受け取る機器がない',
   'simulation.packetStory.dropOther': 'ここでパケットが捨てられました',
 } as const;

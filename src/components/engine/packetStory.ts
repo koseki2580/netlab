@@ -55,6 +55,7 @@ const DROP_REASON_KEYS: Readonly<Record<string, string>> = {
   loss: 'simulation.packetStory.dropLoss',
   'next-hop-off-link': 'simulation.packetStory.dropNextHopOffLink',
   'reserved-address': 'simulation.packetStory.dropReservedAddress',
+  'no-receiver': 'simulation.packetStory.dropNoReceiver',
 };
 
 const DROP_FALLBACK_KEY = 'simulation.packetStory.dropOther';

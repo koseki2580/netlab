@@ -32,6 +32,8 @@ export interface ForwardLoopShared {
   snapshots: InFlightPacket[];
   nodeArpTables: Record<string, Record<string, string>>;
   arpCache: Map<string, string>;
+  /** What each switch has learned, by switch id: MAC (with VLAN) to port. */
+  macTables?: Map<string, Map<string, string>>;
   reassemblers: Map<string, Reassembler>;
   linkQueues: LinkQueueRegistry;
   flowCollector?: FlowCollector;

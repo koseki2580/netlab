@@ -82,12 +82,28 @@ type ForwardDecision =
       egressInterfaceId?: string;
       packet: Packet;
     }
+  | {
+      action: 'flood';
+      forward?: { nextNodeId: string; edgeId: string; egressPort: string; packet: Packet };
+      copies: ReadonlyArray<{
+        nextNodeId: string;
+        edgeId: string;
+        egressPort: string;
+        packet: Packet;
+      }>;
+      packet: Packet;
+    }
   | { action: 'deliver'; packet: Packet }
   | { action: 'drop'; reason: string };
 ```
 
 The `forward` variant is authoritative: `SimulationEngine` executes `nextNodeId` and `edgeId`
 directly instead of translating `egressPort` through its own routing heuristics.
+
+A switch that sends a frame out of several ports returns `flood`. The trace follows `forward`, the
+copy towards the destination, and lists `copies` on that hop (`PacketHop.flood`) without adding hops.
+With no `forward`, the trace ends at the device as a drop with reason `no-receiver`. See
+[Behaviour migrations](deprecation-lifecycle.md#switches-learn-mac-addresses-and-copy-frames-they-cannot-place).
 
 ## Overriding a Built-in Plugin
 

@@ -29,6 +29,7 @@ const CODES: readonly CheckResultCode[] = [
 /** Every reason pinned in engineContract.test.ts, plus the ones the engine source reports. */
 const ENGINE_REASONS = [
   'no-route',
+  'no-receiver',
   'acl-deny',
   'no-egress-in-vlan',
   'vlan-ingress-violation',
