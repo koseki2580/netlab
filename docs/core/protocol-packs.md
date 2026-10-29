@@ -1,0 +1,282 @@
+# Protocol Packs
+
+> **Status**: 🧪 Trial (W1 core). The descriptor, `defineProtocol`, the registry and the
+> derivers exist under `src/protocols/pack/` and are tested. They are **not exported** from
+> `netlab` and nothing in the engine or the UI reads them yet. The API shape is frozen only
+> after the user has reviewed the DNS and GRE trial (see [Versioning of the pack API](#versioning-of-the-pack-api)).
+
+A protocol pack describes one protocol **once**. Today a protocol is spread over 20–40 files:
+a payload union, three number-to-name tables, a trace label, a hand-written serializer and a
+second hand-written byte layout, a filter word, hop events, packet-lab ids and lesson
+registrations in five places. A pack replaces that with one registration. The views are
+_derived_ from it.
+
+Requirements: REQ-100 to REQ-106 in the
+[specification](../user-guide/specifications/specification.md), accepted by AC-153 to AC-159
+and exercised by TC-920 to TC-949.
+
+## The descriptor
+
+```typescript
+import { defineProtocol } from './src/protocols/pack'; // not yet exported from 'netlab'
+
+export const grePack = defineProtocol({
+  apiVersion: 1,
+  id: 'gre', // also the trace-filter token
+  name: { short: 'GRE', en: 'Generic Routing Encapsulation', ja: '汎用ルーティングカプセル化' },
+  layer: 'L3',
+  numbers: { ipProtocol: 47 }, // or ports: [{ transport: 'udp', port: 53 }], etherType
+  specs: [
+    {
+      id: 'RFC 2784',
+      title: 'Generic Routing Encapsulation (GRE)',
+      year: 2000,
+      status: 'proposed-standard',
+    },
+    {
+      id: 'RFC 2890',
+      title: 'Key and Sequence Number Extensions to GRE',
+      year: 2000,
+      status: 'proposed-standard',
+    },
+  ],
+  versions: [
+    { id: 'rfc2784', specs: ['RFC 2784'] },
+    {
+      id: 'rfc2890',
+      specs: ['RFC 2784', 'RFC 2890'],
+      extends: 'rfc2784',
+      default: true,
+      whatsNew: {
+        en: 'Adds the Key and Sequence Number fields',
+        ja: 'Key と Sequence Number を追加',
+      },
+    },
+  ],
+  header: [
+    { key: 'c', name: 'Checksum Present', type: 'flag', meaning: { en: '…', ja: '…' }, example: 0 },
+    // …
+    {
+      key: 'key',
+      name: 'Key',
+      type: 'uint',
+      bits: 32,
+      presentIf: 'k',
+      in: ['rfc2890'],
+      meaning: { en: '…', ja: '…' },
+      example: 42,
+    },
+  ],
+});
+```
+
+The full GRE and DNS descriptors are the test fixtures
+`src/protocols/pack/fixtures/gre.pack.ts` and `src/protocols/pack/fixtures/dns.pack.ts`.
+
+### Identity
+
+| Field        | Rule                                                                                  |
+| ------------ | ------------------------------------------------------------------------------------- |
+| `apiVersion` | The pack API version the pack was written against (today `1`).                        |
+| `id`         | `^[a-z][a-z0-9-]{0,31}$`, unique in a registry. It is also the trace-filter token.    |
+| `name`       | `short` (the trace label, e.g. `GRE`), `en` and `ja` full names. All non-empty.       |
+| `layer`      | `L2`, `L3`, `L4` or `L7`. It becomes the layer tag of every annotated field.          |
+| `numbers`    | Optional `ipProtocol` (0–255), `etherType` (0–0xFFFF), `ports` (transport + 1–65535). |
+
+### Versions and spec references
+
+`specs` lists every document the pack cites: `id` (`RFC 2784`, `IEEE 802.1Q-2022`), `title`,
+`year`, `status` (`internet-standard`, `proposed-standard`, `draft-standard`,
+`best-current-practice`, `informational`, `experimental`, `historic`, `ieee-standard`) and an
+optional `url`. `versions` lists the versions a learner can choose: a unique `id`, the specs
+that define it, an optional `extends` (an earlier version) and `whatsNew` (en/ja). Exactly one
+version is `default`. A header field with `in: [...]` exists only in those versions; a field
+without `in` exists in all of them. Two fields may share a `key` only when their `in` sets do
+not overlap. This is how GRE's `Reserved0` is 12 bits in RFC 2784 and 9 bits in RFC 2890.
+
+One protocol is one pack, whatever its versions: TLS 1.2 and TLS 1.3 are versions of `tls`,
+not two packs. A new RFC that changes the wire format adds a version, not a pack.
+
+### Header schema
+
+`header` is the ordered list of fields on the wire. `sections` adds repeated groups after the
+header (DNS questions and resource records). Each field has:
+
+| Property     | Meaning                                                                                                   |
+| ------------ | --------------------------------------------------------------------------------------------------------- |
+| `key`        | Machine id, unique per version; the packet-lab field id is `<pack id>.<key>`.                             |
+| `name`       | The name the RFC uses (`Protocol Type`). Shown as-is in both languages.                                   |
+| `type`       | `uint`, `flag` (1 bit), `enum`, `reserved` (sent as 0), `ipv4`, `ipv6`, `mac`, `bytes`, `domain-name`.    |
+| `bits`       | Width for `uint`, `enum`, `reserved`, and fixed `bytes`. Implied for `flag`/`ipv4`/`ipv6`/`mac`.          |
+| `lengthFrom` | For variable `bytes`: the key of an earlier field holding its length in bytes (DNS `RDLENGTH`).           |
+| `presentIf`  | The key of an earlier `flag`; the field is on the wire only when that flag is 1 (GRE `Key`).              |
+| `values`     | For `enum`: `{ value, name, meaning? }` entries (DNS `RCODE` 3 = `NXDOMAIN`).                             |
+| `hex`        | Display the number in hex (`0x0800`) instead of decimal.                                                  |
+| `format`     | Optional `(value, siblings) => string` display override (DNS `RDATA` shown as an address when TYPE is A). |
+| `meaning`    | `{ en, ja }` for learners. Required on every field, reserved ones included.                               |
+| `example`    | A valid value. Required. The glossary shows it.                                                           |
+| `in`         | Versions the field belongs to.                                                                            |
+
+A section is `{ key, name, countFrom, fields }`: `countFrom` is the header field that counts
+its entries (DNS `ANCOUNT`).
+
+`defineProtocol` rejects a descriptor whose `presentIf`, `lengthFrom`, `countFrom`, `in`,
+`extends` or spec ids point nowhere, whose fields do not close on a byte boundary in every
+version (a variable field must also start on one), whose example or enum value does not fit
+its width, or whose meaning is empty in either language. A rejection is a `NetlabError`
+(`protocol/invalid-request`) whose `context.reason` names the rule (`pack/unknown-reference`,
+`pack/misaligned`, …) and whose `context.path` names the field.
+
+### Behaviour hooks and content bundle (declared, not wired)
+
+`behaviour` and `content` are typed slots. W1 declares them so that a pack written now does
+not change shape later. The engine does not call them yet.
+
+- `behaviour.encapsulation` — `push(inner, config)` / `pop(outer)` (GRE, VXLAN, MPLS).
+- `behaviour.endpoint` — request → reply packets (DNS, NTP).
+- `behaviour.transit` — a per-device forwarding stage (VRRP, LACP).
+- `behaviour.service` — a multi-message session (DHCP-like).
+- `content` — `stage` (1–7), `lesson`, `deck`, `exam`, `exercises[]` and `i18n.{en,ja}`, each
+  a loader `() => import('./…')`.
+
+## Derivers
+
+Every view comes from the descriptor and a **header object**: plain values keyed by field
+key, sections as arrays, e.g. GRE
+`{ c: 0, k: 1, s: 1, ver: 0, protocolType: 0x0800, key: 81, sequence: 7 }`. Reserved fields
+default to 0; any other missing field is an error.
+
+| Deriver                                     | Produces                                                                                                                                                                                                         |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `deriveLayout(pack, header, opts)`          | `{ bytes, fields }`: the wire bytes, and every present field with `path` (`answer[0].ttl`), `bitOffset`, `bitLength`, `byteOffset`, `byteLength`. `opts.baseOffset` shifts offsets; `opts.version` picks fields. |
+| `deriveAnnotatedFields(pack, header, opts)` | The hex/field view rows: today's `AnnotatedField` shape (`name`, `layer`, `byteOffset`, `byteLength`, `displayValue`) plus `key`, `path`, bit position, `value` and the en/ja `meaning`.                         |
+| `deriveTraceLabel(pack, header?)`           | `name.short`, followed by the enum name of the `label.field` when the pack names one (DNS: `DNS QUERY` / `DNS RESPONSE`).                                                                                        |
+| `deriveFilterToken(pack)`                   | The pack `id` (`gre`).                                                                                                                                                                                           |
+| `deriveGlossary(pack)`                      | One entry for the protocol, then one per field key: term, en/ja meaning, example, versions it is in, and the specs of those versions; enum values listed with their meanings.                                    |
+| `derivePacketLabFieldIds(pack, version?)`   | `<id>.<key>` (`<id>.<section>.<key>` in a section) for every non-reserved field of the version.                                                                                                                  |
+
+Byte layout and annotation come from **one walk** of the schema, so they cannot disagree.
+Today they are two hand-kept walks (`packetLayout.ts` and `packetSerializer.ts`).
+
+A header object that disagrees with itself is rejected with `protocol/invalid-packet`:
+a `countFrom` field that differs from the number of entries (`pack/count-mismatch`), a
+`lengthFrom` field that differs from the bytes given (`pack/length-mismatch`), a value that
+does not fit its width (`pack/value-out-of-range`), a missing value (`pack/missing-value`).
+
+## Registry
+
+`createProtocolPackRegistry()` returns an isolated registry. A process-wide default instance
+is created at migration time (as `protocolRegistry` is for routing protocols); the trial does
+not create one, so nothing is registered by importing the module.
+
+- `register(pack)` registers a loaded pack. `registerLazy(stub)` registers only the identity
+  (`id`, `name`, `layer`, `numbers`) and a `load: () => import('./gre')`.
+- Lookups that the trace needs on every hop are **synchronous and identity-only**:
+  `identity(id)`, `byIpProtocol(47)`, `byPort('udp', 53)`, `byEtherType(0x0800)`, `list()`.
+  They never load a pack, so a trace label or number-to-name lookup costs no chunk.
+- `load(id)` resolves the pack once (concurrent calls share one promise), checks that the
+  loaded pack's identity equals the stub's (`pack/identity-mismatch`), and caches it. A failed
+  load rejects and the next call tries again. `get(id)` returns the pack only once loaded.
+- **Duplicate ids** are refused (`pack/duplicate-id`), as is a second claim on the same IP
+  protocol number, EtherType or transport/port (`pack/duplicate-number`). Registering the
+  same pack object twice is a no-op. `unregister(id)` frees the id and its numbers. (Layer
+  plugins overwrite with a warning; packs do not, because two packs silently fighting over
+  port 53 would mislabel every trace.)
+- **Versions** live inside one pack; the registry has no version argument. The caller passes
+  `version` to a deriver, and the default version applies otherwise.
+
+### Bundle budgets
+
+`ui:simulation-context` is at about 247 of 250 kB and the engine at about 432 of 435 kB.
+The core (`define`, `derive`, `registry`) has no dependency on React, the i18n catalogue
+(lesson L014) or any protocol. A pack's schema, meanings and content stay behind its
+`load()` import, so a topology that never shows a GRE packet never downloads the GRE pack.
+The built-in stubs (id, names, numbers: tens of bytes each) are the only always-loaded part.
+In the trial nothing imports `src/protocols/pack/`, so `npm run size` is unchanged.
+
+## Migration map
+
+How each closed union or switch from survey (a) becomes registry-driven. Lines were
+re-checked against commit eb1e263 (switch flooding). Nothing here is migrated in W1.
+
+| Today (`file:line`)                                                                                                                     | What is closed                                     | Becomes                                                                                                                 |
+| --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `src/types/packets.ts:120` `TcpSegment.payload`, `:129` `UdpDatagram.payload`                                                           | L7 payload unions                                  | Add a `PackPayload { layer: 'pack'; protocol: string; header: HeaderValues }` member; existing members stay (no break). |
+| `src/types/packets.ts:177`, `:180` `IpPacket.payload` / `reassemblyPayload`, `:191` IPv6, `:212` Ethernet                               | L3/L4 payload unions                               | Same `PackPayload` member; GRE leaves `RawPayload`+JSON (`GreEncap.ts`) for it.                                         |
+| `src/types/packets.ts:256–296` structural guards                                                                                        | `isXxx` per protocol                               | One `isPackPayload(p, id?)`; existing guards unchanged.                                                                 |
+| `src/simulation/TraceRecorder.ts:38`, `routingHelpers.ts:150`, `utils/packetSerializer.ts:78`                                           | Three number→name tables                           | `registry.byIpProtocol(n)?.name.short ?? String(n)` (identity-only, synchronous).                                       |
+| `src/simulation/TraceRecorder.ts:197` `deriveTraceLabel`                                                                                | `if` chain per protocol                            | Built-ins first (byte-identical labels), then `deriveTraceLabel(pack, header)` for `PackPayload`.                       |
+| `src/utils/packetSerializer.ts:104` `serializeL7`, `:338` `serializeL3` dispatch                                                        | Per-protocol serializers                           | `deriveAnnotatedFields` for `PackPayload`; DNS moves to it (fixing the wire format, see below).                         |
+| `src/utils/packetLayout.ts:122` `buildApplicationPayloadBytes`, `:200` `buildTransportBytes`                                            | Second, hand-kept byte walk                        | `deriveLayout(...).bytes`; one walk for bytes and fields.                                                               |
+| `src/components/simulation/traceFilter/parser.ts:51` `PROTOCOLS`                                                                        | Closed set of filter words                         | Built-in words ∪ `registry.list().map(deriveFilterToken)`.                                                              |
+| `src/types/simulation.ts:128` `PacketHop.event`, `:138` `PacketHop.action`                                                              | Closed hop events/actions                          | `action: \`pack:${id}:${hook}\``(template literal, like`tls:${string}`) + `packHop?: { protocol; hook; fields }`.       |
+| `src/components/simulation/HopInspector.tsx:101` `formatHopAction`                                                                      | `switch` per action                                | Falls through to the pack's hop wording (en/ja from `content.i18n`).                                                    |
+| `src/components/engine/packetStory.ts:18` `HopBubbleKind`                                                                               | Closed bubble kinds                                | Adds `'pack'`; bubble text from the pack.                                                                               |
+| `src/simulation/pipeline/dispatch/forwardingStages.ts:38` `FORWARDING_STAGES`                                                           | Fixed stage list                                   | A `transit`/`encapsulation` hook slot run by one fixed `packStage` (the list stays fixed and ordered).                  |
+| `src/simulation/ServiceOrchestrator.ts:101,195`; `enginePort.ts:29,34`; `worker/protocol.ts:71,78,271,273`; `SimulationEngine.ts:79,87` | `simulateDhcp`/`simulateDns` mirrored per protocol | One `simulateService(protocolId, …)` through port and worker; the old methods stay as wrappers.                         |
+| `src/types/topology.ts:22` `NetlabNodeData` (`:45–47` dhcp/dns fields)                                                                  | Per-protocol node config                           | `protocols?: Record<string, unknown>` keyed by pack id, validated by the pack.                                          |
+| `src/sandbox/edits/types.ts:27` `Edit` union                                                                                            | Per-protocol edits                                 | Packs use the existing `registerSandboxEdit` seam.                                                                      |
+| `demo/packet-lab/model.ts:28` `Carries`, `:56` `FieldId`                                                                                | Closed packet-lab sets                             | `derivePacketLabFieldIds` ids (`gre.key`) alongside the built-ins.                                                      |
+| `demo/main.tsx`, `Gallery.tsx`, `galleryJa.ts`, `lessonManifest.ts`, `examQuestions.ts`                                                 | Lesson registered in five places                   | `content` loaders read by one manifest builder.                                                                         |
+| `src/registry/ProtocolRegistry.ts:10`; `src/types/layers.ts:9` `LayerId`                                                                | Routing-only registry; one plugin per layer        | Unchanged. Packs are a separate registry; a routing pack may later point at a `RoutingProtocol`.                        |
+
+Order: DNS (integrated) and GRE (sidecar → engine) first, with golden traces that must stay
+byte-identical for every existing protocol; then the other sidecars.
+
+### Discrepancies found in today's code (W1 parity run)
+
+- **DNS hex view is not RFC 1035.** `packetLayout.ts:122` writes the ASCII text
+  `DNS QUERY A example.com` as the UDP payload. It has no 12-byte header, no transaction ID,
+  no label-encoded QNAME, and no QTYPE/QCLASS. The UDP `Length` field counts that text. The
+  derived layout writes RFC 1035 §4.1 wire format. The parity test pins the parts that agree
+  (the offset where DNS starts, the `L7` layer, the trace label) and checks the bytes against
+  an RFC 1035 vector instead of today's output.
+- **GRE is not in the hex view.** `GreEncap.ts` carries GRE as a `RawPayload` holding JSON,
+  so the hex view shows JSON text and the IP `Protocol` field shows `47 (47)`. The header
+  codec `GreHeader.ts` agrees with RFC 2890 bit for bit, and the derived bytes equal its
+  output. Its parser does not reject a non-zero reserved bit 1 or bits 4–12 (RFC 2784 §2.3
+  says a receiver MUST discard such a packet unless it implements RFC 1701), and it types
+  `protocolType` as only `0x0800 | 0x86DD` although RFC 2784 allows any EtherType.
+- **The W1 HTML draft's GRE schema is wrong.** It puts C, K and S in adjacent bits with a
+  10-bit Reserved0. RFC 2890 places a reserved bit between C and K (C=bit 0, K=bit 2, S=bit 3,
+  Reserved0 bits 4–12). The fixture follows the RFC.
+
+## i18n merging
+
+Packs carry their learner wording inline (`meaning: { en, ja }`), so the derivers need no
+catalogue. Wording the UI looks up by key (hop bubbles, lesson strings) comes from
+`content.i18n.en` / `.ja` loaders. At migration it is **merged** into the catalogue under the
+pack's own namespace `protocol.<id>.*`, never replacing a key. A pack catalogue key outside
+its namespace, or one already present, is refused. The two languages must have the same key
+set (the existing i18n parity check extends to packs). The core catalogue is never imported by
+the pack core (lesson L014), so packs cost nothing in bundles that show no protocol text.
+
+## Versioning of the pack API
+
+- Every descriptor states `apiVersion`. `defineProtocol` accepts the versions it supports
+  (today `[1]`) and refuses others with `pack/unsupported-api-version`, naming the supported
+  list.
+- Until the freeze, the API is internal: no export from `src/index.ts`, and shapes may change.
+- At the freeze, `apiVersion: 1` is exported, and the error reasons become first-class
+  `protocol-pack/*` codes in `src/errors/codes.ts`. Today they ride on existing codes plus
+  `context.reason`, so `codes.ts` and the bundles stay untouched during the trial.
+- After the freeze, additive changes (a new optional property, a new field `type`, a new
+  `status`) keep `apiVersion: 1`. A breaking change adds `apiVersion: 2`. For at least the
+  runway in [deprecation-lifecycle.md](deprecation-lifecycle.md), `defineProtocol` accepts
+  both and upgrades v1 descriptors internally.
+
+## Adding a protocol (third party)
+
+After the freeze, a third party writes one folder and one registration line:
+
+1. Write `my-proto/index.ts` with `defineProtocol({...})`: identity, specs and versions, then
+   the header schema, field by field from the RFC figure, with en/ja meanings and examples.
+2. Test it with a golden vector from the RFC or a capture:
+   `expect(deriveLayout(pack, header).bytes).toEqual([...])`.
+3. Register it lazily:
+   `registry.registerLazy({ id, name, layer, numbers, load: () => import('./my-proto') })`.
+4. Optional, after W1 wiring: behaviour hooks for engine hops, and a `content` bundle for the
+   lesson, deck, exam and exercises.
+
+`defineProtocol` does the checks a reviewer would otherwise do by hand: widths, alignment,
+references, both languages, and examples that fit.
