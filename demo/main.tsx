@@ -18,6 +18,7 @@ import { ToastViewport } from '../src/components/ToastViewport';
 import Gallery from './Gallery';
 import CoursePage from './course/CoursePage';
 import ExamPage from './course/ExamPage';
+import PathPage from './course/PathPage';
 import ExerciseHub from './exercises/ExerciseHub';
 import ExercisePage from './exercises/ExercisePage';
 import LevelPage from './exercises/LevelPage';
@@ -63,6 +64,7 @@ function DemoRoutes() {
         <Route path="/course" element={<CoursePage />} />
         <Route path="/course/exam" element={<ExamPage />} />
         <Route path="/course/exam/:level" element={<ExamPage />} />
+        <Route path="/path" element={<PathPage />} />
         <Route path="/exercises" element={<ExerciseHub />} />
         <Route path="/exercises/level/:level" element={<LevelPage />} />
         <Route path="/exercises/do/:exerciseId" element={<ExercisePage />} />

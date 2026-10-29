@@ -1247,6 +1247,22 @@ export default function Gallery({
             </span>
           </a>
 
+          {/* The whole path the course begins: seven stages, each opened by its test. */}
+          <a
+            href="#/path"
+            data-testid="gallery-path-link"
+            style={{
+              marginTop: 12,
+              display: 'inline-flex',
+              alignItems: 'center',
+              minHeight: 44,
+              color: 'var(--netlab-accent-cyan)',
+              fontWeight: 700,
+            }}
+          >
+            {t('The whole learning path: 7 stages →', '学習の道すじ（7 つの段階）→')}
+          </a>
+
           <div style={{ marginTop: 20 }}>
             <LearningMap
               map={learningMap}
