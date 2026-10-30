@@ -18,6 +18,7 @@ import {
   type ExamAttempt,
 } from './examAttempt';
 import { EXAM_LEVELS, examLevel } from './examLevels';
+import { examLevelsInStageOrder } from './stages';
 import { examVerdict, firstUnanswered, missedSentence, notLearnedSentence } from './examVerdict';
 import {
   EXAM_LEVEL_1,
@@ -244,24 +245,31 @@ function ExamBody({ level }: { level: ExamLevel }) {
             aria-label={t('Test levels', 'テストのレベル')}
             style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}
           >
-            {EXAM_LEVELS.map((entry) => (
-              <Link
-                key={entry.level}
-                data-testid={`exam-level-${entry.level}`}
-                aria-current={entry.level === level.level ? 'page' : undefined}
-                to={examRoute(entry.level)}
-                style={{
-                  padding: '6px 12px',
-                  borderRadius: 999,
-                  border: `1px solid ${entry.level === level.level ? 'var(--netlab-accent-cyan)' : 'var(--netlab-border)'}`,
-                  color: 'var(--netlab-text-primary)',
-                  textDecoration: 'none',
-                  fontWeight: entry.level === level.level ? 700 : 400,
-                }}
-              >
-                {entry.title[locale]}
-              </Link>
-            ))}
+            {/* In the order of the learning path's stages, not the order the
+                levels were written in. */}
+            {examLevelsInStageOrder()
+              .flatMap((number) => {
+                const found = examLevel(number);
+                return found ? [found] : [];
+              })
+              .map((entry) => (
+                <Link
+                  key={entry.level}
+                  data-testid={`exam-level-${entry.level}`}
+                  aria-current={entry.level === level.level ? 'page' : undefined}
+                  to={examRoute(entry.level)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 999,
+                    border: `1px solid ${entry.level === level.level ? 'var(--netlab-accent-cyan)' : 'var(--netlab-border)'}`,
+                    color: 'var(--netlab-text-primary)',
+                    textDecoration: 'none',
+                    fontWeight: entry.level === level.level ? 700 : 400,
+                  }}
+                >
+                  {entry.title[locale]}
+                </Link>
+              ))}
           </nav>
         ) : null}
         {resumeAt !== null ? (

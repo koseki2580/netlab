@@ -8,6 +8,7 @@ import {
   OFF_PATH,
   STAGES,
   checkpointPassed,
+  examLevelsInStageOrder,
   nextThing,
   stageFacts,
   stageStatuses,
@@ -146,6 +147,9 @@ describe('passing a stage, and what that unlocks (TC-954)', () => {
       packetCleared: allButOne.packetCleared.filter(
         (level) => !(missing.kind === 'packet' && missing.level === level),
       ),
+      examsPassed: allButOne.examsPassed.filter(
+        (level) => !(missing.kind === 'exam' && missing.level === level),
+      ),
     };
     expect(stageStatuses(short)[1]).toMatchObject({ passed: false, unlocked: true });
     expect(stageStatuses(short)[2]).toMatchObject({ unlocked: false });
@@ -187,8 +191,15 @@ describe('the next thing to do (TC-956)', () => {
     expect(nextThing(NO_PROGRESS)).toEqual({ stage: 1, checkpoint: { kind: 'course' } });
   });
 
-  it('is the first checkpoint of stage 2 once the course is done', () => {
+  it('is the stage 1 test once the course is done', () => {
     expect(nextThing(facts({ courseDone: true }))).toEqual({
+      stage: 1,
+      checkpoint: { kind: 'exam', level: 5 },
+    });
+  });
+
+  it('is the first checkpoint of stage 2 once the stage 1 test is passed', () => {
+    expect(nextThing(facts({ courseDone: true, examsPassed: [5] }))).toEqual({
       stage: 2,
       checkpoint: STAGES[1]!.checkpoints[0],
     });
@@ -196,5 +207,50 @@ describe('the next thing to do (TC-956)', () => {
 
   it('is nothing once every stage is passed', () => {
     expect(nextThing(passedThrough(7))).toBeNull();
+  });
+});
+
+const examsOf = (number: number) =>
+  STAGES.find((stage) => stage.number === number)!.checkpoints.flatMap((checkpoint) =>
+    checkpoint.kind === 'exam' ? [checkpoint.level] : [],
+  );
+
+// TC-961
+describe('every stage has its own test (TC-961)', () => {
+  it('gives stages 1, 2, 3 and 7 the new tests, levels 5 to 8', () => {
+    expect([1, 2, 3, 7].map(examsOf)).toEqual([[5], [6], [7], [8]]);
+  });
+
+  it('keeps levels 1 and 2 on stages 4 and 5, and puts levels 3 and 4 on stage 6', () => {
+    expect([4, 5, 6].map(examsOf)).toEqual([[1], [2], [3, 4]]);
+  });
+
+  it('places every test level in exactly one stage', () => {
+    const placed = STAGES.flatMap((stage) => examsOf(stage.number));
+    expect([...placed].sort((a, b) => a - b)).toEqual(EXAM_LEVELS.map((level) => level.level));
+  });
+
+  it('lists the tests in the order of the stages', () => {
+    expect(examLevelsInStageOrder()).toEqual([5, 6, 7, 1, 2, 3, 4, 8]);
+  });
+});
+
+// TC-962
+describe('results from before the stage tests carry over (TC-962)', () => {
+  const passed = (levels: number[]) =>
+    stageStatuses(facts({ examsPassed: levels })).map((stage) => stage.passed);
+
+  it('a pass of level 1 passes stages 1 to 4', () => {
+    expect(passed([1])).toEqual([true, true, true, true, false, false, false]);
+  });
+
+  it('a pass of level 4, now a stage 6 test, passes stages 1 to 6 and opens stage 7', () => {
+    expect(passed([4])).toEqual([true, true, true, true, true, true, false]);
+    expect(stageStatuses(facts({ examsPassed: [4] }))[6]).toMatchObject({ unlocked: true });
+  });
+
+  it('a pass of a stage test passes that stage, and the stage test of stage 7 passes all', () => {
+    expect(passed([5])).toEqual([true, false, false, false, false, false, false]);
+    expect(passed([8]).every(Boolean)).toBe(true);
   });
 });

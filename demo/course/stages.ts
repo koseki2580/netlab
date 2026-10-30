@@ -10,9 +10,10 @@ import { examRoute } from './examAttempt';
  * packet exercises → exam, the exam opening the next stage.
  *
  * The stages are laid over what exists today: manifest lessons, the device and
- * packet exercise levels, and the four levels of the final test. Where a stage
- * has no exam of its own yet, its exercise levels are its checkpoints; where a
- * topic has no lesson yet, it is listed as coming soon.
+ * packet exercise levels, and the tests. Every stage has a test of its own:
+ * levels 5, 6, 7 and 8 were written for stages 1, 2, 3 and 7; levels 1 and 2
+ * close stages 4 and 5; levels 3 and 4 close stage 6. Where a topic has no
+ * lesson yet, it is listed as coming soon.
  *
  * Only passing is gated: every lesson and checkpoint of a locked stage can
  * still be opened. Nothing is stored here; progress is read from the progress
@@ -57,7 +58,7 @@ export const STAGES: readonly Stage[] = [
     },
     withCourse: true,
     lessons: ['/learning/subnetting', '/learning/protocols', '/basic/minimal'],
-    checkpoints: [{ kind: 'course' }],
+    checkpoints: [{ kind: 'course' }, { kind: 'exam', level: 5 }],
     comingSoon: [{ en: 'Bits and bytes', ja: 'ビットとバイト' }],
   },
   {
@@ -71,6 +72,7 @@ export const STAGES: readonly Stage[] = [
     checkpoints: [
       { kind: 'config', level: 1 },
       { kind: 'packet', level: 1 },
+      { kind: 'exam', level: 6 },
     ],
     comingSoon: [],
   },
@@ -96,6 +98,7 @@ export const STAGES: readonly Stage[] = [
       { kind: 'config', level: 2 },
       { kind: 'packet', level: 2 },
       { kind: 'packet', level: 3 },
+      { kind: 'exam', level: 7 },
     ],
     comingSoon: [
       { en: 'VLSM', ja: 'VLSM（可変長サブネット）' },
@@ -170,7 +173,12 @@ export const STAGES: readonly Stage[] = [
       '/networking/multicast',
       '/networking/observability',
     ],
-    checkpoints: [{ kind: 'exam', level: 3 }],
+    // Level 4 ("Expert") goes deeper into the enterprise and provider topics
+    // than the stage 7 lessons; it is a second test of stage 6.
+    checkpoints: [
+      { kind: 'exam', level: 3 },
+      { kind: 'exam', level: 4 },
+    ],
     comingSoon: [
       { en: 'BGP in depth', ja: 'BGP をくわしく' },
       { en: 'Segment Routing', ja: 'セグメントルーティング' },
@@ -191,7 +199,7 @@ export const STAGES: readonly Stage[] = [
       '/networking/http3',
       '/simulation/tcp-congestion',
     ],
-    checkpoints: [{ kind: 'exam', level: 4 }],
+    checkpoints: [{ kind: 'exam', level: 8 }],
     comingSoon: [
       { en: 'Cloud networks (VPC)', ja: 'クラウドのネットワーク（VPC）' },
       { en: 'SD-WAN', ja: 'SD-WAN' },
@@ -210,6 +218,15 @@ export const OFF_PATH: readonly LessonPath[] = [
   '/embed',
   '/comprehensive/all-in-one',
 ];
+
+/** The test levels, in the order of the stages they belong to. */
+export function examLevelsInStageOrder(stages: readonly Stage[] = STAGES): number[] {
+  return stages.flatMap((stage) =>
+    stage.checkpoints.flatMap((checkpoint) =>
+      checkpoint.kind === 'exam' ? [checkpoint.level] : [],
+    ),
+  );
+}
 
 /** What the learner has passed, as plain data. */
 export interface StageFacts {

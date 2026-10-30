@@ -1,4 +1,6 @@
 import type { Page } from '@playwright/test';
+import { COURSE_STEPS, courseProgressId } from '../demo/course/courseSteps';
+import { EXAM_STAGE_1 } from '../demo/course/examStage1';
 import { expect, test } from './fixtures/harness';
 
 /**
@@ -94,6 +96,42 @@ test.describe('the learning path at 1440×900', () => {
     await page.goto('/#/exercises');
     await page.getByTestId(P.hubLink).click();
     await expect(page.getByTestId(P.page)).toBeVisible();
+  });
+});
+
+test.describe('the stage tests at 1440×900', () => {
+  test.use({ viewportPreset: 'desktop' });
+
+  test('TC-965: once the course is done, the next thing is the stage 1 test', async ({ page }) => {
+    await openPath(
+      page,
+      COURSE_STEPS.map((step) => courseProgressId(step.id)),
+    );
+    const next = page.getByTestId(P.next);
+    await expect(next).toHaveAttribute('data-stage', '1');
+    await expect(next).toHaveAttribute('data-kind', 'exam');
+    await expect(next).toHaveAttribute('href', /#\/course\/exam\/5$/);
+  });
+
+  test('TC-966: passing the stage 1 test passes stage 1 and opens stage 2', async ({ page }) => {
+    await page.goto(`/#/course/exam/5?learnerId=${LEARNER}`);
+    // The tests are listed in the order of the stages: stage 1's comes first.
+    const order = await page
+      .getByTestId(/^exam-level-\d+$/)
+      .evaluateAll((links) => links.map((link) => link.getAttribute('data-testid')));
+    expect(order.slice(0, 3)).toEqual(['exam-level-5', 'exam-level-6', 'exam-level-7']);
+    await expect(page.getByTestId('exam-path')).toHaveAttribute('data-level', '5');
+
+    await page.getByTestId('exam-start').click();
+    for (const [index, question] of EXAM_STAGE_1.questions.entries()) {
+      await page.getByTestId(`exam-option-${index + 1}-${question.answer + 1}`).check();
+    }
+    await page.getByTestId('exam-submit').click();
+    await expect(page.getByTestId('exam-score')).toHaveAttribute('data-passed', 'yes');
+
+    await page.goto(`/#/path?learnerId=${LEARNER}`);
+    await expect(page.getByTestId(P.stage(1))).toHaveAttribute('data-state', 'passed');
+    await expect(page.getByTestId(P.stage(2))).toHaveAttribute('data-state', 'open');
   });
 });
 

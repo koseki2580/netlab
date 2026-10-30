@@ -148,8 +148,8 @@ function StageCard({ stage, status }: { stage: Stage; status: StageStatus }) {
         {status.checkpoints.some(({ checkpoint }) => checkpoint.kind === 'exam') ? (
           <p style={{ ...MUTED, margin: '4px 0 0', fontSize: 13 }}>
             {t(
-              'Passing the test passes the stage; the exercises before it prepare for it.',
-              'テストに合格すると、この段階は合格です。その前の問題は、テストの準備です。',
+              'Passing a test of this stage passes it; the exercises before it prepare for it.',
+              'この段階のテストに合格すると、この段階は合格です。その前の問題は、テストの準備です。',
             )}
           </p>
         ) : null}
