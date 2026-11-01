@@ -79,8 +79,8 @@ export const grePack = defineProtocol({
       bits: 1,
       in: V2890,
       meaning: {
-        en: 'Bit 1, the Routing Present bit of RFC 1701. Sent as 0.',
-        ja: 'ビット 1。RFC 1701 では Routing Present だったビット。0 で送る。',
+        en: 'Bit 1, the Routing Present bit of RFC 1701. Sent as 0; a receiver discards the packet if it is set.',
+        ja: 'ビット 1。RFC 1701 では Routing Present だったビット。0 で送る。1 なら受信側はパケットを捨てる。',
       },
       example: 0,
     },
@@ -113,8 +113,8 @@ export const grePack = defineProtocol({
       bits: 9,
       in: V2890,
       meaning: {
-        en: 'Bits 4–12, sent as 0.',
-        ja: 'ビット 4〜12。0 で送る。',
+        en: 'Bits 4–12, sent as 0. A receiver discards the packet if bit 4 or 5 is set, and ignores bits 6–12.',
+        ja: 'ビット 4〜12。0 で送る。ビット 4 か 5 が 1 なら受信側はパケットを捨て、ビット 6〜12 は無視する。',
       },
       example: 0,
     },

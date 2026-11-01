@@ -356,13 +356,23 @@ describe('serializePacket', () => {
     expect(field?.displayValue).toContain('DHCP DISCOVER');
   });
 
-  it('labels DNS payloads as L7 DNS data', () => {
+  it('lists DNS payloads as L7 RFC 1035 fields (TC-1025)', () => {
     const { fields } = serializePacket(dnsFrame);
-    const field = fields.find((candidate) => candidate.name === 'DNS Payload');
+    const l7 = fields.filter((candidate) => candidate.layer === 'L7');
 
-    expect(field).toBeDefined();
-    expect(field?.layer).toBe('L7');
-    expect(field?.displayValue).toContain('DNS QUERY');
+    expect(l7.map((field) => field.name)).toEqual([
+      'ID',
+      'Flags',
+      'QDCOUNT',
+      'ANCOUNT',
+      'NSCOUNT',
+      'ARCOUNT',
+      'QNAME',
+      'QTYPE',
+      'QCLASS',
+    ]);
+    expect(l7.find((field) => field.name === 'Flags')?.displayValue).toBe('0x0100 (QUERY, RD)');
+    expect(l7.find((field) => field.name === 'QNAME')?.displayValue).toBe('web.example.com');
   });
 
   it('appends the FCS as the final 4 bytes of the frame', () => {

@@ -58,15 +58,15 @@ function makePacketId(prefix: string, options: UdpPacketOptions, ts: number): st
 }
 
 /**
- * Compute the UDP length field: header (8 bytes) + estimated payload size.
+ * Compute the UDP length field: header (8 bytes) + payload size.
  *
- * Uses `JSON.stringify(payload).length` as an educational stand-in for actual
- * byte-level serialisation. This is intentionally simplified for visual/educational
- * purposes and does not match real UDP header length calculation.
+ * A DNS message gets no stamped length: the byte builder then counts its RFC 1035
+ * wire bytes (REQ-140). Other payloads still use `JSON.stringify(payload).length`
+ * as an educational stand-in, which does not match their bytes.
  */
-function computeUdpLength(payload: UdpDatagram['payload']): number {
+function computeUdpLength(payload: UdpDatagram['payload']): { length?: number } {
   const UDP_HEADER_SIZE = 8;
-  return UDP_HEADER_SIZE + JSON.stringify(payload).length;
+  return 'questions' in payload ? {} : { length: UDP_HEADER_SIZE + JSON.stringify(payload).length };
 }
 
 function validatePort(port: number, name: string): void {
@@ -119,7 +119,7 @@ export function buildUdpPacket(options: UdpPacketOptions): InFlightPacket {
           layer: 'L4',
           srcPort: options.srcPort,
           dstPort: options.dstPort,
-          length: computeUdpLength(innerPayload),
+          ...computeUdpLength(innerPayload),
           payload: innerPayload,
         },
       },

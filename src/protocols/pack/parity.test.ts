@@ -98,7 +98,7 @@ describe('parity with today’s DNS hex view and trace', () => {
     const recorder = new TraceRecorder();
     for (const message of [QUERY, RESPONSE]) {
       const frame = dnsFrame(message);
-      const today = serializePacket(frame).fields.find((f) => f.name === 'DNS Payload')!;
+      const today = serializePacket(frame).fields.find((f) => f.layer === 'L7')!;
       const rows = deriveAnnotatedFields(dnsPack, dnsMessageToValues(message), {
         baseOffset: today.byteOffset,
       });
@@ -118,7 +118,7 @@ describe('parity with today’s DNS hex view and trace', () => {
     expect(query.slice(-4)).toEqual([0, 1, 0, 1]);
 
     const response = deriveLayout(dnsPack, dnsMessageToValues(RESPONSE)).bytes;
-    expect(response.slice(0, 8)).toEqual([0x2a, 0x01, 0x81, 0x80, 0, 1, 0, 1]);
+    expect(response.slice(0, 8)).toEqual([0x2a, 0x01, 0x85, 0x00, 0, 1, 0, 1]);
     expect(response.slice(-10)).toEqual([0, 0, 0x01, 0x2c, 0, 4, 203, 0, 113, 10]);
   });
 });

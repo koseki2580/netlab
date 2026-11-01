@@ -11,6 +11,7 @@
  *   - L4 UDP:       RFC 768  https://www.rfc-editor.org/rfc/rfc768
  *   - L7 HTTP/1.1:  RFC 9110 https://www.rfc-editor.org/rfc/rfc9110
  *                   RFC 9112 https://www.rfc-editor.org/rfc/rfc9112
+ *   - L7 DNS:       RFC 1035 https://www.rfc-editor.org/rfc/rfc1035
  */
 
 import type {
@@ -34,8 +35,9 @@ import {
   buildIpv4HeaderBytes,
   buildIpv4PayloadBytes,
   buildTcpFlagsByte,
+  dnsFlags,
+  encodeDnsName,
   formatDhcpMessage,
-  formatDnsMessage,
   formatHttpMessage,
   isIcmpMessage,
   isRawPayload,
@@ -101,27 +103,61 @@ function formatIpv4FlagsAndOffset(ip: IpPacket): string {
   return `${formatHex(buildIpv4FlagsAndFragmentOffset(ip), 4)} (${fragments.join(', ')})`;
 }
 
+/**
+ * RFC 1035 rows of a DNS message (REQ-141), at the positions and with the values
+ * the DNS protocol pack derives (TC-1025); Flags groups QR..RCODE in two bytes.
+ */
+function dnsFields(message: DnsMessage, baseOffset: number): AnnotatedField[] {
+  const fields: AnnotatedField[] = [];
+  let at = baseOffset;
+  const row = (name: string, byteLength: number, displayValue: string) => {
+    fields.push({ name, layer: 'L7', byteOffset: at, byteLength, displayValue });
+    at += byteLength;
+  };
+  const flags = dnsFlags(message);
+  row('ID', 2, formatHex(message.transactionId, 4));
+  row(
+    'Flags',
+    2,
+    `${formatHex(flags, 4)} (${
+      message.isResponse ? `RESPONSE, AA, RD, ${flags & 0xf ? 'NXDOMAIN' : 'NOERROR'}` : 'QUERY, RD'
+    })`,
+  );
+  row('QDCOUNT', 2, String(message.questions.length));
+  row('ANCOUNT', 2, String(message.answers.length));
+  row('NSCOUNT', 2, '0');
+  row('ARCOUNT', 2, '0');
+  const named = (prefix: string, name: string) => {
+    row(`${prefix}NAME`, encodeDnsName(name).length, name);
+    row(`${prefix}TYPE`, 2, '1 (A)');
+    row(`${prefix}CLASS`, 2, '1 (IN)');
+  };
+  for (const question of message.questions) named('Q', question.name);
+  for (const answer of message.answers) {
+    named('', answer.name);
+    row('TTL', 4, String(answer.ttl));
+    row('RDLENGTH', 2, '4');
+    row('RDATA', 4, answer.address);
+  }
+  return fields;
+}
+
 function serializeL7(
   payload: HttpMessage | RawPayload | DhcpMessage | DnsMessage,
   baseOffset: number,
 ): LayerResult {
   const bytes = buildApplicationPayloadBytes(payload);
+  if ('questions' in payload) {
+    return { bytes, fields: dnsFields(payload, baseOffset) };
+  }
   const label =
-    payload.layer === 'raw'
-      ? 'Data'
-      : 'messageType' in payload
-        ? 'DHCP Payload'
-        : 'questions' in payload
-          ? 'DNS Payload'
-          : 'HTTP Payload';
+    payload.layer === 'raw' ? 'Data' : 'messageType' in payload ? 'DHCP Payload' : 'HTTP Payload';
   const displayValue =
     payload.layer === 'raw'
       ? payload.data
       : 'messageType' in payload
         ? formatDhcpMessage(payload)
-        : 'questions' in payload
-          ? formatDnsMessage(payload)
-          : formatHttpMessage(payload);
+        : formatHttpMessage(payload);
 
   return {
     bytes,

@@ -5,7 +5,8 @@ export interface GreHeader {
   readonly hasKey: boolean;
   readonly hasSequence: boolean;
   readonly version: 0;
-  readonly protocolType: 0x0800 | 0x86dd;
+  /** EtherType of the payload (RFC 2784 §2.4), e.g. 0x0800 IPv4, 0x86DD IPv6, 0x6558 Ethernet. */
+  readonly protocolType: number;
   readonly checksum?: number;
   readonly key?: number;
   readonly sequence?: number;

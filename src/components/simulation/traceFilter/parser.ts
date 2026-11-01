@@ -140,7 +140,7 @@ function valuesForField(hop: PacketHop, field: FieldName): string[] {
         hop.arpFrame?.payload.targetMac,
       ].filter((value): value is string => typeof value === 'string');
     case 'protocol':
-      return [protocolValue(hop)];
+      return carriesDns(hop) ? [protocolValue(hop), 'dns'] : [protocolValue(hop)];
   }
 }
 
@@ -155,6 +155,16 @@ function protocolValue(hop: PacketHop): string {
     return 'arp';
   }
   return hop.protocol.toLowerCase();
+}
+
+/** DNS rides on UDP/TCP port 53, the port the DNS protocol pack claims (REQ-143). */
+const DNS_PORT = 53;
+
+function carriesDns(hop: PacketHop): boolean {
+  return (
+    (isProtocol(hop, 'udp') || isProtocol(hop, 'tcp')) &&
+    (hop.srcPort === DNS_PORT || hop.dstPort === DNS_PORT)
+  );
 }
 
 function isProtocol(hop: PacketHop, protocol: string): boolean {

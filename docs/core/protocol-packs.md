@@ -223,23 +223,49 @@ re-checked against commit eb1e263 (switch flooding). Nothing here is migrated in
 Order: DNS (integrated) and GRE (sidecar → engine) first, with golden traces that must stay
 byte-identical for every existing protocol; then the other sidecars.
 
-### Discrepancies found in today's code (W1 parity run)
+### Discrepancies found in today's code, and their status
 
-- **DNS hex view is not RFC 1035.** `packetLayout.ts:122` writes the ASCII text
-  `DNS QUERY A example.com` as the UDP payload. It has no 12-byte header, no transaction ID,
-  no label-encoded QNAME, and no QTYPE/QCLASS. The UDP `Length` field counts that text. The
-  derived layout writes RFC 1035 §4.1 wire format. The parity test pins the parts that agree
-  (the offset where DNS starts, the `L7` layer, the trace label) and checks the bytes against
-  an RFC 1035 vector instead of today's output.
-- **GRE is not in the hex view.** `GreEncap.ts` carries GRE as a `RawPayload` holding JSON,
-  so the hex view shows JSON text and the IP `Protocol` field shows `47 (47)`. The header
-  codec `GreHeader.ts` agrees with RFC 2890 bit for bit, and the derived bytes equal its
-  output. Its parser does not reject a non-zero reserved bit 1 or bits 4–12 (RFC 2784 §2.3
-  says a receiver MUST discard such a packet unless it implements RFC 1701), and it types
-  `protocolType` as only `0x0800 | 0x86DD` although RFC 2784 allows any EtherType.
-- **The W1 HTML draft's GRE schema is wrong.** It puts C, K and S in adjacent bits with a
-  10-bit Reserved0. RFC 2890 places a reserved bit between C and K (C=bit 0, K=bit 2, S=bit 3,
-  Reserved0 bits 4–12). The fixture follows the RFC.
+- **DNS hex view was not RFC 1035 — fixed (trial part 2, REQ-140/141).** `packetLayout.ts`
+  wrote the ASCII text `DNS QUERY A example.com` as the UDP payload, and the UDP builder
+  stamped `8 + JSON.stringify(payload).length` as the UDP Length. DNS is now carried, shown
+  and exported to pcap in RFC 1035 §4.1 wire format (`buildDnsMessageBytes`), the UDP Length
+  counts those bytes, and the field view lists ID, Flags, the four counts, the question and
+  the answer records. The bytes are pinned to `deriveLayout(dnsPack, …)` (TC-1024) and the
+  rows to `deriveAnnotatedFields` (TC-1025). Flags follow how a netlab DNS server behaves: it
+  answers only from its own zones (AA 1) and does not recurse (RA 0).
+- **GRE parser — fixed (REQ-144).** `parseGreHeader` now discards a header with bit 1, 4 or
+  5 set (RFC 2784 §2.3: bits 1–5, of which 2 and 3 are K and S under RFC 2890) and still
+  ignores bits 6–12, which RFC 2784 §2.3 says "MUST be ignored on receipt". (The W1 report
+  said "bit 1 or bits 4–12"; that was wrong for bits 6–12.) `GreHeader.protocolType` is now
+  any EtherType (`number`), as RFC 2784 §2.4 allows.
+- **GRE is not in the hex view — open.** `GreEncap.ts` carries GRE as a `RawPayload` holding
+  JSON, so the hex view shows JSON text and the IP `Protocol` field shows `47 (47)`. This
+  waits for GRE pipeline wiring.
+- **Still open, found in part 2.** A netlab DNS server sends nothing for a name it does not
+  hold (RFC 1035 would answer NXDOMAIN, RCODE 3). The UDP Length of DHCP and raw payloads is
+  still `8 + JSON.stringify(payload).length`, which does not match their bytes. In the trace
+  filter, `protocol == dhcp` and `protocol == http` are accepted but match no hop (a hop's
+  `protocol` is the IP protocol name); `protocol == dns` was the same and is fixed (REQ-143).
+- **The W1 HTML draft's GRE schema was wrong — fixed in the draft.** It put C, K and S in
+  adjacent bits with a 10-bit Reserved0. RFC 2890 places a reserved bit between C and K
+  (C=bit 0, K=bit 2, S=bit 3, Reserved0 bits 4–12).
+
+### Trial part 2: what the budgets allowed
+
+`npm run size` bundles each check with esbuild without code splitting, so a dynamic
+`import()` is counted inside the entry that reaches it: lazy loading a pack does not lower
+any budget figure. Measured in the `src/index.ts` bundle (gzip): the registry +1.18 kB, the
+derivers +1.71 kB, both +2.66 kB, both with the DNS pack +7.2 kB; headroom was 1.31 kB
+(engine), 1.67 kB (`ui:simulation-context`) and 0.23 kB (worker, which needs the bytes for
+checksums and FCS). So in part 2 the library carries a compact RFC 1035 encoder and
+byte-granular rows (pinned to the pack by TC-1024/TC-1025), not the registry or the pack
+itself, and the en/ja field meanings are not shown yet. Showing them needs either about
++7.2 kB of engine and `ui:simulation-context` budget, or the size checks measuring lazy
+chunks on their own, so a pack loaded on demand stays off the entry budgets.
+
+Result of part 2 against the committed tree (edc2164 plus these changes only): engine
+433.45 → 433.82 kB, `ui:simulation-context` 248.08 → 248.41 kB, worker 41.40 → 41.74 kB,
+`l3-network` 15.14 → 15.20 kB (at its limit), `l4-transport` 6.20 → 6.21 kB.
 
 ## i18n merging
 

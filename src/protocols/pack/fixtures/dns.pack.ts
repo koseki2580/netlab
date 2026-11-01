@@ -415,18 +415,19 @@ export const dnsPack = defineProtocol({
 });
 
 /**
- * Today's `DnsMessage` (A records only) as a pack header object. A response
- * without an answer is NXDOMAIN, as today's text rendering says.
+ * Today's `DnsMessage` (A records only) as a pack header object (REQ-140). A
+ * netlab DNS server answers only from its own zones (AA = 1) and does not
+ * recurse (RA = 0); a response without an answer is NXDOMAIN.
  */
 export function dnsMessageToValues(message: DnsMessage): HeaderValues {
   return {
     id: message.transactionId,
     qr: message.isResponse ? 1 : 0,
     opcode: 0,
-    aa: 0,
+    aa: message.isResponse ? 1 : 0,
     tc: 0,
     rd: 1,
-    ra: message.isResponse ? 1 : 0,
+    ra: 0,
     ad: 0,
     cd: 0,
     rcode: message.isResponse && message.answers.length === 0 ? 3 : 0,

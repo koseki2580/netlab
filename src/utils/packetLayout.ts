@@ -108,15 +108,54 @@ export function formatDhcpMessage(message: DhcpMessage): string {
   return parts.join(' ');
 }
 
-export function formatDnsMessage(message: DnsMessage): string {
-  const question = message.questions[0];
-  const answer = message.answers[0];
-
-  if (!message.isResponse) {
-    return `DNS QUERY ${question?.type ?? 'A'} ${question?.name ?? 'unknown'}`;
+/** RFC 1035 §3.1: each label prefixed by its length, then a zero byte (no compression). */
+export function encodeDnsName(name: string): number[] {
+  const bytes: number[] = [];
+  for (const label of name.split('.').filter(Boolean)) {
+    const octets = encoder.encode(label);
+    bytes.push(octets.length, ...octets);
   }
+  bytes.push(0);
+  return bytes;
+}
 
-  return `DNS RESPONSE ${answer?.name ?? question?.name ?? 'unknown'} ${answer?.address ?? 'NXDOMAIN'} ttl=${answer?.ttl ?? 0}`;
+/**
+ * RFC 1035 §4.1.1 flags (REQ-140): QR, AA in a response (a netlab DNS server
+ * answers only from its own zones), RD; RA 0 (it does not recurse); RCODE 3
+ * (NXDOMAIN) for a response without an answer.
+ */
+export function dnsFlags(message: DnsMessage): number {
+  if (!message.isResponse) return 0x0100;
+  return message.answers.length ? 0x8500 : 0x8503;
+}
+
+/**
+ * RFC 1035 §4.1 wire format of a DNS message (A records, class IN). Pinned
+ * byte for byte to the DNS protocol pack (src/protocols/pack, TC-1024).
+ */
+export function buildDnsMessageBytes(message: DnsMessage): number[] {
+  return [
+    ...uint16BE(message.transactionId),
+    ...uint16BE(dnsFlags(message)),
+    ...uint16BE(message.questions.length),
+    ...uint16BE(message.answers.length),
+    0,
+    0,
+    0,
+    0,
+    ...message.questions.flatMap((q) => [...encodeDnsName(q.name), 0, 1, 0, 1]),
+    ...message.answers.flatMap((a) => [
+      ...encodeDnsName(a.name),
+      0,
+      1,
+      0,
+      1,
+      ...uint32BE(a.ttl),
+      0,
+      4,
+      ...parseIp(a.address),
+    ]),
+  ];
 }
 
 export function buildApplicationPayloadBytes(
@@ -131,7 +170,7 @@ export function buildApplicationPayloadBytes(
   }
 
   if ('questions' in payload) {
-    return Array.from(encoder.encode(formatDnsMessage(payload)));
+    return buildDnsMessageBytes(payload);
   }
 
   return Array.from(encoder.encode(formatHttpMessage(payload)));
