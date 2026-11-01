@@ -176,3 +176,85 @@ describe('TcpCongestionControl', () => {
     });
   });
 });
+
+/** A sender whose window has `segments` full segments in flight, each acknowledged in turn. */
+function sendAndAck(
+  control: TcpCongestionControl,
+  firstSeq: number,
+  segments: number,
+  mss: number,
+) {
+  for (let i = 0; i < segments; i += 1) control.onSegmentSent(firstSeq + i * mss, mss, i);
+  for (let i = 0; i < segments; i += 1) control.onAckReceived(firstSeq + (i + 1) * mss, 100, i);
+}
+
+// TC-1040 — regression: congestion avoidance grew cwnd by a whole MSS per ACK,
+// the same as slow start. RFC 5681 §3.1: cwnd += SMSS*SMSS/cwnd per ACK (at
+// least one byte), about one SMSS per round trip.
+describe('congestion avoidance grows about one MSS per round trip (TC-1040)', () => {
+  it('adds MSS*MSS/cwnd for one ACK', () => {
+    const control = new TcpCongestionControl({ mss: 1000, iwSegments: 4, initialSsthresh: 4000 });
+    expect(control.state.phase).toBe('congestion-avoidance');
+    control.onSegmentSent(1, 1000, 1);
+    control.onAckReceived(1001, 100, 2);
+    expect(control.state.cwnd).toBe(4250);
+  });
+
+  it('adds about one MSS over a round trip of ACKs', () => {
+    const control = new TcpCongestionControl({ mss: 1000, iwSegments: 4, initialSsthresh: 4000 });
+    sendAndAck(control, 1, 4, 1000);
+    expect(control.state.cwnd).toBeGreaterThanOrEqual(4800);
+    expect(control.state.cwnd).toBeLessThanOrEqual(5000);
+  });
+
+  it('never adds less than one byte', () => {
+    const control = new TcpCongestionControl({ mss: 10, iwSegments: 200, initialSsthresh: 10 });
+    control.onSegmentSent(1, 10, 1);
+    control.onAckReceived(11, 100, 2);
+    expect(control.state.cwnd).toBe(2001);
+  });
+});
+
+// TC-1041 — regression: slow start added a whole MSS for any new ACK. RFC 5681
+// §3.1: cwnd += min(N, SMSS), N the bytes the ACK newly acknowledges.
+describe('slow start grows by the bytes an ACK acknowledges, up to one MSS (TC-1041)', () => {
+  it('adds 500 for an ACK of 500 bytes', () => {
+    const control = new TcpCongestionControl({ mss: 1000, initialSsthresh: 64000 });
+    control.onSegmentSent(1, 500, 1);
+    control.onAckReceived(501, 100, 2);
+    expect(control.state.cwnd).toBe(1500);
+  });
+
+  it('adds nothing for an ACK that acknowledges no new bytes', () => {
+    const control = new TcpCongestionControl({ mss: 1000, initialSsthresh: 64000 });
+    control.onAckReceived(1, 100, 1);
+    expect(control.state.cwnd).toBe(1000);
+  });
+
+  it('adds one MSS for an ACK that covers two segments', () => {
+    const control = new TcpCongestionControl({ mss: 1000, initialSsthresh: 64000 });
+    control.onSegmentSent(1, 1000, 1);
+    control.onSegmentSent(1001, 1000, 2);
+    control.onAckReceived(2001, 100, 3);
+    expect(control.state.cwnd).toBe(2000);
+  });
+});
+
+// TC-1042 — regression: after a retransmission timeout the phase stayed "rto"
+// and no ACK ever grew cwnd again. RFC 5681 §3.1: the sender slow-starts from
+// one segment up to the new ssthresh, then avoids congestion.
+describe('after a timeout the sender slow-starts again (TC-1042)', () => {
+  it('grows from one MSS by slow start, then switches at the new ssthresh', () => {
+    const control = new TcpCongestionControl({ mss: 1000, initialSsthresh: 64000 });
+    for (let i = 0; i < 4; i += 1) control.onSegmentSent(1 + i * 1000, 1000, i);
+    control.onRto(1, 5);
+    expect(control.state).toMatchObject({ cwnd: 1000, ssthresh: 2000 });
+
+    // Slow start: one whole MSS, which brings cwnd up to the new ssthresh.
+    control.onAckReceived(1001, 100, 6);
+    expect(control.state).toMatchObject({ phase: 'congestion-avoidance', cwnd: 2000 });
+    // Congestion avoidance from there: 1000 × 1000 / 2000 = 500.
+    control.onAckReceived(2001, 100, 7);
+    expect(control.state.cwnd).toBe(2500);
+  });
+});

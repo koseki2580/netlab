@@ -193,3 +193,25 @@ describe('TcpCongestionDemo', () => {
     });
   });
 });
+
+// TC-1043 — the lesson's trace never reaches congestion avoidance or an ACK
+// after its timeout, so fixing those rules (TC-1040..TC-1042) leaves every
+// number it shows as it was.
+describe('the congestion lesson’s numbers (TC-1043)', () => {
+  it('steps cwnd and ssthresh exactly as before the congestion-avoidance fix', () => {
+    const run = runCongestionTrace();
+    const cwnd = run.events.flatMap((event) =>
+      event.type === 'cwnd-update' ? [[event.stepIndex, event.reason, event.next]] : [],
+    );
+    expect(cwnd).toEqual([
+      [2, 'ss-increment', 3000],
+      [4, 'ss-increment', 4000],
+      [9, 'fast-retransmit', 5000],
+      [10, 'fast-recovery-deflate', 2000],
+      [12, 'rto-reset', 1000],
+    ]);
+    expect(run.ssthreshByStep.map((sample) => sample.ssthresh)).toEqual([
+      4000, 4000, 4000, 2000, 2000,
+    ]);
+  });
+});

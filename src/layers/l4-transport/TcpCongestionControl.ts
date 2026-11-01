@@ -104,8 +104,20 @@ export class TcpCongestionControl {
       return;
     }
 
+    // After a timeout the sender slow-starts again from one segment (RFC 5681
+    // §3.1); the "rto" phase only marks the timeout itself.
+    if (this.currentState.phase === 'rto') {
+      this.setPhase(
+        this.currentState.cwnd < this.currentState.ssthresh ? 'slow-start' : 'congestion-avoidance',
+        stepIndex,
+      );
+    }
+
     if (this.currentState.phase === 'slow-start') {
-      const nextCwnd = this.currentState.cwnd + this.currentState.mss;
+      // RFC 5681 §3.1: cwnd += min(N, SMSS), N the bytes newly acknowledged.
+      const increment = Math.min(ackedBytes, this.currentState.mss);
+      if (increment <= 0) return;
+      const nextCwnd = this.currentState.cwnd + increment;
       if (nextCwnd >= this.currentState.ssthresh) {
         this.setPhase('congestion-avoidance', stepIndex);
       }
@@ -114,7 +126,11 @@ export class TcpCongestionControl {
     }
 
     if (this.currentState.phase === 'congestion-avoidance') {
-      this.updateCwnd(this.currentState.cwnd + this.currentState.mss, 'ca-increment', stepIndex);
+      // RFC 5681 §3.1: cwnd += SMSS*SMSS/cwnd per ACK, at least one byte —
+      // about one SMSS per round trip, not one per ACK.
+      const { mss, cwnd } = this.currentState;
+      const increment = Math.max(1, Math.floor((mss * mss) / cwnd));
+      this.updateCwnd(cwnd + increment, 'ca-increment', stepIndex);
     }
   }
 
