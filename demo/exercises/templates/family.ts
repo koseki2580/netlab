@@ -47,6 +47,8 @@ export const PASSING_OPTIONS: Readonly<
     JSON.stringify(exercise.reference),
   // TC-787
   'l3-choose-longest': (id) => id === 'longest',
+  // TC-989: raising the wanted provider's LOCAL_PREF, or lowering the other's.
+  'l3-bgp-exit': (id) => id === 'raise-wanted' || id === 'lower-other',
 };
 
 /**

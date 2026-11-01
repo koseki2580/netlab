@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
@@ -9,6 +9,8 @@ import type { NetworkTopology } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import { LESSON_BUTTON } from '../components/lessonStyles';
+import { useNetlabContext } from '../../src/components/NetlabContext';
+import { solicitedNodeAddress, solicitedNodeMac } from './ndp';
 
 function route(nodeId: string, destination: string, nextHop: string): RouteEntry {
   return {
@@ -155,6 +157,7 @@ function DemoInner() {
             )}
           </div>
         </div>
+        <NdpStep />
         <button
           type="button"
           data-testid="ipv6-send-echo"
@@ -194,6 +197,80 @@ function DemoInner() {
         </div>
         <PacketTimeline />
       </aside>
+    </div>
+  );
+}
+
+/** Every IPv6 address in the lesson, with the device that holds it. */
+function useIpv6Addresses(): { label: string; address: string }[] {
+  const { topology } = useNetlabContext();
+  return topology.nodes.flatMap((node) => {
+    const own = typeof node.data.ipv6 === 'string' ? [node.data.ipv6] : [];
+    const ports = (node.data.interfaces ?? []).flatMap((port) =>
+      port.ipv6Address ? [port.ipv6Address] : [],
+    );
+    return [...own, ...ports].map((address) => ({ label: node.data.label, address }));
+  });
+}
+
+/** Neighbour discovery (RFC 4861): where a Neighbor Solicitation for one address goes. */
+function NdpStep() {
+  const t = useT();
+  const addresses = useIpv6Addresses();
+  const [chosen, setChosen] = useState(addresses[0]?.address ?? '');
+  const target = addresses.find((entry) => entry.address === chosen) ?? addresses[0];
+  if (!target) return null;
+  const group = solicitedNodeAddress(target.address);
+  const mac = solicitedNodeMac(target.address);
+
+  return (
+    <div
+      data-testid="ipv6-ndp"
+      style={{
+        border: '1px solid var(--netlab-border-subtle)',
+        borderRadius: 8,
+        padding: '10px 12px',
+        fontSize: 12,
+        lineHeight: 1.7,
+        color: 'var(--netlab-text-primary)',
+        display: 'grid',
+        gap: 6,
+      }}
+    >
+      <strong>{t('Finding a neighbour’s MAC (NDP)', '隣の MAC を調べる (NDP)')}</strong>
+      <div>
+        {t(
+          'IPv6 has no ARP. To learn a neighbour’s MAC, a device sends an ICMPv6 Neighbor Solicitation (RFC 4861) — not to everyone, but to the target’s solicited-node multicast address: ff02::1:ff followed by the last 24 bits of the target address (RFC 4291). The frame goes to the MAC 33:33 followed by that group’s last 32 bits (RFC 2464). The target answers with a Neighbor Advertisement carrying its MAC.',
+          'IPv6 には ARP がありません。隣の機器の MAC を知るには、ICMPv6 の Neighbor Solicitation (RFC 4861) を送ります。宛先は全員ではなく、相手のアドレスの下位 24 ビットを ff02::1:ff に続けた solicited-node マルチキャストアドレスです (RFC 4291)。フレームの宛先 MAC は、33:33 にそのグループの下位 32 ビットを続けたものです (RFC 2464)。相手は自分の MAC を載せた Neighbor Advertisement で応えます。',
+        )}
+      </div>
+      <label style={{ display: 'grid', gap: 4 }}>
+        {t('Address to look up', '調べるアドレス')}
+        <select
+          data-testid="ipv6-ndp-target"
+          value={target.address}
+          onChange={(event) => setChosen(event.target.value)}
+          style={{ fontFamily: 'monospace', fontSize: 12, minHeight: 32 }}
+        >
+          {addresses.map((entry) => (
+            <option key={entry.address} value={entry.address}>
+              {`${entry.address} (${entry.label})`}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div data-testid="ipv6-ndp-solicited" style={{ fontFamily: 'monospace' }}>
+        {t(`Solicited-node address: ${group}`, `solicited-node アドレス: ${group}`)}
+      </div>
+      <div data-testid="ipv6-ndp-mac" style={{ fontFamily: 'monospace' }}>
+        {t(`Frame sent to MAC: ${mac}`, `フレームの宛先 MAC: ${mac}`)}
+      </div>
+      <div data-testid="ipv6-ndp-note" style={{ color: 'var(--netlab-text-secondary)' }}>
+        {t(
+          'This simulator finds IPv6 neighbours without sending these messages, so no Neighbor Solicitation or Advertisement appears in the trace below.',
+          'このシミュレータは、これらのメッセージを送らずに IPv6 の隣の機器を見つけます。そのため、下のトレースに Neighbor Solicitation や Advertisement は現れません。',
+        )}
+      </div>
     </div>
   );
 }

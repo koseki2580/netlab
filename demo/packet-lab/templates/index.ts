@@ -8,7 +8,9 @@ import { p1SendTo } from './level1/p1-send-to';
 import { p1Where } from './level1/p1-where';
 import { p1Which } from './level1/p1-which';
 import { p2TtlWhere } from './level2/p2-ttl-where';
+import { p2Traceroute } from './level2/p2-traceroute';
 import { p3DfRead } from './level3/p3-df-read';
+import { p3Pmtud } from './level3/p3-pmtud';
 import { p4Capture } from './level4/p4-capture';
 import { p4TwoFaults } from './level4/p4-two-faults';
 import { p2DieAt } from './level2/p2-die-at';
@@ -33,9 +35,11 @@ export const TEMPLATES: readonly PacketTemplate[] = [
   p2Port,
   p2TtlWhere,
   p2DieAt,
+  p2Traceroute,
   p3Df,
   p3Fragment,
   p3DfRead,
+  p3Pmtud,
   p3WhichCuts,
   p3FrameAfter,
   p4Fragment,

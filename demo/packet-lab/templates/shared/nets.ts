@@ -2,11 +2,14 @@
  * The two networks every packet exercise is set in, named after a place, and
  * the packet a device of it sends.
  *
- *   lan:    pc1, pc2 — sw1 — r1 — sw2 — srv, srv2
- *   chain:  pc — r1 — … — rN — srv            (N = 1 to 4)
+ *   lan:     pc1, pc2 — sw1 — r1 — sw2 — srv, srv2
+ *   chain:   pc — r1 — … — rN — srv            (N = 1 to 4)
+ *   diamond: pc — r1 — r2 or r3 — r4 — srv     (r1's route picks the way)
  *
  * From the README's rules: a narrow link is never the sender's own cable, and
- * there is at most one on a path.
+ * there is at most one on a path. The one exception is `p3-pmtud`, whose
+ * packets all carry DF: two narrow links are sound when nothing is ever cut
+ * (it is cutting twice the engine gets wrong).
  */
 
 import type { AclRule } from '../../../../src/types/acl';
@@ -23,6 +26,7 @@ import {
   switchNode,
   withInterface,
 } from '../../../exercises/templates/shared/build';
+import { buildDiamond, withStatic, type Way } from '../../../exercises/templates/shared/diamond';
 import type { Place } from '../../../exercises/templates/shared/places';
 import type { AddressPlan } from '../../../exercises/templates/shared/plans';
 import type { Named } from '../../../exercises/templates/shared/text';
@@ -310,5 +314,50 @@ export function packetFrom(
     dstPort: null,
     dataBytes: 0,
     ...over,
+  };
+}
+
+/**
+ * The diamond: r1's one route to the server's network goes the `way` given,
+ * and r4 sends replies back the same way. `routers` is the path the packet
+ * takes, in order.
+ */
+export function diamondNet(place: Place, plan: AddressPlan, way: Way, salt: number): PacketNet {
+  const base = buildDiamond(place, plan);
+  const via = base.via[way];
+  const nextHop = way === 'top' ? base.links.r12.b : base.links.r13.b;
+  const { topology, mac } = salted(
+    withStatic(base, way, [{ destination: base.far.cidr, nextHop }]),
+    salt,
+  );
+  const ip: Record<string, string> = {};
+  for (const node of topology.nodes) {
+    if (node.data.ip) ip[node.id] = node.data.ip;
+    for (const side of node.data.interfaces ?? []) ip[`${node.id}:${side.id}`] = side.ipAddress;
+  }
+  const routers = ['r1', via, 'r4'];
+  const edgeOf = (a: string, b: string) =>
+    topology.edges.find(
+      (edge) =>
+        (edge.source === a && edge.target === b) || (edge.source === b && edge.target === a),
+    )?.id ?? '';
+  const edgeAfter: Record<string, string> = {
+    r1: edgeOf('r1', via),
+    [via]: edgeOf(via, 'r4'),
+    r4: edgeOf('r4', 'srv'),
+  };
+  const sideFacing = (id: string, from: string) => {
+    const edge = topology.edges.find((candidate) => candidate.id === edgeOf(id, from));
+    const handle = edge?.source === id ? edge.sourceHandle : edge?.targetHandle;
+    return handle ?? '';
+  };
+  return {
+    topology,
+    mac,
+    names: base.names,
+    ip,
+    routers,
+    edgeAfter,
+    inSide: { r1: sideFacing('r1', 'pc'), [via]: sideFacing(via, 'r1'), r4: sideFacing('r4', via) },
   };
 }

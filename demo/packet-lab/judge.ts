@@ -692,7 +692,8 @@ function causeOf(topology: Topology, packet: PacketGiven, facts: PacketFacts): s
 
 /** What the right answer to `question` is, according to the simulator. */
 export async function truthOf(exercise: ReadExercise, question: ReadQuestion): Promise<string> {
-  const [first, second] = exercise.packets;
+  const [, second] = exercise.packets;
+  const first = exercise.packets[question.packetIndex ?? 0];
   if (!first) return '';
   const facts = await send(exercise.topology, first);
   switch (question.ask) {

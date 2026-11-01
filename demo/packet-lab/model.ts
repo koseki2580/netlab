@@ -226,13 +226,15 @@ export interface ReadQuestion {
   readonly candidates: readonly Candidate[];
   /** The cable a `frame-*` or `ttl-on-link` question is about. */
   readonly edgeId?: string;
+  /** Which of `packets` the question is about (default the first): a traceroute asks about each probe. */
+  readonly packetIndex?: number;
   /** The `value` of the right candidate. The judge reads it off the simulator; this is the key it must agree with. */
   readonly answer: string;
 }
 
 export interface ReadExercise extends PacketExerciseBase {
   readonly kind: 'read-packet';
-  /** The packet(s) as captured where they left the sender. Two only for `which-arrive`. */
+  /** The packet(s) as captured where they left the sender: two for `which-arrive`, or one per probe a question names. */
   readonly packets: readonly (PacketGiven & { readonly dstIp: string; readonly ttl: number })[];
   /** What the simulator does with `packets[0]`, for the page to show once the questions are answered. */
   readonly outcome: {

@@ -7,13 +7,12 @@ import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { TraceSummary } from '../../src/components/simulation/TraceSummary';
 import { buildFragmentedEchoTopology } from '../../src/scenarios/fragmented-echo';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
-import type { InFlightPacket } from '../../src/types/packets';
-import type { NetworkTopology } from '../../src/types/topology';
 import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import DemoShell from '../DemoShell';
 import { readDemoEmbedParams } from '../embedParams';
 import { useT } from '../localeContext';
 import { LESSON_CARD, LESSON_LABEL, LESSON_TEAL_BUTTON } from '../components/lessonStyles';
+import { buildEchoPacket, pathMtuOf, pmtudDataBytes, readFragNeeded } from './pmtud';
 
 const PING_PAYLOAD_BYTES = 1200;
 const ICMP_HEADER_BYTES = 8;
@@ -60,57 +59,6 @@ const PANEL_STYLE: React.CSSProperties = {
   flexDirection: 'column',
 };
 
-function buildPingPacket(topology: NetworkTopology, df: boolean): InFlightPacket | null {
-  const srcNode = topology.nodes.find((node) => node.id === 'host-a');
-  const dstNode = topology.nodes.find((node) => node.id === 'host-b');
-  const srcIp = srcNode?.data.ip;
-  const dstIp = dstNode?.data.ip;
-  const srcMac = srcNode?.data.mac;
-
-  if (
-    !srcNode ||
-    !dstNode ||
-    typeof srcIp !== 'string' ||
-    typeof dstIp !== 'string' ||
-    typeof srcMac !== 'string'
-  ) {
-    return null;
-  }
-
-  return {
-    id: `mtu-frag-${Date.now()}`,
-    srcNodeId: srcNode.id,
-    dstNodeId: dstNode.id,
-    currentDeviceId: srcNode.id,
-    ingressPortId: '',
-    path: [],
-    timestamp: Date.now(),
-    frame: {
-      layer: 'L2',
-      srcMac,
-      dstMac: '00:00:00:00:00:00',
-      etherType: 0x0800,
-      payload: {
-        layer: 'L3',
-        srcIp,
-        dstIp,
-        ttl: 64,
-        protocol: 1,
-        flags: { df, mf: false },
-        payload: {
-          layer: 'L4',
-          type: 8,
-          code: 0,
-          checksum: 0,
-          identifier: 1,
-          sequenceNumber: 1,
-          data: 'x'.repeat(PING_PAYLOAD_BYTES),
-        },
-      },
-    },
-  };
-}
-
 export default function MtuFragmentationDemo() {
   const [tunnelMtu, setTunnelMtu] = useState(LESSON_DEFAULT_TUNNEL_MTU);
   const topology = useMemo(() => buildFragmentedEchoTopology(tunnelMtu), [tunnelMtu]);
@@ -136,7 +84,8 @@ export default function MtuFragmentationDemo() {
         {...(sandboxEnabled && sandboxIntroId ? { sandboxIntroId } : {})}
         {...tutorialProps}
       >
-        <SimulationProvider>
+        {/* The main-thread engine: path MTU discovery reads the sender's path-MTU cache. */}
+        <SimulationProvider useMainThread>
           <FragmentationDemoInner tunnelMtu={tunnelMtu} onTunnelMtuChange={setTunnelMtu} />
         </SimulationProvider>
       </NetlabProvider>
@@ -173,9 +122,38 @@ function FragmentationDemoInner({
   );
 
   const sendPing = async () => {
-    const packet = buildPingPacket(topology, dfEnabled);
+    const packet = buildEchoPacket(topology, dfEnabled, PING_PAYLOAD_BYTES);
     if (!packet) return;
     engine.reset();
+    await sendPacket(packet);
+  };
+
+  // Path MTU discovery: the newest "fragmentation needed" answer the simulator
+  // recorded, and the path MTU Host A has learned from it.
+  const hostBIp = topology.nodes.find((node) => node.id === 'host-b')?.data.ip;
+  const fragNeeded =
+    [...state.traces]
+      .reverse()
+      .map(readFragNeeded)
+      .find((answer) => answer !== null) ?? null;
+  const pathMtu = typeof hostBIp === 'string' ? pathMtuOf(engine, hostBIp) : null;
+  const [resendId, setResendId] = useState<string | null>(null);
+  const resendTrace = resendId
+    ? (state.traces.find((trace) => trace.packetId === resendId) ?? null)
+    : null;
+  const resendLast = resendTrace?.hops[resendTrace.hops.length - 1];
+  const resendArrived =
+    resendTrace !== null &&
+    resendLast?.nodeId === 'host-b' &&
+    resendLast.event === 'deliver' &&
+    !resendTrace.hops.some((hop) => hop.action === 'fragment');
+
+  const resendAtPathMtu = async () => {
+    if (pathMtu === null) return;
+    const packet = buildEchoPacket(topology, true, pmtudDataBytes(pathMtu));
+    if (!packet) return;
+    engine.reset();
+    setResendId(packet.id);
     await sendPacket(packet);
   };
 
@@ -267,6 +245,7 @@ function FragmentationDemoInner({
             >
               <input
                 type="checkbox"
+                data-testid="mtu-df-toggle"
                 checked={dfEnabled}
                 onChange={(event) => setDfEnabled(event.target.checked)}
               />
@@ -324,6 +303,77 @@ function FragmentationDemoInner({
                   style={{ color: 'var(--netlab-text-secondary)', lineHeight: 1.6 }}
                 >
                   {working}
+                </div>
+              ) : null}
+            </div>
+          </div>
+          <div style={LESSON_CARD} data-testid="mtu-pmtud">
+            <div style={LESSON_LABEL}>
+              {t('Path MTU Discovery (RFC 1191)', 'Path MTU Discovery (RFC 1191)')}
+            </div>
+            <div
+              style={{
+                color: 'var(--netlab-text-primary)',
+                fontFamily: 'monospace',
+                fontSize: 12,
+                display: 'grid',
+                gap: 6,
+                lineHeight: 1.6,
+              }}
+            >
+              <div style={{ color: 'var(--netlab-text-secondary)' }}>
+                {t(
+                  'A sender that sets DF never has its packets split. When one does not fit, the router before the narrow cable throws it away and answers with ICMP "fragmentation needed" (type 3, code 4) carrying that cable\'s MTU. The sender remembers it as its path MTU to that destination and sends smaller packets from then on. Tick DF and ping to see it.',
+                  'DF を立てた送信元のパケットは分割されません。収まらないパケットは、細いケーブルの手前のルータが破棄し、そのケーブルの MTU を載せた ICMP「fragmentation needed」(type 3, code 4) を返します。送信元はそれをその宛先への Path MTU として覚え、以後はそれ以下の大きさで送ります。DF にチェックを入れて ping すると確かめられます。',
+                )}
+              </div>
+              <div data-testid="mtu-pmtud-answer">
+                {fragNeeded
+                  ? t(
+                      `${fragNeeded.routerLabel} answered "fragmentation needed" with MTU ${fragNeeded.reportedMtu}`,
+                      `${fragNeeded.routerLabel} が「fragmentation needed」を MTU ${fragNeeded.reportedMtu} 付きで返しました`,
+                    )
+                  : t(
+                      'No "fragmentation needed" yet',
+                      '「fragmentation needed」はまだ届いていません',
+                    )}
+              </div>
+              <div data-testid="mtu-pmtud-path-mtu">
+                {pathMtu !== null
+                  ? t(
+                      `Host A's path MTU to Host B: ${pathMtu} bytes`,
+                      `Host A が覚えた Host B への Path MTU: ${pathMtu} バイト`,
+                    )
+                  : t(
+                      "Host A's path MTU to Host B: not learned yet",
+                      'Host A が覚えた Host B への Path MTU: まだありません',
+                    )}
+              </div>
+              <button
+                type="button"
+                data-testid="mtu-pmtud-resend"
+                style={LESSON_TEAL_BUTTON}
+                disabled={isRecomputing || pathMtu === null}
+                onClick={() => void resendAtPathMtu()}
+              >
+                {pathMtu !== null
+                  ? t(
+                      `send again at ${pathMtu} bytes, DF set`,
+                      `${pathMtu} バイトで DF を立てて送り直す`,
+                    )
+                  : t('send again at the path MTU', 'Path MTU の大きさで送り直す')}
+              </button>
+              {resendTrace ? (
+                <div data-testid="mtu-pmtud-result">
+                  {resendArrived
+                    ? t(
+                        'It arrived whole at Host B: no fragments, no ICMP.',
+                        'Host B に分割されずに届きました。ICMP も返りません。',
+                      )
+                    : t(
+                        'It did not arrive whole at Host B.',
+                        'Host B に分割されずには届きませんでした。',
+                      )}
                 </div>
               ) : null}
             </div>

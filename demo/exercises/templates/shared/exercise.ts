@@ -152,6 +152,8 @@ export function refOf(change: SettingChange): SettingRef {
         ifaceId: change.ifaceId,
         direction: change.direction,
       };
+    case 'bgp-local-pref':
+      return { kind: change.kind, nodeId: change.nodeId, neighbor: change.neighbor };
   }
 }
 

@@ -10,6 +10,7 @@ import { settingTestId, settingTitle } from './describe';
 import {
   HostIpField,
   IfaceAddressField,
+  BgpLocalPrefField,
   IfaceNatField,
   LinkStateField,
   OspfCostField,
@@ -112,6 +113,8 @@ function Field({
       return <AclField value={value} {...shared} />;
     case 'iface-nat':
       return <IfaceNatField value={value} {...shared} />;
+    case 'bgp-local-pref':
+      return <BgpLocalPrefField value={value} {...shared} />;
   }
 }
 

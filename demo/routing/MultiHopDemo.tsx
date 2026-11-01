@@ -1,8 +1,14 @@
+import { useState } from 'react';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { RouteTable } from '../../src/components/controls/RouteTable';
+import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import type { NetworkTopology } from '../../src/types/topology';
+import { LessonCanvas, LessonPanel, LessonSplit } from '../components/LessonPanel';
+import { LESSON_CARD, LESSON_LABEL, LESSON_TEAL_BUTTON } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
+import { useT } from '../localeContext';
+import { tracerouteRows, type TracerouteRow } from './traceroute';
 
 // ──────────────────────────────────────────────────────────────
 // Client → R1 → R2 → Server
@@ -120,9 +126,99 @@ export default function MultiHopDemo() {
       desc="Traffic crosses two routers through three distinct subnets"
     >
       <NetlabProvider topology={TOPOLOGY}>
-        <NetlabCanvas />
-        <RouteTable />
+        <SimulationProvider>
+          <LessonSplit>
+            <LessonCanvas canvas={<NetlabCanvas />}>
+              <RouteTable />
+            </LessonCanvas>
+            <LessonPanel defaultWidth={380} maxWidth={640} style={PANEL_STYLE}>
+              <TraceroutePanel />
+            </LessonPanel>
+          </LessonSplit>
+        </SimulationProvider>
       </NetlabProvider>
     </DemoShell>
+  );
+}
+
+const PANEL_STYLE: React.CSSProperties = {
+  background: 'var(--netlab-bg-primary)',
+  borderLeft: '1px solid var(--netlab-bg-surface)',
+  padding: 12,
+};
+
+const SERVER_IP = '203.0.113.10';
+
+/** Runs the simulator's traceroute from the client and prints one row per probe. */
+function TraceroutePanel() {
+  const t = useT();
+  const { engine, isRecomputing } = useSimulation();
+  const [rows, setRows] = useState<TracerouteRow[] | null>(null);
+  const [running, setRunning] = useState(false);
+
+  const run = async () => {
+    setRunning(true);
+    try {
+      setRows(tracerouteRows(await engine.traceroute('client-1', SERVER_IP), 'client-1'));
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  const answerText = (row: TracerouteRow) =>
+    row.answer === 'time-exceeded'
+      ? t('time exceeded', '時間超過 (time exceeded)')
+      : row.answer === 'echo-reply'
+        ? t('echo reply: the destination', 'エコー応答: 宛先')
+        : t('no answer', '応答なし');
+
+  return (
+    <div style={LESSON_CARD} data-testid="traceroute">
+      <div style={LESSON_LABEL}>{t('Traceroute', 'traceroute')}</div>
+      <div
+        style={{
+          color: 'var(--netlab-text-secondary)',
+          fontFamily: 'monospace',
+          fontSize: 12,
+          lineHeight: 1.6,
+          marginBottom: 10,
+        }}
+      >
+        {t(
+          `Traceroute sends probes toward ${SERVER_IP} with TTL 1, then 2, then 3. Each router takes one off the TTL; the router where it reaches 0 drops the probe and answers ICMP "time exceeded", so each probe reveals one more router. The server answers the last probe itself. This simulator probes with ICMP echo, as Windows tracert does; Unix traceroute sends UDP by default.`,
+          `traceroute は ${SERVER_IP} へ TTL 1、2、3 と増やしながら調査パケットを送ります。ルータは TTL を 1 ずつ減らし、0 になったルータがパケットを捨てて ICMP「時間超過 (time exceeded)」を返すので、調査パケット 1 つごとにルータが 1 台ずつ分かります。最後の調査パケットにはサーバ自身が応答します。このシミュレータは Windows の tracert と同じく ICMP エコーで調べます。Unix の traceroute は既定では UDP を送ります。`,
+        )}
+      </div>
+      <button
+        type="button"
+        data-testid="traceroute-run"
+        style={LESSON_TEAL_BUTTON}
+        disabled={running || isRecomputing}
+        onClick={() => void run()}
+      >
+        {`traceroute Client → ${SERVER_IP}`}
+      </button>
+      {rows ? (
+        <ol
+          data-testid="traceroute-rows"
+          style={{
+            margin: '10px 0 0',
+            paddingLeft: 0,
+            listStyle: 'none',
+            fontFamily: 'monospace',
+            fontSize: 12,
+            color: 'var(--netlab-text-primary)',
+            display: 'grid',
+            gap: 4,
+          }}
+        >
+          {rows.map((row) => (
+            <li key={row.ttl} data-testid={`traceroute-row-${row.ttl}`}>
+              {`TTL ${row.ttl}: ${row.device ? `${row.device} (${row.address})` : '*'} — ${answerText(row)}`}
+            </li>
+          ))}
+        </ol>
+      ) : null}
+    </div>
   );
 }

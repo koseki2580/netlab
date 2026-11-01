@@ -56,7 +56,9 @@ export type SettingRef =
       readonly ifaceId: string;
       readonly direction: 'inbound' | 'outbound';
     }
-  | { readonly kind: 'iface-nat'; readonly nodeId: string; readonly ifaceId: string };
+  | { readonly kind: 'iface-nat'; readonly nodeId: string; readonly ifaceId: string }
+  /** `neighbor` is the address of the BGP session on `nodeId`: the LOCAL_PREF it gives what it learns there. */
+  | { readonly kind: 'bgp-local-pref'; readonly nodeId: string; readonly neighbor: string };
 
 export type SettingKind = SettingRef['kind'];
 
@@ -117,6 +119,13 @@ export type SettingChange =
       readonly nodeId: string;
       readonly ifaceId: string;
       readonly nat: 'inside' | 'outside' | null;
+    }
+  | {
+      readonly kind: 'bgp-local-pref';
+      readonly nodeId: string;
+      readonly neighbor: string;
+      /** 100 is BGP's default: a session with no LOCAL_PREF of its own reads as 100. */
+      readonly localPref: number;
     };
 
 // --- Probes and checks -------------------------------------------------------

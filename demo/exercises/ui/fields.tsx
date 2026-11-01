@@ -585,6 +585,28 @@ export function OspfCostField({ value, onChange, testId, plain }: FieldProps<'os
   );
 }
 
+export function BgpLocalPrefField({ value, onChange, testId }: FieldProps<'bgp-local-pref'>) {
+  const t = useT();
+  return (
+    <DraftInput
+      label={t(
+        'LOCAL_PREF (the route with the highest is used; 100 if none is set)',
+        'LOCAL_PREF（大きいほうの経路が使われる。決めていなければ 100）',
+      )}
+      shown={String(value.localPref)}
+      parse={(text) => wholeNumber(text, 0, 4294967295)}
+      onValid={(localPref) => onChange({ ...value, localPref })}
+      note={t(
+        `LOCAL_PREF is a whole number from 0 to 4294967295. Until it is, it stays ${value.localPref}.`,
+        `LOCAL_PREF は 0 から 4294967295 までの数です。直すまでは ${value.localPref} のままです。`,
+      )}
+      testId={testId}
+      inputMode="numeric"
+      width={130}
+    />
+  );
+}
+
 export function IfaceNatField({ value, onChange, testId }: FieldProps<'iface-nat'>) {
   const t = useT();
   return (

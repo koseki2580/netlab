@@ -16,7 +16,9 @@ import { p3FrameAfter } from './templates/level3/p3-frame-after';
 import { p3WhichCuts } from './templates/level3/p3-which-cuts';
 import { p2FirstMac } from './templates/level2/p2-first-mac';
 import { p2SmallestTtl } from './templates/level2/p2-smallest-ttl';
+import { p2Traceroute } from './templates/level2/p2-traceroute';
 import { p3Df } from './templates/level3/p3-df';
+import { p3Pmtud } from './templates/level3/p3-pmtud';
 import { p4Fragment } from './templates/level4/p4-fragment';
 import { classicMistakes } from './mistakes';
 
@@ -165,4 +167,56 @@ describe('the new kinds of feedback', () => {
     );
     expect(told.size).toBeGreaterThanOrEqual(12);
   });
+});
+
+// TC-984
+describe('a traceroute: each question is about its own probe', () => {
+  it('names the device that answers each probe, the second router being the one r1 sends to', async () => {
+    for (let seed = 0; seed < 8; seed += 1) {
+      const exercise = p2Traceroute.generate(seed) as ReadExercise;
+      const [a, b] = exercise.packets;
+      expect(exercise.questions.map((question) => question.packetIndex ?? 0)).toEqual([0, 1]);
+      expect(a?.ttl).not.toBe(b?.ttl);
+      const r1 = exercise.topology.nodes.find((node) => node.id === 'r1');
+      const way = r1?.data.staticRoutes?.[0]?.nextHop;
+      const viaId = exercise.topology.nodes.find((node) =>
+        node.data.interfaces?.some((side) => side.ipAddress === way),
+      )?.id;
+      const path = ['r1', viaId, 'r4', 'srv'];
+      const picks = Object.fromEntries(
+        exercise.questions.map((question) => [
+          question.id,
+          path[(exercise.packets[question.packetIndex ?? 0]?.ttl ?? 1) - 1] ?? '',
+        ]),
+      );
+      expect(Object.values(picks)).toEqual(exercise.questions.map((question) => question.answer));
+      const grade = await judgeRead(exercise, { picks });
+      expect(grade.passed, `seed ${seed}`).toBe(true);
+    }
+  }, 120_000);
+});
+
+// TC-985
+describe('path MTU discovery over two narrow cables', () => {
+  it('the first cable’s MTU is turned back at the second; the second’s arrives whole', async () => {
+    for (let seed = 0; seed < 8; seed += 1) {
+      const exercise = p3Pmtud.generate(seed) as ReadExercise;
+      const fix = exercise.fix;
+      if (!fix) throw new Error('p3-pmtud has a fix part');
+      const mtus = exercise.topology.edges
+        .map((edge) => edge.data?.mtuBytes)
+        .filter((mtu): mtu is number => typeof mtu === 'number');
+      expect(mtus, `seed ${seed}: two narrow cables`).toHaveLength(2);
+      const [wider, narrower] = [Math.max(...mtus), Math.min(...mtus)];
+      expect(fix.reference.size).toBe(narrower);
+      // Every packet of this exercise keeps DF: nothing is ever cut.
+      expect(exercise.packets[0]?.df).toBe(true);
+      const picks = Object.fromEntries(exercise.questions.map((q) => [q.id, q.answer]));
+      const right = await judgeRead(exercise, { picks, values: fix.reference });
+      expect(right.passed, `seed ${seed}: the smaller MTU`).toBe(true);
+      const firstOnly = await judgeRead(exercise, { picks, values: { size: wider } });
+      const [refused] = failing(firstOnly);
+      expect(refused?.code, `seed ${seed}: the first MTU alone`).toBe('too-big-not-split');
+    }
+  }, 300_000);
 });

@@ -20,6 +20,8 @@ import type { SettingChange, SettingRef } from './types';
 const DEFAULT_ACCESS_VLAN = 1;
 const DEFAULT_STP_PRIORITY = 32768;
 const DEFAULT_OSPF_COST = 1;
+/** BGP's default LOCAL_PREF (RFC 4271 leaves it to policy; 100 is what routers use). */
+const DEFAULT_LOCAL_PREF = 100;
 
 // --- Applying ----------------------------------------------------------------
 
@@ -186,6 +188,21 @@ function applyOne(topology: TopologySnapshot, change: SettingChange): TopologySn
       return editInterface(topology, change.nodeId, change.ifaceId, ({ nat: _nat, ...rest }) =>
         change.nat === null ? { ...rest } : { ...rest, nat: change.nat },
       );
+
+    case 'bgp-local-pref':
+      return editNode(topology, change.nodeId, (data) => {
+        const config = data.bgpConfig;
+        if (!config?.neighbors.some((entry) => entry.address === change.neighbor)) return null;
+        return {
+          ...data,
+          bgpConfig: {
+            ...config,
+            neighbors: config.neighbors.map((entry) =>
+              entry.address === change.neighbor ? { ...entry, localPref: change.localPref } : entry,
+            ),
+          },
+        };
+      });
   }
 }
 
@@ -290,6 +307,13 @@ export function readSetting(topology: TopologySnapshot, ref: SettingRef): Settin
       const iface = data.interfaces?.find((candidate) => candidate.id === ref.ifaceId);
       return iface ? { ...ref, nat: iface.nat ?? null } : null;
     }
+
+    case 'bgp-local-pref': {
+      const entry = data.bgpConfig?.neighbors.find(
+        (candidate) => candidate.address === ref.neighbor,
+      );
+      return entry ? { ...ref, localPref: entry.localPref ?? DEFAULT_LOCAL_PREF } : null;
+    }
   }
 }
 
@@ -347,6 +371,8 @@ function refKey(ref: SettingRef): string {
       return `${ref.kind}|${ref.nodeId}|${ref.network}`;
     case 'iface-acl':
       return `${ref.kind}|${ref.nodeId}|${ref.ifaceId}|${ref.direction}`;
+    case 'bgp-local-pref':
+      return `${ref.kind}|${ref.nodeId}|${ref.neighbor}`;
   }
 }
 

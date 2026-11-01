@@ -20,6 +20,7 @@ import {
   withLinkState,
   withNodeData,
 } from '../templates/shared/build';
+import { bgpExitsFixture } from '../templates/shared/bgp';
 import {
   applyChanges,
   applyChangesReporting,
@@ -146,6 +147,13 @@ const CASES: readonly {
       rules: [denyPing, permitAll],
     },
     undo: { kind: 'iface-acl', nodeId: 'r1', ifaceId: 'lan', direction: 'inbound', rules: [] },
+  },
+  // TC-988
+  {
+    name: 'bgp-local-pref',
+    start: () => bgpExitsFixture().topology,
+    change: { kind: 'bgp-local-pref', nodeId: 'r1', neighbor: '10.9.0.6', localPref: 200 },
+    undo: { kind: 'bgp-local-pref', nodeId: 'r1', neighbor: '10.9.0.6', localPref: 100 },
   },
   {
     name: 'iface-nat',
@@ -433,5 +441,40 @@ describe('differsOutside: states a SettingChange cannot express are never hidden
         allowed,
       ),
     ).toBe(true);
+  });
+});
+
+// TC-988
+describe('a BGP LOCAL_PREF change', () => {
+  it('sets the one neighbour entry, and leaves the others and the rest of the router alone', () => {
+    const start = bgpExitsFixture().topology;
+    const changed = applyChanges(start, [
+      { kind: 'bgp-local-pref', nodeId: 'r1', neighbor: '10.9.0.6', localPref: 50 },
+    ]);
+    const before = start.nodes.find((node) => node.id === 'r1')?.data.bgpConfig;
+    const after = changed.nodes.find((node) => node.id === 'r1')?.data.bgpConfig;
+    expect(after?.neighbors).toEqual(
+      before?.neighbors.map((entry) =>
+        entry.address === '10.9.0.6' ? { ...entry, localPref: 50 } : entry,
+      ),
+    );
+    expect({ ...after, neighbors: [] }).toEqual({ ...before, neighbors: [] });
+  });
+
+  it('reads 100, the default, where no LOCAL_PREF is set', () => {
+    expect(
+      readSetting(bgpExitsFixture().topology, {
+        kind: 'bgp-local-pref',
+        nodeId: 'r1',
+        neighbor: '10.9.0.2',
+      }),
+    ).toEqual({ kind: 'bgp-local-pref', nodeId: 'r1', neighbor: '10.9.0.2', localPref: 100 });
+  });
+
+  it('has no target on a router without that neighbour', () => {
+    const reported = applyChangesReporting(bgpExitsFixture().topology, [
+      { kind: 'bgp-local-pref', nodeId: 'r1', neighbor: '192.0.2.1', localPref: 200 },
+    ]);
+    expect(reported.ignored).toHaveLength(1);
   });
 });

@@ -900,6 +900,51 @@ exports[`exercise templates, generator version 7 > l3-acl-replies: one instance 
 ]
 `;
 
+exports[`exercise templates, generator version 7 > l3-bgp-exit: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+[
+  {
+    "brief": "母屋のルータは 2 つのプロバイダにつながっていて、写真用のサーバーへの道をどちらからも BGP で教わっています。いまは、AS_PATH（途中のネットワークの並び）が 1 つ短いプロバイダ Bから出ています。この拠点はプロバイダ Aとの契約のほうが安いので、そちらから出したいと考えています。LOCAL_PREF は、母屋のルータが各プロバイダから教わった経路に付ける数で、決めていなければ 100 です。AS_PATH より先に比べられます。",
+    "fingerprint": "l3-bgp-exit|home|A",
+    "id": "l3-bgp-exit~8",
+    "rule": "ルール：BGP の経路は、まず LOCAL_PREF の大きいほうが勝つ。同じときだけ AS_PATH の短いほうが勝つ。",
+    "task": "写真用のサーバーあての通信がプロバイダ Aから出ていく設定を 1 つ選んでください。",
+    "title": "プロバイダ Aから出す",
+  },
+  {
+    "brief": "支店のルータは 2 つのプロバイダにつながっていて、在庫サーバーへの道をどちらからも BGP で教わっています。いまは、AS_PATH（途中のネットワークの並び）が 1 つ短いプロバイダ Bから出ています。この拠点はプロバイダ Aとの契約のほうが安いので、そちらから出したいと考えています。LOCAL_PREF は、支店のルータが各プロバイダから教わった経路に付ける数で、決めていなければ 100 です。AS_PATH より先に比べられます。",
+    "fingerprint": "l3-bgp-exit|shop|A",
+    "id": "l3-bgp-exit~1",
+    "rule": "ルール：BGP の経路は、まず LOCAL_PREF の大きいほうが勝つ。同じときだけ AS_PATH の短いほうが勝つ。",
+    "task": "在庫サーバーあての通信がプロバイダ Aから出ていく設定を 1 つ選んでください。",
+    "title": "プロバイダ Aから出す",
+  },
+  {
+    "brief": "分院のルータは 2 つのプロバイダにつながっていて、カルテサーバーへの道をどちらからも BGP で教わっています。いまは、AS_PATH（途中のネットワークの並び）が 1 つ短いプロバイダ Bから出ています。この拠点はプロバイダ Aとの契約のほうが安いので、そちらから出したいと考えています。LOCAL_PREF は、分院のルータが各プロバイダから教わった経路に付ける数で、決めていなければ 100 です。AS_PATH より先に比べられます。",
+    "fingerprint": "l3-bgp-exit|clinic|A",
+    "id": "l3-bgp-exit~3",
+    "rule": "ルール：BGP の経路は、まず LOCAL_PREF の大きいほうが勝つ。同じときだけ AS_PATH の短いほうが勝つ。",
+    "task": "カルテサーバーあての通信がプロバイダ Aから出ていく設定を 1 つ選んでください。",
+    "title": "プロバイダ Aから出す",
+  },
+  {
+    "brief": "新校舎のルータは 2 つのプロバイダにつながっていて、教材サーバーへの道をどちらからも BGP で教わっています。いまは、AS_PATH（途中のネットワークの並び）が 1 つ短いプロバイダ Aから出ています。この拠点はプロバイダ Bとの契約のほうが安いので、そちらから出したいと考えています。LOCAL_PREF は、新校舎のルータが各プロバイダから教わった経路に付ける数で、決めていなければ 100 です。AS_PATH より先に比べられます。",
+    "fingerprint": "l3-bgp-exit|school|B",
+    "id": "l3-bgp-exit~0",
+    "rule": "ルール：BGP の経路は、まず LOCAL_PREF の大きいほうが勝つ。同じときだけ AS_PATH の短いほうが勝つ。",
+    "task": "教材サーバーあての通信がプロバイダ Bから出ていく設定を 1 つ選んでください。",
+    "title": "プロバイダ Bから出す",
+  },
+  {
+    "brief": "支社のルータは 2 つのプロバイダにつながっていて、ファイルサーバーへの道をどちらからも BGP で教わっています。いまは、AS_PATH（途中のネットワークの並び）が 1 つ短いプロバイダ Aから出ています。この拠点はプロバイダ Bとの契約のほうが安いので、そちらから出したいと考えています。LOCAL_PREF は、支社のルータが各プロバイダから教わった経路に付ける数で、決めていなければ 100 です。AS_PATH より先に比べられます。",
+    "fingerprint": "l3-bgp-exit|office|B",
+    "id": "l3-bgp-exit~5",
+    "rule": "ルール：BGP の経路は、まず LOCAL_PREF の大きいほうが勝つ。同じときだけ AS_PATH の短いほうが勝つ。",
+    "task": "ファイルサーバーあての通信がプロバイダ Bから出ていく設定を 1 つ選んでください。",
+    "title": "プロバイダ Bから出す",
+  },
+]
+`;
+
 exports[`exercise templates, generator version 7 > l3-choose-longest: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {

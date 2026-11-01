@@ -150,6 +150,8 @@ export function settingTestId(ref: SettingRef): string {
         return ref.network.replace(/[^0-9a-z]+/gi, '-');
       case 'iface-acl':
         return `${ref.ifaceId}-${ref.direction}`;
+      case 'bgp-local-pref':
+        return ref.neighbor.replace(/[^0-9a-z]+/gi, '-');
       default:
         return null;
     }
@@ -209,6 +211,20 @@ export function settingTitle(ref: SettingRef, topology: TopologySnapshot): Setti
           ja: `${ref.network} のケーブルのコスト（OSPF）`,
         },
       };
+    case 'bgp-local-pref': {
+      // The neighbour by the device whose address it is, as the diagram names it.
+      const peerId = topology.nodes.find((node) =>
+        node.data.interfaces?.some((side) => side.ipAddress === ref.neighbor),
+      )?.id;
+      const peer = peerId ? both(labelOf(topology, peerId)) : both(ref.neighbor);
+      return {
+        device,
+        name: {
+          en: `LOCAL_PREF for routes from ${peer.en} (BGP)`,
+          ja: `${peer.ja}から受け取る経路の LOCAL_PREF（BGP）`,
+        },
+      };
+    }
     case 'iface-acl': {
       const side = sideName(topology, ref.nodeId, ref.ifaceId);
       return {
@@ -422,6 +438,8 @@ function valueText(change: SettingChange): Localised {
         : change.nat === 'inside'
           ? { en: 'inside', ja: '内側' }
           : { en: 'outside', ja: '外側' };
+    case 'bgp-local-pref':
+      return both(String(change.localPref));
   }
 }
 
