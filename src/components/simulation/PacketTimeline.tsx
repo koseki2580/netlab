@@ -76,7 +76,7 @@ function formatLinkHop(hop: PacketHop, t: TranslatorFn): string | null {
   return null;
 }
 
-function formatHopAnnotation(hop: PacketHop, t: TranslatorFn): string | null {
+function formatHopAnnotation(hop: PacketHop, t: TranslatorFn, locale: string): string | null {
   const parts: string[] = [];
 
   if (hop.action === 'fragment') {
@@ -185,7 +185,7 @@ function formatHopAnnotation(hop: PacketHop, t: TranslatorFn): string | null {
     }
   }
 
-  const flood = floodNote(hop, t);
+  const flood = floodNote(hop, locale);
   if (flood) parts.push(flood);
 
   return parts.length > 0 ? parts.join(' · ') : null;
@@ -206,12 +206,12 @@ function HopRow({
   onClick: () => void;
   onEdit: (anchorElement: HTMLElement) => void;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const color = EVENT_COLORS[hop.event] ?? 'var(--netlab-text-secondary)';
   const label = EVENT_LABELS[hop.event] ?? hop.event.toUpperCase();
   const glossKey = EVENT_GLOSS_KEYS[hop.event];
   const dropReason = hop.event === 'drop' ? formatDropReason(hop.reason) : null;
-  const annotation = formatHopAnnotation(hop, t);
+  const annotation = formatHopAnnotation(hop, t, locale);
 
   return (
     <div

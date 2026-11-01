@@ -56,7 +56,7 @@ export const editor: Catalog = {
   'editor.dropReason.nextHopOffLink':
     'the next router in the route is not on this router’s networks',
   'editor.dropReason.reservedAddress': 'a device has its subnet’s network or broadcast address',
-  'editor.dropReason.noReceiver': 'the switch copied it out of every port and no device took it',
+  'editor.dropReason.noReceiver': 'no device took any of its copies',
   'editor.dropReason.unknown': 'no explanation for this code yet',
 
   'editor.connect.hint': 'To link two devices, hover one and drag its ⊕ onto the other.',

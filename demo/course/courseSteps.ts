@@ -232,12 +232,10 @@ export const COURSE_STEPS: readonly CourseStep[] = [
         host('pc-b', 'PC-B', '10.0.0.12', 'aa:00:00:00:00:02', 690, 120),
         host('pc-c', 'PC-C', '10.0.0.13', 'aa:00:00:00:00:03', 690, 300),
       ],
-      // Each cable names its port on the switch, so the switch can tell them
-      // apart and copies the first frame to PC-C as well (the step says so).
       [
-        { id: 'e1', source: 'pc-a', target: 'sw', targetHandle: 'p0', type: 'smoothstep' },
-        { id: 'e2', source: 'sw', target: 'pc-b', sourceHandle: 'p1', type: 'smoothstep' },
-        { id: 'e3', source: 'sw', target: 'pc-c', sourceHandle: 'p2', type: 'smoothstep' },
+        { id: 'e1', source: 'pc-a', target: 'sw', type: 'smoothstep' },
+        { id: 'e2', source: 'sw', target: 'pc-b', type: 'smoothstep' },
+        { id: 'e3', source: 'sw', target: 'pc-c', type: 'smoothstep' },
       ],
     ),
     from: 'pc-a',

@@ -46,6 +46,7 @@ Forwarders receive topology context through `ForwardContext`:
 interface ForwardContext {
   neighbors: Neighbor[];
   macTable?: Map<string, string>; // a switch's learned `${vlanId}:${mac}` → port id
+  ingressEdgeId?: string; // the link the frame came in by
 }
 ```
 

@@ -30,7 +30,12 @@ export function runRouterPreRoutingStage(ctx: HopContext): StageResult {
     routing: freshRouting(ctx.workingPacket, neighbors, {
       neighbors,
       ...(multicastTable != null ? { multicastTable } : {}),
-      ...(node.data.role === 'switch' ? { macTable: macTableFor(ctx.shared, ctx.current) } : {}),
+      ...(node.data.role === 'switch'
+        ? {
+            macTable: macTableFor(ctx.shared, ctx.current),
+            ...(ctx.ingressEdgeId ? { ingressEdgeId: ctx.ingressEdgeId } : {}),
+          }
+        : {}),
     }),
   });
 

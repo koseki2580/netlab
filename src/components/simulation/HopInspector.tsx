@@ -5,7 +5,7 @@ import { useSimulation } from '../../simulation/SimulationContext';
 import type { NatTranslation, PacketHop, RoutingDecision } from '../../types/simulation';
 import { CARD, FIELD_ROW, MONO_FONT_STACK, SECTION_HEADER, TEXT } from '../_styles/tokens';
 import { useNetlabContext } from '../NetlabContext';
-import { floodCopiesText } from './floodWords';
+import { floodCopiesLabel, floodCopiesText } from './floodWords';
 import { AclMatchView } from './AclMatchView';
 import { HopObservabilityView } from './HopObservabilityView';
 
@@ -176,7 +176,7 @@ function HopFields({
   hop: PacketHop;
   nodes: { id: string; data: { label: string; role: string } }[];
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const fields = [
     { label: t('simulation.hop.field.node'), value: resolveNodeLabel(hop.nodeId, nodes) },
     { label: t('simulation.hop.field.nextHop'), value: resolveNodeLabel(hop.toNodeId, nodes) },
@@ -201,9 +201,9 @@ function HopFields({
   }
 
   // The other copies a switch sent out, and what became of each.
-  const copies = floodCopiesText(hop, (nodeId) => resolveNodeLabel(nodeId, nodes), t);
+  const copies = floodCopiesText(hop, (nodeId) => resolveNodeLabel(nodeId, nodes), locale);
   if (copies) {
-    fields.push({ label: t('simulation.hop.field.copies'), value: copies });
+    fields.push({ label: floodCopiesLabel(locale), value: copies });
   }
 
   if (

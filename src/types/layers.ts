@@ -17,6 +17,11 @@ export interface ForwardContext {
    * devices learn (see the `arpCache` option), so a forwarder writes to it.
    */
   macTable?: Map<string, string>;
+  /**
+   * The link the frame came in by. A switch uses it to tell which port the
+   * frame arrived on when that link names no port at the switch.
+   */
+  ingressEdgeId?: string;
 }
 
 /** One copy of a frame a forwarder sends out of a port. */

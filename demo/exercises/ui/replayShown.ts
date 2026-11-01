@@ -8,10 +8,10 @@
  * Here the diagram says only that it stopped, which is always true, and leaves
  * the reason to the feedback.
  *
- * And the place: a frame no device can take is flooded by the switch, and the
- * simulator reports the drop at whichever host threw it away. That host has
- * nothing to do with the fault, so the replay ends where the frame was last on
- * its own way.
+ * And the place: with its way out gone, a host addresses the frame to another
+ * host's MAC, and the simulator reports the drop at that host. It has nothing
+ * to do with the fault, so the replay ends where the frame was last on its own
+ * way.
  */
 
 import { en } from '../../../src/i18n/locales/en';

@@ -1,5 +1,6 @@
 import { isIpv6Packet } from '../../../../types/packets';
 import type { PacketHop } from '../../../../types/simulation';
+import { passArpThroughSwitches } from './floodCopies';
 import {
   appendHop,
   continueWith,
@@ -8,7 +9,7 @@ import {
   type StageResult,
 } from './_shared';
 
-export function runArpInjectionStage(ctx: RoutedContext): StageResult {
+export function runArpInjectionStage(ctx: RoutedContext): StageResult | Promise<StageResult> {
   const node = ctx.hop.node;
   const hopBase = ctx.hop.base;
   const next = ctx.routing.next;
@@ -52,6 +53,7 @@ export function runArpInjectionStage(ctx: RoutedContext): StageResult {
   ctx.routing.packetBeforeForward =
     shouldInjectArp && ctx.ingressFrom === null ? ctx.workingPacket : ctx.routing.packetBeforeHop;
 
+  let throughSwitches: Promise<void> | null = null;
   if (shouldInjectArp && ctx.routing.arpTarget) {
     const targetMac = ctx.deps.arpDispatcher.resolveTargetMac(
       ctx.current,
@@ -77,6 +79,23 @@ export function runArpInjectionStage(ctx: RoutedContext): StageResult {
       ctx.shared.snapshots,
       ctx.baseTs,
     );
+    // The exchange crosses the switches on its way (REQ-121): they learn both
+    // ends, and the request's copies are listed on its hop.
+    if (ctx.deps.ifaceResolver.findNode(next.nodeId)?.data.role === 'switch') {
+      const requestHop = ctx.shared.hops[ctx.shared.hops.length - 2];
+      throughSwitches = passArpThroughSwitches(ctx, {
+        senderId: ctx.current,
+        senderMac: ctx.routing.arpTarget.senderMac,
+        targetId: ctx.routing.arpTarget.targetNodeId,
+        targetMac,
+        nextNodeId: next.nodeId,
+        edgeId: next.edgeId,
+      }).then((copies) => {
+        if (copies.length > 0 && requestHop?.event === 'arp-request') {
+          requestHop.flood = { copies };
+        }
+      });
+    }
 
     ctx.shared.arpCache.set(ctx.routing.arpTarget.targetIp, targetMac);
     if (ctx.routing.arpTarget.senderIp.trim()) {
@@ -112,5 +131,5 @@ export function runArpInjectionStage(ctx: RoutedContext): StageResult {
         ctx.routing.nextHopIp ?? undefined,
       );
 
-  return continueWith(ctx);
+  return throughSwitches ? throughSwitches.then(() => continueWith(ctx)) : continueWith(ctx);
 }

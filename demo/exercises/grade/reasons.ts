@@ -159,11 +159,11 @@ function sentWords(sent: SentKind | undefined): Localised {
  * One entry per drop reason the engine reports. `device` is the label of the
  * node that reported the drop.
  *
- * `no-route` must NOT use it: where a switch's cables name no port, a frame
- * nobody can deliver still goes on to a bystander host, which reports the drop
- * (engineContract facts 4, 5). Where they do, the switch copies the frame and
- * the trace ends at it as `no-receiver`, so naming that switch is accurate, as
- * it is for an ACL, a VLAN or a spanning-tree drop.
+ * `no-route` must NOT use it: with its way out gone, a host addresses the frame
+ * to another host's MAC, and that bystander reports the drop (engineContract
+ * facts 4, 5). A frame no device takes ends at the switch that copied it
+ * (`no-receiver`), so naming that switch is accurate, as it is for an ACL, a
+ * VLAN or a spanning-tree drop.
  */
 const DROP_TEXT = {
   'no-route': (_device, leg, context) =>

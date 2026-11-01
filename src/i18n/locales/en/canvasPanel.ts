@@ -49,6 +49,6 @@ export const canvasPanel: Catalog = {
     'Dropped here: the next router is not on this router’s networks',
   'simulation.packetStory.dropReservedAddress':
     'Dropped here: a device has its network’s first or last address',
-  'simulation.packetStory.dropNoReceiver': 'Dropped here: copied to every port, no device took it',
+  'simulation.packetStory.dropNoReceiver': 'Dropped here: no device took its copies',
   'simulation.packetStory.dropOther': 'The packet was dropped here',
 } as const;

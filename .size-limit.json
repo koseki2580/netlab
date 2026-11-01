@@ -19,7 +19,7 @@
   {
     "name": "ui:drill-kit",
     "path": "dist/drillKit-*.mjs",
-    "limit": "28.1 kB",
+    "limit": "28 kB",
     "gzip": true
   },
   {

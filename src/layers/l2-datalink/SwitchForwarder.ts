@@ -49,22 +49,46 @@ export class SwitchForwarder implements Forwarder {
     this.macTable.set(this.macKey(vlanId, srcMac), ingressPortId);
   }
 
+  /** The port a link names at this switch, if it names one. */
+  private handleAt(edge: NetlabEdge): string | undefined {
+    if (edge.source === this.nodeId) return edge.sourceHandle || undefined;
+    if (edge.target === this.nodeId) return edge.targetHandle || undefined;
+    return undefined;
+  }
+
+  private touches(edge: NetlabEdge): boolean {
+    return edge.source === this.nodeId || edge.target === this.nodeId;
+  }
+
+  /** A link that names no port here is a port of its own, by the link's id. */
+  private portOfEdge(edge: NetlabEdge): string {
+    return this.handleAt(edge) ?? edge.id;
+  }
+
+  /** The configured ports, then one untagged VLAN 1 port per link that names none. */
+  private allPorts(ports: SwitchPort[]): SwitchPort[] {
+    return [
+      ...ports,
+      ...this.topology.edges
+        .filter((edge) => this.touches(edge) && !this.handleAt(edge))
+        .map((edge): SwitchPort => ({ id: edge.id, name: edge.id, macAddress: '' })),
+    ];
+  }
+
   private resolveConnectedEdgeForPort(portId: string) {
     return (
       this.topology.edges.find(
         (edge) =>
-          (edge.source === this.nodeId && edge.sourceHandle === portId) ||
-          (edge.target === this.nodeId && edge.targetHandle === portId),
+          this.touches(edge) &&
+          (this.handleAt(edge) === portId ||
+            (edge.id === portId && this.handleAt(edge) === undefined)),
       ) ?? null
     );
   }
 
   private resolvePortForEdge(edgeId: string): string | undefined {
     const edge = this.topology.edges.find((candidate) => candidate.id === edgeId);
-    if (!edge) return undefined;
-    if (edge.source === this.nodeId) return edge.sourceHandle ?? undefined;
-    if (edge.target === this.nodeId) return edge.targetHandle ?? undefined;
-    return undefined;
+    return edge ? this.handleAt(edge) : undefined;
   }
 
   private isPortForwarding(portId: string): boolean {
@@ -217,20 +241,25 @@ export class SwitchForwarder implements Forwarder {
 
   async receive(
     packet: InFlightPacket,
-    ingressPortId: string,
+    givenIngressPortId: string,
     ctx: ForwardContext,
   ): Promise<ForwardDecision> {
     const node = this.topology.nodes.find((n) => n.id === this.nodeId);
     if (!node) {
       return { action: 'drop', reason: `switch node ${this.nodeId} not found` };
     }
+    // The link the frame came in by says which port that was, named or not.
+    const arrivedBy = ctx.ingressEdgeId
+      ? this.topology.edges.find((edge) => edge.id === ctx.ingressEdgeId && this.touches(edge))
+      : undefined;
+    const ingressPortId = arrivedBy ? this.portOfEdge(arrivedBy) : givenIngressPortId;
 
     if (!this.isPortForwarding(ingressPortId)) {
       return { action: 'drop', reason: 'stp-port-blocked' };
     }
 
     const frame = packet.frame;
-    const ports = (node.data.ports ?? []) as SwitchPort[];
+    const ports = this.allPorts((node.data.ports ?? []) as SwitchPort[]);
     const ingressPort = this.resolvePortConfig(ports, ingressPortId);
     const vlanId = resolveIngressVlan(ingressPort, frame);
 
@@ -243,13 +272,26 @@ export class SwitchForwarder implements Forwarder {
     // A link the frame may leave by: up (the neighbours the engine gives leave
     // out failed links; none given means every link) and not blocked.
     // The link the frame came in on is up too, though not among the neighbours.
-    const ingressEdge = this.resolveConnectedEdgeForPort(ingressPortId)?.id;
+    const ingressEdge = arrivedBy?.id ?? this.resolveConnectedEdgeForPort(ingressPortId)?.id;
     const open = (edgeId: string) =>
       (ctx.neighbors.length === 0 ||
         edgeId === ingressEdge ||
         ctx.neighbors.some((n) => n.edgeId === edgeId)) &&
       this.isLinkUsable(edgeId);
     this.learn(frame.srcMac, ingressPortId, vlanId);
+    const far = (edge: NetlabEdge) => (edge.source === this.nodeId ? edge.target : edge.source);
+    // The frame as it leaves by `portId` (a trunk may tag it).
+    const out = (portId: string, edgeId: string, nextNodeId: string): FloodTarget => ({
+      nextNodeId,
+      edgeId,
+      egressPort: portId,
+      packet: {
+        ...packet,
+        egressPortId: portId,
+        vlanId,
+        frame: prepareEgressFrame(frame, this.resolvePortConfig(ports, portId), vlanId),
+      },
+    });
 
     // IGMP snooping: learn from transit IGMP Reports and Leaves
     const isIgmpControl = this.snoopIgmp(frame, ingressPortId, vlanId);
@@ -274,21 +316,7 @@ export class SwitchForwarder implements Forwarder {
       const learnedEdge = this.resolveConnectedEdgeForPort(learnedPort);
       // Not over a link that has since gone down or been blocked.
       if (learnedEdge && open(learnedEdge.id)) {
-        const nextNodeId =
-          learnedEdge.source === this.nodeId ? learnedEdge.target : learnedEdge.source;
-        const egressPort = this.resolvePortConfig(ports, learnedPort);
-        return {
-          action: 'forward',
-          nextNodeId,
-          edgeId: learnedEdge.id,
-          egressPort: learnedPort,
-          packet: {
-            ...packet,
-            egressPortId: learnedPort,
-            vlanId,
-            frame: prepareEgressFrame(frame, egressPort, vlanId),
-          },
-        };
+        return { action: 'forward', ...out(learnedPort, learnedEdge.id, far(learnedEdge)) };
       }
     }
 
@@ -300,44 +328,20 @@ export class SwitchForwarder implements Forwarder {
       ctx.neighbors.length > 0
         ? ctx.neighbors
         : this.topology.edges.flatMap((edge) =>
-            edge.id === ingressEdge || (edge.source !== this.nodeId && edge.target !== this.nodeId)
+            edge.id === ingressEdge || !this.touches(edge)
               ? []
-              : [
-                  {
-                    nodeId: edge.source === this.nodeId ? edge.target : edge.source,
-                    edgeId: edge.id,
-                  },
-                ],
+              : [{ nodeId: far(edge), edgeId: edge.id }],
           );
     const selectedNeighbor = this.selectNeighbor(packet, neighbors, multicast);
-    // A link that names no port here cannot be told apart from the others, so
-    // such a frame goes on as one, as it always has.
-    const unnamed =
-      selectedNeighbor !== null && this.resolvePortForEdge(selectedNeighbor.edgeId) === undefined;
     // A broadcast, or a MAC this switch has not learned: a copy goes out of
     // every port that may carry it. The one toward the destination goes on.
     // With no port to copy out of, nothing is copied and it goes as it always has.
-    const targets =
-      multicast || unnamed
-        ? []
-        : egressPorts.flatMap((portId): FloodTarget[] => {
-            const edge = this.resolveConnectedEdgeForPort(portId);
-            if (!edge || !open(edge.id)) return [];
-            const egressPort = this.resolvePortConfig(ports, portId);
-            return [
-              {
-                nextNodeId: edge.source === this.nodeId ? edge.target : edge.source,
-                edgeId: edge.id,
-                egressPort: portId,
-                packet: {
-                  ...packet,
-                  egressPortId: portId,
-                  vlanId,
-                  frame: prepareEgressFrame(frame, egressPort, vlanId),
-                },
-              },
-            ];
-          });
+    const targets = multicast
+      ? []
+      : egressPorts.flatMap((portId): FloodTarget[] => {
+          const edge = this.resolveConnectedEdgeForPort(portId);
+          return edge && open(edge.id) ? [out(portId, edge.id, far(edge))] : [];
+        });
     if (targets.length > 0) {
       const forward = targets.find((target) => target.edgeId === selectedNeighbor?.edgeId);
       if (selectedNeighbor && !forward) {
@@ -360,18 +364,9 @@ export class SwitchForwarder implements Forwarder {
       if (!egressPortId || !egressPorts.includes(egressPortId)) {
         return { action: 'drop', reason: 'no-egress-in-vlan' };
       }
-      const egressPort = this.resolvePortConfig(ports, egressPortId);
       return {
         action: 'forward',
-        nextNodeId: selectedNeighbor.nodeId,
-        edgeId: selectedNeighbor.edgeId,
-        egressPort: egressPortId,
-        packet: {
-          ...packet,
-          egressPortId: egressPortId,
-          vlanId,
-          frame: prepareEgressFrame(frame, egressPort, vlanId),
-        },
+        ...out(egressPortId, selectedNeighbor.edgeId, selectedNeighbor.nodeId),
       };
     }
 
@@ -382,21 +377,9 @@ export class SwitchForwarder implements Forwarder {
     const connectedEdge = this.resolveConnectedEdgeForPort(fallbackEgressPortId);
 
     if (connectedEdge) {
-      const nextNodeId =
-        connectedEdge.source === this.nodeId ? connectedEdge.target : connectedEdge.source;
-      const egressPort = this.resolvePortConfig(ports, fallbackEgressPortId);
-
       return {
         action: 'forward',
-        nextNodeId,
-        edgeId: connectedEdge.id,
-        egressPort: fallbackEgressPortId,
-        packet: {
-          ...packet,
-          egressPortId: fallbackEgressPortId,
-          vlanId,
-          frame: prepareEgressFrame(frame, egressPort, vlanId),
-        },
+        ...out(fallbackEgressPortId, connectedEdge.id, far(connectedEdge)),
       };
     }
 

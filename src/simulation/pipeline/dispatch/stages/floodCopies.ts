@@ -62,6 +62,7 @@ export async function followCopies(
     ).receive(packet, packet.ingressPortId ?? '', {
       neighbors: ctx.deps.getNeighborsFn(node.id, fromNodeId, ctx.shared.failureState),
       macTable: macTableFor(ctx.shared, node.id),
+      ingressEdgeId: target.edgeId,
     });
     if (decision.action === 'flood') {
       out.push({ ...base, outcome: 'flooded' });
@@ -77,4 +78,65 @@ export async function followCopies(
     }
   }
   return out;
+}
+
+const BROADCAST_MAC = 'ff:ff:ff:ff:ff:ff';
+
+/** Who asks whom in an ARP exchange, and the link the question leaves by. */
+export interface ArpLeg {
+  readonly senderId: string;
+  readonly senderMac: string;
+  readonly targetId: string;
+  readonly targetMac: string;
+  readonly nextNodeId: string;
+  readonly edgeId: string;
+}
+
+/**
+ * An ARP exchange through the switches between the two devices. The request
+ * is a broadcast: it is copied through them, and each learns where the asker
+ * is. The reply goes back by what they learned, and each learns where the
+ * answerer is. Returns the request's copies that reached a device other than
+ * the one asked (and past the first link, which the trace already draws).
+ */
+export async function passArpThroughSwitches(ctx: LoopContext, leg: ArpLeg): Promise<FloodCopy[]> {
+  const packetFor = (srcMac: string, dstMac: string, dstNodeId: string) => ({
+    ...ctx.workingPacket,
+    dstNodeId,
+    frame: { ...ctx.workingPacket.frame, srcMac, dstMac },
+  });
+  const request = await followCopies(
+    ctx,
+    leg.senderId,
+    [
+      {
+        nextNodeId: leg.nextNodeId,
+        edgeId: leg.edgeId,
+        egressPort: '',
+        packet: packetFor(leg.senderMac, BROADCAST_MAC, leg.targetId),
+      },
+    ],
+    new Set([leg.senderId]),
+  );
+  const asked = request.find((copy) => copy.toNodeId === leg.targetId);
+  if (asked && asked.fromNodeId !== leg.senderId) {
+    await followCopies(
+      ctx,
+      leg.targetId,
+      [
+        {
+          nextNodeId: asked.fromNodeId,
+          edgeId: asked.edgeId,
+          egressPort: '',
+          packet: packetFor(leg.targetMac, leg.senderMac, leg.senderId),
+        },
+      ],
+      new Set([leg.targetId]),
+    );
+  }
+  return request.filter(
+    (copy) =>
+      copy.toNodeId !== leg.targetId &&
+      !(copy.fromNodeId === leg.senderId && copy.edgeId === leg.edgeId),
+  );
 }

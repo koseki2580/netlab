@@ -98,9 +98,13 @@ What a consumer sees:
   copies on that hop. Before, the drop was reported by whichever bystander host the frame reached,
   as `no-route`. Code that looked for `no-route` at a host to recognise this case should look for
   `no-receiver`.
-- Copying needs the switch's links to name its ports (`sourceHandle`/`targetHandle` at the switch).
-  A frame whose way on is a link that names no port, or a switch with no other cable, is forwarded
-  exactly as before, so there a bystander may still report `no-route`.
+- A link that names no port at the switch is a port of its own, identified by the edge id, untagged
+  in VLAN 1. `packet.egressPortId` and a `FloodTarget.egressPort` carry that id. A switch with no
+  other cable forwards exactly as before.
+- An ARP exchange passes through the switches: both ends are learned, and the request's copies are
+  on the `arp-request` hop as `flood.copies`. A device whose MAC is set in the topology is seeded
+  into the ARP cache, so no exchange happens for it and switches learn from data frames only.
+- `ForwardContext` may carry `ingressEdgeId`, the link the frame came in by.
 
 **How to keep the earlier behaviour.** There is no option that turns copying off. A switch that
 should forward as before can be registered as its own layer forwarder that never returns `flood`.

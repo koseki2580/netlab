@@ -78,8 +78,8 @@ export default function StarDemo() {
           ja: '4 台のクライアントとサーバが 1 台のスイッチにつながっています。Client-1 からサーバへパケットを送りましょう。',
         }}
         takeaway={{
-          en: 'Every device reaches every other through the centre switch. The packet itself crosses only the links it needs; on the first send the switch, which does not yet know where the Server is, also copies it to the other clients, and they throw it away.',
-          ja: 'すべての機器は中央のスイッチを通してお互いに届きます。パケットそのものが通るのは必要なリンクだけです。ただし最初の1通では、スイッチはまだサーバの場所を知らないので、ほかのクライアントにも写しを流し、受け取った側は捨てます。',
+          en: 'Every device reaches every other through the centre switch, and this packet only crosses the links it needs. Before the first send, Client-1 asks for the Server’s MAC address: that question is copied to the other clients, which throw it away, and it teaches the switch where both are.',
+          ja: 'すべての機器は中央のスイッチを通してお互いに届きます。このパケットが通るのは、必要なリンクだけです。最初に送る前に Client-1 はサーバの MAC アドレスを尋ねます。その問い合わせはほかのクライアントにも写され、受け取った側は捨てます。スイッチはこのやり取りで両方の場所を覚えます。',
         }}
       />
     </DemoShell>
