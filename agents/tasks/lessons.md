@@ -233,3 +233,27 @@ A running record of corrections and feedback received during sessions. Use this 
 **Why**: Agents share one index; `git add <paths>` adds to whatever is already staged.
 
 **Apply-when**: Committing while subagents are working in the same checkout.
+
+---
+
+## L017 — `vitest -u <path>` updates the whole suite
+
+**What happened**: `vitest run -u demo/x.test.ts` and `--update demo/x.test.ts` each took the path as the flag's value, so the full suite ran in update mode twice, rewriting a golden file outside the task while other agents' work was half done.
+
+**Rule**: Put the path first and use `--update=true` last, and read the "Test Files" count before trusting the run. After any update, run `git status` on every snapshot and golden file.
+
+**Why**: A shared tree holds other agents' unfinished code, and an update run records that state as the expected one.
+
+**Apply-when**: Refreshing a snapshot in a repository shared with other agents.
+
+---
+
+## L018 — `git rm --cached` stages a deletion
+
+**What happened**: Replacing `.size-limit.json` with `.size-limit.mjs`, `git rm --cached` was used to drop the old file, which put a deletion in the shared index under a no-staging rule; it was undone at once with `git restore --staged`.
+
+**Rule**: Delete a tracked file with plain `rm` and let `git status` show ` D`; never use `git rm`, `git add`, `git mv` or `git checkout -- <file>` on paths another agent may own. Check `git diff --cached --name-only` is empty after any git command that takes a path.
+
+**Why**: The index is shared by every agent in the checkout (L016), so one staged path rides into someone else's commit.
+
+**Apply-when**: Removing, renaming or restoring files in a checkout where staging is forbidden or shared.
