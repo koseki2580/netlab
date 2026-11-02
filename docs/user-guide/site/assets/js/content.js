@@ -28,7 +28,7 @@ window.USER_GUIDE_CONTENT = {
                <ul>
                  <li><strong>2台をつなぐ</strong> — 同じネットワークなら間に何もなくても届きます。</li>
                  <li><strong>スイッチを挟む</strong> — スイッチは中身を書き換えず転送するだけです。</li>
-                 <li><strong>3台目をつなぐ</strong> — スイッチは宛先のポートにだけ流します。</li>
+                 <li><strong>3台目をつなぐ</strong> — PC-A は最初に PC-B の MAC アドレスを尋ねます。動き始めたばかりのスイッチはその問い合わせを PC-C にも写し、PC-C は捨てます。PC-B の返事でスイッチは場所を覚えるので、パケットはこの1通目から PC-B にだけ届きます。</li>
                  <li><strong>2つのネットワーク、つながっていない</strong> — <em>わざと失敗する例です。</em>別のネットワークへ出る道（ルータ）がないので、スイッチを 2 台並べても届きません。</li>
                  <li><strong>ルータが間を埋める</strong> — 両方にアドレスを持つ機器が橋渡しをします。</li>
                  <li><strong>ルータはどう決めているか</strong> — 経路表の行に宛先を当てはめて決めています。</li>
@@ -36,6 +36,23 @@ window.USER_GUIDE_CONTENT = {
                <p>途中でやめても、次に開いたときは止めたステップから再開します。</p>
                <p>最後まで進むと、「次に学ぶことと修了テストへ →」から<a href="#final-test">修了テスト</a>へ進めます。</p>
                <div class="callout">4 番目のステップは失敗するのが正解です。押す前に「これは失敗する例です」と表示されます。壊れているわけではありません。</div>`
+      },
+      {
+        id: "learning-path",
+        title: "学習の道すじ（7 つの段階）",
+        html: `<p>基本から最新までを、7 つの段階に分けて順に学べます。ギャラリーの「学習の道すじ（7 つの段階）→」か、実習問題のページから開けます。アドレスは <code>#/path</code> です。</p>
+               <ol>
+                 <li><strong>準備</strong> — 入門コース、サブネットの練習など</li>
+                 <li><strong>LAN</strong> — スイッチ、ARP、VLAN</li>
+                 <li><strong>IP</strong> — 経路、1 ホップずつの流れ、MTU</li>
+                 <li><strong>トランスポートとサービス</strong> — UDP・TCP、DHCP・DNS、HTTP、NAT</li>
+                 <li><strong>企業ネットワーク</strong> — スパニングツリー、OSPF とエリア、ACL、冗長化、QoS、IPv6、無線</li>
+                 <li><strong>事業者とデータセンター</strong> — ECMP、トンネル、MPLS、VXLAN、マルチキャスト</li>
+                 <li><strong>最新とクラウド</strong> — TLS 1.3、HTTP/2、HTTP/3、輻輳制御</li>
+               </ol>
+               <p>各段階には、レッスンと、合格に必要なもの（入門コース・実習問題のレベル・パケットの問題のレベル・修了テスト）があります。<strong>テストに合格すると、その段階は合格</strong>で、次の段階が開きます。テストのない段階は、そこにある問題のレベルをクリアすると合格です。後の段階のテストに合格すると、それより前の段階も合格になります。前から修了テストに合格していた方は、何もしなくてもその分が合格になっています。</p>
+               <p>どの段階にも自分のテストがあります。段階 1・2・3・7 のテストは新しく作ったもので（テストのページではレベル 5〜8）、それぞれ 10 問です。段階 4 と 5 はこれまでのレベル 1 と 2、段階 6 はレベル 3 と 4（エキスパート）です。テストのページの一覧は、段階の順に並びます。前にどのレベルに合格していても、その結果はそのまま、その段階と前の段階の合格になります。</p>
+               <p>まだ開いていない段階も、レッスンや問題はいつでも開いて読めます。止められるのは「合格」だけです。ページのいちばん上に、次にやることが 1 つ出ます。まだレッスンのない話題は「準備中」として載っています。</p>`
       },
       {
         id: "final-test",
@@ -120,7 +137,7 @@ window.USER_GUIDE_CONTENT = {
                  <li>問題の種類は、毎回ちがう順番で出ます。同じ種類が 2 問つづくことはありません。</li>
                </ul>
                <p>各レベルには、短い 2 行が出ます。1 行目は、いま何問解けていて、あと何問か。2 行目は「まだ解けていない種類：…」です。達成すると、2 行目は「つぎは修了テスト（10 問）か、レベル 2 へ。」に変わります。くわしい数え方は「くわしい判定のしかたを見る」を押すと読めます。</p>
-               <p>レベル 3 は「経路とフィルタ」で、8 種類・100 問以上あります。OSPF のコストで道を選ばせる問題（行きだけ／行きも帰りも。コストは、設定したルータから出ていく通信にだけ効きます）、3 台のルータで行きと帰りの経路を足す問題、ACL の問題が 3 つ（行の順番、ポート番号つきの行、返事まで止めてしまう一覧）、故障が 2 つ同時にある問題、「/数字」がいちばん長い行が勝つことを使って 2 行を選ぶ問題です。ACL の問題の「開ける」「ログインできる」は、tcp の 80 番・22 番で調べます。経路やコストや一覧は、選ぶのではなく自分で書きます。</p>
+               <p>レベル 3 は「経路とフィルタ」で、11 種類・100 問以上あります。OSPF のコストで道を選ばせる問題（行きだけ／行きも帰りも。コストは、設定したルータから出ていく通信にだけ効きます）、3 台のルータで行きと帰りの経路を足す問題、ACL の問題が 3 つ（行の順番、ポート番号つきの行、返事まで止めてしまう一覧）、故障が 2 つ同時にある問題、「/数字」がいちばん長い行が勝つことを使って 2 行を選ぶ問題、BGP の LOCAL_PREF を変えて、2 つあるプロバイダのうち今は使われていない方から出ていかせる設計を選ぶ問題です（LOCAL_PREF は AS パスの長さより先に比べられます。MED は次の問題で扱います）、プロバイダへの 2 本の回線のどちらから出すかを BGP の MED で選ぶ問題（MED を比べるのは同じ隣の AS から来た経路どうしだけです）、OSPF のプライオリティで LAN の DR を選ぶ問題（スパニングツリーとちがい、大きい数字が勝ちます）です。ACL の問題の「開ける」「ログインできる」は、tcp の 80 番・22 番で調べます。経路やコストや一覧は、選ぶのではなく自分で書きます。</p>
                <div class="callout">レベル 4 は、まだ用意できていません。「このレベルの問題は、まだありません。」と出ます。</div>
                <h3>どのレベルから始めるか</h3>
                <p>迷ったら「レベル判定をする」を押してください。質問が 1 つあり、そのあと多くても 8 問を解きます。テストではなく、始める場所を見つけるためのものです。わからない問題は「わからないので次へ」で飛ばせます。</p>
@@ -170,6 +187,7 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>経路表</strong> — ルータが「どの宛先をどちらへ送るか」を持っている表です。</li>
                </ul>
                <p>タイムラインの各行は、<code>CREATE</code>（作られた）、<code>FWD</code>（転送された）、<code>DELIVER</code>（届いた）、<code>DROP</code>（落ちた）のいずれかです。落ちた行には理由が付きます。</p>
+               <p>スイッチは、宛先の MAC アドレスがどのポートの先にいるかをまだ覚えていないとき（ブロードキャストのときも）、入ってきたポート以外の、同じ VLAN の使えるポートすべてにフレームを写して流します。タイムラインはパケットが進む1本の道だけを行にし、写しはそのスイッチの行に「ほかに N か所へコピー」と書かれます。行を押すと、写しがどの機器に届き、どうなったか（「自分あてでないので捨てた」など）が見られます。写しを受け取って捨てた機器は、落ちた行にはなりません。覚えた内容は、ARP の答えと同じく、トレースを消すまで残ります。ケーブルがポートを指定していない図では、ケーブル1本を1つのポートとして同じように扱います。ARP の問い合わせもブロードキャストなので同じように写され、その写しは <code>arp-request</code> の行に書かれます。問い合わせと返事を通したスイッチは、両端の場所を覚えます。</p>
                <div class="callout">赤いケーブルは、そのリンクが落ちていることを表します。障害を扱うレッスンでは、これがそのレッスンの主題です。</div>`
       },
       {
@@ -217,7 +235,7 @@ window.USER_GUIDE_CONTENT = {
                </ul>
                <h3>ステップに合わせて変わる表示</h3>
                <ul>
-                 <li><strong>ARP の基本</strong> — 「ARP テーブル」と「ARP の変化」は、いま表示しているステップの時点の内容です。Router の行は、Server や Client の答えが届いたステップで増えます。リセットすると、最初から入っていた行だけに戻ります。このレッスンは押すたびに覚えた内容を消してから送るので、毎回 ARP の質問が見られます。ほかのレッスンでは、機器は答えを覚えていて、ある宛先へ聞くのは最初に送るときだけです（トレースを消去すると忘れます）。</li>
+                 <li><strong>ARP の基本</strong> — 「ARP テーブル」と「ARP の変化」は、いま表示しているステップの時点の内容です。表は空から始まり、答えが届いたステップで行が増えます。リセットすると空に戻ります。このレッスンは押すたびに覚えた内容を消してから送るので、毎回 ARP の質問が見られます。ほかのレッスンでは、機器は答えを覚えていて、ある宛先へ聞くのは最初に送るときだけです（トレースを消去すると忘れます）。</li>
                  <li><strong>DHCP と DNS</strong> — 「いまの DHCP Client」の行が、DISCOVER・OFFER・REQUEST の間は住所なし、ACK が届くと BOUND と住所を表示します。図の機器を押して見る設定は、やり取りがすべて終わったあとのものです。</li>
                  <li><strong>TCP のハンドシェイク</strong> — 「もう少し詳しく」で、ルータのホップの 2 つの TTL（着いたときと出ていくとき）と、localSeq が SYN の SEQ + 1 になる理由が説明されます。</li>
                  <li><strong>VLAN による分離</strong> — VLAN、アクセスポート、トランクの意味が最初に書かれています。開いた時点では何も送りません。破棄の理由は言葉で表示されます。</li>
@@ -252,6 +270,20 @@ window.USER_GUIDE_CONTENT = {
                <div class="callout">cwnd は 2000 バイト（2 MSS）から始まり、ssthresh の 4000 バイトまでスロースタートで増えます。タイムアウトの時点でも、ACK されていない 2000 バイトは「送信中」のまま表示されます。</div>`
       },
       {
+        id: "tcp-flow-control",
+        title: "TCP のフロー制御",
+        html: `<p>「TCP のフロー制御」のレッスンでは、受信側のアプリを遅くして、送信側が止まる様子を見ます。ステージ 4 のレッスンです。</p>
+               <ul>
+                 <li><strong>設定</strong> — Server のアプリの読む速さ（すぐ全部読む／ゆっくり読む／しばらく読むのをやめる）と、Server の MSS を選び、「接続して 8000 バイト送る」を押します。</li>
+                 <li><strong>セグメントの表</strong> — すべてのセグメントを順に並べ、ウィンドウ、cwnd、rwnd、送信中のバイト数を示します。ウィンドウが 0 の行は色が変わります。</li>
+                 <li><strong>ヘッダを読む</strong> — 行を選ぶと、そのセグメントのウィンドウ欄と、バイト列が下に出ます。</li>
+                 <li><strong>ハンドシェイクで決まったこと</strong> — SYN と SYN-ACK が示したオプション（MSS、ウィンドウスケール、SACK 許可）と、その結果です。MSS は 2 人で 1 つに決める値ではなく、それぞれが受け取れる大きさを知らせる値です。</li>
+                 <li><strong>「TCP のハンドシェイク」のレッスン</strong> — 「もう少し詳しく」に、選んだセグメントのウィンドウとオプション、決まった結果が出ます。</li>
+                 <li><strong>練習問題</strong> — パケット問題のレベル 4 に「送信側はあと何バイト送れる？」が加わりました。ステージ 4 のテスト（レベル 1）には、ウィンドウ 0 と MSS の問題があります。</li>
+               </ul>
+               <div class="callout">オプションは、バイト列の表示にはまだ描かれていません。この画面は SACK を示しますが、選択確認応答そのものは行いません。損失も起こしません。</div>`
+      },
+      {
         id: "lesson-readouts",
         title: "数値の読み方（MTU・無線・QoS・NetFlow）",
         html: `<h3>MTU と分割</h3>
@@ -260,6 +292,7 @@ window.USER_GUIDE_CONTENT = {
                  <li>「トレースのメモ」の「断片の数」（英語表示では <code>Fragments</code>）に、いくつに分かれたかが出ます。</li>
                  <li>分割が起きなかったときは、再組み立てが「不要」（英語表示では <code>not needed</code>）と表示されます。</li>
                  <li>分割された ping のあとは、同じメモの下に<strong>断片の数の計算</strong>が出ます。運ぶバイト数（データ ＋ ICMP ヘッダ）、断片 1 つが運べるバイト数（MTU − IP ヘッダを 8 の倍数に切り捨て）、その割り算の順で、「…なので、断片は 3 個」のように読めます。</li>
+                 <li><strong>Path MTU Discovery（RFC 1191）</strong> — DF にチェックを入れて ping すると、「Path MTU Discovery」の欄に、パケットを捨てて「fragmentation needed」を返したルータとその MTU、Host A が覚えた Host B への Path MTU が出ます。「… バイトで DF を立てて送り直す」を押すと、その大きさのパケットが分割されずに届くことを確かめられます。スライダーを動かすと、覚えた Path MTU はリセットされます。</li>
                </ul>
                <h3>無線 LAN（802.11）</h3>
                <ul>
@@ -300,13 +333,24 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>タブの点</strong> — リンクを落とす前と経路表が変わったルータのタブに、点が付きます。読み上げでは「変化あり」と伝わります。</li>
                  <li><strong>4 つとも点が付きます</strong> — どのルータも、落ちたリンクのネットワーク 10.0.24.0/30 への経路を持っていたからです。</li>
                  <li><strong>リンクを戻すと</strong> — 案内も点も消えます。</li>
-               </ul>`
+               </ul>
+               <h3>BGP が経路を選ぶ順番</h3>
+               <p>「動的ルーティング」で BGP を選ぶと、比べる順番の一覧が出ます。LOCAL_PREF、AS_PATH の長さ、ORIGIN、MED、eBGP か iBGP か、BGP Identifier、ピアのアドレスの順です（RFC 4271 §9.1）。MED は同じ隣の AS から来た経路どうしだけで比べられ、さらに先の AS へは渡されません。実際のルータが BGP Identifier の前に比べる、次ホップまでの IGP コストは、このシミュレータでは比べません。</p>
+               <h3>OSPF のエリアと DR/BDR</h3>
+               <p>「OSPF のエリアと DR/BDR」のレッスンでは、ルータを選ぶと、そのルータがいるエリアごとのリンクステートデータベース（Type 1・2・3・5 の LSA）と、経路の種類（エリア内・エリア間・E1・E2）が読めます。LAN のルータを止めたり起動したりすると、DR と BDR がどう変わるかを試せます。後からプライオリティの大きいルータが来ても、役は譲られません。「全台を同時に再起動」すると選び直しになります。</p>
+               <div class="callout">これらの表は図のネットワークから計算したものです。シミュレータは OSPF のパケットを送りません。Type 4 の LSA、スタブエリア、仮想リンクは扱いません。エリアが 1 つのネットワークの経路は、これまでと同じです。</div>
+               <h3>traceroute（「複数ホップ」のレッスン）</h3>
+               <p>「複数ホップ」のレッスンの「traceroute」の欄で <code>traceroute Client → 203.0.113.10</code> を押すと、シミュレータが TTL 1、2、3 の調査パケットを順に送り、1 つにつき 1 行が出ます。TTL が 0 になったルータは「時間超過 (time exceeded)」を返し、最後の行はサーバ自身の「エコー応答」です。各行のアドレスは、返事を出したインタフェースのアドレスです。答えが返らなかった調査パケットは <code>*</code> の行になります。このシミュレータは Windows の tracert と同じく ICMP エコーで調べます（Unix の traceroute は既定では UDP）。</p>
+               <h3>IPv6 の隣の機器を調べる（NDP）</h3>
+               <p>「IPv6 デュアルスタック」の「隣の MAC を調べる (NDP)」で調べるアドレスを選ぶと、Neighbor Solicitation の宛先になる solicited-node アドレス（ff02::1:ff ＋ 下位 24 ビット、RFC 4291）と、フレームの宛先 MAC（33:33 ＋ その下位 32 ビット、RFC 2464）が出ます。このシミュレータは NS／NA を送らずに隣の機器を見つけるので、トレースにはこれらのメッセージは現れません。</p>`
       },
       {
         id: "pcap",
         title: "パケットを書き出す",
         html: `<p>パケットタイムラインの「PCAP を保存」（英語表示では「Download PCAP」）から、選んでいる通信を <code>.pcap</code> ファイルとして保存できます。Wireshark などでそのまま開けます。</p>
-               <p>書き出されるのは<strong>選択中の通信だけ</strong>です。別の通信を書き出すときは、先にその通信を選んでください。</p>`
+               <p>書き出されるのは<strong>選択中の通信だけ</strong>です。別の通信を書き出すときは、先にその通信を選んでください。</p>
+               <p><strong>DNS</strong> は本物と同じ形（RFC 1035）で書き出されるので、Wireshark でも DNS として読めます。ID、フラグ（QR・AA・RD と結果の RCODE）、質問（名前・種類 A・クラス IN）、応答（TTL とアドレス）が並びます。パケットの 16 進表示とフィールド一覧にも同じ項目が出ます。DNS と GRE のフィールド名にポインタを重ねると、その項目の意味が表示されます。</p>
+               <p><strong>GRE トンネル</strong>のレッスンでは、ping が本当にトンネルを通ります。16 進表示で、外側の IP ヘッダ、GRE ヘッダ（Key を含む）、内側のパケットを順に確かめられます。キーが両端で違うと、パケットは反対側のルータで捨てられます。</p>`
       },
       {
         id: "sandbox",
@@ -334,7 +378,7 @@ window.USER_GUIDE_CONTENT = {
       {
         id: "troubleshooting",
         title: "こまったとき",
-        html: `<p><strong>パケットが届かない</strong> — タイムラインの最後の行にある理由を見てください。<code>no-route</code> は経路がない、<code>not-group-member</code> はそのグループに参加していない、<code>acl-deny</code> はフィルタで止められた、<code>next-hop-off-link</code> はルートの次のルータがそのルータのどのネットワークにもいない、<code>reserved-address</code> は機器にネットワークアドレスかブロードキャストアドレスが付いている、という意味です。レッスンによっては、それを見せることが目的です。</p>
+        html: `<p><strong>パケットが届かない</strong> — タイムラインの最後の行にある理由を見てください。<code>no-route</code> は経路がない、<code>no-receiver</code> はスイッチがすべてのポートに写したが受け取る機器がなかった、<code>not-group-member</code> はそのグループに参加していない、<code>acl-deny</code> はフィルタで止められた、<code>next-hop-off-link</code> はルートの次のルータがそのルータのどのネットワークにもいない、<code>reserved-address</code> は機器にネットワークアドレスかブロードキャストアドレスが付いている、という意味です。レッスンによっては、それを見せることが目的です。</p>
                <p><strong>図が画面に収まらない</strong> — 右下の「全体」（英語表示では <code>fit</code>）を押すと全体が入ります。</p>
                <p><strong>言語が英語のまま</strong> — ギャラリー右上で「日本語」を選んでください。プロトコル名やアドレス、<code>DROP</code> などの記号は、そのまま英語で表示されます。</p>
                <p><strong>進み具合が保存されない</strong> — ブラウザのプライベートモードや、サイトデータを保存しない設定では記録できません。</p>`
@@ -370,7 +414,7 @@ window.USER_GUIDE_CONTENT = {
                <ul>
                  <li><strong>Two machines on a wire</strong> — on the same network they reach each other directly.</li>
                  <li><strong>Put a switch in the middle</strong> — a switch passes frames along without changing them.</li>
-                 <li><strong>A third machine</strong> — the switch sends down one cable, not all of them.</li>
+                 <li><strong>A third machine</strong> — PC-A first asks for PC-B’s MAC address. The switch has just started, so it copies that question to PC-C too, which throws it away. PC-B’s answer teaches the switch the way, so the packet, from the first send on, reaches only PC-B.</li>
                  <li><strong>Two networks, not joined</strong> — <em>this one is meant to fail.</em> Nothing leads out to the other network (there is no router), so two switches side by side do not deliver it.</li>
                  <li><strong>A router fills the gap</strong> — a machine with a foot in both networks carries packets across.</li>
                  <li><strong>How the router decides</strong> — it matches the destination against a row in its table.</li>
@@ -378,6 +422,23 @@ window.USER_GUIDE_CONTENT = {
                <p>Leave partway through and it resumes at the step you reached.</p>
                <p>At the end, “What to learn next, and the final test →” leads on to <a href="#final-test">the final test</a>.</p>
                <div class="callout">Step four failing is the correct outcome. It says so before you press. Nothing is broken.</div>`
+      },
+      {
+        id: "learning-path",
+        title: "The learning path (7 stages)",
+        html: `<p>The path takes you from the basics to the latest in seven stages. Open it from "The whole learning path: 7 stages →" in the gallery or from the exercises page; its address is <code>#/path</code>.</p>
+               <ol>
+                 <li><strong>Getting ready</strong> — the getting-started course, subnetting practice and more</li>
+                 <li><strong>LAN</strong> — switches, ARP and VLANs</li>
+                 <li><strong>IP</strong> — routes, the hop-by-hop path and MTU</li>
+                 <li><strong>Transport and services</strong> — UDP and TCP, DHCP and DNS, HTTP, NAT</li>
+                 <li><strong>Enterprise</strong> — spanning tree, OSPF and its areas, ACLs, redundancy, QoS, IPv6 and wireless</li>
+                 <li><strong>Providers and data centres</strong> — ECMP, tunnels, MPLS, VXLAN and multicast</li>
+                 <li><strong>Modern and cloud</strong> — TLS 1.3, HTTP/2, HTTP/3 and congestion control</li>
+               </ol>
+               <p>Each stage lists its lessons and what it takes to pass: the course, exercise levels, packet exercise levels and the test. <strong>Passing the test passes the stage</strong> and opens the next one. A stage with no test yet is passed by clearing its exercise levels. Passing a later stage's test passes the stages before it too, so if you passed the test before the path existed, those stages are already passed.</p>
+               <p>Every stage has a test of its own. The tests of stages 1, 2, 3 and 7 are new (levels 5 to 8 on the test page), ten questions each. Stages 4 and 5 keep levels 1 and 2; stage 6 has levels 3 and 4 (Expert). The test page lists them in the order of the stages. Whatever level you passed before still passes its stage and every stage before it.</p>
+               <p>Lessons and exercises of a stage that is not open yet can still be read and tried; only passing is gated. The top of the page shows the one next thing to do. Topics with no lesson yet are listed as coming soon.</p>`
       },
       {
         id: "final-test",
@@ -462,7 +523,7 @@ window.USER_GUIDE_CONTENT = {
                  <li>The kinds of task come in a different order each time. The same kind never comes twice in a row.</li>
                </ul>
                <p>Each level shows two short lines. The first says how many you have solved and how many more it takes. The second says “Kinds of task not solved yet: …”. Once the level is cleared, the second line becomes “Next: the final test (10 questions), or level 2.” The details are behind “See the full rule”.</p>
-               <p>Level 3, “routes and filters”, has eight kinds of task and over 100 exercises: steering traffic with an OSPF cost (one way, or there and back; a cost counts only for traffic leaving the router it is set on), adding the missing routes there and back across three routers, three ACL tasks (the order of the lines, a line with a port number, a list that also stops the answers), two faults at once, and choosing two route lines by the rule that the longest “/number” wins. In the ACL tasks “can open” and “can log in” are tcp connections to ports 80 and 22. Routes, costs and list lines are written, not picked.</p>
+               <p>Level 3, “routes and filters”, has eleven kinds of task and over 100 exercises: steering traffic with an OSPF cost (one way, or there and back; a cost counts only for traffic leaving the router it is set on), adding the missing routes there and back across three routers, three ACL tasks (the order of the lines, a line with a port number, a list that also stops the answers), two faults at once, choosing two route lines by the rule that the longest “/number” wins, and choosing the design that makes traffic leave by the provider it does not use now, by changing BGP LOCAL_PREF (LOCAL_PREF is compared before the AS path length), choosing which of two links into a provider to leave by with BGP MED (MED is compared only between routes from the same neighbouring AS), and choosing a LAN's DR with OSPF priorities (unlike spanning tree, the highest number wins). In the ACL tasks “can open” and “can log in” are tcp connections to ports 80 and 22. Routes, costs and list lines are written, not picked.</p>
                <div class="callout">Level 4 is not available yet. It says “No exercises at this level yet.”</div>
                <h3>Where to start</h3>
                <p>If you are not sure, press “Find my level”. It asks one question and then gives you at most 8 exercises. It is not a test; it only finds where to start. “I cannot do this one: next” skips an exercise.</p>
@@ -512,6 +573,7 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>The route table</strong> — what a router holds about where to send which destination.</li>
                </ul>
                <p>Each row is <code>CREATE</code>, <code>FWD</code>, <code>DELIVER</code> or <code>DROP</code>. A dropped row carries its reason.</p>
+               <p>A switch that has not yet learned which port leads to a frame's destination MAC address (or that has a broadcast) copies the frame out of every usable port in the same VLAN except the one it came in on. The timeline keeps one row per hop of the packet's own path; the switch's row says “copied to N more”, and pressing it lists which device each copy reached and what became of it (not for it, discarded, and so on). A device that throws a copy away is not a dropped row. What a switch learns stays, like ARP answers, until the traces are cleared. Where a cable does not say which port it plugs into, the cable counts as a port of its own, and all of this works the same. An ARP request is a broadcast, so it is copied the same way, and its copies are listed on the <code>arp-request</code> row; the switches it and its reply cross learn both ends.</p>
                <div class="callout">A red cable means that link is down. On the lessons about failure, that is the subject.</div>`
       },
       {
@@ -559,7 +621,7 @@ window.USER_GUIDE_CONTENT = {
                </ul>
                <h3>Panels that follow the step</h3>
                <ul>
-                 <li><strong>ARP Basics</strong> — “ARP tables” and “ARP over time” show what each device knew at the step on screen. The Router’s lines appear at the step where the Server’s or the Client’s answer arrives. Reset goes back to the lines that were there from the start. This lesson forgets what was learned before each send, so the ARP question is asked every time. In other lessons a device remembers the answer and asks only before its first send to an address (clearing the traces makes it forget).</li>
+                 <li><strong>ARP Basics</strong> — “ARP tables” and “ARP over time” show what each device knew at the step on screen. The tables start empty, and a line appears at the step where an answer arrives. Reset empties them again. This lesson forgets what was learned before each send, so the ARP question is asked every time. In other lessons a device remembers the answer and asks only before its first send to an address (clearing the traces makes it forget).</li>
                  <li><strong>DHCP &amp; DNS</strong> — the “DHCP Client now” line says it has no address during DISCOVER, OFFER and REQUEST, and BOUND with its address once the ACK has arrived. A device’s details, opened from the diagram, show the end of the whole exchange.</li>
                  <li><strong>TCP Handshake</strong> — “A little more detail” names the two TTLs at a router’s hop (as the packet arrived, and as it leaves) and explains why localSeq is the SYN’s SEQ + 1.</li>
                  <li><strong>VLAN (802.1Q)</strong> — VLAN, access port and trunk are defined first. Nothing is sent until you press a button, and a drop is explained in words.</li>
@@ -594,6 +656,20 @@ window.USER_GUIDE_CONTENT = {
                <div class="callout">cwnd starts at 2000 bytes (two MSS) and grows through slow start to ssthresh, 4000 bytes. At the timeout, the 2000 unacknowledged bytes are still shown as in flight.</div>`
       },
       {
+        id: "tcp-flow-control",
+        title: "TCP flow control",
+        html: `<p>The “TCP Flow Control” lesson lets you slow the receiving application and watch the sender stop. It is a lesson of stage 4.</p>
+               <ul>
+                 <li><strong>Settings</strong> — choose how fast the Server's application reads (everything at once, slowly, or it stops for a while) and the Server's MSS, then press “Connect and send 8000 bytes”.</li>
+                 <li><strong>The table of segments</strong> — every segment in order, with its window, cwnd, rwnd and the bytes in flight. Rows with a window of 0 are coloured.</li>
+                 <li><strong>Reading a header</strong> — choose a row to see that segment's window field and bytes below.</li>
+                 <li><strong>What the handshake settled</strong> — the options the SYN and SYN-ACK offered (MSS, window scale, SACK permitted) and the result. MSS is not one agreed number: each end announces what it will receive.</li>
+                 <li><strong>The TCP Handshake lesson</strong> — “A little more detail” shows the window and options of the chosen segment, and what they settled.</li>
+                 <li><strong>Practice</strong> — packet exercises level 4 gains “How much may the sender still send?”. The stage 4 test (level 1) asks about a zero window and the MSS.</li>
+               </ul>
+               <div class="callout">The byte view does not draw the options yet. This screen offers SACK but does not do selective acknowledgement, and nothing is lost here.</div>`
+      },
+      {
         id: "lesson-readouts",
         title: "Reading the numbers (MTU, wireless, QoS, NetFlow)",
         html: `<h3>MTU &amp; Fragmentation</h3>
@@ -602,6 +678,7 @@ window.USER_GUIDE_CONTENT = {
                  <li>Under “Trace Notes”, <code>Fragments</code> (「断片の数」 in Japanese) says how many pieces the packet was split into.</li>
                  <li>When nothing was split, reassembly reads <code>not needed</code> (「不要」 in Japanese).</li>
                  <li>After a fragmented ping, the same notes show the <strong>sum behind the fragment count</strong>: the bytes to carry (data plus the ICMP header), how much each fragment carries (the MTU minus the IP header, rounded down to a multiple of 8), and the division, ending in “so 3 fragments”.</li>
+                 <li><strong>Path MTU discovery (RFC 1191)</strong> — tick DF and ping, and the “Path MTU Discovery” card names the router that threw the packet away with “fragmentation needed”, the MTU it reported, and Host A's path MTU to Host B. “send again at … bytes, DF set” shows that a packet of that size arrives whole. Moving the slider forgets the learned path MTU.</li>
                </ul>
                <h3>Wireless 802.11</h3>
                <ul>
@@ -642,13 +719,24 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>The dot on a tab</strong> — a tab gets a dot when that router's table differs from before the failure. A screen reader announces it as “changed”.</li>
                  <li><strong>All four get a dot</strong> — every router had a route to the failed link's network, 10.0.24.0/30.</li>
                  <li><strong>Restore the link</strong> — the note and the dots go away.</li>
-               </ul>`
+               </ul>
+               <h3>The order BGP chooses in</h3>
+               <p>In “Dynamic Routing”, selecting BGP lists the order of comparison: LOCAL_PREF, AS_PATH length, ORIGIN, MED, eBGP or iBGP, BGP Identifier, peer address (RFC 4271 §9.1). MED is compared only between routes from the same neighbouring AS, and it is not passed to a further AS. Real routers also compare the IGP cost to the next hop before the BGP Identifier; this simulator does not.</p>
+               <h3>OSPF areas and DR/BDR</h3>
+               <p>In the “OSPF Areas and DR/BDR” lesson, choose a router to read its link-state database for each area it stands in (Type 1, 2, 3 and 5 LSAs) and its routes by path type (intra-area, inter-area, E1, E2). Stop and start the routers on the LAN to see the DR and BDR change. A better router arriving later takes nothing; “restart all together” elects afresh.</p>
+               <div class="callout">These tables are calculated from the network as drawn. The simulator sends no OSPF packets. Type 4 LSAs, stub areas and virtual links are not modelled. A network with one area has the routes it always had.</div>
+               <h3>Traceroute (the “Multi-Hop” lesson)</h3>
+               <p>In the “Multi-Hop” lesson, the “Traceroute” card's <code>traceroute Client → 203.0.113.10</code> makes the simulator send probes with TTL 1, 2 and 3, one row each. The router where the TTL reaches 0 answers “time exceeded”; the last row is the server's own “echo reply”. Each row's address is the interface the answer came from. A probe nobody answered shows as <code>*</code>. This simulator probes with ICMP echo, as Windows tracert does (Unix traceroute sends UDP by default).</p>
+               <h3>Finding an IPv6 neighbour (NDP)</h3>
+               <p>In “IPv6 Dual-Stack”, choose an address under “Finding a neighbour’s MAC (NDP)” to see where a Neighbor Solicitation for it goes: the solicited-node address (ff02::1:ff plus the last 24 bits, RFC 4291) and the frame's MAC (33:33 plus that group's last 32 bits, RFC 2464). This simulator finds neighbours without sending NS/NA, so these messages do not appear in the trace.</p>`
       },
       {
         id: "pcap",
         title: "Exporting packets",
         html: `<p>"Download PCAP" in the packet timeline saves the selected trace as a <code>.pcap</code> file, which opens in Wireshark as it is.</p>
-               <p>Only the <strong>selected trace</strong> is written. To export a different one, select it first.</p>`
+               <p>Only the <strong>selected trace</strong> is written. To export a different one, select it first.</p>
+               <p><strong>DNS</strong> is written in its real wire format (RFC 1035), so Wireshark reads it as DNS: the ID, the flags (QR, AA, RD and the RCODE result), the question (name, type A, class IN) and the answer (TTL and address). The packet's hex view and field list show the same fields. Hover a DNS or GRE field name to read what it means.</p>
+               <p>In the <strong>GRE tunnel</strong> lesson a ping really crosses the tunnel. The hex view shows the outer IP header, the GRE header with its Key, and the inner packet, in order. If the keys at the two ends differ, the far router drops the packet.</p>`
       },
       {
         id: "sandbox",
@@ -676,7 +764,7 @@ window.USER_GUIDE_CONTENT = {
       {
         id: "troubleshooting",
         title: "Troubleshooting",
-        html: `<p><strong>The packet did not arrive.</strong> Read the reason on the last row of the timeline. <code>no-route</code> means there was no route to it, <code>not-group-member</code> means the host had not joined that multicast group, <code>acl-deny</code> means a filter stopped it, <code>next-hop-off-link</code> means a route names a next router on none of that router’s networks, <code>reserved-address</code> means a device has its subnet’s network or broadcast address. On some lessons, showing you that is the point.</p>
+        html: `<p><strong>The packet did not arrive.</strong> Read the reason on the last row of the timeline. <code>no-route</code> means there was no route to it, <code>no-receiver</code> means a switch copied it out of every port and no device took it, <code>not-group-member</code> means the host had not joined that multicast group, <code>acl-deny</code> means a filter stopped it, <code>next-hop-off-link</code> means a route names a next router on none of that router’s networks, <code>reserved-address</code> means a device has its subnet’s network or broadcast address. On some lessons, showing you that is the point.</p>
                <p><strong>The diagram does not fit.</strong> Press <code>fit</code> at the bottom right.</p>
                <p><strong>Still in English.</strong> Choose 日本語 at the top right of the gallery. Protocol names, addresses and codes such as <code>DROP</code> stay in English either way.</p>
                <p><strong>Progress is not remembered.</strong> A private window, or a browser set not to keep site data, has nowhere to store it.</p>`
