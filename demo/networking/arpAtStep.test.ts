@@ -91,11 +91,13 @@ const FINAL = {
 
 // TC-700: the ARP tables follow the step, and Reset (no step) goes back to the start.
 describe('ARP tables at a step (TC-700)', () => {
-  it('before any step holds only what the Client and Server knew from the start', () => {
+  // Flipped by REQ-190 / TC-1145: the Client and Server learned the Router from
+  // its questions, so nothing is known before any step.
+  it('before any step every table is empty', () => {
     expect(arpTablesAtStep(TRACE, FINAL, -1)).toEqual({
       'router-1': {},
-      'server-1': { '203.0.113.1': ROUTER_TO_SERVER },
-      'client-1': { '10.0.0.1': ROUTER_TO_CLIENT },
+      'server-1': {},
+      'client-1': {},
     });
   });
 
@@ -119,9 +121,21 @@ describe('what the Router learned at a step (TC-701)', () => {
   });
 
   it('learns the Server’s address and MAC at the Server’s answer', () => {
-    expect(arpLearnedAt(TRACE, 2)).toEqual([
-      { nodeId: 'router-1', ip: '203.0.113.10', mac: SERVER_MAC },
-    ]);
+    expect(arpLearnedAt(TRACE, 2)).toContainEqual({
+      nodeId: 'router-1',
+      ip: '203.0.113.10',
+      mac: SERVER_MAC,
+    });
+  });
+
+  // TC-1145: the one asked learns the asker from the question.
+  it('the Server learns the Router at its answer, from the Router’s question', () => {
+    expect(arpLearnedAt(TRACE, 2)).toContainEqual({
+      nodeId: 'server-1',
+      ip: '203.0.113.1',
+      mac: ROUTER_TO_SERVER,
+    });
+    expect(arpTablesAtStep(TRACE, FINAL, 1)['server-1'] ?? {}).not.toHaveProperty('203.0.113.1');
   });
 
   it('never lists the Router’s own addresses at any step', () => {

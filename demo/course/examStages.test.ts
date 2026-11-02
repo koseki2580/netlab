@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import {
+  negotiateTcpOptions,
+  planTcpTransfer,
+  synAckOptions,
+  synOptions,
+} from '../../src/layers/l4-transport/TcpFlowControl';
 import { EXAM_LEVELS } from './examLevels';
+import { EXAM_LEVEL_1 } from './examQuestions';
 import { EXAM_STAGE_1 } from './examStage1';
 import { EXAM_STAGE_2 } from './examStage2';
 import { EXAM_STAGE_3 } from './examStage3';
@@ -70,5 +77,40 @@ describe('a stage test asks only about its own stage (TC-964)', () => {
       expect(text, topic).not.toContain(topic);
     }
     expect(stage7.comingSoon.length).toBeGreaterThan(0);
+  });
+});
+
+// TC-1077
+describe('the stage 4 test asks about flow control (TC-1077)', () => {
+  const question = (id: string) => EXAM_LEVEL_1.questions.find((entry) => entry.id === id)!;
+
+  it('still has ten questions, and sends the new ones to the lesson', () => {
+    expect(EXAM_LEVEL_1.questions).toHaveLength(10);
+    const stop = EXAM_LEVEL_1.path.find((entry) => entry.id === 'tcp-flow');
+    expect(stop?.path).toContain('/simulation/tcp-flow-control');
+    expect(question('tcp-zero-window').taughtBy).toBe('tcp-flow');
+    expect(question('tcp-mss').taughtBy).toBe('tcp-flow');
+  });
+
+  it('a zero window: the engine stops data, keeps probing and leaves the connection open', () => {
+    const plan = planTcpTransfer({
+      bytes: 8000,
+      mss: 1000,
+      receiveBuffer: 4000,
+      readBytes: () => 0,
+      maxRounds: 20,
+    });
+    expect(plan.delivered).toBe(4000);
+    expect(plan.steps.filter((step) => step.kind === 'probe').length).toBeGreaterThan(0);
+    expect(plan.congestion.ssthresh).toBe(64000);
+    const q = question('tcp-zero-window');
+    expect(q.options[q.answer]?.en).toContain('probes');
+  });
+
+  it('the MSS: the engine gives the answer the test gives', () => {
+    const syn = synOptions({ mss: 1460 });
+    const { clientSendMss } = negotiateTcpOptions(syn, synAckOptions({ mss: 1000 }, syn));
+    const q = question('tcp-mss');
+    expect(q.options[q.answer]?.en).toBe(`${clientSendMss} bytes`);
   });
 });

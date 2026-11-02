@@ -5,6 +5,7 @@
  */
 import { encodeValue, fieldBits, isNumeric } from './codec';
 import { descriptorError } from './errors';
+import { fieldsIn } from './wire';
 import type {
   Bilingual,
   HeaderField,
@@ -71,14 +72,8 @@ export function validateIdentity(identity: ProtocolIdentity): void {
   }
 }
 
-/** The versions a field belongs to. */
 export function versionsOf(field: HeaderField, all: readonly string[]): readonly string[] {
   return field.in ?? all;
-}
-
-/** The fields of a list that exist in `version`, in wire order. */
-export function fieldsIn(fields: readonly HeaderField[], version: string): HeaderField[] {
-  return fields.filter((f) => f.in === undefined || f.in.includes(version));
 }
 
 function validateVersions(d: ProtocolDescriptor): string {

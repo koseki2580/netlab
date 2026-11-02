@@ -319,6 +319,26 @@ export const PICK_MESSAGES: Readonly<Record<string, Localised>> = {
     'By the time it reaches that router it has already been cut. The router that cuts is the one sending onto the narrow cable.',
     'パケットはそこに着く前に、もう分割されています。分割するのは、細い回線へ送り出すルータです。',
   ),
+  'window-other': L(
+    'That uses the larger of the two limits. Both apply, so the smaller one decides.',
+    'それは 2 つの上限の大きいほうを使っています。両方に従うので、小さいほうで決まります。',
+  ),
+  'window-forgot-flight': L(
+    'That is the whole limit, or nearly. Bytes in flight have already used part of it.',
+    'それは上限そのものの値です。送信中のバイトが、もうその一部を使っています。',
+  ),
+  'window-is-flight': L(
+    'That is what is already on its way, not what may still go.',
+    'それはすでに送った分で、これから送れる分ではありません。',
+  ),
+  'window-nothing': L(
+    'There is room left: both limits are above what is in flight.',
+    'まだ余裕があります。どちらの上限も、送信中のバイトより大きい値です。',
+  ),
+  'window-one-short': L(
+    'There is room for one segment more than that. Work it out again from the smaller limit.',
+    'それよりもう 1 セグメント分の余裕があります。小さいほうの上限から計算し直してください。',
+  ),
   'cut-none-but-narrow': L(
     'A cable on the way has an MTU smaller than the packet, so some router must cut it.',
     '途中に、パケットより MTU が小さい回線があります。どこかのルータが分割します。',

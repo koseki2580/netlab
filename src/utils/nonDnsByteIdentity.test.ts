@@ -4,6 +4,8 @@
  * is recorded in `__golden__/non-dns-bytes.json`; the file was written before
  * the DNS wire-format change and must not change with it.
  */
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { HookEngine } from '../hooks/HookEngine';
 import { SwitchForwarder } from '../layers/l2-datalink/SwitchForwarder';
@@ -214,10 +216,32 @@ beforeAll(() => {
   });
 });
 
+const GOLDEN_PATH = join(__dirname, '__golden__', 'non-dns-bytes.json');
+const readGolden = () => JSON.parse(readFileSync(GOLDEN_PATH, 'utf8')) as Record<string, unknown>;
+
+/**
+ * Compared as parsed JSON, not as text, so that formatting the file changes nothing.
+ * `corpus` and `arp` are strict: no change to the engine can move them. `engine` may
+ * change only for an approved change to what the engine sends; rewrite that section
+ * alone with UPDATE_NON_DNS_ENGINE_GOLDEN=1 and review the diff by value.
+ */
 describe('non-DNS output is byte-identical across the DNS migration (TC-1020)', () => {
   afterEach(() => vi.restoreAllMocks());
 
-  it('keeps hex, field rows, trace labels and pcap bytes of every non-DNS frame', async () => {
+  it('keeps hex, field rows, trace labels and pcap bytes of every non-DNS frame', () => {
+    const recorder = new TraceRecorder();
+    const corpus = Object.fromEntries(
+      Object.entries(CORPUS).map(([name, f]) => [
+        name,
+        { ...view(f), label: recorder.deriveTraceLabel({ frame: f } as InFlightPacket) },
+      ]),
+    );
+    const golden = readGolden();
+    expect(corpus).toEqual(golden['corpus']);
+    expect(view(ARP)).toEqual(golden['arp']);
+  });
+
+  it('keeps every non-DNS frame of a seeded engine run', async () => {
     // DHCP transaction ids come from Math.random and ICMP identifiers hash ids built from
     // Date.now: pin both so the bytes are repeatable.
     vi.spyOn(Date, 'now').mockReturnValue(1_700_000_000_000);
@@ -226,14 +250,6 @@ describe('non-DNS output is byte-identical across the DNS migration (TC-1020)', 
       seed = (seed * 48271) % 0x7fffffff;
       return seed / 0x7fffffff;
     });
-    const recorder = new TraceRecorder();
-    const corpus = Object.fromEntries(
-      Object.entries(CORPUS).map(([name, f]) => [
-        name,
-        { ...view(f), label: recorder.deriveTraceLabel({ frame: f } as InFlightPacket) },
-      ]),
-    );
-
     const engine = new SimulationEngine(TOPOLOGY, new HookEngine());
     await engine.simulateDhcp('client', undefined, 'guard-dhcp');
     await engine.ping('client', '192.168.1.10');
@@ -247,9 +263,11 @@ describe('non-DNS output is byte-identical across the DNS migration (TC-1020)', 
       };
     });
 
-    const golden = { corpus, arp: view(ARP), engine: traces };
-    await expect(`${JSON.stringify(golden, null, 1)}\n`).toMatchFileSnapshot(
-      './__golden__/non-dns-bytes.json',
-    );
+    const golden = readGolden();
+    if (process.env['UPDATE_NON_DNS_ENGINE_GOLDEN']) {
+      writeFileSync(GOLDEN_PATH, `${JSON.stringify({ ...golden, engine: traces }, null, 2)}\n`);
+      return;
+    }
+    expect(traces).toEqual(golden['engine']);
   });
 });

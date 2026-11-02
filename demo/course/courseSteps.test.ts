@@ -66,11 +66,11 @@ describe('the getting-started course', () => {
 
 describe('what step 3 says, on the real simulator', () => {
   /**
-   * TC-871 — the switch of step 3 has just started and PC-B only receives:
-   * each send is also copied to PC-C, which throws it away, until PC-B has
-   * sent something, as TC-622's text says.
+   * TC-871 — the first send asks for PC-B's MAC: that question is copied to
+   * PC-C, which throws it away, and the answer teaches the switch, so the
+   * packet and every later send go to PC-B only, as TC-622's text says.
    */
-  it('copies each packet to PC-C until PC-B has sent something', async () => {
+  it('copies the question to PC-C once, and then sends to PC-B only', async () => {
     await import('../../src/layers/l2-datalink');
     await import('../../src/layers/l3-network');
     await import('../../src/layers/l7-application');
@@ -102,11 +102,10 @@ describe('what step 3 says, on the real simulator', () => {
       );
     const first = await send();
     expect(first.status).toBe('delivered');
+    // The question for PC-B's MAC is the one thing copied, on the first send.
+    const arpCopies = first.hops.find((hop) => hop.event === 'arp-request')?.flood?.copies ?? [];
+    expect(arpCopies.map((copy) => copy.toNodeId)).toEqual(['pc-c']);
     expect(copies(first)).toEqual([['pc-c', 'discarded', 'not-for-me']]);
-    // PC-B has sent nothing, so the switch still does not know its port.
-    expect(copies(await send())).toEqual([['pc-c', 'discarded', 'not-for-me']]);
-    // Once PC-B has sent something, the switch knows where it is.
-    await engine.ping('pc-b', ip(step.from));
     expect(copies(await send())).toEqual([]);
   });
 });

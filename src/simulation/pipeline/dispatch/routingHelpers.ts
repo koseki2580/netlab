@@ -1,3 +1,4 @@
+import { protocolPacks } from '../../../protocols/packs';
 import { IGMP_PROTOCOL } from '../../../types/multicast';
 import type { IpPacket, TcpSegment, UdpDatagram } from '../../../types/packets';
 import type { RouteEntry } from '../../../types/routing';
@@ -153,7 +154,7 @@ export function protocolName(num: number): string {
   if (num === IGMP_PROTOCOL) return 'IGMP';
   if (num === 6) return 'TCP';
   if (num === 17) return 'UDP';
-  return String(num);
+  return protocolPacks.byIpProtocol(num)?.name.short ?? String(num);
 }
 
 export function isPortBearingPayload(

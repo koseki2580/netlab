@@ -163,6 +163,8 @@ export const SEL = {
     greInner: 'gre-inner',
     greStatus: 'gre-status',
     greKeyChange: 'gre-key-change',
+    greSend: 'gre-send',
+    greHex: 'gre-hex',
     mplsLdp: 'mpls-ldp',
     mplsPhp: 'mpls-php',
     mplsStack: 'mpls-stack',

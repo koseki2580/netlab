@@ -58,13 +58,14 @@ test('TC-700: the ARP tables follow the step', async ({ page, demoPage, lessonPa
   await expect(router).toBeVisible();
   await expect(router).not.toContainText('203.0.113.10');
 
-  // Step 1 is the Client creating the ping, step 2 the Router's question.
+  // Steps 1-4: the Client creates the ping, asks for the Router, hears the
+  // answer and sends; step 5 is the Router's question for the Server.
   const lesson = lessonPage.using({ next: page.getByTestId(ID.step) });
-  await press(lesson, 2);
+  await press(lesson, 5);
   await expect(router).not.toContainText('203.0.113.10');
   await expect(page.getByTestId(ID.arpChange)).not.toContainText('203.0.113.1 ');
 
-  // Step 3 is the Server's answer: now the Router knows it.
+  // Step 6 is the Server's answer: now the Router knows it.
   await press(lesson, 1);
   await expect(router).toContainText('203.0.113.10');
   await expect(page.getByTestId(ID.arpChange)).toContainText('203.0.113.10');
@@ -117,8 +118,9 @@ test('TC-705, TC-706: the TCP lesson labels its two TTLs and its two sequence nu
   await page.getByTestId(ID.tcpConnect).click();
   await page.getByTestId(ID.tcpMore).click();
 
-  // Create, the Router's question, the Server's answer, then the Router forwards.
-  await press(lessonPage, 4);
+  // Create, the Client's question and the Router's answer, the Client sends,
+  // the Router's question and the Server's answer, then the Router forwards.
+  await press(lessonPage, 7);
   const ttl = page.getByTestId(ID.tcpTtl);
   await expect(ttl).toContainText('64');
   await expect(ttl).toContainText('63');
@@ -202,7 +204,7 @@ test('TC-712: the Step-by-Step and Trace Inspector lessons each say what to look
   await demoPage.waitForTraceCount(1);
   expect(await demoPage.traces()).toHaveLength(1);
   // What the brief says is what R-1's table shows: /24 is the row used.
-  await press(lessonPage, 2);
+  await lessonPage.stepUntil(() => page.getByTestId('step-route-verdict').isVisible());
   await expect(page.getByTestId('step-route-verdict')).toContainText('203.0.113.0/24');
 
   await demoPage.goto('/simulation/trace-inspector');

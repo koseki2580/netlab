@@ -480,9 +480,13 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
   const activeTrace = state.currentTraceId
     ? (state.traces.find((trace) => trace.packetId === state.currentTraceId) ?? null)
     : null;
+  // The packet's own way: the ARP rows a first send carries are beside it.
   const hopLabels =
-    activeTrace?.hops.map((hop) => hop.nodeLabel).join(' → ') ??
-    t('No trace yet', 'まだ通信はありません');
+    activeTrace?.hops
+      .filter((hop) => hop.event !== 'arp-request' && hop.event !== 'arp-reply')
+      .map((hop) => hop.nodeLabel)
+      .filter((label, index, labels) => label !== labels[index - 1])
+      .join(' → ') ?? t('No trace yet', 'まだ通信はありません');
   // Whichever link spanning tree blocks now — after a re-election that is no
   // longer necessarily B–C.
   const blockedEdgeIds = new Set(

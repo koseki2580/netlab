@@ -21,6 +21,7 @@ import { runObservabilityStage } from './stages/observability';
 import { runPreflightStage } from './stages/preflight';
 import { runRouterPostRoutingStage } from './stages/routerPostRouting';
 import { runRouterPreRoutingStage } from './stages/routerPreRouting';
+import { runTunnelStage } from './stages/tunnel';
 
 type Pending = StageResult | Promise<StageResult>;
 
@@ -39,6 +40,7 @@ export const FORWARDING_STAGES: readonly ForwardingStage[] = [
   { needs: 'start', run: runPreflightStage },
   { needs: 'hop', run: runDeliverToSelfStage },
   { needs: 'hop', run: runIngressInterfaceStage },
+  { needs: 'hop', run: runTunnelStage },
   { needs: 'hop', run: runRouterPreRoutingStage },
   { needs: 'routed', run: runForwarderDispatchStage },
   { needs: 'routed', run: runRouterPostRoutingStage },

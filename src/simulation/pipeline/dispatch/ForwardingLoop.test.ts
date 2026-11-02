@@ -9,7 +9,7 @@ import { AddressPlane } from '../../AddressPlane';
 import { TraceRecorder } from '../../TraceRecorder';
 import { LinkQueueRegistry } from '../../LinkQueueRegistry';
 import { makePacket } from '../../__fixtures__/helpers';
-import { directTopology, singleRouterTopology } from '../../__fixtures__/topologies';
+import { directTopology } from '../../__fixtures__/topologies';
 import { ArpBuilder } from '../builders/ArpBuilder';
 import { FrameMaterializer } from '../builders/FrameMaterializer';
 import { IcmpBuilder } from '../builders/IcmpBuilder';
@@ -56,23 +56,6 @@ function makeForwardingLoop(topology: NetworkTopology) {
 }
 
 describe('ForwardingLoop', () => {
-  it('seedArpCache populates cache from router interfaces', () => {
-    const loop = makeForwardingLoop(singleRouterTopology());
-    const cache = new Map<string, string>();
-    loop.seedArpCache(cache);
-    // Router has eth0 with 10.0.0.1 and eth1 with 203.0.113.1
-    expect(cache.has('10.0.0.1')).toBe(true);
-    expect(cache.has('203.0.113.1')).toBe(true);
-  });
-
-  it('seedArpCache populates endpoint IPs', () => {
-    const loop = makeForwardingLoop(directTopology());
-    const cache = new Map<string, string>();
-    loop.seedArpCache(cache);
-    expect(cache.has('10.0.0.10')).toBe(true);
-    expect(cache.has('203.0.113.10')).toBe(true);
-  });
-
   it('materializePacket returns packet with FCS', () => {
     const loop = makeForwardingLoop(directTopology());
     const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
@@ -85,7 +68,6 @@ describe('ForwardingLoop', () => {
     const loop = makeForwardingLoop(directTopology());
     const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
     const cache = new Map<string, string>();
-    loop.seedArpCache(cache);
     const materialized = loop.materializePacket(packet, EMPTY_FAILURE_STATE, cache);
     const hops: PacketHop[] = [];
     const snapshots: InFlightPacket[] = [];
@@ -121,7 +103,6 @@ describe('ForwardingLoop', () => {
     const loop = makeForwardingLoop(directTopology());
     const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
     const cache = new Map<string, string>();
-    loop.seedArpCache(cache);
     const materialized = loop.materializePacket(packet, EMPTY_FAILURE_STATE, cache);
     const hops: PacketHop[] = [];
 
@@ -150,6 +131,9 @@ describe('ForwardingLoop', () => {
 
     expect(hops.map((hop) => `${hop.event}:${hop.nodeId}`)).toEqual([
       'create:client-1',
+      'arp-request:client-1',
+      'arp-reply:server-1',
+      'forward:client-1',
       'deliver:server-1',
     ]);
   });

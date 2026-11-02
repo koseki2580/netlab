@@ -58,7 +58,13 @@ test('the ARP question appears on the diagram at the asking device', async ({ pa
   await demoPage.dismissBrief();
   await page.getByTestId(IDS.primaryAction).click();
 
-  await page.getByTestId(IDS.traceHop).filter({ hasText: 'ARP-REQ' }).first().click();
+  // The Router's question, for the Server (the Client asks first, for the Router).
+  await page
+    .getByTestId(IDS.traceHop)
+    .filter({ hasText: 'ARP-REQ' })
+    .filter({ hasText: '203.0.113.10' })
+    .first()
+    .click();
   const bubble = page.getByTestId(IDS.bubble);
   await expect(bubble).toHaveAttribute('data-kind', 'arpRequest');
   await expect(bubble).toContainText('203.0.113.10');

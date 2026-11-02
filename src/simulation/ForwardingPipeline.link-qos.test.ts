@@ -8,7 +8,7 @@ import type { NetworkTopology } from '../types/topology';
 import { ForwardingPipeline } from './ForwardingPipeline';
 import { ServiceOrchestrator } from './ServiceOrchestrator';
 import { TraceRecorder } from './TraceRecorder';
-import { makePacket } from './__fixtures__/helpers';
+import { dataHops, makePacket } from './__fixtures__/helpers';
 import { singleRouterTopology } from './__fixtures__/topologies';
 
 beforeAll(() => {
@@ -82,17 +82,17 @@ describe('ForwardingPipeline link QoS', () => {
       makePacket('fp-link-qos-legacy', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
     );
 
-    expect(result.trace.hops.map((hop) => [hop.step, hop.event, hop.action])).toEqual([
-      [0, 'create', undefined],
-      [1, 'forward', undefined],
-      [2, 'deliver', undefined],
+    expect(dataHops(result.trace).map((hop) => [hop.event, hop.action])).toEqual([
+      ['create', undefined],
+      ['forward', undefined],
+      ['deliver', undefined],
     ]);
   });
 
   it('adds deterministic link annotations and step delay for a configured egress edge', async () => {
     const pipeline = makePipeline(withQos(singleRouterTopology()));
     const result = await pipeline.precompute(make1500BytePacket('fp-link-qos'));
-    const actions = result.trace.hops.map((hop) => hop.action);
+    const actions = dataHops(result.trace).map((hop) => hop.action);
 
     expect(actions).toEqual([
       undefined,
@@ -102,13 +102,15 @@ describe('ForwardingPipeline link QoS', () => {
       undefined,
       undefined,
     ]);
-    expect(result.trace.hops[1]).toMatchObject({
+    expect(dataHops(result.trace)[1]).toMatchObject({
       event: 'forward',
       activeEdgeId: 'e2',
       linkQos: { edgeId: 'e2', segSeq: 1, queueDepth: 1 },
     });
-    expect(result.trace.hops[3]).toMatchObject({
-      step: 34,
+    // 33 steps after the frame was queued, whatever ARP rows come before.
+    const arrived = dataHops(result.trace)[3];
+    expect((arrived?.step ?? 0) - (dataHops(result.trace)[1]?.step ?? 0)).toBe(33);
+    expect(arrived).toMatchObject({
       action: 'link:arrived',
       linkQos: { edgeId: 'e2', totalLatencySteps: 32 },
     });
@@ -129,7 +131,7 @@ describe('ForwardingPipeline link QoS', () => {
     const result = await pipeline.precompute(make1500BytePacket('fp-link-qos-loss'));
 
     expect(result.trace.status).toBe('dropped');
-    expect(result.trace.hops[result.trace.hops.length - 1]).toMatchObject({
+    expect(dataHops(result.trace)[dataHops(result.trace).length - 1]).toMatchObject({
       event: 'drop',
       action: 'link:dropped',
       reason: 'loss',
@@ -178,9 +180,9 @@ describe('ForwardingPipeline link QoS', () => {
       },
     });
 
-    expect(result.trace.hops.map((hop) => hop.action)).toContain('shaper:classified');
-    expect(result.trace.hops.map((hop) => hop.action)).toContain('shaper:dequeued');
-    expect(result.trace.hops.find((hop) => hop.action === 'shaper:classified')).toMatchObject({
+    expect(dataHops(result.trace).map((hop) => hop.action)).toContain('shaper:classified');
+    expect(dataHops(result.trace).map((hop) => hop.action)).toContain('shaper:dequeued');
+    expect(dataHops(result.trace).find((hop) => hop.action === 'shaper:classified')).toMatchObject({
       shaperTrace: { classId: 'ef', dscp: 46 },
     });
   });

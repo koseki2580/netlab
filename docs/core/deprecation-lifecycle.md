@@ -102,8 +102,7 @@ What a consumer sees:
   in VLAN 1. `packet.egressPortId` and a `FloodTarget.egressPort` carry that id. A switch with no
   other cable forwards exactly as before.
 - An ARP exchange passes through the switches: both ends are learned, and the request's copies are
-  on the `arp-request` hop as `flood.copies`. A device whose MAC is set in the topology is seeded
-  into the ARP cache, so no exchange happens for it and switches learn from data frames only.
+  on the `arp-request` hop as `flood.copies`.
 - `ForwardContext` may carry `ingressEdgeId`, the link the frame came in by.
 
 **How to keep the earlier behaviour.** There is no option that turns copying off. A switch that
@@ -112,3 +111,23 @@ With `arpCache: 'per-send'`, every send starts with the switch knowing nothing, 
 frame is copied.
 
 Nothing stored changes, so there is nothing to migrate in saved topologies or progress records.
+
+### Every device asks by ARP on first use
+
+**What changed.** A MAC written in the topology (`data.mac`, an interface's `macAddress`) is now
+only that device's own address. It no longer pre-fills anyone's ARP cache, so the first send from
+each device to each next hop has an ARP exchange, routers included (they ask for their next
+router). What is learned belongs to the device that learned it: the asker learns the answer, the
+one asked learns the asker, and a third device still asks. Under `arpCache: 'persist'` the first
+send asks and later sends do not; under `'per-send'` every send asks.
+
+What a consumer sees: `arp-request`/`arp-reply` hops, and a sender's `create` followed by a
+`forward` from the same device after its exchange, in traces that had none; the `create` hop's
+destination MAC is unset until the answer arrives. Code that counts hops or indexes them by
+position should skip the ARP rows. `ForwardingLoop.seedArpCache` is removed.
+
+**How to keep the earlier behaviour.** There is no option for it. Send once before the send you
+measure (the engine keeps what was learned under `'persist'`), or read the hops without the ARP
+rows.
+
+Nothing stored changes.

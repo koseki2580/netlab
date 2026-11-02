@@ -1,4 +1,5 @@
 import type {
+  ArpEthernetFrame,
   DhcpMessage,
   DnsMessage,
   EthernetFrame,
@@ -11,6 +12,8 @@ import type {
   TcpSegment,
   UdpDatagram,
 } from '../types/packets';
+import { dnsMessageToValues, dnsWire } from '../protocols/dns/wire';
+import { deriveLayout } from '../protocols/pack/wire';
 import { parseIpv6 } from './ipv6';
 
 export const DEFAULT_ETHERNET_PREAMBLE = [0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xab];
@@ -108,54 +111,9 @@ export function formatDhcpMessage(message: DhcpMessage): string {
   return parts.join(' ');
 }
 
-/** RFC 1035 §3.1: each label prefixed by its length, then a zero byte (no compression). */
-export function encodeDnsName(name: string): number[] {
-  const bytes: number[] = [];
-  for (const label of name.split('.').filter(Boolean)) {
-    const octets = encoder.encode(label);
-    bytes.push(octets.length, ...octets);
-  }
-  bytes.push(0);
-  return bytes;
-}
-
-/**
- * RFC 1035 §4.1.1 flags (REQ-140): QR, AA in a response (a netlab DNS server
- * answers only from its own zones), RD; RA 0 (it does not recurse); RCODE 3
- * (NXDOMAIN) for a response without an answer.
- */
-export function dnsFlags(message: DnsMessage): number {
-  if (!message.isResponse) return 0x0100;
-  return message.answers.length ? 0x8500 : 0x8503;
-}
-
-/**
- * RFC 1035 §4.1 wire format of a DNS message (A records, class IN). Pinned
- * byte for byte to the DNS protocol pack (src/protocols/pack, TC-1024).
- */
+/** RFC 1035 §4.1 wire format of a DNS message, from the DNS pack (REQ-140, REQ-302). */
 export function buildDnsMessageBytes(message: DnsMessage): number[] {
-  return [
-    ...uint16BE(message.transactionId),
-    ...uint16BE(dnsFlags(message)),
-    ...uint16BE(message.questions.length),
-    ...uint16BE(message.answers.length),
-    0,
-    0,
-    0,
-    0,
-    ...message.questions.flatMap((q) => [...encodeDnsName(q.name), 0, 1, 0, 1]),
-    ...message.answers.flatMap((a) => [
-      ...encodeDnsName(a.name),
-      0,
-      1,
-      0,
-      1,
-      ...uint32BE(a.ttl),
-      0,
-      4,
-      ...parseIp(a.address),
-    ]),
-  ];
+  return deriveLayout(dnsWire, dnsMessageToValues(message)).bytes;
 }
 
 export function buildApplicationPayloadBytes(
@@ -325,6 +283,28 @@ export function buildIpv6HeaderBytes(ip: Ipv6Packet): number[] {
 
 export function buildIpv6PacketBytes(ip: Ipv6Packet): number[] {
   return [...buildIpv6HeaderBytes(ip), ...buildTransportBytes(ip.payload)];
+}
+
+/** An ARP frame without a preamble, with its FCS. */
+export function buildArpFrameBytes(frame: ArpEthernetFrame): number[] {
+  return [
+    ...parseMac(frame.dstMac),
+    ...parseMac(frame.srcMac),
+    0x08,
+    0x06,
+    0x00,
+    0x01,
+    0x08,
+    0x00,
+    0x06,
+    0x04,
+    ...uint16BE(frame.payload.operation === 'request' ? 1 : 2),
+    ...parseMac(frame.payload.senderMac),
+    ...parseIp(frame.payload.senderIp),
+    ...parseMac(frame.payload.targetMac),
+    ...parseIp(frame.payload.targetIp),
+    ...uint32BE(frame.fcs ?? 0),
+  ];
 }
 
 export interface BuildEthernetFrameOptions {

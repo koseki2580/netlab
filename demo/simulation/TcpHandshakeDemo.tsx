@@ -158,6 +158,8 @@ function readSelectedSegment(
     seq: transport.seq,
     ack: transport.ack,
     flags: formatFlags(transport),
+    window: transport.windowSize ?? 65535,
+    options: transport.options ?? null,
   };
 }
 
@@ -456,6 +458,17 @@ function MoreDetail({ connected }: { connected: boolean }) {
               {connection.remoteSeq}
             </div>
             <SeqNote numbers={handshakeNumbers(connection)} />
+            {connection.negotiated ? (
+              <div
+                data-testid="tcp-negotiated"
+                style={{ fontFamily: 'system-ui, sans-serif', marginTop: 4, lineHeight: 1.6 }}
+              >
+                {t(
+                  `The SYN and SYN-ACK also carried options. Each end sends at most ${connection.negotiated.clientSendMss} bytes in a segment (MSS); window scaling is ${connection.negotiated.windowScaling ? 'in use' : 'not in use'}, and SACK is ${connection.negotiated.sackPermitted ? 'allowed' : 'not allowed'}. The next lesson, TCP Flow Control, shows what they do.`,
+                  `SYN と SYN-ACK にはオプションも入っています。1 セグメントで送れるのは最大 ${connection.negotiated.clientSendMss} バイト（MSS）、ウィンドウスケールは${connection.negotiated.windowScaling ? '使います' : '使いません'}。SACK は${connection.negotiated.sackPermitted ? '使えます' : '使えません'}。次のレッスン「TCP のフロー制御」で、その働きを確かめます。`,
+                )}
+              </div>
+            ) : null}
           </div>
         ))}
         <div>
@@ -476,6 +489,13 @@ function MoreDetail({ connected }: { connected: boolean }) {
               <div>Flags: {selected.flags}</div>
               <div>SEQ: {selected.seq}</div>
               <div>ACK: {selected.ack}</div>
+              <div data-testid="tcp-selected-window">Window: {selected.window}</div>
+              {selected.options ? (
+                <div data-testid="tcp-selected-options">
+                  Options: MSS {selected.options.mss}, window scale {selected.options.windowScale},{' '}
+                  {selected.options.sackPermitted ? 'SACK permitted' : 'no SACK'}
+                </div>
+              ) : null}
             </div>
           ) : (
             <div style={{ color: 'var(--netlab-text-secondary)' }}>
@@ -831,8 +851,8 @@ function TcpHandshakeDemoInner() {
               style={{ color: 'var(--netlab-text-secondary)', fontSize: 12, lineHeight: 1.6 }}
             >
               {t(
-                'The ARP rows are the Router finding the number (MAC address) of the machine to hand to. A real device remembers the answer for a few minutes and does not ask again. This screen asks again for every message.',
-                '途中の ARP の行は、Router が渡す相手の番号（MAC アドレス）を調べているところです。本物の機器は答えを数分のあいだ覚えていて、聞き直しません。この画面は、通信のたびに聞き直します。',
+                'The ARP rows are a device finding the number (MAC address) of the machine to hand to. A real device remembers the answer for a few minutes and does not ask again. This screen asks again for every message.',
+                '途中の ARP の行は、機器が渡す相手の番号（MAC アドレス）を調べているところです。本物の機器は答えを数分のあいだ覚えていて、聞き直しません。この画面は、通信のたびに聞き直します。',
               )}
             </div>
           ) : null}

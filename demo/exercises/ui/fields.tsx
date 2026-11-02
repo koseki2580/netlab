@@ -607,6 +607,50 @@ export function BgpLocalPrefField({ value, onChange, testId }: FieldProps<'bgp-l
   );
 }
 
+export function BgpMedField({ value, onChange, testId }: FieldProps<'bgp-med'>) {
+  const t = useT();
+  return (
+    <DraftInput
+      label={t(
+        'MED (between routes from one neighbouring AS, the lowest is used; 0 if none is set)',
+        'MED（同じ隣の AS から来た経路の中で、小さいほうが使われる。決めていなければ 0）',
+      )}
+      shown={String(value.med)}
+      parse={(text) => wholeNumber(text, 0, 4294967295)}
+      onValid={(med) => onChange({ ...value, med })}
+      note={t(
+        `MED is a whole number from 0 to 4294967295. Until it is, it stays ${value.med}.`,
+        `MED は 0 から 4294967295 までの数です。直すまでは ${value.med} のままです。`,
+      )}
+      testId={testId}
+      inputMode="numeric"
+      width={130}
+    />
+  );
+}
+
+export function OspfPriorityField({ value, onChange, testId }: FieldProps<'ospf-priority'>) {
+  const t = useT();
+  return (
+    <DraftInput
+      label={t(
+        'OSPF priority (the highest becomes DR; 0 never stands; 1 if none is set)',
+        'OSPF プライオリティ（いちばん大きいルータが DR になる。0 は立候補しない。決めていなければ 1）',
+      )}
+      shown={String(value.priority)}
+      parse={(text) => wholeNumber(text, 0, 255)}
+      onValid={(priority) => onChange({ ...value, priority })}
+      note={t(
+        `The priority is a whole number from 0 to 255. Until it is, it stays ${value.priority}.`,
+        `プライオリティは 0 から 255 までの数です。直すまでは ${value.priority} のままです。`,
+      )}
+      testId={testId}
+      inputMode="numeric"
+      width={130}
+    />
+  );
+}
+
 export function IfaceNatField({ value, onChange, testId }: FieldProps<'iface-nat'>) {
   const t = useT();
   return (

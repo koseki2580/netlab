@@ -319,6 +319,55 @@ function BgpOriginatedNote({ routers }: { routers: NetlabNode[] }) {
   );
 }
 
+/** The order BGP compares routes in (RFC 4271 §9.1), as the simulator does. */
+function BgpDecisionNote() {
+  const t = useT();
+  const steps = [
+    t('the highest LOCAL_PREF', '最も大きい LOCAL_PREF'),
+    t('the shortest AS_PATH', '最も短い AS_PATH'),
+    t(
+      'the lowest ORIGIN: IGP, then EGP, then INCOMPLETE',
+      '最も小さい ORIGIN（IGP、EGP、INCOMPLETE の順）',
+    ),
+    t(
+      'the lowest MED, only among routes from the same neighbouring AS',
+      '最も小さい MED（同じ隣の AS から来た経路どうしだけ）',
+    ),
+    t('a router’s own network, then eBGP, then iBGP', '自分のネットワーク、eBGP、iBGP の順'),
+    t('the lowest BGP Identifier', '最も小さい BGP Identifier'),
+    t('the lowest peer address', '最も小さいピアのアドレス'),
+  ];
+  return (
+    <div
+      data-testid="dynamic-bgp-decision"
+      style={{
+        color: 'var(--netlab-text-secondary)',
+        fontSize: 11,
+        lineHeight: 1.6,
+        marginBottom: 8,
+      }}
+    >
+      <div>
+        {t(
+          'BGP compares the routes to one network in this order, and stops at the first step that leaves one:',
+          'BGP は、1 つのネットワークへの経路をこの順に比べ、1 本に絞れたところで止めます。',
+        )}
+      </div>
+      <ol style={{ margin: '4px 0', paddingLeft: 18 }}>
+        {steps.map((step) => (
+          <li key={step}>{step}</li>
+        ))}
+      </ol>
+      <div data-testid="dynamic-bgp-med">
+        {t(
+          'MED is a neighbouring AS’s hint about which of its links to enter by, so it means nothing between two different ASes: a lower MED from another AS changes nothing. It also stays with the neighbour: it is not passed on to a further AS. Real routers also compare the IGP cost to the next hop before the BGP Identifier; this simulator does not.',
+          'MED は、隣の AS が「自分のどのリンクから入ってほしいか」を伝える目安です。そのため、別の AS どうしでは意味がなく、別の AS から小さい MED が来ても何も変わりません。さらに先の AS へは渡されません。実際のルータは BGP Identifier の前に次ホップまでの IGP コストも比べますが、このシミュレータでは比べません。',
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
   const t = useT();
   const { topology, routeTable } = useNetlabContext();
@@ -360,6 +409,7 @@ export function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
         </div>
       )}
       {protocol === 'bgp' && <BgpOriginatedNote routers={routers} />}
+      {protocol === 'bgp' && <BgpDecisionNote />}
       {routers.map((router) => {
         const routes = [...(routeTable.get(router.id) ?? [])].sort((left, right) =>
           left.destination.localeCompare(right.destination),

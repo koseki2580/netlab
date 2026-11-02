@@ -391,6 +391,10 @@ export const CODE_TEXT: Record<CheckResultCode, Localised> = {
     en: 'A different switch is the centre of the spanning tree (the root bridge). The switch with the lowest priority number becomes the centre.',
     ja: '別のスイッチが、中心（ルートブリッジ）になっています。優先度の数字がいちばん小さいスイッチが、中心になります。',
   },
+  'wrong-dr': {
+    en: 'A different router is the DR on the LAN. The router with the highest priority becomes DR, then the one with the highest router id; priority 0 never stands.',
+    ja: '別のルータが LAN の DR になっています。プライオリティがいちばん大きいルータ、同じならルータ ID がいちばん大きいルータが DR になります。プライオリティ 0 は立候補しません。',
+  },
   'wrong-role': {
     en: 'That switch port does not have the role this exercise asks for. Look at which switch is the centre of the spanning tree (the root bridge).',
     ja: 'その差し込み口は、この課題が求める役割になっていません。どのスイッチが中心（ルートブリッジ）かを見てください。',
@@ -458,6 +462,8 @@ export interface ExplainDetail {
   readonly device?: string;
   /** `wrong-root`: the wanted switch (`other`) has the same, lowest priority as the root and lost on the device number. */
   readonly tie?: { readonly other: string; readonly priority: number };
+  /** `wrong-dr`: why the wanted router lost. */
+  readonly drLoss?: { readonly wanted: string; readonly why: 'router-id' | 'priority-0' };
   /** `too-many-changes`: how many settings differ, and how many may. */
   readonly count?: number;
   readonly max?: number;
@@ -490,6 +496,30 @@ export function explain(code: CheckResultCode, detail: ExplainDetail = {}): Loca
   }
   if (code === 'wrong-cause' && drop) {
     return join(CODE_TEXT[code], dropBody(drop.reason, drop.leg, drop.device, context));
+  }
+  if (code === 'wrong-dr' && device !== undefined) {
+    const lead = {
+      en: `${device} is the DR now.`,
+      ja: `いまは ${device} が DR です。`,
+    };
+    if (detail.drLoss?.why === 'router-id') {
+      const { wanted } = detail.drLoss;
+      return {
+        en: `${lead.en} ${wanted} has the same priority, and equal priorities go to the highest router id.`,
+        ja: `${lead.ja}${wanted} はプライオリティが同じで、同じときはルータ ID のいちばん大きいルータが選ばれます。`,
+      };
+    }
+    if (detail.drLoss?.why === 'priority-0') {
+      const { wanted } = detail.drLoss;
+      return {
+        en: `${lead.en} ${wanted} has priority 0, which never stands: here, unlike a spanning-tree priority, the highest number wins.`,
+        ja: `${lead.ja}${wanted} のプライオリティは 0 で、立候補しません。スパニングツリーの優先度とちがい、ここでは大きい数字が勝ちます。`,
+      };
+    }
+    return {
+      en: `${lead.en} The highest priority wins, and ${device}'s is higher than the router this asks for.`,
+      ja: `${lead.ja}プライオリティの大きいルータが勝ちます。${device} のほうが、求められているルータより大きい数字です。`,
+    };
   }
   if (code === 'wrong-root' && device !== undefined && detail.tie) {
     const { other, priority } = detail.tie;

@@ -33,6 +33,7 @@ import {
   withNodeData,
   withOspfCost,
 } from '../templates/shared/build';
+import { isArpHop, packetRows } from './engineRun';
 import { prepare, routesOf, stpPort, stpRootNodeId } from './prepare';
 import { runProbe, type ProbeFacts } from './probe';
 
@@ -116,7 +117,9 @@ describe('fact 1: ping reports the reply; the forward leg ends at the first deli
   it('one merged trace holds both legs; cutting at the first deliver gives the request path (TC-368)', async () => {
     const facts = await ping(forwardOnly(), 'pc', 'srv');
     expect(facts.traces).toHaveLength(1);
-    expect(facts.trace?.hops.map((hop) => `${hop.event}@${hop.nodeId}`)).toEqual([
+    // Every device asks on first use (REQ-190): the ARP rows are beside the path.
+    const rows = packetRows(facts.trace?.hops ?? []).map((hop) => `${hop.event}@${hop.nodeId}`);
+    expect(rows).toEqual([
       'create@pc',
       'forward@r1',
       'forward@r2',
@@ -411,24 +414,27 @@ describe('fact 5: hosts with a bad address', () => {
     );
   });
 
-  it('two hosts with one address: the second host loses its replies and takes the first one’s (TC-392)', async () => {
+  // Flipped by REQ-190: the shared address's ARP answer now comes from the first
+  // host that has it. It used to be the last, from the table filled in advance.
+  it('two hosts with one address: the first host answers for it, and the second loses its replies (TC-392)', async () => {
     const duplicate = withNodeData(lanBehindRouter(), 'pc2', { ip: '192.168.1.10' });
-    // Traffic to the shared address is dropped at pc2, whichever host was meant.
     for (const to of ['pc1', 'pc2']) {
       const facts = await ping(duplicate, 'srv', to);
-      expect(facts.drop).toEqual({ nodeId: 'pc2', reason: 'no-route', leg: 'request' });
+      expect(facts.status).toBe('delivered');
+      expect(facts.forwardNodeIds).toEqual(['srv', 'r1', 'sw1', 'pc1']);
     }
-    expect((await ping(duplicate, 'pc2', 'srv')).status).toBe('delivered');
-    const first = await ping(duplicate, 'pc1', 'srv');
-    expect(first.requestDelivered).toBe(true);
-    expect(first.drop).toEqual({ nodeId: 'pc2', reason: 'no-route', leg: 'reply' });
+    expect((await ping(duplicate, 'pc1', 'srv')).status).toBe('delivered');
+    const second = await ping(duplicate, 'pc2', 'srv');
+    expect(second.requestDelivered).toBe(true);
+    expect(second.drop).toEqual({ nodeId: 'pc1', reason: 'no-route', leg: 'reply' });
   });
 
-  it('a host that takes the gateway address breaks only itself (routing-loop on its reply) (TC-393)', async () => {
+  // Flipped by REQ-190: the reply is addressed by what r1 learned from pc2's own
+  // question, so it no longer loops. The grader refuses this address beforehand.
+  it('a host that takes the gateway address breaks nothing on the wire (TC-393)', async () => {
     const thief = withNodeData(lanBehindRouter(), 'pc2', { ip: '192.168.1.1' });
     expect((await ping(thief, 'pc1', 'srv')).status).toBe('delivered');
-    const facts = await ping(thief, 'pc2', 'srv');
-    expect(facts.drop).toEqual({ nodeId: 'r1', reason: 'routing-loop', leg: 'reply' });
+    expect((await ping(thief, 'pc2', 'srv')).status).toBe('delivered');
   });
 });
 
@@ -464,7 +470,11 @@ describe('fact 6: OSPF cost', () => {
   it('a cost is outbound only: the reply still comes back over the cheap side of r4 (TC-396)', async () => {
     const raised = withOspfCost(ospfDiamond(), 'r1', DIAMOND_NETS.top1, 50);
     const facts = await ping(raised, 'pc', 'srv');
-    const reply = facts.trace?.hops.slice(facts.forwardNodeIds.length).map((hop) => hop.nodeId);
+    const hops = (facts.trace?.hops ?? []).filter((hop) => !isArpHop(hop));
+    const reply = hops
+      .slice(hops.findIndex((hop) => hop.event === 'deliver') + 1)
+      .map((hop) => hop.nodeId)
+      .filter((nodeId, index, all) => nodeId !== all[index - 1]);
     expect(reply).toEqual(['srv', 'r4', 'r2', 'r1', 'pc']);
   });
 
@@ -616,7 +626,7 @@ describe('fact 8: static routes', () => {
     const facts = await ping(withLinkState(topology, 'e-12', 'down'), 'pc', 'srv');
     expect(facts.status).toBe('delivered');
     expect(facts.forwardNodeIds).toEqual(['pc', 'r1', 'r3', 'r4', 'srv']);
-    const decision = facts.trace?.hops.find((hop) => hop.nodeId === 'r1')?.routingDecision;
+    const decision = facts.trace?.hops.find((hop) => hop.routingDecision)?.routingDecision;
     expect(decision?.winner).toMatchObject({ destination: '0.0.0.0/0', selectedByFailover: true });
   });
 

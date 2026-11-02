@@ -97,7 +97,7 @@ test('TC-627: the ARP lesson says what a real device remembers and what this scr
   await demoPage.goto('/networking/arp');
   await expect(page.getByTestId('arp-brief-mac')).not.toContainText('最初のパケットを送る前');
   await expect(page.getByTestId('arp-already-known')).toContainText(
-    'Router の番号をもう知っています',
+    '前もって知っていることはありません',
   );
   await expect(page.getByTestId('arp-remember-note')).toHaveCount(0);
 
@@ -106,7 +106,7 @@ test('TC-627: the ARP lesson says what a real device remembers and what this scr
   await expect(note).toContainText('数分のあいだ覚えていて');
   await expect(note).toContainText('送るたびに聞き直します');
   await expect(page.getByTestId('arp-table-kept')).toContainText('本物の機器が覚えておく内容');
-  await expect(page.getByTestId('arp-table-kept')).toContainText('最初から入っていたもの');
+  await expect(page.getByTestId('arp-table-kept')).toContainText('相手の質問から覚えた');
 
   // The same question is on screen again after a second send, as the note says.
   await page.getByTestId('demo-primary-action').click();

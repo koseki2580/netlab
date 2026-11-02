@@ -7,8 +7,7 @@
  * Truth (RFC 4271 §9.1): LOCAL_PREF is compared first and the higher wins; only
  * between equal LOCAL_PREFs does the shorter AS_PATH decide. A session with no
  * LOCAL_PREF of its own gives what it learns 100 (the usual default). MED is
- * left out: this simulator compares it between different neighbouring ASes,
- * which RFC 4271 §9.1.2.2(c) does not.
+ * left out here; `l3-bgp-med` teaches it.
  *
  * Fair to a learner who does not read: which provider is wanted varies, so
  * every design is right half the time it is offered, which is also chance.

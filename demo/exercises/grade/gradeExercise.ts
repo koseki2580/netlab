@@ -17,6 +17,7 @@ import type {
   ExerciseCheck,
   GradeResult,
 } from '../model/types';
+import { ospfLsdb } from '../../../src/routing/ospf/OspfLsdb';
 import type { PacketTrace } from '../../../src/types/simulation';
 import type { StaticRouteConfig } from '../../../src/types/routing';
 import type { TopologySnapshot } from '../../../src/types/topology';
@@ -216,6 +217,29 @@ async function gradeCheck(
         'wrong-root',
         { device: labelOf(prepared, root), ...(tie ? { tie } : {}) },
         at(root),
+      );
+    }
+
+    case 'ospf-dr': {
+      const segment = ospfLsdb(prepared).segments.find((entry) => entry.network === check.network);
+      const dr = segment?.members.find((member) => member.routerId === segment.dr);
+      if (dr?.nodeId === check.nodeId) return result(check, 'ok', {}, at(dr.nodeId));
+      if (!dr) return result(check, 'wrong-dr');
+      const wanted = segment?.members.find((member) => member.nodeId === check.nodeId);
+      const lostOn =
+        wanted?.priority === 0
+          ? 'priority-0'
+          : wanted?.priority === dr.priority
+            ? 'router-id'
+            : null;
+      return result(
+        check,
+        'wrong-dr',
+        {
+          device: labelOf(prepared, dr.nodeId),
+          ...(lostOn ? { drLoss: { wanted: labelOf(prepared, check.nodeId), why: lostOn } } : {}),
+        },
+        at(dr.nodeId),
       );
     }
 

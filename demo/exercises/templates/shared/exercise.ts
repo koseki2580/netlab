@@ -153,7 +153,10 @@ export function refOf(change: SettingChange): SettingRef {
         direction: change.direction,
       };
     case 'bgp-local-pref':
+    case 'bgp-med':
       return { kind: change.kind, nodeId: change.nodeId, neighbor: change.neighbor };
+    case 'ospf-priority':
+      return { kind: change.kind, nodeId: change.nodeId, ifaceId: change.ifaceId };
   }
 }
 

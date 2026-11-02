@@ -115,6 +115,7 @@ export const STAGES: readonly Stage[] = [
     lessons: [
       '/networking/udp',
       '/simulation/tcp-handshake',
+      '/simulation/tcp-flow-control',
       '/services/dhcp-dns',
       '/networking/http',
       '/simulation/nat',
@@ -135,6 +136,7 @@ export const STAGES: readonly Stage[] = [
       '/networking/stp',
       '/routing/dynamic',
       '/routing/ospf-convergence',
+      '/routing/ospf-areas',
       '/simulation/acl',
       '/areas/dmz',
       '/simulation/failure',
@@ -153,10 +155,7 @@ export const STAGES: readonly Stage[] = [
       { kind: 'packet', level: 4 },
       { kind: 'exam', level: 2 },
     ],
-    comingSoon: [
-      { en: 'RSTP and MSTP', ja: 'RSTP と MSTP' },
-      { en: 'OSPF areas', ja: 'OSPF のエリア' },
-    ],
+    comingSoon: [{ en: 'RSTP and MSTP', ja: 'RSTP と MSTP' }],
   },
   {
     number: 6,
@@ -180,7 +179,6 @@ export const STAGES: readonly Stage[] = [
       { kind: 'exam', level: 4 },
     ],
     comingSoon: [
-      { en: 'BGP in depth', ja: 'BGP をくわしく' },
       { en: 'Segment Routing', ja: 'セグメントルーティング' },
       { en: 'Spine-leaf fabrics', ja: 'スパイン・リーフ構成' },
       { en: 'Load balancers', ja: 'ロードバランサ' },

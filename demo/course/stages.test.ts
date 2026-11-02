@@ -54,6 +54,17 @@ describe('the seven stages (TC-950)', () => {
   });
 });
 
+// TC-1078
+describe('stage 4 teaches flow control (TC-1078)', () => {
+  it('lists the lesson, after the handshake, and it is a real route', () => {
+    const lessons = STAGES.find((stage) => stage.number === 4)!.lessons;
+    expect(lessons.indexOf('/simulation/tcp-flow-control')).toBe(
+      lessons.indexOf('/simulation/tcp-handshake') + 1,
+    );
+    expect(LESSONS.map((lesson) => lesson.path)).toContain('/simulation/tcp-flow-control');
+  });
+});
+
 // TC-951
 describe('what a stage asks of the learner (TC-951)', () => {
   it('names only exams, exercise levels and packet levels that exist and hold something', () => {
@@ -252,5 +263,19 @@ describe('results from before the stage tests carry over (TC-962)', () => {
   it('a pass of a stage test passes that stage, and the stage test of stage 7 passes all', () => {
     expect(passed([5])).toEqual([true, false, false, false, false, false, false]);
     expect(passed([8]).every(Boolean)).toBe(true);
+  });
+});
+
+// TC-1109
+describe('the routing depth on the path', () => {
+  const stage = (number: number) => STAGES.find((entry) => entry.number === number);
+
+  it('lists the OSPF areas lesson in stage 5, no longer coming soon', () => {
+    expect(stage(5)?.lessons).toContain('/routing/ospf-areas');
+    expect(stage(5)?.comingSoon.map((topic) => topic.en)).not.toContain('OSPF areas');
+  });
+
+  it('no longer lists BGP in depth as coming soon', () => {
+    expect(stage(6)?.comingSoon.map((topic) => topic.en)).not.toContain('BGP in depth');
   });
 });

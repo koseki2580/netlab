@@ -17,6 +17,9 @@ export interface ArpTargetInfo {
   senderMac: string;
 }
 
+/** The ARP cache entry for what `deviceId` knows about `ip`: each device has its own. */
+export const arpKey = (deviceId: string, ip: string): string => `${deviceId} ${ip}`;
+
 export class ArpDispatcher {
   constructor(
     private readonly traceRecorder: TraceRecorder,

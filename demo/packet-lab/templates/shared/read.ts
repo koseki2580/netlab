@@ -34,6 +34,10 @@ const PROMPTS: Readonly<Record<QuestionAsk, Localised>> = {
     "On that cable, what is the frame's destination MAC address?",
     'その回線で、フレームのあて先 MAC アドレスはどれですか。',
   ),
+  'send-window': L(
+    'How many more bytes may the sender send now?',
+    '送信側はいま、あと何バイト送れますか。',
+  ),
   'ttl-on-link': L(
     "On that cable, what is the packet's TTL?",
     'その回線で、パケットの TTL はいくつですか。',

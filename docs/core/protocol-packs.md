@@ -1,9 +1,8 @@
 # Protocol Packs
 
-> **Status**: 🧪 Trial (W1 core). The descriptor, `defineProtocol`, the registry and the
-> derivers exist under `src/protocols/pack/` and are tested. They are **not exported** from
-> `netlab` and nothing in the engine or the UI reads them yet. The API shape is frozen only
-> after the user has reviewed the DNS and GRE trial (see [Versioning of the pack API](#versioning-of-the-pack-api)).
+> **Status**: 🧪 Trial. DNS and GRE run on packs inside the engine and the views. Nothing is
+> exported from `netlab`; the API shape is frozen only after the user has reviewed the trial
+> (see [Versioning of the pack API](#versioning-of-the-pack-api)).
 
 A protocol pack describes one protocol **once**. Today a protocol is spread over 20–40 files:
 a payload union, three number-to-name tables, a trace label, a hand-written serializer and a
@@ -187,6 +186,8 @@ not create one, so nothing is registered by importing the module.
 
 ### Bundle budgets
 
+Superseded in part by [Two tiers](#two-tiers) and the [size gate](../dev/size-gate.md).
+
 `ui:simulation-context` is at about 247 of 250 kB and the engine at about 432 of 435 kB.
 The core (`define`, `derive`, `registry`) has no dependency on React, the i18n catalogue
 (lesson L014) or any protocol. A pack's schema, meanings and content stay behind its
@@ -250,22 +251,39 @@ byte-identical for every existing protocol; then the other sidecars.
   adjacent bits with a 10-bit Reserved0. RFC 2890 places a reserved bit between C and K
   (C=bit 0, K=bit 2, S=bit 3, Reserved0 bits 4–12).
 
-### Trial part 2: what the budgets allowed
+## Two tiers
 
-`npm run size` bundles each check with esbuild without code splitting, so a dynamic
-`import()` is counted inside the entry that reaches it: lazy loading a pack does not lower
-any budget figure. Measured in the `src/index.ts` bundle (gzip): the registry +1.18 kB, the
-derivers +1.71 kB, both +2.66 kB, both with the DNS pack +7.2 kB; headroom was 1.31 kB
-(engine), 1.67 kB (`ui:simulation-context`) and 0.23 kB (worker, which needs the bytes for
-checksums and FCS). So in part 2 the library carries a compact RFC 1035 encoder and
-byte-granular rows (pinned to the pack by TC-1024/TC-1025), not the registry or the pack
-itself, and the en/ja field meanings are not shown yet. Showing them needs either about
-+7.2 kB of engine and `ui:simulation-context` budget, or the size checks measuring lazy
-chunks on their own, so a pack loaded on demand stays off the entry budgets.
+The bytes of a packet are needed synchronously: `serializePacket` is a public synchronous
+function, and the engine computes length, checksum and FCS on every hop, in a worker that is one
+file and cannot load a chunk. Loading a pack before a send cannot cover those callers. So a pack is
+written in two tiers:
 
-Result of part 2 against the committed tree (edc2164 plus these changes only): engine
-433.45 → 433.82 kB, `ui:simulation-context` 248.08 → 248.41 kB, worker 41.40 → 41.74 kB,
-`l3-network` 15.14 → 15.20 kB (at its limit), `l4-transport` 6.20 → 6.21 kB.
+| Tier  | File                              | Holds                                                      | Loaded                            |
+| ----- | --------------------------------- | ---------------------------------------------------------- | --------------------------------- |
+| Wire  | `src/protocols/<id>/wire.ts`      | Identity, versions, structure, field and enum names, hooks | Statically; in the worker         |
+| Learn | `src/protocols/<id>/pack-<id>.ts` | Spec references, meanings, examples                        | On demand, by `packLearn.ts` (UI) |
+
+The structure has one source. `deriveLayout`, `deriveAnnotatedFields` and `deriveTraceLabel` take
+a wire tier. `mergeLearn(wire, learn)` joins the tiers into a descriptor, which is what
+`defineProtocol` checks; tests run that check, so the lazy chunk stays pure data.
+
+`protocolPacks` (`src/protocols/packs.ts`) is the process-wide index of wire tiers: a read-only
+lookup, small enough for the worker. The full registry (`createProtocolPackRegistry`, with
+duplicate refusal and `load`) is for packs added at run time. A test holds the built-in tiers
+free of clashing claims.
+
+Today every wire tier is eager, so each pack adds to the worker. See the freeze decisions.
+
+GRE's header codec `GreHeader.ts` remains next to the GRE wire tier: `encapGre` and the public
+parser use it, and TC-946 pins its bytes to the pack.
+
+## Tunnels in the engine
+
+`runTunnelStage` runs after the ingress stage. It calls the pack's `behaviour.encapsulation`
+hook where a route leaves by an interface with a `greTunnel`, and unwraps a packet addressed to a
+tunnel's source. It exits at once for a router with no tunnel. The frame carries the real wire
+bytes in `RawPayload.data` and the structure in `gre` (`GreRawPayload`). The other hooks
+(`endpoint`, `transit`, `service`) are still unwired.
 
 ## i18n merging
 

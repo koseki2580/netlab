@@ -126,6 +126,8 @@ export function buildJourney(
   for (const hop of trace.hops) {
     if (!hop.toNodeId) continue;
     if (hop.event !== 'create' && hop.event !== 'forward') continue;
+    // A sender that had to ask by ARP first creates the frame, then sends it.
+    if (steps[steps.length - 1]?.nodeId === hop.nodeId) steps.pop();
     steps.push({
       nodeId: hop.nodeId,
       options: neighborsOf(topology, hop.nodeId),

@@ -126,9 +126,8 @@ test('TC-353: the ARP lesson says who asks whom here, and its bubble carries the
   // TC-700: the table follows the step rather than showing the end result.
   await expect(page.getByTestId('arp-table-note')).toContainText('ステップに合わせて');
 
-  const firstHops = page.getByTestId(T.hop);
-  // Row 1 of this lesson's trace is the Router's question (ARP-REQ).
-  await firstHops.nth(1).click();
+  // The Router's question for the Server (the Client asks first, for the Router).
+  await page.getByTestId(T.hop).filter({ hasText: '203.0.113.10 の持ち主は' }).first().click();
   const bubble = page.getByTestId(T.bubble);
   await expect(bubble).toHaveAttribute('data-kind', 'arpRequest');
   await expect(bubble).toContainText('ARP の質問');

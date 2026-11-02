@@ -107,6 +107,15 @@ export interface DnsMessage {
   answers: DnsRecord[];
 }
 
+/** The options a SYN or SYN-ACK can carry here; an absent one was not offered. */
+export interface TcpHeaderOptions {
+  /** What this end will receive per segment (RFC 9293 §3.7.1). */
+  mss?: number;
+  /** The shift this end applies to the windows it advertises (RFC 7323 §2). */
+  windowScale?: number;
+  sackPermitted?: boolean;
+}
+
 export interface TcpSegment {
   layer: 'L4';
   srcPort: number;
@@ -117,6 +126,8 @@ export interface TcpSegment {
   windowSize?: number;
   checksum?: number;
   urgentPointer?: number;
+  /** Set on SYN and SYN-ACK only; not yet drawn in the byte view. */
+  options?: TcpHeaderOptions;
   payload: HttpMessage | RawPayload;
 }
 

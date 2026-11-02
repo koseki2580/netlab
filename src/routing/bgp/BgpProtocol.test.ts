@@ -621,3 +621,238 @@ describe('BgpProtocol', () => {
     });
   });
 });
+
+// --- The decision process, RFC 4271 §9.1 ---------------------------------------------
+
+interface Peer {
+  id: string;
+  as: number;
+  routerId: string;
+  /** The neighbour entry r1 keeps for this peer. */
+  policy?: Partial<BgpNeighborConfig>;
+  /** r1's subnet number towards this peer. */
+  link: number;
+  /** A peer address other than `10.0.<link>.2`. */
+  address?: string;
+}
+
+const PREFIX = '10.99.0.0/24';
+
+/** r1 (AS 65001, id 9.9.9.9) with these peers, each of which originates PREFIX. */
+function siteWith(peers: Peer[]): NetworkTopology {
+  const r1Interfaces = peers.map((peer) => makeIface(`r1-${peer.link}`, `10.0.${peer.link}.1`));
+  const addressOf = (peer: Peer) => peer.address ?? `10.0.${peer.link}.2`;
+  const r1 = makeRouter(
+    'r1',
+    65001,
+    '9.9.9.9',
+    r1Interfaces,
+    peers.map((peer) => makeNeighbor(addressOf(peer), peer.as, peer.policy)),
+  );
+  return makeTopology({
+    nodes: [
+      r1,
+      ...peers.map((peer) =>
+        makeRouter(
+          peer.id,
+          peer.as,
+          peer.routerId,
+          [makeIface(`${peer.id}-0`, addressOf(peer))],
+          [makeNeighbor(`10.0.${peer.link}.1`, 65001)],
+          [PREFIX],
+        ),
+      ),
+    ],
+  });
+}
+
+function exitOf(topology: NetworkTopology): string | undefined {
+  return findRoute(new BgpProtocol().computeRoutes(topology), 'r1', PREFIX)?.nextHop;
+}
+
+describe('the BGP decision order (RFC 4271 §9.1.2.2)', () => {
+  it('TC-1080: ORIGIN is compared before MED, and a neighbour entry can set it (TC-1088)', () => {
+    const topology = siteWith([
+      {
+        id: 'a',
+        as: 65010,
+        routerId: '1.1.1.1',
+        link: 1,
+        policy: { origin: 'incomplete', med: 0 },
+      },
+      { id: 'b', as: 65010, routerId: '2.2.2.2', link: 2, policy: { origin: 'igp', med: 50 } },
+    ]);
+    expect(exitOf(topology)).toBe('10.0.2.2');
+  });
+
+  it('TC-1080: EGP sits between IGP and INCOMPLETE', () => {
+    const topology = siteWith([
+      { id: 'a', as: 65010, routerId: '1.1.1.1', link: 1, policy: { origin: 'incomplete' } },
+      { id: 'b', as: 65020, routerId: '2.2.2.2', link: 2, policy: { origin: 'egp' } },
+    ]);
+    expect(exitOf(topology)).toBe('10.0.2.2');
+  });
+
+  it('TC-1081: MED is not compared between different neighbouring ASes', () => {
+    const topology = siteWith([
+      { id: 'a', as: 65010, routerId: '1.1.1.1', link: 1, policy: { med: 100 } },
+      { id: 'b', as: 65020, routerId: '2.2.2.2', link: 2, policy: { med: 5 } },
+    ]);
+    expect(exitOf(topology)).toBe('10.0.1.2');
+  });
+
+  it('TC-1082: within one neighbouring AS the lower MED wins', () => {
+    const topology = siteWith([
+      { id: 'a', as: 65010, routerId: '1.1.1.1', link: 1, policy: { med: 100 } },
+      { id: 'b', as: 65010, routerId: '2.2.2.2', link: 2, policy: { med: 5 } },
+    ]);
+    expect(exitOf(topology)).toBe('10.0.2.2');
+  });
+
+  it('TC-1083: the MED cycle gives one answer in every order', () => {
+    const a: Peer = { id: 'a', as: 65010, routerId: '1.1.1.1', link: 1, policy: { med: 10 } };
+    const b: Peer = { id: 'b', as: 65010, routerId: '3.3.3.3', link: 2, policy: { med: 5 } };
+    const c: Peer = { id: 'c', as: 65020, routerId: '2.2.2.2', link: 3 };
+    // Two at a time: a beats c, c beats b, b beats a. In full: b removes a, then c wins on id.
+    for (const order of [
+      [a, b, c],
+      [a, c, b],
+      [b, a, c],
+      [b, c, a],
+      [c, a, b],
+      [c, b, a],
+    ]) {
+      expect(exitOf(siteWith(order))).toBe('10.0.3.2');
+    }
+  });
+
+  it('TC-1085: BGP Identifiers compare as numbers', () => {
+    const topology = siteWith([
+      { id: 'a', as: 65010, routerId: '10.0.0.10', link: 1 },
+      { id: 'b', as: 65020, routerId: '10.0.0.9', link: 2 },
+    ]);
+    expect(exitOf(topology)).toBe('10.0.2.2');
+  });
+
+  it('TC-1086: between two sessions to one router the lower peer address wins, as a number', () => {
+    const r1 = makeRouter(
+      'r1',
+      65001,
+      '9.9.9.9',
+      [makeIface('a', '10.0.0.5'), makeIface('b', '10.0.0.9')],
+      [makeNeighbor('10.0.0.10', 65010), makeNeighbor('10.0.0.6', 65010)],
+    );
+    const peer = makeRouter(
+      'p',
+      65010,
+      '1.1.1.1',
+      [makeIface('a', '10.0.0.6'), makeIface('b', '10.0.0.10')],
+      [makeNeighbor('10.0.0.5', 65001), makeNeighbor('10.0.0.9', 65001)],
+      [PREFIX],
+    );
+    expect(exitOf(makeTopology({ nodes: [r1, peer] }))).toBe('10.0.0.6');
+  });
+
+  it('TC-1084: eBGP beats iBGP once MED has not decided', () => {
+    const r1 = makeRouter(
+      'r1',
+      65001,
+      '9.9.9.9',
+      [makeIface('a', '10.0.1.1'), makeIface('b', '10.0.2.1')],
+      [makeNeighbor('10.0.1.2', 65010), makeNeighbor('10.0.2.2', 65001)],
+    );
+    const external = makeRouter(
+      'ext',
+      65010,
+      '5.5.5.5',
+      [makeIface('a', '10.0.1.2')],
+      [makeNeighbor('10.0.1.1', 65001)],
+      [PREFIX],
+    );
+    const internal = makeRouter(
+      'int',
+      65001,
+      '1.1.1.1',
+      [makeIface('a', '10.0.2.2'), makeIface('b', '10.0.3.1')],
+      [makeNeighbor('10.0.2.1', 65001), makeNeighbor('10.0.3.2', 65020)],
+    );
+    const far = makeRouter(
+      'far',
+      65020,
+      '6.6.6.6',
+      [makeIface('a', '10.0.3.2')],
+      [makeNeighbor('10.0.3.1', 65001)],
+      [PREFIX],
+    );
+    expect(exitOf(makeTopology({ nodes: [r1, external, internal, far] }))).toBe('10.0.1.2');
+  });
+
+  it('TC-1087: MED does not travel to a further AS', () => {
+    // Both r2 routers learn PREFIX from origin; r2a records MED 50 for it. If that MED
+    // reached r1, r2b would win on it; it does not, so the lower Identifier does.
+    const r1 = makeRouter(
+      'r1',
+      65001,
+      '9.9.9.9',
+      [makeIface('a', '10.0.1.1'), makeIface('b', '10.0.2.1')],
+      [makeNeighbor('10.0.1.2', 65002), makeNeighbor('10.0.2.2', 65002)],
+    );
+    const r2a = makeRouter(
+      'r2a',
+      65002,
+      '1.1.1.1',
+      [makeIface('a', '10.0.1.2'), makeIface('b', '10.0.3.1')],
+      [makeNeighbor('10.0.1.1', 65001), makeNeighbor('10.0.3.2', 65003, { med: 50 })],
+    );
+    const r2b = makeRouter(
+      'r2b',
+      65002,
+      '2.2.2.2',
+      [makeIface('a', '10.0.2.2'), makeIface('b', '10.0.4.1')],
+      [makeNeighbor('10.0.2.1', 65001), makeNeighbor('10.0.4.2', 65003)],
+    );
+    const origin = makeRouter(
+      'origin',
+      65003,
+      '3.3.3.3',
+      [makeIface('a', '10.0.3.2'), makeIface('b', '10.0.4.2')],
+      [makeNeighbor('10.0.3.1', 65002), makeNeighbor('10.0.4.1', 65002)],
+      [PREFIX],
+    );
+    expect(exitOf(makeTopology({ nodes: [r1, r2a, r2b, origin] }))).toBe('10.0.1.2');
+  });
+
+  it('TC-1087: over iBGP the MED is kept', () => {
+    // i1 and i2 learn PREFIX from one AS; i1 records MED 50. r1 hears both over iBGP.
+    const r1 = makeRouter(
+      'r1',
+      65001,
+      '9.9.9.9',
+      [makeIface('a', '10.0.1.1'), makeIface('b', '10.0.2.1')],
+      [makeNeighbor('10.0.1.2', 65001), makeNeighbor('10.0.2.2', 65001)],
+    );
+    const i1 = makeRouter(
+      'i1',
+      65001,
+      '1.1.1.1',
+      [makeIface('a', '10.0.1.2'), makeIface('b', '10.0.3.1')],
+      [makeNeighbor('10.0.1.1', 65001), makeNeighbor('10.0.3.2', 65003, { med: 50 })],
+    );
+    const i2 = makeRouter(
+      'i2',
+      65001,
+      '2.2.2.2',
+      [makeIface('a', '10.0.2.2'), makeIface('b', '10.0.4.1')],
+      [makeNeighbor('10.0.2.1', 65001), makeNeighbor('10.0.4.2', 65003)],
+    );
+    const origin = makeRouter(
+      'origin',
+      65003,
+      '3.3.3.3',
+      [makeIface('a', '10.0.3.2'), makeIface('b', '10.0.4.2')],
+      [makeNeighbor('10.0.3.1', 65001), makeNeighbor('10.0.4.1', 65001)],
+      [PREFIX],
+    );
+    expect(exitOf(makeTopology({ nodes: [r1, i1, i2, origin] }))).toBe('10.0.2.2');
+  });
+});

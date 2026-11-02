@@ -9,6 +9,8 @@ import type { NetworkTopology } from '../../types/topology';
 import { inferRouteAddressFamily, type AddressFamily } from '../AddressFamily';
 import { withEqualCostNextHops } from '../ecmp';
 import { isInterfaceOnDownLink } from '../graphBuilder';
+import { ipToInt } from '../../utils/cidr';
+import { isIpv6Address, parseIpv6 } from '../../utils/ipv6';
 
 type SessionType = 'local' | 'ebgp' | 'ibgp';
 
@@ -20,6 +22,8 @@ interface BgpRouteState {
   attributes: BgpPathAttributes;
   sourceType: SessionType;
   advertiserRouterId: string;
+  /** The address of the peer the route was learned from; null for a router's own network. */
+  peerAddress: string | null;
 }
 
 interface BgpSession {
@@ -113,31 +117,39 @@ export class BgpProtocol implements RoutingProtocol {
           },
           sourceType: 'local',
           advertiserRouterId: bgpConfig.routerId,
+          peerAddress: null,
         });
       }
 
       tables.set(router.id, routeTable);
     }
 
+    // Each round, every router decides afresh among its own networks and all
+    // that its peers now offer, so the choice never depends on arrival order.
+    const originated = cloneTables(tables);
     let remainingIterations = bgpRouters.length;
     while (remainingIterations > 0) {
       remainingIterations -= 1;
-      const snapshot = cloneTables(tables);
-      const nextTables = cloneTables(tables);
+      const snapshot = tables;
+      const nextTables = new Map<string, Map<string, BgpRouteState>>();
       let changed = false;
 
       for (const router of bgpRouters) {
         const receiverConfig = router.data.bgpConfig;
         if (!receiverConfig) continue;
 
-        const routeTable = nextTables.get(router.id) ?? new Map<string, BgpRouteState>();
+        const candidates = new Map<string, BgpRouteState[]>();
+        const offer = (route: BgpRouteState) => {
+          candidates.set(route.destination, [...(candidates.get(route.destination) ?? []), route]);
+        };
+        for (const route of originated.get(router.id)?.values() ?? []) offer(route);
 
         for (const session of sessionsByRouter.get(router.id) ?? []) {
-          const neighborTable = snapshot.get(session.neighborId);
-          if (!neighborTable) continue;
-
-          for (const route of neighborTable.values()) {
+          for (const route of snapshot.get(session.neighborId)?.values() ?? []) {
             if (!session.families.includes(route.af)) continue;
+            // RFC 4271 §9.2: what a router learned over iBGP it does not pass
+            // on over iBGP.
+            if (session.sessionType === 'ibgp' && route.sourceType === 'ibgp') continue;
             const exportedAsPath =
               session.sessionType === 'ebgp'
                 ? prependAs(route.attributes.asPath, session.senderLocalAs)
@@ -145,7 +157,7 @@ export class BgpProtocol implements RoutingProtocol {
 
             if (exportedAsPath.includes(receiverConfig.localAs)) continue;
 
-            const candidate: BgpRouteState = {
+            offer({
               af: route.af,
               destination: route.destination,
               nextHop: session.neighborAddress,
@@ -157,30 +169,29 @@ export class BgpProtocol implements RoutingProtocol {
                 localPref:
                   session.neighborConfig.localPref ??
                   (session.sessionType === 'ebgp' ? 100 : route.attributes.localPref),
-                med: session.neighborConfig.med ?? route.attributes.med,
-                origin: route.attributes.origin,
+                // MED is for the neighbouring AS alone (RFC 4271 §5.1.4): kept
+                // inside an AS, not carried to the next one.
+                med:
+                  session.neighborConfig.med ??
+                  (session.sessionType === 'ibgp' ? route.attributes.med : 0),
+                origin: session.neighborConfig.origin ?? route.attributes.origin,
               },
               sourceType: session.sessionType,
               advertiserRouterId: session.neighborRouterId,
-            };
-
-            const existing = routeTable.get(route.destination);
-            if (!existing || compareRoutes(candidate, existing) < 0) {
-              routeTable.set(route.destination, candidate);
-              changed = true;
-            } else if (
-              (receiverConfig.maxEcmpPaths ?? 1) > 1 &&
-              compareMultipath(candidate, existing) === 0 &&
-              !existing.nextHops.includes(candidate.nextHop)
-            ) {
-              routeTable.set(route.destination, {
-                ...existing,
-                nextHops: [...existing.nextHops, candidate.nextHop].sort(),
-              });
-              changed = true;
-            }
+              peerAddress: session.neighborAddress,
+            });
           }
         }
+
+        const previous = snapshot.get(router.id);
+        const routeTable = new Map<string, BgpRouteState>();
+        for (const [destination, routes] of candidates) {
+          const best = decide(routes, receiverConfig.maxEcmpPaths ?? 1);
+          routeTable.set(destination, best);
+          const before = previous?.get(destination);
+          if (!before || !sameDecision(before, best)) changed = true;
+        }
+        if ((previous?.size ?? 0) !== routeTable.size) changed = true;
 
         nextTables.set(router.id, routeTable);
       }
@@ -255,33 +266,85 @@ function sourceRank(sourceType: SessionType): number {
   return 2;
 }
 
-function compareRoutes(left: BgpRouteState, right: BgpRouteState): number {
-  const multipathComparison = compareMultipath(left, right);
-  if (multipathComparison !== 0) {
-    return multipathComparison;
-  }
+const ORIGIN_RANK: Readonly<Record<BgpPathAttributes['origin'], number>> = {
+  igp: 0,
+  egp: 1,
+  incomplete: 2,
+};
 
-  return left.advertiserRouterId.localeCompare(right.advertiserRouterId);
+/** The routes with the lowest `rank`. */
+function lowest(routes: readonly BgpRouteState[], rank: (route: BgpRouteState) => number) {
+  const least = Math.min(...routes.map(rank));
+  return routes.filter((route) => rank(route) === least);
 }
 
-function compareMultipath(left: BgpRouteState, right: BgpRouteState): number {
-  if (left.attributes.localPref !== right.attributes.localPref) {
-    return right.attributes.localPref - left.attributes.localPref;
-  }
+/** The AS a route came from: the first of its AS_PATH; '' for one from inside this AS. */
+function neighbouringAs(route: BgpRouteState): number | '' {
+  return route.attributes.asPath[0] ?? '';
+}
 
-  if (left.attributes.asPath.length !== right.attributes.asPath.length) {
-    return left.attributes.asPath.length - right.attributes.asPath.length;
-  }
+/**
+ * RFC 4271 §9.1.2.2(c): a route goes if another from the same neighbouring AS
+ * has a lower MED. It is done to the whole set at once, because taken two at a
+ * time MED is not transitive and the answer would depend on the order.
+ */
+function withLowestMedPerNeighbouringAs(routes: readonly BgpRouteState[]): BgpRouteState[] {
+  return routes.filter(
+    (route) =>
+      !routes.some(
+        (other) =>
+          neighbouringAs(other) === neighbouringAs(route) &&
+          other.attributes.med < route.attributes.med,
+      ),
+  );
+}
 
-  if (left.attributes.med !== right.attributes.med) {
-    return left.attributes.med - right.attributes.med;
-  }
+/** Numbers, not text: 10.0.0.9 is below 10.0.0.10. */
+function compareAddresses(left: string, right: string): number {
+  const leftValue = addressValue(left);
+  const rightValue = addressValue(right);
+  if (leftValue === null || rightValue === null) return left.localeCompare(right);
+  if (leftValue === rightValue) return 0;
+  return leftValue < rightValue ? -1 : 1;
+}
 
-  if (left.sourceType !== right.sourceType) {
-    return sourceRank(left.sourceType) - sourceRank(right.sourceType);
-  }
+function addressValue(address: string): bigint | null {
+  if (isIpv6Address(address)) return parseIpv6(address).bigint;
+  return /^\d+\.\d+\.\d+\.\d+$/.test(address) ? BigInt(ipToInt(address) >>> 0) : null;
+}
 
-  return 0;
+/**
+ * The decision process of RFC 4271 §9.1: the highest LOCAL_PREF, then
+ * §9.1.2.2's (a) AS_PATH, (b) ORIGIN, (c) MED, (d) a router's own network, then
+ * eBGP, then iBGP. Step (e), the IGP cost to the next hop, is not modelled.
+ * What survives (d) with the winner's MED shares the load, up to `maxEcmpPaths`.
+ */
+function decide(routes: readonly BgpRouteState[], maxEcmpPaths: number): BgpRouteState {
+  let remaining = lowest(routes, (route) => -route.attributes.localPref);
+  remaining = lowest(remaining, (route) => route.attributes.asPath.length);
+  remaining = lowest(remaining, (route) => ORIGIN_RANK[route.attributes.origin]);
+  remaining = withLowestMedPerNeighbouringAs(remaining);
+  remaining = lowest(remaining, (route) => sourceRank(route.sourceType));
+
+  const [best, ...others] = [...remaining].sort(
+    (left, right) =>
+      compareAddresses(left.advertiserRouterId, right.advertiserRouterId) ||
+      compareAddresses(left.peerAddress ?? '', right.peerAddress ?? ''),
+  );
+  if (!best) throw new Error('decide: no routes');
+  if (maxEcmpPaths <= 1) return best;
+  const shared = others.filter((route) => route.attributes.med === best.attributes.med);
+  if (shared.length === 0) return best;
+  return {
+    ...best,
+    nextHops: [best.nextHop, ...shared.map((route) => route.nextHop)]
+      .filter((hop, index, hops) => hops.indexOf(hop) === index)
+      .sort(),
+  };
+}
+
+function sameDecision(left: BgpRouteState, right: BgpRouteState): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
 }
 
 function cloneTables(

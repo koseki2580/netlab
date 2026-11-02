@@ -90,6 +90,15 @@ export const EXAM_PATH: readonly PathStop[] = [
     },
   },
   {
+    id: 'tcp-flow',
+    path: lessonPath('/simulation/tcp-flow-control'),
+    title: { en: 'TCP flow control', ja: 'TCP のフロー制御' },
+    teaches: {
+      en: 'How a receiver keeps a sender from overrunning it',
+      ja: '受信側が送信側の送りすぎを防ぐしくみ',
+    },
+  },
+  {
     id: 'udp',
     path: lessonPath('/networking/udp'),
     title: { en: 'UDP datagram', ja: 'UDP のデータグラム' },
@@ -175,48 +184,45 @@ export const EXAM_QUESTIONS: readonly ExamQuestion[] = [
     taughtBy: 'subnetting',
   },
   {
-    id: 'switch-delivery',
+    id: 'tcp-zero-window',
     prompt: {
-      en: 'PC-A, PC-B and PC-C are plugged into one switch. The switch has already learned which socket (port) each PC is on. PC-A sends to PC-B. Where does the switch send it?',
-      ja: 'PC-A、PC-B、PC-C が 1 台のスイッチにつながっています。スイッチは、どの差し込み口（ポート）の先にどの PC がいるかをもう覚えています。PC-A が PC-B あてに送ると、スイッチはどこへ流しますか？',
+      en: 'A server’s application has stopped reading, and the server’s ACKs now show a window of 0. The sender still has data to send. What does the sender do?',
+      ja: 'サーバのアプリが読むのをやめ、サーバの ACK のウィンドウが 0 になりました。送信側にはまだ送るデータがあります。送信側はどうしますか？',
     },
     options: [
-      { en: 'Only down the cable that leads to PC-B', ja: 'PC-B につながるケーブルにだけ流す' },
+      { en: 'Goes on sending, and the server stores it', ja: '送り続け、サーバがためておく' },
+      { en: 'Stops new data and probes now and then', ja: '新しいデータを止め、ときどき確かめる' },
+      { en: 'Closes the connection with a FIN at once', ja: 'すぐに FIN を送って接続を閉じる' },
       {
-        en: 'Down the cables to both PC-B and PC-C',
-        ja: 'PC-B と PC-C の両方のケーブルに流す',
+        en: 'Halves cwnd, as it does after a loss',
+        ja: '損失のときと同じように cwnd を半分にする',
       },
-      { en: 'Back to PC-A, to confirm it was sent', ja: '確認のため、PC-A に送り返す' },
-      {
-        en: 'Nowhere, as only a router can pass it on',
-        ja: 'ルータがないので、どこにも流さない',
-      },
+    ],
+    answer: 1,
+    explanation: {
+      en: 'It stops new data, because a window of 0 means the receiver has no room. Nothing is lost and the connection stays open. Now and then it sends a one-byte probe, which the receiver answers with its current window, because a window update can be lost. When the application reads again, a window update lets the sender go on. The TCP flow control lesson shows it.',
+      ja: '新しいデータを止めます。ウィンドウ 0 は、受信側に空きがないという意味です。何も失われていないので、接続は開いたままです。ウィンドウ更新が失われることもあるので、送信側はときどき 1 バイトのプローブを送り、受信側がいまのウィンドウを返します。アプリがまた読むと、ウィンドウ更新が届いて送信側は続きを送ります。「TCP のフロー制御」のレッスンで見られます。',
+    },
+    taughtBy: 'tcp-flow',
+  },
+  {
+    id: 'tcp-mss',
+    prompt: {
+      en: 'In the handshake a client announces MSS 1460 and the server announces MSS 1000. What is the most data the client can put in one segment?',
+      ja: 'ハンドシェイクで、クライアントは MSS 1460、サーバは MSS 1000 と知らせました。クライアントが 1 つのセグメントに入れられるデータは最大いくつですか？',
+    },
+    options: [
+      { en: '1000 bytes', ja: '1000 バイト' },
+      { en: '1230 bytes', ja: '1230 バイト' },
+      { en: '1460 bytes', ja: '1460 バイト' },
+      { en: '2460 bytes', ja: '2460 バイト' },
     ],
     answer: 0,
     explanation: {
-      en: 'It goes to PC-B only. A switch remembers which machine is on which socket, so it sends down one cable instead of all of them. No router is needed: the three are on one network. See step 3 of Getting started.',
-      ja: 'PC-B にだけ届きます。スイッチは、どの差し込み口の先にどの機器がいるかを覚えているので、全部に配らず 1 本のケーブルにだけ流します。3 台は同じネットワークなので、ルータは要りません。入門コースのステップ 3 で見られます。',
+      en: '1000 bytes. MSS is what an end says it will receive, so the client may not send the server more than 1000, and it keeps to its own limit as well. The smaller figure decides. The two ends do not meet in the middle, and the figures are not added. The TCP flow control lesson lets you change the server’s MSS.',
+      ja: '1000 バイトです。MSS は「自分はここまで受け取れる」という知らせなので、クライアントはサーバへ 1000 バイトより多くは送れません。自分の上限も超えません。小さいほうで決まります。間を取ることも、足すこともありません。「TCP のフロー制御」のレッスンで、サーバの MSS を変えて確かめられます。',
     },
-    taughtBy: 'course',
-  },
-  {
-    id: 'join-networks',
-    prompt: {
-      en: 'An office has two groups of PCs. One group uses 10.0.0.x/24 on its own switch; the other uses 192.168.1.x/24 on another switch. The two groups cannot reach each other. What makes it work?',
-      ja: '会社に PC のグループが 2 つあります。一方は 10.0.0.x/24 で 1 台目のスイッチに、もう一方は 192.168.1.x/24 で 2 台目のスイッチにつながっています。グループどうしは通信できません。どうすれば届くようになりますか？',
-    },
-    options: [
-      { en: 'Join the two switches with one cable', ja: '2 台のスイッチをケーブルで直接つなぐ' },
-      { en: 'Move every PC onto one larger switch', ja: '全部の PC を大きなスイッチ 1 台につなぐ' },
-      { en: 'Put a third switch between the two', ja: '2 台の間に 3 台目のスイッチを置く' },
-      { en: 'Put a router between the switches', ja: '2 台のスイッチの間にルータを置く' },
-    ],
-    answer: 3,
-    explanation: {
-      en: 'A router is needed. 10.0.0 and 192.168.1 are different networks, and a switch only carries things inside one network, however many switches or cables are added. A router has an address on each network and passes packets across. See steps 4 and 5 of Getting started.',
-      ja: 'ルータが必要です。10.0.0 と 192.168.1 は別のネットワークで、スイッチは 1 つのネットワークの中でしか運べません。スイッチやケーブルを増やしても同じです。ルータは両方のネットワークにアドレスを持ち、その間でパケットを渡します。入門コースのステップ 4 と 5 で見られます。',
-    },
-    taughtBy: 'course',
+    taughtBy: 'tcp-flow',
   },
   {
     id: 'first-packet',

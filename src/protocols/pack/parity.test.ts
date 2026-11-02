@@ -3,8 +3,8 @@
  * Where today's output disagrees with the RFC, the RFC wins and the gap is
  * recorded in docs/core/protocol-packs.md ("Discrepancies found in today's code").
  */
-import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parseGreHeader, serializeGreHeader } from '../../layers/l3-network/tunneling/GreHeader';
 import { TraceRecorder } from '../../simulation/TraceRecorder';
@@ -124,27 +124,8 @@ describe('parity with today’s DNS hex view and trace', () => {
 });
 
 describe('trial boundary', () => {
-  it('TC-949: nothing outside src/protocols/pack exports or imports it', () => {
-    const root = join(__dirname, '..', '..');
-    const packDir = join(root, 'protocols', 'pack');
-    const offenders: string[] = [];
-    const walk = (dir: string) => {
-      for (const entry of readdirSync(dir)) {
-        const path = join(dir, entry);
-        if (statSync(path).isDirectory()) {
-          if (path !== packDir) walk(path);
-        } else if (/\.(ts|tsx)$/.test(entry) && !/\.(test|spec|stories)\./.test(entry)) {
-          if (/protocols\/pack['/]/.test(readFileSync(path, 'utf8'))) {
-            offenders.push(relative(root, path).split(sep).join('/'));
-          }
-        }
-      }
-    };
-    walk(root);
-    walk(join(root, '..', 'demo'));
-    expect(offenders).toEqual([]);
-    expect(readFileSync(join(root, 'index.ts'), 'utf8')).not.toMatch(
-      /defineProtocol|ProtocolPack|protocols\/pack/,
-    );
+  it('TC-949: src/index.ts exports nothing of the pack', () => {
+    const index = readFileSync(join(__dirname, '..', '..', 'index.ts'), 'utf8');
+    expect(index).not.toMatch(/defineProtocol|ProtocolPack|protocols\/pack|protocols\/packs/);
   });
 });

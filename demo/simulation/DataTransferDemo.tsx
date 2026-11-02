@@ -199,8 +199,18 @@ function IpMacSummary({
   const t = useT();
   const sampleChunk = chunks.find((chunk) => chunk.traceId && chunk.state === 'delivered');
   const trace = sampleChunk?.traceId ? tracesById.get(sampleChunk.traceId) : undefined;
-  const hops =
-    trace?.hops.filter((hop) => hop.event !== 'arp-request' && hop.event !== 'arp-reply') ?? [];
+  // The packet's own hops: no ARP rows, and a sender that asked first counts
+  // once, with the addresses it sent with (its `create` has no destination MAC yet).
+  const hops = (
+    trace?.hops.filter((hop) => hop.event !== 'arp-request' && hop.event !== 'arp-reply') ?? []
+  ).filter(
+    (hop, index, rows) =>
+      !(
+        hop.event === 'create' &&
+        rows[index + 1]?.event === 'forward' &&
+        rows[index + 1]?.nodeId === hop.nodeId
+      ),
+  );
 
   if (hops.length === 0) {
     return null;

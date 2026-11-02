@@ -20,6 +20,8 @@ import { p2Traceroute } from './templates/level2/p2-traceroute';
 import { p3Df } from './templates/level3/p3-df';
 import { p3Pmtud } from './templates/level3/p3-pmtud';
 import { p4Fragment } from './templates/level4/p4-fragment';
+import { p4SendWindow } from './templates/level4/p4-send-window';
+import { usableWindow } from '../../src/layers/l4-transport/tcpWindow';
 import { classicMistakes } from './mistakes';
 
 const failing = (grade: PacketGrade) => grade.results.filter((entry) => !entry.passed);
@@ -219,4 +221,21 @@ describe('path MTU discovery over two narrow cables', () => {
       expect(refused?.code, `seed ${seed}: the first MTU alone`).toBe('too-big-not-split');
     }
   }, 300_000);
+});
+
+describe('how much a sender may still send (TC-1076)', () => {
+  it('the key is what the engine says, and each wrong pick is told why', async () => {
+    for (let seed = 0; seed < 24; seed += 1) {
+      const exercise = p4SendWindow.generate(seed) as ReadExercise;
+      const [question] = exercise.questions;
+      expect(question?.answer).toBe(String(usableWindow(question!.window!)));
+      const right = await judgeRead(exercise, { picks: { room: question!.answer } });
+      expect(right.passed).toBe(true);
+      const wrong = question!.candidates.find((candidate) => candidate.why !== 'right')!;
+      const grade = await judgeRead(exercise, { picks: { room: String(wrong.value) } });
+      const [result] = failing(grade);
+      expect(result?.code).toBe('wrong-pick');
+      expect(result?.message).toBe(PICK_MESSAGES[wrong.why]);
+    }
+  });
 });

@@ -4,6 +4,7 @@ import type {
   TcpCongestionState,
   TcpCwndUpdateReason,
 } from '../../types/tcp-congestion';
+import { usableWindow } from './tcpWindow';
 
 interface TcpCongestionControlOptions {
   readonly mss: number;
@@ -68,8 +69,11 @@ export class TcpCongestionControl {
   }
 
   allowedBytesToSend(): number {
-    const congestionAllowance = Math.max(0, this.currentState.cwnd - this.currentState.inflight);
-    return Math.max(0, Math.min(congestionAllowance, this.receiverWindow));
+    return usableWindow({
+      cwnd: this.currentState.cwnd,
+      rwnd: this.receiverWindow,
+      inFlight: this.currentState.inflight,
+    });
   }
 
   setRwnd(bytes: number): void {

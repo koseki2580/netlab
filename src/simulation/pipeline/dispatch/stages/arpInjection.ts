@@ -1,5 +1,6 @@
 import { isIpv6Packet } from '../../../../types/packets';
 import type { PacketHop } from '../../../../types/simulation';
+import { arpKey } from '../ArpDispatcher';
 import { passArpThroughSwitches } from './floodCopies';
 import {
   appendHop,
@@ -31,7 +32,8 @@ export function runArpInjectionStage(ctx: RoutedContext): StageResult | Promise<
         )
       : null;
   const shouldInjectArp =
-    ctx.routing.arpTarget !== null && !ctx.shared.arpCache.has(ctx.routing.arpTarget.targetIp);
+    ctx.routing.arpTarget !== null &&
+    !ctx.shared.arpCache.has(arpKey(ctx.current, ctx.routing.arpTarget.targetIp));
 
   if (shouldInjectArp && ctx.ingressFrom === null) {
     const createHop: Omit<PacketHop, 'step'> = {
@@ -97,9 +99,12 @@ export function runArpInjectionStage(ctx: RoutedContext): StageResult | Promise<
       });
     }
 
-    ctx.shared.arpCache.set(ctx.routing.arpTarget.targetIp, targetMac);
+    ctx.shared.arpCache.set(arpKey(ctx.current, ctx.routing.arpTarget.targetIp), targetMac);
     if (ctx.routing.arpTarget.senderIp.trim()) {
-      ctx.shared.arpCache.set(ctx.routing.arpTarget.senderIp, ctx.routing.arpTarget.senderMac);
+      ctx.shared.arpCache.set(
+        arpKey(ctx.routing.arpTarget.targetNodeId, ctx.routing.arpTarget.senderIp),
+        ctx.routing.arpTarget.senderMac,
+      );
     }
     recordArpEntry(ctx, ctx.current, ctx.routing.arpTarget.targetIp, targetMac);
     recordArpEntry(
@@ -112,7 +117,7 @@ export function runArpInjectionStage(ctx: RoutedContext): StageResult | Promise<
 
   ctx.routing.forwardEvent = ctx.ingressFrom === null && !shouldInjectArp ? 'create' : 'forward';
   ctx.routing.resolvedDstMac = ctx.routing.arpTarget
-    ? (ctx.shared.arpCache.get(ctx.routing.arpTarget.targetIp) ??
+    ? (ctx.shared.arpCache.get(arpKey(ctx.current, ctx.routing.arpTarget.targetIp)) ??
       ctx.deps.arpDispatcher.resolveTargetMac(
         ctx.current,
         next.nodeId,

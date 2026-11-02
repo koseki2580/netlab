@@ -7,6 +7,7 @@ import { SwitchForwarder } from '../layers/l2-datalink/SwitchForwarder';
 import { layerRegistry } from '../registry/LayerRegistry';
 import { ICMP_CODE, ICMP_TYPE } from './icmp';
 import {
+  dataHops,
   CLIENT_MAC,
   SERVER_MAC,
   deriveDeterministicMac,
@@ -78,14 +79,14 @@ describe('Packet routing correctness', () => {
       );
 
       expect(trace.status).toBe('delivered');
-      expect(trace.hops.map((hop) => hop.nodeId)).toEqual([
+      expect(dataHops(trace).map((hop) => hop.nodeId)).toEqual([
         'client-1',
         'router-1',
         'router-2',
         'router-3',
         'server-1',
       ]);
-      expect(trace.hops.map((hop) => hop.event)).toEqual([
+      expect(dataHops(trace).map((hop) => hop.event)).toEqual([
         'create',
         'forward',
         'forward',
@@ -100,7 +101,7 @@ describe('Packet routing correctness', () => {
         makePacket('routing-ttl', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10', 64),
       );
 
-      expect(trace.hops.map((hop) => hop.ttl)).toEqual([64, 64, 63, 62, 61]);
+      expect(dataHops(trace).map((hop) => hop.ttl)).toEqual([64, 64, 63, 62, 61]);
     });
 
     it('rewrites MAC addresses at each router boundary', async () => {
@@ -132,7 +133,7 @@ describe('Packet routing correctness', () => {
         makePacket('diamond-lpm', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
       );
 
-      const r1Hop = trace.hops.find((hop) => hop.nodeId === 'router-1');
+      const r1Hop = dataHops(trace).find((hop) => hop.nodeId === 'router-1');
       expect(r1Hop?.toNodeId).toBe('router-2');
     });
 
@@ -145,7 +146,7 @@ describe('Packet routing correctness', () => {
         makePacket(`diamond-${dstIp}`, 'client-1', 'server-1', '10.0.0.10', dstIp),
       );
 
-      const r1Hop = trace.hops.find((hop) => hop.nodeId === 'router-1');
+      const r1Hop = dataHops(trace).find((hop) => hop.nodeId === 'router-1');
       expect(r1Hop?.toNodeId).toBe(expectedVia);
     });
   });
@@ -157,7 +158,7 @@ describe('Packet routing correctness', () => {
         makePacket('asymmetric-forward', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
       );
 
-      expect(trace.hops.map((hop) => hop.nodeId)).toEqual([
+      expect(dataHops(trace).map((hop) => hop.nodeId)).toEqual([
         'client-1',
         'router-1',
         'router-2',
@@ -171,7 +172,7 @@ describe('Packet routing correctness', () => {
         makePacket('asymmetric-return', 'server-1', 'client-1', '203.0.113.10', '10.0.0.10'),
       );
 
-      expect(trace.hops.map((hop) => hop.nodeId)).toEqual([
+      expect(dataHops(trace).map((hop) => hop.nodeId)).toEqual([
         'server-1',
         'router-3',
         'router-1',
@@ -192,7 +193,7 @@ describe('TTL expiration', () => {
     );
 
     expect(trace.status).toBe('dropped');
-    const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+    const dropHop = dataHops(trace).find((hop) => hop.event === 'drop');
     expect(dropHop?.reason).toBe('ttl-exceeded');
     expect(dropHop?.nodeId).toBe('router-1');
   });
@@ -204,7 +205,7 @@ describe('TTL expiration', () => {
     );
 
     expect(trace.status).toBe('delivered');
-    expect(trace.hops[trace.hops.length - 1]?.ttl).toBe(42);
+    expect(dataHops(trace)[dataHops(trace).length - 1]?.ttl).toBe(42);
   });
 
   it('drops at second router when TTL=2 in a two-router chain', async () => {
@@ -214,7 +215,7 @@ describe('TTL expiration', () => {
     );
 
     expect(trace.status).toBe('dropped');
-    const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+    const dropHop = dataHops(trace).find((hop) => hop.event === 'drop');
     expect(dropHop?.nodeId).toBe('router-2');
     expect(dropHop?.reason).toBe('ttl-exceeded');
   });
@@ -226,7 +227,7 @@ describe('TTL expiration', () => {
     );
 
     expect(trace.status).toBe('dropped');
-    const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+    const dropHop = dataHops(trace).find((hop) => hop.event === 'drop');
     expect(dropHop?.nodeId).toBe('router-3');
     expect(dropHop?.reason).toBe('ttl-exceeded');
   });
@@ -383,8 +384,8 @@ describe('No-route handling', () => {
     );
 
     expect(trace.status).toBe('dropped');
-    const dropHop = trace.hops.find((hop) => hop.event === 'drop');
-    const r1Hop = trace.hops.find((hop) => hop.nodeId === 'router-1');
+    const dropHop = dataHops(trace).find((hop) => hop.event === 'drop');
+    const r1Hop = dataHops(trace).find((hop) => hop.nodeId === 'router-1');
     expect(dropHop?.nodeId).toBe('router-2');
     expect(dropHop?.reason).toBe('no-route');
     expect(r1Hop?.event).toBe('forward');
@@ -405,7 +406,7 @@ describe('No-route handling', () => {
       );
 
       expect(trace.status).toBe('dropped');
-      const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+      const dropHop = dataHops(trace).find((hop) => hop.event === 'drop');
       expect(dropHop?.nodeId).toBe(expectedDropNode);
       expect(dropHop?.reason).toBe('no-route');
     },
@@ -420,7 +421,7 @@ describe('No-route handling', () => {
       makePacket('no-route-null-winner', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
     );
 
-    const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+    const dropHop = dataHops(trace).find((hop) => hop.event === 'drop');
     expect(dropHop?.routingDecision?.winner).toBeNull();
   });
 
@@ -433,7 +434,7 @@ describe('No-route handling', () => {
       makePacket('no-route-candidates', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
     );
 
-    const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+    const dropHop = dataHops(trace).find((hop) => hop.event === 'drop');
     expect(dropHop?.routingDecision?.candidates).toHaveLength(1);
     expect(dropHop?.routingDecision?.winner).toBeNull();
   });
@@ -448,7 +449,7 @@ describe('No-route handling', () => {
     );
 
     expect(trace.status).toBe('dropped');
-    const events = trace.hops.map((hop) => ({ nodeId: hop.nodeId, event: hop.event }));
+    const events = dataHops(trace).map((hop) => ({ nodeId: hop.nodeId, event: hop.event }));
     expect(events).toContainEqual({ nodeId: 'router-1', event: 'forward' });
     expect(events).toContainEqual({ nodeId: 'router-2', event: 'forward' });
     expect(events).toContainEqual({ nodeId: 'router-3', event: 'drop' });
@@ -463,7 +464,7 @@ describe('No-route handling', () => {
       makePacket('no-route-explanation', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
     );
 
-    const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+    const dropHop = dataHops(trace).find((hop) => hop.event === 'drop');
     expect(dropHop?.routingDecision?.explanation).toBeDefined();
     expect(dropHop?.routingDecision?.explanation.length).toBeGreaterThan(0);
   });
@@ -485,7 +486,7 @@ describe('Failure injection', () => {
       );
 
       expect(trace.status).toBe('dropped');
-      const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+      const dropHop = dataHops(trace).find((hop) => hop.event === 'drop');
       expect(dropHop?.reason).toBe('node-down');
       expect(dropHop?.nodeId).toBe('router-1');
     });
@@ -504,7 +505,7 @@ describe('Failure injection', () => {
       );
 
       expect(trace.status).toBe('dropped');
-      const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+      const dropHop = dataHops(trace).find((hop) => hop.event === 'drop');
       expect(dropHop?.nodeId).toBe('router-3');
       expect(dropHop?.reason).toBe('interface-down');
     });
@@ -529,7 +530,7 @@ describe('Failure injection', () => {
       );
 
       expect(trace.status).toBe('dropped');
-      const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+      const dropHop = dataHops(trace).find((hop) => hop.event === 'drop');
       expect(dropHop?.nodeId).toBe('router-2');
       expect(dropHop?.reason).toBe('node-down');
     });
@@ -550,8 +551,8 @@ describe('Failure injection', () => {
       );
 
       expect(trace.status).toBe('dropped');
-      const dropHop = trace.hops.find((hop) => hop.event === 'drop');
-      const r1Hop = trace.hops.find((hop) => hop.nodeId === 'router-1');
+      const dropHop = dataHops(trace).find((hop) => hop.event === 'drop');
+      const r1Hop = dataHops(trace).find((hop) => hop.nodeId === 'router-1');
       expect(dropHop?.nodeId).toBe('router-2');
       expect(dropHop?.reason).toBe('node-down');
       expect(r1Hop?.event).toBe('forward');
@@ -603,7 +604,7 @@ describe('Failure injection', () => {
 
       expect(blocked.status).toBe('dropped');
       expect(fallback.status).toBe('delivered');
-      const r1Hop = fallback.hops.find((hop) => hop.nodeId === 'router-1');
+      const r1Hop = dataHops(fallback).find((hop) => hop.nodeId === 'router-1');
       expect(r1Hop?.toNodeId).toBe('router-3');
     });
   });
@@ -695,7 +696,7 @@ describe('Failure injection', () => {
         );
 
         expect(trace.status).toBe('dropped');
-        const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+        const dropHop = dataHops(trace).find((hop) => hop.event === 'drop');
         expect(dropHop?.reason).toBe(expectedReason);
       },
     );

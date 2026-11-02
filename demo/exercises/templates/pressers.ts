@@ -53,6 +53,7 @@ function valueOf(change: SettingChange): string {
     case 'port-vlan':
       return change.vlanMode;
     case 'stp-priority':
+    case 'ospf-priority':
       return String(change.priority);
     default:
       return change.kind;

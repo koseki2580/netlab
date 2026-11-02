@@ -13,6 +13,7 @@ const CODES: readonly CheckResultCode[] = [
   'wrong-path',
   'route-missing',
   'wrong-root',
+  'wrong-dr',
   'wrong-role',
   'no-acl-drop',
   'no-translation',

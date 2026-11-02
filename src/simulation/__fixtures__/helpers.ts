@@ -2,6 +2,7 @@ import { HookEngine } from '../../hooks/HookEngine';
 import { SimulationEngine } from '../SimulationEngine';
 import type { EthernetFrame, InFlightPacket } from '../../types/packets';
 import type { RouteEntry } from '../../types/routing';
+import type { PacketHop, PacketTrace } from '../../types/simulation';
 import type { NetworkTopology } from '../../types/topology';
 import { assertDefined } from '../../utils';
 
@@ -125,14 +126,43 @@ export function makeEngine(topology: NetworkTopology): SimulationEngine {
   return new SimulationEngine(topology, new HookEngine());
 }
 
+/**
+ * Sends `packet` once, so the devices on its way have asked (REQ-190) and the
+ * next send has no ARP rows: for a test that counts steps along a path.
+ */
+export async function warmUp(engine: SimulationEngine, packet: InFlightPacket): Promise<void> {
+  await engine.send({ ...packet, id: `${packet.id}-warm-up` });
+}
+
 export async function packetAtStep(
   engine: SimulationEngine,
   packet: InFlightPacket,
   step: number,
 ): Promise<InFlightPacket> {
+  await warmUp(engine, packet);
   await engine.send(packet);
   engine.selectHop(step);
   const selectedPacket = engine.getState().selectedPacket ?? undefined;
   assertDefined(selectedPacket, `No packet snapshot available for step ${step}`);
   return selectedPacket;
+}
+
+/**
+ * The hops the packet itself makes: the ARP rows are left out, and the sender's
+ * `create` and the `forward` that follows its exchange are one hop again, with
+ * the MACs the frame left with. Every device asks on first use (REQ-190), so a
+ * test about forwarding reads this rather than counting the ARP rows.
+ */
+export function dataHops(trace: Pick<PacketTrace, 'hops'>): PacketHop[] {
+  const out: PacketHop[] = [];
+  for (const hop of trace.hops) {
+    if (hop.event === 'arp-request' || hop.event === 'arp-reply') continue;
+    const last = out[out.length - 1];
+    if (last?.event === 'create' && hop.event === 'forward' && hop.nodeId === last.nodeId) {
+      out[out.length - 1] = { ...hop, event: 'create' };
+    } else {
+      out.push(hop);
+    }
+  }
+  return out;
 }

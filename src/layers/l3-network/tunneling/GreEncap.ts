@@ -1,19 +1,33 @@
 import type { IpPacket } from '../../../types/packets';
-import type { GreEnvelope, GreTunnelConfig } from '../../../types/tunneling';
+import type {
+  GreEnvelope,
+  GreHeader,
+  GreRawPayload,
+  GreTunnelConfig,
+} from '../../../types/tunneling';
+import { buildIpv4PacketBytes, bytesToRawString } from '../../../utils/packetLayout';
+import { serializeGreHeader } from './GreHeader';
 
+/**
+ * Wraps `inner` in outer IPv4 protocol 47. `data` is the real wire bytes (the hex
+ * view and pcap read them); `gre` keeps the structured header and inner packet, so
+ * the far end gets the inner packet back as it was.
+ */
 export function encapGre(inner: IpPacket, config: GreTunnelConfig): IpPacket {
-  const envelope: GreEnvelope = {
-    kind: 'gre',
-    header: {
-      hasChecksum: false,
-      hasKey: config.key !== undefined,
-      hasSequence: config.sequence !== undefined,
-      version: 0,
-      protocolType: inner.version === 6 ? 0x86dd : 0x0800,
-      ...(config.key === undefined ? {} : { key: config.key }),
-      ...(config.sequence === undefined ? {} : { sequence: config.sequence }),
-    },
-    inner,
+  const header: GreHeader = {
+    hasChecksum: false,
+    hasKey: config.key !== undefined,
+    hasSequence: config.sequence !== undefined,
+    version: 0,
+    protocolType: inner.version === 6 ? 0x86dd : 0x0800,
+    ...(config.key === undefined ? {} : { key: config.key }),
+    ...(config.sequence === undefined ? {} : { sequence: config.sequence }),
+  };
+  const gre: GreEnvelope = { kind: 'gre', header, inner };
+  const payload: GreRawPayload = {
+    layer: 'raw',
+    data: bytesToRawString([...serializeGreHeader(header), ...buildIpv4PacketBytes(inner)]),
+    gre,
   };
   return {
     layer: 'L3',
@@ -21,16 +35,13 @@ export function encapGre(inner: IpPacket, config: GreTunnelConfig): IpPacket {
     dstIp: config.destinationIp,
     ttl: 64,
     protocol: 47,
-    payload: { layer: 'raw', data: JSON.stringify(envelope) },
+    payload,
   };
 }
 
 export function decapGre(outer: IpPacket): { inner: IpPacket; key?: number; sequence?: number } {
-  if (outer.protocol !== 47 || outer.payload.layer !== 'raw') {
-    throw new RangeError('packet is not a GRE envelope');
-  }
-  const envelope = JSON.parse(outer.payload.data) as GreEnvelope;
-  if (envelope.kind !== 'gre') throw new RangeError('raw payload is not GRE');
+  const envelope = (outer.payload as Partial<GreRawPayload>).gre;
+  if (outer.protocol !== 47 || !envelope) throw new RangeError('packet is not a GRE envelope');
   return {
     inner: envelope.inner,
     ...(envelope.header.key === undefined ? {} : { key: envelope.header.key }),

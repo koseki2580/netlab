@@ -155,6 +155,20 @@ const CASES: readonly {
     change: { kind: 'bgp-local-pref', nodeId: 'r1', neighbor: '10.9.0.6', localPref: 200 },
     undo: { kind: 'bgp-local-pref', nodeId: 'r1', neighbor: '10.9.0.6', localPref: 100 },
   },
+  // TC-1107
+  {
+    name: 'bgp-med',
+    start: () => bgpExitsFixture().topology,
+    change: { kind: 'bgp-med', nodeId: 'r1', neighbor: '10.9.0.6', med: 50 },
+    undo: { kind: 'bgp-med', nodeId: 'r1', neighbor: '10.9.0.6', med: 0 },
+  },
+  // TC-1107
+  {
+    name: 'ospf-priority',
+    start: lanBehindRouter,
+    change: { kind: 'ospf-priority', nodeId: 'r1', ifaceId: 'lan', priority: 200 },
+    undo: { kind: 'ospf-priority', nodeId: 'r1', ifaceId: 'lan', priority: 1 },
+  },
   {
     name: 'iface-nat',
     start: lanBehindRouter,

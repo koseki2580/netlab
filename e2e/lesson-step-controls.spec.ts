@@ -32,13 +32,13 @@ async function pressesKeepTheirPlace(page: Page) {
   await step.scrollIntoViewIfNeeded();
 
   await step.click();
-  await expect(page.getByTestId(TID.readout)).toContainText('10 個のうち 1 番目');
+  await expect(page.getByTestId(TID.readout)).toContainText('11 個のうち 1 番目');
   const afterOne = await step.boundingBox();
 
   for (let press = 2; press <= 5; press += 1) {
     await step.click();
   }
-  await expect(page.getByTestId(TID.readout)).toContainText('10 個のうち 5 番目');
+  await expect(page.getByTestId(TID.readout)).toContainText('11 個のうち 5 番目');
   const afterFive = await step.boundingBox();
 
   expect(afterFive?.x).toBe(afterOne?.x);
@@ -60,7 +60,7 @@ test('the step button stays where it was pressed as the history grows', async ({
   await demoPage.goto('/networking/arp');
   await pressesKeepTheirPlace(page);
   /** TC-342 — and the line under it says what a press does, and how many there are. */
-  await expect(page.getByTestId(TID.hint)).toContainText('全部で 10 回');
+  await expect(page.getByTestId(TID.hint)).toContainText('全部で 11 回');
 });
 
 test.describe('on a phone', () => {
@@ -84,12 +84,12 @@ test.describe('on a phone', () => {
       ((await step.boundingBox())?.y ?? 0) - ((await control.boundingBox())?.y ?? 0);
 
     await step.click();
-    await expect(page.getByTestId(TID.readout)).toContainText('10 個のうち 1 番目');
+    await expect(page.getByTestId(TID.readout)).toContainText('11 個のうち 1 番目');
     const afterOne = await offset();
     for (let press = 2; press <= 5; press += 1) {
       await step.click();
     }
-    await expect(page.getByTestId(TID.readout)).toContainText('10 個のうち 5 番目');
+    await expect(page.getByTestId(TID.readout)).toContainText('11 個のうち 5 番目');
 
     expect(await offset()).toBe(afterOne);
     await expect(step).toBeInViewport({ ratio: 1 });
@@ -156,7 +156,8 @@ test('after a send the bar says it arrived, names its buttons, and play replays'
   // Each position is on screen for half a second and the assertion polls up to
   // a second apart, so it looks for any position rather than a particular one:
   // a play that does nothing leaves the sentence above in place and fails here.
-  const position = /^7 個のうち [1-6] 番目：/;
+  // Every device asks on first use, so the count includes the ARP rows.
+  const position = /^\d+ 個のうち \d+ 番目：/;
   await page.getByTestId(TID.play).click();
   await expect(status).toHaveText(position);
 
@@ -187,10 +188,11 @@ test('the timeline keeps its expert tools folded and its rows in Japanese', asyn
 
   const rows = page.getByTestId(SEL.traceFilter.hop);
   await expect(rows.nth(1)).toHaveAttribute('data-event', 'arp-request');
-  await expect(rows.nth(1)).toContainText('203.0.113.10 の持ち主は？');
+  // Row 1 is the Client's question, for the Router.
+  await expect(rows.nth(1)).toContainText('10.0.0.1 の持ち主は？');
   await expect(rows.nth(1)).toContainText('ARP 要求');
   await expect(rows.nth(2)).toHaveAttribute('data-event', 'arp-reply');
-  await expect(rows.nth(2)).toContainText('203.0.113.10 は');
+  await expect(rows.nth(2)).toContainText('10.0.0.1 は');
   await expect(rows.nth(2)).toContainText('です');
   await expect(rows.nth(0)).toContainText('CREATE');
   await expect(rows.nth(0)).toContainText('作成');

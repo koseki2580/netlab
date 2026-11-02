@@ -14,6 +14,7 @@ import { prepare, routesOf } from '../exercises/grade/prepare';
 import { applyChanges } from '../exercises/model/settings';
 import { bgpExitsFixture } from '../exercises/templates/shared/bgp';
 import { EXAM_WAVE1, IGMP_SCENARIO, STATEFUL_SCENARIO } from './examWave1';
+import { examLevel } from './examLevels';
 
 const byId = (id: string) => {
   const found = EXAM_WAVE1.find((question) => question.id === id);
@@ -132,5 +133,27 @@ describe('the questions read like the others', () => {
 
   it('does not put the right answer in the same place every time', () => {
     expect(new Set(EXAM_WAVE1.map((question) => question.answer)).size).toBeGreaterThan(1);
+  });
+});
+
+// TC-1108
+describe('where the questions stand', () => {
+  const ids = (level: number) => examLevel(level)?.questions.map((question) => question.id) ?? [];
+
+  it('stands each in a level of the stage that teaches it, keeping ten', () => {
+    expect(ids(2)).toEqual(
+      expect.arrayContaining(['bgp-local-pref-exit', 'stateful-firewall-reply']),
+    );
+    expect(ids(3)).toContain('igmp-snooping-ports');
+    expect(ids(2)).toHaveLength(10);
+    expect(ids(3)).toHaveLength(10);
+  });
+
+  it('has taken out the questions another stage’s test already covers', () => {
+    expect(ids(2)).not.toContain('longest-prefix');
+    expect(ids(2)).not.toContain('ttl');
+    expect(ids(3)).not.toContain('tls-alpn-mismatch');
+    expect(ids(7)).toEqual(expect.arrayContaining(['s3-lpm-nested', 's3-ttl-at-r3']));
+    expect(ids(8)).toContain('s7-tls-alpn-hidden');
   });
 });

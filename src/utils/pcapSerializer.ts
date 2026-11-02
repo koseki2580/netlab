@@ -1,7 +1,6 @@
 import type { ArpEthernetFrame, EthernetFrame } from '../types/packets';
 import type { PacketHop } from '../types/simulation';
-import { DEFAULT_ETHERNET_PREAMBLE } from './packetLayout';
-import { serializeArpFrame, serializePacket } from './packetSerializer';
+import { buildArpFrameBytes, buildEthernetFrameBytes } from './packetLayout';
 
 export interface PcapRecord {
   hop: PacketHop;
@@ -64,14 +63,10 @@ function isArpFrame(frame: EthernetFrame | ArpEthernetFrame): frame is ArpEthern
 }
 
 export function serializePcapFrame(frame: EthernetFrame | ArpEthernetFrame): Uint8Array {
-  if (isArpFrame(frame)) {
-    const { bytes } = serializeArpFrame(frame);
-    return bytes.slice(0, bytes.length - 4);
-  }
-
-  const { bytes } = serializePacket(frame);
-  const preambleLength = frame.preamble?.length ?? DEFAULT_ETHERNET_PREAMBLE.length;
-  return bytes.slice(preambleLength, bytes.length - 4);
+  const bytes = isArpFrame(frame)
+    ? buildArpFrameBytes(frame).slice(0, -4)
+    : buildEthernetFrameBytes(frame, { includePreamble: false, includeFcs: false });
+  return Uint8Array.from(bytes);
 }
 
 export function buildPcap(records: PcapRecord[]): Uint8Array {

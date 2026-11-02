@@ -21,7 +21,7 @@ Triggered on every pull request targeting `main`. Runs:
 
 1. `npm run typecheck` — TypeScript type check across the full codebase
 2. `npm run test` — Vitest unit test suite
-3. `npm run size` — absolute gzip budgets from `.size-limit.json`
+3. `npm run size` — absolute gzip budgets from `.size-limit.mjs`
 4. `npm run bench:forwarding` — forwarding throughput regression check (non-blocking during rollout)
 
 ### Test files
@@ -44,7 +44,7 @@ npm run test:watch # watch mode
 The pull request workflow keeps two bundle-size signals:
 
 - `npm run size` is the blocking absolute gate. It builds the package and verifies the facade,
-  layer, protocol, worker, and key UI chunks against `.size-limit.json`.
+  layer, protocol, worker, and key UI chunks against `.size-limit.mjs`.
 - The PR size delta job builds the PR and the `main` baseline, compares `size-limit --json`
   output, writes a Markdown table to the workflow summary, and posts or updates one PR comment.
 

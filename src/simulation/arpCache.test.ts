@@ -6,6 +6,7 @@ import { layerRegistry } from '../registry/LayerRegistry';
 import type { PacketTrace } from '../types/simulation';
 import type { NetlabNode, NetworkTopology } from '../types/topology';
 import { makePacket } from './__fixtures__/helpers';
+import { multiHopTopology } from './__fixtures__/topologies';
 import { SimulationEngine } from './SimulationEngine';
 
 beforeAll(() => {
@@ -143,5 +144,63 @@ describe('when what was learned is kept and when it is emptied (REQ-095)', () =>
     expect(
       asksByArp(await engine.precompute(makePacket('p2', 'pc', 'srv', '10.0.0.10', '10.0.0.20'))),
     ).toBe(false);
+  });
+});
+
+const written = (id: string, ip: string, mac: string): NetlabNode => {
+  const node = host(id, ip);
+  return { ...node, data: { ...node.data, mac } };
+};
+
+/** pc and srv on one switch, each with its MAC written in the topology. */
+function writtenLan(): NetworkTopology {
+  const topology = lan();
+  topology.nodes[0] = written('pc', '10.0.0.10', 'aa:00:00:00:00:01');
+  const srvAt = topology.nodes.findIndex((node) => node.id === 'srv');
+  topology.nodes[srvAt] = written('srv', '10.0.0.20', 'aa:00:00:00:00:02');
+  return topology;
+}
+
+describe('a MAC in the topology is the device’s own, not known to others (REQ-190)', () => {
+  it('TC-1140: the first ping asks, the second does not', async () => {
+    const engine = engineOn(writtenLan());
+    expect(asksByArp(await engine.ping('pc', '10.0.0.20'))).toBe(true);
+    expect(asksByArp(await engine.ping('pc', '10.0.0.20'))).toBe(false);
+  });
+
+  it('TC-1141: the answer gives the written MAC, and the frame is addressed to it', async () => {
+    const trace = await engineOn(writtenLan()).ping('pc', '10.0.0.20');
+    const reply = trace.hops.find((hop) => hop.event === 'arp-reply');
+    expect(reply).toMatchObject({ nodeId: 'srv', srcMac: 'aa:00:00:00:00:02' });
+    const atSwitch = trace.hops.find((hop) => hop.nodeId === 'sw' && hop.event === 'forward');
+    expect(atSwitch?.dstMac).toBe('aa:00:00:00:00:02');
+  });
+
+  it("TC-1142: with arpCache 'per-send' both pings ask", async () => {
+    const engine = engineOn(writtenLan(), 'per-send');
+    expect(asksByArp(await engine.ping('pc', '10.0.0.20'))).toBe(true);
+    expect(asksByArp(await engine.ping('pc', '10.0.0.20'))).toBe(true);
+  });
+
+  it('TC-1144: what one device learned, another still has to ask for', async () => {
+    const engine = engineOn(writtenLan());
+    const askers = (trace: PacketTrace) =>
+      trace.hops.filter((hop) => hop.event === 'arp-request').map((hop) => hop.nodeId);
+    expect(askers(await engine.ping('pc', '10.0.0.20'))).toEqual(['pc']);
+    expect(askers(await engine.ping('spare', '10.0.0.20'))).toEqual(['spare']);
+  });
+
+  it('TC-1143: a router asks for its next hop once', async () => {
+    const engine = engineOn(multiHopTopology());
+    const send = async (id: string) => {
+      await engine.send(makePacket(id, 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
+      return engine.getState().traces.find((trace) => trace.packetId === id);
+    };
+    const first = await send('first');
+    expect(first?.status).toBe('delivered');
+    expect(
+      first?.hops.filter((hop) => hop.event === 'arp-request').map((hop) => hop.nodeId),
+    ).toEqual(['client-1', 'router-1', 'router-2']);
+    expect(asksByArp(await send('second'))).toBe(false);
   });
 });

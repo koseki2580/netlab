@@ -146,24 +146,20 @@ describe('what a course step says once its packet has run', () => {
 
 describe('what the course says against what its picture shows', () => {
   /**
-   * TC-622 — the switch of step 3 has just started and PC-B only receives, so
-   * every send here is also copied to PC-C, which throws it away; the text says
-   * so, says what would teach the switch, and what a real network does.
+   * TC-622 — on the first send PC-A asks, the question is copied to PC-C, which
+   * throws it away, and the answer teaches the switch; a second send goes to
+   * PC-B only. The text says so, and that the picture does not draw the question.
    */
-  it('says the switch of step 3 copies the packet to PC-C, and why it keeps doing so here', () => {
+  it('says the question goes to every port once, and the packet to PC-B only', () => {
     const { ja, en } = step('three-machines').copy;
-    expect(en.points.join('')).toMatch(/copy to PC-C.*not for it/);
-    expect(ja.points.join('')).toMatch(/PC-C にも写し.*自分宛てではない/);
-    expect(en.points.join('')).toMatch(/just started.*every port/);
-    expect(ja.points.join('')).toMatch(/動き始めたばかり.*全部の差し込み口/);
-    expect(en.points.join('')).not.toMatch(/already remembers|running for a while/);
-    expect(ja.points.join('')).not.toMatch(/しばらく動いていて/);
-    expect(en.more.join('')).toMatch(/Once PC-B sends.*one cable/s);
-    expect(en.more.join('')).toMatch(/real network.*answer.*taught the switch/s);
-    expect(en.more.join('')).toMatch(/send again.*PC-C again/s);
-    expect(ja.more.join('')).toMatch(/PC-B が何かを送れば.*1本にだけ/s);
-    expect(ja.more.join('')).toMatch(/本物のネットワークでは.*返事でスイッチは覚えます/s);
-    expect(ja.more.join('')).toMatch(/もう一度送っても.*PC-C に写し/s);
+    expect(en.points.join('')).toMatch(/only PC-B.*PC-C.*copy of a question.*not for it/);
+    expect(ja.points.join('')).toMatch(/PC-B にだけ.*PC-C.*写し.*自分宛てではない/);
+    expect(en.points.join('')).toMatch(/just started.*every port.*answer taught it/);
+    expect(ja.points.join('')).toMatch(/動き始めたばかり.*全部の差し込み口.*返事で/);
+    expect(en.more.join('')).toMatch(/send again.*does not ask.*one cable/s);
+    expect(ja.more.join('')).toMatch(/もう一度送ると.*尋ねず.*1本にだけ/s);
+    expect(en.more.join('')).toMatch(/ARP.*does not draw/s);
+    expect(ja.more.join('')).toMatch(/ARP.*描いていません/s);
   });
 
   /**

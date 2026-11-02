@@ -11,7 +11,13 @@ import {
   singleRouterTopology,
   singleRouterTopologyWithoutServerMac,
 } from './__fixtures__/topologies';
-import { CLIENT_MAC, SERVER_MAC, deriveDeterministicMac, makePacket } from './__fixtures__/helpers';
+import {
+  dataHops,
+  CLIENT_MAC,
+  SERVER_MAC,
+  deriveDeterministicMac,
+  makePacket,
+} from './__fixtures__/helpers';
 import { getRequired } from '../utils/typedAccess';
 import { ForwardingPipeline } from './ForwardingPipeline';
 import { ServiceOrchestrator } from './ServiceOrchestrator';
@@ -58,9 +64,13 @@ describe('ForwardingPipeline', () => {
     );
 
     expect(result.trace.status).toBe('delivered');
-    expect(result.trace.hops.map((hop) => hop.event)).toEqual(['create', 'forward', 'deliver']);
+    expect(dataHops(result.trace).map((hop) => hop.event)).toEqual([
+      'create',
+      'forward',
+      'deliver',
+    ]);
     expect(
-      getRequired(result.trace.hops, 1, { reason: 'expected router hop in forwarding test' })
+      getRequired(dataHops(result.trace), 1, { reason: 'expected router hop in forwarding test' })
         .nodeId,
     ).toBe('router-1');
   });
@@ -71,7 +81,7 @@ describe('ForwardingPipeline', () => {
       makePacket('fp-mac-create', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
     );
 
-    expect(result.trace.hops[0]).toEqual(
+    expect(dataHops(result.trace)[0]).toEqual(
       expect.objectContaining({
         event: 'create',
         srcMac: CLIENT_MAC,
@@ -86,7 +96,7 @@ describe('ForwardingPipeline', () => {
       makePacket('fp-mac-forward', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
     );
 
-    expect(result.trace.hops[1]).toEqual(
+    expect(dataHops(result.trace)[1]).toEqual(
       expect.objectContaining({
         nodeId: 'router-1',
         event: 'forward',
@@ -94,7 +104,7 @@ describe('ForwardingPipeline', () => {
         dstMac: '00:00:00:02:00:00',
       }),
     );
-    expect(result.trace.hops[2]).toEqual(
+    expect(dataHops(result.trace)[2]).toEqual(
       expect.objectContaining({
         nodeId: 'router-2',
         event: 'forward',
@@ -109,7 +119,7 @@ describe('ForwardingPipeline', () => {
     const result = await pipeline.precompute(
       makePacket('fp-mac-stability', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
     );
-    const nonArpHops = result.trace.hops.filter(
+    const nonArpHops = dataHops(result.trace).filter(
       (hop) => hop.event !== 'arp-request' && hop.event !== 'arp-reply',
     );
     const macPairs = nonArpHops.map((hop) => `${hop.srcMac}->${hop.dstMac}`);
@@ -126,7 +136,7 @@ describe('ForwardingPipeline', () => {
     const result = await pipeline.precompute(
       makePacket('fp-mac-deliver', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
     );
-    const lastHop = result.trace.hops[result.trace.hops.length - 1];
+    const lastHop = dataHops(result.trace)[dataHops(result.trace).length - 1];
 
     expect(lastHop).toEqual(
       expect.objectContaining({
@@ -166,7 +176,7 @@ describe('ForwardingPipeline', () => {
     );
 
     expect(result.trace.status).toBe('dropped');
-    expect(result.trace.hops.some((hop) => hop.reason === 'ttl-exceeded')).toBe(true);
+    expect(dataHops(result.trace).some((hop) => hop.reason === 'ttl-exceeded')).toBe(true);
   });
 
   it('drops with no-route when the router lacks a matching route', async () => {
@@ -174,7 +184,7 @@ describe('ForwardingPipeline', () => {
     const result = await pipeline.precompute(
       makePacket('fp-no-route', 'client-1', 'server-1', '10.0.0.10', '198.51.100.10'),
     );
-    const lastHop = result.trace.hops[result.trace.hops.length - 1];
+    const lastHop = dataHops(result.trace)[dataHops(result.trace).length - 1];
 
     expect(result.trace.status).toBe('dropped');
     expect(lastHop).toEqual(
@@ -206,9 +216,9 @@ describe('ForwardingPipeline', () => {
 
     expect(result.trace.status).toBe('delivered');
     expect(result.trace.label).toBe('ICMP');
-    expect(result.trace.hops.some((hop) => hop.protocol === 'ICMP')).toBe(true);
+    expect(dataHops(result.trace).some((hop) => hop.protocol === 'ICMP')).toBe(true);
     expect(
-      result.trace.hops.some((hop) => hop.event === 'deliver' && hop.nodeId === 'client-1'),
+      dataHops(result.trace).some((hop) => hop.event === 'deliver' && hop.nodeId === 'client-1'),
     ).toBe(true);
   });
 });

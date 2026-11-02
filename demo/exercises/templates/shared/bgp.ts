@@ -165,6 +165,123 @@ export function bgpExits(
   };
 }
 
+// --- Two links into one provider, for the MED exercise --------------------------
+
+export type Link = 'east' | 'west';
+
+export interface BgpMedExits {
+  readonly topology: TopologySnapshot;
+  readonly names: Readonly<Record<string, Named>>;
+  /** r1's neighbour address on each link into provider A, and to provider B. */
+  readonly neighbour: Readonly<Record<Link | 'other', string>>;
+  readonly edgeOf: Readonly<Record<Link, string>>;
+}
+
+export const MED_START = 100;
+
+const MED_NAMES: Readonly<Record<Link | 'other', Named>> = {
+  east: L('provider A east', 'プロバイダ A 東'),
+  west: L('provider A west', 'プロバイダ A 西'),
+  other: PROVIDER_NAMES.B,
+};
+
+/**
+ *              east (AS 65010) ─┐
+ * pc — r1  ─<  west (AS 65010) ─┼─ rs (AS 65040) — srv
+ *  AS 65001    other (AS 65020) ┘
+ *
+ * All three offer an AS_PATH of the same length. Every session on r1 starts
+ * with MED 100. The link not wanted has the lower BGP Identifier, so traffic
+ * leaves by it; provider B has the highest, so it never wins on the tie.
+ */
+export function bgpMedExits(
+  addresses: BgpExitsAddresses,
+  wanted: Link,
+  names: Readonly<{ pc: Named; r1: Named; rs: Named; srv: Named }>,
+): BgpMedExits {
+  const { near, far, linkBlock } = addresses;
+  const pair = (index: number) => {
+    const base = index * 4;
+    return { a: `${linkBlock}.${base + 1}`, b: `${linkBlock}.${base + 2}` };
+  };
+  const sides: readonly (Link | 'other')[] = ['east', 'west', 'other'];
+  const toR1 = { east: pair(0), west: pair(1), other: pair(2) };
+  const toRs = { east: pair(3), west: pair(4), other: pair(5) };
+  const asOf = (side: Link | 'other') => (side === 'other' ? 65020 : 65010);
+  const idOf = (side: Link | 'other') =>
+    side === 'other' ? '10.0.0.90' : side === wanted ? '10.0.0.20' : '10.0.0.10';
+  const peer = (address: string, remoteAs: number, med?: number): BgpNeighborConfig => ({
+    address,
+    remoteAs,
+    ...(med === undefined ? {} : { med }),
+  });
+  const topology = snapshot(
+    [
+      host('pc', `${near}.10`, at(0, 1)),
+      router(
+        'r1',
+        [
+          iface('lan', `${near}.1/24`),
+          ...sides.map((side) => iface(`to-${side}`, `${toR1[side].a}/30`)),
+        ],
+        {
+          bgpConfig: {
+            localAs: AS.r1,
+            routerId: '10.0.0.1',
+            neighbors: sides.map((side) => peer(toR1[side].b, asOf(side), MED_START)),
+            networks: [`${near}.0/24`],
+          },
+        },
+        at(1, 1),
+      ),
+      ...sides.map((side, row) =>
+        router(
+          side,
+          [iface('to-r1', `${toR1[side].b}/30`), iface('on', `${toRs[side].a}/30`)],
+          {
+            bgpConfig: {
+              localAs: asOf(side),
+              routerId: idOf(side),
+              neighbors: [peer(toR1[side].a, AS.r1), peer(toRs[side].b, AS.rc)],
+              networks: [],
+            },
+          },
+          at(2, row),
+        ),
+      ),
+      router(
+        'rs',
+        [
+          ...sides.map((side) => iface(`to-${side}`, `${toRs[side].b}/30`)),
+          iface('lan', `${far}.1/24`),
+        ],
+        {
+          bgpConfig: {
+            localAs: AS.rc,
+            routerId: '10.0.0.40',
+            neighbors: sides.map((side) => peer(toRs[side].a, asOf(side))),
+            networks: [`${far}.0/24`],
+          },
+        },
+        at(3, 1),
+      ),
+      host('srv', `${far}.10`, { role: 'server', ...at(4, 1) }),
+    ],
+    [
+      link('e-pc', 'pc', 'r1:lan'),
+      ...sides.map((side) => link(`e-1-${side}`, `r1:to-${side}`, `${side}:to-r1`)),
+      ...sides.map((side) => link(`e-s-${side}`, `${side}:on`, `rs:to-${side}`)),
+      link('e-srv', 'rs:lan', 'srv'),
+    ],
+  );
+  return {
+    topology,
+    names: { pc: names.pc, r1: names.r1, rs: names.rs, srv: names.srv, ...MED_NAMES },
+    neighbour: { east: toR1.east.b, west: toR1.west.b, other: toR1.other.b },
+    edgeOf: { east: 'e-1-east', west: 'e-1-west' },
+  };
+}
+
 /** A fixed instance, for tests: provider B is the longer way. */
 export function bgpExitsFixture(): BgpExits {
   const named = (en: string) => L(en, en);

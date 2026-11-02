@@ -11,6 +11,8 @@ import {
   HostIpField,
   IfaceAddressField,
   BgpLocalPrefField,
+  BgpMedField,
+  OspfPriorityField,
   IfaceNatField,
   LinkStateField,
   OspfCostField,
@@ -115,6 +117,10 @@ function Field({
       return <IfaceNatField value={value} {...shared} />;
     case 'bgp-local-pref':
       return <BgpLocalPrefField value={value} {...shared} />;
+    case 'bgp-med':
+      return <BgpMedField value={value} {...shared} />;
+    case 'ospf-priority':
+      return <OspfPriorityField value={value} {...shared} />;
   }
 }
 

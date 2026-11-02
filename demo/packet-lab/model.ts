@@ -217,7 +217,9 @@ export type QuestionAsk =
   /** On the cable `edgeId`: the frame's source MAC, its destination MAC, the packet's TTL. */
   | 'frame-src-mac'
   | 'frame-dst-mac'
-  | 'ttl-on-link';
+  | 'ttl-on-link'
+  /** How many more bytes the sender may send, given `window`. */
+  | 'send-window';
 
 export interface ReadQuestion {
   readonly id: string;
@@ -228,6 +230,12 @@ export interface ReadQuestion {
   readonly edgeId?: string;
   /** Which of `packets` the question is about (default the first): a traceroute asks about each probe. */
   readonly packetIndex?: number;
+  /** The sender's state, for a `send-window` question. */
+  readonly window?: {
+    readonly cwnd: number;
+    readonly rwnd: number;
+    readonly inFlight: number;
+  };
   /** The `value` of the right candidate. The judge reads it off the simulator; this is the key it must agree with. */
   readonly answer: string;
 }

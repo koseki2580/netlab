@@ -116,8 +116,8 @@ function ArpTablePanel() {
             style={{ ...DETAIL_STYLE, color: 'var(--netlab-text-secondary)' }}
           >
             {t(
-              'This table follows the step on screen: it shows what each device knew at that step. Before the first step, and after Reset, only the lines that were there from the start are shown.',
-              'この表は、いま表示しているステップに合わせて変わります。そのステップで各機器が知っていた対応だけを表示します。最初のステップの前とリセットのあとは、最初から入っていた行だけです。',
+              'This table follows the step on screen: it shows what each device knew at that step. Before the first step, and after Reset, it is empty.',
+              'この表は、いま表示しているステップに合わせて変わります。そのステップで各機器が知っていた対応だけを表示します。最初のステップの前とリセットのあとは、空です。',
             )}
           </div>
           <div
@@ -125,8 +125,8 @@ function ArpTablePanel() {
             style={{ ...DETAIL_STYLE, color: 'var(--netlab-text-primary)' }}
           >
             {t(
-              "This table is what a real device keeps. The Router's lines are what it learned by asking just now. The lines of the Client and the Server were there from the start.",
-              'この表が、本物の機器が覚えておく内容です。Router の行は、いま聞いて覚えたものです。Client と Server の行は、最初から入っていたものです。',
+              'This table is what a real device keeps. Each line was learned from an answer, or from the question of a device that asked.',
+              'この表が、本物の機器が覚えておく内容です。どの行も、答えを聞いて、または相手の質問から覚えたものです。',
             )}
           </div>
           {entries.map(([nodeId, table]) => (
@@ -275,20 +275,18 @@ function ArpDemoInner() {
               '住所（IP アドレス）だけでは渡せません。初めて渡す相手は、その番号（MAC アドレス）をまだ知らないからです。だから全員に聞き、持ち主だけが「わたしです」と番号を答えます。',
             )}
           </div>
-          {/* What this lesson's trace shows: the Client never asks. The Router
-              asks for the Server, and on the reply's way back for the Client. */}
+          {/* What this lesson's trace shows: every device asks before it hands on. */}
           <div data-testid="arp-who-asks" style={{ ...DETAIL_STYLE, marginTop: 6 }}>
             {t(
-              'In this lesson the one that asks is the Router: for the Server on the way out, and for the Client on the way back.',
-              'このレッスンで聞くのは Router（ルータ）です。行きは Server を、帰りは Client を探して聞きます。',
+              'Each device asks for the next one it hands to. On the way out the Client asks for the Router, then the Router (the one in the middle) for the Server. On the way back nobody asks: each one asked learned the asker from its question.',
+              '機器はそれぞれ、次に渡す相手を聞きます。行きは Client が Router を、次に Router（ルータ）が Server を聞きます。帰りはだれも聞きません。聞かれた側は、質問から相手を覚えているからです。',
             )}
           </div>
-          {/* The Client's table holds the Router's number from the start, beside
-              a sentence saying a device asks before it first sends. */}
+          {/* The tables start empty: no device knows another's number in advance. */}
           <div data-testid="arp-already-known" style={{ ...DETAIL_STYLE, marginTop: 6 }}>
             {t(
-              'The Client and the Server do not ask. In this lesson each already knows the number of its own way out, the Router, as a device that has been running for a while would.',
-              'Client と Server は聞きません。このレッスンでは、どちらも自分の出口である Router の番号をもう知っています。しばらく動いている機器と同じ状態です。',
+              'Nothing is known in advance: until a device has asked, it does not have the other’s number.',
+              '前もって知っていることはありません。聞くまでは、相手の番号を持っていません。',
             )}
           </div>
           <details data-testid="lesson-more" style={{ ...DETAIL_STYLE, marginTop: 6 }}>

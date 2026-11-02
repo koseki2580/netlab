@@ -60,9 +60,10 @@ export interface ArpLearned {
 }
 
 /**
- * The lines the trace's ARP answers taught, each with the step it arrived at.
+ * The lines the trace's ARP exchanges taught, each with the step it arrived at.
  *
- * The device that learns is the one that asked: an answer carries the
+ * The one asked learns the asker from the question; the device that learns
+ * the answer is the one that asked: an answer carries the
  * answerer's address and MAC back to the asker. The engine's own per-step
  * snapshot files a frame's sender under the device the hop is recorded at, so
  * at the question the Router "learned" its own address and at the answer
@@ -71,9 +72,17 @@ export interface ArpLearned {
 function learnedLines(trace: PacketTrace): (ArpLearned & { readonly step: number })[] {
   const lines: (ArpLearned & { readonly step: number })[] = [];
   let asker: string | null = null;
+  let question: { readonly senderIp?: string; readonly senderMac?: string } | undefined;
   trace.hops.forEach((hop, step) => {
-    if (hop.event === 'arp-request') asker = hop.nodeId;
+    if (hop.event === 'arp-request') {
+      asker = hop.nodeId;
+      question = hop.arpFrame?.payload;
+    }
     if (hop.event !== 'arp-reply' || asker === null) return;
+    // The one asked learned the asker from the question; it shows as it answers.
+    if (question?.senderIp && question.senderMac) {
+      lines.push({ nodeId: hop.nodeId, ip: question.senderIp, mac: question.senderMac, step });
+    }
     const answer = hop.arpFrame?.payload;
     if (!answer?.senderIp || !answer.senderMac) return;
     lines.push({ nodeId: asker, ip: answer.senderIp, mac: answer.senderMac, step });
@@ -92,8 +101,8 @@ export function arpLearnedAt(trace: PacketTrace, step: number): ArpLearned[] {
  * Every device's ARP table as it stood at `step`.
  *
  * `finalTables` is what the engine holds once the whole exchange has run. A
- * line in it that no answer in the trace taught was there from the start; a
- * line an answer taught appears from that answer's step on.
+ * line in it that no exchange in the trace taught was there from the start; a
+ * line an exchange taught appears from that answer's step on.
  */
 export function arpTablesAtStep(
   trace: PacketTrace,

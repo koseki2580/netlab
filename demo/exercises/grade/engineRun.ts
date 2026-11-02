@@ -43,6 +43,22 @@ export async function withEngine<T>(
 export const isArpHop = (hop: PacketHop): boolean =>
   hop.event === 'arp-request' || hop.event === 'arp-reply';
 
+/**
+ * The rows of the packet itself: no ARP rows, and a sender that asked first has
+ * one row, not `create` and then the `forward` that follows its exchange.
+ */
+export const packetRows = (hops: readonly PacketHop[]): PacketHop[] =>
+  hops
+    .filter((hop) => !isArpHop(hop))
+    .filter(
+      (hop, index, rows) =>
+        !(
+          hop.event === 'forward' &&
+          rows[index - 1]?.event === 'create' &&
+          rows[index - 1]?.nodeId === hop.nodeId
+        ),
+    );
+
 /** The address a probe uses for a node: a host's `ip`, else a router's first interface. */
 export function addressOf(topology: Nodes, nodeId: string): string | null {
   const node = topology.nodes.find((candidate) => candidate.id === nodeId);

@@ -12,6 +12,7 @@
  * TC ids are not allocated yet: the specification is outside this folder.
  */
 
+import { packetRows } from '../exercises/grade/engineRun';
 import { describe, expect, it } from 'vitest';
 import type { AclRule } from '../../src/types/acl';
 import type { IpPacket } from '../../src/types/packets';
@@ -435,7 +436,9 @@ describe('4. TTL', () => {
 
   it('the ICMP error is in the same trace, after the drop, and the trace stays `dropped`', async () => {
     const facts = await onChain({ ttl: 2 });
-    expect(facts.trace?.hops.map((hop) => [hop.nodeId, hop.event, hop.srcIp, hop.dstIp])).toEqual([
+    // The ARP rows beside the path are left out: every device asks on first use.
+    const rows = packetRows(facts.trace?.hops ?? []);
+    expect(rows.map((hop) => [hop.nodeId, hop.event, hop.srcIp, hop.dstIp])).toEqual([
       ['pc', 'create', '10.0.1.10', '10.0.2.10'],
       ['r1', 'forward', '10.0.1.10', '10.0.2.10'],
       ['r2', 'drop', '10.0.1.10', '10.0.2.10'],
@@ -625,7 +628,8 @@ describe('6. DF and MTU', () => {
         drop: null,
       },
     ]);
-    expect(facts.trace?.hops.map((hop) => [hop.nodeId, hop.event])).toEqual([
+    const rows = packetRows(facts.trace?.hops ?? []);
+    expect(rows.map((hop) => [hop.nodeId, hop.event])).toEqual([
       ['pc', 'create'],
       ['r1', 'drop'],
       ['r1', 'create'],

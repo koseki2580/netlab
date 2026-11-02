@@ -7,7 +7,7 @@ import type { FailureState } from '../types/failure';
 import type { InFlightPacket } from '../types/packets';
 import type { DataTransferState } from '../types/transfer';
 import { assertDefined, getRequired } from '../utils/typedAccess';
-import { makeEngine } from './__fixtures__/helpers';
+import { dataHops, makeEngine } from './__fixtures__/helpers';
 import {
   dataTransferDemoTopology,
   multiHopTopology,
@@ -314,14 +314,14 @@ describe('DataTransferController', () => {
     });
     const trace = traceForChunk(engine, chunk);
 
-    expect(trace.hops.map((hop) => hop.ttl)).toEqual([64, 64, 63, 62]);
-    expect(trace.hops.map((hop) => hop.srcIp)).toEqual([
+    expect(dataHops(trace).map((hop) => hop.ttl)).toEqual([64, 64, 63, 62]);
+    expect(dataHops(trace).map((hop) => hop.srcIp)).toEqual([
       '10.0.1.10',
       '10.0.1.10',
       '10.0.1.10',
       '10.0.1.10',
     ]);
-    expect(trace.hops.map((hop) => hop.dstIp)).toEqual([
+    expect(dataHops(trace).map((hop) => hop.dstIp)).toEqual([
       '10.0.3.10',
       '10.0.3.10',
       '10.0.3.10',
@@ -329,9 +329,11 @@ describe('DataTransferController', () => {
     ]);
 
     const traceId = chunkTraceId(chunk);
-    const createPacket = packetSnapshotAtTraceStep(engine, traceId, 0);
-    const firstRouterPacket = packetSnapshotAtTraceStep(engine, traceId, 1);
-    const secondRouterPacket = packetSnapshotAtTraceStep(engine, traceId, 2);
+    const stepOf = (index: number) =>
+      getRequired(dataHops(trace), index, { reason: 'expected a hop' }).step;
+    const createPacket = packetSnapshotAtTraceStep(engine, traceId, stepOf(0));
+    const firstRouterPacket = packetSnapshotAtTraceStep(engine, traceId, stepOf(1));
+    const secondRouterPacket = packetSnapshotAtTraceStep(engine, traceId, stepOf(2));
 
     expect(createPacket.frame.srcMac).toBe('aa:bb:cc:00:01:10');
     expect(createPacket.frame.dstMac).toBe('aa:bb:cc:00:01:01');
@@ -355,10 +357,10 @@ describe('DataTransferController', () => {
     const trace = traceForChunk(engine, chunk);
 
     expect(
-      getRequired(trace.hops, 1, { reason: 'expected first router hop' }).changedFields,
+      getRequired(dataHops(trace), 1, { reason: 'expected first router hop' }).changedFields,
     ).toEqual(['TTL', 'Header Checksum', 'Src MAC', 'Dst MAC', 'FCS']);
     expect(
-      getRequired(trace.hops, 2, { reason: 'expected second router hop' }).changedFields,
+      getRequired(dataHops(trace), 2, { reason: 'expected second router hop' }).changedFields,
     ).toEqual(['TTL', 'Header Checksum', 'Src MAC', 'Dst MAC', 'FCS']);
   });
 
@@ -529,13 +531,15 @@ describe('DataTransferController', () => {
       reason: 'expected mac-visibility chunk',
     });
     const trace = traceForChunk(engine, chunk);
-    const firstHop = getRequired(trace.hops, 0, { reason: 'expected first MAC-visible hop' });
-    const lastHop = getRequired(trace.hops, trace.hops.length - 1, {
+    const firstHop = getRequired(dataHops(trace), 0, { reason: 'expected first MAC-visible hop' });
+    const lastHop = getRequired(dataHops(trace), dataHops(trace).length - 1, {
       reason: 'expected final MAC-visible hop',
     });
 
     expect(
-      trace.hops.every((hop) => typeof hop.srcMac === 'string' && typeof hop.dstMac === 'string'),
+      dataHops(trace).every(
+        (hop) => typeof hop.srcMac === 'string' && typeof hop.dstMac === 'string',
+      ),
     ).toBe(true);
     expect(firstHop.srcMac).toBe('aa:bb:cc:00:01:10');
     expect(lastHop.dstMac).toBe('aa:bb:cc:00:03:10');
@@ -556,7 +560,7 @@ describe('DataTransferController', () => {
       reason: 'expected stable-ip chunk',
     });
     const trace = traceForChunk(engine, chunk);
-    const nonArpHops = trace.hops.filter(
+    const nonArpHops = dataHops(trace).filter(
       (hop) => hop.event !== 'arp-request' && hop.event !== 'arp-reply',
     );
     const macPairs = nonArpHops.map((hop) => `${hop.srcMac}->${hop.dstMac}`);
@@ -608,7 +612,7 @@ describe('DataTransferController', () => {
         if (!chunk.traceId) return false;
         const trace = traceForPacketId(engine, chunk.traceId);
         return Boolean(
-          getRequired(trace.hops, trace.hops.length - 1, {
+          getRequired(dataHops(trace), dataHops(trace).length - 1, {
             reason: 'expected final dropped-chunk hop',
           }).reason,
         );

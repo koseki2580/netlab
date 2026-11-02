@@ -282,6 +282,56 @@ describe('route-present', () => {
   });
 });
 
+// TC-1107
+describe('ospf-dr', () => {
+  const lan = (priorities: Readonly<Record<string, number>>): TopologySnapshot => {
+    const member = (id: string, host: number) =>
+      router(id, [iface('lan', `10.5.0.${host}/24`, { ospfPriority: priorities[id] ?? 1 })], {
+        ospfConfig: {
+          routerId: `${host}.${host}.${host}.${host}`,
+          areas: [{ areaId: '0.0.0.0', networks: ['10.5.0.0/24'] }],
+        },
+      });
+    return snapshot(
+      [
+        member('ra', 1),
+        member('rb', 2),
+        switchNode('sw', [
+          { id: 'p1', name: 'p1', macAddress: '' },
+          { id: 'p2', name: 'p2', macAddress: '' },
+        ]),
+      ],
+      [link('e1', 'ra:lan', 'sw:p1'), link('e2', 'rb:lan', 'sw:p2')],
+    );
+  };
+  const check = { id: 'c', kind: 'ospf-dr', nodeId: 'ra', network: '10.5.0.0/24' } as const;
+
+  it('passes when the router is the DR', async () => {
+    expect((await gradeOne(lan({ ra: 5 }), check)).code).toBe('ok');
+  });
+
+  it('names the real DR when another router is', async () => {
+    const wrong = await gradeOne(lan({ rb: 5 }), check);
+    expect(wrong.code).toBe('wrong-dr');
+    expect(wrong.message.en).toContain('rb is the DR now');
+    expect(wrong.message.ja).toContain('rb');
+  });
+
+  it('says the router id settled a tie', async () => {
+    const wrong = await gradeOne(lan({}), check);
+    expect(wrong.message.en).toContain('highest router id');
+  });
+
+  it('says priority 0 never stands', async () => {
+    const wrong = await gradeOne(lan({ ra: 0 }), check);
+    expect(wrong.message.en).toContain('priority 0');
+  });
+
+  it('fails without throwing where there is no such LAN', async () => {
+    expect((await gradeOne(routerChain(), check)).code).toBe('wrong-dr');
+  });
+});
+
 // TC-422
 describe('stp-root and stp-port-role', () => {
   it('stp-root passes for the root and names the real root otherwise', async () => {

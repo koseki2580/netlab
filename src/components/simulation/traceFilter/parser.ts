@@ -1,3 +1,4 @@
+import { protocolPacks } from '../../../protocols/packs';
 import { NetlabError } from '../../../errors';
 import type { PacketHop, PacketTrace } from '../../../types/simulation';
 
@@ -48,7 +49,7 @@ const FIELDS = new Set<FieldName>([
   'protocol',
 ]);
 
-const PROTOCOLS = new Set(['arp', 'icmp', 'tcp', 'udp', 'dhcp', 'dns', 'http', 'igmp']);
+const PROTOCOLS = new Set(['arp', 'icmp', 'tcp', 'udp', 'dhcp', 'http', 'igmp']);
 
 export function parseTraceFilter(input: string): TraceFilterResult {
   try {
@@ -140,7 +141,7 @@ function valuesForField(hop: PacketHop, field: FieldName): string[] {
         hop.arpFrame?.payload.targetMac,
       ].filter((value): value is string => typeof value === 'string');
     case 'protocol':
-      return carriesDns(hop) ? [protocolValue(hop), 'dns'] : [protocolValue(hop)];
+      return [protocolValue(hop), ...packsOnPorts(hop)];
   }
 }
 
@@ -157,14 +158,19 @@ function protocolValue(hop: PacketHop): string {
   return hop.protocol.toLowerCase();
 }
 
-/** DNS rides on UDP/TCP port 53, the port the DNS protocol pack claims (REQ-143). */
-const DNS_PORT = 53;
+/** A built-in word, or a protocol pack's id (REQ-302). */
+function isProtocolWord(word: string): boolean {
+  return PROTOCOLS.has(word) || protocolPacks.wire(word) !== undefined;
+}
 
-function carriesDns(hop: PacketHop): boolean {
-  return (
-    (isProtocol(hop, 'udp') || isProtocol(hop, 'tcp')) &&
-    (hop.srcPort === DNS_PORT || hop.dstPort === DNS_PORT)
-  );
+/** The packs that claim this hop's UDP or TCP ports (REQ-143). */
+function packsOnPorts(hop: PacketHop): string[] {
+  const transport = protocolValue(hop);
+  if (transport !== 'udp' && transport !== 'tcp') return [];
+  return [hop.srcPort, hop.dstPort].flatMap((port) => {
+    const pack = port === undefined ? undefined : protocolPacks.byPort(transport, port);
+    return pack ? [pack.id] : [];
+  });
 }
 
 function isProtocol(hop: PacketHop, protocol: string): boolean {
@@ -288,7 +294,7 @@ function validateComparison(field: FieldName, value: Token): void {
   if ((field === 'tcp.port' || field === 'udp.port') && !/^\d+$/.test(value.text)) {
     throw parseError(`${field} expects a numeric port`, value.column);
   }
-  if (field === 'protocol' && !PROTOCOLS.has(value.text.toLowerCase())) {
+  if (field === 'protocol' && !isProtocolWord(value.text.toLowerCase())) {
     throw parseError(`Unsupported protocol "${value.text}"`, value.column);
   }
 }

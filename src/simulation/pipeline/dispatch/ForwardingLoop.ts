@@ -13,7 +13,7 @@ import type { PrecomputeOptions } from '../../types';
 import type { FrameMaterializer, IcmpBuilder } from '../builders';
 import type { InterfaceResolver, MacResolver, PortResolver } from '../resolvers';
 import { isPlaceholderMac, type AddressPlane } from '../../AddressPlane';
-import type { ArpDispatcher } from './ArpDispatcher';
+import { arpKey, type ArpDispatcher } from './ArpDispatcher';
 import { FORWARDING_STAGES, MAX_HOPS, createLoopContext, runStage } from './forwardingStages';
 
 export interface ForwardLoopParams {
@@ -62,27 +62,6 @@ export class ForwardingLoop {
     ) => Neighbor[],
   ) {}
 
-  seedArpCache(cache: Map<string, string>): void {
-    for (const node of this.topology.nodes) {
-      for (const iface of this.ifaceResolver.getLogical(node)) {
-        if (iface.ipAddress && iface.macAddress && !isPlaceholderMac(iface.macAddress)) {
-          cache.set(iface.ipAddress, iface.macAddress);
-        }
-      }
-
-      const effectiveIp = this.addresses.nodeIp(node);
-      if (
-        typeof effectiveIp === 'string' &&
-        effectiveIp &&
-        typeof node.data.mac === 'string' &&
-        node.data.mac &&
-        !isPlaceholderMac(node.data.mac)
-      ) {
-        cache.set(effectiveIp, node.data.mac);
-      }
-    }
-  }
-
   materializePacket(
     packet: InFlightPacket,
     failureState: FailureState,
@@ -125,7 +104,7 @@ export class ForwardingLoop {
           : null;
       const resolvedDstMac = next
         ? arpTarget
-          ? (arpCache.get(arpTarget.targetIp) ?? null)
+          ? (arpCache.get(arpKey(currentNode.id, arpTarget.targetIp)) ?? null)
           : this.macResolver.resolveDstMac(
               currentNode.id,
               next.nodeId,

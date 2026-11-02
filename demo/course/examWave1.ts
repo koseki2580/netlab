@@ -1,9 +1,8 @@
 /**
  * Final-test questions for the first wave of deeper basics (BGP LOCAL_PREF,
- * IGMP snooping, the stateful firewall flag), offered as new entries for the
- * owner of the level files to place: every level holds exactly ten questions,
- * so these are not wired into one here. `lesson` is the lesson that teaches
- * each; `taughtBy` is the path-stop id to give it in the level it joins.
+ * IGMP snooping, the stateful firewall flag), with the scenarios that prove
+ * them. The level of the stage that teaches each takes it by `wave1Question`.
+ * `lesson` is the lesson that teaches it; `taughtBy` is its stop in that level.
  *
  * Each right answer is what the simulator does on the scenario below (see
  * `examWave1.test.ts`) and what the standard gives: RFC 4271 §9.1 (BGP),
@@ -50,7 +49,7 @@ export const EXAM_WAVE1: readonly ExamCandidate[] = [
       en: 'BGP compares LOCAL_PREF before anything else, and the higher wins (RFC 4271 §9.1). Only between routes of equal LOCAL_PREF does the shorter AS_PATH decide; that is why the traffic left by provider A before. LOCAL_PREF is the usual way for a network to choose its own way out. It is not a cost: unlike an OSPF cost, more is better. Two routes are used together only where the router is set to share load between equal routes, and these two are not equal.',
       ja: 'BGP は何よりも先に LOCAL_PREF を比べ、大きいほうが勝ちます（RFC 4271 §9.1）。LOCAL_PREF が同じ経路どうしのときだけ、短い AS_PATH が決め手になります。前にプロバイダ A から出ていたのはそのためです。LOCAL_PREF は、自分のネットワークの出口を選ぶときのふつうの方法です。コストではありません。OSPF のコストとちがい、大きいほうが選ばれます。2 つの経路をいっしょに使うのは、同じ値の経路で負荷を分けるよう設定したときだけで、この 2 つは同じ値ではありません。',
     },
-    taughtBy: 'dynamic-routing',
+    taughtBy: 'dynamic',
     lesson: '/routing/dynamic',
   },
   {
@@ -162,6 +161,14 @@ const packetOf = (
   }) as unknown as InFlightPacket;
 
 /** Four hosts on one switch, VLAN 10, ports 1 to 4; the sender is on port 1. */
+/** A question as a level holds it. */
+export function wave1Question(id: string): ExamQuestion {
+  const found = EXAM_WAVE1.find((question) => question.id === id);
+  if (!found) throw new Error(`no such question: ${id}`);
+  const { lesson: _lesson, ...question } = found;
+  return question;
+}
+
 export const IGMP_SCENARIO = {
   topology: {
     nodes: [

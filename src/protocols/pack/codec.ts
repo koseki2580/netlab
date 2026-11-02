@@ -1,8 +1,8 @@
 /** Value rules shared by `defineProtocol` (examples) and the derivers (header values). */
 import { isIpv6Address, parseIpv6 } from '../../utils/ipv6';
-import type { FieldValue, HeaderField, HeaderValues } from './types';
+import type { FieldValue, HeaderValues, WireField } from './types';
 
-const IMPLIED_BITS: Partial<Record<HeaderField['type'], number>> = {
+const IMPLIED_BITS: Partial<Record<WireField['type'], number>> = {
   flag: 1,
   ipv4: 32,
   ipv6: 128,
@@ -10,12 +10,12 @@ const IMPLIED_BITS: Partial<Record<HeaderField['type'], number>> = {
 };
 
 /** Fixed width in bits, or `undefined` for a variable-length field. */
-export function fieldBits(field: HeaderField): number | undefined {
+export function fieldBits(field: WireField): number | undefined {
   if (field.type === 'domain-name' || field.lengthFrom !== undefined) return undefined;
   return IMPLIED_BITS[field.type] ?? field.bits;
 }
 
-export function isNumeric(field: HeaderField): boolean {
+export function isNumeric(field: WireField): boolean {
   return (
     field.type === 'uint' ||
     field.type === 'enum' ||
@@ -30,7 +30,7 @@ export type Encoded =
   | { readonly bytes: readonly number[] };
 
 /** Encodes a value, or returns why it does not fit the field. */
-export function encodeValue(field: HeaderField, value: FieldValue): Encoded | string {
+export function encodeValue(field: WireField, value: FieldValue): Encoded | string {
   if (isNumeric(field)) {
     const bits = fieldBits(field) ?? 0;
     const n = typeof value === 'boolean' ? Number(value) : value;
@@ -92,11 +92,7 @@ function hex(n: number, digits: number): string {
 }
 
 /** The field-view display value (REQ-102). */
-export function displayValue(
-  field: HeaderField,
-  value: FieldValue,
-  siblings: HeaderValues,
-): string {
+export function displayValue(field: WireField, value: FieldValue, siblings: HeaderValues): string {
   if (field.format) return field.format(value, siblings);
   if (isNumeric(field)) {
     const n = Number(value);

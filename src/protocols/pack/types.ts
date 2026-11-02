@@ -88,7 +88,8 @@ export interface EnumValue {
   readonly meaning?: Bilingual;
 }
 
-export interface HeaderField {
+/** What the wire needs of a field: everything but the learner's text. */
+export interface WireField {
   readonly key: string;
   /** The name the RFC uses; shown as-is in both languages. */
   readonly name: string;
@@ -102,19 +103,25 @@ export interface HeaderField {
   readonly values?: readonly EnumValue[];
   readonly hex?: boolean;
   readonly format?: (value: FieldValue, siblings: HeaderValues) => string;
-  readonly meaning: Bilingual;
-  readonly example: FieldValue;
   /** Versions the field belongs to; all versions when absent. */
   readonly in?: readonly string[];
 }
 
-export interface HeaderSection {
+export interface HeaderField extends WireField {
+  readonly meaning: Bilingual;
+  readonly example: FieldValue;
+}
+
+export interface WireSection<Field extends WireField = WireField> {
   readonly key: string;
   readonly name: string;
   /** Key of a header field counting this section's entries. */
   readonly countFrom: string;
+  readonly fields: readonly Field[];
+}
+
+export interface HeaderSection extends WireSection<HeaderField> {
   readonly meaning: Bilingual;
-  readonly fields: readonly HeaderField[];
 }
 
 export type Loader<T> = () => Promise<T | { readonly default: T }>;
@@ -141,6 +148,38 @@ export interface ProtocolContent {
     readonly en?: Loader<Readonly<Record<string, string>>>;
     readonly ja?: Loader<Readonly<Record<string, string>>>;
   };
+}
+
+/**
+ * The eager tier of a pack (REQ-302): enough to write, read and label packets
+ * synchronously, in the worker too. A full pack is also a valid wire tier.
+ */
+export interface ProtocolWire extends ProtocolIdentity {
+  readonly defaultVersion: string;
+  readonly versions: readonly { readonly id: string }[];
+  readonly header: readonly WireField[];
+  readonly sections?: readonly WireSection[];
+  /** An enum header field whose value name follows the short name in the trace label. */
+  readonly label?: { readonly field: string };
+  readonly behaviour?: ProtocolBehaviour;
+}
+
+/** One field's text. Keyed by field key, or `key@version` where versions differ. */
+export interface LearnField {
+  readonly meaning: Bilingual;
+  readonly example: FieldValue;
+  /** Meanings of named enum values, by value. */
+  readonly values?: Readonly<Record<number, Bilingual>>;
+}
+
+/** The lazy tier of a pack (REQ-302): loaded when a learner reads about the protocol. */
+export interface ProtocolLearn {
+  /** The size gate looks for this string to find a learn tier in an eager closure. */
+  readonly tier: '__netlab_learn_tier__';
+  readonly specs: readonly SpecRef[];
+  readonly versions: readonly ProtocolVersion[];
+  readonly fields: Readonly<Record<string, LearnField>>;
+  readonly sections?: Readonly<Record<string, Bilingual>>;
 }
 
 export interface ProtocolDescriptor extends ProtocolIdentity {

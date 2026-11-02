@@ -12,6 +12,7 @@ import { p2Traceroute } from './level2/p2-traceroute';
 import { p3DfRead } from './level3/p3-df-read';
 import { p3Pmtud } from './level3/p3-pmtud';
 import { p4Capture } from './level4/p4-capture';
+import { p4SendWindow } from './level4/p4-send-window';
 import { p4TwoFaults } from './level4/p4-two-faults';
 import { p2DieAt } from './level2/p2-die-at';
 import { p3FrameAfter } from './level3/p3-frame-after';
@@ -45,6 +46,7 @@ export const TEMPLATES: readonly PacketTemplate[] = [
   p4Fragment,
   p4Capture,
   p4TwoFaults,
+  p4SendWindow,
 ];
 
 export function templateById(id: string): PacketTemplate | undefined {

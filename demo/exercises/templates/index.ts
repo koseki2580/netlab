@@ -29,6 +29,8 @@ import { l3AclPort } from './level3/l3-acl-port';
 import { l3AclReplies } from './level3/l3-acl-replies';
 import { l3ChooseLongest } from './level3/l3-choose-longest';
 import { l3BgpExit } from './level3/l3-bgp-exit';
+import { l3BgpMed } from './level3/l3-bgp-med';
+import { l3OspfDr } from './level3/l3-ospf-dr';
 import { l3OspfBothWays } from './level3/l3-ospf-both-ways';
 import { l3OspfPrefer } from './level3/l3-ospf-prefer';
 import { l3StaticBothWays } from './level3/l3-static-both-ways';
@@ -73,6 +75,8 @@ export const TEMPLATES: readonly ExerciseTemplate[] = [
   l3TwoFaults,
   l3ChooseLongest,
   l3BgpExit,
+  l3BgpMed,
+  l3OspfDr,
 ];
 
 export function templateById(id: string): ExerciseTemplate | undefined {

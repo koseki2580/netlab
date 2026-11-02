@@ -10,6 +10,7 @@
  * split (the reassembler is used for feedback only).
  */
 
+import { usableWindow } from '../../src/layers/l4-transport/tcpWindow';
 import type { NetlabNode, TopologySnapshot } from '../../src/types/topology';
 import { isInSubnet } from '../../src/utils/cidr';
 import { prepare } from '../exercises/grade/prepare';
@@ -692,6 +693,9 @@ function causeOf(topology: Topology, packet: PacketGiven, facts: PacketFacts): s
 
 /** What the right answer to `question` is, according to the simulator. */
 export async function truthOf(exercise: ReadExercise, question: ReadQuestion): Promise<string> {
+  if (question.ask === 'send-window') {
+    return question.window ? String(usableWindow(question.window)) : '';
+  }
   const [, second] = exercise.packets;
   const first = exercise.packets[question.packetIndex ?? 0];
   if (!first) return '';
@@ -728,6 +732,10 @@ export async function truthOf(exercise: ReadExercise, question: ReadQuestion): P
 }
 
 const READ_WRONG: Record<ReadQuestion['ask'], Localised> = {
+  'send-window': {
+    en: 'Not that many. Take the smaller of cwnd and rwnd, then take off what is in flight.',
+    ja: 'その数ではありません。cwnd と rwnd の小さいほうから、送信中のバイトを引いてください。',
+  },
   'cut-by': {
     en: 'It is not cut there. At each router, compare the size of the packet with the MTU of the cable ahead.',
     ja: 'そこでは分割されません。ルータごとに、パケットの大きさと、その先の回線の MTU を比べてください。',

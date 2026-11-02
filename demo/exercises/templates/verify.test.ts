@@ -286,6 +286,7 @@ async function problemsOf(exercise: Exercise): Promise<string[]> {
   // built around; a planted mistake, a "/number" or a kind of port never is.
   if (exercise.kind !== 'choose-design') {
     const rootCheck = exercise.checks.find((check) => check.kind === 'stp-root');
+    const drCheck = exercise.checks.find((check) => check.kind === 'ospf-dr');
     for (const card of pressCards(exercise, FIRST_ORDER)) {
       for (const press of card.presses) {
         const applied = applyChangesReporting(start, [press.change]).topology;
@@ -293,16 +294,26 @@ async function problemsOf(exercise: Exercise): Promise<string[]> {
         if (!grade.passed) continue;
         // A priority is sound when it makes the wanted switch the lowest outright, not by a tie.
         const sound =
-          press.sound ??
-          (rootCheck?.kind === 'stp-root' &&
-            applied.nodes
-              .filter((node) => node.data.role === 'switch' && node.id !== rootCheck.nodeId)
-              .every(
-                (node) =>
-                  (node.data.stpConfig?.priority ?? 32768) >
-                  (applied.nodes.find((other) => other.id === rootCheck.nodeId)?.data.stpConfig
-                    ?.priority ?? 32768),
-              ));
+          (press.sound ??
+            (rootCheck?.kind === 'stp-root' &&
+              applied.nodes
+                .filter((node) => node.data.role === 'switch' && node.id !== rootCheck.nodeId)
+                .every(
+                  (node) =>
+                    (node.data.stpConfig?.priority ?? 32768) >
+                    (applied.nodes.find((other) => other.id === rootCheck.nodeId)?.data.stpConfig
+                      ?.priority ?? 32768),
+                ))) ||
+          // TC-1105: likewise the wanted router's OSPF priority: the highest outright.
+          (drCheck?.kind === 'ospf-dr' &&
+            (() => {
+              const priorityOf = (id: string) =>
+                applied.nodes.find((node) => node.id === id)?.data.interfaces?.[0]?.ospfPriority ??
+                1;
+              return applied.nodes
+                .filter((node) => node.data.role === 'router' && node.id !== drCheck.nodeId)
+                .every((node) => priorityOf(node.id) < priorityOf(drCheck.nodeId));
+            })());
         no(sound, `a press that is not a sound fix passes: ${JSON.stringify(press.change)}`);
       }
       const usable = card.presses.filter((press) => press.sound === true);

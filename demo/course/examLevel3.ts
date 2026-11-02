@@ -1,5 +1,6 @@
 import type { ExamLevel, ExamQuestion, PathStop } from './examQuestions';
 import { lessonPath } from '../lessonManifest';
+import { wave1Question } from './examWave1';
 
 /**
  * Level 3 of the final test: how production networks and protocols behave —
@@ -60,12 +61,12 @@ const PATH: readonly PathStop[] = [
     },
   },
   {
-    id: 'https',
-    path: lessonPath('/networking/https'),
-    title: { en: 'HTTPS TLS 1.3', ja: 'HTTPS（TLS 1.3）' },
+    id: 'multicast',
+    path: lessonPath('/networking/multicast'),
+    title: { en: 'Multicast', ja: 'マルチキャスト' },
     teaches: {
-      en: 'What is agreed before the first encrypted byte',
-      ja: '最初の暗号化データの前に取り決めること',
+      en: 'How IGMP snooping keeps a stream to the ports that want it',
+      ja: 'IGMP スヌーピングが、映像を欲しいポートだけに届けるしくみ',
     },
   },
   {
@@ -293,37 +294,7 @@ const QUESTIONS: readonly ExamQuestion[] = [
     },
     taughtBy: 'tcp-congestion',
   },
-  {
-    id: 'tls-alpn-mismatch',
-    prompt: {
-      en: 'A client offers only http/1.1 in ALPN; the server is configured to accept only h2. What does the lesson’s TLS 1.3 handshake do?',
-      ja: 'クライアントは ALPN で http/1.1 だけを提示し、サーバは h2 だけを受け付ける設定です。レッスンの TLS 1.3 ハンドシェイクはどうなりますか？',
-    },
-    options: [
-      {
-        en: 'The handshake completes and the connection quietly falls back to HTTP/1.1',
-        ja: 'ハンドシェイクは完了し、何も言わずに HTTP/1.1 に落として通信する',
-      },
-      {
-        en: 'The handshake completes, and the mismatch only shows up as an HTTP error afterwards',
-        ja: 'ハンドシェイクは完了し、食い違いはそのあと HTTP のエラーとして現れる',
-      },
-      {
-        en: 'The server answers the ClientHello with a fatal no_application_protocol alert, before any certificate is sent',
-        ja: 'サーバは ClientHello に対して致命的な no_application_protocol アラートを返す。証明書はまだ送られていない',
-      },
-      {
-        en: 'The certificate check fails, because the certificate names the protocol',
-        ja: '証明書に使うプロトコルが書かれているので、証明書の検証で失敗する',
-      },
-    ],
-    answer: 2,
-    explanation: {
-      en: 'In TLS 1.3 the server names its ALPN choice in EncryptedExtensions, the message after the ServerHello. With no common protocol it has nothing to choose, so it stops right after reading the ClientHello. The lesson’s forced mismatch showed only tls:client-hello followed by “Alert fatal no_application_protocol” — no ServerHello, certificate or application data.',
-      ja: 'TLS 1.3 では、サーバは選んだ ALPN を ServerHello の次の EncryptedExtensions で伝えます。共通のプロトコルがなければ選べるものがないので、サーバは ClientHello を読んだ直後に打ち切ります。レッスンで食い違わせると、tls:client-hello のあとに「Alert fatal no_application_protocol」が出ただけで、ServerHello も証明書もアプリケーションデータもありませんでした。',
-    },
-    taughtBy: 'https',
-  },
+  wave1Question('igmp-snooping-ports'),
   {
     id: 'h3-head-of-line',
     prompt: {

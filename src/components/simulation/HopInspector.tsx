@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { tunnelRows } from './tunnelWords';
 import { useI18n } from '../../i18n/useI18n';
 import { routingVerdict } from '../../simulation/pipeline/dispatch/routingHelpers';
 import { useSimulation } from '../../simulation/SimulationContext';
@@ -121,6 +122,9 @@ function formatHopAction(action: PacketHop['action']): string {
       if (action?.startsWith('sflow:')) {
         return action.slice('sflow:'.length).replace(/-/g, ' ');
       }
+      if (action?.startsWith('tunnel:')) {
+        return action.slice('tunnel:'.length).replace(/-/g, ' ');
+      }
       if (action?.startsWith('tls:')) {
         return action.slice('tls:'.length).replace(/-/g, ' ');
       }
@@ -199,6 +203,8 @@ function HopFields({
   if (hop.action) {
     fields.push({ label: t('simulation.hop.field.action'), value: formatHopAction(hop.action) });
   }
+
+  if (hop.tunnel) fields.push(...tunnelRows(hop.tunnel, locale));
 
   // The other copies a switch sent out, and what became of each.
   const copies = floodCopiesText(hop, (nodeId) => resolveNodeLabel(nodeId, nodes), locale);

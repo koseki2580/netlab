@@ -49,6 +49,8 @@ export const PASSING_OPTIONS: Readonly<
   'l3-choose-longest': (id) => id === 'longest',
   // TC-989: raising the wanted provider's LOCAL_PREF, or lowering the other's.
   'l3-bgp-exit': (id) => id === 'raise-wanted' || id === 'lower-other',
+  // TC-1104: only a MED within provider A counts, and only the one that puts the wanted link ahead.
+  'l3-bgp-med': (id) => id === 'lower-wanted' || id === 'raise-other',
 };
 
 /**

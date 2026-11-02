@@ -150,8 +150,8 @@ describe('derived byte layout and field view', () => {
     expect(at(rows, 'k').displayValue).toBe('1');
     expect(at(rows, 'ver').displayValue).toBe('0 (GRE)');
     for (const row of rows) {
-      expect(row.meaning.en.trim()).not.toBe('');
-      expect(row.meaning.ja.trim()).not.toBe('');
+      expect(row.meaning!.en.trim()).not.toBe('');
+      expect(row.meaning!.ja.trim()).not.toBe('');
     }
     expect(rows.map((r) => [r.path, r.byteOffset, r.byteLength, r.bitOffset])).toEqual(
       layout.fields.map((f) => [f.path, f.byteOffset, f.byteLength, f.bitOffset]),

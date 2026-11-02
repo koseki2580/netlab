@@ -136,3 +136,20 @@ describe('the Dynamic Routing lesson route tables', () => {
     }
   });
 });
+
+// TC-1101
+describe('the BGP decision order in the Dynamic Routing lesson', () => {
+  it('lists ORIGIN before MED, and says MED stays within one neighbouring AS', () => {
+    const en = table('bgp', 'en').querySelector('[data-testid="dynamic-bgp-decision"]');
+    const steps = [...(en?.querySelectorAll('li') ?? [])].map((step) => step.textContent);
+    expect(steps).toHaveLength(7);
+    expect(steps[2]).toContain('ORIGIN');
+    expect(steps[3]).toContain('only among routes from the same neighbouring AS');
+    const ja = table('bgp', 'ja').querySelector('[data-testid="dynamic-bgp-med"]');
+    expect(ja?.textContent).toContain('別の AS どうしでは意味がなく');
+  });
+
+  it('is not shown for the other protocols', () => {
+    expect(table('ospf', 'en').querySelector('[data-testid="dynamic-bgp-decision"]')).toBeNull();
+  });
+});

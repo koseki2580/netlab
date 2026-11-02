@@ -362,7 +362,16 @@ describe('serializePacket', () => {
 
     expect(l7.map((field) => field.name)).toEqual([
       'ID',
-      'Flags',
+      'QR',
+      'OPCODE',
+      'AA',
+      'TC',
+      'RD',
+      'RA',
+      'Z',
+      'AD',
+      'CD',
+      'RCODE',
       'QDCOUNT',
       'ANCOUNT',
       'NSCOUNT',
@@ -371,7 +380,7 @@ describe('serializePacket', () => {
       'QTYPE',
       'QCLASS',
     ]);
-    expect(l7.find((field) => field.name === 'Flags')?.displayValue).toBe('0x0100 (QUERY, RD)');
+    expect(l7.find((field) => field.name === 'QR')?.displayValue).toBe('0 (QUERY)');
     expect(l7.find((field) => field.name === 'QNAME')?.displayValue).toBe('web.example.com');
   });
 

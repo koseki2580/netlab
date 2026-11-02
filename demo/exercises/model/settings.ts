@@ -22,6 +22,7 @@ const DEFAULT_STP_PRIORITY = 32768;
 const DEFAULT_OSPF_COST = 1;
 /** BGP's default LOCAL_PREF (RFC 4271 leaves it to policy; 100 is what routers use). */
 const DEFAULT_LOCAL_PREF = 100;
+const DEFAULT_OSPF_PRIORITY = 1;
 
 // --- Applying ----------------------------------------------------------------
 
@@ -189,6 +190,27 @@ function applyOne(topology: TopologySnapshot, change: SettingChange): TopologySn
         change.nat === null ? { ...rest } : { ...rest, nat: change.nat },
       );
 
+    case 'ospf-priority':
+      return editInterface(topology, change.nodeId, change.ifaceId, (iface) => ({
+        ...iface,
+        ospfPriority: change.priority,
+      }));
+
+    case 'bgp-med':
+      return editNode(topology, change.nodeId, (data) => {
+        const config = data.bgpConfig;
+        if (!config?.neighbors.some((entry) => entry.address === change.neighbor)) return null;
+        return {
+          ...data,
+          bgpConfig: {
+            ...config,
+            neighbors: config.neighbors.map((entry) =>
+              entry.address === change.neighbor ? { ...entry, med: change.med } : entry,
+            ),
+          },
+        };
+      });
+
     case 'bgp-local-pref':
       return editNode(topology, change.nodeId, (data) => {
         const config = data.bgpConfig;
@@ -308,6 +330,18 @@ export function readSetting(topology: TopologySnapshot, ref: SettingRef): Settin
       return iface ? { ...ref, nat: iface.nat ?? null } : null;
     }
 
+    case 'ospf-priority': {
+      const iface = data.interfaces?.find((candidate) => candidate.id === ref.ifaceId);
+      return iface ? { ...ref, priority: iface.ospfPriority ?? DEFAULT_OSPF_PRIORITY } : null;
+    }
+
+    case 'bgp-med': {
+      const entry = data.bgpConfig?.neighbors.find(
+        (candidate) => candidate.address === ref.neighbor,
+      );
+      return entry ? { ...ref, med: entry.med ?? 0 } : null;
+    }
+
     case 'bgp-local-pref': {
       const entry = data.bgpConfig?.neighbors.find(
         (candidate) => candidate.address === ref.neighbor,
@@ -372,7 +406,10 @@ function refKey(ref: SettingRef): string {
     case 'iface-acl':
       return `${ref.kind}|${ref.nodeId}|${ref.ifaceId}|${ref.direction}`;
     case 'bgp-local-pref':
+    case 'bgp-med':
       return `${ref.kind}|${ref.nodeId}|${ref.neighbor}`;
+    case 'ospf-priority':
+      return `${ref.kind}|${ref.nodeId}|${ref.ifaceId}`;
   }
 }
 

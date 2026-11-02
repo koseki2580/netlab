@@ -167,9 +167,9 @@ export class ForwardingPipeline {
   private arpCacheForSend(options: PrecomputeOptions): Map<string, string> {
     const learned = this.learnedArp;
     if (!learned) return new Map();
-    for (const [ip, mac] of learned) {
-      const owner = this.addresses.findOwner(ip);
-      if (!owner || !this.macsOf(owner).includes(mac)) learned.delete(ip);
+    for (const [key, mac] of learned) {
+      const owner = this.addresses.findOwner(key.slice(key.lastIndexOf(' ') + 1));
+      if (!owner || !this.macsOf(owner).includes(mac)) learned.delete(key);
     }
     return options.probe ? new Map(learned) : learned;
   }
@@ -211,7 +211,6 @@ export class ForwardingPipeline {
       ? new Map<string, NetflowExporter>()
       : this.netflowExporters;
     const sflowSamplers = new Map<string, SflowSampler>();
-    this.forwardingLoop.seedArpCache(arpCache);
     const baseTs = Date.now();
     const current = packet.srcNodeId;
     const workingPacket = this.forwardingLoop.materializePacket(

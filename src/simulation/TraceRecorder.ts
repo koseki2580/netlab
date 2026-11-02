@@ -1,3 +1,6 @@
+import { dnsMessageToValues } from '../protocols/dns/wire';
+import { deriveTraceLabel as packTraceLabel } from '../protocols/pack/wire';
+import { protocolPacks } from '../protocols/packs';
 import { buildPcap, type PcapRecord } from '../utils/pcapSerializer';
 import type {
   DhcpMessage,
@@ -39,7 +42,7 @@ function protocolName(num: number): string {
   if (num === 1) return 'ICMP';
   if (num === 6) return 'TCP';
   if (num === 17) return 'UDP';
-  return String(num);
+  return protocolPacks.byIpProtocol(num)?.name.short ?? String(num);
 }
 
 export type TraceDetailLevel = 'full' | 'metadata-only';
@@ -212,7 +215,7 @@ export class TraceRecorder {
         return `DHCP ${ipPayload.payload.messageType}`;
       }
       if (isDnsPayload(ipPayload.payload)) {
-        return ipPayload.payload.isResponse ? 'DNS RESPONSE' : 'DNS QUERY';
+        return packTraceLabel(protocolPacks.wire('dns')!, dnsMessageToValues(ipPayload.payload));
       }
       return 'UDP';
     }

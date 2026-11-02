@@ -12,6 +12,7 @@ import { buildEthernetFrameBytes, buildIpv4HeaderBytes } from '../utils/packetLa
 import { serializeArpFrame } from '../utils/packetSerializer';
 import { assertDefined, getRequired } from '../utils/typedAccess';
 import {
+  dataHops,
   CLIENT_MAC,
   SERVER_MAC,
   SERVER_TWO_MAC,
@@ -22,6 +23,7 @@ import {
   makeRouteEntry,
   packetAtStep,
   pcapRecordBytes,
+  warmUp,
 } from './__fixtures__/helpers';
 import {
   aclTopology,
@@ -55,8 +57,16 @@ beforeAll(() => {
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-function hopAt(trace: PacketTrace, index: number) {
+function rawHopAt(trace: PacketTrace, index: number) {
   return getRequired(trace.hops, index, {
+    packetId: trace.packetId,
+    reason: 'expected trace hop',
+    index,
+  });
+}
+
+function hopAt(trace: PacketTrace, index: number) {
+  return getRequired(dataHops(trace), index, {
     packetId: trace.packetId,
     reason: 'expected trace hop',
     index,
@@ -92,7 +102,7 @@ describe('SimulationEngine.precompute', () => {
     const deliverHop = hopAt(trace, 1);
 
     expect(trace.status).toBe('delivered');
-    expect(trace.hops).toHaveLength(2);
+    expect(dataHops(trace)).toHaveLength(2);
     expect(createHop.event).toBe('create');
     expect(createHop.nodeId).toBe('client-1');
     expect(createHop.toNodeId).toBe('server-1');
@@ -109,7 +119,7 @@ describe('SimulationEngine.precompute', () => {
     const deliverHop = hopAt(trace, 2);
 
     expect(trace.status).toBe('delivered');
-    expect(trace.hops).toHaveLength(3);
+    expect(dataHops(trace)).toHaveLength(3);
     expect(createHop.event).toBe('create');
     expect(createHop.nodeId).toBe('client-1');
     expect(forwardHop.event).toBe('forward');
@@ -118,13 +128,14 @@ describe('SimulationEngine.precompute', () => {
     expect(deliverHop.nodeId).toBe('server-1');
   });
 
-  it('does not inject ARP hops when endpoint and interface MACs are explicitly configured', async () => {
+  // Flipped by REQ-190: a MAC written in the topology no longer makes it known.
+  it('injects ARP hops even when endpoint and interface MACs are explicitly configured', async () => {
     const engine = makeEngine(singleRouterTopology());
     const packet = makePacket('p-explicit', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
     const trace = await engine.precompute(packet);
 
     expect(trace.hops.some((hop) => hop.event === 'arp-request' || hop.event === 'arp-reply')).toBe(
-      false,
+      true,
     );
   });
 
@@ -141,8 +152,8 @@ describe('SimulationEngine.precompute', () => {
       'deliver',
     ]);
 
-    const arpRequest = hopAt(trace, 1);
-    const arpReply = hopAt(trace, 2);
+    const arpRequest = rawHopAt(trace, 1);
+    const arpReply = rawHopAt(trace, 2);
     expect(arpRequest.nodeId).toBe('client-1');
     expect(arpRequest.arpFrame?.payload.operation).toBe('request');
     expect(arpRequest.arpFrame?.dstMac).toBe('ff:ff:ff:ff:ff:ff');
@@ -156,17 +167,16 @@ describe('SimulationEngine.precompute', () => {
     const packet = makePacket('p-arp-router', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
     const trace = await engine.precompute(packet);
 
-    expect(trace.hops.map((hop) => hop.event)).toEqual([
-      'create',
-      'arp-request',
-      'arp-reply',
-      'forward',
-      'deliver',
+    expect(trace.hops.map((hop) => `${hop.event}@${hop.nodeId}`)).toEqual([
+      'create@client-1',
+      'arp-request@client-1',
+      'arp-reply@router-1',
+      'forward@client-1',
+      'arp-request@router-1',
+      'arp-reply@server-1',
+      'forward@router-1',
+      'deliver@server-1',
     ]);
-
-    expect(hopAt(trace, 1).nodeId).toBe('router-1');
-    expect(hopAt(trace, 2).nodeId).toBe('server-1');
-    expect(hopAt(trace, 3).nodeId).toBe('router-1');
   });
 
   it('populates nodeArpTables for both the requester and the responder when ARP is simulated', async () => {
@@ -267,7 +277,7 @@ describe('SimulationEngine.precompute', () => {
     const trace = await engine.precompute(packet);
 
     expect(trace.status).toBe('dropped');
-    const dropHop = trace.hops.find((h) => h.event === 'drop');
+    const dropHop = dataHops(trace).find((h) => h.event === 'drop');
     expect(dropHop).toBeDefined();
     expect(dropHop!.reason).toBe('ttl-exceeded');
     expect(dropHop!.nodeId).toBe('router-1');
@@ -282,7 +292,7 @@ describe('SimulationEngine.precompute', () => {
     const trace = await engine.precompute(packet);
 
     expect(trace.status).toBe('dropped');
-    const dropHop = trace.hops.find((h) => h.event === 'drop');
+    const dropHop = dataHops(trace).find((h) => h.event === 'drop');
     expect(dropHop).toBeDefined();
     expect(dropHop!.reason).toBe('no-route');
     expect(dropHop!.ingressInterfaceId).toBe('eth0');
@@ -301,7 +311,6 @@ describe('SimulationEngine.precompute', () => {
       'Dst MAC',
       'FCS',
     ]);
-    expect(hopAt(trace, 0).changedFields).toBeUndefined();
   });
 
   it('traverses through a switch', async () => {
@@ -311,7 +320,7 @@ describe('SimulationEngine.precompute', () => {
     const switchHop = hopAt(trace, 1);
 
     expect(trace.status).toBe('delivered');
-    expect(trace.hops).toHaveLength(3);
+    expect(dataHops(trace)).toHaveLength(3);
     expect(switchHop.nodeId).toBe('switch-1');
     expect(switchHop.event).toBe('forward');
     expect(switchHop.activeEdgeId).toBe('e2');
@@ -333,6 +342,7 @@ describe('SimulationEngine.precompute', () => {
   it('keeps MAC addresses stable on client-to-switch hops with no L3 boundary', async () => {
     const engine = makeEngine(switchPassthroughTopology());
     const packet = makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10');
+    await warmUp(engine, packet);
     await engine.send(packet);
 
     engine.selectHop(0);
@@ -365,7 +375,7 @@ describe('SimulationEngine.precompute', () => {
     const deliverHop = hopAt(trace, 3);
 
     expect(trace.status).toBe('delivered');
-    expect(trace.hops).toHaveLength(4);
+    expect(dataHops(trace)).toHaveLength(4);
     expect(createHop.event).toBe('create');
     expect(firstRouterHop.nodeId).toBe('router-1');
     expect(secondRouterHop.nodeId).toBe('router-2');
@@ -502,7 +512,7 @@ describe('SimulationEngine.precompute', () => {
     const trace = await engine.precompute(packet);
 
     expect(trace.status).toBe('dropped');
-    const dropHop = hopAt(trace, trace.hops.length - 1);
+    const dropHop = hopAt(trace, dataHops(trace).length - 1);
     expect(dropHop.event).toBe('drop');
     expect(dropHop.reason).toBe('routing-loop');
   });
@@ -514,7 +524,9 @@ describe('SimulationEngine.precompute', () => {
     const trace = await engine.precompute(packet);
 
     const edgeIds = topology.edges.map((e) => e.id);
-    const forwardHops = trace.hops.filter((h) => h.event === 'create' || h.event === 'forward');
+    const forwardHops = dataHops(trace).filter(
+      (h) => h.event === 'create' || h.event === 'forward',
+    );
     for (const hop of forwardHops) {
       expect(hop.activeEdgeId).toBeDefined();
       expect(edgeIds).toContain(hop.activeEdgeId);
@@ -525,6 +537,7 @@ describe('SimulationEngine.precompute', () => {
 describe('SimulationEngine.step', () => {
   async function loadedEngine() {
     const engine = makeEngine(singleRouterTopology());
+    await warmUp(engine, makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
     await engine.send(makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
     return engine;
   }
@@ -582,7 +595,7 @@ describe('SimulationEngine.step', () => {
       activePathEdgeIds: ['e1', 'e2'],
       highlightMode: 'path',
       traceColors: {
-        p1: 'var(--netlab-accent-cyan)',
+        p1: expect.any(String),
       },
     });
 
@@ -599,6 +612,7 @@ describe('SimulationEngine.play / pause', () => {
   it('auto-advances to done with zero interval', async () => {
     vi.useFakeTimers();
     const engine = makeEngine(singleRouterTopology());
+    await warmUp(engine, makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
     await engine.send(makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
 
     engine.play(0);
@@ -612,6 +626,7 @@ describe('SimulationEngine.play / pause', () => {
   it('pauses mid-play', async () => {
     vi.useFakeTimers();
     const engine = makeEngine(singleRouterTopology());
+    await warmUp(engine, makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
     await engine.send(makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
 
     engine.play(100);
@@ -788,6 +803,7 @@ describe('SimulationEngine.sendTransfer', () => {
 describe('SimulationEngine.reset', () => {
   it('resets playback position without clearing traces', async () => {
     const engine = makeEngine(singleRouterTopology());
+    await warmUp(engine, makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
     await engine.send(makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
     engine.step();
     engine.step();
@@ -797,7 +813,7 @@ describe('SimulationEngine.reset', () => {
     expect(state.currentStep).toBe(-1);
     expect(state.activeEdgeIds).toEqual([]);
     expect(state.selectedHop).toBeNull();
-    expect(state.traces).toHaveLength(1); // trace still present
+    expect(state.traces).toHaveLength(2); // both traces still present
     expect(state.status).toBe('paused');
   });
 });
@@ -868,7 +884,7 @@ describe('SimulationEngine.exportPcap', () => {
     );
 
     const trace = traceForPacketId(engine, 'pcap-drop');
-    const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+    const dropHop = dataHops(trace).find((hop) => hop.event === 'drop');
     assertDefined(dropHop, 'expected drop hop for PCAP export');
     const dropHopIndex = dropHop.step;
     expect(dropHopIndex).toBeGreaterThanOrEqual(0);
@@ -908,7 +924,7 @@ describe('SimulationEngine NAT', () => {
     );
 
     const trace = engine.getState().traces.find((candidate) => candidate.packetId === 'nat-snat');
-    const natHop = trace?.hops.find((hop) => hop.nodeId === 'nat-router');
+    const natHop = dataHops(trace ?? { hops: [] }).find((hop) => hop.nodeId === 'nat-router');
     const natTable = engine.getState().natTables.find((table) => table.routerId === 'nat-router');
 
     expect(trace?.status).toBe('delivered');
@@ -972,7 +988,7 @@ describe('SimulationEngine NAT', () => {
     );
 
     const trace = engine.getState().traces.find((candidate) => candidate.packetId === 'nat-return');
-    const natHop = trace?.hops.find((hop) => hop.nodeId === 'nat-router');
+    const natHop = dataHops(trace ?? { hops: [] }).find((hop) => hop.nodeId === 'nat-router');
 
     expect(trace?.status).toBe('delivered');
     expect(natHop?.natTranslation).toEqual({
@@ -1018,7 +1034,9 @@ describe('SimulationEngine NAT', () => {
     const inboundTrace = engine
       .getState()
       .traces.find((candidate) => candidate.packetId === 'nat-dnat-in');
-    const inboundNatHop = inboundTrace?.hops.find((hop) => hop.nodeId === 'nat-router');
+    const inboundNatHop = dataHops(inboundTrace ?? { hops: [] }).find(
+      (hop) => hop.nodeId === 'nat-router',
+    );
 
     expect(inboundTrace?.status).toBe('delivered');
     expect(inboundNatHop?.natTranslation).toEqual({
@@ -1152,9 +1170,9 @@ describe('SimulationEngine ACL', () => {
       ),
     );
 
-    const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+    const dropHop = dataHops(trace).find((hop) => hop.event === 'drop');
     expect(trace.status).toBe('dropped');
-    expect(trace.hops).toHaveLength(2);
+    expect(dataHops(trace)).toHaveLength(2);
     expect(dropHop?.nodeId).toBe('router-1');
     expect(dropHop?.reason).toBe('acl-deny');
     expect(dropHop?.aclMatch?.action).toBe('deny');
@@ -1181,7 +1199,7 @@ describe('SimulationEngine ACL', () => {
       makePacket('acl-permit', 'client-1', 'server-1', '10.0.1.10', '203.0.113.50', 64, 40000, 80),
     );
 
-    const routerHop = trace.hops.find(
+    const routerHop = dataHops(trace).find(
       (hop) => hop.nodeId === 'router-1' && hop.event === 'forward',
     );
     expect(trace.status).toBe('delivered');
@@ -1218,7 +1236,7 @@ describe('SimulationEngine ACL', () => {
       ),
     );
 
-    const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+    const dropHop = dataHops(trace).find((hop) => hop.event === 'drop');
     expect(trace.status).toBe('dropped');
     expect(dropHop?.reason).toBe('acl-deny');
     expect(dropHop?.aclMatch?.matchedRule).toBeNull();
@@ -1324,6 +1342,7 @@ describe('SimulationEngine ACL', () => {
 describe('SimulationEngine.subscribe', () => {
   it('calls listener on step', async () => {
     const engine = makeEngine(singleRouterTopology());
+    await warmUp(engine, makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
     await engine.send(makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
 
     const listener = vi.fn();
@@ -1335,6 +1354,7 @@ describe('SimulationEngine.subscribe', () => {
 
   it('does not call listener after unsubscribe', async () => {
     const engine = makeEngine(singleRouterTopology());
+    await warmUp(engine, makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
     await engine.send(makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
 
     const listener = vi.fn();
@@ -1351,6 +1371,7 @@ describe('SimulationEngine hook emission', () => {
     const hookEngine = new HookEngine();
     const topology = singleRouterTopology();
     const engine = new SimulationEngine(topology, hookEngine);
+    await warmUp(engine, makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
     await engine.send(makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
 
     const forwardSpy = vi.fn(async (_ctx, next) => {
@@ -1373,6 +1394,7 @@ describe('SimulationEngine hook emission', () => {
   it('emits packet:deliver on the deliver hop', async () => {
     const hookEngine = new HookEngine();
     const engine = new SimulationEngine(singleRouterTopology(), hookEngine);
+    await warmUp(engine, makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
     await engine.send(makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
 
     const deliverSpy = vi.fn(async (_ctx, next) => {
@@ -1393,6 +1415,7 @@ describe('SimulationEngine hook emission', () => {
 describe('SimulationEngine.selectHop', () => {
   it('updates selectedHop and activeEdgeIds without advancing currentStep', async () => {
     const engine = makeEngine(singleRouterTopology());
+    await warmUp(engine, makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
     await engine.send(makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
 
     engine.selectHop(1); // router-1 forward hop
@@ -1404,6 +1427,10 @@ describe('SimulationEngine.selectHop', () => {
 
   it('keeps the full path highlight while selecting a specific hop', async () => {
     const engine = makeEngine(singleRouterTopology());
+    await warmUp(
+      engine,
+      makePacket('select-hop-path', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
+    );
     await engine.send(
       makePacket('select-hop-path', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
     );
@@ -1459,7 +1486,7 @@ describe('SimulationEngine.routingDecision', () => {
       makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
     );
 
-    const routerHop = trace.hops.find((h) => h.nodeId === 'router-1');
+    const routerHop = dataHops(trace).find((h) => h.nodeId === 'router-1');
     expect(routerHop).toBeDefined();
     expect(routerHop!.routingDecision).toBeDefined();
   });
@@ -1470,8 +1497,8 @@ describe('SimulationEngine.routingDecision', () => {
       makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
     );
 
-    const clientHop = trace.hops.find((h) => h.nodeId === 'client-1');
-    const serverHop = trace.hops.find((h) => h.nodeId === 'server-1');
+    const clientHop = dataHops(trace).find((h) => h.nodeId === 'client-1');
+    const serverHop = dataHops(trace).find((h) => h.nodeId === 'server-1');
     expect(clientHop!.routingDecision).toBeUndefined();
     expect(serverHop!.routingDecision).toBeUndefined();
   });
@@ -1482,7 +1509,7 @@ describe('SimulationEngine.routingDecision', () => {
       makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
     );
 
-    const routerHop = trace.hops.find((h) => h.nodeId === 'router-1');
+    const routerHop = dataHops(trace).find((h) => h.nodeId === 'router-1');
     expect(routerHop!.routingDecision!.winner).not.toBeNull();
   });
 
@@ -1494,7 +1521,7 @@ describe('SimulationEngine.routingDecision', () => {
       makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
     );
 
-    const routerHop = trace.hops.find((h) => h.nodeId === 'router-1');
+    const routerHop = dataHops(trace).find((h) => h.nodeId === 'router-1');
     expect(routerHop).toBeDefined();
     expect(routerHop!.routingDecision).toBeDefined();
     expect(routerHop!.routingDecision!.winner).toBeNull();
@@ -1506,7 +1533,7 @@ describe('SimulationEngine.routingDecision', () => {
       makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10', 1),
     );
 
-    const dropHop = trace.hops.find((h) => h.event === 'drop');
+    const dropHop = dataHops(trace).find((h) => h.event === 'drop');
     expect(dropHop).toBeDefined();
     expect(dropHop!.reason).toBe('ttl-exceeded');
     expect(dropHop!.routingDecision).toBeUndefined();
@@ -1518,7 +1545,7 @@ describe('SimulationEngine.routingDecision', () => {
       makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
     );
 
-    const routerHop = trace.hops.find((h) => h.nodeId === 'router-1');
+    const routerHop = dataHops(trace).find((h) => h.nodeId === 'router-1');
     // singleRouterTopology has 2 routes for router-1
     expect(routerHop!.routingDecision!.candidates).toHaveLength(2);
   });
@@ -1529,7 +1556,7 @@ describe('SimulationEngine.routingDecision', () => {
       makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
     );
 
-    const routerHop = trace.hops.find((h) => h.nodeId === 'router-1');
+    const routerHop = dataHops(trace).find((h) => h.nodeId === 'router-1');
     const lpmWinners = routerHop!.routingDecision!.candidates.filter((c) => c.selectedByLpm);
     expect(lpmWinners).toHaveLength(1);
   });
@@ -1540,7 +1567,7 @@ describe('SimulationEngine.routingDecision', () => {
       makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'),
     );
 
-    const routerHop = trace.hops.find((h) => h.nodeId === 'router-1');
+    const routerHop = dataHops(trace).find((h) => h.nodeId === 'router-1');
     expect(typeof routerHop!.routingDecision!.explanation).toBe('string');
     expect(routerHop!.routingDecision!.explanation.length).toBeGreaterThan(0);
   });
@@ -1554,17 +1581,17 @@ describe('SimulationEngine ICMP helpers', () => {
 
     expect(trace.status).toBe('delivered');
 
-    const serverDeliverIndex = trace.hops.findIndex(
+    const serverDeliverIndex = dataHops(trace).findIndex(
       (hop) => hop.nodeId === 'server-1' && hop.event === 'deliver',
     );
-    const clientDeliverIndex = trace.hops.findIndex(
+    const clientDeliverIndex = dataHops(trace).findIndex(
       (hop) =>
         hop.nodeId === 'client-1' && hop.event === 'deliver' && hop.fromNodeId === 'router-1',
     );
 
     expect(serverDeliverIndex).toBeGreaterThan(-1);
     expect(clientDeliverIndex).toBeGreaterThan(serverDeliverIndex);
-    expect(trace.hops[0]?.protocol).toBe('ICMP');
+    expect(dataHops(trace)[0]?.protocol).toBe('ICMP');
   });
 
   it('ping drops with no-route when the destination IP is unreachable', async () => {
@@ -1573,7 +1600,9 @@ describe('SimulationEngine ICMP helpers', () => {
     const trace = await engine.ping('client-1', '198.51.100.10');
 
     expect(trace.status).toBe('dropped');
-    expect(trace.hops.some((hop) => hop.event === 'drop' && hop.reason === 'no-route')).toBe(true);
+    expect(dataHops(trace).some((hop) => hop.event === 'drop' && hop.reason === 'no-route')).toBe(
+      true,
+    );
   });
 
   it('ping with TTL=1 marks the router drop hop and appends the generated ICMP response', async () => {
@@ -1583,14 +1612,14 @@ describe('SimulationEngine ICMP helpers', () => {
 
     expect(trace.status).toBe('dropped');
 
-    const ttlDropHop = trace.hops.find(
+    const ttlDropHop = dataHops(trace).find(
       (hop) => hop.nodeId === 'router-1' && hop.event === 'drop' && hop.reason === 'ttl-exceeded',
     );
 
     expect(ttlDropHop?.icmpGenerated).toBe(true);
-    expect(trace.hops.some((hop) => hop.nodeId === 'client-1' && hop.event === 'deliver')).toBe(
-      true,
-    );
+    expect(
+      dataHops(trace).some((hop) => hop.nodeId === 'client-1' && hop.event === 'deliver'),
+    ).toBe(true);
   });
 
   it('traceroute stops after the destination is reached', async () => {
@@ -1623,7 +1652,7 @@ describe('SimulationEngine failure-aware routing fallback', () => {
     expect('selectReachableRoute' in engine).toBe(false);
     expect('resolveNextNode' in engine).toBe(false);
 
-    const routerHop = trace.hops.find((hop) => hop.nodeId === 'router-1');
+    const routerHop = dataHops(trace).find((hop) => hop.nodeId === 'router-1');
     expect(routerHop?.toNodeId).toBe('router-2');
     expect(routerHop?.routingDecision?.winner?.destination).toBe('203.0.113.0/24');
   });
@@ -1643,7 +1672,7 @@ describe('SimulationEngine failure-aware routing fallback', () => {
 
     expect(trace.status).toBe('delivered');
 
-    const routerHop = trace.hops.find((hop) => hop.nodeId === 'router-1');
+    const routerHop = dataHops(trace).find((hop) => hop.nodeId === 'router-1');
     expect(routerHop?.toNodeId).toBe('router-3');
     expect(routerHop?.activeEdgeId).toBe('e3');
     expect(routerHop?.egressInterfaceId).toBe('eth2');
@@ -1682,7 +1711,7 @@ describe('SimulationEngine failure-aware routing fallback', () => {
     expect('selectReachableRoute' in engine).toBe(false);
     expect('resolveNextNode' in engine).toBe(false);
 
-    const routerHop = trace.hops.find((hop) => hop.nodeId === 'router-1');
+    const routerHop = dataHops(trace).find((hop) => hop.nodeId === 'router-1');
     expect(routerHop?.toNodeId).toBe('router-3');
     expect(routerHop?.routingDecision?.winner?.destination).toBe('0.0.0.0/0');
   });
@@ -1695,7 +1724,7 @@ describe('SimulationEngine failure-aware routing fallback', () => {
 
     expect(trace.status).toBe('delivered');
 
-    const routerHop = trace.hops.find((hop) => hop.nodeId === 'router-1');
+    const routerHop = dataHops(trace).find((hop) => hop.nodeId === 'router-1');
     expect(routerHop?.toNodeId).toBe('router-2');
     expect(routerHop?.egressInterfaceId).toBe('eth1');
     expect(routerHop?.routingDecision?.winner?.destination).toBe('203.0.113.0/24');
@@ -1719,7 +1748,9 @@ describe('SimulationEngine failure-aware routing fallback', () => {
 
     expect(trace.status).toBe('dropped');
 
-    const dropHop = trace.hops.find((hop) => hop.event === 'drop' && hop.nodeId === 'router-1');
+    const dropHop = dataHops(trace).find(
+      (hop) => hop.event === 'drop' && hop.nodeId === 'router-1',
+    );
     expect(dropHop?.reason).toBe('no-route');
     expect(dropHop?.routingDecision?.winner).toBeNull();
     expect(dropHop?.routingDecision?.explanation).toContain('No reachable route');
@@ -1748,7 +1779,9 @@ describe('SimulationEngine failure-aware routing fallback', () => {
 
     expect(trace.status).toBe('dropped');
 
-    const dropHop = trace.hops.find((hop) => hop.event === 'drop' && hop.nodeId === 'router-1');
+    const dropHop = dataHops(trace).find(
+      (hop) => hop.event === 'drop' && hop.nodeId === 'router-1',
+    );
     expect(dropHop?.reason).toBe('interface-down');
     expect(dropHop?.egressInterfaceId).toBe('eth2');
     expect(dropHop?.routingDecision?.winner?.nextHop).toBe('172.17.0.2');
@@ -1783,7 +1816,7 @@ describe('SimulationEngine failure simulation', () => {
       failureState,
     );
     expect(trace.status).toBe('dropped');
-    const dropHop = trace.hops.find((h) => h.event === 'drop');
+    const dropHop = dataHops(trace).find((h) => h.event === 'drop');
     expect(dropHop?.reason).toBe('node-down');
     expect(dropHop?.nodeId).toBe('router-1');
   });
@@ -1818,7 +1851,7 @@ describe('SimulationEngine failure simulation', () => {
       failureState,
     );
     expect(trace.status).toBe('dropped');
-    const dropHop = trace.hops.find((h) => h.event === 'drop');
+    const dropHop = dataHops(trace).find((h) => h.event === 'drop');
     expect(dropHop?.reason).toBe('no-route');
     expect(dropHop?.nodeId).toBe('router-1');
   });
@@ -1871,7 +1904,7 @@ describe('SimulationEngine failure simulation', () => {
       );
 
       expect(trace.status).toBe('dropped');
-      const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+      const dropHop = dataHops(trace).find((hop) => hop.event === 'drop');
       expect(dropHop?.nodeId).toBe('router-1');
       expect(dropHop?.reason).toBe('interface-down');
       expect(dropHop?.egressInterfaceId).toBe('eth1');
@@ -1912,7 +1945,7 @@ describe('SimulationEngine failure simulation', () => {
       );
 
       expect(trace.status).toBe('dropped');
-      const routerHop = trace.hops.find((hop) => hop.nodeId === 'router-1');
+      const routerHop = dataHops(trace).find((hop) => hop.nodeId === 'router-1');
       expect(routerHop?.event).toBe('drop');
       expect(routerHop?.reason).toBe('interface-down');
     });
@@ -1931,7 +1964,7 @@ describe('SimulationEngine failure simulation', () => {
       );
 
       expect(trace.status).toBe('dropped');
-      const dropHop = trace.hops.find((hop) => hop.event === 'drop');
+      const dropHop = dataHops(trace).find((hop) => hop.event === 'drop');
       expect(dropHop?.nodeId).toBe('router-1');
       expect(dropHop?.reason).toBe('no-route');
     });

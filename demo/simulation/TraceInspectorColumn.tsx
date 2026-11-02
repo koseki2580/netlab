@@ -30,7 +30,9 @@ export function TraceInspectorColumn() {
       <div
         data-testid="lesson-trace-timeline"
         style={{
-          flex: '1 1 0',
+          // Until a hop is chosen the timeline takes the height of its rows, so
+          // a first send's ARP rows do not push the last hop out of sight.
+          flex: hopChosen ? '1 1 0' : '1 0 auto',
           minHeight: 200,
           background: 'var(--netlab-bg-panel)',
           border: '1px solid var(--netlab-border-subtle)',

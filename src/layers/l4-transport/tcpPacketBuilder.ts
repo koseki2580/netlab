@@ -1,4 +1,4 @@
-import type { InFlightPacket, TcpFlags } from '../../types/packets';
+import type { InFlightPacket, TcpFlags, TcpHeaderOptions } from '../../types/packets';
 
 export interface TcpPacketOptions {
   srcNodeId: string;
@@ -11,6 +11,14 @@ export interface TcpPacketOptions {
   ack: number;
   ttl?: number;
   sessionId?: string;
+  /** The window field. Left out, the segment has none of its own (serialised as 65535). */
+  windowSize?: number;
+  /** For a SYN or SYN-ACK. */
+  tcpOptions?: TcpHeaderOptions;
+  /** Bytes of data the segment carries. Default none. */
+  dataBytes?: number;
+  /** Tells apart segments alike in every other way, such as two window probes. */
+  idSalt?: string;
 }
 
 function hashString(input: string): number {
@@ -34,6 +42,7 @@ function makePacketId(prefix: string, options: TcpPacketOptions): string {
       String(options.seq),
       String(options.ack),
       options.sessionId ?? '',
+      ...(options.idSalt === undefined ? [] : [options.idSalt]),
     ].join(':'),
   ).toString(16)}`;
 }
@@ -72,9 +81,11 @@ function buildTcpPacket(
           seq: options.seq,
           ack: ackOverride,
           flags,
+          ...(options.windowSize !== undefined ? { windowSize: options.windowSize } : {}),
+          ...(options.tcpOptions !== undefined ? { options: options.tcpOptions } : {}),
           payload: {
             layer: 'raw',
-            data: '',
+            data: 'x'.repeat(options.dataBytes ?? 0),
           },
         },
       },

@@ -308,9 +308,19 @@ export function readPacketFacts(
   trace: PacketTrace,
   snapshots: readonly InFlightPacket[],
 ): PacketFacts {
-  const all = trace.hops.flatMap((hop, index) => {
+  const all: ReturnType<typeof view>[] = [];
+  trace.hops.forEach((hop, index) => {
     const packet = snapshots[index];
-    return packet && !isArpHop(hop) ? [view(hop, packet, packet.id !== packetId)] : [];
+    if (!packet || isArpHop(hop)) return;
+    const entry = view(hop, packet, packet.id !== packetId);
+    const last = all[all.length - 1];
+    // A sender that had to ask first creates the frame, asks, then sends it:
+    // one step of the packet, with the addresses it left with.
+    if (last?.event === 'create' && hop.event === 'forward' && last.nodeId === hop.nodeId) {
+      all[all.length - 1] = { ...entry, event: 'create', hop: { ...entry.hop, event: 'create' } };
+    } else {
+      all.push(entry);
+    }
   });
   const own = all.filter((entry) => !entry.generated);
   const probe = readFacts([{ ...trace, hops: own.map((entry) => entry.hop) }], false);

@@ -14,7 +14,25 @@ export type {
   TcpPacketSender,
   TcpEventSink,
   TcpTeardownResult,
+  TcpTransferRequest,
+  TcpTransferResult,
 } from './TcpOrchestrator';
+export {
+  advertisedWindowField,
+  negotiateTcpOptions,
+  planTcpTransfer,
+  synAckOptions,
+  synOptions,
+  usableWindow,
+} from './TcpFlowControl';
+export type {
+  TcpEndpointConfig,
+  TcpEndpoints,
+  TcpTransferConfig,
+  TcpTransferPlan,
+  TcpTransferStep,
+  TcpTransferStepKind,
+} from './TcpFlowControl';
 export { TcpConnectionTracker } from './TcpConnectionTracker';
 export {
   buildSynPacket,

@@ -1,4 +1,4 @@
-import type { EthernetFrame, IpPacket } from './packets';
+import type { EthernetFrame, IpPacket, RawPayload } from './packets';
 
 export interface GreHeader {
   readonly hasChecksum: boolean;
@@ -23,6 +23,11 @@ export interface GreEnvelope {
   readonly kind: 'gre';
   readonly header: GreHeader;
   readonly inner: IpPacket;
+}
+
+/** A GRE packet in an outer IPv4 packet: the wire bytes in `data`, the structure in `gre`. */
+export interface GreRawPayload extends RawPayload {
+  readonly gre: GreEnvelope;
 }
 
 export interface MplsLabel {

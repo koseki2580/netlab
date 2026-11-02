@@ -4,6 +4,7 @@
  * cause the feedback does not state, and must not sit on a device the packet
  * was merely flooded to. TC-660, TC-661.
  */
+import { isArpHop } from '../grade/engineRun';
 import { describe, expect, it } from 'vitest';
 import { en } from '../../../src/i18n/locales/en';
 import { ja } from '../../../src/i18n/locales/ja';
@@ -57,12 +58,22 @@ describe('where the replay ends', () => {
     expect(result.evidence?.nodeId).toBe('pc2');
     expect(result.evidence?.diagnosis).toBe('wrong-network');
     const shown = shownTrace(trace, exercise.start);
-    expect(shown.hops.map((hop) => hop.nodeId)).toEqual(['pc1', 'sw1']);
+    // pc1 asks first (REQ-190); the packet itself still stops at the switch.
+    expect(shown.hops.filter((hop) => !isArpHop(hop)).map((hop) => hop.nodeId)).toEqual([
+      'pc1',
+      'pc1',
+      'sw1',
+    ]);
     const last = shown.hops[shown.hops.length - 1];
     expect(last).toMatchObject({ nodeId: 'sw1', event: 'drop' });
     expect(last?.activeEdgeId).toBeUndefined();
     // The trace the grader holds is not changed.
-    expect(trace.hops.map((hop) => hop.nodeId)).toEqual(['pc1', 'sw1', 'pc2']);
+    expect(trace.hops.filter((hop) => !isArpHop(hop)).map((hop) => hop.nodeId)).toEqual([
+      'pc1',
+      'pc1',
+      'sw1',
+      'pc2',
+    ]);
   });
 
   it('a drop at the sender, at a router, or a delivery is shown as it is', async () => {

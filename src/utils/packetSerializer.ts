@@ -29,14 +29,13 @@ import type {
 import {
   DEFAULT_ETHERNET_PREAMBLE,
   buildApplicationPayloadBytes,
+  buildArpFrameBytes,
   buildEthernetFrameBytes,
   buildIcmpMessageBytes,
   buildIpv4FlagsAndFragmentOffset,
   buildIpv4HeaderBytes,
   buildIpv4PayloadBytes,
   buildTcpFlagsByte,
-  dnsFlags,
-  encodeDnsName,
   formatDhcpMessage,
   formatHttpMessage,
   isIcmpMessage,
@@ -46,6 +45,11 @@ import {
   uint16BE,
   uint32BE,
 } from './packetLayout';
+import { dnsMessageToValues, dnsWire } from '../protocols/dns/wire';
+import { greHeaderToValues, greWire } from '../protocols/gre/wire';
+import { deriveAnnotatedFields } from '../protocols/pack/wire';
+import { protocolPacks } from '../protocols/packs';
+import type { GreRawPayload } from '../types/tunneling';
 import { getRequired } from './typedAccess';
 
 export type LayerTag = 'L2' | 'L3' | 'L4' | 'L7' | 'ARP' | 'raw';
@@ -56,6 +60,10 @@ export interface AnnotatedField {
   byteOffset: number;
   byteLength: number;
   displayValue: string;
+  /** What the field means, once the protocol's learn tier is loaded. */
+  meaning?: { readonly en: string; readonly ja: string };
+  /** The protocol pack this row came from. */
+  packId?: string;
 }
 
 export interface SerializedPacket {
@@ -81,15 +89,7 @@ function formatProtocol(protocol: number): string {
   if (protocol === 1) return 'ICMP';
   if (protocol === 6) return 'TCP';
   if (protocol === 17) return 'UDP';
-  return String(protocol);
-}
-
-function macToBytes(mac: string): number[] {
-  return mac.split(':').map((part) => Number.parseInt(part, 16));
-}
-
-function ipToBytes(ip: string): number[] {
-  return ip.split('.').map((part) => Number.parseInt(part, 10));
+  return protocolPacks.byIpProtocol(protocol)?.name.short ?? String(protocol);
 }
 
 function formatIpv4FlagsAndOffset(ip: IpPacket): string {
@@ -103,52 +103,18 @@ function formatIpv4FlagsAndOffset(ip: IpPacket): string {
   return `${formatHex(buildIpv4FlagsAndFragmentOffset(ip), 4)} (${fragments.join(', ')})`;
 }
 
-/**
- * RFC 1035 rows of a DNS message (REQ-141), at the positions and with the values
- * the DNS protocol pack derives (TC-1025); Flags groups QR..RCODE in two bytes.
- */
-function dnsFields(message: DnsMessage, baseOffset: number): AnnotatedField[] {
-  const fields: AnnotatedField[] = [];
-  let at = baseOffset;
-  const row = (name: string, byteLength: number, displayValue: string) => {
-    fields.push({ name, layer: 'L7', byteOffset: at, byteLength, displayValue });
-    at += byteLength;
-  };
-  const flags = dnsFlags(message);
-  row('ID', 2, formatHex(message.transactionId, 4));
-  row(
-    'Flags',
-    2,
-    `${formatHex(flags, 4)} (${
-      message.isResponse ? `RESPONSE, AA, RD, ${flags & 0xf ? 'NXDOMAIN' : 'NOERROR'}` : 'QUERY, RD'
-    })`,
-  );
-  row('QDCOUNT', 2, String(message.questions.length));
-  row('ANCOUNT', 2, String(message.answers.length));
-  row('NSCOUNT', 2, '0');
-  row('ARCOUNT', 2, '0');
-  const named = (prefix: string, name: string) => {
-    row(`${prefix}NAME`, encodeDnsName(name).length, name);
-    row(`${prefix}TYPE`, 2, '1 (A)');
-    row(`${prefix}CLASS`, 2, '1 (IN)');
-  };
-  for (const question of message.questions) named('Q', question.name);
-  for (const answer of message.answers) {
-    named('', answer.name);
-    row('TTL', 4, String(answer.ttl));
-    row('RDLENGTH', 2, '4');
-    row('RDATA', 4, answer.address);
-  }
-  return fields;
-}
-
 function serializeL7(
   payload: HttpMessage | RawPayload | DhcpMessage | DnsMessage,
   baseOffset: number,
 ): LayerResult {
   const bytes = buildApplicationPayloadBytes(payload);
   if ('questions' in payload) {
-    return { bytes, fields: dnsFields(payload, baseOffset) };
+    // With the learn tier loaded, the rows carry their meanings (REQ-303).
+    const dns = protocolPacks.get('dns') ?? dnsWire;
+    return {
+      bytes,
+      fields: deriveAnnotatedFields(dns, dnsMessageToValues(payload), { baseOffset }),
+    };
   }
   const label =
     payload.layer === 'raw' ? 'Data' : 'messageType' in payload ? 'DHCP Payload' : 'HTTP Payload';
@@ -371,19 +337,40 @@ function serializeIcmp(icmp: IcmpMessage, baseOffset: number): LayerResult {
   };
 }
 
+/** The GRE header, then the inner packet, as rows (REQ-304). */
+function serializeGre(payload: GreRawPayload, baseOffset: number): LayerResult {
+  const header = deriveAnnotatedFields(
+    protocolPacks.get('gre') ?? greWire,
+    greHeaderToValues(payload.gre.header),
+    { baseOffset },
+  );
+  const last = header[header.length - 1]!;
+  const inner = serializeL3(payload.gre.inner, last.byteOffset + last.byteLength);
+  return {
+    bytes: buildApplicationPayloadBytes(payload),
+    fields: [
+      ...header,
+      ...inner.fields.map((field) => ({ ...field, name: `Inner ${field.name}` })),
+    ],
+  };
+}
+
 function serializeL3(ip: IpPacket, baseOffset: number): LayerResult {
   const headerBytes = buildIpv4HeaderBytes(ip);
   const headerLength = headerBytes.length;
   const l4Base = baseOffset + headerLength;
-  const l4Result = isRawPayload(ip.payload)
-    ? serializeL7(ip.payload, l4Base)
-    : isTcpSegment(ip.payload)
-      ? serializeTcp(ip.payload, l4Base)
-      : isIcmpMessage(ip.payload)
-        ? serializeIcmp(ip.payload, l4Base)
-        : 'igmpType' in ip.payload
-          ? { bytes: [], fields: [] }
-          : serializeUdp(ip.payload, l4Base);
+  const l4Result =
+    'gre' in ip.payload
+      ? serializeGre(ip.payload as GreRawPayload, l4Base)
+      : isRawPayload(ip.payload)
+        ? serializeL7(ip.payload, l4Base)
+        : isTcpSegment(ip.payload)
+          ? serializeTcp(ip.payload, l4Base)
+          : isIcmpMessage(ip.payload)
+            ? serializeIcmp(ip.payload, l4Base)
+            : 'igmpType' in ip.payload
+              ? { bytes: [], fields: [] }
+              : serializeUdp(ip.payload, l4Base);
   const payloadBytes = buildIpv4PayloadBytes(ip);
   const totalLength = ip.totalLength ?? headerLength + payloadBytes.length;
   const identification = ip.identification ?? 0;
@@ -543,24 +530,7 @@ export function serializePacket(frame: EthernetFrame): SerializedPacket {
 export function serializeArpFrame(frame: ArpEthernetFrame): SerializedPacket {
   const fcs = frame.fcs ?? 0;
   const operation = frame.payload.operation === 'request' ? 1 : 2;
-  const rawBytes = [
-    ...macToBytes(frame.dstMac),
-    ...macToBytes(frame.srcMac),
-    0x08,
-    0x06,
-    0x00,
-    0x01,
-    0x08,
-    0x00,
-    0x06,
-    0x04,
-    ...uint16BE(operation),
-    ...macToBytes(frame.payload.senderMac),
-    ...ipToBytes(frame.payload.senderIp),
-    ...macToBytes(frame.payload.targetMac),
-    ...ipToBytes(frame.payload.targetIp),
-    ...uint32BE(fcs),
-  ];
+  const rawBytes = buildArpFrameBytes(frame);
 
   const fields: AnnotatedField[] = [
     { name: 'Dst MAC', layer: 'L2', byteOffset: 0, byteLength: 6, displayValue: frame.dstMac },

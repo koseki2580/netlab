@@ -1,25 +1,28 @@
 /**
- * Protocol-pack registry (REQ-104). Identity lookups are synchronous and never
- * load a pack; `load` resolves a lazily registered pack once.
+ * Protocol-pack registry (REQ-104, REQ-302). Wire tiers and identity lookups are
+ * synchronous and never load anything; `load` resolves a learn tier once. A pack
+ * is checked by `defineProtocol`, and a lazy one against its registration on load.
  */
-import { validateIdentity } from './define';
 import { descriptorError } from './errors';
-import type { Loader, ProtocolIdentity, ProtocolPack, Transport } from './types';
+import type { Loader, ProtocolIdentity, ProtocolPack, ProtocolWire, Transport } from './types';
 
 export interface ProtocolPackStub extends ProtocolIdentity {
   readonly load: Loader<ProtocolPack>;
 }
 
 export interface ProtocolPackRegistry {
-  register(pack: ProtocolPack): void;
+  /** A wire tier, or a whole pack. A wire tier can be given its `load`. */
+  register(pack: ProtocolWire | ProtocolPack, load?: Loader<ProtocolPack>): void;
   registerLazy(stub: ProtocolPackStub): void;
   unregister(id: string): void;
   identity(id: string): ProtocolIdentity | undefined;
+  /** The wire tier, when one was registered. */
+  wire(id: string): ProtocolWire | undefined;
   byIpProtocol(protocol: number): ProtocolIdentity | undefined;
   byEtherType(etherType: number): ProtocolIdentity | undefined;
   byPort(transport: Transport, port: number): ProtocolIdentity | undefined;
   list(): readonly ProtocolIdentity[];
-  /** The pack, once registered eagerly or loaded. */
+  /** The whole pack, once registered whole or loaded. */
   get(id: string): ProtocolPack | undefined;
   load(id: string): Promise<ProtocolPack>;
 }
@@ -28,6 +31,7 @@ interface Entry {
   readonly source: object;
   readonly identity: ProtocolIdentity;
   readonly claims: readonly string[];
+  readonly wire?: ProtocolWire;
   readonly loader?: Loader<ProtocolPack>;
   pack?: ProtocolPack;
   pending?: Promise<ProtocolPack> | undefined;
@@ -40,16 +44,11 @@ const identityOf = ({ id, name, layer, numbers }: ProtocolIdentity): ProtocolIde
   ...(numbers ? { numbers } : {}),
 });
 
-function claimsOf(identity: ProtocolIdentity): [claim: string, path: string][] {
-  const n = identity.numbers ?? {};
+function claimsOf({ numbers: n = {} }: ProtocolIdentity): string[] {
   return [
-    ...(n.ipProtocol === undefined
-      ? []
-      : [[`ip:${n.ipProtocol}`, 'numbers.ipProtocol'] as [string, string]]),
-    ...(n.etherType === undefined
-      ? []
-      : [[`ether:${n.etherType}`, 'numbers.etherType'] as [string, string]]),
-    ...(n.ports ?? []).map((p): [string, string] => [`${p.transport}:${p.port}`, 'numbers.ports']),
+    ...(n.ipProtocol === undefined ? [] : [`ipProtocol:${n.ipProtocol}`]),
+    ...(n.etherType === undefined ? [] : [`etherType:${n.etherType}`]),
+    ...(n.ports ?? []).map((p) => `${p.transport}:${p.port}`),
   ];
 }
 
@@ -63,71 +62,57 @@ export function createProtocolPackRegistry(): ProtocolPackRegistry {
   const add = (source: object, identity: ProtocolIdentity, extra: Partial<Entry>) => {
     const existing = entries.get(identity.id);
     if (existing?.source === source) return;
-    validateIdentity(identity);
-    if (existing)
-      throw descriptorError(
-        'pack/duplicate-id',
-        `A pack "${identity.id}" is already registered`,
-        'id',
-      );
+    if (existing) throw descriptorError('pack/duplicate-id', identity.id, 'id');
     const mine = claimsOf(identity);
-    for (const [claim, path] of mine) {
-      const owner = claims.get(claim);
-      if (owner !== undefined) {
+    for (const claim of mine) {
+      if (claims.has(claim)) {
+        const kind = claim.split(':')[0]!;
         throw descriptorError(
           'pack/duplicate-number',
-          `${claim} is already claimed by "${owner}"`,
-          path,
+          `${claim} is ${claims.get(claim)}'s`,
+          kind.startsWith('ip') || kind.startsWith('ether') ? `numbers.${kind}` : 'numbers.ports',
         );
       }
     }
-    for (const [claim] of mine) claims.set(claim, identity.id);
-    entries.set(identity.id, {
-      source,
-      identity: identityOf(identity),
-      claims: mine.map(([c]) => c),
-      ...extra,
-    });
+    for (const claim of mine) claims.set(claim, identity.id);
+    entries.set(identity.id, { source, identity: identityOf(identity), claims: mine, ...extra });
   };
 
-  const byClaim = (claim: string) => {
-    const id = claims.get(claim);
-    return id === undefined ? undefined : entries.get(id)?.identity;
-  };
+  const byClaim = (claim: string) => entries.get(claims.get(claim) ?? '')?.identity;
+
+  const register: ProtocolPackRegistry['register'] = (pack, load) =>
+    add(pack, pack, {
+      wire: pack,
+      ...('specs' in pack ? { pack } : {}),
+      ...(load ? { loader: load } : {}),
+    });
 
   return {
-    register: (pack) => add(pack, pack, { pack }),
+    register,
     registerLazy: (stub) => add(stub, stub, { loader: stub.load }),
     unregister(id) {
-      const entry = entries.get(id);
-      if (!entry) return;
-      for (const claim of entry.claims) claims.delete(claim);
+      for (const claim of entries.get(id)?.claims ?? []) claims.delete(claim);
       entries.delete(id);
     },
     identity: (id) => entries.get(id)?.identity,
-    byIpProtocol: (protocol) => byClaim(`ip:${protocol}`),
-    byEtherType: (etherType) => byClaim(`ether:${etherType}`),
+    wire: (id) => entries.get(id)?.wire,
+    byIpProtocol: (protocol) => byClaim(`ipProtocol:${protocol}`),
+    byEtherType: (etherType) => byClaim(`etherType:${etherType}`),
     byPort: (transport, port) => byClaim(`${transport}:${port}`),
     list: () => [...entries.values()].map((e) => e.identity),
     get: (id) => entries.get(id)?.pack,
     load(id) {
       const entry = entries.get(id);
-      if (!entry) {
-        return Promise.reject(
-          descriptorError('pack/unknown-id', `No pack "${id}" is registered`, 'id'),
-        );
+      if (!entry?.loader && !entry?.pack) {
+        return Promise.reject(descriptorError('pack/unknown-id', id, 'id'));
       }
       if (entry.pack) return Promise.resolve(entry.pack);
       entry.pending ??= entry.loader!().then(
         (loaded) => {
+          entry.pending = undefined;
           const pack = 'default' in loaded ? loaded.default : loaded;
           if (!sameIdentity(pack, entry.identity)) {
-            entry.pending = undefined;
-            throw descriptorError(
-              'pack/identity-mismatch',
-              `The loaded pack "${pack.id}" differs from its registration "${id}"`,
-              'id',
-            );
+            throw descriptorError('pack/identity-mismatch', pack.id, 'id');
           }
           entry.pack = pack;
           return pack;

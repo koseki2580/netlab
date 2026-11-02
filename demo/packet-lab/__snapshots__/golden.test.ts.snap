@@ -765,6 +765,51 @@ exports[`packet exercise templates, generator version 2 > p4-fragment: five diff
 ]
 `;
 
+exports[`packet exercise templates, generator version 2 > p4-send-window: five different tasks as the learner reads them 1`] = `
+[
+  {
+    "brief": "TCP の送信側には 2 つの上限があります。受信側は、あとどれだけ入るかをセグメントごとに知らせます。これがウィンドウ（rwnd）です。送信側は、ネットワークが運べる量の見積もり（cwnd）を持っています。送ったけれどまだ確認応答のないバイトが「送信中」で、どちらの上限にも数えます。rwnd が 0 のあいだは、cwnd がどれほど大きくても新しいデータは送れません。",
+    "fingerprint": "p4-send-window|rwnd|0|closed|2",
+    "id": "p4-send-window~0",
+    "rule": "ルール：送信中のバイトは、cwnd と rwnd の小さいほうを超えない。",
+    "task": "3 つの数を読んで、送信側がいまあと何バイト送れるかを選んでください。",
+    "title": "写真用のサーバーへ送る",
+  },
+  {
+    "brief": "TCP の送信側には 2 つの上限があります。受信側は、あとどれだけ入るかをセグメントごとに知らせます。これがウィンドウ（rwnd）です。送信側は、ネットワークが運べる量の見積もり（cwnd）を持っています。送ったけれどまだ確認応答のないバイトが「送信中」で、どちらの上限にも数えます。rwnd が 0 のあいだは、cwnd がどれほど大きくても新しいデータは送れません。",
+    "fingerprint": "p4-send-window|cwnd|2|open|1",
+    "id": "p4-send-window~1",
+    "rule": "ルール：送信中のバイトは、cwnd と rwnd の小さいほうを超えない。",
+    "task": "3 つの数を読んで、送信側がいまあと何バイト送れるかを選んでください。",
+    "title": "カルテサーバーへ送る",
+  },
+  {
+    "brief": "TCP の送信側には 2 つの上限があります。受信側は、あとどれだけ入るかをセグメントごとに知らせます。これがウィンドウ（rwnd）です。送信側は、ネットワークが運べる量の見積もり（cwnd）を持っています。送ったけれどまだ確認応答のないバイトが「送信中」で、どちらの上限にも数えます。rwnd が 0 のあいだは、cwnd がどれほど大きくても新しいデータは送れません。",
+    "fingerprint": "p4-send-window|rwnd|3|open|2",
+    "id": "p4-send-window~2",
+    "rule": "ルール：送信中のバイトは、cwnd と rwnd の小さいほうを超えない。",
+    "task": "3 つの数を読んで、送信側がいまあと何バイト送れるかを選んでください。",
+    "title": "カルテサーバーへ送る",
+  },
+  {
+    "brief": "TCP の送信側には 2 つの上限があります。受信側は、あとどれだけ入るかをセグメントごとに知らせます。これがウィンドウ（rwnd）です。送信側は、ネットワークが運べる量の見積もり（cwnd）を持っています。送ったけれどまだ確認応答のないバイトが「送信中」で、どちらの上限にも数えます。rwnd が 0 のあいだは、cwnd がどれほど大きくても新しいデータは送れません。",
+    "fingerprint": "p4-send-window|cwnd|1|open|3",
+    "id": "p4-send-window~3",
+    "rule": "ルール：送信中のバイトは、cwnd と rwnd の小さいほうを超えない。",
+    "task": "3 つの数を読んで、送信側がいまあと何バイト送れるかを選んでください。",
+    "title": "教材サーバーへ送る",
+  },
+  {
+    "brief": "TCP の送信側には 2 つの上限があります。受信側は、あとどれだけ入るかをセグメントごとに知らせます。これがウィンドウ（rwnd）です。送信側は、ネットワークが運べる量の見積もり（cwnd）を持っています。送ったけれどまだ確認応答のないバイトが「送信中」で、どちらの上限にも数えます。rwnd が 0 のあいだは、cwnd がどれほど大きくても新しいデータは送れません。",
+    "fingerprint": "p4-send-window|rwnd|3|open|1",
+    "id": "p4-send-window~4",
+    "rule": "ルール：送信中のバイトは、cwnd と rwnd の小さいほうを超えない。",
+    "task": "3 つの数を読んで、送信側がいまあと何バイト送れるかを選んでください。",
+    "title": "ファイルサーバーへ送る",
+  },
+]
+`;
+
 exports[`packet exercise templates, generator version 2 > p4-two-faults: five different tasks as the learner reads them 1`] = `
 [
   {

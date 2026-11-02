@@ -37,6 +37,8 @@ type ChoiceExercise = Pick<Exercise, 'id' | 'level' | 'allowed' | 'start'>;
 
 const PREFIX_LENGTHS = [8, 16, 24, 25, 26, 27, 28, 30];
 const STP_PRIORITIES = Array.from({ length: 16 }, (_, index) => index * 4096);
+/** The priorities a press can try: both ends, and enough between them to win or lose. */
+const OSPF_PRIORITIES = [0, 1, 10, 50, 100, 200, 255];
 
 export { PREFIX_LENGTHS, STP_PRIORITIES };
 
@@ -127,6 +129,16 @@ export function pressCards(exercise: ChoiceExercise, order: AttemptOrder): Press
             ref,
             chips: [],
             presses: STP_PRIORITIES.filter((priority) => priority !== value.priority).map(
+              (priority) => ({ change: { ...value, priority }, sound: null }),
+            ),
+          },
+        ];
+      case 'ospf-priority':
+        return [
+          {
+            ref,
+            chips: [],
+            presses: OSPF_PRIORITIES.filter((priority) => priority !== value.priority).map(
               (priority) => ({ change: { ...value, priority }, sound: null }),
             ),
           },

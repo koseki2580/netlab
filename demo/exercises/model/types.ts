@@ -58,7 +58,9 @@ export type SettingRef =
     }
   | { readonly kind: 'iface-nat'; readonly nodeId: string; readonly ifaceId: string }
   /** `neighbor` is the address of the BGP session on `nodeId`: the LOCAL_PREF it gives what it learns there. */
-  | { readonly kind: 'bgp-local-pref'; readonly nodeId: string; readonly neighbor: string };
+  | { readonly kind: 'bgp-local-pref'; readonly nodeId: string; readonly neighbor: string }
+  | { readonly kind: 'bgp-med'; readonly nodeId: string; readonly neighbor: string }
+  | { readonly kind: 'ospf-priority'; readonly nodeId: string; readonly ifaceId: string };
 
 export type SettingKind = SettingRef['kind'];
 
@@ -126,6 +128,20 @@ export type SettingChange =
       readonly neighbor: string;
       /** 100 is BGP's default: a session with no LOCAL_PREF of its own reads as 100. */
       readonly localPref: number;
+    }
+  | {
+      readonly kind: 'bgp-med';
+      readonly nodeId: string;
+      readonly neighbor: string;
+      /** The MED this router records for routes from that session; 0 if none is set. */
+      readonly med: number;
+    }
+  | {
+      readonly kind: 'ospf-priority';
+      readonly nodeId: string;
+      readonly ifaceId: string;
+      /** 1 is OSPF's default; 0 never stands for DR. */
+      readonly priority: number;
     };
 
 // --- Probes and checks -------------------------------------------------------
@@ -191,6 +207,13 @@ export type ExerciseCheck =
       readonly protocol?: 'static' | 'ospf' | 'rip' | 'connected';
     }
   | { readonly id: string; readonly kind: 'stp-root'; readonly nodeId: string }
+  /** On the LAN `network`, with every router started together. */
+  | {
+      readonly id: string;
+      readonly kind: 'ospf-dr';
+      readonly nodeId: string;
+      readonly network: string;
+    }
   | {
       readonly id: string;
       readonly kind: 'stp-port-role';
@@ -379,6 +402,7 @@ export type CheckResultCode =
   | 'wrong-path'
   | 'route-missing'
   | 'wrong-root'
+  | 'wrong-dr'
   | 'wrong-role'
   | 'no-acl-drop'
   | 'no-translation'

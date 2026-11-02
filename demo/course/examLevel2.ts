@@ -1,5 +1,6 @@
 import type { ExamLevel } from './examQuestions';
 import { lessonPath } from '../lessonManifest';
+import { wave1Question } from './examWave1';
 
 /**
  * Level 2 of the final test: how networks behave once the parts are known —
@@ -31,24 +32,6 @@ export const EXAM_LEVEL_2: ExamLevel = {
       teaches: {
         en: 'Redundant links between switches',
         ja: 'スイッチどうしの冗長なリンク',
-      },
-    },
-    {
-      id: 'step',
-      path: lessonPath('/simulation/step'),
-      title: { en: 'Step-by-Step', ja: '1ホップずつ進める' },
-      teaches: {
-        en: 'How a router picks a row of its route table',
-        ja: 'ルータが経路表の行を選ぶしくみ',
-      },
-    },
-    {
-      id: 'trace',
-      path: lessonPath('/simulation/trace-inspector'),
-      title: { en: 'Trace Inspector', ja: '通信の詳細を見る' },
-      teaches: {
-        en: 'What changes in a packet from hop to hop',
-        ja: 'ホップごとにパケットの何が変わるか',
       },
     },
     {
@@ -169,68 +152,8 @@ export const EXAM_LEVEL_2: ExamLevel = {
       },
       taughtBy: 'stp',
     },
-    {
-      id: 'longest-prefix',
-      prompt: {
-        en: 'R-1’s route table has both 203.0.113.0/24 and 0.0.0.0/0. A packet for 203.0.113.10 arrives. Which row does R-1 use?',
-        ja: 'R-1 の経路表には 203.0.113.0/24 と 0.0.0.0/0 の両方があります。203.0.113.10 あてのパケットが届きました。R-1 はどの行を使いますか？',
-      },
-      options: [
-        {
-          en: '0.0.0.0/0 — the default route matches everything, so it is used first',
-          ja: '0.0.0.0/0。デフォルト経路はすべてに一致するので、先に使われる',
-        },
-        {
-          en: '203.0.113.0/24 — both match, and the longer (more specific) prefix wins',
-          ja: '203.0.113.0/24。どちらも一致し、より長い（詳しい）プレフィックスが選ばれる',
-        },
-        {
-          en: 'Neither — a router needs a row for exactly 203.0.113.10',
-          ja: 'どちらでもない。ルータには 203.0.113.10 ぴったりの行が必要',
-        },
-        {
-          en: 'Both — the packet is copied out along each matching row',
-          ja: '両方。一致した行ごとにパケットがコピーされて送られる',
-        },
-      ],
-      answer: 1,
-      explanation: {
-        en: 'A router compares all rows and, of those that match, uses the one with the longest prefix — /24 beats /0. In the lesson, R-1’s table marks 0.0.0.0/0 as a match but 203.0.113.0/24 as the one adopted.',
-        ja: 'ルータはすべての行と比べ、一致した行のうちプレフィックスがいちばん長いものを使います。/24 は /0 より長いので勝ちます。レッスンの R-1 の表では 0.0.0.0/0 は「一致」、203.0.113.0/24 が「採用」でした。',
-      },
-      taughtBy: 'step',
-    },
-    {
-      id: 'ttl',
-      prompt: {
-        en: 'The client sends a packet with TTL 64. It passes three routers (R-1, R-2, R-3) and reaches the server. What TTL does the server see?',
-        ja: 'クライアントが TTL 64 のパケットを送ります。3 台のルータ（R-1、R-2、R-3）を通ってサーバに届きました。サーバが受け取ったときの TTL はいくつですか？',
-      },
-      options: [
-        {
-          en: '64 — only the sender sets the TTL; nothing on the way changes it',
-          ja: '64。TTL を決めるのは送り手だけで、途中では変わらない',
-        },
-        {
-          en: '61 — each router takes one off as it forwards',
-          ja: '61。ルータが転送するたびに 1 ずつ減らす',
-        },
-        {
-          en: '60 — every device after the client takes one off, the server included',
-          ja: '60。クライアントの次からは、サーバも含めて機器ごとに 1 ずつ減る',
-        },
-        {
-          en: '0 — TTL counts down to zero when the packet arrives',
-          ja: '0。パケットが届いた時点で TTL は 0 になる',
-        },
-      ],
-      answer: 1,
-      explanation: {
-        en: 'Each router subtracts one when it forwards, so three routers make 64 → 61; a packet whose TTL reaches zero is dropped, which is what stops one circling forever in a loop. In the lesson, the CREATE hop shows TTL 64 and the server’s DELIVER hop shows TTL 61.',
-        ja: 'ルータは転送するたびに TTL を 1 減らすので、3 台で 64 → 61 になります。0 になったパケットは捨てられ、ループで回り続けるのを止めます。レッスンでは、最初の CREATE のホップが TTL 64、サーバの DELIVER のホップが TTL 61 でした。',
-      },
-      taughtBy: 'trace',
-    },
+    wave1Question('bgp-local-pref-exit'),
+    wave1Question('stateful-firewall-reply'),
     {
       id: 'rip-vs-ospf',
       prompt: {

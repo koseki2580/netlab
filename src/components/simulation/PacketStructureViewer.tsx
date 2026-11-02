@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { useI18n } from '../../i18n/useI18n';
+import { loadLearnTier } from '../../protocols/packLearn';
 import { useSimulation } from '../../simulation/SimulationContext';
 import type { AnnotatedField, LayerTag, SerializedPacket } from '../../utils/packetSerializer';
 import { serializeArpFrame, serializePacket } from '../../utils/packetSerializer';
@@ -185,7 +187,7 @@ function FieldTable({
   fields: AnnotatedField[];
   changedFields?: string[];
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   if (fields.length === 0) return null;
   const changedFieldSet = new Set(changedFields ?? []);
   return (
@@ -254,6 +256,9 @@ function FieldTable({
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
               }}
+              {...(field.meaning
+                ? { title: locale === 'ja' ? field.meaning.ja : field.meaning.en }
+                : {})}
             >
               {field.name}
             </span>
@@ -280,10 +285,35 @@ function FieldTable({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
+/** Loads the learn tier of each protocol on show; a failed load changes nothing (REQ-303). */
+function useLearnTiers(packIds: string): void {
+  const [, rerender] = useState(0);
+  useEffect(() => {
+    let current = true;
+    const ids = packIds ? packIds.split(' ') : [];
+    void Promise.allSettled(ids.map(loadLearnTier)).then((results) => {
+      if (current && results.some((result) => result.status === 'fulfilled')) {
+        rerender((count) => count + 1);
+      }
+    });
+    return () => {
+      current = false;
+    };
+  }, [packIds]);
+}
+
 export function PacketStructureViewer() {
   const { t } = useI18n();
   const { state } = useSimulation();
   const { selectedHop, selectedPacket } = state;
+  const serialized = !selectedPacket
+    ? null
+    : selectedHop?.arpFrame
+      ? serializeArpFrame(selectedHop.arpFrame)
+      : serializePacket(selectedPacket.frame);
+  useLearnTiers(
+    [...new Set(serialized?.fields.flatMap((field) => field.packId ?? []) ?? [])].join(' '),
+  );
 
   return (
     <div
@@ -313,13 +343,10 @@ export function PacketStructureViewer() {
         {t('simulation.packet.heading')}
       </div>
 
-      {!selectedPacket ? (
+      {!serialized ? (
         <EmptyState />
       ) : (
         (() => {
-          const serialized = selectedHop?.arpFrame
-            ? serializeArpFrame(selectedHop.arpFrame)
-            : serializePacket(selectedPacket.frame);
           const changedFields = selectedHop?.changedFields;
           return (
             <>

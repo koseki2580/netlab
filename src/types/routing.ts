@@ -24,7 +24,11 @@ export interface RouteEntry {
   protocol: ProtocolName;
   adminDistance: number;
   nodeId: string; // which router owns this route
+  /** Set by OSPF's area-by-area calculation: what kind of path the route is. */
+  ospfPathType?: OspfPathType;
 }
+
+export type OspfPathType = 'intra-area' | 'inter-area' | 'external-1' | 'external-2';
 
 export interface EqualCostNextHop {
   nextHop: string;
@@ -84,6 +88,8 @@ export interface RouterInterface {
   macAddress: string;
   mtu?: number;
   connectedEdgeId?: string;
+  /** OSPF priority for the DR election on this interface (default 1; 0 never stands). */
+  ospfPriority?: number;
   nat?: 'inside' | 'outside';
   inboundAcl?: AclRule[];
   outboundAcl?: AclRule[];
@@ -98,6 +104,15 @@ export interface RouterInterface {
 export interface OspfConfig {
   routerId: string;
   areas: OspfAreaConfig[];
+  /** Networks from outside OSPF this router brings in: it is an ASBR. */
+  externals?: OspfExternalConfig[];
+}
+
+export interface OspfExternalConfig {
+  network: string;
+  metric: number;
+  /** E2 (the default) keeps the metric; E1 adds the cost of the way to the ASBR. */
+  metricType?: 1 | 2;
 }
 
 export interface OspfV3Config {
@@ -116,6 +131,8 @@ export interface OspfAreaConfig {
   areaId: string;
   networks: string[];
   cost?: number;
+  /** Ranges an ABR summarises this area's networks into. */
+  ranges?: string[];
 }
 
 export interface RipConfig {
@@ -139,6 +156,8 @@ export interface BgpNeighborConfig {
   families?: BgpAddressFamily[];
   localPref?: number;
   med?: number;
+  /** Import policy: the ORIGIN given to routes learned from this neighbour. */
+  origin?: BgpPathAttributes['origin'];
 }
 
 export interface BgpPathAttributes {

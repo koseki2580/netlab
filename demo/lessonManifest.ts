@@ -232,6 +232,18 @@ export const LESSONS = [
     sandboxReady: true,
     defaultSandboxTab: 'node',
   },
+  {
+    path: '/routing/ospf-areas',
+    category: 'routing',
+    module: './routing/OspfAreasDemo',
+    title: { en: 'OSPF Areas and DR/BDR', ja: 'OSPF のエリアと DR/BDR' },
+    desc: {
+      en: 'Read each router’s link-state database by area, see ABRs summarise, and watch the DR election refuse to be pushed aside.',
+      ja: 'ルータごとのリンクステートデータベースをエリア別に読み、ABR の集約を確かめ、DR が後から来たルータに譲らない選出を試します。',
+    },
+    difficulty: 'advanced',
+    tags: ['OSPF'],
+  },
   // ── Network Areas ──
   {
     path: '/networking/arp',
@@ -646,6 +658,18 @@ export const LESSONS = [
     scenarioId: 'tcp-handshake',
     sandboxReady: true,
     defaultSandboxTab: 'packet',
+  },
+  {
+    path: '/simulation/tcp-flow-control',
+    category: 'simulation',
+    module: './simulation/TcpFlowControlDemo',
+    title: { en: 'TCP Flow Control', ja: 'TCP のフロー制御' },
+    desc: {
+      en: 'Slow the receiving application and watch the window close, the sender stop, and a window update restart it. See what the handshake options settle.',
+      ja: '受信側のアプリを遅くして、ウィンドウが閉じ、送信側が止まり、ウィンドウ更新でまた動き出す様子を見ます。ハンドシェイクのオプションで決まることも確かめます。',
+    },
+    difficulty: 'intermediate',
+    tags: ['L4', 'TCP'],
   },
   {
     path: '/simulation/tcp-congestion',

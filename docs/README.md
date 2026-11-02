@@ -27,6 +27,7 @@ Developer-facing tooling that does not ship in the published library bundle.
 - [Running E2E](dev/e2e-running.md) - Prebuilt (default), dev-server and smoke modes, timeouts, and the `E2E_PORT` setting
 - [E2E Locator Policy](dev/e2e-locators.md) - testid-only locator convention for Playwright specs, POM layout, and the `no-raw-locators-in-e2e` lint rule
 - [TC Traceability Check](dev/tc-check.md) - `npm run tc:check`: duplicate, missing, mis-levelled and malformed `TC-*` rows between the spec and the tests
+- [Size Gate](dev/size-gate.md) - `npm run size`: eager closures, per-pack limits, and the guard that keeps a pack's learn tier out of them
 
 ### 🧠 Core Architecture & APIs (`core/`)
 
@@ -146,6 +147,7 @@ Specifications for protocol implementations based on the OSI model and network d
 - [Spanning Tree (802.1D)](networking/stp.md) - Root election, port roles, and blocked-port enforcement in switch forwarding
 - [MTU & IPv4 Fragmentation](networking/mtu-fragmentation.md) - Per-link/per-interface MTU, DF-bit handling, ICMP Fragmentation Needed, and destination reassembly
 - [Path MTU Discovery](networking/pmtud.md) - TCP `DF=1` defaults, per-host PMTU cache, and adaptive chunk sizing from ICMP Fragmentation Needed
+- [TCP Flow Control and Options](networking/tcp-flow-control.md) - Receive window, zero-window probes, MSS, window scale and SACK-permitted in the handshake, and `TcpOrchestrator.transfer`
 - [TCP Congestion Control](networking/tcp-congestion.md) - Educational slow start, congestion avoidance, fast retransmit/recovery, RTO, and deterministic loss hooks
 - [Per-Link QoS](networking/link-qos.md) - Deterministic bandwidth, propagation delay, loss, and drop-tail queue annotations on topology links
 - [DSCP Marking And Shaping](networking/dscp.md) - DSCP code points, DRR class queues, sandbox validation, and shaper trace annotations

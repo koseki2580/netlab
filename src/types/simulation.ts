@@ -110,6 +110,17 @@ export interface HopFlood {
   copies: FloodCopy[];
 }
 
+/** Both headers at a tunnel's end (REQ-304). */
+export interface HopTunnel {
+  protocol: string;
+  stage: 'encap' | 'decap';
+  outerSrc: string;
+  outerDst: string;
+  innerSrc: string;
+  innerDst: string;
+  key?: number;
+}
+
 export interface PacketHop {
   traceEventId?: string;
   step: number;
@@ -145,7 +156,10 @@ export interface PacketHop {
     | `netflow:${string}`
     | `sflow:${string}`
     | `tls:${string}`
+    | `tunnel:${string}`
     | `link:${string}`;
+  /** Set on the hop where a router wrapped or unwrapped a tunnelled packet. */
+  tunnel?: HopTunnel;
   ecmpTrace?: EcmpTrace;
   shaperTrace?: ShaperTrace;
   observabilityTrace?: ObservabilityTrace;

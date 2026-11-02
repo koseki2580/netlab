@@ -4,7 +4,7 @@ import { SwitchForwarder } from '../layers/l2-datalink/SwitchForwarder';
 import { RouterForwarder } from '../layers/l3-network/RouterForwarder';
 import { layerRegistry } from '../registry/LayerRegistry';
 import { SimulationEngine } from './SimulationEngine';
-import { makePacket, makeRouteEntry } from './__fixtures__/helpers';
+import { dataHops, makePacket, makeRouteEntry } from './__fixtures__/helpers';
 import type { NetworkTopology } from '../types/topology';
 
 beforeAll(() => {
@@ -153,7 +153,7 @@ describe('SimulationEngine — VLAN routing', () => {
     const trace = await engine.precompute(packet);
 
     expect(trace.status).toBe('delivered');
-    const routerHop = trace.hops.find((hop) => hop.nodeId === 'router-1');
+    const routerHop = dataHops(trace).find((hop) => hop.nodeId === 'router-1');
     expect(routerHop?.event).toBe('forward');
     expect(routerHop?.ingressInterfaceName).toBe('eth0.10');
     expect(routerHop?.egressInterfaceName).toBe('eth0.20');

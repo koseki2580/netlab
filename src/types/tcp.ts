@@ -23,6 +23,19 @@ export type TcpEvent =
   | 'TIMEOUT'
   | 'RST_RECEIVED';
 
+/** What a handshake settled. Sizes are per direction: there is no single agreed MSS. */
+export interface TcpNegotiatedOptions {
+  /** Most data the client puts in a segment, and the same for the server. */
+  clientSendMss: number;
+  serverSendMss: number;
+  /** Both ends offered window scale. */
+  windowScaling: boolean;
+  /** The shift each end applies to the windows it advertises; 0 without scaling. */
+  clientWindowShift: number;
+  serverWindowShift: number;
+  sackPermitted: boolean;
+}
+
 export interface TcpConnection {
   id: string;
   srcNodeId: string;
@@ -37,6 +50,10 @@ export interface TcpConnection {
   remoteSeq: number;
   createdAt: number;
   congestion?: TcpCongestionState;
+  negotiated?: TcpNegotiatedOptions;
+  /** Each end's receive buffer, in bytes. */
+  clientReceiveBuffer?: number;
+  serverReceiveBuffer?: number;
 }
 
 export interface TcpTransitionResult {

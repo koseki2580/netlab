@@ -123,54 +123,21 @@ describe('DNS hex view in RFC 1035 wire format', () => {
     }
   });
 
-  it('TC-1025: lists header, question and answer rows where and as the DNS pack does', () => {
+  it('TC-1025: lists every field of the message, as the DNS pack derives it', () => {
     const rows = serializePacket(inFrame(RESPONSE)).fields.filter((f) => f.layer === 'L7');
-    expect(rows.map((r) => r.name)).toEqual([
-      'ID',
-      'Flags',
-      'QDCOUNT',
-      'ANCOUNT',
-      'NSCOUNT',
-      'ARCOUNT',
-      'QNAME',
-      'QTYPE',
-      'QCLASS',
-      'NAME',
-      'TYPE',
-      'CLASS',
-      'TTL',
-      'RDLENGTH',
-      'RDATA',
-    ]);
     const pack = deriveAnnotatedFields(dnsPack, dnsMessageToValues(RESPONSE), {
       baseOffset: DNS_AT,
     });
-    for (const row of rows.filter((r) => r.name !== 'Flags')) {
-      const same = pack.find((p) => p.name === row.name && p.byteOffset === row.byteOffset);
-      expect(same, row.name).toBeDefined();
-      expect([row.byteLength, row.displayValue]).toEqual([same!.byteLength, same!.displayValue]);
-    }
-    const flags = rows.find((r) => r.name === 'Flags')!;
-    const bits = pack.filter(
-      (p) => p.bitOffset >= (DNS_AT + 2) * 8 && p.bitOffset < (DNS_AT + 4) * 8,
+    expect(rows.map((r) => [r.name, r.byteOffset, r.byteLength, r.displayValue])).toEqual(
+      pack.map((r) => [r.name, r.byteOffset, r.byteLength, r.displayValue]),
     );
-    expect(bits.map((p) => p.path)).toEqual([
-      'qr',
-      'opcode',
-      'aa',
-      'tc',
-      'rd',
-      'ra',
-      'z',
-      'ad',
-      'cd',
-      'rcode',
-    ]);
-    expect(flags).toMatchObject({
-      byteOffset: DNS_AT + 2,
-      byteLength: 2,
-      displayValue: '0x8500 (RESPONSE, AA, RD, NOERROR)',
-    });
+    const value = (name: string) => rows.find((r) => r.name === name)?.displayValue;
+    expect(value('ID')).toBe('0x2A01');
+    expect(value('QR')).toBe('1 (RESPONSE)');
+    expect(value('AA')).toBe('1');
+    expect(value('RA')).toBe('0');
+    expect(value('RCODE')).toBe('0 (NOERROR)');
+    expect(value('RDATA')).toBe('203.0.113.10');
   });
 });
 

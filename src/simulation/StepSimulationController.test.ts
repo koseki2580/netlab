@@ -203,10 +203,7 @@ describe('StepSimulationController.nextStep', () => {
     const ctrl = makeController(singleRouterTopology());
     await ctrl.load(makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
 
-    // singleRouterTopology has 3 hops (0, 1, 2)
-    ctrl.nextStep();
-    ctrl.nextStep();
-    ctrl.nextStep();
+    while (ctrl.getState().canStep) ctrl.nextStep();
 
     const state = ctrl.getState();
     expect(state.status).toBe('done');
@@ -217,9 +214,7 @@ describe('StepSimulationController.nextStep', () => {
     const ctrl = makeController(singleRouterTopology());
     await ctrl.load(makePacket('p1', 'client-1', 'server-1', '10.0.0.10', '203.0.113.10'));
 
-    ctrl.nextStep();
-    ctrl.nextStep();
-    ctrl.nextStep();
+    while (ctrl.getState().canStep) ctrl.nextStep();
     const hop = ctrl.nextStep(); // extra — should not advance
     expect(hop).toBeNull();
   });

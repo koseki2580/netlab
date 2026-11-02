@@ -92,7 +92,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "coverage": "vitest run --coverage",
-    "size": "npm run build && size-limit",
+    "size": "npm run build && size-limit && node scripts/size-gate-check.mjs",
     "size:delta": "node scripts/size-limit-delta.mjs",
     "size:comment": "node scripts/post-pr-comment.mjs",
     "i18n:check": "node scripts/i18n-check.mjs",

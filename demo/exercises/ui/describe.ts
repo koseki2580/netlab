@@ -151,7 +151,10 @@ export function settingTestId(ref: SettingRef): string {
       case 'iface-acl':
         return `${ref.ifaceId}-${ref.direction}`;
       case 'bgp-local-pref':
+      case 'bgp-med':
         return ref.neighbor.replace(/[^0-9a-z]+/gi, '-');
+      case 'ospf-priority':
+        return ref.ifaceId;
       default:
         return null;
     }
@@ -211,7 +214,13 @@ export function settingTitle(ref: SettingRef, topology: TopologySnapshot): Setti
           ja: `${ref.network} のケーブルのコスト（OSPF）`,
         },
       };
-    case 'bgp-local-pref': {
+    case 'ospf-priority':
+      return {
+        device,
+        name: { en: 'OSPF priority on the LAN', ja: 'LAN の OSPF プライオリティ' },
+      };
+    case 'bgp-local-pref':
+    case 'bgp-med': {
       // The neighbour by the device whose address it is, as the diagram names it.
       const peerId = topology.nodes.find((node) =>
         node.data.interfaces?.some((side) => side.ipAddress === ref.neighbor),
@@ -220,8 +229,8 @@ export function settingTitle(ref: SettingRef, topology: TopologySnapshot): Setti
       return {
         device,
         name: {
-          en: `LOCAL_PREF for routes from ${peer.en} (BGP)`,
-          ja: `${peer.ja}から受け取る経路の LOCAL_PREF（BGP）`,
+          en: `${ref.kind === 'bgp-med' ? 'MED' : 'LOCAL_PREF'} for routes from ${peer.en} (BGP)`,
+          ja: `${peer.ja}から受け取る経路の ${ref.kind === 'bgp-med' ? 'MED' : 'LOCAL_PREF'}（BGP）`,
         },
       };
     }
@@ -344,6 +353,13 @@ export function checkLabel(check: ExerciseCheck, topology: TopologySnapshot): Lo
         ja: `${device} がスパニングツリーの中心（ルートブリッジ）になる`,
       };
     }
+    case 'ospf-dr': {
+      const device = labelOf(topology, check.nodeId);
+      return {
+        en: `${device} is the DR on the LAN`,
+        ja: `${device} が LAN の DR になる`,
+      };
+    }
     case 'stp-port-role': {
       const device = labelOf(topology, check.nodeId);
       const port = portName(topology, check.nodeId, check.portId);
@@ -440,6 +456,10 @@ function valueText(change: SettingChange): Localised {
           : { en: 'outside', ja: '外側' };
     case 'bgp-local-pref':
       return both(String(change.localPref));
+    case 'bgp-med':
+      return both(String(change.med));
+    case 'ospf-priority':
+      return both(String(change.priority));
   }
 }
 

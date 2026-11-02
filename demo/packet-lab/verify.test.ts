@@ -14,6 +14,7 @@
  *   (`demo/exercises/verify/harness.ts`).
  *
  * TC ids are not allocated yet: the specification is outside this folder.
+ * TC-1075: p4-send-window runs through every check here.
  */
 
 import { describe, expect, it } from 'vitest';

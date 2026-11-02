@@ -11,6 +11,15 @@ import {
   generateISN,
 } from './tcpPacketBuilder';
 import { TcpCongestionControl } from './TcpCongestionControl';
+import {
+  advertisedWindowField,
+  negotiateTcpOptions,
+  planTcpTransfer,
+  synAckOptions,
+  synOptions,
+  type TcpEndpoints,
+  type TcpTransferPlan,
+} from './TcpFlowControl';
 import { addressViewOf, primaryNodeIp, type AddressView } from '../../simulation/addressView';
 
 const DEFAULT_TCP_MSS_BYTES = 1460;
@@ -43,6 +52,27 @@ export interface TcpTeardownResult {
   failureReason?: string;
 }
 
+/** What to send over an open connection, from the client to the server. */
+export interface TcpTransferRequest {
+  readonly bytes: number;
+  /** How many bytes the server's application takes in a round. Default all it has. */
+  readonly readBytes?: (round: number) => number;
+  readonly maxRounds?: number;
+}
+
+export interface TcpTransferResult {
+  /** The whole transfer ran and every byte was acknowledged. */
+  success: boolean;
+  /** The connection as it stands after the transfer. */
+  connection: TcpConnection;
+  plan: TcpTransferPlan;
+  /** One per step of the plan, in order, up to any failure. */
+  traces: PacketTrace[];
+  failureReason?: string;
+}
+
+const DEFAULT_RECEIVE_BUFFER_BYTES = 65535;
+
 function createConnectionId(connection: {
   srcIp: string;
   srcPort: number;
@@ -67,6 +97,7 @@ export class TcpOrchestrator {
     sink: TcpEventSink,
     failureState: FailureState = EMPTY_FAILURE_STATE,
     sessionId?: string,
+    endpoints: TcpEndpoints = {},
   ): Promise<TcpHandshakeResult> {
     const clientIp = this.resolveNodeIp(clientNodeId);
     const serverIp = this.resolveNodeIp(serverNodeId);
@@ -83,6 +114,13 @@ export class TcpOrchestrator {
     const clientIsn = generateISN(clientNodeId, srcPort);
     const serverIsn = generateISN(serverNodeId, dstPort);
     const traces: PacketTrace[] = [];
+    const clientEndpoint = endpoints.client ?? {};
+    const serverEndpoint = endpoints.server ?? {};
+    const synTcpOptions = synOptions(clientEndpoint);
+    const synAckTcpOptions = synAckOptions(serverEndpoint, synTcpOptions);
+    const negotiated = negotiateTcpOptions(synTcpOptions, synAckTcpOptions);
+    const clientBuffer = clientEndpoint.receiveBuffer ?? DEFAULT_RECEIVE_BUFFER_BYTES;
+    const serverBuffer = serverEndpoint.receiveBuffer ?? DEFAULT_RECEIVE_BUFFER_BYTES;
 
     const synPacket = buildSynPacket({
       srcNodeId: clientNodeId,
@@ -93,6 +131,9 @@ export class TcpOrchestrator {
       dstPort,
       seq: clientIsn,
       ack: 0,
+      // RFC 7323 §2.2: the window of a SYN or SYN-ACK is never scaled.
+      windowSize: advertisedWindowField(clientBuffer, 0),
+      tcpOptions: synTcpOptions,
       ...(sessionId !== undefined ? { sessionId } : {}),
     });
     const synTrace = await this.sendPacket(synPacket, sink, traces, failureState);
@@ -114,6 +155,8 @@ export class TcpOrchestrator {
       dstPort: srcPort,
       seq: serverIsn,
       ack: clientIsn + 1,
+      windowSize: advertisedWindowField(serverBuffer, 0),
+      tcpOptions: synAckTcpOptions,
       ...(sessionId !== undefined ? { sessionId } : {}),
     });
     const synAckTrace = await this.sendPacket(synAckPacket, sink, traces, failureState);
@@ -135,6 +178,7 @@ export class TcpOrchestrator {
       dstPort,
       seq: clientIsn + 1,
       ack: serverIsn + 1,
+      windowSize: advertisedWindowField(clientBuffer, negotiated.clientWindowShift),
       ...(sessionId !== undefined ? { sessionId } : {}),
     });
     const ackTrace = await this.sendPacket(ackPacket, sink, traces, failureState);
@@ -166,6 +210,9 @@ export class TcpOrchestrator {
       remoteSeq: serverIsn + 1,
       createdAt: Date.now(),
       congestion: new TcpCongestionControl({ mss: DEFAULT_TCP_MSS_BYTES }).state,
+      negotiated,
+      clientReceiveBuffer: clientBuffer,
+      serverReceiveBuffer: serverBuffer,
     };
 
     return {
@@ -265,6 +312,83 @@ export class TcpOrchestrator {
 
     return {
       success: true,
+      traces,
+    };
+  }
+
+  /**
+   * Sends `request.bytes` from the client to the server over the simulator:
+   * one trace per segment of the plan, window fields and all. Nothing is
+   * retransmitted: a segment that does not arrive ends the transfer.
+   */
+  async transfer(
+    connection: TcpConnection,
+    request: TcpTransferRequest,
+    sink: TcpEventSink,
+    failureState: FailureState = EMPTY_FAILURE_STATE,
+  ): Promise<TcpTransferResult> {
+    const negotiated = connection.negotiated ?? negotiateTcpOptions(synOptions({}), synOptions({}));
+    const clientBuffer = connection.clientReceiveBuffer ?? DEFAULT_RECEIVE_BUFFER_BYTES;
+    const plan = planTcpTransfer({
+      bytes: request.bytes,
+      mss: negotiated.clientSendMss,
+      receiveBuffer: connection.serverReceiveBuffer ?? DEFAULT_RECEIVE_BUFFER_BYTES,
+      windowShift: negotiated.serverWindowShift,
+      senderWindow: clientBuffer,
+      senderWindowField: advertisedWindowField(clientBuffer, negotiated.clientWindowShift),
+      readBytes: request.readBytes ?? (() => Number.POSITIVE_INFINITY),
+      ...(request.maxRounds !== undefined ? { maxRounds: request.maxRounds } : {}),
+    });
+
+    const client = {
+      srcNodeId: connection.srcNodeId,
+      dstNodeId: connection.dstNodeId,
+      srcIp: connection.srcIp,
+      dstIp: connection.dstIp,
+      srcPort: connection.srcPort,
+      dstPort: connection.dstPort,
+    };
+    const server = {
+      srcNodeId: connection.dstNodeId,
+      dstNodeId: connection.srcNodeId,
+      srcIp: connection.dstIp,
+      dstIp: connection.srcIp,
+      srcPort: connection.dstPort,
+      dstPort: connection.srcPort,
+    };
+
+    const traces: PacketTrace[] = [];
+    for (const [index, step] of plan.steps.entries()) {
+      const fromClient = step.kind === 'data' || step.kind === 'probe';
+      const packet = buildAckPacket({
+        ...(fromClient ? client : server),
+        seq: fromClient ? connection.localSeq + step.seq : connection.remoteSeq,
+        ack: fromClient ? connection.localAck : connection.localSeq + step.ack,
+        windowSize: step.windowField,
+        dataBytes: step.length,
+        sessionId: connection.id,
+        idSalt: `${step.kind}-${index}`,
+      });
+      const trace = await this.sendPacket(packet, sink, traces, failureState);
+      if (trace.status !== 'delivered') {
+        return {
+          success: false,
+          connection,
+          plan,
+          traces,
+          failureReason: `TCP transfer failed at ${step.kind} ${index + 1}`,
+        };
+      }
+    }
+
+    return {
+      success: plan.completed,
+      connection: {
+        ...connection,
+        localSeq: connection.localSeq + plan.delivered,
+        congestion: plan.congestion,
+      },
+      plan,
       traces,
     };
   }
