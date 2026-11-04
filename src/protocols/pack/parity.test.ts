@@ -3,8 +3,6 @@
  * Where today's output disagrees with the RFC, the RFC wins and the gap is
  * recorded in docs/core/protocol-packs.md ("Discrepancies found in today's code").
  */
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parseGreHeader, serializeGreHeader } from '../../layers/l3-network/tunneling/GreHeader';
 import { TraceRecorder } from '../../simulation/TraceRecorder';
@@ -120,12 +118,5 @@ describe('parity with today’s DNS hex view and trace', () => {
     const response = deriveLayout(dnsPack, dnsMessageToValues(RESPONSE)).bytes;
     expect(response.slice(0, 8)).toEqual([0x2a, 0x01, 0x85, 0x00, 0, 1, 0, 1]);
     expect(response.slice(-10)).toEqual([0, 0, 0x01, 0x2c, 0, 4, 203, 0, 113, 10]);
-  });
-});
-
-describe('trial boundary', () => {
-  it('TC-949: src/index.ts exports nothing of the pack', () => {
-    const index = readFileSync(join(__dirname, '..', '..', 'index.ts'), 'utf8');
-    expect(index).not.toMatch(/defineProtocol|ProtocolPack|protocols\/pack|protocols\/packs/);
   });
 });

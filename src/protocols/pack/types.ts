@@ -49,9 +49,14 @@ export interface ProtocolNumbers {
   readonly ipProtocol?: number;
   readonly etherType?: number;
   readonly ports?: readonly PortClaim[];
+  /**
+   * ICMP (v4) or ICMPv6 (v6) message types the pack owns, without owning the IP
+   * protocol: a Neighbour Discovery pack claims `{ v6: [135, 136] }` (REQ-311).
+   */
+  readonly icmpTypes?: { readonly v4?: readonly number[]; readonly v6?: readonly number[] };
 }
 
-export interface ProtocolName extends Bilingual {
+export interface ProtocolPackName extends Bilingual {
   /** Short name used as the trace label, e.g. `GRE`. */
   readonly short: string;
 }
@@ -59,7 +64,7 @@ export interface ProtocolName extends Bilingual {
 /** The part of a pack the registry keeps eagerly (cheap, synchronous lookups). */
 export interface ProtocolIdentity {
   readonly id: string;
-  readonly name: ProtocolName;
+  readonly name: ProtocolPackName;
   readonly layer: PackLayer;
   readonly numbers?: ProtocolNumbers;
 }

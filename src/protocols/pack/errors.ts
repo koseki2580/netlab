@@ -1,17 +1,22 @@
 import { NetlabError } from '../../errors/NetlabError';
+import type { NetlabErrorCode } from '../../errors/codes';
 
-/**
- * Trial-period error helper. Descriptor and registry misuse use the existing
- * `protocol/invalid-request` code, header values `protocol/invalid-packet`; the
- * precise rule rides in `context.reason` (`pack/...`) and the field in
- * `context.path`. Dedicated `protocol-pack/*` codes are added at the freeze.
- */
-export function packError(
-  code: 'protocol/invalid-request' | 'protocol/invalid-packet',
-  reason: string,
-  message: string,
-  path?: string,
-): NetlabError {
+/** The `protocol-pack/*` code a rule belongs to (REQ-310). */
+const REGISTRY_REASONS = new Set([
+  'pack/duplicate-id',
+  'pack/duplicate-number',
+  'pack/unknown-id',
+  'pack/identity-mismatch',
+]);
+
+function codeOf(reason: string): NetlabErrorCode {
+  if (REGISTRY_REASONS.has(reason)) return 'protocol-pack/registry';
+  return reason === 'pack/unknown-version'
+    ? 'protocol-pack/unknown-version'
+    : 'protocol-pack/invalid-descriptor';
+}
+
+function packError(code: NetlabErrorCode, reason: string, message: string, path?: string) {
   return new NetlabError({
     code,
     message: path === undefined ? message : `${message} (at ${path})`,
@@ -19,8 +24,10 @@ export function packError(
   });
 }
 
+/** A descriptor, tier, registry or version rule was broken; `context.reason` names it. */
 export const descriptorError = (reason: string, message: string, path?: string) =>
-  packError('protocol/invalid-request', reason, message, path);
+  packError(codeOf(reason), reason, message, path);
 
+/** A header object disagrees with the schema (`protocol-pack/invalid-header`). */
 export const valueError = (reason: string, message: string, path: string) =>
-  packError('protocol/invalid-packet', reason, message, path);
+  packError('protocol-pack/invalid-header', reason, message, path);

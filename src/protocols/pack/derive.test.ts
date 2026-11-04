@@ -86,7 +86,7 @@ describe('derived byte layout and field view', () => {
 
     expectRefused(
       () => deriveLayout(grePack, GRE_KS, { version: 'rfc1701' }),
-      'protocol/invalid-request',
+      'protocol-pack/unknown-version',
       'pack/unknown-version',
     );
   });
@@ -283,7 +283,7 @@ describe('derived label, filter token, packet-lab ids and glossary', () => {
 });
 
 describe('header objects that disagree with the schema', () => {
-  const bad = 'protocol/invalid-packet' as const;
+  const bad = 'protocol-pack/invalid-header' as const;
 
   it('TC-938: refuses a missing value and sends a missing reserved field as 0', () => {
     const { protocolType: _omit, ...noType } = GRE_KS;

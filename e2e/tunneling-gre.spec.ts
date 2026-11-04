@@ -1,7 +1,7 @@
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
-test('TC-1132: a ping crosses the GRE tunnel, and a changed key stops it', async ({
+test('TC-1132, TC-1162: a ping crosses the GRE tunnel, and a changed key stops it', async ({
   page,
   demoPage,
 }) => {

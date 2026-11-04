@@ -9,15 +9,13 @@
  */
 import { decapGre, encapGre } from '../../layers/l3-network/tunneling/GreEncap';
 import type { GreHeader } from '../../types/tunneling';
+import { greIdentity } from './identity';
 import type { HeaderValues, ProtocolBehaviour, ProtocolWire } from '../pack/types';
 
 const V2890 = ['rfc2890'];
 
 export const greWire: ProtocolWire = {
-  id: 'gre',
-  name: { short: 'GRE', en: 'Generic Routing Encapsulation', ja: '汎用ルーティングカプセル化' },
-  layer: 'L3',
-  numbers: { ipProtocol: 47 },
+  ...greIdentity,
   defaultVersion: 'rfc2890',
   versions: [{ id: 'rfc2784' }, { id: 'rfc2890' }],
   behaviour: { encapsulation: { push: encapGre, pop: decapGre } } as unknown as ProtocolBehaviour,

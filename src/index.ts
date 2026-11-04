@@ -216,6 +216,59 @@ export { TraceSummary } from './components/simulation/TraceSummary';
 
 // Packet serializer (byte-level packet visualization)
 export { serializeArpFrame, serializePacket } from './utils/packetSerializer';
+
+// Protocol packs — frozen API, apiVersion 1 (docs/core/protocol-packs.md).
+/** Validates a protocol descriptor (identity, versions, specs, header schema) and returns it as a pack. */
+export { defineProtocol, PROTOCOL_PACK_API_VERSION } from './protocols/pack/define';
+/** Joins a pack's wire tier and learn tier into one descriptor for `defineProtocol`. */
+export { mergeLearn } from './protocols/pack/merge';
+/** Writes, lists and labels a packet from a pack's wire tier: bytes, field rows, trace label. */
+export { deriveAnnotatedFields, deriveLayout, deriveTraceLabel } from './protocols/pack/wire';
+/** What a pack says about itself: glossary entries and packet-lab field ids. */
+export { deriveGlossary, derivePacketLabFieldIds } from './protocols/pack/derive';
+/** A registry for packs added at run time: refuses duplicate ids and claims, loads lazily once. */
+export { createProtocolPackRegistry } from './protocols/pack/registry';
+/** The built-in packs' wire tiers, as the engine and the views read them. */
+export { protocolPacks } from './protocols/packs';
+/** Loads a built-in pack's learn tier (meanings, specs), once. UI code only. */
+export { loadLearnTier } from './protocols/packLearn';
+export type {
+  Bilingual,
+  EnumValue,
+  FieldType,
+  FieldValue,
+  HeaderField,
+  HeaderSection,
+  HeaderValues,
+  LearnField,
+  Loader,
+  PackLayer,
+  PortClaim,
+  ProtocolBehaviour,
+  ProtocolContent,
+  ProtocolDescriptor,
+  ProtocolIdentity,
+  ProtocolLearn,
+  ProtocolPackName,
+  ProtocolNumbers,
+  ProtocolPack,
+  ProtocolVersion,
+  ProtocolWire,
+  SpecRef,
+  SpecStatus,
+  Transport,
+  WireField,
+  WireSection,
+} from './protocols/pack/types';
+export type {
+  DeriveOptions,
+  LayoutField,
+  PackAnnotatedField,
+  PackLayout,
+} from './protocols/pack/wire';
+export type { GlossaryEntry } from './protocols/pack/derive';
+export type { ProtocolPackRegistry, ProtocolPackStub } from './protocols/pack/registry';
+export type { LazyWire, WireIndex } from './protocols/pack/wireIndex';
 export type { AnnotatedField, LayerTag, SerializedPacket } from './utils/packetSerializer';
 
 // Step simulation controller

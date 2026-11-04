@@ -39,7 +39,7 @@ describe('protocol pack registry', () => {
     const otherGre = defineProtocol(toyDescriptor({ id: 'gre' }));
     expectRefused(
       () => registry.register(otherGre),
-      'protocol/invalid-request',
+      'protocol-pack/registry',
       'pack/duplicate-id',
       'id',
     );
@@ -47,7 +47,7 @@ describe('protocol pack registry', () => {
     const claims47 = defineProtocol(toyDescriptor({ id: 'gre2', numbers: { ipProtocol: 47 } }));
     expectRefused(
       () => registry.register(claims47),
-      'protocol/invalid-request',
+      'protocol-pack/registry',
       'pack/duplicate-number',
       'numbers.ipProtocol',
     );
@@ -85,7 +85,7 @@ describe('protocol pack registry', () => {
     expect(registry.get('gre')).toBe(grePack);
 
     await expect(registry.load('nope')).rejects.toMatchObject({
-      code: 'protocol/invalid-request',
+      code: 'protocol-pack/registry',
       context: { reason: 'pack/unknown-id' },
     });
   });
@@ -94,7 +94,7 @@ describe('protocol pack registry', () => {
     const registry = createProtocolPackRegistry();
     registry.registerLazy({ ...greIdentity, id: 'gre', load: async () => dnsPack });
     await expect(registry.load('gre')).rejects.toMatchObject({
-      code: 'protocol/invalid-request',
+      code: 'protocol-pack/registry',
       context: { reason: 'pack/identity-mismatch' },
     });
 

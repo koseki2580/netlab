@@ -1,6 +1,7 @@
 /** Test helpers for the protocol-pack trial (imported by tests only). */
 import { expect } from 'vitest';
 import { NetlabError } from '../../errors';
+import type { NetlabErrorCode } from '../../errors/codes';
 import type { HeaderField, ProtocolDescriptor } from './types';
 
 /** A one-byte field; an override set to `undefined` removes that property. */
@@ -36,7 +37,7 @@ export function toyDescriptor(overrides: Partial<ProtocolDescriptor> = {}): Prot
 /** Asserts `fn` throws a NetlabError with this code, `context.reason` and (optionally) `context.path`. */
 export function expectRefused(
   fn: () => unknown,
-  code: 'protocol/invalid-request' | 'protocol/invalid-packet',
+  code: NetlabErrorCode,
   reason: string,
   path?: string,
 ): NetlabError {

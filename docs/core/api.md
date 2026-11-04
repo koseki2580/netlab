@@ -473,6 +473,27 @@ import type { LayerTag, AnnotatedField, SerializedPacket } from 'netlab';
 | `AnnotatedField`           | Named byte-range metadata for rendered packet fields                               |
 | `SerializedPacket`         | Result object consumed by packet-inspection UI                                     |
 
+## Protocol Packs
+
+Frozen at `apiVersion: 1`. Guide: [Protocol Packs](protocol-packs.md).
+
+```typescript
+import { defineProtocol, mergeLearn, deriveLayout, createProtocolPackRegistry } from 'netlab';
+import type { ProtocolDescriptor, ProtocolWire, ProtocolLearn } from 'netlab';
+```
+
+| Export                                                                                                                                                      | Description                                                                            |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `defineProtocol(descriptor)`                                                                                                                                | Validates a descriptor and returns a `ProtocolPack`; errors are `protocol-pack/*`      |
+| `PROTOCOL_PACK_API_VERSION`                                                                                                                                 | `1`, the version descriptors state as `apiVersion`                                     |
+| `mergeLearn(wire, learn)`                                                                                                                                   | Joins a wire tier and a learn tier into one descriptor                                 |
+| `deriveLayout`, `deriveAnnotatedFields`, `deriveTraceLabel`                                                                                                 | Bytes and positions, field-view rows, and the trace label from a wire tier             |
+| `deriveGlossary`, `derivePacketLabFieldIds`                                                                                                                 | Glossary entries and packet-lab field ids from a pack                                  |
+| `createProtocolPackRegistry()`                                                                                                                              | A registry for run-time packs: refuses duplicate ids and claims, loads lazily once     |
+| `protocolPacks`                                                                                                                                             | The built-in packs' index: identity, wire tier, lookup by IP protocol, port, ICMP type |
+| `loadLearnTier(id)`                                                                                                                                         | Loads a built-in pack's learn tier once (UI code)                                      |
+| `ProtocolDescriptor`, `ProtocolPack`, `ProtocolWire`, `ProtocolLearn`, `ProtocolIdentity`, `ProtocolNumbers`, `WireField`, `HeaderField`, `HeaderValues`, … | The descriptor, tier and registry types                                                |
+
 ## Utilities
 
 ```typescript

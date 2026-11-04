@@ -5,7 +5,7 @@ import { grePack } from './fixtures/gre.pack';
 import { expectRefused, toyDescriptor, toyField } from './testing';
 import type { ProtocolDescriptor } from './types';
 
-const invalid = 'protocol/invalid-request' as const;
+const invalid = 'protocol-pack/invalid-descriptor' as const;
 
 describe('defineProtocol', () => {
   it('TC-920: accepts the GRE and DNS descriptors as given', () => {

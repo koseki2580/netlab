@@ -27,4 +27,5 @@ export default [
   eager({ name: 'ui:scenario-export', path: 'dist/ScenarioExportDialog-*.mjs', limit: '52 kB' }),
   pack('dns', '3 kB'),
   pack('gre', '3 kB'),
+  pack('ntp', '3 kB'),
 ];

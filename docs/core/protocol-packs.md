@@ -1,8 +1,7 @@
 # Protocol Packs
 
-> **Status**: 🧪 Trial. DNS and GRE run on packs inside the engine and the views. Nothing is
-> exported from `netlab`; the API shape is frozen only after the user has reviewed the trial
-> (see [Versioning of the pack API](#versioning-of-the-pack-api)).
+> **Status**: ✅ Frozen at `apiVersion: 1` and exported from `netlab`. DNS, GRE and NTP are packs;
+> DNS and GRE run inside the engine. See [Add a protocol](#add-a-protocol).
 
 A protocol pack describes one protocol **once**. Today a protocol is spread over 20–40 files:
 a payload union, three number-to-name tables, a trace label, a hand-written serializer and a
@@ -254,9 +253,8 @@ byte-identical for every existing protocol; then the other sidecars.
 ## Two tiers
 
 The bytes of a packet are needed synchronously: `serializePacket` is a public synchronous
-function, and the engine computes length, checksum and FCS on every hop, in a worker that is one
-file and cannot load a chunk. Loading a pack before a send cannot cover those callers. So a pack is
-written in two tiers:
+function, and the engine computes length, checksum and FCS on every hop. So a pack is written in
+two tiers:
 
 | Tier  | File                              | Holds                                                      | Loaded                            |
 | ----- | --------------------------------- | ---------------------------------------------------------- | --------------------------------- |
@@ -272,7 +270,11 @@ lookup, small enough for the worker. The full registry (`createProtocolPackRegis
 duplicate refusal and `load`) is for packs added at run time. A test holds the built-in tiers
 free of clashing claims.
 
-Today every wire tier is eager, so each pack adds to the worker. See the freeze decisions.
+The worker is an ES module, so a wire tier the engine does not need on every hop is lazy there
+too: `protocolPacks` holds its identity at once and loads the tier on first `loadWire`. GRE's
+loads at the first router with a tunnel; NTP's is never loaded by the engine. DNS's is eager.
+Where a module worker cannot start (an old browser, or the CommonJS build, whose worker URL
+cannot be formed), the engine runs on the main thread.
 
 GRE's header codec `GreHeader.ts` remains next to the GRE wire tier: `encapGre` and the public
 parser use it, and TC-946 pins its bytes to the pack.
@@ -300,27 +302,66 @@ the pack core (lesson L014), so packs cost nothing in bundles that show no proto
 - Every descriptor states `apiVersion`. `defineProtocol` accepts the versions it supports
   (today `[1]`) and refuses others with `pack/unsupported-api-version`, naming the supported
   list.
-- Until the freeze, the API is internal: no export from `src/index.ts`, and shapes may change.
-- At the freeze, `apiVersion: 1` is exported, and the error reasons become first-class
-  `protocol-pack/*` codes in `src/errors/codes.ts`. Today they ride on existing codes plus
-  `context.reason`, so `codes.ts` and the bundles stay untouched during the trial.
+- Frozen at `apiVersion: 1` (`PROTOCOL_PACK_API_VERSION`) and exported from `netlab`. Errors
+  carry the `protocol-pack/*` codes (`invalid-descriptor`, `invalid-header`, `unknown-version`,
+  `registry`), with the precise rule in `context.reason` (see [errors](errors.md)).
 - After the freeze, additive changes (a new optional property, a new field `type`, a new
   `status`) keep `apiVersion: 1`. A breaking change adds `apiVersion: 2`. For at least the
   runway in [deprecation-lifecycle.md](deprecation-lifecycle.md), `defineProtocol` accepts
   both and upgrades v1 descriptors internally.
 
-## Adding a protocol (third party)
+## Add a protocol
 
-After the freeze, a third party writes one folder and one registration line:
+The API is frozen at `apiVersion: 1` and exported from `netlab`. A built-in pack lives in
+`src/protocols/<id>/`. Copy [`src/protocols/_template/`](../../src/protocols/_template/), which no
+bundle includes, and follow these steps in order. NTP (`src/protocols/ntp/`) was added this way.
 
-1. Write `my-proto/index.ts` with `defineProtocol({...})`: identity, specs and versions, then
-   the header schema, field by field from the RFC figure, with en/ja meanings and examples.
-2. Test it with a golden vector from the RFC or a capture:
-   `expect(deriveLayout(pack, header).bytes).toEqual([...])`.
-3. Register it lazily:
-   `registry.registerLazy({ id, name, layer, numbers, load: () => import('./my-proto') })`.
-4. Optional, after W1 wiring: behaviour hooks for engine hops, and a `content` bundle for the
-   lesson, deck, exam and exercises.
+1. **Spec first.** Add REQ, AC and `TC-*` rows to the
+   [specification](../user-guide/specifications/specification.md): the RFC golden vector, text in
+   both languages, the filter word, and anything the engine does with it.
+2. **Identity** (`identity.ts`). Give the id (lowercase, also the filter word), the short and
+   en/ja names, the layer, and the numbers it claims: `ipProtocol`, `etherType`, `ports`, or
+   `icmpTypes: { v4?, v6? }` for ICMP message types.
+3. **Wire tier** (`wire.ts`). Write the header fields in wire order, from the RFC's figure: key,
+   the RFC's name, type, width, `presentIf`, `lengthFrom`, enum names, and `label` if one field
+   names the message. Put no learner text here. Add a header-object adapter if the engine already
+   has a type for the message (see `dnsMessageToValues`).
+4. **Learn tier** (`pack-<id>.ts`, default export, `tier: '__netlab_learn_tier__'`). Add the
+   specs and versions, and for **every** field a meaning in English and Japanese and an example,
+   with enum value meanings. Key a field `key@version` where its meaning differs by version.
+5. **Tests** (`<id>.test.ts`). `defineProtocol(mergeLearn(wire, learn))` must pass, and
+   `deriveLayout` must write the RFC's example bytes. Check the label and the filter word.
+6. **Register.** Add the identity to `src/protocols/packs.ts`. A wire tier the engine needs on
+   every hop is eager; any other is `{ ...identity, loadWire: () => import('./<id>/wire') … }`,
+   which the worker loads on first use. Add the learn tier to `LEARN` in
+   `src/protocols/packLearn.ts`.
+7. **Size.** Add `pack('<id>', '3 kB')` to `.size-limit.mjs`. `npm run size` must stay green;
+   it fails if the learn tier reaches an eager closure.
+8. **Engine behaviour**, when the protocol has traffic: a `behaviour` hook (`encapsulation` is
+   wired; see `runTunnelStage`), hops that state what happened, and its words in both languages.
+9. **Content**, once learners can see the protocol's traffic: a lesson and its stage entry
+   (`demo/lessonManifest.ts`, `demo/course/stages.ts`), an exercise, and exam questions
+   (`demo/course/examQuestions.ts`). Update the user guide only for what learners can see.
 
-`defineProtocol` does the checks a reviewer would otherwise do by hand: widths, alignment,
-references, both languages, and examples that fit.
+### Checklist
+
+- [ ] Spec rows (REQ, AC, `TC-*`), and `npm run tc:check -- --strict` clean
+- [ ] Identity with claims that clash with no other pack (the registry test catches clashes)
+- [ ] Wire tier faithful to the RFC figure; versions with `in` where fields differ
+- [ ] Learn tier: every field has an en and a ja meaning and an example; enum values explained
+- [ ] Tests: `defineProtocol` passes, an RFC golden vector, the label, the filter word
+- [ ] Registered in `packs.ts` (eager or `loadWire`) and `packLearn.ts`
+- [ ] `pack('<id>', '3 kB')` in `.size-limit.mjs`; `npm run size` green
+- [ ] Engine behaviour and hop wording, if the protocol has traffic
+- [ ] Lesson and stage entry, exercise, exam questions, if learners can see its traffic
+- [ ] User guide, if learners see something new
+
+For NTP, steps 8 and 9 are open: the engine sends no NTP yet, so there is nothing for a lesson
+to show. It took 4 new files (`identity.ts`, `wire.ts`, `pack-ntp.ts`, `ntp.test.ts`) and 4
+edits (`packs.ts`, `packLearn.ts`, `.size-limit.mjs`, the specification).
+
+### Packs outside netlab
+
+An application can define its own packs with the exported API and keep them in a registry from
+`createProtocolPackRegistry()`, which refuses duplicate ids and claims and loads lazily. The
+built-in index `protocolPacks`, which the engine reads, holds the built-in packs only.

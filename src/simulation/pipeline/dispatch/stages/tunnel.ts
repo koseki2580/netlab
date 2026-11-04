@@ -70,13 +70,28 @@ function facts(
  * interface wraps what it routes into the tunnel, and unwraps what arrives for it.
  * A router without one, and every packet of any other kind, passes untouched.
  */
-export function runTunnelStage(ctx: HopContext): StageResult {
-  const { node, ipPacket, base } = ctx.hop;
+export function runTunnelStage(ctx: HopContext): StageResult | Promise<StageResult> {
+  const { node, ipPacket } = ctx.hop;
   const tunnels = node.data.interfaces?.filter((iface) => iface.greTunnel) ?? [];
   if (node.data.role !== 'router' || tunnels.length === 0 || isIpv6Packet(ipPacket)) {
     return continueWith(ctx);
   }
-  const hook = greEncapsulation(protocolPacks.wire('gre'));
+  // GRE's wire tier loads on the first router with a tunnel (REQ-312).
+  const loaded = protocolPacks.wire('gre');
+  return loaded
+    ? tunnelHop(ctx, tunnels, loaded)
+    : protocolPacks.loadWire('gre').then((wire) => tunnelHop(ctx, tunnels, wire));
+}
+
+type TunnelInterface = NonNullable<HopContext['hop']['node']['data']['interfaces']>[number];
+
+function tunnelHop(
+  ctx: HopContext,
+  tunnels: readonly TunnelInterface[],
+  wire: ProtocolWire | undefined,
+): StageResult {
+  const { ipPacket, base } = ctx.hop;
+  const hook = greEncapsulation(wire);
   if (!hook) return continueWith(ctx);
 
   if ('gre' in ipPacket.payload) {

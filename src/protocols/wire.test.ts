@@ -70,14 +70,19 @@ describe('the two tiers are one description (TC-1123)', () => {
 describe('the process-wide registry (TC-1124)', () => {
   it('finds wire tiers by id, number and port without loading', () => {
     expect(protocolPacks.wire('dns')).toBe(dnsWire);
+    expect(protocolPacks.identity('gre')?.name.short).toBe('GRE');
     expect(protocolPacks.byIpProtocol(47)?.id).toBe('gre');
     expect(protocolPacks.byPort('udp', 53)?.id).toBe('dns');
-    expect(protocolPacks.list().map((p) => p.id)).toEqual(['dns', 'gre']);
+    expect(protocolPacks.list().map((p) => p.id)).toEqual(expect.arrayContaining(['dns', 'gre']));
   });
 
   it('holds tiers that claim no number twice', () => {
     const registry = createProtocolPackRegistry();
-    expect(() => protocolPacks.list().forEach((wire) => registry.register(wire))).not.toThrow();
+    expect(() =>
+      protocolPacks
+        .list()
+        .forEach((entry) => registry.registerLazy({ ...entry, load: () => Promise.reject() })),
+    ).not.toThrow();
   });
 
   it('runs a wire tier’s loader once', async () => {

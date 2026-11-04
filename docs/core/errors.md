@@ -45,13 +45,24 @@ An internal assumption was violated. These indicate bugs or unexpected state.
 
 A received packet or response violates protocol rules.
 
-| Code                        | Thrown By                   | Description                               |
-| --------------------------- | --------------------------- | ----------------------------------------- |
-| `protocol/invalid-packet`   | `DhcpClient.ts`             | Received packet fails protocol validation |
-| `protocol/invalid-request`  | `HttpServer.ts`             | Incomplete or malformed HTTP request      |
-| `protocol/invalid-response` | `HttpClient.ts`             | HTTP response parse failure or incomplete |
-| `protocol/handshake-failed` | `HttpClient.ts`             | TCP handshake did not succeed             |
-| `protocol/session-desync`   | `DataTransferController.ts` | Trace or session state inconsistency      |
+| Code                        | Thrown By       | Description                               |
+| --------------------------- | --------------- | ----------------------------------------- |
+| `protocol/invalid-packet`   | `DhcpClient.ts` | Received packet fails protocol validation |
+| `protocol/invalid-request`  | `HttpServer.ts` | Incomplete or malformed HTTP request      |
+| `protocol/invalid-response` | `HttpClient.ts` | HTTP response parse failure or incomplete |
+
+### `protocol-pack/*` — Protocol Pack Errors
+
+`context.reason` names the rule (`pack/...`) and `context.path` the field.
+
+| Code                               | Thrown By                      | Description                                                      |
+| ---------------------------------- | ------------------------------ | ---------------------------------------------------------------- |
+| `protocol-pack/invalid-descriptor` | `defineProtocol`, `mergeLearn` | A descriptor or tier breaks a rule                               |
+| `protocol-pack/invalid-header`     | the derivers                   | A header object disagrees with the schema                        |
+| `protocol-pack/unknown-version`    | the derivers                   | The pack has no such version                                     |
+| `protocol-pack/registry`           | `createProtocolPackRegistry`   | Duplicate id or claim, unknown id, or a loaded pack that differs |
+| `protocol/handshake-failed`        | `HttpClient.ts`                | TCP handshake did not succeed                                    |
+| `protocol/session-desync`          | `DataTransferController.ts`    | Trace or session state inconsistency                             |
 
 ### `tcp/*` — TCP Model Accounting
 

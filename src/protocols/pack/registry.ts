@@ -21,6 +21,7 @@ export interface ProtocolPackRegistry {
   byIpProtocol(protocol: number): ProtocolIdentity | undefined;
   byEtherType(etherType: number): ProtocolIdentity | undefined;
   byPort(transport: Transport, port: number): ProtocolIdentity | undefined;
+  byIcmpType(version: 4 | 6, type: number): ProtocolIdentity | undefined;
   list(): readonly ProtocolIdentity[];
   /** The whole pack, once registered whole or loaded. */
   get(id: string): ProtocolPack | undefined;
@@ -49,6 +50,8 @@ function claimsOf({ numbers: n = {} }: ProtocolIdentity): string[] {
     ...(n.ipProtocol === undefined ? [] : [`ipProtocol:${n.ipProtocol}`]),
     ...(n.etherType === undefined ? [] : [`etherType:${n.etherType}`]),
     ...(n.ports ?? []).map((p) => `${p.transport}:${p.port}`),
+    ...(n.icmpTypes?.v4 ?? []).map((type) => `icmpTypes:v4:${type}`),
+    ...(n.icmpTypes?.v6 ?? []).map((type) => `icmpTypes:v6:${type}`),
   ];
 }
 
@@ -70,7 +73,7 @@ export function createProtocolPackRegistry(): ProtocolPackRegistry {
         throw descriptorError(
           'pack/duplicate-number',
           `${claim} is ${claims.get(claim)}'s`,
-          kind.startsWith('ip') || kind.startsWith('ether') ? `numbers.${kind}` : 'numbers.ports',
+          kind === 'udp' || kind === 'tcp' || kind === 'sctp' ? 'numbers.ports' : `numbers.${kind}`,
         );
       }
     }
@@ -99,6 +102,7 @@ export function createProtocolPackRegistry(): ProtocolPackRegistry {
     byIpProtocol: (protocol) => byClaim(`ipProtocol:${protocol}`),
     byEtherType: (etherType) => byClaim(`etherType:${etherType}`),
     byPort: (transport, port) => byClaim(`${transport}:${port}`),
+    byIcmpType: (version, type) => byClaim(`icmpTypes:v${version}:${type}`),
     list: () => [...entries.values()].map((e) => e.identity),
     get: (id) => entries.get(id)?.pack,
     load(id) {

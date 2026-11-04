@@ -8,6 +8,7 @@ import { layerRegistry } from '../registry/LayerRegistry';
 import type { EthernetFrame } from '../types/packets';
 import type { RouteEntry, RouterInterface } from '../types/routing';
 import type { NetlabNode, NetworkTopology } from '../types/topology';
+import { protocolPacks } from '../protocols/packs';
 import { serializePacket } from '../utils/packetSerializer';
 import { SimulationEngine } from './SimulationEngine';
 
@@ -120,6 +121,28 @@ async function ping(topology: NetworkTopology) {
 }
 
 describe('a ping across a GRE tunnel', () => {
+  it('TC-1163: loads the GRE wire tier only where a router has a tunnel', async () => {
+    // Runs in a fresh module graph per file, so nothing has loaded GRE before.
+    const plain = tunnelled();
+    plain.nodes = plain.nodes.map(
+      (node): NetlabNode =>
+        node.data.role === 'router'
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                interfaces: (node.data.interfaces ?? []).filter((iface) => !iface.greTunnel),
+              },
+            }
+          : node,
+    );
+    await new SimulationEngine(plain, new HookEngine()).ping('a', '10.0.0.1');
+    expect(protocolPacks.wire('gre')).toBeUndefined();
+    const { trace } = await ping(tunnelled());
+    expect(trace.status).toBe('delivered');
+    expect(protocolPacks.wire('gre')?.id).toBe('gre');
+  });
+
   it('TC-1127: wraps at one end, unwraps at the other, and says so', async () => {
     const { trace } = await ping(tunnelled());
     expect(trace.status).toBe('delivered');

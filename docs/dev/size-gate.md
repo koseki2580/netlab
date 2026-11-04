@@ -16,7 +16,8 @@
 `import()` is inlined and counted in the entry that reaches it. `withoutLazyChunks`
 ([`scripts/size-gate.mjs`](../../scripts/size-gate.mjs)) keeps dynamic imports out of each check.
 
-The worker is one file (`iife`): it has no lazy chunks, so its figure is the whole worker.
+The worker is an ES module: its check counts the entry and the chunks it imports statically,
+not a wire tier it loads on first use (GRE, NTP).
 
 ## The learn-tier guard
 

@@ -6,6 +6,7 @@ import { protocolPacks } from './packs';
 const LEARN: Readonly<Record<string, () => Promise<{ default: ProtocolLearn }>>> = {
   dns: () => import('./dns/pack-dns'),
   gre: () => import('./gre/pack-gre'),
+  ntp: () => import('./ntp/pack-ntp'),
 };
 
 const pending = new Map<string, Promise<ProtocolPack | undefined>>();
@@ -14,12 +15,12 @@ const pending = new Map<string, Promise<ProtocolPack | undefined>>();
 export function loadLearnTier(id: string): Promise<ProtocolPack | undefined> {
   const loaded = protocolPacks.get(id);
   if (loaded) return Promise.resolve(loaded);
-  const wire = protocolPacks.wire(id);
   const load = LEARN[id];
-  if (!wire || !load) return Promise.resolve(undefined);
+  if (!load) return Promise.resolve(undefined);
   const running =
     pending.get(id) ??
-    load().then((module) => {
+    Promise.all([protocolPacks.loadWire(id), load()]).then(([wire, module]) => {
+      if (!wire) return undefined;
       const pack = { ...mergeLearn(wire, module.default), defaultVersion: wire.defaultVersion };
       protocolPacks.attach(pack);
       return pack;

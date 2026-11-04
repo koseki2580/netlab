@@ -24,6 +24,8 @@ export default defineConfig(({ command }) => {
           insertTypesEntry: true,
         }),
       ],
+      // An ES-module worker can load a wire tier on first use (REQ-312).
+      worker: { format: 'es' as const },
       build: {
         lib: {
           entry: {

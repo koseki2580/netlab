@@ -30,6 +30,22 @@ function shouldUseWorker(opts: SimulationEngineOptions): boolean {
   return !opts.useMainThread && (opts.createWorker !== undefined || typeof Worker !== 'undefined');
 }
 
+/**
+ * The worker is an ES module (REQ-312). Where it cannot start (no module workers,
+ * or no worker URL, as in the CommonJS build), the engine runs on the main thread.
+ */
+function startWorker(
+  topology: NetworkTopology,
+  hookEngine: HookEngine,
+  opts: SimulationEngineOptions,
+): SimulationEnginePort {
+  try {
+    return new WorkerEngine(topology, hookEngine, opts);
+  } catch {
+    return new MainThreadEngine(topology, hookEngine, opts);
+  }
+}
+
 export class SimulationEngine {
   readonly hookEngine: HookEngine;
   readonly pipeline: DataTransferPipeline | undefined;
@@ -42,7 +58,7 @@ export class SimulationEngine {
   ) {
     this.hookEngine = hookEngine;
     const impl = shouldUseWorker(opts)
-      ? new WorkerEngine(topology, hookEngine, opts)
+      ? startWorker(topology, hookEngine, opts)
       : new MainThreadEngine(topology, hookEngine, opts);
     this.impl = impl;
     this.pipeline = impl instanceof MainThreadEngine ? impl.pipeline : undefined;

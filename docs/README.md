@@ -43,7 +43,7 @@ Core specifications for the overall design of Netlab and for creating extensions
 - [Mismatch Report](api/mismatch-report.md) - Results of the API documentation audit
 - [Hooks](core/hooks.md) - Mechanism of the React-independent event hook engine
 - [Plugins](core/plugins.md) - Plugin mechanism for feature extensions
-- [Protocol Packs](core/protocol-packs.md) - (Trial, not exported) one `defineProtocol` descriptor per protocol, its registry, the derived field/byte/label/filter/glossary views, and the migration map
+- [Protocol Packs](core/protocol-packs.md) - The frozen protocol-pack API (`apiVersion: 1`): one description per protocol in a wire and a learn tier, the registry, the derived views, and how to add a protocol
 - [Sandbox Edit Plugins](core/sandbox-plugin.md) - Public API for registering custom sandbox edit variants
 - [Errors](core/errors.md) - NetlabError taxonomy and recovery guidance
 

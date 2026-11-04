@@ -160,7 +160,7 @@ function protocolValue(hop: PacketHop): string {
 
 /** A built-in word, or a protocol pack's id (REQ-302). */
 function isProtocolWord(word: string): boolean {
-  return PROTOCOLS.has(word) || protocolPacks.wire(word) !== undefined;
+  return PROTOCOLS.has(word) || protocolPacks.identity(word) !== undefined;
 }
 
 /** The packs that claim this hop's UDP or TCP ports (REQ-143). */

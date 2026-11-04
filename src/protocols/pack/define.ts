@@ -1,6 +1,6 @@
 /**
  * `defineProtocol`: validates a protocol-pack descriptor (REQ-100, REQ-101).
- * Every refusal is a NetlabError `protocol/invalid-request` with `context.reason`
+ * Every refusal is a NetlabError `protocol-pack/*` (REQ-310) with `context.reason`
  * and `context.path` (see ./errors.ts).
  */
 import { encodeValue, fieldBits, isNumeric } from './codec';
@@ -15,7 +15,10 @@ import type {
   ProtocolPack,
 } from './types';
 
-export const SUPPORTED_PACK_API_VERSIONS: readonly number[] = [1];
+/** The protocol-pack API version this build implements (REQ-313). Descriptors state it as `apiVersion`. */
+export const PROTOCOL_PACK_API_VERSION = 1;
+
+export const SUPPORTED_PACK_API_VERSIONS: readonly number[] = [PROTOCOL_PACK_API_VERSION];
 
 const ID_PATTERN = /^[a-z][a-z0-9-]{0,31}$/;
 const KEY_PATTERN = /^[A-Za-z][A-Za-z0-9_]*$/;
@@ -60,6 +63,9 @@ export function validateIdentity(identity: ProtocolIdentity): void {
   const numbers = identity.numbers ?? {};
   inRange(numbers.ipProtocol, 255, 0, 'numbers.ipProtocol');
   inRange(numbers.etherType, 0xffff, 0, 'numbers.etherType');
+  for (const type of [...(numbers.icmpTypes?.v4 ?? []), ...(numbers.icmpTypes?.v6 ?? [])]) {
+    inRange(type, 255, 0, 'numbers.icmpTypes');
+  }
   for (const claim of numbers.ports ?? []) {
     if (!TRANSPORTS.has(claim.transport)) {
       throw descriptorError(
