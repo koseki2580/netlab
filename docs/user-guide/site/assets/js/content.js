@@ -342,14 +342,17 @@ window.USER_GUIDE_CONTENT = {
                <h3>traceroute（「複数ホップ」のレッスン）</h3>
                <p>「複数ホップ」のレッスンの「traceroute」の欄で <code>traceroute Client → 203.0.113.10</code> を押すと、シミュレータが TTL 1、2、3 の調査パケットを順に送り、1 つにつき 1 行が出ます。TTL が 0 になったルータは「時間超過 (time exceeded)」を返し、最後の行はサーバ自身の「エコー応答」です。各行のアドレスは、返事を出したインタフェースのアドレスです。答えが返らなかった調査パケットは <code>*</code> の行になります。このシミュレータは Windows の tracert と同じく ICMP エコーで調べます（Unix の traceroute は既定では UDP）。</p>
                <h3>IPv6 の隣の機器を調べる（NDP）</h3>
-               <p>「IPv6 デュアルスタック」の「隣の MAC を調べる (NDP)」で調べるアドレスを選ぶと、Neighbor Solicitation の宛先になる solicited-node アドレス（ff02::1:ff ＋ 下位 24 ビット、RFC 4291）と、フレームの宛先 MAC（33:33 ＋ その下位 32 ビット、RFC 2464）が出ます。このシミュレータは NS／NA を送らずに隣の機器を見つけるので、トレースにはこれらのメッセージは現れません。</p>`
+               <p>「IPv6 デュアルスタック」の「隣の MAC を調べる (NDP)」で調べるアドレスを選ぶと、Neighbor Solicitation の宛先になる solicited-node アドレス（ff02::1:ff ＋ 下位 24 ビット、RFC 4291）と、フレームの宛先 MAC（33:33 ＋ その下位 32 ビット、RFC 2464）が出ます。IPv6 を送る機器は、ARP と同じように最初の送信で尋ねます。トレースには NS（近隣要請）と NA（近隣通知）の行が出ます。タイムラインの記号は NS と NA で、フィルタでは <code>protocol == ndp</code> で選べます。スイッチは NS を全部の口に写します。</p>`
       },
       {
         id: "pcap",
         title: "パケットを書き出す",
         html: `<p>パケットタイムラインの「PCAP を保存」（英語表示では「Download PCAP」）から、選んでいる通信を <code>.pcap</code> ファイルとして保存できます。Wireshark などでそのまま開けます。</p>
                <p>書き出されるのは<strong>選択中の通信だけ</strong>です。別の通信を書き出すときは、先にその通信を選んでください。</p>
-               <p><strong>DNS</strong> は本物と同じ形（RFC 1035）で書き出されるので、Wireshark でも DNS として読めます。ID、フラグ（QR・AA・RD と結果の RCODE）、質問（名前・種類 A・クラス IN）、応答（TTL とアドレス）が並びます。パケットの 16 進表示とフィールド一覧にも同じ項目が出ます。DNS と GRE のフィールド名にポインタを重ねると、その項目の意味が表示されます。</p>
+               <p><strong>DNS</strong> は本物と同じ形（RFC 1035）で書き出されるので、Wireshark でも DNS として読めます。ID、フラグ（QR・AA・RD と結果の RCODE）、質問（名前・種類 A・クラス IN）、応答（TTL とアドレス）が並びます。パケットの 16 進表示とフィールド一覧にも同じ項目が出ます。DNS と GRE のフィールド名にポインタを重ねると、その項目の意味が表示されます。IPv6 のパケットも、IPv6 ヘッダ、ICMPv6（ping）や近隣探索（NS・NA・RA とそのオプション）を本物のバイトで表示します。チェックサムは RFC 4443 のとおり計算されます。</p>
+               <h3>DNS の名前解決とキャッシュ</h3>
+               <p>「DNS の名前解決とキャッシュ」のレッスンでは、PC の問い合わせを受けたリゾルバが、ルート、com、example.com の順にサーバーへ聞き、委任（NS レコードとグルー）をたどる様子が、実際に流れたメッセージ 1 つずつで読めます。続けて PC-B が同じ名前を引くと、リゾルバはだれにも聞かずにキャッシュから答え、TTL は残りの秒数になります。存在しない名前には NXDOMAIN（RCODE 3）が SOA とともに返り、リゾルバはそれも SOA の TTL と MINIMUM の小さいほうの時間だけ覚えておきます（RFC 2308）。扱うレコードは A・AAAA・CNAME（たどる）・NS・MX・SOA です。</p>
+               <div class="callout">キャッシュはエンジンを開いているあいだ残り、時間は実際の時計で数えます。再送、TCP への切り替え、グルーのない委任、DNSSEC は扱いません。これまでのゾーン一覧だけの DNS サーバーは、知らない名前に NXDOMAIN を返すようになりました（以前は何も返しませんでした）。</div>
                <p><strong>GRE トンネル</strong>のレッスンでは、ping が本当にトンネルを通ります。16 進表示で、外側の IP ヘッダ、GRE ヘッダ（Key を含む）、内側のパケットを順に確かめられます。キーが両端で違うと、パケットは反対側のルータで捨てられます。</p>`
       },
       {
@@ -728,14 +731,17 @@ window.USER_GUIDE_CONTENT = {
                <h3>Traceroute (the “Multi-Hop” lesson)</h3>
                <p>In the “Multi-Hop” lesson, the “Traceroute” card's <code>traceroute Client → 203.0.113.10</code> makes the simulator send probes with TTL 1, 2 and 3, one row each. The router where the TTL reaches 0 answers “time exceeded”; the last row is the server's own “echo reply”. Each row's address is the interface the answer came from. A probe nobody answered shows as <code>*</code>. This simulator probes with ICMP echo, as Windows tracert does (Unix traceroute sends UDP by default).</p>
                <h3>Finding an IPv6 neighbour (NDP)</h3>
-               <p>In “IPv6 Dual-Stack”, choose an address under “Finding a neighbour’s MAC (NDP)” to see where a Neighbor Solicitation for it goes: the solicited-node address (ff02::1:ff plus the last 24 bits, RFC 4291) and the frame's MAC (33:33 plus that group's last 32 bits, RFC 2464). This simulator finds neighbours without sending NS/NA, so these messages do not appear in the trace.</p>`
+               <p>In “IPv6 Dual-Stack”, choose an address under “Finding a neighbour’s MAC (NDP)” to see where a Neighbor Solicitation for it goes: the solicited-node address (ff02::1:ff plus the last 24 bits, RFC 4291) and the frame's MAC (33:33 plus that group's last 32 bits, RFC 2464). A device sending IPv6 asks on its first send, as with ARP, so the trace shows the NS (neighbour solicitation) and NA (neighbour advertisement) rows. The timeline codes them NS and NA, and the filter <code>protocol == ndp</code> selects them. A switch copies an NS out of every port.</p>`
       },
       {
         id: "pcap",
         title: "Exporting packets",
         html: `<p>"Download PCAP" in the packet timeline saves the selected trace as a <code>.pcap</code> file, which opens in Wireshark as it is.</p>
                <p>Only the <strong>selected trace</strong> is written. To export a different one, select it first.</p>
-               <p><strong>DNS</strong> is written in its real wire format (RFC 1035), so Wireshark reads it as DNS: the ID, the flags (QR, AA, RD and the RCODE result), the question (name, type A, class IN) and the answer (TTL and address). The packet's hex view and field list show the same fields. Hover a DNS or GRE field name to read what it means.</p>
+               <p><strong>DNS</strong> is written in its real wire format (RFC 1035), so Wireshark reads it as DNS: the ID, the flags (QR, AA, RD and the RCODE result), the question (name, type A, class IN) and the answer (TTL and address). The packet's hex view and field list show the same fields. Hover a DNS or GRE field name to read what it means. IPv6 packets show their real bytes too: the IPv6 header, then ICMPv6 (ping) or Neighbour Discovery (NS, NA, RA and their options), with the checksum computed as RFC 4443 says.</p>
+               <h3>DNS resolution and caching</h3>
+               <p>In the “DNS Resolution and Caching” lesson, each message on the wire is listed as the resolver answers the PC: it asks the root, then the com server, then example.com’s server, following the referrals (NS records and their glue). When PC-B then looks up the same name, the resolver asks nobody and answers from its cache, with the TTL that is left. A name that does not exist gets NXDOMAIN (RCODE 3) with the zone’s SOA, and the resolver keeps that too, for the lower of the SOA’s TTL and its MINIMUM (RFC 2308). The records handled are A, AAAA, CNAME (followed), NS, MX and SOA.</p>
+               <div class="callout">The cache lasts as long as the engine, and time is the real clock. Retries, falling back to TCP, referrals without glue and DNSSEC are not modelled. A DNS server with only a zones list now answers an unknown name with NXDOMAIN (before, it did not answer at all).</div>
                <p>In the <strong>GRE tunnel</strong> lesson a ping really crosses the tunnel. The hex view shows the outer IP header, the GRE header with its Key, and the inner packet, in order. If the keys at the two ends differ, the far router drops the packet.</p>`
       },
       {
