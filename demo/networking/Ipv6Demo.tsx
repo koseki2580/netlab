@@ -190,7 +190,12 @@ function DemoInner() {
           ) : (
             ipv6Hops.map((hop) => (
               <div key={`${hop.step}-${hop.nodeId}`} style={{ marginBottom: 4 }}>
-                {hop.step}: {hop.nodeLabel} {hop.event}
+                {hop.step}: {hop.nodeLabel}{' '}
+                {hop.event === 'ndp-solicit'
+                  ? `NS → ${hop.dstIp}`
+                  : hop.event === 'ndp-advert'
+                    ? `NA → ${hop.dstIp}`
+                    : hop.event}
               </div>
             ))
           )}
@@ -267,8 +272,8 @@ function NdpStep() {
       </div>
       <div data-testid="ipv6-ndp-note" style={{ color: 'var(--netlab-text-secondary)' }}>
         {t(
-          'This simulator finds IPv6 neighbours without sending these messages, so no Neighbor Solicitation or Advertisement appears in the trace below.',
-          'このシミュレータは、これらのメッセージを送らずに IPv6 の隣の機器を見つけます。そのため、下のトレースに Neighbor Solicitation や Advertisement は現れません。',
+          'Press Send IPv6 Echo: on the first send, the list below shows each Neighbor Solicitation (NS, to the solicited-node address) and the Advertisement (NA) that answers it, first the Client asking for R1, then R1 for the Server. A second send asks nothing: the answers are remembered.',
+          '「IPv6 の Echo を送る」を押すと、最初の送信では、下の一覧に Neighbor Solicitation（NS、solicited-node アドレスあて）と、それに応える Advertisement（NA）が出ます。まず Client が R1 を、次に R1 が Server を尋ねます。2 回目の送信では何も尋ねません。答えを覚えているからです。',
         )}
       </div>
     </div>

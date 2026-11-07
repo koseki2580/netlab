@@ -136,7 +136,15 @@ export interface PacketHop {
   protocol: string; // 'TCP' | 'UDP' | 'ICMP' | '<number>'
   srcPort?: number; // present for TCP and UDP payloads
   dstPort?: number; // present for TCP and UDP payloads
-  event: 'create' | 'forward' | 'deliver' | 'drop' | 'arp-request' | 'arp-reply';
+  event:
+    | 'create'
+    | 'forward'
+    | 'deliver'
+    | 'drop'
+    | 'arp-request'
+    | 'arp-reply'
+    | 'ndp-solicit'
+    | 'ndp-advert';
   fromNodeId?: string; // absent on step 0 (create)
   toNodeId?: string; // absent on deliver / drop
   activeEdgeId?: string; // ReactFlow edge.id to highlight; absent on deliver / drop
@@ -145,6 +153,17 @@ export interface PacketHop {
   egressInterfaceId?: string;
   egressInterfaceName?: string;
   arpFrame?: import('./packets').ArpEthernetFrame;
+  /**
+   * The Neighbor Solicitation or Advertisement of an `ndp-solicit`/`ndp-advert`
+   * hop, as on the wire: an IPv6 frame whose payload is the ICMPv6 message.
+   */
+  ndpFrame?: import('./packets').EthernetFrame & {
+    payload: import('./packets').Ipv6Packet & {
+      payload: import('../simulation/icmpv6').NdpMessage;
+    };
+  };
+  /** RFC 4861 §7.3.2: INCOMPLETE once solicited, REACHABLE once advertised. */
+  ndpState?: 'INCOMPLETE' | 'REACHABLE';
   reason?: string; // known values include node-down, interface-down, no-route, ttl-exceeded
   action?:
     | 'fragment'
@@ -204,4 +223,14 @@ export interface SimulationState {
   nodeArpTables: Record<string, Record<string, string>>;
   natTables: NatTable[];
   connTrackTables: ConnTrackTable[];
+}
+
+/** A hop that finds a neighbour's MAC (ARP or NDP): beside the packet's path, not on it. */
+export function isNeighborLookupHop(hop: Pick<PacketHop, 'event'>): boolean {
+  return (
+    hop.event === 'arp-request' ||
+    hop.event === 'arp-reply' ||
+    hop.event === 'ndp-solicit' ||
+    hop.event === 'ndp-advert'
+  );
 }

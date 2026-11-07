@@ -8,8 +8,7 @@ import {
 } from '../layers/l4-transport/TcpOrchestrator';
 import { buildDiscover, handleAck, handleOffer } from '../services/DhcpClient';
 import { handleDiscover, handleRequest, LeaseAllocator } from '../services/DhcpServer';
-import { buildDnsQuery, handleDnsResponse } from '../services/DnsClient';
-import { handleDnsQuery } from '../services/DnsServer';
+import type { ResolverCache } from '../services/DnsResolver';
 import { EMPTY_FAILURE_STATE, type FailureState } from '../types/failure';
 import type { DhcpMessage, InFlightPacket, UdpDatagram } from '../types/packets';
 import type { DhcpLeaseState, DnsCache } from '../types/services';
@@ -54,6 +53,8 @@ export class ServiceOrchestrator {
   private readonly runtimeNodeIps = new Map<string, string>();
   private readonly dhcpLeaseStates = new Map<string, DhcpLeaseState>();
   private readonly dnsCaches = new Map<string, DnsCache>();
+  /** Each recursive resolver's cache: kept for the life of the engine, as ARP answers are. */
+  private readonly dnsResolverCaches = new Map<string, ResolverCache>();
   private readonly joinedGroups = new Map<string, Set<string>>();
   private readonly tcpConnections = new TcpConnectionTracker();
   /** Every node's addresses, its DHCP leases included. This is its one owner. */
@@ -199,10 +200,13 @@ export class ServiceOrchestrator {
     failureState: FailureState = EMPTY_FAILURE_STATE,
     sessionId: string = crypto.randomUUID(),
   ): Promise<string | null> {
+    // A stub may cache, but only for the record's TTL (RFC 1035 §7.3).
     const cached = this.dnsCaches.get(clientNodeId)?.[hostname];
-    if (cached) return cached.address;
+    if (cached && Date.now() - cached.resolvedAt < cached.ttl * 1000) return cached.address;
 
-    const queryPacket = buildDnsQuery(
+    // DNS loads on the first lookup: the client, the servers and the resolver.
+    const dns = await import('../services/DnsRecursion');
+    const queryPacket = dns.buildDnsQuery(
       clientNodeId,
       hostname,
       this.topology,
@@ -217,14 +221,24 @@ export class ServiceOrchestrator {
     sink.appendTrace(queryResult.trace, queryResult.nodeArpTables);
     if (queryResult.trace.status !== 'delivered') return null;
 
-    const responsePacket = handleDnsQuery(stampedQuery, this.topology);
+    const responsePacket = await dns.answerDnsOnWire(
+      stampedQuery,
+      this.topology,
+      this.dnsResolverCaches,
+      Date.now() / 1000,
+      async (step) => {
+        const stepResult = await packetSender.precompute({ ...step, sessionId }, failureState);
+        sink.appendTrace(stepResult.trace, stepResult.nodeArpTables);
+        return stepResult.trace.status === 'delivered';
+      },
+    );
     if (!responsePacket) return null;
     const stampedResponse = { ...responsePacket, sessionId };
     const responseResult = await packetSender.precompute(stampedResponse, failureState);
     sink.appendTrace(responseResult.trace, responseResult.nodeArpTables);
     if (responseResult.trace.status !== 'delivered') return null;
 
-    const record = handleDnsResponse(stampedResponse);
+    const record = dns.handleDnsResponse(stampedResponse);
     if (!record) return null;
 
     this.dnsCaches.set(clientNodeId, {

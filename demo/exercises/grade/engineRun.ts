@@ -14,6 +14,7 @@ import { HookEngine } from '../../../src/hooks/HookEngine';
 import { MainThreadEngine } from '../../../src/simulation/worker/MainThreadEngine';
 import type { PacketHop } from '../../../src/types/simulation';
 import type { NetworkTopology, TopologySnapshot } from '../../../src/types/topology';
+import { isNeighborLookupHop } from '../../../src/types/simulation';
 
 type Nodes = Pick<TopologySnapshot, 'nodes'>;
 
@@ -40,8 +41,7 @@ export async function withEngine<T>(
 }
 
 /** An ARP exchange happens beside a packet's path, not along it. */
-export const isArpHop = (hop: PacketHop): boolean =>
-  hop.event === 'arp-request' || hop.event === 'arp-reply';
+export const isArpHop = (hop: PacketHop): boolean => isNeighborLookupHop(hop);
 
 /**
  * The rows of the packet itself: no ARP rows, and a sender that asked first has

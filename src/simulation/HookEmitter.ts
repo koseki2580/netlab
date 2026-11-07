@@ -45,6 +45,8 @@ export class HookEmitter {
         break;
       case 'arp-request':
       case 'arp-reply':
+      case 'ndp-solicit':
+      case 'ndp-advert':
         break;
     }
   }

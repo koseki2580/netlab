@@ -50,6 +50,8 @@ const EVENT_COLORS: Record<string, string> = {
   drop: 'var(--netlab-accent-red)',
   'arp-request': 'var(--netlab-accent-orange)',
   'arp-reply': 'var(--netlab-accent-orange)',
+  'ndp-solicit': 'var(--netlab-accent-orange)',
+  'ndp-advert': 'var(--netlab-accent-orange)',
 };
 
 function Field({ label, value }: { label: string; value: string }) {

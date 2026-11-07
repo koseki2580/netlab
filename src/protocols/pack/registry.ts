@@ -65,14 +65,13 @@ export function createProtocolPackRegistry(): ProtocolPackRegistry {
   const add = (source: object, identity: ProtocolIdentity, extra: Partial<Entry>) => {
     const existing = entries.get(identity.id);
     if (existing?.source === source) return;
-    if (existing) throw descriptorError('pack/duplicate-id', identity.id, 'id');
+    if (existing) throw descriptorError('pack/duplicate-id', 'id');
     const mine = claimsOf(identity);
     for (const claim of mine) {
       if (claims.has(claim)) {
         const kind = claim.split(':')[0]!;
         throw descriptorError(
           'pack/duplicate-number',
-          `${claim} is ${claims.get(claim)}'s`,
           kind === 'udp' || kind === 'tcp' || kind === 'sctp' ? 'numbers.ports' : `numbers.${kind}`,
         );
       }
@@ -108,7 +107,7 @@ export function createProtocolPackRegistry(): ProtocolPackRegistry {
     load(id) {
       const entry = entries.get(id);
       if (!entry?.loader && !entry?.pack) {
-        return Promise.reject(descriptorError('pack/unknown-id', id, 'id'));
+        return Promise.reject(descriptorError('pack/unknown-id', 'id'));
       }
       if (entry.pack) return Promise.resolve(entry.pack);
       entry.pending ??= entry.loader!().then(
@@ -116,7 +115,7 @@ export function createProtocolPackRegistry(): ProtocolPackRegistry {
           entry.pending = undefined;
           const pack = 'default' in loaded ? loaded.default : loaded;
           if (!sameIdentity(pack, entry.identity)) {
-            throw descriptorError('pack/identity-mismatch', pack.id, 'id');
+            throw descriptorError('pack/identity-mismatch', 'id');
           }
           entry.pack = pack;
           return pack;

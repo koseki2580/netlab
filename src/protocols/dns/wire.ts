@@ -51,7 +51,18 @@ const reservedZ = (bits: number, version: string): WireField => ({
   in: [version],
 });
 
+/** The full record set, once installed (`./records`). */
+let records: {
+  readonly values: (message: DnsMessage) => HeaderValues;
+  readonly rdata: (value: FieldValue, siblings: HeaderValues) => string;
+} | null = null;
+
+export function setDnsRecordCodec(codec: NonNullable<typeof records>): void {
+  records = codec;
+}
+
 function formatRdata(value: FieldValue, siblings: HeaderValues): string {
+  if (records) return records.rdata(value, siblings);
   const bytes = value as readonly number[];
   if (siblings['type'] === 1 && bytes.length === 4) return bytes.join('.');
   return `0x${bytes.map((b) => b.toString(16).padStart(2, '0').toUpperCase()).join('')}`;
@@ -130,11 +141,13 @@ export const dnsWire: ProtocolWire = {
 };
 
 /**
- * A `DnsMessage` (A records only) as a header object (REQ-140). A netlab DNS server
+ * A `DnsMessage` as a header object (REQ-140): A records only, unless the full
+ * record set is installed (`./records`). A netlab DNS server
  * answers only from its own zones (AA = 1) and does not recurse (RA = 0); a response
  * without an answer is NXDOMAIN.
  */
 export function dnsMessageToValues(message: DnsMessage): HeaderValues {
+  if (records) return records.values(message);
   const response = message.isResponse ? 1 : 0;
   return {
     id: message.transactionId,

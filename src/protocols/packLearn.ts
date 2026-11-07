@@ -7,6 +7,9 @@ const LEARN: Readonly<Record<string, () => Promise<{ default: ProtocolLearn }>>>
   dns: () => import('./dns/pack-dns'),
   gre: () => import('./gre/pack-gre'),
   ntp: () => import('./ntp/pack-ntp'),
+  ipv6: () => import('./ipv6/pack-ipv6'),
+  icmpv6: () => import('./icmpv6/pack-icmpv6'),
+  nd: () => import('./nd/pack-nd'),
 };
 
 const pending = new Map<string, Promise<ProtocolPack | undefined>>();

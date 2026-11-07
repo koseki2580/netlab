@@ -11,7 +11,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { DEFAULT_I18N_VALUE } from '../../i18n/I18nContext';
 import type { TranslatorFn } from '../../i18n/types';
-import type { PacketHop } from '../../types/simulation';
+import { NDP_STEP_CARD_KEYS } from './ndpWords';
+import { isNeighborLookupHop, type PacketHop } from '../../types/simulation';
 import { Marker, type MarkerShape } from './Marker';
 import { hopEventMarker } from './hopMarkers';
 
@@ -100,6 +101,12 @@ function describeHop(hop: PacketHop, t: TranslatorFn): string {
       return t('simulation.stepCard.arpRequest', { node, ip: hop.dstIp });
     case 'arp-reply':
       return t('simulation.stepCard.arpReply', { node });
+    case 'ndp-solicit':
+    case 'ndp-advert':
+      return t(NDP_STEP_CARD_KEYS[hop.event], {
+        node,
+        ip: hop.ndpFrame?.payload.payload.targetAddress ?? hop.dstIp,
+      });
     default:
       return hop.nodeLabel;
   }
@@ -107,7 +114,7 @@ function describeHop(hop: PacketHop, t: TranslatorFn): string {
 
 function hopDelta(hop: PacketHop): string[] {
   const pills: string[] = [];
-  if (hop.event !== 'arp-request' && hop.event !== 'arp-reply') {
+  if (!isNeighborLookupHop(hop)) {
     pills.push(hop.protocol);
     if (typeof hop.ttl === 'number') pills.push(`ttl ${hop.ttl}`);
   }

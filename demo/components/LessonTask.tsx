@@ -7,6 +7,7 @@ import { buildUdpPacket } from '../../src/layers/l4-transport/udpPacketBuilder';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import type { NetworkTopology } from '../../src/types/topology';
 import { useT } from '../localeContext';
+import { isNeighborLookupHop } from '../../src/types/simulation';
 
 /**
  * The one task a small lesson sets, with the answer it produced.
@@ -94,7 +95,7 @@ export function LessonTask({ goal, from, to, takeaway }: LessonTaskProps) {
   // say "6" on a three-device diagram, and the trace also records the address
   // lookup that goes back and forth first; neither is what the learner sees.
   const path = (trace?.hops ?? [])
-    .filter((hop) => hop.event !== 'arp-request' && hop.event !== 'arp-reply')
+    .filter((hop) => !isNeighborLookupHop(hop))
     .map((hop) => hop.nodeLabel)
     .filter((label, index, labels) => Boolean(label) && label !== labels[index - 1]);
 

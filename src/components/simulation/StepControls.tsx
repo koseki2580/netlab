@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { useI18n } from '../../i18n/useI18n';
 import { useSimulation } from '../../simulation/SimulationContext';
 import { routingVerdict } from '../../simulation/pipeline/dispatch/routingHelpers';
 import type { PacketHop, RoutingDecision } from '../../types/simulation';
 import { usePlayback } from './playback';
 import { TraceSelector } from './TraceSelector';
 import { NARROW_CSS, hopReadout, traceOutcome } from './traceWords';
+import { useNdpT } from './ndpWords';
 
 // ── Style constants (dark theme, monospace) ───────────────────────────────────
 
@@ -16,6 +16,8 @@ const EVENT_COLORS: Record<string, string> = {
   drop: 'var(--netlab-accent-red)',
   'arp-request': 'var(--netlab-accent-orange)',
   'arp-reply': 'var(--netlab-accent-orange)',
+  'ndp-solicit': 'var(--netlab-accent-orange)',
+  'ndp-advert': 'var(--netlab-accent-orange)',
 };
 
 // A gap and shrinkable columns keep a prefix and its next hop from running
@@ -32,7 +34,7 @@ interface HopHeaderProps {
 }
 
 function HopHeader({ hop, current, total }: HopHeaderProps) {
-  const { t } = useI18n();
+  const t = useNdpT();
   const eventColor = EVENT_COLORS[hop.event] ?? 'var(--netlab-text-secondary)';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -72,7 +74,7 @@ interface RoutingTableProps {
 
 function RoutingTable({ decision }: RoutingTableProps) {
   const { candidates, winner } = decision;
-  const { t } = useI18n();
+  const t = useNdpT();
   const verdict = routingVerdict(decision);
 
   return (
@@ -224,7 +226,7 @@ interface StepEntryProps {
 }
 
 function StepEntry({ hop, isCurrent, isLast, totalHops }: StepEntryProps) {
-  const { t } = useI18n();
+  const t = useNdpT();
   const circleColor = isCurrent ? 'var(--netlab-accent-cyan)' : 'var(--netlab-border)';
   const circleBorder = isCurrent ? 'var(--netlab-accent-cyan)' : 'var(--netlab-text-muted)';
 
@@ -329,7 +331,7 @@ export function StepControls({
   primary = true,
   continueAcrossTraces = false,
 }: StepControlsProps = {}) {
-  const { t } = useI18n();
+  const t = useNdpT();
   const { state } = useSimulation();
   const playback = usePlayback({ continueAcrossTraces });
   const { status, currentStep, traces } = state;

@@ -1,11 +1,11 @@
 import type React from 'react';
-import { useI18n } from '../../i18n/useI18n';
 import { useSimulation } from '../../simulation/SimulationContext';
 import type { InFlightPacket } from '../../types/packets';
 import type { NetworkTopology } from '../../types/topology';
 import { useNetlabContext } from '../NetlabContext';
 import { usePlayback } from './playback';
 import { NARROW_CSS, hopReadout, traceOutcome } from './traceWords';
+import { useNdpT } from './ndpWords';
 
 function buildDefaultPacket(topology: NetworkTopology): InFlightPacket | null {
   const client = topology.nodes.find((n) => n.data.role === 'client');
@@ -102,7 +102,7 @@ export interface SimulationControlsProps {
 }
 
 export function SimulationControls({ showSend = true }: SimulationControlsProps = {}) {
-  const { t } = useI18n();
+  const t = useNdpT();
   const { topology } = useNetlabContext();
   const { engine, state, sendPacket } = useSimulation();
   const playback = usePlayback();

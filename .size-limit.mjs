@@ -25,7 +25,10 @@ export default [
   eager({ name: 'ui:simulation-context', path: 'dist/sandbox-mode-*.mjs', limit: '66 kB' }),
   eager({ name: 'ui:node-ports', path: 'dist/NodePorts-*.mjs', limit: '3 kB' }),
   eager({ name: 'ui:scenario-export', path: 'dist/ScenarioExportDialog-*.mjs', limit: '52 kB' }),
-  pack('dns', '3 kB'),
+  pack('dns', '3.5 kB'),
   pack('gre', '3 kB'),
   pack('ntp', '3 kB'),
+  pack('ipv6', '3 kB'),
+  pack('icmpv6', '3 kB'),
+  pack('nd', '3 kB'),
 ];

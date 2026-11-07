@@ -2,7 +2,7 @@ import { HookEngine } from '../../hooks/HookEngine';
 import { SimulationEngine } from '../SimulationEngine';
 import type { EthernetFrame, InFlightPacket } from '../../types/packets';
 import type { RouteEntry } from '../../types/routing';
-import type { PacketHop, PacketTrace } from '../../types/simulation';
+import { isNeighborLookupHop, type PacketHop, type PacketTrace } from '../../types/simulation';
 import type { NetworkTopology } from '../../types/topology';
 import { assertDefined } from '../../utils';
 
@@ -156,7 +156,7 @@ export async function packetAtStep(
 export function dataHops(trace: Pick<PacketTrace, 'hops'>): PacketHop[] {
   const out: PacketHop[] = [];
   for (const hop of trace.hops) {
-    if (hop.event === 'arp-request' || hop.event === 'arp-reply') continue;
+    if (isNeighborLookupHop(hop)) continue;
     const last = out[out.length - 1];
     if (last?.event === 'create' && hop.event === 'forward' && hop.nodeId === last.nodeId) {
       out[out.length - 1] = { ...hop, event: 'create' };

@@ -13,6 +13,7 @@ import type { PacketTrace } from '../../src/types/simulation';
 import type { ReassemblyState, TransferChunk, TransferMessage } from '../../src/types/transfer';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
+import { isNeighborLookupHop } from '../../src/types/simulation';
 
 const DEFAULT_PAYLOAD = 'Hello, this is a test message from Server A to Server B!';
 const TOPOLOGY = dataTransferDemoTopology();
@@ -201,9 +202,7 @@ function IpMacSummary({
   const trace = sampleChunk?.traceId ? tracesById.get(sampleChunk.traceId) : undefined;
   // The packet's own hops: no ARP rows, and a sender that asked first counts
   // once, with the addresses it sent with (its `create` has no destination MAC yet).
-  const hops = (
-    trace?.hops.filter((hop) => hop.event !== 'arp-request' && hop.event !== 'arp-reply') ?? []
-  ).filter(
+  const hops = (trace?.hops.filter((hop) => !isNeighborLookupHop(hop)) ?? []).filter(
     (hop, index, rows) =>
       !(
         hop.event === 'create' &&

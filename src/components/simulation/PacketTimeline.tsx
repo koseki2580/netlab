@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { floodNote } from './floodWords';
+import { useNdpT } from './ndpWords';
 import type { TranslatorFn } from '../../i18n/types';
 import { useI18n } from '../../i18n/useI18n';
 import { traceEventId } from '../../sandbox/annotations/anchors';
@@ -21,6 +22,8 @@ const EVENT_COLORS: Record<string, string> = {
   drop: 'var(--netlab-accent-red)',
   'arp-request': 'var(--netlab-accent-orange)',
   'arp-reply': 'var(--netlab-accent-orange)',
+  'ndp-solicit': 'var(--netlab-accent-orange)',
+  'ndp-advert': 'var(--netlab-accent-orange)',
 };
 
 const EVENT_LABELS: Record<string, string> = {
@@ -30,6 +33,8 @@ const EVENT_LABELS: Record<string, string> = {
   drop: 'DROP',
   'arp-request': 'ARP-REQ',
   'arp-reply': 'ARP-REP',
+  'ndp-solicit': 'NS',
+  'ndp-advert': 'NA',
 };
 
 // The codes stay as they are (the guide names them); each gets a plain gloss.
@@ -40,6 +45,8 @@ const EVENT_GLOSS_KEYS: Record<string, string> = {
   drop: 'simulation.panelGloss.event.drop',
   'arp-request': 'simulation.panelGloss.event.arpRequest',
   'arp-reply': 'simulation.panelGloss.event.arpReply',
+  'ndp-solicit': 'simulation.panelGloss.event.ndpSolicit',
+  'ndp-advert': 'simulation.panelGloss.event.ndpAdvert',
 };
 
 function formatDropReason(reason: string | undefined): string | null {
@@ -206,7 +213,8 @@ function HopRow({
   onClick: () => void;
   onEdit: (anchorElement: HTMLElement) => void;
 }) {
-  const { t, locale } = useI18n();
+  const { locale } = useI18n();
+  const t = useNdpT();
   const color = EVENT_COLORS[hop.event] ?? 'var(--netlab-text-secondary)';
   const label = EVENT_LABELS[hop.event] ?? hop.event.toUpperCase();
   const glossKey = EVENT_GLOSS_KEYS[hop.event];
@@ -328,6 +336,16 @@ function HopRow({
             : t('simulation.timeline.arpIs', { ip: hop.srcIp, mac: hop.arpFrame.srcMac })}
         </span>
       )}
+      {hop.ndpFrame && (
+        <span style={{ color: 'var(--netlab-accent-orange)', fontSize: 9, paddingLeft: 28 }}>
+          {hop.event === 'ndp-solicit'
+            ? t('simulation.timeline.arpWho', { ip: hop.ndpFrame.payload.payload.targetAddress })
+            : t('simulation.timeline.arpIs', {
+                ip: hop.ndpFrame.payload.payload.targetAddress,
+                mac: hop.ndpFrame.srcMac,
+              })}
+        </span>
+      )}
       {annotation && (
         <span style={{ color: 'var(--netlab-text-secondary)', fontSize: 9, paddingLeft: 28 }}>
           {annotation}
@@ -344,7 +362,7 @@ export interface PacketTimelineProps {
 }
 
 export const PacketTimeline = memo(function PacketTimeline({ filter }: PacketTimelineProps = {}) {
-  const { t } = useI18n();
+  const t = useNdpT();
   const { topology } = useNetlabContext();
   const { state, exportPcap } = useSimulation();
   const playback = usePlayback();

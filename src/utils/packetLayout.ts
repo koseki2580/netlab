@@ -1,3 +1,4 @@
+import type { HeaderValues, ProtocolWire } from '../protocols/pack/types';
 import type {
   ArpEthernetFrame,
   DhcpMessage,
@@ -5,6 +6,7 @@ import type {
   EthernetFrame,
   HttpMessage,
   IcmpMessage,
+  Icmpv6Message,
   IpPacket,
   Ipv6Packet,
   RawPayload,
@@ -265,8 +267,37 @@ export function buildIpv4PacketBytes(ip: IpPacket): number[] {
   return [...buildIpv4HeaderBytes(ip), ...buildIpv4PayloadBytes(ip)];
 }
 
+/** The ICMPv6 pack's codec, set when its wire tier loads (`protocolPacks.loadWire('icmpv6')`). */
+export interface Icmpv6Codec {
+  bytes(ip: Ipv6Packet & { payload: Icmpv6Message }): number[];
+  values(ip: Ipv6Packet & { payload: Icmpv6Message }): HeaderValues;
+  wireFor(message: Icmpv6Message): ProtocolWire;
+}
+
+let icmpv6Codec: Icmpv6Codec | undefined;
+
+/** Called by the ICMPv6 wire tier's loader; the worker loads it before its first send. */
+export function registerIcmpv6Codec(codec: Icmpv6Codec): void {
+  icmpv6Codec = codec;
+}
+
+export function getIcmpv6Codec(): Icmpv6Codec | undefined {
+  return icmpv6Codec;
+}
+
+/**
+ * An IPv6 packet's payload. ICMPv6 and ND go through their packs, checksum computed
+ * (REQ-322), once the ICMPv6 wire tier has loaded; before that, as they always were.
+ */
+export function buildIpv6PayloadBytes(ip: Ipv6Packet): number[] {
+  const payload = ip.payload;
+  return icmpv6Codec && ip.nextHeader === 58 && 'type' in payload && 'code' in payload
+    ? icmpv6Codec.bytes({ ...ip, payload })
+    : buildTransportBytes(payload);
+}
+
 export function buildIpv6HeaderBytes(ip: Ipv6Packet): number[] {
-  const payloadBytes = buildTransportBytes(ip.payload);
+  const payloadBytes = buildIpv6PayloadBytes(ip);
   const trafficClass = ip.trafficClass ?? 0;
   const flowLabel = ip.flowLabel ?? 0;
   const firstWord = ((6 & 0x0f) << 28) | ((trafficClass & 0xff) << 20) | (flowLabel & 0x000fffff);
@@ -282,7 +313,7 @@ export function buildIpv6HeaderBytes(ip: Ipv6Packet): number[] {
 }
 
 export function buildIpv6PacketBytes(ip: Ipv6Packet): number[] {
-  return [...buildIpv6HeaderBytes(ip), ...buildTransportBytes(ip.payload)];
+  return [...buildIpv6HeaderBytes(ip), ...buildIpv6PayloadBytes(ip)];
 }
 
 /** An ARP frame without a preamble, with its FCS. */

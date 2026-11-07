@@ -23,6 +23,7 @@ import type { InFlightPacket } from '../../src/types/packets';
 import type { PacketHop, PacketTrace } from '../../src/types/simulation';
 import { NAT_DEMO_TOPOLOGY } from './natDemoTopology';
 import { readDemoEmbedParams } from '../embedParams';
+import { isNeighborLookupHop } from '../../src/types/simulation';
 
 export { NAT_DEMO_TOPOLOGY };
 
@@ -305,7 +306,7 @@ const HOME_NODE: Readonly<Record<string, { id: string; label: string }>> = {
  * that rewrite an address. Later sends ask nothing: the answers are remembered.
  */
 export function isNatLessonRow(item: PacketHop | PacketTrace): boolean {
-  return !('event' in item) || (item.event !== 'arp-request' && item.event !== 'arp-reply');
+  return !('event' in item) || !isNeighborLookupHop(item);
 }
 
 /** The way back, said in words once a reply has been sent. */

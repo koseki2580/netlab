@@ -22,6 +22,7 @@ import type {
   HttpMessage,
   IcmpMessage,
   IpPacket,
+  Ipv6Packet,
   RawPayload,
   TcpSegment,
   UdpDatagram,
@@ -35,6 +36,9 @@ import {
   buildIpv4FlagsAndFragmentOffset,
   buildIpv4HeaderBytes,
   buildIpv4PayloadBytes,
+  buildIpv6HeaderBytes,
+  buildIpv6PayloadBytes,
+  getIcmpv6Codec,
   buildTcpFlagsByte,
   formatDhcpMessage,
   formatHttpMessage,
@@ -47,9 +51,11 @@ import {
 } from './packetLayout';
 import { dnsMessageToValues, dnsWire } from '../protocols/dns/wire';
 import { greHeaderToValues, greWire } from '../protocols/gre/wire';
+import { ipv6ToValues } from '../protocols/ipv6/values';
 import { deriveAnnotatedFields } from '../protocols/pack/wire';
 import { protocolPacks } from '../protocols/packs';
 import type { GreRawPayload } from '../types/tunneling';
+import { isIpv6Packet } from '../types/packets';
 import { getRequired } from './typedAccess';
 
 export type LayerTag = 'L2' | 'L3' | 'L4' | 'L7' | 'ARP' | 'raw';
@@ -455,10 +461,54 @@ function serializeL3(ip: IpPacket, baseOffset: number): LayerResult {
   };
 }
 
+/**
+ * An IPv6 packet: the IPv6 header, then ICMPv6/ND, TCP or UDP rows (REQ-323). The
+ * IPv6 and ICMPv6 rows come from their packs once loaded (the viewer loads them on
+ * show); until then each is one row, so this stays synchronous.
+ */
+function serializeIpv6(ip: Ipv6Packet, baseOffset: number): LayerResult {
+  const payloadBytes = buildIpv6PayloadBytes(ip);
+  const ipv6 = protocolPacks.get('ipv6') ?? protocolPacks.wire('ipv6');
+  const coarse = (name: string, packId: string, at: number, byteLength: number) => ({
+    name,
+    layer: 'L3' as const,
+    byteOffset: at,
+    byteLength,
+    displayValue: '',
+    packId,
+  });
+  const header = ipv6
+    ? deriveAnnotatedFields(ipv6, ipv6ToValues(ip, payloadBytes.length), { baseOffset })
+    : [coarse('IPv6 Header', 'ipv6', baseOffset, 40)];
+  const at = baseOffset + 40;
+  const payload = ip.payload;
+  const codec = getIcmpv6Codec();
+  const rows =
+    ip.nextHeader === 58 && 'type' in payload && 'code' in payload
+      ? codec
+        ? deriveAnnotatedFields(
+            protocolPacks.get(codec.wireFor(payload).id) ?? codec.wireFor(payload),
+            codec.values({ ...ip, payload }),
+            { baseOffset: at },
+          )
+        : [coarse('ICMPv6 Message', 'icmpv6', at, payloadBytes.length)]
+      : isRawPayload(payload)
+        ? serializeL7(payload, at).fields
+        : isTcpSegment(payload)
+          ? serializeTcp(payload, at).fields
+          : 'srcPort' in payload
+            ? serializeUdp(payload, at).fields
+            : [];
+  return { bytes: [...buildIpv6HeaderBytes(ip), ...payloadBytes], fields: [...header, ...rows] };
+}
+
 function serializeL2(frame: EthernetFrame): LayerResult {
   const preambleBytes = frame.preamble ?? DEFAULT_ETHERNET_PREAMBLE;
   const l3Base = preambleBytes.length + 14;
-  const l3Result = serializeL3(frame.payload, l3Base);
+  const ipv6 = isIpv6Packet(frame.payload);
+  const l3Result = isIpv6Packet(frame.payload)
+    ? serializeIpv6(frame.payload, l3Base)
+    : serializeL3(frame.payload, l3Base);
   const fcs = frame.fcs ?? 0;
   const fcsBytes = uint32BE(fcs);
   const rawBytes = buildEthernetFrameBytes(frame);
@@ -492,7 +542,7 @@ function serializeL2(frame: EthernetFrame): LayerResult {
         layer: 'L2',
         byteOffset: preambleBytes.length + 12,
         byteLength: 2,
-        displayValue: `${formatHex(frame.etherType, 4)} (IPv4)`,
+        displayValue: `${formatHex(frame.etherType, 4)} (${ipv6 ? 'IPv6' : 'IPv4'})`,
       },
       ...l3Result.fields,
       {

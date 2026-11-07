@@ -42,6 +42,11 @@ const PROMPTS: Readonly<Record<QuestionAsk, Localised>> = {
     "On that cable, what is the packet's TTL?",
     'その回線で、パケットの TTL はいくつですか。',
   ),
+  'dns-asked': L(
+    'Which server answers this query of the resolver?',
+    'リゾルバのこの問い合わせに答えるのは、どのサーバーですか。',
+  ),
+  'dns-ttl-left': L('What TTL does the answer carry?', '答えの TTL はいくつですか。'),
 };
 
 /** The right one first, then the others, each with the mistake it is; the order comes from the seed. */

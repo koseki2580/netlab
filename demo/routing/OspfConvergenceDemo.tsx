@@ -47,6 +47,7 @@ import { LessonCanvas, LessonNote, LessonPanel, LessonSplit } from '../component
 import { useViewport } from '../../src/utils/useViewport';
 import { LinkCostsPanel } from './OspfLinkCosts';
 import { routeNextHops } from './routeDisplay';
+import { isNeighborLookupHop } from '../../src/types/simulation';
 
 /** The inter-router link this lesson fails; the assessment names the same id. */
 const PRIMARY_LINK_ID = 'e-r2-r4';
@@ -91,7 +92,7 @@ export interface ProbeRun {
 export function probePath(trace: PacketTrace): string {
   const labels: string[] = [];
   for (const hop of trace.hops) {
-    if (hop.event === 'arp-request' || hop.event === 'arp-reply') continue;
+    if (isNeighborLookupHop(hop)) continue;
     if (labels[labels.length - 1] !== hop.nodeLabel) labels.push(hop.nodeLabel);
     if (hop.event === 'deliver' || hop.event === 'drop') break;
   }

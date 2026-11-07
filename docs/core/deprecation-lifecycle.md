@@ -131,3 +131,20 @@ measure (the engine keeps what was learned under `'persist'`), or read the hops 
 rows.
 
 Nothing stored changes.
+
+### IPv6 neighbours are found by NDP on the wire
+
+**What changed.** An IPv6 sender, host or router, now resolves the address it hands a frame to by
+Neighbor Discovery (RFC 4861 §7.2) on first use, under the same rules and `arpCache` option as
+ARP. `PacketHop['event']` gains two values, `'ndp-solicit'` and `'ndp-advert'`: a `switch` over it
+that was exhaustive needs the two cases. Their hops carry `ndpFrame`, the frame as on the wire, whose
+IPv6 payload is an `NdpMessage` (RFC 4861 §4.3/§4.4: `type` 135 or 136, `code`, `checksum`,
+`targetAddress`, the NA's `flags` and the link-layer address `options`), and `ndpState`
+(`'INCOMPLETE'` on the solicitation, `'REACHABLE'` on the advertisement). A switch copies a frame
+to an IPv6 multicast MAC (33:33) out of every port of its VLAN. `isNeighborLookupHop` tells ARP and
+NDP hops from the packet's own.
+
+**How to keep the earlier behaviour.** There is no option for it. Skip the NDP hops as you skip the
+ARP ones (`isNeighborLookupHop`), or send once first under `'persist'`.
+
+Nothing stored changes.

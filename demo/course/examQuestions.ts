@@ -117,6 +117,15 @@ export const EXAM_PATH: readonly PathStop[] = [
     },
   },
   {
+    id: 'dns-resolution',
+    path: lessonPath('/services/dns-resolution'),
+    title: { en: 'DNS resolution and caching', ja: 'DNS の名前解決とキャッシュ' },
+    teaches: {
+      en: 'How a name is found, and why the second time is quicker',
+      ja: '名前の見つけ方と、2 回目が速い理由',
+    },
+  },
+  {
     id: 'nat',
     path: lessonPath('/simulation/nat'),
     title: { en: 'NAT / PAT', ja: 'NAT / PAT' },
@@ -256,23 +265,35 @@ export const EXAM_QUESTIONS: readonly ExamQuestion[] = [
     taughtBy: 'arp',
   },
   {
-    id: 'route-table',
+    id: 'dns-second-lookup',
     prompt: {
-      en: 'A router’s table has two rows. Row 1: addresses in 10.0.0.0/24 go out of the left side. Row 2: addresses in 192.168.1.0/24 go out of the right side. A packet for 192.168.1.50 arrives. What does the router do?',
-      ja: 'ルータの経路表に 2 行あります。1 行目：10.0.0.0/24 あては左側へ。2 行目：192.168.1.0/24 あては右側へ。そこへ 192.168.1.50 あてのパケットが届きました。ルータはどうしますか？',
+      en: 'Your laptop opens www.example.com. A minute later a colleague in the same office opens it too. Both ask the office’s DNS server, which finds names for them and keeps each answer for its TTL, here 300 seconds. What does that server do for your colleague?',
+      ja: 'あなたのノート PC で www.example.com を開きました。1 分後、同じ会社の同僚も開きます。どちらも会社の DNS サーバーに聞きます。このサーバーは代わりに名前を探し、答えを TTL のあいだ（ここでは 300 秒）覚えておきます。同僚には、どうしますか。',
     },
     options: [
-      { en: 'Sends it out of the left side only', ja: '左側だけに送り出す' },
-      { en: 'Sends it out of the right side only', ja: '右側だけに送り出す' },
-      { en: 'Sends it out of both sides, to be safe', ja: '念のため両側に送り出す' },
-      { en: 'Drops it, as no row says 192.168.1.50', ja: '表に .50 がないので捨てる' },
+      {
+        en: 'Asks the root, then the com server, then example.com’s server again',
+        ja: 'もう一度ルート、com、example.com のサーバーの順に聞く',
+      },
+      {
+        en: 'Answers at once from what it kept, with the TTL now about 240',
+        ja: '覚えている答えをすぐ返す。TTL は残りの約 240 になる',
+      },
+      {
+        en: 'Tells your colleague to ask your laptop for the address',
+        ja: 'アドレスはあなたの PC に聞くよう同僚に伝える',
+      },
+      {
+        en: 'Answers from what it kept, with the TTL of 300 again',
+        ja: '覚えている答えを返す。TTL は前と同じ 300 のまま',
+      },
     ],
     answer: 1,
     explanation: {
-      en: 'It goes out of the right side. A row covers a range of addresses, not one address: 192.168.1.0/24 means every address that starts with 192.168.1, so 192.168.1.50 fits row 2. See Client and server, and step 6 of Getting started.',
-      ja: '右側へ送ります。各行は 1 つのアドレスではなく、アドレスの範囲を表します。192.168.1.0/24 は「192.168.1 で始まるアドレス全部」なので、192.168.1.50 は 2 行目に当てはまります。レッスン「クライアントとサーバ」と、入門コースのステップ 6 で見られます。',
+      en: 'The first time, the DNS server had to find the name: it asked a root server, which pointed it to the com servers, which pointed it to example.com’s own server, which gave the address. It keeps that answer for its TTL, so the next person is answered at once. What it hands on is what is left of the time: 300 seconds minus the 60 it has kept it, so about 240. After 300 seconds it asks again. See DNS resolution and caching.',
+      ja: '1 回目は、DNS サーバーが名前を探す必要がありました。ルートサーバーに聞くと com のサーバーを教えられ、com のサーバーに聞くと example.com のサーバーを教えられ、そこがアドレスを答えました。サーバーはこの答えを TTL のあいだ覚えておくので、次の人にはすぐ答えます。渡す TTL は残りの時間で、300 秒から覚えていた 60 秒を引いた、約 240 です。300 秒が過ぎたら、また聞きに行きます。「DNS の名前解決とキャッシュ」を見てください。',
     },
-    taughtBy: 'routing',
+    taughtBy: 'dns-resolution',
   },
   {
     id: 'tcp-next',

@@ -3,7 +3,12 @@ import { tunnelRows } from './tunnelWords';
 import { useI18n } from '../../i18n/useI18n';
 import { routingVerdict } from '../../simulation/pipeline/dispatch/routingHelpers';
 import { useSimulation } from '../../simulation/SimulationContext';
-import type { NatTranslation, PacketHop, RoutingDecision } from '../../types/simulation';
+import {
+  isNeighborLookupHop,
+  type NatTranslation,
+  type PacketHop,
+  type RoutingDecision,
+} from '../../types/simulation';
 import { CARD, FIELD_ROW, MONO_FONT_STACK, SECTION_HEADER, TEXT } from '../_styles/tokens';
 import { useNetlabContext } from '../NetlabContext';
 import { floodCopiesLabel, floodCopiesText } from './floodWords';
@@ -17,6 +22,8 @@ const EVENT_COLORS: Record<PacketHop['event'], string> = {
   drop: 'var(--netlab-accent-red)',
   'arp-request': 'var(--netlab-accent-orange)',
   'arp-reply': 'var(--netlab-accent-orange)',
+  'ndp-solicit': 'var(--netlab-accent-orange)',
+  'ndp-advert': 'var(--netlab-accent-orange)',
 };
 
 function resolveNodeLabel(
@@ -38,7 +45,7 @@ function getTtlOut(
   hop: PacketHop,
   nodes: { id: string; data: { label: string; role: string } }[],
 ): number {
-  if (hop.event === 'arp-request' || hop.event === 'arp-reply') {
+  if (isNeighborLookupHop(hop)) {
     return 0;
   }
   if (hop.event === 'forward' && isRouterNode(hop.nodeId, nodes)) {

@@ -57,13 +57,18 @@ describe('DnsServer', () => {
     expect(payload?.answers[0]?.address).toBe('192.168.1.10');
   });
 
-  it('returns null for an unknown hostname', () => {
+  // TC-1231: a name the server does not hold is answered with NXDOMAIN, not silence
+  // (RFC 1035 §4.1.1). It used to return null, so the client waited for nothing.
+  it('answers an unknown hostname with NXDOMAIN', () => {
     const query = buildDnsQuery(
       'client-1',
       'unknown.example.com',
       TOPOLOGY,
       new AddressPlane(TOPOLOGY),
     )!;
-    expect(handleDnsQuery(query, TOPOLOGY)).toBeNull();
+    const response = handleDnsQuery(query, TOPOLOGY);
+    const transport = response?.frame.payload.payload;
+    const message = transport && 'payload' in transport ? transport.payload : null;
+    expect(message).toMatchObject({ isResponse: true, answers: [], rcode: 3 });
   });
 });

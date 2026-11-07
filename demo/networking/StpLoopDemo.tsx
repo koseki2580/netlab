@@ -16,6 +16,7 @@ import type { InFlightPacket } from '../../src/types/packets';
 import type { NetworkTopology, SwitchPort } from '../../src/types/topology';
 import DemoShell from '../DemoShell';
 import { LESSON_CARD } from '../components/lessonStyles';
+import { isNeighborLookupHop } from '../../src/types/simulation';
 
 type SwitchId = 'switch-a' | 'switch-b' | 'switch-c';
 type HostId = 'host-a' | 'host-b' | 'host-c';
@@ -483,7 +484,7 @@ function TracePanel({ lastScenario }: { lastScenario: string | null }) {
   // The packet's own way: the ARP rows a first send carries are beside it.
   const hopLabels =
     activeTrace?.hops
-      .filter((hop) => hop.event !== 'arp-request' && hop.event !== 'arp-reply')
+      .filter((hop) => !isNeighborLookupHop(hop))
       .map((hop) => hop.nodeLabel)
       .filter((label, index, labels) => label !== labels[index - 1])
       .join(' → ') ?? t('No trace yet', 'まだ通信はありません');

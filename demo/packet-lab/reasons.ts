@@ -259,6 +259,27 @@ export const REASSEMBLES_ANYWAY = L(
  * of its own. None of these names the right answer.
  */
 export const PICK_MESSAGES: Readonly<Record<string, Localised>> = {
+  // Which server the resolver asks (p2-dns-step).
+  'dns-cached-already': L(
+    'That server was asked before: its referral is still in the resolver’s cache, so the resolver starts below it.',
+    'そのサーバーには前に聞いています。委任の答えがまだリゾルバのキャッシュにあるので、リゾルバはその下から始めます。',
+  ),
+  'dns-not-yet': L(
+    'Not yet: the resolver reaches that server only after a referral that sends it there.',
+    'まだです。リゾルバがそのサーバーに聞くのは、そこへ回す委任を受け取ってからです。',
+  ),
+  'dns-not-cached': L(
+    'The cache does not hold this answer yet, so the resolver has to ask.',
+    'キャッシュにはまだこの答えがないので、リゾルバは聞きに行きます。',
+  ),
+  'dns-cached-answer': L(
+    'The answer itself is still in the cache (its TTL has not run out), so the resolver asks nobody.',
+    '答えそのものがまだキャッシュにあります（TTL が残っている）。リゾルバはだれにも聞きません。',
+  ),
+  'dns-ttl-wrong': L(
+    'A cached answer carries its TTL minus the seconds it has been kept.',
+    'キャッシュからの答えの TTL は、もとの TTL から、覚えていた秒数を引いた値です。',
+  ),
   // The frame on a cable after a router: its source MAC.
   'src-sender': L(
     "That is the sender's MAC. It is on the frame only on the first cable; every router writes the frame anew.",

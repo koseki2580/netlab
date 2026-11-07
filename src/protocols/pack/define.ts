@@ -27,7 +27,7 @@ const TRANSPORTS = new Set(['udp', 'tcp', 'sctp']);
 
 function text(value: string | undefined, path: string): void {
   if (typeof value !== 'string' || value.trim() === '') {
-    throw descriptorError('pack/missing-text', 'Text is empty', path);
+    throw descriptorError('pack/missing-text', path);
   }
 }
 
@@ -38,27 +38,19 @@ function bilingual(value: Bilingual | undefined, path: string): void {
 
 function inRange(value: number | undefined, max: number, min: number, path: string): void {
   if (value !== undefined && (!Number.isInteger(value) || value < min || value > max)) {
-    throw descriptorError('pack/value-out-of-range', `${value} is outside ${min}–${max}`, path);
+    throw descriptorError('pack/value-out-of-range', path);
   }
 }
 
 /** Checks the identity part of a pack or of a lazy registration. */
 export function validateIdentity(identity: ProtocolIdentity): void {
   if (typeof identity.id !== 'string' || !ID_PATTERN.test(identity.id)) {
-    throw descriptorError(
-      'pack/invalid-id',
-      `Pack id "${String(identity.id)}" must match ${ID_PATTERN}`,
-      'id',
-    );
+    throw descriptorError('pack/invalid-id', 'id');
   }
   text(identity.name?.short, 'name.short');
   bilingual(identity.name, 'name');
   if (!LAYERS.has(identity.layer)) {
-    throw descriptorError(
-      'pack/invalid-identity',
-      `Layer "${identity.layer}" is not L2, L3, L4 or L7`,
-      'layer',
-    );
+    throw descriptorError('pack/invalid-identity', 'layer');
   }
   const numbers = identity.numbers ?? {};
   inRange(numbers.ipProtocol, 255, 0, 'numbers.ipProtocol');
@@ -68,11 +60,7 @@ export function validateIdentity(identity: ProtocolIdentity): void {
   }
   for (const claim of numbers.ports ?? []) {
     if (!TRANSPORTS.has(claim.transport)) {
-      throw descriptorError(
-        'pack/invalid-identity',
-        `Transport "${claim.transport}" is unknown`,
-        'numbers.ports',
-      );
+      throw descriptorError('pack/invalid-identity', 'numbers.ports');
     }
     inRange(claim.port, 65535, 1, 'numbers.ports');
   }
@@ -88,22 +76,13 @@ function validateVersions(d: ProtocolDescriptor): string {
     text(spec.id, 'specs');
     text(spec.title, `specs.${spec.id}.title`);
     inRange(spec.year, 9999, 1900, `specs.${spec.id}.year`);
-    if (specIds.has(spec.id))
-      throw descriptorError(
-        'pack/duplicate-key',
-        `Spec ${spec.id} is listed twice`,
-        `specs.${spec.id}`,
-      );
+    if (specIds.has(spec.id)) throw descriptorError('pack/duplicate-key', `specs.${spec.id}`);
     specIds.add(spec.id);
   }
   const ids = d.versions.map((v) => v.id);
   const defaults = d.versions.filter((v) => v.default === true);
   if (ids.length === 0 || new Set(ids).size !== ids.length || defaults.length !== 1) {
-    throw descriptorError(
-      'pack/invalid-versions',
-      'A pack needs at least one version, unique version ids and exactly one default version',
-      'versions',
-    );
+    throw descriptorError('pack/invalid-versions', 'versions');
   }
   for (const version of d.versions) {
     const path = `versions.${version.id}`;
@@ -112,19 +91,11 @@ function validateVersions(d: ProtocolDescriptor): string {
       version.extends !== undefined &&
       (version.extends === version.id || !ids.includes(version.extends))
     ) {
-      throw descriptorError(
-        'pack/unknown-reference',
-        `extends "${version.extends}", which is not another version`,
-        path,
-      );
+      throw descriptorError('pack/unknown-reference', path);
     }
     const missing = version.specs.find((s) => !specIds.has(s));
     if (missing !== undefined) {
-      throw descriptorError(
-        'pack/unknown-reference',
-        `cites "${missing}", which is not in specs`,
-        path,
-      );
+      throw descriptorError('pack/unknown-reference', path);
     }
     if (version.whatsNew) bilingual(version.whatsNew, `${path}.whatsNew`);
   }
@@ -136,69 +107,66 @@ function validateField(
   earlier: readonly HeaderField[],
   scope: string,
   versions: readonly string[],
+  last = false,
 ): void {
   const path = `${scope}.${String(field.key)}`;
   if (typeof field.key !== 'string' || !KEY_PATTERN.test(field.key)) {
-    throw descriptorError('pack/invalid-id', `Field key must match ${KEY_PATTERN}`, path);
+    throw descriptorError('pack/invalid-id', path);
   }
   text(field.name, `${path}.name`);
   bilingual(field.meaning, `${path}.meaning`);
-  if (field.example === undefined)
-    throw descriptorError('pack/missing-example', 'Every field needs an example', path);
+  if (field.example === undefined) throw descriptorError('pack/missing-example', path);
 
-  const unknown = (what: string) => descriptorError('pack/unknown-reference', what, path);
+  const unknown = () => descriptorError('pack/unknown-reference', path);
   const badVersion = field.in?.find((v) => !versions.includes(v));
-  if (badVersion !== undefined || field.in?.length === 0)
-    throw unknown(`in: "${String(badVersion)}" is not a version`);
+  if (badVersion !== undefined || field.in?.length === 0) throw unknown();
   if (
     field.presentIf !== undefined &&
     !earlier.some((f) => f.key === field.presentIf && f.type === 'flag')
   ) {
-    throw unknown(`presentIf "${field.presentIf}" is not an earlier flag`);
+    throw unknown();
   }
   if (
     field.lengthFrom !== undefined &&
     !earlier.some((f) => f.key === field.lengthFrom && isNumeric(f))
   ) {
-    throw unknown(`lengthFrom "${field.lengthFrom}" is not an earlier number field`);
+    throw unknown();
+  }
+  if (field.when && !earlier.some((f) => f.key === field.when!.field && isNumeric(f))) {
+    throw unknown();
   }
 
-  const width = (message: string) => descriptorError('pack/invalid-width', message, path);
+  const width = () => descriptorError('pack/invalid-width', path);
   if (isNumeric(field)) {
     const bits = fieldBits(field);
-    if (field.type === 'flag' && field.bits !== undefined && field.bits !== 1)
-      throw width('A flag is 1 bit');
-    if (bits === undefined || !Number.isInteger(bits) || bits < 1 || bits > 32)
-      throw width('Number fields are 1–32 bits');
+    if (field.type === 'flag' && field.bits !== undefined && field.bits !== 1) throw width();
+    if (bits === undefined || !Number.isInteger(bits) || bits < 1 || bits > 32) throw width();
   } else if (field.type === 'bytes') {
     const fixed = field.bits !== undefined;
+    const rest = !fixed && field.lengthFrom === undefined;
     if (
-      fixed === (field.lengthFrom !== undefined) ||
+      (fixed && field.lengthFrom !== undefined) ||
+      (rest && !last) ||
       (fixed && (field.bits! <= 0 || field.bits! % 8 !== 0))
     ) {
-      throw width('A bytes field has either whole-byte bits or lengthFrom');
+      throw width();
     }
   } else if (field.bits !== undefined && field.bits !== fieldBits(field)) {
-    throw width(`A ${field.type} field has a fixed width`);
+    throw width();
   }
 
   if (field.type === 'enum') {
-    if (!field.values || field.values.length === 0) throw width('An enum needs values');
+    if (!field.values || field.values.length === 0) throw width();
     for (const v of field.values) {
       text(v.name, `${path}.values`);
       if (v.meaning) bilingual(v.meaning, `${path}.values.${v.name}.meaning`);
       if (typeof encodeValue(field, v.value) === 'string') {
-        throw descriptorError(
-          'pack/value-out-of-range',
-          `Enum value ${v.value} does not fit`,
-          path,
-        );
+        throw descriptorError('pack/value-out-of-range', path);
       }
     }
   }
   const encoded = encodeValue(field, field.example);
-  if (typeof encoded === 'string')
-    throw descriptorError('pack/value-out-of-range', `Example: ${encoded}`, path);
+  if (typeof encoded === 'string') throw descriptorError('pack/value-out-of-range', path);
 }
 
 function validateList(
@@ -206,7 +174,9 @@ function validateList(
   scope: string,
   versions: readonly string[],
 ): void {
-  fields.forEach((field, index) => validateField(field, fields.slice(0, index), scope, versions));
+  fields.forEach((field, index) =>
+    validateField(field, fields.slice(0, index), scope, versions, index === fields.length - 1),
+  );
   fields.forEach((field, index) => {
     const mine = versionsOf(field, versions);
     const clash = fields
@@ -216,39 +186,23 @@ function validateList(
           other.key === field.key && versionsOf(other, versions).some((v) => mine.includes(v)),
       );
     if (clash) {
-      throw descriptorError(
-        'pack/duplicate-key',
-        `Key "${field.key}" is used twice in one version`,
-        `${scope}.${field.key}`,
-      );
+      throw descriptorError('pack/duplicate-key', `${scope}.${field.key}`);
     }
   });
   for (const version of versions) {
     let bit = 0;
-    for (const field of fieldsIn(fields, version)) {
+    for (const field of fieldsIn(fields, version).filter((f) => !f.when)) {
       const bits = fieldBits(field);
       if ((bits === undefined || field.presentIf !== undefined) && bit % 8 !== 0) {
-        throw descriptorError(
-          'pack/misaligned',
-          `Starts ${bit % 8} bits into a byte in ${version}`,
-          `${scope}.${field.key}`,
-        );
+        throw descriptorError('pack/misaligned', `${scope}.${field.key}`);
       }
       if (field.presentIf !== undefined && (bits ?? 0) % 8 !== 0) {
-        throw descriptorError(
-          'pack/misaligned',
-          'A conditional field is whole bytes',
-          `${scope}.${field.key}`,
-        );
+        throw descriptorError('pack/misaligned', `${scope}.${field.key}`);
       }
       bit += bits ?? 0;
     }
     if (bit % 8 !== 0) {
-      throw descriptorError(
-        'pack/misaligned',
-        `Ends ${bit % 8} bits into a byte in ${version}`,
-        scope,
-      );
+      throw descriptorError('pack/misaligned', scope);
     }
   }
 }
@@ -260,26 +214,21 @@ function validateSection(
 ): void {
   const path = `sections.${String(section.key)}`;
   if (typeof section.key !== 'string' || !KEY_PATTERN.test(section.key)) {
-    throw descriptorError('pack/invalid-id', `Section key must match ${KEY_PATTERN}`, path);
+    throw descriptorError('pack/invalid-id', path);
   }
   if (
     d.header.some((f) => f.key === section.key) ||
     d.sections!.filter((s) => s.key === section.key).length > 1
   ) {
-    throw descriptorError(
-      'pack/duplicate-key',
-      `Section key "${section.key}" is already used`,
-      path,
-    );
+    throw descriptorError('pack/duplicate-key', path);
   }
   text(section.name, `${path}.name`);
   bilingual(section.meaning, `${path}.meaning`);
-  if (!d.header.some((f) => f.key === section.countFrom && isNumeric(f))) {
-    throw descriptorError(
-      'pack/unknown-reference',
-      `countFrom "${section.countFrom}" is not a header number field`,
-      path,
-    );
+  if (
+    section.countFrom !== undefined &&
+    !d.header.some((f) => f.key === section.countFrom && isNumeric(f))
+  ) {
+    throw descriptorError('pack/unknown-reference', path);
   }
   validateList(section.fields, path, versions);
 }
@@ -290,8 +239,8 @@ export function defineProtocol(descriptor: ProtocolDescriptor): ProtocolPack {
   if (!SUPPORTED_PACK_API_VERSIONS.includes(d.apiVersion)) {
     throw descriptorError(
       'pack/unsupported-api-version',
-      `apiVersion ${String(d.apiVersion)} is not supported; supported: ${SUPPORTED_PACK_API_VERSIONS.join(', ')}`,
       'apiVersion',
+      `supported: ${SUPPORTED_PACK_API_VERSIONS.join(', ')}`,
     );
   }
   validateIdentity(d);
@@ -303,11 +252,7 @@ export function defineProtocol(descriptor: ProtocolDescriptor): ProtocolPack {
     d.label !== undefined &&
     !d.header.some((f) => f.key === d.label!.field && f.type === 'enum')
   ) {
-    throw descriptorError(
-      'pack/unknown-reference',
-      `label field "${d.label.field}" is not a header enum`,
-      'label',
-    );
+    throw descriptorError('pack/unknown-reference', 'label');
   }
   return Object.freeze({ ...d, defaultVersion });
 }

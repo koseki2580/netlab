@@ -26,6 +26,8 @@ const EVENT_META: Record<PacketHop['event'], { label: string; color: string }> =
   drop: { label: 'DROP', color: 'var(--netlab-accent-red)' },
   'arp-request': { label: 'ARP-REQ', color: 'var(--netlab-accent-orange)' },
   'arp-reply': { label: 'ARP-REP', color: 'var(--netlab-accent-orange)' },
+  'ndp-solicit': { label: 'NS', color: 'var(--netlab-accent-orange)' },
+  'ndp-advert': { label: 'NA', color: 'var(--netlab-accent-orange)' },
 };
 
 function shortSessionId(sessionId: string): string {
@@ -80,6 +82,12 @@ function describeHop(
   }
   if (hop.event === 'arp-reply') {
     return `${hop.srcIp} is at ${hop.arpFrame?.srcMac ?? 'unknown'}`;
+  }
+  if (hop.ndpFrame) {
+    const target = hop.ndpFrame.payload.payload.targetAddress;
+    return hop.event === 'ndp-solicit'
+      ? `who has ${target}?`
+      : `${target} is at ${hop.ndpFrame.srcMac}`;
   }
 
   const parts: string[] = [];

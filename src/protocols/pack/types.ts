@@ -101,8 +101,13 @@ export interface WireField {
   readonly type: FieldType;
   /** Width for uint/enum/reserved and fixed bytes; implied for flag/ipv4/ipv6/mac. */
   readonly bits?: number;
-  /** Variable `bytes`: key of an earlier field holding the length in bytes. */
+  /** Variable `bytes`: key of an earlier field holding the length. */
   readonly lengthFrom?: string;
+  /** With `lengthFrom`: bytes = value × lengthScale + lengthOffset (RFC 4861 options: 8, −2). */
+  readonly lengthScale?: number;
+  readonly lengthOffset?: number;
+  /** The field is on the wire only when an earlier field's value is one of `values`. */
+  readonly when?: { readonly field: string; readonly values: readonly number[] };
   /** Key of an earlier flag; the field is on the wire only when that flag is 1. */
   readonly presentIf?: string;
   readonly values?: readonly EnumValue[];
@@ -120,8 +125,8 @@ export interface HeaderField extends WireField {
 export interface WireSection<Field extends WireField = WireField> {
   readonly key: string;
   readonly name: string;
-  /** Key of a header field counting this section's entries. */
-  readonly countFrom: string;
+  /** Key of a header field counting this section's entries; absent: repeat to the end. */
+  readonly countFrom?: string;
   readonly fields: readonly Field[];
 }
 

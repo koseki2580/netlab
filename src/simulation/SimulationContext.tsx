@@ -15,7 +15,11 @@ import type { InFlightPacket } from '../types/packets';
 import type { DhcpLeaseState, DnsCache } from '../types/services';
 import type { SimulationState } from '../types/simulation';
 import { useOptionalFailure } from './FailureContext';
+import { installDnsRecords } from '../protocols/dns/records';
 import { SimulationEngine } from './SimulationEngine';
+
+// Packets from the engine may carry any DNS record type; the packet views write them all.
+installDnsRecords();
 
 export interface SimulationContextValue {
   engine: SimulationEngine;

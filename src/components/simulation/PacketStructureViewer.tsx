@@ -310,7 +310,7 @@ export function PacketStructureViewer() {
     ? null
     : selectedHop?.arpFrame
       ? serializeArpFrame(selectedHop.arpFrame)
-      : serializePacket(selectedPacket.frame);
+      : serializePacket(selectedHop?.ndpFrame ?? selectedPacket.frame);
   useLearnTiers(
     [...new Set(serialized?.fields.flatMap((field) => field.packId ?? []) ?? [])].join(' '),
   );

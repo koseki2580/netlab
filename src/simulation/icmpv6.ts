@@ -1,4 +1,4 @@
-import { canonicalizeIpv6 } from '../utils/ipv6';
+import { canonicalizeIpv6, parseIpv6 } from '../utils/ipv6';
 
 export const ICMPV6_TYPE = {
   DESTINATION_UNREACHABLE: 1,
@@ -33,6 +33,45 @@ export interface Icmpv6Message {
   prefix?: string;
   managed?: boolean;
   otherConfig?: boolean;
+}
+
+/** An NDP option (RFC 4861 §4.6.1): Source (1) or Target (2) Link-Layer Address. */
+export interface NdpLinkLayerOption {
+  readonly type: 1 | 2;
+  readonly linkLayerAddress: string;
+}
+
+/**
+ * A Neighbor Solicitation (RFC 4861 §4.3, type 135) or Advertisement (§4.4,
+ * type 136) as on the wire. `flags` is the NA's R, S and O bits.
+ */
+export interface NdpMessage {
+  readonly layer: 'L4';
+  readonly type: 135 | 136;
+  readonly code: 0;
+  readonly checksum: number;
+  readonly targetAddress: string;
+  readonly flags?: {
+    readonly router: boolean;
+    readonly solicited: boolean;
+    readonly override: boolean;
+  };
+  readonly options: readonly NdpLinkLayerOption[];
+}
+
+/** ff02::1:ff00:0/104 plus the address's last 24 bits (RFC 4291 §2.7.1). */
+export function solicitedNodeAddress(address: string): string {
+  const [, , , , , , seventh = 0, last = 0] = parseIpv6(address).hextets;
+  return canonicalizeIpv6(
+    `ff02::1:${(0xff00 | (seventh & 0xff)).toString(16)}:${last.toString(16)}`,
+  );
+}
+
+/** 33:33 plus the last 32 bits of the solicited-node address (RFC 2464 §7). */
+export function solicitedNodeMac(address: string): string {
+  const [, , , , , , seventh = 0, last = 0] = parseIpv6(solicitedNodeAddress(address)).hextets;
+  const bytes = [0x33, 0x33, seventh >> 8, seventh & 0xff, last >> 8, last & 0xff];
+  return bytes.map((byte) => byte.toString(16).padStart(2, '0')).join(':');
 }
 
 export interface RouterAdvertisementResult {

@@ -1,3 +1,4 @@
+import type { DnsRecord } from './packets';
 export interface DhcpServerConfig {
   leasePool: string;
   subnetMask: string;
@@ -16,7 +17,12 @@ export interface DnsZoneEntry {
 }
 
 export interface DnsServerConfig {
+  /** A records answered with TTL 300, as before (no SOA: nothing is authoritative). */
   zones: DnsZoneEntry[];
+  /** Records of any type; an SOA makes the server authoritative for its name. */
+  records?: DnsRecord[];
+  /** A recursive resolver: it walks from these root servers' addresses. */
+  recursive?: { rootServers: string[] };
 }
 
 export interface DhcpLeaseState {

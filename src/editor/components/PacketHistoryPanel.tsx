@@ -20,6 +20,8 @@ const EVENT_TONE: Record<string, string> = {
   drop: 'var(--netlab-accent-red)',
   'arp-request': 'var(--netlab-accent-yellow)',
   'arp-reply': 'var(--netlab-accent-yellow)',
+  'ndp-solicit': 'var(--netlab-accent-yellow)',
+  'ndp-advert': 'var(--netlab-accent-yellow)',
 };
 
 /**

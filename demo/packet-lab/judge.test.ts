@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 import { judgeBuild, judgeFragment, judgeRead } from './judge';
 import type { BuildExercise, FragmentExercise, PacketGrade, ReadExercise } from './model';
 import { PICK_MESSAGES } from './reasons';
+import { p2DnsStep } from './templates/level2/p2-dns-step';
 import { p2DieAt } from './templates/level2/p2-die-at';
 import { p3FrameAfter } from './templates/level3/p3-frame-after';
 import { p3WhichCuts } from './templates/level3/p3-which-cuts';
@@ -236,6 +237,28 @@ describe('how much a sender may still send (TC-1076)', () => {
       const [result] = failing(grade);
       expect(result?.code).toBe('wrong-pick');
       expect(result?.message).toBe(PICK_MESSAGES[wrong.why]);
+    }
+  });
+});
+
+// TC-1234
+describe('the DNS step: the key is what the resolver does', () => {
+  it('agrees with the resolver, and each wrong pick says what it mistook', async () => {
+    for (let seed = 0; seed < 16; seed += 1) {
+      const exercise = p2DnsStep.generate(seed) as ReadExercise;
+      const picks = Object.fromEntries(exercise.questions.map((q) => [q.id, q.answer]));
+      expect((await judgeRead(exercise, { picks })).passed, exercise.id).toBe(true);
+      for (const question of exercise.questions) {
+        for (const candidate of question.candidates) {
+          if (candidate.why === 'right') continue;
+          const grade = await judgeRead(exercise, {
+            picks: { ...picks, [question.id]: String(candidate.value) },
+          });
+          const result = grade.results.find((entry) => entry.goalId === question.id);
+          expect(result?.code).toBe('wrong-pick');
+          expect(result?.message).toEqual(PICK_MESSAGES[candidate.why]);
+        }
+      }
     }
   });
 });

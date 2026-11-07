@@ -87,16 +87,26 @@ export interface DhcpMessage {
   options: DhcpOptions;
 }
 
+export type DnsRecordType = 'A' | 'AAAA' | 'CNAME' | 'NS' | 'MX' | 'SOA';
+
 export interface DnsQuestion {
   name: string;
-  type: 'A';
+  type: DnsRecordType;
 }
 
 export interface DnsRecord {
   name: string;
-  type: 'A';
+  type: DnsRecordType;
   ttl: number;
+  /**
+   * The RDATA as text: the address (A, AAAA), the name pointed to (CNAME, NS),
+   * the mail exchanger (MX), or the primary server (SOA).
+   */
   address: string;
+  /** MX: lower is preferred. */
+  preference?: number;
+  /** SOA: the negative-caching time (RFC 2308 §4). */
+  minimum?: number;
 }
 
 export interface DnsMessage {
@@ -105,6 +115,17 @@ export interface DnsMessage {
   isResponse: boolean;
   questions: DnsQuestion[];
   answers: DnsRecord[];
+  /**
+   * Set by the resolution chain; left out, a response is an authoritative
+   * answer to a recursive query (AA 1, RD 1, RA 0), NXDOMAIN when it has no answer.
+   */
+  authority?: DnsRecord[];
+  additional?: DnsRecord[];
+  /** 0 NOERROR, 2 SERVFAIL, 3 NXDOMAIN. */
+  rcode?: 0 | 2 | 3;
+  authoritative?: boolean;
+  recursionDesired?: boolean;
+  recursionAvailable?: boolean;
 }
 
 /** The options a SYN or SYN-ACK can carry here; an absent one was not offered. */

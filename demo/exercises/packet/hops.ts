@@ -8,6 +8,7 @@
 
 import type { PacketTrace } from '../../../src/types/simulation';
 import type { Localised } from '../../packet-lab/model';
+import { isNeighborLookupHop } from '../../../src/types/simulation';
 
 export interface HopLine {
   readonly step: number;
@@ -45,7 +46,7 @@ function what(event: string, action: string | undefined, note: boolean): Localis
 /** The packet's own hops first, ARP left out; then the hops of any note sent back. */
 export function hopLines(trace: PacketTrace, srcIp: string): HopLine[] {
   return trace.hops
-    .filter((hop) => hop.event !== 'arp-request' && hop.event !== 'arp-reply')
+    .filter((hop) => !isNeighborLookupHop(hop))
     .map((hop) => {
       const note = hop.srcIp !== srcIp;
       return {

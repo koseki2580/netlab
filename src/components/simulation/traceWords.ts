@@ -12,6 +12,8 @@ const EVENT_WORD_KEYS: Record<string, string> = {
   drop: 'simulation.event.drop',
   'arp-request': 'simulation.event.arpRequest',
   'arp-reply': 'simulation.event.arpReply',
+  'ndp-solicit': 'simulation.event.ndpSolicit',
+  'ndp-advert': 'simulation.event.ndpAdvert',
 };
 
 /** An event code in the reader's words; a code with no word stays as it is. */

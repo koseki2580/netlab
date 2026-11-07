@@ -49,7 +49,7 @@ const FIELDS = new Set<FieldName>([
   'protocol',
 ]);
 
-const PROTOCOLS = new Set(['arp', 'icmp', 'tcp', 'udp', 'dhcp', 'http', 'igmp']);
+const PROTOCOLS = new Set(['arp', 'ndp', 'icmp', 'tcp', 'udp', 'dhcp', 'http', 'igmp']);
 
 export function parseTraceFilter(input: string): TraceFilterResult {
   try {
@@ -154,6 +154,9 @@ function portValues(hop: PacketHop): string[] {
 function protocolValue(hop: PacketHop): string {
   if (hop.arpFrame || hop.event === 'arp-request' || hop.event === 'arp-reply') {
     return 'arp';
+  }
+  if (hop.ndpFrame || hop.event === 'ndp-solicit' || hop.event === 'ndp-advert') {
+    return 'ndp';
   }
   return hop.protocol.toLowerCase();
 }

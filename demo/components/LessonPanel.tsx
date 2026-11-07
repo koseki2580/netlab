@@ -13,7 +13,7 @@ import {
   type ResizableSidebarProps,
 } from '../../src/components/ResizableSidebar';
 import { hopReadout, traceOutcome } from '../../src/components/simulation/traceWords';
-import { useI18n } from '../../src/i18n/useI18n';
+import { useNdpT } from '../../src/components/simulation/ndpWords';
 import { useSimulation } from '../../src/simulation/SimulationContext';
 import { useViewport } from '../../src/utils/useViewport';
 import { arrangeForPhone } from './phoneLayout';
@@ -310,7 +310,7 @@ export function LessonStepBar({
   step?: boolean;
 }) {
   const pin = useContext(PinContext);
-  const { t } = useI18n();
+  const t = useNdpT();
   const { engine, state } = useSimulation();
   const { status, currentStep, traces, currentTraceId } = state;
   if (!pin?.actions) return null;

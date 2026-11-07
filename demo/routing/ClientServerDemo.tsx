@@ -16,6 +16,7 @@ import { encodeTopology, decodeTopology } from '../../src/utils/topology-url';
 import DemoShell from '../DemoShell';
 import { readLearningLocale } from '../learning/learningLocale';
 import { useT } from '../localeContext';
+import { isNeighborLookupHop } from '../../src/types/simulation';
 
 // ────────────────────────────────────────────────
 // Demo topology: Client → SW-1 → Router → SW-2 → Server
@@ -259,7 +260,7 @@ function ClientServerBrief() {
   // address lookup (ARP) happens beside the path, not along it.
   const route: string[] = [];
   for (const hop of trace?.hops ?? []) {
-    if (hop.event === 'arp-request' || hop.event === 'arp-reply') continue;
+    if (isNeighborLookupHop(hop)) continue;
     if (route[route.length - 1] !== hop.nodeLabel) route.push(hop.nodeLabel);
   }
   return (

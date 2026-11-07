@@ -3,6 +3,8 @@ import type { InFlightPacket } from '../../../types/packets';
 import type { PacketHop } from '../../../types/simulation';
 import { isInSubnet } from '../../../utils/cidr';
 import { deriveDeterministicMac } from '../../../utils/network';
+import { canonicalizeIpv6 } from '../../../utils/ipv6';
+import { interfaceMatchesTarget } from '../../../layers/l3-network/logicalInterfaces';
 import type { TraceRecorder } from '../../TraceRecorder';
 import type { ArpBuilder, FrameMaterializer } from '../builders';
 import type { InterfaceResolver, MacResolver, PortResolver } from '../resolvers';
@@ -150,6 +152,61 @@ export class ArpDispatcher {
     return (
       this.macResolver.resolveEndpointMac(targetNodeId) ?? deriveDeterministicMac(targetNodeId)
     );
+  }
+
+  /**
+   * IPv6: whom the sender hands the frame to, by the same rules as ARP's
+   * (RFC 4861 §7.2): a router its next hop, a host its gateway or the
+   * destination on its own link.
+   */
+  resolveNeighborInfo(
+    currentNodeId: string,
+    nextNodeId: string,
+    packet: InFlightPacket,
+    failureState: FailureState,
+    egressInterfaceId?: string,
+    nextHopIp?: string,
+  ): ArpTargetInfo | null {
+    const current = this.ifaceResolver.findNode(currentNodeId);
+    if (!current) return null;
+    const dstIp = packet.frame.payload.dstIp;
+    if (dstIp.toLowerCase().startsWith('ff')) return null;
+    const target = this.macResolver.resolveEffectiveLayer2Destination(
+      currentNodeId,
+      nextNodeId,
+      packet,
+      failureState,
+      nextHopIp,
+    );
+    if (!target) return null;
+    const router = current.data.role === 'router';
+    if (!router && current.data.role !== 'client' && current.data.role !== 'server') return null;
+    const own = router
+      ? (this.ifaceResolver.findLogicalById(currentNodeId, egressInterfaceId) ??
+        this.ifaceResolver
+          .getLogical(current)
+          .find((iface) => iface.ipv6Address && interfaceMatchesTarget(iface, nextHopIp ?? dstIp)))
+      : null;
+    const senderIp = router ? own?.ipv6Address : current.data.ipv6;
+    if (!senderIp) return null;
+    const targetIp =
+      target.data.role === 'router'
+        ? router && nextHopIp && nextHopIp !== dstIp
+          ? nextHopIp
+          : this.ifaceResolver
+              .getLogical(target)
+              .find((iface) => iface.ipv6Address && interfaceMatchesTarget(iface, senderIp))
+              ?.ipv6Address
+        : target.data.ipv6;
+    if (!targetIp) return null;
+    return {
+      targetIp: canonicalizeIpv6(targetIp),
+      targetNodeId: target.id,
+      senderIp: canonicalizeIpv6(senderIp),
+      senderMac:
+        (router ? own?.macAddress : this.macResolver.resolveEndpointMac(currentNodeId)) ??
+        deriveDeterministicMac(currentNodeId),
+    };
   }
 
   injectExchange(

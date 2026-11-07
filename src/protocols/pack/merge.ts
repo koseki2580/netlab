@@ -11,7 +11,7 @@ import type {
 export function mergeLearn(wire: ProtocolWire, learn: ProtocolLearn): ProtocolDescriptor {
   const withText = (field: WireField): HeaderField => {
     const text = learn.fields[`${field.key}@${field.in?.[0]}`] ?? learn.fields[field.key];
-    if (!text) throw descriptorError('pack/missing-text', 'Field has no text', field.key);
+    if (!text) throw descriptorError('pack/missing-text', field.key);
     const { values, ...rest } = text;
     return {
       ...field,

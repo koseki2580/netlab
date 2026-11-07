@@ -219,7 +219,11 @@ export type QuestionAsk =
   | 'frame-dst-mac'
   | 'ttl-on-link'
   /** How many more bytes the sender may send, given `window`. */
-  | 'send-window';
+  | 'send-window'
+  /** Which server answers the resolver's `dns.step`-th query (`cache`: nobody is asked). */
+  | 'dns-asked'
+  /** The TTL left on the cached answer the resolver gives. */
+  | 'dns-ttl-left';
 
 export interface ReadQuestion {
   readonly id: string;
@@ -235,6 +239,16 @@ export interface ReadQuestion {
     readonly cwnd: number;
     readonly rwnd: number;
     readonly inFlight: number;
+  };
+  /**
+   * For a `dns-*` question: the name looked up, and, `seconds` before it, the
+   * lookup that filled the resolver's cache (none: the cache was empty).
+   */
+  readonly dns?: {
+    readonly name: string;
+    readonly earlier: string | null;
+    readonly seconds: number;
+    readonly step: number;
   };
   /** The `value` of the right candidate. The judge reads it off the simulator; this is the key it must agree with. */
   readonly answer: string;

@@ -13,6 +13,7 @@
 import { usableWindow } from '../../src/layers/l4-transport/tcpWindow';
 import type { NetlabNode, TopologySnapshot } from '../../src/types/topology';
 import { isInSubnet } from '../../src/utils/cidr';
+import { createResolverCache, resolve } from '../../src/services/DnsResolver';
 import { prepare } from '../exercises/grade/prepare';
 import {
   buildPacket,
@@ -696,6 +697,9 @@ export async function truthOf(exercise: ReadExercise, question: ReadQuestion): P
   if (question.ask === 'send-window') {
     return question.window ? String(usableWindow(question.window)) : '';
   }
+  if (question.ask === 'dns-asked' || question.ask === 'dns-ttl-left') {
+    return dnsTruth(exercise, question);
+  }
   const [, second] = exercise.packets;
   const first = exercise.packets[question.packetIndex ?? 0];
   if (!first) return '';
@@ -731,7 +735,39 @@ export async function truthOf(exercise: ReadExercise, question: ReadQuestion): P
   }
 }
 
+/** What the resolver does, on the exercise's own servers: the same code the engine runs. */
+function dnsTruth(exercise: ReadExercise, question: ReadQuestion): string {
+  const scenario = question.dns;
+  if (!scenario) return '';
+  const topology = { ...exercise.topology, routeTables: new Map() };
+  const resolverId =
+    exercise.topology.nodes.find((node) => node.data.dnsServer?.recursive)?.id ?? '';
+  const cache = createResolverCache();
+  const START = 1000;
+  if (scenario.earlier) {
+    resolve(topology, resolverId, { name: scenario.earlier, type: 'A' }, cache, START);
+  }
+  const now = resolve(
+    topology,
+    resolverId,
+    { name: scenario.name, type: 'A' },
+    cache,
+    START + scenario.seconds,
+  );
+  if (question.ask === 'dns-asked') return now.steps[scenario.step - 1]?.serverNodeId ?? 'cache';
+  const last = now.answer.answers[now.answer.answers.length - 1];
+  return last ? String(last.ttl) : '';
+}
+
 const READ_WRONG: Record<ReadQuestion['ask'], Localised> = {
+  'dns-asked': {
+    en: 'Not that server. Start from what the resolver’s cache still holds, then follow the referrals down.',
+    ja: 'そのサーバーではありません。リゾルバのキャッシュにまだ残っているものから始めて、委任をたどってください。',
+  },
+  'dns-ttl-left': {
+    en: 'Not that TTL. A cached answer carries its TTL minus the seconds it has been kept.',
+    ja: 'その TTL ではありません。キャッシュからの答えは、もとの TTL から覚えていた秒数を引いた値です。',
+  },
   'send-window': {
     en: 'Not that many. Take the smaller of cwnd and rwnd, then take off what is in flight.',
     ja: 'その数ではありません。cwnd と rwnd の小さいほうから、送信中のバイトを引いてください。',

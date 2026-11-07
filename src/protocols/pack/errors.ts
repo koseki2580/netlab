@@ -16,18 +16,24 @@ function codeOf(reason: string): NetlabErrorCode {
     : 'protocol-pack/invalid-descriptor';
 }
 
-function packError(code: NetlabErrorCode, reason: string, message: string, path?: string) {
+/**
+ * The message is the rule and the field (`pack/misaligned at header.ver`): the rule
+ * itself is `context.reason`, the field `context.path`. Kept short, as this is in the
+ * main bundle; docs/core/protocol-packs.md explains each rule.
+ */
+function packError(code: NetlabErrorCode, reason: string, path?: string, detail?: string) {
+  const where = path === undefined ? '' : ` at ${path}`;
   return new NetlabError({
     code,
-    message: path === undefined ? message : `${message} (at ${path})`,
+    message: `${reason}${where}${detail === undefined ? '' : `: ${detail}`}`,
     context: path === undefined ? { reason } : { reason, path },
   });
 }
 
 /** A descriptor, tier, registry or version rule was broken; `context.reason` names it. */
-export const descriptorError = (reason: string, message: string, path?: string) =>
-  packError(codeOf(reason), reason, message, path);
+export const descriptorError = (reason: string, path?: string, detail?: string) =>
+  packError(codeOf(reason), reason, path, detail);
 
 /** A header object disagrees with the schema (`protocol-pack/invalid-header`). */
-export const valueError = (reason: string, message: string, path: string) =>
-  packError('protocol-pack/invalid-header', reason, message, path);
+export const valueError = (reason: string, path: string, detail?: string) =>
+  packError('protocol-pack/invalid-header', reason, path, detail);

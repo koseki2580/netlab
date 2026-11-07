@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useI18n } from '../../i18n/useI18n';
 import { dispatchShortcut } from '../../keyboard/shortcuts';
 import type { PacketHop } from '../../types/simulation';
 import { Marker } from './Marker';
 import { hopEventMarker } from './hopMarkers';
 import { usePlayback } from './playback';
 import { StepHoverCard, resolveStepPreview, useStepHover } from './StepHoverCard';
+import { useNdpT } from './ndpWords';
 
 /**
  * Horizontal scrub track for the active packet trace. The playbook (v5, N3)
@@ -36,7 +36,7 @@ export function PacketScrubTimeline({
   hideKeyboardHint = false,
   ownKeyboard = true,
 }: PacketScrubTimelineProps = {}) {
-  const { t } = useI18n();
+  const t = useNdpT();
   const playback = usePlayback();
   const rootRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);

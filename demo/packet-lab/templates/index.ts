@@ -9,6 +9,7 @@ import { p1Where } from './level1/p1-where';
 import { p1Which } from './level1/p1-which';
 import { p2TtlWhere } from './level2/p2-ttl-where';
 import { p2Traceroute } from './level2/p2-traceroute';
+import { p2DnsStep } from './level2/p2-dns-step';
 import { p3DfRead } from './level3/p3-df-read';
 import { p3Pmtud } from './level3/p3-pmtud';
 import { p4Capture } from './level4/p4-capture';
@@ -37,6 +38,7 @@ export const TEMPLATES: readonly PacketTemplate[] = [
   p2TtlWhere,
   p2DieAt,
   p2Traceroute,
+  p2DnsStep,
   p3Df,
   p3Fragment,
   p3DfRead,

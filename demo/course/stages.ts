@@ -117,6 +117,7 @@ export const STAGES: readonly Stage[] = [
       '/simulation/tcp-handshake',
       '/simulation/tcp-flow-control',
       '/services/dhcp-dns',
+      '/services/dns-resolution',
       '/networking/http',
       '/simulation/nat',
       '/simulation/session',

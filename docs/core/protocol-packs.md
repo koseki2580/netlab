@@ -279,7 +279,30 @@ cannot be formed), the engine runs on the main thread.
 GRE's header codec `GreHeader.ts` remains next to the GRE wire tier: `encapGre` and the public
 parser use it, and TC-946 pins its bytes to the pack.
 
-## Tunnels in the engine
+## IPv6, ICMPv6 and Neighbour Discovery
+
+Three packs: `ipv6` (RFC 8200 fixed header; EtherType 0x86DD), `icmpv6` (RFC 4443; IP
+protocol 58; echo) and `nd` (RFC 4861; ICMPv6 types 133–136 through `icmpTypes`; RS, RA, NS,
+NA and the link-layer, prefix-information and MTU options). They needed four walker features,
+all additive to `apiVersion: 1`:
+
+| Feature             | Field or section property           | Used for                              |
+| ------------------- | ----------------------------------- | ------------------------------------- |
+| Rest of the message | a `bytes` field with no width, last | ICMPv6 message bodies                 |
+| Repeat to the end   | a section with no `countFrom`       | ND options                            |
+| Length in units     | `lengthScale`, `lengthOffset`       | ND option lengths (8-octet units, −2) |
+| Depends on a value  | `when: { field, values }`           | the body of each ICMPv6 and ND type   |
+
+The ICMPv6 checksum is computed over the IPv6 pseudo-header (RFC 4443 §2.3). The family is
+lazy: loading the ICMPv6 wire tier registers its codec with `packetLayout`
+(`registerIcmpv6Codec`). The worker loads it before its first message, so every IPv6 hop's
+payload length and FCS count the real message; the views load all three when an IPv6 packet is
+shown and show one row per header until then. A caller that loads nothing gets the bytes
+written before this change. The engine's `NdpMessage` (`flags`, `options`) and the older
+`Icmpv6Message` fields are both read.
+
+Not modelled: IPv6 extension headers. A chain of them needs a section whose entries each name
+the next one, which the walker does not have.
 
 `runTunnelStage` runs after the ingress stage. It calls the pack's `behaviour.encapsulation`
 hook where a route leaves by an interface with a `greTunnel`, and unwraps a packet addressed to a

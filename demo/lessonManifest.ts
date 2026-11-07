@@ -544,6 +544,18 @@ export const LESSONS = [
     difficulty: 'intermediate',
     tags: ['DHCP', 'DNS'],
   },
+  {
+    path: '/services/dns-resolution',
+    category: 'services',
+    module: './services/DnsResolutionDemo',
+    title: { en: 'DNS Resolution and Caching', ja: 'DNS の名前解決とキャッシュ' },
+    desc: {
+      en: 'Follow a resolver from the root to the authoritative server, then see the second lookup answered from its cache, and an unknown name.',
+      ja: 'リゾルバがルートから権威サーバーまでたどる様子を追い、2 回目がキャッシュから答えられること、存在しない名前の扱いを確かめます。',
+    },
+    difficulty: 'intermediate',
+    tags: ['DNS'],
+  },
   // ── Simulation ──
   {
     path: '/simulation/step',

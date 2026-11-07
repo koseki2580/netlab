@@ -193,6 +193,8 @@ const hopEventArb = fc.constantFrom<PacketHop['event']>(
   'drop',
   'arp-request',
   'arp-reply',
+  'ndp-solicit',
+  'ndp-advert',
 );
 
 export const packetHopArb: fc.Arbitrary<PacketHop> = fc.record({

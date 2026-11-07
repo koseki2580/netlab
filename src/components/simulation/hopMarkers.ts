@@ -40,6 +40,16 @@ const HOP_EVENT_MARKERS: Readonly<Record<PacketHop['event'], HopMarkerMeta>> = {
     color: 'var(--netlab-accent-yellow)',
     labelKey: 'simulation.marker.arpReply',
   },
+  'ndp-solicit': {
+    shape: 'triangle-up',
+    color: 'var(--netlab-accent-yellow)',
+    labelKey: 'simulation.event.ndpSolicit',
+  },
+  'ndp-advert': {
+    shape: 'triangle-up',
+    color: 'var(--netlab-accent-yellow)',
+    labelKey: 'simulation.event.ndpAdvert',
+  },
 };
 
 const FALLBACK_MARKER: HopMarkerMeta = {

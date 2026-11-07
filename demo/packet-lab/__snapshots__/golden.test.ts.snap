@@ -180,6 +180,51 @@ exports[`packet exercise templates, generator version 2 > p2-die-at: five differ
 ]
 `;
 
+exports[`packet exercise templates, generator version 2 > p2-dns-step: five different tasks as the learner reads them 1`] = `
+[
+  {
+    "brief": "PC は質問をリゾルバに送ります。リゾルバが代わりに答えを探します。ルートサーバーは com の担当を、com サーバーは example.com の担当を知っていて、example.com サーバーが名前の答えを知っています。答えはそれぞれ TTL のあいだ覚えておかれます。com への委任は 2 日、example.com への委任はここでは 1 時間、www.example.com のアドレスは 300 秒です。",
+    "fingerprint": "p2-dns-step|example|nothing.com|2|100",
+    "id": "p2-dns-step~0",
+    "rule": "ルール：リゾルバは、覚えている最も近い委任（なければルート）から始めて委任をたどる。キャッシュにある答えはすぐ返し、TTL は覚えていた秒数を引いた値になる。",
+    "task": "リゾルバがすでに知っていることを読んで、だれに聞き、何と答えるかを選んでください。",
+    "title": "www.example.com を引く",
+  },
+  {
+    "brief": "PC は質問をリゾルバに送ります。リゾルバが代わりに答えを探します。ルートサーバーは com の担当を、com サーバーは example.com の担当を知っていて、example.com サーバーが名前の答えを知っています。答えはそれぞれ TTL のあいだ覚えておかれます。com への委任は 2 日、example.com への委任はここでは 1 時間、www.example.com のアドレスは 300 秒です。",
+    "fingerprint": "p2-dns-step|cache|www.example.com|1|140",
+    "id": "p2-dns-step~1",
+    "rule": "ルール：リゾルバは、覚えている最も近い委任（なければルート）から始めて委任をたどる。キャッシュにある答えはすぐ返し、TTL は覚えていた秒数を引いた値になる。",
+    "task": "リゾルバがすでに知っていることを読んで、だれに聞き、何と答えるかを選んでください。",
+    "title": "www.example.com を引く",
+  },
+  {
+    "brief": "PC は質問をリゾルバに送ります。リゾルバが代わりに答えを探します。ルートサーバーは com の担当を、com サーバーは example.com の担当を知っていて、example.com サーバーが名前の答えを知っています。答えはそれぞれ TTL のあいだ覚えておかれます。com への委任は 2 日、example.com への委任はここでは 1 時間、www.example.com のアドレスは 300 秒です。",
+    "fingerprint": "p2-dns-step|com|-|2|180",
+    "id": "p2-dns-step~2",
+    "rule": "ルール：リゾルバは、覚えている最も近い委任（なければルート）から始めて委任をたどる。キャッシュにある答えはすぐ返し、TTL は覚えていた秒数を引いた値になる。",
+    "task": "リゾルバがすでに知っていることを読んで、だれに聞き、何と答えるかを選んでください。",
+    "title": "www.example.com を引く",
+  },
+  {
+    "brief": "PC は質問をリゾルバに送ります。リゾルバが代わりに答えを探します。ルートサーバーは com の担当を、com サーバーは example.com の担当を知っていて、example.com サーバーが名前の答えを知っています。答えはそれぞれ TTL のあいだ覚えておかれます。com への委任は 2 日、example.com への委任はここでは 1 時間、www.example.com のアドレスは 300 秒です。",
+    "fingerprint": "p2-dns-step|root|-|1|220",
+    "id": "p2-dns-step~3",
+    "rule": "ルール：リゾルバは、覚えている最も近い委任（なければルート）から始めて委任をたどる。キャッシュにある答えはすぐ返し、TTL は覚えていた秒数を引いた値になる。",
+    "task": "リゾルバがすでに知っていることを読んで、だれに聞き、何と答えるかを選んでください。",
+    "title": "www.example.com を引く",
+  },
+  {
+    "brief": "PC は質問をリゾルバに送ります。リゾルバが代わりに答えを探します。ルートサーバーは com の担当を、com サーバーは example.com の担当を知っていて、example.com サーバーが名前の答えを知っています。答えはそれぞれ TTL のあいだ覚えておかれます。com への委任は 2 日、example.com への委任はここでは 1 時間、www.example.com のアドレスは 300 秒です。",
+    "fingerprint": "p2-dns-step|root|-|1|120",
+    "id": "p2-dns-step~4",
+    "rule": "ルール：リゾルバは、覚えている最も近い委任（なければルート）から始めて委任をたどる。キャッシュにある答えはすぐ返し、TTL は覚えていた秒数を引いた値になる。",
+    "task": "リゾルバがすでに知っていることを読んで、だれに聞き、何と答えるかを選んでください。",
+    "title": "www.example.com を引く",
+  },
+]
+`;
+
 exports[`packet exercise templates, generator version 2 > p2-first-mac: five different tasks as the learner reads them 1`] = `
 [
   {

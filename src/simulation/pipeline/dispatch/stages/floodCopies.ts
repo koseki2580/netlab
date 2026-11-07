@@ -90,6 +90,8 @@ export interface ArpLeg {
   readonly targetMac: string;
   readonly nextNodeId: string;
   readonly edgeId: string;
+  /** Where the question goes: broadcast for ARP, the solicited-node group's MAC for NDP. */
+  readonly requestMac?: string;
 }
 
 /**
@@ -113,7 +115,7 @@ export async function passArpThroughSwitches(ctx: LoopContext, leg: ArpLeg): Pro
         nextNodeId: leg.nextNodeId,
         edgeId: leg.edgeId,
         egressPort: '',
-        packet: packetFor(leg.senderMac, BROADCAST_MAC, leg.targetId),
+        packet: packetFor(leg.senderMac, leg.requestMac ?? BROADCAST_MAC, leg.targetId),
       },
     ],
     new Set([leg.senderId]),

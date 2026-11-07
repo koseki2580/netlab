@@ -64,8 +64,14 @@ const dnsLearn: ProtocolLearn = {
   sections: {
     question: text('What is being asked.', '問い合わせの中身。'),
     answer: text('Records that answer the question.', '質問に答えるレコード。'),
-    authority: text('Records naming the authoritative servers.', '権威サーバーを示すレコード。'),
-    additional: text('Records that help use the answer.', '回答を使うのに役立つレコード。'),
+    authority: text(
+      'Records naming the servers to ask next (NS, a referral), or the zone’s SOA when the name does not exist, which a resolver may cache as a negative answer (RFC 2308).',
+      '次に問い合わせるサーバーを示すレコード（NS、委任）。名前が存在しないときは、そのゾーンの SOA。リゾルバはこれを否定の答えとしてキャッシュできる（RFC 2308）。',
+    ),
+    additional: text(
+      'Records that help use the answer, such as the addresses of the servers named in the authority section (glue).',
+      '回答を使うのに役立つレコード。権威セクションに挙がったサーバーのアドレス（グルー）など。',
+    ),
   },
   fields: {
     id: field(
@@ -169,14 +175,14 @@ const dnsLearn: ProtocolLearn = {
       values: CLASSES,
     },
     ttl: field(
-      'Seconds the record may be cached before it must be asked for again.',
-      'このレコードをキャッシュしてよい秒数。過ぎたら問い合わせ直す。',
+      'Seconds the record may be cached before it must be asked for again. An answer from a cache carries the seconds left.',
+      'このレコードをキャッシュしてよい秒数。過ぎたら問い合わせ直す。キャッシュからの回答には、残りの秒数が入る。',
       300,
     ),
     rdlength: field('The length of RDATA in bytes.', 'RDATA のバイト数。', 4),
     rdata: field(
-      'The data itself; for TYPE A, a four-byte IPv4 address.',
-      'データそのもの。TYPE が A なら 4 バイトの IPv4 アドレス。',
+      'The data itself, shaped by TYPE: A a four-byte IPv4 address, AAAA sixteen bytes of IPv6 (RFC 3596), NS and CNAME a name, MX a preference (lower first) and a name, SOA the zone’s primary server, mailbox, serial, timers and the negative-caching time.',
+      'データそのもの。形は TYPE で決まる。A は 4 バイトの IPv4 アドレス、AAAA は 16 バイトの IPv6 アドレス（RFC 3596）、NS と CNAME は名前、MX は優先度（小さいほうが先）と名前、SOA はゾーンの主サーバー、管理者のメール、シリアル、各種タイマー、否定キャッシュの時間。',
       [93, 184, 216, 34],
     ),
   },

@@ -90,9 +90,16 @@ export class ForwardingLoop {
     // in the loop; only a host's first frame is filled in here.
     if (currentNode?.data.role === 'client' || currentNode?.data.role === 'server') {
       const resolvedSrcMac = this.macResolver.resolveEndpointMac(currentNode.id);
-      const arpTarget =
-        next && !isIpv6Packet(workingPacket.frame.payload)
-          ? this.arpDispatcher.resolveTargetInfo(
+      const arpTarget = !next
+        ? null
+        : isIpv6Packet(workingPacket.frame.payload)
+          ? this.arpDispatcher.resolveNeighborInfo(
+              currentNode.id,
+              next.nodeId,
+              workingPacket,
+              failureState,
+            )
+          : this.arpDispatcher.resolveTargetInfo(
               currentNode.id,
               next.nodeId,
               workingPacket,
@@ -100,8 +107,7 @@ export class ForwardingLoop {
               undefined,
               next.edgeId,
               undefined,
-            )
-          : null;
+            );
       const resolvedDstMac = next
         ? arpTarget
           ? (arpCache.get(arpKey(currentNode.id, arpTarget.targetIp)) ?? null)

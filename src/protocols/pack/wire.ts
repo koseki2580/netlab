@@ -51,11 +51,7 @@ interface WalkEntry extends LayoutField {
 export function resolveVersion(pack: ProtocolWire, version: string | undefined): string {
   const id = version ?? pack.defaultVersion;
   if (!pack.versions.some((v) => v.id === id)) {
-    throw descriptorError(
-      'pack/unknown-version',
-      `Pack "${pack.id}" has no version "${id}"`,
-      'version',
-    );
+    throw descriptorError('pack/unknown-version', 'version');
   }
   return id;
 }
@@ -81,23 +77,20 @@ function walk(
     for (const field of fieldsIn(fields, version)) {
       const path = `${prefix}${field.key}`;
       if (field.presentIf !== undefined && Number(values[field.presentIf] ?? 0) !== 1) continue;
+      if (field.when && !field.when.values.includes(Number(values[field.when.field]))) continue;
       const given = values[field.key] as FieldValue | undefined;
       if (given === undefined && field.type !== 'reserved') {
-        throw valueError('pack/missing-value', `No value for ${field.name}`, path);
+        throw valueError('pack/missing-value', path);
       }
       const value = given ?? 0;
       const encoded = encodeValue(field, value);
-      if (typeof encoded === 'string') throw valueError('pack/value-out-of-range', encoded, path);
-      if (
-        field.lengthFrom !== undefined &&
-        'bytes' in encoded &&
-        values[field.lengthFrom] !== encoded.bytes.length
-      ) {
-        throw valueError(
-          'pack/length-mismatch',
-          `${field.lengthFrom} says ${String(values[field.lengthFrom])} bytes; ${encoded.bytes.length} given`,
-          path,
-        );
+      if (typeof encoded === 'string') throw valueError('pack/value-out-of-range', path);
+      if (field.lengthFrom !== undefined && 'bytes' in encoded) {
+        const said =
+          Number(values[field.lengthFrom]) * (field.lengthScale ?? 1) + (field.lengthOffset ?? 0);
+        if (said !== encoded.bytes.length) {
+          throw valueError('pack/length-mismatch', path);
+        }
       }
       const start = bit;
       if ('bytes' in encoded) {
@@ -126,12 +119,8 @@ function walk(
   writeList(pack.header, header, '');
   for (const section of pack.sections ?? []) {
     const list = (header[section.key] ?? []) as readonly HeaderValues[];
-    if (header[section.countFrom] !== list.length) {
-      throw valueError(
-        'pack/count-mismatch',
-        `${section.countFrom} says ${String(header[section.countFrom])}; ${list.length} ${section.name} entries given`,
-        section.countFrom,
-      );
+    if (section.countFrom !== undefined && header[section.countFrom] !== list.length) {
+      throw valueError('pack/count-mismatch', section.countFrom);
     }
     list.forEach((entry, i) => writeList(section.fields, entry, `${section.key}[${i}].`));
   }

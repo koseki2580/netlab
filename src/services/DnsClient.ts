@@ -66,7 +66,9 @@ export function handleDnsResponse(
   const payload = dnsPayload(response);
   if (!payload?.isResponse) return null;
 
-  const answer = payload.answers[0];
+  // After a CNAME chain the address is the last record of the type asked (RFC 1034 §3.6.2).
+  const asked = payload.questions[0]?.type ?? 'A';
+  const answer = [...payload.answers].reverse().find((record) => record.type === asked);
   if (!answer) return null;
 
   return {

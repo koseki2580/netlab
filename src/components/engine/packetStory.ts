@@ -1,6 +1,6 @@
 import { clusterNodeId } from '../../areas/areaLod';
 import type { NetworkArea } from '../../types/areas';
-import type { PacketHop, SimulationState } from '../../types/simulation';
+import { isNeighborLookupHop, type PacketHop, type SimulationState } from '../../types/simulation';
 import type { CanvasPacket, CanvasPacketSource } from './canvasEngine';
 
 /**
@@ -104,12 +104,29 @@ export function bubbleForHop(hop: PacketHop): HopBubble | null {
       params: { mac: arp?.senderMac ?? hop.srcMac ?? '' },
     };
   }
+  // NDP asks and answers the same question for IPv6 (REQ-191).
+  const nd = hop.ndpFrame;
+  if (nd) {
+    return hop.event === 'ndp-solicit'
+      ? {
+          kind: 'arpRequest',
+          ...at,
+          key: 'simulation.packetStory.arpRequest',
+          params: { ip: nd.payload.payload.targetAddress },
+        }
+      : {
+          kind: 'arpReply',
+          ...at,
+          key: 'simulation.packetStory.arpReply',
+          params: { mac: nd.srcMac },
+        };
+  }
   return null;
 }
 
-/** An ARP exchange happens beside the packet's path, not along it. */
+/** An ARP or NDP exchange happens beside the packet's path, not along it. */
 function isOnPath(hop: PacketHop): boolean {
-  return hop.event !== 'arp-request' && hop.event !== 'arp-reply';
+  return !isNeighborLookupHop(hop);
 }
 
 export type StoryState = Pick<

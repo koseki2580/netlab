@@ -24,6 +24,9 @@ export function isNumeric(field: WireField): boolean {
   );
 }
 
+/** Why a value does not fit: the error names the rule and the field (REQ-310). */
+const BAD = 'out of range';
+
 /** A value ready for the bit writer: a number of `bits` width, or whole bytes. */
 export type Encoded =
   | { readonly number: number; readonly bits: number }
@@ -35,7 +38,7 @@ export function encodeValue(field: WireField, value: FieldValue): Encoded | stri
     const bits = fieldBits(field) ?? 0;
     const n = typeof value === 'boolean' ? Number(value) : value;
     if (typeof n !== 'number' || !Number.isInteger(n) || n < 0 || n >= 2 ** bits) {
-      return `${String(value)} does not fit ${bits} bits`;
+      return BAD;
     }
     return { number: n, bits };
   }
@@ -43,30 +46,29 @@ export function encodeValue(field: WireField, value: FieldValue): Encoded | stri
     case 'ipv4':
       return typeof value === 'string' && /^\d{1,3}(\.\d{1,3}){3}$/.test(value)
         ? checkBytes(value.split('.').map(Number), 4)
-        : `${String(value)} is not an IPv4 address`;
+        : BAD;
     case 'mac':
       return typeof value === 'string' && /^[0-9a-f]{2}(:[0-9a-f]{2}){5}$/i.test(value)
         ? { bytes: value.split(':').map((part) => Number.parseInt(part, 16)) }
-        : `${String(value)} is not a MAC address`;
+        : BAD;
     case 'ipv6':
       return typeof value === 'string' && isIpv6Address(value)
         ? { bytes: parseIpv6(value).hextets.flatMap((h) => [h >> 8, h & 0xff]) }
-        : `${String(value)} is not an IPv6 address`;
+        : BAD;
     case 'domain-name':
-      return typeof value === 'string' ? encodeDomainName(value) : `${String(value)} is not a name`;
+      return typeof value === 'string' ? encodeDomainName(value) : BAD;
     default: {
       const width = fieldBits(field);
       return Array.isArray(value)
         ? checkBytes(value as readonly number[], width === undefined ? undefined : width / 8)
-        : `${String(value)} is not a byte list`;
+        : BAD;
     }
   }
 }
 
 function checkBytes(bytes: readonly number[], length: number | undefined): Encoded | string {
-  if (bytes.some((b) => !Number.isInteger(b) || b < 0 || b > 255)) return 'a byte is outside 0–255';
-  if (length !== undefined && bytes.length !== length)
-    return `needs ${length} bytes, got ${bytes.length}`;
+  if (bytes.some((b) => !Number.isInteger(b) || b < 0 || b > 255)) return BAD;
+  if (length !== undefined && bytes.length !== length) return BAD;
   return { bytes };
 }
 
@@ -78,13 +80,13 @@ function encodeDomainName(name: string): Encoded | string {
     for (const label of trimmed.split('.')) {
       const octets = Array.from(new TextEncoder().encode(label));
       if (octets.length === 0 || octets.length > 63) {
-        return `label "${label}" must be 1–63 octets`;
+        return BAD;
       }
       bytes.push(octets.length, ...octets);
     }
   }
   bytes.push(0);
-  return bytes.length > 255 ? `name is ${bytes.length} octets; the limit is 255` : { bytes };
+  return bytes.length > 255 ? BAD : { bytes };
 }
 
 function hex(n: number, digits: number): string {
