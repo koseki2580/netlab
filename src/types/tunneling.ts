@@ -87,6 +87,11 @@ export interface VxlanEnvelope {
   readonly inner: EthernetFrame;
 }
 
+/** A VXLAN packet in UDP: the wire bytes in `data`, the structure in `vxlan` (REQ-331). */
+export interface VxlanRawPayload extends RawPayload {
+  readonly vxlan: VxlanEnvelope;
+}
+
 export interface VxlanEncapConfig {
   readonly vni: number;
   readonly sourceVtepIp: string;

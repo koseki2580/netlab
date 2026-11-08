@@ -1,5 +1,7 @@
 import type { EthernetFrame, IpPacket, UdpDatagram } from '../../../types/packets';
-import type { VxlanEncapConfig, VxlanEnvelope } from '../../../types/tunneling';
+import type { VxlanEncapConfig, VxlanEnvelope, VxlanRawPayload } from '../../../types/tunneling';
+import { buildEthernetFrameBytes, bytesToRawString } from '../../../utils/packetLayout';
+import { serializeVxlanHeader } from './VxlanHeader';
 import { hashFlow } from '../../../utils/hashFlow';
 
 export function encapVxlan(inner: EthernetFrame, config: VxlanEncapConfig): IpPacket {
@@ -24,8 +26,21 @@ export function encapVxlan(inner: EthernetFrame, config: VxlanEncapConfig): IpPa
       layer: 'L4',
       srcPort,
       dstPort: 4789,
-      payload: { layer: 'raw', data: JSON.stringify(envelope) },
+      payload: vxlanPayload(envelope),
     },
+  };
+}
+
+/**
+ * The UDP payload: the RFC 7348 header and the inner frame (no preamble, no FCS) as
+ * real bytes in `data`, the structure in `vxlan` for the far VTEP.
+ */
+function vxlanPayload(vxlan: VxlanEnvelope): VxlanRawPayload {
+  const inner = buildEthernetFrameBytes(vxlan.inner, { includePreamble: false, includeFcs: false });
+  return {
+    layer: 'raw',
+    data: bytesToRawString([...serializeVxlanHeader(vxlan.header), ...inner]),
+    vxlan,
   };
 }
 
@@ -33,8 +48,8 @@ export function decapVxlan(outer: IpPacket): { vni: number; inner: EthernetFrame
   if (outer.protocol !== 17 || !isVxlanUdpPayload(outer.payload)) {
     throw new RangeError('packet is not a VXLAN envelope');
   }
-  const envelope = JSON.parse(outer.payload.payload.data) as VxlanEnvelope;
-  if (envelope.kind !== 'vxlan') throw new RangeError('raw payload is not VXLAN');
+  const envelope = (outer.payload.payload as Partial<VxlanRawPayload>).vxlan;
+  if (!envelope) throw new RangeError('raw payload is not VXLAN');
   return { vni: envelope.header.vni, inner: envelope.inner };
 }
 

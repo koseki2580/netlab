@@ -50,11 +50,12 @@ import {
   uint32BE,
 } from './packetLayout';
 import { dnsMessageToValues, dnsWire } from '../protocols/dns/wire';
-import { greHeaderToValues, greWire } from '../protocols/gre/wire';
+import { greHeaderToValues } from '../protocols/gre/values';
 import { ipv6ToValues } from '../protocols/ipv6/values';
 import { deriveAnnotatedFields } from '../protocols/pack/wire';
 import { protocolPacks } from '../protocols/packs';
-import type { GreRawPayload } from '../types/tunneling';
+import type { HeaderValues } from '../protocols/pack/types';
+import type { GreRawPayload, VxlanRawPayload } from '../types/tunneling';
 import { isIpv6Packet } from '../types/packets';
 import { getRequired } from './typedAccess';
 
@@ -113,6 +114,7 @@ function serializeL7(
   payload: HttpMessage | RawPayload | DhcpMessage | DnsMessage,
   baseOffset: number,
 ): LayerResult {
+  if ('vxlan' in payload) return serializeVxlan(payload as VxlanRawPayload, baseOffset);
   const bytes = buildApplicationPayloadBytes(payload);
   if ('questions' in payload) {
     // With the learn tier loaded, the rows carry their meanings (REQ-303).
@@ -344,19 +346,65 @@ function serializeIcmp(icmp: IcmpMessage, baseOffset: number): LayerResult {
 }
 
 /** The GRE header, then the inner packet, as rows (REQ-304). */
+/**
+ * A tunnel header's rows from its pack once loaded; until then one row over its bytes
+ * (REQ-332). The viewer loads the pack when the packet is shown.
+ */
+function tunnelHeader(
+  id: string,
+  values: HeaderValues,
+  baseOffset: number,
+  byteLength: number,
+  name: string,
+): AnnotatedField[] {
+  const wire = protocolPacks.get(id) ?? protocolPacks.wire(id);
+  return wire
+    ? deriveAnnotatedFields(wire, values, { baseOffset })
+    : [{ name, layer: 'L3', byteOffset: baseOffset, byteLength, displayValue: '', packId: id }];
+}
+
+const inner = (fields: readonly AnnotatedField[]) =>
+  fields.map((field) => ({ ...field, name: `Inner ${field.name}` }));
+
 function serializeGre(payload: GreRawPayload, baseOffset: number): LayerResult {
-  const header = deriveAnnotatedFields(
-    protocolPacks.get('gre') ?? greWire,
-    greHeaderToValues(payload.gre.header),
-    { baseOffset },
-  );
-  const last = header[header.length - 1]!;
-  const inner = serializeL3(payload.gre.inner, last.byteOffset + last.byteLength);
+  const { header: gre } = payload.gre;
+  const length = 4 + 4 * [gre.hasChecksum, gre.hasKey, gre.hasSequence].filter(Boolean).length;
   return {
     bytes: buildApplicationPayloadBytes(payload),
     fields: [
-      ...header,
-      ...inner.fields.map((field) => ({ ...field, name: `Inner ${field.name}` })),
+      ...tunnelHeader('gre', greHeaderToValues(gre), baseOffset, length, 'GRE Header'),
+      ...inner(serializeL3(payload.gre.inner, baseOffset + length).fields),
+    ],
+  };
+}
+
+/** VXLAN (REQ-332): the header, then the inner Ethernet frame and its packet. */
+function serializeVxlan(payload: VxlanRawPayload, baseOffset: number): LayerResult {
+  const frame = payload.vxlan.inner;
+  const at = baseOffset + 8;
+  const row = (name: string, offset: number, byteLength: number, displayValue: string) => ({
+    name,
+    layer: 'L2' as const,
+    byteOffset: at + offset,
+    byteLength,
+    displayValue,
+  });
+  return {
+    bytes: buildApplicationPayloadBytes(payload),
+    fields: [
+      ...tunnelHeader(
+        'vxlan',
+        { i: 1, vni: payload.vxlan.header.vni },
+        baseOffset,
+        8,
+        'VXLAN Header',
+      ),
+      ...inner([
+        row('Dst MAC', 0, 6, frame.dstMac),
+        row('Src MAC', 6, 6, frame.srcMac),
+        row('EtherType', 12, 2, formatHex(frame.etherType, 4)),
+      ]),
+      ...(isIpv6Packet(frame.payload) ? [] : inner(serializeL3(frame.payload, at + 14).fields)),
     ],
   };
 }

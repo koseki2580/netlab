@@ -8,9 +8,8 @@
  *   |                 Sequence Number (Optional)                    |
  */
 import { decapGre, encapGre } from '../../layers/l3-network/tunneling/GreEncap';
-import type { GreHeader } from '../../types/tunneling';
 import { greIdentity } from './identity';
-import type { HeaderValues, ProtocolBehaviour, ProtocolWire } from '../pack/types';
+import type { ProtocolBehaviour, ProtocolWire } from '../pack/types';
 
 const V2890 = ['rfc2890'];
 
@@ -55,16 +54,4 @@ export const greWire: ProtocolWire = {
   ],
 };
 
-/** A `GreHeader` (src/types/tunneling.ts) as a header object. */
-export function greHeaderToValues(header: GreHeader): HeaderValues {
-  return {
-    c: header.hasChecksum ? 1 : 0,
-    k: header.hasKey ? 1 : 0,
-    s: header.hasSequence ? 1 : 0,
-    ver: header.version,
-    protocolType: header.protocolType,
-    ...(header.hasChecksum ? { checksum: header.checksum ?? 0 } : {}),
-    ...(header.hasKey ? { key: header.key ?? 0 } : {}),
-    ...(header.hasSequence ? { sequence: header.sequence ?? 0 } : {}),
-  };
-}
+export { greHeaderToValues } from './values';

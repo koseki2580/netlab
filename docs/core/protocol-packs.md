@@ -310,7 +310,18 @@ tunnel's source. It exits at once for a router with no tunnel. The frame carries
 bytes in `RawPayload.data` and the structure in `gre` (`GreRawPayload`). The other hooks
 (`endpoint`, `transit`, `service`) are still unwired.
 
-## i18n merging
+## VXLAN in the engine
+
+`vxlan` (RFC 7348, UDP 4789) has a wire and a learn tier, both lazy. A router with a `vtep`
+wraps a packet whose route's next hop is a peer VTEP: outer IPv4 and UDP 4789, the VXLAN header
+with the VNI, and an inner Ethernet frame from its router MAC to the peer's (symmetric IRB,
+EVPN Type-5). The peer unwraps what is addressed to its VTEP address and routes on; another
+VNI drops with `vxlan-vni-mismatch`. EVPN's route learning is computed, not sent. The bytes
+are real (`VxlanRawPayload`: `data` plus the structured `vxlan`).
+
+`runTunnelStage` is now a small check; GRE and VXLAN load with the tunnel code
+(`tunnelHop.ts`) on the first router with a tunnel or a VTEP. Tunnel headers (GRE, VXLAN) show
+as one row in the hex view until their pack loads, which the viewer does on show.
 
 Packs carry their learner wording inline (`meaning: { en, ja }`), so the derivers need no
 catalogue. Wording the UI looks up by key (hop bubbles, lesson strings) comes from

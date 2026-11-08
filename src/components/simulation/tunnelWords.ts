@@ -12,6 +12,8 @@ export function tunnelRows(tunnel: HopTunnel, locale: string) {
   return [
     { label: words.outer, value: `${outerSrc} → ${outerDst}` },
     { label: words.inner, value: `${innerSrc} → ${innerDst}` },
-    ...(key === undefined ? [] : [{ label: words.key, value: String(key) }]),
+    ...(key === undefined
+      ? []
+      : [{ label: tunnel.protocol === 'vxlan' ? 'VNI' : words.key, value: String(key) }]),
   ];
 }

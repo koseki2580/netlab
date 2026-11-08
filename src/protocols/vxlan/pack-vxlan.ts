@@ -1,0 +1,45 @@
+/** VXLAN, the learn tier: loaded on demand, never in an eager closure (REQ-330). */
+import type { ProtocolLearn } from '../pack/types';
+
+const learn: ProtocolLearn = {
+  tier: '__netlab_learn_tier__',
+  specs: [
+    {
+      id: 'RFC 7348',
+      title:
+        'Virtual eXtensible Local Area Network (VXLAN): A Framework for Overlaying Virtualized Layer 2 Networks over Layer 3 Networks',
+      year: 2014,
+      status: 'informational',
+      url: 'https://www.rfc-editor.org/rfc/rfc7348',
+    },
+  ],
+  versions: [{ id: 'rfc7348', specs: ['RFC 7348'], default: true }],
+  fields: {
+    reservedFlags: {
+      meaning: { en: 'Reserved flag bits, sent as 0.', ja: '予約のフラグビット。0 で送る。' },
+      example: 0,
+    },
+    i: {
+      meaning: {
+        en: 'I: the VNI is valid. Always 1.',
+        ja: 'I：VNI が有効であることを示す。常に 1。',
+      },
+      example: 1,
+    },
+    reservedFlags2: {
+      meaning: { en: 'Reserved flag bits, sent as 0.', ja: '予約のフラグビット。0 で送る。' },
+      example: 0,
+    },
+    reserved1: { meaning: { en: 'Reserved, sent as 0.', ja: '予約。0 で送る。' }, example: 0 },
+    vni: {
+      meaning: {
+        en: 'The VXLAN Network Identifier: which of up to 16 million overlay segments the inner frame belongs to.',
+        ja: 'VXLAN ネットワーク識別子。内側のフレームが最大 1600 万あるオーバーレイ区画のどれに属するか。',
+      },
+      example: 10000,
+    },
+    reserved2: { meaning: { en: 'Reserved, sent as 0.', ja: '予約。0 で送る。' }, example: 0 },
+  },
+};
+
+export default learn;

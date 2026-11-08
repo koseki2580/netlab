@@ -28,6 +28,7 @@ export default [
   pack('dns', '3.5 kB'),
   pack('gre', '3 kB'),
   pack('ntp', '3 kB'),
+  pack('vxlan', '3 kB'),
   pack('ipv6', '3 kB'),
   pack('icmpv6', '3 kB'),
   pack('nd', '3 kB'),
