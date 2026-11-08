@@ -353,7 +353,8 @@ window.USER_GUIDE_CONTENT = {
                <h3>DNS の名前解決とキャッシュ</h3>
                <p>「DNS の名前解決とキャッシュ」のレッスンでは、PC の問い合わせを受けたリゾルバが、ルート、com、example.com の順にサーバーへ聞き、委任（NS レコードとグルー）をたどる様子が、実際に流れたメッセージ 1 つずつで読めます。続けて PC-B が同じ名前を引くと、リゾルバはだれにも聞かずにキャッシュから答え、TTL は残りの秒数になります。存在しない名前には NXDOMAIN（RCODE 3）が SOA とともに返り、リゾルバはそれも SOA の TTL と MINIMUM の小さいほうの時間だけ覚えておきます（RFC 2308）。扱うレコードは A・AAAA・CNAME（たどる）・NS・MX・SOA です。</p>
                <div class="callout">キャッシュはエンジンを開いているあいだ残り、時間は実際の時計で数えます。再送、TCP への切り替え、グルーのない委任、DNSSEC は扱いません。これまでのゾーン一覧だけの DNS サーバーは、知らない名前に NXDOMAIN を返すようになりました（以前は何も返しませんでした）。</div>
-               <p><strong>GRE トンネル</strong>のレッスンでは、ping が本当にトンネルを通ります。16 進表示で、外側の IP ヘッダ、GRE ヘッダ（Key を含む）、内側のパケットを順に確かめられます。キーが両端で違うと、パケットは反対側のルータで捨てられます。</p>`
+               <p><strong>GRE トンネル</strong>のレッスンでは、ping が本当にトンネルを通ります。16 進表示で、外側の IP ヘッダ、GRE ヘッダ（Key を含む）、内側のパケットを順に確かめられます。キーが両端で違うと、パケットは反対側のルータで捨てられます。</p>
+               <p><strong>VXLAN/EVPN</strong> のレッスンでも、ping が本当にファブリックを渡ります。Leaf1 が UDP のポート 4789 で包み、Leaf2 が外します。16 進表示で VXLAN ヘッダ（VNI）と内側の Ethernet フレームを確かめられます。Leaf2 に別の VNI を付けると、パケットは Leaf2 で捨てられます。EVPN の経路はレッスンが計算して表示するもので、パケットとしては送っていません。</p>`
       },
       {
         id: "sandbox",
@@ -742,7 +743,8 @@ window.USER_GUIDE_CONTENT = {
                <h3>DNS resolution and caching</h3>
                <p>In the “DNS Resolution and Caching” lesson, each message on the wire is listed as the resolver answers the PC: it asks the root, then the com server, then example.com’s server, following the referrals (NS records and their glue). When PC-B then looks up the same name, the resolver asks nobody and answers from its cache, with the TTL that is left. A name that does not exist gets NXDOMAIN (RCODE 3) with the zone’s SOA, and the resolver keeps that too, for the lower of the SOA’s TTL and its MINIMUM (RFC 2308). The records handled are A, AAAA, CNAME (followed), NS, MX and SOA.</p>
                <div class="callout">The cache lasts as long as the engine, and time is the real clock. Retries, falling back to TCP, referrals without glue and DNSSEC are not modelled. A DNS server with only a zones list now answers an unknown name with NXDOMAIN (before, it did not answer at all).</div>
-               <p>In the <strong>GRE tunnel</strong> lesson a ping really crosses the tunnel. The hex view shows the outer IP header, the GRE header with its Key, and the inner packet, in order. If the keys at the two ends differ, the far router drops the packet.</p>`
+               <p>In the <strong>GRE tunnel</strong> lesson a ping really crosses the tunnel. The hex view shows the outer IP header, the GRE header with its Key, and the inner packet, in order. If the keys at the two ends differ, the far router drops the packet.</p>
+               <p>In the <strong>VXLAN/EVPN</strong> lesson a ping really crosses the fabric too: Leaf1 wraps it in UDP to port 4789 and Leaf2 unwraps it. The hex view shows the VXLAN header with its VNI and the inner Ethernet frame. Give Leaf2 another VNI and the packet is dropped there. The EVPN routes are worked out and shown by the lesson; they are not sent as packets.</p>`
       },
       {
         id: "sandbox",
