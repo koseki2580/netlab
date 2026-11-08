@@ -1,0 +1,1 @@
+const e={id:`ntp`,name:{short:`NTP`,en:`Network Time Protocol`,ja:`ネットワーク時刻プロトコル`},layer:`L7`,numbers:{ports:[{transport:`udp`,port:123}]}};export{e as t};

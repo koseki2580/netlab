@@ -1,0 +1,1 @@
+function e(e,t){return{version:6,trafficClass:e.trafficClass??0,flowLabel:e.flowLabel??0,payloadLength:e.payloadLength??t,nextHeader:e.nextHeader,hopLimit:e.hopLimit,source:e.srcIp,destination:e.dstIp}}export{e as t};

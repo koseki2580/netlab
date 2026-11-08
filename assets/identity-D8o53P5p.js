@@ -1,0 +1,1 @@
+const e={id:`ipv6`,name:{short:`IPv6`,en:`Internet Protocol version 6`,ja:`インターネットプロトコル第 6 版`},layer:`L3`,numbers:{etherType:34525}};export{e as t};

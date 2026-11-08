@@ -1,0 +1,1 @@
+var e={id:`gre`,name:{short:`GRE`,en:`Generic Routing Encapsulation`,ja:`汎用ルーティングカプセル化`},layer:`L3`,numbers:{ipProtocol:47}};export{e as t};

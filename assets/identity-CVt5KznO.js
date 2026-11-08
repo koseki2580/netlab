@@ -1,0 +1,1 @@
+const e={id:`vxlan`,name:{short:`VXLAN`,en:`Virtual eXtensible Local Area Network`,ja:`仮想拡張 LAN`},layer:`L2`,numbers:{ports:[{transport:`udp`,port:4789}]}};export{e as t};

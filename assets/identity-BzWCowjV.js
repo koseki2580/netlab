@@ -1,0 +1,1 @@
+var e={id:`nd`,name:{short:`ND`,en:`Neighbor Discovery`,ja:`近隣探索`},layer:`L3`,numbers:{icmpTypes:{v6:[133,134,135,136]}}};export{e as t};
