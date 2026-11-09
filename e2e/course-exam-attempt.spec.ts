@@ -1,7 +1,12 @@
 import type { Locator, Page } from '@playwright/test';
 import { optionOrder } from '../demo/course/examAttempt';
 import { EXAM_LEVELS } from '../demo/course/examLevels';
-import { EXAM_QUESTIONS } from '../demo/course/examQuestions';
+import { drawQuestions } from '../demo/course/examDraw';
+import { examLevel } from '../demo/course/examLevels';
+
+/** Level 1 is opened with this seed unless a test names another (REQ-194). */
+const SEED = 11;
+const EXAM_QUESTIONS = drawQuestions(examLevel(1)!, SEED);
 import { expect, test, VIEWPORTS } from './fixtures/harness';
 import type { DemoPage } from './pages/DemoPage';
 
@@ -17,7 +22,7 @@ import type { DemoPage } from './pages/DemoPage';
  */
 test.use({ appLocale: 'ja' });
 
-async function startExam(page: Page, demoPage: DemoPage, route = '/course/exam') {
+async function startExam(page: Page, demoPage: DemoPage, route = `/course/exam?examSeed=${SEED}`) {
   await demoPage.goto(route);
   await page.getByTestId('exam-start').click();
   await expect(page.getByTestId('exam-question-1')).toBeVisible();
@@ -120,7 +125,7 @@ test('TC-324: each attempt shows the options in a new order, "not learned" last'
   }
 
   // An option keeps the text of its original position wherever it is shown.
-  for (const [index, question] of EXAM_QUESTIONS.entries()) {
+  for (const [index, question] of drawQuestions(examLevel(1)!, 1).entries()) {
     for (const [k, option] of question.options.entries()) {
       await expect(page.getByTestId(`exam-option-row-${index + 1}-${k + 1}`)).toContainText(
         option.ja,
@@ -226,6 +231,32 @@ test('TC-1334: a passed attempt shows the right answer and its explanation', asy
   await expect(page.getByTestId('exam-feedback-1')).toContainText(missed.explanation.ja);
   await expect(page.getByTestId('exam-answers-later')).toHaveCount(0);
   await expect(page.getByTestId('exam-retry')).toBeEnabled();
+});
+
+test('TC-1356: the stage 1 test asks a new set after a failed attempt', async ({
+  page,
+  demoPage,
+}) => {
+  const route = '/course/exam/5?examSeed=4';
+  const stage1 = examLevel(5)!;
+  const first = drawQuestions(stage1, 4);
+  const next = drawQuestions(
+    stage1,
+    5,
+    first.map((question) => question.id),
+  );
+  await startExam(page, demoPage, route);
+  for (const [index, question] of first.entries()) {
+    await expect(page.getByTestId(`exam-question-${index + 1}`)).toContainText(question.prompt.ja);
+  }
+  await answerAllNotLearnedAndMark(page);
+  await studyOneLesson(page, demoPage, route);
+  await page.getByTestId('exam-retry').click();
+  for (const [index, question] of next.entries()) {
+    await expect(page.getByTestId(`exam-question-${index + 1}`)).toContainText(question.prompt.ja);
+  }
+  const repeated = next.filter((question) => first.includes(question)).length;
+  expect(repeated).toBeLessThanOrEqual(2);
 });
 
 test('TC-1335: a stage test keeps a failed attempt’s answers to itself too', async ({

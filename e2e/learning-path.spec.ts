@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 import { COURSE_STEPS, courseProgressId } from '../demo/course/courseSteps';
-import { EXAM_STAGE_1 } from '../demo/course/examStage1';
+import { drawQuestions } from '../demo/course/examDraw';
+import { examLevel } from '../demo/course/examLevels';
 import { expect, test } from './fixtures/harness';
 
 /**
@@ -114,7 +115,8 @@ test.describe('the stage tests at 1440×900', () => {
   });
 
   test('TC-966: passing the stage 1 test passes stage 1 and opens stage 2', async ({ page }) => {
-    await page.goto(`/#/course/exam/5?learnerId=${LEARNER}`);
+    // A named seed fixes the ten the stage 1 test draws from its pool (REQ-194).
+    await page.goto(`/#/course/exam/5?learnerId=${LEARNER}&examSeed=3`);
     // The tests are listed in the order of the stages: stage 1's comes first.
     const order = await page
       .getByTestId(/^exam-level-\d+$/)
@@ -123,7 +125,7 @@ test.describe('the stage tests at 1440×900', () => {
     await expect(page.getByTestId('exam-path')).toHaveAttribute('data-level', '5');
 
     await page.getByTestId('exam-start').click();
-    for (const [index, question] of EXAM_STAGE_1.questions.entries()) {
+    for (const [index, question] of drawQuestions(examLevel(5)!, 3).entries()) {
       await page.getByTestId(`exam-option-${index + 1}-${question.answer + 1}`).check();
     }
     await page.getByTestId('exam-submit').click();

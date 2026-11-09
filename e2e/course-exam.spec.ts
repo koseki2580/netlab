@@ -1,4 +1,9 @@
-import { EXAM_QUESTIONS } from '../demo/course/examQuestions';
+import { drawQuestions } from '../demo/course/examDraw';
+import { examLevel } from '../demo/course/examLevels';
+
+/** The test is opened with this seed, so the ten it draws are known (REQ-194). */
+const SEED = 11;
+const EXAM_QUESTIONS = drawQuestions(examLevel(1)!, SEED);
 import { expect, test } from './fixtures/harness';
 import { SEL } from './selectors';
 
@@ -13,7 +18,7 @@ test.use({ appLocale: 'ja', viewportPreset: 'desktop' });
  * teaches it, so "not yet" comes with where to go.
  */
 async function openExam(page: import('@playwright/test').Page) {
-  await page.goto('/#/course/exam');
+  await page.goto(`/#/course/exam?examSeed=${SEED}`);
   await expect(page.getByTestId(SEL.app.root)).toBeVisible();
   await expect(page.getByTestId('exam-path')).toBeVisible();
   // The questions stay hidden until the learner starts the test (TC-323).

@@ -20,6 +20,11 @@ export interface ExamAttempt {
   readonly marked: boolean;
   /** Whether, since this attempt was marked, a lesson it links to was opened. */
   readonly studied?: boolean;
+  /**
+   * The ids of the questions this attempt asks, drawn from the level's pool
+   * (REQ-194). An attempt stored before the pools has none: the original ten.
+   */
+  readonly questionIds?: readonly string[];
 }
 
 export const NEW_ATTEMPT: ExamAttempt = { seed: 0, started: false, answers: {}, marked: false };
@@ -125,8 +130,17 @@ function isAnswer(value: unknown): value is ExamAnswer {
 
 function isAttempt(value: unknown): value is ExamAttempt {
   if (typeof value !== 'object' || value === null) return false;
-  const { seed, started, answers, marked, studied: visited } = value as Record<string, unknown>;
+  const {
+    seed,
+    started,
+    answers,
+    marked,
+    studied: visited,
+    questionIds,
+  } = value as Record<string, unknown>;
   return (
+    (questionIds === undefined ||
+      (Array.isArray(questionIds) && questionIds.every((id) => typeof id === 'string'))) &&
     (visited === undefined || typeof visited === 'boolean') &&
     typeof seed === 'number' &&
     Number.isFinite(seed) &&

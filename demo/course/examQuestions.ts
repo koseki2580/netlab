@@ -415,7 +415,10 @@ export interface ExamLevel {
   /** One line on who the level is for, shown before the path. */
   readonly summary: Localised;
   readonly path: readonly PathStop[];
+  /** The original ten: what an attempt asks where the level has no pool. */
   readonly questions: readonly ExamQuestion[];
+  /** Ten topic slots, each a few questions taught by one stop (REQ-194). */
+  readonly slots?: readonly (readonly ExamQuestion[])[];
 }
 
 export const EXAM_LEVEL_1: ExamLevel = {
@@ -434,7 +437,15 @@ export function scoreLevel(
   level: ExamLevel,
   answers: Readonly<Record<string, ExamAnswer | undefined>>,
 ): ExamResult {
-  const perQuestion = level.questions.map((question) => ({
+  return scoreQuestions(level.questions, answers);
+}
+
+/** Mark the answers to the questions an attempt asked. */
+export function scoreQuestions(
+  questions: readonly ExamQuestion[],
+  answers: Readonly<Record<string, ExamAnswer | undefined>>,
+): ExamResult {
+  const perQuestion = questions.map((question) => ({
     id: question.id,
     correct: answers[question.id] === question.answer,
   }));

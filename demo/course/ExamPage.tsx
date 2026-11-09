@@ -27,10 +27,11 @@ import {
   EXAM_LEVEL_1,
   EXAM_PASS_MARK,
   levelStop,
-  scoreLevel,
+  scoreQuestions,
   type ExamAnswer,
   type ExamLevel,
 } from './examQuestions';
+import { drawQuestions, questionsOf } from './examDraw';
 
 /**
  * The beginner path's final test: the path in order, then — once the learner
@@ -88,13 +89,18 @@ function ExamBody({ level }: { level: ExamLevel }) {
     () => loadAttempt(sessionStore(), level.level) ?? NEW_ATTEMPT,
   );
   const { answers } = attempt;
+  // The ten this attempt asks, drawn from the level's pool (REQ-194).
+  const questions = useMemo(
+    () => questionsOf(level, attempt.questionIds),
+    [level, attempt.questionIds],
+  );
   const result = useMemo(
-    () => (attempt.marked ? scoreLevel(level, answers) : null),
-    [attempt.marked, answers, level],
+    () => (attempt.marked ? scoreQuestions(questions, answers) : null),
+    [attempt.marked, answers, questions],
   );
   const answered = useMemo(
-    () => level.questions.filter((question) => answers[question.id] !== undefined).length,
-    [answers, level],
+    () => questions.filter((question) => answers[question.id] !== undefined).length,
+    [answers, questions],
   );
   const scoreRef = useRef<HTMLElement>(null);
   const questionsRef = useRef<HTMLDivElement>(null);
@@ -124,12 +130,19 @@ function ExamBody({ level }: { level: ExamLevel }) {
   /** A seed named in the address fixes the order; tests use it. */
   const begin = (previousSeed: number | undefined) => {
     const named = seedFromSearch(location.search, window.location.search);
+    const seed = nextSeed(named, previousSeed, Math.random);
     goToQuestions.current = true;
     setAttempt({
-      seed: nextSeed(named, previousSeed, Math.random),
+      seed,
       started: true,
       answers: {},
       marked: false,
+      // Passed over: what the attempt before asked, so a retake is a new set.
+      questionIds: drawQuestions(
+        level,
+        seed,
+        previousSeed === undefined ? [] : questions.map((question) => question.id),
+      ).map((question) => question.id),
     });
   };
 
@@ -159,7 +172,7 @@ function ExamBody({ level }: { level: ExamLevel }) {
   const resumeAt = attempt.marked
     ? null
     : firstUnanswered(
-        level.questions.map((question) => question.id),
+        questions.map((question) => question.id),
         answers,
       );
 
@@ -174,7 +187,7 @@ function ExamBody({ level }: { level: ExamLevel }) {
   };
 
   const submit = () => {
-    const marked = scoreLevel(level, answers);
+    const marked = scoreQuestions(questions, answers);
     setAttempt((current) => ({ ...current, marked: true }));
     if (marked.passed) {
       recordCompletion({
@@ -208,7 +221,7 @@ function ExamBody({ level }: { level: ExamLevel }) {
       }}
     >
       {numbers.map((number) => {
-        const question = level.questions[number - 1];
+        const question = questions[number - 1];
         const stop = question ? levelStop(level, question.taughtBy) : undefined;
         return (
           <li
@@ -440,7 +453,7 @@ function ExamBody({ level }: { level: ExamLevel }) {
             data-testid="exam-questions"
             style={{ display: 'grid', gap: 16, outline: 'none' }}
           >
-            {level.questions.map((question, index) => {
+            {questions.map((question, index) => {
               const outcome = result?.perQuestion[index];
               const chosen = answers[question.id];
               const stop = levelStop(level, question.taughtBy);
