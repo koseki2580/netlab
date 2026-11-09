@@ -18,9 +18,39 @@ export interface ExamAttempt {
   readonly answers: Readonly<Record<string, ExamAnswer>>;
   /** Whether the answers have been marked. The result is derived from them. */
   readonly marked: boolean;
+  /** Whether, since this attempt was marked, a lesson it links to was opened. */
+  readonly studied?: boolean;
 }
 
 export const NEW_ATTEMPT: ExamAttempt = { seed: 0, started: false, answers: {}, marked: false };
+
+/**
+ * What a marked question may show (REQ-193). A failed attempt keeps a missed
+ * question's right option and its explanation to itself: shown, they were
+ * copied into an immediate retake. A passed attempt shows everything.
+ */
+export function reviewOf(question: { readonly passed: boolean; readonly correct: boolean }): {
+  readonly rightOption: boolean;
+  readonly explanation: boolean;
+} {
+  return {
+    rightOption: question.passed && !question.correct,
+    explanation: question.passed || question.correct,
+  };
+}
+
+/** The attempt, once the learner has opened a lesson it links to. */
+export function studied(attempt: ExamAttempt): ExamAttempt {
+  return { ...attempt, studied: true };
+}
+
+/**
+ * Whether another attempt may start. After a failure, only once a lesson it
+ * links to has been opened: the immediate retake is what was copied.
+ */
+export function mayRetake(attempt: ExamAttempt, passed: boolean): boolean {
+  return passed || attempt.studied === true;
+}
 
 /** A small seeded generator (mulberry32): the same seed, the same numbers. */
 function generator(seed: number): () => number {
@@ -95,8 +125,9 @@ function isAnswer(value: unknown): value is ExamAnswer {
 
 function isAttempt(value: unknown): value is ExamAttempt {
   if (typeof value !== 'object' || value === null) return false;
-  const { seed, started, answers, marked } = value as Record<string, unknown>;
+  const { seed, started, answers, marked, studied: visited } = value as Record<string, unknown>;
   return (
+    (visited === undefined || typeof visited === 'boolean') &&
     typeof seed === 'number' &&
     Number.isFinite(seed) &&
     typeof started === 'boolean' &&

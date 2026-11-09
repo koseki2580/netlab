@@ -5,10 +5,14 @@ import {
   examReturnSearch,
   examRoute,
   loadAttempt,
+  mayRetake,
+  NEW_ATTEMPT,
   nextSeed,
   optionOrder,
+  reviewOf,
   saveAttempt,
   seedFromSearch,
+  studied,
   type ExamAttempt,
 } from './examAttempt';
 
@@ -153,5 +157,40 @@ describe('the way back from a lesson to the test (TC-327)', () => {
   it('gives the address of each level of the test', () => {
     expect(examRoute(1)).toBe('/course/exam');
     expect(examRoute(3)).toBe('/course/exam/3');
+  });
+});
+
+describe('what a marked attempt reveals (REQ-193)', () => {
+  // TC-1330: a failed attempt keeps a missed question's answer to itself.
+  it('withholds a missed answer and its explanation until the test is passed', () => {
+    expect(reviewOf({ passed: false, correct: false })).toEqual({
+      rightOption: false,
+      explanation: false,
+    });
+    expect(reviewOf({ passed: false, correct: true })).toEqual({
+      rightOption: false,
+      explanation: true,
+    });
+    expect(reviewOf({ passed: true, correct: false })).toEqual({
+      rightOption: true,
+      explanation: true,
+    });
+  });
+
+  // TC-1331: another attempt after a failed one waits for a lesson to be opened.
+  it('offers another attempt after a failure only once a linked lesson is opened', () => {
+    const failed = { ...NEW_ATTEMPT, started: true, marked: true };
+    expect(mayRetake(failed, false)).toBe(false);
+    expect(mayRetake(studied(failed), false)).toBe(true);
+    expect(mayRetake(failed, true)).toBe(true);
+    // A stored attempt keeps the visit.
+    const store = new Map<string, string>();
+    const fake = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => void store.set(key, value),
+      removeItem: (key: string) => void store.delete(key),
+    };
+    saveAttempt(fake, 5, studied(failed));
+    expect(mayRetake(loadAttempt(fake, 5)!, false)).toBe(true);
   });
 });

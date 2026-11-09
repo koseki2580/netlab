@@ -12,9 +12,12 @@ import {
   loadAttempt,
   nextSeed,
   optionOrder,
+  mayRetake,
+  reviewOf,
   saveAttempt,
   seedFromSearch,
   sessionStore,
+  studied,
   type ExamAttempt,
 } from './examAttempt';
 import { EXAM_LEVELS, examLevel } from './examLevels';
@@ -182,6 +185,17 @@ function ExamBody({ level }: { level: ExamLevel }) {
     }
   };
 
+  /**
+   * Following a review link counts as studying: it is kept with the attempt
+   * at once, before the page is left, and lets the next attempt start.
+   */
+  const recordStudy = () => {
+    const next = studied(attempt);
+    saveAttempt(sessionStore(), level.level, next);
+    setAttempt(next);
+  };
+  const retakeAllowed = result !== null && mayRetake(attempt, result.passed);
+
   /** For each of these questions: a way down to it, and the lesson that teaches it. */
   const questionLinks = (numbers: readonly number[]) => (
     <ul
@@ -221,6 +235,7 @@ function ExamBody({ level }: { level: ExamLevel }) {
               <Link
                 data-testid={`exam-missed-review-${number}`}
                 to={`${stop.path}${examReturnSearch(level.level)}`}
+                onClick={recordStudy}
                 style={{
                   ...LINK,
                   display: 'inline-flex',
@@ -373,14 +388,41 @@ function ExamBody({ level }: { level: ExamLevel }) {
                 {questionLinks(notLearned)}
               </div>
             ) : null}
+            {result.passed ? null : (
+              <p data-testid="exam-answers-later" style={{ margin: '10px 0 0' }}>
+                {t(
+                  'The right answers and why are shown once you pass. Study the lessons above first.',
+                  '正解とその理由は、合格すると表示されます。まず上のレッスンで復習しましょう。',
+                )}
+              </p>
+            )}
             <button
               type="button"
               data-testid="exam-retry"
               onClick={() => begin(attempt.seed)}
-              style={{ ...BUTTON, marginTop: 12, minHeight: 44 }}
+              disabled={!retakeAllowed}
+              aria-describedby={retakeAllowed ? undefined : 'exam-retry-hint'}
+              style={{
+                ...BUTTON,
+                marginTop: 12,
+                minHeight: 44,
+                ...(retakeAllowed ? {} : { opacity: 0.6, cursor: 'not-allowed' }),
+              }}
             >
               {t('Try again', 'もう一度受ける')}
             </button>
+            {retakeAllowed ? null : (
+              <p
+                id="exam-retry-hint"
+                data-testid="exam-retry-hint"
+                style={{ margin: '6px 0 0', color: 'var(--netlab-text-secondary)' }}
+              >
+                {t(
+                  'Open one of the review lessons above first; then you can try again.',
+                  '上の「復習する」のレッスンを 1 つ開くと、もう一度受けられます。',
+                )}
+              </p>
+            )}
             <Link
               data-testid="exam-to-exercises"
               to={`/exercises/level/${level.level}`}
@@ -429,8 +471,12 @@ function ExamBody({ level }: { level: ExamLevel }) {
                     ].map(({ key, text }) => {
                       const suffix = key === 'not-learned' ? 'x' : Number(key) + 1;
                       const isChosen = outcome !== undefined && chosen === key;
+                      // The right option of a miss is named only once the test is passed.
                       const isMissedAnswer =
-                        outcome !== undefined && !outcome.correct && key === question.answer;
+                        outcome !== undefined &&
+                        result !== null &&
+                        reviewOf({ passed: result.passed, correct: outcome.correct }).rightOption &&
+                        key === question.answer;
                       return (
                         <label
                           key={String(key)}
@@ -503,11 +549,15 @@ function ExamBody({ level }: { level: ExamLevel }) {
                             ? t('– Not learned yet', '– まだ習っていない')
                             : t('✗ Not quite', '✗ 不正解')}
                       </strong>
-                      <p style={{ margin: '4px 0' }}>{question.explanation[locale]}</p>
+                      {result &&
+                      reviewOf({ passed: result.passed, correct: outcome.correct }).explanation ? (
+                        <p style={{ margin: '4px 0' }}>{question.explanation[locale]}</p>
+                      ) : null}
                       {!outcome.correct && stop ? (
                         <Link
                           data-testid={`exam-review-${number}`}
                           to={`${stop.path}${examReturnSearch(level.level)}`}
+                          onClick={recordStudy}
                           style={{
                             ...LINK,
                             display: 'inline-flex',
