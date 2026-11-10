@@ -3,7 +3,7 @@ import { configDefaults, defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     reporters: process.env.CI ? ['default', 'verbose'] : ['default'],
-    exclude: [...configDefaults.exclude, 'e2e/**'],
+    exclude: [...configDefaults.exclude, 'e2e/**', 'agents/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],

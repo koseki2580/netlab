@@ -137,12 +137,17 @@ function ExamBody({ level }: { level: ExamLevel }) {
       started: true,
       answers: {},
       marked: false,
-      // Passed over: what the attempt before asked, so a retake is a new set.
+      // Passed over: what the last two attempts asked, so a retake is a new set.
       questionIds: drawQuestions(
         level,
         seed,
-        previousSeed === undefined ? [] : questions.map((question) => question.id),
+        previousSeed === undefined
+          ? []
+          : [...questions.map((question) => question.id), ...(attempt.earlierIds ?? [])],
       ).map((question) => question.id),
+      ...(previousSeed === undefined
+        ? {}
+        : { earlierIds: questions.map((question) => question.id) }),
     });
   };
 

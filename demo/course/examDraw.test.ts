@@ -3,17 +3,17 @@ import { drawQuestions, questionsOf } from './examDraw';
 import { EXAM_LEVELS, examLevel } from './examLevels';
 import { EXAM_PASS_MARK, scoreQuestions } from './examQuestions';
 
-const POOLED = [1, 5, 6, 7].map((level) => examLevel(level)!);
+const POOLED = [1, 2, 3, 4, 5, 6, 7, 8].map((level) => examLevel(level)!);
 const SEEDS = Array.from({ length: 200 }, (_, seed) => seed);
 
 // TC-1350
-describe('levels 1, 5, 6 and 7 each hold a pool of twenty in ten slots (TC-1350)', () => {
+describe('every level holds a pool of thirty in ten slots of three (TC-1350, TC-1357)', () => {
   for (const level of POOLED) {
     it(`level ${level.level}`, () => {
       const slots = level.slots!;
       expect(slots).toHaveLength(10);
       for (const slot of slots) {
-        expect(slot).toHaveLength(2);
+        expect(slot).toHaveLength(3);
         expect(new Set(slot.map((q) => q.taughtBy)).size, slot[0]!.id).toBe(1);
         expect(level.path.some((stop) => stop.id === slot[0]!.taughtBy)).toBe(true);
       }
@@ -57,6 +57,17 @@ describe('the attempt after a failed one is mostly different (TC-1352)', () => {
         expect(next.filter((id) => first.includes(id)).length).toBeLessThanOrEqual(2);
       }
     });
+
+    // TC-1358: the attempt after that avoids both of the last two.
+    it(`level ${level.level}: attempt N+2 repeats at most two of attempt N`, () => {
+      for (const seed of SEEDS) {
+        const first = drawQuestions(level, seed).map((q) => q.id);
+        const second = drawQuestions(level, seed + 1, first).map((q) => q.id);
+        const third = drawQuestions(level, seed + 2, [...second, ...first]).map((q) => q.id);
+        expect(third.filter((id) => first.includes(id)).length).toBeLessThanOrEqual(2);
+        expect(third.filter((id) => second.includes(id)).length).toBeLessThanOrEqual(2);
+      }
+    });
   }
 });
 
@@ -64,9 +75,13 @@ describe('the attempt after a failed one is mostly different (TC-1352)', () => {
 describe('every pooled question meets the stage-test rules (TC-1353)', () => {
   for (const level of POOLED) {
     const pool = level.slots!.flat();
+    // The original ten of levels 2–4 were written before these rules, to their own; every
+    // question added to a pool, and every question of levels 1 and 5–8, meets them.
+    const ruled =
+      level.level >= 2 && level.level <= 4 ? level.slots!.flatMap((slot) => slot.slice(1)) : pool;
     for (const locale of ['en', 'ja'] as const) {
       it(`level ${level.level}: the right option is never the single longest, and none is twice another (${locale})`, () => {
-        for (const q of pool) {
+        for (const q of ruled) {
           const lengths = q.options.map((option) => option[locale].length);
           const others = lengths.filter((_, index) => index !== q.answer);
           expect(lengths[q.answer], q.id).toBeLessThanOrEqual(Math.max(...others));
@@ -76,8 +91,8 @@ describe('every pooled question meets the stage-test rules (TC-1353)', () => {
     }
     it(`level ${level.level}: the right place varies and each explanation names its lesson`, () => {
       expect(new Set(pool.map((q) => q.answer)).size).toBe(4);
-      // Level 1's original ten predate the rule; every question added to a pool meets it.
-      const named = level.level === 1 ? level.slots!.map((slot) => slot[1]!) : pool;
+      // The original ten of levels 1–4 predate the rule; every question added to a pool meets it.
+      const named = level.level <= 4 ? level.slots!.flatMap((slot) => slot.slice(1)) : pool;
       for (const q of named) {
         expect(q.prompt.ja.length, q.id).toBeGreaterThan(0);
         expect(q.explanation.en, q.id).toMatch(/lesson|course|practice|drill/);

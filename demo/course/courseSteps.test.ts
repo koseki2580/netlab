@@ -107,5 +107,6 @@ describe('what step 3 says, on the real simulator', () => {
     expect(arpCopies.map((copy) => copy.toNodeId)).toEqual(['pc-c']);
     expect(copies(first)).toEqual([['pc-c', 'discarded', 'not-for-me']]);
     expect(copies(await send())).toEqual([]);
-  });
+    // It loads the engine's layers itself, which takes a while beside other test files.
+  }, 20_000);
 });

@@ -25,6 +25,8 @@ export interface ExamAttempt {
    * (REQ-194). An attempt stored before the pools has none: the original ten.
    */
   readonly questionIds?: readonly string[];
+  /** The ids the attempt before this one asked: a draw avoids both (REQ-194). */
+  readonly earlierIds?: readonly string[];
 }
 
 export const NEW_ATTEMPT: ExamAttempt = { seed: 0, started: false, answers: {}, marked: false };
@@ -137,8 +139,11 @@ function isAttempt(value: unknown): value is ExamAttempt {
     marked,
     studied: visited,
     questionIds,
+    earlierIds,
   } = value as Record<string, unknown>;
   return (
+    (earlierIds === undefined ||
+      (Array.isArray(earlierIds) && earlierIds.every((id) => typeof id === 'string'))) &&
     (questionIds === undefined ||
       (Array.isArray(questionIds) && questionIds.every((id) => typeof id === 'string'))) &&
     (visited === undefined || typeof visited === 'boolean') &&

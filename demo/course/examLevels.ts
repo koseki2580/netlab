@@ -7,17 +7,21 @@ import { EXAM_STAGE_2 } from './examStage2';
 import { EXAM_STAGE_3 } from './examStage3';
 import { EXAM_STAGE_7 } from './examStage7';
 import { POOL_A } from './examPoolA';
+import { POOL_B } from './examPoolB';
 
 /**
- * A level with a pool (REQ-194): each original question and its partner make
+ * A level with a pool (REQ-194): each original question and its partners make
  * one slot. A level whose questions are not all partnered keeps no pool.
  */
 function withPool(level: ExamLevel): ExamLevel {
-  const partners = level.questions.map((question) => POOL_A.get(question.id));
-  if (partners.some((partner) => partner === undefined)) return level;
+  const partners = level.questions.map((question) => [
+    ...(POOL_A.has(question.id) ? [POOL_A.get(question.id)!] : []),
+    ...(POOL_B.get(question.id) ?? []),
+  ]);
+  if (partners.some((partner) => partner.length === 0)) return level;
   return {
     ...level,
-    slots: level.questions.map((question, index) => [question, partners[index]!]),
+    slots: level.questions.map((question, index) => [question, ...partners[index]!]),
   };
 }
 
@@ -29,13 +33,13 @@ function withPool(level: ExamLevel): ExamLevel {
  */
 export const EXAM_LEVELS: readonly ExamLevel[] = [
   withPool(EXAM_LEVEL_1),
-  EXAM_LEVEL_2,
-  EXAM_LEVEL_3,
-  EXAM_LEVEL_4,
+  withPool(EXAM_LEVEL_2),
+  withPool(EXAM_LEVEL_3),
+  withPool(EXAM_LEVEL_4),
   withPool(EXAM_STAGE_1),
   withPool(EXAM_STAGE_2),
   withPool(EXAM_STAGE_3),
-  EXAM_STAGE_7,
+  withPool(EXAM_STAGE_7),
 ];
 
 export function examLevel(level: number): ExamLevel | undefined {
