@@ -241,6 +241,8 @@ export interface EthernetFrame {
   dstMac: string;
   etherType: number; // 0x0800 = IPv4, 0x86DD = IPv6
   vlanTag?: VlanTag;
+  /** RFC 3032 label stack, top first; the frame's EtherType is 0x8847 while it is set (REQ-334). */
+  mplsStack?: readonly import('./tunneling').MplsLabel[];
   payload: IpPacket | Ipv6Packet;
   fcs?: number;
 }
@@ -280,6 +282,8 @@ export interface InFlightPacket {
   path: string[]; // ordered list of device IDs already visited
   timestamp: number;
   sessionId?: string;
+  /** The next hop an MPLS label decided at this hop; the router sends there, not by IP. */
+  mplsNextHop?: string;
 }
 
 // ── Runtime predicates (type guards) ────────────────────────────

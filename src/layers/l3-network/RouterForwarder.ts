@@ -294,7 +294,9 @@ export class RouterForwarder implements Forwarder {
       return { action: 'drop', reason: 'ttl-exceeded' };
     }
 
-    const result = this.lookupReachable(ipPacket.dstIp, packet, ctx.neighbors);
+    // An MPLS label sends the packet to its next hop, not by IP (REQ-334).
+    const target = packet.mplsNextHop ?? ipPacket.dstIp;
+    const result = this.lookupReachable(target, packet, ctx.neighbors);
     if (typeof result === 'string') {
       return { action: 'drop', reason: result };
     }
@@ -312,8 +314,8 @@ export class RouterForwarder implements Forwarder {
           ),
         };
 
-    const nextHopIp = route.nextHop === 'direct' ? ipPacket.dstIp : route.nextHop;
-    const egressInterfaceId = this.resolveEgressInterface(route, ipPacket.dstIp, neighbor.edgeId);
+    const nextHopIp = route.nextHop === 'direct' ? target : route.nextHop;
+    const egressInterfaceId = this.resolveEgressInterface(route, target, neighbor.edgeId);
     const egressInterface = egressInterfaceId
       ? this.findLogicalInterfaceById(egressInterfaceId)
       : null;

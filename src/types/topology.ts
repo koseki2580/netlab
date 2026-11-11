@@ -41,6 +41,7 @@ export interface NetlabNodeData extends Record<string, unknown> {
   netflow?: NetflowConfig;
   vrfs?: VrfConfig[];
   vtep?: VtepConfig;
+  mpls?: import('./tunneling').MplsTables;
   // Service-specific
   dhcpServer?: DhcpServerConfig;
   dhcpClient?: DhcpClientConfig;

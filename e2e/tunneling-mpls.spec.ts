@@ -35,3 +35,17 @@ test('the label stack on each link is the one a real LSP carries', async ({ page
   await expect(intoP).toContainText('16001 / 24010');
   await expect(intoPe2, "P swaps its own label for PE2's").toContainText('16002 / 24010');
 });
+
+test('TC-1302: the engine pushes, swaps and pops, and a missing label stops the packet', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/tunneling/mpls-l3vpn');
+  const status = page.getByTestId('mpls-status');
+  await expect(status).toContainText('Delivered');
+  await expect(page.getByTestId('mpls-hex')).toContainText('0x8847 (MPLS)');
+  await expect(page.getByTestId('mpls-hex')).toContainText('24010');
+
+  await page.getByTestId('mpls-remove-p-labels').click();
+  await expect(status).toContainText('no entry for the label');
+});

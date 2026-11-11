@@ -9,7 +9,10 @@ import { continueWith, type HopContext, type StageResult } from './_shared';
 export function runTunnelStage(ctx: HopContext): StageResult | Promise<StageResult> {
   const { node, ipPacket } = ctx.hop;
   const tunnels =
-    node.data.vtep !== undefined || node.data.interfaces?.some((iface) => iface.greTunnel);
+    node.data.vtep !== undefined ||
+    node.data.mpls !== undefined ||
+    ctx.workingPacket.frame.mplsStack !== undefined ||
+    node.data.interfaces?.some((iface) => iface.greTunnel);
   if (node.data.role !== 'router' || !tunnels || isIpv6Packet(ipPacket)) return continueWith(ctx);
   return import('./tunnelHop').then((module) => module.tunnelHop(ctx));
 }

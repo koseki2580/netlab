@@ -8,6 +8,7 @@ const LEARN: Readonly<Record<string, () => Promise<{ default: ProtocolLearn }>>>
   gre: () => import('./gre/pack-gre'),
   ntp: () => import('./ntp/pack-ntp'),
   vxlan: () => import('./vxlan/pack-vxlan'),
+  mpls: () => import('./mpls/pack-mpls'),
   ipv6: () => import('./ipv6/pack-ipv6'),
   icmpv6: () => import('./icmpv6/pack-icmpv6'),
   nd: () => import('./nd/pack-nd'),

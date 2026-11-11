@@ -1,7 +1,12 @@
 import { bestRoute, isPortBearingPayload, protocolName } from '../routingHelpers';
 import type { IpPacket } from '../../../../types/packets';
 import type { HopTunnel } from '../../../../types/simulation';
-import type { GreTunnelConfig, VtepConfig, VxlanEncapConfig } from '../../../../types/tunneling';
+import type {
+  GreTunnelConfig,
+  MplsLabel,
+  VtepConfig,
+  VxlanEncapConfig,
+} from '../../../../types/tunneling';
 import type { EthernetFrame } from '../../../../types/packets';
 import type { ProtocolWire } from '../../../../protocols/pack/types';
 import { protocolPacks } from '../../../../protocols/packs';
@@ -77,7 +82,15 @@ export async function tunnelHop(ctx: HopContext): Promise<StageResult> {
     if (result.kind !== 'continue' || ctx.hop.ipPacket.protocol === 47) return result;
   }
   const vtep = ctx.hop.node.data.vtep;
-  return vtep ? vxlanHop(ctx, vtep, await protocolPacks.loadWire('vxlan')) : continueWith(ctx);
+  if (vtep) {
+    const result = vxlanHop(ctx, vtep, await protocolPacks.loadWire('vxlan'));
+    if (result.kind !== 'continue') return result;
+  }
+  if (ctx.hop.node.data.mpls || ctx.workingPacket.frame.mplsStack) {
+    await protocolPacks.loadWire('mpls'); // registers the label-stack bytes with packetLayout
+    return mplsHop(ctx);
+  }
+  return continueWith(ctx);
 }
 
 function greHop(
@@ -208,5 +221,88 @@ function vxlanHop(ctx: HopContext, vtep: VtepConfig, wire: ProtocolWire | undefi
     ctx.workingPacket,
   );
   adopt(ctx, outer);
+  return continueWith(ctx);
+}
+
+const labelsOf = (stack: readonly MplsLabel[] | undefined) =>
+  (stack ?? []).map((entry) => entry.label);
+
+/** The frame from here on: these labels (or none), EtherType to match, and where MPLS sends it. */
+function relabel(ctx: HopContext, stack: readonly MplsLabel[], nextHop: string | undefined): void {
+  const { mplsStack: _old, ...frame } = ctx.workingPacket.frame;
+  const { mplsNextHop: _hop, ...packet } = ctx.workingPacket;
+  ctx.workingPacket = {
+    ...packet,
+    ...(nextHop ? { mplsNextHop: nextHop } : {}),
+    frame: stack.length
+      ? { ...frame, etherType: 0x8847, mplsStack: stack }
+      : { ...frame, etherType: 0x0800 },
+  };
+}
+
+/**
+ * MPLS in the engine (REQ-334): push at the ingress PE by FTN, swap or pop by the
+ * top label. When no label is left the packet is routed by IP. LDP and VPN labels
+ * are given in `mpls`, not signalled on the wire.
+ */
+function mplsHop(ctx: HopContext): StageResult {
+  const { ipPacket, base } = ctx.hop;
+  const tables = ctx.hop.node.data.mpls ?? {};
+  const stack = ctx.workingPacket.frame.mplsStack;
+  const note = (
+    action: 'push' | 'swap' | 'pop',
+    before: readonly MplsLabel[],
+    after: readonly MplsLabel[],
+  ) =>
+    appendHop(
+      ctx,
+      {
+        ...base,
+        action: `tunnel:mpls-${action}`,
+        mpls: { action, before: labelsOf(before), after: labelsOf(after) },
+      },
+      ctx.workingPacket,
+    );
+
+  if (!stack) {
+    const ftn = tables.ftn?.find((entry) => isInSubnet(ipPacket.dstIp, entry.prefix));
+    if (!ftn) return continueWith(ctx);
+    const ttl = ipPacket.ttl - 1;
+    const pushed = ftn.push.map((label, i) => ({
+      label,
+      tc: 0,
+      endOfStack: i === ftn.push.length - 1,
+      ttl,
+    }));
+    note('push', [], pushed);
+    relabel(ctx, pushed, ftn.nextHop);
+    return continueWith(ctx);
+  }
+
+  let labels: readonly MplsLabel[] = stack;
+  while (labels.length > 0) {
+    const [top, ...rest] = labels;
+    const entry = tables.lfib?.find((candidate) => candidate.inLabel === top!.label);
+    if (!entry) {
+      appendDropHop(ctx, 'mpls-no-label', ctx.workingPacket, {
+        mpls: { action: 'pop', before: labelsOf(labels), after: labelsOf(labels) },
+      });
+      return breakWith(ctx);
+    }
+    if (entry.action === 'swap') {
+      const swapped = [
+        { ...top!, label: entry.outLabel ?? top!.label, ttl: top!.ttl - 1 },
+        ...rest,
+      ];
+      note('swap', labels, swapped);
+      relabel(ctx, swapped, entry.nextHop);
+      return continueWith(ctx);
+    }
+    note('pop', labels, rest);
+    relabel(ctx, rest, entry.nextHop);
+    // PHP: labels remain and this entry sends them on; none remain: route by IP.
+    if (rest.length > 0 && entry.nextHop) return continueWith(ctx);
+    labels = rest;
+  }
   return continueWith(ctx);
 }

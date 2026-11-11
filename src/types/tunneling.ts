@@ -39,6 +39,23 @@ export interface MplsLabel {
 
 export type MplsLabelStack = readonly MplsLabel[];
 
+/** A router's MPLS tables (REQ-334): what it pushes onto IP packets, and what it does with a label. */
+export interface MplsTables {
+  /** FEC to NHLFE: for a destination in `prefix`, push `push` (top first) and send to `nextHop`. */
+  readonly ftn?: readonly {
+    readonly prefix: string;
+    readonly push: readonly number[];
+    readonly nextHop: string;
+  }[];
+  /** The label table: swap `inLabel` for `outLabel`, or pop it; send to `nextHop` when labels remain. */
+  readonly lfib?: readonly {
+    readonly inLabel: number;
+    readonly action: 'swap' | 'pop';
+    readonly outLabel?: number;
+    readonly nextHop?: string;
+  }[];
+}
+
 export interface RouteDistinguisher {
   readonly type: 0 | 1 | 2;
   readonly value: string;

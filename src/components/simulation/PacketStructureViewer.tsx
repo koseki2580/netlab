@@ -241,10 +241,10 @@ function FieldTable({
               padding: '3px 8px',
               borderTop: idx > 0 ? '1px solid var(--netlab-bg-primary)' : undefined,
               background: changedFieldSet.has(field.name)
-                ? '#92400e33'
+                ? '#92400e1a'
                 : idx % 2 === 0
                   ? 'transparent'
-                  : '#0f172a55',
+                  : '#0f172a14',
               alignItems: 'center',
             }}
           >

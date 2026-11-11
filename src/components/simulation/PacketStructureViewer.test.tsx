@@ -194,13 +194,13 @@ describe('PacketStructureViewer', () => {
       simulationMock.state.selectedPacket = { frame: {} };
       simulationMock.state.selectedHop = { changedFields: ['Src IP'] };
 
-      expect(renderViewer()).toContain('background:#92400e33');
+      expect(renderViewer()).toContain('background:#92400e1a');
     });
 
     it('alternates row colors', () => {
       simulationMock.state.selectedPacket = { frame: {} };
 
-      expect(renderViewer()).toContain('background:#0f172a55');
+      expect(renderViewer()).toContain('background:#0f172a14');
     });
   });
 

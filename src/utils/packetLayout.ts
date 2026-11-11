@@ -338,6 +338,13 @@ export function buildArpFrameBytes(frame: ArpEthernetFrame): number[] {
   ];
 }
 
+let mplsBytes: ((stack: NonNullable<EthernetFrame['mplsStack']>) => number[]) | undefined;
+
+/** Called when the MPLS wire tier loads: label stacks are written through its pack (REQ-334). */
+export function registerMplsCodec(bytes: typeof mplsBytes): void {
+  mplsBytes = bytes;
+}
+
 export interface BuildEthernetFrameOptions {
   includePreamble?: boolean;
   includeFcs?: boolean;
@@ -360,6 +367,7 @@ export function buildEthernetFrameBytes(
     ...parseMac(frame.dstMac),
     ...parseMac(frame.srcMac),
     ...uint16BE(frame.etherType),
+    ...(frame.mplsStack ? (mplsBytes?.(frame.mplsStack) ?? []) : []),
     ...('hopLimit' in frame.payload
       ? buildIpv6PacketBytes(frame.payload)
       : buildIpv4PacketBytes(frame.payload)),

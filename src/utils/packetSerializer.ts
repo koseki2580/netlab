@@ -552,7 +552,8 @@ function serializeIpv6(ip: Ipv6Packet, baseOffset: number): LayerResult {
 
 function serializeL2(frame: EthernetFrame): LayerResult {
   const preambleBytes = frame.preamble ?? DEFAULT_ETHERNET_PREAMBLE;
-  const l3Base = preambleBytes.length + 14;
+  const labels = frame.mplsStack ?? [];
+  const l3Base = preambleBytes.length + 14 + 4 * labels.length;
   const ipv6 = isIpv6Packet(frame.payload);
   const l3Result = isIpv6Packet(frame.payload)
     ? serializeIpv6(frame.payload, l3Base)
@@ -590,8 +591,24 @@ function serializeL2(frame: EthernetFrame): LayerResult {
         layer: 'L2',
         byteOffset: preambleBytes.length + 12,
         byteLength: 2,
-        displayValue: `${formatHex(frame.etherType, 4)} (${ipv6 ? 'IPv6' : 'IPv4'})`,
+        displayValue: `${formatHex(frame.etherType, 4)} (${labels.length ? 'MPLS' : ipv6 ? 'IPv6' : 'IPv4'})`,
       },
+      ...(labels.length
+        ? tunnelHeader(
+            'mpls',
+            {
+              stack: labels.map((l) => ({
+                label: l.label,
+                tc: l.tc,
+                s: l.endOfStack ? 1 : 0,
+                ttl: l.ttl,
+              })),
+            },
+            l3Base - 4 * labels.length,
+            4 * labels.length,
+            'MPLS Label Stack',
+          )
+        : []),
       ...l3Result.fields,
       {
         name: 'FCS',

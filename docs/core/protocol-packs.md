@@ -331,6 +331,19 @@ its namespace, or one already present, is refused. The two languages must have t
 set (the existing i18n parity check extends to packs). The core catalogue is never imported by
 the pack core (lesson L014), so packs cost nothing in bundles that show no protocol text.
 
+## MPLS in the engine
+
+`mpls` (RFC 3031/3032, EtherType 0x8847) models the label-stack entry (20-bit label, TC, S,
+TTL) as a section that repeats to the end. A router's `mpls` tables give its FTN (push at the
+ingress PE) and its label table (swap, or pop: PHP when labels remain, the VPN label at the
+egress PE when none remain, after which the packet is routed by IP). An unknown label drops
+with `mpls-no-label`. The frame carries `mplsStack` and EtherType 0x8847 while it has labels;
+`InFlightPacket.mplsNextHop` sends it to the label's next hop rather than by IP, which is the
+only MPLS code in `RouterForwarder`. The hop logic lives in the lazy tunnel chunk, and the
+label bytes come from the pack through `registerMplsCodec`, set when the MPLS wire tier loads
+(which the stage does before any frame has labels). LDP and VPNv4 labels are worked out by the
+lesson, not signalled.
+
 ## Versioning of the pack API
 
 - Every descriptor states `apiVersion`. `defineProtocol` accepts the versions it supports

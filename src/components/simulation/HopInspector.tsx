@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { tunnelRows } from './tunnelWords';
+import { mplsRows, tunnelRows } from './tunnelWords';
 import { useI18n } from '../../i18n/useI18n';
 import { routingVerdict } from '../../simulation/pipeline/dispatch/routingHelpers';
 import { useSimulation } from '../../simulation/SimulationContext';
@@ -212,6 +212,7 @@ function HopFields({
   }
 
   if (hop.tunnel) fields.push(...tunnelRows(hop.tunnel, locale));
+  if (hop.mpls) fields.push(...mplsRows(hop.mpls, locale));
 
   // The other copies a switch sent out, and what became of each.
   const copies = floodCopiesText(hop, (nodeId) => resolveNodeLabel(nodeId, nodes), locale);

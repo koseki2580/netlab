@@ -179,6 +179,8 @@ export interface PacketHop {
     | `link:${string}`;
   /** Set on the hop where a router wrapped or unwrapped a tunnelled packet. */
   tunnel?: HopTunnel;
+  /** Set on the hop where a router pushed, swapped or popped MPLS labels (REQ-334). */
+  mpls?: { action: 'push' | 'swap' | 'pop'; before: number[]; after: number[] };
   ecmpTrace?: EcmpTrace;
   shaperTrace?: ShaperTrace;
   observabilityTrace?: ObservabilityTrace;

@@ -8,6 +8,7 @@
 import { dnsWire } from './dns/wire';
 import { greIdentity } from './gre/identity';
 import { ntpIdentity } from './ntp/identity';
+import { mplsIdentity } from './mpls/identity';
 import { vxlanIdentity } from './vxlan/identity';
 import { icmpv6Identity } from './icmpv6/identity';
 import { ipv6Identity } from './ipv6/identity';
@@ -20,6 +21,7 @@ export const protocolPacks = createWireIndex([
   { ...greIdentity, loadWire: () => import('./gre/wire').then((module) => module.greWire) },
   { ...ntpIdentity, loadWire: () => import('./ntp/wire').then((module) => module.ntpWire) },
   { ...vxlanIdentity, loadWire: () => import('./vxlan/wire').then((module) => module.vxlanWire) },
+  { ...mplsIdentity, loadWire: () => import('./mpls/wire').then((module) => module.mplsWire) },
   {
     ...icmpv6Identity,
     loadWire: () =>
