@@ -46,6 +46,11 @@ describe('the wave B answers are what the code or the RFC formula gives (TC-1359
       ])?.nextHop,
     ).toBe('D');
     expect(right('s3-lpm-default-only')).toMatch(/^D,/);
+    // TC-1368: only the address a row fits is forwarded; the other has no route.
+    const only = [row('10.0.0.0/8', 'A')];
+    expect(bestRoute('10.200.0.1', only)?.nextHop).toBe('A');
+    expect(bestRoute('11.0.0.1', only)).toBeNull();
+    expect(right('s3-no-route-which')).toBe('Only 10.200.0.1');
     expect(
       bestRoute('203.0.113.9', [
         row('0.0.0.0/0', '172.16.0.2'),
