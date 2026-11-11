@@ -1,0 +1,1 @@
+var e={id:`mpls`,name:{short:`MPLS`,en:`Multiprotocol Label Switching`,ja:`マルチプロトコル・ラベル・スイッチング`},layer:`L2`,numbers:{etherType:34887}};export{e as t};
