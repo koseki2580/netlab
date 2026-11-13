@@ -22,6 +22,11 @@ export interface Localised {
 export interface PathStop {
   readonly id: string;
   readonly path: string;
+  /**
+   * What the address adds to open the lesson on the view the stop is about,
+   * as `name=value` (the Dynamic Routing lesson opens on RIP; `protocol=bgp`).
+   */
+  readonly query?: string;
   readonly title: Localised;
   /**
    * The topic, in one line — never the answer. Learners in trials passed
@@ -267,8 +272,8 @@ export const EXAM_QUESTIONS: readonly ExamQuestion[] = [
   {
     id: 'dns-second-lookup',
     prompt: {
-      en: 'Your laptop opens www.example.com. A minute later a colleague in the same office opens it too. Both ask the office’s DNS server, which finds names for them and keeps each answer for its TTL, here 300 seconds. What does that server do for your colleague?',
-      ja: 'あなたのノート PC で www.example.com を開きました。1 分後、同じ会社の同僚も開きます。どちらも会社の DNS サーバーに聞きます。このサーバーは代わりに名前を探し、答えを TTL のあいだ（ここでは 300 秒）覚えておきます。同僚には、どうしますか。',
+      en: 'Your laptop opened www.example.com through the office DNS server a minute ago; the answer it got had a TTL of 300 seconds. Now a colleague asks the same server for the same name. What does the server do?',
+      ja: '1 分前、あなたのノート PC は会社の DNS サーバーを通して www.example.com を開きました。受け取った答えの TTL は 300 秒でした。いま同僚が、同じサーバーに同じ名前を尋ねます。サーバーはどうしますか。',
     },
     options: [
       {
@@ -345,19 +350,19 @@ export const EXAM_QUESTIONS: readonly ExamQuestion[] = [
   {
     id: 'name-fails',
     prompt: {
-      en: 'On a laptop, a web page opens when you type the server’s IP address, but not when you type its name, www.example.com. Which service is most likely not working?',
-      ja: 'ノート PC で、サーバの IP アドレスを打つとページが開きますが、www.example.com という名前を打つと開きません。うまく動いていない可能性が高いのはどれですか？',
+      en: 'A laptop gets all its settings from DHCP. It opens a page when you type the server’s IP address, but not when you type www.example.com. Which setting it was given is most likely wrong?',
+      ja: 'ノート PC は設定をすべて DHCP で受け取っています。サーバの IP アドレスを打つとページが開きますが、www.example.com と打つと開きません。受け取った設定のうち、まちがっている可能性が高いのはどれですか？',
     },
     options: [
-      { en: 'DHCP', ja: 'DHCP' },
-      { en: 'DNS', ja: 'DNS' },
-      { en: 'ARP', ja: 'ARP' },
-      { en: 'NAT', ja: 'NAT' },
+      { en: 'The default gateway', ja: 'デフォルトゲートウェイ' },
+      { en: 'The DNS server', ja: 'DNS サーバ' },
+      { en: 'The subnet mask', ja: 'サブネットマスク' },
+      { en: 'The lease time', ja: 'リースの期間' },
     ],
     answer: 1,
     explanation: {
-      en: 'DNS is the one not working. People type names, but a packet needs an IP address, and DNS is what turns the name into the address. Typing the address still works, so only that step is failing. DHCP is the service that lends a machine its address. See DHCP and DNS.',
-      ja: '動いていないのは DNS です。人は名前を使いますが、パケットには IP アドレスが必要で、名前をアドレスに変えるのが DNS です。アドレスを直接打てば開くので、止まっているのはその変換だけです。機器にアドレスを貸すのは DHCP です。レッスン「DHCP と DNS」で見られます。',
+      en: 'Typing the address works, so the gateway and mask are fine; only turning the name into an address fails, and that is the DNS server the laptop was given. The DHCP and DNS lesson shows DHCP handing out the DNS server.',
+      ja: 'アドレスを打てば開くので、ゲートウェイとマスクは正しく、失敗しているのは名前をアドレスに変える部分だけです。それを受け持つのが、受け取った DNS サーバのアドレスです。DHCP と DNS のレッスンで、DHCP が DNS サーバを渡す様子が見られます。',
     },
     taughtBy: 'dns',
   },

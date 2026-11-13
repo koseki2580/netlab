@@ -20,7 +20,10 @@ export function ProgressPanel() {
     );
   }
 
-  const completions = progress.progress?.completions ?? [];
+  // A test's own bookkeeping (its last draws and review gate) is not something done.
+  const completions = (progress.progress?.completions ?? []).filter(
+    (completion) => completion.metadata?.['record'] !== 'exam-state',
+  );
 
   return (
     <section

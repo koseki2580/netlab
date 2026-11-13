@@ -124,8 +124,8 @@ const QUESTIONS: readonly ExamQuestion[] = [
         ja: '宛先アドレスが同じなので、8 本とも同じ Spine を通る',
       },
       {
-        en: 'Each flow is hashed to one spine and takes that same spine both times, even though the split is not exactly even',
-        ja: 'フローごとにハッシュで 1 つの Spine が決まり、2 回とも同じ Spine を通る。振り分けはぴったり半分ずつとは限らない',
+        en: 'Each flow is hashed to one spine and keeps it both times; the split need not be even',
+        ja: 'フローごとにハッシュで Spine が決まり、2 回とも同じ。半分ずつとは限らない',
       },
       {
         en: 'Each flow picks a spine at random, so the second send lands differently from the first',
@@ -152,11 +152,11 @@ const QUESTIONS: readonly ExamQuestion[] = [
       },
       {
         en: 'R1 recomputes on its own: the next hop moves from R2 to R3 and the metric rises from 3 to 5',
-        ja: 'R1 が自分で計算し直す。次ホップが R2 から R3 に変わり、メトリックは 3 から 5 に上がる',
+        ja: 'R1 が自分で計算し直す。次ホップは R3、メトリックは 3 から 5',
       },
       {
         en: 'R1 starts sharing traffic equally between R2 and R3',
-        ja: 'R1 は R2 と R3 に均等に振り分け始める',
+        ja: 'R1 は R2 と R3 の 2 つに均等に振り分け始める',
       },
       {
         en: 'The route disappears until an administrator adds a static backup route',
@@ -221,8 +221,8 @@ const QUESTIONS: readonly ExamQuestion[] = [
         ja: '安全のため、以降は両方のメンバにコピーして送られる',
       },
       {
-        en: 'The port-channel stays up with one active member, and the flow is re-hashed onto fa0/2',
-        ja: 'ポートチャネルは稼働中のメンバ 1 本で動き続け、フローは fa0/2 にハッシュし直される',
+        en: 'The bundle stays up on one member, and the flow is re-hashed onto fa0/2',
+        ja: '1 本で動き続け、フローは fa0/2 に移る',
       },
     ],
     answer: 3,
@@ -244,7 +244,7 @@ const QUESTIONS: readonly ExamQuestion[] = [
         ja: 'どこにも届けない。NAT は内側から始めた通信の返事しか通さない',
       },
       {
-        en: 'To Client A, 192.168.1.10, on port 80 — both the address and the port are rewritten',
+        en: 'To Client A, 192.168.1.10, on port 80: address and port rewritten',
         ja: 'Client A（192.168.1.10）のポート 80 へ。アドレスもポートも書き換えられる',
       },
       {
@@ -271,8 +271,8 @@ const QUESTIONS: readonly ExamQuestion[] = [
     },
     options: [
       {
-        en: 'Only the loss at 9001: with no ACKs the retransmission timer fires, while the duplicate ACKs at 3001 trigger fast retransmit without resetting the window',
-        ja: '9001 の損失だけ。ACK が返らないので再送タイマ（RTO）が切れる。3001 では重複 ACK で高速再送が起き、ウィンドウはリセットされない',
+        en: 'Only at 9001: the timer fires; at 3001 duplicate ACKs cause fast retransmit',
+        ja: '9001 だけ。タイマが切れる。3001 は重複 ACK で高速再送',
       },
       {
         en: 'Only the loss at 3001: three duplicate ACKs are the strongest sign of congestion',
@@ -283,7 +283,7 @@ const QUESTIONS: readonly ExamQuestion[] = [
         ja: '両方。どんな損失でも TCP は 1 セグメントのスロースタートに戻る',
       },
       {
-        en: 'Neither: cwnd only ever halves on loss',
+        en: 'Neither of them: cwnd only ever halves on loss',
         ja: 'どちらでもない。損失で cwnd は半分になるだけ',
       },
     ],
@@ -307,8 +307,8 @@ const QUESTIONS: readonly ExamQuestion[] = [
         ja: 'どちらも /b だけが待つ。HTTP/2 のストリームで先頭ブロッキングはすでに解決している',
       },
       {
-        en: 'Over HTTP/2 all four streams stall behind the lost TCP segment; over HTTP/3 only /b stalls and the others complete',
-        ja: 'HTTP/2 では失われた TCP セグメントの後ろで 4 本とも止まる。HTTP/3 では /b だけが止まり、ほかは完了する',
+        en: 'Over HTTP/2 all four stall behind the lost segment; over HTTP/3 only /b',
+        ja: 'HTTP/2 は 4 本とも止まり、HTTP/3 は /b だけが止まる',
       },
       {
         en: 'In both, all four stall, because they share one connection',
@@ -334,8 +334,8 @@ const QUESTIONS: readonly ExamQuestion[] = [
     },
     options: [
       {
-        en: 'Only the VPN label 24010, which tells PE2 which VRF the packet belongs to',
-        ja: 'VPN ラベル 24010 だけ。PE2 はこれで、どの VRF のパケットかを知る',
+        en: 'Only the VPN label 24010, which picks PE2’s VRF',
+        ja: 'VPN ラベル 24010 だけ。PE2 はこれで VRF を知る',
       },
       {
         en: 'Both labels; PE2 pops the transport label itself',
@@ -377,8 +377,8 @@ const QUESTIONS: readonly ExamQuestion[] = [
         ja: 'VXLAN では ARP を運べないので、要求は捨てられる',
       },
       {
-        en: 'Leaf1 answers locally with Host B’s MAC from the Type-2 route, so the request does not cross the fabric',
-        ja: 'Leaf1 が Type-2 経路で得た Host B の MAC でその場で答えるので、要求はファブリックを渡らない',
+        en: 'Leaf1 answers itself with Host B’s MAC from the Type-2 route',
+        ja: 'Leaf1 が Type-2 経路の MAC でその場で答える',
       },
     ],
     answer: 3,

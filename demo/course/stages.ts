@@ -267,24 +267,15 @@ export interface StageStatus {
 }
 
 /**
- * Each stage, passed or not and open or not. A stage is passed when all its
- * checkpoints are, or when its own exam or the exam of a later stage is: the
- * exam is what opens the next stage, and a later exam covers what came before,
- * which is also how a learner who passed the old test levels keeps them. A stage is open when it is the first or the one before is passed.
+ * Each stage, passed or not and open or not. A stage is passed only when every
+ * one of its checkpoints is: its test and its exercise levels alike (REQ-112,
+ * REQ-198). A test passed earlier stays passed as its checkpoint, but no longer
+ * stands in for the exercises. A stage is open when it is the first or the
+ * one before is passed.
  */
 export function stageStatuses(facts: StageFacts, stages: readonly Stage[] = STAGES): StageStatus[] {
-  const examPassedFrom = (index: number) =>
-    stages
-      .slice(index)
-      .some((later) =>
-        later.checkpoints.some(
-          (checkpoint) => checkpoint.kind === 'exam' && checkpointPassed(checkpoint, facts),
-        ),
-      );
-  const passed = stages.map(
-    (stage, index) =>
-      stage.checkpoints.every((checkpoint) => checkpointPassed(checkpoint, facts)) ||
-      examPassedFrom(index),
+  const passed = stages.map((stage) =>
+    stage.checkpoints.every((checkpoint) => checkpointPassed(checkpoint, facts)),
   );
   return stages.map((stage, index) => ({
     number: stage.number,
@@ -355,4 +346,24 @@ export function stageFacts({
       isCompleted(level === 1 ? 'course:exam' : `course:exam:${level}`),
     ),
   };
+}
+
+/**
+ * A test's name, by the stage it belongs to (REQ-198): "Stage 4 test". A stage
+ * with two tests numbers them. The old level names read as going back to the start.
+ */
+export function examStageName(level: number, stages: readonly Stage[] = STAGES): Localised {
+  for (const stage of stages) {
+    const levels = stage.checkpoints.flatMap((checkpoint) =>
+      checkpoint.kind === 'exam' ? [checkpoint.level] : [],
+    );
+    const index = levels.indexOf(level);
+    if (index === -1) continue;
+    const part = levels.length > 1 ? ` ${index + 1}` : '';
+    return {
+      en: `Stage ${stage.number} test${part}`,
+      ja: `段階 ${stage.number} のテスト${part}`,
+    };
+  }
+  return { en: `Test ${level}`, ja: `テスト ${level}` };
 }

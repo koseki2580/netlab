@@ -13,6 +13,7 @@ import { EXAM_LEVELS } from './examLevels';
 import {
   STAGES,
   checkpointPath,
+  examStageName,
   nextThing,
   stageFacts,
   stageStatuses,
@@ -46,13 +47,9 @@ function checkpointWords(checkpoint: Checkpoint): Localised {
         en: `Packet exercises, level ${checkpoint.level}: ${PACKET_LEVEL_NAMES[checkpoint.level].en}`,
         ja: `パケットの問題 レベル ${checkpoint.level}：${PACKET_LEVEL_NAMES[checkpoint.level].ja}`,
       };
-    case 'exam': {
-      const level = EXAM_LEVELS.find((entry) => entry.level === checkpoint.level);
-      return {
-        en: `Test: ${level?.title.en ?? `Level ${checkpoint.level}`}`,
-        ja: `テスト：${level?.title.ja ?? `レベル ${checkpoint.level}`}`,
-      };
-    }
+    case 'exam':
+      // Named by its stage, never by the old level names (REQ-198).
+      return examStageName(checkpoint.level);
   }
 }
 
@@ -145,11 +142,24 @@ function StageCard({ stage, status }: { stage: Stage; status: StageStatus }) {
             </li>
           ))}
         </ol>
-        {status.checkpoints.some(({ checkpoint }) => checkpoint.kind === 'exam') ? (
-          <p style={{ ...MUTED, margin: '4px 0 0', fontSize: 13 }}>
+        <p style={{ ...MUTED, margin: '4px 0 0', fontSize: 13 }}>
+          {t(
+            'The stage is passed when every item above is done, not by its test alone.',
+            'この段階は、上のものがすべて済んだときに合格です。テストだけでは合格になりません。',
+          )}
+        </p>
+        {!status.passed &&
+        status.checkpoints.some(
+          ({ checkpoint, passed }) => checkpoint.kind === 'exam' && passed,
+        ) ? (
+          // A test passed earlier is kept, but the stage now also needs its exercises (REQ-114).
+          <p
+            data-testid={`path-stage-${stage.number}-test-kept`}
+            style={{ margin: '4px 0 0', fontSize: 13 }}
+          >
             {t(
-              'Passing a test of this stage passes it; the exercises before it prepare for it.',
-              'この段階のテストに合格すると、この段階は合格です。その前の問題は、テストの準備です。',
+              'Your pass of this stage’s test is kept. The exercises above still remain before the stage is passed.',
+              'この段階のテストの合格は残っています。段階の合格には、上の問題がまだ残っています。',
             )}
           </p>
         ) : null}

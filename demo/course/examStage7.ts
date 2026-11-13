@@ -100,20 +100,20 @@ export const EXAM_STAGE_7: ExamLevel = {
       },
       options: [
         {
-          en: 'Certificate, Finished, EncryptedExtensions',
-          ja: 'Certificate → Finished → EncryptedExtensions',
+          en: 'Certificate → EncryptedExtensions → CertificateVerify → Finished',
+          ja: 'Certificate → EncryptedExtensions → CertificateVerify → Finished',
         },
         {
-          en: 'Finished, Certificate, CertificateVerify',
-          ja: 'Finished → Certificate → CertificateVerify',
+          en: 'EncryptedExtensions → CertificateVerify → Certificate → Finished',
+          ja: 'EncryptedExtensions → CertificateVerify → Certificate → Finished',
         },
         {
-          en: 'CertificateVerify, Certificate, Finished',
-          ja: 'CertificateVerify → Certificate → Finished',
+          en: 'Certificate → CertificateVerify → Finished → EncryptedExtensions',
+          ja: 'Certificate → CertificateVerify → Finished → EncryptedExtensions',
         },
         {
-          en: 'EncryptedExtensions, Certificate, Finished',
-          ja: 'EncryptedExtensions → Certificate → Finished',
+          en: 'EncryptedExtensions → Certificate → CertificateVerify → Finished',
+          ja: 'EncryptedExtensions → Certificate → CertificateVerify → Finished',
         },
       ],
       answer: 3,

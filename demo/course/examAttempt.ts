@@ -32,31 +32,99 @@ export interface ExamAttempt {
 export const NEW_ATTEMPT: ExamAttempt = { seed: 0, started: false, answers: {}, marked: false };
 
 /**
- * What a marked question may show (REQ-193). A failed attempt keeps a missed
- * question's right option and its explanation to itself: shown, they were
- * copied into an immediate retake. A passed attempt shows everything.
+ * What a marked question may show (REQ-193, REQ-196). A failed attempt shows
+ * nothing about any answer: neither marks nor right options nor explanations
+ * (persona run 2 copied them into the retake). A passed attempt shows all.
  */
 export function reviewOf(question: { readonly passed: boolean; readonly correct: boolean }): {
+  readonly marks: boolean;
   readonly rightOption: boolean;
   readonly explanation: boolean;
 } {
   return {
+    marks: question.passed,
     rightOption: question.passed && !question.correct,
-    explanation: question.passed || question.correct,
+    explanation: question.passed,
   };
 }
 
-/** The attempt, once the learner has opened a lesson it links to. */
-export function studied(attempt: ExamAttempt): ExamAttempt {
-  return { ...attempt, studied: true };
+/**
+ * What the progress record keeps for a level (REQ-195, REQ-197): the questions
+ * of the last two attempts, whether the last was failed, the path stops of its
+ * missed questions, and which of their review lessons have been opened since.
+ * It lives in the progress record, so a reload or a new tab sees it too.
+ */
+export interface ExamLedger {
+  readonly lastIds: readonly string[];
+  readonly earlierIds: readonly string[];
+  readonly failed: boolean;
+  readonly missedStops: readonly string[];
+  readonly studiedStops: readonly string[];
 }
 
-/**
- * Whether another attempt may start. After a failure, only once a lesson it
- * links to has been opened: the immediate retake is what was copied.
- */
-export function mayRetake(attempt: ExamAttempt, passed: boolean): boolean {
-  return passed || attempt.studied === true;
+export const EMPTY_LEDGER: ExamLedger = {
+  lastIds: [],
+  earlierIds: [],
+  failed: false,
+  missedStops: [],
+  studiedStops: [],
+};
+
+/** The progress-record id of a level's ledger. */
+export function ledgerId(level: number): string {
+  return `exam-state:${level}`;
+}
+
+const list = (value: unknown): string[] =>
+  typeof value === 'string' && value.length > 0 ? value.split(',') : [];
+
+export function ledgerFromMetadata(
+  metadata: Readonly<Record<string, string | number | boolean>> | undefined,
+): ExamLedger {
+  if (!metadata) return EMPTY_LEDGER;
+  return {
+    lastIds: list(metadata['lastIds']),
+    earlierIds: list(metadata['earlierIds']),
+    failed: metadata['failed'] === true,
+    missedStops: list(metadata['missedStops']),
+    studiedStops: list(metadata['studiedStops']),
+  };
+}
+
+export function ledgerToMetadata(ledger: ExamLedger): Record<string, string | boolean> {
+  return {
+    record: 'exam-state',
+    lastIds: ledger.lastIds.join(','),
+    earlierIds: ledger.earlierIds.join(','),
+    failed: ledger.failed,
+    missedStops: ledger.missedStops.join(','),
+    studiedStops: ledger.studiedStops.join(','),
+  };
+}
+
+/** A new attempt drew `ids`: they become the last, the last become the earlier. */
+export function ledgerAfterDraw(ledger: ExamLedger, ids: readonly string[]): ExamLedger {
+  return { ...EMPTY_LEDGER, lastIds: [...ids], earlierIds: [...ledger.lastIds] };
+}
+
+export function ledgerAfterMarking(
+  ledger: ExamLedger,
+  result: { readonly passed: boolean; readonly missedStops: readonly string[] },
+): ExamLedger {
+  return result.passed
+    ? { ...ledger, failed: false, missedStops: [], studiedStops: [] }
+    : { ...ledger, failed: true, missedStops: [...new Set(result.missedStops)], studiedStops: [] };
+}
+
+export function ledgerAfterStudy(ledger: ExamLedger, stop: string): ExamLedger {
+  return ledger.studiedStops.includes(stop)
+    ? ledger
+    : { ...ledger, studiedStops: [...ledger.studiedStops, stop] };
+}
+
+/** Whether a new attempt may begin: after a fail, once every missed topic’s lesson was opened. */
+export function mayBegin(ledger: ExamLedger): boolean {
+  return !ledger.failed || ledger.missedStops.every((stop) => ledger.studiedStops.includes(stop));
 }
 
 /** A small seeded generator (mulberry32): the same seed, the same numbers. */
@@ -197,6 +265,11 @@ export function examRoute(level: number): string {
 /** What the test adds to a lesson's address so the lesson can offer the way back. */
 export function examReturnSearch(level: number): string {
   return `?fromExam=${level}`;
+}
+
+/** Where a path stop's link goes from a level's test: its lesson, on the view it is about. */
+export function stopHref(stop: { readonly path: string; readonly query?: string }, level: number) {
+  return `${stop.path}${examReturnSearch(level)}${stop.query ? `&${stop.query}` : ''}`;
 }
 
 /** The level of the test a lesson was opened from, if its address names one. */

@@ -180,19 +180,32 @@ describe('passing a stage, and what that unlocks (TC-954)', () => {
 
 // TC-955
 describe('a learner who passed an exam before the path existed (TC-955)', () => {
-  it('has every stage that exam closes passed', () => {
+  // Changed by REQ-198: the test is kept, but no stage passes without its exercises.
+  it('keeps that test as its stage’s checkpoint, and passes no stage by it', () => {
     const statuses = stageStatuses(facts({ examsPassed: [2] }));
     expect(statuses.map((stage) => stage.passed)).toEqual([
-      true,
-      true,
-      true,
-      true,
-      true,
+      false,
+      false,
+      false,
+      false,
+      false,
       false,
       false,
     ]);
-    expect(statuses[5]).toMatchObject({ unlocked: true });
-    expect(statuses[6]).toMatchObject({ unlocked: false });
+    const stage5 = statuses[4]!;
+    expect(stage5.checkpoints.find((entry) => entry.checkpoint.kind === 'exam')?.passed).toBe(true);
+    expect(statuses[1]).toMatchObject({ unlocked: false });
+  });
+});
+
+// TC-1426
+describe('a stage passes only with its test and its exercises (TC-1426)', () => {
+  it('stage 2 with its test passed and its exercises not is not passed; with them it is', () => {
+    const before = passedThrough(1);
+    const testOnly: StageFacts = { ...before, examsPassed: [...before.examsPassed, 6] };
+    expect(stageStatuses(testOnly)[1]).toMatchObject({ passed: false });
+    expect(stageStatuses(testOnly)[2]).toMatchObject({ unlocked: false });
+    expect(stageStatuses(passedThrough(2))[1]).toMatchObject({ passed: true });
   });
 });
 
@@ -251,18 +264,32 @@ describe('results from before the stage tests carry over (TC-962)', () => {
   const passed = (levels: number[]) =>
     stageStatuses(facts({ examsPassed: levels })).map((stage) => stage.passed);
 
-  it('a pass of level 1 passes stages 1 to 4', () => {
-    expect(passed([1])).toEqual([true, true, true, true, false, false, false]);
+  // Changed by REQ-198: an earlier pass is kept as that stage's test, and no stage
+  // passes without its exercises.
+  const examKept = (levels: number[], stage: number) =>
+    stageStatuses(facts({ examsPassed: levels }))[stage - 1]!.checkpoints.find(
+      (entry) => entry.checkpoint.kind === 'exam',
+    )?.passed;
+
+  it('a pass of level 1 is kept as stage 4’s test, its only checkpoint, and passes that stage only', () => {
+    expect(passed([1])).toEqual([false, false, false, true, false, false, false]);
+    expect(examKept([1], 4)).toBe(true);
   });
 
-  it('a pass of level 4, now a stage 6 test, passes stages 1 to 6 and opens stage 7', () => {
-    expect(passed([4])).toEqual([true, true, true, true, true, true, false]);
-    expect(stageStatuses(facts({ examsPassed: [4] }))[6]).toMatchObject({ unlocked: true });
+  it('a pass of level 4 is kept as one of stage 6’s tests', () => {
+    expect(passed([4]).some(Boolean)).toBe(false);
+    expect(
+      stageStatuses(facts({ examsPassed: [4] }))[5]!.checkpoints.some(
+        (entry) => entry.checkpoint.kind === 'exam' && entry.passed,
+      ),
+    ).toBe(true);
   });
 
-  it('a pass of a stage test passes that stage, and the stage test of stage 7 passes all', () => {
-    expect(passed([5])).toEqual([true, false, false, false, false, false, false]);
-    expect(passed([8]).every(Boolean)).toBe(true);
+  it('a stage test with the rest of its stage passes that stage only', () => {
+    expect(passed([5])).toEqual([false, false, false, false, false, false, false]);
+    expect(stageStatuses(facts({ courseDone: true, examsPassed: [5] }))[0]!.passed).toBe(true);
+    // Stage 7 has its test as its only checkpoint; it covers no earlier stage.
+    expect(passed([8])).toEqual([false, false, false, false, false, false, true]);
   });
 });
 

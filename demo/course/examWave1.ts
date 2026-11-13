@@ -49,7 +49,7 @@ export const EXAM_WAVE1: readonly ExamCandidate[] = [
       en: 'BGP compares LOCAL_PREF before anything else, and the higher wins (RFC 4271 §9.1). Only between routes of equal LOCAL_PREF does the shorter AS_PATH decide; that is why the traffic left by provider A before. LOCAL_PREF is the usual way for a network to choose its own way out. It is not a cost: unlike an OSPF cost, more is better. Two routes are used together only where the router is set to share load between equal routes, and these two are not equal.',
       ja: 'BGP は何よりも先に LOCAL_PREF を比べ、大きいほうが勝ちます（RFC 4271 §9.1）。LOCAL_PREF が同じ経路どうしのときだけ、短い AS_PATH が決め手になります。前にプロバイダ A から出ていたのはそのためです。LOCAL_PREF は、自分のネットワークの出口を選ぶときのふつうの方法です。コストではありません。OSPF のコストとちがい、大きいほうが選ばれます。2 つの経路をいっしょに使うのは、同じ値の経路で負荷を分けるよう設定したときだけで、この 2 つは同じ値ではありません。',
     },
-    taughtBy: 'dynamic',
+    taughtBy: 'bgp',
     lesson: '/routing/dynamic',
   },
   {

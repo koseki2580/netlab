@@ -5,14 +5,15 @@ import {
   examReturnSearch,
   examRoute,
   loadAttempt,
-  mayRetake,
-  NEW_ATTEMPT,
+  mayBegin,
+  ledgerAfterMarking,
+  ledgerAfterStudy,
+  EMPTY_LEDGER,
   nextSeed,
   optionOrder,
   reviewOf,
   saveAttempt,
   seedFromSearch,
-  studied,
   type ExamAttempt,
 } from './examAttempt';
 
@@ -160,37 +161,30 @@ describe('the way back from a lesson to the test (TC-327)', () => {
   });
 });
 
-describe('what a marked attempt reveals (REQ-193)', () => {
-  // TC-1330: a failed attempt keeps a missed question's answer to itself.
-  it('withholds a missed answer and its explanation until the test is passed', () => {
+describe('what a marked attempt reveals (REQ-193, REQ-196)', () => {
+  // TC-1330: a failed attempt keeps every answer to itself; a passed one shows all.
+  it('withholds every mark, right option and explanation until the test is passed', () => {
     expect(reviewOf({ passed: false, correct: false })).toEqual({
+      marks: false,
       rightOption: false,
       explanation: false,
     });
     expect(reviewOf({ passed: false, correct: true })).toEqual({
+      marks: false,
       rightOption: false,
-      explanation: true,
+      explanation: false,
     });
     expect(reviewOf({ passed: true, correct: false })).toEqual({
+      marks: true,
       rightOption: true,
       explanation: true,
     });
   });
 
-  // TC-1331: another attempt after a failed one waits for a lesson to be opened.
-  it('offers another attempt after a failure only once a linked lesson is opened', () => {
-    const failed = { ...NEW_ATTEMPT, started: true, marked: true };
-    expect(mayRetake(failed, false)).toBe(false);
-    expect(mayRetake(studied(failed), false)).toBe(true);
-    expect(mayRetake(failed, true)).toBe(true);
-    // A stored attempt keeps the visit.
-    const store = new Map<string, string>();
-    const fake = {
-      getItem: (key: string) => store.get(key) ?? null,
-      setItem: (key: string, value: string) => void store.set(key, value),
-      removeItem: (key: string) => void store.delete(key),
-    };
-    saveAttempt(fake, 5, studied(failed));
-    expect(mayRetake(loadAttempt(fake, 5)!, false)).toBe(true);
+  // TC-1331: another attempt after a failed one waits for its lessons (TC-1424 has the rest).
+  it('offers another attempt after a failure only once the missed lesson is opened', () => {
+    const failed = ledgerAfterMarking(EMPTY_LEDGER, { passed: false, missedStops: ['arp'] });
+    expect(mayBegin(failed)).toBe(false);
+    expect(mayBegin(ledgerAfterStudy(failed, 'arp'))).toBe(true);
   });
 });

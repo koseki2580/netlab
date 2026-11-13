@@ -34,17 +34,32 @@ async function answerAllNotLearnedAndMark(page: Page) {
   await expect(page.getByTestId('exam-score')).toHaveAttribute('data-score', '0');
 }
 
-/** Follow the first review link of a failed result, then come back to the test. */
-async function studyOneLesson(page: Page, demoPage: DemoPage, back?: string) {
-  await page
-    .getByTestId(/^exam-missed-review-/)
-    .first()
-    .click();
+/** Follow one review link of a failed result, then come back to the test. */
+async function studyLesson(page: Page, demoPage: DemoPage, link: Locator, back?: string) {
+  await link.click();
   await page.getByTestId('demo-shell-back-to-exam').click();
   await expect(page.getByTestId('exam-score')).toBeVisible();
   if (back) {
     await demoPage.goto(back);
     await expect(page.getByTestId('exam-score')).toBeVisible();
+  }
+}
+
+/** The review links of a failed result, one per missed topic, as their test ids. */
+async function reviewLinksByTopic(page: Page): Promise<string[]> {
+  const links = await page
+    .getByTestId(/^exam-missed-review-/)
+    .evaluateAll((all) =>
+      all.map((link) => [link.getAttribute('data-testid') ?? '', link.textContent ?? '']),
+    );
+  const seen = new Set<string>();
+  return links.flatMap(([id, text]) => (seen.has(text!) ? [] : (seen.add(text!), [id!])));
+}
+
+/** Open the review lesson of every missed topic, coming back each time (REQ-197). */
+async function studyEveryTopic(page: Page, demoPage: DemoPage, back?: string) {
+  for (const id of await reviewLinksByTopic(page)) {
+    await studyLesson(page, demoPage, page.getByTestId(id), back);
   }
 }
 
@@ -136,7 +151,7 @@ test('TC-324: each attempt shows the options in a new order, "not learned" last'
   // "Try again" is the next attempt: with a named seed, the next whole number.
   // After a failure it waits for a lesson the result links to (TC-1333).
   await page.getByTestId('exam-submit').click();
-  await studyOneLesson(page, demoPage, '/course/exam?examSeed=1');
+  await studyEveryTopic(page, demoPage, '/course/exam?examSeed=1');
   await page.getByTestId('exam-retry').click();
   await expect(page.getByTestId('exam-score')).toHaveCount(0);
   const second: string[][] = [];
@@ -154,15 +169,18 @@ test('TC-325: after marking, the score is in view and each answer is named in wo
 }) => {
   await startExam(page, demoPage);
 
-  const [one, two, three] = EXAM_QUESTIONS;
+  // A pass with one wrong and one "not learned": only a pass names answers (REQ-196).
+  const [one, two] = EXAM_QUESTIONS;
   const wrong = ((two!.answer + 1) % 4) + 1;
-  await page.getByTestId(`exam-option-1-${one!.answer + 1}`).check();
-  await page.getByTestId(`exam-option-2-${wrong}`).check();
-  for (let n = 3; n <= 10; n += 1) await page.getByTestId(`exam-option-${n}-x`).check();
+  for (const [index, question] of EXAM_QUESTIONS.entries()) {
+    const n = index + 1;
+    const key = n === 2 ? `${wrong}` : n === 3 ? 'x' : `${question.answer + 1}`;
+    await page.getByTestId(`exam-option-${n}-${key}`).check();
+  }
   await page.getByTestId('exam-submit').click();
 
   const score = page.getByTestId('exam-score');
-  await expect(score).toHaveAttribute('data-score', '1');
+  await expect(score).toHaveAttribute('data-score', '8');
   await expect(score).toBeInViewport();
   await expect(score).toBeFocused();
 
@@ -172,23 +190,22 @@ test('TC-325: after marking, the score is in view and each answer is named in wo
   ).toContainText('あなたの答え');
   await expect(page.getByTestId('exam-correct-answer-1')).toHaveCount(0);
 
-  // Answered wrong in a failed attempt: the choice is named and marked wrong,
-  // and the right one is not shown (TC-1332, REQ-193).
+  // Answered wrong: the choice is named and marked wrong, and the right one named.
   await expect(
     page.getByTestId(`exam-option-row-2-${wrong}`).getByTestId('exam-your-answer-2'),
   ).toContainText('✗ あなたの答え');
-  await expect(page.getByTestId('exam-correct-answer-2')).toHaveCount(0);
-  await expect(page.getByTestId('exam-feedback-2')).not.toContainText(two!.explanation.ja);
+  await expect(
+    page.getByTestId(`exam-option-row-2-${two!.answer + 1}`).getByTestId('exam-correct-answer-2'),
+  ).toContainText('正解');
 
-  // "Not learned": that row is the learner's answer; the right one is not shown.
+  // "Not learned": that row is the learner's answer; the right one is named too.
   await expect(
     page.getByTestId('exam-option-row-3-x').getByTestId('exam-your-answer-3'),
   ).toBeVisible();
-  await expect(page.getByTestId('exam-correct-answer-3')).toHaveCount(0);
-  void three;
+  await expect(page.getByTestId('exam-correct-answer-3')).toContainText('正解');
 });
 
-test('TC-1332, TC-1333: a failed attempt names no answer, and the next waits for a lesson', async ({
+test('TC-1332, TC-1333: a failed attempt names no answer, and the next waits for its lessons', async ({
   page,
   demoPage,
 }) => {
@@ -196,15 +213,17 @@ test('TC-1332, TC-1333: a failed attempt names no answer, and the next waits for
   await answerAllNotLearnedAndMark(page);
   for (let n = 1; n <= 10; n += 1) {
     await expect(page.getByTestId(`exam-correct-answer-${n}`)).toHaveCount(0);
-    await expect(page.getByTestId(`exam-feedback-${n}`)).not.toContainText(
-      EXAM_QUESTIONS[n - 1]!.explanation.ja,
-    );
+    await expect(page.getByTestId(`exam-your-answer-${n}`)).toHaveCount(0);
+    await expect(page.getByTestId(`exam-feedback-${n}`)).toHaveCount(0);
   }
+  await expect(page.getByTestId('exam-questions')).not.toContainText(
+    EXAM_QUESTIONS[0]!.explanation.ja,
+  );
   await expect(page.getByTestId('exam-answers-later')).toContainText('合格すると');
   await expect(page.getByTestId('exam-retry')).toBeDisabled();
   await expect(page.getByTestId('exam-retry-hint')).toContainText('復習');
 
-  await studyOneLesson(page, demoPage);
+  await studyEveryTopic(page, demoPage);
   await expect(page.getByTestId('exam-retry')).toBeEnabled();
   await page.getByTestId('exam-retry').click();
   await expect(page.getByTestId('exam-score')).toHaveCount(0);
@@ -250,7 +269,7 @@ test('TC-1356: the stage 1 test asks a new set after a failed attempt', async ({
     await expect(page.getByTestId(`exam-question-${index + 1}`)).toContainText(question.prompt.ja);
   }
   await answerAllNotLearnedAndMark(page);
-  await studyOneLesson(page, demoPage, route);
+  await studyEveryTopic(page, demoPage, route);
   await page.getByTestId('exam-retry').click();
   for (const [index, question] of next.entries()) {
     await expect(page.getByTestId(`exam-question-${index + 1}`)).toContainText(question.prompt.ja);
@@ -271,6 +290,106 @@ test('TC-1335: a stage test keeps a failed attempt’s answers to itself too', a
   await expect(page.getByTestId('exam-retry')).toBeDisabled();
 });
 
+/** The prompts of the ten questions shown, in order. */
+async function shownPrompts(page: Page, stage: ReturnType<typeof examLevel>): Promise<string[]> {
+  const prompts: string[] = [];
+  for (let n = 1; n <= 10; n += 1) {
+    const text = (await page.getByTestId(`exam-question-${n}`).textContent()) ?? '';
+    const pool = stage!.slots?.flat() ?? stage!.questions;
+    const match = pool
+      .filter((question) => text.includes(question.prompt.ja))
+      .sort((a, b) => b.prompt.ja.length - a.prompt.ja.length)[0];
+    prompts.push(match?.id ?? `unknown-${n}`);
+  }
+  return prompts;
+}
+
+test('TC-1421: a reload, a new tab and "Start" still ask a new set after a fail', async ({
+  page,
+  demoPage,
+}) => {
+  // Kimura's report: after a fail, eight of the ten came back.
+  const route = '/course/exam/5?examSeed=4';
+  const stage1 = examLevel(5)!;
+  await startExam(page, demoPage, route);
+  const first = await shownPrompts(page, stage1);
+  expect(first.filter((id) => id.startsWith('unknown'))).toEqual([]);
+  await answerAllNotLearnedAndMark(page);
+  await studyEveryTopic(page, demoPage, route);
+
+  // A new tab has none of this tab's attempt: it begins with "Start".
+  const other = await page.context().newPage();
+  await other.goto(`/#${route}`);
+  await other.getByTestId('exam-start').click();
+  await expect(other.getByTestId('exam-question-1')).toBeVisible();
+  const next = await shownPrompts(other, stage1);
+  expect(next.filter((id) => id.startsWith('unknown'))).toEqual([]);
+  expect(next.filter((id) => first.includes(id)).length).toBeLessThanOrEqual(2);
+  await other.close();
+});
+
+test('TC-1423: a failed attempt marks no answer right or wrong and explains none', async ({
+  page,
+  demoPage,
+}) => {
+  await startExam(page, demoPage);
+  const [one] = EXAM_QUESTIONS;
+  await page.getByTestId(`exam-option-1-${one!.answer + 1}`).check();
+  for (let n = 2; n <= 10; n += 1) await page.getByTestId(`exam-option-${n}-x`).check();
+  await page.getByTestId('exam-submit').click();
+  await expect(page.getByTestId('exam-score')).toHaveAttribute('data-passed', 'no');
+
+  const questions = page.getByTestId('exam-questions');
+  await expect(questions).not.toContainText('✓');
+  await expect(questions).not.toContainText('✗');
+  await expect(questions).not.toContainText('正解');
+  await expect(questions).not.toContainText(one!.explanation.ja);
+  await expect(page.getByTestId(/^exam-your-answer-/)).toHaveCount(0);
+  await expect(page.getByTestId(/^exam-feedback-/)).toHaveCount(0);
+  await expect(page.locator('[data-correct]')).toHaveCount(0);
+  // What is shown: the score, which questions were missed, and their lessons.
+  await expect(page.getByTestId('exam-score')).toHaveAttribute('data-score', '1');
+  await expect(page.getByTestId('exam-not-learned-summary')).toBeVisible();
+  await expect(page.getByTestId('exam-missed-review-2')).toContainText('復習する');
+  await expect(page.getByTestId('exam-missed-1')).toHaveCount(0);
+});
+
+test('TC-1425: every missed topic is reviewed before another attempt, across a reload and a new tab', async ({
+  page,
+  demoPage,
+}) => {
+  const route = '/course/exam/5?examSeed=4';
+  await startExam(page, demoPage, route);
+  await answerAllNotLearnedAndMark(page);
+  const topics = await reviewLinksByTopic(page);
+  expect(topics.length).toBeGreaterThanOrEqual(2);
+
+  // One topic reviewed of several: still closed, after a reload too.
+  await studyLesson(page, demoPage, page.getByTestId(topics[0]!), route);
+  await page.reload();
+  await expect(page.getByTestId('exam-retry')).toBeDisabled();
+  await expect(page.getByTestId('exam-retry-hint')).toContainText(`${topics.length} つのうち 1 つ`);
+
+  // A new tab offers "Start", closed, with the topics still to review.
+  const other = await page.context().newPage();
+  await other.goto(`/#${route}`);
+  await expect(other.getByTestId('exam-start')).toBeDisabled();
+  await expect(other.getByTestId('exam-start-hint')).toContainText('前回は不合格');
+  const left = other.getByTestId(/^exam-start-review-/);
+  await expect(left).toHaveCount(topics.length - 1);
+  for (let k = topics.length - 1; k > 0; k -= 1) {
+    await left.first().click();
+    await other.getByTestId('demo-shell-back-to-exam').click();
+    await expect(other.getByTestId(/^exam-start-review-/)).toHaveCount(k - 1);
+  }
+  await expect(other.getByTestId('exam-start')).toBeEnabled();
+  await other.close();
+
+  // And the first tab, reloaded, may try again.
+  await page.reload();
+  await expect(page.getByTestId('exam-retry')).toBeEnabled();
+});
+
 test('TC-326: the attempt survives a reload and a visit to a lesson, until "try again"', async ({
   page,
   demoPage,
@@ -282,15 +401,16 @@ test('TC-326: the attempt survives a reload and a visit to a lesson, until "try 
   await expect(page.getByTestId('exam-score')).toHaveAttribute('data-score', '0');
   await expect(page.getByTestId('exam-option-4-x')).toBeChecked();
 
-  await page.getByTestId('exam-review-5').click();
+  await page.getByTestId('exam-missed-review-5').click();
   await expect(page).toHaveURL(/#\/networking\/arp/);
   await page.getByTestId('demo-shell-back-to-exam').click();
   await expect(page).toHaveURL(/#\/course\/exam$/);
   await expect(page.getByTestId('exam-score')).toHaveAttribute('data-score', '0');
   await expect(page.getByTestId('exam-score')).toBeInViewport();
   await expect(page.getByTestId('exam-option-4-x')).toBeChecked();
-  await expect(page.getByTestId('exam-review-5')).toBeVisible();
+  await expect(page.getByTestId('exam-missed-review-5')).toBeVisible();
 
+  await studyEveryTopic(page, demoPage);
   await page.getByTestId('exam-retry').click();
   await expect(page.getByTestId('exam-score')).toHaveCount(0);
   await expect(page.getByTestId('exam-option-4-x')).not.toBeChecked();
@@ -337,7 +457,12 @@ for (const theme of ['dark', 'light'] as const) {
       await startExam(page, demoPage);
       await answerAllNotLearnedAndMark(page);
 
-      for (const id of ['exam-path-course', 'exam-path-arp', 'exam-review-1', 'exam-review-10']) {
+      for (const id of [
+        'exam-path-course',
+        'exam-path-arp',
+        'exam-missed-review-1',
+        'exam-missed-review-10',
+      ]) {
         expect(await contrastOf(page.getByTestId(id)), `${id} in ${theme}`).toBeGreaterThanOrEqual(
           4.5,
         );
@@ -352,7 +477,7 @@ test('TC-328: a review link is a comfortable tap target on a phone', async ({ pa
   await answerAllNotLearnedAndMark(page);
 
   for (const n of [1, 5, 10]) {
-    const box = await page.getByTestId(`exam-review-${n}`).boundingBox();
+    const box = await page.getByTestId(`exam-missed-review-${n}`).boundingBox();
     expect(box?.height ?? 0, `review link ${n}`).toBeGreaterThanOrEqual(44);
   }
 });
@@ -422,7 +547,8 @@ test('answers of "not learned yet" are not called mistakes', async ({ page, demo
   // Each still points at the lesson that teaches it.
   await expect(page.getByTestId('exam-missed-review-1')).toBeVisible();
   await expect(page.getByTestId('exam-missed-review-3')).toBeVisible();
-  await expect(page.getByTestId('exam-question-1')).toContainText('まだ習っていない');
+  // A failed attempt marks no question, so the two are told apart in the
+  // summary above only (REQ-196).
   await expect(page.getByTestId('exam-question-1')).not.toContainText('不正解');
-  await expect(page.getByTestId('exam-question-3')).toContainText('不正解');
+  await expect(page.getByTestId('exam-question-3')).not.toContainText('不正解');
 });

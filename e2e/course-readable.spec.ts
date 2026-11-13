@@ -107,7 +107,13 @@ test('each step says its one idea first and keeps the detail closed', async ({
   }
 
   await expect(page.getByTestId(SEL.course.finished)).toBeVisible();
-  await expect(page.getByTestId(IDS.toExam)).toBeVisible();
+  // TC-1431 — the end button names the stage 1 test and opens it (REQ-198).
+  const toExam = page.getByTestId(IDS.toExam);
+  await expect(toExam).toHaveText('段階 1 のテストへ →');
+  await toExam.click();
+  await expect(page).toHaveURL(/#\/course\/exam\/5$/);
+  await expect(page.getByTestId('exam-path')).toHaveAttribute('data-level', '5');
+  await expect(page.getByTestId('exam-path')).toContainText('段階 1 のテスト');
 });
 
 test.describe('on a phone', () => {

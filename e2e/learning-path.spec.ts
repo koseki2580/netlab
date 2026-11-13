@@ -71,22 +71,38 @@ test.describe('the learning path at 1440×900', () => {
     await expect(page).toHaveURL(/#\/basic\/three-tier$/);
   });
 
-  test('TC-958: a learner who passed the old level 2 test continues from stage 6', async ({
+  test('TC-958, TC-1427: a kept test pass leaves the stage open, and tests are named by stage', async ({
     page,
   }) => {
+    // The old level 2 test is stage 5's: its pass is kept, the stage is not passed (REQ-114).
     await openPath(page, ['course:exam:2']);
-    for (let n = 1; n <= 5; n += 1) {
-      await expect(page.getByTestId(P.stage(n)), `stage ${n}`).toHaveAttribute(
+    const kept = page.getByTestId(P.checkpoint(5)).filter({ hasText: 'Stage 5 test' });
+    await expect(kept).toHaveAttribute('data-passed', 'yes');
+    await expect(page.getByTestId(P.stage(5))).not.toHaveAttribute('data-state', 'passed');
+    await expect(page.getByTestId('path-stage-5-test-kept')).toContainText('exercises');
+    for (let n = 1; n <= 7; n += 1) {
+      await expect(page.getByTestId(P.stage(n)), `stage ${n}`).not.toHaveAttribute(
         'data-state',
         'passed',
       );
     }
-    await expect(page.getByTestId(P.stage(6))).toHaveAttribute('data-state', 'open');
-    await expect(page.getByTestId(P.stage(7))).toHaveAttribute('data-state', 'locked');
     const next = page.getByTestId(P.next);
-    await expect(next).toHaveAttribute('data-stage', '6');
-    await expect(next).toHaveAttribute('data-kind', 'exam');
-    await expect(next).toHaveAttribute('href', /#\/course\/exam\/3$/);
+    await expect(next).toHaveAttribute('data-stage', '1');
+
+    // Every test on the path is named by its stage, not by a level.
+    const words = await page
+      .getByTestId(/^path-stage-\d-checkpoint$/)
+      .filter({ hasText: /test/i })
+      .allTextContents();
+    expect(words.length).toBe(8);
+    for (const word of words) expect(word).toMatch(/Stage \d test( [12])?$/);
+    await expect(page.getByTestId(P.page)).not.toContainText(/Level \d/);
+
+    // And on the test page.
+    await page.goto(`/#/course/exam/2?learnerId=${LEARNER}`);
+    await expect(page.getByTestId('exam-level-2')).toHaveText('Stage 5 test');
+    await expect(page.getByTestId('exam-level-3')).toHaveText('Stage 6 test 1');
+    await expect(page.getByTestId('exam-path')).toContainText('Stage 5 test');
   });
 
   test('TC-960: the gallery and the exercise hub lead to the path', async ({ page }) => {
@@ -114,7 +130,27 @@ test.describe('the stage tests at 1440×900', () => {
     await expect(next).toHaveAttribute('href', /#\/course\/exam\/5$/);
   });
 
-  test('TC-966: passing the stage 1 test passes stage 1 and opens stage 2', async ({ page }) => {
+  test('TC-966: with the course done, passing the stage 1 test passes stage 1', async ({
+    page,
+  }) => {
+    // The course is done: the record holds it once, and the test adds to it (REQ-112).
+    await page.addInitScript(
+      ({ learner, ids }) => {
+        const key = `netlab-progress:v1:${learner}`;
+        if (window.localStorage.getItem(key)) return;
+        const now = new Date().toISOString();
+        window.localStorage.setItem(
+          key,
+          JSON.stringify({
+            schemaVersion: 1,
+            learnerId: learner,
+            completions: ids.map((id) => ({ kind: 'tutorial', id, completedAt: now })),
+            updatedAt: now,
+          }),
+        );
+      },
+      { learner: LEARNER, ids: COURSE_STEPS.map((step) => courseProgressId(step.id)) },
+    );
     // A named seed fixes the ten the stage 1 test draws from its pool (REQ-194).
     await page.goto(`/#/course/exam/5?learnerId=${LEARNER}&examSeed=3`);
     // The tests are listed in the order of the stages: stage 1's comes first.

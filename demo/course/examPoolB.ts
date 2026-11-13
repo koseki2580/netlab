@@ -70,7 +70,7 @@ const ENTRIES: readonly (readonly [string, ExamQuestion])[] = [
         en: 'With LOCAL_PREF equal, the shorter AS_PATH wins (RFC 4271 §9.1). The dynamic routing lesson compares the paths this way.',
         ja: 'LOCAL_PREF が同じなら、短い AS_PATH が勝ちます（RFC 4271 §9.1）。動的ルーティングのレッスンで、この比べ方が見られます。',
       },
-      taughtBy: 'dynamic',
+      taughtBy: 'bgp',
     },
   ],
   [
@@ -893,15 +893,15 @@ const ENTRIES: readonly (readonly [string, ExamQuestion])[] = [
         ja: 'PC-A はルータに直接つながり、PC-D はルータの反対側に直接つながっています。スイッチはありません。PC-A から PC-D へ送ります。何ホップですか？',
       },
       options: [
-        { en: '1, the router', ja: '1。ルータの分' },
-        { en: '2, two cables', ja: '2。ケーブル 2 本' },
-        { en: '3, all devices', ja: '3。通った機器の数' },
-        { en: '0, it is direct', ja: '0。直接つながっているから' },
+        { en: '1, the router crossed', ja: '1。越えたルータの分' },
+        { en: '2, one for each cable', ja: '2。ケーブル 2 本' },
+        { en: '3, counting all devices', ja: '3。通った機器の数' },
+        { en: '0, they are directly joined', ja: '0。直接つながっているから' },
       ],
-      answer: 1,
+      answer: 0,
       explanation: {
-        en: 'One hop per cable crossed: PC-A → router, router → PC-D, so 2. The course counts hops per cable.',
-        ja: 'ホップは渡ったケーブルの数です。PC-A → ルータ、ルータ → PC-D で 2 ホップです。入門コースでもケーブルごとに数えます。',
+        en: 'A hop is one router crossed (RFC 791, RFC 1812 §5.3.1): PC-A to PC-D crosses one router, so 1. The course counts hops by routers.',
+        ja: 'ホップは越えたルータの数です（RFC 791、RFC 1812 §5.3.1）。PC-A から PC-D までに越えるルータは 1 台なので 1 ホップです。入門コースでもルータで数えます。',
       },
       taughtBy: 'course',
     },
@@ -931,21 +931,21 @@ const ENTRIES: readonly (readonly [string, ExamQuestion])[] = [
   [
     's1-mask-24',
     {
-      id: 's1-mask-16',
+      id: 's1-mask-from-slash',
       prompt: {
-        en: 'A PC’s mask is 255.255.0.0. How is the network part written with a slash?',
-        ja: 'PC のマスクは 255.255.0.0 です。ネットワーク部分をスラッシュで書くとどうなりますか？',
+        en: 'A PC’s address is written 10.0.0.11/24. Written as a mask instead, which is it?',
+        ja: 'PC のアドレスは 10.0.0.11/24 と書かれています。これをマスクで書くとどれですか？',
       },
       options: [
-        { en: '/8', ja: '/8' },
-        { en: '/16', ja: '/16' },
-        { en: '/24', ja: '/24' },
-        { en: '/32', ja: '/32' },
+        { en: '255.0.0.0', ja: '255.0.0.0' },
+        { en: '255.255.0.0', ja: '255.255.0.0' },
+        { en: '255.255.255.0', ja: '255.255.255.0' },
+        { en: '255.255.255.255', ja: '255.255.255.255' },
       ],
-      answer: 1,
+      answer: 2,
       explanation: {
-        en: 'Each 255 is 8 bits kept for the network: two of them make 16, so /16. The course explains the mask beside /24. Standard: RFC 4632 §3.1.',
-        ja: '255 の 1 つは 8 ビットで、2 つで 16 なので /16 です。入門コースで、/24 と並べてマスクを説明しています。根拠：RFC 4632 §3.1。',
+        en: '/24 and the mask 255.255.255.0 say the same thing: the first three numbers are the network. The course writes them side by side. Standard: RFC 4632 §3.1.',
+        ja: '/24 とマスク 255.255.255.0 は同じことを表します。最初の 3 つの数がネットワークです。入門コースで 2 つを並べて書いています。根拠：RFC 4632 §3.1。',
       },
       taughtBy: 'course',
     },
@@ -955,8 +955,8 @@ const ENTRIES: readonly (readonly [string, ExamQuestion])[] = [
     {
       id: 's1-copy-broadcast',
       prompt: {
-        en: 'PC-A, PC-B and PC-C share one switch. PC-A sends a frame to the broadcast address ff:ff:ff:ff:ff:ff. Which PCs receive it?',
-        ja: 'PC-A、PC-B、PC-C が 1 台のスイッチにつながっています。PC-A が全員あての ff:ff:ff:ff:ff:ff にフレームを送ります。受け取るのはどれですか？',
+        en: 'PC-A, PC-B and PC-C share a switch that has just started. Before its first packet to PC-B, PC-A asks which machine has PC-B’s address. Which PCs does the switch send that question to?',
+        ja: 'PC-A、PC-B、PC-C が、動き始めたばかりのスイッチにつながっています。PC-B への最初のパケットの前に、PC-A は PC-B の番号の持ち主を尋ねます。スイッチはその問いをどの PC に送りますか？',
       },
       options: [
         { en: 'PC-B only', ja: 'PC-B だけ' },
@@ -966,8 +966,8 @@ const ENTRIES: readonly (readonly [string, ExamQuestion])[] = [
       ],
       answer: 3,
       explanation: {
-        en: 'A broadcast is for everyone, so the switch sends it out of every port but the one it came in on. The course’s third step shows the switch copying to every port.',
-        ja: '全員あてなので、スイッチは入ってきたポート以外のすべてのポートに送ります。入門コースの 3 番目のステップで、全部のポートに写す様子が見られます。',
+        en: 'The question (ARP) is for everyone on the network, and a switch that has just started knows no port anyway: it sends the question out of every port but the one it came in on, to PC-B and PC-C. The course’s step on the switch says so. Standard: RFC 826; IEEE 802.1D flooding.',
+        ja: 'その問い（ARP）はネットワークの全員あてで、動き始めたばかりのスイッチはどの口も覚えていません。入ってきた口以外の全部の差し込み口に流すので、PC-B と PC-C に届きます。入門コースのスイッチのステップで説明しています。根拠：RFC 826、IEEE 802.1D のフラッディング。',
       },
       taughtBy: 'course',
     },
@@ -1827,7 +1827,7 @@ const ENTRIES: readonly (readonly [string, ExamQuestion])[] = [
         en: 'LOCAL_PREF is compared first and the higher wins, before AS_PATH length is looked at (RFC 4271 §9.1). The dynamic routing lesson shows LOCAL_PREF choosing the exit.',
         ja: 'LOCAL_PREF が AS_PATH より先に比べられ、大きいほうが勝ちます（RFC 4271 §9.1）。動的ルーティングのレッスンで、LOCAL_PREF が出口を決める様子が見られます。',
       },
-      taughtBy: 'dynamic',
+      taughtBy: 'bgp',
     },
   ],
   [

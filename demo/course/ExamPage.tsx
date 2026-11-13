@@ -7,18 +7,24 @@ import { useGalleryLocale, useT } from '../localeContext';
 import {
   NEW_ATTEMPT,
   clearAttempt,
-  examReturnSearch,
+  stopHref,
   examRoute,
   loadAttempt,
   nextSeed,
   optionOrder,
-  mayRetake,
   reviewOf,
   saveAttempt,
   seedFromSearch,
   sessionStore,
-  studied,
   type ExamAttempt,
+  type ExamLedger,
+  ledgerAfterDraw,
+  ledgerAfterMarking,
+  ledgerAfterStudy,
+  ledgerFromMetadata,
+  ledgerId,
+  ledgerToMetadata,
+  mayBegin,
 } from './examAttempt';
 import { EXAM_LEVELS, examLevel } from './examLevels';
 import { examLevelsInStageOrder } from './stages';
@@ -32,6 +38,7 @@ import {
   type ExamLevel,
 } from './examQuestions';
 import { drawQuestions, questionsOf } from './examDraw';
+import { examStageName } from './stages';
 
 /**
  * The beginner path's final test: the path in order, then — once the learner
@@ -83,7 +90,16 @@ const BADGE: React.CSSProperties = {
 function ExamBody({ level }: { level: ExamLevel }) {
   const t = useT();
   const locale = useGalleryLocale();
-  const { recordCompletion } = useOptionalProgress();
+  const { recordCompletion, completionFor } = useOptionalProgress();
+  // What the progress record keeps for this level: the last two draws and the
+  // review gate (REQ-195, REQ-197). A reload or a new tab reads the same.
+  const ledger = ledgerFromMetadata(completionFor(ledgerId(level.level), 'assessment')?.metadata);
+  const keepLedger = (next: ExamLedger) =>
+    recordCompletion({
+      kind: 'assessment',
+      id: ledgerId(level.level),
+      metadata: ledgerToMetadata(next),
+    });
   const location = useLocation();
   const [attempt, setAttempt] = useState<ExamAttempt>(
     () => loadAttempt(sessionStore(), level.level) ?? NEW_ATTEMPT,
@@ -127,28 +143,21 @@ function ExamBody({ level }: { level: ExamLevel }) {
     target.focus({ preventScroll: true });
   }, [attempt.marked, attempt.seed, attempt.started]);
 
-  /** A seed named in the address fixes the order; tests use it. */
+  /**
+   * Begins an attempt, by "Start" or by "Try again" alike. A seed named in the
+   * address fixes the order; tests use it. The draw passes over the last two
+   * attempts' questions, read from the progress record, so neither a reload,
+   * a new tab nor "Start" brings the same screen back (REQ-195).
+   */
   const begin = (previousSeed: number | undefined) => {
+    if (!mayBegin(ledger)) return;
     const named = seedFromSearch(location.search, window.location.search);
     const seed = nextSeed(named, previousSeed, Math.random);
+    const seen = [...new Set([...ledger.lastIds, ...ledger.earlierIds])];
+    const drawn = drawQuestions(level, seed, seen).map((question) => question.id);
+    keepLedger(ledgerAfterDraw(ledger, drawn));
     goToQuestions.current = true;
-    setAttempt({
-      seed,
-      started: true,
-      answers: {},
-      marked: false,
-      // Passed over: what the last two attempts asked, so a retake is a new set.
-      questionIds: drawQuestions(
-        level,
-        seed,
-        previousSeed === undefined
-          ? []
-          : [...questions.map((question) => question.id), ...(attempt.earlierIds ?? [])],
-      ).map((question) => question.id),
-      ...(previousSeed === undefined
-        ? {}
-        : { earlierIds: questions.map((question) => question.id) }),
-    });
+    setAttempt({ seed, started: true, answers: {}, marked: false, questionIds: drawn });
   };
 
   /**
@@ -194,6 +203,15 @@ function ExamBody({ level }: { level: ExamLevel }) {
   const submit = () => {
     const marked = scoreQuestions(questions, answers);
     setAttempt((current) => ({ ...current, marked: true }));
+    // The topics missed, by the path stop that teaches each (REQ-197).
+    keepLedger(
+      ledgerAfterMarking(ledger, {
+        passed: marked.passed,
+        missedStops: questions
+          .filter((_question, index) => !marked.perQuestion[index]!.correct)
+          .map((question) => question.taughtBy),
+      }),
+    );
     if (marked.passed) {
       recordCompletion({
         kind: 'tutorial',
@@ -204,15 +222,15 @@ function ExamBody({ level }: { level: ExamLevel }) {
   };
 
   /**
-   * Following a review link counts as studying: it is kept with the attempt
-   * at once, before the page is left, and lets the next attempt start.
+   * Opening a missed topic's review lesson counts as studying it; it is kept in
+   * the progress record at once, before the page is left (REQ-197).
    */
-  const recordStudy = () => {
-    const next = studied(attempt);
-    saveAttempt(sessionStore(), level.level, next);
-    setAttempt(next);
-  };
-  const retakeAllowed = result !== null && mayRetake(attempt, result.passed);
+  const recordStudy = (stop: string) => keepLedger(ledgerAfterStudy(ledger, stop));
+  const beginAllowed = mayBegin(ledger);
+  const missedTopics = ledger.failed ? ledger.missedStops.length : 0;
+  const studiedTopics = ledger.failed
+    ? ledger.missedStops.filter((stop) => ledger.studiedStops.includes(stop)).length
+    : 0;
 
   /** For each of these questions: a way down to it, and the lesson that teaches it. */
   const questionLinks = (numbers: readonly number[]) => (
@@ -252,8 +270,8 @@ function ExamBody({ level }: { level: ExamLevel }) {
             {stop ? (
               <Link
                 data-testid={`exam-missed-review-${number}`}
-                to={`${stop.path}${examReturnSearch(level.level)}`}
-                onClick={recordStudy}
+                to={stopHref(stop, level.level)}
+                onClick={() => recordStudy(stop.id)}
                 style={{
                   ...LINK,
                   display: 'inline-flex',
@@ -300,7 +318,7 @@ function ExamBody({ level }: { level: ExamLevel }) {
                     fontWeight: entry.level === level.level ? 700 : 400,
                   }}
                 >
-                  {entry.title[locale]}
+                  {examStageName(entry.level)[locale]}
                 </Link>
               ))}
           </nav>
@@ -318,7 +336,7 @@ function ExamBody({ level }: { level: ExamLevel }) {
         ) : null}
         <section style={CARD} data-testid="exam-path" data-level={level.level}>
           <p style={{ margin: '0 0 6px', color: 'var(--netlab-text-secondary)' }}>
-            {level.title[locale]} — {level.summary[locale]}
+            {examStageName(level.level)[locale]} — {level.summary[locale]}
           </p>
           <h2 style={{ margin: 0, fontSize: 18 }}>
             {t('What this test covers, in order', 'このテストの範囲と、学ぶ順番')}
@@ -334,7 +352,7 @@ function ExamBody({ level }: { level: ExamLevel }) {
               <li key={stop.id}>
                 <Link
                   data-testid={`exam-path-${stop.id}`}
-                  to={`${stop.path}${examReturnSearch(level.level)}`}
+                  to={stopHref(stop, level.level)}
                   style={{ ...LINK, display: 'inline-block', padding: '6px 0' }}
                 >
                   {stop.title[locale]}
@@ -358,10 +376,57 @@ function ExamBody({ level }: { level: ExamLevel }) {
                 type="button"
                 data-testid="exam-start"
                 onClick={() => begin(undefined)}
-                style={{ ...BUTTON, minHeight: 44 }}
+                disabled={!beginAllowed}
+                aria-describedby={beginAllowed ? undefined : 'exam-start-hint'}
+                style={{
+                  ...BUTTON,
+                  minHeight: 44,
+                  ...(beginAllowed ? {} : { opacity: 0.6, cursor: 'not-allowed' }),
+                }}
               >
                 {t('Start the test', 'テストを始める')}
               </button>
+              {beginAllowed ? null : (
+                // A failed attempt is kept in the progress record, so a reload or a
+                // new tab does not open the test again before its lessons (REQ-197).
+                <p
+                  id="exam-start-hint"
+                  data-testid="exam-start-hint"
+                  style={{ margin: '6px 0 0', color: 'var(--netlab-text-secondary)' }}
+                >
+                  {t(
+                    `Your last attempt did not pass. Open the review lesson of every topic you missed first (${studiedTopics} of ${missedTopics} opened).`,
+                    `前回は不合格でした。まちがえた話題ごとに「復習する」のレッスンを開いてから受けてください（${missedTopics} つのうち ${studiedTopics} つを開きました）。`,
+                  )}
+                </p>
+              )}
+              {beginAllowed ? null : (
+                // In a new tab the failed attempt is gone, so the topics still to
+                // review are listed here from the progress record (REQ-197).
+                <ul style={{ margin: '4px 0 0', padding: 0, listStyle: 'none' }}>
+                  {ledger.missedStops
+                    .filter((stop) => !ledger.studiedStops.includes(stop))
+                    .map((id) => levelStop(level, id))
+                    .flatMap((stop) => (stop ? [stop] : []))
+                    .map((stop) => (
+                      <li key={stop.id}>
+                        <Link
+                          data-testid={`exam-start-review-${stop.id}`}
+                          to={stopHref(stop, level.level)}
+                          onClick={() => recordStudy(stop.id)}
+                          style={{
+                            ...LINK,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            minHeight: 44,
+                          }}
+                        >
+                          {t(`Review: ${stop.title.en} →`, `復習する：${stop.title.ja} →`)}
+                        </Link>
+                      </li>
+                    ))}
+                </ul>
+              )}
             </div>
           )}
         </section>
@@ -418,26 +483,26 @@ function ExamBody({ level }: { level: ExamLevel }) {
               type="button"
               data-testid="exam-retry"
               onClick={() => begin(attempt.seed)}
-              disabled={!retakeAllowed}
-              aria-describedby={retakeAllowed ? undefined : 'exam-retry-hint'}
+              disabled={!beginAllowed}
+              aria-describedby={beginAllowed ? undefined : 'exam-retry-hint'}
               style={{
                 ...BUTTON,
                 marginTop: 12,
                 minHeight: 44,
-                ...(retakeAllowed ? {} : { opacity: 0.6, cursor: 'not-allowed' }),
+                ...(beginAllowed ? {} : { opacity: 0.6, cursor: 'not-allowed' }),
               }}
             >
               {t('Try again', 'もう一度受ける')}
             </button>
-            {retakeAllowed ? null : (
+            {beginAllowed ? null : (
               <p
                 id="exam-retry-hint"
                 data-testid="exam-retry-hint"
                 style={{ margin: '6px 0 0', color: 'var(--netlab-text-secondary)' }}
               >
                 {t(
-                  'Open one of the review lessons above first; then you can try again.',
-                  '上の「復習する」のレッスンを 1 つ開くと、もう一度受けられます。',
+                  `Open the review lesson of every topic you missed first (${studiedTopics} of ${missedTopics} opened); then you can try again.`,
+                  `まちがえた話題ごとに「復習する」のレッスンを開くと、もう一度受けられます（${missedTopics} つのうち ${studiedTopics} つを開きました）。`,
                 )}
               </p>
             )}
@@ -463,12 +528,18 @@ function ExamBody({ level }: { level: ExamLevel }) {
               const chosen = answers[question.id];
               const stop = levelStop(level, question.taughtBy);
               const number = index + 1;
+              // After a fail nothing about any answer is shown (REQ-196).
+              const shown =
+                outcome && result
+                  ? reviewOf({ passed: result.passed, correct: outcome.correct })
+                  : null;
+              const marked = shown?.marks ? outcome : undefined;
               return (
                 <fieldset
                   key={question.id}
                   data-testid={`exam-question-${number}`}
                   tabIndex={-1}
-                  {...(outcome ? { 'data-correct': outcome.correct ? 'yes' : 'no' } : {})}
+                  {...(marked ? { 'data-correct': marked.correct ? 'yes' : 'no' } : {})}
                   style={{ ...CARD, margin: 0, minWidth: 0, scrollMarginTop: 8 }}
                 >
                   <legend style={{ fontWeight: 700, padding: '0 6px' }}>
@@ -488,13 +559,9 @@ function ExamBody({ level }: { level: ExamLevel }) {
                       },
                     ].map(({ key, text }) => {
                       const suffix = key === 'not-learned' ? 'x' : Number(key) + 1;
-                      const isChosen = outcome !== undefined && chosen === key;
+                      const isChosen = marked !== undefined && chosen === key;
                       // The right option of a miss is named only once the test is passed.
-                      const isMissedAnswer =
-                        outcome !== undefined &&
-                        result !== null &&
-                        reviewOf({ passed: result.passed, correct: outcome.correct }).rightOption &&
-                        key === question.answer;
+                      const isMissedAnswer = shown?.rightOption === true && key === question.answer;
                       return (
                         <label
                           key={String(key)}
@@ -507,7 +574,7 @@ function ExamBody({ level }: { level: ExamLevel }) {
                             padding: '4px 10px',
                             borderRadius: 8,
                             border: isChosen
-                              ? `2px solid ${outcome.correct ? 'var(--netlab-accent-green)' : 'var(--netlab-accent-orange)'}`
+                              ? `2px solid ${marked!.correct ? 'var(--netlab-accent-green)' : 'var(--netlab-accent-orange)'}`
                               : isMissedAnswer
                                 ? '2px dashed var(--netlab-accent-green)'
                                 : '2px solid transparent',
@@ -530,7 +597,7 @@ function ExamBody({ level }: { level: ExamLevel }) {
                             {text}
                             {isChosen ? (
                               <span data-testid={`exam-your-answer-${number}`} style={BADGE}>
-                                {outcome.correct ? '✓ ' : '✗ '}
+                                {marked!.correct ? '✓ ' : '✗ '}
                                 {t('Your answer', 'あなたの答え')}
                               </span>
                             ) : null}
@@ -545,7 +612,7 @@ function ExamBody({ level }: { level: ExamLevel }) {
                       );
                     })}
                   </div>
-                  {outcome ? (
+                  {marked ? (
                     <div
                       data-testid={`exam-feedback-${number}`}
                       style={{
@@ -556,26 +623,25 @@ function ExamBody({ level }: { level: ExamLevel }) {
                     >
                       <strong
                         style={{
-                          color: outcome.correct
+                          color: marked.correct
                             ? 'var(--netlab-accent-green)'
                             : 'var(--netlab-text-primary)',
                         }}
                       >
-                        {outcome.correct
+                        {marked.correct
                           ? t('✓ Correct', '✓ 正解')
                           : chosen === 'not-learned'
                             ? t('– Not learned yet', '– まだ習っていない')
                             : t('✗ Not quite', '✗ 不正解')}
                       </strong>
-                      {result &&
-                      reviewOf({ passed: result.passed, correct: outcome.correct }).explanation ? (
+                      {shown?.explanation ? (
                         <p style={{ margin: '4px 0' }}>{question.explanation[locale]}</p>
                       ) : null}
-                      {!outcome.correct && stop ? (
+                      {!marked.correct && stop ? (
                         <Link
                           data-testid={`exam-review-${number}`}
-                          to={`${stop.path}${examReturnSearch(level.level)}`}
-                          onClick={recordStudy}
+                          to={stopHref(stop, level.level)}
+                          onClick={() => recordStudy(stop.id)}
                           style={{
                             ...LINK,
                             display: 'inline-flex',
@@ -625,7 +691,7 @@ export default function ExamPage() {
   const level = examLevel(Number(params.level ?? '1')) ?? EXAM_LEVEL_1;
   return (
     <DemoShell
-      title={locale === 'ja' ? `修了テスト（${level.title.ja}）` : `Final test (${level.title.en})`}
+      title={examStageName(level.level)[locale]}
       desc={
         locale === 'ja'
           ? '10 問。間違えた問題は、教えているレッスンへ案内します。'

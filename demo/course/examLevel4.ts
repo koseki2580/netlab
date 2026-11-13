@@ -55,6 +55,8 @@ export const EXAM_LEVEL_4: ExamLevel = {
     {
       id: 'dynamic',
       path: lessonPath('/routing/dynamic'),
+      // Opened on BGP rather than RIP; OSPF is one switch away (REQ-199).
+      query: 'protocol=bgp',
       title: { en: 'Dynamic Routing', ja: '動的ルーティング' },
       teaches: {
         en: 'What OSPF and BGP each put in a router’s table on the same network',
@@ -133,8 +135,8 @@ export const EXAM_LEVEL_4: ExamLevel = {
           ja: '8 つとも 10.0.12.2 経由。どのフローも送信元と宛先のアドレスが同じだから。2 回目も同じ 8 行が追加される',
         },
         {
-          en: 'Five via 10.0.12.2 and three via 10.0.13.2 — the 3rd, 5th and 8th flows; the second press repeats the pattern exactly, 10 and 6 of 16 lines',
-          ja: '10.0.12.2 経由が 5 つ、10.0.13.2 経由が 3 つ（3・5・8 番目のフロー）。2 回目もまったく同じ並びで、16 行のうち 10 行と 6 行になる',
+          en: 'Five via 10.0.12.2 and three via 10.0.13.2 (3rd, 5th, 8th); the second press repeats it, 10 and 6 of 16 lines',
+          ja: '10.0.12.2 経由が 5 つ、10.0.13.2 経由が 3 つ（3・5・8 番目）。2 回目も同じで、16 行中 10 行と 6 行',
         },
         {
           en: 'An uneven split on the first press, and a different split on the second, because Leaf A takes a new hash for each burst',
@@ -377,8 +379,8 @@ export const EXAM_LEVEL_4: ExamLevel = {
           ja: '−79.1 dBm で 56%。屋内の電波は距離の 3 乗で弱まるので、約 33 dB 下がる',
         },
         {
-          en: '−68.1 dBm and 13%',
-          ja: '−68.1 dBm で 13%',
+          en: '−68.1 dBm and 13%: weaker, and some frames are lost',
+          ja: '−68.1 dBm で 13%。弱まり、一部が失われる',
         },
         {
           en: '−68.1 dBm and 0%: still a usable signal, so nothing is lost yet',

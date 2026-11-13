@@ -75,10 +75,8 @@ describe('the attempt after a failed one is mostly different (TC-1352)', () => {
 describe('every pooled question meets the stage-test rules (TC-1353)', () => {
   for (const level of POOLED) {
     const pool = level.slots!.flat();
-    // The original ten of levels 2–4 were written before these rules, to their own; every
-    // question added to a pool, and every question of levels 1 and 5–8, meets them.
-    const ruled =
-      level.level >= 2 && level.level <= 4 ? level.slots!.flatMap((slot) => slot.slice(1)) : pool;
+    // TC-1428: every question of every level meets the length rules (REQ-199).
+    const ruled = pool;
     for (const locale of ['en', 'ja'] as const) {
       it(`level ${level.level}: the right option is never the single longest, and none is twice another (${locale})`, () => {
         for (const q of ruled) {

@@ -44,6 +44,17 @@ export const EXAM_LEVEL_2: ExamLevel = {
       },
     },
     {
+      // The lesson opens on RIP; BGP's choice is taught in its BGP view.
+      id: 'bgp',
+      path: lessonPath('/routing/dynamic'),
+      query: 'protocol=bgp',
+      title: { en: 'Dynamic Routing: BGP', ja: '動的ルーティング：BGP' },
+      teaches: {
+        en: 'How BGP chooses between routes to one network',
+        ja: '同じネットワークへの BGP 経路から、どれを選ぶか',
+      },
+    },
+    {
       id: 'ospf',
       path: lessonPath('/routing/ospf-convergence'),
       title: { en: 'OSPF Convergence', ja: 'OSPF の収束' },
@@ -106,8 +117,8 @@ export const EXAM_LEVEL_2: ExamLevel = {
           ja: 'SW1 がすべてのポートにコピーし、B1 が受け取る',
         },
         {
-          en: 'SW1 sends it up the trunk to the router R1, which routes it back down into VLAN 20',
-          ja: 'SW1 がトランクでルータ R1 へ送り、R1 が VLAN 20 側へ転送して戻す',
+          en: 'SW1 sends it up the trunk to R1, which routes it back into VLAN 20',
+          ja: 'SW1 がトランクで R1 へ送り、R1 が VLAN 20 へ戻す',
         },
         {
           en: 'It never can — different VLANs can never talk, even through a router',
@@ -133,7 +144,7 @@ export const EXAM_LEVEL_2: ExamLevel = {
           ja: '何も変わらない。先に選ばれた Switch A がルートのまま',
         },
         {
-          en: 'Switch C becomes the root, and spanning tree chooses again which link to block',
+          en: 'Switch C becomes the root, and the blocked link is chosen again',
           ja: 'Switch C がルートになり、どのリンクを遮断するかが選び直される',
         },
         {
@@ -170,8 +181,8 @@ export const EXAM_LEVEL_2: ExamLevel = {
           ja: 'どちらもリンクのコストを足すので、どちらも R3 経由を避ける',
         },
         {
-          en: 'RIP counts hops, so the paths tie; OSPF adds link costs, so the R2 path (3) beats the R3 path (5)',
-          ja: 'RIP はホップ数を数えるので同点。OSPF はリンクのコストを足すので、R2 経由（3）が R3 経由（5）に勝つ',
+          en: 'RIP: a tie in hops; OSPF: R2, cost 3 against 5',
+          ja: 'RIP はホップ数で同点、OSPF は R2 経由（3 対 5）',
         },
         {
           en: 'RIP adds link costs; OSPF counts hops',
@@ -202,7 +213,7 @@ export const EXAM_LEVEL_2: ExamLevel = {
         },
         {
           en: 'R1 recalculates by itself and sends it through R3, at a higher cost',
-          ja: 'R1 が自分で計算し直し、コストは高くなるが R3 経由で送る',
+          ja: 'R1 が自分で計算し直し、R3 経由で送る',
         },
         {
           en: 'R1 sends it through both R2 and R3 at once to be safe',
@@ -232,8 +243,8 @@ export const EXAM_LEVEL_2: ExamLevel = {
           ja: 'R1 はパケットを 604 バイトに切り詰め、残りは捨てる',
         },
         {
-          en: 'R1 drops it and sends Host A an ICMP “Fragmentation Needed” message giving the MTU',
-          ja: 'R1 はパケットを捨て、MTU を知らせる ICMP「Fragmentation Needed」を Host A へ返す',
+          en: 'R1 drops it and sends Host A an ICMP Fragmentation Needed',
+          ja: '捨てて ICMP の Frag Needed を返す',
         },
         {
           en: 'The link carries it anyway, because MTU is only a recommendation',
@@ -263,8 +274,8 @@ export const EXAM_LEVEL_2: ExamLevel = {
           ja: '通る。ACL は記録する通信を並べているだけだから',
         },
         {
-          en: 'It is dropped at the router — no rule matches, so the default policy denies it',
-          ja: 'ルータで落ちる。一致する行がないので、既定のポリシーで拒否される',
+          en: 'Dropped at the router: no rule matches, so it is denied',
+          ja: 'ルータで落ちる。合う行がなく拒否される',
         },
         {
           en: 'It reaches the server, which refuses it because it has no SSH',
@@ -290,11 +301,11 @@ export const EXAM_LEVEL_2: ExamLevel = {
           ja: 'DISCOVER → OFFER → REQUEST → ACK',
         },
         {
-          en: 'REQUEST → OFFER → ACK (the laptop asks for an address first)',
+          en: 'REQUEST → OFFER → ACK (laptop asks first)',
           ja: 'REQUEST → OFFER → ACK（まずノート PC がアドレスを要求する）',
         },
         {
-          en: 'OFFER → REQUEST → ACK (the server announces addresses on its own)',
+          en: 'OFFER → REQUEST → ACK (server offers first)',
           ja: 'OFFER → REQUEST → ACK（サーバが自分からアドレスを知らせる）',
         },
         {
@@ -321,8 +332,8 @@ export const EXAM_LEVEL_2: ExamLevel = {
           ja: 'R1 は IPv6 のパケットを IPv4 に変えて転送し、あとで元に戻している',
         },
         {
-          en: 'Each interface has both an IPv4 and an IPv6 address, and the IPv6 echo travels as IPv6 all the way',
-          ja: 'インタフェースが IPv4 と IPv6 の両方のアドレスを持ち、IPv6 の echo は最後まで IPv6 のまま運ばれる',
+          en: 'Each interface has both addresses; the echo stays IPv6 all the way',
+          ja: '各インタフェースが両方のアドレスを持ち、echo は IPv6 のまま',
         },
         {
           en: 'The IPv6 address is the IPv4 address written in a longer form — they are one address',

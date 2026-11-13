@@ -64,7 +64,7 @@ const UI_COPY: Record<CourseLocale, CourseUiCopy> = {
     finishTitle: 'That is the whole idea',
     finishBody:
       'You have seen a wire, a switch, why one network cannot reach another, and the router that joins them. Every lesson in the gallery is one of these ideas taken further.',
-    toExam: 'What to learn next, and the final test →',
+    toExam: 'On to the stage 1 test →',
     toExercises: 'Try hands-on exercises',
     toGallery: 'Open the gallery',
     restart: 'Start over',
@@ -84,7 +84,7 @@ const UI_COPY: Record<CourseLocale, CourseUiCopy> = {
     finishTitle: '仕組みはこれで一通りです',
     finishBody:
       'ケーブル1本、スイッチ、ネットワークが違うと届かないこと、そしてそれをつなぐルータを見てきました。ギャラリーのレッスンは、どれもこの続きです。',
-    toExam: '次に学ぶことと修了テストへ →',
+    toExam: '段階 1 のテストへ →',
     toExercises: '実習問題をやってみる',
     toGallery: 'ギャラリーを開く',
     restart: 'もう一度はじめから',
@@ -559,10 +559,10 @@ export default function CoursePage() {
                 textAlign: 'center',
               }}
             >
-              {/* The course is the first stop on the path the final test covers;
-                  finishing it leads on to the rest of that path and the test. */}
+              {/* The course is stage 1 of the path; its last button opens the stage 1
+                  test, named as such (REQ-198). */}
               <a
-                href="#/course/exam"
+                href="#/course/exam/5"
                 data-testid="course-to-exam"
                 style={{ ...BUTTON, textDecoration: 'none', display: 'inline-block' }}
               >

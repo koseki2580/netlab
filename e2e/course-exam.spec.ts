@@ -38,13 +38,13 @@ test(
     await expect(page.getByTestId('exam-score')).toHaveAttribute('data-passed', 'no');
     for (let n = 1; n <= 10; n += 1) {
       await expect(
-        page.getByTestId(`exam-review-${n}`),
+        page.getByTestId(`exam-missed-review-${n}`),
         `question ${n} points to its lesson`,
       ).toBeVisible();
     }
 
     // A review link leads to the lesson.
-    await page.getByTestId('exam-review-5').click();
+    await page.getByTestId('exam-missed-review-5').click();
     await expect(page.getByTestId(SEL.app.root)).toBeVisible();
     await expect(page).toHaveURL(/#\/networking\/arp/);
   },
