@@ -122,8 +122,8 @@ function AreasPanel({ lan, onLan }: { lan: LanState; onLan: (next: LanState) => 
         ))}
         <div style={NOTE}>
           {t(
-            'Type 1: each router’s links, inside one area. Type 2: the DR’s list of a LAN. Type 3: an ABR’s summary. Type 5: an ASBR’s network from outside, in every area. Real OSPF also has Type 4, which says how to reach an ASBR in another area; it is not modelled here.',
-            'Type 1：各ルータのリンク。1 つのエリアの中だけ。Type 2：DR がまとめる LAN の一覧。Type 3：ABR のまとめ。Type 5：ASBR が持ち込む外部のネットワークで、すべてのエリアに入ります。実際の OSPF には、別のエリアの ASBR への行き方を伝える Type 4 もありますが、ここでは扱いません。',
+            'Type 1: each router’s links, inside one area. Type 2: the DR’s list of a LAN. Type 3: an ABR’s summary. Type 5: an ASBR’s network from outside, carried into every normal area but not into stub or NSSA areas. Real OSPF also has Type 4, which says how to reach an ASBR in another area; it is not modelled here.',
+            'Type 1：各ルータのリンク。1 つのエリアの中だけ。Type 2：DR がまとめる LAN の一覧。Type 3：ABR のまとめ。Type 5：ASBR が持ち込む外部のネットワークで、ふつうのエリアにはすべて入りますが、スタブエリアには入りません（NSSA も同じです）。実際の OSPF には、別のエリアの ASBR への行き方を伝える Type 4 もありますが、ここでは扱いません。',
           )}
         </div>
       </div>

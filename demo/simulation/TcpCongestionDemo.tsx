@@ -75,12 +75,48 @@ export function runCongestionScenario(): readonly TcpCongestionEvent[] {
   return runCongestionTrace().events;
 }
 
+/** The first cwnd, in segments; the flow-control lesson starts at the same. */
+export const CONGESTION_IW_SEGMENTS = 2;
+
+/** The rules the trace follows (RFC 5681 §3.1–3.2), shown before any step is chosen. */
+function CongestionRules() {
+  const t = useT();
+  const rules: readonly [string, string][] = [
+    [
+      'Slow start: each ACK of new data adds up to one MSS to cwnd, so cwnd about doubles each round trip, until it reaches ssthresh.',
+      'スロースタート：新しいデータの ACK が届くたびに cwnd が最大 1 MSS 増えます。1 往復ごとにほぼ 2 倍になり、ssthresh に達するまで続きます。',
+    ],
+    [
+      'Congestion avoidance: above ssthresh, cwnd grows by about one MSS per round trip.',
+      '輻輳回避：ssthresh を超えると、cwnd は 1 往復ごとに約 1 MSS ずつ増えます。',
+    ],
+    [
+      'Three duplicate ACKs: the lost segment is sent again at once (fast retransmit); ssthresh becomes half of what is in flight, at least 2 MSS, and cwnd ssthresh + 3 MSS, falling back to ssthresh when new data is acknowledged.',
+      '重複 ACK が 3 つ：失われたセグメントをすぐ送り直します（高速再送）。ssthresh は送信中の量の半分（最低 2 MSS）、cwnd は ssthresh + 3 MSS になり、新しいデータの ACK で ssthresh まで戻ります。',
+    ],
+    [
+      'A timeout: ssthresh becomes half of what is in flight, at least 2 MSS, cwnd drops to 1 MSS, and slow start begins again.',
+      'タイムアウト：ssthresh は送信中の量の半分（最低 2 MSS）、cwnd は 1 MSS に下がり、スロースタートからやり直します。',
+    ],
+  ];
+  return (
+    <ul
+      data-testid="tcp-congestion-rules"
+      style={{ margin: '0 0 12px', paddingLeft: 20, lineHeight: 1.6 }}
+    >
+      {rules.map(([en, ja]) => (
+        <li key={en}>{t(en, ja)}</li>
+      ))}
+    </ul>
+  );
+}
+
 export function runCongestionTrace(): CongestionRun {
   const control = new TcpCongestionControl({
     mss: MSS,
     // Two segments, so the window reaches 4000 before the four-segment burst
     // at steps 5–6; with one it was 3000 and the burst overran it.
-    iwSegments: 2,
+    iwSegments: CONGESTION_IW_SEGMENTS,
     initialSsthresh: 4000,
   });
   const ssthreshByStep: TcpSsthreshSample[] = [{ stepIndex: 0, ssthresh: control.state.ssthresh }];
@@ -246,6 +282,7 @@ export function TcpCongestionDemoInner() {
     >
       <div style={{ maxWidth: 980, margin: '0 auto' }}>
         <TopologyPanel />
+        <CongestionRules />
 
         <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
           <button

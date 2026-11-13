@@ -15,6 +15,8 @@ export const TRANSFER_BYTES = 8000;
 export const SERVER_BUFFER = 4000;
 /** The application reads again from this round in the "stops" setting. */
 export const RESUME_ROUND = 8;
+/** The first cwnd in segments: the same as the congestion lesson's, within RFC 5681 §3.1. */
+export const FLOW_IW_SEGMENTS = 2;
 
 export type ReaderSpeed = 'fast' | 'slow' | 'stops';
 
@@ -91,7 +93,12 @@ export async function runFlow(
   if (!connection?.negotiated) return null;
   const moved = await orchestrator.transfer(
     connection,
-    { bytes: TRANSFER_BYTES, readBytes: readerBytes(speed), maxRounds: 200 },
+    {
+      bytes: TRANSFER_BYTES,
+      readBytes: readerBytes(speed),
+      maxRounds: 200,
+      initialCwndSegments: FLOW_IW_SEGMENTS,
+    },
     QUIET_SINK,
   );
 

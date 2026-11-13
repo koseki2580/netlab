@@ -209,7 +209,7 @@ export const LESSONS = [
     path: '/routing/dynamic',
     category: 'routing',
     module: './routing/DynamicRoutingDemo',
-    title: { en: 'Dynamic Routing', ja: '動的ルーティング' },
+    title: { en: 'Dynamic Routing: RIP, OSPF and BGP', ja: '動的ルーティング（RIP・OSPF・BGP）' },
     desc: {
       en: 'Switch between RIP, OSPF, and BGP to compare hop-count, SPF cost, and policy-based path selection.',
       ja: 'RIP・OSPF・BGP を切り替えて、ホップ数・SPF コスト・ポリシーによる経路選択の違いを比べます。',

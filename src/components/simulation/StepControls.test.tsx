@@ -469,12 +469,12 @@ describe('StepControls for a beginner', () => {
     simulationMock.state = makeState({ currentStep: 1 });
     render();
     expect(byId('step-readout')?.textContent).toBe('Step 2 of 3: Router (forwarded)');
-    expect(byId('step-hint')?.textContent).toContain('3 presses in all');
+    expect(byId('step-hint')?.textContent).toContain('3 steps in all');
 
     render(ja(<StepControls />));
     expect(byId('step-readout')?.textContent).toBe('3 個のうち 2 番目：Router（転送）');
     expect(byId('step-hint')?.textContent).toBe(
-      '押すたびに、パケットが次の機器へ 1 回受け渡されます（＝1 ホップ）。全部で 3 回。',
+      '押すたびに 1 ステップ進みます。全部で 3 ステップ。',
     );
   });
 

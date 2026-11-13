@@ -276,6 +276,12 @@ function NdpStep() {
           '「IPv6 の Echo を送る」を押すと、最初の送信では、下の一覧に Neighbor Solicitation（NS、solicited-node アドレスあて）と、それに応える Advertisement（NA）が出ます。まず Client が R1 を、次に R1 が Server を尋ねます。2 回目の送信では何も尋ねません。答えを覚えているからです。',
         )}
       </div>
+      <div data-testid="ipv6-gateway-note" style={{ color: 'var(--netlab-text-secondary)' }}>
+        {t(
+          'Here the Client reaches R1 by R1’s global address, 2001:db8:1::1, to keep the picture readable. A real host usually uses the router’s link-local address (fe80::…) as its gateway, learned from the router’s Router Advertisements (RFC 4861).',
+          'ここでは図を読みやすくするため、Client は R1 のグローバルアドレス 2001:db8:1::1 に向けて送ります。本物の機器は、ふつうルータのリンクローカルアドレス（fe80::…）をゲートウェイにします。ルータが送る Router Advertisement から知ります（RFC 4861）。',
+        )}
+      </div>
     </div>
   );
 }

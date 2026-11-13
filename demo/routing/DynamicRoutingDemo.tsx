@@ -1,5 +1,6 @@
 import { useT } from '../localeContext';
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
@@ -40,9 +41,9 @@ const PROTOCOL_META: Record<DynamicProtocol, ProtocolMeta> = {
     label: 'BGP',
     accent: 'var(--netlab-accent-orange)',
     summary:
-      'Policy wins over equal AS_PATH length. R1 prefers the AS65002 path via higher LOCAL_PREF.',
+      'LOCAL_PREF is compared before AS_PATH: the higher LOCAL_PREF wins, whatever the path length. R1 prefers the AS65002 path for its higher LOCAL_PREF.',
     summaryJa:
-      'AS_PATH の長さが同じなら、ポリシーが優先されます。R1 は LOCAL_PREF の高い AS65002 経由を選びます。',
+      'BGP は AS_PATH より先に LOCAL_PREF を比べます。AS_PATH の長さにかかわらず、LOCAL_PREF の高いほうが選ばれます。R1 は LOCAL_PREF の高い AS65002 経由を選びます。',
   },
 };
 
@@ -394,6 +395,7 @@ export function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
         )}
       </div>
       <p
+        data-testid="dynamic-summary"
         style={{
           color: 'var(--netlab-text-secondary)',
           fontSize: 12,
@@ -469,8 +471,15 @@ export function DynamicRouteTable({ protocol }: { protocol: DynamicProtocol }) {
   );
 }
 
+/** The protocol an address asks for (`?protocol=bgp`), so a link can open the view it is about. */
+export function protocolFromSearch(search: string): DynamicProtocol {
+  const asked = new URLSearchParams(search).get('protocol');
+  return asked === 'ospf' || asked === 'bgp' ? asked : 'rip';
+}
+
 export default function DynamicRoutingDemo() {
-  const [protocol, setProtocol] = useState<DynamicProtocol>('rip');
+  const search = useLocation().search;
+  const [protocol, setProtocol] = useState<DynamicProtocol>(() => protocolFromSearch(search));
   const topology = buildTopology(protocol);
   // Beside the route table a phone left the canvas 30px wide: there the two
   // stack, and the column scrolls.

@@ -21,7 +21,7 @@ test(
     await page.getByTestId('trace-advanced-toggle').click();
     await searchbox.fill('protocol == tcp');
     await expect(page.getByTestId(SEL.traceFilter.statusLabel)).toContainText(
-      `0 of ${initialCount} hops shown`,
+      `0 of ${initialCount} steps shown`,
     );
     await expect
       .poll(() =>
@@ -40,12 +40,12 @@ test(
     await demoPage.waitForTraceCount(1);
     await expect(page.getByTestId(SEL.traceFilter.searchbox)).toHaveValue('protocol == tcp');
     await expect(page.getByTestId(SEL.traceFilter.statusLabel)).toContainText(
-      `0 of ${initialCount} hops shown`,
+      `0 of ${initialCount} steps shown`,
     );
 
     await page.getByTestId(SEL.traceFilter.searchbox).press('Escape');
     await expect(page.getByTestId(SEL.traceFilter.statusLabel)).toContainText(
-      `${initialCount} of ${initialCount} hops shown`,
+      `${initialCount} of ${initialCount} steps shown`,
     );
     await expect
       .poll(() =>

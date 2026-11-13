@@ -111,7 +111,7 @@ export const p3Df = definePacketTemplate(
     const wrongDf = { values: { df: startDf }, note: 'DF the wrong way' };
     return {
       kind: 'build-packet',
-      title: L(`A narrow cable before ${the(srv)}`, `${srv.ja}の手前の細い回線`),
+      title: L(`A narrow cable on the way to ${the(srv)}`, `${srv.ja}までの途中の細い回線`),
       task,
       rule: L(
         'Rule: a packet bigger than the MTU is split if it lacks the DF mark; with it, it is dropped and a note comes back.',

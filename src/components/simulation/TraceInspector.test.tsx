@@ -301,7 +301,7 @@ describe('Trace Inspector components', () => {
   it('HopInspector renders derived TTL Out and routing explanation for router hops', () => {
     const html = renderWithContexts(<HopInspector />, makeState({ selectedHop: BASE_ROUTER_HOP }));
 
-    expect(html).toContain('Hop 2 / 3');
+    expect(html).toContain('Step 2 / 3');
     expect(html).toContain('TTL Out');
     expect(html).toContain('62');
     expect(html).toContain('Ingress If');

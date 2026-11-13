@@ -58,6 +58,8 @@ export interface TcpTransferRequest {
   /** How many bytes the server's application takes in a round. Default all it has. */
   readonly readBytes?: (round: number) => number;
   readonly maxRounds?: number;
+  /** The first cwnd, in segments. Default 1. */
+  readonly initialCwndSegments?: number;
 }
 
 export interface TcpTransferResult {
@@ -338,6 +340,9 @@ export class TcpOrchestrator {
       senderWindowField: advertisedWindowField(clientBuffer, negotiated.clientWindowShift),
       readBytes: request.readBytes ?? (() => Number.POSITIVE_INFINITY),
       ...(request.maxRounds !== undefined ? { maxRounds: request.maxRounds } : {}),
+      ...(request.initialCwndSegments !== undefined
+        ? { initialCwndSegments: request.initialCwndSegments }
+        : {}),
     });
 
     const client = {

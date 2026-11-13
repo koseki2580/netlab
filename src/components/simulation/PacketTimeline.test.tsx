@@ -319,7 +319,7 @@ describe('PacketTimeline', () => {
     });
 
     expect(container?.querySelectorAll('[role="option"]')).toHaveLength(1);
-    expect(container?.textContent).toContain('1 of 2 hops shown');
+    expect(container?.textContent).toContain('1 of 2 steps shown');
     expect(engine.getState()).toEqual(before);
     vi.useRealTimers();
   });

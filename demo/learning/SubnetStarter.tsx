@@ -208,10 +208,38 @@ export function SubnetStarter() {
           );
         })}
       </ol>
+      <div data-testid="subnet-starter-count" style={{ margin: '16px 0 0', lineHeight: 1.7 }}>
+        <h3 style={{ margin: '0 0 4px', fontSize: 16 }}>
+          {t('How many machines fit in a /24?', '/24 には何台入る？')}
+        </h3>
+        <p style={{ margin: 0 }}>
+          {t(
+            'The last number can be 0 to 255: 256 numbers. Two of them are kept. The one ending .0 names the network itself, and the one ending .255 is for sending to everyone on it. So a /24 holds 254 machines.',
+            '最後の数は 0〜255 の 256 通りです。そのうち 2 つは使えません。.0 で終わるものはネットワークそのものの名前、.255 で終わるものは全員あての宛先です。だから /24 に入るのは 254 台です。',
+          )}
+        </p>
+      </div>
+      <div data-testid="subnet-starter-bits" style={{ margin: '12px 0 0', lineHeight: 1.7 }}>
+        <h3 style={{ margin: '0 0 4px', fontSize: 16 }}>
+          {t('What the number after the slash counts', '「/」のあとの数が数えているもの')}
+        </h3>
+        <p style={{ margin: 0 }}>
+          {t(
+            '"/24" is not "24 machines". A computer keeps an address as 32 bits, digits that are 0 or 1: 8 bits for each of its four numbers. /24 says the first 24 bits, the first three numbers, are the network.',
+            '「/24」は「24 台」ではありません。コンピュータはアドレスを 32 個のビット（0 か 1 の数字）で持っています。4 つの数の 1 つにつき 8 ビットです。/24 は「はじめの 24 ビット、つまり最初の 3 つの数がネットワーク」という意味です。',
+          )}
+        </p>
+        <p style={{ margin: '6px 0 0' }}>
+          {t(
+            'A mask says the same, number by number. 255 is eight 1s (11111111), so 255.255.255.0 is 24 ones: /24. 248 is 11111000, five 1s, so 255.248.0.0 is 8 + 5 = 13 ones: /13.',
+            'マスクは同じことを数ごとに書いたものです。255 は 1 が 8 個（11111111）なので、255.255.255.0 は 1 が 24 個で /24 です。248 は 11111000 で 1 が 5 個なので、255.248.0.0 は 8 + 5 = 13 個で /13 です。',
+          )}
+        </p>
+      </div>
       <p style={{ margin: '12px 0 0', color: 'var(--netlab-text-secondary)' }}>
         {t(
-          'The practice below goes further — first and last addresses, how many machines fit. It is optional for the beginner path.',
-          '下の練習問題は、最初と最後のアドレスや入る台数など、さらに先の計算です。入門の学習パスでは、ここまでで十分です。',
+          'The practice below goes further, with masks like these and first and last addresses. It is optional for the beginner path.',
+          '下の練習問題では、こうしたマスクや、最初と最後のアドレスをさらに練習します。入門の学習パスでは、ここまでで十分です。',
         )}
       </p>
     </section>

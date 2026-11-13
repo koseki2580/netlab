@@ -3,9 +3,9 @@ import type { Catalog } from '../../types';
 export const simulation: Catalog = {
   'simulation.timeline.heading': 'パケットタイムライン',
   'simulation.timeline.clear': 'タイムラインを消去',
-  'simulation.timeline.hopsShown': '{{total}} ホップ中 {{shown}} 件を表示',
+  'simulation.timeline.hopsShown': '{{total}} ステップ中 {{shown}} 件を表示',
   'simulation.timeline.downloadPcap': 'PCAP を保存',
-  'simulation.timeline.hops': 'パケットのホップ',
+  'simulation.timeline.hops': 'パケットのステップ',
   'simulation.timeline.empty': 'まだ何も送っていません。送ると、通った道がここに並びます。',
 
   'simulation.steps.heading': '1ステップずつ実行',
@@ -20,8 +20,7 @@ export const simulation: Catalog = {
   'simulation.steps.dropReason': '破棄の理由: {{reason}}',
   'simulation.steps.logIdle':
     'まだ何も送っていません。この画面のボタンで通信を始めると、ここから 1 つずつ進められます。',
-  'simulation.steps.logLoaded':
-    '押すたびに、パケットが次の機器へ 1 回受け渡されます（＝1 ホップ）。全部で {{total}} 回。',
+  'simulation.steps.logLoaded': '押すたびに 1 ステップ進みます。全部で {{total}} ステップ。',
   'simulation.steps.next': '→ 次のステップ',
   'simulation.steps.reset': '⟳ リセット',
   'simulation.steps.statusDone': '最後まで進みました。⟳ でやり直せます。',
@@ -51,7 +50,7 @@ export const simulation: Catalog = {
   'simulation.hop.heading': 'ホップの詳細',
   'simulation.hop.empty':
     'まだ選ばれていません。タイムラインの行を押すと、パケットの中身が見られます。',
-  'simulation.hop.position': '{{current}} / {{total}} ホップ',
+  'simulation.hop.position': '{{current}} / {{total}} ステップ',
   'simulation.hop.fields': 'ホップの情報',
   'simulation.hop.arpFields': 'ARP の情報',
   'simulation.hop.nat': 'NAT による変換',
@@ -107,7 +106,7 @@ export const simulation: Catalog = {
   'simulation.controls.statusLoaded': '→ を押すと、通った道を 1 つずつ見直せます。',
   'simulation.areas.heading': 'ネットワークの区画',
   'simulation.summary.heading': '通信のまとめ',
-  'simulation.summary.hops': 'ホップ数:',
+  'simulation.summary.hops': 'ステップ数:',
   'simulation.summary.status': '状態:',
   'simulation.summary.dst': '宛先:',
   'simulation.summary.delivered': '届いた',

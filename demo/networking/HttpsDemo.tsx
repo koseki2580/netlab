@@ -72,8 +72,8 @@ function HttpsDemoInner() {
           </div>
           <div>
             {t(
-              'This server accepts only h2. If none of the client’s ALPN choices is acceptable, the server ends the handshake at once with a no_application_protocol alert — before any certificate is sent.',
-              'このサーバが受け付けるのは h2 だけです。クライアントの ALPN の中に受け付けられるものがなければ、サーバは証明書を送る前に、no_application_protocol の警告でハンドシェイクを打ち切ります。',
+              'In the normal run the server accepts http/1.1, which the client offers, so the two agree on it. "Force ALPN mismatch" makes the server accept only h2: none of the client’s choices fits, so the server ends the handshake at once with a no_application_protocol alert, before any certificate is sent.',
+              'ふつうの実行では、サーバは http/1.1 を受け付けます。クライアントも http/1.1 を示すので、それに決まります。「ALPN をわざと食い違わせる」では、サーバが h2 だけを受け付けます。クライアントの ALPN の中に合うものがないので、サーバは証明書を送る前に、no_application_protocol の警告でハンドシェイクを打ち切ります。',
             )}
           </div>
         </div>

@@ -15,6 +15,7 @@ import {
   type FlowRow,
   type FlowRun,
   type ReaderSpeed,
+  FLOW_IW_SEGMENTS,
   type RowKind,
 } from './tcpFlowLesson';
 
@@ -299,8 +300,8 @@ function FlowControlInner() {
             </div>
             <div style={{ marginTop: 6 }} data-testid="tcp-flow-rule">
               {t(
-                `Every segment from the Server says how much room is left: its window (rwnd). The Client keeps the bytes in flight within the smaller of rwnd and its own cwnd. Here the Server has room for ${SERVER_BUFFER} bytes and the Client sends ${TRANSFER_BYTES}. Bytes stay in the Server's buffer until its application reads them, so make the application slow and watch.`,
-                `Server のセグメントには、あとどれだけ入るか（ウィンドウ、rwnd）が書かれています。Client は、送信中のバイトが rwnd と自分の cwnd の小さいほうを超えないようにします。ここでは Server に ${SERVER_BUFFER} バイトの空きがあり、Client が ${TRANSFER_BYTES} バイトを送ります。届いたデータは、Server のアプリが読むまでバッファに残ります。アプリを遅くして、様子を見てください。`,
+                `Every segment from the Server says how much room is left: its window (rwnd). The Client keeps the bytes in flight within the smaller of rwnd and its own cwnd. Here the Server has room for ${SERVER_BUFFER} bytes and the Client sends ${TRANSFER_BYTES}. Bytes stay in the Server's buffer until its application reads them, so make the application slow and watch. The Server reopens a closed window only once at least min(half its buffer, one MSS) is free, so a slow reader's window grows in steps of that size, not of what it reads. cwnd starts at ${FLOW_IW_SEGMENTS} segments, as in the congestion lesson; RFC 5681 allows a first window of 2 to 4 segments, by segment size.`,
+                `Server のセグメントには、あとどれだけ入るか（ウィンドウ、rwnd）が書かれています。Client は、送信中のバイトが rwnd と自分の cwnd の小さいほうを超えないようにします。ここでは Server に ${SERVER_BUFFER} バイトの空きがあり、Client が ${TRANSFER_BYTES} バイトを送ります。届いたデータは、Server のアプリが読むまでバッファに残ります。アプリを遅くして、様子を見てください。閉じたウィンドウは、バッファの半分と 1 MSS の小さいほう以上が空いてから開きます。だから、ゆっくり読むアプリのウィンドウは、読んだ量ではなくその大きさずつ増えます。cwnd は輻輳制御のレッスンと同じ ${FLOW_IW_SEGMENTS} セグメントから始まります。RFC 5681 では、最初のウィンドウはセグメントの大きさに応じて 2〜4 セグメントまでです。`,
               )}
             </div>
           </div>

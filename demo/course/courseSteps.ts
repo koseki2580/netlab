@@ -196,7 +196,7 @@ export const COURSE_STEPS: readonly CourseStep[] = [
         headline: 'Through a switch, it arrives just the same.',
         points: [
           'The packet went PC-A → Switch → PC-B: it was passed along twice.',
-          'Each pass from one device to the next is called one **hop**. Last time it took 1 hop; this time, 2.',
+          'A switch passes the packet on inside one network, so it is not counted as a **hop**. A hop is one router crossed, and there is no router here yet.',
           'A switch passes the packet on without changing what is written in it.',
           'So as far as PC-A and PC-B are concerned, nothing changed.',
         ],
@@ -212,7 +212,7 @@ export const COURSE_STEPS: readonly CourseStep[] = [
         headline: 'スイッチを通っても、同じように届きます。',
         points: [
           'パケットは PC-A → スイッチ → PC-B と、2回渡されました。',
-          '機器から次の機器へ1回渡ることを「**ホップ**」と呼びます。さっきは1ホップ、今回は2ホップです。',
+          'スイッチは 1 つのネットワークの中で渡すだけなので、「**ホップ**」には数えません。ホップは、ルータを 1 台越えることです。ここにはまだルータがありません。',
           'スイッチは、中身を書き換えずに次へ渡すだけです。',
           'だから PC-A と PC-B から見れば、何も変わりません。',
         ],
@@ -254,7 +254,7 @@ export const COURSE_STEPS: readonly CourseStep[] = [
         task: 'Send from PC-A to PC-B, and watch where the packet goes.',
         headline: 'Once a switch knows where a machine is, it sends to that one only.',
         points: [
-          'The packet reached only PC-B. PC-C received one thing: a copy of a question, which it threw away because it was not for it.',
+          'The packet reached only PC-B. PC-C received a copy of a question, which it threw away because it was not for it. The picture does not draw that question or its copy.',
           'Besides its IP address, every machine has a second number of its own, its **MAC address**. In the picture it is the line starting "MAC" under each PC.',
           'The three lines leaving the switch end in its three sockets for cables, called **ports**.',
           'Before sending, PC-A asked which machine has PC-B’s address. This switch has just started, so it sent that question out of every port except the one it came in on, and PC-B’s answer taught it the way.',
@@ -263,7 +263,7 @@ export const COURSE_STEPS: readonly CourseStep[] = [
         more: [
           'The switch learns as it goes: each time a frame comes in, it notes the sender’s MAC address against the port the frame came in on.',
           'If you send again, PC-A remembers the reply and does not ask, and the switch sends down the one cable to PC-B.',
-          'That question is called ARP. The picture moves only the packet, so it does not draw the question or its copy.',
+          'That question is called ARP. The ARP lesson draws it moving.',
         ],
       },
       ja: {
@@ -272,7 +272,7 @@ export const COURSE_STEPS: readonly CourseStep[] = [
         task: 'PC-A から PC-B へ送って、どこを通るか見てみましょう。',
         headline: 'スイッチは場所を覚えると、宛先の1台にだけ流します。',
         points: [
-          'パケットは PC-B にだけ届きました。PC-C に届いたのは問い合わせの写しだけで、PC-C は自分宛てではないと見て捨てました。',
+          'パケットは PC-B にだけ届きました。PC-C には問い合わせの写しが届き、自分宛てではないので捨てました。図は、その問い合わせと写しを描いていません。',
           '機器には IP アドレスのほかに、もう1つ「**MAC アドレス**」という番号が付いています。図では、各 PC の下の「MAC」で始まる行です。',
           'スイッチから出ている3本の線の付け根が、ケーブルの**差し込み口（ポート）**です。',
           'PC-A は送る前に、PC-B の番号の持ち主を尋ねました。動き始めたばかりのスイッチは、その問いを入ってきた口以外の全部の差し込み口に流し、PC-B の返事で道を覚えました。',
@@ -281,7 +281,7 @@ export const COURSE_STEPS: readonly CourseStep[] = [
         more: [
           'スイッチは、フレームを受け取るたびに「送り主の MAC アドレス」と「入ってきた差し込み口」を組にして覚えていきます。',
           'もう一度送ると、PC-A は答えを覚えているので尋ねず、スイッチも PC-B につながる1本にだけ流します。',
-          'この問い合わせを ARP と呼びます。図で動くのはパケットだけなので、問い合わせとその写しは描いていません。',
+          'この問い合わせを ARP と呼びます。ARP のレッスンでは、これも図で動きます。',
         ],
       },
     },
@@ -308,14 +308,14 @@ export const COURSE_STEPS: readonly CourseStep[] = [
       en: {
         title: 'Two networks, not joined',
         goal: 'PC-A is on the 10.0.0 network, PC-D is on the 192.168.1 network, and nothing connects the two switches.',
-        task: 'Send a packet to PC-D. It is meant to fail — watch where it stops.',
+        task: 'Send a packet to PC-D. It is meant to fail; the picture shows where its way ends.',
         headline: 'Across two networks, switches alone cannot deliver.',
         points: [
+          'The picture shows the packet going as far as Switch-1, to mark where the way ends. A real PC-A would not send it at all: it has nobody to hand it to.',
           'PC-A’s address starts 10.0.0 and PC-D’s starts 192.168.1. The first three numbers differ, so these are different networks.',
           'PC-A compares the two addresses and sees that the destination is outside its own network.',
           'A packet for outside has to be handed to a device that joins one network to another. There is no such device here.',
           'A switch passes packets along inside one network. Two switches side by side do not join two networks.',
-          'The picture draws the packet stopping at Switch-1. A real PC-A, with nobody to hand it to, would not send it at all.',
         ],
         more: [
           'The red note on the picture marks where the packet ended. A packet that cannot be delivered is thrown away; later lessons call this a **drop**.',
@@ -326,14 +326,14 @@ export const COURSE_STEPS: readonly CourseStep[] = [
       ja: {
         title: '2つのネットワーク、つながっていない',
         goal: 'PC-A は 10.0.0 のネットワーク、PC-D は 192.168.1 のネットワークにいます。2台のスイッチの間は何もつながっていません。',
-        task: 'PC-D へ送ってみましょう。これは失敗する例です。どこで止まるか見てください。',
+        task: 'PC-D へ送ってみましょう。これは失敗する例です。図は、道がどこで終わるかを示します。',
         headline: 'ネットワークが違うと、スイッチだけでは届きません。',
         points: [
+          '図では、道が終わる場所を示すために、パケットがスイッチ1 まで進んで止まるように描いています。本物の PC-A は、渡す相手がいないので送り出しません。',
           'PC-A の住所は 10.0.0 で、PC-D の住所は 192.168.1 で始まります。最初の3つの数が違うので、別のネットワークです。',
           'PC-A は2つの住所を見比べて、宛先が自分のネットワークの外だと分かります。',
           '外あてのパケットは、ネットワークどうしをつなぐ機器に渡します。ここには、その機器がありません。',
           'スイッチは、同じネットワークの中で渡す機器です。2台並べても、2つのネットワークはつながりません。',
-          '図では、スイッチ1 で止まるように描いています。本物の PC-A は、渡す相手がいないので送り出しません。',
         ],
         more: [
           '図の赤い印は、パケットがそこで終わったという印です。届けられないパケットは捨てられます。あとのレッスンでは、これを「**ドロップ**」と呼びます。',
@@ -378,7 +378,7 @@ export const COURSE_STEPS: readonly CourseStep[] = [
         ],
         more: [
           'A PC’s network settings have a box named "default gateway". This address (here 10.0.0.1) is what goes in it.',
-          'The packet went PC-A → Switch-1 → Router → Switch-2 → PC-D: 4 hops.',
+          'The packet went PC-A → Switch-1 → Router → Switch-2 → PC-D. It crossed one router: 1 hop. The switches are not counted.',
         ],
       },
       ja: {
@@ -394,7 +394,7 @@ export const COURSE_STEPS: readonly CourseStep[] = [
         ],
         more: [
           'PC のネットワーク設定には「デフォルト ゲートウェイ」という欄があります。そこに書くのが、このアドレス（ここでは 10.0.0.1）です。',
-          'パケットは PC-A → スイッチ1 → ルータ → スイッチ2 → PC-D と、4ホップで届きました。',
+          'パケットは PC-A → スイッチ1 → ルータ → スイッチ2 → PC-D と通りました。越えたルータは 1 台なので、1 ホップです。スイッチは数えません。',
         ],
       },
     },

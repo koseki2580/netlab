@@ -11,9 +11,9 @@ import type { Catalog } from '../../types';
 export const simulation: Catalog = {
   'simulation.timeline.heading': 'PACKET TIMELINE',
   'simulation.timeline.clear': 'Clear timeline',
-  'simulation.timeline.hopsShown': '{{shown}} of {{total}} hops shown',
+  'simulation.timeline.hopsShown': '{{shown}} of {{total}} steps shown',
   'simulation.timeline.downloadPcap': 'Download PCAP',
-  'simulation.timeline.hops': 'Packet hops',
+  'simulation.timeline.hops': 'Packet steps',
   'simulation.timeline.empty': 'Nothing sent yet. The route appears here once you send.',
 
   'simulation.steps.heading': 'STEP-BY-STEP SIMULATION',
@@ -28,8 +28,7 @@ export const simulation: Catalog = {
   'simulation.steps.dropReason': 'Drop reason: {{reason}}',
   'simulation.steps.logIdle':
     "Nothing sent yet. Start an exchange with this lesson's button, then step through it here.",
-  'simulation.steps.logLoaded':
-    'Each press hands the packet to the next device (one hop). {{total}} presses in all.',
+  'simulation.steps.logLoaded': 'Each press shows one step of the trace. {{total}} steps in all.',
   'simulation.steps.next': '→ Next Step',
   'simulation.steps.reset': '⟳ Reset',
   'simulation.steps.statusDone': 'Reached the end. ⟳ starts over.',
@@ -58,7 +57,7 @@ export const simulation: Catalog = {
 
   'simulation.hop.heading': 'HOP INSPECTOR',
   'simulation.hop.empty': 'No hop selected. Click a timeline row to inspect packet details.',
-  'simulation.hop.position': 'Hop {{current}} / {{total}}',
+  'simulation.hop.position': 'Step {{current}} / {{total}}',
   'simulation.hop.fields': 'HOP FIELDS',
   'simulation.hop.arpFields': 'ARP FIELDS',
   'simulation.hop.nat': 'NAT TRANSLATION',
@@ -114,7 +113,7 @@ export const simulation: Catalog = {
   'simulation.controls.statusLoaded': 'Press → to retrace its path one device at a time.',
   'simulation.areas.heading': 'NETWORK AREAS',
   'simulation.summary.heading': 'TRACE SUMMARY',
-  'simulation.summary.hops': 'Hops:',
+  'simulation.summary.hops': 'Steps:',
   'simulation.summary.status': 'Status:',
   'simulation.summary.dst': 'Dst:',
   'simulation.summary.delivered': 'delivered',

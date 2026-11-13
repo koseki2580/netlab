@@ -67,7 +67,7 @@ describe('what a course step says once its packet has run', () => {
     const glossed: [term: string, gloss: RegExp, stepNumber: number][] = [
       ['パケット', /送るデータのひとかたまり/, 1],
       ['IP アドレス', /住所/, 1],
-      ['ホップ', /1回渡る/, 2],
+      ['ホップ', /ルータを 1 台越える/, 2],
       ['MAC アドレス', /番号/, 3],
       ['ポート', /差し込み口（ポート）/, 3],
       ['フレーム', /封筒/, 3],
@@ -158,8 +158,11 @@ describe('what the course says against what its picture shows', () => {
     expect(ja.points.join('')).toMatch(/動き始めたばかり.*全部の差し込み口.*返事で/);
     expect(en.more.join('')).toMatch(/send again.*does not ask.*one cable/s);
     expect(ja.more.join('')).toMatch(/もう一度送ると.*尋ねず.*1本にだけ/s);
-    expect(en.more.join('')).toMatch(/ARP.*does not draw/s);
-    expect(ja.more.join('')).toMatch(/ARP.*描いていません/s);
+    // What the picture does not draw is said in the points, not only behind "more" (TC-1382).
+    expect(en.points.join('')).toMatch(/does not draw/);
+    expect(ja.points.join('')).toMatch(/描いていません/);
+    expect(en.more.join('')).toMatch(/ARP/);
+    expect(ja.more.join('')).toMatch(/ARP/);
   });
 
   /**

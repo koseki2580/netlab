@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useLocation } from 'react-router-dom';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { useNetlabContext } from '../../src/components/NetlabContext';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
@@ -23,6 +24,7 @@ import {
 import { diagramCss, labelOf, localizedTopology } from './courseDiagram';
 import { COURSE_STEPS, courseProgressId, type CourseLocale, type CourseStep } from './courseSteps';
 import { usePacketTravel } from './usePacketTravel';
+import { examLevelFromSearch } from './examAttempt';
 
 const PROGRESS_KEY = 'netlab-course-step';
 const LOCALE_KEY = 'netlab-locale';
@@ -210,7 +212,9 @@ function StepStage({
   const body = step.copy[locale];
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
+  // Opened from a test, whose explanations may point into it: open from the start.
+  const fromExam = examLevelFromSearch(useLocation().search) !== undefined;
+  const [moreOpen, setMoreOpen] = useState(fromExam);
   const diagramRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLElement | null>(null);
   const outcomeRef = useRef<HTMLDivElement | null>(null);

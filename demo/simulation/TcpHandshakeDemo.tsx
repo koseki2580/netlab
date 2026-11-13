@@ -26,6 +26,12 @@ import { readDemoEmbedParams } from '../embedParams';
 
 const TOPOLOGY = tcpHandshake.topology;
 
+/** What the ARP rows are, and that only the first segment asks. */
+export const tcpArpNote = {
+  en: 'The ARP rows are a device finding the number (MAC address) of the machine to hand to. Only the first message (the SYN) asks; the answer is remembered, so the SYN-ACK and the ACK are sent without asking.',
+  ja: '途中の ARP の行は、機器が渡す相手の番号（MAC アドレス）を調べているところです。尋ねるのは最初の SYN のときだけです。答えを覚えているので、SYN-ACK と ACK は尋ねずに送ります。',
+} as const;
+
 export const TCP_HANDSHAKE_DEMO_TOPOLOGY = TOPOLOGY;
 
 /**
@@ -850,10 +856,7 @@ function TcpHandshakeDemoInner() {
               data-testid="tcp-arp-note"
               style={{ color: 'var(--netlab-text-secondary)', fontSize: 12, lineHeight: 1.6 }}
             >
-              {t(
-                'The ARP rows are a device finding the number (MAC address) of the machine to hand to. A real device remembers the answer for a few minutes and does not ask again. This screen asks again for every message.',
-                '途中の ARP の行は、機器が渡す相手の番号（MAC アドレス）を調べているところです。本物の機器は答えを数分のあいだ覚えていて、聞き直しません。この画面は、通信のたびに聞き直します。',
-              )}
+              {t(tcpArpNote.en, tcpArpNote.ja)}
             </div>
           ) : null}
           <MoreDetail connected={connected} />
