@@ -32,14 +32,15 @@ export class OspfProtocol implements RoutingProtocol {
 
     for (const router of ospfRouters) {
       const bestRoutes = new Map<string, RouteEntry>();
-      const advertisedNetworks = getAdvertisedNetworks(topology, router).keys();
+      const advertisedNetworks = getAdvertisedNetworks(topology, router);
       const spf = runSpf(router, adjacency, routerById, participatingRouterIds);
 
-      for (const network of advertisedNetworks) {
+      // RFC 2328 §12.4.1, §16.1: an attached network costs the interface onto it.
+      for (const [network, interfaceCost] of advertisedNetworks) {
         bestRoutes.set(network, {
           destination: network,
           nextHop: 'direct',
-          metric: 0,
+          metric: interfaceCost,
           protocol: 'ospf',
           adminDistance: this.adminDistance,
           nodeId: router.id,

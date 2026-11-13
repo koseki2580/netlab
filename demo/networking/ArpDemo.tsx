@@ -1,5 +1,6 @@
 import { useGalleryLocale, useT } from '../localeContext';
-import { useMemo, type CSSProperties, type ReactNode } from 'react';
+import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import DemoShell from '../DemoShell';
 import { NetlabProvider } from '../../src/components/NetlabProvider';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
@@ -26,6 +27,7 @@ import { basicArp } from '../../src/scenarios';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import { useViewport } from '../../src/utils/useViewport';
 import { readDemoEmbedParams } from '../embedParams';
+import { ARP_LOCAL, arpSceneFromSearch, type ArpScene } from './arpScenes';
 import { arpLearnedAt, arpTablesAtStep, shownStep } from '../components/stateAtStep';
 import { LESSON_CARD, LESSON_LABEL } from '../components/lessonStyles';
 
@@ -213,8 +215,9 @@ function ArpDiffCard() {
   );
 }
 
-function ArpDemoInner() {
+function ArpDemoInner({ scene, onScene }: { scene: ArpScene; onScene: (next: ArpScene) => void }) {
   const t = useT();
+  const local = scene === 'local';
   const { engine, state } = useSimulation();
   const hasTrace = state.traces.length > 0;
   const hopChosen = state.selectedHop !== null;
@@ -222,7 +225,7 @@ function ArpDemoInner() {
 
   const sendPing = async () => {
     engine.clear();
-    await engine.ping('client-1', '203.0.113.10');
+    await engine.ping('client-1', local ? ARP_LOCAL.target : '203.0.113.10');
   };
 
   return (
@@ -276,12 +279,21 @@ function ArpDemoInner() {
             )}
           </div>
           {/* What this lesson's trace shows: every device asks before it hands on. */}
-          <div data-testid="arp-who-asks" style={{ ...DETAIL_STYLE, marginTop: 6 }}>
-            {t(
-              'Each device asks for the next one it hands to. On the way out the Client asks for the Router, then the Router (the one in the middle) for the Server. On the way back nobody asks: each one asked learned the asker from its question.',
-              '機器はそれぞれ、次に渡す相手を聞きます。行きは Client が Router を、次に Router（ルータ）が Server を聞きます。帰りはだれも聞きません。聞かれた側は、質問から相手を覚えているからです。',
-            )}
-          </div>
+          {local ? (
+            <div data-testid="arp-local-note" style={{ ...DETAIL_STYLE, marginTop: 6 }}>
+              {t(
+                'The Printer, 10.0.0.20, is on the Client’s own network (10.0.0). So the Client asks for the Printer itself, not for the Router, and the frame goes straight to the Printer’s MAC address. The Router plays no part.',
+                'Printer（10.0.0.20）は、Client と同じネットワーク（10.0.0）にいます。だから Client は Router ではなく Printer そのものを聞きます。フレームは Printer の MAC アドレスへ直接届きます。Router は関わりません。',
+              )}
+            </div>
+          ) : (
+            <div data-testid="arp-who-asks" style={{ ...DETAIL_STYLE, marginTop: 6 }}>
+              {t(
+                'Each device asks for the next one it hands to. On the way out the Client asks for the Router, then the Router (the one in the middle) for the Server. On the way back nobody asks: each one asked learned the asker from its question.',
+                '機器はそれぞれ、次に渡す相手を聞きます。行きは Client が Router を、次に Router（ルータ）が Server を聞きます。帰りはだれも聞きません。聞かれた側は、質問から相手を覚えているからです。',
+              )}
+            </div>
+          )}
           {/* The tables start empty: no device knows another's number in advance. */}
           <div data-testid="arp-already-known" style={{ ...DETAIL_STYLE, marginTop: 6 }}>
             {t(
@@ -346,9 +358,42 @@ function ArpDemoInner() {
                   fontWeight: 700,
                 }}
               >
-                {t('▶ Send from Client to Server', '▶ Client から Server へ送ってみる')}
+                {local
+                  ? t('▶ Send from Client to Printer', '▶ Client から Printer へ送ってみる')
+                  : t('▶ Send from Client to Server', '▶ Client から Server へ送ってみる')}
               </button>
             </LessonPinned>
+            <div
+              role="group"
+              aria-label={t('Scene', '場面')}
+              style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}
+            >
+              {(
+                [
+                  ['routed', t('Across a router', 'ルータの向こうへ')],
+                  ['local', t('On the same network', '同じネットワークの中で')],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  data-testid={`arp-scene-${value}`}
+                  aria-pressed={scene === value}
+                  onClick={() => onScene(value)}
+                  style={{
+                    minHeight: 44,
+                    padding: '6px 12px',
+                    borderRadius: 8,
+                    border: `2px solid ${scene === value ? 'var(--netlab-accent-cyan)' : 'var(--netlab-border)'}`,
+                    background: 'var(--netlab-bg-surface)',
+                    color: 'var(--netlab-text-primary)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
             <div
               data-testid="arp-send-hint"
               style={{ ...DETAIL_STYLE, marginTop: 6, color: 'var(--netlab-text-secondary)' }}
@@ -418,6 +463,13 @@ const PHONE_POSITIONS: PhonePositions = {
   'server-1': { x: 250, y: 0 },
 };
 
+const LOCAL_PHONE_POSITIONS: PhonePositions = {
+  'client-1': { x: 0, y: 0 },
+  'printer-1': { x: 0, y: 120 },
+  'switch-1': { x: 125, y: 60 },
+  'router-1': { x: 250, y: 60 },
+};
+
 export default function ArpDemo() {
   const params = new URLSearchParams(window.location.search);
   const tutorialId = params.get('tutorial') ?? null;
@@ -425,7 +477,13 @@ export default function ArpDemo() {
   const { embedded, embedMode, parentOrigin } = readDemoEmbedParams();
   const tutorialProps = tutorialId ? { tutorialId } : {};
 
-  const phone = usePhoneTopology(basicArp.topology, PHONE_POSITIONS);
+  const search = useLocation().search;
+  const [scene, setScene] = useState<ArpScene>(() => arpSceneFromSearch(search));
+  const local = scene === 'local';
+  const phone = usePhoneTopology(
+    local ? ARP_LOCAL.topology : basicArp.topology,
+    local ? LOCAL_PHONE_POSITIONS : PHONE_POSITIONS,
+  );
   return (
     <DemoShell
       title="ARP Basics"
@@ -433,7 +491,7 @@ export default function ArpDemo() {
       embedded={embedded}
     >
       <NetlabProvider
-        key={phone.layout}
+        key={`${scene}-${phone.layout}`}
         topology={phone.topology}
         sandboxEnabled={sandboxEnabled}
         {...(sandboxEnabled ? { sandboxControlMode: 'sandbox-owns' as const } : {})}
@@ -443,7 +501,7 @@ export default function ArpDemo() {
       >
         <ArpBubbleWords>
           <SimulationProvider>
-            <ArpDemoInner />
+            <ArpDemoInner scene={scene} onScene={setScene} />
           </SimulationProvider>
         </ArpBubbleWords>
       </NetlabProvider>

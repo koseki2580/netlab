@@ -156,7 +156,9 @@ test('TC-629: the TCP lesson shows a connection’s numbers once its three messa
   await demoPage.goto('/simulation/tcp-handshake');
   await expect(page.getByTestId('tcp-arp-note')).toHaveCount(0);
   await page.getByTestId('tcp-connect').click();
-  await expect(page.getByTestId('tcp-arp-note')).toContainText('数分のあいだ覚えていて');
+  await expect(page.getByTestId('tcp-arp-note')).toContainText(
+    '尋ねるのは最初の SYN のときだけです',
+  );
 
   const more = page.getByTestId('tcp-more-detail');
   await expect(more).toContainText('セグメント＝TCP が送る 1 通');

@@ -352,7 +352,7 @@ describe('OSPF areas (RFC 2328 §16)', () => {
         {
           destination: '10.0.1.0/30',
           nextHop: 'direct',
-          metric: 0,
+          metric: 1,
           protocol: 'ospf',
           adminDistance: 110,
           nodeId: 'a',
@@ -360,7 +360,7 @@ describe('OSPF areas (RFC 2328 §16)', () => {
         {
           destination: '10.1.1.0/24',
           nextHop: 'direct',
-          metric: 0,
+          metric: 1,
           protocol: 'ospf',
           adminDistance: 110,
           nodeId: 'a',
@@ -368,7 +368,7 @@ describe('OSPF areas (RFC 2328 §16)', () => {
         {
           destination: '10.0.1.0/30',
           nextHop: 'direct',
-          metric: 0,
+          metric: 1,
           protocol: 'ospf',
           adminDistance: 110,
           nodeId: 'b',
@@ -383,6 +383,39 @@ describe('OSPF areas (RFC 2328 §16)', () => {
         },
       ]),
     );
+  });
+
+  // TC-1404: RFC 2328 §12.4.1, §16.1, with several areas as with one.
+  it('TC-1404: an attached network carries its interface cost in several areas', () => {
+    const two = topology(
+      [
+        router(
+          'a',
+          '1.1.1.1',
+          [
+            ['lan', '10.1.1.1/24'],
+            ['up', '10.0.1.1/30'],
+          ],
+          {
+            areas: [
+              { areaId: '1', networks: ['10.1.1.0/24'], cost: 7 },
+              { areaId: '0', networks: ['10.0.1.0/30'] },
+            ],
+          },
+        ),
+        router('b', '2.2.2.2', [['down', '10.0.1.2/30']], {
+          areas: [{ areaId: '0', networks: ['10.0.1.0/30'] }],
+        }),
+      ],
+      [cable('a', 'up', 'b', 'down')],
+    );
+    const attached = routes(two).filter(
+      (route) => route.nodeId === 'a' && route.nextHop === 'direct',
+    );
+    expect(attached.map((route) => [route.destination, route.metric]).sort()).toEqual([
+      ['10.0.1.0/30', 1],
+      ['10.1.1.0/24', 7],
+    ]);
   });
 
   it('TC-1096: E1 adds the way to the ASBR, E2 does not, and internal routes win over both', () => {

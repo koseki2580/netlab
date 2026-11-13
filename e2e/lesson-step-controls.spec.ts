@@ -60,7 +60,7 @@ test('the step button stays where it was pressed as the history grows', async ({
   await demoPage.goto('/networking/arp');
   await pressesKeepTheirPlace(page);
   /** TC-342 — and the line under it says what a press does, and how many there are. */
-  await expect(page.getByTestId(TID.hint)).toContainText('全部で 11 回');
+  await expect(page.getByTestId(TID.hint)).toContainText('全部で 11 ステップ');
 });
 
 test.describe('on a phone', () => {

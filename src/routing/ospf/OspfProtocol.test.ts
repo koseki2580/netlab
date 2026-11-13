@@ -112,13 +112,14 @@ describe('OspfProtocol', () => {
       expect(new OspfProtocol().computeRoutes(topology)).toEqual([]);
     });
 
-    it('returns directly connected networks with metric 0', () => {
+    // TC-1403: RFC 2328 §12.4.1 and §16.1: an attached network costs the interface onto it.
+    it('TC-1403: gives a directly attached network the cost of its interface, not 0', () => {
       const topology = makeTopology({
         nodes: [
           makeRouter(
             'r1',
             [makeIface('lan0', '10.1.0.1', 24), makeIface('eth0', '10.0.12.1', 30)],
-            [makeArea(['10.1.0.0/24', '10.0.12.0/30'])],
+            [makeArea(['10.1.0.0/24', '10.0.12.0/30'], 10)],
           ),
         ],
       });
@@ -131,13 +132,13 @@ describe('OspfProtocol', () => {
             nodeId: 'r1',
             destination: '10.1.0.0/24',
             nextHop: 'direct',
-            metric: 0,
+            metric: 10,
           }),
           expect.objectContaining({
             nodeId: 'r1',
             destination: '10.0.12.0/30',
             nextHop: 'direct',
-            metric: 0,
+            metric: 10,
           }),
         ]),
       );

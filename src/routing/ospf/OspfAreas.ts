@@ -442,7 +442,7 @@ export function computeAreaRoutes(topology: NetworkTopology, adminDistance: numb
       );
 
     for (const [network, reach] of intra) {
-      emit(network, reach.direct ? 0 : reach.cost, reach.nextHops, 'intra-area');
+      emit(network, reach.cost, reach.nextHops, 'intra-area');
     }
     for (const [network, reach] of inter) emit(network, reach.cost, reach.nextHops, 'inter-area');
     for (const [network, entry] of externals) {

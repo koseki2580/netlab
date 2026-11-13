@@ -386,4 +386,6 @@ export interface PacketGrade {
   readonly results: readonly PacketGoalResult[];
   /** The trace of the packet that was sent, to replay on the diagram. Absent when nothing was sent. */
   readonly trace?: PacketTrace;
+  /** One per packet, in order, where a read exercise hands over more than one. */
+  readonly traces?: readonly PacketTrace[];
 }

@@ -22,7 +22,7 @@ import {
   type Draft,
 } from './answers';
 import { diagramFacts, needsMacs } from './diagramFacts';
-import { hopLines } from './hops';
+import { packetPaths } from './hops';
 import { FragmentTable, PacketLayers, Questions } from './PacketForm';
 import { answeredByPicks, packetMeta } from './packetSource';
 
@@ -146,14 +146,7 @@ export function PacketRunner({
     if (attemptId.current) store.recordHint(attemptId.current, tier);
   };
 
-  const packetForForm =
-    exercise.kind === 'build-packet'
-      ? exercise.packet
-      : exercise.kind === 'read-packet'
-        ? exercise.packets[0]
-        : exercise.packet;
-  const sentFrom = packetForForm?.srcIp ?? '';
-  const hops = grade?.trace ? hopLines(grade.trace, sentFrom) : [];
+  const paths = grade ? packetPaths(exercise, grade) : [];
   const labelOf = (id: string) => exercise.nodeLabels[id]?.[locale] ?? id;
 
   const goalLabel = (entry: PacketGoalResult): string => {
@@ -504,20 +497,32 @@ export function PacketRunner({
             ) : (
               resultRows(grade.results)
             )}
-            {hops.length > 0 ? (
+            {paths.some((path) => path.lines.length > 0) ? (
               <div>
-                <strong>{t('Where the packet went', 'パケットの通った道')}</strong>
-                <ol data-testid="packet-hops" style={{ margin: 0, paddingLeft: 24 }}>
-                  {hops.map((hop) => (
-                    <li key={hop.step} data-testid="packet-hop" data-note={String(hop.note)}>
-                      {hop.note ? t('(note sent back) ', '（返ってきた知らせ）') : ''}
-                      {labelOf(hop.nodeId)}：{hop.what[locale]}
-                      {hop.start
-                        ? t(` — leaves with TTL ${hop.ttl}`, `（送り出したときの TTL ${hop.ttl}）`)
-                        : t(` — TTL on arrival ${hop.ttl}`, `（着いたときの TTL ${hop.ttl}）`)}
-                    </li>
-                  ))}
-                </ol>
+                <strong>
+                  {paths.length > 1
+                    ? t('Where each packet went', 'それぞれのパケットの通った道')
+                    : t('Where the packet went', 'パケットの通った道')}
+                </strong>
+                {paths.map((path, index) => (
+                  <div key={index} data-testid={`packet-path-${index + 1}`}>
+                    {path.name ? <div style={{ marginTop: 6 }}>{path.name[locale]}</div> : null}
+                    <ol data-testid="packet-hops" style={{ margin: 0, paddingLeft: 24 }}>
+                      {path.lines.map((hop) => (
+                        <li key={hop.step} data-testid="packet-hop" data-note={String(hop.note)}>
+                          {hop.note ? t('(note sent back) ', '（返ってきた知らせ）') : ''}
+                          {labelOf(hop.nodeId)}：{hop.what[locale]}
+                          {hop.start
+                            ? t(
+                                ` — leaves with TTL ${hop.ttl}`,
+                                `（送り出したときの TTL ${hop.ttl}）`,
+                              )
+                            : t(` — TTL on arrival ${hop.ttl}`, `（着いたときの TTL ${hop.ttl}）`)}
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                ))}
               </div>
             ) : null}
           </section>

@@ -839,6 +839,17 @@ export async function judgeRead(exercise: ReadExercise, answer: ReadAnswer): Pro
         outcome.facts ?? (await send(exercise.topology, first)),
       );
     }
+    if (exercise.packets.length > 1) {
+      // Each packet's own path, so the page never shows one packet's path as another's.
+      const all = await Promise.all(
+        exercise.packets.map((packet) => send(exercise.topology, packet)),
+      );
+      const traces = all.flatMap((facts) => (facts.trace ? [facts.trace] : []));
+      return {
+        ...graded(out, all[0] ?? null),
+        ...(traces.length === all.length ? { traces } : {}),
+      };
+    }
     return graded(out, await send(exercise.topology, first));
   } catch {
     return failedAll(ids);

@@ -7,7 +7,7 @@
  */
 
 import type { PacketTrace } from '../../../src/types/simulation';
-import type { Localised } from '../../packet-lab/model';
+import type { Localised, PacketExercise, PacketGrade } from '../../packet-lab/model';
 import { isNeighborLookupHop } from '../../../src/types/simulation';
 
 export interface HopLine {
@@ -58,4 +58,28 @@ export function hopLines(trace: PacketTrace, srcIp: string): HopLine[] {
         what: what(hop.event, hop.action, note),
       };
     });
+}
+
+export interface PacketPath {
+  /** "Packet A", "Packet B" where there are several; none where there is one. */
+  readonly name?: Localised;
+  readonly lines: readonly HopLine[];
+}
+
+const LETTERS = 'ABCDEFGH';
+
+/** The path of each packet that was sent, each under its own name. */
+export function packetPaths(exercise: PacketExercise, grade: PacketGrade): PacketPath[] {
+  if (exercise.kind === 'read-packet' && grade.traces && grade.traces.length > 1) {
+    return grade.traces.map((trace, index) => {
+      const letter = LETTERS[index] ?? String(index + 1);
+      return {
+        name: { en: `Packet ${letter}`, ja: `パケット ${letter}` },
+        lines: hopLines(trace, exercise.packets[index]?.srcIp ?? ''),
+      };
+    });
+  }
+  if (!grade.trace) return [];
+  const sent = exercise.kind === 'read-packet' ? exercise.packets[0] : exercise.packet;
+  return [{ lines: hopLines(grade.trace, sent?.srcIp ?? '') }];
 }
