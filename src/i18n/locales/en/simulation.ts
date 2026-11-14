@@ -523,15 +523,14 @@ export const simulation: Catalog = {
     'Every router decrements the TTL; when it hits zero the packet is discarded so it cannot loop forever. The router notifies the source, which is how traceroute maps the path hop by hop.',
   'simulation.dropLesson.ttlExceeded.routesRef': "show this router's routes",
   'simulation.dropLesson.noRoute.cause': 'No matching route for the destination address',
-  'simulation.dropLesson.noRoute.response': 'ICMP Destination Unreachable (no route to host)',
+  'simulation.dropLesson.noRoute.response': 'ICMP Destination Unreachable (network unreachable)',
   'simulation.dropLesson.noRoute.why':
     'The router had no route — not even a default — covering the destination prefix, so it cannot decide where to forward and drops the packet, signalling the source.',
   'simulation.dropLesson.noRoute.routesRef': "inspect this router's routes",
   'simulation.dropLesson.aclDeny.cause': 'Denied by an inbound ACL rule on the ingress interface',
-  'simulation.dropLesson.aclDeny.response':
-    'ICMP Destination Unreachable (administratively prohibited)',
+  'simulation.dropLesson.aclDeny.response': 'Nothing: dropped silently',
   'simulation.dropLesson.aclDeny.why':
-    'An access-control rule matched this packet and explicitly blocked it. The administrator chose to drop it here — some configurations notify the source with an ICMP message, others drop silently.',
+    'An access-control rule matched this packet and blocked it. This router drops it without a word to the source.',
   'simulation.dropLesson.aclDeny.aclRef': 'show the matching ACL',
   'simulation.dropCard.heading': 'drop event',
   'simulation.dropCard.step': 'step {{step}}',

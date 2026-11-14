@@ -7,7 +7,7 @@ import { buildUdpPacket } from '../../src/layers/l4-transport/udpPacketBuilder';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import type { NetworkTopology } from '../../src/types/topology';
 import { useT } from '../localeContext';
-import { isNeighborLookupHop } from '../../src/types/simulation';
+import { isNeighborLookupHop, packetEnd, packetLeg } from '../../src/types/simulation';
 
 /**
  * The one task a small lesson sets, with the answer it produced.
@@ -89,12 +89,13 @@ export function LessonTask({ goal, from, to, takeaway }: LessonTaskProps) {
   }, [engine, from, sendPacket, to, topology.nodes]);
 
   const trace = state.traces[state.traces.length - 1];
-  const lastHop = trace?.hops[trace.hops.length - 1];
+  // Where the packet itself ended, not the ICMP sent back about a drop.
+  const lastHop = trace ? packetEnd(trace) : undefined;
   const arrived = lastHop?.event === 'deliver';
   // The devices the packet itself went through, in order. A hop count would
   // say "6" on a three-device diagram, and the trace also records the address
   // lookup that goes back and forth first; neither is what the learner sees.
-  const path = (trace?.hops ?? [])
+  const path = (trace ? packetLeg(trace) : [])
     .filter((hop) => !isNeighborLookupHop(hop))
     .map((hop) => hop.nodeLabel)
     .filter((label, index, labels) => Boolean(label) && label !== labels[index - 1]);

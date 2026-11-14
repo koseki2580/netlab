@@ -1,4 +1,4 @@
-import type { PacketTrace } from '../../types/simulation';
+import { packetLeg, type PacketTrace } from '../../types/simulation';
 import type { NetworkTopology } from '../../types/topology';
 import { EMPTY_FAILURE_STATE, type FailureState } from '../../types/failure';
 import { JOURNEY_FLOWS, type JourneyFlow } from '../packet-journey/journey';
@@ -82,18 +82,20 @@ export function resilienceOutcome(
   trace: PacketTrace,
   topology: NetworkTopology,
 ): ResilienceOutcome {
+  // The packet's own path, not the ICMP sent back about a drop.
+  const hops = packetLeg(trace);
   const traversed: string[] = [];
-  for (const hop of trace.hops) {
+  for (const hop of hops) {
     if (hop.toNodeId) {
       const id = edgeBetween(topology, hop.nodeId, hop.toNodeId);
       if (id) traversed.push(id);
     }
   }
-  const last = trace.hops[trace.hops.length - 1];
+  const last = hops[hops.length - 1];
   return {
     outcome: trace.status === 'delivered' ? 'survived' : 'dropped',
     endNodeId: last?.nodeId ?? '',
-    dropReason: trace.hops.find((hop) => hop.event === 'drop')?.reason ?? null,
+    dropReason: hops.find((hop) => hop.event === 'drop')?.reason ?? null,
     traversedEdgeIds: traversed,
   };
 }

@@ -25,6 +25,7 @@ import { diagramCss, labelOf, localizedTopology } from './courseDiagram';
 import { COURSE_STEPS, courseProgressId, type CourseLocale, type CourseStep } from './courseSteps';
 import { usePacketTravel } from './usePacketTravel';
 import { examLevelFromSearch } from './examAttempt';
+import { packetEnd, packetLeg } from '../../src/types/simulation';
 
 const PROGRESS_KEY = 'netlab-course-step';
 const LOCALE_KEY = 'netlab-locale';
@@ -240,10 +241,11 @@ function StepStage({
   }, [sendPacket, step]);
 
   const lastTrace = state.traces[state.traces.length - 1];
-  const lastHop = lastTrace?.hops[lastTrace.hops.length - 1];
+  // Where the packet itself ended, not the ICMP sent back about a drop.
+  const lastHop = lastTrace ? packetEnd(lastTrace) : undefined;
   const arrived = lastHop?.event === 'deliver';
   const devices = useMemo(
-    () => new Set(lastTrace?.hops.map((hop) => hop.nodeId) ?? []).size,
+    () => new Set(lastTrace ? packetLeg(lastTrace).map((hop) => hop.nodeId) : []).size,
     [lastTrace],
   );
 

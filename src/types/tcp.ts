@@ -54,6 +54,11 @@ export interface TcpConnection {
   /** Each end's receive buffer, in bytes. */
   clientReceiveBuffer?: number;
   serverReceiveBuffer?: number;
+  /**
+   * The client's address and port as the server saw them, when a NAT router
+   * translated them (RFC 3022 §2.2): what the server's segments are sent to.
+   */
+  peerSeenByServer?: { ip: string; port: number };
 }
 
 export interface TcpTransitionResult {

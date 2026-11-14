@@ -270,7 +270,7 @@ function ExamBody({ level }: { level: ExamLevel }) {
             {stop ? (
               <Link
                 data-testid={`exam-missed-review-${number}`}
-                to={stopHref(stop, level.level)}
+                to={stopHref(stop, level.level, question)}
                 onClick={() => recordStudy(stop.id)}
                 style={{
                   ...LINK,
@@ -640,7 +640,7 @@ function ExamBody({ level }: { level: ExamLevel }) {
                       {!marked.correct && stop ? (
                         <Link
                           data-testid={`exam-review-${number}`}
-                          to={stopHref(stop, level.level)}
+                          to={stopHref(stop, level.level, question)}
                           onClick={() => recordStudy(stop.id)}
                           style={{
                             ...LINK,

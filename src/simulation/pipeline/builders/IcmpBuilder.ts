@@ -191,30 +191,60 @@ export class IcmpBuilder {
     };
   }
 
-  buildTimeExceeded(
+  /** An ICMP error from a router back to the packet's source (RFC 792). */
+  private buildError(
+    suffix: string,
     routerNodeId: string,
     routerIp: string,
     originalPacket: InFlightPacket,
+    message: Omit<IcmpMessage, 'layer' | 'checksum'>,
   ): InFlightPacket {
     return this.buildIcmpPacket(
-      `${originalPacket.id}-ttl-exceeded`,
+      `${originalPacket.id}-${suffix}`,
       routerNodeId,
       originalPacket.srcNodeId,
       routerIp,
       originalPacket.frame.payload.srcIp,
       64,
-      {
-        layer: 'L4',
-        type: ICMP_TYPE.TIME_EXCEEDED,
-        code: ICMP_CODE.TTL_EXCEEDED_IN_TRANSIT,
-        checksum: 0,
-        data: `Original dst: ${originalPacket.frame.payload.dstIp}`,
-      },
+      { layer: 'L4', checksum: 0, ...message },
     );
+  }
+
+  /** The dropped packet's IP header and first 8 bytes of data, as an error quotes them. */
+  private quoted(originalPacket: InFlightPacket): string {
+    return bytesToRawString([
+      ...buildIpv4HeaderBytes(originalPacket.frame.payload),
+      ...buildTransportBytes(originalPacket.frame.payload.payload).slice(0, 8),
+    ]);
+  }
+
+  buildTimeExceeded(
+    routerNodeId: string,
+    routerIp: string,
+    originalPacket: InFlightPacket,
+  ): InFlightPacket {
+    return this.buildError('ttl-exceeded', routerNodeId, routerIp, originalPacket, {
+      type: ICMP_TYPE.TIME_EXCEEDED,
+      code: ICMP_CODE.TTL_EXCEEDED_IN_TRANSIT,
+      data: `Original dst: ${originalPacket.frame.payload.dstIp}`,
+    });
   }
 
   shouldEmitGeneratedIcmp(srcIp: string): boolean {
     return srcIp !== '0.0.0.0' && srcIp !== BROADCAST_IP;
+  }
+
+  /** A router with no route for the destination tells the source (RFC 1812 §5.2.7.1). */
+  buildNetUnreachable(
+    routerNodeId: string,
+    routerIp: string,
+    originalPacket: InFlightPacket,
+  ): InFlightPacket {
+    return this.buildError('net-unreachable', routerNodeId, routerIp, originalPacket, {
+      type: ICMP_TYPE.DESTINATION_UNREACHABLE,
+      code: ICMP_CODE.NET_UNREACHABLE,
+      data: this.quoted(originalPacket),
+    });
   }
 
   buildFragmentationNeeded(
@@ -223,26 +253,11 @@ export class IcmpBuilder {
     originalPacket: InFlightPacket,
     nextHopMtu: number,
   ): InFlightPacket {
-    const quotedBytes = [
-      ...buildIpv4HeaderBytes(originalPacket.frame.payload),
-      ...buildTransportBytes(originalPacket.frame.payload.payload).slice(0, 8),
-    ];
-
-    return this.buildIcmpPacket(
-      `${originalPacket.id}-frag-needed`,
-      routerNodeId,
-      originalPacket.srcNodeId,
-      routerIp,
-      originalPacket.frame.payload.srcIp,
-      64,
-      {
-        layer: 'L4',
-        type: ICMP_TYPE.DESTINATION_UNREACHABLE,
-        code: ICMP_CODE.FRAGMENTATION_NEEDED,
-        checksum: 0,
-        sequenceNumber: nextHopMtu,
-        data: bytesToRawString(quotedBytes),
-      },
-    );
+    return this.buildError('frag-needed', routerNodeId, routerIp, originalPacket, {
+      type: ICMP_TYPE.DESTINATION_UNREACHABLE,
+      code: ICMP_CODE.FRAGMENTATION_NEEDED,
+      sequenceNumber: nextHopMtu,
+      data: this.quoted(originalPacket),
+    });
   }
 }

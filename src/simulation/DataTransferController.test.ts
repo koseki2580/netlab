@@ -1,3 +1,4 @@
+import { packetEnd } from '../types/simulation';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { HookEngine } from '../hooks/HookEngine';
 import { RouterForwarder } from '../layers/l3-network/RouterForwarder';
@@ -611,11 +612,9 @@ describe('DataTransferController', () => {
       droppedChunks.every((chunk) => {
         if (!chunk.traceId) return false;
         const trace = traceForPacketId(engine, chunk.traceId);
-        return Boolean(
-          getRequired(dataHops(trace), dataHops(trace).length - 1, {
-            reason: 'expected final dropped-chunk hop',
-          }).reason,
-        );
+        // The chunk ends at its drop; an ICMP error sent back about it is merged
+        // in after that hop (RFC 792, TC-1535).
+        return Boolean(packetEnd(trace)?.reason);
       }),
     ).toBe(true);
   });

@@ -1,6 +1,6 @@
 import type { InFlightPacket } from '../../types/packets';
 import type { NetworkTopology } from '../../types/topology';
-import type { PacketHop, PacketTrace } from '../../types/simulation';
+import { packetLeg, type PacketHop, type PacketTrace } from '../../types/simulation';
 
 /** One instructive packet to predict, with the lesson it carries. */
 export interface JourneyFlow {
@@ -122,8 +122,10 @@ export function buildJourney(
   trace: PacketTrace,
   topology: NetworkTopology,
 ): PacketJourney {
+  // The ICMP sent back about a drop is not a step to predict.
+  const hops = packetLeg(trace);
   const steps: JourneyStep[] = [];
-  for (const hop of trace.hops) {
+  for (const hop of hops) {
     if (!hop.toNodeId) continue;
     if (hop.event !== 'create' && hop.event !== 'forward') continue;
     // A sender that had to ask by ARP first creates the frame, then sends it.

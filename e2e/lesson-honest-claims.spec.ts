@@ -114,7 +114,7 @@ test('TC-627: the ARP lesson says what a real device remembers and what this scr
   await expect(note).toBeVisible();
 });
 
-test('TC-628: the NAT lesson shows the reply, says where the inbound rule came from, and lists no ARP rows', async ({
+test('TC-628, TC-1542: the NAT lesson shows the reply, says where the inbound rule came from, and lists no ARP rows', async ({
   page,
   demoPage,
 }) => {
@@ -139,6 +139,8 @@ test('TC-628: the NAT lesson shows the reply, says where the inbound rule came f
   await expect(page.getByTestId('nat-arp-note')).toContainText('ARP の行を省いています');
 
   await reply.click();
+  // The reply is built from the trace of what was sent (REQ-381): the server
+  // answers 203.0.113.1:1024, what it saw, and the router hands it to Client A.
   const result = page.getByTestId('nat-reply-result');
   await expect(result).toContainText('203.0.113.1:1024 あてに戻ってきました');
   await expect(result).toContainText('192.168.1.10:54321 に戻し、Client A に渡しました');

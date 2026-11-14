@@ -1,4 +1,5 @@
 import { layerRegistry } from '../../../../registry/LayerRegistry';
+import { isIpv6Packet } from '../../../../types/packets';
 import type { PacketHop } from '../../../../types/simulation';
 import { topologyWithAddressView } from '../../../addressView';
 import { bestRoute, buildRoutingDecision } from '../routingHelpers';
@@ -62,11 +63,12 @@ export async function runForwarderDispatchStage(ctx: RoutedContext): Promise<Sta
             null,
           );
         }
-        if (
-          node.data.role === 'router' &&
-          decision.reason === 'ttl-exceeded' &&
-          !ctx.shared.options.suppressGeneratedIcmp
-        ) {
+        // TTL expiry and a missing route are both told to the source
+        // (RFC 792, RFC 1812 §5.2.7.1); IPv6 has its own messages.
+        const reported =
+          decision.reason === 'ttl-exceeded' ||
+          (decision.reason === 'no-route' && !isIpv6Packet(ctx.workingPacket.frame.payload));
+        if (node.data.role === 'router' && reported && !ctx.shared.options.suppressGeneratedIcmp) {
           const routerIp = hopBase.ingressInterfaceId
             ? ctx.deps.ifaceResolver.findLogicalById(ctx.current, hopBase.ingressInterfaceId)
                 ?.ipAddress
@@ -78,11 +80,17 @@ export async function runForwarderDispatchStage(ctx: RoutedContext): Promise<Sta
           ) {
             extras.icmpGenerated = true;
             ctx.generatedIcmpPackets.push(
-              ctx.deps.icmpBuilder.buildTimeExceeded(
-                ctx.current,
-                responseSourceIp,
-                ctx.workingPacket,
-              ),
+              decision.reason === 'ttl-exceeded'
+                ? ctx.deps.icmpBuilder.buildTimeExceeded(
+                    ctx.current,
+                    responseSourceIp,
+                    ctx.workingPacket,
+                  )
+                : ctx.deps.icmpBuilder.buildNetUnreachable(
+                    ctx.current,
+                    responseSourceIp,
+                    ctx.workingPacket,
+                  ),
             );
           }
         }

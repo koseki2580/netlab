@@ -227,6 +227,21 @@ export interface SimulationState {
   connTrackTables: ConnTrackTable[];
 }
 
+/**
+ * The packet's own hops: up to and including where it was dropped. An ICMP
+ * error the router sends back about it (RFC 792) is merged in after the drop,
+ * so the last hop of a dropped trace is not where the packet ended.
+ */
+export function packetLeg(trace: Pick<PacketTrace, 'hops'>): PacketHop[] {
+  return trace.hops.slice(0, trace.hops.findIndex((hop) => hop.event === 'drop') + 1 || undefined);
+}
+
+/** The hop where the packet itself ended: its drop, or its last hop. */
+export function packetEnd(trace: Pick<PacketTrace, 'hops'>): PacketHop | undefined {
+  const leg = packetLeg(trace);
+  return leg[leg.length - 1];
+}
+
 /** A hop that finds a neighbour's MAC (ARP or NDP): beside the packet's path, not on it. */
 export function isNeighborLookupHop(hop: Pick<PacketHop, 'event'>): boolean {
   return (

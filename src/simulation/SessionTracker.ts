@@ -7,7 +7,7 @@ import type {
   SessionMode,
   SessionPhase,
 } from '../types/session';
-import type { PacketTrace } from '../types/simulation';
+import { packetEnd, type PacketTrace } from '../types/simulation';
 
 export type SessionTrackerListener = () => void;
 
@@ -239,7 +239,7 @@ export class SessionTracker {
 
   private syncDataTransferSession(session: NetworkSession, trace: PacketTrace): void {
     const firstHop = trace.hops[0];
-    const lastHop = trace.hops[trace.hops.length - 1];
+    const lastHop = packetEnd(trace);
 
     if (!session.events.some((event) => event.phase === 'request:routing')) {
       this.addEvent(session, 'request:routing', {

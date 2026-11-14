@@ -1,5 +1,5 @@
 import type { TranslatorFn } from '../../i18n/types';
-import type { PacketTrace } from '../../types/simulation';
+import { packetEnd, type PacketTrace } from '../../types/simulation';
 
 /** Phone-width rules the shared controls need and inline styles cannot say. */
 export const NARROW_CSS =
@@ -36,7 +36,7 @@ export function hopReadout(trace: PacketTrace, step: number, t: TranslatorFn): s
 
 /** How a finished trace ended, in a sentence; empty while it has not ended. */
 export function traceOutcome(trace: PacketTrace, t: TranslatorFn): string {
-  const last = trace.hops[trace.hops.length - 1];
+  const last = packetEnd(trace);
   if (!last) return '';
   if (trace.status === 'delivered') {
     return t('simulation.steps.delivered', { node: last.nodeLabel });

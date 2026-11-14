@@ -36,9 +36,9 @@ export function evidenceOf(
 /**
  * Whether `nodeId` rewrote the source address of the first packet of the
  * exchange and that packet reached its target. For a TCP probe that packet is
- * the SYN, which is all NAT can be judged on: the SYN-ACK never gets back
- * through NAT in this engine (engineContract fact 2). `facts.natTranslations`
- * is not used because it spans every packet of the exchange.
+ * the SYN, the packet whose source NAT rewrites on the way out. The SYN-ACK
+ * is translated back on its way in (RFC 3022 §2.2, TC-1540), so
+ * `facts.natTranslations` is not used: it spans every packet of the exchange.
  */
 export function sourceNatOnSyn(facts: ProbeFacts, nodeId: string): boolean {
   const syn = facts.traces[0];

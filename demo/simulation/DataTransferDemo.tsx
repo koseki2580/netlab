@@ -13,7 +13,7 @@ import type { PacketTrace } from '../../src/types/simulation';
 import type { ReassemblyState, TransferChunk, TransferMessage } from '../../src/types/transfer';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
-import { isNeighborLookupHop } from '../../src/types/simulation';
+import { isNeighborLookupHop, packetEnd } from '../../src/types/simulation';
 
 const DEFAULT_PAYLOAD = 'Hello, this is a test message from Server A to Server B!';
 const TOPOLOGY = dataTransferDemoTopology();
@@ -323,7 +323,7 @@ function MissingChunksSection({
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
         {missing.map((chunk) => {
           const trace = chunk.traceId ? tracesById.get(chunk.traceId) : undefined;
-          const lastHop = trace?.hops[trace.hops.length - 1];
+          const lastHop = trace ? packetEnd(trace) : undefined;
           const reason = lastHop?.reason ?? 'dropped';
           const location = lastHop?.nodeLabel ? ` @ ${lastHop.nodeLabel}` : '';
 

@@ -1124,6 +1124,8 @@ const ENTRIES: readonly (readonly [string, ExamQuestion])[] = [
         ja: 'ARP の質問は全員あてなので、ネットワークのすべての機器が受け取ります。答えるのは持ち主だけです。ARP のレッスンで「全員への質問」と説明しています。',
       },
       taughtBy: 'arp',
+      // The ARP lesson's scene on one network teaches it (REQ-346).
+      reviewQuery: 'scene=local',
     },
   ],
   [
@@ -1146,6 +1148,8 @@ const ENTRIES: readonly (readonly [string, ExamQuestion])[] = [
         ja: '答えるのはアドレスの持ち主だけで、自分の MAC を返します。ほかは黙っています。ARP のレッスンでも、質問 1 つに答えは 1 つです。',
       },
       taughtBy: 'arp',
+      // The ARP lesson's scene on one network teaches it (REQ-346).
+      reviewQuery: 'scene=local',
     },
   ],
   [
@@ -1190,6 +1194,8 @@ const ENTRIES: readonly (readonly [string, ExamQuestion])[] = [
         ja: '同じネットワークなら送り主が宛先に直接渡すので、Client 自身がプリンターを尋ねます。ARP のレッスンで、送り主が送る前に尋ねる様子が見られます。',
       },
       taughtBy: 'arp',
+      // The ARP lesson's scene on one network teaches it (REQ-346).
+      reviewQuery: 'scene=local',
     },
   ],
   [

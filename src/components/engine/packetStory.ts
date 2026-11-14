@@ -1,6 +1,11 @@
 import { clusterNodeId } from '../../areas/areaLod';
 import type { NetworkArea } from '../../types/areas';
-import { isNeighborLookupHop, type PacketHop, type SimulationState } from '../../types/simulation';
+import {
+  isNeighborLookupHop,
+  packetLeg,
+  type PacketHop,
+  type SimulationState,
+} from '../../types/simulation';
 import type { CanvasPacket, CanvasPacketSource } from './canvasEngine';
 
 /**
@@ -163,10 +168,11 @@ export function packetStoryFrom(state: StoryState): PacketStory | null {
   }
 
   const route: string[] = [];
-  for (const candidate of trace.hops.filter(isOnPath)) {
+  const leg = packetLeg(trace);
+  for (const candidate of leg.filter(isOnPath)) {
     if (route[route.length - 1] !== candidate.nodeId) route.push(candidate.nodeId);
   }
-  const last = trace.hops[trace.hops.length - 1]!;
+  const last = leg[leg.length - 1]!;
   if (route.length === 0) route.push(last.nodeId);
   const drop = last.event === 'drop' ? bubbleForHop(last) : null;
   const rewrite = trace.hops.find((candidate) => candidate.natTranslation);

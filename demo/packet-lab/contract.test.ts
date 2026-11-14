@@ -182,10 +182,24 @@ describe('1. destination IP', () => {
     expect(dropHop?.routingDecision?.dstIp).toBe('8.8.8.8');
   });
 
-  it('no ICMP destination-unreachable is generated for `no-route` (engine quirk)', async () => {
+  it('a `no-route` drop sends ICMP Destination Unreachable, network unreachable, to the sender (TC-1535)', async () => {
+    // Was an engine quirk: the router dropped the packet without a word. RFC
+    // 1812 §5.2.7.1 has it tell the source, and the engine now does (REQ-380).
     const facts = await onLans({ dstIp: '8.8.8.8' });
-    expect(facts.icmp).toEqual([]);
-    expect(last(facts.hops)?.hop.icmpGenerated).toBeUndefined();
+    expect(facts.drop).toEqual({ nodeId: 'r1', reason: 'no-route' });
+    expect(facts.icmp).toEqual([
+      {
+        fromNodeId: 'r1',
+        srcIp: '192.168.1.1',
+        dstIp: '192.168.1.10',
+        type: 3,
+        code: 0,
+        nextHopMtu: null,
+        deliveredTo: 'pc1',
+        drop: null,
+      },
+    ]);
+    expect(last(facts.hops)?.hop.icmpGenerated).toBe(true);
   });
 
   it('an unused address of a connected LAN is sent back and dropped at the sender as `routing-loop` (engine quirk)', async () => {

@@ -38,7 +38,7 @@ export const canvasPanel: Catalog = {
   'simulation.packetStory.arpReply': "It's me (MAC {{mac}})",
   'simulation.packetStory.natSource': 'Sender {{from}} → {{to}}',
   'simulation.packetStory.natDestination': 'Destination {{from}} → {{to}}',
-  'simulation.packetStory.dropNoRoute': 'Dropped here: no route to the destination',
+  'simulation.packetStory.dropNoRoute': 'Dropped here, sender told: no route',
   'simulation.packetStory.dropTtl': 'Dropped here: its TTL (lifetime) ran out',
   'simulation.packetStory.dropNodeDown': 'Dropped here: this device is down',
   'simulation.packetStory.dropLinkDown': 'Dropped here: the link onward is down',

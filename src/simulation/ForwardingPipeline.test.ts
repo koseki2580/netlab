@@ -184,14 +184,20 @@ describe('ForwardingPipeline', () => {
     const result = await pipeline.precompute(
       makePacket('fp-no-route', 'client-1', 'server-1', '10.0.0.10', '198.51.100.10'),
     );
-    const lastHop = dataHops(result.trace)[dataHops(result.trace).length - 1];
+    const hops = dataHops(result.trace);
+    const drop = hops.find((hop) => hop.event === 'drop');
 
     expect(result.trace.status).toBe('dropped');
-    expect(lastHop).toEqual(
+    expect(drop).toEqual(
       expect.objectContaining({
         nodeId: 'router-1',
         reason: 'no-route',
+        icmpGenerated: true,
       }),
+    );
+    // Then the router tells the client (RFC 1812 §5.2.7.1, TC-1535).
+    expect(hops[hops.length - 1]).toEqual(
+      expect.objectContaining({ nodeId: 'client-1', event: 'deliver', protocol: 'ICMP' }),
     );
   });
 

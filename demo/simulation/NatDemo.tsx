@@ -22,6 +22,7 @@ import { useViewport } from '../../src/utils/useViewport';
 import type { InFlightPacket } from '../../src/types/packets';
 import type { PacketHop, PacketTrace } from '../../src/types/simulation';
 import { NAT_DEMO_TOPOLOGY } from './natDemoTopology';
+import { peerSeenBy } from '../../src/layers/l4-transport/peerSeenBy';
 import { readDemoEmbedParams } from '../embedParams';
 import { isNeighborLookupHop } from '../../src/types/simulation';
 
@@ -340,13 +341,26 @@ function NatReplyResult() {
 function NatDemoInner() {
   const t = useT();
   const { sendPacket, state } = useSimulation();
-  // The reply answers the send made last, the way a server answers whoever just spoke to it.
-  const outbound = state.natTables
-    .flatMap((table) => table.entries)
-    .filter((entry) => entry.type === 'snat')
-    .sort((a, b) => a.lastSeenAt - b.lastSeenAt);
-  const lastOut = outbound[outbound.length - 1];
-  const replyTo = lastOut ? HOME_NODE[lastOut.insideLocalIp] : undefined;
+  // The reply answers the send made last, the way a server answers whoever
+  // just spoke to it: to the address and port it saw, read from that send's
+  // trace by the rule the engine's own TCP uses (RFC 3022 §2.2, REQ-381).
+  const lastSent = [...state.traces]
+    .reverse()
+    .find((trace) => trace.packetId.startsWith('nat-snat') && trace.status === 'delivered');
+  const seen = lastSent ? peerSeenBy(lastSent, 'server-1') : null;
+  const atServer = lastSent?.hops.find(
+    (hop) => hop.nodeId === 'server-1' && hop.event === 'deliver',
+  );
+  const lastOut =
+    seen && atServer?.dstPort !== undefined
+      ? {
+          from: lastSent!.hops[0]!.srcIp,
+          seen,
+          serverIp: atServer.dstIp,
+          serverPort: atServer.dstPort,
+        }
+      : undefined;
+  const replyTo = lastOut ? HOME_NODE[lastOut.from] : undefined;
 
   return (
     <LessonSplit pinned>
@@ -493,10 +507,10 @@ function NatDemoInner() {
                       `nat-reply-${Date.now()}`,
                       'server-1',
                       replyTo.id,
-                      lastOut.outsidePeerIp,
-                      lastOut.insideGlobalIp,
-                      lastOut.outsidePeerPort,
-                      lastOut.insideGlobalPort,
+                      lastOut.serverIp,
+                      lastOut.seen.ip,
+                      lastOut.serverPort,
+                      lastOut.seen.port,
                       true,
                     ),
                   );

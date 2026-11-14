@@ -2,7 +2,7 @@
  * What the diagram shows and says when it replays a Check.
  *
  * The canvas draws a sentence where a packet was dropped, chosen by the
- * simulator's reason: 「ここで捨てられました：宛先への経路がありません」. In an
+ * simulator's reason: 「ここで捨てられました：経路がなく、送信元に通知」. In an
  * exercise the feedback beside it is the grader's, and the grader often knows
  * better (a cable is out; an address does not match), so the two disagreed.
  * Here the diagram says only that it stopped, which is always true, and leaves

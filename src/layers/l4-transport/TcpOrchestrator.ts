@@ -1,6 +1,7 @@
 import { EMPTY_FAILURE_STATE, type FailureState } from '../../types/failure';
 import type { InFlightPacket } from '../../types/packets';
 import type { PacketTrace } from '../../types/simulation';
+import { peerSeenBy } from './peerSeenBy';
 import type { NetlabNode, NetworkTopology } from '../../types/topology';
 import type { TcpConnection } from '../../types/tcp';
 import {
@@ -148,13 +149,17 @@ export class TcpOrchestrator {
       };
     }
 
+    // The server answers whom it saw: through NAT, the translated address and
+    // port, which the router translates back (RFC 3022 §2.2).
+    const seen = peerSeenBy(synTrace, serverNodeId) ?? { ip: clientIp, port: srcPort };
+    const translated = seen.ip !== clientIp || seen.port !== srcPort;
     const synAckPacket = buildSynAckPacket({
       srcNodeId: serverNodeId,
       dstNodeId: clientNodeId,
       srcIp: serverIp,
-      dstIp: clientIp,
+      dstIp: seen.ip,
       srcPort: dstPort,
-      dstPort: srcPort,
+      dstPort: seen.port,
       seq: serverIsn,
       ack: clientIsn + 1,
       windowSize: advertisedWindowField(serverBuffer, 0),
@@ -215,6 +220,7 @@ export class TcpOrchestrator {
       negotiated,
       clientReceiveBuffer: clientBuffer,
       serverReceiveBuffer: serverBuffer,
+      ...(translated ? { peerSeenByServer: seen } : {}),
     };
 
     return {
@@ -256,9 +262,9 @@ export class TcpOrchestrator {
       srcNodeId: connection.dstNodeId,
       dstNodeId: connection.srcNodeId,
       srcIp: connection.dstIp,
-      dstIp: connection.srcIp,
+      dstIp: connection.peerSeenByServer?.ip ?? connection.srcIp,
       srcPort: connection.dstPort,
-      dstPort: connection.srcPort,
+      dstPort: connection.peerSeenByServer?.port ?? connection.srcPort,
       seq: connection.remoteSeq,
       ack: connection.localSeq + 1,
       sessionId,
@@ -276,9 +282,9 @@ export class TcpOrchestrator {
       srcNodeId: connection.dstNodeId,
       dstNodeId: connection.srcNodeId,
       srcIp: connection.dstIp,
-      dstIp: connection.srcIp,
+      dstIp: connection.peerSeenByServer?.ip ?? connection.srcIp,
       srcPort: connection.dstPort,
-      dstPort: connection.srcPort,
+      dstPort: connection.peerSeenByServer?.port ?? connection.srcPort,
       seq: connection.remoteSeq,
       ack: connection.localSeq + 1,
       sessionId,
@@ -357,9 +363,9 @@ export class TcpOrchestrator {
       srcNodeId: connection.dstNodeId,
       dstNodeId: connection.srcNodeId,
       srcIp: connection.dstIp,
-      dstIp: connection.srcIp,
+      dstIp: connection.peerSeenByServer?.ip ?? connection.srcIp,
       srcPort: connection.dstPort,
-      dstPort: connection.srcPort,
+      dstPort: connection.peerSeenByServer?.port ?? connection.srcPort,
     };
 
     const traces: PacketTrace[] = [];

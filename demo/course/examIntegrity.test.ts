@@ -143,3 +143,28 @@ describe('a stage 1 question the course teaches uses only what the course says (
     }
   });
 });
+
+describe('a same-network ARP question reviews the ARP lesson on one network (TC-1434)', () => {
+  const local = [
+    's2-arp-question-ip',
+    's2-arp-who-hears',
+    's2-arp-printer-answers',
+    's2-arp-who-asks-local',
+    's2-first-frame-local',
+    'first-packet',
+    'first-packet-again',
+  ];
+  it('opens /networking/arp on scene=local with the way back to the test', () => {
+    for (const n of [1, 6]) {
+      const level = examLevel(n)!;
+      for (const q of level.slots!.flat().filter((one) => one.taughtBy === 'arp')) {
+        const href = stopHref(levelStop(level, 'arp')!, n, q);
+        expect(href, q.id).toBe(
+          local.includes(q.id)
+            ? `/networking/arp?fromExam=${n}&scene=local`
+            : `/networking/arp?fromExam=${n}`,
+        );
+      }
+    }
+  });
+});

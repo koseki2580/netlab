@@ -110,9 +110,14 @@ describe('reach', () => {
   });
 
   it('a TCP reach replays the packet that was stopped, not the SYN', async () => {
-    const result = await gradeOne(natLan(), check(tcp('pc1', 'srv')));
+    // r2 can send the SYN on but has no route back for the SYN-ACK. (NAT was
+    // the example until the SYN-ACK came back through it, TC-1540.)
+    const forwardOnly = withNodeData(routerChain(), 'r1', {
+      staticRoutes: [{ destination: '10.0.2.0/24', nextHop: '10.0.12.2' }],
+    });
+    const result = await gradeOne(forwardOnly, check(tcp('pc', 'srv')));
     expect(result.code).toBe('not-delivered');
-    expect(result.evidence).toMatchObject({ dropReason: 'no-nat-entry', dropLeg: 'reply' });
+    expect(result.evidence).toMatchObject({ dropReason: 'no-route', dropLeg: 'reply' });
     expect(result.trace?.status).toBe('dropped');
   });
 });

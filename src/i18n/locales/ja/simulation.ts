@@ -520,14 +520,14 @@ export const simulation: Catalog = {
     'ルータは通るたびに TTL を 1 ずつ減らします。0 になったパケットは捨てられるので、いつまでもループすることはありません。ルータは送信元にそれを知らせます。traceroute はこの仕組みで、経路を 1 ホップずつ調べています。',
   'simulation.dropLesson.ttlExceeded.routesRef': 'このルータの経路を見る',
   'simulation.dropLesson.noRoute.cause': '宛先アドレスに一致する経路がない',
-  'simulation.dropLesson.noRoute.response': 'ICMP Destination Unreachable（ホストへの経路なし）',
+  'simulation.dropLesson.noRoute.response': 'ICMP Destination Unreachable（ネットワーク到達不能）',
   'simulation.dropLesson.noRoute.why':
     'ルータには、宛先のプレフィックスを含む経路がありませんでした（デフォルトルートもなし）。どこへ転送するか決められないので、パケットを捨てて送信元に知らせます。',
   'simulation.dropLesson.noRoute.routesRef': 'このルータの経路を調べる',
   'simulation.dropLesson.aclDeny.cause': '入口インタフェースの受信側 ACL ルールで拒否された',
-  'simulation.dropLesson.aclDeny.response': 'ICMP Destination Unreachable（管理上の禁止）',
+  'simulation.dropLesson.aclDeny.response': 'なし：黙って捨てる',
   'simulation.dropLesson.aclDeny.why':
-    'アクセス制御のルールがこのパケットに一致し、はっきりと遮断しました。ここで捨てると管理者が決めたためです。設定によって、ICMP メッセージで送信元に知らせる場合と、何も知らせずに捨てる場合があります。',
+    'アクセス制御のルールがこのパケットに一致し、遮断しました。このルータは送信元に何も知らせずに捨てます。',
   'simulation.dropLesson.aclDeny.aclRef': '一致した ACL を見る',
   'simulation.dropCard.heading': 'パケットの破棄',
   'simulation.dropCard.step': 'ステップ {{step}}',

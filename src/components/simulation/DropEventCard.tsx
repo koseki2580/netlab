@@ -7,27 +7,15 @@ import { getDropLesson } from './dropLessons';
 
 /**
  * `DROP_LESSONS` is a public export whose copy is English text, so it is
- * translated here, at render, looked up by that text. Text with no entry (the
- * RFC reference titles, the ICMP type/code line) is shown as written.
+ * translated here, at render: `simulation.dropLesson.<lesson>.<field>`, with a
+ * tab reference read from `<lesson>.<ref>`. RFC titles and the ICMP type/code
+ * line are shown as written.
  */
-const LESSON_TEXT_KEYS: Readonly<Record<string, string>> = {
-  'TTL reached 0 before the packet reached its destination':
-    'simulation.dropLesson.ttlExceeded.cause',
-  'ICMP Time Exceeded sent back to the source': 'simulation.dropLesson.ttlExceeded.response',
-  'Every router decrements the TTL; when it hits zero the packet is discarded so it cannot loop forever. The router notifies the source, which is how traceroute maps the path hop by hop.':
-    'simulation.dropLesson.ttlExceeded.why',
-  "show this router's routes": 'simulation.dropLesson.ttlExceeded.routesRef',
-  'No matching route for the destination address': 'simulation.dropLesson.noRoute.cause',
-  'ICMP Destination Unreachable (no route to host)': 'simulation.dropLesson.noRoute.response',
-  'The router had no route — not even a default — covering the destination prefix, so it cannot decide where to forward and drops the packet, signalling the source.':
-    'simulation.dropLesson.noRoute.why',
-  "inspect this router's routes": 'simulation.dropLesson.noRoute.routesRef',
-  'Denied by an inbound ACL rule on the ingress interface': 'simulation.dropLesson.aclDeny.cause',
-  'ICMP Destination Unreachable (administratively prohibited)':
-    'simulation.dropLesson.aclDeny.response',
-  'An access-control rule matched this packet and explicitly blocked it. The administrator chose to drop it here — some configurations notify the source with an ICMP message, others drop silently.':
-    'simulation.dropLesson.aclDeny.why',
-  'show the matching ACL': 'simulation.dropLesson.aclDeny.aclRef',
+const LESSON_KEYS: Readonly<Record<string, readonly [string, string]>> = {
+  'ttl-exceeded': ['ttlExceeded', 'routesRef'],
+  'ttl-expired': ['ttlExceeded', 'routesRef'],
+  'no-route': ['noRoute', 'routesRef'],
+  'acl-deny': ['aclDeny', 'aclRef'],
 };
 
 const SANS = 'system-ui, -apple-system, "Segoe UI", sans-serif';
@@ -96,10 +84,9 @@ export function DropEventCard({
   editable = false,
 }: DropEventCardProps) {
   const { t } = useI18n();
-  const lessonText = (text: string): string => {
-    const key = LESSON_TEXT_KEYS[text];
-    return key ? t(key) : text;
-  };
+  const keys = hop.reason ? LESSON_KEYS[hop.reason] : undefined;
+  const lessonText = (field: string | undefined, text: string): string =>
+    keys && field ? t(`simulation.dropLesson.${keys[0]}.${field}`) : text;
   const lesson = hop.event === 'drop' ? getDropLesson(hop.reason) : undefined;
 
   useEffect(() => {
@@ -169,11 +156,15 @@ export function DropEventCard({
       </div>
 
       <DropSection label={t('simulation.dropCard.cause')}>
-        <span style={{ fontFamily: MONO, fontSize: 12 }}>{lessonText(lesson.cause.text)}</span>
+        <span style={{ fontFamily: MONO, fontSize: 12 }}>
+          {lessonText('cause', lesson.cause.text)}
+        </span>
       </DropSection>
 
       <DropSection label={t('simulation.dropCard.response')}>
-        <span style={{ fontFamily: MONO, fontSize: 12 }}>{lessonText(lesson.response.text)}</span>
+        <span style={{ fontFamily: MONO, fontSize: 12 }}>
+          {lessonText('response', lesson.response.text)}
+        </span>
         {lesson.response.meta && (
           <span style={{ fontFamily: MONO, fontSize: 10, color: 'var(--netlab-text-muted)' }}>
             {' '}
@@ -191,7 +182,7 @@ export function DropEventCard({
             color: 'var(--netlab-text-secondary)',
           }}
         >
-          {lessonText(lesson.why)}
+          {lessonText('why', lesson.why)}
         </span>
       </DropSection>
 
@@ -210,7 +201,7 @@ export function DropEventCard({
             }}
             style={refStyle('var(--netlab-accent-cyan)')}
           >
-            {lessonText(ref.label)} →
+            {lessonText(ref.tab && keys?.[1], ref.label)} →
           </button>
         ))}
         {editable && fix && (

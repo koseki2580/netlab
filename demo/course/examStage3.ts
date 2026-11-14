@@ -133,8 +133,8 @@ export const EXAM_STAGE_3: ExamLevel = {
       ],
       answer: 1,
       explanation: {
-        en: 'A router forwards only along a row that matches; with no match and no default route it discards the packet (RFC 1812; a real router also reports it with ICMP). The routing decision drill marks such a packet as dropped.',
-        ja: 'ルータが転送するのは一致した行がある場合だけです。一致する行もデフォルト経路もなければ、パケットを捨てます（RFC 1812。実際のルータは ICMP でも知らせます）。ルーティング判断の練習でも、このパケットは「捨てる」が答えです。',
+        en: 'A router forwards only along a row that matches; with no match and no default route it discards the packet and tells the sender with ICMP Destination Unreachable, network unreachable (RFC 1812 §5.2.7.1). The routing decision drill marks such a packet as dropped.',
+        ja: 'ルータが転送するのは一致した行がある場合だけです。一致する行もデフォルト経路もなければ、パケットを捨て、送信元に ICMP の到達不能（ネットワーク到達不能）で知らせます（RFC 1812 §5.2.7.1）。ルーティング判断の練習でも、このパケットは「捨てる」が答えです。',
       },
       taughtBy: 'routing-decision',
     },

@@ -91,9 +91,25 @@ describe('DropEventCard', () => {
     expect(card?.getAttribute('role')).toBe('dialog');
     const text = card?.textContent ?? '';
     expect(text).toContain('Denied by an inbound ACL rule');
-    expect(text).toContain('administratively prohibited');
     expect(text).toContain('access-control rule matched');
     expect(text).toContain('step 3'); // hop.step is 0-indexed; card shows step+1
+  });
+
+  /**
+   * TC-1543 — an ACL deny is dropped without a word: the engine sends no ICMP
+   * for it, so the card must not claim one (it said type 3 code 13).
+   */
+  it('says an ACL deny sends nothing back, in both languages (TC-1543)', () => {
+    for (const locale of ['en', 'ja'] as const) {
+      render(
+        <I18nProvider locale={locale}>
+          <DropEventCard hop={makeDropHop('acl-deny')} />
+        </I18nProvider>,
+      );
+      const text = q('drop-event-card')?.textContent ?? '';
+      expect(text).not.toMatch(/ICMP|type 3|code 13|管理上の禁止/);
+      expect(text).toContain(locale === 'en' ? 'Nothing: dropped silently' : 'なし：黙って捨てる');
+    }
   });
 
   it('renders nothing for a non-drop hop or an unknown reason', () => {
@@ -114,10 +130,10 @@ describe('DropEventCard', () => {
 
   it('opens an external ref via window.open', () => {
     const open = vi.spyOn(window, 'open').mockReturnValue(null);
-    render(<DropEventCard hop={makeDropHop('acl-deny')} />);
+    render(<DropEventCard hop={makeDropHop('no-route')} />);
     click(q('drop-ref-link') as HTMLElement);
     expect(open).toHaveBeenCalledWith(
-      'https://datatracker.ietf.org/doc/html/rfc792',
+      'https://datatracker.ietf.org/doc/html/rfc1812#section-5.2.7.1',
       '_blank',
       'noopener',
     );
@@ -143,10 +159,10 @@ describe('DropEventCard', () => {
   /**
    * TC-168 — every authored drop lesson reads in Japanese.
    *
-   * The card translates the lesson by looking its English text up, because
-   * `DROP_LESSONS` is a public export that authors the copy in English. That
-   * lookup misses silently when the authored text is edited, and the learner
-   * is shown English instead; this holds every lesson to being translated.
+   * `DROP_LESSONS` is a public export that authors the copy in English; the
+   * card reads each field's catalogue key from the drop reason. A reason with
+   * no keys would show English silently; this holds every lesson to being
+   * translated.
    */
   it('shows every authored drop lesson in Japanese', () => {
     for (const [reason, lesson] of Object.entries(DROP_LESSONS)) {

@@ -404,6 +404,10 @@ export class ForwardingPipeline {
       ) {
         break;
       }
+      // A router that reports the destination unreachable ends it, as `!N` does.
+      if (traceResult.trace.hops.some((hop) => hop.reason === 'no-route' && hop.icmpGenerated)) {
+        break;
+      }
     }
 
     return traces;

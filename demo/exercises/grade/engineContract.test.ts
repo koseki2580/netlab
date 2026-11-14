@@ -126,6 +126,10 @@ describe('fact 1: ping reports the reply; the forward leg ends at the first deli
       'deliver@srv',
       'create@srv',
       'drop@r2',
+      // r2 has no route for the reply, so it tells the server: ICMP
+      // Destination Unreachable, network unreachable (RFC 1812 §5.2.7.1, TC-1535).
+      'create@r2',
+      'deliver@srv',
     ]);
     expect(facts.forwardNodeIds).toEqual(['pc', 'r1', 'r2', 'srv']);
     expect(facts.forwardEdgeIds).toEqual(['e-pc', 'e-12', 'e-srv']);
@@ -161,26 +165,61 @@ describe('fact 2: NAT is observable only with transport ports', () => {
         postDstIp: '203.0.113.10',
         postDstPort: 80,
       },
+      // The SYN-ACK now reaches r1 at the translated address and is put back
+      // (RFC 3022 §2.2, TC-1540); the final ACK reuses the same entry.
+      {
+        nodeId: 'r1',
+        type: 'snat',
+        preSrcIp: '203.0.113.10',
+        preSrcPort: 80,
+        postSrcIp: '203.0.113.10',
+        postSrcPort: 80,
+        preDstIp: '203.0.113.1',
+        preDstPort: 1024,
+        postDstIp: '192.168.1.10',
+        postDstPort: 49152,
+      },
+      {
+        nodeId: 'r1',
+        type: 'snat',
+        preSrcIp: '192.168.1.10',
+        preSrcPort: 49152,
+        postSrcIp: '203.0.113.1',
+        postSrcPort: 1024,
+        preDstIp: '203.0.113.10',
+        preDstPort: 80,
+        postDstIp: '203.0.113.10',
+        postDstPort: 80,
+      },
     ]);
     expect(facts.requestDelivered).toBe(true);
     expect(facts.trace?.status).toBe('delivered');
   });
 
-  it('a TCP handshake through NAT fails at the SYN-ACK with no-nat-entry (engine quirk) (TC-372)', async () => {
-    // The server answers to the client's inside address, not the translated
-    // one, so the NAT router finds no entry for the reply. "Translated" must
-    // therefore be judged on the SYN alone, never on handshake success.
+  it('a TCP handshake through NAT succeeds: the SYN-ACK goes to the translated address (TC-372, TC-1540)', async () => {
+    // Was an engine quirk: the server answered the client's inside address, so
+    // the NAT router found no entry. The reply now goes to the address and port
+    // the server saw, and the router translates it back (RFC 3022 §2.2, REQ-381).
     const engine = new MainThreadEngine(prepare(natLan()), new HookEngine());
     const result = await engine.tcpConnect('pc1', 'srv', 49152, 80);
     engine.dispose();
-    expect(result.success).toBe(false);
-    expect(result.connection).toBeNull();
-    expect(result.failureReason).toBe('TCP handshake failed at SYN-ACK');
-    expect(result.traces.map((trace) => trace.status)).toEqual(['delivered', 'dropped']);
+    expect(result.success).toBe(true);
+    expect(result.traces.map((trace) => trace.status)).toEqual([
+      'delivered',
+      'delivered',
+      'delivered',
+    ]);
+    const synAck = result.traces[1]!;
+    const sent = synAck.hops.find((hop) => hop.nodeId === 'srv')!;
+    const back = synAck.hops.find((hop) => hop.nodeId === 'r1' && hop.natTranslation)!;
+    expect(sent.dstIp).toBe(back.natTranslation!.preDstIp);
+    expect(sent.dstIp).not.toBe('192.168.1.10');
+    expect(back.natTranslation).toMatchObject({ postDstIp: '192.168.1.10', postDstPort: 49152 });
+    expect(synAck.hops[synAck.hops.length - 1]).toMatchObject({ nodeId: 'pc1', event: 'deliver' });
+    expect(result.connection?.peerSeenByServer?.ip).toBe(sent.dstIp);
 
     const facts = await tcp(natLan(), 'pc1', 'srv');
-    expect(facts.status).toBe('dropped');
-    expect(facts.drop).toEqual({ nodeId: 'r1', reason: 'no-nat-entry', leg: 'reply' });
+    expect(facts.status).toBe('delivered');
   });
 
   it('without NAT a TCP connect succeeds with three traces: SYN, SYN-ACK, ACK (TC-373)', async () => {

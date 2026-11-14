@@ -47,33 +47,24 @@ export const DROP_LESSONS: Readonly<Record<string, DropLesson>> = {
     cause: { kind: 'route', text: 'No matching route for the destination address' },
     response: {
       kind: 'icmp',
-      text: 'ICMP Destination Unreachable (no route to host)',
+      text: 'ICMP Destination Unreachable (network unreachable)',
       meta: 'type 3 · code 0',
     },
     why: 'The router had no route — not even a default — covering the destination prefix, so it cannot decide where to forward and drops the packet, signalling the source.',
     refs: [
       { label: "inspect this router's routes", tab: 'routes' },
       {
-        label: 'RFC 1812 §5.2.6',
-        href: 'https://datatracker.ietf.org/doc/html/rfc1812#section-5.2.6',
+        label: 'RFC 1812 §5.2.7.1',
+        href: 'https://datatracker.ietf.org/doc/html/rfc1812#section-5.2.7.1',
       },
     ],
   },
   'acl-deny': {
     cause: { kind: 'acl', text: 'Denied by an inbound ACL rule on the ingress interface' },
-    response: {
-      kind: 'icmp',
-      text: 'ICMP Destination Unreachable (administratively prohibited)',
-      meta: 'type 3 · code 13',
-    },
-    why: 'An access-control rule matched this packet and explicitly blocked it. The administrator chose to drop it here — some configurations notify the source with an ICMP message, others drop silently.',
-    refs: [
-      { label: 'show the matching ACL', tab: 'acl' },
-      {
-        label: 'RFC 792 — Destination Unreachable',
-        href: 'https://datatracker.ietf.org/doc/html/rfc792',
-      },
-    ],
+    // The engine sends no ICMP for a deny: the card must not claim one (TC-1543).
+    response: { kind: 'none', text: 'Nothing: dropped silently' },
+    why: 'An access-control rule matched this packet and blocked it. This router drops it without a word to the source.',
+    refs: [{ label: 'show the matching ACL', tab: 'acl' }],
   },
 };
 

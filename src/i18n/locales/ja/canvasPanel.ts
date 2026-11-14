@@ -38,7 +38,7 @@ export const canvasPanel: Catalog = {
   'simulation.packetStory.arpReply': 'わたしです（MAC {{mac}}）',
   'simulation.packetStory.natSource': '送り主 {{from}} → {{to}}',
   'simulation.packetStory.natDestination': '宛先 {{from}} → {{to}}',
-  'simulation.packetStory.dropNoRoute': 'ここで捨てられました：宛先への経路がありません',
+  'simulation.packetStory.dropNoRoute': 'ここで捨てられました：経路がなく、送信元に通知',
   'simulation.packetStory.dropTtl': 'ここで捨てられました：TTL（寿命）が 0 になりました',
   'simulation.packetStory.dropNodeDown': 'ここで捨てられました：この機器が止まっています',
   'simulation.packetStory.dropLinkDown': 'ここで捨てられました：この先のリンクが切れています',

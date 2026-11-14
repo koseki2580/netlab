@@ -267,9 +267,17 @@ export function examReturnSearch(level: number): string {
   return `?fromExam=${level}`;
 }
 
-/** Where a path stop's link goes from a level's test: its lesson, on the view it is about. */
-export function stopHref(stop: { readonly path: string; readonly query?: string }, level: number) {
-  return `${stop.path}${examReturnSearch(level)}${stop.query ? `&${stop.query}` : ''}`;
+/**
+ * Where a path stop's link goes from a level's test: its lesson, on the view it
+ * is about, or on the scene a missed question names.
+ */
+export function stopHref(
+  stop: { readonly path: string; readonly query?: string },
+  level: number,
+  question?: { readonly reviewQuery?: string },
+) {
+  const query = question?.reviewQuery ?? stop.query;
+  return `${stop.path}${examReturnSearch(level)}${query ? `&${query}` : ''}`;
 }
 
 /** The level of the test a lesson was opened from, if its address names one. */

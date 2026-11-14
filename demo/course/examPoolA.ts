@@ -251,6 +251,8 @@ const STAGE_2: readonly (readonly [string, ExamQuestion])[] = [
         ja: 'ARP の質問は「10.0.0.12 の持ち主は？」で、MAC を知りたい相手のアドレスを書きます。全員あてに送られますが、中に書くのは探している相手のアドレスです。ARP のレッスンのタイムラインにも「… の持ち主は？」と出ます。',
       },
       taughtBy: 'arp',
+      // The ARP lesson's scene on one network teaches it (REQ-346).
+      reviewQuery: 'scene=local',
     },
   ],
   [
@@ -339,6 +341,8 @@ const STAGE_2: readonly (readonly [string, ExamQuestion])[] = [
         ja: '同じネットワークでは、次に渡す相手が宛先そのものなので、フレームはプリンターの MAC あてです。Router の MAC を使うのは、ネットワークの外へ出るときだけです。ARP のレッスンで、フレームの 2 つのアドレスを説明しています。',
       },
       taughtBy: 'arp',
+      // The ARP lesson's scene on one network teaches it (REQ-346).
+      reviewQuery: 'scene=local',
     },
   ],
   [
@@ -785,6 +789,8 @@ const LEVEL_1: readonly (readonly [string, ExamQuestion])[] = [
         ja: '機器は ARP の答えを覚えて次の送信に使うので、すぐに送ります。尋ねるのは、そのアドレスへの最初の送信だけです。ARP のレッスンの注に、本物の機器が覚えておく時間が書かれています。',
       },
       taughtBy: 'arp',
+      // The ARP lesson's scene on one network teaches it (REQ-346).
+      reviewQuery: 'scene=local',
     },
   ],
   [

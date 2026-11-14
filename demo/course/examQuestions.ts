@@ -46,6 +46,12 @@ export interface ExamQuestion {
   readonly explanation: Localised;
   /** The `PathStop` id whose lesson teaches this. */
   readonly taughtBy: string;
+  /**
+   * What its review link adds, as `name=value`, when its stop's lesson has a
+   * scene for exactly this question (the ARP lesson's `scene=local`); else the
+   * stop's own.
+   */
+  readonly reviewQuery?: string;
 }
 
 export const EXAM_PATH: readonly PathStop[] = [
@@ -268,6 +274,8 @@ export const EXAM_QUESTIONS: readonly ExamQuestion[] = [
       ja: '足りないのは相手の MAC アドレスです。IP アドレスは最終的な行き先、MAC アドレスは「このケーブルの区間で受け取る機器」の番号です。ARP は同じネットワークの全員に「この IP アドレスの持ち主は？」と尋ね、持ち主が MAC アドレスを答えます。レッスン「ARP の基本」で見られます。',
     },
     taughtBy: 'arp',
+    // The ARP lesson's scene on one network teaches it (REQ-346).
+    reviewQuery: 'scene=local',
   },
   {
     id: 'dns-second-lookup',
