@@ -2,9 +2,15 @@ import { useState } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { dnsLabTopology } from '../../src/services/dnsFixture';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
-import { LessonCanvas, LessonPanel, LessonSplit } from '../components/LessonPanel';
+import {
+  LessonCanvas,
+  LessonPanel,
+  LessonSplit,
+  usePhoneTopology,
+  type PhonePositions,
+} from '../components/LessonPanel';
 import { LESSON_CARD, LESSON_LABEL, LESSON_TEAL_BUTTON } from '../components/lessonStyles';
-import { NetlabProvider } from '../components/PhoneNetlabProvider';
+import { NetlabProvider } from '../../src/components/NetlabProvider';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import { describeStep, dnsSteps, type DnsStep } from './dnsResolutionLesson';
@@ -117,17 +123,30 @@ function ResolutionPanel() {
   );
 }
 
+/** Three to a row, closer than the default: at the default spacing the names were 6.6px. */
+const PHONE_POSITIONS: PhonePositions = {
+  client: { x: 0, y: 0 },
+  'client-b': { x: 108, y: 0 },
+  resolver: { x: 216, y: 0 },
+  sw: { x: 54, y: 120 },
+  router: { x: 162, y: 120 },
+  root: { x: 0, y: 240 },
+  com: { x: 108, y: 240 },
+  example: { x: 216, y: 240 },
+};
+
 export default function DnsResolutionDemo() {
+  const phone = usePhoneTopology(TOPOLOGY, PHONE_POSITIONS);
   return (
     <DemoShell
       title="DNS Resolution and Caching"
       desc="From the root to the authoritative server, then from the cache"
     >
-      <NetlabProvider topology={TOPOLOGY}>
+      <NetlabProvider key={phone.layout} topology={phone.topology}>
         {/* The main-thread engine: the steps are read from its packet capture. */}
         <SimulationProvider useMainThread>
           <LessonSplit>
-            <LessonCanvas canvas={<NetlabCanvas />} />
+            <LessonCanvas narrowHeight={520} canvas={<NetlabCanvas />} />
             <LessonPanel
               defaultWidth={480}
               maxWidth={760}

@@ -7,6 +7,7 @@ import { SimulationProvider, useSimulation } from '../../../src/simulation/Simul
 import type { PacketTrace } from '../../../src/types/simulation';
 import type { NetworkTopology, TopologySnapshot } from '../../../src/types/topology';
 import { I18nProvider } from '../../../src/i18n/I18nProvider';
+import { usePhoneTopology } from '../../components/LessonPanel';
 import { cablePressed, type CableInReach } from './cablePress';
 import { diagramWords, shownTrace } from './replayShown';
 import {
@@ -23,7 +24,7 @@ export interface DiagramReplay {
 }
 
 /** Slower than the library's own autoplay: a beginner has to be able to follow the dot. */
-const REPLAY_STEP_MS = 700;
+export const REPLAY_STEP_MS = 700;
 
 const SCOPE = '[data-exercise-diagram]';
 const NODE = '[data-testid="topology-node"]';
@@ -243,10 +244,13 @@ export function ExerciseDiagram({
   onPick?: (pick: DiagramPick) => void;
 }) {
   // `NetlabProvider` computes the route tables itself; it only needs the Map to exist.
-  const runnable = useMemo<NetworkTopology>(
+  const wide = useMemo<NetworkTopology>(
     () => ({ ...topology, routeTables: new Map() }),
     [topology],
   );
+  // On a phone the devices stand a few to a row, so the fit draws them readably.
+  const phone = usePhoneTopology(wide);
+  const runnable = phone.topology;
   const notes = useMemo(() => diagramNotesLines(topology, locale), [topology, locale]);
   const warning = useMemo(() => noAddressNote(topology, locale), [topology, locale]);
   // Read when the replay is asked for: the settings of that moment are the ones it was graded on.
@@ -338,7 +342,7 @@ export function ExerciseDiagram({
           {warning}
         </p>
       ) : null}
-      <NetlabProvider topology={runnable}>
+      <NetlabProvider key={phone.layout} topology={runnable}>
         {/* Inside the library's provider, which sets its own catalogue: the words
             for a cable that is out and for a replay that stops are the page's
             (`replayShown.ts`). */}

@@ -10,6 +10,7 @@
 
 import type { AttemptMeta } from '../store/attemptStore';
 import {
+  isAttempted,
   isPacketAttempt,
   levelSummary,
   PACKET_TRACK_PREFIX,
@@ -101,16 +102,29 @@ export function packetMeta(exercise: PacketExercise, locale: AttemptLocale): Att
 }
 
 /**
- * The next packet exercise of a level for this learner: one not met yet, not
- * of the kind just done while another kind has one left, in an order of the
- * learner's own (packet-lab `nextExerciseId`). Returns a packet-lab id.
+ * The next packet exercise of a level for this learner: the one they opened
+ * and left without a Check, unless it is the one they are leaving by "next";
+ * else one not met yet, not of the kind just done while another kind has one
+ * left, in an order of the learner's own (packet-lab `nextExerciseId`).
+ * Returns a packet-lab id.
  */
 export function nextPacketFor(
   level: ExerciseLevel,
   attempts: readonly AttemptRecord[],
+  leaving?: string,
 ): string | undefined {
   const mine = attempts.filter((attempt) => isPacketAttempt(attempt));
   const atLevel = mine.filter((attempt) => attempt.level === level);
+  const judged = new Set(atLevel.filter(isAttempted).map((attempt) => attempt.exerciseId));
+  const pending = [...atLevel]
+    .reverse()
+    .find(
+      (attempt) =>
+        attempt.context === 'practice' &&
+        !judged.has(attempt.exerciseId) &&
+        untracked(attempt.exerciseId) !== leaving,
+    );
+  if (pending) return untracked(pending.exerciseId);
   return nextExerciseId(level, {
     seenIds: atLevel.map((attempt) => untracked(attempt.exerciseId)),
     avoidTemplateIds: atLevel.slice(-3).map((attempt) => untracked(attempt.templateId)),

@@ -255,7 +255,7 @@ function NdpStep() {
           data-testid="ipv6-ndp-target"
           value={target.address}
           onChange={(event) => setChosen(event.target.value)}
-          style={{ fontFamily: 'monospace', fontSize: 12, minHeight: 32 }}
+          style={{ fontFamily: 'monospace', fontSize: 12, minHeight: 44 }}
         >
           {addresses.map((entry) => (
             <option key={entry.address} value={entry.address}>

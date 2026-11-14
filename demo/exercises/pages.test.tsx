@@ -273,6 +273,7 @@ describe('the exercise page', () => {
     screen = render(<ExercisePageBody store={store} />, {
       path: `/exercises/do/${kind}~0`,
       route: '/exercises/do/:exerciseId',
+      byLink: true,
     });
     const view = screen;
     await view.until(() => view.find('exercise-panel') !== null);
@@ -284,6 +285,18 @@ describe('the exercise page', () => {
       `${kind}~0`,
       shown,
     ]);
+  });
+
+  // TC-1603: a reload or a step back is not opening it again on purpose.
+  it('TC-1603: a reload of a judged exercise shows the same problem', async () => {
+    const kind = level1[0] ?? '';
+    screen = render(<ExercisePageBody store={storeWith([failed(kind, 0, 1)])} />, {
+      path: `/exercises/do/${kind}~0`,
+      route: '/exercises/do/:exerciseId',
+    });
+    const view = screen;
+    await view.until(() => view.find('exercise-panel') !== null);
+    expect(view.get('exercise-panel').getAttribute('data-exercise-id')).toBe(`${kind}~0`);
   });
 
   // TC-600

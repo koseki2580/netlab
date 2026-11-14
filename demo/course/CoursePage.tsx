@@ -272,6 +272,14 @@ function StepStage({
     revealInPanel(panelRef.current, outcomeRef.current);
   }, [finished]);
 
+  // "A little more" opens under the result, below the next bar on a phone:
+  // bring what it opened into view, inside the panel only.
+  useEffect(() => {
+    if (!moreOpen || !panelRef.current) return;
+    const opened = panelRef.current.querySelector<HTMLElement>('#course-more');
+    if (opened) revealInPanel(panelRef.current, opened);
+  }, [moreOpen]);
+
   const tone: ResultTone =
     step.expect !== (arrived ? 'deliver' : 'drop')
       ? 'unexpected'

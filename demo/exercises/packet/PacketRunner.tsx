@@ -9,7 +9,7 @@ import type {
 } from '../../packet-lab/model';
 import type { AttemptStore } from '../store/attemptStore';
 import { attemptOrder } from '../ui/attemptOrder';
-import { ExerciseDiagram, type DiagramReplay } from '../ui/ExerciseDiagram';
+import { ExerciseDiagram, REPLAY_STEP_MS, type DiagramReplay } from '../ui/ExerciseDiagram';
 import { LessonLinks } from '../ui/ExerciseParts';
 import { CARD, MUTED, PRIMARY, SECONDARY } from '../ui/styles';
 import {
@@ -32,7 +32,7 @@ const LAYOUT_CSS = `
 .packet-panel { overflow: auto; padding: 16px; display: grid; gap: 14px; align-content: start; }
 @media (max-width: 900px) {
   .packet-page { display: block; height: auto; }
-  .packet-diagram { height: 320px; }
+  .packet-diagram { height: 440px; }
 }`;
 
 /** Why Check did not judge: nothing entered yet, or a box that does not hold a value. */
@@ -67,6 +67,9 @@ export function PacketRunner({
   const attemptId = useRef<string | null>(null);
   const [slot, setSlot] = useState(0);
   const resultRef = useRef<HTMLElement>(null);
+  const diagramRef = useRef<HTMLDivElement>(null);
+  const toResult = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(toResult.current), []);
 
   useEffect(() => {
     const id = store.open(packetMeta(exercise, locale), 'practice');
@@ -130,7 +133,24 @@ export function PacketRunner({
         changedSettings: changedCount(exercise, draft),
       });
     }
-    requestAnimationFrame(() => resultRef.current?.focus());
+    // On a phone the diagram is above the result: focusing the result scrolled
+    // it away while the packet crossed it. Keep it in view for the replay, then
+    // bring the result into view.
+    const stacked = window.matchMedia?.('(max-width: 900px)').matches ?? false;
+    requestAnimationFrame(() => {
+      if (!stacked) {
+        resultRef.current?.focus();
+        return;
+      }
+      diagramRef.current?.scrollIntoView({ block: 'start' });
+      resultRef.current?.focus({ preventScroll: true });
+      const steps = result.trace?.hops.length ?? 0;
+      window.clearTimeout(toResult.current);
+      toResult.current = window.setTimeout(
+        () => resultRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }),
+        steps * REPLAY_STEP_MS + 300,
+      );
+    });
   };
 
   const reveal = () => {
@@ -201,7 +221,7 @@ export function PacketRunner({
       data-kind={exercise.kind}
     >
       <style>{LAYOUT_CSS}</style>
-      <div className="packet-diagram">
+      <div className="packet-diagram" ref={diagramRef}>
         <ExerciseDiagram
           topology={exercise.topology}
           replay={replay}

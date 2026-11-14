@@ -86,7 +86,7 @@ function AreasPanel({ lan, onLan }: { lan: LanState; onLan: (next: LanState) => 
             data-testid="ospf-router-select"
             value={routerId}
             onChange={(event) => setRouterId(event.target.value)}
-            style={{ minHeight: 32, fontFamily: 'monospace', fontSize: 12 }}
+            style={{ minHeight: 44, fontFamily: 'monospace', fontSize: 12 }}
           >
             {LESSON_ROUTER_IDS.map((id) => (
               <option key={id} value={id}>

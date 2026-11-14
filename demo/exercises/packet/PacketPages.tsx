@@ -250,7 +250,7 @@ export function PacketExerciseBody({ store: injected }: { store?: AttemptStore }
     );
   }
   const onNext = () => {
-    const nextId = nextPacketFor(exercise.level, store.getState().attempts);
+    const nextId = nextPacketFor(exercise.level, store.getState().attempts, exercise.id);
     void navigate(nextId ? packetPath(nextId) : packetLevelPath(exercise.level));
   };
   return (

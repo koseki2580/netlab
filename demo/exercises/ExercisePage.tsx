@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useNavigationType, useParams, useSearchParams } from 'react-router-dom';
 import { useGalleryLocale, useT } from '../localeContext';
 import { exerciseById, nextForLearner, reopenedExerciseId } from './exerciseSource';
 import { isAttempted } from './store/estimate';
@@ -36,8 +36,11 @@ export function ExercisePageBody({ store: injected }: { store?: AttemptStore }) 
   // another instance of the same kind of task. Decided when the address
   // changes, from the record as it stood then: the attempt made on THIS visit
   // must not send the learner away from the exercise they are doing.
+  // Only an exercise opened on purpose, by a link in the app, is swapped: a
+  // reload or a step back returns the learner to the problem they were on.
+  const onPurpose = useNavigationType() === 'PUSH';
   const opens = useMemo(() => {
-    if (run) return exerciseId;
+    if (run || !onPurpose) return exerciseId;
     const { attempts } = store.getState();
     return reopenedExerciseId(
       exerciseId,
@@ -45,7 +48,7 @@ export function ExercisePageBody({ store: injected }: { store?: AttemptStore }) 
       attempts.map((attempt) => attempt.exerciseId),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [exerciseId, store, run === undefined]);
+  }, [exerciseId, store, run === undefined, onPurpose]);
   useEffect(() => {
     if (opens !== exerciseId) void navigate(exercisePath(opens), { replace: true });
   }, [opens, exerciseId, navigate]);

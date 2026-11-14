@@ -81,6 +81,11 @@ const LESSONS = [
   '/simulation/failure',
   '/simulation/nat',
   '/simulation/acl',
+  // TC-1600: still under 7.5px in persona run 2.
+  '/areas/dmz',
+  '/services/dns-resolution',
+  '/exercises/do/l1-host-address~0',
+  '/exercises/packet/do/p1-where~0',
 ] as const;
 
 for (const path of LESSONS) {

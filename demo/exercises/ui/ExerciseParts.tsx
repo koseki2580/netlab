@@ -140,7 +140,7 @@ export function ExerciseBrief({
           ) : null}
           {/* The story and the glosses: for a reader who wants them, shut for one who does not. */}
           <details data-testid="exercise-more">
-            <summary style={{ cursor: 'pointer', minHeight: 32, fontSize: 15 }}>
+            <summary style={{ cursor: 'pointer', minHeight: 44, fontSize: 15 }}>
               {t('What happened, and what the words mean', 'なにが起きたか・ことばの説明を読む')}
             </summary>
             <p

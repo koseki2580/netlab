@@ -114,7 +114,7 @@ const TOUCH_TARGETS: readonly (readonly [selectors: readonly string[], css: stri
   [['[data-testid="course-back"]'], 'min-height:44px;margin-block:-13px'],
   [
     ['main input:not([type="checkbox"]):not([type="radio"]):not([type="range"])', 'main select'],
-    'min-height:44px',
+    'min-height:44px;min-width:44px',
   ],
   // Everything else a finger presses: the bottom bar's icons (32px), a
   // lesson's small toggles, close and clear marks (15px), its step and play
@@ -149,9 +149,19 @@ const NARROW_RULES =
   '[data-lesson-grid]>section{min-height:0 !important}' +
   '[data-lesson-grid] [data-testid="netlab-canvas"]{height:300px !important}';
 
+/**
+ * A toast's close mark (11×14) is drawn outside the shell, over the page, and
+ * sets its own size with `all: unset`.
+ */
+const TOAST_RULES =
+  '[data-testid="toast-card"] button{min-width:44px !important;min-height:44px !important;' +
+  'display:inline-flex !important;align-items:center;justify-content:center}';
+
 /** Always on the narrow layout; on the wide one only where the pointer is coarse. */
 const touchCss = (narrow: boolean) =>
-  narrow ? TOUCH_RULES + NARROW_RULES : `@media (pointer:coarse){${TOUCH_RULES}}`;
+  narrow
+    ? TOUCH_RULES + NARROW_RULES + TOAST_RULES
+    : `@media (pointer:coarse){${TOUCH_RULES}${TOAST_RULES}}`;
 
 interface DemoShellProps {
   title: string;

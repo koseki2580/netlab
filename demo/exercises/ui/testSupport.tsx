@@ -2,7 +2,7 @@
 
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { createSafeProgressStorage } from '../../../src/progress/storage';
 import { GalleryLocaleProvider, type GalleryLocale } from '../../localeContext';
 import { exerciseById } from '../exerciseSource';
@@ -55,7 +55,14 @@ export function render(
     locale = 'ja',
     path = '/',
     route = '*',
-  }: { locale?: GalleryLocale; path?: string; route?: string } = {},
+    byLink = false,
+  }: {
+    locale?: GalleryLocale;
+    path?: string;
+    route?: string;
+    /** Arrive by following a link in the app (a push), not by loading the address. */
+    byLink?: boolean;
+  } = {},
 ): Screen {
   actEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
   const container = document.createElement('div');
@@ -63,9 +70,10 @@ export function render(
   const root: Root = createRoot(container);
   act(() => {
     root.render(
-      <MemoryRouter initialEntries={[path]}>
+      <MemoryRouter initialEntries={[byLink ? '/__from-a-link' : path]}>
         <GalleryLocaleProvider locale={locale}>
           <Routes>
+            <Route path="/__from-a-link" element={<Navigate to={path} />} />
             <Route path={route} element={ui} />
             <Route path="*" element={<div data-testid="elsewhere" />} />
           </Routes>

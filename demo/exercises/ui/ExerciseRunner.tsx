@@ -72,7 +72,7 @@ const NO_CHANGES: readonly SettingChange[] = [];
 const LEGEND_COLUMNS = 5;
 
 /** The least height the diagram keeps on a phone: below this its devices cannot be told apart. */
-const NARROW_DIAGRAM_MIN_HEIGHT = 150;
+const NARROW_DIAGRAM_MIN_HEIGHT = 320;
 
 /** The goal a prediction is about: the first "reaches" goal of the exercise. */
 function predictedCheck(exercise: Exercise) {
