@@ -50,37 +50,33 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>事業者とデータセンター</strong> — ECMP、トンネル、MPLS、VXLAN、マルチキャスト</li>
                  <li><strong>最新とクラウド</strong> — TLS 1.3、HTTP/2、HTTP/3、輻輳制御</li>
                </ol>
-               <p>各段階には、レッスンと、合格に必要なもの（入門コース・実習問題のレベル・パケットの問題のレベル・修了テスト）があります。<strong>テストに合格すると、その段階は合格</strong>で、次の段階が開きます。テストのない段階は、そこにある問題のレベルをクリアすると合格です。後の段階のテストに合格すると、それより前の段階も合格になります。前から修了テストに合格していた方は、何もしなくてもその分が合格になっています。</p>
-               <p>どの段階にも自分のテストがあります。段階 1・2・3・7 のテストは新しく作ったもので（テストのページではレベル 5〜8）、それぞれ 10 問です。段階 4 と 5 はこれまでのレベル 1 と 2、段階 6 はレベル 3 と 4（エキスパート）です。テストのページの一覧は、段階の順に並びます。前にどのレベルに合格していても、その結果はそのまま、その段階と前の段階の合格になります。</p>
+               <p>各段階には、レッスンと、合格に必要なもの（入門コース・実習問題のレベル・パケットの問題のレベル・修了テスト）があります。<strong>段階は、そこに並ぶものがすべて済んだときに合格</strong>で、次の段階が開きます。テストに合格しただけでは、その段階の問題のレベルが残っていれば合格になりません。</p>
+               <p>前にテストに合格していた方は、その合格がそのまま残ります。段階にほかの問題が残っていれば、段階のカードに「この段階のテストの合格は残っています」と出るので、残りを済ませてください。</p>
+               <p>どの段階にも自分のテストがあります。テストは段階の名前で呼びます（「段階 1 のテスト」など）。段階 6 には 2 つあり、「段階 6 のテスト 1」「段階 6 のテスト 2」です。テストのページの一覧は、段階の順に並びます。</p>
                <p>まだ開いていない段階も、レッスンや問題はいつでも開いて読めます。止められるのは「合格」だけです。ページのいちばん上に、次にやることが 1 つ出ます。まだレッスンのない話題は「準備中」として載っています。</p>`
       },
       {
         id: "final-test",
         title: "修了テスト",
-        html: `<p>修了テストは、学んだことが身についたかを自分で確かめるためのページです。入門コースを最後まで進めると出る「次に学ぶことと修了テストへ →」から開けます。</p>
-               <p>レベルは 4 つあり、ページ上部のボタンで切り替えます。</p>
-               <ul>
-                 <li><strong>レベル 1・入門</strong> — ネットワークの部品、アドレス、どの機器も頼っているサービス。</li>
-                 <li><strong>レベル 2・中級</strong> — VLAN とループ、経路の選ばれ方と切り替わり方、パケットの大きさ、フィルタ、IPv6。</li>
-                 <li><strong>レベル 3・上級</strong> — 複数経路、障害時の切り替え、輻輳、最近の HTTP、オーバーレイ。</li>
-                 <li><strong>レベル 4・エキスパート</strong> — 複数のしくみが重なった場面の正確な結果。レッスンで場面を再現し、表示される数値を読んで答えます。</li>
-               </ul>
+        html: `<p>修了テストは、学んだことが身についたかを自分で確かめるためのページです。入門コースを最後まで進めると出る「段階 1 のテストへ →」から、段階 1 のテストが開きます。</p>
+               <p>テストは段階ごとにあり、「段階 1 のテスト」のように段階の名前で呼びます。ページ上部のボタンで、段階の順に切り替えます。</p>
                <h3>受け方</h3>
                <ol>
                  <li>最初のカード「このテストの範囲と、学ぶ順番」に並ぶレッスンを、上から順に開いて学びます。</li>
-                 <li>10 問に答えます。どの問題にも「わからない（まだ習っていない）」があるので、当てずっぽうで選ぶ必要はありません。</li>
+                 <li>10 問に答えます。どの問題にも「わからない（まだ習っていない）」があるので、当てずっぽうで選ぶ必要はありません。どのテストも、話題ごとに 3 問ずつ用意した 30 問から、毎回すべての話題を 1 問ずつ選んで 10 問にします。受け直すと、直前の 2 回と違う問題が出ます。</li>
                  <li>「採点する」を押します。ボタンの横に、何問に回答済みかが出ます。</li>
                </ol>
                <h3>採点のあと</h3>
                <ul>
                  <li>点数と「合格」または「もう少し」が出ます。<strong>10 問中 8 問で合格</strong>です。</li>
-                 <li>すべての問題に解説が付きます。</li>
-                 <li>間違えた問題には「復習する：…」のリンクが出て、それを教えているレッスンへ直接行けます。</li>
-                 <li>「もう一度受ける」で、回答を消してやり直せます。</li>
+                 <li>合格すると、すべての問題に正解と解説が付きます。</li>
+                 <li>不合格のときは、点数と、どの問題を間違えたか、それを教えているレッスンへの「復習する：…」のリンクだけが出ます。どの問題にも ✓ や ✗、正解、解説は出ません。正解と解説は、合格したときに表示されます。</li>
+                 <li>「もう一度受ける」で、回答を消して選択肢の並びを変えてやり直せます。不合格のあとは、<strong>まちがえた話題ごとに</strong>「復習する」のレッスンを開くと押せるようになります。ボタンの下に、いくつ開いたかが出ます。</li>
+                 <li>ページを読み込み直しても、新しいタブで開いても、この決まりは変わりません。新しいタブでは「テストを始める」の下に、まだ開いていない復習のレッスンが並びます。</li>
                  <li>「このレベルを実習問題で練習する →」で、同じレベルの<a href="#hands-on-exercises">実習問題</a>へ行けます。</li>
                </ul>
                <div class="callout">合格すると、ギャラリーの進み具合に記録されます。レベルを切り替えると、回答は引き継がれず最初からになります。</div>
-               <p>アドレスで直接開くこともできます。レベル 1 は <code>#/course/exam</code>、レベル 2〜4 は <code>#/course/exam/2</code> のように末尾へ番号を付けます。</p>`
+               <p>アドレスで直接開くこともできます。段階 1 のテストは <code>#/course/exam/5</code> です。ほかのテストは、学習の道すじの各段階から開けます。</p>`
       },
       {
         id: "hands-on-exercises",
@@ -186,6 +182,7 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>パケットタイムライン</strong> — 送ったパケットが通った順に並びます。行を押すと、その時点のパケットの中身が見られます。</li>
                  <li><strong>経路表</strong> — ルータが「どの宛先をどちらへ送るか」を持っている表です。</li>
                </ul>
+               <p><strong>ステップとホップは別のものです。</strong>ステップはタイムラインの 1 行で、機器がパケットを作る・渡す・受け取る・相手を尋ねる、のどれか 1 つです。ホップはルータを 1 台越えることで、TTL や traceroute はこれを数えます。スイッチはホップに数えません。「3 / 11 ステップ」「ステップ数:」などの数は、行の数です。</p>
                <p>タイムラインの各行は、<code>CREATE</code>（作られた）、<code>FWD</code>（転送された）、<code>DELIVER</code>（届いた）、<code>DROP</code>（落ちた）のいずれかです。落ちた行には理由が付きます。</p>
                <p>スイッチは、宛先の MAC アドレスがどのポートの先にいるかをまだ覚えていないとき（ブロードキャストのときも）、入ってきたポート以外の、同じ VLAN の使えるポートすべてにフレームを写して流します。タイムラインはパケットが進む1本の道だけを行にし、写しはそのスイッチの行に「ほかに N か所へコピー」と書かれます。行を押すと、写しがどの機器に届き、どうなったか（「自分あてでないので捨てた」など）が見られます。写しを受け取って捨てた機器は、落ちた行にはなりません。覚えた内容は、ARP の答えと同じく、トレースを消すまで残ります。ケーブルがポートを指定していない図では、ケーブル1本を1つのポートとして同じように扱います。ARP の問い合わせもブロードキャストなので同じように写され、その写しは <code>arp-request</code> の行に書かれます。問い合わせと返事を通したスイッチは、両端の場所を覚えます。</p>
                <div class="callout">赤いケーブルは、そのリンクが落ちていることを表します。障害を扱うレッスンでは、これがそのレッスンの主題です。</div>`
@@ -196,6 +193,7 @@ window.USER_GUIDE_CONTENT = {
         html: `<p>図の横にパネルが付くレッスンの多くは、画面の幅に合わせて並び方が変わります。境目は<strong>幅 900px</strong> です。</p>
                <ul>
                  <li><strong>幅の狭い画面（900px 未満）</strong> — レッスン全体が<strong>縦 1 列</strong>になり、上から下へスクロールして読みます。図に重なっていた説明は図の外に出て、その次に図が決まった高さで表示され、最後にパネルが画面の幅いっぱいに並びます。</li>
+                 <li><strong>練習問題とパケットの実習</strong> — スマートフォンでは図の機器が数台ずつの段に並び、名前が読める大きさで描かれます。パケットの実習で「確かめる」を押すと、パケットが動くあいだは図が画面に残り、動き終わってから結果の位置へ移ります。読み込み直しや「戻る」では同じ問題に戻り、答えずに離れたパケットの問題は次に開いたときもう一度出ます。</li>
                  <li><strong>幅の広い画面</strong> — パネルは図の横に並びます。図とパネルの境目をドラッグすると、パネルの幅を広げられます。</li>
                </ul>
                <p><strong>ARP・TCP のハンドシェイク・DHCP と DNS・NAT</strong> の 4 つのレッスンは、幅の狭い画面では並び方が少し違います。<strong>図は上に固定</strong>され、そのすぐ下に<strong>操作ボタン</strong>（送る、①②③、「次のステップ」）と、いまパケットがどこにいるかを示す <strong>1 行の状況</strong>が並びます。スクロールするのは、その下の説明とパネルだけです。機器は幅の広い画面より近づけて並べてあるので、大きく表示されます。</p>
@@ -238,7 +236,7 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>ARP の基本</strong> — 「ARP テーブル」と「ARP の変化」は、いま表示しているステップの時点の内容です。表は空から始まり、答えが届いたステップで行が増えます。リセットすると空に戻ります。このレッスンは押すたびに覚えた内容を消してから送るので、毎回 ARP の質問が見られます。ほかのレッスンでは、機器は答えを覚えていて、ある宛先へ聞くのは最初に送るときだけです（トレースを消去すると忘れます）。</li>
                  <li><strong>DHCP と DNS</strong> — 「いまの DHCP Client」の行が、DISCOVER・OFFER・REQUEST の間は住所なし、ACK が届くと BOUND と住所を表示します。図の機器を押して見る設定は、やり取りがすべて終わったあとのものです。</li>
                  <li><strong>TCP のハンドシェイク</strong> — 「もう少し詳しく」で、ルータのホップの 2 つの TTL（着いたときと出ていくとき）と、localSeq が SYN の SEQ + 1 になる理由が説明されます。</li>
-                 <li><strong>VLAN による分離</strong> — VLAN、アクセスポート、トランクの意味が最初に書かれています。開いた時点では何も送りません。破棄の理由は言葉で表示されます。</li>
+                 <li><strong>VLAN による分離</strong> — VLAN、アクセスポート、トランクの意味が最初に書かれています。開いた時点では何も送りません。破棄の理由は言葉で表示されます。フレームは自分の VLAN の外へは出ません。トランクを切ってから A1 → B1 を送ると、A1 の ARP（ルータの MAC アドレスの問い合わせ）は VLAN 10 の中だけに届き、答える機器がないので、A1 は何も送らずに止まります（理由 <code>arp-no-reply</code>）。図、タイムライン、ホップの詳細、エディタの履歴、演習の答え合わせにも、同じことが言葉で表示されます。</li>
                  <li><strong>1ホップずつ進める</strong>と<strong>通信の詳細を見る</strong> — それぞれ、何を見るレッスンかの説明があります（R-1 の最長一致と、ホップごとの TTL と MAC）。</li>
                </ul>
                <h3>スパニングツリー</h3>
@@ -354,7 +352,8 @@ window.USER_GUIDE_CONTENT = {
                <p>「DNS の名前解決とキャッシュ」のレッスンでは、PC の問い合わせを受けたリゾルバが、ルート、com、example.com の順にサーバーへ聞き、委任（NS レコードとグルー）をたどる様子が、実際に流れたメッセージ 1 つずつで読めます。続けて PC-B が同じ名前を引くと、リゾルバはだれにも聞かずにキャッシュから答え、TTL は残りの秒数になります。存在しない名前には NXDOMAIN（RCODE 3）が SOA とともに返り、リゾルバはそれも SOA の TTL と MINIMUM の小さいほうの時間だけ覚えておきます（RFC 2308）。扱うレコードは A・AAAA・CNAME（たどる）・NS・MX・SOA です。</p>
                <div class="callout">キャッシュはエンジンを開いているあいだ残り、時間は実際の時計で数えます。再送、TCP への切り替え、グルーのない委任、DNSSEC は扱いません。これまでのゾーン一覧だけの DNS サーバーは、知らない名前に NXDOMAIN を返すようになりました（以前は何も返しませんでした）。</div>
                <p><strong>GRE トンネル</strong>のレッスンでは、ping が本当にトンネルを通ります。16 進表示で、外側の IP ヘッダ、GRE ヘッダ（Key を含む）、内側のパケットを順に確かめられます。キーが両端で違うと、パケットは反対側のルータで捨てられます。</p>
-               <p><strong>VXLAN/EVPN</strong> のレッスンでも、ping が本当にファブリックを渡ります。Leaf1 が UDP のポート 4789 で包み、Leaf2 が外します。16 進表示で VXLAN ヘッダ（VNI）と内側の Ethernet フレームを確かめられます。Leaf2 に別の VNI を付けると、パケットは Leaf2 で捨てられます。EVPN の経路はレッスンが計算して表示するもので、パケットとしては送っていません。</p>`
+               <p><strong>VXLAN/EVPN</strong> のレッスンでも、ping が本当にファブリックを渡ります。Leaf1 が UDP のポート 4789 で包み、Leaf2 が外します。16 進表示で VXLAN ヘッダ（VNI）と内側の Ethernet フレームを確かめられます。Leaf2 に別の VNI を付けると、パケットは Leaf2 で捨てられます。EVPN の経路はレッスンが計算して表示するもので、パケットとしては送っていません。</p>
+               <p><strong>MPLS L3VPN</strong> のレッスンでは、パケットが本当にラベルで運ばれます。PE1 がラベルを 2 つ付け（トランスポートと VPN）、P が付け替えるか外し（PHP）、PE2 が最後のラベルを外して CE2 に届けます。16 進表示では EtherType 0x8847 とラベルの並びが見えます。P のラベル表を消すと、パケットは P で捨てられます。LDP と VPN のラベルはレッスンが計算したもので、パケットとしては送っていません。LDP のラベル（トランスポートラベル）は、顧客の経路ではなく PE2 のループバック 192.0.2.2/32 に対して決まります。顧客の経路 10.0.2.0/24 は、BGP から来る VPN ラベルで運ばれます。</p>`
       },
       {
         id: "sandbox",
@@ -382,7 +381,7 @@ window.USER_GUIDE_CONTENT = {
       {
         id: "troubleshooting",
         title: "こまったとき",
-        html: `<p><strong>パケットが届かない</strong> — タイムラインの最後の行にある理由を見てください。<code>no-route</code> は経路がない、<code>no-receiver</code> はスイッチがすべてのポートに写したが受け取る機器がなかった、<code>not-group-member</code> はそのグループに参加していない、<code>acl-deny</code> はフィルタで止められた、<code>next-hop-off-link</code> はルートの次のルータがそのルータのどのネットワークにもいない、<code>reserved-address</code> は機器にネットワークアドレスかブロードキャストアドレスが付いている、という意味です。レッスンによっては、それを見せることが目的です。</p>
+        html: `<p><strong>パケットが届かない</strong> — タイムラインの DROP の行にある理由を見てください。<code>no-route</code> は経路がない（ルータは送信元へ ICMP の到達不能を返し、DROP のあとの行に出ます）、<code>no-receiver</code> はスイッチがすべてのポートに写したが受け取る機器がなかった、<code>not-group-member</code> はそのグループに参加していない、<code>acl-deny</code> はフィルタで止められた、<code>next-hop-off-link</code> はルートの次のルータがそのルータのどのネットワークにもいない、<code>reserved-address</code> は機器にネットワークアドレスかブロードキャストアドレスが付いている、という意味です。レッスンによっては、それを見せることが目的です。</p>
                <p><strong>図が画面に収まらない</strong> — 右下の「全体」（英語表示では <code>fit</code>）を押すと全体が入ります。</p>
                <p><strong>言語が英語のまま</strong> — ギャラリー右上で「日本語」を選んでください。プロトコル名やアドレス、<code>DROP</code> などの記号は、そのまま英語で表示されます。</p>
                <p><strong>進み具合が保存されない</strong> — ブラウザのプライベートモードや、サイトデータを保存しない設定では記録できません。</p>`
@@ -440,37 +439,33 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>Providers and data centres</strong> — ECMP, tunnels, MPLS, VXLAN and multicast</li>
                  <li><strong>Modern and cloud</strong> — TLS 1.3, HTTP/2, HTTP/3 and congestion control</li>
                </ol>
-               <p>Each stage lists its lessons and what it takes to pass: the course, exercise levels, packet exercise levels and the test. <strong>Passing the test passes the stage</strong> and opens the next one. A stage with no test yet is passed by clearing its exercise levels. Passing a later stage's test passes the stages before it too, so if you passed the test before the path existed, those stages are already passed.</p>
-               <p>Every stage has a test of its own. The tests of stages 1, 2, 3 and 7 are new (levels 5 to 8 on the test page), ten questions each. Stages 4 and 5 keep levels 1 and 2; stage 6 has levels 3 and 4 (Expert). The test page lists them in the order of the stages. Whatever level you passed before still passes its stage and every stage before it.</p>
+               <p>Each stage lists its lessons and what it takes to pass: the course, exercise levels, packet exercise levels and the test. <strong>A stage is passed when everything it lists is done</strong>, and that opens the next one. Passing its test alone does not pass a stage that also lists exercise levels.</p>
+               <p>If you passed a test before, that pass is kept. Where the stage still lists exercises, its card says “Your pass of this stage’s test is kept”; finish the rest to pass the stage.</p>
+               <p>Every stage has a test of its own. Each test is named by its stage (“Stage 1 test” and so on); stage 6 has two, “Stage 6 test 1” and “Stage 6 test 2”. The test page lists them in the order of the stages.</p>
                <p>Lessons and exercises of a stage that is not open yet can still be read and tried; only passing is gated. The top of the page shows the one next thing to do. Topics with no lesson yet are listed as coming soon.</p>`
       },
       {
         id: "final-test",
         title: "The final test",
-        html: `<p>The final test lets you check for yourself that what you studied has stuck. Finish the six-step course and press “What to learn next, and the final test →” to open it.</p>
-               <p>There are four levels. Switch between them with the buttons at the top of the page.</p>
-               <ul>
-                 <li><strong>Level 1 · Beginner</strong> — the parts of a network, addresses, and the services every device relies on.</li>
-                 <li><strong>Level 2 · Intermediate</strong> — VLANs and loops, how routes are chosen and changed, packet size, filtering and IPv6.</li>
-                 <li><strong>Level 3 · Advanced</strong> — multipath, failover, congestion, modern HTTP and overlays.</li>
-                 <li><strong>Level 4 · Expert</strong> — exact results where several mechanisms meet. You reproduce each scenario in its lesson and read the numbers it shows.</li>
-               </ul>
+        html: `<p>The final test lets you check for yourself that what you studied has stuck. Finish the course and press “On to the stage 1 test →” to open the stage 1 test.</p>
+               <p>Every stage has its test, named by the stage, as in “Stage 1 test”. Switch between them, in the order of the stages, with the buttons at the top of the page.</p>
                <h3>Taking it</h3>
                <ol>
                  <li>The first card, “What this test covers, in order”, lists the lessons for the level. Open them from the top and study them.</li>
-                 <li>Answer the ten questions. Every question also offers “I have not learned this”, so you never need to guess.</li>
+                 <li>Answer the ten questions. Every question also offers “I have not learned this”, so you never need to guess. Every test holds thirty questions, three for each topic, and asks one per topic each time; an attempt asks questions that neither of the last two attempts asked.</li>
                  <li>Press “Mark my answers”. Next to the button you can see how many you have answered.</li>
                </ol>
                <h3>After marking</h3>
                <ul>
                  <li>You get your score and either “Passed” or “Not yet”. <strong>8 of 10 passes.</strong></li>
-                 <li>Every question shows its explanation.</li>
-                 <li>Each question you missed shows a “Review: …” link that takes you straight to the lesson that teaches it.</li>
-                 <li>“Try again” clears your answers so you can start over.</li>
+                 <li>After a pass, every question shows its right answer and its explanation.</li>
+                 <li>After a fail, you see only your score, which questions you missed, and a “Review: …” link to the lesson that teaches each. No question shows ✓ or ✗, a right answer or an explanation; those are shown once you pass.</li>
+                 <li>“Try again” clears your answers and shuffles the options. After a fail it becomes available once you have opened the “Review” lesson of <strong>every topic you missed</strong>; below the button you can see how many you have opened.</li>
+                 <li>Reloading the page or opening the test in a new tab does not change this. In a new tab, the review lessons still to open are listed under “Start the test”.</li>
                  <li>“Practise this level hands-on →” takes you to the <a href="#hands-on-exercises">hands-on exercises</a> of the same level.</li>
                </ul>
                <div class="callout">A pass is recorded in your progress in the gallery. Switching level starts that level fresh; answers do not carry over.</div>
-               <p>You can also open a level by address: level 1 is <code>#/course/exam</code>, and levels 2 to 4 add the number, as in <code>#/course/exam/2</code>.</p>`
+               <p>You can also open the stage 1 test by address, <code>#/course/exam/5</code>; the others open from each stage of the learning path.</p>`
       },
       {
         id: "hands-on-exercises",
@@ -573,10 +568,11 @@ window.USER_GUIDE_CONTENT = {
         html: `<p>Most lessons are a diagram, some controls, and a result.</p>
                <ul>
                  <li><strong>The diagram</strong> — machines and cables. Press a machine to open its detail. The buttons at the bottom right zoom and fit.</li>
-                 <li><strong>The packet timeline</strong> — every hop in order. Press a row to see what the packet looked like at that point.</li>
+                 <li><strong>The packet timeline</strong> — every step in order. Press a row to see what the packet looked like at that point.</li>
                  <li><strong>The route table</strong> — what a router holds about where to send which destination.</li>
                </ul>
                <p>Each row is <code>CREATE</code>, <code>FWD</code>, <code>DELIVER</code> or <code>DROP</code>. A dropped row carries its reason.</p>
+               <p><strong>Steps and hops are not the same.</strong> A step is one row of the timeline: a machine creating, passing on, receiving or asking about the packet. A hop is one router crossed, as TTL and traceroute count it; switches are not hops. The step counters (“Step 3 / 11”, “Steps:”) count rows.</p>
                <p>A switch that has not yet learned which port leads to a frame's destination MAC address (or that has a broadcast) copies the frame out of every usable port in the same VLAN except the one it came in on. The timeline keeps one row per hop of the packet's own path; the switch's row says “copied to N more”, and pressing it lists which device each copy reached and what became of it (not for it, discarded, and so on). A device that throws a copy away is not a dropped row. What a switch learns stays, like ARP answers, until the traces are cleared. Where a cable does not say which port it plugs into, the cable counts as a port of its own, and all of this works the same. An ARP request is a broadcast, so it is copied the same way, and its copies are listed on the <code>arp-request</code> row; the switches it and its reply cross learn both ends.</p>
                <div class="callout">A red cable means that link is down. On the lessons about failure, that is the subject.</div>`
       },
@@ -586,6 +582,7 @@ window.USER_GUIDE_CONTENT = {
         html: `<p>Many lessons with a panel beside the diagram arrange themselves to fit the screen. The dividing line is a width of <strong>900px</strong>.</p>
                <ul>
                  <li><strong>Narrow screen (under 900px)</strong> — the lesson becomes <strong>one scrolling column</strong>, read from top to bottom. The notes that sat over the diagram move out of it, then comes the diagram at a fixed height, and last the panel at the full width of the screen.</li>
+                 <li><strong>Exercises and packet exercises</strong> — on a phone the devices of the diagram stand a few to a row and are drawn at a readable size. After Check in a packet exercise the diagram stays on screen while the packet moves, then the page moves to the result. A reload or Back returns to the same problem, and a packet problem left unanswered is offered again next time.</li>
                  <li><strong>Wide screen</strong> — the panel sits beside the diagram. Drag the edge between them to make the panel wider.</li>
                </ul>
                <p>Four lessons — <strong>ARP, the TCP handshake, DHCP and DNS, and NAT</strong> — are arranged a little differently on a narrow screen. The <strong>diagram stays fixed at the top</strong>; directly under it are the <strong>buttons that drive it</strong> (send, ①②③, “Next step”) and <strong>one line saying where the packet is</strong>. Only the notes and the panel below scroll. Their devices stand closer together than on a wide screen, so they are drawn larger.</p>
@@ -628,7 +625,7 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>ARP Basics</strong> — “ARP tables” and “ARP over time” show what each device knew at the step on screen. The tables start empty, and a line appears at the step where an answer arrives. Reset empties them again. This lesson forgets what was learned before each send, so the ARP question is asked every time. In other lessons a device remembers the answer and asks only before its first send to an address (clearing the traces makes it forget).</li>
                  <li><strong>DHCP &amp; DNS</strong> — the “DHCP Client now” line says it has no address during DISCOVER, OFFER and REQUEST, and BOUND with its address once the ACK has arrived. A device’s details, opened from the diagram, show the end of the whole exchange.</li>
                  <li><strong>TCP Handshake</strong> — “A little more detail” names the two TTLs at a router’s hop (as the packet arrived, and as it leaves) and explains why localSeq is the SYN’s SEQ + 1.</li>
-                 <li><strong>VLAN (802.1Q)</strong> — VLAN, access port and trunk are defined first. Nothing is sent until you press a button, and a drop is explained in words.</li>
+                 <li><strong>VLAN (802.1Q)</strong> — VLAN, access port and trunk are defined first. Nothing is sent until you press a button, and a drop is explained in words. A frame never leaves its VLAN: cut the trunk and send A1 → B1, and A1's ARP (its question for the router's MAC address) reaches only VLAN 10, nobody there answers, and A1 sends nothing (reason <code>arp-no-reply</code>). The diagram, the timeline, the hop details, the editor's history and an exercise's feedback say the same in words.</li>
                  <li><strong>Step-by-Step</strong> and <strong>Trace Inspector</strong> — each says what to look at: R-1’s longest-prefix match, and the TTL and MAC changes from hop to hop.</li>
                </ul>
                <h3>Spanning Tree</h3>
@@ -744,7 +741,8 @@ window.USER_GUIDE_CONTENT = {
                <p>In the “DNS Resolution and Caching” lesson, each message on the wire is listed as the resolver answers the PC: it asks the root, then the com server, then example.com’s server, following the referrals (NS records and their glue). When PC-B then looks up the same name, the resolver asks nobody and answers from its cache, with the TTL that is left. A name that does not exist gets NXDOMAIN (RCODE 3) with the zone’s SOA, and the resolver keeps that too, for the lower of the SOA’s TTL and its MINIMUM (RFC 2308). The records handled are A, AAAA, CNAME (followed), NS, MX and SOA.</p>
                <div class="callout">The cache lasts as long as the engine, and time is the real clock. Retries, falling back to TCP, referrals without glue and DNSSEC are not modelled. A DNS server with only a zones list now answers an unknown name with NXDOMAIN (before, it did not answer at all).</div>
                <p>In the <strong>GRE tunnel</strong> lesson a ping really crosses the tunnel. The hex view shows the outer IP header, the GRE header with its Key, and the inner packet, in order. If the keys at the two ends differ, the far router drops the packet.</p>
-               <p>In the <strong>VXLAN/EVPN</strong> lesson a ping really crosses the fabric too: Leaf1 wraps it in UDP to port 4789 and Leaf2 unwraps it. The hex view shows the VXLAN header with its VNI and the inner Ethernet frame. Give Leaf2 another VNI and the packet is dropped there. The EVPN routes are worked out and shown by the lesson; they are not sent as packets.</p>`
+               <p>In the <strong>VXLAN/EVPN</strong> lesson a ping really crosses the fabric too: Leaf1 wraps it in UDP to port 4789 and Leaf2 unwraps it. The hex view shows the VXLAN header with its VNI and the inner Ethernet frame. Give Leaf2 another VNI and the packet is dropped there. The EVPN routes are worked out and shown by the lesson; they are not sent as packets.</p>
+               <p>In the <strong>MPLS L3VPN</strong> lesson the packet really travels by labels: PE1 pushes two (transport and VPN), P swaps or pops one (PHP), and PE2 pops the last and delivers to CE2. The hex view shows EtherType 0x8847 and the label stack. Remove P's label table and the packet is dropped at P. The LDP and VPN labels are worked out by the lesson; they are not sent as packets. LDP's label (the transport label) is bound to PE2's loopback, 192.0.2.2/32, not to the customer route; the customer route 10.0.2.0/24 rides on the VPN label from BGP.</p>`
       },
       {
         id: "sandbox",
@@ -772,7 +770,7 @@ window.USER_GUIDE_CONTENT = {
       {
         id: "troubleshooting",
         title: "Troubleshooting",
-        html: `<p><strong>The packet did not arrive.</strong> Read the reason on the last row of the timeline. <code>no-route</code> means there was no route to it, <code>no-receiver</code> means a switch copied it out of every port and no device took it, <code>not-group-member</code> means the host had not joined that multicast group, <code>acl-deny</code> means a filter stopped it, <code>next-hop-off-link</code> means a route names a next router on none of that router’s networks, <code>reserved-address</code> means a device has its subnet’s network or broadcast address. On some lessons, showing you that is the point.</p>
+        html: `<p><strong>The packet did not arrive.</strong> Read the reason on the DROP row of the timeline. <code>no-route</code> means there was no route to it (the router then sends the sender ICMP Destination Unreachable, in the rows after the drop), <code>no-receiver</code> means a switch copied it out of every port and no device took it, <code>not-group-member</code> means the host had not joined that multicast group, <code>acl-deny</code> means a filter stopped it, <code>next-hop-off-link</code> means a route names a next router on none of that router’s networks, <code>reserved-address</code> means a device has its subnet’s network or broadcast address. On some lessons, showing you that is the point.</p>
                <p><strong>The diagram does not fit.</strong> Press <code>fit</code> at the bottom right.</p>
                <p><strong>Still in English.</strong> Choose 日本語 at the top right of the gallery. Protocol names, addresses and codes such as <code>DROP</code> stay in English either way.</p>
                <p><strong>Progress is not remembered.</strong> A private window, or a browser set not to keep site data, has nowhere to store it.</p>`
