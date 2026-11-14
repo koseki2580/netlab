@@ -13,9 +13,12 @@
  * chips and its last number the most shared. So the set is built as a grid in
  * which the usable chip stands like every other:
  *
- * - a /24 (`grid`): two networks times three last numbers. Each network has
- *   three chips, each last number two. With a single neighbour to go by:
- *   three networks, one number apart, times two last numbers.
+ * - a /24 (`grid`): two networks times three last numbers: the usable one,
+ *   one in use, and .0 (the network's own number) or .255 ("to everyone").
+ *   "Same first three numbers and in no one's use" leaves two chips, and only
+ *   the rule (1 to 254) tells them apart (persona run 2: that filter left
+ *   exactly one).
+ * - a /25 to /30 (`grid` too): two networks times three last numbers.
  * - a /16 or a /8 (`spread`): six chips with six different "first three
  *   numbers", each last number on two of them. The usable one has middle
  *   numbers no neighbour has, so copying a neighbour's first three numbers
@@ -232,24 +235,38 @@ function grid({ shared, current, taken, elsewhere, salt }: GridInput): Candidate
   if (second === undefined) return null;
   const at = (net: string, last: number): string => `${net}.${last}`;
   const [one, two] = lasts;
+  // On a /24, the network's own number or its "to everyone" one, which the rule names.
+  const reserved =
+    shared.prefixLength === 24 ? withLast(shared.anchor, (salt >>> 10) % 2 === 0 ? 0 : 255) : null;
+  // On a /24: three chips on each network, each on the same three last numbers.
   const wrong =
-    one !== undefined && two !== undefined
-      ? [
-          withLast(shared.anchor, one),
-          withLast(shared.anchor, two),
-          at(second, free),
-          at(second, one),
-          at(second, two),
-        ]
-      : one !== undefined && third !== undefined
+    reserved !== null
+      ? one !== undefined
         ? [
             withLast(shared.anchor, one),
+            reserved,
             at(second, free),
             at(second, one),
-            at(third, free),
-            at(third, one),
+            at(second, lastOf(reserved)),
           ]
-        : [];
+        : []
+      : one !== undefined && two !== undefined
+        ? [
+            withLast(shared.anchor, one),
+            withLast(shared.anchor, two),
+            at(second, free),
+            at(second, one),
+            at(second, two),
+          ]
+        : one !== undefined && third !== undefined
+          ? [
+              withLast(shared.anchor, one),
+              at(second, free),
+              at(second, one),
+              at(third, free),
+              at(third, one),
+            ]
+          : [];
   const offered = wrong.filter((chip) => chip !== current && chip !== right);
   return offered.length === CHIP_COUNT - 1 && distinct(offered).length === offered.length
     ? { right, wrong: offered }

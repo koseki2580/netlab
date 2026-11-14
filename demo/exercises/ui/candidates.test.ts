@@ -35,14 +35,16 @@ describe('address chips for a host', () => {
     for (const wrong of parts.wrong) expect(await passesWith(wrong), wrong).toBe(false);
   });
 
-  it('includes the mistakes a rule of thumb makes: an address in use, the router’s own, a network one number off', () => {
+  it('includes the mistakes a rule of thumb makes: an address in use, a special number, a network one number off', () => {
     const parts = hostCandidates(till.start, 'pc1', 'salt');
     const wrong = parts?.wrong ?? [];
     expect(routerSide).not.toBe('');
-    // The simulator accepts the network's own address for a host, so it is not offered as wrong.
-    expect(wrong).not.toContain(`${lan}.0`);
-    expect(wrong).toContain(routerSide);
-    expect(wrong.some((chip) => chip === nodeIp('pc2') || chip === nodeIp('pc3'))).toBe(true);
+    // In use: the router's own side or a neighbour's address.
+    expect(wrong.some((chip) => [routerSide, nodeIp('pc2'), nodeIp('pc3')].includes(chip))).toBe(
+      true,
+    );
+    // The network's own number or its "to everyone" one (the grader refuses both, REQ-352).
+    expect(wrong.some((chip) => chip === `${lan}.0` || chip === `${lan}.255`)).toBe(true);
     // The same first two numbers, a different third.
     const [first, second, third] = lan.split('.');
     expect(

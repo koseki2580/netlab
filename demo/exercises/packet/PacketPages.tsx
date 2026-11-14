@@ -28,6 +28,7 @@ export const PACKET_LEVEL_NAMES: Readonly<Record<ExerciseLevel, Localised>> = {
   2: { en: 'TTL, MAC, ports and lists', ja: 'TTL・MAC・ポートと一覧' },
   3: { en: 'MTU, splitting, and the frame on each cable', ja: 'MTU・分割・区間ごとのフレーム' },
   4: { en: 'Whole splits and several faults', ja: '分割のすべてと、いくつもの原因' },
+  5: { en: 'Tunnels and labels: GRE, VXLAN, MPLS', ja: 'トンネルとラベル：GRE・VXLAN・MPLS' },
 };
 
 const linkStyle = { ...LINK, display: 'inline-flex', alignItems: 'center', minHeight: 44 } as const;
@@ -128,7 +129,7 @@ export function PacketLevelBody({ store: injected }: { store?: AttemptStore }) {
   const t = useT();
   const locale = useGalleryLocale();
   const { level: levelText } = useParams<{ level: string }>();
-  const level = parseLevel(levelText);
+  const level = parseLevel(levelText, PACKET_LEVELS);
   const { store, state } = useExerciseStore(injected, 'packet');
   if (!level) {
     return (

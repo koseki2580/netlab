@@ -31,7 +31,7 @@ import {
 } from '../../packet-lab/templates';
 import { localiseTopology } from '../model/text';
 
-export const PACKET_LEVELS: readonly ExerciseLevel[] = [1, 2, 3, 4];
+export const PACKET_LEVELS: readonly ExerciseLevel[] = [1, 2, 3, 4, 5];
 
 export const tracked = (id: string): string => `${PACKET_TRACK_PREFIX}${id}`;
 export const untracked = (id: string): string =>

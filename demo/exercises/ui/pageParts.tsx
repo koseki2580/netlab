@@ -1,13 +1,13 @@
 import { useState, type ReactNode } from 'react';
 import DemoShell from '../../DemoShell';
 import { readLearningLocale } from '../../learning/learningLocale';
-import type { ExerciseLevel, Localised } from '../model/types';
+import type { DeviceLevel, ExerciseLevel, Localised } from '../model/types';
 import { isSolved, isSolvedAfterTries } from '../store/estimate';
 import type { AttemptRecord } from '../store/types';
 
 /** What the exercise pages share besides the exercise itself. */
 
-export const LEVEL_NAMES: Readonly<Record<ExerciseLevel, Localised>> = {
+export const LEVEL_NAMES: Readonly<Record<DeviceLevel, Localised>> = {
   1: { en: 'First steps: addresses and cables', ja: 'はじめて：アドレスと線' },
   2: { en: 'Switches and simple routes', ja: 'スイッチと、かんたんな経路' },
   3: { en: 'Choosing routes, NAT and filters', ja: '経路の選び方・NAT・通信の制限' },
@@ -24,8 +24,17 @@ export const BEFORE_AND_AFTER: Localised = {
   ja: '勉強の前と後でくらべる',
 };
 
-export function parseLevel(text: string | undefined): ExerciseLevel | undefined {
-  return ([1, 2, 3, 4] as const).find((level) => String(level) === text);
+/** The level a path names, among `levels` (the device levels unless told otherwise). */
+export function parseLevel(text: string | undefined): DeviceLevel | undefined;
+export function parseLevel<L extends ExerciseLevel>(
+  text: string | undefined,
+  levels: readonly L[],
+): L | undefined;
+export function parseLevel(
+  text: string | undefined,
+  levels: readonly ExerciseLevel[] = [1, 2, 3, 4],
+): ExerciseLevel | undefined {
+  return levels.find((level) => String(level) === text);
 }
 
 export function exercisePath(

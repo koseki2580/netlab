@@ -6,7 +6,7 @@
  * promises a reply: the simulator sends none to a delivered packet.
  */
 
-import type { PacketTrace } from '../../../src/types/simulation';
+import type { PacketHop, PacketTrace } from '../../../src/types/simulation';
 import type { Localised, PacketExercise, PacketGrade } from '../../packet-lab/model';
 import { isNeighborLookupHop } from '../../../src/types/simulation';
 
@@ -19,6 +19,36 @@ export interface HopLine {
   readonly start: boolean;
   readonly ttl: number;
   readonly what: Localised;
+}
+
+/** What a tunnel end or a label router did (REQ-353), or null. */
+function tunnelWhat(hop: PacketHop): Localised | null {
+  const tunnel = hop.tunnel;
+  if (tunnel) {
+    const proto = tunnel.protocol.toUpperCase();
+    return tunnel.stage === 'encap'
+      ? {
+          en: `wraps it in a ${proto} packet to ${tunnel.outerDst}`,
+          ja: `${proto} のパケットで包み、${tunnel.outerDst} あてに送る`,
+        }
+      : { en: `takes it out of the ${proto} packet`, ja: `${proto} の包みから取り出す` };
+  }
+  const mpls = hop.mpls;
+  if (!mpls) return null;
+  const labels = mpls.after.join(' / ');
+  switch (mpls.action) {
+    case 'push':
+      return { en: `puts the labels ${labels} on it`, ja: `ラベル ${labels} を付ける` };
+    case 'swap':
+      return {
+        en: `swaps the top label: now ${labels}`,
+        ja: `上のラベルを付け替える（${labels}）`,
+      };
+    case 'pop':
+      return labels
+        ? { en: `takes the top label off: now ${labels}`, ja: `上のラベルを外す（${labels}）` }
+        : { en: 'takes the last label off', ja: '最後のラベルを外す' };
+  }
 }
 
 function what(event: string, action: string | undefined, note: boolean): Localised {
@@ -45,17 +75,21 @@ function what(event: string, action: string | undefined, note: boolean): Localis
 
 /** The packet's own hops first, ARP left out; then the hops of any note sent back. */
 export function hopLines(trace: PacketTrace, srcIp: string): HopLine[] {
+  // Between a tunnel's ends the outer packet is the sender's own, from the tunnel's address.
+  let wrapped = false;
   return trace.hops
     .filter((hop) => !isNeighborLookupHop(hop))
     .map((hop) => {
-      const note = hop.srcIp !== srcIp;
+      if (hop.tunnel?.stage === 'encap') wrapped = true;
+      const note = hop.srcIp !== srcIp && !wrapped;
+      if (hop.tunnel?.stage === 'decap') wrapped = false;
       return {
         step: hop.step,
         nodeId: hop.nodeId,
         note,
         start: hop.event === 'create',
         ttl: hop.ttl,
-        what: what(hop.event, hop.action, note),
+        what: (note ? null : tunnelWhat(hop)) ?? what(hop.event, hop.action, note),
       };
     });
 }

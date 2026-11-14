@@ -24,6 +24,8 @@ import { p2SmallestTtl } from './level2/p2-smallest-ttl';
 import { p3Df } from './level3/p3-df';
 import { p3Fragment } from './level3/p3-fragment';
 import { p4Fragment } from './level4/p4-fragment';
+import { p5MplsRead } from './level5/p5-mpls-read';
+import { p5GreRead, p5VxlanRead } from './level5/p5-tunnel-read';
 
 export { PACKET_GENERATOR_VERSION } from './shared/define';
 
@@ -49,6 +51,9 @@ export const TEMPLATES: readonly PacketTemplate[] = [
   p4Capture,
   p4TwoFaults,
   p4SendWindow,
+  p5GreRead,
+  p5VxlanRead,
+  p5MplsRead,
 ];
 
 export function templateById(id: string): PacketTemplate | undefined {

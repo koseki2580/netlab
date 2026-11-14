@@ -144,6 +144,42 @@ describe('the two addresses of a network that no device may use', () => {
 });
 
 // TC-659
+// TC-1472 (REQ-352): one cable out was the answer, in the picture and in the list.
+describe('two cables are out, and the brief says which one matters (TC-1472)', () => {
+  const down = (of: Exercise) =>
+    of.start.edges.filter((edge) => edge.data?.state === 'down').map((edge) => edge.id);
+  it('every instance starts with two cables out, the spare one named in the brief', () => {
+    for (const seed of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]) {
+      const of = exercise(`l1-cable-off~${seed}`);
+      expect(down(of), of.id).toHaveLength(2);
+      expect(of.brief.ja, of.id).toContain('わざとぬいてあります');
+      expect(of.brief.en, of.id).toContain('taken out on purpose');
+    }
+  });
+
+  it('plugging in only the spare one, or both, is not a pass; the fault alone is', async () => {
+    for (const seed of [0, 1, 2, 3, 4, 5]) {
+      const of = exercise(`l1-cable-off~${seed}`);
+      const [fix] = of.reference;
+      if (fix?.kind !== 'link-state') throw new Error('the fix is not a cable');
+      const spare = down(of).find((id) => id !== fix.edgeId) ?? '';
+      const plug = (edgeId: string) => ({
+        kind: 'link-state' as const,
+        edgeId,
+        state: 'up' as const,
+      });
+      expect((await grade(of, [plug(spare)])).passed, of.id).toBe(false);
+      const both = await grade(of, [plug(fix.edgeId), plug(spare)]);
+      expect(both.passed, of.id).toBe(false);
+      expect(
+        both.results.find((entry) => entry.code === 'too-many-changes'),
+        of.id,
+      ).toBeDefined();
+      expect((await grade(of, [fix])).passed, of.id).toBe(true);
+    }
+  });
+});
+
 describe('the unplugged cable', () => {
   it('offers nothing but cables to change: an address setting there was only noise, and a pass with one changed was accepted', () => {
     for (const seed of [0, 1, 2, 3, 4, 5]) {
@@ -156,9 +192,12 @@ describe('the unplugged cable', () => {
   it('plugging the cable in and pulling another out is not a pass', async () => {
     const of = exercise('l1-cable-off~1');
     const [fix] = of.reference;
+    // A cable that is in: the one put away on purpose is out already.
     const other = of.allowed.find(
       (ref) =>
-        ref.kind === 'link-state' && ref.edgeId !== (fix?.kind === 'link-state' ? fix.edgeId : ''),
+        ref.kind === 'link-state' &&
+        ref.edgeId !== (fix?.kind === 'link-state' ? fix.edgeId : '') &&
+        of.start.edges.find((edge) => edge.id === ref.edgeId)?.data?.state !== 'down',
     );
     if (!fix || other?.kind !== 'link-state') throw new Error('no second cable');
     const result = await grade(of, [

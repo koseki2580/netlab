@@ -121,8 +121,8 @@ export const l1RouterAddress = defineTemplate(
         `${router.ja}の 2 つのアドレスのうち、まちがっているほうを直してください。`,
       ),
       rule: L(
-        'Rule: the router says /24. On each side, the same first three numbers as the devices on that side. A whole address is nobody else’s.',
-        'ルール：ルータは /24。その側の機器と、はじめの 3 つの数字をそろえる。アドレスは、だれともかぶらない。',
+        'Rule: the router says /24. On each side, the same first three numbers as the devices on that side. A whole address is nobody else’s. The last number is from 1 to 254: 0 and 255 are special.',
+        'ルール：ルータは /24。その側の機器と、はじめの 3 つの数字をそろえる。アドレスは、だれともかぶらない。最後の数字は 1〜254（0 と 255 は特別な数字）。',
       ),
       brief: say(brief, WHY_TWO_SIDES),
       topology,

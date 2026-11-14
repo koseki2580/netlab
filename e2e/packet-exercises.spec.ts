@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import type { BuildExercise, FragmentExercise } from '../demo/packet-lab/model';
+import type { BuildExercise, FragmentExercise, ReadExercise } from '../demo/packet-lab/model';
 import { exerciseById } from '../demo/packet-lab/templates';
 import { expect, test } from './fixtures/harness';
 import type { DemoPage } from './pages/DemoPage';
@@ -45,7 +45,7 @@ test(
   async ({ page, demoPage }) => {
     await demoPage.goto('/exercises');
     await page.getByTestId('exercises-packet-link').click();
-    for (const level of [1, 2, 3, 4]) {
+    for (const level of [1, 2, 3, 4, 5]) {
       await expect(page.getByTestId(`packet-level-${level}`)).toBeVisible();
     }
     await page.getByTestId('packet-start-1').click();
@@ -124,4 +124,25 @@ test('TC-775: the level counts a solve', async ({ page, demoPage }) => {
   await page.getByTestId('packet-back-to-level').click();
   await expect(page.getByTestId('packet-level-headline-1')).toHaveAttribute('data-solved', '1');
   await expect(page.getByTestId('packet-level-record-item')).toHaveCount(1);
+});
+
+/**
+ * TC-1478 (REQ-353) — level 5: the labels of a packet across an MPLS core, read
+ * off the tables beside the diagram, judged on the simulator and replayed in words.
+ */
+test('TC-1478: a level 5 MPLS exercise is read off its label tables and solved', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/exercises/packet/level/5');
+  await expect(page.getByTestId('packet-level-headline-5')).toBeVisible();
+  const exercise = packet<ReadExercise>('p5-mpls-read~0');
+  await open(page, demoPage, exercise.id);
+  await expect(page.getByTestId('packet-facts-tunnels')).toContainText('VPN ラベル');
+  await expect(page.getByTestId('packet-facts-tunnels')).toContainText('を付けて');
+  for (const question of exercise.questions) {
+    await page.getByTestId(`packet-pick-${question.id}-option-${question.answer}`).click();
+  }
+  await check(page, true);
+  await expect(page.getByTestId('packet-hops')).toContainText('ラベル');
 });

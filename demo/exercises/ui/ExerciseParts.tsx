@@ -197,6 +197,38 @@ export function ExerciseBrief({
 /** How a pass is recorded: without help, with a hint, after several tries, or not at all (the answer was shown). */
 export type Counted = 'solved' | 'helped' | 'tries' | 'not-counted';
 
+/** How a pass is recorded, said to the learner; empty for a clean solve. */
+export function countedSentence(
+  counted: Counted,
+  checksToCount: 1 | 2,
+  t: (en: string, ja: string) => string,
+): string {
+  if (counted === 'helped') {
+    return t(
+      'Recorded as “solved with help”, because you opened a hint.',
+      'ヒントを見たので、「ヒントを使って解けた」として記録しました。',
+    );
+  }
+  if (counted === 'tries') {
+    return checksToCount === 1
+      ? t(
+          'Recorded as “solved after several tries”, because the first Check did not solve it.',
+          '1 回目の「たしかめる」では解けなかったので、「何度かためして解けた」として記録しました。',
+        )
+      : t(
+          'Recorded as “solved after several tries”, because it took more than 2 Checks.',
+          '「たしかめる」を 3 回以上押したので、「何度かためして解けた」として記録しました。',
+        );
+  }
+  if (counted === 'not-counted') {
+    return t(
+      'This one is not counted as solved, because the answer was shown.',
+      '答えを見たあとなので、この問題は「解けた」には数えません。',
+    );
+  }
+  return '';
+}
+
 /**
  * What Check found. After a miss it is kept short on purpose: one line, the
  * first goal not met with the grader's reason, and nothing else, so the
@@ -304,27 +336,7 @@ export function ResultPanel({
           ) : null}
           {grade.passed ? (
             <p data-testid="exercise-result-done" data-counted={counted} style={{ margin: 0 }}>
-              {doneSentence}{' '}
-              {counted === 'helped'
-                ? t(
-                    'Recorded as “solved with help”, because you opened a hint.',
-                    'ヒントを見たので、「ヒントを使って解けた」として記録しました。',
-                  )
-                : counted === 'tries'
-                  ? t(
-                      checksToCount === 1
-                        ? 'Recorded as “solved after several tries”, because the first Check did not solve it.'
-                        : 'Recorded as “solved after several tries”, because it took more than 2 Checks.',
-                      checksToCount === 1
-                        ? '1 回目の「たしかめる」では解けなかったので、「何度かためして解けた」として記録しました。'
-                        : '「たしかめる」を 3 回以上押したので、「何度かためして解けた」として記録しました。',
-                    )
-                  : counted === 'not-counted'
-                    ? t(
-                        'This one is not counted as solved, because the answer was shown.',
-                        '答えを見たあとなので、この問題は「解けた」には数えません。',
-                      )
-                    : ''}
+              {doneSentence} {countedSentence(counted, checksToCount, t)}
             </p>
           ) : null}
           <ul style={LIST}>

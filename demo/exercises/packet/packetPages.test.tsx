@@ -19,6 +19,7 @@ import { render, testStore, type Screen } from '../ui/testSupport';
 import { referenceDraft } from './answers';
 import { diagramFacts } from './diagramFacts';
 import { inAttemptOrder } from './PacketForm';
+import { checkpointPassed, STAGES, stageFacts } from '../../course/stages';
 import { PacketExerciseBody, PacketHubBody, PacketLevelBody } from './PacketPages';
 import { answeredByPicks, packetSummary, tracked } from './packetSource';
 
@@ -103,9 +104,9 @@ describe('the packet hub', () => {
     expect(screen.get('exercises-packet-link').getAttribute('href')).toBe('/exercises/packet');
   });
 
-  it('TC-742: shows four levels, each with where the learner stands and a way to the next packet exercise', () => {
+  it('TC-742: shows five levels, each with where the learner stands and a way to the next packet exercise', () => {
     screen = render(<PacketHubBody store={testStore()} />);
-    for (const level of [1, 2, 3, 4]) {
+    for (const level of [1, 2, 3, 4, 5]) {
       expect(screen.get(`packet-level-headline-${level}`).dataset.status).toBe('not-enough');
       expect(screen.get(`packet-start-${level}`).getAttribute('href')).toMatch(
         /^\/exercises\/packet\/do\/p\d-/,
@@ -228,7 +229,12 @@ describe('a read exercise with a correction', () => {
 describe('what is said beside the diagram', () => {
   it('TC-750: MAC addresses where a MAC is the question, the MTU where a cable has one, the list where a router has one', () => {
     expect(diagramFacts(packet('p2-first-mac~0')).macs.length).toBeGreaterThan(0);
-    expect(diagramFacts(packet('p1-send-to~0'))).toEqual({ macs: [], mtus: [], lists: [] });
+    expect(diagramFacts(packet('p1-send-to~0'))).toEqual({
+      macs: [],
+      mtus: [],
+      lists: [],
+      tunnels: [],
+    });
     expect(diagramFacts(packet('p3-df~0')).mtus).toHaveLength(1);
     expect(diagramFacts(packet('p2-port~0')).lists).toHaveLength(2);
   });
@@ -301,5 +307,86 @@ describe('both languages, and a wrong address', () => {
   it('TC-755: an id that is not an exercise says so', () => {
     open('no-such~0');
     expect(screen?.find('packet-exercise-missing')).not.toBeNull();
+  });
+});
+
+// TC-1470: a second pick that passes is not shown as a clean solve, as on the device exercises.
+describe('a pass after a wrong pick (TC-1470)', () => {
+  it('says it is recorded as solved after several tries, in both languages', async () => {
+    const exercise = Array.from({ length: 20 }, (_, seed) =>
+      packet<BuildExercise>(`p2-smallest-ttl~${seed}`),
+    ).find((entry) => entry.fields[0]?.candidates?.some((option) => option.why !== 'right'));
+    if (!exercise) throw new Error('no instance with a wrong value');
+    const wrong = exercise.fields[0]!.candidates!.find((option) => option.why !== 'right')!;
+    for (const [locale, words] of [
+      [
+        'ja',
+        '1 回目の「たしかめる」では解けなかったので、「何度かためして解けた」として記録しました。',
+      ],
+      ['en', 'Recorded as “solved after several tries”, because the first Check did not solve it.'],
+    ] as const) {
+      const { screen: view, store } = open(exercise.id, testStore(), locale);
+      await view.click(`packet-field-ttl-option-${String(wrong.value)}`);
+      await checkAndWait(view);
+      await view.click(`packet-field-ttl-option-${String(exercise.reference.ttl)}`);
+      await checkAndWait(view);
+      expect(view.get('packet-result').dataset.passed).toBe('true');
+      expect(view.get('packet-result-counted').dataset.counted).toBe('tries');
+      expect(view.get('packet-result-counted').textContent).toContain(words);
+      expect(store.getState().attempts[0]).toMatchObject({ checkPresses: 2, checksToCount: 1 });
+      view.unmount();
+      screen = null;
+    }
+  });
+
+  it('a first-Check solve says nothing more', async () => {
+    const exercise = packet<BuildExercise>('p1-send-to~0');
+    const { screen: view } = open(exercise.id);
+    await view.enter('packet-field-dstIp', String(exercise.reference.dstIp));
+    await checkAndWait(view);
+    expect(view.find('packet-result-counted')).toBeNull();
+  });
+});
+
+// TC-1475 (REQ-353): level 5, tunnels and labels, is a level like the others.
+describe('packet level 5 (TC-1475)', () => {
+  const fiveIds = Array.from({ length: 10 }, (_, index) => {
+    const template = ['p5-gre-read', 'p5-vxlan-read', 'p5-mpls-read'][index % 3];
+    return `${template}~${Math.floor(index / 3)}`;
+  });
+
+  it('its page names it and lists its three kinds of task', () => {
+    screen = render(<PacketLevelBody store={testStore()} />, {
+      path: '/exercises/packet/level/5',
+      route: '/exercises/packet/level/:level',
+      locale: 'en',
+    });
+    expect(screen.container.textContent).toContain('Tunnels and labels: GRE, VXLAN, MPLS');
+    expect(screen.get('packet-level-kinds').children.length).toBe(3);
+  });
+
+  it('a level 5 attempt is kept through a save and a load', () => {
+    const store = testStore();
+    const result = store.importJson(
+      JSON.stringify({ version: 1, attempts: [packetSolved('p5-mpls-read~0', 5000)], cycles: [] }),
+    );
+    expect(result).toMatchObject({ ok: true, attempts: 1 });
+    expect(store.getState().attempts[0]?.level).toBe(5);
+  });
+
+  it('ten clean solves over its three kinds clear it, and stage 6 counts it', () => {
+    const attempts = fiveIds.map((id, index) => packetSolved(id, 1000 * (index + 1)));
+    expect(packetSummary(attempts, 5).status).toBe('cleared');
+    const facts = stageFacts({
+      isCompleted: () => false,
+      courseStepIds: [],
+      deviceAttempts: [],
+      packetAttempts: attempts,
+      examLevels: [],
+    });
+    expect(facts.packetCleared).toContain(5);
+    const six = STAGES.find((stage) => stage.number === 6);
+    expect(six?.checkpoints).toContainEqual({ kind: 'packet', level: 5 });
+    expect(checkpointPassed({ kind: 'packet', level: 5 }, facts)).toBe(true);
   });
 });

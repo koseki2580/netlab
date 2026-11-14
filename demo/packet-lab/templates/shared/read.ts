@@ -47,6 +47,18 @@ const PROMPTS: Readonly<Record<QuestionAsk, Localised>> = {
     'リゾルバのこの問い合わせに答えるのは、どのサーバーですか。',
   ),
   'dns-ttl-left': L('What TTL does the answer carry?', '答えの TTL はいくつですか。'),
+  'dst-on-link': L(
+    'On that cable, what is the destination address of the packet on the wire?',
+    'その回線を流れるパケットの、あて先アドレスはどれですか。',
+  ),
+  'src-on-link': L(
+    'On that cable, what is the source address of the packet on the wire?',
+    'その回線を流れるパケットの、送り元アドレスはどれですか。',
+  ),
+  'labels-on-link': L(
+    'On that cable, which labels does the packet carry? (top first)',
+    'その回線で、パケットに付いているラベルはどれですか。（上から順に）',
+  ),
 };
 
 /** The right one first, then the others, each with the mistake it is; the order comes from the seed. */

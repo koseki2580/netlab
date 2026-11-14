@@ -97,7 +97,16 @@ export interface PacketField {
 
 // --- Goals ---------------------------------------------------------------------
 
-export type DropReason = 'ttl-exceeded' | 'fragmentation-needed' | 'acl-deny' | 'no-route';
+export type DropReason =
+  | 'ttl-exceeded'
+  | 'fragmentation-needed'
+  | 'acl-deny'
+  | 'no-route'
+  /** Level 5 (REQ-353): the far end of a tunnel does not take it. */
+  | 'gre-key-mismatch'
+  | 'vxlan-vni-mismatch'
+  /** Level 5: a router of an MPLS core has no entry for the label on top. */
+  | 'mpls-no-label';
 
 /** What must be true of the packet after it was sent. `label` is the goal in the learner's words. */
 export type PacketGoal = { readonly id: string; readonly label: Localised } & (
@@ -223,7 +232,13 @@ export type QuestionAsk =
   /** Which server answers the resolver's `dns.step`-th query (`cache`: nobody is asked). */
   | 'dns-asked'
   /** The TTL left on the cached answer the resolver gives. */
-  | 'dns-ttl-left';
+  | 'dns-ttl-left'
+  /** Level 5: on the cable `edgeId`, the destination address (of the outer packet, in a tunnel). */
+  | 'dst-on-link'
+  /** Level 5: on the cable `edgeId`, the source address (of the outer packet, in a tunnel). */
+  | 'src-on-link'
+  /** Level 5: on the cable `edgeId`, the MPLS labels, top first (`none`: plain IP). */
+  | 'labels-on-link';
 
 export interface ReadQuestion {
   readonly id: string;

@@ -1,57 +1,57 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`exercise templates, generator version 7 > l1-cable-off: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l1-cable-off: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
-    "brief": "週末に、部屋の模様替えをしました。リビングのパソコンと書斎のノートパソコンから写真用のサーバーにつながりません。子ども部屋のパソコンからは、つながります。どこかでケーブルがぬけたようです。",
-    "fingerprint": "l1-cable-off|home|two-switches|e-sw",
+    "brief": "週末に、部屋の模様替えをしました。リビングのパソコンは今週は使わないので、ケーブルをわざとぬいてあります。書斎のノートパソコンから写真用のサーバーにつながりません。子ども部屋のパソコンからは、つながります。ほかにも、どこかでケーブルがぬけたようです。",
+    "fingerprint": "l1-cable-off|home|two-switches|e-sw|pc1",
     "id": "l1-cable-off~8",
     "rule": "ルール：ぬけているケーブルは、図では赤い点線。押すと、つながります。",
-    "task": "ぬけているケーブルを図で見つけて、つなぎ直してください。",
+    "task": "まちがってぬけたケーブルを見つけて、つなぎ直してください。わざとぬいたほうは、そのままにします。",
     "title": "つながらない機器がある",
   },
   {
-    "brief": "きのうの夜、お店の床をそうじしました。レジから在庫サーバーにつながりません。事務室のパソコンと売り場のタブレットからは、つながります。どこかでケーブルがぬけたようです。",
-    "fingerprint": "l1-cable-off|shop|two-switches|pc1",
+    "brief": "きのうの夜、お店の床をそうじしました。事務室のパソコンは今週は使わないので、ケーブルをわざとぬいてあります。レジから在庫サーバーにつながりません。売り場のタブレットからは、つながります。ほかにも、どこかでケーブルがぬけたようです。",
+    "fingerprint": "l1-cable-off|shop|two-switches|pc1|pc2",
     "id": "l1-cable-off~1",
     "rule": "ルール：ぬけているケーブルは、図では赤い点線。押すと、つながります。",
-    "task": "ぬけているケーブルを図で見つけて、つなぎ直してください。",
+    "task": "まちがってぬけたケーブルを見つけて、つなぎ直してください。わざとぬいたほうは、そのままにします。",
     "title": "つながらない機器がある",
   },
   {
-    "brief": "新しいいすを置くために、机を動かしました。どの機器からも、カルテサーバーにつながりません。どこかでケーブルがぬけたようです。",
-    "fingerprint": "l1-cable-off|clinic|two-switches|e-srv",
+    "brief": "新しいいすを置くために、机を動かしました。診察室のパソコンは今週は使わないので、ケーブルをわざとぬいてあります。使っているどの機器からも、カルテサーバーにつながりません。ほかにも、どこかでケーブルがぬけたようです。",
+    "fingerprint": "l1-cable-off|clinic|two-switches|e-srv|pc2",
     "id": "l1-cable-off~3",
     "rule": "ルール：ぬけているケーブルは、図では赤い点線。押すと、つながります。",
-    "task": "ぬけているケーブルを図で見つけて、つなぎ直してください。",
+    "task": "まちがってぬけたケーブルを見つけて、つなぎ直してください。わざとぬいたほうは、そのままにします。",
     "title": "だれもつながらない",
   },
   {
-    "brief": "授業のあとで、机を並べ替えました。どの機器からも、教材サーバーにつながりません。どこかでケーブルがぬけたようです。",
-    "fingerprint": "l1-cable-off|school|one-switch|e-up",
+    "brief": "授業のあとで、机を並べ替えました。教室のパソコンは今週は使わないので、ケーブルをわざとぬいてあります。使っているどの機器からも、教材サーバーにつながりません。ほかにも、どこかでケーブルがぬけたようです。",
+    "fingerprint": "l1-cable-off|school|one-switch|e-up|pc3",
     "id": "l1-cable-off~0",
     "rule": "ルール：ぬけているケーブルは、図では赤い点線。押すと、つながります。",
-    "task": "ぬけているケーブルを図で見つけて、つなぎ直してください。",
+    "task": "まちがってぬけたケーブルを見つけて、つなぎ直してください。わざとぬいたほうは、そのままにします。",
     "title": "だれもつながらない",
   },
   {
-    "brief": "きのう、机の下で工事がありました。どの機器からも、ファイルサーバーにつながりません。どこかでケーブルがぬけたようです。",
-    "fingerprint": "l1-cable-off|office|one-switch|e-up",
+    "brief": "きのう、机の下で工事がありました。営業のパソコンは今週は使わないので、ケーブルをわざとぬいてあります。使っているどの機器からも、ファイルサーバーにつながりません。ほかにも、どこかでケーブルがぬけたようです。",
+    "fingerprint": "l1-cable-off|office|one-switch|e-up|pc1",
     "id": "l1-cable-off~5",
     "rule": "ルール：ぬけているケーブルは、図では赤い点線。押すと、つながります。",
-    "task": "ぬけているケーブルを図で見つけて、つなぎ直してください。",
+    "task": "まちがってぬけたケーブルを見つけて、つなぎ直してください。わざとぬいたほうは、そのままにします。",
     "title": "だれもつながらない",
   },
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l1-choose-address: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l1-choose-address: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "おじいちゃんの家で使っていたカラープリンタをもらって、リビングにつなぎました。ところが、どの機器からも印刷できません。アドレスは、前の場所で使っていた「172.18.4.110」のままです。まわりの機器のアドレスと見くらべてください。カラープリンタのアドレスを、どれに変えますか。アドレスは、ルータもふくめて、だれともかぶらないようにします。同じアドレスが 2 台にあると、どちらに届けるか決められず、片方にしか届かなくなるからです。",
     "fingerprint": "l1-choose-address|home|one-switch|pc1",
     "id": "l1-choose-address~8",
-    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。",
+    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "カラープリンタのアドレスを、どれにするか選んでください。",
     "title": "よそから来たカラープリンタ",
   },
@@ -59,7 +59,7 @@ exports[`exercise templates, generator version 7 > l1-choose-address: one instan
     "brief": "ほかの支店で使っていた値札プリンタを持ってきて、売り場につなぎました。ところが、どの機器からも印刷できません。アドレスは、前の場所で使っていた「172.18.4.20」のままです。まわりの機器のアドレスと見くらべてください。値札プリンタのアドレスを、どれに変えますか。アドレスは、ルータもふくめて、だれともかぶらないようにします。同じアドレスが 2 台にあると、どちらに届けるか決められず、片方にしか届かなくなるからです。",
     "fingerprint": "l1-choose-address|shop|two-switches|pc1",
     "id": "l1-choose-address~1",
-    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。",
+    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "値札プリンタのアドレスを、どれにするか選んでください。",
     "title": "よそから来た値札プリンタ",
   },
@@ -67,7 +67,7 @@ exports[`exercise templates, generator version 7 > l1-choose-address: one instan
     "brief": "ほかの診療所で使っていた処方せんプリンタをゆずってもらい、受付につなぎました。ところが、どの機器からも印刷できません。アドレスは、前の場所で使っていた「10.1.99.20」のままです。まわりの機器のアドレスと見くらべてください。処方せんプリンタのアドレスを、どれに変えますか。アドレスは、ルータもふくめて、だれともかぶらないようにします。同じアドレスが 2 台にあると、どちらに届けるか決められず、片方にしか届かなくなるからです。",
     "fingerprint": "l1-choose-address|clinic|one-switch|pc3",
     "id": "l1-choose-address~3",
-    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。",
+    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "処方せんプリンタのアドレスを、どれにするか選んでください。",
     "title": "よそから来た処方せんプリンタ",
   },
@@ -75,7 +75,7 @@ exports[`exercise templates, generator version 7 > l1-choose-address: one instan
     "brief": "ほかの学校で使っていたポスター用のプリンタをゆずり受けて、教室の近くにつなぎました。ところが、どの機器からも印刷できません。アドレスは、前の場所で使っていた「192.168.150.110」のままです。まわりの機器のアドレスと見くらべてください。ポスター用のプリンタのアドレスを、どれに変えますか。アドレスは、ルータもふくめて、だれともかぶらないようにします。同じアドレスが 2 台にあると、どちらに届けるか決められず、片方にしか届かなくなるからです。",
     "fingerprint": "l1-choose-address|school|one-switch|pc1",
     "id": "l1-choose-address~0",
-    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。",
+    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "ポスター用のプリンタのアドレスを、どれにするか選んでください。",
     "title": "よそから来たポスター用のプリンタ",
   },
@@ -83,20 +83,20 @@ exports[`exercise templates, generator version 7 > l1-choose-address: one instan
     "brief": "閉めた支店で使っていた図面用のプリンタが送られてきたので、席の近くにつなぎました。ところが、どの機器からも印刷できません。アドレスは、前の場所で使っていた「10.1.99.110」のままです。まわりの機器のアドレスと見くらべてください。図面用のプリンタのアドレスを、どれに変えますか。アドレスは、ルータもふくめて、だれともかぶらないようにします。同じアドレスが 2 台にあると、どちらに届けるか決められず、片方にしか届かなくなるからです。",
     "fingerprint": "l1-choose-address|office|one-switch|pc3",
     "id": "l1-choose-address~5",
-    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。",
+    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "図面用のプリンタのアドレスを、どれにするか選んでください。",
     "title": "よそから来た図面用のプリンタ",
   },
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l1-host-address: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l1-host-address: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "リビングのパソコンを設定し直したら、写真用のサーバーの写真が見られなくなりました。アドレスは、だれかが手で入れたものです。同じ側にある機器のアドレスは、はじめの 3 つの数字が同じです。最後の数字だけが、1 台ごとにちがいます。同じ側の機器のアドレスと見くらべて、リビングのパソコンのアドレスを直してください。アドレスは、ルータもふくめて、だれともかぶらないようにします。同じアドレスが 2 台にあると、どちらに届けるか決められず、片方にしか届かなくなるからです。",
     "fingerprint": "l1-host-address|home|two-switches|pc1|other-side",
     "id": "l1-host-address~8",
-    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。",
+    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "リビングのパソコンのアドレスを、まわりの機器に合うように直してください。",
     "title": "リビングのパソコンのアドレスを直す",
   },
@@ -104,7 +104,7 @@ exports[`exercise templates, generator version 7 > l1-host-address: one instance
     "brief": "レジを新しいものに取り替えたら、在庫サーバーが使えなくなりました。もうすぐ開店です。アドレスは、だれかが手で入れたものです。同じ側にある機器のアドレスは、はじめの 3 つの数字が同じです。最後の数字だけが、1 台ごとにちがいます。同じ側の機器のアドレスと見くらべて、レジのアドレスを直してください。アドレスは、ルータもふくめて、だれともかぶらないようにします。同じアドレスが 2 台にあると、どちらに届けるか決められず、片方にしか届かなくなるからです。",
     "fingerprint": "l1-host-address|shop|two-switches|pc1|stranger",
     "id": "l1-host-address~1",
-    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。",
+    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "レジのアドレスを、まわりの機器に合うように直してください。",
     "title": "レジのアドレスを直す",
   },
@@ -112,7 +112,7 @@ exports[`exercise templates, generator version 7 > l1-host-address: one instance
     "brief": "朝の診療が始まる前に、診察室のパソコンからカルテサーバーが開けないことに気づきました。アドレスは、だれかが手で入れたものです。同じ側にある機器のアドレスは、はじめの 3 つの数字が同じです。最後の数字だけが、1 台ごとにちがいます。同じ側の機器のアドレスと見くらべて、診察室のパソコンのアドレスを直してください。アドレスは、ルータもふくめて、だれともかぶらないようにします。同じアドレスが 2 台にあると、どちらに届けるか決められず、片方にしか届かなくなるからです。",
     "fingerprint": "l1-host-address|clinic|two-switches|pc2|router",
     "id": "l1-host-address~3",
-    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。",
+    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "診察室のパソコンのアドレスを、まわりの機器に合うように直してください。",
     "title": "診察室のパソコンのアドレスを直す",
   },
@@ -120,7 +120,7 @@ exports[`exercise templates, generator version 7 > l1-host-address: one instance
     "brief": "授業の前に、先生のパソコンから教材サーバーの教材が開けなくなっていました。アドレスは、だれかが手で入れたものです。同じ側にある機器のアドレスは、はじめの 3 つの数字が同じです。最後の数字だけが、1 台ごとにちがいます。同じ側の機器のアドレスと見くらべて、先生のパソコンのアドレスを直してください。アドレスは、ルータもふくめて、だれともかぶらないようにします。同じアドレスが 2 台にあると、どちらに届けるか決められず、片方にしか届かなくなるからです。",
     "fingerprint": "l1-host-address|school|one-switch|pc1|other-side",
     "id": "l1-host-address~0",
-    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。",
+    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "先生のパソコンのアドレスを、まわりの機器に合うように直してください。",
     "title": "先生のパソコンのアドレスを直す",
   },
@@ -128,20 +128,20 @@ exports[`exercise templates, generator version 7 > l1-host-address: one instance
     "brief": "席替えのあと、会議室のパソコンからファイルサーバーが使えなくなりました。アドレスは、だれかが手で入れたものです。同じ側にある機器のアドレスは、はじめの 3 つの数字が同じです。最後の数字だけが、1 台ごとにちがいます。同じ側の機器のアドレスと見くらべて、会議室のパソコンのアドレスを直してください。アドレスは、ルータもふくめて、だれともかぶらないようにします。同じアドレスが 2 台にあると、どちらに届けるか決められず、片方にしか届かなくなるからです。",
     "fingerprint": "l1-host-address|office|one-switch|pc3|other-side",
     "id": "l1-host-address~5",
-    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。",
+    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "会議室のパソコンのアドレスを、まわりの機器に合うように直してください。",
     "title": "会議室のパソコンのアドレスを直す",
   },
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l1-host-blank: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l1-host-blank: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "誕生日のプレゼントに新しいタブレットを買いました。ケーブルはつなぎましたが、まだ写真用のサーバーの写真が見られません。この機器には、まだアドレスが入っていません。同じ側にある機器のアドレスは、はじめの 3 つの数字が同じです。最後の数字だけが、1 台ごとにちがいます。同じ側の機器のアドレスを見て、新しいタブレットに、ほかの機器と重ならないアドレスを入れてください。アドレスは、ルータもふくめて、だれともかぶらないようにします。同じアドレスが 2 台にあると、どちらに届けるか決められず、片方にしか届かなくなるからです。",
     "fingerprint": "l1-host-blank|home|two-switches|pc1",
     "id": "l1-host-blank~8",
-    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。",
+    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "新しいタブレットに、アドレスを入れてください。",
     "title": "新しいタブレットにアドレスを入れる",
   },
@@ -149,7 +149,7 @@ exports[`exercise templates, generator version 7 > l1-host-blank: one instance s
     "brief": "いそがしい時期にそなえて、2 台目のレジが届きました。ケーブルはつなぎましたが、まだ在庫サーバーが使えません。この機器には、まだアドレスが入っていません。同じ側にある機器のアドレスは、はじめの 3 つの数字が同じです。最後の数字だけが、1 台ごとにちがいます。同じ側の機器のアドレスを見て、2 台目のレジに、ほかの機器と重ならないアドレスを入れてください。アドレスは、ルータもふくめて、だれともかぶらないようにします。同じアドレスが 2 台にあると、どちらに届けるか決められず、片方にしか届かなくなるからです。",
     "fingerprint": "l1-host-blank|shop|two-switches|pc1",
     "id": "l1-host-blank~1",
-    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。",
+    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "2 台目のレジに、アドレスを入れてください。",
     "title": "2 台目のレジにアドレスを入れる",
   },
@@ -157,7 +157,7 @@ exports[`exercise templates, generator version 7 > l1-host-blank: one instance s
     "brief": "看護師用の新しいパソコンを机に置きました。ケーブルはつなぎましたが、まだカルテサーバーが開けません。この機器には、まだアドレスが入っていません。同じ側にある機器のアドレスは、はじめの 3 つの数字が同じです。最後の数字だけが、1 台ごとにちがいます。同じ側の機器のアドレスを見て、看護師用の新しいパソコンに、ほかの機器と重ならないアドレスを入れてください。アドレスは、ルータもふくめて、だれともかぶらないようにします。同じアドレスが 2 台にあると、どちらに届けるか決められず、片方にしか届かなくなるからです。",
     "fingerprint": "l1-host-blank|clinic|two-switches|pc2",
     "id": "l1-host-blank~3",
-    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。",
+    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "看護師用の新しいパソコンに、アドレスを入れてください。",
     "title": "看護師用の新しいパソコンにアドレスを入れる",
   },
@@ -165,7 +165,7 @@ exports[`exercise templates, generator version 7 > l1-host-blank: one instance s
     "brief": "教室の新しいタブレットが配られました。ケーブルはつなぎましたが、まだ教材サーバーが開けません。この機器には、まだアドレスが入っていません。同じ側にある機器のアドレスは、はじめの 3 つの数字が同じです。最後の数字だけが、1 台ごとにちがいます。同じ側の機器のアドレスを見て、教室の新しいタブレットに、ほかの機器と重ならないアドレスを入れてください。アドレスは、ルータもふくめて、だれともかぶらないようにします。同じアドレスが 2 台にあると、どちらに届けるか決められず、片方にしか届かなくなるからです。",
     "fingerprint": "l1-host-blank|school|one-switch|pc1",
     "id": "l1-host-blank~0",
-    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。",
+    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "教室の新しいタブレットに、アドレスを入れてください。",
     "title": "教室の新しいタブレットにアドレスを入れる",
   },
@@ -173,14 +173,14 @@ exports[`exercise templates, generator version 7 > l1-host-blank: one instance s
     "brief": "月曜からの新入社員のパソコンを席に置きました。ケーブルはつなぎましたが、まだファイルサーバーが使えません。この機器には、まだアドレスが入っていません。同じ側にある機器のアドレスは、はじめの 3 つの数字が同じです。最後の数字だけが、1 台ごとにちがいます。同じ側の機器のアドレスを見て、新入社員のパソコンに、ほかの機器と重ならないアドレスを入れてください。アドレスは、ルータもふくめて、だれともかぶらないようにします。同じアドレスが 2 台にあると、どちらに届けるか決められず、片方にしか届かなくなるからです。",
     "fingerprint": "l1-host-blank|office|one-switch|pc3",
     "id": "l1-host-blank~5",
-    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。",
+    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。アドレスは、ルータもふくめて、だれともかぶらない。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "新入社員のパソコンに、アドレスを入れてください。",
     "title": "新入社員のパソコンにアドレスを入れる",
   },
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l1-prefix-fit: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l1-prefix-fit: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "リビングのパソコンにアドレスを手で入れたところ、写真用のサーバーの写真が見られません。家のルータの「リビングのスイッチのある側」のアドレスは「10.5.0.1/16」です。「/16」は、はじめの 2 つの数字が同じ機器どうしが、同じネットワークの仲間だという意味です。数字を見くらべて、リビングのパソコンのアドレスを、仲間に入るように直してください。数字 1 つが 8 ぶんなので、/8 は 1 つ目まで、/16 は 2 つ目まで、/24 は 3 つ目までが同じ、という意味です。",
@@ -202,7 +202,7 @@ exports[`exercise templates, generator version 7 > l1-prefix-fit: one instance s
     "brief": "電話で聞いたアドレスを診察室のパソコンに入れましたが、カルテサーバーが開けません。診療所のルータの「受付のスイッチのある側」のアドレスは「10.1.2.254/24」です。「/24」は、はじめの 3 つの数字が同じ機器どうしが、同じネットワークの仲間だという意味です。数字を見くらべて、診察室のパソコンのアドレスを、仲間に入るように直してください。数字 1 つが 8 ぶんなので、/8 は 1 つ目まで、/16 は 2 つ目まで、/24 は 3 つ目までが同じ、という意味です。",
     "fingerprint": "l1-prefix-fit|clinic|server-switch|/24|pc2",
     "id": "l1-prefix-fit~3",
-    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。ちがうのは最後の数字だけ。",
+    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。ちがうのは最後の数字だけ。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "診察室のパソコンのアドレスを、まわりの機器の仲間に入るように直してください。",
     "title": "診察室のパソコンを「/24」のネットワークに入れる",
   },
@@ -218,20 +218,20 @@ exports[`exercise templates, generator version 7 > l1-prefix-fit: one instance s
     "brief": "去年の管理表のアドレスを営業のパソコンに入れましたが、ファイルサーバーが使えません。会社のルータの「3 階のスイッチのある側」のアドレスは「192.168.3.1/24」です。「/24」は、はじめの 3 つの数字が同じ機器どうしが、同じネットワークの仲間だという意味です。数字を見くらべて、営業のパソコンのアドレスを、仲間に入るように直してください。数字 1 つが 8 ぶんなので、/8 は 1 つ目まで、/16 は 2 つ目まで、/24 は 3 つ目までが同じ、という意味です。",
     "fingerprint": "l1-prefix-fit|office|server-switch|/24|pc1",
     "id": "l1-prefix-fit~5",
-    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。ちがうのは最後の数字だけ。",
+    "rule": "ルール：ルータは /24。はじめの 3 つの数字が同じなら仲間。ちがうのは最後の数字だけ。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "営業のパソコンのアドレスを、まわりの機器の仲間に入るように直してください。",
     "title": "営業のパソコンを「/24」のネットワークに入れる",
   },
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l1-router-address: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l1-router-address: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "家のルータがこわれたので、新しいものに取り替えて、手で設定しました。それから、どの機器からも写真用のサーバーにつながりません。パソコンと写真用のサーバーは、さわっていません。ルータは 2 つのネットワークをつなぐ機械で、それぞれの側に 1 つずつアドレスを持ちます。ここでは「2 階のスイッチのある側」と「写真用のサーバーのある側」です。どちらのアドレスも、その側にある機器と、はじめの 3 つの数字が同じでなければなりません。まちがっているほうを直してください。ルータがそれぞれの側にアドレスを持つのは、どちらの側の機器ともじかにやりとりするためです。機器がじかにやりとりできるのは、同じネットワークの相手だけです。",
     "fingerprint": "l1-router-address|home|two-switches|lan|stranger",
     "id": "l1-router-address~8",
-    "rule": "ルール：ルータは /24。その側の機器と、はじめの 3 つの数字をそろえる。アドレスは、だれともかぶらない。",
+    "rule": "ルール：ルータは /24。その側の機器と、はじめの 3 つの数字をそろえる。アドレスは、だれともかぶらない。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "家のルータの 2 つのアドレスのうち、まちがっているほうを直してください。",
     "title": "家のルータの先へ届かない",
   },
@@ -239,7 +239,7 @@ exports[`exercise templates, generator version 7 > l1-router-address: one instan
     "brief": "開店前にお店のルータを取り替えて、設定を手で入れ直しました。それから、どの機器からも在庫サーバーにつながりません。パソコンと在庫サーバーは、さわっていません。ルータは 2 つのネットワークをつなぐ機械で、それぞれの側に 1 つずつアドレスを持ちます。ここでは「事務室のスイッチのある側」と「在庫サーバーのある側」です。どちらのアドレスも、その側にある機器と、はじめの 3 つの数字が同じでなければなりません。まちがっているほうを直してください。ルータがそれぞれの側にアドレスを持つのは、どちらの側の機器ともじかにやりとりするためです。機器がじかにやりとりできるのは、同じネットワークの相手だけです。",
     "fingerprint": "l1-router-address|shop|two-switches|lan|stranger",
     "id": "l1-router-address~1",
-    "rule": "ルール：ルータは /24。その側の機器と、はじめの 3 つの数字をそろえる。アドレスは、だれともかぶらない。",
+    "rule": "ルール：ルータは /24。その側の機器と、はじめの 3 つの数字をそろえる。アドレスは、だれともかぶらない。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "お店のルータの 2 つのアドレスのうち、まちがっているほうを直してください。",
     "title": "お店のルータの先へ届かない",
   },
@@ -247,7 +247,7 @@ exports[`exercise templates, generator version 7 > l1-router-address: one instan
     "brief": "昼休みに診療所のルータを取り替えて、設定を入れ直しました。それから、どの機器からもカルテサーバーにつながりません。パソコンとカルテサーバーは、さわっていません。ルータは 2 つのネットワークをつなぐ機械で、それぞれの側に 1 つずつアドレスを持ちます。ここでは「診察室のスイッチのある側」と「カルテサーバーのある側」です。どちらのアドレスも、その側にある機器と、はじめの 3 つの数字が同じでなければなりません。まちがっているほうを直してください。ルータがそれぞれの側にアドレスを持つのは、どちらの側の機器ともじかにやりとりするためです。機器がじかにやりとりできるのは、同じネットワークの相手だけです。",
     "fingerprint": "l1-router-address|clinic|two-switches|lan|near-miss",
     "id": "l1-router-address~3",
-    "rule": "ルール：ルータは /24。その側の機器と、はじめの 3 つの数字をそろえる。アドレスは、だれともかぶらない。",
+    "rule": "ルール：ルータは /24。その側の機器と、はじめの 3 つの数字をそろえる。アドレスは、だれともかぶらない。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "診療所のルータの 2 つのアドレスのうち、まちがっているほうを直してください。",
     "title": "診療所のルータの先へ届かない",
   },
@@ -255,7 +255,7 @@ exports[`exercise templates, generator version 7 > l1-router-address: one instan
     "brief": "休みのあいだに学校のルータを取り替えて、設定を入れ直しました。それから、どの機器からも教材サーバーにつながりません。パソコンと教材サーバーは、さわっていません。ルータは 2 つのネットワークをつなぐ機械で、それぞれの側に 1 つずつアドレスを持ちます。ここでは「教室のスイッチのある側」と「職員室のスイッチのある側」です。どちらのアドレスも、その側にある機器と、はじめの 3 つの数字が同じでなければなりません。まちがっているほうを直してください。ルータがそれぞれの側にアドレスを持つのは、どちらの側の機器ともじかにやりとりするためです。機器がじかにやりとりできるのは、同じネットワークの相手だけです。",
     "fingerprint": "l1-router-address|school|server-switch|far|stranger",
     "id": "l1-router-address~0",
-    "rule": "ルール：ルータは /24。その側の機器と、はじめの 3 つの数字をそろえる。アドレスは、だれともかぶらない。",
+    "rule": "ルール：ルータは /24。その側の機器と、はじめの 3 つの数字をそろえる。アドレスは、だれともかぶらない。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "学校のルータの 2 つのアドレスのうち、まちがっているほうを直してください。",
     "title": "学校のルータの先へ届かない",
   },
@@ -263,20 +263,20 @@ exports[`exercise templates, generator version 7 > l1-router-address: one instan
     "brief": "きのうの夜、会社のルータを取り替えて、設定を手で写しました。それから、どの機器からもファイルサーバーにつながりません。パソコンとファイルサーバーは、さわっていません。ルータは 2 つのネットワークをつなぐ機械で、それぞれの側に 1 つずつアドレスを持ちます。ここでは「3 階のスイッチのある側」と「サーバー室のスイッチのある側」です。どちらのアドレスも、その側にある機器と、はじめの 3 つの数字が同じでなければなりません。まちがっているほうを直してください。ルータがそれぞれの側にアドレスを持つのは、どちらの側の機器ともじかにやりとりするためです。機器がじかにやりとりできるのは、同じネットワークの相手だけです。",
     "fingerprint": "l1-router-address|office|server-switch|far|near-miss",
     "id": "l1-router-address~5",
-    "rule": "ルール：ルータは /24。その側の機器と、はじめの 3 つの数字をそろえる。アドレスは、だれともかぶらない。",
+    "rule": "ルール：ルータは /24。その側の機器と、はじめの 3 つの数字をそろえる。アドレスは、だれともかぶらない。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "会社のルータの 2 つのアドレスのうち、まちがっているほうを直してください。",
     "title": "会社のルータの先へ届かない",
   },
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l1-which-pc: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l1-which-pc: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "家族がそれぞれ、自分の機器を設定しました。ところが、写真用のサーバーの写真が見られない機器があります。3 台のうち 1 台は、アドレスの入れまちがいです。アドレスは、ルータもふくめて、だれともかぶらないようにします。同じアドレスが 2 台にあると、どちらに届けるか決められず、片方にしか届かなくなるからです。",
     "fingerprint": "l1-which-pc|home|one-switch|pc1|stranger",
     "id": "l1-which-pc~8",
-    "rule": "ルール：ルータは /24。同じ側は、はじめの 3 つの数字が同じ。アドレスは、ルータもふくめて 1 台ずつちがう。",
+    "rule": "ルール：ルータは /24。同じ側は、はじめの 3 つの数字が同じ。アドレスは、ルータもふくめて 1 台ずつちがう。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "3 台のうち、アドレスがおかしい 1 台を見つけて、その 1 台だけを直してください。",
     "title": "3 台のうち 1 台がおかしい",
   },
@@ -284,7 +284,7 @@ exports[`exercise templates, generator version 7 > l1-which-pc: one instance set
     "brief": "セールの前に、3 台の機器を急いで設定しました。ところが、在庫サーバーが使えない機器があります。3 台のうち 1 台は、アドレスの入れまちがいです。アドレスは、ルータもふくめて、だれともかぶらないようにします。同じアドレスが 2 台にあると、どちらに届けるか決められず、片方にしか届かなくなるからです。",
     "fingerprint": "l1-which-pc|shop|server-switch|pc1|stranger",
     "id": "l1-which-pc~1",
-    "rule": "ルール：ルータは /24。同じ側は、はじめの 3 つの数字が同じ。アドレスは、ルータもふくめて 1 台ずつちがう。",
+    "rule": "ルール：ルータは /24。同じ側は、はじめの 3 つの数字が同じ。アドレスは、ルータもふくめて 1 台ずつちがう。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "3 台のうち、アドレスがおかしい 1 台を見つけて、その 1 台だけを直してください。",
     "title": "3 台のうち 1 台がおかしい",
   },
@@ -292,7 +292,7 @@ exports[`exercise templates, generator version 7 > l1-which-pc: one instance set
     "brief": "停電のあと、3 台のパソコンを設定し直しました。ところが、カルテサーバーが開けないパソコンがあります。3 台のうち 1 台は、アドレスの入れまちがいです。アドレスは、ルータもふくめて、だれともかぶらないようにします。同じアドレスが 2 台にあると、どちらに届けるか決められず、片方にしか届かなくなるからです。",
     "fingerprint": "l1-which-pc|clinic|one-switch|pc1|duplicate",
     "id": "l1-which-pc~3",
-    "rule": "ルール：ルータは /24。同じ側は、はじめの 3 つの数字が同じ。アドレスは、ルータもふくめて 1 台ずつちがう。",
+    "rule": "ルール：ルータは /24。同じ側は、はじめの 3 つの数字が同じ。アドレスは、ルータもふくめて 1 台ずつちがう。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "3 台のうち、アドレスがおかしい 1 台を見つけて、その 1 台だけを直してください。",
     "title": "3 台のうち 1 台がおかしい",
   },
@@ -300,7 +300,7 @@ exports[`exercise templates, generator version 7 > l1-which-pc: one instance set
     "brief": "新学期にそなえて、3 台のパソコンを設定しました。ところが、教材サーバーが開けないパソコンがあります。3 台のうち 1 台は、アドレスの入れまちがいです。アドレスは、ルータもふくめて、だれともかぶらないようにします。同じアドレスが 2 台にあると、どちらに届けるか決められず、片方にしか届かなくなるからです。",
     "fingerprint": "l1-which-pc|school|one-switch|pc2|stranger",
     "id": "l1-which-pc~0",
-    "rule": "ルール：ルータは /24。同じ側は、はじめの 3 つの数字が同じ。アドレスは、ルータもふくめて 1 台ずつちがう。",
+    "rule": "ルール：ルータは /24。同じ側は、はじめの 3 つの数字が同じ。アドレスは、ルータもふくめて 1 台ずつちがう。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "3 台のうち、アドレスがおかしい 1 台を見つけて、その 1 台だけを直してください。",
     "title": "3 台のうち 1 台がおかしい",
   },
@@ -308,14 +308,14 @@ exports[`exercise templates, generator version 7 > l1-which-pc: one instance set
     "brief": "新しいチームのために、3 台のパソコンを設定しました。ところが、ファイルサーバーが使えないパソコンがあります。3 台のうち 1 台は、アドレスの入れまちがいです。アドレスは、ルータもふくめて、だれともかぶらないようにします。同じアドレスが 2 台にあると、どちらに届けるか決められず、片方にしか届かなくなるからです。",
     "fingerprint": "l1-which-pc|office|one-switch|pc2|duplicate",
     "id": "l1-which-pc~5",
-    "rule": "ルール：ルータは /24。同じ側は、はじめの 3 つの数字が同じ。アドレスは、ルータもふくめて 1 台ずつちがう。",
+    "rule": "ルール：ルータは /24。同じ側は、はじめの 3 つの数字が同じ。アドレスは、ルータもふくめて 1 台ずつちがう。最後の数字は 1〜254（0 と 255 は特別な数字）。",
     "task": "3 台のうち、アドレスがおかしい 1 台を見つけて、その 1 台だけを直してください。",
     "title": "3 台のうち 1 台がおかしい",
   },
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l2-acl-permit: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l2-acl-permit: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "写真用のサーバーを開いてよいのは、家族の機器だけです。仕事用の機器からは開けないようにしてあります。家のルータは、これを ACL（通す通信・止める通信を 1 行ずつ書いた一覧）で行っています。写真用のサーバーを開くときの通信は、種類が tcp で、あて先のポート番号は 80 番です。（ポート番号は、機器の中の「どの窓口あてか」を表す数字です。スイッチの差し込み口（ポート）とは別のものです。）行が 1 つあるだけで、ほかの通信がぜんぶ止まります。一覧の最後には、見えない『それ以外は止める』の行があるからです。リビングのパソコンは新しく入った機器で、まだ写真用のサーバーに届きません。一覧を直して、リビングのパソコンが通るようにしてください。仕事用のノートパソコンは、これまでどおり通してはいけません。",
@@ -360,7 +360,7 @@ exports[`exercise templates, generator version 7 > l2-acl-permit: one instance s
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l2-choose-root: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l2-choose-root: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "家の 3 台のスイッチを、輪になるようにつないであります。輪になった配線では、スパニングツリー（STP）がケーブルを 1 本止めて、通信が回り続けないようにします。どのケーブルが止まるかは、中心になるスイッチ（ルートブリッジ。優先度の数字がいちばん小さいスイッチ）で決まります。2 階のスイッチの機器もリビングのスイッチの機器も、一日中写真用のサーバーを使います。いまはリビングのスイッチが中心で、片方は遠回りをして写真用のサーバーに届いています。どちらも直接のケーブルを通るようにするには、どの設定にしますか。いちばん小さい数字が中心になるのは、どのスイッチも同じ決まりで、同じ 1 台を中心に選べるようにするためです（数字が同じなら、機器の番号が小さいほう）。中心はサーバーの近くがよいのは、みんなからサーバーへの道が木の枝にそって通り、止められたケーブルを通らずにすむからです。",
@@ -405,7 +405,7 @@ exports[`exercise templates, generator version 7 > l2-choose-root: one instance 
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l2-choose-static-default: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l2-choose-static-default: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "母屋から外へ出るケーブルは 1 本だけで、その先は離れのルータです。離れのルータの向こうには写真用のサーバー・ガレージのカメラ・作業小屋のパソコン・新しいタブレットがあり、それぞれ別のネットワークにあります。新しいタブレットのネットワークはできたばかりで、これからもふえる予定です。リビングのパソコンから、その全部に届かなければなりません。ルータは、自分に直接つながっていないネットワークへは、経路（「このネットワークあては、となりのこのルータに渡す」という行。そのとなりのルータを「次のルータ」といいます）がなければ送れません。母屋のルータには、まだ経路が 1 つもありません。どう書きますか。0.0.0.0/0 は、どの行き先にも当てはまります。「/0」は、同じでなければならない数字が 1 つもない、という意味だからです。ほかの行が当てはまらないときに使われます。",
@@ -450,7 +450,7 @@ exports[`exercise templates, generator version 7 > l2-choose-static-default: one
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l2-static-missing: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l2-static-missing: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "写真用のサーバーを離れに移して、専用のルータの先につなぎました。ところが、リビングのパソコンから届きません。送ったものは、途中のルータで止まります。ルータが知っているのは、自分に直接つながっているネットワークだけです。それ以外のネットワークへ送るには、経路がいります。経路とは「このネットワークあては、となりのこのルータに渡す」という 1 行のことです。そのとなりのルータを「次のルータ」といい、そのアドレスを書きます。写真用のサーバーのネットワーク（10.20.0.0/24）への経路を持っていないルータを見つけて、経路を足してください。「次のルータ」がこちらを向いた側のアドレスなのは、ルータがじかに渡せるのは自分と同じネットワークの相手だけだからです。",
@@ -495,7 +495,7 @@ exports[`exercise templates, generator version 7 > l2-static-missing: one instan
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l2-static-nexthop: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l2-static-nexthop: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "母屋と離れは、ルータでつながっています。リビングのパソコンから、離れの写真用のサーバーを使います。経路はだれかが入れてくれたのですが、それでも届きません。ルータが知っているのは、自分に直接つながっているネットワークだけです。それ以外のネットワークへ送るには、経路がいります。経路とは「このネットワークあては、となりのこのルータに渡す」という 1 行のことです。そのとなりのルータを「次のルータ」といい、そのアドレスを書きます。写真用のサーバーのネットワーク（10.20.0.0/24）への経路のうち 1 つは、「次のルータ」がまちがっています。見つけて直してください。「次のルータ」がこちらを向いた側のアドレスなのは、ルータがじかに渡せるのは自分と同じネットワークの相手だけだからです。",
@@ -540,7 +540,7 @@ exports[`exercise templates, generator version 7 > l2-static-nexthop: one instan
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l2-static-return: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l2-static-return: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "母屋と離れは、ルータでつながっています。リビングのパソコンから、離れの写真用のサーバーを使います。写真がいつまでも開きません。でも、リビングのパソコンが送ったものは、写真用のサーバーに届いています。返事のほうが、帰り道でなくなっています。ルータが知っているのは、自分に直接つながっているネットワークだけです。それ以外のネットワークへ送るには、経路がいります。経路とは「このネットワークあては、となりのこのルータに渡す」という 1 行のことです。そのとなりのルータを「次のルータ」といい、そのアドレスを書きます。リビングのパソコンのネットワーク（192.168.10.0/24）への帰り道を知らないルータを見つけて、経路を足してください。「次のルータ」がこちらを向いた側のアドレスなのは、ルータがじかに渡せるのは自分と同じネットワークの相手だけだからです。",
@@ -585,7 +585,7 @@ exports[`exercise templates, generator version 7 > l2-static-return: one instanc
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l2-stp-root: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l2-stp-root: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "ケーブルが 1 本抜けても部屋が切り離されないように、家のスイッチを輪につなぎました。輪になった配線では、スパニングツリー（STP）がケーブルを 1 本止めて、通信が回り続けないようにします。そのとき中心になるスイッチをルートブリッジといい、優先度の数字がいちばん小さいスイッチが選ばれます。写真用のサーバーはリビングのスイッチにつながっているので、リビングのスイッチを中心にしたいところです。ところが、いまは別のスイッチが中心になっています。優先度の数字を変えて、リビングのスイッチがルートブリッジになるようにしてください。いちばん小さい数字が中心になるのは、どのスイッチも同じ決まりで、同じ 1 台を中心に選べるようにするためです（数字が同じなら、機器の番号が小さいほう）。中心はサーバーの近くがよいのは、みんなからサーバーへの道が木の枝にそって通り、止められたケーブルを通らずにすむからです。",
@@ -630,7 +630,7 @@ exports[`exercise templates, generator version 7 > l2-stp-root: one instance set
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l2-trunk-allowed: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l2-trunk-allowed: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "別の部屋の機器もつなげるように、スイッチを 1 台ふやしました。家族の機器と在宅勤務の機器は同じスイッチを使い、VLAN（スイッチの中を分ける仕切り）で分けてあります。機器をつなぐふつうの差し込み口には VLAN 番号が 1 つあり、同じ番号の差し込み口どうしだけが届きます。番号がちがうと、アドレスが合っていても届きません。スイッチは、番号のちがう差し込み口へは何も渡さないからです。スイッチ同士をつなぐケーブルはトランクといい、複数の VLAN をまとめて運びます。その両はしの差し込み口には、番号 1 つのかわりに、運ぶ番号の一覧があります。番号は、両はしの一覧にいります。片方のスイッチが送り出しても、もう片方が受け取らなければ届かないからです。仕事用のノートパソコンから、別のスイッチにある仕事用の電話機に届きません。どちらも在宅勤務の機器です。図にある機器の VLAN 番号と、トランクの一覧を見くらべて、足りない番号を足してください。2 つのグループは分けたままにします。",
@@ -675,7 +675,7 @@ exports[`exercise templates, generator version 7 > l2-trunk-allowed: one instanc
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l2-vlan-access: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l2-vlan-access: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "家族の機器と在宅勤務の機器は同じスイッチを使い、VLAN（スイッチの中を分ける仕切り）で分けてあります。機器をつなぐふつうの差し込み口には VLAN 番号が 1 つあり、同じ番号の差し込み口どうしだけが届きます。番号がちがうと、アドレスが合っていても届きません。スイッチは、番号のちがう差し込み口へは何も渡さないからです。片づけのときに仕事用のノートパソコンのケーブルを抜いて、スイッチの別の差し込み口につなぎ直しました。それから、仕事用のノートパソコンだけ、同じグループ（在宅勤務）の仕事用の電話機に届きません。差し込み口の VLAN 番号を見くらべて、ちがっている 1 つを直してください。2 つのグループは分けたままにします。",
@@ -720,7 +720,7 @@ exports[`exercise templates, generator version 7 > l2-vlan-access: one instance 
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l2-vlan-separate: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l2-vlan-separate: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "家で仕事をするようになりました。仕事用の機器は、家族の機器から見えないようにしなければなりません。スイッチの中は、VLAN（スイッチの中を分ける仕切り）で分けられます。機器をつなぐ差し込み口には VLAN 番号が 1 つずつあり、同じ番号の差し込み口どうしだけが届きます。いまは、どの差し込み口も同じ番号なので、どの機器からもどの機器にも届きます。家族の機器（リビングのパソコン・書斎のノートパソコン・子ども部屋のパソコン）と、在宅勤務の機器（仕事用のノートパソコンと仕事用の電話機）が、別々の VLAN 番号になるように分けてください。同じグループの中では、これまでどおり届くようにします。番号がちがうと、アドレスが合っていても届きません。スイッチは、番号のちがう差し込み口へは何も渡さないからです。",
@@ -765,7 +765,7 @@ exports[`exercise templates, generator version 7 > l2-vlan-separate: one instanc
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l3-acl-order: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l3-acl-order: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "仕事用のノートパソコンからは、写真用のサーバーを開けないようにしたいところです。だれかが家のルータの一覧に、仕事用のノートパソコンを止める行を足しました。それでも、仕事用のノートパソコンから開けてしまいます。ルータは、通信を一覧（ACL）と上から順に見くらべ、最初に当てはまった行で「通す・止める」を決めます。行が 1 つあるだけで、ほかの通信はぜんぶ止まります。一覧の最後には、見えない『それ以外は止める』の行があるからです。行が当てはまるかは、種類（tcp・udp・icmp。icmp は ping が使う種類）、送り主（「/32」はその 1 台だけ）、tcp と udp ではあて先のポート番号（機器の中の「どの窓口あてか」。スイッチの差し込み口とは別のもの）で決まります。一覧を直して、仕事用のノートパソコンは止まり、ほかの機器は通れるようにしてください。",
@@ -810,7 +810,7 @@ exports[`exercise templates, generator version 7 > l3-acl-order: one instance se
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l3-acl-port: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l3-acl-port: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "仕事用のノートパソコンから、写真用のサーバーのページ（tcp・80 番）を開けるようにしたいのですが、ログイン（tcp・22 番）はできないままにします。いまは、家のルータの一覧が通しているのはリビングのパソコンと書斎のノートパソコンだけです。ルータは、通信を一覧（ACL）と上から順に見くらべ、最初に当てはまった行で「通す・止める」を決めます。行が 1 つあるだけで、ほかの通信はぜんぶ止まります。一覧の最後には、見えない『それ以外は止める』の行があるからです。行が当てはまるかは、種類（tcp・udp・icmp。icmp は ping が使う種類）、送り主（「/32」はその 1 台だけ）、tcp と udp ではあて先のポート番号（機器の中の「どの窓口あてか」。スイッチの差し込み口とは別のもの）で決まります。",
@@ -855,7 +855,7 @@ exports[`exercise templates, generator version 7 > l3-acl-port: one instance set
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l3-acl-replies: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l3-acl-replies: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "プリンタから、パソコンに届かないようにしたい。そこで、だれかが家のルータの写真用のサーバー側に、入ってくる通信の一覧を作り、「プリンタを止める」の 1 行を書きました。それから、どのパソコンからも写真用のサーバーが開けなくなりました。ルータは、通信を一覧（ACL）と上から順に見くらべ、最初に当てはまった行で「通す・止める」を決めます。行が 1 つあるだけで、ほかの通信はぜんぶ止まります。一覧の最後には、見えない『それ以外は止める』の行があるからです。行が当てはまるかは、種類（tcp・udp・icmp。icmp は ping が使う種類）、送り主（「/32」はその 1 台だけ）、tcp と udp ではあて先のポート番号（機器の中の「どの窓口あてか」。スイッチの差し込み口とは別のもの）で決まります。返事も、一覧で調べられます。サーバーの返事は、その側から「入ってくる」通信です。",
@@ -900,7 +900,7 @@ exports[`exercise templates, generator version 7 > l3-acl-replies: one instance 
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l3-bgp-exit: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l3-bgp-exit: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "母屋のルータは 2 つのプロバイダにつながっていて、写真用のサーバーへの道をどちらからも BGP で教わっています。いまは、AS_PATH（途中のネットワークの並び）が 1 つ短いプロバイダ Bから出ています。この拠点はプロバイダ Aとの契約のほうが安いので、そちらから出したいと考えています。LOCAL_PREF は、母屋のルータが各プロバイダから教わった経路に付ける数で、決めていなければ 100 です。AS_PATH より先に比べられます。",
@@ -945,7 +945,7 @@ exports[`exercise templates, generator version 7 > l3-bgp-exit: one instance set
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l3-bgp-med: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l3-bgp-med: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "母屋のルータはプロバイダ A に 2 本、プロバイダ B に 1 本の回線を持ち、写真用のサーバーへの道を 3 つとも、同じ LOCAL_PREF、同じ長さの AS_PATH で教わっています。母屋のルータはどのセッションでも MED を 100 と記録しています。すべて同じなので BGP Identifier の最も小さいものが選ばれ、いまはプロバイダ A 東から出ています。この拠点は、回線の太いプロバイダ A 西から出したいと考えています。次に比べられるのは MED です。",
@@ -990,7 +990,7 @@ exports[`exercise templates, generator version 7 > l3-bgp-med: one instance set 
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l3-choose-longest: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l3-choose-longest: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "母屋のルータから写真用のサーバーへは、庭のルータを通る道と、作業小屋のルータを通る道があります。作業小屋のルータは移設中で、写真用のサーバーへの先の道を、まだ知りません。母屋のルータには、写真用のサーバーへの経路がまだ 1 つもありません。経路の表で、行き先に当てはまる行がいくつもあるときは、「/数字」がいちばん長い行（行き先をいちばんくわしく書いた行）が勝ちます。行の順番は関係ありません。0.0.0.0/0 は何にでも当てはまるので、ほかに当てはまる行がないときだけ使われます。母屋のルータにどの 2 行を入れると、リビングのパソコンから写真用のサーバーに届きますか。",
@@ -1035,7 +1035,7 @@ exports[`exercise templates, generator version 7 > l3-choose-longest: one instan
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l3-ospf-both-ways: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l3-ospf-both-ways: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "作業小屋のルータを通る回線はおそく、庭のルータを通る回線が速い回線です。ルータどうしは、道を自分たちで見つけます（OSPF）。ケーブルごとにコスト（回線ごとの点数。合計が小さい道が選ばれます）があります。コストは、それを設定したルータから「出ていく」通信にだけ数えられます。いまのコスト（各ルータから出ていく側）：母屋のルータから庭のルータへ 10、作業小屋のルータへ 1。庭のルータから先へ 2。作業小屋のルータから先へ 1。帰り道は、離れのルータから庭のルータへ 10、作業小屋のルータへ 1。庭のルータから先へ 2。作業小屋のルータから先へ 1。リビングのパソコンが送るものも、写真用のサーバーの返事も、庭のルータを通るようにしてください。各ルータは、自分から出ていく側のコストを足して、どこへ送るかを決めます。帰ってくる返事の道は、向こう側のルータが、自分のコストで決めます。",
@@ -1080,7 +1080,7 @@ exports[`exercise templates, generator version 7 > l3-ospf-both-ways: one instan
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l3-ospf-dr: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l3-ospf-dr: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "3 台のルータが 1 つの LAN を共有しています。LAN では DR を 1 台選び、ほかのルータは DR と地図を交換します。母屋のルータはメモリがいちばん多いので DR にしたいのですが、いまはちがいます。ルータ ID は、母屋のルータが 1.1.1.1、離れのルータが 2.2.2.2、庭のルータが 3.3.3.3 です。動いているネットワークでは、役についたルータは止まるまで譲りません。ここでは、変更のあと全台が同時に再起動するものとします。",
@@ -1125,7 +1125,7 @@ exports[`exercise templates, generator version 7 > l3-ospf-dr: one instance set 
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l3-ospf-prefer: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l3-ospf-prefer: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "庭のルータを通る回線はおそく、作業小屋のルータを通る回線が速い回線です。ルータどうしは、道を自分たちで見つけます（OSPF）。ケーブルごとにコスト（回線ごとの点数。合計が小さい道が選ばれます）があります。コストは、それを設定したルータから「出ていく」通信にだけ数えられます。いまのコスト（各ルータから出ていく側）：母屋のルータから庭のルータへ 1、作業小屋のルータへ 10。庭のルータから先へ 1。作業小屋のルータから先へ 2。リビングのパソコンから写真用のサーバーへ送るものが、作業小屋のルータを通るようにしてください。各ルータは、自分から出ていく側のコストを足して、どこへ送るかを決めます。帰ってくる返事の道は、向こう側のルータが、自分のコストで決めます。",
@@ -1170,7 +1170,7 @@ exports[`exercise templates, generator version 7 > l3-ospf-prefer: one instance 
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l3-static-both-ways: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l3-static-both-ways: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "母屋と離れは、ルータでつながっています。リビングのパソコンから、離れの写真用のサーバーを使います。あいだに新しいルータを入れて、そのルータととなりのルータの経路を入れ直しました。それから、何も届きません。ルータが知っているのは、自分に直接つながっているネットワークだけです。それ以外のネットワークへ送るには、経路がいります。経路とは「このネットワークあては、となりのこのルータに渡す」という 1 行のことです。そのとなりのルータを「次のルータ」といい、そのアドレスを書きます。足りない経路が 2 つあります。写真用のサーバーのネットワーク（10.20.0.0/24）へ行く道に 1 つ、リビングのパソコンのネットワーク（192.168.10.0/24）へ帰る道に 1 つです。返事にも、帰り道がいります。「次のルータ」がこちらを向いた側のアドレスなのは、ルータがじかに渡せるのは自分と同じネットワークの相手だけだからです。",
@@ -1215,7 +1215,7 @@ exports[`exercise templates, generator version 7 > l3-static-both-ways: one inst
 ]
 `;
 
-exports[`exercise templates, generator version 7 > l3-two-faults: one instance set in each place (home, shop, clinic, school, office) 1`] = `
+exports[`exercise templates, generator version 8 > l3-two-faults: one instance set in each place (home, shop, clinic, school, office) 1`] = `
 [
   {
     "brief": "家具の移動とルータの設定変更をした週末のあと、何もつながりません。どのパソコンからも、写真用のサーバーに届きません。おかしいところが 2 つあります。ぬけたケーブル、ネットワークのちがう機器、ネットワークのちがうルータの側、のうちの 2 つです。両方を見つけて、そこだけを直してください。",

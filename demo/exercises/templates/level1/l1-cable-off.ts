@@ -1,8 +1,12 @@
 /**
  * l1-cable-off — one cable is unplugged. The brief gives the symptom (who
  * cannot reach the server), not the cable; the learner finds it on the picture
- * and plugs it back in. The address of a PC may be changed too, and is not the
- * problem.
+ * and plugs it back in.
+ *
+ * A second cable is out on purpose: a PC not in use this week (the brief says
+ * so). The picture and the list show two cables out, so neither gives the
+ * answer away; the symptom says which one matters, and plugging both in is
+ * one change too many (persona run 2: one ✕ in the list was the answer).
  *
  * No loop anywhere in these shapes, so a cable that is down behaves as one
  * (engine fact 4 is about loops).
@@ -31,6 +35,11 @@ export const l1CableOff = defineTemplate(
     const pc = draw.pick(lan.pcs);
     // Which cable: the PC's own, one every PC shares, or the server's.
     const where = draw.pick(['own', 'shared', 'server']);
+    // The PC put away, its cable out on purpose: never the one cut off.
+    // At least two PCs are left: one is left out only when it is the one cut off.
+    const spare = draw.pick(
+      lan.pcs.filter((id) => where !== 'own' || id !== pc) as [string, ...string[]],
+    );
 
     // --- The fault ---
     const cable =
@@ -44,17 +53,24 @@ export const l1CableOff = defineTemplate(
             : shape === 'server-switch'
               ? draw.pick([lan.uplink, 'e-far'])
               : lan.uplink;
-    const topology = withLinkState(lan.topology, cable, 'down');
+    const spareCable = lan.cableOf[spare] ?? 'e-pc3';
+    const topology = withLinkState(withLinkState(lan.topology, cable, 'down'), spareCable, 'down');
 
     // --- The brief: who notices ---
     const srv = place.server;
-    const cutOff: readonly string[] =
-      cable === 'e-sw' ? ['pc1', 'pc2'] : where === 'own' ? [pc] : lan.pcs;
+    const inUse = lan.pcs.filter((id) => id !== spare);
+    const cutOff: readonly string[] = (
+      cable === 'e-sw' ? ['pc1', 'pc2'] : where === 'own' ? [pc] : lan.pcs
+    ).filter((id) => id !== spare);
     const cutOffNames = cutOff.flatMap((id) => lan.names[id] ?? []);
-    const stillFine = lan.pcs.flatMap((id) => (cutOff.includes(id) ? [] : (lan.names[id] ?? [])));
+    const stillFine = inUse.flatMap((id) => (cutOff.includes(id) ? [] : (lan.names[id] ?? [])));
+    const spareName = lan.names[spare] ?? place.pcs[2];
     const symptom =
       stillFine.length === 0
-        ? L(`No device can reach ${the(srv)}.`, `どの機器からも、${srv.ja}につながりません。`)
+        ? L(
+            `No device in use can reach ${the(srv)}.`,
+            `使っているどの機器からも、${srv.ja}につながりません。`,
+          )
         : L(
             `${capital(listOf(cutOffNames).en)} cannot reach ${the(srv)}, while ${listOf(stillFine).en} still can.`,
             `${listOf(cutOffNames).ja}から${srv.ja}につながりません。${listOf(stillFine).ja}からは、つながります。`,
@@ -74,8 +90,15 @@ export const l1CableOff = defineTemplate(
     });
     const brief = say(
       opening,
+      L(
+        `${capital(the(spareName))} is not in use this week, so its cable was taken out on purpose.`,
+        `${spareName.ja}は今週は使わないので、ケーブルをわざとぬいてあります。`,
+      ),
       symptom,
-      L('A cable seems to have been pulled out somewhere.', 'どこかでケーブルがぬけたようです。'),
+      L(
+        'Another cable seems to have been pulled out somewhere.',
+        'ほかにも、どこかでケーブルがぬけたようです。',
+      ),
     );
 
     // --- What may be changed, the goals, the answers ---
@@ -86,8 +109,8 @@ export const l1CableOff = defineTemplate(
         stillFine.length === 0 ? 'だれもつながらない' : 'つながらない機器がある',
       ),
       task: L(
-        'Find the unplugged cable on the diagram and plug it back in.',
-        'ぬけているケーブルを図で見つけて、つなぎ直してください。',
+        'Find the cable that was pulled out by mistake and plug it back in. Leave the other one out.',
+        'まちがってぬけたケーブルを見つけて、つなぎ直してください。わざとぬいたほうは、そのままにします。',
       ),
       rule: L(
         'Rule: a cable that is out is drawn as a red dotted line. Press it to plug it in.',
@@ -100,11 +123,21 @@ export const l1CableOff = defineTemplate(
       // with one Check to count it was only noise, and a learner who plugged the
       // cable in and also changed the address was told it was solved.
       allowed: lan.cables.map((edgeId) => ({ kind: 'link-state', edgeId }) as const),
-      checks: everyoneReaches(lan, lan.names),
+      checks: [
+        ...everyoneReaches(lan, lan.names).filter((check) =>
+          check.kind === 'reach' ? check.probe.from !== spare : true,
+        ),
+        {
+          id: 'one-change',
+          kind: 'max-changes',
+          max: 1,
+          label: L('Only one cable was plugged in', 'つないだケーブルは 1 本だけ'),
+        },
+      ],
       hints: [
         L(
-          'Look at the cables on the picture one by one. A cable that is out is drawn differently from the others.',
-          '図のケーブルを 1 本ずつ見てください。ぬけているケーブルは、ほかのケーブルとちがう見た目になっています。',
+          `Two cables are drawn as out. One of them is the cable of ${the(spareName)}, taken out on purpose.`,
+          `ぬけているように描かれたケーブルが 2 本あります。そのうち 1 本は、わざとぬいた${spareName.ja}のケーブルです。`,
         ),
         L(
           'If only one device is cut off, suspect the cable only that device uses. If several are, suspect a cable they all share.',
@@ -118,16 +151,15 @@ export const l1CableOff = defineTemplate(
       lessons: ['/course'],
       reference: [{ kind: 'link-state', edgeId: cable, state: 'up' }],
       wrongAnswers: [
-        // Pulling out another cable instead of plugging this one in.
+        // Plugging in the cable taken out on purpose instead.
+        [{ kind: 'link-state', edgeId: spareCable, state: 'up' }],
+        // Plugging both in: one change too many.
         [
-          {
-            kind: 'link-state',
-            edgeId: lan.cables.find((id) => id !== cable) ?? cable,
-            state: 'down',
-          },
+          { kind: 'link-state', edgeId: cable, state: 'up' },
+          { kind: 'link-state', edgeId: spareCable, state: 'up' },
         ],
       ],
-      fingerprint: [place.id, shape, where === 'own' ? pc : cable],
+      fingerprint: [place.id, shape, where === 'own' ? pc : cable, spare],
     };
   },
 );

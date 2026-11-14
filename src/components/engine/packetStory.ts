@@ -61,7 +61,6 @@ const DROP_REASON_KEYS: Readonly<Record<string, string>> = {
   'next-hop-off-link': 'simulation.packetStory.dropNextHopOffLink',
   'reserved-address': 'simulation.packetStory.dropReservedAddress',
   'no-receiver': 'simulation.packetStory.dropNoReceiver',
-  'arp-no-reply': 'simulation.packetStory.dropArpNoReply',
 };
 
 const DROP_FALLBACK_KEY = 'simulation.packetStory.dropOther';
@@ -74,7 +73,8 @@ export function bubbleForHop(hop: PacketHop): HopBubble | null {
       kind: 'drop',
       ...at,
       key: DROP_REASON_KEYS[hop.reason ?? ''] ?? DROP_FALLBACK_KEY,
-      params: {},
+      // A reason with no key here keeps its code: the canvas may load words for it.
+      params: { reason: hop.reason ?? '' },
     };
   }
   const nat = hop.natTranslation;

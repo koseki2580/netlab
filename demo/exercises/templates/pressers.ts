@@ -361,7 +361,8 @@ export async function clearRate(
 /**
  * `neighbour-habit`: knows one thing, and knows it well: "take the first three
  * numbers of a device beside it, and a last number that is not on the diagram
- * yet". Sees a red dotted cable and plugs it in. Does not know what "/16"
+ * yet". Sees a red dotted cable and plugs it in, the first of two if two are
+ * out. Does not know what "/16"
  * means, and cannot tell which side of a router an address belongs to.
  *
  * `knows-level-1`: applies every rule of level 1: reads the "/number", takes
@@ -399,9 +400,11 @@ const addressOf = (change: SettingChange | undefined): string | null =>
 const ownerOf = (change: SettingChange): string =>
   change.kind === 'iface-address'
     ? `${change.nodeId}:${change.ifaceId}`
-    : 'nodeId' in change
-      ? change.nodeId
-      : '';
+    : change.kind === 'link-state'
+      ? change.edgeId
+      : 'nodeId' in change
+        ? change.nodeId
+        : '';
 
 /** What the habit makes of a list of addresses for one device: its picks, or none when it has nothing to say. */
 function habitPicks<T>(
@@ -499,7 +502,8 @@ function knowingOffer(exercise: Exercise, order: ReturnType<typeof attemptOrder>
     const press = card.presses.find(
       (entry) =>
         entry.sound === true &&
-        (picking || touched.has(ownerOf(entry.change)) || entry.change.kind === 'link-state'),
+        // A cable too: of two cables out, the brief says which one matters (l1-cable-off).
+        (picking || touched.has(ownerOf(entry.change))),
     );
     if (press) return { changes: [press.change], value: valueOf(press.change) };
   }

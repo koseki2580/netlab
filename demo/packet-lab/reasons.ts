@@ -259,6 +259,100 @@ export const REASSEMBLES_ANYWAY = L(
  * of its own. None of these names the right answer.
  */
 export const PICK_MESSAGES: Readonly<Record<string, Localised>> = {
+  // Level 5 (REQ-353): the packet on the wire in a tunnel.
+  'inner-dst': L(
+    'That is where the PC’s packet goes in the end. Between the tunnel’s ends it rides inside an outer packet, addressed to the far end.',
+    'それは PC のパケットの最終的なあて先です。トンネルの両端のあいだでは、それは外側のパケットの中に入っていて、外側のあて先は向こう端です。',
+  ),
+  'near-end': L(
+    'That is the near end of the tunnel: the outer packet comes FROM there.',
+    'それはトンネルの手前の端です。外側のパケットは、そこから送られます。',
+  ),
+  'middle-router': L(
+    'That is the router in the middle: it only passes the outer packet on, and is not an end of the tunnel.',
+    'それはまん中のルータです。外側のパケットを次へ送るだけで、トンネルの端ではありません。',
+  ),
+  'inner-src': L(
+    'That is where the PC’s packet comes from. Between the tunnel’s ends it rides inside an outer packet, sent from the near end.',
+    'それは PC のパケットの送り元です。トンネルの両端のあいだでは、それは外側のパケットの中に入っていて、外側の送り元は手前の端です。',
+  ),
+  'far-end-as-src': L(
+    'That is the far end of the tunnel: the outer packet goes TO there, and comes from the near end.',
+    'それはトンネルの向こう端です。外側のパケットはそこへ向かうもので、送り元は手前の端です。',
+  ),
+  'cable-side': L(
+    'That is an end’s address on a cable. These VXLAN ends send from their loopbacks, which is what the outer packet carries.',
+    'それは端の、回線側のアドレスです。この VXLAN の端はループバックから送るので、外側のパケットに入るのはそのアドレスです。',
+  ),
+  'tunnel-side': L(
+    'That is the far end’s address on the tunnel itself. The outer packet is addressed to the far end’s address on the provider’s cable.',
+    'それは向こう端の、トンネル自体のアドレスです。外側のパケットのあて先は、向こう端の事業者回線側のアドレスです。',
+  ),
+  'far-lan-side': L(
+    'That is the far end’s side facing the server. The tunnel runs between the two ends’ addresses on the provider’s cables.',
+    'それは向こう端の、サーバー側のアドレスです。トンネルは、事業者の回線側の、両端のアドレスのあいだを通ります。',
+  ),
+  'arrives-cable-out': L(
+    'A cable on the way to the far end is out, so the router in the middle has no way on and throws it away.',
+    '向こう端へのとちゅうの回線がぬけているので、まん中のルータは先へ送れず、捨てます。',
+  ),
+  'explicit-null': L(
+    'Label 0 (explicit null) is not used here: the next router asks for its own label, or for 3 to have it taken off.',
+    'ここではラベル 0（explicit null）は使われません。次のルータが指定するのは自分のラベルか、外してもらう 3 です。',
+  ),
+  'stops-near-end': L(
+    'The near end does not stop it: it wraps it (or labels it) and sends it on.',
+    '手前の端では止まりません。包んで（またはラベルを付けて）、先へ送ります。',
+  ),
+  'stops-middle': L(
+    'The router in the middle passes the outer packet on: its cable to the far end is in.',
+    'まん中のルータは、外側のパケットを先へ送ります。向こう端への回線がつながっているからです。',
+  ),
+  'stops-far-when-same': L(
+    'Both ends have the same key or VNI, so the far end takes it out of the tunnel and sends it to the server.',
+    '両端のキー（または VNI）が同じなので、向こう端はトンネルから取り出して、サーバーへ送ります。',
+  ),
+  'arrives-when-different': L(
+    'The far end has another key or VNI, so it throws the packet away: it never reaches the server.',
+    '向こう端のキー（または VNI）がちがうので、向こう端で捨てられます。サーバーには届きません。',
+  ),
+  // Level 5: labels across an MPLS core.
+  'not-swapped': L(
+    'That is the label the first router put on. The router in the middle swaps it for the one the next router asked for (or takes it off).',
+    'それは最初のルータが付けたラベルです。まん中のルータが、次のルータが指定したラベルに付け替えます（または外します）。',
+  ),
+  'swapped-too-early': L(
+    'On the first cable the label is still the one the first router put on: it is swapped only at the router in the middle.',
+    '最初の回線では、まだ最初のルータが付けたラベルのままです。付け替えるのは、まん中のルータです。',
+  ),
+  'swapped-under-php': L(
+    'The far PE asked for label 3 (implicit null), so the router in the middle takes the top label off instead of swapping it.',
+    '向こうの PE がラベル 3（implicit null）を指定したので、まん中のルータは上のラベルを付け替えずに外します。',
+  ),
+  'popped-too-early': L(
+    'The top label is taken off only where the next router asked for label 3, and not before the router in the middle.',
+    '上のラベルを外すのは、次のルータがラベル 3 を指定したところだけで、まん中のルータより手前ではありません。',
+  ),
+  'implicit-null-on-wire': L(
+    'Label 3 (implicit null) is a request to take the label off. It is never on a cable.',
+    'ラベル 3（implicit null）は「外して」という指定で、回線に流れることはありません。',
+  ),
+  'no-labels-in-core': L(
+    'In the core it carries labels: the router in the middle knows no route to the server, only labels.',
+    'コアの中ではラベルが付いています。まん中のルータはサーバーへの経路を知らず、ラベルだけで送ります。',
+  ),
+  'stops-middle-with-entry': L(
+    'The router in the middle has an entry for the top label, so it swaps or pops it and sends it on.',
+    'まん中のルータには上のラベルの登録があるので、付け替えるか外して、先へ送ります。',
+  ),
+  'stops-far-pe': L(
+    'The far PE has an entry for the VPN label: it takes it off and sends the packet on to the server.',
+    '向こうの PE には VPN ラベルの登録があるので、それを外して、パケットをサーバーへ送ります。',
+  ),
+  'arrives-without-entry': L(
+    'A router on the way has no entry for the label it reads, and no route to fall back on, so it throws the packet away.',
+    'とちゅうのルータに、読んだラベルの登録がなく、代わりの経路もないので、パケットは捨てられます。',
+  ),
   // Which server the resolver asks (p2-dns-step).
   'dns-cached-already': L(
     'That server was asked before: its referral is still in the resolver’s cache, so the resolver starts below it.',

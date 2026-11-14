@@ -1,4 +1,4 @@
-import { useArpWords } from '../../components/simulation/useArpWords';
+import { useLazyDropWords } from '../../components/simulation/useLazyDropWords';
 import { useI18n } from '../../i18n/useI18n';
 import type { PacketHop, PacketTrace } from '../../types/simulation';
 import { dropReasonKey, historyRows, hopEdgeId, summarizeTraces } from '../simulationSummary';
@@ -34,9 +34,7 @@ export function PacketHistoryPanel({ traces, selectedStep, onSelectHop }: Packet
   const { t, locale } = useI18n();
   const summary = summarizeTraces(traces);
   const rows = historyRows(traces);
-  const arp = useArpWords(
-    traces.some((trace) => trace.hops.some((hop) => hop.reason === 'arp-no-reply')),
-  );
+  const arp = useLazyDropWords(summary.dropped > 0);
 
   return (
     <div data-testid="editor-history" style={{ fontFamily: 'monospace', fontSize: 12 }}>

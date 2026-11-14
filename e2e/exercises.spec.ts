@@ -301,9 +301,13 @@ test.describe('in Japanese', () => {
     demoPage,
   }) => {
     const CABLE = 'l1-cable-off~6';
-    const { reference } = exercise(CABLE);
+    const { reference, start } = exercise(CABLE);
     const [fix] = reference;
     if (fix?.kind !== 'link-state') throw new Error('the pinned cable exercise changed');
+    // The cable of the PC put away stays out on purpose (TC-1472).
+    const spare = start.edges.find(
+      (edge) => edge.id !== fix.edgeId && edge.data?.state === 'down',
+    )?.id;
     await open(page, demoPage, CABLE);
     await expect(
       page.getByTestId(X.diagram).locator(`[data-edge-id="${fix.edgeId}"]`),
@@ -361,7 +365,11 @@ test.describe('in Japanese', () => {
     await expect(page.getByTestId(X.cableSaid)).toContainText('つなぎました');
     const toggles = page.getByTestId(X.settings).getByRole('switch');
     for (const toggle of await toggles.all()) {
-      await expect(toggle).toHaveAttribute('aria-checked', 'true');
+      const testId = (await toggle.getAttribute('data-testid')) ?? '';
+      const isSpare =
+        spare !== undefined &&
+        testId === `${settingTestId({ kind: 'link-state', edgeId: spare })}-toggle`;
+      await expect(toggle).toHaveAttribute('aria-checked', isSpare ? 'false' : 'true');
     }
     await check(page, true);
   });

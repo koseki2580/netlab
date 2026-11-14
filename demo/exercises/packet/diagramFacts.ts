@@ -1,7 +1,8 @@
 /**
  * What a packet exercise needs said beside its diagram, and only that: the
  * MAC address of each device where a MAC is the question, the limit (MTU) of
- * each cable that has one, and a router's list (ACL) where there is one. The
+ * each cable that has one, a router's list (ACL) where there is one, and what
+ * a router does with tunnels and labels (GRE, VXLAN, MPLS; REQ-353). The
  * device exercises' diagram shows none of these.
  */
 
@@ -18,6 +19,76 @@ export interface DiagramFacts {
   readonly macs: readonly DiagramFact[];
   readonly mtus: readonly DiagramFact[];
   readonly lists: readonly DiagramFact[];
+  readonly tunnels: readonly DiagramFact[];
+}
+
+/** GRE ends and key, a VTEP's addresses and VNI, and a router's MPLS tables, in words. */
+function tunnelFacts(exercise: PacketExercise): DiagramFact[] {
+  return exercise.topology.nodes.flatMap((node) => {
+    const label = name(exercise, node.id);
+    const at = (id: string, en: string, ja: string): DiagramFact => ({
+      id: `${node.id}:${id}`,
+      text: { en: `${label.en}: ${en}`, ja: `${label.ja}：${ja}` },
+    });
+    const gre = (node.data.interfaces ?? []).flatMap((side) => {
+      const tunnel = side.greTunnel;
+      if (!tunnel) return [];
+      const key = tunnel.key !== undefined ? `, key ${tunnel.key}` : '';
+      const keyJa = tunnel.key !== undefined ? `、キー ${tunnel.key}` : '';
+      return [
+        at(
+          side.id,
+          `GRE tunnel from ${tunnel.sourceIp} to ${tunnel.destinationIp}${key}`,
+          `GRE トンネル（${tunnel.sourceIp} から ${tunnel.destinationIp} へ${keyJa}）`,
+        ),
+      ];
+    });
+    const vtep = node.data.vtep;
+    const vxlan = vtep
+      ? [
+          at(
+            'vtep',
+            `VXLAN end at ${vtep.sourceVtepIp}, the other end ${vtep.peerVtepIps.join(', ')}, VNI ${vtep.vni}`,
+            `VXLAN の端 ${vtep.sourceVtepIp}（向こうの端 ${vtep.peerVtepIps.join('、')}、VNI ${vtep.vni}）`,
+          ),
+        ]
+      : [];
+    const mpls = node.data.mpls;
+    const labels = (stack: readonly number[]) => stack.join(' / ');
+    const mplsFacts = mpls
+      ? [
+          ...(mpls.vpn ?? []).map((route, index) =>
+            at(
+              `vpn${index}`,
+              `for ${route.prefix}: VPN label ${route.label}, to the PE at ${route.egress}`,
+              `${route.prefix} あて：VPN ラベル ${route.label}、${route.egress} の PE へ`,
+            ),
+          ),
+          ...(mpls.ftn ?? []).map((entry, index) =>
+            at(
+              `ftn${index}`,
+              `for ${entry.prefix}: push ${labels(entry.push)} and send to ${entry.nextHop}`,
+              `${entry.prefix} あて：${labels(entry.push)} を付けて ${entry.nextHop} へ`,
+            ),
+          ),
+          ...(mpls.lfib ?? []).map((entry, index) =>
+            at(
+              `lfib${index}`,
+              entry.action === 'swap'
+                ? `label ${entry.inLabel}: swap for ${entry.outLabel ?? entry.inLabel}`
+                : `label ${entry.inLabel}: take it off`,
+              entry.action === 'swap'
+                ? `ラベル ${entry.inLabel}：${entry.outLabel ?? entry.inLabel} に付け替える`
+                : `ラベル ${entry.inLabel}：外す`,
+            ),
+          ),
+          ...((mpls.lfib ?? []).length === 0 && !mpls.ftn && !mpls.vpn
+            ? [at('lfib', 'no label table', 'ラベル表なし')]
+            : []),
+        ]
+      : [];
+    return [...gre, ...vxlan, ...mplsFacts];
+  });
 }
 
 const MAC_ASKS = new Set(['frame-src-mac', 'frame-dst-mac']);
@@ -130,5 +201,5 @@ export function diagramFacts(exercise: PacketExercise): DiagramFacts {
       }),
     ),
   );
-  return { macs, mtus, lists };
+  return { macs, mtus, lists, tunnels: tunnelFacts(exercise) };
 }

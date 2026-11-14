@@ -724,6 +724,27 @@ export async function truthOf(exercise: ReadExercise, question: ReadQuestion): P
           ? hop.srcMac.toLowerCase()
           : hop.dstMac.toLowerCase();
     }
+    case 'dst-on-link':
+    case 'src-on-link': {
+      // In a tunnel, the addresses of the outer packet: its ends, not the PC and the server.
+      const hop = facts.hops.find((entry) => entry.hop.activeEdgeId === question.edgeId);
+      if (!hop) return '';
+      return question.ask === 'dst-on-link'
+        ? (hop.hop.tunnel?.outerDst ?? hop.dstIp)
+        : (hop.hop.tunnel?.outerSrc ?? hop.srcIp);
+    }
+    case 'labels-on-link': {
+      const at = facts.hops.findIndex((entry) => entry.hop.activeEdgeId === question.edgeId);
+      const hop = facts.hops[at];
+      if (!hop) return '';
+      // The labels the router last put on before it sent the packet onto that cable.
+      const labelled = facts.hops
+        .slice(0, at + 1)
+        .reverse()
+        .find((entry) => entry.nodeId === hop.nodeId && entry.hop.mpls);
+      const labels = labelled?.hop.mpls?.after ?? [];
+      return labels.length > 0 ? labels.join(' / ') : 'none';
+    }
     case 'which-arrive': {
       const other = second ? await send(exercise.topology, second) : null;
       const a = facts.delivered && facts.deliveredTo === ownerOf(exercise.topology, first.dstIp);
@@ -795,6 +816,18 @@ const READ_WRONG: Record<ReadQuestion['ask'], Localised> = {
   'which-arrive': {
     en: 'Not so. For each packet, check whether some device on the diagram has its destination address.',
     ja: 'ちがいます。パケットごとに、あて先アドレスを持つ機器が図にあるかを確かめてください。',
+  },
+  'dst-on-link': {
+    en: 'Not that address. In a tunnel the packet on this cable is the outer one: it is addressed to the far end of the tunnel, and the PC’s packet rides inside it.',
+    ja: 'そのアドレスではありません。トンネルの中では、この回線を流れるのは外側のパケットです。あて先はトンネルの向こう端で、PC のパケットはその中に入っています。',
+  },
+  'src-on-link': {
+    en: 'Not that address. In a tunnel the packet on this cable is the outer one: it comes from the near end of the tunnel, and the PC’s packet rides inside it.',
+    ja: 'そのアドレスではありません。トンネルの中では、この回線を流れるのは外側のパケットです。送り元はトンネルの手前の端で、PC のパケットはその中に入っています。',
+  },
+  'labels-on-link': {
+    en: 'Not those labels. Each router sends it with the label the next router asked for; the VPN label at the bottom stays until the far PE.',
+    ja: 'そのラベルではありません。ルータは、次のルータが指定したラベルを付けて送ります。いちばん下の VPN ラベルは、向こうの PE まで変わりません。',
   },
   'stops-at': {
     en: 'It does not stop there. Follow it router by router, and at each one check the TTL left, the cable ahead and the list (ACL).',

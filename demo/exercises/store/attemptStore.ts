@@ -90,7 +90,8 @@ export interface AttemptStoreOptions {
 
 const EMPTY_STATE: ExerciseStoreState = { version: 1, attempts: [], cycles: [] };
 
-const LEVELS: readonly unknown[] = [1, 2, 3, 4];
+// Level 5 is the packet track's (REQ-353).
+const LEVELS: readonly unknown[] = [1, 2, 3, 4, 5];
 const KINDS: readonly unknown[] = [
   'configure',
   'switch',

@@ -102,9 +102,9 @@ window.USER_GUIDE_CONTENT = {
                <h3>入力と図について</h3>
                <ul>
                  <li><strong>全角でも入力できます</strong> — 「１０、２０」や「１９２．１６８．１．５」は、半角として読み取られます。</li>
-                 <li><strong>赤い点線</strong>は、ぬけているケーブルです。図で押すと、つながります。ほかのケーブルと重なって見える所を押しても、ぬけているほうがつながります。押したあとに「〜のケーブルをつなぎました。」と出ます。</li>
+                 <li><strong>赤い点線</strong>は、ぬけているケーブルです。図で押すと、つながります。ほかのケーブルと重なって見える所を押しても、ぬけているほうがつながります。押したあとに「〜のケーブルをつなぎました。」と出ます。ぬけたケーブルを見つける問題では、使っていない PC のケーブルもわざとぬいてあり、赤い点線は 2 本あります。つなぐのは、まちがってぬけたほうの 1 本だけです。</li>
                  <li><strong>⚠</strong> は「この機器にまだアドレスがない」という印です。故障ではありません。</li>
-                 <li>アドレスの候補は 6 つ出ます。候補だけを見くらべても、正しいものはわかりません。図の機器のアドレスと見くらべてください。</li>
+                 <li>アドレスの候補は 6 つ出ます。候補だけを見くらべても、正しいものはわかりません。図の機器のアドレスと見くらべてください。/24 では、最後の数字が 0 や 255 の候補もあります。この 2 つは特別な数字で、機器には使えません（ルールの行に書かれています）。</li>
                  <li>経路の「次のルータ」に書けるのは、となりのルータの「こちら側」のアドレスだけです。向こう側のアドレス、ルータ自身のアドレス、はなれた機器のアドレスでは届かず、それぞれ何がちがうかが出ます。</li>
                </ul>
                <h3>判定のきまり</h3>
@@ -152,15 +152,16 @@ window.USER_GUIDE_CONTENT = {
       {
         id: "packet-exercises",
         title: "パケットの実習",
-        html: `<p>パケットの実習は、設定ではなくパケットそのものを扱う、実習問題とは別の 4 レベルの練習です。実習問題の一覧の「パケットの実習へ」から開けます。アドレスは <code>#/exercises/packet</code> です。</p>
+        html: `<p>パケットの実習は、設定ではなくパケットそのものを扱う、実習問題とは別の 5 レベルの練習です。実習問題の一覧の「パケットの実習へ」から開けます。アドレスは <code>#/exercises/packet</code> です。</p>
                <ul>
                  <li><strong>パケットを組み立てる</strong> — パケットがフレーム・IP パケット・中身の層で描かれ、変えてよい欄だけが枠付きの入力欄になっています。あて先アドレス、TTL、あて先 MAC アドレス、ポート番号、「分割しない」の印（DF）、大きさなどを埋めます。</li>
                  <li><strong>分割のしかたを答える</strong> — 「＋ 断片を足す」で断片を 1 つずつ足し、大きさ（IP ヘッダ込み）と、レベル 4 では位置と「続きあり」の印を書きます。スマートフォンでは断片 1 つが 1 枚のカードになります。</li>
+                 <li><strong>トンネルとラベル（レベル 5）</strong> — GRE や VXLAN のトンネル、MPLS のコアを通るパケットを読みます。コアの回線を流れるのは外側のパケットで、あて先・送り元はトンネルの端です。MPLS では、回線ごとに付いているラベルを選びます。図の横に、トンネルの端・キー・VNI・ラベル表が書かれます。段階 6 で使います。</li>
                  <li><strong>パケットを読む</strong> — 送り主から出たときのパケットを読み、届く先・止まる場所・原因の欄などを選びます。直す問題では、選んだ答えと直したパケットを 1 回の「たしかめる」でまとめて判定し、結果は「読み取り」と「直したパケット」に分けて表示します。</li>
                </ul>
                <p>「たしかめる」を押すと、答えたパケットをシミュレータで実際に送ります。結果には目標ごとの ✓・✗ と、できていない目標の理由（例：「TTL が足りず、2 台目のルータ（…）で捨てられました。」）、パケットの通った道が出ます。通った道には、各機器に<strong>着いたときの TTL</strong>（送り主は送り出したときの TTL）が書かれ、ルータが返した知らせ（時間切れ・大きすぎる）はそれとわかるように並びます。届いたパケットに返事が返ってくることはありません。</p>
                <p>MAC アドレス・回線の上限（MTU）・ルータの一覧（ACL）は、その問題に必要なときだけ図の横に書かれます。何も入れずに、または整数でない値のまま「たしかめる」を押しても判定せず、理由を表示します。</p>
-               <div class="callout">レベルの判定は実習問題と同じ決まりで、パケットの実習の記録だけで数えます。実習問題のレベルには数えません。選ぶだけで答える問題は 1 回目の「たしかめる」で解けたときだけ数えます。</div>`
+               <div class="callout">レベルの判定は実習問題と同じ決まりで、パケットの実習の記録だけで数えます。実習問題のレベルには数えません。選ぶだけで答える問題は 1 回目の「たしかめる」で解けたときだけ数えます。2 回目以降で解けたときは、「何度かためして解けた」として記録したことが表示されます。</div>`
       },
       {
         id: "gallery",
@@ -491,9 +492,9 @@ window.USER_GUIDE_CONTENT = {
                <h3>Typing, and the diagram</h3>
                <ul>
                  <li><strong>Full-width characters are accepted</strong> — 「１０、２０」 and 「１９２．１６８．１．５」 are read as their half-width forms.</li>
-                 <li><strong>A red dotted line</strong> is an unplugged cable. Press it on the diagram to plug it in. Where it seems to run along another cable, a press there still plugs in the unplugged one. A line then says which cable was plugged in.</li>
+                 <li><strong>A red dotted line</strong> is an unplugged cable. Press it on the diagram to plug it in. Where it seems to run along another cable, a press there still plugs in the unplugged one. A line then says which cable was plugged in. In the exercise to find the unplugged cable, the cable of a PC not in use is out on purpose too, so two lines are red dotted: plug in only the one pulled out by mistake.</li>
                  <li><strong>⚠</strong> means “this device has no address yet”. It is not a fault.</li>
-                 <li>Six addresses are offered. Comparing them with each other does not tell you which one fits; compare them with the addresses on the diagram.</li>
+                 <li>Six addresses are offered. Comparing them with each other does not tell you which one fits; compare them with the addresses on the diagram. On a /24 one of them may end in 0 or 255: these two are special numbers no device may use (the rule line says so).</li>
                  <li>The “next router” of a route can only be the neighbouring router’s address on the side facing this one. An address on its far side, the router’s own address or a device far away does not work, and you are told which it is.</li>
                </ul>
                <h3>How Check judges</h3>
@@ -541,15 +542,16 @@ window.USER_GUIDE_CONTENT = {
       {
         id: "packet-exercises",
         title: "Packet exercises",
-        html: `<p>The packet exercises work on the packet itself rather than on settings: a track of its own, with four levels. Open them with “Go to the packet exercises” on the list of hands-on exercises. The address is <code>#/exercises/packet</code>.</p>
+        html: `<p>The packet exercises work on the packet itself rather than on settings: a track of its own, with five levels. Open them with “Go to the packet exercises” on the list of hands-on exercises. The address is <code>#/exercises/packet</code>.</p>
                <ul>
                  <li><strong>Build a packet</strong> — the packet is drawn in layers (frame, IP packet, what it carries), and only the fields you may change are outlined boxes: the destination address, the TTL, the destination MAC address, the port, the “do not split” mark (DF), the size.</li>
                  <li><strong>Say how it is split</strong> — add the pieces one by one with “+ Add a piece” and write each one’s size (IP header included) and, at level 4, its position and its “more pieces follow” mark. On a phone each piece is a card of its own.</li>
+                 <li><strong>Tunnels and labels (level 5)</strong> — read a packet through a GRE or VXLAN tunnel or across an MPLS core. On a cable of the core the packet on the wire is the outer one: its destination and source are the tunnel’s ends. For MPLS, choose the labels the packet carries on a cable. The tunnel ends, keys, VNIs and label tables are written beside the diagram. Stage 6 asks for it.</li>
                  <li><strong>Read a packet</strong> — read the packet as it left the sender and choose where it arrives, where it stops, or which field is why. Where you also correct it, one “Check” judges your choices and your correction together, and the result shows “Your reading” and “Your correction” apart.</li>
                </ul>
                <p>“Check” sends your packet on the simulator. The result marks each goal ✓ or ✗ with the reason for each one not met (for example “The TTL ran out, and the second router (…) threw the packet away.”) and lists where the packet went, with the <strong>TTL each device received it with</strong> (the sender: the TTL it left with); a note a router sent back (time exceeded, too big) is listed as such. A delivered packet gets no reply.</p>
                <p>MAC addresses, cable limits (MTU) and router lists (ACL) are written beside the diagram only on the exercises that need them. “Check” with nothing entered, or with a box that is not a whole number, judges nothing and says why.</p>
-               <div class="callout">A packet level is cleared by the same rule as the other exercises, counted over packet exercises alone; they do not count toward the other levels. An exercise answered by choosing counts only when solved on the first Check.</div>`
+               <div class="callout">A packet level is cleared by the same rule as the other exercises, counted over packet exercises alone; they do not count toward the other levels. An exercise answered by choosing counts only when solved on the first Check; solved on a later Check, the page says it is recorded as “solved after several tries”.</div>`
       },
       {
         id: "gallery",

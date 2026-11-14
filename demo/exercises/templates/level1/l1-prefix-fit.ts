@@ -46,7 +46,10 @@ const FITS = {
   },
   24: {
     count: L('first three numbers', 'はじめの 3 つの数字'),
-    free: L('Only the last one differs.', 'ちがうのは最後の数字だけ。'),
+    free: L(
+      'Only the last one differs. The last number is from 1 to 254: 0 and 255 are special.',
+      'ちがうのは最後の数字だけ。最後の数字は 1〜254（0 と 255 は特別な数字）。',
+    ),
     bases: [
       { fixed: '192.168.3', inside: ['', '', ''], outside: '192.168.4' },
       { fixed: '10.1.2', inside: ['', '', ''], outside: '10.1.3' },

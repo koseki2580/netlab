@@ -131,6 +131,52 @@ describe('the chips alone do not say which one is usable', () => {
   });
 });
 
+// TC-1471 (REQ-352): with the diagram too. A learner who keeps the chips with the
+// neighbours' first three numbers and drops every address the diagram shows was left
+// with exactly one chip, the usable one (persona run 2, 4 of 4). On a /24 at least two
+// are left, and only the rule (the last number is 1 to 254) tells them apart.
+describe('the chips and the diagram together do not say which one is usable (TC-1471)', () => {
+  const shownIn = (exercise: Exercise): Set<string> =>
+    new Set(
+      exercise.start.nodes.flatMap((node) => [
+        ...(typeof node.data.ip === 'string' ? [node.data.ip] : []),
+        ...(node.data.interfaces ?? []).map((side) => side.ipAddress),
+      ]),
+    );
+  const level1 = withChips.filter(([, level]) => level === 1);
+
+  it('some level 1 templates offer chips on a /24', () => {
+    expect(level1.length).toBeGreaterThanOrEqual(3);
+  });
+
+  describe.each(level1)('%s', (templateId) => {
+    // Where the router's side on that network says /24.
+    const cards = chipCards(templateId, 1).filter((card) =>
+      card.exercise.start.nodes.some((node) =>
+        (node.data.interfaces ?? []).some(
+          (side) =>
+            side.prefixLength === 24 &&
+            isInSubnet(card.right, `${firstThree(side.ipAddress)}.0/24`),
+        ),
+      ),
+    );
+
+    it('"same first three numbers, not on the diagram" leaves two chips or more', () => {
+      for (const card of cards) {
+        const shown = shownIn(card.exercise);
+        const left = card.chips.filter(
+          (chip) => firstThree(chip) === firstThree(card.right) && !shown.has(chip),
+        );
+        expect(left.length, card.exercise.id).toBeGreaterThanOrEqual(2);
+        // The others among them are the network's own number or "to everyone".
+        for (const chip of left.filter((entry) => entry !== card.right)) {
+          expect([0, 255], `${card.exercise.id} ${chip}`).toContain(last(chip));
+        }
+      }
+    });
+  });
+});
+
 // --- The "/number" exercise ---------------------------------------------------
 
 interface Fit {

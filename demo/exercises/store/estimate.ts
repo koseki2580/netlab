@@ -3,7 +3,7 @@
  * simple enough to say back to the learner in one sentence.
  */
 
-import type { ExerciseLevel, Localised } from '../model/types';
+import type { DeviceLevel, ExerciseLevel, Localised } from '../model/types';
 import { TEMPLATES } from '../templates';
 import type { AttemptLocale, AttemptRecord, PlacementResult } from './types';
 
@@ -21,7 +21,7 @@ function kindsByLevel(
 ): Readonly<Record<ExerciseLevel, readonly string[]>> {
   const of = (level: ExerciseLevel) =>
     templates.filter((template) => template.level === level).map((template) => template.id);
-  return { 1: of(1), 2: of(2), 3: of(3), 4: of(4) };
+  return { 1: of(1), 2: of(2), 3: of(3), 4: of(4), 5: of(5) };
 }
 
 /** A level is judged on the last this-many distinct exercises. */
@@ -91,7 +91,7 @@ export function checksCounted(attempt: AttemptRecord): number {
   return attempt.checksToCount ?? MAX_CHECKS_TO_COUNT;
 }
 
-export const EXERCISE_LEVELS: readonly ExerciseLevel[] = [1, 2, 3, 4];
+export const EXERCISE_LEVELS: readonly DeviceLevel[] = [1, 2, 3, 4];
 
 export type LevelStatus = 'not-enough' | 'in-progress' | 'cleared';
 

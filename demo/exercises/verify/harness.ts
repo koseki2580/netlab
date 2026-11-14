@@ -69,7 +69,7 @@ export interface TemplateFamily<E extends FamilyExercise> {
   };
 }
 
-const LEVELS: readonly ExerciseLevel[] = [1, 2, 3, 4];
+const LEVELS: readonly ExerciseLevel[] = [1, 2, 3, 4, 5];
 
 // --- Lessons ------------------------------------------------------------------------
 

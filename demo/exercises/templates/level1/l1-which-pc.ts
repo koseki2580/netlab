@@ -95,8 +95,8 @@ export const l1WhichPc = defineTemplate(
         '3 台のうち、アドレスがおかしい 1 台を見つけて、その 1 台だけを直してください。',
       ),
       rule: L(
-        'Rule: the router says /24. Devices on the same side share their first three numbers. A whole address is different for each device, the router included.',
-        'ルール：ルータは /24。同じ側は、はじめの 3 つの数字が同じ。アドレスは、ルータもふくめて 1 台ずつちがう。',
+        'Rule: the router says /24. Devices on the same side share their first three numbers. A whole address is different for each device, the router included. The last number is from 1 to 254: 0 and 255 are special.',
+        'ルール：ルータは /24。同じ側は、はじめの 3 つの数字が同じ。アドレスは、ルータもふくめて 1 台ずつちがう。最後の数字は 1〜254（0 と 255 は特別な数字）。',
       ),
       brief: say(brief, WHY_UNIQUE),
       topology,

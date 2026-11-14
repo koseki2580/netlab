@@ -10,7 +10,7 @@ import type {
 import type { AttemptStore } from '../store/attemptStore';
 import { attemptOrder } from '../ui/attemptOrder';
 import { ExerciseDiagram, REPLAY_STEP_MS, type DiagramReplay } from '../ui/ExerciseDiagram';
-import { LessonLinks } from '../ui/ExerciseParts';
+import { countedSentence, LessonLinks, type Counted } from '../ui/ExerciseParts';
 import { CARD, MUTED, PRIMARY, SECONDARY } from '../ui/styles';
 import {
   answerFor,
@@ -62,6 +62,7 @@ export function PacketRunner({
   const [shownDrafts, setShownDrafts] = useState(false);
   const [hintTier, setHintTier] = useState<0 | 1 | 2 | 3>(0);
   const [revealed, setRevealed] = useState(false);
+  const [failedChecks, setFailedChecks] = useState(0);
   const [briefOpen, setBriefOpen] = useState(false);
   const [replay, setReplay] = useState<DiagramReplay | null>(null);
   const attemptId = useRef<string | null>(null);
@@ -94,6 +95,15 @@ export function PacketRunner({
   }, [exercise, draft.values]);
   const rowDrafts = useMemo(() => draftRows(exercise, draft.rows), [exercise, draft.rows]);
   const passed = grade?.passed === true && !stale;
+  // As on the device exercises: how this pass is recorded (`model/closedSet.ts`).
+  const checksToCount = answeredByPicks(exercise) ? 1 : 2;
+  const counted: Counted = revealed
+    ? 'not-counted'
+    : hintTier > 0
+      ? 'helped'
+      : failedChecks >= checksToCount
+        ? 'tries'
+        : 'solved';
   const settled = passed || revealed;
 
   const change = (next: Draft) => {
@@ -121,6 +131,7 @@ export function PacketRunner({
     const result = await judgePacketExercise(exercise, answerFor(exercise, draft));
     setGrade(result);
     setStale(false);
+    if (!result.passed) setFailedChecks((count) => count + 1);
     setBusy(false);
     if (result.trace)
       setReplay((before) => ({ trace: result.trace!, run: (before?.run ?? 0) + 1 }));
@@ -267,7 +278,7 @@ export function PacketRunner({
           ) : null}
         </section>
 
-        {facts.macs.length + facts.mtus.length + facts.lists.length > 0 ? (
+        {facts.macs.length + facts.mtus.length + facts.lists.length + facts.tunnels.length > 0 ? (
           <section
             data-testid="packet-facts"
             style={box}
@@ -297,6 +308,16 @@ export function PacketRunner({
                     'どの「通す」行にも当てはまらない通信は止められます。',
                   )}
                 </p>
+              </div>
+            ) : null}
+            {facts.tunnels.length > 0 ? (
+              <div data-testid="packet-facts-tunnels">
+                <strong>{t('Tunnels and labels', 'トンネルとラベル')}</strong>
+                <ul style={{ margin: 0, fontFamily: 'ui-monospace, monospace', fontSize: 14 }}>
+                  {facts.tunnels.map((fact) => (
+                    <li key={fact.id}>{fact.text[locale]}</li>
+                  ))}
+                </ul>
               </div>
             ) : null}
             {facts.macs.length > 0 ? (
@@ -503,6 +524,11 @@ export function PacketRunner({
                       'まだです。シミュレータが見つけたこと：',
                     )}
             </strong>
+            {passed && counted !== 'solved' ? (
+              <p data-testid="packet-result-counted" data-counted={counted} style={{ margin: 0 }}>
+                {countedSentence(counted, checksToCount, t)}
+              </p>
+            ) : null}
             {exercise.kind === 'read-packet' && exercise.fix ? (
               <>
                 <div data-testid="packet-result-questions">

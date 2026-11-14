@@ -12,7 +12,14 @@ import type { StpPortRole, TopologySnapshot } from '../../../src/types/topology'
 
 export type { Localised };
 
-export type ExerciseLevel = 1 | 2 | 3 | 4;
+/**
+ * 1 to 4 for the device exercises; the packet track has a fifth (tunnels and
+ * labels, REQ-353).
+ */
+export type ExerciseLevel = 1 | 2 | 3 | 4 | 5;
+
+/** The levels of the device exercises. */
+export type DeviceLevel = Exclude<ExerciseLevel, 5>;
 
 export type ExerciseKind = 'configure' | 'switch' | 'choose-design' | 'diagnose-repair';
 

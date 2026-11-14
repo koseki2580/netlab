@@ -1,4 +1,4 @@
-import type { ExerciseLevel } from '../exercises/model/types';
+import type { DeviceLevel, ExerciseLevel } from '../exercises/model/types';
 import { packetSummary } from '../exercises/packet/packetSource';
 import { levelSummary } from '../exercises/store/estimate';
 import type { AttemptRecord } from '../exercises/store/types';
@@ -28,7 +28,7 @@ export interface Localised {
 /** One thing a stage asks the learner to pass. */
 export type Checkpoint =
   | { readonly kind: 'course' }
-  | { readonly kind: 'config'; readonly level: ExerciseLevel }
+  | { readonly kind: 'config'; readonly level: DeviceLevel }
   | { readonly kind: 'packet'; readonly level: ExerciseLevel }
   | { readonly kind: 'exam'; readonly level: number };
 
@@ -176,6 +176,8 @@ export const STAGES: readonly Stage[] = [
     // Level 4 ("Expert") goes deeper into the enterprise and provider topics
     // than the stage 7 lessons; it is a second test of stage 6.
     checkpoints: [
+      // Reading packets in a GRE or VXLAN tunnel and across an MPLS core (REQ-353).
+      { kind: 'packet', level: 5 },
       { kind: 'exam', level: 3 },
       { kind: 'exam', level: 4 },
     ],
@@ -314,7 +316,7 @@ export function checkpointPath(checkpoint: Checkpoint): string {
   }
 }
 
-const LEVELS: readonly ExerciseLevel[] = [1, 2, 3, 4];
+const LEVELS: readonly ExerciseLevel[] = [1, 2, 3, 4, 5];
 
 /**
  * What the learner has passed, read from where it is already kept: completions

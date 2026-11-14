@@ -320,10 +320,16 @@ async function problemsOf(exercise: Exercise): Promise<string[]> {
       if (card.chips.length > 0) {
         no(usable.length === 1, `${card.chips.length} chips, ${usable.length} of them usable`);
         no(new Set(card.chips).size === card.chips.length, 'two chips are the same');
-        // TC-654: nothing offered is an address no device may have.
+        // TC-654 (amended by REQ-352): a chip that ends in .0 or .255 is offered only where
+        // the rule line teaches it (the last number is 1 to 254), and never as the usable one.
+        const special = card.chips.filter((chip) => /^\d+\.\d+\.\d+\.(0|255)$/.test(chip));
         no(
-          card.chips.every((chip) => !/^\d+\.\d+\.\d+\.(0|255)$/.test(chip)),
-          `a chip is the first or last address of a network: ${card.chips.join(' ')}`,
+          special.length === 0 ||
+            (exercise.rule?.en.includes('from 1 to 254') === true &&
+              !special.some((chip) =>
+                usable.some((press) => JSON.stringify(press.change).includes(`"${chip}"`)),
+              )),
+          `a chip is the first or last address of a network the rule does not name: ${card.chips.join(' ')}`,
         );
         if (exercise.level <= 2) {
           no(card.chips.length >= 4, `only ${card.chips.length} chips: ${card.chips.join(' ')}`);

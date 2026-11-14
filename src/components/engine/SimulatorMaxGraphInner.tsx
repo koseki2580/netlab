@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Cell, Graph, Outline, type PanningHandler, type TooltipHandler } from '@maxgraph/core';
 import { AREA_CLUSTER_NODE_TYPE } from '../../areas/areaLod';
 import { useI18n } from '../../i18n/useI18n';
-import { useArpWords } from '../simulation/useArpWords';
+import { useLazyDropWords } from '../simulation/useLazyDropWords';
 import { DefaultNode } from '../DefaultNode';
 import { MaxGraphControls } from '../../maxgraph/MaxGraphControls';
 import { useGridToggle, useMaxGraph } from '../../maxgraph/useMaxGraph';
@@ -60,9 +60,6 @@ const LINK_STATE_KEYS: Record<Exclude<LinkState, 'up'>, { label: string; hint: s
   blocked: { label: 'simulation.linkState.blocked', hint: 'simulation.linkState.blockedHint' },
 };
 
-/** The bubble of an unanswered ARP (REQ-350): its words load with `useArpWords`. */
-const ARP_BUBBLE_KEY = 'simulation.packetStory.dropArpNoReply';
-
 export default function SimulatorMaxGraphInner({
   nodes,
   edges,
@@ -95,7 +92,10 @@ export default function SimulatorMaxGraphInner({
         : undefined,
     [packetSource, nodes],
   );
-  const arp = useArpWords(packet?.bubble?.key === ARP_BUBBLE_KEY);
+  // A drop whose words load on demand (REQ-350, REQ-353).
+  const dropped = packet?.bubble?.kind === 'drop' ? packet.bubble.params.reason : undefined;
+  const lazy = useLazyDropWords(dropped !== undefined);
+  const lazyReason = dropped && lazy?.dropWords(dropped, locale) ? dropped : undefined;
   const hostRef = useRef<HTMLDivElement>(null);
   const outlineHostRef = useRef<HTMLDivElement>(null);
   // The overview draws from the graph, so it has to go before the graph does.
@@ -345,8 +345,8 @@ export default function SimulatorMaxGraphInner({
           bubbleText={
             !packet.bubble
               ? null
-              : packet.bubble.key === ARP_BUBBLE_KEY
-                ? (arp?.bubbleWords(locale) ?? t('simulation.packetStory.dropOther'))
+              : lazyReason !== undefined
+                ? (lazy?.bubbleWords(lazyReason, locale) ?? null)
                 : t(packet.bubble.key, packet.bubble.params)
           }
         />

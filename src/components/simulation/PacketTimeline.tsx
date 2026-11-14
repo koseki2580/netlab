@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { useArpWords } from './useArpWords';
+import { useLazyDropWords } from './useLazyDropWords';
 import { floodNote } from './floodWords';
 import { useNdpT } from './ndpWords';
 import type { TranslatorFn } from '../../i18n/types';
@@ -225,7 +225,7 @@ function HopRow({
   const label = EVENT_LABELS[hop.event] ?? hop.event.toUpperCase();
   const glossKey = EVENT_GLOSS_KEYS[hop.event];
   const dropReason = hop.event === 'drop' ? formatDropReason(hop.reason) : null;
-  const arp = useArpWords(hop.reason === 'arp-no-reply');
+  const arp = useLazyDropWords(hop.event === 'drop');
   const annotation = formatHopAnnotation(
     hop,
     t,

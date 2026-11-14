@@ -899,3 +899,138 @@ exports[`packet exercise templates, generator version 2 > p4-two-faults: five di
   },
 ]
 `;
+
+exports[`packet exercise templates, generator version 2 > p5-gre-read: five different tasks as the learner reads them 1`] = `
+[
+  {
+    "brief": "新校舎のルータと本校舎のルータは、事業者の回線を通して 2 つの拠点をつないでいます。まん中のルータは事業者のもので、拠点のネットワークは知りません。",
+    "fingerprint": "p5-gre-read|school|gre|middle|src-on-link",
+    "id": "p5-gre-read~0",
+    "rule": "ルール：トンネルは向こう端あてのパケットで包む。向こう端はキーが同じときだけ受け取る。",
+    "task": "図の横の GRE トンネルを読んで、2 つの問いに答えてください。",
+    "title": "GRE トンネルを通るパケット",
+  },
+  {
+    "brief": "支店のルータと本店のルータは、事業者の回線を通して 2 つの拠点をつないでいます。まん中のルータは事業者のもので、拠点のネットワークは知りません。",
+    "fingerprint": "p5-gre-read|shop|gre|far-end|dst-on-link",
+    "id": "p5-gre-read~1",
+    "rule": "ルール：トンネルは向こう端あてのパケットで包む。向こう端はキーが同じときだけ受け取る。",
+    "task": "図の横の GRE トンネルを読んで、2 つの問いに答えてください。",
+    "title": "GRE トンネルを通るパケット",
+  },
+  {
+    "brief": "支店のルータと本店のルータは、事業者の回線を通して 2 つの拠点をつないでいます。まん中のルータは事業者のもので、拠点のネットワークは知りません。",
+    "fingerprint": "p5-gre-read|shop|gre|none|src-on-link",
+    "id": "p5-gre-read~2",
+    "rule": "ルール：トンネルは向こう端あてのパケットで包む。向こう端はキーが同じときだけ受け取る。",
+    "task": "図の横の GRE トンネルを読んで、2 つの問いに答えてください。",
+    "title": "GRE トンネルを通るパケット",
+  },
+  {
+    "brief": "分院のルータと本院のルータは、事業者の回線を通して 2 つの拠点をつないでいます。まん中のルータは事業者のもので、拠点のネットワークは知りません。",
+    "fingerprint": "p5-gre-read|clinic|gre|far-end|dst-on-link",
+    "id": "p5-gre-read~3",
+    "rule": "ルール：トンネルは向こう端あてのパケットで包む。向こう端はキーが同じときだけ受け取る。",
+    "task": "図の横の GRE トンネルを読んで、2 つの問いに答えてください。",
+    "title": "GRE トンネルを通るパケット",
+  },
+  {
+    "brief": "新校舎のルータと本校舎のルータは、事業者の回線を通して 2 つの拠点をつないでいます。まん中のルータは事業者のもので、拠点のネットワークは知りません。",
+    "fingerprint": "p5-gre-read|school|gre|none|dst-on-link",
+    "id": "p5-gre-read~4",
+    "rule": "ルール：トンネルは向こう端あてのパケットで包む。向こう端はキーが同じときだけ受け取る。",
+    "task": "図の横の GRE トンネルを読んで、2 つの問いに答えてください。",
+    "title": "GRE トンネルを通るパケット",
+  },
+]
+`;
+
+exports[`packet exercise templates, generator version 2 > p5-mpls-read: five different tasks as the learner reads them 1`] = `
+[
+  {
+    "brief": "新校舎のルータと本校舎のルータは事業者の端のルータ（PE）です。上のラベルは本校舎のルータのループバックあて（LDP）、その下の VPN ラベルは BGP から来ます。まん中の渡り廊下のルータはラベルだけで転送し、拠点への経路は知りません。",
+    "fingerprint": "p5-mpls-read|school|php|far-end",
+    "id": "p5-mpls-read~0",
+    "rule": "ルール：上のラベルは、次のルータの指定に付け替える（3 なら外す）。下の VPN ラベルは変わらない。",
+    "task": "図の横のラベル表を読んで、2 つの問いに答えてください。",
+    "title": "MPLS のコアを通るパケット",
+  },
+  {
+    "brief": "支店のルータと本店のルータは事業者の端のルータ（PE）です。上のラベルは本店のルータのループバックあて（LDP）、その下の VPN ラベルは BGP から来ます。まん中の中継のルータはラベルだけで転送し、拠点への経路は知りません。",
+    "fingerprint": "p5-mpls-read|shop|swap|none",
+    "id": "p5-mpls-read~1",
+    "rule": "ルール：上のラベルは、次のルータの指定に付け替える（3 なら外す）。下の VPN ラベルは変わらない。",
+    "task": "図の横のラベル表を読んで、2 つの問いに答えてください。",
+    "title": "MPLS のコアを通るパケット",
+  },
+  {
+    "brief": "支店のルータと本店のルータは事業者の端のルータ（PE）です。上のラベルは本店のルータのループバックあて（LDP）、その下の VPN ラベルは BGP から来ます。まん中の中継のルータはラベルだけで転送し、拠点への経路は知りません。",
+    "fingerprint": "p5-mpls-read|shop|swap|middle",
+    "id": "p5-mpls-read~2",
+    "rule": "ルール：上のラベルは、次のルータの指定に付け替える（3 なら外す）。下の VPN ラベルは変わらない。",
+    "task": "図の横のラベル表を読んで、2 つの問いに答えてください。",
+    "title": "MPLS のコアを通るパケット",
+  },
+  {
+    "brief": "分院のルータと本院のルータは事業者の端のルータ（PE）です。上のラベルは本院のルータのループバックあて（LDP）、その下の VPN ラベルは BGP から来ます。まん中の中継のルータはラベルだけで転送し、拠点への経路は知りません。",
+    "fingerprint": "p5-mpls-read|clinic|php|far-end",
+    "id": "p5-mpls-read~3",
+    "rule": "ルール：上のラベルは、次のルータの指定に付け替える（3 なら外す）。下の VPN ラベルは変わらない。",
+    "task": "図の横のラベル表を読んで、2 つの問いに答えてください。",
+    "title": "MPLS のコアを通るパケット",
+  },
+  {
+    "brief": "新校舎のルータと本校舎のルータは事業者の端のルータ（PE）です。上のラベルは本校舎のルータのループバックあて（LDP）、その下の VPN ラベルは BGP から来ます。まん中の渡り廊下のルータはラベルだけで転送し、拠点への経路は知りません。",
+    "fingerprint": "p5-mpls-read|school|swap|middle",
+    "id": "p5-mpls-read~4",
+    "rule": "ルール：上のラベルは、次のルータの指定に付け替える（3 なら外す）。下の VPN ラベルは変わらない。",
+    "task": "図の横のラベル表を読んで、2 つの問いに答えてください。",
+    "title": "MPLS のコアを通るパケット",
+  },
+]
+`;
+
+exports[`packet exercise templates, generator version 2 > p5-vxlan-read: five different tasks as the learner reads them 1`] = `
+[
+  {
+    "brief": "新校舎のルータと本校舎のルータは、事業者の回線を通して 2 つの拠点をつないでいます。まん中のルータは事業者のもので、拠点のネットワークは知りません。",
+    "fingerprint": "p5-vxlan-read|school|vxlan|middle|src-on-link",
+    "id": "p5-vxlan-read~0",
+    "rule": "ルール：トンネルは向こう端あてのパケットで包む。向こう端はVNIが同じときだけ受け取る。",
+    "task": "図の横の VXLAN トンネルを読んで、2 つの問いに答えてください。",
+    "title": "VXLAN トンネルを通るパケット",
+  },
+  {
+    "brief": "支店のルータと本店のルータは、事業者の回線を通して 2 つの拠点をつないでいます。まん中のルータは事業者のもので、拠点のネットワークは知りません。",
+    "fingerprint": "p5-vxlan-read|shop|vxlan|far-end|dst-on-link",
+    "id": "p5-vxlan-read~1",
+    "rule": "ルール：トンネルは向こう端あてのパケットで包む。向こう端はVNIが同じときだけ受け取る。",
+    "task": "図の横の VXLAN トンネルを読んで、2 つの問いに答えてください。",
+    "title": "VXLAN トンネルを通るパケット",
+  },
+  {
+    "brief": "支店のルータと本店のルータは、事業者の回線を通して 2 つの拠点をつないでいます。まん中のルータは事業者のもので、拠点のネットワークは知りません。",
+    "fingerprint": "p5-vxlan-read|shop|vxlan|none|src-on-link",
+    "id": "p5-vxlan-read~2",
+    "rule": "ルール：トンネルは向こう端あてのパケットで包む。向こう端はVNIが同じときだけ受け取る。",
+    "task": "図の横の VXLAN トンネルを読んで、2 つの問いに答えてください。",
+    "title": "VXLAN トンネルを通るパケット",
+  },
+  {
+    "brief": "分院のルータと本院のルータは、事業者の回線を通して 2 つの拠点をつないでいます。まん中のルータは事業者のもので、拠点のネットワークは知りません。",
+    "fingerprint": "p5-vxlan-read|clinic|vxlan|far-end|dst-on-link",
+    "id": "p5-vxlan-read~3",
+    "rule": "ルール：トンネルは向こう端あてのパケットで包む。向こう端はVNIが同じときだけ受け取る。",
+    "task": "図の横の VXLAN トンネルを読んで、2 つの問いに答えてください。",
+    "title": "VXLAN トンネルを通るパケット",
+  },
+  {
+    "brief": "新校舎のルータと本校舎のルータは、事業者の回線を通して 2 つの拠点をつないでいます。まん中のルータは事業者のもので、拠点のネットワークは知りません。",
+    "fingerprint": "p5-vxlan-read|school|vxlan|none|dst-on-link",
+    "id": "p5-vxlan-read~4",
+    "rule": "ルール：トンネルは向こう端あてのパケットで包む。向こう端はVNIが同じときだけ受け取る。",
+    "task": "図の横の VXLAN トンネルを読んで、2 つの問いに答えてください。",
+    "title": "VXLAN トンネルを通るパケット",
+  },
+]
+`;
