@@ -704,7 +704,7 @@ export function ExerciseRunner({
               data-exercise-id={exercise.id}
               style={{
                 display: 'grid',
-                gap: 16,
+                gap: isNarrow ? 16 : 12,
                 padding: 16,
                 alignContent: 'start',
                 gridTemplateRows: 'auto',
@@ -797,7 +797,8 @@ export function ExerciseRunner({
                   {...(missedSetting ? { onShowSetting: showSetting } : {})}
                   panelRef={resultRef}
                 />
-                <div ref={hintsRef}>
+                {/* No box of its own: with no hint shown it leaves no gap above the form. */}
+                <div ref={hintsRef} style={{ display: 'contents' }}>
                   <HintTexts exercise={exercise} shownTier={hintTier} topology={topology} />
                 </div>
               </div>

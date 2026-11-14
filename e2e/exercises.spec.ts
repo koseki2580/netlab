@@ -534,7 +534,7 @@ test.describe('in Japanese', () => {
     await expect(page.getByTestId(X.predictionOutcome)).toHaveAttribute('data-correct', 'true');
   });
 
-  /** TC-598, TC-600, TC-909 — an exercise missed and opened again is another instance, and the miss stays a miss. */
+  /** TC-598, TC-600, TC-909, TC-1603 — an exercise missed and opened again from the app is another instance; a reload is the same one; the miss stays a miss. */
   test('opening an exercise again after a miss gives other values, and the miss still counts', async ({
     page,
     demoPage,
@@ -546,16 +546,21 @@ test.describe('in Japanese', () => {
       'やり直しても、この問題は「何度かためして解けた」のままです。次の問題でとり返せます。',
     );
 
+    // A reload returns to the same problem (TC-1603); opening it again from a
+    // link in the app is asking for it again, and gives another instance.
     await page.reload();
     const panel = page.getByTestId(X.panel);
-    await expect(panel).not.toHaveAttribute('data-exercise-id', HOST);
-    await expect(panel).toHaveAttribute('data-exercise-id', /^l1-host-address~\d+$/);
-    // The answer that would have worked there is not offered here.
-    await expect(chipOf(page, hostChips().right)).toHaveCount(0);
+    await expect(panel).toHaveAttribute('data-exercise-id', HOST);
 
     await demoPage.goto('/exercises/level/1');
     await expect(page.getByTestId(X.kind('l1-host-address'))).toHaveAttribute('data-solved', '0');
     await expect(page.getByTestId(X.recent)).toContainText('まだ解けていない');
+
+    await page.getByTestId(X.recent).getByRole('link').first().click();
+    await expect(panel).not.toHaveAttribute('data-exercise-id', HOST);
+    await expect(panel).toHaveAttribute('data-exercise-id', /^l1-host-address~\d+$/);
+    // The answer that would have worked there is not offered here.
+    await expect(chipOf(page, hostChips().right)).toHaveCount(0);
   });
 
   /** TC-605 — the router exercise: choose the side, change your mind, fix it, one Check. */
