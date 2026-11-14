@@ -189,3 +189,41 @@ describe('a ping across an MPLS provider', () => {
     ).toEqual(['0', '1']);
   });
 });
+
+/** PE1's tables as an L3VPN keys them (RFC 4364 §5–6, RFC 5036): LDP for PE2's loopback, VPN by BGP. */
+function withVpnRoute(ftn: MplsTables['ftn']): NetworkTopology {
+  const topology = provider(SWAP);
+  const pe1 = topology.nodes.find((node) => node.id === 'pe1')!;
+  const tables: MplsTables = {
+    ...(ftn ? { ftn } : {}),
+    vpn: [{ prefix: '10.2.0.0/24', label: 200, egress: '192.0.2.2' }],
+    lfib: pe1.data.mpls?.lfib ?? [],
+  };
+  return {
+    ...topology,
+    nodes: topology.nodes.map((node) =>
+      node.id === 'pe1' ? { ...node, data: { ...node.data, mpls: tables } } : node,
+    ),
+  };
+}
+
+describe('the transport label is for the egress PE, not the customer route (TC-1463)', () => {
+  it('pushes the FTN label for the egress PE over the VPN label, and is delivered', async () => {
+    const { trace } = await ping(
+      withVpnRoute([{ prefix: '192.0.2.2/32', push: [100], nextHop: '10.0.12.2' }]),
+    );
+    // The request leg; the reply comes back on PE2's own tables.
+    expect(actions(trace).slice(0, 4)).toEqual([
+      ['pe1', 'push', '100/200'],
+      ['p', 'swap', '101/200'],
+      ['pe2', 'pop', '200'],
+      ['pe2', 'pop', ''],
+    ]);
+    expect(trace.status).toBe('delivered');
+  });
+
+  it('with no FTN entry for the egress PE, uses no label and routes by IP', async () => {
+    const { trace } = await ping(withVpnRoute([]));
+    expect(trace.hops.find((hop) => hop.nodeId === 'pe1' && hop.mpls)).toBeUndefined();
+  });
+});

@@ -225,23 +225,30 @@ describe('a switch copies a frame it cannot place (REQ-096, REQ-097, REQ-098)', 
     expect(fromBystander.hops.some((hop) => hop.nodeId === 'sw2' && hop.flood)).toBe(false);
   });
 
-  it('TC-864: a frame no port leads to ends at the switch as no-receiver', async () => {
+  // REQ-350: a host sends nothing it cannot address. Its ARP for an address nobody on its
+  // LAN has is copied to every other port and goes unanswered; before REQ-350 the frame
+  // itself crossed the switch and ended there as no-receiver (TC-864) or plain (TC-870).
+  it('TC-864: an ARP for an address nobody has is copied to every port and ends at the host', async () => {
     const engine = engineOn(lan());
     const packet = makePacket('lost', 'pc', 'nobody', '10.0.0.10', '10.0.0.99');
     const trace = await engine.precompute({
       ...packet,
       frame: { ...packet.frame, dstMac: '02:de:ad:00:00:01' },
     });
-    const last = trace.hops[trace.hops.length - 1];
-    expect(last).toMatchObject({ nodeId: 'sw', event: 'drop', reason: 'no-receiver' });
-    expect(copiesAt(last)).toEqual([
+    const request = trace.hops.find((hop) => hop.event === 'arp-request');
+    expect(copiesAt(request)).toEqual([
       ['srv', 'discarded', 'not-for-me'],
       ['by', 'discarded', 'not-for-me'],
     ]);
-    expect(trace.hops.some((hop) => hop.reason === 'no-route')).toBe(false);
+    expect(trace.hops[trace.hops.length - 1]).toMatchObject({
+      nodeId: 'pc',
+      event: 'drop',
+      reason: 'arp-no-reply',
+    });
+    expect(trace.hops.some((hop) => hop.nodeId === 'sw' || hop.reason === 'no-route')).toBe(false);
   });
 
-  it('TC-870: a switch with no other cable copies nothing and ends the trace as before', async () => {
+  it('TC-870: a switch with no other cable copies the ARP nowhere, and the host sends nothing', async () => {
     const topology = topologyOf(
       [host('pc', '10.0.0.10'), switchNode('sw', [port('p1'), port('p2')])],
       [link('e-pc', 'pc', 'sw', undefined, 'p1')],
@@ -251,10 +258,12 @@ describe('a switch copies a frame it cannot place (REQ-096, REQ-097, REQ-098)', 
       ...packet,
       frame: { ...packet.frame, dstMac: '02:de:ad:00:00:01' },
     });
-    const last = trace.hops[trace.hops.length - 1];
-    expect(last).toMatchObject({ nodeId: 'sw', event: 'drop' });
-    expect(last?.reason).not.toBe('no-receiver');
-    expect(trace.hops.some((hop) => hop.flood !== undefined)).toBe(false);
+    expect(trace.hops[trace.hops.length - 1]).toMatchObject({
+      nodeId: 'pc',
+      event: 'drop',
+      reason: 'arp-no-reply',
+    });
+    expect(trace.hops.some((hop) => (hop.flood?.copies.length ?? 0) > 0)).toBe(false);
   });
 
   it('TC-865: reset() keeps what the switch learned, clearTraces() empties it, a failed link is not used', async () => {

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Cell, Graph, Outline, type PanningHandler, type TooltipHandler } from '@maxgraph/core';
 import { AREA_CLUSTER_NODE_TYPE } from '../../areas/areaLod';
 import { useI18n } from '../../i18n/useI18n';
+import { useArpWords } from '../simulation/useArpWords';
 import { DefaultNode } from '../DefaultNode';
 import { MaxGraphControls } from '../../maxgraph/MaxGraphControls';
 import { useGridToggle, useMaxGraph } from '../../maxgraph/useMaxGraph';
@@ -59,6 +60,9 @@ const LINK_STATE_KEYS: Record<Exclude<LinkState, 'up'>, { label: string; hint: s
   blocked: { label: 'simulation.linkState.blocked', hint: 'simulation.linkState.blockedHint' },
 };
 
+/** The bubble of an unanswered ARP (REQ-350): its words load with `useArpWords`. */
+const ARP_BUBBLE_KEY = 'simulation.packetStory.dropArpNoReply';
+
 export default function SimulatorMaxGraphInner({
   nodes,
   edges,
@@ -83,7 +87,7 @@ export default function SimulatorMaxGraphInner({
   sandbox,
   packet: packetSource,
 }: SimulatorCanvasProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const packet = useMemo(
     () =>
       packetSource
@@ -91,6 +95,7 @@ export default function SimulatorMaxGraphInner({
         : undefined,
     [packetSource, nodes],
   );
+  const arp = useArpWords(packet?.bubble?.key === ARP_BUBBLE_KEY);
   const hostRef = useRef<HTMLDivElement>(null);
   const outlineHostRef = useRef<HTMLDivElement>(null);
   // The overview draws from the graph, so it has to go before the graph does.
@@ -337,7 +342,13 @@ export default function SimulatorMaxGraphInner({
           packet={packet}
           revision={viewRevision}
           label={t('simulation.packetStory.marker')}
-          bubbleText={packet.bubble ? t(packet.bubble.key, packet.bubble.params) : null}
+          bubbleText={
+            !packet.bubble
+              ? null
+              : packet.bubble.key === ARP_BUBBLE_KEY
+                ? (arp?.bubbleWords(locale) ?? t('simulation.packetStory.dropOther'))
+                : t(packet.bubble.key, packet.bubble.params)
+          }
         />
       ) : null}
       {showMinimap ? (

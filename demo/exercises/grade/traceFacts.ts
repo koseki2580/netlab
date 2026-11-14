@@ -57,3 +57,44 @@ export function stoppingTrace(facts: ProbeFacts): PacketTrace | null {
     facts.traces.find((trace) => trace.hops.some((hop) => hop.event === 'drop')) ?? facts.trace
   );
 }
+
+/** An ARP request nobody answered (REQ-350): what it asked for, and who heard it. */
+export interface UnansweredArp {
+  /** The address asked for. */
+  readonly asked: string;
+  /** The devices a copy of the question reached: those inside the sender's VLAN. */
+  readonly heardBy: readonly string[];
+}
+
+/** The ARP request that ended the probe at its sender, or null when it did not end so. */
+export function unansweredArp(facts: ProbeFacts): UnansweredArp | null {
+  if (facts.drop?.reason !== 'arp-no-reply') return null;
+  const hops = stoppingTrace(facts)?.hops ?? [];
+  const request = [...hops]
+    .reverse()
+    .find((hop) => hop.event === 'arp-request' && hop.nodeId === facts.drop?.nodeId);
+  const asked = request?.arpFrame?.payload.targetIp;
+  if (!request || asked === undefined) return null;
+  return { asked, heardBy: (request.flood?.copies ?? []).map((copy) => copy.toNodeId) };
+}
+
+/**
+ * The VLAN of the switch port `hostId` plugs into, when that port is set to one.
+ * A port with no VLAN setting has none to name.
+ */
+export function vlanOfHost(topology: TopologySnapshot, hostId: string): number | null {
+  for (const edge of topology.edges) {
+    const [switchId, handle] =
+      edge.source === hostId
+        ? [edge.target, edge.targetHandle]
+        : edge.target === hostId
+          ? [edge.source, edge.sourceHandle]
+          : [null, null];
+    if (switchId === null) continue;
+    const port = topology.nodes
+      .find((node) => node.id === switchId && node.data.role === 'switch')
+      ?.data.ports?.find((candidate) => candidate.id === handle);
+    if (port?.vlanMode === 'access' && typeof port.accessVlan === 'number') return port.accessVlan;
+  }
+  return null;
+}

@@ -40,15 +40,27 @@ const iface = (
   macAddress,
 });
 
-const toCe2 = convergeLdp({ routers: ['pe1', 'p1', 'pe2'], fec: '10.0.2.0/24', baseLabel: 16000 });
-const toCe1 = convergeLdp({ routers: ['pe2', 'p1', 'pe1'], fec: '10.0.1.0/24', baseLabel: 16010 });
+/** The PEs' loopbacks: LDP's FECs, and the next hops BGP gives the VPN routes (RFC 4364 §5–6). */
+const PE1_LOOPBACK = '192.0.2.1';
+const PE2_LOOPBACK = '192.0.2.2';
+const toCe2 = convergeLdp({
+  routers: ['pe1', 'p1', 'pe2'],
+  fec: `${PE2_LOOPBACK}/32`,
+  baseLabel: 16000,
+});
+const toCe1 = convergeLdp({
+  routers: ['pe2', 'p1', 'pe1'],
+  fec: `${PE1_LOOPBACK}/32`,
+  baseLabel: 16010,
+});
 const labelIn = (ldp: typeof toCe2, routerId: string) =>
   ldp.mappings.find((mapping) => mapping.routerId === routerId)?.label ?? 0;
 const VPN_TO_CE2 = 24010;
 const VPN_TO_CE1 = 24020;
 
 /**
- * CE1 — PE1 — P — PE2 — CE2. The labels come from LDP and the VPN routes from BGP,
+ * CE1 — PE1 — P — PE2 — CE2. The transport labels come from LDP, for the far PE's
+ * loopback, and the VPN routes and their labels from BGP,
  * both worked out here (not signalled on the wire); the engine then pushes, swaps
  * and pops them (REQ-334). P has no route to either customer: it forwards by label.
  */
@@ -98,16 +110,14 @@ export function mplsTopology(php: boolean, pHasLabels = true): NetworkTopology {
         [
           iface('pe1-c', '10.0.1.1', 24, '02:00:00:00:01:01'),
           iface('pe1-p', '10.255.12.1', 30, '02:00:00:00:01:02'),
+          iface('pe1-lo', PE1_LOOPBACK, 32, '02:00:00:00:01:03'),
         ],
         [direct('10.0.1.0/24'), direct('10.255.12.0/30'), via('10.255.23.0/30', '10.255.12.2')],
         {
           ftn: [
-            {
-              prefix: '10.0.2.0/24',
-              push: [labelIn(toCe2, 'p1'), VPN_TO_CE2],
-              nextHop: '10.255.12.2',
-            },
+            { prefix: `${PE2_LOOPBACK}/32`, push: [labelIn(toCe2, 'p1')], nextHop: '10.255.12.2' },
           ],
+          vpn: [{ prefix: '10.0.2.0/24', label: VPN_TO_CE2, egress: PE2_LOOPBACK }],
           lfib: [
             { inLabel: labelIn(toCe1, 'pe1'), action: 'pop' },
             { inLabel: VPN_TO_CE1, action: 'pop' },
@@ -136,16 +146,14 @@ export function mplsTopology(php: boolean, pHasLabels = true): NetworkTopology {
         [
           iface('pe2-p', '10.255.23.2', 30, '02:00:00:00:02:02'),
           iface('pe2-c', '10.0.2.1', 24, '02:00:00:00:02:01'),
+          iface('pe2-lo', PE2_LOOPBACK, 32, '02:00:00:00:02:03'),
         ],
         [direct('10.0.2.0/24'), direct('10.255.23.0/30'), via('10.255.12.0/30', '10.255.23.1')],
         {
           ftn: [
-            {
-              prefix: '10.0.1.0/24',
-              push: [labelIn(toCe1, 'p1'), VPN_TO_CE1],
-              nextHop: '10.255.23.1',
-            },
+            { prefix: `${PE1_LOOPBACK}/32`, push: [labelIn(toCe1, 'p1')], nextHop: '10.255.23.1' },
           ],
+          vpn: [{ prefix: '10.0.1.0/24', label: VPN_TO_CE1, egress: PE1_LOOPBACK }],
           lfib: [
             { inLabel: labelIn(toCe2, 'pe2'), action: 'pop' },
             { inLabel: VPN_TO_CE2, action: 'pop' },
@@ -213,7 +221,7 @@ function MplsL3vpnDemoInner({
     rd: blue.rd,
     prefix: '10.0.2.0/24',
     routeTargets: blue.exportRts,
-    nextHopPe: '192.0.2.2',
+    nextHopPe: PE2_LOOPBACK,
     vpnLabel: VPN_TO_CE2,
   });
 
@@ -262,12 +270,12 @@ function MplsL3vpnDemoInner({
           <div data-testid="mpls-ldp-brief">
             {php
               ? t(
-                  'LDP: each router advertises a label for the route to 10.0.2.0/24. P advertises 16001; PE2, with PHP on as now, advertises label 3 (implicit null). A router sends a packet with the label its next router asked for, so PE1 sends 16001 to P, and P pops the transport label instead of swapping it. This outer transport label only carries the packet across the core to PE2.',
-                  'LDP：各ルータは 10.0.2.0/24 への経路にラベルを 1 つ決めて知らせます。P は 16001 です。いまは PHP が有効なので、PE2 はラベル 3（implicit null）を知らせます。パケットには「次のルータが指定したラベル」を付けて送るので、PE1 は P へ 16001 を付けて送り、P はトランスポートラベルを付け替えずに外します。この外側のトランスポートラベルは、コアを越えて PE2 まで運ぶためだけのものです。',
+                  'LDP: each router advertises a label for PE2’s loopback, 192.0.2.2/32, the address BGP names as the next hop of customer blue’s route. P advertises 16001; PE2, with PHP on as now, advertises label 3 (implicit null). A router sends a packet with the label its next router asked for, so PE1 sends 16001 to P, and P pops the transport label instead of swapping it. This outer transport label only carries the packet across the core to PE2; the customer route 10.0.2.0/24 rides on the VPN label from BGP, not on an LDP label.',
+                  'LDP：各ルータは、PE2 のループバック 192.0.2.2/32（BGP が顧客 blue の経路の次の行き先として示すアドレス）にラベルを 1 つ決めて知らせます。P は 16001 です。いまは PHP が有効なので、PE2 はラベル 3（implicit null）を知らせます。パケットには「次のルータが指定したラベル」を付けて送るので、PE1 は P へ 16001 を付けて送り、P はトランスポートラベルを付け替えずに外します。この外側のトランスポートラベルは、コアを越えて PE2 まで運ぶためだけのものです。顧客の経路 10.0.2.0/24 は VPN ラベル（BGP から）で運ばれ、LDP のラベルではありません。',
                 )
               : t(
-                  'LDP: each router advertises a label for the route to 10.0.2.0/24 — P 16001, PE2 16002. A router sends a packet with the label its next router asked for, so with PHP off P swaps 16001 for 16002. This outer transport label only carries the packet across the core to PE2.',
-                  'LDP：各ルータは 10.0.2.0/24 への経路にラベルを 1 つ決めて知らせます（P は 16001、PE2 は 16002）。パケットには「次のルータが指定したラベル」を付けて送るので、PHP が無効なら P は 16001 を 16002 に付け替えます。この外側のトランスポートラベルは、コアを越えて PE2 まで運ぶためだけのものです。',
+                  'LDP: each router advertises a label for PE2’s loopback, 192.0.2.2/32, the address BGP names as the next hop of customer blue’s route — P 16001, PE2 16002. A router sends a packet with the label its next router asked for, so with PHP off P swaps 16001 for 16002. This outer transport label only carries the packet across the core to PE2; the customer route 10.0.2.0/24 rides on the VPN label from BGP, not on an LDP label.',
+                  'LDP：各ルータは、PE2 のループバック 192.0.2.2/32（BGP が顧客 blue の経路の次の行き先として示すアドレス）にラベルを 1 つ決めて知らせます（P は 16001、PE2 は 16002）。パケットには「次のルータが指定したラベル」を付けて送るので、PHP が無効なら P は 16001 を 16002 に付け替えます。この外側のトランスポートラベルは、コアを越えて PE2 まで運ぶためだけのものです。顧客の経路 10.0.2.0/24 は VPN ラベル（BGP から）で運ばれ、LDP のラベルではありません。',
                 )}
           </div>
           <div>
@@ -296,7 +304,10 @@ function MplsL3vpnDemoInner({
               : t(`LDP: pending in ${ldp.steps} steps`, `LDP: ${ldp.steps} ステップ時点で未収束`)}
           </div>
           <div data-testid="mpls-mapping">
-            {t('Label mapping:', 'ラベルの割り当て:')}{' '}
+            {t(
+              `Label mapping for FEC ${PE2_LOOPBACK}/32 (PE2’s loopback):`,
+              `FEC ${PE2_LOOPBACK}/32（PE2 のループバック）のラベル割り当て:`,
+            )}{' '}
             {ldp.mappings
               .map((m) =>
                 php && m.routerId === 'pe2'

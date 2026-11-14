@@ -11,6 +11,15 @@ describe('the VLAN lesson says why a packet was dropped (TC-710)', () => {
     expect(words.ja).not.toContain('no-egress-in-vlan');
   });
 
+  // TC-1462 (REQ-350): with the trunk down the sender's ARP goes unanswered in its VLAN.
+  it('explains arp-no-reply in both languages (TC-1462)', () => {
+    const words = vlanDropWords('arp-no-reply');
+    expect(words.en).toContain('Nobody in this VLAN answered the ARP, so nothing was sent.');
+    expect(words.ja).toContain('この VLAN の中で ARP に答える機器がなく、何も送られませんでした。');
+    expect(words.en).not.toContain('arp-no-reply');
+    expect(words.ja).not.toContain('arp-no-reply');
+  });
+
   it('still says something readable for a reason it has no words for', () => {
     const words = vlanDropWords('something-else');
     expect(words.en).toMatch(/^The packet was dropped/);

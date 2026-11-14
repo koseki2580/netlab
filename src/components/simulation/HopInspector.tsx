@@ -11,6 +11,7 @@ import {
 } from '../../types/simulation';
 import { CARD, FIELD_ROW, MONO_FONT_STACK, SECTION_HEADER, TEXT } from '../_styles/tokens';
 import { useNetlabContext } from '../NetlabContext';
+import { useArpWords } from './useArpWords';
 import { floodCopiesLabel, floodCopiesText } from './floodWords';
 import { AclMatchView } from './AclMatchView';
 import { HopObservabilityView } from './HopObservabilityView';
@@ -443,7 +444,8 @@ function RoutingSection({ decision }: { decision: RoutingDecision }) {
 }
 
 function DropReasonBlock({ reason }: { reason: string }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const words = useArpWords(reason === 'arp-no-reply')?.dropWords(reason, locale) ?? null;
   return (
     <section
       style={{
@@ -465,6 +467,7 @@ function DropReasonBlock({ reason }: { reason: string }) {
         {t('simulation.hop.dropReason')}
       </div>
       <div style={{ color: '#fecaca', fontSize: 12 }}>{formatDropReason(reason)}</div>
+      {words && <div style={{ color: '#fecaca', fontSize: 12, marginTop: 4 }}>{words}</div>}
     </section>
   );
 }

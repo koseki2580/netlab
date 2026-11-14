@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useArpWords } from './useArpWords';
 import { floodNote } from './floodWords';
 import { useNdpT } from './ndpWords';
 import type { TranslatorFn } from '../../i18n/types';
@@ -83,7 +84,12 @@ function formatLinkHop(hop: PacketHop, t: TranslatorFn): string | null {
   return null;
 }
 
-function formatHopAnnotation(hop: PacketHop, t: TranslatorFn, locale: string): string | null {
+function formatHopAnnotation(
+  hop: PacketHop,
+  t: TranslatorFn,
+  locale: string,
+  said: string | null = null,
+): string | null {
   const parts: string[] = [];
 
   if (hop.action === 'fragment') {
@@ -186,7 +192,7 @@ function formatHopAnnotation(hop: PacketHop, t: TranslatorFn, locale: string): s
   }
 
   if (hop.event === 'drop') {
-    const reason = formatDropReason(hop.reason);
+    const reason = said ?? formatDropReason(hop.reason);
     if (reason) {
       parts.push(reason);
     }
@@ -219,7 +225,13 @@ function HopRow({
   const label = EVENT_LABELS[hop.event] ?? hop.event.toUpperCase();
   const glossKey = EVENT_GLOSS_KEYS[hop.event];
   const dropReason = hop.event === 'drop' ? formatDropReason(hop.reason) : null;
-  const annotation = formatHopAnnotation(hop, t, locale);
+  const arp = useArpWords(hop.reason === 'arp-no-reply');
+  const annotation = formatHopAnnotation(
+    hop,
+    t,
+    locale,
+    arp?.dropWords(hop.reason, locale) ?? null,
+  );
 
   return (
     <div

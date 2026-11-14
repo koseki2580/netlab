@@ -4,7 +4,6 @@
  * cause the feedback does not state, and must not sit on a device the packet
  * was merely flooded to. TC-660, TC-661.
  */
-import { isArpHop } from '../grade/engineRun';
 import { describe, expect, it } from 'vitest';
 import { en } from '../../../src/i18n/locales/en';
 import { ja } from '../../../src/i18n/locales/ja';
@@ -52,28 +51,20 @@ describe('the words of the diagram in an exercise', () => {
 
 // TC-661
 describe('where the replay ends', () => {
-  it('a frame nobody could take was flooded to a bystander: the replay ends before it, with the marker there', async () => {
+  // REQ-350: before it, the till's frame crossed the switch to a bystander PC, and the
+  // replay had to end before that PC. Now its ARP goes unanswered and nothing is sent.
+  it('the till whose ARP nobody answers: the replay ends at the till, as the grader saw it', async () => {
     const { exercise, result, trace } = await startResult('l1-host-address~1', 'reach-pc1-srv');
-    // The simulator reports the drop at another PC, and the feedback is about the till's address.
-    expect(result.evidence?.nodeId).toBe('pc2');
+    expect(result.evidence?.nodeId).toBe('pc1');
     expect(result.evidence?.diagnosis).toBe('wrong-network');
     const shown = shownTrace(trace, exercise.start);
-    // pc1 asks first (REQ-190); the packet itself still stops at the switch.
-    expect(shown.hops.filter((hop) => !isArpHop(hop)).map((hop) => hop.nodeId)).toEqual([
-      'pc1',
-      'pc1',
-      'sw1',
+    expect(shown.hops.map((hop) => [hop.nodeId, hop.event])).toEqual([
+      ['pc1', 'create'],
+      ['pc1', 'arp-request'],
+      ['pc1', 'drop'],
     ]);
-    const last = shown.hops[shown.hops.length - 1];
-    expect(last).toMatchObject({ nodeId: 'sw1', event: 'drop' });
-    expect(last?.activeEdgeId).toBeUndefined();
-    // The trace the grader holds is not changed.
-    expect(trace.hops.filter((hop) => !isArpHop(hop)).map((hop) => hop.nodeId)).toEqual([
-      'pc1',
-      'pc1',
-      'sw1',
-      'pc2',
-    ]);
+    expect(shown.hops.map((hop) => hop.nodeId)).toEqual(trace.hops.map((hop) => hop.nodeId));
+    expect(shown.hops.some((hop) => hop.nodeId === 'pc2')).toBe(false);
   });
 
   it('a drop at the sender, at a router, or a delivery is shown as it is', async () => {

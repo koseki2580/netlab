@@ -148,3 +148,24 @@ NDP hops from the packet's own.
 ARP ones (`isNeighborLookupHop`), or send once first under `'persist'`.
 
 Nothing stored changes.
+
+### A frame stays inside its VLAN, and an unanswered ARP sends nothing
+
+**What changed.** A host's frame now stays inside its VLAN (IEEE 802.1Q). When a host must learn a
+MAC by ARP (RFC 826), its own subnet's or its gateway's, and nobody inside its VLAN answers, the host
+sends nothing further (REQ-350). The trace lists the host's `create`, its `arp-request` (with
+`flood.copies` for the devices of its VLAN that heard it) and a `drop` at the host with the new
+reason `'arp-no-reply'`. Before, the lookup that picked the frame's destination ignored VLANs and
+down links: a frame could reach a host of another VLAN and be answered, a switch reported
+`no-egress-in-vlan`, or a bystander host reported `no-route`. Those outcomes no longer come from a
+host's own send. A switch port with no VLAN setting counts as VLAN 1, as on a real switch.
+
+What a consumer sees: code that matched `no-egress-in-vlan` at a switch, or `no-route` at a
+bystander, for a host whose way out is cut or whose peer is in another VLAN, now sees `arp-no-reply`
+at the sender; `trace.status` is still `'dropped'`. A `switch` over drop reasons that names its cases
+needs `'arp-no-reply'`.
+
+**How to keep the earlier behaviour.** There is no option for it: the earlier outcome was not what a
+network does. Read `arp-no-reply` where the earlier reasons were read.
+
+Nothing stored changes.

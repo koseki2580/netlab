@@ -172,8 +172,24 @@ test('TC-709, TC-710: the VLAN lesson defines its words, waits, and says a drop 
   await page.getByTestId(ID.vlanBreak).click();
   await page.getByTestId(ID.vlanSendAb).click();
   const drop = page.getByTestId(ID.vlanDrop);
-  await expect(drop).toContainText('no port in the packet’s VLAN');
-  await expect(drop).not.toContainText('no-egress-in-vlan:');
+  // REQ-350 (TC-1462): the sender's ARP goes unanswered inside its VLAN.
+  await expect(drop).toContainText('Nobody in this VLAN answered the ARP, so nothing was sent.');
+  await expect(drop).not.toContainText('arp-no-reply');
+});
+
+test.describe('in Japanese', () => {
+  test.use({ appLocale: 'ja' });
+  test('TC-1462: with the trunk down, the VLAN lesson says nobody in the VLAN answered the ARP', async ({
+    page,
+    demoPage,
+  }) => {
+    await demoPage.goto('/networking/vlan');
+    await page.getByTestId(ID.vlanBreak).click();
+    await page.getByTestId(ID.vlanSendAb).click();
+    await expect(page.getByTestId(ID.vlanDrop)).toContainText(
+      'この VLAN の中で ARP に答える機器がなく、何も送られませんでした。',
+    );
+  });
 });
 
 for (const viewport of [VIEWPORTS.desktop, VIEWPORTS.phone]) {

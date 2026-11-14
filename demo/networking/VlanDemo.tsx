@@ -222,6 +222,13 @@ const BTN_DISABLED: CSSProperties = {
  * VLAN is.
  */
 export function vlanDropWords(reason: string | undefined): { en: string; ja: string } {
+  // REQ-350: the sender's question stays in its VLAN, so with the trunk down nobody answers.
+  if (reason === 'arp-no-reply') {
+    return {
+      en: 'The sender asked (by ARP) for the router’s MAC address. Only devices in its own VLAN hear that question, and the router is reached only through the trunk, which is down. Nobody in this VLAN answered the ARP, so nothing was sent.',
+      ja: '送り主は ARP で、ルータの MAC アドレスをたずねました。この問いが聞こえるのは同じ VLAN の機器だけで、ルータへはトランクを通るしかなく、そのトランクが切れています。この VLAN の中で ARP に答える機器がなく、何も送られませんでした。',
+    };
+  }
   if (reason === 'no-egress-in-vlan') {
     return {
       en: 'SW1 had no port in the packet’s VLAN to send it out of: the way to the router, the trunk, is down, so the packet could not leave its VLAN.',

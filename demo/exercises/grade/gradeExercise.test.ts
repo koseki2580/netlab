@@ -126,10 +126,11 @@ describe('must-not-reach', () => {
     because,
   });
 
-  it('vlan: passes when the switch has no port in that VLAN, and names the switch', async () => {
+  // REQ-350: the sender's ARP stays in its VLAN, so the sender is where it stops.
+  it('vlan: passes when the ARP of the sender goes unanswered inside its VLAN, and names the sender', async () => {
     const result = await gradeOne(vlanSwitch(), check(ping('a1', 'b1'), 'vlan'));
     expect(result.code).toBe('ok');
-    expect(result.evidence).toMatchObject({ nodeId: 'sw1', dropReason: 'no-egress-in-vlan' });
+    expect(result.evidence).toMatchObject({ nodeId: 'a1', dropReason: 'arp-no-reply' });
   });
 
   it('acl: passes when an ACL refuses the request', async () => {
@@ -899,8 +900,8 @@ describe('worked example 1: the till with the wrong address (l1-host-address)', 
     expect(grade.passed).toBe(false);
     const till = grade.results[0];
     expect(till).toMatchObject({ code: 'not-delivered' });
-    // The engine reports this drop at pc2, a bystander (engineContract fact 5).
-    expect(till?.evidence).toMatchObject({ nodeId: 'pc2', dropReason: 'no-route' });
+    // The till's ARP for its gateway goes unanswered, so it stops there (REQ-350).
+    expect(till?.evidence).toMatchObject({ nodeId: 'pc1', dropReason: 'arp-no-reply' });
     expect(till?.message.ja).not.toContain('pc2');
     expect(till?.message.ja).toContain('3 つ目の数字がちがいます（2 と 1）');
     expect(grade.results[1]?.code).toBe('ok');

@@ -1,3 +1,4 @@
+import { useArpWords } from '../../components/simulation/useArpWords';
 import { useI18n } from '../../i18n/useI18n';
 import type { PacketHop, PacketTrace } from '../../types/simulation';
 import { dropReasonKey, historyRows, hopEdgeId, summarizeTraces } from '../simulationSummary';
@@ -30,9 +31,12 @@ const EVENT_TONE: Record<string, string> = {
  * that hop crossed so the text and the picture stay connected.
  */
 export function PacketHistoryPanel({ traces, selectedStep, onSelectHop }: PacketHistoryPanelProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const summary = summarizeTraces(traces);
   const rows = historyRows(traces);
+  const arp = useArpWords(
+    traces.some((trace) => trace.hops.some((hop) => hop.reason === 'arp-no-reply')),
+  );
 
   return (
     <div data-testid="editor-history" style={{ fontFamily: 'monospace', fontSize: 12 }}>
@@ -117,7 +121,7 @@ export function PacketHistoryPanel({ traces, selectedStep, onSelectHop }: Packet
                         fontSize: 11,
                       }}
                     >
-                      {t(dropReasonKey(hop.reason))}
+                      {(arp?.dropWords(hop.reason, locale) ?? null) || t(dropReasonKey(hop.reason))}
                     </span>
                   ) : null}
                 </button>

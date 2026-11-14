@@ -7,6 +7,7 @@ type NdpInjector = typeof injectNdpExchange;
 import { passArpThroughSwitches } from './floodCopies';
 import {
   appendHop,
+  BROADCAST_IP,
   continueWith,
   type RoutedContext,
   recordArpEntry,
@@ -15,7 +16,6 @@ import {
 
 export function runArpInjectionStage(ctx: RoutedContext): StageResult | Promise<StageResult> {
   const node = ctx.hop.node;
-  const hopBase = ctx.hop.base;
   const next = ctx.routing.next;
   if (!next) {
     return continueWith(ctx);
@@ -43,6 +43,31 @@ export function runArpInjectionStage(ctx: RoutedContext): StageResult | Promise<
           ctx.routing.nextHopIp ?? undefined,
         )
       : null;
+  // A host that must ask may get no answer inside its VLAN (802.1Q, REQ-350). That
+  // check, and drawing it, load only when a host asks, as NDP's exchange does.
+  if (
+    !v6 &&
+    ctx.ingressFrom === null &&
+    (ctx.routing.arpTarget === null ||
+      !ctx.shared.arpCache.has(arpKey(ctx.current, ctx.routing.arpTarget.targetIp))) &&
+    (node.data.role === 'client' || node.data.role === 'server') &&
+    ctx.workingPacket.frame.payload.dstIp !== BROADCAST_IP &&
+    ctx.deps.ifaceResolver.findNode(next.nodeId)?.data.role === 'switch'
+  ) {
+    return import('../arpUnanswered').then((module) =>
+      module.nobodyAnswers(ctx, next) ? module.askUnanswered(ctx, next) : ask(ctx, next, v6),
+    );
+  }
+  return ask(ctx, next, v6);
+}
+
+/** The ARP (or NDP) exchange, when the sender must ask and an answer comes. */
+function ask(
+  ctx: RoutedContext,
+  next: { nodeId: string; edgeId: string },
+  v6: boolean,
+): StageResult | Promise<StageResult> {
+  const hopBase = ctx.hop.base;
   const shouldInjectArp =
     ctx.routing.arpTarget !== null &&
     !ctx.shared.arpCache.has(arpKey(ctx.current, ctx.routing.arpTarget.targetIp));

@@ -138,6 +138,8 @@ export interface DropContext {
   readonly trunkOnly?: boolean;
   /** What was sent: an ACL message says which kind of traffic a line has to let through. */
   readonly sent?: SentKind;
+  /** `arp-no-reply`: the address the sender asked for, and its VLAN when its port has one. */
+  readonly arp?: { readonly asked: string; readonly vlan?: number };
 }
 
 /** The kind of traffic a probe sends, as an ACL line would have to name it. */
@@ -196,6 +198,42 @@ const DROP_TEXT = {
           en: `${device} sent the answer out of every port, and no device there took it. Compare the sender's address with the devices on that side.`,
           ja: `${device} は返事をすべてのポートに流しましたが、受け取る機器がありませんでした。送り主のアドレスを、同じ側の機器と見くらべてください。`,
         },
+  // REQ-350: the sender asked, nobody inside its VLAN answered, and nothing was sent.
+  // The sender is named: it is where the packet stopped.
+  'arp-no-reply': (device, _leg, context) => {
+    const asked = context.arp?.asked;
+    const vlan = context.arp?.vlan;
+    const who =
+      asked === undefined ? { en: 'its next stop', ja: '次の行き先' } : { en: asked, ja: asked };
+    if (vlan === undefined) {
+      return {
+        en: `${device} asked (by ARP) who has ${who.en}, and nobody on its network answered, so nothing was sent. Compare the first numbers of each address with the devices next to it.`,
+        ja: `${device} は「${who.ja} はだれ？」と（ARP で）たずねましたが、同じネットワークで答える機器がなく、何も送られませんでした。アドレスのはじめの数字を、同じ側の機器と見くらべてください。`,
+      };
+    }
+    const lead = {
+      en: `${device} asked (by ARP) who has ${who.en} inside VLAN ${vlan}, and nobody there answered, so nothing was sent.`,
+      ja: `${device} は VLAN ${vlan} の中で「${who.ja} はだれ？」と（ARP で）たずねましたが、そこで答える機器がなく、何も送られませんでした。`,
+    };
+    if (context.hasTrunk === true && context.trunkOnly === true) {
+      return {
+        en: `${lead.en} Look at the list at BOTH ends of the cable between the switches (trunk): does each carry VLAN ${vlan}?`,
+        ja: `${lead.ja}スイッチ同士をつなぐケーブル（トランク）の両はしの一覧に、VLAN ${vlan} があるか見てください。`,
+      };
+    }
+    return {
+      en:
+        `${lead.en} Compare the VLAN numbers of the two devices' sockets.` +
+        (context.hasTrunk === true
+          ? ' Look at the list of the cable between the switches (the trunk) too.'
+          : ''),
+      ja:
+        `${lead.ja}2 台の差し込み口の VLAN 番号を見くらべてください。` +
+        (context.hasTrunk === true
+          ? 'スイッチ同士をつなぐケーブル（トランク）の一覧も見てください。'
+          : ''),
+    };
+  },
   'acl-deny': (device, leg, context) => ({
     en:
       `${device} refused it. Check that its list of allowed traffic (ACL) has a line that lets ${sentWords(context.sent).en} through.` +
@@ -458,6 +496,7 @@ export interface ExplainDetail {
   readonly hasTrunk?: boolean;
   readonly trunkOnly?: boolean;
   readonly sent?: SentKind;
+  readonly arp?: DropContext['arp'];
   /** `wrong-root`: the label of the switch that is the root now. */
   readonly device?: string;
   /** `wrong-root`: the wanted switch (`other`) has the same, lowest priority as the root and lost on the device number. */
@@ -477,6 +516,7 @@ export function explain(code: CheckResultCode, detail: ExplainDetail = {}): Loca
     ...(detail.hasTrunk === true ? { hasTrunk: true } : {}),
     ...(detail.trunkOnly === true ? { trunkOnly: true } : {}),
     ...(detail.sent ? { sent: detail.sent } : {}),
+    ...(detail.arp ? { arp: detail.arp } : {}),
   };
   if ((code === 'not-delivered' || code === 'address-conflict') && diagnosis) {
     return diagnosisMessage(diagnosis);

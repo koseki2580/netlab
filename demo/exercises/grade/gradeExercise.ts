@@ -44,7 +44,14 @@ import {
   type ExplainDetail,
   type NextHopFault,
 } from './reasons';
-import { evidenceOf, labelOf, sourceNatOnSyn, stoppingTrace } from './traceFacts';
+import {
+  evidenceOf,
+  labelOf,
+  sourceNatOnSyn,
+  stoppingTrace,
+  unansweredArp,
+  vlanOfHost,
+} from './traceFacts';
 
 type GradedExercise = Pick<Exercise, 'start' | 'allowed' | 'checks'> &
   Partial<Pick<Exercise, 'kind'>>;
@@ -84,7 +91,12 @@ function probeCode(check: ProbeCheck, facts: ProbeFacts): CheckResultCode {
       // It must be a drop by the network, and by the stated cause when there is one.
       const reason = facts.drop?.reason;
       if (reason === undefined) return 'wrong-cause';
-      if (check.because === 'vlan') return VLAN_REASONS.includes(reason) ? 'ok' : 'wrong-cause';
+      if (check.because === 'vlan') {
+        // A question kept inside the sender's VLAN never reached the destination (REQ-350).
+        const arp = unansweredArp(facts);
+        if (arp) return arp.heardBy.includes(check.probe.to) ? 'wrong-cause' : 'ok';
+        return VLAN_REASONS.includes(reason) ? 'ok' : 'wrong-cause';
+      }
       if (check.because === 'acl') return reason === 'acl-deny' ? 'ok' : 'wrong-cause';
       return 'ok';
     }
@@ -348,6 +360,8 @@ async function gradeCheck(
       const hasTrunk = current.nodes.some((node) =>
         (node.data.ports ?? []).some((port) => port.vlanMode === 'trunk'),
       );
+      const asked = unansweredArp(facts);
+      const vlan = asked && facts.drop ? vlanOfHost(current, facts.drop.nodeId) : null;
       return result(
         check,
         code,
@@ -358,6 +372,7 @@ async function gradeCheck(
           ...(routesEditable ? { routesEditable } : {}),
           ...(hasTrunk ? { hasTrunk } : {}),
           ...(trunkOnly ? { trunkOnly } : {}),
+          ...(asked ? { arp: { asked: asked.asked, ...(vlan !== null ? { vlan } : {}) } } : {}),
           sent:
             check.probe.via === 'tcp'
               ? { via: 'tcp', dstPort: check.probe.dstPort }

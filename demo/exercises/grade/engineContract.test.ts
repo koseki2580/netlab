@@ -340,9 +340,11 @@ describe('fact 4: spanning tree and a link that is down', () => {
     expect(facts.forwardNodeIds).toEqual(['pc1']);
   });
 
-  it('a down switch uplink is reported by a bystander host, not by the switch (TC-386)', async () => {
+  // 802.1Q/RFC 826 (REQ-350): the sender asks for its gateway inside its VLAN, nobody there
+  // answers, and nothing is sent. Before REQ-350 a bystander was named (TC-386, TC-389, TC-390).
+  it('a down switch uplink leaves the sender ARP for its gateway unanswered (TC-386)', async () => {
     const facts = await ping(withLinkState(lanBehindRouter(), 'e-up', 'down'), 'pc1', 'srv');
-    expect(facts.drop).toEqual({ nodeId: 'pc2', reason: 'no-route', leg: 'request' });
+    expect(facts.drop).toEqual({ nodeId: 'pc1', reason: 'arp-no-reply', leg: 'request' });
   });
 });
 
@@ -361,10 +363,10 @@ describe('fact 5: hosts with a bad address', () => {
     expect(facts.drop).toEqual({ nodeId: 'r1', reason: 'no-route', leg: 'request' });
   });
 
-  it('wrong-subnet host across a router: not delivered, and the drop is at a bystander (TC-389)', async () => {
+  it('wrong-subnet host across a router: no gateway on its subnet answers, so nothing is sent (TC-389)', async () => {
     const out = await ping(wrongSubnet(), 'pc1', 'srv');
     expect(out.requestDelivered).toBe(false);
-    expect(out.drop).toEqual({ nodeId: 'pc2', reason: 'no-route', leg: 'request' });
+    expect(out.drop).toEqual({ nodeId: 'pc1', reason: 'arp-no-reply', leg: 'request' });
 
     const back = await ping(wrongSubnet(), 'srv', 'pc1');
     expect(back.drop).toEqual({ nodeId: 'r1', reason: 'no-route', leg: 'request' });
@@ -376,7 +378,7 @@ describe('fact 5: hosts with a bad address', () => {
       'pc1',
       'srv',
     );
-    expect(facts.drop).toEqual({ nodeId: 'pc2', reason: 'no-route', leg: 'request' });
+    expect(facts.drop).toEqual({ nodeId: 'pc1', reason: 'arp-no-reply', leg: 'request' });
   });
 
   it('a host with no address: the engine throws invariant/no-ip; runProbe reports no-address (TC-391)', async () => {
@@ -683,11 +685,13 @@ describe('fact 8: static routes', () => {
 });
 
 describe('extra pins: VLANs', () => {
-  it('same VLAN on one switch is delivered; another VLAN drops at the switch with no-egress-in-vlan (TC-411)', async () => {
+  // REQ-350: an ARP broadcast stays in its VLAN, so a host of another VLAN is never asked
+  // and nothing is sent; before it, the frame reached the switch (TC-411 to TC-414).
+  it('same VLAN on one switch is delivered; for another VLAN the ARP goes unanswered (TC-411)', async () => {
     expect((await ping(vlanSwitch(), 'a1', 'a2')).status).toBe('delivered');
     const facts = await ping(vlanSwitch(), 'a1', 'b1');
-    expect(facts.drop).toEqual({ nodeId: 'sw1', reason: 'no-egress-in-vlan', leg: 'request' });
-    expect(facts.forwardNodeIds).toEqual(['a1', 'sw1']);
+    expect(facts.drop).toEqual({ nodeId: 'a1', reason: 'arp-no-reply', leg: 'request' });
+    expect(facts.forwardNodeIds).not.toContain('sw1');
   });
 
   it('a trunk carries the VLANs it allows, and the far switch keeps them apart (TC-412)', async () => {
@@ -699,17 +703,17 @@ describe('extra pins: VLANs', () => {
     ]);
     expect((await ping(trunkedSwitches(), 'b1', 'b2')).status).toBe('delivered');
     expect((await ping(trunkedSwitches(), 'a1', 'b2')).drop).toEqual({
-      nodeId: 'sw2',
-      reason: 'no-egress-in-vlan',
+      nodeId: 'a1',
+      reason: 'arp-no-reply',
       leg: 'request',
     });
   });
 
-  it('a trunk that omits a VLAN drops that VLAN at the near switch and still carries the other (TC-413)', async () => {
+  it('a trunk that omits a VLAN keeps the ARP of that VLAN from crossing, and still carries the other (TC-413)', async () => {
     const onlyTen = trunkedSwitches([10]);
     expect((await ping(onlyTen, 'b1', 'b2')).drop).toEqual({
-      nodeId: 'sw1',
-      reason: 'no-egress-in-vlan',
+      nodeId: 'b1',
+      reason: 'arp-no-reply',
       leg: 'request',
     });
     expect((await ping(onlyTen, 'a1', 'a2')).status).toBe('delivered');
@@ -717,16 +721,16 @@ describe('extra pins: VLANs', () => {
 });
 
 describe('extra pins: a down trunk with no loop', () => {
-  it('drops in both directions at the near switch, reported as no-egress-in-vlan (TC-414)', async () => {
+  it('in both directions the ARP goes unanswered across the down trunk (TC-414)', async () => {
     const down = withLinkState(trunkedSwitches(), 'e-trunk', 'down');
     expect((await ping(down, 'a1', 'a2')).drop).toEqual({
-      nodeId: 'sw1',
-      reason: 'no-egress-in-vlan',
+      nodeId: 'a1',
+      reason: 'arp-no-reply',
       leg: 'request',
     });
     expect((await ping(down, 'a2', 'a1')).drop).toEqual({
-      nodeId: 'sw2',
-      reason: 'no-egress-in-vlan',
+      nodeId: 'a2',
+      reason: 'arp-no-reply',
       leg: 'request',
     });
   });

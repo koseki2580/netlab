@@ -265,13 +265,17 @@ function mplsHop(ctx: HopContext): StageResult {
     );
 
   if (!stack) {
-    const ftn = tables.ftn?.find((entry) => isInSubnet(ipPacket.dstIp, entry.prefix));
+    // A VPN route rides on the LSP to its egress PE (REQ-351).
+    const vpn = tables.vpn?.find((entry) => isInSubnet(ipPacket.dstIp, entry.prefix));
+    const fec = vpn?.egress ?? ipPacket.dstIp;
+    const ftn = tables.ftn?.find((entry) => isInSubnet(fec, entry.prefix));
     if (!ftn) return continueWith(ctx);
+    const push = vpn ? [...ftn.push, vpn.label] : ftn.push;
     const ttl = ipPacket.ttl - 1;
-    const pushed = ftn.push.map((label, i) => ({
+    const pushed = push.map((label, i) => ({
       label,
       tc: 0,
-      endOfStack: i === ftn.push.length - 1,
+      endOfStack: i === push.length - 1,
       ttl,
     }));
     note('push', [], pushed);

@@ -288,8 +288,9 @@ describe('what a message points at is something the learner can change', () => {
       trunks.map((ref) => ({ ...ref, vlanMode: 'trunk' as const, trunkAllowedVlans: [one] })),
     );
     const failed = result.results.find((entry) => entry.code === 'not-delivered');
-    expect(failed?.message.ja).toMatch(/^.+ には、この VLAN 番号を運ぶトランク/);
-    expect(failed?.message.ja).toContain('トランクの両はしの一覧');
+    // REQ-350: the sender's question stays in its VLAN, then the trunk's list is the hint.
+    expect(failed?.message.ja).toMatch(/^.+ は VLAN \d+ の中で「[\d.]+ はだれ？」/);
+    expect(failed?.message.ja).toContain('トランク）の両はしの一覧に、VLAN');
     expect(failed?.message.ja).not.toContain('2 台の差し込み口の VLAN 番号を見くらべて');
   });
 

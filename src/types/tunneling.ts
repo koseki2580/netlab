@@ -41,11 +41,24 @@ export type MplsLabelStack = readonly MplsLabel[];
 
 /** A router's MPLS tables (REQ-334): what it pushes onto IP packets, and what it does with a label. */
 export interface MplsTables {
-  /** FEC to NHLFE: for a destination in `prefix`, push `push` (top first) and send to `nextHop`. */
+  /**
+   * FEC to NHLFE: for a destination in `prefix`, push `push` (top first) and send to `nextHop`.
+   * In an L3VPN the FEC is a provider address, the egress PE's loopback (RFC 5036), not a customer route.
+   */
   readonly ftn?: readonly {
     readonly prefix: string;
     readonly push: readonly number[];
     readonly nextHop: string;
+  }[];
+  /**
+   * VPN routes (RFC 4364 §5–6, REQ-351): for a destination in `prefix`, push the VPN `label` (from
+   * MP-BGP) under the transport label of the `ftn` entry whose FEC holds `egress`, the egress PE.
+   * With no such entry the route is not used.
+   */
+  readonly vpn?: readonly {
+    readonly prefix: string;
+    readonly label: number;
+    readonly egress: string;
   }[];
   /** The label table: swap `inLabel` for `outLabel`, or pop it; send to `nextHop` when labels remain. */
   readonly lfib?: readonly {
