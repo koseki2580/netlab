@@ -1,0 +1,1 @@
+var e={en:`nobody in its VLAN answered the ARP, so nothing was sent`,ja:`同じ VLAN の中で ARP に答える機器がなく、何も送られませんでした`},t=t=>t===`ja`?e.ja:e.en;function n(e,n){return e===`arp-no-reply`?t(n):null}function r(t){return t===`ja`?`ここで止まりました：${e.ja}`:`Stopped here: ${e.en}`}export{r as bubbleWords,n as dropWords};

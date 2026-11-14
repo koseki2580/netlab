@@ -1,0 +1,1 @@
+function e(e){let t=2166136261;for(let n=0;n<e.length;n++)t^=e.charCodeAt(n),t=Math.imul(t,16777619);return[2,t>>>24&255,t>>>16&255,t>>>8&255,t&255,e.length&255].map(e=>e.toString(16).padStart(2,`0`)).join(`:`)}function t(e){try{return new URL(e).hostname||null}catch{return null}}function n(e){return/^(\d{1,3}\.){3}\d{1,3}$/.test(e)}export{t as n,n as r,e as t};
