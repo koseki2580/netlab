@@ -515,3 +515,43 @@ describe('StepControls for a beginner', () => {
     expect(byId('step-readout')?.textContent).toBe('Router で破棄されました（no-route）。');
   });
 });
+
+// TC-1479 (REQ-354): the hop line of an ARP hop has no TTL; of an NDP hop, its hop limit.
+describe('the hop line of an ARP or NDP hop (TC-1479)', () => {
+  const withHops = (hops: PacketHop[]) => {
+    const state = makeState({ currentStep: hops.length - 1 });
+    return { ...state, traces: [{ ...state.traces[0]!, hops }] } as SimulationState;
+  };
+  it('ARP: the addresses asked about and ARP, no TTL', () => {
+    simulationMock.state = withHops([
+      makeHop({
+        step: 0,
+        event: 'arp-request',
+        srcIp: '10.0.0.10',
+        dstIp: '10.0.0.1',
+        ttl: 0,
+        protocol: 'ARP',
+        arpFrame: {} as NonNullable<PacketHop['arpFrame']>,
+      }),
+    ]);
+    render();
+    expect(container?.textContent).toContain('10.0.0.10 → 10.0.0.1');
+    expect(container?.textContent).not.toContain('TTL 0');
+  });
+  it('NDP: hop limit 255', () => {
+    simulationMock.state = withHops([
+      makeHop({
+        step: 0,
+        event: 'ndp-solicit',
+        srcIp: '2001:db8::10',
+        dstIp: 'ff02::1:ff00:1',
+        ttl: 255,
+        protocol: 'ICMPv6',
+        ndpFrame: {} as NonNullable<PacketHop['ndpFrame']>,
+      }),
+    ]);
+    render();
+    expect(container?.textContent).toContain('Hop Limit 255');
+    expect(container?.textContent).not.toContain('TTL 255');
+  });
+});

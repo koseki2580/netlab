@@ -87,6 +87,9 @@ function FieldRow({
   value: string;
   valueColor?: string;
 }) {
+  // In Japanese the field names load with the lazy words (REQ-355).
+  const { locale } = useI18n();
+  const words = useLazyDropWords(locale === 'ja');
   return (
     <div
       style={{
@@ -94,7 +97,7 @@ function FieldRow({
         alignItems: 'start',
       }}
     >
-      <span style={{ color: TEXT.secondary }}>{label}</span>
+      <span style={{ color: TEXT.secondary }}>{words?.fieldLabel(label, locale) ?? label}</span>
       <span style={{ color: valueColor ?? TEXT.primary, wordBreak: 'break-word' }}>{value}</span>
     </div>
   );
@@ -196,8 +199,9 @@ function HopFields({
     { label: 'Dst IP', value: hop.dstIp },
     { label: 'Src MAC', value: hop.srcMac ?? '—' },
     { label: 'Dst MAC', value: hop.dstMac ?? '—' },
-    { label: 'TTL In', value: String(hop.ttl) },
-    { label: 'TTL Out', value: String(getTtlOut(hop, nodes)) },
+    // NDP rides on IPv6 with hop limit 255 (RFC 4861 §7.1): no TTL in and out (REQ-354).
+    { label: hop.ndpFrame ? 'Hop Limit' : 'TTL In', value: String(hop.ttl) },
+    ...(hop.ndpFrame ? [] : [{ label: 'TTL Out', value: String(getTtlOut(hop, nodes)) }]),
     { label: t('simulation.hop.field.protocol'), value: hop.protocol },
   ];
 

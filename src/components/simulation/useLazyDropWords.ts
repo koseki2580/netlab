@@ -4,6 +4,11 @@ type LazyDropWords = typeof import('./lazyDropWords');
 
 let loaded: LazyDropWords | null = null;
 
+/** Load the words now, for a view about to need them (or a test that renders without effects). */
+export async function preloadLazyDropWords(): Promise<void> {
+  loaded ??= await import('./lazyDropWords');
+}
+
 /**
  * The words of `lazyDropWords.ts`, loaded the first time a view shows a drop
  * (the module itself says which reasons it has words for), so they stay out of

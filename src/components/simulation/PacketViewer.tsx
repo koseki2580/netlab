@@ -1,6 +1,7 @@
 import { useI18n } from '../../i18n/useI18n';
 import { useSimulation } from '../../simulation/SimulationContext';
 import type { PacketHop } from '../../types/simulation';
+import { useLazyDropWords } from './useLazyDropWords';
 
 const PANEL: React.CSSProperties = {
   width: 220,
@@ -55,9 +56,12 @@ const EVENT_COLORS: Record<string, string> = {
 };
 
 function Field({ label, value }: { label: string; value: string }) {
+  // In Japanese the field names load with the lazy words (REQ-355).
+  const { locale } = useI18n();
+  const words = useLazyDropWords(locale === 'ja');
   return (
     <div style={ROW}>
-      <span style={KEY}>{label}</span>
+      <span style={KEY}>{words?.fieldLabel(label, locale) ?? label}</span>
       <span style={VAL}>{value}</span>
     </div>
   );
@@ -131,9 +135,21 @@ export function PacketViewerPanel({ floating = false }: PacketViewerPanelProps) 
 
           <div style={{ borderTop: '1px solid var(--netlab-bg-surface)', paddingTop: 8 }}>
             <Field label={t('simulation.hop.field.node')} value={selectedHop.nodeLabel} />
-            <Field label="Src IP" value={selectedHop.srcIp} />
-            <Field label="Dst IP" value={selectedHop.dstIp} />
-            <Field label="TTL" value={String(selectedHop.ttl)} />
+            {/* An ARP message has no IP header (RFC 826); NDP has hop limit 255 (REQ-354). */}
+            <Field
+              label={selectedHop.arpFrame ? 'Sender IP' : 'Src IP'}
+              value={selectedHop.srcIp}
+            />
+            <Field
+              label={selectedHop.arpFrame ? 'Target IP' : 'Dst IP'}
+              value={selectedHop.dstIp}
+            />
+            {selectedHop.arpFrame ? null : (
+              <Field
+                label={selectedHop.ndpFrame ? 'Hop Limit' : 'TTL'}
+                value={String(selectedHop.ttl)}
+              />
+            )}
             <Field label={t('simulation.hop.field.protocol')} value={selectedHop.protocol} />
 
             {selectedHop.toNodeId && (

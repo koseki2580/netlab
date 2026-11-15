@@ -1,8 +1,9 @@
 /**
- * The words for drop reasons the views load only when a trace has one
- * (`useLazyDropWords`): an unanswered ARP (REQ-350), and a tunnel or label
- * router that would not take the packet (REQ-353). They stay out of the shared
- * catalogue and out of the bundles that never show one.
+ * Words the trace views load only when they need them (`useLazyDropWords`):
+ * the drop reasons of an unanswered ARP (REQ-350) and of a tunnel or label
+ * router that would not take the packet (REQ-353), and the Japanese names of
+ * the hop fields (REQ-355). They stay out of the shared catalogue and out of
+ * the bundles that never show them.
  */
 const SAID: Readonly<Record<string, { readonly en: string; readonly ja: string }>> = {
   'arp-no-reply': {
@@ -30,4 +31,28 @@ export function dropWords(reason: string | undefined, locale: string): string | 
 export function bubbleWords(reason: string, locale: string): string {
   const said = dropWords(reason, locale) ?? '';
   return locale === 'ja' ? `ここで止まりました：${said}` : `Stopped here: ${said}`;
+}
+
+/** The hop fields in Japanese, the technical term beside the ones a learner meets as such. */
+const FIELDS_JA: Readonly<Record<string, string>> = {
+  'Src IP': '送信元 IP',
+  'Dst IP': '宛先 IP',
+  'Src MAC': '送信元 MAC',
+  'Dst MAC': '宛先 MAC',
+  'TTL In': '着いたときの TTL',
+  'TTL Out': '送り出すときの TTL',
+  TTL: 'TTL（寿命）',
+  'Hop Limit': 'ホップ数の上限（Hop Limit）',
+  'Sender MAC': '問い合わせた機器の MAC',
+  'Sender IP': '問い合わせた機器の IP',
+  'Target MAC': '探している機器の MAC',
+  'Target IP': '探している IP',
+  'Eth Dst': 'フレームの宛先 MAC',
+  'Eth Src': 'フレームの送信元 MAC',
+  EtherType: '中身の種類（EtherType）',
+};
+
+/** A hop field's name in the reader's language: Japanese where there is one, else as given. */
+export function fieldLabel(label: string, locale: string): string {
+  return (locale === 'ja' && FIELDS_JA[label]) || label;
 }

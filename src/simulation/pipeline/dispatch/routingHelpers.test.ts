@@ -111,8 +111,10 @@ describe('routingHelpers', () => {
     const toJa = createTranslator('ja', ja);
     const primary = makeRouteEntry('r1', '203.0.113.0/24', '192.168.1.2');
     const backup = makeRouteEntry('r1', '0.0.0.0/0', '192.168.1.9');
+    const connected = makeRouteEntry('r1', '203.0.113.0/24', 'direct');
     const cases = [
       ['a matched route', buildRoutingDecision('203.0.113.5', [primary], primary)],
+      ['a connected route', buildRoutingDecision('203.0.113.5', [connected], connected)],
       ['a fallback route', buildRoutingDecision('203.0.113.5', [primary, backup], backup)],
       ['no reachable route', buildRoutingDecision('203.0.113.5', [primary], null)],
       ['no matching route', buildRoutingDecision('198.51.100.1', [primary])],

@@ -6,7 +6,9 @@ import { SimulationEngine } from '../../simulation/SimulationEngine';
 import type { PacketHop, PacketTrace, SimulationState } from '../../types/simulation';
 import type { NetworkTopology } from '../../types/topology';
 import { NetlabContext } from '../NetlabContext';
+import { I18nProvider } from '../../i18n/I18nProvider';
 import { HopInspector } from './HopInspector';
+import { preloadLazyDropWords } from './useLazyDropWords';
 
 const TOPOLOGY: NetworkTopology = {
   nodes: [
@@ -57,7 +59,7 @@ const TOPOLOGY: NetworkTopology = {
   routeTables: new Map(),
 };
 
-function renderHopInspector(selectedHop: PacketHop): string {
+function renderHopInspector(selectedHop: PacketHop, locale = 'en'): string {
   const hookEngine = new HookEngine();
   const engine = new SimulationEngine(TOPOLOGY, hookEngine);
   const trace: PacketTrace = {
@@ -107,11 +109,118 @@ function renderHopInspector(selectedHop: PacketHop): string {
           isRecomputing: false,
         }}
       >
-        <HopInspector />
+        <I18nProvider locale={locale}>
+          <HopInspector />
+        </I18nProvider>
       </SimulationContext.Provider>
     </NetlabContext.Provider>,
   );
 }
+
+// TC-1479: the hop details of an ARP hop have no TTL; those of NDP give hop limit 255.
+describe('HopInspector: ARP and NDP (TC-1479)', () => {
+  const lookup = (extra: Partial<PacketHop>): PacketHop => ({
+    step: 0,
+    nodeId: 'client-1',
+    nodeLabel: 'Client',
+    srcIp: '10.0.0.10',
+    dstIp: '10.0.0.1',
+    ttl: 0,
+    protocol: 'ARP',
+    event: 'arp-request',
+    timestamp: 0,
+    ...extra,
+  });
+
+  it('ARP: sender and target, no TTL rows', () => {
+    const html = renderHopInspector(
+      lookup({
+        arpFrame: {
+          layer: 'L2',
+          srcMac: '00:00:00:00:00:10',
+          dstMac: 'ff:ff:ff:ff:ff:ff',
+          etherType: 0x0806,
+          payload: {
+            layer: 'ARP',
+            hardwareType: 1,
+            protocolType: 0x0800,
+            operation: 'request',
+            senderMac: '00:00:00:00:00:10',
+            senderIp: '10.0.0.10',
+            targetMac: '00:00:00:00:00:00',
+            targetIp: '10.0.0.1',
+          },
+        },
+      }),
+    );
+    expect(html).toContain('Sender IP');
+    expect(html).toContain('Target IP');
+    expect(html).not.toContain('TTL In');
+    expect(html).not.toContain('TTL Out');
+  });
+
+  // TC-1481 (REQ-355): in Japanese the field names are Japanese, the technical term beside them.
+  it('TC-1481: names the ARP fields in Japanese', async () => {
+    await preloadLazyDropWords();
+    const html = renderHopInspector(
+      lookup({
+        arpFrame: {
+          layer: 'L2',
+          srcMac: '00:00:00:00:00:10',
+          dstMac: 'ff:ff:ff:ff:ff:ff',
+          etherType: 0x0806,
+          payload: {
+            layer: 'ARP',
+            hardwareType: 1,
+            protocolType: 0x0800,
+            operation: 'request',
+            senderMac: '00:00:00:00:00:10',
+            senderIp: '10.0.0.10',
+            targetMac: '00:00:00:00:00:00',
+            targetIp: '10.0.0.1',
+          },
+        },
+      }),
+      'ja',
+    );
+    expect(html).toContain('問い合わせた機器の MAC');
+    expect(html).toContain('中身の種類（EtherType）');
+    expect(html).not.toContain('Sender MAC');
+    expect(html).not.toContain('>EtherType<');
+  });
+
+  it('NDP: the IPv6 hop limit, 255, and no TTL rows', () => {
+    const html = renderHopInspector(
+      lookup({
+        srcIp: '2001:db8::10',
+        dstIp: 'ff02::1:ff00:1',
+        protocol: 'ICMPv6',
+        ttl: 255,
+        event: 'ndp-solicit',
+        ndpFrame: {
+          layer: 'L2',
+          srcMac: '00:00:00:00:00:10',
+          dstMac: '33:33:ff:00:00:01',
+          etherType: 0x86dd,
+          payload: {
+            layer: 'L3',
+            version: 6,
+            srcIp: '2001:db8::10',
+            dstIp: 'ff02::1:ff00:1',
+            ttl: 255,
+            hopLimit: 255,
+            nextHeader: 58,
+            protocol: 58,
+            payload: { layer: 'L4', type: 135, code: 0, checksum: 0, targetAddress: '2001:db8::1' },
+          },
+        } as unknown as NonNullable<PacketHop['ndpFrame']>,
+      }),
+    );
+    expect(html).toContain('Hop Limit');
+    expect(html).toContain('255');
+    expect(html).not.toContain('TTL In');
+  });
+});
 
 describe('HopInspector', () => {
   it('renders source and destination MAC rows when hop MACs are present', () => {

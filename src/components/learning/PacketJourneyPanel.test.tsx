@@ -232,6 +232,26 @@ describe('PacketJourneyPanel', () => {
     expect(testid('packet-journey-prompt')).not.toBeNull();
   });
 
+  // TC-1480: the engine's decision is said in the reader's language, not in the engine's English.
+  it('TC-1480: says the engine decision in Japanese inside a Japanese page', async () => {
+    act(() =>
+      root?.render(
+        <I18nProvider locale="ja">
+          <PacketJourneyPanel />
+        </I18nProvider>,
+      ),
+    );
+    await flush();
+    const journey = await realJourney(0);
+    click(`packet-journey-answer-${journey.steps[0]!.correctNodeId}`);
+    click('packet-journey-advance');
+    const r1 = journey.steps[1]!;
+    click(`packet-journey-answer-${r1.options.find((option) => option !== r1.correctNodeId)!}`);
+    const feedback = testid('packet-journey-feedback')?.textContent ?? '';
+    expect(feedback).toContain('10.2.0.0/24 に一致したので');
+    expect(feedback).not.toContain('Matched');
+  });
+
   it('renders Japanese inside an I18nProvider with locale ja', async () => {
     act(() =>
       root?.render(

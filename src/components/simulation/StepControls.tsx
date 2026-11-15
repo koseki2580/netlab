@@ -62,7 +62,8 @@ function HopHeader({ hop, current, total }: HopHeaderProps) {
         </span>
       </div>
       <div style={{ fontSize: 11, color: 'var(--netlab-text-secondary)' }}>
-        {hop.srcIp} → {hop.dstIp} &nbsp;|&nbsp; TTL {hop.ttl} &nbsp;|&nbsp; {hop.protocol}
+        {/* ARP has no TTL (RFC 826); NDP has hop limit 255 (REQ-354). */}
+        {`${hop.srcIp} → ${hop.dstIp} \u00a0|\u00a0 ${hop.arpFrame ? '' : `${hop.ndpFrame ? 'Hop Limit' : 'TTL'} ${hop.ttl} \u00a0|\u00a0 `}${hop.protocol}`}
       </div>
     </div>
   );

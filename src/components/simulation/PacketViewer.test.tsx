@@ -61,3 +61,36 @@ describe('PacketViewerPanel with nothing chosen', () => {
     expect(textIn('ja', SENT)).not.toContain('まだ何も送っていません');
   });
 });
+
+// TC-1479 (REQ-354): an ARP hop has no TTL; an NDP hop shows its IPv6 hop limit.
+describe('PacketViewerPanel with an ARP or NDP hop (TC-1479)', () => {
+  const chosen = (hop: Record<string, unknown>) =>
+    ({
+      ...SENT,
+      selectedHop: { step: 0, nodeLabel: 'PC', event: 'arp-request', ...hop },
+    }) as unknown as SimulationState;
+  it('ARP: sender and target, and no TTL', () => {
+    const text = textIn(
+      'en',
+      chosen({ srcIp: '10.0.0.10', dstIp: '10.0.0.1', ttl: 0, protocol: 'ARP', arpFrame: {} }),
+    );
+    expect(text).toContain('Sender IP');
+    expect(text).toContain('Target IP');
+    expect(text).not.toContain('TTL');
+  });
+  it('NDP: hop limit 255, and no TTL', () => {
+    const text = textIn(
+      'en',
+      chosen({
+        event: 'ndp-solicit',
+        srcIp: '2001:db8::10',
+        dstIp: 'ff02::1:ff00:1',
+        ttl: 255,
+        protocol: 'ICMPv6',
+        ndpFrame: {},
+      }),
+    );
+    expect(text).toContain('Hop Limit255');
+    expect(text).not.toContain('TTL');
+  });
+});

@@ -1,3 +1,4 @@
+import { routingVerdict } from '../../simulation/pipeline/dispatch/routingHelpers';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { HookEngine } from '../../hooks/HookEngine';
 import { useI18n } from '../../i18n/useI18n';
@@ -89,7 +90,10 @@ export function PacketJourneyPanel() {
     (nodeId: string) => {
       if (!step || result) return;
       const correct = nodeId === step.correctNodeId;
-      const engineLine = step.hop.routingDecision?.explanation;
+      // In the reader's language, not the engine's English line (REQ-355).
+      const decision = step.hop.routingDecision;
+      const verdict = decision ? routingVerdict(decision) : null;
+      const engineLine = verdict ? t(verdict.key, verdict.params) : undefined;
       const targetLabel = labels.get(step.correctNodeId) ?? step.correctNodeId;
       // A hop with one way out asks nothing, so it is confirmed, not graded:
       // it neither says "Correct" nor counts toward the score.
