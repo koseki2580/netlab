@@ -7,6 +7,8 @@ import { expect, test } from './fixtures/harness';
  * and targets smaller than a fingertip.
  */
 test.use({ viewportPreset: 'phone', isMobile: true });
+// Firefox cannot emulate a mobile browser (`isMobile`): the phone checks run on Chromium and WebKit.
+test.skip(({ browserName }) => browserName === 'firefox', 'Firefox has no isMobile emulation');
 
 test('TC-1601: after a send the course verdict is above the next bar, and "more" opens in view', async ({
   page,

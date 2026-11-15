@@ -63,7 +63,9 @@ test('a mid-page illustration canvas lets the page scroll under the pointer', as
   demoPage,
 }) => {
   await demoPage.goto('/learning/packet-journey');
-  const canvas = page.locator('[data-node-kind]').first();
+  // A device drawn on the canvas: its icon sits under the device box, which
+  // takes the pointer (WebKit refused to hover the icon itself).
+  const canvas = page.getByTestId('topology-node').first();
   await expect(canvas).toBeVisible();
 
   const before = await page.evaluate(() => window.scrollY);

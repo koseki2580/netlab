@@ -10,6 +10,8 @@ import { boxesOf, settled } from './fixtures/settle';
  * than a fingertip, and a help card that listed keyboard shortcuts.
  */
 test.use({ viewportPreset: 'phone', isMobile: true });
+// Firefox cannot emulate a mobile browser (`isMobile`): the phone checks run on Chromium and WebKit.
+test.skip(({ browserName }) => browserName === 'firefox', 'Firefox has no isMobile emulation');
 
 /** The smallest text drawn on any device of the diagram, in CSS pixels on screen. */
 async function smallestDeviceText(page: Page): Promise<number> {
