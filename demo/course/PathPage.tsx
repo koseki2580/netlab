@@ -82,7 +82,7 @@ function StageCard({ stage, status }: { stage: Stage; status: StageStatus }) {
         <span data-testid={`path-stage-${stage.number}-title`}>
           {t(
             `Stage ${stage.number} · ${stage.title.en}`,
-            `段階 ${stage.number}・${stage.title.ja}`,
+            `Level ${stage.number}・${stage.title.ja}`,
           )}
         </span>{' '}
         <span
@@ -98,7 +98,7 @@ function StageCard({ stage, status }: { stage: Stage; status: StageStatus }) {
         <p data-testid={`path-stage-${stage.number}-lock`} style={{ margin: 0 }}>
           {t(
             `Pass stage ${stage.number - 1} to open this stage. You can still read and try everything here.`,
-            `段階 ${stage.number - 1} に合格すると開きます。ここにあるものは、いまでも読んで試せます。`,
+            `Level ${stage.number - 1} に合格すると開きます。ここにあるものは、いまでも読んで試せます。`,
           )}
         </p>
       ) : null}
@@ -125,7 +125,7 @@ function StageCard({ stage, status }: { stage: Stage; status: StageStatus }) {
 
       <div>
         <h3 style={{ margin: '4px 0', fontSize: 14 }}>
-          {t('To pass this stage', 'この段階の合格に必要なもの')}
+          {t('To pass this stage', 'この Level の合格に必要なもの')}
         </h3>
         <ol style={{ margin: 0, paddingLeft: 22 }}>
           {status.checkpoints.map(({ checkpoint, passed }) => (
@@ -145,7 +145,7 @@ function StageCard({ stage, status }: { stage: Stage; status: StageStatus }) {
         <p style={{ ...MUTED, margin: '4px 0 0', fontSize: 13 }}>
           {t(
             'The stage is passed when every item above is done, not by its test alone.',
-            'この段階は、上のものがすべて済んだときに合格です。テストだけでは合格になりません。',
+            'この Level は、上のものがすべて済んだときに合格です。テストだけでは合格になりません。',
           )}
         </p>
         {!status.passed &&
@@ -159,7 +159,7 @@ function StageCard({ stage, status }: { stage: Stage; status: StageStatus }) {
           >
             {t(
               'Your pass of this stage’s test is kept. The exercises above still remain before the stage is passed.',
-              'この段階のテストの合格は残っています。段階の合格には、上の問題がまだ残っています。',
+              'この Level のテストの合格は残っています。Level の合格には、上の問題がまだ残っています。',
             )}
           </p>
         ) : null}
@@ -200,7 +200,7 @@ export function PathBody({ store }: { store?: AttemptStore }) {
           {next ? (
             <>
               <p style={{ margin: 0, fontSize: 17, fontWeight: 700 }}>
-                {t(`Next, in stage ${next.stage}:`, `次は、段階 ${next.stage} の：`)}
+                {t(`Next, in stage ${next.stage}:`, `次は、Level ${next.stage} の：`)}
               </p>
               <div>
                 <Link
@@ -218,14 +218,14 @@ export function PathBody({ store }: { store?: AttemptStore }) {
             <p data-testid="path-all-passed" style={{ margin: 0, fontSize: 17, fontWeight: 700 }}>
               {t(
                 'Every stage is passed. More topics are coming to stages 6 and 7.',
-                'すべての段階に合格しました。段階 6 と 7 には、これからも項目が増えます。',
+                'すべての Level に合格しました。Level 6 と 7 には、これからも項目が増えます。',
               )}
             </p>
           )}
           <p style={{ ...MUTED, margin: 0, fontSize: 14 }}>
             {t(
               'Seven stages, each with lessons, exercises and a test. Passing a stage opens the next. Every lesson can be read at any time.',
-              '7 つの段階があり、それぞれにレッスン・問題・テストがあります。段階に合格すると次が開きます。レッスンはいつでも読めます。',
+              '7 つの Level があり、それぞれにレッスン・問題・テストがあります。Level に合格すると次が開きます。レッスンはいつでも読めます。',
             )}
           </p>
         </section>
@@ -243,7 +243,7 @@ export default function PathPage() {
       title={{ en: 'Learning path', ja: '学習の道すじ' }}
       desc={{
         en: 'Seven stages from the basics to the latest: lessons, exercises and a test in each.',
-        ja: '基本から最新まで 7 つの段階。それぞれにレッスン・問題・テストがあります。',
+        ja: '基本から最新まで 7 つの Level。それぞれにレッスン・問題・テストがあります。',
       }}
     >
       <PathBody />

@@ -8,7 +8,7 @@ import type { ExamLevel } from './examQuestions';
  */
 export const EXAM_STAGE_2: ExamLevel = {
   level: 6,
-  title: { en: 'Stage 2 · LAN', ja: '段階 2・LAN' },
+  title: { en: 'Stage 2 · LAN', ja: 'Level 2・LAN' },
   summary: {
     en: 'One local network: how a switch passes frames, how ARP finds a MAC address, and VLANs.',
     ja: '1 つのローカルネットワーク。スイッチの渡し方、ARP による MAC アドレスの調べ方、VLAN。',

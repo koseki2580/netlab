@@ -106,9 +106,9 @@ describe('the review gate (TC-1424)', () => {
 // TC-1427 (unit part): every test is named by its stage.
 describe('test names (TC-1427)', () => {
   it('names each test by its stage, numbering a stage’s two', () => {
-    expect(examStageName(5)).toEqual({ en: 'Stage 1 test', ja: '段階 1 のテスト' });
-    expect(examStageName(1)).toEqual({ en: 'Stage 4 test', ja: '段階 4 のテスト' });
-    expect(examStageName(4).ja).toBe('段階 6 のテスト 2');
+    expect(examStageName(5)).toEqual({ en: 'Stage 1 test', ja: 'Level 1 のテスト' });
+    expect(examStageName(1)).toEqual({ en: 'Stage 4 test', ja: 'Level 4 のテスト' });
+    expect(examStageName(4).ja).toBe('Level 6 のテスト 2');
   });
 });
 

@@ -9,7 +9,7 @@ import type { ExamLevel } from './examQuestions';
  */
 export const EXAM_STAGE_3: ExamLevel = {
   level: 7,
-  title: { en: 'Stage 3 · IP', ja: '段階 3・IP' },
+  title: { en: 'Stage 3 · IP', ja: 'Level 3・IP' },
   summary: {
     en: 'Crossing routers: route tables, what changes in a packet on the way, and packet size.',
     ja: 'ルータを越えること。経路表、途中でパケットの何が変わるか、パケットの大きさ。',

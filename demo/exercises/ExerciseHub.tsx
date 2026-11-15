@@ -144,7 +144,7 @@ export function ExerciseHubBody({ store: injected }: { store?: AttemptStore }) {
             {t('My record, and saving it', '自分の記録を見る・保存する')}
           </Link>{' '}
           <Link to="/path" data-testid="exercises-path-link" style={SECONDARY}>
-            {t('The learning path: 7 stages', '学習の道すじ（7 つの段階）')}
+            {t('The learning path: 7 stages', '学習の道すじ（7 つの Level）')}
           </Link>
         </div>
       </div>

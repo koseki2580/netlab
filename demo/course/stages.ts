@@ -364,7 +364,7 @@ export function examStageName(level: number, stages: readonly Stage[] = STAGES):
     const part = levels.length > 1 ? ` ${index + 1}` : '';
     return {
       en: `Stage ${stage.number} test${part}`,
-      ja: `段階 ${stage.number} のテスト${part}`,
+      ja: `Level ${stage.number} のテスト${part}`,
     };
   }
   return { en: `Test ${level}`, ja: `テスト ${level}` };

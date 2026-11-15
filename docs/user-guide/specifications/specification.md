@@ -182,7 +182,7 @@ application; the library's public API and data model are not changed by them.
   and what was opened MUST be kept in the progress record, so neither a reload
   nor a new tab offers an attempt sooner.
 - **REQ-198 (MUST):** The path, the test page and the course MUST name every
-  test by its stage ("Stage N test" / 「段階 N のテスト」), never by a level
+  test by its stage ("Stage N test" / 「Level N のテスト」), never by a level
   number, and the course's last button MUST name the stage 1 test it opens. A
   learner whose stage needs exercises beyond a test already passed MUST be told
   so on the path.

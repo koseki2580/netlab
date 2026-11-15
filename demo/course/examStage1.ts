@@ -8,7 +8,7 @@ import type { ExamLevel } from './examQuestions';
  */
 export const EXAM_STAGE_1: ExamLevel = {
   level: 5,
-  title: { en: 'Stage 1 · Getting ready', ja: '段階 1・準備' },
+  title: { en: 'Stage 1 · Getting ready', ja: 'Level 1・準備' },
   summary: {
     en: 'Addresses, the parts of a small network, and how to read a "/number".',
     ja: 'アドレス、小さなネットワークの部品、「/数字」の読み方。',

@@ -267,3 +267,13 @@ A running record of corrections and feedback received during sessions. Use this 
 **Why**: Agents test the behaviour they changed; layout and navigation contracts held by other specs break silently.
 
 **Apply-when**: Committing agent work that touches shared page components (runners, shells, panels) or navigation rules.
+
+## L020 — Keep the user's own name for a learning unit; do not translate it
+
+**What happened**: The seven learning-path units were labelled 「段階 N」 in Japanese; the user asked for them to stay "Level" (「Level 1・準備」「Level 1 のテスト」).
+
+**Rule**: When the user has named a unit of the curriculum, use that word in every language unless they ask for a translation; keep the exercise levels (「レベル N」) distinct from it.
+
+**Why**: A translated label the user did not choose reads as a different concept, and renames ripple through UI, tests, spec and guide.
+
+**Apply-when**: Naming stages, levels, tests or other curriculum units in UI strings, especially Japanese.

@@ -1260,7 +1260,7 @@ export default function Gallery({
               fontWeight: 700,
             }}
           >
-            {t('The whole learning path: 7 stages →', '学習の道すじ（7 つの段階）→')}
+            {t('The whole learning path: 7 stages →', '学習の道すじ（7 つの Level）→')}
           </a>
 
           <div style={{ marginTop: 20 }}>

@@ -85,7 +85,7 @@ const UI_COPY: Record<CourseLocale, CourseUiCopy> = {
     finishTitle: '仕組みはこれで一通りです',
     finishBody:
       'ケーブル1本、スイッチ、ネットワークが違うと届かないこと、そしてそれをつなぐルータを見てきました。ギャラリーのレッスンは、どれもこの続きです。',
-    toExam: '段階 1 のテストへ →',
+    toExam: 'Level 1 のテストへ →',
     toExercises: '実習問題をやってみる',
     toGallery: 'ギャラリーを開く',
     restart: 'もう一度はじめから',

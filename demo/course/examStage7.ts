@@ -10,7 +10,7 @@ import type { ExamLevel } from './examQuestions';
  */
 export const EXAM_STAGE_7: ExamLevel = {
   level: 8,
-  title: { en: 'Stage 7 · Modern and cloud', ja: '段階 7・最新とクラウド' },
+  title: { en: 'Stage 7 · Modern and cloud', ja: 'Level 7・最新とクラウド' },
   summary: {
     en: 'The modern web: TLS 1.3, HTTP/2, HTTP/3 over QUIC, and how TCP reacts to loss.',
     ja: '今の Web。TLS 1.3、HTTP/2、QUIC 上の HTTP/3、TCP の損失への対応。',
