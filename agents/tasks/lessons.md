@@ -257,3 +257,13 @@ A running record of corrections and feedback received during sessions. Use this 
 **Why**: The index is shared by every agent in the checkout (L016), so one staged path rides into someone else's commit.
 
 **Apply-when**: Removing, renaming or restoring files in a checkout where staging is forbidden or shared.
+
+## L019 — An agent's own e2e run is not the regression check for shared UI
+
+**What happened**: The lessons agent changed the exercise page for phones and ran only the phone suites (33/33). That broke two desktop checks at 1280×720 and the TC-598 reopen check, and the breakage went unnoticed until another agent hit it after the commit (fixed in c84b6cb).
+
+**Rule**: Before committing an agent's UI change, the lead runs every e2e spec that opens the touched pages (grep the spec files for their routes and test ids), not only the specs the agent names.
+
+**Why**: Agents test the behaviour they changed; layout and navigation contracts held by other specs break silently.
+
+**Apply-when**: Committing agent work that touches shared page components (runners, shells, panels) or navigation rules.
