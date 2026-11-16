@@ -757,6 +757,15 @@ export type {
   TranslatorFn,
   TranslatorParams,
 } from './i18n';
+export { runTerminalCommand } from './terminal';
+export type {
+  TerminalContext,
+  TerminalEngine,
+  TerminalResult,
+  WebPage,
+  WebSite,
+  WebSites,
+} from './terminal';
 export { DEFAULT_SANDBOX_PROPOSAL_TIMEOUT_MS } from './controlled/sandbox-mode';
 export type {
   ControlledTopologyChangeHandler,

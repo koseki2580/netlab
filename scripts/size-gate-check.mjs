@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /**
- * Fails `npm run size` when a learn tier, or a locale loaded on demand (TC-1496)
- * (`dist/locales/*`, REQ-356), reaches another eager closure (docs/dev/size-gate.md).
+ * Fails `npm run size` when a learn tier, a locale loaded on demand (TC-1496,
+ * `dist/locales/*`, REQ-356) or xterm.js (TC-1715, REQ-361) reaches another
+ * eager closure (docs/dev/size-gate.md).
  */
-import { globSync } from 'node:fs';
+import { globSync, readFileSync } from 'node:fs';
 import checks from '../.size-limit.mjs';
 import { eagerClosure, findLearnTierLeaks } from './size-gate.mjs';
 
@@ -25,5 +26,16 @@ const localeLeaks = entries
 for (const { entry, chunk } of localeLeaks) {
   console.error(`locale in an eager closure: ${entry} reaches ${chunk}`);
 }
-if (leaks.length > 0 || localeLeaks.length > 0 || entries.length === 0) process.exit(1);
-console.log(`size gate: no learn tier or locale in ${entries.length} eager closures`);
+// xterm.js is the demo's terminal, never the library's (REQ-361, TC-1715).
+const XTERM_MARKER = 'xterm-helper-textarea';
+const xtermLeaks = entries.flatMap((entry) =>
+  eagerClosure(entry)
+    .filter((file) => readFileSync(file, 'utf8').includes(XTERM_MARKER))
+    .map((chunk) => ({ entry, chunk })),
+);
+for (const { entry, chunk } of xtermLeaks) {
+  console.error(`xterm.js in a library closure: ${entry} reaches ${chunk}`);
+}
+if (leaks.length > 0 || localeLeaks.length > 0 || xtermLeaks.length > 0 || entries.length === 0)
+  process.exit(1);
+console.log(`size gate: no learn tier, locale or xterm.js in ${entries.length} eager closures`);

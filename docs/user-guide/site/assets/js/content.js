@@ -345,6 +345,21 @@ window.USER_GUIDE_CONTENT = {
                <p>「IPv6 デュアルスタック」の「隣の MAC を調べる (NDP)」で調べるアドレスを選ぶと、Neighbor Solicitation の宛先になる solicited-node アドレス（ff02::1:ff ＋ 下位 24 ビット、RFC 4291）と、フレームの宛先 MAC（33:33 ＋ その下位 32 ビット、RFC 2464）が出ます。IPv6 を送る機器は、ARP と同じように最初の送信で尋ねます。トレースには NS（近隣要請）と NA（近隣通知）の行が出ます。タイムラインの記号は NS と NA で、フィルタでは <code>protocol == ndp</code> で選べます。スイッチは NS を全部の口に写します。</p>`
       },
       {
+        id: "terminal",
+        title: "端末と模擬サーバ",
+        html: `<p>「端末と模擬サーバ」（<code>#/tools/terminal</code>）では、図の <strong>client</strong> で端末を開き、実機と同じコマンドを打てます。コマンドはシミュレータの上で動き、パケットは図の上を動きます。答える DNS・Web（<strong>www</strong>）・DHCP のサーバも、ページの中で動いています。ネットワークにつながっていなくても使えます。</p>
+               <ul>
+                 <li><code>ping -c 2 www</code> — エコー要求を送ります。届かないときは、ルータが返す <code>Destination Net Unreachable</code> が出ます。</li>
+                 <li><code>traceroute www</code> — 途中のルータを 1 台ずつ調べます。</li>
+                 <li><code>nslookup www.example.test</code>・<code>dig www.example.test</code> — DNS にアドレスを聞きます。ない名前には NXDOMAIN が返ります。</li>
+                 <li><code>curl http://www.example.test/</code> — DNS で名前を引き、TCP でつなぎ、HTTP でページを取ってきます。<code>-v</code> で要求と応答の見出し、<code>-I</code> で見出しだけを表示します。</li>
+                 <li><code>ip addr</code>・<code>ip route</code>・<code>arp -a</code>・<code>ss -t</code> — この機器のアドレス、経路、近くの機器の MAC、TCP の接続を見ます。</li>
+                 <li><code>help</code> で一覧、<code>clear</code> で画面を消します。↑↓ で前に打ったコマンド、Tab でコマンドや機器の名前を補えます。</li>
+               </ul>
+               <p>名前は、まず図の機器の名前（<code>www</code> など）で探し、なければ DNS に聞きます。パネルのボタンを押すと、そのコマンドを打って実行します。スマートフォンでは、端末の下の入力欄に打って「コマンドを実行」を押します。</p>
+               <div class="callout">シミュレータには時計がないので、出力に時間（time=…）は出ません。対応するオプションは上に書いたものだけです。</div>`
+      },
+      {
         id: "pcap",
         title: "パケットを書き出す",
         html: `<p>パケットタイムラインの「PCAP を保存」（英語表示では「Download PCAP」）から、選んでいる通信を <code>.pcap</code> ファイルとして保存できます。Wireshark などでそのまま開けます。</p>
@@ -734,6 +749,21 @@ window.USER_GUIDE_CONTENT = {
                <p>In the “Multi-Hop” lesson, the “Traceroute” card's <code>traceroute Client → 203.0.113.10</code> makes the simulator send probes with TTL 1, 2 and 3, one row each. The router where the TTL reaches 0 answers “time exceeded”; the last row is the server's own “echo reply”. Each row's address is the interface the answer came from. A probe nobody answered shows as <code>*</code>. This simulator probes with ICMP echo, as Windows tracert does (Unix traceroute sends UDP by default).</p>
                <h3>Finding an IPv6 neighbour (NDP)</h3>
                <p>In “IPv6 Dual-Stack”, choose an address under “Finding a neighbour’s MAC (NDP)” to see where a Neighbor Solicitation for it goes: the solicited-node address (ff02::1:ff plus the last 24 bits, RFC 4291) and the frame's MAC (33:33 plus that group's last 32 bits, RFC 2464). A device sending IPv6 asks on its first send, as with ARP, so the trace shows the NS (neighbour solicitation) and NA (neighbour advertisement) rows. The timeline codes them NS and NA, and the filter <code>protocol == ndp</code> selects them. A switch copies an NS out of every port.</p>`
+      },
+      {
+        id: "terminal",
+        title: "Terminal and simulated servers",
+        html: `<p>On “Terminal and simulated servers” (<code>#/tools/terminal</code>) you open a terminal on the <strong>client</strong> and type the commands of a real machine. They run on the simulator, and their packets move on the diagram. The DNS, web (<strong>www</strong>) and DHCP servers that answer run in the page too, so it works offline.</p>
+               <ul>
+                 <li><code>ping -c 2 www</code> — sends echo requests. When there is no way there, the router’s <code>Destination Net Unreachable</code> is printed.</li>
+                 <li><code>traceroute www</code> — finds the routers on the way, one by one.</li>
+                 <li><code>nslookup www.example.test</code>, <code>dig www.example.test</code> — ask DNS for an address. A name that does not exist gets NXDOMAIN.</li>
+                 <li><code>curl http://www.example.test/</code> — looks the name up in DNS, connects over TCP and fetches the page over HTTP. <code>-v</code> shows the request and response headers; <code>-I</code> shows only the headers.</li>
+                 <li><code>ip addr</code>, <code>ip route</code>, <code>arp -a</code>, <code>ss -t</code> — this device’s address, its routes, its neighbours’ MAC addresses and its TCP connections.</li>
+                 <li><code>help</code> lists the commands and <code>clear</code> clears the screen. ↑/↓ bring back earlier commands; Tab completes commands and device names.</li>
+               </ul>
+               <p>A name is looked up among the devices on the diagram first (such as <code>www</code>), then in DNS. A button in the panel types its command and runs it. On a phone, type into the line under the terminal and press “Run the command”.</p>
+               <div class="callout">The simulator has no clock, so the output shows no times (time=…). Only the options listed above are understood.</div>`
       },
       {
         id: "pcap",

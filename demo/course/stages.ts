@@ -122,6 +122,7 @@ export const STAGES: readonly Stage[] = [
       '/simulation/nat',
       '/simulation/session',
       '/simulation/data-transfer',
+      '/tools/terminal',
     ],
     checkpoints: [{ kind: 'exam', level: 1 }],
     comingSoon: [],

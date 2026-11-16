@@ -32,6 +32,12 @@ The Japanese catalog is its own entry, `dist/locales/ja.js` (`locale:ja`, 25 kB)
 by `I18nProvider` (REQ-356). `size-gate-check` fails, naming the entry and the file, if any other
 eager entry's static imports reach a `dist/locales/*` file.
 
+## The xterm.js guard
+
+xterm.js is the demo's terminal (REQ-361). `size-gate-check` fails if an eager entry's closure
+contains xterm.js's `xterm-helper-textarea`. The terminal's commands are their own chunk,
+`ui:terminal` (7 kB).
+
 ## Adding a pack
 
 Add a `pack('<id>', '3 kB')` line to `.size-limit.mjs`, name the learn file `pack-<id>.ts`, and

@@ -85,6 +85,7 @@ Specifications regarding user interface implementation and canvas operations.
 - [Sandbox Named Snapshots](ui/sandbox-snapshots.md) - Named history bookmarks, arbitrary snapshot comparison, revert, and edit-chain inspection
 - [Assessment Sandbox](ui/assessments.md) - Goal-based free-form sandbox exercises, rubrics, constraints, hints, and submission files
 - [Learner Progress](ui/learner-progress.md) - Opt-in cross-session completion persistence, progress panel, and Gallery badges
+- [Terminal and simulated servers](ui/terminal.md) - `runTerminalCommand`, the commands, and the xterm.js demo page at `/tools/terminal`
 - [日本語 i18n ガイド](ui/i18n-ja.md) - Japanese locale contribution flow, parity check, and translation guardrails
 - [Sandbox Keyboard Shortcuts & Narration](ui/sandbox-shortcuts.md) - Built-in shortcut registry, dispatcher, help modal, and `aria-live` screen-reader narration
 - [Sandbox Scenario Authoring](ui/sandbox-authoring.md) - Browser export flow for turning sandbox states into commit-ready Scenario source
