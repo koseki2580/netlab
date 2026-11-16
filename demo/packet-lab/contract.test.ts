@@ -202,12 +202,24 @@ describe('1. destination IP', () => {
     expect(last(facts.hops)?.hop.icmpGenerated).toBe(true);
   });
 
-  it('an unused address of a connected LAN is sent back and dropped at the sender as `routing-loop` (engine quirk)', async () => {
-    // A real router would ask for the address with ARP on the far LAN, get no
-    // answer, and drop the packet itself.
+  it('an unused address of a connected LAN: the router asks by ARP, nobody answers, and it tells the sender host unreachable (TC-1774)', async () => {
+    // Was an engine quirk: the packet was sent back out and dropped at the sender
+    // as `routing-loop`. A real router asks on the far LAN, gets no answer, drops
+    // the packet and tells the source (RFC 1812 §5.2.7.1, REQ-371).
     const facts = await onLans({ dstIp: '203.0.113.99' });
-    expect(facts.drop).toEqual({ nodeId: 'pc1', reason: 'routing-loop' });
-    expect(facts.path).toEqual(['pc1', 'sw1', 'r1', 'sw1', 'pc1']);
+    expect(facts.drop).toEqual({ nodeId: 'r1', reason: 'arp-no-reply' });
+    expect(facts.icmp).toEqual([
+      {
+        fromNodeId: 'r1',
+        srcIp: '192.168.1.1',
+        dstIp: '192.168.1.10',
+        type: 3,
+        code: 1,
+        nextHopMtu: null,
+        deliveredTo: 'pc1',
+        drop: null,
+      },
+    ]);
   });
 
   it('routers follow `dstIp`, but delivery needs `dstNodeId` to name the owner of `dstIp` (engine quirk)', async () => {

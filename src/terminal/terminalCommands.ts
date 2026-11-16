@@ -115,7 +115,7 @@ async function resolve(context: TerminalContext, name: string): Promise<string |
 /** How a probe ended, read from its trace. */
 type Outcome =
   | { kind: 'reply'; from: string; ttl: number }
-  | { kind: 'time-exceeded' | 'net-unreachable'; from: string }
+  | { kind: 'time-exceeded' | 'net-unreachable' | 'host-unreachable'; from: string }
   | { kind: 'none' };
 
 function outcome(trace: PacketTrace, srcNodeId: string): Outcome {
@@ -129,6 +129,8 @@ function outcome(trace: PacketTrace, srcNodeId: string): Outcome {
     .find((hop) => hop.nodeId === srcNodeId && hop.event === 'deliver');
   if (!reply || !back) return { kind: 'none' };
   if (dropped?.reason === 'ttl-exceeded') return { kind: 'time-exceeded', from: reply.srcIp };
+  // A router whose ARP on its own LAN went unanswered (REQ-371).
+  if (dropped?.reason === 'arp-no-reply') return { kind: 'host-unreachable', from: reply.srcIp };
   if (dropped) return { kind: 'net-unreachable', from: reply.srcIp };
   return { kind: 'reply', from: reply.srcIp, ttl: back.ttl };
 }
@@ -160,6 +162,8 @@ async function ping(
       lines.push(`64 bytes from ${result.from}: icmp_seq=${seq} ttl=${result.ttl}`);
     } else if (result.kind === 'net-unreachable') {
       lines.push(`From ${result.from} icmp_seq=${seq} Destination Net Unreachable`);
+    } else if (result.kind === 'host-unreachable') {
+      lines.push(`From ${result.from} icmp_seq=${seq} Destination Host Unreachable`);
     } else if (result.kind === 'time-exceeded') {
       lines.push(`From ${result.from} icmp_seq=${seq} Time to live exceeded`);
     }
@@ -191,7 +195,7 @@ async function traceroute(
     if (result.kind === 'none') lines.push(`${hop}  * * *`);
     else
       lines.push(
-        `${hop}  ${result.from} (${result.from})${result.kind === 'net-unreachable' ? ' !N' : ''}`,
+        `${hop}  ${result.from} (${result.from})${result.kind === 'net-unreachable' ? ' !N' : result.kind === 'host-unreachable' ? ' !H' : ''}`,
       );
   });
   return { lines };

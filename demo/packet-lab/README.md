@@ -62,18 +62,18 @@ Real:
   `dstNodeId` is that node **and** it owns `dstIp`. Switches use `dstNodeId` to pick the port when the
   destination MAC does not decide. Any disagreement ends as `drop` at a host with `reason: 'no-route'`
   (a host that is handed a packet it will not accept has "nowhere to forward it").
-- **An unused address inside a connected LAN** (for example `203.0.113.99`) is not dropped at the
-  router: it is sent back out and dropped at the sender with `reason: 'routing-loop'` (quirk; a real
-  router would fail ARP and drop it itself).
+- **An unused address inside a connected LAN** (for example `203.0.113.99`): the router asks for it by
+  ARP on that LAN, nobody answers, and it drops the packet there with `reason: 'arp-no-reply'` and
+  sends ICMP Destination Unreachable, host unreachable (type 3, code 1), to the sender (REQ-371).
 
 Consequences:
 
 - Build: sound. The exercise must set `dstNodeId` itself from the learner's `dstIp` (look the owner
   up in the topology; when nobody owns it, any id that is not a node, for example the address).
   Never expose `dstNodeId` to the learner.
-- Build and read: "wrong network" distractors must be addresses **no route covers**, which give a
-  clean `no-route` at a router. Do not use an unused address of a connected LAN as a wrong answer or
-  as a diagnose case; its `routing-loop` at the sender teaches something false.
+- Build and read: "wrong network" distractors should be addresses **no route covers** (a clean
+  `no-route` at a router). An unused address of a connected LAN now gives `arp-no-reply` at the
+  router, which is true to a network but a different lesson.
 - Read: do not show "the host dropped it: no-route" to a learner as is; translate the reason for a
   drop at a host ("this device is not the destination").
 

@@ -15,6 +15,7 @@
 import { describe, expect, it } from 'vitest';
 import { HookEngine } from '../../../src/hooks/HookEngine';
 import { MainThreadEngine } from '../../../src/simulation/worker/MainThreadEngine';
+import { packetEnd } from '../../../src/types/simulation';
 import type { AclRule } from '../../../src/types/acl';
 import type { StaticRouteConfig } from '../../../src/types/routing';
 import type { TopologySnapshot } from '../../../src/types/topology';
@@ -436,10 +437,16 @@ describe('fact 5: hosts with a bad address', () => {
       traces: [],
       failureReason: 'TCP handshake failed: missing node IP',
     });
-    // Pinging an address nobody owns does not throw: it drops at the sender.
+    // Pinging an address nobody owns does not throw. Flipped by REQ-371: the router
+    // asks for it on that LAN, gets no answer and drops it there (it used to come back
+    // to a host as `no-route`), telling the sender host unreachable.
     const stray = await engine.ping('srv', '192.168.1.10');
     expect(stray.status).toBe('dropped');
-    expect(stray.hops[stray.hops.length - 1]).toMatchObject({ event: 'drop', reason: 'no-route' });
+    expect(packetEnd(stray)).toMatchObject({
+      event: 'drop',
+      reason: 'arp-no-reply',
+      icmpGenerated: true,
+    });
     engine.dispose();
 
     for (const [from, to] of [

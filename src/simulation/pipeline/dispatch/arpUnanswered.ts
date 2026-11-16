@@ -1,6 +1,7 @@
 /**
  * A host asks by ARP and nobody inside its VLAN answers (IEEE 802.1Q, RFC 826,
- * REQ-350): the packet never leaves it. Loaded only when that happens, so it
+ * REQ-350): the packet never leaves it. A router that asks on its own LAN and
+ * gets no answer drops the packet and tells the source (REQ-371). Loaded only when that happens, so it
  * stays out of the engine's own bundle.
  */
 import { isVlanAllowedOnPort, resolveIngressVlan } from '../../../layers/l2-datalink/vlan';
@@ -131,5 +132,137 @@ export async function askUnanswered(ctx: RoutedContext, next: Next): Promise<Sta
   });
   if (hop && copies.length > 0) hop.flood = { copies };
   appendDropHop(ctx, 'arp-no-reply', ctx.workingPacket);
+  return breakWith(ctx);
+}
+
+/**
+ * The router's own network that holds `target`, and the neighbour on that
+ * interface's cable: where its ARP for `target` would go (REQ-371). Null for
+ * an address of none of its networks — that is the routing table's business.
+ */
+export function routerLanFor(
+  ctx: RoutedContext,
+  target: string,
+): {
+  iface: ReturnType<RoutedContext['deps']['ifaceResolver']['findLogicalById']>;
+  next: Next;
+} | null {
+  const { ifaceResolver, topology } = ctx.deps;
+  const router = ifaceResolver.findNode(ctx.current);
+  const iface = (router?.data.interfaces ?? [])
+    .map((candidate) => ifaceResolver.findLogicalById(ctx.current, candidate.id))
+    .find((candidate) => candidate !== null && interfaceMatchesTarget(candidate, target));
+  if (!iface) return null;
+  const edge = topology.edges.find(
+    (candidate) =>
+      (candidate.source === ctx.current && candidate.sourceHandle === iface.id) ||
+      (candidate.target === ctx.current && candidate.targetHandle === iface.id),
+  );
+  if (!edge) return null;
+  const nodeId = edge.source === ctx.current ? edge.target : edge.source;
+  return { iface, next: { nodeId, edgeId: edge.id } };
+}
+
+/** Whether nobody beyond `next` (through switches, over links that are up) has `target`. */
+export function routerNobodyAnswers(ctx: RoutedContext, next: Next, target: string): boolean {
+  const { ifaceResolver, addresses } = ctx.deps;
+  const failures = ctx.shared.failureState;
+  const visited = new Set<string>();
+  const owns = (nodeId: string, from: string): boolean => {
+    const node = ifaceResolver.findNode(nodeId);
+    if (!node || visited.has(nodeId)) return false;
+    visited.add(nodeId);
+    if (node.data.role !== 'switch') return addresses.ownsIp(node, target);
+    return ifaceResolver
+      .getNeighbors(nodeId, from, failures)
+      .some((neighbor) => neighbor.nodeId !== ctx.current && owns(neighbor.nodeId, nodeId));
+  };
+  return !owns(next.nodeId, ctx.current);
+}
+
+/**
+ * The router's ARP request for `target`, with the copies its LAN heard, then
+ * the drop and, unless the source cannot be told, ICMP host unreachable from
+ * the address the packet came in on (RFC 1812 §5.2.7.1).
+ */
+export async function routerAsksUnanswered(
+  ctx: RoutedContext,
+  next: Next,
+  target: string,
+): Promise<StageResult> {
+  const { ifaceResolver, macResolver, addresses, frameMaterializer, traceRecorder, icmpBuilder } =
+    ctx.deps;
+  const router = ifaceResolver.findNode(ctx.current);
+  const egress = routerLanFor(ctx, target)?.iface ?? null;
+  const senderIp = egress?.ipAddress ?? '';
+  const senderMac =
+    egress?.macAddress ??
+    macResolver.resolveEndpointMac(ctx.current) ??
+    deriveDeterministicMac(ctx.current);
+  const request = new ArpBuilder().buildRequestFrame({ ip: senderIp, mac: senderMac }, target);
+  const at = { toNodeId: next.nodeId, activeEdgeId: next.edgeId };
+  ctx.stepCounter = traceRecorder.appendHop(
+    ctx.shared.hops,
+    ctx.shared.snapshots,
+    frameMaterializer.withArpFrameMacs(
+      {
+        nodeId: ctx.current,
+        nodeLabel: router?.data.label ?? ctx.current,
+        srcIp: senderIp,
+        dstIp: target,
+        ttl: 0,
+        protocol: 'ARP',
+        event: 'arp-request',
+        ...at,
+        arpFrame: request,
+        timestamp: ctx.baseTs,
+      },
+      request,
+    ),
+    ctx.workingPacket,
+    ctx.stepCounter,
+  );
+  const hop = ctx.shared.hops[ctx.shared.hops.length - 1];
+  if (ifaceResolver.findNode(next.nodeId)?.data.role === 'switch') {
+    const frame = ctx.workingPacket.frame;
+    const asking = {
+      ...ctx,
+      workingPacket: {
+        ...ctx.workingPacket,
+        frame: { ...frame, payload: { ...frame.payload, dstIp: target } },
+      },
+    };
+    const copies = await passArpThroughSwitches(asking, {
+      senderId: ctx.current,
+      senderMac,
+      targetId: '',
+      targetMac: '',
+      nextNodeId: next.nodeId,
+      edgeId: next.edgeId,
+    });
+    if (hop && copies.length > 0) hop.flood = { copies };
+  }
+  const extras: { icmpGenerated?: boolean } = {};
+  const ingressId = ctx.hop.base.ingressInterfaceId;
+  const answerFrom =
+    (ingressId ? ifaceResolver.findLogicalById(ctx.current, ingressId)?.ipAddress : undefined) ??
+    (router ? addresses.nodeIp(router) : undefined);
+  if (
+    answerFrom &&
+    !ctx.shared.options.suppressGeneratedIcmp &&
+    icmpBuilder.shouldEmitGeneratedIcmp(ctx.workingPacket.frame.payload.srcIp)
+  ) {
+    extras.icmpGenerated = true;
+    // Host unreachable is network unreachable with code 1 (RFC 792); built here,
+    // where it is needed, so the engine's own chunk does not carry it.
+    const unreachable = icmpBuilder.buildNetUnreachable(ctx.current, answerFrom, ctx.workingPacket);
+    const ip = unreachable.frame.payload;
+    ctx.generatedIcmpPackets.push({
+      ...unreachable,
+      id: unreachable.id.replace(/net-unreachable$/, 'host-unreachable'),
+      frame: { ...unreachable.frame, payload: { ...ip, payload: { ...ip.payload, code: 1 } } },
+    } as typeof unreachable);
+  }
+  appendDropHop(ctx, 'arp-no-reply', ctx.workingPacket, extras);
   return breakWith(ctx);
 }

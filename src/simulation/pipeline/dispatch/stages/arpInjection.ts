@@ -43,6 +43,24 @@ export function runArpInjectionStage(ctx: RoutedContext): StageResult | Promise<
           ctx.routing.nextHopIp ?? undefined,
         )
       : null;
+  // A router asking on its own LAN for an address nobody there has gets no
+  // answer either (RFC 1812 §5.2.7.1, REQ-371): checked, and drawn, on demand.
+  if (
+    !v6 &&
+    node.data.role === 'router' &&
+    ctx.routing.arpTarget === null &&
+    ctx.workingPacket.frame.payload.dstIp !== BROADCAST_IP
+  ) {
+    const target = ctx.routing.nextHopIp ?? ctx.workingPacket.frame.payload.dstIp;
+    return import('../arpUnanswered').then((module) => {
+      // Where the ARP goes is the cable of the network that holds the address,
+      // whatever neighbour the packet would otherwise have been handed to.
+      const lan = module.routerLanFor(ctx, target);
+      return lan && module.routerNobodyAnswers(ctx, lan.next, target)
+        ? module.routerAsksUnanswered(ctx, lan.next, target)
+        : ask(ctx, next, v6);
+    });
+  }
   // A host that must ask may get no answer inside its VLAN (802.1Q, REQ-350). That
   // check, and drawing it, load only when a host asks, as NDP's exchange does.
   if (

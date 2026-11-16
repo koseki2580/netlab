@@ -265,3 +265,14 @@ describe('TC-1718: dhclient on a host with a fixed address', () => {
     expect(text(await run('dhclient', { locale: 'ja' }))).toContain('DHCP は使っていません');
   });
 });
+
+describe('TC-1775: nobody on the router’s LAN has the address', () => {
+  it('ping prints the router’s Destination Host Unreachable, and traceroute ends with !H', async () => {
+    const { run } = setUp();
+    expect((await run('ping -c 1 10.0.2.99')).lines).toContain(
+      'From 10.0.1.1 icmp_seq=1 Destination Host Unreachable',
+    );
+    const trace = (await run('traceroute 10.0.2.99')).lines;
+    expect(trace[trace.length - 1]).toBe(' 2  10.0.1.1 (10.0.1.1) !H');
+  });
+});

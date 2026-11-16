@@ -218,3 +218,19 @@ What a consumer sees: for a loop of routers, a longer trace (one forward hop per
 network does.
 
 Nothing stored changes.
+
+### A router whose ARP goes unanswered drops the packet and says host unreachable
+
+**What changed.** A packet for an unused address of a router's own LAN used to be handed back toward
+the sender and dropped there as `'routing-loop'` (or `'no-route'` at a host). The router now asks
+for the address by ARP on that LAN, nobody answers, and it drops the packet itself with
+`'arp-no-reply'` and sends ICMP Destination Unreachable, host unreachable (type 3, code 1), from the
+address the packet came in on (RFC 1812 §5.2.7.1, REQ-371). A traceroute ends there, as `!H`.
+
+What a consumer sees: the trace's `arp-request` from the router, then a drop at the router with
+`icmpGenerated: true`, then the ICMP to the sender.
+
+**How to keep the earlier behaviour.** There is no option for it: the earlier outcome was not what a
+network does.
+
+Nothing stored changes.
