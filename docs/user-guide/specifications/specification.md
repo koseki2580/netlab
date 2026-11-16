@@ -1102,10 +1102,11 @@ unreachable`; a failure inside a command MUST be printed, never thrown. `curl` M
   MUST list tasks, each met by a command whose output shows its goal reached, each then explained, in
   English and Japanese, kept in the browser when storage is available.
 - **REQ-364 (MUST):** The terminal page MUST offer to break the network in one of four ways without
-  saying which (the DNS server's cable out, the web server down, the line past the router cut, the
-  client on a wrong address), each showing the same symptom and its own evidence in commands. A cause
-  MUST be chosen only after a command; a wrong pick MUST say what the commands would show for it, and
-  the right one MUST explain the evidence. `?fault=<id>` MUST open with that fault.
+  saying which, none of them drawn on the diagram (the DNS server's switch port in another VLAN, the web
+  server down, the router's server-side address wrong so it has no route, the client on a wrong address),
+  each showing the same symptom and its own evidence in commands. A cause MUST be chosen only after a
+  command, and the choices MUST look unavailable until then; a wrong pick MUST say what the commands would
+  show for it, and the right one MUST explain the evidence. `?fault=<id>` MUST open with that fault.
 
 - **REQ-346 (MUST):** The ARP lesson MUST offer a scene, opened by `?scene=local`, in which the target is
   on the sender's own network, so the sender asks for the target itself, not for the router.

@@ -8,7 +8,7 @@ import type { WebSites } from '../../src/terminal/types';
 import type { NetworkTopology } from '../../src/types/topology';
 import type { Bilingual } from './terminalMissions';
 
-export type CauseId = 'dns-unreachable' | 'web-down' | 'core-link' | 'client-address';
+export type CauseId = 'dns-unreachable' | 'web-down' | 'router-route' | 'client-address';
 
 export interface Cause {
   readonly id: CauseId;
@@ -26,35 +26,51 @@ export interface Fault {
   readonly web: (sites: WebSites) => WebSites;
 }
 
-const cableDown =
-  (edgeId: string) =>
+/** Edit one device's data: a fault set in a device, not drawn on the diagram. */
+const setDevice =
+  (nodeId: string, edit: (data: NetworkTopology['nodes'][number]['data']) => object) =>
   (topology: NetworkTopology): NetworkTopology => ({
     ...topology,
-    edges: topology.edges.map((edge) =>
-      edge.id === edgeId ? { ...edge, data: { ...edge.data, state: 'down' as const } } : edge,
+    nodes: topology.nodes.map((node) =>
+      node.id === nodeId ? { ...node, data: { ...node.data, ...edit(node.data) } } : node,
     ),
   });
 
 const same = (sites: WebSites) => sites;
 
 export const FAULTS: readonly Fault[] = [
-  { id: 'f1', cause: 'dns-unreachable', apply: cableDown('e-dns'), web: same },
+  {
+    id: 'f1',
+    cause: 'dns-unreachable',
+    // The DNS server's switch port is put in VLAN 20; everything else is in VLAN 1.
+    apply: setDevice('sw-b', (data) => ({
+      ports: (data.ports ?? []).map((port) =>
+        port.id === 'p1' ? { ...port, vlanMode: 'access' as const, accessVlan: 20 } : port,
+      ),
+    })),
+    web: same,
+  },
   {
     id: 'f2',
     cause: 'web-down',
     apply: (topology) => topology,
     web: (sites) => Object.fromEntries(Object.entries(sites).filter(([id]) => id !== 'www')),
   },
-  { id: 'f3', cause: 'core-link', apply: cableDown('e-up-b'), web: same },
+  {
+    id: 'f3',
+    cause: 'router-route',
+    // The router's server-side interface has the wrong address: it has no route to 10.0.2.0/24.
+    apply: setDevice('router', (data) => ({
+      interfaces: (data.interfaces ?? []).map((iface) =>
+        iface.id === 'eth1' ? { ...iface, ipAddress: '10.0.20.1' } : iface,
+      ),
+    })),
+    web: same,
+  },
   {
     id: 'f4',
     cause: 'client-address',
-    apply: (topology) => ({
-      ...topology,
-      nodes: topology.nodes.map((node) =>
-        node.id === 'client' ? { ...node, data: { ...node.data, ip: '10.0.3.10' } } : node,
-      ),
-    }),
+    apply: setDevice('client', () => ({ ip: '10.0.3.10' })),
     web: same,
   },
 ];
@@ -68,8 +84,8 @@ export const CAUSES: readonly Cause[] = [
       ja: 'それなら nslookup がタイムアウトし、ping 10.0.2.53 は届かず、それでも ping www（機器の名前で引くので DNS を使わない）は届くはずです。',
     },
     explain: {
-      en: 'curl said “Could not resolve host”, nslookup timed out and ping 10.0.2.53 got no reply — yet ping www reached the server by its address. The network works; only the DNS server is cut off: its cable is out. Plug it back in, and the name resolves again.',
-      ja: 'curl は「Could not resolve host」、nslookup はタイムアウト、ping 10.0.2.53 は応答なし。それでも ping www はアドレスで www に届きました。ネットワークは動いていて、DNS サーバだけが切り離されています（ケーブルが抜けています）。挿し直せば名前がまた引けます。',
+      en: 'curl said “Could not resolve host”, nslookup timed out and ping 10.0.2.53 got no reply — yet ping www reached the server next to it. The network works; only the DNS server is cut off: its switch port is in VLAN 20 while everything else is in VLAN 1. Put the port back in VLAN 1 and the name resolves again.',
+      ja: 'curl は「Could not resolve host」、nslookup はタイムアウト、ping 10.0.2.53 は応答なし。それでも隣の www には ping が届きました。ネットワークは動いていて、DNS サーバだけが切り離されています（つながるスイッチのポートが VLAN 20、ほかは VLAN 1）。ポートを VLAN 1 に戻せば名前がまた引けます。',
     },
   },
   {
@@ -85,15 +101,15 @@ export const CAUSES: readonly Cause[] = [
     },
   },
   {
-    id: 'core-link',
-    label: { en: 'The line past the router is cut', ja: 'ルータの先の回線が切れている' },
+    id: 'router-route',
+    label: { en: 'The router has no route to the servers', ja: 'ルータにサーバ側への経路がない' },
     wouldShow: {
-      en: 'Then ping 10.0.1.1 (the router) would answer but nothing past it would, and traceroute would stop after the router with * * *.',
-      ja: 'それなら ping 10.0.1.1（ルータ）は届くのに、その先には何も届かず、traceroute はルータの次から * * * になるはずです。',
+      en: 'Then ping 10.0.1.1 (the router) would answer, but ping www would get “Destination Net Unreachable” from 10.0.1.1, and traceroute would end with !N.',
+      ja: 'それなら ping 10.0.1.1（ルータ）は届くのに、ping www にはルータ 10.0.1.1 から「Destination Net Unreachable」が返り、traceroute は !N で終わるはずです。',
     },
     explain: {
-      en: 'The router (10.0.1.1) answered, but www and the DNS server behind it did not, and traceroute stopped after hop 1. Everything past the router is unreachable: the line from the router to the server LAN is down.',
-      ja: 'ルータ（10.0.1.1）は応答するのに、その先の www にも DNS サーバにも届かず、traceroute は 1 行目のあと止まりました。ルータより先がすべて届かない、つまりルータからサーバ側の LAN への回線が切れています。',
+      en: 'The router answered, and then said itself that it cannot reach www’s network: “From 10.0.1.1 … Destination Net Unreachable”, and !N in traceroute. Its server-side interface is set to 10.0.20.1, not 10.0.2.1, so it has no route to 10.0.2.0/24. Correct that address and the route is back.',
+      ja: 'ルータは応答し、そのうえで「www のネットワークには行けない」と自分で知らせてきました（「From 10.0.1.1 … Destination Net Unreachable」、traceroute の !N）。ルータのサーバ側のインタフェースが 10.0.2.1 ではなく 10.0.20.1 になっていて、10.0.2.0/24 への経路がありません。アドレスを直せば経路が戻ります。',
     },
   },
   {

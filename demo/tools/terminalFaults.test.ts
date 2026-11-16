@@ -24,6 +24,9 @@ async function evidence(cause: CauseId) {
     pageOpens: (await run('curl http://www.example.test/')).includes('Hello from www'),
     dnsAnswers: (await run('nslookup www.example.test')).includes('Address: 10.0.2.80'),
     wwwByName: (await run('ping -c 1 www')).includes(' 0% packet loss'),
+    routerSaysNoRoute: (await run('ping -c 1 www')).includes(
+      'From 10.0.1.1 icmp_seq=1 Destination Net Unreachable',
+    ),
     routerAnswers: (await run('ping -c 1 10.0.1.1')).includes(' 0% packet loss'),
     dnsServerAnswers: (await run('ping -c 1 10.0.2.53')).includes(' 0% packet loss'),
     addressOnLan: (await run('ip addr')).includes('inet 10.0.1.10/24'),
@@ -35,6 +38,7 @@ describe('TC-1731: every fault breaks the page and shows its own evidence', () =
     expect(await evidence('dns-unreachable')).toEqual({
       pageOpens: false,
       dnsAnswers: false,
+      routerSaysNoRoute: false,
       wwwByName: true,
       routerAnswers: true,
       dnsServerAnswers: false,
@@ -43,14 +47,16 @@ describe('TC-1731: every fault breaks the page and shows its own evidence', () =
     expect(await evidence('web-down')).toEqual({
       pageOpens: false,
       dnsAnswers: true,
+      routerSaysNoRoute: false,
       wwwByName: true,
       routerAnswers: true,
       dnsServerAnswers: true,
       addressOnLan: true,
     });
-    expect(await evidence('core-link')).toEqual({
+    expect(await evidence('router-route')).toEqual({
       pageOpens: false,
       dnsAnswers: false,
+      routerSaysNoRoute: true,
       wwwByName: false,
       routerAnswers: true,
       dnsServerAnswers: false,
@@ -59,6 +65,7 @@ describe('TC-1731: every fault breaks the page and shows its own evidence', () =
     expect(await evidence('client-address')).toEqual({
       pageOpens: false,
       dnsAnswers: false,
+      routerSaysNoRoute: false,
       wwwByName: false,
       routerAnswers: false,
       dnsServerAnswers: false,

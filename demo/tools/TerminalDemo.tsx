@@ -293,7 +293,12 @@ function FaultCard({
                 data-testid={`terminal-fault-pick-${cause.id}`}
                 disabled={runs === 0 || solved}
                 aria-pressed={picked.includes(cause.id)}
-                style={{ ...LESSON_BUTTON, textAlign: 'left' }}
+                style={{
+                  ...LESSON_BUTTON,
+                  textAlign: 'left',
+                  // Not yet to be chosen: before a command, or once solved.
+                  ...(runs === 0 || solved ? { opacity: 0.45, cursor: 'not-allowed' } : {}),
+                }}
                 onClick={() => onPick(cause.id)}
               >
                 {cause.label[locale]}
