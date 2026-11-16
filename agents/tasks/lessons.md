@@ -287,3 +287,13 @@ A running record of corrections and feedback received during sessions. Use this 
 **Why**: The next free number is the same number for every agent that reads the spec at the same time.
 
 **Apply-when**: Dispatching two or more agents that may add requirements to `specification.md`.
+
+## L022 — Use a new learner tool as a learner before calling it done
+
+**What happened**: The first terminal passed every test, but typing a dozen ordinary and wrong commands found a command that threw (no address), a page hint that could not be followed (dhclient with the terminal fixed on the client), and an engine bug (a router's own reply left with TTL 63).
+
+**Rule**: Before reporting a new interactive learning tool done, run its happy path plus wrong, partial and failing inputs on every device or mode it offers, and read every output against the real tool; turn each surprise into a TC.
+
+**Why**: Tests written with the code check what was intended; a learner's first minutes check what was missed.
+
+**Apply-when**: Shipping a terminal, editor, form or any surface where the learner types free input.
