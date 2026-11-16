@@ -19,7 +19,10 @@ due to be fixed separately. Use `--strict` once they are.
 - **Spec tables**: every Markdown table whose first header cell is `Test case`
   and which has a `Level` column (the main test-case table and the regression
   table). Other tables, such as the requirement traceability matrix, are
-  ignored. Cells are split on unescaped `|`.
+  ignored for TC checks. Cells are split on unescaped `|`.
+- **Requirements**: every `- **REQ-<n>` and `- **AC-<n>:` definition line, and
+  the first cell of every table whose header starts with `Requirement` (the
+  traceability matrix).
 - **Test references**: every `TC-<number>` in any file under `e2e/`, and in
   `*.test.*` / `*.spec.*` files under `src/` and `demo/`.
 
@@ -31,6 +34,8 @@ due to be fixed separately. Use `--strict` once they are.
 | (b) referenced by tests but missing            | error   | A test cites an id that no spec row defines.                                                              |
 | (c) Level outside the vocabulary               | error   | A Level cell has a token other than `unit`, `unit/behavior`, `unit/performance`, `integration`, `e2e`.    |
 | (d) wrong cell count                           | error   | A row has more or fewer cells than its table header. Its Level is not checked, since the columns shifted. |
+| (f) REQ or AC ids defined twice                | error   | The same REQ or AC id is defined on more than one line.                                                   |
+| (g) requirements with no traceability row      | error   | A defined REQ is in no traceability row's first cell.                                                     |
 | (e) E2E-level ids no test references (warning) | warning | A row's Level includes `e2e` but no scanned file cites the id. Never fails `--strict`.                    |
 
 Level is compared after normalisation: case is ignored and `+`-joined tokens

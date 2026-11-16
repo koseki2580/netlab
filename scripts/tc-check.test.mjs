@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   analyse,
+  analyseRequirements,
   errorCount,
   extractTcRefs,
   normaliseLevel,
@@ -88,5 +89,39 @@ describe('tc-check analysis', () => {
 
   it('counts the error categories but not the E2E warning', () => {
     expect(errorCount(result)).toBe(5);
+  });
+});
+
+describe('tc-check requirements', () => {
+  const REQS = `
+- **REQ-001 (MUST):** one.
+- **REQ-002 (MUST):** two.
+- **REQ-002 (SHOULD):** two again.
+- **REQ-003 (MUST):** three, traced in a joined row.
+- **REQ-004 (MAY):** four, never traced.
+
+- **AC-001:** Given one.
+- **AC-002:** Given two.
+- **AC-002:** Given two again.
+
+| Requirement      | Acceptance | Test case |
+| ---------------- | ---------- | --------- |
+| REQ-001          | AC-001     | TC-001    |
+| REQ-002, REQ-003 | AC-002     | TC-002    |
+`;
+
+  it('reports a REQ or AC defined twice, and a REQ with no traceability row', () => {
+    expect(analyseRequirements(REQS)).toEqual({
+      duplicateDefinitions: [
+        { id: 'REQ-002', lines: [3, 4] },
+        { id: 'AC-002', lines: [9, 10] },
+      ],
+      untraced: ['REQ-004'],
+    });
+  });
+
+  it('counts both as errors', () => {
+    const empty = analyse([], new Map());
+    expect(errorCount(empty, analyseRequirements(REQS))).toBe(3);
   });
 });

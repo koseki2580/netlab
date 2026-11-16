@@ -4,7 +4,8 @@
  *
  * Reports duplicate TC ids, TC ids referenced by tests but absent from the
  * spec, Level cells outside the vocabulary, rows with the wrong cell count,
- * and (as a warning) E2E-level ids no test references.
+ * REQ or AC ids defined twice, requirements with no traceability row, and (as
+ * a warning) E2E-level ids no test references.
  *
  * Exits 0 unless `--strict` is given and an error category is non-empty.
  * See docs/dev/tc-check.md.
@@ -127,9 +128,39 @@ export function analyse(rows, refs) {
   return { duplicates, missingFromSpec, badLevels, badCellCounts, unreferencedE2e };
 }
 
+const DEFINITION = /^- \*\*((?:REQ|AC)-\d+)\b/;
+
+/**
+ * Requirement bookkeeping: a REQ or AC defined (`- **REQ-n …` / `- **AC-n:`)
+ * on more than one line, and a REQ no traceability row (a table whose header
+ * starts with "Requirement") lists in its first cell.
+ */
+export function analyseRequirements(markdown) {
+  const lines = markdown.split('\n');
+  const defined = new Map();
+  const traced = new Set();
+  for (let i = 0; i < lines.length; i += 1) {
+    const id = DEFINITION.exec(lines[i])?.[1];
+    if (id) defined.set(id, [...(defined.get(id) ?? []), i + 1]);
+    if (!isTableLine(lines[i]) || (i > 0 && isTableLine(lines[i - 1]))) continue;
+    if (splitRow(lines[i])[0]?.toLowerCase() !== 'requirement') continue;
+    for (let j = i + 1; j < lines.length && isTableLine(lines[j]); j += 1) {
+      for (const req of splitRow(lines[j])[0]?.match(/REQ-\d+/g) ?? []) traced.add(req);
+    }
+  }
+  const duplicateDefinitions = [...defined]
+    .filter(([, at]) => at.length > 1)
+    .sort(([a], [b]) =>
+      a.startsWith('REQ') === b.startsWith('REQ') ? 0 : a.startsWith('REQ') ? -1 : 1,
+    )
+    .map(([id, at]) => ({ id, lines: at }));
+  const untraced = [...defined.keys()].filter((id) => id.startsWith('REQ-') && !traced.has(id));
+  return { duplicateDefinitions, untraced };
+}
+
 const byTcNumber = (a, b) => Number(a.slice(3)) - Number(b.slice(3));
 
-export function formatReport(result) {
+export function formatReport(result, requirements = { duplicateDefinitions: [], untraced: [] }) {
   const out = [];
   const section = (title, items, render) => {
     out.push(`${title}: ${items.length}`);
@@ -156,6 +187,12 @@ export function formatReport(result) {
     result.badCellCounts,
     (b) => `${b.id} (line ${b.line}): ${b.cells} cells, expected ${b.expected}`,
   );
+  section(
+    '(f) REQ or AC ids defined twice',
+    requirements.duplicateDefinitions,
+    (d) => `${d.id} at lines ${d.lines.join(', ')}`,
+  );
+  section('(g) requirements with no traceability row', requirements.untraced, (id) => id);
   out.push(
     `(e) warning — E2E-level ids no test references: ${result.unreferencedE2e.length}`,
     ...(result.unreferencedE2e.length
@@ -165,11 +202,13 @@ export function formatReport(result) {
   return out.join('\n');
 }
 
-export const errorCount = (result) =>
+export const errorCount = (result, requirements = { duplicateDefinitions: [], untraced: [] }) =>
   result.duplicates.length +
   result.missingFromSpec.length +
   result.badLevels.length +
-  result.badCellCounts.length;
+  result.badCellCounts.length +
+  requirements.duplicateDefinitions.length +
+  requirements.untraced.length;
 
 const TEST_FILE = /\.(test|spec)\.[cm]?[jt]sx?$/;
 
@@ -202,10 +241,11 @@ function collectRefs(root) {
 
 function main(argv) {
   const strict = argv.includes('--strict');
-  const rows = parseSpecRows(readFileSync(path.join(repoRoot, SPEC_PATH), 'utf8'));
-  const result = analyse(rows, collectRefs(repoRoot));
-  console.log(formatReport(result));
-  const errors = errorCount(result);
+  const spec = readFileSync(path.join(repoRoot, SPEC_PATH), 'utf8');
+  const result = analyse(parseSpecRows(spec), collectRefs(repoRoot));
+  const requirements = analyseRequirements(spec);
+  console.log(formatReport(result, requirements));
+  const errors = errorCount(result, requirements);
   if (errors > 0 && strict) {
     console.error(`\ntc:check failed: ${errors} problem(s) (--strict).`);
     process.exitCode = 1;
