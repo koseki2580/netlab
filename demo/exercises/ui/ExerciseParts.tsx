@@ -53,6 +53,31 @@ function GoalMark({ mark }: { mark: Mark }) {
 
 // --- Brief -------------------------------------------------------------------
 
+/** The story and the glosses: for a reader who wants them, shut for one who does not. */
+export function ExerciseStory({
+  exercise,
+  compact = false,
+}: {
+  exercise: Exercise;
+  compact?: boolean;
+}) {
+  const locale = useGalleryLocale();
+  const t = useT();
+  return (
+    <details data-testid="exercise-more">
+      <summary style={{ cursor: 'pointer', fontSize: 15 }}>
+        {t('What happened, and what the words mean', 'なにが起きたか・ことばの説明を読む')}
+      </summary>
+      <p
+        data-testid="exercise-story"
+        style={{ margin: '4px 0 0', fontSize: 15, lineHeight: compact ? 1.6 : 1.8 }}
+      >
+        {exercise.brief[locale]}
+      </p>
+    </details>
+  );
+}
+
 /**
  * The goals of an exercise, each with its mark once Check has run. On a phone
  * they are part of the brief; beside the diagram they stand under the
@@ -98,6 +123,7 @@ export function ExerciseBrief({
   goals = true,
   reopens = false,
   keyOnly = false,
+  story = true,
 }: {
   /** Show `exercise.ruleKey` in place of the rule (`Exercise.ruleKey`). */
   keyOnly?: boolean;
@@ -114,6 +140,8 @@ export function ExerciseBrief({
   results: readonly CheckResult[] | null;
   /** A phone: tighter lines, so the diagram still fits under the brief. */
   compact?: boolean;
+  /** Whether the story is offered here; a phone offers it under the diagram instead. */
+  story?: boolean;
 }) {
   const locale = useGalleryLocale();
   const t = useT();
@@ -138,18 +166,7 @@ export function ExerciseBrief({
               {(keyOnly && exercise.ruleKey ? exercise.ruleKey : exercise.rule)[locale]}
             </p>
           ) : null}
-          {/* The story and the glosses: for a reader who wants them, shut for one who does not. */}
-          <details data-testid="exercise-more">
-            <summary style={{ cursor: 'pointer', fontSize: 15 }}>
-              {t('What happened, and what the words mean', 'なにが起きたか・ことばの説明を読む')}
-            </summary>
-            <p
-              data-testid="exercise-story"
-              style={{ margin: '4px 0 0', fontSize: 15, lineHeight: compact ? 1.6 : 1.8 }}
-            >
-              {exercise.brief[locale]}
-            </p>
-          </details>
+          {story ? <ExerciseStory exercise={exercise} compact={compact} /> : null}
         </>
       ) : (
         <p style={{ margin: 0, fontSize: compact ? 15 : 16, lineHeight: compact ? 1.6 : 1.8 }}>

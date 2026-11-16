@@ -352,9 +352,12 @@ export function ExerciseDiagram({
             <ReplayDriver replay={shownReplay} />
             {/* A picture, not an editor: devices stay where the exercise put them, and
               a wheel or a finger over the diagram scrolls the page instead of zooming. */}
+            {/* On a phone the zoom buttons took the room the fit needs, and a
+                picture that fits itself has nothing to zoom (TC-1600). */}
             <NetlabCanvas
               followTopology
               minimap={false}
+              controls={phone.layout !== 'narrow'}
               fitViewPadding={0.2}
               interactiveGraph={false}
             >

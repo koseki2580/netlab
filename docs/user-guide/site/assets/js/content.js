@@ -195,7 +195,7 @@ window.USER_GUIDE_CONTENT = {
         html: `<p>図の横にパネルが付くレッスンの多くは、画面の幅に合わせて並び方が変わります。境目は<strong>幅 900px</strong> です。</p>
                <ul>
                  <li><strong>幅の狭い画面（900px 未満）</strong> — レッスン全体が<strong>縦 1 列</strong>になり、上から下へスクロールして読みます。図に重なっていた説明は図の外に出て、その次に図が決まった高さで表示され、最後にパネルが画面の幅いっぱいに並びます。</li>
-                 <li><strong>練習問題とパケットの実習</strong> — スマートフォンでは図の機器が数台ずつの段に並び、名前が読める大きさで描かれます。パケットの実習で「確かめる」を押すと、パケットが動くあいだは図が画面に残り、動き終わってから結果の位置へ移ります。読み込み直しや「戻る」では同じ問題に戻り、答えずに離れたパケットの問題は次に開いたときもう一度出ます。</li>
+                 <li><strong>練習問題とパケットの実習</strong> — スマートフォンでは図の機器が数台ずつの段に並び、名前が読める大きさで描かれます。最初の画面には問題文・目標・図・「たしかめる」が収まり、機器とアドレスの一覧と「なにが起きたか・ことばの説明を読む」は図の下にあります。パケットの実習で「確かめる」を押すと、パケットが動くあいだは図が画面に残り、動き終わってから結果の位置へ移ります。読み込み直しや「戻る」では同じ問題に戻り、答えずに離れたパケットの問題は次に開いたときもう一度出ます。</li>
                  <li><strong>幅の広い画面</strong> — パネルは図の横に並びます。図とパネルの境目をドラッグすると、パネルの幅を広げられます。</li>
                </ul>
                <p><strong>ARP・TCP のハンドシェイク・DHCP と DNS・NAT</strong> の 4 つのレッスンは、幅の狭い画面では並び方が少し違います。<strong>図は上に固定</strong>され、そのすぐ下に<strong>操作ボタン</strong>（送る、①②③、「次のステップ」）と、いまパケットがどこにいるかを示す <strong>1 行の状況</strong>が並びます。スクロールするのは、その下の説明とパネルだけです。機器は幅の広い画面より近づけて並べてあるので、大きく表示されます。</p>
@@ -586,7 +586,7 @@ window.USER_GUIDE_CONTENT = {
         html: `<p>Many lessons with a panel beside the diagram arrange themselves to fit the screen. The dividing line is a width of <strong>900px</strong>.</p>
                <ul>
                  <li><strong>Narrow screen (under 900px)</strong> — the lesson becomes <strong>one scrolling column</strong>, read from top to bottom. The notes that sat over the diagram move out of it, then comes the diagram at a fixed height, and last the panel at the full width of the screen.</li>
-                 <li><strong>Exercises and packet exercises</strong> — on a phone the devices of the diagram stand a few to a row and are drawn at a readable size. After Check in a packet exercise the diagram stays on screen while the packet moves, then the page moves to the result. A reload or Back returns to the same problem, and a packet problem left unanswered is offered again next time.</li>
+                 <li><strong>Exercises and packet exercises</strong> — on a phone the devices of the diagram stand a few to a row and are drawn at a readable size. The first screen holds the task, its goals, the diagram and Check; the list of devices and addresses, and “What happened, and what the words mean”, are under the diagram. After Check in a packet exercise the diagram stays on screen while the packet moves, then the page moves to the result. A reload or Back returns to the same problem, and a packet problem left unanswered is offered again next time.</li>
                  <li><strong>Wide screen</strong> — the panel sits beside the diagram. Drag the edge between them to make the panel wider.</li>
                </ul>
                <p>Four lessons — <strong>ARP, the TCP handshake, DHCP and DNS, and NAT</strong> — are arranged a little differently on a narrow screen. The <strong>diagram stays fixed at the top</strong>; directly under it are the <strong>buttons that drive it</strong> (send, ①②③, “Next step”) and <strong>one line saying where the packet is</strong>. Only the notes and the panel below scroll. Their devices stand closer together than on a wide screen, so they are drawn larger.</p>

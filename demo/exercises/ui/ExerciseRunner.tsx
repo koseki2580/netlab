@@ -38,6 +38,7 @@ import {
 import {
   DesignChooser,
   ExerciseBrief,
+  ExerciseStory,
   GiveUp,
   GoalList,
   HintButton,
@@ -72,7 +73,7 @@ const NO_CHANGES: readonly SettingChange[] = [];
 const LEGEND_COLUMNS = 5;
 
 /** The least height the diagram keeps on a phone: below this its devices cannot be told apart. */
-const NARROW_DIAGRAM_MIN_HEIGHT = 320;
+const NARROW_DIAGRAM_MIN_HEIGHT = 150;
 
 /** The goal a prediction is about: the first "reaches" goal of the exercise. */
 function predictedCheck(exercise: Exercise) {
@@ -539,6 +540,7 @@ export function ExerciseRunner({
       keyOnly={keyOnly}
       reopens={context === 'practice'}
       goals={isNarrow}
+      story={!isNarrow}
     />
   );
   const diagram = (
@@ -666,7 +668,6 @@ export function ExerciseRunner({
             >
               {diagram}
             </div>
-            <DiagramLegend topology={topology} locale={locale} />
           </div>
         ) : (
           <LessonCanvas
@@ -715,6 +716,12 @@ export function ExerciseRunner({
               }}
             >
               {isNarrow ? null : brief}
+              {/* On a phone the story opens below the first screen: above the diagram
+                  it took the room the devices need (TC-525, TC-1600). */}
+              {/* The picture in words, under the first screen: on it, it took the
+                  diagram's height and the names on the picture shrank (TC-1600). */}
+              {isNarrow ? <DiagramLegend topology={topology} locale={locale} /> : null}
+              {isNarrow && exercise.task ? <ExerciseStory exercise={exercise} compact /> : null}
 
               {/* Above the form: after Check the learner reads the result, and what to change is right under it. */}
               <div style={{ display: 'grid', gap: 10, scrollMarginTop: 8 }}>
