@@ -290,7 +290,11 @@ export class RouterForwarder implements Forwarder {
       return { action: 'drop', reason: ingressResolution.reason };
     }
 
-    if (ipPacket.ttl <= 1) {
+    // A packet this router made itself (an echo reply, an ICMP error) has no
+    // ingress port: it leaves with the TTL it was given. Only a packet the
+    // router forwards loses one (RFC 1812 §5.3.1, REQ-362).
+    const originated = ingressPortId === '' && packet.srcNodeId === this.nodeId;
+    if (!originated && ipPacket.ttl <= 1) {
       return { action: 'drop', reason: 'ttl-exceeded' };
     }
 
@@ -302,9 +306,10 @@ export class RouterForwarder implements Forwarder {
     }
     const { route, neighbor, ecmpTrace } = result;
 
+    const lose = originated ? 0 : 1;
     const updatedIp = isIpv6Packet(ipPacket)
-      ? { ...ipPacket, ttl: ipPacket.ttl - 1, hopLimit: ipPacket.hopLimit - 1 }
-      : { ...ipPacket, ttl: ipPacket.ttl - 1 };
+      ? { ...ipPacket, ttl: ipPacket.ttl - lose, hopLimit: ipPacket.hopLimit - lose }
+      : { ...ipPacket, ttl: ipPacket.ttl - lose };
     const updatedIpWithChecksum = isIpv6Packet(updatedIp)
       ? updatedIp
       : {

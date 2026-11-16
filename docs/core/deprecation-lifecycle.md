@@ -186,3 +186,18 @@ children only once the catalog is loaded.
 before `renderToString`), or pass `catalog={ja}` with `import { ja } from 'netlab/locales/ja'`.
 
 Nothing stored changes.
+
+### A router sends what it originates with the TTL it set
+
+**What changed.** A router no longer takes one off the TTL of a packet it makes itself, such as an
+echo reply or an ICMP error (RFC 1812 §5.3.1, REQ-362). Before, its own replies left with 63: a
+ping to the gateway answered with 63, as if a router had forwarded it, and a traceroute's
+time-exceeded answers arrived one lower than on a real network.
+
+What a consumer sees: replies a router originates arrive one higher than before (64 from a
+gateway on the same LAN). Packets a router forwards still lose one.
+
+**How to keep the earlier behaviour.** There is no option for it: the earlier value was not what a
+router does.
+
+Nothing stored changes.
