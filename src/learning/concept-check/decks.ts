@@ -102,6 +102,9 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
     ['q1', 'a'],
     ['q2', 'b'],
     ['q3', 'c'],
+    ['q4', 'b'],
+    ['q5', 'c'],
+    ['q6', 'a'],
   ]),
   deck('ipv4', 'l3', [
     ['q4', 'a'],
@@ -215,6 +218,9 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
     ['q4', 'a'],
     ['q5', 'b'],
     ['q6', 'c'],
+    ['q7', 'b'],
+    ['q8', 'c'],
+    ['q9', 'a'],
   ]),
   deck('ports', 'fundamentals', [
     ['q1', 'a'],

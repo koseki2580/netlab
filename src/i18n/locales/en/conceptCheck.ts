@@ -1999,4 +1999,68 @@ export const conceptCheck: Catalog = {
   'learning.concept.commands.q6.b.why':
     'The gateway’s entry from the same ping is still there; the server’s was never made.',
   'learning.concept.commands.q6.c': 'ARP asks only inside the host’s own LAN',
+  // ICMP and addressing, from the ICMP, VLSM and bits lessons (REQ-370).
+  'learning.concept.icmp.q4.prompt':
+    'A ping to an address nobody routes passes R1 (by its default route), then R2, which has no route. Who sends Destination Unreachable?',
+  'learning.concept.icmp.q4.why':
+    'The router that cannot go on drops the packet and answers, from the address it received it on: here R2. R1 had a route (its default) and forwarded it.',
+  'learning.concept.icmp.q4.a': 'R1, the first router on the way',
+  'learning.concept.icmp.q4.a.why':
+    'R1 had a route — its default — so it forwarded the packet and had nothing to report.',
+  'learning.concept.icmp.q4.b': 'R2, the router with no route',
+  'learning.concept.icmp.q4.c': 'The destination, which is unknown',
+  'learning.concept.icmp.q4.c.why':
+    'An address nobody routes to has no host to answer; the packet never got there.',
+  'learning.concept.icmp.q5.prompt':
+    "1,500 bytes with Don't Fragment set meet a link of MTU 1,400. What does the router send back?",
+  'learning.concept.icmp.q5.why':
+    "It may not split the packet, so it drops it and answers Destination Unreachable, fragmentation needed (type 3, code 4), quoting the next hop's MTU; the sender then sends smaller packets (path MTU discovery).",
+  'learning.concept.icmp.q5.a': 'Time Exceeded, type 11, code 0',
+  'learning.concept.icmp.q5.a.why':
+    'Time Exceeded is for a TTL that runs out; the TTL here is fine.',
+  'learning.concept.icmp.q5.b': 'Two fragments of 1,400 and 120 bytes',
+  'learning.concept.icmp.q5.b.why':
+    'Splitting is what DF forbids; without DF the router would fragment.',
+  'learning.concept.icmp.q5.c': 'Unreachable code 4, with MTU 1400',
+  'learning.concept.icmp.q6.prompt':
+    'ping sends one kind of ICMP message and gets another back. Which types are they?',
+  'learning.concept.icmp.q6.why':
+    'ping sends Echo Request (type 8); the destination answers Echo Reply (type 0) from its own address.',
+  'learning.concept.icmp.q6.a': 'Echo Request 8, then Echo Reply 0',
+  'learning.concept.icmp.q6.b': 'Echo Request 0, then Echo Reply 8',
+  'learning.concept.icmp.q6.b.why':
+    'The numbers are the other way round: the request is 8, the reply 0.',
+  'learning.concept.icmp.q6.c': 'Both are type 3, with codes 0 and 1',
+  'learning.concept.icmp.q6.c.why':
+    "Type 3 is Destination Unreachable, an error, not ping's request or reply.",
+  'learning.concept.addressing.q7.prompt':
+    'A department needs 50 hosts. Which is the smallest subnet that holds them?',
+  'learning.concept.addressing.q7.why':
+    'A /n holds 2^(32−n) − 2 hosts (network and broadcast addresses taken out): /27 holds 30, too few; /26 holds 62, enough; /25 would waste 64 addresses.',
+  'learning.concept.addressing.q7.a': '/27, which holds 30 hosts',
+  'learning.concept.addressing.q7.a.why': '30 is fewer than 50: the subnet is too small.',
+  'learning.concept.addressing.q7.b': '/26, which holds 62 hosts',
+  'learning.concept.addressing.q7.c': '/25, which holds 126 hosts',
+  'learning.concept.addressing.q7.c.why':
+    'It fits, but /26 fits too and is half the size: VLSM gives each just what it needs.',
+  'learning.concept.addressing.q8.prompt':
+    'In VLSM, why give the largest department its subnet first?',
+  'learning.concept.addressing.q8.why':
+    'A subnet must start on a multiple of its own size. Placing the largest first and packing the rest after it keeps every later, smaller subnet on its boundary with no gaps.',
+  'learning.concept.addressing.q8.a': 'Larger subnets need more routers',
+  'learning.concept.addressing.q8.a.why':
+    "The number of routers does not depend on a subnet's size.",
+  'learning.concept.addressing.q8.b': 'Small subnets cannot be routed later',
+  'learning.concept.addressing.q8.b.why':
+    'Any subnet can be routed whenever it is made; order does not change that.',
+  'learning.concept.addressing.q8.c': 'So each starts on a multiple of its size',
+  'learning.concept.addressing.q9.prompt':
+    'The octet 11000000 in binary is which number, and which mask octet?',
+  'learning.concept.addressing.q9.why':
+    'The bits are worth 128, 64, 32, 16, 8, 4, 2, 1; 11000000 is 128 + 64 = 192. As a mask, two ones in the last octet: /24 + 2 = /26.',
+  'learning.concept.addressing.q9.a': '192: two ones, as in /26',
+  'learning.concept.addressing.q9.b': '128: one one, as in /25',
+  'learning.concept.addressing.q9.b.why': '128 is 10000000, one one; here there are two.',
+  'learning.concept.addressing.q9.c': '224: three ones, as in /27',
+  'learning.concept.addressing.q9.c.why': '224 is 11100000, three ones; here there are two.',
 } as const;

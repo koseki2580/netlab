@@ -1989,4 +1989,66 @@ export const conceptCheck: Catalog = {
   'learning.concept.commands.q6.b.why':
     '同じ ping のゲートウェイのエントリは残っています。サーバのものは最初から作られていません。',
   'learning.concept.commands.q6.c': 'ARP は自分の LAN の中でしか聞かない',
+  // ICMP and addressing, from the ICMP, VLSM and bits lessons (REQ-370).
+  'learning.concept.icmp.q4.prompt':
+    '経路のない宛先への ping が、R1（デフォルトルート）を通って R2 に着き、R2 には経路がありません。Destination Unreachable を送るのは？',
+  'learning.concept.icmp.q4.why':
+    '先へ進めなかったルータがパケットを捨て、受け取ったアドレスから知らせます。ここでは R2 です。R1 には経路（デフォルト）があったので転送しました。',
+  'learning.concept.icmp.q4.a': '途中の最初のルータ R1',
+  'learning.concept.icmp.q4.a.why':
+    'R1 には経路（デフォルト）があったので、転送しただけで知らせることはありません。',
+  'learning.concept.icmp.q4.b': '経路を持たないルータ R2',
+  'learning.concept.icmp.q4.c': '知られていない宛先そのもの',
+  'learning.concept.icmp.q4.c.why':
+    '誰も経路を持たない宛先には答える機器がなく、パケットはそこに届いていません。',
+  'learning.concept.icmp.q5.prompt':
+    '「断片化禁止（DF）」付きの 1,500 バイトが、MTU 1,400 の回線にさしかかりました。ルータは何を返しますか？',
+  'learning.concept.icmp.q5.why':
+    '分けることは禁じられているので捨て、次の区間の MTU を添えて Destination Unreachable、断片化が必要（タイプ 3、コード 4）を返します。送り主はそれより小さく送り直します（経路 MTU 探索）。',
+  'learning.concept.icmp.q5.a': 'Time Exceeded（タイプ 11、コード 0）',
+  'learning.concept.icmp.q5.a.why':
+    'Time Exceeded は TTL が尽きたときのものです。ここでは TTL は問題ありません。',
+  'learning.concept.icmp.q5.b': '1,400 と 120 バイトの 2 つの断片',
+  'learning.concept.icmp.q5.b.why':
+    '分けることこそ DF が禁じていることです。DF がなければ、ルータは断片化します。',
+  'learning.concept.icmp.q5.c': '到達不能のコード 4 と、MTU 1400',
+  'learning.concept.icmp.q6.prompt':
+    'ping は ICMP の 1 種類を送り、別の種類が返ってきます。それぞれのタイプ番号は？',
+  'learning.concept.icmp.q6.why':
+    'ping は Echo Request（タイプ 8）を送り、宛先が自分のアドレスから Echo Reply（タイプ 0）を返します。',
+  'learning.concept.icmp.q6.a': 'Echo Request 8、返りは Echo Reply 0',
+  'learning.concept.icmp.q6.b': 'Echo Request 0、返りは Echo Reply 8',
+  'learning.concept.icmp.q6.b.why': '番号が逆です。要求が 8、応答が 0 です。',
+  'learning.concept.icmp.q6.c': 'どちらもタイプ 3（コード 0 と 1）',
+  'learning.concept.icmp.q6.c.why':
+    'タイプ 3 は Destination Unreachable という知らせで、ping の要求や応答ではありません。',
+  'learning.concept.addressing.q7.prompt':
+    'ある部署に 50 台が必要です。それが入る最も小さいサブネットは？',
+  'learning.concept.addressing.q7.why':
+    '/n には 2^(32−n) − 2 台が入ります（ネットワークとブロードキャストのアドレスを除く）。/27 は 30 台で足りず、/26 は 62 台で足ります。/25 では 64 個のアドレスが無駄になります。',
+  'learning.concept.addressing.q7.a': '30 台が入る /27',
+  'learning.concept.addressing.q7.a.why': '30 は 50 より少ないので、小さすぎます。',
+  'learning.concept.addressing.q7.b': '62 台が入る /26',
+  'learning.concept.addressing.q7.c': '126 台が入る /25',
+  'learning.concept.addressing.q7.c.why':
+    '入りますが、半分の大きさの /26 でも足ります。VLSM では必要なだけを割り当てます。',
+  'learning.concept.addressing.q8.prompt': 'VLSM で、最も大きい部署から先に割り当てるのはなぜ？',
+  'learning.concept.addressing.q8.why':
+    'サブネットは自分のサイズの倍数の位置から始まります。大きいものから置き、残りをすき間なく詰めていくと、あとの小さいサブネットも必ず区切りの位置に来ます。',
+  'learning.concept.addressing.q8.a': '大きいサブネットはルータが多く要る',
+  'learning.concept.addressing.q8.a.why': 'ルータの数はサブネットの大きさとは関係ありません。',
+  'learning.concept.addressing.q8.b': '小さいサブネットはあとで経路にできない',
+  'learning.concept.addressing.q8.b.why':
+    'どのサブネットも、作ればいつでも経路にできます。順番は関係ありません。',
+  'learning.concept.addressing.q8.c': 'どれもサイズの倍数の位置から始められる',
+  'learning.concept.addressing.q9.prompt':
+    '2 進数のオクテット 11000000 は、10 進数でいくつ？ どのマスクのオクテット？',
+  'learning.concept.addressing.q9.why':
+    '各ビットの重みは 128・64・32・16・8・4・2・1 です。11000000 は 128 + 64 = 192。マスクなら最後のオクテットに 1 が 2 つで、/24 + 2 = /26 です。',
+  'learning.concept.addressing.q9.a': '192：1 が 2 つの /26 のもの',
+  'learning.concept.addressing.q9.b': '128：1 が 1 つの /25 のもの',
+  'learning.concept.addressing.q9.b.why':
+    '128 は 10000000（1 が 1 つ）です。ここでは 2 つあります。',
+  'learning.concept.addressing.q9.c': '224：1 が 3 つの /27 のもの',
+  'learning.concept.addressing.q9.c.why': '224 は 11100000（1 が 3 つ）です。ここでは 2 つです。',
 } as const;
