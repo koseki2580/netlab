@@ -11,6 +11,7 @@ import {
   ICMP_SENDER,
   ICMP_TARGET_IP,
   ICMP_UNROUTED_IP,
+  ICMP_ABSENT_IP,
   icmpTopology,
   readIcmpOutcome,
 } from './icmpLesson';
@@ -24,6 +25,7 @@ async function outcomes() {
     echo: readIcmpOutcome(await engine.ping(ICMP_SENDER, ICMP_TARGET_IP), ICMP_SENDER),
     ttl: readIcmpOutcome(await engine.ping(ICMP_SENDER, ICMP_TARGET_IP, { ttl: 1 }), ICMP_SENDER),
     'no-route': readIcmpOutcome(await engine.ping(ICMP_SENDER, ICMP_UNROUTED_IP), ICMP_SENDER),
+    'no-host': readIcmpOutcome(await engine.ping(ICMP_SENDER, ICMP_ABSENT_IP), ICMP_SENDER),
     'too-big': readIcmpOutcome(await engine.precompute(tooBig), ICMP_SENDER),
   };
 }
@@ -43,6 +45,13 @@ describe('TC-1760: each situation brings back its ICMP message', () => {
       kind: 'net-unreachable',
       type: 3,
       code: 0,
+      from: '10.0.1.2',
+      fromDevice: 'R2',
+    });
+    expect(seen['no-host']).toMatchObject({
+      kind: 'host-unreachable',
+      type: 3,
+      code: 1,
       from: '10.0.1.2',
       fromDevice: 'R2',
     });

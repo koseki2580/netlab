@@ -53,6 +53,15 @@ export async function runForwarderDispatchStage(ctx: RoutedContext): Promise<Sta
         }
         decision = { action: 'forward', ...decision.forward };
       }
+      // An address of the router's own network that nobody there has (REQ-371).
+      if (
+        decision.action === 'drop' &&
+        decision.reason === 'no-route' &&
+        node.data.role === 'router'
+      ) {
+        const unanswered = await (await import('../arpUnanswered')).unansweredAtRouter(ctx);
+        if (unanswered) return unanswered;
+      }
       if (decision.action === 'drop') {
         const extras: Partial<Omit<PacketHop, 'step' | 'event' | 'reason'>> = {};
         if (node.data.role === 'router' && decision.reason !== 'ttl-exceeded') {

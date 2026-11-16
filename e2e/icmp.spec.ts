@@ -21,7 +21,9 @@ test('TC-1761: each situation brings back its ICMP message, and the predictions 
     await expect(result).toHaveAttribute('data-right', String(index !== 1));
     await page.getByTestId('icmp-next').click();
   }
-  await expect(page.getByTestId('icmp-summary')).toContainText('3 / 4');
+  await expect(page.getByTestId('icmp-summary')).toContainText(
+    `${ICMP_CASES.length - 1} / ${ICMP_CASES.length}`,
+  );
 });
 
 test('TC-1762: the router that cannot go on is the one that answers', async ({

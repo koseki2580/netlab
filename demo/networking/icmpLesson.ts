@@ -11,6 +11,8 @@ export const ICMP_LINK_MTU = 1400;
 export const ICMP_SENDER = 'host-a';
 export const ICMP_TARGET_IP = '203.0.113.10';
 export const ICMP_UNROUTED_IP = '198.51.100.7';
+/** An address of Host B's LAN that no device has. */
+export const ICMP_ABSENT_IP = '203.0.113.99';
 
 /**
  * The MTU lesson's network, with R2's default route taken away: R2 then has
@@ -40,6 +42,7 @@ export type IcmpKind =
   | 'echo-reply'
   | 'time-exceeded'
   | 'net-unreachable'
+  | 'host-unreachable'
   | 'frag-needed'
   | 'nothing';
 
@@ -60,6 +63,7 @@ export const ICMP_CODES: Record<Exclude<IcmpKind, 'nothing'>, { type: number; co
   'echo-reply': { type: 0, code: 0 },
   'time-exceeded': { type: 11, code: 0 },
   'net-unreachable': { type: 3, code: 0 },
+  'host-unreachable': { type: 3, code: 1 },
   'frag-needed': { type: 3, code: 4 },
 };
 
@@ -80,7 +84,9 @@ export function readIcmpOutcome(trace: PacketTrace, sender: string): IcmpOutcome
         ? 'frag-needed'
         : drop.reason === 'no-route'
           ? 'net-unreachable'
-          : 'nothing';
+          : drop.reason === 'arp-no-reply'
+            ? 'host-unreachable'
+            : 'nothing';
   if (kind === 'nothing') return { kind };
   return {
     kind,
@@ -91,7 +97,7 @@ export function readIcmpOutcome(trace: PacketTrace, sender: string): IcmpOutcome
   };
 }
 
-export type IcmpCaseId = 'echo' | 'ttl' | 'no-route' | 'too-big';
+export type IcmpCaseId = 'echo' | 'ttl' | 'no-route' | 'no-host' | 'too-big';
 
 export interface IcmpCase {
   readonly id: IcmpCaseId;
@@ -135,6 +141,18 @@ export const ICMP_CASES: readonly IcmpCase[] = [
     explain: {
       en: 'The router with no route answers, not the first one: R2 drops the packet and sends Destination Unreachable, network unreachable (type 3, code 0), from the address it received it on.',
       ja: '答えるのは最初のルータではなく、経路を持たないルータです。R2 がパケットを捨て、受け取ったインタフェースのアドレスから Destination Unreachable、ネットワーク到達不能（タイプ 3、コード 0）を返します。',
+    },
+  },
+  {
+    id: 'no-host',
+    situation: {
+      en: 'Host A pings 203.0.113.99: on Host B’s network, but no device there has that address.',
+      ja: 'Host A が 203.0.113.99 に ping します。Host B のネットワークの中のアドレスですが、その番号を持つ機器はいません。',
+    },
+    expected: 'host-unreachable',
+    explain: {
+      en: 'R2 has the network (it is connected), so it asks by ARP who has 203.0.113.99. Nobody answers, so R2 drops the packet and sends Destination Unreachable, host unreachable (type 3, code 1): the network is there, the host is not.',
+      ja: 'R2 はそのネットワークを持っている（直結）ので、ARP で「203.0.113.99 はだれ？」と尋ねます。答える機器がいないので、R2 はパケットを捨て、Destination Unreachable、ホスト到達不能（タイプ 3、コード 1）を返します。ネットワークはあるが、その機器がいない、という知らせです。',
     },
   },
   {

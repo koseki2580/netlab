@@ -158,9 +158,36 @@ export function routerLanFor(
       (candidate.source === ctx.current && candidate.sourceHandle === iface.id) ||
       (candidate.target === ctx.current && candidate.targetHandle === iface.id),
   );
-  if (!edge) return null;
-  const nodeId = edge.source === ctx.current ? edge.target : edge.source;
-  return { iface, next: { nodeId, edgeId: edge.id } };
+  if (edge) {
+    const nodeId = edge.source === ctx.current ? edge.target : edge.source;
+    return { iface, next: { nodeId, edgeId: edge.id } };
+  }
+  // A cable that names no interface: the neighbour whose side holds a device
+  // on that network (itself, or behind its switches).
+  const failures = ctx.shared.failureState;
+  const onNetwork = (nodeId: string, from: string, seen: Set<string>): boolean => {
+    const node = ifaceResolver.findNode(nodeId);
+    if (!node || seen.has(nodeId)) return false;
+    seen.add(nodeId);
+    const address = ctx.deps.addresses.nodeIp(node);
+    if (node.data.role !== 'switch')
+      return (
+        (address !== undefined && address !== null && interfaceMatchesTarget(iface, address)) ||
+        (node.data.interfaces ?? []).some(
+          (other) =>
+            other.ipAddress !== undefined && interfaceMatchesTarget(iface, other.ipAddress),
+        )
+      );
+    return ifaceResolver
+      .getNeighbors(nodeId, from, failures)
+      .some(
+        (neighbor) => neighbor.nodeId !== ctx.current && onNetwork(neighbor.nodeId, nodeId, seen),
+      );
+  };
+  const neighbor = ifaceResolver
+    .getNeighbors(ctx.current, null, failures)
+    .find((candidate) => onNetwork(candidate.nodeId, ctx.current, new Set()));
+  return neighbor ? { iface, next: { nodeId: neighbor.nodeId, edgeId: neighbor.edgeId } } : null;
 }
 
 /** Whether nobody beyond `next` (through switches, over links that are up) has `target`. */
@@ -265,4 +292,20 @@ export async function routerAsksUnanswered(
   }
   appendDropHop(ctx, 'arp-no-reply', ctx.workingPacket, extras);
   return breakWith(ctx);
+}
+
+/**
+ * The router's side of REQ-371, decided and drawn here so the engine's own
+ * chunk carries one call: for an IPv4 address of one of the router's own
+ * networks that nobody there has, the unanswered ARP and its drop; otherwise
+ * null, and the caller carries on.
+ */
+export async function unansweredAtRouter(ctx: RoutedContext): Promise<StageResult | null> {
+  const payload = ctx.workingPacket.frame.payload;
+  if ('hopLimit' in payload) return null;
+  const target = ctx.routing.nextHopIp ?? payload.dstIp;
+  const lan = routerLanFor(ctx, target);
+  return lan && routerNobodyAnswers(ctx, lan.next, target)
+    ? routerAsksUnanswered(ctx, lan.next, target)
+    : null;
 }

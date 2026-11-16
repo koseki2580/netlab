@@ -20,6 +20,7 @@ import {
   ICMP_SENDER,
   ICMP_TARGET_IP,
   ICMP_UNROUTED_IP,
+  ICMP_ABSENT_IP,
   icmpTopology,
   readIcmpOutcome,
   type IcmpKind,
@@ -35,6 +36,10 @@ const KIND_WORDS: Record<IcmpKind, readonly [string, string]> = {
   'net-unreachable': [
     'Destination Unreachable — network',
     'Destination Unreachable — ネットワーク到達不能',
+  ],
+  'host-unreachable': [
+    'Destination Unreachable — host',
+    'Destination Unreachable — ホスト到達不能',
   ],
   'frag-needed': [
     'Destination Unreachable — fragmentation needed',
@@ -85,6 +90,7 @@ function IcmpSteps() {
       else if (step.id === 'ttl')
         trace = await engine.ping(ICMP_SENDER, ICMP_TARGET_IP, { ttl: 1 });
       else if (step.id === 'no-route') trace = await engine.ping(ICMP_SENDER, ICMP_UNROUTED_IP);
+      else if (step.id === 'no-host') trace = await engine.ping(ICMP_SENDER, ICMP_ABSENT_IP);
       else {
         // 1,472 bytes of data + 8 of ICMP header + 20 of IP header = 1,500, with DF set.
         const packet = buildEchoPacket(topology, true, 1472);
@@ -118,21 +124,27 @@ function IcmpSteps() {
             </tr>
           </thead>
           <tbody>
-            {(['echo-reply', 'time-exceeded', 'net-unreachable', 'frag-needed'] as const).map(
-              (kind) => (
-                <tr key={kind}>
-                  <td style={{ padding: 4 }}>{word(kind)}</td>
-                  <td
-                    style={{ padding: 4, fontFamily: 'monospace' }}
-                  >{`${ICMP_CODES[kind].type} / ${ICMP_CODES[kind].code}`}</td>
-                  <td style={{ padding: 4 }}>
-                    {kind === 'echo-reply'
-                      ? t('the destination', '宛先')
-                      : t('the router that cannot go on', '先へ進めなかったルータ')}
-                  </td>
-                </tr>
-              ),
-            )}
+            {(
+              [
+                'echo-reply',
+                'time-exceeded',
+                'net-unreachable',
+                'host-unreachable',
+                'frag-needed',
+              ] as const
+            ).map((kind) => (
+              <tr key={kind}>
+                <td style={{ padding: 4 }}>{word(kind)}</td>
+                <td
+                  style={{ padding: 4, fontFamily: 'monospace' }}
+                >{`${ICMP_CODES[kind].type} / ${ICMP_CODES[kind].code}`}</td>
+                <td style={{ padding: 4 }}>
+                  {kind === 'echo-reply'
+                    ? t('the destination', '宛先')
+                    : t('the router that cannot go on', '先へ進めなかったルータ')}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
         <button
