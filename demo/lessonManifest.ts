@@ -68,6 +68,18 @@ export interface Lesson {
 export const LESSONS = [
   // ── Basic Topologies ──
   {
+    path: '/learning/bits',
+    category: 'basic',
+    module: './learning/BitsDrillDemo',
+    title: { en: 'Bits and bytes', ja: 'ビットとバイト' },
+    desc: {
+      en: 'The eight bits of an octet: binary and decimal, masks, and AND — what every address is built from.',
+      ja: 'オクテットの 8 ビット：2 進数と 10 進数、マスク、AND。どのアドレスもこれでできています。',
+    },
+    difficulty: 'beginner',
+    tags: ['L3'],
+  },
+  {
     path: '/learning/subnetting',
     category: 'basic',
     module: './learning/SubnetDrillDemo',

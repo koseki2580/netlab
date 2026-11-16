@@ -57,9 +57,9 @@ export const STAGES: readonly Stage[] = [
       ja: 'アドレス、ネットワークの部品、「/数字」の読み方',
     },
     withCourse: true,
-    lessons: ['/learning/subnetting', '/learning/protocols', '/basic/minimal'],
+    lessons: ['/learning/bits', '/learning/subnetting', '/learning/protocols', '/basic/minimal'],
     checkpoints: [{ kind: 'course' }, { kind: 'exam', level: 5 }],
-    comingSoon: [{ en: 'Bits and bytes', ja: 'ビットとバイト' }],
+    comingSoon: [],
   },
   {
     number: 2,

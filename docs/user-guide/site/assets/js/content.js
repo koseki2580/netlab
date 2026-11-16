@@ -42,7 +42,7 @@ window.USER_GUIDE_CONTENT = {
         title: "学習の道すじ（7 つの Level）",
         html: `<p>基本から最新までを、7 つの Level に分けて順に学べます。ギャラリーの「学習の道すじ（7 つの Level）→」か、実習問題のページから開けます。アドレスは <code>#/path</code> です。</p>
                <ol>
-                 <li><strong>準備</strong> — 入門コース、サブネットの練習など</li>
+                 <li><strong>準備</strong> — ビットとバイト、入門コース、サブネットの練習など</li>
                  <li><strong>LAN</strong> — スイッチ、ARP、VLAN</li>
                  <li><strong>IP</strong> — VLSM（大きさの違うサブネットに分ける練習）、経路、1 ホップずつの流れ、MTU</li>
                  <li><strong>トランスポートとサービス</strong> — UDP・TCP、DHCP・DNS、HTTP、NAT、端末と模擬サーバ</li>
@@ -451,7 +451,7 @@ window.USER_GUIDE_CONTENT = {
         title: "The learning path (7 stages)",
         html: `<p>The path takes you from the basics to the latest in seven stages. Open it from "The whole learning path: 7 stages →" in the gallery or from the exercises page; its address is <code>#/path</code>.</p>
                <ol>
-                 <li><strong>Getting ready</strong> — the getting-started course, subnetting practice and more</li>
+                 <li><strong>Getting ready</strong> — bits and bytes, the getting-started course, subnetting practice and more</li>
                  <li><strong>LAN</strong> — switches, ARP and VLANs</li>
                  <li><strong>IP</strong> — VLSM (practice carving subnets of different sizes), routes, the hop-by-hop path and MTU</li>
                  <li><strong>Transport and services</strong> — UDP and TCP, DHCP and DNS, HTTP, NAT</li>
