@@ -81,6 +81,18 @@ export const LESSONS = [
     progressId: 'subnet-drill',
   },
   {
+    path: '/learning/vlsm',
+    category: 'basic',
+    module: './learning/VlsmDrillDemo',
+    title: { en: 'VLSM: subnets of different sizes', ja: 'VLSM：大きさの違うサブネット' },
+    desc: {
+      en: 'Carve one block into subnets that each fit their department, with nothing wasted.',
+      ja: '1 つのブロックを、部署ごとにちょうど足りる大きさのサブネットに分けます。',
+    },
+    difficulty: 'intermediate',
+    tags: ['L3'],
+  },
+  {
     path: '/learning/protocols',
     category: 'basic',
     module: './learning/ConceptCheckDemo',

@@ -84,6 +84,7 @@ export const STAGES: readonly Stage[] = [
       ja: 'アドレス設計、静的ルーティング、1 ホップずつの経路、パケットの大きさ',
     },
     lessons: [
+      '/learning/vlsm',
       '/routing/client-server',
       '/learning/routing-decision',
       '/learning/visual-routing',
@@ -100,10 +101,7 @@ export const STAGES: readonly Stage[] = [
       { kind: 'packet', level: 3 },
       { kind: 'exam', level: 7 },
     ],
-    comingSoon: [
-      { en: 'VLSM', ja: 'VLSM（可変長サブネット）' },
-      { en: 'ICMP and traceroute', ja: 'ICMP と traceroute' },
-    ],
+    comingSoon: [{ en: 'ICMP and traceroute', ja: 'ICMP と traceroute' }],
   },
   {
     number: 4,
