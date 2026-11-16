@@ -46,6 +46,7 @@ export function TerminalPanel({
   web,
   names,
   pending,
+  onRun,
 }: {
   engine: TerminalEngine;
   nodeId: string;
@@ -56,6 +57,8 @@ export function TerminalPanel({
   names: readonly string[];
   /** A command to type and run, from the suggestions beside the terminal. */
   pending?: { readonly line: string; readonly id: number } | null;
+  /** Each command run, with the device it ran on and what it printed. */
+  onRun?: (run: { nodeId: string; line: string; lines: readonly string[] }) => void;
 }) {
   const t = useT();
   const locale = useGalleryLocale();
@@ -66,9 +69,10 @@ export function TerminalPanel({
   const [ready, setReady] = useState(false);
   const [transcript, setTranscript] = useState<string[]>([]);
   const [typed, setTyped] = useState('');
-  const latest = useRef({ engine, nodeId, web, locale, names, host });
-  latest.current = { engine, nodeId, web, locale, names, host };
+  const latest = useRef({ engine, nodeId, web, locale, names, host, onRun });
+  latest.current = { engine, nodeId, web, locale, names, host, onRun };
   const run = useRef<(line: string) => Promise<void>>(async () => {});
+  const switched = useRef<(host: string) => void>(() => {});
 
   useEffect(() => {
     let disposed = false;
@@ -120,10 +124,19 @@ export function TerminalPanel({
           setTranscript((previous) =>
             [...previous, `${h}$ ${command}`, ...result.lines].slice(-TRANSCRIPT_LINES),
           );
+          latest.current.onRun?.({ nodeId: id, line: command, lines: result.lines });
         } finally {
           busy.current = false;
           prompt();
         }
+      };
+
+      // Another device chosen: say so, and prompt as that device.
+      switched.current = (next: string) => {
+        terminal.write(`\r\n\x1b[90m-- ${next} --\x1b[0m\r\n`);
+        line = '';
+        if (!busy.current) prompt();
+        setTranscript((previous) => [...previous, `-- ${next} --`].slice(-TRANSCRIPT_LINES));
       };
 
       const data = terminal.onData((key) => {
@@ -183,6 +196,13 @@ export function TerminalPanel({
       term.current = null;
     };
   }, []);
+
+  const shownHost = useRef(host);
+  useEffect(() => {
+    if (shownHost.current === host) return;
+    shownHost.current = host;
+    switched.current(host);
+  }, [host]);
 
   // A suggestion pressed beside the terminal: type it, then run it.
   useEffect(() => {

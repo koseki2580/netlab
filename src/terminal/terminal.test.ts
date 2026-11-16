@@ -221,3 +221,47 @@ describe('TC-1709: help, clear, unknown commands, and the page’s language', ()
     expect((await run('foo', { locale: 'ja' })).lines).toEqual(['foo: command not found']);
   });
 });
+
+describe('TC-1716: a host with no address, and an engine that throws', () => {
+  it('says the network is unreachable instead of stopping', async () => {
+    const { run } = setUp(terminalNetwork(), 'laptop');
+    expect((await run('ping -c 1 www')).lines).toEqual(['ping: connect: Network is unreachable']);
+    expect((await run('traceroute www')).lines).toEqual([
+      'traceroute: connect: Network is unreachable',
+    ]);
+    expect((await run('curl http://www/')).lines).toEqual([
+      'curl: (7) Failed to connect: Network is unreachable',
+    ]);
+  });
+
+  it('prints what went wrong when the engine throws, and does not reject', async () => {
+    const { engine, run } = setUp();
+    const broken = {
+      ...engine,
+      getTopology: () => engine.getTopology(),
+      getRuntimeNodeIp: (id: string) => engine.getRuntimeNodeIp(id),
+      ping: () => Promise.reject(new Error('engine stopped')),
+    } as unknown as TerminalContext['engine'];
+    expect((await run('ping -c 1 10.0.2.80', { engine: broken })).lines).toContain(
+      'ping: engine stopped',
+    );
+  });
+});
+
+describe('TC-1717: curl without http://, and ss without -t', () => {
+  it('fetches a URL typed without its scheme, and lists TCP with plain ss', async () => {
+    const { run } = setUp();
+    expect(text(await run('curl www.example.test'))).toContain('<h1>Hello from www</h1>');
+    expect((await run('ss')).lines[0]).toMatch(/^State\s+Recv-Q/);
+  });
+});
+
+describe('TC-1718: dhclient on a host with a fixed address', () => {
+  it('says DHCP is off on this host, in the page’s language', async () => {
+    const { run } = setUp();
+    expect((await run('dhclient')).lines).toEqual([
+      'dhclient: client has a fixed address (10.0.1.10); DHCP is off on this device. Try it on laptop.',
+    ]);
+    expect(text(await run('dhclient', { locale: 'ja' }))).toContain('DHCP は使っていません');
+  });
+});

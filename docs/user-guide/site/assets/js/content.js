@@ -356,6 +356,7 @@ window.USER_GUIDE_CONTENT = {
                  <li><code>ip addr</code>・<code>ip route</code>・<code>arp -a</code>・<code>ss -t</code> — この機器のアドレス、経路、近くの機器の MAC、TCP の接続を見ます。</li>
                  <li><code>help</code> で一覧、<code>clear</code> で画面を消します。↑↓ で前に打ったコマンド、Tab でコマンドや機器の名前を補えます。</li>
                </ul>
+               <p><strong>端末を開く機器</strong>で、client・laptop・各サーバを選べます。laptop は最初アドレスがないので、<code>dhclient</code> でもらってから使います。<strong>やってみよう</strong>の 7 つの課題は、目的に合ったコマンドを打つと ✓ が付き、出力の読み方の説明が開きます（ブラウザに保存されます）。</p>
                <p>名前は、まず図の機器の名前（<code>www</code> など）で探し、なければ DNS に聞きます。パネルのボタンを押すと、そのコマンドを打って実行します。スマートフォンでは、端末の下の入力欄に打って「コマンドを実行」を押します。</p>
                <div class="callout">シミュレータには時計がないので、出力に時間（time=…）は出ません。対応するオプションは上に書いたものだけです。</div>`
       },
@@ -762,6 +763,7 @@ window.USER_GUIDE_CONTENT = {
                  <li><code>ip addr</code>, <code>ip route</code>, <code>arp -a</code>, <code>ss -t</code> — this device’s address, its routes, its neighbours’ MAC addresses and its TCP connections.</li>
                  <li><code>help</code> lists the commands and <code>clear</code> clears the screen. ↑/↓ bring back earlier commands; Tab completes commands and device names.</li>
                </ul>
+               <p>Choose the device under <strong>Terminal on</strong>: the client, the laptop or a server. The laptop has no address at first: run <code>dhclient</code> on it. The seven <strong>Try it</strong> tasks get a ✓ when a command reaches their goal, and then explain how to read its output (kept in the browser).</p>
                <p>A name is looked up among the devices on the diagram first (such as <code>www</code>), then in DNS. A button in the panel types its command and runs it. On a phone, type into the line under the terminal and press “Run the command”.</p>
                <div class="callout">The simulator has no clock, so the output shows no times (time=…). Only the options listed above are understood.</div>`
       },

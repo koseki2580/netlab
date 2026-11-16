@@ -56,6 +56,35 @@ test.describe('English', () => {
   });
 });
 
+test.describe('tasks', () => {
+  test.use({ appLocale: 'ja', viewportPreset: 'desktop' });
+
+  test('TC-1723: a task is met by its command, on the device chosen, and then explained', async ({
+    page,
+    demoPage,
+  }) => {
+    await demoPage.goto('/tools/terminal');
+    await expect(page.getByTestId('terminal-loading')).toHaveCount(0);
+    const reach = page.getByTestId('terminal-mission-reach');
+    await expect(reach).toHaveAttribute('data-done', 'false');
+    await typeCommand(page, 'ping -c 1 www');
+    await expect(reach).toHaveAttribute('data-done', 'true');
+    await expect(page.getByTestId('terminal-mission-reach-explain')).toContainText('ttl=63');
+
+    // dhclient on the client only says DHCP is off there; on the laptop it gets an address.
+    const dhcp = page.getByTestId('terminal-mission-dhcp');
+    await typeCommand(page, 'dhclient');
+    await expect(transcript(page)).toContainText('DHCP は使っていません');
+    await expect(dhcp).toHaveAttribute('data-done', 'false');
+    await page.getByTestId('terminal-device').selectOption('laptop');
+    await expect(transcript(page)).toContainText('-- laptop --');
+    await typeCommand(page, 'dhclient');
+    await expect(transcript(page)).toContainText('bound to 10.0.1.');
+    await expect(dhcp).toHaveAttribute('data-done', 'true');
+    await expect(page.getByTestId('terminal-mission-dhcp-explain')).toContainText('DISCOVER');
+  });
+});
+
 test.describe('Japanese', () => {
   test.use({ appLocale: 'ja', viewportPreset: 'desktop' });
 

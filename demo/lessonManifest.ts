@@ -538,8 +538,8 @@ export const LESSONS = [
     module: './tools/TerminalDemo',
     title: { en: 'Terminal and simulated servers', ja: '端末と模擬サーバ' },
     desc: {
-      en: 'Run ping, traceroute, dig and curl on a client; DNS, web and DHCP servers answer inside the page.',
-      ja: 'client で ping・traceroute・dig・curl を打つと、ページの中の DNS・Web・DHCP サーバが答えます。',
+      en: 'Run ping, traceroute, dig, curl and dhclient on a device; DNS, web and DHCP servers answer inside the page.',
+      ja: '機器で ping・traceroute・dig・curl・dhclient を打つと、ページの中の DNS・Web・DHCP サーバが答えます。',
     },
     difficulty: 'beginner',
     tags: ['L3', 'L7'],

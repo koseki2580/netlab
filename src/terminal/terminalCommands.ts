@@ -93,6 +93,14 @@ const nodeIp = (context: TerminalContext, node: NetlabNode): string | undefined 
   node.data.ip ??
   node.data.interfaces?.find((iface) => iface.ipAddress)?.ipAddress;
 
+/** This host's own address; without one it can send nothing (`connect: Network is unreachable`). */
+function ownIp(context: TerminalContext): string | undefined {
+  const node = context.engine
+    .getTopology()
+    .nodes.find((candidate) => candidate.id === context.nodeId);
+  return node ? nodeIp(context, node) : undefined;
+}
+
 /** A name the way a resolver finds it: the devices' names first (as `/etc/hosts`), then DNS. */
 async function resolve(context: TerminalContext, name: string): Promise<string | null> {
   if (isIpv4(name)) return name;
@@ -140,6 +148,7 @@ async function ping(
   }
   const host = rest[0];
   if (!host || !Number.isInteger(count) || count < 1 || count > 10) return usage('ping', locale);
+  if (!ownIp(context)) return { lines: ['ping: connect: Network is unreachable'] };
   const ip = await resolve(context, host);
   if (!ip) return { lines: [`ping: ${host}: Name or service not known`] };
   const lines = [`PING ${host} (${ip}) 56(84) bytes of data.`];
@@ -171,6 +180,7 @@ async function traceroute(
 ): Promise<TerminalResult> {
   const host = args[0];
   if (!host) return usage('traceroute', locale);
+  if (!ownIp(context)) return { lines: ['traceroute: connect: Network is unreachable'] };
   const ip = await resolve(context, host);
   if (!ip) return { lines: [`${host}: Name or service not known`] };
   const traces = await context.engine.traceroute(context.nodeId, ip);
@@ -266,9 +276,12 @@ async function curl(
 ): Promise<TerminalResult> {
   const verbose = args.includes('-v');
   const headOnly = args.includes('-I');
-  const url = args.find((arg) => !arg.startsWith('-'));
+  const typed = args.find((arg) => !arg.startsWith('-'));
+  // Like curl, a URL with no scheme is taken as http.
+  const url = typed && !/^[a-z]+:\/\//i.test(typed) ? `http://${typed}` : typed;
   const parsed = url ? /^http:\/\/([^/:]+)(?::(\d+))?(\/.*)?$/.exec(url) : null;
   if (!parsed) return usage('curl', locale);
+  if (!ownIp(context)) return { lines: ['curl: (7) Failed to connect: Network is unreachable'] };
   const host = parsed[1] as string;
   const path = parsed[3] ?? '/';
   const port = parsed[2] ? Number(parsed[2]) : 80;
@@ -333,8 +346,23 @@ async function curl(
   };
 }
 
-async function dhclient(context: TerminalContext): Promise<TerminalResult> {
+async function dhclient(context: TerminalContext, locale: Locale): Promise<TerminalResult> {
   const engine = context.engine;
+  const nodes = engine.getTopology().nodes;
+  const self = nodes.find((node) => node.id === context.nodeId);
+  if (self && !self.data.dhcpClient?.enabled && self.data.ip) {
+    const other = nodes.find((node) => node.data.dhcpClient?.enabled)?.data.label;
+    const name = self.data.label;
+    return {
+      lines: [
+        say(
+          locale,
+          `dhclient: ${name} has a fixed address (${self.data.ip}); DHCP is off on this device.${other ? ` Try it on ${other}.` : ''}`,
+          `dhclient: ${name} は固定のアドレス（${self.data.ip}）を使っていて、DHCP は使っていません。${other ? `${other} で試してください。` : ''}`,
+        ),
+      ],
+    };
+  }
   const bound = await engine.simulateDhcp(context.nodeId);
   const lease = engine.getDhcpLeaseState(context.nodeId);
   const lines = ['DHCPDISCOVER on eth0 to 255.255.255.255 port 67'];
@@ -408,7 +436,8 @@ function arp(args: string[], context: TerminalContext, locale: Locale): Terminal
 }
 
 function ss(args: string[], context: TerminalContext, locale: Locale): TerminalResult {
-  if (args[0] !== '-t') return usage('ss', locale);
+  // Only TCP is kept as connections, so `ss` alone lists what `ss -t` does.
+  if (args[0] !== undefined && args[0] !== '-t') return usage('ss', locale);
   const rows = context.engine.getTcpConnectionsForNode(context.nodeId).map((connection) => {
     const mine = connection.srcNodeId === context.nodeId;
     const local = mine
@@ -435,8 +464,17 @@ function ss(args: string[], context: TerminalContext, locale: Locale): TerminalR
   };
 }
 
-/** Run one command line on the host `context.nodeId`. */
+/** Run one command line on the host `context.nodeId`; a failure is printed, never thrown. */
 export async function runCommand(line: string, context: TerminalContext): Promise<TerminalResult> {
+  const [command] = tokenize(line);
+  try {
+    return await dispatch(line, context);
+  } catch (error) {
+    return { lines: [`${command}: ${error instanceof Error ? error.message : String(error)}`] };
+  }
+}
+
+async function dispatch(line: string, context: TerminalContext): Promise<TerminalResult> {
   const locale: Locale = context.locale ?? 'en';
   const [command, ...args] = tokenize(line);
   switch (command) {
@@ -457,7 +495,7 @@ export async function runCommand(line: string, context: TerminalContext): Promis
     case 'curl':
       return curl(args, context, locale);
     case 'dhclient':
-      return dhclient(context);
+      return dhclient(context, locale);
     case 'ip':
       return ip(args, context, locale);
     case 'arp':
