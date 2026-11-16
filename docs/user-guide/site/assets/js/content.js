@@ -199,7 +199,7 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>幅の広い画面</strong> — パネルは図の横に並びます。図とパネルの境目をドラッグすると、パネルの幅を広げられます。</li>
                </ul>
                <p><strong>ARP・TCP のハンドシェイク・DHCP と DNS・NAT</strong> の 4 つのレッスンは、幅の狭い画面では並び方が少し違います。<strong>図は上に固定</strong>され、そのすぐ下に<strong>操作ボタン</strong>（送る、①②③、「次のステップ」）と、いまパケットがどこにいるかを示す <strong>1 行の状況</strong>が並びます。スクロールするのは、その下の説明とパネルだけです。機器は幅の広い画面より近づけて並べてあるので、大きく表示されます。</p>
-               <p>スマートフォンでは、どのレッスンも図の機器を<strong>1 行に 3 台まで</strong>並べ直すので、機器の名前とアドレスが読める大きさで表示されます。横に説明の列があるレッスンは、図が上、説明が下に並びます。ボタンやタブは指で押しやすい<strong>44px 以上</strong>の大きさになります。下のバーの <strong>?</strong> は、タッチ画面では<strong>タップのしかた</strong>（機器、ボタン、タイムラインの行、拡大・縮小、下のバー）を説明します。</p>
+               <p>スマートフォンでは、どのレッスンも図の機器を<strong>1 行に 3 台まで</strong>（「パケットの旅」「障害への強さを試す」「ルーティング判断 — ネットワーク上で」のドリルは 2 台まで）並べ直すので、機器の名前とアドレスが読める大きさで表示されます。横に説明の列があるレッスンは、図が上、説明が下に並びます。ボタンやタブは指で押しやすい<strong>44px 以上</strong>の大きさになります。下のバーの <strong>?</strong> は、タッチ画面では<strong>タップのしかた</strong>（機器、ボタン、タイムラインの行、拡大・縮小、下のバー）を説明します。</p>
                <ul>
                  <li><strong>図の機器をタップ</strong>すると、その機器の詳細（アドレスなどの設定）が開きます。たたまれたエリアはタップで開きます。</li>
                  <li><strong>レッスン一覧</strong>では、左の案内は「☰ メニュー」ボタンで開く引き出しになり、カードが画面の幅いっぱいに並びます。</li>
@@ -606,7 +606,7 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>Wide screen</strong> — the panel sits beside the diagram. Drag the edge between them to make the panel wider.</li>
                </ul>
                <p>Four lessons — <strong>ARP, the TCP handshake, DHCP and DNS, and NAT</strong> — are arranged a little differently on a narrow screen. The <strong>diagram stays fixed at the top</strong>; directly under it are the <strong>buttons that drive it</strong> (send, ①②③, “Next step”) and <strong>one line saying where the packet is</strong>. Only the notes and the panel below scroll. Their devices stand closer together than on a wide screen, so they are drawn larger.</p>
-               <p>On a phone every lesson stands its devices <strong>at most three to a row</strong>, so their names and addresses are drawn at a size you can read. A lesson with a column beside its diagram puts the diagram on top and the column below it. Buttons and tabs are at least <strong>44px</strong> each way, a fingertip’s size. On a touch screen, <strong>?</strong> in the bottom bar explains <strong>what to tap</strong> (devices, buttons, timeline rows, zoom, the bottom bar) instead of listing keyboard shortcuts.</p>
+               <p>On a phone every lesson stands its devices <strong>at most three to a row</strong> (two in the Packet Journey, Resilience Lab and “Routing Decision — on the network” drills), so their names and addresses are drawn at a size you can read. A lesson with a column beside its diagram puts the diagram on top and the column below it. Buttons and tabs are at least <strong>44px</strong> each way, a fingertip’s size. On a touch screen, <strong>?</strong> in the bottom bar explains <strong>what to tap</strong> (devices, buttons, timeline rows, zoom, the bottom bar) instead of listing keyboard shortcuts.</p>
                <ul>
                  <li><strong>Tap a device</strong> on a diagram to open its details (its addresses and other settings). Tap a folded area to open it.</li>
                  <li>On the <strong>lesson list</strong> the navigation on the left becomes a drawer opened by the “☰ Menu” button, and the cards take the full width.</li>

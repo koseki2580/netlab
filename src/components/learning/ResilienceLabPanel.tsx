@@ -12,6 +12,8 @@ import type { ResilienceOutcome } from '../../learning/resilience';
 import { SimulationEngine } from '../../simulation/SimulationEngine';
 import { NetlabCanvas } from '../NetlabCanvas';
 import { NetlabProvider } from '../NetlabProvider';
+import { arrangeForPhone, snakePositions } from '../../utils/phoneLayout';
+import { useViewport } from '../../utils/useViewport';
 import {
   ConceptCallout,
   DrillFeedback,
@@ -36,6 +38,8 @@ type Prediction = 'survived' | 'dropped';
  * Requires the l2/l3 layer plugins to be registered (the demo entry does this).
  */
 export function ResilienceLabPanel() {
+  // On a phone the devices stand two to a row in the drill's card, so their names are readable (TC-1730).
+  const phone = useViewport().isNarrow;
   const { t } = useI18n();
   const topology = useMemo(() => buildResilienceTopology(), []);
   const labels = useMemo(
@@ -208,7 +212,14 @@ export function ResilienceLabPanel() {
             overflow: 'hidden',
           }}
         >
-          <NetlabProvider key={scenario.id} topology={viewTopology}>
+          <NetlabProvider
+            key={`${scenario.id}-${phone ? 'phone' : 'wide'}`}
+            topology={
+              phone
+                ? arrangeForPhone(viewTopology, snakePositions(viewTopology.nodes, undefined, 2))
+                : viewTopology
+            }
+          >
             <NetlabCanvas
               followTopology
               minimap={false}

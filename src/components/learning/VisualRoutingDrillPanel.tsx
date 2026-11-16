@@ -5,6 +5,8 @@ import type { RouteGradeResult } from '../../learning/routing-decision';
 import { nextHopFromNodeId, routeProblemTopology } from '../../learning/routing-decision/topology';
 import { NetlabCanvas } from '../NetlabCanvas';
 import { NetlabProvider } from '../NetlabProvider';
+import { arrangeForPhone, snakePositions } from '../../utils/phoneLayout';
+import { useViewport } from '../../utils/useViewport';
 import { routeExplanation, routePrompt } from './drillI18n';
 import {
   ConceptCallout,
@@ -27,6 +29,8 @@ const SESSION_LENGTH = 8;
  * question. Graded by the longest-prefix match the engine uses.
  */
 export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }) {
+  // On a phone the devices stand two to a row in the drill's card, so their names are readable (TC-1730).
+  const phone = useViewport().isNarrow;
   const { t } = useI18n();
   const [baseSeed, setBaseSeed] = useState(seed);
   const [index, setIndex] = useState(0);
@@ -237,7 +241,14 @@ export function VisualRoutingDrillPanel({ seed = Date.now() }: { seed?: number }
           }}
         >
           {/* Remount per question so canvas selection state starts fresh. */}
-          <NetlabProvider key={problem.id} topology={topology}>
+          <NetlabProvider
+            key={`${problem.id}-${phone ? 'phone' : 'wide'}`}
+            topology={
+              phone
+                ? arrangeForPhone(topology, snakePositions(topology.nodes, undefined, 2))
+                : topology
+            }
+          >
             <NetlabCanvas
               followTopology
               minimap={false}

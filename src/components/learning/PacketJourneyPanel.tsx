@@ -13,6 +13,8 @@ import type { PacketJourney } from '../../learning/packet-journey';
 import { SimulationEngine } from '../../simulation/SimulationEngine';
 import { NetlabCanvas } from '../NetlabCanvas';
 import { NetlabProvider } from '../NetlabProvider';
+import { arrangeForPhone, snakePositions } from '../../utils/phoneLayout';
+import { useViewport } from '../../utils/useViewport';
 import {
   ConceptCallout,
   DrillFeedback,
@@ -37,6 +39,8 @@ import type { DrillResult } from './drillKit';
  * README quick start both do this).
  */
 export function PacketJourneyPanel() {
+  // On a phone the devices stand two to a row in the drill's card, so their names are readable (TC-1730).
+  const phone = useViewport().isNarrow;
   const { t } = useI18n();
   const topology = useMemo(() => buildJourneyTopology(), []);
   const labels = useMemo(
@@ -233,7 +237,14 @@ export function PacketJourneyPanel() {
             overflow: 'hidden',
           }}
         >
-          <NetlabProvider key={flow.id} topology={viewTopology}>
+          <NetlabProvider
+            key={`${flow.id}-${phone ? 'phone' : 'wide'}`}
+            topology={
+              phone
+                ? arrangeForPhone(viewTopology, snakePositions(viewTopology.nodes, undefined, 2))
+                : viewTopology
+            }
+          >
             <NetlabCanvas
               followTopology
               minimap={false}

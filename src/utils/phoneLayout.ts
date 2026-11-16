@@ -41,18 +41,22 @@ const AREA_ROW_GAP = 150;
 const AREA_PAD = { left: 12, top: 36, right: 92, bottom: 102 };
 
 /**
- * Three to a row, in the order the wide picture reads (left to right, then top
+ * Three to a row (or `perRow`: two in a narrow card), in the order the wide picture reads (left to right, then top
  * to bottom), every other row running right to left.
  */
-export function snakePositions(nodes: readonly Placed[], rowGap = ROW_GAP): PhonePlaces {
+export function snakePositions(
+  nodes: readonly Placed[],
+  rowGap = ROW_GAP,
+  perRow = PER_ROW,
+): PhonePlaces {
   const order = [...nodes].sort(
     (a, b) => a.position.x - b.position.x || a.position.y - b.position.y,
   );
   const places: PhonePlaces = {};
   order.forEach((node, index) => {
-    const row = Math.floor(index / PER_ROW);
-    const column = index % PER_ROW;
-    const x = row % 2 === 0 ? column : PER_ROW - 1 - column;
+    const row = Math.floor(index / perRow);
+    const column = index % perRow;
+    const x = row % 2 === 0 ? column : perRow - 1 - column;
     places[node.id] = { x: x * COLUMN_GAP, y: row * rowGap };
   });
   return places;
