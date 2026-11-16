@@ -39,6 +39,9 @@ export default defineConfig(({ command }) => {
             'protocols/quic/index': resolve(__dirname, 'src/protocols/quic/index.ts'),
             'protocols/http2/index': resolve(__dirname, 'src/protocols/http2/index.ts'),
             'protocols/http3/index': resolve(__dirname, 'src/protocols/http3/index.ts'),
+            // The Japanese words: loaded on demand by `I18nProvider` (REQ-356),
+            // or imported here to pass as `catalog`.
+            'locales/ja': resolve(__dirname, 'src/i18n/locales/ja.ts'),
           },
           name: 'Netlab',
           formats: ['es', 'cjs'],

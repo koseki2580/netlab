@@ -4,6 +4,7 @@ export default defineConfig({
   test: {
     reporters: process.env.CI ? ['default', 'verbose'] : ['default'],
     exclude: [...configDefaults.exclude, 'e2e/**', 'agents/**'],
+    setupFiles: ['src/testing/preloadLocales.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],

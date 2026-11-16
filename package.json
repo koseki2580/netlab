@@ -75,6 +75,11 @@
       "types": "./dist/protocols/http3/index.d.ts",
       "import": "./dist/protocols/http3/index.js",
       "require": "./dist/protocols/http3/index.cjs.js"
+    },
+    "./locales/ja": {
+      "types": "./dist/i18n/locales/ja.d.ts",
+      "import": "./dist/locales/ja.js",
+      "require": "./dist/locales/ja.cjs.js"
     }
   },
   "scripts": {

@@ -169,3 +169,20 @@ needs `'arp-no-reply'`.
 network does. Read `arp-no-reply` where the earlier reasons were read.
 
 Nothing stored changes.
+
+### The Japanese catalog loads on demand
+
+**What changed.** The Japanese catalog is no longer in the main bundle (REQ-356). `I18nProvider`
+(and `NetlabProvider`) with `locale="ja"` and no `catalog` loads it the first time it is needed:
+on a first render it renders nothing for its children until the catalog arrives, and on a switch
+of locale it keeps the language shown until then. Before, the first render was always Japanese,
+on the client and in server rendering.
+
+What a consumer sees: an app that renders `locale="ja"` without preloading shows its children a
+moment later than before, never in English. Server rendering with `locale="ja"` renders the
+children only once the catalog is loaded.
+
+**How to keep the earlier behaviour.** `await preloadLocale('ja')` before the first render (or
+before `renderToString`), or pass `catalog={ja}` with `import { ja } from 'netlab/locales/ja'`.
+
+Nothing stored changes.

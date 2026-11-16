@@ -26,6 +26,12 @@ A pack's learn tier ([protocol packs](../core/protocol-packs.md)) carries the st
 and fails, naming the entry and the chunk, if the string appears in the closure. That also catches
 a tier inlined into the worker, where there is nothing to walk.
 
+## The locale guard
+
+The Japanese catalog is its own entry, `dist/locales/ja.js` (`locale:ja`, 25 kB), loaded on demand
+by `I18nProvider` (REQ-356). `size-gate-check` fails, naming the entry and the file, if any other
+eager entry's static imports reach a `dist/locales/*` file.
+
 ## Adding a pack
 
 Add a `pack('<id>', '3 kB')` line to `.size-limit.mjs`, name the learn file `pack-<id>.ts`, and

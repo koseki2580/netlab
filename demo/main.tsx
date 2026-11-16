@@ -14,6 +14,7 @@ import { StrictMode, useMemo, type ComponentType } from 'react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { ProgressProvider } from '../src/progress';
+import { preloadLocale } from '../src/i18n/lazyLocales';
 import { ToastViewport } from '../src/components/ToastViewport';
 import Gallery from './Gallery';
 import CoursePage from './course/CoursePage';
@@ -84,10 +85,15 @@ function DemoRoutes() {
   );
 }
 
-createRoot(root).render(
-  <StrictMode>
-    <HashRouter>
-      <DemoRoutes />
-    </HashRouter>
-  </StrictMode>,
-);
+// The Japanese words load before the first paint, so a Japanese page never
+// shows a blank or an English frame first (REQ-356). They are in this bundle
+// already: the wait is one microtask.
+void preloadLocale('ja').then(() => {
+  createRoot(root).render(
+    <StrictMode>
+      <HashRouter>
+        <DemoRoutes />
+      </HashRouter>
+    </StrictMode>,
+  );
+});

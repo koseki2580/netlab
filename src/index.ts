@@ -746,6 +746,7 @@ export {
   I18nProvider,
   createTranslator,
   en,
+  preloadLocale,
   substitute,
   useI18n,
 } from './i18n';

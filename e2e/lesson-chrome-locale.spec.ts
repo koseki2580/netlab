@@ -232,3 +232,38 @@ test('the lesson navigation is Japanese and leads back to the lessons', async ({
   await back.click();
   await expect(page.getByTestId(SEL.gallery.heading), 'it leads back to the lessons').toBeVisible();
 });
+
+/**
+ * TC-1495 — the Japanese words load on demand (REQ-356), and a Japanese page
+ * paints no English of the library before them: every paint from the first
+ * is watched, and "▶ Send Packet" never appears.
+ */
+test.describe(() => {
+  test.use({ appLocale: 'ja' });
+
+  test('a Japanese page paints no English before its Japanese words arrive', async ({
+    page,
+    demoPage,
+  }) => {
+    await page.addInitScript(() => {
+      const seen: string[] = [];
+      (window as unknown as { __painted: string[] }).__painted = seen;
+      const watch = () =>
+        new MutationObserver(() => seen.push(document.body?.innerText ?? '')).observe(
+          document.documentElement,
+          { childList: true, subtree: true, characterData: true },
+        );
+      if (document.documentElement) watch();
+      else document.addEventListener('readystatechange', watch, { once: true });
+    });
+    await page.setViewportSize(VIEWPORTS.wide);
+    await demoPage.goto('/routing/client-server');
+    await expect(page.getByTestId(SEL.demo.primaryAction).first()).toHaveText('▶ パケットを送る');
+
+    const painted = await page.evaluate(
+      () => (window as unknown as { __painted: string[] }).__painted,
+    );
+    expect(painted.length).toBeGreaterThan(0);
+    expect(painted.filter((text) => text.includes('Send Packet'))).toEqual([]);
+  });
+});

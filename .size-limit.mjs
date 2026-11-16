@@ -24,6 +24,8 @@ export default [
   eager({ name: 'worker', path: 'dist/assets/worker.entry-*.js', limit: '46 kB' }),
   eager({ name: 'ui:simulation-context', path: 'dist/sandbox-mode-*.mjs', limit: '66 kB' }),
   eager({ name: 'ui:node-ports', path: 'dist/NodePorts-*.mjs', limit: '3 kB' }),
+  // The Japanese words, loaded only for a Japanese page (REQ-356).
+  eager({ name: 'locale:ja', path: 'dist/locales/ja.js', limit: '25 kB' }),
   eager({ name: 'ui:scenario-export', path: 'dist/ScenarioExportDialog-*.mjs', limit: '52 kB' }),
   pack('dns', '3.5 kB'),
   pack('gre', '3 kB'),

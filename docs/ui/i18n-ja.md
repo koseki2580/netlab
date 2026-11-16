@@ -1,6 +1,6 @@
 # 日本語 i18n ガイド
 
-Netlab の UI 文言は `src/i18n/locales/en.ts` を基準に管理します。日本語ロケールは `src/i18n/locales/ja.ts` から公開され、同じキー集合と同じプレースホルダー名を持つ必要があります。
+Netlab の UI 文言は `src/i18n/locales/en.ts` を基準に管理します。日本語ロケールは `src/i18n/locales/ja.ts` にあり、同じキー集合と同じプレースホルダー名を持つ必要があります。日本語カタログは本体に含めず、日本語を表示するときに読み込みます（`dist/locales/ja.js`、REQ-356）。最初の描画から日本語にしたいアプリは `preloadLocale('ja')` を待ってから描画するか、`netlab/locales/ja` の `ja` を `catalog` に渡します。
 
 ## 新しいロケールを追加する手順
 
