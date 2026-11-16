@@ -86,6 +86,7 @@ export const STAGES: readonly Stage[] = [
     lessons: [
       '/learning/vlsm',
       '/routing/client-server',
+      '/networking/icmp',
       '/learning/routing-decision',
       '/learning/visual-routing',
       '/routing/multi-hop',
@@ -101,7 +102,7 @@ export const STAGES: readonly Stage[] = [
       { kind: 'packet', level: 3 },
       { kind: 'exam', level: 7 },
     ],
-    comingSoon: [{ en: 'ICMP and traceroute', ja: 'ICMP と traceroute' }],
+    comingSoon: [],
   },
   {
     number: 4,

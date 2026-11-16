@@ -218,6 +218,18 @@ export const LESSONS = [
     tags: ['L3', 'Static'],
   },
   {
+    path: '/networking/icmp',
+    category: 'routing',
+    module: './networking/IcmpDemo',
+    title: { en: 'ICMP and traceroute', ja: 'ICMP と traceroute' },
+    desc: {
+      en: 'What the network answers back, and why: predict, send and read four ICMP messages.',
+      ja: 'ネットワークが何を、なぜ返すのか。4 つの ICMP メッセージを予想し、送り、読み取ります。',
+    },
+    difficulty: 'intermediate',
+    tags: ['L3'],
+  },
+  {
     path: '/routing/multi-hop',
     category: 'routing',
     module: './routing/MultiHopDemo',
