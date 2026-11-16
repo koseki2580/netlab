@@ -201,3 +201,20 @@ gateway on the same LAN). Packets a router forwards still lose one.
 router does.
 
 Nothing stored changes.
+
+### A routing loop ends when the TTL runs out
+
+**What changed.** A packet caught in a loop of routers used to stop the first time it came back to a
+router, dropped with the reason `'routing-loop'` and no ICMP. Each router now takes one off the TTL
+as it forwards, as before, and the loop guard counts that: the packet goes round until the TTL runs
+out, and the router where it does drops it as `'ttl-exceeded'` and sends Time Exceeded to the sender
+(RFC 1812 §5.3.1, REQ-369). A loop that never lowers the TTL (switches only) is still caught the
+first time round as `'routing-loop'`, and a walk is capped at 1,024 steps.
+
+What a consumer sees: for a loop of routers, a longer trace (one forward hop per lap) ending in
+`'ttl-exceeded'` with `icmpGenerated: true`, where it ended in `'routing-loop'`.
+
+**How to keep the earlier behaviour.** There is no option for it: the earlier outcome was not what a
+network does.
+
+Nothing stored changes.

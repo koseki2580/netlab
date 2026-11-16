@@ -21,7 +21,12 @@ import type { ArpDispatcher } from '../ArpDispatcher';
 import type { ForwardLoopParams, ForwardLoopShared } from '../ForwardingLoop';
 import type { AclMatchInfo } from '../../../../types/acl';
 
-export const MAX_HOPS = 64;
+/**
+ * A safety cap on one walk, not a model of anything: a routing loop ends when
+ * the TTL (at most 255) runs out (REQ-369), and a loop of switches is caught by
+ * its loop-guard key the first time round, with switches between routers.
+ */
+export const MAX_HOPS = 1024;
 export const BROADCAST_IP = '255.255.255.255';
 
 export function isIgmpMessage(payload: IpPacket['payload']): payload is IgmpMessage {
@@ -202,6 +207,13 @@ export function buildLoopGuardKey(
   packet: InFlightPacket,
   ingressEdgeId: string | null,
 ): string {
+  // A router takes one off the TTL each time it forwards, so a packet caught in
+  // a routing loop comes back with a different TTL each lap and goes round until
+  // the TTL runs out and a router answers Time Exceeded (REQ-369). The TTL is
+  // part of a router's key; a loop that never lowers it is still caught.
+  if (node.data.role === 'router') {
+    return `${node.id}:ttl${packet.frame.payload.ttl}`;
+  }
   if (node.data.role !== 'switch') {
     return node.id;
   }

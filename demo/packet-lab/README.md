@@ -56,8 +56,8 @@ Real:
   node id): delivered there. A host of the sender's own LAN: delivered without touching the router.
   A router's own interface address with the router's id: delivered at the router.
 - An address no route covers: dropped at the first router, `reason: 'no-route'`, with
-  `routingDecision.winner === null` on the drop hop. **No ICMP destination-unreachable is generated**
-  (quirk).
+  `routingDecision.winner === null` on the drop hop. The router sends ICMP Destination Unreachable,
+  network unreachable (type 3, code 0), back to the sender (REQ-380).
 - **`dstNodeId` matters** (quirk). Routers forward on `dstIp`, but a node only accepts a packet when
   `dstNodeId` is that node **and** it owns `dstIp`. Switches use `dstNodeId` to pick the port when the
   destination MAC does not decide. Any disagreement ends as `drop` at a host with `reason: 'no-route'`

@@ -5,7 +5,7 @@ import { RouterForwarder } from '../layers/l3-network/RouterForwarder';
 import { layerRegistry } from '../registry/LayerRegistry';
 import { type FailureState, EMPTY_FAILURE_STATE, makeInterfaceFailureId } from '../types/failure';
 import type { RouteEntry } from '../types/routing';
-import type { PacketTrace } from '../types/simulation';
+import { packetEnd, type PacketTrace } from '../types/simulation';
 import type { NetworkTopology } from '../types/topology';
 import { computeFcs, computeIpv4Checksum } from '../utils/checksum';
 import { buildEthernetFrameBytes, buildIpv4HeaderBytes } from '../utils/packetLayout';
@@ -395,8 +395,10 @@ describe('SimulationEngine.precompute', () => {
     expect(secondRouterHop.egressInterfaceId).toBe('eth1');
   });
 
-  it('stops with routing-loop when a node is revisited (triangle cycle)', async () => {
-    // Triangle: client-1 → R1 → R2 → R3 → R1 (R1 is revisited, triggering loop detection)
+  it('a packet in a triangle routing loop goes round until its TTL runs out (TC-1771)', async () => {
+    // Triangle: client-1 → R1 → R2 → R3 → R1 → … Each lap lowers the TTL, so it ends as
+    // ttl-exceeded at a router, as on a real network (REQ-369); it used to stop at the
+    // first revisit as `routing-loop`.
     // R1 and R3 share an edge so R3 can forward back to R1 without backtracking through R2.
     const routeTables = new Map<string, RouteEntry[]>([
       ['router-1', [makeRouteEntry('router-1', '203.0.113.0/24', '172.16.0.2')]],
@@ -512,9 +514,14 @@ describe('SimulationEngine.precompute', () => {
     const trace = await engine.precompute(packet);
 
     expect(trace.status).toBe('dropped');
-    const dropHop = hopAt(trace, dataHops(trace).length - 1);
-    expect(dropHop.event).toBe('drop');
-    expect(dropHop.reason).toBe('routing-loop');
+    // The packet's own path ends where its TTL ran out; the Time Exceeded sent back
+    // finds no route to the client in these tables, which is a separate leg.
+    const end = packetEnd(trace);
+    expect(end?.event).toBe('drop');
+    expect(end?.reason).toBe('ttl-exceeded');
+    expect(
+      trace.hops.filter((hop) => hop.nodeId === 'router-1' && hop.event === 'forward').length,
+    ).toBeGreaterThan(10);
   });
 
   it('populates activeEdgeId on forward hops', async () => {
