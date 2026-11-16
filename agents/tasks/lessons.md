@@ -297,3 +297,13 @@ A running record of corrections and feedback received during sessions. Use this 
 **Why**: Tests written with the code check what was intended; a learner's first minutes check what was missed.
 
 **Apply-when**: Shipping a terminal, editor, form or any surface where the learner types free input.
+
+## L023 — A demo page's words must be read inside DemoShell
+
+**What happened**: The VLSM page called `useT()` in its default export, outside `DemoShell`, so every word stayed English on a Japanese page; only `lesson-japanese.spec` caught it.
+
+**Rule**: In a demo page, put everything that calls `useT()` / `useGalleryLocale()` in a component rendered as `DemoShell`'s child; the default export only renders `DemoShell` (its title and desc come from the manifest's copy).
+
+**Why**: `DemoShell` provides the gallery locale to its children; hooks above it read the default, English.
+
+**Apply-when**: Writing a new page under `demo/`.
