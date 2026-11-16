@@ -1,14 +1,17 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import { TERMINAL_WEB_SITES, terminalNetwork } from '../../src/terminal/terminalNetwork';
+import type { WebSites } from '../../src/terminal/types';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { LessonCanvas, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import { LESSON_BUTTON, LESSON_CARD, LESSON_LABEL } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useGalleryLocale, useT } from '../localeContext';
 import { TerminalPanel } from '../terminal/TerminalPanel';
+import { CAUSES, FAULTS, causeOf, type CauseId, type Fault } from './terminalFaults';
 import { MISSIONS, completedBy, type TerminalRun } from './terminalMissions';
 
 const TOPOLOGY = terminalNetwork();
@@ -123,22 +126,35 @@ const HIDDEN_TEXT: React.CSSProperties = {
   clip: 'rect(0 0 0 0)',
 };
 
-function TerminalSide() {
+function TerminalSide({
+  web,
+  faults,
+  onCommand,
+}: {
+  web: WebSites;
+  /** The fault-finding card, whose state lives above the network it breaks. */
+  faults: React.ReactNode;
+  onCommand: () => void;
+}) {
   const t = useT();
   const { engine } = useSimulation();
   const [pending, setPending] = useState<{ line: string; id: number } | null>(null);
   const [deviceId, setDeviceId] = useState('client');
   const [done, setDone] = useState<Set<string>>(readDone);
   const device = DEVICES.find((node) => node.id === deviceId) ?? DEVICES[0];
-  const onRun = useCallback((run: TerminalRun) => {
-    setDone((previous) => {
-      const met = completedBy(run, previous);
-      if (met.length === 0) return previous;
-      const next = new Set([...previous, ...met]);
-      saveDone(next);
-      return next;
-    });
-  }, []);
+  const onRun = useCallback(
+    (run: TerminalRun) => {
+      onCommand();
+      setDone((previous) => {
+        const met = completedBy(run, previous);
+        if (met.length === 0) return previous;
+        const next = new Set([...previous, ...met]);
+        saveDone(next);
+        return next;
+      });
+    },
+    [onCommand],
+  );
   return (
     <>
       <div style={LESSON_CARD}>
@@ -150,6 +166,7 @@ function TerminalSide() {
           )}
         </p>
       </div>
+      {faults}
       <Missions done={done} />
       <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {t('Terminal on', '端末を開く機器')}
@@ -170,7 +187,7 @@ function TerminalSide() {
         engine={engine}
         nodeId={device?.id ?? 'client'}
         host={device?.data.label ?? 'client'}
-        web={TERMINAL_WEB_SITES}
+        web={web}
         names={NAMES}
         pending={pending}
         onRun={onRun}
@@ -212,8 +229,141 @@ function TerminalSide() {
   );
 }
 
+/** The fault-finding card (REQ-364): one symptom, commands to find why, then a pick. */
+function FaultCard({
+  fault,
+  runs,
+  picked,
+  onStart,
+  onPick,
+  onEnd,
+}: {
+  fault: Fault | null;
+  runs: number;
+  picked: readonly CauseId[];
+  onStart: () => void;
+  onPick: (cause: CauseId) => void;
+  onEnd: () => void;
+}) {
+  const t = useT();
+  const locale = useGalleryLocale();
+  const last = picked[picked.length - 1];
+  const solved = fault !== null && last === fault.cause;
+  return (
+    <div style={LESSON_CARD} data-testid="terminal-faults">
+      <div style={LESSON_LABEL}>{t('Find the fault', '故障を探す')}</div>
+      {fault === null ? (
+        <>
+          <p style={{ margin: '0 0 8px', lineHeight: 1.6 }}>
+            {t(
+              'Break the network in one of four ways, without being told which. Then find out why the page will not open, with commands.',
+              'ネットワークを 4 通りのどれかで壊します（どれかは伏せます）。Web ページが開かない理由を、コマンドで突き止めてください。',
+            )}
+          </p>
+          <button
+            type="button"
+            data-testid="terminal-fault-start"
+            style={LESSON_BUTTON}
+            onClick={onStart}
+          >
+            {t('Break something', '故障を起こす')}
+          </button>
+        </>
+      ) : (
+        <>
+          <p
+            data-testid="terminal-fault-symptom"
+            style={{ margin: '0 0 8px', lineHeight: 1.6, fontWeight: 700 }}
+          >
+            {t(
+              'On the client, http://www.example.test/ will not open. Why? Find out with commands, then choose.',
+              'client で http://www.example.test/ が開きません。なぜでしょう。コマンドで調べてから選んでください。',
+            )}
+          </p>
+          {runs === 0 ? (
+            <p style={{ margin: '0 0 8px', color: 'var(--netlab-text-secondary)' }}>
+              {t('Run at least one command first.', 'まずコマンドを 1 つ以上打ってください。')}
+            </p>
+          ) : null}
+          <div style={{ display: 'grid', gap: 6 }}>
+            {CAUSES.map((cause) => (
+              <button
+                key={cause.id}
+                type="button"
+                data-testid={`terminal-fault-pick-${cause.id}`}
+                disabled={runs === 0 || solved}
+                aria-pressed={picked.includes(cause.id)}
+                style={{ ...LESSON_BUTTON, textAlign: 'left' }}
+                onClick={() => onPick(cause.id)}
+              >
+                {cause.label[locale]}
+              </button>
+            ))}
+          </div>
+          {last !== undefined ? (
+            <p
+              data-testid="terminal-fault-feedback"
+              data-correct={String(solved)}
+              role="status"
+              style={{ margin: '8px 0 0', lineHeight: 1.6 }}
+            >
+              {solved
+                ? `${t('Right.', '正解です。')} ${causeOf(last).explain[locale]}`
+                : `${t('Not that.', 'ちがいます。')} ${causeOf(last).wouldShow[locale]} ${t('Check again with commands.', 'もう一度コマンドで確かめてください。')}`}
+            </p>
+          ) : null}
+          <button
+            type="button"
+            data-testid="terminal-fault-end"
+            style={{ ...LESSON_BUTTON, marginTop: 8 }}
+            onClick={onEnd}
+          >
+            {solved
+              ? t('Fix it and go back', '直して元に戻す')
+              : t('Give up and fix it', 'あきらめて元に戻す')}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function TerminalDemo() {
   const t = useT();
+  // `?fault=f2` opens with that fault: a link a teacher can hand out, and a fixed case for tests.
+  const search = useLocation().search;
+  const [faultIndex, setFaultIndex] = useState<number | null>(() => {
+    const index = FAULTS.findIndex(
+      (candidate) => candidate.id === new URLSearchParams(search).get('fault'),
+    );
+    return index === -1 ? null : index;
+  });
+  const [runs, setRuns] = useState(0);
+  const [picked, setPicked] = useState<CauseId[]>([]);
+  const fault = faultIndex === null ? null : (FAULTS[faultIndex] ?? null);
+  const topology = useMemo(() => (fault ? fault.apply(TOPOLOGY) : TOPOLOGY), [fault]);
+  const web = useMemo(() => (fault ? fault.web(TERMINAL_WEB_SITES) : TERMINAL_WEB_SITES), [fault]);
+  const onCommand = useCallback(() => setRuns((count) => count + 1), []);
+  const faults = (
+    <FaultCard
+      fault={fault}
+      runs={runs}
+      picked={picked}
+      onStart={() => {
+        // A different fault each time, without saying which.
+        const next = Math.floor(Math.random() * FAULTS.length);
+        setFaultIndex(next === faultIndex ? (next + 1) % FAULTS.length : next);
+        setRuns(0);
+        setPicked([]);
+      }}
+      onPick={(cause) => setPicked((previous) => [...previous, cause])}
+      onEnd={() => {
+        setFaultIndex(null);
+        setRuns(0);
+        setPicked([]);
+      }}
+    />
+  );
   return (
     <DemoShell
       title={t('Terminal and simulated servers', '端末と模擬サーバ')}
@@ -222,12 +372,12 @@ export default function TerminalDemo() {
         '機器で ping・traceroute・dig・curl・dhclient を打つと、ページの中の DNS・Web・DHCP サーバが答えます',
       )}
     >
-      <NetlabProvider topology={TOPOLOGY}>
+      <NetlabProvider key={fault?.id ?? 'working'} topology={topology}>
         <SimulationProvider>
           <LessonSplit>
             <LessonCanvas canvas={<NetlabCanvas />} />
             <LessonPanel defaultWidth={520} maxWidth={760} style={PANEL_STYLE}>
-              <TerminalSide />
+              <TerminalSide web={web} faults={faults} onCommand={onCommand} />
               <PacketTimeline />
             </LessonPanel>
           </LessonSplit>

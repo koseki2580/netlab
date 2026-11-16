@@ -85,6 +85,37 @@ test.describe('tasks', () => {
   });
 });
 
+test.describe('faults', () => {
+  test.use({ appLocale: 'ja', viewportPreset: 'desktop' });
+
+  test('TC-1732: a fault is found with commands: a wrong pick says what it would show, the right one explains', async ({
+    page,
+    demoPage,
+  }) => {
+    await demoPage.goto('/tools/terminal?fault=f2');
+    await expect(page.getByTestId('terminal-loading')).toHaveCount(0);
+    await expect(page.getByTestId('terminal-fault-symptom')).toBeVisible();
+    // A cause is chosen only after a command.
+    await expect(page.getByTestId('terminal-fault-pick-web-down')).toBeDisabled();
+    await typeCommand(page, 'curl http://www.example.test/');
+    await expect(transcript(page)).toContainText("Couldn't connect to server");
+    await typeCommand(page, 'nslookup www.example.test');
+    await expect(transcript(page)).toContainText('Address: 10.0.2.80');
+
+    await page.getByTestId('terminal-fault-pick-dns-unreachable').click();
+    const feedback = page.getByTestId('terminal-fault-feedback');
+    await expect(feedback).toHaveAttribute('data-correct', 'false');
+    await expect(feedback).toContainText('nslookup がタイムアウト');
+
+    await page.getByTestId('terminal-fault-pick-web-down').click();
+    await expect(feedback).toHaveAttribute('data-correct', 'true');
+    await expect(feedback).toContainText('80 番');
+
+    await page.getByTestId('terminal-fault-end').click();
+    await expect(page.getByTestId('terminal-fault-start')).toBeVisible();
+  });
+});
+
 test.describe('Japanese', () => {
   test.use({ appLocale: 'ja', viewportPreset: 'desktop' });
 
