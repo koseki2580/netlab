@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useViewport } from '../../src/utils/useViewport';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
@@ -115,6 +115,20 @@ function Missions({ done }: { done: ReadonlySet<string> }) {
           );
         })}
       </ol>
+      {/* What was seen here, kept: the deck drills the same lines on a schedule (REQ-365). */}
+      <p data-testid="terminal-review" style={{ margin: '10px 0 0', lineHeight: 1.6 }}>
+        {t('To keep it: ', '忘れないために：')}
+        <Link to="/learning/protocols">
+          {t(
+            'review the “Reading command output” deck',
+            '「コマンドの出力を読む」のデッキで復習する',
+          )}
+        </Link>
+        {t(
+          ' — the same lines, asked again over the following days.',
+          '（同じ出力を、日をおいて何度か問います）。',
+        )}
+      </p>
     </div>
   );
 }
