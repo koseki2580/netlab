@@ -64,6 +64,9 @@ export async function undecidedContrastFailures(
       if (!element || !text) continue;
       const style = getComputedStyle(element);
       const foreground = channels(style.color);
+      // Text drawn fully transparent is not seen: it is there for a screen
+      // reader (xterm.js's accessibility rows), and contrast is about what is seen.
+      if (foreground[3] === 0) continue;
       let background = [255, 255, 255];
       for (let node: Element | null = element; node; node = node.parentElement) {
         const candidate = channels(getComputedStyle(node).backgroundColor);
