@@ -277,3 +277,13 @@ A running record of corrections and feedback received during sessions. Use this 
 **Why**: A translated label the user did not choose reads as a different concept, and renames ripple through UI, tests, spec and guide.
 
 **Apply-when**: Naming stages, levels, tests or other curriculum units in UI strings, especially Japanese.
+
+## L021 — Give parallel agents REQ/AC ranges, not only TC ranges
+
+**What happened**: Two agents working at once each took the next free requirement number, so REQ-350/AC-350 was defined twice (VLAN ARP and reload), and tc:check passed because it only looked at TC ids.
+
+**Rule**: When agents write spec rows in parallel, assign each a REQ/AC range as well as a TC range, and run `tc:check --strict`, which now fails on (f) duplicate REQ/AC and (g) untraced REQs, before committing their docs.
+
+**Why**: The next free number is the same number for every agent that reads the spec at the same time.
+
+**Apply-when**: Dispatching two or more agents that may add requirements to `specification.md`.
