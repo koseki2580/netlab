@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useViewport } from '../../src/utils/useViewport';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
@@ -142,6 +143,7 @@ function TerminalSide({
   const [deviceId, setDeviceId] = useState('client');
   const [done, setDone] = useState<Set<string>>(readDone);
   const device = DEVICES.find((node) => node.id === deviceId) ?? DEVICES[0];
+  const phone = useViewport().isNarrow;
   const onRun = useCallback(
     (run: TerminalRun) => {
       onCommand();
@@ -166,8 +168,9 @@ function TerminalSide({
           )}
         </p>
       </div>
-      {faults}
-      <Missions done={done} />
+      {/* On a phone the terminal comes first: below the cards it was a long scroll away. */}
+      {phone ? null : faults}
+      {phone ? null : <Missions done={done} />}
       <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {t('Terminal on', '端末を開く機器')}
         <select
@@ -192,6 +195,8 @@ function TerminalSide({
         pending={pending}
         onRun={onRun}
       />
+      {phone ? faults : null}
+      {phone ? <Missions done={done} /> : null}
       <div style={LESSON_CARD}>
         <div style={LESSON_LABEL}>{t('Examples', 'コマンドの例')}</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>

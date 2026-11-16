@@ -135,6 +135,9 @@ test.describe('phone', () => {
   test('TC-1713: the input line under the terminal runs a command', async ({ page, demoPage }) => {
     await demoPage.goto('/tools/terminal');
     await expect(page.getByTestId('terminal-loading')).toHaveCount(0);
+    // The terminal starts on the first screen, before the task cards.
+    const screen = await page.getByTestId('terminal-screen').boundingBox();
+    expect(screen?.y ?? Infinity).toBeLessThan(page.viewportSize()?.height ?? 0);
     await page.getByTestId('terminal-input').fill('ip addr');
     await page.getByTestId('terminal-run').click();
     await expect(transcript(page)).toContainText('inet 10.0.1.10/24');
