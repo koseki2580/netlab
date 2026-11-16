@@ -51,6 +51,7 @@ const KINDS: readonly IcmpKind[] = [
   'echo-reply',
   'time-exceeded',
   'net-unreachable',
+  'host-unreachable',
   'frag-needed',
   'nothing',
 ];

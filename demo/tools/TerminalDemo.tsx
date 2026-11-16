@@ -118,7 +118,7 @@ function Missions({ done }: { done: ReadonlySet<string> }) {
       {/* What was seen here, kept: the deck drills the same lines on a schedule (REQ-365). */}
       <p data-testid="terminal-review" style={{ margin: '10px 0 0', lineHeight: 1.6 }}>
         {t('To keep it: ', '忘れないために：')}
-        <Link to="/learning/protocols">
+        <Link to="/learning/protocols" style={{ color: 'var(--netlab-accent-cyan)' }}>
           {t(
             'review the “Reading command output” deck',
             '「コマンドの出力を読む」のデッキで復習する',

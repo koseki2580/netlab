@@ -307,3 +307,13 @@ A running record of corrections and feedback received during sessions. Use this 
 **Why**: `DemoShell` provides the gallery locale to its children; hooks above it read the default, English.
 
 **Apply-when**: Writing a new page under `demo/`.
+
+## L024 — Read a Playwright summary without anchoring to the line start
+
+**What happened**: Commit 8ef4ed65 said "807 passed" while 4 tests had failed: the summary line `4 failed` starts with terminal control codes, and `grep -E "^\s+[0-9]+ (passed|failed)"` skipped it.
+
+**Rule**: Summarise a Playwright run with `grep -aoE "[0-9]+ (passed|failed|flaky|skipped|did not run)"` (no `^`), and do not commit while any `failed` count shows.
+
+**Why**: The line reporter redraws lines with ANSI codes, so anchored patterns miss exactly the failure line.
+
+**Apply-when**: Checking any e2e result before a commit or a report.
