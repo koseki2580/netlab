@@ -9,6 +9,8 @@ const pack = (id, limit) => eager({ name: `pack:${id}`, path: `dist/pack-${id}-*
 
 export default [
   eager({ path: 'dist/netlab.es.js', limit: '220 kB' }),
+  // The concept checks' Japanese strings, loaded only for a Japanese page (REQ-365).
+  eager({ name: 'locale:concept-ja', path: 'dist/conceptCheck-*.mjs', limit: '47 kB' }),
   eager({ name: 'ui:concept-check', path: 'dist/ConceptCheckPanelInner-*.mjs', limit: '110 kB' }),
   eager({ name: 'ui:graph-maxgraph', path: 'dist/MaxGraphEngineInner-*.mjs', limit: '138 kB' }),
   eager({ name: 'ui:drill-kit', path: 'dist/drillKit-*.mjs', limit: '28 kB' }),

@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createTranslator } from '../../i18n/createTranslator';
 import { I18nContext } from '../../i18n/I18nContext';
 import { conceptCheck as conceptCheckEn } from '../../i18n/locales/en/conceptCheck';
-import { conceptCheck as conceptCheckJa } from '../../i18n/locales/ja/conceptCheck';
 import { useI18n } from '../../i18n/useI18n';
+import { conceptJapanese, loadConceptJapanese } from './conceptCatalog';
 import {
   allConceptQuestions,
   correctOption,
@@ -632,9 +632,23 @@ export default function ConceptCheckPanelInner(props: ConceptCheckPanelProps = {
   // Layer the locale over en so a partial locale still resolves (docs/dev/i18n.md:
   // "missing keys fall back to en"). Membership is therefore tested against the
   // en key set — a ja gap yields English, never a raw `learning.concept.*` key.
+  // The Japanese strings load on first use; until then nothing is drawn, so no
+  // English frame shows on a Japanese page.
+  const [loaded, setLoaded] = useState(() => conceptJapanese());
+  useEffect(() => {
+    if (locale !== 'ja' || loaded) return;
+    let live = true;
+    void loadConceptJapanese().then(() => {
+      if (live) setLoaded(conceptJapanese());
+    });
+    return () => {
+      live = false;
+    };
+  }, [locale, loaded]);
+  const waiting = locale === 'ja' && !loaded;
   const strings = useMemo(
-    () => (locale === 'ja' ? { ...conceptCheckEn, ...conceptCheckJa } : conceptCheckEn),
-    [locale],
+    () => (locale === 'ja' && loaded ? { ...conceptCheckEn, ...loaded } : conceptCheckEn),
+    [locale, loaded],
   );
   const conceptT = useMemo(() => createTranslator(locale, strings), [locale, strings]);
   const value = useMemo(
@@ -645,6 +659,7 @@ export default function ConceptCheckPanelInner(props: ConceptCheckPanelProps = {
     }),
     [locale, strings, conceptT, baseT],
   );
+  if (waiting) return null;
   return (
     <I18nContext.Provider value={value}>
       <ConceptCheckPanelBody {...props} />
