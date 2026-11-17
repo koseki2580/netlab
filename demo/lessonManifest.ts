@@ -484,6 +484,18 @@ export const LESSONS = [
     tags: ['MPLS', 'L3VPN'],
   },
   {
+    path: '/networking/segment-routing',
+    category: 'areas',
+    module: './networking/SegmentRoutingDemo',
+    title: { en: 'Segment routing', ja: 'セグメントルーティング' },
+    desc: {
+      en: 'The path written into the packet as a stack of labels, with no per-path state in the core.',
+      ja: '通る道をラベルの積み重ねとしてパケットに書き込み、途中のルータは経路ごとの状態を持ちません。',
+    },
+    difficulty: 'advanced',
+    tags: ['MPLS'],
+  },
+  {
     path: '/networking/tunneling/vxlan-evpn',
     category: 'areas',
     module: './networking/VxlanEvpnDemo',
