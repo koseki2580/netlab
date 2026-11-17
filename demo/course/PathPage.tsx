@@ -28,7 +28,13 @@ import {
  * and checkpoint can be opened in any stage; only passing is gated.
  */
 
-const TAP: CSSProperties = { ...LINK, display: 'inline-flex', alignItems: 'center', minHeight: 44 };
+const TAP: CSSProperties = {
+  ...LINK,
+  display: 'inline-flex',
+  alignItems: 'center',
+  minHeight: 44,
+  minWidth: 44,
+};
 
 function checkpointWords(checkpoint: Checkpoint): Localised {
   switch (checkpoint.kind) {
