@@ -199,10 +199,10 @@ export const STAGES: readonly Stage[] = [
       '/networking/http3',
       '/simulation/tcp-congestion',
       '/networking/vpc',
+      '/networking/sd-wan',
     ],
     checkpoints: [{ kind: 'exam', level: 8 }],
     comingSoon: [
-      { en: 'SD-WAN', ja: 'SD-WAN' },
       { en: 'Streaming telemetry', ja: 'ストリーミングテレメトリ' },
       { en: 'L4S', ja: 'L4S' },
       { en: 'MASQUE', ja: 'MASQUE' },

@@ -792,6 +792,18 @@ export const LESSONS = [
     tags: ['L3', 'L4'],
   },
   {
+    path: '/networking/sd-wan',
+    category: 'simulation',
+    module: './networking/SdwanDemo',
+    title: { en: 'SD-WAN', ja: 'SD-WAN' },
+    desc: {
+      en: 'Each kind of traffic on the cheapest link that meets its needs, moved as the links change.',
+      ja: '通信の種類ごとに、条件を満たすいちばん安い回線へ。回線の状態が変われば移します。',
+    },
+    difficulty: 'intermediate',
+    tags: ['WAN'],
+  },
+  {
     path: '/simulation/enterprise',
     category: 'simulation',
     module: './enterprise/EnterpriseDemo',

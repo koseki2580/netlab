@@ -13,6 +13,8 @@ const NON_CANVAS_DEMO_PATHS = new Set([
   // Drills of numbers, with no network to draw (REQ-366, REQ-367).
   '/learning/bits',
   '/learning/vlsm',
+  // A decision table over link measurements, with no network to draw (REQ-376).
+  '/networking/sd-wan',
   '/networking/https',
   '/networking/http2',
   '/networking/http3',
