@@ -27,6 +27,8 @@ const NON_CANVAS_DEMO_PATHS = new Set([
   '/networking/post-quantum',
   // A table of four DNS transports, with no network to draw (REQ-384).
   '/networking/encrypted-dns',
+  // A drawn fabric and its counts, not a simulated network (REQ-385).
+  '/networking/spine-leaf',
   '/networking/https',
   '/networking/http2',
   '/networking/http3',

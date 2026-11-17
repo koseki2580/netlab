@@ -168,6 +168,7 @@ export const STAGES: readonly Stage[] = [
     },
     lessons: [
       '/networking/ecmp',
+      '/networking/spine-leaf',
       '/networking/load-balancer',
       '/networking/tunneling/gre',
       '/networking/tunneling/mpls-l3vpn',
@@ -184,7 +185,7 @@ export const STAGES: readonly Stage[] = [
       { kind: 'exam', level: 3 },
       { kind: 'exam', level: 4 },
     ],
-    comingSoon: [{ en: 'Spine-leaf fabrics', ja: 'スパイン・リーフ構成' }],
+    comingSoon: [],
   },
   {
     number: 7,

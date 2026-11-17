@@ -47,7 +47,7 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>IP</strong> — VLSM（大きさの違うサブネットに分ける練習）、経路、ICMP と traceroute（4 つの ICMP メッセージを予想して確かめる）、1 ホップずつの流れ、MTU</li>
                  <li><strong>トランスポートとサービス</strong> — UDP・TCP、DHCP・DNS、HTTP、NAT、端末と模擬サーバ</li>
                  <li><strong>企業ネットワーク</strong> — スパニングツリー（RSTP の代替ポートと MSTP を含む）、OSPF とエリア、ACL、冗長化、QoS、IPv6、無線</li>
-                 <li><strong>事業者とデータセンター</strong> — ECMP、ロードバランサ、セグメントルーティング、トンネル、MPLS、VXLAN、マルチキャスト</li>
+                 <li><strong>事業者とデータセンター</strong> — ECMP、スパイン・リーフ構成、ロードバランサ、セグメントルーティング、トンネル、MPLS、VXLAN、マルチキャスト</li>
                  <li><strong>最新とクラウド</strong> — クラウドのネットワーク（VPC）、SD-WAN、ストリーミングテレメトリ、TLS 1.3、ECH、耐量子の鍵交換、DNS の暗号化、HTTP/2、HTTP/3、MASQUE、輻輳制御、L4S</li>
                </ol>
                <p>各 Level には、レッスンと、合格に必要なもの（入門コース・実習問題のレベル・パケットの問題のレベル・修了テスト）があります。<strong>Level は、そこに並ぶものがすべて済んだときに合格</strong>で、次の Level が開きます。テストに合格しただけでは、その Level の問題のレベルが残っていれば合格になりません。</p>
@@ -456,7 +456,7 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>IP</strong> — VLSM (practice carving subnets of different sizes), routes, ICMP and traceroute (predict and check four ICMP messages), the hop-by-hop path and MTU</li>
                  <li><strong>Transport and services</strong> — UDP and TCP, DHCP and DNS, HTTP, NAT</li>
                  <li><strong>Enterprise</strong> — spanning tree (with RSTP's alternate ports and MSTP), OSPF and its areas, ACLs, redundancy, QoS, IPv6 and wireless</li>
-                 <li><strong>Providers and data centres</strong> — ECMP, load balancers, segment routing, tunnels, MPLS, VXLAN and multicast</li>
+                 <li><strong>Providers and data centres</strong> — ECMP, spine-leaf fabrics, load balancers, segment routing, tunnels, MPLS, VXLAN and multicast</li>
                  <li><strong>Modern and cloud</strong> — cloud networks (VPC), SD-WAN, streaming telemetry, TLS 1.3, ECH, post-quantum key exchange, encrypted DNS, HTTP/2, HTTP/3, MASQUE, congestion control and L4S</li>
                </ol>
                <p>Each stage lists its lessons and what it takes to pass: the course, exercise levels, packet exercise levels and the test. <strong>A stage is passed when everything it lists is done</strong>, and that opens the next one. Passing its test alone does not pass a stage that also lists exercise levels.</p>

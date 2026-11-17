@@ -388,6 +388,18 @@ export const LESSONS = [
     tags: ['Routing', 'ECMP'],
   },
   {
+    path: '/networking/spine-leaf',
+    category: 'areas',
+    module: './networking/SpineLeafDemo',
+    title: { en: 'Spine-leaf fabrics', ja: 'スパイン・リーフ構成' },
+    desc: {
+      en: 'Every leaf to every spine: three switches between any two servers, and a failed spine costs only a share.',
+      ja: 'どのリーフもすべてのスパインへ。どのサーバ間もスイッチ 3 台で、スパインの故障で失うのは容量の一部だけ。',
+    },
+    difficulty: 'intermediate',
+    tags: ['ECMP'],
+  },
+  {
     path: '/networking/load-balancer',
     category: 'areas',
     module: './networking/LoadBalancerDemo',
