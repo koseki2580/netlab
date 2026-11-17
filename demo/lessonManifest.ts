@@ -840,6 +840,18 @@ export const LESSONS = [
     tags: ['TLS'],
   },
   {
+    path: '/networking/post-quantum',
+    category: 'simulation',
+    module: './networking/PqKexDemo',
+    title: { en: 'Post-quantum key exchange', ja: '耐量子の鍵交換' },
+    desc: {
+      en: 'X25519, ML-KEM and the hybrid browsers send: what each protects against, and its cost in bytes.',
+      ja: 'X25519、ML-KEM、ブラウザが送るハイブリッド。それぞれが何から守り、何バイト増えるか。',
+    },
+    difficulty: 'advanced',
+    tags: ['TLS'],
+  },
+  {
     path: '/networking/masque',
     category: 'simulation',
     module: './networking/MasqueDemo',

@@ -196,6 +196,7 @@ export const STAGES: readonly Stage[] = [
     lessons: [
       '/networking/https',
       '/networking/ech',
+      '/networking/post-quantum',
       '/networking/http2',
       '/networking/http3',
       '/networking/masque',
@@ -206,7 +207,7 @@ export const STAGES: readonly Stage[] = [
       '/networking/telemetry',
     ],
     checkpoints: [{ kind: 'exam', level: 8 }],
-    comingSoon: [{ en: 'Post-quantum key exchange (ML-KEM)', ja: '耐量子の鍵交換（ML-KEM）' }],
+    comingSoon: [{ en: 'Encrypted DNS (DoH, DoT, DoQ)', ja: 'DNS の暗号化（DoH・DoT・DoQ）' }],
   },
 ];
 

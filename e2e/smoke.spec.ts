@@ -23,6 +23,8 @@ const NON_CANVAS_DEMO_PATHS = new Set([
   '/networking/masque',
   // Two bar charts of one link, with no network to draw (REQ-382).
   '/networking/telemetry',
+  // Tables of key shares and attackers, with no network to draw (REQ-383).
+  '/networking/post-quantum',
   '/networking/https',
   '/networking/http2',
   '/networking/http3',

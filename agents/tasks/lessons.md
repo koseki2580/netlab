@@ -317,3 +317,13 @@ A running record of corrections and feedback received during sessions. Use this 
 **Why**: The line reporter redraws lines with ANSI codes, so anchored patterns miss exactly the failure line.
 
 **Apply-when**: Checking any e2e result before a commit or a report.
+
+## L025 — Take the next REQ number from the highest one, not from the last section
+
+**What happened**: Telemetry was given REQ-380 after REQ-379, but REQ-380 and REQ-381 already existed further down (the engine's ICMP and NAT rules); `tc:check --strict` (f) caught the duplicate.
+
+**Rule**: Before adding a REQ, run `grep -oE "\*\*REQ-[0-9]+" spec | sort -n | tail -1` and use the next number.
+
+**Why**: The spec's sections are not in REQ order, so the nearest neighbour is not the maximum.
+
+**Apply-when**: Adding any REQ, AC or TC id to the specification.
