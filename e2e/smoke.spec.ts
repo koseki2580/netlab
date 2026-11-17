@@ -15,6 +15,8 @@ const NON_CANVAS_DEMO_PATHS = new Set([
   '/learning/vlsm',
   // A decision table over link measurements, with no network to draw (REQ-376).
   '/networking/sd-wan',
+  // A model of one bottleneck, drawn as a chart (REQ-377).
+  '/networking/l4s',
   '/networking/https',
   '/networking/http2',
   '/networking/http3',

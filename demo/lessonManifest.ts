@@ -804,6 +804,18 @@ export const LESSONS = [
     tags: ['WAN'],
   },
   {
+    path: '/networking/l4s',
+    category: 'simulation',
+    module: './networking/L4sDemo',
+    title: { en: 'L4S', ja: 'L4S' },
+    desc: {
+      en: 'Early ECN marks instead of drops: the line stays full while the queue stays short.',
+      ja: '捨てる代わりに早めの ECN の印で伝えると、回線を使い切ったまま待ち行列を短く保てます。',
+    },
+    difficulty: 'advanced',
+    tags: ['TCP'],
+  },
+  {
     path: '/simulation/enterprise',
     category: 'simulation',
     module: './enterprise/EnterpriseDemo',
