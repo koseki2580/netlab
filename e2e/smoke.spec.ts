@@ -21,6 +21,8 @@ const NON_CANVAS_DEMO_PATHS = new Set([
   '/networking/ech',
   // A table of who learns what, with no network to draw (REQ-379).
   '/networking/masque',
+  // Two bar charts of one link, with no network to draw (REQ-382).
+  '/networking/telemetry',
   '/networking/https',
   '/networking/http2',
   '/networking/http3',

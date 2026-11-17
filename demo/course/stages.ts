@@ -203,9 +203,10 @@ export const STAGES: readonly Stage[] = [
       '/networking/l4s',
       '/networking/vpc',
       '/networking/sd-wan',
+      '/networking/telemetry',
     ],
     checkpoints: [{ kind: 'exam', level: 8 }],
-    comingSoon: [{ en: 'Streaming telemetry', ja: 'ストリーミングテレメトリ' }],
+    comingSoon: [{ en: 'Post-quantum key exchange (ML-KEM)', ja: '耐量子の鍵交換（ML-KEM）' }],
   },
 ];
 

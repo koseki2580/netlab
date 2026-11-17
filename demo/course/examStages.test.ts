@@ -73,8 +73,8 @@ describe('a stage test asks only about its own stage (TC-964)', () => {
     const text = EXAM_STAGE_7.questions
       .flatMap((q) => [q.prompt.en, ...q.options.map((o) => o.en)])
       .join(' ');
-    for (const topic of ['VPC', 'SD-WAN', 'telemetry', 'L4S', 'MASQUE', 'ECH']) {
-      expect(text, topic).not.toContain(topic);
+    for (const topic of stage7.comingSoon) {
+      expect(text, topic.en).not.toContain(topic.en);
     }
     expect(stage7.comingSoon.length).toBeGreaterThan(0);
   });

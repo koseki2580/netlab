@@ -804,6 +804,18 @@ export const LESSONS = [
     tags: ['WAN'],
   },
   {
+    path: '/networking/telemetry',
+    category: 'simulation',
+    module: './networking/TelemetryDemo',
+    title: { en: 'Streaming telemetry', ja: 'ストリーミングテレメトリ' },
+    desc: {
+      en: 'A five-minute poll and a ten-second stream of the same link: what each one sees.',
+      ja: '同じ回線を 5 分ごとの問い合わせと 10 秒ごとのストリームで見ると、それぞれ何が見えるか。',
+    },
+    difficulty: 'intermediate',
+    tags: ['Operations'],
+  },
+  {
     path: '/networking/l4s',
     category: 'simulation',
     module: './networking/L4sDemo',
