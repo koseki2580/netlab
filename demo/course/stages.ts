@@ -168,6 +168,7 @@ export const STAGES: readonly Stage[] = [
     },
     lessons: [
       '/networking/ecmp',
+      '/networking/load-balancer',
       '/networking/tunneling/gre',
       '/networking/tunneling/mpls-l3vpn',
       '/networking/tunneling/vxlan-evpn',
@@ -185,7 +186,6 @@ export const STAGES: readonly Stage[] = [
     comingSoon: [
       { en: 'Segment Routing', ja: 'セグメントルーティング' },
       { en: 'Spine-leaf fabrics', ja: 'スパイン・リーフ構成' },
-      { en: 'Load balancers', ja: 'ロードバランサ' },
     ],
   },
   {

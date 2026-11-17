@@ -388,6 +388,18 @@ export const LESSONS = [
     tags: ['Routing', 'ECMP'],
   },
   {
+    path: '/networking/load-balancer',
+    category: 'areas',
+    module: './networking/LoadBalancerDemo',
+    title: { en: 'Load balancers', ja: 'ロードバランサ' },
+    desc: {
+      en: 'One VIP, many servers: round robin, least connections and source hash, with health checks.',
+      ja: '1 つの VIP に多数のサーバ。ラウンドロビン、最小接続、送信元ハッシュとヘルスチェック。',
+    },
+    difficulty: 'intermediate',
+    tags: ['L4'],
+  },
+  {
     path: '/networking/ipv6',
     category: 'areas',
     module: './networking/Ipv6Demo',
