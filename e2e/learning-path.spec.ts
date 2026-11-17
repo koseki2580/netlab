@@ -62,7 +62,7 @@ test.describe('the learning path at 1440×900', () => {
     await expect(next).toHaveAttribute('data-kind', 'course');
 
     await expect(page.getByTestId(P.lock(2))).toContainText('stage 1');
-    await expect(page.getByTestId(P.coming(7))).toBeVisible();
+    await expect(page.getByTestId(P.coming(6))).toBeVisible();
 
     // Locked is about passing only: a lesson of a locked stage opens.
     const lesson = page.getByTestId(P.lesson(2)).first();

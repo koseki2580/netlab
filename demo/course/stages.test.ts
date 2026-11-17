@@ -89,14 +89,19 @@ describe('what a stage asks of the learner (TC-951)', () => {
 });
 
 // TC-952
-describe('stages still being written (TC-952)', () => {
-  it('list their planned topics in English and Japanese', () => {
-    for (const number of [6, 7]) {
-      const stage = STAGES.find((entry) => entry.number === number)!;
-      expect(stage.comingSoon.length).toBeGreaterThan(0);
+describe('topics still to be written (TC-952)', () => {
+  it('are named in English and Japanese, and leave the list once their lesson exists', () => {
+    for (const stage of STAGES) {
+      const taught = new Set<string>(
+        stage.lessons.flatMap((path) => {
+          const lesson = LESSONS.find((entry) => entry.path === path);
+          return lesson ? [lesson.title.en] : [];
+        }),
+      );
       for (const topic of stage.comingSoon) {
         expect(topic.en.trim()).not.toBe('');
         expect(topic.ja.trim()).not.toBe('');
+        expect(taught.has(topic.en), `${topic.en} is taught in stage ${stage.number}`).toBe(false);
       }
     }
   });

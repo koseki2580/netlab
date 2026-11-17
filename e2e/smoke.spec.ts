@@ -25,6 +25,8 @@ const NON_CANVAS_DEMO_PATHS = new Set([
   '/networking/telemetry',
   // Tables of key shares and attackers, with no network to draw (REQ-383).
   '/networking/post-quantum',
+  // A table of four DNS transports, with no network to draw (REQ-384).
+  '/networking/encrypted-dns',
   '/networking/https',
   '/networking/http2',
   '/networking/http3',

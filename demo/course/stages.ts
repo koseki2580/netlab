@@ -197,6 +197,7 @@ export const STAGES: readonly Stage[] = [
       '/networking/https',
       '/networking/ech',
       '/networking/post-quantum',
+      '/networking/encrypted-dns',
       '/networking/http2',
       '/networking/http3',
       '/networking/masque',
@@ -207,7 +208,7 @@ export const STAGES: readonly Stage[] = [
       '/networking/telemetry',
     ],
     checkpoints: [{ kind: 'exam', level: 8 }],
-    comingSoon: [{ en: 'Encrypted DNS (DoH, DoT, DoQ)', ja: 'DNS の暗号化（DoH・DoT・DoQ）' }],
+    comingSoon: [],
   },
 ];
 

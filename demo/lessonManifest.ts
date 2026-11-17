@@ -852,6 +852,18 @@ export const LESSONS = [
     tags: ['TLS'],
   },
   {
+    path: '/networking/encrypted-dns',
+    category: 'simulation',
+    module: './networking/EncryptedDnsDemo',
+    title: { en: 'Encrypted DNS', ja: 'DNS の暗号化' },
+    desc: {
+      en: 'DNS, DoT, DoH and DoQ: what the local network can read, change and block.',
+      ja: 'DNS、DoT、DoH、DoQ。手元のネットワークが何を読め、書き換え、止められるか。',
+    },
+    difficulty: 'intermediate',
+    tags: ['DNS'],
+  },
+  {
     path: '/networking/masque',
     category: 'simulation',
     module: './networking/MasqueDemo',
