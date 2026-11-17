@@ -46,7 +46,7 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>LAN</strong> — スイッチ、ARP、VLAN</li>
                  <li><strong>IP</strong> — VLSM（大きさの違うサブネットに分ける練習）、経路、ICMP と traceroute（4 つの ICMP メッセージを予想して確かめる）、1 ホップずつの流れ、MTU</li>
                  <li><strong>トランスポートとサービス</strong> — UDP・TCP、DHCP・DNS、HTTP、NAT、端末と模擬サーバ</li>
-                 <li><strong>企業ネットワーク</strong> — スパニングツリー、OSPF とエリア、ACL、冗長化、QoS、IPv6、無線</li>
+                 <li><strong>企業ネットワーク</strong> — スパニングツリー（RSTP の代替ポートと MSTP を含む）、OSPF とエリア、ACL、冗長化、QoS、IPv6、無線</li>
                  <li><strong>事業者とデータセンター</strong> — ECMP、トンネル、MPLS、VXLAN、マルチキャスト</li>
                  <li><strong>最新とクラウド</strong> — TLS 1.3、HTTP/2、HTTP/3、輻輳制御</li>
                </ol>
@@ -455,7 +455,7 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>LAN</strong> — switches, ARP and VLANs</li>
                  <li><strong>IP</strong> — VLSM (practice carving subnets of different sizes), routes, ICMP and traceroute (predict and check four ICMP messages), the hop-by-hop path and MTU</li>
                  <li><strong>Transport and services</strong> — UDP and TCP, DHCP and DNS, HTTP, NAT</li>
-                 <li><strong>Enterprise</strong> — spanning tree, OSPF and its areas, ACLs, redundancy, QoS, IPv6 and wireless</li>
+                 <li><strong>Enterprise</strong> — spanning tree (with RSTP's alternate ports and MSTP), OSPF and its areas, ACLs, redundancy, QoS, IPv6 and wireless</li>
                  <li><strong>Providers and data centres</strong> — ECMP, tunnels, MPLS, VXLAN and multicast</li>
                  <li><strong>Modern and cloud</strong> — TLS 1.3, HTTP/2, HTTP/3 and congestion control</li>
                </ol>

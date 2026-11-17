@@ -135,6 +135,7 @@ export const STAGES: readonly Stage[] = [
     },
     lessons: [
       '/networking/stp',
+      '/networking/rstp',
       '/routing/dynamic',
       '/routing/ospf-convergence',
       '/routing/ospf-areas',
@@ -156,7 +157,7 @@ export const STAGES: readonly Stage[] = [
       { kind: 'packet', level: 4 },
       { kind: 'exam', level: 2 },
     ],
-    comingSoon: [{ en: 'RSTP and MSTP', ja: 'RSTP と MSTP' }],
+    comingSoon: [],
   },
   {
     number: 6,

@@ -18,12 +18,12 @@ import DemoShell from '../DemoShell';
 import { LESSON_CARD } from '../components/lessonStyles';
 import { isNeighborLookupHop } from '../../src/types/simulation';
 
-type SwitchId = 'switch-a' | 'switch-b' | 'switch-c';
+export type SwitchId = 'switch-a' | 'switch-b' | 'switch-c';
 type HostId = 'host-a' | 'host-b' | 'host-c';
 
 const INTER_SWITCH_EDGE_ID = 'e-bc';
 
-const DEFAULT_PRIORITIES: Record<SwitchId, number> = {
+export const DEFAULT_PRIORITIES: Record<SwitchId, number> = {
   'switch-a': 4096,
   'switch-b': DEFAULT_BRIDGE_PRIORITY,
   'switch-c': DEFAULT_BRIDGE_PRIORITY,
@@ -130,7 +130,8 @@ function roleColor(role: 'ROOT' | 'DESIGNATED' | 'BLOCKED' | 'DISABLED'): string
   }
 }
 
-function buildTopology(
+/** The three-switch triangle with these bridge priorities and disabled ports (also the RSTP lesson's). */
+export function buildTopology(
   priorities: Record<SwitchId, number>,
   disabledPortIds: Record<SwitchId, string[]>,
 ): NetworkTopology {

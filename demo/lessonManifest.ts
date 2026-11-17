@@ -323,6 +323,18 @@ export const LESSONS = [
     scenarioOnCard: false,
   },
   {
+    path: '/networking/rstp',
+    category: 'areas',
+    module: './networking/RstpDemo',
+    title: { en: 'RSTP and MSTP', ja: 'RSTP と MSTP' },
+    desc: {
+      en: 'Alternate ports that take over at once, and one spanning tree per group of VLANs.',
+      ja: 'すぐ代われる代替ポートと、VLAN のまとまりごとのスパニングツリー。',
+    },
+    difficulty: 'intermediate',
+    tags: ['L2'],
+  },
+  {
     path: '/networking/mtu-fragmentation',
     category: 'areas',
     module: './networking/MtuFragmentationDemo',
