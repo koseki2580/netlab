@@ -19,6 +19,8 @@ const NON_CANVAS_DEMO_PATHS = new Set([
   '/networking/l4s',
   // The first TLS bytes as hex, with no network to draw (REQ-378).
   '/networking/ech',
+  // A table of who learns what, with no network to draw (REQ-379).
+  '/networking/masque',
   '/networking/https',
   '/networking/http2',
   '/networking/http3',

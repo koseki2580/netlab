@@ -198,16 +198,14 @@ export const STAGES: readonly Stage[] = [
       '/networking/ech',
       '/networking/http2',
       '/networking/http3',
+      '/networking/masque',
       '/simulation/tcp-congestion',
       '/networking/l4s',
       '/networking/vpc',
       '/networking/sd-wan',
     ],
     checkpoints: [{ kind: 'exam', level: 8 }],
-    comingSoon: [
-      { en: 'Streaming telemetry', ja: 'ストリーミングテレメトリ' },
-      { en: 'MASQUE', ja: 'MASQUE' },
-    ],
+    comingSoon: [{ en: 'Streaming telemetry', ja: 'ストリーミングテレメトリ' }],
   },
 ];
 

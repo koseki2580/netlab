@@ -828,6 +828,18 @@ export const LESSONS = [
     tags: ['TLS'],
   },
   {
+    path: '/networking/masque',
+    category: 'simulation',
+    module: './networking/MasqueDemo',
+    title: { en: 'MASQUE', ja: 'MASQUE' },
+    desc: {
+      en: 'UDP through HTTP/3 proxies: who learns your address, the site and what you read.',
+      ja: 'HTTP/3 のプロキシ越しの UDP。あなたのアドレス、サイト、中身を、誰が知るか。',
+    },
+    difficulty: 'advanced',
+    tags: ['QUIC'],
+  },
+  {
     path: '/simulation/enterprise',
     category: 'simulation',
     module: './enterprise/EnterpriseDemo',
