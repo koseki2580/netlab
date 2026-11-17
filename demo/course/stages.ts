@@ -195,6 +195,7 @@ export const STAGES: readonly Stage[] = [
     },
     lessons: [
       '/networking/https',
+      '/networking/ech',
       '/networking/http2',
       '/networking/http3',
       '/simulation/tcp-congestion',
@@ -206,7 +207,6 @@ export const STAGES: readonly Stage[] = [
     comingSoon: [
       { en: 'Streaming telemetry', ja: 'ストリーミングテレメトリ' },
       { en: 'MASQUE', ja: 'MASQUE' },
-      { en: 'Encrypted Client Hello (ECH)', ja: 'Encrypted Client Hello（ECH）' },
     ],
   },
 ];

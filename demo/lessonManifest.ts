@@ -816,6 +816,18 @@ export const LESSONS = [
     tags: ['TCP'],
   },
   {
+    path: '/networking/ech',
+    category: 'simulation',
+    module: './networking/EchDemo',
+    title: { en: 'Encrypted Client Hello (ECH)', ja: 'Encrypted Client Hello（ECH）' },
+    desc: {
+      en: 'What someone on the path can read in TLS’s first message, with and without ECH.',
+      ja: 'TLS の最初のメッセージから、途中で見ている人に何が読めるか。ECH のありとなしで比べます。',
+    },
+    difficulty: 'advanced',
+    tags: ['TLS'],
+  },
+  {
     path: '/simulation/enterprise',
     category: 'simulation',
     module: './enterprise/EnterpriseDemo',

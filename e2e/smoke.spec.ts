@@ -17,6 +17,8 @@ const NON_CANVAS_DEMO_PATHS = new Set([
   '/networking/sd-wan',
   // A model of one bottleneck, drawn as a chart (REQ-377).
   '/networking/l4s',
+  // The first TLS bytes as hex, with no network to draw (REQ-378).
+  '/networking/ech',
   '/networking/https',
   '/networking/http2',
   '/networking/http3',
