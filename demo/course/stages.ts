@@ -200,10 +200,10 @@ export const STAGES: readonly Stage[] = [
       '/networking/http2',
       '/networking/http3',
       '/simulation/tcp-congestion',
+      '/networking/vpc',
     ],
     checkpoints: [{ kind: 'exam', level: 8 }],
     comingSoon: [
-      { en: 'Cloud networks (VPC)', ja: 'クラウドのネットワーク（VPC）' },
       { en: 'SD-WAN', ja: 'SD-WAN' },
       { en: 'Streaming telemetry', ja: 'ストリーミングテレメトリ' },
       { en: 'L4S', ja: 'L4S' },

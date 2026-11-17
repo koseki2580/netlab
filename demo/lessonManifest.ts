@@ -768,6 +768,18 @@ export const LESSONS = [
     tags: ['L4', 'TCP'],
   },
   {
+    path: '/networking/vpc',
+    category: 'simulation',
+    module: './networking/VpcDemo',
+    title: { en: 'Cloud networks (VPC)', ja: 'クラウドのネットワーク（VPC）' },
+    desc: {
+      en: 'Subnets, gateways and a security group, as the devices that do their jobs.',
+      ja: 'サブネット、ゲートウェイ、セキュリティグループを、その仕事をする機器として見ます。',
+    },
+    difficulty: 'intermediate',
+    tags: ['L3', 'L4'],
+  },
+  {
     path: '/simulation/enterprise',
     category: 'simulation',
     module: './enterprise/EnterpriseDemo',
