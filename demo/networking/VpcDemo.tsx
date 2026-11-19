@@ -8,6 +8,7 @@ import {
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  lessonChoice,
 } from '../components/lessonStyles';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import DemoShell from '../DemoShell';
@@ -101,6 +102,13 @@ function VpcSteps() {
     setRight((previous) => [...previous, seen.arrived === guess]);
   };
 
+  const reasonText =
+    result?.reason === 'acl-deny'
+      ? t('the security group denied it', 'セキュリティグループが拒否')
+      : result?.reason === 'no-nat-entry'
+        ? t('no address mapping', 'アドレスの対応づけがない')
+        : (result?.reason ?? '');
+
   return (
     <div style={LESSON_CARD} data-testid="vpc-step" data-case={step.id}>
       <div style={LESSON_LABEL}>{`${index + 1} / ${VPC_CASES.length}`}</div>
@@ -119,11 +127,9 @@ function VpcSteps() {
             data-testid={`vpc-guess-${value ? 'arrives' : 'stopped'}`}
             disabled={result !== null}
             onClick={() => setGuess(value)}
-            style={{
-              ...LESSON_BUTTON,
-              outline: guess === value ? '2px solid var(--netlab-accent-cyan)' : undefined,
-            }}
+            style={lessonChoice(guess === value)}
           >
+            {guess === value ? '✓ ' : ''}
             {value ? t('It gets through', '届く') : t('It is stopped', '止められる')}
           </button>
         ))}
@@ -145,6 +151,7 @@ function VpcSteps() {
           data-testid="vpc-result"
           data-arrived={String(result.arrived)}
           data-right={String(result.arrived === guess)}
+          data-reason={result.reason ?? undefined}
           role="status"
           style={{ marginTop: 10 }}
         >
@@ -155,10 +162,15 @@ function VpcSteps() {
             {result.arrived
               ? t(`It reached ${result.endedAt}.`, `${result.endedAt} に届きました。`)
               : t(
-                  `Stopped at ${result.endedAt} (${result.reason}).`,
-                  `${result.endedAt} で止められました（${result.reason}）。`,
+                  `Stopped at ${result.endedAt} (${reasonText}).`,
+                  `${result.endedAt} で止められました（${reasonText}）。`,
                 )}
           </p>
+          {result.rewrites.length > 0 && !result.arrived ? (
+            <div style={{ ...LESSON_LABEL, marginTop: 6 }}>
+              {t('Rewritten before it was stopped:', '止められる前の書き換え：')}
+            </div>
+          ) : null}
           {result.rewrites.length > 0 ? (
             <ul
               data-testid="vpc-rewrites"

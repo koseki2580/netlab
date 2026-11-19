@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import {
-  LESSON_BUTTON,
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  lessonChoice,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -40,7 +40,7 @@ function DelayChart({ scenario }: { scenario: L4sScenario }) {
     <svg
       data-testid="l4s-chart"
       data-scenario={scenario}
-      viewBox={`-30 -8 ${CHART_W + 40} ${CHART_H + 28}`}
+      viewBox={`-44 -8 ${CHART_W + 54} ${CHART_H + 28}`}
       style={{ width: '100%', maxWidth: 480 }}
       role="img"
       aria-label={t(
@@ -101,6 +101,8 @@ function L4sLesson() {
         margin: '0 auto',
         padding: 16,
         display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr)',
+        alignContent: 'start',
         gap: 12,
         overflowY: 'auto',
         height: '100%',
@@ -145,12 +147,9 @@ function L4sLesson() {
               data-testid={`l4s-guess-${id}`}
               disabled={revealed}
               onClick={() => setGuess(id)}
-              style={{
-                ...LESSON_BUTTON,
-                textAlign: 'left',
-                outline: guess === id ? '2px solid var(--netlab-accent-cyan)' : undefined,
-              }}
+              style={{ ...lessonChoice(guess === id), textAlign: 'left' }}
             >
+              {guess === id ? '✓ ' : ''}
               {t(...NAMES[id])}
             </button>
           ))}
@@ -168,8 +167,8 @@ function L4sLesson() {
                 : t('Not what you predicted. ', '予想とちがいました。')}
             </strong>
             {t(
-              'Classic TCP has to pick: a deep buffer keeps the line full but lets the queue grow until it overflows; a shallow one keeps the queue short, but halving then leaves the line idle. L4S is told while the queue is still short and backs off a little, so it does both — and loses no packet.',
-              '従来の TCP はどちらかを選ぶしかありません。深いバッファなら回線は埋まりますが、あふれるまで待ち行列が伸びます。浅いバッファなら待ち行列は短いままですが、半分に減らしたあと回線が空きます。L4S は待ち行列が短いうちに伝えられて少しだけ減らすので、両方を満たし、パケットも失いません。',
+              'Classic TCP has to pick: a deep buffer keeps the line full but lets the queue grow until it overflows; a shallow one keeps the queue short, but halving then leaves the line idle. L4S is told while the queue is still short and backs off a little, so it does both — and here loses no packet.',
+              '従来の TCP はどちらかを選ぶしかありません。深いバッファなら回線は埋まりますが、あふれるまで待ち行列が伸びます。浅いバッファなら待ち行列は短いままですが、半分に減らしたあと回線が空きます。L4S は待ち行列が短いうちに伝えられて少しだけ減らすので、両方を満たし、ここではパケットも失いません。',
             )}
           </p>
         ) : (
@@ -225,15 +224,15 @@ function L4sLesson() {
                 aria-selected={shown === id}
                 data-testid={`l4s-show-${id}`}
                 onClick={() => setShown(id)}
-                style={{
-                  ...LESSON_BUTTON,
-                  outline: shown === id ? '2px solid var(--netlab-accent-cyan)' : undefined,
-                }}
+                style={lessonChoice(shown === id)}
               >
                 {t(...NAMES[id])}
               </button>
             ))}
           </div>
+          <p style={{ margin: '10px 0 4px', fontSize: 13, fontWeight: 700 }}>
+            {t(`Shown: ${NAMES[shown][0]}`, `表示中：${NAMES[shown][1]}`)}
+          </p>
           <DelayChart scenario={shown} />
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--netlab-text-secondary)' }}>
             {t(
@@ -249,7 +248,10 @@ function L4sLesson() {
 
 export default function L4sDemo() {
   return (
-    <DemoShell title="L4S" desc="Early ECN marks instead of drops: a full line with a short queue">
+    <DemoShell
+      title="L4S"
+      desc="One bottleneck, three senders: told it is full by a drop, or early by an ECN mark."
+    >
       <L4sLesson />
     </DemoShell>
   );

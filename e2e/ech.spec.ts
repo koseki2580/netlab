@@ -15,6 +15,9 @@ test('TC-1843: without ECH the site is readable, with ECH only the public name i
   await page.getByTestId('ech-guess-ech-yes').click();
   await page.getByTestId('ech-reveal-button').click();
   await expect(page.getByTestId('ech-reveal')).toHaveAttribute('data-right', 'false');
+  await expect(page.getByTestId('ech-reveal')).toContainText('2 問中 1 問正解');
+  await expect(page.getByTestId('ech-mark-plain')).toHaveAttribute('data-right', 'true');
+  await expect(page.getByTestId('ech-mark-ech')).toHaveAttribute('data-right', 'false');
   await expect(page.getByTestId('ech-readable')).toContainText('clinic.example');
   await page.getByTestId('ech-show-ech').click();
   await expect(page.getByTestId('ech-readable')).toContainText('cdn.example');

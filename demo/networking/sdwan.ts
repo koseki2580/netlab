@@ -3,6 +3,11 @@
  * period (latency, jitter, loss), and a policy per kind of traffic that picks
  * the cheapest link meeting its needs — and moves when a link stops meeting
  * them.
+ *
+ * Real SD-WAN policies name a preferred link and backup links, and dampen
+ * switching (hold-downs, averaging windows) so a link is not flapped on one
+ * bad probe; "the cheapest link that meets the needs" is this lesson's
+ * simplification of that.
  */
 export interface LinkSample {
   readonly latencyMs: number;

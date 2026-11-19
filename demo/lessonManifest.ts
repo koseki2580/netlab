@@ -393,8 +393,8 @@ export const LESSONS = [
     module: './networking/SpineLeafDemo',
     title: { en: 'Spine-leaf fabrics', ja: 'スパイン・リーフ構成' },
     desc: {
-      en: 'Every leaf to every spine: three switches between any two servers, and a failed spine costs only a share.',
-      ja: 'どのリーフもすべてのスパインへ。どのサーバ間もスイッチ 3 台で、スパインの故障で失うのは容量の一部だけ。',
+      en: 'Every leaf linked to every spine: count the paths, the hops, and what a failed spine costs.',
+      ja: 'どのリーフもすべてのスパインとつながる構成。経路の数、通るスイッチ、スパインの故障で失うものを数えます。',
     },
     difficulty: 'intermediate',
     tags: ['ECMP'],
@@ -833,8 +833,8 @@ export const LESSONS = [
     module: './networking/L4sDemo',
     title: { en: 'L4S', ja: 'L4S' },
     desc: {
-      en: 'Early ECN marks instead of drops: the line stays full while the queue stays short.',
-      ja: '捨てる代わりに早めの ECN の印で伝えると、回線を使い切ったまま待ち行列を短く保てます。',
+      en: 'One bottleneck, three senders: told it is full by a drop, or early by an ECN mark.',
+      ja: '1 つのボトルネックと 3 つの送り手。混雑は、パケットが捨てられて伝わるか、早めの ECN の印で伝わるか。',
     },
     difficulty: 'advanced',
     tags: ['TCP'],

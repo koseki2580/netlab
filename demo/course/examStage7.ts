@@ -176,10 +176,10 @@ export const EXAM_STAGE_7: ExamLevel = {
         ja: 'SD-WAN のレッスンで、インターネット回線（費用 1）が遅延 120 ms、揺らぎ 40 ms、損失 3 % に悪化します。LTE（費用 2）は 70 ms・15 ms・1 %、MPLS（費用 3）は 30 ms・2 ms・0 % です。音声通話の上限は 150 ms・30 ms・1 % です。音声通話はどこへ？',
       },
       options: [
-        { en: 'MPLS, as it is the best', ja: 'MPLS（いちばん良い回線）' },
-        { en: 'LTE, the cheapest that meets it', ja: 'LTE（条件内で最安）' },
-        { en: 'The internet line, still the cheapest', ja: 'インターネット（いちばん安い）' },
-        { en: 'None of them: voice waits', ja: 'どれも使わず待つ' },
+        { en: 'MPLS (cost 3)', ja: 'MPLS（費用 3）' },
+        { en: 'LTE (cost 2)', ja: 'LTE（費用 2）' },
+        { en: 'Internet (cost 1)', ja: 'インターネット（費用 1）' },
+        { en: 'None of them', ja: 'どれも使わない' },
       ],
       answer: 1,
       explanation: {
@@ -297,8 +297,8 @@ export const EXAM_STAGE_7: ExamLevel = {
       ],
       answer: 0,
       explanation: {
-        en: 'A deep buffer fills the line but lets delay reach 20 ms; a shallow one keeps delay low but leaves the line 85 % used. L4S backs off by its marks while the queue is short: 100 % used, worst 5.8 ms. The L4S lesson runs all three.',
-        ja: '深いバッファは回線を埋めますが遅延が 20 ms まで伸び、浅いバッファは遅延が小さい代わりに使用率が 85 % にとどまります。L4S は待ち行列が短いうちに印の数だけ減らすので、使用率 100 %、最大 5.8 ms です。L4S のレッスンで 3 つを走らせられます。',
+        en: 'A deep buffer keeps the line about 97 % used but lets delay reach 20 ms; a shallow one keeps delay low but leaves the line 85 % used. L4S backs off by its marks while the queue is short: 100 % used, worst 5.8 ms. The L4S lesson runs all three.',
+        ja: '深いバッファは使用率約 97 % を保ちますが遅延が 20 ms まで伸び、浅いバッファは遅延が小さい代わりに使用率が 85 % にとどまります。L4S は待ち行列が短いうちに印の数だけ減らすので、使用率 100 %、最大 5.8 ms です。L4S のレッスンで 3 つを走らせられます。',
       },
       taughtBy: 'l4s',
     },

@@ -680,8 +680,8 @@ const ENTRIES: readonly (readonly [string, ExamQuestion])[] = [
       ],
       answer: 2,
       explanation: {
-        en: 'The NAT gateway rewrites 10.0.2.10 to its own 10.0.1.30, and the internet gateway rewrites that to the public 198.51.100.1. The VPC lesson lists both rewrites.',
-        ja: 'NAT ゲートウェイが 10.0.2.10 を自分の 10.0.1.30 に、インターネットゲートウェイがそれを公開の 198.51.100.1 に書き換えます。VPC のレッスンに、2 回の書き換えが並びます。',
+        en: 'The NAT gateway rewrites 10.0.2.10 to its own 10.0.1.30, and the internet gateway rewrites that to the public 198.51.100.1. The VPC lesson lists both rewrites; there one gateway address is shared, while in a cloud the NAT gateway has its own public (Elastic) IP.',
+        ja: 'NAT ゲートウェイが 10.0.2.10 を自分の 10.0.1.30 に、インターネットゲートウェイがそれを公開の 198.51.100.1 に書き換えます。VPC のレッスンに、2 回の書き換えが並びます。レッスンでは 1 つのアドレスを共有していますが、クラウドでは NAT ゲートウェイが自分の公開 IP（Elastic IP）を持ちます。',
       },
       taughtBy: 'vpc',
     },

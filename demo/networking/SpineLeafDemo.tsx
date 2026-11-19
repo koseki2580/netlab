@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import {
   LESSON_BUTTON,
+  LESSON_BUTTON_PLAIN,
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  lessonChoice,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -26,6 +28,15 @@ const PREDICT_FABRIC: Fabric = { leaves: 8, spines: 4, failed: 1 };
 
 const W = 400;
 const H = 150;
+
+/** A failed spine's button: greyed, struck through and dashed, unlike the cyan running one. */
+const SPINE_DOWN_BUTTON = {
+  ...LESSON_BUTTON_PLAIN,
+  background: 'var(--netlab-bg-surface)',
+  color: 'var(--netlab-text-primary)',
+  textDecoration: 'line-through',
+  borderStyle: 'dashed',
+} as const;
 
 /** The fabric: spines on top, leaves below, a link from every leaf to every spine. */
 function FabricDrawing({
@@ -153,6 +164,8 @@ function SpineLeafLesson() {
         margin: '0 auto',
         padding: 16,
         display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr)',
+        alignContent: 'start',
         gap: 12,
         overflowY: 'auto',
         height: '100%',
@@ -191,11 +204,9 @@ function SpineLeafLesson() {
               data-testid={`sl-guess-${answer}`}
               disabled={revealed}
               onClick={() => setGuess(answer)}
-              style={{
-                ...LESSON_BUTTON,
-                outline: guess === answer ? '2px solid var(--netlab-accent-cyan)' : undefined,
-              }}
+              style={lessonChoice(guess === answer)}
             >
+              {guess === answer ? '✓ ' : ''}
               {answer === '0' ? t('0 % — cut off', '0 %（切れる）') : `${answer} %`}
             </button>
           ))}
@@ -283,10 +294,7 @@ function SpineLeafLesson() {
                 aria-pressed={down.has(spine)}
                 data-testid={`sl-spine-${spine + 1}`}
                 onClick={() => toggle(spine)}
-                style={{
-                  ...LESSON_BUTTON,
-                  outline: down.has(spine) ? '2px solid var(--netlab-accent-cyan)' : undefined,
-                }}
+                style={down.has(spine) ? SPINE_DOWN_BUTTON : LESSON_BUTTON}
               >
                 {down.has(spine)
                   ? t(`S${spine + 1} down`, `S${spine + 1} 故障中`)
@@ -353,7 +361,7 @@ export default function SpineLeafDemo() {
   return (
     <DemoShell
       title="Spine-leaf fabrics"
-      desc="Every leaf to every spine: three switches between any two servers, and a failed spine costs only a share"
+      desc="Every leaf linked to every spine: count the paths, the hops, and what a failed spine costs."
     >
       <SpineLeafLesson />
     </DemoShell>

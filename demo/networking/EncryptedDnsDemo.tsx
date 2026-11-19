@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import {
-  LESSON_BUTTON,
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  lessonChoice,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -52,6 +52,8 @@ function EncryptedDnsLesson() {
         margin: '0 auto',
         padding: 16,
         display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr)',
+        alignContent: 'start',
         gap: 12,
         overflowY: 'auto',
         height: '100%',
@@ -90,12 +92,9 @@ function EncryptedDnsLesson() {
               data-testid={`edns-guess-${method}`}
               disabled={revealed}
               onClick={() => setGuess(method)}
-              style={{
-                ...LESSON_BUTTON,
-                textAlign: 'left',
-                outline: guess === method ? '2px solid var(--netlab-accent-cyan)' : undefined,
-              }}
+              style={{ ...lessonChoice(guess === method), textAlign: 'left' }}
             >
+              {guess === method ? '✓ ' : ''}
               {NAME[method]}
             </button>
           ))}
@@ -113,8 +112,8 @@ function EncryptedDnsLesson() {
                 : t('Not what you predicted. ', '予想とちがいました。')}
             </strong>
             {t(
-              'DoH. DoT and DoQ have their own port, 853, so one rule stops them and the device falls back to plain DNS. DoH travels on TCP 443 like every HTTPS page; to block it the network must know the resolver’s address and block that.',
-              'DoH です。DoT と DoQ には専用のポート 853 番があるので、規則 1 つで止められ、端末は平文の DNS に戻ってしまいます。DoH は、どの HTTPS のページとも同じ TCP 443 番を通ります。止めるには、リゾルバのアドレスを知っていて、それを止めるしかありません。',
+              'DoH. DoT and DoQ have their own port, 853, so one rule stops them; a device in opportunistic mode then falls back to plain DNS, one in strict mode fails to resolve. DoH travels on TCP 443 like every HTTPS page; to block it the network must know the resolver’s address and block that.',
+              'DoH です。DoT と DoQ には専用のポート 853 番があるので、規則 1 つで止められます。日和見モードの端末は平文の DNS に戻り、厳格モードの端末は名前解決に失敗します。DoH は、どの HTTPS のページとも同じ TCP 443 番を通ります。止めるには、リゾルバのアドレスを知っていて、それを止めるしかありません。',
             )}
           </p>
         ) : (
@@ -134,41 +133,50 @@ function EncryptedDnsLesson() {
 
       {revealed ? (
         <div style={LESSON_CARD} data-testid="edns-table">
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ textAlign: 'left', color: 'var(--netlab-text-secondary)' }}>
-                <th style={cell}>{t('The café’s network can…', 'カフェのネットワークは…')}</th>
-                {METHODS.map((method) => (
-                  <th key={method} style={cell}>
-                    {NAME[method]}
-                    <div style={{ fontFamily: 'monospace', fontWeight: 400 }}>
-                      {`${TRANSPORT[method].proto.toUpperCase()} ${TRANSPORT[method].port} · RFC ${TRANSPORT[method].rfc}`}
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {abilities.map(([ability, en, ja]) => (
-                <tr key={ability}>
-                  <td style={cell}>{t(en, ja)}</td>
-                  {METHODS.map((method) => {
-                    const can = networkCan(method)[ability];
-                    return (
-                      <td
-                        key={method}
-                        data-testid={`edns-${method}-${ability}`}
-                        data-can={String(can)}
-                        style={{ ...cell, fontWeight: can ? 700 : 400 }}
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ textAlign: 'left', color: 'var(--netlab-text-secondary)' }}>
+                  <th style={cell}>{t('The café’s network can…', 'カフェのネットワークは…')}</th>
+                  {METHODS.map((method) => (
+                    <th key={method} style={cell}>
+                      {NAME[method]}
+                      <div
+                        style={{ fontFamily: 'monospace', fontWeight: 400, whiteSpace: 'nowrap' }}
                       >
-                        {can ? t('✓ can', '✓ できる') : t('✕ cannot', '✕ できない')}
-                      </td>
-                    );
-                  })}
+                        {`${TRANSPORT[method].proto.toUpperCase()} ${TRANSPORT[method].port}`}
+                      </div>
+                      <div
+                        style={{ fontFamily: 'monospace', fontWeight: 400, whiteSpace: 'nowrap' }}
+                      >
+                        {`RFC ${TRANSPORT[method].rfc}`}
+                      </div>
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {abilities.map(([ability, en, ja]) => (
+                  <tr key={ability}>
+                    <td style={cell}>{t(en, ja)}</td>
+                    {METHODS.map((method) => {
+                      const can = networkCan(method)[ability];
+                      return (
+                        <td
+                          key={method}
+                          data-testid={`edns-${method}-${ability}`}
+                          data-can={String(can)}
+                          style={{ ...cell, fontWeight: can ? 700 : 400, whiteSpace: 'nowrap' }}
+                        >
+                          {can ? t('✓ can', '✓ できる') : t('✕ cannot', '✕ できない')}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : null}
 

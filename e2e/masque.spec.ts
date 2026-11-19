@@ -19,7 +19,7 @@ test('TC-1853: with two relays nobody links you to the site; with one proxy the 
   await expect(page.getByTestId('masque-segments')).toContainText('192.0.2.10 → 198.51.100.7');
   await page.getByTestId('masque-setup-one-proxy').click();
   await expect(page.getByTestId('masque-relay2-clientIp')).toHaveAttribute('data-known', 'true');
-  await expect(page.getByTestId('masque-links')).toContainText('出口リレー');
+  await expect(page.getByTestId('masque-links')).toContainText('プロキシが');
   await page.getByTestId('masque-setup-direct').click();
   await expect(page.getByTestId('masque-wifi-site')).toHaveAttribute('data-known', 'true');
 });

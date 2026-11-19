@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import {
-  LESSON_BUTTON,
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  lessonChoice,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -25,6 +25,9 @@ const ANSWERS: readonly Answer[] = ['full', 'fifth', 'flat'];
 
 const W = 360;
 const H = 100;
+
+/** A card that may shrink below its content's width, so a long path line scrolls inside it. */
+const CARD = { ...LESSON_CARD, minWidth: 0 };
 
 /** Utilisation readings as bars across the ten minutes. */
 function Bars({
@@ -116,18 +119,20 @@ function TelemetryLesson() {
         margin: '0 auto',
         padding: 16,
         display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr)',
+        alignContent: 'start',
         gap: 12,
         overflowY: 'auto',
         height: '100%',
         boxSizing: 'border-box',
       }}
     >
-      <div style={LESSON_CARD}>
+      <div style={CARD}>
         <div style={LESSON_LABEL}>{t('Streaming telemetry', 'ストリーミングテレメトリ')}</div>
         <p style={{ margin: 0, lineHeight: 1.7 }}>
           {t(
-            'Monitoring reads an interface’s octet counter twice and divides the difference by the time between: that is the link’s utilisation over the interval. Classic SNMP asks every five minutes. Streaming telemetry (gNMI with OpenConfig paths) lets the router push: a SAMPLE subscription every few seconds, and ON_CHANGE the moment a state changes.',
-            '監視は、インターフェースのオクテットカウンタを 2 回読み、その差を間の時間で割ります。これがその間の回線の使用率です。従来の SNMP は 5 分ごとに問い合わせます。ストリーミングテレメトリ（OpenConfig のパスを使う gNMI）では、ルータの側から送ってきます。数秒ごとの SAMPLE と、状態が変わった瞬間の ON_CHANGE です。',
+            'Monitoring reads an interface’s octet counter twice and divides the difference by the time between: that is the link’s utilisation over the interval. SNMP pollers commonly ask every five minutes. Streaming telemetry (gNMI with OpenConfig paths) lets the router push: a SAMPLE subscription every few seconds, and ON_CHANGE the moment a state changes.',
+            '監視は、インターフェースのオクテットカウンタを 2 回読み、その差を間の時間で割ります。これがその間の回線の使用率です。SNMP の監視は 5 分ごとに問い合わせる設定がよく使われます。ストリーミングテレメトリ（OpenConfig のパスを使う gNMI）では、ルータの側から送ってきます。数秒ごとの SAMPLE と、状態が変わった瞬間の ON_CHANGE です。',
           )}
         </p>
         <pre
@@ -137,6 +142,7 @@ function TelemetryLesson() {
             padding: 8,
             fontSize: 12,
             overflowX: 'auto',
+            maxWidth: '100%',
             background: 'var(--netlab-bg-surface)',
             borderRadius: 6,
           }}
@@ -145,7 +151,7 @@ function TelemetryLesson() {
         </pre>
       </div>
 
-      <div style={LESSON_CARD} data-testid="telemetry-predict">
+      <div style={CARD} data-testid="telemetry-predict">
         <div style={LESSON_LABEL}>{t('Predict first', 'まず予想')}</div>
         <p style={{ margin: '0 0 8px', lineHeight: 1.7 }}>
           {t(
@@ -167,12 +173,9 @@ function TelemetryLesson() {
               data-testid={`telemetry-guess-${answer}`}
               disabled={revealed}
               onClick={() => setGuess(answer)}
-              style={{
-                ...LESSON_BUTTON,
-                textAlign: 'left',
-                outline: guess === answer ? '2px solid var(--netlab-accent-cyan)' : undefined,
-              }}
+              style={{ ...lessonChoice(guess === answer), textAlign: 'left' }}
             >
+              {guess === answer ? '✓ ' : ''}
               {answerName(answer)}
             </button>
           ))}
@@ -210,7 +213,7 @@ function TelemetryLesson() {
       </div>
 
       {revealed ? (
-        <div style={LESSON_CARD} data-testid="telemetry-graphs">
+        <div style={CARD} data-testid="telemetry-graphs">
           <div style={LESSON_LABEL}>
             {t(`SNMP, every ${POLL_S / 60} minutes`, `SNMP（${POLL_S / 60} 分ごと）`)}
           </div>
@@ -222,7 +225,7 @@ function TelemetryLesson() {
               `5 分ごとの値：最大 ${peak(poll)} %`,
             )}
           />
-          <div style={{ ...LESSON_LABEL, marginTop: 8 }}>
+          <div style={{ ...LESSON_LABEL, marginTop: 8, textTransform: 'none' }}>
             {t(`gNMI SAMPLE, every ${SAMPLE_S} seconds`, `gNMI の SAMPLE（${SAMPLE_S} 秒ごと）`)}
           </div>
           <Bars
@@ -237,7 +240,7 @@ function TelemetryLesson() {
       ) : null}
 
       {revealed ? (
-        <div style={LESSON_CARD} data-testid="telemetry-status">
+        <div style={CARD} data-testid="telemetry-status">
           <div style={LESSON_LABEL}>
             {t(
               'And at 6:40 the link went down for 30 seconds',
@@ -268,8 +271,8 @@ function TelemetryLesson() {
           </table>
           <p style={{ margin: '8px 0 0', lineHeight: 1.7 }}>
             {t(
-              'Both polls found the link up: the outage fell between them. ON_CHANGE reported it the second it happened, and again when it came back. That is why networks that need to react — reroute, alert, plan capacity — stream rather than poll.',
-              '2 回の問い合わせはどちらも「UP」でした。障害がちょうどその間に起きたからです。ON_CHANGE は、落ちた瞬間と戻った瞬間に知らせました。素早く反応したいネットワーク（経路の切り替え、警報、容量計画）が、問い合わせではなくストリーミングを使うのはこのためです。',
+              'Both polls found the link up: the outage fell between them (SNMP can push linkDown/linkUp traps for this one event, but not a stream of counters). ON_CHANGE reported it the second it happened, and again when it came back. That is why networks that need to react — reroute, alert, plan capacity — stream rather than poll.',
+              '2 回の問い合わせはどちらも「UP」でした。障害がちょうどその間に起きたからです（この障害だけなら SNMP も linkDown/linkUp トラップで知らせられますが、カウンタを流し続けることはできません）。ON_CHANGE は、落ちた瞬間と戻った瞬間に知らせました。素早く反応したいネットワーク（経路の切り替え、警報、容量計画）が、問い合わせではなくストリーミングを使うのはこのためです。',
             )}
           </p>
         </div>

@@ -16,6 +16,7 @@ test('TC-1882: a wrong prediction is marked; only plain DNS is readable, only Do
   await expect(page.getByTestId('edns-doh-readName')).toHaveAttribute('data-can', 'false');
   await expect(page.getByTestId('edns-doq-blockByPortAlone')).toHaveAttribute('data-can', 'true');
   await expect(page.getByTestId('edns-doh-blockByPortAlone')).toHaveAttribute('data-can', 'false');
-  await expect(page.getByTestId('edns-table')).toContainText('UDP 853 · RFC 9250');
+  await expect(page.getByTestId('edns-table')).toContainText('UDP 853');
+  await expect(page.getByTestId('edns-table')).toContainText('RFC 9250');
   await expect(page.getByTestId('edns-limits')).toContainText('ECH');
 });

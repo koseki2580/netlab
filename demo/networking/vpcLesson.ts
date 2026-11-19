@@ -237,8 +237,8 @@ export const VPC_CASES: readonly VpcCase[] = [
     },
     arrives: true,
     explain: {
-      en: 'The private subnet’s route table sends it to the NAT gateway, which puts its own address on it; the internet gateway then puts the public one. The reply can come back, but nobody outside can start a connection to db.',
-      ja: '非公開サブネットのルートテーブルが NAT ゲートウェイへ送り、NAT ゲートウェイが自分のアドレスに、インターネットゲートウェイが公開アドレスに書き換えます。返事は戻れますが、外から db に接続を始めることはできません。',
+      en: 'The private subnet’s route table sends it to the NAT gateway, which puts its own address on it; the internet gateway then puts the public one. The reply can come back, but nobody outside can start a connection to db. Here one gateway address, 198.51.100.1, is shared by everything going out; in a cloud the NAT gateway has its own public (elastic) IP, separate from web’s.',
+      ja: '非公開サブネットのルートテーブルが NAT ゲートウェイへ送り、NAT ゲートウェイが自分のアドレスに、インターネットゲートウェイが公開アドレスに書き換えます。返事は戻れますが、外から db に接続を始めることはできません。ここでは外へ出る通信がすべてゲートウェイの 1 つのアドレス 198.51.100.1 を共有していますが、クラウドでは NAT ゲートウェイが web とは別の、自分専用の公開 IP（Elastic IP）を持ちます。',
     },
   },
   {

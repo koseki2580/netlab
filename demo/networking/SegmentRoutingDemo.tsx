@@ -4,10 +4,10 @@ import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import { LessonCanvas, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import {
-  LESSON_BUTTON,
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  lessonChoice,
 } from '../components/lessonStyles';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import DemoShell from '../DemoShell';
@@ -40,6 +40,14 @@ function SrRun({ policy }: { policy: SrPolicy }) {
   return (
     <div style={LESSON_CARD} data-testid={`sr-run-${policy}`}>
       <div style={LESSON_LABEL}>{t(`R1 pushes: ${stack}`, `R1 が積むラベル：${stack}`)}</div>
+      {policy === 'shortest' ? (
+        <p style={{ margin: '0 0 8px', lineHeight: 1.7 }} data-testid="sr-tie-note">
+          {t(
+            'With one SID, R1 follows its route to R4, which goes via R2 (in this lesson R1’s table prefers R2; a real IGP would pick the lower-cost path or share both).',
+            'SID が 1 つのとき、R1 は R4 への自分の経路に従い、その経路は R2 を通ります（このレッスンでは R1 の経路表が R2 を選ぶようにしてあります。実際の IGP なら、コストの低い道を選ぶか、両方に分散します）。',
+          )}
+        </p>
+      ) : null}
       <p style={{ margin: '0 0 8px', fontWeight: 700 }}>
         {t(
           'h1 pings h4. Which routers does it cross on the way?',
@@ -60,12 +68,9 @@ function SrRun({ policy }: { policy: SrPolicy }) {
             data-testid={`sr-guess-${policy}-${path.id.replace(/\W+/g, '')}`}
             disabled={seen !== null}
             onClick={() => setGuess(path.id)}
-            style={{
-              ...LESSON_BUTTON,
-              textAlign: 'left',
-              outline: guess === path.id ? '2px solid var(--netlab-accent-cyan)' : undefined,
-            }}
+            style={{ ...lessonChoice(guess === path.id), textAlign: 'left' }}
           >
+            {guess === path.id ? '✓ ' : ''}
             {t(path.en, path.ja)}
           </button>
         ))}
@@ -153,10 +158,7 @@ function SrLesson() {
                   aria-selected={policy === id}
                   data-testid={`sr-policy-${id}`}
                   onClick={() => setPolicy(id)}
-                  style={{
-                    ...LESSON_BUTTON,
-                    outline: policy === id ? '2px solid var(--netlab-accent-cyan)' : undefined,
-                  }}
+                  style={lessonChoice(policy === id)}
                 >
                   {id === 'shortest'
                     ? t('One SID: R4', 'SID 1 つ：R4')

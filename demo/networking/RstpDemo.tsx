@@ -7,6 +7,7 @@ import {
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  lessonChoice,
 } from '../components/lessonStyles';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import DemoShell from '../DemoShell';
@@ -147,13 +148,9 @@ function RstpLesson() {
                     data-testid={`rstp-guess-${option.id}`}
                     disabled={view.kind === 'cut'}
                     onClick={() => setGuess(option.id)}
-                    style={{
-                      ...LESSON_BUTTON,
-                      textAlign: 'left',
-                      outline:
-                        guess === option.id ? '2px solid var(--netlab-accent-cyan)' : undefined,
-                    }}
+                    style={{ ...lessonChoice(guess === option.id), textAlign: 'left' }}
                   >
+                    {guess === option.id ? '✓ ' : ''}
                     {t(option.en, option.ja)}
                   </button>
                 ))}
@@ -219,7 +216,7 @@ function RstpLesson() {
                     type="button"
                     data-testid={`rstp-mst-${instance.id}`}
                     aria-pressed={view.kind === 'mst' && view.instance === instance.id}
-                    style={LESSON_BUTTON}
+                    style={lessonChoice(view.kind === 'mst' && view.instance === instance.id)}
                     onClick={() => setView({ kind: 'mst', instance: instance.id })}
                   >
                     {t(

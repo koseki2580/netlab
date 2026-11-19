@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import {
-  LESSON_BUTTON,
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  lessonChoice,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -32,6 +32,9 @@ const cell: React.CSSProperties = {
   fontSize: 13,
 };
 
+/** A value cell: never broken mid-word; the table scrolls inside its card instead. */
+const valueCell: React.CSSProperties = { ...cell, whiteSpace: 'nowrap' };
+
 /** The lesson, inside DemoShell so it reads the page's language (L023). */
 function PqKexLesson() {
   const t = useT();
@@ -53,6 +56,8 @@ function PqKexLesson() {
         margin: '0 auto',
         padding: 16,
         display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr)',
+        alignContent: 'start',
         gap: 12,
         overflowY: 'auto',
         height: '100%',
@@ -63,8 +68,8 @@ function PqKexLesson() {
         <div style={LESSON_LABEL}>{t('Post-quantum key exchange', '耐量子の鍵交換')}</div>
         <p style={{ margin: 0, lineHeight: 1.7 }}>
           {t(
-            'Someone can record your encrypted traffic today and keep it. If a large quantum computer is built later, it can solve X25519’s elliptic-curve problem and recover the session key — “harvest now, decrypt later”. ML-KEM (FIPS 203) is a key exchange built on a lattice problem with no known quantum shortcut. Browsers now offer the hybrid X25519MLKEM768 in TLS 1.3 by default: both are run, and the session key is derived from both secrets.',
-            '暗号化された通信は、今のうちに記録して取っておくことができます。将来、大きな量子コンピュータができれば、X25519 の楕円曲線の問題を解いてセッションの鍵を取り出せます。これが「今集めて、あとで解読」です。ML-KEM（FIPS 203）は、量子でも速く解く方法が知られていない格子の問題に基づく鍵交換です。今のブラウザは TLS 1.3 で、ハイブリッドの X25519MLKEM768 を標準で提案します。両方を行い、セッションの鍵を両方の秘密から作ります。',
+            'Someone can record your encrypted traffic today and keep it. If a large quantum computer is built later, it can solve X25519’s elliptic-curve problem and recover the session key — “harvest now, decrypt later”. ML-KEM (FIPS 203) is a key exchange built on a lattice problem with no known quantum shortcut. X25519MLKEM768 is a hybrid of the two.',
+            '暗号化された通信は、今のうちに記録して取っておくことができます。将来、大きな量子コンピュータができれば、X25519 の楕円曲線の問題を解いてセッションの鍵を取り出せます。これが「今集めて、あとで解読」です。ML-KEM（FIPS 203）は、量子でも速く解く方法が知られていない格子の問題に基づく鍵交換です。X25519MLKEM768 は、この 2 つのハイブリッドです。',
           )}
         </p>
       </div>
@@ -91,11 +96,9 @@ function PqKexLesson() {
               data-testid={`pq-guess-${group}`}
               disabled={revealed}
               onClick={() => setGuess(group)}
-              style={{
-                ...LESSON_BUTTON,
-                outline: guess === group ? '2px solid var(--netlab-accent-cyan)' : undefined,
-              }}
+              style={lessonChoice(guess === group)}
             >
+              {guess === group ? '✓ ' : ''}
               {NAME[group]}
             </button>
           ))}
@@ -113,8 +116,8 @@ function PqKexLesson() {
                 : t('Not what you predicted. ', '予想とちがいました。')}
             </strong>
             {t(
-              'Only the hybrid. X25519 alone falls to a quantum computer; ML-KEM alone is still young, and a flaw found in it would expose everything it protected. The hybrid falls only if both do — the reason it, not ML-KEM alone, is what browsers send.',
-              'ハイブリッドだけです。X25519 だけでは量子コンピュータに破られます。ML-KEM だけでは、まだ新しい方式なので、欠陥が見つかれば守っていたものがすべて漏れます。ハイブリッドは両方が破られない限り破られません。ブラウザが ML-KEM 単独ではなくハイブリッドを送るのはこのためです。',
+              'Only the hybrid. X25519 alone falls to a quantum computer; ML-KEM alone is still young, and a flaw found in it would expose everything it protected. The hybrid runs both, derives the session key from both secrets, and falls only if both do — the reason browsers now offer it in TLS 1.3 by default, not ML-KEM alone.',
+              'ハイブリッドだけです。X25519 だけでは量子コンピュータに破られます。ML-KEM だけでは、まだ新しい方式なので、欠陥が見つかれば守っていたものがすべて漏れます。ハイブリッドは両方を行ってセッションの鍵を両方の秘密から作るので、両方が破られない限り破られません。今のブラウザが TLS 1.3 で ML-KEM 単独ではなくハイブリッドを標準で提案するのはこのためです。',
             )}
           </p>
         ) : (
@@ -134,87 +137,91 @@ function PqKexLesson() {
 
       {revealed ? (
         <div style={LESSON_CARD} data-testid="pq-table">
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ textAlign: 'left', color: 'var(--netlab-text-secondary)' }}>
-                <th style={cell} />
-                {GROUPS.map((group) => (
-                  <th key={group} style={cell}>
-                    {NAME[group]}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {ATTACKERS.map((attacker) => (
-                <tr key={attacker}>
-                  <td style={cell}>{attackerName(attacker)}</td>
-                  {GROUPS.map((group) => {
-                    const holds = staysSecret(group, attacker);
-                    return (
-                      <td
-                        key={group}
-                        data-testid={`pq-${group}-${attacker}`}
-                        data-holds={String(holds)}
-                        style={{ ...cell, fontWeight: holds ? 400 : 700 }}
-                      >
-                        {holds
-                          ? t('✓ stays secret', '✓ 守れる')
-                          : t('✕ key recovered', '✕ 鍵が漏れる')}
-                      </td>
-                    );
-                  })}
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ textAlign: 'left', color: 'var(--netlab-text-secondary)' }}>
+                  <th style={cell} />
+                  {GROUPS.map((group) => (
+                    <th key={group} style={valueCell}>
+                      {NAME[group]}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {ATTACKERS.map((attacker) => (
+                  <tr key={attacker}>
+                    <td style={cell}>{attackerName(attacker)}</td>
+                    {GROUPS.map((group) => {
+                      const holds = staysSecret(group, attacker);
+                      return (
+                        <td
+                          key={group}
+                          data-testid={`pq-${group}-${attacker}`}
+                          data-holds={String(holds)}
+                          style={{ ...valueCell, fontWeight: holds ? 400 : 700 }}
+                        >
+                          {holds
+                            ? t('✓ stays secret', '✓ 守れる')
+                            : t('✕ key recovered', '✕ 鍵が漏れる')}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : null}
 
       {revealed ? (
         <div style={LESSON_CARD} data-testid="pq-sizes">
           <div style={LESSON_LABEL}>{t('The price: size', '代わりに増えるもの：大きさ')}</div>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ textAlign: 'left', color: 'var(--netlab-text-secondary)' }}>
-                <th style={cell}>{t('Group (code)', 'グループ（番号）')}</th>
-                <th style={cell}>{t('Client sends', 'クライアントが送る')}</th>
-                <th style={cell}>{t('Server returns', 'サーバが返す')}</th>
-                <th style={cell}>ClientHello</th>
-              </tr>
-            </thead>
-            <tbody>
-              {GROUPS.map((group) => {
-                const bytes = clientHelloBytes(group);
-                return (
-                  <tr key={group} data-testid={`pq-size-${group}`}>
-                    <td style={cell}>
-                      {NAME[group]}{' '}
-                      <span style={{ fontFamily: 'monospace' }}>
-                        {`0x${CODEPOINT[group].toString(16).padStart(4, '0')}`}
-                      </span>
-                    </td>
-                    <td
-                      style={{ ...cell, fontFamily: 'monospace' }}
-                    >{`${SHARE[group].client} B`}</td>
-                    <td
-                      style={{ ...cell, fontFamily: 'monospace' }}
-                    >{`${SHARE[group].server} B`}</td>
-                    <td style={{ ...cell, fontFamily: 'monospace' }}>
-                      {t(
-                        `≈ ${bytes} B, ${segmentsFor(bytes)} TCP segment${segmentsFor(bytes) > 1 ? 's' : ''}`,
-                        `約 ${bytes} B、TCP セグメント ${segmentsFor(bytes)} 個`,
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ textAlign: 'left', color: 'var(--netlab-text-secondary)' }}>
+                  <th style={cell}>{t('Group (code)', 'グループ（番号）')}</th>
+                  <th style={cell}>{t('Client sends', 'クライアントが送る')}</th>
+                  <th style={cell}>{t('Server returns', 'サーバが返す')}</th>
+                  <th style={cell}>ClientHello</th>
+                </tr>
+              </thead>
+              <tbody>
+                {GROUPS.map((group) => {
+                  const bytes = clientHelloBytes(group);
+                  return (
+                    <tr key={group} data-testid={`pq-size-${group}`}>
+                      <td style={valueCell}>
+                        {NAME[group]}{' '}
+                        <span style={{ fontFamily: 'monospace' }}>
+                          {`0x${CODEPOINT[group].toString(16).padStart(4, '0')}`}
+                        </span>
+                      </td>
+                      <td
+                        style={{ ...valueCell, fontFamily: 'monospace' }}
+                      >{`${SHARE[group].client} B`}</td>
+                      <td
+                        style={{ ...valueCell, fontFamily: 'monospace' }}
+                      >{`${SHARE[group].server} B`}</td>
+                      <td style={{ ...valueCell, fontFamily: 'monospace' }}>
+                        {t(
+                          `≈ ${bytes} B, ${segmentsFor(bytes)} TCP segment${segmentsFor(bytes) > 1 ? 's' : ''}`,
+                          `約 ${bytes} B、TCP セグメント ${segmentsFor(bytes)} 個`,
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
           <p style={{ margin: '8px 0 0', lineHeight: 1.7 }}>
             {t(
-              `With the hybrid the ClientHello no longer fits one ${MSS}-byte segment, so it arrives in two. Middleboxes that expected the whole ClientHello in the first packet broke when browsers turned this on; they had to be fixed. QUIC carries it in more than one Initial packet for the same reason.`,
-              `ハイブリッドでは ClientHello が ${MSS} バイトのセグメント 1 つに収まらず、2 つに分かれて届きます。ClientHello 全体が最初のパケットに入っていると決めつけていた途中の機器は、ブラウザがこれを有効にしたときに動かなくなり、修正が必要になりました。QUIC でも同じ理由で、Initial パケット 2 つ以上に分けて運びます。`,
+              `With the hybrid the ClientHello no longer fits one ${MSS}-byte segment, so it arrives in two. Middleboxes that expected the whole ClientHello in the first packet broke when browsers turned this on; they had to be fixed. QUIC likewise splits it across two Initial packets, since each datagram holds only about 1,200–1,500 bytes.`,
+              `ハイブリッドでは ClientHello が ${MSS} バイトのセグメント 1 つに収まらず、2 つに分かれて届きます。ClientHello 全体が最初のパケットに入っていると決めつけていた途中の機器は、ブラウザがこれを有効にしたときに動かなくなり、修正が必要になりました。QUIC でも、1 つのデータグラムに約 1,200〜1,500 バイトしか入らないため、Initial パケット 2 つに分けて運びます。`,
             )}
           </p>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--netlab-text-secondary)' }}>

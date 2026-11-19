@@ -4,10 +4,10 @@ import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import { LessonCanvas, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import {
-  LESSON_BUTTON,
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  lessonChoice,
 } from '../components/lessonStyles';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import DemoShell from '../DemoShell';
@@ -160,11 +160,9 @@ function LoadBalancerLesson() {
                     data-testid={`lb-guess-${id}`}
                     disabled={revealed}
                     onClick={() => setGuess(id)}
-                    style={{
-                      ...LESSON_BUTTON,
-                      outline: guess === id ? '2px solid var(--netlab-accent-cyan)' : undefined,
-                    }}
+                    style={lessonChoice(guess === id)}
                   >
+                    {guess === id ? '✓ ' : ''}
                     {t(
                       ...([
                         ALGORITHMS.find((a) => a.id === id)!.en,
@@ -214,11 +212,7 @@ function LoadBalancerLesson() {
                     aria-selected={algorithm === a.id}
                     data-testid={`lb-algorithm-${a.id}`}
                     onClick={() => setAlgorithm(a.id)}
-                    style={{
-                      ...LESSON_BUTTON,
-                      outline:
-                        algorithm === a.id ? '2px solid var(--netlab-accent-cyan)' : undefined,
-                    }}
+                    style={lessonChoice(algorithm === a.id)}
                   >
                     {t(a.en, a.ja)}
                   </button>

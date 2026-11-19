@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
-  LESSON_BUTTON,
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  lessonChoice,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -52,6 +52,8 @@ function EchLesson() {
       : t('TLS 1.3 with ECH', 'ECH ありの TLS 1.3');
   const sees = (mode: Mode) => (flights ? readable(flights[mode].onTheWire).includes(SITE) : null);
   const ready = guesses.plain !== undefined && guesses.ech !== undefined;
+  const isRight = (mode: Mode) => guesses[mode] === sees(mode);
+  const rightCount = MODES.filter(isRight).length;
 
   return (
     <div
@@ -60,6 +62,8 @@ function EchLesson() {
         margin: '0 auto',
         padding: 16,
         display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr)',
+        alignContent: 'start',
         gap: 12,
         overflowY: 'auto',
         height: '100%',
@@ -70,8 +74,8 @@ function EchLesson() {
         <div style={LESSON_LABEL}>Encrypted Client Hello (ECH)</div>
         <p style={{ margin: 0, lineHeight: 1.7 }}>
           {t(
-            `You open https://${SITE}/ on a café’s Wi-Fi. TLS 1.3 encrypts the page and even the server’s certificate. But the very first message, the ClientHello, goes out before there is any key — and it names the site (SNI), so that a server hosting many sites knows which certificate to show.`,
-            `カフェの Wi-Fi で https://${SITE}/ を開きます。TLS 1.3 はページの中身も、サーバの証明書さえも暗号化します。ところが最初のメッセージ ClientHello は、まだ鍵が何もないうちに送られます。しかも、多くのサイトを載せたサーバがどの証明書を出せばよいか分かるように、サイトの名前（SNI）が書かれています。`,
+            `You open https://${SITE}/ on a café’s Wi-Fi. TLS 1.3 encrypts the page and even the server’s certificate. But the very first message, the ClientHello, goes out before there is any key.`,
+            `カフェの Wi-Fi で https://${SITE}/ を開きます。TLS 1.3 はページの中身も、サーバの証明書さえも暗号化します。ところが最初のメッセージ ClientHello は、まだ鍵が何もないうちに送られます。`,
           )}
         </p>
       </div>
@@ -85,6 +89,15 @@ function EchLesson() {
                 `${modeName(mode)}: can someone on the café’s Wi-Fi read “${SITE}” in the first bytes?`,
                 `${modeName(mode)}：カフェの Wi-Fi にいる人は、最初のバイト列から「${SITE}」を読める？`,
               )}
+              {revealed && flights ? (
+                <strong
+                  data-testid={`ech-mark-${mode}`}
+                  data-right={String(isRight(mode))}
+                  style={{ marginLeft: 8 }}
+                >
+                  {isRight(mode) ? t('✓ right', '✓ 正解') : t('✕ wrong', '✕ 不正解')}
+                </strong>
+              ) : null}
             </p>
             <div
               role="radiogroup"
@@ -100,12 +113,9 @@ function EchLesson() {
                   data-testid={`ech-guess-${mode}-${value ? 'yes' : 'no'}`}
                   disabled={revealed}
                   onClick={() => setGuesses((previous) => ({ ...previous, [mode]: value }))}
-                  style={{
-                    ...LESSON_BUTTON,
-                    outline:
-                      guesses[mode] === value ? '2px solid var(--netlab-accent-cyan)' : undefined,
-                  }}
+                  style={lessonChoice(guesses[mode] === value)}
                 >
+                  {guesses[mode] === value ? '✓ ' : ''}
                   {value ? t('It can be read', '読める') : t('It cannot', '読めない')}
                 </button>
               ))}
@@ -122,18 +132,14 @@ function EchLesson() {
         ) : revealed ? (
           <p
             data-testid="ech-reveal"
-            data-right={String(MODES.every((mode) => guesses[mode] === sees(mode)))}
+            data-right={String(rightCount === MODES.length)}
             role="status"
             style={{ margin: 0, lineHeight: 1.7 }}
           >
-            <strong>
-              {MODES.every((mode) => guesses[mode] === sees(mode))
-                ? t('As you predicted. ', '予想どおりです。')
-                : t('Not quite what you predicted. ', '予想と少しちがいました。')}
-            </strong>
+            <strong>{t(`${rightCount} of 2 right. `, `2 問中 ${rightCount} 問正解。`)}</strong>
             {t(
-              `Without ECH the name is there in plain text. With ECH the outer ClientHello names only ${PUBLIC_NAME}, the provider’s public name that every site it hosts shares; the real ClientHello travels sealed with a key the provider published in DNS, and only the provider opens it.`,
-              `ECH なしでは、名前がそのまま読めます。ECH ありでは、外側の ClientHello に書かれるのは事業者の公開名 ${PUBLIC_NAME} だけで、これは事業者が載せている全サイトで共通です。本物の ClientHello は、事業者が DNS に公開した鍵で封をして送られ、開けられるのは事業者だけです。`,
+              `The ClientHello names the site (SNI), so that a server hosting many sites knows which certificate to show. Without ECH the name is there in plain text. With ECH the outer ClientHello names only ${PUBLIC_NAME}, the provider’s public name that every site it hosts shares; the real ClientHello travels sealed with a key the provider published in DNS, and only the provider opens it.`,
+              `ClientHello には、多くのサイトを載せたサーバがどの証明書を出せばよいか分かるように、サイトの名前（SNI）が書かれています。ECH なしでは、名前がそのまま読めます。ECH ありでは、外側の ClientHello に書かれるのは事業者の公開名 ${PUBLIC_NAME} だけで、これは事業者が載せている全サイトで共通です。本物の ClientHello は、事業者が DNS に公開した鍵で封をして送られ、開けられるのは事業者だけです。`,
             )}
           </p>
         ) : (
@@ -162,10 +168,7 @@ function EchLesson() {
                 aria-selected={shown === mode}
                 data-testid={`ech-show-${mode}`}
                 onClick={() => setShown(mode)}
-                style={{
-                  ...LESSON_BUTTON,
-                  outline: shown === mode ? '2px solid var(--netlab-accent-cyan)' : undefined,
-                }}
+                style={lessonChoice(shown === mode)}
               >
                 {modeName(mode)}
               </button>
@@ -191,8 +194,8 @@ function EchLesson() {
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--netlab-text-secondary)' }}>
             {shown === 'ech'
               ? t(
-                  `${flights.ech.onTheWire.length} bytes: the outer ClientHello, then ${flights.ech.sealed?.length ?? 0} sealed bytes (AES-128-GCM, the outer hello as associated data, so changing it breaks the seal).`,
-                  `${flights.ech.onTheWire.length} バイト：外側の ClientHello と、封をした ${flights.ech.sealed?.length ?? 0} バイト（AES-128-GCM。外側の ClientHello を関連データにしているので、外側を書き換えると封が開かなくなります）。`,
+                  `${flights.ech.onTheWire.length} bytes: the outer ClientHello, carrying ${flights.ech.sealed?.length ?? 0} sealed bytes in its encrypted_client_hello extension (simplified here as appended after it; AES-128-GCM with the outer hello as associated data, so changing it breaks the seal).`,
+                  `${flights.ech.onTheWire.length} バイト：外側の ClientHello と、その encrypted_client_hello 拡張に入った封をした ${flights.ech.sealed?.length ?? 0} バイト（ここでは後ろに付けて簡略化。AES-128-GCM。外側を関連データにしているので、書き換えると封が開かなくなります）。`,
                 )
               : t(
                   `${flights.plain.onTheWire.length} bytes, built by the simulator’s ClientHello encoder.`,

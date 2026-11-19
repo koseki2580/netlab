@@ -4,7 +4,8 @@
  * A classic sender halves on a drop, so its buffer decides the trade-off:
  * deep keeps the line full but delay high, shallow keeps delay low but leaves
  * the line idle. An L4S sender is told early, by ECN marks from a shallow
- * threshold, and backs off in proportion to them (as DCTCP/Prague do), so the
+ * threshold, and backs off in proportion to them (as DCTCP/Prague do; simplified: α
+ * from one round, not DCTCP's moving average), so the
  * queue stays short and the line stays full.
  */
 export type L4sScenario = 'classic-deep' | 'classic-shallow' | 'l4s';

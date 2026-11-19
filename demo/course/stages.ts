@@ -163,8 +163,8 @@ export const STAGES: readonly Stage[] = [
     number: 6,
     title: { en: 'Providers and data centres', ja: '事業者とデータセンター' },
     topics: {
-      en: 'Multipath, tunnels, MPLS, VXLAN/EVPN and multicast',
-      ja: '複数経路、トンネル、MPLS、VXLAN/EVPN、マルチキャスト',
+      en: 'Multipath and spine-leaf, load balancers, tunnels, MPLS and segment routing, VXLAN/EVPN and multicast',
+      ja: '複数経路とスパイン・リーフ、ロードバランサ、トンネル、MPLS とセグメントルーティング、VXLAN/EVPN、マルチキャスト',
     },
     lessons: [
       '/networking/ecmp',
@@ -191,8 +191,8 @@ export const STAGES: readonly Stage[] = [
     number: 7,
     title: { en: 'Modern and cloud', ja: '最新とクラウド' },
     topics: {
-      en: 'TLS 1.3, HTTP/2, HTTP/3 over QUIC, and congestion control',
-      ja: 'TLS 1.3、HTTP/2、QUIC 上の HTTP/3、輻輳制御',
+      en: 'TLS 1.3, ECH and post-quantum keys, HTTP/2 and HTTP/3, congestion control and L4S, MASQUE, encrypted DNS, cloud networks, SD-WAN and telemetry',
+      ja: 'TLS 1.3、ECH と耐量子の鍵、HTTP/2 と HTTP/3、輻輳制御と L4S、MASQUE、DNS の暗号化、クラウド、SD-WAN、テレメトリ',
     },
     lessons: [
       '/networking/https',

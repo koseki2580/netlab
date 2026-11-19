@@ -327,3 +327,23 @@ A running record of corrections and feedback received during sessions. Use this 
 **Why**: The spec's sections are not in REQ order, so the nearest neighbour is not the maximum.
 
 **Apply-when**: Adding any REQ, AC or TC id to the specification.
+
+## L026 — Show a chosen option by inverting it, not by an outline in the button's own colour
+
+**What happened**: Twelve lessons marked the chosen prediction with a cyan outline on a cyan button; in the dark theme the two colours are identical, so learners could not see what they had picked (found by Playwright UX agents, not by any test).
+
+**Rule**: Style choices and tabs with `lessonChoice(chosen)` from `demo/components/lessonStyles.ts` and prefix a chosen prediction with "✓ ".
+
+**Why**: An outline only shows when it contrasts with the fill in every theme.
+
+**Apply-when**: Adding any prediction button, tab or toggle to a lesson.
+
+## L027 — Keep the answer out of everything visible before the prediction
+
+**What happened**: SD-WAN's table worked before predicting, the L4S and spine-leaf subtitles stated the result, the ECH and post-quantum intros named it, and an exam option read "LTE, the cheapest that meets it".
+
+**Rule**: Before writing a predict-first lesson, read its manifest subtitle, intro, controls and any exam option for the answer; reveal results only after the guess.
+
+**Why**: A prediction the page already answered teaches nothing.
+
+**Apply-when**: Writing a lesson, its manifest entry, or an exam question.

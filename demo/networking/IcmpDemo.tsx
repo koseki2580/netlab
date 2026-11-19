@@ -10,6 +10,7 @@ import {
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  lessonChoice,
 } from '../components/lessonStyles';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import DemoShell from '../DemoShell';
@@ -192,12 +193,12 @@ function IcmpSteps() {
             disabled={outcome !== null}
             onClick={() => setGuess(kind)}
             style={{
-              ...LESSON_BUTTON,
+              ...lessonChoice(guess === kind),
               textAlign: 'left',
-              outline: guess === kind ? '2px solid var(--netlab-accent-cyan)' : undefined,
               opacity: outcome !== null && guess !== kind ? 0.5 : 1,
             }}
           >
+            {guess === kind ? '✓ ' : ''}
             {word(kind)}
           </button>
         ))}

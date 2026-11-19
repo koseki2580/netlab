@@ -21,6 +21,24 @@ export const LESSON_BUTTON: CSSProperties = {
   padding: '8px 12px',
 };
 
+/**
+ * A prediction choice or a tab: the action button when not chosen, inverted
+ * (and outlined) when chosen, so the choice shows in both themes — a cyan
+ * outline alone vanished against the cyan button in the dark theme. Pair it
+ * with `aria-checked`/`aria-selected` and a leading "✓ " in the label.
+ */
+export function lessonChoice(chosen: boolean): CSSProperties {
+  return chosen
+    ? {
+        ...LESSON_BUTTON,
+        background: 'var(--netlab-text-primary)',
+        color: 'var(--netlab-bg-primary)',
+        outline: '2px solid var(--netlab-text-primary)',
+        outlineOffset: 2,
+      }
+    : LESSON_BUTTON;
+}
+
 /** The same button without its colours, for a lesson that sets them per state. */
 export const LESSON_BUTTON_PLAIN: CSSProperties = {
   border: '1px solid var(--netlab-border-strong)',

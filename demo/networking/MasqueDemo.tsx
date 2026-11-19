@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import {
-  LESSON_BUTTON,
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  lessonChoice,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -50,6 +50,9 @@ function MasqueLesson() {
       relay2: t('egress relay', '出口リレー'),
       site: SITE_NAME,
     })[party];
+  /** A party's name in the setup on show: with one proxy there is no ingress, so no "egress". */
+  const shownName = (party: Party | 'client') =>
+    party === 'relay2' && setup === 'one-proxy' ? t('the proxy', 'プロキシ') : partyName(party);
   const factName = (fact: Fact) =>
     ({
       clientIp: t('your address', 'あなたのアドレス'),
@@ -72,6 +75,8 @@ function MasqueLesson() {
         margin: '0 auto',
         padding: 16,
         display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr)',
+        alignContent: 'start',
         gap: 12,
         overflowY: 'auto',
         height: '100%',
@@ -110,11 +115,9 @@ function MasqueLesson() {
               data-testid={`masque-guess-${answer}`}
               disabled={revealed}
               onClick={() => setGuess(answer)}
-              style={{
-                ...LESSON_BUTTON,
-                outline: guess === answer ? '2px solid var(--netlab-accent-cyan)' : undefined,
-              }}
+              style={lessonChoice(guess === answer)}
             >
+              {guess === answer ? '✓ ' : ''}
               {answerName(answer)}
             </button>
           ))}
@@ -162,10 +165,7 @@ function MasqueLesson() {
                 aria-selected={setup === id}
                 data-testid={`masque-setup-${id}`}
                 onClick={() => setSetup(id)}
-                style={{
-                  ...LESSON_BUTTON,
-                  outline: setup === id ? '2px solid var(--netlab-accent-cyan)' : undefined,
-                }}
+                style={lessonChoice(setup === id)}
               >
                 {setupName(id)}
               </button>
@@ -187,7 +187,7 @@ function MasqueLesson() {
                 const known = knows(setup, party);
                 return (
                   <tr key={party} data-testid={`masque-row-${party}`}>
-                    <td style={cell}>{partyName(party)}</td>
+                    <td style={cell}>{shownName(party)}</td>
                     {FACTS.map((fact) => (
                       <td
                         key={fact}
@@ -208,8 +208,8 @@ function MasqueLesson() {
               const linker = anyoneLinks(setup);
               return linker
                 ? t(
-                    `${partyName(linker)} knows both who and where.`,
-                    `${partyName(linker)}が「誰が」と「どこへ」の両方を知ります。`,
+                    `${shownName(linker)} knows both who and where.`,
+                    `${shownName(linker)}が「誰が」と「どこへ」の両方を知ります。`,
                   )
                 : t(
                     'Nobody but you knows both who and where.',
@@ -232,22 +232,24 @@ function MasqueLesson() {
                 {' — '}
                 {segment.layer.next === 'request'
                   ? t(
-                      `QUIC sealed to ${partyName(segment.layer.key)}: the request itself`,
-                      `${partyName(segment.layer.key)}宛てに封をした QUIC：依頼そのもの`,
+                      `QUIC sealed to ${shownName(segment.layer.key)}: the request itself`,
+                      `${shownName(segment.layer.key)}宛てに封をした QUIC：依頼そのもの`,
                     )
                   : t(
-                      `sealed to ${partyName(segment.layer.key)}: “CONNECT-UDP to ${partyName(segment.layer.next)}”, and inside it more sealed layers`,
-                      `${partyName(segment.layer.key)}宛てに封：「${partyName(segment.layer.next)}へ CONNECT-UDP」、その中にさらに封をした層`,
+                      `sealed to ${shownName(segment.layer.key)}: “CONNECT-UDP to ${shownName(segment.layer.next)}”, and inside it more sealed layers`,
+                      `${shownName(segment.layer.key)}宛てに封：「${shownName(segment.layer.next)}へ CONNECT-UDP」、その中にさらに封をした層`,
                     )}
               </li>
             ))}
           </ol>
-          <p style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--netlab-text-secondary)' }}>
-            {t(
-              'Two relays protect you only if their operators do not share notes — which is why Private Relay runs the two by different companies. The site still sees the egress relay’s address, usually chosen near you so the site can tell your region.',
-              '2 台のリレーが守ってくれるのは、運営者どうしが情報を突き合わせない場合だけです。だから Private Relay は 2 台を別の会社が運営します。サイトには出口リレーのアドレスが見えます。地域が分かるよう、ふつうはあなたの近くのものが選ばれます。',
-            )}
-          </p>
+          {setup === 'two-hop' ? (
+            <p style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--netlab-text-secondary)' }}>
+              {t(
+                'Two relays protect you only if their operators do not share notes — which is why Private Relay runs the two by different companies. The site still sees the egress relay’s address, usually chosen near you so the site can tell your region.',
+                '2 台のリレーが守ってくれるのは、運営者どうしが情報を突き合わせない場合だけです。だから Private Relay は 2 台を別の会社が運営します。サイトには出口リレーのアドレスが見えます。地域が分かるよう、ふつうはあなたの近くのものが選ばれます。',
+              )}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>

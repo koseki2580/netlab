@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import {
-  LESSON_BUTTON,
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  lessonChoice,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useGalleryLocale, useT } from '../localeContext';
@@ -40,6 +40,8 @@ function SdwanLesson() {
         margin: '0 auto',
         padding: 16,
         display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr)',
+        alignContent: 'start',
         gap: 12,
         overflowY: 'auto',
         height: '100%',
@@ -50,8 +52,8 @@ function SdwanLesson() {
         <div style={LESSON_LABEL}>SD-WAN</div>
         <p style={{ margin: 0, lineHeight: 1.7 }}>
           {t(
-            'A branch office has three uplinks. SD-WAN measures each one all the time and, for every kind of traffic, sends it over the cheapest link that meets that traffic’s needs — moving it the moment a link stops meeting them.',
-            '支店には 3 本の回線があります。SD-WAN は各回線をいつも測り、通信の種類ごとに、その通信の条件を満たす中でいちばん安い回線を選びます。回線が条件を満たさなくなれば、すぐに移します。',
+            'A branch office has three uplinks. SD-WAN measures each one all the time and, for every kind of traffic, sends it over the cheapest link that meets that traffic’s needs — moving it once a link’s measurements, averaged over a short window, stop meeting them.',
+            '支店には 3 本の回線があります。SD-WAN は各回線をいつも測り、通信の種類ごとに、その通信の条件を満たす中でいちばん安い回線を選びます。その回線の、短い時間で平均した測定値が条件を満たさなくなれば、別の回線へ移します。',
           )}
         </p>
         <table
@@ -105,11 +107,9 @@ function SdwanLesson() {
               data-testid={`sdwan-guess-${link.id}`}
               disabled={revealed}
               onClick={() => setGuess(link.id)}
-              style={{
-                ...LESSON_BUTTON,
-                outline: guess === link.id ? '2px solid var(--netlab-accent-cyan)' : undefined,
-              }}
+              style={lessonChoice(guess === link.id)}
             >
+              {guess === link.id ? '✓ ' : ''}
               {link.name[locale]}
             </button>
           ))}
@@ -128,7 +128,7 @@ function SdwanLesson() {
             </strong>
             {t(
               `Voice goes to ${linkName(voiceInRush)}: it meets voice’s needs and costs less than MPLS. Video meetings, which allow only 0.5 % loss, cannot use LTE’s 1 %, so they go to MPLS — the same rush, two answers.`,
-              `音声通話は ${linkName(voiceInRush)} へ移ります。通話の条件を満たし、MPLS より安いからです。損失を 0.5 % までしか許さないビデオ会議は LTE の 1 % を使えないので、MPLS へ移ります。同じ混雑でも、答えは通信ごとにちがいます。`,
+              `音声通話は ${linkName(voiceInRush)}へ移ります。通話の条件を満たし、MPLS より安いからです。損失を 0.5 % までしか許さないビデオ会議は LTE の 1 % を使えないので、MPLS へ移ります。同じ混雑でも、答えは通信ごとにちがいます。`,
             )}
           </p>
         ) : (
@@ -142,86 +142,88 @@ function SdwanLesson() {
               setPeriod(1);
             }}
           >
-            {t('See what SD-WAN does', 'SD-WAN の判断を見る')}
+            {guess
+              ? t('See what SD-WAN does', 'SD-WAN の判断を見る')
+              : t('Predict first', '先に予想を選んでください')}
           </button>
         )}
       </div>
 
-      <div style={LESSON_CARD} data-testid="sdwan-periods">
-        <div role="tablist" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {Array.from({ length: PERIODS }, (_, index) => (
-            <button
-              key={index}
-              type="button"
-              role="tab"
-              aria-selected={period === index}
-              data-testid={`sdwan-period-${index}`}
-              onClick={() => setPeriod(index)}
-              style={{
-                ...LESSON_BUTTON,
-                outline: period === index ? '2px solid var(--netlab-accent-cyan)' : undefined,
-              }}
-            >
-              {t(...PERIOD_NAMES[index]!)}
-            </button>
-          ))}
+      {revealed ? (
+        <div style={LESSON_CARD} data-testid="sdwan-periods">
+          <div role="tablist" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {Array.from({ length: PERIODS }, (_, index) => (
+              <button
+                key={index}
+                type="button"
+                role="tab"
+                aria-selected={period === index}
+                data-testid={`sdwan-period-${index}`}
+                onClick={() => setPeriod(index)}
+                style={lessonChoice(period === index)}
+              >
+                {t(...PERIOD_NAMES[index]!)}
+              </button>
+            ))}
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
+            <thead>
+              <tr style={{ textAlign: 'left', color: 'var(--netlab-text-secondary)' }}>
+                <th style={cell}>{t('Link', '回線')}</th>
+                <th style={cell}>{t('Measured', '測定値')}</th>
+                {POLICIES.map((policy) => (
+                  <th key={policy.id} style={cell}>
+                    {policy.name[locale]}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {UPLINKS.map((link) => {
+                const sample = link.samples[period]!;
+                return (
+                  <tr key={link.id}>
+                    <td style={cell}>{link.name[locale]}</td>
+                    <td
+                      style={{ ...cell, fontFamily: 'monospace' }}
+                    >{`${sample.latencyMs} / ${sample.jitterMs} / ${sample.lossPct}`}</td>
+                    {POLICIES.map((policy) => {
+                      const chosen = choose(policy, period) === link.id;
+                      const ok = meets(sample, policy);
+                      return (
+                        <td
+                          key={policy.id}
+                          data-testid={`sdwan-cell-${link.id}-${policy.id}`}
+                          data-chosen={String(chosen)}
+                          title={ok ? '' : misses(link, policy, period).join(', ')}
+                          style={{
+                            ...cell,
+                            whiteSpace: 'nowrap',
+                            fontWeight: chosen ? 700 : 400,
+                            color: ok ? undefined : 'var(--netlab-text-secondary)',
+                          }}
+                        >
+                          {chosen
+                            ? t('◉ uses it', '◉ 使う')
+                            : ok
+                              ? t('meets', '条件内')
+                              : t('✕ misses', '✕ 条件外')}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <p style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--netlab-text-secondary)' }}>
+            {t(
+              'Real SD-WAN measures with probes every few seconds; here four moments of a day stand for that. The rule is the same: the cheapest link that meets the traffic’s needs.',
+              '実際の SD-WAN は数秒おきに試験パケットで測ります。ここでは 1 日の 4 つの時点で代わりに見せています。決め方は同じで、条件を満たす中でいちばん安い回線です。',
+            )}
+          </p>
         </div>
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
-          <thead>
-            <tr style={{ textAlign: 'left', color: 'var(--netlab-text-secondary)' }}>
-              <th style={cell}>{t('Link', '回線')}</th>
-              <th style={cell}>{t('Measured', '測定値')}</th>
-              {POLICIES.map((policy) => (
-                <th key={policy.id} style={cell}>
-                  {policy.name[locale]}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {UPLINKS.map((link) => {
-              const sample = link.samples[period]!;
-              return (
-                <tr key={link.id}>
-                  <td style={cell}>{link.name[locale]}</td>
-                  <td
-                    style={{ ...cell, fontFamily: 'monospace' }}
-                  >{`${sample.latencyMs} / ${sample.jitterMs} / ${sample.lossPct}`}</td>
-                  {POLICIES.map((policy) => {
-                    const chosen = choose(policy, period) === link.id;
-                    const ok = meets(sample, policy);
-                    return (
-                      <td
-                        key={policy.id}
-                        data-testid={`sdwan-cell-${link.id}-${policy.id}`}
-                        data-chosen={String(chosen)}
-                        title={ok ? '' : misses(link, policy, period).join(', ')}
-                        style={{
-                          ...cell,
-                          fontWeight: chosen ? 700 : 400,
-                          color: ok ? undefined : 'var(--netlab-text-secondary)',
-                        }}
-                      >
-                        {chosen
-                          ? t('◉ uses it', '◉ 使う')
-                          : ok
-                            ? t('meets', '条件内')
-                            : t('✕ misses', '✕ 条件外')}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        <p style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--netlab-text-secondary)' }}>
-          {t(
-            'Real SD-WAN measures with probes every few seconds; here four moments of a day stand for that. The rule is the same: the cheapest link that meets the traffic’s needs.',
-            '実際の SD-WAN は数秒おきに試験パケットで測ります。ここでは 1 日の 4 つの時点で代わりに見せています。決め方は同じで、条件を満たす中でいちばん安い回線です。',
-          )}
-        </p>
-      </div>
+      ) : null}
     </div>
   );
 }

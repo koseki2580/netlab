@@ -24,7 +24,7 @@ test('TC-1801: each connection gets through or is stopped as the VPC is built, a
       await expect(page.getByTestId('vpc-rewrites')).toContainText('10.0.2.10 → 10.0.1.30');
       await expect(page.getByTestId('vpc-rewrites')).toContainText('10.0.1.30 → 198.51.100.1');
     }
-    if (situation.id === 'ssh-in') await expect(result).toContainText('acl-deny');
+    if (situation.id === 'ssh-in') await expect(result).toHaveAttribute('data-reason', 'acl-deny');
     await page.getByTestId('vpc-next').click();
   }
   await expect(page.getByTestId('vpc-summary')).toContainText(
