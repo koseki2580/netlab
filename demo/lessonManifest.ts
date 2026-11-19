@@ -876,6 +876,18 @@ export const LESSONS = [
     tags: ['DNS'],
   },
   {
+    path: '/networking/happy-eyeballs',
+    category: 'simulation',
+    module: './networking/HappyEyeballsDemo',
+    title: { en: 'Happy Eyeballs and NAT64', ja: 'Happy Eyeballs と NAT64' },
+    desc: {
+      en: 'Two address families, one connection: which one a client uses, and how IPv6-only networks still reach IPv4.',
+      ja: '2 つのアドレスファミリーと 1 本の接続。クライアントはどちらを使い、IPv6 だけの網はどう IPv4 に届くか。',
+    },
+    difficulty: 'intermediate',
+    tags: ['IPv6'],
+  },
+  {
     path: '/networking/masque',
     category: 'simulation',
     module: './networking/MasqueDemo',

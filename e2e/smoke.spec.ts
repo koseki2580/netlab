@@ -29,6 +29,8 @@ const NON_CANVAS_DEMO_PATHS = new Set([
   '/networking/encrypted-dns',
   // A drawn fabric and its counts, not a simulated network (REQ-385).
   '/networking/spine-leaf',
+  // Tables of connection races and address translation (REQ-386).
+  '/networking/happy-eyeballs',
   '/networking/https',
   '/networking/http2',
   '/networking/http3',

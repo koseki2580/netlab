@@ -191,14 +191,15 @@ export const STAGES: readonly Stage[] = [
     number: 7,
     title: { en: 'Modern and cloud', ja: '最新とクラウド' },
     topics: {
-      en: 'TLS 1.3, ECH and post-quantum keys, HTTP/2 and HTTP/3, congestion control and L4S, MASQUE, encrypted DNS, cloud networks, SD-WAN and telemetry',
-      ja: 'TLS 1.3、ECH と耐量子の鍵、HTTP/2 と HTTP/3、輻輳制御と L4S、MASQUE、DNS の暗号化、クラウド、SD-WAN、テレメトリ',
+      en: 'TLS 1.3, ECH and post-quantum keys, HTTP/2 and HTTP/3, congestion control and L4S, MASQUE, encrypted DNS, Happy Eyeballs and NAT64, cloud networks, SD-WAN and telemetry',
+      ja: 'TLS 1.3、ECH と耐量子の鍵、HTTP/2 と HTTP/3、輻輳制御と L4S、MASQUE、DNS の暗号化、Happy Eyeballs と NAT64、クラウド、SD-WAN、テレメトリ',
     },
     lessons: [
       '/networking/https',
       '/networking/ech',
       '/networking/post-quantum',
       '/networking/encrypted-dns',
+      '/networking/happy-eyeballs',
       '/networking/http2',
       '/networking/http3',
       '/networking/masque',
