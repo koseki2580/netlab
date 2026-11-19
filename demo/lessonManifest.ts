@@ -269,6 +269,18 @@ export const LESSONS = [
     defaultSandboxTab: 'node',
   },
   {
+    path: '/networking/bfd',
+    category: 'routing',
+    module: './networking/BfdDemo',
+    title: { en: 'BFD and failure detection', ja: 'BFD と障害の検出' },
+    desc: {
+      en: 'How long a router keeps sending into a dead path, with routing timers and with BFD.',
+      ja: 'ルータが止まった経路へ送り続けるのはどれくらいか。ルーティングのタイマーと BFD で比べます。',
+    },
+    difficulty: 'intermediate',
+    tags: ['OSPF'],
+  },
+  {
     path: '/routing/ospf-areas',
     category: 'routing',
     module: './routing/OspfAreasDemo',

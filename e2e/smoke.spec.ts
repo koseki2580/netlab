@@ -31,6 +31,8 @@ const NON_CANVAS_DEMO_PATHS = new Set([
   '/networking/spine-leaf',
   // Tables of connection races and address translation (REQ-386).
   '/networking/happy-eyeballs',
+  // A table of failure-detection timers (REQ-387).
+  '/networking/bfd',
   '/networking/https',
   '/networking/http2',
   '/networking/http3',

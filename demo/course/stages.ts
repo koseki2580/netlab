@@ -130,14 +130,15 @@ export const STAGES: readonly Stage[] = [
     number: 5,
     title: { en: 'Enterprise', ja: '企業ネットワーク' },
     topics: {
-      en: 'Spanning tree, OSPF, ACLs, redundancy, QoS, IPv6 and wireless',
-      ja: 'スパニングツリー、OSPF、ACL、冗長化、QoS、IPv6、無線',
+      en: 'Spanning tree, OSPF and BFD, ACLs, redundancy, QoS, IPv6 and wireless',
+      ja: 'スパニングツリー、OSPF と BFD、ACL、冗長化、QoS、IPv6、無線',
     },
     lessons: [
       '/networking/stp',
       '/networking/rstp',
       '/routing/dynamic',
       '/routing/ospf-convergence',
+      '/networking/bfd',
       '/routing/ospf-areas',
       '/simulation/acl',
       '/areas/dmz',
