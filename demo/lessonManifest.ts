@@ -321,6 +321,18 @@ export const LESSONS = [
     tags: ['802.1Q'],
   },
   {
+    path: '/networking/physical-layer',
+    category: 'areas',
+    module: './networking/PhysicalLayerDemo',
+    title: { en: 'The physical layer in practice', ja: '実際の物理層' },
+    desc: {
+      en: 'Duplex mismatch, PoE power budgets and LLDP neighbour discovery.',
+      ja: 'デュプレックス不一致、PoE の電力予算、LLDP による隣接機器の発見。',
+    },
+    difficulty: 'beginner',
+    tags: ['L1–L2'],
+  },
+  {
     path: '/networking/stp',
     category: 'areas',
     module: './networking/StpLoopDemo',
@@ -386,6 +398,30 @@ export const LESSONS = [
     },
     difficulty: 'advanced',
     tags: ['QoS', 'DSCP'],
+  },
+  {
+    path: '/networking/qos-queuing',
+    category: 'areas',
+    module: './networking/QosQueuingDemo',
+    title: { en: 'QoS queuing', ja: 'QoS のキューイング' },
+    desc: {
+      en: 'Police or shape a contract with a token bucket, then serve voice and a bulk transfer on a congested link.',
+      ja: 'トークンバケットで契約帯域をポリシング・シェーピングし、混雑したリンクで音声と大量転送をさばきます。',
+    },
+    difficulty: 'intermediate',
+    tags: ['QoS'],
+  },
+  {
+    path: '/networking/net-ops',
+    category: 'areas',
+    module: './networking/NetOpsDemo',
+    title: { en: 'Syslog, SNMP and NTP', ja: 'syslog・SNMP・NTP' },
+    desc: {
+      en: 'Read one incident from four devices’ logs, and see how monitoring learns of a short outage.',
+      ja: '4 台の機器のログから 1 つの障害を読み解き、短い停止に監視がどう気づくかを見ます。',
+    },
+    difficulty: 'intermediate',
+    tags: ['Operations'],
   },
   {
     path: '/networking/ecmp',

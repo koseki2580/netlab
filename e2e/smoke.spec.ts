@@ -33,6 +33,12 @@ const NON_CANVAS_DEMO_PATHS = new Set([
   '/networking/happy-eyeballs',
   // A table of failure-detection timers (REQ-387).
   '/networking/bfd',
+  // Logs sorted by clock, and a poll against a trap (REQ-389).
+  '/networking/net-ops',
+  // Duplex, PoE and LLDP tables (REQ-390).
+  '/networking/physical-layer',
+  // Charts of a token bucket and of queues (REQ-388).
+  '/networking/qos-queuing',
   '/networking/https',
   '/networking/http2',
   '/networking/http3',

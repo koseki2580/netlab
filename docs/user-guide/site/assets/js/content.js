@@ -43,10 +43,10 @@ window.USER_GUIDE_CONTENT = {
         html: `<p>基本から最新までを、7 つの Level に分けて順に学べます。ギャラリーの「学習の道すじ（7 つの Level）→」か、実習問題のページから開けます。アドレスは <code>#/path</code> です。</p>
                <ol>
                  <li><strong>準備</strong> — ビットとバイト、入門コース、サブネットの練習など</li>
-                 <li><strong>LAN</strong> — スイッチ、ARP、VLAN</li>
+                 <li><strong>LAN</strong> — スイッチ、ARP、VLAN、物理層（デュプレックス、PoE、LLDP）</li>
                  <li><strong>IP</strong> — VLSM（大きさの違うサブネットに分ける練習）、経路、ICMP と traceroute（4 つの ICMP メッセージを予想して確かめる）、1 ホップずつの流れ、MTU</li>
                  <li><strong>トランスポートとサービス</strong> — UDP・TCP、DHCP・DNS、HTTP、NAT、端末と模擬サーバ</li>
-                 <li><strong>企業ネットワーク</strong> — スパニングツリー（RSTP の代替ポートと MSTP を含む）、OSPF とエリア、BFD による障害の検出、ACL、冗長化、QoS、IPv6、無線</li>
+                 <li><strong>企業ネットワーク</strong> — スパニングツリー（RSTP の代替ポートと MSTP を含む）、OSPF とエリア、BFD による障害の検出、ACL、冗長化、QoS（マーキングとキューイング）、syslog・SNMP・NTP、IPv6、無線</li>
                  <li><strong>事業者とデータセンター</strong> — ECMP、スパイン・リーフ構成、ロードバランサ、セグメントルーティング、トンネル、MPLS、VXLAN、マルチキャスト</li>
                  <li><strong>最新とクラウド</strong> — クラウドのネットワーク（VPC）、SD-WAN、ストリーミングテレメトリ、TLS 1.3、ECH、耐量子の鍵交換、DNS の暗号化、Happy Eyeballs と NAT64、HTTP/2、HTTP/3、MASQUE、輻輳制御、L4S</li>
                </ol>
@@ -452,10 +452,10 @@ window.USER_GUIDE_CONTENT = {
         html: `<p>The path takes you from the basics to the latest in seven stages. Open it from "The whole learning path: 7 stages →" in the gallery or from the exercises page; its address is <code>#/path</code>.</p>
                <ol>
                  <li><strong>Getting ready</strong> — bits and bytes, the getting-started course, subnetting practice and more</li>
-                 <li><strong>LAN</strong> — switches, ARP and VLANs</li>
+                 <li><strong>LAN</strong> — switches, ARP, VLANs and the physical layer (duplex, PoE, LLDP)</li>
                  <li><strong>IP</strong> — VLSM (practice carving subnets of different sizes), routes, ICMP and traceroute (predict and check four ICMP messages), the hop-by-hop path and MTU</li>
                  <li><strong>Transport and services</strong> — UDP and TCP, DHCP and DNS, HTTP, NAT</li>
-                 <li><strong>Enterprise</strong> — spanning tree (with RSTP's alternate ports and MSTP), OSPF and its areas, failure detection with BFD, ACLs, redundancy, QoS, IPv6 and wireless</li>
+                 <li><strong>Enterprise</strong> — spanning tree (with RSTP's alternate ports and MSTP), OSPF and its areas, failure detection with BFD, ACLs, redundancy, QoS (marking and queuing), syslog, SNMP and NTP, IPv6 and wireless</li>
                  <li><strong>Providers and data centres</strong> — ECMP, spine-leaf fabrics, load balancers, segment routing, tunnels, MPLS, VXLAN and multicast</li>
                  <li><strong>Modern and cloud</strong> — cloud networks (VPC), SD-WAN, streaming telemetry, TLS 1.3, ECH, post-quantum key exchange, encrypted DNS, Happy Eyeballs and NAT64, HTTP/2, HTTP/3, MASQUE, congestion control and L4S</li>
                </ol>

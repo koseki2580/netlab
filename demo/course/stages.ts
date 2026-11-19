@@ -65,10 +65,16 @@ export const STAGES: readonly Stage[] = [
     number: 2,
     title: { en: 'LAN', ja: 'LAN' },
     topics: {
-      en: 'Ethernet, MAC addresses, switches, VLANs and ARP',
-      ja: 'イーサネット、MAC アドレス、スイッチ、VLAN、ARP',
+      en: 'Ethernet, MAC addresses, switches, VLANs, ARP, and the physical layer',
+      ja: 'イーサネット、MAC アドレス、スイッチ、VLAN、ARP、物理層',
     },
-    lessons: ['/basic/three-tier', '/basic/star', '/networking/arp', '/networking/vlan'],
+    lessons: [
+      '/basic/three-tier',
+      '/basic/star',
+      '/networking/arp',
+      '/networking/vlan',
+      '/networking/physical-layer',
+    ],
     checkpoints: [
       { kind: 'config', level: 1 },
       { kind: 'packet', level: 1 },
@@ -130,8 +136,8 @@ export const STAGES: readonly Stage[] = [
     number: 5,
     title: { en: 'Enterprise', ja: '企業ネットワーク' },
     topics: {
-      en: 'Spanning tree, OSPF and BFD, ACLs, redundancy, QoS, IPv6 and wireless',
-      ja: 'スパニングツリー、OSPF と BFD、ACL、冗長化、QoS、IPv6、無線',
+      en: 'Spanning tree, OSPF and BFD, ACLs, redundancy, QoS, logs and time, IPv6 and wireless',
+      ja: 'スパニングツリー、OSPF と BFD、ACL、冗長化、QoS、ログと時刻、IPv6、無線',
     },
     lessons: [
       '/networking/stp',
@@ -147,6 +153,8 @@ export const STAGES: readonly Stage[] = [
       '/networking/ha',
       '/networking/link-qos',
       '/networking/dscp',
+      '/networking/qos-queuing',
+      '/networking/net-ops',
       '/networking/ipv6',
       '/networking/ipv6-routing',
       '/networking/dhcpv6',
