@@ -1,0 +1,1 @@
+function e(e){return e.hops.slice(0,e.hops.findIndex(e=>e.event===`drop`)+1||void 0)}function t(t){let n=e(t);return n[n.length-1]}function n(e){return e.event===`arp-request`||e.event===`arp-reply`||e.event===`ndp-solicit`||e.event===`ndp-advert`}export{t as n,e as r,n as t};
