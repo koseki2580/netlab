@@ -39,6 +39,12 @@ const NON_CANVAS_DEMO_PATHS = new Set([
   '/networking/physical-layer',
   // Charts of a token bucket and of queues (REQ-388).
   '/networking/qos-queuing',
+  // Model-driven tables and diagrams with no simulated network (REQ-391..REQ-395).
+  '/networking/vpn-tunnel',
+  '/networking/isis',
+  '/networking/quic-migration',
+  '/networking/dnssec',
+  '/networking/modern-wifi',
   '/networking/https',
   '/networking/http2',
   '/networking/http3',

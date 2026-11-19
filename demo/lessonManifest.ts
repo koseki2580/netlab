@@ -294,6 +294,21 @@ export const LESSONS = [
   },
   // ── Network Areas ──
   {
+    path: '/networking/isis',
+    category: 'routing',
+    module: './networking/IsisDemo',
+    title: {
+      en: 'IS-IS: levels, areas and the attached bit',
+      ja: 'IS-IS：レベル・エリア・attached ビット',
+    },
+    desc: {
+      en: 'Read NETs, see which routers become neighbours, and follow SPF on the Level 1 and Level 2 databases.',
+      ja: 'NET を読み、どのルータがネイバーになるかを確かめ、レベル 1 とレベル 2 のデータベースで SPF をたどります。',
+    },
+    difficulty: 'advanced',
+    tags: ['OSPF'],
+  },
+  {
     path: '/networking/arp',
     category: 'areas',
     module: './networking/ArpDemo',
@@ -520,6 +535,18 @@ export const LESSONS = [
     tags: ['Wi-Fi', 'WPA2', 'CSMA/CA'],
   },
   {
+    path: '/networking/modern-wifi',
+    category: 'areas',
+    module: './networking/ModernWifiDemo',
+    title: { en: 'Modern Wi-Fi: Wi-Fi 6/7 and WPA3', ja: '最新の Wi-Fi：Wi-Fi 6/7 と WPA3' },
+    desc: {
+      en: 'Thirty phones on one access point, the channels each band offers, and what WPA3 changes for weak passwords.',
+      ja: '1 台のアクセスポイントに 30 台のスマートフォン、各帯域で取れるチャネル、弱いパスワードに対して WPA3 が変えること。',
+    },
+    difficulty: 'advanced',
+    tags: ['Wi-Fi'],
+  },
+  {
     path: '/networking/tunneling/gre',
     category: 'areas',
     module: './networking/GreDemo',
@@ -530,6 +557,18 @@ export const LESSONS = [
     },
     difficulty: 'advanced',
     tags: ['GRE', 'Overlay'],
+  },
+  {
+    path: '/networking/vpn-tunnel',
+    category: 'areas',
+    module: './networking/VpnTunnelDemo',
+    title: { en: 'Site-to-site VPN: IPsec and WireGuard', ja: '拠点間 VPN：IPsec と WireGuard' },
+    desc: {
+      en: 'Join two offices over the internet: what an observer can read, what each wrapping costs in bytes, and which traffic enters the tunnel.',
+      ja: '2 つのオフィスをインターネット越しにつなぎます。途中で何が読めるか、包み方ごとに何バイト増えるか、どの通信がトンネルに入るか。',
+    },
+    difficulty: 'advanced',
+    tags: ['GRE'],
   },
   {
     path: '/networking/tunneling/mpls-l3vpn',
@@ -640,6 +679,18 @@ export const LESSONS = [
     tags: ['HTTP/3', 'QUIC'],
   },
   {
+    path: '/networking/quic-migration',
+    category: 'areas',
+    module: './networking/QuicMigrationDemo',
+    title: { en: 'QUIC connection migration and 0-RTT', ja: 'QUIC の接続移行と 0-RTT' },
+    desc: {
+      en: 'A phone changes networks in the middle of two downloads; then count the round trips before the first byte.',
+      ja: 'ダウンロード中にスマートフォンのネットワークが変わったら？ そして最初の 1 バイトまでの往復を数えます。',
+    },
+    difficulty: 'advanced',
+    tags: ['QUIC'],
+  },
+  {
     path: '/areas/dmz',
     category: 'areas',
     module: './areas/DmzDemo',
@@ -701,6 +752,18 @@ export const LESSONS = [
     tags: ['DNS'],
   },
   // ── Simulation ──
+  {
+    path: '/networking/dnssec',
+    category: 'services',
+    module: './networking/DnssecDemo',
+    title: { en: 'DNSSEC validation', ja: 'DNSSEC の検証' },
+    desc: {
+      en: 'Follow the chain of trust from the root to an answer, and predict the validator’s verdict in four cases.',
+      ja: 'ルートから答えまでの信頼の連鎖をたどり、4 つの場面でリゾルバの判定を予想します。',
+    },
+    difficulty: 'advanced',
+    tags: ['DNS'],
+  },
   {
     path: '/simulation/step',
     category: 'simulation',

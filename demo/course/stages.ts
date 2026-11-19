@@ -114,8 +114,8 @@ export const STAGES: readonly Stage[] = [
     number: 4,
     title: { en: 'Transport and services', ja: 'トランスポートとサービス' },
     topics: {
-      en: 'UDP and TCP, DNS, DHCP, HTTP and NAT',
-      ja: 'UDP と TCP、DNS、DHCP、HTTP、NAT',
+      en: 'UDP and TCP, DNS and DNSSEC, DHCP, HTTP and NAT',
+      ja: 'UDP と TCP、DNS と DNSSEC、DHCP、HTTP、NAT',
     },
     lessons: [
       '/networking/udp',
@@ -123,6 +123,7 @@ export const STAGES: readonly Stage[] = [
       '/simulation/tcp-flow-control',
       '/services/dhcp-dns',
       '/services/dns-resolution',
+      '/networking/dnssec',
       '/networking/http',
       '/simulation/nat',
       '/simulation/session',
@@ -136,8 +137,8 @@ export const STAGES: readonly Stage[] = [
     number: 5,
     title: { en: 'Enterprise', ja: '企業ネットワーク' },
     topics: {
-      en: 'Spanning tree, OSPF and BFD, ACLs, redundancy, QoS, logs and time, IPv6 and wireless',
-      ja: 'スパニングツリー、OSPF と BFD、ACL、冗長化、QoS、ログと時刻、IPv6、無線',
+      en: 'Spanning tree, OSPF and BFD, ACLs, redundancy, QoS, logs and time, IPv6, and wireless up to Wi-Fi 7 and WPA3',
+      ja: 'スパニングツリー、OSPF と BFD、ACL、冗長化、QoS、ログと時刻、IPv6、無線（Wi-Fi 7 と WPA3 まで）',
     },
     lessons: [
       '/networking/stp',
@@ -159,6 +160,7 @@ export const STAGES: readonly Stage[] = [
       '/networking/ipv6-routing',
       '/networking/dhcpv6',
       '/networking/wireless',
+      '/networking/modern-wifi',
       '/simulation/enterprise',
     ],
     checkpoints: [
@@ -172,14 +174,16 @@ export const STAGES: readonly Stage[] = [
     number: 6,
     title: { en: 'Providers and data centres', ja: '事業者とデータセンター' },
     topics: {
-      en: 'Multipath and spine-leaf, load balancers, tunnels, MPLS and segment routing, VXLAN/EVPN and multicast',
-      ja: '複数経路とスパイン・リーフ、ロードバランサ、トンネル、MPLS とセグメントルーティング、VXLAN/EVPN、マルチキャスト',
+      en: 'IS-IS, multipath and spine-leaf, load balancers, tunnels and site-to-site VPNs, MPLS and segment routing, VXLAN/EVPN and multicast',
+      ja: 'IS-IS、複数経路とスパイン・リーフ、ロードバランサ、トンネルと拠点間 VPN、MPLS とセグメントルーティング、VXLAN/EVPN、マルチキャスト',
     },
     lessons: [
+      '/networking/isis',
       '/networking/ecmp',
       '/networking/spine-leaf',
       '/networking/load-balancer',
       '/networking/tunneling/gre',
+      '/networking/vpn-tunnel',
       '/networking/tunneling/mpls-l3vpn',
       '/networking/segment-routing',
       '/networking/tunneling/vxlan-evpn',
@@ -200,8 +204,8 @@ export const STAGES: readonly Stage[] = [
     number: 7,
     title: { en: 'Modern and cloud', ja: '最新とクラウド' },
     topics: {
-      en: 'TLS 1.3, ECH and post-quantum keys, HTTP/2 and HTTP/3, congestion control and L4S, MASQUE, encrypted DNS, Happy Eyeballs and NAT64, cloud networks, SD-WAN and telemetry',
-      ja: 'TLS 1.3、ECH と耐量子の鍵、HTTP/2 と HTTP/3、輻輳制御と L4S、MASQUE、DNS の暗号化、Happy Eyeballs と NAT64、クラウド、SD-WAN、テレメトリ',
+      en: 'TLS 1.3, ECH and post-quantum keys, HTTP/2, HTTP/3 and QUIC migration, congestion control and L4S, MASQUE, encrypted DNS, Happy Eyeballs and NAT64, cloud networks, SD-WAN and telemetry',
+      ja: 'TLS 1.3、ECH と耐量子の鍵、HTTP/2、HTTP/3 と QUIC の接続移行、輻輳制御と L4S、MASQUE、DNS の暗号化、Happy Eyeballs と NAT64、クラウド、SD-WAN、テレメトリ',
     },
     lessons: [
       '/networking/https',
@@ -211,6 +215,7 @@ export const STAGES: readonly Stage[] = [
       '/networking/happy-eyeballs',
       '/networking/http2',
       '/networking/http3',
+      '/networking/quic-migration',
       '/networking/masque',
       '/simulation/tcp-congestion',
       '/networking/l4s',
