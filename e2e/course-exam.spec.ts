@@ -91,3 +91,20 @@ test('ten right answers pass', async ({ page }) => {
   await expect(page.getByTestId('exam-missed')).toHaveCount(0);
   await expect(page.getByTestId('exam-review-1')).toHaveCount(0);
 });
+
+// TC-1893 — on a phone every level link of the test takes a finger.
+test.describe('the test on a phone', () => {
+  test.use({ viewportPreset: 'phone' });
+
+  test('TC-1893: each level link is at least 44 px tall and wide', async ({ page }) => {
+    await page.goto(`/#/course/exam?examSeed=${SEED}`);
+    await expect(page.getByTestId('exam-level-1')).toBeVisible();
+    const small = await page.evaluate(
+      () =>
+        [...document.querySelectorAll<HTMLElement>('[data-testid^="exam-level-"]')]
+          .map((el) => el.getBoundingClientRect())
+          .filter((box) => box.width < 43.5 || box.height < 43.5).length,
+    );
+    expect(small).toBe(0);
+  });
+});

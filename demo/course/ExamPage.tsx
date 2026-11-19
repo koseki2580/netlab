@@ -310,6 +310,12 @@ function ExamBody({ level }: { level: ExamLevel }) {
                   aria-current={entry.level === level.level ? 'page' : undefined}
                   to={examRoute(entry.level)}
                   style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: 44,
+                    minWidth: 44,
+                    boxSizing: 'border-box',
                     padding: '6px 12px',
                     borderRadius: 999,
                     border: `1px solid ${entry.level === level.level ? 'var(--netlab-accent-cyan)' : 'var(--netlab-border)'}`,
