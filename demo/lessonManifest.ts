@@ -294,6 +294,21 @@ export const LESSONS = [
   },
   // ── Network Areas ──
   {
+    path: '/networking/redistribution',
+    category: 'routing',
+    module: './networking/RedistributionDemo',
+    title: {
+      en: 'Route redistribution and administrative distance',
+      ja: '経路の再配布とアドミニストレーティブディスタンス',
+    },
+    desc: {
+      en: 'Predict which source a router trusts for one prefix, then watch two border routers redistribute between RIP and OSPF.',
+      ja: '1 つのプレフィックスでルータがどの情報源を信じるかを予想し、2 台の境界ルータが RIP と OSPF の間で再配布する様子を見ます。',
+    },
+    difficulty: 'advanced',
+    tags: ['OSPF'],
+  },
+  {
     path: '/networking/isis',
     category: 'routing',
     module: './networking/IsisDemo',
@@ -511,6 +526,18 @@ export const LESSONS = [
     tags: ['IPv6', 'ICMPv6'],
   },
   {
+    path: '/networking/ipv6-nd',
+    category: 'areas',
+    module: './networking/Ipv6NdDemo',
+    title: { en: 'IPv6 Neighbor Discovery', ja: 'IPv6 の近隣探索' },
+    desc: {
+      en: 'Follow a neighbour-cache entry over time, build an address from a Router Advertisement, and check that nobody else has it.',
+      ja: '近隣キャッシュのエントリを時間を追って見ていき、ルータ広告からアドレスを作り、ほかに使っている人がいないかを確かめます。',
+    },
+    difficulty: 'advanced',
+    tags: ['IPv6'],
+  },
+  {
     path: '/networking/ipv6-routing',
     category: 'areas',
     module: './networking/Ipv6RoutingDemo',
@@ -614,6 +641,18 @@ export const LESSONS = [
     desc: {
       en: 'The path written into the packet as a stack of labels, with no per-path state in the core.',
       ja: '通る道をラベルの積み重ねとしてパケットに書き込み、途中のルータは経路ごとの状態を持ちません。',
+    },
+    difficulty: 'advanced',
+    tags: ['MPLS'],
+  },
+  {
+    path: '/networking/mpls-te',
+    category: 'areas',
+    module: './networking/MplsTeDemo',
+    title: { en: 'MPLS traffic engineering', ja: 'MPLS トラフィックエンジニアリング' },
+    desc: {
+      en: 'Ask for paths with a bandwidth: how RSVP-TE places them, and how fast reroute protects them.',
+      ja: '帯域を指定して経路を要求すると、RSVP-TE がどう配置し、高速迂回がどう守るか。',
     },
     difficulty: 'advanced',
     tags: ['MPLS'],
@@ -740,6 +779,18 @@ export const LESSONS = [
   },
   // ── Services ──
   {
+    path: '/networking/pim',
+    category: 'areas',
+    module: './networking/PimDemo',
+    title: { en: 'PIM multicast routing', ja: 'PIM によるマルチキャストルーティング' },
+    desc: {
+      en: 'Build PIM sparse-mode trees across routers: the shared tree through the RP, the switch to the source tree, the RPF check and SSM.',
+      ja: 'ルータをまたいで PIM スパースモードのツリーを作ります。RP を通る共有ツリー、送信元ツリーへの切り替え、RPF チェック、SSM。',
+    },
+    difficulty: 'advanced',
+    tags: ['IGMP'],
+  },
+  {
     path: '/tools/terminal',
     category: 'services',
     module: './tools/TerminalDemo',
@@ -862,6 +913,18 @@ export const LESSONS = [
     },
     difficulty: 'advanced',
     tags: ['ACL', 'Firewall'],
+  },
+  {
+    path: '/networking/access-security',
+    category: 'simulation',
+    module: './networking/AccessSecurityDemo',
+    title: { en: 'Protecting access ports', ja: 'アクセスポートを守る' },
+    desc: {
+      en: 'What an access switch lets through a wall socket: 802.1X with RADIUS, port security, DHCP snooping and dynamic ARP inspection.',
+      ja: '壁のポートからスイッチが何を通すか。RADIUS と組む 802.1X、ポートセキュリティ、DHCP スヌーピング、ダイナミック ARP インスペクション。',
+    },
+    difficulty: 'intermediate',
+    tags: ['ACL'],
   },
   {
     path: '/simulation/interface-aware',

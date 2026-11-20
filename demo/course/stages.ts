@@ -138,8 +138,8 @@ export const STAGES: readonly Stage[] = [
     number: 5,
     title: { en: 'Enterprise', ja: '企業ネットワーク' },
     topics: {
-      en: 'Spanning tree, OSPF and BFD, ACLs, redundancy, QoS, logs and time, IPv6, and wireless up to Wi-Fi 7 and WPA3',
-      ja: 'スパニングツリー、OSPF と BFD、ACL、冗長化、QoS、ログと時刻、IPv6、無線（Wi-Fi 7 と WPA3 まで）',
+      en: 'Spanning tree, OSPF and BFD, redistribution, ACLs and access-port protection, redundancy, QoS, logs and time, IPv6 and Neighbor Discovery, and wireless up to Wi-Fi 7 and WPA3',
+      ja: 'スパニングツリー、OSPF と BFD、再配布、ACL とアクセスポートの保護、冗長化、QoS、ログと時刻、IPv6 と近隣探索、無線（Wi-Fi 7 と WPA3 まで）',
     },
     lessons: [
       '/networking/stp',
@@ -148,7 +148,9 @@ export const STAGES: readonly Stage[] = [
       '/routing/ospf-convergence',
       '/networking/bfd',
       '/routing/ospf-areas',
+      '/networking/redistribution',
       '/simulation/acl',
+      '/networking/access-security',
       '/areas/dmz',
       '/simulation/failure',
       '/learning/resilience',
@@ -158,6 +160,7 @@ export const STAGES: readonly Stage[] = [
       '/networking/qos-queuing',
       '/networking/net-ops',
       '/networking/ipv6',
+      '/networking/ipv6-nd',
       '/networking/ipv6-routing',
       '/networking/dhcpv6',
       '/networking/wireless',
@@ -175,8 +178,8 @@ export const STAGES: readonly Stage[] = [
     number: 6,
     title: { en: 'Providers and data centres', ja: '事業者とデータセンター' },
     topics: {
-      en: 'IS-IS, BGP policy and RPKI, multipath and spine-leaf, load balancers, tunnels and site-to-site VPNs, MPLS and segment routing, VXLAN/EVPN and multicast',
-      ja: 'IS-IS、BGP のポリシーと RPKI、複数経路とスパイン・リーフ、ロードバランサ、トンネルと拠点間 VPN、MPLS とセグメントルーティング、VXLAN/EVPN、マルチキャスト',
+      en: 'IS-IS, BGP policy and RPKI, multipath and spine-leaf, load balancers, tunnels and site-to-site VPNs, MPLS, segment routing and traffic engineering, VXLAN/EVPN, and multicast with PIM',
+      ja: 'IS-IS、BGP のポリシーと RPKI、複数経路とスパイン・リーフ、ロードバランサ、トンネルと拠点間 VPN、MPLS、セグメントルーティングとトラフィックエンジニアリング、VXLAN/EVPN、PIM によるマルチキャスト',
     },
     lessons: [
       '/networking/isis',
@@ -189,8 +192,10 @@ export const STAGES: readonly Stage[] = [
       '/networking/vpn-tunnel',
       '/networking/tunneling/mpls-l3vpn',
       '/networking/segment-routing',
+      '/networking/mpls-te',
       '/networking/tunneling/vxlan-evpn',
       '/networking/multicast',
+      '/networking/pim',
       '/networking/observability',
     ],
     // Level 4 ("Expert") goes deeper into the enterprise and provider topics

@@ -51,6 +51,12 @@ const NON_CANVAS_DEMO_PATHS = new Set([
   '/networking/anycast',
   '/networking/dhcp-relay',
   '/networking/netconf',
+  // Model-driven tables and diagrams with no simulated network (REQ-401..REQ-405).
+  '/networking/pim',
+  '/networking/access-security',
+  '/networking/ipv6-nd',
+  '/networking/mpls-te',
+  '/networking/redistribution',
   '/networking/https',
   '/networking/http2',
   '/networking/http3',
