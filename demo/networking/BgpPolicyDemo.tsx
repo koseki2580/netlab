@@ -527,7 +527,7 @@ function BgpPolicyLesson() {
         <div style={LESSON_LABEL}>{t('What is simplified', '簡略化していること')}</div>
         <p style={{ margin: 0, lineHeight: 1.7, fontSize: 13 }}>
           {t(
-            'The order follows RFC 4271 §9.1.2.2 with weight in front. Real routers add steps: many vendors prefer a path the router originates itself is preferred, some vendors prefer the older of two eBGP paths before comparing router IDs, route reflection adds its own tie-breaks, and the lowest peer address comes last. Here every path has a MED, router IDs are distinct, and nobody removes communities, which providers often do at their edge.',
+            'The order follows RFC 4271 §9.1.2.2 with weight in front. Real routers add steps: many vendors prefer a path the router originates itself, some vendors prefer the older of two eBGP paths before comparing router IDs, route reflection adds its own tie-breaks, and the lowest peer address comes last. Here every path has a MED, router IDs are distinct, and nobody removes communities, which providers often do at their edge.',
             '比べる順番は RFC 4271 §9.1.2.2 に weight を先頭に加えたものです。実際のルータにはさらにステップがあります。多くのベンダーは自分で広告した経路を優先する、ベンダーによっては 2 本の eBGP 経路のうち古いほうをルータ ID より先に優先する、ルートリフレクタ独自の比較がある、最後にピアアドレスの小さいほうを選ぶ、などです。ここではすべての経路に MED があり、ルータ ID は重複せず、コミュニティを取り除くルータもいません（実際のプロバイダは境界でよく取り除きます）。',
           )}
         </p>

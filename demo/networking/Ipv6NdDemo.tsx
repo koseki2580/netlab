@@ -390,8 +390,8 @@ function Ipv6NdLesson() {
           >
             {final.state === 'NONE'
               ? t(
-                  `After ${MAX_UNICAST_SOLICIT} unanswered probes the entry is gone at ${seconds(final.atMs)}. A’s next packet to B starts again from INCOMPLETE with a multicast Neighbor Solicitation, and if that goes unanswered too the sender gets an ICMPv6 “address unreachable”.`,
-                  `${MAX_UNICAST_SOLICIT} 回の確認に応答がなく、${seconds(final.atMs)} にエントリが消えます。A が次に B へ送るときは INCOMPLETE からやり直してマルチキャストで NS を送り、それにも応答がなければ送信元に ICMPv6 の「アドレス到達不能」が返ります。`,
+                  `After ${MAX_UNICAST_SOLICIT} unanswered probes the entry is gone at ${seconds(final.atMs)}. A’s next packet to B starts again from INCOMPLETE with a multicast Neighbor Solicitation, and if that goes unanswered too, address resolution fails and the packet is dropped: A’s application gets an error. (A router forwarding the packet would send ICMPv6 “address unreachable” back to the source.)`,
+                  `${MAX_UNICAST_SOLICIT} 回の確認に応答がなく、${seconds(final.atMs)} にエントリが消えます。A が次に B へ送るときは INCOMPLETE からやり直してマルチキャストで NS を送り、それにも応答がなければアドレス解決は失敗し、パケットは捨てられて A のアプリケーションにエラーが返ります（転送中のルータなら、送信元へ ICMPv6 の「アドレス到達不能」を返します）。`,
                 )
               : t(
                   `B answered the first probe, so the entry is REACHABLE again and turns STALE at ${seconds(final.atMs)}. A STALE entry costs nothing: nothing is checked until A has something to send.`,

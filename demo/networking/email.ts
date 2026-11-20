@@ -2,7 +2,7 @@
  * The email lesson (REQ-408): how a message reaches the recipient's domain
  * (MX lookup, lowest preference first, RFC 5321) and how the receiver decides
  * whether the sender is who the From: header says (SPF RFC 7208, DKIM
- * RFC 6376, DMARC RFC 7489).
+ * RFC 6376, DMARC RFC 9989, which obsoletes RFC 7489).
  *
  * Simplified:
  * - DKIM signatures are not computed. A signature "verifies" unless the
@@ -10,7 +10,7 @@
  *   the real body hash. No keys are looked up.
  * - SPF records hold only `ip4:` terms and end in `-all` or `~all`.
  * - The organisational domain is the last two labels of a name; real
- *   receivers use the Public Suffix List.
+ *   receivers use RFC 9989's DNS tree walk or the older Public Suffix List.
  * - Alignment is relaxed (the DMARC default): the organisational domains
  *   must match, not the full names.
  * - MX hosts with equal preference keep their listed order; RFC 5321 asks
