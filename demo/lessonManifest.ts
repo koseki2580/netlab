@@ -428,6 +428,18 @@ export const LESSONS = [
     defaultSandboxTab: 'node',
   },
   {
+    path: '/networking/pppoe',
+    category: 'areas',
+    module: './networking/PppoeDemo',
+    title: { en: 'PPPoE, MTU 1492 and MSS clamping', ja: 'PPPoE と MTU 1492、MSS クランプ' },
+    desc: {
+      en: 'Open a PPPoE session step by step, then follow a web page download across the smaller link and compare it with IPoE.',
+      ja: 'PPPoE のセッションを順に開き、小さくなったリンクを通る Web ページのダウンロードを追い、IPoE と比べます。',
+    },
+    difficulty: 'advanced',
+    tags: ['MTU'],
+  },
+  {
     path: '/networking/link-qos',
     category: 'areas',
     module: './networking/LinkQosDemo',
@@ -704,6 +716,30 @@ export const LESSONS = [
     },
     difficulty: 'intermediate',
     tags: ['L7', 'HTTP'],
+  },
+  {
+    path: '/networking/email',
+    category: 'areas',
+    module: './networking/EmailDemo',
+    title: { en: 'Email delivery and authentication', ja: 'メールの配送と送信元認証' },
+    desc: {
+      en: 'Follow a message from the MX lookup through the SMTP dialogue, then predict how the receiver judges four messages from the same domain.',
+      ja: 'MX の検索から SMTP のやりとりまでメールを追い、同じドメインを名乗る 4 通を受信側がどう判定するか予想します。',
+    },
+    difficulty: 'intermediate',
+    tags: ['DNS'],
+  },
+  {
+    path: '/networking/voip',
+    category: 'areas',
+    module: './networking/VoipDemo',
+    title: { en: 'Voice over IP: SIP, RTP and jitter', ja: 'VoIP：SIP・RTP とジッタ' },
+    desc: {
+      en: 'How SIP and SDP set up a call, what RTP costs per call, and how a jitter buffer trades delay for loss.',
+      ja: 'SIP と SDP が通話を張るしくみ、1 通話の RTP の帯域、ジッタバッファが遅延と損失をどう引き換えるか。',
+    },
+    difficulty: 'intermediate',
+    tags: ['QoS'],
   },
   {
     path: '/networking/https',
@@ -1002,6 +1038,18 @@ export const LESSONS = [
     tags: ['L4', 'TCP'],
   },
   {
+    path: '/networking/tcp-options',
+    category: 'simulation',
+    module: './networking/TcpOptionsDemo',
+    title: { en: 'TCP window scaling and SACK', ja: 'TCP のウィンドウスケールと SACK' },
+    desc: {
+      en: 'Work out how fast one TCP connection can go to a distant server, then repair several losses in one window with and without SACK.',
+      ja: '遠くのサーバーへの TCP 接続 1 本がどこまで速くなれるかを計算し、1 つのウィンドウでの複数の損失を SACK あり・なしで直します。',
+    },
+    difficulty: 'advanced',
+    tags: ['TCP'],
+  },
+  {
     path: '/networking/vpc',
     category: 'simulation',
     module: './networking/VpcDemo',
@@ -1120,6 +1168,18 @@ export const LESSONS = [
     },
     difficulty: 'advanced',
     tags: ['BGP'],
+  },
+  {
+    path: '/networking/nat-traversal',
+    category: 'simulation',
+    module: './networking/NatTraversalDemo',
+    title: { en: 'NAT traversal: STUN, TURN and ICE', ja: 'NAT 越え：STUN、TURN、ICE' },
+    desc: {
+      en: 'Two peers behind different NATs want a direct call: will their packets get through, and which path does ICE choose?',
+      ja: '別々の NAT の内側にいる 2 つのピアが直接通話したい。パケットは届く？ ICE はどの経路を選ぶ？',
+    },
+    difficulty: 'advanced',
+    tags: ['NAT'],
   },
   {
     path: '/networking/masque',

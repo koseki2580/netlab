@@ -57,6 +57,12 @@ const NON_CANVAS_DEMO_PATHS = new Set([
   '/networking/ipv6-nd',
   '/networking/mpls-te',
   '/networking/redistribution',
+  // Model-driven tables and diagrams with no simulated network (REQ-406..REQ-410).
+  '/networking/nat-traversal',
+  '/networking/voip',
+  '/networking/email',
+  '/networking/tcp-options',
+  '/networking/pppoe',
   '/networking/https',
   '/networking/http2',
   '/networking/http3',

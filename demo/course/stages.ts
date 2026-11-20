@@ -100,6 +100,7 @@ export const STAGES: readonly Stage[] = [
       '/simulation/trace-inspector',
       '/learning/packet-journey',
       '/networking/mtu-fragmentation',
+      '/networking/pppoe',
       '/simulation/interface-aware',
     ],
     checkpoints: [
@@ -114,8 +115,8 @@ export const STAGES: readonly Stage[] = [
     number: 4,
     title: { en: 'Transport and services', ja: 'トランスポートとサービス' },
     topics: {
-      en: 'UDP and TCP, DNS and DNSSEC, DHCP and relays, HTTP and NAT',
-      ja: 'UDP と TCP、DNS と DNSSEC、DHCP とリレー、HTTP、NAT',
+      en: 'UDP and TCP, DNS and DNSSEC, DHCP and relays, HTTP, email, voice over IP and NAT',
+      ja: 'UDP と TCP、DNS と DNSSEC、DHCP とリレー、HTTP、メール、VoIP、NAT',
     },
     lessons: [
       '/networking/udp',
@@ -126,6 +127,8 @@ export const STAGES: readonly Stage[] = [
       '/services/dns-resolution',
       '/networking/dnssec',
       '/networking/http',
+      '/networking/email',
+      '/networking/voip',
       '/simulation/nat',
       '/simulation/session',
       '/simulation/data-transfer',
@@ -212,8 +215,8 @@ export const STAGES: readonly Stage[] = [
     number: 7,
     title: { en: 'Modern and cloud', ja: '最新とクラウド' },
     topics: {
-      en: 'TLS 1.3, ECH and post-quantum keys, HTTP/2, HTTP/3 and QUIC migration, congestion control and L4S, MASQUE, encrypted DNS, Happy Eyeballs and NAT64, anycast and CDNs, cloud networks, SD-WAN, NETCONF/YANG and telemetry',
-      ja: 'TLS 1.3、ECH と耐量子の鍵、HTTP/2、HTTP/3 と QUIC の接続移行、輻輳制御と L4S、MASQUE、DNS の暗号化、Happy Eyeballs と NAT64、エニーキャストと CDN、クラウド、SD-WAN、NETCONF/YANG、テレメトリ',
+      en: 'TLS 1.3, ECH and post-quantum keys, HTTP/2, HTTP/3 and QUIC migration, congestion control, window scaling and SACK, L4S, MASQUE, encrypted DNS, Happy Eyeballs and NAT64, anycast and CDNs, NAT traversal, cloud networks, SD-WAN, NETCONF/YANG and telemetry',
+      ja: 'TLS 1.3、ECH と耐量子の鍵、HTTP/2、HTTP/3 と QUIC の接続移行、輻輳制御、ウィンドウスケールと SACK、L4S、MASQUE、DNS の暗号化、Happy Eyeballs と NAT64、エニーキャストと CDN、NAT 越え、クラウド、SD-WAN、NETCONF/YANG、テレメトリ',
     },
     lessons: [
       '/networking/https',
@@ -222,11 +225,13 @@ export const STAGES: readonly Stage[] = [
       '/networking/encrypted-dns',
       '/networking/happy-eyeballs',
       '/networking/anycast',
+      '/networking/nat-traversal',
       '/networking/http2',
       '/networking/http3',
       '/networking/quic-migration',
       '/networking/masque',
       '/simulation/tcp-congestion',
+      '/networking/tcp-options',
       '/networking/l4s',
       '/networking/vpc',
       '/networking/sd-wan',
