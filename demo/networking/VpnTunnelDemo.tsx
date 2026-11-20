@@ -484,8 +484,8 @@ function VpnTunnelLesson() {
           </div>
           <p style={{ margin: '8px 0 0', lineHeight: 1.7 }}>
             {t(
-              'A range left out of the IPsec selectors (here a new office, 10.4.0.0/16) fails open: its traffic leaves unencrypted, unless the policy has an explicit discard rule. In WireGuard the same mistake fails closed: nothing is sent. AllowedIPs also work in the other direction: a packet decrypted from peer B is accepted only if its source address is in B’s AllowedIPs; IPsec likewise checks arriving packets against the selectors.',
-              'IPsec のセレクタに入れ忘れた範囲（ここでは新しいオフィス 10.4.0.0/16）は「開いたまま」失敗します。明示的な破棄ルールがない限り、その通信は暗号化されずに出ていきます。WireGuard で同じ間違いをすると「閉じたまま」失敗し、何も送られません。AllowedIPs は逆方向にも効きます。ピア B から届いて復号したパケットは、送信元アドレスが B の AllowedIPs に含まれるときだけ受け入れられます。IPsec も同じように、届いたパケットをセレクタと照らし合わせます。',
+              'A range left out of the IPsec selectors (here a new office, 10.4.0.0/16) usually fails open: on most gateways (crypto-map ACLs, Linux XFRM) unmatched traffic is routed in the clear, although RFC 4301 says a complete policy should discard it. In WireGuard the same mistake fails closed: nothing is sent. AllowedIPs also work in the other direction: a packet decrypted from peer B is accepted only if its source address is in B’s AllowedIPs; IPsec likewise checks arriving packets against the selectors.',
+              'IPsec のセレクタに入れ忘れた範囲（ここでは新しいオフィス 10.4.0.0/16）は、たいてい「開いたまま」失敗します。多くのゲートウェイ（crypto map の ACL や Linux の XFRM）は一致しない通信を暗号化せずにルーティングするからです。ただし RFC 4301 は、完全なポリシーならそれを破棄すべきだとしています。WireGuard で同じ間違いをすると「閉じたまま」失敗し、何も送られません。AllowedIPs は逆方向にも効きます。ピア B から届いて復号したパケットは、送信元アドレスが B の AllowedIPs に含まれるときだけ受け入れられます。IPsec も同じように、届いたパケットをセレクタと照らし合わせます。',
             )}
           </p>
         </div>

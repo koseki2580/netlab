@@ -104,10 +104,10 @@ export const PLANS: Record<Region, Record<'5' | '6', readonly Block[]>> = {
     '6': [{ fromMHz: 5945, toMHz: 7125 }],
   },
   jp: {
-    // W52/W53 (36–64) and W56 (100–140).
+    // W52/W53 (36–64) and W56 (100–144, channel 144 since 2019).
     '5': [
       { fromMHz: 5170, toMHz: 5330 },
-      { fromMHz: 5490, toMHz: 5710 },
+      { fromMHz: 5490, toMHz: 5730 },
     ],
     // 5925–6425 MHz; channels 1–93.
     '6': [{ fromMHz: 5945, toMHz: 6425 }],

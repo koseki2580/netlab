@@ -35,7 +35,7 @@ export interface Network {
   readonly links: readonly Link[];
 }
 
-/** The default interface metric on common implementations (wide metrics allow up to 2^24 − 1). */
+/** The default interface metric on common implementations (wide metrics: 24 bits; 2^24 − 1 means "do not use this link"). */
 export const DEFAULT_METRIC = 10;
 
 export const BASE_NETWORK: Network = {

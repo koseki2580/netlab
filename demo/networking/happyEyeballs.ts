@@ -15,7 +15,7 @@ export const SCENARIOS: readonly Scenario[] = ['v6-ok', 'v6-broken', 'v6-slow'];
 
 /** RFC 8305 §5's recommended Connection Attempt Delay, ms. */
 export const ATTEMPT_DELAY_MS = 250;
-/** How long a client that tries one address at a time waits on a dead one: a common OS default. */
+/** How long a client that tries one address at a time waits on a dead one: Windows' default TCP connect timeout (3 + 6 + 12 s). */
 export const NAIVE_TIMEOUT_MS = 21_000;
 
 /** Round trip to the server over each family, ms; null when packets vanish. */

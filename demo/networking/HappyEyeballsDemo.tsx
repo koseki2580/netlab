@@ -129,8 +129,8 @@ function HappyEyeballsLesson() {
                 : t('Not what you predicted. ', '予想とちがいました。')}
             </strong>
             {t(
-              `Over ${broken.family}, after ${seconds(broken.connectedMs)}. Happy Eyeballs (RFC 8305) starts IPv6 first, and if it has not connected within ${ATTEMPT_DELAY_MS} ms it starts IPv4 alongside; whichever connects first is used. A browser that tried one address at a time would wait for IPv6 to time out — about ${NAIVE_TIMEOUT_MS / 1000} s on a common default — before trying IPv4.`,
-              `${broken.family} で、${seconds(broken.connectedMs)} 後につながります。Happy Eyeballs（RFC 8305）はまず IPv6 を試し、${ATTEMPT_DELAY_MS} ms 以内につながらなければ IPv4 も並べて試し、先につながった方を使います。1 つずつ順に試すブラウザなら、IPv6 があきらめられるまで（よくある初期設定で約 ${NAIVE_TIMEOUT_MS / 1000} 秒）待ってから IPv4 を試します。`,
+              `Over ${broken.family}, after ${seconds(broken.connectedMs)}. Happy Eyeballs (RFC 8305) starts IPv6 first, and if it has not connected within ${ATTEMPT_DELAY_MS} ms it starts IPv4 alongside; whichever connects first is used. A browser that tried one address at a time would wait for IPv6 to time out — about ${NAIVE_TIMEOUT_MS / 1000} s with Windows’ default (longer on Linux) — before trying IPv4.`,
+              `${broken.family} で、${seconds(broken.connectedMs)} 後につながります。Happy Eyeballs（RFC 8305）はまず IPv6 を試し、${ATTEMPT_DELAY_MS} ms 以内につながらなければ IPv4 も並べて試し、先につながった方を使います。1 つずつ順に試すブラウザなら、IPv6 があきらめられるまで（Windows の初期設定で約 ${NAIVE_TIMEOUT_MS / 1000} 秒、Linux ではもっと長い）待ってから IPv4 を試します。`,
             )}
           </p>
         ) : (
@@ -195,8 +195,8 @@ function HappyEyeballsLesson() {
           </div>
           <p style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--netlab-text-secondary)' }}>
             {t(
-              'Simplified: both DNS answers arrive together and a connection takes one round trip. Real clients also wait up to 50 ms for the AAAA answer and sort several addresses of each family.',
-              '簡略化しています。2 つの DNS の答えは同時に届き、接続には 1 往復かかるものとしました。実際のクライアントは AAAA の答えを最大 50 ms 待ち、各ファミリーの複数のアドレスを並べ替えて試します。',
+              'Simplified: both DNS answers arrive together and a connection takes one round trip. Real clients that get the A answer first also wait up to 50 ms for the AAAA answer, and sort several addresses of each family.',
+              '簡略化しています。2 つの DNS の答えは同時に届き、接続には 1 往復かかるものとしました。実際のクライアントは、A の答えが先に届いたときは AAAA の答えを最大 50 ms 待ち、各ファミリーの複数のアドレスを並べ替えて試します。',
             )}
           </p>
         </div>

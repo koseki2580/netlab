@@ -55,9 +55,14 @@ describe('TC-1993: 5 GHz channels per width, and how many need DFS', () => {
       { count: 0, dfs: 0 },
     ]);
   });
-  it('Japan (no 144, no 149–165): 19 / 9 / 4 / 2 / 0', () => {
-    expect(counts('jp').map((c) => c!.count)).toEqual([19, 9, 4, 2, 0]);
-    expect(channelCount('jp', '5', 20)!.dfs).toBe(15);
+  it('Japan (W56 up to 144, no 149–165): 20 / 10 / 5 / 2 / 0, of which 16 / 8 / 4 / 2 / 0 need DFS', () => {
+    expect(counts('jp')).toEqual([
+      { count: 20, dfs: 16 },
+      { count: 10, dfs: 8 },
+      { count: 5, dfs: 4 },
+      { count: 2, dfs: 2 },
+      { count: 0, dfs: 0 },
+    ]);
   });
 });
 

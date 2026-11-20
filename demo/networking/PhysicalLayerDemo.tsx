@@ -411,8 +411,8 @@ function PoePart() {
           </table>
           <p style={{ margin: '8px 0 0', lineHeight: 1.7, fontSize: 13 }}>
             {t(
-              'A class says only the most a device may need, so a switch that allocates by class reserves that maximum per port. If the switch and devices negotiate power over LLDP (LLDP-MED or the 802.3at/bt LLDP power TLVs), each device asks for what it needs (here 5, 10 and 22 W) and all 24 ports fit. The 30 W at the switch is 25.5 W at the AP because up to 100 m of cable loses the rest. Many Wi-Fi 6 APs need 802.3bt (class 5 or 6, 45 or 60 W) for every feature. Real switches also let you give ports a priority, so the AP is not simply the one on the highest port.',
-              'クラスが示すのは機器が必要とし得る上限だけなので、クラスで割り当てるスイッチはポートごとにその上限を確保します。スイッチと機器が LLDP で電力を交渉する場合（LLDP-MED や 802.3at/bt の LLDP 電力 TLV）は、機器が必要な分だけ（ここでは 5、10、22 W）を求め、24 ポートすべてが収まります。スイッチ側の 30 W が AP では 25.5 W なのは、最長 100 m のケーブルで残りが失われるからです。Wi-Fi 6 の AP には、すべての機能を使うのに 802.3bt（クラス 5 か 6、45 W か 60 W）が要るものが多くあります。実際のスイッチではポートに優先度も付けられるので、止まるのが単に番号の最も大きいポートとは限りません。',
+              'A class says only the most a device may need, so a switch that allocates by class reserves that maximum per port. If the switch and devices negotiate power over LLDP (LLDP-MED or the 802.3at/bt LLDP power TLVs), each device asks for what it needs (here 5, 10 and 22 W) and all 24 ports fit. The 30 W at the switch is 25.5 W at the AP because up to 100 m of cable loses the rest. Many Wi-Fi 6E and Wi-Fi 7 APs need 802.3bt (usually class 5, 45 W) for every feature. Real switches also let you give ports a priority, so the AP is not simply the one on the highest port.',
+              'クラスが示すのは機器が必要とし得る上限だけなので、クラスで割り当てるスイッチはポートごとにその上限を確保します。スイッチと機器が LLDP で電力を交渉する場合（LLDP-MED や 802.3at/bt の LLDP 電力 TLV）は、機器が必要な分だけ（ここでは 5、10、22 W）を求め、24 ポートすべてが収まります。スイッチ側の 30 W が AP では 25.5 W なのは、最長 100 m のケーブルで残りが失われるからです。Wi-Fi 6E や Wi-Fi 7 の AP には、すべての機能を使うのに 802.3bt（多くはクラス 5、45 W）が要るものが多くあります。実際のスイッチではポートに優先度も付けられるので、止まるのが単に番号の最も大きいポートとは限りません。',
             )}
           </p>
         </div>

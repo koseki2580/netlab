@@ -250,8 +250,8 @@ function IsisLesson() {
         <div style={LESSON_LABEL}>IS-IS</div>
         <p style={{ margin: 0, lineHeight: 1.7 }}>
           {t(
-            'IS-IS is a link-state routing protocol like OSPF: every router floods what it knows about its links, builds the same map, and runs SPF (Dijkstra) on it. Many service providers and large data centres run IS-IS rather than OSPF. Each router is named by a NET, and is configured as Level 1 (L1), Level 2 (L2) or both (L1/L2).',
-            'IS-IS は OSPF と同じリンクステート型のルーティングプロトコルです。各ルータが自分のリンクの情報を流し、全員が同じ地図を作って SPF（ダイクストラ法）で経路を計算します。多くの通信事業者や大規模データセンターは OSPF ではなく IS-IS を使います。ルータは NET というアドレスで識別され、レベル 1（L1）、レベル 2（L2）、またはその両方（L1/L2）として設定されます。',
+            'IS-IS is a link-state routing protocol like OSPF: every router floods what it knows about its links, builds the same map, and runs SPF (Dijkstra) on it. Many service providers, and some data-centre fabrics, run IS-IS rather than OSPF. Each router is named by a NET, and is configured as Level 1 (L1), Level 2 (L2) or both (L1/L2).',
+            'IS-IS は OSPF と同じリンクステート型のルーティングプロトコルです。各ルータが自分のリンクの情報を流し、全員が同じ地図を作って SPF（ダイクストラ法）で経路を計算します。多くの通信事業者や一部のデータセンターのファブリックは、OSPF ではなく IS-IS を使います。ルータは NET というアドレスで識別され、レベル 1（L1）、レベル 2（L2）、またはその両方（L1/L2）として設定されます。',
           )}
         </p>
         <label style={{ display: 'grid', gap: 4, marginTop: 10, fontSize: 13 }}>
@@ -696,7 +696,7 @@ export default function IsisDemo() {
   return (
     <DemoShell
       title="IS-IS"
-      desc="The link-state routing protocol of providers and data centres: NETs, levels and areas, and how it differs from OSPF"
+      desc="The link-state routing protocol of many providers: NETs, levels and areas, and how it differs from OSPF"
     >
       <IsisLesson />
     </DemoShell>
