@@ -45,6 +45,12 @@ const NON_CANVAS_DEMO_PATHS = new Set([
   '/networking/quic-migration',
   '/networking/dnssec',
   '/networking/modern-wifi',
+  // Model-driven tables, maps and XML with no simulated network (REQ-396..REQ-400).
+  '/networking/bgp-policy',
+  '/networking/rpki',
+  '/networking/anycast',
+  '/networking/dhcp-relay',
+  '/networking/netconf',
   '/networking/https',
   '/networking/http2',
   '/networking/http3',

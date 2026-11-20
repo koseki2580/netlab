@@ -45,10 +45,10 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>準備</strong> — ビットとバイト、入門コース、サブネットの練習など</li>
                  <li><strong>LAN</strong> — スイッチ、ARP、VLAN、物理層（デュプレックス、PoE、LLDP）</li>
                  <li><strong>IP</strong> — VLSM（大きさの違うサブネットに分ける練習）、経路、ICMP と traceroute（4 つの ICMP メッセージを予想して確かめる）、1 ホップずつの流れ、MTU</li>
-                 <li><strong>トランスポートとサービス</strong> — UDP・TCP、DHCP・DNS・DNSSEC、HTTP、NAT、端末と模擬サーバ</li>
+                 <li><strong>トランスポートとサービス</strong> — UDP・TCP、DHCP と DHCP リレー、DNS・DNSSEC、HTTP、NAT、端末と模擬サーバ</li>
                  <li><strong>企業ネットワーク</strong> — スパニングツリー（RSTP の代替ポートと MSTP を含む）、OSPF とエリア、BFD による障害の検出、ACL、冗長化、QoS（マーキングとキューイング）、syslog・SNMP・NTP、IPv6、Wi-Fi 6/7 と WPA3 を含む無線</li>
-                 <li><strong>事業者とデータセンター</strong> — IS-IS、ECMP、スパイン・リーフ構成、ロードバランサ、セグメントルーティング、トンネル、拠点間 VPN（IPsec・WireGuard）、MPLS、VXLAN、マルチキャスト</li>
-                 <li><strong>最新とクラウド</strong> — クラウドのネットワーク（VPC）、SD-WAN、ストリーミングテレメトリ、TLS 1.3、ECH、耐量子の鍵交換、DNS の暗号化、Happy Eyeballs と NAT64、HTTP/2、QUIC の接続移行、HTTP/3、MASQUE、輻輳制御、L4S</li>
+                 <li><strong>事業者とデータセンター</strong> — IS-IS、BGP の最適経路とコミュニティ、RPKI、ECMP、スパイン・リーフ構成、ロードバランサ、セグメントルーティング、トンネル、拠点間 VPN（IPsec・WireGuard）、MPLS、VXLAN、マルチキャスト</li>
+                 <li><strong>最新とクラウド</strong> — クラウドのネットワーク（VPC）、SD-WAN、ストリーミングテレメトリ、TLS 1.3、ECH、耐量子の鍵交換、DNS の暗号化、Happy Eyeballs と NAT64、エニーキャストと CDN、NETCONF と YANG、HTTP/2、QUIC の接続移行、HTTP/3、MASQUE、輻輳制御、L4S</li>
                </ol>
                <p>各 Level には、レッスンと、合格に必要なもの（入門コース・実習問題のレベル・パケットの問題のレベル・修了テスト）があります。<strong>Level は、そこに並ぶものがすべて済んだときに合格</strong>で、次の Level が開きます。テストに合格しただけでは、その Level の問題のレベルが残っていれば合格になりません。</p>
                <p>前にテストに合格していた方は、その合格がそのまま残ります。Level にほかの問題が残っていれば、Level のカードに「この Level のテストの合格は残っています」と出るので、残りを済ませてください。</p>
@@ -454,10 +454,10 @@ window.USER_GUIDE_CONTENT = {
                  <li><strong>Getting ready</strong> — bits and bytes, the getting-started course, subnetting practice and more</li>
                  <li><strong>LAN</strong> — switches, ARP, VLANs and the physical layer (duplex, PoE, LLDP)</li>
                  <li><strong>IP</strong> — VLSM (practice carving subnets of different sizes), routes, ICMP and traceroute (predict and check four ICMP messages), the hop-by-hop path and MTU</li>
-                 <li><strong>Transport and services</strong> — UDP and TCP, DHCP, DNS and DNSSEC, HTTP, NAT</li>
+                 <li><strong>Transport and services</strong> — UDP and TCP, DHCP and DHCP relay, DNS and DNSSEC, HTTP, NAT</li>
                  <li><strong>Enterprise</strong> — spanning tree (with RSTP's alternate ports and MSTP), OSPF and its areas, failure detection with BFD, ACLs, redundancy, QoS (marking and queuing), syslog, SNMP and NTP, IPv6 and wireless (including Wi-Fi 6/7 and WPA3)</li>
-                 <li><strong>Providers and data centres</strong> — IS-IS, ECMP, spine-leaf fabrics, load balancers, segment routing, tunnels, site-to-site VPNs (IPsec, WireGuard), MPLS, VXLAN and multicast</li>
-                 <li><strong>Modern and cloud</strong> — cloud networks (VPC), SD-WAN, streaming telemetry, TLS 1.3, ECH, post-quantum key exchange, encrypted DNS, Happy Eyeballs and NAT64, HTTP/2, HTTP/3, QUIC connection migration, MASQUE, congestion control and L4S</li>
+                 <li><strong>Providers and data centres</strong> — IS-IS, BGP best path and communities, RPKI, ECMP, spine-leaf fabrics, load balancers, segment routing, tunnels, site-to-site VPNs (IPsec, WireGuard), MPLS, VXLAN and multicast</li>
+                 <li><strong>Modern and cloud</strong> — cloud networks (VPC), SD-WAN, streaming telemetry, TLS 1.3, ECH, post-quantum key exchange, encrypted DNS, Happy Eyeballs and NAT64, anycast and CDNs, NETCONF and YANG, HTTP/2, HTTP/3, QUIC connection migration, MASQUE, congestion control and L4S</li>
                </ol>
                <p>Each stage lists its lessons and what it takes to pass: the course, exercise levels, packet exercise levels and the test. <strong>A stage is passed when everything it lists is done</strong>, and that opens the next one. Passing its test alone does not pass a stage that also lists exercise levels.</p>
                <p>If you passed a test before, that pass is kept. Where the stage still lists exercises, its card says “Your pass of this stage’s test is kept”; finish the rest to pass the stage.</p>

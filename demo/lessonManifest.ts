@@ -309,6 +309,30 @@ export const LESSONS = [
     tags: ['OSPF'],
   },
   {
+    path: '/networking/bgp-policy',
+    category: 'routing',
+    module: './networking/BgpPolicyDemo',
+    title: { en: 'BGP best path and communities', ja: 'BGP の最適経路選択とコミュニティ' },
+    desc: {
+      en: 'Step through how a router picks one of several BGP paths, change one attribute, then tag a route with communities and see where it goes.',
+      ja: '複数の BGP 経路からルータが 1 本を選ぶ手順をたどり、属性を 1 つ変え、経路にコミュニティを付けて届く範囲を確かめます。',
+    },
+    difficulty: 'advanced',
+    tags: ['BGP'],
+  },
+  {
+    path: '/networking/rpki',
+    category: 'routing',
+    module: './networking/RpkiDemo',
+    title: { en: 'RPKI route origin validation', ja: 'RPKI による経路オリジン検証' },
+    desc: {
+      en: 'How a router checks which AS may originate a BGP prefix, and what that changes for forwarding.',
+      ja: 'BGP のプレフィックスをどの AS が送り出してよいかをルータが確かめる仕組みと、それで転送がどう変わるか。',
+    },
+    difficulty: 'advanced',
+    tags: ['BGP'],
+  },
+  {
     path: '/networking/arp',
     category: 'areas',
     module: './networking/ArpDemo',
@@ -740,6 +764,18 @@ export const LESSONS = [
     tags: ['DHCP', 'DNS'],
   },
   {
+    path: '/networking/dhcp-relay',
+    category: 'services',
+    module: './networking/DhcpRelayDemo',
+    title: { en: 'DHCP relay (ip helper-address)', ja: 'DHCP リレー（ip helper-address）' },
+    desc: {
+      en: 'One DHCP server, many VLANs: follow a DHCP broadcast through a router and see what the server reads to choose an address.',
+      ja: '1 台の DHCP サーバーで複数の VLAN をまかないます。DHCP のブロードキャストがルータをどう越えるかを追い、サーバーが何を見てアドレスを選ぶか。',
+    },
+    difficulty: 'intermediate',
+    tags: ['DHCP'],
+  },
+  {
     path: '/services/dns-resolution',
     category: 'services',
     module: './services/DnsResolutionDemo',
@@ -927,6 +963,18 @@ export const LESSONS = [
     tags: ['WAN'],
   },
   {
+    path: '/networking/netconf',
+    category: 'simulation',
+    module: './networking/NetconfDemo',
+    title: { en: 'NETCONF and YANG', ja: 'NETCONF と YANG' },
+    desc: {
+      en: 'Push one interface change to three routers with a data model and with a CLI script, and see what each leaves behind.',
+      ja: '同じインターフェースの変更を、データモデルと CLI スクリプトで 3 台のルータに送り、それぞれ何が残るかを見ます。',
+    },
+    difficulty: 'intermediate',
+    tags: ['Operations'],
+  },
+  {
     path: '/networking/telemetry',
     category: 'simulation',
     module: './networking/TelemetryDemo',
@@ -997,6 +1045,18 @@ export const LESSONS = [
     },
     difficulty: 'intermediate',
     tags: ['IPv6'],
+  },
+  {
+    path: '/networking/anycast',
+    category: 'simulation',
+    module: './networking/AnycastDemo',
+    title: { en: 'Anycast and CDNs', ja: 'エニーキャストと CDN' },
+    desc: {
+      en: 'One address announced from many places: which copy a user reaches, and what happens when one goes away.',
+      ja: '多くの場所から広告される 1 つのアドレス。利用者はどの拠点に届き、1 つが消えるとどうなるか。',
+    },
+    difficulty: 'advanced',
+    tags: ['BGP'],
   },
   {
     path: '/networking/masque',
