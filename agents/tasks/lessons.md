@@ -347,3 +347,13 @@ A running record of corrections and feedback received during sessions. Use this 
 **Why**: A prediction the page already answered teaches nothing.
 
 **Apply-when**: Writing a lesson, its manifest entry, or an exam question.
+
+## L028 — Agents that build lessons in parallel own new files only; the lead runs Playwright
+
+**What happened**: A lesson-building subagent ran Playwright and briefly edited the manifest while the lead's full run was going, and a test lost its trace file (spurious failure). The brief in /private/tmp also vanished when the temp folder was cleared.
+
+**Rule**: Keep the brief in `agents/tasks/active/lesson-brief.md`; agents create only their own four files and never run Playwright or a dev server; the lead integrates shared files, runs every e2e, and measures each page on a 390 px phone after the reveal (overflow, 44 px controls, SVG text ≥ 9 px).
+
+**Why**: Shared ports and test-results folders make concurrent runs fail for reasons unrelated to the code, and agents cannot see the page.
+
+**Apply-when**: Dispatching subagents to build lessons or pages in parallel.

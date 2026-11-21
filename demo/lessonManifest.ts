@@ -281,6 +281,18 @@ export const LESSONS = [
     tags: ['OSPF'],
   },
   {
+    path: '/networking/eigrp',
+    category: 'routing',
+    module: './networking/EigrpDemo',
+    title: { en: 'EIGRP and DUAL', ja: 'EIGRP と DUAL' },
+    desc: {
+      en: 'Successors, feasible successors, and what EIGRP does when its best route fails.',
+      ja: 'サクセサとフィージブルサクセサ、そして最良の経路が落ちたとき EIGRP がどう動くか。',
+    },
+    difficulty: 'intermediate',
+    tags: ['OSPF'],
+  },
+  {
     path: '/routing/ospf-areas',
     category: 'routing',
     module: './routing/OspfAreasDemo',
@@ -610,6 +622,18 @@ export const LESSONS = [
     tags: ['Wi-Fi'],
   },
   {
+    path: '/networking/wifi-roaming',
+    category: 'areas',
+    module: './networking/WifiRoamingDemo',
+    title: { en: 'Wi-Fi roaming and controllers', ja: 'Wi-Fi のローミングとコントローラ' },
+    desc: {
+      en: 'A voice call walks past three access points: where the phone roams, how long each roam takes, and where its packets travel.',
+      ja: '音声通話をしながら 3 台のアクセスポイントの前を歩きます。どこでローミングし、どれだけかかり、パケットがどこを通るか。',
+    },
+    difficulty: 'advanced',
+    tags: ['Wi-Fi'],
+  },
+  {
     path: '/networking/tunneling/gre',
     category: 'areas',
     module: './networking/GreDemo',
@@ -718,6 +742,18 @@ export const LESSONS = [
     tags: ['L7', 'HTTP'],
   },
   {
+    path: '/networking/http-cache',
+    category: 'areas',
+    module: './networking/HttpCacheDemo',
+    title: { en: 'HTTP caching', ja: 'HTTP のキャッシュ' },
+    desc: {
+      en: 'Follow Cache-Control, freshness and revalidation through a browser cache and a CDN over time.',
+      ja: 'Cache-Control、新鮮さ、再検証を、ブラウザのキャッシュと CDN で時間を追って確かめます。',
+    },
+    difficulty: 'intermediate',
+    tags: ['HTTP/2'],
+  },
+  {
     path: '/networking/email',
     category: 'areas',
     module: './networking/EmailDemo',
@@ -788,6 +824,18 @@ export const LESSONS = [
     },
     difficulty: 'advanced',
     tags: ['QUIC'],
+  },
+  {
+    path: '/networking/mptcp',
+    category: 'areas',
+    module: './networking/MptcpDemo',
+    title: { en: 'Multipath TCP', ja: 'Multipath TCP（MPTCP）' },
+    desc: {
+      en: 'One connection over Wi-Fi and LTE at once: the scheduler, a lost path, and sharing a bottleneck fairly.',
+      ja: 'Wi-Fi と LTE を同時に使う 1 つの接続。スケジューラ、経路が切れたとき、ボトルネックの公平な分け合い。',
+    },
+    difficulty: 'advanced',
+    tags: ['TCP'],
   },
   {
     path: '/areas/dmz',
@@ -1072,6 +1120,18 @@ export const LESSONS = [
     },
     difficulty: 'intermediate',
     tags: ['WAN'],
+  },
+  {
+    path: '/networking/ztna',
+    category: 'simulation',
+    module: './networking/ZtnaDemo',
+    title: { en: 'From VPN to zero-trust access', ja: 'VPN からゼロトラストアクセスへ' },
+    desc: {
+      en: 'A remote worker reaches company apps through a VPN or through an access proxy that checks identity and device.',
+      ja: '在宅の利用者が社内アプリへ入るのは VPN か、本人と端末を確かめるアクセスプロキシか。',
+    },
+    difficulty: 'advanced',
+    tags: ['ACL'],
   },
   {
     path: '/networking/netconf',

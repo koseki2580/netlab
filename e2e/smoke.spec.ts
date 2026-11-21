@@ -63,6 +63,12 @@ const NON_CANVAS_DEMO_PATHS = new Set([
   '/networking/email',
   '/networking/tcp-options',
   '/networking/pppoe',
+  // Model-driven tables and diagrams with no simulated network (REQ-411..REQ-415).
+  '/networking/eigrp',
+  '/networking/http-cache',
+  '/networking/wifi-roaming',
+  '/networking/mptcp',
+  '/networking/ztna',
   '/networking/https',
   '/networking/http2',
   '/networking/http3',

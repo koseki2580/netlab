@@ -115,8 +115,8 @@ export const STAGES: readonly Stage[] = [
     number: 4,
     title: { en: 'Transport and services', ja: 'トランスポートとサービス' },
     topics: {
-      en: 'UDP and TCP, DNS and DNSSEC, DHCP and relays, HTTP, email, voice over IP and NAT',
-      ja: 'UDP と TCP、DNS と DNSSEC、DHCP とリレー、HTTP、メール、VoIP、NAT',
+      en: 'UDP and TCP, DNS and DNSSEC, DHCP and relays, HTTP and caching, email, voice over IP and NAT',
+      ja: 'UDP と TCP、DNS と DNSSEC、DHCP とリレー、HTTP とキャッシュ、メール、VoIP、NAT',
     },
     lessons: [
       '/networking/udp',
@@ -127,6 +127,7 @@ export const STAGES: readonly Stage[] = [
       '/services/dns-resolution',
       '/networking/dnssec',
       '/networking/http',
+      '/networking/http-cache',
       '/networking/email',
       '/networking/voip',
       '/simulation/nat',
@@ -141,8 +142,8 @@ export const STAGES: readonly Stage[] = [
     number: 5,
     title: { en: 'Enterprise', ja: '企業ネットワーク' },
     topics: {
-      en: 'Spanning tree, OSPF and BFD, redistribution, ACLs and access-port protection, redundancy, QoS, logs and time, IPv6 and Neighbor Discovery, and wireless up to Wi-Fi 7 and WPA3',
-      ja: 'スパニングツリー、OSPF と BFD、再配布、ACL とアクセスポートの保護、冗長化、QoS、ログと時刻、IPv6 と近隣探索、無線（Wi-Fi 7 と WPA3 まで）',
+      en: 'Spanning tree, OSPF, EIGRP and BFD, redistribution, ACLs and access-port protection, redundancy, QoS, logs and time, IPv6 and Neighbor Discovery, and wireless up to Wi-Fi 7, WPA3 and roaming',
+      ja: 'スパニングツリー、OSPF、EIGRP と BFD、再配布、ACL とアクセスポートの保護、冗長化、QoS、ログと時刻、IPv6 と近隣探索、無線（Wi-Fi 7、WPA3、ローミングまで）',
     },
     lessons: [
       '/networking/stp',
@@ -150,6 +151,7 @@ export const STAGES: readonly Stage[] = [
       '/routing/dynamic',
       '/routing/ospf-convergence',
       '/networking/bfd',
+      '/networking/eigrp',
       '/routing/ospf-areas',
       '/networking/redistribution',
       '/simulation/acl',
@@ -168,6 +170,7 @@ export const STAGES: readonly Stage[] = [
       '/networking/dhcpv6',
       '/networking/wireless',
       '/networking/modern-wifi',
+      '/networking/wifi-roaming',
       '/simulation/enterprise',
     ],
     checkpoints: [
@@ -215,8 +218,8 @@ export const STAGES: readonly Stage[] = [
     number: 7,
     title: { en: 'Modern and cloud', ja: '最新とクラウド' },
     topics: {
-      en: 'TLS 1.3, ECH and post-quantum keys, HTTP/2, HTTP/3 and QUIC migration, congestion control, window scaling and SACK, L4S, MASQUE, encrypted DNS, Happy Eyeballs and NAT64, anycast and CDNs, NAT traversal, cloud networks, SD-WAN, NETCONF/YANG and telemetry',
-      ja: 'TLS 1.3、ECH と耐量子の鍵、HTTP/2、HTTP/3 と QUIC の接続移行、輻輳制御、ウィンドウスケールと SACK、L4S、MASQUE、DNS の暗号化、Happy Eyeballs と NAT64、エニーキャストと CDN、NAT 越え、クラウド、SD-WAN、NETCONF/YANG、テレメトリ',
+      en: 'TLS 1.3, ECH and post-quantum keys, HTTP/2, HTTP/3, QUIC migration and Multipath TCP, congestion control, window scaling and SACK, L4S, MASQUE, encrypted DNS, Happy Eyeballs and NAT64, anycast and CDNs, NAT traversal, cloud networks, SD-WAN, zero-trust access, NETCONF/YANG and telemetry',
+      ja: 'TLS 1.3、ECH と耐量子の鍵、HTTP/2、HTTP/3、QUIC の接続移行と Multipath TCP、輻輳制御、ウィンドウスケールと SACK、L4S、MASQUE、DNS の暗号化、Happy Eyeballs と NAT64、エニーキャストと CDN、NAT 越え、クラウド、SD-WAN、ゼロトラストアクセス、NETCONF/YANG、テレメトリ',
     },
     lessons: [
       '/networking/https',
@@ -229,12 +232,14 @@ export const STAGES: readonly Stage[] = [
       '/networking/http2',
       '/networking/http3',
       '/networking/quic-migration',
+      '/networking/mptcp',
       '/networking/masque',
       '/simulation/tcp-congestion',
       '/networking/tcp-options',
       '/networking/l4s',
       '/networking/vpc',
       '/networking/sd-wan',
+      '/networking/ztna',
       '/networking/netconf',
       '/networking/telemetry',
     ],
