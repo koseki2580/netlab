@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { runTerminalCommand, type TerminalEngine, type WebSites } from '../../src/terminal';
+import {
+  runTerminalCommand,
+  type ServerApp,
+  type TerminalEngine,
+  type WebSites,
+} from '../../src/terminal';
 import { useViewport } from '../../src/utils/useViewport';
 import { useGalleryLocale, useT } from '../localeContext';
 
@@ -44,6 +49,7 @@ export function TerminalPanel({
   nodeId,
   host,
   web,
+  apps,
   names,
   pending,
   onRun,
@@ -53,6 +59,8 @@ export function TerminalPanel({
   /** The prompt's host name. */
   host: string;
   web: WebSites;
+  /** Learner-written apps running on servers, which answer in place of their static pages (REQ-416). */
+  apps?: Readonly<Record<string, ServerApp>>;
   /** Device and DNS names Tab completes after a command. */
   names: readonly string[];
   /** A command to type and run, from the suggestions beside the terminal. */
@@ -69,8 +77,8 @@ export function TerminalPanel({
   const [ready, setReady] = useState(false);
   const [transcript, setTranscript] = useState<string[]>([]);
   const [typed, setTyped] = useState('');
-  const latest = useRef({ engine, nodeId, web, locale, names, host, onRun });
-  latest.current = { engine, nodeId, web, locale, names, host, onRun };
+  const latest = useRef({ engine, nodeId, web, apps, locale, names, host, onRun });
+  latest.current = { engine, nodeId, web, apps, locale, names, host, onRun };
   const run = useRef<(line: string) => Promise<void>>(async () => {});
   const switched = useRef<(host: string) => void>(() => {});
 
@@ -111,12 +119,13 @@ export function TerminalPanel({
       run.current = async (command: string) => {
         if (busy.current) return;
         busy.current = true;
-        const { engine: e, nodeId: id, web: w, locale: l, host: h } = latest.current;
+        const { engine: e, nodeId: id, web: w, apps: a, locale: l, host: h } = latest.current;
         try {
           const result = await runTerminalCommand(command, {
             engine: e,
             nodeId: id,
             web: w,
+            ...(a ? { apps: a } : {}),
             locale: l,
           });
           if (result.clear) terminal.clear();

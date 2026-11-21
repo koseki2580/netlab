@@ -5,13 +5,14 @@ import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
 import { TERMINAL_WEB_SITES, terminalNetwork } from '../../src/terminal/terminalNetwork';
-import type { WebSites } from '../../src/terminal/types';
+import type { ServerApp, WebSites } from '../../src/terminal/types';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import { LessonCanvas, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import { LESSON_BUTTON, LESSON_CARD, LESSON_LABEL } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useGalleryLocale, useT } from '../localeContext';
 import { TerminalPanel } from '../terminal/TerminalPanel';
+import { ServerAppCard, type WwwMode } from './ServerAppCard';
 import { CAUSES, FAULTS, causeOf, type CauseId, type Fault } from './terminalFaults';
 import { MISSIONS, completedBy, type TerminalRun } from './terminalMissions';
 
@@ -155,6 +156,15 @@ function TerminalSide({
   const { engine } = useSimulation();
   const [pending, setPending] = useState<{ line: string; id: number } | null>(null);
   const [deviceId, setDeviceId] = useState('client');
+  const [wwwMode, setWwwMode] = useState<WwwMode>('built-in');
+  const [wwwApp, setWwwApp] = useState<ServerApp | null>(null);
+  // While the learner's app is in charge of www (running or stopped), www's built-in pages are gone.
+  const servedWeb = useMemo(() => {
+    if (wwwMode === 'built-in') return web;
+    const { www: _builtIn, ...rest } = web;
+    return rest;
+  }, [web, wwwMode]);
+  const apps = useMemo(() => (wwwApp ? { www: wwwApp } : undefined), [wwwApp]);
   const [done, setDone] = useState<Set<string>>(readDone);
   const device = DEVICES.find((node) => node.id === deviceId) ?? DEVICES[0];
   const phone = useViewport().isNarrow;
@@ -204,12 +214,19 @@ function TerminalSide({
         engine={engine}
         nodeId={device?.id ?? 'client'}
         host={device?.data.label ?? 'client'}
-        web={web}
+        web={servedWeb}
+        {...(apps ? { apps } : {})}
         names={NAMES}
         pending={pending}
         onRun={onRun}
       />
       {phone ? faults : null}
+      <ServerAppCard
+        onChange={(mode, app) => {
+          setWwwMode(mode);
+          setWwwApp(app);
+        }}
+      />
       {phone ? <Missions done={done} /> : null}
       <div style={LESSON_CARD}>
         <div style={LESSON_LABEL}>{t('Examples', 'コマンドの例')}</div>

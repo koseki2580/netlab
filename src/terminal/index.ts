@@ -1,6 +1,7 @@
 import type { TerminalContext, TerminalResult } from './types';
 
 export type {
+  ServerApp,
   TerminalContext,
   TerminalEngine,
   TerminalResult,

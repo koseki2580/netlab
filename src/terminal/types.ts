@@ -1,4 +1,5 @@
 import type { SimulationEnginePort } from '../simulation/enginePort';
+import type { SandboxResult } from './serverApp/appSandbox';
 
 /** What one web page answers with. */
 export interface WebPage {
@@ -15,6 +16,14 @@ export interface WebSite {
 
 /** The web sites of a network, by the id of the server device that serves each. */
 export type WebSites = Readonly<Record<string, WebSite>>;
+
+/**
+ * A learner-written server app listening on port 80 (REQ-416): it answers an
+ * HTTP/1.1 request string with its response, or says why it could not.
+ */
+export interface ServerApp {
+  handle(raw: string): Promise<SandboxResult>;
+}
 
 /** The parts of the engine the terminal uses: sends go through it, so they are traces. */
 export type TerminalEngine = Pick<
@@ -41,6 +50,8 @@ export interface TerminalContext {
   readonly locale?: 'en' | 'ja';
   /** What the web servers of the network answer `curl` with. */
   readonly web?: WebSites;
+  /** Running learner-written apps, by server device id; they take the place of a static site. */
+  readonly apps?: Readonly<Record<string, ServerApp>>;
 }
 
 export interface TerminalResult {

@@ -50,3 +50,21 @@ const { lines, clear } = await runTerminalCommand('ping -c 2 www', {
 - On a phone, an input line under the terminal takes the typing, where the soft keyboard and the
   IME work.
 - `size-gate-check` fails if any library entry reaches xterm.js (TC-1715).
+
+## Learner-written server app (REQ-416)
+
+`TerminalContext.apps` maps a server device id to a `ServerApp` (`handle(raw) → SandboxResult`); while one is
+set, `curl` sends the HTTP/1.1 request through the engine, asks the app for the response and sends that back
+with `sendTransfer`, which splits it into segments of 1400 bytes (or the path MTU − 40). `curl -v` prints
+`* Response sent in N segments: …` from the transfer's chunk count. `-X`, `-H`, `-d` and `-i` are supported.
+
+- Core: `src/terminal/serverApp/serverApp.ts` — `parseHttpRequest`, `serializeHttpResponse`, `runServerApp`
+  (Express-like `app.get/post/put/delete`, `:param`, `req.query/params/headers/body`, `res.status/set/send/json`;
+  404 for no route, 500 for a throwing handler, `console.log` captured). Route matching reuses
+  `HttpServer` from `src/layers/l7-application/HttpServer.ts`.
+- Sandbox: `appSandbox.ts` owns a dedicated module Worker (`sandbox.worker.ts`), created on Start and
+  terminated on Stop or when a request exceeds 1000 ms. The worker shadows `fetch`, `XMLHttpRequest`,
+  `WebSocket`, `EventSource`, `importScripts`, `indexedDB` and `caches` before running the code — defence in
+  depth for the learner's own code, not a security boundary.
+- Demo: `demo/tools/ServerAppCard.tsx` keeps the code in localStorage (`netlab-terminal-www-app`), never in the
+  URL. Before the first Start, www serves its built-in pages; after Start, the app; after Stop, nothing.

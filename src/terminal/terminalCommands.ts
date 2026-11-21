@@ -49,8 +49,8 @@ const USAGE: Record<string, readonly [string, string]> = {
   nslookup: ['Usage: nslookup name', '使い方: nslookup 名前'],
   dig: ['Usage: dig name', '使い方: dig 名前'],
   curl: [
-    'Usage: curl [-v] [-I] http://host[:port]/path',
-    '使い方: curl [-v] [-I] http://ホスト[:ポート]/パス',
+    'Usage: curl [-v] [-i] [-I] [-X method] [-H header] [-d data] http://host[:port]/path',
+    '使い方: curl [-v] [-i] [-I] [-X メソッド] [-H ヘッダ] [-d データ] http://ホスト[:ポート]/パス',
   ],
   ip: ['Usage: ip addr | ip route', '使い方: ip addr | ip route'],
   arp: ['Usage: arp -a', '使い方: arp -a'],
@@ -271,6 +271,11 @@ async function dig(
 }
 
 const REASON: Record<number, string> = { 200: 'OK', 404: 'Not Found' };
+/** The transfer's segment size on an ordinary 1500-byte path (DataTransferController's default). */
+const SEGMENT_BYTES = 1400;
+
+/** The flags curl takes a value after. */
+const CURL_VALUE_FLAGS = new Set(['-X', '-H', '-d']);
 let nextPort = 49152;
 
 async function curl(
@@ -280,7 +285,12 @@ async function curl(
 ): Promise<TerminalResult> {
   const verbose = args.includes('-v');
   const headOnly = args.includes('-I');
-  const typed = args.find((arg) => !arg.startsWith('-'));
+  const withHeaders = args.includes('-i');
+  const valueOf = (flag: string) =>
+    args.flatMap((arg, i) => (arg === flag ? [args[i + 1] ?? ''] : []));
+  const typed = args.find(
+    (arg, i) => !arg.startsWith('-') && !CURL_VALUE_FLAGS.has(args[i - 1] ?? ''),
+  );
   // Like curl, a URL with no scheme is taken as http.
   const url = typed && !/^[a-z]+:\/\//i.test(typed) ? `http://${typed}` : typed;
   const parsed = url ? /^http:\/\/([^/:]+)(?::(\d+))?(\/.*)?$/.exec(url) : null;
@@ -293,11 +303,13 @@ async function curl(
   const ip = await resolve(context, host);
   if (!ip) return { lines: [`curl: (6) Could not resolve host: ${host}`] };
   const server = context.engine.getTopology().nodes.find((node) => nodeIp(context, node) === ip);
+  const app = server ? context.apps?.[server.id] : undefined;
   const site = server ? context.web?.[server.id] : undefined;
   const refused = [
     `curl: (7) Failed to connect to ${host} port ${port}: Couldn't connect to server`,
   ];
-  if (!server || !site || (site.port ?? 80) !== port) return { lines: refused };
+  const listening = app ? port === 80 : site !== undefined && (site.port ?? 80) === port;
+  if (!server || !listening) return { lines: refused };
 
   const engine = context.engine;
   const srcPort = nextPort;
@@ -305,38 +317,82 @@ async function curl(
   const handshake = await engine.tcpConnect(context.nodeId, server.id, srcPort, port);
   if (!handshake.success || !handshake.connection) return { lines: refused };
 
-  const method = headOnly ? 'HEAD' : 'GET';
+  const data = valueOf('-d').slice(-1)[0];
+  const method =
+    valueOf('-X').slice(-1)[0] ?? (headOnly ? 'HEAD' : data !== undefined ? 'POST' : 'GET');
+  const extraHeaders = valueOf('-H');
   const request = [
     `${method} ${path} HTTP/1.1`,
     `Host: ${host}`,
     'User-Agent: curl',
     'Accept: */*',
+    ...extraHeaders,
+    ...(data !== undefined
+      ? [
+          ...(extraHeaders.some((h) => /^content-type:/i.test(h))
+            ? []
+            : ['Content-Type: application/x-www-form-urlencoded']),
+          `Content-Length: ${new TextEncoder().encode(data).length}`,
+        ]
+      : []),
   ];
-  await engine.sendTransfer(context.nodeId, server.id, `${request.join('\r\n')}\r\n\r\n`, {
+  const rawRequest = `${request.join('\r\n')}\r\n\r\n${data ?? ''}`;
+  await engine.sendTransfer(context.nodeId, server.id, rawRequest, {
     srcPort,
     dstPort: port,
   });
-  const page: WebPage = site.pages[path] ?? {
-    status: 404,
-    contentType: 'text/plain',
-    body: 'Not Found',
-  };
-  const status = page.status ?? 200;
-  const headers = [
-    `HTTP/1.1 ${status} ${REASON[status] ?? ''}`.trimEnd(),
-    `Content-Type: ${page.contentType ?? 'text/plain'}`,
-    `Content-Length: ${new TextEncoder().encode(page.body).length}`,
-  ];
-  const response = `${headers.join('\r\n')}\r\n\r\n${headOnly ? '' : page.body}`;
-  await engine.sendTransfer(server.id, context.nodeId, response, {
+
+  let headers: string[];
+  let bodyText: string;
+  if (app) {
+    const answer = await app.handle(rawRequest);
+    if (!answer.ok) {
+      await engine.tcpDisconnect(handshake.connection.id);
+      return answer.kind === 'timeout'
+        ? {
+            lines: ['curl: (28) Operation timed out after 1000 milliseconds with 0 bytes received'],
+          }
+        : { lines: ['curl: (52) Empty reply from server'] };
+    }
+    const [head = '', ...rest] = answer.raw.split('\r\n\r\n');
+    headers = head.split('\r\n');
+    bodyText = rest.join('\r\n\r\n');
+  } else {
+    const page: WebPage = site?.pages[path] ?? {
+      status: 404,
+      contentType: 'text/plain',
+      body: 'Not Found',
+    };
+    const status = page.status ?? 200;
+    headers = [
+      `HTTP/1.1 ${status} ${REASON[status] ?? ''}`.trimEnd(),
+      `Content-Type: ${page.contentType ?? 'text/plain'}`,
+      `Content-Length: ${new TextEncoder().encode(page.body).length}`,
+    ];
+    bodyText = page.body;
+  }
+  const response = `${headers.join('\r\n')}\r\n\r\n${headOnly ? '' : bodyText}`;
+  const sent = await engine.sendTransfer(server.id, context.nodeId, response, {
     srcPort: port,
     dstPort: srcPort,
   });
   await engine.tcpDisconnect(handshake.connection.id);
 
-  const body = headOnly ? [] : page.body.split('\n');
+  const body = headOnly ? [] : bodyText.split('\n');
   if (headOnly) return { lines: headers };
-  if (!verbose) return { lines: body };
+  if (!verbose) return { lines: withHeaders ? [...headers, '', ...body] : body };
+  // The transfer splits the response into segments of SEGMENT_BYTES; name them when the count agrees.
+  const total = sent.payloadSizeBytes;
+  const count = sent.expectedChunks;
+  const sizes =
+    count === Math.ceil(total / SEGMENT_BYTES)
+      ? Array.from({ length: count }, (_, i) =>
+          i < count - 1 ? SEGMENT_BYTES : total - SEGMENT_BYTES * (count - 1),
+        )
+      : null;
+  const segments = sizes
+    ? `* Response sent in ${count} segment${count === 1 ? '' : 's'}: ${sizes.join(' + ')} bytes`
+    : `* Response sent in ${count} segments, ${total} bytes`;
   return {
     lines: [
       `*   Trying ${ip}:${port}...`,
@@ -346,6 +402,8 @@ async function curl(
       ...headers.map((line) => `< ${line}`),
       '<',
       ...body,
+      // Last, as curl ends with its own "* Connection … left intact": how the response travelled.
+      segments,
     ],
   };
 }

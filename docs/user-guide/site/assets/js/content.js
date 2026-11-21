@@ -348,6 +348,7 @@ window.USER_GUIDE_CONTENT = {
         id: "terminal",
         title: "端末と模擬サーバ",
         html: `<p>「端末と模擬サーバ」（<code>#/tools/terminal</code>）では、図の <strong>client</strong> で端末を開き、実機と同じコマンドを打てます。コマンドはシミュレータの上で動き、パケットは図の上を動きます。答える DNS・Web（<strong>www</strong>）・DHCP のサーバも、ページの中で動いています。ネットワークにつながっていなくても使えます。</p>
+               <p><strong>www のサーバを書く</strong>：カードに Express 風の JavaScript（<code>app.get('/hello', (req, res) =&gt; res.send('Hello'))</code>）を書いて「起動」を押すと、www の 80 番でそのアプリが動きます。client から <code>curl</code> すると、要求と応答がネットワークを通り、アプリの答えが表示されます。<code>curl -v</code> では、応答がいくつのセグメント（1 つ最大 1400 バイト）に分かれて届いたかも出ます。<code>-X</code>・<code>-H</code>・<code>-d</code> で POST もできます。ないパスは 404、例外を投げたハンドラは 500 になり、エラーはカードのログに出ます。1000 ms 以上かかる要求ではアプリが止められ、curl はタイムアウトを表示します。「停止」すると接続は拒否され、「組み込みのページに戻す」で元に戻ります。コードはこのブラウザにだけ保存され、ページとは別のワーカーで、自分ではネットワークにアクセスできない状態で動きます。</p>
                <ul>
                  <li><code>ping -c 2 www</code> — エコー要求を送ります。届かないときは、ルータが返す <code>Destination Net Unreachable</code> が出ます。</li>
                  <li><code>traceroute www</code> — 途中のルータを 1 台ずつ調べます。</li>
@@ -757,6 +758,7 @@ window.USER_GUIDE_CONTENT = {
         id: "terminal",
         title: "Terminal and simulated servers",
         html: `<p>On “Terminal and simulated servers” (<code>#/tools/terminal</code>) you open a terminal on the <strong>client</strong> and type the commands of a real machine. They run on the simulator, and their packets move on the diagram. The DNS, web (<strong>www</strong>) and DHCP servers that answer run in the page too, so it works offline.</p>
+               <p><strong>Write www’s server</strong>: write an Express-style JavaScript app in the card (<code>app.get('/hello', (req, res) =&gt; res.send('Hello'))</code>) and press Start; it runs on www’s port 80. A <code>curl</code> from the client travels through the network and prints the app’s answer; <code>curl -v</code> also says how many segments (up to 1400 bytes each) the response came back in. <code>-X</code>, <code>-H</code> and <code>-d</code> send a POST. A path with no route gives 404 and a throwing handler 500, with the error in the card’s log; a request that takes over 1000 ms stops the app and curl reports a timeout. Stop refuses connections; “Back to the built-in pages” restores them. The code is kept only in this browser and runs in a worker separate from the page, with no network access of its own.</p>
                <ul>
                  <li><code>ping -c 2 www</code> — sends echo requests. When there is no way there, the router’s <code>Destination Net Unreachable</code> is printed.</li>
                  <li><code>traceroute www</code> — finds the routers on the way, one by one.</li>
