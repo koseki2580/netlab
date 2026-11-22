@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { Buffer } from 'node:buffer';
+import { readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
@@ -105,19 +106,49 @@ async function loadCatalog(entryPoint, exportName) {
   return catalog;
 }
 
+/** `{ chunk: path }` for each concept-check chunk aggregator of a locale. */
+function conceptChunkFiles(locale) {
+  const dir = path.join(repoRoot, 'src/i18n/locales', locale, 'concept');
+  const pattern = new RegExp(`^concept-${locale}-([a-z0-9]+)\\.ts$`);
+  return Object.fromEntries(
+    readdirSync(dir).flatMap((name) => {
+      const match = pattern.exec(name);
+      return match ? [[match[1], path.join(dir, name)]] : [];
+    }),
+  );
+}
+
 async function main() {
   const enCatalog = await loadCatalog(path.join(repoRoot, 'src/i18n/locales/en.ts'), 'en');
   const jaCatalog = await loadCatalog(path.join(repoRoot, 'src/i18n/locales/ja.ts'), 'ja');
-  // The conceptCheck sub-catalog is kept out of the assembled en/ja (lazy-loaded
-  // by the panel to stay out of the root bundle) but still needs en/ja parity.
-  const enConcept = await loadCatalog(
-    path.join(repoRoot, 'src/i18n/locales/en/conceptCheck.ts'),
-    'conceptCheck',
-  );
-  const jaConcept = await loadCatalog(
-    path.join(repoRoot, 'src/i18n/locales/ja/conceptCheck.ts'),
-    'conceptCheck',
-  );
+  // The concept checks' strings load in chunks of their own (src/i18n/locales/<locale>/concept/,
+  // one aggregator per chunk over per-deck files), outside the assembled en/ja. Each chunk must
+  // match its counterpart in the other locale, so a key sits in the same chunk in both.
+  const enChunks = conceptChunkFiles('en');
+  const jaChunks = conceptChunkFiles('ja');
+  const enConcept = {};
+  const jaConcept = {};
+  const chunkReports = [];
+  for (const chunk of new Set([...Object.keys(enChunks), ...Object.keys(jaChunks)])) {
+    if (!enChunks[chunk] || !jaChunks[chunk]) {
+      console.error(`i18n parity failed: concept chunk "${chunk}" exists in only one locale`);
+      process.exitCode = 1;
+      return;
+    }
+    const en = await loadCatalog(enChunks[chunk], 'catalog');
+    const ja = await loadCatalog(jaChunks[chunk], 'catalog');
+    Object.assign(enConcept, en);
+    Object.assign(jaConcept, ja);
+    const chunkReport = compareCatalogs(en, ja);
+    if (!chunkReport.ok) chunkReports.push([chunk, chunkReport]);
+  }
+  for (const [chunk, chunkReport] of chunkReports) {
+    console.error(`concept chunk "${chunk}":\n${formatI18nReport(chunkReport)}`);
+  }
+  if (chunkReports.length > 0) {
+    process.exitCode = 1;
+    return;
+  }
   const enMerged = { ...enCatalog, ...enConcept };
   const jaMerged = { ...jaCatalog, ...jaConcept };
   const report = compareCatalogs(enMerged, jaMerged);
@@ -128,7 +159,9 @@ async function main() {
     return;
   }
 
-  console.log(`i18n parity ok: ${Object.keys(enMerged).length} keys`);
+  console.log(
+    `i18n parity ok: ${Object.keys(enMerged).length} keys (${Object.keys(enChunks).length} concept chunks)`,
+  );
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === scriptPath) {

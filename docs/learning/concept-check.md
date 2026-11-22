@@ -60,8 +60,10 @@ distractor's key is its option key + `.why`; both are enforced by a structural
 test.
 
 **To add a protocol:** append a deck to `src/learning/concept-check/decks.ts`
-and its `learning.concept.<deck>.*` keys to the en/ja sub-catalogs
-(`src/i18n/locales/{en,ja}/conceptCheck.ts`). A structural test fails if any
+and its `learning.concept.<deck>.*` keys to the en/ja string chunks: its
+questions in `src/i18n/locales/{en,ja}/concept/decks/<deck>.ts`, spread into
+its chunk's `concept-<locale>-<chunk>.ts`, and its name in
+`concept-<locale>-core.ts` ([i18n](../dev/i18n.md)). A structural test fails if any
 referenced key is missing in either language, if a question lacks exactly one
 correct option, or if the correct answer never moves slot — so new decks can't
 drift.

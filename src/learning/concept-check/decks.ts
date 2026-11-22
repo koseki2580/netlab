@@ -1,4 +1,4 @@
-import type { ConceptDeck, ConceptLayer, ConceptQuestion } from './types';
+import type { ConceptDeck, ConceptDeckChunk, ConceptLayer, ConceptQuestion } from './types';
 
 type Answer = 'a' | 'b' | 'c';
 
@@ -22,15 +22,35 @@ function question(deck: string, id: string, answer: Answer): ConceptQuestion {
   };
 }
 
-/** A deck: its id, its layer, and each question's id with the letter of its answer. */
+type Questions = readonly (readonly [string, Answer])[];
+
+/**
+ * A deck: its id, its layer, each question's id with the letter of its answer,
+ * and the string chunk its questions load from — its layer, except that a
+ * layer-7 deck names one of the two layer-7 chunks.
+ */
+function deck(
+  id: string,
+  layer: 'l7',
+  questions: Questions,
+  chunk: Extract<ConceptDeckChunk, 'l7web' | 'l7apps'>,
+): ConceptDeck;
+function deck(
+  id: string,
+  layer: Exclude<ConceptLayer, 'l7'>,
+  questions: Questions,
+  chunk?: ConceptDeckChunk,
+): ConceptDeck;
 function deck(
   id: string,
   layer: ConceptLayer,
-  questions: readonly (readonly [string, Answer])[],
+  questions: Questions,
+  chunk: ConceptDeckChunk = layer as ConceptDeckChunk,
 ): ConceptDeck {
   return {
     id,
     layer,
+    chunk,
     nameKey: `learning.concept.${id}.name`,
     questions: questions.map(([questionId, answer]) => question(id, questionId, answer)),
   };
@@ -74,13 +94,18 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
     ['q2', 'b'],
     ['q3', 'c'],
   ]),
-  deck('dns', 'l7', [
-    ['q4', 'a'],
-    ['q5', 'b'],
-    ['q1', 'a'],
-    ['q2', 'b'],
-    ['q3', 'c'],
-  ]),
+  deck(
+    'dns',
+    'l7',
+    [
+      ['q4', 'a'],
+      ['q5', 'b'],
+      ['q1', 'a'],
+      ['q2', 'b'],
+      ['q3', 'c'],
+    ],
+    'l7web',
+  ),
   deck('tls', 'l5', [
     ['q1', 'b'],
     ['q2', 'c'],
@@ -93,11 +118,16 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
     ['q2', 'b'],
     ['q3', 'c'],
   ]),
-  deck('dhcp', 'l7', [
-    ['q1', 'b'],
-    ['q2', 'a'],
-    ['q3', 'c'],
-  ]),
+  deck(
+    'dhcp',
+    'l7',
+    [
+      ['q1', 'b'],
+      ['q2', 'a'],
+      ['q3', 'c'],
+    ],
+    'l7apps',
+  ),
   deck('icmp', 'l3', [
     ['q1', 'a'],
     ['q2', 'b'],
@@ -133,26 +163,41 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
     ['q2', 'b'],
     ['q3', 'c'],
   ]),
-  deck('http', 'l7', [
-    ['q1', 'a'],
-    ['q2', 'b'],
-    ['q3', 'c'],
-  ]),
+  deck(
+    'http',
+    'l7',
+    [
+      ['q1', 'a'],
+      ['q2', 'b'],
+      ['q3', 'c'],
+    ],
+    'l7web',
+  ),
   deck('quic', 'l4', [
     ['q1', 'a'],
     ['q2', 'b'],
     ['q3', 'c'],
   ]),
-  deck('http2', 'l7', [
-    ['q1', 'a'],
-    ['q2', 'b'],
-    ['q3', 'c'],
-  ]),
-  deck('http3', 'l7', [
-    ['q1', 'a'],
-    ['q2', 'b'],
-    ['q3', 'c'],
-  ]),
+  deck(
+    'http2',
+    'l7',
+    [
+      ['q1', 'a'],
+      ['q2', 'b'],
+      ['q3', 'c'],
+    ],
+    'l7web',
+  ),
+  deck(
+    'http3',
+    'l7',
+    [
+      ['q1', 'a'],
+      ['q2', 'b'],
+      ['q3', 'c'],
+    ],
+    'l7web',
+  ),
   deck('qos', 'l3', [
     ['q1', 'a'],
     ['q2', 'b'],
@@ -235,31 +280,56 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
     ['q2', 'b'],
     ['q3', 'c'],
   ]),
-  deck('ftp', 'l7', [
-    ['q1', 'a'],
-    ['q2', 'b'],
-    ['q3', 'c'],
-  ]),
-  deck('smtp', 'l7', [
-    ['q1', 'a'],
-    ['q2', 'b'],
-    ['q3', 'c'],
-  ]),
-  deck('email', 'l7', [
-    ['q1', 'a'],
-    ['q2', 'b'],
-    ['q3', 'c'],
-  ]),
-  deck('ntp', 'l7', [
-    ['q1', 'a'],
-    ['q2', 'b'],
-    ['q3', 'c'],
-  ]),
-  deck('snmp', 'l7', [
-    ['q1', 'a'],
-    ['q2', 'b'],
-    ['q3', 'c'],
-  ]),
+  deck(
+    'ftp',
+    'l7',
+    [
+      ['q1', 'a'],
+      ['q2', 'b'],
+      ['q3', 'c'],
+    ],
+    'l7apps',
+  ),
+  deck(
+    'smtp',
+    'l7',
+    [
+      ['q1', 'a'],
+      ['q2', 'b'],
+      ['q3', 'c'],
+    ],
+    'l7apps',
+  ),
+  deck(
+    'email',
+    'l7',
+    [
+      ['q1', 'a'],
+      ['q2', 'b'],
+      ['q3', 'c'],
+    ],
+    'l7apps',
+  ),
+  deck(
+    'ntp',
+    'l7',
+    [
+      ['q1', 'a'],
+      ['q2', 'b'],
+      ['q3', 'c'],
+    ],
+    'l7apps',
+  ),
+  deck(
+    'snmp',
+    'l7',
+    [
+      ['q1', 'a'],
+      ['q2', 'b'],
+      ['q3', 'c'],
+    ],
+    'l7apps',
+  ),
   deck('ipsec', 'l5', [
     ['q1', 'a'],
     ['q2', 'b'],
@@ -320,26 +390,46 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
     ['q2', 'b'],
     ['q3', 'c'],
   ]),
-  deck('sip', 'l7', [
-    ['q1', 'b'],
-    ['q2', 'c'],
-    ['q3', 'a'],
-  ]),
-  deck('rtp', 'l7', [
-    ['q1', 'a'],
-    ['q2', 'b'],
-    ['q3', 'c'],
-  ]),
-  deck('stun', 'l7', [
-    ['q1', 'c'],
-    ['q2', 'a'],
-    ['q3', 'b'],
-  ]),
-  deck('dnssec', 'l7', [
-    ['q1', 'a'],
-    ['q2', 'b'],
-    ['q3', 'c'],
-  ]),
+  deck(
+    'sip',
+    'l7',
+    [
+      ['q1', 'b'],
+      ['q2', 'c'],
+      ['q3', 'a'],
+    ],
+    'l7apps',
+  ),
+  deck(
+    'rtp',
+    'l7',
+    [
+      ['q1', 'a'],
+      ['q2', 'b'],
+      ['q3', 'c'],
+    ],
+    'l7apps',
+  ),
+  deck(
+    'stun',
+    'l7',
+    [
+      ['q1', 'c'],
+      ['q2', 'a'],
+      ['q3', 'b'],
+    ],
+    'l7apps',
+  ),
+  deck(
+    'dnssec',
+    'l7',
+    [
+      ['q1', 'a'],
+      ['q2', 'b'],
+      ['q3', 'c'],
+    ],
+    'l7web',
+  ),
   deck('commands', 'fundamentals', [
     ['q1', 'a'],
     ['q2', 'b'],

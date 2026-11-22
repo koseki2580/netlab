@@ -551,4 +551,52 @@ describe('ConceptCheckPanel', () => {
     );
     expect(testid('concept-check-session-title')?.textContent).toBe('イーサネット');
   });
+
+  it('TC-2278: with deckId it starts straight in that deck, and offers to practise it again', () => {
+    act(() => root?.render(<ConceptCheckPanel reviewStore={store} deckId="tcp" />));
+    expect(testid('concept-check-picker')).toBeNull();
+    expect(testid('concept-check-session-title')?.textContent).toBe('TCP');
+    const first = getDeck('tcp')!.questions[0]!;
+    expect(testid('concept-check-prompt')?.textContent).toBe(
+      (en as Record<string, string>)[first.promptKey],
+    );
+    const total = getDeck('tcp')!.questions.length;
+    for (let i = 0; i < total; i += 1) {
+      clickOption('tcp', i, 'correct');
+      click('concept-check-next');
+    }
+    expect(testid('concept-check-summary')).not.toBeNull();
+    // No picker to go back to: the way on is the same deck again.
+    expect(testid('concept-check-back')).toBeNull();
+    click('concept-check-again');
+    expect(testid('concept-check-session-title')?.textContent).toBe('TCP');
+    expect(testid('concept-check-progress')?.textContent).toContain(`1 / ${total}`);
+  });
+
+  it('TC-2279: reviewScope limits the review queue to those decks', () => {
+    store.save({
+      'arp:q1': { box: 1, dueAt: 0 },
+      'arp:q2': { box: 1, dueAt: 0 },
+      'tcp:q1': { box: 1, dueAt: 0 },
+      'udp:q1': { box: 1, dueAt: 0 },
+    });
+    act(() => root?.render(<ConceptCheckPanel reviewStore={store} reviewScope={['tcp', 'udp']} />));
+    expect(testid('concept-check-review')?.textContent).toBe('Review due now (2)');
+    click('concept-check-review');
+    const prompts: string[] = [];
+    for (let i = 0; i < 2; i += 1) {
+      prompts.push(testid('concept-check-prompt')?.textContent ?? '');
+      click('concept-check-option-0');
+      click('concept-check-next');
+    }
+    const strings = en as Record<string, string>;
+    expect(prompts.sort()).toEqual(
+      [
+        strings['learning.concept.tcp.q1.prompt']!,
+        strings['learning.concept.udp.q1.prompt']!,
+      ].sort(),
+    );
+    // Out-of-scope items are kept as they were, not dropped from the store.
+    expect(Object.keys(store.load()).sort()).toEqual(['arp:q1', 'arp:q2', 'tcp:q1', 'udp:q1']);
+  });
 });

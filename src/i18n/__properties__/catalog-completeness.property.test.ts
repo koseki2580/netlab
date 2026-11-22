@@ -2,12 +2,19 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { en as enBase } from '../locales/en';
-import { conceptCheck } from '../locales/en/conceptCheck';
+import type { Catalog } from '../types';
 
-// conceptCheck is a lazy sub-catalog (kept out of the assembled `en` so it stays
-// out of the root bundle — see locales/en.ts) but is merged into the translator
-// at runtime by ConceptCheckPanel. For coverage it must be checked alongside en.
-const en: Record<string, string> = { ...enBase, ...conceptCheck };
+// The concept checks' strings load in chunks (locales/<locale>/concept/**, kept out
+// of the assembled `en`), resolved at runtime by the concept panel. For coverage
+// every English file under concept/ — chunk aggregators and per-deck files alike —
+// is checked alongside en.
+const conceptFiles = import.meta.glob<Record<string, Catalog>>('../locales/en/concept/**/*.ts', {
+  eager: true,
+});
+const en: Record<string, string> = Object.assign(
+  { ...enBase },
+  ...Object.values(conceptFiles).flatMap((module) => Object.values(module)),
+);
 
 const SRC_ROOT = resolve(__dirname, '../..');
 

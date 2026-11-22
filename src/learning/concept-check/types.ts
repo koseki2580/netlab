@@ -1,6 +1,25 @@
 /** OSI-ish grouping used to organize protocol decks in the picker. */
 export type ConceptLayer = 'fundamentals' | 'l2' | 'l3' | 'l4' | 'l5' | 'l7' | 'routing';
 
+/**
+ * A lazily loaded group of concept-check strings. `core` holds the panel's own
+ * strings and every deck's name; each other chunk holds its decks' questions.
+ * A deck's chunk is its layer, except that layer 7 is split in two.
+ */
+export type ConceptChunk =
+  | 'core'
+  | 'fundamentals'
+  | 'l2'
+  | 'l3'
+  | 'l4'
+  | 'l5'
+  | 'l7web'
+  | 'l7apps'
+  | 'routing';
+
+/** The chunk a deck's questions live in (never `core`). */
+export type ConceptDeckChunk = Exclude<ConceptChunk, 'core'>;
+
 /** One answer choice; exactly one option per question is `correct`. */
 export interface ConceptOption {
   /** i18n key for the option text. */
@@ -26,6 +45,8 @@ export interface ConceptQuestion {
 export interface ConceptDeck {
   readonly id: string;
   readonly layer: ConceptLayer;
+  /** The string chunk holding this deck's questions (its name is in `core`). */
+  readonly chunk: ConceptDeckChunk;
   /** i18n key for the protocol's display name. */
   readonly nameKey: string;
   readonly questions: readonly ConceptQuestion[];

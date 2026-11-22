@@ -1,12 +1,14 @@
 import { Suspense, lazy, useMemo, useState } from 'react';
 import { LazyPanelBoundary } from '../LazyPanelBoundary';
 import { useI18n } from '../../i18n/useI18n';
-import type { createReviewStore } from '../../learning/review';
+import type { ConceptCheckPanelProps } from './ConceptCheckPanelInner';
 
 /**
- * Public entry for the Protocol Concept Checks. The panel body and its large
- * en+ja concept-check catalogs are lazy-loaded, so consumers that never render it
- * pay nothing for the strings. See ConceptCheckPanelInner for the merged catalog.
+ * Public entry for the Protocol Concept Checks. The panel body is lazy-loaded,
+ * and its strings load in chunks of their own, en and ja alike, only the chunks
+ * a view needs (`conceptCatalog.ts`), so consumers that never render it pay
+ * nothing for them. `deckId` starts straight in one deck; `reviewScope` limits
+ * the review queue to some decks.
  *
  * The deck DATA is not lazy: `src/index.ts` re-exports `CONCEPT_DECKS` (and
  * `decksByLayer`/`getDeck`) at value level, so it lands in the statically-imported
@@ -22,8 +24,7 @@ import type { createReviewStore } from '../../learning/review';
 export function ConceptCheckPanel({
   importInner = () => import('./ConceptCheckPanelInner'),
   ...props
-}: {
-  reviewStore?: ReturnType<typeof createReviewStore>;
+}: ConceptCheckPanelProps & {
   /** Seam for tests to simulate a failing chunk; never set by consumers. */
   importInner?: () => Promise<{ default: typeof import('./ConceptCheckPanelInner').default }>;
 } = {}) {

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * Fails `npm run size` when a learn tier, a locale loaded on demand (TC-1496,
- * `dist/locales/*`, REQ-356) or xterm.js (TC-1715, REQ-361) reaches another
+ * `dist/locales/*`, REQ-356), a concept-check string chunk (`dist/concept-<locale>-<chunk>-*`,
+ * REQ-365) or xterm.js (TC-1715, REQ-361) reaches another
  * eager closure (docs/dev/size-gate.md).
  */
 import { globSync, readFileSync } from 'node:fs';
@@ -15,7 +16,7 @@ const leaks = findLearnTierLeaks(entries);
 for (const { entry, chunk } of leaks) {
   console.error(`learn tier in an eager closure: ${entry} reaches ${chunk}`);
 }
-const LOCALE = /[\\/]locales[\\/][a-z-]+\.(?:js|mjs|cjs)$/;
+const LOCALE = /[\\/](?:locales[\\/][a-z-]+|concept-(?:en|ja)-[a-z0-9]+-[\w-]+)\.(?:js|mjs|cjs)$/;
 const localeLeaks = entries
   .filter((entry) => !LOCALE.test(entry))
   .flatMap((entry) =>

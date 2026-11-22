@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-// The concept-check strings are a lazy-loaded sub-catalog (kept out of the root
-// bundle), so they live in their own files rather than the assembled en/ja.
-import { conceptCheck as en } from '../../i18n/locales/en/conceptCheck';
-import { conceptCheck as ja } from '../../i18n/locales/ja/conceptCheck';
+import type { Catalog } from '../../i18n/types';
 import { CONCEPT_DECKS } from './decks';
 import {
   correctOption,
@@ -12,6 +9,23 @@ import {
   isCorrectChoice,
   questionItemId,
 } from './grade';
+
+// The concept-check strings load in chunks (conceptCatalog.ts). The invariants
+// below run over every chunk file of each locale, merged, so a deck in any chunk
+// is held to them, whatever the convenience catalog `conceptCheck.ts` includes.
+const chunkFiles = import.meta.glob<{ catalog: Catalog }>(
+  '../../i18n/locales/*/concept/concept-*.ts',
+  { eager: true },
+);
+const merged = (locale: string): Catalog =>
+  Object.assign(
+    {},
+    ...Object.entries(chunkFiles)
+      .filter(([path]) => path.includes(`/locales/${locale}/`))
+      .map(([, module]) => module.catalog),
+  );
+const en = merged('en');
+const ja = merged('ja');
 
 describe('concept-check decks', () => {
   it('every deck has a unique id, a name key, and at least one question', () => {

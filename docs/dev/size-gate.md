@@ -7,10 +7,11 @@
 
 ## What is measured
 
-| Check        | Measures                                                                                       |
-| ------------ | ---------------------------------------------------------------------------------------------- |
-| Eager checks | What a consumer downloads up front: the entry and all it statically imports, npm packages too. |
-| `pack:<id>`  | One lazily loaded learn chunk (`dist/pack-<id>-*.mjs`) on its own. Limit: 3 kB gzipped.        |
+| Check                      | Measures                                                                                       |
+| -------------------------- | ---------------------------------------------------------------------------------------------- |
+| Eager checks               | What a consumer downloads up front: the entry and all it statically imports, npm packages too. |
+| `pack:<id>`                | One lazily loaded learn chunk (`dist/pack-<id>-*.mjs`) on its own. Limit: 3 kB gzipped.        |
+| `concept:<locale>:<chunk>` | One concept-check string chunk (`dist/concept-<locale>-<chunk>-*.mjs`, REQ-365) on its own.    |
 
 `size-limit` bundles a check with esbuild and no code splitting, so without help a dynamic
 `import()` is inlined and counted in the entry that reaches it. `withoutLazyChunks`
@@ -30,7 +31,30 @@ a tier inlined into the worker, where there is nothing to walk.
 
 The Japanese catalog is its own entry, `dist/locales/ja.js` (`locale:ja`, 25 kB), loaded on demand
 by `I18nProvider` (REQ-356). `size-gate-check` fails, naming the entry and the file, if any other
-eager entry's static imports reach a `dist/locales/*` file.
+eager entry's static imports reach a `dist/locales/*` file or a concept-check chunk.
+
+## The concept-check chunks
+
+The concept checks' strings, English and Japanese alike, load in chunks only when a view needs them
+([i18n](i18n.md)). Each chunk has its own check, with a limit of its measured size plus about 10 %
+(gzipped, kB = 1000 bytes; measured 2026-11-22):
+
+| Chunk        | en measured | en limit | ja measured | ja limit |
+| ------------ | ----------- | -------- | ----------- | -------- |
+| core         | 1.23        | 1.4      | 1.56        | 1.8      |
+| fundamentals | 5.86        | 6.5      | 7.02        | 7.8      |
+| l2           | 5.96        | 6.6      | 7.08        | 7.8      |
+| l3           | 7.57        | 8.4      | 8.98        | 9.9      |
+| l4           | 2.66        | 3        | 3.34        | 3.7      |
+| l5           | 4.64        | 5.2      | 5.67        | 6.3      |
+| l7web        | 3.30        | 3.7      | 4.00        | 4.5      |
+| l7apps       | 5.33        | 5.9      | 6.46        | 7.2      |
+| routing      | 3.90        | 4.3      | 4.67        | 5.2      |
+
+`ui:concept-check` (the panel, 26.3 kB) went from 110 kB to 29 kB once its English strings moved
+out. The locale guard covers the chunks too: `size-gate-check` fails if another eager entry's
+static imports reach a `dist/concept-<locale>-<chunk>-*` file. A deck that outgrows its chunk's
+limit belongs in a new chunk, not a raised limit.
 
 ## The xterm.js guard
 

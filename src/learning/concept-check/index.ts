@@ -10,4 +10,11 @@ export {
   questionItemId,
 } from './grade';
 export type { DeckMastery, IndexedQuestion } from './grade';
-export type { ConceptDeck, ConceptLayer, ConceptOption, ConceptQuestion } from './types';
+export type {
+  ConceptChunk,
+  ConceptDeck,
+  ConceptDeckChunk,
+  ConceptLayer,
+  ConceptOption,
+  ConceptQuestion,
+} from './types';

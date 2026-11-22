@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createTranslator } from '../../i18n/createTranslator';
-import { I18nContext } from '../../i18n/I18nContext';
-import { conceptCheck as conceptCheckEn } from '../../i18n/locales/en/conceptCheck';
+import { substitute } from '../../i18n/substitute';
+import type { Catalog } from '../../i18n/types';
 import { useI18n } from '../../i18n/useI18n';
-import { conceptJapanese, loadConceptJapanese } from './conceptCatalog';
+import { conceptChunk, conceptLocale, loadConceptChunk } from './conceptCatalog';
 import {
   allConceptQuestions,
   correctOption,
@@ -12,6 +11,7 @@ import {
   getDeck,
   isCorrectChoice,
   questionItemId,
+  type ConceptChunk,
   type IndexedQuestion,
 } from '../../learning/concept-check';
 import {
@@ -73,12 +73,47 @@ interface Session {
  * `reviewStore` is injectable for tests/embedding; it defaults to the
  * localStorage-backed store (SSR- and storage-failure-safe).
  */
-interface ConceptCheckPanelProps {
+export interface ConceptCheckPanelProps {
   reviewStore?: ReturnType<typeof createReviewStore>;
+  /** Start straight in this deck, with no picker (e.g. a lesson's own deck). */
+  deckId?: string;
+  /** Limit the review queue to these decks' questions; other items stay stored as they are. */
+  reviewScope?: readonly string[];
 }
 
-function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptCheckPanelProps = {}) {
-  const { t } = useI18n();
+/** A deck's session, or `null` for an unknown deck. */
+function deckSession(deckId: string): Omit<Session, 'token'> | null {
+  const deck = getDeck(deckId);
+  if (!deck) return null;
+  return {
+    kind: 'deck',
+    id: deckId,
+    titleKey: deck.nameKey,
+    items: deck.questions.map((q) => ({
+      itemId: questionItemId(deck.id, q.id),
+      deck,
+      question: q,
+    })),
+  };
+}
+
+/** The string chunks a view needs: core for the picker, plus each deck's chunk in a session. */
+function neededChunks(session: Session | null): readonly ConceptChunk[] {
+  return ['core', ...new Set(session?.items.map((item) => item.deck.chunk) ?? [])];
+}
+
+/**
+ * Active-recall quiz across protocols. Its strings load chunk by chunk
+ * (`conceptCatalog.ts`): until every chunk the current view needs is loaded,
+ * the panel draws nothing, so no raw key or English frame shows. Concept keys
+ * resolve from the loaded chunks; every other key from the host catalog.
+ */
+export default function ConceptCheckPanelInner({
+  reviewStore = createReviewStore(),
+  deckId,
+  reviewScope,
+}: ConceptCheckPanelProps = {}) {
+  const { locale, t: baseT } = useI18n();
   // Scopes the document-level key handler to this panel (see the keydown effect).
   const panelRef = useRef<HTMLDivElement>(null);
   const groups = useMemo(() => decksByLayer(), []);
@@ -87,12 +122,42 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
 
   const [review, setReview] = useState<ReviewState>(() => reviewStore.load());
   const [query, setQuery] = useState('');
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<Session | null>(() => {
+    const initial = deckId ? deckSession(deckId) : null;
+    return initial ? { ...initial, token: 0 } : null;
+  });
   const [qIdx, setQIdx] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [correct, setCorrect] = useState(0);
   const [streak, setStreak] = useState(0);
   const [complete, setComplete] = useState(false);
+
+  // The strings of the chunks this view needs, or `null` while one is loading.
+  const lang = conceptLocale(locale);
+  const chunks = useMemo(() => neededChunks(session), [session]);
+  const [loads, setLoads] = useState(0);
+  const strings = useMemo<Catalog | null>(() => {
+    void loads;
+    const parts = chunks.map((chunk) => conceptChunk(lang, chunk));
+    return parts.every((part) => part !== undefined) ? Object.assign({}, ...parts) : null;
+  }, [lang, chunks, loads]);
+  useEffect(() => {
+    if (strings) return undefined;
+    let live = true;
+    void Promise.all(chunks.map((chunk) => loadConceptChunk(lang, chunk))).then(() => {
+      if (live) setLoads((value) => value + 1);
+    });
+    return () => {
+      live = false;
+    };
+  }, [strings, lang, chunks]);
+  const t = useCallback<typeof baseT>(
+    (key, params) => {
+      const template = strings?.[key];
+      return template === undefined ? baseT(key, params) : substitute(template, params);
+    },
+    [strings, baseT],
+  );
 
   const total = session?.items.length ?? 0;
   const indexedQ = session?.items[qIdx];
@@ -140,9 +205,16 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
   const stats = useMemo(() => reviewStats(liveReview, now), [liveReview, now]);
   // What the Review button will actually deliver: due items first, capped by the
   // session limit. Labelling with anything else promises a session we won't start.
+  const scopedReview = useMemo(() => {
+    if (!reviewScope) return liveReview;
+    const scope = new Set(reviewScope);
+    return Object.fromEntries(
+      Object.entries(liveReview).filter(([itemId]) => scope.has(byItemId.get(itemId)!.deck.id)),
+    ) as typeof review;
+  }, [liveReview, reviewScope, byItemId]);
   const queuedIds = useMemo(
-    () => reviewQueue(liveReview, REVIEW_SESSION_LIMIT, now),
-    [liveReview, now],
+    () => reviewQueue(scopedReview, REVIEW_SESSION_LIMIT, now),
+    [scopedReview, now],
   );
   const queuedCount = queuedIds.length;
   const queuedDueCount = useMemo(
@@ -162,19 +234,9 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
   }, []);
 
   const startDeck = useCallback(
-    (deckId: string) => {
-      const deck = getDeck(deckId);
-      if (!deck) return;
-      start({
-        kind: 'deck',
-        id: deckId,
-        titleKey: deck.nameKey,
-        items: deck.questions.map((q) => ({
-          itemId: questionItemId(deck.id, q.id),
-          deck,
-          question: q,
-        })),
-      });
+    (id: string) => {
+      const next = deckSession(id);
+      if (next) start(next);
     },
     [start],
   );
@@ -284,6 +346,8 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [session, complete, question, selected, options, answer, next, isCovered]);
+
+  if (!strings) return null;
 
   // ── Deck picker ──────────────────────────────────────────────────────────
   if (!session) {
@@ -490,14 +554,26 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
                 {t('learning.concept.review.start', { count: queuedCount })}
               </button>
             )}
-            <button
-              type="button"
-              data-testid="concept-check-back"
-              onClick={backToDecks}
-              style={pillButton('var(--netlab-accent-blue)')}
-            >
-              {t('learning.concept.backToDecks')}
-            </button>
+            {deckId && getDeck(deckId) ? (
+              // Started in one deck: there is no picker to go back to.
+              <button
+                type="button"
+                data-testid="concept-check-again"
+                onClick={() => startDeck(deckId)}
+                style={pillButton('var(--netlab-accent-blue)')}
+              >
+                {t('learning.drill.practiceAgain')}
+              </button>
+            ) : (
+              <button
+                type="button"
+                data-testid="concept-check-back"
+                onClick={backToDecks}
+                style={pillButton('var(--netlab-accent-blue)')}
+              >
+                {t('learning.concept.backToDecks')}
+              </button>
+            )}
           </div>
         </div>
       </DrillFrame>
@@ -618,51 +694,5 @@ function ConceptCheckPanelBody({ reviewStore = createReviewStore() }: ConceptChe
         )}
       </div>
     </DrillFrame>
-  );
-}
-
-/**
- * Lazy-chunk entry: provides the concept-check i18n strings (kept out of the
- * root bundle — see locales/en.ts) by merging them into the context translator,
- * so the body resolves both `learning.concept.*` (from this chunk) and the base
- * keys (from the host catalog). Concept keys win; everything else falls through.
- */
-export default function ConceptCheckPanelInner(props: ConceptCheckPanelProps = {}) {
-  const { locale, t: baseT } = useI18n();
-  // Layer the locale over en so a partial locale still resolves (docs/dev/i18n.md:
-  // "missing keys fall back to en"). Membership is therefore tested against the
-  // en key set — a ja gap yields English, never a raw `learning.concept.*` key.
-  // The Japanese strings load on first use; until then nothing is drawn, so no
-  // English frame shows on a Japanese page.
-  const [loaded, setLoaded] = useState(() => conceptJapanese());
-  useEffect(() => {
-    if (locale !== 'ja' || loaded) return;
-    let live = true;
-    void loadConceptJapanese().then(() => {
-      if (live) setLoaded(conceptJapanese());
-    });
-    return () => {
-      live = false;
-    };
-  }, [locale, loaded]);
-  const waiting = locale === 'ja' && !loaded;
-  const strings = useMemo(
-    () => (locale === 'ja' && loaded ? { ...conceptCheckEn, ...loaded } : conceptCheckEn),
-    [locale, loaded],
-  );
-  const conceptT = useMemo(() => createTranslator(locale, strings), [locale, strings]);
-  const value = useMemo(
-    () => ({
-      locale,
-      t: ((key, params) =>
-        key in strings ? conceptT(key, params) : baseT(key, params)) as typeof baseT,
-    }),
-    [locale, strings, conceptT, baseT],
-  );
-  if (waiting) return null;
-  return (
-    <I18nContext.Provider value={value}>
-      <ConceptCheckPanelBody {...props} />
-    </I18nContext.Provider>
   );
 }

@@ -5,13 +5,36 @@ import { withoutLazyChunks } from './scripts/size-gate.mjs';
  * Per-pack checks: one lazily loaded learn chunk, on its own (pure data, no imports).
  */
 const eager = (check) => ({ gzip: true, modifyEsbuildConfig: withoutLazyChunks, ...check });
+const concept = (locale, chunk, limit) =>
+  eager({
+    name: `concept:${locale}:${chunk}`,
+    path: `dist/concept-${locale}-${chunk}-*.mjs`,
+    limit,
+  });
+/** [chunk, en limit, ja limit]: measured + ~10 % (docs/dev/size-gate.md). */
+const CONCEPT_CHUNK_LIMITS = [
+  ['core', '1.4 kB', '1.8 kB'],
+  ['fundamentals', '6.5 kB', '7.8 kB'],
+  ['l2', '6.6 kB', '7.8 kB'],
+  ['l3', '8.4 kB', '9.9 kB'],
+  ['l4', '3 kB', '3.7 kB'],
+  ['l5', '5.2 kB', '6.3 kB'],
+  ['l7web', '3.7 kB', '4.5 kB'],
+  ['l7apps', '5.9 kB', '7.2 kB'],
+  ['routing', '4.3 kB', '5.2 kB'],
+];
 const pack = (id, limit) => eager({ name: `pack:${id}`, path: `dist/pack-${id}-*.mjs`, limit });
 
 export default [
   eager({ path: 'dist/netlab.es.js', limit: '220 kB' }),
-  // The concept checks' Japanese strings, loaded only for a Japanese page (REQ-365).
-  eager({ name: 'locale:concept-ja', path: 'dist/conceptCheck-*.mjs', limit: '47 kB' }),
-  eager({ name: 'ui:concept-check', path: 'dist/ConceptCheckPanelInner-*.mjs', limit: '110 kB' }),
+  // The concept checks' strings, en and ja alike, in chunks loaded only when a view needs them
+  // (REQ-365): core (panel strings, deck names), then one chunk per group of decks.
+  ...CONCEPT_CHUNK_LIMITS.flatMap(([chunk, en, ja]) => [
+    concept('en', chunk, en),
+    concept('ja', chunk, ja),
+  ]),
+  // 26.3 kB once its English strings moved into the concept chunks.
+  eager({ name: 'ui:concept-check', path: 'dist/ConceptCheckPanelInner-*.mjs', limit: '29 kB' }),
   eager({ name: 'ui:graph-maxgraph', path: 'dist/MaxGraphEngineInner-*.mjs', limit: '138 kB' }),
   eager({ name: 'ui:drill-kit', path: 'dist/drillKit-*.mjs', limit: '28 kB' }),
   eager({ path: 'dist/layers/l1-physical/index.js', limit: '4 kB' }),
