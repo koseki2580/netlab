@@ -26,7 +26,7 @@ import {
 } from './netconf';
 
 type Answer = 'accepted' | 'clamped' | 'before-error' | 'nothing';
-const ANSWERS: readonly Answer[] = ['accepted', 'clamped', 'before-error', 'nothing'];
+const ANSWERS: readonly Answer[] = ['accepted', 'clamped', 'nothing', 'before-error'];
 const METHODS: readonly Method[] = ['netconf', 'netconf-all-or-none', 'cli'];
 type Trial = 'mtu' | 'shut-mgmt';
 const TRIALS: readonly Trial[] = ['mtu', 'shut-mgmt'];
@@ -428,7 +428,7 @@ function NetconfLesson() {
 
       {revealed ? (
         <div style={LESSON_CARD} data-testid="nc-xml">
-          <div style={LESSON_LABEL}>
+          <div style={{ ...LESSON_LABEL, textTransform: 'none' }}>
             {t('The <edit-config> sent to R2', 'R2 に送る <edit-config>')}
           </div>
           <pre style={pre} data-testid="nc-xml-text">
@@ -445,7 +445,9 @@ function NetconfLesson() {
 
       {revealed ? (
         <div style={LESSON_CARD} data-testid="nc-confirmed">
-          <div style={LESSON_LABEL}>{t('Confirmed commit', 'confirmed commit')}</div>
+          <div style={{ ...LESSON_LABEL, textTransform: 'none' }}>
+            {t('Confirmed commit', 'confirmed commit')}
+          </div>
           <p style={{ margin: '0 0 8px', lineHeight: 1.7 }}>
             {t(
               `A valid change can still be a wrong one. With <commit><confirmed/>, the change goes live, but the router restores the previous configuration by itself unless a second, confirming <commit> arrives within the confirm-timeout (${DEFAULT_CONFIRM_TIMEOUT_S} s by default). Here the script sends that confirmation ${CONFIRM_AFTER_S} s after the commit, if it can still reach R2 through eth0.`,

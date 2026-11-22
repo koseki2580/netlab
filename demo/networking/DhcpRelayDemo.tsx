@@ -19,7 +19,8 @@ import {
 } from './dhcpRelay';
 
 type Answer = 'first-pool' | 'giaddr' | 'mac' | 'none';
-const ANSWERS: readonly Answer[] = ['first-pool', 'giaddr', 'mac', 'none'];
+/** Display order: deliberate, so the right answers do not sit in one position across lessons. */
+const ANSWERS: readonly Answer[] = ['giaddr', 'mac', 'first-pool', 'none'];
 
 const PORTS = ['Gi1/0/5', 'Gi1/0/7'] as const;
 
@@ -105,20 +106,20 @@ function DhcpRelayLesson() {
   const answerName = (answer: Answer) =>
     ({
       'first-pool': t(
-        'An address from the first pool in its list',
-        '設定の先頭にあるプールのアドレス',
+        'An address from the first pool in its list, which it uses for any relayed request',
+        'リレー経由の要求に使う、設定の先頭にあるプールのアドレス',
       ),
       giaddr: t(
         'An address from the pool that matches what the router wrote into the request',
         'ルータがリクエストに書き込んだ情報に合うプールのアドレス',
       ),
       mac: t(
-        'Either pool: the server chooses by the client’s MAC address',
-        'どちらのプールもありうる。クライアントの MAC アドレスで決める',
+        'An address from the pool it picks by looking up the client’s MAC address',
+        'クライアントの MAC アドレスを調べて選んだプールのアドレス',
       ),
       none: t(
-        'Nothing: the request comes from 10.0.100.1, and it has no pool for that subnet',
-        '何も返さない。リクエストの送信元は 10.0.100.1 で、そのサブネットのプールがない',
+        `Nothing: it matches the packet’s source, ${upstream}, and has no pool for that subnet`,
+        `何も返さない。送信元 ${upstream} のサブネットで探すが、合うプールがない`,
       ),
     })[answer];
   const scenarioName = (id: ScenarioId) =>

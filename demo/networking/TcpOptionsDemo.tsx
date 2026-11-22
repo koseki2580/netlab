@@ -7,6 +7,7 @@ import {
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
+import { useViewport } from '../../src/utils/useViewport';
 import {
   DEFAULT_LOST,
   FAR_RTT_MS,
@@ -62,6 +63,7 @@ function sackAnswerOf(roundTrips: number): SackAnswer {
 /** The lesson, inside DemoShell so it reads the page's language (L023). */
 function TcpOptionsLesson() {
   const t = useT();
+  const { isNarrow } = useViewport();
   const [guess, setGuess] = useState<RateAnswer | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [rttMs, setRttMs] = useState(FAR_RTT_MS);
@@ -179,7 +181,7 @@ function TcpOptionsLesson() {
             type="button"
             data-testid="tcpo-reveal-button"
             disabled={!guess}
-            style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, minHeight: 44, opacity: guess ? 1 : 0.5 }}
+            style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, opacity: guess ? 1 : 0.5 }}
             onClick={() => setRevealed(true)}
           >
             {guess
@@ -304,12 +306,24 @@ function TcpOptionsLesson() {
               `ウィンドウが大きいと、1 回の損失のかたまりで複数のセグメントが失われることがあります。送り手はセグメント 1〜${WINDOW_SEGMENTS} を送り、× の付いたものが失われました。最初の損失より後のセグメントに対する ACK は重複 ACK になるので、高速再送が始まります。`,
             )}
           </p>
+          {sackRevealed ? (
+            <p data-testid="tcpo-seg-hint" style={{ margin: '0 0 8px', fontWeight: 700 }}>
+              {t(
+                'Click a segment to lose it or get it back.',
+                'セグメントを押すと、失う・届くを切り替えられます。',
+              )}
+            </p>
+          ) : null}
           <div
             role="group"
             aria-label={t('Segments of the window', 'ウィンドウのセグメント')}
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(10, minmax(0, 1fr))',
+              // Ten per row on wide screens; on narrow ones each box keeps a 44 px target and
+              // the 20 segments wrap onto more rows.
+              gridTemplateColumns: isNarrow
+                ? 'repeat(auto-fill, minmax(44px, 1fr))'
+                : 'repeat(10, minmax(0, 1fr))',
               gap: 4,
             }}
           >
@@ -330,12 +344,18 @@ function TcpOptionsLesson() {
                   onClick={() => toggleLost(seg)}
                   style={{
                     minHeight: 44,
-                    minWidth: 0,
+                    minWidth: isNarrow ? 44 : 0,
                     padding: 0,
                     borderRadius: 6,
                     fontFamily: 'monospace',
                     fontSize: 12,
-                    border: `1px solid ${isLost ? 'var(--netlab-accent-red)' : 'var(--netlab-border-strong)'}`,
+                    // Longhands only (no shorthand mixed in), so React updates them cleanly;
+                    // the thicker bottom edge makes each box read as a pressable button.
+                    borderStyle: 'solid',
+                    borderWidth: '1px 1px 3px',
+                    borderColor: isLost
+                      ? 'var(--netlab-accent-red)'
+                      : 'var(--netlab-border-strong)',
                     background: isLost ? 'var(--netlab-bg-surface)' : 'var(--netlab-bg-panel)',
                     color: isLost ? 'var(--netlab-accent-red)' : 'var(--netlab-text-primary)',
                     cursor: sackRevealed && seg <= DROPPABLE ? 'pointer' : 'default',
@@ -399,7 +419,6 @@ function TcpOptionsLesson() {
               style={{
                 ...LESSON_TEAL_BUTTON,
                 marginTop: 8,
-                minHeight: 44,
                 opacity: sackGuess ? 1 : 0.5,
               }}
               onClick={() => setSackRevealed(true)}

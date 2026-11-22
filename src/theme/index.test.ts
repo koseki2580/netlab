@@ -179,3 +179,79 @@ describe('accent legibility', () => {
     });
   }
 });
+
+/**
+ * The strong border is what lesson diagrams draw their links with. It was
+ * referenced by a dozen diagrams but emitted by no theme, so every one of
+ * those links computed to `stroke: none` and the diagrams showed no lines.
+ */
+describe('strong border', () => {
+  const channel = (part: string): number => {
+    const v = parseInt(part, 16) / 255;
+    return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  };
+  const luminance = (hex: string): number => {
+    const h = hex.replace('#', '');
+    return (
+      0.2126 * channel(h.slice(0, 2)) +
+      0.7152 * channel(h.slice(2, 4)) +
+      0.0722 * channel(h.slice(4, 6))
+    );
+  };
+  const contrast = (a: string, b: string): number => {
+    const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
+    return (hi + 0.05) / (lo + 0.05);
+  };
+
+  const bases = [
+    ['dark', NETLAB_DARK_THEME],
+    ['light', NETLAB_LIGHT_THEME],
+  ] as const;
+  const axisSets = (['studio', 'academic'] as const).flatMap((palette) =>
+    (['off', 'on'] as const).flatMap((colorBlindSafe) =>
+      (['normal', 'more'] as const).map((contrastAxis) => ({
+        palette,
+        colorBlindSafe,
+        contrast: contrastAxis,
+      })),
+    ),
+  );
+
+  it('TC-2280: every theme, palette, colour-blind and contrast setting emits --netlab-border-strong', () => {
+    for (const [name, theme] of bases) {
+      for (const axes of axisSets) {
+        const vars = themeToVars(theme, axes) as Record<string, string | undefined>;
+        const value = vars['--netlab-border-strong'];
+        expect(value, `${name} ${JSON.stringify(axes)}`).toMatch(/^#[0-9a-f]{6}$/i);
+      }
+    }
+    // A custom theme written before the token existed still gets one.
+    const { borderStrong: _omitted, ...legacy } = NETLAB_DARK_THEME;
+    expect(themeToVars(legacy)).toMatchObject({
+      '--netlab-border-strong': NETLAB_DARK_THEME.textSecondary,
+    });
+  });
+
+  it('TC-2281: the strong border clears 3:1 on every background and is stronger than the plain border', () => {
+    const failures: string[] = [];
+    for (const [name, theme] of bases) {
+      for (const axes of axisSets) {
+        const vars = themeToVars(theme, axes) as Record<string, string>;
+        const strong = vars['--netlab-border-strong'] as string;
+        const plain = vars['--netlab-border'] as string;
+        for (const bgVar of [
+          '--netlab-bg-primary',
+          '--netlab-bg-surface',
+          '--netlab-bg-elevated',
+        ]) {
+          const bg = vars[bgVar] as string;
+          const ratio = contrast(strong, bg);
+          if (ratio < 3) failures.push(`${name} ${bgVar}: ${ratio.toFixed(2)}`);
+          if (ratio <= contrast(plain, bg))
+            failures.push(`${name} ${bgVar}: not stronger than border`);
+        }
+      }
+    }
+    expect(failures).toEqual([]);
+  });
+});

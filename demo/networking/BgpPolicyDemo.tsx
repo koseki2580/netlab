@@ -26,9 +26,11 @@ import {
   type StepId,
 } from './bgpPolicy';
 
-const PATH_IDS: readonly PathId[] = ['isp-a', 'isp-b', 'ibgp'];
+/** Display order: deliberate, so the right answers do not sit in one position across lessons. */
+const PATH_IDS: readonly PathId[] = ['isp-b', 'isp-a', 'ibgp'];
+const MED_PATH_IDS: readonly PathId[] = ['isp-a', 'ibgp', 'isp-b'];
 type Spread = 'only-e1' | 'inside' | 'everyone' | 'nobody';
-const SPREADS: readonly Spread[] = ['only-e1', 'inside', 'everyone', 'nobody'];
+const SPREADS: readonly Spread[] = ['everyone', 'inside', 'only-e1', 'nobody'];
 
 const cell: React.CSSProperties = {
   padding: 4,
@@ -199,7 +201,7 @@ function BgpPolicyLesson() {
       type="button"
       data-testid={testid}
       disabled={!ready}
-      style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, minHeight: 44, opacity: ready ? 1 : 0.5 }}
+      style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, opacity: ready ? 1 : 0.5 }}
       onClick={go}
     >
       {ready ? label : t('Predict first', '先に予想を選んでください')}
@@ -304,7 +306,7 @@ function BgpPolicyLesson() {
               'ISP-A はトラフィックを引き込みたくて、MED を 0（どの経路よりも小さい値）にして送ってきました。ほかは何も変わりません。R1 が選ぶのはどの経路？',
             )}
           </p>
-          {choices(PATH_IDS, medGuess, setMedGuess, pathName, 'bgp-guess-med', medRevealed)}
+          {choices(MED_PATH_IDS, medGuess, setMedGuess, pathName, 'bgp-guess-med', medRevealed)}
           {medRevealed ? (
             <p
               data-testid="bgp-med-reveal"

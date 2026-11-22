@@ -66,6 +66,13 @@ export interface NetlabTheme extends LearningSurfaceTokens {
   border: string;
   /** Semi-transparent / subtle border color (rgba supported). */
   borderSubtle: string;
+  /**
+   * A border that must stay visible: diagram links and outlined controls.
+   * Clears 3:1 (WCAG non-text contrast) on every background of its theme.
+   * Optional so custom themes written before it existed still type-check;
+   * when omitted, `textSecondary` is used.
+   */
+  borderStrong?: string;
 
   // ── Text ─────────────────────────────────────────────────────────────────
   /** Primary text color. */
@@ -112,6 +119,8 @@ export const NETLAB_DARK_THEME: NetlabTheme = {
   bgPanel: 'rgba(15, 23, 42, 0.95)',
   border: '#334155',
   borderSubtle: 'rgba(100, 116, 139, 0.4)',
+  // 3.74:1 at worst (bg-elevated); --netlab-border's #334155 reads 1.26 there.
+  borderStrong: '#7c8aa0',
   textPrimary: '#e2e8f0',
   textSecondary: '#94a3b8',
   textMuted: '#94a3b8',
@@ -139,6 +148,8 @@ export const NETLAB_LIGHT_THEME: NetlabTheme = {
   bgPanel: 'rgba(248, 250, 252, 0.95)',
   border: '#cbd5e1',
   borderSubtle: 'rgba(148, 163, 184, 0.4)',
+  // 3.86:1 at worst (bg-elevated); --netlab-border's #cbd5e1 reads 1.20 there.
+  borderStrong: '#64748b',
   textPrimary: '#0f172a',
   textSecondary: '#475569',
   // Darkened from #5a6a7e (4.48:1 on bg-elevated — just under AA) to clear 4.5:1
@@ -207,6 +218,7 @@ export function themeToVars(theme: NetlabTheme, axes?: NetlabThemeAxes): React.C
     '--netlab-bg-panel': resolved.bgPanel,
     '--netlab-border': resolved.border,
     '--netlab-border-subtle': resolved.borderSubtle,
+    '--netlab-border-strong': resolved.borderStrong ?? resolved.textSecondary,
     '--netlab-text-primary': resolved.textPrimary,
     '--netlab-text-secondary': resolved.textSecondary,
     '--netlab-text-muted': resolved.textMuted,

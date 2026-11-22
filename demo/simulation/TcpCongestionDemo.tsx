@@ -276,7 +276,7 @@ export function TcpCongestionDemoInner() {
         height: '100%',
         overflow: 'auto',
         padding: 18,
-        background: 'var(--netlab-bg-canvas)',
+        background: 'var(--netlab-bg-primary)',
         color: 'var(--netlab-text-primary)',
       }}
     >

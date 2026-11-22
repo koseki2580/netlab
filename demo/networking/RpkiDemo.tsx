@@ -20,7 +20,8 @@ import {
   type ValidationState,
 } from './rpki';
 
-const STATES: readonly ValidationState[] = ['Valid', 'Invalid', 'NotFound'];
+/** Display order: deliberate, so the right answers do not sit in one position across lessons. */
+const STATES: readonly ValidationState[] = ['Valid', 'NotFound', 'Invalid'];
 const POLICIES: readonly Policy[] = ['accept-all', 'drop-invalid'];
 const DESTINATIONS = ['192.0.2.10', '192.0.2.200'] as const;
 /** More-specifics of the /22 ROA, announced by its own origin, for the maxLength slider. */

@@ -63,10 +63,14 @@ test.describe(() => {
     await demoPage.goto('/networking/udp');
     const send = page.getByTestId(SEL.demo.primaryAction).first();
     await expect(send).toHaveText('UDP を送る → ポート 7777');
-    const box = await send.boundingBox();
-    if (!box) throw new Error('button was not measurable');
-    // One line of 12px text plus padding; a wrapped label is twice that.
-    expect(box.height).toBeLessThan(40);
+    // The button is at least 44 px tall for touch (REQ-420), so count the label's lines instead:
+    // a wrapped label has text boxes on two different rows.
+    const rows = await send.evaluate((button) => {
+      const range = document.createRange();
+      range.selectNodeContents(button);
+      return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size;
+    });
+    expect(rows).toBe(1);
   });
 });
 

@@ -24,7 +24,7 @@ import {
 } from './httpCache';
 
 type Answer = 'cache' | 'cdn' | 'revalidate' | 'download';
-const ANSWERS: readonly Answer[] = ['cache', 'cdn', 'revalidate', 'download'];
+const ANSWERS: readonly Answer[] = ['revalidate', 'cache', 'cdn', 'download'];
 const PREDICT_AT = 10;
 
 const cell: React.CSSProperties = {
@@ -208,7 +208,6 @@ function HttpCacheLesson() {
             style={{
               ...LESSON_TEAL_BUTTON,
               marginTop: 8,
-              minHeight: 44,
               opacity: guess ? 1 : 0.5,
             }}
             onClick={() => setRevealed(true)}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   LESSON_CARD,
   LESSON_LABEL,
@@ -24,7 +24,8 @@ import {
 } from './anycast';
 
 type Answer = 'tyo' | 'fra' | 'nyc' | 'spread';
-const ANSWERS: readonly Answer[] = ['tyo', 'fra', 'nyc', 'spread'];
+/** Display order: deliberate, so the right answers do not sit in one position across lessons. */
+const ANSWERS: readonly Answer[] = ['spread', 'nyc', 'tyo', 'fra'];
 const ANSWER_OF: Record<SiteId, Answer> = {
   'site-tyo': 'tyo',
   'site-fra': 'fra',
@@ -73,12 +74,22 @@ const POS: Record<NodeId, readonly [number, number]> = {
   'site-fra': [380, 260],
   'site-nyc': [540, 260],
 };
-/** Two links are drawn as curves so they miss the boxes between their ends. */
-const CURVES: Partial<Record<string, readonly [number, number]>> = {
-  't-asia|t-us': [380, 90],
-  'site-fra|t-global': [220, 360],
+const point = (id: NodeId) => POS[id].join(',');
+/**
+ * Two links are drawn as curves so they miss the boxes between their ends, each
+ * with its label placed clear of the boxes. The carrier–Frankfurt curve runs
+ * below the whole site row, so it cannot be read as ending at Tokyo.
+ */
+const CURVES: Partial<Record<string, { d: string; label: readonly [number, number] }>> = {
+  't-asia|t-us': { d: `M${point('t-asia')} Q380,90 ${point('t-us')}`, label: [300, 122] },
+  'site-fra|t-global': {
+    // Lowest point about y 310 at x 220; label under it, at the curve's middle.
+    d: `M${point('t-global')} C60,340 380,340 ${point('site-fra')}`,
+    label: [220, 324],
+  },
 };
-const BOX_W = 124;
+// 112 wide leaves a 48-unit gap between neighbouring boxes, room for a "120 ms" label.
+const BOX_W = 112;
 const BOX_H = 36;
 
 const onPath = (path: readonly NodeId[] | undefined, a: NodeId, b: NodeId) => {
@@ -103,104 +114,124 @@ function Topology({
 }) {
   const t = useT();
   // Below about 560 px the labels would shrink past reading size, so the map keeps
-  // that width and scrolls sideways inside its card instead.
+  // that width and scrolls sideways inside its card instead, with a hint saying so.
+  const scroller = useRef<HTMLDivElement>(null);
+  const [overflows, setOverflows] = useState(false);
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el) return;
+    const check = () => setOverflows(el.scrollWidth > el.clientWidth + 1);
+    check();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(check);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   return (
-    <div style={{ overflowX: 'auto' }}>
-      <svg
-        data-testid="any-map"
-        viewBox="-10 0 630 310"
-        style={{ width: '100%', minWidth: 560 }}
-        role="img"
-        aria-label={t(
-          'Four ISPs, four transit networks and the CDN’s three sites, with the one-way latency of each link',
-          '4 つの ISP、4 つのトランジット網、CDN の 3 拠点と、各リンクの片道の遅延',
-        )}
-      >
-        {LINKS.map((link) => {
-          const [ax, ay] = POS[link.a];
-          const [bx, by] = POS[link.b];
-          const key = [link.a, link.b].sort().join('|');
-          const control = CURVES[key];
-          const bgp = onPath(bgpPath, link.a, link.b);
-          const nearest = onPath(nearestPath, link.a, link.b);
-          const d = control
-            ? `M${ax},${ay} Q${control[0]},${control[1]} ${bx},${by}`
-            : `M${ax},${ay} L${bx},${by}`;
-          // A curve's label sits a quarter of the way along it, a line's in its middle.
-          const at = control
-            ? key === 't-asia|t-us'
-              ? [300, 122]
-              : [220, 300]
-            : ax === bx
-              ? [ax + 6, (ay + by) / 2 + 4]
-              : [(ax + bx) / 2, ay - 5];
-          return (
-            <g key={key}>
-              <path
-                d={d}
-                fill="none"
-                stroke={
-                  bgp
-                    ? 'var(--netlab-accent-cyan)'
-                    : nearest
-                      ? 'var(--netlab-accent-green)'
-                      : 'var(--netlab-border)'
-                }
-                strokeWidth={bgp || nearest ? 3 : 1.5}
-                strokeDasharray={!bgp && nearest ? '6 4' : undefined}
-              />
-              <text
-                x={at[0]}
-                y={at[1]}
-                textAnchor={ax === bx && !control ? 'start' : 'middle'}
-                fontSize={11}
-                fill="var(--netlab-text-secondary)"
-              >
-                {`${link.ms} ms`}
-              </text>
-            </g>
-          );
-        })}
-        {NODES.map((node) => {
-          const [x, y] = POS[node.id];
-          const withdrawn = node.id === down;
-          return (
-            <g key={node.id} opacity={withdrawn ? 0.4 : 1}>
-              <rect
-                x={x - BOX_W / 2}
-                y={y - BOX_H / 2}
-                width={BOX_W}
-                height={BOX_H}
-                rx={6}
-                fill="var(--netlab-bg-surface)"
-                stroke={
-                  node.kind === 'site' ? 'var(--netlab-accent-cyan)' : 'var(--netlab-border-strong)'
-                }
-                strokeDasharray={withdrawn ? '4 3' : undefined}
-              />
-              <text
-                x={x}
-                y={y - 3}
-                textAnchor="middle"
-                fontSize={10}
-                fill="var(--netlab-text-primary)"
-              >
-                {t(...NAMES[node.id])}
-              </text>
-              <text
-                x={x}
-                y={y + 11}
-                textAnchor="middle"
-                fontSize={10}
-                fontFamily="monospace"
-                fill="var(--netlab-text-secondary)"
-              >
-                {withdrawn ? t('withdrawn', '取り下げ') : `AS ${node.asn}`}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
+    <div>
+      <div ref={scroller} style={{ overflowX: 'auto' }}>
+        <svg
+          data-testid="any-map"
+          viewBox="-10 0 630 332"
+          style={{ width: '100%', minWidth: 560 }}
+          role="img"
+          aria-label={t(
+            'Four ISPs, four transit networks and the CDN’s three sites, with the one-way latency of each link',
+            '4 つの ISP、4 つのトランジット網、CDN の 3 拠点と、各リンクの片道の遅延',
+          )}
+        >
+          {LINKS.map((link) => {
+            const [ax, ay] = POS[link.a];
+            const [bx, by] = POS[link.b];
+            const key = [link.a, link.b].sort().join('|');
+            const curve = CURVES[key];
+            const bgp = onPath(bgpPath, link.a, link.b);
+            const nearest = onPath(nearestPath, link.a, link.b);
+            const d = curve ? curve.d : `M${ax},${ay} L${bx},${by}`;
+            // A curve's label is placed by hand; a line's sits in its middle.
+            const label = curve
+              ? curve.label
+              : ax === bx
+                ? [ax + 6, (ay + by) / 2 + 4]
+                : [(ax + bx) / 2, ay - 5];
+            return (
+              <g key={key}>
+                <path
+                  d={d}
+                  fill="none"
+                  stroke={
+                    bgp
+                      ? 'var(--netlab-accent-cyan)'
+                      : nearest
+                        ? 'var(--netlab-accent-green)'
+                        : 'var(--netlab-border)'
+                  }
+                  strokeWidth={bgp || nearest ? 3 : 1.5}
+                  strokeDasharray={!bgp && nearest ? '6 4' : undefined}
+                />
+                <text
+                  x={label[0]}
+                  y={label[1]}
+                  textAnchor={ax === bx && !curve ? 'start' : 'middle'}
+                  fontSize={11}
+                  fill="var(--netlab-text-secondary)"
+                >
+                  {`${link.ms} ms`}
+                </text>
+              </g>
+            );
+          })}
+          {NODES.map((node) => {
+            const [x, y] = POS[node.id];
+            const withdrawn = node.id === down;
+            return (
+              <g key={node.id} opacity={withdrawn ? 0.4 : 1}>
+                <rect
+                  x={x - BOX_W / 2}
+                  y={y - BOX_H / 2}
+                  width={BOX_W}
+                  height={BOX_H}
+                  rx={6}
+                  fill="var(--netlab-bg-surface)"
+                  stroke={
+                    node.kind === 'site'
+                      ? 'var(--netlab-accent-cyan)'
+                      : 'var(--netlab-border-strong)'
+                  }
+                  strokeDasharray={withdrawn ? '4 3' : undefined}
+                />
+                <text
+                  x={x}
+                  y={y - 3}
+                  textAnchor="middle"
+                  fontSize={10}
+                  fill="var(--netlab-text-primary)"
+                >
+                  {t(...NAMES[node.id])}
+                </text>
+                <text
+                  x={x}
+                  y={y + 11}
+                  textAnchor="middle"
+                  fontSize={10}
+                  fontFamily="monospace"
+                  fill="var(--netlab-text-secondary)"
+                >
+                  {withdrawn ? t('withdrawn', '取り下げ') : `AS ${node.asn}`}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+      {overflows ? (
+        <p
+          data-testid="any-map-scroll-hint"
+          style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--netlab-text-secondary)' }}
+        >
+          {t('Scroll the map sideways to see every site →', '地図は横にスクロールできます →')}
+        </p>
+      ) : null}
     </div>
   );
 }

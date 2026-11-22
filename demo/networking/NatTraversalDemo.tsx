@@ -24,7 +24,7 @@ import {
 } from './natTraversal';
 
 type Answer = 'direct' | 'one-way' | 'relay' | 'nothing';
-const ANSWERS: readonly Answer[] = ['direct', 'one-way', 'relay', 'nothing'];
+const ANSWERS: readonly Answer[] = ['relay', 'direct', 'one-way', 'nothing'];
 const ASKED: Readonly<Record<Side, NatType>> = { A: 'symmetric', B: 'port-restricted-cone' };
 
 const cell: React.CSSProperties = {

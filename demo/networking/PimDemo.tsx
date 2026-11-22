@@ -28,7 +28,8 @@ import {
 } from './pim';
 
 type Answer = 'all' | 'r6' | 'r5-r7' | 'none';
-const ANSWERS: readonly Answer[] = ['all', 'r6', 'r5-r7', 'none'];
+/** Display order: deliberate, so the right answers do not sit in one position across lessons. */
+const ANSWERS: readonly Answer[] = ['all', 'none', 'r6', 'r5-r7'];
 type View = 'shared' | 'source' | 'ssm';
 const VIEWS: readonly View[] = ['shared', 'source', 'ssm'];
 
@@ -152,13 +153,8 @@ function Topology({ rp, tree }: { rp: RouterId | null; tree: TreeResult | null }
                 </text>
               ) : null}
               {RECEIVERS.includes(router) ? (
-                <text
-                  x={p.x}
-                  y={p.y + 34}
-                  textAnchor="middle"
-                  fontSize={11}
-                  fill="var(--netlab-text-secondary)"
-                >
+                // Beside the router, not under it: below R7 it covered the R4–R5 cost.
+                <text x={p.x + 22} y={p.y + 16} fontSize={11} fill="var(--netlab-text-secondary)">
                   {t('receiver', '受信者')}
                 </text>
               ) : null}
@@ -310,7 +306,6 @@ function PimLesson() {
             style={{
               ...LESSON_TEAL_BUTTON,
               marginTop: 8,
-              minHeight: 44,
               opacity: guess ? 1 : 0.5,
             }}
             onClick={() => setRevealed(true)}

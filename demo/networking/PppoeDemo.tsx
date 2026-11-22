@@ -68,9 +68,15 @@ function PppoeLesson() {
   const truth = answerOf(asked);
   const askedData = asked.packets.filter((p) => p.kind === 'data');
   const askedDropped = askedData.filter((p) => p.fate === 'dropped');
+  const askedResendsDropped = asked.packets.filter(
+    (p) => p.kind === 'resend' && p.fate === 'dropped',
+  );
   const clamped = transfer({ ...ASKED, clamp: true });
   const run = transfer({ clamp, icmpFiltered, responseBytes });
   const outcome = answerOf(run);
+  const runResendsDropped = run.packets.filter(
+    (p) => p.kind === 'resend' && p.fate === 'dropped',
+  ).length;
 
   const answerName = (answer: Answer) =>
     ({
@@ -146,7 +152,9 @@ function PppoeLesson() {
       }}
     >
       <div style={LESSON_CARD}>
-        <div style={LESSON_LABEL}>{t('Getting online over PPPoE', 'PPPoE でインターネットへ')}</div>
+        <div style={{ ...LESSON_LABEL, textTransform: 'none' }}>
+          {t('Getting online over PPPoE', 'PPPoE でインターネットへ')}
+        </div>
         <p style={{ margin: 0, lineHeight: 1.7 }}>
           {t(
             'Many home and office routers reach their provider with PPPoE (RFC 2516): PPP, the protocol of dial-up days, carried inside Ethernet frames. Before any IP packet can go out, the router has to find a provider’s access concentrator (often called a BRAS) and open a session with it.',
@@ -300,8 +308,8 @@ function PppoeLesson() {
                 : t('Not what you predicted. ', '予想とちがいました。')}
             </strong>
             {t(
-              `It starts, then hangs. The handshake and the ${asked.packets.find((p) => p.kind === 'request')!.ipBytes}-byte request are small and pass. The PC announced MSS ${asked.announcedMss} (its own ${ETHERNET_MTU}-byte LAN), so the server answers in ${asked.firstSegment + 40}-byte packets. They do not fit the ${pppoeMtu}-byte PPPoE link: ${askedDropped.length} of the ${askedData.length} are dropped. The provider’s router reports it with ICMP “fragmentation needed”, but the firewall throws that away, so the server never learns, and its resends are the same size and die the same way. The browser holds ${asked.receivedBytes.toLocaleString('en')} bytes from the small last packet but can use ${asked.inOrderBytes} of them, because everything before them is missing. This is a PMTUD black hole.`,
-              `始まって、そこで止まります。ハンドシェイクと ${asked.packets.find((p) => p.kind === 'request')!.ipBytes} バイトのリクエストは小さいので通ります。PC は自分の ${ETHERNET_MTU} バイトの LAN に合わせて MSS ${asked.announcedMss} を伝えたので、サーバは ${asked.firstSegment + 40} バイトのパケットで返します。これは ${pppoeMtu} バイトの PPPoE リンクに収まらず、${askedData.length} 個のうち ${askedDropped.length} 個が捨てられます。事業者側のルータは ICMP「分割が必要」で知らせますが、ファイアウォールがそれを捨てるので、サーバは気づかず、同じ大きさで再送しては同じように消えます。ブラウザは最後の小さなパケットの ${asked.receivedBytes.toLocaleString('ja')} バイトを受け取っていますが、その前がすべて欠けているので、使えるのは ${asked.inOrderBytes} バイトです。これが PMTUD ブラックホールです。`,
+              `It starts, then hangs. The handshake and the ${asked.packets.find((p) => p.kind === 'request')!.ipBytes}-byte request are small and pass. The PC announced MSS ${asked.announcedMss} (its own ${ETHERNET_MTU}-byte LAN), so the server answers in ${asked.firstSegment + 40}-byte packets. They do not fit the ${pppoeMtu}-byte PPPoE link: of the first ${askedData.length}, ${askedDropped.length} are dropped. The provider’s router reports it with ICMP “fragmentation needed”, but the firewall throws that away, so the server never learns, and its ${askedResendsDropped.length} resends are the same size and are dropped too (${asked.dropped} in all). The browser holds ${asked.receivedBytes.toLocaleString('en')} bytes from the small last packet but can use ${asked.inOrderBytes} of them, because everything before them is missing. This is a PMTUD black hole.`,
+              `始まって、そこで止まります。ハンドシェイクと ${asked.packets.find((p) => p.kind === 'request')!.ipBytes} バイトのリクエストは小さいので通ります。PC は自分の ${ETHERNET_MTU} バイトの LAN に合わせて MSS ${asked.announcedMss} を伝えたので、サーバは ${asked.firstSegment + 40} バイトのパケットで返します。これは ${pppoeMtu} バイトの PPPoE リンクに収まらず、最初の ${askedData.length} 個のうち ${askedDropped.length} 個が捨てられます。事業者側のルータは ICMP「分割が必要」で知らせますが、ファイアウォールがそれを捨てるので、サーバは気づきません。同じ大きさで再送した ${askedResendsDropped.length} 個も捨てられます（計 ${asked.dropped} 個）。ブラウザは最後の小さなパケットの ${asked.receivedBytes.toLocaleString('ja')} バイトを受け取っていますが、その前がすべて欠けているので、使えるのは ${asked.inOrderBytes} バイトです。これが PMTUD ブラックホールです。`,
             )}
           </p>
         ) : (
@@ -309,7 +317,7 @@ function PppoeLesson() {
             type="button"
             data-testid="pppoe-reveal-button"
             disabled={!guess}
-            style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, opacity: guess ? 1 : 0.5, minHeight: 44 }}
+            style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, opacity: guess ? 1 : 0.5 }}
             onClick={() => setRevealed(true)}
           >
             {guess
@@ -379,8 +387,8 @@ function PppoeLesson() {
           >
             {outcomeName(outcome)}{' '}
             {t(
-              `Server sees MSS ${run.serverSeesMss}; ${run.dropped} packets dropped; ${run.inOrderBytes.toLocaleString('en')} of ${responseBytes.toLocaleString('en')} bytes usable.`,
-              `サーバに見える MSS は ${run.serverSeesMss}、捨てられたパケットは ${run.dropped} 個、使えるのは ${responseBytes.toLocaleString('ja')} バイト中 ${run.inOrderBytes.toLocaleString('ja')} バイトです。`,
+              `Server sees MSS ${run.serverSeesMss}; ${run.dropped} packets dropped${runResendsDropped > 0 ? ` (${runResendsDropped} of them resends)` : ''}; ${run.inOrderBytes.toLocaleString('en')} of ${responseBytes.toLocaleString('en')} bytes usable.`,
+              `サーバに見える MSS は ${run.serverSeesMss}、捨てられたパケットは ${run.dropped} 個${runResendsDropped > 0 ? `（うち再送 ${runResendsDropped} 個）` : ''}、使えるのは ${responseBytes.toLocaleString('ja')} バイト中 ${run.inOrderBytes.toLocaleString('ja')} バイトです。`,
             )}
           </p>
           <div style={{ overflowX: 'auto', marginTop: 8 }}>
@@ -441,7 +449,9 @@ function PppoeLesson() {
 
       {revealed ? (
         <div style={LESSON_CARD} data-testid="pppoe-ipoe">
-          <div style={LESSON_LABEL}>{t('Part 3: IPoE', 'Part 3：IPoE')}</div>
+          <div style={{ ...LESSON_LABEL, textTransform: 'none' }}>
+            {t('Part 3: IPoE', 'Part 3：IPoE')}
+          </div>
           <p style={{ margin: '0 0 8px', lineHeight: 1.7 }}>
             {t(
               'With IPoE the router does not dial at all: IP packets go straight into Ethernet frames and the address comes from DHCP (or, for IPv6, router advertisements and DHCPv6). There is no PPP header, so where the provider’s access network carries full-size frames the link MTU stays 1500. Many IPoE services in Japan are IPv6 first and carry IPv4 inside IPv6, which costs a 40-byte IPv6 header instead.',

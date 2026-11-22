@@ -130,6 +130,7 @@ Each `NetlabTheme` field maps to a CSS custom property scoped to the component c
 | `bgPanel`       | `--netlab-bg-panel`       |
 | `border`        | `--netlab-border`         |
 | `borderSubtle`  | `--netlab-border-subtle`  |
+| `borderStrong`  | `--netlab-border-strong`  |
 | `textPrimary`   | `--netlab-text-primary`   |
 | `textSecondary` | `--netlab-text-secondary` |
 | `textMuted`     | `--netlab-text-muted`     |
@@ -145,6 +146,10 @@ Each `NetlabTheme` field maps to a CSS custom property scoped to the component c
 | `nodeSwitchBg`  | `--netlab-node-switch-bg` |
 | `nodeClientBg`  | `--netlab-node-client-bg` |
 | `nodeServerBg`  | `--netlab-node-server-bg` |
+
+`borderStrong` is optional (a custom theme without it falls back to `textSecondary`); it is the
+border that must stay visible — diagram links and outlined lesson choices — at ≥ 3:1 against every
+background (dark `#7c8aa0`, light `#64748b`).
 
 Learning-surface tokens (second tier) and the shared radius scale are emitted
 alongside the above. The radius scale is fixed (not a `NetlabTheme` field):

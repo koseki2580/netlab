@@ -30,7 +30,8 @@ import {
 } from './accessSecurity';
 
 type Answer = 'nothing' | 'eapol-only' | 'eapol-dhcp' | 'everything';
-const ANSWERS: readonly Answer[] = ['nothing', 'eapol-only', 'eapol-dhcp', 'everything'];
+/** Display order: deliberate, so the right answers do not sit in one position across lessons. */
+const ANSWERS: readonly Answer[] = ['everything', 'nothing', 'eapol-dhcp', 'eapol-only'];
 
 const HUB_MACS = ['aa:bb:cc:00:00:01', 'aa:bb:cc:00:00:02', 'aa:bb:cc:00:00:03'] as const;
 

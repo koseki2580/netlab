@@ -29,10 +29,11 @@ import {
 } from './redistribution';
 
 type AdAnswer = SourceId | 'share';
-const AD_ANSWERS: readonly AdAnswer[] = ['static', 'ospf-r8', 'rip-r9', 'share'];
+/** Display order: deliberate, so the right answers do not sit in one position across lessons. */
+const AD_ANSWERS: readonly AdAnswer[] = ['rip-r9', 'static', 'ospf-r8', 'share'];
 
 type Answer = 'direct' | 'long' | 'loop' | 'none';
-const ANSWERS: readonly Answer[] = ['direct', 'long', 'loop', 'none'];
+const ANSWERS: readonly Answer[] = ['long', 'direct', 'loop', 'none'];
 
 const PROTOCOLS: readonly Protocol[] = ['connected', 'static', 'ebgp', 'ospf', 'rip', 'ibgp'];
 

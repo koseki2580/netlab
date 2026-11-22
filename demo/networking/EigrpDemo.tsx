@@ -23,7 +23,7 @@ import {
 } from './eigrp';
 
 type Answer = 'b' | 'bc' | 'bd' | 'bcd' | 'none';
-const ANSWERS: readonly Answer[] = ['b', 'bc', 'bd', 'bcd', 'none'];
+const ANSWERS: readonly Answer[] = ['bcd', 'bc', 'b', 'bd', 'none'];
 
 const cell: React.CSSProperties = {
   padding: 4,
@@ -82,16 +82,23 @@ function TopologyDiagram({ topology }: { topology: Topology }) {
           return (
             <g key={`${link.a}-${link.b}`}>
               <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="var(--netlab-border-strong)" />
+              {/* The cost sits on its own line's midpoint, boxed so it reads as that link's label. */}
+              <rect
+                x={(x1 + x2) / 2 - 12}
+                y={(y1 + y2) / 2 - 9}
+                width={24}
+                height={18}
+                rx={4}
+                fill="var(--netlab-bg-surface)"
+                stroke="var(--netlab-border-strong)"
+              />
               <text
                 x={(x1 + x2) / 2}
-                y={(y1 + y2) / 2 - 4}
+                y={(y1 + y2) / 2 + 4}
                 textAnchor="middle"
                 fontSize={12}
                 fontFamily="monospace"
                 fill="var(--netlab-accent-cyan)"
-                stroke="var(--netlab-bg-primary)"
-                strokeWidth={4}
-                paintOrder="stroke"
               >
                 {link.cost}
               </text>
@@ -296,7 +303,7 @@ function EigrpLesson() {
               </strong>
               {t(
                 `${selection.feasibleSuccessors.map((entry) => entry.id).join(' and ')}. The feasibility condition: a neighbour qualifies only if its reported distance is strictly less than R1’s feasible distance, here ${fd}. B reports ${row('B').rd} < ${fd}: yes. C reports ${row('C').rd}, which is not less than ${fd}: no, even though its total (${row('C').fd}) is only ${row('C').fd - row('B').fd} more than B’s. D reports ${row('D').rd} < ${fd}: yes, even though its total (${row('D').fd}) is the worst.`,
-                `${selection.feasibleSuccessors.map((entry) => entry.id).join(' と ')} です。フィージブル条件では、ネイバーの報告距離が R1 のフィージブルディスタンス（ここでは ${fd}）より厳密に小さいときだけ予備にできます。B の報告は ${row('B').rd} < ${fd} なので合格。C の報告 ${row('C').rd} は ${fd} より小さくないので不合格です。合計（${row('C').fd}）は B より ${row('C').fd - row('B').fd} 大きいだけなのに、です。D の報告は ${row('D').rd} < ${fd} なので合格。合計（${row('D').fd}）はいちばん悪いのに、です。`,
+                `${selection.feasibleSuccessors.map((entry) => entry.id).join(' と ')} です。フィージブル条件では、ネイバーの報告距離が R1 のフィージブルディスタンス（ここでは ${fd}）より厳密に小さいときだけ予備にできます。B の報告は ${row('B').rd} < ${fd} なので合格。C の報告 ${row('C').rd} は ${fd} より小さくないので不合格です。C は合計 ${row('C').fd} で B と ${row('C').fd - row('B').fd} しか違わないのに、予備になれません。D の報告は ${row('D').rd} < ${fd} なので合格。D は合計 ${row('D').fd} でいちばん遠いのに、予備になれます。`,
               )}
             </p>
             <p style={{ margin: '8px 0 0' }}>

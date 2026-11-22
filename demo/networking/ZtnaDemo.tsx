@@ -236,7 +236,7 @@ function ZtnaLesson() {
             type="button"
             data-testid="ztna-reveal-button"
             disabled={!guess}
-            style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, minHeight: 44, opacity: guess ? 1 : 0.5 }}
+            style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, opacity: guess ? 1 : 0.5 }}
             onClick={() => setRevealed(true)}
           >
             {guess

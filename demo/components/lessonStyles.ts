@@ -22,21 +22,28 @@ export const LESSON_BUTTON: CSSProperties = {
 };
 
 /**
- * A prediction choice or a tab: the action button when not chosen, inverted
- * (and outlined) when chosen, so the choice shows in both themes — a cyan
- * outline alone vanished against the cyan button in the dark theme. Pair it
- * with `aria-checked`/`aria-selected` and a leading "✓ " in the label.
+ * A prediction choice or a tab. Unchosen options are outlined (accent border
+ * and text, no fill); the chosen one is filled with the accent and ringed, so
+ * it reads as the strongest option in both themes rather than as a disabled
+ * one. Pair it with `aria-checked`/`aria-selected` and a leading "✓ " in the
+ * label.
  */
 export function lessonChoice(chosen: boolean): CSSProperties {
   return chosen
     ? {
         ...LESSON_BUTTON,
-        background: 'var(--netlab-text-primary)',
-        color: 'var(--netlab-bg-primary)',
-        outline: '2px solid var(--netlab-text-primary)',
+        border: '1px solid var(--netlab-accent-cyan)',
+        minHeight: 44,
+        outline: '2px solid var(--netlab-accent-cyan)',
         outlineOffset: 2,
       }
-    : LESSON_BUTTON;
+    : {
+        ...LESSON_BUTTON,
+        border: '1px solid var(--netlab-accent-cyan)',
+        background: 'transparent',
+        color: 'var(--netlab-accent-cyan)',
+        minHeight: 44,
+      };
 }
 
 /** The same button without its colours, for a lesson that sets them per state. */
@@ -54,6 +61,7 @@ export const LESSON_BUTTON_PLAIN: CSSProperties = {
  * values: no theme token has them in both themes, so they stay as they are.
  */
 export const LESSON_TEAL_BUTTON: CSSProperties = {
+  minHeight: 44,
   padding: '8px 12px',
   borderRadius: 8,
   border: '1px solid #0f766e',

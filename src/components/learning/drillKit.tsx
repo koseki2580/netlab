@@ -13,7 +13,7 @@ export const drillCardStyle: React.CSSProperties = {
   background: 'var(--netlab-bg-surface)',
   border: '1px solid var(--netlab-learning-surface-border)',
   borderRadius: 'var(--netlab-radius-lg)',
-  boxShadow: 'var(--netlab-learning-surface-shadow)',
+  boxShadow: 'var(--netlab-learning-shadow)',
   padding: 24,
   maxWidth: 560,
   margin: '0 auto',

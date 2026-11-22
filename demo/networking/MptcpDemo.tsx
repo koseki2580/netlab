@@ -22,7 +22,7 @@ import {
 } from './mptcp';
 
 type Answer = 'breaks' | 'slower' | 'same' | 'waits';
-const ANSWERS: readonly Answer[] = ['breaks', 'waits', 'same', 'slower'];
+const ANSWERS: readonly Answer[] = ['breaks', 'waits', 'slower', 'same'];
 const ASKED_LOSS_S = 4;
 
 const cell: React.CSSProperties = {
@@ -263,7 +263,7 @@ function MptcpLesson() {
             type="button"
             data-testid="mptcp-reveal-button"
             disabled={!guess}
-            style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, minHeight: 44, opacity: guess ? 1 : 0.5 }}
+            style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, opacity: guess ? 1 : 0.5 }}
             onClick={() => setRevealed(true)}
           >
             {guess
@@ -315,7 +315,9 @@ function MptcpLesson() {
 
       {revealed ? (
         <div style={LESSON_CARD} data-testid="mptcp-failover">
-          <div style={LESSON_LABEL}>{t('Losing Wi-Fi', 'Wi-Fi が切れたら')}</div>
+          <div style={{ ...LESSON_LABEL, textTransform: 'none' }}>
+            {t('Losing Wi-Fi', 'Wi-Fi が切れたら')}
+          </div>
           <label style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             {t('Wi-Fi is lost at', 'Wi-Fi が切れる時刻')}
             <input

@@ -205,7 +205,7 @@ function EmailLesson() {
       </div>
 
       <div style={LESSON_CARD}>
-        <div style={LESSON_LABEL}>
+        <div style={{ ...LESSON_LABEL, textTransform: 'none' }}>
           {t('Part 2: is it really from example.com?', 'パート 2：本当に example.com から？')}
         </div>
         <p style={{ margin: 0, lineHeight: 1.7 }}>
@@ -267,7 +267,7 @@ function EmailLesson() {
             type="button"
             data-testid="mail-reveal-button"
             disabled={!guess}
-            style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, opacity: guess ? 1 : 0.5, minHeight: 44 }}
+            style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, opacity: guess ? 1 : 0.5 }}
             onClick={() => setRevealed(true)}
           >
             {guess
@@ -279,7 +279,7 @@ function EmailLesson() {
 
       {revealed ? (
         <div style={LESSON_CARD} data-testid="mail-cases">
-          <div style={LESSON_LABEL}>
+          <div style={{ ...LESSON_LABEL, textTransform: 'none' }}>
             {t('Four messages, all with From: example.com', 'From: が example.com の 4 通')}
           </div>
           <div
