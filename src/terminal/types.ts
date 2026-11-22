@@ -12,6 +12,8 @@ export interface WebPage {
 export interface WebSite {
   readonly port?: number;
   readonly pages: Readonly<Record<string, WebPage>>;
+  /** The 404 body for a path with no page; "Not Found" when omitted. */
+  readonly notFound?: string;
 }
 
 /** The web sites of a network, by the id of the server device that serves each. */

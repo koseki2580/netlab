@@ -53,6 +53,31 @@ function defaultWorker(): SandboxWorker {
   }) as unknown as SandboxWorker;
 }
 
+/** More stray or malformed messages than this from the worker stop the sandbox. */
+const MAX_STRAY_MESSAGES = 50;
+
+const isStringArray = (value: unknown): boolean =>
+  Array.isArray(value) && value.every((item) => typeof item === 'string');
+
+/**
+ * Whether `result` has the shape the worker is meant to post: a request's success carries the raw
+ * response and its status, a load's success only the log, and a failure its kind and message.
+ */
+function isValidResult(result: unknown, isRequest: boolean): boolean {
+  if (typeof result !== 'object' || result === null) return false;
+  const r = result as Record<string, unknown>;
+  if (typeof r['ok'] !== 'boolean' || !isStringArray(r['log'])) return false;
+  if (!r['ok']) return typeof r['kind'] === 'string' && typeof r['message'] === 'string';
+  if (!isRequest) return true;
+  const response = r['response'] as Record<string, unknown> | null | undefined;
+  return (
+    typeof r['raw'] === 'string' &&
+    typeof response === 'object' &&
+    response !== null &&
+    typeof response['status'] === 'number'
+  );
+}
+
 const STOPPED: StoppedResult = {
   ok: false,
   kind: 'stopped',
@@ -67,11 +92,13 @@ export function createAppSandbox(code: string, options: AppSandboxOptions = {}):
   let worker: SandboxWorker | undefined;
   let nextId = 1;
   let started: Promise<SandboxStartResult> | undefined;
+  let strays = 0;
   const pending = new Map<
     number,
     {
       resolve: (result: SandboxReply['result'] | ServerAppFailure) => void;
       timer: ReturnType<typeof setTimeout>;
+      isRequest: boolean;
     }
   >();
 
@@ -90,8 +117,22 @@ export function createAppSandbox(code: string, options: AppSandboxOptions = {}):
     if (worker) return worker;
     const created = factory();
     created.onmessage = ({ data }) => {
-      const entry = pending.get(data.id);
-      if (!entry) return;
+      // The worker runs learner code, so its messages are checked, not trusted.
+      const reply = data as unknown as Partial<Record<keyof SandboxReply, unknown>> | null;
+      const entry =
+        typeof reply === 'object' && reply !== null && typeof reply.id === 'number'
+          ? pending.get(reply.id)
+          : undefined;
+      if (!entry || !isValidResult(reply?.result, entry.isRequest)) {
+        strays += 1;
+        if (strays > MAX_STRAY_MESSAGES) {
+          shutDown({
+            ...STOPPED,
+            message: 'the app sent too many unexpected messages; the sandbox was stopped',
+          });
+        }
+        return;
+      }
       clearTimeout(entry.timer);
       pending.delete(data.id);
       entry.resolve(data.result);
@@ -119,7 +160,7 @@ export function createAppSandbox(code: string, options: AppSandboxOptions = {}):
           log: [],
         });
       }, timeoutMs);
-      pending.set(id, { resolve, timer });
+      pending.set(id, { resolve, timer, isRequest: raw !== undefined });
       ensureWorker().postMessage(raw === undefined ? { id, code } : { id, code, raw });
     });
 

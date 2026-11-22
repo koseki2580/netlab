@@ -148,6 +148,9 @@ export function terminalNetwork(): NetworkTopology {
 /** The pages the web server `www` answers with (REQ-360). */
 export const TERMINAL_WEB_SITES: WebSites = {
   www: {
+    // The terminal lesson lets the learner replace these pages with their own app (REQ-416).
+    notFound:
+      'Not Found (built-in page — press Start in "Write www\'s server" to run your own code)',
     pages: {
       '/': {
         contentType: 'text/html',

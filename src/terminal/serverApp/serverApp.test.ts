@@ -194,7 +194,8 @@ describe('TC-2207: errors while loading the app are reported, not answered', () 
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.kind).toBe('syntax');
-    expect(result.message).toMatch(/SyntaxError/);
+    // The UI adds "SyntaxError: "; the message is the engine's own (TC-2254).
+    expect(result.message).toBe('Unexpected end of input');
   });
 
   it('reports an error thrown at load time as kind runtime', async () => {

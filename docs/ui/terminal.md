@@ -68,3 +68,17 @@ with `sendTransfer`, which splits it into segments of 1400 bytes (or the path MT
   depth for the learner's own code, not a security boundary.
 - Demo: `demo/tools/ServerAppCard.tsx` keeps the code in localStorage (`netlab-terminal-www-app`), never in the
   URL. Before the first Start, www serves its built-in pages; after Start, the app; after Stop, nothing.
+
+### Hardening and `ss -l` (REQ-418, REQ-419)
+
+- `ss -l` / `-lu` / `-a` list listening sockets derived from the context (site or running app on TCP; a device's
+  `dnsServer` / `dhcpServer` role on UDP 53 / 67). Plain `ss` lists established connections only.
+- Body cap `MAX_BODY_BYTES` (64 KiB) in `res.send/json` (500 + log) and again in curl (error 56; head over 16 KiB
+  too). Log capped at 200 × 500 chars per request. CR/LF in header names/values → TypeError, status outside
+  100–999 → RangeError, both as 500 + log.
+- curl prints server-supplied lines through `visible()`, which shows C0/C1 controls like `cat -v`; xterm is given a
+  `linkHandler` that opens nothing.
+- The worker also shadows `Worker`, `SharedWorker`, `WebTransport`, `BroadcastChannel`, `navigator.storage`;
+  `appSandbox` accepts only replies for pending ids with a valid shape and stops after 50 stray messages.
+- The card keeps the code it was started with and shows a restart notice when the editor differs; the built-in www
+  answers an unknown path with a hint to press Start.

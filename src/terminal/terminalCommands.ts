@@ -8,6 +8,7 @@ import { resolveHostSettings } from '../components/NodeDetailPanel/hostSettings'
 import { packetLeg, type PacketTrace } from '../types/simulation';
 import type { NetlabNode } from '../types/topology';
 import { intToIp, ipToInt, networkAddress } from '../utils/cidr';
+import { MAX_BODY_BYTES } from './serverApp/serverApp';
 import type { TerminalContext, TerminalResult, WebPage } from './types';
 
 const IPV4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
@@ -54,7 +55,7 @@ const USAGE: Record<string, readonly [string, string]> = {
   ],
   ip: ['Usage: ip addr | ip route', '使い方: ip addr | ip route'],
   arp: ['Usage: arp -a', '使い方: arp -a'],
-  ss: ['Usage: ss -t', '使い方: ss -t'],
+  ss: ['Usage: ss [-t] [-u] [-l] [-a] [-n]', '使い方: ss [-t] [-u] [-l] [-a] [-n]'],
 };
 
 function usage(command: string, locale: Locale): TerminalResult {
@@ -72,7 +73,11 @@ function help(locale: Locale): TerminalResult {
     ['dhclient', 'ask DHCP for an address', 'DHCP でアドレスをもらう'],
     ['ip addr | ip route', 'show this host’s address and routes', 'この機器のアドレスと経路を見る'],
     ['arp -a', 'show the neighbours’ MAC addresses', '近くの機器の MAC アドレスを見る'],
-    ['ss -t', 'show TCP connections', 'TCP の接続を見る'],
+    [
+      'ss [-t] [-u] [-l] [-a]',
+      'show connections; -l listening sockets, -a both',
+      '接続を見る（-l は待ち受け中のソケット、-a は両方）',
+    ],
     ['clear', 'clear the screen', '画面を消す'],
   ];
   const width = Math.max(...rows.map(([command]) => command.length));
@@ -274,6 +279,22 @@ const REASON: Record<number, string> = { 200: 'OK', 404: 'Not Found' };
 /** The transfer's segment size on an ordinary 1500-byte path (DataTransferController's default). */
 const SEGMENT_BYTES = 1400;
 
+/** The most a response's head may take before curl gives up on it, in UTF-8 bytes. */
+const MAX_HEAD_BYTES = 16 * 1024;
+
+/**
+ * Shows control characters as `cat -v` does (ESC as ^[, DEL as ^?, a C1 control as M-^…), tabs
+ * kept: what the server sent must not clear the screen, move the cursor or make links in xterm.
+ */
+function visible(text: string): string {
+  return text.replace(/[\u0000-\u0008\u000a-\u001f\u007f-\u009f]/g, (char) => {
+    const code = char.charCodeAt(0);
+    if (code === 0x7f) return '^?';
+    if (code >= 0x80) return `M-^${String.fromCharCode(code - 0x80 + 64)}`;
+    return `^${String.fromCharCode(code + 64)}`;
+  });
+}
+
 /** The flags curl takes a value after. */
 const CURL_VALUE_FLAGS = new Set(['-X', '-H', '-d']);
 let nextPort = 49152;
@@ -357,11 +378,17 @@ async function curl(
     const [head = '', ...rest] = answer.raw.split('\r\n\r\n');
     headers = head.split('\r\n');
     bodyText = rest.join('\r\n\r\n');
+    // The app's side already caps the body, but the worker could post anything: check again.
+    const bytes = (text: string) => new TextEncoder().encode(text).length;
+    if (bytes(bodyText) > MAX_BODY_BYTES || bytes(head) > MAX_HEAD_BYTES) {
+      await engine.tcpDisconnect(handshake.connection.id);
+      return { lines: ['curl: (56) Failure when receiving data from the peer'] };
+    }
   } else {
     const page: WebPage = site?.pages[path] ?? {
       status: 404,
       contentType: 'text/plain',
-      body: 'Not Found',
+      body: site?.notFound ?? 'Not Found',
     };
     const status = page.status ?? 200;
     headers = [
@@ -378,9 +405,11 @@ async function curl(
   });
   await engine.tcpDisconnect(handshake.connection.id);
 
-  const body = headOnly ? [] : bodyText.split('\n');
-  if (headOnly) return { lines: headers };
-  if (!verbose) return { lines: withHeaders ? [...headers, '', ...body] : body };
+  // Everything below that came from the server is printed with its control characters visible.
+  const body = headOnly ? [] : bodyText.split('\n').map(visible);
+  const shown = headers.map(visible);
+  if (headOnly) return { lines: shown };
+  if (!verbose) return { lines: withHeaders ? [...shown, '', ...body] : body };
   // The transfer splits the response into segments of SEGMENT_BYTES; name them when the count agrees.
   const total = sent.payloadSizeBytes;
   const count = sent.expectedChunks;
@@ -399,7 +428,7 @@ async function curl(
       `* Connected to ${host} (${ip}) port ${port}`,
       ...request.map((line) => `> ${line}`),
       '>',
-      ...headers.map((line) => `< ${line}`),
+      ...shown.map((line) => `< ${line}`),
       '<',
       ...body,
       // Last, as curl ends with its own "* Connection … left intact": how the response travelled.
@@ -497,27 +526,63 @@ function arp(args: string[], context: TerminalContext, locale: Locale): Terminal
   };
 }
 
+/** The UDP services a device's own settings say it runs, as the ports they listen on. */
+const UDP_SERVICES = [
+  { port: 53, runs: (node: NetlabNode) => node.data.dnsServer !== undefined },
+  { port: 67, runs: (node: NetlabNode) => node.data.dhcpServer !== undefined },
+] as const;
+
 function ss(args: string[], context: TerminalContext, locale: Locale): TerminalResult {
-  // Only TCP is kept as connections, so `ss` alone lists what `ss -t` does.
-  if (args[0] !== undefined && args[0] !== '-t') return usage('ss', locale);
-  const rows = context.engine.getTcpConnectionsForNode(context.nodeId).map((connection) => {
-    const mine = connection.srcNodeId === context.nodeId;
-    const local = mine
-      ? `${connection.srcIp}:${connection.srcPort}`
-      : `${connection.dstIp}:${connection.dstPort}`;
-    const peer = mine
-      ? `${connection.dstIp}:${connection.dstPort}`
-      : `${connection.srcIp}:${connection.srcPort}`;
-    const state = connection.state === 'ESTABLISHED' ? 'ESTAB' : connection.state;
-    return [state, '0', '0', local, peer];
-  });
-  const header = ['State', 'Recv-Q', 'Send-Q', 'Local Address:Port', 'Peer Address:Port'];
-  const all = [header, ...rows];
-  const widths = header.map((_, column) =>
-    Math.max(...all.map((row) => (row[column] ?? '').length)),
+  // Flags may be grouped (`-ltn`) or apart (`-l -t`); -n is accepted as ports are always numeric.
+  if (!args.every((arg) => /^-[tulan]+$/.test(arg))) return usage('ss', locale);
+  const flags = new Set(args.flatMap((arg) => [...arg.slice(1)]));
+  const all = flags.has('a');
+  const listening = all || flags.has('l');
+  const connected = all || !flags.has('l');
+  // Only TCP is kept as connections, so with no protocol named `ss` shows TCP, as `ss -t` does.
+  const udp = flags.has('u');
+  const tcp = flags.has('t') || !udp;
+
+  const rows: string[][] = [];
+  if (tcp && listening) {
+    // What curl connects to: a running app takes the place of the static site.
+    const app = context.apps?.[context.nodeId];
+    const site = context.web?.[context.nodeId];
+    const port = app ? 80 : site ? (site.port ?? 80) : undefined;
+    if (port !== undefined)
+      rows.push(['tcp', 'LISTEN', '0', '128', `0.0.0.0:${port}`, '0.0.0.0:*']);
+  }
+  if (tcp && connected) {
+    for (const connection of context.engine.getTcpConnectionsForNode(context.nodeId)) {
+      const mine = connection.srcNodeId === context.nodeId;
+      const local = mine
+        ? `${connection.srcIp}:${connection.srcPort}`
+        : `${connection.dstIp}:${connection.dstPort}`;
+      const peer = mine
+        ? `${connection.dstIp}:${connection.dstPort}`
+        : `${connection.srcIp}:${connection.srcPort}`;
+      const state = connection.state === 'ESTABLISHED' ? 'ESTAB' : connection.state;
+      rows.push(['tcp', state, '0', '0', local, peer]);
+    }
+  }
+  if (udp && listening) {
+    // UDP services are unconnected sockets, which ss shows only with -l or -a.
+    const self = context.engine.getTopology().nodes.find((node) => node.id === context.nodeId);
+    for (const service of UDP_SERVICES) {
+      if (self && service.runs(self)) {
+        rows.push(['udp', 'UNCONN', '0', '0', `0.0.0.0:${service.port}`, '0.0.0.0:*']);
+      }
+    }
+  }
+
+  const header = ['Netid', 'State', 'Recv-Q', 'Send-Q', 'Local Address:Port', 'Peer Address:Port'];
+  // Like ss, the Netid column appears only when more than one protocol is shown.
+  const table = [header, ...rows].map((row) => (tcp && udp ? row : row.slice(1)));
+  const widths = (table[0] ?? []).map((_, column) =>
+    Math.max(...table.map((row) => (row[column] ?? '').length)),
   );
   return {
-    lines: all.map((row) =>
+    lines: table.map((row) =>
       row
         .map((cell, column) => cell.padEnd(widths[column] ?? 0))
         .join('  ')

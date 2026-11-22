@@ -26,8 +26,9 @@ export default [
   eager({ name: 'worker', path: 'dist/assets/worker.entry-*.js', limit: '46 kB' }),
   eager({ name: 'ui:simulation-context', path: 'dist/sandbox-mode-*.mjs', limit: '66 kB' }),
   eager({ name: 'ui:node-ports', path: 'dist/NodePorts-*.mjs', limit: '3 kB' }),
-  // The terminal's commands, loaded when one first runs (REQ-361).
-  eager({ name: 'ui:terminal', path: 'dist/terminalCommands-*.mjs', limit: '7 kB' }),
+  // The terminal's commands, loaded when one first runs (REQ-361). 7.5 kB after ss -l/-u/-a
+  // (REQ-418) and curl's limits and escaping (REQ-419); still loaded only on the first command.
+  eager({ name: 'ui:terminal', path: 'dist/terminalCommands-*.mjs', limit: '8 kB' }),
   // The Japanese words, loaded only for a Japanese page (REQ-356).
   eager({ name: 'locale:ja', path: 'dist/locales/ja.js', limit: '25 kB' }),
   eager({ name: 'ui:scenario-export', path: 'dist/ScenarioExportDialog-*.mjs', limit: '52 kB' }),

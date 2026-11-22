@@ -6,6 +6,7 @@ import {
   type WebSites,
 } from '../../src/terminal';
 import { useViewport } from '../../src/utils/useViewport';
+import { LESSON_BUTTON } from '../components/lessonStyles';
 import { useGalleryLocale, useT } from '../localeContext';
 
 type Xterm = import('@xterm/xterm').Terminal;
@@ -52,6 +53,7 @@ export function TerminalPanel({
   apps,
   names,
   pending,
+  focusRequest,
   onRun,
 }: {
   engine: TerminalEngine;
@@ -65,6 +67,8 @@ export function TerminalPanel({
   names: readonly string[];
   /** A command to type and run, from the suggestions beside the terminal. */
   pending?: { readonly line: string; readonly id: number } | null;
+  /** Changed to move the keyboard focus to the terminal (or, on a phone, its input line). */
+  focusRequest?: number;
   /** Each command run, with the device it ran on and what it printed. */
   onRun?: (run: { nodeId: string; line: string; lines: readonly string[] }) => void;
 }) {
@@ -77,6 +81,7 @@ export function TerminalPanel({
   const [ready, setReady] = useState(false);
   const [transcript, setTranscript] = useState<string[]>([]);
   const [typed, setTyped] = useState('');
+  const input = useRef<HTMLInputElement>(null);
   const latest = useRef({ engine, nodeId, web, apps, locale, names, host, onRun });
   latest.current = { engine, nodeId, web, apps, locale, names, host, onRun };
   const run = useRef<(line: string) => Promise<void>>(async () => {});
@@ -99,6 +104,8 @@ export function TerminalPanel({
         fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
         fontSize: 14,
         theme: { background: '#0d1117', foreground: '#d6e2ee', cursor: '#3fb950' },
+        // Output can come from the learner's own server: its OSC 8 links do nothing when clicked.
+        linkHandler: { activate: () => {} },
       });
       const fit = new FitAddon();
       terminal.loadAddon(fit);
@@ -221,6 +228,15 @@ export function TerminalPanel({
     void run.current(pending.line);
   }, [pending, ready]);
 
+  // Asked from outside (an app just started): put the keyboard where commands are typed.
+  useEffect(() => {
+    if (!focusRequest || !ready) return;
+    if (isNarrow) input.current?.focus();
+    else term.current?.focus();
+    // Only a new request moves the focus, not a resize.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusRequest, ready]);
+
   return (
     <div style={{ display: 'grid', gap: 8 }}>
       <div
@@ -256,6 +272,7 @@ export function TerminalPanel({
           style={{ display: 'flex', gap: 8 }}
         >
           <input
+            ref={input}
             data-testid="terminal-input"
             aria-label={t('Command', 'コマンド')}
             value={typed}
@@ -271,7 +288,11 @@ export function TerminalPanel({
               padding: '0 8px',
             }}
           />
-          <button type="submit" data-testid="terminal-run" style={{ minHeight: 44, minWidth: 64 }}>
+          <button
+            type="submit"
+            data-testid="terminal-run"
+            style={{ ...LESSON_BUTTON, minHeight: 44, minWidth: 64 }}
+          >
             {t('Run the command', 'コマンドを実行')}
           </button>
         </form>

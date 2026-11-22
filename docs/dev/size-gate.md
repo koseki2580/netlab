@@ -36,7 +36,9 @@ eager entry's static imports reach a `dist/locales/*` file.
 
 xterm.js is the demo's terminal (REQ-361). `size-gate-check` fails if an eager entry's closure
 contains xterm.js's `xterm-helper-textarea`. The terminal's commands are their own chunk,
-`ui:terminal` (7 kB).
+`ui:terminal` (8 kB; raised from 7 kB for `ss -l` and curl's response limits, REQ-418/419).
+The engine worker is at 45,999 of 46,000 bytes after the TCP numbering and ACKs (REQ-417), which load
+lazily from `tcpSegmentation.ts`: any further eager worker code must move out first.
 
 ## Adding a pack
 

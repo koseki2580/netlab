@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useViewport } from '../../src/utils/useViewport';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
@@ -158,6 +158,8 @@ function TerminalSide({
   const [deviceId, setDeviceId] = useState('client');
   const [wwwMode, setWwwMode] = useState<WwwMode>('built-in');
   const [wwwApp, setWwwApp] = useState<ServerApp | null>(null);
+  const [focusRequest, setFocusRequest] = useState(0);
+  const appCard = useRef<HTMLDivElement>(null);
   // While the learner's app is in charge of www (running or stopped), www's built-in pages are gone.
   const servedWeb = useMemo(() => {
     if (wwwMode === 'built-in') return web;
@@ -195,21 +197,35 @@ function TerminalSide({
       {/* On a phone the terminal comes first: below the cards it was a long scroll away. */}
       {phone ? null : faults}
       {phone ? null : <Missions done={done} />}
-      <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        {t('Terminal on', '端末を開く機器')}
-        <select
-          data-testid="terminal-device"
-          value={deviceId}
-          onChange={(event) => setDeviceId(event.target.value)}
-          style={{ minHeight: 44, fontSize: 15 }}
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {t('Terminal on', '端末を開く機器')}
+          <select
+            data-testid="terminal-device"
+            value={deviceId}
+            onChange={(event) => setDeviceId(event.target.value)}
+            style={{ minHeight: 44, fontSize: 15 }}
+          >
+            {DEVICES.map((node) => (
+              <option key={node.id} value={node.id}>
+                {node.data.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        {/* The app card sits below the terminal, out of sight: this brings it up. */}
+        <button
+          type="button"
+          data-testid="server-app-jump"
+          style={{ ...LESSON_BUTTON, minHeight: 44, marginLeft: 'auto' }}
+          onClick={() => {
+            appCard.current?.scrollIntoView({ block: 'start' });
+            appCard.current?.querySelector('textarea')?.focus({ preventScroll: true });
+          }}
         >
-          {DEVICES.map((node) => (
-            <option key={node.id} value={node.id}>
-              {node.data.label}
-            </option>
-          ))}
-        </select>
-      </label>
+          {t('Write www’s server ↓', 'www のサーバを書く ↓')}
+        </button>
+      </div>
       <TerminalPanel
         engine={engine}
         nodeId={device?.id ?? 'client'}
@@ -218,13 +234,17 @@ function TerminalSide({
         {...(apps ? { apps } : {})}
         names={NAMES}
         pending={pending}
+        focusRequest={focusRequest}
         onRun={onRun}
       />
       {phone ? faults : null}
       <ServerAppCard
+        cardRef={appCard}
         onChange={(mode, app) => {
           setWwwMode(mode);
           setWwwApp(app);
+          // Started: the keyboard goes to the terminal, ready for curl.
+          if (mode === 'app') setFocusRequest((count) => count + 1);
         }}
       />
       {phone ? <Missions done={done} /> : null}

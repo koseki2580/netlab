@@ -92,6 +92,18 @@ const STATUS_TEXT: Readonly<Record<number, string>> = {
   503: 'Service Unavailable',
 };
 
+/** The largest response body an app may send, in UTF-8 bytes; curl checks it again. */
+export const MAX_BODY_BYTES = 64 * 1024;
+/** How many log entries one request (or the load) may leave, and how long each may be. */
+const MAX_LOG_ENTRIES = 200;
+const MAX_LOG_CHARS = 500;
+
+/** Adds a log line within the per-request limits; lines past the limit are dropped. */
+function pushLog(log: string[], line: string): void {
+  if (log.length >= MAX_LOG_ENTRIES) return;
+  log.push(line.length > MAX_LOG_CHARS ? `${line.slice(0, MAX_LOG_CHARS)}…` : line);
+}
+
 const TEXT_PLAIN = 'text/plain; charset=utf-8';
 const TEXT_HTML = 'text/html; charset=utf-8';
 const APPLICATION_JSON = 'application/json; charset=utf-8';
@@ -181,12 +193,40 @@ function describe(value: unknown): string {
   }
 }
 
+const lineOf = (error: unknown): number | undefined => {
+  if (typeof error !== 'object' || error === null) return undefined;
+  const { lineNumber, line } = error as { lineNumber?: unknown; line?: unknown };
+  const value = lineNumber ?? line;
+  return typeof value === 'number' ? value : undefined;
+};
+
+/**
+ * The message of a syntax error, without its name (the UI adds "SyntaxError: "), and with the line
+ * in the learner's code when the engine reports one. The engine's count includes the lines that
+ * new Function wraps around the body, so it is calibrated with an error known to be on line 1. V8
+ * reports no line at all; then none is given rather than a guess.
+ */
+function syntaxMessage(error: unknown, code: string): string {
+  const message = error instanceof Error ? error.message : String(error);
+  const reported = lineOf(error);
+  if (reported === undefined) return message;
+  let firstLine: number | undefined;
+  try {
+    new Function('app', 'console', '}');
+  } catch (calibration) {
+    firstLine = lineOf(calibration);
+  }
+  if (firstLine === undefined) return message;
+  const line = reported - firstLine + 1;
+  return line >= 1 && line <= code.split('\n').length ? `${message} (line ${line})` : message;
+}
+
 /** Evaluates the app's code once: it declares routes and may log. Nothing is answered yet. */
 export function loadServerApp(code: string): LoadResult {
   const routes: { method: RouteMethod; path: string; handler: Handler }[] = [];
   const pendingLog: string[] = [];
   const write = (...args: unknown[]) => {
-    pendingLog.push(args.map(describe).join(' '));
+    pushLog(pendingLog, args.map(describe).join(' '));
   };
   const appConsole = { log: write, info: write, warn: write, error: write, debug: write };
   const route = (method: RouteMethod) => (path: unknown, handler: unknown) => {
@@ -210,7 +250,7 @@ export function loadServerApp(code: string): LoadResult {
 
     evaluate = new Function('app', 'console', code) as typeof evaluate;
   } catch (error) {
-    return { ok: false, kind: 'syntax', message: describe(error), log: [] };
+    return { ok: false, kind: 'syntax', message: syntaxMessage(error, code), log: [] };
   }
   try {
     evaluate(app, appConsole);
@@ -221,9 +261,23 @@ export function loadServerApp(code: string): LoadResult {
 }
 
 function createRes(onLateSend: () => void) {
-  const state: { status: number; headers: Record<string, string>; body?: string } = {
+  const state: {
+    status: number;
+    headers: Record<string, string>;
+    body?: string;
+    /** Set when the body was over MAX_BODY_BYTES: the response is a 500 whatever follows. */
+    oversized?: boolean;
+  } = {
     status: 200,
     headers: {},
+  };
+  const respond = (body: string) => {
+    if (new TextEncoder().encode(body).length > MAX_BODY_BYTES) {
+      state.oversized = true;
+      state.body = '';
+    } else {
+      state.body = body;
+    }
   };
   const setType = (type: string) => {
     if (!Object.keys(state.headers).some((name) => name.toLowerCase() === 'content-type')) {
@@ -231,11 +285,22 @@ function createRes(onLateSend: () => void) {
     }
   };
   const res = {
-    status(code: number) {
-      state.status = Number(code);
+    status(code: unknown) {
+      // As Express does: anything but an integer from 100 to 999 is refused.
+      if (typeof code !== 'number' || !Number.isInteger(code) || code < 100 || code > 999) {
+        throw new RangeError(`Invalid status code: ${String(code)}`);
+      }
+      state.status = code;
       return res;
     },
     set(name: string, value: unknown) {
+      // As Node does: a CR or LF would end the header and start another (response splitting).
+      if (/[\r\n]/.test(String(name))) {
+        throw new TypeError(`Header name must be a valid HTTP token ["${String(name)}"]`);
+      }
+      if (/[\r\n]/.test(String(value))) {
+        throw new TypeError(`Invalid character in header content ["${String(name)}"]`);
+      }
       for (const existing of Object.keys(state.headers)) {
         if (existing.toLowerCase() === String(name).toLowerCase()) delete state.headers[existing];
       }
@@ -249,7 +314,7 @@ function createRes(onLateSend: () => void) {
       }
       if (value !== null && typeof value === 'object') return res.json(value);
       setType(TEXT_HTML);
-      state.body = value === undefined ? '' : String(value);
+      respond(value === undefined ? '' : String(value));
       return res;
     },
     json(value: unknown) {
@@ -258,7 +323,7 @@ function createRes(onLateSend: () => void) {
         return res;
       }
       setType(APPLICATION_JSON);
-      state.body = JSON.stringify(value) ?? '';
+      respond(JSON.stringify(value) ?? '');
       return res;
     },
   };
@@ -299,7 +364,7 @@ export async function dispatchServerApp(
   try {
     parsed = parseHttpRequest(raw);
   } catch (error) {
-    log.push(describe(error));
+    pushLog(log, describe(error));
     return finish({ status: 400, headers: {}, body: 'Bad Request' });
   }
   const label = `${parsed.method} ${parsed.path}`;
@@ -317,20 +382,25 @@ export async function dispatchServerApp(
   const server = new HttpServer({ nodeId: 'server-app' });
   for (const route of loaded.routes) {
     server.route(route.method, route.path, async (_message, params) => {
-      const { res, state } = createRes(() => log.push(`${label}: response already sent; ignored`));
+      const { res, state } = createRes(() =>
+        pushLog(log, `${label}: response already sent; ignored`),
+      );
       const decoded: Record<string, string> = {};
       for (const [name, value] of Object.entries(params)) decoded[name] = decodeParam(value);
       const req = { ...parsed, params: decoded, body };
       try {
         await route.handler(req, res);
-        if (state.body === undefined) {
-          log.push(`${label}: handler did not respond`);
+        if (state.oversized) {
+          pushLog(log, `${label}: response body exceeds 64 KiB`);
+          answered = { status: 500, headers: {}, body: 'Internal Server Error' };
+        } else if (state.body === undefined) {
+          pushLog(log, `${label}: handler did not respond`);
           answered = { status: 500, headers: {}, body: 'Internal Server Error' };
         } else {
           answered = { status: state.status, headers: state.headers, body: state.body };
         }
       } catch (error) {
-        log.push(describe(error));
+        pushLog(log, describe(error));
         answered = { status: 500, headers: {}, body: 'Internal Server Error' };
       }
       return { layer: 'L7', httpVersion: 'HTTP/1.1', headers: {} };

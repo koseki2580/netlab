@@ -54,7 +54,7 @@ describe('TC-2209: the app sandbox answers requests, reports errors and stops on
     const started = await sandbox.start();
     expect(started.ok).toBe(false);
     expect(!started.ok && started.kind).toBe('syntax');
-    expect(!started.ok && started.message).toMatch(/SyntaxError/);
+    expect(!started.ok && started.message).toBe("Unexpected token '}'");
     expect(sandbox.running).toBe(false);
   });
 
@@ -111,5 +111,74 @@ describe('TC-2209: the app sandbox answers requests, reports errors and stops on
     expect(worker.terminated).toBe(true);
     const result = await sandbox.handle(GET('/'));
     expect(!result.ok && result.kind).toBe('stopped');
+  });
+});
+
+/** A worker that posts `noise` before each real reply, as compromised learner code could. */
+class NoisyWorker extends InProcessWorker {
+  constructor(private readonly noise: (request: SandboxRequest) => unknown[]) {
+    super();
+  }
+  override postMessage(request: SandboxRequest): void {
+    for (const data of this.noise(request)) {
+      this.onmessage?.({ data: data as SandboxReply });
+    }
+    super.postMessage(request);
+  }
+}
+
+const OK_CODE = `app.get('/', (req, res) => res.send('real'));`;
+
+describe('TC-2257: the sandbox accepts only well-formed replies to pending requests', () => {
+  it('ignores replies with an unknown id or a bad shape and still answers with the real one', async () => {
+    const forged = (id: number) => ({
+      id,
+      result: {
+        ok: true,
+        raw: 'HTTP/1.1 200 OK\r\n\r\nforged',
+        response: { status: 200 },
+        log: [],
+      },
+    });
+    const worker = new NoisyWorker(({ id, raw }) => [
+      forged(id + 100),
+      null,
+      'nonsense',
+      { id, result: { ok: 'yes', raw: 'x', log: [] } },
+      // A request reply without raw.
+      ...(raw === undefined ? [] : [{ id, result: { ok: true, log: [] } }]),
+      { id, result: { ok: true, raw: 42, response: { status: 200 }, log: [] } },
+      { id, result: { ok: false, kind: 'syntax', message: 7, log: [] } },
+    ]);
+    const sandbox = createAppSandbox(OK_CODE, { workerFactory: () => worker });
+    const result = await sandbox.handle(GET('/'));
+    expect(result.ok && result.response.body).toBe('real');
+    expect(sandbox.running).toBe(true);
+  });
+});
+
+describe('TC-2258: more than 50 stray messages stop the sandbox', () => {
+  it('terminates the worker and answers the waiting request as stopped', async () => {
+    let flood = false;
+    const worker = new NoisyWorker(({ id }) =>
+      flood ? Array.from({ length: 51 }, () => ({ id: id + 1000, result: { ok: true } })) : [],
+    );
+    const sandbox = createAppSandbox(OK_CODE, { workerFactory: () => worker });
+    expect((await sandbox.start()).ok).toBe(true);
+    flood = true;
+    const result = await sandbox.handle(GET('/'));
+    expect(!result.ok && result.kind).toBe('stopped');
+    expect(sandbox.running).toBe(false);
+    expect(worker.terminated).toBe(true);
+  });
+
+  it('50 stray messages are tolerated', async () => {
+    const worker = new NoisyWorker(({ id }) =>
+      Array.from({ length: 25 }, () => ({ id: id + 1000, result: { ok: true } })),
+    );
+    const sandbox = createAppSandbox(OK_CODE, { workerFactory: () => worker });
+    const result = await sandbox.handle(GET('/')); // start + request: 50 strays
+    expect(result.ok && result.response.body).toBe('real');
+    expect(sandbox.running).toBe(true);
   });
 });

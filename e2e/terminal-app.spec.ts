@@ -70,3 +70,34 @@ test('TC-2216: a throwing handler gives 500 with its error in the log; Stop refu
   await typeCommand(page, 'curl http://www.example.test/');
   await expect(transcript(page)).toContainText('<h1>Hello from www</h1>');
 });
+
+test('TC-2240: an edit while running asks for a restart, and the jump link brings the card into view', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/tools/terminal');
+  await expect(page.getByTestId('terminal-loading')).toHaveCount(0);
+
+  // The card is below the terminal; the link beside the terminal brings it up.
+  await page.getByTestId('server-app-jump').click();
+  await expect(page.getByTestId('server-app')).toBeInViewport();
+
+  const editor = page.getByTestId('server-app-code');
+  await editor.fill("app.get('/v', (req, res) => res.send('one'));");
+  await page.getByTestId('server-app-start').click();
+  await expect(page.getByTestId('server-app-status')).toHaveAttribute('data-mode', 'app');
+  await expect(page.getByTestId('server-app-dirty')).toHaveCount(0);
+
+  // Edited while running: the app keeps the code it started with until Restart.
+  await editor.fill("app.get('/v', (req, res) => res.send('two'));");
+  await expect(page.getByTestId('server-app-dirty')).toHaveText(
+    'コードが変わりました。再起動すると反映されます。',
+  );
+  await typeCommand(page, 'curl http://www.example.test/v');
+  await expect(transcript(page)).toContainText('one');
+
+  await page.getByTestId('server-app-start').click();
+  await expect(page.getByTestId('server-app-dirty')).toHaveCount(0);
+  await typeCommand(page, 'curl http://www.example.test/v');
+  await expect(transcript(page)).toContainText('two');
+});
