@@ -84,9 +84,9 @@ test('all-in-one names flows by their order and endpoints, not a random hash', a
 
   const chips = page.getByTestId('trace-selector-chip');
   await expect(chips).toHaveCount(2);
-  await expect(chips.nth(0), 'the first flow is ① and names its endpoints').toHaveText(
-    /^① .+ → .+/,
+  await expect(chips.nth(0), 'the first flow is 1. and names its endpoints').toHaveText(
+    /^1\. .+ → .+/,
   );
-  await expect(chips.nth(1)).toHaveText(/^② .+ → .+/);
+  await expect(chips.nth(1)).toHaveText(/^2\. .+ → .+/);
   await expect(chips.nth(0), 'no hash stands in for a name').not.toHaveText(/#[0-9a-f]{6,}/);
 });

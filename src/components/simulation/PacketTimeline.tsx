@@ -367,6 +367,15 @@ function HopRow({
   );
 }
 
+/**
+ * The header badge counts the steps of the selected trace, not the traces in
+ * the list, so it says so (TC-2260); a bare number beside many flows misled.
+ */
+function stepCountLabel(count: number, locale: string): string {
+  if (locale === 'ja') return `この通信は ${count} ステップ`;
+  return `${count} ${count === 1 ? 'step' : 'steps'} in this trace`;
+}
+
 const identityFilter: TraceFilterPredicate = () => true;
 
 export interface PacketTimelineProps {
@@ -375,6 +384,7 @@ export interface PacketTimelineProps {
 
 export const PacketTimeline = memo(function PacketTimeline({ filter }: PacketTimelineProps = {}) {
   const t = useNdpT();
+  const { locale } = useI18n();
   const { topology } = useNetlabContext();
   const { state, exportPcap } = useSimulation();
   const playback = usePlayback();
@@ -473,7 +483,7 @@ export const PacketTimeline = memo(function PacketTimeline({ filter }: PacketTim
               padding: '1px 6px',
             }}
           >
-            {trace.hops.length}
+            {stepCountLabel(trace.hops.length, locale)}
           </span>
         )}
         <button

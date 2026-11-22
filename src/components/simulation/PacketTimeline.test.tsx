@@ -468,7 +468,11 @@ describe('PacketTimeline for a beginner', () => {
   let host: HTMLDivElement;
   let hostRoot: Root;
 
-  function renderIn(locale: string, trace: PacketTrace | null = ARP_TRACE) {
+  function renderIn(
+    locale: string,
+    trace: PacketTrace | null = ARP_TRACE,
+    traces: PacketTrace[] = trace ? [trace] : [],
+  ) {
     host = document.createElement('div');
     document.body.appendChild(host);
     hostRoot = createRoot(host);
@@ -486,7 +490,7 @@ describe('PacketTimeline for a beginner', () => {
             <SimulationContext.Provider
               value={makeSimulationContextValue({
                 state: trace
-                  ? makeState({ traces: [trace] })
+                  ? makeState({ traces, currentTraceId: trace.packetId })
                   : makeState({ traces: [], currentTraceId: null, status: 'idle' }),
               })}
             >
@@ -565,5 +569,31 @@ describe('PacketTimeline for a beginner', () => {
     renderIn('en', null);
     expect(host.textContent).toContain('Nothing sent yet.');
     expect(host.textContent).not.toContain('Send Packet');
+  });
+
+  it('TC-2260: every flow is numbered the same way past ten, and the count says it counts steps', () => {
+    const flows = Array.from({ length: 12 }, (_, index) => ({
+      ...ARP_TRACE,
+      packetId: `pkt-${index + 1}`,
+    }));
+    const chipTexts = () =>
+      Array.from(host.querySelectorAll('[data-testid="trace-selector-chip"]')).map(
+        (chip) => chip.textContent ?? '',
+      );
+
+    renderIn('en', flows[0] ?? null, flows);
+    const chips = chipTexts();
+    expect(chips).toHaveLength(12);
+    chips.forEach((text, index) => {
+      expect(text.startsWith(`${index + 1}. Client → Server`)).toBe(true);
+    });
+    expect(chips.join('')).not.toMatch(/[\u2460-\u2473]/);
+    expect(host.textContent).toContain('4 steps in this trace');
+
+    act(() => hostRoot.unmount());
+    host.remove();
+    renderIn('ja', flows[0] ?? null, flows);
+    expect(chipTexts()[10]?.startsWith('11. Client → Server')).toBe(true);
+    expect(host.textContent).toContain('この通信は 4 ステップ');
   });
 });

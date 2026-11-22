@@ -7,15 +7,14 @@ function shortId(value: string): string {
   return value.length > 8 ? value.slice(0, 8) : value;
 }
 
-const CIRCLED = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
-
 /**
- * Name a trace by its order and its endpoints — "① Client → Server" — the way
+ * Name a trace by its order and its endpoints — "1. Client → Server" — the way
  * the learner sent it. A hash ("#a944f7b8") names nothing a learner can see,
- * and the same flow got a different one on each tab.
+ * and the same flow got a different one on each tab. One numbering style for
+ * every flow (TC-2260): circled digits ran out after ⑩ and the list switched style.
  */
 function traceName(trace: PacketTrace, index: number): string {
-  const order = CIRCLED[index] ?? `${index + 1}.`;
+  const order = `${index + 1}.`;
   const labelOf = (nodeId: string) =>
     trace.hops.find((hop) => hop.nodeId === nodeId)?.nodeLabel ?? nodeId;
   const route = `${labelOf(trace.srcNodeId)} → ${labelOf(trace.dstNodeId)}`;
