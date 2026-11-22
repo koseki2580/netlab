@@ -284,6 +284,8 @@ export interface InFlightPacket {
   sessionId?: string;
   /** The next hop an MPLS label decided at this hop; the router sends there, not by IP. */
   mplsNextHop?: string;
+  /** The trace's label when the sender names the packet itself, such as a TCP segment of a transfer (REQ-417). */
+  label?: string;
 }
 
 // ── Runtime predicates (type guards) ────────────────────────────

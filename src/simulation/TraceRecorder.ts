@@ -198,6 +198,7 @@ export class TraceRecorder {
   }
 
   deriveTraceLabel(packet: InFlightPacket): string {
+    if (packet.label) return packet.label;
     const ipPayload = packet.frame.payload.payload;
 
     if (isHttpPayload(ipPayload)) {

@@ -3,6 +3,7 @@ import type { FailureState } from '../types/failure';
 import { EMPTY_FAILURE_STATE } from '../types/failure';
 import type { InFlightPacket } from '../types/packets';
 import type { RouteEntry } from '../types/routing';
+import type { TcpConnection } from '../types/tcp';
 import type { Neighbor, PacketTrace } from '../types/simulation';
 import type { NetlabNode } from '../types/topology';
 import type {
@@ -46,6 +47,8 @@ export interface DataTransferEngine {
   getRuntimeNodeIp(nodeId: string): string | null;
   getState(): { readonly traces: readonly PacketTrace[] };
   send(packet: InFlightPacket, failureState?: FailureState): Promise<void>;
+  /** The open connections; a transfer on one of them is numbered as its TCP stream (REQ-417). */
+  getTcpConnections?(): readonly TcpConnection[];
 }
 
 export interface DataTransferControllerDeps {
@@ -73,12 +76,9 @@ function createState(): DataTransferState {
   };
 }
 
+/** The engine itself needs `crypto.randomUUID` for every packet it sends (TraceCoordinator). */
 function makeId(prefix: string): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}-${crypto.randomUUID()}`;
-  }
-
-  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  return `${prefix}-${crypto.randomUUID()}`;
 }
 
 function payloadPreview(payload: string): string {
@@ -93,59 +93,20 @@ function byteLength(value: string): number {
   return textEncoder.encode(value).length;
 }
 
-function splitPayloadByBytes(
-  payload: string,
-  maxBytes: number,
-): { data: string; sizeBytes: number }[] {
-  if (payload.length === 0) {
-    return [{ data: '', sizeBytes: 0 }];
+/**
+ * Where the chunk that starts at character `from` ends: as many whole
+ * characters as fit in `maxBytes` of UTF-8, and at least one. One pass.
+ */
+function chunkEnd(payload: string, from: number, maxBytes: number): number {
+  let end = from;
+  for (let bytes = 0; end < payload.length; ) {
+    const code = payload.codePointAt(end) ?? 0;
+    const size = code < 0x80 ? 1 : code < 0x800 ? 2 : code < 0x10000 ? 3 : 4;
+    if (bytes > 0 && bytes + size > maxBytes) break;
+    bytes += size;
+    end += code > 0xffff ? 2 : 1;
   }
-
-  const chunks: { data: string; sizeBytes: number }[] = [];
-  let currentChunk = '';
-  let currentBytes = 0;
-
-  for (const character of payload) {
-    const characterBytes = byteLength(character);
-
-    if (currentBytes > 0 && currentBytes + characterBytes > maxBytes) {
-      chunks.push({ data: currentChunk, sizeBytes: currentBytes });
-      currentChunk = '';
-      currentBytes = 0;
-    }
-
-    currentChunk += character;
-    currentBytes += characterBytes;
-
-    if (currentBytes > maxBytes) {
-      chunks.push({ data: currentChunk, sizeBytes: currentBytes });
-      currentChunk = '';
-      currentBytes = 0;
-    }
-  }
-
-  if (currentChunk.length > 0) {
-    chunks.push({ data: currentChunk, sizeBytes: currentBytes });
-  }
-
-  return chunks;
-}
-
-function takePayloadChunkByBytes(
-  payload: string,
-  maxBytes: number,
-): { data: string; sizeBytes: number; remainder: string } {
-  const [firstChunk] = splitPayloadByBytes(payload, maxBytes);
-
-  if (!firstChunk) {
-    return { data: '', sizeBytes: 0, remainder: '' };
-  }
-
-  return {
-    data: firstChunk.data,
-    sizeBytes: firstChunk.sizeBytes,
-    remainder: payload.slice(firstChunk.data.length),
-  };
+  return end;
 }
 
 function effectiveChunkSize(configuredMax: number, pathMtu: number): number {
@@ -164,17 +125,18 @@ function cloneTransferMessage(transfer: TransferMessage): TransferMessage {
   };
 }
 
-function cloneTransferChunk(chunk: TransferChunk): TransferChunk {
-  return { ...chunk };
+/** Every chunk of a transfer has the same total, the chunks so far: filled in here, not per chunk. */
+function cloneTransferChunk(chunk: TransferChunk, totalChunks: number): TransferChunk {
+  return { ...chunk, totalChunks };
 }
 
 function cloneReassemblyState(reassembly: ReassemblyState): ReassemblyState {
   return {
     ...reassembly,
     receivedChunks: new Map(
-      Array.from(reassembly.receivedChunks.entries(), ([sequenceNumber, chunk]) => [
+      [...reassembly.receivedChunks].map(([sequenceNumber, chunk]) => [
         sequenceNumber,
-        cloneTransferChunk(chunk),
+        cloneTransferChunk(chunk, reassembly.expectedTotal),
       ]),
     ),
   };
@@ -248,24 +210,37 @@ export class DataTransferController {
     transfer.status = 'in-progress';
     this.notify();
 
-    let remainingPayload = payload;
+    const engine = this.deps.engine;
+    const tcp = engine.getTcpConnections?.().length
+      ? (await import('./tcpSegmentation')).openTcpStream(
+          engine,
+          srcNodeId,
+          dstNodeId,
+          options,
+          payload,
+          chunkEnd,
+          failureState,
+        )
+      : null;
+    let offset = 0;
     let payloadOffsetBytes = 0;
     let needsEmptyChunk = payload.length === 0;
 
-    while (needsEmptyChunk || remainingPayload.length > 0) {
+    while (needsEmptyChunk || offset < payload.length) {
       needsEmptyChunk = false;
       const currentChunkSize = effectiveChunkSize(
         chunkSize,
         pmtuLookup?.(srcNodeId, dstIp) ?? Number.POSITIVE_INFINITY,
       );
-      const chunkPayload = takePayloadChunkByBytes(remainingPayload, currentChunkSize);
+      const end = chunkEnd(payload, offset, currentChunkSize);
+      const data = payload.slice(offset, end);
       const chunk: TransferChunk = {
         chunkId: `${messageId}-chunk-${chunks.length}`,
         messageId,
         sequenceNumber: chunks.length,
         totalChunks: 0,
-        data: chunkPayload.data,
-        sizeBytes: chunkPayload.sizeBytes,
+        data,
+        sizeBytes: byteLength(data),
         state: 'in-flight',
       };
 
@@ -286,7 +261,10 @@ export class DataTransferController {
         ...(sessionId !== undefined ? { sessionId } : {}),
       });
 
-      await this.deps.engine.send(packet, failureState);
+      await this.deps.engine.send(
+        tcp ? tcp.stamp(packet, end, currentChunkSize, chunks.length) : packet,
+        failureState,
+      );
 
       const trace = this.findTrace(packet.id);
       if (!trace) {
@@ -324,23 +302,18 @@ export class DataTransferController {
 
       chunk.state = trace.status === 'delivered' ? 'delivered' : 'dropped';
       chunks.push(chunk);
-      transfer.expectedChunks = chunks.length;
-      reassembly.expectedTotal = chunks.length;
-      chunks.forEach((candidate) => {
-        candidate.totalChunks = chunks.length;
-      });
-      reassembly.receivedChunks = new Map(
-        chunks
-          .filter((candidate) => candidate.state === 'delivered')
-          .map((candidate) => [candidate.sequenceNumber, cloneTransferChunk(candidate)]),
-      );
+      transfer.expectedChunks = reassembly.expectedTotal = chunks.length;
+      if (chunk.state === 'delivered') {
+        reassembly.receivedChunks.set(chunk.sequenceNumber, chunk);
+      }
 
       this.notify();
+      await tcp?.ack(chunk.state === 'delivered');
 
-      remainingPayload = chunkPayload.remainder;
+      offset = end;
       payloadOffsetBytes += chunk.sizeBytes;
 
-      if (chunkDelay > 0 && remainingPayload.length > 0) {
+      if (chunkDelay > 0 && offset < payload.length) {
         await delay(chunkDelay);
       }
     }
@@ -373,19 +346,19 @@ export class DataTransferController {
   getState(): DataTransferState {
     return {
       transfers: new Map(
-        Array.from(this.state.transfers.entries(), ([messageId, transfer]) => [
+        [...this.state.transfers].map(([messageId, transfer]) => [
           messageId,
           cloneTransferMessage(transfer),
         ]),
       ),
       chunks: new Map(
-        Array.from(this.state.chunks.entries(), ([messageId, chunks]) => [
+        [...this.state.chunks].map(([messageId, chunks]) => [
           messageId,
-          chunks.map((chunk) => cloneTransferChunk(chunk)),
+          chunks.map((chunk) => cloneTransferChunk(chunk, chunks.length)),
         ]),
       ),
       reassembly: new Map(
-        Array.from(this.state.reassembly.entries(), ([messageId, reassembly]) => [
+        [...this.state.reassembly].map(([messageId, reassembly]) => [
           messageId,
           cloneReassemblyState(reassembly),
         ]),
@@ -400,9 +373,10 @@ export class DataTransferController {
   }
 
   getChunks(messageId: string): TransferChunk[] {
-    return [...(this.state.chunks.get(messageId) ?? [])]
+    const chunks = this.state.chunks.get(messageId) ?? [];
+    return [...chunks]
       .sort((left, right) => left.sequenceNumber - right.sequenceNumber)
-      .map((chunk) => cloneTransferChunk(chunk));
+      .map((chunk) => cloneTransferChunk(chunk, chunks.length));
   }
 
   getReassembly(messageId: string): ReassemblyState | undefined {
@@ -421,6 +395,7 @@ export class DataTransferController {
   }
 
   private notify(): void {
+    if (this.listeners.size === 0) return;
     const snapshot = this.getState();
     this.listeners.forEach((listener) => listener(snapshot));
   }
@@ -503,8 +478,8 @@ export class DataTransferController {
     }
 
     const pipeline = this.deps.pipeline;
-    const node = pipeline?.findNode(nodeId) ?? null;
-    const effectiveIp = pipeline?.getEffectiveNodeIp(node);
+    const node = pipeline.findNode(nodeId) ?? null;
+    const effectiveIp = pipeline.getEffectiveNodeIp(node);
 
     if (!effectiveIp) {
       throw new NetlabError({
@@ -519,10 +494,10 @@ export class DataTransferController {
 
   private resolveSourceMac(nodeId: string, dstIp: string): string {
     const pipeline = this.deps.pipeline;
-    const node = pipeline?.findNode(nodeId) ?? null;
+    const node = pipeline.findNode(nodeId) ?? null;
 
     if (node?.data.role === 'router') {
-      const egressInterfaceId = pipeline?.resolveEgressInterface?.(nodeId, dstIp)?.id;
+      const egressInterfaceId = pipeline.resolveEgressInterface?.(nodeId, dstIp)?.id;
       if (egressInterfaceId) {
         const egressInterface = node.data.interfaces?.find(
           (iface) => iface.id === egressInterfaceId,
@@ -566,25 +541,18 @@ export class DataTransferController {
   }
 
   private resolveNextHopIp(srcNode: NetlabNode, dstIp: string): string {
-    if (srcNode.data.role === 'router') {
-      const route = this.selectBestRoute(dstIp, [...this.deps.pipeline.getRouteTable(srcNode.id)]);
-      if (route) {
-        return route.nextHop === 'direct' ? dstIp : route.nextHop;
-      }
-      return dstIp;
-    }
-
-    const route = this.selectBestRoute(dstIp, srcNode.data.staticRoutes ?? []);
-    if (route) {
-      return route.nextHop === 'direct' ? dstIp : route.nextHop;
-    }
-
-    return dstIp;
+    const route = this.selectBestRoute(
+      dstIp,
+      srcNode.data.role === 'router'
+        ? this.deps.pipeline.getRouteTable(srcNode.id)
+        : (srcNode.data.staticRoutes ?? []),
+    );
+    return route && route.nextHop !== 'direct' ? route.nextHop : dstIp;
   }
 
   private selectBestRoute<T extends { destination: string; nextHop: string }>(
     dstIp: string,
-    routes: T[],
+    routes: readonly T[],
   ): T | null {
     return (
       [...routes]
@@ -615,7 +583,10 @@ export class DataTransferController {
       }
 
       if (node.data.role !== 'switch') {
-        fallback ??= node;
+        // Nobody here has the address: the frame is for a router, not the first host found.
+        if (fallback?.data.role !== 'router' && (!fallback || node.data.role === 'router')) {
+          fallback = node;
+        }
         if (nodeOwnsIp(node, targetIp, this.deps.pipeline.getEffectiveNodeIp(node))) {
           return node;
         }
