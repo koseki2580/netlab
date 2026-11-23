@@ -5,6 +5,7 @@ import {
   type TerminalEngine,
   type WebSites,
 } from '../../src/terminal';
+import { useNetlabTheme } from '../../src/hooks/useNetlabTheme';
 import { useViewport } from '../../src/utils/useViewport';
 import { LESSON_BUTTON } from '../components/lessonStyles';
 import { useGalleryLocale, useT } from '../localeContext';
@@ -75,6 +76,7 @@ export function TerminalPanel({
   const t = useT();
   const locale = useGalleryLocale();
   const { isNarrow } = useViewport();
+  const { colorMode } = useNetlabTheme();
   const screen = useRef<HTMLDivElement>(null);
   const term = useRef<Xterm | null>(null);
   const busy = useRef(false);
@@ -239,8 +241,13 @@ export function TerminalPanel({
 
   return (
     <div style={{ display: 'grid', gap: 8 }}>
+      {/* xterm's hidden input takes the keys when the screen is tapped: under 16px, iOS zooms into it. */}
+      <style>
+        {'.netlab-terminal-screen .xterm-helper-textarea { font-size: 16px !important; }'}
+      </style>
       <div
         ref={screen}
+        className="netlab-terminal-screen"
         data-testid="terminal-screen"
         aria-label={t('Terminal', '端末')}
         style={{
@@ -286,6 +293,11 @@ export function TerminalPanel({
               fontFamily: 'monospace',
               fontSize: 16,
               padding: '0 8px',
+              background: 'var(--netlab-bg-surface)',
+              color: 'var(--netlab-text-primary)',
+              border: '1px solid var(--netlab-border-strong)',
+              borderRadius: 6,
+              colorScheme: colorMode,
             }}
           />
           <button

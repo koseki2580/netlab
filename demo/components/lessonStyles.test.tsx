@@ -4,8 +4,9 @@ import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it } from 'vitest';
 import AnycastDemo from '../networking/AnycastDemo';
+import L4sDemo from '../networking/L4sDemo';
 import ModernWifiDemo from '../networking/ModernWifiDemo';
-import { LESSON_CARD, LESSON_TEAL_BUTTON_DISABLED } from './lessonStyles';
+import { LESSON_CARD, LESSON_TEAL_BUTTON_DISABLED, predictionMark } from './lessonStyles';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -86,5 +87,75 @@ describe('lesson legends name a line style, not a theme colour (TC-2337)', () =>
     const ja = revealed(ModernWifiDemo, 'wifi', 'ja');
     expect(ja).toContain('各バーの左側はオーバーヘッド、右側はデータです。');
     expect(ja).not.toContain('水色');
+  });
+});
+
+/**
+ * TC-2360 — after a prediction is revealed, a wrong choice is marked ✗ and the
+ * right one ✓, as the concept check marks them; before it, the chosen one is ✓.
+ */
+describe('prediction marks (TC-2360)', () => {
+  it('marks only the chosen option before the reveal', () => {
+    expect(predictionMark('a', 'a', 'b', false)).toBe('✓ ');
+    expect(predictionMark('b', 'a', 'b', false)).toBe('');
+    expect(predictionMark('c', 'a', 'b', false)).toBe('');
+  });
+
+  it('marks a wrong choice ✗ and the right one ✓ after the reveal', () => {
+    expect(predictionMark('a', 'a', 'b', true)).toBe('✗ ');
+    expect(predictionMark('b', 'a', 'b', true)).toBe('✓ ');
+    expect(predictionMark('c', 'a', 'b', true)).toBe('');
+  });
+
+  it('marks a right choice ✓ after the reveal', () => {
+    expect(predictionMark('b', 'b', 'b', true)).toBe('✓ ');
+    expect(predictionMark('a', 'b', 'b', true)).toBe('');
+  });
+
+  it('marks every right option when more than one is right', () => {
+    expect(predictionMark('a', 'a', ['b', 'c'], true)).toBe('✗ ');
+    expect(predictionMark('b', 'a', ['b', 'c'], true)).toBe('✓ ');
+    expect(predictionMark('c', 'a', ['b', 'c'], true)).toBe('✓ ');
+  });
+
+  it('marks booleans by value, so a false answer still counts', () => {
+    expect(predictionMark(true, true, false, true)).toBe('✗ ');
+    expect(predictionMark(false, true, false, true)).toBe('✓ ');
+  });
+
+  describe('in the L4S lesson', () => {
+    let root: Root | null = null;
+    let container: HTMLDivElement | null = null;
+
+    afterEach(() => {
+      act(() => root?.unmount());
+      container?.remove();
+      root = null;
+      container = null;
+    });
+
+    it('shows ✗ on a wrong prediction and ✓ on the right one once revealed', () => {
+      container = document.createElement('div');
+      document.body.appendChild(container);
+      root = createRoot(container);
+      act(() =>
+        root!.render(
+          <MemoryRouter>
+            <L4sDemo />
+          </MemoryRouter>,
+        ),
+      );
+      const option = (id: string) =>
+        container!.querySelector<HTMLButtonElement>(`[data-testid="l4s-guess-${id}"]`)!;
+      act(() => option('classic-deep').click());
+      expect(option('classic-deep').textContent).toMatch(/^✓ /);
+      act(() =>
+        container!.querySelector<HTMLButtonElement>('[data-testid="l4s-reveal-button"]')!.click(),
+      );
+      expect(option('classic-deep').textContent).toMatch(/^✗ /);
+      expect(option('classic-deep').getAttribute('aria-checked')).toBe('true');
+      expect(option('l4s').textContent).toMatch(/^✓ /);
+      expect(option('classic-shallow').textContent).not.toMatch(/^[✓✗]/);
+    });
   });
 });

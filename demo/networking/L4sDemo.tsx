@@ -5,6 +5,7 @@ import {
   LESSON_TEAL_BUTTON,
   LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
+  predictionMark,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -41,7 +42,7 @@ function DelayChart({ scenario }: { scenario: L4sScenario }) {
     <svg
       data-testid="l4s-chart"
       data-scenario={scenario}
-      viewBox={`-44 -8 ${CHART_W + 54} ${CHART_H + 28}`}
+      viewBox={`-44 -8 ${CHART_W + 54} ${CHART_H + 32}`}
       style={{ width: '100%', maxWidth: 480 }}
       role="img"
       aria-label={t(
@@ -58,7 +59,7 @@ function DelayChart({ scenario }: { scenario: L4sScenario }) {
               x={-6}
               y={y + 4}
               textAnchor="end"
-              fontSize={11}
+              fontSize={12}
               fill="var(--netlab-text-secondary)"
             >
               {`${ms} ms`}
@@ -71,7 +72,7 @@ function DelayChart({ scenario }: { scenario: L4sScenario }) {
         x={CHART_W / 2}
         y={CHART_H + 18}
         textAnchor="middle"
-        fontSize={11}
+        fontSize={12}
         fill="var(--netlab-text-secondary)"
       >
         {t('round trips →', '往復 →')}
@@ -150,7 +151,7 @@ function L4sLesson() {
               onClick={() => setGuess(id)}
               style={{ ...lessonChoice(guess === id), textAlign: 'left' }}
             >
-              {guess === id ? '✓ ' : ''}
+              {predictionMark(id, guess, 'l4s', revealed)}
               {t(...NAMES[id])}
             </button>
           ))}

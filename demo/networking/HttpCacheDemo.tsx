@@ -5,6 +5,7 @@ import {
   LESSON_TEAL_BUTTON,
   LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
+  predictionMark,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -178,7 +179,7 @@ function HttpCacheLesson() {
               onClick={() => setGuess(answer)}
               style={{ ...lessonChoice(guess === answer), textAlign: 'left', minHeight: 44 }}
             >
-              {guess === answer ? '✓ ' : ''}
+              {predictionMark(answer, guess, truth, revealed)}
               {answerName(answer)}
             </button>
           ))}

@@ -5,6 +5,7 @@ import {
   LESSON_TEAL_BUTTON,
   LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
+  predictionMark,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -116,7 +117,7 @@ function EchLesson() {
                   onClick={() => setGuesses((previous) => ({ ...previous, [mode]: value }))}
                   style={lessonChoice(guesses[mode] === value)}
                 >
-                  {guesses[mode] === value ? '✓ ' : ''}
+                  {predictionMark(value, guesses[mode], sees(mode), revealed)}
                   {value ? t('It can be read', '読める') : t('It cannot', '読めない')}
                 </button>
               ))}

@@ -12,6 +12,7 @@ import {
   LESSON_TEAL_BUTTON,
   LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
+  predictionMark,
 } from '../components/lessonStyles';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import DemoShell from '../DemoShell';
@@ -199,7 +200,7 @@ function IcmpSteps() {
               opacity: outcome !== null && guess !== kind ? 0.5 : 1,
             }}
           >
-            {guess === kind ? '✓ ' : ''}
+            {predictionMark(kind, guess, outcome?.kind, outcome !== null)}
             {word(kind)}
           </button>
         ))}

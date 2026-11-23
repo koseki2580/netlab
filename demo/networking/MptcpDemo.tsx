@@ -5,6 +5,7 @@ import {
   LESSON_TEAL_BUTTON,
   LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
+  predictionMark,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -82,7 +83,7 @@ function ProgressChart({ lossAtS, stripped }: { lossAtS: number; stripped: boole
             x={-6}
             y={y(mb) + 4}
             textAnchor="end"
-            fontSize={11}
+            fontSize={12}
             fill="var(--netlab-text-secondary)"
           >
             {`${mb} MB`}
@@ -97,7 +98,7 @@ function ProgressChart({ lossAtS, stripped }: { lossAtS: number; stripped: boole
         stroke="var(--netlab-text-secondary)"
         strokeDasharray="2 3"
       />
-      <text x={x(lossAtS) + 4} y={10} fontSize={11} fill="var(--netlab-text-secondary)">
+      <text x={x(lossAtS) + 4} y={10} fontSize={12} fill="var(--netlab-text-secondary)">
         {t('Wi-Fi lost', 'Wi-Fi 切断')}
       </text>
       {series.map(({ id, outcome, colour, dash }) => {
@@ -131,7 +132,7 @@ function ProgressChart({ lossAtS, stripped }: { lossAtS: number; stripped: boole
         x={CHART_W / 2}
         y={CHART_H + 20}
         textAnchor="middle"
-        fontSize={11}
+        fontSize={12}
         fill="var(--netlab-text-secondary)"
       >
         {t('seconds → (0–20 s)', '秒 →（0〜20 秒）')}
@@ -237,7 +238,7 @@ function MptcpLesson() {
               onClick={() => setGuess(answer)}
               style={{ ...lessonChoice(guess === answer), textAlign: 'left', minHeight: 44 }}
             >
-              {guess === answer ? '✓ ' : ''}
+              {predictionMark(answer, guess, truth, revealed)}
               {answerName(answer)}
             </button>
           ))}

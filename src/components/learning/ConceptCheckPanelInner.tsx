@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { substitute } from '../../i18n/substitute';
 import type { Catalog } from '../../i18n/types';
 import { useI18n } from '../../i18n/useI18n';
@@ -79,6 +79,10 @@ export interface ConceptCheckPanelProps {
   deckId?: string;
   /** Limit the review queue to these decks' questions; other items stay stored as they are. */
   reviewScope?: readonly string[];
+  /** Open straight in the review session when something in the queue is due; otherwise the picker. */
+  autoStartReview?: boolean;
+  /** Extra actions on the end screen, e.g. a link back to where the learner came from. */
+  endActions?: ReactNode;
 }
 
 /** A deck's session, or `null` for an unknown deck. */
@@ -112,6 +116,8 @@ export default function ConceptCheckPanelInner({
   reviewStore = createReviewStore(),
   deckId,
   reviewScope,
+  autoStartReview = false,
+  endActions,
 }: ConceptCheckPanelProps = {}) {
   const { locale, t: baseT } = useI18n();
   // Scopes the document-level key handler to this panel (see the keydown effect).
@@ -248,6 +254,15 @@ export default function ConceptCheckPanelInner({
     if (items.length === 0) return;
     start({ kind: 'review', id: 'review', titleKey: 'learning.concept.review.title', items });
   }, [queuedIds, byItemId, start]);
+
+  // Once, on mount: arriving to review (e.g. from the learning path) should not
+  // need a second tap on the Review button.
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (autoStarted.current) return;
+    autoStarted.current = true;
+    if (autoStartReview && !deckId && queuedDueCount > 0) startReview();
+  }, [autoStartReview, deckId, queuedDueCount, startReview]);
 
   const result = useMemo<DrillResult | null>(() => {
     if (!question || selected === null) return null;
@@ -574,6 +589,7 @@ export default function ConceptCheckPanelInner({
                 {t('learning.concept.backToDecks')}
               </button>
             )}
+            {endActions}
           </div>
         </div>
       </DrillFrame>

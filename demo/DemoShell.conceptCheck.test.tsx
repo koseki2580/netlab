@@ -74,4 +74,23 @@ describe('the concept check after a lesson', () => {
     expect(testid('concept-check-picker')).toBeNull();
     expect(testid('concept-check-prompt')?.textContent).not.toBe('');
   });
+
+  it('TC-2372: on a phone the check’s card is not nested in a padded section', async () => {
+    const width = window.innerWidth;
+    Object.defineProperty(window, 'innerWidth', { value: 390, configurable: true, writable: true });
+    try {
+      render('/networking/arp');
+      act(() => testid('lesson-concept-open')!.click());
+      await findTestid('concept-check-session-title');
+      const section = testid('lesson-concept-open')!.closest('section')!;
+      expect(section.style.paddingLeft).toBe('0px');
+      expect(section.style.paddingRight).toBe('0px');
+    } finally {
+      Object.defineProperty(window, 'innerWidth', {
+        value: width,
+        configurable: true,
+        writable: true,
+      });
+    }
+  });
 });

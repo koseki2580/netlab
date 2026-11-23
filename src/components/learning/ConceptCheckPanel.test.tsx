@@ -599,4 +599,34 @@ describe('ConceptCheckPanel', () => {
     // Out-of-scope items are kept as they were, not dropped from the store.
     expect(Object.keys(store.load()).sort()).toEqual(['arp:q1', 'arp:q2', 'tcp:q1', 'udp:q1']);
   });
+
+  it('TC-2370: autoStartReview opens in the due review and endActions show at its end', () => {
+    store.save({ 'tcp:q1': { box: 1, dueAt: 0 } });
+    act(() =>
+      root?.render(
+        <ConceptCheckPanel
+          reviewStore={store}
+          reviewScope={['tcp']}
+          autoStartReview
+          endActions={<a href="/path">back</a>}
+        />,
+      ),
+    );
+    expect(testid('concept-check-picker')).toBeNull();
+    expect(testid('concept-check-session-title')?.textContent).toBe('Review');
+    expect(testid('concept-check-prompt')?.textContent).toBe(
+      (en as Record<string, string>)['learning.concept.tcp.q1.prompt'],
+    );
+    click('concept-check-option-0');
+    click('concept-check-next');
+    expect(testid('concept-check-summary')?.querySelector('a[href="/path"]')?.textContent).toBe(
+      'back',
+    );
+  });
+
+  it('TC-2370: autoStartReview with nothing due shows the picker', () => {
+    store.save({ 'tcp:q1': { box: 1, dueAt: Number.MAX_SAFE_INTEGER } });
+    act(() => root?.render(<ConceptCheckPanel reviewStore={store} autoStartReview />));
+    expect(testid('concept-check-picker')).not.toBeNull();
+  });
 });

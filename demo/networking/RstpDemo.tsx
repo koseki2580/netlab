@@ -9,6 +9,7 @@ import {
   LESSON_TEAL_BUTTON,
   LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
+  predictionMark,
 } from '../components/lessonStyles';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import DemoShell from '../DemoShell';
@@ -151,7 +152,7 @@ function RstpLesson() {
                     onClick={() => setGuess(option.id)}
                     style={{ ...lessonChoice(guess === option.id), textAlign: 'left' }}
                   >
-                    {guess === option.id ? '✓ ' : ''}
+                    {predictionMark(option.id, guess, newRoot, view.kind === 'cut')}
                     {t(option.en, option.ja)}
                   </button>
                 ))}

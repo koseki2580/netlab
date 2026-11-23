@@ -5,6 +5,7 @@ import {
   LESSON_TEAL_BUTTON,
   LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
+  predictionMark,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -146,7 +147,7 @@ function RpkiLesson() {
               onClick={() => setGuess(state)}
               style={{ ...lessonChoice(guess === state), textAlign: 'left' }}
             >
-              {guess === state ? '✓ ' : ''}
+              {predictionMark(state, guess, truth, revealed)}
               {stateName(state)}
             </button>
           ))}

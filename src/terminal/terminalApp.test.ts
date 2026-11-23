@@ -39,7 +39,8 @@ describe('TC-2210: curl reaches the app through the simulator and prints its ans
     const { engine, run } = setUp(appOf(CODE));
     const before = engine.getState().traces.length;
     const result = await run('curl http://www.example.test/hello?name=Ada');
-    expect(result.lines).toEqual(['Hello Ada']);
+    // The app's log line follows the body (TC-2352).
+    expect(result.lines).toEqual(['Hello Ada', '* www log: GET /hello?name=Ada → 200']);
     expect(engine.getState().traces.length).toBeGreaterThan(before + 2);
   });
 });
@@ -67,7 +68,8 @@ describe('TC-2212: -X, -H and -d send a request body the app reads', () => {
       `curl -i -X POST -H 'Content-Type: application/json' -d '{"n":1}' http://www.example.test/echo`,
     );
     expect(result.lines[0]).toBe('HTTP/1.1 201 Created');
-    expect(result.lines[result.lines.length - 1]).toBe('{"got":{"n":1}}');
+    // The body is last but for the app's log line (TC-2352).
+    expect(result.lines[result.lines.length - 2]).toBe('{"got":{"n":1}}');
   });
 });
 
@@ -104,5 +106,29 @@ describe('TC-2214: a stopped app refuses connections, and a hung one times out',
     expect((await hung.run('curl http://www.example.test/hello')).lines[0]).toBe(
       'curl: (28) Operation timed out after 1000 milliseconds with 0 bytes received',
     );
+  });
+});
+
+describe('TC-2352: after curl to a running app, the transcript echoes the app log line', () => {
+  it('ends with the method, path and status, also after the segment note of -v', async () => {
+    const { run } = setUp(appOf(CODE));
+    const plain = await run('curl http://www.example.test/hello?name=Ada');
+    expect(plain.lines[plain.lines.length - 1]).toBe('* www log: GET /hello?name=Ada → 200');
+    const missing = await run('curl -v http://www.example.test/nope');
+    expect(missing.lines[missing.lines.length - 1]).toBe('* www log: GET /nope → 404');
+    expect(missing.lines[missing.lines.length - 2]).toMatch(/^\* Response sent in /);
+    const head = await run('curl -I http://www.example.test/hello');
+    // The app routes GET only, so its HEAD answer is 404: the echo names what the app said.
+    expect(head.lines[head.lines.length - 1]).toBe('* www log: HEAD /hello → 404');
+  });
+
+  it('a static site echoes no app log line', async () => {
+    const engine = new MainThreadEngine(enrichTopology(terminalNetwork()), new HookEngine());
+    const result = await runCommand('curl http://www.example.test/', {
+      engine,
+      nodeId: 'client',
+      web: TERMINAL_WEB_SITES,
+    });
+    expect(result.lines.some((line) => line.includes(' log: '))).toBe(false);
   });
 });

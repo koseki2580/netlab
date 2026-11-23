@@ -79,7 +79,7 @@ describe('NodeGlyph', () => {
     expect(NODE_GLYPHS.server.letter).toBe('S');
     for (const kind of KINDS) {
       render(<NodeGlyph kind={kind} />);
-      expect(container?.querySelector('svg text')?.getAttribute('font-size')).toBe('16');
+      expect(container?.querySelector('svg text')?.getAttribute('font-size')).toBe('17');
     }
   });
 });

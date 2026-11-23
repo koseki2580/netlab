@@ -5,6 +5,7 @@ import {
   LESSON_TEAL_BUTTON,
   LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
+  predictionMark,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useGalleryLocale, useT } from '../localeContext';
@@ -110,7 +111,7 @@ function SdwanLesson() {
               onClick={() => setGuess(link.id)}
               style={lessonChoice(guess === link.id)}
             >
-              {guess === link.id ? '✓ ' : ''}
+              {predictionMark(link.id, guess, voiceInRush, revealed)}
               {link.name[locale]}
             </button>
           ))}

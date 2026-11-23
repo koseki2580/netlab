@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useNetlabTheme } from '../../src/hooks/useNetlabTheme';
 import { useViewport } from '../../src/utils/useViewport';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
@@ -170,6 +171,7 @@ function TerminalSide({
   const [done, setDone] = useState<Set<string>>(readDone);
   const device = DEVICES.find((node) => node.id === deviceId) ?? DEVICES[0];
   const phone = useViewport().isNarrow;
+  const { colorMode } = useNetlabTheme();
   const onRun = useCallback(
     (run: TerminalRun) => {
       onCommand();
@@ -204,7 +206,16 @@ function TerminalSide({
             data-testid="terminal-device"
             value={deviceId}
             onChange={(event) => setDeviceId(event.target.value)}
-            style={{ minHeight: 44, fontSize: 15 }}
+            // 16px: iOS zooms into a smaller field when it is tapped. Theme colours, not white in dark.
+            style={{
+              minHeight: 44,
+              fontSize: 16,
+              background: 'var(--netlab-bg-surface)',
+              color: 'var(--netlab-text-primary)',
+              border: '1px solid var(--netlab-border-strong)',
+              borderRadius: 6,
+              colorScheme: colorMode,
+            }}
           >
             {DEVICES.map((node) => (
               <option key={node.id} value={node.id}>

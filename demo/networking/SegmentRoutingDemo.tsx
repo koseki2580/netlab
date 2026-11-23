@@ -9,6 +9,7 @@ import {
   LESSON_TEAL_BUTTON,
   LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
+  predictionMark,
 } from '../components/lessonStyles';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import DemoShell from '../DemoShell';
@@ -71,7 +72,7 @@ function SrRun({ policy }: { policy: SrPolicy }) {
             onClick={() => setGuess(path.id)}
             style={{ ...lessonChoice(guess === path.id), textAlign: 'left' }}
           >
-            {guess === path.id ? '✓ ' : ''}
+            {predictionMark(path.id, guess, seen?.routers.join(', '), seen !== null)}
             {t(path.en, path.ja)}
           </button>
         ))}

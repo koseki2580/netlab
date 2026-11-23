@@ -7,6 +7,7 @@ import {
   LESSON_TEAL_BUTTON,
   LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
+  predictionMark,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -91,7 +92,7 @@ function FabricDrawing({
             x={x(spine, fabric.spines)}
             y={26}
             textAnchor="middle"
-            fontSize={11}
+            fontSize={12}
             fill="var(--netlab-text-primary)"
             style={{ textDecoration: down.has(spine) ? 'line-through' : undefined }}
           >
@@ -114,7 +115,7 @@ function FabricDrawing({
             x={x(leaf, fabric.leaves)}
             y={H - 19}
             textAnchor="middle"
-            fontSize={10}
+            fontSize={12}
             fill="var(--netlab-text-primary)"
           >
             {`L${leaf + 1}`}
@@ -207,7 +208,7 @@ function SpineLeafLesson() {
               onClick={() => setGuess(answer)}
               style={lessonChoice(guess === answer)}
             >
-              {guess === answer ? '✓ ' : ''}
+              {predictionMark(answer, guess, truth, revealed)}
               {answer === '0' ? t('0 % — cut off', '0 %（切れる）') : `${answer} %`}
             </button>
           ))}

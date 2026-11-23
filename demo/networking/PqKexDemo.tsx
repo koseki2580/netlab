@@ -5,6 +5,7 @@ import {
   LESSON_TEAL_BUTTON,
   LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
+  predictionMark,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -99,7 +100,7 @@ function PqKexLesson() {
               onClick={() => setGuess(group)}
               style={lessonChoice(guess === group)}
             >
-              {guess === group ? '✓ ' : ''}
+              {predictionMark(group, guess, always, revealed)}
               {NAME[group]}
             </button>
           ))}

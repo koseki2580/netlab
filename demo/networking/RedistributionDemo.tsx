@@ -5,6 +5,7 @@ import {
   LESSON_TEAL_BUTTON,
   LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
+  predictionMark,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -328,7 +329,7 @@ function RedistributionLesson() {
               onClick={() => setAdGuess(answer)}
               style={{ ...lessonChoice(adGuess === answer), textAlign: 'left' }}
             >
-              {adGuess === answer ? '✓ ' : ''}
+              {predictionMark(answer, adGuess, adTruth, adRevealed)}
               {adAnswerName(answer)}
             </button>
           ))}
@@ -470,7 +471,7 @@ function RedistributionLesson() {
               onClick={() => setGuess(answer)}
               style={{ ...lessonChoice(guess === answer), textAlign: 'left' }}
             >
-              {guess === answer ? '✓ ' : ''}
+              {predictionMark(answer, guess, truth, revealed)}
               {answerName(answer)}
             </button>
           ))}

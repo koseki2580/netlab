@@ -103,7 +103,8 @@ describe('TC-2251: curl refuses a response over 64 KiB that the app side hands i
     const raw = serializeHttpResponse({ status: 200, headers: {}, body: 'y'.repeat(KIB64) });
     const { run } = setUp({ app: rawApp(raw) });
     const result = await run('curl http://www.example.test/');
-    expect(result.lines).toEqual(['y'.repeat(KIB64)]);
+    // The app's log line follows the body (TC-2352).
+    expect(result.lines).toEqual(['y'.repeat(KIB64), '* www log: GET / → 200']);
   }, 60_000);
 });
 
@@ -210,7 +211,10 @@ describe('TC-2255: curl makes control characters from the server visible, like c
     const code = `app.get('/', (req, res) => res.send('\\x1b[2J\\x1b]8;;http://evil\\x07link\\ta\\u009b0m'));`;
     const { run } = setUp({ app: appOf(code) });
     const result = await run('curl http://www.example.test/');
-    expect(result.lines).toEqual(['^[[2J^[]8;;http://evil^Glink\taM-^[0m']);
+    expect(result.lines).toEqual([
+      '^[[2J^[]8;;http://evil^Glink\taM-^[0m',
+      '* www log: GET / → 200',
+    ]);
   });
 
   it('the status line and headers are sanitised in -i and -v output', async () => {
@@ -226,7 +230,10 @@ describe('TC-2255: curl makes control characters from the server visible, like c
   it('DEL and NUL are shown as ^? and ^@', async () => {
     const code = `app.get('/', (req, res) => res.send('a\\x7fb\\x00c'));`;
     const { run } = setUp({ app: appOf(code) });
-    expect((await run('curl http://www.example.test/')).lines).toEqual(['a^?b^@c']);
+    expect((await run('curl http://www.example.test/')).lines).toEqual([
+      'a^?b^@c',
+      '* www log: GET / → 200',
+    ]);
   });
 });
 

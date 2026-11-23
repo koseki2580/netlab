@@ -5,6 +5,7 @@ import {
   LESSON_TEAL_BUTTON,
   LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
+  predictionMark,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -95,7 +96,7 @@ function EncryptedDnsLesson() {
               onClick={() => setGuess(method)}
               style={{ ...lessonChoice(guess === method), textAlign: 'left' }}
             >
-              {guess === method ? '✓ ' : ''}
+              {predictionMark(method, guess, unblockable, revealed)}
               {NAME[method]}
             </button>
           ))}

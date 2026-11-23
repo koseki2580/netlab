@@ -46,3 +46,41 @@ describe('TC-1800: each connection ends as the lesson says', () => {
       expect((await run(situation.id)).arrived, situation.id).toBe(situation.arrives);
   });
 });
+
+/**
+ * TC-2362 — the subnets' node labels are in the page's language and fit their
+ * boxes. A switch box is 80 px wide with 8 px padding a side, its label 11 px
+ * monospace: a Latin character takes 0.6 em, a full-width one 1 em.
+ */
+describe('TC-2362: the subnet labels are localized and fit their boxes', () => {
+  const LABEL_ROOM_PX = 80 - 2 * 8;
+  const widthPx = (label: string) =>
+    [...label].reduce((sum, char) => sum + (char.charCodeAt(0) > 0xff ? 11 : 11 * 0.6), 0);
+  const labelOf = (locale: 'en' | 'ja', id: string) =>
+    String(vpcTopology(locale).nodes.find((node) => node.id === id)?.data.label);
+
+  it('in English they read public and private', () => {
+    expect(labelOf('en', 'sw-public')).toBe('public');
+    expect(labelOf('en', 'sw-private')).toBe('private');
+  });
+
+  it('in Japanese they read 公開 and 非公開, as the lesson’s terms do', () => {
+    expect(labelOf('ja', 'sw-public')).toBe('公開');
+    expect(labelOf('ja', 'sw-private')).toBe('非公開');
+  });
+
+  it('each fits inside its box in both languages', () => {
+    for (const locale of ['en', 'ja'] as const)
+      for (const id of ['sw-public', 'sw-private'])
+        expect(widthPx(labelOf(locale, id)), `${locale} ${id}`).toBeLessThanOrEqual(LABEL_ROOM_PX);
+  });
+
+  it('the simulator still runs the lesson with the Japanese labels', async () => {
+    const engine = new MainThreadEngine(enrichTopology(vpcTopology('ja')), new HookEngine());
+    const situation = VPC_CASES.find((candidate) => candidate.id === 'db-out')!;
+    const packet = vpcSyn(situation);
+    await engine.send(packet);
+    const trace = engine.getState().traces.find((candidate) => candidate.packetId === packet.id)!;
+    expect(readVpcTrace(trace).arrived).toBe(true);
+  });
+});

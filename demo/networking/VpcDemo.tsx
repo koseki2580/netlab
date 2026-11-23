@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
@@ -10,13 +10,12 @@ import {
   LESSON_TEAL_BUTTON,
   LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
+  predictionMark,
 } from '../components/lessonStyles';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import DemoShell from '../DemoShell';
 import { useGalleryLocale, useT } from '../localeContext';
 import { VPC_CASES, readVpcTrace, vpcSyn, vpcTopology } from './vpcLesson';
-
-const TOPOLOGY = vpcTopology();
 
 const PANEL_STYLE: React.CSSProperties = {
   background: 'var(--netlab-bg-primary)',
@@ -130,7 +129,7 @@ function VpcSteps() {
             onClick={() => setGuess(value)}
             style={lessonChoice(guess === value)}
           >
-            {guess === value ? '✓ ' : ''}
+            {predictionMark(value, guess, result?.arrived, result !== null)}
             {value ? t('It gets through', '届く') : t('It is stopped', '止められる')}
           </button>
         ))}
@@ -207,8 +206,10 @@ function VpcSteps() {
 /** The lesson, inside DemoShell so it reads the page's language (L023). */
 function VpcLesson() {
   const t = useT();
+  const locale = useGalleryLocale();
+  const topology = useMemo(() => vpcTopology(locale), [locale]);
   return (
-    <NetlabProvider topology={TOPOLOGY}>
+    <NetlabProvider topology={topology}>
       <SimulationProvider useMainThread>
         <LessonSplit>
           <LessonCanvas canvas={<NetlabCanvas />} />

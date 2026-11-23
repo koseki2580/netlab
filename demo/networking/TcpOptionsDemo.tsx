@@ -5,6 +5,7 @@ import {
   LESSON_TEAL_BUTTON,
   LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
+  predictionMark,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -154,7 +155,7 @@ function TcpOptionsLesson() {
               onClick={() => setGuess(answer)}
               style={{ ...lessonChoice(guess === answer), textAlign: 'left', minHeight: 44 }}
             >
-              {guess === answer ? '✓ ' : ''}
+              {predictionMark(answer, guess, rateTruth, revealed)}
               {rateName(answer)}
             </button>
           ))}
@@ -390,7 +391,7 @@ function TcpOptionsLesson() {
                 onClick={() => setSackGuess(answer)}
                 style={{ ...lessonChoice(sackGuess === answer), textAlign: 'left', minHeight: 44 }}
               >
-                {sackGuess === answer ? '✓ ' : ''}
+                {predictionMark(answer, sackGuess, sackTruth, sackRevealed)}
                 {sackName(answer)}
               </button>
             ))}

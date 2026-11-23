@@ -20,9 +20,11 @@ const ports = (count: number, group: number) =>
 /**
  * The VPC 10.0.0.0/16: a public subnet (web, NAT gateway) and a private one
  * (db). The internet gateway maps the public address's port 80 to web and,
- * as its security group, lets in only TCP 80.
+ * as its security group, lets in only TCP 80. The subnets are labelled in
+ * `locale`, short enough for a switch's box.
  */
-export function vpcTopology(): NetworkTopology {
+export function vpcTopology(locale: 'en' | 'ja' = 'en'): NetworkTopology {
+  const ja = locale === 'ja';
   return {
     nodes: [
       {
@@ -95,7 +97,7 @@ export function vpcTopology(): NetworkTopology {
         type: 'switch',
         position: { x: 420, y: 200 },
         data: {
-          label: 'public subnet',
+          label: ja ? '公開' : 'public',
           role: 'switch',
           layerId: 'l2',
           ports: ports(3, 1),
@@ -148,7 +150,7 @@ export function vpcTopology(): NetworkTopology {
         type: 'switch',
         position: { x: 780, y: 290 },
         data: {
-          label: 'private subnet',
+          label: ja ? '非公開' : 'private',
           role: 'switch',
           layerId: 'l2',
           ports: ports(2, 2),

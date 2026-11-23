@@ -9,6 +9,7 @@ import {
   LESSON_TEAL_BUTTON,
   LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
+  predictionMark,
 } from '../components/lessonStyles';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
 import DemoShell from '../DemoShell';
@@ -163,7 +164,7 @@ function LoadBalancerLesson() {
                     onClick={() => setGuess(id)}
                     style={lessonChoice(guess === id)}
                   >
-                    {guess === id ? '✓ ' : ''}
+                    {predictionMark(id, guess, lowerPeak, revealed)}
                     {t(
                       ...([
                         ALGORITHMS.find((a) => a.id === id)!.en,

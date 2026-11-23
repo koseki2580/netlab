@@ -5,6 +5,7 @@ import {
   LESSON_TEAL_BUTTON,
   LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
+  predictionMark,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -248,7 +249,7 @@ function DnssecLesson() {
               onClick={() => setGuesses({ ...guesses, [scenario]: verdict })}
               style={{ ...lessonChoice(guess === verdict), textAlign: 'left', minHeight: 44 }}
             >
-              {guess === verdict ? '✓ ' : ''}
+              {predictionMark(verdict, guess, validation.verdict, shown)}
               {verdictName(verdict)}
             </button>
           ))}

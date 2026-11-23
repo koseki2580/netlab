@@ -6,6 +6,7 @@ import {
   LESSON_TEAL_BUTTON,
   LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
+  predictionMark,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -157,7 +158,7 @@ function NetOpsLesson() {
               onClick={() => setGuess(event.device)}
               style={lessonChoice(guess === event.device)}
             >
-              {guess === event.device ? '✓ ' : ''}
+              {predictionMark(event.device, guess, trueFirst.device, revealed)}
               {`${name(event)} (${event.hostname})`}
             </button>
           ))}

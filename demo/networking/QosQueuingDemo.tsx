@@ -5,6 +5,7 @@ import {
   LESSON_TEAL_BUTTON,
   LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
+  predictionMark,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -269,7 +270,7 @@ function QosQueuingLesson() {
               onClick={() => setConditionGuess(guess)}
               style={lessonChoice(conditionGuess === guess)}
             >
-              {conditionGuess === guess ? '✓ ' : ''}
+              {predictionMark(guess, conditionGuess, conditionTruth, conditionShown)}
               {conditionLabel(guess)}
             </button>
           ))}
@@ -413,7 +414,7 @@ function QosQueuingLesson() {
               onClick={() => setDelayGuess(guess)}
               style={lessonChoice(delayGuess === guess)}
             >
-              {delayGuess === guess ? '✓ ' : ''}
+              {predictionMark(guess, delayGuess, delayTruth, delayShown)}
               {guess === '1'
                 ? t('Under 2 ms', '2 ms 未満')
                 : guess === '1000'

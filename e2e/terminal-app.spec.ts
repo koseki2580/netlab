@@ -101,3 +101,33 @@ test('TC-2240: an edit while running asks for a restart, and the jump link bring
   await typeCommand(page, 'curl http://www.example.test/v');
   await expect(transcript(page)).toContainText('two');
 });
+
+test.describe('on a phone in the dark theme', () => {
+  test.use({ viewportPreset: 'phone', appTheme: 'dark' });
+
+  test('TC-2350: every field and the terminal input is 16px or more, and none is white', async ({
+    page,
+    demoPage,
+  }) => {
+    await demoPage.goto('/tools/terminal');
+    await expect(page.getByTestId('terminal-loading')).toHaveCount(0);
+    const style = async (field: ReturnType<Page['locator']>) =>
+      field.evaluate((element) => {
+        const computed = getComputedStyle(element);
+        return { fontSize: parseFloat(computed.fontSize), background: computed.backgroundColor };
+      });
+    const fields = [
+      page.getByTestId('server-app-code'),
+      page.getByTestId('terminal-device'),
+      page.getByTestId('terminal-input'),
+    ];
+    for (const field of fields) {
+      const { fontSize, background } = await style(field);
+      expect(fontSize).toBeGreaterThanOrEqual(16);
+      expect(background).not.toBe('rgb(255, 255, 255)');
+    }
+    // xterm's own hidden input takes the keys when the screen is tapped: iOS zooms on it too.
+    const helper = page.getByTestId('terminal-screen').locator('.xterm-helper-textarea');
+    expect((await style(helper)).fontSize).toBeGreaterThanOrEqual(16);
+  });
+});

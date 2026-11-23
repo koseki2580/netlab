@@ -33,7 +33,7 @@ export function glyphSvg(kind: NodeGlyphKind, size = 28): string {
     // stop being addressable the same way.
     `<svg width="${size}" height="${size}" viewBox="0 0 40 40" role="img" aria-label="${escapeHtml(kind)}" data-node-kind="${escapeHtml(kind)}">`,
     `<${tag} ${attrs(shape)} fill="none" stroke="${meta.color}" stroke-width="2" />`,
-    `<text x="20" y="21" text-anchor="middle" dominant-baseline="central" font-family="ui-monospace, monospace" font-size="16" font-weight="700" fill="${meta.color}">${escapeHtml(meta.letter)}</text>`,
+    `<text x="20" y="21" text-anchor="middle" dominant-baseline="central" font-family="ui-monospace, monospace" font-size="17" font-weight="700" fill="${meta.color}">${escapeHtml(meta.letter)}</text>`,
     `</svg>`,
   ].join('');
 }

@@ -5,6 +5,7 @@ import {
   LESSON_TEAL_BUTTON,
   LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
+  predictionMark,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -215,7 +216,7 @@ function VoipLesson() {
               onClick={() => setGuess(answer)}
               style={{ ...lessonChoice(guess === answer), textAlign: 'left' }}
             >
-              {guess === answer ? '✓ ' : ''}
+              {predictionMark(answer, guess, truth, revealed)}
               {answerName(answer)}
             </button>
           ))}
@@ -466,7 +467,7 @@ function VoipLesson() {
                 onClick={() => setBufferGuess(d)}
                 style={lessonChoice(bufferGuess === d)}
               >
-                {bufferGuess === d ? '✓ ' : ''}
+                {predictionMark(d, bufferGuess, best, bufferRevealed)}
                 {`${d} ms`}
               </button>
             ))}

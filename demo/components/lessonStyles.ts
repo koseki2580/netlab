@@ -111,3 +111,22 @@ export const LESSON_LABEL: CSSProperties = {
   marginBottom: 8,
   textTransform: 'uppercase',
 };
+
+/**
+ * The mark before a prediction option's label. Before the reveal the chosen
+ * option shows "✓ " (chosen). After it, the chosen option shows "✗ " when it
+ * was wrong and the right one shows "✓ ", as the concept check marks them.
+ * `answer` is the right option, or the list of them when more than one is
+ * right; it may be unknown until the reveal.
+ */
+export function predictionMark<T>(
+  id: T,
+  guess: T | null | undefined,
+  answer: T | readonly T[] | undefined,
+  revealed: boolean,
+): string {
+  if (!revealed) return guess === id ? '✓ ' : '';
+  const right = Array.isArray(answer) ? (answer as readonly T[]).includes(id) : answer === id;
+  if (right) return '✓ ';
+  return guess === id ? '✗ ' : '';
+}

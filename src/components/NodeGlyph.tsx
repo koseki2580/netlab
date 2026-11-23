@@ -87,7 +87,8 @@ export function NodeGlyph({
         textAnchor="middle"
         dominantBaseline="central"
         fontFamily="ui-monospace, monospace"
-        fontSize={16}
+        // 17, not 16: a lesson fitted to a 390 px phone draws it 9 px+ (REQ-427).
+        fontSize={17}
         fontWeight={700}
         fill={meta.color}
       >

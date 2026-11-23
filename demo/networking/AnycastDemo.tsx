@@ -5,6 +5,7 @@ import {
   LESSON_TEAL_BUTTON,
   LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
+  predictionMark,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -134,7 +135,7 @@ function Topology({
         <svg
           data-testid="any-map"
           viewBox="-10 0 630 332"
-          style={{ width: '100%', minWidth: 560 }}
+          style={{ width: '100%', minWidth: 640 }}
           role="img"
           aria-label={t(
             'Four ISPs, four transit networks and the CDN’s three sites, with the one-way latency of each link',
@@ -336,7 +337,7 @@ function AnycastLesson() {
               onClick={() => setGuess(answer)}
               style={{ ...lessonChoice(guess === answer), textAlign: 'left' }}
             >
-              {guess === answer ? '✓ ' : ''}
+              {predictionMark(answer, guess, truth, revealed)}
               {answerName(answer)}
             </button>
           ))}

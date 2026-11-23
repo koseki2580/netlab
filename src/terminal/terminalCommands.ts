@@ -365,6 +365,8 @@ async function curl(
 
   let headers: string[];
   let bodyText: string;
+  // A running app's log line for this request, echoed last: its log card may be far down the page.
+  let appLog: string[] = [];
   if (app) {
     const answer = await app.handle(rawRequest);
     if (!answer.ok) {
@@ -378,6 +380,9 @@ async function curl(
     const [head = '', ...rest] = answer.raw.split('\r\n\r\n');
     headers = head.split('\r\n');
     bodyText = rest.join('\r\n\r\n');
+    appLog = [
+      `* ${server.data.label} log: ${method} ${path} → ${visible(String(answer.response.status))}`,
+    ];
     // The app's side already caps the body, but the worker could post anything: check again.
     const bytes = (text: string) => new TextEncoder().encode(text).length;
     if (bytes(bodyText) > MAX_BODY_BYTES || bytes(head) > MAX_HEAD_BYTES) {
@@ -408,8 +413,8 @@ async function curl(
   // Everything below that came from the server is printed with its control characters visible.
   const body = headOnly ? [] : bodyText.split('\n').map(visible);
   const shown = headers.map(visible);
-  if (headOnly) return { lines: shown };
-  if (!verbose) return { lines: withHeaders ? [...shown, '', ...body] : body };
+  if (headOnly) return { lines: [...shown, ...appLog] };
+  if (!verbose) return { lines: [...(withHeaders ? [...shown, '', ...body] : body), ...appLog] };
   // The transfer splits the response into segments of SEGMENT_BYTES; name them when the count agrees.
   const total = sent.payloadSizeBytes;
   const count = sent.expectedChunks;
@@ -431,8 +436,9 @@ async function curl(
       ...shown.map((line) => `< ${line}`),
       '<',
       ...body,
-      // Last, as curl ends with its own "* Connection … left intact": how the response travelled.
+      // As curl ends with its own "* Connection … left intact": how the response travelled.
       segments,
+      ...appLog,
     ],
   };
 }

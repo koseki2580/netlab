@@ -199,7 +199,15 @@ function BringIntoView({ target }: { target: React.RefObject<HTMLElement | null>
  * After the lesson, a collapsed check in the lesson's own deck. Its summary
  * schedules the answers for review like any other concept check.
  */
-function LessonConceptCheck({ deckId, locale }: { deckId: string; locale: 'en' | 'ja' }) {
+function LessonConceptCheck({
+  deckId,
+  locale,
+  isNarrow,
+}: {
+  deckId: string;
+  locale: 'en' | 'ja';
+  isNarrow: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const section = useRef<HTMLElement>(null);
   return (
@@ -209,7 +217,9 @@ function LessonConceptCheck({ deckId, locale }: { deckId: string; locale: 'en' |
       style={{
         borderTop: '1px solid var(--netlab-border)',
         background: 'var(--netlab-bg-surface)',
-        padding: '8px 16px',
+        // On a phone the check's own frame keeps the inset: padding here too nested its
+        // card in a padded card and lost the width the options need (REQ-428).
+        padding: isNarrow ? '8px 0' : '8px 16px',
       }}
     >
       <button
@@ -224,6 +234,7 @@ function LessonConceptCheck({ deckId, locale }: { deckId: string; locale: 'en' |
           borderRadius: 6,
           padding: '6px 10px',
           minHeight: 44,
+          marginInline: isNarrow ? 16 : 0,
           color: 'var(--netlab-text-primary)',
           fontFamily: 'monospace',
           fontSize: 13,
@@ -683,7 +694,11 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
                       <div style={{ height: '100%', overflow: 'auto' }}>
                         <GalleryLocaleProvider locale={locale}>{children}</GalleryLocaleProvider>
                       </div>
-                      <LessonConceptCheck deckId={conceptDeck} locale={locale} />
+                      <LessonConceptCheck
+                        deckId={conceptDeck}
+                        locale={locale}
+                        isNarrow={isNarrow}
+                      />
                     </>
                   ) : (
                     <GalleryLocaleProvider locale={locale}>{children}</GalleryLocaleProvider>

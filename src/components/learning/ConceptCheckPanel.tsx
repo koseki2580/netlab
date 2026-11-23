@@ -8,7 +8,8 @@ import type { ConceptCheckPanelProps } from './ConceptCheckPanelInner';
  * and its strings load in chunks of their own, en and ja alike, only the chunks
  * a view needs (`conceptCatalog.ts`), so consumers that never render it pay
  * nothing for them. `deckId` starts straight in one deck; `reviewScope` limits
- * the review queue to some decks.
+ * the review queue to some decks; `autoStartReview` opens straight in the review
+ * when something is due; `endActions` adds actions to the end screen.
  *
  * The deck DATA is not lazy: `src/index.ts` re-exports `CONCEPT_DECKS` (and
  * `decksByLayer`/`getDeck`) at value level, so it lands in the statically-imported
