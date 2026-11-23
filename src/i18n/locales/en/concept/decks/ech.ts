@@ -10,7 +10,7 @@ export const ech: Catalog = {
   'learning.concept.ech.q1.why':
     'The ClientHello carries the site’s name (SNI) so that a server hosting many sites knows which certificate to show — and it is sent before there is any key.',
   'learning.concept.ech.q1.b.why':
-    'TLS 1.3 encrypts from the ServerHello on, even the certificate, but the ClientHello goes first, in the clear, with the name in SNI.',
+    'TLS 1.3 encrypts everything after the ServerHello, even the certificate, but the ClientHello goes first, in the clear, with the name in SNI.',
   'learning.concept.ech.q1.c.why':
     'No attack is needed: the name is plain text in the ClientHello, readable by anyone on the path.',
   'learning.concept.ech.q2.prompt':
@@ -41,7 +41,7 @@ export const ech: Catalog = {
   'learning.concept.ech.q4.b': 'It opens as usual; only the inner hello is protected',
   'learning.concept.ech.q4.c': 'It opens, but now names a site the attacker chose',
   'learning.concept.ech.q4.why':
-    'The whole outer hello is the seal’s associated data: not hidden, but authenticated by AES-GCM, so one changed byte makes opening fail.',
+    'The outer hello (with the sealed part zeroed) is the seal’s associated data: not hidden, but authenticated by AES-GCM, so one changed byte makes opening fail.',
   'learning.concept.ech.q4.b.why':
     'The outer hello is not encrypted, but it is authenticated as associated data, so any change breaks decryption.',
   'learning.concept.ech.q4.c.why':

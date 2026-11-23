@@ -10,7 +10,9 @@
  * - Shared tree (*,G): each last-hop router joins hop by hop towards the RP,
  *   so the tree is the union of the receivers' shortest paths to the RP. The
  *   source's first-hop router sends to the RP along its shortest path
- *   (Register messages, then native traffic), and the RP sends down the tree.
+ *   (in Register messages), and the RP sends down the tree. Once the RP joins the source
+ *   tree, native packets follow the (S,G) branch, so a router on it (R3 for an RP on R6) also
+ *   feeds its (*,G) branches directly; the delays here are those of the Register phase.
  * - Source tree (S,G): each last-hop router joins towards the source, so the
  *   tree is the union of the receivers' shortest paths to the source.
  * - SSM: receivers name the source (IGMPv3), so the source tree is built

@@ -14,7 +14,7 @@ export const mptcp: Catalog = {
   'learning.concept.mptcp.q1.c.why':
     'スケジューラはサブフローごとにウィンドウを埋めるので、遅い経路がペースを決めることはありません。自分の分を上乗せするだけです。',
   'learning.concept.mptcp.q2.prompt':
-    'min-RTT スケジューラで、ウィンドウが空の状態から、アプリが 64 KB の要求を送ります。Wi-Fi のウィンドウは満杯で 100 KB 入ります。セグメントはどこを通りますか？',
+    'min-RTT スケジューラで、ウィンドウが空の状態から、アプリが 64 KB の要求を送ります。Wi-Fi のウィンドウには最大 100 KB まで入ります。セグメントはどこを通りますか？',
   'learning.concept.mptcp.q2.a': 'すべて Wi-Fi。往復時間が最短で、まだ空きがあるから',
   'learning.concept.mptcp.q2.b': '帯域に合わせて Wi-Fi と LTE に 2 : 1 で分ける',
   'learning.concept.mptcp.q2.c': 'サブフローに 1 セグメントずつ交互に',

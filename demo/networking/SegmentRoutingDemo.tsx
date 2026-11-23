@@ -131,8 +131,8 @@ function SrLesson() {
               </div>
               <p style={{ margin: '0 0 8px', lineHeight: 1.7 }}>
                 {t(
-                  'Every router has a node SID, a label every router knows: “take me to this router”. The first router writes the path into the packet as a stack of SIDs; each router reads only the top one, and pops it when it is its own. The routers in between keep nothing per path.',
-                  '各ルータには、全員が知っている「このルータまで連れていって」というラベル、ノード SID があります。最初のルータが、通る道を SID の積み重ねとしてパケットに書き込み、各ルータはいちばん上だけを読み、自分の SID なら外します。途中のルータは、経路ごとの状態を何も持ちません。',
+                  'Every router has a node SID, a label every router knows: “take me to this router”. The first router writes the path into the packet as a stack of SIDs; each router reads only the top one, and pops it when it is its own. The routers in between keep nothing per path. (This lesson turns penultimate-hop popping off; with it on, the SR-MPLS default, the hop before the owner pops the SID instead.)',
+                  '各ルータには、全員が知っている「このルータまで連れていって」というラベル、ノード SID があります。最初のルータが、通る道を SID の積み重ねとしてパケットに書き込み、各ルータはいちばん上だけを読み、自分の SID なら外します。途中のルータは、経路ごとの状態を何も持ちません（このレッスンでは PHP を無効にしています。既定の PHP ありでは、SID を持つルータの 1 つ手前で外されます）。',
                 )}
               </p>
               <table

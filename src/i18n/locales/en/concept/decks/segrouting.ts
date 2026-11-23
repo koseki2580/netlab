@@ -3,14 +3,14 @@ import type { Catalog } from '../../../../types';
 /** The `segrouting` deck's questions (en); its name is in the core chunk. */
 export const segrouting: Catalog = {
   'learning.concept.segrouting.q1.prompt':
-    'In SR-MPLS, R1 pushes a single label, R4’s node SID 16004, and its route to R4 goes via R2. What do R2 and R4 do with that label?',
+    'In SR-MPLS with penultimate-hop popping (PHP) turned off, R1 pushes a single label, R4’s node SID 16004, and its route to R4 goes via R2. What do R2 and R4 do with that label?',
   'learning.concept.segrouting.q1.a': 'R2 swaps it for a label it chose itself, as LDP does',
   'learning.concept.segrouting.q1.b': 'R2 pops it and routes the packet on by its IP address',
   'learning.concept.segrouting.q1.c': 'R2 sends it on unchanged toward R4, and R4 pops it',
   'learning.concept.segrouting.q1.why':
     'A node SID means the same in every router: “take me to R4”. R2 forwards 16004 toward R4 with the same label, and R4 pops its own SID.',
   'learning.concept.segrouting.q2.prompt':
-    'To steer traffic via R3, R1 pushes the stack 16003 | 16004 (R3’s SID on top). What does R3 do when the packet arrives?',
+    'Still with PHP off, to steer traffic via R3, R1 pushes the stack 16003 | 16004 (R3’s SID on top). What does R3 do when the packet arrives?',
   'learning.concept.segrouting.q2.a': 'Pops 16003, its own, and sends it on toward R4 by 16004',
   'learning.concept.segrouting.q2.b': 'Sends it to R4 with both labels on, as only R4 pops',
   'learning.concept.segrouting.q2.c': 'Drops it, having no state for this path from R1',
@@ -26,7 +26,7 @@ export const segrouting: Catalog = {
   'learning.concept.segrouting.q1.a.why':
     'With LDP each router picks its own labels hop by hop; a node SID is one value known everywhere, so R2 keeps it.',
   'learning.concept.segrouting.q1.b.why':
-    'Only the router that owns a SID pops it. 16004 belongs to R4, so R2 forwards the label toward R4.',
+    'With PHP off, only the router that owns a SID pops it. 16004 belongs to R4, so R2 forwards the label toward R4. (With PHP, the SR-MPLS default, R2 — the hop before R4 — would pop it.)',
   'learning.concept.segrouting.q2.b.why':
     'Each SID is popped by the router it names; R3 pops 16003 and R4 is left with only its own 16004 to pop.',
   'learning.concept.segrouting.q2.c.why':

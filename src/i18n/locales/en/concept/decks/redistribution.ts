@@ -3,7 +3,7 @@ import type { Catalog } from '../../../../types';
 /** The `redistribution` deck's questions (en); its name is in the core chunk. */
 export const redistribution: Catalog = {
   'learning.concept.redistribution.q1.prompt':
-    'A router learns 10.5.0.0/16 from OSPF (cost 20) and from RIP (2 hops). Which route does it install?',
+    'With the common Cisco default distances, a router learns 10.5.0.0/16 from OSPF (cost 20) and from RIP (2 hops). Which route does it install?',
   'learning.concept.redistribution.q1.a': 'The RIP route, because 2 is less than 20',
   'learning.concept.redistribution.q1.b': 'The OSPF route: its distance, 110, beats RIP’s 120',
   'learning.concept.redistribution.q1.c': 'Both, sharing the load as equal-cost paths',

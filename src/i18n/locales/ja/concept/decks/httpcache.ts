@@ -26,7 +26,7 @@ export const httpcache: Catalog = {
   'learning.concept.httpcache.q2.c.why':
     'max-age=60 が効くのは保存を許されたキャッシュだけで、private は全利用者が共有する CDN を除外します。',
   'learning.concept.httpcache.q3.prompt':
-    'hero.jpg は Cache-Control: s-maxage=86400, max-age=60 です。最初の訪問から 2 分後、ブラウザがページを開き直すとどうなりますか？',
+    'hero.jpg は ETag 付きで、Cache-Control: s-maxage=86400, max-age=60 です。最初の訪問から 2 分後、ブラウザがページを開き直すとどうなりますか？',
   'learning.concept.httpcache.q3.a': 'ブラウザが画像全体をオリジンからもう一度ダウンロードする',
   'learning.concept.httpcache.q3.b': 'ブラウザは自分のコピーをそのまま使う。まだ 1 日は新鮮だから',
   'learning.concept.httpcache.q3.c': 'ブラウザが CDN に確認し、CDN 自身が 304 を返す',

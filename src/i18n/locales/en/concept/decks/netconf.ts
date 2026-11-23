@@ -8,7 +8,7 @@ export const netconf: Catalog = {
   'learning.concept.netconf.q1.b': 'All three, with the MTU capped at 9216',
   'learning.concept.netconf.q1.c': 'None of them: running is exactly as before',
   'learning.concept.netconf.q1.why':
-    '<validate> rejects the candidate (invalid-value at …/ipv4/mtu), so there is no commit: the edits are discarded and running is unchanged.',
+    'The MTU is outside the YANG range 68–9216, so R2 answers invalid-value at …/ipv4/mtu (a range is checked as soon as the edit reaches the candidate, and <validate> would catch it too). Nothing is committed: the edits are discarded and running is unchanged.',
   'learning.concept.netconf.q1.a.why':
     'That is what a line-by-line CLI script leaves. With a candidate the whole change is validated first, and a failed validation commits nothing.',
   'learning.concept.netconf.q1.b.why':
@@ -41,7 +41,7 @@ export const netconf: Catalog = {
   'learning.concept.netconf.q4.b': 'R2 refuses the commit, as it would cut the session',
   'learning.concept.netconf.q4.c': 'R2 restores the old config itself after the timeout',
   'learning.concept.netconf.q4.why':
-    'The script loses R2 the moment eth0 shuts, so no confirming <commit> can arrive; when the confirm-timeout (600 s by default) runs out, R2 rolls back by itself and eth0 is up again.',
+    'The script loses R2 the moment eth0 shuts, so no confirming <commit> can arrive; when the confirm-timeout (600 s by default) runs out, or sooner if R2 notices the session has ended, R2 rolls back by itself and eth0 is up again.',
   'learning.concept.netconf.q4.a.why':
     'That is a plain commit. A confirmed commit is undone unless a confirming <commit> arrives in time, and here none can.',
   'learning.concept.netconf.q4.b.why':

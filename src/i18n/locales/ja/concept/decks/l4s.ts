@@ -38,7 +38,7 @@ export const l4s: Catalog = {
     'L4S の送信側が、自分のパケットの一部にマークが付いたことを知りました。どう反応しますか？',
   'learning.concept.l4s.q4.a': 'ドロップ時のクラシック TCP と同じくウィンドウを半減する',
   'learning.concept.l4s.q4.b': 'ルータのキューが空になるまで送信を止める',
-  'learning.concept.l4s.q4.c': 'マークされた数に比例して送信を少し減らす',
+  'learning.concept.l4s.q4.c': 'マークされた数に比例して送信を減らす',
   'learning.concept.l4s.q4.why':
     'DCTCP や Prague と同じく、マークされた割合に応じた分だけウィンドウを減らします。マークが少なければ減らす量も少しです。小さく早い減速を重ねることで、キューを短く保ちつつ回線を埋め続けます。',
   'learning.concept.l4s.q4.a.why':

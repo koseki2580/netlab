@@ -25,16 +25,16 @@ export const pim: Catalog = {
   'learning.concept.pim.q2.c.why':
     'RPF は早い者勝ちではありません。受け入れるインタフェースは送信元へのユニキャスト経路で決まるので、R3 からのコピーは何が先に来ても捨てられます。',
   'learning.concept.pim.q3.prompt':
-    'RP を R6 に移しました。どのルータもまだ送信元ツリーに切り替えていないとき、R5 への通信はどう届く？',
+    'RP を R6 に移しました。R1 がまだ最初のパケットを Register メッセージに入れて RP へ送っている間、それらは R5 にどう届く？',
   'learning.concept.pim.q3.a': 'これまでどおり最短経路の R1→R4→R5',
   'learning.concept.pim.q3.b': 'R6 まで上ってから R3 経由で下りる',
   'learning.concept.pim.q3.c': 'R6 は行き止まりなので R1→R2→R3→R5',
   'learning.concept.pim.q3.why':
-    '共有ツリーではすべてが RP を通ります。R1–R2–R3–R6 と進み、R6–R3–R5 と戻るので 13 ms かかり、送信元ツリーの 5 ms より遅くなります。受信者の経路から外れた RP は、切り替えまで遅延を増やします。',
+    'Register は RP 宛てのユニキャストで R1–R2–R3–R6 と進み、R6 がカプセルを外して共有ツリーを R6–R3–R5 と下ろすので 13 ms かかり、送信元ツリーの 5 ms より遅くなります。受信者の経路から外れた RP は、切り替えまで遅延を増やします。',
   'learning.concept.pim.q3.a.why':
     'それは送信元ツリーです。切り替え前は、通信は RP から共有ツリーを下ってしか受信者に届きません。',
   'learning.concept.pim.q3.c.why':
-    '共有ツリーの根は RP なので、途中に R3 があっても R6 を飛ばすことはできません。',
+    'Register は RP そのもの宛てなので、R3 は中継するだけです。R6 がカプセルを外して共有ツリーへ戻すまで R5 には届きません。',
   'learning.concept.pim.q4.prompt':
     '受信者が SSM で 232.1.1.1 に参加し、IGMPv3 で送信元 10.1.1.10 を指定しました。ASM（任意送信元マルチキャスト）と比べて何が変わる？',
   'learning.concept.pim.q4.a': '最初から送信元ツリーができ、RP はまったく使わない',

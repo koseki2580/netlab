@@ -25,16 +25,16 @@ export const pim: Catalog = {
   'learning.concept.pim.q2.c.why':
     'RPF does not race copies: the interface is fixed by the unicast route to the source, so R3’s copy is dropped whatever arrives first.',
   'learning.concept.pim.q3.prompt':
-    'The RP is moved to R6. Before any router switches to the source tree, how does traffic reach R5?',
+    'The RP is moved to R6. While R1 is still sending the group’s first packets to the RP inside Register messages, how do they reach R5?',
   'learning.concept.pim.q3.a': 'R1→R4→R5, its shortest path, as before',
   'learning.concept.pim.q3.b': 'Up to R6 and back down via R3',
   'learning.concept.pim.q3.c': 'R1→R2→R3→R5, skipping R6 as a dead end',
   'learning.concept.pim.q3.why':
-    'On the shared tree everything passes the RP: R1–R2–R3–R6, then back R6–R3–R5, 13 ms against 5 ms on the source tree. An RP off the receivers’ paths costs delay until the switch.',
+    'A Register is unicast to the RP, R1–R2–R3–R6; R6 decapsulates it and sends it down the shared tree, R6–R3–R5: 13 ms against 5 ms on the source tree. An RP off the receivers’ paths costs delay until the switch.',
   'learning.concept.pim.q3.a.why':
     'That is the source tree. Before the switch, traffic reaches receivers only down the shared tree from the RP.',
   'learning.concept.pim.q3.c.why':
-    'The shared tree is rooted at the RP, so traffic cannot skip R6, even though R3 lies on the way.',
+    'A Register is addressed to the RP itself, so R3 only passes it on; it reaches R5 only after R6 decapsulates it and sends it back down the shared tree.',
   'learning.concept.pim.q4.prompt':
     'Receivers join 232.1.1.1 with SSM, naming the source 10.1.1.10 in IGMPv3. What changes compared with any-source multicast?',
   'learning.concept.pim.q4.a': 'The source tree is built at once, with no RP at all',

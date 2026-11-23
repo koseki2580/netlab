@@ -411,8 +411,8 @@ function PimLesson() {
           </p>
           <p style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--netlab-text-secondary)' }}>
             {t(
-              'Try the RP on R6: traffic for R5 and R7 climbs up to R6 and comes back down the same link, because the shared tree must pass the RP. An RP placed off the receivers’ paths costs delay until the switch. Many routers switch as soon as the first packet arrives; the switch is the last-hop router’s choice, not a rule of the protocol.',
-              'RP を R6 に置いてみてください。共有ツリーは必ず RP を通るので、R5 と R7 への通信は R6 まで上ってから同じリンクを下りてきます。受信者の経路から外れた場所の RP は、切り替えまで遅延を増やします。多くのルータは最初のパケットが届いた時点で切り替えます。切り替えるかどうかはラストホップルータが決めることで、プロトコルの決まりではありません。',
+              'Try the RP on R6: while R1 still sends in Register messages, traffic for R5 and R7 climbs up to R6 and comes back down the same link, because the shared tree must pass the RP. An RP placed off the receivers’ paths costs delay until the switch. Many routers switch as soon as the first packet arrives; the switch is the last-hop router’s choice, not a rule of the protocol.',
+              'RP を R6 に置いてみてください。R1 がまだ Register で送っている間は、共有ツリーは必ず RP を通るので、R5 と R7 への通信は R6 まで上ってから同じリンクを下りてきます。受信者の経路から外れた場所の RP は、切り替えまで遅延を増やします。多くのルータは最初のパケットが届いた時点で切り替えます。切り替えるかどうかはラストホップルータが決めることで、プロトコルの決まりではありません。',
             )}
           </p>
         </div>

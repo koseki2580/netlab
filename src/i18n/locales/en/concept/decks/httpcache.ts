@@ -25,7 +25,7 @@ export const httpcache: Catalog = {
   'learning.concept.httpcache.q2.c.why':
     'max-age=60 applies to caches allowed to store it, and private excludes the CDN, which is shared by every user.',
   'learning.concept.httpcache.q3.prompt':
-    'hero.jpg has Cache-Control: s-maxage=86400, max-age=60. Two minutes after the first visit the browser opens the page again. What happens?',
+    'hero.jpg has an ETag and Cache-Control: s-maxage=86400, max-age=60. Two minutes after the first visit the browser opens the page again. What happens?',
   'learning.concept.httpcache.q3.a': 'The browser downloads the full image from the origin again',
   'learning.concept.httpcache.q3.b': 'The browser uses its own copy: it is fresh for a day',
   'learning.concept.httpcache.q3.c': 'The browser asks the CDN, which answers 304 by itself',

@@ -8,7 +8,7 @@ export const netconf: Catalog = {
   'learning.concept.netconf.q1.b': '3 つとも入り、MTU は 9216 に丸められる',
   'learning.concept.netconf.q1.c': 'どれも入らず、running は元のまま',
   'learning.concept.netconf.q1.why':
-    '<validate> が candidate を拒否する（…/ipv4/mtu で invalid-value）ので commit されません。変更は破棄され、running は変わりません。',
+    'MTU が YANG の範囲 68〜9216 の外なので、R2 は …/ipv4/mtu で invalid-value を返します（range は編集が candidate に入る時点で確かめられ、<validate> でも見つかります）。commit は行われず、変更は破棄され、running は変わりません。',
   'learning.concept.netconf.q1.a.why':
     'それは 1 行ずつ反映される CLI スクリプトの結果です。candidate では変更全体をまず検証し、検証に失敗すれば何も commit されません。',
   'learning.concept.netconf.q1.b.why':
@@ -41,7 +41,7 @@ export const netconf: Catalog = {
   'learning.concept.netconf.q4.b': 'セッションが切れるので R2 は commit を拒否する',
   'learning.concept.netconf.q4.c': 'タイムアウト後に R2 が自分で元の設定に戻す',
   'learning.concept.netconf.q4.why':
-    'eth0 が止まった瞬間にスクリプトは R2 に届かなくなるので、確定の <commit> は来ません。confirm-timeout（初期値 600 秒）が切れると R2 は自分で元に戻し、eth0 は再び up になります。',
+    'eth0 が止まった瞬間にスクリプトは R2 に届かなくなるので、確定の <commit> は来ません。confirm-timeout（初期値 600 秒）が切れると、またはそれより前に R2 がセッションの終了に気づけば、R2 は自分で元に戻し、eth0 は再び up になります。',
   'learning.concept.netconf.q4.a.why':
     'それは普通の commit です。confirmed commit は、期限内に確定の <commit> が来なければ取り消されます。ここでは確定は届きません。',
   'learning.concept.netconf.q4.b.why':

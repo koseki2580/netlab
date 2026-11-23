@@ -19,13 +19,13 @@ export const portsecurity: Catalog = {
   'learning.concept.portsecurity.q2.b': '待たずにすぐゲスト VLAN へ入れられる',
   'learning.concept.portsecurity.q2.c': '90 秒待ったあと MAB で VLAN 40 に入る',
   'learning.concept.portsecurity.q2.why':
-    'スイッチは 30 秒おきに 3 回 EAP の要求を送り、そのあと MAC 認証バイパス（MAB）を試します。RADIUS は MAC を知っているので、Tunnel-Private-Group-ID 40 を付けて Access-Accept を返します。',
+    'スイッチは 30 秒おきに 3 回 EAP の要求を送り、そのあと MAC 認証バイパス（MAB）を試します。RADIUS は MAC を知っているので、Tunnel-Private-Group-ID 40 を付けて Access-Accept を返します。（この待ち時間は標準ではなく、よくあるスイッチの初期値です。）',
   'learning.concept.portsecurity.q2.a.why':
     'EAPOL に答えなくても終わりではありません。スイッチは MAB に切り替え、機器の MAC を名前として RADIUS へ送ります。',
   'learning.concept.portsecurity.q2.b.why':
-    'ゲスト VLAN は RADIUS が拒否した機器のためのものです。この MAC は登録済みなので、Access-Accept が専用の VLAN を指定します。また MAB は EAP のタイムアウトを待ってから始まります。',
+    'ゲスト VLAN は MAB も拒否されたときの受け皿です。この MAC は登録済みなので、Access-Accept が専用の VLAN を指定します。また MAB は EAP のタイムアウトを待ってから始まります。',
   'learning.concept.portsecurity.q3.prompt':
-    'ポートセキュリティで許す MAC アドレスは 1 個、違反時の動作は shutdown です。壁のコンセントの先に小さなスイッチがつながれ、3 台がそれぞれ 1 フレームずつ送ります。つながるのは何台？',
+    'Cisco 系のスイッチで、ポートセキュリティで許す MAC アドレスは 1 個、違反時の動作は shutdown です。壁のコンセントの先に小さなスイッチがつながれ、3 台がそれぞれ 1 フレームずつ送ります。つながるのは何台？',
   'learning.concept.portsecurity.q3.a': '最初の 1 台だけ（残りは捨てられる）',
   'learning.concept.portsecurity.q3.b': '0 台（ポートが err-disabled になる）',
   'learning.concept.portsecurity.q3.c': '3 台とも（違反がログに残るだけ）',

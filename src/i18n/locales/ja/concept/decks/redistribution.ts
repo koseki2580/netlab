@@ -3,7 +3,7 @@ import type { Catalog } from '../../../../types';
 /** The `redistribution` deck's questions (ja); its name is in the core chunk. */
 export const redistribution: Catalog = {
   'learning.concept.redistribution.q1.prompt':
-    'あるルータが 10.5.0.0/16 を OSPF（コスト 20）と RIP（2 ホップ）から学びました。インストールされるのはどちらですか？',
+    'よく使われる Cisco の既定の AD で、あるルータが 10.5.0.0/16 を OSPF（コスト 20）と RIP（2 ホップ）から学びました。インストールされるのはどちらですか？',
   'learning.concept.redistribution.q1.a': 'RIP の経路。メトリック 2 のほうが 20 より小さいから',
   'learning.concept.redistribution.q1.b': 'OSPF の経路。AD 110 が RIP の 120 に勝つ',
   'learning.concept.redistribution.q1.c': '両方。等コスト経路として負荷分散する',

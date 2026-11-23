@@ -19,13 +19,13 @@ export const portsecurity: Catalog = {
   'learning.concept.portsecurity.q2.b': 'It is let straight in, into the guest VLAN',
   'learning.concept.portsecurity.q2.c': 'After 90 s of unanswered EAP, MAB puts it in VLAN 40',
   'learning.concept.portsecurity.q2.why':
-    'The switch sends 3 EAP requests 30 s apart, then tries MAC Authentication Bypass. RADIUS knows the MAC and answers Access-Accept with Tunnel-Private-Group-ID 40.',
+    'The switch sends 3 EAP requests 30 s apart, then tries MAC Authentication Bypass. RADIUS knows the MAC and answers Access-Accept with Tunnel-Private-Group-ID 40. (These timings are a common switch’s defaults, not a standard.)',
   'learning.concept.portsecurity.q2.a.why':
     'Silence on EAPOL is not the end: the switch falls back to MAB and sends the device’s MAC to RADIUS as its name.',
   'learning.concept.portsecurity.q2.b.why':
-    'The guest VLAN is for devices RADIUS rejects; this MAC is known, so the Access-Accept names its own VLAN. And MAB waits for EAP to time out first.',
+    'The guest VLAN is the fallback when MAB is rejected too; this MAC is known, so the Access-Accept names its own VLAN. And MAB waits for EAP to time out first.',
   'learning.concept.portsecurity.q3.prompt':
-    'Port security allows 1 MAC address, violation mode shutdown. A small switch behind the wall socket connects three devices, which send one frame each. How many get access?',
+    'On a Cisco-style switch, port security allows 1 MAC address, violation mode shutdown. A small switch behind the wall socket connects three devices, which send one frame each. How many get access?',
   'learning.concept.portsecurity.q3.a': 'One, the first; the others are dropped',
   'learning.concept.portsecurity.q3.b': 'None: the port is err-disabled',
   'learning.concept.portsecurity.q3.c': 'All three, with a violation logged',

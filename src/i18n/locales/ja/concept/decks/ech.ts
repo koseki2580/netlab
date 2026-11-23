@@ -10,7 +10,7 @@ export const ech: Catalog = {
   'learning.concept.ech.q1.why':
     'ClientHello には、多数のサイトを収容するサーバーがどの証明書を返すか判断できるようサイト名（SNI）が入っており、しかも鍵がまだない段階で送られます。',
   'learning.concept.ech.q1.b.why':
-    'TLS 1.3 は ServerHello 以降を証明書まで暗号化しますが、ClientHello はその前に平文で送られ、SNI に名前が入っています。',
+    'TLS 1.3 は ServerHello より後を証明書まで暗号化しますが、ClientHello はその前に平文で送られ、SNI に名前が入っています。',
   'learning.concept.ech.q1.c.why':
     '攻撃は不要です。名前は ClientHello に平文で入っており、経路上の誰でも読めます。',
   'learning.concept.ech.q2.prompt':
@@ -41,7 +41,7 @@ export const ech: Catalog = {
   'learning.concept.ech.q4.b': '普通に開ける。守られているのは内側だけ',
   'learning.concept.ech.q4.c': '開けるが、攻撃者が選んだサイト名に変わる',
   'learning.concept.ech.q4.why':
-    '外側の ClientHello 全体が封の関連データ（AAD）です。隠されてはいませんが AES-GCM で認証されるため、1 バイト変わるだけで開けなくなります。',
+    '外側の ClientHello（封をした部分をゼロで埋めたもの）が封の関連データ（AAD）です。隠されてはいませんが AES-GCM で認証されるため、1 バイト変わるだけで開けなくなります。',
   'learning.concept.ech.q4.b.why':
     '外側は暗号化されませんが、関連データとして認証されています。どんな変更でも復号に失敗します。',
   'learning.concept.ech.q4.c.why':

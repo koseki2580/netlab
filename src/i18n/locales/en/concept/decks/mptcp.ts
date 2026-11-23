@@ -14,7 +14,7 @@ export const mptcp: Catalog = {
   'learning.concept.mptcp.q1.c.why':
     'The scheduler fills each subflow’s window separately, so the slow path does not set the pace; it only adds its own share.',
   'learning.concept.mptcp.q2.prompt':
-    'With a min-RTT scheduler and empty windows, the app sends a 64 KB request. Full, Wi-Fi’s window holds 100 KB. Where do the segments go?',
+    'With a min-RTT scheduler and empty windows, the app sends a 64 KB request. Wi-Fi’s window holds up to 100 KB. Where do the segments go?',
   'learning.concept.mptcp.q2.a': 'All over Wi-Fi: it has the lowest RTT and room left',
   'learning.concept.mptcp.q2.b': 'Split 2 : 1 between Wi-Fi and LTE, by bandwidth',
   'learning.concept.mptcp.q2.c': 'Alternately, one segment per subflow',
