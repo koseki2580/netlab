@@ -197,7 +197,11 @@ function IcmpSteps() {
             style={{
               ...lessonChoice(guess === kind),
               textAlign: 'left',
-              opacity: outcome !== null && guess !== kind ? 0.5 : 1,
+              // After the send, only options that are neither picked nor the answer step back,
+              // in secondary text that still reads at 4.5:1 (REQ-424d, REQ-427).
+              ...(outcome !== null && guess !== kind && outcome.kind !== kind
+                ? { color: 'var(--netlab-text-secondary)' }
+                : {}),
             }}
           >
             {predictionMark(kind, guess, outcome?.kind, outcome !== null)}
