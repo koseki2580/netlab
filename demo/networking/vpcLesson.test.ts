@@ -69,6 +69,13 @@ describe('TC-2362: the subnet labels are localized and fit their boxes', () => {
     expect(labelOf('ja', 'sw-private')).toBe('非公開');
   });
 
+  it('in Japanese the user is 利用者; the gateways keep their short names, which fit', () => {
+    expect(labelOf('ja', 'user')).toBe('利用者');
+    expect(labelOf('en', 'user')).toBe('user');
+    expect(labelOf('ja', 'igw')).toBe('internet GW');
+    expect(labelOf('ja', 'natgw')).toBe('NAT GW');
+  });
+
   it('each fits inside its box in both languages', () => {
     for (const locale of ['en', 'ja'] as const)
       for (const id of ['sw-public', 'sw-private'])

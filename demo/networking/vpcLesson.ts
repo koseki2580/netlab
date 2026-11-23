@@ -32,7 +32,7 @@ export function vpcTopology(locale: 'en' | 'ja' = 'en'): NetworkTopology {
         type: 'client',
         position: { x: 40, y: 200 },
         data: {
-          label: 'user',
+          label: ja ? '利用者' : 'user',
           role: 'client',
           layerId: 'l7',
           ip: USER_IP,
