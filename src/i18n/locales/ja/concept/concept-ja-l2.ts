@@ -8,6 +8,8 @@ import { wifi } from './decks/wifi';
 import { lacp } from './decks/lacp';
 import { lldp } from './decks/lldp';
 import { pppoe } from './decks/pppoe';
+import { physical } from './decks/physical';
+import { roaming } from './decks/roaming';
 
 /** The concept checks' `l2` chunk (ja): the questions of arp, stp, vlan, ethernet, vxlan, wifi, lacp, lldp, pppoe. */
 export const catalog: Catalog = {
@@ -20,4 +22,6 @@ export const catalog: Catalog = {
   ...lacp,
   ...lldp,
   ...pppoe,
+  ...physical,
+  ...roaming,
 };

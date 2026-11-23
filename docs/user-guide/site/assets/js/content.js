@@ -53,7 +53,9 @@ window.USER_GUIDE_CONTENT = {
                <p>各 Level には、レッスンと、合格に必要なもの（入門コース・実習問題のレベル・パケットの問題のレベル・修了テスト）があります。<strong>Level は、そこに並ぶものがすべて済んだときに合格</strong>で、次の Level が開きます。テストに合格しただけでは、その Level の問題のレベルが残っていれば合格になりません。</p>
                <p>前にテストに合格していた方は、その合格がそのまま残ります。Level にほかの問題が残っていれば、Level のカードに「この Level のテストの合格は残っています」と出るので、残りを済ませてください。</p>
                <p>どの Level にも自分のテストがあります。テストは Level の名前で呼びます（「Level 1 のテスト」など）。Level 6 には 2 つあり、「Level 6 のテスト 1」「Level 6 のテスト 2」です。テストのページの一覧は、Level の順に並びます。</p>
-               <p>まだ開いていない Level も、レッスンや問題はいつでも開いて読めます。止められるのは「合格」だけです。ページのいちばん上に、次にやることが 1 つ出ます。まだレッスンのない話題は「準備中」として載っています。</p>`
+               <p>まだ開いていない Level も、レッスンや問題はいつでも開いて読めます。止められるのは「合格」だけです。ページのいちばん上に、次にやることが 1 つ出ます。まだレッスンのない話題は「準備中」として載っています。</p>
+               <p>復習の時期が来た問題があると、各段階に「復習 N 問」と表示されます。押すと、その段階のレッスンの問題だけを復習できます。</p>
+`
       },
       {
         id: "final-test",
@@ -187,7 +189,9 @@ window.USER_GUIDE_CONTENT = {
                <p>相手を尋ねる行のうち、<strong>ARP</strong> の行には TTL がありません（ARP は IP パケットではなく、問い合わせた機器の IP と探している IP を運びます）。<strong>NDP</strong> の行は IPv6 のパケットなので、ホップ数の上限（Hop Limit）255 が出ます。日本語の画面では、ホップの詳細の欄の名前も日本語で出ます（例：「問い合わせた機器の MAC」「中身の種類（EtherType）」）。パケットジャーニーのエンジンの判断も、日本語で出ます。</p>
                <p>タイムラインの各行は、<code>CREATE</code>（作られた）、<code>FWD</code>（転送された）、<code>DELIVER</code>（届いた）、<code>DROP</code>（落ちた）のいずれかです。落ちた行には理由が付きます。</p>
                <p>スイッチは、宛先の MAC アドレスがどのポートの先にいるかをまだ覚えていないとき（ブロードキャストのときも）、入ってきたポート以外の、同じ VLAN の使えるポートすべてにフレームを写して流します。タイムラインはパケットが進む1本の道だけを行にし、写しはそのスイッチの行に「ほかに N か所へコピー」と書かれます。行を押すと、写しがどの機器に届き、どうなったか（「自分あてでないので捨てた」など）が見られます。写しを受け取って捨てた機器は、落ちた行にはなりません。覚えた内容は、ARP の答えと同じく、トレースを消すまで残ります。ケーブルがポートを指定していない図では、ケーブル1本を1つのポートとして同じように扱います。ARP の問い合わせもブロードキャストなので同じように写され、その写しは <code>arp-request</code> の行に書かれます。問い合わせと返事を通したスイッチは、両端の場所を覚えます。</p>
-               <div class="callout">赤いケーブルは、そのリンクが落ちていることを表します。障害を扱うレッスンでは、これがそのレッスンの主題です。</div>`
+               <div class="callout">赤いケーブルは、そのリンクが落ちていることを表します。障害を扱うレッスンでは、これがそのレッスンの主題です。</div>
+               <p><strong>理解度チェック</strong>：レッスンの下にある「理解度チェック（このレッスンの問題）」を開くと、そのレッスンの内容を問う問題が出ます。答えた問題は間隔をあけて復習に回ります。</p>
+`
       },
       {
         id: "narrow-screens",
@@ -464,7 +468,9 @@ window.USER_GUIDE_CONTENT = {
                <p>Each stage lists its lessons and what it takes to pass: the course, exercise levels, packet exercise levels and the test. <strong>A stage is passed when everything it lists is done</strong>, and that opens the next one. Passing its test alone does not pass a stage that also lists exercise levels.</p>
                <p>If you passed a test before, that pass is kept. Where the stage still lists exercises, its card says “Your pass of this stage’s test is kept”; finish the rest to pass the stage.</p>
                <p>Every stage has a test of its own. Each test is named by its stage (“Stage 1 test” and so on); stage 6 has two, “Stage 6 test 1” and “Stage 6 test 2”. The test page lists them in the order of the stages.</p>
-               <p>Lessons and exercises of a stage that is not open yet can still be read and tried; only passing is gated. The top of the page shows the one next thing to do. Topics with no lesson yet are listed as coming soon.</p>`
+               <p>Lessons and exercises of a stage that is not open yet can still be read and tried; only passing is gated. The top of the page shows the one next thing to do. Topics with no lesson yet are listed as coming soon.</p>
+               <p>When questions are due for review, each stage shows “N due for review”; it opens a review of that stage’s lessons only.</p>
+`
       },
       {
         id: "final-test",
@@ -598,7 +604,9 @@ window.USER_GUIDE_CONTENT = {
                <p><strong>Steps and hops are not the same.</strong> A step is one row of the timeline: a machine creating, passing on, receiving or asking about the packet. A hop is one router crossed, as TTL and traceroute count it; switches are not hops. The step counters (“Step 3 / 11”, “Steps:”) count rows.</p>
                <p>Of the rows that ask about a neighbour, an <strong>ARP</strong> row has no TTL: ARP is not an IP packet, and it carries the sender’s and the target’s IP addresses. An <strong>NDP</strong> row is an IPv6 packet, and shows its Hop Limit, 255. On a Japanese page the fields of the hop details are named in Japanese, and the packet journey gives the engine’s decision in Japanese.</p>
                <p>A switch that has not yet learned which port leads to a frame's destination MAC address (or that has a broadcast) copies the frame out of every usable port in the same VLAN except the one it came in on. The timeline keeps one row per hop of the packet's own path; the switch's row says “copied to N more”, and pressing it lists which device each copy reached and what became of it (not for it, discarded, and so on). A device that throws a copy away is not a dropped row. What a switch learns stays, like ARP answers, until the traces are cleared. Where a cable does not say which port it plugs into, the cable counts as a port of its own, and all of this works the same. An ARP request is a broadcast, so it is copied the same way, and its copies are listed on the <code>arp-request</code> row; the switches it and its reply cross learn both ends.</p>
-               <div class="callout">A red cable means that link is down. On the lessons about failure, that is the subject.</div>`
+               <div class="callout">A red cable means that link is down. On the lessons about failure, that is the subject.</div>
+               <p><strong>Check yourself</strong>: under a lesson, “Check yourself — questions on this lesson” opens questions on what it taught. Questions you answer come back for review at growing intervals.</p>
+`
       },
       {
         id: "narrow-screens",

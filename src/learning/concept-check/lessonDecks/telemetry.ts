@@ -1,0 +1,12 @@
+/** The `telemetry` concept-check deck: each question id with the letter of its right answer. */
+export const DECK = {
+  id: 'telemetry',
+  layer: 'l7',
+  chunk: 'l7apps',
+  answers: [
+    ['q1', 'b'],
+    ['q2', 'c'],
+    ['q3', 'a'],
+    ['q4', 'b'],
+  ],
+} as const;

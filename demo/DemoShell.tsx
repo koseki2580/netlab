@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CommandPalette, type CommandPaletteItem } from '../src/components/CommandPalette';
 import { KeyboardHelpOverlay } from '../src/components/KeyboardHelpOverlay';
@@ -25,7 +25,7 @@ import { TouchHelpOverlay } from './components/TouchHelpOverlay';
 import { I18nProvider } from '../src/i18n/I18nProvider';
 import { readLearningLocale } from './learning/learningLocale';
 import { DEMO_COPY_JA } from './galleryJa';
-import { SCENARIO_ROUTES } from './lessonManifest';
+import { LESSONS, SCENARIO_ROUTES, type Lesson } from './lessonManifest';
 import { GalleryLocaleProvider } from './localeContext';
 import { examLevelFromSearch, examRoute } from './course/examAttempt';
 
@@ -163,6 +163,66 @@ const touchCss = (narrow: boolean) =>
     ? TOUCH_RULES + NARROW_RULES + TOAST_RULES
     : `@media (pointer:coarse){${TOUCH_RULES}${TOAST_RULES}}`;
 
+/**
+ * The concept check is loaded only when a learner opens it: the panel and its
+ * strings stay out of every lesson's first download.
+ */
+const LazyConceptCheckPanel = lazy(() =>
+  import('../src/components/learning/ConceptCheckPanel').then((module) => ({
+    default: module.ConceptCheckPanel,
+  })),
+);
+
+/**
+ * After the lesson, a collapsed check in the lesson's own deck. Its summary
+ * schedules the answers for review like any other concept check.
+ */
+function LessonConceptCheck({ deckId, locale }: { deckId: string; locale: 'en' | 'ja' }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <section
+      aria-label={locale === 'ja' ? '理解度チェック' : 'Check yourself'}
+      style={{
+        borderTop: '1px solid var(--netlab-border)',
+        background: 'var(--netlab-bg-surface)',
+        padding: '8px 16px',
+      }}
+    >
+      <button
+        type="button"
+        data-testid="lesson-concept-open"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+        className="netlab-focus-ring"
+        style={{
+          background: 'none',
+          border: '1px solid var(--netlab-accent-cyan)',
+          borderRadius: 6,
+          padding: '6px 10px',
+          minHeight: 44,
+          color: 'var(--netlab-text-primary)',
+          fontFamily: 'monospace',
+          fontSize: 13,
+          fontWeight: 700,
+          cursor: 'pointer',
+        }}
+      >
+        {open ? '▾ ' : '▸ '}
+        {locale === 'ja'
+          ? '理解度チェック（このレッスンの問題）'
+          : 'Check yourself — questions on this lesson'}
+      </button>
+      {open && (
+        <div style={{ marginTop: 8 }}>
+          <Suspense fallback={null}>
+            <LazyConceptCheckPanel deckId={deckId} />
+          </Suspense>
+        </div>
+      )}
+    </section>
+  );
+}
+
 interface DemoShellProps {
   title: string;
   desc: string;
@@ -198,6 +258,10 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
   const translatedCopy = locale === 'ja' ? DEMO_COPY_JA[location.pathname] : undefined;
   const shownTitle = translatedCopy?.title ?? title;
   const shownDesc = translatedCopy?.desc ?? desc;
+  const conceptDeck = embedded
+    ? undefined
+    : (LESSONS as readonly Lesson[]).find((lesson) => lesson.path === location.pathname)
+        ?.conceptDeck;
   // A lesson opened from the final test names that test's level in its address,
   // so the learner has a way back to their answers and not only to the gallery.
   const examToReturnTo = examLevelFromSearch(location.search);
@@ -579,12 +643,27 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
               <main
                 id="netlab-demo-content"
                 tabIndex={-1}
-                style={{ height: '100%', outline: 'none' }}
+                style={{
+                  height: '100%',
+                  outline: 'none',
+                  // With a check below it, the lesson keeps the full height and the page scrolls
+                  // to the check, so a canvas is never shrunk below a readable size (TC-721, TC-842).
+                  ...(conceptDeck ? { overflowY: 'auto' as const } : {}),
+                }}
               >
                 {/* Every lesson inside follows the same choice: NetlabProvider
                   inherits it when a lesson does not name a language itself. */}
                 <I18nProvider locale={locale}>
-                  <GalleryLocaleProvider locale={locale}>{children}</GalleryLocaleProvider>
+                  {conceptDeck ? (
+                    <>
+                      <div style={{ height: '100%', overflow: 'auto' }}>
+                        <GalleryLocaleProvider locale={locale}>{children}</GalleryLocaleProvider>
+                      </div>
+                      <LessonConceptCheck deckId={conceptDeck} locale={locale} />
+                    </>
+                  ) : (
+                    <GalleryLocaleProvider locale={locale}>{children}</GalleryLocaleProvider>
+                  )}
                 </I18nProvider>
               </main>
             </ShellChromeProvider>

@@ -48,15 +48,28 @@ const PANEL_KEY =
 const DECK_KEY = /^learning\.concept\.[a-z][a-z0-9]*\.(name|q\d+\.(prompt|why|[abc](\.why)?))$/;
 
 describe('concept-check string chunks', () => {
-  it('TC-2270: the merged key set is exactly the one before the split', () => {
-    // sha256 of the sorted key list of the single catalog this split replaced.
+  it('TC-2270: the keys of the decks that existed before the split are exactly as they were, and lesson decks add only their own', () => {
+    // Lesson decks (one file each in lessonDecks/) were added after the split; every other key is unchanged,
+    // so saved review progress keeps working. sha256 of the sorted key list of the catalog the split replaced.
+    const lessonIds = Object.keys(import.meta.glob('./lessonDecks/*.ts', { eager: true })).map(
+      (path) => path.replace('./lessonDecks/', '').replace('.ts', ''),
+    );
+    const ofLessonDeck = (key: string) =>
+      lessonIds.some((id) => key.startsWith(`learning.concept.${id}.`));
     for (const catalog of [enMerged, jaMerged]) {
       const keys = Object.keys(catalog).sort();
-      expect(keys).toHaveLength(1464);
-      expect(keys.filter((key) => key.endsWith('.prompt'))).toHaveLength(198);
-      expect(createHash('sha256').update(keys.join('\n')).digest('hex')).toBe(
+      const before = keys.filter((key) => !ofLessonDeck(key));
+      expect(before).toHaveLength(1464);
+      expect(before.filter((key) => key.endsWith('.prompt'))).toHaveLength(198);
+      expect(createHash('sha256').update(before.join('\n')).digest('hex')).toBe(
         'ef8ebf1c8894a4ae0093f4c1401f1d3b68e550d9395bfea214ea4d153ea1efbf',
       );
+      for (const id of lessonIds) {
+        expect(
+          keys.filter((key) => key.startsWith(`learning.concept.${id}.`)).length,
+          id,
+        ).toBeGreaterThan(10);
+      }
     }
   });
 

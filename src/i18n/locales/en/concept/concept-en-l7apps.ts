@@ -8,6 +8,8 @@ import { snmp } from './decks/snmp';
 import { sip } from './decks/sip';
 import { rtp } from './decks/rtp';
 import { stun } from './decks/stun';
+import { netconf } from './decks/netconf';
+import { telemetry } from './decks/telemetry';
 
 /** The concept checks' `l7apps` chunk (en): the questions of dhcp, ftp, smtp, email, ntp, snmp, sip, rtp, stun. */
 export const catalog: Catalog = {
@@ -20,4 +22,6 @@ export const catalog: Catalog = {
   ...sip,
   ...rtp,
   ...stun,
+  ...netconf,
+  ...telemetry,
 };

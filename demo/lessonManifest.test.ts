@@ -1,7 +1,9 @@
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { getDeck } from '../src/learning/concept-check';
 import { EXAM_LEVELS } from './course/examLevels';
+import { STAGES } from './course/stages';
 import { CATEGORIES } from './Gallery';
 import { DEMO_COPY_JA } from './galleryJa';
 import {
@@ -59,5 +61,46 @@ describe('the lesson manifest (TC-730)', () => {
       // The app finds pages by this name pattern (`main.tsx`).
       expect(lesson.module, lesson.path).toMatch(/^\.\/[^/]+\/[^/]+Demo$/);
     }
+  });
+});
+
+/**
+ * Lessons on the learning path that are drills or tools rather than a topic,
+ * and so carry no concept-check deck of their own.
+ */
+const NO_DECK_ON_PATH: readonly string[] = [
+  '/learning/bits', // a binary drill
+  '/learning/subnetting', // a subnetting drill
+  '/learning/vlsm', // a VLSM drill
+  '/learning/protocols', // the concept checks themselves
+  '/simulation/failure', // a failure-injection tool
+  '/learning/resilience', // a failure-prediction lab
+  '/networking/observability', // NetFlow / sFlow: no deck covers flow export
+];
+
+describe('the concept check each lesson ends with', () => {
+  const byPath = new Map((LESSONS as readonly Lesson[]).map((lesson) => [lesson.path, lesson]));
+  const onPath = STAGES.flatMap((stage) => stage.lessons);
+
+  it('TC-2290: every lesson on the path has a deck, or is a drill or tool named as having none', () => {
+    const missing = onPath.filter(
+      (path) => !byPath.get(path)?.conceptDeck && !NO_DECK_ON_PATH.includes(path),
+    );
+    expect(missing).toEqual([]);
+    // The list stays honest: nothing on it has a deck, and everything on it is on the path.
+    for (const path of NO_DECK_ON_PATH) {
+      expect(byPath.get(path)?.conceptDeck, path).toBeUndefined();
+      expect(onPath, path).toContain(path);
+    }
+  });
+
+  // Fails until every new deck named in the manifest has been added to CONCEPT_DECKS.
+  it('TC-2291: every deck a lesson names exists', () => {
+    const unknown = (LESSONS as readonly Lesson[]).flatMap((lesson) =>
+      lesson.conceptDeck && !getDeck(lesson.conceptDeck)
+        ? [`${lesson.path} → ${lesson.conceptDeck}`]
+        : [],
+    );
+    expect(unknown).toEqual([]);
   });
 });

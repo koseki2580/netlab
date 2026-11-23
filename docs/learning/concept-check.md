@@ -175,3 +175,12 @@ retrieval.
 - deckMastery (pure): counts seen/mastered against caller predicates
 - store: round-trips through storage, tolerates malformed/legacy values, and
   degrades to empty when storage is unavailable
+
+## Lesson decks (REQ-422, REQ-423)
+
+A lesson's own deck is one file in `src/learning/concept-check/lessonDecks/<id>.ts` (`DECK = { id, layer, chunk,
+answers }`), registered in `decks.ts`; its strings are `src/i18n/locales/{en,ja}/concept/decks/<id>.ts` (questions
+only) plus its name in `concept-{en,ja}-core.ts`, and it is spread into its group's aggregator. Its truth test,
+`demo/networking/<id>.concept.test.ts`, checks every right answer against the lesson's model. A lesson names its
+deck with `conceptDeck` in `demo/lessonManifest.ts`; the lesson page offers it under "Check yourself", and the path
+shows each stage's due reviews.

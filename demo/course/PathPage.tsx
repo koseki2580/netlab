@@ -1,5 +1,6 @@
-import type { CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
+import { createReviewStore, MAX_BOX, type ReviewState } from '../../src/learning/review';
 import { useOptionalProgress } from '../../src/progress';
 import { PACKET_LEVEL_NAMES } from '../exercises/packet/PacketPages';
 import type { AttemptStore } from '../exercises/store/attemptStore';
@@ -62,10 +63,40 @@ function checkpointWords(checkpoint: Checkpoint): Localised {
 const lessonFor = (path: string): Lesson | undefined =>
   (LESSONS as readonly Lesson[]).find((lesson) => lesson.path === path);
 
-function StageCard({ stage, status }: { stage: Stage; status: StageStatus }) {
+/** The concept-check decks of a stage's lessons, each once, in lesson order. */
+const stageDecks = (stage: Stage): string[] => [
+  ...new Set(stage.lessons.flatMap((path) => lessonFor(path)?.conceptDeck ?? [])),
+];
+
+/**
+ * Review items due now in some decks: seen, not yet mastered, and scheduled
+ * for now or earlier — what the concept checks' review would ask. Items are
+ * stored as `<deckId>:<questionId>`.
+ */
+function dueInDecks(review: ReviewState, decks: readonly string[], now: number): number {
+  const wanted = new Set(decks);
+  return Object.entries(review).filter(
+    ([itemId, entry]) =>
+      wanted.has(itemId.slice(0, itemId.indexOf(':'))) && entry.box < MAX_BOX && entry.dueAt <= now,
+  ).length;
+}
+
+function StageCard({
+  stage,
+  status,
+  review,
+  now,
+}: {
+  stage: Stage;
+  status: StageStatus;
+  review: ReviewState;
+  now: number;
+}) {
   const t = useT();
   const locale = useGalleryLocale();
   const state = status.passed ? 'passed' : status.unlocked ? 'open' : 'locked';
+  const decks = stageDecks(stage);
+  const due = dueInDecks(review, decks, now);
   const badge = {
     passed: t('Passed', '合格'),
     open: t('Open', '挑戦できます'),
@@ -100,6 +131,17 @@ function StageCard({ stage, status }: { stage: Stage; status: StageStatus }) {
         </span>
       </h2>
       <p style={{ ...MUTED, margin: 0 }}>{stage.topics[locale]}</p>
+      {due > 0 ? (
+        <p style={{ margin: 0 }}>
+          <Link
+            to={`/learning/protocols?review=${decks.join(',')}`}
+            data-testid={`path-stage-${stage.number}-review`}
+            style={TAP}
+          >
+            {t(`${due} due for review`, `復習 ${due} 問`)}
+          </Link>
+        </p>
+      ) : null}
       {state === 'locked' ? (
         <p data-testid={`path-stage-${stage.number}-lock`} style={{ margin: 0 }}>
           {t(
@@ -183,8 +225,20 @@ function StageCard({ stage, status }: { stage: Stage; status: StageStatus }) {
   );
 }
 
-export function PathBody({ store }: { store?: AttemptStore }) {
+export function PathBody({
+  store,
+  reviewStore,
+}: {
+  store?: AttemptStore;
+  /** The concept checks' review schedule; the browser's stored one by default. */
+  reviewStore?: ReturnType<typeof createReviewStore>;
+}) {
   const t = useT();
+  // Read once: the counts are of what is due when the page is opened.
+  const [{ review, now }] = useState(() => ({
+    review: (reviewStore ?? createReviewStore()).load(),
+    now: Date.now(),
+  }));
   const locale = useGalleryLocale();
   const { isCompleted } = useOptionalProgress();
   const device = useExerciseStore(store, 'device');
@@ -236,7 +290,13 @@ export function PathBody({ store }: { store?: AttemptStore }) {
           </p>
         </section>
         {STAGES.map((stage, index) => (
-          <StageCard key={stage.number} stage={stage} status={statuses[index]!} />
+          <StageCard
+            key={stage.number}
+            stage={stage}
+            status={statuses[index]!}
+            review={review}
+            now={now}
+          />
         ))}
       </div>
     </div>

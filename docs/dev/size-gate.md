@@ -73,3 +73,10 @@ add its loader to `src/protocols/packLearn.ts`. Only UI code may import that mod
 
 The eager limits were set under the old measure, which counted every lazy chunk. They were kept as
 they were, so most now sit far above their figures. Lowering them is a separate decision.
+
+### Concept-check chunks after the lesson decks (REQ-423)
+
+The 26 lesson decks grew the group chunks; limits are measured + 10 %. `routing` is the largest (ja 16.0 kB,
+nine lesson decks on top of seven protocol decks). If it grows again, split it — e.g. IGP decks (ospf, rip,
+isis, eigrp, redistribution, bfd) from provider decks (bgp, ecmp, mpls, rpki, anycast, mplste, pim, sdwan,
+segrouting, spineleaf) — rather than raising the limit further.

@@ -13,15 +13,15 @@ const concept = (locale, chunk, limit) =>
   });
 /** [chunk, en limit, ja limit]: measured + ~10 % (docs/dev/size-gate.md). */
 const CONCEPT_CHUNK_LIMITS = [
-  ['core', '1.4 kB', '1.8 kB'],
+  ['core', '1.8 kB', '2.3 kB'],
   ['fundamentals', '6.5 kB', '7.8 kB'],
-  ['l2', '6.6 kB', '7.8 kB'],
-  ['l3', '8.4 kB', '9.9 kB'],
-  ['l4', '3 kB', '3.7 kB'],
-  ['l5', '5.2 kB', '6.3 kB'],
-  ['l7web', '3.7 kB', '4.5 kB'],
-  ['l7apps', '5.9 kB', '7.2 kB'],
-  ['routing', '4.3 kB', '5.2 kB'],
+  ['l2', '9.3 kB', '11.2 kB'],
+  ['l3', '10.7 kB', '12.7 kB'],
+  ['l4', '8.3 kB', '10.2 kB'],
+  ['l5', '9.5 kB', '11.8 kB'],
+  ['l7web', '6.7 kB', '8.3 kB'],
+  ['l7apps', '8.4 kB', '10.2 kB'],
+  ['routing', '14.4 kB', '17.7 kB'],
 ];
 const pack = (id, limit) => eager({ name: `pack:${id}`, path: `dist/pack-${id}-*.mjs`, limit });
 

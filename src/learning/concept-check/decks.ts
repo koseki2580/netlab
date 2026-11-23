@@ -1,4 +1,30 @@
 import type { ConceptDeck, ConceptDeckChunk, ConceptLayer, ConceptQuestion } from './types';
+import { DECK as anycastDeck } from './lessonDecks/anycast';
+import { DECK as bfdDeck } from './lessonDecks/bfd';
+import { DECK as echDeck } from './lessonDecks/ech';
+import { DECK as encdnsDeck } from './lessonDecks/encdns';
+import { DECK as happyeyeballsDeck } from './lessonDecks/happyeyeballs';
+import { DECK as httpcacheDeck } from './lessonDecks/httpcache';
+import { DECK as l4sDeck } from './lessonDecks/l4s';
+import { DECK as loadbalancerDeck } from './lessonDecks/loadbalancer';
+import { DECK as masqueDeck } from './lessonDecks/masque';
+import { DECK as mplsteDeck } from './lessonDecks/mplste';
+import { DECK as mptcpDeck } from './lessonDecks/mptcp';
+import { DECK as netconfDeck } from './lessonDecks/netconf';
+import { DECK as physicalDeck } from './lessonDecks/physical';
+import { DECK as pimDeck } from './lessonDecks/pim';
+import { DECK as portsecurityDeck } from './lessonDecks/portsecurity';
+import { DECK as pqkexDeck } from './lessonDecks/pqkex';
+import { DECK as redistributionDeck } from './lessonDecks/redistribution';
+import { DECK as roamingDeck } from './lessonDecks/roaming';
+import { DECK as rpkiDeck } from './lessonDecks/rpki';
+import { DECK as sdwanDeck } from './lessonDecks/sdwan';
+import { DECK as segroutingDeck } from './lessonDecks/segrouting';
+import { DECK as spineleafDeck } from './lessonDecks/spineleaf';
+import { DECK as tcpoptionsDeck } from './lessonDecks/tcpoptions';
+import { DECK as telemetryDeck } from './lessonDecks/telemetry';
+import { DECK as vpcDeck } from './lessonDecks/vpc';
+import { DECK as ztnaDeck } from './lessonDecks/ztna';
 
 type Answer = 'a' | 'b' | 'c';
 
@@ -438,4 +464,31 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
     ['q5', 'b'],
     ['q6', 'c'],
   ]),
+  // Decks of the lessons, one file each (src/learning/concept-check/lessonDecks/).
+  deck(anycastDeck.id, anycastDeck.layer, anycastDeck.answers),
+  deck(bfdDeck.id, bfdDeck.layer, bfdDeck.answers),
+  deck(echDeck.id, echDeck.layer, echDeck.answers),
+  deck(encdnsDeck.id, encdnsDeck.layer, encdnsDeck.answers, encdnsDeck.chunk),
+  deck(happyeyeballsDeck.id, happyeyeballsDeck.layer, happyeyeballsDeck.answers),
+  deck(httpcacheDeck.id, httpcacheDeck.layer, httpcacheDeck.answers, httpcacheDeck.chunk),
+  deck(l4sDeck.id, l4sDeck.layer, l4sDeck.answers),
+  deck(loadbalancerDeck.id, loadbalancerDeck.layer, loadbalancerDeck.answers),
+  deck(masqueDeck.id, masqueDeck.layer, masqueDeck.answers, masqueDeck.chunk),
+  deck(mplsteDeck.id, mplsteDeck.layer, mplsteDeck.answers),
+  deck(mptcpDeck.id, mptcpDeck.layer, mptcpDeck.answers),
+  deck(netconfDeck.id, netconfDeck.layer, netconfDeck.answers, netconfDeck.chunk),
+  deck(physicalDeck.id, physicalDeck.layer, physicalDeck.answers),
+  deck(pimDeck.id, pimDeck.layer, pimDeck.answers),
+  deck(portsecurityDeck.id, portsecurityDeck.layer, portsecurityDeck.answers),
+  deck(pqkexDeck.id, pqkexDeck.layer, pqkexDeck.answers),
+  deck(redistributionDeck.id, redistributionDeck.layer, redistributionDeck.answers),
+  deck(roamingDeck.id, roamingDeck.layer, roamingDeck.answers),
+  deck(rpkiDeck.id, rpkiDeck.layer, rpkiDeck.answers),
+  deck(sdwanDeck.id, sdwanDeck.layer, sdwanDeck.answers),
+  deck(segroutingDeck.id, segroutingDeck.layer, segroutingDeck.answers),
+  deck(spineleafDeck.id, spineleafDeck.layer, spineleafDeck.answers),
+  deck(tcpoptionsDeck.id, tcpoptionsDeck.layer, tcpoptionsDeck.answers),
+  deck(telemetryDeck.id, telemetryDeck.layer, telemetryDeck.answers, telemetryDeck.chunk),
+  deck(vpcDeck.id, vpcDeck.layer, vpcDeck.answers),
+  deck(ztnaDeck.id, ztnaDeck.layer, ztnaDeck.answers),
 ];

@@ -10,6 +10,8 @@ import { mtu } from './decks/mtu';
 import { gre } from './decks/gre';
 import { tunneling } from './decks/tunneling';
 import { ndp } from './decks/ndp';
+import { happyeyeballs } from './decks/happyeyeballs';
+import { vpc } from './decks/vpc';
 
 /** The concept checks' `l3` chunk (en): the questions of nat, icmp, ipv4, ipv6, qos, vrrp, multicast, mtu, gre, tunneling, ndp. */
 export const catalog: Catalog = {
@@ -24,4 +26,6 @@ export const catalog: Catalog = {
   ...gre,
   ...tunneling,
   ...ndp,
+  ...happyeyeballs,
+  ...vpc,
 };
