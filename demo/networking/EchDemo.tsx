@@ -3,6 +3,7 @@ import {
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
@@ -147,7 +148,7 @@ function EchLesson() {
             type="button"
             data-testid="ech-reveal-button"
             disabled={!ready || !flights}
-            style={{ ...LESSON_TEAL_BUTTON, opacity: ready ? 1 : 0.5 }}
+            style={ready ? LESSON_TEAL_BUTTON : LESSON_TEAL_BUTTON_DISABLED}
             onClick={() => setRevealed(true)}
           >
             {ready

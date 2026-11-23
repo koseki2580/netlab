@@ -4,6 +4,7 @@ import {
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  LESSON_TEAL_BUTTON_DISABLED,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
@@ -140,7 +141,7 @@ function DuplexPart() {
             type="button"
             data-testid="phy-reveal-button"
             disabled={!guess}
-            style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, opacity: guess ? 1 : 0.5 }}
+            style={{ ...(guess ? LESSON_TEAL_BUTTON : LESSON_TEAL_BUTTON_DISABLED), marginTop: 8 }}
             onClick={() => setRevealed(true)}
           >
             {guess
@@ -317,7 +318,7 @@ function PoePart() {
             type="button"
             data-testid="phy-poe-reveal-button"
             disabled={!guess}
-            style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, opacity: guess ? 1 : 0.5 }}
+            style={{ ...(guess ? LESSON_TEAL_BUTTON : LESSON_TEAL_BUTTON_DISABLED), marginTop: 8 }}
             onClick={() => setRevealed(true)}
           >
             {guess

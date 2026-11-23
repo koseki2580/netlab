@@ -6,7 +6,7 @@ import {
   NETLAB_PALETTES,
   themeToVars,
 } from './index';
-import { CBSAFE_ACCENTS } from './palettes';
+import { ACADEMIC_DARK_ACCENTS, CBSAFE_ACCENTS } from './palettes';
 
 describe('themeToVars', () => {
   it('includes node background tokens from the built-in themes', () => {
@@ -43,6 +43,9 @@ describe('themeToVars', () => {
       '--netlab-accent-purple': '#6d28d9',
     });
     expect(themeToVars(NETLAB_DARK_THEME, { palette: 'academic' })).toMatchObject({
+      '--netlab-accent-purple': ACADEMIC_DARK_ACCENTS.accentPurple,
+    });
+    expect(themeToVars(NETLAB_LIGHT_THEME, { palette: 'academic' })).toMatchObject({
       '--netlab-accent-purple': NETLAB_PALETTES.academic.accentPurple,
     });
     expect(themeToVars(NETLAB_DARK_THEME, { colorBlindSafe: 'on' })).toMatchObject({
@@ -65,9 +68,9 @@ describe('themeToVars', () => {
       '--netlab-accent-cyan': NETLAB_DARK_THEME.accentCyan,
     });
     expect(academic).toMatchObject({
-      '--netlab-accent-green': NETLAB_PALETTES.academic.accentGreen,
-      '--netlab-accent-cyan': NETLAB_PALETTES.academic.accentCyan,
-      '--netlab-accent-blue': NETLAB_PALETTES.academic.accentBlue,
+      '--netlab-accent-green': ACADEMIC_DARK_ACCENTS.accentGreen,
+      '--netlab-accent-cyan': ACADEMIC_DARK_ACCENTS.accentCyan,
+      '--netlab-accent-blue': ACADEMIC_DARK_ACCENTS.accentBlue,
     });
   });
 
@@ -253,5 +256,65 @@ describe('strong border', () => {
       }
     }
     expect(failures).toEqual([]);
+  });
+});
+
+/**
+ * TC-2330 (REQ-424a) — the academic palette had one accent set for both
+ * themes, tuned for a light page: its cyan read 3.34:1 on the dark page and
+ * 2.45:1 on the dark elevated surface. Dark now gets its own set.
+ */
+describe('TC-2330: academic palette in the dark theme', () => {
+  const channel = (part: string): number => {
+    const v = parseInt(part, 16) / 255;
+    return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  };
+  const luminance = (hex: string): number => {
+    const h = hex.replace('#', '');
+    return (
+      0.2126 * channel(h.slice(0, 2)) +
+      0.7152 * channel(h.slice(2, 4)) +
+      0.0722 * channel(h.slice(4, 6))
+    );
+  };
+  const contrast = (a: string, b: string): number => {
+    const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
+    return (hi + 0.05) / (lo + 0.05);
+  };
+  const ACCENTS = ['green', 'red', 'orange', 'yellow', 'cyan', 'purple'] as const;
+
+  it('every accent read as text reaches 4.5:1 on the dark page, surface and elevated backgrounds', () => {
+    const vars = themeToVars(NETLAB_DARK_THEME, { palette: 'academic' }) as Record<string, string>;
+    const failures: string[] = [];
+    for (const accent of ACCENTS) {
+      const fg = vars[`--netlab-accent-${accent}`] as string;
+      for (const bg of ['--netlab-bg-primary', '--netlab-bg-surface', '--netlab-bg-elevated']) {
+        const ratio = contrast(fg, vars[bg] as string);
+        if (ratio < 4.5) failures.push(`${accent} ${fg} on ${bg}: ${ratio.toFixed(2)}`);
+      }
+    }
+    expect(failures).toEqual([]);
+  });
+
+  it('labels on filled accents stay readable: page-colour text on cyan, white text on blue', () => {
+    const vars = themeToVars(NETLAB_DARK_THEME, { palette: 'academic' }) as Record<string, string>;
+    expect(
+      contrast(vars['--netlab-bg-primary'] as string, vars['--netlab-accent-cyan'] as string),
+    ).toBeGreaterThanOrEqual(4.5);
+    // Blue is a button fill with a white label in both palettes of the dark
+    // theme (as in studio), so it is held to the label test, not the text one.
+    expect(contrast('#ffffff', vars['--netlab-accent-blue'] as string)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('the light theme keeps the academic values it had', () => {
+    expect(themeToVars(NETLAB_LIGHT_THEME, { palette: 'academic' })).toMatchObject({
+      '--netlab-accent-green': '#2f7d62',
+      '--netlab-accent-cyan': '#356dab',
+      '--netlab-accent-blue': '#4a64b3',
+      '--netlab-accent-yellow': '#a26b00',
+      '--netlab-accent-orange': '#c45a14',
+      '--netlab-accent-red': '#a83a2e',
+      '--netlab-accent-purple': '#6b3fcb',
+    });
   });
 });

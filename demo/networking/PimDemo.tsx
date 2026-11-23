@@ -3,6 +3,7 @@ import {
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
@@ -89,7 +90,7 @@ function Topology({ rp, tree }: { rp: RouterId | null; tree: TreeResult | null }
                 y1={a.y}
                 x2={b.x}
                 y2={b.y}
-                stroke={on ? 'var(--netlab-accent-cyan)' : 'var(--netlab-border)'}
+                stroke={on ? 'var(--netlab-accent-cyan)' : 'var(--netlab-border-strong)'}
                 strokeWidth={on ? 5 : 2}
               />
               <text
@@ -108,7 +109,7 @@ function Topology({ rp, tree }: { rp: RouterId | null; tree: TreeResult | null }
           y1={170}
           x2={POS.R1.x}
           y2={170}
-          stroke="var(--netlab-border)"
+          stroke="var(--netlab-border-strong)"
           strokeDasharray="4 3"
         />
         <text x={-6} y={160} fontSize={12} fill="var(--netlab-text-primary)">
@@ -304,9 +305,8 @@ function PimLesson() {
             data-testid="pim-reveal-button"
             disabled={!guess}
             style={{
-              ...LESSON_TEAL_BUTTON,
+              ...(guess ? LESSON_TEAL_BUTTON : LESSON_TEAL_BUTTON_DISABLED),
               marginTop: 8,
-              opacity: guess ? 1 : 0.5,
             }}
             onClick={() => setRevealed(true)}
           >

@@ -658,7 +658,11 @@ export default function ConceptCheckPanelInner({
                   gap: 8,
                   textAlign: 'left',
                   borderRadius: 'var(--netlab-radius-sm)',
-                  opacity: result !== null && !isWinner && !isWrongChoice ? 0.5 : 1,
+                  // Options not picked keep full opacity (fading them dropped the text to about
+                  // 3:1); secondary text sets them apart while ✓/✗ marks the two that count.
+                  ...(result !== null && !isWinner && !isWrongChoice
+                    ? { color: 'var(--netlab-text-secondary)' }
+                    : {}),
                 }}
               >
                 <span

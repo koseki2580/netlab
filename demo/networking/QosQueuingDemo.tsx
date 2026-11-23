@@ -3,6 +3,7 @@ import {
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
@@ -373,7 +374,10 @@ function QosQueuingLesson() {
             type="button"
             data-testid="qq-condition-button"
             disabled={!conditionGuess}
-            style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, opacity: conditionGuess ? 1 : 0.5 }}
+            style={{
+              ...(conditionGuess ? LESSON_TEAL_BUTTON : LESSON_TEAL_BUTTON_DISABLED),
+              marginTop: 8,
+            }}
             onClick={() => setConditionShown(true)}
           >
             {conditionGuess
@@ -526,7 +530,10 @@ function QosQueuingLesson() {
             type="button"
             data-testid="qq-delay-button"
             disabled={!delayGuess}
-            style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, opacity: delayGuess ? 1 : 0.5 }}
+            style={{
+              ...(delayGuess ? LESSON_TEAL_BUTTON : LESSON_TEAL_BUTTON_DISABLED),
+              marginTop: 8,
+            }}
             onClick={() => setDelayShown(true)}
           >
             {delayGuess

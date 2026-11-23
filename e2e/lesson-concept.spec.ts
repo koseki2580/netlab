@@ -35,3 +35,41 @@ test('a lesson’s check is answered there, and nothing is due on the path after
   await expect(page.getByTestId('path-stage-2-review')).toHaveCount(0);
   await expect(page.locator('[data-testid^="path-stage-"][data-testid$="-review"]')).toHaveCount(0);
 });
+
+test.describe('on a phone', () => {
+  test.use({ viewportPreset: 'phone', hasTouch: true });
+
+  /**
+   * TC-2340 — opening the check from the end of a lesson brings its first
+   * question on screen; before, only the ▸ turned into ▾ and the panel opened
+   * below the fold.
+   */
+  test('TC-2340: opening the check brings its first question on screen', async ({
+    page,
+    demoPage,
+  }) => {
+    await demoPage.goto('/networking/l4s');
+    const open = page.getByTestId('lesson-concept-open');
+    await open.scrollIntoViewIfNeeded();
+    await open.tap();
+    const title = page.getByTestId('concept-check-session-title');
+    await expect(title).toBeVisible();
+    await expect(title).toBeInViewport();
+    await expect(page.getByTestId('concept-check-option-0')).toBeInViewport();
+  });
+
+  /**
+   * TC-2341 — the bottom bar offers no button that does nothing: every item in
+   * it leads somewhere when tapped.
+   */
+  test('TC-2341: every item of the bottom bar leads somewhere', async ({ page, demoPage }) => {
+    await demoPage.goto('/networking/l4s');
+    const rail = page.locator('[data-netlab-nav-rail]');
+    await expect(rail).toBeVisible();
+    const labels = await rail
+      .locator('[data-netlab-rail-item]')
+      .evaluateAll((items) => items.map((item) => item.getAttribute('aria-label') ?? ''));
+    expect(labels).not.toContain('Run');
+    expect(labels).not.toContain('実行');
+  });
+});

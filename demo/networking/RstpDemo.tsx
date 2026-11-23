@@ -7,6 +7,7 @@ import {
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
 } from '../components/lessonStyles';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
@@ -191,7 +192,10 @@ function RstpLesson() {
                   type="button"
                   data-testid="rstp-cut-link"
                   disabled={!guess}
-                  style={{ ...LESSON_TEAL_BUTTON, marginTop: 10, opacity: guess ? 1 : 0.5 }}
+                  style={{
+                    ...(guess ? LESSON_TEAL_BUTTON : LESSON_TEAL_BUTTON_DISABLED),
+                    marginTop: 10,
+                  }}
                   onClick={() => setView({ kind: 'cut' })}
                 >
                   {guess

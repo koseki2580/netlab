@@ -3,6 +3,7 @@ import {
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
@@ -271,7 +272,11 @@ function DnssecLesson() {
             type="button"
             data-testid="dnssec-reveal-button"
             disabled={!guess}
-            style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, minHeight: 44, opacity: guess ? 1 : 0.5 }}
+            style={{
+              ...(guess ? LESSON_TEAL_BUTTON : LESSON_TEAL_BUTTON_DISABLED),
+              marginTop: 8,
+              minHeight: 44,
+            }}
             onClick={() => setRevealed({ ...revealed, [scenario]: true })}
           >
             {guess

@@ -331,7 +331,7 @@ describe('ConceptCheckPanel', () => {
         </I18nProvider>,
       ),
     );
-    expect(container?.textContent).toContain('プロトコル・コンセプトチェック');
+    expect(container?.textContent).toContain('プロトコルの理解度チェック');
     click('concept-check-deck-dns');
     expect(testid('concept-check-prompt')?.textContent).toContain('DNS');
   });

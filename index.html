@@ -16,6 +16,16 @@
         width: 100%;
         min-height: 100%;
       }
+      /* Text without a font of its own reads in the system sans-serif, not the browser's serif (REQ-424f). */
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          'Hiragino Sans',
+          'Noto Sans JP',
+          sans-serif;
+      }
       /* Simulator routes opt into a fixed 100vh viewport via this class — they
          render through DemoShell which sets the height itself, but the class
          documents the contract and is available for any other simulator-like

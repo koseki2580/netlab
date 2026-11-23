@@ -98,7 +98,7 @@ export function GoalList({
     <ul
       data-testid="exercise-goals"
       aria-label={t('Goals', '目標')}
-      style={compact ? { ...LIST, gap: 4, fontSize: 15, lineHeight: 1.5 } : LIST}
+      style={compact ? { ...LIST, gap: 2, fontSize: 14, lineHeight: 1.4 } : LIST}
     >
       {exercise.checks.map((check) => {
         const result = results?.find((entry) => entry.checkId === check.id);
@@ -161,7 +161,7 @@ export function ExerciseBrief({
           {exercise.rule ? (
             <p
               data-testid="exercise-rule"
-              style={{ margin: 0, fontSize: compact ? 15 : 16, lineHeight: compact ? 1.45 : 1.6 }}
+              style={{ margin: 0, fontSize: compact ? 14 : 16, lineHeight: compact ? 1.45 : 1.6 }}
             >
               {(keyOnly && exercise.ruleKey ? exercise.ruleKey : exercise.rule)[locale]}
             </p>
@@ -169,7 +169,7 @@ export function ExerciseBrief({
           {story ? <ExerciseStory exercise={exercise} compact={compact} /> : null}
         </>
       ) : (
-        <p style={{ margin: 0, fontSize: compact ? 15 : 16, lineHeight: compact ? 1.6 : 1.8 }}>
+        <p style={{ margin: 0, fontSize: compact ? 14 : 16, lineHeight: compact ? 1.5 : 1.8 }}>
           {exercise.brief[locale]}
         </p>
       )}

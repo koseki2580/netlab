@@ -107,13 +107,18 @@ function StageCard({
       ? 'var(--netlab-accent-green)'
       : state === 'open'
         ? 'var(--netlab-accent-blue)'
-        : 'var(--netlab-border)';
+        : 'var(--netlab-text-secondary)';
 
   return (
     <section
       data-testid={`path-stage-${stage.number}`}
       data-state={state}
-      style={{ ...CARD, borderColor: accent, display: 'grid', gap: 8 }}
+      style={{
+        ...CARD,
+        borderColor: state === 'locked' ? 'var(--netlab-border-strong)' : accent,
+        display: 'grid',
+        gap: 8,
+      }}
     >
       <h2 style={{ margin: 0, fontSize: 18 }}>
         <span data-testid={`path-stage-${stage.number}-title`}>

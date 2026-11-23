@@ -10,6 +10,7 @@ import {
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
 } from '../components/lessonStyles';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
@@ -208,7 +209,7 @@ function IcmpSteps() {
           type="button"
           data-testid="icmp-send"
           disabled={!guess || sending || isRecomputing}
-          style={{ ...LESSON_TEAL_BUTTON, marginTop: 10, opacity: guess ? 1 : 0.5 }}
+          style={{ ...(guess ? LESSON_TEAL_BUTTON : LESSON_TEAL_BUTTON_DISABLED), marginTop: 10 }}
           onClick={() => void send()}
         >
           {guess ? t('Send it', '送ってみる') : t('Predict first', '先に予想を選んでください')}

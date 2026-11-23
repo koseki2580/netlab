@@ -53,7 +53,7 @@ export function nodeStyle(node: NetlabNode): CellStyle {
     // Theme tokens, not fixed slate: on a light canvas the overview showed a
     // row of black boxes where the devices are.
     fillColor: transparent ? 'none' : 'var(--netlab-bg-surface)',
-    strokeColor: transparent ? 'none' : 'var(--netlab-border)',
+    strokeColor: transparent ? 'none' : 'var(--netlab-border-strong, var(--netlab-border))',
     rounded: true,
     verticalAlign: 'middle',
     align: 'center',
@@ -84,7 +84,7 @@ export function edgeStyle(edge: NetlabEdge): CellStyle {
   };
   const width = Number(style.strokeWidth);
   const opacity = Number(style.opacity);
-  const stroke = style.stroke ?? 'var(--netlab-border)';
+  const stroke = style.stroke ?? 'var(--netlab-border-strong, var(--netlab-border))';
   return {
     strokeColor: stroke,
     strokeWidth: Number.isFinite(width) && width > 0 ? width : 1,

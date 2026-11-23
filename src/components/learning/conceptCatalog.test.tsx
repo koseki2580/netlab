@@ -22,7 +22,7 @@ it('renders nothing on a Japanese page until its strings arrive, then Japanese (
     ),
   );
   expect(container.textContent).not.toContain('Protocol Concept Check');
-  await vi.waitFor(() => expect(container.textContent).toContain('プロトコル・コンセプトチェック'));
+  await vi.waitFor(() => expect(container.textContent).toContain('プロトコルの理解度チェック'));
   act(() => root.unmount());
 });
 

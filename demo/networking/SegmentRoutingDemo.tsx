@@ -7,6 +7,7 @@ import {
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
 } from '../components/lessonStyles';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
@@ -80,7 +81,7 @@ function SrRun({ policy }: { policy: SrPolicy }) {
           type="button"
           data-testid={`sr-send-${policy}`}
           disabled={!guess || isRecomputing}
-          style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, opacity: guess ? 1 : 0.5 }}
+          style={{ ...(guess ? LESSON_TEAL_BUTTON : LESSON_TEAL_BUTTON_DISABLED), marginTop: 8 }}
           onClick={() =>
             void engine.ping('h1', '10.4.0.10').then((trace) => setSeen(readSrPath(trace)))
           }

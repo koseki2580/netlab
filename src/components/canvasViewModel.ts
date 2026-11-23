@@ -191,7 +191,7 @@ export function styleEdges(
           ...validationEdge.style,
           stroke: highlight.color,
           strokeWidth: 2,
-          opacity: 0.45,
+          opacity: 0.8,
         },
       };
     }

@@ -3,6 +3,7 @@ import {
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
@@ -206,9 +207,8 @@ function HttpCacheLesson() {
             data-testid="cache-reveal-button"
             disabled={!guess}
             style={{
-              ...LESSON_TEAL_BUTTON,
+              ...(guess ? LESSON_TEAL_BUTTON : LESSON_TEAL_BUTTON_DISABLED),
               marginTop: 8,
-              opacity: guess ? 1 : 0.5,
             }}
             onClick={() => setRevealed(true)}
           >

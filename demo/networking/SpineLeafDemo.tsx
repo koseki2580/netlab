@@ -5,6 +5,7 @@ import {
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
@@ -69,7 +70,7 @@ function FabricDrawing({
             y1={H - 24}
             x2={x(spine, fabric.spines)}
             y2={24}
-            stroke={down.has(spine) ? 'var(--netlab-border)' : 'var(--netlab-accent-cyan)'}
+            stroke={down.has(spine) ? 'var(--netlab-border-strong)' : 'var(--netlab-accent-cyan)'}
             strokeDasharray={down.has(spine) ? '3 3' : undefined}
             strokeWidth={1}
           />
@@ -233,7 +234,7 @@ function SpineLeafLesson() {
             type="button"
             data-testid="sl-reveal-button"
             disabled={!guess}
-            style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, opacity: guess ? 1 : 0.5 }}
+            style={{ ...(guess ? LESSON_TEAL_BUTTON : LESSON_TEAL_BUTTON_DISABLED), marginTop: 8 }}
             onClick={() => {
               setRevealed(true);
               setLeaves(PREDICT_FABRIC.leaves);

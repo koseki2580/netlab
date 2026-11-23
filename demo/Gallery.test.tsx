@@ -53,12 +53,13 @@ describe('demo chrome', () => {
     expect(html).toContain('netlab-sim-shell');
   });
 
-  it('DemoShell mounts the nav rail with simulator active state outside embedded mode', () => {
+  it('DemoShell mounts the nav rail, with no "Run" item, outside embedded mode', () => {
     const html = renderDemoShell('/routing/ospf-convergence');
 
     expect(html).toContain('data-netlab-nav-rail');
-    expect(html).toContain('aria-label="Run"');
-    expect(html).toContain('aria-current="page"');
+    // REQ-425: the rail leads back to the lessons and has no "Run" marker that did nothing.
+    expect(html).toContain('aria-label="Browse"');
+    expect(html).not.toContain('aria-label="Run"');
     expect(html).not.toContain('← Gallery');
   });
 

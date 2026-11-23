@@ -3,6 +3,7 @@ import {
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
@@ -354,7 +355,10 @@ function RedistributionLesson() {
             type="button"
             data-testid="redist-ad-reveal-button"
             disabled={!adGuess}
-            style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, opacity: adGuess ? 1 : 0.5 }}
+            style={{
+              ...(adGuess ? LESSON_TEAL_BUTTON : LESSON_TEAL_BUTTON_DISABLED),
+              marginTop: 8,
+            }}
             onClick={() => setAdRevealed(true)}
           >
             {adGuess
@@ -493,7 +497,7 @@ function RedistributionLesson() {
             type="button"
             data-testid="redist-reveal-button"
             disabled={!guess}
-            style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, opacity: guess ? 1 : 0.5 }}
+            style={{ ...(guess ? LESSON_TEAL_BUTTON : LESSON_TEAL_BUTTON_DISABLED), marginTop: 8 }}
             onClick={() => setRevealed(true)}
           >
             {guess

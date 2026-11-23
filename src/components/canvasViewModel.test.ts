@@ -110,7 +110,7 @@ describe('styleEdges', () => {
       animated: true,
       style: { stroke: 'gold', strokeWidth: 3, opacity: 1 },
     });
-    expect(path).toMatchObject({ animated: true, style: { stroke: 'gold', opacity: 0.45 } });
+    expect(path).toMatchObject({ animated: true, style: { stroke: 'gold', opacity: 0.8 } });
     expect(other?.style?.stroke).toBeUndefined();
   });
 

@@ -3,6 +3,7 @@ import {
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
@@ -166,7 +167,7 @@ function ModernWifiLesson() {
             type="button"
             data-testid="wifi-reveal-button"
             disabled={!guess}
-            style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, opacity: guess ? 1 : 0.5 }}
+            style={{ ...(guess ? LESSON_TEAL_BUTTON : LESSON_TEAL_BUTTON_DISABLED), marginTop: 8 }}
             onClick={() => setRevealed(true)}
           >
             {guess
@@ -251,8 +252,8 @@ function ModernWifiLesson() {
           </div>
           <p style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--netlab-text-secondary)' }}>
             {t(
-              `Grey: overhead; cyan: data. Simplified: the ${OVERHEAD_US} µs overhead per transmission and the ${CHANNEL_RATE_MBPS} Mb/s rate are assumptions. A 20 MHz channel splits into 9, 4, 2 or 1 RUs (26, 52, 106 or 242 subcarriers), and a smaller RU carries proportionally less, so with OFDMA the data part grows. The trigger frames and multi-user acknowledgements OFDMA needs are not counted, so the real saving is smaller. With one phone, OFDMA gives it the whole channel and saves nothing.`,
-              `灰色はオーバーヘッド、水色はデータです。簡略化しています。送信 1 回あたり ${OVERHEAD_US} µs のオーバーヘッドと ${CHANNEL_RATE_MBPS} Mb/s のレートは仮定です。20 MHz のチャネルは 9・4・2・1 個の RU（26・52・106・242 サブキャリア）に分けられ、小さい RU ほど運べる量も比例して減るので、OFDMA ではデータの部分が長くなります。OFDMA に必要なトリガーフレームや複数端末向けの ACK は数えていないため、実際の短縮はこれより小さくなります。1 台だけなら、OFDMA はチャネル全体をその 1 台に渡すので何も変わりません。`,
+              `Left part of each bar: overhead; right part: data. Simplified: the ${OVERHEAD_US} µs overhead per transmission and the ${CHANNEL_RATE_MBPS} Mb/s rate are assumptions. A 20 MHz channel splits into 9, 4, 2 or 1 RUs (26, 52, 106 or 242 subcarriers), and a smaller RU carries proportionally less, so with OFDMA the data part grows. The trigger frames and multi-user acknowledgements OFDMA needs are not counted, so the real saving is smaller. With one phone, OFDMA gives it the whole channel and saves nothing.`,
+              `各バーの左側はオーバーヘッド、右側はデータです。簡略化しています。送信 1 回あたり ${OVERHEAD_US} µs のオーバーヘッドと ${CHANNEL_RATE_MBPS} Mb/s のレートは仮定です。20 MHz のチャネルは 9・4・2・1 個の RU（26・52・106・242 サブキャリア）に分けられ、小さい RU ほど運べる量も比例して減るので、OFDMA ではデータの部分が長くなります。OFDMA に必要なトリガーフレームや複数端末向けの ACK は数えていないため、実際の短縮はこれより小さくなります。1 台だけなら、OFDMA はチャネル全体をその 1 台に渡すので何も変わりません。`,
             )}
           </p>
         </div>

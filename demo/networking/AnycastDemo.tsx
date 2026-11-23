@@ -3,6 +3,7 @@ import {
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
@@ -81,7 +82,7 @@ const point = (id: NodeId) => POS[id].join(',');
  * below the whole site row, so it cannot be read as ending at Tokyo.
  */
 const CURVES: Partial<Record<string, { d: string; label: readonly [number, number] }>> = {
-  't-asia|t-us': { d: `M${point('t-asia')} Q380,90 ${point('t-us')}`, label: [300, 122] },
+  't-asia|t-us': { d: `M${point('t-asia')} Q380,90 ${point('t-us')}`, label: [300, 110] },
   'site-fra|t-global': {
     // Lowest point about y 310 at x 220; label under it, at the curve's middle.
     d: `M${point('t-global')} C60,340 380,340 ${point('site-fra')}`,
@@ -164,7 +165,7 @@ function Topology({
                       ? 'var(--netlab-accent-cyan)'
                       : nearest
                         ? 'var(--netlab-accent-green)'
-                        : 'var(--netlab-border)'
+                        : 'var(--netlab-border-strong)'
                   }
                   strokeWidth={bgp || nearest ? 3 : 1.5}
                   strokeDasharray={!bgp && nearest ? '6 4' : undefined}
@@ -175,6 +176,10 @@ function Topology({
                   textAnchor={ax === bx && !curve ? 'start' : 'middle'}
                   fontSize={11}
                   fill="var(--netlab-text-secondary)"
+                  // A halo in the card's colour keeps a crossing line from cutting the label.
+                  stroke="var(--netlab-bg-primary)"
+                  strokeWidth={3}
+                  paintOrder="stroke"
                 >
                   {`${link.ms} ms`}
                 </text>
@@ -297,8 +302,8 @@ function AnycastLesson() {
         <p style={{ margin: 0, fontSize: 13, color: 'var(--netlab-text-secondary)' }}>
           {revealed
             ? t(
-                'Solid cyan: the path the Singapore ISP’s BGP chose. Dashed green: its lowest-latency path, when different.',
-                '水色の実線：シンガポールの ISP が BGP で選んだ経路。緑の破線：遅延が最小の経路（ちがう場合）。',
+                'Thick solid line: the path the Singapore ISP’s BGP chose. Thick dashed line: its lowest-latency path, when different.',
+                '太い実線：シンガポールの ISP が BGP で選んだ経路。太い破線：遅延が最小の経路（ちがう場合）。',
               )
             : t(
                 'Each label is the link’s one-way latency.',
@@ -360,7 +365,7 @@ function AnycastLesson() {
             type="button"
             data-testid="any-reveal-button"
             disabled={!guess}
-            style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, opacity: guess ? 1 : 0.5 }}
+            style={{ ...(guess ? LESSON_TEAL_BUTTON : LESSON_TEAL_BUTTON_DISABLED), marginTop: 8 }}
             onClick={() => setRevealed(true)}
           >
             {guess

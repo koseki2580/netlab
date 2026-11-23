@@ -6,7 +6,7 @@ import type { Catalog } from '../../../types';
  * from its own chunk (`concept-ja-<chunk>.ts`).
  */
 export const catalog: Catalog = {
-  'learning.concept.title': 'プロトコル・コンセプトチェック',
+  'learning.concept.title': 'プロトコルの理解度チェック',
   'learning.concept.primer.title': '遊び方',
   'learning.concept.primer.body':
     'トピックを選び、いくつかの問いに答えて理解度を確認します。誤答の場合はまず「その選択肢がなぜ誤りか」を示してから一般的な解説が続き、セッション終了時にスコアが出ます。トピックは L2 からセキュリティまでスタックを横断します。',

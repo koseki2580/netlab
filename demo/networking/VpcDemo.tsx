@@ -8,6 +8,7 @@ import {
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
 } from '../components/lessonStyles';
 import { NetlabProvider } from '../components/PhoneNetlabProvider';
@@ -139,7 +140,10 @@ function VpcSteps() {
           type="button"
           data-testid="vpc-send"
           disabled={guess === null || isRecomputing}
-          style={{ ...LESSON_TEAL_BUTTON, marginTop: 10, opacity: guess === null ? 0.5 : 1 }}
+          style={{
+            ...(guess === null ? LESSON_TEAL_BUTTON_DISABLED : LESSON_TEAL_BUTTON),
+            marginTop: 10,
+          }}
           onClick={() => void send()}
         >
           {guess === null

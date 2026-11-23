@@ -41,7 +41,8 @@ describe('DemoShell responsive layout (S1)', () => {
     expect(html).not.toContain('data-variant="rail"');
     expect(html).toContain('data-narrow');
     // Same nav items survive the variant switch.
-    expect(html).toContain('aria-label="Run"');
+    // REQ-425: no "Run" item that does nothing when tapped.
+    expect(html).not.toContain('aria-label="Run"');
     expect(html).toContain('aria-label="Browse"');
   });
 

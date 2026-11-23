@@ -3,6 +3,7 @@ import {
   LESSON_CARD,
   LESSON_LABEL,
   LESSON_TEAL_BUTTON,
+  LESSON_TEAL_BUTTON_DISABLED,
   lessonChoice,
 } from '../components/lessonStyles';
 import DemoShell from '../DemoShell';
@@ -201,7 +202,7 @@ function BgpPolicyLesson() {
       type="button"
       data-testid={testid}
       disabled={!ready}
-      style={{ ...LESSON_TEAL_BUTTON, marginTop: 8, opacity: ready ? 1 : 0.5 }}
+      style={{ ...(ready ? LESSON_TEAL_BUTTON : LESSON_TEAL_BUTTON_DISABLED), marginTop: 8 }}
       onClick={go}
     >
       {ready ? label : t('Predict first', '先に予想を選んでください')}

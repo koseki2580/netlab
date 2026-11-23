@@ -73,6 +73,19 @@ export const LESSON_TEAL_BUTTON: CSSProperties = {
   fontWeight: 700,
 };
 
+/**
+ * The teal button while it is disabled (before a prediction is chosen). It is
+ * drawn as an outlined neutral button rather than faded with opacity, so its
+ * label ("Predict first") still reads at 4.5:1 in both themes.
+ */
+export const LESSON_TEAL_BUTTON_DISABLED: CSSProperties = {
+  ...LESSON_TEAL_BUTTON,
+  border: '1px solid var(--netlab-border-strong)',
+  background: 'var(--netlab-bg-elevated)',
+  color: 'var(--netlab-text-secondary)',
+  cursor: 'not-allowed',
+};
+
 /** A bordered box in a lesson's side column. */
 export const LESSON_PANEL: CSSProperties = {
   border: '1px solid var(--netlab-border-subtle)',
@@ -80,10 +93,10 @@ export const LESSON_PANEL: CSSProperties = {
   padding: 12,
 };
 
-/** A card in a lesson's panel, with the dark edge the beginner lessons use. */
+/** A card in a lesson's panel, edged with the theme's strong border. */
 export const LESSON_CARD: CSSProperties = {
   background: 'var(--netlab-bg-primary)',
-  border: '1px solid #1f2937',
+  border: '1px solid var(--netlab-border-strong)',
   borderRadius: 10,
   padding: 12,
 };

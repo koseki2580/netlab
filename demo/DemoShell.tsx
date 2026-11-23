@@ -1,5 +1,5 @@
 import type React from 'react';
-import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CommandPalette, type CommandPaletteItem } from '../src/components/CommandPalette';
 import { KeyboardHelpOverlay } from '../src/components/KeyboardHelpOverlay';
@@ -174,13 +174,37 @@ const LazyConceptCheckPanel = lazy(() =>
 );
 
 /**
+ * Opened from the end of a lesson, the check unfolds below the fold, and its
+ * panel and words load in stages: while it settles, keep it on screen (REQ-425).
+ */
+function BringIntoView({ target }: { target: React.RefObject<HTMLElement | null> }) {
+  useEffect(() => {
+    const element = target.current;
+    if (!element) return undefined;
+    const bring = () => element.scrollIntoView?.({ block: 'start' });
+    bring();
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    const observer = new ResizeObserver(bring);
+    observer.observe(element);
+    const stop = window.setTimeout(() => observer.disconnect(), 1500);
+    return () => {
+      window.clearTimeout(stop);
+      observer.disconnect();
+    };
+  }, [target]);
+  return null;
+}
+
+/**
  * After the lesson, a collapsed check in the lesson's own deck. Its summary
  * schedules the answers for review like any other concept check.
  */
 function LessonConceptCheck({ deckId, locale }: { deckId: string; locale: 'en' | 'ja' }) {
   const [open, setOpen] = useState(false);
+  const section = useRef<HTMLElement>(null);
   return (
     <section
+      ref={section}
       aria-label={locale === 'ja' ? '理解度チェック' : 'Check yourself'}
       style={{
         borderTop: '1px solid var(--netlab-border)',
@@ -219,6 +243,7 @@ function LessonConceptCheck({ deckId, locale }: { deckId: string; locale: 'en' |
           </Suspense>
         </div>
       )}
+      {open && <BringIntoView target={section} />}
     </section>
   );
 }
@@ -336,6 +361,7 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
 
   // P4 — caller-controlled nav items. Only views that are actually wired ship
   // here; the rail no longer hardcodes disabled "not wired yet" placeholders.
+  // A "Run" item that marked the current page did nothing when tapped (REQ-425).
   const navItems: NavRailItem[] = [
     {
       id: 'gallery',
@@ -343,13 +369,6 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
       icon: '⊞',
       active: view === 'gallery',
       onClick: () => selectView('gallery'),
-    },
-    {
-      id: 'simulator',
-      label: locale === 'ja' ? '実行' : 'Run',
-      icon: '▶',
-      active: view === 'simulator',
-      onClick: () => selectView('simulator'),
     },
   ];
 
@@ -571,11 +590,14 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
                 {locale === 'ja' ? '← レッスン一覧へ' : '← All lessons'}
               </button>
               <span
+                data-testid="demo-shell-brand"
                 style={{
                   color: 'var(--netlab-text-primary)',
                   fontWeight: 'bold',
                   fontFamily: 'monospace',
                   fontSize: 15,
+                  // On a wide screen the description gives way, not the name or the title (REQ-424g).
+                  ...(isNarrow ? {} : { whiteSpace: 'nowrap' as const, flexShrink: 0 }),
                 }}
               >
                 📡 netlab
@@ -588,6 +610,7 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
                   fontFamily: 'monospace',
                   fontSize: 14,
                   fontWeight: 600,
+                  ...(isNarrow ? {} : { whiteSpace: 'nowrap' as const, flexShrink: 0 }),
                 }}
               >
                 {shownTitle}
@@ -598,6 +621,7 @@ export default function DemoShell({ title, desc, children, embedded = false }: D
                   color: 'var(--netlab-text-secondary)',
                   fontSize: 12,
                   fontFamily: 'monospace',
+                  ...(isNarrow ? {} : { flex: '1 1 auto', minWidth: 0 }),
                 }}
               >
                 {shownDesc}

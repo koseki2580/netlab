@@ -7,6 +7,7 @@ import {
   RADIUS_SCALE,
   type LearningSurfaceTokens,
 } from './learningSurface';
+import { resolveColorMode } from '../utils/themeUtils';
 import { CBSAFE_ACCENTS, paletteOverrides, type NetlabPalette } from './palettes';
 
 export type { NetlabPalette } from './palettes';
@@ -201,7 +202,10 @@ function contrastOverrides(theme: NetlabTheme, contrast: NetlabContrast): Partia
 
 export function themeToVars(theme: NetlabTheme, axes?: NetlabThemeAxes): React.CSSProperties {
   const palette = axes?.palette ?? 'studio';
-  let resolved: NetlabTheme = { ...theme, ...paletteOverrides(palette) };
+  let resolved: NetlabTheme = {
+    ...theme,
+    ...paletteOverrides(palette, resolveColorMode(theme.bgPrimary)),
+  };
   if (palette === 'academic') {
     // Learning-surface washes desaturate for projector / print use. The accent
     // channel already shifted via paletteOverrides; this calms the gradients.

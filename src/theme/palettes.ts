@@ -42,7 +42,29 @@ export const NETLAB_PALETTES: Record<NetlabPalette, AccentOverrides> = {
   },
 };
 
-export function paletteOverrides(palette: NetlabPalette): AccentOverrides {
+/**
+ * The academic accents for a dark base theme. The set above is tuned for a
+ * light page; on the dark one its cyan read 3.34:1 against bg-primary and
+ * 2.45:1 against bg-elevated. These clear 4.5:1 on the dark primary, surface
+ * and elevated backgrounds (REQ-424a). Blue stays the fill it is in the studio
+ * dark theme: it carries a white label (5.58:1), which a text-legible blue
+ * could not (#8596cc read 2.90:1 under white).
+ */
+export const ACADEMIC_DARK_ACCENTS: AccentOverrides = {
+  accentGreen: '#40a985',
+  accentCyan: '#6b9bd1',
+  accentBlue: '#4a64b3',
+  accentYellow: '#d08900',
+  accentOrange: '#ea792e',
+  accentRed: '#d97f75',
+  accentPurple: '#a68be0',
+};
+
+export function paletteOverrides(
+  palette: NetlabPalette,
+  mode: 'light' | 'dark' = 'light',
+): AccentOverrides {
+  if (palette === 'academic' && mode === 'dark') return ACADEMIC_DARK_ACCENTS;
   return NETLAB_PALETTES[palette] ?? {};
 }
 
