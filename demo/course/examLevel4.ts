@@ -64,6 +64,24 @@ export const EXAM_LEVEL_4: ExamLevel = {
       },
     },
     {
+      id: 'bgp-policy',
+      path: lessonPath('/networking/bgp-policy'),
+      title: { en: 'BGP best path and communities', ja: 'BGP の最適経路選択とコミュニティ' },
+      teaches: {
+        en: 'How far a tagged route travels between ASes',
+        ja: 'タグを付けた経路が、AS の間をどこまで伝わるか',
+      },
+    },
+    {
+      id: 'rpki',
+      path: lessonPath('/networking/rpki'),
+      title: { en: 'RPKI route origin validation', ja: 'RPKI による経路オリジン検証' },
+      teaches: {
+        en: 'Checking who may announce a prefix',
+        ja: 'だれがプレフィックスを広告してよいかの確認',
+      },
+    },
+    {
       id: 'ospf-convergence',
       path: lessonPath('/routing/ospf-convergence'),
       title: { en: 'OSPF Convergence', ja: 'OSPF の収束' },

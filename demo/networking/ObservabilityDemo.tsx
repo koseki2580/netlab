@@ -10,7 +10,8 @@ import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import { LESSON_BUTTON } from '../components/lessonStyles';
 
-function buildTopology(): NetworkTopology {
+/** The lesson's network: a client, R1 running NetFlow, SW1 sampling with sFlow, a server. */
+export function buildTopology(): NetworkTopology {
   return {
     nodes: [
       {

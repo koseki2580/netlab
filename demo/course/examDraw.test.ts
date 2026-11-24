@@ -1,21 +1,76 @@
 import { describe, expect, it } from 'vitest';
 import { drawQuestions, questionsOf } from './examDraw';
 import { EXAM_LEVELS, examLevel } from './examLevels';
-import { EXAM_PASS_MARK, scoreQuestions } from './examQuestions';
+import { EXAM_PASS_MARK, levelStop, scoreQuestions } from './examQuestions';
+import { STAGES } from './stages';
 
 const POOLED = [1, 2, 3, 4, 5, 6, 7, 8].map((level) => examLevel(level)!);
 const SEEDS = Array.from({ length: 200 }, (_, seed) => seed);
 
-// TC-1350
-describe('every level holds a pool of thirty in ten slots of three (TC-1350, TC-1357)', () => {
+// TC-1350, TC-2520: ten slots of at least three; a slot's first three are its own stop's, and
+// wave C adds questions on related lessons, each taught by a stop of the path.
+describe('every level holds ten slots of at least three (TC-1350, TC-1357, TC-2520)', () => {
   for (const level of POOLED) {
     it(`level ${level.level}`, () => {
       const slots = level.slots!;
       expect(slots).toHaveLength(10);
       for (const slot of slots) {
-        expect(slot).toHaveLength(3);
-        expect(new Set(slot.map((q) => q.taughtBy)).size, slot[0]!.id).toBe(1);
-        expect(level.path.some((stop) => stop.id === slot[0]!.taughtBy)).toBe(true);
+        expect(slot.length, slot[0]!.id).toBeGreaterThanOrEqual(3);
+        expect(new Set(slot.slice(0, 3).map((q) => q.taughtBy)).size, slot[0]!.id).toBe(1);
+        for (const q of slot) {
+          expect(
+            level.path.some((stop) => stop.id === q.taughtBy),
+            q.id,
+          ).toBe(true);
+        }
+      }
+    });
+  }
+});
+
+// TC-2521: each stage 6 and 7 lesson wave C was written for is asked in its own stage's tests.
+describe('the lessons of stages 6 and 7 that wave C covers are asked in their stage’s tests (TC-2521)', () => {
+  const COVERED: Record<6 | 7, readonly string[]> = {
+    6: [
+      '/networking/isis',
+      '/networking/bgp-policy',
+      '/networking/rpki',
+      '/networking/spine-leaf',
+      '/networking/load-balancer',
+      '/networking/tunneling/gre',
+      '/networking/vpn-tunnel',
+      '/networking/segment-routing',
+      '/networking/mpls-te',
+      '/networking/pim',
+      '/networking/observability',
+    ],
+    7: [
+      '/networking/encrypted-dns',
+      '/networking/happy-eyeballs',
+      '/networking/anycast',
+      '/networking/nat-traversal',
+      '/networking/quic-migration',
+      '/networking/mptcp',
+      '/networking/masque',
+      '/networking/tcp-options',
+      '/networking/ztna',
+      '/networking/netconf',
+      '/networking/telemetry',
+    ],
+  };
+  for (const number of [6, 7] as const) {
+    it(`stage ${number}`, () => {
+      const stage = STAGES.find((entry) => entry.number === number)!;
+      const asked = new Set(
+        stage.checkpoints.flatMap((checkpoint) => {
+          if (checkpoint.kind !== 'exam') return [];
+          const level = examLevel(checkpoint.level)!;
+          return level.slots!.flat().map((q) => levelStop(level, q.taughtBy)!.path);
+        }),
+      );
+      for (const path of COVERED[number]) {
+        expect(stage.lessons as readonly string[], path).toContain(path);
+        expect(asked.has(path), path).toBe(true);
       }
     });
   }
@@ -25,12 +80,12 @@ describe('every level holds a pool of thirty in ten slots of three (TC-1350, TC-
 describe('a draw asks one question from each slot (TC-1351)', () => {
   for (const level of POOLED) {
     it(`level ${level.level}`, () => {
-      const stops = new Set(level.slots!.map((slot) => slot[0]!.taughtBy));
+      const stops = new Set(level.path.map((stop) => stop.id));
       for (const seed of SEEDS) {
         const drawn = drawQuestions(level, seed);
         expect(drawn).toHaveLength(10);
         drawn.forEach((q, index) => expect(level.slots![index]).toContain(q));
-        expect(new Set(drawn.map((q) => q.taughtBy))).toEqual(stops);
+        for (const q of drawn) expect(stops.has(q.taughtBy), q.id).toBe(true);
         expect(drawQuestions(level, seed)).toEqual(drawn);
       }
       // Different seeds do not all draw the same ten.

@@ -8,10 +8,13 @@ import { EXAM_STAGE_3 } from './examStage3';
 import { EXAM_STAGE_7 } from './examStage7';
 import { POOL_A } from './examPoolA';
 import { POOL_B } from './examPoolB';
+import { POOL_C } from './examPoolC';
 
 /**
  * A level with a pool (REQ-194): each original question and its partners make
- * one slot. A level whose questions are not all partnered keeps no pool.
+ * one slot. A level whose questions are not all partnered keeps no pool. Wave
+ * C adds, after a slot's three, questions on lessons of the same topic that no
+ * slot asked about before, each taught by its own stop.
  */
 function withPool(level: ExamLevel): ExamLevel {
   const partners = level.questions.map((question) => [
@@ -21,7 +24,11 @@ function withPool(level: ExamLevel): ExamLevel {
   if (partners.some((partner) => partner.length === 0)) return level;
   return {
     ...level,
-    slots: level.questions.map((question, index) => [question, ...partners[index]!]),
+    slots: level.questions.map((question, index) => [
+      question,
+      ...partners[index]!,
+      ...(POOL_C.get(question.id) ?? []),
+    ]),
   };
 }
 

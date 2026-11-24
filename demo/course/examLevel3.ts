@@ -22,12 +22,30 @@ const PATH: readonly PathStop[] = [
     },
   },
   {
+    id: 'isis',
+    path: lessonPath('/networking/isis'),
+    title: { en: 'IS-IS levels and areas', ja: 'IS-IS のレベルとエリア' },
+    teaches: {
+      en: 'How a two-level link-state network reaches another area',
+      ja: '2 階層のリンクステート網が、別のエリアへ届くしくみ',
+    },
+  },
+  {
     id: 'ecmp',
     path: lessonPath('/networking/ecmp'),
     title: { en: 'ECMP Multipath', ja: 'ECMP（等コスト複数経路）' },
     teaches: {
       en: 'Using two equal-cost paths at once',
       ja: '同じコストの 2 つの経路を同時に使うこと',
+    },
+  },
+  {
+    id: 'spine-leaf',
+    path: lessonPath('/networking/spine-leaf'),
+    title: { en: 'Spine-leaf fabrics', ja: 'スパイン・リーフ構成' },
+    teaches: {
+      en: 'Paths and capacity between the leaves of a fabric',
+      ja: 'ファブリックのリーフ間の経路と容量',
     },
   },
   {
@@ -40,6 +58,24 @@ const PATH: readonly PathStop[] = [
     teaches: {
       en: 'Keeping the gateway and the uplinks up when one piece fails',
       ja: '1 か所が壊れても、ゲートウェイと上りのリンクを保つしくみ',
+    },
+  },
+  {
+    id: 'load-balancer',
+    path: lessonPath('/networking/load-balancer'),
+    title: { en: 'Load balancers', ja: 'ロードバランサ' },
+    teaches: {
+      en: 'Which server each request goes to',
+      ja: '要求ごとの振り分け先のサーバ',
+    },
+  },
+  {
+    id: 'observability',
+    path: lessonPath('/networking/observability'),
+    title: { en: 'Flow Observability', ja: 'フローの可視化' },
+    teaches: {
+      en: 'What a router and a switch report about the traffic',
+      ja: 'ルータとスイッチが通信について報告すること',
     },
   },
   {
@@ -70,6 +106,15 @@ const PATH: readonly PathStop[] = [
     },
   },
   {
+    id: 'pim',
+    path: lessonPath('/networking/pim'),
+    title: { en: 'PIM multicast routing', ja: 'PIM によるマルチキャストルーティング' },
+    teaches: {
+      en: 'Multicast trees between routers',
+      ja: 'ルータ間のマルチキャストのツリー',
+    },
+  },
+  {
     id: 'http2',
     path: lessonPath('/networking/http2'),
     title: { en: 'HTTP/2 Multiplexing', ja: 'HTTP/2 の多重化' },
@@ -97,12 +142,48 @@ const PATH: readonly PathStop[] = [
     },
   },
   {
+    id: 'segment-routing',
+    path: lessonPath('/networking/segment-routing'),
+    title: { en: 'Segment routing', ja: 'セグメントルーティング' },
+    teaches: {
+      en: 'A path written into the packet as labels',
+      ja: 'ラベルとしてパケットに書き込む経路',
+    },
+  },
+  {
+    id: 'mpls-te',
+    path: lessonPath('/networking/mpls-te'),
+    title: { en: 'MPLS traffic engineering', ja: 'MPLS トラフィックエンジニアリング' },
+    teaches: {
+      en: 'Placing label-switched paths by bandwidth',
+      ja: '帯域を見て LSP を置くこと',
+    },
+  },
+  {
     id: 'vxlan',
     path: lessonPath('/networking/tunneling/vxlan-evpn'),
     title: { en: 'VXLAN EVPN', ja: 'VXLAN EVPN' },
     teaches: {
       en: 'Stretching a layer-2 segment across a routed fabric',
       ja: 'ルーティングされたファブリックの上に、L2 のセグメントを広げること',
+    },
+  },
+  {
+    id: 'gre',
+    path: lessonPath('/networking/tunneling/gre'),
+    title: { en: 'GRE Tunnel', ja: 'GRE トンネル' },
+    teaches: {
+      en: 'One network’s packets carried inside another’s',
+      ja: 'あるネットワークのパケットを、別のネットワークの中に入れて運ぶこと',
+    },
+  },
+  {
+    id: 'vpn-tunnel',
+    path: lessonPath('/networking/vpn-tunnel'),
+    title: { en: 'Site-to-site VPN: IPsec and WireGuard', ja: '拠点間 VPN：IPsec と WireGuard' },
+    teaches: {
+      en: 'What each tunnel shows on the internet',
+      ja: 'トンネルごとに、インターネットから見えるもの',
     },
   },
 ];

@@ -4,10 +4,10 @@ import type { ExamLevel } from './examQuestions';
 /**
  * The test of stage 7 (最新とクラウド): TLS 1.3, HTTP/2, HTTP/3 over QUIC, TCP
  * congestion control, and the stage's newer lessons — cloud networks (VPC),
- * SD-WAN, L4S, Encrypted Client Hello and post-quantum key exchange. Ten
- * slots cannot cover every lesson; MASQUE, streaming telemetry and encrypted
- * DNS are not asked. Every answer is what the named lesson shows when run,
- * and what the standard says.
+ * SD-WAN, L4S, Encrypted Client Hello and post-quantum key exchange. The
+ * stage's other lessons are asked through wave C (`examPoolC.ts`), each in the
+ * slot of a related topic, so one attempt asks some of them, not all. Every
+ * answer is what the named lesson shows when run, and what the standard says.
  */
 export const EXAM_STAGE_7: ExamLevel = {
   level: 8,
@@ -45,12 +45,48 @@ export const EXAM_STAGE_7: ExamLevel = {
       },
     },
     {
+      id: 'quic-migration',
+      path: lessonPath('/networking/quic-migration'),
+      title: { en: 'QUIC connection migration', ja: 'QUIC の接続移行' },
+      teaches: {
+        en: 'A connection when the phone changes network',
+        ja: 'スマートフォンがネットワークを変えたときの接続',
+      },
+    },
+    {
+      id: 'mptcp',
+      path: lessonPath('/networking/mptcp'),
+      title: { en: 'Multipath TCP', ja: 'Multipath TCP（MPTCP）' },
+      teaches: {
+        en: 'One connection over Wi-Fi and LTE at once',
+        ja: 'Wi-Fi と LTE に同時に乗る 1 本の接続',
+      },
+    },
+    {
+      id: 'masque',
+      path: lessonPath('/networking/masque'),
+      title: { en: 'MASQUE', ja: 'MASQUE' },
+      teaches: {
+        en: 'Who learns what through one or two proxies',
+        ja: '1 段や 2 段のプロキシで、だれが何を知るか',
+      },
+    },
+    {
       id: 'tcp-congestion',
       path: lessonPath('/simulation/tcp-congestion'),
       title: { en: 'TCP Congestion Control', ja: 'TCP の輻輳制御' },
       teaches: {
         en: 'How fast a sender sends, and what loss does to it',
         ja: '送る速さと、損失がそれをどう変えるか',
+      },
+    },
+    {
+      id: 'tcp-options',
+      path: lessonPath('/networking/tcp-options'),
+      title: { en: 'TCP window scaling and SACK', ja: 'TCP のウィンドウスケールと SACK' },
+      teaches: {
+        en: 'TCP options on a long, fast path',
+        ja: '遠くて速い経路での TCP のオプション',
       },
     },
     {
@@ -69,6 +105,33 @@ export const EXAM_STAGE_7: ExamLevel = {
       teaches: {
         en: 'The cheapest link that meets the traffic',
         ja: '通信の条件を満たすいちばん安い回線',
+      },
+    },
+    {
+      id: 'ztna',
+      path: lessonPath('/networking/ztna'),
+      title: { en: 'From VPN to zero-trust access', ja: 'VPN からゼロトラストアクセスへ' },
+      teaches: {
+        en: 'What a remote worker can reach',
+        ja: 'リモートで働く人が届く範囲',
+      },
+    },
+    {
+      id: 'netconf',
+      path: lessonPath('/networking/netconf'),
+      title: { en: 'NETCONF and YANG', ja: 'NETCONF と YANG' },
+      teaches: {
+        en: 'Changing a router’s configuration by a model',
+        ja: 'モデルに沿ってルータの設定を変えること',
+      },
+    },
+    {
+      id: 'telemetry',
+      path: lessonPath('/networking/telemetry'),
+      title: { en: 'Streaming telemetry', ja: 'ストリーミングテレメトリ' },
+      teaches: {
+        en: 'Reading a link’s counters and state',
+        ja: '回線のカウンタと状態の読み方',
       },
     },
     {
@@ -96,6 +159,42 @@ export const EXAM_STAGE_7: ExamLevel = {
       teaches: {
         en: 'Why browsers send a hybrid key share',
         ja: 'ブラウザがハイブリッドを送る理由',
+      },
+    },
+    {
+      id: 'encrypted-dns',
+      path: lessonPath('/networking/encrypted-dns'),
+      title: { en: 'Encrypted DNS', ja: 'DNS の暗号化' },
+      teaches: {
+        en: 'What a network sees of a name lookup',
+        ja: '名前の問い合わせがネットワークにどう見えるか',
+      },
+    },
+    {
+      id: 'happy-eyeballs',
+      path: lessonPath('/networking/happy-eyeballs'),
+      title: { en: 'Happy Eyeballs and NAT64', ja: 'Happy Eyeballs と NAT64' },
+      teaches: {
+        en: 'Connecting when both IPv6 and IPv4 exist',
+        ja: 'IPv6 と IPv4 の両方があるときのつなぎ方',
+      },
+    },
+    {
+      id: 'anycast',
+      path: lessonPath('/networking/anycast'),
+      title: { en: 'Anycast and CDNs', ja: 'エニーキャストと CDN' },
+      teaches: {
+        en: 'One address announced from several places',
+        ja: '複数の場所から広告される 1 つのアドレス',
+      },
+    },
+    {
+      id: 'nat-traversal',
+      path: lessonPath('/networking/nat-traversal'),
+      title: { en: 'NAT traversal: STUN, TURN and ICE', ja: 'NAT 越え：STUN、TURN、ICE' },
+      teaches: {
+        en: 'Two peers behind NATs reaching each other',
+        ja: 'NAT の内側どうしの 2 台がつながること',
       },
     },
   ],
