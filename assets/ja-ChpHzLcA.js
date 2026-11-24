@@ -1,1 +1,0 @@
-import{t as e}from"./index-BA9HH8Q0.js";export{e as ja};
