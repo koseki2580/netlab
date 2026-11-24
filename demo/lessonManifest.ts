@@ -370,6 +370,19 @@ export const LESSONS = [
     tags: ['BGP'],
   },
   {
+    path: '/networking/route-reflector',
+    category: 'routing',
+    module: './networking/RouteReflectorDemo',
+    title: { en: 'iBGP scaling and route reflectors', ja: 'iBGP のスケールとルートリフレクタ' },
+    desc: {
+      en: 'How many iBGP sessions an AS needs, and how a route reaches a router it has no session with.',
+      ja: 'AS に要る iBGP セッションの数と、セッションのないルータへ経路が届く仕組み。',
+    },
+    conceptDeck: 'routereflector',
+    difficulty: 'advanced',
+    tags: ['BGP'],
+  },
+  {
     path: '/networking/rpki',
     category: 'routing',
     module: './networking/RpkiDemo',
@@ -399,6 +412,19 @@ export const LESSONS = [
     defaultSandboxTab: 'packet',
   },
   {
+    path: '/networking/mac-learning',
+    category: 'areas',
+    module: './networking/MacLearningDemo',
+    title: { en: 'MAC learning', ja: 'MAC アドレス学習' },
+    desc: {
+      en: 'Frame by frame, predict which ports an Ethernet switch sends each frame out of, then move a host and let time pass.',
+      ja: 'イーサネットスイッチが各フレームをどのポートから出すかを 1 つずつ予想し、ホストの移動や時間の経過も試します。',
+    },
+    conceptDeck: 'maclearning',
+    difficulty: 'beginner',
+    tags: ['L2', '802.1Q'],
+  },
+  {
     path: '/networking/vlan',
     category: 'areas',
     module: './networking/VlanDemo',
@@ -423,6 +449,19 @@ export const LESSONS = [
     conceptDeck: 'physical',
     difficulty: 'beginner',
     tags: ['L1–L2'],
+  },
+  {
+    path: '/networking/optical',
+    category: 'areas',
+    module: './networking/OpticalDemo',
+    title: { en: 'Optical link budgets and DWDM', ja: '光リンクバジェットと DWDM' },
+    desc: {
+      en: 'Add up a fibre link’s losses to see whether it comes up, then fit DWDM channels into the C-band.',
+      ja: '光ファイバリンクの損失を足し合わせて上がるかを確かめ、C バンドに DWDM のチャネルを並べます。',
+    },
+    conceptDeck: 'optical',
+    difficulty: 'intermediate',
+    tags: ['L1', 'DWDM'],
   },
   {
     path: '/networking/stp',
@@ -467,6 +506,19 @@ export const LESSONS = [
     scenarioId: 'fragmented-echo',
     sandboxReady: true,
     defaultSandboxTab: 'node',
+  },
+  {
+    path: '/networking/plpmtud',
+    category: 'areas',
+    module: './networking/PlpmtudDemo',
+    title: { en: 'PLPMTUD: probing for the path MTU', ja: 'PLPMTUD：プローブで経路 MTU を探す' },
+    desc: {
+      en: 'Finding how big a packet the path carries when the ICMP that classic PMTUD waits for never arrives.',
+      ja: '従来の PMTUD が待つ ICMP が届かないとき、経路が運べるパケットの大きさをどう見つけるか。',
+    },
+    conceptDeck: 'plpmtud',
+    difficulty: 'advanced',
+    tags: ['L4', 'ICMP'],
   },
   {
     path: '/networking/pppoe',
@@ -536,6 +588,19 @@ export const LESSONS = [
     tags: ['Operations'],
   },
   {
+    path: '/networking/time-sync',
+    category: 'areas',
+    module: './networking/TimeSyncDemo',
+    title: { en: 'Time sync: NTP and PTP', ja: '時刻同期：NTP と PTP' },
+    desc: {
+      en: 'Four timestamps, one offset: work out what NTP computes, then send it over an uneven path and through a switch with PTP.',
+      ja: '4 つのタイムスタンプから 1 つのオフセットへ。NTP の計算を予想し、偏った経路とスイッチ越しの PTP で試します。',
+    },
+    conceptDeck: 'timesync',
+    difficulty: 'advanced',
+    tags: ['NTP', 'PTP'],
+  },
+  {
     path: '/networking/ecmp',
     category: 'areas',
     module: './networking/EcmpDemo',
@@ -562,6 +627,19 @@ export const LESSONS = [
     tags: ['ECMP'],
   },
   {
+    path: '/networking/lossless-dc',
+    category: 'areas',
+    module: './networking/LosslessDcDemo',
+    title: { en: 'Lossless Ethernet for RoCEv2', ja: 'RoCEv2 のためのロスレス Ethernet' },
+    desc: {
+      en: 'Many servers answer one at once: what a data-centre switch does with the burst.',
+      ja: '多数のサーバが一斉に 1 台へ応答したとき、データセンターのスイッチはそのバーストをどう扱うか。',
+    },
+    conceptDeck: 'lossless',
+    difficulty: 'advanced',
+    tags: ['Data center'],
+  },
+  {
     path: '/networking/load-balancer',
     category: 'areas',
     module: './networking/LoadBalancerDemo',
@@ -586,6 +664,19 @@ export const LESSONS = [
     conceptDeck: 'ipv6',
     difficulty: 'advanced',
     tags: ['IPv6', 'ICMPv6'],
+  },
+  {
+    path: '/networking/ipv6-addressing',
+    category: 'areas',
+    module: './networking/Ipv6AddressingDemo',
+    title: { en: 'IPv6 addresses and prefixes', ja: 'IPv6 アドレスとプレフィックス' },
+    desc: {
+      en: 'How an IPv6 address is written, what its first bits say about it, and how a delegated prefix is cut into LANs.',
+      ja: 'IPv6 アドレスの書き方、先頭のビットが表すもの、委任されたプレフィックスを LAN に切り分ける方法。',
+    },
+    conceptDeck: 'ipv6addr',
+    difficulty: 'intermediate',
+    tags: ['IPv6'],
   },
   {
     path: '/networking/ipv6-nd',
@@ -795,6 +886,22 @@ export const LESSONS = [
     tags: ['L7', 'HTTP'],
   },
   {
+    path: '/networking/websocket',
+    category: 'areas',
+    module: './networking/WebSocketDemo',
+    title: {
+      en: 'Polling, long polling and WebSocket',
+      ja: 'ポーリング、ロングポーリング、WebSocket',
+    },
+    desc: {
+      en: 'Get news from a server to a browser three ways and count what each costs, then decide which requests may be resent after a dropped connection.',
+      ja: 'サーバーからブラウザへ知らせを届ける 3 つの方法のコストを数え、接続が切れたあと送り直してよいリクエストを見分けます。',
+    },
+    conceptDeck: 'websocket',
+    difficulty: 'intermediate',
+    tags: ['HTTP'],
+  },
+  {
     path: '/networking/http-cache',
     category: 'areas',
     module: './networking/HttpCacheDemo',
@@ -884,6 +991,19 @@ export const LESSONS = [
     conceptDeck: 'quic',
     difficulty: 'advanced',
     tags: ['QUIC'],
+  },
+  {
+    path: '/networking/mobile-core',
+    category: 'areas',
+    module: './networking/MobileCoreDemo',
+    title: { en: '5G core: the user plane', ja: '5G コア：ユーザプレーン' },
+    desc: {
+      en: "Count the tunnel headers on a phone's packets between base station and core, then hand the phone to another base station.",
+      ja: 'スマートフォンのパケットが基地局とコアの間で包まれるヘッダを数え、別の基地局へハンドオーバーします。',
+    },
+    conceptDeck: 'mobilecore',
+    difficulty: 'advanced',
+    tags: ['5G', 'GTP-U'],
   },
   {
     path: '/networking/mptcp',
@@ -978,6 +1098,19 @@ export const LESSONS = [
     tags: ['DHCP'],
   },
   {
+    path: '/networking/dhcp-lease',
+    category: 'services',
+    module: './networking/DhcpLeaseDemo',
+    title: { en: 'DHCP lease lifecycle', ja: 'DHCP リースのライフサイクル' },
+    desc: {
+      en: "A client's only DHCP server dies mid-lease: follow what the client sends, and when.",
+      ja: 'クライアントの唯一の DHCP サーバがリースの途中で止まります。クライアントが何をいつ送るかを追います。',
+    },
+    conceptDeck: 'dhcplease',
+    difficulty: 'intermediate',
+    tags: ['DHCP'],
+  },
+  {
     path: '/services/dns-resolution',
     category: 'services',
     module: './services/DnsResolutionDemo',
@@ -1057,6 +1190,19 @@ export const LESSONS = [
     scenarioId: 'nat-basics',
     sandboxReady: true,
     defaultSandboxTab: 'node',
+  },
+  {
+    path: '/networking/cgnat',
+    category: 'simulation',
+    module: './networking/CgnatDemo',
+    title: { en: 'Carrier-grade NAT', ja: 'キャリアグレード NAT' },
+    desc: {
+      en: 'Many subscribers behind one public IPv4 address: how its ports are shared out, and what happens when one runs short.',
+      ja: '1 つのグローバル IPv4 アドレスの後ろに多くの加入者がいます。ポートをどう分け合い、足りなくなると何が起きるか。',
+    },
+    conceptDeck: 'cgnat',
+    difficulty: 'advanced',
+    tags: ['SNAT'],
   },
   {
     path: '/simulation/acl',
@@ -1175,6 +1321,19 @@ export const LESSONS = [
       ja: '遠くのサーバーへの TCP 接続 1 本がどこまで速くなれるかを計算し、1 つのウィンドウでの複数の損失を SACK あり・なしで直します。',
     },
     conceptDeck: 'tcpoptions',
+    difficulty: 'advanced',
+    tags: ['TCP'],
+  },
+  {
+    path: '/networking/tcp-cubic',
+    category: 'simulation',
+    module: './networking/TcpCubicDemo',
+    title: { en: 'CUBIC and RACK-TLP', ja: 'CUBIC と RACK-TLP' },
+    desc: {
+      en: 'Lose one packet on a fast, long path and see how Reno and CUBIC grow back, then lose the end of a response and see how the sender finds out.',
+      ja: '速くて遠い経路でパケットを 1 つ失い、Reno と CUBIC がどう戻るかを見て、次に応答の最後を失わせ、送り手がどう気づくかを確かめます。',
+    },
+    conceptDeck: 'cubic',
     difficulty: 'advanced',
     tags: ['TCP'],
   },

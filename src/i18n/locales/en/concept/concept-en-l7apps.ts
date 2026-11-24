@@ -10,6 +10,8 @@ import { rtp } from './decks/rtp';
 import { stun } from './decks/stun';
 import { netconf } from './decks/netconf';
 import { telemetry } from './decks/telemetry';
+import { timesync } from './decks/timesync';
+import { dhcplease } from './decks/dhcplease';
 
 /** The concept checks' `l7apps` chunk (en): the questions of dhcp, ftp, smtp, email, ntp, snmp, sip, rtp, stun. */
 export const catalog: Catalog = {
@@ -24,4 +26,6 @@ export const catalog: Catalog = {
   ...stun,
   ...netconf,
   ...telemetry,
+  ...timesync,
+  ...dhcplease,
 };

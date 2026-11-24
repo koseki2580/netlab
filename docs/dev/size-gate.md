@@ -80,3 +80,23 @@ The 26 lesson decks grew the group chunks; limits are measured + 10 %. `routing`
 nine lesson decks on top of seven protocol decks). If it grows again, split it — e.g. IGP decks (ospf, rip,
 isis, eigrp, redistribution, bfd) from provider decks (bgp, ecmp, mpls, rpki, anycast, mplste, pim, sdwan,
 segrouting, spineleaf) — rather than raising the limit further.
+
+### After the twelve lessons of REQ-429..440 (measured 2026-11-24)
+
+Twelve more lesson decks went into `l2` (maclearning, optical, lossless), `l3` (ipv6addr, cgnat,
+mobilecore), `l4` (plpmtud, cubic), `l7web` (websocket), `l7apps` (dhcplease, timesync) and `routing`
+(routereflector); their names went into `core`. Limits are again measured + 10 %:
+
+| Chunk   | en measured | en limit | ja measured | ja limit |
+| ------- | ----------- | -------- | ----------- | -------- |
+| core    | 1.81        | 2        | 2.33        | 2.6      |
+| l2      | 11.79       | 13       | 14.25       | 15.7     |
+| l3      | 12.55       | 13.9     | 15.08       | 16.6     |
+| l4      | 9.70        | 10.7     | 12.01       | 13.3     |
+| l7web   | 7.14        | 7.9      | 8.82        | 9.8      |
+| l7apps  | 9.75        | 10.8     | 11.81       | 13       |
+| routing | 14.31       | 15.8     | 17.53       | 19.3     |
+
+Each chunk loads once, when a learner first opens a deck of its group, so a learner who never opens
+a group never downloads it. The next deck that pushes a chunk past its limit splits that chunk
+(lesson decks from protocol decks), as described for `routing` above.

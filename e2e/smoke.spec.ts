@@ -10,6 +10,30 @@ import { SEL } from './selectors';
  * canvas on them tests the harness, not the product.
  */
 const NON_CANVAS_DEMO_PATHS = new Set([
+  // A model-driven lesson with no network to draw (REQ-439).
+  '/networking/websocket',
+  // A model-driven lesson with no network to draw (REQ-436).
+  '/networking/tcp-cubic',
+  // A model-driven lesson with no network to draw (REQ-435).
+  '/networking/lossless-dc',
+  // A model-driven lesson with no network to draw (REQ-432).
+  '/networking/route-reflector',
+  // A model-driven lesson with no network to draw (REQ-440).
+  '/networking/plpmtud',
+  // A model-driven lesson with no network to draw (REQ-430).
+  '/networking/ipv6-addressing',
+  // A model-driven lesson with no network to draw (REQ-437).
+  '/networking/optical',
+  // A model-driven lesson with no network to draw (REQ-429).
+  '/networking/mac-learning',
+  // A model-driven lesson with no network to draw (REQ-433).
+  '/networking/cgnat',
+  // A model-driven lesson with no network to draw (REQ-431).
+  '/networking/dhcp-lease',
+  // A model-driven lesson with no network to draw (REQ-438).
+  '/networking/mobile-core',
+  // A model-driven lesson with no network to draw (REQ-434).
+  '/networking/time-sync',
   // Drills of numbers, with no network to draw (REQ-366, REQ-367).
   '/learning/bits',
   '/learning/vlsm',

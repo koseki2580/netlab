@@ -5,6 +5,18 @@ import { DECK as echDeck } from './lessonDecks/ech';
 import { DECK as encdnsDeck } from './lessonDecks/encdns';
 import { DECK as happyeyeballsDeck } from './lessonDecks/happyeyeballs';
 import { DECK as httpcacheDeck } from './lessonDecks/httpcache';
+import { DECK as timesyncDeck } from './lessonDecks/timesync';
+import { DECK as mobilecoreDeck } from './lessonDecks/mobilecore';
+import { DECK as dhcpleaseDeck } from './lessonDecks/dhcplease';
+import { DECK as cgnatDeck } from './lessonDecks/cgnat';
+import { DECK as maclearningDeck } from './lessonDecks/maclearning';
+import { DECK as opticalDeck } from './lessonDecks/optical';
+import { DECK as ipv6addrDeck } from './lessonDecks/ipv6addr';
+import { DECK as plpmtudDeck } from './lessonDecks/plpmtud';
+import { DECK as routereflectorDeck } from './lessonDecks/routereflector';
+import { DECK as losslessDeck } from './lessonDecks/lossless';
+import { DECK as cubicDeck } from './lessonDecks/cubic';
+import { DECK as websocketDeck } from './lessonDecks/websocket';
 import { DECK as l4sDeck } from './lessonDecks/l4s';
 import { DECK as loadbalancerDeck } from './lessonDecks/loadbalancer';
 import { DECK as masqueDeck } from './lessonDecks/masque';
@@ -491,4 +503,21 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
   deck(telemetryDeck.id, telemetryDeck.layer, telemetryDeck.answers, telemetryDeck.chunk),
   deck(vpcDeck.id, vpcDeck.layer, vpcDeck.answers),
   deck(ztnaDeck.id, ztnaDeck.layer, ztnaDeck.answers),
+  deck(websocketDeck.id, websocketDeck.layer, websocketDeck.answers, websocketDeck.chunk),
+  deck(cubicDeck.id, cubicDeck.layer, cubicDeck.answers, cubicDeck.chunk),
+  deck(losslessDeck.id, losslessDeck.layer, losslessDeck.answers, losslessDeck.chunk),
+  deck(
+    routereflectorDeck.id,
+    routereflectorDeck.layer,
+    routereflectorDeck.answers,
+    routereflectorDeck.chunk,
+  ),
+  deck(plpmtudDeck.id, plpmtudDeck.layer, plpmtudDeck.answers, plpmtudDeck.chunk),
+  deck(ipv6addrDeck.id, ipv6addrDeck.layer, ipv6addrDeck.answers, ipv6addrDeck.chunk),
+  deck(opticalDeck.id, opticalDeck.layer, opticalDeck.answers, opticalDeck.chunk),
+  deck(maclearningDeck.id, maclearningDeck.layer, maclearningDeck.answers, maclearningDeck.chunk),
+  deck(cgnatDeck.id, cgnatDeck.layer, cgnatDeck.answers, cgnatDeck.chunk),
+  deck(dhcpleaseDeck.id, dhcpleaseDeck.layer, dhcpleaseDeck.answers, dhcpleaseDeck.chunk),
+  deck(mobilecoreDeck.id, mobilecoreDeck.layer, mobilecoreDeck.answers, mobilecoreDeck.chunk),
+  deck(timesyncDeck.id, timesyncDeck.layer, timesyncDeck.answers, timesyncDeck.chunk),
 ];

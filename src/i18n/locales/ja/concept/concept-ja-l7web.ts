@@ -7,6 +7,7 @@ import { dnssec } from './decks/dnssec';
 import { encdns } from './decks/encdns';
 import { httpcache } from './decks/httpcache';
 import { masque } from './decks/masque';
+import { websocket } from './decks/websocket';
 
 /** The concept checks' `l7web` chunk (ja): the questions of dns, http, http2, http3, dnssec. */
 export const catalog: Catalog = {
@@ -18,4 +19,5 @@ export const catalog: Catalog = {
   ...encdns,
   ...httpcache,
   ...masque,
+  ...websocket,
 };

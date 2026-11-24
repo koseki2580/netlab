@@ -12,6 +12,9 @@ import { tunneling } from './decks/tunneling';
 import { ndp } from './decks/ndp';
 import { happyeyeballs } from './decks/happyeyeballs';
 import { vpc } from './decks/vpc';
+import { mobilecore } from './decks/mobilecore';
+import { cgnat } from './decks/cgnat';
+import { ipv6addr } from './decks/ipv6addr';
 
 /** The concept checks' `l3` chunk (ja): the questions of nat, icmp, ipv4, ipv6, qos, vrrp, multicast, mtu, gre, tunneling, ndp. */
 export const catalog: Catalog = {
@@ -28,4 +31,7 @@ export const catalog: Catalog = {
   ...ndp,
   ...happyeyeballs,
   ...vpc,
+  ...mobilecore,
+  ...cgnat,
+  ...ipv6addr,
 };
