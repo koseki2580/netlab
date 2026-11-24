@@ -14,7 +14,7 @@ export const cubic: Catalog = {
   'learning.concept.cubic.q1.c.why':
     'About 40 s is CUBIC’s K on this path. Reno’s growth is counted in round trips, so a large window takes it far longer.',
   'learning.concept.cubic.q2.prompt':
-    'For the same window before the loss, why does a longer round trip not slow CUBIC’s return to it?',
+    'On a path with a large window, like the 83,333-packet one, why does a longer round trip not slow CUBIC’s return to the old window?',
   'learning.concept.cubic.q2.a': 'Its window is a function of time since the loss',
   'learning.concept.cubic.q2.b': 'It sends larger packets when the RTT is long',
   'learning.concept.cubic.q2.c': 'It measures the RTT and scales its steps to it',

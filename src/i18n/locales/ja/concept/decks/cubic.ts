@@ -14,7 +14,7 @@ export const cubic: Catalog = {
   'learning.concept.cubic.q1.c.why':
     '約 40 秒はこの経路での CUBIC の K です。Reno の増え方は往復の回数で数えるので、ウィンドウが大きいとずっと長くかかります。',
   'learning.concept.cubic.q2.prompt':
-    '損失前のウィンドウが同じなら、往復時間が長くても CUBIC が元に戻るのが遅くならないのはなぜ？',
+    '83,333 パケットのような大きなウィンドウの経路で、往復時間が長くても CUBIC が元のウィンドウに戻るのが遅くならないのはなぜ？',
   'learning.concept.cubic.q2.a': 'ウィンドウが損失からの時間の関数だから',
   'learning.concept.cubic.q2.b': '往復時間が長いと大きなパケットを送るから',
   'learning.concept.cubic.q2.c': '往復時間を測って増やす幅を合わせるから',

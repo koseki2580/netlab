@@ -8,7 +8,7 @@ export const lossless: Catalog = {
   'learning.concept.lossless.q1.b': 'Only the first few frames are lost',
   'learning.concept.lossless.q1.c': 'About half are tail-dropped: 257 of 512',
   'learning.concept.lossless.q1.why':
-    'Frames arrive about eight times faster than the port can send them, so the buffer is full within a few dozen frame times and everything after that is dropped until the senders finish: 257 of 512 frames.',
+    'Frames arrive about eight times faster than the port can send them, so the buffer is full within a few dozen frame times. After that only one arriving frame per frame time finds room, the slot the port just emptied, and the rest are dropped until the senders finish: 257 of 512 frames.',
   'learning.concept.lossless.q1.a.why':
     '512 frames do not fit in 160, and the port drains only one frame per frame time while eight arrive.',
   'learning.concept.lossless.q1.b.why':

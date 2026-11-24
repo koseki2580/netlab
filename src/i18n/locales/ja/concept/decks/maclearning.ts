@@ -10,7 +10,7 @@ export const maclearning: Catalog = {
   'learning.concept.maclearning.q1.why':
     'B のアドレスのエントリがないので、スイッチは B の場所を知りません。そこで入ってきたポート以外のすべてへフラッディングします。B は受け取り、C と D は捨てます。',
   'learning.concept.maclearning.q1.a.why':
-    'スイッチは宛先が未知のフレームを捨てず、フラッディングします。だから最初のフレームも必ず届きます。',
+    'スイッチは既定では宛先が未知のフレームを捨てず、フラッディングします。だから最初のフレームも届きます。',
   'learning.concept.maclearning.q1.c.why':
     '宛先アドレスが示すのは誰あてかであって、そのホストがどのポートにいるかではありません。それを教えてくれるのはテーブルだけで、テーブルは空です。',
   'learning.concept.maclearning.q2.prompt':
@@ -19,7 +19,7 @@ export const maclearning: Catalog = {
   'learning.concept.maclearning.q2.b': 'B が応答するまで何も学習しない',
   'learning.concept.maclearning.q2.c': 'A の MAC アドレスがポート 1 にあること',
   'learning.concept.maclearning.q2.why':
-    'スイッチはすべてのフレームの送信元アドレスから学習します。A のアドレスがポート 1 から入ってきたので、A あてのフレームはポート 1 から出すようになります。B が応答すれば、B はポート 2 として学習されます。',
+    'スイッチはすべてのフレームの送信元アドレスから学習します。A のアドレスがポート 1 から入ってきたので、A あてのフレームはポート 1 から出すようになります。B が応答すれば、B がポート 2 にいることも学習されます。',
   'learning.concept.maclearning.q2.a.why':
     'フレームはポート 2・3・4 へフラッディングされたので、B がそのどれにいるかスイッチにはわかりません。B を学習できるのは B が送ったフレームからだけです。',
   'learning.concept.maclearning.q2.b.why':

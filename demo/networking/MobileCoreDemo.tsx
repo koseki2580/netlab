@@ -153,9 +153,12 @@ function MobileCoreLesson() {
     ({
       everything: t(
         'A new IP address, from a new anchor UPF',
-        '新しいアンカー UPF から新しい IP アドレス',
+        'アンカー UPF が変わり、IP アドレスも新しくなる',
       ),
-      ip: t('A new IP address, same anchor UPF', 'アンカー UPF は同じで、IP アドレスは新しく'),
+      ip: t(
+        'A new IP address, same anchor UPF',
+        'アンカー UPF は同じだが、IP アドレスは新しくなる',
+      ),
       anchor: t('Same IP; gNB2 becomes the anchor', 'IP は同じで、gNB2 がアンカーになる'),
       tunnel: t(
         'Same IP and anchor; the N3 tunnel moves',

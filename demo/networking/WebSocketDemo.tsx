@@ -266,7 +266,7 @@ function WebSocketLesson() {
           <p style={{ margin: '0 0 8px', lineHeight: 1.7 }}>
             {t(
               'The connection starts as an HTTP/1.1 GET with “Upgrade: websocket”; the server answers 101 Switching Protocols, and from then on both sides send frames (RFC 6455). A frame’s header holds the length in 7 bits, or 16 or 64 more; frames from the client are also masked with a 4-byte key, so that proxies on the way cannot be tricked into treating them as HTTP.',
-              '接続は「Upgrade: websocket」付きの HTTP/1.1 の GET で始まり、サーバーが 101 Switching Protocols と答えると、そこから先は両方がフレームを送ります（RFC 6455）。フレームのヘッダーは長さを 7 ビット、または追加の 16 か 64 ビットで表します。クライアントから送るフレームはさらに 4 バイトの鍵でマスクされます。途中のプロキシがそれを HTTP と取り違えるように仕向けられないようにするためです。',
+              '接続は「Upgrade: websocket」付きの HTTP/1.1 の GET で始まり、サーバーが 101 Switching Protocols と答えると、そこから先は両方がフレームを送ります（RFC 6455）。フレームのヘッダーは長さを 7 ビット、または追加の 16 か 64 ビットで表します。クライアントから送るフレームはさらに 4 バイトの鍵でマスクされます。悪意のあるページが、途中のプロキシにフレームを HTTP のリクエストと誤解させられないようにするためです。',
             )}
           </p>
           <div

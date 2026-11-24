@@ -19,11 +19,11 @@ export const plpmtud: Catalog = {
   'learning.concept.plpmtud.q2.b': '576 bytes, the old IPv4 minimum',
   'learning.concept.plpmtud.q2.c': '1200 bytes of UDP payload',
   'learning.concept.plpmtud.q2.why':
-    'Every QUIC path must carry 1200-byte datagrams (RFC 9000 §14), so that is BASE_PLPMTU; on IPv6 it is a 1248-byte packet, below the 1280 minimum.',
+    'Every QUIC path must carry 1200-byte datagrams (RFC 9000 §14), so that is BASE_PLPMTU; on IPv6 that is a 1248-byte packet, within the 1280-byte minimum MTU every IPv6 link must carry.',
   'learning.concept.plpmtud.q2.a.why':
     'Its own link allows 1500, but a tunnel further on may not; that is the largest it may try, not one it knows works.',
   'learning.concept.plpmtud.q2.b.why':
-    'QUIC refuses paths below 1200 bytes, so it can start there; going lower would waste most of every packet.',
+    'QUIC must not be used on a path that cannot carry 1200 bytes, so 1200 is already known to fit; starting at 576 would only probe sizes QUIC never needs.',
   'learning.concept.plpmtud.q3.prompt':
     'A DPLPMTUD probe of 1389 bytes is never acknowledged. What does the sender conclude?',
   'learning.concept.plpmtud.q3.a': 'The path is congested, so it halves its sending rate',

@@ -149,8 +149,8 @@ function CgnatLesson() {
         <div style={LESSON_LABEL}>{t('Predict first', 'まず予想')}</div>
         <p style={{ margin: '0 0 8px', lineHeight: 1.7 }}>
           {t(
-            `One public address, ${PUBLIC_IP}. The CGN hands out its ports in blocks of ${n(ASKED_BLOCK)}, one block per subscriber. How many subscribers can share the address?`,
-            `グローバルアドレスは ${PUBLIC_IP} の 1 つです。CGN はそのポートを ${n(ASKED_BLOCK)} 個ずつのブロックにして、加入者に 1 ブロックずつ渡します。このアドレスを共有できる加入者は何人？`,
+            `One public address, ${PUBLIC_IP}. The CGN hands out its ports in blocks of ${n(ASKED_BLOCK)}, one block per subscriber, and leaves ports below ${FIRST_PORT} out. How many subscribers can share the address?`,
+            `グローバルアドレスは ${PUBLIC_IP} の 1 つです。CGN はそのポートを ${n(ASKED_BLOCK)} 個ずつのブロックにして、加入者に 1 ブロックずつ渡します。${FIRST_PORT} 未満のポートは使いません。このアドレスを共有できる加入者は何人？`,
           )}
         </p>
         <div
@@ -254,8 +254,8 @@ function CgnatLesson() {
                   : t('Not what you predicted. ', '予想とちがいました。')}
               </strong>
               {t(
-                `Flows from number ${n(askedHeavy.firstRefusedFlow ?? 0)} on get no port, so ${askedHeavy.refusedFlows} new connections fail. Every flow needs its own outside port: the CGN maps each inside address and port to one outside port whatever the destination (endpoint-independent mapping, which RFC 6888 requires), so ${n(askedHeavy.ports)} ports carry ${n(askedHeavy.ports)} flows. The first ${n(askedHeavy.ports)} keep working, and the other ${askedHeavy.subscribersServed - 1} subscribers are untouched: their ports are in their own blocks.`,
-                `${n(askedHeavy.firstRefusedFlow ?? 0)} 本目以降はポートがもらえず、${askedHeavy.refusedFlows} 本の新しい接続が失敗します。どの通信にも外側のポートが 1 つずつ要ります。CGN は内側のアドレスとポートの組を、宛先にかかわらず外側の 1 ポートに対応付ける（エンドポイント非依存マッピング。RFC 6888 が求めています）ので、${n(askedHeavy.ports)} ポートで運べるのは ${n(askedHeavy.ports)} 本です。最初の ${n(askedHeavy.ports)} 本は動き続け、ほかの ${askedHeavy.subscribersServed - 1} 人には影響しません。それぞれのポートは自分のブロックにあるからです。`,
+                `Flows from number ${n(askedHeavy.firstRefusedFlow ?? 0)} on get no port, so ${askedHeavy.refusedFlows} new connections fail. Each connection opens from its own inside port, and each inside port needs its own outside port: the CGN maps each inside address and port to one outside port whatever the destination (endpoint-independent mapping, which RFC 6888 requires), so ${n(askedHeavy.ports)} ports carry ${n(askedHeavy.ports)} flows. The first ${n(askedHeavy.ports)} keep working, and the other ${askedHeavy.subscribersServed - 1} subscribers are untouched: their ports are in their own blocks.`,
+                `${n(askedHeavy.firstRefusedFlow ?? 0)} 本目以降はポートがもらえず、${askedHeavy.refusedFlows} 本の新しい接続が失敗します。接続はそれぞれ別の内側ポートから開かれ、内側ポートごとに外側のポートが 1 つずつ要ります。CGN は内側のアドレスとポートの組を、宛先にかかわらず外側の 1 ポートに対応付ける（エンドポイント非依存マッピング。RFC 6888 が求めています）ので、${n(askedHeavy.ports)} ポートで運べるのは ${n(askedHeavy.ports)} 本です。最初の ${n(askedHeavy.ports)} 本は動き続け、ほかの ${askedHeavy.subscribersServed - 1} 人には影響しません。それぞれのポートは自分のブロックにあるからです。`,
               )}
             </p>
           ) : (

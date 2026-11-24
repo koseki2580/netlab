@@ -8,7 +8,7 @@ export const lossless: Catalog = {
   'learning.concept.lossless.q1.b': '最初の数フレームだけが失われる',
   'learning.concept.lossless.q1.c': '約半分がテールドロップ（512 中 257）',
   'learning.concept.lossless.q1.why':
-    'フレームはポートが送り出せる速さの約 8 倍で届くので、数十フレーム時間でバッファが埋まり、送り手が送り終えるまでそれ以降は捨てられます。512 フレーム中 257 フレームです。',
+    'フレームはポートが送り出せる速さの約 8 倍で届くので、数十フレーム時間でバッファが埋まります。その後は、ポートが 1 フレーム送り出して空いた 1 つ分しか入れず、残りは送り手が送り終えるまで捨てられます。512 フレーム中 257 フレームです。',
   'learning.concept.lossless.q1.a.why':
     '512 フレームは 160 に入りきりません。ポートは 1 フレーム時間に 1 フレームしか出せないのに、8 フレームずつ届きます。',
   'learning.concept.lossless.q1.b.why':

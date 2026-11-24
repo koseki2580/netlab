@@ -372,8 +372,8 @@ function TcpCubicLesson() {
           </div>
           <p style={{ margin: '4px 0 0', lineHeight: 1.7 }}>
             {t(
-              `CUBIC’s window is W(t) = ${C_CUBIC}·(t − K)³ + W_max, with K = ∛(W_max·(1 − ${BETA_CUBIC})/${C_CUBIC}) seconds. It rises fast just after the loss, slows as it nears the old window, then probes beyond it. Because t is clock time, not round trips, a longer round trip does not slow it down; on a small, short path its Reno-friendly estimate takes over, so it is never slower than a Reno-like flow.`,
-              `CUBIC のウィンドウは W(t) = ${C_CUBIC}·(t − K)³ + W_max、K = ∛(W_max·(1 − ${BETA_CUBIC})/${C_CUBIC}) 秒です。損失の直後は速く増え、元のウィンドウに近づくと緩やかになり、そのあと先を探りに行きます。t は往復の回数ではなく時計の時間なので、往復時間が長くても遅くなりません。小さく短い経路では Reno 相当の見積もり（W_est）が上回るので、Reno のような流れより遅くなることはありません。`,
+              `CUBIC’s window is W(t) = ${C_CUBIC}·(t − K)³ + W_max, with K = ∛(W_max·(1 − ${BETA_CUBIC})/${C_CUBIC}) seconds. It rises fast just after the loss, slows as it nears the old window, then probes beyond it. Because t is clock time, not round trips, a longer round trip does not slow its cubic curve. On a small, short path its Reno-friendly estimate W_est takes over instead. RFC 9438 designs it to give about the throughput a Reno flow would get: it starts from 70% rather than 50%, but climbs back a little more slowly, so in the table Reno can be back first.`,
+              `CUBIC のウィンドウは W(t) = ${C_CUBIC}·(t − K)³ + W_max、K = ∛(W_max·(1 − ${BETA_CUBIC})/${C_CUBIC}) 秒です。損失の直後は速く増え、元のウィンドウに近づくと緩やかになり、そのあと先を探りに行きます。t は往復の回数ではなく時計の時間なので、往復時間が長くても 3 次曲線は遅くなりません。小さく短い経路では、代わりに Reno 相当の見積もり（W_est）が上回ります。RFC 9438 はこれを、Reno の流れとほぼ同じスループットになるように決めています。70% から始まる代わりに戻る速さは少し遅いので、表では Reno のほうが先に戻ることもあります。`,
             )}
           </p>
           <p style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--netlab-text-secondary)' }}>

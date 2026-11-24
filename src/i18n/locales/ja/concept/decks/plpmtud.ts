@@ -19,11 +19,11 @@ export const plpmtud: Catalog = {
   'learning.concept.plpmtud.q2.b': '古い IPv4 の最小値、576 バイト',
   'learning.concept.plpmtud.q2.c': 'UDP ペイロードで 1200 バイト',
   'learning.concept.plpmtud.q2.why':
-    'QUIC の経路はどれも 1200 バイトのデータグラムを運べなければなりません（RFC 9000 §14）。それが BASE_PLPMTU で、IPv6 なら 1248 バイトのパケットとなり、最小の 1280 に収まります。',
+    'QUIC の経路はどれも 1200 バイトのデータグラムを運べなければなりません（RFC 9000 §14）。それが BASE_PLPMTU で、IPv6 なら 1248 バイトのパケットとなり、どの IPv6 リンクも運べなければならない最小 MTU の 1280 バイトに収まります。',
   'learning.concept.plpmtud.q2.a.why':
     '自分のリンクは 1500 を通しますが、その先のトンネルが通すとは限りません。1500 は試してよい最大で、通ると分かっている値ではありません。',
   'learning.concept.plpmtud.q2.b.why':
-    'QUIC は 1200 バイト未満の経路では使わないので、1200 から始められます。それより小さくすると、どのパケットも大半が無駄になります。',
+    'QUIC は 1200 バイトを運べない経路では使ってはいけないので、1200 は通ると分かっています。576 から始めても、QUIC が必要としない大きさを試すだけです。',
   'learning.concept.plpmtud.q3.prompt':
     '1389 バイトの DPLPMTUD のプローブに確認応答が返ってきません。送り手はどう判断する？',
   'learning.concept.plpmtud.q3.a': '経路が混んでいるので、送信レートを半分にする',

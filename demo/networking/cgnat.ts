@@ -67,7 +67,7 @@ export interface HeavyOutcome {
   readonly refusedFlows: number;
   /** How many subscribers the address serves once the heavy one has its blocks. */
   readonly subscribersServed: number;
-  /** Log records for the heavy subscriber's ports: one per block, against one per flow. */
+  /** Log records for the heavy subscriber's ports: one per block, against one per flow that got a port. */
   readonly blockLogRecords: number;
   readonly flowLogRecords: number;
 }
@@ -89,7 +89,7 @@ export function heavySubscriber(blockSize: number, maxBlocks: number, flows: num
     refusedFlows,
     subscribersServed: 1 + (total - blocks),
     blockLogRecords: blocks,
-    flowLogRecords: flows,
+    flowLogRecords: flows - refusedFlows,
   };
 }
 

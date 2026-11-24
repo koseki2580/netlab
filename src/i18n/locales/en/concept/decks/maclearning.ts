@@ -10,7 +10,7 @@ export const maclearning: Catalog = {
   'learning.concept.maclearning.q1.why':
     'With no entry for B’s address the switch cannot know where B is, so it floods the frame out of every port except the one it came in on. B gets it; C and D discard it.',
   'learning.concept.maclearning.q1.a.why':
-    'A switch never drops a frame for an unknown destination; it floods it, so the first frame always gets through.',
+    'By default a switch does not drop a frame for an unknown destination; it floods it, so the first frame gets through.',
   'learning.concept.maclearning.q1.c.why':
     'The destination address says who the frame is for, not which port that host is on. Only the table can tell the switch that, and it is empty.',
   'learning.concept.maclearning.q2.prompt':

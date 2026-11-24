@@ -21,7 +21,7 @@ export const cgnat: Catalog = {
   'learning.concept.cgnat.q2.why':
     'Each flow needs its own outside port, so 1,024 ports carry 1,024 flows; the other 176 are refused, while the first 1,024 and the other subscribers are untouched.',
   'learning.concept.cgnat.q2.b.why':
-    'A CGN uses endpoint-independent mapping (RFC 6888 requires it): an inside address and port keep one outside port whatever the destination, so ports are not shared between flows.',
+    'A CGN uses endpoint-independent mapping (RFC 6888 requires it): an outside port belongs to one inside address and port whatever the destination, so it is never reused for another connection’s source port.',
   'learning.concept.cgnat.q2.c.why':
     'Each subscriber’s ports are in its own block; another block can be given only from free ones, and only if the operator allows more than one per subscriber.',
   'learning.concept.cgnat.q3.prompt':
@@ -30,7 +30,7 @@ export const cgnat: Catalog = {
   'learning.concept.cgnat.q3.b': 'Standards forbid two flows on one port',
   'learning.concept.cgnat.q3.c': 'One log record per block, not per flow',
   'learning.concept.cgnat.q3.why':
-    'An ISP must be able to say who used a public address and port at a given time. Logging each block given out, rather than each flow, cuts the records from 1,200 to 1 for a busy household.',
+    'An ISP must be able to say who used a public address and port at a given time. Logging each block given out, rather than each flow, cuts the records for a busy household from 1,024 to 1.',
   'learning.concept.cgnat.q3.a.why':
     'Translation speed is not the reason; blocks are about how much the CGN must log to trace a port back to a subscriber.',
   'learning.concept.cgnat.q3.b.why':

@@ -21,11 +21,11 @@ describe('TC-2449: cgnat deck: the right answers hold in the lesson model', () =
       subscribersServed: 63,
     });
   });
-  it('q3 (c): per-block logging is 1 record for 1,200 flows', () => {
+  it('q3 (c): per-block logging is 1 record against 1,024 per-flow records', () => {
     expect(answer('q3')).toBe('c');
     expect(heavySubscriber(1024, 1, 1200)).toMatchObject({
       blockLogRecords: 1,
-      flowLogRecords: 1200,
+      flowLogRecords: 1024,
     });
   });
   it('q4 (c): a 6-bit PSID with a = 6 gives 64 subscribers 1,008 ports each, in 63 runs of 16', () => {

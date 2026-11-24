@@ -70,8 +70,8 @@ const ENTRIES: readonly (readonly [string, ExamQuestion])[] = [
       ],
       answer: 1,
       explanation: {
-        en: 'Happy Eyeballs tries IPv6 first and, if it is not up within the Connection Attempt Delay (250 ms recommended, RFC 8305), starts IPv4 too; the first to connect wins, so IPv4 is up at 250 + 30 = 280 ms. A client that waits for IPv6 to time out first takes over 21 s. The Happy Eyeballs lesson runs both.',
-        ja: 'Happy Eyeballs はまず IPv6 を試し、接続試行の待ち時間（推奨 250 ms、RFC 8305）のうちにつながらなければ IPv4 も始めます。先につながった方を使うので、IPv4 で 250 + 30 = 280 ms につながります。IPv6 のタイムアウトを待ってから IPv4 を試す端末では、21 秒以上かかります。Happy Eyeballs のレッスンで両方を走らせられます。',
+        en: 'Happy Eyeballs tries IPv6 first and, if it is not up within the Connection Attempt Delay (250 ms recommended, RFC 8305), starts IPv4 too; the first to connect wins, so IPv4 is up at 250 + 30 = 280 ms. A client that tries one address at a time waits for IPv6 to time out first: about 21 s with Windows’ default, longer on Linux. The Happy Eyeballs lesson runs both.',
+        ja: 'Happy Eyeballs はまず IPv6 を試し、接続試行の待ち時間（推奨 250 ms、RFC 8305）のうちにつながらなければ IPv4 も始めます。先につながった方を使うので、IPv4 で 250 + 30 = 280 ms につながります。1 つずつ順に試す端末は、まず IPv6 のタイムアウトを待ちます。Windows の初期設定で約 21 秒、Linux ではもっと長くかかります。Happy Eyeballs のレッスンで両方を走らせられます。',
       },
       taughtBy: 'happy-eyeballs',
     },
@@ -132,7 +132,10 @@ const ENTRIES: readonly (readonly [string, ExamQuestion])[] = [
         { en: 'DNS over TLS, TCP 853', ja: 'DNS over TLS（TCP 853）' },
         { en: 'DNS over HTTPS, TCP 443', ja: 'DNS over HTTPS（TCP 443）' },
         { en: 'DNS over QUIC, UDP 853', ja: 'DNS over QUIC（UDP 853）' },
-        { en: 'Classic DNS on UDP port 53', ja: '暗号化しない昔ながらの DNS（UDP 53）' },
+        {
+          en: 'None: each has a port of its own',
+          ja: 'どれもない（それぞれ専用のポートを使っている）',
+        },
       ],
       answer: 1,
       explanation: {
@@ -380,8 +383,8 @@ const ENTRIES: readonly (readonly [string, ExamQuestion])[] = [
       ],
       answer: 1,
       explanation: {
-        en: 'Every router already knows every node SID, so R1 writes the path into the packet: it pushes 16003 then 16004, R3 removes its own SID and the next one leads to R4. R2, R3 and R4 keep no per-path state and their tables do not change. (The lesson turns penultimate-hop popping off; with it on, the SR-MPLS default, the hop before a SID’s owner removes it instead.) The segment-routing lesson sends both.',
-        ja: 'どのルータもすべてのノード SID を知っているので、R1 が通る道をパケットに書き込みます。16003、16004 の順に積むと、R3 が自分の SID を外し、次の SID が R4 へ導きます。R2、R3、R4 は経路ごとの状態を持たず、表も変わりません（このレッスンは PHP を無効にしています。SR-MPLS の既定である PHP ありでは、SID を持つルータの 1 つ手前で外されます）。セグメントルーティングのレッスンで両方を送れます。',
+        en: 'Every router already knows every node SID, so R1 writes the path into the packet: it pushes the stack 16003 | 16004, with 16003 on top. R3 removes its own SID and the next one leads to R4. R2, R3 and R4 keep no per-path state and their tables do not change. (The lesson turns penultimate-hop popping off; with it on, the SR-MPLS default, the hop before a SID’s owner removes it instead.) The segment-routing lesson sends both.',
+        ja: 'どのルータもすべてのノード SID を知っているので、R1 が通る道をパケットに書き込みます。16003 をいちばん上、その下に 16004 というラベルスタックを積むと、R3 が自分の SID を外し、次の SID が R4 へ導きます。R2、R3、R4 は経路ごとの状態を持たず、表も変わりません（このレッスンは PHP を無効にしています。SR-MPLS の既定である PHP ありでは、SID を持つルータの 1 つ手前で外されます）。セグメントルーティングのレッスンで両方を送れます。',
       },
       taughtBy: 'segment-routing',
     },

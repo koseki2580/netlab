@@ -34,6 +34,12 @@ describe('TC-2441: with one 1,024-port block, a subscriber’s 1,025th concurren
       subscribersServed: 63,
     });
   });
+  it('only the 1,024 flows that got a port would be logged per flow; per block it is 1 record', () => {
+    expect(heavySubscriber(1024, 1, 1200)).toMatchObject({
+      blockLogRecords: 1,
+      flowLogRecords: 1024,
+    });
+  });
   it('1,000 flows all get a port', () => {
     expect(heavySubscriber(1024, 1, 1000).firstRefusedFlow).toBeNull();
   });

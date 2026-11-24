@@ -41,6 +41,9 @@ function clock(s: number): string {
 /** Hours, with a half shown as .5. */
 const hours = (s: number) => `${Number((s / H).toFixed(2))} h`;
 
+/** The same, for Japanese sentences: 4 時間. */
+const jaHours = (s: number) => `${Number((s / H).toFixed(2))} 時間`;
+
 /** Which answer the moment of first notice matches. */
 function answerOf(outcome: LeaseOutcome, leaseS: number, downS: number): Answer {
   const times = leaseTimes(leaseS);
@@ -70,8 +73,8 @@ function Timeline({ outcome }: { outcome: LeaseOutcome }) {
         `Time line to ${hours(endS)}: ${requests.length} requests, ${
           outcome.addressLostS === null ? 'address kept' : `address lost at ${hours(endS)}`
         }`,
-        `${hours(endS)} までの時間軸：要求 ${requests.length} 回、${
-          outcome.addressLostS === null ? 'アドレスは維持' : `${hours(endS)} にアドレスを失う`
+        `${jaHours(endS)} までの時間軸：要求 ${requests.length} 回、${
+          outcome.addressLostS === null ? 'アドレスは維持' : `${jaHours(endS)} にアドレスを失う`
         }`,
       )}
     >
@@ -212,8 +215,8 @@ function DhcpLeaseLesson() {
         <div style={LESSON_LABEL}>{t('A DHCP lease', 'DHCP のリース')}</div>
         <p style={{ margin: 0, lineHeight: 1.7 }}>
           {t(
-            'A DHCP server does not give an address away: it lends it for a fixed time, the lease. The client must get the lease extended before it runs out, or give the address up. Between those moments the client and the server do not talk at all.',
-            'DHCP サーバはアドレスを譲るのではなく、決まった時間だけ貸します。これがリースです。クライアントはリースが切れる前に延長してもらうか、アドレスを手放さなければなりません。その間、クライアントとサーバは何もやりとりしません。',
+            'A DHCP server does not give an address away: it lends it for a fixed time, the lease. The client must get the lease extended before it runs out, or give the address up.',
+            'DHCP サーバはアドレスを譲るのではなく、決まった時間だけ貸します。これがリースです。クライアントはリースが切れる前に延長してもらうか、アドレスを手放さなければなりません。',
           )}
         </p>
       </div>
@@ -261,7 +264,7 @@ function DhcpLeaseLesson() {
             </strong>
             {t(
               `At ${hours(askedOutcome.firstUnansweredS)}. Nothing tells the laptop that the server died: it speaks to the server only when it needs to, and the first time is T1, half the lease, when it unicasts a DHCPREQUEST to renew. Unanswered, it tries ${count(askedOutcome, 'renew')} times in all; at T2 (${hours(askedTimes.t2S)}, 7/8 of the lease) it broadcasts the request to any server, ${count(askedOutcome, 'rebind')} times; at ${hours(askedTimes.expiryS)} the lease ends, the address is removed and it starts over with DHCPDISCOVER. For ${hours(askedTimes.expiryS - ASKED.downH * H)} after the crash the laptop worked normally.`,
-              `${hours(askedOutcome.firstUnansweredS)}後です。サーバが止まったことをノート PC に知らせるものはありません。ノート PC がサーバに話しかけるのは必要なときだけで、最初はリースの半分の T1 に、更新のための DHCPREQUEST をユニキャストで送るときです。応答がないので合わせて ${count(askedOutcome, 'renew')} 回試し、T2（${hours(askedTimes.t2S)}、リースの 7/8）では要求をどのサーバ宛てにもブロードキャストして ${count(askedOutcome, 'rebind')} 回試します。${hours(askedTimes.expiryS)}でリースが切れ、アドレスを削除して DHCPDISCOVER から始め直します。落ちてから ${hours(askedTimes.expiryS - ASKED.downH * H)}の間、ノート PC は普通に使えていました。`,
+              `${jaHours(askedOutcome.firstUnansweredS)}後です。サーバが止まったことをノート PC に知らせるものはありません。ノート PC がサーバに話しかけるのは必要なときだけで、最初はリースの半分の T1 に、更新のための DHCPREQUEST をユニキャストで送るときです。応答がないので合わせて ${count(askedOutcome, 'renew')} 回試し、T2（${jaHours(askedTimes.t2S)}、リースの 7/8）では要求をどのサーバ宛てにもブロードキャストして ${count(askedOutcome, 'rebind')} 回試します。${jaHours(askedTimes.expiryS)}でリースが切れ、アドレスを削除して DHCPDISCOVER から始め直します。落ちてから ${jaHours(askedTimes.expiryS - ASKED.downH * H)}の間、ノート PC は普通に使えていました。`,
             )}
           </p>
         ) : (
@@ -348,11 +351,11 @@ function DhcpLeaseLesson() {
             {outcome.addressLostS === null
               ? t(
                   `T1 ${hours(times.t1S)}, T2 ${hours(times.t2S)}. First unanswered request at ${hours(outcome.firstUnansweredS)}; server ${outcome.leaseFrom} answers the broadcast and the address is kept.`,
-                  `T1 ${hours(times.t1S)}、T2 ${hours(times.t2S)}。最初の無応答は ${hours(outcome.firstUnansweredS)}。ブロードキャストにサーバ ${outcome.leaseFrom} が応え、アドレスは維持されます。`,
+                  `T1 ${jaHours(times.t1S)}、T2 ${jaHours(times.t2S)}。最初の無応答は ${jaHours(outcome.firstUnansweredS)}後。ブロードキャストにサーバ ${outcome.leaseFrom} が応え、アドレスは維持されます。`,
                 )
               : t(
                   `T1 ${hours(times.t1S)}, T2 ${hours(times.t2S)}. First unanswered request at ${hours(outcome.firstUnansweredS)}; the address is lost at ${hours(outcome.addressLostS)}.`,
-                  `T1 ${hours(times.t1S)}、T2 ${hours(times.t2S)}。最初の無応答は ${hours(outcome.firstUnansweredS)}、アドレスを失うのは ${hours(outcome.addressLostS)}です。`,
+                  `T1 ${jaHours(times.t1S)}、T2 ${jaHours(times.t2S)}。最初の無応答は ${jaHours(outcome.firstUnansweredS)}後、アドレスを失うのは ${jaHours(outcome.addressLostS)}後です。`,
                 )}
           </p>
           <Timeline outcome={outcome} />
@@ -395,8 +398,8 @@ function DhcpLeaseLesson() {
           </p>
           <p style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--netlab-text-secondary)' }}>
             {t(
-              `Simplified: T1 = 0.5 and T2 = 0.875 of the lease are RFC 2131’s defaults; a server may send other values (options 58 and 59). Retries follow RFC 2131’s suggestion (wait half the time left, at least ${MIN_RETRY_S} s); real clients vary. The network loses no packets here. Server B already knows this lease, as a failover partner would; DHCP failover is a vendor feature (ISC, Microsoft), not an RFC.`,
-              `簡略化しています。T1 = リースの 0.5、T2 = 0.875 は RFC 2131 の既定値で、サーバは別の値を送れます（オプション 58 と 59）。再送は RFC 2131 の提案（残り時間の半分、ただし最短 ${MIN_RETRY_S} 秒待つ）に従いますが、実際のクライアントの動きはさまざまです。ここではネットワークでパケットは失われません。サーバ B は、フェイルオーバーの相方のように、このリースをすでに知っているものとしています。DHCP フェイルオーバーは RFC ではなくベンダーの機能（ISC、Microsoft など）です。`,
+              `Simplified: T1 = 0.5 and T2 = 0.875 of the lease are RFC 2131’s defaults; a server may send other values (options 58 and 59). Retries follow RFC 2131’s suggestion (wait half the time left, at least ${MIN_RETRY_S} s); real clients vary. The network loses no packets here. Server B already knows this lease, as a failover partner would; DHCPv4 failover was never published as an RFC (ISC follows the IETF draft; Microsoft has its own).`,
+              `簡略化しています。T1 = リースの 0.5、T2 = 0.875 は RFC 2131 の既定値で、サーバは別の値を送れます（オプション 58 と 59）。再送は RFC 2131 の提案（残り時間の半分、ただし最短 ${MIN_RETRY_S} 秒待つ）に従いますが、実際のクライアントの動きはさまざまです。ここではネットワークでパケットは失われません。サーバ B は、フェイルオーバーの相方のように、このリースをすでに知っているものとしています。DHCPv4 のフェイルオーバーは RFC になっておらず（ISC は IETF のドラフトに従い、Microsoft は独自方式）、製品ごとの機能です。`,
             )}
           </p>
         </div>
