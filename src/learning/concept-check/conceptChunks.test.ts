@@ -12,7 +12,17 @@ import { CONCEPT_DECKS } from './decks';
 import type { ConceptDeck } from './types';
 
 const LOCALES = ['en', 'ja'] as const;
-const GROUPS = ['fundamentals', 'l2', 'l3', 'l4', 'l5', 'l7web', 'l7apps', 'routing'] as const;
+const GROUPS = [
+  'fundamentals',
+  'l2',
+  'l2infra',
+  'l3',
+  'l4',
+  'l5',
+  'l7web',
+  'l7apps',
+  'routing',
+] as const;
 
 const chunkFiles = import.meta.glob<{ catalog: Catalog }>(
   '../../i18n/locales/*/concept/concept-*.ts',
@@ -73,7 +83,7 @@ describe('concept-check string chunks', () => {
     }
   });
 
-  it('TC-2271: one core chunk and one chunk per deck group in each locale; a deck’s chunk is its layer, layer 7 split in two', () => {
+  it('TC-2271: one core chunk and one chunk per deck group in each locale; a deck’s chunk is its layer, layer 7 split in two and layer 2’s infrastructure decks apart', () => {
     const expected = LOCALES.flatMap((locale) =>
       ['core', ...GROUPS].map(
         (chunk) => `../../i18n/locales/${locale}/concept/concept-${locale}-${chunk}.ts`,
@@ -83,6 +93,7 @@ describe('concept-check string chunks', () => {
     expect(new Set(CONCEPT_DECKS.map((deck) => deck.chunk))).toEqual(new Set(GROUPS));
     for (const deck of CONCEPT_DECKS) {
       if (deck.layer === 'l7') expect(['l7web', 'l7apps']).toContain(deck.chunk);
+      else if (deck.layer === 'l2') expect(['l2', 'l2infra']).toContain(deck.chunk);
       else expect(deck.chunk, deck.id).toBe(deck.layer);
     }
   });

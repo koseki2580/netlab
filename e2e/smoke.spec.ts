@@ -10,6 +10,18 @@ import { SEL } from './selectors';
  * canvas on them tests the harness, not the product.
  */
 const NON_CANVAS_DEMO_PATHS = new Set([
+  // A model-driven lesson with no network to draw (REQ-447).
+  '/networking/k8s-networking',
+  // A model-driven lesson with no network to draw (REQ-446).
+  '/networking/tsn',
+  // A model-driven lesson with no network to draw (REQ-445).
+  '/networking/bgp-graceful-restart',
+  // A model-driven lesson with no network to draw (REQ-444).
+  '/networking/sctp',
+  // A model-driven lesson with no network to draw (REQ-443).
+  '/networking/pon',
+  // A model-driven lesson with no network to draw (REQ-442).
+  '/networking/qinq',
   // A model-driven lesson with no network to draw (REQ-439).
   '/networking/websocket',
   // A model-driven lesson with no network to draw (REQ-436).

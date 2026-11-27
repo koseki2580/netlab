@@ -4,12 +4,14 @@ export type ConceptLayer = 'fundamentals' | 'l2' | 'l3' | 'l4' | 'l5' | 'l7' | '
 /**
  * A lazily loaded group of concept-check strings. `core` holds the panel's own
  * strings and every deck's name; each other chunk holds its decks' questions.
- * A deck's chunk is its layer, except that layer 7 is split in two.
+ * A deck's chunk is its layer, except that layer 7 is split in two and layer 2's
+ * data-centre and provider decks have a chunk of their own (`l2infra`).
  */
 export type ConceptChunk =
   | 'core'
   | 'fundamentals'
   | 'l2'
+  | 'l2infra'
   | 'l3'
   | 'l4'
   | 'l5'

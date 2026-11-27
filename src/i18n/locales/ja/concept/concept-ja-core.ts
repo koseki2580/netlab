@@ -124,4 +124,10 @@ export const catalog: Catalog = {
   'learning.concept.lossless.name': 'ロスレス Ethernet（PFC/ECN）',
   'learning.concept.cubic.name': 'CUBIC と RACK-TLP',
   'learning.concept.websocket.name': 'WebSocket とポーリング',
+  'learning.concept.qinq.name': 'Q-in-Q（802.1ad）',
+  'learning.concept.pon.name': 'PON（パッシブ光ネットワーク）',
+  'learning.concept.sctp.name': 'SCTP のマルチホーミングとストリーム',
+  'learning.concept.bgpgr.name': 'BGP グレースフルリスタート',
+  'learning.concept.tsn.name': 'Time-Sensitive Networking（TSN）',
+  'learning.concept.k8snet.name': 'Kubernetes のネットワーク',
 };

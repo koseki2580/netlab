@@ -16,6 +16,7 @@ import { sdwan } from './decks/sdwan';
 import { segrouting } from './decks/segrouting';
 import { spineleaf } from './decks/spineleaf';
 import { routereflector } from './decks/routereflector';
+import { bgpgr } from './decks/bgpgr';
 
 /** The concept checks' `routing` chunk (ja): the questions of ospf, bgp, rip, ecmp, mpls, isis, eigrp. */
 export const catalog: Catalog = {
@@ -36,4 +37,5 @@ export const catalog: Catalog = {
   ...segrouting,
   ...spineleaf,
   ...routereflector,
+  ...bgpgr,
 };

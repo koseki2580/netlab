@@ -17,6 +17,12 @@ import { DECK as routereflectorDeck } from './lessonDecks/routereflector';
 import { DECK as losslessDeck } from './lessonDecks/lossless';
 import { DECK as cubicDeck } from './lessonDecks/cubic';
 import { DECK as websocketDeck } from './lessonDecks/websocket';
+import { DECK as qinqDeck } from './lessonDecks/qinq';
+import { DECK as ponDeck } from './lessonDecks/pon';
+import { DECK as sctpDeck } from './lessonDecks/sctp';
+import { DECK as bgpgrDeck } from './lessonDecks/bgpgr';
+import { DECK as tsnDeck } from './lessonDecks/tsn';
+import { DECK as k8snetDeck } from './lessonDecks/k8snet';
 import { DECK as l4sDeck } from './lessonDecks/l4s';
 import { DECK as loadbalancerDeck } from './lessonDecks/loadbalancer';
 import { DECK as masqueDeck } from './lessonDecks/masque';
@@ -503,6 +509,12 @@ export const CONCEPT_DECKS: readonly ConceptDeck[] = [
   deck(telemetryDeck.id, telemetryDeck.layer, telemetryDeck.answers, telemetryDeck.chunk),
   deck(vpcDeck.id, vpcDeck.layer, vpcDeck.answers),
   deck(ztnaDeck.id, ztnaDeck.layer, ztnaDeck.answers),
+  deck(k8snetDeck.id, k8snetDeck.layer, k8snetDeck.answers, k8snetDeck.chunk),
+  deck(tsnDeck.id, tsnDeck.layer, tsnDeck.answers, tsnDeck.chunk),
+  deck(bgpgrDeck.id, bgpgrDeck.layer, bgpgrDeck.answers, bgpgrDeck.chunk),
+  deck(sctpDeck.id, sctpDeck.layer, sctpDeck.answers, sctpDeck.chunk),
+  deck(ponDeck.id, ponDeck.layer, ponDeck.answers, ponDeck.chunk),
+  deck(qinqDeck.id, qinqDeck.layer, qinqDeck.answers, qinqDeck.chunk),
   deck(websocketDeck.id, websocketDeck.layer, websocketDeck.answers, websocketDeck.chunk),
   deck(cubicDeck.id, cubicDeck.layer, cubicDeck.answers, cubicDeck.chunk),
   deck(losslessDeck.id, losslessDeck.layer, losslessDeck.answers, losslessDeck.chunk),

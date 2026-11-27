@@ -100,3 +100,11 @@ mobilecore), `l4` (plpmtud, cubic), `l7web` (websocket), `l7apps` (dhcplease, ti
 Each chunk loads once, when a learner first opens a deck of its group, so a learner who never opens
 a group never downloads it. The next deck that pushes a chunk past its limit splits that chunk
 (lesson decks from protocol decks), as described for `routing` above.
+
+### `l2` split (REQ-442, REQ-443, REQ-446; measured 2026-11-27)
+
+Q-in-Q, PON and TSN would have pushed `l2` to 15.3 kB (en) / 18.5 kB (ja). As planned above, the chunk
+was split rather than raised: the data-centre and provider lesson decks (optical, lossless, qinq, pon,
+tsn) moved to a new `l2infra` chunk. `l2` is now 9.48 / 11.42 kB under its 13 / 15.7 kB limits;
+`l2infra` is 6.23 / 7.67 kB with limits 6.9 / 8.5 kB. Keys did not change, so saved review progress
+is unaffected.

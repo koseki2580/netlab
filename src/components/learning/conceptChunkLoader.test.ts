@@ -26,6 +26,7 @@ describe('loadConceptChunk', () => {
       'core',
       'fundamentals',
       'l2',
+      'l2infra',
       'l3',
       'l4',
       'l5',

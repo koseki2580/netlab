@@ -16,6 +16,7 @@ const CONCEPT_CHUNK_LIMITS = [
   ['core', '2 kB', '2.6 kB'],
   ['fundamentals', '6.5 kB', '7.8 kB'],
   ['l2', '13 kB', '15.7 kB'],
+  ['l2infra', '6.9 kB', '8.5 kB'],
   ['l3', '13.9 kB', '16.6 kB'],
   ['l4', '10.7 kB', '13.3 kB'],
   ['l5', '9.5 kB', '11.8 kB'],

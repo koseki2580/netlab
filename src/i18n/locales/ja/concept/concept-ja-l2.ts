@@ -11,8 +11,6 @@ import { pppoe } from './decks/pppoe';
 import { physical } from './decks/physical';
 import { roaming } from './decks/roaming';
 import { maclearning } from './decks/maclearning';
-import { optical } from './decks/optical';
-import { lossless } from './decks/lossless';
 
 /** The concept checks' `l2` chunk (ja): the questions of arp, stp, vlan, ethernet, vxlan, wifi, lacp, lldp, pppoe. */
 export const catalog: Catalog = {
@@ -28,6 +26,4 @@ export const catalog: Catalog = {
   ...physical,
   ...roaming,
   ...maclearning,
-  ...optical,
-  ...lossless,
 };

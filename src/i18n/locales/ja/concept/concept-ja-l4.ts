@@ -8,6 +8,7 @@ import { mptcp } from './decks/mptcp';
 import { tcpoptions } from './decks/tcpoptions';
 import { plpmtud } from './decks/plpmtud';
 import { cubic } from './decks/cubic';
+import { sctp } from './decks/sctp';
 
 /** The concept checks' `l4` chunk (ja): the questions of tcp, udp, quic. */
 export const catalog: Catalog = {
@@ -20,4 +21,5 @@ export const catalog: Catalog = {
   ...tcpoptions,
   ...plpmtud,
   ...cubic,
+  ...sctp,
 };

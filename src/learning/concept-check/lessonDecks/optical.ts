@@ -1,7 +1,7 @@
 export const DECK = {
   id: 'optical',
   layer: 'l2',
-  chunk: 'l2',
+  chunk: 'l2infra',
   answers: [
     ['q1', 'c'],
     ['q2', 'a'],

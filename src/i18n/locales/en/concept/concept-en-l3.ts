@@ -15,6 +15,7 @@ import { vpc } from './decks/vpc';
 import { mobilecore } from './decks/mobilecore';
 import { cgnat } from './decks/cgnat';
 import { ipv6addr } from './decks/ipv6addr';
+import { k8snet } from './decks/k8snet';
 
 /** The concept checks' `l3` chunk (en): the questions of nat, icmp, ipv4, ipv6, qos, vrrp, multicast, mtu, gre, tunneling, ndp. */
 export const catalog: Catalog = {
@@ -34,4 +35,5 @@ export const catalog: Catalog = {
   ...mobilecore,
   ...cgnat,
   ...ipv6addr,
+  ...k8snet,
 };

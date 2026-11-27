@@ -2,6 +2,7 @@ import type { Catalog } from '../../types';
 import { catalog as core } from './concept/concept-ja-core';
 import { catalog as fundamentals } from './concept/concept-ja-fundamentals';
 import { catalog as l2 } from './concept/concept-ja-l2';
+import { catalog as l2infra } from './concept/concept-ja-l2infra';
 import { catalog as l3 } from './concept/concept-ja-l3';
 import { catalog as l4 } from './concept/concept-ja-l4';
 import { catalog as l5 } from './concept/concept-ja-l5';
@@ -18,6 +19,7 @@ export const conceptCheck: Catalog = {
   ...core,
   ...fundamentals,
   ...l2,
+  ...l2infra,
   ...l3,
   ...l4,
   ...l5,

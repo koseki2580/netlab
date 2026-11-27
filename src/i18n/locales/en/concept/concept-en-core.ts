@@ -124,4 +124,10 @@ export const catalog: Catalog = {
   'learning.concept.lossless.name': 'Lossless Ethernet (PFC/ECN)',
   'learning.concept.cubic.name': 'CUBIC and RACK-TLP',
   'learning.concept.websocket.name': 'WebSocket and polling',
+  'learning.concept.qinq.name': 'Q-in-Q (802.1ad)',
+  'learning.concept.pon.name': 'Passive optical networks',
+  'learning.concept.sctp.name': 'SCTP multihoming and streams',
+  'learning.concept.bgpgr.name': 'BGP graceful restart',
+  'learning.concept.tsn.name': 'Time-Sensitive Networking',
+  'learning.concept.k8snet.name': 'Kubernetes networking',
 };
