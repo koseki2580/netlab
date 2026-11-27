@@ -56,3 +56,31 @@ test('TC-2406: a silently moved host is sent to its old port, and an aged-out en
   await expect(page.getByTestId('ml2-aged-result')).toHaveAttribute('data-egress', '1');
   await expect(page.getByTestId('ml2-aged-result')).toHaveAttribute('data-kind', 'forward');
 });
+
+test('TC-2647: after the ageing reveal, a 420 s ageing time keeps A’s entry through 400 s of silence and reaches the first challenge', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/mac-learning');
+  for (let frame = 1; frame <= 5; frame += 1) {
+    await page.getByTestId('ml-guess-flood').click();
+    await page.getByTestId('ml-reveal-button').click();
+    if (frame < 5) await page.getByTestId('ml-next').click();
+  }
+  await page.getByTestId('ml2-tab-aged').click();
+  await expect(page.getByTestId('challenges')).toHaveCount(0);
+  await page.getByTestId('ml2-guess-flood').click();
+  await page.getByTestId('ml2-reveal-button').click();
+
+  const first = page.getByTestId('challenge-keep-entry');
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-keep-entry-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-keep-entry-hint-button').click();
+  await expect(page.getByTestId('challenge-keep-entry-hint')).toBeVisible();
+
+  await page.getByTestId('ml2-ageing').fill('420');
+  await expect(page.getByTestId('ml2-aged-result')).toHaveAttribute('data-kind', 'forward');
+  await expect(first).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-keep-entry-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

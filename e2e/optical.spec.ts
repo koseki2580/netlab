@@ -42,3 +42,22 @@ test('TC-2486: 44 channels fit the C-band on the 100 GHz grid, 87 on the 50 GHz 
   await page.getByTestId('op-spacing-50').click();
   await expect(page.getByTestId('op-grid')).toHaveAttribute('data-count', '87');
 });
+
+test('TC-2631: after the reveal, changing only the fibre to 1550 nm reaches the first challenge', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/optical');
+  await expect(page.getByTestId('challenges')).toHaveCount(0);
+  await page.getByTestId('op-guess-thin').click();
+  await page.getByTestId('op-reveal-button').click();
+  const first = page.getByTestId('challenge-fibre-only');
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-fibre-only-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-fibre-only-hint-button').click();
+  await expect(page.getByTestId('challenge-fibre-only-hint')).toBeVisible();
+  await page.getByTestId('op-fibre-smf-1550').click();
+  await expect(first).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-fibre-only-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

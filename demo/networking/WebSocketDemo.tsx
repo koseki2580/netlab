@@ -7,6 +7,7 @@ import {
   lessonChoice,
   predictionMark,
 } from '../components/lessonStyles';
+import { LessonChallenges } from '../components/LessonChallenges';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import {
@@ -28,10 +29,10 @@ import {
   type ShopRequest,
   type ShopState,
 } from './websocket';
+import { FRAME_SIZES, POLL_RANGE_S, websocketChallenges } from './websocketChallenges';
 
 const ASKED_EVERY_S = 10;
 const ASKED_POLL_S = 5;
-const FRAME_SIZES: readonly number[] = [100, 1_000, 70_000];
 
 type Answer = 'all-half' | 'events-full' | 'all-full' | 'events-none';
 const ANSWERS: readonly Answer[] = ['all-half', 'events-full', 'all-full', 'events-none'];
@@ -210,8 +211,8 @@ function WebSocketLesson() {
               {t('Poll every', 'ポーリング間隔')}
               <input
                 type="range"
-                min={1}
-                max={30}
+                min={POLL_RANGE_S.min}
+                max={POLL_RANGE_S.max}
                 value={pollS}
                 data-testid="ws-poll"
                 onChange={(event) => setPollS(Number(event.target.value))}
@@ -321,6 +322,13 @@ function WebSocketLesson() {
             )}
           </p>
         </div>
+      ) : null}
+
+      {revealed ? (
+        <LessonChallenges
+          lessonId="websocket"
+          challenges={websocketChallenges({ everyS, pollS, frameSize, fromClient })}
+        />
       ) : null}
 
       <div style={LESSON_CARD} data-testid="idem-predict">

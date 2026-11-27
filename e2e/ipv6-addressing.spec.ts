@@ -59,3 +59,25 @@ test('TC-2418: LAN 4 of a /56 gets subnet ID 03, and the prefix length sets how 
     '2001:db8:1234:567a::/64',
   );
 });
+
+test('TC-2651: giving a LAN the prefix …:5610::/64 is reached by choosing LAN 17, the subnet ID 0x10', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/ipv6-addressing');
+  await page.getByTestId('ipv6a-pd-guess-s5603').click();
+  await page.getByTestId('ipv6a-pd-reveal-button').click();
+  const challenge = page.getByTestId('challenge-subnet-10');
+  await expect(challenge).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-subnet-10-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-subnet-10-hint-button').click();
+  await expect(page.getByTestId('challenge-subnet-10-hint')).toBeVisible();
+  await page.getByTestId('ipv6a-pd-lan').fill('17');
+  await expect(page.getByTestId('ipv6a-pd-result')).toHaveAttribute(
+    'data-prefix',
+    '2001:db8:1234:5610::/64',
+  );
+  await expect(challenge).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-subnet-10-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

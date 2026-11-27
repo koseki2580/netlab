@@ -30,3 +30,25 @@ test('TC-2425: the client first notices at T1 (4 h), loses the address at 8 h, a
   await expect(result).toHaveAttribute('data-first-unanswered', '43200');
   await expect(result).toHaveAttribute('data-address-lost', '86400');
 });
+
+test('TC-2645: after the reveal, a 24 h lease with only server A reaches the first challenge: the address outlives A by 23 h', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/dhcp-lease');
+  await expect(page.getByTestId('challenges')).toHaveCount(0);
+  await page.getByTestId('dhcp-lease-guess-t1').click();
+  await page.getByTestId('dhcp-lease-reveal-button').click();
+
+  const first = page.getByTestId('challenge-survive-outage');
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-survive-outage-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-survive-outage-hint-button').click();
+  await expect(page.getByTestId('challenge-survive-outage-hint')).toBeVisible();
+
+  await page.getByTestId('dhcp-lease-length').fill('24');
+  await expect(page.getByTestId('dhcp-lease-result')).toHaveAttribute('data-address-lost', '86400');
+  await expect(first).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-survive-outage-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

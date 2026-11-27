@@ -7,6 +7,7 @@ import {
   lessonChoice,
   predictionMark,
 } from '../components/lessonStyles';
+import { LessonChallenges } from '../components/LessonChallenges';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import {
@@ -28,6 +29,7 @@ import {
   type Link,
   type Verdict,
 } from './optical';
+import { opticalChallenges } from './opticalChallenges';
 
 type CountAnswer = 'about-2' | 'about-40' | 'about-400';
 const COUNT_ANSWERS: readonly CountAnswer[] = ['about-2', 'about-40', 'about-400'];
@@ -459,6 +461,10 @@ function OpticalLesson() {
             )}
           </p>
         </div>
+      ) : null}
+
+      {revealed ? (
+        <LessonChallenges lessonId="optical" challenges={opticalChallenges(link)} />
       ) : null}
 
       <div style={LESSON_CARD} data-testid="op-dwdm">

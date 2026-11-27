@@ -7,6 +7,7 @@ import {
   lessonChoice,
   predictionMark,
 } from '../components/lessonStyles';
+import { LessonChallenges } from '../components/LessonChallenges';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import {
@@ -23,6 +24,7 @@ import {
   type IncastOutcome,
   type Mode,
 } from './losslessDc';
+import { CABLE_RANGE, HEADROOM_RANGE, losslessDcChallenges } from './losslessDcChallenges';
 
 type Answer = 'unaffected' | 'slowed' | 'drops';
 const ANSWERS: readonly Answer[] = ['unaffected', 'slowed', 'drops'];
@@ -138,6 +140,7 @@ function LosslessDcLesson() {
     () => simulate('pfc', { ...DEFAULT_CONFIG, cableMetres: cable, headroomFrames: headroom }),
     [cable, headroom],
   );
+  const challenges = useMemo(() => losslessDcChallenges({ cable, headroom }), [cable, headroom]);
   const needed = headroomFrames(cable);
   const neededBytes = headroomBytes(cable);
   const answerName = (answer: Answer) =>
@@ -336,9 +339,9 @@ function LosslessDcLesson() {
               {t('Cable', 'ケーブル')}
               <input
                 type="range"
-                min={24}
-                max={192}
-                step={24}
+                min={CABLE_RANGE.min}
+                max={CABLE_RANGE.max}
+                step={CABLE_RANGE.step}
                 value={cable}
                 data-testid="ll-cable"
                 onChange={(event) => setCable(Number(event.target.value))}
@@ -350,8 +353,8 @@ function LosslessDcLesson() {
               {t('Headroom per port', 'ポートごとのヘッドルーム')}
               <input
                 type="range"
-                min={0}
-                max={18}
+                min={HEADROOM_RANGE.min}
+                max={HEADROOM_RANGE.max}
                 value={headroom}
                 data-testid="ll-headroom"
                 onChange={(event) => setHeadroom(Number(event.target.value))}
@@ -390,6 +393,8 @@ function LosslessDcLesson() {
           </p>
         </div>
       ) : null}
+
+      {revealed ? <LessonChallenges lessonId="lossless-dc" challenges={challenges} /> : null}
     </div>
   );
 }

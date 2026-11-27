@@ -42,3 +42,22 @@ test('TC-2496: a handover keeps the UE’s IP and anchor and moves only the N3 d
   await page.getByTestId('mc-serving-gnb1').click();
   await expect(page.getByTestId('mc-row-downlink')).toHaveAttribute('data-changed', 'false');
 });
+
+test('TC-2653: the smallest transport MTU that lets the UE keep 1500 bytes is reached by moving the transport MTU', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/mobile-core');
+  await page.getByTestId('mc-guess-full').click();
+  await page.getByTestId('mc-reveal-button').click();
+  const challenge = page.getByTestId('challenge-ue-keeps-1500');
+  await expect(challenge).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-ue-keeps-1500-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-ue-keeps-1500-hint-button').click();
+  await expect(page.getByTestId('challenge-ue-keeps-1500-hint')).toBeVisible();
+  await page.getByTestId('mc-mtu').fill('1544');
+  await expect(page.getByTestId('mc-result')).toHaveAttribute('data-mtu', '1500');
+  await expect(challenge).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-ue-keeps-1500-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

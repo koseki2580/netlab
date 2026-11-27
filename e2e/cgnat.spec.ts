@@ -39,3 +39,27 @@ test('TC-2445: 1,024-port blocks serve 63 subscribers, flow 1,025 is refused, an
   await page.getByTestId('cgnat-psid-bits').fill('8');
   await expect(page.getByTestId('cgnat-map-result')).toHaveAttribute('data-ports', '252');
 });
+
+test('TC-2637: a challenge is reached by setting smaller blocks with a higher per-subscriber limit', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/cgnat');
+  await expect(page.getByTestId('challenges')).toHaveCount(0);
+  await page.getByTestId('cgnat-guess-63').click();
+  await page.getByTestId('cgnat-reveal-button').click();
+  await page.getByTestId('cgnat-flows-guess-from-1025').click();
+  await page.getByTestId('cgnat-flows-reveal-button').click();
+
+  const first = page.getByTestId('challenge-many-subscribers');
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-many-subscribers-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-many-subscribers-hint-button').click();
+  await expect(page.getByTestId('challenge-many-subscribers-hint')).toBeVisible();
+
+  await page.getByTestId('cgnat-block-512').click();
+  await page.getByTestId('cgnat-max-blocks').fill('3');
+  await expect(first).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-many-subscribers-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

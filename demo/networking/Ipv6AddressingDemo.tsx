@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { LessonChallenges } from '../components/LessonChallenges';
 import {
   LESSON_CARD,
   LESSON_LABEL,
@@ -20,6 +21,7 @@ import {
   subnetCount,
   type AddressKind,
 } from './ipv6Addressing';
+import { ipv6AddressingChallenges } from './ipv6AddressingChallenges';
 
 /** REQ-430 — the lesson page. Every address and count shown is computed by ipv6Addressing.ts. */
 
@@ -506,6 +508,13 @@ function Ipv6AddressingLesson() {
           </p>
         </div>
       ) : null}
+
+      {lanRevealed && (
+        <LessonChallenges
+          lessonId="ipv6-addressing"
+          challenges={ipv6AddressingChallenges({ delegated: DELEGATIONS[length], lan: shownLan })}
+        />
+      )}
     </div>
   );
 }

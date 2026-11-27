@@ -7,6 +7,7 @@ import {
   lessonChoice,
   predictionMark,
 } from '../components/lessonStyles';
+import { LessonChallenges } from '../components/LessonChallenges';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import {
@@ -23,6 +24,7 @@ import {
   tailLoss,
   windowPackets,
 } from './tcpCubic';
+import { tcpCubicChallenges } from './tcpCubicChallenges';
 
 type RenoAnswer = 'seconds' | 'minute' | 'ten-minutes' | 'hour';
 const RENO_ANSWERS: readonly RenoAnswer[] = ['seconds', 'minute', 'ten-minutes', 'hour'];
@@ -536,6 +538,13 @@ function TcpCubicLesson() {
           </p>
         </div>
       ) : null}
+
+      {revealed && tailRevealed && (
+        <LessonChallenges
+          lessonId="tcp-cubic"
+          challenges={tcpCubicChallenges({ bps, rttMs, srttMs, lost })}
+        />
+      )}
     </div>
   );
 }

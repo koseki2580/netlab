@@ -37,3 +37,23 @@ test('TC-2518: the hidden path MTU slider re-runs the search', async ({ page, de
   await page.getByTestId('plpmtud-path-mtu').fill('1492');
   await expect(page.getByTestId('plpmtud-result')).toHaveAttribute('data-plpmtu', '1444');
 });
+
+test('TC-2635: after the reveal, a 1492-byte path makes the search land exactly and reaches the first challenge', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/plpmtud');
+  await expect(page.getByTestId('challenges')).toHaveCount(0);
+  await page.getByTestId('plpmtud-guess-binary').click();
+  await page.getByTestId('plpmtud-reveal-button').click();
+  const first = page.getByTestId('challenge-exact');
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-exact-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-exact-hint-button').click();
+  await expect(page.getByTestId('challenge-exact-hint')).toBeVisible();
+  await page.getByTestId('plpmtud-path-mtu').fill('1492');
+  await expect(page.getByTestId('plpmtud-result')).toHaveAttribute('data-plpmtu', '1444');
+  await expect(first).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-exact-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

@@ -7,6 +7,7 @@ import {
   lessonChoice,
   predictionMark,
 } from '../components/lessonStyles';
+import { LessonChallenges } from '../components/LessonChallenges';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import {
@@ -24,12 +25,18 @@ import {
   type HostId,
   type Step,
 } from './macLearning';
+import {
+  AGEING_RANGE_S,
+  ASKED_IDLE_S,
+  IDLE_RANGE_S,
+  macLearningChallenges,
+} from './macLearningChallenges';
 
 type Answer = 'flood' | 'drop' | `port-${number}`;
 type Situation = 'moved' | 'aged';
 
 /** How long nobody speaks in the ageing question. */
-const AGED_IDLE_S = 400;
+const AGED_IDLE_S = ASKED_IDLE_S;
 
 const cell: React.CSSProperties = {
   padding: 4,
@@ -220,10 +227,11 @@ function MacLearningLesson() {
   });
   const [shown2, setShown2] = useState<Record<Situation, boolean>>({ moved: false, aged: false });
   const [idleS, setIdleS] = useState(AGED_IDLE_S);
+  const [ageingS, setAgeingS] = useState(AGEING_TIME_S);
   const moved = useMemo(() => movedScene(), []);
   const asked2 = situation === 'moved' ? moved[0]! : agedScene(AGED_IDLE_S);
   const truth2 = answerOf(asked2);
-  const custom = agedScene(idleS);
+  const custom = agedScene(idleS, ageingS);
 
   const home = Object.fromEntries(HOST_IDS.map((id) => [id, HOSTS[id].port])) as Record<
     HostId,
@@ -519,15 +527,29 @@ function MacLearningLesson() {
                 {t('Seconds since A last sent', 'A が最後に送ってからの秒数')}
                 <input
                   type="range"
-                  min={10}
-                  max={600}
-                  step={10}
+                  min={IDLE_RANGE_S.min}
+                  max={IDLE_RANGE_S.max}
+                  step={IDLE_RANGE_S.step}
                   value={idleS}
                   data-testid="ml2-idle"
                   onChange={(event) => setIdleS(Number(event.target.value))}
                   style={{ minHeight: 44 }}
                 />
                 <span style={{ fontFamily: 'monospace' }}>{`${idleS} s`}</span>
+              </label>
+              <label style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                {t('Ageing time', 'エージングタイム')}
+                <input
+                  type="range"
+                  min={AGEING_RANGE_S.min}
+                  max={AGEING_RANGE_S.max}
+                  step={AGEING_RANGE_S.step}
+                  value={ageingS}
+                  data-testid="ml2-ageing"
+                  onChange={(event) => setAgeingS(Number(event.target.value))}
+                  style={{ minHeight: 44 }}
+                />
+                <span style={{ fontFamily: 'monospace' }}>{`${ageingS} s`}</span>
               </label>
               <p
                 data-testid="ml2-aged-result"
@@ -545,6 +567,12 @@ function MacLearningLesson() {
                       `まだテーブルにあります。B → A はポート ${ports(custom.egress)} からだけ出ます。`,
                     )}
               </p>
+              <div style={{ marginTop: 10 }}>
+                <LessonChallenges
+                  lessonId="mac-learning"
+                  challenges={macLearningChallenges({ idleS, ageingS })}
+                />
+              </div>
             </div>
           ) : null}
           <p

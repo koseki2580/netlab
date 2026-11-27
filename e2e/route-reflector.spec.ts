@@ -42,3 +42,23 @@ test('TC-2438: C hears A’s route only through a reflector, and the loop checks
   await page.getByTestId('rr-scenario-two-rr-split').click();
   await expect(page.locator('[data-to="A"][data-verdict="originator-id"]')).toHaveCount(2);
 });
+
+test('TC-2649: the smallest AS whose full mesh needs more than 100 sessions is reached by moving the router count', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/route-reflector');
+  await page.getByTestId('rr-guess-pairs').click();
+  await page.getByTestId('rr-reveal-button').click();
+  await page.getByTestId('rr-prop-guess-rr-only').click();
+  await page.getByTestId('rr-prop-reveal-button').click();
+  const challenge = page.getByTestId('challenge-mesh-over-100');
+  await expect(challenge).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-mesh-over-100-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-mesh-over-100-hint-button').click();
+  await expect(page.getByTestId('challenge-mesh-over-100-hint')).toBeVisible();
+  await page.getByTestId('rr-n').fill('15');
+  await expect(challenge).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-mesh-over-100-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

@@ -48,3 +48,28 @@ test('TC-2457: a transparent clock removes the queues, leaving half the fibre as
   await expect(page.getByTestId('ts-ptp-ordinary')).toHaveAttribute('data-error', '489950');
   await expect(page.getByTestId('ts-ptp-transparent')).toHaveAttribute('data-error', '-50');
 });
+
+test('TC-2639: a challenge is reached by making the request’s trip out as long as the trip back', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/time-sync');
+  await page.getByTestId('ts-guess-right').click();
+  await page.getByTestId('ts-reveal-button').click();
+  await page.getByTestId('ts-asym-guess-half').click();
+  await page.getByTestId('ts-asym-reveal-button').click();
+  await expect(page.getByTestId('challenges')).toHaveCount(0);
+  await page.getByTestId('ts-ptp-guess-fibre').click();
+  await page.getByTestId('ts-ptp-reveal-button').click();
+
+  const first = page.getByTestId('challenge-exact');
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-exact-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-exact-hint-button').click();
+  await expect(page.getByTestId('challenge-exact-hint')).toBeVisible();
+
+  await page.getByTestId('ts-forward').fill('4');
+  await expect(first).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-exact-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

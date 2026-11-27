@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { LessonChallenges } from '../components/LessonChallenges';
 import {
   LESSON_CARD,
   LESSON_LABEL,
@@ -20,6 +21,7 @@ import {
   type OuterFamily,
   type Session,
 } from './mobileCore';
+import { mobileCoreChallenges } from './mobileCoreChallenges';
 
 type Size = 'full' | 'udp-only' | 'no-extension' | 'all';
 const SIZES: readonly Size[] = ['full', 'udp-only', 'all', 'no-extension'];
@@ -390,6 +392,13 @@ function MobileCoreLesson() {
           </p>
         </div>
       ) : null}
+
+      {sizeShown && (
+        <LessonChallenges
+          lessonId="mobile-core"
+          challenges={mobileCoreChallenges({ outer, container, transportMtu })}
+        />
+      )}
 
       {sizeShown ? (
         <div style={LESSON_CARD} data-testid="mc-handover">

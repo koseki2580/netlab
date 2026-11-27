@@ -7,6 +7,7 @@ import {
   lessonChoice,
   predictionMark,
 } from '../components/lessonStyles';
+import { LessonChallenges } from '../components/LessonChallenges';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import {
@@ -21,6 +22,7 @@ import {
   mapPortSet,
   sharedSpaceSize,
 } from './cgnat';
+import { cgnatChallenges } from './cgnatChallenges';
 
 const ASKED_BLOCK = 1024;
 const ASKED_FLOWS = 1200;
@@ -464,6 +466,13 @@ function CgnatLesson() {
           </p>
         </div>
       ) : null}
+
+      {flowRevealed && (
+        <LessonChallenges
+          lessonId="cgnat"
+          challenges={cgnatChallenges({ blockSize, maxBlocks, flows, psidBits })}
+        />
+      )}
     </div>
   );
 }

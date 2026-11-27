@@ -34,3 +34,25 @@ test('TC-2508: short polling sends 12 requests and waits 2.5 s on average, a Web
   await expect(page.getByTestId('idem-row-put-name')).toHaveAttribute('data-same', 'true');
   await expect(page.getByTestId('idem-row-post-order')).toHaveAttribute('data-same', 'false');
 });
+
+test('TC-2643: after the reveal, making long polling cost more than 5 s short polling reaches the first challenge', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/websocket');
+  await expect(page.getByTestId('challenges')).toHaveCount(0);
+  await page.getByTestId('ws-guess-all-half').click();
+  await page.getByTestId('ws-reveal-button').click();
+
+  const first = page.getByTestId('challenge-long-costs-more');
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-long-costs-more-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-long-costs-more-hint-button').click();
+  await expect(page.getByTestId('challenge-long-costs-more-hint')).toBeVisible();
+
+  await page.getByTestId('ws-every').fill('4');
+  await expect(page.getByTestId('ws-row-long')).toHaveAttribute('data-requests', '15');
+  await expect(first).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-long-costs-more-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

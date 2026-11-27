@@ -7,6 +7,7 @@ import {
   lessonChoice,
   predictionMark,
 } from '../components/lessonStyles';
+import { LessonChallenges } from '../components/LessonChallenges';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import {
@@ -20,6 +21,7 @@ import {
   type Path,
   type Timestamps,
 } from './timeSync';
+import { timeSyncChallenges } from './timeSyncChallenges';
 
 type First = 'right' | 'raw' | 'no-hold' | 'sign';
 const FIRSTS: readonly First[] = ['raw', 'right', 'no-hold', 'sign'];
@@ -488,6 +490,13 @@ function TimeSyncLesson() {
           </p>
         </div>
       ) : null}
+
+      {thirdShown && (
+        <LessonChallenges
+          lessonId="time-sync"
+          challenges={timeSyncChallenges({ forward, syncWaitUs })}
+        />
+      )}
     </div>
   );
 }

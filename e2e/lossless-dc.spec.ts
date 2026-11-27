@@ -42,3 +42,26 @@ test('TC-2468: too little headroom for the cable drops frames even with PFC', as
   await expect(tuned).toHaveAttribute('data-needed', '18');
   await expect(tuned).toHaveAttribute('data-drops', '65');
 });
+
+test('TC-2633: after the reveal, the smallest headroom that loses nothing at 192 m reaches the first challenge', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/lossless-dc');
+  await expect(page.getByTestId('challenges')).toHaveCount(0);
+  await page.getByTestId('ll-guess-slowed').click();
+  await page.getByTestId('ll-reveal-button').click();
+  const first = page.getByTestId('challenge-smallest-headroom');
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-smallest-headroom-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-smallest-headroom-hint-button').click();
+  await expect(page.getByTestId('challenge-smallest-headroom-hint')).toBeVisible();
+  await page.getByTestId('ll-cable').fill('192');
+  await page.getByTestId('ll-headroom').fill('12');
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await page.getByTestId('ll-headroom').fill('13');
+  await expect(page.getByTestId('ll-tuned')).toHaveAttribute('data-drops', '0');
+  await expect(first).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-smallest-headroom-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

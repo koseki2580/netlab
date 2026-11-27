@@ -28,3 +28,27 @@ test('TC-2478: Reno needs about 69 min where CUBIC needs 39.7 s, and TLP resends
   await page.getByTestId('tlp-lost').fill('1');
   await expect(page.getByTestId('tlp-row-tlp')).toHaveAttribute('data-first', '350');
 });
+
+test('TC-2641: a challenge is reached by choosing a small, short path where Reno is back first', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/tcp-cubic');
+  await page.getByTestId('cubic-guess-hour').click();
+  await page.getByTestId('cubic-reveal-button').click();
+  await expect(page.getByTestId('challenges')).toHaveCount(0);
+  await page.getByTestId('tlp-guess-few-rtts').click();
+  await page.getByTestId('tlp-reveal-button').click();
+
+  const first = page.getByTestId('challenge-reno-first');
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-reno-first-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-reno-first-hint-button').click();
+  await expect(page.getByTestId('challenge-reno-first-hint')).toBeVisible();
+
+  await page.getByTestId('cubic-speed-100000000').click();
+  await page.getByTestId('cubic-rtt').fill('30');
+  await expect(first).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-reno-first-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

@@ -7,6 +7,7 @@ import {
   lessonChoice,
   predictionMark,
 } from '../components/lessonStyles';
+import { LessonChallenges } from '../components/LessonChallenges';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import {
@@ -16,6 +17,7 @@ import {
   type LeaseEvent,
   type LeaseOutcome,
 } from './dhcpLease';
+import { dhcpLeaseChallenges } from './dhcpLeaseChallenges';
 
 const H = 3600;
 const ASKED = { leaseH: 8, downH: 1 } as const;
@@ -403,6 +405,13 @@ function DhcpLeaseLesson() {
             )}
           </p>
         </div>
+      ) : null}
+
+      {revealed ? (
+        <LessonChallenges
+          lessonId="dhcp-lease"
+          challenges={dhcpLeaseChallenges({ leaseH, downH: effectiveDownH, serverB })}
+        />
       ) : null}
     </div>
   );

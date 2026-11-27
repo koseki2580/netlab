@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { LessonChallenges } from '../components/LessonChallenges';
 import {
   LESSON_CARD,
   LESSON_LABEL,
@@ -20,6 +21,7 @@ import {
   type ScenarioId,
   type Verdict,
 } from './routeReflector';
+import { routeReflectorChallenges } from './routeReflectorChallenges';
 
 const ASKED_N = 10;
 
@@ -456,6 +458,13 @@ function RouteReflectorLesson() {
           </p>
         </div>
       ) : null}
+
+      {reachRevealed && (
+        <LessonChallenges
+          lessonId="route-reflector"
+          challenges={routeReflectorChallenges({ n, scenario: shown })}
+        />
+      )}
     </div>
   );
 }

@@ -7,6 +7,7 @@ import {
   lessonChoice,
   predictionMark,
 } from '../components/lessonStyles';
+import { LessonChallenges } from '../components/LessonChallenges';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import {
@@ -22,6 +23,7 @@ import {
   searchByteByByte,
   type Search,
 } from './plpmtud';
+import { PATH_MTU_RANGE, plpmtudChallenges } from './plpmtudChallenges';
 
 /** REQ-440 — the lesson page. Every size and count shown is computed by plpmtud.ts. */
 
@@ -305,9 +307,9 @@ function PlpmtudLesson() {
             {t('Hidden path MTU', '隠れた経路 MTU')}
             <input
               type="range"
-              min={1280}
-              max={LINK_MTU}
-              step={4}
+              min={PATH_MTU_RANGE.min}
+              max={PATH_MTU_RANGE.max}
+              step={PATH_MTU_RANGE.step}
               value={pathMtu}
               data-testid="plpmtud-path-mtu"
               onChange={(event) => setPathMtu(Number(event.target.value))}
@@ -368,6 +370,10 @@ function PlpmtudLesson() {
             )}
           </p>
         </div>
+      ) : null}
+
+      {revealed ? (
+        <LessonChallenges lessonId="plpmtud" challenges={plpmtudChallenges(pathMtu)} />
       ) : null}
 
       {revealed ? (
