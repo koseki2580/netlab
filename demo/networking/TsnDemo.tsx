@@ -414,8 +414,8 @@ function TsnLesson() {
           </div>
           <p style={{ margin: '0 0 8px', lineHeight: 1.7 }}>
             {t(
-              `Frame preemption (IEEE 802.1Qbu with IEEE 802.3br) lets an express frame interrupt a best-effort frame and resume it afterwards, so only a piece that cannot be split still blocks. This lesson assumes that piece is at most ${UNSPLITTABLE_BYTES} bytes (${us(preempt.guardBandNs)} at 1 Gb/s), which also shrinks the guard band to that length.`,
-              `フレームプリエンプション（IEEE 802.1Qbu と IEEE 802.3br）では、エクスプレスフレームがベストエフォートのフレームに割り込み、あとで続きを送れます。待たされるのは分割できない断片だけになります。このレッスンではその断片を最大 ${UNSPLITTABLE_BYTES} バイト（1 Gb/s で ${us(preempt.guardBandNs)}）と仮定しており、ガードバンドもその長さまで短くできます。`,
+              `Frame preemption (IEEE 802.1Qbu with IEEE 802.3br) lets an express frame interrupt a best-effort frame and resume it afterwards, so only a piece that cannot be split still blocks. This lesson assumes that piece is at most ${UNSPLITTABLE_BYTES} bytes (${us(preempt.guardBandNs)} at 1 Gb/s with preamble, SFD and gap), which also shrinks the guard band to that length.`,
+              `フレームプリエンプション（IEEE 802.1Qbu と IEEE 802.3br）では、エクスプレスフレームがベストエフォートのフレームに割り込み、あとで続きを送れます。待たされるのは分割できない断片だけになります。このレッスンではその断片を最大 ${UNSPLITTABLE_BYTES} バイト（プリアンブル、SFD、ギャップを含めて 1 Gb/s で ${us(preempt.guardBandNs)}）と仮定しており、ガードバンドもその長さまで短くできます。`,
             )}
           </p>
           <div

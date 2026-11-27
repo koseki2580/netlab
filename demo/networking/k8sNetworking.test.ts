@@ -72,9 +72,10 @@ describe('TC-2595: under Cluster the source is rewritten even on the backend’s
 });
 
 describe('TC-2596: under Local only nodes with a backend pass the health check', () => {
-  it('node-a 503, node-b 200; under Cluster both 200', () => {
+  it('node-a 503, node-b 200; under Cluster no health-check port at all', () => {
     expect(healthCheck('node-a', 'Local')).toBe(503);
     expect(healthCheck('node-b', 'Local')).toBe(200);
-    expect(healthCheck('node-a', 'Cluster')).toBe(200);
+    expect(healthCheck('node-a', 'Cluster')).toBeNull();
+    expect(healthCheck('node-b', 'Cluster')).toBeNull();
   });
 });

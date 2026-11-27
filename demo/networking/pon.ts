@@ -17,7 +17,7 @@
  * Upstream: the OLT grants each ONU a slice of each 125 µs upstream frame
  * (TDMA), sized by dynamic bandwidth assignment (DBA). Simplified to a
  * max-min fair share of the frame among the ONUs' demands; real DBA works on
- * T-CONTs with fixed, assured and best-effort parts.
+ * T-CONTs with fixed, assured, non-assured and best-effort parts.
  */
 
 export type TechId = 'gpon' | 'xgspon';

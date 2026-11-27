@@ -19,13 +19,13 @@ export const tsn: Catalog = {
   'learning.concept.tsn.q2.b': '0.123 µs, a hundredth of it',
   'learning.concept.tsn.q2.c': '1.2304 µs, a tenth of it',
   'learning.concept.tsn.q2.why':
-    'A frame’s time on the wire is its bits divided by the rate: 12 304 bits ÷ 10 Gb/s = 1.2304 µs. Ten times the rate, a tenth of the blocking.',
+    'A frame’s time on the wire is its bits divided by the rate: 12,304 bits ÷ 10 Gb/s = 1.2304 µs. Ten times the rate, a tenth of the blocking.',
   'learning.concept.tsn.q2.a.why':
     'The frame has the same number of bits, but they go out ten times faster.',
   'learning.concept.tsn.q2.b.why':
     'The rate went up ten times, not a hundred: the blocking shrinks by ten.',
   'learning.concept.tsn.q3.prompt':
-    'An 802.1Qbv gate control list opens a window for the control class at the start of each 250 µs cycle on a 1 Gb/s port. Best-effort frames are up to 1518 bytes and cannot be preempted. How long a guard band, with every best-effort gate closed, must come before the window so the link is idle when it opens?',
+    'An 802.1Qbv gate control list opens a window for the control class at the start of each 250 µs cycle on a 1 Gb/s port. Best-effort frames are up to 1518 bytes and cannot be preempted. Counting 8 bytes of preamble and SFD and the 12-byte gap per frame, how long a guard band, with every best-effort gate closed, must come before the window so the link is idle when it opens?',
   'learning.concept.tsn.q3.a': '12.304 µs, about 4.9 % of each cycle',
   'learning.concept.tsn.q3.b': '0.672 µs, the control frame’s own time',
   'learning.concept.tsn.q3.c': 'None: closing a gate stops its frame',

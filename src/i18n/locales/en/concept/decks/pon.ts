@@ -19,7 +19,7 @@ export const pon: Catalog = {
   'learning.concept.pon.q2.b': 'The splitter sends each home only its own frames',
   'learning.concept.pon.q2.c': 'Each home receives on its own wavelength',
   'learning.concept.pon.q2.why':
-    'Every ONU receives everything and keeps only frames for its own IDs. Because a modified ONU could keep the rest, PON encrypts downstream traffic (AES-128) with a key per ONU.',
+    'Every ONU receives everything and keeps only frames for its own IDs. Because a modified ONU could keep the rest, GPON and XGS-PON encrypt unicast downstream traffic (AES-128) with a key per ONU.',
   'learning.concept.pon.q2.b.why':
     'A passive splitter cannot look at frames: it divides the light, and all of it, among every output.',
   'learning.concept.pon.q2.c.why':

@@ -368,8 +368,8 @@ function K8sNetworkingLesson() {
         <div style={LESSON_LABEL}>{t('The cluster', 'クラスタ')}</div>
         <p style={{ margin: '0 0 8px', lineHeight: 1.7 }}>
           {t(
-            `Kubernetes gives every Pod its own IP address, and its networking model requires that any Pod can reach any other Pod at that address, on any node, without NAT. How the packets travel between nodes is left to the CNI plugin (routes, an overlay, or cloud routing). Pods come and go, so clients use a Service instead: a stable virtual address, the ClusterIP, that no interface actually holds. Here a Service named web has ClusterIP ${SERVICE.clusterIp} port ${SERVICE.port}, sending to port ${BACKEND_POD.port} of its one backend Pod.`,
-            `Kubernetes はすべての Pod に専用の IP アドレスを与えます。ネットワークモデルは、どの Pod もどのノードのほかの Pod にもそのアドレスで、NAT なしで届くことを求めます。ノード間でパケットをどう運ぶか（経路、オーバーレイ、クラウドのルーティング）は CNI プラグインに任されています。Pod は作られては消えるので、クライアントは代わりに Service を使います。どのインターフェースも実際には持たない、変わらない仮想アドレス ClusterIP です。ここでは web という Service が ClusterIP ${SERVICE.clusterIp} のポート ${SERVICE.port} を持ち、唯一のバックエンド Pod のポート ${BACKEND_POD.port} へ送ります。`,
+            `Kubernetes gives every Pod its own IP address, and its networking model requires that any Pod can reach any other Pod at that address, on any node, without NAT. How the packets travel between nodes is left to the CNI plugin (routes, an overlay, or cloud routing). Pods come and go, so clients use a Service instead: a stable virtual address, the ClusterIP, that no Pod holds (in iptables mode no interface holds it at all). Here a Service named web has ClusterIP ${SERVICE.clusterIp} port ${SERVICE.port}, sending to port ${BACKEND_POD.port} of its one backend Pod.`,
+            `Kubernetes はすべての Pod に専用の IP アドレスを与えます。ネットワークモデルは、どの Pod もどのノードのほかの Pod にもそのアドレスで、NAT なしで届くことを求めます。ノード間でパケットをどう運ぶか（経路、オーバーレイ、クラウドのルーティング）は CNI プラグインに任されています。Pod は作られては消えるので、クライアントは代わりに Service を使います。どの Pod も持たない変わらない仮想アドレス ClusterIP です（iptables モードではどのインターフェースも持ちません）。ここでは web という Service が ClusterIP ${SERVICE.clusterIp} のポート ${SERVICE.port} を持ち、唯一のバックエンド Pod のポート ${BACKEND_POD.port} へ送ります。`,
           )}
         </p>
         <ClusterDiagram />
@@ -512,14 +512,20 @@ function K8sNetworkingLesson() {
                   <td style={num}>{explored.extraHops}</td>
                 </tr>
                 {target === 'node-port' ? (
-                  <tr data-testid="k8s-health" data-status={healthCheck(entry, policy)}>
+                  <tr data-testid="k8s-health" data-status={healthCheck(entry, policy) ?? 'none'}>
                     <td style={cell}>
                       {t(
                         `Health check on ${entry} (type LoadBalancer)`,
                         `${entry} のヘルスチェック（LoadBalancer 型の場合）`,
                       )}
                     </td>
-                    <td style={num}>{healthCheck(entry, policy)}</td>
+                    <td style={num}>
+                      {healthCheck(entry, policy) ??
+                        t(
+                          'none: no health-check port under Cluster',
+                          'なし（Cluster では割り当てられない）',
+                        )}
+                    </td>
                   </tr>
                 ) : null}
               </tbody>
@@ -527,8 +533,8 @@ function K8sNetworkingLesson() {
           </div>
           <p style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--netlab-text-secondary)' }}>
             {t(
-              'Simplified: two nodes and one backend; source ports are kept through SNAT (a real masquerade may change them); the trip between nodes is one hop, whatever the CNI plugin does on the way. The rewrites are those of kube-proxy in iptables or IPVS mode, which is an implementation, not part of the model: kube-proxy can be set to masquerade Pod-to-ClusterIP traffic too, and CNI plugins that replace kube-proxy (for example with eBPF) may keep the client address under Cluster or let the backend answer directly. The health-check port is allocated by Kubernetes for a Local Service of type LoadBalancer; a NodePort-only Service has no load balancer to read it.',
-              '簡略化しています。ノードは 2 台、バックエンドは 1 つです。SNAT でも送信元ポートはそのまま（実際のマスカレードでは変わることがあります）とし、ノード間は CNI プラグインが途中で何をしても 1 ホップとしました。書き換えは iptables または IPVS モードの kube-proxy のもので、ネットワークモデルの一部ではなく実装です。kube-proxy は Pod から ClusterIP への通信もマスカレードするよう設定でき、kube-proxy を置き換える CNI プラグイン（eBPF など）は Cluster でもクライアントのアドレスを残したり、バックエンドから直接返したりできます。ヘルスチェック用のポートは、Local の LoadBalancer 型 Service に Kubernetes が割り当てるものです。NodePort だけの Service には、それを読むロードバランサがありません。',
+              'Simplified: two nodes and one backend; source ports are kept through SNAT (a real masquerade may change them); the trip between nodes is one hop, whatever the CNI plugin does on the way. The rewrites are those of kube-proxy in iptables or IPVS mode, which is an implementation, not part of the model: kube-proxy can be set to masquerade Pod-to-ClusterIP traffic too, and CNI plugins that replace kube-proxy (for example with eBPF) may keep the client address under Cluster or let the backend answer directly. The health-check port is allocated by Kubernetes for a Local Service of type LoadBalancer; a NodePort-only Service has no load balancer to read it. SNAT is shown as the node’s address; strictly it is the address of the interface the packet leaves by, which with some CNI plugins is a bridge or tunnel address.',
+              '簡略化しています。ノードは 2 台、バックエンドは 1 つです。SNAT でも送信元ポートはそのまま（実際のマスカレードでは変わることがあります）とし、ノード間は CNI プラグインが途中で何をしても 1 ホップとしました。書き換えは iptables または IPVS モードの kube-proxy のもので、ネットワークモデルの一部ではなく実装です。kube-proxy は Pod から ClusterIP への通信もマスカレードするよう設定でき、kube-proxy を置き換える CNI プラグイン（eBPF など）は Cluster でもクライアントのアドレスを残したり、バックエンドから直接返したりできます。ヘルスチェック用のポートは、Local の LoadBalancer 型 Service に Kubernetes が割り当てるものです。NodePort だけの Service には、それを読むロードバランサがありません。SNAT 後の送信元はノードのアドレスとしています。厳密には出ていくインターフェースのアドレスで、CNI プラグインによってはブリッジやトンネルのアドレスになります。',
             )}
           </p>
         </div>

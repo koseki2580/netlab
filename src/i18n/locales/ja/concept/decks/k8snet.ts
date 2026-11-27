@@ -25,7 +25,7 @@ export const k8snet: Catalog = {
   'learning.concept.k8snet.q2.c.why':
     'SNAT はしていないので、ノードのアドレスは出てきません。conntrack は ClusterIP に戻します。',
   'learning.concept.k8snet.q3.prompt':
-    'externalTrafficPolicy: Cluster の NodePort Service で、kube-proxy は iptables モードです。203.0.113.9 のクライアントが、唯一のバックエンド Pod が動く node-b（10.0.0.2）に接続します。バックエンドに見える送信元は？',
+    'externalTrafficPolicy: Cluster の NodePort Service で、kube-proxy は iptables モードです。203.0.113.9 のクライアントが、唯一のバックエンド Pod が動く node-b（10.0.0.2）に接続します。マスカレード後の送信元はノード自身のアドレスとします。バックエンドに見える送信元は？',
   'learning.concept.k8snet.q3.a': '203.0.113.9（余分なホップがないので SNAT しない）',
   'learning.concept.k8snet.q3.b': '10.0.0.2（Cluster はノードへ SNAT する）',
   'learning.concept.k8snet.q3.c': '10.0.0.1（もう一方のノード）',
@@ -36,7 +36,7 @@ export const k8snet: Catalog = {
   'learning.concept.k8snet.q3.c.why':
     'SNAT に使うのは要求が入ったノード node-b です。node-a はこの経路にありません。',
   'learning.concept.k8snet.q4.prompt':
-    '今度は externalTrafficPolicy: Local で、ノードとバックエンド（node-b だけ）は同じ、iptables モードです。クライアントが node-a の NodePort に接続します。どうなる？',
+    'externalTrafficPolicy: Local の NodePort Service で、kube-proxy は iptables モードです。唯一のバックエンド Pod は node-b（10.0.0.2）で動いています。クライアントが、バックエンドのない node-a（10.0.0.1）の NodePort に接続します。どうなる？',
   'learning.concept.k8snet.q4.a': 'node-a へ SNAT して node-b へ転送',
   'learning.concept.k8snet.q4.b': 'クライアントのアドレスのまま node-b へ転送',
   'learning.concept.k8snet.q4.c': 'node-a で破棄（バックエンドがない）',

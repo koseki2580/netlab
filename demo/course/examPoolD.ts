@@ -15,8 +15,8 @@ const ENTRIES: readonly (readonly [string, ExamQuestion])[] = [
     {
       id: 's2-mac-moved-silent',
       prompt: {
-        en: 'A switch has learned host A on port 1 and host B on port 2; its ageing time is 300 s, the IEEE recommended default. A is moved to port 3 and sends nothing. Five seconds later B sends a frame to A. Where does the switch send it?',
-        ja: 'スイッチは、ホスト A をポート 1、ホスト B をポート 2 で学習しています。エージングタイムは IEEE の推奨値の 300 秒です。A はポート 3 につなぎ替えられ、そのあと何も送っていません。5 秒後、B が A 宛てにフレームを送ります。スイッチはそれをどこへ出しますか？',
+        en: 'A 4-port switch has learned host A on port 1 and host B on port 2; port 1 leads to a small unmanaged switch, so it stays up when A is moved. Its ageing time is 300 s, the IEEE recommended default. A is moved to port 3 and sends nothing. Five seconds later B sends a frame to A. Where does the switch send it?',
+        ja: '4 ポートのスイッチが、ホスト A をポート 1、ホスト B をポート 2 で学習しています。ポート 1 の先は小さなアンマネージドスイッチなので、A を移してもリンクは上がったままです。エージングタイムは IEEE の推奨値の 300 秒です。A をポート 3 に移し、A は何も送りません。5 秒後、B が A あてにフレームを送ります。スイッチはどこへ送りますか？',
       },
       options: [
         { en: 'Port 3 only, A’s new port', ja: 'ポート 3 だけ（A の新しいポート）' },
@@ -127,8 +127,8 @@ const ENTRIES: readonly (readonly [string, ExamQuestion])[] = [
     {
       id: 'http-retry-post',
       prompt: {
-        en: 'On one connection a client sends GET /feed, PUT /profile/name, DELETE /cart/items/7 and POST /orders. The connection drops before any response comes back. By HTTP’s rules (RFC 9110), which one may the client not resend automatically?',
-        ja: 'クライアントが 1 本の接続で GET /feed、PUT /profile/name、DELETE /cart/items/7、POST /orders を送りました。どの応答も返ってくる前に接続が切れます。HTTP の決まり（RFC 9110）で、クライアントが自動で送り直してはいけないのはどれですか？',
+        en: 'On one connection a client sends GET /feed, PUT /profile/name, DELETE /cart/items/7 and POST /orders. The connection drops before any response comes back. By HTTP’s rules (RFC 9110), which one should the client not resend automatically?',
+        ja: 'クライアントが 1 本の接続で GET /feed、PUT /profile/name、DELETE /cart/items/7、POST /orders を送りました。どの応答も返ってくる前に接続が切れます。HTTP の決まり（RFC 9110）で、クライアントが自動で送り直すべきでないのはどれですか？',
       },
       options: [
         { en: 'GET', ja: 'GET' },
@@ -138,8 +138,8 @@ const ENTRIES: readonly (readonly [string, ExamQuestion])[] = [
       ],
       answer: 2,
       explanation: {
-        en: 'GET, PUT and DELETE are idempotent: arriving twice leaves the server as arriving once (the name is set again to the same value, item 7 is already gone). POST is not: a second copy may place a second order, so a client must not resend it automatically unless it knows the request is safe to repeat (RFC 9110 §9.2.2). The polling and WebSocket lesson sends each request twice.',
-        ja: 'GET、PUT、DELETE はべき等です。2 回届いても、サーバの状態は 1 回届いたときと同じです（名前は同じ値にもう一度なるだけで、商品 7 はもう消えています）。POST は違い、2 回目で注文がもう 1 つ入ることがあるので、繰り返しても安全だとわかっている場合を除き、自動で送り直してはいけません（RFC 9110 §9.2.2）。ポーリングと WebSocket のレッスンで、各要求を 2 回送れます。',
+        en: 'GET, PUT and DELETE are idempotent: arriving twice leaves the server as arriving once (the name is set again to the same value, item 7 is already gone). POST is not: a second copy may place a second order, so a client SHOULD NOT resend it automatically unless it knows the request is safe to repeat (RFC 9110 §9.2.2). The polling and WebSocket lesson sends each request twice.',
+        ja: 'GET、PUT、DELETE はべき等です。2 回届いても、サーバの状態は 1 回届いたときと同じです（名前は同じ値にもう一度なるだけで、商品 7 はもう消えています）。POST は違い、2 回目で注文がもう 1 つ入ることがあるので、繰り返しても安全だとわかっている場合を除き、自動で送り直すべきではありません（RFC 9110 §9.2.2 の SHOULD NOT）。ポーリングと WebSocket のレッスンで、各要求を 2 回送れます。',
       },
       taughtBy: 'websocket',
     },
@@ -195,8 +195,8 @@ const ENTRIES: readonly (readonly [string, ExamQuestion])[] = [
     {
       id: 'l4-ibgp-no-reflector',
       prompt: {
-        en: 'In one AS, router A has an iBGP session with B, and B one with C; there is no A–C session. A learns 203.0.113.0/24 from an eBGP neighbour. B is an ordinary iBGP router, not a route reflector. Does C learn the route?',
-        ja: '1 つの AS の中で、ルータ A は B と、B は C と iBGP セッションを張っています。A と C の間にセッションはありません。A は eBGP の相手から 203.0.113.0/24 を学びます。B はルートリフレクタではない、普通の iBGP ルータです。C はこの経路を学びますか？',
+        en: 'In one AS, router A has an iBGP session with B, and B one with C; there is no A–C session. A learns 203.0.113.0/24 from an eBGP neighbour at 198.51.100.1. B is an ordinary iBGP router, not a route reflector. Does C learn the route?',
+        ja: '1 つの AS の中で、ルータ A は B と、B は C と iBGP セッションを張っています。A と C の間にセッションはありません。A は eBGP の相手 198.51.100.1 から 203.0.113.0/24 を学びます。B はルートリフレクタではない、普通の iBGP ルータです。C はこの経路を学びますか？',
       },
       options: [
         { en: 'Yes, with B as its next hop', ja: 'はい。ネクストホップは B' },
@@ -217,8 +217,8 @@ const ENTRIES: readonly (readonly [string, ExamQuestion])[] = [
     {
       id: 'l4-pfc-innocent-flow',
       prompt: {
-        en: 'Eight servers burst into one 100 Gbit/s switch port at the same moment. PFC is on for their priority; ECN is off. Flow V shares server S1’s uplink and priority but goes out of another, idle port. While the switch is pausing the burst, what happens to V?',
-        ja: '8 台のサーバが同時に、スイッチの 100 Gbit/s のポート 1 つへバーストを送ります。その優先度では PFC が有効で、ECN は無効です。フロー V はサーバ S1 と上りリンクも優先度も同じですが、出ていくのは空いている別のポートです。スイッチがバーストを一時停止させている間、V はどうなりますか？',
+        en: 'Eight servers burst into one 100 Gbit/s switch port at the same moment. PFC is on for their priority; ECN is off. Flow V shares the uplink and priority of server S1, one of the eight, but goes out of another, idle port. While the switch is pausing the burst, what happens to V?',
+        ja: '8 台のサーバが同時に、スイッチの 100 Gbit/s のポート 1 つへバーストを送ります。その優先度では PFC が有効で、ECN は無効です。フロー V は、8 台のうちの 1 台であるサーバ S1 と上りリンクも優先度も同じですが、出ていくのは空いている別のポートです。スイッチがバーストを一時停止させている間、V はどうなりますか？',
       },
       options: [
         { en: 'It keeps its full rate', ja: '全速のまま流れる' },

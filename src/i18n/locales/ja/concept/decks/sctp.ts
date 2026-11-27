@@ -3,7 +3,7 @@ import type { Catalog } from '../../../../types';
 /** The `sctp` deck's questions (ja); its name is in the core chunk. */
 export const sctp: Catalog = {
   'learning.concept.sctp.q1.prompt':
-    'SCTP のアソシエーションにプライマリとセカンダリの経路があり、プライマリが切れました。RTO は 1 秒から始まりタイムアウトごとに 2 倍（上限 60 秒）、エラー数が Path.Max.Retrans = 5 を超えるとプライマリをあきらめます。新しいデータがセカンダリへ移るのはいつ？',
+    'SCTP のアソシエーションにプライマリとセカンダリの経路があり、プライマリが切れました。RTO は 1 秒から始まりタイムアウトごとに 2 倍（上限 60 秒）です。タイムアウト 1 回ごとに経路のエラー数が 1 増え、エラー数が Path.Max.Retrans = 5 を超えるとプライマリをあきらめます。新しいデータがセカンダリへ移るのはいつ？',
   'learning.concept.sctp.q1.a': '5 秒後（1 秒のタイムアウト 5 回）',
   'learning.concept.sctp.q1.b': '31 秒後（倍々のタイムアウト 5 回）',
   'learning.concept.sctp.q1.c': '63 秒後（倍々のタイムアウト 6 回）',
@@ -25,7 +25,7 @@ export const sctp: Catalog = {
   'learning.concept.sctp.q2.c.why':
     'ストリーム 1 は順序ありなので、A2 と A3 はもう届いていても A1 より先には渡せません。',
   'learning.concept.sctp.q3.prompt':
-    '同じ障害で、RTO は 1 秒から始まり 2 倍ずつ増えますが、運用者が Path.Max.Retrans = 2 にしました。新しいデータがセカンダリへ移るのはいつ？',
+    'SCTP のアソシエーションのプライマリ経路が切れ、セカンダリは生きています。RTO は 1 秒から始まりタイムアウトごとに 2 倍、タイムアウト 1 回ごとにエラー数が 1 増え、エラー数が Path.Max.Retrans を超えるとプライマリをあきらめます。運用者は Path.Max.Retrans を 2 にしました。新しいデータがセカンダリへ移るのはいつ？',
   'learning.concept.sctp.q3.a': '2 秒後（1 秒のタイムアウト 2 回）',
   'learning.concept.sctp.q3.b': '7 秒後（1 + 2 + 4 秒）',
   'learning.concept.sctp.q3.c': '3 秒後（1 + 2 秒）',
@@ -36,7 +36,7 @@ export const sctp: Catalog = {
   'learning.concept.sctp.q3.c.why':
     'タイムアウト 2 回ではエラー数は 2 で、Path.Max.Retrans と等しいだけです。超えるには 4 秒の 3 回めが要ります。',
   'learning.concept.sctp.q4.prompt':
-    '同じ 6 つのメッセージを今度は 1 本の TCP 接続で送り、A1 が失われました。アプリケーションに渡るのが遅れるのはいくつ？',
+    'A1、B1、A2、B2、A3、B3 の 6 つのメッセージをこの順に 1 本の TCP 接続で送り、A1 が失われました。アプリケーションに渡るのが遅れるのはいくつ？',
   'learning.concept.sctp.q4.a': '1 つ（A1 だけ）',
   'learning.concept.sctp.q4.b': '3 つ（A1、A2、A3）',
   'learning.concept.sctp.q4.c': '6 つすべて',

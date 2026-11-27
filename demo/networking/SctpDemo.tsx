@@ -330,7 +330,7 @@ function SctpLesson() {
           <p style={{ margin: '8px 0 0', lineHeight: 1.7 }}>
             {t(
               `Operators who need fast failover, such as for signalling, often lower Path.Max.Retrans and RTO.Min; set them too low and a short burst of loss makes a healthy path look dead. An idle path, such as the secondary here, is watched with HEARTBEAT chunks, sent about every HB.interval (${en(RFC_DEFAULTS.hbIntervalMs)} by default) plus one RTO; each HEARTBEAT not answered within an RTO also counts as an error. So A knows whether the secondary is usable before it needs it.`,
-              `シグナリングのように素早い切り替えが必要な運用では、Path.Max.Retrans と RTO.Min を下げることがよくあります。下げすぎると、短い間のパケットロスだけで正常な経路を死んだとみなしてしまいます。ここでのセカンダリのように使っていない経路は、HEARTBEAT チャンクで見張ります。HEARTBEAT はおよそ HB.interval（初期値 ${ja(RFC_DEFAULTS.hbIntervalMs)}）+ RTO ごとに送られ、RTO のうちに応答がなければ、それもエラーとして数えます。だから A は、セカンダリが使えるかどうかを必要になる前から知っています。`,
+              `シグナリングのように素早い切り替えが必要な運用では、Path.Max.Retrans と RTO.Min を下げることがよくあります。下げすぎると、短い間のパケットロスだけで正常な経路を死んだとみなしてしまいます。ここでのセカンダリのように使っていない経路は、HEARTBEAT チャンクで見張ります。HEARTBEAT はおよそ HB.interval（初期値 ${ja(RFC_DEFAULTS.hbIntervalMs)}）+ RTO ごとに送られ、RTO 以内に応答がなければ、それもエラーとして数えます。だから A は、セカンダリが使えるかどうかを必要になる前から知っています。`,
             )}
           </p>
           <p style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--netlab-text-secondary)' }}>

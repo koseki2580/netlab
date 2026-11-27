@@ -382,8 +382,8 @@ function PonLesson() {
             >
               <Verdict right={shareGuess === shareTruth} />
               {t(
-                `${rate(asked.downMbps)}. The splitter cannot switch anything: it sends the OLT’s light to all ${SPLIT} homes, so one ${rate(xgs.downMbps)} stream carries everyone’s traffic and ${rate(xgs.downMbps)} ÷ ${SPLIT} = ${rate(asked.downMbps)}. Every ONU receives every frame and keeps only its own; downstream traffic is encrypted (AES-128) with a key per ONU, so neighbours cannot read each other’s. The “10 Gb/s” is what one home gets when the others are quiet, which is most of the time.`,
-                `${rate(asked.downMbps)} です。スプリッタは何も切り替えられず、OLT の光を ${SPLIT} 軒すべてに届けます。つまり 1 本の ${rate(xgs.downMbps)} の流れで全員の通信を運ぶので、${rate(xgs.downMbps)} ÷ ${SPLIT} = ${rate(asked.downMbps)} です。どの ONU もすべてのフレームを受け取り、自分あての分だけを取り出します。下りの通信は ONU ごとの鍵で暗号化（AES-128）されているので、隣の家の通信は読めません。「10 Gb/s」は、ほかの家が静かなときに 1 軒が得られる速さで、たいていの時間はそうなっています。`,
+                `${rate(asked.downMbps)}. The splitter cannot switch anything: it sends the OLT’s light to all ${SPLIT} homes, so one ${rate(xgs.downMbps)} stream carries everyone’s traffic and ${rate(xgs.downMbps)} ÷ ${SPLIT} = ${rate(asked.downMbps)}. Every ONU receives every frame and keeps only its own; unicast downstream traffic is encrypted (AES-128) with a key per ONU, so neighbours cannot read each other’s. The “10 Gb/s” is what one home gets when the others are quiet, which is most of the time.`,
+                `${rate(asked.downMbps)} です。スプリッタは何も切り替えられず、OLT の光を ${SPLIT} 軒すべてに届けます。つまり 1 本の ${rate(xgs.downMbps)} の流れで全員の通信を運ぶので、${rate(xgs.downMbps)} ÷ ${SPLIT} = ${rate(asked.downMbps)} です。どの ONU もすべてのフレームを受け取り、自分あての分だけを取り出します。下りのユニキャスト通信は ONU ごとの鍵で暗号化（AES-128）されているので、隣の家の通信は読めません。「10 Gb/s」は、ほかの家が静かなときに 1 軒が得られる速さで、たいていの時間はそうなっています。`,
               )}
             </p>
             <div
@@ -749,8 +749,8 @@ function PonLesson() {
               }}
             >
               {t(
-                'Simplified: the grants here are a fair share (an ONU asking for less than an equal share gets what it asks, the rest split the remainder equally), and the guard time and preamble before each burst are left out. Real DBA gives each service fixed, assured and best-effort parts.',
-                '簡略化しています。ここでの割り当ては公平な分け方（均等な取り分より少なく求める ONU には求めた分を、残りはほかの ONU で均等に分ける）で、各バーストの前のガードタイムやプリアンブルは省いています。実際の DBA は、サービスごとに固定・保証・ベストエフォートの部分を割り当てます。',
+                'Simplified: the grants here are a fair share (an ONU asking for less than an equal share gets what it asks, the rest split the remainder equally), and the guard time and preamble before each burst are left out. Real DBA gives each service fixed, assured, non-assured and best-effort parts.',
+                '簡略化しています。ここでの割り当ては公平な分け方（均等な取り分より少なく求める ONU には求めた分を、残りはほかの ONU で均等に分ける）で、各バーストの前のガードタイムやプリアンブルは省いています。実際の DBA は、サービスごとに固定・保証・非保証・ベストエフォートの部分を割り当てます。',
               )}
             </p>
           </>

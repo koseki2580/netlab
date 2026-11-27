@@ -3,7 +3,7 @@ import type { Catalog } from '../../../../types';
 /** The `sctp` deck's questions (en); its name is in the core chunk. */
 export const sctp: Catalog = {
   'learning.concept.sctp.q1.prompt':
-    'An SCTP association has a primary and a secondary path; the primary fails. The RTO starts at 1 s and doubles at each timeout, up to 60 s, and the primary is abandoned when its error count exceeds Path.Max.Retrans = 5. When does new data move to the secondary?',
+    'An SCTP association has a primary and a secondary path; the primary fails. The RTO starts at 1 s and doubles at each timeout, up to 60 s; each timeout adds one to the path’s error count, and the primary is abandoned when that count exceeds Path.Max.Retrans = 5. When does new data move to the secondary?',
   'learning.concept.sctp.q1.a': 'After 5 s: five timeouts of 1 s',
   'learning.concept.sctp.q1.b': 'After 31 s: five doubling timeouts',
   'learning.concept.sctp.q1.c': 'After 63 s: six doubling timeouts',
@@ -25,7 +25,7 @@ export const sctp: Catalog = {
   'learning.concept.sctp.q2.c.why':
     'Stream 1 is ordered, so A2 and A3 cannot be handed over before A1, even if they have already arrived.',
   'learning.concept.sctp.q3.prompt':
-    'Same failure with RTO starting at 1 s and doubling, but the operator set Path.Max.Retrans = 2. When does new data move to the secondary?',
+    'An SCTP association’s primary path fails; the secondary works. The RTO starts at 1 s and doubles at each timeout, each timeout adds one to the path’s error count, and the primary is abandoned when the count exceeds Path.Max.Retrans, which the operator set to 2. When does new data move to the secondary?',
   'learning.concept.sctp.q3.a': 'After 2 s: two timeouts of 1 s',
   'learning.concept.sctp.q3.b': 'After 7 s: 1 + 2 + 4 s',
   'learning.concept.sctp.q3.c': 'After 3 s: 1 + 2 s',
@@ -36,7 +36,7 @@ export const sctp: Catalog = {
   'learning.concept.sctp.q3.c.why':
     'Two timeouts make the count 2, which equals Path.Max.Retrans; it has to exceed it, so a third timeout of 4 s comes first.',
   'learning.concept.sctp.q4.prompt':
-    'The same six messages go over one TCP connection instead, and A1 is lost. How many of them reach the application late?',
+    'Six messages, A1, B1, A2, B2, A3, B3, are sent in that order over one TCP connection, and A1 is lost. How many of them reach the application late?',
   'learning.concept.sctp.q4.a': 'One: only A1',
   'learning.concept.sctp.q4.b': 'Three: A1, A2 and A3',
   'learning.concept.sctp.q4.c': 'All six messages',

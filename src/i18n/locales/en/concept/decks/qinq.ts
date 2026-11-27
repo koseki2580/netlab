@@ -19,7 +19,7 @@ export const qinq: Catalog = {
   'learning.concept.qinq.q2.b': 'The edge switch fragments them to fit',
   'learning.concept.qinq.q2.c': 'They do not fit: only 1496 bytes of payload do',
   'learning.concept.qinq.q2.why':
-    'Two tags take 8 bytes, so a 1522-byte frame leaves 1522 − 14 − 4 − 8 = 1496 bytes of payload. The provider must raise its core frame size to at least 1526, or the customer its MTU.',
+    'Two tags take 8 bytes, so a 1522-byte frame leaves 1522 − 14 − 4 − 8 = 1496 bytes of payload. The provider must raise its core frame size to at least 1526 bytes, or the customer must lower its MTU to 1496.',
   'learning.concept.qinq.q2.a.why':
     'The tags sit inside the frame, so every byte of them counts against the largest frame a switch accepts.',
   'learning.concept.qinq.q2.b.why':

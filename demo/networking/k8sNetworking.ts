@@ -140,8 +140,9 @@ export function trace(target: Target, entry: NodeId = 'node-a', policy: Policy =
 /**
  * Under Local, kube-proxy serves a health-check port on every node so a load
  * balancer can skip nodes without a backend: 200 with one, 503 without.
- * Under Cluster every node can answer, so every node is healthy.
+ * Under Cluster no health-check port is allocated, so there is none (null).
  */
-export function healthCheck(node: NodeId, policy: Policy): 200 | 503 {
-  return policy === 'Cluster' || node === BACKEND_POD.node ? 200 : 503;
+export function healthCheck(node: NodeId, policy: Policy): 200 | 503 | null {
+  if (policy === 'Cluster') return null;
+  return node === BACKEND_POD.node ? 200 : 503;
 }

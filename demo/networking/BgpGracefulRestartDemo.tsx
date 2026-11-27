@@ -147,7 +147,7 @@ function BgpGracefulRestartLesson() {
   const rowName = (id: (typeof rows)[number]['id']) =>
     ({
       'nogr-bfd': t('No GR, BFD', 'GR なし、BFD あり'),
-      'gr-nobfd': t('GR, no BFD', 'GR あり、BFD なし'),
+      'gr-nobfd': t('GR (RFC 8538), no BFD', 'GR あり（RFC 8538）、BFD なし'),
       'gr-c0': t('GR, BFD with C = 0', 'GR あり、BFD（C = 0）'),
       'gr-c1': t('GR, BFD with C = 1', 'GR あり、BFD（C = 1）'),
     })[id];
@@ -361,7 +361,7 @@ function BgpGracefulRestartLesson() {
             </strong>
             {t(
               `${en(askedDead.lossMs)}. BFD noticed in ${en(askedDead.noticedMs)}, but R2, as a GR helper, kept the stale routes via R1 for the whole Restart Time, forwarding into a dead router, and moved to the backup only at ${en(askedDead.deletedMs ?? 0)}. GR must not hide a real failure. A BFD with the C bit at 1 runs independently of the control plane (often in hardware), so it stays up through a control-plane restart; when it does go down, the forwarding plane has failed, and RFC 5882 has the helper drop the routes at once.`,
-              `${ja(askedDead.lossMs)}です。BFD は ${ja(askedDead.noticedMs)}で気づきましたが、R2 は GR のヘルパーとして Restart Time いっぱい R1 経由の stale の経路を残し、止まったルータへ転送し続けました。バックアップへ移ったのは ${ja(askedDead.deletedMs ?? 0)}です。GR が本物の障害を隠してはいけません。C ビットが 1 の BFD はコントロールプレーンから独立して（多くはハードウェアで）動くので、コントロールプレーンの再起動中も落ちません。それが落ちたならフォワーディングプレーンの障害なので、RFC 5882 ではヘルパーはすぐに経路を消します。`,
+              `${ja(askedDead.lossMs)}です。BFD は ${ja(askedDead.noticedMs)}で気づきましたが、R2 は GR のヘルパーとして Restart Time いっぱい R1 経由の stale の経路を残し、止まったルータへ転送し続けました。バックアップへ移ったのは ${ja(askedDead.deletedMs ?? 0)}後です。GR が本物の障害を隠してはいけません。C ビットが 1 の BFD はコントロールプレーンから独立して（多くはハードウェアで）動くので、コントロールプレーンの再起動中も落ちません。それが落ちたならフォワーディングプレーンの障害なので、RFC 5882 ではヘルパーはすぐに経路を消します。`,
             )}
           </p>
         ) : (
@@ -442,14 +442,14 @@ function BgpGracefulRestartLesson() {
           </label>
           <p style={{ margin: '8px 0 0', lineHeight: 1.7 }}>
             {t(
-              `Without BFD, R2 notices a dead router only when the hold time runs out (${en(d.holdTimeMs)} here, a common value; some vendors default to 180 s) and then still keeps the stale routes for the Restart Time. A shorter Restart Time hides a failure for less time, but a restart that takes longer then loses traffic.`,
-              `BFD がないと、R2 が止まったルータに気づくのはホールドタイムが切れたとき（ここでは ${ja(d.holdTimeMs)}。よく使われる値で、初期値を 180 秒とするベンダーもあります）で、そのあとさらに Restart Time のあいだ stale の経路を残します。Restart Time を短くすれば障害を隠す時間は減りますが、それより長くかかる再起動では通信が失われます。`,
+              `Without BFD, R2 notices a dead router only when the hold time runs out (up to ${en(d.holdTimeMs)} here, a common value; some vendors default to 180 s). Under RFC 4724 alone that ends GR and the routes go then; with RFC 8538 (the N bit, which many current implementations negotiate) R2 still keeps the stale routes for the Restart Time after that, as shown. A shorter Restart Time hides a failure for less time, but a restart that takes longer then loses traffic.`,
+              `BFD がないと、R2 が止まったルータに気づくのはホールドタイムが切れたとき（ここでは最大 ${ja(d.holdTimeMs)}。よく使われる値で、初期値を 180 秒とするベンダーもあります）です。RFC 4724 だけならそこで GR は終わり経路は消えますが、RFC 8538（N ビット。最近の実装の多くがネゴシエートします）があると、表のようにそのあとさらに Restart Time のあいだ stale の経路を残します。Restart Time を短くすれば障害を隠す時間は減りますが、それより長くかかる再起動では通信が失われます。`,
             )}
           </p>
           <p style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--netlab-text-secondary)' }}>
             {t(
-              `Simplified: one prefix stands for all; moving to the backup and installing routes take no time; R2 sees the session drop at once in a control-plane restart; all routes arrive by End-of-RIB. ${en(d.restartTimeMs)} is a common default Restart Time, not a fixed value; real helpers may also keep stale routes under a separate stale-path timer.`,
-              `簡略化：1 つのプレフィックスで全体を代表させ、バックアップへの切り替えと経路のインストールには時間がかからないとしています。コントロールプレーンの再起動では R2 はセッション断にすぐ気づき、経路は End-of-RIB までにすべて届くとしています。Restart Time の ${ja(d.restartTimeMs)} はよくある初期値で、決まった値ではありません。実機のヘルパーには stale の経路を別のタイマーで管理するものもあります。`,
+              `Simplified: one prefix stands for all; moving to the backup and installing routes take no time; R2 sees the session drop at once in a control-plane restart; R1’s routes arrive just before End-of-RIB. ${en(d.restartTimeMs)} is a common default Restart Time, not a fixed value; real helpers may also keep stale routes under a separate stale-path timer.`,
+              `簡略化：1 つのプレフィックスで全体を代表させ、バックアップへの切り替えと経路のインストールには時間がかからないとしています。コントロールプレーンの再起動では R2 はセッション断にすぐ気づき、経路は End-of-RIB の直前にまとめて届くとしています。Restart Time の ${ja(d.restartTimeMs)} はよくある初期値で、決まった値ではありません。実機のヘルパーには stale の経路を別のタイマーで管理するものもあります。`,
             )}
           </p>
         </div>

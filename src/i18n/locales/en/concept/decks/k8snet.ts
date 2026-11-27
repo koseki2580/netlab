@@ -25,7 +25,7 @@ export const k8snet: Catalog = {
   'learning.concept.k8snet.q2.c.why':
     'No SNAT happened, so the node’s address is never involved; conntrack restores the ClusterIP.',
   'learning.concept.k8snet.q3.prompt':
-    'A NodePort Service with externalTrafficPolicy: Cluster; kube-proxy in iptables mode. A client at 203.0.113.9 connects to node-b (10.0.0.2), the node that runs the only backend Pod. What source does the backend see?',
+    'A NodePort Service with externalTrafficPolicy: Cluster; kube-proxy in iptables mode. A client at 203.0.113.9 connects to node-b (10.0.0.2), the node that runs the only backend Pod. Take the masquerade address as the node’s own. What source does the backend see?',
   'learning.concept.k8snet.q3.a': '203.0.113.9: no extra hop, so no SNAT',
   'learning.concept.k8snet.q3.b': '10.0.0.2: Cluster SNATs to the node',
   'learning.concept.k8snet.q3.c': '10.0.0.1: the other node',
@@ -36,12 +36,12 @@ export const k8snet: Catalog = {
   'learning.concept.k8snet.q3.c.why':
     'The SNAT uses the node the request entered, node-b; node-a is not on this path.',
   'learning.concept.k8snet.q4.prompt':
-    'Now externalTrafficPolicy: Local, same nodes and backend (only on node-b), iptables mode. A client connects to the NodePort on node-a. What happens?',
+    'A NodePort Service with externalTrafficPolicy: Local; kube-proxy in iptables mode. The only backend Pod runs on node-b (10.0.0.2). A client connects to the NodePort on node-a (10.0.0.1), which has no backend. What happens?',
   'learning.concept.k8snet.q4.a': 'Forwarded to node-b with SNAT to node-a',
   'learning.concept.k8snet.q4.b': 'Forwarded to node-b, client address kept',
   'learning.concept.k8snet.q4.c': 'Dropped on node-a: it has no backend',
   'learning.concept.k8snet.q4.why':
-    'Under Local a node sends NodePort traffic only to backends on itself, which is what lets it keep the client address. node-a has none, so it drops the request; a LoadBalancer Service’s health check (503 on node-a) keeps the load balancer away from it.',
+    'Under Local a node sends NodePort traffic only to backends on itself, which is what lets it keep the client address. node-a has none, so it drops the request; if the Service were of type LoadBalancer, its health check (503 on node-a) would keep the load balancer away from it.',
   'learning.concept.k8snet.q4.a.why':
     'That is what Cluster does. Local never sends to another node, so it never needs the SNAT.',
   'learning.concept.k8snet.q4.b.why':

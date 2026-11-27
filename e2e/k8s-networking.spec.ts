@@ -50,4 +50,5 @@ test('TC-2598: a NodePort on a node with no backend is SNATed under Cluster and 
   await expect(page.getByTestId('k8s-health')).toHaveAttribute('data-status', '503');
   await page.getByTestId('k8s-policy-Cluster').click();
   await expect(page.getByTestId('k8s-trace')).toHaveAttribute('data-backend-sees', '10.0.0.1');
+  await expect(page.getByTestId('k8s-health')).toHaveAttribute('data-status', 'none');
 });

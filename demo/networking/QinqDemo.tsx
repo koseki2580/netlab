@@ -339,6 +339,12 @@ function QinqLesson() {
       {sizeRevealed ? (
         <div style={LESSON_CARD} data-testid="qq-hops">
           <div style={LESSON_LABEL}>{t('Hop by hop', '1 ホップずつ')}</div>
+          <p style={{ margin: '0 0 8px', lineHeight: 1.7 }}>
+            {t(
+              'A1’s frame here is addressed to A2 (unicast).',
+              'ここでの A1 のフレームは A2 あて（ユニキャスト）です。',
+            )}
+          </p>
           <label style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
             {t('Payload', 'ペイロード')}
             <input
